@@ -168,6 +168,9 @@ private:
     void PrepareForDraw();
     void PrepareForDispatch();
 
+    void StartCopyEncoder();
+    void FinishEncoders();
+
     id<MTLBuffer> CreateStagingBuffer(uint64 Size);
 
     id<MTLCommandBuffer>         CommandBuffer;

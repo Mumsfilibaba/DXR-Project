@@ -14,6 +14,24 @@ static MTLIndexType ConvertIndexFormat(EIndexFormat IndexFormat)
     return (IndexFormat == EIndexFormat::uint32) ? MTLIndexTypeUInt32 : MTLIndexTypeUInt16;
 }
 
+static NSUInteger GetMipExtent(NSUInteger Extent, uint32 MipLevel)
+{
+    const NSUInteger MipExtent = Extent >> MipLevel;
+    return (MipExtent > 0) ? MipExtent : 1;
+}
+
+static NSUInteger ResolveMipCopyExtent(uint32 RequestedEnd, NSUInteger SrcOrigin, NSUInteger DstOrigin, NSUInteger SrcExtent, NSUInteger DstExtent)
+{
+    if (SrcOrigin >= SrcExtent || DstOrigin >= DstExtent)
+    {
+        return 0;
+    }
+
+    const NSUInteger Requested = (NSUInteger(RequestedEnd) > SrcOrigin) ? (NSUInteger(RequestedEnd) - SrcOrigin) : 1;
+    const NSUInteger Available = Math::Min<NSUInteger>(SrcExtent - SrcOrigin, DstExtent - DstOrigin);
+    return Math::Min<NSUInteger>(Requested, Available);
+}
+
 FMetalCommandContext::FMetalCommandContext(FMetalDevice* InDevice)
     : FMetalDeviceChild(InDevice)
     , IRHICommandContext()
@@ -56,7 +74,7 @@ void FMetalCommandContext::FinishContext()
 
     ContextState.EndCommandBuffer();
 
-    CopyContext.FinishEncoder();
+    FinishEncoders();
 
     FMetalDeviceRHI::Get()->FlushDeletionQueue(Commands);
     GetDevice()->GetQueue()->SubmitCommands(Commands);
@@ -110,17 +128,13 @@ void FMetalCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTar
     ColorAttachment.storeActionOptions = MTLStoreActionOptionNone;
     ColorAttachment.storeAction        = MTLStoreActionStore;
 
-    CopyContext.FinishEncoder();
+    FinishEncoders();
 
-    if (!GraphicsEncoder)
-    {
-        GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
-    }
+    id<MTLRenderCommandEncoder> ClearEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
 
     [RenderPassDescriptor release];
 
-    [GraphicsEncoder endEncoding];
-    GraphicsEncoder = nil;
+    [ClearEncoder endEncoding];
 }
 
 void FMetalCommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil)
@@ -141,7 +155,7 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     
     CHECK(GraphicsEncoder == nil);
     
-    CopyContext.FinishEncoder();
+    FinishEncoders();
 
     FMetalRenderTargetViewRHI* CachedRenderTargets[RHI_MAX_RENDER_TARGETS] = { };
     const uint32 NumRenderTargets = BeginRenderPassDesc.NumRenderTargets;
@@ -290,8 +304,8 @@ void FMetalCommandContext::SetComputePipelineState(FRHIComputePipelineState* Pip
 
 void FMetalCommandContext::SetMeshletPipelineState(FRHIMeshletPipelineState* PipelineState)
 {
-    // Mesh shaders are not yet implemented on Metal.
-    UNREFERENCED_VARIABLE(PipelineState);
+    FMetalMeshletPipelineStateRHI* MetalPipelineState = static_cast<FMetalMeshletPipelineStateRHI*>(PipelineState);
+    ContextState.SetMeshletPipelineState(MetalPipelineState);
 }
 
 void FMetalCommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
@@ -444,7 +458,7 @@ void FMetalCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& Bu
 
     Memory::Memcpy(StagingBuffer.contents, SourceData, Size);
 
-    CopyContext.StartEncoder(CommandBuffer);
+    StartCopyEncoder();
     [CopyContext.GetMTLCopyEncoder() copyFromBuffer:StagingBuffer
                                        sourceOffset:0
                                            toBuffer:DstBuffer
@@ -486,7 +500,7 @@ void FMetalCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegio
 
     Memory::Memcpy(StagingBuffer.contents, SrcData, DataSize);
 
-    CopyContext.StartEncoder(CommandBuffer);
+    StartCopyEncoder();
     [CopyContext.GetMTLCopyEncoder() copyFromBuffer:StagingBuffer
                                        sourceOffset:0
                                   sourceBytesPerRow:(bIsTexture1D ? 0 : SrcRowPitch)
@@ -515,7 +529,7 @@ void FMetalCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FR
     CHECK(MetalDst      != nullptr);
     CHECK(MetalSrc      != nullptr);
     
-    CopyContext.StartEncoder(CommandBuffer);
+    StartCopyEncoder();
     
     id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
     [CopyEncoder copyFromBuffer:MetalSrc->GetMTLBuffer()
@@ -534,7 +548,7 @@ void FMetalCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
     CHECK(MetalDst      != nullptr);
     CHECK(MetalSrc      != nullptr);
     
-    CopyContext.StartEncoder(CommandBuffer);
+    StartCopyEncoder();
     
     id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
     [CopyEncoder copyFromTexture:MetalSrc->GetMTLTexture() toTexture:MetalDst->GetMTLTexture()];
@@ -549,11 +563,10 @@ void FMetalCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
     CHECK(MetalDst      != nullptr);
     CHECK(MetalSrc      != nullptr);
 
-    CopyContext.StartEncoder(CommandBuffer);
+    StartCopyEncoder();
 
-    const MTLSize   Size      = MTLSizeMake(CopyDesc.Size.X, Math::Max(CopyDesc.Size.Y, 1), Math::Max(CopyDesc.Size.Z, 1));
-    const MTLOrigin SrcOrigin = MTLOriginMake(CopyDesc.SrcPosition.X, CopyDesc.SrcPosition.Y, CopyDesc.SrcPosition.Z);
-    const MTLOrigin DstOrigin = MTLOriginMake(CopyDesc.DstPosition.X, CopyDesc.DstPosition.Y, CopyDesc.DstPosition.Z);
+    id<MTLTexture> SrcTexture = MetalSrc->GetMTLTexture();
+    id<MTLTexture> DstTexture = MetalDst->GetMTLTexture();
 
     const uint32 NumArraySlices = Math::Max(CopyDesc.NumArraySlices, 1u);
     const uint32 NumMipLevels   = Math::Max(CopyDesc.NumMipLevels, 1u);
@@ -563,14 +576,30 @@ void FMetalCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
     {
         for (uint32 MipIndex = 0; MipIndex < NumMipLevels; ++MipIndex)
         {
-            [CopyEncoder copyFromTexture:MetalSrc->GetMTLTexture()
+            const uint32 SrcMipLevel = CopyDesc.SrcMipSlice + MipIndex;
+            const uint32 DstMipLevel = CopyDesc.DstMipSlice + MipIndex;
+
+            const MTLOrigin SrcOrigin = MTLOriginMake(CopyDesc.SrcPosition.X >> MipIndex, CopyDesc.SrcPosition.Y >> MipIndex, CopyDesc.SrcPosition.Z >> MipIndex);
+            const MTLOrigin DstOrigin = MTLOriginMake(CopyDesc.DstPosition.X >> MipIndex, CopyDesc.DstPosition.Y >> MipIndex, CopyDesc.DstPosition.Z >> MipIndex);
+
+            const MTLSize Size = MTLSizeMake(
+                ResolveMipCopyExtent(uint32(CopyDesc.SrcPosition.X + CopyDesc.Size.X) >> MipIndex, SrcOrigin.x, DstOrigin.x, GetMipExtent(SrcTexture.width,  SrcMipLevel), GetMipExtent(DstTexture.width,  DstMipLevel)),
+                ResolveMipCopyExtent(uint32(CopyDesc.SrcPosition.Y + CopyDesc.Size.Y) >> MipIndex, SrcOrigin.y, DstOrigin.y, GetMipExtent(SrcTexture.height, SrcMipLevel), GetMipExtent(DstTexture.height, DstMipLevel)),
+                ResolveMipCopyExtent(uint32(CopyDesc.SrcPosition.Z + CopyDesc.Size.Z) >> MipIndex, SrcOrigin.z, DstOrigin.z, GetMipExtent(SrcTexture.depth,  SrcMipLevel), GetMipExtent(DstTexture.depth,  DstMipLevel)));
+
+            if (Size.width == 0 || Size.height == 0 || Size.depth == 0)
+            {
+                continue;
+            }
+
+            [CopyEncoder copyFromTexture:SrcTexture
                              sourceSlice:CopyDesc.SrcArraySlice + ArrayIndex
-                             sourceLevel:CopyDesc.SrcMipSlice + MipIndex
+                             sourceLevel:SrcMipLevel
                             sourceOrigin:SrcOrigin
                               sourceSize:Size
-                               toTexture:MetalDst->GetMTLTexture()
+                               toTexture:DstTexture
                         destinationSlice:CopyDesc.DstArraySlice + ArrayIndex
-                        destinationLevel:CopyDesc.DstMipSlice + MipIndex
+                        destinationLevel:DstMipLevel
                        destinationOrigin:DstOrigin];
         }
     }
@@ -597,7 +626,7 @@ void FMetalCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
     const uint64 RowPitch     = uint64(SrcRegion.Width) * GetByteStrideFromFormat(SrcDesc.Format);
     const uint64 SlicePitch   = RowPitch * SrcRegion.Height;
 
-    CopyContext.StartEncoder(CommandBuffer);
+    StartCopyEncoder();
 
     [CopyContext.GetMTLCopyEncoder() copyFromTexture:MetalSrc->GetMTLTexture()
                                          sourceSlice:SrcArraySlice
@@ -648,7 +677,7 @@ void FMetalCommandContext::PrepareForDispatch()
     {
         CHECK(CommandBuffer != nil);
 
-        CopyContext.FinishEncoder();
+        FinishEncoders();
 
         ComputeEncoder = [CommandBuffer computeCommandEncoder];
         [ComputeEncoder retain];
@@ -656,6 +685,37 @@ void FMetalCommandContext::PrepareForDispatch()
 
     ContextState.PrepareComputeState();
     ContextState.BindComputeState();
+}
+
+void FMetalCommandContext::StartCopyEncoder()
+{
+    CHECK(CommandBuffer != nil);
+
+    if (GraphicsEncoder || ComputeEncoder)
+    {
+        FinishEncoders();
+    }
+
+    CopyContext.StartEncoder(CommandBuffer);
+}
+
+void FMetalCommandContext::FinishEncoders()
+{
+    if (GraphicsEncoder)
+    {
+        [GraphicsEncoder endEncoding];
+        [GraphicsEncoder release];
+        GraphicsEncoder = nil;
+    }
+
+    if (ComputeEncoder)
+    {
+        [ComputeEncoder endEncoding];
+        [ComputeEncoder release];
+        ComputeEncoder = nil;
+    }
+
+    CopyContext.FinishEncoder();
 }
 
 void FMetalCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
@@ -752,7 +812,7 @@ void FMetalCommandContext::Flush()
     if (Commands)
     {
         ContextState.EndCommandBuffer();
-        CopyContext.FinishEncoder();
+        FinishEncoders();
 
         FMetalDeviceRHI::Get()->FlushDeletionQueue(Commands);
         GetDevice()->GetQueue()->SubmitCommands(Commands);
@@ -773,9 +833,13 @@ void FMetalCommandContext::PushEvent(const StringView& Name)
     {
         Encoder = GraphicsEncoder;
     }
+    else if (ComputeEncoder)
+    {
+        Encoder = ComputeEncoder;
+    }
     else
     {
-        CopyContext.StartEncoder(CommandBuffer);
+        StartCopyEncoder();
         Encoder = CopyContext.GetMTLCopyEncoder();
     }
 
@@ -790,6 +854,10 @@ void FMetalCommandContext::PopEvent()
     if (GraphicsEncoder)
     {
         Encoder = GraphicsEncoder;
+    }
+    else if (ComputeEncoder)
+    {
+        Encoder = ComputeEncoder;
     }
     else
     {

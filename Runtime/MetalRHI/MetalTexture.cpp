@@ -39,6 +39,11 @@ static MTLTextureDescriptor* CreateTextureDescriptor(const FRHITextureDesc& Desc
         TextureDescriptor.usage |= MTLTextureUsagePixelFormatView;
     }
 
+    if (Desc.IsUnorderedAccessTexture() && (Desc.IsTextureCube() || Desc.IsTextureCubeArray()))
+    {
+        TextureDescriptor.usage |= MTLTextureUsagePixelFormatView;
+    }
+
     return TextureDescriptor;
 }
 

@@ -249,6 +249,42 @@ static bool ProbeCreateAndDestroy()
     TEST_END();
 }
 
+static bool ProbePipelineObjects()
+{
+    TEST_BEGIN();
+
+    TEST_SECTION("Fixed-function state");
+
+    FRHIDepthStencilStateRef DepthStencilState = RHI::CreateDepthStencilState(FRHIDepthStencilStateDesc());
+    TEST_EXPECT(DepthStencilState != nullptr);
+    TEST_EXPECT(DepthStencilState && DepthStencilState->GetRHINativeState() == nullptr);
+
+    FRHIRasterizerStateRef RasterizerState = RHI::CreateRasterizerState(FRHIRasterizerStateDesc());
+    TEST_EXPECT(RasterizerState != nullptr);
+    TEST_EXPECT(RasterizerState && RasterizerState->GetRHINativeState() == nullptr);
+
+    FRHIBlendStateRef BlendState = RHI::CreateBlendState(FRHIBlendStateDesc());
+    TEST_EXPECT(BlendState != nullptr);
+    TEST_EXPECT(BlendState && BlendState->GetRHINativeState() == nullptr);
+
+    TEST_SECTION("Input layout");
+
+    TArray<FRHIInputElementDesc> InputElements;
+    FRHIInputElementDesc& Position = InputElements.Emplace();
+    Position.Semantic     = "POSITION";
+    Position.Format       = EFormat::R32G32B32_Float;
+    Position.VertexStride = static_cast<uint16>(sizeof(float) * 3);
+    Position.InputSlot    = 0;
+    Position.ByteOffset   = 0;
+
+    FRHIInputLayoutRef InputLayout = RHI::CreateInputLayout(InputElements);
+    TEST_EXPECT(InputLayout != nullptr);
+    TEST_EXPECT(InputLayout && InputLayout->GetNumInputElementDescs() == 1u);
+    TEST_EXPECT(InputLayout && InputLayout->GetInputElementDesc(0) != nullptr);
+
+    TEST_END();
+}
+
 static bool BootRHI(ERHIType ExpectedType)
 {
     TEST_BEGIN();
@@ -275,6 +311,7 @@ static bool BootRHI(ERHIType ExpectedType)
         TEST_EXPECT(ProbeBuffers(bCanMap));
         TEST_EXPECT(ProbeTextures());
         TEST_EXPECT(ProbeCreateAndDestroy());
+        TEST_EXPECT(ProbePipelineObjects());
 
         if (FRHICommandListExecutor::IsInitialized())
         {

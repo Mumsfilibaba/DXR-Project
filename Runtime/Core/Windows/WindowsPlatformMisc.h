@@ -69,6 +69,51 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
     #endif
     }
 
+    static FORCEINLINE bool GetEnvironmentVariable(const CHAR* Name, String& OutValue)
+    {
+        OutValue.Clear();
+
+        if (!Name || Name[0] == '\0')
+        {
+            return false;
+        }
+
+        // A null buffer reports the size needed including the terminator, so an existing but empty value gives 1
+        DWORD RequiredSize = ::GetEnvironmentVariableA(Name, nullptr, 0);
+        while (RequiredSize > 0)
+        {
+            const DWORD Length = RequiredSize - 1;
+            OutValue.Resize(static_cast<int32>(Length));
+
+            const DWORD Copied = ::GetEnvironmentVariableA(Name, OutValue.Data(), RequiredSize);
+            if (Copied == Length)
+            {
+                return true;
+            }
+
+            if (Copied == 0)
+            {
+                OutValue.Clear();
+                return false;
+            }
+
+            RequiredSize = Copied;
+        }
+
+        return false;
+    }
+
+    static FORCEINLINE bool SetEnvironmentVariable(const CHAR* Name, const CHAR* Value)
+    {
+        if (!Name || Name[0] == '\0')
+        {
+            return false;
+        }
+
+        // A null value is how the Win32 API removes a variable, which matches unsetenv on macOS
+        return ::SetEnvironmentVariableA(Name, Value) != FALSE;
+    }
+
     static void InstallCrashHandler();
 
     static FORCEINLINE int32 GetLastErrorString(String& OutErrorString)

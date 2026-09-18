@@ -916,7 +916,25 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
         return false;
     }
 
-    Result = spvc_compiler_options_set_uint(CompilerOptions, SPVC_COMPILER_OPTION_MSL_VERSION, SPVC_MAKE_MSL_VERSION(2, 3, 0));
+    uint32 MSLVersion = SPVC_MAKE_MSL_VERSION(2, 3, 0);
+    switch (CompileInfo.ShaderStage)
+    {
+        case EShaderStage::Mesh:
+        case EShaderStage::Amplification:
+        case EShaderStage::RayGen:
+        case EShaderStage::RayAnyHit:
+        case EShaderStage::RayClosestHit:
+        case EShaderStage::RayMiss:
+        case EShaderStage::RayIntersection:
+        case EShaderStage::RayCallable:
+            MSLVersion = SPVC_MAKE_MSL_VERSION(3, 0, 0);
+            break;
+
+        default:
+            break;
+    }
+
+    Result = spvc_compiler_options_set_uint(CompilerOptions, SPVC_COMPILER_OPTION_MSL_VERSION, MSLVersion);
     if (Result != SPVC_SUCCESS)
     {
         LOG_ERROR("[FShaderCompiler]: Failed to set the MSL version");

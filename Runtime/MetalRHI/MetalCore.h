@@ -534,14 +534,64 @@ constexpr MTLPixelFormat ConvertFormat(EFormat Format)
     }
 }
 
-NODISCARD inline bool MetalFormatSupportsShaderWrite(MTLPixelFormat Format, MTLReadWriteTextureTier ReadWriteTextureTier)
+NODISCARD inline bool MetalFormatSupportsShaderWrite(MTLPixelFormat Format)
 {
-    if (Format == MTLPixelFormatInvalid)
+    switch (Format)
     {
-        return false;
-    }
+        case MTLPixelFormatR8Unorm:
+        case MTLPixelFormatR8Snorm:
+        case MTLPixelFormatR8Uint:
+        case MTLPixelFormatR8Sint:
+        case MTLPixelFormatR16Unorm:
+        case MTLPixelFormatR16Snorm:
+        case MTLPixelFormatR16Float:
+        case MTLPixelFormatR16Uint:
+        case MTLPixelFormatR16Sint:
+        case MTLPixelFormatR32Float:
+        case MTLPixelFormatR32Uint:
+        case MTLPixelFormatR32Sint:
+        case MTLPixelFormatRG8Unorm:
+        case MTLPixelFormatRG8Snorm:
+        case MTLPixelFormatRG8Uint:
+        case MTLPixelFormatRG8Sint:
+        case MTLPixelFormatRG16Unorm:
+        case MTLPixelFormatRG16Snorm:
+        case MTLPixelFormatRG16Float:
+        case MTLPixelFormatRG16Uint:
+        case MTLPixelFormatRG16Sint:
+        case MTLPixelFormatRG32Float:
+        case MTLPixelFormatRG32Uint:
+        case MTLPixelFormatRG32Sint:
+        case MTLPixelFormatRGBA8Unorm:
+        case MTLPixelFormatRGBA8Snorm:
+        case MTLPixelFormatRGBA8Uint:
+        case MTLPixelFormatRGBA8Sint:
+        case MTLPixelFormatBGRA8Unorm:
+        case MTLPixelFormatRGB10A2Unorm:
+        case MTLPixelFormatRGB10A2Uint:
+        case MTLPixelFormatRG11B10Float:
+        case MTLPixelFormatRGBA16Unorm:
+        case MTLPixelFormatRGBA16Snorm:
+        case MTLPixelFormatRGBA16Float:
+        case MTLPixelFormatRGBA16Uint:
+        case MTLPixelFormatRGBA16Sint:
+        case MTLPixelFormatRGBA32Float:
+        case MTLPixelFormatRGBA32Uint:
+        case MTLPixelFormatRGBA32Sint:
+        {
+            return true;
+        }
 
-    if (ReadWriteTextureTier == MTLReadWriteTextureTierNone)
+        default:
+        {
+            return false;
+        }
+    }
+}
+
+NODISCARD inline bool MetalFormatSupportsShaderReadWrite(MTLPixelFormat Format, MTLReadWriteTextureTier ReadWriteTextureTier)
+{
+    if (Format == MTLPixelFormatInvalid || ReadWriteTextureTier == MTLReadWriteTextureTierNone)
     {
         return false;
     }
@@ -712,6 +762,33 @@ constexpr MTLTriangleFillMode ConvertFillMode(EFillMode FillMode)
         case EFillMode::WireFrame: return MTLTriangleFillModeLines;
         case EFillMode::Solid:     return MTLTriangleFillModeFill;
         default:                   return MTLTriangleFillMode(-1);
+    }
+}
+
+constexpr MTLCullMode ConvertCullMode(ECullMode CullMode)
+{
+    switch (CullMode)
+    {
+        case ECullMode::None:  return MTLCullModeNone;
+        case ECullMode::Front: return MTLCullModeFront;
+        case ECullMode::Back:  return MTLCullModeBack;
+        default:               return MTLCullModeNone;
+    }
+}
+
+constexpr bool IsStencilPixelFormat(MTLPixelFormat Format)
+{
+    switch (Format)
+    {
+        case MTLPixelFormatDepth32Float_Stencil8:
+        case MTLPixelFormatStencil8:
+        case MTLPixelFormatX32_Stencil8:
+        case MTLPixelFormatDepth24Unorm_Stencil8:
+        case MTLPixelFormatX24_Stencil8:
+            return true;
+
+        default:
+            return false;
     }
 }
 

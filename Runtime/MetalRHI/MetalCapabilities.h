@@ -10,6 +10,7 @@ extern METALRHI_API MTLArgumentBuffersTier GMetalArgumentBuffersTier;
 extern METALRHI_API MTLReadWriteTextureTier GMetalReadWriteTextureTier;
 extern METALRHI_API bool                   GMetalSupportsRayTracing;
 extern METALRHI_API bool                   GMetalSupportsRayTracingFromRender;
+extern METALRHI_API bool                   GMetalSupportsMeshShaders;
 extern METALRHI_API bool                   GMetalSupportsUnifiedMemory;
 extern METALRHI_API uint64                 GMetalMaxBufferLength;
 extern METALRHI_API uint32                 GMetalMaxThreadsPerThreadgroup;

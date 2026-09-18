@@ -4,6 +4,7 @@
 #include "RHI/RHICommandList.h"
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalCapabilities.h"
+#include "MetalRHI/MetalDeviceDebug.h"
 #include "MetalRHI/MetalQueue.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -103,6 +104,10 @@ FMetalDeviceRHI::~FMetalDeviceRHI()
 
     SAFE_DELETE(Device);
 
+#if METAL_ENABLE_DEBUG_LAYER
+    MetalStopValidationCapture();
+#endif
+
     if (MetalDeviceRHI == this)
     {
         MetalDeviceRHI = nullptr;
@@ -149,6 +154,11 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
 
 bool FMetalDeviceRHI::Initialize()
 {
+#if METAL_ENABLE_DEBUG_LAYER
+    MetalEnableDebugLayer();
+    MetalStartValidationCapture();
+#endif
+
     Device = new FMetalDevice();
     if (!Device->Initialize())
     {
@@ -363,12 +373,38 @@ FRHIGeometryShader* FMetalDeviceRHI::CreateGeometryShader(const TArray<uint8>& S
 
 FRHIMeshShader* FMetalDeviceRHI::CreateMeshShader(const TArray<uint8>& ShaderCode)
 {
-    return nullptr;
+    if (!GMetalSupportsMeshShaders)
+    {
+        return nullptr;
+    }
+
+    FMetalMeshShaderRef NewShader = new FMetalMeshShaderRHI(GetMetalDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIAmplificationShader* FMetalDeviceRHI::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
-    return nullptr;
+    if (!GMetalSupportsMeshShaders)
+    {
+        return nullptr;
+    }
+
+    FMetalAmplificationShaderRef NewShader = new FMetalAmplificationShaderRHI(GetMetalDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIPixelShader* FMetalDeviceRHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
@@ -503,18 +539,45 @@ FRHIGraphicsPipelineState* FMetalDeviceRHI::CreateGraphicsPipelineState(const FR
 
 FRHIComputePipelineState* FMetalDeviceRHI::CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)
 {
-    return new FMetalComputePipelineStateRHI();
+    FMetalComputePipelineStateRef NewPipelineState = new FMetalComputePipelineStateRHI(GetMetalDevice());
+    if (!NewPipelineState->Initialize(InDesc))
+    {
+        return nullptr;
+    }
+
+    return NewPipelineState.ReleaseOwnership();
 }
 
 FRHIMeshletPipelineState* FMetalDeviceRHI::CreateMeshletPipelineState(const FRHIMeshletPipelineStateDesc& InDesc)
 {
-    // Mesh shaders (object/mesh) are not yet implemented on Metal.
-    return nullptr;
+    if (!GMetalSupportsMeshShaders)
+    {
+        return nullptr;
+    }
+
+    FMetalMeshletPipelineStateRef NewPipelineState = new FMetalMeshletPipelineStateRHI(GetMetalDevice(), InDesc);
+    if (!NewPipelineState->Initialize())
+    {
+        return nullptr;
+    }
+
+    return NewPipelineState.ReleaseOwnership();
 }
 
 FRHIRayTracingPipelineState* FMetalDeviceRHI::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& Desc)
 {
-    return new FMetalRayTracingPipelineStateRHI();
+    if (!GMetalSupportsRayTracing)
+    {
+        return nullptr;
+    }
+
+    FMetalRayTracingPipelineStateRef NewPipelineState = new FMetalRayTracingPipelineStateRHI(GetMetalDevice(), Desc);
+    if (!NewPipelineState->Initialize())
+    {
+        return nullptr;
+    }
+
+    return NewPipelineState.ReleaseOwnership();
 }
 
 FRHIQuery* FMetalDeviceRHI::CreateQuery(EQueryType InQueryType)
@@ -559,7 +622,7 @@ FRHISwapChain* FMetalDeviceRHI::CreateSwapChain(const FRHISwapChainDesc& SwapCha
 bool FMetalDeviceRHI::QueryUAVFormatSupport(EFormat Format) const
 {
     const MTLPixelFormat PixelFormat = MetalRHI::ConvertFormat(Format);
-    return MetalRHI::MetalFormatSupportsShaderWrite(PixelFormat, GMetalReadWriteTextureTier);
+    return MetalRHI::MetalFormatSupportsShaderWrite(PixelFormat);
 }
 
 bool FMetalDeviceRHI::QuerySupportedSampleCounts(EFormat Format, uint32& OutSampleCounts) const

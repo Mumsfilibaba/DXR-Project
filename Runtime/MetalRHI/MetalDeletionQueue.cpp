@@ -26,6 +26,13 @@ void FMetalDeferredObject::ProcessItems(const TArray<FMetalDeferredObject>& Item
                 [Item.Heap release];
                 break;
             }
+
+            case FMetalDeferredObject::EType::MTLObject:
+            {
+                CHECK(Item.Object != nil);
+                [Item.Object release];
+                break;
+            }
         }
     }
 }

@@ -2,6 +2,80 @@
 #include "MetalRHI/MetalDevice.h"
 #include "Core/Threading/ScopedLock.h"
 
+#if METAL_ENABLE_LOGGING
+static const CHAR* ToString(MTLCommandBufferError ErrorCode)
+{
+    switch (ErrorCode)
+    {
+        case MTLCommandBufferErrorNone:            return "None";
+        case MTLCommandBufferErrorInternal:        return "Internal";
+        case MTLCommandBufferErrorTimeout:         return "Timeout";
+        case MTLCommandBufferErrorPageFault:       return "PageFault";
+        case MTLCommandBufferErrorAccessRevoked:   return "AccessRevoked";
+        case MTLCommandBufferErrorNotPermitted:    return "NotPermitted";
+        case MTLCommandBufferErrorOutOfMemory:     return "OutOfMemory";
+        case MTLCommandBufferErrorInvalidResource: return "InvalidResource";
+        case MTLCommandBufferErrorMemoryless:      return "Memoryless";
+        case MTLCommandBufferErrorDeviceRemoved:   return "DeviceRemoved";
+        case MTLCommandBufferErrorStackOverflow:   return "StackOverflow";
+        default:                                   return "Unknown";
+    }
+}
+
+static const CHAR* ToString(MTLCommandEncoderErrorState ErrorState)
+{
+    switch (ErrorState)
+    {
+        case MTLCommandEncoderErrorStateCompleted: return "Completed";
+        case MTLCommandEncoderErrorStateAffected:  return "Affected";
+        case MTLCommandEncoderErrorStatePending:   return "Pending";
+        case MTLCommandEncoderErrorStateFaulted:   return "Faulted";
+        default:                                   return "Unknown";
+    }
+}
+
+static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer)
+{
+    if (!CommandBuffer || CommandBuffer.status != MTLCommandBufferStatusError)
+    {
+        return;
+    }
+
+    const String Label(CommandBuffer.label ? CommandBuffer.label : @"<unnamed>");
+
+    NSError* Error = CommandBuffer.error;
+    if (!Error)
+    {
+        METAL_ERROR("Command buffer '%s' failed without reporting an error", *Label);
+        return;
+    }
+
+    const String Description(Error.localizedDescription);
+    if ([Error.domain isEqualToString:MTLCommandBufferErrorDomain])
+    {
+        METAL_ERROR("Command buffer '%s' failed with %s: %s", *Label, ToString(MTLCommandBufferError(Error.code)), *Description);
+    }
+    else
+    {
+        const String Domain(Error.domain);
+        METAL_ERROR("Command buffer '%s' failed with %s(%ld): %s", *Label, *Domain, long(Error.code), *Description);
+    }
+
+    NSArray<id<MTLCommandBufferEncoderInfo>>* EncoderInfos = Error.userInfo[MTLCommandBufferEncoderInfoErrorKey];
+    for (id<MTLCommandBufferEncoderInfo> EncoderInfo in EncoderInfos)
+    {
+        const String EncoderLabel(EncoderInfo.label ? EncoderInfo.label : @"<unnamed>");
+        METAL_ERROR("  Encoder '%s': %s", *EncoderLabel, ToString(EncoderInfo.errorState));
+
+        for (NSString* Signpost in EncoderInfo.debugSignposts)
+        {
+            const String SignpostLabel(Signpost);
+            METAL_ERROR("    %s", *SignpostLabel);
+        }
+    }
+}
+#endif
+
 FMetalQueue::FMetalQueue(FMetalDevice* InDevice, EMetalQueueType InQueueType)
     : FMetalDeviceChild(InDevice)
     , CommandQueue(nil)
@@ -76,7 +150,14 @@ FMetalCommands* FMetalQueue::ObtainCommands()
 
 id<MTLCommandBuffer> FMetalQueue::CreateCommandBuffer()
 {
+#if METAL_ENABLE_LOGGING
+    MTLCommandBufferDescriptor* Descriptor = [[MTLCommandBufferDescriptor new] autorelease];
+    Descriptor.errorOptions = MTLCommandBufferErrorOptionEncoderExecutionStatus;
+
+    id<MTLCommandBuffer> CommandBuffer = [CommandQueue commandBufferWithDescriptor:Descriptor];
+#else
     id<MTLCommandBuffer> CommandBuffer = [CommandQueue commandBuffer];
+#endif
     if (CommandBuffer)
     {
         [CommandBuffer retain];
@@ -91,6 +172,16 @@ uint64 FMetalQueue::SubmitCommands(FMetalCommands* Commands)
 
     const uint64 Value = NextSubmissionValue.Increment();
     Commands->SubmissionValue = Value;
+
+#if METAL_ENABLE_LOGGING
+    [Commands->CommandBuffer setLabel:[NSString stringWithFormat:@"MetalQueue-%llu", Value]];
+
+    [Commands->CommandBuffer addCompletedHandler:^(id<MTLCommandBuffer> CompletedBuffer)
+    {
+        ReportCommandBufferError(CompletedBuffer);
+    }];
+#endif
+
     [Commands->CommandBuffer encodeSignalEvent:SubmissionEvent value:Value];
     [Commands->CommandBuffer commit];
 

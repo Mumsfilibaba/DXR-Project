@@ -12,6 +12,7 @@ struct FMetalDeferredObject
         RHIResource  = 1,
         MTLResource  = 2,
         MTLHeap      = 3,
+        MTLObject    = 4,
     };
 
     FMetalDeferredObject(FRHIResource* InResource)
@@ -35,6 +36,34 @@ struct FMetalDeferredObject
         Heap = [InHeap retain];
     }
 
+    FMetalDeferredObject(id<MTLRenderPipelineState> InPipelineState)
+        : Type(EType::MTLObject)
+    {
+        CHECK(InPipelineState != nil);
+        Object = [InPipelineState retain];
+    }
+
+    FMetalDeferredObject(id<MTLComputePipelineState> InPipelineState)
+        : Type(EType::MTLObject)
+    {
+        CHECK(InPipelineState != nil);
+        Object = [InPipelineState retain];
+    }
+
+    FMetalDeferredObject(id<MTLDepthStencilState> InDepthStencilState)
+        : Type(EType::MTLObject)
+    {
+        CHECK(InDepthStencilState != nil);
+        Object = [InDepthStencilState retain];
+    }
+
+    FMetalDeferredObject(MTLVertexDescriptor* InVertexDescriptor)
+        : Type(EType::MTLObject)
+    {
+        CHECK(InVertexDescriptor != nil);
+        Object = [InVertexDescriptor retain];
+    }
+
     EType const Type;
 
     union
@@ -42,5 +71,6 @@ struct FMetalDeferredObject
         FRHIResource*   RHIResource;
         id<MTLResource> Resource;
         id<MTLHeap>     Heap;
+        NSObject*       Object;
     };
 };

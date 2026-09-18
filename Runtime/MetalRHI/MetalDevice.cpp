@@ -351,6 +351,7 @@ bool FMetalDevice::QueryDeviceFeatureSupport()
     GMetalReadWriteTextureTier         = Device.readWriteTextureSupport;
     GMetalSupportsRayTracing           = Device.supportsRaytracing;
     GMetalSupportsRayTracingFromRender = Device.supportsRaytracingFromRender;
+    GMetalSupportsMeshShaders          = [Device supportsFamily:MTLGPUFamilyApple9];
     GMetalSupportsUnifiedMemory        = Device.hasUnifiedMemory;
     GMetalMaxBufferLength              = static_cast<uint64>(Device.maxBufferLength);
     GMetalMaxThreadsPerThreadgroup     = static_cast<uint32>(Device.maxThreadsPerThreadgroup.width);
@@ -369,8 +370,10 @@ bool FMetalDevice::QueryDeviceFeatureSupport()
         GMetalMaxTexture2DSize = 16384;
     }
 
-    METAL_INFO("bSupportRayTracing=%s, bSupportRayTracingFromRender=%s", GMetalSupportsRayTracing ? "true" : "false",
-        GMetalSupportsRayTracingFromRender ? "true" : "false");
+    METAL_INFO("bSupportRayTracing=%s, bSupportRayTracingFromRender=%s, bSupportMeshShaders=%s",
+        GMetalSupportsRayTracing ? "true" : "false",
+        GMetalSupportsRayTracingFromRender ? "true" : "false",
+        GMetalSupportsMeshShaders ? "true" : "false");
 
     DumpMetalCapabilities();
     return true;

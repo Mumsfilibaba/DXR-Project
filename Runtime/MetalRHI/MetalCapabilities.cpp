@@ -14,6 +14,7 @@ METALRHI_API MTLArgumentBuffersTier  GMetalArgumentBuffersTier          = MTLArg
 METALRHI_API MTLReadWriteTextureTier GMetalReadWriteTextureTier         = MTLReadWriteTextureTierNone;
 METALRHI_API bool                    GMetalSupportsRayTracing           = false;
 METALRHI_API bool                    GMetalSupportsRayTracingFromRender = false;
+METALRHI_API bool                    GMetalSupportsMeshShaders          = false;
 METALRHI_API bool                    GMetalSupportsUnifiedMemory        = false;
 METALRHI_API uint64                  GMetalMaxBufferLength              = 0;
 METALRHI_API uint32                  GMetalMaxThreadsPerThreadgroup     = 0;
@@ -35,6 +36,7 @@ void DumpMetalCapabilities()
     LOG_INFO("[MetalRHI]   Unified Memory                         : %s", YesNo(GMetalSupportsUnifiedMemory));
     LOG_INFO("[MetalRHI]   Ray Tracing                            : %s", YesNo(GMetalSupportsRayTracing));
     LOG_INFO("[MetalRHI]   Ray Tracing From Render                : %s", YesNo(GMetalSupportsRayTracingFromRender));
+    LOG_INFO("[MetalRHI]   Mesh Shaders                           : %s", YesNo(GMetalSupportsMeshShaders));
     LOG_INFO("[MetalRHI]   Counter Sampling                       : %s", YesNo(GMetalSupportsCounterSampling));
     LOG_INFO("[MetalRHI]   BC Texture Compression                 : %s", YesNo(GMetalSupportsBCTextureCompression));
     LOG_INFO("[MetalRHI]   Max Buffer Length                      : %llu", static_cast<unsigned long long>(GMetalMaxBufferLength));

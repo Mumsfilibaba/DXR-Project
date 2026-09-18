@@ -94,6 +94,17 @@ static FMetalSubresourceRange ResolveUAVRange(const FRHIUnorderedAccessViewDesc&
             Range.NumSlices  = InDesc.Texture2DArray.NumSlices;
             break;
 
+        case EViewDimension::TextureCube:
+            Range.FirstMip  = InDesc.TextureCube.MipLevel;
+            Range.NumSlices = RHI_NUM_CUBE_FACES;
+            break;
+
+        case EViewDimension::TextureCubeArray:
+            Range.FirstMip   = InDesc.TextureCubeArray.MipLevel;
+            Range.FirstSlice = InDesc.TextureCubeArray.FirstCube * RHI_NUM_CUBE_FACES;
+            Range.NumSlices  = InDesc.TextureCubeArray.NumCubes * RHI_NUM_CUBE_FACES;
+            break;
+
         case EViewDimension::Texture3D:
             Range.FirstMip = InDesc.Texture3D.MipLevel;
             break;
@@ -369,21 +380,19 @@ bool FMetalUnorderedAccessViewRHI::Initialize()
         return InitializeBufferView(Buffer, uint64(Desc.Buffer.FirstElement) * Stride, uint64(Desc.Buffer.NumElements) * Stride);
     }
 
-    if (IsCubeViewDimension(Desc.ViewDimension))
-    {
-        METAL_ERROR("Metal has no writable cube textures");
-        return false;
-    }
-
-    if (!MetalRHI::MetalFormatSupportsShaderWrite(MetalRHI::ConvertFormat(Desc.GetFormat()), GMetalReadWriteTextureTier))
+    if (!MetalRHI::MetalFormatSupportsShaderWrite(MetalRHI::ConvertFormat(Desc.GetFormat())))
     {
         METAL_ERROR("Format '%s' cannot be written from a shader on this device", ToString(Desc.GetFormat()));
         return false;
     }
 
+    const EViewDimension ViewDimension = IsCubeViewDimension(Desc.ViewDimension)
+        ? EViewDimension::Texture2DArray
+        : Desc.ViewDimension;
+
     const FMetalSubresourceRange Range = ResolveUAVRange(Desc);
     return InitializeTextureView(static_cast<FRHITexture*>(GetResource()), Desc.GetFormat(),
-        Desc.ViewDimension, Range.FirstMip, Range.NumMips, Range.FirstSlice, Range.NumSlices);
+        ViewDimension, Range.FirstMip, Range.NumMips, Range.FirstSlice, Range.NumSlices);
 }
 
 FMetalRenderTargetViewRHI::FMetalRenderTargetViewRHI(FMetalDevice* InDevice, FRHITexture* InTexture, const FRHIRenderTargetViewDesc& InDesc)

@@ -1,5 +1,6 @@
 #pragma once
 #include "RHI/RHIResources.h"
+#include "RHI/RayTracing/RHIRayTracingPipelineState.h"
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalShader.h"
 
@@ -9,6 +10,7 @@ typedef TSharedRef<class FMetalInputLayoutRHI>             FMetalVertexInputLayo
 typedef TSharedRef<class FMetalDepthStencilStateRHI>       FMetalDepthStencilStateRef;
 typedef TSharedRef<class FMetalGraphicsPipelineStateRHI>   FMetalGraphicsPipelineStateRef;
 typedef TSharedRef<class FMetalComputePipelineStateRHI>    FMetalComputePipelineStateRef;
+typedef TSharedRef<class FMetalMeshletPipelineStateRHI>    FMetalMeshletPipelineStateRef;
 typedef TSharedRef<class FMetalRayTracingPipelineStateRHI> FMetalRayTracingPipelineStateRef;
 
 class FMetalInputLayoutRHI : public FRHIInputLayout
@@ -23,8 +25,8 @@ public:
     virtual const FRHIInputElementDesc* GetInputElementDesc(uint32 Index) const override final;
     virtual uint32 GetNumInputElementDescs() const override final;
 
-    MTLVertexDescriptor* GetMTLVertexDescriptor() const 
-    { 
+    MTLVertexDescriptor* GetMTLVertexDescriptor() const
+    {
         return VertexDescriptor;
     }
 
@@ -41,16 +43,16 @@ public:
 
     // FRHIDepthStencilState Interface
     virtual void* GetRHINativeState() const override final;
-    
+
     bool Initialize();
 
-    id<MTLDepthStencilState> GetMTLDepthStencilState() const 
-    { 
-        return DepthStencilState; 
+    id<MTLDepthStencilState> GetMTLDepthStencilState() const
+    {
+        return DepthStencilState;
     }
-    
+
 private:
-    id<MTLDepthStencilState>  DepthStencilState;
+    id<MTLDepthStencilState> DepthStencilState;
 };
 
 class FMetalRasterizerStateRHI : public FRHIRasterizerState
@@ -72,9 +74,15 @@ public:
         return FrontFaceWinding;
     }
 
+    MTLCullMode GetMTLCullMode() const
+    {
+        return CullMode;
+    }
+
 private:
-    MTLTriangleFillMode     FillMode;
-    MTLWinding              FrontFaceWinding;
+    MTLTriangleFillMode FillMode;
+    MTLWinding          FrontFaceWinding;
+    MTLCullMode         CullMode;
 };
 
 class FMetalBlendStateRHI : public FRHIBlendState
@@ -82,7 +90,6 @@ class FMetalBlendStateRHI : public FRHIBlendState
 public:
     struct FBlendAttachment
     {
-        MTLPixelFormat    PixelFormat;
         MTLColorWriteMask WriteMask;
         BOOL              bBlendingEnabled;
         MTLBlendOperation AlphaBlendOperation;
@@ -102,17 +109,29 @@ public:
 
     const FBlendAttachment& GetColorAttachment(uint32 Index) const
     {
-         return ColorAttachments[Index];
+        return ColorAttachments[Index];
+    }
+
+    bool IsAlphaToCoverageEnabled() const
+    {
+        return bAlphaToCoverageEnable;
+    }
+
+    bool IsLogicOpEnabled() const
+    {
+        return bLogicOpEnable;
     }
 
 private:
-    FBlendAttachment   ColorAttachments[RHI_MAX_RENDER_TARGETS];
+    FBlendAttachment ColorAttachments[RHI_MAX_RENDER_TARGETS];
+    bool             bAlphaToCoverageEnable;
+    bool             bLogicOpEnable;
 };
 
 struct FMetalResourceBinding
 {
     FMetalResourceBinding() = default;
-    
+
     FMetalResourceBinding(uint8 InBinding)
         : Binding(InBinding)
     {
@@ -121,15 +140,40 @@ struct FMetalResourceBinding
     uint8 Binding = 0;
 };
 
+struct FMetalPipelineBindingLayout
+{
+    FMetalPipelineBindingLayout();
+    ~FMetalPipelineBindingLayout();
+
+    void Reset();
+    void Collect(NSArray<id<MTLBinding>>* Bindings, EShaderVisibility::Type ShaderStage, bool bSkipVertexStreams);
+
+    uint32 GetBufferBinding(EShaderVisibility::Type ShaderVisibility, uint32 BufferIndex) const
+    {
+        return BufferBindings[ShaderVisibility][BufferIndex];
+    }
+
+    uint32 GetNumBuffers(EShaderVisibility::Type ShaderVisibility) const
+    {
+        return NumBuffers[ShaderVisibility];
+    }
+
+    TArray<FMetalResourceBinding>                 VertexBuffers;
+    TStaticArray<uint8, MAX_CONSTANT_BUFFERS>     BufferBindings[EShaderVisibility::Count];
+    TStaticArray<uint8, EShaderVisibility::Count> NumBuffers;
+    TArray<FMetalResourceBinding>                 TextureBindings[EShaderVisibility::Count];
+    TArray<FMetalResourceBinding>                 SamplerBindings[EShaderVisibility::Count];
+};
+
 class FMetalGraphicsPipelineStateRHI : public FRHIGraphicsPipelineState, public FMetalDeviceChild
 {
 public:
     FMetalGraphicsPipelineStateRHI(FMetalDevice* InDevice, const FRHIGraphicsPipelineStateDesc& InDesc);
     virtual ~FMetalGraphicsPipelineStateRHI();
-    
+
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
-    
+
     virtual void SetDebugName(const String& InName)       override final;
     virtual void GetDebugName(String& OutDebugName) const override final;
 
@@ -141,12 +185,99 @@ public:
 
     uint32 GetBufferBinding(EShaderVisibility::Type ShaderVisibility, uint32 BufferIndex) const
     {
-        return BufferBindings[ShaderVisibility][BufferIndex];
+        return Bindings.GetBufferBinding(ShaderVisibility, BufferIndex);
     }
-    
+
     uint32 GetNumBuffers(EShaderVisibility::Type ShaderVisibility) const
     {
-        return NumBuffers[ShaderVisibility];
+        return Bindings.GetNumBuffers(ShaderVisibility);
+    }
+
+    id<MTLRenderPipelineState> GetMTLPipelineState() const
+    {
+        return PipelineState;
+    }
+
+    MTLPrimitiveType GetMTLPrimitiveType() const
+    {
+        return PrimitiveType;
+    }
+
+private:
+    FRHIGraphicsPipelineStateDesc          Desc;
+    TSharedRef<FMetalBlendStateRHI>        BlendState;
+    TSharedRef<FMetalDepthStencilStateRHI> DepthStencilState;
+    TSharedRef<FMetalRasterizerStateRHI>   RasterizerState;
+    id<MTLRenderPipelineState>             PipelineState;
+    FMetalPipelineBindingLayout            Bindings;
+    MTLPrimitiveType                       PrimitiveType;
+};
+
+class FMetalComputePipelineStateRHI : public FRHIComputePipelineState, public FMetalDeviceChild
+{
+public:
+    FMetalComputePipelineStateRHI(FMetalDevice* InDevice);
+    virtual ~FMetalComputePipelineStateRHI();
+
+    // FRHIPipelineState Interface
+    virtual void* GetRHINativeState() const override final;
+
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
+
+    bool Initialize(const FRHIComputePipelineStateDesc& InDesc);
+
+    uint32 GetBufferBinding(uint32 BufferIndex) const
+    {
+        return Bindings.GetBufferBinding(EShaderVisibility::Compute, BufferIndex);
+    }
+
+    uint32 GetNumBuffers() const
+    {
+        return Bindings.GetNumBuffers(EShaderVisibility::Compute);
+    }
+
+    id<MTLComputePipelineState> GetMTLPipelineState() const
+    {
+        return PipelineState;
+    }
+
+    uint32 GetMaxTotalThreadsPerThreadgroup() const
+    {
+        return MaxTotalThreadsPerThreadgroup;
+    }
+
+private:
+    id<MTLComputePipelineState> PipelineState;
+    FMetalPipelineBindingLayout Bindings;
+    uint32                      MaxTotalThreadsPerThreadgroup;
+};
+
+class FMetalMeshletPipelineStateRHI : public FRHIMeshletPipelineState, public FMetalDeviceChild
+{
+public:
+    FMetalMeshletPipelineStateRHI(FMetalDevice* InDevice, const FRHIMeshletPipelineStateDesc& InDesc);
+    virtual ~FMetalMeshletPipelineStateRHI();
+
+    // FRHIPipelineState Interface
+    virtual void* GetRHINativeState() const override final;
+
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
+
+    bool Initialize();
+
+    FMetalDepthStencilStateRHI* GetMetalDepthStencilState() const { return DepthStencilState.Get(); }
+    FMetalRasterizerStateRHI*   GetMetalRasterizerState()   const { return RasterizerState.Get(); }
+
+    uint32 GetBufferBinding(EShaderVisibility::Type ShaderVisibility, uint32 BufferIndex) const
+    {
+        return Bindings.GetBufferBinding(ShaderVisibility, BufferIndex);
+    }
+
+    uint32 GetNumBuffers(EShaderVisibility::Type ShaderVisibility) const
+    {
+        return Bindings.GetNumBuffers(ShaderVisibility);
     }
 
     id<MTLRenderPipelineState> GetMTLPipelineState() const
@@ -155,36 +286,19 @@ public:
     }
 
 private:
-    FRHIGraphicsPipelineStateDesc                 Desc;
-    TSharedRef<FMetalBlendStateRHI>               BlendState;
-    TSharedRef<FMetalDepthStencilStateRHI>        DepthStencilState;
-    TSharedRef<FMetalRasterizerStateRHI>          RasterizerState;
-    id<MTLRenderPipelineState>                    PipelineState;
-    TArray<FMetalResourceBinding>                 VertexBuffers;
-    TStaticArray<uint8, MAX_CONSTANT_BUFFERS>     BufferBindings[EShaderVisibility::Count];
-    TStaticArray<uint8, EShaderVisibility::Count> NumBuffers;
-    TArray<FMetalResourceBinding>                 TextureBindings[EShaderVisibility::Count];
-    TArray<FMetalResourceBinding>                 SamplerBindings[EShaderVisibility::Count];
+    FRHIMeshletPipelineStateDesc           Desc;
+    TSharedRef<FMetalBlendStateRHI>        BlendState;
+    TSharedRef<FMetalDepthStencilStateRHI> DepthStencilState;
+    TSharedRef<FMetalRasterizerStateRHI>   RasterizerState;
+    id<MTLRenderPipelineState>             PipelineState;
+    FMetalPipelineBindingLayout            Bindings;
 };
 
-class FMetalComputePipelineStateRHI : public FRHIComputePipelineState
+class FMetalRayTracingPipelineStateRHI : public FRHIRayTracingPipelineState, public FMetalDeviceChild
 {
 public:
-    FMetalComputePipelineStateRHI()  = default;
-    ~FMetalComputePipelineStateRHI() = default;
-
-    // FRHIPipelineState Interface
-    virtual void* GetRHINativeState() const override final;
-
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
-};
-
-class FMetalRayTracingPipelineStateRHI : public FRHIRayTracingPipelineState
-{
-public:
-    FMetalRayTracingPipelineStateRHI()  = default;
-    ~FMetalRayTracingPipelineStateRHI() = default;
+    FMetalRayTracingPipelineStateRHI(FMetalDevice* InDevice, const FRHIRayTracingPipelineStateDesc& InDesc);
+    virtual ~FMetalRayTracingPipelineStateRHI();
 
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
@@ -193,8 +307,26 @@ public:
     virtual void GetDebugName(String& OutDebugName) const override final;
 
     // FRHIRayTracingPipelineState Interface
-    virtual void GetExportName(ERayTracingShaderRecordKind, uint32, String& OutExportName) const override final { OutExportName = String(); }
-    virtual uint32 GetNumExportNames(ERayTracingShaderRecordKind) const override final { return 0; }
+    virtual void GetExportName(ERayTracingShaderRecordKind Kind, uint32 RecordIndex, String& OutExportName) const override final;
+    virtual uint32 GetNumExportNames(ERayTracingShaderRecordKind Kind) const override final;
+
+    bool Initialize();
+
+    id<MTLComputePipelineState> GetMTLPipelineState() const
+    {
+        return PipelineState;
+    }
+
+private:
+    TArray<String>& GetExportNameArray(ERayTracingShaderRecordKind Kind);
+    const TArray<String>& GetExportNameArray(ERayTracingShaderRecordKind Kind) const;
+
+    FRHIRayTracingPipelineStateDesc Desc;
+    id<MTLComputePipelineState>     PipelineState;
+    TArray<String>                  RayGenerationExports;
+    TArray<String>                  MissExports;
+    TArray<String>                  CallableExports;
+    TArray<String>                  HitGroupExports;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

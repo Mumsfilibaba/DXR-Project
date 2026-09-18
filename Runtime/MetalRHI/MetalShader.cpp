@@ -42,13 +42,20 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
             return false;
         }
         
-        NSString* EntryPoint = String("Spirv_Main").GetNSString();
-        FunctionName = [EntryPoint retain];
+        NSArray<NSString*>* FunctionNames = [Library functionNames];
+        if (FunctionNames.count == 0)
+        {
+            LOG_ERROR("Compiled Library does not contain an entry-point");
+            return false;
+        }
+
+        FunctionName = [FunctionNames.firstObject retain];
         
-        Function = [Library newFunctionWithName:EntryPoint];
+        Function = [Library newFunctionWithName:FunctionName];
         if (!Function)
         {
-            LOG_ERROR("Failed to retrieve function from Library");
+            const String NameString(FunctionName);
+            LOG_ERROR("Failed to retrieve function '%s' from Library", *NameString);
             return false;
         }
     }
@@ -72,6 +79,22 @@ FMetalPixelShaderRHI::FMetalPixelShaderRHI(FMetalDevice* InDevice)
 
 FMetalPixelShaderRHI::~FMetalPixelShaderRHI() = default;
 
+FMetalMeshShaderRHI::FMetalMeshShaderRHI(FMetalDevice* InDevice)
+    : FRHIMeshShader()
+    , FMetalShader(InDevice, EShaderVisibility::Mesh)
+{
+}
+
+FMetalMeshShaderRHI::~FMetalMeshShaderRHI() = default;
+
+FMetalAmplificationShaderRHI::FMetalAmplificationShaderRHI(FMetalDevice* InDevice)
+    : FRHIAmplificationShader()
+    , FMetalShader(InDevice, EShaderVisibility::Amplification)
+{
+}
+
+FMetalAmplificationShaderRHI::~FMetalAmplificationShaderRHI() = default;
+
 FMetalComputeShaderRHI::FMetalComputeShaderRHI(FMetalDevice* InDevice)
     : FRHIComputeShader()
     , FMetalShader(InDevice, EShaderVisibility::Compute)
@@ -86,6 +109,17 @@ FMetalRayTracingShader::FMetalRayTracingShader(FMetalDevice* InDevice)
 }
 
 FMetalRayTracingShader::~FMetalRayTracingShader() = default;
+
+bool FMetalRayTracingShader::Initialize(const TArray<uint8>& InCode)
+{
+    if (!FMetalShader::Initialize(InCode))
+    {
+        return false;
+    }
+
+    Identifier = String(FunctionName);
+    return true;
+}
 
 FMetalRayGenShaderRHI::FMetalRayGenShaderRHI(FMetalDevice* InDevice)
     : FRHIRayGenShader()
@@ -151,6 +185,26 @@ void* FMetalPixelShaderRHI::GetRHINativeHandle()
 }
 
 void* FMetalPixelShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FMetalShader*>(this);
+}
+
+void* FMetalMeshShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(GetMTLFunction());
+}
+
+void* FMetalMeshShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FMetalShader*>(this);
+}
+
+void* FMetalAmplificationShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(GetMTLFunction());
+}
+
+void* FMetalAmplificationShaderRHI::GetRHIBaseInterface()
 {
     return static_cast<FMetalShader*>(this);
 }

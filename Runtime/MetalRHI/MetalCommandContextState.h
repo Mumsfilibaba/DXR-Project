@@ -278,6 +278,7 @@ public:
 
     void SetGraphicsPipelineState(FMetalGraphicsPipelineStateRHI* InGraphicsPipelineState);
     void SetComputePipelineState(FMetalComputePipelineStateRHI* InComputePipelineState);
+    void SetMeshletPipelineState(FMetalMeshletPipelineStateRHI* InMeshletPipelineState);
     void SetRenderTargets(FMetalRenderTargetViewRHI* const* RenderTargets, uint32 NumRenderTargets, FMetalDepthStencilViewRHI* DepthStencil);
     void SetViewports(const MTLViewport* Viewports, uint32 NumViewports);
     void SetScissorRects(const MTLScissorRect* ScissorRects, uint32 NumScissorRects);
@@ -306,6 +307,11 @@ public:
     FORCEINLINE FMetalComputePipelineStateRHI* GetComputePipelineState() const
     {
         return ComputeState.PipelineState.Get();
+    }
+
+    FORCEINLINE FMetalMeshletPipelineStateRHI* GetMeshletPipelineState() const
+    {
+        return GraphicsState.MeshletPipelineState.Get();
     }
 
     FORCEINLINE MTLPrimitiveType GetPrimitiveType() const
@@ -371,12 +377,16 @@ private:
     void BindComputeSamplers();
     void BindComputeShaderConstants();
 
+    uint32 GetBoundBufferBinding(EShaderVisibility::Type ShaderStage, uint32 BufferIndex) const;
+    uint32 GetBoundNumBuffers(EShaderVisibility::Type ShaderStage) const;
+
     FMetalCommandContext& Context;
 
     struct FGraphicsState
     {
         FGraphicsState()
             : PipelineState(nullptr)
+            , MeshletPipelineState(nullptr)
             , PrimitiveType(MTLPrimitiveType(-1))
             , StencilRef(0)
             , NumViewports(0)
@@ -404,6 +414,7 @@ private:
         }
 
         FMetalGraphicsPipelineStateRef PipelineState;
+        FMetalMeshletPipelineStateRef  MeshletPipelineState;
         MTLPrimitiveType               PrimitiveType;
         float                          BlendFactor[4];
         uint32                         StencilRef;

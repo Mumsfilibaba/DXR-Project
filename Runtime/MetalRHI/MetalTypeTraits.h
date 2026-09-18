@@ -16,6 +16,7 @@ class FMetalSceneAccelerationStructureRHI;
 class FMetalGeometryAccelerationStructureRHI;
 class FMetalGraphicsPipelineStateRHI;
 class FMetalComputePipelineStateRHI;
+class FMetalMeshletPipelineStateRHI;
 class FMetalRayTracingPipelineStateRHI;
 class FMetalInputLayoutRHI;
 class FMetalRasterizerStateRHI;
@@ -26,6 +27,8 @@ class FMetalHullShaderRHI;
 class FMetalDomainShaderRHI;
 class FMetalGeometryShaderRHI;
 class FMetalPixelShaderRHI;
+class FMetalMeshShaderRHI;
+class FMetalAmplificationShaderRHI;
 class FMetalComputeShaderRHI;
 class FMetalRayGenShaderRHI;
 class FMetalRayAnyHitShaderRHI;
@@ -109,6 +112,11 @@ template<> struct TMetalRHIResourceType<FRHIComputePipelineState>
     typedef FMetalComputePipelineStateRHI Type;
 };
 
+template<> struct TMetalRHIResourceType<FRHIMeshletPipelineState>
+{
+    typedef FMetalMeshletPipelineStateRHI Type;
+};
+
 template<> struct TMetalRHIResourceType<FRHIRayTracingPipelineState>
 {
     typedef FMetalRayTracingPipelineStateRHI Type;
@@ -157,6 +165,16 @@ template<> struct TMetalRHIResourceType<FRHIGeometryShader>
 template<> struct TMetalRHIResourceType<FRHIPixelShader>
 {
     typedef FMetalPixelShaderRHI Type;
+};
+
+template<> struct TMetalRHIResourceType<FRHIMeshShader>
+{
+    typedef FMetalMeshShaderRHI Type;
+};
+
+template<> struct TMetalRHIResourceType<FRHIAmplificationShader>
+{
+    typedef FMetalAmplificationShaderRHI Type;
 };
 
 template<> struct TMetalRHIResourceType<FRHIComputeShader>

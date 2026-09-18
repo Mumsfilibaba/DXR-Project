@@ -33,6 +33,34 @@ struct IPlatformMisc
     {
     }
 
+    /**
+     * @brief Read an environment variable of the current process
+     *
+     * @param Name Name of the variable, which is case-sensitive on Unix and case-insensitive on Windows
+     * @param OutValue Receives the value, and is cleared when the variable is not set
+     * @return True when the variable is set, including when it is set to an empty value
+     */
+    static FORCEINLINE bool GetEnvironmentVariable(const CHAR* Name, String& OutValue)
+    {
+        OutValue.Clear();
+        return false;
+    }
+
+    /**
+     * @brief Set an environment variable of the current process, overwriting any existing value
+     *
+     * The change is visible to this process and to any child it spawns afterwards, and is lost when the
+     * process exits. A null Value removes the variable rather than setting it empty.
+     *
+     * @param Name Name of the variable
+     * @param Value Value to store, or nullptr to remove the variable
+     * @return True when the variable was stored or removed
+     */
+    static FORCEINLINE bool SetEnvironmentVariable(const CHAR* Name, const CHAR* Value)
+    {
+        return false;
+    }
+
     /** @return Returns how the user chose to respond to a failed assert */
     static FORCEINLINE EAssertDialogResult ShowAssertDialog(const CHAR* Title, const CHAR* Message)
     {

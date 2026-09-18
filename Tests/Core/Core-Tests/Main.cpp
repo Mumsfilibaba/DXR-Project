@@ -19,6 +19,7 @@
 #include "JsonArchiveTests.h"
 #include "BlueNoiseGeneratorTests.h"
 #include "PlatformTimeTests.h"
+#include "PlatformMiscTests.h"
 #include "MemoryStackTests.h"
 #include "PlatformEventPoolTests.h"
 
@@ -57,6 +58,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("JsonArchive", JsonArchive_Test());
     RUN_TEST("BlueNoiseGenerator", BlueNoiseGenerator_Test());
     RUN_TEST("PlatformTime", PlatformTime_Test());
+    RUN_TEST("PlatformMisc", PlatformMisc_Test());
     RUN_TEST("MemoryStack", MemoryStack_Test());
     RUN_TEST("PlatformEventPool", PlatformEventPool_Test());
 

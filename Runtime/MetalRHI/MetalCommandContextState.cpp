@@ -43,7 +43,7 @@ void FMetalCommandContextState::ResetStateResources()
 
 void FMetalCommandContextState::BeginCommandBuffer()
 {
-    GraphicsState.bBindPipelineState     = GraphicsState.PipelineState != nullptr;
+    GraphicsState.bBindPipelineState     = GraphicsState.PipelineState != nullptr || GraphicsState.MeshletPipelineState != nullptr;
     GraphicsState.bBindPrimitiveTopology = GraphicsState.PrimitiveType != MTLPrimitiveType(-1);
     GraphicsState.bBindRenderTargets     = GraphicsState.RenderTargetCache.NumRenderTargets > 0 || GraphicsState.RenderTargetCache.DepthStencilView != nullptr;
     GraphicsState.bBindViewports         = GraphicsState.NumViewports > 0;
@@ -71,8 +71,10 @@ void FMetalCommandContextState::SetGraphicsPipelineState(FMetalGraphicsPipelineS
         return;
     }
 
-    GraphicsState.PipelineState         = MakeSharedRef<FMetalGraphicsPipelineStateRHI>(InGraphicsPipelineState);
-    GraphicsState.bBindPipelineState    = true;
+    GraphicsState.PipelineState          = MakeSharedRef<FMetalGraphicsPipelineStateRHI>(InGraphicsPipelineState);
+    GraphicsState.MeshletPipelineState   = nullptr;
+    GraphicsState.PrimitiveType          = InGraphicsPipelineState ? InGraphicsPipelineState->GetMTLPrimitiveType() : MTLPrimitiveType(-1);
+    GraphicsState.bBindPipelineState     = true;
     GraphicsState.bBindPrimitiveTopology = true;
 
     CommonState.ConstantBufferCache.DirtyResourcesAll();
@@ -95,6 +97,24 @@ void FMetalCommandContextState::SetComputePipelineState(FMetalComputePipelineSta
     CommonState.ShaderResourceViewCache.DirtyResources(EShaderVisibility::Compute);
     CommonState.UnorderedAccessViewCache.DirtyResources(EShaderVisibility::Compute);
     CommonState.SamplerStateCache.DirtyResources(EShaderVisibility::Compute);
+}
+
+void FMetalCommandContextState::SetMeshletPipelineState(FMetalMeshletPipelineStateRHI* InMeshletPipelineState)
+{
+    if (GraphicsState.MeshletPipelineState.Get() == InMeshletPipelineState)
+    {
+        return;
+    }
+
+    GraphicsState.MeshletPipelineState   = MakeSharedRef<FMetalMeshletPipelineStateRHI>(InMeshletPipelineState);
+    GraphicsState.PipelineState          = nullptr;
+    GraphicsState.bBindPipelineState     = true;
+    GraphicsState.bBindPrimitiveTopology = false;
+
+    CommonState.ConstantBufferCache.DirtyResourcesAll();
+    CommonState.ShaderResourceViewCache.DirtyResourcesAll();
+    CommonState.UnorderedAccessViewCache.DirtyResourcesAll();
+    CommonState.SamplerStateCache.DirtyResourcesAll();
 }
 
 void FMetalCommandContextState::SetRenderTargets(FMetalRenderTargetViewRHI* const* RenderTargets, uint32 NumRenderTargets, FMetalDepthStencilViewRHI* DepthStencil)
@@ -281,28 +301,34 @@ void FMetalCommandContextState::BindGraphicsState()
         return;
     }
 
-    FMetalGraphicsPipelineStateRHI* Pipeline = GraphicsState.PipelineState.Get();
-    if (Pipeline == nullptr)
+    FMetalGraphicsPipelineStateRHI* GraphicsPipeline = GraphicsState.PipelineState.Get();
+    FMetalMeshletPipelineStateRHI*  MeshletPipeline  = GraphicsState.MeshletPipelineState.Get();
+
+    if (GraphicsPipeline == nullptr && MeshletPipeline == nullptr)
     {
         return;
     }
 
     if (GraphicsState.bBindPipelineState)
     {
-        if (id<MTLRenderPipelineState> PipelineState = Pipeline->GetMTLPipelineState())
+        id<MTLRenderPipelineState> PipelineState = GraphicsPipeline ? GraphicsPipeline->GetMTLPipelineState() : MeshletPipeline->GetMTLPipelineState();
+        if (PipelineState)
         {
             [Encoder setRenderPipelineState:PipelineState];
         }
 
-        if (FMetalDepthStencilStateRHI* DepthStencilState = Pipeline->GetMetalDepthStencilState())
+        FMetalDepthStencilStateRHI* DepthStencilState = GraphicsPipeline ? GraphicsPipeline->GetMetalDepthStencilState() : MeshletPipeline->GetMetalDepthStencilState();
+        if (DepthStencilState)
         {
             [Encoder setDepthStencilState:DepthStencilState->GetMTLDepthStencilState()];
         }
 
-        if (FMetalRasterizerStateRHI* RasterizerState = Pipeline->GetMetalRasterizerState())
+        FMetalRasterizerStateRHI* RasterizerState = GraphicsPipeline ? GraphicsPipeline->GetMetalRasterizerState() : MeshletPipeline->GetMetalRasterizerState();
+        if (RasterizerState)
         {
             [Encoder setFrontFacingWinding:RasterizerState->GetMTLFrontFaceWinding()];
             [Encoder setTriangleFillMode:RasterizerState->GetMTLFillMode()];
+            [Encoder setCullMode:RasterizerState->GetMTLCullMode()];
         }
 
         GraphicsState.bBindPipelineState = false;
@@ -363,8 +389,11 @@ void FMetalCommandContextState::BindGraphicsState()
 
     if (GraphicsState.bBindShaderConstants)
     {
-        BindGraphicsShaderConstants(EShaderVisibility::Vertex);
-        BindGraphicsShaderConstants(EShaderVisibility::Pixel);
+        for (uint32 Stage = EShaderVisibility::Vertex; Stage < EShaderVisibility::Count; Stage++)
+        {
+            BindGraphicsShaderConstants(static_cast<EShaderVisibility::Type>(Stage));
+        }
+
         GraphicsState.bBindShaderConstants = false;
     }
 }
@@ -385,7 +414,11 @@ void FMetalCommandContextState::BindComputeState()
 
     if (ComputeState.bBindPipelineState)
     {
-        // TODO: Hook up compute pipeline once FMetalComputePipelineStateRHI stores the MTLComputePipelineState.
+        if (id<MTLComputePipelineState> PipelineState = Pipeline->GetMTLPipelineState())
+        {
+            [Encoder setComputePipelineState:PipelineState];
+        }
+
         ComputeState.bBindPipelineState = false;
     }
 
@@ -421,8 +454,7 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
         return;
     }
 
-    FMetalGraphicsPipelineStateRHI* Pipeline = GraphicsState.PipelineState.Get();
-    if (Pipeline == nullptr)
+    if (GraphicsState.PipelineState == nullptr && GraphicsState.MeshletPipelineState == nullptr)
     {
         return;
     }
@@ -447,7 +479,7 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
             FMetalBufferRHI* Buffer = CBVCache.ConstantBuffers[ShaderStage][Index];
             id<MTLBuffer>    MTLBufferHandle = Buffer ? Buffer->GetMTLBuffer() : nil;
 
-            const uint32 SlotIndex = Pipeline->GetBufferBinding(ShaderStage, Index);
+            const uint32 SlotIndex = GetBoundBufferBinding(ShaderStage, Index);
             if (ShaderStage == EShaderVisibility::Vertex)
             {
                 [Encoder setVertexBuffer:MTLBufferHandle offset:0 atIndex:SlotIndex];
@@ -455,6 +487,14 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
             else if (ShaderStage == EShaderVisibility::Pixel)
             {
                 [Encoder setFragmentBuffer:MTLBufferHandle offset:0 atIndex:SlotIndex];
+            }
+            else if (ShaderStage == EShaderVisibility::Mesh)
+            {
+                [Encoder setMeshBuffer:MTLBufferHandle offset:0 atIndex:SlotIndex];
+            }
+            else if (ShaderStage == EShaderVisibility::Amplification)
+            {
+                [Encoder setObjectBuffer:MTLBufferHandle offset:0 atIndex:SlotIndex];
             }
         }
 
@@ -476,6 +516,14 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
             {
                 [Encoder setFragmentTexture:MTLTextureHandle atIndex:Index];
             }
+            else if (ShaderStage == EShaderVisibility::Mesh)
+            {
+                [Encoder setMeshTexture:MTLTextureHandle atIndex:Index];
+            }
+            else if (ShaderStage == EShaderVisibility::Amplification)
+            {
+                [Encoder setObjectTexture:MTLTextureHandle atIndex:Index];
+            }
         }
 
         SRVCache.ClearResourcesDirty(ShaderStage);
@@ -495,6 +543,14 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
             else if (ShaderStage == EShaderVisibility::Pixel)
             {
                 [Encoder setFragmentTexture:MTLTextureHandle atIndex:MAX_SRVS + Index];
+            }
+            else if (ShaderStage == EShaderVisibility::Mesh)
+            {
+                [Encoder setMeshTexture:MTLTextureHandle atIndex:MAX_SRVS + Index];
+            }
+            else if (ShaderStage == EShaderVisibility::Amplification)
+            {
+                [Encoder setObjectTexture:MTLTextureHandle atIndex:MAX_SRVS + Index];
             }
         }
 
@@ -531,6 +587,14 @@ void FMetalCommandContextState::BindGraphicsSamplers(EShaderVisibility::Type Sha
         {
             [Encoder setFragmentSamplerState:MTLSampler atIndex:Index];
         }
+        else if (ShaderStage == EShaderVisibility::Mesh)
+        {
+            [Encoder setMeshSamplerState:MTLSampler atIndex:Index];
+        }
+        else if (ShaderStage == EShaderVisibility::Amplification)
+        {
+            [Encoder setObjectSamplerState:MTLSampler atIndex:Index];
+        }
     }
 
     Cache.ClearResourcesDirty(ShaderStage);
@@ -555,8 +619,7 @@ void FMetalCommandContextState::BindGraphicsShaderConstants(EShaderVisibility::T
 
     const NSUInteger ByteLength = NumConstants * sizeof(uint32);
 
-    FMetalGraphicsPipelineStateRHI* Pipeline = GraphicsState.PipelineState.Get();
-    const uint32 SlotIndex = Pipeline ? Pipeline->GetNumBuffers(ShaderStage) : 0;
+    const uint32 SlotIndex = GetBoundNumBuffers(ShaderStage);
 
     if (ShaderStage == EShaderVisibility::Vertex)
     {
@@ -566,6 +629,44 @@ void FMetalCommandContextState::BindGraphicsShaderConstants(EShaderVisibility::T
     {
         [Encoder setFragmentBytes:Cache.Constants[ShaderStage] length:ByteLength atIndex:SlotIndex];
     }
+    else if (ShaderStage == EShaderVisibility::Mesh)
+    {
+        [Encoder setMeshBytes:Cache.Constants[ShaderStage] length:ByteLength atIndex:SlotIndex];
+    }
+    else if (ShaderStage == EShaderVisibility::Amplification)
+    {
+        [Encoder setObjectBytes:Cache.Constants[ShaderStage] length:ByteLength atIndex:SlotIndex];
+    }
+}
+
+uint32 FMetalCommandContextState::GetBoundBufferBinding(EShaderVisibility::Type ShaderStage, uint32 BufferIndex) const
+{
+    if (FMetalMeshletPipelineStateRHI* MeshletPipeline = GraphicsState.MeshletPipelineState.Get())
+    {
+        return MeshletPipeline->GetBufferBinding(ShaderStage, BufferIndex);
+    }
+
+    if (FMetalGraphicsPipelineStateRHI* Pipeline = GraphicsState.PipelineState.Get())
+    {
+        return Pipeline->GetBufferBinding(ShaderStage, BufferIndex);
+    }
+
+    return 0;
+}
+
+uint32 FMetalCommandContextState::GetBoundNumBuffers(EShaderVisibility::Type ShaderStage) const
+{
+    if (FMetalMeshletPipelineStateRHI* MeshletPipeline = GraphicsState.MeshletPipelineState.Get())
+    {
+        return MeshletPipeline->GetNumBuffers(ShaderStage);
+    }
+
+    if (FMetalGraphicsPipelineStateRHI* Pipeline = GraphicsState.PipelineState.Get())
+    {
+        return Pipeline->GetNumBuffers(ShaderStage);
+    }
+
+    return 0;
 }
 
 void FMetalCommandContextState::BindComputeResources()

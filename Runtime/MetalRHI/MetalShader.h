@@ -9,6 +9,8 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 typedef TSharedRef<class FMetalShader>                 FMetalShaderRef;
 typedef TSharedRef<class FMetalVertexShaderRHI>        FMetalVertexShaderRef;
 typedef TSharedRef<class FMetalPixelShaderRHI>         FMetalPixelShaderRef;
+typedef TSharedRef<class FMetalMeshShaderRHI>          FMetalMeshShaderRef;
+typedef TSharedRef<class FMetalAmplificationShaderRHI> FMetalAmplificationShaderRef;
 typedef TSharedRef<class FMetalComputeShaderRHI>       FMetalComputeShaderRef;
 typedef TSharedRef<class FMetalRayTracingShader>         FMetalRayTracingShaderRef;
 typedef TSharedRef<class FMetalRayGenShaderRHI>          FMetalRayGenShaderRef;
@@ -22,10 +24,12 @@ struct EShaderVisibility
 {
     enum Type : uint8
     {
-        Compute = 0,
-        Vertex  = 1,
-        Pixel   = 2,
-        Count   = Pixel + 1,
+        Compute       = 0,
+        Vertex        = 1,
+        Pixel         = 2,
+        Mesh          = 3,
+        Amplification = 4,
+        Count         = Amplification + 1,
     };
 };
 
@@ -82,6 +86,28 @@ public:
     virtual void* GetRHIBaseInterface() override final;
 };
 
+class FMetalMeshShaderRHI : public FRHIMeshShader, public FMetalShader
+{
+public:
+    FMetalMeshShaderRHI(FMetalDevice* InDevice);
+    virtual ~FMetalMeshShaderRHI();
+
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
+};
+
+class FMetalAmplificationShaderRHI : public FRHIAmplificationShader, public FMetalShader
+{
+public:
+    FMetalAmplificationShaderRHI(FMetalDevice* InDevice);
+    virtual ~FMetalAmplificationShaderRHI();
+
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
+};
+
 class FMetalRayTracingShader : public FMetalShader
 {
 public:
@@ -90,6 +116,8 @@ public:
 public:
     FMetalRayTracingShader(FMetalDevice* InDevice);
     virtual ~FMetalRayTracingShader();
+
+    bool Initialize(const TArray<uint8>& InCode);
 
     const String& GetIdentifier() const
     {
