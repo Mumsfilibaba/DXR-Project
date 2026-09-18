@@ -93,6 +93,7 @@ FMetalDeviceRHI::~FMetalDeviceRHI()
     }
 
     FlushDeferredDeletions();
+    BufferClearPipelines.Release();
     SAFE_DELETE(CommandContext);
 
     {
@@ -116,13 +117,13 @@ FMetalDeviceRHI::~FMetalDeviceRHI()
 
 bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
 {
-    RHI::bSupportsRayTracing                = GMetalSupportsRayTracing;
-    RHI::bSupportsInlineRayTracing          = GMetalSupportsRayTracingFromRender;
+    RHI::bSupportsRayTracing                = false;
+    RHI::bSupportsInlineRayTracing          = false;
     RHI::bSupportsGeometryShaders           = false;
     RHI::bSupportsDepthBoundsTest           = false;
     RHI::bSupportsTessellation              = false;
     RHI::MaxPatchControlPoints              = 0;
-    RHI::bSupportsTimestampQueries          = GMetalSupportsCounterSampling;
+    RHI::bSupportsTimestampQueries          = false;
     RHI::bSupportsPipelineStatisticsQueries = false;
     RHI::bSupportsStreamOutput              = false;
     RHI::MaxBufferSize                      = GMetalMaxBufferLength;
@@ -656,7 +657,7 @@ void FMetalDeviceRHI::EndFrame()
 
 FRHIFence* FMetalDeviceRHI::CreateFence()
 {
-    return new FMetalFenceRHI();
+    return new FMetalFenceRHI(Device->GetMTLDevice());
 }
 
 IRHICommandContext* FMetalDeviceRHI::ObtainCommandContext()
@@ -667,7 +668,7 @@ IRHICommandContext* FMetalDeviceRHI::ObtainCommandContext()
 bool FMetalDeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode)
 {
     OutResult = 0;
-    return true;
+    return false;
 }
 
 void FMetalDeviceRHI::EnqueueResourceDeletion(FRHIResource* Resource)

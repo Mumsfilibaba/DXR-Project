@@ -10,6 +10,11 @@ public:
     FMetalView(FMetalDevice* InDevice);
     virtual ~FMetalView();
 
+    bool InitializeTextureView(FRHITexture* InTexture, EFormat InFormat, EViewDimension InViewDimension, 
+        uint32 InFirstMip, uint32 InNumMips, uint32 InFirstSlice, uint32 InNumSlices);
+    bool InitializeBufferView(FRHIBuffer* InBuffer, uint64 InOffset, uint64 InSize);
+    bool InitializeBufferTextureView(EFormat InFormat, bool bWritable);
+
     id<MTLTexture> GetMTLTexture() const
     {
         return TextureView;
@@ -29,11 +34,6 @@ public:
     {
         return BufferSize;
     }
-
-protected:
-    bool InitializeTextureView(FRHITexture* InTexture, EFormat InFormat, EViewDimension InViewDimension, 
-        uint32 InFirstMip, uint32 InNumMips, uint32 InFirstSlice, uint32 InNumSlices);
-    bool InitializeBufferView(FRHIBuffer* InBuffer, uint64 InOffset, uint64 InSize);
 
 private:
     id<MTLTexture> TextureView;

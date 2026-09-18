@@ -19,6 +19,7 @@
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalDeletionQueue.h"
 #include "MetalRHI/MetalTypeTraits.h"
+#include "MetalRHI/MetalBufferClear.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -138,6 +139,11 @@ public:
         return Device;
     }
 
+    FMetalBufferClearPipelines& GetBufferClearPipelines()
+    {
+        return BufferClearPipelines;
+    }
+
     FMetalCommandContext* ObtainMetalCommandContext()
     {
         return CommandContext;
@@ -155,6 +161,7 @@ private:
 
     FMetalDevice*                Device;
     FMetalCommandContext*        CommandContext;
+    FMetalBufferClearPipelines   BufferClearPipelines;
     TArray<FMetalDeferredObject> DeferredObjects;
     FCriticalSection             DeferredObjectsCS;
     FSamplerStateMap             SamplerStateMap;

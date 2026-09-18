@@ -326,6 +326,55 @@ bool FMetalView::InitializeBufferView(FRHIBuffer* InBuffer, uint64 InOffset, uin
     return true;
 }
 
+bool FMetalView::InitializeBufferTextureView(EFormat InFormat, bool bWritable)
+{
+    if (!BufferView)
+    {
+        METAL_ERROR("Cannot create a texel-buffer texture without a buffer view");
+        return false;
+    }
+
+    const MTLPixelFormat PixelFormat = MetalRHI::ConvertFormat(InFormat);
+    if (PixelFormat == MTLPixelFormatInvalid)
+    {
+        METAL_ERROR("Typed buffer view has an unsupported format '%s'", ToString(InFormat));
+        return false;
+    }
+
+    if (bWritable && !MetalRHI::MetalFormatSupportsShaderWrite(PixelFormat))
+    {
+        METAL_ERROR("Format '%s' cannot be written from a shader on this device", ToString(InFormat));
+        return false;
+    }
+
+    const uint32 Stride = GetByteStrideFromFormat(InFormat);
+    if (Stride == 0 || (BufferSize % Stride) != 0)
+    {
+        METAL_ERROR("Typed buffer view size %llu is not a multiple of the %u-byte format stride", BufferSize, Stride);
+        return false;
+    }
+
+    const NSUInteger NumElements = static_cast<NSUInteger>(BufferSize / Stride);
+    MTLTextureUsage Usage = MTLTextureUsageShaderRead;
+    if (bWritable)
+    {
+        Usage |= MTLTextureUsageShaderWrite;
+    }
+
+    MTLTextureDescriptor* Descriptor = [MTLTextureDescriptor textureBufferDescriptorWithPixelFormat:PixelFormat
+                                                                                              width:NumElements
+                                                                                    resourceOptions:BufferView.resourceOptions
+                                                                                              usage:Usage];
+    TextureView = [BufferView newTextureWithDescriptor:Descriptor offset:BufferOffset bytesPerRow:0];
+    if (!TextureView)
+    {
+        METAL_ERROR("Failed to create a texel-buffer texture");
+        return false;
+    }
+
+    return true;
+}
+
 FMetalShaderResourceViewRHI::FMetalShaderResourceViewRHI(FMetalDevice* InDevice, FRHIResource* InResource, const FRHIShaderResourceViewDesc& InRHIDesc)
     : FRHIShaderResourceView(InResource, InRHIDesc)
     , FMetalView(InDevice)
@@ -350,7 +399,17 @@ bool FMetalShaderResourceViewRHI::Initialize()
         }
 
         const uint32 Stride = ResolveBufferViewStride(Buffer->GetDesc(), Desc.Buffer.Type, Desc.Buffer.Format);
-        return InitializeBufferView(Buffer, uint64(Desc.Buffer.FirstElement) * Stride, uint64(Desc.Buffer.NumElements) * Stride);
+        if (!InitializeBufferView(Buffer, uint64(Desc.Buffer.FirstElement) * Stride, uint64(Desc.Buffer.NumElements) * Stride))
+        {
+            return false;
+        }
+
+        if (Desc.Buffer.Type == EBufferViewType::Typed)
+        {
+            return InitializeBufferTextureView(Desc.Buffer.Format, false);
+        }
+
+        return true;
     }
 
     const FMetalSubresourceRange Range = ResolveSRVRange(Desc);
@@ -377,7 +436,17 @@ bool FMetalUnorderedAccessViewRHI::Initialize()
         }
 
         const uint32 Stride = ResolveBufferViewStride(Buffer->GetDesc(), Desc.Buffer.Type, Desc.Buffer.Format);
-        return InitializeBufferView(Buffer, uint64(Desc.Buffer.FirstElement) * Stride, uint64(Desc.Buffer.NumElements) * Stride);
+        if (!InitializeBufferView(Buffer, uint64(Desc.Buffer.FirstElement) * Stride, uint64(Desc.Buffer.NumElements) * Stride))
+        {
+            return false;
+        }
+
+        if (Desc.Buffer.Type == EBufferViewType::Typed)
+        {
+            return InitializeBufferTextureView(Desc.Buffer.Format, true);
+        }
+
+        return true;
     }
 
     if (!MetalRHI::MetalFormatSupportsShaderWrite(MetalRHI::ConvertFormat(Desc.GetFormat())))

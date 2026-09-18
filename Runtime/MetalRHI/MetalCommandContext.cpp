@@ -6,6 +6,10 @@
 #include "MetalRHI/MetalTexture.h"
 #include "MetalRHI/MetalSwapChain.h"
 #include "MetalRHI/MetalPipelineState.h"
+#include "MetalRHI/MetalFence.h"
+#include "MetalRHI/MetalBufferClear.h"
+#include "Core/Math/Math.h"
+#include "Core/Memory/Memory.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -32,6 +36,8 @@ static NSUInteger ResolveMipCopyExtent(uint32 RequestedEnd, NSUInteger SrcOrigin
     return Math::Min<NSUInteger>(Requested, Available);
 }
 
+static constexpr MTLRenderStages GraphicsFenceStages = MTLRenderStageVertex | MTLRenderStageFragment;
+
 FMetalCommandContext::FMetalCommandContext(FMetalDevice* InDevice)
     : FMetalDeviceChild(InDevice)
     , IRHICommandContext()
@@ -39,15 +45,28 @@ FMetalCommandContext::FMetalCommandContext(FMetalDevice* InDevice)
     , Commands(nullptr)
     , GraphicsEncoder(nil)
     , ComputeEncoder(nil)
+    , EncoderFence(nil)
+    , bEncoderFencePending(false)
     , CopyContext()
     , ContextState(InDevice, *this)
 {
 }
 
-FMetalCommandContext::~FMetalCommandContext() = default;
+FMetalCommandContext::~FMetalCommandContext()
+{
+    [EncoderFence release];
+    EncoderFence = nil;
+}
 
 bool FMetalCommandContext::Initialize()
 {
+    EncoderFence = [GetDevice()->GetMTLDevice() newFence];
+    if (!EncoderFence)
+    {
+        METAL_ERROR_CRITICAL("Failed to create encoder fence");
+        return false;
+    }
+
     if (!ContextState.Initialize())
     {
         METAL_ERROR_CRITICAL("Failed to initialize ContextState");
@@ -131,22 +150,151 @@ void FMetalCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTar
     FinishEncoders();
 
     id<MTLRenderCommandEncoder> ClearEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
+    if (bEncoderFencePending)
+    {
+        [ClearEncoder waitForFence:EncoderFence beforeStages:GraphicsFenceStages];
+        bEncoderFencePending = false;
+    }
 
     [RenderPassDescriptor release];
 
+    [ClearEncoder updateFence:EncoderFence afterStages:GraphicsFenceStages];
     [ClearEncoder endEncoding];
+    bEncoderFencePending = true;
 }
 
 void FMetalCommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil)
 {
+    SCOPED_AUTORELEASE_POOL();
+
+    FMetalDepthStencilViewRHI* MetalDSV = static_cast<FMetalDepthStencilViewRHI*>(DepthStencilView);
+    CHECK(MetalDSV != nullptr);
+
+    FMetalTextureRHI* DSVTexture = GetMetalTexture(static_cast<FRHITexture*>(MetalDSV->GetResource()));
+    CHECK(DSVTexture != nullptr);
+
+    id<MTLTexture> Texture = DSVTexture->GetMTLTexture();
+    CHECK(Texture != nil);
+
+    MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
+
+    MTLRenderPassDepthAttachmentDescriptor* DepthAttachment = RenderPassDescriptor.depthAttachment;
+    DepthAttachment.texture            = Texture;
+    DepthAttachment.loadAction         = MTLLoadActionClear;
+    DepthAttachment.clearDepth         = Depth;
+    DepthAttachment.level              = MetalDSV->GetMipLevel();
+    DepthAttachment.slice              = MetalDSV->GetArrayIndex();
+    DepthAttachment.storeActionOptions = MTLStoreActionOptionNone;
+    DepthAttachment.storeAction        = MTLStoreActionStore;
+
+    if (MetalRHI::IsStencilPixelFormat(Texture.pixelFormat))
+    {
+        MTLRenderPassStencilAttachmentDescriptor* StencilAttachment = RenderPassDescriptor.stencilAttachment;
+        StencilAttachment.texture            = Texture;
+        StencilAttachment.loadAction         = MTLLoadActionClear;
+        StencilAttachment.clearStencil       = Stencil;
+        StencilAttachment.level              = MetalDSV->GetMipLevel();
+        StencilAttachment.slice              = MetalDSV->GetArrayIndex();
+        StencilAttachment.storeActionOptions = MTLStoreActionOptionNone;
+        StencilAttachment.storeAction        = MTLStoreActionStore;
+    }
+
+    FinishEncoders();
+
+    id<MTLRenderCommandEncoder> ClearEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
+    if (bEncoderFencePending)
+    {
+        [ClearEncoder waitForFence:EncoderFence beforeStages:GraphicsFenceStages];
+        bEncoderFencePending = false;
+    }
+
+    [RenderPassDescriptor release];
+
+    [ClearEncoder updateFence:EncoderFence afterStages:GraphicsFenceStages];
+    [ClearEncoder endEncoding];
+    bEncoderFencePending = true;
 }
 
 void FMetalCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const Vector4& ClearColor)
 {
+    FMetalUnorderedAccessViewRHI* View = static_cast<FMetalUnorderedAccessViewRHI*>(UnorderedAccessView);
+    CHECK(View != nullptr);
+
+    if (View->GetDesc().IsBufferUAV())
+    {
+        uint32 Values[4];
+        Memory::Memcpy(Values, &ClearColor, sizeof(Values));
+        MetalClearBufferUAV::Clear(*this, View, Values, true);
+        return;
+    }
+
+    SCOPED_AUTORELEASE_POOL();
+
+    id<MTLTexture> Texture = View->GetMTLTexture();
+    CHECK(Texture != nil);
+
+    MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
+    MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[0];
+    ColorAttachment.texture            = Texture;
+    ColorAttachment.loadAction         = MTLLoadActionClear;
+    ColorAttachment.clearColor         = MTLClearColorMake(ClearColor.X, ClearColor.Y, ClearColor.Z, ClearColor.W);
+    ColorAttachment.storeActionOptions = MTLStoreActionOptionNone;
+    ColorAttachment.storeAction        = MTLStoreActionStore;
+
+    FinishEncoders();
+
+    id<MTLRenderCommandEncoder> ClearEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
+    if (bEncoderFencePending)
+    {
+        [ClearEncoder waitForFence:EncoderFence beforeStages:GraphicsFenceStages];
+        bEncoderFencePending = false;
+    }
+
+    [RenderPassDescriptor release];
+
+    [ClearEncoder updateFence:EncoderFence afterStages:GraphicsFenceStages];
+    [ClearEncoder endEncoding];
+    bEncoderFencePending = true;
 }
 
 void FMetalCommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView* UnorderedAccessView, const uint32 Values[4])
 {
+    FMetalUnorderedAccessViewRHI* View = static_cast<FMetalUnorderedAccessViewRHI*>(UnorderedAccessView);
+    CHECK(View != nullptr);
+
+    if (View->GetDesc().IsBufferUAV())
+    {
+        MetalClearBufferUAV::Clear(*this, View, Values, false);
+        return;
+    }
+
+    SCOPED_AUTORELEASE_POOL();
+
+    id<MTLTexture> Texture = View->GetMTLTexture();
+    CHECK(Texture != nil);
+
+    MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
+    MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[0];
+    ColorAttachment.texture            = Texture;
+    ColorAttachment.loadAction         = MTLLoadActionClear;
+    ColorAttachment.clearColor         = MTLClearColorMake(double(Values[0]), double(Values[1]), double(Values[2]), double(Values[3]));
+    ColorAttachment.storeActionOptions = MTLStoreActionOptionNone;
+    ColorAttachment.storeAction        = MTLStoreActionStore;
+
+    FinishEncoders();
+
+    id<MTLRenderCommandEncoder> ClearEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
+    if (bEncoderFencePending)
+    {
+        [ClearEncoder waitForFence:EncoderFence beforeStages:GraphicsFenceStages];
+        bEncoderFencePending = false;
+    }
+
+    [RenderPassDescriptor release];
+
+    [ClearEncoder updateFence:EncoderFence afterStages:GraphicsFenceStages];
+    [ClearEncoder endEncoding];
+    bEncoderFencePending = true;
 }
 
 void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginRenderPassDesc)
@@ -205,14 +353,28 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
         DepthAttachment.slice              = MetalDSV->GetArrayIndex();
         DepthAttachment.storeActionOptions = MTLStoreActionOptionNone;
         DepthAttachment.storeAction        = MetalRHI::ConvertAttachmentStoreAction(DepthStencilAttachment.StoreAction);
+
+        if (MetalRHI::IsStencilPixelFormat(DSVTexture->GetMTLTexture().pixelFormat))
+        {
+            const EDepthStencilViewFlags DSVFlags = MetalDSV->GetFlags();
+            const bool bReadOnlyStencil = IsEnumFlagSet(DSVFlags, EDepthStencilViewFlags::ReadOnlyStencil);
+
+            MTLRenderPassStencilAttachmentDescriptor* StencilAttachment = RenderPassDescriptor.stencilAttachment;
+            StencilAttachment.texture            = DSVTexture->GetMTLTexture();
+            StencilAttachment.loadAction         = MetalRHI::ConvertAttachmentLoadAction(DepthStencilAttachment.LoadAction);
+            StencilAttachment.clearStencil       = static_cast<uint32>(DepthStencilAttachment.ClearValue.Stencil);
+            StencilAttachment.level              = MetalDSV->GetMipLevel();
+            StencilAttachment.slice              = MetalDSV->GetArrayIndex();
+            StencilAttachment.storeActionOptions = MTLStoreActionOptionNone;
+            StencilAttachment.storeAction        = bReadOnlyStencil ? MTLStoreActionDontCare : MetalRHI::ConvertAttachmentStoreAction(DepthStencilAttachment.StoreAction);
+        }
     }
-    
-    // TODO: Stencil Attachment
 
     CHECK(RenderPassDescriptor != nil);
     GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
     [GraphicsEncoder retain];
-    
+    WaitForPendingEncoderFenceOnGraphics();
+
     [RenderPassDescriptor release];
 }
 
@@ -240,8 +402,41 @@ void FMetalCommandContext::SetViewport(const FViewportRegion& ViewportRegion)
 
 void FMetalCommandContext::SetScissorRect(const FScissorRegion& ScissorRegion)
 {
-    // TODO: Forward the scissor rectangle once the ImGui path supplies valid bounds.
-    UNREFERENCED_VARIABLE(ScissorRegion);
+    int32 Width  = 1;
+    int32 Height = 1;
+
+    FMetalRenderTargetViewRHI* RenderTargets[RHI_MAX_RENDER_TARGETS] = { };
+    uint32 NumRenderTargets = 0;
+    FMetalDepthStencilViewRHI* DepthStencilView = nullptr;
+    ContextState.GetRenderTargets(RenderTargets, NumRenderTargets, &DepthStencilView);
+
+    id<MTLTexture> ClampTexture = nil;
+    if (NumRenderTargets > 0 && RenderTargets[0])
+    {
+        ClampTexture = RenderTargets[0]->GetMTLTexture();
+    }
+    else if (DepthStencilView)
+    {
+        ClampTexture = DepthStencilView->GetMTLTexture();
+    }
+
+    if (ClampTexture)
+    {
+        Width  = static_cast<int32>(ClampTexture.width);
+        Height = static_cast<int32>(ClampTexture.height);
+    }
+
+    const int32 OriginX = Math::Clamp(static_cast<int32>(ScissorRegion.PositionX), 0, Width);
+    const int32 OriginY = Math::Clamp(static_cast<int32>(ScissorRegion.PositionY), 0, Height);
+    const int32 SizeX   = Math::Clamp(static_cast<int32>(ScissorRegion.Width), 0, Width - OriginX);
+    const int32 SizeY   = Math::Clamp(static_cast<int32>(ScissorRegion.Height), 0, Height - OriginY);
+
+    MTLScissorRect Rect;
+    Rect.x      = static_cast<NSUInteger>(OriginX);
+    Rect.y      = static_cast<NSUInteger>(OriginY);
+    Rect.width  = static_cast<NSUInteger>(Math::Max(SizeX, 0));
+    Rect.height = static_cast<NSUInteger>(Math::Max(SizeY, 0));
+    ContextState.SetScissorRects(&Rect, 1);
 }
 
 void FMetalCommandContext::SetBlendFactor(const Vector4& Color)
@@ -273,6 +468,11 @@ void FMetalCommandContext::SetSamplePositions(const FRHISamplePositionsDesc& Sam
 
 void FMetalCommandContext::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)
 {
+    UNREFERENCED_VARIABLE(Offsets);
+    if (!Buffers.IsEmpty())
+    {
+        METAL_ERROR("SetStreamOutputTargets: stream output is not supported by the Metal backend");
+    }
 }
 
 void FMetalCommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot)
@@ -514,10 +714,86 @@ void FMetalCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegio
 
 void FMetalCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 {
+    SCOPED_AUTORELEASE_POOL();
+
+    FMetalTextureRHI* MetalDst = GetMetalTexture(Dst);
+    FMetalTextureRHI* MetalSrc = GetMetalTexture(Src);
+    CHECK(MetalDst != nullptr);
+    CHECK(MetalSrc != nullptr);
+
+    id<MTLTexture> SrcTexture = MetalSrc->GetMTLTexture();
+    id<MTLTexture> DstTexture = MetalDst->GetMTLTexture();
+    CHECK(SrcTexture != nil);
+    CHECK(DstTexture != nil);
+
+    if (SrcTexture.sampleCount <= 1)
+    {
+        METAL_ERROR("ResolveTexture requires a multisampled source");
+        return;
+    }
+
+    MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
+
+    const bool bIsStencil = MetalRHI::IsStencilPixelFormat(SrcTexture.pixelFormat);
+    const bool bIsDepth   = (SrcTexture.pixelFormat == MTLPixelFormatDepth16Unorm)
+        || (SrcTexture.pixelFormat == MTLPixelFormatDepth32Float)
+        || (SrcTexture.pixelFormat == MTLPixelFormatDepth32Float_Stencil8)
+        || (SrcTexture.pixelFormat == MTLPixelFormatDepth24Unorm_Stencil8);
+
+    if (bIsDepth)
+    {
+        MTLRenderPassDepthAttachmentDescriptor* DepthAttachment = RenderPassDescriptor.depthAttachment;
+        DepthAttachment.texture        = SrcTexture;
+        DepthAttachment.resolveTexture = DstTexture;
+        DepthAttachment.loadAction     = MTLLoadActionLoad;
+        DepthAttachment.storeAction    = MTLStoreActionMultisampleResolve;
+
+        if (bIsStencil)
+        {
+            METAL_ERROR("ResolveTexture: combined depth/stencil resolve is not supported");
+            [RenderPassDescriptor release];
+            return;
+        }
+    }
+    else if (bIsStencil)
+    {
+        METAL_ERROR("ResolveTexture: stencil resolve is not supported");
+        [RenderPassDescriptor release];
+        return;
+    }
+    else
+    {
+        MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[0];
+        ColorAttachment.texture        = SrcTexture;
+        ColorAttachment.resolveTexture = DstTexture;
+        ColorAttachment.loadAction     = MTLLoadActionLoad;
+        ColorAttachment.storeAction    = MTLStoreActionMultisampleResolve;
+    }
+
+    FinishEncoders();
+
+    id<MTLRenderCommandEncoder> ResolveEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
+    if (bEncoderFencePending)
+    {
+        [ResolveEncoder waitForFence:EncoderFence beforeStages:GraphicsFenceStages];
+        bEncoderFencePending = false;
+    }
+
+    [RenderPassDescriptor release];
+
+    [ResolveEncoder updateFence:EncoderFence afterStages:GraphicsFenceStages];
+    [ResolveEncoder endEncoding];
+    bEncoderFencePending = true;
 }
 
 void FMetalCommandContext::TranscodeSamplerFeedback(FRHITexture* Dst, uint32 DstSubresource, FRHITexture* Src, uint32 SrcSubresource, ESamplerFeedbackTranscodeMode Mode)
 {
+    UNREFERENCED_VARIABLE(Dst);
+    UNREFERENCED_VARIABLE(DstSubresource);
+    UNREFERENCED_VARIABLE(Src);
+    UNREFERENCED_VARIABLE(SrcSubresource);
+    UNREFERENCED_VARIABLE(Mode);
+    METAL_ERROR("TranscodeSamplerFeedback: sampler feedback is not supported by the Metal backend");
 }
 
 void FMetalCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc)
@@ -639,28 +915,114 @@ void FMetalCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
                             destinationBytesPerImage:(bIsTexture3D ? SlicePitch : 0)];
 }
 
-void FMetalCommandContext::WriteFence(FRHIFence* Fence) 
-{ 
-} 
+void FMetalCommandContext::WriteFence(FRHIFence* Fence)
+{
+    FMetalFenceRHI* MetalFence = static_cast<FMetalFenceRHI*>(Fence);
+    CHECK(MetalFence != nullptr);
+
+    if (CommandBuffer == nil)
+    {
+        METAL_ERROR("WriteFence requires an open command buffer");
+        return;
+    }
+
+    FinishEncoders();
+
+    const uint64 Value = MetalFence->SignalNextValue();
+    [CommandBuffer encodeSignalEvent:MetalFence->GetMTLSharedEvent() value:Value];
+    SubmitCommandBufferAndObtainNew();
+}
 
 void FMetalCommandContext::DiscardContents(class FRHITexture* Texture)
 {
+    // Metal has no DiscardResource. DontCare store at the end of a render pass is the equivalent.
+    UNREFERENCED_VARIABLE(Texture);
 }
 
 void FMetalCommandContext::BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* RayTracingScene, const FRHISceneAccelerationStructureBuildDesc& BuildDesc)
 {
+    UNREFERENCED_VARIABLE(RayTracingScene);
+    UNREFERENCED_VARIABLE(BuildDesc);
+    METAL_ERROR("BuildSceneAccelerationStructure is not implemented");
 }
 
 void FMetalCommandContext::BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* RayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc)
 {
+    UNREFERENCED_VARIABLE(RayTracingGeometry);
+    UNREFERENCED_VARIABLE(BuildDesc);
+    METAL_ERROR("BuildGeometryAccelerationStructure is not implemented");
 }
 
 void FMetalCommandContext::TransitionBarrier(TArrayView<const FRHITransitionBarrierDesc> TransitionDescs)
 {
+    bool bNeedsMemoryBarrier = false;
+    bool bBreakToCopy        = false;
+    bool bBreakToCompute     = false;
+    bool bBreakToGraphics    = false;
+
+    for (const FRHITransitionBarrierDesc& Desc : TransitionDescs)
+    {
+        if (Desc.IsSplit())
+        {
+            continue;
+        }
+
+        const ERHIResourceState AfterState = Desc.AfterState;
+        const bool bAfterUAV   = IsEnumFlagSet(AfterState, ERHIResourceState::UnorderedAccess);
+        const bool bBeforeUAV  = IsEnumFlagSet(Desc.BeforeState, ERHIResourceState::UnorderedAccess);
+        const bool bWriteToRead = !RHIIsReadOnlyState(Desc.BeforeState) && RHIIsReadOnlyState(AfterState);
+
+        if (bAfterUAV || bBeforeUAV || bWriteToRead)
+        {
+            bNeedsMemoryBarrier = true;
+        }
+
+        if (IsEnumFlagSet(AfterState, ERHIResourceState::CopyDest) || IsEnumFlagSet(AfterState, ERHIResourceState::CopySource)
+            || IsEnumFlagSet(AfterState, ERHIResourceState::ResolveDest) || IsEnumFlagSet(AfterState, ERHIResourceState::ResolveSource))
+        {
+            bBreakToCopy = true;
+        }
+
+        if (bAfterUAV)
+        {
+            bBreakToCompute = true;
+        }
+
+        if (IsEnumFlagSet(AfterState, ERHIResourceState::RenderTarget) || IsEnumFlagSet(AfterState, ERHIResourceState::DepthWrite)
+            || IsEnumFlagSet(AfterState, ERHIResourceState::DepthRead))
+        {
+            bBreakToGraphics = true;
+        }
+    }
+
+    if (bBreakToCopy && (GraphicsEncoder || ComputeEncoder))
+    {
+        FinishEncoders();
+        return;
+    }
+
+    if (bBreakToCompute && GraphicsEncoder)
+    {
+        FinishEncoders();
+        return;
+    }
+
+    if (bBreakToGraphics && ComputeEncoder)
+    {
+        FinishEncoders();
+        return;
+    }
+
+    if (bNeedsMemoryBarrier)
+    {
+        InsertMemoryBarrier();
+    }
 }
 
 void FMetalCommandContext::UnorderedAccessBarrier(TArrayView<const FRHIUnorderedAccessBarrierDesc> BarrierDescs)
 {
+    UNREFERENCED_VARIABLE(BarrierDescs);
+    InsertMemoryBarrier();
 }
 
 void FMetalCommandContext::PrepareForDraw()
@@ -681,6 +1043,7 @@ void FMetalCommandContext::PrepareForDispatch()
 
         ComputeEncoder = [CommandBuffer computeCommandEncoder];
         [ComputeEncoder retain];
+        WaitForPendingEncoderFenceOnCompute();
     }
 
     ContextState.PrepareComputeState();
@@ -697,25 +1060,108 @@ void FMetalCommandContext::StartCopyEncoder()
     }
 
     CopyContext.StartEncoder(CommandBuffer);
+    WaitForPendingEncoderFenceOnBlit();
 }
 
 void FMetalCommandContext::FinishEncoders()
 {
+    bool bEndedEncoder = false;
+
     if (GraphicsEncoder)
     {
+        [GraphicsEncoder updateFence:EncoderFence afterStages:GraphicsFenceStages];
         [GraphicsEncoder endEncoding];
         [GraphicsEncoder release];
         GraphicsEncoder = nil;
+        bEndedEncoder = true;
     }
 
     if (ComputeEncoder)
     {
+        [ComputeEncoder updateFence:EncoderFence];
         [ComputeEncoder endEncoding];
         [ComputeEncoder release];
         ComputeEncoder = nil;
+        bEndedEncoder = true;
+    }
+
+    if (id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder())
+    {
+        [CopyEncoder updateFence:EncoderFence];
+        bEndedEncoder = true;
     }
 
     CopyContext.FinishEncoder();
+
+    if (bEndedEncoder)
+    {
+        bEncoderFencePending = true;
+    }
+}
+
+void FMetalCommandContext::WaitForPendingEncoderFenceOnGraphics()
+{
+    if (bEncoderFencePending && GraphicsEncoder)
+    {
+        [GraphicsEncoder waitForFence:EncoderFence beforeStages:GraphicsFenceStages];
+        bEncoderFencePending = false;
+    }
+}
+
+void FMetalCommandContext::WaitForPendingEncoderFenceOnCompute()
+{
+    if (bEncoderFencePending && ComputeEncoder)
+    {
+        [ComputeEncoder waitForFence:EncoderFence];
+        bEncoderFencePending = false;
+    }
+}
+
+void FMetalCommandContext::WaitForPendingEncoderFenceOnBlit()
+{
+    id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
+    if (bEncoderFencePending && CopyEncoder)
+    {
+        [CopyEncoder waitForFence:EncoderFence];
+        bEncoderFencePending = false;
+    }
+}
+
+void FMetalCommandContext::InsertMemoryBarrier()
+{
+    const MTLBarrierScope Scope = MTLBarrierScopeBuffers | MTLBarrierScopeTextures;
+
+    if (ComputeEncoder)
+    {
+        [ComputeEncoder memoryBarrierWithScope:Scope];
+        return;
+    }
+
+    if (GraphicsEncoder)
+    {
+        MTLRenderStages Stages = MTLRenderStageVertex | MTLRenderStageFragment;
+        [GraphicsEncoder memoryBarrierWithScope:Scope afterStages:Stages beforeStages:Stages];
+        return;
+    }
+
+    if (CopyContext.GetMTLCopyEncoder())
+    {
+        FinishEncoders();
+    }
+}
+
+void FMetalCommandContext::SubmitCommandBufferAndObtainNew()
+{
+    CHECK(CommandBuffer != nil);
+
+    ContextState.EndCommandBuffer();
+    FMetalDeviceRHI::Get()->FlushDeletionQueue(Commands);
+    GetDevice()->GetQueue()->SubmitCommands(Commands);
+
+    Commands      = GetDevice()->GetQueue()->ObtainCommands();
+    CommandBuffer = Commands->CommandBuffer;
+    bEncoderFencePending = false;
+    ContextState.BeginCommandBuffer();
 }
 
 void FMetalCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)

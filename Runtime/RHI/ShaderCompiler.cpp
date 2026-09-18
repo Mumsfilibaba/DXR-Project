@@ -1045,6 +1045,14 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
         return false;
     }
 
+    Result = spvc_compiler_options_set_bool(CompilerOptions, SPVC_COMPILER_OPTION_MSL_TEXTURE_BUFFER_NATIVE, SPVC_TRUE);
+    if (Result != SPVC_SUCCESS)
+    {
+        LOG_ERROR("[FShaderCompiler]: Failed to enable native MSL texel buffers");
+        DEBUG_BREAK();
+        return false;
+    }
+
     Result = spvc_compiler_install_compiler_options(CompilerMSL, CompilerOptions);
     if (Result != SPVC_SUCCESS)
     {

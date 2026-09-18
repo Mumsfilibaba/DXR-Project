@@ -176,12 +176,20 @@ private:
     void StartCopyEncoder();
     void FinishEncoders();
 
+    void WaitForPendingEncoderFenceOnGraphics();
+    void WaitForPendingEncoderFenceOnCompute();
+    void WaitForPendingEncoderFenceOnBlit();
+    void InsertMemoryBarrier();
+    void SubmitCommandBufferAndObtainNew();
+
     id<MTLBuffer> CreateStagingBuffer(uint64 Size);
 
     id<MTLCommandBuffer>         CommandBuffer;
     FMetalCommands*              Commands;
     id<MTLRenderCommandEncoder>  GraphicsEncoder;
     id<MTLComputeCommandEncoder> ComputeEncoder;
+    id<MTLFence>                 EncoderFence;
+    bool                         bEncoderFencePending;
     FMetalCopyCommandContext     CopyContext;
     FMetalCommandContextState    ContextState;
 };

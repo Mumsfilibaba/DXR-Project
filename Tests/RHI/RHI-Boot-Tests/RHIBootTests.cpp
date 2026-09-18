@@ -6,6 +6,7 @@
 #include <Core/Misc/Paths.h>
 #include <RHI/RHI.h>
 #include <RHI/RHICommandList.h>
+#include <RHI/RHIQuery.h>
 #include <RHI/RHIResources.h>
 #include <RHI/ShaderCompiler.h>
 
@@ -327,6 +328,114 @@ static bool ProbeShaders()
     TEST_END();
 }
 
+static bool ProbeCommandRecording()
+{
+    TEST_BEGIN();
+
+    TEST_SECTION("WriteFence becomes signaled after submit");
+    {
+        FRHIFenceRef Fence = RHI::CreateFence();
+        TEST_EXPECT(Fence != nullptr);
+
+        if (Fence)
+        {
+            const uint32 Dummy = 0;
+            FRHIBufferRef Scratch = RHI::CreateBuffer(FRHIBufferDesc::CreateVertexBuffer(sizeof(uint32), 1), ERHIResourceState::Common, &Dummy);
+            TEST_EXPECT(Scratch != nullptr);
+
+            FRHICommandList CommandList;
+            if (Scratch)
+            {
+                CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(
+                    Scratch.Get(), ERHIResourceState::Common, ERHIResourceState::VertexBuffer));
+            }
+            CommandList.WriteFence(Fence.Get());
+            FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+
+            TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
+            TEST_EXPECT(Fence->IsSignaled());
+        }
+    }
+
+    TEST_SECTION("ClearDepthStencilView records without crashing");
+    {
+        FRHITextureRef DepthTarget = RHI::CreateTexture(FRHITextureDesc::CreateTexture2D(
+            EFormat::D32_Float, 8, 8, 1, 1, ETextureUsageFlags::DepthStencil));
+        TEST_EXPECT(DepthTarget != nullptr);
+        TEST_EXPECT(DepthTarget && DepthTarget->GetDepthStencilView() != nullptr);
+
+        if (DepthTarget && DepthTarget->GetDepthStencilView())
+        {
+            FRHICommandList CommandList;
+            CommandList.ClearDepthStencilView(DepthTarget->GetDepthStencilView(), 1.0f, 0);
+            FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+        }
+    }
+
+    TEST_SECTION("Buffer UAV clear copies the pattern to a readback");
+    {
+        const uint32 ClearValues[4] = { 7u, 7u, 7u, 7u };
+        const uint32 NumUInt4       = 2;
+        const uint64 ByteSize       = NumUInt4 * sizeof(uint32) * 4;
+
+        const FRHIBufferDesc UAVDesc(EBufferFlags::Default | EBufferFlags::RWBuffer | EBufferFlags::CopySource, sizeof(uint32), ByteSize);
+        FRHIBufferRef UAVBuffer = RHI::CreateBuffer(UAVDesc);
+        TEST_EXPECT(UAVBuffer != nullptr);
+
+        FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(ByteSize));
+        TEST_EXPECT(ReadbackBuffer != nullptr);
+
+        if (UAVBuffer && ReadbackBuffer)
+        {
+            FRHIUnorderedAccessViewRef BufferUAV = RHI::CreateUnorderedAccessView(
+                UAVBuffer.Get(), FRHIUnorderedAccessViewDesc::CreateTypedBuffer(0, NumUInt4, EFormat::R32G32B32A32_Uint));
+            TEST_EXPECT(BufferUAV != nullptr);
+
+            if (BufferUAV)
+            {
+                FRHIFenceRef Fence = RHI::CreateFence();
+                FRHICommandList CommandList;
+                CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(
+                    UAVBuffer.Get(), ERHIResourceState::Common, ERHIResourceState::UnorderedAccess));
+                CommandList.ClearUnorderedAccessViewUint(BufferUAV.Get(), ClearValues);
+                CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(
+                    UAVBuffer.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
+                CommandList.CopyBuffer(ReadbackBuffer.Get(), UAVBuffer.Get(), FRHIBufferCopyDesc(0, 0, ByteSize));
+                CommandList.WriteFence(Fence.Get());
+                FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+
+                TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
+
+                const uint32* Mapped = static_cast<const uint32*>(ReadbackBuffer->Map());
+                TEST_EXPECT(Mapped != nullptr);
+                if (Mapped)
+                {
+                    TEST_EXPECT_EQ(Mapped[0], 7u);
+                    TEST_EXPECT_EQ(Mapped[7], 7u);
+                    ReadbackBuffer->Unmap();
+                }
+            }
+        }
+    }
+
+    TEST_END();
+}
+
+static bool ProbeCapabilityHonesty(ERHIType ExpectedType)
+{
+    TEST_BEGIN();
+
+    if (ExpectedType == ERHIType::Metal)
+    {
+        TEST_SECTION("Metal reports timestamp queries and ray tracing as unsupported until those subsystems exist");
+        TEST_EXPECT(RHI::bSupportsTimestampQueries == false);
+        TEST_EXPECT(RHI::bSupportsRayTracing == false);
+        TEST_EXPECT(RHI::bSupportsInlineRayTracing == false);
+    }
+
+    TEST_END();
+}
+
 static bool BootRHI(ERHIType ExpectedType)
 {
     TEST_BEGIN();
@@ -359,6 +468,8 @@ static bool BootRHI(ERHIType ExpectedType)
         if (ExpectedType != ERHIType::Null)
         {
             TEST_EXPECT(ProbeShaders());
+            TEST_EXPECT(ProbeCommandRecording());
+            TEST_EXPECT(ProbeCapabilityHonesty(ExpectedType));
         }
 
         if (FRHICommandListExecutor::IsInitialized())
