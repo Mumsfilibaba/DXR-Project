@@ -27,14 +27,23 @@ public:
     FMetalCommands*      ObtainCommands();
     id<MTLCommandBuffer> CreateCommandBuffer();
 
-    void SubmitCommands(FMetalCommands* Commands);
+    uint64 SubmitCommands(FMetalCommands* Commands);
+
     void ProcessCommandQueue();
     void WaitForCompletion();
+    void WaitForValue(uint64 Value);
 
     uint64 GetCompletedValue() const;
 
-    id<MTLCommandQueue> GetMTLCommandQueue() const { return CommandQueue; }
-    EMetalQueueType     GetType()            const { return QueueType; }
+    EMetalQueueType GetType() const
+    {
+        return QueueType;
+    }
+
+    id<MTLCommandQueue> GetMTLCommandQueue() const
+    {
+        return CommandQueue;
+    }
 
 private:
     void RecycleCommands(FMetalCommands* Commands);
@@ -60,4 +69,30 @@ struct FMetalCommands
     id<MTLCommandBuffer>          CommandBuffer;
     uint64                        SubmissionValue;
     TArray<FMetalDeferredObject>  DeferredObjects;
+};
+
+class FMetalUploadBatch
+{
+public:
+    explicit FMetalUploadBatch(FMetalDevice* InDevice);
+    ~FMetalUploadBatch();
+
+    id<MTLBuffer> CreateStagingBuffer(uint64 Size);
+    uint64 Submit();
+
+    bool IsValid() const
+    {
+        return BlitEncoder != nil;
+    }
+
+    id<MTLBlitCommandEncoder> GetBlitEncoder() const
+    {
+        return BlitEncoder;
+    }
+
+private:
+    FMetalDevice*             Device;
+    FMetalQueue*              Queue;
+    FMetalCommands*           Commands;
+    id<MTLBlitCommandEncoder> BlitEncoder;
 };

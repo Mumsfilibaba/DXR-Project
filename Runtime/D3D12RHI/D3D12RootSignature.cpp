@@ -922,13 +922,13 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
         const FRHIStaticSamplerInfo& Entry = LayoutStaticSamplers[i];
         
         D3D12_STATIC_SAMPLER_DESC& Desc = StaticSamplers[NumStaticSamplers];
-        Desc.Filter           = ConvertSamplerFilter(Entry.Filter);
-        Desc.AddressU         = ConvertSamplerMode(Entry.AddressU);
-        Desc.AddressV         = ConvertSamplerMode(Entry.AddressV);
-        Desc.AddressW         = ConvertSamplerMode(Entry.AddressW);
+        Desc.Filter           = D3D12RHI::ConvertSamplerFilter(Entry.Filter);
+        Desc.AddressU         = D3D12RHI::ConvertSamplerMode(Entry.AddressU);
+        Desc.AddressV         = D3D12RHI::ConvertSamplerMode(Entry.AddressV);
+        Desc.AddressW         = D3D12RHI::ConvertSamplerMode(Entry.AddressW);
         Desc.MipLODBias       = Entry.MipLODBias;
         Desc.MaxAnisotropy    = Entry.MaxAnisotropy;
-        Desc.ComparisonFunc   = ConvertComparisonFunc(Entry.ComparisonFunc);
+        Desc.ComparisonFunc   = D3D12RHI::ConvertComparisonFunc(Entry.ComparisonFunc);
         Desc.BorderColor      = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
         Desc.MinLOD           = Entry.MinLOD;
         Desc.MaxLOD           = Entry.MaxLOD;

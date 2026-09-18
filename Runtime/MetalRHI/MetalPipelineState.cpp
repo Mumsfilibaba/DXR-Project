@@ -8,12 +8,12 @@ FMetalInputLayoutRHI::FMetalInputLayoutRHI(const TArray<FRHIInputElementDesc>& I
     for (int32 Index = 0; Index < InInputElements.Size(); ++Index)
     {
         const auto& Element = InInputElements[Index];
-        VertexDescriptor.attributes[Index].format      = ConvertVertexFormat(Element.Format);
+        VertexDescriptor.attributes[Index].format      = MetalRHI::ConvertVertexFormat(Element.Format);
         VertexDescriptor.attributes[Index].offset      = Element.ByteOffset;
         VertexDescriptor.attributes[Index].bufferIndex = Element.InputSlot;
         
         VertexDescriptor.layouts[Element.InputSlot].stride       = Element.VertexStride;
-        VertexDescriptor.layouts[Element.InputSlot].stepFunction = ConvertVertexInputClass(Element.InputClass);
+        VertexDescriptor.layouts[Element.InputSlot].stepFunction = MetalRHI::ConvertVertexInputClass(Element.InputClass);
         VertexDescriptor.layouts[Element.InputSlot].stepRate     = Element.InputClass == EVertexInputClass::Vertex ? 1 : Element.InstanceStepRate;
     }
 }
@@ -60,23 +60,23 @@ bool FMetalDepthStencilStateRHI::Initialize()
     
     MTLDepthStencilDescriptor* Descriptor = [[MTLDepthStencilDescriptor new] autorelease];
     Descriptor.depthWriteEnabled    = Desc.bDepthEnable;
-    Descriptor.depthCompareFunction = ConvertCompareFunction(Desc.DepthFunc);
+    Descriptor.depthCompareFunction = MetalRHI::ConvertCompareFunction(Desc.DepthFunc);
     
     if (Desc.bStencilEnable)
     {
         Descriptor.backFaceStencil                            = [[MTLStencilDescriptor new] autorelease];
-        Descriptor.backFaceStencil.stencilCompareFunction     = ConvertCompareFunction(Desc.BackFace.StencilFunc);
-        Descriptor.backFaceStencil.stencilFailureOperation    = ConvertStencilOp(Desc.BackFace.StencilFailOp);
-        Descriptor.backFaceStencil.depthFailureOperation      = ConvertStencilOp(Desc.BackFace.StencilDepthFailOp);
-        Descriptor.backFaceStencil.depthStencilPassOperation  = ConvertStencilOp(Desc.BackFace.StencilDepthPassOp);
+        Descriptor.backFaceStencil.stencilCompareFunction     = MetalRHI::ConvertCompareFunction(Desc.BackFace.StencilFunc);
+        Descriptor.backFaceStencil.stencilFailureOperation    = MetalRHI::ConvertStencilOp(Desc.BackFace.StencilFailOp);
+        Descriptor.backFaceStencil.depthFailureOperation      = MetalRHI::ConvertStencilOp(Desc.BackFace.StencilDepthFailOp);
+        Descriptor.backFaceStencil.depthStencilPassOperation  = MetalRHI::ConvertStencilOp(Desc.BackFace.StencilDepthPassOp);
         Descriptor.backFaceStencil.readMask                   = Desc.StencilReadMask;
         Descriptor.backFaceStencil.writeMask                  = Desc.StencilWriteMask;
         
         Descriptor.frontFaceStencil                           = [[MTLStencilDescriptor new] autorelease];
-        Descriptor.frontFaceStencil.stencilCompareFunction    = ConvertCompareFunction(Desc.FrontFace.StencilFunc);
-        Descriptor.frontFaceStencil.stencilFailureOperation   = ConvertStencilOp(Desc.FrontFace.StencilFailOp);
-        Descriptor.frontFaceStencil.depthFailureOperation     = ConvertStencilOp(Desc.FrontFace.StencilDepthFailOp);
-        Descriptor.frontFaceStencil.depthStencilPassOperation = ConvertStencilOp(Desc.FrontFace.StencilDepthPassOp);
+        Descriptor.frontFaceStencil.stencilCompareFunction    = MetalRHI::ConvertCompareFunction(Desc.FrontFace.StencilFunc);
+        Descriptor.frontFaceStencil.stencilFailureOperation   = MetalRHI::ConvertStencilOp(Desc.FrontFace.StencilFailOp);
+        Descriptor.frontFaceStencil.depthFailureOperation     = MetalRHI::ConvertStencilOp(Desc.FrontFace.StencilDepthFailOp);
+        Descriptor.frontFaceStencil.depthStencilPassOperation = MetalRHI::ConvertStencilOp(Desc.FrontFace.StencilDepthPassOp);
         Descriptor.frontFaceStencil.readMask                  = Desc.StencilReadMask;
         Descriptor.frontFaceStencil.writeMask                 = Desc.StencilWriteMask;
     }
@@ -101,7 +101,7 @@ bool FMetalDepthStencilStateRHI::Initialize()
 
 FMetalRasterizerStateRHI::FMetalRasterizerStateRHI(const FRHIRasterizerStateDesc& InDesc)
     : FRHIRasterizerState(InDesc)
-    , FillMode(ConvertFillMode(InDesc.FillMode))
+    , FillMode(MetalRHI::ConvertFillMode(InDesc.FillMode))
     , FrontFaceWinding(InDesc.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
 {
 }
@@ -121,13 +121,13 @@ FMetalBlendStateRHI::FMetalBlendStateRHI(const FRHIBlendStateDesc& InDesc)
     for (int32 Index = 0; Index < InDesc.NumRenderTargets; Index++)
     {
         ColorAttachments[Index].bBlendingEnabled            = InDesc.RenderTargets[Index].bBlendEnable ? YES : NO;
-        ColorAttachments[Index].SourceColorBlendFactor      = ConvertBlend(InDesc.RenderTargets[Index].SrcBlend);
-        ColorAttachments[Index].DestinationColorBlendFactor = ConvertBlend(InDesc.RenderTargets[Index].DstBlend);
-        ColorAttachments[Index].ColorBlendOperation         = ConvertBlendOp(InDesc.RenderTargets[Index].BlendOp);
-        ColorAttachments[Index].SourceAlphaBlendFactor      = ConvertBlend(InDesc.RenderTargets[Index].SrcBlendAlpha);
-        ColorAttachments[Index].DestinationAlphaBlendFactor = ConvertBlend(InDesc.RenderTargets[Index].DstBlendAlpha);
-        ColorAttachments[Index].AlphaBlendOperation         = ConvertBlendOp(InDesc.RenderTargets[Index].BlendOpAlpha);
-        ColorAttachments[Index].WriteMask                   = ConvertColorWriteFlags(InDesc.RenderTargets[Index].ColorWriteMask);
+        ColorAttachments[Index].SourceColorBlendFactor      = MetalRHI::ConvertBlend(InDesc.RenderTargets[Index].SrcBlend);
+        ColorAttachments[Index].DestinationColorBlendFactor = MetalRHI::ConvertBlend(InDesc.RenderTargets[Index].DstBlend);
+        ColorAttachments[Index].ColorBlendOperation         = MetalRHI::ConvertBlendOp(InDesc.RenderTargets[Index].BlendOp);
+        ColorAttachments[Index].SourceAlphaBlendFactor      = MetalRHI::ConvertBlend(InDesc.RenderTargets[Index].SrcBlendAlpha);
+        ColorAttachments[Index].DestinationAlphaBlendFactor = MetalRHI::ConvertBlend(InDesc.RenderTargets[Index].DstBlendAlpha);
+        ColorAttachments[Index].AlphaBlendOperation         = MetalRHI::ConvertBlendOp(InDesc.RenderTargets[Index].BlendOpAlpha);
+        ColorAttachments[Index].WriteMask                   = MetalRHI::ConvertColorWriteFlags(InDesc.RenderTargets[Index].ColorWriteMask);
     }
 }
 
@@ -195,10 +195,10 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
 
     for (uint32 Index = 0; Index < Desc.RasterizerOutputFormats.NumRenderTargets; ++Index)
     {
-        Descriptor.colorAttachments[Index].pixelFormat = ConvertFormat(Desc.RasterizerOutputFormats.RenderTargetFormats[Index]);
+        Descriptor.colorAttachments[Index].pixelFormat = MetalRHI::ConvertFormat(Desc.RasterizerOutputFormats.RenderTargetFormats[Index]);
     }
 
-    Descriptor.depthAttachmentPixelFormat = ConvertFormat(Desc.RasterizerOutputFormats.DepthStencilFormat);
+    Descriptor.depthAttachmentPixelFormat = MetalRHI::ConvertFormat(Desc.RasterizerOutputFormats.DepthStencilFormat);
 
     FMetalInputLayoutRHI* InputLayout = static_cast<FMetalInputLayoutRHI*>(Desc.InputLayout);
     Descriptor.vertexDescriptor = InputLayout ? InputLayout->GetMTLVertexDescriptor() : nil;

@@ -20,7 +20,7 @@ public:
     {
         if (!CopyEncoder)
         {
-            CopyEncoder = [CommandBuffer blitCommandEncoder];
+            CopyEncoder = [[CommandBuffer blitCommandEncoder] retain];
         }
     }
     
@@ -30,14 +30,8 @@ public:
         {
             [CopyEncoder endEncoding];
             [CopyEncoder release];
+            CopyEncoder = nil;
         }
-    }
-    
-    void FinishEncoderUnsafe()
-    {
-        CHECK(CopyEncoder != nil);
-        [CopyEncoder endEncoding];
-        [CopyEncoder release];
     }
     
     id<MTLBlitCommandEncoder> GetMTLCopyEncoder() const 
@@ -173,6 +167,8 @@ public:
 private:
     void PrepareForDraw();
     void PrepareForDispatch();
+
+    id<MTLBuffer> CreateStagingBuffer(uint64 Size);
 
     id<MTLCommandBuffer>         CommandBuffer;
     FMetalCommands*              Commands;

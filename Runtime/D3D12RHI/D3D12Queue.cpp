@@ -32,7 +32,7 @@ static TAutoConsoleVariable<int32> CVarCommandContextMinRetained(
 FD3D12Queue::FD3D12Queue(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
     : FD3D12DeviceChild(InDevice)
     , QueueType(InQueueType)
-    , CommandListType(ToCommandListType(InQueueType))
+    , CommandListType(D3D12RHI::ToCommandListType(InQueueType))
     , Frequency(0)
     , SubmissionFence(nullptr)
     , CommandQueue(nullptr)

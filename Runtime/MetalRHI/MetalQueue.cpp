@@ -84,7 +84,7 @@ id<MTLCommandBuffer> FMetalQueue::CreateCommandBuffer()
     return CommandBuffer;
 }
 
-void FMetalQueue::SubmitCommands(FMetalCommands* Commands)
+uint64 FMetalQueue::SubmitCommands(FMetalCommands* Commands)
 {
     CHECK(Commands != nullptr);
     CHECK(Commands->CommandBuffer != nil);
@@ -95,6 +95,7 @@ void FMetalQueue::SubmitCommands(FMetalCommands* Commands)
     [Commands->CommandBuffer commit];
 
     PendingSubmissions.Enqueue(Commands);
+    return Value;
 }
 
 void FMetalQueue::ProcessCommandQueue()
@@ -132,6 +133,16 @@ void FMetalQueue::WaitForCompletion()
     if (LastSubmitted >= 1 && SubmissionEvent)
     {
         [SubmissionEvent waitUntilSignaledValue:LastSubmitted timeoutMS:UINT64_MAX];
+    }
+
+    ProcessCommandQueue();
+}
+
+void FMetalQueue::WaitForValue(uint64 Value)
+{
+    if (Value > 0 && SubmissionEvent && GetCompletedValue() < Value)
+    {
+        [SubmissionEvent waitUntilSignaledValue:Value timeoutMS:UINT64_MAX];
     }
 
     ProcessCommandQueue();
@@ -176,4 +187,71 @@ void FMetalCommands::PostExecute()
         [CommandBuffer release];
         CommandBuffer = nil;
     }
+}
+
+FMetalUploadBatch::FMetalUploadBatch(FMetalDevice* InDevice)
+    : Device(InDevice)
+    , Queue(InDevice ? InDevice->GetQueue() : nullptr)
+    , Commands(nullptr)
+    , BlitEncoder(nil)
+{
+    if (!Queue)
+    {
+        return;
+    }
+
+    Commands = Queue->ObtainCommands();
+    if (!Commands || !Commands->CommandBuffer)
+    {
+        METAL_ERROR("Failed to obtain a command buffer for an upload batch");
+        return;
+    }
+
+    BlitEncoder = [[Commands->CommandBuffer blitCommandEncoder] retain];
+    METAL_ERROR_COND(BlitEncoder != nil, "Failed to create a blit encoder for an upload batch");
+}
+
+FMetalUploadBatch::~FMetalUploadBatch()
+{
+    Submit();
+}
+
+id<MTLBuffer> FMetalUploadBatch::CreateStagingBuffer(uint64 Size)
+{
+    if (!Commands || Size == 0)
+    {
+        return nil;
+    }
+
+    id<MTLDevice> DeviceHandle  = Device->GetMTLDevice();
+    id<MTLBuffer> StagingBuffer = [DeviceHandle newBufferWithLength:Size options:MTLResourceStorageModeShared | MTLResourceCPUCacheModeDefaultCache];
+
+    if (!StagingBuffer)
+    {
+        METAL_ERROR("Failed to allocate a %llu byte staging buffer", Size);
+        return nil;
+    }
+
+    Commands->DeferredObjects.Emplace(StagingBuffer);
+    [StagingBuffer release];
+    return StagingBuffer;
+}
+
+uint64 FMetalUploadBatch::Submit()
+{
+    if (BlitEncoder)
+    {
+        [BlitEncoder endEncoding];
+        [BlitEncoder release];
+        BlitEncoder = nil;
+    }
+
+    if (!Commands)
+    {
+        return 0;
+    }
+
+    const uint64 SubmissionValue = Queue->SubmitCommands(Commands);
+    Commands = nullptr;
+    return SubmissionValue;
 }

@@ -29,12 +29,12 @@ static void EncodeZeroFill(id<MTLBlitCommandEncoder> Blit, id<MTLBuffer> Staging
         return;
     }
 
-    const bool bIs1D = Type == EMetalNullTextureType::Texture1D || Type == EMetalNullTextureType::Texture1DArray;
-    const bool bIs3D = Type == EMetalNullTextureType::Texture3D;
+    const bool bIsTexture1D = Type == EMetalNullTextureType::Texture1D || Type == EMetalNullTextureType::Texture1DArray;
+    const bool bIsTexture3D = Type == EMetalNullTextureType::Texture3D;
 
     const NSUInteger BytesPerPixel = 4;
-    const NSUInteger BytesPerRow   = bIs1D ? 0 : BytesPerPixel;
-    const NSUInteger BytesPerImage = bIs3D ? BytesPerPixel : 0;
+    const NSUInteger BytesPerRow   = bIsTexture1D ? 0 : BytesPerPixel;
+    const NSUInteger BytesPerImage = bIsTexture3D ? BytesPerPixel : 0;
     const NSUInteger SliceCount    = (Type == EMetalNullTextureType::TextureCube || Type == EMetalNullTextureType::TextureCubeArray) ? 6 : 1;
 
     for (NSUInteger Slice = 0; Slice < SliceCount; ++Slice)
@@ -127,32 +127,21 @@ bool FMetalDefaultResources::Initialize(FMetalDevice& InDevice)
 
     Memory::Memzero(NullBuffer.contents, 16);
 
-    id<MTLCommandQueue> CommandQueue = InDevice.GetMTLCommandQueue();
-    if (!CommandQueue)
     {
-        METAL_ERROR("Failed to get the Metal command queue for default resources");
-        return false;
+        FMetalUploadBatch UploadBatch(&InDevice);
+        if (!UploadBatch.IsValid())
+        {
+            METAL_ERROR("Failed to create a blit encoder for default resources");
+            return false;
+        }
+
+        for (uint8 Type = 0; Type < EMetalNullTextureType::Count; ++Type)
+        {
+            const EMetalNullTextureType::Type TextureType = static_cast<EMetalNullTextureType::Type>(Type);
+            EncodeZeroFill(UploadBatch.GetBlitEncoder(), NullBuffer, NullTextures[Type], TextureType);
+            EncodeZeroFill(UploadBatch.GetBlitEncoder(), NullBuffer, NullRWTextures[Type], TextureType);
+        }
     }
-
-    id<MTLCommandBuffer>      CommandBuffer = [CommandQueue commandBuffer];
-    id<MTLBlitCommandEncoder> BlitEncoder   = [CommandBuffer blitCommandEncoder];
-
-    if (!CommandBuffer || !BlitEncoder)
-    {
-        METAL_ERROR("Failed to create a blit encoder for default resources");
-        return false;
-    }
-
-    for (uint8 Type = 0; Type < EMetalNullTextureType::Count; ++Type)
-    {
-        const EMetalNullTextureType::Type TextureType = static_cast<EMetalNullTextureType::Type>(Type);
-        EncodeZeroFill(BlitEncoder, NullBuffer, NullTextures[Type], TextureType);
-        EncodeZeroFill(BlitEncoder, NullBuffer, NullRWTextures[Type], TextureType);
-    }
-
-    [BlitEncoder endEncoding];
-    [CommandBuffer commit];
-    [CommandBuffer waitUntilCompleted];
 
     MTLSamplerDescriptor* SamplerDesc = [MTLSamplerDescriptor new];
     SamplerDesc.minFilter     = MTLSamplerMinMagFilterLinear;

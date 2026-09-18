@@ -630,7 +630,7 @@ FVulkanRenderPassKey FVulkanCommandContextState::BuildRenderPassKey(const FVulka
         NumSamples = Math::Max<uint8>(static_cast<uint8>(Texture->GetDesc().NumSamples), NumSamples);
     }
 
-    RenderPassKey.SampleCountLog2 = SampleCountToLog2(NumSamples);
+    RenderPassKey.SampleCountLog2 = VulkanRHI::SampleCountToLog2(NumSamples);
 
     if (CommonGraphicsState.ViewInstancingState.bEnableViewInstancing)
     {
@@ -750,7 +750,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
     }
 
 #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
-    RenderPassKey.SampleCountLog2 = SampleCountToLog2(NumSamples);
+    RenderPassKey.SampleCountLog2 = VulkanRHI::SampleCountToLog2(NumSamples);
     if (RenderPassDesc.ViewInstancingState.bEnableViewInstancing)
     {
         RenderPassKey.ViewInstancingState = RenderPassDesc.ViewInstancingState;
@@ -786,8 +786,8 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
             ColorAttachments[i].sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
             ColorAttachments[i].imageView   = RenderTargetState.RenderTargetViews[i] ? RenderTargetState.RenderTargetViews[i]->GetImageViewInfo().ImageView : VK_NULL_HANDLE;
             ColorAttachments[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            ColorAttachments[i].loadOp      = ConvertLoadAction(ColorAttachment.LoadAction);
-            ColorAttachments[i].storeOp     = ConvertStoreAction(ColorAttachment.StoreAction);
+            ColorAttachments[i].loadOp      = VulkanRHI::ConvertLoadAction(ColorAttachment.LoadAction);
+            ColorAttachments[i].storeOp     = VulkanRHI::ConvertStoreAction(ColorAttachment.StoreAction);
             ColorAttachments[i].clearValue  = ColorClearValues[i];
         }
 
@@ -805,10 +805,10 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
             DepthStencilAttachmentInfo.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
             DepthStencilAttachmentInfo.imageView   = RenderTargetState.DepthStencilView->GetImageViewInfo().ImageView;
             DepthStencilAttachmentInfo.imageLayout = GetDepthStencilAttachmentLayout(DepthStencilView);
-            DepthStencilAttachmentInfo.loadOp      = ConvertLoadAction(DepthStencilAttachment.LoadAction);
+            DepthStencilAttachmentInfo.loadOp      = VulkanRHI::ConvertLoadAction(DepthStencilAttachment.LoadAction);
             DepthStencilAttachmentInfo.clearValue  = DepthStencilClearValue;
 
-            const VkAttachmentStoreOp StoreOp  = ConvertStoreAction(DepthStencilAttachment.StoreAction);
+            const VkAttachmentStoreOp StoreOp  = VulkanRHI::ConvertStoreAction(DepthStencilAttachment.StoreAction);
             DepthStencilAttachmentInfo.storeOp = DepthStencilView->IsDepthReadOnly() ? VK_ATTACHMENT_STORE_OP_NONE_KHR : StoreOp;
 
             StencilAttachmentInfo         = DepthStencilAttachmentInfo;
@@ -984,7 +984,7 @@ void FVulkanCommandContextState::ResumeRenderPass()
             ColorAttachments[i].imageView   = RenderTargetState.RenderTargetViews[i] ? RenderTargetState.RenderTargetViews[i]->GetImageViewInfo().ImageView : VK_NULL_HANDLE;
             ColorAttachments[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             ColorAttachments[i].loadOp      = VK_ATTACHMENT_LOAD_OP_LOAD;
-            ColorAttachments[i].storeOp     = ConvertStoreAction(RenderTargetState.ColorStoreActions[i]);
+            ColorAttachments[i].storeOp     = VulkanRHI::ConvertStoreAction(RenderTargetState.ColorStoreActions[i]);
         }
 
         VkRenderingAttachmentInfoKHR DepthStencilAttachment = {};
@@ -1003,7 +1003,7 @@ void FVulkanCommandContextState::ResumeRenderPass()
             DepthStencilAttachment.imageLayout = GetDepthStencilAttachmentLayout(DepthStencilView);
             DepthStencilAttachment.loadOp      = VK_ATTACHMENT_LOAD_OP_LOAD;
 
-            const VkAttachmentStoreOp StoreOp = ConvertStoreAction(RenderTargetState.DepthStencilStoreAction);
+            const VkAttachmentStoreOp StoreOp = VulkanRHI::ConvertStoreAction(RenderTargetState.DepthStencilStoreAction);
             DepthStencilAttachment.storeOp = DepthStencilView->IsDepthReadOnly() ? VK_ATTACHMENT_STORE_OP_NONE_KHR : StoreOp;
 
             StencilAttachment         = DepthStencilAttachment;
@@ -1317,7 +1317,7 @@ void FVulkanCommandContextState::SetSamplePositions(const FRHISamplePositionsDes
 
         CommonGraphicsState.SampleLocationsInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLE_LOCATIONS_INFO_EXT;
         CommonGraphicsState.SampleLocationsInfo.pNext                   = nullptr;
-        CommonGraphicsState.SampleLocationsInfo.sampleLocationsPerPixel = ConvertSampleCount(NumSamplesPerPixel);
+        CommonGraphicsState.SampleLocationsInfo.sampleLocationsPerPixel = VulkanRHI::ConvertSampleCount(NumSamplesPerPixel);
         CommonGraphicsState.SampleLocationsInfo.sampleLocationGridSize  = VkExtent2D{ GridWidth, GridHeight };
         CommonGraphicsState.SampleLocationsInfo.sampleLocationsCount    = NumLocations;
         CommonGraphicsState.SampleLocationsInfo.pSampleLocations        = CommonGraphicsState.SampleLocations;

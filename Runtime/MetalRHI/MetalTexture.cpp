@@ -1,7 +1,128 @@
 #include "MetalRHI/MetalTexture.h"
+#include "MetalRHI/MetalCapabilities.h"
+#include "MetalRHI/MetalDevice.h"
+#include "MetalRHI/MetalQueue.h"
+#include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalSwapChain.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+static MTLTextureDescriptor* CreateTextureDescriptor(const FRHITextureDesc& Desc)
+{
+    MTLTextureDescriptor* TextureDescriptor = [[MTLTextureDescriptor new] autorelease];
+    TextureDescriptor.textureType        = MetalRHI::GetMTLTextureType(Desc.Dimension, Desc.IsMultisampled());
+    TextureDescriptor.pixelFormat        = MetalRHI::ConvertFormat(Desc.Format);
+    TextureDescriptor.usage              = MetalRHI::ConvertTextureFlags(Desc.UsageFlags);
+    TextureDescriptor.mipmapLevelCount   = Math::Max(Desc.NumMipLevels, 1u);
+    TextureDescriptor.sampleCount        = Math::Max(Desc.NumSamples, 1u);
+    TextureDescriptor.storageMode        = MTLStorageModePrivate;
+    TextureDescriptor.cpuCacheMode       = MTLCPUCacheModeDefaultCache;
+    TextureDescriptor.hazardTrackingMode = MTLHazardTrackingModeDefault;
+    TextureDescriptor.width              = static_cast<NSUInteger>(Math::Max(Desc.Extent.X, 1));
+    TextureDescriptor.height             = static_cast<NSUInteger>(Math::Max(Desc.Extent.Y, 1));
+
+    TextureDescriptor.allowGPUOptimizedContents = (Desc.IsRenderTarget() || Desc.IsDepthStencil()) ? YES : NO;
+
+    if (Desc.IsTexture3D())
+    {
+        TextureDescriptor.depth       = static_cast<NSUInteger>(Math::Max(Desc.Extent.Z, 1));
+        TextureDescriptor.arrayLength = 1;
+    }
+    else
+    {
+        TextureDescriptor.depth       = 1;
+        TextureDescriptor.arrayLength = Math::Max(Desc.NumArraySlices, 1u);
+    }
+
+    if (IsTypelessFormat(Desc.Format) || (Desc.IsDepthStencil() && Desc.IsShaderResourceTexture()))
+    {
+        TextureDescriptor.usage |= MTLTextureUsagePixelFormatView;
+    }
+
+    return TextureDescriptor;
+}
+
+static FRHIShaderResourceViewDesc CreateDefaultSRVDesc(const FRHITextureDesc& Desc)
+{
+    const EFormat Format    = Desc.Format;
+    const uint8   NumMips   = static_cast<uint8>(Math::Max(Desc.NumMipLevels, 1u));
+    const uint16  NumSlices = static_cast<uint16>(Math::Max(Desc.NumArraySlices, 1u));
+
+    switch (Desc.Dimension)
+    {
+        case ETextureDimension::Texture1D:        return FRHIShaderResourceViewDesc::CreateTexture1D(Format, 0, NumMips);
+        case ETextureDimension::Texture1DArray:   return FRHIShaderResourceViewDesc::CreateTexture1DArray(Format, 0, NumMips, 0, NumSlices);
+        case ETextureDimension::Texture2D:        return FRHIShaderResourceViewDesc::CreateTexture2D(Format, 0, NumMips);
+        case ETextureDimension::Texture2DArray:   return FRHIShaderResourceViewDesc::CreateTexture2DArray(Format, 0, NumMips, 0, NumSlices);
+        case ETextureDimension::TextureCube:      return FRHIShaderResourceViewDesc::CreateTextureCube(Format, 0, NumMips);
+        case ETextureDimension::TextureCubeArray: return FRHIShaderResourceViewDesc::CreateTextureCubeArray(Format, 0, NumMips, 0, NumSlices);
+        case ETextureDimension::Texture3D:        return FRHIShaderResourceViewDesc::CreateTexture3D(Format, 0, NumMips);
+
+        default:
+        {
+            CHECK(false);
+            return FRHIShaderResourceViewDesc();
+        }
+    }
+}
+
+static FRHIUnorderedAccessViewDesc CreateDefaultUAVDesc(const FRHITextureDesc& Desc)
+{
+    const EFormat Format    = Desc.Format;
+    const uint16  NumSlices = static_cast<uint16>(Math::Max(Desc.NumArraySlices, 1u));
+
+    switch (Desc.Dimension)
+    {
+        case ETextureDimension::Texture1D:      return FRHIUnorderedAccessViewDesc::CreateTexture1D(Format, 0);
+        case ETextureDimension::Texture1DArray: return FRHIUnorderedAccessViewDesc::CreateTexture1DArray(Format, 0, 0, NumSlices);
+        case ETextureDimension::Texture2D:      return FRHIUnorderedAccessViewDesc::CreateTexture2D(Format, 0);
+        case ETextureDimension::Texture2DArray: return FRHIUnorderedAccessViewDesc::CreateTexture2DArray(Format, 0, 0, NumSlices);
+        case ETextureDimension::Texture3D:      return FRHIUnorderedAccessViewDesc::CreateTexture3D(Format, 0, 0, static_cast<uint16>(Math::Max(Desc.Extent.Z, 1)));
+
+        default:
+        {
+            CHECK(false);
+            return FRHIUnorderedAccessViewDesc();
+        }
+    }
+}
+
+static FRHIRenderTargetViewDesc CreateDefaultRTVDesc(const FRHITextureDesc& Desc)
+{
+    const EFormat Format    = Desc.Format;
+    const uint16  NumSlices = static_cast<uint16>(Math::Max(Desc.NumArraySlices, 1u));
+
+    switch (Desc.Dimension)
+    {
+        case ETextureDimension::Texture1D:      return FRHIRenderTargetViewDesc::CreateTexture1D(Format, 0);
+        case ETextureDimension::Texture1DArray: return FRHIRenderTargetViewDesc::CreateTexture1DArray(Format, 0, 0, NumSlices);
+        case ETextureDimension::Texture2D:      return FRHIRenderTargetViewDesc::CreateTexture2D(Format, 0);
+        case ETextureDimension::Texture3D:      return FRHIRenderTargetViewDesc::CreateTexture3D(Format, 0, 0, static_cast<uint16>(Math::Max(Desc.Extent.Z, 1)));
+
+        default:
+        {
+            return FRHIRenderTargetViewDesc::CreateTexture2DArray(Format, 0, 0, static_cast<uint16>(RHIDimensionArrayLayers(Desc.Dimension, NumSlices)));
+        }
+    }
+}
+
+static FRHIDepthStencilViewDesc CreateDefaultDSVDesc(const FRHITextureDesc& Desc)
+{
+    const EFormat Format    = (Desc.ClearValue.Format != EFormat::Unknown) ? Desc.ClearValue.Format : Desc.Format;
+    const uint16  NumSlices = static_cast<uint16>(Math::Max(Desc.NumArraySlices, 1u));
+
+    switch (Desc.Dimension)
+    {
+        case ETextureDimension::Texture1D:      return FRHIDepthStencilViewDesc::CreateTexture1D(Format, 0);
+        case ETextureDimension::Texture1DArray: return FRHIDepthStencilViewDesc::CreateTexture1DArray(Format, 0, 0, NumSlices);
+        case ETextureDimension::Texture2D:      return FRHIDepthStencilViewDesc::CreateTexture2D(Format, 0);
+
+        default:
+        {
+            return FRHIDepthStencilViewDesc::CreateTexture2DArray(Format, 0, 0, static_cast<uint16>(RHIDimensionArrayLayers(Desc.Dimension, NumSlices)));
+        }
+    }
+}
 
 FMetalTextureRHI::FMetalTextureRHI(FMetalDevice* InDevice, const FRHITextureDesc& InTextureDesc)
     : FRHITexture(InTextureDesc)
@@ -9,6 +130,7 @@ FMetalTextureRHI::FMetalTextureRHI(FMetalDevice* InDevice, const FRHITextureDesc
     , Texture(nil)
     , SwapChain(nullptr)
     , ShaderResourceView(nullptr)
+    , UnorderedAccessView(nullptr)
     , RenderTargetView(nullptr)
     , DepthStencilView(nullptr)
 {
@@ -16,7 +138,12 @@ FMetalTextureRHI::FMetalTextureRHI(FMetalDevice* InDevice, const FRHITextureDesc
 
 FMetalTextureRHI::~FMetalTextureRHI()
 {
-    [Texture release];
+    if (Texture)
+    {
+        FMetalDeviceRHI::DeferDeletion(Texture);
+        [Texture release];
+        Texture = nil;
+    }
 }
 
 void* FMetalTextureRHI::GetRHINativeResource() const
@@ -41,7 +168,7 @@ FRHIShaderResourceView* FMetalTextureRHI::GetShaderResourceView() const
 
 FRHIUnorderedAccessView* FMetalTextureRHI::GetUnorderedAccessView() const
 {
-    return nullptr;
+    return UnorderedAccessView.Get();
 }
 
 FRHIRenderTargetView* FMetalTextureRHI::GetRenderTargetView() const
@@ -58,166 +185,156 @@ bool FMetalTextureRHI::Initialize(ERHIResourceState InInitialAccess, const IRHIT
 {
     SCOPED_AUTORELEASE_POOL();
 
-    MTLTextureDescriptor* TextureDescriptor = [[MTLTextureDescriptor new] autorelease];
-    TextureDescriptor.textureType               = GetMTLTextureType(Desc.Dimension, Desc.IsMultisampled());
-    TextureDescriptor.pixelFormat               = ConvertFormat(Desc.Format);
-    TextureDescriptor.usage                     = ConvertTextureFlags(Desc.UsageFlags);
-    TextureDescriptor.allowGPUOptimizedContents = NO;
-    TextureDescriptor.swizzle                   = MTLTextureSwizzleChannelsMake(MTLTextureSwizzleRed, MTLTextureSwizzleGreen, MTLTextureSwizzleBlue, MTLTextureSwizzleAlpha);
-    TextureDescriptor.mipmapLevelCount          = Desc.NumMipLevels;
-    TextureDescriptor.sampleCount               = Desc.NumSamples;
-    TextureDescriptor.resourceOptions           = MTLResourceCPUCacheModeWriteCombined;
-    TextureDescriptor.cpuCacheMode              = MTLCPUCacheModeWriteCombined;
-    TextureDescriptor.storageMode               = MTLStorageModePrivate;
-    TextureDescriptor.hazardTrackingMode        = MTLHazardTrackingModeDefault;
-    TextureDescriptor.width                     = Desc.Extent.X;
-    TextureDescriptor.height                    = Desc.Extent.Y;
-    
-    if (Desc.IsTexture3D())
+    MTLTextureDescriptor* TextureDescriptor = CreateTextureDescriptor(Desc);
+    if (TextureDescriptor.pixelFormat == MTLPixelFormatInvalid)
     {
-        TextureDescriptor.depth       = Desc.Extent.Z;
-        TextureDescriptor.arrayLength = 1;
+        METAL_ERROR("Format '%s' has no Metal equivalent", ToString(Desc.Format));
+        return false;
     }
-    else
-    {
-        TextureDescriptor.depth       = 1;
-        TextureDescriptor.arrayLength = Math::Max(Desc.NumArraySlices, 1u);
-    }
-    
-    id<MTLDevice>  Device     = GetDevice()->GetMTLDevice();
-    id<MTLTexture> NewTexture = [Device newTextureWithDescriptor:TextureDescriptor];
 
-    if (!NewTexture)
+    id<MTLDevice> DeviceHandle = GetDevice()->GetMTLDevice();
+    Texture = [DeviceHandle newTextureWithDescriptor:TextureDescriptor];
+
+    if (!Texture)
+    {
+        METAL_ERROR("Failed to create a %s texture", ToString(Desc.Dimension));
+        return false;
+    }
+
+    if (InInitialData && !UploadInitialData(InInitialData))
     {
         return false;
     }
-    
-    SetDrawableTexture(NewTexture);
-    
-    // TODO: Upload every texture dimension through the device queue.
-    if (Desc.IsTexture2D())
+
+    return CreateDefaultViews();
+}
+
+bool FMetalTextureRHI::UploadInitialData(const IRHITextureData* InInitialData)
+{
+    SCOPED_AUTORELEASE_POOL();
+
+    if (Desc.IsMultisampled())
     {
-        if (InInitialData)
+        METAL_ERROR("A multisampled texture cannot be given initial data");
+        return false;
+    }
+
+    const bool   bIsTexture1D   = Desc.IsTexture1D() || Desc.IsTexture1DArray();
+    const bool   bIsTexture3D   = Desc.IsTexture3D();
+    const uint32 NumMipLevels   = Math::Max(Desc.NumMipLevels, 1u);
+    const uint32 NumArraySlices = RHIDimensionArrayLayers(Desc.Dimension, Math::Max(Desc.NumArraySlices, 1u));
+    const uint32 BaseDepth      = bIsTexture3D ? static_cast<uint32>(Math::Max(Desc.Extent.Z, 1)) : 1u;
+
+    uint64 StagingSize = 0;
+    for (uint32 MipIndex = 0, MipDepth = BaseDepth; MipIndex < NumMipLevels; ++MipIndex, MipDepth = Math::Max(MipDepth / 2, 1u))
+    {
+        if (!InInitialData->GetMipData(MipIndex))
         {
-            @autoreleasepool
-            {
-                id<MTLCommandQueue>       CommandQueue  = GetDevice()->GetMTLCommandQueue();
-                id<MTLCommandBuffer>      CommandBuffer = [CommandQueue commandBuffer];
-                id<MTLBlitCommandEncoder> CopyEncoder   = [CommandBuffer blitCommandEncoder];
+            break;
+        }
 
-                uint64 TotalTextureSize = 0;
-                for (uint32 Index = 0; Index < Desc.NumMipLevels; ++Index)
-                {
-                    TotalTextureSize += InInitialData->GetMipSlicePitch(Index);
-                }
-                
-                id<MTLBuffer> StagingBuffer = [Device newBufferWithLength:TotalTextureSize options:MTLResourceCPUCacheModeDefaultCache];
-                uint8* StagingBufferContents = reinterpret_cast<uint8*>(StagingBuffer.contents);
-                
-                uint32 Width        = Desc.Extent.X;
-                uint32 Height       = Desc.Extent.Y;
-                uint64 SourceOffset = 0;
+        const uint64 SubresourceSize = static_cast<uint64>(InInitialData->GetMipSlicePitch(MipIndex)) * MipDepth;
+        StagingSize += Math::AlignUp<uint64>(SubresourceSize, TEXTURE_UPLOAD_ALIGNMENT) * NumArraySlices;
+    }
 
-                for (uint32 Index = 0; Index < Desc.NumMipLevels; ++Index)
-                {
-                    // TODO: Copy block-compressed edge mips instead of dropping them.
-                    if (IsBlockCompressed(Desc.Format) && ((Width % 4 != 0) || (Height % 4 != 0)))
-                    {
-                        break;
-                    }
+    if (StagingSize == 0)
+    {
+        return true;
+    }
 
-                    MTLRegion Region;
-                    Region.origin = { 0, 0, 0 };
-                    Region.size   = { NSUInteger(Width), NSUInteger(Height), 1 };
-                    
-                    const NSUInteger BytesPerRow = NSUInteger(InInitialData->GetMipRowPitch(Index));
-                    const NSUInteger SlicePitch  = NSUInteger(InInitialData->GetMipSlicePitch(Index));
-                    
-                    Memory::Memcpy(StagingBufferContents + SourceOffset, InInitialData->GetMipData(Index), SlicePitch);
-                    
-                    [CopyEncoder copyFromBuffer:StagingBuffer
-                                sourceOffset:SourceOffset
-                            sourceBytesPerRow:BytesPerRow
-                            sourceBytesPerImage:0
-                                    sourceSize:Region.size
-                                    toTexture:NewTexture
-                            destinationSlice:0
-                            destinationLevel:Index
-                            destinationOrigin:Region.origin];
-                    
-                    Width        = Width / 2;
-                    Height       = Height / 2;
-                    SourceOffset = SourceOffset + SlicePitch;
-                }
+    FMetalUploadBatch UploadBatch(GetDevice());
+    if (!UploadBatch.IsValid())
+    {
+        return false;
+    }
 
-                [CopyEncoder endEncoding];
+    id<MTLBuffer> StagingBuffer = UploadBatch.CreateStagingBuffer(StagingSize);
+    if (!StagingBuffer)
+    {
+        return false;
+    }
 
-                // TODO: Defer the staging buffer through FMetalQueue instead of stalling.
-                [CommandBuffer commit];
-                [CommandBuffer waitUntilCompleted];
-            
-                [StagingBuffer release];
-            }
+    uint8* StagingContents = reinterpret_cast<uint8*>(StagingBuffer.contents);
+    uint64 StagingOffset   = 0;
+
+    uint32 Width  = static_cast<uint32>(Math::Max(Desc.Extent.X, 1));
+    uint32 Height = static_cast<uint32>(Math::Max(Desc.Extent.Y, 1));
+    uint32 Depth  = BaseDepth;
+
+    for (uint32 MipIndex = 0; MipIndex < NumMipLevels; ++MipIndex)
+    {
+        const uint8* MipData = reinterpret_cast<const uint8*>(InInitialData->GetMipData(MipIndex));
+        if (!MipData)
+        {
+            break;
+        }
+
+        const uint64 RowPitch        = static_cast<uint64>(InInitialData->GetMipRowPitch(MipIndex));
+        const uint64 SlicePitch      = static_cast<uint64>(InInitialData->GetMipSlicePitch(MipIndex));
+        const uint64 SubresourceSize = SlicePitch * Depth;
+
+        for (uint32 ArraySlice = 0; ArraySlice < NumArraySlices; ++ArraySlice)
+        {
+            Memory::Memcpy(StagingContents + StagingOffset, MipData + (ArraySlice * SubresourceSize), SubresourceSize);
+
+            [UploadBatch.GetBlitEncoder() copyFromBuffer:StagingBuffer
+                                           sourceOffset:StagingOffset
+                                      sourceBytesPerRow:(bIsTexture1D ? 0 : RowPitch)
+                                    sourceBytesPerImage:(bIsTexture3D ? SlicePitch : 0)
+                                             sourceSize:MTLSizeMake(Width, Height, Depth)
+                                              toTexture:Texture
+                                       destinationSlice:ArraySlice
+                                       destinationLevel:MipIndex
+                                      destinationOrigin:MTLOriginMake(0, 0, 0)];
+
+            StagingOffset += Math::AlignUp<uint64>(SubresourceSize, TEXTURE_UPLOAD_ALIGNMENT);
+        }
+
+        Width  = Math::Max(Width / 2, 1u);
+        Height = Math::Max(Height / 2, 1u);
+        Depth  = Math::Max(Depth / 2, 1u);
+    }
+
+    UploadBatch.Submit();
+    return true;
+}
+
+bool FMetalTextureRHI::CreateDefaultViews()
+{
+    if (Desc.IsShaderResourceTexture() && !Desc.IsNoDefaultSRV())
+    {
+        ShaderResourceView = new FMetalShaderResourceViewRHI(GetDevice(), this, CreateDefaultSRVDesc(Desc));
+        if (!ShaderResourceView->Initialize())
+        {
+            return false;
+        }
+    }
+
+    if (Desc.IsUnorderedAccessTexture() && !Desc.IsNoDefaultUAV() && !IsTextureCube(Desc.Dimension))
+    {
+        UnorderedAccessView = new FMetalUnorderedAccessViewRHI(GetDevice(), this, CreateDefaultUAVDesc(Desc));
+        if (!UnorderedAccessView->Initialize())
+        {
+            return false;
         }
     }
 
     if (Desc.IsRenderTarget() && !Desc.IsNoDefaultRTV())
     {
-        FRHIRenderTargetViewDesc RTVDesc;
-        if (Desc.IsTexture1D())
+        RenderTargetView = new FMetalRenderTargetViewRHI(GetDevice(), this, CreateDefaultRTVDesc(Desc));
+        if (!RenderTargetView->Initialize())
         {
-            RTVDesc = FRHIRenderTargetViewDesc::CreateTexture1D(Desc.Format, 0);
+            return false;
         }
-        else if (Desc.IsTexture1DArray())
-        {
-            RTVDesc = FRHIRenderTargetViewDesc::CreateTexture1DArray(Desc.Format, 0, 0, Desc.NumArraySlices);
-        }
-        else if (Desc.IsTexture2D())
-        {
-            RTVDesc = FRHIRenderTargetViewDesc::CreateTexture2D(Desc.Format, 0);
-        }
-        else if (Desc.IsTexture2DArray() || Desc.IsTextureCube() || Desc.IsTextureCubeArray())
-        {
-            RTVDesc = FRHIRenderTargetViewDesc::CreateTexture2DArray(Desc.Format, 0, 0, static_cast<uint16>(Desc.NumArraySlices));
-        }
-        else if (Desc.IsTexture3D())
-        {
-            RTVDesc = FRHIRenderTargetViewDesc::CreateTexture3D(Desc.Format, 0, 0, static_cast<uint16>(Desc.Extent.Z));
-        }
-        else
-        {
-            CHECK(false);
-        }
-
-        RenderTargetView = new FMetalRenderTargetViewRHI(GetDevice(), this, RTVDesc);
     }
 
     if (Desc.IsDepthStencil() && !Desc.IsNoDefaultDSV())
     {
-        const EFormat DSVFormat = Desc.ClearValue.Format != EFormat::Unknown ? Desc.ClearValue.Format : Desc.Format;
-        FRHIDepthStencilViewDesc DSVDesc;
-        if (Desc.IsTexture1D())
+        DepthStencilView = new FMetalDepthStencilViewRHI(GetDevice(), this, CreateDefaultDSVDesc(Desc));
+        if (!DepthStencilView->Initialize())
         {
-            DSVDesc = FRHIDepthStencilViewDesc::CreateTexture1D(DSVFormat, 0);
+            return false;
         }
-        else if (Desc.IsTexture1DArray())
-        {
-            DSVDesc = FRHIDepthStencilViewDesc::CreateTexture1DArray(DSVFormat, 0, 0, Desc.NumArraySlices);
-        }
-        else if (Desc.IsTexture2D())
-        {
-            DSVDesc = FRHIDepthStencilViewDesc::CreateTexture2D(DSVFormat, 0);
-        }
-        else if (Desc.IsTexture2DArray() || Desc.IsTextureCube() || Desc.IsTextureCubeArray())
-        {
-            DSVDesc = FRHIDepthStencilViewDesc::CreateTexture2DArray(DSVFormat, 0, 0, static_cast<uint16>(Desc.NumArraySlices));
-        }
-        else
-        {
-            CHECK(false);
-        }
-
-        DepthStencilView = new FMetalDepthStencilViewRHI(GetDevice(), this, DSVDesc);
     }
 
     return true;

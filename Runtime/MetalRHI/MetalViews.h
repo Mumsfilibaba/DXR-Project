@@ -15,8 +15,31 @@ public:
         return TextureView;
     }
 
+    id<MTLBuffer> GetMTLBuffer() const
+    {
+        return BufferView;
+    }
+
+    uint64 GetBufferOffset() const
+    {
+        return BufferOffset;
+    }
+
+    uint64 GetBufferSize() const
+    {
+        return BufferSize;
+    }
+
+protected:
+    bool InitializeTextureView(FRHITexture* InTexture, EFormat InFormat, EViewDimension InViewDimension, 
+        uint32 InFirstMip, uint32 InNumMips, uint32 InFirstSlice, uint32 InNumSlices);
+    bool InitializeBufferView(FRHIBuffer* InBuffer, uint64 InOffset, uint64 InSize);
+
 private:
     id<MTLTexture> TextureView;
+    id<MTLBuffer>  BufferView;
+    uint64         BufferOffset;
+    uint64         BufferSize;
 };
 
 class FMetalShaderResourceViewRHI : public FRHIShaderResourceView, public FMetalView
@@ -29,6 +52,8 @@ public:
     virtual void* GetRHINativeHandle() const override final;
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
+
+    bool Initialize();
 };
 
 class FMetalUnorderedAccessViewRHI : public FRHIUnorderedAccessView, public FMetalView
@@ -41,6 +66,8 @@ public:
     virtual void* GetRHINativeHandle() const override final;
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
+
+    bool Initialize();
 };
 
 class FMetalRenderTargetViewRHI : public FRHIRenderTargetView, public FMetalView
@@ -52,8 +79,17 @@ public:
     // FRHIRenderTargetView Interface
     virtual void* GetRHINativeHandle() const override final;
 
-    uint8  GetMipLevel()   const { return MipLevel; }
-    uint16 GetArrayIndex() const { return ArrayIndex; }
+    bool Initialize();
+
+    uint8 GetMipLevel() const
+    {
+        return MipLevel;
+    }
+
+    uint16 GetArrayIndex() const
+    {
+        return ArrayIndex;
+    }
 
 private:
     uint8  MipLevel;
@@ -69,9 +105,22 @@ public:
     // FRHIDepthStencilView Interface
     virtual void* GetRHINativeHandle() const override final;
 
-    uint8                  GetMipLevel()   const { return MipLevel; }
-    uint16                 GetArrayIndex() const { return ArrayIndex; }
-    EDepthStencilViewFlags GetFlags()      const { return Flags; }
+    bool Initialize();
+
+    uint8 GetMipLevel() const
+    {
+        return MipLevel;
+    }
+
+    uint16 GetArrayIndex() const
+    {
+        return ArrayIndex;
+    }
+
+    EDepthStencilViewFlags GetFlags() const
+    {
+        return Flags;
+    }
 
 private:
     uint8                  MipLevel;

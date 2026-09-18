@@ -77,9 +77,9 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
     }
 
     D3D12_RESOURCE_DESC ResourceDesc = {};
-    ResourceDesc.Dimension        = ConvertTextureDimension(Desc.Dimension);
-    ResourceDesc.Flags            = ConvertTextureFlags(Desc.UsageFlags);
-    ResourceDesc.Format           = ConvertFormat(Desc.Format);
+    ResourceDesc.Dimension        = D3D12RHI::ConvertTextureDimension(Desc.Dimension);
+    ResourceDesc.Flags            = D3D12RHI::ConvertTextureFlags(Desc.UsageFlags);
+    ResourceDesc.Format           = D3D12RHI::ConvertFormat(Desc.Format);
     ResourceDesc.Layout           = D3D12_TEXTURE_LAYOUT_UNKNOWN;
     ResourceDesc.MipLevels        = static_cast<UINT16>(Desc.NumMipLevels);
     ResourceDesc.Alignment        = 0;
@@ -112,7 +112,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
     const bool bSupportClearValue = Desc.IsRenderTarget() || Desc.IsDepthStencil();
     if (bSupportClearValue)
     {
-        ClearValue.Format = (Desc.ClearValue.Format != EFormat::Unknown) ? ConvertFormat(Desc.ClearValue.Format) : ResourceDesc.Format;
+        ClearValue.Format = (Desc.ClearValue.Format != EFormat::Unknown) ? D3D12RHI::ConvertFormat(Desc.ClearValue.Format) : ResourceDesc.Format;
         if (Desc.ClearValue.IsDepthStencilValue())
         {
             ClearValue.DepthStencil.Depth   = Desc.ClearValue.AsDepthStencil().Depth;
@@ -124,9 +124,9 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
         }
     }
 
-    const D3D12_RESOURCE_STATES RequestedInitialState = ConvertResourceState(InInitialAccess);
+    const D3D12_RESOURCE_STATES RequestedInitialState = D3D12RHI::ConvertResourceState(InInitialAccess);
 
-    const ED3D12ResourceStateMode ResolvedStateMode = ConvertResourceStateMode(Desc.TrackingMode);
+    const ED3D12ResourceStateMode ResolvedStateMode = D3D12RHI::ConvertResourceStateMode(Desc.TrackingMode);
 
     const bool bHasDefaultState = (ResolvedStateMode == ED3D12ResourceStateMode::SingleState);
     const D3D12_RESOURCE_STATES D3D12DefaultState = bHasDefaultState ? RequestedInitialState : D3D12_RESOURCE_STATES(0);
@@ -157,7 +157,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
     if (!Desc.IsNoDefaultSRV())
     {
         D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc = {};
-        ViewDesc.Format                  = D3D12CastShaderResourceFormat(ResourceDesc.Format);
+        ViewDesc.Format                  = D3D12RHI::D3D12CastShaderResourceFormat(ResourceDesc.Format);
         ViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
         if (Desc.IsTexture1D())
@@ -224,7 +224,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
             return false;
         }
 
-        FD3D12ShaderResourceViewRHIRef DefaultSRV = new FD3D12ShaderResourceViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this, GetDefaultShaderResourceViewDescForTexture(Desc));
+        FD3D12ShaderResourceViewRHIRef DefaultSRV = new FD3D12ShaderResourceViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this, D3D12RHI::GetDefaultShaderResourceViewDescForTexture(Desc));
         if (!DefaultSRV->Initialize(GetResource(), ViewDesc))
         {
             return false;
@@ -237,7 +237,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
     if (Desc.IsUnorderedAccessTexture() && !Desc.IsNoDefaultUAV())
     {
         D3D12_UNORDERED_ACCESS_VIEW_DESC ViewDesc = {};
-        ViewDesc.Format = D3D12CastUnorderedAccessFormat(ResourceDesc.Format);
+        ViewDesc.Format = D3D12RHI::D3D12CastUnorderedAccessFormat(ResourceDesc.Format);
 
         if (Desc.IsTexture1D())
         {
@@ -287,7 +287,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
             return false;
         }
 
-        FD3D12UnorderedAccessViewRHIRef DefaultUAV = new FD3D12UnorderedAccessViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this, GetDefaultUnorderedAccessViewDescForTexture(Desc));
+        FD3D12UnorderedAccessViewRHIRef DefaultUAV = new FD3D12UnorderedAccessViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this, D3D12RHI::GetDefaultUnorderedAccessViewDescForTexture(Desc));
         if (!DefaultUAV->Initialize(nullptr, GetResource(), ViewDesc))
         {
             return false;
@@ -300,7 +300,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
     if (Desc.IsRenderTarget() && !Desc.IsNoDefaultRTV())
     {
         D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = {};
-        RTVDesc.Format = D3D12CastRenderTargetFormat(ResourceDesc.Format);
+        RTVDesc.Format = D3D12RHI::D3D12CastRenderTargetFormat(ResourceDesc.Format);
 
         if (Desc.IsTexture1D())
         {
@@ -360,7 +360,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
             return false;
         }
 
-        FD3D12RenderTargetViewRHIRef DefaultRTV = new FD3D12RenderTargetViewRHI(GetDevice(), GetDevice()->GetRenderTargetOfflineDescriptorHeap(), this, GetDefaultRenderTargetViewDescForTexture(Desc));
+        FD3D12RenderTargetViewRHIRef DefaultRTV = new FD3D12RenderTargetViewRHI(GetDevice(), GetDevice()->GetRenderTargetOfflineDescriptorHeap(), this, D3D12RHI::GetDefaultRenderTargetViewDescForTexture(Desc));
         if (!DefaultRTV->Initialize(GetResource(), RTVDesc))
         {
             return false;
@@ -374,7 +374,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
     {
         D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc = {};
         const EFormat DSVFormat = Desc.ClearValue.Format != EFormat::Unknown ? Desc.ClearValue.Format : Desc.Format;
-        DSVDesc.Format = D3D12CastDepthStencilFormat(ConvertFormat(DSVFormat));
+        DSVDesc.Format = D3D12RHI::D3D12CastDepthStencilFormat(D3D12RHI::ConvertFormat(DSVFormat));
 
         if (Desc.IsTexture1D())
         {
@@ -425,7 +425,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
             return false;
         }
 
-        FD3D12DepthStencilViewRHIRef DefaultDSV = new FD3D12DepthStencilViewRHI(GetDevice(), GetDevice()->GetDepthStencilOfflineDescriptorHeap(), this, GetDefaultDepthStencilViewDescForTexture(Desc));
+        FD3D12DepthStencilViewRHIRef DefaultDSV = new FD3D12DepthStencilViewRHI(GetDevice(), GetDevice()->GetDepthStencilOfflineDescriptorHeap(), this, D3D12RHI::GetDefaultDepthStencilViewDescForTexture(Desc));
         if (!DefaultDSV->Initialize(GetResource(), DSVDesc))
         {
             return false;
@@ -598,7 +598,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
             else
             {
                 D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = {};
-                RTVDesc.Format = D3D12CastRenderTargetFormat(ResourceDesc.Format);
+                RTVDesc.Format = D3D12RHI::D3D12CastRenderTargetFormat(ResourceDesc.Format);
 
                 if (Desc.IsTexture1D())
                 {
@@ -657,7 +657,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
                     return false;
                 }
 
-                FD3D12RenderTargetViewRHIRef NewRTV = new FD3D12RenderTargetViewRHI(GetDevice(), GetDevice()->GetRenderTargetOfflineDescriptorHeap(), this, GetDefaultRenderTargetViewDescForTexture(Desc));
+                FD3D12RenderTargetViewRHIRef NewRTV = new FD3D12RenderTargetViewRHI(GetDevice(), GetDevice()->GetRenderTargetOfflineDescriptorHeap(), this, D3D12RHI::GetDefaultRenderTargetViewDescForTexture(Desc));
                 if (!NewRTV->Initialize(GetResource(), RTVDesc))
                 {
                     D3D12_ERROR("Clear: Failed to create temporary RTV");
@@ -708,7 +708,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
                 const EFormat DSVViewFormat = Desc.ClearValue.Format != EFormat::Unknown ? Desc.ClearValue.Format : Desc.Format;
 
                 D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc = {};
-                DSVDesc.Format = D3D12CastDepthStencilFormat(ConvertFormat(DSVViewFormat));
+                DSVDesc.Format = D3D12RHI::D3D12CastDepthStencilFormat(D3D12RHI::ConvertFormat(DSVViewFormat));
 
                 if (Desc.IsTexture1D())
                 {
@@ -758,7 +758,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
                     return false;
                 }
 
-                FD3D12DepthStencilViewRHIRef NewDSV = new FD3D12DepthStencilViewRHI(GetDevice(), GetDevice()->GetDepthStencilOfflineDescriptorHeap(), this, GetDefaultDepthStencilViewDescForTexture(Desc));
+                FD3D12DepthStencilViewRHIRef NewDSV = new FD3D12DepthStencilViewRHI(GetDevice(), GetDevice()->GetDepthStencilOfflineDescriptorHeap(), this, D3D12RHI::GetDefaultDepthStencilViewDescForTexture(Desc));
                 if (!NewDSV->Initialize(GetResource(), DSVDesc))
                 {
                     D3D12_ERROR("Clear: Failed to create temporary DSV");
@@ -772,7 +772,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
             const EFormat DepthStencilFormat = Desc.ClearValue.Format != EFormat::Unknown ? Desc.ClearValue.Format : Desc.Format;
 
             D3D12_CLEAR_FLAGS ClearFlags = D3D12_CLEAR_FLAG_DEPTH;
-            if (IsStencilFormat(DepthStencilFormat))
+            if (D3D12RHI::IsStencilFormat(DepthStencilFormat))
             {
                 ClearFlags |= D3D12_CLEAR_FLAG_STENCIL;
             }
@@ -796,7 +796,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
 
     if (ResolvedStateMode != ED3D12ResourceStateMode::MultipleStates)
     {
-        Desc.TrackingMode = ConvertResourceStateMode(ResolvedStateMode);
+        Desc.TrackingMode = D3D12RHI::ConvertResourceStateMode(ResolvedStateMode);
         GetResource()->SetResourceStateMode(ResolvedStateMode);
     }
 
@@ -809,7 +809,7 @@ bool FD3D12TextureRHI::InitializeSamplerFeedbackMap(ERHIResourceState InInitialA
 #if D3D12_USE_SAMPLER_FEEDBACK
     D3D12_RESOURCE_DESC1 ResourceDesc = {};
     ResourceDesc.Dimension                = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-    ResourceDesc.Format                   = ConvertFormat(Desc.Format);
+    ResourceDesc.Format                   = D3D12RHI::ConvertFormat(Desc.Format);
     ResourceDesc.Width                    = Desc.Extent.X;
     ResourceDesc.Height                   = Desc.Extent.Y;
     ResourceDesc.DepthOrArraySize         = static_cast<UINT16>(RHIDimensionArrayLayers(Desc.Dimension, Desc.NumArraySlices));
@@ -828,7 +828,7 @@ bool FD3D12TextureRHI::InitializeSamplerFeedbackMap(ERHIResourceState InInitialA
     };
 
     FD3D12ResourceRef NewResource;
-    if (!GetDevice()->CreateCommittedResource2(ResourceDesc, D3D12_HEAP_TYPE_DEFAULT, ConvertResourceState(InInitialAccess), nullptr, NewResource))
+    if (!GetDevice()->CreateCommittedResource2(ResourceDesc, D3D12_HEAP_TYPE_DEFAULT, D3D12RHI::ConvertResourceState(InInitialAccess), nullptr, NewResource))
     {
         return false;
     }
@@ -851,7 +851,7 @@ bool FD3D12TextureRHI::InitializeSamplerFeedbackMap(ERHIResourceState InInitialA
 
 bool FD3D12TextureRHI::InitializeSwapChainTexture()
 {
-    const DXGI_FORMAT BackBufferFormat = ConvertFormat(Desc.Format);
+    const DXGI_FORMAT BackBufferFormat = D3D12RHI::ConvertFormat(Desc.Format);
 
     if (Desc.IsRenderTarget())
     {

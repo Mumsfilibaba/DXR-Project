@@ -426,6 +426,9 @@ struct THash<FVulkanHashableImageView>
     }
 };
 
+namespace VulkanRHI
+{
+
 inline String GetVersionAsString(uint32 VersionNumber)
 {
     return String::Printf("%d.%d.%d.%d", VK_API_VERSION_MAJOR(VersionNumber), VK_API_VERSION_MINOR(VersionNumber),
@@ -1395,6 +1398,8 @@ NODISCARD inline bool IsFormatInCompatibilityClass(VkFormat ImageFormat, VkForma
     }
 
     return false;
+}
+
 }
 
 constexpr const CHAR* ToString(VkImageLayout Layout)

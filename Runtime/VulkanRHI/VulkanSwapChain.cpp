@@ -183,7 +183,7 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
 
 	const VkSurfaceFormatKHR DesiredFormat =
 	{ 
-		ConvertFormat(CreateInfo.Format),
+		VulkanRHI::ConvertFormat(CreateInfo.Format),
 		CreateInfo.ColorSpace
 	};
 	
@@ -337,7 +337,7 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
 
 	// Ensure that all the image usage flags are supported
 	const VkImageUsageFlags SupportedUsage = Capabilities.supportedUsageFlags;
-	const VkImageUsageFlags RequestedUsage = ConvertSwapChainUsage(CreateInfo.Usage);
+	const VkImageUsageFlags RequestedUsage = VulkanRHI::ConvertSwapChainUsage(CreateInfo.Usage);
 	const VkImageUsageFlags FinalUsage     = RequestedUsage & SupportedUsage;
 
 	if (FinalUsage != RequestedUsage)
@@ -630,7 +630,7 @@ bool FVulkanSwapChainRHI::CreateBackBuffer()
 
 VkImageView FVulkanSwapChainRHI::CreateBackBufferImageView(VkImage InImage) const
 {
-    const VkFormat BackBufferFormat = ConvertFormat(Desc.ColorFormat);
+    const VkFormat BackBufferFormat = VulkanRHI::ConvertFormat(Desc.ColorFormat);
 
     VkImageViewCreateInfo ImageViewCreateInfo = {};
     ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -641,7 +641,7 @@ VkImageView FVulkanSwapChainRHI::CreateBackBufferImageView(VkImage InImage) cons
     ImageViewCreateInfo.components.g                    = VK_COMPONENT_SWIZZLE_G;
     ImageViewCreateInfo.components.b                    = VK_COMPONENT_SWIZZLE_B;
     ImageViewCreateInfo.components.a                    = VK_COMPONENT_SWIZZLE_A;
-    ImageViewCreateInfo.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(BackBufferFormat);
+    ImageViewCreateInfo.subresourceRange.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(BackBufferFormat);
     ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
     ImageViewCreateInfo.subresourceRange.layerCount     = 1;
     ImageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
@@ -857,7 +857,7 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
 	}
 
 	FVulkanSwapChainCreateInfo SwapChainCreateInfo;
-	SwapChainCreateInfo.ColorSpace        = ConvertColorSpace(CurrentColorSpace);
+	SwapChainCreateInfo.ColorSpace        = VulkanRHI::ConvertColorSpace(CurrentColorSpace);
 	SwapChainCreateInfo.Surface           = Surface.Get();
 	SwapChainCreateInfo.PreviousSwapChain = RetiredSurface ? nullptr : SwapChainResource.Get();
 	SwapChainCreateInfo.BufferCount       = CVarBackbufferCount.GetValue();
@@ -1023,7 +1023,7 @@ bool FVulkanSwapChainRHI::Resize(uint32 InWidth, uint32 InHeight, EFormat NewFor
     PendingRenderSemaphore.Reset();
 
     VULKAN_INFO("FVulkanSwapChainRHI::Resize Width=%u Height=%u Format=%s Colorspace=%s",
-        ResolvedWidth, ResolvedHeight, ToString(ConvertFormat(EffectiveFormat)), ToString(ConvertColorSpace(EffectiveColorSpace)));
+        ResolvedWidth, ResolvedHeight, ToString(VulkanRHI::ConvertFormat(EffectiveFormat)), ToString(VulkanRHI::ConvertColorSpace(EffectiveColorSpace)));
 
     if (bFormatChanged)
     {
@@ -1201,8 +1201,8 @@ bool FVulkanSwapChainRHI::IsFormatSupported(EFormat Format, EColorSpace ColorSpa
         return false;
     }
 
-    const VkFormat        TargetFormat     = ConvertFormat(Format);
-    const VkColorSpaceKHR TargetColorSpace = ConvertColorSpace(ColorSpace);
+    const VkFormat        TargetFormat     = VulkanRHI::ConvertFormat(Format);
+    const VkColorSpaceKHR TargetColorSpace = VulkanRHI::ConvertColorSpace(ColorSpace);
 
     for (const VkSurfaceFormatKHR& SupportedFormat : SupportedFormats)
     {

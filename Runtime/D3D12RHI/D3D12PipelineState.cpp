@@ -45,7 +45,7 @@ FD3D12InputLayoutRHI::FD3D12InputLayoutRHI(const TArray<FRHIInputElementDesc>& I
         InputElementDesc.SemanticIndex = Element.SemanticIndex;
         HashCombine(CalculatedHash, InputElementDesc.SemanticIndex);
 
-        InputElementDesc.Format = ConvertFormat(Element.Format);
+        InputElementDesc.Format = D3D12RHI::ConvertFormat(Element.Format);
         HashCombine(CalculatedHash, InputElementDesc.Format);
 
         InputElementDesc.InputSlot = Element.InputSlot;
@@ -54,7 +54,7 @@ FD3D12InputLayoutRHI::FD3D12InputLayoutRHI(const TArray<FRHIInputElementDesc>& I
         InputElementDesc.AlignedByteOffset = Element.ByteOffset;
         HashCombine(CalculatedHash, InputElementDesc.AlignedByteOffset);
 
-        InputElementDesc.InputSlotClass = ConvertVertexInputClass(Element.InputClass);
+        InputElementDesc.InputSlotClass = D3D12RHI::ConvertVertexInputClass(Element.InputClass);
         HashCombine(CalculatedHash, InputElementDesc.InputSlotClass);
 
         InputElementDesc.InstanceDataStepRate = Element.InputClass == EVertexInputClass::Vertex ? 0 : Element.InstanceStepRate;
@@ -94,14 +94,14 @@ FD3D12DepthStencilStateRHI::FD3D12DepthStencilStateRHI(const FRHIDepthStencilSta
 {
     Memory::Memzero(&D3D12Desc);
 
-    D3D12Desc.DepthFunc        = ConvertComparisonFunc(InDesc.DepthFunc);
+    D3D12Desc.DepthFunc        = D3D12RHI::ConvertComparisonFunc(InDesc.DepthFunc);
     D3D12Desc.DepthEnable      = InDesc.bDepthEnable;
     D3D12Desc.DepthWriteMask   = InDesc.bDepthWriteEnable ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
     D3D12Desc.StencilEnable    = InDesc.bStencilEnable;
     D3D12Desc.StencilReadMask  = static_cast<uint8>(InDesc.StencilReadMask);
     D3D12Desc.StencilWriteMask = static_cast<uint8>(InDesc.StencilWriteMask);
-    D3D12Desc.FrontFace        = ConvertStencilState(InDesc.FrontFace);
-    D3D12Desc.BackFace         = ConvertStencilState(InDesc.BackFace);
+    D3D12Desc.FrontFace        = D3D12RHI::ConvertStencilState(InDesc.FrontFace);
+    D3D12Desc.BackFace         = D3D12RHI::ConvertStencilState(InDesc.BackFace);
 
     Hash = CRC32::Generate(&D3D12Desc, sizeof(D3D12_DEPTH_STENCIL_DESC));
 }
@@ -122,12 +122,12 @@ FD3D12RasterizerStateRHI::FD3D12RasterizerStateRHI(const FRHIRasterizerStateDesc
     Memory::Memzero(&D3D12Desc);
 
     D3D12Desc.AntialiasedLineEnable = InDesc.bAntialiasedLineEnable;
-    D3D12Desc.CullMode              = ConvertCullMode(InDesc.CullMode);
+    D3D12Desc.CullMode              = D3D12RHI::ConvertCullMode(InDesc.CullMode);
     D3D12Desc.DepthBias             = static_cast<int32>(InDesc.DepthBias);
     D3D12Desc.DepthBiasClamp        = InDesc.DepthBiasClamp;
     D3D12Desc.DepthClipEnable       = InDesc.bDepthClipEnable;
     D3D12Desc.SlopeScaledDepthBias  = InDesc.SlopeScaledDepthBias;
-    D3D12Desc.FillMode              = ConvertFillMode(InDesc.FillMode);
+    D3D12Desc.FillMode              = D3D12RHI::ConvertFillMode(InDesc.FillMode);
     D3D12Desc.ForcedSampleCount     = InDesc.ForcedSampleCount;
     D3D12Desc.FrontCounterClockwise = InDesc.bFrontCounterClockwise;
     D3D12Desc.MultisampleEnable     = InDesc.bMultisampleEnable;
@@ -154,17 +154,17 @@ FD3D12BlendStateRHI::FD3D12BlendStateRHI(const FRHIBlendStateDesc& InDesc)
     D3D12Desc.AlphaToCoverageEnable   = InDesc.bAlphaToCoverageEnable;
     D3D12Desc.IndependentBlendEnable  = InDesc.bIndependentBlendEnable;
 
-    const D3D12_LOGIC_OP LogicOp = ConvertLogicOp(InDesc.LogicOp);
+    const D3D12_LOGIC_OP LogicOp = D3D12RHI::ConvertLogicOp(InDesc.LogicOp);
     for (int32 Index = 0; Index < InDesc.NumRenderTargets; Index++)
     {
         D3D12Desc.RenderTarget[Index].BlendEnable           = InDesc.RenderTargets[Index].bBlendEnable;
-        D3D12Desc.RenderTarget[Index].BlendOp               = ConvertBlendOp(InDesc.RenderTargets[Index].BlendOp);
-        D3D12Desc.RenderTarget[Index].BlendOpAlpha          = ConvertBlendOp(InDesc.RenderTargets[Index].BlendOpAlpha);
-        D3D12Desc.RenderTarget[Index].DestBlend             = ConvertBlend(InDesc.RenderTargets[Index].DstBlend);
-        D3D12Desc.RenderTarget[Index].DestBlendAlpha        = ConvertBlend(InDesc.RenderTargets[Index].DstBlendAlpha);
-        D3D12Desc.RenderTarget[Index].SrcBlend              = ConvertBlend(InDesc.RenderTargets[Index].SrcBlend);
-        D3D12Desc.RenderTarget[Index].SrcBlendAlpha         = ConvertBlend(InDesc.RenderTargets[Index].SrcBlendAlpha);
-        D3D12Desc.RenderTarget[Index].RenderTargetWriteMask = ConvertColorWriteFlags(InDesc.RenderTargets[Index].ColorWriteMask);
+        D3D12Desc.RenderTarget[Index].BlendOp               = D3D12RHI::ConvertBlendOp(InDesc.RenderTargets[Index].BlendOp);
+        D3D12Desc.RenderTarget[Index].BlendOpAlpha          = D3D12RHI::ConvertBlendOp(InDesc.RenderTargets[Index].BlendOpAlpha);
+        D3D12Desc.RenderTarget[Index].DestBlend             = D3D12RHI::ConvertBlend(InDesc.RenderTargets[Index].DstBlend);
+        D3D12Desc.RenderTarget[Index].DestBlendAlpha        = D3D12RHI::ConvertBlend(InDesc.RenderTargets[Index].DstBlendAlpha);
+        D3D12Desc.RenderTarget[Index].SrcBlend              = D3D12RHI::ConvertBlend(InDesc.RenderTargets[Index].SrcBlend);
+        D3D12Desc.RenderTarget[Index].SrcBlendAlpha         = D3D12RHI::ConvertBlend(InDesc.RenderTargets[Index].SrcBlendAlpha);
+        D3D12Desc.RenderTarget[Index].RenderTargetWriteMask = D3D12RHI::ConvertColorWriteFlags(InDesc.RenderTargets[Index].ColorWriteMask);
         D3D12Desc.RenderTarget[Index].LogicOp               = LogicOp;
         D3D12Desc.RenderTarget[Index].LogicOpEnable         = InDesc.bLogicOpEnable;
     }
@@ -406,11 +406,11 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
 
         for (uint32 Index = 0; Index < RenderTargetInfo.NumRenderTargets; Index++)
         {
-            RenderTargetInfo.RTFormats[Index] = ConvertFormat(Desc.RasterizerOutputFormats.RenderTargetFormats[Index]);
+            RenderTargetInfo.RTFormats[Index] = D3D12RHI::ConvertFormat(Desc.RasterizerOutputFormats.RenderTargetFormats[Index]);
         }
 
         // DepthStencil
-        DepthBufferFormat = ConvertFormat(Desc.RasterizerOutputFormats.DepthStencilFormat);
+        DepthBufferFormat = D3D12RHI::ConvertFormat(Desc.RasterizerOutputFormats.DepthStencilFormat);
     }
 
     // RasterizerState
@@ -452,8 +452,8 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
 
     // Topology
     {
-        PrimitiveTopologyType = ConvertPrimitiveTopologyType(Desc.PrimitiveTopology);
-        PrimitiveTopology     = ConvertPrimitiveTopology(Desc.PrimitiveTopology);
+        PrimitiveTopologyType = D3D12RHI::ConvertPrimitiveTopologyType(Desc.PrimitiveTopology);
+        PrimitiveTopology     = D3D12RHI::ConvertPrimitiveTopology(Desc.PrimitiveTopology);
     }
 
     // IndexBufferStripCutValue
@@ -1079,10 +1079,10 @@ bool FD3D12MeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDes
 
         for (uint32 Index = 0; Index < RenderTargetInfo.NumRenderTargets; Index++)
         {
-            RenderTargetInfo.RTFormats[Index] = ConvertFormat(Desc.RasterizerOutputFormats.RenderTargetFormats[Index]);
+            RenderTargetInfo.RTFormats[Index] = D3D12RHI::ConvertFormat(Desc.RasterizerOutputFormats.RenderTargetFormats[Index]);
         }
 
-        DepthBufferFormat = ConvertFormat(Desc.RasterizerOutputFormats.DepthStencilFormat);
+        DepthBufferFormat = D3D12RHI::ConvertFormat(Desc.RasterizerOutputFormats.DepthStencilFormat);
     }
 
     // RasterizerState

@@ -23,7 +23,7 @@ FD3D12CommandAllocator::~FD3D12CommandAllocator()
 
 bool FD3D12CommandAllocator::Initialize()
 {
-    const D3D12_COMMAND_LIST_TYPE Type = ToCommandListType(QueueType);
+    const D3D12_COMMAND_LIST_TYPE Type = D3D12RHI::ToCommandListType(QueueType);
 
     HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
     if (SUCCEEDED(Result))
@@ -217,7 +217,7 @@ void FD3D12CommandList::BeginQuery(const FD3D12Query& Query)
     FD3D12QueryHeap* Heap = Query.QueryHeap;
     UpdateResidency(Heap->GetResidencyHandle());
 
-    const D3D12_QUERY_TYPE D3DType = GetResolveQueryType(Heap->QueryHeapType);
+    const D3D12_QUERY_TYPE D3DType = D3D12RHI::GetResolveQueryType(Heap->QueryHeapType);
     GetGraphicsCommandList()->BeginQuery(Heap->GetD3D12QueryHeap(), D3DType, Query.QueryIndex);
 
     if (Heap->QueryHeapType == D3D12_QUERY_HEAP_TYPE_OCCLUSION)
@@ -242,7 +242,7 @@ void FD3D12CommandList::EndQuery(const FD3D12Query& Query)
     }
     else
     {
-        const D3D12_QUERY_TYPE D3DType = GetResolveQueryType(Heap->QueryHeapType);
+        const D3D12_QUERY_TYPE D3DType = D3D12RHI::GetResolveQueryType(Heap->QueryHeapType);
         GetGraphicsCommandList()->EndQuery(Heap->GetD3D12QueryHeap(), D3DType, Query.QueryIndex);
     }
 }

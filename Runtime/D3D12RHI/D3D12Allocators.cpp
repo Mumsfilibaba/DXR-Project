@@ -3020,13 +3020,13 @@ bool FD3D12TextureAllocator::CanUseSmallResourcePlacementAlignment(const D3D12_R
     uint32 SizeX = static_cast<uint32>(Desc.Width);
     uint32 SizeY = Desc.Height;
 
-    uint32 BitsPerPixel = GetBitsPerPixel(Desc.Format);
+    uint32 BitsPerPixel = D3D12RHI::GetBitsPerPixel(Desc.Format);
     if (BitsPerPixel == 0)
     {
         return false;
     }
 
-    if (IsFormatCompressed(Desc.Format))
+    if (D3D12RHI::IsFormatCompressed(Desc.Format))
     {
         SizeX         = Math::DivideByMultiple(SizeX, 4u);
         SizeY         = Math::DivideByMultiple(SizeY, 4u);
@@ -3585,13 +3585,13 @@ bool FD3D12TextureAllocator::CanUseSmallResourcePlacementAlignment(const D3D12_R
     uint32 SizeX = static_cast<uint32>(Desc.Width);
     uint32 SizeY = Desc.Height;
 
-    uint32 BitsPerPixel = GetBitsPerPixel(Desc.Format);
+    uint32 BitsPerPixel = D3D12RHI::GetBitsPerPixel(Desc.Format);
     if (BitsPerPixel == 0)
     {
         return false;
     }
 
-    if (IsFormatCompressed(Desc.Format))
+    if (D3D12RHI::IsFormatCompressed(Desc.Format))
     {
         SizeX         = Math::DivideByMultiple(SizeX, 4u);
         SizeY         = Math::DivideByMultiple(SizeY, 4u);

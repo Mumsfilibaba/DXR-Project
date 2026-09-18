@@ -361,7 +361,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
         {
             VkPhysicalDeviceProperties AdapterProperties;
             vkGetPhysicalDeviceProperties(CurrentAdapter, &AdapterProperties);
-            LOG_INFO("    '%s' Supports Vulkan '%s'", AdapterProperties.deviceName, *GetVersionAsString(AdapterProperties.apiVersion));
+            LOG_INFO("    '%s' Supports Vulkan '%s'", AdapterProperties.deviceName, *VulkanRHI::GetVersionAsString(AdapterProperties.apiVersion));
         }
     }
 
@@ -379,7 +379,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
 
         if (AdapterProperties.apiVersion < VULKAN_TARGET_API_VERSION)
         {
-            VULKAN_INFO("Skipping device '%s' since it's api-version is below Vulkan 1.2 (apiVersion=%s)", AdapterProperties.deviceName, *GetVersionAsString(AdapterProperties.apiVersion));
+            VULKAN_INFO("Skipping device '%s' since it's api-version is below Vulkan 1.2 (apiVersion=%s)", AdapterProperties.deviceName, *VulkanRHI::GetVersionAsString(AdapterProperties.apiVersion));
             continue;
         }
 
@@ -546,7 +546,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
 
     vkGetPhysicalDeviceMemoryProperties2(PhysicalDevice, &DeviceMemoryProperties2);
     
-    VULKAN_INFO("Using adapter '%s' Which supports Vulkan '%s'", DeviceProperties.deviceName, *GetVersionAsString(DeviceProperties.apiVersion));
+    VULKAN_INFO("Using adapter '%s' Which supports Vulkan '%s'", DeviceProperties.deviceName, *VulkanRHI::GetVersionAsString(DeviceProperties.apiVersion));
     return true;
 }
 
@@ -1144,7 +1144,7 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
         ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
         ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
         ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
-        ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(VK_FORMAT_R8G8B8A8_UNORM);
+        ImageBarrier.subresourceRange.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(VK_FORMAT_R8G8B8A8_UNORM);
         ImageBarrier.subresourceRange.baseArrayLayer = 0;
         ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
         ImageBarrier.subresourceRange.baseMipLevel   = 0;
@@ -1251,17 +1251,17 @@ bool FVulkanDevice::FindOrCreateSampler(const FRHISamplerStateDesc& SamplerDesc,
 {
     VkSamplerCreateInfo CreateInfo = {};
     CreateInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    CreateInfo.magFilter               = ConvertSamplerFilterToMagFilter(SamplerDesc.Filter);
-    CreateInfo.minFilter               = ConvertSamplerFilterToMinFilter(SamplerDesc.Filter);
-    CreateInfo.mipmapMode              = ConvertSamplerFilterToMipmapMode(SamplerDesc.Filter);
-    CreateInfo.addressModeU            = ConvertSamplerMode(SamplerDesc.AddressU);
-    CreateInfo.addressModeV            = ConvertSamplerMode(SamplerDesc.AddressV);
-    CreateInfo.addressModeW            = ConvertSamplerMode(SamplerDesc.AddressW);
+    CreateInfo.magFilter               = VulkanRHI::ConvertSamplerFilterToMagFilter(SamplerDesc.Filter);
+    CreateInfo.minFilter               = VulkanRHI::ConvertSamplerFilterToMinFilter(SamplerDesc.Filter);
+    CreateInfo.mipmapMode              = VulkanRHI::ConvertSamplerFilterToMipmapMode(SamplerDesc.Filter);
+    CreateInfo.addressModeU            = VulkanRHI::ConvertSamplerMode(SamplerDesc.AddressU);
+    CreateInfo.addressModeV            = VulkanRHI::ConvertSamplerMode(SamplerDesc.AddressV);
+    CreateInfo.addressModeW            = VulkanRHI::ConvertSamplerMode(SamplerDesc.AddressW);
     CreateInfo.mipLodBias              = SamplerDesc.MipLODBias;
-    CreateInfo.anisotropyEnable        = IsAnisotropySampler(SamplerDesc.Filter);
+    CreateInfo.anisotropyEnable        = VulkanRHI::IsAnisotropySampler(SamplerDesc.Filter);
     CreateInfo.maxAnisotropy           = SamplerDesc.MaxAnisotropy;
-    CreateInfo.compareEnable           = IsComparisonSampler(SamplerDesc.Filter);
-    CreateInfo.compareOp               = ConvertComparisonFunc(SamplerDesc.ComparisonFunc);
+    CreateInfo.compareEnable           = VulkanRHI::IsComparisonSampler(SamplerDesc.Filter);
+    CreateInfo.compareOp               = VulkanRHI::ConvertComparisonFunc(SamplerDesc.ComparisonFunc);
     CreateInfo.minLod                  = SamplerDesc.MinLOD;
     CreateInfo.maxLod                  = SamplerDesc.MaxLOD;
     CreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;

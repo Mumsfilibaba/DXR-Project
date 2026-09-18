@@ -80,8 +80,14 @@ constexpr uint32 MAX_BUFFERS  = 48;
 constexpr uint32 MAX_SHADER_CONSTANTS = 32;
 constexpr uint32 MAX_VIEWPORTS        = 16;
 
-constexpr uint32 BUFFER_ALIGNMENT          = 16;
-constexpr uint32 CONSTANT_BUFFER_ALIGNMENT = 256;
+constexpr uint32 BUFFER_ALIGNMENT                 = 16;
+constexpr uint32 CONSTANT_BUFFER_ALIGNMENT        = 256;
+constexpr uint32 ACCELERATION_STRUCTURE_ALIGNMENT = 256;
+
+constexpr uint32 TEXTURE_UPLOAD_ALIGNMENT = 256;
+
+namespace MetalRHI
+{
 
 constexpr MTLLoadAction ConvertAttachmentLoadAction(EAttachmentLoadAction LoadAction)
 {
@@ -343,6 +349,26 @@ constexpr MTLTextureType GetMTLTextureType(ETextureDimension TextureDimension, b
     }
 }
 
+constexpr MTLTextureType GetMTLTextureType(EViewDimension ViewDimension, bool bIsMultisampled)
+{
+    switch (ViewDimension)
+    {
+        case EViewDimension::Texture1D:        return MTLTextureType1D;
+        case EViewDimension::Texture1DArray:   return MTLTextureType1DArray;
+        case EViewDimension::Texture2D:        return bIsMultisampled ? MTLTextureType2DMultisample      : MTLTextureType2D;
+        case EViewDimension::Texture2DArray:   return bIsMultisampled ? MTLTextureType2DMultisampleArray : MTLTextureType2DArray;
+        case EViewDimension::TextureCube:      return MTLTextureTypeCube;
+        case EViewDimension::TextureCubeArray: return MTLTextureTypeCubeArray;
+        case EViewDimension::Texture3D:        return MTLTextureType3D;
+
+        default:
+        {
+            CHECK(false);
+            return MTLTextureType(-1);
+        }
+    }
+}
+
 constexpr MTLTextureUsage ConvertTextureFlags(ETextureUsageFlags Flag)
 {
     MTLTextureUsage Result = MTLTextureUsageUnknown;
@@ -362,8 +388,47 @@ constexpr MTLTextureUsage ConvertTextureFlags(ETextureUsageFlags Flag)
     {
         Result |= MTLTextureUsageShaderRead;
     }
+    if (IsEnumFlagSet(Flag, ETextureUsageFlags::CopySource))
+    {
+        Result |= MTLTextureUsageShaderRead;
+    }
 
     return Result;
+}
+
+constexpr MTLResourceOptions GetMTLBufferResourceOptions(const FRHIBufferDesc& BufferDesc)
+{
+    if (BufferDesc.IsReadBack())
+    {
+        return MTLResourceStorageModeShared | MTLResourceCPUCacheModeDefaultCache | MTLResourceHazardTrackingModeDefault;
+    }
+
+    if (BufferDesc.IsDynamic() || BufferDesc.IsTransient())
+    {
+        return MTLResourceStorageModeShared | MTLResourceCPUCacheModeWriteCombined | MTLResourceHazardTrackingModeDefault;
+    }
+
+    return MTLResourceStorageModePrivate | MTLResourceCPUCacheModeDefaultCache | MTLResourceHazardTrackingModeDefault;
+}
+
+constexpr uint64 GetMTLBufferAlignment(const FRHIBufferDesc& BufferDesc)
+{
+    if (BufferDesc.IsAccelerationStructure())
+    {
+        return ACCELERATION_STRUCTURE_ALIGNMENT;
+    }
+
+    if (BufferDesc.IsConstantBuffer())
+    {
+        return CONSTANT_BUFFER_ALIGNMENT;
+    }
+
+    return BUFFER_ALIGNMENT;
+}
+
+constexpr bool IsMTLBufferMappable(const FRHIBufferDesc& BufferDesc)
+{
+    return BufferDesc.IsDynamic() || BufferDesc.IsReadBack() || BufferDesc.IsTransient();
 }
 
 constexpr MTLPixelFormat ConvertFormat(EFormat Format)
@@ -648,4 +713,6 @@ constexpr MTLTriangleFillMode ConvertFillMode(EFillMode FillMode)
         case EFillMode::Solid:     return MTLTriangleFillModeFill;
         default:                   return MTLTriangleFillMode(-1);
     }
+}
+
 }

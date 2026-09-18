@@ -566,7 +566,7 @@ void FVulkanCommands::PreExecute()
         FVulkanImageLayoutState& GlobalState = Pending.Texture->GetImageLayoutState();
 
         const VkImageCreateInfo& CreateInfo = Pending.Texture->GetVkImageCreateInfo();
-        const VkImageAspectFlags AspectMask = GetImageAspectFlagsFromFormat(CreateInfo.format);
+        const VkImageAspectFlags AspectMask = VulkanRHI::GetImageAspectFlagsFromFormat(CreateInfo.format);
 
         if (Pending.Subresource == RHI_ALL_MIP_LEVELS)
         {

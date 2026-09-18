@@ -775,7 +775,7 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
     // Shader Model
     // -------------------------------------------------------------------------------------------
 
-    RHI::MaxShaderModel = ConvertShaderModel(GD3D12HighestShaderModel);
+    RHI::MaxShaderModel = D3D12RHI::ConvertShaderModel(GD3D12HighestShaderModel);
 
     // -------------------------------------------------------------------------------------------
     // SV_RenderTargetArrayIndex from VS

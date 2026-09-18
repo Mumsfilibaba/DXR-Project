@@ -93,7 +93,7 @@ FVulkanInputLayoutRHI::FVulkanInputLayoutRHI(const TArray<FRHIInputElementDesc>&
     for (int32 Index = 0; Index < NumElements; Index++)
     {
         VkVertexInputAttributeDescription& Attribute = VertexInputAttributeDescriptions[Index];
-        Attribute.format   = ConvertFormat(InInputElements[Index].Format);
+        Attribute.format   = VulkanRHI::ConvertFormat(InInputElements[Index].Format);
         Attribute.binding  = InInputElements[Index].InputSlot;
         Attribute.location = InInputElements[Index].ShaderElementIndex;
         Attribute.offset   = InInputElements[Index].ByteOffset;
@@ -143,11 +143,11 @@ FVulkanDepthStencilStateRHI::FVulkanDepthStencilStateRHI(const FRHIDepthStencilS
     CreateInfo.sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     CreateInfo.depthTestEnable       = InDesc.bDepthEnable;
     CreateInfo.depthWriteEnable      = InDesc.bDepthWriteEnable;
-    CreateInfo.depthCompareOp        = ConvertComparisonFunc(InDesc.DepthFunc);
+    CreateInfo.depthCompareOp        = VulkanRHI::ConvertComparisonFunc(InDesc.DepthFunc);
     CreateInfo.depthBoundsTestEnable = (InDesc.bDepthBoundsTestEnable && GVulkanSupportsDepthBoundsTest) ? VK_TRUE : VK_FALSE;
     CreateInfo.stencilTestEnable     = InDesc.bStencilEnable;
-    CreateInfo.front                 = ConvertStencilState(InDesc.FrontFace);
-    CreateInfo.back                  = ConvertStencilState(InDesc.BackFace);
+    CreateInfo.front                 = VulkanRHI::ConvertStencilState(InDesc.FrontFace);
+    CreateInfo.back                  = VulkanRHI::ConvertStencilState(InDesc.BackFace);
     CreateInfo.minDepthBounds        = 0.0f;
     CreateInfo.maxDepthBounds        = 1.0f;
     
@@ -172,8 +172,8 @@ FVulkanRasterizerStateRHI::FVulkanRasterizerStateRHI(FVulkanDevice* InDevice, co
     
     CreateInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     CreateInfo.rasterizerDiscardEnable = VK_FALSE;
-    CreateInfo.polygonMode             = ConvertFillMode(InDesc.FillMode);
-    CreateInfo.cullMode                = ConvertCullMode(InDesc.CullMode);
+    CreateInfo.polygonMode             = VulkanRHI::ConvertFillMode(InDesc.FillMode);
+    CreateInfo.cullMode                = VulkanRHI::ConvertCullMode(InDesc.CullMode);
     CreateInfo.frontFace               = InDesc.bFrontCounterClockwise ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE;
     CreateInfo.depthBiasEnable         = InDesc.bEnableDepthBias ? VK_TRUE : VK_FALSE;
     CreateInfo.depthBiasConstantFactor = InDesc.DepthBias;
@@ -249,20 +249,20 @@ FVulkanBlendStateRHI::FVulkanBlendStateRHI(const FRHIBlendStateDesc& InDesc)
     // NOTE: Blend constants are configured as dynamic state
     CreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     CreateInfo.logicOpEnable   = InDesc.bLogicOpEnable;
-    CreateInfo.logicOp         = ConvertLogicOp(InDesc.LogicOp);
+    CreateInfo.logicOp         = VulkanRHI::ConvertLogicOp(InDesc.LogicOp);
     CreateInfo.attachmentCount = InDesc.NumRenderTargets;
     CreateInfo.pAttachments    = BlendAttachmentStates;
 
     for (int32 Index = 0; Index < InDesc.NumRenderTargets; Index++)
     {
         BlendAttachmentStates[Index].blendEnable         = InDesc.RenderTargets[Index].bBlendEnable ? VK_TRUE : VK_FALSE;
-        BlendAttachmentStates[Index].srcColorBlendFactor = ConvertBlend(InDesc.RenderTargets[Index].SrcBlend);
-        BlendAttachmentStates[Index].dstColorBlendFactor = ConvertBlend(InDesc.RenderTargets[Index].DstBlend);
-        BlendAttachmentStates[Index].colorBlendOp        = ConvertBlendOp(InDesc.RenderTargets[Index].BlendOp);
-        BlendAttachmentStates[Index].srcAlphaBlendFactor = ConvertBlend(InDesc.RenderTargets[Index].SrcBlendAlpha);
-        BlendAttachmentStates[Index].dstAlphaBlendFactor = ConvertBlend(InDesc.RenderTargets[Index].DstBlendAlpha);
-        BlendAttachmentStates[Index].alphaBlendOp        = ConvertBlendOp(InDesc.RenderTargets[Index].BlendOpAlpha);
-        BlendAttachmentStates[Index].colorWriteMask      = ConvertColorWriteFlags(InDesc.RenderTargets[Index].ColorWriteMask);
+        BlendAttachmentStates[Index].srcColorBlendFactor = VulkanRHI::ConvertBlend(InDesc.RenderTargets[Index].SrcBlend);
+        BlendAttachmentStates[Index].dstColorBlendFactor = VulkanRHI::ConvertBlend(InDesc.RenderTargets[Index].DstBlend);
+        BlendAttachmentStates[Index].colorBlendOp        = VulkanRHI::ConvertBlendOp(InDesc.RenderTargets[Index].BlendOp);
+        BlendAttachmentStates[Index].srcAlphaBlendFactor = VulkanRHI::ConvertBlend(InDesc.RenderTargets[Index].SrcBlendAlpha);
+        BlendAttachmentStates[Index].dstAlphaBlendFactor = VulkanRHI::ConvertBlend(InDesc.RenderTargets[Index].DstBlendAlpha);
+        BlendAttachmentStates[Index].alphaBlendOp        = VulkanRHI::ConvertBlendOp(InDesc.RenderTargets[Index].BlendOpAlpha);
+        BlendAttachmentStates[Index].colorWriteMask      = VulkanRHI::ConvertColorWriteFlags(InDesc.RenderTargets[Index].ColorWriteMask);
     }
 }
 
@@ -491,7 +491,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     // InputAssembly CreateInfo
     VkPipelineInputAssemblyStateCreateInfo InputAssemblyCreateInfo = {};
     InputAssemblyCreateInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    InputAssemblyCreateInfo.topology               = ConvertPrimitiveTopology(InDesc.PrimitiveTopology);
+    InputAssemblyCreateInfo.topology               = VulkanRHI::ConvertPrimitiveTopology(InDesc.PrimitiveTopology);
     InputAssemblyCreateInfo.primitiveRestartEnable = InDesc.bPrimitiveRestartEnable ? VK_TRUE : VK_FALSE;
 
     // Tessellation CreateInfo
@@ -566,7 +566,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     VkPipelineMultisampleStateCreateInfo MultisamplingCreateInfo = {};
     MultisamplingCreateInfo.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     MultisamplingCreateInfo.sampleShadingEnable   = VK_FALSE;
-    MultisamplingCreateInfo.rasterizationSamples  = ConvertSampleCount(EffectiveSampleCount);
+    MultisamplingCreateInfo.rasterizationSamples  = VulkanRHI::ConvertSampleCount(EffectiveSampleCount);
     MultisamplingCreateInfo.minSampleShading      = 1.0f;
     MultisamplingCreateInfo.pSampleMask           = SampleMaskValues;
     MultisamplingCreateInfo.alphaToCoverageEnable = InDesc.BlendState->GetDesc().bAlphaToCoverageEnable ? VK_TRUE : VK_FALSE;
@@ -648,16 +648,16 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     {
         for (uint8 Index = 0; Index < InDesc.RasterizerOutputFormats.NumRenderTargets; Index++)
         {
-            ColorAttachmentFormats[Index] = ConvertFormat(InDesc.RasterizerOutputFormats.RenderTargetFormats[Index]);
+            ColorAttachmentFormats[Index] = VulkanRHI::ConvertFormat(InDesc.RasterizerOutputFormats.RenderTargetFormats[Index]);
         }
 
-        const VkFormat DepthStencilVkFormat = ConvertFormat(InDesc.RasterizerOutputFormats.DepthStencilFormat);
+        const VkFormat DepthStencilVkFormat = VulkanRHI::ConvertFormat(InDesc.RasterizerOutputFormats.DepthStencilFormat);
 
         PipelineRenderingInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
         PipelineRenderingInfo.colorAttachmentCount    = InDesc.RasterizerOutputFormats.NumRenderTargets;
         PipelineRenderingInfo.pColorAttachmentFormats = ColorAttachmentFormats;
         PipelineRenderingInfo.depthAttachmentFormat   = DepthStencilVkFormat;
-        PipelineRenderingInfo.stencilAttachmentFormat = IsStencilFormat(DepthStencilVkFormat) ? DepthStencilVkFormat : VK_FORMAT_UNDEFINED;
+        PipelineRenderingInfo.stencilAttachmentFormat = VulkanRHI::IsStencilFormat(DepthStencilVkFormat) ? DepthStencilVkFormat : VK_FORMAT_UNDEFINED;
 
         if (GVulkanSupportsMultiviews && InDesc.ViewInstancingState.bEnableViewInstancing)
         {
@@ -682,7 +682,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     else
     {
         FVulkanRenderPassKey RenderPassKey;
-        RenderPassKey.SampleCountLog2                 = SampleCountToLog2(EffectiveSampleCount);
+        RenderPassKey.SampleCountLog2                 = VulkanRHI::SampleCountToLog2(EffectiveSampleCount);
         RenderPassKey.DepthStencilFormat              = InDesc.RasterizerOutputFormats.DepthStencilFormat;
         RenderPassKey.DepthStencilActions.LoadAction  = EAttachmentLoadAction::Load;
         RenderPassKey.DepthStencilActions.StoreAction = EAttachmentStoreAction::Store;
@@ -1042,7 +1042,7 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
     VkPipelineMultisampleStateCreateInfo MultisamplingCreateInfo = {};
     MultisamplingCreateInfo.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     MultisamplingCreateInfo.sampleShadingEnable   = VK_FALSE;
-    MultisamplingCreateInfo.rasterizationSamples  = ConvertSampleCount(EffectiveSampleCount);
+    MultisamplingCreateInfo.rasterizationSamples  = VulkanRHI::ConvertSampleCount(EffectiveSampleCount);
     MultisamplingCreateInfo.minSampleShading      = 1.0f;
     MultisamplingCreateInfo.pSampleMask           = SampleMaskValues;
     MultisamplingCreateInfo.alphaToCoverageEnable = InDesc.BlendState->GetDesc().bAlphaToCoverageEnable ? VK_TRUE : VK_FALSE;
@@ -1122,16 +1122,16 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
     {
         for (uint8 Index = 0; Index < InDesc.RasterizerOutputFormats.NumRenderTargets; Index++)
         {
-            ColorAttachmentFormats[Index] = ConvertFormat(InDesc.RasterizerOutputFormats.RenderTargetFormats[Index]);
+            ColorAttachmentFormats[Index] = VulkanRHI::ConvertFormat(InDesc.RasterizerOutputFormats.RenderTargetFormats[Index]);
         }
 
-        const VkFormat DepthStencilVkFormat = ConvertFormat(InDesc.RasterizerOutputFormats.DepthStencilFormat);
+        const VkFormat DepthStencilVkFormat = VulkanRHI::ConvertFormat(InDesc.RasterizerOutputFormats.DepthStencilFormat);
 
         PipelineRenderingInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
         PipelineRenderingInfo.colorAttachmentCount    = InDesc.RasterizerOutputFormats.NumRenderTargets;
         PipelineRenderingInfo.pColorAttachmentFormats = ColorAttachmentFormats;
         PipelineRenderingInfo.depthAttachmentFormat   = DepthStencilVkFormat;
-        PipelineRenderingInfo.stencilAttachmentFormat = IsStencilFormat(DepthStencilVkFormat) ? DepthStencilVkFormat : VK_FORMAT_UNDEFINED;
+        PipelineRenderingInfo.stencilAttachmentFormat = VulkanRHI::IsStencilFormat(DepthStencilVkFormat) ? DepthStencilVkFormat : VK_FORMAT_UNDEFINED;
 
         if (GVulkanSupportsMultiviews && GVulkanSupportsMeshShaderMultiview && InDesc.ViewInstancingState.bEnableViewInstancing)
         {
@@ -1160,7 +1160,7 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
     else
     {
         FVulkanRenderPassKey RenderPassKey;
-        RenderPassKey.SampleCountLog2                 = SampleCountToLog2(EffectiveSampleCount);
+        RenderPassKey.SampleCountLog2                 = VulkanRHI::SampleCountToLog2(EffectiveSampleCount);
         RenderPassKey.DepthStencilFormat              = InDesc.RasterizerOutputFormats.DepthStencilFormat;
         RenderPassKey.DepthStencilActions.LoadAction  = EAttachmentLoadAction::Load;
         RenderPassKey.DepthStencilActions.StoreAction = EAttachmentStoreAction::Store;

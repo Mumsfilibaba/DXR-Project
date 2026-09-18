@@ -243,12 +243,18 @@ FRHIShaderResourceView* FMetalDeviceRHI::CreateShaderResourceView(FRHIResource* 
         return nullptr;
     }
 
-    if (InDesc.IsBufferSRV() || InDesc.IsTextureSRV() || InDesc.IsAccelerationStructureSRV())
+    if (!InDesc.IsBufferSRV() && !InDesc.IsTextureSRV() && !InDesc.IsAccelerationStructureSRV())
     {
-        return new FMetalShaderResourceViewRHI(GetMetalDevice(), InResource, InDesc);
+        return nullptr;
     }
 
-    return nullptr;
+    TSharedRef<FMetalShaderResourceViewRHI> NewView = new FMetalShaderResourceViewRHI(GetMetalDevice(), InResource, InDesc);
+    if (!NewView->Initialize())
+    {
+        return nullptr;
+    }
+
+    return NewView.ReleaseOwnership();
 }
 
 FRHIRenderTargetView* FMetalDeviceRHI::CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)
@@ -259,7 +265,14 @@ FRHIRenderTargetView* FMetalDeviceRHI::CreateRenderTargetView(FRHIResource* InRe
     }
 
     FRHITexture* Texture = static_cast<FRHITexture*>(InResource);
-    return new FMetalRenderTargetViewRHI(GetMetalDevice(), Texture, InDesc);
+
+    TSharedRef<FMetalRenderTargetViewRHI> NewView = new FMetalRenderTargetViewRHI(GetMetalDevice(), Texture, InDesc);
+    if (!NewView->Initialize())
+    {
+        return nullptr;
+    }
+
+    return NewView.ReleaseOwnership();
 }
 
 FRHIDepthStencilView* FMetalDeviceRHI::CreateDepthStencilView(FRHIResource* InResource, const FRHIDepthStencilViewDesc& InDesc)
@@ -270,7 +283,14 @@ FRHIDepthStencilView* FMetalDeviceRHI::CreateDepthStencilView(FRHIResource* InRe
     }
     
     FRHITexture* Texture = static_cast<FRHITexture*>(InResource);
-    return new FMetalDepthStencilViewRHI(GetMetalDevice(), Texture, InDesc);
+
+    TSharedRef<FMetalDepthStencilViewRHI> NewView = new FMetalDepthStencilViewRHI(GetMetalDevice(), Texture, InDesc);
+    if (!NewView->Initialize())
+    {
+        return nullptr;
+    }
+
+    return NewView.ReleaseOwnership();
 }
 
 FRHIUnorderedAccessView* FMetalDeviceRHI::CreateUnorderedAccessView(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc)
@@ -280,12 +300,18 @@ FRHIUnorderedAccessView* FMetalDeviceRHI::CreateUnorderedAccessView(FRHIResource
         return nullptr;
     }
 
-    if (InDesc.IsBufferUAV() || InDesc.IsTextureUAV())
+    if (!InDesc.IsBufferUAV() && !InDesc.IsTextureUAV())
     {
-        return new FMetalUnorderedAccessViewRHI(GetMetalDevice(), InResource, InDesc);
+        return nullptr;
     }
 
-    return nullptr;
+    TSharedRef<FMetalUnorderedAccessViewRHI> NewView = new FMetalUnorderedAccessViewRHI(GetMetalDevice(), InResource, InDesc);
+    if (!NewView->Initialize())
+    {
+        return nullptr;
+    }
+
+    return NewView.ReleaseOwnership();
 }
 
 FRHIUnorderedAccessView* FMetalDeviceRHI::CreateSamplerFeedbackUnorderedAccessView(FRHITexture* /* InFeedbackTexture */, FRHITexture* /* InTargetedTexture */)
@@ -532,8 +558,8 @@ FRHISwapChain* FMetalDeviceRHI::CreateSwapChain(const FRHISwapChainDesc& SwapCha
 
 bool FMetalDeviceRHI::QueryUAVFormatSupport(EFormat Format) const
 {
-    const MTLPixelFormat PixelFormat = ConvertFormat(Format);
-    return MetalFormatSupportsShaderWrite(PixelFormat, GMetalReadWriteTextureTier);
+    const MTLPixelFormat PixelFormat = MetalRHI::ConvertFormat(Format);
+    return MetalRHI::MetalFormatSupportsShaderWrite(PixelFormat, GMetalReadWriteTextureTier);
 }
 
 bool FMetalDeviceRHI::QuerySupportedSampleCounts(EFormat Format, uint32& OutSampleCounts) const

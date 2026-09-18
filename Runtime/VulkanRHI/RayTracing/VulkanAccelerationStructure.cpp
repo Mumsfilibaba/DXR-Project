@@ -145,7 +145,7 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
         AccelerationStructureGeometry.geometry.triangles.maxVertex    = Math::Max<uint32>(BuildDesc.NumVertices - 1, 1);
         AccelerationStructureGeometry.geometry.triangles.vertexStride = VertexBuffer->GetDesc().Stride;
         AccelerationStructureGeometry.geometry.triangles.vertexData   = VertexData;
-        AccelerationStructureGeometry.geometry.triangles.indexType    = ConvertIndexFormat(BuildDesc.IndexFormat);
+        AccelerationStructureGeometry.geometry.triangles.indexType    = VulkanRHI::ConvertIndexFormat(BuildDesc.IndexFormat);
         AccelerationStructureGeometry.geometry.triangles.indexData    = IndexData;
 
         PrimitiveCount = BuildDesc.NumIndices / 3;
@@ -158,7 +158,7 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
     VkAccelerationStructureBuildGeometryInfoKHR AccelerationStructureBuildGeometryInfo = {};
     AccelerationStructureBuildGeometryInfo.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
     AccelerationStructureBuildGeometryInfo.type          = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-    AccelerationStructureBuildGeometryInfo.flags         = ConvertAccelerationStructureBuildFlags(GetFlags());
+    AccelerationStructureBuildGeometryInfo.flags         = VulkanRHI::ConvertAccelerationStructureBuildFlags(GetFlags());
     AccelerationStructureBuildGeometryInfo.mode          = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
     AccelerationStructureBuildGeometryInfo.geometryCount = 1;
     AccelerationStructureBuildGeometryInfo.pGeometries   = &AccelerationStructureGeometry;
@@ -446,7 +446,7 @@ bool FVulkanSceneAccelerationStructureRHI::Build(FVulkanCommandContext& CmdConte
             OutInstance.instanceCustomIndex                    = Instance.InstanceIndex & 0xFFFFFF;
             OutInstance.mask                                   = Instance.Mask & 0xFF;
             OutInstance.instanceShaderBindingTableRecordOffset = Instance.HitGroupIndex & 0xFFFFFF;
-            OutInstance.flags                                  = ConvertRayTracingInstanceFlags(Instance.Flags) & 0xFF;
+            OutInstance.flags                                  = VulkanRHI::ConvertRayTracingInstanceFlags(Instance.Flags) & 0xFF;
             OutInstance.accelerationStructureReference         = VulkanGeometry->GetDeviceAddress();
         }
     }
@@ -471,7 +471,7 @@ bool FVulkanSceneAccelerationStructureRHI::Build(FVulkanCommandContext& CmdConte
     VkAccelerationStructureBuildGeometryInfoKHR BuildGeometryInfo = {};
     BuildGeometryInfo.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
     BuildGeometryInfo.type          = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-    BuildGeometryInfo.flags         = ConvertAccelerationStructureBuildFlags(GetFlags());
+    BuildGeometryInfo.flags         = VulkanRHI::ConvertAccelerationStructureBuildFlags(GetFlags());
     BuildGeometryInfo.mode          = BuildMode;
     BuildGeometryInfo.geometryCount = 1;
     BuildGeometryInfo.pGeometries   = &AccelerationStructureGeometry;
@@ -801,7 +801,7 @@ bool FVulkanClusterAccelerationStructureRHI::Initialize()
     VkClusterAccelerationStructureInputInfoNV InputInfo = {};
     InputInfo.sType                         = VK_STRUCTURE_TYPE_CLUSTER_ACCELERATION_STRUCTURE_INPUT_INFO_NV;
     InputInfo.maxAccelerationStructureCount = Math::Max<uint32>(ClusterDesc.ClusterLimits.MaxClusterCount, 1u);
-    InputInfo.flags                         = ConvertAccelerationStructureBuildFlags(ClusterDesc.Flags);
+    InputInfo.flags                         = VulkanRHI::ConvertAccelerationStructureBuildFlags(ClusterDesc.Flags);
     InputInfo.opType                        = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_TRIANGLE_CLUSTER_NV;
     InputInfo.opInput.pTriangleClusters     = &Scratch.TriangleClusters;
 
@@ -869,7 +869,7 @@ bool FVulkanClusterTemplateRHI::Initialize()
     VkClusterAccelerationStructureInputInfoNV InputInfo = {};
     InputInfo.sType                         = VK_STRUCTURE_TYPE_CLUSTER_ACCELERATION_STRUCTURE_INPUT_INFO_NV;
     InputInfo.maxAccelerationStructureCount = Math::Max<uint32>(ClusterTemplateDesc.ClusterLimits.MaxClusterCount, 1u);
-    InputInfo.flags                         = ConvertAccelerationStructureBuildFlags(ClusterTemplateDesc.Flags);
+    InputInfo.flags                         = VulkanRHI::ConvertAccelerationStructureBuildFlags(ClusterTemplateDesc.Flags);
     InputInfo.opType                        = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_TRIANGLE_CLUSTER_TEMPLATE_NV;
     InputInfo.opInput.pTriangleClusters     = &Scratch.TriangleClusters;
 
@@ -953,7 +953,7 @@ bool FVulkanPartitionedSceneAccelerationStructureRHI::Initialize()
 
     VkPartitionedAccelerationStructureInstancesInputNV InstancesInput = {};
     InstancesInput.sType                             = VK_STRUCTURE_TYPE_PARTITIONED_ACCELERATION_STRUCTURE_INSTANCES_INPUT_NV;
-    InstancesInput.flags                             = ConvertAccelerationStructureBuildFlags(SceneInputs.Flags);
+    InstancesInput.flags                             = VulkanRHI::ConvertAccelerationStructureBuildFlags(SceneInputs.Flags);
     InstancesInput.instanceCount                     = SceneInputs.MaxInstanceCount;
     InstancesInput.maxInstancePerPartitionCount      = SceneInputs.MaxInstanceCount;
     InstancesInput.partitionCount                    = SceneInputs.MaxPartitionCount;

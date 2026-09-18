@@ -39,7 +39,7 @@ void FD3D12Query::CopyResult(void* Dst) const
 FD3D12QueryHeap::FD3D12QueryHeap(FD3D12Device* InDevice, D3D12_QUERY_HEAP_TYPE InHeapType, int32 InNumQueries)
     : FD3D12DeviceChild(InDevice)
     , QueryHeapType(InHeapType)
-    , QueryType(GetResolveQueryType(InHeapType))
+    , QueryType(D3D12RHI::GetResolveQueryType(InHeapType))
     , NumQueries(InNumQueries)
     , ReadbackData(nullptr)
 {

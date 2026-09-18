@@ -31,12 +31,6 @@ public:
     
     id<MTLTexture> GetMTLTexture() const;
 
-    void SetDrawableTexture(id<MTLTexture> InTexture) 
-    {
-        [Texture release];
-        Texture = [InTexture retain];
-    }
-
     void SetSwapChain(FMetalSwapChainRHI* InSwapChain)
     {
         SwapChain = InSwapChain;
@@ -47,12 +41,21 @@ public:
         return ShaderResourceView.Get();
     }
 
+    FMetalUnorderedAccessViewRHI* GetMetalUnorderedAccessView() const
+    {
+        return UnorderedAccessView.Get();
+    }
+
 private:
-    id<MTLTexture>                          Texture;
-    FMetalSwapChainRHI*                     SwapChain;
-    TSharedRef<FMetalShaderResourceViewRHI> ShaderResourceView;
-    TSharedRef<FMetalRenderTargetViewRHI>   RenderTargetView;
-    TSharedRef<FMetalDepthStencilViewRHI>   DepthStencilView;
+    bool CreateDefaultViews();
+    bool UploadInitialData(const IRHITextureData* InInitialData);
+
+    id<MTLTexture>                           Texture;
+    FMetalSwapChainRHI*                      SwapChain;
+    TSharedRef<FMetalShaderResourceViewRHI>  ShaderResourceView;
+    TSharedRef<FMetalUnorderedAccessViewRHI> UnorderedAccessView;
+    TSharedRef<FMetalRenderTargetViewRHI>    RenderTargetView;
+    TSharedRef<FMetalDepthStencilViewRHI>    DepthStencilView;
 };
 
 FORCEINLINE FMetalTextureRHI* GetMetalTexture(FRHITexture* Texture)

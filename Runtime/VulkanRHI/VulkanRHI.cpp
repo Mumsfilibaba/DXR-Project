@@ -801,7 +801,7 @@ void FVulkanDeviceRHI::GetRayTracingAccelerationStructureOperationPrebuildInfo(c
         VkClusterAccelerationStructureInputInfoNV InputInfo = {};
         InputInfo.sType                         = VK_STRUCTURE_TYPE_CLUSTER_ACCELERATION_STRUCTURE_INPUT_INFO_NV;
         InputInfo.maxAccelerationStructureCount = InInputs.MaxArgumentCount;
-        InputInfo.flags                         = ConvertAccelerationStructureBuildFlags(EAccelerationStructureBuildFlags::None);
+        InputInfo.flags                         = VulkanRHI::ConvertAccelerationStructureBuildFlags(EAccelerationStructureBuildFlags::None);
 
         switch (InInputs.OperationType)
         {
@@ -1352,7 +1352,7 @@ bool FVulkanDeviceRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVid
 
 bool FVulkanDeviceRHI::QueryUAVFormatSupport(EFormat Format) const
 {
-    VkFormat VulkanFormat = ConvertFormat(Format);
+    VkFormat VulkanFormat = VulkanRHI::ConvertFormat(Format);
     if (VulkanFormat != VK_FORMAT_UNDEFINED)
     {
         VkFormatProperties FormatProperties = PhysicalDevice->GetFormatProperties(VulkanFormat);
@@ -1373,13 +1373,13 @@ bool FVulkanDeviceRHI::QuerySupportedSampleCounts(EFormat Format, uint32& OutSam
 {
     OutSampleCounts = 0;
 
-    const VkFormat VulkanFormat = ConvertFormat(Format);
+    const VkFormat VulkanFormat = VulkanRHI::ConvertFormat(Format);
     if (VulkanFormat == VK_FORMAT_UNDEFINED)
     {
         return false;
     }
 
-    const VkImageAspectFlags AspectFlags     = GetImageAspectFlagsFromFormat(VulkanFormat);
+    const VkImageAspectFlags AspectFlags     = VulkanRHI::GetImageAspectFlagsFromFormat(VulkanFormat);
     const bool               bIsDepthStencil = (AspectFlags & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)) != 0;
 
     VkImageFormatProperties ImageFormatProperties = {};

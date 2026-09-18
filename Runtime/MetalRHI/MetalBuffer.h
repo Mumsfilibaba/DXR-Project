@@ -31,11 +31,24 @@ public:
 
     FORCEINLINE void SetMTLBuffer(id<MTLBuffer> InBuffer) 
     { 
-        Buffer = [InBuffer retain]; 
+        [InBuffer retain];
+        [Buffer release];
+        Buffer = InBuffer;
     } 
-    
+
+    FORCEINLINE uint64 GetLastWriteValue() const
+    {
+        return LastWriteValue;
+    }
+
+    FORCEINLINE void SetLastWriteValue(uint64 InValue)
+    {
+        LastWriteValue = InValue;
+    }
+
 private:
     id<MTLBuffer> Buffer;
+    uint64        LastWriteValue;
 };
 
 inline FMetalBufferRHI* GetMetalBuffer(FRHIBuffer* Buffer)

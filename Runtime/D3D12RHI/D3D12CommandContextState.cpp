@@ -1355,7 +1355,7 @@ void FD3D12CommandContextState::SetRenderTargets(FD3D12RenderTargetViewRHI* cons
 
 void FD3D12CommandContextState::SetShadingRate(EShadingRate ShadingRate)
 {
-    D3D12_SHADING_RATE D3DShadingRate = ConvertShadingRate(ShadingRate);
+    D3D12_SHADING_RATE D3DShadingRate = D3D12RHI::ConvertShadingRate(ShadingRate);
     if (CommonGraphicsState.ShadingRate != D3DShadingRate)
     {
         CommonGraphicsState.ShadingRate      = D3DShadingRate;

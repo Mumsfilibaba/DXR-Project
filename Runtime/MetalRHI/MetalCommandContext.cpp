@@ -110,6 +110,8 @@ void FMetalCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTar
     ColorAttachment.storeActionOptions = MTLStoreActionOptionNone;
     ColorAttachment.storeAction        = MTLStoreActionStore;
 
+    CopyContext.FinishEncoder();
+
     if (!GraphicsEncoder)
     {
         GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
@@ -169,11 +171,11 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
 
         MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[Index];
         ColorAttachment.texture            = RTVTexture->GetMTLTexture();
-        ColorAttachment.loadAction         = ConvertAttachmentLoadAction(Attachment.LoadAction);
+        ColorAttachment.loadAction         = MetalRHI::ConvertAttachmentLoadAction(Attachment.LoadAction);
         ColorAttachment.level              = MetalRTV->GetMipLevel();
         ColorAttachment.slice              = MetalRTV->GetArrayIndex();
         ColorAttachment.storeActionOptions = MTLStoreActionOptionNone;
-        ColorAttachment.storeAction        = ConvertAttachmentStoreAction(Attachment.StoreAction);
+        ColorAttachment.storeAction        = MetalRHI::ConvertAttachmentStoreAction(Attachment.StoreAction);
         ColorAttachment.clearColor         = MTLClearColorMake(Attachment.ClearValue.R, Attachment.ClearValue.G, Attachment.ClearValue.B, Attachment.ClearValue.A);
     }
 
@@ -183,12 +185,12 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
 
         MTLRenderPassDepthAttachmentDescriptor* DepthAttachment = RenderPassDescriptor.depthAttachment;
         DepthAttachment.texture            = DSVTexture->GetMTLTexture();
-        DepthAttachment.loadAction         = ConvertAttachmentLoadAction(DepthStencilAttachment.LoadAction);
+        DepthAttachment.loadAction         = MetalRHI::ConvertAttachmentLoadAction(DepthStencilAttachment.LoadAction);
         DepthAttachment.clearDepth         = DepthStencilAttachment.ClearValue.Depth;
         DepthAttachment.level              = MetalDSV->GetMipLevel();
         DepthAttachment.slice              = MetalDSV->GetArrayIndex();
         DepthAttachment.storeActionOptions = MTLStoreActionOptionNone;
-        DepthAttachment.storeAction        = ConvertAttachmentStoreAction(DepthStencilAttachment.StoreAction);
+        DepthAttachment.storeAction        = MetalRHI::ConvertAttachmentStoreAction(DepthStencilAttachment.StoreAction);
     }
     
     // TODO: Stencil Attachment
@@ -391,16 +393,109 @@ void FMetalCommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView
     }
 }
 
+id<MTLBuffer> FMetalCommandContext::CreateStagingBuffer(uint64 Size)
+{
+    if (!Commands || Size == 0)
+    {
+        return nil;
+    }
+
+    id<MTLDevice> DeviceHandle  = GetDevice()->GetMTLDevice();
+    id<MTLBuffer> StagingBuffer = [DeviceHandle newBufferWithLength:Size options:MTLResourceStorageModeShared | MTLResourceCPUCacheModeDefaultCache];
+    if (!StagingBuffer)
+    {
+        METAL_ERROR("Failed to allocate a %llu byte staging buffer", Size);
+        return nil;
+    }
+
+    Commands->DeferredObjects.Emplace(StagingBuffer);
+    [StagingBuffer release];
+    return StagingBuffer;
+}
+
 void FMetalCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SourceData)
 {
+    SCOPED_AUTORELEASE_POOL();
+
+    FMetalBufferRHI* MetalDst = GetMetalBuffer(Dst);
+    if (!MetalDst || !SourceData || BufferRegion.Size == 0)
+    {
+        return;
+    }
+
+    id<MTLBuffer> DstBuffer = MetalDst->GetMTLBuffer();
+    CHECK(DstBuffer != nil);
+
+    const uint64 Size = BufferRegion.IsWholeResource() ? MetalDst->GetDesc().Size : BufferRegion.Size;
+
+    if (DstBuffer.storageMode == MTLStorageModeShared)
+    {
+        Memory::Memcpy(reinterpret_cast<uint8*>(DstBuffer.contents) + BufferRegion.Offset, SourceData, Size);
+        return;
+    }
+
+    CHECK(CommandBuffer != nil);
+
+    id<MTLBuffer> StagingBuffer = CreateStagingBuffer(Size);
+    if (!StagingBuffer)
+    {
+        return;
+    }
+
+    Memory::Memcpy(StagingBuffer.contents, SourceData, Size);
+
+    CopyContext.StartEncoder(CommandBuffer);
+    [CopyContext.GetMTLCopyEncoder() copyFromBuffer:StagingBuffer
+                                       sourceOffset:0
+                                           toBuffer:DstBuffer
+                                  destinationOffset:BufferRegion.Offset
+                                               size:Size];
 }
 
 void FMetalCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* SourceData, uint32 SrcRowPitch)
 {
+    const FTextureRegion3D Region3D(TextureRegion.Width, TextureRegion.Height, 1, TextureRegion.PositionX, TextureRegion.PositionY, 0);
+    UpdateTexture3D(Dst, Region3D, MipLevel, SourceData, SrcRowPitch, SrcRowPitch * TextureRegion.Height);
 }
 
 void FMetalCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegion3D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch, uint32 SrcDepthPitch)
 {
+    SCOPED_AUTORELEASE_POOL();
+
+    FMetalTextureRHI* MetalDst = GetMetalTexture(Dst);
+    if (!MetalDst || !SrcData || TextureRegion.Width == 0 || TextureRegion.Height == 0)
+    {
+        return;
+    }
+
+    id<MTLTexture> DstTexture = MetalDst->GetMTLTexture();
+    CHECK(CommandBuffer != nil);
+    CHECK(DstTexture    != nil);
+
+    const FRHITextureDesc& DstDesc = MetalDst->GetDesc();
+    const bool   bIsTexture1D = DstDesc.IsTexture1D() || DstDesc.IsTexture1DArray();
+    const bool   bIsTexture3D = DstDesc.IsTexture3D();
+    const uint32 Depth        = Math::Max(TextureRegion.Depth, 1u);
+    const uint64 DataSize     = uint64(SrcDepthPitch) * Depth;
+
+    id<MTLBuffer> StagingBuffer = CreateStagingBuffer(DataSize);
+    if (!StagingBuffer)
+    {
+        return;
+    }
+
+    Memory::Memcpy(StagingBuffer.contents, SrcData, DataSize);
+
+    CopyContext.StartEncoder(CommandBuffer);
+    [CopyContext.GetMTLCopyEncoder() copyFromBuffer:StagingBuffer
+                                       sourceOffset:0
+                                  sourceBytesPerRow:(bIsTexture1D ? 0 : SrcRowPitch)
+                                sourceBytesPerImage:(bIsTexture3D ? SrcDepthPitch : 0)
+                                         sourceSize:MTLSizeMake(TextureRegion.Width, TextureRegion.Height, Depth)
+                                          toTexture:DstTexture
+                                   destinationSlice:0
+                                   destinationLevel:MipLevel
+                                  destinationOrigin:MTLOriginMake(TextureRegion.PositionX, TextureRegion.PositionY, TextureRegion.PositionZ)];
 }
 
 void FMetalCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
@@ -428,8 +523,6 @@ void FMetalCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FR
                        toBuffer:MetalDst->GetMTLBuffer()
               destinationOffset:CopyDesc.DstOffset
                            size:CopyDesc.Size];
-    
-    CopyContext.FinishEncoder();
 }
 
 void FMetalCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
@@ -445,20 +538,76 @@ void FMetalCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
     
     id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
     [CopyEncoder copyFromTexture:MetalSrc->GetMTLTexture() toTexture:MetalDst->GetMTLTexture()];
-    
-    CopyContext.FinishEncoder();
 }
 
 void FMetalCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyDesc) 
 { 
+    FMetalTextureRHI* MetalDst = GetMetalTexture(Dst);
+    FMetalTextureRHI* MetalSrc = GetMetalTexture(Src);
+
+    CHECK(CommandBuffer != nil);
+    CHECK(MetalDst      != nullptr);
+    CHECK(MetalSrc      != nullptr);
+
+    CopyContext.StartEncoder(CommandBuffer);
+
+    const MTLSize   Size      = MTLSizeMake(CopyDesc.Size.X, Math::Max(CopyDesc.Size.Y, 1), Math::Max(CopyDesc.Size.Z, 1));
+    const MTLOrigin SrcOrigin = MTLOriginMake(CopyDesc.SrcPosition.X, CopyDesc.SrcPosition.Y, CopyDesc.SrcPosition.Z);
+    const MTLOrigin DstOrigin = MTLOriginMake(CopyDesc.DstPosition.X, CopyDesc.DstPosition.Y, CopyDesc.DstPosition.Z);
+
+    const uint32 NumArraySlices = Math::Max(CopyDesc.NumArraySlices, 1u);
+    const uint32 NumMipLevels   = Math::Max(CopyDesc.NumMipLevels, 1u);
+
+    id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
+    for (uint32 ArrayIndex = 0; ArrayIndex < NumArraySlices; ++ArrayIndex)
+    {
+        for (uint32 MipIndex = 0; MipIndex < NumMipLevels; ++MipIndex)
+        {
+            [CopyEncoder copyFromTexture:MetalSrc->GetMTLTexture()
+                             sourceSlice:CopyDesc.SrcArraySlice + ArrayIndex
+                             sourceLevel:CopyDesc.SrcMipSlice + MipIndex
+                            sourceOrigin:SrcOrigin
+                              sourceSize:Size
+                               toTexture:MetalDst->GetMTLTexture()
+                        destinationSlice:CopyDesc.DstArraySlice + ArrayIndex
+                        destinationLevel:CopyDesc.DstMipSlice + MipIndex
+                       destinationOrigin:DstOrigin];
+        }
+    }
 } 
  
 void FMetalCommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion2D& SrcRegion, uint32 SrcMipLevel) 
 { 
+    const FTextureRegion3D Region3D(SrcRegion.Width, SrcRegion.Height, 1, SrcRegion.PositionX, SrcRegion.PositionY, 0);
+    CopyTextureSubresourceToBuffer(Dst, DstOffset, Src, Region3D, SrcMipLevel, 0);
 } 
 
 void FMetalCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion3D& SrcRegion, uint32 SrcMipLevel, uint32 SrcArraySlice)
 {
+    FMetalBufferRHI*  MetalDst = GetMetalBuffer(Dst);
+    FMetalTextureRHI* MetalSrc = GetMetalTexture(Src);
+
+    CHECK(CommandBuffer != nil);
+    CHECK(MetalDst      != nullptr);
+    CHECK(MetalSrc      != nullptr);
+
+    const FRHITextureDesc& SrcDesc = MetalSrc->GetDesc();
+    const bool   bIsTexture3D = SrcDesc.IsTexture3D();
+    const uint32 Depth        = Math::Max(SrcRegion.Depth, 1u);
+    const uint64 RowPitch     = uint64(SrcRegion.Width) * GetByteStrideFromFormat(SrcDesc.Format);
+    const uint64 SlicePitch   = RowPitch * SrcRegion.Height;
+
+    CopyContext.StartEncoder(CommandBuffer);
+
+    [CopyContext.GetMTLCopyEncoder() copyFromTexture:MetalSrc->GetMTLTexture()
+                                         sourceSlice:SrcArraySlice
+                                         sourceLevel:SrcMipLevel
+                                        sourceOrigin:MTLOriginMake(SrcRegion.PositionX, SrcRegion.PositionY, SrcRegion.PositionZ)
+                                          sourceSize:MTLSizeMake(SrcRegion.Width, SrcRegion.Height, Depth)
+                                            toBuffer:MetalDst->GetMTLBuffer()
+                                   destinationOffset:DstOffset
+                              destinationBytesPerRow:RowPitch
+                            destinationBytesPerImage:(bIsTexture3D ? SlicePitch : 0)];
 }
 
 void FMetalCommandContext::WriteFence(FRHIFence* Fence) 
@@ -498,6 +647,9 @@ void FMetalCommandContext::PrepareForDispatch()
     if (ComputeEncoder == nil)
     {
         CHECK(CommandBuffer != nil);
+
+        CopyContext.FinishEncoder();
+
         ComputeEncoder = [CommandBuffer computeCommandEncoder];
         [ComputeEncoder retain];
     }

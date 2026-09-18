@@ -234,7 +234,7 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
     }
     else
     {
-        if (!GetDevice()->SupportsSwapChainFormat(ConvertFormat(Desc.ColorFormat), Desc.Usage))
+        if (!GetDevice()->SupportsSwapChainFormat(D3D12RHI::ConvertFormat(Desc.ColorFormat), Desc.Usage))
         {
             D3D12_ERROR("[FD3D12SwapChainRHI]: Requested back-buffer format %s is not supported on this device.", ToString(Desc.ColorFormat));
             return false;
@@ -266,8 +266,8 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc = {};
     SwapChainDesc.Width              = Desc.Width;
     SwapChainDesc.Height             = Desc.Height;
-    SwapChainDesc.Format             = ConvertFormat(ResolvedFormat);
-    SwapChainDesc.BufferUsage        = ConvertSwapChainUsage(Desc.Usage);
+    SwapChainDesc.Format             = D3D12RHI::ConvertFormat(ResolvedFormat);
+    SwapChainDesc.BufferUsage        = D3D12RHI::ConvertSwapChainUsage(Desc.Usage);
     SwapChainDesc.BufferCount        = NumSwapChainBuffers;
     SwapChainDesc.SampleDesc.Count   = 1;
     SwapChainDesc.SampleDesc.Quality = 0;
@@ -344,7 +344,7 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
 
     // Apply color space
     {
-        const DXGI_COLOR_SPACE_TYPE RequestedDXGI = ConvertColorSpace(ResolvedColorSpace);
+        const DXGI_COLOR_SPACE_TYPE RequestedDXGI = D3D12RHI::ConvertColorSpace(ResolvedColorSpace);
         
         UINT SupportFlags = 0;
         SwapChain->CheckColorSpaceSupport(RequestedDXGI, &SupportFlags);
@@ -428,7 +428,7 @@ bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 I
 
         ReleaseBackBufferResources();
 
-        const DXGI_FORMAT ResizeDXGIFormat = bFormatChanged ? ConvertFormat(EffectiveFormat) : DXGI_FORMAT_UNKNOWN;
+        const DXGI_FORMAT ResizeDXGIFormat = bFormatChanged ? D3D12RHI::ConvertFormat(EffectiveFormat) : DXGI_FORMAT_UNKNOWN;
         HRESULT Result = SwapChain->ResizeBuffers(DesiredBackBufferCount, ResolvedWidth, ResolvedHeight, ResizeDXGIFormat, Flags);
         if (SUCCEEDED(Result))
         {
@@ -457,12 +457,12 @@ bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 I
         }
 
         D3D12_INFO("[FD3D12SwapChainRHI]: Resized Width=%u Height=%u Format=%s Colorspace=%s BackBuffers=%u",
-            Desc.Width, Desc.Height, ToString(ConvertFormat(Desc.ColorFormat)), ToString(ConvertColorSpace(EffectiveColorSpace)), NumBackBuffers);
+            Desc.Width, Desc.Height, ToString(D3D12RHI::ConvertFormat(Desc.ColorFormat)), ToString(D3D12RHI::ConvertColorSpace(EffectiveColorSpace)), NumBackBuffers);
     }
 
     if (bColorSpaceChanged)
     {
-        const DXGI_COLOR_SPACE_TYPE NewDXGI = ConvertColorSpace(EffectiveColorSpace);
+        const DXGI_COLOR_SPACE_TYPE NewDXGI = D3D12RHI::ConvertColorSpace(EffectiveColorSpace);
         if (FAILED(SwapChain->SetColorSpace1(NewDXGI)))
         {
             D3D12_WARNING("[FD3D12SwapChainRHI]: SetColorSpace1(%s) failed", ToString(EffectiveColorSpace));
@@ -568,13 +568,13 @@ bool FD3D12SwapChainRHI::IsFormatSupported(EFormat Format, EColorSpace ColorSpac
         return false;
     }
 
-    if (!GetDevice()->SupportsSwapChainFormat(ConvertFormat(Format), Desc.Usage))
+    if (!GetDevice()->SupportsSwapChainFormat(D3D12RHI::ConvertFormat(Format), Desc.Usage))
     {
         return false;
     }
 
     UINT SupportFlags = 0;
-    if (FAILED(SwapChain->CheckColorSpaceSupport(ConvertColorSpace(ColorSpace), &SupportFlags)))
+    if (FAILED(SwapChain->CheckColorSpaceSupport(D3D12RHI::ConvertColorSpace(ColorSpace), &SupportFlags)))
     {
         return false;
     }
@@ -659,7 +659,7 @@ bool FD3D12SwapChainRHI::QueryDisplayHDRInfo(FRHIDisplayHDRInfo& OutInfo) const
     OutInfo.GreenPrimary          = { OutputDesc.GreenPrimary[0], OutputDesc.GreenPrimary[1] };
     OutInfo.BluePrimary           = { OutputDesc.BluePrimary[0],  OutputDesc.BluePrimary[1]  };
     OutInfo.WhitePoint            = { OutputDesc.WhitePoint[0],   OutputDesc.WhitePoint[1]   };
-    OutInfo.ColorSpace            = ConvertColorSpace(OutputDesc.ColorSpace);
+    OutInfo.ColorSpace            = D3D12RHI::ConvertColorSpace(OutputDesc.ColorSpace);
     OutInfo.MinLuminance          = OutputDesc.MinLuminance;
     OutInfo.MaxLuminance          = OutputDesc.MaxLuminance;
     OutInfo.MaxFullFrameLuminance = OutputDesc.MaxFullFrameLuminance;
