@@ -254,6 +254,7 @@ function BuildRules(Name)
             if self.bOptimizeDebugBuild then
                 filter "configurations:*Debug*"
                     optimize("Full")
+                    flags({ "NoRuntimeChecks" })
                 filter {}
             else
                 filter "configurations:*Debug*"
