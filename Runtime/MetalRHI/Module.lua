@@ -4,7 +4,8 @@ include "BuildTool.lua"
 
 if IsPlatformMac() then
     local MetalRHI = ModuleBuildRules("MetalRHI")
-    MetalRHI.bRuntimeLinking = true
+    MetalRHI.bRuntimeLinking        = true
+    MetalRHI.bUsePrecompiledHeaders = true
     
     MetalRHI.AddModules({
         "Core",

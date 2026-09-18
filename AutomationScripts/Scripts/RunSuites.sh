@@ -147,7 +147,7 @@ Core-Math-Tests-SSSE3 Core-Math-Tests-SSE4_1 Core-Math-Tests-SSE4_2"
                 TARGETS="Core-Tests Core-Containers-Tests Core-Templates-Tests $MATH_TARGETS"
                 ;;
             RHI)
-                TARGETS="RHI-Tests"
+                TARGETS="RHI-Tests RHI-Boot-Tests"
                 ;;
             RendererCore)
                 TARGETS="RendererCore-Tests"

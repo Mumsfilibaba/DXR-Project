@@ -33,7 +33,6 @@ void* FMetalBufferRHI::Map(uint64 Offset, uint64 Size)
         return nullptr;
     }
 
-    // Only shared-storage (CPU-visible) buffers can be mapped directly.
     if (BufferHandle.storageMode != MTLStorageModeShared)
     {
         return nullptr;
@@ -73,10 +72,8 @@ bool FMetalBufferRHI::Initialize(ERHIResourceState InInitialAccess, const void* 
         return false;
     }
     
-    // Set the buffer handle
     SetMTLBuffer(NewBuffer);
     
-    // Upload the data
     if (InInitialData)
     {
         if (Desc.IsDynamic())
@@ -102,7 +99,7 @@ bool FMetalBufferRHI::Initialize(ERHIResourceState InInitialAccess, const void* 
                 
                 [CopyEncoder endEncoding];
 
-                // TODO: we do not want to wait here
+                // TODO: Defer the staging buffer through FMetalQueue instead of stalling.
                 [CommandBuffer commit];
                 [CommandBuffer waitUntilCompleted];
             

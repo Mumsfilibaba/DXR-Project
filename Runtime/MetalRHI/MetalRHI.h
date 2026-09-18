@@ -1,4 +1,9 @@
 #pragma once
+#include "Core/Containers/Array.h"
+#include "Core/Containers/Map.h"
+#include "Core/Containers/SharedRef.h"
+#include "Core/Platform/CriticalSection.h"
+#include "Core/Threading/ScopedLock.h"
 #include "RHI/RHI.h"
 #include "MetalRHI/MetalBuffer.h"
 #include "MetalRHI/MetalTexture.h"
@@ -12,6 +17,7 @@
 #include "MetalRHI/MetalPipelineState.h"
 #include "MetalRHI/MetalRayTracing.h"
 #include "MetalRHI/MetalDevice.h"
+#include "MetalRHI/MetalDeletionQueue.h"
 #include "MetalRHI/MetalTypeTraits.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -21,13 +27,19 @@ struct FMetalModuleRHI final : public FRHIModule
     virtual FRHIDevice* CreateDevice() override final;
 };
 
-class FMetalDeviceRHI : public FRHIDevice
+class METALRHI_API FMetalDeviceRHI : public FRHIDevice
 {
 public:
     static FORCEINLINE FMetalDeviceRHI* Get()
     {
         CHECK(MetalDeviceRHI != nullptr);
         return MetalDeviceRHI;
+    }
+
+    template<typename... ArgTypes>
+    static void DeferDeletion(ArgTypes&&... Args)
+    {
+        Get()->DeferDeletionInternal(Forward<ArgTypes>(Args)...);
     }
 
     template<typename TRHIType>
@@ -47,6 +59,9 @@ public:
     ~FMetalDeviceRHI();
 
     bool Initialize();
+    bool InitializeDeviceFeatureSupport();
+    void FlushDeletionQueue(FMetalCommands* Commands);
+    void FlushDeferredDeletions();
 
     // FRHIDevice interface
     virtual void BeginFrame() override final;
@@ -129,8 +144,21 @@ public:
     }
 
 private:
-    FMetalDevice*         Device;
-    FMetalCommandContext* CommandContext;
+    template<typename... ArgTypes>
+    void DeferDeletionInternal(ArgTypes&&... Args)
+    {
+        TScopedLock Lock(DeferredObjectsCS);
+        DeferredObjects.Emplace(Forward<ArgTypes>(Args)...);
+    }
+
+    typedef TMap<FRHISamplerStateDesc, TSharedRef<FMetalSamplerStateRHI>> FSamplerStateMap;
+
+    FMetalDevice*                Device;
+    FMetalCommandContext*        CommandContext;
+    TArray<FMetalDeferredObject> DeferredObjects;
+    FCriticalSection             DeferredObjectsCS;
+    FSamplerStateMap             SamplerStateMap;
+    FCriticalSection             SamplerStateMapCS;
 
     static FMetalDeviceRHI* MetalDeviceRHI;
 };

@@ -56,7 +56,7 @@ protected:
     id<MTLLibrary>          Library;
     NSString*               FunctionName;
     EShaderVisibility::Type Visibility;
-    // TODO: Release after use, high memory usage to keep this
+    // TODO: Release the function after pipeline creation once every consumer retains it.
     id<MTLFunction>         Function;
 };
 

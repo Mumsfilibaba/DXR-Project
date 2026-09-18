@@ -327,6 +327,8 @@ constexpr MTLTextureType GetMTLTextureType(ETextureDimension TextureDimension, b
 {
     switch(TextureDimension)
     {
+        case ETextureDimension::Texture1D:        return MTLTextureType1D;
+        case ETextureDimension::Texture1DArray:   return MTLTextureType1DArray;
         case ETextureDimension::Texture2D:        return bIsMultisampled ? MTLTextureType2DMultisample      : MTLTextureType2D;
         case ETextureDimension::Texture2DArray:   return bIsMultisampled ? MTLTextureType2DMultisampleArray : MTLTextureType2DArray;
         case ETextureDimension::TextureCube:      return MTLTextureTypeCube;
@@ -464,6 +466,63 @@ constexpr MTLPixelFormat ConvertFormat(EFormat Format)
         case EFormat::BC7_UNorm_SRGB:        return MTLPixelFormatBC7_RGBAUnorm_sRGB;
             
         default:                             return MTLPixelFormatInvalid;
+    }
+}
+
+NODISCARD inline bool MetalFormatSupportsShaderWrite(MTLPixelFormat Format, MTLReadWriteTextureTier ReadWriteTextureTier)
+{
+    if (Format == MTLPixelFormatInvalid)
+    {
+        return false;
+    }
+
+    if (ReadWriteTextureTier == MTLReadWriteTextureTierNone)
+    {
+        return false;
+    }
+
+    switch (Format)
+    {
+        case MTLPixelFormatR32Float:
+        case MTLPixelFormatR32Uint:
+        case MTLPixelFormatR32Sint:
+        {
+            return true;
+        }
+
+        default:
+        {
+            break;
+        }
+    }
+
+    if (ReadWriteTextureTier < MTLReadWriteTextureTier2)
+    {
+        return false;
+    }
+
+    switch (Format)
+    {
+        case MTLPixelFormatRGBA8Unorm:
+        case MTLPixelFormatRGBA8Sint:
+        case MTLPixelFormatRGBA8Uint:
+        case MTLPixelFormatRGBA16Float:
+        case MTLPixelFormatRGBA16Uint:
+        case MTLPixelFormatRGBA16Sint:
+        case MTLPixelFormatRGBA32Float:
+        case MTLPixelFormatRGBA32Uint:
+        case MTLPixelFormatRGBA32Sint:
+        case MTLPixelFormatRG32Float:
+        case MTLPixelFormatRG32Uint:
+        case MTLPixelFormatRG32Sint:
+        {
+            return true;
+        }
+
+        default:
+        {
+            return false;
+        }
     }
 }
 

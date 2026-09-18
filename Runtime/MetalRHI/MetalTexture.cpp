@@ -94,7 +94,7 @@ bool FMetalTextureRHI::Initialize(ERHIResourceState InInitialAccess, const IRHIT
     
     SetDrawableTexture(NewTexture);
     
-    // TODO: Fix upload for other resources than Texture2D
+    // TODO: Upload every texture dimension through the device queue.
     if (Desc.IsTexture2D())
     {
         if (InInitialData)
@@ -105,27 +105,22 @@ bool FMetalTextureRHI::Initialize(ERHIResourceState InInitialAccess, const IRHIT
                 id<MTLCommandBuffer>      CommandBuffer = [CommandQueue commandBuffer];
                 id<MTLBlitCommandEncoder> CopyEncoder   = [CommandBuffer blitCommandEncoder];
 
-                // TODO: Handle uploadbuffers differently
-                
-                // Calculate total size of upload buffer
                 uint64 TotalTextureSize = 0;
                 for (uint32 Index = 0; Index < Desc.NumMipLevels; ++Index)
                 {
                     TotalTextureSize += InInitialData->GetMipSlicePitch(Index);
                 }
                 
-                // Create a staginbuffer and get the data-pointer for it
                 id<MTLBuffer> StagingBuffer = [Device newBufferWithLength:TotalTextureSize options:MTLResourceCPUCacheModeDefaultCache];
                 uint8* StagingBufferContents = reinterpret_cast<uint8*>(StagingBuffer.contents);
                 
-                // Transfer all the mip-levels
                 uint32 Width        = Desc.Extent.X;
                 uint32 Height       = Desc.Extent.Y;
                 uint64 SourceOffset = 0;
 
                 for (uint32 Index = 0; Index < Desc.NumMipLevels; ++Index)
                 {
-                    // TODO: This does not feel optimal
+                    // TODO: Copy block-compressed edge mips instead of dropping them.
                     if (IsBlockCompressed(Desc.Format) && ((Width % 4 != 0) || (Height % 4 != 0)))
                     {
                         break;
@@ -138,10 +133,8 @@ bool FMetalTextureRHI::Initialize(ERHIResourceState InInitialAccess, const IRHIT
                     const NSUInteger BytesPerRow = NSUInteger(InInitialData->GetMipRowPitch(Index));
                     const NSUInteger SlicePitch  = NSUInteger(InInitialData->GetMipSlicePitch(Index));
                     
-                    // Set the data in the stagingbuffer
                     Memory::Memcpy(StagingBufferContents + SourceOffset, InInitialData->GetMipData(Index), SlicePitch);
                     
-                    // Perform copy of the staginbuffer into the GPU memory
                     [CopyEncoder copyFromBuffer:StagingBuffer
                                 sourceOffset:SourceOffset
                             sourceBytesPerRow:BytesPerRow
@@ -159,7 +152,7 @@ bool FMetalTextureRHI::Initialize(ERHIResourceState InInitialAccess, const IRHIT
 
                 [CopyEncoder endEncoding];
 
-                // TODO: we do not want to wait here
+                // TODO: Defer the staging buffer through FMetalQueue instead of stalling.
                 [CommandBuffer commit];
                 [CommandBuffer waitUntilCompleted];
             
@@ -258,7 +251,6 @@ void FMetalTextureRHI::GetDebugName(String& OutDebugName) const
 
 id<MTLTexture> FMetalTextureRHI::GetMTLTexture() const
 {
-    // Need to get the texture from the viewport
     if (SwapChain)
     {   
         return SwapChain->GetDrawableTexture();

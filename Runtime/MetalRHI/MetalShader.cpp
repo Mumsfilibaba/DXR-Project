@@ -20,7 +20,7 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
 {
     @autoreleasepool
     {
-        // NOTE: That there are no null-terminator in the shader code, therefore, when creating this string we need to use the known size
+        // Shader bytecode is not null-terminated, so construct the source with its explicit length.
         const CHAR* CodeString = reinterpret_cast<const CHAR*>(InCode.Data());
         const int32 CodeLength = InCode.Size();
         
@@ -42,11 +42,9 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
             return false;
         }
         
-        // Retrieve the entrypoint (All SPIR-V shaders have a static entrypoint)
         NSString* EntryPoint = String("Spirv_Main").GetNSString();
         FunctionName = [EntryPoint retain];
         
-        // Retrieve the function
         Function = [Library newFunctionWithName:EntryPoint];
         if (!Function)
         {

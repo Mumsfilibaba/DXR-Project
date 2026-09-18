@@ -17,7 +17,6 @@ public:
 
 private:
     id<MTLTexture> TextureView;
-    // id<MTLBuffer>  Buffer;
 };
 
 class FMetalShaderResourceViewRHI : public FRHIShaderResourceView, public FMetalView

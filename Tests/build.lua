@@ -37,6 +37,7 @@ else
 end
 
 AddTarget("RHI-Tests")
+AddTarget("RHI-Boot-Tests")
 AddTarget("RendererCore-Tests")
 AddTarget("Application-Tests")
 AddTarget("Application-Playground")

@@ -22,6 +22,7 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Platform/PlatformConsoleWindow.h"
 #include "Renderer/Performance/GPUProfiler.h"
+#include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Engine.h"
 #include "RendererCore/RenderGraph/RenderGraphResourcePool.h"
@@ -240,8 +241,11 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
     if (!RHI::Initialize())
     {
+        LOG_ERROR("[BOOT] Failed at RHI initialize");
         return -1;
     }
+
+    LOG_INFO("[BOOT] RHI initialized type=%s", ToString(RHI::Device->GetRHIType()));
 
     CoreDelegates::PostInitRHIDelegate.Broadcast();
 
@@ -318,9 +322,12 @@ int32 FEngineLoop::Init()
 
     if (!CreateApplicationRenderer())
     {
+        LOG_ERROR("[BOOT] Failed at ApplicationRenderer RHI initialize");
         FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create the UI renderer");
         return -1;
     }
+
+    LOG_INFO("[BOOT] ApplicationRenderer RHI initialized");
 
     CoreDelegates::PreEngineInitDelegate.Broadcast();
 
@@ -338,9 +345,12 @@ int32 FEngineLoop::Init()
     IRendererModule* RendererModule = IRendererModule::Get();
     if (!RendererModule->Initialize())
     {
+        LOG_ERROR("[BOOT] Failed at scene renderer initialize");
         FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create Renderer");
         return -1;
     }
+
+    LOG_INFO("[BOOT] Scene renderer initialized");
 
     UIRenderer->SetGPUProfiler(&RendererModule->GetGPUProfiler());
 
@@ -364,9 +374,11 @@ int32 FEngineLoop::Init()
 
     if (!FEngine::Get()->Start())
     {
+        LOG_ERROR("[BOOT] Failed at engine start");
         return -1;
     }
 
+    LOG_INFO("[BOOT] Engine started");
     return 0;
 }
 
@@ -417,9 +429,15 @@ void FEngineLoop::Tick()
 
     ++FrameCounter;
 
+    if (FrameCounter == 1)
+    {
+        LOG_INFO("[BOOT] First frame submitted");
+    }
+
     const int32 ExitAfterFrames = CVarExitAfterFrames.GetValue();
     if (ExitAfterFrames > 0 && FrameCounter >= static_cast<uint64>(ExitAfterFrames))
     {
+        LOG_INFO("[BOOT] ExitAfterFrames reached count=%llu", static_cast<uint64>(FrameCounter));
         RequestEngineExit("Engine.ExitAfterFrames reached");
     }
 }

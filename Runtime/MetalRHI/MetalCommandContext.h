@@ -6,6 +6,7 @@
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FMetalDevice;
+struct FMetalCommands;
 
 class FMetalCopyCommandContext final
 {
@@ -174,6 +175,7 @@ private:
     void PrepareForDispatch();
 
     id<MTLCommandBuffer>         CommandBuffer;
+    FMetalCommands*              Commands;
     id<MTLRenderCommandEncoder>  GraphicsEncoder;
     id<MTLComputeCommandEncoder> ComputeEncoder;
     FMetalCopyCommandContext     CopyContext;

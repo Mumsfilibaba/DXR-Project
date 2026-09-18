@@ -228,7 +228,7 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
 
         if (Binding.type == MTLBindingTypeBuffer)
         {
-            // NOTE: Might not be the best way, but for now it works since all shaders will have this name of vertexbuffers
+            // SPIRV-Cross gives translated vertex streams the "vertexBuffer." prefix.
             if ([Binding.name containsString:@"vertexBuffer."])
             {
                 VertexBuffers.Emplace(static_cast<uint8>(Binding.index));

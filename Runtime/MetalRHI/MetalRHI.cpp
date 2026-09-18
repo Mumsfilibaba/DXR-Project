@@ -1,5 +1,10 @@
 #include "Core/Containers/UniquePtr.h"
+#include "Core/Math/Math.h"
+#include "Core/Threading/ScopedLock.h"
+#include "RHI/RHICommandList.h"
 #include "MetalRHI/MetalRHI.h"
+#include "MetalRHI/MetalCapabilities.h"
+#include "MetalRHI/MetalQueue.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -34,6 +39,97 @@ FMetalDeviceRHI::FMetalDeviceRHI()
     {
         MetalDeviceRHI = this;
     }
+}
+
+void FMetalDeviceRHI::FlushDeferredDeletions()
+{
+    if (FRHICommandListExecutor::IsInitialized())
+    {
+        FRHICommandListExecutor::Get().FlushDeletedResources();
+    }
+
+    while (!DeferredObjects.IsEmpty())
+    {
+        TArray<FMetalDeferredObject> Items;
+        {
+            TScopedLock Lock(DeferredObjectsCS);
+            Items = Move(DeferredObjects);
+        }
+
+        FMetalDeferredObject::ProcessItems(Items);
+
+        if (FRHICommandListExecutor::IsInitialized())
+        {
+            FRHICommandListExecutor::Get().FlushDeletedResources();
+        }
+    }
+}
+
+void FMetalDeviceRHI::FlushDeletionQueue(FMetalCommands* Commands)
+{
+    TScopedLock Lock(DeferredObjectsCS);
+    if (!Commands)
+    {
+        return;
+    }
+
+    if (Commands->DeferredObjects.IsEmpty())
+    {
+        Commands->DeferredObjects = Move(DeferredObjects);
+    }
+    else if (!DeferredObjects.IsEmpty())
+    {
+        Commands->DeferredObjects.Append(DeferredObjects);
+        DeferredObjects.Clear();
+    }
+}
+
+FMetalDeviceRHI::~FMetalDeviceRHI()
+{
+    if (Device)
+    {
+        Device->WaitForGPU();
+    }
+
+    FlushDeferredDeletions();
+    SAFE_DELETE(CommandContext);
+
+    {
+        TScopedLock Lock(SamplerStateMapCS);
+        SamplerStateMap.Clear();
+    }
+
+    FlushDeferredDeletions();
+
+    SAFE_DELETE(Device);
+
+    if (MetalDeviceRHI == this)
+    {
+        MetalDeviceRHI = nullptr;
+    }
+}
+
+bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
+{
+    RHI::bSupportsRayTracing                = GMetalSupportsRayTracing;
+    RHI::bSupportsInlineRayTracing          = GMetalSupportsRayTracingFromRender;
+    RHI::bSupportsGeometryShaders           = false;
+    RHI::bSupportsDepthBoundsTest           = false;
+    RHI::bSupportsTessellation              = false;
+    RHI::MaxPatchControlPoints              = 0;
+    RHI::bSupportsTimestampQueries          = GMetalSupportsCounterSampling;
+    RHI::bSupportsPipelineStatisticsQueries = false;
+    RHI::bSupportsStreamOutput              = false;
+    RHI::MaxBufferSize                      = GMetalMaxBufferLength;
+    RHI::MaxStorageBufferSize               = GMetalMaxBufferLength;
+    RHI::MaxTexture2DSize                   = GMetalMaxTexture2DSize;
+    RHI::MaxTexture1DSize                   = GMetalMaxTexture2DSize;
+    RHI::MaxTexture3DWidth                  = GMetalMaxTexture2DSize;
+    RHI::MaxTexture3DHeight                 = GMetalMaxTexture2DSize;
+    RHI::MaxTexture3DDepth                  = Math::Min<uint32>(GMetalMaxTexture2DSize, 2048);
+    RHI::MaxCubeTextureSize                 = GMetalMaxTexture2DSize;
+    RHI::DefaultSwapChainFormat             = EFormat::B8G8R8A8_Unorm;
+    RHI::bSupportsTransparentSwapChain      = true;
 
     RHI::bSupportsDrawIndirect               = false;
     RHI::bSupportsDrawIndirectCount          = false;
@@ -46,19 +142,9 @@ FMetalDeviceRHI::FMetalDeviceRHI()
 
     RHI::bSupportsSamplerFeedback            = false;
     RHI::SamplerFeedbackTier                 = ESamplerFeedbackTier::NotSupported;
+    RHI::bSupportsBindless                   = false;
 
-    RHI::bSupportsTransparentSwapChain        = true;
-}
-
-FMetalDeviceRHI::~FMetalDeviceRHI()
-{
-    SAFE_DELETE(CommandContext);
-    SAFE_DELETE(Device);
-
-    if (MetalDeviceRHI == this)
-    {
-        MetalDeviceRHI = nullptr;
-    }
+    return true;
 }
 
 bool FMetalDeviceRHI::Initialize()
@@ -76,6 +162,12 @@ bool FMetalDeviceRHI::Initialize()
     if (!CommandContext->Initialize())
     {
         METAL_ERROR("Failed to initialize FMetalCommandContext");
+        return false;
+    }
+
+    if (!InitializeDeviceFeatureSupport())
+    {
+        METAL_ERROR("Failed to initialize device feature support");
         return false;
     }
 
@@ -110,15 +202,28 @@ FRHIBuffer* FMetalDeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, ER
 
 FRHISamplerState* FMetalDeviceRHI::CreateSamplerState(const FRHISamplerStateDesc& InSamplerDesc)
 {
-    FMetalSamplerStateRef NewSamplerState = new FMetalSamplerStateRHI(GetMetalDevice(), InSamplerDesc);
-    if (!NewSamplerState->Initialize())
+    TScopedLock Lock(SamplerStateMapCS);
+
+    TSharedRef<FMetalSamplerStateRHI> Result;
+
+    if (TSharedRef<FMetalSamplerStateRHI>* ExistingSamplerState = SamplerStateMap.Find(InSamplerDesc))
     {
-        return nullptr;
+        Result = *ExistingSamplerState;
     }
     else
     {
-        return NewSamplerState.ReleaseOwnership();
+        Result = new FMetalSamplerStateRHI(GetMetalDevice(), InSamplerDesc);
+        if (!Result->Initialize())
+        {
+            return nullptr;
+        }
+        else
+        {
+            SamplerStateMap.Add(InSamplerDesc, Result);
+        }
     }
+
+    return Result.ReleaseOwnership();
 }
 
 FRHISceneAccelerationStructure* FMetalDeviceRHI::CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& Desc)
@@ -427,7 +532,8 @@ FRHISwapChain* FMetalDeviceRHI::CreateSwapChain(const FRHISwapChainDesc& SwapCha
 
 bool FMetalDeviceRHI::QueryUAVFormatSupport(EFormat Format) const
 {
-    return true;
+    const MTLPixelFormat PixelFormat = ConvertFormat(Format);
+    return MetalFormatSupportsShaderWrite(PixelFormat, GMetalReadWriteTextureTier);
 }
 
 bool FMetalDeviceRHI::QuerySupportedSampleCounts(EFormat Format, uint32& OutSampleCounts) const
@@ -438,8 +544,8 @@ bool FMetalDeviceRHI::QuerySupportedSampleCounts(EFormat Format, uint32& OutSamp
 
 bool FMetalDeviceRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const
 {
-    OutMemoryInfo = FRHIVideoMemoryInfo();
-    return false;
+    CHECK(Device != nullptr);
+    return Device->QueryVideoMemoryInfo(MemoryType, OutMemoryInfo);
 }
 
 bool FMetalDeviceRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode)
@@ -450,10 +556,13 @@ bool FMetalDeviceRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipeline
 
 void FMetalDeviceRHI::BeginFrame()
 {
+    Device->BeginFrame();
+    Device->GetQueue()->ProcessCommandQueue();
 }
 
 void FMetalDeviceRHI::EndFrame()
 {
+    Device->EndFrame();
 }
 
 FRHIFence* FMetalDeviceRHI::CreateFence()
@@ -474,13 +583,13 @@ bool FMetalDeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQuery
 
 void FMetalDeviceRHI::EnqueueResourceDeletion(FRHIResource* Resource)
 {
-    // delete Resource;
+    DeferDeletion(Resource);
 }
 
 void* FMetalDeviceRHI::GetRHINativeAdapter()
 {
-    // TODO: Finish
-    return nullptr;
+    CHECK(Device != nullptr);
+    return reinterpret_cast<void*>(Device->GetMTLDevice());
 }
 
 void* FMetalDeviceRHI::GetRHINativeDevice()
@@ -492,25 +601,25 @@ void* FMetalDeviceRHI::GetRHINativeDevice()
 void* FMetalDeviceRHI::GetRHINativeDirectCommandQueue()
 {
     CHECK(Device != nullptr);
-    return reinterpret_cast<void*>(Device->GetMTLCommandQueue());
+    return reinterpret_cast<void*>(Device->GetQueue()->GetMTLCommandQueue());
 }
 
 void* FMetalDeviceRHI::GetRHINativeComputeCommandQueue()
 {
-    // TODO: Finish
-    return nullptr;
+    CHECK(Device != nullptr);
+    return reinterpret_cast<void*>(Device->GetQueue()->GetMTLCommandQueue());
 }
 
 void* FMetalDeviceRHI::GetRHINativeCopyCommandQueue()
 {
-    // TODO: Finish
-    return nullptr;
+    CHECK(Device != nullptr);
+    return reinterpret_cast<void*>(Device->GetQueue()->GetMTLCommandQueue());
 }
 
 String FMetalDeviceRHI::GetAdapterName() const
 {
-    // TODO: Finish
-    return String();
+    CHECK(Device != nullptr);
+    return Device->GetProperties().Name;
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

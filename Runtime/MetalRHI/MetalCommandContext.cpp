@@ -1,5 +1,7 @@
 #include "MetalRHI/MetalCommandContext.h"
 #include "MetalRHI/MetalDevice.h"
+#include "MetalRHI/MetalRHI.h"
+#include "MetalRHI/MetalQueue.h"
 #include "MetalRHI/MetalBuffer.h"
 #include "MetalRHI/MetalTexture.h"
 #include "MetalRHI/MetalSwapChain.h"
@@ -16,6 +18,7 @@ FMetalCommandContext::FMetalCommandContext(FMetalDevice* InDevice)
     : FMetalDeviceChild(InDevice)
     , IRHICommandContext()
     , CommandBuffer(nil)
+    , Commands(nullptr)
     , GraphicsEncoder(nil)
     , ComputeEncoder(nil)
     , CopyContext()
@@ -39,9 +42,10 @@ bool FMetalCommandContext::Initialize()
 void FMetalCommandContext::StartContext() 
 {
     CHECK(CommandBuffer == nil);
-    
-    id<MTLCommandQueue> CommandQueue = GetDevice()->GetMTLCommandQueue();
-    CommandBuffer = [CommandQueue commandBuffer];
+
+    FMetalQueue* Queue = GetDevice()->GetQueue();
+    Commands      = Queue->ObtainCommands();
+    CommandBuffer = Commands->CommandBuffer;
 
     ContextState.BeginCommandBuffer();
 }
@@ -53,10 +57,11 @@ void FMetalCommandContext::FinishContext()
     ContextState.EndCommandBuffer();
 
     CopyContext.FinishEncoder();
-    
-    [CommandBuffer commit];
-    [CommandBuffer release];
-    
+
+    FMetalDeviceRHI::Get()->FlushDeletionQueue(Commands);
+    GetDevice()->GetQueue()->SubmitCommands(Commands);
+
+    Commands      = nullptr;
     CommandBuffer = nil;
 }
 
@@ -219,7 +224,7 @@ void FMetalCommandContext::SetViewport(const FViewportRegion& ViewportRegion)
 
 void FMetalCommandContext::SetScissorRect(const FScissorRegion& ScissorRegion)
 {
-    // TODO: ImGui is screwing something up here; once fixed, forward a properly sized rect to ContextState.
+    // TODO: Forward the scissor rectangle once the ImGui path supplies valid bounds.
     UNREFERENCED_VARIABLE(ScissorRegion);
 }
 
@@ -509,7 +514,6 @@ void FMetalCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
     
     const MTLPrimitiveType PrimitiveType = ContextState.GetPrimitiveType();
     CHECK(PrimitiveType != MTLPrimitiveType(-1));
-    //[GraphicsEncoder drawPrimitives:PrimitiveType vertexStart:StartVertexLocation vertexCount:VertexCount];
 }
 
 void FMetalCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
@@ -522,15 +526,6 @@ void FMetalCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocat
     const MTLPrimitiveType        PrimitiveType    = ContextState.GetPrimitiveType();
     CHECK(IndexBufferCache.IndexBuffer != nil);
     CHECK(PrimitiveType                != MTLPrimitiveType(-1));
-
-    /*[GraphicsEncoder drawIndexedPrimitives:PrimitiveType
-                                indexCount:IndexCount
-                                 indexType:IndexBufferCache.IndexType
-                               indexBuffer:IndexBufferCache.IndexBuffer
-                         indexBufferOffset:IndexBufferCache.BufferResource->GetStride() * StartIndexLocation
-                             instanceCount:1
-                                baseVertex:BaseVertexLocation
-                              baseInstance:0];*/
 }
 
 void FMetalCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
@@ -541,11 +536,6 @@ void FMetalCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 I
     
     const MTLPrimitiveType PrimitiveType = ContextState.GetPrimitiveType();
     CHECK(PrimitiveType != MTLPrimitiveType(-1));
-    /*[GraphicsEncoder drawPrimitives:PrimitiveType
-                        vertexStart:StartVertexLocation
-                        vertexCount:VertexCountPerInstance
-                      instanceCount:InstanceCount
-                       baseInstance:StartInstanceLocation];*/
 }
 
 void FMetalCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
@@ -558,15 +548,6 @@ void FMetalCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, ui
     const MTLPrimitiveType        PrimitiveType    = ContextState.GetPrimitiveType();
     CHECK(IndexBufferCache.IndexBuffer != nil);
     CHECK(PrimitiveType                != MTLPrimitiveType(-1));
-
-    /*[GraphicsEncoder drawIndexedPrimitives:PrimitiveType
-                                indexCount:IndexCountPerInstance
-                                 indexType:IndexBufferCache.IndexType
-                               indexBuffer:IndexBufferCache.IndexBuffer
-                         indexBufferOffset:IndexBufferCache.BufferResource->GetStride() * StartIndexLocation
-                             instanceCount:InstanceCount
-                                baseVertex:BaseVertexLocation
-                              baseInstance:StartInstanceLocation];*/
 }
 
 void FMetalCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
@@ -616,11 +597,19 @@ void FMetalCommandContext::ClearState()
 
 void FMetalCommandContext::Flush()
 {
-    if (CommandBuffer)
+    if (Commands)
     {
-        [CommandBuffer commit];
-        [CommandBuffer waitUntilCompleted];
+        ContextState.EndCommandBuffer();
+        CopyContext.FinishEncoder();
+
+        FMetalDeviceRHI::Get()->FlushDeletionQueue(Commands);
+        GetDevice()->GetQueue()->SubmitCommands(Commands);
+
+        Commands      = nullptr;
+        CommandBuffer = nil;
     }
+
+    GetDevice()->GetQueue()->WaitForCompletion();
 }
 
 void FMetalCommandContext::PushEvent(const StringView& Name)
