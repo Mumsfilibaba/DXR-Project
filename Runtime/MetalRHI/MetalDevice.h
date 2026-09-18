@@ -1,6 +1,7 @@
 #pragma once
 #include "MetalRHI/MetalCore.h"
 #include "MetalRHI/MetalQueue.h"
+#include "MetalRHI/MetalQuery.h"
 #include "RHI/RHIDevice.h"
 
 class FMetalDevice;
@@ -87,6 +88,9 @@ public:
     FMetalQueue*        GetQueue(EMetalQueueType Type = EMetalQueueType::Direct) const;
     id<MTLCommandQueue> GetMTLCommandQueue() const;
 
+    FMetalTimestampQueries& GetTimestampQueries() { return TimestampQueries; }
+    FMetalOcclusionQueries& GetOcclusionQueries() { return OcclusionQueries; }
+
     id<MTLDevice>                 GetMTLDevice()        const { return Device; }
     const FMetalDeviceProperties& GetProperties()       const { return Properties; }
     FMetalDefaultResources&       GetDefaultResources()       { return DefaultResources; }
@@ -100,5 +104,7 @@ private:
     FMetalQueue*           Queue;
     FMetalDeviceProperties Properties;
     FMetalDefaultResources DefaultResources;
+    FMetalTimestampQueries TimestampQueries;
+    FMetalOcclusionQueries OcclusionQueries;
     uint64                 FrameCounter;
 };

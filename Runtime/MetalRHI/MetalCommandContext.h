@@ -7,6 +7,7 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FMetalDevice;
 struct FMetalCommands;
+struct FMetalQueryRHI;
 
 class FMetalCopyCommandContext final
 {
@@ -175,6 +176,8 @@ private:
 
     void StartCopyEncoder();
     void FinishEncoders();
+    void EnsureTimestampEncoder();
+    bool SampleTimestamp(FMetalQueryRHI& Query);
 
     void WaitForPendingEncoderFenceOnGraphics();
     void WaitForPendingEncoderFenceOnCompute();
@@ -192,6 +195,7 @@ private:
     bool                         bEncoderFencePending;
     FMetalCopyCommandContext     CopyContext;
     FMetalCommandContextState    ContextState;
+    FMetalQueryRHI*              ActiveOcclusionQuery;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

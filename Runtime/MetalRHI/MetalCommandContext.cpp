@@ -8,6 +8,9 @@
 #include "MetalRHI/MetalPipelineState.h"
 #include "MetalRHI/MetalFence.h"
 #include "MetalRHI/MetalBufferClear.h"
+#include "MetalRHI/MetalQuery.h"
+#include "MetalRHI/MetalCapabilities.h"
+#include "MetalRHI/MetalStats.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 
@@ -49,6 +52,7 @@ FMetalCommandContext::FMetalCommandContext(FMetalDevice* InDevice)
     , bEncoderFencePending(false)
     , CopyContext()
     , ContextState(InDevice, *this)
+    , ActiveOcclusionQuery(nullptr)
 {
 }
 
@@ -104,6 +108,36 @@ void FMetalCommandContext::FinishContext()
 
 void FMetalCommandContext::QueryTimestamp(FRHIQuery* Query)
 {
+    FMetalQueryRHI* MetalQuery = FMetalDeviceRHI::ResourceCast(Query);
+    CHECK(MetalQuery != nullptr);
+    CHECK(Commands != nullptr);
+
+    if (MetalQuery->GetType() != EQueryType::Timestamp)
+    {
+        METAL_ERROR("QueryTimestamp requires a timestamp query");
+        return;
+    }
+
+    FMetalTimestampQueries& Timestamps = GetDevice()->GetTimestampQueries();
+    if (!Timestamps.IsAvailable())
+    {
+        METAL_ERROR("Timestamp queries are unavailable on this Metal device");
+        return;
+    }
+
+    if (!Timestamps.Allocate(*MetalQuery))
+    {
+        return;
+    }
+
+    EnsureTimestampEncoder();
+    if (!SampleTimestamp(*MetalQuery))
+    {
+        Timestamps.Cancel(*MetalQuery);
+        return;
+    }
+
+    Commands->PendingQueries.Add(MetalQuery);
 }
 
 void FMetalCommandContext::BeginFrame()
@@ -116,10 +150,68 @@ void FMetalCommandContext::EndFrame()
 
 void FMetalCommandContext::BeginQuery(FRHIQuery* Query)
 {
+    FMetalQueryRHI* MetalQuery = FMetalDeviceRHI::ResourceCast(Query);
+    CHECK(MetalQuery != nullptr);
+
+    const EQueryType Type = MetalQuery->GetType();
+    if (Type == EQueryType::Occlusion)
+    {
+        if (!GraphicsEncoder)
+        {
+            METAL_ERROR("BeginQuery for occlusion requires an open render encoder");
+            return;
+        }
+
+        if (ActiveOcclusionQuery)
+        {
+            METAL_ERROR("BeginQuery for occlusion cannot nest");
+            return;
+        }
+
+        if (!GetDevice()->GetOcclusionQueries().Allocate(*MetalQuery))
+        {
+            return;
+        }
+
+        const NSUInteger Offset = NSUInteger(MetalQuery->SampleIndex) * sizeof(uint64);
+        [GraphicsEncoder setVisibilityResultMode:MTLVisibilityResultModeCounting offset:Offset];
+        ActiveOcclusionQuery = MetalQuery;
+        Commands->PendingQueries.Add(MetalQuery);
+        return;
+    }
+
+    if (Type == EQueryType::PipelineStatistics)
+    {
+        METAL_ERROR("Pipeline statistics queries are not supported by the Metal backend");
+        return;
+    }
+
+    METAL_ERROR("BeginQuery is not supported for this query type");
 }
 
 void FMetalCommandContext::EndQuery(FRHIQuery* Query)
 {
+    FMetalQueryRHI* MetalQuery = FMetalDeviceRHI::ResourceCast(Query);
+    CHECK(MetalQuery != nullptr);
+
+    if (MetalQuery->GetType() != EQueryType::Occlusion)
+    {
+        METAL_ERROR("EndQuery is only valid for occlusion queries");
+        return;
+    }
+
+    if (MetalQuery != ActiveOcclusionQuery)
+    {
+        METAL_ERROR("EndQuery does not match the active occlusion query");
+        return;
+    }
+
+    if (GraphicsEncoder)
+    {
+        [GraphicsEncoder setVisibilityResultMode:MTLVisibilityResultModeDisabled offset:0];
+    }
+
+    ActiveOcclusionQuery = nullptr;
 }
 
 void* FMetalCommandContext::GetRHINativeCommandList()
@@ -370,10 +462,17 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
         }
     }
 
+    id<MTLBuffer> VisibilityBuffer = GetDevice()->GetOcclusionQueries().GetBuffer();
+    if (VisibilityBuffer)
+    {
+        RenderPassDescriptor.visibilityResultBuffer = VisibilityBuffer;
+    }
+
     CHECK(RenderPassDescriptor != nil);
     GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
     [GraphicsEncoder retain];
     WaitForPendingEncoderFenceOnGraphics();
+    STAT_ADD(STAT_Metal_EncoderCount, 1);
 
     [RenderPassDescriptor release];
 }
@@ -381,7 +480,13 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
 void FMetalCommandContext::EndRenderPass()
 {
     CHECK(GraphicsEncoder != nil);
-        
+
+    if (ActiveOcclusionQuery)
+    {
+        [GraphicsEncoder setVisibilityResultMode:MTLVisibilityResultModeDisabled offset:0];
+        ActiveOcclusionQuery = nullptr;
+    }
+
     [GraphicsEncoder endEncoding];
     [GraphicsEncoder release];
     GraphicsEncoder = nil;
@@ -929,7 +1034,8 @@ void FMetalCommandContext::WriteFence(FRHIFence* Fence)
     FinishEncoders();
 
     const uint64 Value = MetalFence->SignalNextValue();
-    [CommandBuffer encodeSignalEvent:MetalFence->GetMTLSharedEvent() value:Value];
+    Commands->PendingSignalEvents.Add(MetalFence->GetMTLSharedEvent());
+    Commands->PendingSignalValues.Add(Value);
     SubmitCommandBufferAndObtainNew();
 }
 
@@ -1044,6 +1150,7 @@ void FMetalCommandContext::PrepareForDispatch()
         ComputeEncoder = [CommandBuffer computeCommandEncoder];
         [ComputeEncoder retain];
         WaitForPendingEncoderFenceOnCompute();
+        STAT_ADD(STAT_Metal_EncoderCount, 1);
     }
 
     ContextState.PrepareComputeState();
@@ -1059,8 +1166,121 @@ void FMetalCommandContext::StartCopyEncoder()
         FinishEncoders();
     }
 
+    const bool bOpenedEncoder = (CopyContext.GetMTLCopyEncoder() == nil);
     CopyContext.StartEncoder(CommandBuffer);
+    if (bOpenedEncoder)
+    {
+        STAT_ADD(STAT_Metal_EncoderCount, 1);
+    }
     WaitForPendingEncoderFenceOnBlit();
+}
+
+void FMetalCommandContext::EnsureTimestampEncoder()
+{
+    FMetalTimestampQueries& Timestamps = GetDevice()->GetTimestampQueries();
+
+    if (GraphicsEncoder && !Timestamps.CanSampleGraphics())
+    {
+        FinishEncoders();
+    }
+    else if (ComputeEncoder && !Timestamps.CanSampleCompute())
+    {
+        FinishEncoders();
+    }
+    else if (CopyContext.GetMTLCopyEncoder() && !Timestamps.CanSampleBlit())
+    {
+        FinishEncoders();
+    }
+
+    if (GraphicsEncoder || ComputeEncoder || CopyContext.GetMTLCopyEncoder())
+    {
+        return;
+    }
+
+    if (Timestamps.CanSampleBlit())
+    {
+        StartCopyEncoder();
+        return;
+    }
+
+    if (Timestamps.CanSampleCompute())
+    {
+        CHECK(CommandBuffer != nil);
+        FinishEncoders();
+        ComputeEncoder = [CommandBuffer computeCommandEncoder];
+        [ComputeEncoder retain];
+        WaitForPendingEncoderFenceOnCompute();
+        STAT_ADD(STAT_Metal_EncoderCount, 1);
+        return;
+    }
+
+    if (Timestamps.CanSampleGraphics())
+    {
+        id<MTLTexture> DummyTarget = Timestamps.GetDummyRenderTarget();
+        if (!DummyTarget)
+        {
+            METAL_ERROR("This Metal device can only sample timestamps at draw boundaries, but no dummy render target exists");
+            return;
+        }
+
+        CHECK(CommandBuffer != nil);
+        MTLRenderPassDescriptor* Descriptor = [MTLRenderPassDescriptor renderPassDescriptor];
+        Descriptor.colorAttachments[0].texture     = DummyTarget;
+        Descriptor.colorAttachments[0].loadAction  = MTLLoadActionDontCare;
+        Descriptor.colorAttachments[0].storeAction = MTLStoreActionDontCare;
+        GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:Descriptor];
+        [GraphicsEncoder retain];
+        WaitForPendingEncoderFenceOnGraphics();
+        STAT_ADD(STAT_Metal_EncoderCount, 1);
+        return;
+    }
+
+    METAL_ERROR("This Metal device has no encoder type that can sample timestamps");
+}
+
+bool FMetalCommandContext::SampleTimestamp(FMetalQueryRHI& Query)
+{
+    FMetalTimestampQueries& Timestamps = GetDevice()->GetTimestampQueries();
+    id<MTLCounterSampleBuffer> SampleBuffer = Timestamps.GetSampleBuffer();
+    if (!SampleBuffer || Query.SampleIndex == MetalInvalidQueryIndex)
+    {
+        METAL_ERROR("Timestamp sample buffer is not ready");
+        return false;
+    }
+
+    const NSUInteger SampleIndex = Query.SampleIndex;
+    const BOOL       bBarrier    = Timestamps.UseSampleBarrier() ? YES : NO;
+
+    if (GraphicsEncoder && Timestamps.CanSampleGraphics())
+    {
+        [GraphicsEncoder sampleCountersInBuffer:SampleBuffer atSampleIndex:SampleIndex withBarrier:bBarrier];
+    }
+    else if (ComputeEncoder && Timestamps.CanSampleCompute())
+    {
+        [ComputeEncoder sampleCountersInBuffer:SampleBuffer atSampleIndex:SampleIndex withBarrier:bBarrier];
+    }
+    else if (id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder())
+    {
+        if (!Timestamps.CanSampleBlit())
+        {
+            METAL_ERROR("QueryTimestamp has no encoder to sample on");
+            return false;
+        }
+
+        [CopyEncoder sampleCountersInBuffer:SampleBuffer atSampleIndex:SampleIndex withBarrier:bBarrier];
+    }
+    else
+    {
+        METAL_ERROR("QueryTimestamp has no encoder to sample on");
+        return false;
+    }
+
+    if (!Timestamps.UseSampleBarrier())
+    {
+        FinishEncoders();
+    }
+
+    return true;
 }
 
 void FMetalCommandContext::FinishEncoders()
@@ -1069,6 +1289,12 @@ void FMetalCommandContext::FinishEncoders()
 
     if (GraphicsEncoder)
     {
+        if (ActiveOcclusionQuery)
+        {
+            [GraphicsEncoder setVisibilityResultMode:MTLVisibilityResultModeDisabled offset:0];
+            ActiveOcclusionQuery = nullptr;
+        }
+
         [GraphicsEncoder updateFence:EncoderFence afterStages:GraphicsFenceStages];
         [GraphicsEncoder endEncoding];
         [GraphicsEncoder release];

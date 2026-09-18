@@ -328,9 +328,16 @@ static bool ProbeShaders()
     TEST_END();
 }
 
+static bool ProbeTimestamps();
+
 static bool ProbeCommandRecording()
 {
     TEST_BEGIN();
+
+    if (RHI::Device->GetRHIType() == ERHIType::Metal && RHI::bSupportsTimestampQueries)
+    {
+        TEST_EXPECT(ProbeTimestamps());
+    }
 
     TEST_SECTION("WriteFence becomes signaled after submit");
     {
@@ -421,16 +428,69 @@ static bool ProbeCommandRecording()
     TEST_END();
 }
 
+static bool ProbeTimestamps()
+{
+    TEST_BEGIN();
+
+    TEST_SECTION("Timestamp queries resolve to increasing nanoseconds");
+    {
+        FRHIQueryRef BeginQuery = RHI::CreateQuery(EQueryType::Timestamp);
+        FRHIQueryRef EndQuery   = RHI::CreateQuery(EQueryType::Timestamp);
+        TEST_EXPECT(BeginQuery != nullptr);
+        TEST_EXPECT(EndQuery != nullptr);
+
+        const uint32 Dummy = 0;
+        FRHIBufferRef Source = RHI::CreateBuffer(
+            FRHIBufferDesc::CreateVertexBuffer(sizeof(uint32), 1, EBufferFlags::Default | EBufferFlags::CopySource),
+            ERHIResourceState::Common, &Dummy);
+        FRHIBufferRef Dest = RHI::CreateBuffer(
+            FRHIBufferDesc::CreateVertexBuffer(sizeof(uint32), 1, EBufferFlags::Default | EBufferFlags::CopyDest));
+        TEST_EXPECT(Source != nullptr);
+        TEST_EXPECT(Dest != nullptr);
+
+        FRHIFenceRef Fence = RHI::CreateFence();
+        TEST_EXPECT(Fence != nullptr);
+
+        if (BeginQuery && EndQuery && Source && Dest && Fence)
+        {
+            FRHICommandList CommandList;
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(
+                Source.Get(), ERHIResourceState::Common, ERHIResourceState::CopySource));
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(
+                Dest.Get(), ERHIResourceState::Common, ERHIResourceState::CopyDest));
+            CommandList.QueryTimestamp(BeginQuery.Get());
+            CommandList.CopyBuffer(Dest.Get(), Source.Get(), FRHIBufferCopyDesc(0, 0, sizeof(uint32)));
+            CommandList.QueryTimestamp(EndQuery.Get());
+            CommandList.WriteFence(Fence.Get());
+            FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+
+            TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
+
+            uint64 BeginResult = 0;
+            uint64 EndResult   = 0;
+            TEST_EXPECT(RHI::Device->GetQueryResult(BeginQuery.Get(), BeginResult, EQueryResultMode::Wait));
+            TEST_EXPECT(RHI::Device->GetQueryResult(EndQuery.Get(), EndResult, EQueryResultMode::Wait));
+            TEST_EXPECT(BeginResult != 0);
+            TEST_EXPECT(EndResult != 0);
+            TEST_EXPECT(EndResult > BeginResult);
+        }
+    }
+
+    TEST_END();
+}
+
 static bool ProbeCapabilityHonesty(ERHIType ExpectedType)
 {
     TEST_BEGIN();
 
     if (ExpectedType == ERHIType::Metal)
     {
-        TEST_SECTION("Metal reports timestamp queries and ray tracing as unsupported until those subsystems exist");
-        TEST_EXPECT(RHI::bSupportsTimestampQueries == false);
+        TEST_SECTION("Metal reports ray tracing as unsupported until those subsystems exist");
         TEST_EXPECT(RHI::bSupportsRayTracing == false);
         TEST_EXPECT(RHI::bSupportsInlineRayTracing == false);
+
+        TEST_SECTION("Metal reports timestamp queries when the device has a timestamp counter set");
+        TEST_EXPECT(RHI::bSupportsTimestampQueries);
     }
 
     TEST_END();

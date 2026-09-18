@@ -16,6 +16,11 @@ extern METALRHI_API uint64                 GMetalMaxBufferLength;
 extern METALRHI_API uint32                 GMetalMaxThreadsPerThreadgroup;
 extern METALRHI_API uint32                 GMetalMaxTexture2DSize;
 extern METALRHI_API bool                   GMetalSupportsCounterSampling;
+extern METALRHI_API bool                   GMetalSupportsTimestampQueries;
+extern METALRHI_API bool                   GMetalSupportsTimestampStageBoundary;
+extern METALRHI_API bool                   GMetalSupportsTimestampDrawBoundary;
+extern METALRHI_API bool                   GMetalSupportsTimestampDispatchBoundary;
+extern METALRHI_API bool                   GMetalSupportsTimestampBlitBoundary;
 extern METALRHI_API bool                   GMetalSupportsBCTextureCompression;
 
 // -------------------------------------------------------------------------------------------

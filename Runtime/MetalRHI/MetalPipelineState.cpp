@@ -1,6 +1,7 @@
 #include "MetalRHI/MetalPipelineState.h"
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalCapabilities.h"
+#include "MetalRHI/MetalStats.h"
 #include "RHI/MSLShaderBindings.h"
 
 void FMetalPipelineBindingLayout::Reset()
@@ -434,6 +435,8 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
         return false;
     }
 
+    STAT_ADD(STAT_Metal_PSOCreateCount, 1);
+    STAT_ADD(STAT_Metal_NumGraphicsPipelineStates, 1);
     return true;
 }
 
@@ -491,6 +494,8 @@ bool FMetalComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
 
     MaxTotalThreadsPerThreadgroup = static_cast<uint32>(PipelineState.maxTotalThreadsPerThreadgroup);
     Bindings.Collect(ComputeShader->GetBindings(), EShaderVisibility::Compute);
+    STAT_ADD(STAT_Metal_PSOCreateCount, 1);
+    STAT_ADD(STAT_Metal_NumComputePipelineStates, 1);
     return true;
 }
 
@@ -610,6 +615,8 @@ bool FMetalMeshletPipelineStateRHI::Initialize()
         return false;
     }
 
+    STAT_ADD(STAT_Metal_PSOCreateCount, 1);
+    STAT_ADD(STAT_Metal_NumMeshletPipelineStates, 1);
     return true;
 }
 

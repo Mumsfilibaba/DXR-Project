@@ -186,6 +186,8 @@ FMetalDevice::FMetalDevice()
     , Queue(nullptr)
     , Properties{}
     , DefaultResources{}
+    , TimestampQueries(this)
+    , OcclusionQueries(this)
     , FrameCounter(0)
 {
     Memory::Memzero(DefaultResources.NullTextures, sizeof(DefaultResources.NullTextures));
@@ -341,6 +343,24 @@ bool FMetalDevice::Initialize()
         return false;
     }
 
+    GMetalSupportsTimestampQueries = GMetalSupportsCounterSampling && TimestampQueries.Initialize();
+    if (!GMetalSupportsTimestampQueries)
+    {
+        TimestampQueries.Release();
+        METAL_INFO("Timestamp queries are unavailable on this Metal device");
+    }
+    else if (![Device supportsCounterSampling:MTLCounterSamplingPointAtStageBoundary])
+    {
+        METAL_INFO("Timestamp samples are quantized to encoder boundaries");
+    }
+
+    if (!OcclusionQueries.Initialize())
+    {
+        METAL_ERROR("Failed to initialize occlusion queries");
+        return false;
+    }
+
+    DumpMetalCapabilities();
     return true;
 }
 
@@ -375,7 +395,6 @@ bool FMetalDevice::QueryDeviceFeatureSupport()
         GMetalSupportsRayTracingFromRender ? "true" : "false",
         GMetalSupportsMeshShaders ? "true" : "false");
 
-    DumpMetalCapabilities();
     return true;
 }
 

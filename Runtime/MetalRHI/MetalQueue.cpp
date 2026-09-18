@@ -1,5 +1,7 @@
 #include "MetalRHI/MetalQueue.h"
 #include "MetalRHI/MetalDevice.h"
+#include "MetalRHI/MetalQuery.h"
+#include "MetalRHI/MetalStats.h"
 #include "Core/Threading/ScopedLock.h"
 
 #if METAL_ENABLE_LOGGING
@@ -145,6 +147,9 @@ FMetalCommands* FMetalQueue::ObtainCommands()
     Commands->CommandBuffer    = CreateCommandBuffer();
     Commands->SubmissionValue  = 0;
     Commands->DeferredObjects.Clear();
+    Commands->PendingQueries.Clear();
+    Commands->PendingSignalEvents.Clear();
+    Commands->PendingSignalValues.Clear();
     return Commands;
 }
 
@@ -182,9 +187,26 @@ uint64 FMetalQueue::SubmitCommands(FMetalCommands* Commands)
     }];
 #endif
 
+    Commands->Device->GetTimestampQueries().EncodeResolve(Commands->CommandBuffer, Commands->PendingQueries);
+
+    CHECK(Commands->PendingSignalEvents.Size() == Commands->PendingSignalValues.Size());
+    for (int32 Index = 0; Index < Commands->PendingSignalEvents.Size(); ++Index)
+    {
+        [Commands->CommandBuffer encodeSignalEvent:Commands->PendingSignalEvents[Index] value:Commands->PendingSignalValues[Index]];
+    }
+
     [Commands->CommandBuffer encodeSignalEvent:SubmissionEvent value:Value];
     [Commands->CommandBuffer commit];
 
+    for (FMetalQueryRHI* Query : Commands->PendingQueries)
+    {
+        if (Query)
+        {
+            Query->SubmissionValue = Value;
+        }
+    }
+
+    STAT_ADD(STAT_Metal_CommandBufferCount, 1);
     PendingSubmissions.Enqueue(Commands);
     return Value;
 }
@@ -256,6 +278,9 @@ FMetalCommands::FMetalCommands(FMetalDevice* InDevice, FMetalQueue* InQueue)
     , CommandBuffer(nil)
     , SubmissionValue(0)
     , DeferredObjects()
+    , PendingQueries()
+    , PendingSignalEvents()
+    , PendingSignalValues()
 {
 }
 
@@ -270,6 +295,7 @@ FMetalCommands::~FMetalCommands()
 
 void FMetalCommands::PostExecute()
 {
+    ResolveMetalQueries(PendingQueries);
     FMetalDeferredObject::ProcessItems(DeferredObjects);
     DeferredObjects.Clear();
 

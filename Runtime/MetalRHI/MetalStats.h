@@ -1,0 +1,14 @@
+#pragma once
+#include "Core/Stats/Stats.h"
+
+STAT_DECLARE_EXTERN(METALRHI_API, STAT_Metal_PSOCreateCount);
+STAT_DECLARE_EXTERN(METALRHI_API, STAT_Metal_NumGraphicsPipelineStates);
+STAT_DECLARE_EXTERN(METALRHI_API, STAT_Metal_NumComputePipelineStates);
+STAT_DECLARE_EXTERN(METALRHI_API, STAT_Metal_NumMeshletPipelineStates);
+
+STAT_DECLARE_EXTERN(METALRHI_API, STAT_Metal_CommandBufferCount);
+STAT_DECLARE_EXTERN(METALRHI_API, STAT_Metal_EncoderCount);
+
+STAT_DECLARE_EXTERN(METALRHI_API, STAT_Metal_CounterSampleBufferCount);
+STAT_DECLARE_EXTERN(METALRHI_API, STAT_Metal_TimestampSlotsInFlight);
+STAT_DECLARE_EXTERN(METALRHI_API, STAT_Metal_OcclusionSlotsInFlight);

@@ -123,7 +123,7 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
     RHI::bSupportsDepthBoundsTest           = false;
     RHI::bSupportsTessellation              = false;
     RHI::MaxPatchControlPoints              = 0;
-    RHI::bSupportsTimestampQueries          = false;
+    RHI::bSupportsTimestampQueries          = GMetalSupportsTimestampQueries;
     RHI::bSupportsPipelineStatisticsQueries = false;
     RHI::bSupportsStreamOutput              = false;
     RHI::MaxBufferSize                      = GMetalMaxBufferLength;
@@ -583,7 +583,7 @@ FRHIRayTracingPipelineState* FMetalDeviceRHI::CreateRayTracingPipelineState(cons
 
 FRHIQuery* FMetalDeviceRHI::CreateQuery(EQueryType InQueryType)
 {
-    return new FMetalQueryRHI(InQueryType);
+    return new FMetalQueryRHI(GetMetalDevice(), InQueryType);
 }
 
 FRHISwapChain* FMetalDeviceRHI::CreateSwapChain(const FRHISwapChainDesc& SwapChainDesc)
@@ -668,7 +668,50 @@ IRHICommandContext* FMetalDeviceRHI::ObtainCommandContext()
 bool FMetalDeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode)
 {
     OutResult = 0;
-    return false;
+
+    FMetalQueryRHI* MetalQuery = ResourceCast(Query);
+    if (!MetalQuery || !MetalQuery->QueryResult)
+    {
+        return false;
+    }
+
+    if (MetalQuery->GetType() == EQueryType::PipelineStatistics)
+    {
+        return false;
+    }
+
+    if (!MetalQuery->bResolved)
+    {
+        FMetalQueue* Queue = Device->GetQueue();
+        if (Mode == EQueryResultMode::Wait)
+        {
+            if (MetalQuery->SubmissionValue != 0)
+            {
+                Queue->WaitForValue(MetalQuery->SubmissionValue);
+            }
+            else
+            {
+                Queue->WaitForCompletion();
+            }
+
+            if (!MetalQuery->bResolved)
+            {
+                MetalQuery->Resolve();
+            }
+        }
+        else
+        {
+            Queue->ProcessCommandQueue();
+        }
+    }
+
+    if (!MetalQuery->bResolved)
+    {
+        return false;
+    }
+
+    OutResult = *MetalQuery->QueryResult;
+    return true;
 }
 
 void FMetalDeviceRHI::EnqueueResourceDeletion(FRHIResource* Resource)

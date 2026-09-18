@@ -8,6 +8,7 @@
 
 class FMetalDevice;
 struct FMetalCommands;
+struct FMetalQueryRHI;
 
 enum class EMetalQueueType : uint8
 {
@@ -69,6 +70,9 @@ struct FMetalCommands
     id<MTLCommandBuffer>          CommandBuffer;
     uint64                        SubmissionValue;
     TArray<FMetalDeferredObject>  DeferredObjects;
+    TArray<FMetalQueryRHI*>       PendingQueries;
+    TArray<id<MTLSharedEvent>>    PendingSignalEvents;
+    TArray<uint64>                PendingSignalValues;
 };
 
 class FMetalUploadBatch

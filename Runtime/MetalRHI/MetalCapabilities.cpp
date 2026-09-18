@@ -20,6 +20,11 @@ METALRHI_API uint64                  GMetalMaxBufferLength              = 0;
 METALRHI_API uint32                  GMetalMaxThreadsPerThreadgroup     = 0;
 METALRHI_API uint32                  GMetalMaxTexture2DSize             = 0;
 METALRHI_API bool                    GMetalSupportsCounterSampling      = false;
+METALRHI_API bool                    GMetalSupportsTimestampQueries     = false;
+METALRHI_API bool                    GMetalSupportsTimestampStageBoundary    = false;
+METALRHI_API bool                    GMetalSupportsTimestampDrawBoundary     = false;
+METALRHI_API bool                    GMetalSupportsTimestampDispatchBoundary = false;
+METALRHI_API bool                    GMetalSupportsTimestampBlitBoundary     = false;
 METALRHI_API bool                    GMetalSupportsBCTextureCompression = false;
 
 void DumpMetalCapabilities()
@@ -38,6 +43,11 @@ void DumpMetalCapabilities()
     LOG_INFO("[MetalRHI]   Ray Tracing From Render                : %s", YesNo(GMetalSupportsRayTracingFromRender));
     LOG_INFO("[MetalRHI]   Mesh Shaders                           : %s", YesNo(GMetalSupportsMeshShaders));
     LOG_INFO("[MetalRHI]   Counter Sampling                       : %s", YesNo(GMetalSupportsCounterSampling));
+    LOG_INFO("[MetalRHI]   Timestamp Queries                      : %s", YesNo(GMetalSupportsTimestampQueries));
+    LOG_INFO("[MetalRHI]   Timestamp AtStageBoundary              : %s", YesNo(GMetalSupportsTimestampStageBoundary));
+    LOG_INFO("[MetalRHI]   Timestamp AtDrawBoundary               : %s", YesNo(GMetalSupportsTimestampDrawBoundary));
+    LOG_INFO("[MetalRHI]   Timestamp AtDispatchBoundary           : %s", YesNo(GMetalSupportsTimestampDispatchBoundary));
+    LOG_INFO("[MetalRHI]   Timestamp AtBlitBoundary               : %s", YesNo(GMetalSupportsTimestampBlitBoundary));
     LOG_INFO("[MetalRHI]   BC Texture Compression                 : %s", YesNo(GMetalSupportsBCTextureCompression));
     LOG_INFO("[MetalRHI]   Max Buffer Length                      : %llu", static_cast<unsigned long long>(GMetalMaxBufferLength));
     LOG_INFO("[MetalRHI]   Max Threads Per Threadgroup            : %u", GMetalMaxThreadsPerThreadgroup);
