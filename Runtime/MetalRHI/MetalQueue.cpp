@@ -2,7 +2,30 @@
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalQuery.h"
 #include "MetalRHI/MetalStats.h"
+#include "Core/Containers/String.h"
+#include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
+
+static void ReportFunctionLogs(id<MTLCommandBuffer> CommandBuffer)
+{
+    if (!CommandBuffer || !CommandBuffer.logs)
+    {
+        return;
+    }
+
+    for (id<MTLFunctionLog> FunctionLog in CommandBuffer.logs)
+    {
+        const String Description(FunctionLog.description);
+        if (CString::Stristr(*Description, "error") != nullptr || CString::Stristr(*Description, "fault") != nullptr)
+        {
+            METAL_ERROR("[Metal Function] %s", *Description);
+        }
+        else
+        {
+            METAL_WARNING("[Metal Function] %s", *Description);
+        }
+    }
+}
 
 #if METAL_ENABLE_LOGGING
 static const CHAR* ToString(MTLCommandBufferError ErrorCode)
@@ -36,7 +59,7 @@ static const CHAR* ToString(MTLCommandEncoderErrorState ErrorState)
     }
 }
 
-static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer)
+static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer, const TArray<String>& Breadcrumbs)
 {
     if (!CommandBuffer || CommandBuffer.status != MTLCommandBufferStatusError)
     {
@@ -73,6 +96,15 @@ static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer)
         {
             const String SignpostLabel(Signpost);
             METAL_ERROR("    %s", *SignpostLabel);
+        }
+    }
+
+    if (!Breadcrumbs.IsEmpty())
+    {
+        METAL_ERROR("  Breadcrumbs:");
+        for (const String& Name : Breadcrumbs)
+        {
+            METAL_ERROR("    %s", *Name);
         }
     }
 }
@@ -150,6 +182,8 @@ FMetalCommands* FMetalQueue::ObtainCommands()
     Commands->PendingQueries.Clear();
     Commands->PendingSignalEvents.Clear();
     Commands->PendingSignalValues.Clear();
+    Commands->Breadcrumbs.Clear();
+    Commands->DebugLabel.Clear();
     return Commands;
 }
 
@@ -178,14 +212,23 @@ uint64 FMetalQueue::SubmitCommands(FMetalCommands* Commands)
     const uint64 Value = NextSubmissionValue.Increment();
     Commands->SubmissionValue = Value;
 
-#if METAL_ENABLE_LOGGING
-    [Commands->CommandBuffer setLabel:[NSString stringWithFormat:@"MetalQueue-%llu", Value]];
+    TArray<String> BreadcrumbCopy = Commands->Breadcrumbs;
+    if (!Commands->DebugLabel.IsEmpty())
+    {
+        [Commands->CommandBuffer setLabel:Commands->DebugLabel.GetNSString()];
+    }
+    else
+    {
+        [Commands->CommandBuffer setLabel:[NSString stringWithFormat:@"MetalQueue-%llu", Value]];
+    }
 
     [Commands->CommandBuffer addCompletedHandler:^(id<MTLCommandBuffer> CompletedBuffer)
     {
-        ReportCommandBufferError(CompletedBuffer);
-    }];
+#if METAL_ENABLE_LOGGING
+        ReportCommandBufferError(CompletedBuffer, BreadcrumbCopy);
 #endif
+        ReportFunctionLogs(CompletedBuffer);
+    }];
 
     Commands->Device->GetTimestampQueries().EncodeResolve(Commands->CommandBuffer, Commands->PendingQueries);
 
@@ -282,6 +325,8 @@ FMetalCommands::FMetalCommands(FMetalDevice* InDevice, FMetalQueue* InQueue)
     , PendingQueries()
     , PendingSignalEvents()
     , PendingSignalValues()
+    , Breadcrumbs()
+    , DebugLabel()
 {
 }
 
@@ -292,6 +337,26 @@ FMetalCommands::~FMetalCommands()
         [CommandBuffer release];
         CommandBuffer = nil;
     }
+}
+
+void FMetalCommands::RecordBreadcrumb(const String& Name)
+{
+    if (Name.IsEmpty())
+    {
+        return;
+    }
+
+    if (DebugLabel.IsEmpty())
+    {
+        DebugLabel = Name;
+    }
+
+    if (Breadcrumbs.Size() >= MaxBreadcrumbs)
+    {
+        Breadcrumbs.RemoveAt(0);
+    }
+
+    Breadcrumbs.Emplace(Name);
 }
 
 void FMetalCommands::PostExecute()
@@ -326,6 +391,11 @@ FMetalUploadBatch::FMetalUploadBatch(FMetalDevice* InDevice)
     }
 
     BlitEncoder = [[Commands->CommandBuffer blitCommandEncoder] retain];
+    if (BlitEncoder)
+    {
+        BlitEncoder.label = @"Blit";
+        Commands->RecordBreadcrumb("Blit");
+    }
     METAL_ERROR_COND(BlitEncoder != nil, "Failed to create a blit encoder for an upload batch");
 }
 

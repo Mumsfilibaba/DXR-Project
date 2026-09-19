@@ -183,6 +183,7 @@ private:
     bool SampleTimestamp(FMetalQueryRHI& Query);
     void AddPendingQuery(FMetalQueryRHI* Query);
     void ApplyVertexAmplification();
+    void ApplyEncoderLabel(id<MTLCommandEncoder> Encoder, NSString* Kind);
     void InsertDrawDispatchSignpost(NSString* Name);
 
     void WaitForPendingEncoderFenceOnGraphics();

@@ -12,6 +12,7 @@
 #include "RHI/MSLShaderBindings.h"
 #include "RHI/ShaderCompiler.h"
 #include "RHI/ShaderStats.h"
+#include "Core/Math/Math.h"
 
 #include <spirv_cross_c.h>
 
@@ -67,6 +68,7 @@ enum class EDXCPart : uint32
 struct FMSLReflectedResource
 {
     spvc_variable_id Id;
+    spvc_type_id     BaseTypeId;
     EMSLBindingType  BindingType;
     uint8            RegisterIndex;
 };
@@ -454,7 +456,7 @@ static bool GatherMSLResources(spvc_compiler Compiler, spvc_resources Resources,
             return false;
         }
 
-        OutResources.Emplace(FMSLReflectedResource{ Id, BindingType, static_cast<uint8>(Register) });
+        OutResources.Emplace(FMSLReflectedResource{ Id, Reflected[Index].base_type_id, BindingType, static_cast<uint8>(Register) });
     }
 
     return true;
@@ -1153,17 +1155,46 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
         Bindings.Emplace(FMSLShaderBinding{ ReflectedResource.BindingType, ReflectedResource.RegisterIndex, static_cast<uint8>(Slot), 0 });
     }
 
+    uint16 ShaderConstantsSize = 0;
+    for (const FMSLReflectedResource& ReflectedResource : ReflectedResources)
+    {
+        if (ReflectedResource.BindingType != EMSLBindingType::ShaderConstants)
+        {
+            continue;
+        }
+
+        const spvc_type Type = spvc_compiler_get_type_handle(CompilerMSL, ReflectedResource.BaseTypeId);
+        size_t          StructSize = 0;
+        if (spvc_compiler_get_declared_struct_size(CompilerMSL, Type, &StructSize) != SPVC_SUCCESS)
+        {
+            LOG_ERROR("[FShaderCompiler]: Failed to reflect the shader-constant block size");
+            spvc_context_destroy(Context);
+            DEBUG_BREAK();
+            return false;
+        }
+
+        if (StructSize > UINT16_MAX)
+        {
+            LOG_ERROR("[FShaderCompiler]: Shader-constant block size %zu exceeds UINT16_MAX", StructSize);
+            spvc_context_destroy(Context);
+            DEBUG_BREAK();
+            return false;
+        }
+
+        ShaderConstantsSize = Math::Max(ShaderConstantsSize, static_cast<uint16>(StructSize));
+    }
+
     const uint32 SourceLength = CString::Strlen(MSLSource);
 
     FMSLShaderHeader Header;
-    Header.Magic            = FMSLShaderHeader::ExpectedMagic;
-    Header.Version          = FMSLShaderHeader::ExpectedVersion;
-    Header.NumBindings      = static_cast<uint32>(Bindings.Size());
-    Header.SourceSize       = SourceLength;
-    Header.ThreadGroupSizeX = 0;
-    Header.ThreadGroupSizeY = 0;
-    Header.ThreadGroupSizeZ = 0;
-    Header.Padding0         = 0;
+    Header.Magic               = FMSLShaderHeader::ExpectedMagic;
+    Header.Version             = FMSLShaderHeader::ExpectedVersion;
+    Header.NumBindings         = static_cast<uint32>(Bindings.Size());
+    Header.SourceSize          = SourceLength;
+    Header.ThreadGroupSizeX    = 0;
+    Header.ThreadGroupSizeY    = 0;
+    Header.ThreadGroupSizeZ    = 0;
+    Header.ShaderConstantsSize = ShaderConstantsSize;
 
     if (CompileInfo.ShaderStage == EShaderStage::Compute)
     {

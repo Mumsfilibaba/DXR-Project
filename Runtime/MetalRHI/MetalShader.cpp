@@ -10,6 +10,7 @@ FMetalShader::FMetalShader(FMetalDevice* InDevice, EShaderVisibility::Type InVis
     , ThreadGroupSizeX(0)
     , ThreadGroupSizeY(0)
     , ThreadGroupSizeZ(0)
+    , ShaderConstantsSize(0)
 {
 }
 
@@ -36,9 +37,10 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
 
         if (Header.Magic == FMSLShaderHeader::ExpectedMagic && Header.Version == FMSLShaderHeader::ExpectedVersion)
         {
-            ThreadGroupSizeX = Header.ThreadGroupSizeX;
-            ThreadGroupSizeY = Header.ThreadGroupSizeY;
-            ThreadGroupSizeZ = Header.ThreadGroupSizeZ;
+            ThreadGroupSizeX    = Header.ThreadGroupSizeX;
+            ThreadGroupSizeY    = Header.ThreadGroupSizeY;
+            ThreadGroupSizeZ    = Header.ThreadGroupSizeZ;
+            ShaderConstantsSize = Header.ShaderConstantsSize;
         }
     }
 

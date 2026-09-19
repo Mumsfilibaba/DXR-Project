@@ -1,5 +1,5 @@
 #pragma once
-#include "MetalRHI/MetalConfiguration.h"
+#include "MetalRHI/MetalCore.h"
 
 #if METAL_ENABLE_DEBUG_LAYER
 
@@ -13,3 +13,15 @@ void MetalStartValidationCapture();
 void MetalStopValidationCapture();
 
 #endif
+
+/** @brief Clears the captured Metal validation error count. */
+void MetalResetValidationErrors();
+
+/** @return True when the capture has seen a Metal validation error since the last reset. */
+bool MetalHasValidationErrors();
+
+/** @brief Starts a one-frame GPU capture when MetalRHI.CaptureNextFrame is set. */
+void MetalBeginFrameCapture(id<MTLDevice> Device);
+
+/** @brief Stops a capture started by MetalBeginFrameCapture. */
+void MetalEndFrameCapture();

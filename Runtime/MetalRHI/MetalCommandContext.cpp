@@ -16,29 +16,6 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-static MTLIndexType ConvertIndexFormat(EIndexFormat IndexFormat)
-{
-    return (IndexFormat == EIndexFormat::uint32) ? MTLIndexTypeUInt32 : MTLIndexTypeUInt16;
-}
-
-static NSUInteger GetMipExtent(NSUInteger Extent, uint32 MipLevel)
-{
-    const NSUInteger MipExtent = Extent >> MipLevel;
-    return (MipExtent > 0) ? MipExtent : 1;
-}
-
-static NSUInteger ResolveMipCopyExtent(uint32 RequestedEnd, NSUInteger SrcOrigin, NSUInteger DstOrigin, NSUInteger SrcExtent, NSUInteger DstExtent)
-{
-    if (SrcOrigin >= SrcExtent || DstOrigin >= DstExtent)
-    {
-        return 0;
-    }
-
-    const NSUInteger Requested = (NSUInteger(RequestedEnd) > SrcOrigin) ? (NSUInteger(RequestedEnd) - SrcOrigin) : 1;
-    const NSUInteger Available = Math::Min<NSUInteger>(SrcExtent - SrcOrigin, DstExtent - DstOrigin);
-    return Math::Min<NSUInteger>(Requested, Available);
-}
-
 static constexpr MTLRenderStages GraphicsFenceStages = MTLRenderStageVertex | MTLRenderStageFragment;
 
 FMetalCommandContext::FMetalCommandContext(FMetalDevice* InDevice)
@@ -507,6 +484,7 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     CHECK(RenderPassDescriptor != nil);
     GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
     [GraphicsEncoder retain];
+    ApplyEncoderLabel(GraphicsEncoder, @"Render");
     WaitForPendingEncoderFenceOnGraphics();
     STAT_ADD(STAT_Metal_EncoderCount, 1);
 
@@ -526,6 +504,7 @@ void FMetalCommandContext::EndRenderPass()
     [GraphicsEncoder endEncoding];
     [GraphicsEncoder release];
     GraphicsEncoder = nil;
+    ContextState.ResetBoundConstantSlots();
     bDirectHasEncodedWork = true;
 }
 
@@ -634,7 +613,7 @@ void FMetalCommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const> 
 void FMetalCommandContext::SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat)
 {
     FMetalBufferRHI* MetalIndexBuffer = static_cast<FMetalBufferRHI*>(IndexBuffer);
-    ContextState.SetIndexBuffer(MetalIndexBuffer, ConvertIndexFormat(IndexFormat));
+    ContextState.SetIndexBuffer(MetalIndexBuffer, MetalRHI::ConvertIndexFormat(IndexFormat));
 }
 
 void FMetalCommandContext::SetGraphicsPipelineState(FRHIGraphicsPipelineState* PipelineState)
@@ -1009,9 +988,9 @@ void FMetalCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
             const MTLOrigin DstOrigin = MTLOriginMake(CopyDesc.DstPosition.X >> MipIndex, CopyDesc.DstPosition.Y >> MipIndex, CopyDesc.DstPosition.Z >> MipIndex);
 
             const MTLSize Size = MTLSizeMake(
-                ResolveMipCopyExtent(uint32(CopyDesc.SrcPosition.X + CopyDesc.Size.X) >> MipIndex, SrcOrigin.x, DstOrigin.x, GetMipExtent(SrcTexture.width,  SrcMipLevel), GetMipExtent(DstTexture.width,  DstMipLevel)),
-                ResolveMipCopyExtent(uint32(CopyDesc.SrcPosition.Y + CopyDesc.Size.Y) >> MipIndex, SrcOrigin.y, DstOrigin.y, GetMipExtent(SrcTexture.height, SrcMipLevel), GetMipExtent(DstTexture.height, DstMipLevel)),
-                ResolveMipCopyExtent(uint32(CopyDesc.SrcPosition.Z + CopyDesc.Size.Z) >> MipIndex, SrcOrigin.z, DstOrigin.z, GetMipExtent(SrcTexture.depth,  SrcMipLevel), GetMipExtent(DstTexture.depth,  DstMipLevel)));
+                MetalRHI::ResolveMipCopyExtent(uint32(CopyDesc.SrcPosition.X + CopyDesc.Size.X) >> MipIndex, SrcOrigin.x, DstOrigin.x, MetalRHI::GetMipExtent(SrcTexture.width,  SrcMipLevel), MetalRHI::GetMipExtent(DstTexture.width,  DstMipLevel)),
+                MetalRHI::ResolveMipCopyExtent(uint32(CopyDesc.SrcPosition.Y + CopyDesc.Size.Y) >> MipIndex, SrcOrigin.y, DstOrigin.y, MetalRHI::GetMipExtent(SrcTexture.height, SrcMipLevel), MetalRHI::GetMipExtent(DstTexture.height, DstMipLevel)),
+                MetalRHI::ResolveMipCopyExtent(uint32(CopyDesc.SrcPosition.Z + CopyDesc.Size.Z) >> MipIndex, SrcOrigin.z, DstOrigin.z, MetalRHI::GetMipExtent(SrcTexture.depth,  SrcMipLevel), MetalRHI::GetMipExtent(DstTexture.depth,  DstMipLevel)));
 
             if (Size.width == 0 || Size.height == 0 || Size.depth == 0)
             {
@@ -1201,6 +1180,7 @@ void FMetalCommandContext::PrepareForDispatch()
 
         ComputeEncoder = [CommandBuffer computeCommandEncoder];
         [ComputeEncoder retain];
+        ApplyEncoderLabel(ComputeEncoder, @"Compute");
         WaitForPendingEncoderFenceOnCompute();
         STAT_ADD(STAT_Metal_EncoderCount, 1);
     }
@@ -1225,8 +1205,8 @@ void FMetalCommandContext::StartCopyEncoder()
 
     const bool bOpenedEncoder = (CopyContext.GetMTLCopyEncoder() == nil);
     CopyContext.StartEncoder(CommandBuffer);
-
     bBlitOnCopyQueue = false;
+    ApplyEncoderLabel(CopyContext.GetMTLCopyEncoder(), @"Blit");
 
     if (bOpenedEncoder)
     {
@@ -1271,6 +1251,7 @@ void FMetalCommandContext::EnsureTimestampEncoder()
     
         ComputeEncoder = [CommandBuffer computeCommandEncoder];
         [ComputeEncoder retain];
+        ApplyEncoderLabel(ComputeEncoder, @"Compute");
     
         WaitForPendingEncoderFenceOnCompute();
         STAT_ADD(STAT_Metal_EncoderCount, 1);
@@ -1292,6 +1273,7 @@ void FMetalCommandContext::EnsureTimestampEncoder()
 
         ComputeEncoder = [CommandBuffer computeCommandEncoder];
         [ComputeEncoder retain];
+        ApplyEncoderLabel(ComputeEncoder, @"Compute");
 
         WaitForPendingEncoderFenceOnCompute();
         STAT_ADD(STAT_Metal_EncoderCount, 1);
@@ -1434,6 +1416,7 @@ void FMetalCommandContext::FinishDirectEncoders()
 
     if (bEndedEncoder)
     {
+        ContextState.ResetBoundConstantSlots();
         bEncoderFencePending = true;
     }
 }
@@ -1520,8 +1503,36 @@ void FMetalCommandContext::ApplyVertexAmplification()
     [GraphicsEncoder setVertexAmplificationCount:Count viewMappings:Mappings];
 }
 
+void FMetalCommandContext::ApplyEncoderLabel(id<MTLCommandEncoder> Encoder, NSString* Kind)
+{
+    if (!Encoder)
+    {
+        return;
+    }
+
+    FMetalCommands* Payload = (bBlitOnCopyQueue && CopyCommands) ? CopyCommands : Commands;
+    if (Payload && !Payload->DebugLabel.IsEmpty())
+    {
+        Encoder.label = Payload->DebugLabel.GetNSString();
+    }
+    else
+    {
+        Encoder.label = Kind;
+    }
+
+    if (Payload)
+    {
+        Payload->RecordBreadcrumb(String(Kind));
+    }
+}
+
 void FMetalCommandContext::InsertDrawDispatchSignpost(NSString* Name)
 {
+    if (Commands)
+    {
+        Commands->RecordBreadcrumb(String(Name));
+    }
+
     if (GraphicsEncoder)
     {
         [GraphicsEncoder insertDebugSignpost:Name];
@@ -1823,6 +1834,10 @@ void FMetalCommandContext::PushEvent(const StringView& Name)
     }
 
     [Encoder pushDebugGroup:String(Name).GetNSString()];
+    if (Commands)
+    {
+        Commands->RecordBreadcrumb(String(Name));
+    }
 }
 
 void FMetalCommandContext::PopEvent()

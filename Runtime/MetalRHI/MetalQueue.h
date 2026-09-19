@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Queue.h"
+#include "Core/Containers/String.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Threading/Atomic/AtomicInt.h"
 #include "MetalRHI/MetalDeviceChild.h"
@@ -60,10 +61,13 @@ private:
 
 struct FMetalCommands
 {
+    static constexpr int32 MaxBreadcrumbs = 64;
+
     FMetalCommands(FMetalDevice* InDevice, FMetalQueue* InQueue);
     ~FMetalCommands();
 
     void PostExecute();
+    void RecordBreadcrumb(const String& Name);
 
     FMetalQueue*                  Queue;
     FMetalDevice* const           Device;
@@ -73,6 +77,8 @@ struct FMetalCommands
     TArray<FMetalQueryRHI*>       PendingQueries;
     TArray<id<MTLSharedEvent>>    PendingSignalEvents;
     TArray<uint64>                PendingSignalValues;
+    TArray<String>                Breadcrumbs;
+    String                        DebugLabel;
 };
 
 class FMetalUploadBatch

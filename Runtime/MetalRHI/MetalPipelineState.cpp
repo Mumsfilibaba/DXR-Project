@@ -7,6 +7,11 @@
 #include "RHI/RHISamplerState.h"
 #include "RHI/RHI.h"
 
+static NSString* PipelineDebugLabel(const String& Name, NSString* Fallback)
+{
+    return Name.IsEmpty() ? Fallback : Name.GetNSString();
+}
+
 static bool ConfigureViewInstancing(const FRHIViewInstancingState& State, NSUInteger& OutAmplificationCount)
 {
     OutAmplificationCount = 1;
@@ -205,6 +210,22 @@ static void ApplyDepthStencilFormats(TPipelineDescriptor* Descriptor, EFormat De
     }
 }
 
+static bool UsesDepthOrStencil(const FRHIDepthStencilStateDesc& Desc)
+{
+    return Desc.bDepthEnable || Desc.bDepthWriteEnable || Desc.bStencilEnable;
+}
+
+static bool ValidateDepthStencilCompatibility(const FRHIDepthStencilStateDesc& Desc, EFormat DepthStencilFormat, const CHAR* Context)
+{
+    if (!UsesDepthOrStencil(Desc) || DepthStencilFormat != EFormat::Unknown)
+    {
+        return true;
+    }
+
+    METAL_ERROR("%s enables depth or stencil without a depth-stencil format", Context);
+    return false;
+}
+
 void FMetalPipelineBindingLayout::Reset()
 {
     for (uint32 ShaderStage = 0; ShaderStage < EShaderVisibility::Count; ++ShaderStage)
@@ -215,11 +236,12 @@ void FMetalPipelineBindingLayout::Reset()
         UnorderedAccessBuffers[ShaderStage].Fill(InvalidSlot);
         UnorderedAccessTextures[ShaderStage].Fill(InvalidSlot);
         Samplers[ShaderStage].Fill(InvalidSlot);
-        ShaderConstants[ShaderStage] = InvalidSlot;
+        ShaderConstants[ShaderStage]     = InvalidSlot;
+        ShaderConstantsSize[ShaderStage] = 0;
     }
 }
 
-bool FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& ShaderBindings, EShaderVisibility::Type ShaderStage)
+bool FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& ShaderBindings, EShaderVisibility::Type ShaderStage, uint16 InShaderConstantsSize)
 {
     for (const FMSLShaderBinding& Binding : ShaderBindings)
     {
@@ -298,6 +320,7 @@ bool FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& Shade
                     return false;
                 }
 
+                ShaderConstantsSize[ShaderStage] = InShaderConstantsSize;
                 break;
             }
 
@@ -630,6 +653,11 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
         return false;
     }
 
+    if (!ValidateDepthStencilCompatibility(DepthStencilState->GetDesc(), Desc.RasterizerOutputFormats.DepthStencilFormat, "Graphics PSO"))
+    {
+        return false;
+    }
+
     RasterizerState = MakeSharedRef<FMetalRasterizerStateRHI>(Desc.RasterizerState);
     if (!RasterizerState)
     {
@@ -655,7 +683,7 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
     if (FMetalShader* VertexShader = GetMetalShader(Desc.VertexShader))
     {
         Descriptor.vertexFunction = VertexShader->GetMTLFunction();
-        if (!Bindings.Collect(VertexShader->GetBindings(), EShaderVisibility::Vertex))
+        if (!Bindings.Collect(VertexShader->GetBindings(), EShaderVisibility::Vertex, VertexShader->GetShaderConstantsSize()))
         {
             [Descriptor release];
             return false;
@@ -672,7 +700,7 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
     if (FMetalShader* PixelShader = GetMetalShader(Desc.PixelShader))
     {
         Descriptor.fragmentFunction = PixelShader->GetMTLFunction();
-        if (!Bindings.Collect(PixelShader->GetBindings(), EShaderVisibility::Pixel))
+        if (!Bindings.Collect(PixelShader->GetBindings(), EShaderVisibility::Pixel, PixelShader->GetShaderConstantsSize()))
         {
             [Descriptor release];
             return false;
@@ -700,6 +728,8 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
         Descriptor.maxVertexAmplificationCount = AmplificationCount;
     }
 
+    Descriptor.label = PipelineDebugLabel(DebugName, @"GraphicsPSO");
+
     NSError* Error = nil;
     PipelineState = [GetDevice()->GetMTLDevice() newRenderPipelineStateWithDescriptor:Descriptor error:&Error];
     [Descriptor release];
@@ -716,13 +746,14 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
     return true;
 }
 
-void FMetalGraphicsPipelineStateRHI::SetDebugName(const String&)
+void FMetalGraphicsPipelineStateRHI::SetDebugName(const String& InName)
 {
+    DebugName = InName;
 }
 
 void FMetalGraphicsPipelineStateRHI::GetDebugName(String& OutDebugName) const
 {
-    OutDebugName.Clear();
+    OutDebugName = DebugName;
 }
 
 void* FMetalGraphicsPipelineStateRHI::GetRHINativeState() const
@@ -773,7 +804,13 @@ bool FMetalComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
     }
 
     NSError* Error = nil;
-    PipelineState = [GetDevice()->GetMTLDevice() newComputePipelineStateWithFunction:ComputeShader->GetMTLFunction() error:&Error];
+    MTLComputePipelineDescriptor* Descriptor = [[MTLComputePipelineDescriptor new] autorelease];
+    Descriptor.computeFunction = ComputeShader->GetMTLFunction();
+    Descriptor.label           = PipelineDebugLabel(DebugName, @"ComputePSO");
+    PipelineState = [GetDevice()->GetMTLDevice() newComputePipelineStateWithDescriptor:Descriptor
+                                                                               options:MTLPipelineOptionNone
+                                                                            reflection:nil
+                                                                                 error:&Error];
     if (PipelineState == nil)
     {
         const String ErrorString([Error localizedDescription]);
@@ -786,7 +823,7 @@ bool FMetalComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
     ThreadGroupSizeY = ComputeShader->GetThreadGroupSizeY();
     ThreadGroupSizeZ = ComputeShader->GetThreadGroupSizeZ();
 
-    if (!Bindings.Collect(ComputeShader->GetBindings(), EShaderVisibility::Compute))
+    if (!Bindings.Collect(ComputeShader->GetBindings(), EShaderVisibility::Compute, ComputeShader->GetShaderConstantsSize()))
     {
         return false;
     }
@@ -801,13 +838,14 @@ bool FMetalComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
     return true;
 }
 
-void FMetalComputePipelineStateRHI::SetDebugName(const String&)
+void FMetalComputePipelineStateRHI::SetDebugName(const String& InName)
 {
+    DebugName = InName;
 }
 
 void FMetalComputePipelineStateRHI::GetDebugName(String& OutDebugName) const
 {
-    OutDebugName.Clear();
+    OutDebugName = DebugName;
 }
 
 void* FMetalComputePipelineStateRHI::GetRHINativeState() const
@@ -876,6 +914,11 @@ bool FMetalMeshletPipelineStateRHI::Initialize()
         return false;
     }
 
+    if (!ValidateDepthStencilCompatibility(DepthStencilState->GetDesc(), Desc.RasterizerOutputFormats.DepthStencilFormat, "Meshlet PSO"))
+    {
+        return false;
+    }
+
     RasterizerState = MakeSharedRef<FMetalRasterizerStateRHI>(Desc.RasterizerState);
     if (!RasterizerState)
     {
@@ -900,7 +943,7 @@ bool FMetalMeshletPipelineStateRHI::Initialize()
     MTLMeshRenderPipelineDescriptor* Descriptor = [MTLMeshRenderPipelineDescriptor new];
     Descriptor.meshFunction = MeshShader->GetMTLFunction();
 
-    if (!Bindings.Collect(MeshShader->GetBindings(), EShaderVisibility::Mesh))
+    if (!Bindings.Collect(MeshShader->GetBindings(), EShaderVisibility::Mesh, MeshShader->GetShaderConstantsSize()))
     {
         [Descriptor release];
         return false;
@@ -909,7 +952,7 @@ bool FMetalMeshletPipelineStateRHI::Initialize()
     if (FMetalShader* AmplificationShader = GetMetalShader(Desc.AmplificationShader))
     {
         Descriptor.objectFunction = AmplificationShader->GetMTLFunction();
-        if (!Bindings.Collect(AmplificationShader->GetBindings(), EShaderVisibility::Amplification))
+        if (!Bindings.Collect(AmplificationShader->GetBindings(), EShaderVisibility::Amplification, AmplificationShader->GetShaderConstantsSize()))
         {
             [Descriptor release];
             return false;
@@ -919,7 +962,7 @@ bool FMetalMeshletPipelineStateRHI::Initialize()
     if (FMetalShader* PixelShader = GetMetalShader(Desc.PixelShader))
     {
         Descriptor.fragmentFunction = PixelShader->GetMTLFunction();
-        if (!Bindings.Collect(PixelShader->GetBindings(), EShaderVisibility::Pixel))
+        if (!Bindings.Collect(PixelShader->GetBindings(), EShaderVisibility::Pixel, PixelShader->GetShaderConstantsSize()))
         {
             [Descriptor release];
             return false;
@@ -946,6 +989,8 @@ bool FMetalMeshletPipelineStateRHI::Initialize()
         Descriptor.maxVertexAmplificationCount = AmplificationCount;
     }
 
+    Descriptor.label = PipelineDebugLabel(DebugName, @"MeshletPSO");
+
     NSError* Error = nil;
     PipelineState = [GetDevice()->GetMTLDevice() newRenderPipelineStateWithMeshDescriptor:Descriptor error:&Error];
     [Descriptor release];
@@ -962,13 +1007,14 @@ bool FMetalMeshletPipelineStateRHI::Initialize()
     return true;
 }
 
-void FMetalMeshletPipelineStateRHI::SetDebugName(const String&)
+void FMetalMeshletPipelineStateRHI::SetDebugName(const String& InName)
 {
+    DebugName = InName;
 }
 
 void FMetalMeshletPipelineStateRHI::GetDebugName(String& OutDebugName) const
 {
-    OutDebugName.Clear();
+    OutDebugName = DebugName;
 }
 
 void* FMetalMeshletPipelineStateRHI::GetRHINativeState() const
@@ -1105,6 +1151,7 @@ bool FMetalRayTracingPipelineStateRHI::Initialize()
     MTLComputePipelineDescriptor* Descriptor = [[MTLComputePipelineDescriptor new] autorelease];
     Descriptor.computeFunction   = RayGenShader->GetMTLFunction();
     Descriptor.maxCallStackDepth = Math::Max(Desc.MaxRecursionDepth, 1u);
+    Descriptor.label             = PipelineDebugLabel(DebugName, @"RayTracingPSO");
 
     if (LinkedShaderFunctions.count > 0)
     {
@@ -1139,13 +1186,14 @@ uint32 FMetalRayTracingPipelineStateRHI::GetNumExportNames(ERayTracingShaderReco
     return static_cast<uint32>(GetExportNameArray(Kind).Size());
 }
 
-void FMetalRayTracingPipelineStateRHI::SetDebugName(const String&)
+void FMetalRayTracingPipelineStateRHI::SetDebugName(const String& InName)
 {
+    DebugName = InName;
 }
 
 void FMetalRayTracingPipelineStateRHI::GetDebugName(String& OutDebugName) const
 {
-    OutDebugName.Clear();
+    OutDebugName = DebugName;
 }
 
 void* FMetalRayTracingPipelineStateRHI::GetRHINativeState() const

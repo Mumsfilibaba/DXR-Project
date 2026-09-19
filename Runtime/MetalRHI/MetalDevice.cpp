@@ -1,5 +1,6 @@
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalCapabilities.h"
+#include "MetalRHI/MetalDeviceDebug.h"
 #include "MetalRHI/MetalQueue.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
@@ -476,12 +477,14 @@ bool FMetalDevice::InitializeDefaultResources()
 void FMetalDevice::BeginFrame()
 {
     FrameCounter++;
+    MetalBeginFrameCapture(Device);
     ProcessQueues();
 }
 
 void FMetalDevice::EndFrame()
 {
     ProcessQueues();
+    MetalEndFrameCapture();
 }
 
 void FMetalDevice::WaitForGPU()

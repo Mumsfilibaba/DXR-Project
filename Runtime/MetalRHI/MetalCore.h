@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Mac/Mac.h"
+#include "Core/Math/Math.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/Debug.h"
 #include "RHI/RHIResources.h"
@@ -755,6 +756,16 @@ constexpr MTLPrimitiveType ConvertPrimitiveTopology(EPrimitiveTopology Primitive
     }
 }
 
+constexpr MTLIndexType ConvertIndexFormat(EIndexFormat IndexFormat)
+{
+    switch (IndexFormat)
+    {
+        case EIndexFormat::uint16: return MTLIndexTypeUInt16;
+        case EIndexFormat::uint32: return MTLIndexTypeUInt32;
+        default:                   return MTLIndexType(-1);
+    }
+}
+
 constexpr MTLTriangleFillMode ConvertFillMode(EFillMode FillMode)
 {
     switch (FillMode)
@@ -790,6 +801,24 @@ constexpr bool IsStencilPixelFormat(MTLPixelFormat Format)
         default:
             return false;
     }
+}
+
+constexpr NSUInteger GetMipExtent(NSUInteger Extent, uint32 MipLevel)
+{
+    const NSUInteger MipExtent = Extent >> MipLevel;
+    return (MipExtent > 0) ? MipExtent : 1;
+}
+
+constexpr NSUInteger ResolveMipCopyExtent(uint32 RequestedEnd, NSUInteger SrcOrigin, NSUInteger DstOrigin, NSUInteger SrcExtent, NSUInteger DstExtent)
+{
+    if (SrcOrigin >= SrcExtent || DstOrigin >= DstExtent)
+    {
+        return 0;
+    }
+
+    const NSUInteger Requested = (NSUInteger(RequestedEnd) > SrcOrigin) ? (NSUInteger(RequestedEnd) - SrcOrigin) : 1;
+    const NSUInteger Available = Math::Min<NSUInteger>(SrcExtent - SrcOrigin, DstExtent - DstOrigin);
+    return Math::Min<NSUInteger>(Requested, Available);
 }
 
 }

@@ -5,7 +5,16 @@
 #include "Core/Platform/PlatformThread.h"
 #include "Core/Templates/CString.h"
 #include "Core/Threading/Atomic/AtomicBool.h"
+#include "Core/Threading/Atomic/AtomicInt.h"
 #include "Core/Threading/Runnable.h"
+
+static TAutoConsoleVariable<bool> CVarCaptureNextFrame(
+    "MetalRHI.CaptureNextFrame",
+    "Captures the next BeginFrame/EndFrame pair with MTLCaptureManager",
+    false);
+
+static AtomicInt32 GValidationErrorCount;
+static bool        GCaptureActive = false;
 
 #if METAL_ENABLE_DEBUG_LAYER
 
@@ -22,6 +31,8 @@ static TAutoConsoleVariable<bool> CVarBreakOnValidationError(
     "MetalRHI.BreakOnValidationError",
     "Enables breakpoints when the Metal debug layer reports an error",
     false);
+
+static AtomicBool GReportingDisabled;
 
 static bool IsEnvFlagEnabled(const CHAR* Name)
 {
@@ -54,8 +65,7 @@ static bool IsMetalValidationLine(const CHAR* Text)
         return false;
     }
 
-    return CString::Strstr(Text, "[MetalRHI]") == nullptr
-        && CString::Strstr(Text, "[Metal Validation]") == nullptr;
+    return CString::Strstr(Text, "[MetalRHI]") == nullptr;
 }
 
 static const CHAR* SkipNSLogPrefix(const CHAR* Text)
@@ -89,8 +99,6 @@ static bool IsMetalValidationError(const CHAR* Text)
         || CString::Stristr(Text, "faulted") != nullptr;
 }
 
-static AtomicBool GReportingDisabled;
-
 static void ReportValidationLine(const CHAR* RawText)
 {
     if (GReportingDisabled.Load())
@@ -107,6 +115,7 @@ static void ReportValidationLine(const CHAR* RawText)
         }
 
         METAL_ERROR("[Metal Validation] %s", Text);
+        GValidationErrorCount.Add(1);
         if (CVarBreakOnValidationError.GetValue())
         {
             DEBUG_BREAK();
@@ -337,3 +346,69 @@ void MetalStopValidationCapture()
 }
 
 #endif
+
+void MetalResetValidationErrors()
+{
+    GValidationErrorCount.Store(0);
+}
+
+bool MetalHasValidationErrors()
+{
+    return GValidationErrorCount.Load() != 0;
+}
+
+void MetalBeginFrameCapture(id<MTLDevice> Device)
+{
+    if (!Device || GCaptureActive || !CVarCaptureNextFrame.GetValue())
+    {
+        return;
+    }
+
+    CVarCaptureNextFrame.SetVariable(false);
+
+    MTLCaptureManager* Manager = [MTLCaptureManager sharedCaptureManager];
+    if (!Manager)
+    {
+        return;
+    }
+
+    MTLCaptureDescriptor* Descriptor = [[MTLCaptureDescriptor new] autorelease];
+    Descriptor.captureObject = Device;
+    if ([Manager supportsDestination:MTLCaptureDestinationDeveloperTools])
+    {
+        Descriptor.destination = MTLCaptureDestinationDeveloperTools;
+    }
+    else if ([Manager supportsDestination:MTLCaptureDestinationGPUTraceDocument])
+    {
+        Descriptor.destination = MTLCaptureDestinationGPUTraceDocument;
+        Descriptor.outputURL   = [NSURL fileURLWithPath:@"/tmp/DXR-MetalCapture.gputrace"];
+    }
+    else
+    {
+        METAL_WARNING("MTLCaptureManager has no supported capture destination");
+        return;
+    }
+
+    NSError* Error = nil;
+    if (![Manager startCaptureWithDescriptor:Descriptor error:&Error])
+    {
+        const String ErrorString(Error ? [Error localizedDescription] : @"unknown error");
+        METAL_ERROR("Failed to start a Metal GPU capture: %s", *ErrorString);
+        return;
+    }
+
+    GCaptureActive = true;
+    METAL_INFO("Metal GPU capture started");
+}
+
+void MetalEndFrameCapture()
+{
+    if (!GCaptureActive)
+    {
+        return;
+    }
+
+    [[MTLCaptureManager sharedCaptureManager] stopCapture];
+    GCaptureActive = false;
+    METAL_INFO("Metal GPU capture stopped");
+}

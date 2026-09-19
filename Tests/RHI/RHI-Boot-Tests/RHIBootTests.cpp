@@ -15,6 +15,7 @@
 #include <RHI/ShaderCompiler.h>
 
 #if PLATFORM_MACOS
+#include <MetalRHI/MetalDeviceDebug.h>
 #include <MetalRHI/MetalPipelineState.h>
 #include <RHI/MSLShaderBindings.h>
 #endif
@@ -634,7 +635,12 @@ static bool ProbeCommandRecording()
 
                     FRHIRasterizerStateDesc RasterizerDesc;
                     RasterizerDesc.CullMode = ECullMode::None;
-                    FRHIDepthStencilStateRef DepthStencilState = RHI::CreateDepthStencilState(FRHIDepthStencilStateDesc());
+
+                    FRHIDepthStencilStateDesc DepthStencilDesc;
+                    DepthStencilDesc.bDepthEnable      = false;
+                    DepthStencilDesc.bDepthWriteEnable = false;
+
+                    FRHIDepthStencilStateRef DepthStencilState = RHI::CreateDepthStencilState(DepthStencilDesc);
                     FRHIRasterizerStateRef   RasterizerState   = RHI::CreateRasterizerState(RasterizerDesc);
                     FRHIBlendStateRef        BlendState        = RHI::CreateBlendState(FRHIBlendStateDesc());
 
@@ -806,6 +812,13 @@ static bool BootRHI(ERHIType ExpectedType)
     SetConsoleVariable("RHI.EnableValidation", true);
     SetConsoleVariable("RHI.EnableValidationDebugBreak", false);
     SetConsoleVariable("TaskGraph.EnableRHIThread", false);
+    if (ExpectedType == ERHIType::Metal)
+    {
+        SetConsoleVariable("RHI.EnableDebugLayer", true);
+#if PLATFORM_MACOS
+        MetalResetValidationErrors();
+#endif
+    }
 
     const bool bInitialized = RHI::Initialize();
     TEST_EXPECT(bInitialized);
@@ -836,6 +849,13 @@ static bool BootRHI(ERHIType ExpectedType)
         {
             FRHICommandListExecutor::Get().WaitForGPU();
         }
+
+#if PLATFORM_MACOS
+        if (ExpectedType == ERHIType::Metal)
+        {
+            TEST_EXPECT(!MetalHasValidationErrors());
+        }
+#endif
 
         RHI::Release();
         TEST_EXPECT(RHI::Device == nullptr);

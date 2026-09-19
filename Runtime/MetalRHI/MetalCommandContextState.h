@@ -247,11 +247,13 @@ struct FMetalShaderConstantsCache
         {
             Memory::Memzero(Constants[Stage], sizeof(Constants[Stage]));
             NumConstants[Stage] = 0;
+            BoundSlot[Stage]    = FMetalPipelineBindingLayout::InvalidSlot;
         }
     }
 
     uint32 Constants[EShaderVisibility::Count][MAX_SHADER_CONSTANTS];
     uint32 NumConstants[EShaderVisibility::Count];
+    uint8  BoundSlot[EShaderVisibility::Count];
 };
 
 class FMetalCommandContextState : public FMetalDeviceChild
@@ -275,6 +277,7 @@ public:
 
     void BeginCommandBuffer();
     void EndCommandBuffer() {}
+    void ResetBoundConstantSlots();
 
     void SetGraphicsPipelineState(FMetalGraphicsPipelineStateRHI* InGraphicsPipelineState);
     void SetComputePipelineState(FMetalComputePipelineStateRHI* InComputePipelineState);

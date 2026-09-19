@@ -122,7 +122,7 @@ struct FMSLShaderHeader
     static constexpr uint32 ExpectedMagic = 0x4D534C42;
 
     /** @brief Layout revision, bumped whenever the header or the binding array changes shape. */
-    static constexpr uint32 ExpectedVersion = 2;
+    static constexpr uint32 ExpectedVersion = 3;
 
     uint32 Magic;
     uint32 Version;
@@ -131,7 +131,8 @@ struct FMSLShaderHeader
     uint16 ThreadGroupSizeX;
     uint16 ThreadGroupSizeY;
     uint16 ThreadGroupSizeZ;
-    uint16 Padding0;
+
+    uint16 ShaderConstantsSize;
 };
 
 static_assert(sizeof(FMSLShaderHeader) == 24, "FMSLShaderHeader is serialized verbatim and must not carry padding");

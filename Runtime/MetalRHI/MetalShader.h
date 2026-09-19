@@ -66,6 +66,8 @@ public:
     uint16 GetThreadGroupSizeY() const { return ThreadGroupSizeY; }
     uint16 GetThreadGroupSizeZ() const { return ThreadGroupSizeZ; }
 
+    uint16 GetShaderConstantsSize() const { return ShaderConstantsSize; }
+
 protected:
     id<MTLLibrary>            Library;
     NSString*                 FunctionName;
@@ -75,6 +77,7 @@ protected:
     uint16                    ThreadGroupSizeX;
     uint16                    ThreadGroupSizeY;
     uint16                    ThreadGroupSizeZ;
+    uint16                    ShaderConstantsSize;
 };
 
 class FMetalVertexShaderRHI : public FRHIVertexShader, public FMetalShader

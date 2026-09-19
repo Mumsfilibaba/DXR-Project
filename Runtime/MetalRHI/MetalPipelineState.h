@@ -140,10 +140,15 @@ public:
 
     void Reset();
 
-    bool Collect(const TArray<FMSLShaderBinding>& ShaderBindings, EShaderVisibility::Type ShaderStage);
+    bool Collect(const TArray<FMSLShaderBinding>& ShaderBindings, EShaderVisibility::Type ShaderStage, uint16 InShaderConstantsSize);
     bool ConflictsWithVertexInputs(const FMetalInputLayoutRHI* InputLayout) const;
 
     uint8 GetSlot(EShaderVisibility::Type ShaderVisibility, EMSLBindingType BindingType, uint32 RegisterIndex) const;
+
+    uint16 GetShaderConstantsSize(EShaderVisibility::Type ShaderStage) const
+    {
+        return ShaderConstantsSize[ShaderStage];
+    }
 
 private:
     TStaticArray<uint8, MAX_CONSTANT_BUFFERS> ConstantBuffers[EShaderVisibility::Count];
@@ -153,6 +158,7 @@ private:
     TStaticArray<uint8, MAX_UAVS>             UnorderedAccessTextures[EShaderVisibility::Count];
     TStaticArray<uint8, MAX_SAMPLER_STATES>   Samplers[EShaderVisibility::Count];
     uint8                                     ShaderConstants[EShaderVisibility::Count];
+    uint16                                    ShaderConstantsSize[EShaderVisibility::Count];
 };
 
 struct FMetalStaticSamplerBinding
@@ -210,6 +216,11 @@ public:
         return Desc.ViewInstancingState;
     }
 
+    bool HasDepthStencilAttachment() const
+    {
+        return Desc.RasterizerOutputFormats.DepthStencilFormat != EFormat::Unknown;
+    }
+
 private:
     FRHIGraphicsPipelineStateDesc          Desc;
     TSharedRef<FMetalBlendStateRHI>        BlendState;
@@ -219,6 +230,7 @@ private:
     FMetalPipelineBindingLayout            Bindings;
     TArray<FMetalStaticSamplerBinding>     StaticSamplers;
     MTLPrimitiveType                       PrimitiveType;
+    String                                 DebugName;
 };
 
 class FMetalComputePipelineStateRHI : public FRHIComputePipelineState, public FMetalDeviceChild
@@ -265,6 +277,7 @@ private:
     uint16                             ThreadGroupSizeX;
     uint16                             ThreadGroupSizeY;
     uint16                             ThreadGroupSizeZ;
+    String                             DebugName;
 };
 
 class FMetalMeshletPipelineStateRHI : public FRHIMeshletPipelineState, public FMetalDeviceChild
@@ -302,6 +315,11 @@ public:
         return Desc.ViewInstancingState;
     }
 
+    bool HasDepthStencilAttachment() const
+    {
+        return Desc.RasterizerOutputFormats.DepthStencilFormat != EFormat::Unknown;
+    }
+
 private:
     FRHIMeshletPipelineStateDesc           Desc;
     TSharedRef<FMetalBlendStateRHI>        BlendState;
@@ -310,6 +328,7 @@ private:
     id<MTLRenderPipelineState>             PipelineState;
     FMetalPipelineBindingLayout            Bindings;
     TArray<FMetalStaticSamplerBinding>     StaticSamplers;
+    String                                 DebugName;
 };
 
 class FMetalRayTracingPipelineStateRHI : public FRHIRayTracingPipelineState, public FMetalDeviceChild
@@ -345,6 +364,7 @@ private:
     TArray<String>                  MissExports;
     TArray<String>                  CallableExports;
     TArray<String>                  HitGroupExports;
+    String                          DebugName;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -2,6 +2,7 @@
 #include "MetalRHI/MetalCommandContext.h"
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalTexture.h"
+#include "Core/Math/Math.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -60,6 +61,8 @@ void FMetalCommandContextState::BeginCommandBuffer()
     ComputeState.bBindPipelineState   = ComputeState.PipelineState != nullptr;
     ComputeState.bBindShaderConstants = true;
 
+    ResetBoundConstantSlots();
+
     CommonState.ConstantBufferCache.DirtyResourcesAll();
     CommonState.ShaderResourceViewCache.DirtyResourcesAll();
     CommonState.UnorderedAccessViewCache.DirtyResourcesAll();
@@ -84,6 +87,8 @@ void FMetalCommandContextState::SetGraphicsPipelineState(FMetalGraphicsPipelineS
     CommonState.UnorderedAccessViewCache.DirtyResourcesAll();
     CommonState.SamplerStateCache.DirtyResourcesAll();
 
+    GraphicsState.bBindShaderConstants = true;
+
     if (InGraphicsPipelineState)
     {
         InGraphicsPipelineState->ApplyStaticSamplers(CommonState.SamplerStateCache);
@@ -104,6 +109,8 @@ void FMetalCommandContextState::SetComputePipelineState(FMetalComputePipelineSta
     CommonState.ShaderResourceViewCache.DirtyResources(EShaderVisibility::Compute);
     CommonState.UnorderedAccessViewCache.DirtyResources(EShaderVisibility::Compute);
     CommonState.SamplerStateCache.DirtyResources(EShaderVisibility::Compute);
+
+    ComputeState.bBindShaderConstants = true;
 
     if (InComputePipelineState)
     {
@@ -127,6 +134,8 @@ void FMetalCommandContextState::SetMeshletPipelineState(FMetalMeshletPipelineSta
     CommonState.ShaderResourceViewCache.DirtyResourcesAll();
     CommonState.UnorderedAccessViewCache.DirtyResourcesAll();
     CommonState.SamplerStateCache.DirtyResourcesAll();
+
+    GraphicsState.bBindShaderConstants = true;
 
     if (InMeshletPipelineState)
     {
@@ -305,6 +314,7 @@ void FMetalCommandContextState::SetShaderConstants(EShaderVisibility::Type Shade
     CHECK(NumShaderConstants <= MAX_SHADER_CONSTANTS);
 
     FMetalShaderConstantsCache& Cache = CommonState.ShaderConstantsCache;
+    Memory::Memzero(Cache.Constants[ShaderStage], sizeof(Cache.Constants[ShaderStage]));
     if (ShaderConstants && NumShaderConstants > 0)
     {
         Memory::Memcpy(Cache.Constants[ShaderStage], ShaderConstants, sizeof(uint32) * NumShaderConstants);
@@ -355,7 +365,8 @@ void FMetalCommandContextState::BindGraphicsState()
         }
 
         FMetalDepthStencilStateRHI* DepthStencilState = GraphicsPipeline ? GraphicsPipeline->GetMetalDepthStencilState() : MeshletPipeline->GetMetalDepthStencilState();
-        if (DepthStencilState)
+        const bool bHasDepthStencilAttachment = GraphicsPipeline ? GraphicsPipeline->HasDepthStencilAttachment() : MeshletPipeline->HasDepthStencilAttachment();
+        if (DepthStencilState && bHasDepthStencilAttachment)
         {
             [Encoder setDepthStencilState:DepthStencilState->GetMTLDepthStencilState()];
         }
@@ -621,6 +632,14 @@ void FMetalCommandContextState::BindGraphicsSamplers(EShaderVisibility::Type Sha
     Cache.ClearResourcesDirty(ShaderStage);
 }
 
+void FMetalCommandContextState::ResetBoundConstantSlots()
+{
+    for (uint32 Stage = 0; Stage < EShaderVisibility::Count; ++Stage)
+    {
+        CommonState.ShaderConstantsCache.BoundSlot[Stage] = InvalidMSLSlot;
+    }
+}
+
 void FMetalCommandContextState::BindGraphicsShaderConstants(EShaderVisibility::Type ShaderStage)
 {
     CHECK(ShaderStage != EShaderVisibility::Compute);
@@ -636,21 +655,30 @@ void FMetalCommandContextState::BindGraphicsShaderConstants(EShaderVisibility::T
         return;
     }
 
-    FMetalShaderConstantsCache& Cache = CommonState.ShaderConstantsCache;
-    const uint32 NumConstants = Cache.NumConstants[ShaderStage];
-    if (NumConstants == 0)
+    FMetalShaderConstantsCache& Cache        = CommonState.ShaderConstantsCache;
+    const uint8                 PreviousSlot = Cache.BoundSlot[ShaderStage];
+    const uint8                 Slot         = Layout->GetSlot(ShaderStage, EMSLBindingType::ShaderConstants, 0);
+    const uint16                ByteLength   = Layout->GetShaderConstantsSize(ShaderStage);
+
+    if (Slot == InvalidMSLSlot || ByteLength == 0)
     {
+        if (PreviousSlot != InvalidMSLSlot)
+        {
+            Context.SetGraphicsBuffer(ShaderStage, nil, 0, PreviousSlot);
+            Cache.BoundSlot[ShaderStage] = InvalidMSLSlot;
+        }
+
         return;
     }
 
-    const uint8 Slot = Layout->GetSlot(ShaderStage, EMSLBindingType::ShaderConstants, 0);
-    if (Slot == InvalidMSLSlot)
+    if (PreviousSlot != InvalidMSLSlot && PreviousSlot != Slot)
     {
-        return;
+        Context.SetGraphicsBuffer(ShaderStage, nil, 0, PreviousSlot);
     }
 
-    const NSUInteger ByteLength = NumConstants * sizeof(uint32);
-    Context.SetGraphicsBytes(ShaderStage, Cache.Constants[ShaderStage], ByteLength, Slot);
+    const NSUInteger BindLength = Math::Min<NSUInteger>(ByteLength, sizeof(Cache.Constants[ShaderStage]));
+    Context.SetGraphicsBytes(ShaderStage, Cache.Constants[ShaderStage], BindLength, Slot);
+    Cache.BoundSlot[ShaderStage] = Slot;
 }
 
 const FMetalPipelineBindingLayout* FMetalCommandContextState::GetBoundLayout(EShaderVisibility::Type ShaderStage) const
@@ -815,21 +843,30 @@ void FMetalCommandContextState::BindComputeShaderConstants()
         return;
     }
 
-    FMetalShaderConstantsCache& Cache = CommonState.ShaderConstantsCache;
-    const uint32 NumConstants = Cache.NumConstants[EShaderVisibility::Compute];
-    if (NumConstants == 0)
+    FMetalShaderConstantsCache& Cache        = CommonState.ShaderConstantsCache;
+    const uint8                 PreviousSlot = Cache.BoundSlot[EShaderVisibility::Compute];
+    const uint8                 Slot         = Layout->GetSlot(EShaderVisibility::Compute, EMSLBindingType::ShaderConstants, 0);
+    const uint16                ByteLength   = Layout->GetShaderConstantsSize(EShaderVisibility::Compute);
+
+    if (Slot == InvalidMSLSlot || ByteLength == 0)
     {
+        if (PreviousSlot != InvalidMSLSlot)
+        {
+            [Encoder setBuffer:nil offset:0 atIndex:PreviousSlot];
+            Cache.BoundSlot[EShaderVisibility::Compute] = InvalidMSLSlot;
+        }
+
         return;
     }
 
-    const uint8 Slot = Layout->GetSlot(EShaderVisibility::Compute, EMSLBindingType::ShaderConstants, 0);
-    if (Slot == InvalidMSLSlot)
+    if (PreviousSlot != InvalidMSLSlot && PreviousSlot != Slot)
     {
-        return;
+        [Encoder setBuffer:nil offset:0 atIndex:PreviousSlot];
     }
 
-    const NSUInteger ByteLength = NumConstants * sizeof(uint32);
-    [Encoder setBytes:Cache.Constants[EShaderVisibility::Compute] length:ByteLength atIndex:Slot];
+    const NSUInteger BindLength = Math::Min<NSUInteger>(ByteLength, sizeof(Cache.Constants[EShaderVisibility::Compute]));
+    [Encoder setBytes:Cache.Constants[EShaderVisibility::Compute] length:BindLength atIndex:Slot];
+    Cache.BoundSlot[EShaderVisibility::Compute] = Slot;
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
