@@ -1,6 +1,22 @@
 #include "MetalRHI/MetalShader.h"
 #include "Core/Memory/Memory.h"
 
+static NSString* ResolveMetalFunctionName(id<MTLLibrary> Library)
+{
+    NSArray<NSString*>* FunctionNames = [Library functionNames];
+    if (FunctionNames.count == 0)
+    {
+        return nil;
+    }
+
+    if ([FunctionNames containsObject:@"Main"])
+    {
+        return @"Main";
+    }
+
+    return FunctionNames.firstObject;
+}
+
 FMetalShader::FMetalShader(FMetalDevice* InDevice, EShaderVisibility::Type InVisibility)
     : FMetalDeviceChild(InDevice)
     , Library(nil)
@@ -68,15 +84,13 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
             return false;
         }
         
-        NSArray<NSString*>* FunctionNames = [Library functionNames];
-        if (FunctionNames.count == 0)
+        FunctionName = [ResolveMetalFunctionName(Library) retain];
+        if (!FunctionName)
         {
             LOG_ERROR("Compiled Library does not contain an entry-point");
             return false;
         }
 
-        FunctionName = [FunctionNames.firstObject retain];
-        
         Function = [Library newFunctionWithName:FunctionName];
         if (!Function)
         {
