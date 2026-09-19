@@ -1127,10 +1127,24 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
             continue;
         }
 
-        if (Slot > UINT8_MAX)
+        const uint8 TableLimit = GetMSLMaxSlotCount(ReflectedResource.BindingType);
+        if (Slot > UINT8_MAX || Slot >= TableLimit)
         {
-            LOG_ERROR("[FShaderCompiler]: %s register %u resolved to MSL slot %u, which exceeds the binding table",
-                ToString(ReflectedResource.BindingType), ReflectedResource.RegisterIndex, Slot);
+            const CHAR* TableName = "buffer";
+            switch (GetMSLBindingTable(ReflectedResource.BindingType))
+            {
+                case EMSLBindingTable::Texture:
+                    TableName = "texture";
+                    break;
+                case EMSLBindingTable::Sampler:
+                    TableName = "sampler";
+                    break;
+                default:
+                    break;
+            }
+
+            LOG_ERROR("[FShaderCompiler]: %s register %u resolved to MSL slot %u, which exceeds the %u-slot %s table",
+                ToString(ReflectedResource.BindingType), ReflectedResource.RegisterIndex, Slot, TableLimit, TableName);
             spvc_context_destroy(Context);
             DEBUG_BREAK();
             return false;

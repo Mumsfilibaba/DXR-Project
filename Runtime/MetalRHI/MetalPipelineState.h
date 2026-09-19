@@ -2,6 +2,7 @@
 #include "RHI/RHIResources.h"
 #include "RHI/RayTracing/RHIRayTracingPipelineState.h"
 #include "MetalRHI/MetalDevice.h"
+#include "MetalRHI/MetalSamplerState.h"
 #include "MetalRHI/MetalShader.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -139,7 +140,8 @@ public:
 
     void Reset();
 
-    void Collect(const TArray<FMSLShaderBinding>& ShaderBindings, EShaderVisibility::Type ShaderStage);
+    bool Collect(const TArray<FMSLShaderBinding>& ShaderBindings, EShaderVisibility::Type ShaderStage);
+    bool ConflictsWithVertexInputs(const FMetalInputLayoutRHI* InputLayout) const;
 
     uint8 GetSlot(EShaderVisibility::Type ShaderVisibility, EMSLBindingType BindingType, uint32 RegisterIndex) const;
 
@@ -152,6 +154,20 @@ private:
     TStaticArray<uint8, MAX_SAMPLER_STATES>   Samplers[EShaderVisibility::Count];
     uint8                                     ShaderConstants[EShaderVisibility::Count];
 };
+
+struct FMetalStaticSamplerBinding
+{
+    /** @brief Stage whose sampler table this entry occupies. */
+    EShaderVisibility::Type Stage;
+
+    /** @brief HLSL s# register. */
+    uint8 RegisterIndex;
+
+    /** @brief Sampler created from the static-sampler desc. */
+    TSharedRef<FMetalSamplerStateRHI> Sampler;
+};
+
+struct FMetalSamplerStateCache;
 
 class FMetalGraphicsPipelineStateRHI : public FRHIGraphicsPipelineState, public FMetalDeviceChild
 {
@@ -167,10 +183,12 @@ public:
 
     bool Initialize();
 
+    void ApplyStaticSamplers(FMetalSamplerStateCache& Cache) const;
+    bool HasStaticSampler(EShaderVisibility::Type ShaderStage, uint32 RegisterIndex) const;
+
     FMetalBlendStateRHI*        GetMetalBlendState()        const { return BlendState.Get(); }
     FMetalDepthStencilStateRHI* GetMetalDepthStencilState() const { return DepthStencilState.Get(); }
     FMetalRasterizerStateRHI*   GetMetalRasterizerState()   const { return RasterizerState.Get(); }
-
 
     const FMetalPipelineBindingLayout& GetBindings() const
     {
@@ -194,6 +212,7 @@ private:
     TSharedRef<FMetalRasterizerStateRHI>   RasterizerState;
     id<MTLRenderPipelineState>             PipelineState;
     FMetalPipelineBindingLayout            Bindings;
+    TArray<FMetalStaticSamplerBinding>     StaticSamplers;
     MTLPrimitiveType                       PrimitiveType;
 };
 
@@ -211,6 +230,8 @@ public:
 
     bool Initialize(const FRHIComputePipelineStateDesc& InDesc);
 
+    void ApplyStaticSamplers(FMetalSamplerStateCache& Cache) const;
+    bool HasStaticSampler(EShaderVisibility::Type ShaderStage, uint32 RegisterIndex) const;
 
     const FMetalPipelineBindingLayout& GetBindings() const
     {
@@ -228,9 +249,10 @@ public:
     }
 
 private:
-    id<MTLComputePipelineState> PipelineState;
-    FMetalPipelineBindingLayout Bindings;
-    uint32                      MaxTotalThreadsPerThreadgroup;
+    id<MTLComputePipelineState>        PipelineState;
+    FMetalPipelineBindingLayout        Bindings;
+    TArray<FMetalStaticSamplerBinding> StaticSamplers;
+    uint32                             MaxTotalThreadsPerThreadgroup;
 };
 
 class FMetalMeshletPipelineStateRHI : public FRHIMeshletPipelineState, public FMetalDeviceChild
@@ -247,10 +269,12 @@ public:
 
     bool Initialize();
 
+    void ApplyStaticSamplers(FMetalSamplerStateCache& Cache) const;
+    bool HasStaticSampler(EShaderVisibility::Type ShaderStage, uint32 RegisterIndex) const;
+
     FMetalDepthStencilStateRHI* GetMetalDepthStencilState() const { return DepthStencilState.Get(); }
     FMetalRasterizerStateRHI*   GetMetalRasterizerState()   const { return RasterizerState.Get(); }
 
-    /** @return The HLSL register to MSL slot table for every stage in this pipeline. */
     const FMetalPipelineBindingLayout& GetBindings() const
     {
         return Bindings;
@@ -268,6 +292,7 @@ private:
     TSharedRef<FMetalRasterizerStateRHI>   RasterizerState;
     id<MTLRenderPipelineState>             PipelineState;
     FMetalPipelineBindingLayout            Bindings;
+    TArray<FMetalStaticSamplerBinding>     StaticSamplers;
 };
 
 class FMetalRayTracingPipelineStateRHI : public FRHIRayTracingPipelineState, public FMetalDeviceChild

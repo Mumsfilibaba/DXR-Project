@@ -75,7 +75,7 @@ constexpr uint32 MAX_CONSTANT_BUFFERS = 16;
 constexpr uint32 MAX_SAMPLER_STATES   = 16;
 
 constexpr uint32 MAX_TEXTURES = 32;
-constexpr uint32 MAX_BUFFERS  = 48;
+constexpr uint32 MAX_BUFFERS  = 31;
 
 constexpr uint32 MAX_SHADER_CONSTANTS = 32;
 constexpr uint32 MAX_VIEWPORTS        = 16;

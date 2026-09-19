@@ -30,6 +30,58 @@ enum class EMSLBindingType : uint8
     Count = 8,
 };
 
+enum class EMSLBindingTable : uint8
+{
+    /** @brief `[[buffer(n)]]` table. */
+    Buffer = 0,
+
+    /** @brief `[[texture(n)]]` table. */
+    Texture = 1,
+
+    /** @brief `[[sampler(n)]]` table. */
+    Sampler = 2,
+};
+
+/** @brief Conservative Metal buffer-table size (`maxBuffers` / `maxVertexBuffers`). */
+static constexpr uint8 MSL_MAX_BUFFER_SLOTS = 31;
+
+/** @brief Conservative Mac texture-table size. Apple silicon can be 128. */
+static constexpr uint8 MSL_MAX_TEXTURE_SLOTS = 31;
+
+/** @brief Sampler-table size, matching `MAX_SAMPLER_STATES`. */
+static constexpr uint8 MSL_MAX_SAMPLER_SLOTS = 16;
+
+inline EMSLBindingTable GetMSLBindingTable(EMSLBindingType BindingType)
+{
+    switch (BindingType)
+    {
+        case EMSLBindingType::ShaderResourceTexture:
+        case EMSLBindingType::UnorderedAccessTexture:
+            return EMSLBindingTable::Texture;
+
+        case EMSLBindingType::Sampler:
+            return EMSLBindingTable::Sampler;
+
+        default:
+            return EMSLBindingTable::Buffer;
+    }
+}
+
+inline uint8 GetMSLMaxSlotCount(EMSLBindingType BindingType)
+{
+    switch (GetMSLBindingTable(BindingType))
+    {
+        case EMSLBindingTable::Texture:
+            return MSL_MAX_TEXTURE_SLOTS;
+
+        case EMSLBindingTable::Sampler:
+            return MSL_MAX_SAMPLER_SLOTS;
+
+        default:
+            return MSL_MAX_BUFFER_SLOTS;
+    }
+}
+
 inline const CHAR* ToString(EMSLBindingType BindingType)
 {
     static constexpr const CHAR* const BindingTypeStrings[] =

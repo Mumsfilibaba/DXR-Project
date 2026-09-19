@@ -8,7 +8,13 @@
 #include <RHI/RHICommandList.h>
 #include <RHI/RHIQuery.h>
 #include <RHI/RHIResources.h>
+#include <RHI/RHISamplerState.h>
 #include <RHI/ShaderCompiler.h>
+
+#if PLATFORM_MACOS
+#include <MetalRHI/MetalPipelineState.h>
+#include <RHI/MSLShaderBindings.h>
+#endif
 
 static void SetConsoleVariable(const CHAR* VariableName, bool bValue)
 {
@@ -323,6 +329,56 @@ static bool ProbeShaders()
             TEST_EXPECT(PipelineState != nullptr);
         }
     }
+
+#if PLATFORM_MACOS
+    if (RHI::Device->GetRHIType() == ERHIType::Metal)
+    {
+        TEST_SECTION("A compute PSO materialises a static sampler on s0");
+
+        const String SamplerSource(
+            "SamplerState LinearSampler : register(s0);\n"
+            "Texture2D<float4> SourceTex : register(t0);\n"
+            "RWTexture2D<float4> DestTex : register(u0);\n"
+            "[numthreads(1, 1, 1)]\n"
+            "void Main(uint3 DispatchThreadID : SV_DispatchThreadID)\n"
+            "{\n"
+            "    DestTex[DispatchThreadID.xy] = SourceTex.SampleLevel(LinearSampler, float2(0.5, 0.5), 0);\n"
+            "}\n");
+
+        TArray<uint8> SamplerByteCode;
+        const FShaderCompileInfo SamplerCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+        const bool bSamplerCompiled = FShaderCompiler::Get().CompileFromSource(SamplerSource, SamplerCompileInfo, SamplerByteCode);
+        TEST_EXPECT(bSamplerCompiled);
+
+        if (bSamplerCompiled)
+        {
+            FRHIComputeShaderRef SamplerComputeShader = RHI::CreateComputeShader(SamplerByteCode);
+            TEST_EXPECT(SamplerComputeShader != nullptr);
+
+            if (SamplerComputeShader)
+            {
+                FRHIStaticSamplerInfo StaticSampler;
+                StaticSampler.ShaderRegister   = 0;
+                StaticSampler.ShaderVisibility = EShaderStage::Compute;
+                StaticSampler.Filter           = ESamplerFilter::MinMagMipLinear;
+
+                FRHIComputePipelineStateDesc SamplerPipelineDesc;
+                SamplerPipelineDesc.Shader         = SamplerComputeShader.Get();
+                SamplerPipelineDesc.StaticSamplers = TArrayView<const FRHIStaticSamplerInfo>(&StaticSampler, 1);
+
+                FRHIComputePipelineStateRef SamplerPipelineState = RHI::CreateComputePipelineState(SamplerPipelineDesc);
+                TEST_EXPECT(SamplerPipelineState != nullptr);
+
+                if (SamplerPipelineState)
+                {
+                    const FMetalComputePipelineStateRHI* MetalPipeline = static_cast<const FMetalComputePipelineStateRHI*>(SamplerPipelineState.Get());
+                    TEST_EXPECT(MetalPipeline->GetBindings().GetSlot(EShaderVisibility::Compute, EMSLBindingType::Sampler, 0) != FMetalPipelineBindingLayout::InvalidSlot);
+                    TEST_EXPECT(MetalPipeline->HasStaticSampler(EShaderVisibility::Compute, 0));
+                }
+            }
+        }
+    }
+#endif
 
     FShaderCompiler::Destroy();
     TEST_END();

@@ -1,8 +1,135 @@
 #include "MetalRHI/MetalPipelineState.h"
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalCapabilities.h"
+#include "MetalRHI/MetalCommandContextState.h"
 #include "MetalRHI/MetalStats.h"
 #include "RHI/MSLShaderBindings.h"
+#include "RHI/RHISamplerState.h"
+
+static bool AssignMSLSlot(uint8& Dest, const FMSLShaderBinding& Binding, EShaderVisibility::Type ShaderStage)
+{
+    const uint8 TableLimit = GetMSLMaxSlotCount(Binding.BindingType);
+    if (Binding.SlotIndex >= TableLimit)
+    {
+        METAL_ERROR("%s register %u resolved to MSL slot %u, which exceeds the %u-slot table (stage %u)",
+            ToString(Binding.BindingType), Binding.RegisterIndex, Binding.SlotIndex, TableLimit, ShaderStage);
+        return false;
+    }
+
+    if (Dest != FMetalPipelineBindingLayout::InvalidSlot && Dest != Binding.SlotIndex)
+    {
+        METAL_ERROR("Shader stage %u already mapped %s register %u to MSL slot %u, cannot also use slot %u",
+            ShaderStage, ToString(Binding.BindingType), Binding.RegisterIndex, Dest, Binding.SlotIndex);
+        return false;
+    }
+
+    Dest = Binding.SlotIndex;
+    return true;
+}
+
+static EShaderVisibility::Type ConvertStaticSamplerVisibility(EShaderStage ShaderStage)
+{
+    switch (ShaderStage)
+    {
+        case EShaderStage::Vertex:
+            return EShaderVisibility::Vertex;
+        case EShaderStage::Pixel:
+            return EShaderVisibility::Pixel;
+        case EShaderStage::Compute:
+            return EShaderVisibility::Compute;
+        case EShaderStage::Mesh:
+            return EShaderVisibility::Mesh;
+        case EShaderStage::Amplification:
+            return EShaderVisibility::Amplification;
+        default:
+            return EShaderVisibility::Count;
+    }
+}
+
+static bool CreateStaticSamplers(
+    TArray<FMetalStaticSamplerBinding>& OutSamplers,
+    const TArrayView<const FRHIStaticSamplerInfo>& Infos,
+    const FMetalPipelineBindingLayout& Layout)
+{
+    OutSamplers.Clear();
+
+    for (const FRHIStaticSamplerInfo& Info : Infos)
+    {
+        if (Info.ShaderRegister >= MAX_SAMPLER_STATES)
+        {
+            METAL_ERROR("Static sampler register s%u exceeds MAX_SAMPLER_STATES", Info.ShaderRegister);
+            return false;
+        }
+
+        const uint8 RegisterIndex = static_cast<uint8>(Info.ShaderRegister);
+
+        TArray<EShaderVisibility::Type> Stages;
+        const EShaderVisibility::Type ConvertedStage = ConvertStaticSamplerVisibility(Info.ShaderVisibility);
+        if (ConvertedStage < EShaderVisibility::Count)
+        {
+            Stages.Add(ConvertedStage);
+        }
+        else
+        {
+            for (uint8 Stage = 0; Stage < EShaderVisibility::Count; ++Stage)
+            {
+                const EShaderVisibility::Type Visibility = static_cast<EShaderVisibility::Type>(Stage);
+                if (Layout.GetSlot(Visibility, EMSLBindingType::Sampler, RegisterIndex) != FMetalPipelineBindingLayout::InvalidSlot)
+                {
+                    Stages.Add(Visibility);
+                }
+            }
+        }
+
+        if (Stages.IsEmpty())
+        {
+            continue;
+        }
+
+        FRHISamplerState* Created = FMetalDeviceRHI::Get()->CreateSamplerState(Info.GetSamplerStateDesc());
+        if (!Created)
+        {
+            METAL_ERROR("Failed to create static sampler for register s%u", RegisterIndex);
+            return false;
+        }
+
+        const TSharedRef<FMetalSamplerStateRHI> Sampler(static_cast<FMetalSamplerStateRHI*>(Created));
+
+        for (EShaderVisibility::Type Stage : Stages)
+        {
+            FMetalStaticSamplerBinding& Binding = OutSamplers.Emplace();
+            Binding.Stage         = Stage;
+            Binding.RegisterIndex = RegisterIndex;
+            Binding.Sampler       = Sampler;
+        }
+    }
+
+    return true;
+}
+
+static bool HasStaticSamplerBinding(const TArray<FMetalStaticSamplerBinding>& Samplers, EShaderVisibility::Type ShaderStage, uint32 RegisterIndex)
+{
+    for (const FMetalStaticSamplerBinding& Binding : Samplers)
+    {
+        if (Binding.Stage == ShaderStage && Binding.RegisterIndex == RegisterIndex)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static void ApplyStaticSamplerBindings(const TArray<FMetalStaticSamplerBinding>& Samplers, FMetalSamplerStateCache& Cache)
+{
+    for (const FMetalStaticSamplerBinding& Binding : Samplers)
+    {
+        CHECK(Binding.RegisterIndex < MAX_SAMPLER_STATES);
+        Cache.SamplerStates[Binding.Stage][Binding.RegisterIndex] = Binding.Sampler.Get();
+        Cache.NumSamplers[Binding.Stage] = Math::Max<uint8>(Cache.NumSamplers[Binding.Stage], static_cast<uint8>(Binding.RegisterIndex + 1));
+        Cache.DirtyResources(Binding.Stage);
+    }
+}
 
 void FMetalPipelineBindingLayout::Reset()
 {
@@ -18,7 +145,7 @@ void FMetalPipelineBindingLayout::Reset()
     }
 }
 
-void FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& ShaderBindings, EShaderVisibility::Type ShaderStage)
+bool FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& ShaderBindings, EShaderVisibility::Type ShaderStage)
 {
     for (const FMSLShaderBinding& Binding : ShaderBindings)
     {
@@ -27,58 +154,146 @@ void FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& Shade
             case EMSLBindingType::ConstantBuffer:
             {
                 CHECK(Binding.RegisterIndex < MAX_CONSTANT_BUFFERS);
-                ConstantBuffers[ShaderStage][Binding.RegisterIndex] = Binding.SlotIndex;
+                if (!AssignMSLSlot(ConstantBuffers[ShaderStage][Binding.RegisterIndex], Binding, ShaderStage))
+                {
+                    return false;
+                }
                 break;
             }
 
             case EMSLBindingType::ShaderResourceBuffer:
             {
                 CHECK(Binding.RegisterIndex < MAX_SRVS);
-                ShaderResourceBuffers[ShaderStage][Binding.RegisterIndex] = Binding.SlotIndex;
+                if (!AssignMSLSlot(ShaderResourceBuffers[ShaderStage][Binding.RegisterIndex], Binding, ShaderStage))
+                {
+                    return false;
+                }
                 break;
             }
 
             case EMSLBindingType::ShaderResourceTexture:
             {
                 CHECK(Binding.RegisterIndex < MAX_SRVS);
-                ShaderResourceTextures[ShaderStage][Binding.RegisterIndex] = Binding.SlotIndex;
+                if (!AssignMSLSlot(ShaderResourceTextures[ShaderStage][Binding.RegisterIndex], Binding, ShaderStage))
+                {
+                    return false;
+                }
                 break;
             }
 
             case EMSLBindingType::UnorderedAccessBuffer:
             {
                 CHECK(Binding.RegisterIndex < MAX_UAVS);
-                UnorderedAccessBuffers[ShaderStage][Binding.RegisterIndex] = Binding.SlotIndex;
+                if (!AssignMSLSlot(UnorderedAccessBuffers[ShaderStage][Binding.RegisterIndex], Binding, ShaderStage))
+                {
+                    return false;
+                }
                 break;
             }
 
             case EMSLBindingType::UnorderedAccessTexture:
             {
                 CHECK(Binding.RegisterIndex < MAX_UAVS);
-                UnorderedAccessTextures[ShaderStage][Binding.RegisterIndex] = Binding.SlotIndex;
+                if (!AssignMSLSlot(UnorderedAccessTextures[ShaderStage][Binding.RegisterIndex], Binding, ShaderStage))
+                {
+                    return false;
+                }
                 break;
             }
 
             case EMSLBindingType::Sampler:
             {
                 CHECK(Binding.RegisterIndex < MAX_SAMPLER_STATES);
-                Samplers[ShaderStage][Binding.RegisterIndex] = Binding.SlotIndex;
+                if (!AssignMSLSlot(Samplers[ShaderStage][Binding.RegisterIndex], Binding, ShaderStage))
+                {
+                    return false;
+                }
                 break;
             }
 
             case EMSLBindingType::ShaderConstants:
             {
-                ShaderConstants[ShaderStage] = Binding.SlotIndex;
+                if (!AssignMSLSlot(ShaderConstants[ShaderStage], Binding, ShaderStage))
+                {
+                    return false;
+                }
                 break;
             }
 
             default:
             {
                 METAL_ERROR("Unhandled MSL binding type %s", ToString(Binding.BindingType));
-                break;
+                return false;
             }
         }
     }
+
+    return true;
+}
+
+bool FMetalPipelineBindingLayout::ConflictsWithVertexInputs(const FMetalInputLayoutRHI* InputLayout) const
+{
+    if (!InputLayout)
+    {
+        return false;
+    }
+
+    const uint32 NumElements = InputLayout->GetNumInputElementDescs();
+    for (uint32 ElementIndex = 0; ElementIndex < NumElements; ++ElementIndex)
+    {
+        const FRHIInputElementDesc* Element = InputLayout->GetInputElementDesc(ElementIndex);
+        if (!Element)
+        {
+            continue;
+        }
+
+        const uint32 InputSlot = Element->InputSlot;
+        auto OccupiesSlot = [InputSlot](uint8 Slot) -> bool
+        {
+            return Slot != InvalidSlot && Slot == InputSlot;
+        };
+
+        const EShaderVisibility::Type VertexStage = EShaderVisibility::Vertex;
+
+        for (uint32 RegisterIndex = 0; RegisterIndex < MAX_CONSTANT_BUFFERS; ++RegisterIndex)
+        {
+            if (OccupiesSlot(ConstantBuffers[VertexStage][RegisterIndex]))
+            {
+                METAL_ERROR("Vertex shader constant buffer register %u uses MSL slot %u, which is also input stream slot %u",
+                    RegisterIndex, ConstantBuffers[VertexStage][RegisterIndex], InputSlot);
+                return true;
+            }
+        }
+
+        for (uint32 RegisterIndex = 0; RegisterIndex < MAX_SRVS; ++RegisterIndex)
+        {
+            if (OccupiesSlot(ShaderResourceBuffers[VertexStage][RegisterIndex]))
+            {
+                METAL_ERROR("Vertex shader SRV buffer register %u uses MSL slot %u, which is also input stream slot %u",
+                    RegisterIndex, ShaderResourceBuffers[VertexStage][RegisterIndex], InputSlot);
+                return true;
+            }
+        }
+
+        for (uint32 RegisterIndex = 0; RegisterIndex < MAX_UAVS; ++RegisterIndex)
+        {
+            if (OccupiesSlot(UnorderedAccessBuffers[VertexStage][RegisterIndex]))
+            {
+                METAL_ERROR("Vertex shader UAV buffer register %u uses MSL slot %u, which is also input stream slot %u",
+                    RegisterIndex, UnorderedAccessBuffers[VertexStage][RegisterIndex], InputSlot);
+                return true;
+            }
+        }
+
+        if (OccupiesSlot(ShaderConstants[VertexStage]))
+        {
+            METAL_ERROR("Vertex shader constants use MSL slot %u, which is also input stream slot %u",
+                ShaderConstants[VertexStage], InputSlot);
+            return true;
+        }
+    }
+
+    return false;
 }
 
 uint8 FMetalPipelineBindingLayout::GetSlot(EShaderVisibility::Type ShaderVisibility, EMSLBindingType BindingType, uint32 RegisterIndex) const
@@ -403,13 +618,34 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
     if (FMetalShader* VertexShader = GetMetalShader(Desc.VertexShader))
     {
         Descriptor.vertexFunction = VertexShader->GetMTLFunction();
-        Bindings.Collect(VertexShader->GetBindings(), EShaderVisibility::Vertex);
+        if (!Bindings.Collect(VertexShader->GetBindings(), EShaderVisibility::Vertex))
+        {
+            [Descriptor release];
+            return false;
+        }
+    }
+
+    FMetalInputLayoutRHI* InputLayout = static_cast<FMetalInputLayoutRHI*>(Desc.InputLayout);
+    if (Bindings.ConflictsWithVertexInputs(InputLayout))
+    {
+        [Descriptor release];
+        return false;
     }
 
     if (FMetalShader* PixelShader = GetMetalShader(Desc.PixelShader))
     {
         Descriptor.fragmentFunction = PixelShader->GetMTLFunction();
-        Bindings.Collect(PixelShader->GetBindings(), EShaderVisibility::Pixel);
+        if (!Bindings.Collect(PixelShader->GetBindings(), EShaderVisibility::Pixel))
+        {
+            [Descriptor release];
+            return false;
+        }
+    }
+
+    if (!CreateStaticSamplers(StaticSamplers, Desc.StaticSamplers, Bindings))
+    {
+        [Descriptor release];
+        return false;
     }
 
     if (!ApplyColorAttachments(Descriptor, BlendState.Get(), Desc.RasterizerOutputFormats))
@@ -421,7 +657,6 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
     ApplyDepthStencilFormats(Descriptor, Desc.RasterizerOutputFormats.DepthStencilFormat);
     Descriptor.rasterSampleCount = Math::Max(Desc.MultiSampleState.SampleCount, 1u);
 
-    FMetalInputLayoutRHI* InputLayout = static_cast<FMetalInputLayoutRHI*>(Desc.InputLayout);
     Descriptor.vertexDescriptor = InputLayout ? InputLayout->GetMTLVertexDescriptor() : nil;
 
     NSError* Error = nil;
@@ -452,6 +687,16 @@ void FMetalGraphicsPipelineStateRHI::GetDebugName(String& OutDebugName) const
 void* FMetalGraphicsPipelineStateRHI::GetRHINativeState() const
 {
     return (__bridge void*)PipelineState;
+}
+
+void FMetalGraphicsPipelineStateRHI::ApplyStaticSamplers(FMetalSamplerStateCache& Cache) const
+{
+    ApplyStaticSamplerBindings(StaticSamplers, Cache);
+}
+
+bool FMetalGraphicsPipelineStateRHI::HasStaticSampler(EShaderVisibility::Type ShaderStage, uint32 RegisterIndex) const
+{
+    return HasStaticSamplerBinding(StaticSamplers, ShaderStage, RegisterIndex);
 }
 
 FMetalComputePipelineStateRHI::FMetalComputePipelineStateRHI(FMetalDevice* InDevice)
@@ -493,7 +738,15 @@ bool FMetalComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
     }
 
     MaxTotalThreadsPerThreadgroup = static_cast<uint32>(PipelineState.maxTotalThreadsPerThreadgroup);
-    Bindings.Collect(ComputeShader->GetBindings(), EShaderVisibility::Compute);
+    if (!Bindings.Collect(ComputeShader->GetBindings(), EShaderVisibility::Compute))
+    {
+        return false;
+    }
+
+    if (!CreateStaticSamplers(StaticSamplers, InDesc.StaticSamplers, Bindings))
+    {
+        return false;
+    }
     STAT_ADD(STAT_Metal_PSOCreateCount, 1);
     STAT_ADD(STAT_Metal_NumComputePipelineStates, 1);
     return true;
@@ -511,6 +764,16 @@ void FMetalComputePipelineStateRHI::GetDebugName(String& OutDebugName) const
 void* FMetalComputePipelineStateRHI::GetRHINativeState() const
 {
     return (__bridge void*)PipelineState;
+}
+
+void FMetalComputePipelineStateRHI::ApplyStaticSamplers(FMetalSamplerStateCache& Cache) const
+{
+    ApplyStaticSamplerBindings(StaticSamplers, Cache);
+}
+
+bool FMetalComputePipelineStateRHI::HasStaticSampler(EShaderVisibility::Type ShaderStage, uint32 RegisterIndex) const
+{
+    return HasStaticSamplerBinding(StaticSamplers, ShaderStage, RegisterIndex);
 }
 
 FMetalMeshletPipelineStateRHI::FMetalMeshletPipelineStateRHI(FMetalDevice* InDevice, const FRHIMeshletPipelineStateDesc& InDesc)
@@ -581,18 +844,36 @@ bool FMetalMeshletPipelineStateRHI::Initialize()
 
     MTLMeshRenderPipelineDescriptor* Descriptor = [MTLMeshRenderPipelineDescriptor new];
     Descriptor.meshFunction = MeshShader->GetMTLFunction();
-    Bindings.Collect(MeshShader->GetBindings(), EShaderVisibility::Mesh);
+    if (!Bindings.Collect(MeshShader->GetBindings(), EShaderVisibility::Mesh))
+    {
+        [Descriptor release];
+        return false;
+    }
 
     if (FMetalShader* AmplificationShader = GetMetalShader(Desc.AmplificationShader))
     {
         Descriptor.objectFunction = AmplificationShader->GetMTLFunction();
-        Bindings.Collect(AmplificationShader->GetBindings(), EShaderVisibility::Amplification);
+        if (!Bindings.Collect(AmplificationShader->GetBindings(), EShaderVisibility::Amplification))
+        {
+            [Descriptor release];
+            return false;
+        }
     }
 
     if (FMetalShader* PixelShader = GetMetalShader(Desc.PixelShader))
     {
         Descriptor.fragmentFunction = PixelShader->GetMTLFunction();
-        Bindings.Collect(PixelShader->GetBindings(), EShaderVisibility::Pixel);
+        if (!Bindings.Collect(PixelShader->GetBindings(), EShaderVisibility::Pixel))
+        {
+            [Descriptor release];
+            return false;
+        }
+    }
+
+    if (!CreateStaticSamplers(StaticSamplers, Desc.StaticSamplers, Bindings))
+    {
+        [Descriptor release];
+        return false;
     }
 
     if (!ApplyColorAttachments(Descriptor, BlendState.Get(), Desc.RasterizerOutputFormats))
@@ -632,6 +913,16 @@ void FMetalMeshletPipelineStateRHI::GetDebugName(String& OutDebugName) const
 void* FMetalMeshletPipelineStateRHI::GetRHINativeState() const
 {
     return (__bridge void*)PipelineState;
+}
+
+void FMetalMeshletPipelineStateRHI::ApplyStaticSamplers(FMetalSamplerStateCache& Cache) const
+{
+    ApplyStaticSamplerBindings(StaticSamplers, Cache);
+}
+
+bool FMetalMeshletPipelineStateRHI::HasStaticSampler(EShaderVisibility::Type ShaderStage, uint32 RegisterIndex) const
+{
+    return HasStaticSamplerBinding(StaticSamplers, ShaderStage, RegisterIndex);
 }
 
 FMetalRayTracingPipelineStateRHI::FMetalRayTracingPipelineStateRHI(FMetalDevice* InDevice, const FRHIRayTracingPipelineStateDesc& InDesc)

@@ -10,29 +10,6 @@ static const CHAR* const CollidingShaderFile = "Shaders/Shadows/CascadeMatrixGen
 
 static constexpr uint8 InvalidSlot = UINT8_MAX;
 
-enum class EMSLTable : uint8
-{
-    Buffer,
-    Texture,
-    Sampler,
-};
-
-static EMSLTable GetTable(EMSLBindingType BindingType)
-{
-    switch (BindingType)
-    {
-        case EMSLBindingType::ShaderResourceTexture:
-        case EMSLBindingType::UnorderedAccessTexture:
-            return EMSLTable::Texture;
-
-        case EMSLBindingType::Sampler:
-            return EMSLTable::Sampler;
-
-        default:
-            return EMSLTable::Buffer;
-    }
-}
-
 static uint8 FindSlot(const TArray<FMSLShaderBinding>& Bindings, EMSLBindingType BindingType, uint8 RegisterIndex)
 {
     for (const FMSLShaderBinding& Binding : Bindings)
@@ -98,7 +75,7 @@ bool MSLShaderBinding_Test()
                 const FMSLShaderBinding& Binding = Bindings[Index];
                 const FMSLShaderBinding& Other   = Bindings[OtherIndex];
 
-                const bool bCollides = GetTable(Binding.BindingType) == GetTable(Other.BindingType) && Binding.SlotIndex == Other.SlotIndex;
+                const bool bCollides = GetMSLBindingTable(Binding.BindingType) == GetMSLBindingTable(Other.BindingType) && Binding.SlotIndex == Other.SlotIndex;
                 if (bCollides)
                 {
                     LOG_ERROR("[FAIL] %s : %s register %u and %s register %u both resolved to slot %u",
@@ -110,6 +87,13 @@ bool MSLShaderBinding_Test()
 
                 TEST_EXPECT(!bCollides);
             }
+        }
+
+        TEST_SECTION("Every resolved slot is below the per-table max");
+        for (int32 Index = 0; Index < Bindings.Size(); Index++)
+        {
+            const FMSLShaderBinding& Binding = Bindings[Index];
+            TEST_EXPECT(Binding.SlotIndex < GetMSLMaxSlotCount(Binding.BindingType));
         }
     }
 

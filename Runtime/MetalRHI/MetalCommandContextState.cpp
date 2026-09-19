@@ -83,6 +83,11 @@ void FMetalCommandContextState::SetGraphicsPipelineState(FMetalGraphicsPipelineS
     CommonState.ShaderResourceViewCache.DirtyResourcesAll();
     CommonState.UnorderedAccessViewCache.DirtyResourcesAll();
     CommonState.SamplerStateCache.DirtyResourcesAll();
+
+    if (InGraphicsPipelineState)
+    {
+        InGraphicsPipelineState->ApplyStaticSamplers(CommonState.SamplerStateCache);
+    }
 }
 
 void FMetalCommandContextState::SetComputePipelineState(FMetalComputePipelineStateRHI* InComputePipelineState)
@@ -99,6 +104,11 @@ void FMetalCommandContextState::SetComputePipelineState(FMetalComputePipelineSta
     CommonState.ShaderResourceViewCache.DirtyResources(EShaderVisibility::Compute);
     CommonState.UnorderedAccessViewCache.DirtyResources(EShaderVisibility::Compute);
     CommonState.SamplerStateCache.DirtyResources(EShaderVisibility::Compute);
+
+    if (InComputePipelineState)
+    {
+        InComputePipelineState->ApplyStaticSamplers(CommonState.SamplerStateCache);
+    }
 }
 
 void FMetalCommandContextState::SetMeshletPipelineState(FMetalMeshletPipelineStateRHI* InMeshletPipelineState)
@@ -117,6 +127,11 @@ void FMetalCommandContextState::SetMeshletPipelineState(FMetalMeshletPipelineSta
     CommonState.ShaderResourceViewCache.DirtyResourcesAll();
     CommonState.UnorderedAccessViewCache.DirtyResourcesAll();
     CommonState.SamplerStateCache.DirtyResourcesAll();
+
+    if (InMeshletPipelineState)
+    {
+        InMeshletPipelineState->ApplyStaticSamplers(CommonState.SamplerStateCache);
+    }
 }
 
 void FMetalCommandContextState::SetRenderTargets(FMetalRenderTargetViewRHI* const* RenderTargets, uint32 NumRenderTargets, FMetalDepthStencilViewRHI* DepthStencil)
@@ -257,6 +272,26 @@ void FMetalCommandContextState::SetSampler(FMetalSamplerStateRHI* SamplerState, 
 {
     CHECK(ShaderStage < EShaderVisibility::Count);
     CHECK(SamplerIndex < MAX_SAMPLER_STATES);
+
+    if (ShaderStage == EShaderVisibility::Compute)
+    {
+        if (ComputeState.PipelineState && ComputeState.PipelineState->HasStaticSampler(ShaderStage, SamplerIndex))
+        {
+            return;
+        }
+    }
+    else
+    {
+        if (GraphicsState.PipelineState && GraphicsState.PipelineState->HasStaticSampler(ShaderStage, SamplerIndex))
+        {
+            return;
+        }
+
+        if (GraphicsState.MeshletPipelineState && GraphicsState.MeshletPipelineState->HasStaticSampler(ShaderStage, SamplerIndex))
+        {
+            return;
+        }
+    }
 
     FMetalSamplerStateCache& Cache = CommonState.SamplerStateCache;
     Cache.SamplerStates[ShaderStage][SamplerIndex] = SamplerState;
