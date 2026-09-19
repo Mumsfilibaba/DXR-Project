@@ -1194,6 +1194,21 @@ void FMetalCommandContext::EnsureTimestampEncoder()
 
     if (GraphicsEncoder || ComputeEncoder || CopyContext.GetMTLCopyEncoder())
     {
+        if (!(Timestamps.GetDummyComputePipeline() && !GraphicsEncoder && !ComputeEncoder))
+        {
+            return;
+        }
+
+        FinishEncoders();
+    }
+
+    if (Timestamps.GetDummyComputePipeline() && Timestamps.CanSampleCompute())
+    {
+        CHECK(CommandBuffer != nil);
+        ComputeEncoder = [CommandBuffer computeCommandEncoder];
+        [ComputeEncoder retain];
+        WaitForPendingEncoderFenceOnCompute();
+        STAT_ADD(STAT_Metal_EncoderCount, 1);
         return;
     }
 
@@ -1249,7 +1264,11 @@ bool FMetalCommandContext::SampleTimestamp(FMetalQueryRHI& Query)
     }
 
     const NSUInteger SampleIndex = Query.SampleIndex;
-    const BOOL       bBarrier    = Timestamps.UseSampleBarrier() ? YES : NO;
+    BOOL             bBarrier    = Timestamps.UseSampleBarrier() ? YES : NO;
+    if (!bBarrier && !GraphicsEncoder)
+    {
+        bBarrier = YES;
+    }
 
     if (GraphicsEncoder && Timestamps.CanSampleGraphics())
     {
@@ -1257,7 +1276,9 @@ bool FMetalCommandContext::SampleTimestamp(FMetalQueryRHI& Query)
     }
     else if (ComputeEncoder && Timestamps.CanSampleCompute())
     {
+        Timestamps.PrepareComputeSample(ComputeEncoder);
         [ComputeEncoder sampleCountersInBuffer:SampleBuffer atSampleIndex:SampleIndex withBarrier:bBarrier];
+        Timestamps.PrepareComputeSample(ComputeEncoder);
     }
     else if (id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder())
     {
@@ -1267,7 +1288,9 @@ bool FMetalCommandContext::SampleTimestamp(FMetalQueryRHI& Query)
             return false;
         }
 
+        Timestamps.PrepareBlitSample(CopyEncoder);
         [CopyEncoder sampleCountersInBuffer:SampleBuffer atSampleIndex:SampleIndex withBarrier:bBarrier];
+        Timestamps.PrepareBlitSample(CopyEncoder);
     }
     else
     {

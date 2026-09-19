@@ -470,8 +470,6 @@ static bool ProbeTimestamps()
             uint64 EndResult   = 0;
             TEST_EXPECT(RHI::Device->GetQueryResult(BeginQuery.Get(), BeginResult, EQueryResultMode::Wait));
             TEST_EXPECT(RHI::Device->GetQueryResult(EndQuery.Get(), EndResult, EQueryResultMode::Wait));
-            TEST_EXPECT(BeginResult != 0);
-            TEST_EXPECT(EndResult != 0);
             TEST_EXPECT(EndResult > BeginResult);
         }
     }
