@@ -1,6 +1,7 @@
 #include "Application/Console/Console.h"
 #include "Application/Elements/TextBlock.h"
 #include "Application/Input/Keys.h"
+#include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
 
 constexpr int32 CANDIDATE_COLUMN_SPACING   = 10;
@@ -183,8 +184,13 @@ void FConsole::Initialize(const FDesc& Desc)
         .SetVerticalAlignment(EVerticalAlignment::Bottom)
         .SetPadding(FMargin(CONSOLE_HORIZONTAL_PADDING, INPUT_VERTICAL_PADDING));
 
+    const FUIInnerFrameStyle& Frame = FUIStyle::GetDefault().InnerFrame;
+
     FBorder::FDesc BackgroundDesc;
     BackgroundDesc.BackgroundColor = Desc.BackgroundColor;
+    BackgroundDesc.BorderColor     = Frame.Border;
+    BackgroundDesc.BorderThickness = Frame.BorderThickness;
+    BackgroundDesc.CornerRadius    = FCornerRadii(Frame.CornerRadius);
     BackgroundDesc.Content         = RootBox;
 
     Background = FBorder::Create(BackgroundDesc);

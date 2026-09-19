@@ -86,6 +86,13 @@ private:
     void OnGridDeleteRequested();
     void OnTreeDropped(const String& PayloadId, int32 Target);
     void OnGridDropped(const String& PayloadId, int32 Target);
+    void UpdateTreeDragPreview(int32 Target);
+    void UpdateGridDragPreview(int32 Target);
+    void UpdateDragPreview(const FEntryPath& TargetPath, const String& TargetName);
+
+    NODISCARD String GetTreeHoverTip(int32 Target) const;
+    NODISCARD String GetGridHoverTip(int32 Target) const;
+    NODISCARD String BuildHoverTip(const FEntryPath& Path, const FEntry& Entry) const;
 
     NODISCARD FRectangle GetTreeRowBounds(int32 Target) const;
     NODISCARD FRectangle GetTreeLabelBounds(int32 Target) const;

@@ -401,8 +401,10 @@ void FGraphCanvas::AutoLayout()
         int32 FromNodeId = -1;
         int32 ToNodeId   = -1;
 
-        Model->FindPin(Link.FromPinId, FromNodeId);
-        Model->FindPin(Link.ToPinId, ToNodeId);
+        if (!Model->FindPin(Link.FromPinId, FromNodeId) || !Model->FindPin(Link.ToPinId, ToNodeId))
+        {
+            continue;
+        }
 
         int32 FromIndex = -1;
         int32 ToIndex   = -1;
@@ -765,8 +767,10 @@ bool FGraphCanvas::GetLinkCurve(const FGraphLink& Link, Vector2& OutStart, Vecto
     int32 FromNodeId = -1;
     int32 ToNodeId   = -1;
 
-    Model->FindPin(Link.FromPinId, FromNodeId);
-    Model->FindPin(Link.ToPinId, ToNodeId);
+    if (!Model->FindPin(Link.FromPinId, FromNodeId) || !Model->FindPin(Link.ToPinId, ToNodeId))
+    {
+        return false;
+    }
 
     TSharedPtr<FGraphNodeElement> FromElement = FindNodeElement(FromNodeId);
     TSharedPtr<FGraphNodeElement> ToElement   = FindNodeElement(ToNodeId);

@@ -62,12 +62,15 @@ int32 FRichTextBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
 
     RefreshLayout(TextBounds.Width);
 
+    const FMargin&     HighlightPadding = Style.Metrics.TextHighlightPadding;
+    const FCornerRadii HighlightRadii(Style.Metrics.TextHighlightCornerRadius);
+
     TArray<FRectangle> Rectangles;
     GatherRangeRectangles(SearchRanges, Rectangles);
 
     for (const FRectangle& Rectangle : Rectangles)
     {
-        OutCommandList.AddBox(LayerId, Rectangle, Style.Colors.Accent);
+        OutCommandList.AddBox(LayerId, Rectangle.Inflate(HighlightPadding), Style.Colors.Accent, HighlightRadii);
     }
 
     if (HasSelection())
@@ -80,7 +83,7 @@ int32 FRichTextBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
 
         for (const FRectangle& Rectangle : Rectangles)
         {
-            OutCommandList.AddBox(LayerId + 1, Rectangle, Style.Colors.TextSelectionBackground);
+            OutCommandList.AddBox(LayerId + 1, Rectangle.Inflate(HighlightPadding), Style.Colors.TextSelectionBackground, HighlightRadii);
         }
     }
 
@@ -127,6 +130,17 @@ FEventResponse FRichTextBlock::OnKeyDown(const FKeyEvent& KeyEvent)
     }
 
     return FInteractiveElement::OnKeyDown(KeyEvent);
+}
+
+bool FRichTextBlock::GetCursor(ECursor& OutCursor) const
+{
+    if (!bIsSelectable || !IsEnabled() || !IsHovered())
+    {
+        return false;
+    }
+
+    OutCursor = ECursor::TextInput;
+    return true;
 }
 
 void FRichTextBlock::SetRuns(const TArray<FTextRun>& InRuns)

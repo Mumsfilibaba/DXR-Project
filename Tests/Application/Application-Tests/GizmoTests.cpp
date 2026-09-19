@@ -246,6 +246,28 @@ bool GizmoHitTest_Test()
     TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::None);
     TEST_EXPECT(!Gizmo->IsHovered());
 
+    TEST_SECTION("A host re-pushing what the gizmo already has keeps the hover, since nothing moved under the cursor");
+    Gizmo->OnMouseMove(MakeMoveEvent(IntVector2(423, 300)));
+
+    Gizmo->SetOperation(EGizmoOperation::Translate);
+    Gizmo->SetMode(EGizmoMode::World);
+    Gizmo->SetCamera(MakeFrontView(), MakeOrthographic(), true);
+    Gizmo->SetTransform(Matrix4::Identity());
+
+    TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::TranslateX);
+
+    TEST_SECTION("Changing the handle set does drop it, since the handle it named is gone with the set");
+    Gizmo->SetOperation(EGizmoOperation::Rotate);
+    TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::None);
+
+    Gizmo->SetOperation(EGizmoOperation::Translate);
+    Gizmo->OnMouseMove(MakeMoveEvent(IntVector2(423, 300)));
+
+    Gizmo->SetMode(EGizmoMode::Local);
+    TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::None);
+
+    Gizmo->SetMode(EGizmoMode::World);
+
     TEST_SECTION("The square at the pivot takes the cursor before any axis does");
     Gizmo->OnMouseMove(MakeMoveEvent(IntVector2(400, 300)));
     TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::TranslateScreen);

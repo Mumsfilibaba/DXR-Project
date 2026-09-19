@@ -16,7 +16,6 @@
 #include "Application/Docking/DockWindowManager.h"
 #include "Application/Docking/DockingArea.h"
 #include "Application/Elements/Box.h"
-#include "Application/Elements/Separator.h"
 #include "Application/Elements/Window.h"
 #include "Application/Menus/MenuInputHandler.h"
 
@@ -104,7 +103,6 @@ bool FEditorShell::Initialize()
 
     Root->AddSlot(TitleBar->GetElement());
     Root->AddSlot(DockingArea).SetFillCoefficient(1.0f);
-    Root->AddSlot(FSeparator::CreateHorizontal());
     Root->AddSlot(Footer->GetElement());
 
     if (!RestoreLayout())

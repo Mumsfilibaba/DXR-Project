@@ -23,6 +23,8 @@
 #include "Application/Menus/Menu.h"
 #include "Application/Menus/MenuItem.h"
 #include "Application/Menus/MenuStack.h"
+#include "Application/Menus/ToolTipService.h"
+#include "Application/Elements/IndexedPathMove.h"
 
 static const CHAR* GItemDragDropPayloadId   = "CB_MOVE_ITEM";
 static const CHAR* GFolderDragDropPayloadId = "CB_MOVE_FOLDER";
@@ -35,20 +37,24 @@ constexpr int32 FOLDER_PANEL_MIN  = 200;
 constexpr int32 CONTENT_PANEL_MIN = 250;
 
 constexpr int32 COLUMN_PADDING = 4;
-constexpr int32 CONTENT_INSET  = 8;
+constexpr int32 CONTENT_INSET  = FEditorStyle::PanelPadding;
 
-constexpr int32 BREADCRUMB_GAP            = 6;
+constexpr int32 BREADCRUMB_GAP            = FEditorStyle::ItemSpacing;
 constexpr int32 BREADCRUMB_SEPARATOR_SIZE = 12;
-constexpr int32 BREADCRUMB_NAV_SIZE       = 16;
+constexpr int32 BREADCRUMB_NAV_SIZE       = FEditorStyle::IconSize;
+constexpr int32 BREADCRUMB_NAV_GAP        = 4;
+constexpr int32 BREADCRUMB_BAR_PADDING    = FEditorStyle::ItemSpacing;
 constexpr int32 BREADCRUMB_FIELD_PADDING  = 4;
 constexpr float BREADCRUMB_FIELD_CORNER   = 4.0f;
 
-constexpr int32 FOLDER_HEADER_HEIGHT = 42;
-constexpr int32 FOLDER_ROW_HEIGHT    = 24;
+// A search field with the column's own padding above and below it, which is what the band holds
+constexpr int32 FOLDER_HEADER_HEIGHT = FEditorStyle::FrameHeight + (2 * COLUMN_PADDING);
+constexpr int32 FOLDER_ROW_HEIGHT    = FEditorStyle::RowHeight;
 
 constexpr int32 TILE_WIDTH       = 132;
 constexpr int32 TILE_HEIGHT      = 158;
 constexpr int32 TILE_SPACING     = 8;
+constexpr int32 TILE_VIEW_INSET  = 12;
 constexpr int32 TILE_ICON_SIZE   = 110;
 constexpr int32 TILE_LABEL_INSET = 8;
 constexpr float TILE_CORNER      = 6.0f;
@@ -82,6 +88,8 @@ DECLARE_DELEGATE(FOnBrowserDeleteRequested);
 
 /** @brief Called with the payload dropped on a target, which is InvalidTarget for the space below the items. */
 DECLARE_DELEGATE(FOnBrowserDropped, const String& /*PayloadId*/, int32 /*Target*/);
+DECLARE_DELEGATE(FOnBrowserDragPreview, int32 /*Target*/);
+DECLARE_RETURN_DELEGATE(FOnBrowserHoverTip, String, int32 /*Target*/);
 
 static IntVector2 ScreenToClient(const TSharedPtr<FVisualElement>& Element, const IntVector2& ScreenPosition)
 {
@@ -186,6 +194,12 @@ public:
 
         /** @brief Fired with the payload dropped on the view. */
         FOnBrowserDropped OnDropped;
+
+        /** @brief Fired while a drag is over a target, so the ghost can show Move / Cannot move. */
+        FOnBrowserDragPreview OnDragPreview;
+
+        /** @brief The hover tip for a target, empty for none. */
+        FOnBrowserHoverTip HoverTip;
     };
 
 public:
@@ -203,6 +217,7 @@ public:
     virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override final;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override final;
     virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override final;
+    virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override final;
     virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override final;
     virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override final;
 
@@ -220,7 +235,7 @@ public:
      * @param DisplayText What the ghost following the cursor reads.
      * @param CursorEvent The move that crossed the drag threshold.
      */
-    void BeginDrag(const String& DisplayText, const FCursorEvent& CursorEvent);
+    void BeginDrag(const String& DisplayText, const FUIBrush& Icon, int32 SelectionCount, const FCursorEvent& CursorEvent);
 
     /** @brief Drops the field without writing anything back, and returns the keyboard to the view. */
     void CancelRename();
@@ -255,8 +270,11 @@ private:
     FOnBrowserRenameRequested  OnRenameRequested;
     FOnBrowserDeleteRequested  OnDeleteRequested;
     FOnBrowserDropped          OnDropped;
+    FOnBrowserDragPreview      OnDragPreview;
+    FOnBrowserHoverTip         HoverTip;
     int32                      RenamedTarget;
     int32                      DropTarget;
+    int32                      HoveredTipTarget;
     bool                       bIsDragging;
     bool                       bIsCursorInsideView;
     bool                       bRestoreViewFocus;
@@ -286,8 +304,11 @@ FEditorContentBrowserView::FEditorContentBrowserView()
     , OnRenameRequested()
     , OnDeleteRequested()
     , OnDropped()
+    , OnDragPreview()
+    , HoverTip()
     , RenamedTarget(InvalidTarget)
     , DropTarget(InvalidTarget)
+    , HoveredTipTarget(InvalidTarget)
     , bIsDragging(false)
     , bIsCursorInsideView(false)
     , bRestoreViewFocus(false)
@@ -311,6 +332,8 @@ void FEditorContentBrowserView::Initialize(const FDesc& Desc)
     OnRenameRequested = Desc.OnRenameRequested;
     OnDeleteRequested = Desc.OnDeleteRequested;
     OnDropped         = Desc.OnDropped;
+    OnDragPreview     = Desc.OnDragPreview;
+    HoverTip          = Desc.HoverTip;
 
     if (View)
     {
@@ -467,6 +490,25 @@ FEventResponse FEditorContentBrowserView::OnMouseMove(const FCursorEvent& Cursor
 {
     if (!bIsDragging)
     {
+        const int32 Target = HitTest.IsBound() ? HitTest.Execute(CursorEvent.GetClientPosition()) : InvalidTarget;
+        if (Target == HoveredTipTarget)
+        {
+            return FEventResponse::Unhandled();
+        }
+
+        FToolTipService::Get().CancelToolTip(AsSharedPtr());
+        HoveredTipTarget = InvalidTarget;
+
+        if (HoverTip.IsBound() && Target != InvalidTarget && !FDragDropService::Get().IsDragging())
+        {
+            const String Tip = HoverTip.Execute(Target);
+            if (!Tip.IsEmpty())
+            {
+                HoveredTipTarget = Target;
+                FToolTipService::Get().RequestTextToolTip(AsSharedPtr(), Tip, FEditorStyle::GetFonts().Body);
+            }
+        }
+
         return FEventResponse::Unhandled();
     }
 
@@ -477,7 +519,18 @@ FEventResponse FEditorContentBrowserView::OnMouseMove(const FCursorEvent& Cursor
     bIsCursorInsideView = GetContentRectangle().EncapsulatesPoint(ClientPosition);
 
     FDragDropService::Get().UpdateDrag(ScreenPosition);
+    OnDragPreview.ExecuteIfBound(DropTarget);
+
     return FEventResponse::Handled();
+}
+
+FEventResponse FEditorContentBrowserView::OnMouseLeft(const FCursorEvent& CursorEvent)
+{
+    UNREFERENCED_VARIABLE(CursorEvent);
+
+    HoveredTipTarget = InvalidTarget;
+    FToolTipService::Get().CancelToolTip(AsSharedPtr());
+    return FEventResponse::Unhandled();
 }
 
 FEventResponse FEditorContentBrowserView::OnMouseButtonUp(const FCursorEvent& CursorEvent)
@@ -571,7 +624,7 @@ void FEditorContentBrowserView::BeginRename(int32 Target)
     FApplication::Get().SetFocusElement(RenameField);
 }
 
-void FEditorContentBrowserView::BeginDrag(const String& DisplayText, const FCursorEvent& CursorEvent)
+void FEditorContentBrowserView::BeginDrag(const String& DisplayText, const FUIBrush& Icon, int32 SelectionCount, const FCursorEvent& CursorEvent)
 {
     if (IsRenaming() || !FApplication::IsInitialized())
     {
@@ -579,14 +632,21 @@ void FEditorContentBrowserView::BeginDrag(const String& DisplayText, const FCurs
     }
 
     FDragDropPayload Payload;
-    Payload.TypeId      = PayloadId;
-    Payload.DisplayText = DisplayText;
+    Payload.TypeId              = PayloadId;
+    Payload.DisplayText         = DisplayText;
+    Payload.Icon                = Icon;
+    Payload.AllowedStatusIcon   = FEditorIcons::CircledCheckmark;
+    Payload.ForbiddenStatusIcon = FEditorIcons::Forbidden;
+    Payload.IconSize            = 64;
+    Payload.SelectionCount      = Math::Max(SelectionCount, 1);
 
     bIsDragging         = true;
     bIsCursorInsideView = true;
     DropTarget          = InvalidTarget;
+    HoveredTipTarget    = InvalidTarget;
 
     FApplication::Get().CaptureMouse(AsSharedPtr());
+    FToolTipService::Get().CancelToolTip(AsSharedPtr());
     FDragDropService::Get().BeginDrag(Payload, CursorEvent.GetScreenPosition());
 }
 
@@ -633,6 +693,10 @@ EKeyInterceptResult FEditorContentBrowserView::HandleRenameFieldKeyDown(const FK
 void FEditorContentBrowserView::HandleDrop(const FDragDropPayload& Payload, const IntVector2& ScreenPosition)
 {
     const int32 Target = HitTest.IsBound() ? HitTest.Execute(ScreenToClient(AsSharedPtr(), ScreenPosition)) : InvalidTarget;
+    if (CanDrop.IsBound() && !CanDrop.Execute(Target))
+    {
+        return;
+    }
 
     OnDropped.ExecuteIfBound(Payload.TypeId, Target);
 }
@@ -640,6 +704,7 @@ void FEditorContentBrowserView::HandleDrop(const FDragDropPayload& Payload, cons
 void FEditorContentBrowserView::ClearDragState()
 {
     DropTarget          = InvalidTarget;
+    HoveredTipTarget    = InvalidTarget;
     bIsDragging         = false;
     bIsCursorInsideView = false;
 }
@@ -729,7 +794,8 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildFolderColumn()
     TreeDesc.Font                = FEditorStyle::GetFonts().Body;
     TreeDesc.RowHeight           = FOLDER_ROW_HEIGHT;
     TreeDesc.bShowScrollBar      = true;
-    TreeDesc.bAllowMultiSelect   = false;
+    TreeDesc.bAlternateRowColors = true;
+    TreeDesc.bAllowMultiSelect   = true;
     TreeDesc.bHighlightAncestors = true;
     TreeDesc.OnSelectionChanged  = FOnTreeSelectionChanged::CreateRaw(this, &FEditorContentBrowserPanel::OnFolderSelectionChanged);
     TreeDesc.OnDragDetected      = FOnTreeItemDragDetected::CreateRaw(this, &FEditorContentBrowserPanel::OnFolderDragDetected);
@@ -756,6 +822,8 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildFolderColumn()
     WrapperDesc.OnRenameRequested = FOnBrowserRenameRequested::CreateRaw(this, &FEditorContentBrowserPanel::OnTreeRenameRequested);
     WrapperDesc.OnDeleteRequested = FOnBrowserDeleteRequested::CreateRaw(this, &FEditorContentBrowserPanel::OnTreeDeleteRequested);
     WrapperDesc.OnDropped         = FOnBrowserDropped::CreateRaw(this, &FEditorContentBrowserPanel::OnTreeDropped);
+    WrapperDesc.OnDragPreview     = FOnBrowserDragPreview::CreateRaw(this, &FEditorContentBrowserPanel::UpdateTreeDragPreview);
+    WrapperDesc.HoverTip          = FOnBrowserHoverTip::CreateRaw(this, &FEditorContentBrowserPanel::GetTreeHoverTip);
 
     TreeWrapper = FEditorContentBrowserView::Create(WrapperDesc);
     if (!TreeWrapper)
@@ -771,7 +839,7 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildFolderColumn()
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
     Column->AddSlot(FBorder::Create(HeaderDesc));
-    Column->AddSlot(TreeWrapper).SetFillCoefficient(1.0f);
+    Column->AddSlot(FEditorStyle::MakeInnerFrame(TreeWrapper)).SetFillCoefficient(1.0f);
 
     return Column;
 }
@@ -827,6 +895,8 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildContentColumn()
     WrapperDesc.OnRenameRequested = FOnBrowserRenameRequested::CreateRaw(this, &FEditorContentBrowserPanel::OnGridRenameRequested);
     WrapperDesc.OnDeleteRequested = FOnBrowserDeleteRequested::CreateRaw(this, &FEditorContentBrowserPanel::OnGridDeleteRequested);
     WrapperDesc.OnDropped         = FOnBrowserDropped::CreateRaw(this, &FEditorContentBrowserPanel::OnGridDropped);
+    WrapperDesc.OnDragPreview     = FOnBrowserDragPreview::CreateRaw(this, &FEditorContentBrowserPanel::UpdateGridDragPreview);
+    WrapperDesc.HoverTip          = FOnBrowserHoverTip::CreateRaw(this, &FEditorContentBrowserPanel::GetGridHoverTip);
 
     GridWrapper = FEditorContentBrowserView::Create(WrapperDesc);
     if (!GridWrapper)
@@ -846,7 +916,7 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildContentColumn()
     }
 
     TSharedPtr<FOverlay> GridArea = FOverlay::Create();
-    GridArea->AddSlot(GridWrapper);
+    GridArea->AddSlot(GridWrapper).SetPadding(FMargin(TILE_VIEW_INSET));
     GridArea->AddSlot(EmptyStateText).SetHorizontalAlignment(EHorizontalAlignment::Center).SetVerticalAlignment(EVerticalAlignment::Center);
 
     TSharedPtr<FFractionWidthBox> SearchBand = FFractionWidthBox::Create(ContentSearchBox, CONTENT_SEARCH_FRACTION, CONTENT_SEARCH_MIN);
@@ -854,7 +924,7 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildContentColumn()
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
     Column->AddSlot(Breadcrumbs).SetPadding(FMargin(0, 0, 0, COLUMN_PADDING));
     Column->AddSlot(SearchBand).SetPadding(FMargin(0, 0, 0, COLUMN_PADDING));
-    Column->AddSlot(GridArea).SetFillCoefficient(1.0f);
+    Column->AddSlot(FEditorStyle::MakeInnerFrame(GridArea)).SetFillCoefficient(1.0f);
 
     return Column;
 }
@@ -865,13 +935,15 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildBreadcrumbBar()
 
     FButton::FDesc BackDesc;
     BackDesc.Font      = FEditorStyle::GetFonts().Body;
-    BackDesc.Padding   = FMargin(6, 4, 6, 4);
+    BackDesc.Padding   = FMargin(8, 4, 8, 4);
+    BackDesc.bIsGhost  = true;
     BackDesc.Content   = FBrowserGlyph::Create(FEditorIcons::Previous, BREADCRUMB_NAV_SIZE, Style.Colors.Text);
     BackDesc.OnClicked = FOnClicked::CreateRaw(this, &FEditorContentBrowserPanel::NavigateBack);
 
     FButton::FDesc ForwardDesc;
     ForwardDesc.Font      = FEditorStyle::GetFonts().Body;
-    ForwardDesc.Padding   = FMargin(6, 4, 6, 4);
+    ForwardDesc.Padding   = FMargin(8, 4, 8, 4);
+    ForwardDesc.bIsGhost  = true;
     ForwardDesc.Content   = FBrowserGlyph::Create(FEditorIcons::Next, BREADCRUMB_NAV_SIZE, Style.Colors.Text);
     ForwardDesc.OnClicked = FOnClicked::CreateRaw(this, &FEditorContentBrowserPanel::NavigateForward);
 
@@ -899,12 +971,18 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildBreadcrumbBar()
 
     TSharedPtr<FHorizontalBox> Row = FHorizontalBox::Create();
     Row->AddSlot(BackButton).SetVerticalAlignment(EVerticalAlignment::Center);
-    Row->AddSlot(FSpacer::CreateHorizontal(COLUMN_PADDING));
+    Row->AddSlot(FSpacer::CreateHorizontal(BREADCRUMB_NAV_GAP));
     Row->AddSlot(ForwardButton).SetVerticalAlignment(EVerticalAlignment::Center);
     Row->AddSlot(FSpacer::CreateHorizontal(CONTENT_INSET));
     Row->AddSlot(FBorder::Create(FieldDesc)).SetFillCoefficient(1.0f).SetVerticalAlignment(EVerticalAlignment::Center);
 
-    return Row;
+    FBorder::FDesc HeaderDesc;
+    HeaderDesc.Content         = Row;
+    HeaderDesc.BackgroundColor = Style.Header.Fill;
+    HeaderDesc.Padding         = FMargin(BREADCRUMB_BAR_PADDING);
+    HeaderDesc.MinHeight       = FOLDER_HEADER_HEIGHT;
+
+    return FBorder::Create(HeaderDesc);
 }
 
 void FEditorContentBrowserPanel::BuildPlaceholderTree()
@@ -1127,6 +1205,7 @@ void FEditorContentBrowserPanel::RefreshBreadcrumbs()
         FButton::FDesc Desc;
         Desc.SetText(CrumbLabel).SetFont(FEditorStyle::GetFonts().Body);
         Desc.Padding   = FMargin(8, 2, 8, 2);
+        Desc.bIsGhost  = true;
         Desc.OnClicked = FOnClicked::CreateLambda([this, Path]()
         {
             NavigateTo(Path, true);
@@ -1149,7 +1228,7 @@ void FEditorContentBrowserPanel::RefreshBreadcrumbs()
         }
 
         BreadcrumbBar->AddSlot(FBrowserGlyph::Create(FEditorIcons::RightArrow, BREADCRUMB_SEPARATOR_SIZE, Style.Colors.TextDisabled))
-            .SetPadding(FMargin(0, 0, BREADCRUMB_GAP, 0))
+            .SetPadding(FMargin(BREADCRUMB_GAP / 2, 0, BREADCRUMB_GAP / 2, 0))
             .SetVerticalAlignment(EVerticalAlignment::Center);
 
         AddCrumb(Entry->Name, Prefix);
@@ -1480,26 +1559,24 @@ void FEditorContentBrowserPanel::PasteEntries()
 
 void FEditorContentBrowserPanel::MoveEntries(const FEntryPath& SourceParentPath, const TArray<int32>& ChildIndices, const FEntryPath& TargetPath)
 {
-    if (ChildIndices.IsEmpty() || SourceParentPath == TargetPath)
-    {
-        return;
-    }
+    TArray<int32> Legal;
+    TArray<int32> Illegal;
+    FIndexedPathMove::Classify(SourceParentPath, ChildIndices, TargetPath, Legal, Illegal);
 
-    if (!CanMoveInto(SourceParentPath, ChildIndices, TargetPath))
+    if (Legal.IsEmpty())
     {
-        ReportFailure("Could not move these items into that folder", CollectEntryNames(SourceParentPath, ChildIndices));
         return;
     }
 
     TArray<FEntry>* Source = FindChildArray(SourceParentPath);
     if (!Source)
     {
-        ReportFailure("Could not find the folder these items came from", CollectEntryNames(SourceParentPath, ChildIndices));
+        ReportFailure("Could not find the folder these items came from", CollectEntryNames(SourceParentPath, Legal));
         return;
     }
 
     TArray<FEntry> Moved;
-    TArray<int32>  Sorted = ChildIndices;
+    TArray<int32>  Sorted = Legal;
     Sorted.SortWithPredicate([](int32 Left, int32 Right) { return Left > Right; });
 
     for (const int32 ChildIndex : Sorted)
@@ -1600,38 +1677,7 @@ bool FEditorContentBrowserPanel::HasClipboardContent() const
 
 bool FEditorContentBrowserPanel::CanMoveInto(const FEntryPath& SourceParentPath, const TArray<int32>& ChildIndices, const FEntryPath& TargetPath) const
 {
-    if (ChildIndices.IsEmpty() || SourceParentPath == TargetPath)
-    {
-        return false;
-    }
-
-    for (const int32 ChildIndex : ChildIndices)
-    {
-        FEntryPath SourcePath = SourceParentPath;
-        SourcePath.Add(ChildIndex);
-
-        if (TargetPath.Size() < SourcePath.Size())
-        {
-            continue;
-        }
-
-        bool bIsDescendant = true;
-        for (int32 Depth = 0; Depth < SourcePath.Size(); ++Depth)
-        {
-            if (TargetPath[Depth] != SourcePath[Depth])
-            {
-                bIsDescendant = false;
-                break;
-            }
-        }
-
-        if (bIsDescendant)
-        {
-            return false;
-        }
-    }
-
-    return true;
+    return FIndexedPathMove::CanMoveAny(SourceParentPath, ChildIndices, TargetPath);
 }
 
 TArray<String> FEditorContentBrowserPanel::CollectEntryNames(const FEntryPath& ParentPath, const TArray<int32>& ChildIndices)
@@ -1774,7 +1820,7 @@ TSharedPtr<FMenu> FEditorContentBrowserPanel::BuildContextMenu(bool bIsFolderPan
 
 void FEditorContentBrowserPanel::OnFolderSelectionChanged(const TArray<TSharedPtr<FTreeItem>>& Selection)
 {
-    if (!Selection.IsEmpty())
+    if (Selection.Size() == 1)
     {
         NavigateTo(FindTreeItemPath(Selection[0]), true);
     }
@@ -1794,7 +1840,7 @@ void FEditorContentBrowserPanel::OnFolderDragDetected(const TSharedPtr<FTreeItem
     DragChildIndices.Clear();
     DragChildIndices.Add(Path.Last());
 
-    TreeWrapper->BeginDrag(Item->Label, CursorEvent);
+    TreeWrapper->BeginDrag(Item->Label, FEditorIcons::Folder, 1, CursorEvent);
 }
 
 void FEditorContentBrowserPanel::OnTileActivated(int32 Index)
@@ -1839,12 +1885,9 @@ void FEditorContentBrowserPanel::OnTileDragDetected(int32 Index, const FCursorEv
         DragChildIndices.Add(VisibleChildIndices[Index]);
     }
 
-    const String& ItemLabel   = TileView->GetItems()[Index].Label;
-    const String  DisplayText = DragChildIndices.Size() > 1
-        ? String::Printf("%s +%d", ItemLabel.Data(), DragChildIndices.Size() - 1)
-        : ItemLabel;
+    const FTileItem& Item = TileView->GetItems()[Index];
 
-    GridWrapper->BeginDrag(DisplayText, CursorEvent);
+    GridWrapper->BeginDrag(Item.Label, Item.Icon, DragChildIndices.Size(), CursorEvent);
 }
 
 void FEditorContentBrowserPanel::OnFolderSearchTextChanged(const String& SearchText)
@@ -2084,7 +2127,7 @@ bool FEditorContentBrowserPanel::CanDropOnTile(int32 Target) const
 
     if (!Entry || !Entry->bIsFolder)
     {
-        return CanMoveInto(DragParentPath, DragChildIndices, CurrentPath);
+        return false;
     }
 
     return CanMoveInto(DragParentPath, DragChildIndices, TilePath);
@@ -2108,4 +2151,135 @@ String FEditorContentBrowserPanel::GetTileLabel(int32 Target) const
     const int32   Dot       = ItemLabel.FindLastChar('.');
 
     return (Dot != String::InvalidIndex) ? ItemLabel.SubString(0, Dot) : ItemLabel;
+}
+
+void FEditorContentBrowserPanel::UpdateTreeDragPreview(int32 Target)
+{
+    const TArray<TSharedPtr<FTreeItem>>& Rows = FolderTree->GetVisibleRows();
+    if (!Rows.IsValidIndex(Target))
+    {
+        UpdateDragPreview(FEntryPath(), String());
+        return;
+    }
+
+    UpdateDragPreview(FindTreeItemPath(Rows[Target]), Rows[Target]->Label);
+}
+
+void FEditorContentBrowserPanel::UpdateGridDragPreview(int32 Target)
+{
+    FEntryPath TargetPath = CurrentPath;
+    String     TargetName;
+
+    const FEntryPath TilePath = ResolveTileTarget(Target);
+    if (const FEntry* Entry = FindEntry(TilePath))
+    {
+        if (Entry->bIsFolder)
+        {
+            TargetPath = TilePath;
+            TargetName = Entry->Name;
+        }
+        else
+        {
+            const TArray<String> Names = CollectEntryNames(DragParentPath, DragChildIndices);
+            const String         SourceName = Names.IsEmpty() ? String() : Names[0];
+            FDragDropService::Get().SetPreview(EDragDropPreviewState::Forbidden,
+                String::Printf("Cannot move %s to %s", *SourceName, *Entry->Name));
+            return;
+        }
+    }
+
+    if (TargetName.IsEmpty())
+    {
+        if (const FEntry* Folder = FindEntry(CurrentPath))
+        {
+            TargetName = Folder->Name;
+        }
+        else
+        {
+            TargetName = "Root";
+        }
+    }
+
+    UpdateDragPreview(TargetPath, TargetName);
+}
+
+void FEditorContentBrowserPanel::UpdateDragPreview(const FEntryPath& TargetPath, const String& TargetName)
+{
+    TArray<int32> Legal;
+    TArray<int32> Illegal;
+    FIndexedPathMove::Classify(DragParentPath, DragChildIndices, TargetPath, Legal, Illegal);
+
+    String SourceName;
+    if (!DragChildIndices.IsEmpty())
+    {
+        FEntryPath SourcePath = DragParentPath;
+        SourcePath.Add(DragChildIndices[0]);
+        if (const FEntry* Entry = FindEntry(SourcePath))
+        {
+            SourceName = Entry->Name;
+        }
+    }
+
+    EDragDropPreviewState State = EDragDropPreviewState::Neutral;
+    String                Status;
+    if (!TargetName.IsEmpty())
+    {
+        if (Legal.IsEmpty())
+        {
+            State  = EDragDropPreviewState::Forbidden;
+            Status = String::Printf("Cannot move %s to %s", *SourceName, *TargetName);
+        }
+        else if (!Illegal.IsEmpty())
+        {
+            State  = EDragDropPreviewState::Partial;
+            Status = String::Printf("Move %s and others to %s", *SourceName, *TargetName);
+        }
+        else
+        {
+            State  = EDragDropPreviewState::Allowed;
+            Status = String::Printf("Move %s to %s", *SourceName, *TargetName);
+        }
+    }
+
+    FDragDropService::Get().SetPreview(State, Status);
+}
+
+String FEditorContentBrowserPanel::GetTreeHoverTip(int32 Target) const
+{
+    const TArray<TSharedPtr<FTreeItem>>& Rows = FolderTree->GetVisibleRows();
+    if (!Rows.IsValidIndex(Target))
+    {
+        return String();
+    }
+
+    const FEntryPath Path  = FindTreeItemPath(Rows[Target]);
+    const FEntry*    Entry = FindEntry(Path);
+    return Entry ? BuildHoverTip(Path, *Entry) : String();
+}
+
+String FEditorContentBrowserPanel::GetGridHoverTip(int32 Target) const
+{
+    const FEntryPath Path  = ResolveTileTarget(Target);
+    const FEntry*    Entry = FindEntry(Path);
+    return Entry ? BuildHoverTip(Path, *Entry) : String();
+}
+
+String FEditorContentBrowserPanel::BuildHoverTip(const FEntryPath& Path, const FEntry& Entry) const
+{
+    String FullPath;
+    for (int32 Depth = 0; Depth < Path.Size(); ++Depth)
+    {
+        FEntryPath Prefix = Path;
+        Prefix.Resize(Depth + 1);
+        if (const FEntry* Node = FindEntry(Prefix))
+        {
+            if (!FullPath.IsEmpty())
+            {
+                FullPath += "/";
+            }
+            FullPath += Node->Name;
+        }
+    }
+
+    return String::Printf("%s\n%s\nPath: %s", *Entry.Name, Entry.bIsFolder ? "Folder" : "Document", *FullPath);
 }

@@ -235,8 +235,12 @@ FTitleBar::FTitleBar()
     , Panel(nullptr)
     , LeadingSpacer(nullptr)
     , IconSpacer(nullptr)
+    , LeadingHost(nullptr)
+    , LeadingHostSlotIndex(-1)
+    , FlexibleSpacerSlotIndex(-1)
     , TrailingSpacer(nullptr)
     , TitleLabel(nullptr)
+    , LeadingContent(nullptr)
     , CaptionButtonRow(nullptr)
     , CaptionButtons()
 {
@@ -258,6 +262,10 @@ void FTitleBar::Initialize(const FDesc& Desc)
     IconSpacer = FSpacer::CreateHorizontal(Icon.IsValid() ? TITLE_ICON_SIZE + TITLE_ICON_MARGIN : 0);
     Panel->AddSlot(IconSpacer);
 
+    LeadingHost = FOverlay::Create();
+    LeadingHostSlotIndex = Panel->GetNumSlots();
+    Panel->AddSlot(LeadingHost);
+
     FTextBlock::FDesc LabelDesc;
     LabelDesc.Text            = Title;
     LabelDesc.Font            = Desc.Font;
@@ -266,6 +274,7 @@ void FTitleBar::Initialize(const FDesc& Desc)
     TitleLabel = FTextBlock::Create(LabelDesc);
 
     Panel->AddSlot(Desc.Content);
+    FlexibleSpacerSlotIndex = Panel->GetNumSlots();
     Panel->AddSlot(FSpacer::CreateHorizontal(0)).SetFillCoefficient(1.0f);
 
     if (bShowCaptionButtons)
@@ -338,6 +347,37 @@ void FTitleBar::SetTitle(const String& InTitle)
     if (TitleLabel)
     {
         TitleLabel->SetText(InTitle);
+    }
+}
+
+void FTitleBar::SetLeadingContent(const TSharedPtr<FVisualElement>& InContent)
+{
+    if (LeadingContent == InContent)
+    {
+        return;
+    }
+
+    if (LeadingHost)
+    {
+        LeadingHost->ClearSlots();
+        if (InContent)
+        {
+            LeadingHost->AddSlot(InContent).SetVerticalAlignment(EVerticalAlignment::Fill);
+        }
+    }
+
+    LeadingContent = InContent;
+
+    if (Panel && LeadingHostSlotIndex >= 0 && LeadingHostSlotIndex < Panel->GetNumSlots() &&
+        FlexibleSpacerSlotIndex >= 0 && FlexibleSpacerSlotIndex < Panel->GetNumSlots())
+    {
+        Panel->GetSlot(LeadingHostSlotIndex).SetFillCoefficient(InContent ? 1.0f : 0.0f);
+        Panel->GetSlot(FlexibleSpacerSlotIndex).SetFillCoefficient(InContent ? 0.0f : 1.0f);
+    }
+
+    if (TitleLabel)
+    {
+        TitleLabel->SetVisibility(InContent ? EVisibility::Hidden : EVisibility::Visible);
     }
 }
 

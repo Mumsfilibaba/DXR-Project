@@ -273,8 +273,11 @@ void FGizmo::SetOperation(EGizmoOperation InOperation)
         return;
     }
 
-    Operation     = InOperation;
-    HoveredHandle = EGizmoHandle::None;
+    if (Operation != InOperation)
+    {
+        Operation     = InOperation;
+        HoveredHandle = EGizmoHandle::None;
+    }
 
     UpdateContext();
 }
@@ -286,8 +289,11 @@ void FGizmo::SetMode(EGizmoMode InMode)
         return;
     }
 
-    Mode          = InMode;
-    HoveredHandle = EGizmoHandle::None;
+    if (Mode != InMode)
+    {
+        Mode          = InMode;
+        HoveredHandle = EGizmoHandle::None;
+    }
 
     UpdateContext();
 }
@@ -658,10 +664,15 @@ void FGizmo::BeginDrag(EGizmoHandle Handle, const IntVector2& ClientPosition)
     if (Handle == EGizmoHandle::ScaleUniform)
     {
         Vector2 PivotClient;
-        FGizmoMath::WorldToClient(ViewProjectionMatrix, GetContentRectangle(), Pivot, PivotClient);
-
-        const Vector2 Cursor(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
-        DragStartLength = Math::Max((Cursor - PivotClient).GetLength(), 1.0f);
+        if (FGizmoMath::WorldToClient(ViewProjectionMatrix, GetContentRectangle(), Pivot, PivotClient))
+        {
+            const Vector2 Cursor(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
+            DragStartLength = Math::Max((Cursor - PivotClient).GetLength(), 1.0f);
+        }
+        else
+        {
+            DragStartLength = 1.0f;
+        }
     }
     else
     {
@@ -774,10 +785,11 @@ void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
     if (ActiveHandle == EGizmoHandle::ScaleUniform)
     {
         Vector2 PivotClient;
-        FGizmoMath::WorldToClient(ViewProjectionMatrix, GetContentRectangle(), Pivot, PivotClient);
-
-        const Vector2 Cursor(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
-        Factor = (Cursor - PivotClient).GetLength() / DragStartLength;
+        if (FGizmoMath::WorldToClient(ViewProjectionMatrix, GetContentRectangle(), Pivot, PivotClient))
+        {
+            const Vector2 Cursor(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
+            Factor = (Cursor - PivotClient).GetLength() / DragStartLength;
+        }
     }
     else
     {

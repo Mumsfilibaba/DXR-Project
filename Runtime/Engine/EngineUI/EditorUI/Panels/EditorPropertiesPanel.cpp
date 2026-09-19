@@ -144,7 +144,7 @@ bool FEditorPropertiesPanel::Initialize()
 
     ScrollBox->SetContent(Column);
 
-    Content = ScrollBox;
+    Content = FEditorStyle::MakeInnerFrame(ScrollBox);
 
     RebuildContent();
     return true;
@@ -1264,7 +1264,7 @@ TSharedPtr<FSeparatorText> FEditorPropertiesPanel::CreateSectionLabel(const Stri
 
 void FEditorPropertiesPanel::AddSection(const TSharedPtr<FVerticalBox>& InColumn, const String& SectionLabel, const TSharedPtr<FPropertyTable>& Table)
 {
-    InColumn->AddSlot(FExpander::Create(FEditorStyle::MakeExpanderDesc(SectionLabel, Table, true)));
+    InColumn->AddSlot(FExpander::Create(FEditorStyle::MakeExpanderDesc(SectionLabel, Table, true))).SetPadding(FEditorStyle::GetSectionSpacing());
 }
 
 TSharedPtr<TNumericEntry<float>> FEditorPropertiesPanel::CreateFloatEditor(float Value, float Min, float Max, float Step, int32 Precision, const TDelegate<void(float)>& OnChanged)

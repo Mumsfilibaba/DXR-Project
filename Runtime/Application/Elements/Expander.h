@@ -44,8 +44,8 @@ public:
         /** @brief The size the arrow brush is drawn at, in pixels, which is square. */
         int32 ArrowSize = 16;
 
-        /** @brief Whether a closed section draws the rule that separates it from the next one. */
-        bool bDrawBottomBorderWhenClosed = true;
+        /** @brief Unused. Nested panels carry their own outline instead of a closed-state underline. */
+        bool bDrawBottomBorderWhenClosed = false;
 
         /** @brief Fired with the state the section moved to. */
         FOnExpanderStateChanged OnStateChanged;
@@ -120,6 +120,12 @@ public:
 private:
     NODISCARD FRectangle GetHeaderBounds(const FRectangle& AllottedBounds) const;
     NODISCARD int32 GetArrowExtent() const;
+    NODISCARD int32 GetSettledHeight() const;
+    NODISCARD int32 GetDisplayedHeight() const;
+    NODISCARD int32 GetContentDesiredHeight() const;
+    NODISCARD double GetSecondsSinceAnimationStart() const;
+    NODISCARD float GetAnimationAlpha() const;
+    NODISCARD bool IsContentShown() const;
 
     TSharedPtr<FVisualElement> Content;
     TSharedPtr<IFontFace>      Font;
@@ -130,6 +136,8 @@ private:
     FUIBrush                   CollapsedArrow;
     int32                      ArrowSize;
     int32                      HeaderHeight;
+    int32                      AnimationStartHeight;
+    uint64                     AnimationStartCounter;
     bool                       bIsExpanded;
     bool                       bIsHeaderHovered;
     bool                       bDrawBottomBorderWhenClosed;

@@ -940,6 +940,63 @@ bool MenuBarSwitching_Test()
     TEST_END();
 }
 
+bool MenuBlocksHoverBehindIt_Test()
+{
+    TEST_BEGIN();
+
+    FScopedStubApplication  Application;
+    FScopedMenuTestServices MenuServices;
+
+    const TSharedPtr<IFontFace> Font   = CreateFont();
+    TSharedPtr<FWindow>         Window = Application.CreateWindow(IntVector2(800, 600), IntVector2(0, 0));
+
+    TSharedPtr<FMenu>    Behind = CreateMenu(Font, { "Row one", "Row two", "Row three", "Row four", "Row five", "Row six" });
+    TSharedPtr<FOverlay> Root   = FOverlay::Create();
+    Root->AddSlot(Behind).SetHorizontalAlignment(EHorizontalAlignment::Left).SetVerticalAlignment(EVerticalAlignment::Top);
+
+    Window->SetContent(Root);
+    FApplication::LayoutWindow(Window);
+
+    const FRectangle BehindBounds = Behind->GetContentRectangle();
+
+    TSharedPtr<FMenu> Menu     = CreateMenu(Font, { "New", "Open" });
+    FMenuHandle       DropDown = FMenuStack::Get().PushMenu(Window, FRectangle(BehindBounds.Position, 0, 0), EMenuPlacement::AtCursor, Menu);
+
+    TEST_EXPECT(DropDown != nullptr);
+    TEST_EXPECT(DropDown->bIsInline);
+
+    const FRectangle MenuBounds = Menu->GetContentRectangle();
+    const IntVector2 InsideMenu = MenuBounds.GetCenter();
+    const IntVector2 BelowMenu(BehindBounds.Position.X + 2, BehindBounds.GetBottom() - 2);
+
+    TEST_SECTION("The drop-down covers the top of the content and leaves its lower rows clear");
+    TEST_EXPECT(BehindBounds.EncapsulatesPoint(InsideMenu));
+    TEST_EXPECT(BehindBounds.EncapsulatesPoint(BelowMenu));
+    TEST_EXPECT(!MenuBounds.EncapsulatesPoint(BelowMenu));
+
+    TEST_SECTION("Over the menu, only the menu is in the path, so the row behind it cannot hover along");
+    FElementPath CoveredPath;
+    Window->FindChildrenContainingPoint(InsideMenu, CoveredPath);
+    TEST_EXPECT(CoveredPath.Contains(Menu));
+    TEST_EXPECT(!CoveredPath.Contains(Behind));
+    TEST_EXPECT(!CoveredPath.Contains(Root));
+
+    TEST_SECTION("Clear of the menu the content is reached as before");
+    FElementPath UncoveredPath;
+    Window->FindChildrenContainingPoint(BelowMenu, UncoveredPath);
+    TEST_EXPECT(!UncoveredPath.Contains(Menu));
+    TEST_EXPECT(UncoveredPath.Contains(Behind));
+
+    TEST_SECTION("Dismissing it hands the content back");
+    FMenuStack::Get().DismissAll();
+
+    FElementPath RestoredPath;
+    Window->FindChildrenContainingPoint(InsideMenu, RestoredPath);
+    TEST_EXPECT(RestoredPath.Contains(Behind));
+
+    TEST_END();
+}
+
 bool MenuBarHighlight_Test()
 {
     TEST_BEGIN();
@@ -1195,6 +1252,20 @@ bool ToolTipService_Test()
     TEST_EXPECT(ToolTips.IsShowing());
     TEST_EXPECT_EQ(ToolTips.GetToolTipBounds().Position,
         IntVector2(340 + FToolTipService::CursorOffset, 260 + FToolTipService::CursorOffset));
+
+    TEST_SECTION("Repeating the same text request keeps the one hosted tip rather than orphaning it");
+    ToolTips.RequestTextToolTip(Owner, "Opens the file", Font, EToolTipPlacement::FollowCursor, 0.5f);
+    TEST_EXPECT(ToolTips.IsShowing());
+    TEST_EXPECT(!Window->GetMenuHost()->IsEmpty());
+
+    TEST_SECTION("Changing a shown request removes its old content before the replacement waits");
+    ToolTips.RequestTextToolTip(Owner, "Opens another file", Font, EToolTipPlacement::FollowCursor, 0.5f);
+    TEST_EXPECT(!ToolTips.IsShowing());
+    TEST_EXPECT(ToolTips.IsPending());
+    TEST_EXPECT(Window->GetMenuHost()->IsEmpty());
+
+    ToolTips.Tick(0.6f);
+    TEST_EXPECT(ToolTips.IsShowing());
 
     TEST_SECTION("Leaving the element it describes takes it down");
     ToolTips.CancelToolTip(Owner);
@@ -1483,6 +1554,15 @@ bool DragDropService_Test()
     {
         TEST_EXPECT_EQ(DragCommands[0].Bounds.Position, IntVector2(150, 150) + IntVector2(FDragDropService::DragVisualCursorOffset, FDragDropService::DragVisualCursorOffset));
     }
+
+    TEST_SECTION("A forbidden preview adds a status line without moving the ghost");
+    DragDrop.SetPreview(EDragDropPreviewState::Forbidden, "Cannot move Rock.mesh");
+    TEST_EXPECT_EQ(DragDrop.GetPayload().PreviewState, EDragDropPreviewState::Forbidden);
+    TEST_EXPECT(DragDrop.GetPayload().StatusText == String("Cannot move Rock.mesh"));
+
+    FDrawCommandList ForbiddenCommands;
+    DragDrop.DrawDragVisual(ForbiddenCommands, 0);
+    TEST_EXPECT_EQ(CountCommands(ForbiddenCommands, EDrawCommandType::Text), 2);
 
     FDragDropService::Release();
 

@@ -146,6 +146,7 @@ FToolTipService::FToolTipService()
     , ClampArea()
     , ToolTipBounds()
     , CursorPosition()
+    , RequestedText()
     , RequestedDelay(DefaultDelay)
     , RemainingSeconds(0.0f)
     , bIsShowing(false)
@@ -169,7 +170,7 @@ void FToolTipService::RequestToolTip(
         return;
     }
 
-    if (Owner != InOwner)
+    if (Owner != InOwner || bIsShowing)
     {
         DismissToolTip();
     }
@@ -180,6 +181,8 @@ void FToolTipService::RequestToolTip(
     AnchorBounds     = InAnchorBounds;
     RequestedDelay   = Math::Max(DelaySeconds, 0.0f);
     RemainingSeconds = RequestedDelay;
+
+    RequestedText.Clear();
 }
 
 void FToolTipService::RequestTextToolTip(
@@ -189,7 +192,13 @@ void FToolTipService::RequestTextToolTip(
     EToolTipPlacement                 InPlacement,
     float                             DelaySeconds)
 {
+    if (Owner == InOwner && RequestedText == Text && Placement == InPlacement)
+    {
+        return;
+    }
+
     RequestToolTip(InOwner, FToolTip::Create(Text, Font), InPlacement, DelaySeconds);
+    RequestedText = Text;
 }
 
 void FToolTipService::CancelToolTip(const TSharedPtr<FVisualElement>& InOwner)
@@ -246,6 +255,7 @@ void FToolTipService::DismissToolTip()
     AnchorBounds     = FRectangle();
     ClampArea        = FRectangle();
     ToolTipBounds    = FRectangle();
+    RequestedText.Clear();
     RemainingSeconds = 0.0f;
     bIsShowing       = false;
 }

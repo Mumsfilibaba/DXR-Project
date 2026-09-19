@@ -150,7 +150,8 @@ public:
      *
      * @param ClientPosition Where the cursor is, in client coordinates.
      * @param OutZones       Filled with the zones, the tab strip first. Empty when the cursor is over no
-     *                       panel, except for an area holding none at all, which offers the whole of itself.
+     *                       panel, except for an area holding none at all, which offers the whole of itself,
+     *                       and for a strip lifted into a host caption, which offers itself alone.
      */
     void GatherDropZones(const IntVector2& ClientPosition, TArray<FDropZone>& OutZones) const;
 
@@ -197,6 +198,26 @@ public:
      * @return The strip, or null when the tree holds no such panel.
      */
     NODISCARD TSharedPtr<FTabStrip> FindPanelTabStrip(const String& PanelId) const;
+
+    /**
+     * @brief The root tab strip of an unsplit tree, which a floating host can lift into its caption.
+     *
+     * @return The strip, or null when the root is split or empty.
+     */
+    NODISCARD TSharedPtr<FTabStrip> GetRootTabStrip() const;
+
+    /**
+     * @brief Hides the root tab strip from the body of an unsplit tree so a host can draw it in the caption.
+     *
+     * @param bInSuppress True to omit the root strip from the body.
+     */
+    void SetSuppressRootTabStrip(bool bInSuppress);
+
+    /** @return True when the root strip is omitted from the body. */
+    NODISCARD FORCEINLINE bool IsRootTabStripSuppressed() const
+    {
+        return bSuppressRootTabStrip;
+    }
 
     /**
      * @brief Gets whether a panel sits in the tree.
@@ -268,6 +289,8 @@ private:
     };
     
     NODISCARD int32 FindLeafAt(const IntVector2& ClientPosition) const;
+    NODISCARD FRectangle GetLiftedTabStripBounds() const;
+    NODISCARD bool IsOverLiftedTabStrip(const IntVector2& ClientPosition) const;
     NODISCARD FRectangle ComputeDropBounds(const String& TargetPanelId, EDockDirection Direction) const;
     NODISCARD const FVisualElement* FindFocusedFrame() const;
     NODISCARD int32 DrawDropZones(FDrawCommandList& OutCommandList, int32 LayerId) const;
@@ -293,6 +316,7 @@ private:
     bool                      bAllowTearOut;
     bool                      bIsDropTarget;
     bool                      bNeedsRebuild;
+    bool                      bSuppressRootTabStrip;
     FOnPanelTornOut           OnPanelTornOutDelegate;
     FOnPanelClosed            OnPanelClosedDelegate;
 };

@@ -5,6 +5,7 @@
 
 #include <Core/Containers/Array.h>
 #include <Core/Containers/SharedPtr.h>
+#include <Application/Draw/DrawCommandList.h>
 #include <Application/Elements/TileView.h>
 #include <Application/Elements/TreeView.h>
 #include <Application/Input/Keys.h>
@@ -224,6 +225,22 @@ bool TreeViewSelection_Test()
     TEST_EXPECT_EQ(LastSelection.Size(), 1);
     TEST_EXPECT(LastSelection[0] == Alpha);
 
+    TEST_SECTION("A selected row uses rounded highlight geometry even when it is the top row");
+    FDrawCommandList SelectionCommands;
+    TreeView->OnDraw(FDrawGeometry(TreeView->GetContentRectangle(), 1.0f), SelectionCommands, 0);
+
+    const FFloatColor InactiveSelection = Desc.Style.InactiveSelectedFill;
+    bool              bFoundRoundedSelection = false;
+    for (const FDrawCommand& Command : SelectionCommands.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Box && Command.Tint == InactiveSelection)
+        {
+            bFoundRoundedSelection = !Command.CornerRadius.IsZero();
+            break;
+        }
+    }
+    TEST_EXPECT(bFoundRoundedSelection);
+
     TEST_SECTION("A chord click adds a row without dropping the one already held");
     TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(100, 50), EModifierFlag::Ctrl));
 
@@ -252,12 +269,22 @@ bool TreeViewSelection_Test()
     TEST_EXPECT(!TreeView->IsSelected(Alpha));
     TEST_EXPECT_EQ(ChangeCount, CountBeforePush);
 
+    TEST_SECTION("A shift click after a pushed selection runs from that selection, which carries no anchor");
+    TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(100, 10), EModifierFlag::Shift));
+
+    TEST_EXPECT_EQ(TreeView->GetSelection().Size(), 4);
+    TEST_EXPECT(TreeView->IsSelected(Alpha));
+    TEST_EXPECT(TreeView->IsSelected(Beta));
+    TEST_EXPECT(TreeView->IsSelected(Gamma));
+    TEST_EXPECT(TreeView->IsSelected(Delta));
+
     TEST_SECTION("Emptying the selection from the host reports nothing either");
+    const int32 CountBeforeClear = ChangeCount;
     TreeView->ClearSelection();
 
     TEST_EXPECT(TreeView->GetSelection().IsEmpty());
     TEST_EXPECT(!TreeView->IsSelected(Delta));
-    TEST_EXPECT_EQ(ChangeCount, CountBeforePush);
+    TEST_EXPECT_EQ(ChangeCount, CountBeforeClear);
 
     TEST_SECTION("A single-select view answers a chord click with the row clicked and nothing else");
     FTreeView::FDesc SingleDesc;

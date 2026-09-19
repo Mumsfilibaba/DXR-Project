@@ -47,29 +47,36 @@ static void ResizeToUnassigned(TArray<int32>& Slots, int32 Size)
     }
 }
 
-namespace RenderGraphColors
+struct RenderGraphColors
 {
-    static const FFloatColor NodeTitle   = MakeGraphColor(60, 60, 65);
-    static const FFloatColor NodeBody    = MakeGraphColor(45, 45, 48);
-    static const FFloatColor NodeBorder  = MakeGraphColor(90, 90, 95);
-    static const FFloatColor NodeText    = MakeGraphColor(235, 235, 235);
+    static FFloatColor NodeTitle()   { return FUIStyle::GetDefault().Colors.ControlHovered; }
+    static FFloatColor NodeBody()    { return FUIStyle::GetDefault().Colors.ControlNormal; }
+    static FFloatColor NodeBorder()  { return FUIStyle::GetDefault().Colors.Border; }
+    static FFloatColor NodeText()    { return FUIStyle::GetDefault().Colors.Text; }
 
-    static const FFloatColor MutedTitle  = MakeGraphColor(42, 42, 46);
-    static const FFloatColor MutedBody   = MakeGraphColor(32, 32, 35);
-    static const FFloatColor MutedBorder = MakeGraphColor(62, 62, 66);
-    static const FFloatColor MutedText   = MakeGraphColor(140, 140, 145);
+    static FFloatColor MutedTitle()  { return FUIStyle::GetDefault().Colors.ControlPressed; }
+    static FFloatColor MutedBody()   { return FUIStyle::GetDefault().Colors.ControlDisabled; }
+    static FFloatColor MutedBorder() { return FUIStyle::GetDefault().Header.Border; }
+    static FFloatColor MutedText()   { return FUIStyle::GetDefault().Colors.TextDisabled; }
 
-    static const FFloatColor InputPin    = MakeGraphColor(100, 180, 255);
-    static const FFloatColor OutputPin   = MakeGraphColor(255, 180, 90);
-    static const FFloatColor PinOutline  = MakeGraphColor(20, 20, 20);
+    // Pin hues carry the meaning here, so they stay put where the rest of the chrome follows the theme
+    static FFloatColor InputPin()    { return MakeGraphColor(100, 180, 255); }
+    static FFloatColor OutputPin()   { return MakeGraphColor(255, 180, 90); }
+    static FFloatColor PinOutline()  { return FUIStyle::GetDefault().Colors.InputFieldFill; }
 
-    static const FFloatColor Background  = MakeGraphColor(28, 28, 28);
-    static const FFloatColor Link        = MakeGraphColor(170, 170, 180, 200);
+    static FFloatColor Background()  { return FUIStyle::GetDefault().Colors.WindowBackground; }
+    static FFloatColor Link()        { return WithAlpha(FUIStyle::GetDefault().Colors.Border, 200.0f / 255.0f); }
 
-    static const FFloatColor LegendFill   = MakeGraphColor(20, 20, 22, 225);
-    static const FFloatColor LegendBorder = MakeGraphColor(90, 90, 95);
-    static const FFloatColor LegendText   = MakeGraphColor(220, 220, 220);
-}
+    static FFloatColor LegendFill()   { return WithAlpha(FUIStyle::GetDefault().Panel.Fill, 225.0f / 255.0f); }
+    static FFloatColor LegendBorder() { return FUIStyle::GetDefault().Colors.Border; }
+    static FFloatColor LegendText()   { return FUIStyle::GetDefault().Colors.Text; }
+
+private:
+    static FFloatColor WithAlpha(const FFloatColor& Color, float Alpha)
+    {
+        return FFloatColor(Color.R, Color.G, Color.B, Alpha);
+    }
+};
 
 class FRenderGraphLegend final : public FVisualElement
 {
@@ -105,23 +112,23 @@ public:
 
         const FFloatColor Swatches[RENDERGRAPH_LEGEND_ROWS] =
         {
-            RenderGraphColors::InputPin,
-            RenderGraphColors::OutputPin,
-            RenderGraphColors::NodeTitle,
-            RenderGraphColors::MutedTitle,
+            RenderGraphColors::InputPin(),
+            RenderGraphColors::OutputPin(),
+            RenderGraphColors::NodeTitle(),
+            RenderGraphColors::MutedTitle(),
         };
 
         const FFloatColor SwatchOutlines[] =
         {
-            RenderGraphColors::NodeBorder,
-            RenderGraphColors::MutedBorder,
+            RenderGraphColors::NodeBorder(),
+            RenderGraphColors::MutedBorder(),
         };
 
         const FRectangle&  Bounds  = AllottedGeometry.Bounds;
         const FCornerRadii Corners(RENDERGRAPH_LEGEND_CORNER_RADIUS);
 
-        OutCommandList.AddBox(LayerId, Bounds, RenderGraphColors::LegendFill, Corners);
-        OutCommandList.AddBoxOutline(LayerId, Bounds, RenderGraphColors::LegendBorder, 1.0f, Corners);
+        OutCommandList.AddBox(LayerId, Bounds, RenderGraphColors::LegendFill(), Corners);
+        OutCommandList.AddBoxOutline(LayerId, Bounds, RenderGraphColors::LegendBorder(), 1.0f, Corners);
 
         if (!Font)
         {
@@ -154,7 +161,7 @@ public:
             const FRectangle LabelBounds(IntVector2(LabelLeft, CenterY - (LineHeight / 2)),
                 Bounds.GetRight() - LabelLeft - RENDERGRAPH_LEGEND_PADDING, LineHeight);
 
-            OutCommandList.AddText(LayerId + 1, LabelBounds, Labels[Row], Font.Get(), RenderGraphColors::LegendText);
+            OutCommandList.AddText(LayerId + 1, LabelBounds, Labels[Row], Font.Get(), RenderGraphColors::LegendText());
         }
 
         return LayerId + 1;
@@ -194,17 +201,17 @@ bool FEditorRenderGraphPanel::Initialize()
 
     FGraphCanvas::FDesc CanvasDesc;
     CanvasDesc.Font                        = FEditorStyle::GetFonts().Body;
-    CanvasDesc.BackgroundColor             = RenderGraphColors::Background;
-    CanvasDesc.LinkColor                   = RenderGraphColors::Link;
+    CanvasDesc.BackgroundColor             = RenderGraphColors::Background();
+    CanvasDesc.LinkColor                   = RenderGraphColors::Link();
     CanvasDesc.GridSpacing                 = 32;
     CanvasDesc.bIsViewer                   = true;
-    CanvasDesc.NodeStyle.Body              = RenderGraphColors::NodeBody;
-    CanvasDesc.NodeStyle.Border            = RenderGraphColors::NodeBorder;
-    CanvasDesc.NodeStyle.Text              = RenderGraphColors::NodeText;
-    CanvasDesc.NodeStyle.MutedBody         = RenderGraphColors::MutedBody;
-    CanvasDesc.NodeStyle.MutedBorder       = RenderGraphColors::MutedBorder;
-    CanvasDesc.NodeStyle.MutedText         = RenderGraphColors::MutedText;
-    CanvasDesc.NodeStyle.PinOutline        = RenderGraphColors::PinOutline;
+    CanvasDesc.NodeStyle.Body              = RenderGraphColors::NodeBody();
+    CanvasDesc.NodeStyle.Border            = RenderGraphColors::NodeBorder();
+    CanvasDesc.NodeStyle.Text              = RenderGraphColors::NodeText();
+    CanvasDesc.NodeStyle.MutedBody         = RenderGraphColors::MutedBody();
+    CanvasDesc.NodeStyle.MutedBorder       = RenderGraphColors::MutedBorder();
+    CanvasDesc.NodeStyle.MutedText         = RenderGraphColors::MutedText();
+    CanvasDesc.NodeStyle.PinOutline        = RenderGraphColors::PinOutline();
     CanvasDesc.NodeStyle.CornerRadius      = 6.0f;
     CanvasDesc.NodeStyle.MutedTintOpacity  = 1.0f;
     CanvasDesc.NodeStyle.bStackPinRows     = true;
@@ -232,7 +239,7 @@ bool FEditorRenderGraphPanel::Initialize()
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
     Column->AddSlot(HeaderRow).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
-    Column->AddSlot(CanvasArea).SetFillCoefficient(1.0f);
+    Column->AddSlot(FEditorStyle::MakeInnerFrame(CanvasArea)).SetFillCoefficient(1.0f);
 
     Content = Column;
     return true;
@@ -484,7 +491,7 @@ bool FEditorRenderGraphPanel::RebuildModel(const FRenderGraphDebugSnapshot& Snap
 
         FGraphNode Node;
         Node.Title     = BuildNodeTitle(Pass);
-        Node.TitleTint = bIsInactive ? RenderGraphColors::MutedTitle : RenderGraphColors::NodeTitle;
+        Node.TitleTint = bIsInactive ? RenderGraphColors::MutedTitle() : RenderGraphColors::NodeTitle();
         Node.bIsMuted  = bIsInactive;
 
         TArray<int32> AccessPinSlots;
@@ -507,12 +514,12 @@ bool FEditorRenderGraphPanel::RebuildModel(const FRenderGraphDebugSnapshot& Snap
             if (Access.bIsWrite && HasIncomingLink(Snapshot, PassIndex, AccessIndex))
             {
                 LoadPinSlots[AccessIndex] = Node.Pins.Size();
-                Node.Pins.Emplace(EGraphPinDirection::Input, Resource.Name, TypeTag, RenderGraphColors::InputPin);
+                Node.Pins.Emplace(EGraphPinDirection::Input, Resource.Name, TypeTag, RenderGraphColors::InputPin());
             }
 
             AccessPinSlots[AccessIndex] = Node.Pins.Size();
             Node.Pins.Emplace(Access.bIsWrite ? EGraphPinDirection::Output : EGraphPinDirection::Input, Resource.Name, TypeTag,
-                Access.bIsWrite ? RenderGraphColors::OutputPin : RenderGraphColors::InputPin);
+                Access.bIsWrite ? RenderGraphColors::OutputPin() : RenderGraphColors::InputPin());
         }
 
         if (const Vector2* StoredPosition = PositionsByPassName.Find(Pass.Name))

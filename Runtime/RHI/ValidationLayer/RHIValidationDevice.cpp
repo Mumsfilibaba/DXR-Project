@@ -1975,7 +1975,7 @@ FRHIShaderBindingTable* FRHIValidationDevice::CreateShaderBindingTable(const FRH
 
     if (!RHI::bSupportsShaderBindingTableDescriptors)
     {
-        RHI_VALIDATION_WARNING("CreateShaderBindingTable: this backend's local records may only hold buffers; texture/typed-view/sampler local records are rejected at record-update time. Bind those globally instead.");
+        RHI_VALIDATION_WARNING_ONCE("CreateShaderBindingTable: this backend's local records may only hold buffers; texture/typed-view/sampler local records are rejected at record-update time. Bind those globally instead.");
     }
 
     FRHIShaderBindingTable* ShaderBindingTable = TrackLiveResource(Device->CreateShaderBindingTable(InDesc));

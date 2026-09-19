@@ -60,9 +60,12 @@ static TSharedPtr<FButton> CreateDialogButton(const String& Label, const FOnClic
     Content->AddSlot(FSpacer::CreateHorizontal(DIALOG_BUTTON_WIDTH));
     Content->AddSlot(LabelText).SetHorizontalAlignment(EHorizontalAlignment::Center).SetVerticalAlignment(EVerticalAlignment::Center);
 
+    const FMargin& ButtonPadding = FUIStyle::GetDefault().Metrics.ButtonPadding;
+
     FButton::FDesc Desc;
     Desc.Font      = FEditorStyle::GetFonts().Body;
-    Desc.Padding   = FMargin(0, 4, 0, 4);
+    Desc.Padding   = FMargin(0, ButtonPadding.Top, 0, ButtonPadding.Bottom);
+    Desc.MinHeight = FEditorStyle::ButtonHeight;
     Desc.Content   = Content;
     Desc.OnClicked = OnClicked;
 
@@ -131,10 +134,10 @@ bool FEditorConfirmDialog::Open(const TSharedPtr<FVisualElement>& AnchorElement,
     Column->AddSlot(ButtonRow);
 
     FBorder::FDesc BorderDesc;
-    BorderDesc.BackgroundColor = Style.Colors.PanelBackground;
-    BorderDesc.BorderColor     = Style.Colors.Border;
-    BorderDesc.BorderThickness = Style.Metrics.BorderThickness;
-    BorderDesc.CornerRadius    = FCornerRadii(Style.Metrics.CornerRadius);
+    BorderDesc.BackgroundColor = Style.Panel.Fill;
+    BorderDesc.BorderColor     = Style.Panel.Border;
+    BorderDesc.BorderThickness = Style.Panel.BorderThickness;
+    BorderDesc.CornerRadius    = FCornerRadii(Style.Panel.CornerRadius);
     BorderDesc.Padding         = FMargin(DIALOG_PADDING, DIALOG_PADDING, DIALOG_PADDING, DIALOG_PADDING);
     BorderDesc.Content         = Column;
 

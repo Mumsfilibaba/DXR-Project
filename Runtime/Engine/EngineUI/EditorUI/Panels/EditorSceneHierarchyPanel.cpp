@@ -26,13 +26,12 @@ static const CHAR* GFilterTypeLabel = "Filter";
 
 constexpr float DROP_INDICATOR_THICKNESS = 2.0f;
 
-constexpr int32 HIERARCHY_ROW_HEIGHT = 30;
-
 constexpr int32 HIERARCHY_TYPE_COLUMN_WIDTH = 120;
 
 static const EEditorLightType GPlaceableLightTypes[] =
 {
     EEditorLightType::Point,
+    EEditorLightType::Spot,
     EEditorLightType::Directional,
     EEditorLightType::Sky,
 };
@@ -720,7 +719,7 @@ bool FEditorSceneHierarchyPanel::Initialize()
 {
     FTreeView::FDesc TreeDesc;
     TreeDesc.Font                = FEditorStyle::GetFonts().Body;
-    TreeDesc.RowHeight           = HIERARCHY_ROW_HEIGHT;
+    TreeDesc.RowHeight           = FEditorStyle::RowHeight;
     TreeDesc.TypeColumnWidth     = HIERARCHY_TYPE_COLUMN_WIDTH;
     TreeDesc.LabelColumnHeader   = "Item Label";
     TreeDesc.TypeColumnHeader    = "Type";
@@ -760,7 +759,7 @@ bool FEditorSceneHierarchyPanel::Initialize()
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
     Column->AddSlot(SearchBox).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
-    Column->AddSlot(HierarchyView).SetFillCoefficient(1.0f);
+    Column->AddSlot(FEditorStyle::MakeInnerFrame(HierarchyView)).SetFillCoefficient(1.0f);
 
     Content = Column;
 

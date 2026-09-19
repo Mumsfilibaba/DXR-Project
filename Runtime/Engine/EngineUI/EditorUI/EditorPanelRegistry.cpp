@@ -208,6 +208,33 @@ void FEditorPanelRegistry::ShowPanel(const String& PanelId)
     Panel->SetOpen(true);
 }
 
+void FEditorPanelRegistry::HidePanel(const String& PanelId)
+{
+    TSharedPtr<FEditorPanel> Panel = FindPanel(PanelId);
+    if (!Panel || !DockingArea)
+    {
+        return;
+    }
+
+    if (DockingArea->IsPanelDocked(PanelId))
+    {
+        DockingArea->UndockPanel(PanelId);
+    }
+
+    Panel->SetOpen(false);
+}
+
+void FEditorPanelRegistry::TogglePanel(const String& PanelId)
+{
+    if (IsPanelDocked(PanelId))
+    {
+        HidePanel(PanelId);
+        return;
+    }
+
+    ShowPanel(PanelId);
+}
+
 void FEditorPanelRegistry::OnPanelClosed(const String& PanelId)
 {
     if (TSharedPtr<FEditorPanel> Panel = FindPanel(PanelId))

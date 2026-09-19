@@ -221,6 +221,7 @@ private:
     FRectangle                 ClampArea;
     FRectangle                 ToolTipBounds;
     IntVector2                 CursorPosition;
+    String                     RequestedText;
     float                      RequestedDelay;
     float                      RemainingSeconds;
     bool                       bIsShowing;

@@ -240,8 +240,24 @@ struct FRectangle
     }
 
     /**
+     * @brief Returns the rectangle grown on every side by the margin.
+     *
+     * @param Margin The amount to grow by on each side.
+     * @return The inflated rectangle.
+     */
+    NODISCARD FORCEINLINE FRectangle Inflate(const FMargin& Margin) const
+    {
+        FRectangle Result;
+        Result.Position.X = Position.X - Margin.Left;
+        Result.Position.Y = Position.Y - Margin.Top;
+        Result.Width      = Width + Margin.GetTotalHorizontal();
+        Result.Height     = Height + Margin.GetTotalVertical();
+        return Result;
+    }
+
+    /**
      * @brief Returns the overlap of the two rectangles, or an empty rectangle when they do not touch.
-     * 
+     *
      * @param Other The rectangle to intersect with.
      * @return The overlapping region.
      */

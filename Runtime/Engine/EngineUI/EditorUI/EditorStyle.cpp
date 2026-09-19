@@ -19,12 +19,11 @@ constexpr float CONSOLE_FIELD_CORNER_RADIUS  = 6.0f;
 constexpr int32 INPUT_FIELD_PADDING_X = 12;
 constexpr int32 INPUT_FIELD_PADDING_Y = 6;
 
-constexpr float TOOL_TIP_BORDER_THICKNESS = 2.0f;
-constexpr int32 TOOL_TIP_PADDING        = 4;
+constexpr int32 TOOL_TIP_PADDING = 4;
 
 constexpr int32 SECTION_HEADER_HEIGHT   = 34;
 constexpr int32 SECTION_CONTENT_INDENT  = 12;
-constexpr int32 SECTION_CONTENT_SPACING = 6;
+constexpr int32 SECTION_OUTER_SPACING   = 4;
 
 static FFloatColor FromBytes(int32 R, int32 G, int32 B)
 {
@@ -94,6 +93,19 @@ bool FEditorStyle::Initialize()
     GStyle.Panel.BorderThickness          = 1.0f;
     GStyle.Panel.Gap                      = 6;
 
+    GStyle.InnerFrame.Fill                = FromBytes(24, 24, 27);
+    GStyle.InnerFrame.Border              = FromBytes(48, 48, 54);
+    GStyle.InnerFrame.CornerRadius        = 6.0f;
+    GStyle.InnerFrame.BorderThickness     = 1.0f;
+    GStyle.InnerFrame.Padding             = FMargin(6);
+
+    GStyle.Header.Fill                    = FromBytes(30, 30, 33);
+    GStyle.Header.Border                  = FromBytes(48, 48, 54);
+    GStyle.Header.BottomBorder            = FromBytes(48, 48, 54);
+    GStyle.Header.CornerRadius            = 8.0f;
+    GStyle.Header.BorderThickness         = 1.0f;
+    GStyle.Header.ExpandDuration          = 0.15f;
+
     GStyle.Tab.StripFill                  = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     GStyle.MenuBar.ItemHovered            = FromBytes(87, 87, 87);
@@ -137,7 +149,7 @@ const FUIStyle& FEditorStyle::GetStyle()
 
 FFloatColor FEditorStyle::GetFooterColor()
 {
-    return FromBytes(36, 36, 36);
+    return FUIStyle::GetDefault().Colors.WindowBackground;
 }
 
 FFloatColor FEditorStyle::GetCandidateListColor()
@@ -177,11 +189,29 @@ FFloatColor FEditorStyle::GetToolTipBorderColor()
 
 TSharedPtr<FVisualElement> FEditorStyle::MakeToolTipFrame(const TSharedPtr<FVisualElement>& Content)
 {
+    const FUIStyleMetrics& Metrics = FUIStyle::GetDefault().Metrics;
+
     FBorder::FDesc FrameDesc;
     FrameDesc.BackgroundColor = GetToolTipColor();
     FrameDesc.BorderColor     = GetToolTipBorderColor();
-    FrameDesc.BorderThickness = TOOL_TIP_BORDER_THICKNESS;
+    FrameDesc.BorderThickness = Metrics.BorderThickness;
+    FrameDesc.CornerRadius    = FCornerRadii(Metrics.CornerRadius);
     FrameDesc.Padding         = FMargin(TOOL_TIP_PADDING);
+    FrameDesc.Content         = Content;
+
+    return FBorder::Create(FrameDesc);
+}
+
+TSharedPtr<FVisualElement> FEditorStyle::MakeInnerFrame(const TSharedPtr<FVisualElement>& Content)
+{
+    const FUIInnerFrameStyle& Frame = FUIStyle::GetDefault().InnerFrame;
+
+    FBorder::FDesc FrameDesc;
+    FrameDesc.BackgroundColor = Frame.Fill;
+    FrameDesc.BorderColor     = Frame.Border;
+    FrameDesc.BorderThickness = Frame.BorderThickness;
+    FrameDesc.CornerRadius    = FCornerRadii(Frame.CornerRadius);
+    FrameDesc.Padding         = Frame.Padding;
     FrameDesc.Content         = Content;
 
     return FBorder::Create(FrameDesc);
@@ -225,6 +255,11 @@ FSearchBox::FDesc FEditorStyle::MakeSearchBoxDesc(const String& Hint, const FOnS
     return Desc;
 }
 
+FMargin FEditorStyle::GetSectionSpacing()
+{
+    return FMargin(0, SECTION_OUTER_SPACING, 0, SECTION_OUTER_SPACING);
+}
+
 FExpander::FDesc FEditorStyle::MakeExpanderDesc(const String& Label, const TSharedPtr<FVisualElement>& Content, bool bIsExpanded)
 {
     FExpander::FDesc Desc;
@@ -236,7 +271,9 @@ FExpander::FDesc FEditorStyle::MakeExpanderDesc(const String& Label, const TShar
     Desc.ExpandedArrow  = FEditorIcons::CollapseArrowDown;
     Desc.CollapsedArrow = FEditorIcons::CollapseArrowRight;
     Desc.ArrowSize      = IconSize;
-    Desc.ContentPadding = FMargin(SECTION_CONTENT_INDENT, 0, 0, SECTION_CONTENT_SPACING);
+    Desc.ContentPadding = FMargin(SECTION_CONTENT_INDENT, 8, 8, 8);
+    Desc.Style          = FUIStyle::GetDefault().Header;
+    Desc.bDrawBottomBorderWhenClosed = false;
     return Desc;
 }
 
@@ -244,7 +281,9 @@ FPropertyTable::FDesc FEditorStyle::MakePropertyTableDesc(float LabelColumnFract
 {
     FPropertyTable::FDesc Desc;
     Desc.Font                = GFonts.Body;
+    Desc.HeaderFont          = GFonts.BodyBold;
     Desc.RowHeight           = FrameHeight + Desc.Style.CellPadding.GetTotalVertical();
+    Desc.HeaderRowHeight     = SECTION_HEADER_HEIGHT;
     Desc.LabelColumnFraction = LabelColumnFraction;
     Desc.LabelColumnWidth    = LabelColumnWidth;
     Desc.RevertIcon          = FEditorIcons::Undo;
@@ -256,7 +295,9 @@ FPropertyTable::FDesc FEditorStyle::MakeDataTableDesc()
 {
     FPropertyTable::FDesc Desc;
     Desc.Font                = GFonts.Body;
+    Desc.HeaderFont          = GFonts.BodyBold;
     Desc.RowHeight           = RowHeight;
+    Desc.HeaderRowHeight     = SECTION_HEADER_HEIGHT;
     Desc.bAlternateRowColors = true;
     return Desc;
 }

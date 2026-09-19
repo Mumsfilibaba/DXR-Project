@@ -8,11 +8,17 @@
 #include "Application/Gizmo/Gizmo.h"
 #include "Application/Input/Keys.h"
 #include "Application/Style/UIStyle.h"
+#include "Application/Text/IFontFace.h"
+#include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
+#include "Core/Templates/CString.h"
 
 // The ring that says the world is running, in the amber the editor uses nowhere else
 static const FFloatColor PLAY_BORDER_COLOR = FFloatColor(0.95f, 0.62f, 0.11f, 1.0f);
 
 static constexpr float PLAY_BORDER_THICKNESS = 2.0f;
+
+static constexpr float FPS_BOX_OPACITY = 0.75f;
 
 TSharedPtr<FEditorViewportSurface> FEditorViewportSurface::Create()
 {
@@ -156,6 +162,40 @@ int32 FEditorViewportSurface::OnDraw(const FDrawGeometry& AllottedGeometry, FDra
         OutCommandList.AddBoxOutline(CurrentLayer, Marquee, Style.Colors.Accent, 1.0f);
 
         ++CurrentLayer;
+    }
+
+    if (IConsoleVariable* DrawFps = FConsoleManager::Get().FindConsoleVariable("Engine.DrawFps"))
+    {
+        if (DrawFps->GetBool())
+        {
+            const FUIStyle& Style = FUIStyle::GetDefault();
+
+            const IFontFace* Font = Style.MonospaceFont ? Style.MonospaceFont : Style.NormalFont;
+            if (Font)
+            {
+                CHAR FpsText[16];
+                CString::Snprintf(FpsText, static_cast<int32>(sizeof(FpsText)), "%d", FFrameProfiler::Get().GetFramesPerSecond());
+
+                const String FpsString(FpsText);
+                const int32  TextWidth  = Font->MeasureWidth(StringView(FpsString.Data(), FpsString.Length()));
+                const int32  TextHeight = Font->GetLineHeight();
+                const int32  Padding    = 4;
+                const int32  Margin     = 6;
+
+                FRectangle Box;
+                Box.Width      = TextWidth + (Padding * 2);
+                Box.Height     = TextHeight + (Padding * 2);
+                Box.Position.X = AllottedGeometry.Bounds.GetRight() - Margin - Box.Width;
+                Box.Position.Y = AllottedGeometry.Bounds.Position.Y + Margin;
+
+                FFloatColor BoxFill = Style.Colors.WindowBackground;
+                BoxFill.A           = FPS_BOX_OPACITY;
+
+                OutCommandList.AddBox(CurrentLayer, Box, BoxFill);
+                OutCommandList.AddText(CurrentLayer + 1, Box.Deflate(FMargin(Padding)), FpsString, Font, Style.Colors.Text);
+                CurrentLayer += 2;
+            }
+        }
     }
 
     if (bShowPlayBorder)

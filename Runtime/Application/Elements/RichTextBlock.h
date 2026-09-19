@@ -39,6 +39,7 @@ public:
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override;
+    virtual bool GetCursor(ECursor& OutCursor) const override;
 
     /**
      * @brief Replaces the text, dropping the selection with it.

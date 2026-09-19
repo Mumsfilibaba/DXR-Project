@@ -104,7 +104,7 @@ static void CreateSceneGraphViews(FRenderGraphBuilder& GraphBuilder, FSceneRende
         for (uint32 CascadeIndex = 0; CascadeIndex < NUM_SHADOW_CASCADES; ++CascadeIndex)
         {
             Context.ShadowCascadeDSVs[CascadeIndex] = GraphBuilder.CreateDSV(Context.ShadowCascades,
-                FRHIDepthStencilViewDesc::CreateTexture2DArray(ShadowMapFormat, 0, CascadeIndex, 1),
+                FRHIDepthStencilViewDesc::CreateTexture2DArray(ShadowMapFormat, 0, static_cast<uint16>(CascadeIndex), 1),
                 "ShadowCascadeDSV");
         }
     }
@@ -156,7 +156,7 @@ void FSceneRenderer::BuildAndExecuteSceneGraph(const FSceneRenderView& SceneRend
     Context.SSAOBuffer            = GraphBuilder.CreateTexture(CreateUnorderedAccessDesc(RendererTextureFormats::SSAOBufferFormat, RenderWidth, RenderHeight), "SSAO");
     Context.SceneTarget           = GraphBuilder.CreateTexture(CreateSceneTargetDesc(RendererTextureFormats::SceneTargetFormat, RenderWidth, RenderHeight), "SceneTarget");
     Context.DirectionalShadowMask = GraphBuilder.CreateTexture(CreateUnorderedAccessDesc(RendererTextureFormats::ShadowMaskFormat, RenderWidth, RenderHeight), "DirectionalShadowMask");
-    Context.CascadeIndexBuffer    = GraphBuilder.CreateTexture(CreateUnorderedAccessDesc(EFormat::R32_Float, RenderWidth, RenderHeight), "CascadeIndexBuffer");
+    Context.CascadeIndexBuffer    = GraphBuilder.CreateTexture(CreateUnorderedAccessDesc(RendererTextureFormats::CascadeIndexFormat, RenderWidth, RenderHeight), "CascadeIndexBuffer");
     Context.ReducedDepthBuffer0   = GraphBuilder.CreateTexture(CreateReducedDepthDesc(RenderWidth, RenderHeight), "ReducedDepth0");
     Context.ReducedDepthBuffer1   = GraphBuilder.CreateTexture(CreateReducedDepthDesc(RenderWidth, RenderHeight), "ReducedDepth1");
 

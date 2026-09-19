@@ -79,6 +79,7 @@ FPropertyTable::FPropertyTable()
     , bAlternateRowColors(false)
     , bIsDraggingDivider(false)
     , bIsDividerHovered(false)
+    , OnRowContext()
 {
 }
 
@@ -87,11 +88,13 @@ FPropertyTable::~FPropertyTable() = default;
 void FPropertyTable::Initialize(const FDesc& Desc)
 {
     Font                = Desc.Font;
+    HeaderFont          = Desc.HeaderFont;
     Style               = Desc.Style;
     RevertIcon          = Desc.RevertIcon;
     LabelColumnWidth    = Math::Max(0, Desc.LabelColumnWidth);
     EditorColumnInset   = Math::Max(0, Desc.EditorColumnInset);
     RowHeight           = Math::Max(1, Desc.RowHeight);
+    HeaderRowHeight     = Math::Max(0, Desc.HeaderRowHeight);
     IndentPerLevel      = Math::Max(0, Desc.IndentPerLevel);
     bShowRevertColumn   = Desc.bShowRevertColumn;
     bAlternateRowColors = Desc.bAlternateRowColors;
@@ -203,12 +206,12 @@ int32 FPropertyTable::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
         const FRectangle RuleBounds(IntVector2(RowBounds.Position.X, RowBounds.GetBottom() - LineWidth), RowBounds.Width, LineWidth);
         OutCommandList.AddBox(LayerId, RuleBounds, Style.GridLine);
 
-        if (Font && !Row.Label.IsEmpty())
+        if (IFontFace* const RowFont = GetRowFont(Index); RowFont && !Row.Label.IsEmpty())
         {
             const FRectangle LabelBounds = GetLabelRectangle(Index, AllottedGeometry.Bounds);
-            const String     LabelText   = Font->ElideText(StringView(Row.Label.Data(), Row.Label.Length()), LabelBounds.Width);
+            const String     LabelText   = RowFont->ElideText(StringView(Row.Label.Data(), Row.Label.Length()), LabelBounds.Width);
 
-            OutCommandList.AddText(LayerId, LabelBounds, LabelText, Font.Get(), DefaultStyle.Colors.Text);
+            OutCommandList.AddText(LayerId, LabelBounds, LabelText, RowFont, DefaultStyle.Colors.Text);
         }
 
         if (IsRowModified(Index))
@@ -305,6 +308,18 @@ FEventResponse FPropertyTable::OnMouseButtonDown(const FCursorEvent& CursorEvent
 
 FEventResponse FPropertyTable::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 {
+    if (CursorEvent.GetKey() == Keys::MouseButtonRight)
+    {
+        const int32 RowIndex = FindRowAtPoint(CursorEvent.GetClientPosition());
+        if (RowIndex != InvalidRowIndex && OnRowContext.IsBound())
+        {
+            OnRowContext.Execute(RowIndex);
+            return FEventResponse::Handled();
+        }
+
+        return FEventResponse::Unhandled();
+    }
+
     if (CursorEvent.GetKey() != Keys::MouseButtonLeft)
     {
         return FEventResponse::Unhandled();
@@ -516,7 +531,22 @@ int32 FPropertyTable::GetRowHeight(int32 Index) const
     }
 
     const int32 Override = Rows[Index].HeightOverride;
-    return Override > 0 ? Override : RowHeight;
+    if (Override > 0)
+    {
+        return Override;
+    }
+
+    return (Rows[Index].bIsHeader && HeaderRowHeight > 0) ? HeaderRowHeight : RowHeight;
+}
+
+IFontFace* FPropertyTable::GetRowFont(int32 Index) const
+{
+    if (Index >= 0 && Index < Rows.Size() && Rows[Index].bIsHeader && HeaderFont)
+    {
+        return HeaderFont.Get();
+    }
+
+    return Font.Get();
 }
 
 int32 FPropertyTable::GetRowOffset(int32 Index) const
@@ -556,12 +586,13 @@ FRectangle FPropertyTable::GetLabelRectangle(int32 Index, const FRectangle& Boun
     const FPropertyRow& Row        = Rows[Index];
     const FRectangle    RowBounds  = GetRowRectangle(Index, Bounds);
     const int32         LabelRight = Row.bIsHeader ? RowBounds.GetRight() : (Bounds.Position.X + GetDividerOffset(Bounds));
+    IFontFace* const    RowFont    = GetRowFont(Index);
 
     FRectangle LabelBounds;
     LabelBounds.Position.X = RowBounds.Position.X + Style.LabelIndent + (Row.IndentLevel * IndentPerLevel);
-    LabelBounds.Position.Y = RowBounds.Position.Y + (Font ? Font->GetTextBandOffset(RowBounds.Height) : 0);
+    LabelBounds.Position.Y = RowBounds.Position.Y + (RowFont ? RowFont->GetTextBandOffset(RowBounds.Height) : 0);
     LabelBounds.Width      = Math::Max(0, LabelRight - Style.CellPadding.Right - LabelBounds.Position.X);
-    LabelBounds.Height     = Font ? Font->GetTextBandHeight() : RowBounds.Height;
+    LabelBounds.Height     = RowFont ? RowFont->GetTextBandHeight() : RowBounds.Height;
 
     return LabelBounds;
 }
@@ -624,14 +655,16 @@ const String& FPropertyTable::GetElidedLabel(int32 Index) const
 {
     static const String EmptyLabel;
 
-    const String& Label = Rows[Index].Label;
-    if (!Font || Label.IsEmpty())
+    const String&    Label   = Rows[Index].Label;
+    IFontFace* const RowFont = GetRowFont(Index);
+
+    if (!RowFont || Label.IsEmpty())
     {
         return EmptyLabel;
     }
 
     const int32 LabelWidth = GetLabelRectangle(Index, GetContentRectangle()).Width;
-    return Font->MeasureWidth(StringView(Label.Data(), Label.Length())) > LabelWidth ? Label : EmptyLabel;
+    return RowFont->MeasureWidth(StringView(Label.Data(), Label.Length())) > LabelWidth ? Label : EmptyLabel;
 }
 
 void FPropertyTable::UpdateHoveredRow(const IntVector2& ClientPosition)

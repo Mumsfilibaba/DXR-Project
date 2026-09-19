@@ -89,8 +89,10 @@ void FDockDragState::UpdateDrag(const IntVector2& ScreenPosition)
 
     ClearTarget();
 
-    for (FDockingArea* Area : RegisteredAreas)
+    for (int32 Index = RegisteredAreas.Size() - 1; Index >= 0; --Index)
     {
+        FDockingArea* const Area = RegisteredAreas[Index];
+
         String PanelId;
         
         EDockDirection Direction = EDockDirection::Center;

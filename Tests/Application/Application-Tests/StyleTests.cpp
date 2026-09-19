@@ -156,6 +156,21 @@ bool StyleControlColor_Test()
     TEST_EXPECT(Style.GetTextColor(EInteractionState::Pressed) == Style.Colors.Text);
     TEST_EXPECT(Style.GetTextColor(EInteractionState::Disabled) == Style.Colors.TextDisabled);
 
+    TEST_SECTION("A nested expander is a rounded panel, not a flat bar with an underline");
+    TEST_EXPECT(Style.Header.CornerRadius >= Style.Panel.CornerRadius - 0.01f);
+    TEST_EXPECT(Style.Header.BorderThickness <= 1.0f + 0.01f);
+    TEST_EXPECT(Style.Header.ExpandDuration > 0.0f);
+
+    TEST_SECTION("An inner view is framed thinner than the docked panel around it");
+    TEST_EXPECT(Style.InnerFrame.CornerRadius > 0.0f);
+    TEST_EXPECT(Style.InnerFrame.CornerRadius <= Style.Panel.CornerRadius);
+    TEST_EXPECT(Style.InnerFrame.BorderThickness > 0.0f);
+    TEST_EXPECT(Style.InnerFrame.Padding.Left > Style.InnerFrame.BorderThickness);
+    TEST_EXPECT(Style.InnerFrame.Padding.Top > Style.InnerFrame.BorderThickness);
+
+    TEST_SECTION("Tree interaction highlights round inside their framed view");
+    TEST_EXPECT(Style.TreeRow.CornerRadius > 0.0f);
+
     TEST_END();
 }
 

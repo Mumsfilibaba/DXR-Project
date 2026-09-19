@@ -4,9 +4,6 @@
 #include "Application/Text/IFontFace.h"
 #include "Core/Math/Math.h"
 
-// How far the highlight box is grown past the run it sits behind, in pixels
-constexpr int32 TEXT_SEARCH_HIGHLIGHT_PADDING = 1;
-
 void DrawTextWithSearchHighlight(FDrawCommandList& OutCommandList, int32 LayerId, const FRectangle& LabelBounds,
     const String& Label, int32 MatchOffset, int32 MatchLength, const IFontFace* Font, const FFloatColor& TextColor)
 {
@@ -15,18 +12,17 @@ void DrawTextWithSearchHighlight(FDrawCommandList& OutCommandList, int32 LayerId
         return;
     }
 
-    const FUITreeRowStyle& Style     = FUIStyle::GetDefault().TreeRow;
+    const FUIStyle&        Style    = FUIStyle::GetDefault();
+    const FUITreeRowStyle& RowStyle = Style.TreeRow;
     const StringView       LabelView(Label.Data(), Label.Length());
 
     const int32 MatchLeft  = Font->MeasureWidth(StringView(LabelView.Data(), MatchOffset));
     const int32 MatchWidth = Font->MeasureWidth(StringView(LabelView.Data() + MatchOffset, MatchLength));
 
-    const FRectangle HighlightBounds(
-        IntVector2(LabelBounds.Position.X + MatchLeft - TEXT_SEARCH_HIGHLIGHT_PADDING, LabelBounds.Position.Y - TEXT_SEARCH_HIGHLIGHT_PADDING),
-        MatchWidth + TEXT_SEARCH_HIGHLIGHT_PADDING * 2,
-        LabelBounds.Height + TEXT_SEARCH_HIGHLIGHT_PADDING * 2);
+    const FRectangle MatchBounds(IntVector2(LabelBounds.Position.X + MatchLeft, LabelBounds.Position.Y), MatchWidth, LabelBounds.Height);
+    const FRectangle HighlightBounds = MatchBounds.Inflate(Style.Metrics.TextHighlightPadding);
 
-    OutCommandList.AddBox(LayerId, HighlightBounds, Style.SearchHighlight);
+    OutCommandList.AddBox(LayerId, HighlightBounds, RowStyle.SearchHighlight, FCornerRadii(Style.Metrics.TextHighlightCornerRadius));
 
     FRectangle RunBounds = LabelBounds;
     if (MatchOffset > 0)
@@ -35,7 +31,7 @@ void DrawTextWithSearchHighlight(FDrawCommandList& OutCommandList, int32 LayerId
     }
 
     RunBounds.Position.X = LabelBounds.Position.X + MatchLeft;
-    OutCommandList.AddText(LayerId + 1, RunBounds, Label.SubString(MatchOffset, MatchLength), Font, Style.SearchHighlightText);
+    OutCommandList.AddText(LayerId + 1, RunBounds, Label.SubString(MatchOffset, MatchLength), Font, RowStyle.SearchHighlightText);
 
     const int32 SuffixOffset = MatchOffset + MatchLength;
     if (SuffixOffset < Label.Length())

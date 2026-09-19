@@ -53,10 +53,8 @@ void FGraphModel::RemoveNode(int32 NodeId)
             int32 FromNodeId = -1;
             int32 ToNodeId   = -1;
 
-            FindPin(Links[LinkIndex].FromPinId, FromNodeId);
-            FindPin(Links[LinkIndex].ToPinId, ToNodeId);
-
-            if (FromNodeId == NodeId || ToNodeId == NodeId)
+            if ((FindPin(Links[LinkIndex].FromPinId, FromNodeId) && FromNodeId == NodeId)
+                || (FindPin(Links[LinkIndex].ToPinId, ToNodeId) && ToNodeId == NodeId))
             {
                 Links.RemoveAt(LinkIndex);
             }
@@ -254,10 +252,12 @@ bool FGraphModel::CanReachNode(int32 FromNodeId, int32 TargetNodeId) const
             int32 LinkFromNodeId = -1;
             int32 LinkToNodeId   = -1;
 
-            FindPin(Link.FromPinId, LinkFromNodeId);
-            FindPin(Link.ToPinId, LinkToNodeId);
+            if (!FindPin(Link.FromPinId, LinkFromNodeId) || LinkFromNodeId != NodeId)
+            {
+                continue;
+            }
 
-            if (LinkFromNodeId != NodeId)
+            if (!FindPin(Link.ToPinId, LinkToNodeId))
             {
                 continue;
             }

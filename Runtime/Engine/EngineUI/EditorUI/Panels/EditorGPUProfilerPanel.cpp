@@ -109,7 +109,7 @@ bool FEditorGPUProfilerPanel::Initialize()
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
     Column->AddSlot(FrameTimeHistogram).SetPadding(FMargin(6, 6, 6, 6));
     Column->AddSlot(PassTable);
-    Column->AddSlot(StatisticsSection);
+    Column->AddSlot(StatisticsSection).SetPadding(FEditorStyle::GetSectionSpacing());
 
     TSharedPtr<FScrollBox> ScrollBox = FScrollBox::Create();
     if (!ScrollBox)
@@ -121,7 +121,7 @@ bool FEditorGPUProfilerPanel::Initialize()
 
     TSharedPtr<FVerticalBox> Root = FVerticalBox::Create();
     Root->AddSlot(ToolBar).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
-    Root->AddSlot(ScrollBox).SetFillCoefficient(1.0f);
+    Root->AddSlot(FEditorStyle::MakeInnerFrame(ScrollBox)).SetFillCoefficient(1.0f);
 
     Content = Root;
     return true;

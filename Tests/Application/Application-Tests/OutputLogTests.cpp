@@ -286,6 +286,28 @@ bool RichTextSelection_Test()
     DragSelection(Fixed, IntVector2(1, 8), IntVector2(60, 8));
     TEST_EXPECT(!Fixed->HasSelection());
 
+    TEST_SECTION("Text that can be dragged through puts the text cursor under the pointer, so the log reads as selectable");
+    TSharedPtr<FRichTextBlock> Hovered = MakeBlock(Font, { "hover me" });
+    LayoutElement(Hovered, FRectangle(IntVector2(0, 0), 400, 60));
+
+    ECursor Cursor = ECursor::Arrow;
+    TEST_EXPECT(!Hovered->GetCursor(Cursor));
+
+    Hovered->OnMouseEntered(MakeMoveEvent(IntVector2(4 * 8 + 1, 8)));
+
+    TEST_EXPECT(Hovered->GetCursor(Cursor));
+    TEST_EXPECT(Cursor == ECursor::TextInput);
+
+    TEST_SECTION("Leaving it hands the shape back");
+    Hovered->OnMouseLeft(MakeMoveEvent(IntVector2(900, 900)));
+
+    TEST_EXPECT(!Hovered->GetCursor(Cursor));
+
+    TEST_SECTION("Text that cannot be selected keeps the arrow, which is what a tool tip wants");
+    Fixed->OnMouseEntered(MakeMoveEvent(IntVector2(1, 8)));
+
+    TEST_EXPECT(!Fixed->GetCursor(Cursor));
+
     TEST_END();
 }
 

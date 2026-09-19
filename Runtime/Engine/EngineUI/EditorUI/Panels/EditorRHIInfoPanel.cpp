@@ -101,7 +101,7 @@ bool FEditorRHIInfoPanel::Initialize()
 
     ScrollBox->SetContent(Column);
 
-    Content = ScrollBox;
+    Content = FEditorStyle::MakeInnerFrame(ScrollBox);
 
     RebuildDetailSections();
     return true;
@@ -125,7 +125,7 @@ bool FEditorRHIInfoPanel::BuildOverview(const TSharedPtr<FVerticalBox>& InColumn
     Table->AddRow("Local Memory", LocalMemoryBar).ToolTipText = "Memory on the adapter itself, against the budget the driver grants this process";
     Table->AddRow("Non-Local Memory", NonLocalMemoryBar).ToolTipText = "System memory the adapter reads across the bus, against the budget the driver grants this process";
 
-    InColumn->AddSlot(Table);
+    InColumn->AddSlot(Table).SetPadding(FEditorStyle::GetSectionSpacing());
     return true;
 }
 
@@ -146,7 +146,7 @@ bool FEditorRHIInfoPanel::BuildCounters(const TSharedPtr<FVerticalBox>& InColumn
     Table->AddRow("Dispatch Calls", DispatchCallsText);
     Table->AddRow("Commands", CommandsText);
 
-    InColumn->AddSlot(Table);
+    InColumn->AddSlot(Table).SetPadding(FEditorStyle::GetSectionSpacing());
     return true;
 }
 
@@ -252,7 +252,7 @@ void FEditorRHIInfoPanel::RebuildDetailSections()
         GroupSection.Table     = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
         GroupSection.Section   = FExpander::Create(FEditorStyle::MakeExpanderDesc(GroupName, GroupSection.Table, false));
 
-        DetailsColumn->AddSlot(GroupSection.Section);
+        DetailsColumn->AddSlot(GroupSection.Section).SetPadding(FEditorStyle::GetSectionSpacing());
         DetailSections.Emplace(GroupSection);
     }
 

@@ -256,6 +256,7 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 
     FFloatColor HoverFill = Style.HoveredFill;
     HoverFill.A           = TREE_HOVER_OPACITY;
+    const FCornerRadii HighlightRadii(Style.CornerRadius);
 
     const int32 FirstRow = Math::Clamp(ScrollOffset / RowHeight, 0, Math::Max(Rows.Size() - 1, 0));
     const int32 LastRow  = Math::Min(Rows.Size() - 1, (ScrollOffset + Bounds.Height) / RowHeight);
@@ -273,16 +274,16 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 
         if (IsSelected(Item))
         {
-            OutCommandList.AddBox(LayerId, RowBounds, bHasFocus ? Style.SelectedFill : Style.InactiveSelectedFill);
+            OutCommandList.AddBox(LayerId, RowBounds, bHasFocus ? Style.SelectedFill : Style.InactiveSelectedFill, HighlightRadii);
         }
         else if (bHighlightAncestors && IsAncestorOfSelection(Item))
         {
-            OutCommandList.AddBox(LayerId, RowBounds, Style.AncestorFill);
+            OutCommandList.AddBox(LayerId, RowBounds, Style.AncestorFill, HighlightRadii);
         }
 
         if (RowIndex == HoveredRowIndex)
         {
-            OutCommandList.AddBox(LayerId, RowBounds, HoverFill);
+            OutCommandList.AddBox(LayerId, RowBounds, HoverFill, HighlightRadii);
         }
 
         const FRectangle DisclosureBounds = ComputeDisclosureBounds(RowBounds, Depth);
@@ -851,19 +852,23 @@ void FTreeView::ApplySelectionFromClick(int32 RowIndex, const FModifierKeyState&
         return;
     }
 
-    if (bAllowMultiSelect && Modifiers.IsShiftDown() && AnchorRowIndex >= 0 && AnchorRowIndex < Rows.Size())
+    if (bAllowMultiSelect && Modifiers.IsShiftDown())
     {
-        const int32 FirstRow = Math::Min(AnchorRowIndex, RowIndex);
-        const int32 LastRow  = Math::Max(AnchorRowIndex, RowIndex);
-
-        Selection.Clear();
-        for (int32 Index = FirstRow; Index <= LastRow; ++Index)
+        const int32 ExtendFromRow = GetCurrentRowIndex();
+        if (ExtendFromRow != InvalidRowIndex)
         {
-            Selection.Add(Rows[Index]);
-        }
+            const int32 FirstRow = Math::Min(ExtendFromRow, RowIndex);
+            const int32 LastRow  = Math::Max(ExtendFromRow, RowIndex);
 
-        OnSelectionChangedDelegate.ExecuteIfBound(Selection);
-        return;
+            Selection.Clear();
+            for (int32 Index = FirstRow; Index <= LastRow; ++Index)
+            {
+                Selection.Add(Rows[Index]);
+            }
+
+            OnSelectionChangedDelegate.ExecuteIfBound(Selection);
+            return;
+        }
     }
 
     Selection.Clear();

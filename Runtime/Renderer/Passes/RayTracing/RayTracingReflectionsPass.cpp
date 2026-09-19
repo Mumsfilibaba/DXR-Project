@@ -316,6 +316,36 @@ const FRayTracingVariant& FRayTracingReflectionsPass::GetVariant(EReflectionPath
     }
 }
 
+FRHIShaderBindingTableRef& FRayTracingReflectionsPass::GetShaderBindingTable(FFrameResources& Resources, EReflectionPath Path)
+{
+    switch (Path)
+    {
+    case EReflectionPath::ShaderExecutionReordering:
+        return Resources.RayTracingSERShaderBindingTable;
+
+    case EReflectionPath::Bindless:
+        return Resources.RayTracingBindlessShaderBindingTable;
+
+    default:
+        return Resources.RayTracingShaderBindingTable;
+    }
+}
+
+uint32& FRayTracingReflectionsPass::GetHitGroupCapacity(EReflectionPath Path)
+{
+    switch (Path)
+    {
+    case EReflectionPath::ShaderExecutionReordering:
+        return CurrentSERHitGroupCapacity;
+
+    case EReflectionPath::Bindless:
+        return CurrentBindlessHitGroupCapacity;
+
+    default:
+        return CurrentHitGroupCapacity;
+    }
+}
+
 bool FRayTracingReflectionsPass::NeedsBindlessData() const
 {
     return SelectPath() != EReflectionPath::Local;
@@ -556,19 +586,8 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
 
     const FRayTracingVariant&    ActiveVariant            = GetVariant(Path);
     FRHIRayTracingPipelineState* ActivePipeline           = ActiveVariant.Pipeline.Get();
-    FRHIShaderBindingTableRef&   ActiveShaderBindingTable = Resources.RayTracingShaderBindingTable;
-    uint32&                      ActiveCapacity           = CurrentHitGroupCapacity;
-
-    if (Path == EReflectionPath::ShaderExecutionReordering)
-    {
-        ActiveShaderBindingTable = Resources.RayTracingSERShaderBindingTable;
-        ActiveCapacity           = CurrentSERHitGroupCapacity;
-    }
-    else if (Path == EReflectionPath::Bindless)
-    {
-        ActiveShaderBindingTable = Resources.RayTracingBindlessShaderBindingTable;
-        ActiveCapacity           = CurrentBindlessHitGroupCapacity;
-    }
+    FRHIShaderBindingTableRef&   ActiveShaderBindingTable = GetShaderBindingTable(Resources, Path);
+    uint32&                      ActiveCapacity           = GetHitGroupCapacity(Path);
 
     if (!ActivePipeline)
     {

@@ -10,6 +10,7 @@
 #include <Application/Elements/CheckBox.h>
 #include <Application/Elements/EditableText.h>
 #include <Application/Elements/Expander.h>
+#include <Application/Elements/IndexedPathMove.h>
 #include <Application/Elements/Histogram.h>
 #include <Application/Elements/NumericEntry.h>
 #include <Application/Elements/Overlay.h>
@@ -608,6 +609,22 @@ bool ScrollBarControl_Test()
     DrawElement(ScrollBar, EmptyCommands);
     TEST_EXPECT_EQ(CountCommands(EmptyCommands, EDrawCommandType::Box), 1);
 
+    TEST_SECTION("Default thumb padding does not leave the allocated scrollbar rail transparent");
+    FScrollBar::FDesc PaddedDesc;
+    PaddedDesc.Orientation = EOrientation::Vertical;
+
+    TSharedPtr<FScrollBar> Padded = FScrollBar::Create(PaddedDesc);
+    const FRectangle       PaddedBounds(IntVector2(20, 0), 12, 200);
+    LayoutElement(Padded, PaddedBounds);
+    Padded->SetScrollState(800, 200, 0);
+
+    FDrawCommandList PaddedCommands;
+    DrawElement(Padded, PaddedCommands);
+    const FDrawCommand* Rail = FindFirstBox(PaddedCommands);
+    TEST_EXPECT(Rail != nullptr);
+    TEST_EXPECT_EQ(Rail->Bounds, PaddedBounds);
+    TEST_EXPECT(Padded->GetThumbBounds().Position.X > PaddedBounds.Position.X);
+
     TEST_SECTION("The thumb takes the fraction of the track that is in view");
     ScrollBar->SetScrollState(800, 200, 0);
     TEST_EXPECT(ScrollBar->IsScrollable());
@@ -915,6 +932,7 @@ bool ExpanderControl_Test()
     Desc.bIsExpanded    = false;
     Desc.HeaderHeight   = HeaderHeight;
     Desc.ContentPadding = ContentPadding;
+    Desc.Style.ExpandDuration = 0.0f;
     Desc.OnStateChanged = FOnExpanderStateChanged::CreateLambda([&StateChanges](bool bNewState) { StateChanges.Add(bNewState); });
 
     TSharedPtr<FExpander> Expander = FExpander::Create(Desc);
@@ -996,6 +1014,79 @@ bool ExpanderControl_Test()
 
     Expander->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
     TEST_EXPECT(!Expander->GetCursor(Cursor));
+
+    TEST_END();
+}
+
+bool ExpanderAnimation_Test()
+{
+    TEST_BEGIN();
+
+    FTextBlock::FDesc ContentDesc;
+    ContentDesc.Text = "Body";
+    ContentDesc.Font = CreateFont();
+
+    FExpander::FDesc Desc;
+    Desc.Label                = "Section";
+    Desc.Font                 = CreateFont();
+    Desc.Content              = FTextBlock::Create(ContentDesc);
+    Desc.bIsExpanded          = false;
+    Desc.HeaderHeight         = 20;
+    Desc.Style.ExpandDuration = 1000.0f;
+
+    TSharedPtr<FExpander> Expander = FExpander::Create(Desc);
+    LayoutElement(Expander, FRectangle(IntVector2(0, 0), 200, 200));
+
+    const int32 ClosedHeight = Expander->GetCachedDesiredSize().Y;
+    TEST_EXPECT_EQ(ClosedHeight, 20);
+
+    Expander->SetExpanded(true);
+    Expander->PrepareDesiredSize();
+
+    TEST_SECTION("A long open has not finished on the first layout, so the height is still short of the settled size");
+    TEST_EXPECT(Expander->GetCachedDesiredSize().Y < 20 + Expander->GetContent()->GetCachedDesiredSize().Y + Desc.ContentPadding.GetTotalVertical());
+    TEST_EXPECT(Expander->GetCachedDesiredSize().Y >= ClosedHeight);
+
+    TEST_END();
+}
+
+bool IndexedPathMove_Test()
+{
+    TEST_BEGIN();
+
+    TArray<int32> Parent;
+    Parent.Add(0);
+
+    TArray<int32> Child;
+    Child.Add(1);
+
+    TArray<int32> Self = Parent;
+    Self.Add(1);
+
+    TArray<int32> Descendant = Self;
+    Descendant.Add(0);
+
+    TArray<int32> Sibling;
+    Sibling.Add(0);
+    Sibling.Add(2);
+
+    TEST_SECTION("A folder cannot land on itself or inside its own tree");
+    TEST_EXPECT(FIndexedPathMove::IsPrefix(Self, Self));
+    TEST_EXPECT(FIndexedPathMove::IsPrefix(Self, Descendant));
+    TEST_EXPECT(!FIndexedPathMove::IsPrefix(Self, Sibling));
+
+    TArray<int32> Legal;
+    TArray<int32> Illegal;
+    FIndexedPathMove::Classify(Parent, Child, Self, Legal, Illegal);
+    TEST_EXPECT(Legal.IsEmpty());
+    TEST_EXPECT_EQ(Illegal.Size(), 1);
+
+    FIndexedPathMove::Classify(Parent, Child, Sibling, Legal, Illegal);
+    TEST_EXPECT_EQ(Legal.Size(), 1);
+    TEST_EXPECT(Illegal.IsEmpty());
+
+    FIndexedPathMove::Classify(Parent, Child, Parent, Legal, Illegal);
+    TEST_EXPECT(Legal.IsEmpty());
 
     TEST_END();
 }

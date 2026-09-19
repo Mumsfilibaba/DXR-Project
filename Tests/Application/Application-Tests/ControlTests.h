@@ -10,6 +10,8 @@ bool ScrollBoxScrollBar_Test();
 bool OverlayControl_Test();
 bool SpacerSeparatorControl_Test();
 bool ExpanderControl_Test();
+bool ExpanderAnimation_Test();
+bool IndexedPathMove_Test();
 bool SearchBoxControl_Test();
 bool SearchBoxClearStyle_Test();
 bool NumericEntryControl_Test();

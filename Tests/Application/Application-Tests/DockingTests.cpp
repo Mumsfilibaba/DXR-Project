@@ -19,6 +19,7 @@
 #include <Application/ElementPath.h>
 #include <Application/Elements/ScrollBar.h>
 #include <Application/Elements/TextBlock.h>
+#include <Application/Elements/TitleBar.h>
 #include <Application/Input/Keys.h>
 #include <Application/Text/FixedWidthFontFace.h>
 #include <Application/Text/TrueTypeFontFace.h>
@@ -84,6 +85,32 @@ static TSharedPtr<FTab> FindTab(const TSharedPtr<FTabStrip>& Strip, const String
 static TSharedPtr<FTabStrip> FindStrip(const TSharedPtr<FDockingArea>& Area)
 {
     return Area->FindPanelTabStrip(String());
+}
+
+static bool ContainsElement(const TSharedPtr<FVisualElement>& Root, const FVisualElement* Needle)
+{
+    if (!Root || !Needle)
+    {
+        return false;
+    }
+
+    if (Root.Get() == Needle)
+    {
+        return true;
+    }
+
+    TArray<TSharedPtr<FVisualElement>> Children;
+    Root->GetChildren(Children);
+
+    for (const TSharedPtr<FVisualElement>& Child : Children)
+    {
+        if (ContainsElement(Child, Needle))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 static void DrawElement(const TSharedPtr<FVisualElement>& Element, FDrawCommandList& OutCommandList)
@@ -2283,6 +2310,232 @@ bool DockDragState_Test()
     TEST_EXPECT(!DragState.HasTarget());
     DragState.CancelDrag();
 
+    FDockDragState::Shutdown();
+
+    TEST_END();
+}
+
+bool DockHostAdaptiveChrome_Test()
+{
+    TEST_BEGIN();
+
+    FScopedStubApplication Application;
+    FDockingFixture        Fixture(Application, IntVector2(800, 600));
+
+    Fixture.Area->DockPanel("Outliner", String(), EDockDirection::Center);
+    Fixture.Area->DockPanel("Details", "Outliner", EDockDirection::Right);
+    Fixture.Layout();
+
+    FDockWindowManager::FDesc ManagerDesc;
+    ManagerDesc.MainArea      = Fixture.Area;
+    ManagerDesc.AreaDesc.Font = Fixture.Font;
+
+    FDockWindowManager& Manager = FDockWindowManager::Get();
+    Manager.Initialize(ManagerDesc);
+
+    FDockDragState& DragState = FDockDragState::Get();
+    DragState.BeginDrag("Details", Fixture.Area.Get(), IntVector2(2000, 2000));
+    DragState.EndDrag();
+    Manager.Tick();
+
+    TSharedPtr<FDockingArea> HostArea   = Manager.GetHostArea(0);
+    TSharedPtr<FWindow>      HostWindow = Manager.GetHostWindow(0);
+    TEST_EXPECT(HostArea != nullptr);
+    TEST_EXPECT(HostWindow != nullptr);
+
+    FApplication::LayoutWindow(HostWindow);
+
+    TEST_SECTION("An unsplit host lifts its strip out of the dock tree and into the caption");
+    TEST_EXPECT(HostArea->IsRootTabStripSuppressed());
+
+    TSharedPtr<FTabStrip> RootStrip = HostArea->GetRootTabStrip();
+    TEST_EXPECT(RootStrip != nullptr);
+    TEST_EXPECT(!ContainsElement(HostArea, RootStrip.Get()));
+
+    TArray<TSharedPtr<FVisualElement>> HostChildren;
+    HostWindow->GetContent()->GetChildren(HostChildren);
+    TEST_EXPECT_EQ(HostChildren.Size(), 2);
+
+    TSharedPtr<FTitleBar> TitleBar = StaticCastSharedPtr<FTitleBar>(HostChildren[0]);
+    TEST_EXPECT(TitleBar->GetLeadingContent() == StaticCastSharedPtr<FVisualElement>(RootStrip));
+
+    TEST_SECTION("Splitting the host puts the strip back in the pane and restores the caption title");
+    HostArea->RegisterPanel("Content", "Content Browser", MakePanel("Content", Fixture.Font));
+    HostArea->DockPanel("Content", "Details", EDockDirection::Right);
+    Manager.Tick();
+    FApplication::LayoutWindow(HostWindow);
+
+    TEST_EXPECT(!HostArea->IsRootTabStripSuppressed());
+    TEST_EXPECT(TitleBar->GetLeadingContent() == nullptr);
+    TEST_EXPECT(HostArea->GetRootTabStrip() == nullptr);
+
+    TSharedPtr<FTabStrip> DetailsStrip = HostArea->FindPanelTabStrip("Details");
+    TEST_EXPECT(DetailsStrip != nullptr);
+    TEST_EXPECT(ContainsElement(HostArea, DetailsStrip.Get()));
+
+    FDockWindowManager::Shutdown();
+    FDockDragState::Shutdown();
+
+    TEST_END();
+}
+
+bool DockTabDragIntoExistingHost_Test()
+{
+    TEST_BEGIN();
+
+    FScopedStubApplication Application;
+    FDockingFixture        Fixture(Application, IntVector2(800, 600), IntVector2(0, 0));
+
+    Fixture.Area->DockPanel("Outliner", String(), EDockDirection::Center);
+    Fixture.Area->DockPanel("Details", "Outliner", EDockDirection::Center);
+    Fixture.Area->DockPanel("Content", "Outliner", EDockDirection::Center);
+    Fixture.Layout();
+
+    FDockWindowManager::FDesc ManagerDesc;
+    ManagerDesc.MainArea      = Fixture.Area;
+    ManagerDesc.AreaDesc.Font = Fixture.Font;
+
+    FDockWindowManager& Manager   = FDockWindowManager::Get();
+    FDockDragState&     DragState = FDockDragState::Get();
+
+    Manager.Initialize(ManagerDesc);
+
+    DragState.BeginDrag("Details", Fixture.Area.Get(), IntVector2(2000, 2000));
+    DragState.EndDrag();
+    Manager.Tick();
+
+    TEST_EXPECT_EQ(Manager.GetNumHosts(), 1);
+
+    TSharedPtr<FDockingArea> HostArea   = Manager.GetHostArea(0);
+    TSharedPtr<FWindow>      HostWindow = Manager.GetHostWindow(0);
+    TEST_EXPECT(HostArea != nullptr);
+    TEST_EXPECT(HostWindow != nullptr);
+
+    HostWindow->MoveTo(IntVector2(900, 100));
+    FApplication::LayoutWindow(HostWindow);
+    Fixture.Layout();
+
+    TSharedPtr<FTabStrip> MainStrip = Fixture.Area->FindPanelTabStrip("Content");
+    TEST_EXPECT(MainStrip != nullptr);
+
+    TSharedPtr<FTab> ContentTab = FindTab(MainStrip, "Content");
+    TEST_EXPECT(ContentTab != nullptr);
+
+    TEST_SECTION("Dragging a tab off the main strip detaches it, which is what puts a drag in flight");
+    MainStrip->OnTabPressed(ContentTab.Get(), ContentTab->GetContentRectangle().GetCenter());
+
+    const FRectangle StripBounds = MainStrip->GetContentRectangle();
+    const IntVector2 BelowStrip(StripBounds.GetCenter().X, StripBounds.GetBottom() + FTabStrip::TearOutDistance + 10);
+
+    MainStrip->OnTabDragged(ContentTab.Get(), BelowStrip, BelowStrip);
+
+    TEST_EXPECT_EQ(MainStrip->GetDetachedPanelId(), String("Content"));
+    TEST_EXPECT(DragState.IsDragging());
+
+    TEST_SECTION("Carrying it over the floating host resolves that host, not the window it came from");
+    const IntVector2 OverHost = HostArea->GetContentRectangle().GetCenter() + HostWindow->GetPosition();
+    MainStrip->OnTabDragged(ContentTab.Get(), OverHost, OverHost);
+
+    TEST_EXPECT_EQ(DragState.GetTargetArea(), HostArea.Get());
+    TEST_EXPECT_EQ(DragState.GetTargetDirection(), EDockDirection::Center);
+
+    TEST_SECTION("Letting go there gives the host a second tab rather than a second window");
+    MainStrip->OnTabReleased(ContentTab.Get(), OverHost, OverHost);
+    Manager.Tick();
+
+    TEST_EXPECT_EQ(Manager.GetNumHosts(), 1);
+    TEST_EXPECT(HostArea->IsPanelDocked("Content"));
+    TEST_EXPECT_EQ(HostArea->GetDockedPanelIds().Size(), 2);
+    TEST_EXPECT(!Fixture.Area->IsPanelDocked("Content"));
+
+    FDockWindowManager::Shutdown();
+    FDockDragState::Shutdown();
+
+    TEST_END();
+}
+
+bool DockHostCaptionTabDrop_Test()
+{
+    TEST_BEGIN();
+
+    FScopedStubApplication Application;
+    FDockingFixture        Fixture(Application, IntVector2(800, 600));
+
+    Fixture.Area->DockPanel("Outliner", String(), EDockDirection::Center);
+    Fixture.Area->DockPanel("Content", "Outliner", EDockDirection::Center);
+    Fixture.Area->DockPanel("Details", "Outliner", EDockDirection::Right);
+    Fixture.Layout();
+
+    FDockWindowManager::FDesc ManagerDesc;
+    ManagerDesc.MainArea      = Fixture.Area;
+    ManagerDesc.AreaDesc.Font = Fixture.Font;
+
+    FDockWindowManager& Manager = FDockWindowManager::Get();
+    Manager.Initialize(ManagerDesc);
+
+    FDockDragState& DragState = FDockDragState::Get();
+
+    DragState.BeginDrag("Details", Fixture.Area.Get(), IntVector2(2000, 2000));
+    DragState.EndDrag();
+    Manager.Tick();
+
+    TSharedPtr<FDockingArea> HostArea   = Manager.GetHostArea(0);
+    TSharedPtr<FWindow>      HostWindow = Manager.GetHostWindow(0);
+    TEST_EXPECT(HostArea != nullptr);
+    TEST_EXPECT(HostWindow != nullptr);
+
+    HostWindow->MoveTo(IntVector2(100, 100));
+    FApplication::LayoutWindow(HostWindow);
+
+    TEST_SECTION("A host's caption strip is a drop target even though it sits outside the area");
+    TSharedPtr<FTabStrip> CaptionStrip = HostArea->GetRootTabStrip();
+    TEST_EXPECT(CaptionStrip != nullptr);
+    TEST_EXPECT(!CaptionStrip->GetContentRectangle().IsEmpty());
+
+    const FRectangle CaptionStripBounds = CaptionStrip->GetContentRectangle();
+    const TArray<TSharedPtr<FTab>>& CaptionTabElements = CaptionStrip->GetTabs();
+    TEST_EXPECT_EQ(CaptionTabElements.Size(), 1);
+
+    const int32 LastTabRight = CaptionTabElements.Last()->GetContentRectangle().GetRight();
+    TEST_EXPECT((CaptionStripBounds.GetRight() - LastTabRight) >= FUIStyle::GetDefault().Tab.MinWidth);
+
+    const IntVector2 OverCaptionStrip(
+        (LastTabRight + CaptionStripBounds.GetRight()) / 2,
+        CaptionStripBounds.GetCenter().Y);
+    const IntVector2 OverCaptionStripScreen = OverCaptionStrip + HostWindow->GetPosition();
+
+    String         TargetPanelId;
+    EDockDirection TargetDirection = EDockDirection::Left;
+    TEST_EXPECT(HostArea->HitTestDropTarget(OverCaptionStripScreen, TargetPanelId, TargetDirection));
+    TEST_EXPECT_EQ(TargetPanelId, String("Details"));
+    TEST_EXPECT_EQ(TargetDirection, EDockDirection::Center);
+
+    TEST_SECTION("The host takes the drop rather than the window it floats over");
+    DragState.BeginDrag("Content", Fixture.Area.Get(), OverCaptionStripScreen);
+
+    TEST_EXPECT_EQ(DragState.GetTargetArea(), HostArea.Get());
+    TEST_EXPECT_EQ(DragState.GetTargetPanelId(), String("Details"));
+    TEST_EXPECT_EQ(DragState.GetTargetDirection(), EDockDirection::Center);
+
+    TEST_SECTION("Letting go there gives the host a second tab rather than a second window");
+    DragState.EndDrag();
+    Manager.Tick();
+    FApplication::LayoutWindow(HostWindow);
+
+    TEST_EXPECT_EQ(Manager.GetNumHosts(), 1);
+    TEST_EXPECT(HostArea->IsPanelDocked("Content"));
+    TEST_EXPECT_EQ(HostArea->GetDockedPanelIds().Size(), 2);
+    TEST_EXPECT_EQ(HostArea->SaveLayout().Kind, EDockNodeKind::Tabs);
+
+    TEST_SECTION("Both tabs are in the caption, which is where an unsplit host keeps its strip");
+    TEST_EXPECT(HostArea->IsRootTabStripSuppressed());
+
+    const TArray<String> CaptionTabs = GetTabOrder(HostArea->GetRootTabStrip());
+    TEST_EXPECT_EQ(CaptionTabs.Size(), 2);
+    TEST_EXPECT_EQ(CaptionTabs[0], String("Details"));
+    TEST_EXPECT_EQ(CaptionTabs[1], String("Content"));
+
+    FDockWindowManager::Shutdown();
     FDockDragState::Shutdown();
 
     TEST_END();

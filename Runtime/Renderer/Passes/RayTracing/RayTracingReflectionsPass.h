@@ -53,9 +53,11 @@ public:
     NODISCARD FRHITexture* GetReflectionNoiseMask() const;
 
 private:
-    NODISCARD FRayTracingVariant        CreateVariant(const FRayTracingPermutation& Permutation);
-    NODISCARD EReflectionPath           SelectPath() const;
-    NODISCARD const FRayTracingVariant& GetVariant(EReflectionPath Path) const;
+    NODISCARD FRayTracingVariant         CreateVariant(const FRayTracingPermutation& Permutation);
+    NODISCARD EReflectionPath            SelectPath() const;
+    NODISCARD const FRayTracingVariant&  GetVariant(EReflectionPath Path) const;
+    NODISCARD FRHIShaderBindingTableRef& GetShaderBindingTable(FFrameResources& Resources, EReflectionPath Path);
+    NODISCARD uint32&                    GetHitGroupCapacity(EReflectionPath Path);
 
     void LoadReflectionNoiseMask();
 

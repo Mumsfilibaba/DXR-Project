@@ -209,7 +209,7 @@ bool FEditorRendererSettingsPanel::Initialize()
 
     TSharedPtr<FVerticalBox> Layout = FVerticalBox::Create();
     Layout->AddSlot(SearchBox).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
-    Layout->AddSlot(ScrollBox).SetFillCoefficient(1.0f);
+    Layout->AddSlot(FEditorStyle::MakeInnerFrame(ScrollBox)).SetFillCoefficient(1.0f);
 
     Content = Layout;
 
@@ -301,11 +301,11 @@ void FEditorRendererSettingsPanel::RebuildSections()
 
             if (ParentBox)
             {
-                ParentBox->AddSlot(Section);
+                ParentBox->AddSlot(Section).SetPadding(FEditorStyle::GetSectionSpacing());
             }
             else
             {
-                Column->AddSlot(Section);
+                Column->AddSlot(Section).SetPadding(FEditorStyle::GetSectionSpacing());
             }
 
             SectionBoxes.Emplace(FSectionBox{ Setting.Section, SectionBox });

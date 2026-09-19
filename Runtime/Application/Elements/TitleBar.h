@@ -7,6 +7,7 @@
 #include "CoreApplication/PlatformInterface/IPlatformWindow.h"
 
 class FHorizontalBox;
+class FOverlay;
 class FSpacer;
 class FTextBlock;
 class FWindow;
@@ -183,6 +184,19 @@ public:
      */
     void SetTitle(const String& InTitle);
 
+    /**
+     * @brief Places a tab strip (or anything else) in the caption in place of the title text.
+     *
+     * @param InContent The element to host, or null to restore the title.
+     */
+    void SetLeadingContent(const TSharedPtr<FVisualElement>& InContent);
+
+    /** @return What SetLeadingContent last placed, or null when the title is showing. */
+    NODISCARD FORCEINLINE const TSharedPtr<FVisualElement>& GetLeadingContent() const
+    {
+        return LeadingContent;
+    }
+
     /** @return The caption text. */
     NODISCARD FORCEINLINE const String& GetTitle() const
     {
@@ -233,8 +247,12 @@ private:
     TSharedPtr<FHorizontalBox>         Panel;
     TSharedPtr<FSpacer>                LeadingSpacer;
     TSharedPtr<FSpacer>                IconSpacer;
+    TSharedPtr<FOverlay>               LeadingHost;
+    int32                              LeadingHostSlotIndex;
+    int32                              FlexibleSpacerSlotIndex;
     TSharedPtr<FSpacer>                TrailingSpacer;
     TSharedPtr<FTextBlock>             TitleLabel;
+    TSharedPtr<FVisualElement>         LeadingContent;
     TSharedPtr<FHorizontalBox>         CaptionButtonRow;
     TArray<TSharedPtr<FCaptionButton>> CaptionButtons;
 };

@@ -75,7 +75,7 @@ bool FEditorFrameProfilerPanel::Initialize()
 
     TSharedPtr<FVerticalBox> Root = FVerticalBox::Create();
     Root->AddSlot(ToolBar).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
-    Root->AddSlot(ScrollBox).SetFillCoefficient(1.0f);
+    Root->AddSlot(FEditorStyle::MakeInnerFrame(ScrollBox)).SetFillCoefficient(1.0f);
 
     Content = Root;
     return true;
@@ -202,7 +202,7 @@ void FEditorFrameProfilerPanel::RefreshThreads()
             ThreadSection.Table   = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
             ThreadSection.Section = FExpander::Create(FEditorStyle::MakeExpanderDesc(ThreadLabel, ThreadSection.Table, bIsExpanded));
 
-            ThreadsColumn->AddSlot(ThreadSection.Section);
+            ThreadsColumn->AddSlot(ThreadSection.Section).SetPadding(FEditorStyle::GetSectionSpacing());
             ThreadSections.Emplace(ThreadSection);
         }
     }

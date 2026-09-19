@@ -10,6 +10,7 @@
 #include <Application/Text/FixedWidthFontFace.h>
 #include <Application/Text/TrueTypeFontFace.h>
 #include <Application/Elements/EditableText.h>
+#include <Application/Style/UIStyle.h>
 
 #if PLATFORM_MACOS
 /** @brief The modifier a shortcut is spelled with here, which is the one FModifierKeyState calls the command. */
@@ -340,11 +341,13 @@ bool EditableTextSelection_Test()
     CommandList.Reset();
     Drawn->OnDraw(FDrawGeometry(Drawn->GetContentRectangle(), 1.0f), CommandList, 0);
 
+    const FMargin& HighlightPadding = FUIStyle::GetDefault().Metrics.TextHighlightPadding;
+
     TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::Box), 1);
     TEST_EXPECT(CommandList[0].Type == EDrawCommandType::Box);
-    TEST_EXPECT_EQ(CommandList[0].Bounds.Position.X, 1 * 8);
-    TEST_EXPECT_EQ(CommandList[0].Bounds.Width, 2 * 8);
-    TEST_EXPECT_EQ(CommandList[0].Bounds.Height, 16);
+    TEST_EXPECT_EQ(CommandList[0].Bounds.Position.X, (1 * 8) - HighlightPadding.Left);
+    TEST_EXPECT_EQ(CommandList[0].Bounds.Width, (2 * 8) + HighlightPadding.GetTotalHorizontal());
+    TEST_EXPECT_EQ(CommandList[0].Bounds.Height, 16 + HighlightPadding.GetTotalVertical());
 
     TEST_SECTION("The fill is recorded before the glyphs, so it stays behind them");
     TEST_EXPECT_EQ(CommandList.FindTextCommand("Hello"), 1);

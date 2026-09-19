@@ -109,7 +109,7 @@ int32 FMenuHost::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     return MaxLayerId;
 }
 
-void FMenuHost::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+const FMenuHost::FHostedChild* FMenuHost::FindChildAtPoint(const IntVector2& ClientPosition) const
 {
     for (int32 Index = Children.Size() - 1; Index >= 0; --Index)
     {
@@ -121,9 +121,23 @@ void FMenuHost::FindChildrenContainingPoint(const IntVector2& ClientPosition, FE
 
         if (Child.Content->GetContentRectangle().EncapsulatesPoint(ClientPosition))
         {
-            OutChildElements.Add(GetVisibility(), AsSharedPtr());
-            Child.Content->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-            return;
+            return &Child;
         }
+    }
+
+    return nullptr;
+}
+
+bool FMenuHost::CoversPoint(const IntVector2& ClientPosition) const
+{
+    return FindChildAtPoint(ClientPosition) != nullptr;
+}
+
+void FMenuHost::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+{
+    if (const FHostedChild* Child = FindChildAtPoint(ClientPosition))
+    {
+        OutChildElements.Add(GetVisibility(), AsSharedPtr());
+        Child->Content->FindChildrenContainingPoint(ClientPosition, OutChildElements);
     }
 }

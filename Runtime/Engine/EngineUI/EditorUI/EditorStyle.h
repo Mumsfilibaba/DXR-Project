@@ -95,13 +95,21 @@ struct ENGINE_API FEditorStyle
     NODISCARD static FFloatColor GetToolTipBorderColor();
 
     /**
-     * @brief Wraps content in the frame every rich tool tip draws, so the fill, the stroke and the padding
-     * are set here rather than repeated at every call site.
+     * @brief Wraps content in the frame every rich tool tip draws, so the fill, the rounding, the stroke
+     * and the padding are set here rather than repeated at every call site.
      *
      * @param Content The element to frame.
      * @return The frame, ready to hand to FToolTipService::RequestToolTip.
      */
     NODISCARD static TSharedPtr<FVisualElement> MakeToolTipFrame(const TSharedPtr<FVisualElement>& Content);
+
+    /**
+     * @brief Wraps a primary view in the thin rounded inner frame used inside docked panels.
+     *
+     * @param Content The view to frame.
+     * @return The frame, ready to slot under a toolbar.
+     */
+    NODISCARD static TSharedPtr<FVisualElement> MakeInnerFrame(const TSharedPtr<FVisualElement>& Content);
 
     /** @return The frame every editor search field draws, rounded far enough to read as a pill. */
     NODISCARD static FInputFrameStyle GetInputFrameStyle();
@@ -118,6 +126,16 @@ struct ENGINE_API FEditorStyle
      * @return The description, ready to hand to FSearchBox::Create.
      */
     NODISCARD static FSearchBox::FDesc MakeSearchBoxDesc(const String& Hint, const FOnSearchTextChanged& OnChanged);
+
+    /**
+     * @brief The space a collapsible section reserves above and below itself.
+     *
+     * Every section carries its own fill and outline, so a stack of them needs this gap to keep one
+     * header off the next and off the edge of the view holding them.
+     *
+     * @return The padding, ready to hand to FBoxSlot::SetPadding.
+     */
+    NODISCARD static FMargin GetSectionSpacing();
 
     /**
      * @brief Builds the description a collapsible editor section is created from. The arrow brushes come

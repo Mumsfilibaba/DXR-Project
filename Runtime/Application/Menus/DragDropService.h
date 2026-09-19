@@ -8,6 +8,14 @@
 
 class FWindow;
 
+enum class EDragDropPreviewState : uint8
+{
+    Neutral,
+    Allowed,
+    Partial,
+    Forbidden,
+};
+
 struct FDragDropPayload
 {
     /** @return True when the payload names a type, which every drag in flight does. */
@@ -22,8 +30,26 @@ struct FDragDropPayload
     /** @brief The text drawn under the cursor while the drag is in flight. */
     String DisplayText;
 
+    /** @brief The status line drawn under DisplayText, such as "Cannot move X to Y". */
+    String StatusText;
+
+    /** @brief Whether the current target would take the drop. */
+    EDragDropPreviewState PreviewState = EDragDropPreviewState::Neutral;
+
     /** @brief The icon drawn beside the display text, which is unset for a payload without one. */
     FUIBrush Icon;
+
+    /** @brief The icon drawn beside an allowed or partially allowed drop status. */
+    FUIBrush AllowedStatusIcon;
+
+    /** @brief The icon drawn beside a forbidden drop status. */
+    FUIBrush ForbiddenStatusIcon;
+
+    /** @brief The requested side of Icon, where zero uses DragVisualIconSize. */
+    int32 IconSize = 0;
+
+    /** @brief How many items the icon represents, with values above one drawn as a badge. */
+    int32 SelectionCount = 1;
 
     /** @brief What the payload stands for, which the source and the target agree on through the type id. */
     void* UserData = nullptr;
@@ -96,6 +122,14 @@ public:
 
     /** @brief Ends the drag without dropping anything, which is what Escape does. */
     void CancelDrag();
+
+    /**
+     * @brief Updates the ghost's status line and whether the current target is legal.
+     *
+     * @param InState      Allowed, partial, forbidden, or none.
+     * @param InStatusText The line under the payload name.
+     */
+    void SetPreview(EDragDropPreviewState InState, const String& InStatusText);
 
     /** @return True while a drag is in flight. */
     NODISCARD FORCEINLINE bool IsDragging() const

@@ -2,6 +2,7 @@
 #include "Application/Application.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Input/Keys.h"
+#include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
 #include "Core/Platform/PlatformSystemClipboard.h"
 #include "Core/Platform/PlatformTime.h"
@@ -115,13 +116,16 @@ int32 FEditableText::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandL
         const int32 StartOffset = Font->MeasureWidth(StringView(Text.Data(), GetSelectionStart()));
         const int32 EndOffset   = Font->MeasureWidth(StringView(Text.Data(), GetSelectionEnd()));
 
+        const FUIStyleMetrics& Metrics = FUIStyle::GetDefault().Metrics;
+
         FRectangle SelectionBounds;
         SelectionBounds.Position.X = TextBounds.Position.X + StartOffset;
         SelectionBounds.Position.Y = GetTextBandTop(TextBounds);
         SelectionBounds.Width      = EndOffset - StartOffset;
         SelectionBounds.Height     = GetTextBandHeight();
 
-        OutCommandList.AddBox(LayerId, SelectionBounds, SelectionColor);
+        OutCommandList.AddBox(LayerId, SelectionBounds.Inflate(Metrics.TextHighlightPadding), SelectionColor,
+            FCornerRadii(Metrics.TextHighlightCornerRadius));
     }
 
     if (Text.IsEmpty())

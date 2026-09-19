@@ -110,7 +110,7 @@ void FTrueTypeFontFace::ShapeRun(const StringView& Text, FShapedRun& OutRun) con
 
     for (int32 Index = 0; Index < Text.Length(); ++Index)
     {
-        Atlas.GetGlyph(ToCodepoint(Text[Index]));
+        static_cast<void>(Atlas.GetGlyph(ToCodepoint(Text[Index])));
     }
 
     OutRun.Glyphs.Reserve(Text.Length());

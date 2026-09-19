@@ -121,6 +121,8 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("OverlayControl", OverlayControl_Test());
     RUN_TEST("SpacerSeparatorControl", SpacerSeparatorControl_Test());
     RUN_TEST("ExpanderControl", ExpanderControl_Test());
+    RUN_TEST("ExpanderAnimation", ExpanderAnimation_Test());
+    RUN_TEST("IndexedPathMove", IndexedPathMove_Test());
     RUN_TEST("SearchBoxControl", SearchBoxControl_Test());
     RUN_TEST("SearchBoxClearStyle", SearchBoxClearStyle_Test());
     RUN_TEST("NumericEntryControl", NumericEntryControl_Test());
@@ -138,6 +140,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("TileViewDrag", TileViewDrag_Test());
 
     RUN_TEST("PropertyTableRows", PropertyTableRows_Test());
+    RUN_TEST("PropertyTableRowContext", PropertyTableRowContext_Test());
     RUN_TEST("PropertyTableColumnDrag", PropertyTableColumnDrag_Test());
     RUN_TEST("PropertyTableRevertCursor", PropertyTableRevertCursor_Test());
     RUN_TEST("PropertyTableFixedColumn", PropertyTableFixedColumn_Test());
@@ -152,6 +155,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("MenuItemActivation", MenuItemActivation_Test());
     RUN_TEST("MenuKeyboard", MenuKeyboard_Test());
     RUN_TEST("MenuBarSwitching", MenuBarSwitching_Test());
+    RUN_TEST("MenuBlocksHoverBehindIt", MenuBlocksHoverBehindIt_Test());
     RUN_TEST("MenuBarHighlight", MenuBarHighlight_Test());
     RUN_TEST("MenuBarTallStrip", MenuBarTallStrip_Test());
     RUN_TEST("MenuBarInTitleBar", MenuBarInTitleBar_Test());
@@ -185,6 +189,9 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("DockDropPreview", DockDropPreview_Test());
     RUN_TEST("DockHostNativeDrag", DockHostNativeDrag_Test());
     RUN_TEST("DockLayoutFileMultiWindow", DockLayoutFileMultiWindow_Test());
+    RUN_TEST("DockHostAdaptiveChrome", DockHostAdaptiveChrome_Test());
+    RUN_TEST("DockHostCaptionTabDrop", DockHostCaptionTabDrop_Test());
+    RUN_TEST("DockTabDragIntoExistingHost", DockTabDragIntoExistingHost_Test());
 
     RUN_TEST("PanelChromeGeometry", PanelChromeGeometry_Test());
     RUN_TEST("PanelChromeGap", PanelChromeGap_Test());

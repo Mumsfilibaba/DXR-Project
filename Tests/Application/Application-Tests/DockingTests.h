@@ -62,3 +62,12 @@ bool DockHostNativeDrag_Test();
 
 /** @brief Round-trips a multi-window layout file, and reads a version 1 file as one window. */
 bool DockLayoutFileMultiWindow_Test();
+
+/** @brief An unsplit floating host lifts its tab strip into the caption; a split host keeps per-pane strips. */
+bool DockHostAdaptiveChrome_Test();
+
+/** @brief A strip lifted into a host caption still takes a drop, which is what gives a host a second tab. */
+bool DockHostCaptionTabDrop_Test();
+
+/** @brief Dragging a tab out of the main window and onto an existing floating host adds a tab to it. */
+bool DockTabDragIntoExistingHost_Test();

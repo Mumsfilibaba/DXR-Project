@@ -79,23 +79,47 @@ struct FUIStyleColors
 
 struct FUIHeaderStyle
 {
-    /** @brief The fill behind the header, which does not lift on hover. */
-    FFloatColor Fill = FFloatColor(47.0f / 255.0f, 47.0f / 255.0f, 47.0f / 255.0f, 1.0f);
+    /** @brief The fill of the whole nested panel, header and open body together. */
+    FFloatColor Fill = FFloatColor(0.12f, 0.12f, 0.14f, 1.0f);
 
     /** @brief The tint of the arrow that shows which way the section is folded. */
     FFloatColor ArrowTint = FFloatColor(101.0f / 255.0f, 101.0f / 255.0f, 101.0f / 255.0f, 1.0f);
 
-    /** @brief The rule below a closed header, which is what separates one closed section from the next. */
-    FFloatColor BottomBorder = FFloatColor(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f);
+    /** @brief The one thin stroke around the nested panel. */
+    FFloatColor Border = FFloatColor(0.19f, 0.19f, 0.22f, 1.0f);
+
+    /** @brief Unused once the nested panel carries its own outline. Kept so older callers still compile. */
+    FFloatColor BottomBorder = FFloatColor(0.19f, 0.19f, 0.22f, 1.0f);
 
     /** @brief The space between the header's edges and its label. */
     FMargin FramePadding = FMargin(10, 8, 10, 8);
 
-    /** @brief How far the header's corners are rounded, in pixels. */
-    float CornerRadius = 2.0f;
+    /** @brief How far the nested panel's corners are rounded, in pixels. */
+    float CornerRadius = 8.0f;
 
-    /** @brief The width of the rule below a closed header, in pixels. */
-    float BorderThickness = 2.0f;
+    /** @brief How thick the nested panel's outline is, in pixels. */
+    float BorderThickness = 1.0f;
+
+    /** @brief How long an open or close takes, in seconds. Zero snaps. */
+    float ExpandDuration = 0.15f;
+};
+
+struct FUIInnerFrameStyle
+{
+    /** @brief The fill of a primary view framed inside a docked panel. */
+    FFloatColor Fill = FFloatColor(0.09f, 0.09f, 0.11f, 1.0f);
+
+    /** @brief The thin stroke around that view. */
+    FFloatColor Border = FFloatColor(0.19f, 0.19f, 0.22f, 1.0f);
+
+    /** @brief How far the inner frame's corners are rounded, in pixels. */
+    float CornerRadius = 6.0f;
+
+    /** @brief How thick that stroke is, in pixels. */
+    float BorderThickness = 1.0f;
+
+    /** @brief The gutter between the stroke and the view. */
+    FMargin Padding = FMargin(6);
 };
 
 struct FUIPropertyTableStyle
@@ -239,6 +263,9 @@ struct FUITreeRowStyle
 
     /** @brief The tint of the disclosure arrow on a row that has children. */
     FFloatColor ArrowTint = FFloatColor(101.0f / 255.0f, 101.0f / 255.0f, 101.0f / 255.0f, 1.0f);
+
+    /** @brief The radius used by hover and selection highlights. */
+    float CornerRadius = 4.0f;
 
     /** @brief The fill behind the column captions, matching the shared header fill. */
     FFloatColor HeaderFill = FFloatColor(47.0f / 255.0f, 47.0f / 255.0f, 47.0f / 255.0f, 1.0f);
@@ -455,6 +482,17 @@ struct FUIStyleMetrics
     /** @brief The width of a stroke around a control, in pixels. */
     float BorderThickness = 1.0f;
 
+    /** @brief How far a fill drawn behind a run of text, a search match or a selection, is rounded, in pixels. */
+    float TextHighlightCornerRadius = 3.0f;
+
+    /**
+     * @brief The gutter that fill is grown past the run it sits behind, in pixels. The rounding takes its
+     * bite out of this gutter rather than out of the glyphs, which is why it is held above zero. It stays
+     * narrow because a highlight sits flush against the text either side of it: a wider gutter would draw
+     * the fill under the neighbouring glyphs, and a taller one would push it past the row that carries it.
+     */
+    FMargin TextHighlightPadding = FMargin(2, 1);
+
     /** @brief How tall one row in a tree, a list or a table is, in pixels. */
     int32 RowHeight = 24;
 
@@ -489,6 +527,14 @@ struct FUIStyleMetrics
     int32 TitleBarLeadingInset = 8;
 };
 
+/**
+ * @brief The shipped hybrid theme.
+ *
+ * Shell and footer share WindowBackground. Docked leaves use Panel (8px radius, 1px outline, 6px gap).
+ * Primary views use InnerFrame. Nested expanders use Header, including ExpandDuration. Tabs, popups,
+ * and controls keep their own tokens; hover, focus, selected, disabled, and splitter states live on
+ * Colors, Tab, Menu, and Metrics.SplitterHintThickness.
+ */
 struct APPLICATION_API FUIStyle
 {
     /**
@@ -543,7 +589,10 @@ struct APPLICATION_API FUIStyle
     /** @brief The look of the card a docked panel is drawn as. */
     FUIPanelChromeStyle Panel;
 
-    /** @brief The look of a collapsible section's header bar. */
+    /** @brief The look of a primary view framed inside a docked panel. */
+    FUIInnerFrameStyle InnerFrame;
+
+    /** @brief The look of a collapsible nested panel. */
     FUIHeaderStyle Header;
 
     /** @brief The look of a table of labels and their editors. */

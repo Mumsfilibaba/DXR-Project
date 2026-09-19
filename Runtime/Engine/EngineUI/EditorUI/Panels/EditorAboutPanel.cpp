@@ -1,15 +1,50 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorAboutPanel.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
+#include "Application/Elements/Border.h"
+#include "Application/Elements/Box.h"
+#include "Application/Elements/Expander.h"
 #include "Application/Elements/PropertyTable.h"
 #include "Application/Elements/ScrollBox.h"
 #include "Application/Elements/TextBlock.h"
 #include "Core/Misc/BuildInfo.h"
+#include "Core/Platform/PlatformSystemClipboard.h"
 #include "RHI/RHI.h"
 #include "RHI/RHIDevice.h"
 
+constexpr int32 ABOUT_LABEL_COLUMN_WIDTH = 128;
+constexpr int32 ABOUT_HEADER_PADDING     = 16;
+
+static TSharedPtr<FVisualElement> BuildAboutHeader()
+{
+    FTextBlock::FDesc NameDesc;
+    NameDesc.Text = BuildInfo::GetEngineName();
+    NameDesc.Font = FEditorStyle::GetFonts().BodyBold;
+
+    FTextBlock::FDesc VersionDesc;
+    VersionDesc.Text            = String::Printf("Version %s  |  %s", BuildInfo::GetVersionString(), BuildInfo::GetConfigurationName());
+    VersionDesc.Font            = FEditorStyle::GetFonts().Body;
+    VersionDesc.ColorAndOpacity = FUIStyle::GetDefault().Colors.TextDisabled;
+
+    TSharedPtr<FVerticalBox> Text = FVerticalBox::Create();
+    Text->AddSlot(FTextBlock::Create(NameDesc));
+    Text->AddSlot(FTextBlock::Create(VersionDesc)).SetPadding(FMargin(0, FEditorStyle::ItemSpacing, 0, 0));
+
+    const FUIHeaderStyle& HeaderStyle = FUIStyle::GetDefault().Header;
+
+    FBorder::FDesc HeaderDesc;
+    HeaderDesc.BackgroundColor = HeaderStyle.Fill;
+    HeaderDesc.BorderColor     = HeaderStyle.Border;
+    HeaderDesc.BorderThickness = HeaderStyle.BorderThickness;
+    HeaderDesc.CornerRadius    = FCornerRadii(HeaderStyle.CornerRadius);
+    HeaderDesc.Padding         = FMargin(ABOUT_HEADER_PADDING);
+    HeaderDesc.Content         = Text;
+
+    return FBorder::Create(HeaderDesc);
+}
+
 FEditorAboutPanel::FEditorAboutPanel(FEditorEngine* InEditorEngine)
     : FEditorPanel(InEditorEngine, "About", "About")
-    , Table(nullptr)
+    , Tables()
 {
 }
 
@@ -19,13 +54,13 @@ FEditorAboutPanel::~FEditorAboutPanel()
 
 bool FEditorAboutPanel::Initialize()
 {
-    Table = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
-    if (!Table)
+    TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
+    if (!Column)
     {
         return false;
     }
 
-    BuildRows();
+    BuildSections(Column);
 
     TSharedPtr<FScrollBox> ScrollBox = FScrollBox::Create();
     if (!ScrollBox)
@@ -33,52 +68,79 @@ bool FEditorAboutPanel::Initialize()
         return false;
     }
 
-    ScrollBox->SetContent(Table);
+    ScrollBox->SetContent(Column);
 
-    Content = ScrollBox;
+    TSharedPtr<FVerticalBox> Layout = FVerticalBox::Create();
+    Layout->AddSlot(BuildAboutHeader()).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
+    Layout->AddSlot(FEditorStyle::MakeInnerFrame(ScrollBox)).SetFillCoefficient(1.0f);
+
+    Content = Layout;
     return true;
 }
 
-void FEditorAboutPanel::BuildRows()
+TSharedPtr<FPropertyTable> FEditorAboutPanel::AddSection(const TSharedPtr<FVerticalBox>& Column, const String& SectionName)
 {
-    Table->AddRow("Engine", CreateValueText(String::Printf("%s %s", BuildInfo::GetEngineName(), BuildInfo::GetVersionString())));
+    FPropertyTable::FDesc TableDesc = FEditorStyle::MakeDataTableDesc();
+    TableDesc.LabelColumnWidth      = ABOUT_LABEL_COLUMN_WIDTH;
+    TableDesc.EditorColumnInset     = TableDesc.Style.CellPadding.Left;
 
-    Table->AddHeaderRow("Source");
-
-    Table->AddRow("Branch", CreateValueText(BuildInfo::GetBranch())).IndentLevel = 1;
-
-    const String Commit = BuildInfo::IsWorkingTreeDirty()
-        ? String::Printf("%s (dirty)", BuildInfo::GetCommit())
-        : String(BuildInfo::GetCommit());
-
-    Table->AddRow("Commit", CreateValueText(Commit)).IndentLevel = 1;
-    Table->AddRow("Commit Date", CreateValueText(BuildInfo::GetCommitDate())).IndentLevel = 1;
-
-    Table->AddHeaderRow("Build");
-
-    Table->AddRow("Configuration", CreateValueText(String::Printf("%s (%s)", BuildInfo::GetConfigurationName(), BuildInfo::GetLinkageName()))).IndentLevel = 1;
-    Table->AddRow("Platform", CreateValueText(String::Printf("%s %s", BuildInfo::GetPlatformName(), BuildInfo::GetArchitectureName()))).IndentLevel = 1;
-    Table->AddRow("Compiler", CreateValueText(BuildInfo::GetCompilerName())).IndentLevel = 1;
-    Table->AddRow("Compiled", CreateValueText(BuildInfo::GetCompileTimestamp())).IndentLevel = 1;
-
-    Table->AddHeaderRow("Graphics");
-
-    if (RHI::Device)
+    TSharedPtr<FPropertyTable> SectionTable = FPropertyTable::Create(TableDesc);
+    if (!SectionTable)
     {
-        const String AdapterName = RHI::Device->GetAdapterName();
-
-        Table->AddRow("Backend", CreateValueText(ToString(RHI::Device->GetRHIType()))).IndentLevel = 1;
-        Table->AddRow("Adapter", CreateValueText(AdapterName.IsEmpty() ? String("Unknown") : AdapterName)).IndentLevel = 1;
+        return nullptr;
     }
-    else
+
+    SectionTable->SetOnRowContext(FOnPropertyRowContext::CreateLambda([this, SectionTable](int32 RowIndex)
     {
-        Table->AddRow("Backend", CreateValueText("None")).IndentLevel = 1;
+        CopyRow(SectionTable, RowIndex);
+    }));
+
+    Column->AddSlot(FExpander::Create(FEditorStyle::MakeExpanderDesc(SectionName, SectionTable, true))).SetPadding(FEditorStyle::GetSectionSpacing());
+    Tables.Emplace(SectionTable);
+
+    return SectionTable;
+}
+
+void FEditorAboutPanel::BuildSections(const TSharedPtr<FVerticalBox>& Column)
+{
+    if (TSharedPtr<FPropertyTable> Source = AddSection(Column, "Source"))
+    {
+        const String Commit = BuildInfo::IsWorkingTreeDirty()
+            ? String::Printf("%s (dirty)", BuildInfo::GetCommit())
+            : String(BuildInfo::GetCommit());
+
+        Source->AddRow("Branch", CreateValueText(BuildInfo::GetBranch()));
+        Source->AddRow("Commit", CreateValueText(Commit));
+        Source->AddRow("Commit Date", CreateValueText(BuildInfo::GetCommitDate()));
+    }
+
+    if (TSharedPtr<FPropertyTable> Build = AddSection(Column, "Build"))
+    {
+        Build->AddRow("Configuration", CreateValueText(String::Printf("%s (%s)", BuildInfo::GetConfigurationName(), BuildInfo::GetLinkageName())));
+        Build->AddRow("Platform", CreateValueText(String::Printf("%s %s", BuildInfo::GetPlatformName(), BuildInfo::GetArchitectureName())));
+        Build->AddRow("Compiler", CreateValueText(BuildInfo::GetCompilerName()));
+        Build->AddRow("Compiled", CreateValueText(BuildInfo::GetCompileTimestamp()));
+    }
+
+    if (TSharedPtr<FPropertyTable> Graphics = AddSection(Column, "Graphics"))
+    {
+        if (RHI::Device)
+        {
+            const String AdapterName = RHI::Device->GetAdapterName();
+
+            Graphics->AddRow("Backend", CreateValueText(ToString(RHI::Device->GetRHIType())));
+            Graphics->AddRow("Adapter", CreateValueText(AdapterName.IsEmpty() ? String("Unknown") : AdapterName));
+        }
+        else
+        {
+            Graphics->AddRow("Backend", CreateValueText("None"));
+        }
     }
 }
 
 void FEditorAboutPanel::Release()
 {
-    Table.Reset();
+    Tables.Clear();
 
     FEditorPanel::Release();
 }
@@ -90,8 +152,27 @@ void FEditorAboutPanel::Tick(float /*DeltaTime*/)
 TSharedPtr<FVisualElement> FEditorAboutPanel::CreateValueText(const String& Text)
 {
     FTextBlock::FDesc Desc;
-    Desc.Text = Text;
-    Desc.Font = FEditorStyle::GetFonts().Body;
+    Desc.Text     = Text;
+    Desc.Font     = FEditorStyle::GetFonts().Monospace;
+    Desc.Overflow = ETextOverflow::Elide;
 
     return FTextBlock::Create(Desc);
+}
+
+void FEditorAboutPanel::CopyRow(const TSharedPtr<FPropertyTable>& FromTable, int32 RowIndex)
+{
+    if (!FromTable || RowIndex < 0 || RowIndex >= FromTable->GetNumRows())
+    {
+        return;
+    }
+
+    const FPropertyRow& Row = FromTable->GetRow(RowIndex);
+
+    String Value;
+    if (const TSharedPtr<FTextBlock> ValueText = StaticCastSharedPtr<FTextBlock>(Row.Editor))
+    {
+        Value = ValueText->GetText();
+    }
+
+    FPlatformSystemClipboard::SetText(String::Printf("%s: %s", *Row.Label, *Value));
 }

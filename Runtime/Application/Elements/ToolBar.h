@@ -334,7 +334,7 @@ public:
         /** @brief The gap between one entry and the next, in pixels. */
         int32 ItemSpacing;
 
-        /** @brief True to fill the strip with the panel color, which a bar over a panel turns off. */
+        /** @brief True to fill the strip with the docked panel's surface, so it reads flush with the tab strip above it. */
         bool bHasBackground : 1;
     };
 

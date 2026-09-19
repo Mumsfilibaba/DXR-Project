@@ -1,6 +1,7 @@
 #include "Application/Application.h"
 #include "Application/Docking/DockDragState.h"
 #include "Application/Docking/DockWindowManager.h"
+#include "Application/Docking/TabStrip.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/Image.h"
 #include "Application/Elements/TitleBar.h"
@@ -93,6 +94,8 @@ void FDockWindowManager::Tick()
 
             Window->SetTitle(Title);
         }
+
+        SyncHostChrome(Hosts[Index]);
     }
 }
 
@@ -156,6 +159,7 @@ TSharedPtr<FDockingArea> FDockWindowManager::SpawnHost(const String& PanelId, co
     Host.TitleBar = TitleBar;
 
     Hosts.Add(Host);
+    SyncHostChrome(Hosts.Last());
 
     FWindow* const WindowPtr = Window.Get();
     Window->SetOnWindowClosed(FOnWindowClosed::CreateLambda([this, WindowPtr]()
@@ -684,6 +688,22 @@ void FDockWindowManager::CloseHost(int32 HostIndex)
             FApplication::Get().DestroyWindow(Host.Window);
         }
     }
+}
+
+void FDockWindowManager::SyncHostChrome(FHost& Host)
+{
+    if (!Host.Area || !Host.TitleBar)
+    {
+        return;
+    }
+
+    Host.Area->FlushPendingRebuild();
+
+    const bool bUnsplit = Host.Area->SaveLayout().Kind == EDockNodeKind::Tabs;
+    Host.Area->SetSuppressRootTabStrip(bUnsplit);
+    Host.Area->FlushPendingRebuild();
+
+    Host.TitleBar->SetLeadingContent(bUnsplit ? StaticCastSharedPtr<FVisualElement>(Host.Area->GetRootTabStrip()) : nullptr);
 }
 
 void FDockWindowManager::ReturnPanelRegistrationsToMainArea(const TSharedPtr<FDockingArea>& Area)

@@ -44,6 +44,17 @@ namespace RHIValidationInternal
         LOG_WARNING("[RHI VALIDATION WARNING] " __VA_ARGS__); \
     } while (false)
 
+#define RHI_VALIDATION_WARNING_ONCE(...) \
+    do \
+    { \
+        static bool bHasWarned = false; \
+        if (!bHasWarned) \
+        { \
+            bHasWarned = true; \
+            LOG_WARNING("[RHI VALIDATION WARNING] " __VA_ARGS__); \
+        } \
+    } while (false)
+
 namespace RHIValidationInternal
 {
     template<typename ParameterType>

@@ -123,6 +123,35 @@ bool PropertyTableRows_Test()
     TEST_END();
 }
 
+bool PropertyTableRowContext_Test()
+{
+    TEST_BEGIN();
+
+    FPropertyTable::FDesc Desc;
+    Desc.Font      = CreateFont();
+    Desc.RowHeight = 20;
+
+    TArray<int32> ContextRows;
+
+    TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(Desc);
+    Table->AddRow("Location", nullptr);
+    Table->AddRow("Rotation", nullptr);
+    Table->SetOnRowContext(FOnPropertyRowContext::CreateLambda([&ContextRows](int32 RowIndex) { ContextRows.Add(RowIndex); }));
+
+    LayoutElement(Table, FRectangle(IntVector2(0, 0), 200, 40));
+
+    TEST_SECTION("A right click on a row fires the context handler with that row");
+    TEST_EXPECT(Table->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(20, 10), Keys::MouseButtonRight)).IsEventHandled());
+    TEST_EXPECT_EQ(ContextRows.Size(), 1);
+    TEST_EXPECT_EQ(ContextRows[0], 0);
+
+    TEST_SECTION("A right click below the rows is ignored");
+    TEST_EXPECT(!Table->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(20, 80), Keys::MouseButtonRight)).IsEventHandled());
+    TEST_EXPECT_EQ(ContextRows.Size(), 1);
+
+    TEST_END();
+}
+
 bool PropertyTableColumnDrag_Test()
 {
     TEST_BEGIN();

@@ -106,6 +106,17 @@ void FDragDropService::CancelDrag()
     }
 }
 
+void FDragDropService::SetPreview(EDragDropPreviewState InState, const String& InStatusText)
+{
+    if (!IsDragging())
+    {
+        return;
+    }
+
+    Payload.PreviewState = InState;
+    Payload.StatusText   = InStatusText;
+}
+
 void FDragDropService::OnWindowPainting(const TSharedPtr<FWindow>& Window)
 {
     if (!IsDragging() || !Window || Window != FApplication::Get().FindWindowUnderCursor())
@@ -174,38 +185,103 @@ void FDragDropService::DrawDragVisual(FDrawCommandList& OutCommandList, int32 La
     const FUIStyle&  Style = FUIStyle::GetDefault();
     const IFontFace* Font  = Style.NormalFont;
 
-    const bool  bHasIcon   = Payload.Icon.IsValid();
-    const int32 IconExtent = bHasIcon ? DragVisualIconSize + DragVisualPadding : 0;
-    const int32 TextWidth  = Font ? Font->MeasureWidth(StringView(Payload.DisplayText.Data(), Payload.DisplayText.Length())) : 0;
-    const int32 TextHeight = Font ? Font->GetLineHeight() : DragVisualIconSize;
+    const bool  bHasIcon        = Payload.Icon.IsValid();
+    const int32 SourceIconSize  = bHasIcon ? Math::Max(Payload.IconSize, DragVisualIconSize) : 0;
+    const int32 IconExtent      = bHasIcon ? SourceIconSize + DragVisualPadding : 0;
+    const int32 TextWidth       = Font ? Font->MeasureWidth(StringView(Payload.DisplayText.Data(), Payload.DisplayText.Length())) : 0;
+    const int32 TextHeight      = Font ? Font->GetLineHeight() : DragVisualIconSize;
+
+    const int32 StatusWidth  = (Font && !Payload.StatusText.IsEmpty()) ? Font->MeasureWidth(StringView(Payload.StatusText.Data(), Payload.StatusText.Length())) : 0;
+    const int32 StatusHeight = (Font && !Payload.StatusText.IsEmpty()) ? Font->GetLineHeight() : 0;
+    const FUIBrush& StatusIcon = Payload.PreviewState == EDragDropPreviewState::Forbidden
+        ? Payload.ForbiddenStatusIcon
+        : Payload.AllowedStatusIcon;
+    const bool  bHasStatusIcon = StatusHeight > 0 && StatusIcon.IsValid();
+    const int32 StatusIconExtent = bHasStatusIcon ? StatusHeight + DragVisualPadding : 0;
 
     FRectangle Ghost;
-    Ghost.Width    = (DragVisualPadding * 2) + IconExtent + TextWidth;
-    Ghost.Height   = (DragVisualPadding * 2) + Math::Max(TextHeight, bHasIcon ? DragVisualIconSize : 0);
+    Ghost.Width    = (DragVisualPadding * 2) + IconExtent + Math::Max(TextWidth, StatusIconExtent + StatusWidth);
+    Ghost.Height   = (DragVisualPadding * 2) + Math::Max(TextHeight + StatusHeight, SourceIconSize);
     Ghost.Position = (ScreenPosition - ClientOrigin) + IntVector2(DragVisualCursorOffset, DragVisualCursorOffset);
 
     const FCornerRadii Radii(Style.Metrics.CornerRadius);
+    FFloatColor Outline = Style.Colors.Border;
+    if (Payload.PreviewState == EDragDropPreviewState::Allowed)
+    {
+        Outline = Style.Colors.Accent;
+    }
+    else if (Payload.PreviewState == EDragDropPreviewState::Forbidden)
+    {
+        Outline = Style.Colors.TextDisabled;
+    }
+    else if (Payload.PreviewState == EDragDropPreviewState::Partial)
+    {
+        Outline = Style.Colors.AccentHovered;
+    }
+
     OutCommandList.AddBox(LayerId, Ghost, Style.Colors.PanelBackground, Radii);
-    OutCommandList.AddBoxOutline(LayerId, Ghost, HasTarget() ? Style.Colors.Accent : Style.Colors.Border, Style.Metrics.BorderThickness, Radii);
+    OutCommandList.AddBoxOutline(LayerId, Ghost, Outline, Style.Metrics.BorderThickness, Radii);
 
     FRectangle Inner = Ghost.Deflate(FMargin(DragVisualPadding));
 
     if (bHasIcon)
     {
         FRectangle IconBounds = Inner;
-        IconBounds.Width      = DragVisualIconSize;
-        IconBounds.Height     = DragVisualIconSize;
-        IconBounds.Position.Y = Inner.Position.Y + ((Inner.Height - DragVisualIconSize) / 2);
+        IconBounds.Width      = SourceIconSize;
+        IconBounds.Height     = SourceIconSize;
+        IconBounds.Position.Y = Inner.Position.Y + ((Inner.Height - SourceIconSize) / 2);
 
         OutCommandList.AddImage(LayerId + 1, IconBounds, Payload.Icon, FFloatColor::White);
+
+        if (Payload.SelectionCount > 1 && Font)
+        {
+            const String CountText = String::Printf("+%d", Payload.SelectionCount - 1);
+            const int32  CountWidth = Font->MeasureWidth(StringView(CountText.Data(), CountText.Length()));
+
+            FRectangle BadgeBounds;
+            BadgeBounds.Width      = CountWidth + (DragVisualPadding * 2);
+            BadgeBounds.Height     = TextHeight + DragVisualPadding;
+            BadgeBounds.Position.X = IconBounds.Position.X;
+            BadgeBounds.Position.Y = IconBounds.GetBottom() - BadgeBounds.Height;
+
+            OutCommandList.AddBox(LayerId + 2, BadgeBounds, Style.Colors.PanelBackground, Radii);
+            OutCommandList.AddText(LayerId + 3, BadgeBounds.Deflate(FMargin(DragVisualPadding, 0)), CountText, Font, Style.Colors.Text);
+        }
 
         Inner.Position.X += IconExtent;
         Inner.Width       = Math::Max(Inner.Width - IconExtent, 0);
     }
 
+    const int32 TextBlockHeight = TextHeight + StatusHeight;
+    const int32 TextTop = Inner.Position.Y + Math::Max((Inner.Height - TextBlockHeight) / 2, 0);
+
     if (!Payload.DisplayText.IsEmpty())
     {
-        OutCommandList.AddText(LayerId + 1, Inner, Payload.DisplayText, Font, Style.Colors.Text);
+        FRectangle NameBounds = Inner;
+        NameBounds.Position.Y = TextTop;
+        NameBounds.Height     = TextHeight;
+        OutCommandList.AddText(LayerId + 1, NameBounds, Payload.DisplayText, Font, Style.Colors.Text);
+    }
+
+    if (!Payload.StatusText.IsEmpty())
+    {
+        FRectangle StatusBounds = Inner;
+        StatusBounds.Position.Y = TextTop + TextHeight;
+        StatusBounds.Height      = StatusHeight;
+
+        if (bHasStatusIcon)
+        {
+            FRectangle StatusIconBounds = StatusBounds;
+            StatusIconBounds.Width      = StatusHeight;
+            StatusIconBounds.Height     = StatusHeight;
+            OutCommandList.AddImage(LayerId + 1, StatusIconBounds, StatusIcon, Outline);
+
+            StatusBounds.Position.X += StatusIconExtent;
+            StatusBounds.Width       = Math::Max(StatusBounds.Width - StatusIconExtent, 0);
+        }
+
+        OutCommandList.AddText(LayerId + 1, StatusBounds, Payload.StatusText, Font,
+            Payload.PreviewState == EDragDropPreviewState::Forbidden ? Style.Colors.TextDisabled : Style.Colors.Text);
     }
 }
 

@@ -45,10 +45,10 @@ IntVector2 FScrollBar::ComputeDesiredSize() const
 
 int32 FScrollBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FRectangle Track = ComputeTrackBounds(AllottedGeometry.Bounds);
-
+    const FRectangle Bounds = AllottedGeometry.Bounds;
     const FCornerRadii TrackRadii(Style.CornerRadius);
-    OutCommandList.AddBox(LayerId, Track, ApplyOpacity(Style.Track), TrackRadii);
+
+    OutCommandList.AddBox(LayerId, Bounds, ApplyOpacity(Style.Track));
 
     if (!IsScrollable())
     {

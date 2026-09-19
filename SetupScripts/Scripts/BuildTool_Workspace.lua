@@ -139,6 +139,7 @@ local gDirectoryBuildPropsContent =
     <VcpkgEnabled>false</VcpkgEnabled>
     <VcpkgApplocalDeps>false</VcpkgApplocalDeps>
     <NMakeCleanCommandLine>rem Nothing to clean</NMakeCleanCommandLine>
+    <NMakeReBuildCommandLine>rem Nothing to rebuild</NMakeReBuildCommandLine>
   </PropertyGroup>
 </Project>
 ]]

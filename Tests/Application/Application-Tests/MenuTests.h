@@ -8,6 +8,7 @@ bool MenuMinimumWidth_Test();
 bool MenuItemActivation_Test();
 bool MenuKeyboard_Test();
 bool MenuBarSwitching_Test();
+bool MenuBlocksHoverBehindIt_Test();
 bool MenuBarHighlight_Test();
 bool MenuBarTallStrip_Test();
 bool MenuBarInTitleBar_Test();

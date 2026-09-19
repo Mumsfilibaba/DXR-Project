@@ -74,7 +74,7 @@ bool FEditorStatsPanel::Initialize()
 
     ScrollBox->SetContent(Column);
 
-    Content = ScrollBox;
+    Content = FEditorStyle::MakeInnerFrame(ScrollBox);
 
     RebuildSections();
     return true;
@@ -155,7 +155,7 @@ void FEditorStatsPanel::RebuildSections()
         GroupSection.Table     = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
         GroupSection.Section   = FExpander::Create(FEditorStyle::MakeExpanderDesc(GroupName, GroupSection.Table, true));
 
-        Column->AddSlot(GroupSection.Section);
+        Column->AddSlot(GroupSection.Section).SetPadding(FEditorStyle::GetSectionSpacing());
         Sections.Emplace(GroupSection);
     }
 

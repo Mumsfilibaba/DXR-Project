@@ -184,13 +184,15 @@ void FWindow::FindChildrenContainingPoint(const IntVector2& ClientPosition, FEle
         {
             OutParentElements.Add(CurrentVisibility, AsSharedPtr());
 
-            const bool bIsOverlayModal = Overlay && Overlay->IsVisible() && Overlay->CapturesAllInput();
-            if (Content && !bIsOverlayModal)
+            const bool bIsCoveredByMenu = MenuHost && MenuHost->IsVisible() && MenuHost->CoversPoint(ClientPosition);
+            const bool bIsOverlayModal  = Overlay && Overlay->IsVisible() && Overlay->CapturesAllInput();
+
+            if (Content && !bIsOverlayModal && !bIsCoveredByMenu)
             {
                 Content->FindChildrenContainingPoint(ClientPosition, OutParentElements);
             }
 
-            if (Overlay)
+            if (Overlay && !bIsCoveredByMenu)
             {
                 Overlay->FindChildrenContainingPoint(ClientPosition, OutParentElements);
             }

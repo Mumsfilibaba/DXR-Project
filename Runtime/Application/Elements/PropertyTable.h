@@ -6,9 +6,11 @@
 #include "Application/Elements/VisualElement.h"
 #include "Application/Style/UIStyle.h"
 #include "Application/Text/IFontFace.h"
+#include "Core/Delegates/Delegate.h"
 
 /** @brief Called once a tick for whether a row still holds its default, which is what shows and hides its revert arrow. */
 DECLARE_RETURN_DELEGATE(FOnPropertyModified, bool);
+DECLARE_DELEGATE(FOnPropertyRowContext, int32 /*RowIndex*/);
 
 struct FPropertyRow
 {
@@ -48,8 +50,14 @@ public:
         /** @brief The face the labels are measured and drawn with. */
         TSharedPtr<IFontFace> Font;
 
+        /** @brief The face heading rows use, which lets a section title carry more weight than the rows under it. Null falls back to Font. */
+        TSharedPtr<IFontFace> HeaderFont;
+
         /** @brief How tall every row is, in pixels. */
         int32 RowHeight = FUIStyle::GetDefault().Metrics.RowHeight;
+
+        /** @brief How tall heading rows are, in pixels, which lets a section title sit in a deeper band. Zero takes RowHeight instead. */
+        int32 HeaderRowHeight = 0;
 
         /** @brief The share of the width the label column takes, clamped when it is applied. */
         float LabelColumnFraction = 0.4f;
@@ -209,6 +217,16 @@ public:
      */
     NODISCARD int32 FindRowAtPoint(const IntVector2& ClientPosition) const;
 
+    /**
+     * @brief Sets what a right-click on a row does.
+     *
+     * @param InOnRowContext Fired with the row index.
+     */
+    void SetOnRowContext(const FOnPropertyRowContext& InOnRowContext)
+    {
+        OnRowContext = InOnRowContext;
+    }
+
 private:
     NODISCARD int32 GetDividerOffset(const FRectangle& Bounds) const;
     NODISCARD bool IsPointOnDivider(const IntVector2& ClientPosition) const;
@@ -222,12 +240,14 @@ private:
     NODISCARD bool IsRowModified(int32 Index) const;
     NODISCARD int32 FindRevertRowAtPoint(const IntVector2& ClientPosition) const;
     NODISCARD const String& GetElidedLabel(int32 Index) const;
+    NODISCARD IFontFace* GetRowFont(int32 Index) const;
 
     void UpdateHoveredRow(const IntVector2& ClientPosition);
     void ClearHoveredRow();
 
     TArray<FPropertyRow>  Rows;
     TSharedPtr<IFontFace> Font;
+    TSharedPtr<IFontFace> HeaderFont;
     FUIPropertyTableStyle Style;
     FUIBrush              RevertIcon;
     IntVector2            DragOrigin;
@@ -237,6 +257,7 @@ private:
     int32                 DragStartWidth;
     int32                 EditorColumnInset;
     int32                 RowHeight;
+    int32                 HeaderRowHeight;
     int32                 IndentPerLevel;
     int32                 HoveredRowIndex;
     int32                 HoveredRevertRow;
@@ -245,4 +266,5 @@ private:
     bool                  bAlternateRowColors;
     bool                  bIsDraggingDivider;
     bool                  bIsDividerHovered;
+    FOnPropertyRowContext OnRowContext;
 };

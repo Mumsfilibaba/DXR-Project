@@ -322,7 +322,7 @@ int32 FToolBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& 
 {
     if (bHasBackground)
     {
-        OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, FUIStyle::GetDefault().Colors.PanelBackground);
+        OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, FUIStyle::GetDefault().Panel.Fill);
     }
 
     return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);

@@ -93,7 +93,7 @@ bool FEditorOutputLogPanel::Initialize()
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
     Column->AddSlot(ToolBar).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
-    Column->AddSlot(LogArea).SetFillCoefficient(1.0f);
+    Column->AddSlot(FEditorStyle::MakeInnerFrame(LogArea)).SetFillCoefficient(1.0f);
 
     Content = Column;
     return true;

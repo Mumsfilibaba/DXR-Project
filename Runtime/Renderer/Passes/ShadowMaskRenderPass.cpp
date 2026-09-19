@@ -297,7 +297,7 @@ void FShadowMaskRenderPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder
             const Vector4 MaskClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             PassCommandList.ClearUnorderedAccessViewFloat(PassResources.Get(Context.DirectionalShadowMask)->GetUnorderedAccessView(), MaskClearColor);
 
-            const Vector4 DebugClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            PassCommandList.ClearUnorderedAccessViewFloat(PassResources.Get(Context.CascadeIndexBuffer)->GetUnorderedAccessView(), DebugClearColor);
+            const uint32 DebugClearValues[4] = { 0, 0, 0, 0 };
+            PassCommandList.ClearUnorderedAccessViewUint(PassResources.Get(Context.CascadeIndexBuffer)->GetUnorderedAccessView(), DebugClearValues);
         });
 }
