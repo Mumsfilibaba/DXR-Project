@@ -1,5 +1,6 @@
 #include "MSLShaderBindingTests.h"
 
+#include <Core/Memory/Memory.h>
 #include <Core/Misc/Paths.h>
 #include <RHI/MSLShaderBindings.h>
 #include <RHI/ShaderCompiler.h>
@@ -95,6 +96,14 @@ bool MSLShaderBinding_Test()
             const FMSLShaderBinding& Binding = Bindings[Index];
             TEST_EXPECT(Binding.SlotIndex < GetMSLMaxSlotCount(Binding.BindingType));
         }
+
+        TEST_SECTION("A compute shader blob carries a non-zero threadgroup size");
+        FMSLShaderHeader Header;
+        Memory::Memcpy(&Header, ByteCode.Data(), sizeof(FMSLShaderHeader));
+        TEST_EXPECT_EQ(Header.Version, FMSLShaderHeader::ExpectedVersion);
+        TEST_EXPECT(Header.ThreadGroupSizeX != 0);
+        TEST_EXPECT_EQ(Header.ThreadGroupSizeY, static_cast<uint16>(1));
+        TEST_EXPECT_EQ(Header.ThreadGroupSizeZ, static_cast<uint16>(1));
     }
 
     FShaderCompiler::Destroy();

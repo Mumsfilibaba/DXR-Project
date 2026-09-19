@@ -117,38 +117,83 @@ FMetalDeviceRHI::~FMetalDeviceRHI()
 
 bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
 {
-    RHI::bSupportsRayTracing                = false;
-    RHI::bSupportsInlineRayTracing          = false;
-    RHI::bSupportsGeometryShaders           = false;
-    RHI::bSupportsDepthBoundsTest           = false;
-    RHI::bSupportsTessellation              = false;
-    RHI::MaxPatchControlPoints              = 0;
-    RHI::bSupportsTimestampQueries          = GMetalSupportsTimestampQueries;
-    RHI::bSupportsPipelineStatisticsQueries = false;
-    RHI::bSupportsStreamOutput              = false;
-    RHI::MaxBufferSize                      = GMetalMaxBufferLength;
-    RHI::MaxStorageBufferSize               = GMetalMaxBufferLength;
-    RHI::MaxTexture2DSize                   = GMetalMaxTexture2DSize;
-    RHI::MaxTexture1DSize                   = GMetalMaxTexture2DSize;
-    RHI::MaxTexture3DWidth                  = GMetalMaxTexture2DSize;
-    RHI::MaxTexture3DHeight                 = GMetalMaxTexture2DSize;
-    RHI::MaxTexture3DDepth                  = Math::Min<uint32>(GMetalMaxTexture2DSize, 2048);
-    RHI::MaxCubeTextureSize                 = GMetalMaxTexture2DSize;
-    RHI::DefaultSwapChainFormat             = EFormat::B8G8R8A8_Unorm;
-    RHI::bSupportsTransparentSwapChain      = true;
+    RHI::bSupportsGeometryShaders                       = false;
+    RHI::bSupportsTessellation                          = false;
+    RHI::MaxPatchControlPoints                          = 0;
+    RHI::bSupportRenderTargetArrayIndexFromVertexShader = true;
+    RHI::MaxShaderModel                                 = EShaderModel::SM_6_6;
+    RHI::bSupportsBindless                              = false;
+
+    RHI::MaxViewInstanceCount    = Math::Max(GMetalMaxVertexAmplificationCount, 1u);
+    RHI::bSupportsViewInstancing = RHI::MaxViewInstanceCount > 1;
+
+    RHI::bSupportsRayTracing                                       = false;
+    RHI::RayTracingTier                                            = ERayTracingTier::NotSupported;
+    RHI::RayTracingMaxRecursionDepth                               = 0;
+    RHI::bSupportsInlineRayTracing                                 = false;
+    RHI::bSupportsOpacityMicromap                                  = false;
+    RHI::bSupportsShaderExecutionReordering                        = false;
+    RHI::bShaderExecutionReorderingActuallyReorders                = false;
+    RHI::bSupportsRayTracingPipelineAdditions                      = false;
+    RHI::bSupportsClustersAndPartitionedSceneAccelerationStructure = false;
+    RHI::bSupportsIndirectAccelerationStructureOperations          = false;
+    RHI::bSupportsDispatchRaysIndirect                             = false;
+    RHI::RayTracingMaxTrianglesPerCluster                          = 0;
+    RHI::RayTracingMaxVerticesPerCluster                           = 0;
+    RHI::RayTracingMaxPartitionedInstanceCount                     = 0;
+    RHI::bSupportsShaderBindingTableDescriptors                    = false;
+    RHI::bSupportsToolsVisualization                               = false;
+
+    RHI::bSupportsTransparentSwapChain = true;
+
+    RHI::bSupportsVRS             = false;
+    RHI::ShadingRateTier          = EShadingRateTier::NotSupported;
+    RHI::ShadingRateImageTileSize = 0;
+
+    RHI::bSupportsSamplerFeedback = false;
+    RHI::SamplerFeedbackTier      = ESamplerFeedbackTier::NotSupported;
+
+    RHI::bSupportsProgrammableSamplePositions = false;
+    RHI::SamplePositionsTier                  = ESamplePositionsTier::NotSupported;
+    RHI::MaxSamplePositionGridWidth           = 0;
+    RHI::MaxSamplePositionGridHeight          = 0;
+    RHI::SupportedSamplePositionSampleCounts  = 0;
 
     RHI::bSupportsDrawIndirect               = false;
     RHI::bSupportsDrawIndirectCount          = false;
     RHI::bSupportsDispatchIndirect           = false;
     RHI::bSupportsDispatchMeshIndirect       = false;
     RHI::bSupportsDispatchMeshIndirectCount  = false;
-    RHI::bSupportsDispatchRaysIndirect       = false;
     RHI::MaxDrawIndirectCommandCount         = 0;
     RHI::MaxDispatchMeshIndirectCommandCount = 0;
 
-    RHI::bSupportsSamplerFeedback            = false;
-    RHI::SamplerFeedbackTier                 = ESamplerFeedbackTier::NotSupported;
-    RHI::bSupportsBindless                   = false;
+    RHI::MaxTexture1DSize        = GMetalMaxTexture2DSize;
+    RHI::MaxTexture1DArrayLayers = GMetalMaxTextureArrayLayers;
+    RHI::MaxTexture2DSize        = GMetalMaxTexture2DSize;
+    RHI::MaxTexture2DArrayLayers = GMetalMaxTextureArrayLayers;
+    RHI::MaxTexture3DWidth       = GMetalMaxTexture2DSize;
+    RHI::MaxTexture3DHeight      = GMetalMaxTexture2DSize;
+    RHI::MaxTexture3DDepth       = Math::Min<uint32>(GMetalMaxTexture2DSize, 2048);
+    RHI::MaxCubeTextureSize      = GMetalMaxTexture2DSize;
+    RHI::MaxCubeArrayCount       = GMetalMaxTextureArrayLayers / RHI_NUM_CUBE_FACES;
+
+    RHI::MaxBufferSize                        = GMetalMaxBufferLength;
+    RHI::MaxConstantBufferSize                = 64 * 1024;
+    RHI::MaxStorageBufferSize                 = GMetalMaxBufferLength;
+    RHI::StructuredBufferMinStride            = 4;
+    RHI::StructuredBufferMaxStride            = 2048;
+    RHI::RawBufferRequiredAlignment           = 4;
+    RHI::AccelerationStructureBufferAlignment = 256;
+
+    RHI::bSupportsDynamicDepthBias = true;
+    RHI::bSupportsDepthBoundsTest  = false;
+    RHI::bSupportsStreamOutput     = false;
+
+    RHI::bSupportsTimestampQueries           = GMetalSupportsTimestampQueries;
+    RHI::bSupportsPipelineStatisticsQueries  = false;
+    RHI::bSupportsGPUTimestampBubblesRemoval = false;
+
+    RHI::DefaultSwapChainFormat = EFormat::B8G8R8A8_Unorm;
 
     return true;
 }
@@ -647,7 +692,6 @@ bool FMetalDeviceRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipeline
 void FMetalDeviceRHI::BeginFrame()
 {
     Device->BeginFrame();
-    Device->GetQueue()->ProcessCommandQueue();
 }
 
 void FMetalDeviceRHI::EndFrame()
@@ -734,19 +778,19 @@ void* FMetalDeviceRHI::GetRHINativeDevice()
 void* FMetalDeviceRHI::GetRHINativeDirectCommandQueue()
 {
     CHECK(Device != nullptr);
-    return reinterpret_cast<void*>(Device->GetQueue()->GetMTLCommandQueue());
+    return reinterpret_cast<void*>(Device->GetQueue(EMetalQueueType::Direct)->GetMTLCommandQueue());
 }
 
 void* FMetalDeviceRHI::GetRHINativeComputeCommandQueue()
 {
     CHECK(Device != nullptr);
-    return reinterpret_cast<void*>(Device->GetQueue()->GetMTLCommandQueue());
+    return reinterpret_cast<void*>(Device->GetQueue(EMetalQueueType::Compute)->GetMTLCommandQueue());
 }
 
 void* FMetalDeviceRHI::GetRHINativeCopyCommandQueue()
 {
     CHECK(Device != nullptr);
-    return reinterpret_cast<void*>(Device->GetQueue()->GetMTLCommandQueue());
+    return reinterpret_cast<void*>(Device->GetQueue(EMetalQueueType::Copy)->GetMTLCommandQueue());
 }
 
 String FMetalDeviceRHI::GetAdapterName() const

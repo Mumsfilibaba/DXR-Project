@@ -7,12 +7,12 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-typedef TSharedRef<class FMetalShader>                 FMetalShaderRef;
-typedef TSharedRef<class FMetalVertexShaderRHI>        FMetalVertexShaderRef;
-typedef TSharedRef<class FMetalPixelShaderRHI>         FMetalPixelShaderRef;
-typedef TSharedRef<class FMetalMeshShaderRHI>          FMetalMeshShaderRef;
-typedef TSharedRef<class FMetalAmplificationShaderRHI> FMetalAmplificationShaderRef;
-typedef TSharedRef<class FMetalComputeShaderRHI>       FMetalComputeShaderRef;
+typedef TSharedRef<class FMetalShader>                   FMetalShaderRef;
+typedef TSharedRef<class FMetalVertexShaderRHI>          FMetalVertexShaderRef;
+typedef TSharedRef<class FMetalPixelShaderRHI>           FMetalPixelShaderRef;
+typedef TSharedRef<class FMetalMeshShaderRHI>            FMetalMeshShaderRef;
+typedef TSharedRef<class FMetalAmplificationShaderRHI>   FMetalAmplificationShaderRef;
+typedef TSharedRef<class FMetalComputeShaderRHI>         FMetalComputeShaderRef;
 typedef TSharedRef<class FMetalRayTracingShader>         FMetalRayTracingShaderRef;
 typedef TSharedRef<class FMetalRayGenShaderRHI>          FMetalRayGenShaderRef;
 typedef TSharedRef<class FMetalRayAnyHitShaderRHI>       FMetalRayAnyHitShaderRef;
@@ -62,13 +62,19 @@ public:
         return Bindings;
     }
 
+    uint16 GetThreadGroupSizeX() const { return ThreadGroupSizeX; }
+    uint16 GetThreadGroupSizeY() const { return ThreadGroupSizeY; }
+    uint16 GetThreadGroupSizeZ() const { return ThreadGroupSizeZ; }
+
 protected:
     id<MTLLibrary>            Library;
     NSString*                 FunctionName;
     EShaderVisibility::Type   Visibility;
-    // TODO: Release the function after pipeline creation once every consumer retains it.
     id<MTLFunction>           Function;
     TArray<FMSLShaderBinding> Bindings;
+    uint16                    ThreadGroupSizeX;
+    uint16                    ThreadGroupSizeY;
+    uint16                    ThreadGroupSizeZ;
 };
 
 class FMetalVertexShaderRHI : public FRHIVertexShader, public FMetalShader

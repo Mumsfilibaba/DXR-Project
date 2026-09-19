@@ -203,6 +203,7 @@ uint64 FMetalQueue::SubmitCommands(FMetalCommands* Commands)
         if (Query)
         {
             Query->SubmissionValue = Value;
+            Query->SubmittedQueue  = this;
         }
     }
 
@@ -295,7 +296,7 @@ FMetalCommands::~FMetalCommands()
 
 void FMetalCommands::PostExecute()
 {
-    ResolveMetalQueries(PendingQueries);
+    FMetalQueryRHI::ResolveQueries(PendingQueries);
     FMetalDeferredObject::ProcessItems(DeferredObjects);
     DeferredObjects.Clear();
 
@@ -308,7 +309,7 @@ void FMetalCommands::PostExecute()
 
 FMetalUploadBatch::FMetalUploadBatch(FMetalDevice* InDevice)
     : Device(InDevice)
-    , Queue(InDevice ? InDevice->GetQueue() : nullptr)
+    , Queue(InDevice ? InDevice->GetQueue(EMetalQueueType::Copy) : nullptr)
     , Commands(nullptr)
     , BlitEncoder(nil)
 {

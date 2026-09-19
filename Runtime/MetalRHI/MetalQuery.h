@@ -4,21 +4,25 @@
 #include "RHI/RHIResources.h"
 
 class FMetalDevice;
+class FMetalQueue;
 
 static constexpr uint32 MetalInvalidQueryIndex = UINT32_MAX;
 static constexpr uint32 MetalQuerySlotCount    = 4096;
 
 struct FMetalQueryRHI : public FRHIQuery, public FMetalDeviceChild
 {
+    static void ResolveQueries(TArray<FMetalQueryRHI*>& Queries);
+
     FMetalQueryRHI(FMetalDevice* InDevice, EQueryType InQueryType);
     virtual ~FMetalQueryRHI();
 
     void Resolve();
 
-    uint64* QueryResult;
-    uint64  SubmissionValue;
-    uint32  SampleIndex;
-    bool    bResolved;
+    uint64*      QueryResult;
+    uint64       SubmissionValue;
+    FMetalQueue* SubmittedQueue;
+    uint32       SampleIndex;
+    bool         bResolved;
 };
 
 class FMetalTimestampQueries : public FMetalDeviceChild
@@ -104,5 +108,3 @@ private:
     TArray<uint8> Occupied;
     uint32        NextSlot;
 };
-
-void ResolveMetalQueries(TArray<FMetalQueryRHI*>& Queries);

@@ -176,8 +176,14 @@ private:
 
     void StartCopyEncoder();
     void FinishEncoders();
+    void FinishDirectEncoders();
+    void SubmitDirectWorkAndWait();
+    void FlushCopyWork();
     void EnsureTimestampEncoder();
     bool SampleTimestamp(FMetalQueryRHI& Query);
+    void AddPendingQuery(FMetalQueryRHI* Query);
+    void ApplyVertexAmplification();
+    void InsertDrawDispatchSignpost(NSString* Name);
 
     void WaitForPendingEncoderFenceOnGraphics();
     void WaitForPendingEncoderFenceOnCompute();
@@ -189,10 +195,14 @@ private:
 
     id<MTLCommandBuffer>         CommandBuffer;
     FMetalCommands*              Commands;
+    id<MTLCommandBuffer>         CopyCommandBuffer;
+    FMetalCommands*              CopyCommands;
     id<MTLRenderCommandEncoder>  GraphicsEncoder;
     id<MTLComputeCommandEncoder> ComputeEncoder;
     id<MTLFence>                 EncoderFence;
     bool                         bEncoderFencePending;
+    bool                         bDirectHasEncodedWork;
+    bool                         bBlitOnCopyQueue;
     FMetalCopyCommandContext     CopyContext;
     FMetalCommandContextState    ContextState;
     FMetalQueryRHI*              ActiveOcclusionQuery;

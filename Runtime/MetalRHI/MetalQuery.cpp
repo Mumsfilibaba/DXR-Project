@@ -4,51 +4,6 @@
 #include "MetalRHI/MetalStats.h"
 #include "Core/Memory/Memory.h"
 
-FMetalQueryRHI::FMetalQueryRHI(FMetalDevice* InDevice, EQueryType InQueryType)
-    : FRHIQuery(InQueryType)
-    , FMetalDeviceChild(InDevice)
-    , QueryResult(static_cast<uint64*>(Memory::Malloc(GetQueryResultElementCount(InQueryType) * sizeof(uint64))))
-    , SubmissionValue(0)
-    , SampleIndex(MetalInvalidQueryIndex)
-    , bResolved(false)
-{
-    Memory::Memzero(QueryResult, GetQueryResultElementCount(InQueryType) * sizeof(uint64));
-}
-
-FMetalQueryRHI::~FMetalQueryRHI()
-{
-    Memory::Free(QueryResult);
-    QueryResult = nullptr;
-}
-
-void FMetalQueryRHI::Resolve()
-{
-    if (bResolved)
-    {
-        return;
-    }
-
-    switch (GetType())
-    {
-        case EQueryType::Timestamp:
-        {
-            GetDevice()->GetTimestampQueries().Resolve(*this);
-            break;
-        }
-
-        case EQueryType::Occlusion:
-        {
-            GetDevice()->GetOcclusionQueries().Resolve(*this);
-            break;
-        }
-
-        default:
-        {
-            break;
-        }
-    }
-}
-
 static MTLResourceOptions GetQueryCpuBufferOptions(id<MTLDevice> DeviceHandle)
 {
     return DeviceHandle.hasUnifiedMemory
@@ -97,6 +52,65 @@ static uint32 AllocateRingSlot(TArray<uint8>& Occupied, uint32& NextSlot, FMetal
     return MetalInvalidQueryIndex;
 }
 
+void FMetalQueryRHI::ResolveQueries(TArray<FMetalQueryRHI*>& Queries)
+{
+    for (FMetalQueryRHI* Query : Queries)
+    {
+        if (Query)
+        {
+            Query->Resolve();
+        }
+    }
+
+    Queries.Clear();
+}
+
+FMetalQueryRHI::FMetalQueryRHI(FMetalDevice* InDevice, EQueryType InQueryType)
+    : FRHIQuery(InQueryType)
+    , FMetalDeviceChild(InDevice)
+    , QueryResult(static_cast<uint64*>(Memory::Malloc(GetQueryResultElementCount(InQueryType) * sizeof(uint64))))
+    , SubmissionValue(0)
+    , SubmittedQueue(nullptr)
+    , SampleIndex(MetalInvalidQueryIndex)
+    , bResolved(false)
+{
+    Memory::Memzero(QueryResult, GetQueryResultElementCount(InQueryType) * sizeof(uint64));
+}
+
+FMetalQueryRHI::~FMetalQueryRHI()
+{
+    Memory::Free(QueryResult);
+    QueryResult = nullptr;
+}
+
+void FMetalQueryRHI::Resolve()
+{
+    if (bResolved)
+    {
+        return;
+    }
+
+    switch (GetType())
+    {
+        case EQueryType::Timestamp:
+        {
+            GetDevice()->GetTimestampQueries().Resolve(*this);
+            break;
+        }
+
+        case EQueryType::Occlusion:
+        {
+            GetDevice()->GetOcclusionQueries().Resolve(*this);
+            break;
+        }
+
+        default:
+        {
+            break;
+        }
+    }
+}
+
 FMetalTimestampQueries::FMetalTimestampQueries(FMetalDevice* InDevice)
     : FMetalDeviceChild(InDevice)
     , SampleBuffer(nil)
@@ -124,8 +138,9 @@ bool FMetalTimestampQueries::Initialize()
 
     SCOPED_AUTORELEASE_POOL();
 
-    id<MTLDevice> DeviceHandle = GetDevice()->GetMTLDevice();
+    id<MTLDevice>     DeviceHandle = GetDevice()->GetMTLDevice();
     id<MTLCounterSet> TimestampSet = nil;
+
     for (id<MTLCounterSet> CounterSet in DeviceHandle.counterSets)
     {
         if ([CounterSet.name isEqualToString:MTLCommonCounterSetTimestamp])
@@ -173,6 +188,7 @@ bool FMetalTimestampQueries::Initialize()
 
     Memory::Memzero(ResolveBuffer.contents, ResolveBytes);
     NotifyCpuWroteBuffer(ResolveBuffer, 0, NSUInteger(ResolveBytes));
+
     Occupied.Resize(static_cast<int32>(MetalQuerySlotCount));
     Memory::Memzero(Occupied.Data(), Occupied.Size());
     NextSlot = 0;
@@ -201,6 +217,7 @@ bool FMetalTimestampQueries::Initialize()
         DummyDesc.usage       = MTLTextureUsageRenderTarget;
         DummyDesc.storageMode = MTLStorageModePrivate;
         DummyRenderTarget     = [DeviceHandle newTextureWithDescriptor:DummyDesc];
+
         if (!DummyRenderTarget)
         {
             METAL_ERROR("Failed to create a dummy render target for timestamp sampling");
@@ -222,8 +239,15 @@ bool FMetalTimestampQueries::Initialize()
 
     if (bCanSampleCompute)
     {
-        NSError* PipelineError = nil;
-        NSString* Source = @"#include <metal_stdlib>\nusing namespace metal;\nkernel void MetalTimestampDummy(device uint* Out [[buffer(0)]], uint Index [[thread_position_in_grid]]) { Out[0] = Index; }\n";
+        NSError*  PipelineError = nil;
+        NSString* Source        =
+            @"#include <metal_stdlib>\n"
+            @"using namespace metal;\n"
+            @"kernel void MetalTimestampDummy(device uint* Out [[buffer(0)]], uint Index [[thread_position_in_grid]])\n"
+            @"{\n"
+            @"    Out[0] = Index;\n"
+            @"}\n";
+
         id<MTLLibrary> Library = [DeviceHandle newLibraryWithSource:Source options:nil error:&PipelineError];
         if (!Library)
         {
@@ -235,6 +259,7 @@ bool FMetalTimestampQueries::Initialize()
 
         id<MTLFunction> Function = [Library newFunctionWithName:@"MetalTimestampDummy"];
         [Library release];
+
         if (!Function)
         {
             METAL_ERROR("Failed to find the dummy timestamp compute function");
@@ -244,6 +269,7 @@ bool FMetalTimestampQueries::Initialize()
 
         DummyComputePipeline = [DeviceHandle newComputePipelineStateWithFunction:Function error:&PipelineError];
         [Function release];
+
         if (!DummyComputePipeline)
         {
             const String ErrorString(PipelineError ? [PipelineError localizedDescription] : @"unknown error");
@@ -279,6 +305,7 @@ void FMetalTimestampQueries::Release()
     DummyComputePipeline = nil;
 
     Occupied.Clear();
+
     NextSlot           = 0;
     bCanSampleGraphics = false;
     bCanSampleCompute  = false;
@@ -516,13 +543,15 @@ bool FMetalOcclusionQueries::Allocate(FMetalQueryRHI& Query)
     }
 
     uint64* Slots = static_cast<uint64*>(VisibilityBuffer.contents);
-    Slots[Index] = 0;
+    Slots[Index]  = 0;
+
     NotifyCpuWroteBuffer(VisibilityBuffer, NSUInteger(Index) * sizeof(uint64), sizeof(uint64));
 
     Query.SampleIndex     = Index;
     Query.SubmissionValue = 0;
     Query.bResolved       = false;
     *Query.QueryResult    = 0;
+
     STAT_ADD(STAT_Metal_OcclusionSlotsInFlight, 1);
     return true;
 }
@@ -530,6 +559,7 @@ bool FMetalOcclusionQueries::Allocate(FMetalQueryRHI& Query)
 void FMetalOcclusionQueries::Cancel(FMetalQueryRHI& Query)
 {
     FreeSlot(Query.SampleIndex);
+
     Query.SampleIndex     = MetalInvalidQueryIndex;
     Query.SubmissionValue = 0;
 }
@@ -556,17 +586,4 @@ void FMetalOcclusionQueries::FreeSlot(uint32 Index)
         Occupied[Index] = 0;
         STAT_SUBTRACT(STAT_Metal_OcclusionSlotsInFlight, 1);
     }
-}
-
-void ResolveMetalQueries(TArray<FMetalQueryRHI*>& Queries)
-{
-    for (FMetalQueryRHI* Query : Queries)
-    {
-        if (Query)
-        {
-            Query->Resolve();
-        }
-    }
-
-    Queries.Clear();
 }

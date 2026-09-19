@@ -1,7 +1,15 @@
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalCapabilities.h"
 #include "MetalRHI/MetalQueue.h"
+#include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
+#include "Core/Misc/ConsoleManager.h"
+#include <objc/message.h>
+
+static TAutoConsoleVariable<String> CVarPreferredDeviceName(
+    "MetalRHI.PreferredDeviceName",
+    "Selects the Metal device whose name contains this text, ignoring the device scoring when it matches",
+    "");
 
 static MTLTextureType GetNullMTLTextureType(EMetalNullTextureType::Type Type)
 {
@@ -184,6 +192,8 @@ void FMetalDefaultResources::Release()
 FMetalDevice::FMetalDevice()
     : Device(nil)
     , Queue(nullptr)
+    , ComputeQueue(nullptr)
+    , CopyQueue(nullptr)
     , Properties{}
     , DefaultResources{}
     , TimestampQueries(this)
@@ -192,6 +202,7 @@ FMetalDevice::FMetalDevice()
 {
     Memory::Memzero(DefaultResources.NullTextures, sizeof(DefaultResources.NullTextures));
     Memory::Memzero(DefaultResources.NullRWTextures, sizeof(DefaultResources.NullRWTextures));
+
     DefaultResources.NullBuffer     = nil;
     DefaultResources.DefaultSampler = nil;
 }
@@ -200,6 +211,8 @@ FMetalDevice::~FMetalDevice()
 {
     WaitForGPU();
     DefaultResources.Release();
+    SAFE_DELETE(CopyQueue);
+    SAFE_DELETE(ComputeQueue);
     SAFE_DELETE(Queue);
 
     [Device release];
@@ -218,14 +231,17 @@ int32 FMetalDevice::ScoreDevice(id<MTLDevice> CandidateDevice)
     {
         Score += 100;
     }
-    if (!CandidateDevice.isRemovable)
-    {
-        Score += 50;
-    }
     if (!CandidateDevice.isHeadless)
     {
         Score += 25;
     }
+
+    // An external GPU is the faster device often enough that being removable only breaks a tie.
+    if (!CandidateDevice.isRemovable)
+    {
+        Score += 5;
+    }
+
     if (CandidateDevice.recommendedMaxWorkingSetSize > 0)
     {
         Score += static_cast<int32>(CandidateDevice.recommendedMaxWorkingSetSize / (256ull * 1024ull * 1024ull));
@@ -240,16 +256,46 @@ id<MTLDevice> FMetalDevice::SelectDevice()
 
     NSArray<id<MTLDevice>>* AvailableDevices = MTLCopyAllDevices();
 
+    const String PreferredName = CVarPreferredDeviceName.GetValue();
+
     id<MTLDevice> SelectedDevice = nil;
+    id<MTLDevice> PreferredMatch = nil;
     int32         BestScore      = -1;
 
     for (id<MTLDevice> CandidateDevice in AvailableDevices)
     {
-        const int32 Score = ScoreDevice(CandidateDevice);
+        const String Name(CandidateDevice.name);
+        const int32  Score = ScoreDevice(CandidateDevice);
+
+        METAL_INFO("Metal device candidate '%s' (score=%d, %llu MB, low-power=%s, removable=%s, headless=%s)",
+            *Name,
+            Score,
+            CandidateDevice.recommendedMaxWorkingSetSize / (1024ull * 1024ull),
+            CandidateDevice.isLowPower  ? "yes" : "no",
+            CandidateDevice.isRemovable ? "yes" : "no",
+            CandidateDevice.isHeadless  ? "yes" : "no");
+
+        if (!PreferredMatch && !PreferredName.IsEmpty() && Name.Contains(PreferredName, EStringCaseType::NoCase))
+        {
+            PreferredMatch = CandidateDevice;
+        }
+
         if (Score > BestScore)
         {
             BestScore      = Score;
             SelectedDevice = CandidateDevice;
+        }
+    }
+
+    if (!PreferredName.IsEmpty())
+    {
+        if (PreferredMatch)
+        {
+            SelectedDevice = PreferredMatch;
+        }
+        else
+        {
+            METAL_WARNING("No Metal device matches MetalRHI.PreferredDeviceName='%s', falling back to the highest scoring device", *PreferredName);
         }
     }
 
@@ -331,6 +377,20 @@ bool FMetalDevice::Initialize()
         return false;
     }
 
+    ComputeQueue = new FMetalQueue(this, EMetalQueueType::Compute);
+    if (!ComputeQueue->Initialize())
+    {
+        METAL_ERROR("Failed to initialize the Metal compute queue");
+        return false;
+    }
+
+    CopyQueue = new FMetalQueue(this, EMetalQueueType::Copy);
+    if (!CopyQueue->Initialize())
+    {
+        METAL_ERROR("Failed to initialize the Metal copy queue");
+        return false;
+    }
+
     if (!QueryDeviceFeatureSupport())
     {
         METAL_ERROR("Failed to query Metal device feature support");
@@ -375,6 +435,16 @@ bool FMetalDevice::QueryDeviceFeatureSupport()
     GMetalSupportsUnifiedMemory        = Device.hasUnifiedMemory;
     GMetalMaxBufferLength              = static_cast<uint64>(Device.maxBufferLength);
     GMetalMaxThreadsPerThreadgroup     = static_cast<uint32>(Device.maxThreadsPerThreadgroup.width);
+    GMetalMaxVertexAmplificationCount  = 1;
+
+    if ([Device respondsToSelector:@selector(maxVertexAmplificationCount)])
+    {
+        const SEL Selector = @selector(maxVertexAmplificationCount);
+        const NSUInteger AmplificationCount = ((NSUInteger (*)(id, SEL))objc_msgSend)(Device, Selector);
+        GMetalMaxVertexAmplificationCount = Math::Max(static_cast<uint32>(AmplificationCount), 1u);
+    }
+
+    GMetalMaxTextureArrayLayers        = 2048;
     GMetalSupportsBCTextureCompression = Device.supportsBCTextureCompression;
 
     GMetalSupportsCounterSampling =
@@ -406,18 +476,12 @@ bool FMetalDevice::InitializeDefaultResources()
 void FMetalDevice::BeginFrame()
 {
     FrameCounter++;
-    if (Queue)
-    {
-        Queue->ProcessCommandQueue();
-    }
+    ProcessQueues();
 }
 
 void FMetalDevice::EndFrame()
 {
-    if (Queue)
-    {
-        Queue->ProcessCommandQueue();
-    }
+    ProcessQueues();
 }
 
 void FMetalDevice::WaitForGPU()
@@ -425,6 +489,34 @@ void FMetalDevice::WaitForGPU()
     if (Queue)
     {
         Queue->WaitForCompletion();
+    }
+
+    if (ComputeQueue)
+    {
+        ComputeQueue->WaitForCompletion();
+    }
+
+    if (CopyQueue)
+    {
+        CopyQueue->WaitForCompletion();
+    }
+}
+
+void FMetalDevice::ProcessQueues()
+{
+    if (Queue)
+    {
+        Queue->ProcessCommandQueue();
+    }
+
+    if (ComputeQueue)
+    {
+        ComputeQueue->ProcessCommandQueue();
+    }
+
+    if (CopyQueue)
+    {
+        CopyQueue->ProcessCommandQueue();
     }
 }
 
@@ -456,8 +548,17 @@ bool FMetalDevice::QueryVideoMemoryInfo(EVideoMemoryType Type, FRHIVideoMemoryIn
 
 FMetalQueue* FMetalDevice::GetQueue(EMetalQueueType Type) const
 {
-    UNREFERENCED_VARIABLE(Type);
-    return Queue;
+    switch (Type)
+    {
+        case EMetalQueueType::Compute:
+            return ComputeQueue;
+
+        case EMetalQueueType::Copy:
+            return CopyQueue;
+
+        default:
+            return Queue;
+    }
 }
 
 id<MTLCommandQueue> FMetalDevice::GetMTLCommandQueue() const

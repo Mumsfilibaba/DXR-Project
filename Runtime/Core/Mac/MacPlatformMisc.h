@@ -11,7 +11,12 @@ struct FMacPlatformMisc final : public IPlatformMisc
 {
     static FORCEINLINE void OutputDebugString(const CHAR* Message)
     {
-        NSLog(@"%s", Message);
+        if (Message && Message[0] != '\0')
+        {
+            WriteToStdOutput(Message, static_cast<uint32>(strlen(Message)));
+        }
+
+        WriteToStdOutput("\n", 1);
     }
 
     static FORCEINLINE void WriteToStdOutput(const CHAR* Text, uint32 Length)

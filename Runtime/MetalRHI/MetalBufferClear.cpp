@@ -20,10 +20,14 @@ static void BuildClearShaderByteCode(const uint8* Source, int32 SourceSize, TArr
     };
 
     FMSLShaderHeader Header;
-    Header.Magic       = FMSLShaderHeader::ExpectedMagic;
-    Header.Version     = FMSLShaderHeader::ExpectedVersion;
-    Header.NumBindings = ARRAY_COUNT(ClearBindings);
-    Header.SourceSize  = static_cast<uint32>(SourceSize);
+    Header.Magic            = FMSLShaderHeader::ExpectedMagic;
+    Header.Version          = FMSLShaderHeader::ExpectedVersion;
+    Header.NumBindings      = ARRAY_COUNT(ClearBindings);
+    Header.SourceSize       = static_cast<uint32>(SourceSize);
+    Header.ThreadGroupSizeX = static_cast<uint16>(ClearThreadCount);
+    Header.ThreadGroupSizeY = 1;
+    Header.ThreadGroupSizeZ = 1;
+    Header.Padding0         = 0;
 
     constexpr int32 HeaderSize   = static_cast<int32>(sizeof(FMSLShaderHeader));
     constexpr int32 BindingsSize = static_cast<int32>(sizeof(ClearBindings));
@@ -60,6 +64,7 @@ bool FMetalBufferClearPipelines::GetOrCreate(EMetalBufferClearType::Type ClearTy
 
     const uint8* EmbeddedCode = nullptr;
     uint32       EmbeddedSize = 0;
+
     switch (ClearType)
     {
         case EMetalBufferClearType::Uint:
@@ -118,6 +123,7 @@ void MetalClearBufferUAV::Clear(FMetalCommandContext& Context, FMetalUnorderedAc
 
     const uint64 ByteSize    = View->GetBufferSize();
     const uint32 NumElements = static_cast<uint32>(ByteSize / 16ull);
+
     if (NumElements == 0)
     {
         return;
@@ -127,6 +133,7 @@ void MetalClearBufferUAV::Clear(FMetalCommandContext& Context, FMetalUnorderedAc
 
     FRHIComputeShader*        Shader   = nullptr;
     FRHIComputePipelineState* Pipeline = nullptr;
+
     if (!FMetalDeviceRHI::Get()->GetBufferClearPipelines().GetOrCreate(ClearType, Shader, Pipeline))
     {
         return;

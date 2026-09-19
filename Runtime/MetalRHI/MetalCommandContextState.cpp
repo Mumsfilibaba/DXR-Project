@@ -389,6 +389,7 @@ void FMetalCommandContextState::BindGraphicsState()
                             green:GraphicsState.BlendFactor[1]
                              blue:GraphicsState.BlendFactor[2]
                             alpha:GraphicsState.BlendFactor[3]];
+
         GraphicsState.bBindBlendFactor = false;
     }
 
@@ -403,6 +404,7 @@ void FMetalCommandContextState::BindGraphicsState()
         [Encoder setDepthBias:GraphicsState.DepthBias[0]
                    slopeScale:GraphicsState.DepthBias[2]
                         clamp:GraphicsState.DepthBias[1]];
+
         GraphicsState.bBindDepthBias = false;
     }
 
@@ -520,7 +522,8 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
             }
 
             FMetalBufferRHI* Buffer = CBVCache.ConstantBuffers[ShaderStage][Index];
-            id<MTLBuffer>    MTLBufferHandle = Buffer ? Buffer->GetMTLBuffer() : nil;
+
+            id<MTLBuffer> MTLBufferHandle = Buffer ? Buffer->GetMTLBuffer() : nil;
             Context.SetGraphicsBuffer(ShaderStage, MTLBufferHandle, 0, Slot);
         }
 
@@ -610,7 +613,8 @@ void FMetalCommandContextState::BindGraphicsSamplers(EShaderVisibility::Type Sha
         }
 
         FMetalSamplerStateRHI* SamplerState = Cache.SamplerStates[ShaderStage][Index];
-        id<MTLSamplerState>    MTLSampler   = SamplerState ? SamplerState->GetMTLSamplerState() : nil;
+
+        id<MTLSamplerState> MTLSampler = SamplerState ? SamplerState->GetMTLSamplerState() : nil;
         Context.SetGraphicsSampler(ShaderStage, MTLSampler, Slot);
     }
 
@@ -699,7 +703,8 @@ void FMetalCommandContextState::BindComputeResources()
             }
 
             FMetalBufferRHI* Buffer = CBVCache.ConstantBuffers[EShaderVisibility::Compute][Index];
-            id<MTLBuffer>    MTLBufferHandle = Buffer ? Buffer->GetMTLBuffer() : nil;
+
+            id<MTLBuffer> MTLBufferHandle = Buffer ? Buffer->GetMTLBuffer() : nil;
             [Encoder setBuffer:MTLBufferHandle offset:0 atIndex:Slot];
         }
 
@@ -788,7 +793,8 @@ void FMetalCommandContextState::BindComputeSamplers()
         }
 
         FMetalSamplerStateRHI* SamplerState = Cache.SamplerStates[EShaderVisibility::Compute][Index];
-        id<MTLSamplerState>    MTLSampler   = SamplerState ? SamplerState->GetMTLSamplerState() : nil;
+
+        id<MTLSamplerState>  MTLSampler = SamplerState ? SamplerState->GetMTLSamplerState() : nil;
         [Encoder setSamplerState:MTLSampler atIndex:Slot];
     }
 

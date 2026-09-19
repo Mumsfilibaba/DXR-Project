@@ -5,6 +5,31 @@
 #include "MetalRHI/MetalStats.h"
 #include "RHI/MSLShaderBindings.h"
 #include "RHI/RHISamplerState.h"
+#include "RHI/RHI.h"
+
+static bool ConfigureViewInstancing(const FRHIViewInstancingState& State, NSUInteger& OutAmplificationCount)
+{
+    OutAmplificationCount = 1;
+    if (!State.bEnableViewInstancing)
+    {
+        return true;
+    }
+
+    if (!RHI::bSupportsViewInstancing)
+    {
+        METAL_ERROR("View instancing is not supported on this Metal device");
+        return false;
+    }
+
+    if (State.NumArraySlices == 0 || State.NumArraySlices > RHI::MaxViewInstanceCount)
+    {
+        METAL_ERROR("View instancing requested %u slices, device max is %u", State.NumArraySlices, RHI::MaxViewInstanceCount);
+        return false;
+    }
+
+    OutAmplificationCount = State.NumArraySlices;
+    return true;
+}
 
 static bool AssignMSLSlot(uint8& Dest, const FMSLShaderBinding& Binding, EShaderVisibility::Type ShaderStage)
 {
@@ -131,6 +156,55 @@ static void ApplyStaticSamplerBindings(const TArray<FMetalStaticSamplerBinding>&
     }
 }
 
+template<typename TPipelineDescriptor>
+static bool ApplyColorAttachments(TPipelineDescriptor* Descriptor, FMetalBlendStateRHI* BlendState, const FRHIGraphicsPipelineFormats& Formats)
+{
+    CHECK(Descriptor != nil);
+
+    if (BlendState && BlendState->IsLogicOpEnabled())
+    {
+        METAL_ERROR("Metal does not support blend logic operations");
+        return false;
+    }
+
+    Descriptor.alphaToCoverageEnabled = (BlendState && BlendState->IsAlphaToCoverageEnabled()) ? YES : NO;
+
+    for (uint32 Index = 0; Index < Formats.NumRenderTargets; ++Index)
+    {
+        MTLRenderPipelineColorAttachmentDescriptor* Attachment = Descriptor.colorAttachments[Index];
+        Attachment.pixelFormat = MetalRHI::ConvertFormat(Formats.RenderTargetFormats[Index]);
+
+        if (!BlendState)
+        {
+            continue;
+        }
+
+        const uint32 BlendIndex = BlendState->GetDesc().bIndependentBlendEnable ? Index : 0;
+        const FMetalBlendStateRHI::FBlendAttachment& Blend = BlendState->GetColorAttachment(BlendIndex);
+        Attachment.blendingEnabled             = Blend.bBlendingEnabled;
+        Attachment.sourceRGBBlendFactor        = Blend.SourceColorBlendFactor;
+        Attachment.destinationRGBBlendFactor   = Blend.DestinationColorBlendFactor;
+        Attachment.rgbBlendOperation           = Blend.ColorBlendOperation;
+        Attachment.sourceAlphaBlendFactor      = Blend.SourceAlphaBlendFactor;
+        Attachment.destinationAlphaBlendFactor = Blend.DestinationAlphaBlendFactor;
+        Attachment.alphaBlendOperation         = Blend.AlphaBlendOperation;
+        Attachment.writeMask                   = Blend.WriteMask;
+    }
+
+    return true;
+}
+
+template<typename TPipelineDescriptor>
+static void ApplyDepthStencilFormats(TPipelineDescriptor* Descriptor, EFormat DepthStencilFormat)
+{
+    const MTLPixelFormat PixelFormat = MetalRHI::ConvertFormat(DepthStencilFormat);
+    Descriptor.depthAttachmentPixelFormat = PixelFormat;
+    if (MetalRHI::IsStencilPixelFormat(PixelFormat))
+    {
+        Descriptor.stencilAttachmentPixelFormat = PixelFormat;
+    }
+}
+
 void FMetalPipelineBindingLayout::Reset()
 {
     for (uint32 ShaderStage = 0; ShaderStage < EShaderVisibility::Count; ++ShaderStage)
@@ -158,6 +232,7 @@ bool FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& Shade
                 {
                     return false;
                 }
+
                 break;
             }
 
@@ -168,6 +243,7 @@ bool FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& Shade
                 {
                     return false;
                 }
+
                 break;
             }
 
@@ -178,6 +254,7 @@ bool FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& Shade
                 {
                     return false;
                 }
+
                 break;
             }
 
@@ -188,6 +265,7 @@ bool FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& Shade
                 {
                     return false;
                 }
+
                 break;
             }
 
@@ -198,6 +276,7 @@ bool FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& Shade
                 {
                     return false;
                 }
+
                 break;
             }
 
@@ -208,6 +287,7 @@ bool FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& Shade
                 {
                     return false;
                 }
+
                 break;
             }
 
@@ -217,6 +297,7 @@ bool FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& Shade
                 {
                     return false;
                 }
+
                 break;
             }
 
@@ -254,7 +335,6 @@ bool FMetalPipelineBindingLayout::ConflictsWithVertexInputs(const FMetalInputLay
         };
 
         const EShaderVisibility::Type VertexStage = EShaderVisibility::Vertex;
-
         for (uint32 RegisterIndex = 0; RegisterIndex < MAX_CONSTANT_BUFFERS; ++RegisterIndex)
         {
             if (OccupiesSlot(ConstantBuffers[VertexStage][RegisterIndex]))
@@ -332,55 +412,6 @@ FMetalPipelineBindingLayout::FMetalPipelineBindingLayout()
 }
 
 FMetalPipelineBindingLayout::~FMetalPipelineBindingLayout() = default;
-
-template<typename TPipelineDescriptor>
-static bool ApplyColorAttachments(TPipelineDescriptor* Descriptor, FMetalBlendStateRHI* BlendState, const FRHIGraphicsPipelineFormats& Formats)
-{
-    CHECK(Descriptor != nil);
-
-    if (BlendState && BlendState->IsLogicOpEnabled())
-    {
-        METAL_ERROR("Metal does not support blend logic operations");
-        return false;
-    }
-
-    Descriptor.alphaToCoverageEnabled = (BlendState && BlendState->IsAlphaToCoverageEnabled()) ? YES : NO;
-
-    for (uint32 Index = 0; Index < Formats.NumRenderTargets; ++Index)
-    {
-        MTLRenderPipelineColorAttachmentDescriptor* Attachment = Descriptor.colorAttachments[Index];
-        Attachment.pixelFormat = MetalRHI::ConvertFormat(Formats.RenderTargetFormats[Index]);
-
-        if (!BlendState)
-        {
-            continue;
-        }
-
-        const uint32 BlendIndex = BlendState->GetDesc().bIndependentBlendEnable ? Index : 0;
-        const FMetalBlendStateRHI::FBlendAttachment& Blend = BlendState->GetColorAttachment(BlendIndex);
-        Attachment.blendingEnabled             = Blend.bBlendingEnabled;
-        Attachment.sourceRGBBlendFactor        = Blend.SourceColorBlendFactor;
-        Attachment.destinationRGBBlendFactor   = Blend.DestinationColorBlendFactor;
-        Attachment.rgbBlendOperation           = Blend.ColorBlendOperation;
-        Attachment.sourceAlphaBlendFactor      = Blend.SourceAlphaBlendFactor;
-        Attachment.destinationAlphaBlendFactor = Blend.DestinationAlphaBlendFactor;
-        Attachment.alphaBlendOperation         = Blend.AlphaBlendOperation;
-        Attachment.writeMask                   = Blend.WriteMask;
-    }
-
-    return true;
-}
-
-template<typename TPipelineDescriptor>
-static void ApplyDepthStencilFormats(TPipelineDescriptor* Descriptor, EFormat DepthStencilFormat)
-{
-    const MTLPixelFormat PixelFormat = MetalRHI::ConvertFormat(DepthStencilFormat);
-    Descriptor.depthAttachmentPixelFormat = PixelFormat;
-    if (MetalRHI::IsStencilPixelFormat(PixelFormat))
-    {
-        Descriptor.stencilAttachmentPixelFormat = PixelFormat;
-    }
-}
 
 FMetalInputLayoutRHI::FMetalInputLayoutRHI(const TArray<FRHIInputElementDesc>& InInputElements)
     : FRHIInputLayout()
@@ -614,6 +645,12 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
 
     BlendState = MakeSharedRef<FMetalBlendStateRHI>(Desc.BlendState);
 
+    NSUInteger AmplificationCount = 1;
+    if (!ConfigureViewInstancing(Desc.ViewInstancingState, AmplificationCount))
+    {
+        return false;
+    }
+
     MTLRenderPipelineDescriptor* Descriptor = [MTLRenderPipelineDescriptor new];
     if (FMetalShader* VertexShader = GetMetalShader(Desc.VertexShader))
     {
@@ -658,6 +695,10 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
     Descriptor.rasterSampleCount = Math::Max(Desc.MultiSampleState.SampleCount, 1u);
 
     Descriptor.vertexDescriptor = InputLayout ? InputLayout->GetMTLVertexDescriptor() : nil;
+    if (AmplificationCount > 1)
+    {
+        Descriptor.maxVertexAmplificationCount = AmplificationCount;
+    }
 
     NSError* Error = nil;
     PipelineState = [GetDevice()->GetMTLDevice() newRenderPipelineStateWithDescriptor:Descriptor error:&Error];
@@ -704,6 +745,9 @@ FMetalComputePipelineStateRHI::FMetalComputePipelineStateRHI(FMetalDevice* InDev
     , FMetalDeviceChild(InDevice)
     , PipelineState(nil)
     , MaxTotalThreadsPerThreadgroup(0)
+    , ThreadGroupSizeX(0)
+    , ThreadGroupSizeY(0)
+    , ThreadGroupSizeZ(0)
 {
 }
 
@@ -738,6 +782,10 @@ bool FMetalComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
     }
 
     MaxTotalThreadsPerThreadgroup = static_cast<uint32>(PipelineState.maxTotalThreadsPerThreadgroup);
+    ThreadGroupSizeX = ComputeShader->GetThreadGroupSizeX();
+    ThreadGroupSizeY = ComputeShader->GetThreadGroupSizeY();
+    ThreadGroupSizeZ = ComputeShader->GetThreadGroupSizeZ();
+
     if (!Bindings.Collect(ComputeShader->GetBindings(), EShaderVisibility::Compute))
     {
         return false;
@@ -747,6 +795,7 @@ bool FMetalComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
     {
         return false;
     }
+
     STAT_ADD(STAT_Metal_PSOCreateCount, 1);
     STAT_ADD(STAT_Metal_NumComputePipelineStates, 1);
     return true;
@@ -842,8 +891,15 @@ bool FMetalMeshletPipelineStateRHI::Initialize()
 
     BlendState = MakeSharedRef<FMetalBlendStateRHI>(Desc.BlendState);
 
+    NSUInteger AmplificationCount = 1;
+    if (!ConfigureViewInstancing(Desc.ViewInstancingState, AmplificationCount))
+    {
+        return false;
+    }
+
     MTLMeshRenderPipelineDescriptor* Descriptor = [MTLMeshRenderPipelineDescriptor new];
     Descriptor.meshFunction = MeshShader->GetMTLFunction();
+
     if (!Bindings.Collect(MeshShader->GetBindings(), EShaderVisibility::Mesh))
     {
         [Descriptor release];
@@ -884,6 +940,11 @@ bool FMetalMeshletPipelineStateRHI::Initialize()
 
     ApplyDepthStencilFormats(Descriptor, Desc.RasterizerOutputFormats.DepthStencilFormat);
     Descriptor.rasterSampleCount = Math::Max(Desc.MultiSampleState.SampleCount, 1u);
+
+    if (AmplificationCount > 1)
+    {
+        Descriptor.maxVertexAmplificationCount = AmplificationCount;
+    }
 
     NSError* Error = nil;
     PipelineState = [GetDevice()->GetMTLDevice() newRenderPipelineStateWithMeshDescriptor:Descriptor error:&Error];

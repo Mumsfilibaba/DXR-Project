@@ -16,7 +16,7 @@
 static TAutoConsoleVariable<bool> CVarCaptureValidationOutput(
     "MetalRHI.CaptureValidationOutput",
     "Redirects the Metal debug layer's stderr output into the engine log",
-    false);
+    true);
 
 static TAutoConsoleVariable<bool> CVarBreakOnValidationError(
     "MetalRHI.BreakOnValidationError",
@@ -54,37 +54,57 @@ static bool IsMetalValidationLine(const CHAR* Text)
         return false;
     }
 
-    if (CString::Strstr(Text, "[MetalRHI]") != nullptr || CString::Strstr(Text, "[Metal Validation]") != nullptr)
+    return CString::Strstr(Text, "[MetalRHI]") == nullptr
+        && CString::Strstr(Text, "[Metal Validation]") == nullptr;
+}
+
+static const CHAR* SkipNSLogPrefix(const CHAR* Text)
+{
+    if (Text[0] < '0' || Text[0] > '9')
     {
-        return false;
+        return Text;
     }
 
-    return CString::Stristr(Text, "MTLDebug") != nullptr
-        || CString::Stristr(Text, "MTLValidate") != nullptr
-        || CString::Stristr(Text, "Metal API Validation") != nullptr
-        || CString::Stristr(Text, "failed assertion") != nullptr
-        || CString::Strstr(Text, "-[MTL") != nullptr;
+    const CHAR* Separator = CString::Strstr(Text, "] ");
+    const CHAR* Bracket   = CString::Strchr(Text, '[');
+
+    if (!Separator || !Bracket || Bracket > Separator)
+    {
+        return Text;
+    }
+
+    return Separator + 2;
+}
+
+static bool IsFatalValidationLine(const CHAR* Text)
+{
+    return CString::Stristr(Text, "failed assertion") != nullptr;
 }
 
 static bool IsMetalValidationError(const CHAR* Text)
 {
-    return CString::Stristr(Text, "failed assertion") != nullptr
+    return IsFatalValidationLine(Text)
+        || CString::Stristr(Text, "error") != nullptr
         || CString::Stristr(Text, "page fault") != nullptr
         || CString::Stristr(Text, "faulted") != nullptr;
 }
 
 static AtomicBool GReportingDisabled;
 
-static void ReportValidationLine(const CHAR* Text)
+static void ReportValidationLine(const CHAR* RawText)
 {
     if (GReportingDisabled.Load())
     {
         return;
     }
 
+    const CHAR* Text = SkipNSLogPrefix(RawText);
     if (IsMetalValidationError(Text))
     {
-        GReportingDisabled.Store(true);
+        if (IsFatalValidationLine(Text))
+        {
+            GReportingDisabled.Store(true);
+        }
 
         METAL_ERROR("[Metal Validation] %s", Text);
         if (CVarBreakOnValidationError.GetValue())
@@ -131,8 +151,10 @@ public:
         if (pipe(PipeFds) != 0)
         {
             METAL_ERROR("Failed to create a pipe for Metal validation capture");
+
             close(OriginalStderr);
             OriginalStderr = -1;
+
             return false;
         }
 
@@ -140,17 +162,21 @@ public:
         if (dup2(PipeFds[1], STDERR_FILENO) < 0)
         {
             METAL_ERROR("Failed to redirect stderr for Metal validation capture");
+
             close(PipeFds[0]);
             close(PipeFds[1]);
             close(OriginalStderr);
+
             PipeRead       = -1;
             OriginalStderr = -1;
+
             return false;
         }
 
         close(PipeFds[1]);
 
         bStop.Store(false);
+
         Thread = FPlatformThread::Create(this, "MetalValidationLog");
         if (!Thread || !Thread->Start())
         {

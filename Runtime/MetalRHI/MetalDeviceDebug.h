@@ -6,7 +6,7 @@
 /** @brief Turns on Metal's debug layer when RHI.EnableDebugLayer is set, before any MTLDevice is created. */
 void MetalEnableDebugLayer();
 
-/** @brief Mirrors Metal validation text from stderr into the engine log. */
+/** @brief Mirrors Metal validation text from stderr into the engine log, leaving stderr itself intact. */
 void MetalStartValidationCapture();
 
 /** @brief Restores stderr and joins the capture thread. */

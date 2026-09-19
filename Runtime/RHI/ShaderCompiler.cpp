@@ -1156,10 +1156,21 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
     const uint32 SourceLength = CString::Strlen(MSLSource);
 
     FMSLShaderHeader Header;
-    Header.Magic       = FMSLShaderHeader::ExpectedMagic;
-    Header.Version     = FMSLShaderHeader::ExpectedVersion;
-    Header.NumBindings = static_cast<uint32>(Bindings.Size());
-    Header.SourceSize  = SourceLength;
+    Header.Magic            = FMSLShaderHeader::ExpectedMagic;
+    Header.Version          = FMSLShaderHeader::ExpectedVersion;
+    Header.NumBindings      = static_cast<uint32>(Bindings.Size());
+    Header.SourceSize       = SourceLength;
+    Header.ThreadGroupSizeX = 0;
+    Header.ThreadGroupSizeY = 0;
+    Header.ThreadGroupSizeZ = 0;
+    Header.Padding0         = 0;
+
+    if (CompileInfo.ShaderStage == EShaderStage::Compute)
+    {
+        Header.ThreadGroupSizeX = static_cast<uint16>(spvc_compiler_get_execution_mode_argument_by_index(CompilerMSL, SpvExecutionModeLocalSize, 0));
+        Header.ThreadGroupSizeY = static_cast<uint16>(spvc_compiler_get_execution_mode_argument_by_index(CompilerMSL, SpvExecutionModeLocalSize, 1));
+        Header.ThreadGroupSizeZ = static_cast<uint16>(spvc_compiler_get_execution_mode_argument_by_index(CompilerMSL, SpvExecutionModeLocalSize, 2));
+    }
 
     const int32 BindingsSize = Bindings.Size() * sizeof(FMSLShaderBinding);
 

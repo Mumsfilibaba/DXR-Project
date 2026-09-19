@@ -84,9 +84,11 @@ public:
     bool SupportsFamily(MTLGPUFamily Family) const;
     bool QueryVideoMemoryInfo(EVideoMemoryType Type, FRHIVideoMemoryInfo& OutInfo) const;
 
-    // Metal has a single general-purpose queue, so the type is only for interface parity
+    // Direct, Copy and Compute each own an MTLCommandQueue
     FMetalQueue*        GetQueue(EMetalQueueType Type = EMetalQueueType::Direct) const;
     id<MTLCommandQueue> GetMTLCommandQueue() const;
+
+    void ProcessQueues();
 
     FMetalTimestampQueries& GetTimestampQueries() { return TimestampQueries; }
     FMetalOcclusionQueries& GetOcclusionQueries() { return OcclusionQueries; }
@@ -102,6 +104,8 @@ private:
 
     id<MTLDevice>          Device;
     FMetalQueue*           Queue;
+    FMetalQueue*           ComputeQueue;
+    FMetalQueue*           CopyQueue;
     FMetalDeviceProperties Properties;
     FMetalDefaultResources DefaultResources;
     FMetalTimestampQueries TimestampQueries;

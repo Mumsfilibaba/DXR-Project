@@ -4,6 +4,7 @@
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalTexture.h"
+#include "Core/Math/Math.h"
 
 struct FMetalSubresourceRange
 {
@@ -365,7 +366,8 @@ bool FMetalView::InitializeBufferTextureView(EFormat InFormat, bool bWritable)
                                                                                               width:NumElements
                                                                                     resourceOptions:BufferView.resourceOptions
                                                                                               usage:Usage];
-    TextureView = [BufferView newTextureWithDescriptor:Descriptor offset:BufferOffset bytesPerRow:0];
+    const NSUInteger BytesPerRow = Math::AlignUp<NSUInteger>(NumElements * Stride, 32);
+    TextureView = [BufferView newTextureWithDescriptor:Descriptor offset:BufferOffset bytesPerRow:BytesPerRow];
     if (!TextureView)
     {
         METAL_ERROR("Failed to create a texel-buffer texture");

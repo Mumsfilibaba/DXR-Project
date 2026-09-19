@@ -46,10 +46,14 @@ FMetalCommandContext::FMetalCommandContext(FMetalDevice* InDevice)
     , IRHICommandContext()
     , CommandBuffer(nil)
     , Commands(nullptr)
+    , CopyCommandBuffer(nil)
+    , CopyCommands(nullptr)
     , GraphicsEncoder(nil)
     , ComputeEncoder(nil)
     , EncoderFence(nil)
     , bEncoderFencePending(false)
+    , bDirectHasEncodedWork(false)
+    , bBlitOnCopyQueue(false)
     , CopyContext()
     , ContextState(InDevice, *this)
     , ActiveOcclusionQuery(nullptr)
@@ -98,6 +102,7 @@ void FMetalCommandContext::FinishContext()
     ContextState.EndCommandBuffer();
 
     FinishEncoders();
+    FlushCopyWork();
 
     FMetalDeviceRHI::Get()->FlushDeletionQueue(Commands);
     GetDevice()->GetQueue()->SubmitCommands(Commands);
@@ -137,7 +142,7 @@ void FMetalCommandContext::QueryTimestamp(FRHIQuery* Query)
         return;
     }
 
-    Commands->PendingQueries.Add(MetalQuery);
+    AddPendingQuery(MetalQuery);
 }
 
 void FMetalCommandContext::BeginFrame()
@@ -228,8 +233,8 @@ void FMetalCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTar
 
     FMetalTextureRHI* RTVTexture = GetMetalTexture(static_cast<FRHITexture*>(MetalRTV->GetResource()));
 
-    MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
-    MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[0];
+    MTLRenderPassDescriptor*                RenderPassDescriptor = [MTLRenderPassDescriptor new];
+    MTLRenderPassColorAttachmentDescriptor* ColorAttachment      = RenderPassDescriptor.colorAttachments[0];
 
     ColorAttachment.texture            = RTVTexture->GetMTLTexture();
     ColorAttachment.loadAction         = MTLLoadActionClear;
@@ -325,8 +330,9 @@ void FMetalCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView
     id<MTLTexture> Texture = View->GetMTLTexture();
     CHECK(Texture != nil);
 
-    MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
-    MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[0];
+    MTLRenderPassDescriptor*                RenderPassDescriptor = [MTLRenderPassDescriptor new];
+    MTLRenderPassColorAttachmentDescriptor* ColorAttachment      = RenderPassDescriptor.colorAttachments[0];
+
     ColorAttachment.texture            = Texture;
     ColorAttachment.loadAction         = MTLLoadActionClear;
     ColorAttachment.clearColor         = MTLClearColorMake(ClearColor.X, ClearColor.Y, ClearColor.Z, ClearColor.W);
@@ -365,8 +371,9 @@ void FMetalCommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView*
     id<MTLTexture> Texture = View->GetMTLTexture();
     CHECK(Texture != nil);
 
-    MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
-    MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[0];
+    MTLRenderPassDescriptor*                RenderPassDescriptor = [MTLRenderPassDescriptor new];
+    MTLRenderPassColorAttachmentDescriptor* ColorAttachment      = RenderPassDescriptor.colorAttachments[0];
+
     ColorAttachment.texture            = Texture;
     ColorAttachment.loadAction         = MTLLoadActionClear;
     ColorAttachment.clearColor         = MTLClearColorMake(double(Values[0]), double(Values[1]), double(Values[2]), double(Values[3]));
@@ -386,6 +393,7 @@ void FMetalCommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView*
 
     [ClearEncoder updateFence:EncoderFence afterStages:GraphicsFenceStages];
     [ClearEncoder endEncoding];
+
     bEncoderFencePending = true;
 }
 
@@ -396,6 +404,7 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     CHECK(GraphicsEncoder == nil);
     
     FinishEncoders();
+    FlushCopyWork();
 
     FMetalRenderTargetViewRHI* CachedRenderTargets[RHI_MAX_RENDER_TARGETS] = { };
     const uint32 NumRenderTargets = BeginRenderPassDesc.NumRenderTargets;
@@ -412,7 +421,6 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     
     MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
     RenderPassDescriptor.defaultRasterSampleCount = 1;
-    RenderPassDescriptor.renderTargetArrayLength  = 1;
     
     for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
     {
@@ -468,6 +476,34 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
         RenderPassDescriptor.visibilityResultBuffer = VisibilityBuffer;
     }
 
+    NSUInteger ArrayLength = 1;
+    const FRHIViewInstancingState& ViewInstancingState = BeginRenderPassDesc.ViewInstancingState;
+    if (ViewInstancingState.bEnableViewInstancing && ViewInstancingState.NumArraySlices > 0)
+    {
+        ArrayLength = static_cast<NSUInteger>(ViewInstancingState.StartRenderTargetArrayIndex) + ViewInstancingState.NumArraySlices;
+
+        NSUInteger TextureArrayLength = 1;
+        if (NumRenderTargets > 0 && CachedRenderTargets[0])
+        {
+            FMetalTextureRHI* RTVTexture = GetMetalTexture(static_cast<FRHITexture*>(CachedRenderTargets[0]->GetResource()));
+            if (RTVTexture && RTVTexture->GetMTLTexture())
+            {
+                TextureArrayLength = RTVTexture->GetMTLTexture().arrayLength;
+            }
+        }
+        else if (DSVTexture && DSVTexture->GetMTLTexture())
+        {
+            TextureArrayLength = DSVTexture->GetMTLTexture().arrayLength;
+        }
+
+        if (TextureArrayLength > 0)
+        {
+            ArrayLength = Math::Min(ArrayLength, TextureArrayLength);
+        }
+    }
+
+    RenderPassDescriptor.renderTargetArrayLength = ArrayLength;
+
     CHECK(RenderPassDescriptor != nil);
     GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
     [GraphicsEncoder retain];
@@ -490,6 +526,7 @@ void FMetalCommandContext::EndRenderPass()
     [GraphicsEncoder endEncoding];
     [GraphicsEncoder release];
     GraphicsEncoder = nil;
+    bDirectHasEncodedWork = true;
 }
 
 void FMetalCommandContext::SetViewport(const FViewportRegion& ViewportRegion)
@@ -564,16 +601,21 @@ void FMetalCommandContext::SetDepthBounds(float MinDepth, float MaxDepth)
 {
     UNREFERENCED_VARIABLE(MinDepth);
     UNREFERENCED_VARIABLE(MaxDepth);
+
+    METAL_ERROR("SetDepthBounds: depth bounds tests are not supported by the Metal backend");
 }
 
 void FMetalCommandContext::SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc)
 {
     UNREFERENCED_VARIABLE(SamplePositionsDesc);
+
+    METAL_ERROR("SetSamplePositions: programmable sample positions are not supported by the Metal backend");
 }
 
 void FMetalCommandContext::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)
 {
     UNREFERENCED_VARIABLE(Offsets);
+
     if (!Buffers.IsEmpty())
     {
         METAL_ERROR("SetStreamOutputTargets: stream output is not supported by the Metal backend");
@@ -721,6 +763,7 @@ id<MTLBuffer> FMetalCommandContext::CreateStagingBuffer(uint64 Size)
 
     id<MTLDevice> DeviceHandle  = GetDevice()->GetMTLDevice();
     id<MTLBuffer> StagingBuffer = [DeviceHandle newBufferWithLength:Size options:MTLResourceStorageModeShared | MTLResourceCPUCacheModeDefaultCache];
+
     if (!StagingBuffer)
     {
         METAL_ERROR("Failed to allocate a %llu byte staging buffer", Size);
@@ -876,6 +919,7 @@ void FMetalCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
     }
 
     FinishEncoders();
+    FlushCopyWork();
 
     id<MTLRenderCommandEncoder> ResolveEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
     if (bEncoderFencePending)
@@ -898,6 +942,7 @@ void FMetalCommandContext::TranscodeSamplerFeedback(FRHITexture* Dst, uint32 Dst
     UNREFERENCED_VARIABLE(Src);
     UNREFERENCED_VARIABLE(SrcSubresource);
     UNREFERENCED_VARIABLE(Mode);
+
     METAL_ERROR("TranscodeSamplerFeedback: sampler feedback is not supported by the Metal backend");
 }
 
@@ -1004,8 +1049,9 @@ void FMetalCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
     const FRHITextureDesc& SrcDesc = MetalSrc->GetDesc();
     const bool   bIsTexture3D = SrcDesc.IsTexture3D();
     const uint32 Depth        = Math::Max(SrcRegion.Depth, 1u);
-    const uint64 RowPitch     = uint64(SrcRegion.Width) * GetByteStrideFromFormat(SrcDesc.Format);
-    const uint64 SlicePitch   = RowPitch * SrcRegion.Height;
+    const uint64 PixelStride = GetByteStrideFromFormat(SrcDesc.Format);
+    const uint64 RowPitch    = Math::AlignUp(uint64(SrcRegion.Width) * PixelStride, 256ull);
+    const uint64 SlicePitch  = RowPitch * SrcRegion.Height;
 
     StartCopyEncoder();
 
@@ -1032,6 +1078,7 @@ void FMetalCommandContext::WriteFence(FRHIFence* Fence)
     }
 
     FinishEncoders();
+    FlushCopyWork();
 
     const uint64 Value = MetalFence->SignalNextValue();
     Commands->PendingSignalEvents.Add(MetalFence->GetMTLSharedEvent());
@@ -1049,6 +1096,7 @@ void FMetalCommandContext::BuildSceneAccelerationStructure(FRHISceneAcceleration
 {
     UNREFERENCED_VARIABLE(RayTracingScene);
     UNREFERENCED_VARIABLE(BuildDesc);
+
     METAL_ERROR("BuildSceneAccelerationStructure is not implemented");
 }
 
@@ -1056,6 +1104,7 @@ void FMetalCommandContext::BuildGeometryAccelerationStructure(FRHIGeometryAccele
 {
     UNREFERENCED_VARIABLE(RayTracingGeometry);
     UNREFERENCED_VARIABLE(BuildDesc);
+
     METAL_ERROR("BuildGeometryAccelerationStructure is not implemented");
 }
 
@@ -1074,8 +1123,9 @@ void FMetalCommandContext::TransitionBarrier(TArrayView<const FRHITransitionBarr
         }
 
         const ERHIResourceState AfterState = Desc.AfterState;
-        const bool bAfterUAV   = IsEnumFlagSet(AfterState, ERHIResourceState::UnorderedAccess);
-        const bool bBeforeUAV  = IsEnumFlagSet(Desc.BeforeState, ERHIResourceState::UnorderedAccess);
+
+        const bool bAfterUAV    = IsEnumFlagSet(AfterState, ERHIResourceState::UnorderedAccess);
+        const bool bBeforeUAV   = IsEnumFlagSet(Desc.BeforeState, ERHIResourceState::UnorderedAccess);
         const bool bWriteToRead = !RHIIsReadOnlyState(Desc.BeforeState) && RHIIsReadOnlyState(AfterState);
 
         if (bAfterUAV || bBeforeUAV || bWriteToRead)
@@ -1137,6 +1187,7 @@ void FMetalCommandContext::PrepareForDraw()
 
     ContextState.PrepareGraphicsState();
     ContextState.BindGraphicsState();
+    ApplyVertexAmplification();
 }
 
 void FMetalCommandContext::PrepareForDispatch()
@@ -1146,6 +1197,7 @@ void FMetalCommandContext::PrepareForDispatch()
         CHECK(CommandBuffer != nil);
 
         FinishEncoders();
+        FlushCopyWork();
 
         ComputeEncoder = [CommandBuffer computeCommandEncoder];
         [ComputeEncoder retain];
@@ -1163,15 +1215,24 @@ void FMetalCommandContext::StartCopyEncoder()
 
     if (GraphicsEncoder || ComputeEncoder)
     {
-        FinishEncoders();
+        FinishDirectEncoders();
+    }
+
+    if (CopyCommandBuffer)
+    {
+        FlushCopyWork();
     }
 
     const bool bOpenedEncoder = (CopyContext.GetMTLCopyEncoder() == nil);
     CopyContext.StartEncoder(CommandBuffer);
+
+    bBlitOnCopyQueue = false;
+
     if (bOpenedEncoder)
     {
         STAT_ADD(STAT_Metal_EncoderCount, 1);
     }
+
     WaitForPendingEncoderFenceOnBlit();
 }
 
@@ -1205,8 +1266,12 @@ void FMetalCommandContext::EnsureTimestampEncoder()
     if (Timestamps.GetDummyComputePipeline() && Timestamps.CanSampleCompute())
     {
         CHECK(CommandBuffer != nil);
+
+        FlushCopyWork();
+    
         ComputeEncoder = [CommandBuffer computeCommandEncoder];
         [ComputeEncoder retain];
+    
         WaitForPendingEncoderFenceOnCompute();
         STAT_ADD(STAT_Metal_EncoderCount, 1);
         return;
@@ -1221,9 +1286,13 @@ void FMetalCommandContext::EnsureTimestampEncoder()
     if (Timestamps.CanSampleCompute())
     {
         CHECK(CommandBuffer != nil);
+
         FinishEncoders();
+        FlushCopyWork();
+
         ComputeEncoder = [CommandBuffer computeCommandEncoder];
         [ComputeEncoder retain];
+
         WaitForPendingEncoderFenceOnCompute();
         STAT_ADD(STAT_Metal_EncoderCount, 1);
         return;
@@ -1239,12 +1308,17 @@ void FMetalCommandContext::EnsureTimestampEncoder()
         }
 
         CHECK(CommandBuffer != nil);
+
+        FlushCopyWork();
+
         MTLRenderPassDescriptor* Descriptor = [MTLRenderPassDescriptor renderPassDescriptor];
         Descriptor.colorAttachments[0].texture     = DummyTarget;
         Descriptor.colorAttachments[0].loadAction  = MTLLoadActionDontCare;
         Descriptor.colorAttachments[0].storeAction = MTLStoreActionDontCare;
+
         GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:Descriptor];
         [GraphicsEncoder retain];
+
         WaitForPendingEncoderFenceOnGraphics();
         STAT_ADD(STAT_Metal_EncoderCount, 1);
         return;
@@ -1256,6 +1330,7 @@ void FMetalCommandContext::EnsureTimestampEncoder()
 bool FMetalCommandContext::SampleTimestamp(FMetalQueryRHI& Query)
 {
     FMetalTimestampQueries& Timestamps = GetDevice()->GetTimestampQueries();
+
     id<MTLCounterSampleBuffer> SampleBuffer = Timestamps.GetSampleBuffer();
     if (!SampleBuffer || Query.SampleIndex == MetalInvalidQueryIndex)
     {
@@ -1308,6 +1383,25 @@ bool FMetalCommandContext::SampleTimestamp(FMetalQueryRHI& Query)
 
 void FMetalCommandContext::FinishEncoders()
 {
+    FinishDirectEncoders();
+
+    if (CopyContext.GetMTLCopyEncoder())
+    {
+        if (!bBlitOnCopyQueue)
+        {
+            id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
+            [CopyEncoder updateFence:EncoderFence];
+
+            bEncoderFencePending  = true;
+            bDirectHasEncodedWork = true;
+        }
+
+        CopyContext.FinishEncoder();
+    }
+}
+
+void FMetalCommandContext::FinishDirectEncoders()
+{
     bool bEndedEncoder = false;
 
     if (GraphicsEncoder)
@@ -1321,8 +1415,10 @@ void FMetalCommandContext::FinishEncoders()
         [GraphicsEncoder updateFence:EncoderFence afterStages:GraphicsFenceStages];
         [GraphicsEncoder endEncoding];
         [GraphicsEncoder release];
+
         GraphicsEncoder = nil;
         bEndedEncoder = true;
+        bDirectHasEncodedWork = true;
     }
 
     if (ComputeEncoder)
@@ -1330,21 +1426,109 @@ void FMetalCommandContext::FinishEncoders()
         [ComputeEncoder updateFence:EncoderFence];
         [ComputeEncoder endEncoding];
         [ComputeEncoder release];
+
         ComputeEncoder = nil;
         bEndedEncoder = true;
+        bDirectHasEncodedWork = true;
     }
-
-    if (id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder())
-    {
-        [CopyEncoder updateFence:EncoderFence];
-        bEndedEncoder = true;
-    }
-
-    CopyContext.FinishEncoder();
 
     if (bEndedEncoder)
     {
         bEncoderFencePending = true;
+    }
+}
+
+void FMetalCommandContext::SubmitDirectWorkAndWait()
+{
+    CHECK(CommandBuffer != nil);
+
+    FinishDirectEncoders();
+    ContextState.EndCommandBuffer();
+
+    FMetalDeviceRHI::Get()->FlushDeletionQueue(Commands);
+    GetDevice()->GetQueue()->SubmitCommands(Commands);
+    GetDevice()->GetQueue()->WaitForCompletion();
+
+    Commands      = GetDevice()->GetQueue()->ObtainCommands();
+    CommandBuffer = Commands->CommandBuffer;
+
+    bEncoderFencePending  = false;
+    bDirectHasEncodedWork = false;
+
+    ContextState.BeginCommandBuffer();
+}
+
+void FMetalCommandContext::FlushCopyWork()
+{
+    if (CopyContext.GetMTLCopyEncoder())
+    {
+        CopyContext.FinishEncoder();
+    }
+
+    if (!CopyCommands)
+    {
+        return;
+    }
+
+    FMetalDeviceRHI::Get()->FlushDeletionQueue(CopyCommands);
+
+    FMetalQueue* CopyQueue = GetDevice()->GetQueue(EMetalQueueType::Copy);
+    CopyQueue->SubmitCommands(CopyCommands);
+    CopyQueue->WaitForCompletion();
+
+    CopyCommands      = nullptr;
+    CopyCommandBuffer = nil;
+    bBlitOnCopyQueue  = false;
+}
+
+void FMetalCommandContext::AddPendingQuery(FMetalQueryRHI* Query)
+{
+    if (CopyContext.GetMTLCopyEncoder() && !GraphicsEncoder && !ComputeEncoder && CopyCommands)
+    {
+        CopyCommands->PendingQueries.Add(Query);
+        return;
+    }
+
+    CHECK(Commands != nullptr);
+    Commands->PendingQueries.Add(Query);
+}
+
+void FMetalCommandContext::ApplyVertexAmplification()
+{
+    FMetalGraphicsPipelineStateRHI* PipelineState = ContextState.GetGraphicsPipelineState();
+    if (!PipelineState || !GraphicsEncoder)
+    {
+        return;
+    }
+
+    const FRHIViewInstancingState& ViewInstancingState = PipelineState->GetViewInstancingState();
+    if (!ViewInstancingState.bEnableViewInstancing || ViewInstancingState.NumArraySlices == 0)
+    {
+        return;
+    }
+
+    const uint32 Count = ViewInstancingState.NumArraySlices;
+    MTLVertexAmplificationViewMapping Mappings[32];
+    CHECK(Count <= ARRAY_COUNT(Mappings));
+
+    for (uint32 Index = 0; Index < Count; ++Index)
+    {
+        Mappings[Index].renderTargetArrayIndexOffset = ViewInstancingState.StartRenderTargetArrayIndex + Index;
+        Mappings[Index].viewportArrayIndexOffset     = 0;
+    }
+
+    [GraphicsEncoder setVertexAmplificationCount:Count viewMappings:Mappings];
+}
+
+void FMetalCommandContext::InsertDrawDispatchSignpost(NSString* Name)
+{
+    if (GraphicsEncoder)
+    {
+        [GraphicsEncoder insertDebugSignpost:Name];
+    }
+    else if (ComputeEncoder)
+    {
+        [ComputeEncoder insertDebugSignpost:Name];
     }
 }
 
@@ -1369,7 +1553,7 @@ void FMetalCommandContext::WaitForPendingEncoderFenceOnCompute()
 void FMetalCommandContext::WaitForPendingEncoderFenceOnBlit()
 {
     id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
-    if (bEncoderFencePending && CopyEncoder)
+    if (bEncoderFencePending && CopyEncoder && !bBlitOnCopyQueue)
     {
         [CopyEncoder waitForFence:EncoderFence];
         bEncoderFencePending = false;
@@ -1404,70 +1588,167 @@ void FMetalCommandContext::SubmitCommandBufferAndObtainNew()
     CHECK(CommandBuffer != nil);
 
     ContextState.EndCommandBuffer();
+    FinishEncoders();
+    FlushCopyWork();
+
     FMetalDeviceRHI::Get()->FlushDeletionQueue(Commands);
     GetDevice()->GetQueue()->SubmitCommands(Commands);
 
     Commands      = GetDevice()->GetQueue()->ObtainCommands();
     CommandBuffer = Commands->CommandBuffer;
-    bEncoderFencePending = false;
+
+    bEncoderFencePending  = false;
+    bDirectHasEncodedWork = false;
+
     ContextState.BeginCommandBuffer();
 }
 
 void FMetalCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
 {
     CHECK(GraphicsEncoder != nil);
-    
+
+    if (VertexCount == 0)
+    {
+        return;
+    }
+
     PrepareForDraw();
-    
+
     const MTLPrimitiveType PrimitiveType = ContextState.GetPrimitiveType();
     CHECK(PrimitiveType != MTLPrimitiveType(-1));
+
+    [GraphicsEncoder drawPrimitives:PrimitiveType
+                        vertexStart:StartVertexLocation
+                        vertexCount:VertexCount
+                      instanceCount:1
+                       baseInstance:0];
+
+    InsertDrawDispatchSignpost(@"Draw");
 }
 
 void FMetalCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
 {
     CHECK(GraphicsEncoder != nil);
-    
+
+    if (IndexCount == 0)
+    {
+        return;
+    }
+
     PrepareForDraw();
-    
+
     const FMetalIndexBufferCache& IndexBufferCache = ContextState.GetIndexBufferCache();
     const MTLPrimitiveType        PrimitiveType    = ContextState.GetPrimitiveType();
+
     CHECK(IndexBufferCache.IndexBuffer != nil);
     CHECK(PrimitiveType                != MTLPrimitiveType(-1));
+
+    const NSUInteger IndexStride = (IndexBufferCache.IndexType == MTLIndexTypeUInt16) ? 2 : 4;
+    const NSUInteger IndexOffset = IndexBufferCache.Offset + StartIndexLocation * IndexStride;
+
+    [GraphicsEncoder drawIndexedPrimitives:PrimitiveType
+                                indexCount:IndexCount
+                                 indexType:IndexBufferCache.IndexType
+                               indexBuffer:IndexBufferCache.IndexBuffer
+                         indexBufferOffset:IndexOffset
+                             instanceCount:1
+                                baseVertex:BaseVertexLocation
+                             baseInstance:0];
+
+    InsertDrawDispatchSignpost(@"DrawIndexed");
 }
 
 void FMetalCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
 {
     CHECK(GraphicsEncoder != nil);
-    
+
+    if (VertexCountPerInstance == 0 || InstanceCount == 0)
+    {
+        return;
+    }
+
     PrepareForDraw();
-    
+
     const MTLPrimitiveType PrimitiveType = ContextState.GetPrimitiveType();
     CHECK(PrimitiveType != MTLPrimitiveType(-1));
+
+    [GraphicsEncoder drawPrimitives:PrimitiveType
+                        vertexStart:StartVertexLocation
+                        vertexCount:VertexCountPerInstance
+                      instanceCount:InstanceCount
+                       baseInstance:StartInstanceLocation];
+
+    InsertDrawDispatchSignpost(@"DrawInstanced");
 }
 
 void FMetalCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
 {
     CHECK(GraphicsEncoder != nil);
-    
+
+    if (IndexCountPerInstance == 0 || InstanceCount == 0)
+    {
+        return;
+    }
+
     PrepareForDraw();
-    
+
     const FMetalIndexBufferCache& IndexBufferCache = ContextState.GetIndexBufferCache();
     const MTLPrimitiveType        PrimitiveType    = ContextState.GetPrimitiveType();
+
     CHECK(IndexBufferCache.IndexBuffer != nil);
     CHECK(PrimitiveType                != MTLPrimitiveType(-1));
+
+    const NSUInteger IndexStride = (IndexBufferCache.IndexType == MTLIndexTypeUInt16) ? 2 : 4;
+    const NSUInteger IndexOffset = IndexBufferCache.Offset + StartIndexLocation * IndexStride;
+
+    [GraphicsEncoder drawIndexedPrimitives:PrimitiveType
+                                indexCount:IndexCountPerInstance
+                                 indexType:IndexBufferCache.IndexType
+                               indexBuffer:IndexBufferCache.IndexBuffer
+                         indexBufferOffset:IndexOffset
+                             instanceCount:InstanceCount
+                                baseVertex:BaseVertexLocation
+                             baseInstance:StartInstanceLocation];
+
+    InsertDrawDispatchSignpost(@"DrawIndexedInstanced");
 }
 
 void FMetalCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
 {
+    if (WorkGroupsX == 0 || WorkGroupsY == 0 || WorkGroupsZ == 0)
+    {
+        return;
+    }
+
     PrepareForDispatch();
+
+    FMetalComputePipelineStateRHI* PipelineState = ContextState.GetComputePipelineState();
+    CHECK(PipelineState != nullptr);
+    CHECK(ComputeEncoder != nil);
+
+    const uint16 ThreadGroupSizeX = PipelineState->GetThreadGroupSizeX();
+    const uint16 ThreadGroupSizeY = PipelineState->GetThreadGroupSizeY();
+    const uint16 ThreadGroupSizeZ = PipelineState->GetThreadGroupSizeZ();
+
+    if (ThreadGroupSizeX == 0 || ThreadGroupSizeY == 0 || ThreadGroupSizeZ == 0)
+    {
+        METAL_ERROR("Dispatch requires a non-zero threadgroup size from the compute shader");
+        return;
+    }
+
+    [ComputeEncoder dispatchThreadgroups:MTLSizeMake(WorkGroupsX, WorkGroupsY, WorkGroupsZ)
+                   threadsPerThreadgroup:MTLSizeMake(ThreadGroupSizeX, ThreadGroupSizeY, ThreadGroupSizeZ)];
+
+    InsertDrawDispatchSignpost(@"Dispatch");
 }
 
 void FMetalCommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
 {
-    // Mesh shaders are not yet implemented on Metal.
     UNREFERENCED_VARIABLE(ThreadGroupCountX);
     UNREFERENCED_VARIABLE(ThreadGroupCountY);
     UNREFERENCED_VARIABLE(ThreadGroupCountZ);
+
+    METAL_ERROR("DispatchMesh: mesh shaders are not implemented by the Metal backend");
 }
 
 void FMetalCommandContext::AcquireNextBackBuffer(FRHISwapChain* SwapChain)
@@ -1485,6 +1766,7 @@ void FMetalCommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVert
 void FMetalCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat /*Format*/, EColorSpace /*ColorSpace*/)
 {
     FMetalSwapChainRHI* MetalSwapChain = static_cast<FMetalSwapChainRHI*>(SwapChain);
+
     const uint32 ResolvedWidth  = (Width  > 0u) ? Width  : MetalSwapChain->GetDesc().Width;
     const uint32 ResolvedHeight = (Height > 0u) ? Height : MetalSwapChain->GetDesc().Height;
     MetalSwapChain->Resize(ResolvedWidth, ResolvedHeight);
@@ -1508,6 +1790,7 @@ void FMetalCommandContext::Flush()
     {
         ContextState.EndCommandBuffer();
         FinishEncoders();
+        FlushCopyWork();
 
         FMetalDeviceRHI::Get()->FlushDeletionQueue(Commands);
         GetDevice()->GetQueue()->SubmitCommands(Commands);
@@ -1517,6 +1800,7 @@ void FMetalCommandContext::Flush()
     }
 
     GetDevice()->GetQueue()->WaitForCompletion();
+    GetDevice()->GetQueue(EMetalQueueType::Copy)->WaitForCompletion();
 }
 
 void FMetalCommandContext::PushEvent(const StringView& Name)

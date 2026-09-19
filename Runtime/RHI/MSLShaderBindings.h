@@ -122,13 +122,19 @@ struct FMSLShaderHeader
     static constexpr uint32 ExpectedMagic = 0x4D534C42;
 
     /** @brief Layout revision, bumped whenever the header or the binding array changes shape. */
-    static constexpr uint32 ExpectedVersion = 1;
+    static constexpr uint32 ExpectedVersion = 2;
 
     uint32 Magic;
     uint32 Version;
     uint32 NumBindings;
     uint32 SourceSize;
+    uint16 ThreadGroupSizeX;
+    uint16 ThreadGroupSizeY;
+    uint16 ThreadGroupSizeZ;
+    uint16 Padding0;
 };
+
+static_assert(sizeof(FMSLShaderHeader) == 24, "FMSLShaderHeader is serialized verbatim and must not carry padding");
 
 inline bool ParseMSLShaderByteCode(const TArray<uint8>& ByteCode, TArray<FMSLShaderBinding>& OutBindings, TArrayView<const uint8>& OutSource)
 {

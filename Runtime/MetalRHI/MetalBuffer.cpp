@@ -63,6 +63,11 @@ void* FMetalBufferRHI::Map(uint64 Offset, uint64 Size)
         {
             Queue->WaitForCompletion();
         }
+
+        if (FMetalQueue* CopyQueue = GetDevice()->GetQueue(EMetalQueueType::Copy))
+        {
+            CopyQueue->WaitForCompletion();
+        }
     }
 
     uint8* Contents = static_cast<uint8*>([BufferHandle contents]);

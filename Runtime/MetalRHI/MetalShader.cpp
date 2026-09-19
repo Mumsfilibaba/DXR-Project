@@ -1,4 +1,5 @@
 #include "MetalRHI/MetalShader.h"
+#include "Core/Memory/Memory.h"
 
 FMetalShader::FMetalShader(FMetalDevice* InDevice, EShaderVisibility::Type InVisibility)
     : FMetalDeviceChild(InDevice)
@@ -6,6 +7,9 @@ FMetalShader::FMetalShader(FMetalDevice* InDevice, EShaderVisibility::Type InVis
     , FunctionName(nil)
     , Visibility(InVisibility)
     , Function(nil)
+    , ThreadGroupSizeX(0)
+    , ThreadGroupSizeY(0)
+    , ThreadGroupSizeZ(0)
 {
 }
 
@@ -23,6 +27,19 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
     {
         LOG_ERROR("Shader bytecode is not a valid MSL blob");
         return false;
+    }
+
+    if (InCode.Size() >= static_cast<int32>(sizeof(FMSLShaderHeader)))
+    {
+        FMSLShaderHeader Header;
+        Memory::Memcpy(&Header, InCode.Data(), sizeof(FMSLShaderHeader));
+
+        if (Header.Magic == FMSLShaderHeader::ExpectedMagic && Header.Version == FMSLShaderHeader::ExpectedVersion)
+        {
+            ThreadGroupSizeX = Header.ThreadGroupSizeX;
+            ThreadGroupSizeY = Header.ThreadGroupSizeY;
+            ThreadGroupSizeZ = Header.ThreadGroupSizeZ;
+        }
     }
 
     @autoreleasepool

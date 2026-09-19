@@ -2,13 +2,16 @@
 
 #include "TestCommon/TestMacros.h"
 
+#include <Core/Memory/Memory.h>
 #include <Core/Misc/ConsoleManager.h>
 #include <Core/Misc/Paths.h>
 #include <RHI/RHI.h>
 #include <RHI/RHICommandList.h>
+#include <RHI/RHIPipelineState.h>
 #include <RHI/RHIQuery.h>
 #include <RHI/RHIResources.h>
 #include <RHI/RHISamplerState.h>
+#include <RHI/RHITexture.h>
 #include <RHI/ShaderCompiler.h>
 
 #if PLATFORM_MACOS
@@ -331,6 +334,16 @@ static bool ProbeShaders()
     }
 
 #if PLATFORM_MACOS
+    if (bCompiled && RHI::Device->GetRHIType() == ERHIType::Metal)
+    {
+        TEST_SECTION("The compute blob carries a non-zero threadgroup size");
+        FMSLShaderHeader Header;
+        Memory::Memcpy(&Header, ByteCode.Data(), sizeof(FMSLShaderHeader));
+        TEST_EXPECT(Header.ThreadGroupSizeX != 0);
+    }
+#endif
+
+#if PLATFORM_MACOS
     if (RHI::Device->GetRHIType() == ERHIType::Metal)
     {
         TEST_SECTION("A compute PSO materialises a static sampler on s0");
@@ -414,6 +427,7 @@ static bool ProbeCommandRecording()
             }
             CommandList.WriteFence(Fence.Get());
             FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+            FRHICommandListExecutor::Get().WaitForCommands();
 
             TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
             TEST_EXPECT(Fence->IsSignaled());
@@ -466,6 +480,7 @@ static bool ProbeCommandRecording()
                 CommandList.CopyBuffer(ReadbackBuffer.Get(), UAVBuffer.Get(), FRHIBufferCopyDesc(0, 0, ByteSize));
                 CommandList.WriteFence(Fence.Get());
                 FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+                FRHICommandListExecutor::Get().WaitForCommands();
 
                 TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
 
@@ -480,6 +495,228 @@ static bool ProbeCommandRecording()
             }
         }
     }
+
+#if PLATFORM_MACOS
+    if (RHI::Device->GetRHIType() == ERHIType::Metal)
+    {
+        if (!FShaderCompiler::Initialize(Paths::GetAssetDir()))
+        {
+            TEST_EXPECT(false);
+        }
+        else
+        {
+            TEST_SECTION("A static sampler dispatch samples into a UAV");
+            {
+                const uint8 Magenta[4] = { 255, 0, 255, 255 };
+                uint8 SourcePixels[4 * 4 * 4];
+                for (int32 Index = 0; Index < 16; ++Index)
+                {
+                    SourcePixels[Index * 4 + 0] = Magenta[0];
+                    SourcePixels[Index * 4 + 1] = Magenta[1];
+                    SourcePixels[Index * 4 + 2] = Magenta[2];
+                    SourcePixels[Index * 4 + 3] = Magenta[3];
+                }
+
+                FBootTextureData SourceData(SourcePixels, 4 * 4, 4 * 4 * 4);
+                FRHITextureRef SourceTexture = RHI::CreateTexture(FRHITextureDesc::CreateTexture2D(
+                    EFormat::R8G8B8A8_Unorm, 4, 4, 1, 1, ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopyDest),
+                    ERHIResourceState::Common, &SourceData);
+                TEST_EXPECT(SourceTexture != nullptr);
+
+                FRHITextureRef DestTexture = RHI::CreateTexture(FRHITextureDesc::CreateTexture2D(
+                    EFormat::R8G8B8A8_Unorm, 4, 4, 1, 1,
+                    ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopySource));
+                TEST_EXPECT(DestTexture != nullptr);
+
+                const String SamplerSource(
+                    "SamplerState LinearSampler : register(s0);\n"
+                    "Texture2D<float4> SourceTex : register(t0);\n"
+                    "RWTexture2D<float4> DestTex : register(u0);\n"
+                    "[numthreads(1, 1, 1)]\n"
+                    "void Main(uint3 DispatchThreadID : SV_DispatchThreadID)\n"
+                    "{\n"
+                    "    DestTex[DispatchThreadID.xy] = SourceTex.SampleLevel(LinearSampler, float2(0.5, 0.5), 0);\n"
+                    "}\n");
+
+                TArray<uint8> SamplerByteCode;
+                const FShaderCompileInfo SamplerCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+                const bool bSamplerCompiled = FShaderCompiler::Get().CompileFromSource(SamplerSource, SamplerCompileInfo, SamplerByteCode);
+                TEST_EXPECT(bSamplerCompiled);
+
+                if (bSamplerCompiled && SourceTexture && DestTexture)
+                {
+                    FRHIComputeShaderRef SamplerComputeShader = RHI::CreateComputeShader(SamplerByteCode);
+                    TEST_EXPECT(SamplerComputeShader != nullptr);
+
+                    FRHIStaticSamplerInfo StaticSampler;
+                    StaticSampler.ShaderRegister   = 0;
+                    StaticSampler.ShaderVisibility = EShaderStage::Compute;
+                    StaticSampler.Filter           = ESamplerFilter::MinMagMipLinear;
+
+                    FRHIComputePipelineStateDesc SamplerPipelineDesc;
+                    SamplerPipelineDesc.Shader         = SamplerComputeShader.Get();
+                    SamplerPipelineDesc.StaticSamplers = TArrayView<const FRHIStaticSamplerInfo>(&StaticSampler, 1);
+
+                    FRHIComputePipelineStateRef SamplerPipelineState = RHI::CreateComputePipelineState(SamplerPipelineDesc);
+                    TEST_EXPECT(SamplerPipelineState != nullptr);
+
+                    FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(256));
+                    TEST_EXPECT(ReadbackBuffer != nullptr);
+
+                    if (SamplerComputeShader && SamplerPipelineState && ReadbackBuffer
+                        && SourceTexture->GetShaderResourceView() && DestTexture->GetUnorderedAccessView())
+                    {
+                        FRHIFenceRef Fence = RHI::CreateFence();
+                        FRHICommandList CommandList;
+                        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(
+                            SourceTexture.Get(), ERHIResourceState::Common, ERHIResourceState::ShaderResource));
+                        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(
+                            DestTexture.Get(), ERHIResourceState::Common, ERHIResourceState::UnorderedAccess));
+                        CommandList.SetComputePipelineState(SamplerPipelineState.Get());
+                        CommandList.SetShaderResourceView(SamplerComputeShader.Get(), SourceTexture->GetShaderResourceView(), 0);
+                        CommandList.SetUnorderedAccessView(SamplerComputeShader.Get(), DestTexture->GetUnorderedAccessView(), 0);
+                        CommandList.Dispatch(1, 1, 1);
+                        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(
+                            DestTexture.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
+                        CommandList.CopyTextureRegionToBuffer(ReadbackBuffer.Get(), 0, DestTexture.Get(), FTextureRegion2D(1, 1), 0);
+                        CommandList.WriteFence(Fence.Get());
+                        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+                        FRHICommandListExecutor::Get().WaitForCommands();
+
+                        TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
+
+                        const uint8* Mapped = static_cast<const uint8*>(ReadbackBuffer->Map());
+                        TEST_EXPECT(Mapped != nullptr);
+                        if (Mapped)
+                        {
+                            TEST_EXPECT_EQ(Mapped[0], static_cast<uint8>(255));
+                            TEST_EXPECT_EQ(Mapped[1], static_cast<uint8>(0));
+                            TEST_EXPECT_EQ(Mapped[2], static_cast<uint8>(255));
+                            ReadbackBuffer->Unmap();
+                        }
+                    }
+                }
+            }
+
+            TEST_SECTION("An offscreen Draw(3) writes a red pixel");
+            {
+                const String VertexSource(
+                    "float4 Main(uint VertexID : SV_VertexID) : SV_Position\n"
+                    "{\n"
+                    "    float2 Positions[3];\n"
+                    "    Positions[0] = float2(-1.0, -1.0);\n"
+                    "    Positions[1] = float2( 3.0, -1.0);\n"
+                    "    Positions[2] = float2(-1.0,  3.0);\n"
+                    "    return float4(Positions[VertexID], 0.0, 1.0);\n"
+                    "}\n");
+
+                const String PixelSource(
+                    "float4 Main() : SV_Target\n"
+                    "{\n"
+                    "    return float4(1.0, 0.0, 0.0, 1.0);\n"
+                    "}\n");
+
+                TArray<uint8> VertexByteCode;
+                TArray<uint8> PixelByteCode;
+                const FShaderCompileInfo VertexCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
+                const FShaderCompileInfo PixelCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
+                const bool bVertexCompiled = FShaderCompiler::Get().CompileFromSource(VertexSource, VertexCompileInfo, VertexByteCode);
+                const bool bPixelCompiled  = FShaderCompiler::Get().CompileFromSource(PixelSource, PixelCompileInfo, PixelByteCode);
+                TEST_EXPECT(bVertexCompiled);
+                TEST_EXPECT(bPixelCompiled);
+
+                if (bVertexCompiled && bPixelCompiled)
+                {
+                    FRHIVertexShaderRef VertexShader = RHI::CreateVertexShader(VertexByteCode);
+                    FRHIPixelShaderRef  PixelShader  = RHI::CreatePixelShader(PixelByteCode);
+                    TEST_EXPECT(VertexShader != nullptr);
+                    TEST_EXPECT(PixelShader != nullptr);
+
+                    FRHIRasterizerStateDesc RasterizerDesc;
+                    RasterizerDesc.CullMode = ECullMode::None;
+                    FRHIDepthStencilStateRef DepthStencilState = RHI::CreateDepthStencilState(FRHIDepthStencilStateDesc());
+                    FRHIRasterizerStateRef   RasterizerState   = RHI::CreateRasterizerState(RasterizerDesc);
+                    FRHIBlendStateRef        BlendState        = RHI::CreateBlendState(FRHIBlendStateDesc());
+
+                    FRHIGraphicsPipelineStateDesc GraphicsDesc;
+                    GraphicsDesc.VertexShader                         = VertexShader.Get();
+                    GraphicsDesc.PixelShader                          = PixelShader.Get();
+                    GraphicsDesc.DepthStencilState                    = DepthStencilState.Get();
+                    GraphicsDesc.RasterizerState                      = RasterizerState.Get();
+                    GraphicsDesc.BlendState                           = BlendState.Get();
+                    GraphicsDesc.PrimitiveTopology                    = EPrimitiveTopology::TriangleList;
+                    GraphicsDesc.RasterizerOutputFormats.NumRenderTargets = 1;
+                    GraphicsDesc.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
+
+                    FRHIGraphicsPipelineStateRef GraphicsPipeline = RHI::CreateGraphicsPipelineState(GraphicsDesc);
+                    TEST_EXPECT(GraphicsPipeline != nullptr);
+
+                    if (RHI::bSupportsViewInstancing)
+                    {
+                        TEST_SECTION("A graphics PSO with view instancing creates on this device");
+                        GraphicsDesc.ViewInstancingState.bEnableViewInstancing = 1;
+                        GraphicsDesc.ViewInstancingState.NumArraySlices        = 2;
+                        FRHIGraphicsPipelineStateRef InstancedPipeline = RHI::CreateGraphicsPipelineState(GraphicsDesc);
+                        TEST_EXPECT(InstancedPipeline != nullptr);
+                        if (InstancedPipeline)
+                        {
+                            const FMetalGraphicsPipelineStateRHI* MetalPipeline = static_cast<const FMetalGraphicsPipelineStateRHI*>(InstancedPipeline.Get());
+                            TEST_EXPECT(MetalPipeline->GetViewInstancingState().bEnableViewInstancing);
+                        }
+                    }
+
+                    FRHITextureRef RenderTarget = RHI::CreateTexture(FRHITextureDesc::CreateTexture2D(
+                        EFormat::R8G8B8A8_Unorm, 4, 4, 1, 1,
+                        ETextureUsageFlags::RenderTarget | ETextureUsageFlags::CopySource));
+                    TEST_EXPECT(RenderTarget != nullptr);
+                    TEST_EXPECT(RenderTarget && RenderTarget->GetRenderTargetView() != nullptr);
+
+                    FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(256));
+                    TEST_EXPECT(ReadbackBuffer != nullptr);
+
+                    if (GraphicsPipeline && RenderTarget && RenderTarget->GetRenderTargetView() && ReadbackBuffer)
+                    {
+                        FRHIBeginRenderPassDesc::FRenderTargetAttachments Attachments;
+                        Attachments[0] = FRHIRenderTargetAttachment(
+                            RenderTarget->GetRenderTargetView(),
+                            EAttachmentLoadAction::Clear,
+                            EAttachmentStoreAction::Store);
+
+                        FRHIFenceRef Fence = RHI::CreateFence();
+                        FRHICommandList CommandList;
+                        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(
+                            RenderTarget.Get(), ERHIResourceState::Common, ERHIResourceState::RenderTarget));
+                        CommandList.BeginRenderPass(FRHIBeginRenderPassDesc(Attachments, 1));
+                        CommandList.SetGraphicsPipelineState(GraphicsPipeline.Get());
+                        CommandList.SetViewport(FViewportRegion(4.0f, 4.0f, 0.0f, 0.0f, 0.0f, 1.0f));
+                        CommandList.Draw(3, 0);
+                        CommandList.EndRenderPass();
+                        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(
+                            RenderTarget.Get(), ERHIResourceState::RenderTarget, ERHIResourceState::CopySource));
+                        CommandList.CopyTextureRegionToBuffer(ReadbackBuffer.Get(), 0, RenderTarget.Get(), FTextureRegion2D(1, 1), 0);
+                        CommandList.WriteFence(Fence.Get());
+                        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+                        FRHICommandListExecutor::Get().WaitForCommands();
+
+                        TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
+
+                        const uint8* Mapped = static_cast<const uint8*>(ReadbackBuffer->Map());
+                        TEST_EXPECT(Mapped != nullptr);
+                        if (Mapped)
+                        {
+                            TEST_EXPECT_EQ(Mapped[0], static_cast<uint8>(255));
+                            TEST_EXPECT_EQ(Mapped[1], static_cast<uint8>(0));
+                            TEST_EXPECT_EQ(Mapped[2], static_cast<uint8>(0));
+                            ReadbackBuffer->Unmap();
+                        }
+                    }
+                }
+            }
+
+            FShaderCompiler::Destroy();
+        }
+    }
+#endif
 
     TEST_END();
 }
@@ -519,6 +756,7 @@ static bool ProbeTimestamps()
             CommandList.QueryTimestamp(EndQuery.Get());
             CommandList.WriteFence(Fence.Get());
             FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+            FRHICommandListExecutor::Get().WaitForCommands();
 
             TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
 
@@ -545,6 +783,14 @@ static bool ProbeCapabilityHonesty(ERHIType ExpectedType)
 
         TEST_SECTION("Metal reports timestamp queries when the device has a timestamp counter set");
         TEST_EXPECT(RHI::bSupportsTimestampQueries);
+
+        TEST_SECTION("Metal overwrites Null leftover capability flags");
+        TEST_EXPECT(RHI::bSupportsGeometryShaders == false);
+        TEST_EXPECT(RHI::SamplePositionsTier == ESamplePositionsTier::NotSupported);
+        TEST_EXPECT(RHI::bSupportsVRS == false);
+        TEST_EXPECT(RHI::MaxShaderModel == EShaderModel::SM_6_6);
+        TEST_EXPECT(RHI::bSupportRenderTargetArrayIndexFromVertexShader);
+        TEST_EXPECT(RHI::bSupportsDynamicDepthBias);
     }
 
     TEST_END();

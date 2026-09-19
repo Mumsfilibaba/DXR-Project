@@ -205,6 +205,11 @@ public:
         return PrimitiveType;
     }
 
+    const FRHIViewInstancingState& GetViewInstancingState() const
+    {
+        return Desc.ViewInstancingState;
+    }
+
 private:
     FRHIGraphicsPipelineStateDesc          Desc;
     TSharedRef<FMetalBlendStateRHI>        BlendState;
@@ -248,11 +253,18 @@ public:
         return MaxTotalThreadsPerThreadgroup;
     }
 
+    uint16 GetThreadGroupSizeX() const { return ThreadGroupSizeX; }
+    uint16 GetThreadGroupSizeY() const { return ThreadGroupSizeY; }
+    uint16 GetThreadGroupSizeZ() const { return ThreadGroupSizeZ; }
+
 private:
     id<MTLComputePipelineState>        PipelineState;
     FMetalPipelineBindingLayout        Bindings;
     TArray<FMetalStaticSamplerBinding> StaticSamplers;
     uint32                             MaxTotalThreadsPerThreadgroup;
+    uint16                             ThreadGroupSizeX;
+    uint16                             ThreadGroupSizeY;
+    uint16                             ThreadGroupSizeZ;
 };
 
 class FMetalMeshletPipelineStateRHI : public FRHIMeshletPipelineState, public FMetalDeviceChild
@@ -283,6 +295,11 @@ public:
     id<MTLRenderPipelineState> GetMTLPipelineState() const
     {
         return PipelineState;
+    }
+
+    const FRHIViewInstancingState& GetViewInstancingState() const
+    {
+        return Desc.ViewInstancingState;
     }
 
 private:
