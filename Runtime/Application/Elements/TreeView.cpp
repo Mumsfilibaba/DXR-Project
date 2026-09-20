@@ -155,6 +155,7 @@ void FTreeView::Initialize(const FDesc& Desc)
     {
         FScrollBar::FDesc BarDesc;
         BarDesc.Orientation     = EOrientation::Vertical;
+        BarDesc.bAutoHide       = true;
         BarDesc.OnOffsetChanged = FOnScrollBarOffsetChanged::CreateRaw(this, &FTreeView::OnScrollBarMoved);
 
         ScrollBar = FScrollBar::Create(BarDesc);
@@ -224,8 +225,11 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     const int32 HeaderExtent = GetHeaderExtent();
     if (HeaderExtent > 0)
     {
+        const FUIInnerFrameStyle& Frame = FUIStyle::GetDefault().InnerFrame;
+        const float HeaderRadius = Math::Max(Frame.CornerRadius - Frame.BorderThickness, 0.0f);
+
         const FRectangle HeaderBounds(Bounds.Position, Bounds.Width, HeaderExtent);
-        OutCommandList.AddBox(LayerId, HeaderBounds, Style.HeaderFill);
+        OutCommandList.AddBox(LayerId, HeaderBounds, Style.HeaderFill, FCornerRadii::Top(HeaderRadius));
 
         if (Font)
         {
@@ -264,8 +268,9 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     for (int32 RowIndex = FirstRow; RowIndex <= LastRow; ++RowIndex)
     {
         const TSharedPtr<FTreeItem>& Item      = Rows[RowIndex];
-        const FRectangle             RowBounds = ComputeRowBounds(Bounds, RowIndex);
-        const int32                  Depth     = Item->GetDepth();
+        const FRectangle             RowBounds       = ComputeRowBounds(Bounds, RowIndex);
+        const FRectangle             HighlightBounds = ComputeHighlightBounds(RowBounds);
+        const int32                  Depth           = Item->GetDepth();
 
         if (bAlternateRowColors)
         {
@@ -274,16 +279,16 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 
         if (IsSelected(Item))
         {
-            OutCommandList.AddBox(LayerId, RowBounds, bHasFocus ? Style.SelectedFill : Style.InactiveSelectedFill, HighlightRadii);
+            OutCommandList.AddBox(LayerId, HighlightBounds, bHasFocus ? Style.SelectedFill : Style.InactiveSelectedFill, HighlightRadii);
         }
         else if (bHighlightAncestors && IsAncestorOfSelection(Item))
         {
-            OutCommandList.AddBox(LayerId, RowBounds, Style.AncestorFill, HighlightRadii);
+            OutCommandList.AddBox(LayerId, HighlightBounds, Style.AncestorFill, HighlightRadii);
         }
 
         if (RowIndex == HoveredRowIndex)
         {
-            OutCommandList.AddBox(LayerId, RowBounds, HoverFill, HighlightRadii);
+            OutCommandList.AddBox(LayerId, HighlightBounds, HoverFill, HighlightRadii);
         }
 
         const FRectangle DisclosureBounds = ComputeDisclosureBounds(RowBounds, Depth);
@@ -460,12 +465,30 @@ FEventResponse FTreeView::OnMouseScroll(const FCursorEvent& CursorEvent)
     return FEventResponse::Handled();
 }
 
+FEventResponse FTreeView::OnMouseEntered(const FCursorEvent& CursorEvent)
+{
+    UNREFERENCED_VARIABLE(CursorEvent);
+
+    if (ScrollBar)
+    {
+        ScrollBar->SetRevealed(true);
+    }
+
+    return FEventResponse::Unhandled();
+}
+
 FEventResponse FTreeView::OnMouseLeft(const FCursorEvent& CursorEvent)
 {
     UNREFERENCED_VARIABLE(CursorEvent);
 
     HoveredRowIndex = InvalidRowIndex;
     PressedRowIndex = InvalidRowIndex;
+
+    if (ScrollBar)
+    {
+        ScrollBar->SetRevealed(false);
+    }
+
     return FEventResponse::Unhandled();
 }
 
@@ -605,6 +628,12 @@ FRectangle FTreeView::GetItemRowBounds(const TSharedPtr<FTreeItem>& Item) const
     return RowIndex == InvalidRowIndex ? FRectangle() : ComputeRowBounds(GetContentRectangle(), RowIndex);
 }
 
+FRectangle FTreeView::GetItemHighlightBounds(const TSharedPtr<FTreeItem>& Item) const
+{
+    const FRectangle RowBounds = GetItemRowBounds(Item);
+    return RowBounds.IsEmpty() ? FRectangle() : ComputeHighlightBounds(RowBounds);
+}
+
 FRectangle FTreeView::GetItemLabelBounds(const TSharedPtr<FTreeItem>& Item) const
 {
     const FRectangle RowBounds = GetItemRowBounds(Item);
@@ -712,17 +741,32 @@ FRectangle FTreeView::ComputeRowBounds(const FRectangle& ViewBounds, int32 RowIn
     return FRectangle(Position, ViewBounds.Width, RowHeight);
 }
 
+FRectangle FTreeView::ComputeHighlightBounds(const FRectangle& RowBounds) const
+{
+    if (!ScrollBar || !ScrollBar->IsScrollable())
+    {
+        return RowBounds;
+    }
+
+    const int32 Gutter    = 2;
+    const int32 Thickness = FUIStyle::GetDefault().Metrics.ScrollBarThickness;
+    FRectangle  Highlight = RowBounds;
+    Highlight.Width       = Math::Max(Highlight.Width - Thickness - Gutter, 0);
+    return Highlight;
+}
+
 FRectangle FTreeView::ComputeDisclosureBounds(const FRectangle& RowBounds, int32 Depth) const
 {
     const int32      Extent = GetArrowExtent();
-    const IntVector2 Position(RowBounds.Position.X + (Depth * IndentPerLevel), RowBounds.Position.Y + ((RowHeight - Extent) / 2));
+    const IntVector2 Position(RowBounds.Position.X + Style.ContentInset + (Depth * IndentPerLevel),
+        RowBounds.Position.Y + ((RowHeight - Extent) / 2));
 
     return FRectangle(Position, Extent, Extent);
 }
 
 int32 FTreeView::ComputeRowExtent(const TSharedPtr<FTreeItem>& Item) const
 {
-    int32 Extent = (Item->GetDepth() * IndentPerLevel) + GetArrowExtent() + TREE_DISCLOSURE_SPACING;
+    int32 Extent = Style.ContentInset + (Item->GetDepth() * IndentPerLevel) + GetArrowExtent() + TREE_DISCLOSURE_SPACING;
 
     if (bReserveIconColumn)
     {

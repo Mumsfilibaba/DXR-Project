@@ -15,6 +15,7 @@
 #include "Engine/World/Components/StaticMeshComponent.h"
 #include "Core/Containers/Set.h"
 #include "Application/Application.h"
+#include "Application/Elements/Border.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/CheckBox.h"
 #include "Application/Elements/Overlay.h"
@@ -30,16 +31,13 @@
 #include "Application/Menus/MenuStack.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 
-// Wide enough for the camera menu's captions and slider tracks to sit side by side without crowding
 constexpr int32 CAMERA_MENU_WIDTH = 260;
+constexpr int32 CAMERA_LABEL_GAP = 8;
 
-// The gap ImGui leaves between two groups of the viewport strip, which the bar's own default of 2 leaves too tight
 constexpr int32 TOOLBAR_GROUP_GAP = 8;
 
-// The strip's own inset, which is ImGui's twelve either side and six above and below its 26px entries
 static const FMargin TOOLBAR_INSET = FMargin(12, 6, 12, 6);
 
-// ImGui's widths for the strip's entries, which are what keep the three radio groups reading as one row
 constexpr int32 TRANSLATION_BUTTON_WIDTH = 76;
 constexpr int32 ROTATE_BUTTON_WIDTH      = 56;
 constexpr int32 SCALE_BUTTON_WIDTH       = 52;
@@ -49,10 +47,7 @@ constexpr int32 PLAY_BUTTON_WIDTH        = 52;
 constexpr int32 PAUSE_BUTTON_WIDTH       = 56;
 constexpr int32 CAMERA_BUTTON_WIDTH      = 118;
 
-// How wide the view dropdown may grow to fit the longest debug view name before that name is left to clip
 constexpr int32 VIEW_BUTTON_MAX_WIDTH = 128;
-
-// What the view dropdown's label needs beyond the name itself, being the two insets and the arrow
 constexpr int32 VIEW_BUTTON_LABEL_OVERHEAD = 36;
 
 struct FDebugViewEntry
@@ -162,6 +157,7 @@ FEditorViewportPanel::FEditorViewportPanel(FEditorEngine* InEditorEngine)
     , ContextMenuNdc(0.0f, 0.0f)
     , ContextMenuScreenPosition()
     , ContextMenuPickRequestId(0)
+    , ContextMenuActor(nullptr)
     , DebugView(FSceneRenderView::EDebugView::None)
     , SecondaryDebugView(FSceneRenderView::EDebugView::None)
     , DebugViewChannelMask(FSceneRenderView::EDebugViewChannel::All)
@@ -503,11 +499,11 @@ TSharedPtr<FToolBar> FEditorViewportPanel::BuildToolBar()
 
     Bar->AddDropDown(
         FToolBarItemDesc().SetLabel("Camera").SetToolTipText("Speeds, lens and framing").SetMinWidth(CAMERA_BUTTON_WIDTH),
-        BuildCameraMenu());
+        FOnGetMenuContent::CreateRaw(this, &FEditorViewportPanel::BuildCameraMenu));
 
     Bar->AddDropDown(
         FToolBarItemDesc().SetToolTipText("View mode, secondary view and channel mask").SetMinWidth(ComputeViewButtonWidth()),
-        BuildViewOptionsMenu());
+        FOnGetMenuContent::CreateRaw(this, &FEditorViewportPanel::BuildViewOptionsMenu));
 
     ViewItem = Bar->GetItems().Last().Button;
     return Bar;
@@ -675,8 +671,11 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildCameraMenu()
 
     Menu->SetMinDesiredWidth(CAMERA_MENU_WIDTH);
 
-    const auto AddSliderRow = [&Menu, &Font](const CHAR* RowLabel, float MinValue, float MaxValue, float Value,
-        int32 Precision, const FOnSliderValueChanged& OnValueChanged)
+    TArray<TSharedPtr<FBorder>> CaptionColumns;
+    int32                       CaptionColumnWidth = 0;
+
+    const auto AddSliderRow = [&Menu, &Font, &CaptionColumns, &CaptionColumnWidth](const CHAR* RowLabel,
+        float MinValue, float MaxValue, float Value, int32 Precision, const FOnSliderValueChanged& OnValueChanged)
     {
         FTextBlock::FDesc CaptionDesc;
         CaptionDesc.Text = RowLabel;
@@ -691,9 +690,17 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildCameraMenu()
         SliderDesc.bShowValueText = true;
         SliderDesc.OnValueChanged = OnValueChanged;
 
+        FBorder::FDesc CaptionColumnDesc;
+        CaptionColumnDesc.Content = FTextBlock::Create(CaptionDesc);
+
+        TSharedPtr<FBorder> CaptionColumn = FBorder::Create(CaptionColumnDesc);
+
+        CaptionColumns.Add(CaptionColumn);
+        CaptionColumnWidth = Math::Max(CaptionColumnWidth, Font->MeasureWidth(StringView(RowLabel)));
+
         TSharedPtr<FHorizontalBox> Row = FHorizontalBox::Create();
-        Row->AddSlot(FTextBlock::Create(CaptionDesc))
-            .SetPadding(FMargin(0, 0, 8, 0))
+        Row->AddSlot(CaptionColumn)
+            .SetPadding(FMargin(0, 0, CAMERA_LABEL_GAP, 0))
             .SetVerticalAlignment(EVerticalAlignment::Center);
         Row->AddSlot(FSlider::Create(SliderDesc))
             .SetFillCoefficient(1.0f)
@@ -752,6 +759,11 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildCameraMenu()
         {
             CameraController->SetFarPlane(NewValue);
         }));
+
+    for (const TSharedPtr<FBorder>& CaptionColumn : CaptionColumns)
+    {
+        CaptionColumn->SetMinWidth(CaptionColumnWidth);
+    }
 
     Menu->AddSection("Actions", Font);
 
@@ -1125,6 +1137,7 @@ void FEditorViewportPanel::OnViewportContextMenu(const IntVector2& ImagePosition
         ContextMenuLocation = Vector3(0.0f, 0.0f, 0.0f);
     }
 
+    ContextMenuActor         = nullptr;
     ContextMenuPickRequestId = EditorEngine->RequestPick(PixelX, PixelY, EEditorPickPurpose::ContextMenu);
 
     ShowContextMenu();
@@ -1194,26 +1207,34 @@ TSharedPtr<FMenu> FEditorViewportPanel::BuildContextMenu()
 
     Menu->AddItem(FMenuItem::Create(PlaceDesc));
 
-    Menu->AddSection("Selection", Font);
+    Menu->AddSection("Actor", Font);
 
     FMenuItem::FDesc FocusDesc;
-    FocusDesc.Label        = "Focus Selected";
+    FocusDesc.Label        = "Focus";
     FocusDesc.ShortcutText = "F";
     FocusDesc.Font         = Font;
     FocusDesc.OnActivated  = FOnMenuItemActivated::CreateLambda([this]()
     {
-        FocusOnActor(EditorEngine->GetSelectedActor());
+        FocusOnActor(ContextMenuActor ? ContextMenuActor : EditorEngine->GetSelectedActor());
     });
 
     Menu->AddItem(FMenuItem::Create(FocusDesc));
 
     FMenuItem::FDesc DeleteDesc;
-    DeleteDesc.Label        = "Delete Selected";
+    DeleteDesc.Label        = "Delete";
     DeleteDesc.ShortcutText = "Del";
     DeleteDesc.Font         = Font;
     DeleteDesc.OnActivated  = FOnMenuItemActivated::CreateLambda([this]()
     {
-        EditorEngine->RequestDeleteActors(EditorEngine->GetSelectedActors());
+        if (ContextMenuActor)
+        {
+            EditorEngine->RequestDeleteActor(ContextMenuActor);
+            ContextMenuActor = nullptr;
+        }
+        else
+        {
+            EditorEngine->RequestDeleteActors(EditorEngine->GetSelectedActors());
+        }
     });
 
     Menu->AddItem(FMenuItem::Create(DeleteDesc));
@@ -1346,6 +1367,11 @@ void FEditorViewportPanel::OnActorRemoved(FActor* Actor)
 {
     CameraController->OnActorRemoved(Actor);
 
+    if (ContextMenuActor == Actor)
+    {
+        ContextMenuActor = nullptr;
+    }
+
     const int32 DragIndex = DragActors.Find(Actor);
     if (DragIndex != TArray<FActor*>::InvalidIndex)
     {
@@ -1363,10 +1389,7 @@ void FEditorViewportPanel::OnContextMenuPickResult(const FEditorPickResult& Resu
 
     ContextMenuPickRequestId = 0;
 
-    if (PickedActor)
-    {
-        EditorEngine->SetSelectedActor(PickedActor);
-    }
+    ContextMenuActor = PickedActor;
 
     if (Result.bHasDepth)
     {

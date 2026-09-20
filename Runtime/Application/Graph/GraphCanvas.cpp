@@ -43,12 +43,16 @@ FGraphCanvas::FGraphCanvas()
     , NodeStyle()
     , BackgroundColor(FUIStyle::GetDefault().Colors.WindowBackground)
     , LinkColor(0.0f, 0.0f, 0.0f, 0.0f)
+    , GridColor(0.0f, 0.0f, 0.0f, 0.0f)
+    , SurroundColor(0.0f, 0.0f, 0.0f, 0.0f)
+    , CornerRadius(0.0f)
     , MarqueeBounds()
     , Pan(0.0f, 0.0f)
     , DraggingToPosition(0.0f, 0.0f)
     , DragAnchor(0, 0)
     , LastDragPosition(0, 0)
     , Zoom(1.0f)
+    , FitMinZoom(MinZoom)
     , GridSpacingInGraphSpace(GridSpacing)
     , SelectedLinkId(-1)
     , DraggingFromPinId(-1)
@@ -72,7 +76,11 @@ void FGraphCanvas::Initialize(const FDesc& Desc)
     NodeStyle                  = Desc.NodeStyle;
     BackgroundColor            = Desc.BackgroundColor;
     LinkColor                  = Desc.LinkColor;
+    GridColor                  = Desc.GridColor;
+    SurroundColor              = Desc.SurroundColor;
+    CornerRadius               = Math::Max(Desc.CornerRadius, 0.0f);
     GridSpacingInGraphSpace    = Math::Max(Desc.GridSpacing, 1);
+    FitMinZoom                 = Math::Clamp(Desc.FitMinZoom, MinZoom, MaxZoom);
     bShowGrid                  = Desc.bShowGrid;
     bIsViewer                  = Desc.bIsViewer;
     OnGetContextMenuDelegate   = Desc.OnGetContextMenu;
@@ -126,7 +134,9 @@ int32 FGraphCanvas::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
     const FUIStyle&   Style  = FUIStyle::GetDefault();
     const FRectangle& Bounds = AllottedGeometry.Bounds;
 
-    OutCommandList.AddBox(LayerId, Bounds, BackgroundColor);
+    const FCornerRadii Radii(CornerRadius);
+
+    OutCommandList.AddBox(LayerId, Bounds, BackgroundColor, Radii);
 
     if (bShowGrid)
     {
@@ -160,6 +170,13 @@ int32 FGraphCanvas::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
     }
 
     OutCommandList.PopClip(MaxLayerId + 1);
+
+    if (CornerRadius > 0.0f && SurroundColor.A > 0.0f)
+    {
+        OutCommandList.AddPanelChrome(MaxLayerId + 1, Bounds, Radii, 0.0f, FFloatColor(0.0f, 0.0f, 0.0f, 0.0f), SurroundColor);
+        return MaxLayerId + 2;
+    }
+
     return MaxLayerId + 1;
 }
 
@@ -361,7 +378,7 @@ void FGraphCanvas::FitToNodes()
     const float   WidthZoom  = GraphSize.X > 0.0f ? (static_cast<float>(Bounds.Width) / GraphSize.X) : MaxZoom;
     const float   HeightZoom = GraphSize.Y > 0.0f ? (static_cast<float>(Bounds.Height) / GraphSize.Y) : MaxZoom;
 
-    Zoom = Math::Clamp(Math::Min(WidthZoom, HeightZoom), MinZoom, MaxZoom);
+    Zoom = Math::Clamp(Math::Min(WidthZoom, HeightZoom), FitMinZoom, MaxZoom);
 
     const Vector2 ScaledSize(GraphSize.X * Zoom, GraphSize.Y * Zoom);
     Pan = Vector2(((static_cast<float>(Bounds.Width) - ScaledSize.X) * 0.5f) - (Minimum.X * Zoom),
@@ -841,10 +858,10 @@ void FGraphCanvas::DrawGrid(const FRectangle& Bounds, FDrawCommandList& OutComma
         return;
     }
 
-    FFloatColor MinorColor = FUIStyle::GetDefault().Colors.Border;
+    FFloatColor MinorColor = GridColor.A > 0.0f ? GridColor : FUIStyle::GetDefault().Colors.Border;
     MinorColor.A *= GRAPH_GRID_OPACITY;
 
-    FFloatColor MajorColor = FUIStyle::GetDefault().Colors.Border;
+    FFloatColor MajorColor = GridColor.A > 0.0f ? GridColor : FUIStyle::GetDefault().Colors.Border;
     MajorColor.A *= GRAPH_GRID_OPACITY * 2.0f;
 
     const float MajorSpacing = Spacing * static_cast<float>(GRAPH_GRID_MAJOR_EVERY);

@@ -157,21 +157,37 @@ bool PanelChromeGeometry_Test()
     int32 RoundedFills    = 0;
     int32 RoundedOutlines = 0;
 
+    TArray<FRectangle> CardBounds;
+
     for (const FDrawCommand& Command : CommandList.GetCommands())
     {
-        if (Command.CornerRadius.IsZero())
+        if (Command.CornerRadius.IsZero() || Command.Type != EDrawCommandType::BoxOutline)
         {
             continue;
         }
 
-        if (Command.Type == EDrawCommandType::Box && Command.Tint == Style.Panel.Fill)
-        {
-            ++RoundedFills;
-        }
-        else if (Command.Type == EDrawCommandType::BoxOutline && Command.Tint == Style.Panel.Border)
+        if (Command.Tint == Style.Panel.Border)
         {
             ++RoundedOutlines;
+            CardBounds.Add(Command.Bounds);
             TEST_EXPECT(Command.Thickness == Style.Panel.BorderThickness);
+        }
+    }
+
+    for (const FDrawCommand& Command : CommandList.GetCommands())
+    {
+        if (Command.CornerRadius.IsZero() || Command.Type != EDrawCommandType::Box || !(Command.Tint == Style.Panel.Fill))
+        {
+            continue;
+        }
+
+        for (const FRectangle& Card : CardBounds)
+        {
+            if (Card == Command.Bounds)
+            {
+                ++RoundedFills;
+                break;
+            }
         }
     }
 

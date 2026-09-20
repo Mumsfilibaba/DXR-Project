@@ -33,13 +33,13 @@ bool StyleDefaults_Test()
     TEST_EXPECT(Style.ScrollBar.GrabActive.R > Style.ScrollBar.Grab.R);
     TEST_EXPECT(Style.ScrollBar.CornerRadius > 0.0f);
 
-    TEST_SECTION("A dock tab paints nothing at rest, so a pill appears on hover and lifts further still when active");
+    TEST_SECTION("A dock tab paints nothing at rest, and with no rule over the active one its fill has to carry it");
     TEST_EXPECT_EQ(Style.Tab.Fill.A, 0.0f);
     TEST_EXPECT(Style.Tab.FillHovered.R > Style.Tab.StripFill.R);
+    TEST_EXPECT(Style.Tab.FillActive.R > Style.Panel.Fill.R);
     TEST_EXPECT(Style.Tab.FillActive.R > Style.Tab.FillHovered.R);
-    TEST_EXPECT(Style.Tab.ActiveStrip.B > Style.Tab.ActiveStrip.R);
 
-    TEST_SECTION("That pill floats inside the strip, so it is rounded, held off both edges and parted from its neighbour");
+    TEST_SECTION("A tab is held inside the strip and rounded, so a hover or active fill reads as a pill");
     TEST_EXPECT(Style.Tab.CornerRadius > 0.0f);
     TEST_EXPECT(Style.Tab.Spacing > 0);
     TEST_EXPECT(Style.Tab.TopInset > 0);
@@ -50,28 +50,34 @@ bool StyleDefaults_Test()
     TEST_EXPECT(Style.Tab.MinWidth > 0);
     TEST_EXPECT(Style.Tab.MinWidth > 2 * (Style.Tab.HorizontalPadding + Style.Tab.CloseSize));
 
-    TEST_SECTION("A close button fits inside the pill with room to spare, and its glyph centres inside itself");
+    TEST_SECTION("A close button fits inside the tab with room to spare, and its glyph centres inside itself");
     TEST_EXPECT(Style.Tab.CloseSize < Style.Tab.StripHeight - Style.Tab.TopInset - Style.Tab.BottomInset);
     TEST_EXPECT(Style.Tab.CloseIconSize <= Style.Tab.CloseSize - 4);
     TEST_EXPECT_EQ((Style.Tab.CloseSize - Style.Tab.CloseIconSize) % 2, 0);
 
-    TEST_SECTION("The label is lifted off the pill's centre line, by a nudge small enough to stay a correction");
-    TEST_EXPECT(Style.Tab.LabelOffsetY < 0);
-    TEST_EXPECT(Style.Tab.LabelOffsetY > -Style.Tab.TopInset);
+    TEST_SECTION("The label sits on the tab's centre line");
+    TEST_EXPECT_EQ(Style.Tab.LabelOffsetY, 0);
 
-    TEST_SECTION("It sits nearer the pill's edge than the label does, at the same remove a menu row's highlight keeps");
+    TEST_SECTION("It sits nearer the tab's edge than the label does, at the same remove a menu row's highlight keeps");
     TEST_EXPECT(Style.Tab.CloseInset > 0);
     TEST_EXPECT(Style.Tab.CloseInset < Style.Tab.HorizontalPadding);
     TEST_EXPECT_EQ(Style.Tab.CloseInset, Style.Menu.ItemHighlightInset);
 
-    TEST_SECTION("The accent under the active pill is thick enough for its curve to show and fades out before either end");
-    TEST_EXPECT(Style.Tab.ActiveStripThickness > 0);
-    TEST_EXPECT(static_cast<float>(Style.Tab.ActiveStripThickness) < Style.Tab.CornerRadius);
-    TEST_EXPECT(Style.Tab.ActiveStripFadeWidth > static_cast<float>(Style.Tab.ActiveStripThickness));
+    TEST_SECTION("No rule is drawn over the active pill, though the tokens a style would stroke one with are still to hand");
+    TEST_EXPECT_EQ(Style.Tab.ActiveStripThickness, 0);
+    TEST_EXPECT(Style.Tab.ActiveStrip.B > Style.Tab.ActiveStrip.R);
+    TEST_EXPECT(Style.Tab.ActiveStripFadeFraction > 0.0f);
+    TEST_EXPECT(Style.Tab.ActiveStripFadeFraction <= 1.0f);
+    TEST_EXPECT(Style.Tab.ActiveStripTrailAlpha > 0.0f);
+    TEST_EXPECT(Style.Tab.ActiveStripTrailAlpha < 0.5f);
 
     TEST_SECTION("The bar that scrolls an overflowing strip is a hairline, and comes in faster than it goes out");
     TEST_EXPECT(Style.Tab.ScrollBarThickness > 0);
-    TEST_EXPECT(Style.Tab.ScrollBarThickness < Style.Tab.BottomInset + Style.Tab.TopInset);
+    TEST_EXPECT(Style.Tab.ScrollBarThickness < Style.Tab.StripHeight);
+
+    TEST_SECTION("It stands clear of the pills, and the room the two take still leaves a pill worth having");
+    TEST_EXPECT(Style.Tab.ScrollBarGap > 0);
+    TEST_EXPECT(Style.Tab.ScrollBarThickness + Style.Tab.ScrollBarGap < Style.Tab.StripHeight - Style.Tab.TopInset);
     TEST_EXPECT(Style.Tab.ScrollBarFadeInDuration > 0.0f);
     TEST_EXPECT(Style.Tab.ScrollBarFadeOutDuration > Style.Tab.ScrollBarFadeInDuration);
 
@@ -84,13 +90,10 @@ bool StyleDefaults_Test()
     TEST_EXPECT(Style.MenuBar.ItemCornerRadius > 0.0f);
     TEST_EXPECT(Style.MenuBar.ItemPadding.GetTotalVertical() < Style.MenuBar.Height);
 
-    TEST_SECTION("Its entries are parted by the same gap the tabs keep, and its pill is rounded to match theirs");
+    TEST_SECTION("Its entries are parted by a gap of their own, independent of the flush tabs");
     TEST_EXPECT(Style.MenuBar.ItemSpacing > 0);
-    TEST_EXPECT_EQ(Style.MenuBar.ItemSpacing, Style.Tab.Spacing);
-    TEST_EXPECT_EQ(Style.MenuBar.ItemCornerRadius, Style.Tab.CornerRadius);
 
-    TEST_SECTION("A tab stands a little taller than a menu entry, and a menu row matches the entry it drops from");
-    TEST_EXPECT(Style.Tab.StripHeight > Style.MenuBar.Height);
+    TEST_SECTION("A menu row matches the entry it drops from");
     TEST_EXPECT_EQ(Style.Menu.RowHeight, Style.MenuBar.Height - (2 * Style.MenuBar.ItemInset));
 
     TEST_SECTION("Every menu opens at the same width at least, however narrow the rows in it measure");

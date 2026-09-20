@@ -7,6 +7,8 @@
 #include "Application/Style/UIStyle.h"
 #include "Application/Text/IFontFace.h"
 
+class FTextBlock;
+
 struct FEditorFonts
 {
     /** @brief The face nearly everything is drawn with. */
@@ -88,10 +90,10 @@ struct ENGINE_API FEditorStyle
     /** @return The fill behind the run of a completion name the typed word matched. */
     NODISCARD static FFloatColor GetCandidateHighlightColor();
 
-    /** @return The fill of a rich tool tip, which reads lighter than the list it is raised above. */
+    /** @return The fill of a rich tool tip, which is the fill an open menu takes so the two read alike. */
     NODISCARD static FFloatColor GetToolTipColor();
 
-    /** @return The stroke around a rich tool tip. */
+    /** @return The stroke around a rich tool tip, which is the stroke an open menu takes. */
     NODISCARD static FFloatColor GetToolTipBorderColor();
 
     /**
@@ -110,6 +112,25 @@ struct ENGINE_API FEditorStyle
      * @return The frame, ready to slot under a toolbar.
      */
     NODISCARD static TSharedPtr<FVisualElement> MakeInnerFrame(const TSharedPtr<FVisualElement>& Content);
+
+    /**
+     * @brief Builds an inner frame with an explicit gutter, so a view can sit flush against the stroke.
+     *
+     * @param Content The element inside the frame.
+     * @param Padding The gutter between the stroke and the content.
+     */
+    NODISCARD static TSharedPtr<FVisualElement> MakeInnerFrame(const TSharedPtr<FVisualElement>& Content, const FMargin& Padding);
+
+    /**
+     * @brief Builds the card an information panel names itself with, a bold line over a dimmed one in the
+     * header fill, so About, RHI Info and Engine Stats all open the same way.
+     *
+     * @param Title            The bold line, which is what the panel is showing.
+     * @param Subtitle         The dimmed line under it, which qualifies the title.
+     * @param OutSubtitleText  Filled with the dimmed line's block when the caller has to rewrite it later.
+     * @return The card, ready to slot above the panel's scroll view.
+     */
+    NODISCARD static TSharedPtr<FVisualElement> MakeHeaderCard(const String& Title, const String& Subtitle, TSharedPtr<FTextBlock>* OutSubtitleText = nullptr);
 
     /** @return The frame every editor search field draws, rounded far enough to read as a pill. */
     NODISCARD static FInputFrameStyle GetInputFrameStyle();
@@ -136,6 +157,17 @@ struct ENGINE_API FEditorStyle
      * @return The padding, ready to hand to FBoxSlot::SetPadding.
      */
     NODISCARD static FMargin GetSectionSpacing();
+
+    /**
+     * @brief The gap held between collapsible sections that stack directly on top of each other.
+     *
+     * Panels that are nothing but a list of headers read better with a tighter, even rhythm than
+     * GetSectionSpacing gives. The gap sits below each section so the first header still lines up
+     * with whatever sits above the stack.
+     *
+     * @return The padding, ready to hand to FBoxSlot::SetPadding.
+     */
+    NODISCARD static FMargin GetSectionStackSpacing();
 
     /**
      * @brief Builds the description a collapsible editor section is created from. The arrow brushes come
@@ -166,6 +198,14 @@ struct ENGINE_API FEditorStyle
      * @return The description, ready to hand to FPropertyTable::Create.
      */
     NODISCARD static FPropertyTable::FDesc MakeDataTableDesc();
+
+    /**
+     * @brief Builds the description the read-only tables in an information panel are created from, which is
+     * the data table held to a fixed label column so every value lines up down the panel and across panels.
+     *
+     * @return The description, ready to hand to FPropertyTable::Create.
+     */
+    NODISCARD static FPropertyTable::FDesc MakeInfoTableDesc();
 
     /**
      * @brief Fills in the arrow brushes a tree's rows draw their disclosure with, which the icon atlas

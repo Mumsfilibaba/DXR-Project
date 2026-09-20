@@ -308,6 +308,28 @@ bool RichTextSelection_Test()
 
     TEST_EXPECT(!Fixed->GetCursor(Cursor));
 
+    TEST_SECTION("Dragging past the top of a host scroll box moves the view and grows the selection");
+    FRichTextBlock::FDesc TallDesc;
+    for (int32 Line = 0; Line < 20; ++Line)
+    {
+        TallDesc.Runs.Add(FTextRun("line of log text\n", Font.Get(), FUIStyle::GetDefault().Colors.Text));
+    }
+
+    TSharedPtr<FRichTextBlock> TallBlock = FRichTextBlock::Create(TallDesc);
+    TSharedPtr<FScrollBox>     Host      = FScrollBox::Create();
+    Host->SetContent(TallBlock);
+    LayoutElement(Host, FRectangle(IntVector2(0, 0), 200, 48));
+    Host->SetScrollOffset(FScrollBox::DefaultScrollAmountPerWheelStep * 2);
+
+    const int32 OffsetBefore = Host->GetScrollOffset();
+    TEST_EXPECT(OffsetBefore > 0);
+
+    TallBlock->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(8, 24), true));
+    TallBlock->OnMouseMove(MakeMoveEvent(IntVector2(8, -20)));
+
+    TEST_EXPECT(Host->GetScrollOffset() < OffsetBefore);
+    TEST_EXPECT(TallBlock->HasSelection());
+
     TEST_END();
 }
 
@@ -365,6 +387,40 @@ bool RichTextSearch_Test()
 
     TEST_EXPECT_EQ(CountBoxes(Highlighted) - CountBoxes(Unhighlighted), 2);
 
+    TEST_SECTION("A match is filled in the search color rather than the one a selection takes");
+    Block->SelectAll();
+
+    FDrawCommandList Selected;
+    DrawElement(Block, Selected);
+
+    const FUIStyle& Style = FUIStyle::GetDefault();
+
+    int32 SearchLayer    = -1;
+    int32 SelectionLayer = -1;
+    for (const FDrawCommand& Command : Selected.GetCommands())
+    {
+        if (Command.Type != EDrawCommandType::Box)
+        {
+            continue;
+        }
+
+        if (Command.Tint == Style.Colors.SearchTextHighlight)
+        {
+            SearchLayer = Command.LayerId;
+        }
+        else if (Command.Tint == Style.Colors.TextSelectionBackground)
+        {
+            SelectionLayer = Command.LayerId;
+        }
+    }
+
+    TEST_EXPECT(SearchLayer >= 0);
+    TEST_EXPECT(SelectionLayer >= 0);
+
+    TEST_EXPECT(SearchLayer > SelectionLayer);
+
+    Block->ClearSelection();
+
     TEST_SECTION("Replacing the text re-runs the search against it");
     Block->SetRuns({ FTextRun("the the the", Font.Get(), FUIStyle::GetDefault().Colors.Text) });
     LayoutElement(Block, FRectangle(IntVector2(0, 0), 400, 60));
@@ -416,7 +472,7 @@ bool LogViewLogging_Test()
     TEST_SECTION("The text carries the severity prefix and its colour, and the break is a run of its own");
     const TArray<FTextRun>& Runs = LogView->GetTextBlock()->GetLayout().GetSourceRuns();
 
-    TEST_EXPECT_EQ(Runs.Size(), 9);
+    TEST_EXPECT_EQ(Runs.Size(), 8);
     TEST_EXPECT_EQ(Runs[0].Text, String("[Info] "));
     TEST_EXPECT_EQ(Runs[1].Text, String("engine started"));
     TEST_EXPECT_EQ(Runs[2].Text, String("\n"));
@@ -426,7 +482,7 @@ bool LogViewLogging_Test()
     TEST_EXPECT_EQ(Runs[4].Tint, FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Warning));
 
     TEST_SECTION("Which still reads back as one line per message");
-    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetText(), String("[Info] engine started\n[Warning] shader cache cold\n[Info] plain\n"));
+    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetText(), String("[Info] engine started\n[Warning] shader cache cold\n[Info] plain"));
 
     TEST_SECTION("Past the cap the oldest lines are dropped");
     LogView->Log("fourth");

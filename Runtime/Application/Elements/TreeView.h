@@ -168,6 +168,7 @@ public:
     virtual FEventResponse OnMouseDoubleClick(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseScroll(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override;
     virtual bool SupportsKeyboardFocus() const override;
@@ -283,6 +284,15 @@ public:
     NODISCARD FRectangle GetItemRowBounds(const TSharedPtr<FTreeItem>& Item) const;
 
     /**
+     * @brief Gets the part of an item's row its hover and selection fills cover, which is the row less the
+     * gutter the scroll bar takes. A host marking a row draws on this so its mark lines up with selection.
+     *
+     * @param Item The item to measure.
+     * @return Its highlight band in client space, or an empty rectangle when the item has no row.
+     */
+    NODISCARD FRectangle GetItemHighlightBounds(const TSharedPtr<FTreeItem>& Item) const;
+
+    /**
      * @brief Gets the part of an item's row its label occupies, which is the row less the indent, the
      * disclosure and the icon.
      *
@@ -302,6 +312,7 @@ private:
     NODISCARD int32 GetArrowExtent() const;
     NODISCARD int32 GetHeaderExtent() const;
     NODISCARD FRectangle ComputeRowBounds(const FRectangle& ViewBounds, int32 RowIndex) const;
+    NODISCARD FRectangle ComputeHighlightBounds(const FRectangle& RowBounds) const;
     NODISCARD FRectangle ComputeDisclosureBounds(const FRectangle& RowBounds, int32 Depth) const;
     NODISCARD int32 ComputeRowExtent(const TSharedPtr<FTreeItem>& Item) const;
     NODISCARD int32 ComputeLabelStartX(const FRectangle& RowBounds, const TSharedPtr<FTreeItem>& Item) const;

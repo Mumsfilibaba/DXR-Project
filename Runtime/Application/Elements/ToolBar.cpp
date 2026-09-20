@@ -365,6 +365,24 @@ TSharedPtr<FMenuAnchor> FToolBar::AddDropDown(const FToolBarItemDesc& Item, cons
     return NewAnchor;
 }
 
+TSharedPtr<FMenuAnchor> FToolBar::AddDropDown(const FToolBarItemDesc& Item, const FOnGetMenuContent& OnGetMenuContent)
+{
+    TSharedPtr<FToolBarButton> Button = FToolBarButton::Create(Item, EToolBarItemType::DropDown, Font, IconSize);
+
+    FMenuAnchor::FDesc Desc;
+    Desc.Content          = Button;
+    Desc.OnGetMenuContent = OnGetMenuContent;
+    Desc.Placement        = Orientation == EOrientation::Horizontal ? EMenuPlacement::BelowLeftAligned : EMenuPlacement::RightOfTopAligned;
+
+    TSharedPtr<FMenuAnchor> NewAnchor = FMenuAnchor::Create(Desc);
+    Button->SetOwner(this, NewAnchor.Get());
+
+    Anchors.Add(NewAnchor);
+    AppendSlot(NewAnchor, Button, EToolBarItemType::DropDown);
+
+    return NewAnchor;
+}
+
 void FToolBar::BeginGroup()
 {
     CHECK(GroupStartIndex < 0);

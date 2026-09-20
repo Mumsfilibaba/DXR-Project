@@ -31,17 +31,16 @@ static const CHAR* GFolderDragDropPayloadId = "CB_MOVE_FOLDER";
 static const CHAR* GNewFolderName           = "New folder";
 
 constexpr float DROP_INDICATOR_THICKNESS = 2.0f;
-constexpr float FOLDER_PANEL_FRACTION    = 0.3f;
-
-constexpr int32 FOLDER_PANEL_MIN  = 200;
-constexpr int32 CONTENT_PANEL_MIN = 250;
+constexpr int32 FOLDER_PANEL_WIDTH = 220;
+constexpr int32 FOLDER_PANEL_MIN   = 200;
+constexpr int32 CONTENT_PANEL_MIN  = 250;
 
 constexpr int32 COLUMN_PADDING = 4;
-constexpr int32 CONTENT_INSET  = FEditorStyle::PanelPadding;
 
 constexpr int32 BREADCRUMB_GAP            = FEditorStyle::ItemSpacing;
 constexpr int32 BREADCRUMB_SEPARATOR_SIZE = 12;
-constexpr int32 BREADCRUMB_NAV_SIZE       = FEditorStyle::IconSize;
+constexpr int32 BREADCRUMB_NAV_SIZE       = FEditorStyle::FrameHeight;
+constexpr int32 BREADCRUMB_NAV_ICON_SIZE  = 24;
 constexpr int32 BREADCRUMB_NAV_GAP        = 4;
 constexpr int32 BREADCRUMB_BAR_PADDING    = FEditorStyle::ItemSpacing;
 constexpr int32 BREADCRUMB_FIELD_PADDING  = 4;
@@ -760,8 +759,10 @@ bool FEditorContentBrowserPanel::Initialize()
 
     FSplitter::FDesc SplitterDesc;
     SplitterDesc.Orientation = EDockSplitOrientation::Horizontal;
-    SplitterDesc.Fractions.Add(FOLDER_PANEL_FRACTION);
-    SplitterDesc.Fractions.Add(1.0f - FOLDER_PANEL_FRACTION);
+    SplitterDesc.Fractions.Add(0.3f);
+    SplitterDesc.Fractions.Add(0.7f);
+    SplitterDesc.FixedLengths.Add(FOLDER_PANEL_WIDTH);
+    SplitterDesc.FixedLengths.Add(0);
 
     Splitter = FSplitter::Create(SplitterDesc);
     if (!Splitter)
@@ -831,17 +832,11 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildFolderColumn()
         return nullptr;
     }
 
-    FBorder::FDesc HeaderDesc;
-    HeaderDesc.Content         = FolderSearchBox;
-    HeaderDesc.BackgroundColor = FUIStyle::GetDefault().Header.Fill;
-    HeaderDesc.Padding         = FMargin(COLUMN_PADDING);
-    HeaderDesc.MinHeight       = FOLDER_HEADER_HEIGHT;
-
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
-    Column->AddSlot(FBorder::Create(HeaderDesc));
-    Column->AddSlot(FEditorStyle::MakeInnerFrame(TreeWrapper)).SetFillCoefficient(1.0f);
+    Column->AddSlot(FolderSearchBox).SetPadding(FMargin(0, 0, 0, COLUMN_PADDING));
+    Column->AddSlot(TreeWrapper).SetFillCoefficient(1.0f);
 
-    return Column;
+    return FEditorStyle::MakeInnerFrame(Column);
 }
 
 TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildContentColumn()
@@ -935,16 +930,18 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildBreadcrumbBar()
 
     FButton::FDesc BackDesc;
     BackDesc.Font      = FEditorStyle::GetFonts().Body;
-    BackDesc.Padding   = FMargin(8, 4, 8, 4);
+    BackDesc.Padding   = FMargin(4);
+    BackDesc.MinHeight = BREADCRUMB_NAV_SIZE;
     BackDesc.bIsGhost  = true;
-    BackDesc.Content   = FBrowserGlyph::Create(FEditorIcons::Previous, BREADCRUMB_NAV_SIZE, Style.Colors.Text);
+    BackDesc.Content   = FBrowserGlyph::Create(FEditorIcons::Previous, BREADCRUMB_NAV_ICON_SIZE, Style.Colors.Text);
     BackDesc.OnClicked = FOnClicked::CreateRaw(this, &FEditorContentBrowserPanel::NavigateBack);
 
     FButton::FDesc ForwardDesc;
     ForwardDesc.Font      = FEditorStyle::GetFonts().Body;
-    ForwardDesc.Padding   = FMargin(8, 4, 8, 4);
+    ForwardDesc.Padding   = FMargin(4);
+    ForwardDesc.MinHeight = BREADCRUMB_NAV_SIZE;
     ForwardDesc.bIsGhost  = true;
-    ForwardDesc.Content   = FBrowserGlyph::Create(FEditorIcons::Next, BREADCRUMB_NAV_SIZE, Style.Colors.Text);
+    ForwardDesc.Content   = FBrowserGlyph::Create(FEditorIcons::Next, BREADCRUMB_NAV_ICON_SIZE, Style.Colors.Text);
     ForwardDesc.OnClicked = FOnClicked::CreateRaw(this, &FEditorContentBrowserPanel::NavigateForward);
 
     TSharedPtr<FButton> BackButton    = FButton::Create(BackDesc);
@@ -973,13 +970,13 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildBreadcrumbBar()
     Row->AddSlot(BackButton).SetVerticalAlignment(EVerticalAlignment::Center);
     Row->AddSlot(FSpacer::CreateHorizontal(BREADCRUMB_NAV_GAP));
     Row->AddSlot(ForwardButton).SetVerticalAlignment(EVerticalAlignment::Center);
-    Row->AddSlot(FSpacer::CreateHorizontal(CONTENT_INSET));
+    Row->AddSlot(FSpacer::CreateHorizontal(BREADCRUMB_NAV_GAP));
     Row->AddSlot(FBorder::Create(FieldDesc)).SetFillCoefficient(1.0f).SetVerticalAlignment(EVerticalAlignment::Center);
 
     FBorder::FDesc HeaderDesc;
     HeaderDesc.Content         = Row;
     HeaderDesc.BackgroundColor = Style.Header.Fill;
-    HeaderDesc.Padding         = FMargin(BREADCRUMB_BAR_PADDING);
+    HeaderDesc.Padding         = FMargin(0, BREADCRUMB_BAR_PADDING, 0, BREADCRUMB_BAR_PADDING);
     HeaderDesc.MinHeight       = FOLDER_HEADER_HEIGHT;
 
     return FBorder::Create(HeaderDesc);

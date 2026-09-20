@@ -1,5 +1,6 @@
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Elements/RichTextBlock.h"
+#include "Application/Elements/ScrollBox.h"
 #include "Application/Input/Keys.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
@@ -66,25 +67,26 @@ int32 FRichTextBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
     const FCornerRadii HighlightRadii(Style.Metrics.TextHighlightCornerRadius);
 
     TArray<FRectangle> Rectangles;
-    GatherRangeRectangles(SearchRanges, Rectangles);
-
-    for (const FRectangle& Rectangle : Rectangles)
-    {
-        OutCommandList.AddBox(LayerId, Rectangle.Inflate(HighlightPadding), Style.Colors.Accent, HighlightRadii);
-    }
 
     if (HasSelection())
     {
         TArray<FTextRange> SelectionRanges;
         SelectionRanges.Emplace(GetSelectionStart(), GetSelectionEnd());
 
-        Rectangles.Clear();
         GatherRangeRectangles(SelectionRanges, Rectangles);
 
         for (const FRectangle& Rectangle : Rectangles)
         {
-            OutCommandList.AddBox(LayerId + 1, Rectangle.Inflate(HighlightPadding), Style.Colors.TextSelectionBackground, HighlightRadii);
+            OutCommandList.AddBox(LayerId, Rectangle.Inflate(HighlightPadding), Style.Colors.TextSelectionBackground, HighlightRadii);
         }
+    }
+
+    Rectangles.Clear();
+    GatherRangeRectangles(SearchRanges, Rectangles);
+
+    for (const FRectangle& Rectangle : Rectangles)
+    {
+        OutCommandList.AddBox(LayerId + 1, Rectangle.Inflate(HighlightPadding), Style.Colors.SearchTextHighlight, HighlightRadii);
     }
 
     const FDrawGeometry TextGeometry(TextBounds, AllottedGeometry.Scale);
@@ -272,6 +274,32 @@ void FRichTextBlock::OnDragged(const FCursorEvent& CursorEvent)
     if (!bIsSelectable)
     {
         return;
+    }
+
+    FScrollBox* ScrollBox = nullptr;
+    for (FVisualElement* Parent = GetParentElement().Get(); Parent; Parent = Parent->GetParentElement().Get())
+    {
+        ScrollBox = Parent->AsScrollBox();
+        if (ScrollBox)
+        {
+            break;
+        }
+    }
+
+    if (ScrollBox)
+    {
+        const FRectangle ViewBounds = ScrollBox->GetContentRectangle();
+        const int32      CursorY    = CursorEvent.GetClientPosition().Y;
+        const int32      Step       = FScrollBox::DefaultScrollAmountPerWheelStep;
+
+        if (CursorY < ViewBounds.Position.Y)
+        {
+            ScrollBox->SetScrollOffset(ScrollBox->GetScrollOffset() - Step);
+        }
+        else if (CursorY > ViewBounds.GetBottom())
+        {
+            ScrollBox->SetScrollOffset(ScrollBox->GetScrollOffset() + Step);
+        }
     }
 
     const int32 CharacterIndex = FindCharacterIndexAt(CursorEvent.GetClientPosition());

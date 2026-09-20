@@ -71,7 +71,7 @@ int32 FTexturePreview::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComman
     const FRectangle   ImageBounds  = GetImageRectangle(AllottedGeometry.Bounds);
     const FCornerRadii CornerRadius = FCornerRadii(Style.Metrics.CornerRadius);
 
-    OutCommandList.AddImage(LayerId, ImageBounds, Brush, FFloatColor::White);
+    OutCommandList.AddImage(LayerId, ImageBounds, Brush, FFloatColor::White, CornerRadius);
     OutCommandList.AddBoxOutline(LayerId + 1, ImageBounds, Style.Colors.InputFieldBorder, Style.Metrics.BorderThickness, CornerRadius);
 
     return LayerId + 1;

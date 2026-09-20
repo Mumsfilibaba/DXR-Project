@@ -201,12 +201,14 @@ public:
     /**
      * @brief Appends a textured rectangle.
      *
-     * @param LayerId The layer to draw on.
-     * @param Bounds  The rectangle to fill.
-     * @param Brush   The texture and the region of it to sample.
-     * @param Tint    The color the sample is multiplied by.
+     * @param LayerId      The layer to draw on.
+     * @param Bounds       The rectangle to fill.
+     * @param Brush        The texture and the region of it to sample.
+     * @param Tint         The color the sample is multiplied by.
+     * @param CornerRadius How far the rectangle's corners are rounded, which a nine-sliced brush ignores
+     * since its own corners are drawn from the texture.
      */
-    void AddImage(int32 LayerId, const FRectangle& Bounds, const FUIBrush& Brush, const FFloatColor& Tint);
+    void AddImage(int32 LayerId, const FRectangle& Bounds, const FUIBrush& Brush, const FFloatColor& Tint, const FCornerRadii& CornerRadius = FCornerRadii());
 
     /**
      * @brief Appends the bottom band of a rounded rectangle, with either end fading out.
@@ -219,6 +221,24 @@ public:
      * @param FadeWidth    How far in from either edge the alpha runs from nothing to full, in pixels.
      */
     void AddRoundedBottomBar(int32 LayerId, const FRectangle& Bounds, const FCornerRadii& CornerRadius, float Thickness, const FFloatColor& Tint, float FadeWidth);
+
+    /**
+     * @brief Appends a stroke round a rounded rectangle at an even width, held at full strength along the top
+     * and faded back over the top corners to a trail that carries on round the rest, which is how an active
+     * tab wears its accent.
+     *
+     * @param LayerId      The layer to draw on.
+     * @param Bounds       The rounded rectangle the stroke follows.
+     * @param CornerRadius The rectangle's corners, which are the curves the stroke turns.
+     * @param Thickness    How wide the stroke is, measured inward from the rectangle's edge.
+     * @param Tint         The stroke's color where it runs at full strength.
+     * @param FadeFraction How much of each top corner the stroke spends fading back, as a share of that
+     * corner's arc measured from the side edge. Half fades from the middle of the corner.
+     * @param TrailAlpha   What the stroke keeps of that color once the fade is done, as a share of it, which
+     * is what runs round the sides and the bottom. Zero leaves the top rule on its own.
+     */
+    void AddRoundedAccentRing(int32 LayerId, const FRectangle& Bounds, const FCornerRadii& CornerRadius, float Thickness,
+        const FFloatColor& Tint, float FadeFraction, float TrailAlpha);
 
     /**
      * @brief Opens a clip region, intersected with whatever region is already open.

@@ -243,12 +243,13 @@ void FDrawCommandList::AddBezier(int32 LayerId, const Vector2& P0, const Vector2
     AddPolyline(LayerId, ScratchPoints, Tint, Thickness, false);
 }
 
-void FDrawCommandList::AddImage(int32 LayerId, const FRectangle& Bounds, const FUIBrush& Brush, const FFloatColor& Tint)
+void FDrawCommandList::AddImage(int32 LayerId, const FRectangle& Bounds, const FUIBrush& Brush, const FFloatColor& Tint, const FCornerRadii& CornerRadius)
 {
     FDrawCommand& Command = EmplaceCommand(EDrawCommandType::Image, LayerId);
-    Command.Bounds = Bounds;
-    Command.Tint   = Tint;
-    Command.Brush  = Brush;
+    Command.Bounds       = Bounds;
+    Command.Tint         = Tint;
+    Command.Brush        = Brush;
+    Command.CornerRadius = CornerRadius;
 }
 
 void FDrawCommandList::AddRoundedBottomBar(int32 LayerId, const FRectangle& Bounds, const FCornerRadii& CornerRadius, float Thickness, const FFloatColor& Tint, float FadeWidth)
@@ -264,6 +265,23 @@ void FDrawCommandList::AddRoundedBottomBar(int32 LayerId, const FRectangle& Boun
     Command.CornerRadius = CornerRadius;
     Command.Thickness    = Thickness;
     Command.FadeWidth    = Math::Max(FadeWidth, 0.0f);
+}
+
+void FDrawCommandList::AddRoundedAccentRing(int32 LayerId, const FRectangle& Bounds, const FCornerRadii& CornerRadius, float Thickness,
+    const FFloatColor& Tint, float FadeFraction, float TrailAlpha)
+{
+    if (Thickness <= 0.0f)
+    {
+        return;
+    }
+
+    FDrawCommand& Command = EmplaceCommand(EDrawCommandType::RoundedAccentRing, LayerId);
+    Command.Bounds       = Bounds;
+    Command.Tint         = Tint;
+    Command.CornerRadius = CornerRadius;
+    Command.Thickness    = Thickness;
+    Command.FadeFraction = Math::Clamp(FadeFraction, 0.0f, 1.0f);
+    Command.TrailAlpha   = Math::Clamp(TrailAlpha, 0.0f, 1.0f);
 }
 
 void FDrawCommandList::PushClip(int32 LayerId, const FRectangle& ClipRectangle)

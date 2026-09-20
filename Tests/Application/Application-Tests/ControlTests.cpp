@@ -5,6 +5,7 @@
 #include "TestCommon/TestMacros.h"
 
 #include <Core/Containers/SharedPtr.h>
+#include <Core/Platform/PlatformTime.h>
 #include <Application/Draw/DrawCommandList.h>
 #include <Application/Elements/Button.h>
 #include <Application/Elements/CheckBox.h>
@@ -34,6 +35,16 @@ static TSharedPtr<IFontFace> CreateFont()
 }
 
 /** @brief Measures and arranges an element on its own, the way a window would. */
+static void SpinForSeconds(double Seconds)
+{
+    const uint64 Start     = FPlatformTime::QueryPerformanceCounter();
+    const double Frequency = static_cast<double>(FPlatformTime::QueryPerformanceFrequency());
+
+    while ((static_cast<double>(FPlatformTime::QueryPerformanceCounter() - Start) / Frequency) < Seconds)
+    {
+    }
+}
+
 static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRectangle& Bounds)
 {
     Element->PrepareDesiredSize();
@@ -502,6 +513,38 @@ bool SliderControl_Test()
     TEST_EXPECT(Slider->IsHovered());
     TEST_EXPECT(!Slider->GetCursor(Cursor));
 
+    TEST_SECTION("Value text sits under the track rather than across the handle");
+    const TSharedPtr<IFontFace> ValueFont = CreateFont();
+
+    FSlider::FDesc LabelledDesc;
+    LabelledDesc.SetRange(0.0f, 100.0f).SetValue(42.0f);
+    LabelledDesc.HandleSize     = 10;
+    LabelledDesc.bShowValueText = true;
+    LabelledDesc.Font           = ValueFont;
+
+    TSharedPtr<FSlider> Labelled = FSlider::Create(LabelledDesc);
+    Labelled->PrepareDesiredSize();
+    TEST_EXPECT_EQ(Labelled->GetCachedDesiredSize().Y, 10 + 2 + ValueFont->GetCapHeight() + ValueFont->GetDescent());
+
+    LayoutElement(Labelled, FRectangle(IntVector2(0, 0), 110, Labelled->GetCachedDesiredSize().Y));
+
+    FDrawCommandList LabelledCommands;
+    DrawElement(Labelled, LabelledCommands);
+
+    const FRectangle TrackBounds     = Labelled->GetTrackBounds();
+    const int32      CapInset        = ValueFont->GetAscent() - ValueFont->GetCapHeight();
+    bool             bFoundValueText = false;
+    for (const FDrawCommand& Command : LabelledCommands.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Text)
+        {
+            bFoundValueText = true;
+
+            TEST_EXPECT(Command.Bounds.Position.Y + CapInset >= TrackBounds.GetBottom());
+        }
+    }
+    TEST_EXPECT(bFoundValueText);
+
     TEST_END();
 }
 
@@ -734,6 +777,24 @@ bool ScrollBoxScrollBar_Test()
     TEST_EXPECT_EQ(Bar->GetContentRectangle().GetRight(), 200);
     TEST_EXPECT_EQ(Tall->GetContentRectangle().Width, 200 - Bar->GetCachedDesiredSize().X);
 
+    TEST_SECTION("A gutter holds space between the content and a visible bar, and is ignored when the bar is hidden");
+    ScrollBox->SetScrollBarGutter(6);
+    LayoutElement(ScrollBox, FRectangle(IntVector2(0, 0), 200, 100));
+    TEST_EXPECT_EQ(Tall->GetContentRectangle().Width, 200 - Bar->GetCachedDesiredSize().X - 6);
+
+    TEST_SECTION("The gutter is that gap rather than a wider bar, the bar keeping its width at the trailing edge");
+    TEST_EXPECT_EQ(Bar->GetContentRectangle().Width, Bar->GetCachedDesiredSize().X);
+    TEST_EXPECT_EQ(Bar->GetContentRectangle().GetRight(), 200);
+    TEST_EXPECT_EQ(Bar->GetContentRectangle().Position.X - Tall->GetContentRectangle().GetRight(), 6);
+
+    ScrollBox->SetScrollBarVisibility(EScrollBarVisibility::Never);
+    LayoutElement(ScrollBox, FRectangle(IntVector2(0, 0), 200, 100));
+    TEST_EXPECT_EQ(Tall->GetContentRectangle().Width, 200);
+
+    ScrollBox->SetScrollBarVisibility(EScrollBarVisibility::Auto);
+    ScrollBox->SetScrollBarGutter(0);
+    LayoutElement(ScrollBox, FRectangle(IntVector2(0, 0), 200, 100));
+
     TEST_SECTION("The bar knows what the box knows, without either being told twice");
     TEST_EXPECT_EQ(Bar->GetMaxOffset(), ScrollBox->GetMaxScrollOffset());
     TEST_EXPECT_EQ(Bar->GetOffset(), ScrollBox->GetScrollOffset());
@@ -757,6 +818,75 @@ bool ScrollBoxScrollBar_Test()
 
     TEST_EXPECT(!ScrollBox->IsScrollBarVisible());
     TEST_EXPECT_EQ(Tall->GetContentRectangle().Width, 200);
+
+    TEST_END();
+}
+
+bool ScrollBarAutoHide_Test()
+{
+    TEST_BEGIN();
+
+    FUIStyle::ResetDefault();
+
+    const FUIScrollBarStyle& BarStyle = FUIStyle::GetDefault().ScrollBar;
+    const FRectangle         Bounds   = FRectangle(IntVector2(0, 0), 200, 100);
+
+    FTextBlock::FDesc TallDesc;
+    TallDesc.Text = "Line";
+    TallDesc.Font = CreateFont();
+
+    TSharedPtr<FTextBlock> Tall = FTextBlock::Create(TallDesc);
+    Tall->SetMargin(FMargin(0, 0, 0, 400));
+
+    TSharedPtr<FScrollBox> Box = FScrollBox::Create();
+    Box->SetContent(Tall);
+
+    LayoutElement(Box, Bounds);
+    LayoutElement(Box, Bounds);
+
+    const TSharedPtr<FScrollBar>& Bar = Box->GetScrollBar();
+    TEST_EXPECT(Bar != nullptr);
+    TEST_EXPECT(Box->IsScrollBarVisible());
+
+    TEST_SECTION("A view the cursor has never been in keeps its bar clear, and a clear bar draws nothing at all");
+    TEST_EXPECT(Bar->IsAutoHiding());
+    TEST_EXPECT(!Bar->IsRevealed());
+    TEST_EXPECT_EQ(Bar->GetOpacity(), 0.0f);
+
+    FDrawCommandList ClearCommands;
+    DrawElement(Bar, ClearCommands);
+
+    TEST_EXPECT(ClearCommands.GetCommands().IsEmpty());
+
+    TEST_SECTION("The cursor arriving anywhere in the view brings it in, and the style's duration has it all the way in");
+    Box->OnMouseEntered(MakeMoveEvent(IntVector2(20, 20)));
+    TEST_EXPECT(Bar->IsRevealed());
+
+    SpinForSeconds(static_cast<double>(BarStyle.FadeInDuration) + 0.05);
+    LayoutElement(Box, Bounds);
+
+    TEST_EXPECT_EQ(Bar->GetOpacity(), 1.0f);
+
+    FDrawCommandList ShownCommands;
+    DrawElement(Bar, ShownCommands);
+
+    TEST_EXPECT(!ShownCommands.GetCommands().IsEmpty());
+
+    TEST_SECTION("The cursor leaving sets it fading rather than snapping it away");
+    Box->OnMouseLeft(MakeMoveEvent(IntVector2(-40, -40)));
+    TEST_EXPECT(!Bar->IsRevealed());
+
+    SpinForSeconds(0.05);
+    LayoutElement(Box, Bounds);
+
+    TEST_EXPECT(Bar->GetOpacity() < 1.0f);
+    TEST_EXPECT(Bar->GetOpacity() > 0.0f);
+
+    TEST_SECTION("Once that fade has run its course the bar is gone again");
+    SpinForSeconds(static_cast<double>(BarStyle.FadeOutDuration));
+    LayoutElement(Box, Bounds);
+
+    TEST_EXPECT_EQ(Bar->GetOpacity(), 0.0f);
 
     TEST_END();
 }
@@ -1497,6 +1627,11 @@ bool NumericEntryControl_Test()
     FDrawCommandList UnboundedCommands;
     DrawElement(Unbounded, UnboundedCommands);
     TEST_EXPECT_EQ(CountCommands(UnboundedCommands, EDrawCommandType::Box), 1);
+
+    TEST_SECTION("A fill track maps the cursor across the range instead of stepping by pixels");
+    Track->SetValue(0.0f);
+    DragThrough(Track, IntVector2(0, 12), { IntVector2(Bounds.Width, 12) });
+    TEST_EXPECT(Math::Abs(Track->GetValue() - 1.0f) < 0.01f);
 
     TEST_SECTION("A read-only field neither scrubs nor opens its line, and offers no drag cursor");
     TArray<float> ReadOnlyChanges;

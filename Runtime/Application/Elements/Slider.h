@@ -194,6 +194,7 @@ private:
 
     NODISCARD FRectangle ComputeHandleBounds(const FRectangle& Bounds) const;
     NODISCARD FRectangle ComputeTrackBounds(const FRectangle& Bounds) const;
+    NODISCARD FRectangle ComputeInteractiveBounds(const FRectangle& Bounds) const;
 
     float                   MinValue;
     float                   MaxValue;

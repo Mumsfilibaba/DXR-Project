@@ -171,12 +171,15 @@ private:
     void AddText(const FDrawCommand& Command);
     void AddImage(const FDrawCommand& Command);
     void AddRoundedBottomBar(const FDrawCommand& Command);
+    void AddRoundedAccentRing(const FDrawCommand& Command);
     void AddPolyline(TArrayView<const Vector2> Points, float Thickness, bool bClosed, uint32 PackedColor);
     void AddConvexPolygon(TArrayView<const Vector2> Points, uint32 PackedColor);
     void AddQuad(const FRectangle& Bounds, const Vector2& MinTexCoord, const Vector2& MaxTexCoord, uint32 PackedColor);
-    void AddRoundedBox(const FRectangle& Bounds, const FCornerRadii& Radius, uint32 PackedColor);
+    void AddRoundedBox(const FRectangle& Bounds, const FCornerRadii& Radius, uint32 PackedColor,
+        const Vector2& MinTexCoord = Vector2(0.0f, 0.0f), const Vector2& MaxTexCoord = Vector2(1.0f, 1.0f));
     void EmplaceVertex(const Vector2& Position, uint32 PackedColor);
-    void EmplaceFillVertex(const Vector2& Position, const FRectangle& Bounds, uint32 PackedColor);
+    void EmplaceFillVertex(const Vector2& Position, const FRectangle& Bounds, uint32 PackedColor,
+        const Vector2& MinTexCoord = Vector2(0.0f, 0.0f), const Vector2& MaxTexCoord = Vector2(1.0f, 1.0f));
 
     TArray<FUIVertex>    Vertices;
     TArray<uint32>       Indices;

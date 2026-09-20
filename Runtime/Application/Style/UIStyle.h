@@ -15,7 +15,7 @@ enum class EInteractionState : uint8
 struct FUIStyleColors
 {
     /** @brief The fill behind a window's whole client area. */
-    FFloatColor WindowBackground = FFloatColor(0.09f, 0.09f, 0.11f, 1.0f);
+    FFloatColor WindowBackground = FFloatColor(0.09f, 0.09f, 0.09f, 1.0f);
 
     /**
      * @brief The fill behind a panel.
@@ -23,19 +23,19 @@ struct FUIStyleColors
      * This matches the window background so a shell reads as one backdrop with panels laid on it.
      * A panel's own surface is FUIPanelChromeStyle::Fill, which sits a step off this.
      */
-    FFloatColor PanelBackground = FFloatColor(0.09f, 0.09f, 0.11f, 1.0f);
+    FFloatColor PanelBackground = FFloatColor(0.09f, 0.09f, 0.09f, 1.0f);
 
     /** @brief The fill of a control that is neither hovered nor pressed. */
-    FFloatColor ControlNormal = FFloatColor(0.20f, 0.21f, 0.25f, 1.0f);
+    FFloatColor ControlNormal = FFloatColor(0.20f, 0.20f, 0.20f, 1.0f);
 
     /** @brief The fill a control lifts to while the cursor rests on it. */
-    FFloatColor ControlHovered = FFloatColor(0.27f, 0.29f, 0.34f, 1.0f);
+    FFloatColor ControlHovered = FFloatColor(0.27f, 0.27f, 0.27f, 1.0f);
 
     /** @brief The fill a control takes while it is held down. */
-    FFloatColor ControlPressed = FFloatColor(0.16f, 0.17f, 0.21f, 1.0f);
+    FFloatColor ControlPressed = FFloatColor(0.16f, 0.16f, 0.16f, 1.0f);
 
     /** @brief The fill of a control that cannot be interacted with. */
-    FFloatColor ControlDisabled = FFloatColor(0.16f, 0.16f, 0.18f, 1.0f);
+    FFloatColor ControlDisabled = FFloatColor(0.16f, 0.16f, 0.16f, 1.0f);
 
     /** @brief The fill of a button at rest, which runs lighter than a control's. */
     FFloatColor ButtonNormal = FFloatColor(0.22f, 0.22f, 0.22f, 1.0f);
@@ -70,6 +70,14 @@ struct FUIStyleColors
     /** @brief The fill behind selected text. */
     FFloatColor TextSelectionBackground = FFloatColor(0.20f, 0.42f, 0.78f, 1.0f);
 
+    /**
+     * @brief The fill behind a run of text a search matched.
+     *
+     * A match can sit inside a selection, and the text keeps whatever color it was written in, so this is
+     * held off the selection's hue and carries an alpha rather than covering what is under it.
+     */
+    FFloatColor SearchTextHighlight = FFloatColor(0.84f, 0.60f, 0.10f, 0.55f);
+
     /** @brief The color marking what the editor is pointed at, which is the focus ring and the chosen row. */
     FFloatColor Accent = FFloatColor(0.25f, 0.55f, 0.95f, 1.0f);
 
@@ -80,16 +88,16 @@ struct FUIStyleColors
 struct FUIHeaderStyle
 {
     /** @brief The fill of the whole nested panel, header and open body together. */
-    FFloatColor Fill = FFloatColor(0.12f, 0.12f, 0.14f, 1.0f);
+    FFloatColor Fill = FFloatColor(0.12f, 0.12f, 0.12f, 1.0f);
 
     /** @brief The tint of the arrow that shows which way the section is folded. */
     FFloatColor ArrowTint = FFloatColor(101.0f / 255.0f, 101.0f / 255.0f, 101.0f / 255.0f, 1.0f);
 
     /** @brief The one thin stroke around the nested panel. */
-    FFloatColor Border = FFloatColor(0.19f, 0.19f, 0.22f, 1.0f);
+    FFloatColor Border = FFloatColor(0.19f, 0.19f, 0.19f, 1.0f);
 
     /** @brief Unused once the nested panel carries its own outline. Kept so older callers still compile. */
-    FFloatColor BottomBorder = FFloatColor(0.19f, 0.19f, 0.22f, 1.0f);
+    FFloatColor BottomBorder = FFloatColor(0.19f, 0.19f, 0.19f, 1.0f);
 
     /** @brief The space between the header's edges and its label. */
     FMargin FramePadding = FMargin(10, 8, 10, 8);
@@ -107,10 +115,10 @@ struct FUIHeaderStyle
 struct FUIInnerFrameStyle
 {
     /** @brief The fill of a primary view framed inside a docked panel. */
-    FFloatColor Fill = FFloatColor(0.09f, 0.09f, 0.11f, 1.0f);
+    FFloatColor Fill = FFloatColor(0.09f, 0.09f, 0.09f, 1.0f);
 
     /** @brief The thin stroke around that view. */
-    FFloatColor Border = FFloatColor(0.19f, 0.19f, 0.22f, 1.0f);
+    FFloatColor Border = FFloatColor(0.19f, 0.19f, 0.19f, 1.0f);
 
     /** @brief How far the inner frame's corners are rounded, in pixels. */
     float CornerRadius = 6.0f;
@@ -152,7 +160,7 @@ struct FUIPropertyTableStyle
     int32 LabelIndent = 6;
 
     /** @brief How wide the column holding the revert arrow is, in pixels. */
-    int32 RevertColumnWidth = 28;
+    int32 RevertColumnWidth = 40;
 };
 
 struct FUIComboBoxStyle
@@ -247,7 +255,7 @@ struct FUITreeRowStyle
     FFloatColor InactiveSelectedFill = FFloatColor(64.0f / 255.0f, 87.0f / 255.0f, 111.0f / 255.0f, 1.0f);
 
     /** @brief The fill marking a row that stands on the path to the selected one. */
-    FFloatColor AncestorFill = FFloatColor(44.0f / 255.0f, 50.0f / 255.0f, 58.0f / 255.0f, 1.0f);
+    FFloatColor AncestorFill = FFloatColor(47.0f / 255.0f, 47.0f / 255.0f, 47.0f / 255.0f, 1.0f);
 
     /** @brief The color of a row's own name. */
     FFloatColor LabelText = FFloatColor(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
@@ -275,6 +283,9 @@ struct FUITreeRowStyle
 
     /** @brief How far one level of depth moves a row's contents right, in pixels. */
     int32 IndentPerLevel = 18;
+
+    /** @brief How far the disclosure arrow sits in from the row's left edge, in pixels. */
+    int32 ContentInset = 8;
 };
 
 struct FUIScrollBarStyle
@@ -290,15 +301,21 @@ struct FUIScrollBarStyle
 
     /** @brief How far the track's and the thumb's corners are rounded, in pixels. */
     float CornerRadius = 12.0f;
+
+    /** @brief How long a bar that hides itself takes to come in once the cursor is over its view, in seconds. */
+    float FadeInDuration = 0.1f;
+
+    /** @brief How long it takes to fade away again once the cursor leaves, deliberately the slower of the two. */
+    float FadeOutDuration = 0.4f;
 };
 
 struct FUIMenuBarStyle
 {
     /** @brief The fill behind an entry the cursor rests on. */
-    FFloatColor ItemHovered = FFloatColor(0.27f, 0.29f, 0.34f, 1.0f);
+    FFloatColor ItemHovered = FFloatColor(0.27f, 0.27f, 0.27f, 1.0f);
 
     /** @brief The fill behind the entry whose menu is open. */
-    FFloatColor ItemActive = FFloatColor(0.34f, 0.36f, 0.41f, 1.0f);
+    FFloatColor ItemActive = FFloatColor(0.34f, 0.34f, 0.34f, 1.0f);
 
     /** @brief The least height the strip takes, in pixels. */
     int32 Height = 38;
@@ -357,11 +374,16 @@ struct FUITabStyle
     /** @brief The fill of a resting tab, which is clear so the strip shows straight through it. */
     FFloatColor Fill = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-    /** @brief The fill of a tab the cursor is over. */
-    FFloatColor FillHovered = FFloatColor(38.0f / 255.0f, 38.0f / 255.0f, 38.0f / 255.0f, 1.0f);
+    /** @brief The fill of a tab the cursor is over, which stays under the active tab's so that one still leads. */
+    FFloatColor FillHovered = FFloatColor(37.0f / 255.0f, 37.0f / 255.0f, 37.0f / 255.0f, 1.0f);
 
-    /** @brief The fill of the active tab, which lifts furthest off the strip. */
-    FFloatColor FillActive = FFloatColor(48.0f / 255.0f, 48.0f / 255.0f, 48.0f / 255.0f, 1.0f);
+    /**
+     * @brief The fill of the active tab.
+     *
+     * No rule is drawn over it, so this is the whole of what marks the active tab out and has to stand
+     * clear of the panel the strip is laid on.
+     */
+    FFloatColor FillActive = FFloatColor(52.0f / 255.0f, 52.0f / 255.0f, 52.0f / 255.0f, 1.0f);
 
     /**
      * @brief The fill of the strip behind the tabs, which shows wherever the tabs run out.
@@ -371,7 +393,12 @@ struct FUITabStyle
      */
     FFloatColor StripFill = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-    /** @brief The rule under the active tab, which marks it a second time in the accent. */
+    /**
+     * @brief The rule along the top of the active tab, which is off by default.
+     *
+     * Setting ActiveStripThickness strokes this round the pill, bright on the top edge and fading over the
+     * corners to ActiveStripTrailAlpha for the rest of it.
+     */
     FFloatColor ActiveStrip = FFloatColor(0.0f, 122.0f / 255.0f, 204.0f / 255.0f, 1.0f);
 
     /** @brief The rule on a tab's trailing edge, which is off by default while the pills carry the separation. */
@@ -380,13 +407,26 @@ struct FUITabStyle
     /** @brief The fill behind the close cross while the cursor is on the cross itself. */
     FFloatColor CloseHovered = FFloatColor(70.0f / 255.0f, 70.0f / 255.0f, 70.0f / 255.0f, 1.0f);
 
-    /** @brief How thick the rule under the active tab is, in pixels. */
-    int32 ActiveStripThickness = 2;
+    /** @brief How thick that rule is, in pixels, zero leaving the active tab to carry its fill alone. */
+    int32 ActiveStripThickness = 0;
 
-    /** @brief How far in from either end that rule fades away, in pixels. */
-    float ActiveStripFadeWidth = 16.0f;
+    /**
+     * @brief How much of each of the pill's top corners that rule spends fading back, as a share of the arc.
+     *
+     * Half runs the accent at full strength until the middle of the corner and has it down to its trail by
+     * the side edge.
+     */
+    float ActiveStripFadeFraction = 0.5f;
 
-    /** @brief The gap either side of a tab, which is what holds two pills apart now that no rule does. */
+    /**
+     * @brief What the accent keeps of its color once round the corner, as a share of it.
+     *
+     * The remainder rings the rest of the pill, so the active tab reads as a bright rule on top over a faint
+     * border rather than as a rule that stops dead. Zero leaves the rule on its own.
+     */
+    float ActiveStripTrailAlpha = 0.28f;
+
+    /** @brief The gap either side of a tab, in pixels, which is what parts one pill from the next. */
     int32 Spacing = 4;
 
     /** @brief How far a tab is inset from the top of the strip, in pixels. */
@@ -395,13 +435,13 @@ struct FUITabStyle
     /** @brief How far a tab is inset from the bottom of the strip, in pixels. */
     int32 BottomInset = 4;
 
-    /** @brief How far a tab's corners are rounded, in pixels. */
-    float CornerRadius = 6.0f;
+    /** @brief How far a tab's corners are rounded, in pixels, which is what makes it read as a pill. */
+    float CornerRadius = 8.0f;
 
     /** @brief How far the close button's corners are rounded, which runs tighter than the tab's own. */
     float CloseCornerRadius = 4.0f;
 
-    /** @brief The height of the strip, in pixels. */
+    /** @brief The height of the strip, in pixels, which the pill fills bar its two insets. */
     int32 StripHeight = 40;
 
     /** @brief The width a tab is held out to even when its label is shorter than that, in pixels. */
@@ -411,25 +451,33 @@ struct FUITabStyle
     int32 HorizontalPadding = 12;
 
     /** @brief How far the label is nudged off the tab's centre line, in pixels, negative being up. */
-    int32 LabelOffsetY = -2;
+    int32 LabelOffsetY = 0;
 
     /** @brief The gap between a tab's label and its close button, in pixels. */
     int32 LabelCloseGap = 6;
 
-    /** @brief The side of the square the close button fills, in pixels. */
-    int32 CloseSize = 22;
+    /** @brief The side of the square the close button fills, in pixels, which stays inside the pill. */
+    int32 CloseSize = 18;
 
     /** @brief How far the close button is held off the tab's trailing edge, in pixels. */
     int32 CloseInset = 4;
 
     /** @brief The side of the glyph centred in that square, in pixels. */
-    int32 CloseIconSize = 16;
+    int32 CloseIconSize = 14;
 
     /** @brief The width of the rule between two tabs, which is off while the pills carry the separation. */
     int32 SeparatorThickness = 0;
 
     /** @brief How thick the scroll bar under the tabs is, in pixels. */
     int32 ScrollBarThickness = 3;
+
+    /**
+     * @brief How much clear space is kept between a pill and that bar, in pixels.
+     *
+     * The bottom inset covers what it can of the bar and this gap, and a strip that overflows takes the
+     * rest off its pills. A strip everything fits in keeps them at full height, since it shows no bar.
+     */
+    int32 ScrollBarGap = 4;
 
     /** @brief How long the scroll bar takes to appear once the cursor is over the strip, in seconds. */
     float ScrollBarFadeInDuration = 0.1f;
@@ -444,10 +492,10 @@ struct FUIPanelChromeStyle
      * @brief The fill of a docked panel, which sits a single step off the window background
      * so a panel reads as a card laid on the backdrop rather than as a different surface.
      */
-    FFloatColor Fill = FFloatColor(0.12f, 0.12f, 0.14f, 1.0f);
+    FFloatColor Fill = FFloatColor(0.12f, 0.12f, 0.12f, 1.0f);
 
     /** @brief The one thin stroke around that card. */
-    FFloatColor Border = FFloatColor(0.19f, 0.19f, 0.22f, 1.0f);
+    FFloatColor Border = FFloatColor(0.19f, 0.19f, 0.19f, 1.0f);
 
     /** @brief The stroke the card carries while it holds the focus. */
     FFloatColor BorderFocused = FFloatColor(0.25f, 0.55f, 0.95f, 1.0f);

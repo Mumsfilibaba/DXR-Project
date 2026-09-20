@@ -70,6 +70,23 @@ public:
          */
         FFloatColor LinkColor = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 
+        /** @brief The color of the background grid. Transparent falls back to Colors.Border. */
+        FFloatColor GridColor = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+        /**
+         * @brief What shows outside the canvas's own rounded corners, which is whatever it is laid on.
+         *
+         * A canvas fills its card to the edge and paints a grid over it, so the corners have to be taken
+         * back out afterwards. Transparent leaves them square.
+         */
+        FFloatColor SurroundColor = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+        /** @brief How far the canvas's own corners are rounded, in pixels, so it can sit in a rounded card. */
+        float CornerRadius = 0.0f;
+
+        /** @brief The least zoom FitToNodes will use, where one is graph space. */
+        float FitMinZoom = FGraphCanvas::MinZoom;
+
         /** @brief The spacing of the finest grid lines, in graph space. */
         int32 GridSpacing = FGraphCanvas::GridSpacing;
 
@@ -330,12 +347,16 @@ private:
     FGraphNodeStyle                        NodeStyle;
     FFloatColor                            BackgroundColor;
     FFloatColor                            LinkColor;
+    FFloatColor                            GridColor;
+    FFloatColor                            SurroundColor;
+    float                                  CornerRadius;
     FRectangle                             MarqueeBounds;
     Vector2                                Pan;
     Vector2                                DraggingToPosition;
     IntVector2                             DragAnchor;
     IntVector2                             LastDragPosition;
     float                                  Zoom;
+    float                                  FitMinZoom;
     int32                                  GridSpacingInGraphSpace;
     int32                                  SelectedLinkId;
     int32                                  DraggingFromPinId;

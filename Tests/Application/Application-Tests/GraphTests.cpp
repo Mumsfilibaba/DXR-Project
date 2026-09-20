@@ -136,7 +136,10 @@ static IntVector2 GetPinPosition(const TSharedPtr<FGraphCanvas>& Canvas, int32 N
     }
 
     Vector2 Center(0.0f, 0.0f);
-    Element->GetPinCenter(Element->GetNode().Pins[PinIndex].PinId, Center);
+    if (!Element->GetPinCenter(Element->GetNode().Pins[PinIndex].PinId, Center))
+    {
+        return IntVector2(0, 0);
+    }
 
     return IntVector2(static_cast<int32>(Center.X), static_cast<int32>(Center.Y));
 }
@@ -437,6 +440,72 @@ bool GraphCanvasView_Test()
 
     TEST_EXPECT_EQ(Empty->FindNodeAt(IntVector2(10, 10)), -1);
     TEST_EXPECT_EQ(Empty->FindLinkAt(IntVector2(10, 10)), -1);
+
+    TEST_SECTION("A fit floor keeps a large graph from shrinking below a readable zoom");
+    TSharedPtr<FGraphModel> WideModel = MakeSharedPtr<FGraphModel>();
+    WideModel->AddNode(MakeNode("Near", Vector2(0.0f, 0.0f), "Texture"));
+    WideModel->AddNode(MakeNode("Far", Vector2(4000.0f, 0.0f), "Texture"));
+
+    FGraphCanvas::FDesc FlooredDesc;
+    FlooredDesc.Font       = CreateFont();
+    FlooredDesc.Model      = WideModel;
+    FlooredDesc.FitMinZoom = 1.0f;
+
+    TSharedPtr<FGraphCanvas> Floored = FGraphCanvas::Create(FlooredDesc);
+    LayoutElement(Floored, FRectangle(IntVector2(0, 0), 600, 400));
+    Floored->FitToNodes();
+
+    TEST_EXPECT_EQ(Floored->GetZoom(), 1.0f);
+
+    TEST_SECTION("Left square, the canvas fills its bounds to the corner and cuts nothing back out");
+    FDrawCommandList SquareCommands;
+    DrawElement(Floored, SquareCommands);
+
+    TEST_EXPECT_EQ(SquareCommands.GetCommands()[0].Type, EDrawCommandType::Box);
+    TEST_EXPECT_EQ(SquareCommands.GetCommands()[0].CornerRadius.TopLeft, 0.0f);
+
+    TEST_SECTION("Given a radius and what it is laid on, it rounds its fill and cuts the corners back out over the grid");
+    constexpr float CanvasRadius = 6.0f;
+
+    FGraphCanvas::FDesc RoundedDesc;
+    RoundedDesc.Font          = CreateFont();
+    RoundedDesc.Model         = WideModel;
+    RoundedDesc.CornerRadius  = CanvasRadius;
+    RoundedDesc.SurroundColor = FFloatColor::Red;
+
+    TSharedPtr<FGraphCanvas> Rounded = FGraphCanvas::Create(RoundedDesc);
+    LayoutElement(Rounded, FRectangle(IntVector2(0, 0), 600, 400));
+
+    FDrawCommandList RoundedCommands;
+    DrawElement(Rounded, RoundedCommands);
+
+    const FDrawCommand& Fill = RoundedCommands.GetCommands()[0];
+    TEST_EXPECT_EQ(Fill.Type, EDrawCommandType::Box);
+    TEST_EXPECT_EQ(Fill.CornerRadius.TopLeft, CanvasRadius);
+    TEST_EXPECT_EQ(Fill.CornerRadius.BottomRight, CanvasRadius);
+
+    TEST_SECTION("Those wedges are the last thing it draws, so the grid and the links cannot square the card off again");
+    int32 WedgeCount   = 0;
+    int32 TopWedgeLayer = -1;
+
+    for (const FDrawCommand& Command : RoundedCommands.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::ConvexPolygon && Command.Tint == FFloatColor::Red)
+        {
+            ++WedgeCount;
+            TopWedgeLayer = Math::Max(TopWedgeLayer, Command.LayerId);
+        }
+    }
+
+    TEST_EXPECT_EQ(WedgeCount, 4);
+
+    for (const FDrawCommand& Command : RoundedCommands.GetCommands())
+    {
+        if (Command.Type != EDrawCommandType::ConvexPolygon)
+        {
+            TEST_EXPECT(Command.LayerId <= TopWedgeLayer);
+        }
+    }
 
     TEST_END();
 }

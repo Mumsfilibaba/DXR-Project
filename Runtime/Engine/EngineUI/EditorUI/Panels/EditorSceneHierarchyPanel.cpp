@@ -421,10 +421,20 @@ int32 FEditorSceneHierarchyView::OnDraw(const FDrawGeometry& AllottedGeometry, F
 
     if (bIsDragging && bIsCursorInsideView && TreeView)
     {
-        const FRectangle DropBounds = DropTargetItem ? TreeView->GetItemRowBounds(DropTargetItem) : AllottedGeometry.Bounds;
+        const bool       bIsRowTarget = DropTargetItem.IsValid();
+        const FRectangle DropBounds   = bIsRowTarget
+            ? TreeView->GetItemHighlightBounds(DropTargetItem)
+            : AllottedGeometry.Bounds;
+
         if (!DropBounds.IsEmpty())
         {
-            OutCommandList.AddBoxOutline(MaxLayerId, DropBounds, CanDropOn(DropTargetItem) ? Style.Colors.Accent : Style.Colors.TextDisabled, DROP_INDICATOR_THICKNESS);
+            const float Radius = bIsRowTarget
+                ? Style.TreeRow.CornerRadius
+                : Math::Max(Style.InnerFrame.CornerRadius - Style.InnerFrame.BorderThickness, 0.0f);
+
+            OutCommandList.AddBoxOutline(MaxLayerId, DropBounds,
+                CanDropOn(DropTargetItem) ? Style.Colors.Accent : Style.Colors.TextDisabled,
+                DROP_INDICATOR_THICKNESS, FCornerRadii(Radius));
         }
     }
 
@@ -759,7 +769,9 @@ bool FEditorSceneHierarchyPanel::Initialize()
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
     Column->AddSlot(SearchBox).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
-    Column->AddSlot(FEditorStyle::MakeInnerFrame(HierarchyView)).SetFillCoefficient(1.0f);
+
+    const int32 FrameStroke = Math::CeilToInt(FUIStyle::GetDefault().InnerFrame.BorderThickness);
+    Column->AddSlot(FEditorStyle::MakeInnerFrame(HierarchyView, FMargin(FrameStroke))).SetFillCoefficient(1.0f);
 
     Content = Column;
 

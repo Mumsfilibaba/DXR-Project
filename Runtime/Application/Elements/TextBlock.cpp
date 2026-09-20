@@ -19,6 +19,7 @@ FTextBlock::FTextBlock()
     , ColorAndOpacity(FFloatColor::White)
     , Margin()
     , Overflow(ETextOverflow::Overflow)
+    , VerticalAlignment(EVerticalAlignment::Top)
 {
 }
 
@@ -30,7 +31,8 @@ void FTextBlock::Initialize(const FDesc& Desc)
     Font            = Desc.Font;
     ColorAndOpacity = Desc.ColorAndOpacity;
     Margin          = Desc.Margin;
-    Overflow        = Desc.Overflow;
+    Overflow            = Desc.Overflow;
+    VerticalAlignment   = Desc.VerticalAlignment;
 }
 
 IntVector2 FTextBlock::ComputeDesiredSize() const
@@ -48,7 +50,14 @@ int32 FTextBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
 {
     if (!Text.IsEmpty())
     {
-        const FRectangle TextBounds = AllottedGeometry.Bounds.Deflate(Margin);
+        FRectangle TextBounds = AllottedGeometry.Bounds.Deflate(Margin);
+        if (Font && VerticalAlignment == EVerticalAlignment::Center)
+        {
+            const int32 BandOffset = Font->GetTextBandOffset(TextBounds.Height);
+            TextBounds.Position.Y += BandOffset;
+            TextBounds.Height      = Font->GetTextBandHeight();
+        }
+
         if (Overflow == ETextOverflow::Elide && Font)
         {
             const String Elided = Font->ElideText(StringView(Text.Data(), Text.Length()), TextBounds.Width);

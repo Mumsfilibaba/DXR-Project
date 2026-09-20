@@ -2,7 +2,10 @@
 #include "Engine/EngineUI/EditorUI/EditorIcons.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/Paths.h"
+#include "Application/Docking/DockNode.h"
 #include "Application/Elements/Border.h"
+#include "Application/Elements/Box.h"
+#include "Application/Elements/TextBlock.h"
 #include "Application/Text/TrueTypeFontFace.h"
 
 static FEditorFonts GFonts;
@@ -24,10 +27,14 @@ constexpr int32 TOOL_TIP_PADDING = 4;
 constexpr int32 SECTION_HEADER_HEIGHT   = 34;
 constexpr int32 SECTION_CONTENT_INDENT  = 12;
 constexpr int32 SECTION_OUTER_SPACING   = 4;
+constexpr int32 SECTION_STACK_SPACING   = 3;
 
-static FFloatColor FromBytes(int32 R, int32 G, int32 B)
+constexpr int32 HEADER_CARD_PADDING      = 16;
+constexpr int32 INFO_LABEL_COLUMN_WIDTH  = 128;
+
+static FFloatColor FromBytes(int32 R, int32 G, int32 B, int32 A = 255)
 {
-    return FFloatColor(R / 255.0f, G / 255.0f, B / 255.0f, 1.0f);
+    return FFloatColor(R / 255.0f, G / 255.0f, B / 255.0f, A / 255.0f);
 }
 
 static TSharedPtr<IFontFace> LoadFace(const CHAR* Filename, int32 PixelHeight)
@@ -57,20 +64,21 @@ bool FEditorStyle::Initialize()
         return false;
     }
 
-    GStyle.Colors.WindowBackground        = FromBytes(24, 24, 27);
-    GStyle.Colors.PanelBackground         = FromBytes(24, 24, 27);
-    GStyle.Colors.ControlNormal           = FromBytes(33, 33, 36);
-    GStyle.Colors.ControlHovered          = FromBytes(46, 46, 51);
-    GStyle.Colors.ControlPressed          = FromBytes(51, 51, 59);
-    GStyle.Colors.ControlDisabled         = FromBytes(41, 41, 44);
+    GStyle.Colors.WindowBackground        = FromBytes(24, 24, 24);
+    GStyle.Colors.PanelBackground         = FromBytes(24, 24, 24);
+    GStyle.Colors.ControlNormal           = FromBytes(33, 33, 33);
+    GStyle.Colors.ControlHovered          = FromBytes(46, 46, 46);
+    GStyle.Colors.ControlPressed          = FromBytes(51, 51, 51);
+    GStyle.Colors.ControlDisabled         = FromBytes(41, 41, 41);
     GStyle.Colors.ButtonNormal            = FromBytes(56, 56, 56);
     GStyle.Colors.ButtonHovered           = FromBytes(87, 87, 87);
     GStyle.Colors.ButtonPressed           = FromBytes(87, 87, 87);
     GStyle.Colors.Border                  = FromBytes(21, 21, 21);
     GStyle.Colors.SeparatorHovered        = FromBytes(56, 56, 56);
-    GStyle.Colors.Text                    = FromBytes(230, 230, 232);
-    GStyle.Colors.TextDisabled            = FromBytes(115, 117, 122);
+    GStyle.Colors.Text                    = FromBytes(230, 230, 230);
+    GStyle.Colors.TextDisabled            = FromBytes(115, 115, 115);
     GStyle.Colors.TextSelectionBackground = FromBytes(0, 112, 224);
+    GStyle.Colors.SearchTextHighlight     = FromBytes(214, 154, 26, 140);
     GStyle.Colors.Accent                  = FromBytes(9, 92, 176);
     GStyle.Colors.AccentHovered           = FromBytes(15, 110, 205);
 
@@ -82,40 +90,52 @@ bool FEditorStyle::Initialize()
     GStyle.Metrics.RowHeight              = RowHeight;
     GStyle.Metrics.FrameHeight            = FrameHeight;
     GStyle.Metrics.ButtonHeight           = ButtonHeight;
-    GStyle.Metrics.ScrollBarThickness     = 16;
+    GStyle.Metrics.ScrollBarThickness     = 12;
     GStyle.Metrics.SeparatorThickness     = 1;
     GStyle.Metrics.MenuSeparatorThickness = 1;
 
-    GStyle.Panel.Fill                     = FromBytes(30, 30, 33);
-    GStyle.Panel.Border                   = FromBytes(48, 48, 54);
+    GStyle.Panel.Fill                     = FromBytes(30, 30, 30);
+    GStyle.Panel.Border                   = FromBytes(48, 48, 48);
     GStyle.Panel.BorderFocused            = FromBytes(9, 92, 176);
     GStyle.Panel.CornerRadius             = 8.0f;
     GStyle.Panel.BorderThickness          = 1.0f;
     GStyle.Panel.Gap                      = 6;
 
-    GStyle.InnerFrame.Fill                = FromBytes(24, 24, 27);
-    GStyle.InnerFrame.Border              = FromBytes(48, 48, 54);
+    GStyle.InnerFrame.Fill                = FromBytes(24, 24, 24);
+    GStyle.InnerFrame.Border              = FromBytes(48, 48, 48);
     GStyle.InnerFrame.CornerRadius        = 6.0f;
     GStyle.InnerFrame.BorderThickness     = 1.0f;
     GStyle.InnerFrame.Padding             = FMargin(6);
 
-    GStyle.Header.Fill                    = FromBytes(30, 30, 33);
-    GStyle.Header.Border                  = FromBytes(48, 48, 54);
-    GStyle.Header.BottomBorder            = FromBytes(48, 48, 54);
+    GStyle.Header.Fill                    = FromBytes(30, 30, 30);
+    GStyle.Header.Border                  = FromBytes(48, 48, 48);
+    GStyle.Header.BottomBorder            = FromBytes(48, 48, 48);
     GStyle.Header.CornerRadius            = 8.0f;
     GStyle.Header.BorderThickness         = 1.0f;
     GStyle.Header.ExpandDuration          = 0.15f;
+    
+    GStyle.ScrollBar.Track                = GStyle.Colors.WindowBackground;
 
     GStyle.Tab.StripFill                  = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+    GStyle.Tab.FillHovered                = FromBytes(37, 37, 37);
+    GStyle.Tab.FillActive                 = FromBytes(52, 52, 52);
+    GStyle.Tab.ActiveStrip                = GStyle.Colors.Accent;
+    GStyle.Tab.ActiveStripThickness       = 0;
+    GStyle.Tab.Spacing                    = 4;
+    GStyle.Tab.TopInset                   = 4;
+    GStyle.Tab.BottomInset                = 4;
+    GStyle.Tab.CornerRadius               = 8.0f;
+    GStyle.Tab.StripHeight                = FDockMetrics::TabStripHeight;
+    GStyle.Tab.LabelOffsetY               = 0;
 
     GStyle.MenuBar.ItemHovered            = FromBytes(87, 87, 87);
     GStyle.MenuBar.ItemActive             = FromBytes(104, 104, 104);
 
-    GStyle.Menu.Background                = FromBytes(56, 56, 56);
-    GStyle.Menu.Border                    = FromBytes(63, 63, 63);
+    GStyle.Menu.Background                = GStyle.Colors.WindowBackground;
+    GStyle.Menu.Border                    = GStyle.Panel.Border;
     GStyle.Menu.ItemHovered               = FromBytes(0, 112, 224);
     GStyle.Menu.ItemShortcut              = FromBytes(175, 175, 175);
-    GStyle.Menu.Separator                 = FromBytes(106, 106, 106);
+    GStyle.Menu.Separator                 = GStyle.Panel.Border;
     GStyle.Menu.SectionText               = FromBytes(160, 160, 160);
 
     GStyle.NormalFont    = GFonts.Body.Get();
@@ -169,7 +189,7 @@ FFloatColor FEditorStyle::GetCandidateTextColor()
 
 FFloatColor FEditorStyle::GetCandidateSelectionColor()
 {
-    return FromBytes(64, 87, 111);
+    return FUIStyle::GetDefault().Colors.TextSelectionBackground;
 }
 
 FFloatColor FEditorStyle::GetCandidateHighlightColor()
@@ -179,12 +199,12 @@ FFloatColor FEditorStyle::GetCandidateHighlightColor()
 
 FFloatColor FEditorStyle::GetToolTipColor()
 {
-    return FromBytes(56, 56, 56);
+    return FUIStyle::GetDefault().Menu.Background;
 }
 
 FFloatColor FEditorStyle::GetToolTipBorderColor()
 {
-    return FromBytes(71, 71, 71);
+    return FUIStyle::GetDefault().Menu.Border;
 }
 
 TSharedPtr<FVisualElement> FEditorStyle::MakeToolTipFrame(const TSharedPtr<FVisualElement>& Content)
@@ -204,17 +224,60 @@ TSharedPtr<FVisualElement> FEditorStyle::MakeToolTipFrame(const TSharedPtr<FVisu
 
 TSharedPtr<FVisualElement> FEditorStyle::MakeInnerFrame(const TSharedPtr<FVisualElement>& Content)
 {
+    return MakeInnerFrame(Content, FUIStyle::GetDefault().InnerFrame.Padding);
+}
+
+TSharedPtr<FVisualElement> FEditorStyle::MakeInnerFrame(const TSharedPtr<FVisualElement>& Content, const FMargin& Padding)
+{
     const FUIInnerFrameStyle& Frame = FUIStyle::GetDefault().InnerFrame;
 
     FBorder::FDesc FrameDesc;
-    FrameDesc.BackgroundColor = Frame.Fill;
-    FrameDesc.BorderColor     = Frame.Border;
-    FrameDesc.BorderThickness = Frame.BorderThickness;
-    FrameDesc.CornerRadius    = FCornerRadii(Frame.CornerRadius);
-    FrameDesc.Padding         = Frame.Padding;
-    FrameDesc.Content         = Content;
+    FrameDesc.BackgroundColor        = Frame.Fill;
+    FrameDesc.BorderColor            = Frame.Border;
+    FrameDesc.BorderThickness        = Frame.BorderThickness;
+    FrameDesc.CornerRadius           = FCornerRadii(Frame.CornerRadius);
+    FrameDesc.Padding                = Padding;
+    FrameDesc.Content                = Content;
+    FrameDesc.bDrawBorderOverContent = true;
 
     return FBorder::Create(FrameDesc);
+}
+
+TSharedPtr<FVisualElement> FEditorStyle::MakeHeaderCard(const String& Title, const String& Subtitle, TSharedPtr<FTextBlock>* OutSubtitleText)
+{
+    FTextBlock::FDesc TitleDesc;
+    TitleDesc.Text     = Title;
+    TitleDesc.Font     = GFonts.BodyBold;
+    TitleDesc.Overflow = ETextOverflow::Elide;
+
+    FTextBlock::FDesc SubtitleDesc;
+    SubtitleDesc.Text            = Subtitle;
+    SubtitleDesc.Font            = GFonts.Body;
+    SubtitleDesc.ColorAndOpacity = GStyle.Colors.TextDisabled;
+    SubtitleDesc.Overflow        = ETextOverflow::Elide;
+
+    TSharedPtr<FTextBlock> SubtitleText = FTextBlock::Create(SubtitleDesc);
+
+    TSharedPtr<FVerticalBox> Text = FVerticalBox::Create();
+    Text->AddSlot(FTextBlock::Create(TitleDesc));
+    Text->AddSlot(SubtitleText).SetPadding(FMargin(0, ItemSpacing, 0, 0));
+
+    if (OutSubtitleText)
+    {
+        *OutSubtitleText = SubtitleText;
+    }
+
+    const FUIHeaderStyle& HeaderStyle = GStyle.Header;
+
+    FBorder::FDesc CardDesc;
+    CardDesc.BackgroundColor = HeaderStyle.Fill;
+    CardDesc.BorderColor     = HeaderStyle.Border;
+    CardDesc.BorderThickness = HeaderStyle.BorderThickness;
+    CardDesc.CornerRadius    = FCornerRadii(HeaderStyle.CornerRadius);
+    CardDesc.Padding         = FMargin(HEADER_CARD_PADDING);
+    CardDesc.Content         = Text;
+
+    return FBorder::Create(CardDesc);
 }
 
 FInputFrameStyle FEditorStyle::GetInputFrameStyle()
@@ -260,6 +323,11 @@ FMargin FEditorStyle::GetSectionSpacing()
     return FMargin(0, SECTION_OUTER_SPACING, 0, SECTION_OUTER_SPACING);
 }
 
+FMargin FEditorStyle::GetSectionStackSpacing()
+{
+    return FMargin(0, 0, 0, SECTION_STACK_SPACING);
+}
+
 FExpander::FDesc FEditorStyle::MakeExpanderDesc(const String& Label, const TSharedPtr<FVisualElement>& Content, bool bIsExpanded)
 {
     FExpander::FDesc Desc;
@@ -299,6 +367,14 @@ FPropertyTable::FDesc FEditorStyle::MakeDataTableDesc()
     Desc.RowHeight           = RowHeight;
     Desc.HeaderRowHeight     = SECTION_HEADER_HEIGHT;
     Desc.bAlternateRowColors = true;
+    return Desc;
+}
+
+FPropertyTable::FDesc FEditorStyle::MakeInfoTableDesc()
+{
+    FPropertyTable::FDesc Desc = MakeDataTableDesc();
+    Desc.LabelColumnWidth      = INFO_LABEL_COLUMN_WIDTH;
+    Desc.EditorColumnInset     = Desc.Style.CellPadding.Left;
     return Desc;
 }
 

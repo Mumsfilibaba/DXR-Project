@@ -23,6 +23,9 @@ public:
         /** @brief One per child, the least each can be squeezed to. Takes precedence over the size AddChild is given. */
         TArray<IntVector2> MinimumSizes;
 
+        /** @brief One per child, a pixel length to lock. Zero keeps sharing by fraction. */
+        TArray<int32> FixedLengths;
+
         /** @brief Fired when a handle drag settles, carrying the shares every child ended up with. */
         FOnSplitterFractionsChanged OnFractionsChanged;
     };
@@ -112,6 +115,8 @@ private:
 
     int32 GetAvailableLength(const FRectangle& Bounds) const;
     int32 GetChildMinimumLength(int32 ChildIndex) const;
+    int32 GetChildFixedLength(int32 ChildIndex) const;
+    bool  HasAnyFixedLength() const;
 
     EDockSplitOrientation               Orientation;
     int32                               HandleThickness;
@@ -119,7 +124,9 @@ private:
     int32                               HoveredHandleIndex;
     IntVector2                          DragOrigin;
     TArray<float>                       DragStartFractions;
+    TArray<int32>                       DragStartFixedLengths;
     TArray<float>                       Fractions;
+    TArray<int32>                       FixedLengths;
     TArray<IntVector2>                  MinimumSizes;
     TArray<TSharedPtr<FVisualElement>>  Children;
     FOnSplitterFractionsChanged         OnFractionsChangedDelegate;

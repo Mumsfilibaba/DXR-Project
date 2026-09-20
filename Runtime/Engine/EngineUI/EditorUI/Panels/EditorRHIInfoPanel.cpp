@@ -59,7 +59,6 @@ static void UpdateMemoryBar(const TSharedPtr<FProgressBar>& Bar, int64 Usage, in
 
 FEditorRHIInfoPanel::FEditorRHIInfoPanel(FEditorEngine* InEditorEngine)
     : FEditorPanel(InEditorEngine, "RHIInfo", "RHI Info")
-    , AdapterText(nullptr)
     , LocalMemoryBar(nullptr)
     , NonLocalMemoryBar(nullptr)
     , DrawCallsText(nullptr)
@@ -101,37 +100,45 @@ bool FEditorRHIInfoPanel::Initialize()
 
     ScrollBox->SetContent(Column);
 
-    Content = FEditorStyle::MakeInnerFrame(ScrollBox);
+    TSharedPtr<FVerticalBox> Layout = FVerticalBox::Create();
+    Layout->AddSlot(BuildHeaderCard()).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
+    Layout->AddSlot(ScrollBox).SetFillCoefficient(1.0f);
+
+    Content = Layout;
 
     RebuildDetailSections();
     return true;
 }
 
+TSharedPtr<FVisualElement> FEditorRHIInfoPanel::BuildHeaderCard()
+{
+    const String AdapterName = RHI::Device ? RHI::Device->GetAdapterName() : String();
+    const String Backend     = RHI::Device ? String(ToString(RHI::Device->GetRHIType())) : String("None");
+
+    return FEditorStyle::MakeHeaderCard(AdapterName.IsEmpty() ? String("Unknown Adapter") : AdapterName, Backend);
+}
+
 bool FEditorRHIInfoPanel::BuildOverview(const TSharedPtr<FVerticalBox>& InColumn)
 {
-    TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
+    TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(FEditorStyle::MakeInfoTableDesc());
     if (!Table)
     {
         return false;
     }
 
-    const String AdapterName = RHI::Device ? RHI::Device->GetAdapterName() : String();
-    AdapterText = CreateValueText(AdapterName.IsEmpty() ? String("Unknown") : AdapterName);
-
     LocalMemoryBar    = CreateMemoryBar();
     NonLocalMemoryBar = CreateMemoryBar();
 
-    Table->AddRow("Adapter", AdapterText);
-    Table->AddRow("Local Memory", LocalMemoryBar).ToolTipText = "Memory on the adapter itself, against the budget the driver grants this process";
-    Table->AddRow("Non-Local Memory", NonLocalMemoryBar).ToolTipText = "System memory the adapter reads across the bus, against the budget the driver grants this process";
+    Table->AddRow("Local", LocalMemoryBar).ToolTipText = "Memory on the adapter itself, against the budget the driver grants this process";
+    Table->AddRow("Non-Local", NonLocalMemoryBar).ToolTipText = "System memory the adapter reads across the bus, against the budget the driver grants this process";
 
-    InColumn->AddSlot(Table).SetPadding(FEditorStyle::GetSectionSpacing());
+    AddSection(InColumn, "Memory", Table, true);
     return true;
 }
 
 bool FEditorRHIInfoPanel::BuildCounters(const TSharedPtr<FVerticalBox>& InColumn)
 {
-    TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
+    TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(FEditorStyle::MakeInfoTableDesc());
     if (!Table)
     {
         return false;
@@ -141,18 +148,21 @@ bool FEditorRHIInfoPanel::BuildCounters(const TSharedPtr<FVerticalBox>& InColumn
     DispatchCallsText = CreateValueText("0");
     CommandsText      = CreateValueText("0");
 
-    Table->AddHeaderRow("Command Submission");
     Table->AddRow("Draw Calls", DrawCallsText);
     Table->AddRow("Dispatch Calls", DispatchCallsText);
     Table->AddRow("Commands", CommandsText);
 
-    InColumn->AddSlot(Table).SetPadding(FEditorStyle::GetSectionSpacing());
+    AddSection(InColumn, "Command Submission", Table, true);
     return true;
+}
+
+void FEditorRHIInfoPanel::AddSection(const TSharedPtr<FVerticalBox>& InColumn, const String& Label, const TSharedPtr<FVisualElement>& SectionContent, bool bIsExpanded)
+{
+    InColumn->AddSlot(FExpander::Create(FEditorStyle::MakeExpanderDesc(Label, SectionContent, bIsExpanded))).SetPadding(FEditorStyle::GetSectionStackSpacing());
 }
 
 void FEditorRHIInfoPanel::Release()
 {
-    AdapterText.Reset();
     LocalMemoryBar.Reset();
     NonLocalMemoryBar.Reset();
     DrawCallsText.Reset();
@@ -249,10 +259,10 @@ void FEditorRHIInfoPanel::RebuildDetailSections()
     {
         FStatGroupSection GroupSection;
         GroupSection.GroupName = GroupName;
-        GroupSection.Table     = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
+        GroupSection.Table     = FPropertyTable::Create(FEditorStyle::MakeInfoTableDesc());
         GroupSection.Section   = FExpander::Create(FEditorStyle::MakeExpanderDesc(GroupName, GroupSection.Table, false));
 
-        DetailsColumn->AddSlot(GroupSection.Section).SetPadding(FEditorStyle::GetSectionSpacing());
+        DetailsColumn->AddSlot(GroupSection.Section).SetPadding(FEditorStyle::GetSectionStackSpacing());
         DetailSections.Emplace(GroupSection);
     }
 

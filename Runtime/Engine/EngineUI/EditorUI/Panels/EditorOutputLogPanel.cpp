@@ -105,7 +105,8 @@ TSharedPtr<FToolBar> FEditorOutputLogPanel::BuildToolBar()
     Desc.Font           = FEditorStyle::GetFonts().Body;
     Desc.IconSize       = FEditorStyle::IconSize;
     Desc.ItemSpacing    = LOG_TOOLBAR_GAP;
-    Desc.bHasBackground = true;
+    Desc.Padding        = FMargin(0);
+    Desc.bHasBackground = false;
 
     TSharedPtr<FToolBar> Bar = FToolBar::Create(Desc);
     if (!Bar)

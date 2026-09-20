@@ -39,7 +39,7 @@ static const CHAR* GMaterialTextureSlotNames[EMaterialTextureSlot::Count] =
 };
 
 static const CHAR* GNormalMapAxisLabels[2] = { "-Y (DirectX)", "+Y (OpenGL)" };
-static const CHAR* GDegreeSuffix           = "\xC2\xB0";
+static const CHAR* GDegreeSuffix           = "\xB0";
 
 constexpr float REVERT_EPSILON = 0.00005f;
 
@@ -49,9 +49,6 @@ constexpr int32 PROPERTIES_LABEL_COLUMN_WIDTH = 128;
 constexpr int32 MATERIAL_TEXTURE_PREVIEW_SIZE = 48;
 constexpr int32 MATERIAL_TEXTURE_ZOOM_SIZE    = 256;
 constexpr int32 MATERIAL_TEXTURE_ROW_HEIGHT   = MATERIAL_TEXTURE_PREVIEW_SIZE + 8;
-
-// A row holding nothing but a line of text, which is the body font's 18px plus ImGui's 4px above and below
-constexpr int32 TEXT_ROW_HEIGHT = 26;
 
 constexpr int32 UNIFORM_LOCK_SIZE = 16;
 
@@ -143,6 +140,7 @@ bool FEditorPropertiesPanel::Initialize()
     }
 
     ScrollBox->SetContent(Column);
+    ScrollBox->SetScrollBarGutter(FUIStyle::GetDefault().InnerFrame.Padding.Right);
 
     Content = FEditorStyle::MakeInnerFrame(ScrollBox);
 
@@ -1159,9 +1157,7 @@ FPropertyRow& FEditorPropertiesPanel::AddBoolRow(
 
 FPropertyRow& FEditorPropertiesPanel::AddTextRow(const TSharedPtr<FPropertyTable>& Table, const String& RowLabel, const String& Text)
 {
-    FPropertyRow& NewRow  = Table->AddRow(RowLabel, CreateTextRow(Text));
-    NewRow.HeightOverride = TEXT_ROW_HEIGHT;
-    return NewRow;
+    return Table->AddRow(RowLabel, CreateTextRow(Text));
 }
 
 void FEditorPropertiesPanel::WriteVectorRow(int32 RowIndex, int32 DrivingAxis)
@@ -1256,15 +1252,19 @@ TSharedPtr<FPropertyTable> FEditorPropertiesPanel::CreateTable()
 TSharedPtr<FSeparatorText> FEditorPropertiesPanel::CreateSectionLabel(const String& SectionLabel)
 {
     FSeparatorText::FDesc Desc;
-    Desc.Text = SectionLabel;
-    Desc.Font = FEditorStyle::GetFonts().Body;
+    Desc.Text          = SectionLabel;
+    Desc.Font          = FEditorStyle::GetFonts().Body;
+    Desc.RuleColor     = FUIStyle::GetDefault().Header.Border;
+    Desc.RuleThickness = 2.0f;
 
     return FSeparatorText::Create(Desc);
 }
 
 void FEditorPropertiesPanel::AddSection(const TSharedPtr<FVerticalBox>& InColumn, const String& SectionLabel, const TSharedPtr<FPropertyTable>& Table)
 {
-    InColumn->AddSlot(FExpander::Create(FEditorStyle::MakeExpanderDesc(SectionLabel, Table, true))).SetPadding(FEditorStyle::GetSectionSpacing());
+    FExpander::FDesc Desc = FEditorStyle::MakeExpanderDesc(SectionLabel, Table, true);
+    Desc.ContentPadding = FMargin(0, 4, 0, 4);
+    InColumn->AddSlot(FExpander::Create(Desc)).SetPadding(FEditorStyle::GetSectionSpacing());
 }
 
 TSharedPtr<TNumericEntry<float>> FEditorPropertiesPanel::CreateFloatEditor(float Value, float Min, float Max, float Step, int32 Precision, const TDelegate<void(float)>& OnChanged)
@@ -1325,7 +1325,8 @@ TSharedPtr<FTextBlock> FEditorPropertiesPanel::CreateTextRow(const String& Text)
     FTextBlock::FDesc Desc;
     Desc.Text     = Text;
     Desc.Font     = FEditorStyle::GetFonts().Body;
-    Desc.Overflow = ETextOverflow::Elide;
+    Desc.Overflow            = ETextOverflow::Elide;
+    Desc.VerticalAlignment   = EVerticalAlignment::Center;
 
     return FTextBlock::Create(Desc);
 }
@@ -1337,6 +1338,7 @@ TSharedPtr<FTextBlock> FEditorPropertiesPanel::CreateDisabledTextRow(const Strin
     Desc.Font            = FEditorStyle::GetFonts().Body;
     Desc.ColorAndOpacity = FEditorStyle::GetStyle().Colors.TextDisabled;
     Desc.Overflow        = ETextOverflow::Elide;
+    Desc.VerticalAlignment = EVerticalAlignment::Center;
 
     return FTextBlock::Create(Desc);
 }

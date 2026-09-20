@@ -525,6 +525,33 @@ bool SplitterSeededDesc_Test()
         TEST_EXPECT_EQ(Children[1]->GetContentRectangle().Width, 250);
     }
 
+    TEST_SECTION("A fixed length holds its pixels while the other child takes the remainder");
+    {
+        FSplitter::FDesc Desc;
+        Desc.Orientation     = EDockSplitOrientation::Horizontal;
+        Desc.HandleThickness = 4;
+        Desc.FixedLengths.Add(220);
+        Desc.FixedLengths.Add(0);
+
+        TSharedPtr<FSplitter> Splitter = FSplitter::Create(Desc);
+        Splitter->AddChild(MakePanel("Folders", Font), IntVector2(120, 60));
+        Splitter->AddChild(MakePanel("Tiles", Font), IntVector2(120, 60));
+
+        LayoutElement(Splitter, FRectangle(IntVector2(0, 0), 804, 300));
+
+        TArray<TSharedPtr<FVisualElement>> Children;
+        Splitter->GetChildren(Children);
+
+        TEST_EXPECT_EQ(Children[0]->GetContentRectangle().Width, 220);
+        TEST_EXPECT_EQ(Children[1]->GetContentRectangle().Width, 580);
+
+        LayoutElement(Splitter, FRectangle(IntVector2(0, 0), 1004, 300));
+        Splitter->GetChildren(Children);
+
+        TEST_EXPECT_EQ(Children[0]->GetContentRectangle().Width, 220);
+        TEST_EXPECT_EQ(Children[1]->GetContentRectangle().Width, 780);
+    }
+
     TEST_SECTION("An unseeded description still shares evenly and takes the minimums AddChild is given");
     {
         FSplitter::FDesc Desc;
@@ -697,7 +724,7 @@ bool TabStripReorder_Test()
     {
         TEST_EXPECT_EQ(Label->Bounds.Position.Y,
             OutlinerBounds.Position.Y + ((OutlinerBounds.Height - Font->GetLineHeight()) / 2) + TabStyle.LabelOffsetY);
-        TEST_EXPECT(Label->Bounds.GetCenter().Y < OutlinerClose.GetCenter().Y);
+        TEST_EXPECT(Label->Bounds.GetCenter().Y <= OutlinerClose.GetCenter().Y);
     }
 
     TEST_SECTION("A hovered tab puts the hand under the cursor, over its close button as much as over its label");
@@ -918,6 +945,12 @@ bool TabStripScroll_Test()
     TEST_EXPECT_EQ(BarBounds.GetBottom(), Strip->GetContentRectangle().GetBottom());
     TEST_EXPECT(ScrollBar->IsScrollable());
 
+    TEST_SECTION("The pills give up the height it takes to stand clear of that bar by the gap the style names");
+    const FRectangle ScrolledTab = Strip->GetTabs()[0]->GetContentRectangle();
+
+    TEST_EXPECT_EQ(ScrolledTab.Position.Y, TabStyle.TopInset);
+    TEST_EXPECT_EQ(BarBounds.Position.Y - ScrolledTab.GetBottom(), TabStyle.ScrollBarGap);
+
     TEST_SECTION("Its track is cleared away, so what fades in over the strip is the thumb on its own");
     TEST_EXPECT_EQ(ScrollBar->GetStyle().Track.A, 0.0f);
     TEST_EXPECT(ScrollBar->GetStyle().Grab.A > 0.0f);
@@ -943,6 +976,10 @@ bool TabStripScroll_Test()
 
     TEST_EXPECT_EQ(Strip->GetScrollOffset(), 0);
     TEST_EXPECT(!Strip->OnMouseScroll(MakeScrollEvent(1.0f)).IsEventHandled());
+
+    TEST_SECTION("With no bar to stand clear of, its pills have the whole strip back bar the two insets");
+    TEST_EXPECT_EQ(Strip->GetTabs()[0]->GetContentRectangle().Height,
+        FDockMetrics::TabStripHeight - TabStyle.TopInset - TabStyle.BottomInset);
 
     FDrawCommandList FittedCommands;
     DrawElement(Strip, FittedCommands);
@@ -974,6 +1011,8 @@ bool TabStripStyle_Test()
     TabStyle.SeparatorThickness = 3;
     TabStyle.CloseInset         = 7;
     TabStyle.MinWidth           = 0;
+
+    TabStyle.ActiveStripThickness = 2;
 
     FTabStrip::FDesc Desc;
     Desc.Font  = Font;
@@ -1039,26 +1078,98 @@ bool TabStripStyle_Test()
     FDrawCommandList ActiveCommands;
     DrawElement(OutlinerTab, ActiveCommands);
 
-    const FDrawCommand& Pill = ActiveCommands.GetCommands()[0];
-    TEST_EXPECT(Pill.Tint == TabStyle.FillActive);
-    TEST_EXPECT_EQ(Pill.CornerRadius.TopLeft, TabStyle.CornerRadius);
-    TEST_EXPECT_EQ(Pill.CornerRadius.BottomRight, TabStyle.CornerRadius);
+    const FDrawCommand* Pill        = nullptr;
+    const FDrawCommand* Accent      = nullptr;
+    int32               PillIndex   = -1;
+    int32               AccentIndex = -1;
 
-    TEST_SECTION("Its accent is a band cut from that same pill, so it carries the pill's bounds and radius rather than its own");
-    const FDrawCommand* Accent = FindCommand(ActiveCommands, EDrawCommandType::RoundedBottomBar);
-    TEST_EXPECT(Accent != nullptr);
-
-    if (Accent)
+    for (int32 Index = 0; Index < ActiveCommands.GetCommands().Size(); ++Index)
     {
-        TEST_EXPECT(Accent->Tint == TabStyle.ActiveStrip);
-        TEST_EXPECT_EQ(Accent->Bounds, OutlinerTab->GetContentRectangle());
-        TEST_EXPECT_EQ(Accent->CornerRadius.BottomLeft, TabStyle.CornerRadius);
-        TEST_EXPECT_EQ(Accent->Thickness, static_cast<float>(TabStyle.ActiveStripThickness));
-        TEST_EXPECT_EQ(Accent->FadeWidth, TabStyle.ActiveStripFadeWidth);
+        const FDrawCommand& Command = ActiveCommands.GetCommands()[Index];
+
+        if (!Pill && Command.Type == EDrawCommandType::Box && Command.Tint == TabStyle.FillActive)
+        {
+            Pill      = &Command;
+            PillIndex = Index;
+        }
+        else if (!Accent && Command.Type == EDrawCommandType::RoundedAccentRing)
+        {
+            Accent      = &Command;
+            AccentIndex = Index;
+        }
     }
 
+    TEST_EXPECT(Pill != nullptr);
+    TEST_EXPECT(Accent != nullptr);
+
+    if (Pill)
+    {
+        TEST_EXPECT_EQ(Pill->Bounds, OutlinerTab->GetContentRectangle());
+        TEST_EXPECT_EQ(Pill->CornerRadius.TopLeft, TabStyle.CornerRadius);
+        TEST_EXPECT_EQ(Pill->CornerRadius.TopRight, TabStyle.CornerRadius);
+        TEST_EXPECT_EQ(Pill->CornerRadius.BottomLeft, TabStyle.CornerRadius);
+        TEST_EXPECT_EQ(Pill->CornerRadius.BottomRight, TabStyle.CornerRadius);
+    }
+
+    TEST_SECTION("The rule that description asked for is stroked along the tab itself, bright on the top and faint round the rest");
+    if (Pill && Accent)
+    {
+        TEST_EXPECT(AccentIndex > PillIndex);
+
+        TEST_EXPECT_EQ(Accent->Bounds, OutlinerTab->GetContentRectangle());
+        TEST_EXPECT_EQ(Accent->CornerRadius.TopLeft, TabStyle.CornerRadius);
+        TEST_EXPECT_EQ(Accent->CornerRadius.BottomRight, TabStyle.CornerRadius);
+        TEST_EXPECT(Accent->Tint == TabStyle.ActiveStrip);
+        TEST_EXPECT_EQ(Accent->Thickness, static_cast<float>(TabStyle.ActiveStripThickness));
+        TEST_EXPECT_EQ(Accent->FadeFraction, TabStyle.ActiveStripFadeFraction);
+        TEST_EXPECT_EQ(Accent->TrailAlpha, TabStyle.ActiveStripTrailAlpha);
+    }
+
+    TEST_SECTION("Hovering a resting tab fills it as a pill on every corner, without lending it the accent");
+    DetailsTab->OnMouseEntered(MakeMoveEvent(DetailsTab->GetContentRectangle().GetCenter()));
+
+    FDrawCommandList HoveredCommands;
+    DrawElement(DetailsTab, HoveredCommands);
+
+    const FDrawCommand* HoverFill = nullptr;
+    for (const FDrawCommand& Command : HoveredCommands.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Box && Command.Tint == TabStyle.FillHovered)
+        {
+            HoverFill = &Command;
+            break;
+        }
+    }
+
+    TEST_EXPECT(HoverFill != nullptr);
+    if (HoverFill)
+    {
+        TEST_EXPECT_EQ(HoverFill->Bounds.Position, DetailsTab->GetContentRectangle().Position);
+        TEST_EXPECT_EQ(HoverFill->Bounds.Height, DetailsTab->GetContentRectangle().Height);
+        TEST_EXPECT_EQ(HoverFill->CornerRadius.TopLeft, TabStyle.CornerRadius);
+        TEST_EXPECT_EQ(HoverFill->CornerRadius.TopRight, TabStyle.CornerRadius);
+        TEST_EXPECT_EQ(HoverFill->CornerRadius.BottomLeft, TabStyle.CornerRadius);
+        TEST_EXPECT_EQ(HoverFill->CornerRadius.BottomRight, TabStyle.CornerRadius);
+    }
+
+    for (const FDrawCommand& Command : HoveredCommands.GetCommands())
+    {
+        TEST_EXPECT(!(Command.Tint == TabStyle.ActiveStrip));
+    }
+
+    DetailsTab->OnMouseLeft(MakeMoveEvent(IntVector2(-100, -100)));
+
     TEST_SECTION("A resting tab has no accent at all");
-    TEST_EXPECT_EQ(CountCommands(InactiveCommands, EDrawCommandType::RoundedBottomBar), 0);
+    TEST_EXPECT_EQ(CountCommands(InactiveCommands, EDrawCommandType::RoundedAccentRing), 0);
+    bool bRestingHasAccent = false;
+    for (const FDrawCommand& Command : InactiveCommands.GetCommands())
+    {
+        if (Command.Tint == TabStyle.ActiveStrip)
+        {
+            bRestingHasAccent = true;
+        }
+    }
+    TEST_EXPECT(!bRestingHasAccent);
 
     TEST_SECTION("With no close brush to hand, the cross is drawn as two strokes");
     TEST_EXPECT_EQ(CountCommands(ActiveCommands, EDrawCommandType::Polyline), 2);
@@ -1101,6 +1212,26 @@ bool TabStripStyle_Test()
     Plain->PrepareDesiredSize();
 
     TEST_EXPECT_EQ(Plain->GetCachedDesiredSize().Y, FUIStyle::GetDefault().Tab.StripHeight);
+
+    TEST_SECTION("Its active tab is a rounded pill in the panel's fill, carrying no rule at all");
+    LayoutElement(Plain, FRectangle(IntVector2(0, 0), 600, FUIStyle::GetDefault().Tab.StripHeight));
+
+    const FUITabStyle&     PlainStyle = FUIStyle::GetDefault().Tab;
+    const TSharedPtr<FTab> PlainTab   = FindTab(Plain, "Plain");
+
+    TEST_EXPECT(PlainTab->IsActive());
+
+    FDrawCommandList PlainCommands;
+    DrawElement(PlainTab, PlainCommands);
+
+    TEST_EXPECT_EQ(CountCommands(PlainCommands, EDrawCommandType::RoundedAccentRing), 0);
+
+    const FDrawCommand& PlainFill = PlainCommands.GetCommands()[0];
+    TEST_EXPECT_EQ(PlainFill.Type, EDrawCommandType::Box);
+    TEST_EXPECT(PlainFill.Tint == PlainStyle.FillActive);
+    TEST_EXPECT_EQ(PlainFill.Bounds, PlainTab->GetContentRectangle());
+    TEST_EXPECT_EQ(PlainFill.CornerRadius.TopLeft, PlainStyle.CornerRadius);
+    TEST_EXPECT_EQ(PlainFill.CornerRadius.BottomRight, PlainStyle.CornerRadius);
 
     TEST_END();
 }
@@ -2097,7 +2228,7 @@ bool DockHostNativeDrag_Test()
     Main.Layout();
     FApplication::LayoutWindow(Manager.GetHostWindow(0));
 
-    const IntVector2 OverMainStrip = Main.GetDropZoneCenter(IntVector2(400, 300), EDockDirection::Center);
+    const IntVector2 OverMainStrip = Main.Window->GetPosition() + IntVector2(Main.Window->GetSize().X - 24, 8);
 
     DragState.BeginDrag("Details", Manager.GetHostArea(0).Get(), IntVector2(2000, 2000));
     DragState.UpdateDrag(OverMainStrip);

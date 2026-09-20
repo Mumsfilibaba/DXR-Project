@@ -19,6 +19,7 @@ FScrollBox::FScrollBox()
     , ScrollAmountPerWheelStep(DefaultScrollAmountPerWheelStep)
     , ContentHeight(0)
     , ViewHeight(0)
+    , ScrollBarGutter(0)
     , bIsScrollToEndPending(false)
 {
 }
@@ -29,6 +30,7 @@ void FScrollBox::Initialize()
 {
     FScrollBar::FDesc BarDesc;
     BarDesc.Orientation     = EOrientation::Vertical;
+    BarDesc.bAutoHide       = true;
     BarDesc.OnOffsetChanged = FOnScrollBarOffsetChanged::CreateRaw(this, &FScrollBox::SetScrollOffset);
 
     ScrollBar = FScrollBar::Create(BarDesc);
@@ -83,9 +85,11 @@ void FScrollBox::OnArrange(const FRectangle& AllottedBounds)
     {
         const FRectangle Inner = AllottedBounds.Deflate(Padding);
 
+        const int32 BarWidth = Math::Max(Inner.GetRight() - ViewBounds.GetRight() - ScrollBarGutter, 0);
+
         FRectangle BarBounds = ViewBounds;
-        BarBounds.Width      = Inner.GetRight() - ViewBounds.GetRight();
-        BarBounds.Position.X = ViewBounds.GetRight();
+        BarBounds.Width      = BarWidth;
+        BarBounds.Position.X = Inner.GetRight() - BarWidth;
 
         ScrollBar->Tick(BarBounds);
     }
@@ -151,6 +155,26 @@ FEventResponse FScrollBox::OnMouseScroll(const FCursorEvent& CursorEvent)
     return FEventResponse::Handled();
 }
 
+FEventResponse FScrollBox::OnMouseEntered(const FCursorEvent& CursorEvent)
+{
+    if (ScrollBar)
+    {
+        ScrollBar->SetRevealed(true);
+    }
+
+    return FCompoundElement::OnMouseEntered(CursorEvent);
+}
+
+FEventResponse FScrollBox::OnMouseLeft(const FCursorEvent& CursorEvent)
+{
+    if (ScrollBar)
+    {
+        ScrollBar->SetRevealed(false);
+    }
+
+    return FCompoundElement::OnMouseLeft(CursorEvent);
+}
+
 void FScrollBox::ScrollToEnd()
 {
     bIsScrollToEndPending = true;
@@ -195,6 +219,11 @@ void FScrollBox::SetScrollBarVisibility(EScrollBarVisibility InVisibility)
     ScrollBarVisibility = InVisibility;
 }
 
+void FScrollBox::SetScrollBarGutter(int32 InGutter)
+{
+    ScrollBarGutter = Math::Max(0, InGutter);
+}
+
 bool FScrollBox::IsScrollBarVisible() const
 {
     if (!ScrollBar || ScrollBarVisibility == EScrollBarVisibility::Never)
@@ -211,7 +240,7 @@ FRectangle FScrollBox::GetViewBounds(const FRectangle& AllottedBounds) const
 
     if (IsScrollBarVisible())
     {
-        ViewBounds.Width = Math::Max(ViewBounds.Width - ScrollBar->GetCachedDesiredSize().X, 0);
+        ViewBounds.Width = Math::Max(ViewBounds.Width - ScrollBar->GetCachedDesiredSize().X - ScrollBarGutter, 0);
     }
 
     return ViewBounds;

@@ -269,6 +269,46 @@ bool BorderDraw_Test()
     TEST_EXPECT_EQ(TransparentCommandList.CountCommandsOfType(EDrawCommandType::Box), 0);
     TEST_EXPECT_EQ(TransparentCommandList.CountCommandsOfType(EDrawCommandType::Text), 1);
 
+    TEST_SECTION("A stroke goes under the child by default, so a child that fills the border hides it");
+    FBorder::FDesc StrokeDesc;
+    StrokeDesc.BorderColor     = FFloatColor(0.8f, 0.1f, 0.1f, 1.0f);
+    StrokeDesc.BorderThickness = 1.0f;
+    StrokeDesc.Content         = CreateTextBlock("Border", Font);
+
+    TSharedPtr<FBorder> UnderBorder = FBorder::Create(StrokeDesc);
+    UnderBorder->PrepareDesiredSize();
+    UnderBorder->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+
+    FDrawCommandList UnderCommandList;
+    UnderBorder->OnDraw(FDrawGeometry(UnderBorder->GetContentRectangle(), 1.0f), UnderCommandList, 0);
+
+    TEST_EXPECT_EQ(UnderCommandList.CountCommandsOfType(EDrawCommandType::BoxOutline), 1);
+    TEST_EXPECT(UnderCommandList[0].Type == EDrawCommandType::BoxOutline);
+
+    TEST_SECTION("Asked to draw over its child, the same stroke comes after it and no lower than its layer");
+    StrokeDesc.bDrawBorderOverContent = true;
+    StrokeDesc.Content                = CreateTextBlock("Border", Font);
+
+    TSharedPtr<FBorder> OverBorder = FBorder::Create(StrokeDesc);
+    OverBorder->PrepareDesiredSize();
+    OverBorder->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+
+    FDrawCommandList OverCommandList;
+    const int32      OverMaxLayerId = OverBorder->OnDraw(FDrawGeometry(OverBorder->GetContentRectangle(), 1.0f), OverCommandList, 0);
+
+    TEST_EXPECT_EQ(OverCommandList.CountCommandsOfType(EDrawCommandType::BoxOutline), 1);
+
+    const int32 TextIndex = OverCommandList.FindTextCommand("Border");
+    TEST_EXPECT(TextIndex >= 0);
+
+    const int32          StrokeIndex = OverCommandList.GetCommands().LastIndex();
+    const FDrawCommand&  OverStroke  = OverCommandList[StrokeIndex];
+
+    TEST_EXPECT(OverStroke.Type == EDrawCommandType::BoxOutline);
+    TEST_EXPECT(StrokeIndex > TextIndex);
+    TEST_EXPECT(OverStroke.LayerId >= OverCommandList[TextIndex].LayerId);
+    TEST_EXPECT(OverMaxLayerId > OverStroke.LayerId);
+
     TEST_END();
 }
 

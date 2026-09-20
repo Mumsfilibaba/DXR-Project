@@ -59,10 +59,22 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
         return LayerId;
     }
 
+    const FCornerRadii Radii(Style.CornerRadius);
+
     if (bIsActive || IsHovered())
     {
         const FFloatColor& Fill = bIsActive ? Style.FillActive : Style.FillHovered;
-        OutCommandList.AddBox(LayerId, Bounds, Fill, FCornerRadii(Style.CornerRadius));
+        OutCommandList.AddBox(LayerId, Bounds, Fill, Radii);
+    }
+
+    const int32 AccentThickness = bIsActive
+        ? Math::Clamp(Style.ActiveStripThickness, 0, Bounds.Height)
+        : 0;
+
+    if (AccentThickness > 0)
+    {
+        OutCommandList.AddRoundedAccentRing(LayerId, Bounds, Radii, static_cast<float>(AccentThickness),
+            Style.ActiveStrip, Style.ActiveStripFadeFraction, Style.ActiveStripTrailAlpha);
     }
 
     if (Style.SeparatorThickness > 0)
@@ -71,12 +83,6 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
             Style.SeparatorThickness, Bounds.Height);
 
         OutCommandList.AddBox(LayerId, SeparatorBounds, Style.Separator);
-    }
-
-    if (bIsActive)
-    {
-        OutCommandList.AddRoundedBottomBar(LayerId + 1, Bounds, FCornerRadii(Style.CornerRadius),
-            static_cast<float>(Style.ActiveStripThickness), Style.ActiveStrip, Style.ActiveStripFadeWidth);
     }
 
     if (Font)
@@ -92,7 +98,7 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
         OutCommandList.AddText(LayerId + 1, LabelBounds, Label, Font.Get(), LabelColor);
     }
 
-    if (bIsClosable)
+    if (bIsClosable && (bIsActive || IsHovered()))
     {
         const FRectangle CloseBounds = GetCloseButtonRectangle();
 
@@ -101,7 +107,7 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
             OutCommandList.AddBox(LayerId + 1, CloseBounds, Style.CloseHovered, FCornerRadii(Style.CloseCornerRadius));
         }
 
-        const FFloatColor& CrossColor = (bIsActive || IsHovered()) ? Colors.Text : Colors.TextDisabled;
+        const FFloatColor& CrossColor = Colors.Text;
 
         if (CloseIcon.IsValid())
         {
@@ -287,11 +293,15 @@ IntVector2 FTabStrip::ComputeDesiredSize() const
 
 void FTabStrip::OnArrange(const FRectangle& AllottedBounds)
 {
-    const int32 TabHeight = Math::Max(AllottedBounds.Height - Style.TopInset - Style.BottomInset, 0);
-
     ContentWidth = ComputeDesiredSize().X;
     ViewWidth    = AllottedBounds.Width;
     ScrollOffset = Math::Clamp(ScrollOffset, 0, GetMaxScrollOffset());
+
+    const int32 BarBand = GetMaxScrollOffset() > 0
+        ? Math::Max((Style.ScrollBarThickness + Style.ScrollBarGap) - Style.BottomInset, 0)
+        : 0;
+
+    const int32 TabHeight = Math::Max(AllottedBounds.Height - Style.TopInset - Style.BottomInset - BarBand, 0);
 
     int32 Offset = (AllottedBounds.Position.X + Style.Spacing) - ScrollOffset;
     for (const TSharedPtr<FTab>& Tab : Tabs)

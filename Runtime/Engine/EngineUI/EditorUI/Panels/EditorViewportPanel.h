@@ -173,6 +173,7 @@ private:
     Vector2                             ContextMenuNdc;
     IntVector2                          ContextMenuScreenPosition;
     uint64                              ContextMenuPickRequestId;
+    FActor*                             ContextMenuActor;
     FSceneRenderView::EDebugView        DebugView;
     FSceneRenderView::EDebugView        SecondaryDebugView;
     FSceneRenderView::EDebugViewChannel DebugViewChannelMask;

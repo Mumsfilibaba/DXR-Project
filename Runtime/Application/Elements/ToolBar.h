@@ -384,6 +384,15 @@ public:
     TSharedPtr<FMenuAnchor> AddDropDown(const FToolBarItemDesc& Item, const TSharedPtr<FVisualElement>& MenuContent);
 
     /**
+     * @brief Appends an entry that rebuilds its menu each time it opens.
+     *
+     * @param Item            What the entry shows.
+     * @param OnGetMenuContent Builds the menu when the entry is opened.
+     * @return The anchor, so a caller can open or close the menu itself.
+     */
+    TSharedPtr<FMenuAnchor> AddDropDown(const FToolBarItemDesc& Item, const FOnGetMenuContent& OnGetMenuContent);
+
+    /**
      * @brief Opens a run of entries that are fused into one pill.
      *
      * Entries appended until EndGroup sit flush against each other, and EndGroup rounds only the two outer ends, so

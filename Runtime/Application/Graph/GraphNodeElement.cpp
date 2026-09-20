@@ -154,7 +154,7 @@ int32 FGraphNodeElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
     const float Thickness = bIsSelected ? UIStyle.Metrics.BorderThickness * 2.0f : UIStyle.Metrics.BorderThickness;
     OutCommandList.AddBoxOutline(LayerId + 1, Bounds, BorderColor, Thickness, Corners);
 
-    DrawPinSeparator(Bounds, OutCommandList, LayerId + 1, BorderColor);
+    DrawPinSeparator(Bounds, OutCommandList, LayerId + 1, Style.PinSeparator);
 
     if (Font)
     {

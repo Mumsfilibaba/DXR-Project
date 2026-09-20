@@ -75,6 +75,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("UIDrawDataBatching", UIDrawDataBatching_Test());
     RUN_TEST("UIDrawDataRoundedBox", UIDrawDataRoundedBox_Test());
     RUN_TEST("UIDrawDataRoundedBottomBar", UIDrawDataRoundedBottomBar_Test());
+    RUN_TEST("UIDrawDataRoundedAccentRing", UIDrawDataRoundedAccentRing_Test());
     RUN_TEST("UIDrawDataText", UIDrawDataText_Test());
     RUN_TEST("UIDrawDataClipCulling", UIDrawDataClipCulling_Test());
     RUN_TEST("UIDrawDataSiblingClips", UIDrawDataSiblingClips_Test());
@@ -118,6 +119,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("SpinBoxControl", SpinBoxControl_Test());
     RUN_TEST("ScrollBarControl", ScrollBarControl_Test());
     RUN_TEST("ScrollBoxScrollBar", ScrollBoxScrollBar_Test());
+    RUN_TEST("ScrollBarAutoHide", ScrollBarAutoHide_Test());
     RUN_TEST("OverlayControl", OverlayControl_Test());
     RUN_TEST("SpacerSeparatorControl", SpacerSeparatorControl_Test());
     RUN_TEST("ExpanderControl", ExpanderControl_Test());

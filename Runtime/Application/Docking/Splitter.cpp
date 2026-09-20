@@ -21,7 +21,9 @@ FSplitter::FSplitter()
     , HoveredHandleIndex(-1)
     , DragOrigin()
     , DragStartFractions()
+    , DragStartFixedLengths()
     , Fractions()
+    , FixedLengths()
     , MinimumSizes()
     , Children()
     , OnFractionsChangedDelegate()
@@ -35,6 +37,7 @@ void FSplitter::Initialize(const FDesc& Desc)
     Orientation                = Desc.Orientation;
     HandleThickness            = Math::Max(1, Desc.HandleThickness);
     MinimumSizes               = Desc.MinimumSizes;
+    FixedLengths               = Desc.FixedLengths;
     OnFractionsChangedDelegate = Desc.OnFractionsChanged;
 
     TryNormalizeFractions(Desc.Fractions);
@@ -83,7 +86,7 @@ void FSplitter::OnArrange(const FRectangle& AllottedBounds)
         return;
     }
 
-    const int32 Available = GetAvailableLength(AllottedBounds);
+    const int32 Available     = GetAvailableLength(AllottedBounds);
     const bool  bIsHorizontal = Orientation == EDockSplitOrientation::Horizontal;
 
     int32 Offset    = bIsHorizontal ? AllottedBounds.Position.X : AllottedBounds.Position.Y;
@@ -91,10 +94,31 @@ void FSplitter::OnArrange(const FRectangle& AllottedBounds)
 
     for (int32 Index = 0; Index < Children.Size(); ++Index)
     {
-        const bool  bIsLast = Index == Children.Size() - 1;
-        const float Share   = Index < Fractions.Size() ? Fractions[Index] : 0.0f;
+        const bool  bIsLast     = Index == Children.Size() - 1;
+        const int32 FixedLength = GetChildFixedLength(Index);
 
-        const int32 Length = bIsLast ? Available - Allocated : Math::RoundToInt(static_cast<float>(Available) * Share);
+        int32 TrailingMin = 0;
+        for (int32 After = Index + 1; After < Children.Size(); ++After)
+        {
+            TrailingMin += GetChildMinimumLength(After);
+        }
+
+        int32 Length = 0;
+        if (FixedLength > 0)
+        {
+            Length = Math::Clamp(FixedLength, GetChildMinimumLength(Index),
+                Math::Max(Available - Allocated - TrailingMin, GetChildMinimumLength(Index)));
+        }
+        else if (bIsLast)
+        {
+            Length = Available - Allocated;
+        }
+        else
+        {
+            const float Share = Index < Fractions.Size() ? Fractions[Index] : 0.0f;
+            Length = Math::RoundToInt(static_cast<float>(Available) * Share);
+        }
+
         Allocated += Length;
 
         if (Children[Index])
@@ -214,8 +238,9 @@ FEventResponse FSplitter::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 
     ActiveHandleIndex  = HandleIndex;
     HoveredHandleIndex = HandleIndex;
-    DragOrigin         = CursorEvent.GetClientPosition();
-    DragStartFractions = Fractions;
+    DragOrigin             = CursorEvent.GetClientPosition();
+    DragStartFractions     = Fractions;
+    DragStartFixedLengths  = FixedLengths;
 
     if (FApplication::IsInitialized())
     {
@@ -254,7 +279,8 @@ FEventResponse FSplitter::OnMouseMove(const FCursorEvent& CursorEvent)
         return HoveredHandleIndex >= 0 ? FEventResponse::Handled() : FEventResponse::Unhandled();
     }
 
-    Fractions = DragStartFractions;
+    Fractions    = DragStartFractions;
+    FixedLengths = DragStartFixedLengths;
 
     const int32 Delta = Orientation == EDockSplitOrientation::Horizontal
         ? Position.X - DragOrigin.X
@@ -286,6 +312,11 @@ void FSplitter::AddChild(const TSharedPtr<FVisualElement>& InChild, const IntVec
         MinimumSizes.Add(InMinimumSize);
     }
 
+    while (FixedLengths.Size() < Children.Size())
+    {
+        FixedLengths.Add(0);
+    }
+
     if (InChild)
     {
         InChild->SetParentElement(AsWeakPtr());
@@ -310,6 +341,7 @@ void FSplitter::ClearChildren()
     Children.Clear();
     MinimumSizes.Clear();
     Fractions.Clear();
+    FixedLengths.Clear();
 
     ActiveHandleIndex  = -1;
     HoveredHandleIndex = -1;
@@ -386,7 +418,7 @@ int32 FSplitter::GetHandleIndexAt(const IntVector2& ClientPosition) const
 
 void FSplitter::DragHandle(int32 HandleIndex, int32 DeltaPixels)
 {
-    if (HandleIndex < 0 || HandleIndex + 1 >= Fractions.Size())
+    if (HandleIndex < 0 || HandleIndex + 1 >= Children.Size())
     {
         return;
     }
@@ -397,13 +429,35 @@ void FSplitter::DragHandle(int32 HandleIndex, int32 DeltaPixels)
         return;
     }
 
+    const int32 LeadingMinimum  = GetChildMinimumLength(HandleIndex);
+    const int32 TrailingMinimum = GetChildMinimumLength(HandleIndex + 1);
+
+    if (GetChildFixedLength(HandleIndex) > 0)
+    {
+        const int32 DesiredLeading = DragStartFixedLengths.IsValidIndex(HandleIndex)
+            ? DragStartFixedLengths[HandleIndex] + DeltaPixels
+            : GetChildFixedLength(HandleIndex) + DeltaPixels;
+
+        while (FixedLengths.Size() <= HandleIndex)
+        {
+            FixedLengths.Add(0);
+        }
+
+        FixedLengths[HandleIndex] = Math::Clamp(DesiredLeading, LeadingMinimum, Available - TrailingMinimum);
+        OnArrange(GetContentRectangle());
+        return;
+    }
+
+    if (HandleIndex + 1 >= Fractions.Size())
+    {
+        return;
+    }
+
     const float LeadingShare  = Fractions[HandleIndex];
     const float TrailingShare = Fractions[HandleIndex + 1];
     const float PairShare     = LeadingShare + TrailingShare;
 
-    const int32 PairLength      = Math::RoundToInt(static_cast<float>(Available) * PairShare);
-    const int32 LeadingMinimum  = GetChildMinimumLength(HandleIndex);
-    const int32 TrailingMinimum = GetChildMinimumLength(HandleIndex + 1);
+    const int32 PairLength = Math::RoundToInt(static_cast<float>(Available) * PairShare);
 
     if (LeadingMinimum + TrailingMinimum > PairLength)
     {
@@ -417,6 +471,29 @@ void FSplitter::DragHandle(int32 HandleIndex, int32 DeltaPixels)
     Fractions[HandleIndex + 1] = PairShare - Fractions[HandleIndex];
 
     OnArrange(GetContentRectangle());
+}
+
+int32 FSplitter::GetChildFixedLength(int32 ChildIndex) const
+{
+    if (ChildIndex < 0 || ChildIndex >= FixedLengths.Size())
+    {
+        return 0;
+    }
+
+    return Math::Max(FixedLengths[ChildIndex], 0);
+}
+
+bool FSplitter::HasAnyFixedLength() const
+{
+    for (int32 Length : FixedLengths)
+    {
+        if (Length > 0)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 int32 FSplitter::GetAvailableLength(const FRectangle& Bounds) const

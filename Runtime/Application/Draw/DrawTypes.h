@@ -33,6 +33,9 @@ enum class EDrawCommandType : uint8
     /** The bottom band of a rounded rectangle, narrowed by its corners and faded out at either end. */
     RoundedBottomBar,
 
+    /** A stroke round a rounded rectangle, full strength along the top and faded back over the top corners. */
+    RoundedAccentRing,
+
     /** Opens a clip region. A well formed list matches every push with exactly one pop. */
     ClipPush,
 
@@ -246,6 +249,8 @@ struct FDrawCommand
         , PointCount(0)
         , Thickness(0.0f)
         , FadeWidth(0.0f)
+        , FadeFraction(0.0f)
+        , TrailAlpha(0.0f)
         , bIsClosed(false)
     {
     }
@@ -273,11 +278,17 @@ struct FDrawCommand
     /** @brief How many points the command uses, which is zero for every other type. */
     int32 PointCount;
 
-    /** @brief The stroke width in pixels, used by BoxOutline and Polyline, and the band height for RoundedBottomBar. */
+    /** @brief The stroke width in pixels, used by BoxOutline and Polyline, the band height for a bottom bar, and the stroke width for an accent ring. */
     float Thickness;
 
     /** @brief How far in from either end a RoundedBottomBar runs from no alpha to full, in pixels. */
     float FadeWidth;
+
+    /** @brief How much of each top corner a RoundedAccentRing spends fading back, as a share of that corner's arc. */
+    float FadeFraction;
+
+    /** @brief What a RoundedAccentRing keeps of its tint once that fade is done, as a share of it. */
+    float TrailAlpha;
 
     /** @brief True when a polyline joins its last point back to its first. */
     bool bIsClosed;

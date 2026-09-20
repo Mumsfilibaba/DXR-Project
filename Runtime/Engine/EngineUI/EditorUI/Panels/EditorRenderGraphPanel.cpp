@@ -51,12 +51,15 @@ struct RenderGraphColors
 {
     static FFloatColor NodeTitle()   { return FUIStyle::GetDefault().Colors.ControlHovered; }
     static FFloatColor NodeBody()    { return FUIStyle::GetDefault().Colors.ControlNormal; }
-    static FFloatColor NodeBorder()  { return FUIStyle::GetDefault().Colors.Border; }
+    static FFloatColor Stroke()      { return MakeGraphColor(72, 72, 72); }
+    static FFloatColor NodeBorder()  { return Stroke(); }
+    static FFloatColor PinSeparator(){ return MakeGraphColor(90, 90, 90); }
+    static FFloatColor Grid()        { return MakeGraphColor(58, 58, 58); }
     static FFloatColor NodeText()    { return FUIStyle::GetDefault().Colors.Text; }
 
     static FFloatColor MutedTitle()  { return FUIStyle::GetDefault().Colors.ControlPressed; }
     static FFloatColor MutedBody()   { return FUIStyle::GetDefault().Colors.ControlDisabled; }
-    static FFloatColor MutedBorder() { return FUIStyle::GetDefault().Header.Border; }
+    static FFloatColor MutedBorder() { return Stroke(); }
     static FFloatColor MutedText()   { return FUIStyle::GetDefault().Colors.TextDisabled; }
 
     // Pin hues carry the meaning here, so they stay put where the rest of the chrome follows the theme
@@ -65,10 +68,10 @@ struct RenderGraphColors
     static FFloatColor PinOutline()  { return FUIStyle::GetDefault().Colors.InputFieldFill; }
 
     static FFloatColor Background()  { return FUIStyle::GetDefault().Colors.WindowBackground; }
-    static FFloatColor Link()        { return WithAlpha(FUIStyle::GetDefault().Colors.Border, 200.0f / 255.0f); }
+    static FFloatColor Link()        { return Stroke(); }
 
     static FFloatColor LegendFill()   { return WithAlpha(FUIStyle::GetDefault().Panel.Fill, 225.0f / 255.0f); }
-    static FFloatColor LegendBorder() { return FUIStyle::GetDefault().Colors.Border; }
+    static FFloatColor LegendBorder() { return Stroke(); }
     static FFloatColor LegendText()   { return FUIStyle::GetDefault().Colors.Text; }
 
 private:
@@ -203,6 +206,10 @@ bool FEditorRenderGraphPanel::Initialize()
     CanvasDesc.Font                        = FEditorStyle::GetFonts().Body;
     CanvasDesc.BackgroundColor             = RenderGraphColors::Background();
     CanvasDesc.LinkColor                   = RenderGraphColors::Link();
+    CanvasDesc.GridColor                   = RenderGraphColors::Grid();
+    CanvasDesc.SurroundColor               = FUIStyle::GetDefault().Panel.Fill;
+    CanvasDesc.CornerRadius                = FUIStyle::GetDefault().InnerFrame.CornerRadius;
+    CanvasDesc.FitMinZoom                  = 1.0f;
     CanvasDesc.GridSpacing                 = 32;
     CanvasDesc.bIsViewer                   = true;
     CanvasDesc.NodeStyle.Body              = RenderGraphColors::NodeBody();
@@ -212,6 +219,7 @@ bool FEditorRenderGraphPanel::Initialize()
     CanvasDesc.NodeStyle.MutedBorder       = RenderGraphColors::MutedBorder();
     CanvasDesc.NodeStyle.MutedText         = RenderGraphColors::MutedText();
     CanvasDesc.NodeStyle.PinOutline        = RenderGraphColors::PinOutline();
+    CanvasDesc.NodeStyle.PinSeparator      = RenderGraphColors::PinSeparator();
     CanvasDesc.NodeStyle.CornerRadius      = 6.0f;
     CanvasDesc.NodeStyle.MutedTintOpacity  = 1.0f;
     CanvasDesc.NodeStyle.bStackPinRows     = true;
@@ -239,7 +247,7 @@ bool FEditorRenderGraphPanel::Initialize()
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
     Column->AddSlot(HeaderRow).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
-    Column->AddSlot(FEditorStyle::MakeInnerFrame(CanvasArea)).SetFillCoefficient(1.0f);
+    Column->AddSlot(FEditorStyle::MakeInnerFrame(CanvasArea, FMargin(0))).SetFillCoefficient(1.0f);
 
     Content = Column;
     return true;

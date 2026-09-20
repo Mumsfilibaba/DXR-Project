@@ -35,6 +35,8 @@ public:
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
     virtual FEventResponse OnMouseScroll(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
 
     /**
      * @brief Requests that the bottom of the content sit flush with the bottom of the view. Deferred to
@@ -92,11 +94,24 @@ public:
     void SetScrollBarVisibility(EScrollBarVisibility InVisibility);
 
     /**
+     * @brief Sets extra space held between the content and a visible bar, so framed views keep their gutter.
+     *
+     * @param InGutter The gap in pixels. Zero leaves the content flush with the bar.
+     */
+    void SetScrollBarGutter(int32 InGutter);
+
+    /**
      * @brief Gets whether the scroll bar is drawn beside the content.
      *
      * @return True when the bar is drawn, which for Auto means there is something to scroll.
      */
     NODISCARD bool IsScrollBarVisible() const;
+
+    /** @return This element as a scroll box. */
+    NODISCARD virtual FScrollBox* AsScrollBox() override
+    {
+        return this;
+    }
 
     /** @return The scroll bar the box hosts, which a caller can style but does not own. */
     NODISCARD FORCEINLINE const TSharedPtr<class FScrollBar>& GetScrollBar() const
@@ -113,5 +128,6 @@ private:
     int32                        ScrollAmountPerWheelStep;
     int32                        ContentHeight;
     int32                        ViewHeight;
+    int32                        ScrollBarGutter;
     bool                         bIsScrollToEndPending : 1;
 };

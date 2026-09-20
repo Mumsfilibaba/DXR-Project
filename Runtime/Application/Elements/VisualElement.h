@@ -7,6 +7,7 @@
 
 class FElementPath;
 class FDrawCommandList;
+class FScrollBox;
 struct FDrawGeometry;
 
 /** @brief Enumeration for element visibility states. */
@@ -325,6 +326,12 @@ public:
     TWeakPtr<FVisualElement> GetParentElement() const
     {
         return ParentElement;
+    }
+
+    /** @return This element as a scroll box, or null when it is not one. */
+    NODISCARD virtual FScrollBox* AsScrollBox()
+    {
+        return nullptr;
     }
 
     /**

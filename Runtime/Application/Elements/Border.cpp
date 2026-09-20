@@ -23,6 +23,7 @@ FBorder::FBorder()
     , MinHeight(0)
     , Cursor(ECursor::None)
     , bHasCursor(false)
+    , bDrawBorderOverContent(false)
 {
 }
 
@@ -38,6 +39,9 @@ void FBorder::Initialize(const FDesc& Desc)
     MinHeight       = Desc.MinHeight;
     Cursor          = Desc.Cursor;
     bHasCursor      = Desc.bHasCursor;
+
+    bDrawBorderOverContent = Desc.bDrawBorderOverContent;
+
     SetPadding(Desc.Padding);
     SetContent(Desc.Content);
 }
@@ -57,12 +61,22 @@ int32 FBorder::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
         OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, BackgroundColor, CornerRadius);
     }
 
-    if (BorderColor.A > 0.0f && BorderThickness > 0.0f)
+    const bool bDrawsStroke = BorderColor.A > 0.0f && BorderThickness > 0.0f;
+
+    if (bDrawsStroke && !bDrawBorderOverContent)
     {
         OutCommandList.AddBoxOutline(LayerId, AllottedGeometry.Bounds, BorderColor, BorderThickness, CornerRadius);
     }
 
-    return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
+    const int32 ContentLayerId = FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
+
+    if (bDrawsStroke && bDrawBorderOverContent)
+    {
+        OutCommandList.AddBoxOutline(ContentLayerId, AllottedGeometry.Bounds, BorderColor, BorderThickness, CornerRadius);
+        return ContentLayerId + 1;
+    }
+
+    return ContentLayerId;
 }
 
 void FBorder::SetBackgroundColor(const FFloatColor& InBackgroundColor)
@@ -83,6 +97,11 @@ void FBorder::SetCornerRadius(const FCornerRadii& InCornerRadius)
 void FBorder::SetOuterCornerRadius(float InCornerRadius)
 {
     CornerRadius = FCornerRadii(InCornerRadius);
+}
+
+void FBorder::SetDrawBorderOverContent(bool bInDrawBorderOverContent)
+{
+    bDrawBorderOverContent = bInDrawBorderOverContent;
 }
 
 void FBorder::SetBorderThickness(float InBorderThickness)

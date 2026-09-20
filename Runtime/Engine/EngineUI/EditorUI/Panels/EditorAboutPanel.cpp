@@ -1,6 +1,5 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorAboutPanel.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
-#include "Application/Elements/Border.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/Expander.h"
 #include "Application/Elements/PropertyTable.h"
@@ -11,35 +10,11 @@
 #include "RHI/RHI.h"
 #include "RHI/RHIDevice.h"
 
-constexpr int32 ABOUT_LABEL_COLUMN_WIDTH = 128;
-constexpr int32 ABOUT_HEADER_PADDING     = 16;
-
 static TSharedPtr<FVisualElement> BuildAboutHeader()
 {
-    FTextBlock::FDesc NameDesc;
-    NameDesc.Text = BuildInfo::GetEngineName();
-    NameDesc.Font = FEditorStyle::GetFonts().BodyBold;
+    const String Version = String::Printf("Version %s  |  %s", BuildInfo::GetVersionString(), BuildInfo::GetConfigurationName());
 
-    FTextBlock::FDesc VersionDesc;
-    VersionDesc.Text            = String::Printf("Version %s  |  %s", BuildInfo::GetVersionString(), BuildInfo::GetConfigurationName());
-    VersionDesc.Font            = FEditorStyle::GetFonts().Body;
-    VersionDesc.ColorAndOpacity = FUIStyle::GetDefault().Colors.TextDisabled;
-
-    TSharedPtr<FVerticalBox> Text = FVerticalBox::Create();
-    Text->AddSlot(FTextBlock::Create(NameDesc));
-    Text->AddSlot(FTextBlock::Create(VersionDesc)).SetPadding(FMargin(0, FEditorStyle::ItemSpacing, 0, 0));
-
-    const FUIHeaderStyle& HeaderStyle = FUIStyle::GetDefault().Header;
-
-    FBorder::FDesc HeaderDesc;
-    HeaderDesc.BackgroundColor = HeaderStyle.Fill;
-    HeaderDesc.BorderColor     = HeaderStyle.Border;
-    HeaderDesc.BorderThickness = HeaderStyle.BorderThickness;
-    HeaderDesc.CornerRadius    = FCornerRadii(HeaderStyle.CornerRadius);
-    HeaderDesc.Padding         = FMargin(ABOUT_HEADER_PADDING);
-    HeaderDesc.Content         = Text;
-
-    return FBorder::Create(HeaderDesc);
+    return FEditorStyle::MakeHeaderCard(BuildInfo::GetEngineName(), Version);
 }
 
 FEditorAboutPanel::FEditorAboutPanel(FEditorEngine* InEditorEngine)
@@ -72,7 +47,7 @@ bool FEditorAboutPanel::Initialize()
 
     TSharedPtr<FVerticalBox> Layout = FVerticalBox::Create();
     Layout->AddSlot(BuildAboutHeader()).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
-    Layout->AddSlot(FEditorStyle::MakeInnerFrame(ScrollBox)).SetFillCoefficient(1.0f);
+    Layout->AddSlot(ScrollBox).SetFillCoefficient(1.0f);
 
     Content = Layout;
     return true;
@@ -80,11 +55,7 @@ bool FEditorAboutPanel::Initialize()
 
 TSharedPtr<FPropertyTable> FEditorAboutPanel::AddSection(const TSharedPtr<FVerticalBox>& Column, const String& SectionName)
 {
-    FPropertyTable::FDesc TableDesc = FEditorStyle::MakeDataTableDesc();
-    TableDesc.LabelColumnWidth      = ABOUT_LABEL_COLUMN_WIDTH;
-    TableDesc.EditorColumnInset     = TableDesc.Style.CellPadding.Left;
-
-    TSharedPtr<FPropertyTable> SectionTable = FPropertyTable::Create(TableDesc);
+    TSharedPtr<FPropertyTable> SectionTable = FPropertyTable::Create(FEditorStyle::MakeInfoTableDesc());
     if (!SectionTable)
     {
         return nullptr;
@@ -95,7 +66,7 @@ TSharedPtr<FPropertyTable> FEditorAboutPanel::AddSection(const TSharedPtr<FVerti
         CopyRow(SectionTable, RowIndex);
     }));
 
-    Column->AddSlot(FExpander::Create(FEditorStyle::MakeExpanderDesc(SectionName, SectionTable, true))).SetPadding(FEditorStyle::GetSectionSpacing());
+    Column->AddSlot(FExpander::Create(FEditorStyle::MakeExpanderDesc(SectionName, SectionTable, true))).SetPadding(FEditorStyle::GetSectionStackSpacing());
     Tables.Emplace(SectionTable);
 
     return SectionTable;

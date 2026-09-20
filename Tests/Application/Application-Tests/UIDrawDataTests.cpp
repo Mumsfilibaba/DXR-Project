@@ -495,6 +495,137 @@ bool UIDrawDataRoundedBottomBar_Test()
     TEST_END();
 }
 
+bool UIDrawDataRoundedAccentRing_Test()
+{
+    TEST_BEGIN();
+
+    FUIDrawData DrawData;
+    DrawData.SetAntiAliasingEnabled(false);
+
+    const FRectangle Bounds(IntVector2(0, 0), 120, 28);
+
+    constexpr float Radius       = 8.0f;
+    constexpr float Thickness    = 2.0f;
+    constexpr float FadeFraction = 0.5f;
+    constexpr float TrailAlpha   = 0.25f;
+    constexpr float Tolerance    = 0.01f;
+
+    FDrawCommandList RingList;
+    RingList.AddRoundedAccentRing(0, Bounds, FCornerRadii(Radius), Thickness, FFloatColor::White, FadeFraction, TrailAlpha);
+    DrawData.BuildFromCommandList(RingList);
+
+    TEST_SECTION("The stroke is a pair of vertices per sample, closed back on itself so it rings the rectangle");
+    TEST_EXPECT(!DrawData.IsEmpty());
+    TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
+
+    const int32 VertexCount = DrawData.GetVertices().Size();
+    const int32 SampleCount = VertexCount / 2;
+
+    TEST_EXPECT_EQ(VertexCount % 2, 0);
+    TEST_EXPECT_EQ(DrawData.GetIndices().Size(), SampleCount * 6);
+
+    TEST_SECTION("It starts where the top-left corner meets the left side, and its width turns with the curve");
+    const FUIVertex& FirstInner = DrawData.GetVertices()[0];
+    const FUIVertex& FirstOuter = DrawData.GetVertices()[1];
+
+    TEST_EXPECT(Math::Abs(FirstOuter.Position.X) < Tolerance);
+    TEST_EXPECT(Math::Abs(FirstOuter.Position.Y - Radius) < Tolerance);
+    TEST_EXPECT(Math::Abs(FirstInner.Position.X - Thickness) < Tolerance);
+    TEST_EXPECT(Math::Abs(FirstInner.Position.Y - FirstOuter.Position.Y) < Tolerance);
+
+    TEST_SECTION("Nothing it draws leaves the rectangle, and it reaches every edge of it");
+    float MinY = 1000.0f;
+    float MaxY = -1000.0f;
+
+    for (const FUIVertex& Vertex : DrawData.GetVertices())
+    {
+        TEST_EXPECT(Vertex.Position.X >= -Tolerance && Vertex.Position.X <= 120.0f + Tolerance);
+        TEST_EXPECT(Vertex.Position.Y >= -Tolerance && Vertex.Position.Y <= 28.0f + Tolerance);
+
+        MinY = Math::Min(MinY, Vertex.Position.Y);
+        MaxY = Math::Max(MaxY, Vertex.Position.Y);
+    }
+
+    TEST_EXPECT(Math::Abs(MinY) < Tolerance);
+    TEST_EXPECT(Math::Abs(MaxY - 28.0f) < Tolerance);
+
+    TEST_SECTION("The top run is at full strength, the bottom is at the trail, and nothing anywhere is lost");
+    const uint32 TrailByte = static_cast<uint32>(Math::RoundToInt(TrailAlpha * 255.0f));
+
+    TEST_EXPECT_EQ(FirstOuter.Color >> 24, TrailByte);
+
+    int32 FullStrengthSamples = 0;
+    for (int32 SampleIndex = 0; SampleIndex < SampleCount; ++SampleIndex)
+    {
+        const FUIVertex& Outer = DrawData.GetVertices()[(SampleIndex * 2) + 1];
+        const uint32     Alpha = Outer.Color >> 24;
+
+        TEST_EXPECT(Alpha >= TrailByte);
+        TEST_EXPECT_EQ(Alpha, DrawData.GetVertices()[SampleIndex * 2].Color >> 24);
+
+        if (Math::Abs(Outer.Position.Y) < Tolerance)
+        {
+            TEST_EXPECT_EQ(Alpha, 255u);
+        }
+        else if (Math::Abs(Outer.Position.Y - 28.0f) < Tolerance)
+        {
+            TEST_EXPECT_EQ(Alpha, TrailByte);
+        }
+
+        if (Alpha == 255u)
+        {
+            ++FullStrengthSamples;
+        }
+    }
+
+    TEST_EXPECT(FullStrengthSamples > 0);
+    TEST_EXPECT(FullStrengthSamples < SampleCount);
+
+    TEST_SECTION("That fade climbs a step at a time up the corner, and never dips once it is up");
+    uint32 PreviousAlpha = 0;
+    for (int32 SampleIndex = 0; SampleIndex <= SampleCount / 4; ++SampleIndex)
+    {
+        const uint32 Alpha = DrawData.GetVertices()[SampleIndex * 2].Color >> 24;
+        TEST_EXPECT(Alpha >= PreviousAlpha);
+
+        PreviousAlpha = Alpha;
+    }
+
+    TEST_EXPECT_EQ(PreviousAlpha, 255u);
+
+    TEST_SECTION("Asked for no trail, the ring away from the top is clear and only the rule is left");
+    FDrawCommandList RuleList;
+    RuleList.AddRoundedAccentRing(0, Bounds, FCornerRadii(Radius), Thickness, FFloatColor::White, FadeFraction, 0.0f);
+    DrawData.BuildFromCommandList(RuleList);
+
+    TEST_EXPECT_EQ(DrawData.GetVertices()[1].Color >> 24, 0u);
+
+    TEST_SECTION("With square corners it is four mitred points, each reaching a thickness into the rectangle");
+    FDrawCommandList SquareList;
+    SquareList.AddRoundedAccentRing(0, Bounds, FCornerRadii(), Thickness, FFloatColor::White, FadeFraction, TrailAlpha);
+    DrawData.BuildFromCommandList(SquareList);
+
+    TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 8);
+    TEST_EXPECT(Math::Abs(DrawData.GetVertices()[1].Position.X) < Tolerance);
+    TEST_EXPECT(Math::Abs(DrawData.GetVertices()[1].Position.Y) < Tolerance);
+    TEST_EXPECT(Math::Abs(DrawData.GetVertices()[0].Position.X - Thickness) < Tolerance);
+    TEST_EXPECT(Math::Abs(DrawData.GetVertices()[0].Position.Y - Thickness) < Tolerance);
+
+    TEST_SECTION("Both of its top corners belong to the top run, so that rule reads at full strength end to end");
+    TEST_EXPECT_EQ(DrawData.GetVertices()[1].Color >> 24, 255u);
+    TEST_EXPECT_EQ(DrawData.GetVertices()[3].Color >> 24, 255u);
+    TEST_EXPECT_EQ(DrawData.GetVertices()[5].Color >> 24, TrailByte);
+
+    TEST_SECTION("A stroke with no width draws nothing at all");
+    FDrawCommandList ThinList;
+    ThinList.AddRoundedAccentRing(0, Bounds, FCornerRadii(Radius), 0.0f, FFloatColor::White, FadeFraction, TrailAlpha);
+    DrawData.BuildFromCommandList(ThinList);
+
+    TEST_EXPECT(DrawData.IsEmpty());
+
+    TEST_END();
+}
+
 bool UIDrawDataText_Test()
 {
     TEST_BEGIN();

@@ -52,6 +52,7 @@ static String FormatStatValue(const FStatData& Stat)
 FEditorStatsPanel::FEditorStatsPanel(FEditorEngine* InEditorEngine)
     : FEditorPanel(InEditorEngine, "Stats", "Engine Stats")
     , Column(nullptr)
+    , SummaryText(nullptr)
     , Sections()
     , ScratchStats()
     , ScratchGroups()
@@ -74,7 +75,13 @@ bool FEditorStatsPanel::Initialize()
 
     ScrollBox->SetContent(Column);
 
-    Content = FEditorStyle::MakeInnerFrame(ScrollBox);
+    TSharedPtr<FVisualElement> HeaderCard = FEditorStyle::MakeHeaderCard("Engine Stats", String(), &SummaryText);
+
+    TSharedPtr<FVerticalBox> Layout = FVerticalBox::Create();
+    Layout->AddSlot(HeaderCard).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
+    Layout->AddSlot(ScrollBox).SetFillCoefficient(1.0f);
+
+    Content = Layout;
 
     RebuildSections();
     return true;
@@ -83,6 +90,7 @@ bool FEditorStatsPanel::Initialize()
 void FEditorStatsPanel::Release()
 {
     Column.Reset();
+    SummaryText.Reset();
     Sections.Clear();
     ScratchStats.Clear();
     ScratchGroups.Clear();
@@ -152,18 +160,23 @@ void FEditorStatsPanel::RebuildSections()
     {
         FStatGroupSection GroupSection;
         GroupSection.GroupName = GroupName;
-        GroupSection.Table     = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
+        GroupSection.Table     = FPropertyTable::Create(FEditorStyle::MakeInfoTableDesc());
         GroupSection.Section   = FExpander::Create(FEditorStyle::MakeExpanderDesc(GroupName, GroupSection.Table, true));
 
-        Column->AddSlot(GroupSection.Section).SetPadding(FEditorStyle::GetSectionSpacing());
+        Column->AddSlot(GroupSection.Section).SetPadding(FEditorStyle::GetSectionStackSpacing());
         Sections.Emplace(GroupSection);
     }
 
+    int32 NumCounters = 0;
     for (FStatGroupSection& GroupSection : Sections)
     {
         QueryStatsByGroup(GroupSection.GroupName, ScratchStats);
         RebuildGroupRows(GroupSection);
+
+        NumCounters += GroupSection.Values.Size();
     }
+
+    SummaryText->SetText(String::Printf("%d groups  |  %d counters", Sections.Size(), NumCounters));
 }
 
 void FEditorStatsPanel::RebuildGroupRows(FStatGroupSection& GroupSection)

@@ -29,8 +29,12 @@ private:
         TArray<TSharedPtr<FTextBlock>> Values;
     };
 
+    NODISCARD TSharedPtr<FVisualElement> BuildHeaderCard();
+
     NODISCARD bool BuildOverview(const TSharedPtr<FVerticalBox>& InColumn);
     NODISCARD bool BuildCounters(const TSharedPtr<FVerticalBox>& InColumn);
+
+    static void AddSection(const TSharedPtr<FVerticalBox>& InColumn, const String& Label, const TSharedPtr<FVisualElement>& SectionContent, bool bIsExpanded);
 
     void RefreshBudgets();
     void RefreshCounters();
@@ -42,7 +46,6 @@ private:
     NODISCARD static TSharedPtr<FTextBlock> CreateValueText(const String& Text);
     NODISCARD static TSharedPtr<FProgressBar> CreateMemoryBar();
 
-    TSharedPtr<FTextBlock>    AdapterText;
     TSharedPtr<FProgressBar>  LocalMemoryBar;
     TSharedPtr<FProgressBar>  NonLocalMemoryBar;
     TSharedPtr<FTextBlock>    DrawCallsText;

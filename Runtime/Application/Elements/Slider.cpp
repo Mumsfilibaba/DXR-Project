@@ -3,6 +3,8 @@
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
 
+constexpr int32 VALUE_TEXT_SPACING = 2;
+
 TSharedPtr<FSlider> FSlider::Create(const FDesc& Desc)
 {
     TSharedPtr<FSlider> NewSlider = MakeSharedPtr<FSlider>();
@@ -50,7 +52,12 @@ void FSlider::Initialize(const FDesc& Desc)
 
 IntVector2 FSlider::ComputeDesiredSize() const
 {
-    const int32 Breadth = Math::Max(HandleSize, TrackThickness);
+    int32 Breadth = Math::Max(HandleSize, TrackThickness);
+    if (bShowValueText && Font && Orientation == EOrientation::Horizontal)
+    {
+        Breadth += VALUE_TEXT_SPACING + Font->GetCapHeight() + Font->GetDescent();
+    }
+
     return Orientation == EOrientation::Horizontal ? IntVector2(MinLength, Breadth) : IntVector2(Breadth, MinLength);
 }
 
@@ -58,14 +65,15 @@ int32 FSlider::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
 {
     const FUIStyle&         Style = FUIStyle::GetDefault();
     const EInteractionState State = GetInteractionState();
+    const FRectangle        TrackArea = ComputeInteractiveBounds(AllottedGeometry.Bounds);
 
     const FRectangle Handle = ComputeHandleBounds(AllottedGeometry.Bounds);
 
-    FRectangle Groove = AllottedGeometry.Bounds;
+    FRectangle Groove = TrackArea;
     if (Orientation == EOrientation::Horizontal)
     {
-        Groove.Height     = Math::Min(TrackThickness, AllottedGeometry.Bounds.Height);
-        Groove.Position.Y = AllottedGeometry.Bounds.Position.Y + ((AllottedGeometry.Bounds.Height - Groove.Height) / 2);
+        Groove.Height     = Math::Min(TrackThickness, TrackArea.Height);
+        Groove.Position.Y = TrackArea.Position.Y + ((TrackArea.Height - Groove.Height) / 2);
     }
     else
     {
@@ -99,9 +107,13 @@ int32 FSlider::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
 
     if (bShowValueText && Font)
     {
-        const String     Text      = GetFormattedValue();
-        const IntVector2 TextSize(Font->MeasureWidth(StringView(Text.Data(), Text.Length())), Font->GetLineHeight());
-        const FRectangle TextBounds = FRectangle::AlignInBounds(AllottedGeometry.Bounds, TextSize, EHorizontalAlignment::Center, EVerticalAlignment::Center);
+        const String Text      = GetFormattedValue();
+        const int32  TextWidth = Font->MeasureWidth(StringView(Text.Data(), Text.Length()));
+        const int32  CapInset  = Math::Max(Font->GetAscent() - Font->GetCapHeight(), 0);
+        const int32  TextX     = AllottedGeometry.Bounds.Position.X + ((AllottedGeometry.Bounds.Width - TextWidth) / 2);
+        const int32  TextY     = TrackArea.GetBottom() + VALUE_TEXT_SPACING - CapInset;
+
+        const FRectangle TextBounds(IntVector2(TextX, TextY), TextWidth, Font->GetTextBandHeight());
 
         OutCommandList.AddText(LayerId + 1, TextBounds, Text, Font.Get(), Style.GetTextColor(State));
         return LayerId + 1;
@@ -256,16 +268,17 @@ void FSlider::SetValueFromPosition(const IntVector2& ClientPosition)
 
 FRectangle FSlider::ComputeHandleBounds(const FRectangle& Bounds) const
 {
-    const FRectangle Track    = ComputeTrackBounds(Bounds);
-    const int32      Distance = Math::RoundToInt(GetNormalizedValue() * static_cast<float>(Orientation == EOrientation::Horizontal ? Track.Width : Track.Height));
+    const FRectangle TrackArea = ComputeInteractiveBounds(Bounds);
+    const FRectangle Track     = ComputeTrackBounds(Bounds);
+    const int32      Distance  = Math::RoundToInt(GetNormalizedValue() * static_cast<float>(Orientation == EOrientation::Horizontal ? Track.Width : Track.Height));
 
     FRectangle Handle;
     if (Orientation == EOrientation::Horizontal)
     {
         Handle.Width      = HandleSize;
-        Handle.Height     = Math::Min(HandleSize, Bounds.Height);
+        Handle.Height     = Math::Min(HandleSize, TrackArea.Height);
         Handle.Position.X = Track.Position.X + Distance - (HandleSize / 2);
-        Handle.Position.Y = Bounds.Position.Y + ((Bounds.Height - Handle.Height) / 2);
+        Handle.Position.Y = TrackArea.Position.Y + ((TrackArea.Height - Handle.Height) / 2);
     }
     else
     {
@@ -280,19 +293,32 @@ FRectangle FSlider::ComputeHandleBounds(const FRectangle& Bounds) const
 
 FRectangle FSlider::ComputeTrackBounds(const FRectangle& Bounds) const
 {
-    const int32 Inset = HandleSize / 2;
+    const FRectangle TrackArea = ComputeInteractiveBounds(Bounds);
+    const int32      Inset     = HandleSize / 2;
 
-    FRectangle Track = Bounds;
+    FRectangle Track = TrackArea;
     if (Orientation == EOrientation::Horizontal)
     {
         Track.Position.X += Inset;
-        Track.Width = Math::Max(Bounds.Width - (Inset * 2), 0);
+        Track.Width = Math::Max(TrackArea.Width - (Inset * 2), 0);
     }
     else
     {
         Track.Position.Y += Inset;
-        Track.Height = Math::Max(Bounds.Height - (Inset * 2), 0);
+        Track.Height = Math::Max(TrackArea.Height - (Inset * 2), 0);
     }
 
     return Track;
+}
+
+FRectangle FSlider::ComputeInteractiveBounds(const FRectangle& Bounds) const
+{
+    if (!bShowValueText || !Font || Orientation != EOrientation::Horizontal)
+    {
+        return Bounds;
+    }
+
+    FRectangle TrackArea = Bounds;
+    TrackArea.Height     = Math::Min(Math::Max(HandleSize, TrackThickness), Bounds.Height);
+    return TrackArea;
 }

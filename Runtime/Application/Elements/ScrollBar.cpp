@@ -2,6 +2,7 @@
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
+#include "Core/Platform/PlatformTime.h"
 
 TSharedPtr<FScrollBar> FScrollBar::Create(const FDesc& Desc)
 {
@@ -22,6 +23,9 @@ FScrollBar::FScrollBar()
     , Offset(0)
     , ThumbGrabOffset(0)
     , Opacity(1.0f)
+    , FadeCounter(FPlatformTime::QueryPerformanceCounter())
+    , bAutoHide(false)
+    , bIsRevealed(false)
     , OnOffsetChangedDelegate()
 {
 }
@@ -36,6 +40,10 @@ void FScrollBar::Initialize(const FDesc& Desc)
     TrackPadding            = Desc.TrackPadding;
     Style                   = Desc.Style;
     OnOffsetChangedDelegate = Desc.OnOffsetChanged;
+    bAutoHide               = Desc.bAutoHide;
+
+    Opacity     = bAutoHide ? 0.0f : 1.0f;
+    FadeCounter = FPlatformTime::QueryPerformanceCounter();
 }
 
 IntVector2 FScrollBar::ComputeDesiredSize() const
@@ -43,8 +51,19 @@ IntVector2 FScrollBar::ComputeDesiredSize() const
     return Orientation == EOrientation::Vertical ? IntVector2(Thickness, 0) : IntVector2(0, Thickness);
 }
 
+void FScrollBar::OnArrange(const FRectangle& AllottedBounds)
+{
+    FInteractiveElement::OnArrange(AllottedBounds);
+    AdvanceFade();
+}
+
 int32 FScrollBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
+    if (Opacity <= 0.0f)
+    {
+        return LayerId;
+    }
+
     const FRectangle Bounds = AllottedGeometry.Bounds;
     const FCornerRadii TrackRadii(Style.CornerRadius);
 
@@ -67,6 +86,38 @@ int32 FScrollBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
 void FScrollBar::SetOpacity(float InOpacity)
 {
     Opacity = Math::Clamp(InOpacity, 0.0f, 1.0f);
+}
+
+void FScrollBar::SetRevealed(bool bInIsRevealed)
+{
+    bIsRevealed = bInIsRevealed;
+}
+
+void FScrollBar::AdvanceFade()
+{
+    if (!bAutoHide)
+    {
+        return;
+    }
+
+    const uint64 Now     = FPlatformTime::QueryPerformanceCounter();
+    const double Elapsed = static_cast<double>(Now - FadeCounter) / static_cast<double>(FPlatformTime::QueryPerformanceFrequency());
+
+    FadeCounter = Now;
+
+    const float Target   = (bIsRevealed || IsPressed()) ? 1.0f : 0.0f;
+    const float Duration = Target > Opacity ? Style.FadeInDuration : Style.FadeOutDuration;
+
+    if (Duration <= 0.0f)
+    {
+        Opacity = Target;
+        return;
+    }
+
+    const float Step = static_cast<float>(Elapsed) / Duration;
+    Opacity = Target > Opacity
+        ? Math::Min(Opacity + Step, Target)
+        : Math::Max(Opacity - Step, Target);
 }
 
 FFloatColor FScrollBar::ApplyOpacity(const FFloatColor& Color) const

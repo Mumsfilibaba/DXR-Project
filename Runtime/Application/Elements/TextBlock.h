@@ -14,6 +14,7 @@ public:
         FFloatColor           ColorAndOpacity = FFloatColor::White;
         FMargin               Margin;
         ETextOverflow         Overflow = ETextOverflow::Overflow;
+        EVerticalAlignment    VerticalAlignment = EVerticalAlignment::Top;
     };
 
 public:
@@ -74,4 +75,5 @@ private:
     FFloatColor           ColorAndOpacity;
     FMargin               Margin;
     ETextOverflow         Overflow;
+    EVerticalAlignment    VerticalAlignment;
 };

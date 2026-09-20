@@ -555,6 +555,18 @@ FEventResponse TNumericEntry<T>::OnMouseMove(const FCursorEvent& CursorEvent)
     }
 
     bHasScrubbed = true;
+
+    if (HasFillTrack())
+    {
+        const FRectangle Bounds = GetContentRectangle();
+        const float      Alpha  = Bounds.Width > 0
+            ? Math::Saturate(static_cast<float>(CursorEvent.GetClientPosition().X - Bounds.Position.X) / static_cast<float>(Bounds.Width))
+            : 0.0f;
+
+        ApplyValue(MinValue + static_cast<T>(static_cast<float>(MaxValue - MinValue) * Alpha));
+        return FEventResponse::Handled();
+    }
+
     ApplyValue(ScrubStartValue + (static_cast<T>(Travel) * Step));
     return FEventResponse::Handled();
 }

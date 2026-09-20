@@ -9,6 +9,7 @@
 #include <Application/Elements/TileView.h>
 #include <Application/Elements/TreeView.h>
 #include <Application/Input/Keys.h>
+#include <Application/Style/UIStyle.h>
 #include <Application/Text/FixedWidthFontFace.h>
 
 static TSharedPtr<IFontFace> CreateFont()
@@ -552,6 +553,43 @@ bool TreeViewScrolling_Test()
     TEST_EXPECT(!ShortView->OnMouseScroll(MakeScrollEvent(-1.0f)).IsEventHandled());
     TEST_EXPECT_EQ(ShortView->GetScrollOffset(), 0);
 
+    TEST_SECTION("A selected fill stops short of the scrollbar so its right corners stay round");
+    FTreeView::FDesc BarDesc;
+    BarDesc.Font           = CreateFont();
+    BarDesc.RowHeight      = RowHeight;
+    BarDesc.bShowScrollBar = true;
+
+    TSharedPtr<FTreeView> BarView = FTreeView::Create(BarDesc);
+    BarView->SetRootItems(CreateLeafRows(NumRows));
+    BarView->SetSelection({ BarView->GetVisibleRows()[0] });
+    LayoutElement(BarView, FRectangle(IntVector2(0, 0), 200, ViewHeight));
+
+    FDrawCommandList HighlightCommands;
+    BarView->OnDraw(FDrawGeometry(BarView->GetContentRectangle(), 1.0f), HighlightCommands, 0);
+
+    const FFloatColor InactiveSelection = BarDesc.Style.InactiveSelectedFill;
+    FRectangle        DrawnHighlight;
+    bool              bFoundInsetHighlight = false;
+    for (const FDrawCommand& Command : HighlightCommands.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Box && Command.Tint == InactiveSelection)
+        {
+            const int32 Thickness = FUIStyle::GetDefault().Metrics.ScrollBarThickness;
+            TEST_EXPECT(Command.Bounds.GetRight() <= BarView->GetContentRectangle().GetRight() - Thickness);
+            DrawnHighlight       = Command.Bounds;
+            bFoundInsetHighlight = true;
+            break;
+        }
+    }
+    TEST_EXPECT(bFoundInsetHighlight);
+
+    TEST_SECTION("That band is handed out, so a host marking a drop target lands on the selection's shape");
+    const TSharedPtr<FTreeItem>& FirstRow = BarView->GetVisibleRows()[0];
+
+    TEST_EXPECT(BarView->GetItemHighlightBounds(FirstRow) == DrawnHighlight);
+    TEST_EXPECT(BarView->GetItemHighlightBounds(FirstRow).GetRight() < BarView->GetItemRowBounds(FirstRow).GetRight());
+    TEST_EXPECT(BarView->GetItemHighlightBounds(nullptr).IsEmpty());
+
     TEST_END();
 }
 
@@ -631,6 +669,9 @@ bool TreeViewColumnsAndIndent_Test()
 
     TEST_SECTION("A child indents a full level past the parent it hangs off");
     TEST_EXPECT_EQ(ChildLabelX, FilterLabelX + IndentDesc.IndentPerLevel);
+
+    TEST_SECTION("The disclosure arrow sits inside the row rather than against its left edge");
+    TEST_EXPECT(FilterLabelX >= FUIStyle::GetDefault().TreeRow.ContentInset);
 
     TEST_SECTION("A view where nothing has an icon reserves no column for one");
     TSharedPtr<FTreeItem> PlainParent = FTreeItem::Create("Parent");
