@@ -68,8 +68,10 @@ function TargetBuildRules(Name)
             return
         end
 
+        -- The files are compiled as part of the executable below, so the module itself is left for browsing
         local Launch = GetModuleRule(LaunchName)
-        Launch.Kind = "None"  -- prevent a separate build target
+        Launch.Kind          = "None"
+        Launch.bIsBrowseOnly = true
 
         Rule.AddFiles(Launch.Files)
         Rule.AddExcludeFiles(Launch.ExcludeFiles)

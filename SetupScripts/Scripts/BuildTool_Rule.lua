@@ -180,6 +180,10 @@ function BuildRules(Name)
         -- Kind (SharedLib, StaticLib, WindowedApp, ConsoleApp, etc.)
         Kind = "SharedLib",
 
+        -- Generated with the kind 'None' to be browsed in the IDE, whether the files are compiled
+        -- somewhere else, as a launch module is, or not compiled at all
+        bIsBrowseOnly = false,
+
         -- Include / link state
         IncludeDirs = {},
         ExternalIncludeDirs = {},
@@ -636,10 +640,13 @@ function BuildRules(Name)
             -- Remove files
             removefiles(self.ExcludeFiles)
 
+            -- A browse-only module asked for the kind 'None', so nothing being linked is expected there
+            local LogIgnoredByKind = self.bIsBrowseOnly and LogInfo or LogWarning
+
             -- macOS frameworks
             if IsPlatformMac() then
                 if self.Kind == "None" then
-                    LogWarning("Ignoring Frameworks due to the kind being set to 'None'")
+                    LogIgnoredByKind("Ignoring Frameworks due to the kind being set to 'None'")
                 else
                     links(self.Frameworks)
                 end
@@ -649,10 +656,7 @@ function BuildRules(Name)
             if self.Kind == "None" then
                 kind(self.Kind)
 
-                LogWarning("Ignoring LinkLibraries due to the kind being set to 'None'")
-                LogWarning("Ignoring LinkModules due to the kind being set to 'None'")
-                LogWarning("Ignoring LinkOptions due to the kind being set to 'None'")
-                LogWarning("Ignoring Module due to the kind being set to 'None'")
+                LogIgnoredByKind("Ignoring LinkLibraries, LinkModules, LinkOptions and Module for '%s' due to the kind being set to 'None'", self.Name)
             else
                 for _, Layout in ipairs(GetGeneratedLayouts()) do
                     local Result       = self.LayoutResults[Layout]

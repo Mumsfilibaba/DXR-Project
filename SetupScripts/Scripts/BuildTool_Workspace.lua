@@ -80,7 +80,8 @@ local function GenerateBrowseOnlyModules()
 
             local ModuleRule = IncludeIndexedModule(ModuleName)
             if ModuleRule then
-                ModuleRule.Kind = "None"
+                ModuleRule.Kind          = "None"
+                ModuleRule.bIsBrowseOnly = true
             end
         end
     end
