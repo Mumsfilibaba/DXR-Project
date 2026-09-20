@@ -276,7 +276,7 @@ public:
     void ResetStateResources();
 
     void BeginCommandBuffer();
-    void EndCommandBuffer() {}
+    void EndCommandBuffer();
     void ResetBoundConstantSlots();
 
     void SetGraphicsPipelineState(FMetalGraphicsPipelineStateRHI* InGraphicsPipelineState);
@@ -375,6 +375,7 @@ private:
     void BindGraphicsResources(EShaderVisibility::Type ShaderStage);
     void BindGraphicsSamplers(EShaderVisibility::Type ShaderStage);
     void BindGraphicsShaderConstants(EShaderVisibility::Type ShaderStage);
+    void BindBindlessHeaps(EShaderVisibility::Type ShaderStage);
 
     void BindComputeResources();
     void BindComputeSamplers();

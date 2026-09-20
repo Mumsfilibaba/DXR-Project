@@ -9,6 +9,7 @@ class FMetalUploadHeapAllocator;
 class FMetalLinearAllocator;
 class FMetalBufferAllocator;
 class FMetalTextureAllocator;
+class FMetalBindlessDescriptorManager;
 
 struct FMetalDeviceProperties
 {
@@ -88,7 +89,6 @@ public:
     bool SupportsFamily(MTLGPUFamily Family) const;
     bool QueryVideoMemoryInfo(EVideoMemoryType Type, FRHIVideoMemoryInfo& OutInfo) const;
 
-    // Direct, Copy and Compute each own an MTLCommandQueue
     FMetalQueue*        GetQueue(EMetalQueueType Type = EMetalQueueType::Direct) const;
     id<MTLCommandQueue> GetMTLCommandQueue() const;
 
@@ -119,6 +119,11 @@ public:
         return TextureAllocator;
     }
 
+    FMetalBindlessDescriptorManager* GetBindlessDescriptorManager() const
+    {
+        return BindlessDescriptorManager;
+    }
+
     FMetalTimestampQueries& GetTimestampQueries() { return TimestampQueries; }
     FMetalOcclusionQueries& GetOcclusionQueries() { return OcclusionQueries; }
 
@@ -131,18 +136,19 @@ private:
 
     void ReadDeviceProperties();
 
-    id<MTLDevice>              Device;
-    FMetalUploadHeapAllocator* UploadHeapAllocator;
-    FMetalLinearAllocator*     StagingBufferAllocator;
-    FMetalLinearAllocator*     DynamicConstantsAllocator;
-    FMetalBufferAllocator*     BufferAllocator;
-    FMetalTextureAllocator*    TextureAllocator;
-    FMetalQueue*               Queue;
-    FMetalQueue*           ComputeQueue;
-    FMetalQueue*           CopyQueue;
-    FMetalDeviceProperties Properties;
-    FMetalDefaultResources DefaultResources;
-    FMetalTimestampQueries TimestampQueries;
-    FMetalOcclusionQueries OcclusionQueries;
-    uint64                 FrameCounter;
+    id<MTLDevice>                    Device;
+    FMetalUploadHeapAllocator*       UploadHeapAllocator;
+    FMetalLinearAllocator*           StagingBufferAllocator;
+    FMetalLinearAllocator*           DynamicConstantsAllocator;
+    FMetalBufferAllocator*           BufferAllocator;
+    FMetalTextureAllocator*          TextureAllocator;
+    FMetalBindlessDescriptorManager* BindlessDescriptorManager;
+    FMetalQueue*                     Queue;
+    FMetalQueue*                     ComputeQueue;
+    FMetalQueue*                     CopyQueue;
+    FMetalDeviceProperties           Properties;
+    FMetalDefaultResources           DefaultResources;
+    FMetalTimestampQueries           TimestampQueries;
+    FMetalOcclusionQueries           OcclusionQueries;
+    uint64                           FrameCounter;
 };

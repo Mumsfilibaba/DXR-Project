@@ -54,6 +54,9 @@ public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     bool Initialize();
+
+private:
+    mutable FRHIDescriptorHandle BindlessHandle;
 };
 
 class FMetalUnorderedAccessViewRHI : public FRHIUnorderedAccessView, public FMetalView
@@ -68,6 +71,9 @@ public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     bool Initialize();
+
+private:
+    mutable FRHIDescriptorHandle BindlessHandle;
 };
 
 class FMetalRenderTargetViewRHI : public FRHIRenderTargetView, public FMetalView

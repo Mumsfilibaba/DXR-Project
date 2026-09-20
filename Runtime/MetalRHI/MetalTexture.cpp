@@ -156,12 +156,12 @@ void* FMetalTextureRHI::GetRHINativeResource() const
 
 FRHIDescriptorHandle FMetalTextureRHI::GetBindlessSRVHandle() const
 {
-    return FRHIDescriptorHandle();
+    return ShaderResourceView ? ShaderResourceView->GetBindlessHandle() : FRHIDescriptorHandle();
 }
 
 FRHIDescriptorHandle FMetalTextureRHI::GetBindlessUAVHandle() const
 {
-    return FRHIDescriptorHandle();
+    return UnorderedAccessView ? UnorderedAccessView->GetBindlessHandle() : FRHIDescriptorHandle();
 }
 
 FRHIShaderResourceView* FMetalTextureRHI::GetShaderResourceView() const

@@ -1,4 +1,5 @@
 #include "MetalRHI/MetalDeletionQueue.h"
+#include "MetalRHI/MetalBindlessDescriptors.h"
 
 void FMetalDeferredObject::ProcessItems(const TArray<FMetalDeferredObject>& Items)
 {
@@ -31,6 +32,13 @@ void FMetalDeferredObject::ProcessItems(const TArray<FMetalDeferredObject>& Item
             {
                 CHECK(Item.Object != nil);
                 [Item.Object release];
+                break;
+            }
+
+            case FMetalDeferredObject::EType::BindlessSlot:
+            {
+                CHECK(Item.BindlessSlot.Manager != nullptr);
+                Item.BindlessSlot.Manager->RecycleSlot(Item.BindlessSlot.Handle);
                 break;
             }
         }

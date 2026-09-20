@@ -15,8 +15,11 @@
 #include <RHI/ShaderCompiler.h>
 
 #if PLATFORM_MACOS
+#include <MetalRHI/MetalBindlessDescriptors.h>
 #include <MetalRHI/MetalDeviceDebug.h>
 #include <MetalRHI/MetalPipelineState.h>
+#include <MetalRHI/MetalRHI.h>
+#include <MetalRHI/MetalTexture.h>
 #include <RHI/MSLShaderBindings.h>
 #endif
 
@@ -777,6 +780,259 @@ static bool ProbeTimestamps()
     TEST_END();
 }
 
+#if PLATFORM_MACOS
+static bool ProbeBindlessDescriptors()
+{
+    TEST_BEGIN();
+
+    if (!RHI::bSupportsBindless)
+    {
+        TEST_SECTION("Bindless is unavailable on this Metal device");
+        TEST_END();
+    }
+
+    if (!FShaderCompiler::Initialize(Paths::GetAssetDir()))
+    {
+        TEST_EXPECT(false);
+        TEST_END();
+    }
+
+    auto CompileBindless = [](const CHAR* Source, TArray<uint8>& OutByteCode) -> bool
+    {
+        const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_6, EShaderStage::Compute);
+        return FShaderCompiler::Get().CompileFromSource(Source, CompileInfo, OutByteCode);
+    };
+
+    ERHIResourceState OutputState = ERHIResourceState::Common;
+    auto DispatchAndReadUint = [&OutputState](FRHIComputePipelineState* Pipeline, FRHIComputeShader* Shader, FRHIBuffer* Params, FRHIBuffer* Output, FRHIUnorderedAccessView* OutputUAV, uint32 Expected) -> bool
+    {
+        FRHIBufferRef Readback = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(sizeof(uint32)));
+        if (!Readback)
+        {
+            return false;
+        }
+
+        FRHIFenceRef Fence = RHI::CreateFence();
+        FRHICommandList CommandList;
+        if (OutputState != ERHIResourceState::UnorderedAccess)
+        {
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Output, OutputState, ERHIResourceState::UnorderedAccess));
+        }
+
+        CommandList.SetComputePipelineState(Pipeline);
+        CommandList.SetConstantBuffer(Shader, Params, 0);
+        CommandList.SetUnorderedAccessView(Shader, OutputUAV, 0);
+        CommandList.Dispatch(1, 1, 1);
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Output, ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
+        OutputState = ERHIResourceState::CopySource;
+        CommandList.CopyBuffer(Readback.Get(), Output, FRHIBufferCopyDesc(0, 0, sizeof(uint32)));
+        CommandList.WriteFence(Fence.Get());
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+        FRHICommandListExecutor::Get().WaitForCommands();
+        if (!Fence->Wait(5ull * 1000ull * 1000ull * 1000ull))
+        {
+            return false;
+        }
+
+        const uint32* Mapped = static_cast<const uint32*>(Readback->Map());
+        const bool bMatched = Mapped && *Mapped == Expected;
+        if (Mapped)
+        {
+            Readback->Unmap();
+        }
+
+        return bMatched;
+    };
+
+    const FRHIBufferDesc OutputDesc(EBufferFlags::Default | EBufferFlags::RWBuffer | EBufferFlags::CopySource, sizeof(uint32), sizeof(uint32));
+    FRHIBufferRef OutputBuffer = RHI::CreateBuffer(OutputDesc);
+    TEST_EXPECT(OutputBuffer != nullptr);
+    FRHIUnorderedAccessViewRef OutputUAV = OutputBuffer
+        ? RHI::CreateUnorderedAccessView(OutputBuffer.Get(), FRHIUnorderedAccessViewDesc::CreateBuffer(0, 1, EBufferViewType::Structured))
+        : nullptr;
+    TEST_EXPECT(OutputUAV != nullptr);
+
+    TEST_SECTION("Bindless SRV texture and sampler round-trip");
+    {
+        static const CHAR Source[] =
+            "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+            "cbuffer Params : register(b0) { uint ResourceIndex; uint SamplerIndex; uint Pad0; uint Pad1; };\n"
+            "[numthreads(1,1,1)]\n"
+            "void Main()\n"
+            "{\n"
+            "    Texture2D<float4> Tex = ResourceDescriptorHeap[ResourceIndex];\n"
+            "    SamplerState Samp = SamplerDescriptorHeap[SamplerIndex];\n"
+            "    float4 Color = Tex.SampleLevel(Samp, float2(0.5, 0.5), 0);\n"
+            "    OutBuffer[0] = (uint)(Color.x * 255.0f + 0.5f);\n"
+            "}\n";
+
+        TArray<uint8> ByteCode;
+        TEST_EXPECT(CompileBindless(Source, ByteCode));
+        FRHIComputeShaderRef Shader = RHI::CreateComputeShader(ByteCode);
+        TEST_EXPECT(Shader != nullptr);
+
+        FRHIComputePipelineStateDesc PipelineDesc;
+        PipelineDesc.Shader = Shader.Get();
+        FRHIComputePipelineStateRef Pipeline = RHI::CreateComputePipelineState(PipelineDesc);
+        TEST_EXPECT(Pipeline != nullptr);
+
+        const uint8 Red[4] = { 255, 0, 0, 255 };
+        FBootTextureData RedData(Red, 4, 4);
+        FRHITextureRef Texture = RHI::CreateTexture(
+            FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, 1, 1, 1, 1, ETextureUsageFlags::ShaderResourceTexture),
+            ERHIResourceState::Common,
+            &RedData);
+        TEST_EXPECT(Texture != nullptr);
+
+        FRHISamplerStateRef Sampler = RHI::CreateSamplerState(FRHISamplerStateDesc());
+        TEST_EXPECT(Sampler != nullptr);
+
+        const FRHIDescriptorHandle TextureHandle = Texture ? Texture->GetBindlessSRVHandle() : FRHIDescriptorHandle();
+        const FRHIDescriptorHandle SamplerHandle = Sampler ? Sampler->GetBindlessHandle() : FRHIDescriptorHandle();
+        TEST_EXPECT(TextureHandle.IsValid());
+        TEST_EXPECT(SamplerHandle.IsValid());
+
+        uint32 ParamsData[4] = { TextureHandle.Index, SamplerHandle.Index, 0, 0 };
+        FRHIBufferRef Params = RHI::CreateBuffer(FRHIBufferDesc::CreateConstantBuffer(sizeof(ParamsData)), ERHIResourceState::Common, ParamsData);
+        TEST_EXPECT(Params != nullptr);
+
+        if (Pipeline && Shader && Params && OutputBuffer && OutputUAV)
+        {
+            TEST_EXPECT(DispatchAndReadUint(Pipeline.Get(), Shader.Get(), Params.Get(), OutputBuffer.Get(), OutputUAV.Get(), 255u));
+        }
+
+        TEST_SECTION("Update-after-submit rewrites the same resource slot");
+        const uint8 Green[4] = { 0, 255, 0, 255 };
+        FBootTextureData GreenData(Green, 4, 4);
+        FRHITextureRef TextureB = RHI::CreateTexture(
+            FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, 1, 1, 1, 1, ETextureUsageFlags::ShaderResourceTexture),
+            ERHIResourceState::Common,
+            &GreenData);
+        TEST_EXPECT(TextureB != nullptr);
+
+        if (TextureB && TextureHandle.IsValid())
+        {
+            FMetalDeviceRHI* MetalDeviceRHI = FMetalDeviceRHI::Get();
+            FMetalBindlessDescriptorManager* Manager = MetalDeviceRHI ? MetalDeviceRHI->GetMetalDevice()->GetBindlessDescriptorManager() : nullptr;
+            TEST_EXPECT(Manager != nullptr);
+            FMetalTextureRHI* MetalTextureB = GetMetalTexture(TextureB.Get());
+            TEST_EXPECT(MetalTextureB != nullptr && MetalTextureB->GetMTLTexture() != nil);
+            if (Manager && MetalTextureB && MetalTextureB->GetMTLTexture())
+            {
+                Manager->WriteTexture(TextureHandle, MetalTextureB->GetMTLTexture(), false, true, false);
+            }
+
+            uint32 UpdateParams[4] = { TextureHandle.Index, SamplerHandle.Index, 0, 0 };
+            FRHIBufferRef UpdateBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateConstantBuffer(sizeof(UpdateParams)), ERHIResourceState::Common, UpdateParams);
+            if (Pipeline && Shader && UpdateBuffer && OutputBuffer && OutputUAV)
+            {
+                TEST_EXPECT(DispatchAndReadUint(Pipeline.Get(), Shader.Get(), UpdateBuffer.Get(), OutputBuffer.Get(), OutputUAV.Get(), 0u));
+            }
+        }
+    }
+
+    TEST_SECTION("Bindless UAV structured buffer round-trip");
+    {
+        static const CHAR Source[] =
+            "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+            "cbuffer Params : register(b0) { uint ResourceIndex; uint Pad0; uint Pad1; uint Pad2; };\n"
+            "[numthreads(1,1,1)]\n"
+            "void Main()\n"
+            "{\n"
+            "    RWStructuredBuffer<uint> HeapOut = ResourceDescriptorHeap[ResourceIndex];\n"
+            "    HeapOut[0] = 99;\n"
+            "    OutBuffer[0] = HeapOut[0];\n"
+            "}\n";
+
+        TArray<uint8> ByteCode;
+        TEST_EXPECT(CompileBindless(Source, ByteCode));
+        FRHIComputeShaderRef Shader = RHI::CreateComputeShader(ByteCode);
+        FRHIComputePipelineStateDesc PipelineDesc;
+        PipelineDesc.Shader = Shader.Get();
+        FRHIComputePipelineStateRef Pipeline = Shader ? RHI::CreateComputePipelineState(PipelineDesc) : nullptr;
+        TEST_EXPECT(Pipeline != nullptr);
+
+        const FRHIDescriptorHandle HeapHandle = OutputUAV ? OutputUAV->GetBindlessHandle() : FRHIDescriptorHandle();
+        TEST_EXPECT(HeapHandle.IsValid());
+
+        uint32 ParamsData[4] = { HeapHandle.Index, 0, 0, 0 };
+        FRHIBufferRef Params = RHI::CreateBuffer(FRHIBufferDesc::CreateConstantBuffer(sizeof(ParamsData)), ERHIResourceState::Common, ParamsData);
+        if (Pipeline && Shader && Params && OutputBuffer && OutputUAV)
+        {
+            TEST_EXPECT(DispatchAndReadUint(Pipeline.Get(), Shader.Get(), Params.Get(), OutputBuffer.Get(), OutputUAV.Get(), 99u));
+        }
+    }
+
+    TEST_SECTION("Bindless CBV round-trip");
+    {
+        static const CHAR Source[] =
+            "struct FData { uint Value; uint Pad0; uint Pad1; uint Pad2; };\n"
+            "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+            "cbuffer Params : register(b0) { uint ResourceIndex; uint PadA; uint PadB; uint PadC; };\n"
+            "[numthreads(1,1,1)]\n"
+            "void Main()\n"
+            "{\n"
+            "    ConstantBuffer<FData> CB = ResourceDescriptorHeap[ResourceIndex];\n"
+            "    OutBuffer[0] = CB.Value;\n"
+            "}\n";
+
+        TArray<uint8> ByteCode;
+        TEST_EXPECT(CompileBindless(Source, ByteCode));
+        FRHIComputeShaderRef Shader = RHI::CreateComputeShader(ByteCode);
+        FRHIComputePipelineStateDesc PipelineDesc;
+        PipelineDesc.Shader = Shader.Get();
+        FRHIComputePipelineStateRef Pipeline = Shader ? RHI::CreateComputePipelineState(PipelineDesc) : nullptr;
+        TEST_EXPECT(Pipeline != nullptr);
+
+        uint32 ConstantData[4] = { 42u, 0, 0, 0 };
+        FRHIBufferRef ConstantBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateConstantBuffer(sizeof(ConstantData)), ERHIResourceState::Common, ConstantData);
+        TEST_EXPECT(ConstantBuffer != nullptr);
+        const FRHIDescriptorHandle CBVHandle = ConstantBuffer ? ConstantBuffer->GetBindlessHandle() : FRHIDescriptorHandle();
+        TEST_EXPECT(CBVHandle.IsValid());
+
+        uint32 ParamsData[4] = { CBVHandle.Index, 0, 0, 0 };
+        FRHIBufferRef Params = RHI::CreateBuffer(FRHIBufferDesc::CreateConstantBuffer(sizeof(ParamsData)), ERHIResourceState::Common, ParamsData);
+        if (Pipeline && Shader && Params && OutputBuffer && OutputUAV)
+        {
+            TEST_EXPECT(DispatchAndReadUint(Pipeline.Get(), Shader.Get(), Params.Get(), OutputBuffer.Get(), OutputUAV.Get(), 42u));
+        }
+    }
+
+    TEST_SECTION("Reuse-after-retirement recycles the bindless index");
+    {
+        const uint8 Blue[4] = { 0, 0, 255, 255 };
+        FBootTextureData BlueData(Blue, 4, 4);
+        uint32 FirstIndex = FRHIDescriptorHandle::InvalidHandle;
+        {
+            FRHITextureRef Texture = RHI::CreateTexture(
+                FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, 1, 1, 1, 1, ETextureUsageFlags::ShaderResourceTexture),
+                ERHIResourceState::Common,
+                &BlueData);
+            TEST_EXPECT(Texture != nullptr);
+            const FRHIDescriptorHandle Handle = Texture ? Texture->GetBindlessSRVHandle() : FRHIDescriptorHandle();
+            TEST_EXPECT(Handle.IsValid());
+            FirstIndex = Handle.Index;
+        }
+
+        if (FRHICommandListExecutor::IsInitialized())
+        {
+            FRHICommandListExecutor::Get().WaitForGPU();
+        }
+
+        FRHITextureRef TextureB = RHI::CreateTexture(
+            FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, 1, 1, 1, 1, ETextureUsageFlags::ShaderResourceTexture),
+            ERHIResourceState::Common,
+            &BlueData);
+        TEST_EXPECT(TextureB != nullptr);
+        const FRHIDescriptorHandle SecondHandle = TextureB ? TextureB->GetBindlessSRVHandle() : FRHIDescriptorHandle();
+        TEST_EXPECT(SecondHandle.IsValid());
+        TEST_EXPECT_EQ(SecondHandle.Index, FirstIndex);
+    }
+
+    TEST_END();
+}
+#endif
+
 static bool ProbeCapabilityHonesty(ERHIType ExpectedType)
 {
     TEST_BEGIN();
@@ -842,6 +1098,12 @@ static bool BootRHI(ERHIType ExpectedType)
         {
             TEST_EXPECT(ProbeShaders());
             TEST_EXPECT(ProbeCommandRecording());
+#if PLATFORM_MACOS
+            if (ExpectedType == ERHIType::Metal)
+            {
+                TEST_EXPECT(ProbeBindlessDescriptors());
+            }
+#endif
             TEST_EXPECT(ProbeCapabilityHonesty(ExpectedType));
         }
 

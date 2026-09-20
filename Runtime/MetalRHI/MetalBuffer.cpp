@@ -1,4 +1,5 @@
 #include "MetalRHI/MetalBuffer.h"
+#include "MetalRHI/MetalBindlessDescriptors.h"
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalAllocators.h"
 #include "MetalRHI/MetalQueue.h"
@@ -11,12 +12,23 @@ FMetalBufferRHI::FMetalBufferRHI(FMetalDevice* InDevice, const FRHIBufferDesc& I
     , FMetalDeviceChild(InDevice)
     , Buffer(nil)
     , ResourceStorage(InDevice)
+    , BindlessHandle()
     , LastWriteValue(0)
 {
 }
 
 FMetalBufferRHI::~FMetalBufferRHI()
 {
+    if (BindlessHandle.IsValid())
+    {
+        if (FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager())
+        {
+            BindlessManager->Free(BindlessHandle);
+        }
+
+        BindlessHandle = FRHIDescriptorHandle();
+    }
+
     ResourceStorage.ReleaseResource();
     Buffer = nil;
 }
@@ -28,7 +40,31 @@ void* FMetalBufferRHI::GetRHINativeResource() const
 
 FRHIDescriptorHandle FMetalBufferRHI::GetBindlessHandle() const
 {
-    return FRHIDescriptorHandle();
+    if (BindlessHandle.IsValid())
+    {
+        return BindlessHandle;
+    }
+
+    if (!Desc.IsConstantBuffer())
+    {
+        CHECK(false);
+        return FRHIDescriptorHandle();
+    }
+
+    FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager();
+    if (!BindlessManager || !BindlessManager->IsEnabled())
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    BindlessHandle = BindlessManager->Allocate(EDescriptorType::ConstantBuffer);
+    if (!BindlessHandle.IsValid())
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    BindlessManager->WriteBuffer(BindlessHandle, Buffer, ResourceStorage.GetResourceOffset(), false, false, ResourceStorage.IsPlacedResource(), true);
+    return BindlessHandle;
 }
 
 void* FMetalBufferRHI::Map(uint64 Offset, uint64 Size)
@@ -137,7 +173,7 @@ bool FMetalBufferRHI::Initialize(ERHIResourceState InInitialAccess, const void* 
     [UploadBatch.GetBlitEncoder() copyFromBuffer:StagingStorage.GetBuffer()
                                     sourceOffset:StagingStorage.GetResourceOffset()
                                         toBuffer:NewBuffer
-                               destinationOffset:0
+                               destinationOffset:ResourceStorage.GetResourceOffset()
                                             size:Desc.Size];
 
     LastWriteValue = UploadBatch.Submit();

@@ -18,3 +18,9 @@ STAT_DEFINE_MEMORY(STAT_Metal_UploadHeapFragmented, "Upload Heap Fragmented", "M
 STAT_DEFINE_MEMORY(STAT_Metal_DeviceHeapAllocated,  "Device Heap Allocated",  "Metal Allocators");
 STAT_DEFINE_MEMORY(STAT_Metal_DeviceHeapUsed,       "Device Heap Used",       "Metal Allocators");
 STAT_DEFINE_MEMORY(STAT_Metal_DeviceHeapFragmented, "Device Heap Fragmented", "Metal Allocators");
+
+STAT_DEFINE_COUNTER(STAT_Metal_BindlessResourceSlots,  "Bindless Resource Slots",  "Metal Bindless");
+STAT_DEFINE_COUNTER(STAT_Metal_BindlessSamplerSlots,   "Bindless Sampler Slots",   "Metal Bindless");
+STAT_DEFINE_MEMORY(STAT_Metal_BindlessTableBytes,      "Bindless Table Bytes",     "Metal Bindless");
+STAT_DEFINE_COUNTER(STAT_Metal_BindlessPendingWrites,  "Bindless Pending Writes",  "Metal Bindless");
+STAT_DEFINE_COUNTER(STAT_Metal_BindlessGrowthCount,    "Bindless Table Growths",   "Metal Bindless");

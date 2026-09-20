@@ -1,7 +1,10 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "RHI/RHIResource.h"
+#include "RHI/RHITypes.h"
 #include "MetalRHI/MetalCore.h"
+
+class FMetalBindlessDescriptorManager;
 
 struct FMetalDeferredObject
 {
@@ -13,6 +16,7 @@ struct FMetalDeferredObject
         MTLResource  = 2,
         MTLHeap      = 3,
         MTLObject    = 4,
+        BindlessSlot = 5,
     };
 
     FMetalDeferredObject(FRHIResource* InResource)
@@ -64,13 +68,29 @@ struct FMetalDeferredObject
         Object = [InVertexDescriptor retain];
     }
 
+    FMetalDeferredObject(FMetalBindlessDescriptorManager* InManager, FRHIDescriptorHandle InHandle)
+        : Type(EType::BindlessSlot)
+    {
+        CHECK(InManager != nullptr);
+        CHECK(InHandle.IsValid());
+        BindlessSlot.Manager = InManager;
+        BindlessSlot.Handle  = InHandle;
+    }
+
     EType const Type;
+
+    struct FBindlessSlotData
+    {
+        FMetalBindlessDescriptorManager* Manager = nullptr;
+        FRHIDescriptorHandle             Handle;
+    };
 
     union
     {
-        FRHIResource*   RHIResource;
-        id<MTLResource> Resource;
-        id<MTLHeap>     Heap;
-        NSObject*       Object;
+        FRHIResource*     RHIResource;
+        id<MTLResource>   Resource;
+        id<MTLHeap>       Heap;
+        NSObject*         Object;
+        FBindlessSlotData BindlessSlot;
     };
 };

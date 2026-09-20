@@ -1,4 +1,5 @@
 #include "MetalRHI/MetalCommandContextState.h"
+#include "MetalRHI/MetalBindlessDescriptors.h"
 #include "MetalRHI/MetalCommandContext.h"
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalTexture.h"
@@ -348,6 +349,11 @@ void FMetalCommandContextState::BindGraphicsState()
         return;
     }
 
+    if (FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager())
+    {
+        BindlessManager->Flush();
+    }
+
     FMetalGraphicsPipelineStateRHI* GraphicsPipeline = GraphicsState.PipelineState.Get();
     FMetalMeshletPipelineStateRHI*  MeshletPipeline  = GraphicsState.MeshletPipelineState.Get();
 
@@ -440,6 +446,12 @@ void FMetalCommandContextState::BindGraphicsState()
         const EShaderVisibility::Type ShaderStage = static_cast<EShaderVisibility::Type>(Stage);
         BindGraphicsResources(ShaderStage);
         BindGraphicsSamplers(ShaderStage);
+        BindBindlessHeaps(ShaderStage);
+    }
+
+    if (FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager())
+    {
+        BindlessManager->DeclareResidency(Context);
     }
 
     if (GraphicsState.bBindShaderConstants)
@@ -477,14 +489,50 @@ void FMetalCommandContextState::BindComputeState()
         ComputeState.bBindPipelineState = false;
     }
 
+    if (FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager())
+    {
+        BindlessManager->Flush();
+    }
+
     BindComputeResources();
     BindComputeSamplers();
+    BindBindlessHeaps(EShaderVisibility::Compute);
+
+    if (FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager())
+    {
+        BindlessManager->DeclareResidency(Context);
+    }
 
     if (ComputeState.bBindShaderConstants)
     {
         BindComputeShaderConstants();
         ComputeState.bBindShaderConstants = false;
     }
+}
+
+void FMetalCommandContextState::EndCommandBuffer()
+{
+    if (FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager())
+    {
+        BindlessManager->Flush();
+    }
+}
+
+void FMetalCommandContextState::BindBindlessHeaps(EShaderVisibility::Type ShaderStage)
+{
+    FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager();
+    if (!BindlessManager || !BindlessManager->IsEnabled())
+    {
+        return;
+    }
+
+    const FMetalPipelineBindingLayout* Layout = GetBoundLayout(ShaderStage);
+    if (!Layout || !Layout->UsesBindlessHeaps())
+    {
+        return;
+    }
+
+    BindlessManager->BindHeaps(Context, ShaderStage, Layout->GetResourceHeapSlot(ShaderStage), Layout->GetSamplerHeapSlot(ShaderStage));
 }
 
 void FMetalCommandContextState::BindShaderConstants(EShaderVisibility::Type ShaderStage)
@@ -540,8 +588,9 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
             FMetalBufferRHI* Buffer = CBVCache.ConstantBuffers[ShaderStage][Index];
 
             id<MTLBuffer> MTLBufferHandle = Buffer ? Buffer->GetMTLBuffer() : nil;
+            const NSUInteger Offset = Buffer ? Buffer->GetResourceStorage().GetResourceOffset() : 0;
             Context.DeclareResident(MTLBufferHandle, true, false);
-            Context.SetGraphicsBuffer(ShaderStage, MTLBufferHandle, 0, Slot);
+            Context.SetGraphicsBuffer(ShaderStage, MTLBufferHandle, Offset, Slot);
         }
 
         CBVCache.ClearResourcesDirty(ShaderStage);
@@ -743,8 +792,9 @@ void FMetalCommandContextState::BindComputeResources()
             FMetalBufferRHI* Buffer = CBVCache.ConstantBuffers[EShaderVisibility::Compute][Index];
 
             id<MTLBuffer> MTLBufferHandle = Buffer ? Buffer->GetMTLBuffer() : nil;
+            const NSUInteger Offset = Buffer ? Buffer->GetResourceStorage().GetResourceOffset() : 0;
             Context.DeclareResident(MTLBufferHandle, true, false);
-            [Encoder setBuffer:MTLBufferHandle offset:0 atIndex:Slot];
+            [Encoder setBuffer:MTLBufferHandle offset:Offset atIndex:Slot];
         }
 
         CBVCache.ClearResourcesDirty(EShaderVisibility::Compute);

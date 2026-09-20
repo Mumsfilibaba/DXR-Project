@@ -122,7 +122,7 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
     RHI::MaxPatchControlPoints                          = 0;
     RHI::bSupportRenderTargetArrayIndexFromVertexShader = true;
     RHI::MaxShaderModel                                 = EShaderModel::SM_6_6;
-    RHI::bSupportsBindless                              = false;
+    RHI::bSupportsBindless                              = GMetalSupportsBindless;
 
     RHI::MaxViewInstanceCount    = Math::Max(GMetalMaxVertexAmplificationCount, 1u);
     RHI::bSupportsViewInstancing = RHI::MaxViewInstanceCount > 1;

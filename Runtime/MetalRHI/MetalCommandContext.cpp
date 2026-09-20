@@ -1973,6 +1973,7 @@ void FMetalCommandContext::Flush()
 
     GetDevice()->GetQueue()->WaitForCompletion();
     GetDevice()->GetQueue(EMetalQueueType::Copy)->WaitForCompletion();
+    FMetalDeviceRHI::Get()->FlushDeferredDeletions();
 }
 
 void FMetalCommandContext::PushEvent(const StringView& Name)

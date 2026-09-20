@@ -1,10 +1,64 @@
 #include "MetalRHI/MetalViews.h"
+#include "MetalRHI/MetalBindlessDescriptors.h"
 #include "MetalRHI/MetalBuffer.h"
 #include "MetalRHI/MetalCapabilities.h"
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalTexture.h"
 #include "Core/Math/Math.h"
+
+static FRHIDescriptorHandle EnsureViewBindlessHandle(
+    FMetalDevice* Device,
+    FRHIDescriptorHandle& BindlessHandle,
+    EDescriptorType DescriptorType,
+    bool bWritable,
+    id<MTLTexture> TextureView,
+    id<MTLBuffer> BufferView,
+    uint64 BufferOffset)
+{
+    if (BindlessHandle.IsValid())
+    {
+        return BindlessHandle;
+    }
+
+    FMetalBindlessDescriptorManager* BindlessManager = Device ? Device->GetBindlessDescriptorManager() : nullptr;
+    if (!BindlessManager || !BindlessManager->IsEnabled())
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    BindlessHandle = BindlessManager->Allocate(DescriptorType);
+    if (!BindlessHandle.IsValid())
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    if (TextureView)
+    {
+        BindlessManager->WriteTexture(BindlessHandle, TextureView, bWritable, true, true);
+    }
+    else if (BufferView)
+    {
+        BindlessManager->WriteBuffer(BindlessHandle, BufferView, BufferOffset, bWritable, false, BufferView.heap != nil, true);
+    }
+
+    return BindlessHandle;
+}
+
+static void FreeViewBindlessHandle(FMetalDevice* Device, FRHIDescriptorHandle& BindlessHandle)
+{
+    if (!BindlessHandle.IsValid())
+    {
+        return;
+    }
+
+    if (FMetalBindlessDescriptorManager* BindlessManager = Device ? Device->GetBindlessDescriptorManager() : nullptr)
+    {
+        BindlessManager->Free(BindlessHandle);
+    }
+
+    BindlessHandle = FRHIDescriptorHandle();
+}
 
 struct FMetalSubresourceRange
 {
@@ -380,10 +434,14 @@ bool FMetalView::InitializeBufferTextureView(EFormat InFormat, bool bWritable)
 FMetalShaderResourceViewRHI::FMetalShaderResourceViewRHI(FMetalDevice* InDevice, FRHIResource* InResource, const FRHIShaderResourceViewDesc& InRHIDesc)
     : FRHIShaderResourceView(InResource, InRHIDesc)
     , FMetalView(InDevice)
+    , BindlessHandle()
 {
 }
 
-FMetalShaderResourceViewRHI::~FMetalShaderResourceViewRHI() = default;
+FMetalShaderResourceViewRHI::~FMetalShaderResourceViewRHI()
+{
+    FreeViewBindlessHandle(GetDevice(), BindlessHandle);
+}
 
 bool FMetalShaderResourceViewRHI::Initialize()
 {
@@ -422,10 +480,14 @@ bool FMetalShaderResourceViewRHI::Initialize()
 FMetalUnorderedAccessViewRHI::FMetalUnorderedAccessViewRHI(FMetalDevice* InDevice, FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InRHIDesc)
     : FRHIUnorderedAccessView(InResource, InRHIDesc)
     , FMetalView(InDevice)
+    , BindlessHandle()
 {
 }
 
-FMetalUnorderedAccessViewRHI::~FMetalUnorderedAccessViewRHI() = default;
+FMetalUnorderedAccessViewRHI::~FMetalUnorderedAccessViewRHI()
+{
+    FreeViewBindlessHandle(GetDevice(), BindlessHandle);
+}
 
 bool FMetalUnorderedAccessViewRHI::Initialize()
 {
@@ -528,7 +590,7 @@ void* FMetalShaderResourceViewRHI::GetRHINativeHandle() const
 
 FRHIDescriptorHandle FMetalShaderResourceViewRHI::GetBindlessHandle() const
 {
-    return FRHIDescriptorHandle();
+    return EnsureViewBindlessHandle(GetDevice(), BindlessHandle, EDescriptorType::ShaderResource, false, GetMTLTexture(), GetMTLBuffer(), GetBufferOffset());
 }
 
 void* FMetalUnorderedAccessViewRHI::GetRHINativeHandle() const
@@ -538,7 +600,7 @@ void* FMetalUnorderedAccessViewRHI::GetRHINativeHandle() const
 
 FRHIDescriptorHandle FMetalUnorderedAccessViewRHI::GetBindlessHandle() const
 {
-    return FRHIDescriptorHandle();
+    return EnsureViewBindlessHandle(GetDevice(), BindlessHandle, EDescriptorType::UnorderedAccess, true, GetMTLTexture(), GetMTLBuffer(), GetBufferOffset());
 }
 
 void* FMetalRenderTargetViewRHI::GetRHINativeHandle() const

@@ -27,7 +27,13 @@ enum class EMSLBindingType : uint8
     /** @brief Root constants, bound to the MSL buffer table. Carries no register index. */
     ShaderConstants = 7,
 
-    Count = 8,
+    /** @brief SM 6.6 ResourceDescriptorHeap, bound as a descriptor table buffer. */
+    BindlessResourceHeap = 8,
+
+    /** @brief SM 6.6 SamplerDescriptorHeap, bound as a descriptor table buffer. */
+    BindlessSamplerHeap = 9,
+
+    Count = 10,
 };
 
 enum class EMSLBindingTable : uint8
@@ -50,6 +56,19 @@ static constexpr uint8 MSL_MAX_TEXTURE_SLOTS = 31;
 
 /** @brief Sampler-table size, matching `MAX_SAMPLER_STATES`. */
 static constexpr uint8 MSL_MAX_SAMPLER_SLOTS = 16;
+
+/** @brief DXC `-fvk-bind-*-heap` marker set, shared with the Vulkan cook. */
+static constexpr uint32 MSL_BINDLESS_HEAP_MARKER_SET = 31;
+
+static constexpr uint32 MSL_BINDLESS_RESOURCE_BINDING = 0;
+static constexpr uint32 MSL_BINDLESS_SAMPLER_BINDING  = 1;
+static constexpr uint32 MSL_BINDLESS_COUNTER_BINDING  = 16;
+
+/** @brief Fixed MSL buffer index for the resource descriptor table. */
+static constexpr uint8 MSL_BINDLESS_RESOURCE_HEAP_BUFFER_INDEX = 29;
+
+/** @brief Fixed MSL buffer index for the sampler descriptor table. */
+static constexpr uint8 MSL_BINDLESS_SAMPLER_HEAP_BUFFER_INDEX = 30;
 
 inline EMSLBindingTable GetMSLBindingTable(EMSLBindingType BindingType)
 {
@@ -94,6 +113,8 @@ inline const CHAR* ToString(EMSLBindingType BindingType)
         "UnorderedAccessTexture",
         "Sampler",
         "ShaderConstants",
+        "BindlessResourceHeap",
+        "BindlessSamplerHeap",
     };
 
     static_assert(ARRAY_COUNT(BindingTypeStrings) == static_cast<int32>(EMSLBindingType::Count), "BindingTypeStrings is out of date");
@@ -122,7 +143,7 @@ struct FMSLShaderHeader
     static constexpr uint32 ExpectedMagic = 0x4D534C42;
 
     /** @brief Layout revision, bumped whenever the header or the binding array changes shape. */
-    static constexpr uint32 ExpectedVersion = 3;
+    static constexpr uint32 ExpectedVersion = 4;
 
     uint32 Magic;
     uint32 Version;
@@ -133,9 +154,14 @@ struct FMSLShaderHeader
     uint16 ThreadGroupSizeZ;
 
     uint16 ShaderConstantsSize;
+    /** @brief MSL buffer index of ResourceDescriptorHeap, or UINT8_MAX. */
+    uint8  ResourceHeapSlot;
+    /** @brief MSL buffer index of SamplerDescriptorHeap, or UINT8_MAX. */
+    uint8  SamplerHeapSlot;
+    uint16 Padding0;
 };
 
-static_assert(sizeof(FMSLShaderHeader) == 24, "FMSLShaderHeader is serialized verbatim and must not carry padding");
+static_assert(sizeof(FMSLShaderHeader) == 28, "FMSLShaderHeader is serialized verbatim and must not carry padding");
 
 inline bool ParseMSLShaderByteCode(const TArray<uint8>& ByteCode, TArray<FMSLShaderBinding>& OutBindings, TArrayView<const uint8>& OutSource)
 {

@@ -2,6 +2,7 @@
 #include "MetalRHI/MetalCapabilities.h"
 #include "MetalRHI/MetalDeviceDebug.h"
 #include "MetalRHI/MetalAllocators.h"
+#include "MetalRHI/MetalBindlessDescriptors.h"
 #include "MetalRHI/MetalQueue.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
@@ -154,12 +155,12 @@ bool FMetalDefaultResources::Initialize(FMetalDevice& InDevice)
     }
 
     MTLSamplerDescriptor* SamplerDesc = [MTLSamplerDescriptor new];
-    SamplerDesc.minFilter     = MTLSamplerMinMagFilterLinear;
-    SamplerDesc.magFilter     = MTLSamplerMinMagFilterLinear;
-    SamplerDesc.mipFilter     = MTLSamplerMipFilterLinear;
-    SamplerDesc.sAddressMode  = MTLSamplerAddressModeClampToEdge;
-    SamplerDesc.tAddressMode  = MTLSamplerAddressModeClampToEdge;
-    SamplerDesc.rAddressMode  = MTLSamplerAddressModeClampToEdge;
+    SamplerDesc.minFilter    = MTLSamplerMinMagFilterLinear;
+    SamplerDesc.magFilter    = MTLSamplerMinMagFilterLinear;
+    SamplerDesc.mipFilter    = MTLSamplerMipFilterLinear;
+    SamplerDesc.sAddressMode = MTLSamplerAddressModeClampToEdge;
+    SamplerDesc.tAddressMode = MTLSamplerAddressModeClampToEdge;
+    SamplerDesc.rAddressMode = MTLSamplerAddressModeClampToEdge;
 
     DefaultSampler = [DeviceHandle newSamplerStateWithDescriptor:SamplerDesc];
     [SamplerDesc release];
@@ -198,6 +199,7 @@ FMetalDevice::FMetalDevice()
     , DynamicConstantsAllocator(nullptr)
     , BufferAllocator(nullptr)
     , TextureAllocator(nullptr)
+    , BindlessDescriptorManager(nullptr)
     , Queue(nullptr)
     , ComputeQueue(nullptr)
     , CopyQueue(nullptr)
@@ -242,6 +244,7 @@ FMetalDevice::~FMetalDevice()
 
     SAFE_DELETE(TextureAllocator);
     SAFE_DELETE(BufferAllocator);
+    SAFE_DELETE(BindlessDescriptorManager);
     SAFE_DELETE(UploadHeapAllocator);
     SAFE_DELETE(DynamicConstantsAllocator);
     SAFE_DELETE(StagingBufferAllocator);
@@ -425,11 +428,19 @@ bool FMetalDevice::Initialize()
         return false;
     }
 
-    StagingBufferAllocator = new FMetalLinearAllocator(this, 2ull * 1024ull * 1024ull, 2ull * 1024ull * 1024ull);
+    StagingBufferAllocator    = new FMetalLinearAllocator(this, 2ull * 1024ull * 1024ull, 2ull * 1024ull * 1024ull);
     DynamicConstantsAllocator = new FMetalLinearAllocator(this, 4ull * 1024ull * 1024ull, 2ull * 1024ull * 1024ull);
-    UploadHeapAllocator = new FMetalUploadHeapAllocator(this, 2ull * 1024ull * 1024ull, 4ull * 1024ull * 1024ull, 2ull * 1024ull * 1024ull);
-    BufferAllocator = new FMetalBufferAllocator(this);
-    TextureAllocator = new FMetalTextureAllocator(this);
+    UploadHeapAllocator       = new FMetalUploadHeapAllocator(this, 2ull * 1024ull * 1024ull, 4ull * 1024ull * 1024ull, 2ull * 1024ull * 1024ull);
+    BufferAllocator           = new FMetalBufferAllocator(this);
+    TextureAllocator          = new FMetalTextureAllocator(this);
+
+    BindlessDescriptorManager = new FMetalBindlessDescriptorManager(this);
+    GMetalSupportsBindless = BindlessDescriptorManager->Initialize();
+
+    if (!GMetalSupportsBindless)
+    {
+        SAFE_DELETE(BindlessDescriptorManager);
+    }
 
     if (!QueryDeviceFeatureSupport())
     {
@@ -479,7 +490,7 @@ bool FMetalDevice::QueryDeviceFeatureSupport()
 
     if ([Device respondsToSelector:@selector(maxVertexAmplificationCount)])
     {
-        const SEL Selector = @selector(maxVertexAmplificationCount);
+        const SEL        Selector           = @selector(maxVertexAmplificationCount);
         const NSUInteger AmplificationCount = ((NSUInteger (*)(id, SEL))objc_msgSend)(Device, Selector);
         GMetalMaxVertexAmplificationCount = Math::Max(static_cast<uint32>(AmplificationCount), 1u);
     }

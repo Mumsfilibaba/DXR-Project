@@ -28,6 +28,9 @@ static void BuildClearShaderByteCode(const uint8* Source, int32 SourceSize, TArr
     Header.ThreadGroupSizeY    = 1;
     Header.ThreadGroupSizeZ    = 1;
     Header.ShaderConstantsSize = static_cast<uint16>(5u * sizeof(uint32));
+    Header.ResourceHeapSlot    = UINT8_MAX;
+    Header.SamplerHeapSlot     = UINT8_MAX;
+    Header.Padding0            = 0;
 
     constexpr int32 HeaderSize   = static_cast<int32>(sizeof(FMSLShaderHeader));
     constexpr int32 BindingsSize = static_cast<int32>(sizeof(ClearBindings));

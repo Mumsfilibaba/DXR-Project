@@ -24,6 +24,7 @@ extern METALRHI_API bool                    GMetalSupportsTimestampDrawBoundary;
 extern METALRHI_API bool                    GMetalSupportsTimestampDispatchBoundary;
 extern METALRHI_API bool                    GMetalSupportsTimestampBlitBoundary;
 extern METALRHI_API bool                    GMetalSupportsBCTextureCompression;
+extern METALRHI_API bool                    GMetalSupportsBindless;
 
 // -------------------------------------------------------------------------------------------
 // Metal Capability Logging

@@ -150,6 +150,29 @@ public:
         return ShaderConstantsSize[ShaderStage];
     }
 
+    uint8 GetResourceHeapSlot(EShaderVisibility::Type ShaderStage) const
+    {
+        return ResourceHeapSlot[ShaderStage];
+    }
+
+    uint8 GetSamplerHeapSlot(EShaderVisibility::Type ShaderStage) const
+    {
+        return SamplerHeapSlot[ShaderStage];
+    }
+
+    bool UsesBindlessHeaps() const
+    {
+        for (uint32 ShaderStage = 0; ShaderStage < EShaderVisibility::Count; ++ShaderStage)
+        {
+            if (ResourceHeapSlot[ShaderStage] != InvalidSlot || SamplerHeapSlot[ShaderStage] != InvalidSlot)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 private:
     TStaticArray<uint8, MAX_CONSTANT_BUFFERS> ConstantBuffers[EShaderVisibility::Count];
     TStaticArray<uint8, MAX_SRVS>             ShaderResourceBuffers[EShaderVisibility::Count];
@@ -158,6 +181,8 @@ private:
     TStaticArray<uint8, MAX_UAVS>             UnorderedAccessTextures[EShaderVisibility::Count];
     TStaticArray<uint8, MAX_SAMPLER_STATES>   Samplers[EShaderVisibility::Count];
     uint8                                     ShaderConstants[EShaderVisibility::Count];
+    uint8                                     ResourceHeapSlot[EShaderVisibility::Count];
+    uint8                                     SamplerHeapSlot[EShaderVisibility::Count];
     uint16                                    ShaderConstantsSize[EShaderVisibility::Count];
 };
 

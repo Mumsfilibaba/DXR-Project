@@ -1,21 +1,51 @@
 #include "MetalRHI/MetalSamplerState.h"
+#include "MetalRHI/MetalBindlessDescriptors.h"
 #include "MetalRHI/MetalDevice.h"
 
 FMetalSamplerStateRHI::FMetalSamplerStateRHI(FMetalDevice* InDevice, const FRHISamplerStateDesc& InSamplerDesc)
     : FRHISamplerState(InSamplerDesc)
     , FMetalDeviceChild(InDevice)
     , SamplerState(nullptr)
+    , BindlessHandle()
 {
 }
 
 FMetalSamplerStateRHI::~FMetalSamplerStateRHI()
 {
+    if (BindlessHandle.IsValid())
+    {
+        if (FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager())
+        {
+            BindlessManager->Free(BindlessHandle);
+        }
+
+        BindlessHandle = FRHIDescriptorHandle();
+    }
+
     [SamplerState release];
 }
 
 FRHIDescriptorHandle FMetalSamplerStateRHI::GetBindlessHandle() const
 {
-    return FRHIDescriptorHandle();
+    if (BindlessHandle.IsValid())
+    {
+        return BindlessHandle;
+    }
+
+    FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager();
+    if (!BindlessManager || !BindlessManager->IsEnabled() || !SamplerState)
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    BindlessHandle = BindlessManager->Allocate(EDescriptorType::Sampler);
+    if (!BindlessHandle.IsValid())
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    BindlessManager->WriteSampler(BindlessHandle, SamplerState, true);
+    return BindlessHandle;
 }
 
 void* FMetalSamplerStateRHI::GetRHINativeSampler() const

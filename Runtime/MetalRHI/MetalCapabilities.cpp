@@ -28,6 +28,7 @@ METALRHI_API bool                    GMetalSupportsTimestampDrawBoundary     = f
 METALRHI_API bool                    GMetalSupportsTimestampDispatchBoundary = false;
 METALRHI_API bool                    GMetalSupportsTimestampBlitBoundary     = false;
 METALRHI_API bool                    GMetalSupportsBCTextureCompression      = false;
+METALRHI_API bool                    GMetalSupportsBindless                  = false;
 
 void DumpMetalCapabilities()
 {
@@ -51,6 +52,7 @@ void DumpMetalCapabilities()
     LOG_INFO("[MetalRHI]   Timestamp AtDispatchBoundary           : %s", YesNo(GMetalSupportsTimestampDispatchBoundary));
     LOG_INFO("[MetalRHI]   Timestamp AtBlitBoundary               : %s", YesNo(GMetalSupportsTimestampBlitBoundary));
     LOG_INFO("[MetalRHI]   BC Texture Compression                 : %s", YesNo(GMetalSupportsBCTextureCompression));
+    LOG_INFO("[MetalRHI]   Bindless Descriptors                   : %s", YesNo(GMetalSupportsBindless));
     LOG_INFO("[MetalRHI]   Max Buffer Length                      : %llu", static_cast<unsigned long long>(GMetalMaxBufferLength));
     LOG_INFO("[MetalRHI]   Max Threads Per Threadgroup            : %u", GMetalMaxThreadsPerThreadgroup);
     LOG_INFO("[MetalRHI]   Max Vertex Amplification Count         : %u", GMetalMaxVertexAmplificationCount);

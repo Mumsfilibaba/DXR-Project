@@ -19,6 +19,28 @@
 // HLSL space1 holds the 32-bit root constants. Mirrors VULKAN_SHADER_CONSTANTS_SET.
 #define MSL_SHADER_CONSTANTS_SET (1)
 
+static SpvExecutionModel GetMSLExecutionModel(EShaderStage ShaderStage)
+{
+    switch (ShaderStage)
+    {
+        case EShaderStage::Vertex:          return SpvExecutionModelVertex;
+        case EShaderStage::Hull:            return SpvExecutionModelTessellationControl;
+        case EShaderStage::Domain:          return SpvExecutionModelTessellationEvaluation;
+        case EShaderStage::Geometry:        return SpvExecutionModelGeometry;
+        case EShaderStage::Mesh:            return SpvExecutionModelMeshEXT;
+        case EShaderStage::Amplification:   return SpvExecutionModelTaskEXT;
+        case EShaderStage::Pixel:           return SpvExecutionModelFragment;
+        case EShaderStage::Compute:         return SpvExecutionModelGLCompute;
+        case EShaderStage::RayGen:          return SpvExecutionModelRayGenerationKHR;
+        case EShaderStage::RayAnyHit:       return SpvExecutionModelAnyHitKHR;
+        case EShaderStage::RayClosestHit:   return SpvExecutionModelClosestHitKHR;
+        case EShaderStage::RayMiss:         return SpvExecutionModelMissKHR;
+        case EShaderStage::RayIntersection: return SpvExecutionModelIntersectionKHR;
+        case EShaderStage::RayCallable:     return SpvExecutionModelCallableKHR;
+        default:                            return SpvExecutionModelGLCompute;
+    }
+}
+
 static TAutoConsoleVariable<bool> CVarShaderDebug(
     "RHI.ShaderCompiler.Debug",
     "Enable debug information in the Shaders",
@@ -408,6 +430,40 @@ static bool GatherMSLResources(spvc_compiler Compiler, spvc_resources Resources,
         const spvc_variable_id Id       = Reflected[Index].id;
         const uint32           SetIndex = spvc_compiler_get_decoration(Compiler, Id, SpvDecorationDescriptorSet);
         const uint32           Register = spvc_compiler_get_decoration(Compiler, Id, SpvDecorationBinding);
+
+        if (SetIndex == MSL_BINDLESS_HEAP_MARKER_SET)
+        {
+            EMSLBindingType HeapType = EMSLBindingType::Unknown;
+            if (Register == MSL_BINDLESS_RESOURCE_BINDING)
+            {
+                HeapType = EMSLBindingType::BindlessResourceHeap;
+            }
+            else if (Register == MSL_BINDLESS_SAMPLER_BINDING)
+            {
+                HeapType = EMSLBindingType::BindlessSamplerHeap;
+            }
+            else
+            {
+                continue;
+            }
+
+            bool bAlreadyGathered = false;
+            for (const FMSLReflectedResource& Existing : OutResources)
+            {
+                if (Existing.BindingType == HeapType)
+                {
+                    bAlreadyGathered = true;
+                    break;
+                }
+            }
+
+            if (!bAlreadyGathered)
+            {
+                OutResources.Emplace(FMSLReflectedResource{ Id, Reflected[Index].base_type_id, HeapType, 0 });
+            }
+
+            continue;
+        }
 
         EMSLBindingType BindingType = EMSLBindingType::Unknown;
         switch (ResourceType)
@@ -1039,26 +1095,10 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
             break;
     }
 
-    Result = spvc_compiler_options_set_uint(CompilerOptions, SPVC_COMPILER_OPTION_MSL_VERSION, MSLVersion);
-    if (Result != SPVC_SUCCESS)
-    {
-        LOG_ERROR("[FShaderCompiler]: Failed to set the MSL version");
-        DEBUG_BREAK();
-        return false;
-    }
-
     Result = spvc_compiler_options_set_bool(CompilerOptions, SPVC_COMPILER_OPTION_MSL_TEXTURE_BUFFER_NATIVE, SPVC_TRUE);
     if (Result != SPVC_SUCCESS)
     {
         LOG_ERROR("[FShaderCompiler]: Failed to enable native MSL texel buffers");
-        DEBUG_BREAK();
-        return false;
-    }
-
-    Result = spvc_compiler_install_compiler_options(CompilerMSL, CompilerOptions);
-    if (Result != SPVC_SUCCESS)
-    {
-        LOG_ERROR("[FShaderCompiler]: Failed to install MSL compiler options");
         DEBUG_BREAK();
         return false;
     }
@@ -1093,14 +1133,97 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
         }
     }
 
+    bool bUsesBindlessHeaps = false;
+    for (const FMSLReflectedResource& ReflectedResource : ReflectedResources)
+    {
+        if (ReflectedResource.BindingType == EMSLBindingType::BindlessResourceHeap ||
+            ReflectedResource.BindingType == EMSLBindingType::BindlessSamplerHeap)
+        {
+            bUsesBindlessHeaps = true;
+            break;
+        }
+    }
+
+    if (bUsesBindlessHeaps)
+    {
+        MSLVersion = SPVC_MAKE_MSL_VERSION(3, 0, 0);
+    }
+
+    Result = spvc_compiler_options_set_uint(CompilerOptions, SPVC_COMPILER_OPTION_MSL_VERSION, MSLVersion);
+    if (Result != SPVC_SUCCESS)
+    {
+        LOG_ERROR("[FShaderCompiler]: Failed to set the MSL version");
+        DEBUG_BREAK();
+        return false;
+    }
+
+    if (bUsesBindlessHeaps)
+    {
+        // SPIRV-Cross refuses runtime-array heaps unless this option is Tier2. Argument buffers stay off;
+        // the heaps still emit as `device const void* [[buffer(n)]]` rather than nested argument buffers.
+        Result = spvc_compiler_options_set_uint(CompilerOptions, SPVC_COMPILER_OPTION_MSL_ARGUMENT_BUFFERS_TIER, 1);
+        if (Result != SPVC_SUCCESS)
+        {
+            LOG_ERROR("[FShaderCompiler]: Failed to set the MSL argument-buffer tier for bindless heaps");
+            DEBUG_BREAK();
+            return false;
+        }
+    }
+
+    Result = spvc_compiler_install_compiler_options(CompilerMSL, CompilerOptions);
+    if (Result != SPVC_SUCCESS)
+    {
+        LOG_ERROR("[FShaderCompiler]: Failed to install MSL compiler options");
+        DEBUG_BREAK();
+        return false;
+    }
+
     // DXC numbers a Vulkan binding after the HLSL register, so b0 and u0 both land on set 0 binding 0.
     // SPIRV-Cross answers that collision by emitting one `constant void*` argument that every alias
     // casts out of, which Metal rejects the moment one of them needs the device address space. Handing
     // every resource its own binding first is what keeps the aliasing path from triggering at all.
+    // Heap resources stay on set 31 so the runtime-array table ABI is preserved.
+    uint32 DiscreteBinding = 0;
     for (int32 Index = 0; Index < ReflectedResources.Size(); Index++)
     {
-        spvc_compiler_set_decoration(CompilerMSL, ReflectedResources[Index].Id, SpvDecorationBinding, static_cast<unsigned>(Index));
+        const EMSLBindingType BindingType = ReflectedResources[Index].BindingType;
+        if (BindingType == EMSLBindingType::BindlessResourceHeap || BindingType == EMSLBindingType::BindlessSamplerHeap)
+        {
+            continue;
+        }
+
+        spvc_compiler_set_decoration(CompilerMSL, ReflectedResources[Index].Id, SpvDecorationBinding, DiscreteBinding);
         spvc_compiler_set_decoration(CompilerMSL, ReflectedResources[Index].Id, SpvDecorationDescriptorSet, 0);
+        DiscreteBinding++;
+    }
+
+    if (bUsesBindlessHeaps)
+    {
+        const SpvExecutionModel ExecutionModel = GetMSLExecutionModel(CompileInfo.ShaderStage);
+
+        auto AddHeapBinding = [&](unsigned Binding, unsigned BufferIndex) -> bool
+        {
+            spvc_msl_resource_binding ResourceBinding;
+            spvc_msl_resource_binding_init(&ResourceBinding);
+            ResourceBinding.stage      = ExecutionModel;
+            ResourceBinding.desc_set   = MSL_BINDLESS_HEAP_MARKER_SET;
+            ResourceBinding.binding    = Binding;
+            // Runtime-array heaps still emit as [[buffer(n)]], but SPIRV-Cross picks
+            // msl_texture / msl_sampler when the SPIR-V type is Image or Sampler.
+            ResourceBinding.msl_buffer  = BufferIndex;
+            ResourceBinding.msl_texture = BufferIndex;
+            ResourceBinding.msl_sampler = BufferIndex;
+            return spvc_compiler_msl_add_resource_binding(CompilerMSL, &ResourceBinding) == SPVC_SUCCESS;
+        };
+
+        if (!AddHeapBinding(MSL_BINDLESS_RESOURCE_BINDING, MSL_BINDLESS_RESOURCE_HEAP_BUFFER_INDEX) ||
+            !AddHeapBinding(MSL_BINDLESS_SAMPLER_BINDING, MSL_BINDLESS_SAMPLER_HEAP_BUFFER_INDEX))
+        {
+            LOG_ERROR("[FShaderCompiler]: Failed to pin the MSL bindless heap buffer slots");
+            spvc_context_destroy(Context);
+            DEBUG_BREAK();
+            return false;
+        }
     }
 
     const CHAR* MSLSource = nullptr;
@@ -1195,6 +1318,21 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
     Header.ThreadGroupSizeY    = 0;
     Header.ThreadGroupSizeZ    = 0;
     Header.ShaderConstantsSize = ShaderConstantsSize;
+    Header.ResourceHeapSlot    = UINT8_MAX;
+    Header.SamplerHeapSlot     = UINT8_MAX;
+    Header.Padding0            = 0;
+
+    for (const FMSLShaderBinding& Binding : Bindings)
+    {
+        if (Binding.BindingType == EMSLBindingType::BindlessResourceHeap)
+        {
+            Header.ResourceHeapSlot = Binding.SlotIndex;
+        }
+        else if (Binding.BindingType == EMSLBindingType::BindlessSamplerHeap)
+        {
+            Header.SamplerHeapSlot = Binding.SlotIndex;
+        }
+    }
 
     if (CompileInfo.ShaderStage == EShaderStage::Compute)
     {

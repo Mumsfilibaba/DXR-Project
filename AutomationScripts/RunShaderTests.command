@@ -252,9 +252,25 @@ compile_one() {
     RESULT=$?
 
     if [ $RESULT -eq 0 ] && [ -n "$MSL_CHECK" ]; then
+        # Bindless permutations need MSL 3.0 for resource-ID table indexing, matching
+        # ConvertSpirvToMetalShader. Discrete shaders stay on MSL 2.3.
+        MSL_CHECK_VERSION="$MSL_VERSION"
+        for DEFINE in "$@"; do
+            if [ "$DEFINE" = "ENABLE_BINDLESS=(1)" ]; then
+                MSL_CHECK_VERSION="30000"
+            fi
+        done
+
         # FShaderCompiler::ConvertSpirvToMetalShader runs this same translation at
         # load time, so a shader that stops here never reaches a Metal device.
-        OUTPUT=$( "$SPIRV_CROSS" --msl --msl-version "$MSL_VERSION" "$SPIRV_TEMP" --output "$MSL_TEMP" 2>&1 )
+        SPIRV_CROSS_ARGS=(--msl --msl-version "$MSL_CHECK_VERSION")
+        if [ "$MSL_CHECK_VERSION" = "30000" ]; then
+            # Same codegen gate as ConvertSpirvToMetalShader: unsized heaps emit
+            # `device const void* [[buffer(n)]]` only when the MSL tier is 2.
+            SPIRV_CROSS_ARGS+=(--msl-argument-buffer-tier 1)
+        fi
+
+        OUTPUT=$( "$SPIRV_CROSS" "${SPIRV_CROSS_ARGS[@]}" "$SPIRV_TEMP" --output "$MSL_TEMP" 2>&1 )
         RESULT=$?
     fi
 
@@ -288,8 +304,7 @@ sweep_entry() {
     fi
 
     # Mirrors ShouldCompilePermutation, which culls anything the device cannot support
-    # before it ever reaches a compiler. Metal reports neither bindless nor ray tracing,
-    # so sweeping those here would report failures the engine never asks for.
+    # before it ever reaches a compiler. Metal still reports ray tracing as unsupported.
     if has_axis raytracing "$AXES" && [ "$BACKEND_SUPPORTS_RAYTRACING" -eq 0 ]; then
         return
     fi
@@ -513,10 +528,10 @@ for BACKEND in $BACKENDS; do
         MSL_CHECK="1"
     fi
 
-    # Mirrors RHI::bSupportsBindless and RHI::bSupportsRayTracing. MetalRHI sets neither,
-    # so both keep the false they are given in RHICore.cpp.
+    # Mirrors RHI::bSupportsBindless and RHI::bSupportsRayTracing. MetalRHI enables
+    # bindless on Metal 3; ray tracing remains Phase 12.
     if [ "$BACKEND" = "metal" ]; then
-        BACKEND_SUPPORTS_BINDLESS=0
+        BACKEND_SUPPORTS_BINDLESS=1
         BACKEND_SUPPORTS_RAYTRACING=0
     else
         BACKEND_SUPPORTS_BINDLESS=1

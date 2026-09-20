@@ -60,6 +60,7 @@ public:
 private:
     id<MTLBuffer>        Buffer;
     FMetalResourceStorage ResourceStorage;
+    mutable FRHIDescriptorHandle BindlessHandle;
     uint64               LastWriteValue;
 };
 

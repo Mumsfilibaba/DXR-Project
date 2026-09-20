@@ -104,6 +104,51 @@ bool MSLShaderBinding_Test()
         TEST_EXPECT(Header.ThreadGroupSizeX != 0);
         TEST_EXPECT_EQ(Header.ThreadGroupSizeY, static_cast<uint16>(1));
         TEST_EXPECT_EQ(Header.ThreadGroupSizeZ, static_cast<uint16>(1));
+        TEST_EXPECT_EQ(Header.ResourceHeapSlot, UINT8_MAX);
+        TEST_EXPECT_EQ(Header.SamplerHeapSlot, UINT8_MAX);
+    }
+
+    TEST_SECTION("A bindless compute shader pins heap tables at MSL buffers 29 and 30");
+    {
+        static const CHAR BindlessSource[] =
+            "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+            "cbuffer Params : register(b0) { uint ResourceIndex; uint SamplerIndex; uint Pad0; uint Pad1; };\n"
+            "[numthreads(1,1,1)]\n"
+            "void Main()\n"
+            "{\n"
+            "    Texture2D<float4> Tex = ResourceDescriptorHeap[ResourceIndex];\n"
+            "    SamplerState Samp = SamplerDescriptorHeap[SamplerIndex];\n"
+            "    float4 Color = Tex.SampleLevel(Samp, float2(0.5, 0.5), 0);\n"
+            "    OutBuffer[0] = (uint)(Color.x * 255.0f + 0.5f);\n"
+            "}\n";
+
+        TArray<uint8>             BindlessByteCode;
+        TArray<FMSLShaderBinding> BindlessBindings;
+        TArrayView<const uint8>   BindlessSourceView;
+
+        const FShaderCompileInfo BindlessInfo("Main", EShaderModel::SM_6_6, EShaderStage::Compute, TArrayView<FShaderDefine>(), EShaderOutputLanguage::MSL);
+        const bool bBindlessCompiled = FShaderCompiler::Get().CompileFromSource(BindlessSource, BindlessInfo, BindlessByteCode);
+        TEST_EXPECT(bBindlessCompiled);
+
+        if (bBindlessCompiled)
+        {
+            TEST_EXPECT(ParseMSLShaderByteCode(BindlessByteCode, BindlessBindings, BindlessSourceView));
+
+            FMSLShaderHeader BindlessHeader;
+            Memory::Memcpy(&BindlessHeader, BindlessByteCode.Data(), sizeof(FMSLShaderHeader));
+            TEST_EXPECT_EQ(BindlessHeader.Version, FMSLShaderHeader::ExpectedVersion);
+            TEST_EXPECT_EQ(BindlessHeader.ResourceHeapSlot, MSL_BINDLESS_RESOURCE_HEAP_BUFFER_INDEX);
+            TEST_EXPECT_EQ(BindlessHeader.SamplerHeapSlot, MSL_BINDLESS_SAMPLER_HEAP_BUFFER_INDEX);
+
+            TEST_EXPECT(FindSlot(BindlessBindings, EMSLBindingType::BindlessResourceHeap, 0) == MSL_BINDLESS_RESOURCE_HEAP_BUFFER_INDEX);
+            TEST_EXPECT(FindSlot(BindlessBindings, EMSLBindingType::BindlessSamplerHeap, 0) == MSL_BINDLESS_SAMPLER_HEAP_BUFFER_INDEX);
+
+            const String BindlessText(reinterpret_cast<const CHAR*>(BindlessSourceView.Data()), BindlessSourceView.Size());
+            TEST_EXPECT(BindlessText.Contains("spvDescriptorSet31Binding0"));
+            TEST_EXPECT(BindlessText.Contains("spvDescriptorSet31Binding1"));
+            TEST_EXPECT(BindlessText.Contains("[[buffer(29)]]"));
+            TEST_EXPECT(BindlessText.Contains("[[buffer(30)]]"));
+        }
     }
 
     FShaderCompiler::Destroy();

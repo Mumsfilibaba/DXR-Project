@@ -42,7 +42,7 @@ FRHIShaderResourceView* FMetalSceneAccelerationStructureRHI::GetShaderResourceVi
 
 FRHIDescriptorHandle FMetalSceneAccelerationStructureRHI::GetBindlessHandle() const
 {
-    return FRHIDescriptorHandle();
+    return View ? View->GetBindlessHandle() : FRHIDescriptorHandle();
 }
 
 void FMetalSceneAccelerationStructureRHI::SetDebugName(const String& InName)

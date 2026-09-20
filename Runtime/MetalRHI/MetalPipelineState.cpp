@@ -238,6 +238,8 @@ void FMetalPipelineBindingLayout::Reset()
         Samplers[ShaderStage].Fill(InvalidSlot);
         ShaderConstants[ShaderStage]     = InvalidSlot;
         ShaderConstantsSize[ShaderStage] = 0;
+        ResourceHeapSlot[ShaderStage]    = InvalidSlot;
+        SamplerHeapSlot[ShaderStage]     = InvalidSlot;
     }
 }
 
@@ -324,6 +326,26 @@ bool FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& Shade
                 break;
             }
 
+            case EMSLBindingType::BindlessResourceHeap:
+            {
+                if (!AssignMSLSlot(ResourceHeapSlot[ShaderStage], Binding, ShaderStage))
+                {
+                    return false;
+                }
+
+                break;
+            }
+
+            case EMSLBindingType::BindlessSamplerHeap:
+            {
+                if (!AssignMSLSlot(SamplerHeapSlot[ShaderStage], Binding, ShaderStage))
+                {
+                    return false;
+                }
+
+                break;
+            }
+
             default:
             {
                 METAL_ERROR("Unhandled MSL binding type %s", ToString(Binding.BindingType));
@@ -394,6 +416,20 @@ bool FMetalPipelineBindingLayout::ConflictsWithVertexInputs(const FMetalInputLay
                 ShaderConstants[VertexStage], InputSlot);
             return true;
         }
+
+        if (OccupiesSlot(ResourceHeapSlot[VertexStage]))
+        {
+            METAL_ERROR("Vertex shader bindless resource heap uses MSL slot %u, which is also input stream slot %u",
+                ResourceHeapSlot[VertexStage], InputSlot);
+            return true;
+        }
+
+        if (OccupiesSlot(SamplerHeapSlot[VertexStage]))
+        {
+            METAL_ERROR("Vertex shader bindless sampler heap uses MSL slot %u, which is also input stream slot %u",
+                SamplerHeapSlot[VertexStage], InputSlot);
+            return true;
+        }
     }
 
     return false;
@@ -423,6 +459,12 @@ uint8 FMetalPipelineBindingLayout::GetSlot(EShaderVisibility::Type ShaderVisibil
 
         case EMSLBindingType::ShaderConstants:
             return ShaderConstants[ShaderVisibility];
+
+        case EMSLBindingType::BindlessResourceHeap:
+            return ResourceHeapSlot[ShaderVisibility];
+
+        case EMSLBindingType::BindlessSamplerHeap:
+            return SamplerHeapSlot[ShaderVisibility];
 
         default:
             return InvalidSlot;
