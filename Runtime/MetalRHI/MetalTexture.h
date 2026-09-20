@@ -2,6 +2,7 @@
 #include "RHI/RHIResources.h"
 #include "MetalRHI/MetalViews.h"
 #include "MetalRHI/MetalDeviceChild.h"
+#include "MetalRHI/MetalResource.h"
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FMetalSwapChainRHI;
@@ -31,6 +32,11 @@ public:
     
     id<MTLTexture> GetMTLTexture() const;
 
+    FORCEINLINE bool IsHeapPlaced() const
+    {
+        return ResourceStorage.IsPlacedResource();
+    }
+
     void SetSwapChain(FMetalSwapChainRHI* InSwapChain)
     {
         SwapChain = InSwapChain;
@@ -51,6 +57,7 @@ private:
     bool UploadInitialData(const IRHITextureData* InInitialData);
 
     id<MTLTexture>                           Texture;
+    FMetalResourceStorage                    ResourceStorage;
     FMetalSwapChainRHI*                      SwapChain;
     TSharedRef<FMetalShaderResourceViewRHI>  ShaderResourceView;
     TSharedRef<FMetalUnorderedAccessViewRHI> UnorderedAccessView;

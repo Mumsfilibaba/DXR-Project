@@ -1,6 +1,7 @@
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalCapabilities.h"
 #include "MetalRHI/MetalDeviceDebug.h"
+#include "MetalRHI/MetalAllocators.h"
 #include "MetalRHI/MetalQueue.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
@@ -192,6 +193,11 @@ void FMetalDefaultResources::Release()
 
 FMetalDevice::FMetalDevice()
     : Device(nil)
+    , UploadHeapAllocator(nullptr)
+    , StagingBufferAllocator(nullptr)
+    , DynamicConstantsAllocator(nullptr)
+    , BufferAllocator(nullptr)
+    , TextureAllocator(nullptr)
     , Queue(nullptr)
     , ComputeQueue(nullptr)
     , CopyQueue(nullptr)
@@ -212,6 +218,33 @@ FMetalDevice::~FMetalDevice()
 {
     WaitForGPU();
     DefaultResources.Release();
+
+    if (StagingBufferAllocator)
+    {
+        StagingBufferAllocator->CleanUp();
+    }
+    if (DynamicConstantsAllocator)
+    {
+        DynamicConstantsAllocator->CleanUp();
+    }
+    if (UploadHeapAllocator)
+    {
+        UploadHeapAllocator->CleanUp();
+    }
+    if (BufferAllocator)
+    {
+        BufferAllocator->CleanUp();
+    }
+    if (TextureAllocator)
+    {
+        TextureAllocator->CleanUp();
+    }
+
+    SAFE_DELETE(TextureAllocator);
+    SAFE_DELETE(BufferAllocator);
+    SAFE_DELETE(UploadHeapAllocator);
+    SAFE_DELETE(DynamicConstantsAllocator);
+    SAFE_DELETE(StagingBufferAllocator);
     SAFE_DELETE(CopyQueue);
     SAFE_DELETE(ComputeQueue);
     SAFE_DELETE(Queue);
@@ -392,6 +425,12 @@ bool FMetalDevice::Initialize()
         return false;
     }
 
+    StagingBufferAllocator = new FMetalLinearAllocator(this, 2ull * 1024ull * 1024ull, 2ull * 1024ull * 1024ull);
+    DynamicConstantsAllocator = new FMetalLinearAllocator(this, 4ull * 1024ull * 1024ull, 2ull * 1024ull * 1024ull);
+    UploadHeapAllocator = new FMetalUploadHeapAllocator(this, 2ull * 1024ull * 1024ull, 4ull * 1024ull * 1024ull, 2ull * 1024ull * 1024ull);
+    BufferAllocator = new FMetalBufferAllocator(this);
+    TextureAllocator = new FMetalTextureAllocator(this);
+
     if (!QueryDeviceFeatureSupport())
     {
         METAL_ERROR("Failed to query Metal device feature support");
@@ -520,6 +559,27 @@ void FMetalDevice::ProcessQueues()
     if (CopyQueue)
     {
         CopyQueue->ProcessCommandQueue();
+    }
+
+    if (StagingBufferAllocator)
+    {
+        StagingBufferAllocator->CleanUp();
+    }
+    if (DynamicConstantsAllocator)
+    {
+        DynamicConstantsAllocator->CleanUp();
+    }
+    if (UploadHeapAllocator)
+    {
+        UploadHeapAllocator->CleanUp();
+    }
+    if (BufferAllocator)
+    {
+        BufferAllocator->CleanUp();
+    }
+    if (TextureAllocator)
+    {
+        TextureAllocator->CleanUp();
     }
 }
 

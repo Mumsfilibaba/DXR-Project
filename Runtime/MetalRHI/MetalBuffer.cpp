@@ -1,5 +1,6 @@
 #include "MetalRHI/MetalBuffer.h"
 #include "MetalRHI/MetalDevice.h"
+#include "MetalRHI/MetalAllocators.h"
 #include "MetalRHI/MetalQueue.h"
 #include "MetalRHI/MetalRHI.h"
 
@@ -9,18 +10,15 @@ FMetalBufferRHI::FMetalBufferRHI(FMetalDevice* InDevice, const FRHIBufferDesc& I
     : FRHIBuffer(InBufferDesc)
     , FMetalDeviceChild(InDevice)
     , Buffer(nil)
+    , ResourceStorage(InDevice)
     , LastWriteValue(0)
 {
 }
 
 FMetalBufferRHI::~FMetalBufferRHI()
 {
-    if (Buffer)
-    {
-        FMetalDeviceRHI::DeferDeletion(Buffer);
-        [Buffer release];
-        Buffer = nil;
-    }
+    ResourceStorage.ReleaseResource();
+    Buffer = nil;
 }
 
 void* FMetalBufferRHI::GetRHINativeResource() const
@@ -71,7 +69,7 @@ void* FMetalBufferRHI::Map(uint64 Offset, uint64 Size)
     }
 
     uint8* Contents = static_cast<uint8*>([BufferHandle contents]);
-    return Contents ? (Contents + Offset) : nullptr;
+    return Contents ? (Contents + ResourceStorage.GetResourceOffset() + Offset) : nullptr;
 }
 
 void FMetalBufferRHI::Unmap(uint64 Offset, uint64 Size)
@@ -84,19 +82,32 @@ bool FMetalBufferRHI::Initialize(ERHIResourceState InInitialAccess, const void* 
     SCOPED_AUTORELEASE_POOL();
 
     const uint64 AlignedSize = Math::AlignUp(Desc.Size, MetalRHI::GetMTLBufferAlignment(Desc));
+    const MTLResourceOptions Options = MetalRHI::GetMTLBufferResourceOptions(Desc);
 
-    id<MTLDevice> DeviceHandle = GetDevice()->GetMTLDevice();
-    CHECK(DeviceHandle != nil);
+    bool bAllocated = false;
+    if (Desc.IsDynamic() || Desc.IsTransient())
+    {
+        FMetalQueue* Queue = GetDevice()->GetQueue(EMetalQueueType::Direct);
+        bAllocated = GetDevice()->GetUploadHeapAllocator()->Allocate(AlignedSize, MetalRHI::GetMTLBufferAlignment(Desc), Queue, ResourceStorage) != nullptr;
+    }
+    else
+    {
+        bAllocated = GetDevice()->GetBufferAllocator()->TryAllocate(AlignedSize, MetalRHI::GetMTLBufferAlignment(Desc), Options, ResourceStorage);
+    }
 
-    id<MTLBuffer> NewBuffer = [DeviceHandle newBufferWithLength:AlignedSize options:MetalRHI::GetMTLBufferResourceOptions(Desc)];
-    if (!NewBuffer)
+    if (!bAllocated)
     {
         METAL_ERROR("Failed to allocate a %llu byte buffer", AlignedSize);
         return false;
     }
 
-    SetMTLBuffer(NewBuffer);
-    [NewBuffer release];
+    Buffer = ResourceStorage.GetBuffer();
+    id<MTLBuffer> NewBuffer = Buffer;
+    if (!NewBuffer)
+    {
+        METAL_ERROR("Failed to allocate a %llu byte buffer", AlignedSize);
+        return false;
+    }
 
     if (!InInitialData)
     {
@@ -105,7 +116,7 @@ bool FMetalBufferRHI::Initialize(ERHIResourceState InInitialAccess, const void* 
 
     if (NewBuffer.storageMode == MTLStorageModeShared)
     {
-        Memory::Memcpy(NewBuffer.contents, InInitialData, Desc.Size);
+        Memory::Memcpy(static_cast<uint8*>(NewBuffer.contents) + ResourceStorage.GetResourceOffset(), InInitialData, Desc.Size);
         return true;
     }
 
@@ -115,16 +126,16 @@ bool FMetalBufferRHI::Initialize(ERHIResourceState InInitialAccess, const void* 
         return false;
     }
 
-    id<MTLBuffer> StagingBuffer = UploadBatch.CreateStagingBuffer(Desc.Size);
-    if (!StagingBuffer)
+    FMetalResourceStorage StagingStorage(GetDevice());
+    if (!UploadBatch.CreateStagingBuffer(Desc.Size, StagingStorage))
     {
         return false;
     }
 
-    Memory::Memcpy(StagingBuffer.contents, InInitialData, Desc.Size);
+    Memory::Memcpy(StagingStorage.GetMappedBaseAddress(), InInitialData, Desc.Size);
 
-    [UploadBatch.GetBlitEncoder() copyFromBuffer:StagingBuffer
-                                    sourceOffset:0
+    [UploadBatch.GetBlitEncoder() copyFromBuffer:StagingStorage.GetBuffer()
+                                    sourceOffset:StagingStorage.GetResourceOffset()
                                         toBuffer:NewBuffer
                                destinationOffset:0
                                             size:Desc.Size];

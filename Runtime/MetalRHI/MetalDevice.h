@@ -5,6 +5,10 @@
 #include "RHI/RHIDevice.h"
 
 class FMetalDevice;
+class FMetalUploadHeapAllocator;
+class FMetalLinearAllocator;
+class FMetalBufferAllocator;
+class FMetalTextureAllocator;
 
 struct FMetalDeviceProperties
 {
@@ -90,6 +94,31 @@ public:
 
     void ProcessQueues();
 
+    FMetalUploadHeapAllocator* GetUploadHeapAllocator() const
+    {
+        return UploadHeapAllocator;
+    }
+
+    FMetalLinearAllocator* GetStagingBufferAllocator() const
+    {
+        return StagingBufferAllocator;
+    }
+
+    FMetalLinearAllocator* GetDynamicConstantsAllocator() const
+    {
+        return DynamicConstantsAllocator;
+    }
+
+    FMetalBufferAllocator* GetBufferAllocator() const
+    {
+        return BufferAllocator;
+    }
+
+    FMetalTextureAllocator* GetTextureAllocator() const
+    {
+        return TextureAllocator;
+    }
+
     FMetalTimestampQueries& GetTimestampQueries() { return TimestampQueries; }
     FMetalOcclusionQueries& GetOcclusionQueries() { return OcclusionQueries; }
 
@@ -102,8 +131,13 @@ private:
 
     void ReadDeviceProperties();
 
-    id<MTLDevice>          Device;
-    FMetalQueue*           Queue;
+    id<MTLDevice>              Device;
+    FMetalUploadHeapAllocator* UploadHeapAllocator;
+    FMetalLinearAllocator*     StagingBufferAllocator;
+    FMetalLinearAllocator*     DynamicConstantsAllocator;
+    FMetalBufferAllocator*     BufferAllocator;
+    FMetalTextureAllocator*    TextureAllocator;
+    FMetalQueue*               Queue;
     FMetalQueue*           ComputeQueue;
     FMetalQueue*           CopyQueue;
     FMetalDeviceProperties Properties;

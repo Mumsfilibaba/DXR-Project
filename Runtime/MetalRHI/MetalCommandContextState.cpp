@@ -426,6 +426,11 @@ void FMetalCommandContextState::BindGraphicsState()
                           offsets:Cache.Offsets
                         withRange:Cache.DirtyRange];
 
+        for (NSUInteger Index = Cache.DirtyRange.location; Index < Cache.DirtyRange.location + Cache.DirtyRange.length; ++Index)
+        {
+            Context.DeclareResident(Cache.VertexBuffers[Index], true, false);
+        }
+
         Cache.DirtyRange                 = NSMakeRange(0, 0);
         GraphicsState.bBindVertexBuffers = false;
     }
@@ -535,6 +540,7 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
             FMetalBufferRHI* Buffer = CBVCache.ConstantBuffers[ShaderStage][Index];
 
             id<MTLBuffer> MTLBufferHandle = Buffer ? Buffer->GetMTLBuffer() : nil;
+            Context.DeclareResident(MTLBufferHandle, true, false);
             Context.SetGraphicsBuffer(ShaderStage, MTLBufferHandle, 0, Slot);
         }
 
@@ -552,6 +558,7 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
             {
                 id<MTLBuffer> MTLBufferHandle = View ? View->GetMTLBuffer() : nil;
                 const NSUInteger Offset = View ? View->GetBufferOffset() : 0;
+                Context.DeclareResident(MTLBufferHandle, true, true);
                 Context.SetGraphicsBuffer(ShaderStage, MTLBufferHandle, Offset, BufferSlot);
                 continue;
             }
@@ -560,6 +567,7 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
             if (TextureSlot != InvalidMSLSlot)
             {
                 id<MTLTexture> MTLTextureHandle = View ? View->GetMTLTexture() : nil;
+                Context.DeclareResident(MTLTextureHandle, true, true);
                 Context.SetGraphicsTexture(ShaderStage, MTLTextureHandle, TextureSlot);
             }
         }
@@ -578,6 +586,7 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
             {
                 id<MTLBuffer> MTLBufferHandle = View ? View->GetMTLBuffer() : nil;
                 const NSUInteger Offset = View ? View->GetBufferOffset() : 0;
+                Context.DeclareResident(MTLBufferHandle, false, true);
                 Context.SetGraphicsBuffer(ShaderStage, MTLBufferHandle, Offset, BufferSlot);
                 continue;
             }
@@ -586,6 +595,7 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
             if (TextureSlot != InvalidMSLSlot)
             {
                 id<MTLTexture> MTLTextureHandle = View ? View->GetMTLTexture() : nil;
+                Context.DeclareResident(MTLTextureHandle, false, true);
                 Context.SetGraphicsTexture(ShaderStage, MTLTextureHandle, TextureSlot);
             }
         }
@@ -733,6 +743,7 @@ void FMetalCommandContextState::BindComputeResources()
             FMetalBufferRHI* Buffer = CBVCache.ConstantBuffers[EShaderVisibility::Compute][Index];
 
             id<MTLBuffer> MTLBufferHandle = Buffer ? Buffer->GetMTLBuffer() : nil;
+            Context.DeclareResident(MTLBufferHandle, true, false);
             [Encoder setBuffer:MTLBufferHandle offset:0 atIndex:Slot];
         }
 
@@ -750,6 +761,7 @@ void FMetalCommandContextState::BindComputeResources()
             {
                 id<MTLBuffer> MTLBufferHandle = View ? View->GetMTLBuffer() : nil;
                 const NSUInteger Offset = View ? View->GetBufferOffset() : 0;
+                Context.DeclareResident(MTLBufferHandle, true, true);
                 [Encoder setBuffer:MTLBufferHandle offset:Offset atIndex:BufferSlot];
                 continue;
             }
@@ -758,6 +770,7 @@ void FMetalCommandContextState::BindComputeResources()
             if (TextureSlot != InvalidMSLSlot)
             {
                 id<MTLTexture> MTLTextureHandle = View ? View->GetMTLTexture() : nil;
+                Context.DeclareResident(MTLTextureHandle, true, true);
                 [Encoder setTexture:MTLTextureHandle atIndex:TextureSlot];
             }
         }
@@ -776,6 +789,7 @@ void FMetalCommandContextState::BindComputeResources()
             {
                 id<MTLBuffer> MTLBufferHandle = View ? View->GetMTLBuffer() : nil;
                 const NSUInteger Offset = View ? View->GetBufferOffset() : 0;
+                Context.DeclareResident(MTLBufferHandle, false, true);
                 [Encoder setBuffer:MTLBufferHandle offset:Offset atIndex:BufferSlot];
                 continue;
             }
@@ -784,6 +798,7 @@ void FMetalCommandContextState::BindComputeResources()
             if (TextureSlot != InvalidMSLSlot)
             {
                 id<MTLTexture> MTLTextureHandle = View ? View->GetMTLTexture() : nil;
+                Context.DeclareResident(MTLTextureHandle, false, true);
                 [Encoder setTexture:MTLTextureHandle atIndex:TextureSlot];
             }
         }

@@ -1,6 +1,7 @@
 #include "MetalRHI/MetalTexture.h"
 #include "MetalRHI/MetalCapabilities.h"
 #include "MetalRHI/MetalDevice.h"
+#include "MetalRHI/MetalAllocators.h"
 #include "MetalRHI/MetalQueue.h"
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalSwapChain.h"
@@ -133,6 +134,7 @@ FMetalTextureRHI::FMetalTextureRHI(FMetalDevice* InDevice, const FRHITextureDesc
     : FRHITexture(InTextureDesc)
     , FMetalDeviceChild(InDevice)
     , Texture(nil)
+    , ResourceStorage(InDevice)
     , SwapChain(nullptr)
     , ShaderResourceView(nullptr)
     , UnorderedAccessView(nullptr)
@@ -143,12 +145,8 @@ FMetalTextureRHI::FMetalTextureRHI(FMetalDevice* InDevice, const FRHITextureDesc
 
 FMetalTextureRHI::~FMetalTextureRHI()
 {
-    if (Texture)
-    {
-        FMetalDeviceRHI::DeferDeletion(Texture);
-        [Texture release];
-        Texture = nil;
-    }
+    ResourceStorage.ReleaseResource();
+    Texture = nil;
 }
 
 void* FMetalTextureRHI::GetRHINativeResource() const
@@ -197,9 +195,13 @@ bool FMetalTextureRHI::Initialize(ERHIResourceState InInitialAccess, const IRHIT
         return false;
     }
 
-    id<MTLDevice> DeviceHandle = GetDevice()->GetMTLDevice();
-    Texture = [DeviceHandle newTextureWithDescriptor:TextureDescriptor];
+    if (!GetDevice()->GetTextureAllocator()->TryAllocate(TextureDescriptor, ResourceStorage))
+    {
+        METAL_ERROR("Failed to create a %s texture", ToString(Desc.Dimension));
+        return false;
+    }
 
+    Texture = ResourceStorage.GetTexture();
     if (!Texture)
     {
         METAL_ERROR("Failed to create a %s texture", ToString(Desc.Dimension));
@@ -253,13 +255,13 @@ bool FMetalTextureRHI::UploadInitialData(const IRHITextureData* InInitialData)
         return false;
     }
 
-    id<MTLBuffer> StagingBuffer = UploadBatch.CreateStagingBuffer(StagingSize);
-    if (!StagingBuffer)
+    FMetalResourceStorage StagingStorage(GetDevice());
+    if (!UploadBatch.CreateStagingBuffer(StagingSize, StagingStorage))
     {
         return false;
     }
 
-    uint8* StagingContents = reinterpret_cast<uint8*>(StagingBuffer.contents);
+    uint8* StagingContents = static_cast<uint8*>(StagingStorage.GetMappedBaseAddress());
     uint64 StagingOffset   = 0;
 
     uint32 Width  = static_cast<uint32>(Math::Max(Desc.Extent.X, 1));
@@ -282,8 +284,8 @@ bool FMetalTextureRHI::UploadInitialData(const IRHITextureData* InInitialData)
         {
             Memory::Memcpy(StagingContents + StagingOffset, MipData + (ArraySlice * SubresourceSize), SubresourceSize);
 
-            [UploadBatch.GetBlitEncoder() copyFromBuffer:StagingBuffer
-                                           sourceOffset:StagingOffset
+            [UploadBatch.GetBlitEncoder() copyFromBuffer:StagingStorage.GetBuffer()
+                                           sourceOffset:StagingStorage.GetResourceOffset() + StagingOffset
                                       sourceBytesPerRow:(bIsTexture1D ? 0 : RowPitch)
                                     sourceBytesPerImage:(bIsTexture3D ? SlicePitch : 0)
                                              sourceSize:MTLSizeMake(Width, Height, Depth)

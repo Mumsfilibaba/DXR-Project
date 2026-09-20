@@ -2,6 +2,9 @@
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalQueue.h"
+#include "MetalRHI/MetalAllocators.h"
+#include "MetalRHI/MetalResource.h"
+#include "MetalRHI/MetalResource.h"
 #include "MetalRHI/MetalBuffer.h"
 #include "MetalRHI/MetalTexture.h"
 #include "MetalRHI/MetalSwapChain.h"
@@ -13,6 +16,7 @@
 #include "MetalRHI/MetalStats.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
+#include <objc/message.h>
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -31,6 +35,10 @@ FMetalCommandContext::FMetalCommandContext(FMetalDevice* InDevice)
     , bEncoderFencePending(false)
     , bDirectHasEncodedWork(false)
     , bBlitOnCopyQueue(false)
+    , bResidencyDirty(false)
+    , ResidentHeaps()
+    , ResidentReadResources()
+    , ResidentReadWriteResources()
     , CopyContext()
     , ContextState(InDevice, *this)
     , ActiveOcclusionQuery(nullptr)
@@ -488,6 +496,25 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     WaitForPendingEncoderFenceOnGraphics();
     STAT_ADD(STAT_Metal_EncoderCount, 1);
 
+    for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
+    {
+        if (FMetalRenderTargetViewRHI* MetalRTV = CachedRenderTargets[Index])
+        {
+            if (id<MTLTexture> RTTexture = MetalRTV->GetMTLTexture())
+            {
+                DeclareResident(RTTexture, false, true);
+            }
+        }
+    }
+
+    if (MetalDSV)
+    {
+        if (id<MTLTexture> DepthTexture = MetalDSV->GetMTLTexture())
+        {
+            DeclareResident(DepthTexture, false, true);
+        }
+    }
+
     [RenderPassDescriptor release];
 }
 
@@ -505,6 +532,7 @@ void FMetalCommandContext::EndRenderPass()
     [GraphicsEncoder release];
     GraphicsEncoder = nil;
     ContextState.ResetBoundConstantSlots();
+    ResetResidency();
     bDirectHasEncodedWork = true;
 }
 
@@ -733,25 +761,141 @@ void FMetalCommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView
     }
 }
 
-id<MTLBuffer> FMetalCommandContext::CreateStagingBuffer(uint64 Size)
+id<MTLBuffer> FMetalCommandContext::CreateStagingBuffer(uint64 Size, FMetalResourceStorage& OutStorage)
 {
+    OutStorage.Reset();
+
     if (!Commands || Size == 0)
     {
         return nil;
     }
 
-    id<MTLDevice> DeviceHandle  = GetDevice()->GetMTLDevice();
-    id<MTLBuffer> StagingBuffer = [DeviceHandle newBufferWithLength:Size options:MTLResourceStorageModeShared | MTLResourceCPUCacheModeDefaultCache];
-
-    if (!StagingBuffer)
+    FMetalQueue* Queue = GetDevice()->GetQueue();
+    void* Mapped = GetDevice()->GetStagingBufferAllocator()->Allocate(Size, BUFFER_ALIGNMENT, Queue, OutStorage);
+    if (!Mapped)
     {
         METAL_ERROR("Failed to allocate a %llu byte staging buffer", Size);
+        OutStorage.Reset();
         return nil;
     }
 
-    Commands->DeferredObjects.Emplace(StagingBuffer);
-    [StagingBuffer release];
-    return StagingBuffer;
+    return OutStorage.GetBuffer();
+}
+
+void FMetalCommandContext::ResetResidency()
+{
+    ResidentHeaps.Clear();
+    ResidentReadResources.Clear();
+    ResidentReadWriteResources.Clear();
+    bResidencyDirty = false;
+}
+
+void FMetalCommandContext::DeclareResident(id<MTLResource> Resource, bool bReadOnly, bool bIsView)
+{
+    if (!Resource)
+    {
+        return;
+    }
+
+    id<MTLHeap> Heap = Resource.heap;
+    if (!bIsView && Heap)
+    {
+        if (!ResidentHeaps.Contains(Heap))
+        {
+            ResidentHeaps.Add(Heap);
+            bResidencyDirty = true;
+        }
+
+        return;
+    }
+
+    TArray<id<MTLResource>>& List = bReadOnly ? ResidentReadResources : ResidentReadWriteResources;
+    if (!List.Contains(Resource))
+    {
+        List.Add(Resource);
+        bResidencyDirty = true;
+    }
+}
+
+void FMetalCommandContext::FlushResidency()
+{
+    if (!bResidencyDirty)
+    {
+        return;
+    }
+
+    static constexpr MTLRenderStages ResidentRenderStages =
+        MTLRenderStageVertex | MTLRenderStageFragment | MTLRenderStageMesh | MTLRenderStageObject;
+
+    if (GraphicsEncoder)
+    {
+        for (id<MTLHeap> Heap : ResidentHeaps)
+        {
+            [GraphicsEncoder useHeap:Heap stages:ResidentRenderStages];
+        }
+
+        for (id<MTLResource> Resource : ResidentReadResources)
+        {
+            [GraphicsEncoder useResource:Resource usage:MTLResourceUsageRead stages:ResidentRenderStages];
+        }
+
+        for (id<MTLResource> Resource : ResidentReadWriteResources)
+        {
+            [GraphicsEncoder useResource:Resource usage:(MTLResourceUsageRead | MTLResourceUsageWrite) stages:ResidentRenderStages];
+        }
+    }
+    else if (ComputeEncoder)
+    {
+        for (id<MTLHeap> Heap : ResidentHeaps)
+        {
+            [ComputeEncoder useHeap:Heap];
+        }
+
+        for (id<MTLResource> Resource : ResidentReadResources)
+        {
+            [ComputeEncoder useResource:Resource usage:MTLResourceUsageRead];
+        }
+
+        for (id<MTLResource> Resource : ResidentReadWriteResources)
+        {
+            [ComputeEncoder useResource:Resource usage:(MTLResourceUsageRead | MTLResourceUsageWrite)];
+        }
+    }
+    else if (id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder())
+    {
+        const SEL UseHeapSelector     = @selector(useHeap:);
+        const SEL UseResourceSelector = @selector(useResource:usage:);
+
+        if ([CopyEncoder respondsToSelector:UseHeapSelector])
+        {
+            for (id<MTLHeap> Heap : ResidentHeaps)
+            {
+                ((void (*)(id, SEL, id))objc_msgSend)(CopyEncoder, UseHeapSelector, Heap);
+            }
+        }
+
+        if ([CopyEncoder respondsToSelector:UseResourceSelector])
+        {
+            for (id<MTLResource> Resource : ResidentReadResources)
+            {
+                ((void (*)(id, SEL, id, NSUInteger))objc_msgSend)(CopyEncoder, UseResourceSelector, Resource, MTLResourceUsageRead);
+            }
+
+            for (id<MTLResource> Resource : ResidentReadWriteResources)
+            {
+                ((void (*)(id, SEL, id, NSUInteger))objc_msgSend)(CopyEncoder, UseResourceSelector, Resource, MTLResourceUsageRead | MTLResourceUsageWrite);
+            }
+        }
+    }
+
+    bResidencyDirty = false;
+}
+
+void FMetalCommandContext::DeclareCopyResources(id<MTLResource> Source, id<MTLResource> Destination)
+{
+    DeclareResident(Source, true, false);
+    DeclareResident(Destination, false, false);
+    FlushResidency();
 }
 
 void FMetalCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SourceData)
@@ -771,23 +915,24 @@ void FMetalCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& Bu
 
     if (DstBuffer.storageMode == MTLStorageModeShared)
     {
-        Memory::Memcpy(reinterpret_cast<uint8*>(DstBuffer.contents) + BufferRegion.Offset, SourceData, Size);
+        Memory::Memcpy(reinterpret_cast<uint8*>(DstBuffer.contents) + MetalDst->GetResourceStorage().GetResourceOffset() + BufferRegion.Offset, SourceData, Size);
         return;
     }
 
     CHECK(CommandBuffer != nil);
 
-    id<MTLBuffer> StagingBuffer = CreateStagingBuffer(Size);
-    if (!StagingBuffer)
+    FMetalResourceStorage StagingStorage(GetDevice());
+    if (!CreateStagingBuffer(Size, StagingStorage))
     {
         return;
     }
 
-    Memory::Memcpy(StagingBuffer.contents, SourceData, Size);
+    Memory::Memcpy(StagingStorage.GetMappedBaseAddress(), SourceData, Size);
 
     StartCopyEncoder();
-    [CopyContext.GetMTLCopyEncoder() copyFromBuffer:StagingBuffer
-                                       sourceOffset:0
+    DeclareCopyResources(StagingStorage.GetBuffer(), DstBuffer);
+    [CopyContext.GetMTLCopyEncoder() copyFromBuffer:StagingStorage.GetBuffer()
+                                       sourceOffset:StagingStorage.GetResourceOffset()
                                            toBuffer:DstBuffer
                                   destinationOffset:BufferRegion.Offset
                                                size:Size];
@@ -819,17 +964,18 @@ void FMetalCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegio
     const uint32 Depth        = Math::Max(TextureRegion.Depth, 1u);
     const uint64 DataSize     = uint64(SrcDepthPitch) * Depth;
 
-    id<MTLBuffer> StagingBuffer = CreateStagingBuffer(DataSize);
-    if (!StagingBuffer)
+    FMetalResourceStorage StagingStorage(GetDevice());
+    if (!CreateStagingBuffer(DataSize, StagingStorage))
     {
         return;
     }
 
-    Memory::Memcpy(StagingBuffer.contents, SrcData, DataSize);
+    Memory::Memcpy(StagingStorage.GetMappedBaseAddress(), SrcData, DataSize);
 
     StartCopyEncoder();
-    [CopyContext.GetMTLCopyEncoder() copyFromBuffer:StagingBuffer
-                                       sourceOffset:0
+    DeclareCopyResources(StagingStorage.GetBuffer(), DstTexture);
+    [CopyContext.GetMTLCopyEncoder() copyFromBuffer:StagingStorage.GetBuffer()
+                                       sourceOffset:StagingStorage.GetResourceOffset()
                                   sourceBytesPerRow:(bIsTexture1D ? 0 : SrcRowPitch)
                                 sourceBytesPerImage:(bIsTexture3D ? SrcDepthPitch : 0)
                                          sourceSize:MTLSizeMake(TextureRegion.Width, TextureRegion.Height, Depth)
@@ -935,7 +1081,8 @@ void FMetalCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FR
     CHECK(MetalSrc      != nullptr);
     
     StartCopyEncoder();
-    
+    DeclareCopyResources(MetalSrc->GetMTLBuffer(), MetalDst->GetMTLBuffer());
+
     id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
     [CopyEncoder copyFromBuffer:MetalSrc->GetMTLBuffer()
                    sourceOffset:CopyDesc.SrcOffset
@@ -954,7 +1101,8 @@ void FMetalCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
     CHECK(MetalSrc      != nullptr);
     
     StartCopyEncoder();
-    
+    DeclareCopyResources(MetalSrc->GetMTLTexture(), MetalDst->GetMTLTexture());
+
     id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
     [CopyEncoder copyFromTexture:MetalSrc->GetMTLTexture() toTexture:MetalDst->GetMTLTexture()];
 }
@@ -968,10 +1116,11 @@ void FMetalCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
     CHECK(MetalDst      != nullptr);
     CHECK(MetalSrc      != nullptr);
 
-    StartCopyEncoder();
-
     id<MTLTexture> SrcTexture = MetalSrc->GetMTLTexture();
     id<MTLTexture> DstTexture = MetalDst->GetMTLTexture();
+
+    StartCopyEncoder();
+    DeclareCopyResources(SrcTexture, DstTexture);
 
     const uint32 NumArraySlices = Math::Max(CopyDesc.NumArraySlices, 1u);
     const uint32 NumMipLevels   = Math::Max(CopyDesc.NumMipLevels, 1u);
@@ -1033,6 +1182,7 @@ void FMetalCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
     const uint64 SlicePitch  = RowPitch * SrcRegion.Height;
 
     StartCopyEncoder();
+    DeclareCopyResources(MetalSrc->GetMTLTexture(), MetalDst->GetMTLBuffer());
 
     [CopyContext.GetMTLCopyEncoder() copyFromTexture:MetalSrc->GetMTLTexture()
                                          sourceSlice:SrcArraySlice
@@ -1167,6 +1317,14 @@ void FMetalCommandContext::PrepareForDraw()
     ContextState.PrepareGraphicsState();
     ContextState.BindGraphicsState();
     ApplyVertexAmplification();
+
+    const FMetalIndexBufferCache& IndexBufferCache = ContextState.GetIndexBufferCache();
+    if (IndexBufferCache.IndexBuffer)
+    {
+        DeclareResident(IndexBufferCache.IndexBuffer, true, false);
+    }
+
+    FlushResidency();
 }
 
 void FMetalCommandContext::PrepareForDispatch()
@@ -1187,6 +1345,7 @@ void FMetalCommandContext::PrepareForDispatch()
 
     ContextState.PrepareComputeState();
     ContextState.BindComputeState();
+    FlushResidency();
 }
 
 void FMetalCommandContext::StartCopyEncoder()
@@ -1379,6 +1538,7 @@ void FMetalCommandContext::FinishEncoders()
         }
 
         CopyContext.FinishEncoder();
+        ResetResidency();
     }
 }
 
@@ -1401,6 +1561,7 @@ void FMetalCommandContext::FinishDirectEncoders()
         GraphicsEncoder = nil;
         bEndedEncoder = true;
         bDirectHasEncodedWork = true;
+        ResetResidency();
     }
 
     if (ComputeEncoder)
@@ -1412,6 +1573,7 @@ void FMetalCommandContext::FinishDirectEncoders()
         ComputeEncoder = nil;
         bEndedEncoder = true;
         bDirectHasEncodedWork = true;
+        ResetResidency();
     }
 
     if (bEndedEncoder)
@@ -1446,9 +1608,8 @@ void FMetalCommandContext::FlushCopyWork()
     if (CopyContext.GetMTLCopyEncoder())
     {
         CopyContext.FinishEncoder();
+        ResetResidency();
     }
-
-    if (!CopyCommands)
     {
         return;
     }

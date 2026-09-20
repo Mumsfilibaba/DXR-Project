@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Core.h"
+#include "Core/Stats/Stats.h"
 
 #ifndef METAL_ENABLE_LOGGING
     #define METAL_ENABLE_LOGGING (!RELEASE_BUILD)
@@ -7,4 +8,12 @@
 
 #ifndef METAL_ENABLE_DEBUG_LAYER
     #define METAL_ENABLE_DEBUG_LAYER (!RELEASE_BUILD)
+#endif
+
+#ifndef METAL_ENABLE_STATS
+    #define METAL_ENABLE_STATS (STATS_ENABLED)
+#endif
+
+#ifndef METAL_ENABLE_STATS
+    #define METAL_ENABLE_STATS (STATS_ENABLED)
 #endif

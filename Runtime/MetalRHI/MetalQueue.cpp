@@ -1,5 +1,6 @@
 #include "MetalRHI/MetalQueue.h"
 #include "MetalRHI/MetalDevice.h"
+#include "MetalRHI/MetalAllocators.h"
 #include "MetalRHI/MetalQuery.h"
 #include "MetalRHI/MetalStats.h"
 #include "Core/Containers/String.h"
@@ -212,6 +213,19 @@ uint64 FMetalQueue::SubmitCommands(FMetalCommands* Commands)
     const uint64 Value = NextSubmissionValue.Increment();
     Commands->SubmissionValue = Value;
 
+    if (FMetalUploadHeapAllocator* UploadHeapAllocator = GetDevice()->GetUploadHeapAllocator())
+    {
+        UploadHeapAllocator->RetireAllocations(this, Value);
+    }
+    if (FMetalLinearAllocator* StagingBufferAllocator = GetDevice()->GetStagingBufferAllocator())
+    {
+        StagingBufferAllocator->RetireAllocations(this, Value);
+    }
+    if (FMetalLinearAllocator* DynamicConstantsAllocator = GetDevice()->GetDynamicConstantsAllocator())
+    {
+        DynamicConstantsAllocator->RetireAllocations(this, Value);
+    }
+
     TArray<String> BreadcrumbCopy = Commands->Breadcrumbs;
     if (!Commands->DebugLabel.IsEmpty())
     {
@@ -404,25 +418,24 @@ FMetalUploadBatch::~FMetalUploadBatch()
     Submit();
 }
 
-id<MTLBuffer> FMetalUploadBatch::CreateStagingBuffer(uint64 Size)
+bool FMetalUploadBatch::CreateStagingBuffer(uint64 Size, FMetalResourceStorage& OutStorage)
 {
+    OutStorage.Reset();
+
     if (!Commands || Size == 0)
     {
-        return nil;
+        return false;
     }
 
-    id<MTLDevice> DeviceHandle  = Device->GetMTLDevice();
-    id<MTLBuffer> StagingBuffer = [DeviceHandle newBufferWithLength:Size options:MTLResourceStorageModeShared | MTLResourceCPUCacheModeDefaultCache];
-
-    if (!StagingBuffer)
+    void* Mapped = Device->GetStagingBufferAllocator()->Allocate(Size, BUFFER_ALIGNMENT, Queue, OutStorage);
+    if (!Mapped)
     {
         METAL_ERROR("Failed to allocate a %llu byte staging buffer", Size);
-        return nil;
+        OutStorage.Reset();
+        return false;
     }
 
-    Commands->DeferredObjects.Emplace(StagingBuffer);
-    [StagingBuffer release];
-    return StagingBuffer;
+    return true;
 }
 
 uint64 FMetalUploadBatch::Submit()

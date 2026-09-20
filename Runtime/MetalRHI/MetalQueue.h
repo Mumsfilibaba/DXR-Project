@@ -6,6 +6,7 @@
 #include "Core/Threading/Atomic/AtomicInt.h"
 #include "MetalRHI/MetalDeviceChild.h"
 #include "MetalRHI/MetalDeletionQueue.h"
+#include "MetalRHI/MetalResource.h"
 
 class FMetalDevice;
 struct FMetalCommands;
@@ -36,6 +37,11 @@ public:
     void WaitForValue(uint64 Value);
 
     uint64 GetCompletedValue() const;
+
+    uint64 GetLastSubmittedValue() const
+    {
+        return NextSubmissionValue.Load();
+    }
 
     EMetalQueueType GetType() const
     {
@@ -87,7 +93,7 @@ public:
     explicit FMetalUploadBatch(FMetalDevice* InDevice);
     ~FMetalUploadBatch();
 
-    id<MTLBuffer> CreateStagingBuffer(uint64 Size);
+    bool CreateStagingBuffer(uint64 Size, FMetalResourceStorage& OutStorage);
     uint64 Submit();
 
     bool IsValid() const

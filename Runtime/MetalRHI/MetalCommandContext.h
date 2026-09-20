@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/SharedRef.h"
+#include "Core/Containers/Array.h"
 #include "RHI/IRHICommandContext.h"
 #include "MetalRHI/MetalCommandContextState.h"
 
@@ -170,6 +171,9 @@ public:
     void SetGraphicsSampler(EShaderVisibility::Type ShaderStage, id<MTLSamplerState> Sampler, uint8 Slot);
     void SetGraphicsBytes(EShaderVisibility::Type ShaderStage, const void* Bytes, NSUInteger Length, uint8 Slot);
 
+    void DeclareResident(id<MTLResource> Resource, bool bReadOnly, bool bIsView);
+    void FlushResidency();
+
 private:
     void PrepareForDraw();
     void PrepareForDispatch();
@@ -192,7 +196,9 @@ private:
     void InsertMemoryBarrier();
     void SubmitCommandBufferAndObtainNew();
 
-    id<MTLBuffer> CreateStagingBuffer(uint64 Size);
+    id<MTLBuffer> CreateStagingBuffer(uint64 Size, class FMetalResourceStorage& OutStorage);
+    void ResetResidency();
+    void DeclareCopyResources(id<MTLResource> Source, id<MTLResource> Destination);
 
     id<MTLCommandBuffer>         CommandBuffer;
     FMetalCommands*              Commands;
@@ -204,6 +210,10 @@ private:
     bool                         bEncoderFencePending;
     bool                         bDirectHasEncodedWork;
     bool                         bBlitOnCopyQueue;
+    bool                         bResidencyDirty;
+    TArray<id<MTLHeap>>          ResidentHeaps;
+    TArray<id<MTLResource>>      ResidentReadResources;
+    TArray<id<MTLResource>>      ResidentReadWriteResources;
     FMetalCopyCommandContext     CopyContext;
     FMetalCommandContextState    ContextState;
     FMetalQueryRHI*              ActiveOcclusionQuery;

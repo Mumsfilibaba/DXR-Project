@@ -1,6 +1,7 @@
 #pragma once
 #include "RHI/RHIResources.h"
 #include "MetalRHI/MetalDeviceChild.h"
+#include "MetalRHI/MetalResource.h"
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 typedef TSharedRef<class FMetalBufferRHI> FMetalBufferRef;
@@ -46,9 +47,20 @@ public:
         LastWriteValue = InValue;
     }
 
+    FORCEINLINE bool IsHeapPlaced() const
+    {
+        return ResourceStorage.IsPlacedResource();
+    }
+
+    FORCEINLINE const FMetalResourceStorage& GetResourceStorage() const
+    {
+        return ResourceStorage;
+    }
+
 private:
-    id<MTLBuffer> Buffer;
-    uint64        LastWriteValue;
+    id<MTLBuffer>        Buffer;
+    FMetalResourceStorage ResourceStorage;
+    uint64               LastWriteValue;
 };
 
 inline FMetalBufferRHI* GetMetalBuffer(FRHIBuffer* Buffer)
