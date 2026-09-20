@@ -18,6 +18,7 @@
 #include "Core/Containers/Iterator.h"
 #include "Core/Containers/LinkedList.h"
 #include "Core/Containers/Map.h"
+#include "Core/Containers/MultiMap.h"
 #include "Core/Containers/Optional.h"
 #include "Core/Containers/Pair.h"
 #include "Core/Containers/PriorityQueue.h"

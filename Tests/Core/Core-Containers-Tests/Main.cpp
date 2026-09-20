@@ -20,6 +20,7 @@
 #include "BitArray_Test.h"
 #include "Map_Test.h"
 #include "Set_Test.h"
+#include "MultiMap_Test.h"
 #include "UniquePtr_Test.h"
 #include "PriorityQueue_Test.h"
 #include "LinkedList_Test.h"
@@ -108,6 +109,10 @@ void Tests(int32 Argc, const CHAR* Argv[])
 
 #if RUN_TSET_TEST
     RUN_TEST("Set", TSet_Test());
+#endif
+
+#if RUN_TMULTIMAP_TEST
+    RUN_TEST("MultiMap", TMultiMap_Test());
 #endif
 
 #if RUN_TUNIQUEPTR_TEST

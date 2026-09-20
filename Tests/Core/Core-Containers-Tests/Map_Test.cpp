@@ -203,11 +203,50 @@ bool TMap_Test()
         TEST_EXPECT(Map.BucketCount() >= 1);
 
         Map.Add(5, 5);
-        Map.SetMaxLoadFactor(0.5f);
         Map.Rehash(512);
 
         TEST_EXPECT(Map.LoadFactor() <= Map.MaxLoadFactor());
         TEST_EXPECT(Map.Contains(5));
+    }
+
+    TEST_SECTION("Reserve keeps Find pointers until rehash");
+    {
+        TMap<int32, int32> Map;
+        Map.Reserve(256);
+        for (int32 Index = 0; Index < 32; ++Index)
+        {
+            Map.Add(Index, Index);
+        }
+
+        int32* Pointer = Map.Find(7);
+        TEST_EXPECT(Pointer != nullptr);
+
+        for (int32 Index = 32; Index < 64; ++Index)
+        {
+            Map.Add(Index, Index);
+        }
+
+        TEST_EXPECT(Map.Find(7) == Pointer);
+        TEST_EXPECT(*Pointer == 7);
+    }
+
+    TEST_SECTION("Iterator decrement from end");
+    {
+        TMap<int32, int32> Map;
+        Map.Add(1, 10);
+        Map.Add(2, 20);
+        Map.Add(3, 30);
+
+        int32 Sum = 0;
+        auto It = Map.end();
+        --It;
+        TEST_EXPECT(!It.IsEnd());
+        Sum += It.GetValue();
+        --It;
+        Sum += It.GetValue();
+        --It;
+        Sum += It.GetValue();
+        TEST_EXPECT_EQ(Sum, 60);
     }
 
     TEST_SECTION("TMap rehash stress (FInstanced values, seeded size sweep vs std::map)");
@@ -260,6 +299,51 @@ bool TMap_Test()
         }
 
         TEST_EXPECT(FInstanced::LiveCount() == 0);
+    }
+
+    TEST_SECTION("TInlineMap stays inline then spills to the heap");
+    {
+        TInlineMap<int32, int32, 4> Map;
+        TEST_EXPECT(!Map.IsHeapAllocated());
+
+        for (int32 Index = 0; Index < 4; ++Index)
+        {
+            Map.Add(Index, Index * 10);
+        }
+
+        TEST_EXPECT_EQ(Map.Size(), 4);
+        TEST_EXPECT(!Map.IsHeapAllocated());
+        TEST_EXPECT_EQ(Map.GetAllocatedSize(), 0);
+        TEST_EXPECT_EQ(*Map.Find(2), 20);
+
+        for (int32 Index = 4; Index < 32; ++Index)
+        {
+            Map.Add(Index, Index * 10);
+        }
+
+        TEST_EXPECT_EQ(Map.Size(), 32);
+        TEST_EXPECT(Map.IsHeapAllocated());
+        TEST_EXPECT(*Map.Find(31) == 310);
+
+        TInlineMap<int32, int32, 4> Copied = Map;
+        TEST_EXPECT_EQ(Copied.Size(), 32);
+        TEST_EXPECT_EQ(*Copied.Find(0), 0);
+
+        TInlineMap<int32, int32, 4> Moved = Move(Map);
+        TEST_EXPECT_EQ(Moved.Size(), 32);
+        TEST_EXPECT_EQ(Map.Size(), 0);
+        TEST_EXPECT(!Map.IsHeapAllocated());
+        TEST_EXPECT_EQ(*Moved.Find(7), 70);
+
+        TInlineMap<String, int32, 4> Strings;
+        Strings.Add(String("alpha"), 1);
+        Strings.Add(String("beta"), 2);
+        TEST_EXPECT(!Strings.IsHeapAllocated());
+        TEST_EXPECT_EQ(*Strings.Find(String("beta")), 2);
+
+        Moved.Reset();
+        TEST_EXPECT(!Moved.IsHeapAllocated());
+        TEST_EXPECT(Moved.IsEmpty());
     }
 
     TEST_END();

@@ -9,6 +9,7 @@
 #include "TestCommon/TestHarness.h"
 
 #include "Array_Benchmark.h"
+#include "Map_Benchmark.h"
 #include "TaskGraph_Benchmark.h"
 #include "MemoryStack_Benchmark.h"
 
@@ -41,6 +42,10 @@ int main(int Argc, const CHAR* Argv[])
 
 #if RUN_TARRAY_BENCHMARKS
     TArray_Benchmark();
+#endif
+
+#if RUN_TMAP_BENCHMARKS
+    TMap_Benchmark();
 #endif
 
 #if RUN_TASKGRAPH_BENCHMARKS

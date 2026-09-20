@@ -282,4 +282,211 @@ private:
     TDefaultArrayAllocator<ElementType> DynamicAllocation;
 };
 
+template<typename ElementType>
+struct THashTableAllocatorInterface
+{
+    typedef int32 SizeType;
+
+    /**
+     * @brief Allocate storage for the specified number of slots, replacing any current allocation
+     * @param SlotCount Number of slots to allocate, which is always a power of two
+     */
+    FORCEINLINE void Allocate(SizeType SlotCount) { }
+
+    /**
+     * @brief Free the allocation
+     */
+    FORCEINLINE void Free() { }
+
+    /**
+     * @brief Move the allocation from another allocator-instance
+     * @param Other Other allocator instance
+     * @param SlotCount Number of slots stored in the allocation of the other instance
+     */
+    FORCEINLINE void MoveFrom(THashTableAllocatorInterface&& Other, SizeType SlotCount) { }
+
+    /**
+     * @brief Retrieve the slot array, which stores the elements of the table
+     * @param SlotCount Number of slots the storage was allocated for
+     * @return Returns the slot array, or nullptr if there is no allocation
+     */
+    NODISCARD FORCEINLINE ElementType* GetSlots(SizeType SlotCount) const { return nullptr; }
+
+    /**
+     * @brief Retrieve the control array, which stores one metadata byte per slot
+     * @param SlotCount Number of slots the storage was allocated for
+     * @return Returns the control array, or nullptr if there is no allocation
+     */
+    NODISCARD FORCEINLINE uint8* GetControl(SizeType SlotCount) const { return nullptr; }
+
+    /**
+     * @brief Returns the current state of the allocation
+     * @return Returns true or false if the allocation is allocated on the heap
+     */
+    NODISCARD FORCEINLINE bool IsHeapAllocated() const { return false; }
+};
+
+template<typename ElementType>
+class TDefaultHashTableAllocator
+{
+public:
+    typedef int32 SizeType;
+
+    TDefaultHashTableAllocator() = default;
+
+    FORCEINLINE void Allocate(SizeType SlotCount)
+    {
+        CHECK(SlotCount > 0);
+        Free();
+
+        const uint64 Bytes = static_cast<uint64>(SlotCount) * sizeof(ElementType) + static_cast<uint64>(SlotCount);
+        Allocation = Memory::Malloc(Bytes);
+        CHECK(Allocation != nullptr);
+    }
+
+    FORCEINLINE void Free()
+    {
+        if (Allocation)
+        {
+            Memory::Free(Allocation);
+            Allocation = nullptr;
+        }
+    }
+
+    FORCEINLINE void MoveFrom(TDefaultHashTableAllocator&& Other, SizeType)
+    {
+        CHECK(this != &Other);
+        Free();
+        Allocation       = Other.Allocation;
+        Other.Allocation = nullptr;
+    }
+
+    NODISCARD FORCEINLINE ElementType* GetSlots(SizeType SlotCount) const
+    {
+        UNREFERENCED_VARIABLE(SlotCount);
+        return static_cast<ElementType*>(Allocation);
+    }
+
+    NODISCARD FORCEINLINE uint8* GetControl(SizeType SlotCount) const
+    {
+        if (!Allocation)
+        {
+            return nullptr;
+        }
+
+        return reinterpret_cast<uint8*>(static_cast<ElementType*>(Allocation) + SlotCount);
+    }
+
+    NODISCARD FORCEINLINE bool IsHeapAllocated() const
+    {
+        return Allocation != nullptr;
+    }
+
+private:
+    void* Allocation = nullptr;
+};
+
+template<typename ElementType, int32 NumInlineSlots>
+class TInlineHashTableAllocator
+{
+    class TInlineStorage
+    {
+    public:
+        NODISCARD constexpr ElementType* GetAllocation() const
+        {
+            return reinterpret_cast<ElementType*>(InlineAllocation);
+        }
+
+        NODISCARD constexpr uint64 Size() const
+        {
+            return sizeof(InlineAllocation);
+        }
+
+    private:
+        mutable TAlignedBytes<sizeof(ElementType), TAlignmentOf<ElementType>::Value> InlineAllocation[NumInlineSlots];
+    };
+
+public:
+    typedef int32 SizeType;
+
+    TInlineHashTableAllocator()
+    {
+        Memory::Memzero(InlineSlots.GetAllocation(), InlineSlots.Size());
+        Memory::Memzero(InlineControl, sizeof(InlineControl));
+    }
+
+    FORCEINLINE ~TInlineHashTableAllocator()
+    {
+        Free();
+    }
+
+    FORCEINLINE void Allocate(SizeType SlotCount)
+    {
+        CHECK(SlotCount > 0);
+
+        if (SlotCount <= NumInlineSlots)
+        {
+            Heap.Free();
+            return;
+        }
+
+        Heap.Allocate(SlotCount);
+    }
+
+    FORCEINLINE void Free()
+    {
+        if (Heap.IsHeapAllocated())
+        {
+            Heap.Free();
+        }
+        else
+        {
+            Memory::Memzero(InlineSlots.GetAllocation(), InlineSlots.Size());
+            Memory::Memzero(InlineControl, sizeof(InlineControl));
+        }
+    }
+
+    FORCEINLINE void MoveFrom(TInlineHashTableAllocator&& Other, SizeType SlotCount)
+    {
+        CHECK(this != &Other);
+
+        Free();
+
+        if (!Other.Heap.IsHeapAllocated())
+        {
+            if (SlotCount > 0)
+            {
+                CHECK(SlotCount <= NumInlineSlots);
+
+                Memory::Memmove(InlineSlots.GetAllocation(), Other.InlineSlots.GetAllocation(), static_cast<uint64>(SlotCount) * sizeof(ElementType));
+                Memory::Memmove(InlineControl, Other.InlineControl, static_cast<uint64>(SlotCount));
+                Memory::Memzero(Other.InlineSlots.GetAllocation(), Other.InlineSlots.Size());
+                Memory::Memzero(Other.InlineControl, sizeof(Other.InlineControl));
+            }
+        }
+
+        Heap.MoveFrom(::Move(Other.Heap), SlotCount);
+    }
+
+    NODISCARD FORCEINLINE ElementType* GetSlots(SizeType SlotCount) const
+    {
+        return Heap.IsHeapAllocated() ? Heap.GetSlots(SlotCount) : InlineSlots.GetAllocation();
+    }
+
+    NODISCARD FORCEINLINE uint8* GetControl(SizeType SlotCount) const
+    {
+        return Heap.IsHeapAllocated() ? Heap.GetControl(SlotCount) : const_cast<uint8*>(InlineControl);
+    }
+
+    NODISCARD FORCEINLINE bool IsHeapAllocated() const
+    {
+        return Heap.IsHeapAllocated();
+    }
+
+private:
+    TInlineStorage                          InlineSlots;
+    uint8                                   InlineControl[NumInlineSlots];
+    TDefaultHashTableAllocator<ElementType> Heap;
+};
+
 ENABLE_UNREFERENCED_VARIABLE_WARNING

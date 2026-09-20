@@ -417,9 +417,8 @@ struct TJsonOmitEmpty<TOptional<T>>
     }
 };
 
-// Writes a map as a JSON object with its keys in alphabetical order. TMap is backed by
-// std::unordered_map, so its own iteration order changes between runs and between builds, and
-// sorting is what makes two saves of the same data produce the same bytes.
+// Writes a map as a JSON object with its keys in alphabetical order. TMap iteration order is
+// unspecified (hash table), so sorting is what makes two saves of the same data produce the same bytes.
 template<typename T>
 struct TJsonSerializer<TMap<String, T>>
 {

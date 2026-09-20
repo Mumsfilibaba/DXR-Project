@@ -166,6 +166,27 @@ bool TSet_Test()
         TEST_EXPECT(First.BucketCount() >= 1);
     }
 
+    TEST_SECTION("Reserve keeps Find pointers until rehash");
+    {
+        TSet<int32> Set;
+        Set.Reserve(256);
+        for (int32 Index = 0; Index < 32; ++Index)
+        {
+            Set.Add(Index);
+        }
+
+        const int32* Pointer = Set.Find(7);
+        TEST_EXPECT(Pointer != nullptr);
+
+        for (int32 Index = 32; Index < 64; ++Index)
+        {
+            Set.Add(Index);
+        }
+
+        TEST_EXPECT(Set.Find(7) == Pointer);
+        TEST_EXPECT(*Pointer == 7);
+    }
+
     TEST_SECTION("TSet rehash stress (FInstanced, seeded size sweep vs std::set)");
     {
         FInstanced::Reset();
@@ -218,6 +239,45 @@ bool TSet_Test()
         }
 
         TEST_EXPECT(FInstanced::LiveCount() == 0);
+    }
+
+    TEST_SECTION("TInlineSet stays inline then spills to the heap");
+    {
+        TInlineSet<int32, 4> Set;
+        TEST_EXPECT(!Set.IsHeapAllocated());
+
+        Set.Add(1);
+        Set.Add(2);
+        Set.Add(2);
+        Set.Add(3);
+        TEST_EXPECT_EQ(Set.Size(), 3);
+        TEST_EXPECT(!Set.IsHeapAllocated());
+        TEST_EXPECT(Set.Contains(2));
+
+        for (int32 Index = 0; Index < 32; ++Index)
+        {
+            Set.Add(Index);
+        }
+
+        TEST_EXPECT_EQ(Set.Size(), 32);
+        TEST_EXPECT(Set.IsHeapAllocated());
+        TEST_EXPECT(Set.Contains(31));
+
+        TInlineSet<int32, 4> Copied = Set;
+        TEST_EXPECT(Copied.Contains(10));
+
+        TInlineSet<int32, 4> Moved = Move(Set);
+        TEST_EXPECT_EQ(Moved.Size(), 32);
+        TEST_EXPECT_EQ(Set.Size(), 0);
+        TEST_EXPECT(!Set.IsHeapAllocated());
+
+        TInlineSet<String, 4> Strings = { String("alpha"), String("beta"), String("alpha") };
+        TEST_EXPECT_EQ(Strings.Size(), 2);
+        TEST_EXPECT(!Strings.IsHeapAllocated());
+        TEST_EXPECT(Strings.Contains(String("beta")));
+
+        Moved.Reset();
+        TEST_EXPECT(!Moved.IsHeapAllocated());
     }
 
     TEST_END();
