@@ -34,6 +34,10 @@ function TargetBuildRules(Name)
 
     -- The type of target. Decides if there should be a Standalone and DLL or if the app should be a ConsoleApp.
     self.TargetType = ETargetType.Game
+
+    -- Module compiled into the executable (Unreal LaunchModuleName). Nil uses the default for TargetType.
+    self.LaunchModuleName = nil
+
     
     -- Helper functions for the target's source path. Defaults to <Engine>/<Name>; the
     -- workspace overrides it with the folder the Target.lua was found in.
@@ -45,36 +49,53 @@ function TargetBuildRules(Name)
         PathToTarget = CreateOsPath(NewPath)
     end
 
+    local function ResolveLaunchModuleName(Target)
+        if type(Target.LaunchModuleName) == "string" and Target.LaunchModuleName ~= "" then
+            return Target.LaunchModuleName
+        end
+
+        if Target.TargetType == ETargetType.Program then
+            return "LaunchProgram"
+        end
+
+        return "LaunchEngine"
+    end
+
     -- Inject module into the current module (i.e., put the files into the executable)
-    local function InjectLaunchModule(Rule)
-        for i = 1, #Rule.Modules do
-            local DepName = Rule.Modules[i]
-            if DepName == "Launch" then
-                if IsModuleRule("Launch") then
-                    local Launch = GetModuleRule("Launch")
-                    Launch.Kind = "None"  -- prevent a separate build target
+    local function InjectLaunchModule(Rule, LaunchName)
+        if not IsModuleRule(LaunchName) then
+            LogError("Launch module '%s' has not been initialized", LaunchName)
+            return
+        end
 
-                    Rule.AddFiles(Launch.Files)
-                    Rule.AddExcludeFiles(Launch.ExcludeFiles)
-                    Rule.AddDefines(Launch.Defines)
-                    Rule.AddIncludeDirs(Launch.IncludeDirs)
-                    Rule.AddExternalIncludeDirs(Launch.ExternalIncludeDirs)
-                    Rule.AddForceIncludes(Launch.ForceIncludes)
+        local Launch = GetModuleRule(LaunchName)
+        Launch.Kind = "None"  -- prevent a separate build target
 
-                    local ApiPrefix = Launch.Name:upper() .. "_API="
-                    for _, Result in pairs(Rule.LayoutResults) do
-                        for Index, Define in ipairs(Result.Defines) do
-                            if Define:sub(1, #ApiPrefix) == ApiPrefix then
-                                Result.Defines[Index] = ApiPrefix
-                            end
-                        end
-                    end
-                else
-                    LogError("Found the Launch Module among dependencies, but it has not been initialized")
+        Rule.AddFiles(Launch.Files)
+        Rule.AddExcludeFiles(Launch.ExcludeFiles)
+        Rule.AddDefines(Launch.Defines)
+        Rule.AddIncludeDirs(Launch.IncludeDirs)
+        Rule.AddExternalIncludeDirs(Launch.ExternalIncludeDirs)
+        Rule.AddForceIncludes(Launch.ForceIncludes)
+
+        local ApiPrefix = Launch.Name:upper() .. "_API="
+        for _, Result in pairs(Rule.LayoutResults) do
+            for Index, Define in ipairs(Result.Defines) do
+                if Define:sub(1, #ApiPrefix) == ApiPrefix then
+                    Result.Defines[Index] = ApiPrefix
                 end
-                break
             end
         end
+    end
+
+    local function EnsureModuleListed(Rule, ModuleName)
+        for i = 1, #Rule.Modules do
+            if Rule.Modules[i] == ModuleName then
+                return
+            end
+        end
+
+        Rule.AddModules({ ModuleName })
     end
 
     -- Generate target
@@ -168,8 +189,10 @@ function TargetBuildRules(Name)
             Executable.AddExternalIncludeDirs(self.ExternalIncludeDirs)
 
             -- Generate Standalone executable
+            local LaunchName = ResolveLaunchModuleName(self)
+            EnsureModuleListed(Executable, LaunchName)
             Executable.Generate()
-            InjectLaunchModule(Executable)
+            InjectLaunchModule(Executable, LaunchName)
 
             LogInfo("--- Finished generating standalone client executable project for target '%s' ---", self.Name)
         elseif self.TargetType == ETargetType.Editor then
@@ -177,9 +200,9 @@ function TargetBuildRules(Name)
         elseif self.TargetType == ETargetType.Program then
             LogInfo("TargetType=Program")
 
-            -- A Program owns its own main(), so Launch is never injected and there is no
-            -- separate Standalone executable to generate. WindowedApp is left alone, because a
-            -- Program that opens windows needs a bundle and cannot be a console app.
+            -- A Program owns its own main() via the launch module (LaunchProgram by default).
+            -- WindowedApp is left alone, because a Program that opens windows needs a bundle
+            -- and cannot be a console app.
             if self.Kind == "SharedLib" then
                 self.Kind = "ConsoleApp"
             end
@@ -197,7 +220,10 @@ function TargetBuildRules(Name)
             })
 
             LogInfo("--- Generating project for target '%s' ---", self.Name)
+            local LaunchName = ResolveLaunchModuleName(self)
+            EnsureModuleListed(self, LaunchName)
             BaseGenerate()
+            InjectLaunchModule(self, LaunchName)
             LogInfo("--- Finished generating project for target '%s' ---", self.Name)
         end
     end

@@ -4,7 +4,7 @@ local SandboxModules =
 {
     "Core",
     "CoreApplication",
-    "Launch",
+    "LaunchEngine",
     "Application",
     "RHI",
     "Engine",

@@ -1,33 +1,23 @@
-#include <Core/Mac/Mac.h>
-#include <Core/Mac/MacThreadManager.h>
-#include <Core/CoreGlobals.h>
-#include <Core/Containers/String.h>
-#include <AppKit/AppKit.h>
-
-#include "PlaygroundLoop.h"
-
-// The same shape as Runtime/LaunchEngine/Mac/MacMain.cpp: NSApp owns the main thread, and the playground
-// runs on the app thread beside it. The Launch module is not linked here, because linking it would
-// bring FEngineLoop and the whole engine with it, which is the one thing the playground must not boot.
+#include "Core/Mac/Mac.h"
+#include "Core/Mac/MacThreadManager.h"
+#include "Core/Containers/String.h"
+#include "Core/Misc/CommandLine.h"
+#include "LaunchProgram/ProgramEntry.h"
+#include "LaunchProgram/Mac/MacProgramDelegate.h"
+#include <Appkit/Appkit.h>
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 static String GMacCommandLine;
-static int32  GPlaygroundResult = 0;
+static int32  GProgramMainResult = 0;
 
-@interface FPlaygroundAppDelegate : NSObject<NSApplicationDelegate>
-
-- (void)runAppThread;
-
-@end
-
-@implementation FPlaygroundAppDelegate
+@implementation FMacProgramDelegate
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*) Sender
 {
-    if (!IsEngineExitRequested())
+    if (!FProgramLoop::IsExitRequested())
     {
-        RequestEngineExit("The playground was asked to terminate");
+        FProgramLoop::RequestExit("Application terminate");
         return NSTerminateLater;
     }
 
@@ -37,7 +27,8 @@ static int32  GPlaygroundResult = 0;
 - (void)runAppThread
 {
     const CHAR* CommandLine = *GMacCommandLine;
-    GPlaygroundResult = PlaygroundMain(&CommandLine, 1);
+    CommandLine::Initialize(&CommandLine, 1);
+    GProgramMainResult = FProgramLoop::Run(GProgramTitle, GProgramBody);
 
     FMacThreadManager::Get().MainThreadDispatch(^
     {
@@ -48,6 +39,10 @@ static int32  GPlaygroundResult = 0;
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*) Sender
 {
     return YES;
+}
+
+- (void)applicationWillTerminate:(NSNotification*) Notification
+{
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification*) Notification
@@ -62,8 +57,8 @@ int main(int NumArgs, const CHAR** Args)
     for (int32 Index = 1; Index < NumArgs; Index++)
     {
         GMacCommandLine += " ";
-
         String CurrentArg(Args[Index]);
+
         if (CurrentArg.Contains(' '))
         {
             if (CurrentArg.Contains('='))
@@ -71,7 +66,6 @@ int main(int NumArgs, const CHAR** Args)
                 String Argument;
                 String ArgumentValue;
                 CurrentArg.Split('=', Argument, ArgumentValue);
-
                 CurrentArg = String::Printf("%s=\"%s\"", *Argument, *ArgumentValue);
             }
             else
@@ -84,15 +78,14 @@ int main(int NumArgs, const CHAR** Args)
     }
 
     [NSApplication sharedApplication];
-    [NSApp setDelegate:[FPlaygroundAppDelegate new]];
+    [NSApp setDelegate:[FMacProgramDelegate new]];
     [NSApp activateIgnoringOtherApps:YES];
     [NSApp setPresentationOptions:NSApplicationPresentationDefault];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     [NSApp run];
 
     FMacThreadManager::ShutdownAppThread();
-
-    return GPlaygroundResult;
+    return GProgramMainResult;
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

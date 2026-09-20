@@ -1,5 +1,6 @@
 #include "Core/Windows/WindowsPlatformFile.h"
 #include "Core/Windows/WindowsPlatformMisc.h"
+#include "Core/Templates/CString.h"
 #include "Core/Templates/NumericLimits.h"
 
 FWindowsFileHandle::FWindowsFileHandle(HANDLE InFileHandle)
@@ -427,4 +428,34 @@ String FWindowsPlatformFile::GetCurrentWorkingDirectory()
     {
         return Result;
     }
+}
+
+bool FWindowsPlatformFile::IterateDirectory(const CHAR* Path, TArray<FDirectoryEntry>& OutEntries)
+{
+    OutEntries.Clear();
+
+    WIN32_FIND_DATAA FindData;
+    const String     Search = String::Printf("%s\\*", Path);
+    const HANDLE     Handle = ::FindFirstFileA(*Search, &FindData);
+    if (Handle == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+
+    do
+    {
+        if ((CString::Strcmp(FindData.cFileName, ".") == 0) || (CString::Strcmp(FindData.cFileName, "..") == 0))
+        {
+            continue;
+        }
+
+        FDirectoryEntry Entry;
+        Entry.Name         = FindData.cFileName;
+        Entry.bIsDirectory = (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+        OutEntries.Add(Move(Entry));
+    }
+    while (::FindNextFileA(Handle, &FindData));
+
+    ::FindClose(Handle);
+    return true;
 }

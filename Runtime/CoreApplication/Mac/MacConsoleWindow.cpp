@@ -185,10 +185,17 @@ void FMacConsoleWindow::Flush()
     }, NSDefaultRunLoopMode, false);
 }
 
+void FMacConsoleWindow::SetOnClosed(const TFunction<void()>& Callback)
+{
+    SCOPED_LOCK(PendingCS);
+    OnClosed = Callback;
+}
+
 void FMacConsoleWindow::OnWindowDidClose()
 {
     CHECK_COCOA_MAIN_THREAD();
 
+    TFunction<void()> ClosedCopy;
     {
         SCOPED_LOCK(PendingCS);
         PendingLines.Clear();
@@ -196,9 +203,15 @@ void FMacConsoleWindow::OnWindowDidClose()
         [NSApp removeWindowsItem:WindowHandle];
         [WindowHandle autorelease];
         WindowHandle = nullptr;
+        ClosedCopy = OnClosed;
     }
 
     DestroyResources();
+
+    if (ClosedCopy)
+    {
+        ClosedCopy();
+    }
 }
 
 void FMacConsoleWindow::CreateConsole()

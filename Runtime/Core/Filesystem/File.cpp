@@ -165,3 +165,71 @@ bool File::CreateDirectoryTree(const String& Path)
 
     return true;
 }
+
+String File::ExtractExtension(const String& Filepath)
+{
+    const String Filename = ExtractFilename(Filepath);
+    const int32  Dot      = Filename.FindLastChar('.');
+    if ((Dot == String::InvalidIndex) || (Dot == 0))
+    {
+        return String();
+    }
+
+    return String(*Filename + Dot, Filename.Length() - Dot);
+}
+
+String File::CombinePath(const String& Left, const String& Right)
+{
+    if (Left.IsEmpty())
+    {
+        return Right;
+    }
+    if (Right.IsEmpty())
+    {
+        return Left;
+    }
+
+    const bool bLeftSlash  = (Left[Left.Length() - 1] == '/') || (Left[Left.Length() - 1] == '\\');
+    const bool bRightSlash = (Right[0] == '/') || (Right[0] == '\\');
+
+    if (bLeftSlash && bRightSlash)
+    {
+        return Left + String(*Right + 1);
+    }
+    if (!bLeftSlash && !bRightSlash)
+    {
+        return Left + "/" + Right;
+    }
+
+    return Left + Right;
+}
+
+bool File::IterateDirectoryTree(const String& Directory, TFunction<bool(const String& Path, bool bIsDirectory)> Visitor)
+{
+    TArray<FDirectoryEntry> Entries;
+    if (!FPlatformFile::IterateDirectory(*Directory, Entries))
+    {
+        return false;
+    }
+
+    for (const FDirectoryEntry& Entry : Entries)
+    {
+        const String Child = CombinePath(Directory, Entry.Name);
+        if (!Visitor(Child, Entry.bIsDirectory))
+        {
+            if (Entry.bIsDirectory)
+            {
+                continue;
+            }
+
+            return false;
+        }
+
+        if (Entry.bIsDirectory && !IterateDirectoryTree(Child, Visitor))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}

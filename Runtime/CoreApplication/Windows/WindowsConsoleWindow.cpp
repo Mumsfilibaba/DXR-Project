@@ -1,19 +1,68 @@
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Threading/ScopedLock.h"
 #include "CoreApplication/Windows/WindowsConsoleWindow.h"
+
+static FWindowsConsoleWindow* GActiveWindowsConsole = nullptr;
 
 IPlatformConsoleWindow* FWindowsConsoleWindow::Create()
 {
     return new FWindowsConsoleWindow();
 }
 
+BOOL WINAPI FWindowsConsoleWindow::ConsoleCtrlHandler(DWORD Type)
+{
+    if ((Type != CTRL_CLOSE_EVENT) && (Type != CTRL_C_EVENT) && (Type != CTRL_BREAK_EVENT))
+    {
+        return FALSE;
+    }
+
+    if (FWindowsConsoleWindow* Console = GActiveWindowsConsole)
+    {
+        Console->NotifyClosed();
+    }
+
+    FOutputDeviceLogger::Get()->Flush();
+
+    ::TerminateProcess(::GetCurrentProcess(), 0);
+    return TRUE;
+}
+
 FWindowsConsoleWindow::~FWindowsConsoleWindow()
 {
+    if (GActiveWindowsConsole == this)
+    {
+        GActiveWindowsConsole = nullptr;
+    }
+
     Show(false);
 }
 
 FWindowsConsoleWindow::FWindowsConsoleWindow()
     : ConsoleHandle(0)
 {
+}
+
+void FWindowsConsoleWindow::SetOnClosed(const TFunction<void()>& Callback)
+{
+    TScopedLock Lock(ConsoleHandleCS);
+    OnClosed = Callback;
+}
+
+bool FWindowsConsoleWindow::NotifyClosed()
+{
+    TFunction<void()> ClosedCopy;
+    {
+        TScopedLock Lock(ConsoleHandleCS);
+        ClosedCopy = OnClosed;
+    }
+
+    if (!ClosedCopy)
+    {
+        return false;
+    }
+
+    ClosedCopy();
+    return true;
 }
 
 void FWindowsConsoleWindow::Show(bool bShow)
@@ -24,34 +73,35 @@ void FWindowsConsoleWindow::Show(bool bShow)
     {
         if (!ConsoleHandle)
         {
-            if (AllocConsole())
+            ConsoleHandle = ::GetStdHandle(STD_OUTPUT_HANDLE);
+            if ((ConsoleHandle == INVALID_HANDLE_VALUE) || !ConsoleHandle)
             {
+                ::AllocConsole();
                 ConsoleHandle = ::GetStdHandle(STD_OUTPUT_HANDLE);
-                if (!ConsoleHandle)
-                {
-                    // TODO: log this error
-                }
+            }
 
-                if (!Title.IsEmpty())
-                {
-                    SetConsoleTitleA(*Title);
-                }
-                else
-                {
-                    SetConsoleTitleA("Console Output");
-                }
-            }
-            else
+            if ((ConsoleHandle == INVALID_HANDLE_VALUE) || !ConsoleHandle)
             {
-                // TODO: Log error: AllocConsole() failed
+                ConsoleHandle = nullptr;
+                LOG_ERROR("[FWindowsConsoleWindow]: Failed to open console. Error: %lu", ::GetLastError());
+                return;
             }
+
+            GActiveWindowsConsole = this;
+
+            ::SetConsoleCtrlHandler(&FWindowsConsoleWindow::ConsoleCtrlHandler, TRUE);
+            ::SetConsoleTitleA(Title.IsEmpty() ? "Console Output" : *Title);
         }
     }
     else
     {
         if (ConsoleHandle)
         {
-            FreeConsole();
+            if (GActiveWindowsConsole == this)
+            {
+                GActiveWindowsConsole = nullptr;
+            }
+
             ConsoleHandle = nullptr;
         }
     }
@@ -61,14 +111,11 @@ void FWindowsConsoleWindow::SetTitle(const String& InTitle)
 {
     TScopedLock Lock(ConsoleHandleCS);
 
+    Title = InTitle;
+
     if (ConsoleHandle)
     {
         ::SetConsoleTitleA(*InTitle);
-        Title = InTitle;
-    }
-    else
-    {
-        Title = InTitle;
     }
 }
 
@@ -102,14 +149,27 @@ void FWindowsConsoleWindow::SetTextColor(EConsoleTextColor Color)
     }
 }
 
+void FWindowsConsoleWindow::Write(const CHAR* Data, uint32 Length)
+{
+    DWORD ConsoleMode = 0;
+    if (::GetConsoleMode(ConsoleHandle, &ConsoleMode))
+    {
+        ::WriteConsoleA(ConsoleHandle, Data, Length, nullptr, nullptr);
+    }
+    else
+    {
+        ::WriteFile(ConsoleHandle, Data, Length, nullptr, nullptr);
+    }
+}
+
 void FWindowsConsoleWindow::Log(const String& Message)
 {
     TScopedLock Lock(ConsoleHandleCS);
 
     if (ConsoleHandle)
     {
-        WriteConsoleA(ConsoleHandle, *Message, static_cast<DWORD>(Message.Length()), nullptr, nullptr);
-        WriteConsoleA(ConsoleHandle, "\n", 1, nullptr, nullptr);
+        Write(*Message, static_cast<uint32>(Message.Length()));
+        Write("\n", 1);
     }
 }
 
@@ -125,12 +185,15 @@ void FWindowsConsoleWindow::Log(ELogSeverity Severity, const String& Message)
         case ELogSeverity::Info:
             NewColor = EConsoleTextColor::Green;
             break;
+
         case ELogSeverity::Warning:
             NewColor = EConsoleTextColor::Yellow;
             break;
+
         case ELogSeverity::Error:
             NewColor = EConsoleTextColor::Red;
             break;
+
         default:
             NewColor = EConsoleTextColor::White;
             break;
@@ -138,8 +201,8 @@ void FWindowsConsoleWindow::Log(ELogSeverity Severity, const String& Message)
 
         SetTextColor(NewColor);
 
-        WriteConsoleA(ConsoleHandle, *Message, static_cast<DWORD>(Message.Length()), nullptr, nullptr);
-        WriteConsoleA(ConsoleHandle, "\n", 1, nullptr, nullptr);
+        Write(*Message, static_cast<uint32>(Message.Length()));
+        Write("\n", 1);
 
         SetTextColor(EConsoleTextColor::White);
     }

@@ -107,4 +107,6 @@ struct CORE_API FWindowsPlatformFile : public IPlatformFileSystem
         const BOOL Result = ::PathIsRelativeA(Filepath);
         return Result == TRUE;
     }
+
+    static bool IterateDirectory(const CHAR* Path, TArray<FDirectoryEntry>& OutEntries);
 };

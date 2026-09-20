@@ -25,52 +25,52 @@ struct IPlatformString
 
     NODISCARD static FORCEINLINE CHAR ToUpper(CHAR Char)
     {
-        return static_cast<CHAR>(::toupper(Char));
+        return static_cast<CHAR>(::toupper(static_cast<uint8>(Char)));
     }
 
     NODISCARD static FORCEINLINE CHAR ToLower(CHAR Char)
     {
-        return static_cast<CHAR>(::tolower(Char));
+        return static_cast<CHAR>(::tolower(static_cast<uint8>(Char)));
     }
 
     NODISCARD static FORCEINLINE bool IsWhitespace(CHAR Char)
     {
-        return static_cast<bool>(::isspace(Char));
+        return static_cast<bool>(::isspace(static_cast<uint8>(Char)));
     }
 
     NODISCARD static FORCEINLINE bool IsUpper(CHAR Char)
     {
-        return static_cast<bool>(::isupper(Char));
+        return static_cast<bool>(::isupper(static_cast<uint8>(Char)));
     }
 
     NODISCARD static FORCEINLINE bool IsLower(CHAR Char)
     {
-        return static_cast<bool>(::islower(Char));
+        return static_cast<bool>(::islower(static_cast<uint8>(Char)));
     }
 
     NODISCARD static FORCEINLINE bool IsAlnum(CHAR Char)
     {
-        return static_cast<bool>(::isalnum(Char));
+        return static_cast<bool>(::isalnum(static_cast<uint8>(Char)));
     }
 
     NODISCARD static FORCEINLINE bool IsDigit(CHAR Char)
     {
-        return static_cast<bool>(::isdigit(Char));
+        return static_cast<bool>(::isdigit(static_cast<uint8>(Char)));
     }
 
     NODISCARD static FORCEINLINE bool IsAlpha(CHAR Char)
     {
-        return static_cast<bool>(::isalpha(Char));
+        return static_cast<bool>(::isalpha(static_cast<uint8>(Char)));
     }
 
     NODISCARD static FORCEINLINE bool IsPunct(CHAR Char)
     {
-        return static_cast<bool>(::ispunct(Char));
+        return static_cast<bool>(::ispunct(static_cast<uint8>(Char)));
     }
 
     NODISCARD static FORCEINLINE bool IsHexDigit(CHAR Char)
     {
-        return static_cast<bool>(::isxdigit(Char));
+        return static_cast<bool>(::isxdigit(static_cast<uint8>(Char)));
     }
 
     template<typename... ArgTypes>
@@ -110,6 +110,7 @@ struct IPlatformString
 			{
 				const CHAR Hc = ToLower(*H);
 				const CHAR Nc = ToLower(*N);
+
                 if (Hc != Nc)
                 {
 					break;

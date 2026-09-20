@@ -1,6 +1,6 @@
+#include <LaunchProgram/ProgramEntry.h>
 #include <Core/CoreTypes.h>
 #include <Core/CoreDefines.h>
-#include <Core/CoreGlobals.h>
 #include <Core/Containers/Array.h>
 #include <Core/Containers/String.h>
 #include <Core/Filesystem/File.h>
@@ -9,7 +9,6 @@
 #include <Core/Memory/Malloc.h>
 #include <Core/Memory/Memory.h>
 #include <Core/Misc/CommandLine.h>
-#include <Core/Misc/IOutputDevice.h>
 #include <Core/Misc/OutputDeviceLogger.h>
 #include <Core/Platform/PlatformFile.h>
 #include <Core/Tasks/TaskGraph.h>
@@ -23,64 +22,31 @@ DISABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING
 
 ENABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING
 
-#include <cstdio>
-
 #include <Core/Memory/NewOperators.h>
 IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 
 using tinyddsloader::DDSFile;
 
-class FConsoleOutputDevice final : public IOutputDevice
-{
-public:
-    virtual void Log(const String& Message) override
-    {
-        printf("%s\n", Message.Data());
-    }
-
-    virtual void Log(ELogSeverity Severity, const String& Message) override
-    {
-        const CHAR* Prefix = "";
-        switch (Severity)
-        {
-            case ELogSeverity::Warning: Prefix = "[WARNING] "; break;
-            case ELogSeverity::Error:   Prefix = "[ERROR] ";   break;
-            default:                    Prefix = "";           break;
-        }
-
-        printf("%s%s\n", Prefix, Message.Data());
-    }
-
-    virtual void Flush() override
-    {
-        fflush(stdout);
-    }
-};
-
 static void PrintUsage()
 {
-    printf(
-        "BlueNoiseGen -- offline blue-noise mask generator\n"
-        "\n"
-        "  --type=<type>       vc_scalar   Void-and-cluster scalar mask (2D)\n"
-        "                      vec2        Georgiev-Fajardo vector mask (2D)\n"
-        "                      stbn_scalar Spatiotemporal scalar mask\n"
-        "                      stbn_vec2   Spatiotemporal vector mask\n"
-        "  --size=<n>          Width and height of a slice. Default 128.\n"
-        "  --depth=<n>         Temporal slices. Forced to 1 for the non-stbn types. Default 64.\n"
-        "  --channels=<n>      Values per pixel. Implied by the type when omitted.\n"
-        "  --seed=<n>          Generator seed. Default 0.\n"
-        "  --iterations=<n>    Swap iterations. Zero scales to the domain size.\n"
-        "  --bits=<8|16>       Output channel width. Default 16.\n"
-        "  --out=<path>        Destination .dds file.\n"
-        "  --atlas             Lay the slices out as a 2D grid so the Texture2D-only importer\n"
-        "                      can load them. Otherwise a Texture3D is written.\n"
-        "  --checkpoint=<path> Periodically save swap-algorithm state, and resume from it if the\n"
-        "                      file already exists.\n"
-        "\n"
-        "Example:\n"
-        "  BlueNoiseGen --type=stbn_vec2 --size=128 --depth=64 --atlas \\\n"
-        "           --out=Assets/Textures/Noise/STBN_Vec2_128x128x64_RG.dds\n");
+    LOG_INFO("BlueNoiseGen -- offline blue-noise mask generator");
+    LOG_INFO("  --type=<type>       vc_scalar   Void-and-cluster scalar mask (2D)");
+    LOG_INFO("                      vec2        Georgiev-Fajardo vector mask (2D)");
+    LOG_INFO("                      stbn_scalar Spatiotemporal scalar mask");
+    LOG_INFO("                      stbn_vec2   Spatiotemporal vector mask");
+    LOG_INFO("  --size=<n>          Width and height of a slice. Default 128.");
+    LOG_INFO("  --depth=<n>         Temporal slices. Forced to 1 for the non-stbn types. Default 64.");
+    LOG_INFO("  --channels=<n>      Values per pixel. Implied by the type when omitted.");
+    LOG_INFO("  --seed=<n>          Generator seed. Default 0.");
+    LOG_INFO("  --iterations=<n>    Swap iterations. Zero scales to the domain size.");
+    LOG_INFO("  --bits=<8|16>       Output channel width. Default 16.");
+    LOG_INFO("  --out=<path>        Destination .dds file.");
+    LOG_INFO("  --atlas             Lay the slices out as a 2D grid so the Texture2D-only importer");
+    LOG_INFO("                      can load them. Otherwise a Texture3D is written.");
+    LOG_INFO("  --checkpoint=<path> Periodically save swap-algorithm state, and resume from it if the");
+    LOG_INFO("                      file already exists.");
+    LOG_INFO("Example:");
+    LOG_INFO("  BlueNoiseGen --type=stbn_vec2 --size=128 --depth=64 --atlas --out=Assets/Textures/Noise/STBN_Vec2_128x128x64_RG.dds");
 }
 
 static bool GetIntOption(const CHAR* Name, int64& OutValue)
@@ -336,19 +302,11 @@ struct FCheckpointFile
     }
 };
 
-int main(int Argc, const CHAR* Argv[])
+static int32 BlueNoiseGenMain()
 {
-    GIsUnattended = true;
-
-    FConsoleOutputDevice ConsoleDevice;
-    FOutputDeviceLogger::Get()->RegisterOutputDevice(&ConsoleDevice);
-
-    CommandLine::Initialize(Argv, Argc);
-
-    if ((Argc <= 1) || CommandLine::FindOption("help") || CommandLine::FindOption("h"))
+    if (CommandLine::FindOption("help") || CommandLine::FindOption("h") || (CString::Strlen(CommandLine::GetOriginal()) == 0))
     {
         PrintUsage();
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 0;
     }
 
@@ -358,7 +316,6 @@ int main(int Argc, const CHAR* Argv[])
         LOG_ERROR("[BlueNoiseGen] --type is required");
         
         PrintUsage();
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 1;
     }
 
@@ -391,7 +348,6 @@ int main(int Argc, const CHAR* Argv[])
     {
         LOG_ERROR("[BlueNoiseGen] Unknown --type '%s'", Type.Data());
         PrintUsage();
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 1;
     }
 
@@ -419,14 +375,12 @@ int main(int Argc, const CHAR* Argv[])
     if ((Params.Width <= 0) || (Params.Depth <= 0) || (Params.Channels <= 0))
     {
         LOG_ERROR("[BlueNoiseGen] Size, depth and channels must all be positive");
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 1;
     }
 
     if ((Params.Algorithm == EBlueNoiseAlgorithm::VoidAndCluster) && (Params.Channels != 1))
     {
         LOG_ERROR("[BlueNoiseGen] Void-and-cluster produces a scalar rank ordering, so it needs --channels=1");
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 1;
     }
 
@@ -434,7 +388,6 @@ int main(int Argc, const CHAR* Argv[])
     if (!GetStringOption("out", OutputPath))
     {
         LOG_ERROR("[BlueNoiseGen] --out is required");
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 1;
     }
 
@@ -449,7 +402,6 @@ int main(int Argc, const CHAR* Argv[])
         LOG_ERROR("[BlueNoiseGen] Failed to initialize the task graph");
 
         FThreadManager::Release();
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 1;
     }
 
@@ -481,8 +433,7 @@ int main(int Argc, const CHAR* Argv[])
         }
 
         LastReported = Fraction;
-        printf("  %-10s %5.1f%%\r", Phase, Fraction * 100.0f);
-        fflush(stdout);
+        LOG_INFO("[BlueNoiseGen] %s %.0f%%", Phase, Fraction * 100.0f);
     };
 
     if (bCheckpoint)
@@ -497,7 +448,6 @@ int main(int Argc, const CHAR* Argv[])
     }
 
     TArray<float> Values = FBlueNoiseGenerator::Generate(Params, Move(Callbacks));
-    printf("\n");
 
     ReportQuality(Values, Params);
 
@@ -543,7 +493,6 @@ int main(int Argc, const CHAR* Argv[])
     if (!Directory.IsEmpty() && !File::CreateDirectoryTree(Directory))
     {
         LOG_ERROR("[BlueNoiseGen] Failed to create directory '%s'", Directory.Data());
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 1;
     }
 
@@ -551,13 +500,13 @@ int main(int Argc, const CHAR* Argv[])
     if (SaveResult != tinyddsloader::Result::Success)
     {
         LOG_ERROR("[BlueNoiseGen] Failed to write '%s' (tinyddsloader result %d)", OutputPath.Data(), static_cast<int32>(SaveResult));
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 1;
     }
 
     LOG_INFO("[BlueNoiseGen] Wrote '%s' (%dx%dx%d, %d channel(s), %d bits)", OutputPath.Data(), OutputWidth, OutputHeight, OutputDepth, OutputChannels, static_cast<int32>(Bits));
     LOG_INFO("[BlueNoiseGen] Done");
 
-    FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
     return 0;
 }
+
+IMPLEMENT_PROGRAM_MAIN("BlueNoiseGen", &BlueNoiseGenMain);

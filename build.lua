@@ -20,5 +20,7 @@ SetWorkspaceName("DXR-Engine Sandbox")
 AddTarget("Sandbox")
 AddTarget("SandboxEditor")
 
+AddBrowseOnlyModule("LaunchProgram")
+
 -- Generate the workspace
 GenerateWorkspace()

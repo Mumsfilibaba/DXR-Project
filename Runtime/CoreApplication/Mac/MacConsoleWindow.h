@@ -19,6 +19,7 @@ public:
 
     virtual void SetTitle(const String& Title) override final;
     virtual void SetTextColor(EConsoleTextColor Color) override final;
+    virtual void SetOnClosed(const TFunction<void()>& Callback) override final;
 
     // IOutputDevice Interface Overrides
     virtual void Log(const String& Message) override final;
@@ -55,6 +56,7 @@ private:
     mutable FCriticalSection WindowCS;
     mutable FCriticalSection PendingCS;
     String                   Title;
+    TFunction<void()>        OnClosed;
     TArray<FPendingLine>     PendingLines;
     EConsoleTextColor        CurrentTextColor;
     bool                     bFlushScheduled;

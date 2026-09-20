@@ -1,6 +1,7 @@
 #include "Core/Mac/MacPlatformFile.h"
 #include "Core/Mac/MacPlatformMisc.h"
 #include "Core/Platform/PlatformString.h"
+#include "Core/Templates/CString.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include <aio.h>
@@ -11,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
+#include <dirent.h>
 
 FMacFileHandle::FMacFileHandle(int32 InFileHandle, bool bInReadOnly)
     : IPlatformFile()
@@ -464,4 +466,33 @@ const CHAR* FMacPlatformFile::GetExecutablePath()
     }
 
     return StaticExecutablePath;
+}
+
+bool FMacPlatformFile::IterateDirectory(const CHAR* Path, TArray<FDirectoryEntry>& OutEntries)
+{
+    OutEntries.Clear();
+
+    DIR* Directory = ::opendir(Path);
+    if (!Directory)
+    {
+        return false;
+    }
+
+    while (struct dirent* DirEntry = ::readdir(Directory))
+    {
+        if ((CString::Strcmp(DirEntry->d_name, ".") == 0) || (CString::Strcmp(DirEntry->d_name, "..") == 0))
+        {
+            continue;
+        }
+
+        FDirectoryEntry Child;
+        Child.Name = DirEntry->d_name;
+
+        const String ChildPath = String::Printf("%s/%s", Path, DirEntry->d_name);
+        Child.bIsDirectory     = IsDirectory(*ChildPath);
+        OutEntries.Add(Move(Child));
+    }
+
+    ::closedir(Directory);
+    return true;
 }

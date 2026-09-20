@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Containers/String.h"
+#include "Core/Containers/Array.h"
 #include "Core/Containers/Stream.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -130,6 +131,12 @@ private:
     T* Handle;
 };
 
+struct FDirectoryEntry
+{
+    String Name;
+    bool   bIsDirectory = false;
+};
+
 struct CORE_API IPlatformFileSystem
 {
     /** @brief Unimplemented: declared here, but never defined and never overridden by a platform */
@@ -220,6 +227,15 @@ struct CORE_API IPlatformFileSystem
 
     /** @return Returns true if Path is relative rather than absolute */
     static FORCEINLINE bool IsPathRelative(const CHAR* Path)
+    {
+        return false;
+    }
+
+    /**
+     * @brief Fill OutEntries with the immediate children of Path (not recursive)
+     * @return Returns false if Path cannot be opened as a directory
+     */
+    static FORCEINLINE bool IterateDirectory(const CHAR* Path, TArray<FDirectoryEntry>& OutEntries)
     {
         return false;
     }
