@@ -47,8 +47,10 @@ public:
     virtual void Reset()   override final;
     virtual void Release() override final;
 
-    virtual void BeginGPUFrame(FRHICommandList& CmdList) override final;
-    virtual void EndGPUFrame(FRHICommandList& CmdList)   override final;
+    virtual void BeginGPUFrame() override final;
+    virtual void EndGPUFrame() override final;
+    virtual void MarkGPUFrameBegin(FRHICommandList& CmdList) override final;
+    virtual void MarkGPUFrameEnd(FRHICommandList& CmdList) override final;
     virtual void BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name) override final;
     virtual void EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name) override final;
 
@@ -73,6 +75,8 @@ private:
     FRHIQueryRef                          FrameBeginQuery[GPU_PROFILER_BUFFER_COUNT];
     FRHIQueryRef                          FrameEndQuery[GPU_PROFILER_BUFFER_COUNT];
     int32                                 PendingCpuFrameIndex[GPU_PROFILER_BUFFER_COUNT];
+    bool                                  bFrameBeginRecorded[GPU_PROFILER_BUFFER_COUNT];
+    bool                                  bFrameEndRecorded[GPU_PROFILER_BUFFER_COUNT];
     TMap<String, FGPUProfileScopeQueries> ScopeQueries;
     TArray<FGPUPendingScope>              PendingScopes[GPU_PROFILER_BUFFER_COUNT];
     int32                                 NumPendingScopes[GPU_PROFILER_BUFFER_COUNT];

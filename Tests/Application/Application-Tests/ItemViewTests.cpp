@@ -859,6 +859,112 @@ bool TreeViewHeaderToolTips_Test()
     TEST_END();
 }
 
+static FFloatColor MakeTreeHoverFill(const FUITreeRowStyle& Style)
+{
+    FFloatColor Fill = Style.HoveredFill;
+    Fill.A           = 0.5f;
+    return Fill;
+}
+
+static bool DrawsHoverForItem(const TSharedPtr<FTreeView>& Tree, const TSharedPtr<FTreeItem>& Item, const FFloatColor& HoverFill)
+{
+    FDrawCommandList Commands;
+    Tree->OnDraw(FDrawGeometry(Tree->GetContentRectangle(), 1.0f), Commands, 0);
+
+    const FRectangle Highlight = Tree->GetItemHighlightBounds(Item);
+    for (const FDrawCommand& Command : Commands.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Box && Command.Tint == HoverFill && Command.Bounds == Highlight)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool TreeViewHoverAndRowClick_Test()
+{
+    TEST_BEGIN();
+
+    constexpr int32 RowHeight = 20;
+
+    TSharedPtr<FTreeItem> Assets   = FTreeItem::Create("Assets");
+    TSharedPtr<FTreeItem> Textures = FTreeItem::Create("Textures");
+    TSharedPtr<FTreeItem> Meshes   = FTreeItem::Create("Meshes");
+    Assets->AddChild(Textures);
+    Assets->AddChild(Meshes);
+
+    int32 ExpansionCount = 0;
+    int32 DragCount      = 0;
+
+    FTreeView::FDesc Desc;
+    Desc.Font               = CreateFont();
+    Desc.RowHeight          = RowHeight;
+    Desc.OnExpansionChanged = FOnTreeItemExpansionChanged::CreateLambda([&](const TSharedPtr<FTreeItem>&, bool)
+    {
+        ExpansionCount++;
+    });
+    Desc.OnDragDetected = FOnTreeItemDragDetected::CreateLambda([&](const TSharedPtr<FTreeItem>&, const FCursorEvent&)
+    {
+        DragCount++;
+    });
+
+    TSharedPtr<FTreeView> TreeView = FTreeView::Create(Desc);
+    TreeView->SetRootItems({ Assets, FTreeItem::Create("Scenes") });
+    LayoutElement(TreeView, FRectangle(IntVector2(0, 0), 200, 200));
+
+    const FFloatColor HoverFill = MakeTreeHoverFill(Desc.Style);
+    const IntVector2  FirstRow  = IntVector2(100, RowHeight / 2);
+
+    TEST_SECTION("A hover fill stays after the roots are replaced without a further mouse move");
+    TreeView->OnMouseMove(MakeMoveEvent(FirstRow));
+    TEST_EXPECT(DrawsHoverForItem(TreeView, Assets, HoverFill));
+
+    TreeView->SetRootItems({ Assets, FTreeItem::Create("Scenes") });
+    TEST_EXPECT(DrawsHoverForItem(TreeView, Assets, HoverFill));
+
+    TEST_SECTION("Scrolling under a stationary cursor moves the hover onto the row now under it");
+    const TArray<TSharedPtr<FTreeItem>> Rows = CreateLeafRows(20);
+    TSharedPtr<FTreeView> ScrollView = FTreeView::Create(Desc);
+    ScrollView->SetRootItems(Rows);
+    LayoutElement(ScrollView, FRectangle(IntVector2(0, 0), 200, 100));
+
+    ScrollView->OnMouseMove(MakeMoveEvent(FirstRow));
+    TEST_EXPECT(DrawsHoverForItem(ScrollView, Rows[0], HoverFill));
+
+    ScrollView->OnMouseScroll(MakeScrollEvent(-1.0f));
+    TEST_EXPECT(!DrawsHoverForItem(ScrollView, Rows[0], HoverFill));
+    TEST_EXPECT(DrawsHoverForItem(ScrollView, Rows[FTreeView::RowsPerWheelStep], HoverFill));
+
+    TEST_SECTION("A completed click on an expandable row opens it, not only a click on the arrow");
+    const FRectangle LabelBounds = TreeView->GetItemLabelBounds(Assets);
+    const IntVector2 LabelClick(LabelBounds.Position.X + 8, LabelBounds.Position.Y + (LabelBounds.Height / 2));
+
+    TEST_EXPECT(!Assets->bIsExpanded);
+    TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, LabelClick));
+    TreeView->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, LabelClick));
+    TEST_EXPECT(Assets->bIsExpanded);
+    TEST_EXPECT_EQ(ExpansionCount, 1);
+
+    TEST_SECTION("A press that travels far enough to become a drag does not toggle expansion");
+    const int32 CountBeforeDrag = ExpansionCount;
+    TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, LabelClick));
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(LabelClick.X + FTreeView::DragThreshold + 1, LabelClick.Y)));
+    TreeView->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(LabelClick.X + FTreeView::DragThreshold + 1, LabelClick.Y)));
+    TEST_EXPECT_EQ(DragCount, 1);
+    TEST_EXPECT_EQ(ExpansionCount, CountBeforeDrag);
+    TEST_EXPECT(Assets->bIsExpanded);
+
+    TEST_SECTION("A chord click extends the selection without toggling expansion");
+    const int32 CountBeforeChord = ExpansionCount;
+    TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, LabelClick, EModifierFlag::Ctrl));
+    TreeView->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, LabelClick, EModifierFlag::Ctrl));
+    TEST_EXPECT_EQ(ExpansionCount, CountBeforeChord);
+
+    TEST_END();
+}
+
 bool TileViewLayout_Test()
 {
     TEST_BEGIN();

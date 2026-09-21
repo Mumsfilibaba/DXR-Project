@@ -59,6 +59,7 @@ static int32 RunCoreTests()
     RUN_TEST("MemoryStack", MemoryStack_Test());
     RUN_TEST("PlatformEventPool", PlatformEventPool_Test());
     RUN_TEST("Profiler", Profiler_Test());
+    RUN_TEST("ProfilerGPUTraceSentinel", ProfilerGPUTraceSentinel_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();

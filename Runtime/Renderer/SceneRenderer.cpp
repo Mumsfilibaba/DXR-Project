@@ -594,7 +594,7 @@ void FSceneRenderer::RenderThread_BeginSceneCommandList()
     CommandList.PushEvent("Frame");
 
     // Begin capture GPU FrameTime
-    FGPUProfiler::Get().BeginGPUFrame(CommandList);
+    FGPUProfiler::Get().MarkGPUFrameBegin(CommandList);
 }
 
 void FSceneRenderer::RenderThread_RenderSceneFrame(const FSceneRenderPacket& Packet)

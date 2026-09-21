@@ -111,6 +111,7 @@ FTreeView::FTreeView()
     , TypeColumnToolTips()
     , TypeColumnToolTipSplits()
     , PressPosition()
+    , LastCursorPosition()
     , ArrowSize(16)
     , TypeColumnWidth(0)
     , HeaderHeight(FUIStyle::GetDefault().Metrics.RowHeight)
@@ -125,6 +126,8 @@ FTreeView::FTreeView()
     , bHighlightAncestors(false)
     , bAllowMultiSelect(true)
     , bFilterMatchesTypeColumn(true)
+    , bToggleExpansionOnRowClick(true)
+    , bHasCursorInside(false)
     , bRowsDirty(true)
     , bReserveIconColumn(false)
     , OnSelectionChangedDelegate()
@@ -156,6 +159,7 @@ void FTreeView::Initialize(const FDesc& Desc)
     bHighlightAncestors        = Desc.bHighlightAncestors;
     bAllowMultiSelect          = Desc.bAllowMultiSelect;
     bFilterMatchesTypeColumn   = Desc.bFilterMatchesTypeColumn;
+    bToggleExpansionOnRowClick = Desc.bToggleExpansionOnRowClick;
     OnSelectionChangedDelegate = Desc.OnSelectionChanged;
     OnItemActivatedDelegate    = Desc.OnItemActivated;
     OnExpansionChangedDelegate = Desc.OnExpansionChanged;
@@ -423,14 +427,30 @@ FEventResponse FTreeView::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 
 FEventResponse FTreeView::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 {
-    if (CursorEvent.GetKey() == Keys::MouseButtonLeft)
-    {
-        PressedRowIndex = InvalidRowIndex;
-    }
-
-    if (CursorEvent.GetKey() != Keys::MouseButtonLeft || FindRowAt(CursorEvent.GetClientPosition()) == InvalidRowIndex)
+    if (CursorEvent.GetKey() != Keys::MouseButtonLeft)
     {
         return FEventResponse::Unhandled();
+    }
+
+    const int32 ClickedRowIndex = FindRowAt(CursorEvent.GetClientPosition());
+    const int32 ReleasedOnPress = ClickedRowIndex == PressedRowIndex ? ClickedRowIndex : InvalidRowIndex;
+
+    PressedRowIndex = InvalidRowIndex;
+
+    if (ClickedRowIndex == InvalidRowIndex)
+    {
+        return FEventResponse::Unhandled();
+    }
+
+    if (bToggleExpansionOnRowClick && ReleasedOnPress != InvalidRowIndex
+        && !CursorEvent.GetModifierKeys().IsShortcutChordDown()
+        && !CursorEvent.GetModifierKeys().IsShiftDown())
+    {
+        const TSharedPtr<FTreeItem> Item = GetVisibleRows()[ReleasedOnPress];
+        if (Item->HasChildren())
+        {
+            SetItemExpanded(Item, !Item->bIsExpanded);
+        }
     }
 
     return FEventResponse::Handled();
@@ -457,7 +477,10 @@ FEventResponse FTreeView::OnMouseMove(const FCursorEvent& CursorEvent)
 {
     const IntVector2 ClientPosition = CursorEvent.GetClientPosition();
 
-    HoveredRowIndex = FindRowAt(ClientPosition);
+    LastCursorPosition = ClientPosition;
+    bHasCursorInside   = true;
+    UpdateHoveredRow();
+
     UpdateHeaderToolTip(CursorEvent);
 
     if (PressedRowIndex != InvalidRowIndex && OnDragDetectedDelegate.IsBound())
@@ -501,11 +524,16 @@ FEventResponse FTreeView::OnMouseScroll(const FCursorEvent& CursorEvent)
         ScrollBar->SetOffset(ScrollOffset);
     }
 
+    UpdateHoveredRow();
     return FEventResponse::Handled();
 }
 
-FEventResponse FTreeView::OnMouseEntered(const FCursorEvent& /* CursorEvent */)
+FEventResponse FTreeView::OnMouseEntered(const FCursorEvent& CursorEvent)
 {
+    LastCursorPosition = CursorEvent.GetClientPosition();
+    bHasCursorInside   = true;
+    UpdateHoveredRow();
+
     if (ScrollBar)
     {
         ScrollBar->SetRevealed(true);
@@ -516,8 +544,9 @@ FEventResponse FTreeView::OnMouseEntered(const FCursorEvent& /* CursorEvent */)
 
 FEventResponse FTreeView::OnMouseLeft(const FCursorEvent& /* CursorEvent */)
 {
-    HoveredRowIndex = InvalidRowIndex;
-    PressedRowIndex = InvalidRowIndex;
+    bHasCursorInside = false;
+    PressedRowIndex  = InvalidRowIndex;
+    UpdateHoveredRow();
 
     FToolTipService::Get().CancelToolTip(AsSharedPtr());
 
@@ -575,14 +604,16 @@ void FTreeView::SetRootItems(const TArray<TSharedPtr<FTreeItem>>& InRoots)
 {
     RootItems       = InRoots;
     AnchorRowIndex  = InvalidRowIndex;
-    HoveredRowIndex = InvalidRowIndex;
     PressedRowIndex = InvalidRowIndex;
     bRowsDirty      = true;
+
+    UpdateHoveredRow();
 }
 
 void FTreeView::RequestRefresh()
 {
     bRowsDirty = true;
+    UpdateHoveredRow();
 }
 
 const TArray<TSharedPtr<FTreeItem>>& FTreeView::GetVisibleRows() const
@@ -618,6 +649,7 @@ void FTreeView::SetItemExpanded(const TSharedPtr<FTreeItem>& Item, bool bExpande
     Item->bIsExpanded = bExpanded;
     bRowsDirty        = true;
 
+    UpdateHoveredRow();
     OnExpansionChangedDelegate.ExecuteIfBound(Item, bExpanded);
 }
 
@@ -625,12 +657,14 @@ void FTreeView::ExpandAll()
 {
     SetSubtreeExpanded(RootItems, true);
     bRowsDirty = true;
+    UpdateHoveredRow();
 }
 
 void FTreeView::CollapseAll()
 {
     SetSubtreeExpanded(RootItems, false);
     bRowsDirty = true;
+    UpdateHoveredRow();
 }
 
 void FTreeView::SetFilterText(const String& InFilter)
@@ -642,6 +676,7 @@ void FTreeView::SetFilterText(const String& InFilter)
 
     FilterText = InFilter;
     bRowsDirty = true;
+    UpdateHoveredRow();
 }
 
 void FTreeView::ScrollToItem(const TSharedPtr<FTreeItem>& Item)
@@ -1008,6 +1043,12 @@ int32 FTreeView::GetMaxScrollOffset() const
 void FTreeView::OnScrollBarMoved(int32 NewOffset)
 {
     ScrollOffset = Math::Clamp(NewOffset, 0, GetMaxScrollOffset());
+    UpdateHoveredRow();
+}
+
+void FTreeView::UpdateHoveredRow()
+{
+    HoveredRowIndex = bHasCursorInside ? FindRowAt(LastCursorPosition) : InvalidRowIndex;
 }
 
 void FTreeView::ApplySelectionFromClick(int32 RowIndex, const FModifierKeyState& Modifiers)
@@ -1151,4 +1192,6 @@ void FTreeView::ScrollRowIntoView(int32 RowIndex)
     {
         ScrollBar->SetOffset(ScrollOffset);
     }
+
+    UpdateHoveredRow();
 }

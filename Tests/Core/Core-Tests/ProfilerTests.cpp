@@ -450,3 +450,39 @@ bool Profiler_Test()
 
     TEST_END();
 }
+
+bool ProfilerGPUTraceSentinel_Test()
+{
+    TEST_BEGIN();
+
+    constexpr int32 InvalidScopeIndex = -1;
+    TArray<int32>   OpenTraceStack;
+
+    auto ParentOf = [&]() -> int32
+    {
+        for (int32 Index = OpenTraceStack.LastIndex(); Index >= 0; --Index)
+        {
+            if (OpenTraceStack[Index] != InvalidScopeIndex)
+            {
+                return OpenTraceStack[Index];
+            }
+        }
+
+        return InvalidScopeIndex;
+    };
+
+    TEST_SECTION("A disabled inner begin is a sentinel, so its end does not steal the outer parent");
+    OpenTraceStack.Add(0);
+    TEST_EXPECT_EQ(ParentOf(), 0);
+
+    OpenTraceStack.Add(InvalidScopeIndex);
+    TEST_EXPECT_EQ(ParentOf(), 0);
+
+    OpenTraceStack.RemoveAt(OpenTraceStack.LastIndex());
+    TEST_EXPECT_EQ(ParentOf(), 0);
+
+    OpenTraceStack.RemoveAt(OpenTraceStack.LastIndex());
+    TEST_EXPECT_EQ(ParentOf(), InvalidScopeIndex);
+
+    TEST_END();
+}

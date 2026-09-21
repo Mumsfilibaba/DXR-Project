@@ -931,7 +931,7 @@ void FApplicationRenderer::EndFrameAndPresent()
 
     if (GPUProfiler)
     {
-        GPUProfiler->EndGPUFrame(CommandList);
+        GPUProfiler->MarkGPUFrameEnd(CommandList);
     }
 
     {

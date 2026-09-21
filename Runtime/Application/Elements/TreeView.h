@@ -143,6 +143,10 @@ public:
         /** @brief Whether the filter also reads the type column, which a view of numbers wants off. */
         bool bFilterMatchesTypeColumn = true;
 
+        /** @brief Whether a completed click anywhere on a row with children opens or closes it, rather
+         * than only a click on the disclosure arrow. */
+        bool bToggleExpansionOnRowClick = true;
+
         /** @brief Fired with the whole selection after it changed. */
         FOnTreeSelectionChanged OnSelectionChanged;
 
@@ -357,6 +361,7 @@ private:
     void ExpandOrMoveToFirstChild();
     void ScrollRowIntoView(int32 RowIndex);
     void OnScrollBarMoved(int32 NewOffset);
+    void UpdateHoveredRow();
 
     TArray<TSharedPtr<FTreeItem>>         RootItems;
     TArray<TSharedPtr<FTreeItem>>         Selection;
@@ -373,6 +378,7 @@ private:
     TArray<String>                        TypeColumnToolTips;
     TArray<int32>                         TypeColumnToolTipSplits;
     IntVector2                            PressPosition;
+    IntVector2                            LastCursorPosition;
     int32                                 ArrowSize;
     int32                                 TypeColumnWidth;
     int32                                 HeaderHeight;
@@ -387,6 +393,8 @@ private:
     bool                                  bHighlightAncestors;
     bool                                  bAllowMultiSelect;
     bool                                  bFilterMatchesTypeColumn;
+    bool                                  bToggleExpansionOnRowClick;
+    bool                                  bHasCursorInside;
     mutable bool                          bRowsDirty;
     mutable bool                          bReserveIconColumn;
     FOnTreeSelectionChanged               OnSelectionChangedDelegate;

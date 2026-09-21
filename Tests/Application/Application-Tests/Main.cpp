@@ -137,6 +137,7 @@ static int32 RunApplicationTests()
     RUN_TEST("TreeViewScrolling", TreeViewScrolling_Test());
     RUN_TEST("TreeViewColumnsAndIndent", TreeViewColumnsAndIndent_Test());
     RUN_TEST("TreeViewHeaderToolTips", TreeViewHeaderToolTips_Test());
+    RUN_TEST("TreeViewHoverAndRowClick", TreeViewHoverAndRowClick_Test());
     RUN_TEST("TileViewLayout", TileViewLayout_Test());
     RUN_TEST("TileViewSelection", TileViewSelection_Test());
     RUN_TEST("TileViewDrag", TileViewDrag_Test());

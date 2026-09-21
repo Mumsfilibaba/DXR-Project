@@ -35,8 +35,10 @@ struct IGPUProfiler
     virtual void Reset()   = 0;
     virtual void Release() = 0;
 
-    virtual void BeginGPUFrame(FRHICommandList& CommandList) = 0;
-    virtual void EndGPUFrame(FRHICommandList& CommandList) = 0;
+    virtual void BeginGPUFrame() = 0;
+    virtual void EndGPUFrame() = 0;
+    virtual void MarkGPUFrameBegin(FRHICommandList& CommandList) = 0;
+    virtual void MarkGPUFrameEnd(FRHICommandList& CommandList) = 0;
     virtual void BeginGPUTrace(FRHICommandList& CommandList, const CHAR* Name) = 0;
     virtual void EndGPUTrace(FRHICommandList& CommandList, const CHAR* Name) = 0;
 

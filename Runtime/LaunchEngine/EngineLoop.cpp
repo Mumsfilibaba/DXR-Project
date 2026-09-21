@@ -17,6 +17,7 @@
 #include "Core/Misc/BuildInfo.h"
 #include "Core/Misc/FileOutputDevice.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
+#include "RendererCore/Interfaces/IGPUProfiler.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "Application/Application.h"
 #include "ApplicationRenderer/ApplicationRenderer.h"
@@ -478,11 +479,16 @@ void FEngineLoop::Tick()
         IRendererModule* RendererModule = IRendererModule::Get();
         RendererModule->FinishPreviousFrame();
 
+        IGPUProfiler& GPUProfiler = RendererModule->GetGPUProfiler();
+
         UIRenderer->EndFrameAndPresent();
+        GPUProfiler.EndGPUFrame();
 
         FApplication::Get().ProcessDeferredEvents();
 
         FEngine::Get()->Tick(DeltaTime);
+
+        GPUProfiler.BeginGPUFrame();
 
         UIRenderer->BeginFrame();
         UIRenderer->RecordWindows();

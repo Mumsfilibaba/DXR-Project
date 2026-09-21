@@ -22,6 +22,8 @@ FGPUProfiler::FGPUProfiler()
     {
         NumPendingScopes[Index]     = 0;
         PendingCpuFrameIndex[Index] = -1;
+        bFrameBeginRecorded[Index]  = false;
+        bFrameEndRecorded[Index]    = false;
     }
 }
 
@@ -54,6 +56,8 @@ void FGPUProfiler::ReleaseQueries()
 
         NumPendingScopes[Index]     = 0;
         PendingCpuFrameIndex[Index] = -1;
+        bFrameBeginRecorded[Index]  = false;
+        bFrameEndRecorded[Index]    = false;
     }
 
     for (auto ScopeQuery : ScopeQueries)
@@ -119,7 +123,9 @@ void FGPUProfiler::Reset()
         PendingCpuFrameIndex[Index] = -1;
         if (!bFrameOpen || Index != WriteIndex)
         {
-            NumPendingScopes[Index] = 0;
+            NumPendingScopes[Index]    = 0;
+            bFrameBeginRecorded[Index] = false;
+            bFrameEndRecorded[Index]   = false;
         }
     }
 
@@ -180,38 +186,52 @@ bool FGPUProfiler::GetLatestFrame(FProfilerGpuFrame& OutFrame) const
 void FGPUProfiler::CollectResults()
 {
     const int32 ReadIndex = (WriteIndex + 1) % GPU_PROFILER_BUFFER_COUNT;
-    if (!FrameBeginQuery[ReadIndex] || PendingCpuFrameIndex[ReadIndex] < 0)
+    if (PendingCpuFrameIndex[ReadIndex] < 0)
     {
         return;
     }
 
     uint64 FrameBegin = 0;
+    uint64 FrameEnd   = 0;
     float  FrameMs    = 0.0f;
 
-    if (FrameBeginQuery[ReadIndex] && FrameEndQuery[ReadIndex])
+    if (bFrameBeginRecorded[ReadIndex] && FrameBeginQuery[ReadIndex])
     {
         uint64 BeginResult = 0;
-        uint64 EndResult   = 0;
-
-        bool bBeginReady = RHI::Device->GetQueryResult(FrameBeginQuery[ReadIndex].Get(), BeginResult);
-        bool bEndReady   = RHI::Device->GetQueryResult(FrameEndQuery[ReadIndex].Get(), EndResult);
-
-        if (!bBeginReady || !bEndReady)
+        bool   bBeginReady = RHI::Device->GetQueryResult(FrameBeginQuery[ReadIndex].Get(), BeginResult);
+        if (!bBeginReady)
         {
             bBeginReady = RHI::Device->GetQueryResult(FrameBeginQuery[ReadIndex].Get(), BeginResult, EQueryResultMode::Wait);
-            bEndReady   = RHI::Device->GetQueryResult(FrameEndQuery[ReadIndex].Get(), EndResult, EQueryResultMode::Wait);
         }
 
-        if (!bBeginReady || !bEndReady)
+        if (!bBeginReady)
         {
             return;
         }
 
-        if (EndResult > BeginResult)
+        FrameBegin = BeginResult;
+    }
+
+    if (bFrameEndRecorded[ReadIndex] && FrameEndQuery[ReadIndex])
+    {
+        uint64 EndResult = 0;
+        bool   bEndReady = RHI::Device->GetQueryResult(FrameEndQuery[ReadIndex].Get(), EndResult);
+        if (!bEndReady)
         {
-            FrameBegin = BeginResult;
-            FrameMs    = static_cast<float>(Time::ToMilliseconds(static_cast<double>(EndResult - BeginResult)));
+            bEndReady = RHI::Device->GetQueryResult(FrameEndQuery[ReadIndex].Get(), EndResult, EQueryResultMode::Wait);
         }
+
+        if (!bEndReady)
+        {
+            return;
+        }
+
+        FrameEnd = EndResult;
+    }
+
+    if (bFrameBeginRecorded[ReadIndex] && bFrameEndRecorded[ReadIndex] && FrameEnd > FrameBegin)
+    {
+        FrameMs = static_cast<float>(Time::ToMilliseconds(static_cast<double>(FrameEnd - FrameBegin)));
     }
 
     const int32 NumScopes = NumPendingScopes[ReadIndex];
@@ -223,6 +243,7 @@ void FGPUProfiler::CollectResults()
     MappedIndices.Resize(NumScopes);
 
     uint64 EarliestStart = TNumericLimits<uint64>::Max();
+    uint64 LatestEnd     = 0;
     for (int32 ScopeIndex = 0; ScopeIndex < NumScopes; ++ScopeIndex)
     {
         const FGPUPendingScope& Scope = PendingScopes[ReadIndex][ScopeIndex];
@@ -294,18 +315,35 @@ void FGPUProfiler::CollectResults()
         Collected.Add(Interval);
 
         EarliestStart = Math::Min(EarliestStart, BeginResult);
+        LatestEnd     = Math::Max(LatestEnd, EndResult);
+    }
+
+    uint64 SpanBegin = EarliestStart;
+    uint64 SpanEnd   = LatestEnd;
+    if (bFrameBeginRecorded[ReadIndex] && FrameBegin != 0 && (Collected.IsEmpty() || FrameBegin <= EarliestStart))
+    {
+        SpanBegin = FrameBegin;
+    }
+
+    if (bFrameEndRecorded[ReadIndex] && FrameEnd > SpanBegin)
+    {
+        SpanEnd = FrameEnd;
     }
 
     if (!Collected.IsEmpty())
     {
-        const uint64 Base = (FrameBegin != 0 && FrameBegin <= EarliestStart) ? FrameBegin : EarliestStart;
         for (FGPUProfilerInterval& Interval : Collected)
         {
-            Interval.StartNanoseconds -= Math::Min(Interval.StartNanoseconds, Base);
-            Interval.EndNanoseconds   -= Math::Min(Interval.EndNanoseconds, Base);
+            Interval.StartNanoseconds -= Math::Min(Interval.StartNanoseconds, SpanBegin);
+            Interval.EndNanoseconds   -= Math::Min(Interval.EndNanoseconds, SpanBegin);
         }
 
         ApplyExclusiveTimesFromParentIndex(Collected);
+    }
+
+    if (FrameMs <= 0.0f && SpanEnd > SpanBegin)
+    {
+        FrameMs = static_cast<float>(Time::ToMilliseconds(static_cast<double>(SpanEnd - SpanBegin)));
     }
 
     if (FrameMs <= 0.0f && Collected.IsEmpty())
@@ -321,53 +359,83 @@ void FGPUProfiler::CollectResults()
     StoredFrames.Push(Move(Stored));
 }
 
-void FGPUProfiler::BeginGPUFrame(FRHICommandList& CmdList)
+static constexpr int32 GInvalidGPUScopeIndex = -1;
+
+void FGPUProfiler::BeginGPUFrame()
 {
     TScopedLock Lock(StateLock);
-    if (bEnabled)
+    if (!bEnabled)
     {
-        CollectResults();
-
-        WriteIndex = (WriteIndex + 1) % GPU_PROFILER_BUFFER_COUNT;
-
-        NumPendingScopes[WriteIndex]     = 0;
-        PendingCpuFrameIndex[WriteIndex] = FFrameProfiler::Get().GetLatestFinishedFrameIndex();
-
-        OpenTraceStack.Clear();
-
-        OpenPipelineStatsQuery  = nullptr;
-        PipelineStatsScopeIndex = -1;
-        bFrameOpen              = true;
-
-        if (!FrameBeginQuery[WriteIndex])
-        {
-            FrameBeginQuery[WriteIndex] = RHI::CreateQuery(EQueryType::Timestamp);
-        }
-
-        CmdList.QueryTimestamp(FrameBeginQuery[WriteIndex].Get());
+        return;
     }
+
+    CollectResults();
+
+    WriteIndex = (WriteIndex + 1) % GPU_PROFILER_BUFFER_COUNT;
+
+    NumPendingScopes[WriteIndex]     = 0;
+    PendingCpuFrameIndex[WriteIndex] = FFrameProfiler::Get().GetLatestFinishedFrameIndex();
+    bFrameBeginRecorded[WriteIndex]  = false;
+    bFrameEndRecorded[WriteIndex]    = false;
+
+    OpenTraceStack.Clear();
+
+    OpenPipelineStatsQuery  = nullptr;
+    PipelineStatsScopeIndex = -1;
+    bFrameOpen              = true;
 }
 
-void FGPUProfiler::EndGPUFrame(FRHICommandList& CmdList)
+void FGPUProfiler::EndGPUFrame()
 {
     TScopedLock Lock(StateLock);
-    if (bFrameOpen)
-    {
-        if (!FrameEndQuery[WriteIndex])
-        {
-            FrameEndQuery[WriteIndex] = RHI::CreateQuery(EQueryType::Timestamp);
-        }
+    bFrameOpen = false;
+}
 
-        CmdList.QueryTimestamp(FrameEndQuery[WriteIndex].Get());
-        bFrameOpen = false;
+void FGPUProfiler::MarkGPUFrameBegin(FRHICommandList& CmdList)
+{
+    TScopedLock Lock(StateLock);
+    if (!bFrameOpen || bFrameBeginRecorded[WriteIndex])
+    {
+        return;
     }
+
+    if (!FrameBeginQuery[WriteIndex])
+    {
+        FrameBeginQuery[WriteIndex] = RHI::CreateQuery(EQueryType::Timestamp);
+    }
+
+    CmdList.QueryTimestamp(FrameBeginQuery[WriteIndex].Get());
+    bFrameBeginRecorded[WriteIndex] = true;
+}
+
+void FGPUProfiler::MarkGPUFrameEnd(FRHICommandList& CmdList)
+{
+    TScopedLock Lock(StateLock);
+    if (!bFrameOpen)
+    {
+        return;
+    }
+
+    if (!FrameEndQuery[WriteIndex])
+    {
+        FrameEndQuery[WriteIndex] = RHI::CreateQuery(EQueryType::Timestamp);
+    }
+
+    CmdList.QueryTimestamp(FrameEndQuery[WriteIndex].Get());
+    bFrameEndRecorded[WriteIndex] = true;
 }
 
 void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
 {
     TScopedLock Lock(StateLock);
-    if (!bEnabled || !bFrameOpen)
+    if (!bFrameOpen)
     {
+        return;
+    }
+
+    if (!bEnabled)
+    {
+        OpenTraceStack.Add(GInvalidGPUScopeIndex);
         return;
     }
 
@@ -382,10 +450,20 @@ void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
         Pending.Add(NewScope);
     }
 
+    int32 ParentIndex = GInvalidGPUScopeIndex;
+    for (int32 Index = OpenTraceStack.LastIndex(); Index >= 0; --Index)
+    {
+        if (OpenTraceStack[Index] != GInvalidGPUScopeIndex)
+        {
+            ParentIndex = OpenTraceStack[Index];
+            break;
+        }
+    }
+
     FGPUPendingScope& Scope = Pending[ScopeIndex];
     Scope.Name               = Name;
-    Scope.Depth              = OpenTraceStack.Size();
-    Scope.ParentIndex        = OpenTraceStack.IsEmpty() ? -1 : OpenTraceStack.Last();
+    Scope.ParentIndex        = ParentIndex;
+    Scope.Depth              = ParentIndex >= 0 ? Pending[ParentIndex].Depth + 1 : 0;
     Scope.bOwnsPipelineStats = false;
     OpenTraceStack.Add(ScopeIndex);
 
@@ -419,7 +497,6 @@ void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
 
 void FGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const CHAR* /* Name */)
 {
-
     TScopedLock Lock(StateLock);
     if (!bFrameOpen || OpenTraceStack.IsEmpty())
     {
@@ -428,6 +505,11 @@ void FGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const CHAR* /* Name */)
 
     const int32 ScopeIndex = OpenTraceStack.Last();
     OpenTraceStack.RemoveAt(OpenTraceStack.Size() - 1);
+
+    if (ScopeIndex == GInvalidGPUScopeIndex)
+    {
+        return;
+    }
 
     if (ScopeIndex >= 0 && ScopeIndex < PendingScopes[WriteIndex].Size())
     {
