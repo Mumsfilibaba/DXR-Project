@@ -22,17 +22,17 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
+@interface NSObject (MetalRHIMeshEncode)
+- (void)drawMeshThreadgroups:(MTLSize)threadgroupsPerGrid
+threadsPerObjectThreadgroup:(MTLSize)threadsPerObjectThreadgroup
+  threadsPerMeshThreadgroup:(MTLSize)threadsPerMeshThreadgroup;
+- (void)drawMeshThreadgroupsWithIndirectBuffer:(id<MTLBuffer>)indirectBuffer
+                          indirectBufferOffset:(NSUInteger)indirectBufferOffset
+                 threadsPerObjectThreadgroup:(MTLSize)threadsPerObjectThreadgroup
+                   threadsPerMeshThreadgroup:(MTLSize)threadsPerMeshThreadgroup;
+@end
+
 static constexpr MTLRenderStages GraphicsFenceStages = MTLRenderStageVertex | MTLRenderStageFragment;
-
-static uint64 GetMetalIndirectBufferOffset(const FMetalBufferRHI* Buffer, uint64 ArgumentBufferOffset)
-{
-    if (Buffer->IsHeapPlaced())
-    {
-        return ArgumentBufferOffset;
-    }
-
-    return Buffer->GetResourceStorage().GetResourceOffset() + ArgumentBufferOffset;
-}
 
 FMetalCommandContext::FMetalCommandContext(FMetalDevice* InDevice, FMetalQueue& InQueue)
     : FMetalDeviceChild(InDevice)
@@ -1300,6 +1300,21 @@ void FMetalCommandContext::PrepareForDraw()
     FlushResidency();
 }
 
+void FMetalCommandContext::PrepareForMesh()
+{
+    CHECK(GraphicsEncoder != nil);
+
+    ContextState.PrepareGraphicsState();
+    ContextState.BindGraphicsState();
+
+    if (FMetalMeshletPipelineStateRHI* MeshletPipeline = ContextState.GetMeshletPipelineState())
+    {
+        ApplyVertexAmplification(MeshletPipeline->GetViewInstancingState());
+    }
+
+    FlushResidency();
+}
+
 void FMetalCommandContext::PrepareForDispatch()
 {
     AssertCanOpenCompute();
@@ -1683,7 +1698,16 @@ void FMetalCommandContext::ApplyVertexAmplification()
         return;
     }
 
-    const FRHIViewInstancingState& ViewInstancingState = PipelineState->GetViewInstancingState();
+    ApplyVertexAmplification(PipelineState->GetViewInstancingState());
+}
+
+void FMetalCommandContext::ApplyVertexAmplification(const FRHIViewInstancingState& ViewInstancingState)
+{
+    if (!GraphicsEncoder)
+    {
+        return;
+    }
+
     if (!ViewInstancingState.bEnableViewInstancing || ViewInstancingState.NumArraySlices == 0)
     {
         return;
@@ -1974,7 +1998,11 @@ void FMetalCommandContext::DrawIndirect(FRHIBuffer* ArgumentBuffer, uint64 Argum
     CHECK(PrimitiveType != MTLPrimitiveType(-1));
 
     id<MTLBuffer> ArgumentMTLBuffer = Arguments->GetMTLBuffer();
-    const uint64  BaseOffset        = GetMetalIndirectBufferOffset(Arguments, ArgumentBufferOffset);
+    uint64       BaseOffset        = ArgumentBufferOffset;
+    if (!Arguments->IsHeapPlaced())
+    {
+        BaseOffset += Arguments->GetResourceStorage().GetResourceOffset();
+    }
 
     for (uint32 CommandIndex = 0; CommandIndex < CommandCount; ++CommandIndex)
     {
@@ -2010,7 +2038,11 @@ void FMetalCommandContext::DrawIndexedIndirect(FRHIBuffer* ArgumentBuffer, uint6
     CHECK(PrimitiveType                != MTLPrimitiveType(-1));
 
     id<MTLBuffer> ArgumentMTLBuffer = Arguments->GetMTLBuffer();
-    const uint64  BaseOffset        = GetMetalIndirectBufferOffset(Arguments, ArgumentBufferOffset);
+    uint64       BaseOffset        = ArgumentBufferOffset;
+    if (!Arguments->IsHeapPlaced())
+    {
+        BaseOffset += Arguments->GetResourceStorage().GetResourceOffset();
+    }
 
     for (uint32 CommandIndex = 0; CommandIndex < CommandCount; ++CommandIndex)
     {
@@ -2049,8 +2081,14 @@ void FMetalCommandContext::DispatchIndirect(FRHIBuffer* ArgumentBuffer, uint64 A
         return;
     }
 
+    uint64 IndirectOffset = ArgumentBufferOffset;
+    if (!Arguments->IsHeapPlaced())
+    {
+        IndirectOffset += Arguments->GetResourceStorage().GetResourceOffset();
+    }
+
     [ComputeEncoder dispatchThreadgroupsWithIndirectBuffer:Arguments->GetMTLBuffer()
-                                      indirectBufferOffset:GetMetalIndirectBufferOffset(Arguments, ArgumentBufferOffset)
+                                      indirectBufferOffset:IndirectOffset
                                      threadsPerThreadgroup:MTLSizeMake(ThreadGroupSizeX, ThreadGroupSizeY, ThreadGroupSizeZ)];
 
     InsertDrawDispatchSignpost(@"DispatchIndirect");
@@ -2059,11 +2097,88 @@ void FMetalCommandContext::DispatchIndirect(FRHIBuffer* ArgumentBuffer, uint64 A
 
 void FMetalCommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
 {
-    UNREFERENCED_VARIABLE(ThreadGroupCountX);
-    UNREFERENCED_VARIABLE(ThreadGroupCountY);
-    UNREFERENCED_VARIABLE(ThreadGroupCountZ);
+    if (ThreadGroupCountX == 0 || ThreadGroupCountY == 0 || ThreadGroupCountZ == 0)
+    {
+        return;
+    }
 
-    METAL_ERROR("DispatchMesh: mesh shaders are not implemented by the Metal backend");
+    if (!GMetalSupportsMeshShaders)
+    {
+        METAL_ERROR("DispatchMesh: mesh shaders are not supported by this Metal device");
+        return;
+    }
+
+    PrepareForMesh();
+
+    FMetalMeshletPipelineStateRHI* PipelineState = ContextState.GetMeshletPipelineState();
+    CHECK(PipelineState != nullptr);
+    CHECK(GraphicsEncoder != nil);
+
+    const MTLSize MeshSize = PipelineState->GetMeshThreadgroupSize();
+    if (MeshSize.width == 0 || MeshSize.height == 0 || MeshSize.depth == 0)
+    {
+        METAL_ERROR("DispatchMesh requires a non-zero threadgroup size from the mesh shader");
+        return;
+    }
+
+    [GraphicsEncoder drawMeshThreadgroups:MTLSizeMake(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ)
+            threadsPerObjectThreadgroup:PipelineState->GetObjectThreadgroupSize()
+              threadsPerMeshThreadgroup:MeshSize];
+
+    InsertDrawDispatchSignpost(@"DispatchMesh");
+}
+
+void FMetalCommandContext::DispatchMeshIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount)
+{
+    CHECK(GraphicsEncoder != nil);
+
+    if (CommandCount == 0)
+    {
+        return;
+    }
+
+    if (!GMetalSupportsMeshShaders)
+    {
+        METAL_ERROR("DispatchMeshIndirect: mesh shaders are not supported by this Metal device");
+        return;
+    }
+
+    FMetalBufferRHI* Arguments = GetMetalBuffer(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    NoteBufferUse(Arguments);
+    DeclareResident(Arguments->GetMTLBuffer(), true, false);
+
+    PrepareForMesh();
+
+    FMetalMeshletPipelineStateRHI* PipelineState = ContextState.GetMeshletPipelineState();
+    CHECK(PipelineState != nullptr);
+
+    const MTLSize MeshSize = PipelineState->GetMeshThreadgroupSize();
+    if (MeshSize.width == 0 || MeshSize.height == 0 || MeshSize.depth == 0)
+    {
+        METAL_ERROR("DispatchMeshIndirect requires a non-zero threadgroup size from the mesh shader");
+        return;
+    }
+
+    id<MTLBuffer> ArgumentMTLBuffer = Arguments->GetMTLBuffer();
+    uint64       BaseOffset        = ArgumentBufferOffset;
+    if (!Arguments->IsHeapPlaced())
+    {
+        BaseOffset += Arguments->GetResourceStorage().GetResourceOffset();
+    }
+
+    const MTLSize ObjectSize = PipelineState->GetObjectThreadgroupSize();
+
+    for (uint32 CommandIndex = 0; CommandIndex < CommandCount; ++CommandIndex)
+    {
+        [GraphicsEncoder drawMeshThreadgroupsWithIndirectBuffer:ArgumentMTLBuffer
+                                          indirectBufferOffset:BaseOffset + CommandIndex * sizeof(FRHIDispatchMeshIndirectParameters)
+                                 threadsPerObjectThreadgroup:ObjectSize
+                                   threadsPerMeshThreadgroup:MeshSize];
+    }
+
+    InsertDrawDispatchSignpost(@"DispatchMeshIndirect");
 }
 
 void FMetalCommandContext::AcquireNextBackBuffer(FRHISwapChain* SwapChain)

@@ -482,7 +482,7 @@ bool FMetalDevice::QueryDeviceFeatureSupport()
     GMetalReadWriteTextureTier         = Device.readWriteTextureSupport;
     GMetalSupportsRayTracing           = Device.supportsRaytracing;
     GMetalSupportsRayTracingFromRender = Device.supportsRaytracingFromRender;
-    GMetalSupportsMeshShaders          = [Device supportsFamily:MTLGPUFamilyApple9];
+    GMetalSupportsMeshShaders          = [Device supportsFamily:MTLGPUFamilyApple7];
     GMetalSupportsUnifiedMemory        = Device.hasUnifiedMemory;
     GMetalMaxBufferLength              = static_cast<uint64>(Device.maxBufferLength);
     GMetalMaxThreadsPerThreadgroup     = static_cast<uint32>(Device.maxThreadsPerThreadgroup.width);

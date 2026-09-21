@@ -167,10 +167,10 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
     RHI::bSupportsDrawIndirect               = true;
     RHI::bSupportsDrawIndirectCount          = false;
     RHI::bSupportsDispatchIndirect           = true;
-    RHI::bSupportsDispatchMeshIndirect       = false;
+    RHI::bSupportsDispatchMeshIndirect       = GMetalSupportsMeshShaders;
     RHI::bSupportsDispatchMeshIndirectCount  = false;
     RHI::MaxDrawIndirectCommandCount         = uint32(~0u);
-    RHI::MaxDispatchMeshIndirectCommandCount = 0;
+    RHI::MaxDispatchMeshIndirectCommandCount = GMetalSupportsMeshShaders ? uint32(~0u) : 0;
 
     RHI::MaxTexture1DSize        = GMetalMaxTexture2DSize;
     RHI::MaxTexture1DArrayLayers = GMetalMaxTextureArrayLayers;

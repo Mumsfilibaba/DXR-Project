@@ -17,6 +17,7 @@
 
 #if PLATFORM_MACOS
 #include <MetalRHI/MetalBindlessDescriptors.h>
+#include <MetalRHI/MetalCapabilities.h>
 #include <MetalRHI/MetalCommandContext.h>
 #include <MetalRHI/MetalDeviceDebug.h>
 #include <MetalRHI/MetalPipelineState.h>
@@ -406,6 +407,9 @@ static bool ProbeShaders()
 
 static bool ProbeTimestamps();
 static bool ProbeIndirectCommands();
+#if PLATFORM_MACOS
+static bool ProbeDispatchMesh();
+#endif
 
 static bool ProbeCommandRecording()
 {
@@ -728,6 +732,9 @@ static bool ProbeCommandRecording()
 
             TEST_SECTION("Indirect draw, indexed draw and dispatch");
             TEST_EXPECT(ProbeIndirectCommands());
+
+            TEST_SECTION("Mesh dispatch");
+            TEST_EXPECT(ProbeDispatchMesh());
 
             FShaderCompiler::Destroy();
         }
@@ -1083,6 +1090,198 @@ static bool ProbeIndirectCommands()
 
     TEST_END();
 }
+
+#if PLATFORM_MACOS
+static bool ProbeDispatchMesh()
+{
+    TEST_BEGIN();
+
+    if (!GMetalSupportsMeshShaders)
+    {
+        TEST_END();
+        return true;
+    }
+
+    const String MeshSource(
+        "struct VertexOut\n"
+        "{\n"
+        "    float4 Position : SV_Position;\n"
+        "};\n"
+        "\n"
+        "[outputtopology(\"triangle\")]\n"
+        "[numthreads(1, 1, 1)]\n"
+        "void Main(out vertices VertexOut Verts[3], out indices uint3 Tris[1])\n"
+        "{\n"
+        "    SetMeshOutputCounts(3, 1);\n"
+        "    Verts[0].Position = float4(-1.0, -1.0, 0.0, 1.0);\n"
+        "    Verts[1].Position = float4( 3.0, -1.0, 0.0, 1.0);\n"
+        "    Verts[2].Position = float4(-1.0,  3.0, 0.0, 1.0);\n"
+        "    Tris[0] = uint3(0, 1, 2);\n"
+        "}\n");
+
+    const String PixelSource(
+        "float4 Main() : SV_Target\n"
+        "{\n"
+        "    return float4(1.0, 0.0, 0.0, 1.0);\n"
+        "}\n");
+
+    TArray<uint8> MeshByteCode;
+    TArray<uint8> PixelByteCode;
+    const FShaderCompileInfo MeshCompileInfo("Main", EShaderModel::SM_6_5, EShaderStage::Mesh);
+    const FShaderCompileInfo PixelCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
+    const bool bMeshCompiled  = FShaderCompiler::Get().CompileFromSource(MeshSource, MeshCompileInfo, MeshByteCode);
+    const bool bPixelCompiled = FShaderCompiler::Get().CompileFromSource(PixelSource, PixelCompileInfo, PixelByteCode);
+    TEST_EXPECT(bMeshCompiled);
+    TEST_EXPECT(bPixelCompiled);
+
+    FRHIMeshShaderRef            MeshShader;
+    FRHIPixelShaderRef           PixelShader;
+    FRHIMeshletPipelineStateRef  MeshletPipeline;
+    FRHIDepthStencilStateRef     DepthStencilState;
+    FRHIRasterizerStateRef       RasterizerState;
+    FRHIBlendStateRef            BlendState;
+    if (bMeshCompiled && bPixelCompiled)
+    {
+        MeshShader  = RHI::CreateMeshShader(MeshByteCode);
+        PixelShader = RHI::CreatePixelShader(PixelByteCode);
+        if (!MeshShader)
+        {
+            TEST_END();
+            return true;
+        }
+
+        FRHIRasterizerStateDesc RasterizerDesc;
+        RasterizerDesc.CullMode = ECullMode::None;
+
+        FRHIDepthStencilStateDesc DepthStencilDesc;
+        DepthStencilDesc.bDepthEnable      = false;
+        DepthStencilDesc.bDepthWriteEnable = false;
+
+        DepthStencilState = RHI::CreateDepthStencilState(DepthStencilDesc);
+        RasterizerState   = RHI::CreateRasterizerState(RasterizerDesc);
+        BlendState        = RHI::CreateBlendState(FRHIBlendStateDesc());
+
+        FRHIMeshletPipelineStateDesc MeshletDesc;
+        MeshletDesc.MeshShader                                    = MeshShader.Get();
+        MeshletDesc.PixelShader                                   = PixelShader.Get();
+        MeshletDesc.DepthStencilState                             = DepthStencilState.Get();
+        MeshletDesc.RasterizerState                               = RasterizerState.Get();
+        MeshletDesc.BlendState                                    = BlendState.Get();
+        MeshletDesc.RasterizerOutputFormats.NumRenderTargets      = 1;
+        MeshletDesc.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
+        MeshletPipeline = RHI::CreateMeshletPipelineState(MeshletDesc);
+        if (!MeshletPipeline)
+        {
+            TEST_END();
+            return true;
+        }
+    }
+
+    auto ExpectRedPixel = [](FRHIBuffer* ReadbackBuffer) -> bool
+    {
+        const uint8* Mapped = static_cast<const uint8*>(ReadbackBuffer->Map());
+        const bool   bRed   = Mapped && Mapped[0] == 255 && Mapped[1] == 0 && Mapped[2] == 0;
+        if (Mapped)
+        {
+            ReadbackBuffer->Unmap();
+        }
+
+        return bRed;
+    };
+
+    auto RecordMeshPass = [&](FRHICommandList& CommandList, FRHITexture* RenderTarget, auto&& DispatchFn)
+    {
+        FRHIBeginRenderPassDesc::FRenderTargetAttachments Attachments;
+        Attachments[0] = FRHIRenderTargetAttachment(
+            RenderTarget->GetRenderTargetView(),
+            EAttachmentLoadAction::Clear,
+            EAttachmentStoreAction::Store);
+
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(
+            RenderTarget, ERHIResourceState::Common, ERHIResourceState::RenderTarget));
+        CommandList.BeginRenderPass(FRHIBeginRenderPassDesc(Attachments, 1));
+        CommandList.SetMeshletPipelineState(MeshletPipeline.Get());
+        CommandList.SetViewport(FViewportRegion(4.0f, 4.0f, 0.0f, 0.0f, 0.0f, 1.0f));
+        DispatchFn(CommandList);
+        CommandList.EndRenderPass();
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(
+            RenderTarget, ERHIResourceState::RenderTarget, ERHIResourceState::CopySource));
+    };
+
+    if (MeshletPipeline)
+    {
+        TEST_SECTION("DispatchMesh writes a red pixel");
+        {
+            FRHITextureRef RenderTarget = RHI::CreateTexture(FRHITextureDesc::CreateTexture2D(
+                EFormat::R8G8B8A8_Unorm, 4, 4, 1, 1,
+                ETextureUsageFlags::RenderTarget | ETextureUsageFlags::CopySource));
+            FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(256));
+            TEST_EXPECT(RenderTarget != nullptr);
+            TEST_EXPECT(ReadbackBuffer != nullptr);
+
+            if (RenderTarget && RenderTarget->GetRenderTargetView() && ReadbackBuffer)
+            {
+                FRHIFenceRef Fence = RHI::CreateFence();
+                FRHICommandList CommandList;
+                RecordMeshPass(CommandList, RenderTarget.Get(), [](FRHICommandList& List)
+                {
+                    List.DispatchMesh(1, 1, 1);
+                });
+                CommandList.CopyTextureRegionToBuffer(ReadbackBuffer.Get(), 0, RenderTarget.Get(), FTextureRegion2D(1, 1), 0);
+                CommandList.WriteFence(Fence.Get());
+                FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+                FRHICommandListExecutor::Get().WaitForCommands();
+                TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
+                TEST_EXPECT(ExpectRedPixel(ReadbackBuffer.Get()));
+            }
+        }
+
+        TEST_SECTION("DispatchMeshIndirect fills a render target from GPU arguments");
+        {
+            FRHIDispatchMeshIndirectParameters Args;
+            Args.ThreadGroupCountX = 1;
+            Args.ThreadGroupCountY = 1;
+            Args.ThreadGroupCountZ = 1;
+
+            FRHIBufferRef ArgumentBuffer = RHI::CreateBuffer(FRHIBufferDesc(
+                EBufferFlags::Default | EBufferFlags::IndirectArguments | EBufferFlags::CopyDest,
+                sizeof(FRHIDispatchMeshIndirectParameters),
+                sizeof(FRHIDispatchMeshIndirectParameters)));
+            TEST_EXPECT(ArgumentBuffer != nullptr);
+
+            FRHITextureRef RenderTarget = RHI::CreateTexture(FRHITextureDesc::CreateTexture2D(
+                EFormat::R8G8B8A8_Unorm, 4, 4, 1, 1,
+                ETextureUsageFlags::RenderTarget | ETextureUsageFlags::CopySource));
+            FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(256));
+            TEST_EXPECT(RenderTarget != nullptr);
+            TEST_EXPECT(ReadbackBuffer != nullptr);
+
+            if (ArgumentBuffer && RenderTarget && RenderTarget->GetRenderTargetView() && ReadbackBuffer)
+            {
+                FRHIFenceRef Fence = RHI::CreateFence();
+                FRHICommandList CommandList;
+                CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(
+                    ArgumentBuffer.Get(), ERHIResourceState::Common, ERHIResourceState::CopyDest));
+                CommandList.UpdateBuffer(ArgumentBuffer.Get(), FBufferRegion(0, sizeof(Args)), &Args);
+                CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(
+                    ArgumentBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::IndirectArgument));
+                RecordMeshPass(CommandList, RenderTarget.Get(), [&](FRHICommandList& List)
+                {
+                    List.DispatchMeshIndirect(ArgumentBuffer.Get(), 0, 1);
+                });
+                CommandList.CopyTextureRegionToBuffer(ReadbackBuffer.Get(), 0, RenderTarget.Get(), FTextureRegion2D(1, 1), 0);
+                CommandList.WriteFence(Fence.Get());
+                FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+                FRHICommandListExecutor::Get().WaitForCommands();
+                TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
+                TEST_EXPECT(ExpectRedPixel(ReadbackBuffer.Get()));
+            }
+        }
+    }
+
+    TEST_END();
+}
+#endif
 
 static bool ProbeTimestamps()
 {
@@ -1548,13 +1747,25 @@ static bool ProbeCapabilityHonesty(ERHIType ExpectedType)
         TEST_SECTION("Metal reports timestamp queries when the device has a timestamp counter set");
         TEST_EXPECT(RHI::bSupportsTimestampQueries);
 
-        TEST_SECTION("Metal reports draw and dispatch indirect as supported, count and mesh as not");
+        TEST_SECTION("Metal reports draw and dispatch indirect as supported; mesh-indirect follows the family flag; count stays off");
         TEST_EXPECT(RHI::bSupportsDrawIndirect);
         TEST_EXPECT(RHI::bSupportsDispatchIndirect);
         TEST_EXPECT(RHI::bSupportsDrawIndirectCount == false);
-        TEST_EXPECT(RHI::bSupportsDispatchMeshIndirect == false);
         TEST_EXPECT(RHI::bSupportsDispatchMeshIndirectCount == false);
         TEST_EXPECT(RHI::MaxDrawIndirectCommandCount > 0);
+#if PLATFORM_MACOS
+        TEST_EXPECT(RHI::bSupportsDispatchMeshIndirect == GMetalSupportsMeshShaders);
+        if (GMetalSupportsMeshShaders)
+        {
+            TEST_EXPECT(RHI::MaxDispatchMeshIndirectCommandCount > 0);
+        }
+        else
+        {
+            TEST_EXPECT(RHI::MaxDispatchMeshIndirectCommandCount == 0);
+        }
+#else
+        TEST_EXPECT(RHI::bSupportsDispatchMeshIndirect == false);
+#endif
 
         TEST_SECTION("Metal overwrites Null leftover capability flags");
         TEST_EXPECT(RHI::bSupportsGeometryShaders == false);

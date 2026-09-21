@@ -335,6 +335,18 @@ public:
         return PipelineState;
     }
 
+    /** @return Mesh-shader threadgroup size from the MSL header. */
+    MTLSize GetMeshThreadgroupSize() const
+    {
+        return MTLSizeMake(MeshThreadGroupSizeX, MeshThreadGroupSizeY, MeshThreadGroupSizeZ);
+    }
+
+    /** @return Object-shader threadgroup size, or {0,0,0} when there is no amplification shader. */
+    MTLSize GetObjectThreadgroupSize() const
+    {
+        return MTLSizeMake(ObjectThreadGroupSizeX, ObjectThreadGroupSizeY, ObjectThreadGroupSizeZ);
+    }
+
     const FRHIViewInstancingState& GetViewInstancingState() const
     {
         return Desc.ViewInstancingState;
@@ -353,6 +365,12 @@ private:
     id<MTLRenderPipelineState>             PipelineState;
     FMetalPipelineBindingLayout            Bindings;
     TArray<FMetalStaticSamplerBinding>     StaticSamplers;
+    uint16                                 MeshThreadGroupSizeX;
+    uint16                                 MeshThreadGroupSizeY;
+    uint16                                 MeshThreadGroupSizeZ;
+    uint16                                 ObjectThreadGroupSizeX;
+    uint16                                 ObjectThreadGroupSizeY;
+    uint16                                 ObjectThreadGroupSizeZ;
     String                                 DebugName;
 };
 

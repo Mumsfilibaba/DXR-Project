@@ -6,6 +6,7 @@
 #include "RHI/MSLShaderBindings.h"
 #include "RHI/RHISamplerState.h"
 #include "RHI/RHI.h"
+#include <objc/message.h>
 
 static NSString* PipelineDebugLabel(const String& Name, NSString* Fallback)
 {
@@ -913,6 +914,12 @@ FMetalMeshletPipelineStateRHI::FMetalMeshletPipelineStateRHI(FMetalDevice* InDev
     , DepthStencilState(nullptr)
     , RasterizerState(nullptr)
     , PipelineState(nil)
+    , MeshThreadGroupSizeX(0)
+    , MeshThreadGroupSizeY(0)
+    , MeshThreadGroupSizeZ(0)
+    , ObjectThreadGroupSizeX(0)
+    , ObjectThreadGroupSizeY(0)
+    , ObjectThreadGroupSizeZ(0)
 {
 }
 
@@ -942,6 +949,10 @@ bool FMetalMeshletPipelineStateRHI::Initialize()
         METAL_ERROR("Mesh Shader cannot be nullptr");
         return false;
     }
+
+    MeshThreadGroupSizeX = MeshShader->GetThreadGroupSizeX();
+    MeshThreadGroupSizeY = MeshShader->GetThreadGroupSizeY();
+    MeshThreadGroupSizeZ = MeshShader->GetThreadGroupSizeZ();
 
     DepthStencilState = MakeSharedRef<FMetalDepthStencilStateRHI>(Desc.DepthStencilState);
     if (!DepthStencilState)
@@ -994,6 +1005,9 @@ bool FMetalMeshletPipelineStateRHI::Initialize()
     if (FMetalShader* AmplificationShader = GetMetalShader(Desc.AmplificationShader))
     {
         Descriptor.objectFunction = AmplificationShader->GetMTLFunction();
+        ObjectThreadGroupSizeX    = AmplificationShader->GetThreadGroupSizeX();
+        ObjectThreadGroupSizeY    = AmplificationShader->GetThreadGroupSizeY();
+        ObjectThreadGroupSizeZ    = AmplificationShader->GetThreadGroupSizeZ();
         if (!Bindings.Collect(AmplificationShader->GetBindings(), EShaderVisibility::Amplification, AmplificationShader->GetShaderConstantsSize()))
         {
             [Descriptor release];
@@ -1033,8 +1047,21 @@ bool FMetalMeshletPipelineStateRHI::Initialize()
 
     Descriptor.label = PipelineDebugLabel(DebugName, @"MeshletPSO");
 
-    NSError* Error = nil;
-    PipelineState = [GetDevice()->GetMTLDevice() newRenderPipelineStateWithMeshDescriptor:Descriptor error:&Error];
+    NSError*      Error     = nil;
+    id<MTLDevice> MTLDevice = GetDevice()->GetMTLDevice();
+    const SEL     Selector  = NSSelectorFromString(@"newRenderPipelineStateWithMeshDescriptor:error:");
+    if ([MTLDevice respondsToSelector:Selector])
+    {
+        typedef id<MTLRenderPipelineState> (*CreateFn)(id, SEL, MTLMeshRenderPipelineDescriptor*, NSError**);
+        PipelineState = ((CreateFn)objc_msgSend)(MTLDevice, Selector, Descriptor, &Error);
+    }
+    else
+    {
+        Error = [NSError errorWithDomain:@"MetalRHI"
+                                    code:0
+                                userInfo:@{ NSLocalizedDescriptionKey: @"MTLDevice does not implement newRenderPipelineStateWithMeshDescriptor:error:" }];
+    }
+
     [Descriptor release];
 
     if (PipelineState == nil)

@@ -5,6 +5,7 @@
 #include "Core/Templates/Utility/NonCopyable.h"
 #include "Core/Threading/Atomic/AtomicInt.h"
 #include "RHI/IRHICommandContext.h"
+#include "RHI/RHIPipelineState.h"
 #include "MetalRHI/MetalCommandContextState.h"
 #include "MetalRHI/MetalConfiguration.h"
 #include "MetalRHI/MetalQueue.h"
@@ -125,7 +126,7 @@ public:
     virtual void DrawIndexedIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) override final;
     virtual void DrawIndexedIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount) override final { }
     virtual void DispatchIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset) override final;
-    virtual void DispatchMeshIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) override final { }
+    virtual void DispatchMeshIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) override final;
     virtual void DispatchMeshIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount) override final { }
     virtual void SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings) override final { }
     virtual void BuildShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable) override final { }
@@ -218,6 +219,7 @@ public:
 
 private:
     void PrepareForDraw();
+    void PrepareForMesh();
     void PrepareForDispatch();
 
     void StartCopyEncoder(bool bRouteToCopyQueue);
@@ -230,6 +232,7 @@ private:
     bool SampleTimestamp(FMetalQueryRHI& Query);
     void AddPendingQuery(FMetalQueryRHI* Query);
     void ApplyVertexAmplification();
+    void ApplyVertexAmplification(const FRHIViewInstancingState& ViewInstancingState);
     void ApplyEncoderLabel(id<MTLCommandEncoder> Encoder, NSString* Kind);
     void InsertDrawDispatchSignpost(NSString* Name);
 
