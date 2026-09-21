@@ -13,7 +13,8 @@ FMetalBufferRHI::FMetalBufferRHI(FMetalDevice* InDevice, const FRHIBufferDesc& I
     , Buffer(nil)
     , ResourceStorage(InDevice)
     , BindlessHandle()
-    , LastWriteValue(0)
+    , LastUsedQueue(nullptr)
+    , LastUsedValue(0)
 {
 }
 
@@ -88,19 +89,22 @@ void* FMetalBufferRHI::Map(uint64 Offset, uint64 Size)
 
     if (Desc.IsReadBack())
     {
-        FMetalQueue* Queue = GetDevice()->GetQueue();
-        if (LastWriteValue > 0)
+        FMetalQueue* WaitQueue = LastUsedQueue ? LastUsedQueue : GetDevice()->GetQueue();
+        if (LastUsedValue > 0)
         {
-            Queue->WaitForValue(LastWriteValue);
+            WaitQueue->WaitForValue(LastUsedValue);
         }
         else
         {
-            Queue->WaitForCompletion();
+            WaitQueue->WaitForCompletion();
         }
 
-        if (FMetalQueue* CopyQueue = GetDevice()->GetQueue(EMetalQueueType::Copy))
+        if (WaitQueue != GetDevice()->GetQueue(EMetalQueueType::Copy))
         {
-            CopyQueue->WaitForCompletion();
+            if (FMetalQueue* CopyQueue = GetDevice()->GetQueue(EMetalQueueType::Copy))
+            {
+                CopyQueue->WaitForCompletion();
+            }
         }
     }
 
@@ -176,7 +180,9 @@ bool FMetalBufferRHI::Initialize(ERHIResourceState InInitialAccess, const void* 
                                destinationOffset:ResourceStorage.GetResourceOffset()
                                             size:Desc.Size];
 
-    LastWriteValue = UploadBatch.Submit();
+    LastUsedValue = UploadBatch.Submit();
+    LastUsedQueue = GetDevice()->GetQueue(EMetalQueueType::Copy);
+    ResourceStorage.StampLastUse(LastUsedQueue, LastUsedValue);
     return true;
 }
 
@@ -204,6 +210,13 @@ void FMetalBufferRHI::GetDebugName(String& OutDebugName) const
             OutDebugName = String(BufferHandle.label);
         }
     }
+}
+
+void FMetalBufferRHI::StampLastUse(FMetalQueue* InQueue, uint64 InValue)
+{
+    LastUsedQueue = InQueue;
+    LastUsedValue = InValue;
+    ResourceStorage.StampLastUse(InQueue, InValue);
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

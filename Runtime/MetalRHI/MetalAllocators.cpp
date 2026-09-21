@@ -72,7 +72,7 @@ bool FMetalHeapPool::TryAllocate(uint64 SizeInBytes, uint64 Alignment, uint32& O
     return true;
 }
 
-void FMetalHeapPool::Deallocate(uint32 HeapIndex, uint64 Offset, uint64 Size)
+void FMetalHeapPool::Deallocate(uint32 HeapIndex, uint64 Offset, uint64 Size, FMetalQueue* LastUsedQueue, uint64 LastUsedValue)
 {
     TScopedLock Lock(PoolCS);
 
@@ -80,7 +80,7 @@ void FMetalHeapPool::Deallocate(uint32 HeapIndex, uint64 Offset, uint64 Size)
     PendingFree.HeapIndex = HeapIndex;
     PendingFree.Offset    = Offset;
     PendingFree.Size      = Size;
-    StampPendingHeapFree(PendingFree);
+    StampPendingHeapFree(PendingFree, LastUsedQueue, LastUsedValue);
     PendingHeapFrees.Add(PendingFree);
 }
 
@@ -247,8 +247,10 @@ void FMetalHeapPool::ReturnHeapRange(uint32 HeapIndex, uint64 Offset, uint64 Siz
     }
 }
 
-void FMetalHeapPool::StampPendingHeapFree(FPendingHeapFree& PendingFree) const
+void FMetalHeapPool::StampPendingHeapFree(FPendingHeapFree& PendingFree, FMetalQueue* LastUsedQueue, uint64 LastUsedValue) const
 {
+    PendingFree.LastUsedQueue     = LastUsedQueue;
+    PendingFree.LastUsedValue     = LastUsedValue;
     PendingFree.DirectFenceValue  = GetLastSubmittedValue(GetDevice()->GetQueue(EMetalQueueType::Direct));
     PendingFree.ComputeFenceValue = GetLastSubmittedValue(GetDevice()->GetQueue(EMetalQueueType::Compute));
     PendingFree.CopyFenceValue    = GetLastSubmittedValue(GetDevice()->GetQueue(EMetalQueueType::Copy));
@@ -265,6 +267,11 @@ bool FMetalHeapPool::IsHeapFreeEligible(const FPendingHeapFree& PendingFree) con
 
         return Queue->GetCompletedValue() >= Value;
     };
+
+    if (PendingFree.LastUsedQueue && PendingFree.LastUsedValue > 0)
+    {
+        return IsComplete(PendingFree.LastUsedQueue, PendingFree.LastUsedValue);
+    }
 
     return IsComplete(GetDevice()->GetQueue(EMetalQueueType::Direct), PendingFree.DirectFenceValue)
         && IsComplete(GetDevice()->GetQueue(EMetalQueueType::Compute), PendingFree.ComputeFenceValue)
@@ -776,7 +783,7 @@ void FMetalBufferAllocator::Deallocate(FMetalResourceStorage& Storage)
 {
     if (Storage.GetStorageType() == EMetalResourceStorageType::SuballocatedHeap)
     {
-        HeapPool.Deallocate(Storage.GetHeapIndex(), Storage.GetResourceOffset(), Storage.GetSize());
+        HeapPool.Deallocate(Storage.GetHeapIndex(), Storage.GetResourceOffset(), Storage.GetSize(), Storage.GetLastUsedQueue(), Storage.GetLastUsedValue());
     }
 }
 
@@ -861,7 +868,7 @@ void FMetalTextureAllocator::Deallocate(FMetalResourceStorage& Storage)
 {
     if (Storage.GetStorageType() == EMetalResourceStorageType::SuballocatedHeap)
     {
-        HeapPool.Deallocate(Storage.GetHeapIndex(), Storage.GetResourceOffset(), Storage.GetSize());
+        HeapPool.Deallocate(Storage.GetHeapIndex(), Storage.GetResourceOffset(), Storage.GetSize(), Storage.GetLastUsedQueue(), Storage.GetLastUsedValue());
     }
 }
 

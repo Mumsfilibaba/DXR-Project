@@ -94,7 +94,12 @@ FMetalDeviceRHI::~FMetalDeviceRHI()
 
     FlushDeferredDeletions();
     BufferClearPipelines.Release();
-    SAFE_DELETE(CommandContext);
+
+    if (CommandContext && Device)
+    {
+        Device->GetQueue(EMetalQueueType::Direct)->ReleaseCommandContext(CommandContext);
+        CommandContext = nullptr;
+    }
 
     {
         TScopedLock Lock(SamplerStateMapCS);
@@ -214,8 +219,8 @@ bool FMetalDeviceRHI::Initialize()
 
     METAL_INFO("Created FMetalDevice");
 
-    CommandContext = new FMetalCommandContext(Device);
-    if (!CommandContext->Initialize())
+    CommandContext = Device->GetQueue(EMetalQueueType::Direct)->ObtainCommandContext();
+    if (!CommandContext)
     {
         METAL_ERROR("Failed to initialize FMetalCommandContext");
         return false;
@@ -726,7 +731,7 @@ bool FMetalDeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQuery
 
     if (!MetalQuery->bResolved)
     {
-        FMetalQueue* Queue = Device->GetQueue();
+        FMetalQueue* Queue = MetalQuery->SubmittedQueue ? MetalQuery->SubmittedQueue : Device->GetQueue();
         if (Mode == EQueryResultMode::Wait)
         {
             if (MetalQuery->SubmissionValue != 0)

@@ -7,6 +7,7 @@ class FMetalLinearAllocator;
 class FMetalBufferAllocator;
 class FMetalTextureAllocator;
 class FMetalUploadHeapAllocator;
+class FMetalQueue;
 
 enum class EMetalResourceStorageType : uint8
 {
@@ -90,6 +91,18 @@ public:
         return HeapIndex;
     }
 
+    void StampLastUse(FMetalQueue* InQueue, uint64 InValue);
+
+    FORCEINLINE FMetalQueue* GetLastUsedQueue() const
+    {
+        return LastUsedQueue;
+    }
+
+    FORCEINLINE uint64 GetLastUsedValue() const
+    {
+        return LastUsedValue;
+    }
+
 private:
     void ReleaseOwnedResource();
 
@@ -116,4 +129,6 @@ private:
     uint32                    HeapIndex;
     EMetalResourceStorageType StorageType;
     EMetalAllocatorType       AllocatorType;
+    FMetalQueue*              LastUsedQueue;
+    uint64                    LastUsedValue;
 };

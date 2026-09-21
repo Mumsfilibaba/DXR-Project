@@ -16,8 +16,10 @@
 
 #if PLATFORM_MACOS
 #include <MetalRHI/MetalBindlessDescriptors.h>
+#include <MetalRHI/MetalCommandContext.h>
 #include <MetalRHI/MetalDeviceDebug.h>
 #include <MetalRHI/MetalPipelineState.h>
+#include <MetalRHI/MetalQueue.h>
 #include <MetalRHI/MetalRHI.h>
 #include <MetalRHI/MetalTexture.h>
 #include <RHI/MSLShaderBindings.h>
@@ -781,6 +783,154 @@ static bool ProbeTimestamps()
 }
 
 #if PLATFORM_MACOS
+static bool ProbeCopyQueue()
+{
+    TEST_BEGIN();
+
+    TEST_SECTION("Command-list copy then GPU readback");
+    {
+        const uint32 SourceValue = 0xA1B2C3D4u;
+        FRHIBufferRef SourceBuffer = RHI::CreateBuffer(
+            FRHIBufferDesc(EBufferFlags::Default | EBufferFlags::CopySource | EBufferFlags::CopyDest, sizeof(uint32), sizeof(uint32)));
+        TEST_EXPECT(SourceBuffer != nullptr);
+
+        FRHIBufferRef DestBuffer = RHI::CreateBuffer(
+            FRHIBufferDesc(EBufferFlags::Default | EBufferFlags::CopyDest | EBufferFlags::CopySource, sizeof(uint32), sizeof(uint32)));
+        TEST_EXPECT(DestBuffer != nullptr);
+
+        FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(sizeof(uint32)));
+        TEST_EXPECT(ReadbackBuffer != nullptr);
+
+        if (SourceBuffer && DestBuffer && ReadbackBuffer)
+        {
+            FRHIFenceRef Fence = RHI::CreateFence();
+            FRHICommandList CommandList;
+            CommandList.UpdateBuffer(SourceBuffer.Get(), FBufferRegion(0, sizeof(uint32)), &SourceValue);
+            CommandList.CopyBuffer(DestBuffer.Get(), SourceBuffer.Get(), FRHIBufferCopyDesc(0, 0, sizeof(uint32)));
+            CommandList.CopyBuffer(ReadbackBuffer.Get(), DestBuffer.Get(), FRHIBufferCopyDesc(0, 0, sizeof(uint32)));
+            CommandList.WriteFence(Fence.Get());
+            FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+            FRHICommandListExecutor::Get().WaitForCommands();
+            TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
+
+            const uint32* Mapped = static_cast<const uint32*>(ReadbackBuffer->Map());
+            TEST_EXPECT(Mapped != nullptr);
+            if (Mapped)
+            {
+                TEST_EXPECT_EQ(*Mapped, SourceValue);
+                ReadbackBuffer->Unmap();
+            }
+        }
+    }
+
+    TEST_SECTION("Deferred delete after Copy submit recycles after Copy completion");
+    {
+        const uint32 SourceValue = 7u;
+        FRHIBufferRef Transient = RHI::CreateBuffer(
+            FRHIBufferDesc(EBufferFlags::Default | EBufferFlags::CopySource, sizeof(uint32), sizeof(uint32)),
+            ERHIResourceState::Common,
+            &SourceValue);
+        TEST_EXPECT(Transient != nullptr);
+
+        FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(sizeof(uint32)));
+        TEST_EXPECT(ReadbackBuffer != nullptr);
+
+        if (Transient && ReadbackBuffer)
+        {
+            FRHIFenceRef Fence = RHI::CreateFence();
+            FRHICommandList CommandList;
+            CommandList.CopyBuffer(ReadbackBuffer.Get(), Transient.Get(), FRHIBufferCopyDesc(0, 0, sizeof(uint32)));
+            CommandList.WriteFence(Fence.Get());
+            FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+            FRHICommandListExecutor::Get().WaitForCommands();
+            TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
+
+            Transient.Reset();
+            FRHICommandListExecutor::Get().WaitForGPU();
+
+            FRHIBufferRef Replacement = RHI::CreateBuffer(
+                FRHIBufferDesc(EBufferFlags::Default | EBufferFlags::CopySource, sizeof(uint32), sizeof(uint32)),
+                ERHIResourceState::Common,
+                &SourceValue);
+            TEST_EXPECT(Replacement != nullptr);
+        }
+    }
+
+    TEST_END();
+}
+
+static bool ProbeParallelRender()
+{
+    TEST_BEGIN();
+    TEST_SECTION("Parallel render encoder clears a render target");
+
+    FMetalDeviceRHI* MetalDeviceRHI = FMetalDeviceRHI::Get();
+    TEST_EXPECT(MetalDeviceRHI != nullptr);
+    if (!MetalDeviceRHI)
+    {
+        TEST_END();
+    }
+
+    FMetalQueue* DirectQueue = MetalDeviceRHI->GetMetalDevice()->GetQueue(EMetalQueueType::Direct);
+    TEST_EXPECT(DirectQueue != nullptr);
+    if (!DirectQueue)
+    {
+        TEST_END();
+    }
+
+    FRHITextureRef RenderTarget = RHI::CreateTexture(FRHITextureDesc::CreateTexture2D(
+        EFormat::R8G8B8A8_Unorm, 4, 4, 1, 1,
+        ETextureUsageFlags::RenderTarget | ETextureUsageFlags::CopySource));
+    TEST_EXPECT(RenderTarget != nullptr);
+    TEST_EXPECT(RenderTarget && RenderTarget->GetRenderTargetView() != nullptr);
+
+    FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(256));
+    TEST_EXPECT(ReadbackBuffer != nullptr);
+
+    if (RenderTarget && RenderTarget->GetRenderTargetView() && ReadbackBuffer)
+    {
+        {
+            FMetalScopedCommandContext Context(*DirectQueue);
+            FRHIBeginRenderPassDesc::FRenderTargetAttachments Attachments;
+            Attachments[0] = FRHIRenderTargetAttachment(
+                RenderTarget->GetRenderTargetView(),
+                EAttachmentLoadAction::Clear,
+                EAttachmentStoreAction::Store,
+                FFloatColor(1.0f, 0.0f, 0.0f, 1.0f));
+
+            Context->BeginParallelRenderPass(FRHIBeginRenderPassDesc(Attachments, 1));
+            FMetalCommandContext* ChildContext = Context->ObtainParallelChildContext();
+            TEST_EXPECT(ChildContext != nullptr);
+            if (ChildContext)
+            {
+                Context->ReleaseParallelChildContext(ChildContext);
+            }
+
+            Context->EndParallelRenderPass();
+        }
+
+        FRHIFenceRef Fence = RHI::CreateFence();
+        FRHICommandList CommandList;
+        CommandList.CopyTextureRegionToBuffer(ReadbackBuffer.Get(), 0, RenderTarget.Get(), FTextureRegion2D(1, 1), 0);
+        CommandList.WriteFence(Fence.Get());
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+        FRHICommandListExecutor::Get().WaitForCommands();
+        TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
+
+        const uint8* Mapped = static_cast<const uint8*>(ReadbackBuffer->Map());
+        TEST_EXPECT(Mapped != nullptr);
+        if (Mapped)
+        {
+            TEST_EXPECT_EQ(Mapped[0], static_cast<uint8>(255));
+            TEST_EXPECT_EQ(Mapped[1], static_cast<uint8>(0));
+            TEST_EXPECT_EQ(Mapped[2], static_cast<uint8>(0));
+            ReadbackBuffer->Unmap();
+        }
+    }
+
+    TEST_END();
+}
+
 static bool ProbeBindlessDescriptors()
 {
     TEST_BEGIN();
@@ -1101,6 +1251,8 @@ static bool BootRHI(ERHIType ExpectedType)
 #if PLATFORM_MACOS
             if (ExpectedType == ERHIType::Metal)
             {
+                TEST_EXPECT(ProbeCopyQueue());
+                TEST_EXPECT(ProbeParallelRender());
                 TEST_EXPECT(ProbeBindlessDescriptors());
             }
 #endif

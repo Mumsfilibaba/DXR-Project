@@ -140,6 +140,8 @@ FMetalTextureRHI::FMetalTextureRHI(FMetalDevice* InDevice, const FRHITextureDesc
     , UnorderedAccessView(nullptr)
     , RenderTargetView(nullptr)
     , DepthStencilView(nullptr)
+    , LastUsedQueue(nullptr)
+    , LastUsedValue(0)
 {
 }
 
@@ -383,6 +385,13 @@ id<MTLTexture> FMetalTextureRHI::GetMTLTexture() const
     {
         return Texture;
     }
+}
+
+void FMetalTextureRHI::StampLastUse(FMetalQueue* InQueue, uint64 InValue)
+{
+    LastUsedQueue = InQueue;
+    LastUsedValue = InValue;
+    ResourceStorage.StampLastUse(InQueue, InValue);
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -39,13 +39,20 @@ public:
 
     FORCEINLINE uint64 GetLastWriteValue() const
     {
-        return LastWriteValue;
+        return LastUsedValue;
     }
 
-    FORCEINLINE void SetLastWriteValue(uint64 InValue)
+    FORCEINLINE FMetalQueue* GetLastUsedQueue() const
     {
-        LastWriteValue = InValue;
+        return LastUsedQueue;
     }
+
+    FORCEINLINE uint64 GetLastUsedValue() const
+    {
+        return LastUsedValue;
+    }
+
+    void StampLastUse(FMetalQueue* InQueue, uint64 InValue);
 
     FORCEINLINE bool IsHeapPlaced() const
     {
@@ -61,7 +68,8 @@ private:
     id<MTLBuffer>        Buffer;
     FMetalResourceStorage ResourceStorage;
     mutable FRHIDescriptorHandle BindlessHandle;
-    uint64               LastWriteValue;
+    FMetalQueue*         LastUsedQueue;
+    uint64               LastUsedValue;
 };
 
 inline FMetalBufferRHI* GetMetalBuffer(FRHIBuffer* Buffer)

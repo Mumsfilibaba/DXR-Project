@@ -15,6 +15,8 @@ FMetalResourceStorage::FMetalResourceStorage(FMetalDevice* InDevice)
     , HeapIndex(UINT32_MAX)
     , StorageType(EMetalResourceStorageType::Unknown)
     , AllocatorType(EMetalAllocatorType::None)
+    , LastUsedQueue(nullptr)
+    , LastUsedValue(0)
 {
 }
 
@@ -143,4 +145,12 @@ void FMetalResourceStorage::Reset()
     StorageType       = EMetalResourceStorageType::Unknown;
     AllocatorType     = EMetalAllocatorType::None;
     AllocatorPointers.AsVoid = nullptr;
+    LastUsedQueue     = nullptr;
+    LastUsedValue     = 0;
+}
+
+void FMetalResourceStorage::StampLastUse(FMetalQueue* InQueue, uint64 InValue)
+{
+    LastUsedQueue = InQueue;
+    LastUsedValue = InValue;
 }

@@ -37,6 +37,18 @@ public:
         return ResourceStorage.IsPlacedResource();
     }
 
+    FORCEINLINE FMetalQueue* GetLastUsedQueue() const
+    {
+        return LastUsedQueue;
+    }
+
+    FORCEINLINE uint64 GetLastUsedValue() const
+    {
+        return LastUsedValue;
+    }
+
+    void StampLastUse(FMetalQueue* InQueue, uint64 InValue);
+
     void SetSwapChain(FMetalSwapChainRHI* InSwapChain)
     {
         SwapChain = InSwapChain;
@@ -63,6 +75,8 @@ private:
     TSharedRef<FMetalUnorderedAccessViewRHI> UnorderedAccessView;
     TSharedRef<FMetalRenderTargetViewRHI>    RenderTargetView;
     TSharedRef<FMetalDepthStencilViewRHI>    DepthStencilView;
+    FMetalQueue*                             LastUsedQueue;
+    uint64                                   LastUsedValue;
 };
 
 FORCEINLINE FMetalTextureRHI* GetMetalTexture(FRHITexture* Texture)

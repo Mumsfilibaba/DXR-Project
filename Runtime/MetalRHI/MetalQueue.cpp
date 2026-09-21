@@ -3,9 +3,29 @@
 #include "MetalRHI/MetalAllocators.h"
 #include "MetalRHI/MetalQuery.h"
 #include "MetalRHI/MetalStats.h"
+#include "MetalRHI/MetalCommandContext.h"
+#include "MetalRHI/MetalBuffer.h"
+#include "MetalRHI/MetalTexture.h"
 #include "Core/Containers/String.h"
+#include "Core/Math/Math.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
+
+static TAutoConsoleVariable<int32> CVarMaxPendingSubmissions(
+    "MetalRHI.MaxPendingSubmissions",
+    "Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up",
+    32);
+
+static TAutoConsoleVariable<int32> CVarCommandContextMaxIdleFrames(
+    "MetalRHI.CommandContextPool.MaxIdleFrames",
+    "Number of frames a pooled CommandContext may sit unused before it is destroyed",
+    16);
+
+static TAutoConsoleVariable<int32> CVarCommandContextMinRetained(
+    "MetalRHI.CommandContextPool.MinRetained",
+    "Number of CommandContexts the pool keeps alive regardless of how long they have been idle",
+    2);
 
 static void ReportFunctionLogs(id<MTLCommandBuffer> CommandBuffer)
 {
@@ -28,7 +48,6 @@ static void ReportFunctionLogs(id<MTLCommandBuffer> CommandBuffer)
     }
 }
 
-#if METAL_ENABLE_LOGGING
 static const CHAR* ToString(MTLCommandBufferError ErrorCode)
 {
     switch (ErrorCode)
@@ -72,44 +91,43 @@ static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer, const T
     NSError* Error = CommandBuffer.error;
     if (!Error)
     {
-        METAL_ERROR("Command buffer '%s' failed without reporting an error", *Label);
+        LOG_ERROR("[MetalRHI] Command buffer '%s' failed without reporting an error", *Label);
         return;
     }
 
     const String Description(Error.localizedDescription);
     if ([Error.domain isEqualToString:MTLCommandBufferErrorDomain])
     {
-        METAL_ERROR("Command buffer '%s' failed with %s: %s", *Label, ToString(MTLCommandBufferError(Error.code)), *Description);
+        LOG_ERROR("[MetalRHI] Command buffer '%s' failed with %s: %s", *Label, ToString(MTLCommandBufferError(Error.code)), *Description);
     }
     else
     {
         const String Domain(Error.domain);
-        METAL_ERROR("Command buffer '%s' failed with %s(%ld): %s", *Label, *Domain, long(Error.code), *Description);
+        LOG_ERROR("[MetalRHI] Command buffer '%s' failed with %s(%ld): %s", *Label, *Domain, long(Error.code), *Description);
     }
 
     NSArray<id<MTLCommandBufferEncoderInfo>>* EncoderInfos = Error.userInfo[MTLCommandBufferEncoderInfoErrorKey];
     for (id<MTLCommandBufferEncoderInfo> EncoderInfo in EncoderInfos)
     {
         const String EncoderLabel(EncoderInfo.label ? EncoderInfo.label : @"<unnamed>");
-        METAL_ERROR("  Encoder '%s': %s", *EncoderLabel, ToString(EncoderInfo.errorState));
+        LOG_ERROR("[MetalRHI]   Encoder '%s': %s", *EncoderLabel, ToString(EncoderInfo.errorState));
 
         for (NSString* Signpost in EncoderInfo.debugSignposts)
         {
             const String SignpostLabel(Signpost);
-            METAL_ERROR("    %s", *SignpostLabel);
+            LOG_ERROR("[MetalRHI]     %s", *SignpostLabel);
         }
     }
 
     if (!Breadcrumbs.IsEmpty())
     {
-        METAL_ERROR("  Breadcrumbs:");
+        LOG_ERROR("[MetalRHI]   Breadcrumbs:");
         for (const String& Name : Breadcrumbs)
         {
-            METAL_ERROR("    %s", *Name);
+            LOG_ERROR("[MetalRHI]     %s", *Name);
         }
     }
 }
-#endif
 
 FMetalQueue::FMetalQueue(FMetalDevice* InDevice, EMetalQueueType InQueueType)
     : FMetalDeviceChild(InDevice)
@@ -119,6 +137,9 @@ FMetalQueue::FMetalQueue(FMetalDevice* InDevice, EMetalQueueType InQueueType)
     , PendingSubmissions()
     , FreeCommands()
     , FreeCommandsCS()
+    , ConsumerCS()
+    , CommandContextPool()
+    , CurrentFrame(0)
     , QueueType(InQueueType)
 {
 }
@@ -126,6 +147,8 @@ FMetalQueue::FMetalQueue(FMetalDevice* InDevice, EMetalQueueType InQueueType)
 FMetalQueue::~FMetalQueue()
 {
     WaitForCompletion();
+    ProcessCommandQueue();
+    CommandContextPool.DestroyAll();
 
     for (FMetalCommands* Commands : FreeCommands)
     {
@@ -183,6 +206,9 @@ FMetalCommands* FMetalQueue::ObtainCommands()
     Commands->PendingQueries.Clear();
     Commands->PendingSignalEvents.Clear();
     Commands->PendingSignalValues.Clear();
+    Commands->PendingWaits.Clear();
+    Commands->UsedBuffers.Clear();
+    Commands->UsedTextures.Clear();
     Commands->Breadcrumbs.Clear();
     Commands->DebugLabel.Clear();
     return Commands;
@@ -190,19 +216,60 @@ FMetalCommands* FMetalQueue::ObtainCommands()
 
 id<MTLCommandBuffer> FMetalQueue::CreateCommandBuffer()
 {
-#if METAL_ENABLE_LOGGING
     MTLCommandBufferDescriptor* Descriptor = [[MTLCommandBufferDescriptor new] autorelease];
     Descriptor.errorOptions = MTLCommandBufferErrorOptionEncoderExecutionStatus;
 
     id<MTLCommandBuffer> CommandBuffer = [CommandQueue commandBufferWithDescriptor:Descriptor];
-#else
-    id<MTLCommandBuffer> CommandBuffer = [CommandQueue commandBuffer];
-#endif
     if (CommandBuffer)
     {
         [CommandBuffer retain];
     }
     return CommandBuffer;
+}
+
+FMetalCommandContext* FMetalQueue::ObtainCommandContext()
+{
+    FMetalCommandContext* CommandContext = CommandContextPool.Acquire([this](int32) -> FMetalCommandContext*
+    {
+        FMetalCommandContext* NewCommandContext = new FMetalCommandContext(GetDevice(), *this);
+        if (!NewCommandContext->Initialize())
+        {
+            DEBUG_BREAK();
+            delete NewCommandContext;
+            return nullptr;
+        }
+
+        return NewCommandContext;
+    });
+
+    if (!CommandContext)
+    {
+        METAL_ERROR_CRITICAL("Failed to Obtain CommandContext");
+    }
+
+    return CommandContext;
+}
+
+void FMetalQueue::ReleaseCommandContext(FMetalCommandContext* InContext)
+{
+    CHECK(InContext != nullptr);
+    CHECK(!InContext->IsRecording());
+
+    InContext->SetLastUsedFrame(CurrentFrame.Load());
+    CommandContextPool.Release(InContext);
+}
+
+void FMetalQueue::PruneCommandContexts(uint64 InCurrentFrame)
+{
+    CurrentFrame.Store(InCurrentFrame);
+
+    const uint64 MaxIdleFrames = static_cast<uint64>(Math::Max<int32>(0, CVarCommandContextMaxIdleFrames.GetValue()));
+    const int32  MinRetained   = Math::Max<int32>(0, CVarCommandContextMinRetained.GetValue());
+
+    CommandContextPool.PruneFree(MinRetained, [InCurrentFrame, MaxIdleFrames](FMetalCommandContext* Context)
+    {
+        return (InCurrentFrame - Context->GetLastUsedFrame()) > MaxIdleFrames;
+    });
 }
 
 uint64 FMetalQueue::SubmitCommands(FMetalCommands* Commands)
@@ -238,12 +305,11 @@ uint64 FMetalQueue::SubmitCommands(FMetalCommands* Commands)
 
     [Commands->CommandBuffer addCompletedHandler:^(id<MTLCommandBuffer> CompletedBuffer)
     {
-#if METAL_ENABLE_LOGGING
         ReportCommandBufferError(CompletedBuffer, BreadcrumbCopy);
-#endif
         ReportFunctionLogs(CompletedBuffer);
     }];
 
+    Commands->EncodePendingWaits();
     Commands->Device->GetTimestampQueries().EncodeResolve(Commands->CommandBuffer, Commands->PendingQueries);
 
     CHECK(Commands->PendingSignalEvents.Size() == Commands->PendingSignalValues.Size());
@@ -264,13 +330,59 @@ uint64 FMetalQueue::SubmitCommands(FMetalCommands* Commands)
         }
     }
 
+    for (FMetalBufferRHI* Buffer : Commands->UsedBuffers)
+    {
+        if (Buffer)
+        {
+            Buffer->StampLastUse(this, Value);
+        }
+    }
+
+    for (FMetalTextureRHI* Texture : Commands->UsedTextures)
+    {
+        if (Texture)
+        {
+            Texture->StampLastUse(this, Value);
+        }
+    }
+
+    Commands->UsedBuffers.Clear();
+    Commands->UsedTextures.Clear();
+
     STAT_ADD(STAT_Metal_CommandBufferCount, 1);
     PendingSubmissions.Enqueue(Commands);
+
+    const int32 MaxPending = Math::Max(CVarMaxPendingSubmissions.GetValue(), 1);
+    {
+        TScopedLock Lock(ConsumerCS);
+
+        while (PendingSubmissions.Size() > MaxPending)
+        {
+            FMetalCommands* Oldest = nullptr;
+            if (PendingSubmissions.Peek(Oldest) && Oldest)
+            {
+                if (Oldest->SubmissionValue > 0 && SubmissionEvent && GetCompletedValue() < Oldest->SubmissionValue)
+                {
+                    [SubmissionEvent waitUntilSignaledValue:Oldest->SubmissionValue timeoutMS:UINT64_MAX];
+                }
+
+                PendingSubmissions.Dequeue();
+                Oldest->PostExecute();
+                RecycleCommands(Oldest);
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
     return Value;
 }
 
 void FMetalQueue::ProcessCommandQueue()
 {
+    TScopedLock Lock(ConsumerCS);
     const uint64 CompletedValue = GetCompletedValue();
 
     bool bProcess = true;
@@ -339,6 +451,9 @@ FMetalCommands::FMetalCommands(FMetalDevice* InDevice, FMetalQueue* InQueue)
     , PendingQueries()
     , PendingSignalEvents()
     , PendingSignalValues()
+    , PendingWaits()
+    , UsedBuffers()
+    , UsedTextures()
     , Breadcrumbs()
     , DebugLabel()
 {
@@ -371,6 +486,58 @@ void FMetalCommands::RecordBreadcrumb(const String& Name)
     }
 
     Breadcrumbs.Emplace(Name);
+}
+
+void FMetalCommands::AddWait(FMetalQueue* Producer, uint64 Value)
+{
+    if (!Producer || Value == 0)
+    {
+        return;
+    }
+
+    id<MTLSharedEvent> Event = Producer->GetSubmissionEvent();
+    if (!Event)
+    {
+        return;
+    }
+
+    for (FMetalQueueFence& Existing : PendingWaits)
+    {
+        if (Existing.Event == Event)
+        {
+            if (Value > Existing.Value)
+            {
+                Existing.Value    = Value;
+                Existing.bEncoded = false;
+            }
+            return;
+        }
+    }
+
+    FMetalQueueFence Fence;
+    Fence.Event    = Event;
+    Fence.Value    = Value;
+    Fence.bEncoded = false;
+    PendingWaits.Add(Fence);
+}
+
+void FMetalCommands::EncodePendingWaits()
+{
+    if (!CommandBuffer)
+    {
+        return;
+    }
+
+    for (FMetalQueueFence& Fence : PendingWaits)
+    {
+        if (Fence.bEncoded || !Fence.Event)
+        {
+            continue;
+        }
+
+        [CommandBuffer encodeWaitForEvent:Fence.Event value:Fence.Value];
+        Fence.bEncoded = true;
+    }
 }
 
 void FMetalCommands::PostExecute()

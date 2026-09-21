@@ -23,7 +23,7 @@ public:
     ~FMetalHeapPool();
 
     bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, uint32& OutHeapIndex, uint64& OutOffset, FMetalHeap*& OutHeap);
-    void Deallocate(uint32 HeapIndex, uint64 Offset, uint64 Size);
+    void Deallocate(uint32 HeapIndex, uint64 Offset, uint64 Size, FMetalQueue* LastUsedQueue = nullptr, uint64 LastUsedValue = 0);
     void CleanUp();
     void Destroy();
 
@@ -49,12 +49,14 @@ private:
 
     struct FPendingHeapFree
     {
-        uint32 HeapIndex;
-        uint64 Offset;
-        uint64 Size;
-        uint64 DirectFenceValue;
-        uint64 ComputeFenceValue;
-        uint64 CopyFenceValue;
+        uint32       HeapIndex;
+        uint64       Offset;
+        uint64       Size;
+        FMetalQueue* LastUsedQueue;
+        uint64       LastUsedValue;
+        uint64       DirectFenceValue;
+        uint64       ComputeFenceValue;
+        uint64       CopyFenceValue;
     };
 
     FHeapBlock* CreateHeapBlock(uint64 MinimumSize);
@@ -62,7 +64,7 @@ private:
     void        ReturnHeapRange(uint32 HeapIndex, uint64 Offset, uint64 Size);
     void        RecyclePendingHeapFrees();
     void        DropUnusedHeaps();
-    void        StampPendingHeapFree(FPendingHeapFree& PendingFree) const;
+    void        StampPendingHeapFree(FPendingHeapFree& PendingFree, FMetalQueue* LastUsedQueue, uint64 LastUsedValue) const;
     bool        IsHeapFreeEligible(const FPendingHeapFree& PendingFree) const;
 
     static constexpr uint64 DefaultHeapSize    = 64ull * 1024ull * 1024ull;

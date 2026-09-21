@@ -528,6 +528,22 @@ void FMetalDevice::BeginFrame()
 {
     FrameCounter++;
     MetalBeginFrameCapture(Device);
+
+    if (Queue)
+    {
+        Queue->PruneCommandContexts(FrameCounter);
+    }
+
+    if (ComputeQueue)
+    {
+        ComputeQueue->PruneCommandContexts(FrameCounter);
+    }
+
+    if (CopyQueue)
+    {
+        CopyQueue->PruneCommandContexts(FrameCounter);
+    }
+
     ProcessQueues();
 }
 
