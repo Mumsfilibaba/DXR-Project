@@ -164,12 +164,12 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
     RHI::MaxSamplePositionGridHeight          = 0;
     RHI::SupportedSamplePositionSampleCounts  = 0;
 
-    RHI::bSupportsDrawIndirect               = false;
+    RHI::bSupportsDrawIndirect               = true;
     RHI::bSupportsDrawIndirectCount          = false;
-    RHI::bSupportsDispatchIndirect           = false;
+    RHI::bSupportsDispatchIndirect           = true;
     RHI::bSupportsDispatchMeshIndirect       = false;
     RHI::bSupportsDispatchMeshIndirectCount  = false;
-    RHI::MaxDrawIndirectCommandCount         = 0;
+    RHI::MaxDrawIndirectCommandCount         = uint32(~0u);
     RHI::MaxDispatchMeshIndirectCommandCount = 0;
 
     RHI::MaxTexture1DSize        = GMetalMaxTexture2DSize;
