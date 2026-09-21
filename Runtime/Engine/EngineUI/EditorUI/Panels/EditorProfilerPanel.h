@@ -5,6 +5,7 @@
 #include "Engine/EngineUI/EditorUI/EditorPanel.h"
 #include "RendererCore/Interfaces/IGPUProfiler.h"
 
+class FButton;
 class FComboBox;
 class FExpander;
 class FHistogram;
@@ -14,6 +15,7 @@ class FPropertyTable;
 class FSearchBox;
 class FTextBlock;
 class FToolBar;
+class FToolTipHost;
 class FToolBarButton;
 class FTreeView;
 struct FTreeItem;
@@ -94,6 +96,7 @@ private:
     void SetFollowLatestFrame(bool bFollow);
     void SetFrozen(bool bFrozen);
     void PinCurrentFrame();
+    void JumpToFrame(int32 FrameNumber);
     void ApplyProfilerState();
     void RefreshHeader();
     void RefreshHistograms();
@@ -144,6 +147,9 @@ private:
     TSharedPtr<FHistogram>                CpuHistogram;
     TSharedPtr<FHistogram>                GpuHistogram;
     TSharedPtr<FHorizontalBox>            WorstFramesRow;
+    TArray<TSharedPtr<FButton>>           WorstFrameButtons;
+    TArray<TSharedPtr<FToolTipHost>>      WorstFrameToolTips;
+    TArray<int32>                         WorstFrameNumbers;
     TSharedPtr<FProfilerTimeline>         Timeline;
     TSharedPtr<FTreeView>                 HierarchyTree;
     TSharedPtr<FTreeView>                 TargetsTree;
@@ -160,6 +166,7 @@ private:
     TSharedPtr<FTextBlock>                PipelineStatisticsContext;
     TArray<TSharedPtr<FTextBlock>>        PipelineStatisticsValues;
     FProfilerFrame                        ShownFrame;
+    FProfilerFrame                        PinnedFrameSnapshot;
     TArray<FGPUProfilerInterval>          GpuIntervals;
     TArray<TSharedPtr<FTreeItem>>         HierarchyRoots;
     TArray<FScopeRef>                     HierarchyRefs;
@@ -187,4 +194,5 @@ private:
     bool                                  bCollectOptimizationTargets;
     bool                                  bDetailsAreDirty;
     bool                                  bHasShownGpuFrame;
+    bool                                  bHasPinnedFrameSnapshot;
 };

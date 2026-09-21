@@ -18,6 +18,7 @@
 #include "Application/Elements/TreeView.h"
 #include "Application/Menus/ComboBox.h"
 #include "Application/Menus/Menu.h"
+#include "Application/Menus/ToolTipService.h"
 #include "Core/Containers/Map.h"
 #include "Core/Filesystem/File.h"
 #include "Core/Math/Math.h"
@@ -193,6 +194,7 @@ FEditorProfilerPanel::FEditorProfilerPanel(FEditorEngine* InEditorEngine)
     , bCollectOptimizationTargets(true)
     , bDetailsAreDirty(true)
     , bHasShownGpuFrame(false)
+    , bHasPinnedFrameSnapshot(false)
 {
 }
 
@@ -434,7 +436,8 @@ TSharedPtr<FToolBar> FEditorProfilerPanel::BuildToolBar()
             SetFollowLatestFrame(bFollow);
         }));
 
-    FreezeToggle = Bar->AddToggle(FToolBarItemDesc().SetLabel("Freeze").SetToolTipText("Keeps recording, but the strip and the timeline stay on what is on screen."),
+    FreezeToggle = Bar->AddToggle(FToolBarItemDesc().SetLabel("Freeze").SetToolTipText("Stops recording, so the stored frames hold still.\n"
+                                                                                      "That is what the worst-frame buttons jump into."),
         ECheckBoxState::Unchecked,
         FOnCheckStateChanged::CreateLambda([this](ECheckBoxState State)
         {
@@ -607,6 +610,11 @@ void FEditorProfilerPanel::SetMode(EProfilerMode InMode)
 void FEditorProfilerPanel::SetFollowLatestFrame(bool bFollow)
 {
     bFollowLatestFrame = bFollow;
+    if (bFollow)
+    {
+        bHasPinnedFrameSnapshot = false;
+    }
+
     if (LiveToggle)
     {
         LiveToggle->SetCheckState(bFollow ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);
@@ -638,6 +646,8 @@ void FEditorProfilerPanel::SetFrozen(bool bFrozen)
     {
         FreezeToggle->SetCheckState(bIsFrozen ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);
     }
+
+    ApplyProfilerState();
 }
 
 void FEditorProfilerPanel::PinCurrentFrame()
@@ -648,6 +658,34 @@ void FEditorProfilerPanel::PinCurrentFrame()
         SetFollowLatestFrame(false);
         bDetailsAreDirty = true;
     }
+}
+
+void FEditorProfilerPanel::JumpToFrame(int32 FrameNumber)
+{
+    const int32 StoredIndex = FindStoredIndexForFrame(FrameNumber);
+    if (StoredIndex < 0)
+    {
+        return;
+    }
+
+    const FProfilerFrame* Frame = FFrameProfiler::Get().GetStoredFrame(StoredIndex);
+    if (!Frame)
+    {
+        return;
+    }
+
+    if (Mode == EProfilerMode::Boot)
+    {
+        SetMode(EProfilerMode::Frames);
+    }
+
+    SetFollowLatestFrame(false);
+
+    PinnedFrameSnapshot     = *Frame;
+    bHasPinnedFrameSnapshot = true;
+    PinnedFrameNumber       = FrameNumber;
+
+    RefreshDetails();
 }
 
 void FEditorProfilerPanel::ApplyProfilerState()
@@ -667,7 +705,7 @@ void FEditorProfilerPanel::ApplyProfilerState()
         return;
     }
 
-    const bool bActive = bIsProfilingRequested && IsVisible();
+    const bool bActive = bIsProfilingRequested && IsVisible() && !bIsFrozen;
     if (bActive)
     {
         FFrameProfiler::Get().Enable();
@@ -841,8 +879,7 @@ void FEditorProfilerPanel::RefreshFrameSelection()
         const int32 StepsBack = Math::Clamp(NumSamples - 1 - Clicked, 0, NumStored - 1);
         if (const FProfilerFrame* Frame = Cpu.GetStoredFrame(NumStored - 1 - StepsBack))
         {
-            PinnedFrameNumber = Frame->FrameIndex;
-            SetFollowLatestFrame(false);
+            JumpToFrame(Frame->FrameIndex);
         }
 
     }
@@ -862,8 +899,7 @@ void FEditorProfilerPanel::RefreshFrameSelection()
                 FProfilerGpuFrame GpuFrame;
                 if (Gpu->GetStoredFrame(GpuCount - 1 - StepsBack, GpuFrame) && GpuFrame.CpuFrameIndex >= 0)
                 {
-                    PinnedFrameNumber = GpuFrame.CpuFrameIndex;
-                    SetFollowLatestFrame(false);
+                    JumpToFrame(GpuFrame.CpuFrameIndex);
                 }
             }
         }
@@ -952,6 +988,11 @@ const FProfilerFrame* FEditorProfilerPanel::ResolveSelectedFrame() const
         if (StoredIndex >= 0)
         {
             return Cpu.GetStoredFrame(StoredIndex);
+        }
+
+        if (bHasPinnedFrameSnapshot && PinnedFrameSnapshot.FrameIndex == PinnedFrameNumber)
+        {
+            return &PinnedFrameSnapshot;
         }
 
         return Cpu.GetStoredFrame(NumStored - 1);
@@ -1920,33 +1961,79 @@ void FEditorProfilerPanel::RefreshWorstFrames()
         return;
     }
 
-    WorstFramesRow->ClearSlots();
+    for (const TSharedPtr<FButton>& Button : WorstFrameButtons)
+    {
+        if (Button->IsPressed())
+        {
+            return;
+        }
+    }
 
     const TArray<FProfilerWorstFrame> Worst = FProfilerReport::CollectWorstFrames();
-    if (Worst.Size() < 2)
+    const int32 NumShown = Worst.Size() >= 2 ? Worst.Size() : 0;
+
+    bool bFramesChanged = NumShown != WorstFrameNumbers.Size();
+    for (int32 Index = 0; !bFramesChanged && Index < NumShown; ++Index)
+    {
+        bFramesChanged = Worst[Index].FrameIndex != WorstFrameNumbers[Index];
+    }
+
+    if (!bFramesChanged)
     {
         return;
     }
 
-    for (const FProfilerWorstFrame& Hitch : Worst)
+    WorstFrameNumbers.Clear();
+    for (int32 Index = 0; Index < NumShown; ++Index)
     {
-        const int32 FrameIndex = Hitch.FrameIndex;
+        WorstFrameNumbers.Add(Worst[Index].FrameIndex);
+    }
+
+    while (WorstFrameButtons.Size() < NumShown)
+    {
+        const int32 PoolIndex = WorstFrameButtons.Size();
 
         FButton::FDesc Desc;
         Desc.Font      = FEditorStyle::GetFonts().Body;
         Desc.bIsGhost  = true;
-        Desc.Text      = String::Printf("%d  %.1fms", Hitch.FrameIndex, Hitch.CpuMilliseconds);
-        Desc.OnClicked = FOnClicked::CreateLambda([this, FrameIndex]()
+        Desc.OnClicked = FOnClicked::CreateLambda([this, PoolIndex]()
         {
-            if (FindStoredIndexForFrame(FrameIndex) >= 0)
+            if (PoolIndex < WorstFrameNumbers.Size())
             {
-                PinnedFrameNumber = FrameIndex;
-                SetFollowLatestFrame(false);
-                bDetailsAreDirty = true;
+                JumpToFrame(WorstFrameNumbers[PoolIndex]);
             }
         });
 
-        WorstFramesRow->AddSlot(FButton::Create(Desc)).SetPadding(FMargin(0, 0, 6, 0));
+        TSharedPtr<FButton> Button = FButton::Create(Desc);
+        if (!Button)
+        {
+            break;
+        }
+
+        TSharedPtr<FToolTipHost> ToolTip = FToolTipHost::Create(Button, String(), FEditorStyle::GetFonts().Body, EToolTipPlacement::BelowAnchor);
+        if (!ToolTip)
+        {
+            break;
+        }
+
+        WorstFrameButtons.Emplace(Button);
+        WorstFrameToolTips.Emplace(ToolTip);
+    }
+
+    const int32 NumButtons = Math::Min(NumShown, WorstFrameButtons.Size());
+
+    WorstFramesRow->ClearSlots();
+
+    for (int32 Index = 0; Index < NumButtons; ++Index)
+    {
+        const FProfilerWorstFrame& Hitch = Worst[Index];
+
+        WorstFrameButtons[Index]->SetText(String::Printf("%d  %.1fms", Hitch.FrameIndex, Hitch.CpuMilliseconds));
+        WorstFrameToolTips[Index]->SetToolTipText(String::Printf("Jumps the timeline to frame %d, one of the slowest recorded at %.2f ms.\n"
+                                                                 "Freeze first, so the frames are still there to jump into.",
+            Hitch.FrameIndex, Hitch.CpuMilliseconds));
+
+        WorstFramesRow->AddSlot(WorstFrameToolTips[Index]).SetPadding(FMargin(0, 0, 6, 0));
     }
 }
 
@@ -2000,9 +2087,7 @@ void FEditorProfilerPanel::SelectGpuScopeByName(const String& Name)
         return;
     }
 
-    PinnedFrameNumber = MatchingCpuFrame;
-    SetFollowLatestFrame(false);
-    RefreshDetails();
+    JumpToFrame(MatchingCpuFrame);
 
     const int32 GpuLane = ShownFrame.Threads.Size();
 
