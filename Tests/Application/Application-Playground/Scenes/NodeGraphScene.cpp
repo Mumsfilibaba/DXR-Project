@@ -209,7 +209,7 @@ static TSharedPtr<FVisualElement> MakeShaderGraph(const FPlaygroundFonts& Fonts)
     Desc.Font  = Fonts.Body;
     Desc.Model = GShaderModel;
 
-    Desc.OnGetContextMenu = FOnGetGraphContextMenu::CreateLambda([Fonts](const Vector2& GraphPosition)
+    Desc.OnGetContextMenu = FOnGetGraphContextMenu::CreateLambda([Fonts](const Vector2& GraphPosition, int32 /*NodeId*/)
     {
         return MakeContextMenu(Fonts, GraphPosition);
     });

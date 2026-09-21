@@ -13,6 +13,7 @@
 #include <Application/Elements/Expander.h>
 #include <Application/Elements/IndexedPathMove.h>
 #include <Application/Elements/Histogram.h>
+#include <Application/Elements/ProfilerTimeline.h>
 #include <Application/Elements/NumericEntry.h>
 #include <Application/Elements/Overlay.h>
 #include <Application/Elements/ProgressBar.h>
@@ -25,6 +26,7 @@
 #include <Application/Elements/SpinBox.h>
 #include <Application/Elements/TextBlock.h>
 #include <Application/Input/Keys.h>
+#include <Application/Menus/ToolTipService.h>
 #include <Application/Style/UIStyle.h>
 #include <Application/Text/FixedWidthFontFace.h>
 
@@ -59,6 +61,11 @@ static FCursorEvent MakeMoveEvent(const IntVector2& ClientPosition)
 static FCursorEvent MakeButtonEvent(EInputEventType Type, const IntVector2& ClientPosition, FKey Key = Keys::MouseButtonLeft)
 {
     return FCursorEvent(Type, Key, ClientPosition, IntVector2(0, 0), FModifierKeyState(), Type == EInputEventType::MouseButtonDown);
+}
+
+static FCursorEvent MakeScrollEvent(float ScrollDelta, FModifierKeyState Modifiers = FModifierKeyState())
+{
+    return FCursorEvent(EInputEventType::MouseScrolled, Modifiers, ScrollDelta, EScrollAxis::Vertical);
 }
 
 /** @brief Presses, drags through every waypoint and releases, which is one gesture end to end. */
@@ -143,6 +150,42 @@ static void DrawElement(const TSharedPtr<FVisualElement>& Element, FDrawCommandL
     Element->OnDraw(FDrawGeometry(Element->GetContentRectangle(), 1.0f), OutCommandList, 0);
 }
 
+static TArray<FProfilerTimelineLane> MakeTimelineLanes(uint64 Base)
+{
+    FProfilerTimelineLane CpuLane;
+    CpuLane.Label = String("GameThread");
+
+    FProfilerTimelineBar ParentBar;
+    ParentBar.Name             = "Parent";
+    ParentBar.StartNanoseconds = Base;
+    ParentBar.EndNanoseconds   = Base + 1000000;
+    ParentBar.Depth            = 0;
+    CpuLane.Bars.Add(ParentBar);
+
+    FProfilerTimelineBar ChildBar;
+    ChildBar.Name             = "Child";
+    ChildBar.StartNanoseconds = Base + 100000;
+    ChildBar.EndNanoseconds   = Base + 400000;
+    ChildBar.Depth            = 1;
+    ChildBar.ParentIndex      = 0;
+    CpuLane.Bars.Add(ChildBar);
+
+    FProfilerTimelineLane GpuLane;
+    GpuLane.Label  = String("GPU");
+    GpuLane.bIsGpu = true;
+
+    FProfilerTimelineBar GpuBar;
+    GpuBar.Name             = "LightPass";
+    GpuBar.StartNanoseconds = Base;
+    GpuBar.EndNanoseconds   = Base + 500000;
+    GpuLane.Bars.Add(GpuBar);
+
+    TArray<FProfilerTimelineLane> Lanes;
+    Lanes.Add(CpuLane);
+    Lanes.Add(GpuLane);
+    return Lanes;
+}
+
 bool ButtonControl_Test()
 {
     TEST_BEGIN();
@@ -152,7 +195,7 @@ bool ButtonControl_Test()
     int32 ClickCount = 0;
 
     FButton::FDesc Desc;
-    Desc.SetText("Save").SetFont(CreateFont());
+    Desc.SetText("Save as...").SetFont(CreateFont());
     Desc.OnClicked = FOnClicked::CreateLambda([&ClickCount]() { ClickCount++; });
 
     TSharedPtr<FButton> Button = FButton::Create(Desc);
@@ -160,7 +203,7 @@ bool ButtonControl_Test()
 
     TEST_SECTION("The label and the button padding decide the width, and the button height the height");
     const IntVector2 DesiredSize = Button->GetCachedDesiredSize();
-    TEST_EXPECT_EQ(DesiredSize.X, (4 * 8) + Style.Metrics.ButtonPadding.GetTotalHorizontal());
+    TEST_EXPECT_EQ(DesiredSize.X, (10 * 8) + Style.Metrics.ButtonPadding.GetTotalHorizontal());
     TEST_EXPECT_EQ(DesiredSize.Y, Math::Max(16 + Style.Metrics.ButtonPadding.GetTotalVertical(), Style.Metrics.ButtonHeight));
 
     TEST_SECTION("Clicking it fires the delegate once");
@@ -215,6 +258,52 @@ bool ButtonControl_Test()
     IconButton->PrepareDesiredSize();
     TEST_EXPECT_EQ(IconButton->GetCachedDesiredSize().X, (2 * 8) + Style.Metrics.ButtonPadding.GetTotalHorizontal());
     TEST_EXPECT(IconButton->GetText().IsEmpty());
+
+    TEST_SECTION("A label too short to fill a button is widened to the shared floor rather than left a chip");
+    const TSharedPtr<IFontFace> ButtonFont = CreateFont();
+    const int32 LabelFloor = Style.Metrics.ResolveButtonMinWidth(ButtonFont.Get(), Style.Metrics.ButtonPadding);
+
+    FButton::FDesc ShortDesc;
+    ShortDesc.SetText("X").SetFont(ButtonFont);
+
+    TSharedPtr<FButton> ShortButton = FButton::Create(ShortDesc);
+    ShortButton->PrepareDesiredSize();
+
+    TEST_EXPECT_EQ(LabelFloor,
+        ButtonFont->MeasureWidth(StringView(Style.Metrics.ButtonMinLabel)) + Style.Metrics.ButtonPadding.GetTotalHorizontal());
+    TEST_EXPECT(8 + Style.Metrics.ButtonPadding.GetTotalHorizontal() < LabelFloor);
+    TEST_EXPECT_EQ(ShortButton->GetCachedDesiredSize().X, LabelFloor);
+
+    FButton::FDesc ReferenceDesc;
+    ReferenceDesc.SetText(Style.Metrics.ButtonMinLabel).SetFont(ButtonFont);
+
+    TSharedPtr<FButton> ReferenceButton = FButton::Create(ReferenceDesc);
+    ReferenceButton->PrepareDesiredSize();
+
+    TEST_EXPECT_EQ(ShortButton->GetCachedDesiredSize().X, ReferenceButton->GetCachedDesiredSize().X);
+
+    TEST_SECTION("Content handed in from outside brings its own width, so an icon is not stretched to it");
+    FTextBlock::FDesc NarrowDesc;
+    NarrowDesc.Text = "@";
+    NarrowDesc.Font = CreateFont();
+
+    FButton::FDesc NarrowButtonDesc;
+    NarrowButtonDesc.Content = FTextBlock::Create(NarrowDesc);
+
+    TSharedPtr<FButton> NarrowButton = FButton::Create(NarrowButtonDesc);
+    NarrowButton->PrepareDesiredSize();
+
+    TEST_EXPECT_EQ(NarrowButton->GetCachedDesiredSize().X, 8 + Style.Metrics.ButtonPadding.GetTotalHorizontal());
+
+    TEST_SECTION("A caller that wants a wider floor than the shared one still gets it");
+    FButton::FDesc WideDesc;
+    WideDesc.SetText("X").SetFont(ButtonFont);
+    WideDesc.MinWidth = LabelFloor + 40;
+
+    TSharedPtr<FButton> WideButton = FButton::Create(WideDesc);
+    WideButton->PrepareDesiredSize();
+
+    TEST_EXPECT_EQ(WideButton->GetCachedDesiredSize().X, LabelFloor + 40);
 
     TEST_SECTION("The keyboard activates it the way a click does");
     Button->OnKeyDown(FKeyEvent(EInputEventType::KeyDown, Keys::Space, FModifierKeyState(), false, true));
@@ -1833,6 +1922,21 @@ bool HistogramControl_Test()
     TEST_EXPECT_EQ(Histogram->GetNumSamples(), 3);
     TEST_EXPECT_EQ(CountCommands(BarCommands, EDrawCommandType::Box), 1 + Histogram->GetNumSamples());
 
+    TEST_SECTION("Line mode connects samples without emitting one filled bar per value");
+    FHistogram::FDesc LineDesc = Desc;
+    LineDesc.DrawMode = EHistogramDrawMode::Line;
+
+    TSharedPtr<FHistogram> LineGraph = FHistogram::Create(LineDesc);
+    LineGraph->AddSample(2.0f);
+    LineGraph->AddSample(8.0f);
+    LineGraph->AddSample(4.0f);
+    LayoutElement(LineGraph, Bounds);
+
+    FDrawCommandList LineCommands;
+    DrawElement(LineGraph, LineCommands);
+    TEST_EXPECT_EQ(CountCommands(LineCommands, EDrawCommandType::Polyline), 1);
+    TEST_EXPECT_EQ(CountCommands(LineCommands, EDrawCommandType::Box), 1);
+
     TEST_SECTION("With auto-scaling off the same samples stand against the range that was set instead");
     Histogram->SetAutoScale(false);
     Histogram->SetRange(0.0f, 20.0f);
@@ -1866,8 +1970,325 @@ bool HistogramControl_Test()
     TEST_EXPECT_EQ(Histogram->GetHoveredSample(), FHistogram::InvalidSampleIndex);
 
     Histogram->OnMouseMove(MakeMoveEvent(IntVector2(75, 30)));
+    Histogram->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(75, 30)));
+    Histogram->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(75, 30)));
+    TEST_EXPECT_EQ(Histogram->GetSelectedSample(), 1);
+    TEST_EXPECT(!Histogram->IsScrubbing());
+
+    Histogram->OnMouseMove(MakeMoveEvent(IntVector2(75, 30)));
     Histogram->OnMouseLeft(MakeMoveEvent(IntVector2(75, 30)));
     TEST_EXPECT_EQ(Histogram->GetHoveredSample(), FHistogram::InvalidSampleIndex);
+    TEST_EXPECT_EQ(Histogram->GetSelectedSample(), 1);
+
+    TEST_SECTION("Holding the button down walks the selection along with the cursor rather than waiting for a second click");
+    Histogram->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(25, 30)));
+    TEST_EXPECT(Histogram->IsScrubbing());
+    TEST_EXPECT_EQ(Histogram->GetSelectedSample(), 0);
+
+    Histogram->OnMouseMove(MakeMoveEvent(IntVector2(120, 30)));
+    TEST_EXPECT_EQ(Histogram->GetSelectedSample(), 2);
+
+    TEST_SECTION("A drag run past either end holds the nearest bar instead of letting the selection go");
+    Histogram->OnMouseMove(MakeMoveEvent(IntVector2(900, 30)));
+    TEST_EXPECT_EQ(Histogram->GetHoveredSample(), FHistogram::InvalidSampleIndex);
+    TEST_EXPECT_EQ(Histogram->GetSelectedSample(), 2);
+
+    Histogram->OnMouseMove(MakeMoveEvent(IntVector2(-50, 30)));
+    TEST_EXPECT_EQ(Histogram->GetSelectedSample(), 0);
+
+    TEST_SECTION("Once the button is let go the strip goes back to only naming what the cursor is over");
+    Histogram->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(-50, 30)));
+    TEST_EXPECT(!Histogram->IsScrubbing());
+
+    Histogram->OnMouseMove(MakeMoveEvent(IntVector2(120, 30)));
+    TEST_EXPECT_EQ(Histogram->GetHoveredSample(), 2);
+    TEST_EXPECT_EQ(Histogram->GetSelectedSample(), 0);
+
+    TEST_END();
+}
+
+bool ProfilerTimelineControl_Test()
+{
+    TEST_BEGIN();
+
+    FScopedStubApplication Application;
+
+    constexpr int32 CpuRootRowY  = 33;
+    constexpr int32 CpuChildRowY = 54;
+    constexpr int32 GpuRowY      = 76;
+
+    const FRectangle Bounds(IntVector2(0, 0), 400, 120);
+
+    int32 SelectedLane = -2;
+    int32 SelectedBar  = -2;
+    int32 ContextLane  = -2;
+    int32 ContextBar   = -2;
+
+    FProfilerTimeline::FDesc Desc;
+    Desc.Font = CreateFont();
+
+    Desc.OnBarSelected = FOnProfilerBarSelected::CreateLambda([&SelectedLane, &SelectedBar](int32 Lane, int32 Bar)
+    {
+        SelectedLane = Lane;
+        SelectedBar  = Bar;
+    });
+
+    Desc.OnGetBarContextMenu = FOnGetProfilerBarContextMenu::CreateLambda(
+        [&ContextLane, &ContextBar](int32 Lane, int32 Bar) -> TSharedPtr<FVisualElement>
+    {
+        ContextLane = Lane;
+        ContextBar  = Bar;
+        return nullptr;
+    });
+
+    Desc.PreferredHeight = Bounds.Height;
+
+    TSharedPtr<FProfilerTimeline> Timeline = FProfilerTimeline::Create(Desc);
+
+    constexpr uint64 FreeRunningBase = 4000000000000000ull;
+    Timeline->SetLanes(MakeTimelineLanes(FreeRunningBase));
+    LayoutElement(Timeline, Bounds);
+
+    TEST_SECTION("CPU and GPU lanes share one time axis");
+    TEST_EXPECT_EQ(Timeline->GetLanes().Size(), 2);
+    TEST_EXPECT(!Timeline->GetLanes()[0].bIsGpu);
+    TEST_EXPECT(Timeline->GetLanes()[1].bIsGpu);
+
+    TEST_SECTION("Every stamp is moved onto the earliest one, so a free running clock cannot flatten the view");
+    TEST_EXPECT_EQ(Timeline->GetLanes()[0].Bars[0].StartNanoseconds, 0ull);
+    TEST_EXPECT_EQ(Timeline->GetLanes()[0].Bars[1].StartNanoseconds, 100000ull);
+    TEST_EXPECT_EQ(Timeline->GetTotalSpanNanoseconds(), 1000000ull);
+    TEST_EXPECT_EQ(Timeline->GetViewStartNanoseconds(), 0.0f);
+    TEST_EXPECT_EQ(Timeline->GetViewSpanNanoseconds(), 1000000.0f);
+
+    TEST_SECTION("Clicking a bar selects it and reports it");
+    Timeline->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(300, CpuRootRowY)));
+    TEST_EXPECT_EQ(Timeline->GetSelectedLane(), 0);
+    TEST_EXPECT_EQ(Timeline->GetSelectedBar(), 0);
+    TEST_EXPECT_EQ(SelectedLane, 0);
+    TEST_EXPECT_EQ(SelectedBar, 0);
+
+    TEST_SECTION("A nested scope is picked off the row its depth puts it on");
+    Timeline->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(150, CpuChildRowY)));
+    TEST_EXPECT_EQ(Timeline->GetSelectedLane(), 0);
+    TEST_EXPECT_EQ(Timeline->GetSelectedBar(), 1);
+
+    TEST_SECTION("The GPU lane is hit under the thread lanes rather than behind them");
+    Timeline->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(150, GpuRowY)));
+    TEST_EXPECT_EQ(Timeline->GetSelectedLane(), 1);
+    TEST_EXPECT_EQ(Timeline->GetSelectedBar(), 0);
+
+    TEST_SECTION("A bar context request identifies the GPU pass under the cursor");
+    Timeline->OnMouseButtonDown(MakeButtonEvent(
+        EInputEventType::MouseButtonDown, IntVector2(150, GpuRowY), Keys::MouseButtonRight));
+    TEST_EXPECT_EQ(ContextLane, 1);
+    TEST_EXPECT_EQ(ContextBar, 0);
+
+    TEST_SECTION("Clicking past the end of a row clears the selection");
+    Timeline->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(390, CpuChildRowY)));
+    TEST_EXPECT_EQ(Timeline->GetSelectedLane(), FProfilerTimeline::InvalidIndex);
+    TEST_EXPECT_EQ(SelectedLane, FProfilerTimeline::InvalidIndex);
+
+    TEST_SECTION("Resting on a bar asks for the tip naming it, rather than the chart writing one in its corner");
+    FToolTipService& TimelineToolTips = FToolTipService::Get();
+
+    Timeline->OnMouseMove(MakeMoveEvent(IntVector2(300, CpuRootRowY)));
+    TEST_EXPECT(TimelineToolTips.IsPending());
+    TEST_EXPECT_EQ(TimelineToolTips.GetOwner(), StaticCastSharedPtr<FVisualElement>(Timeline));
+
+    TEST_SECTION("Moving onto bare track takes the tip back down");
+    Timeline->OnMouseMove(MakeMoveEvent(IntVector2(390, CpuChildRowY)));
+    TEST_EXPECT(!TimelineToolTips.IsPending());
+
+    TEST_SECTION("Leaving the chart takes the tip with it");
+    Timeline->OnMouseMove(MakeMoveEvent(IntVector2(150, GpuRowY)));
+    TEST_EXPECT(TimelineToolTips.IsPending());
+
+    Timeline->OnMouseLeft(MakeMoveEvent(IntVector2(800, 800)));
+    TEST_EXPECT(!TimelineToolTips.IsPending());
+
+    TEST_SECTION("The bare wheel over a view nothing is outside of is handed back to the panel around it");
+    TEST_EXPECT(!Timeline->IsViewUserAdjusted());
+    TEST_EXPECT(!Timeline->OnMouseScroll(MakeScrollEvent(1.0f)).IsEventHandled());
+    TEST_EXPECT(!Timeline->IsViewUserAdjusted());
+    TEST_EXPECT_EQ(Timeline->GetViewSpanNanoseconds(), 1000000.0f);
+
+    TEST_SECTION("Ctrl and the wheel zooms around the cursor and takes the view off the whole capture");
+    TEST_EXPECT(Timeline->OnMouseScroll(MakeScrollEvent(1.0f, FModifierKeyState(EModifierFlag::Ctrl))).IsEventHandled());
+    TEST_EXPECT(Timeline->IsViewUserAdjusted());
+    TEST_EXPECT(Timeline->GetViewSpanNanoseconds() < 1000000.0f);
+
+    TEST_SECTION("Once zoomed, the bare wheel pans the view the way the scrollbar would");
+    const float StartBeforeWheel = Timeline->GetViewStartNanoseconds();
+    const float SpanBeforeWheel  = Timeline->GetViewSpanNanoseconds();
+
+    TEST_EXPECT(Timeline->OnMouseScroll(MakeScrollEvent(-1.0f)).IsEventHandled());
+    TEST_EXPECT_EQ(Timeline->GetViewSpanNanoseconds(), SpanBeforeWheel);
+    TEST_EXPECT(Timeline->GetViewStartNanoseconds() > StartBeforeWheel);
+
+    TEST_EXPECT(Timeline->OnMouseScroll(MakeScrollEvent(1.0f)).IsEventHandled());
+    TEST_EXPECT(Math::Abs(Timeline->GetViewStartNanoseconds() - StartBeforeWheel) < 1.0f);
+
+    TEST_SECTION("Zooming reveals a horizontal scrollbar sized to the visible time range");
+    const TSharedPtr<FScrollBar>& TimelineScrollBar = Timeline->GetHorizontalScrollBar();
+    TEST_EXPECT(TimelineScrollBar != nullptr);
+    TEST_EXPECT(Timeline->IsHorizontalScrollBarVisible());
+    TEST_EXPECT(TimelineScrollBar->IsScrollable());
+    TEST_EXPECT(Math::Abs(TimelineScrollBar->GetVisibleFraction() - 0.8f) < 0.001f);
+
+    TEST_SECTION("Paging the scrollbar moves the timeline viewport");
+
+    const float StartBeforeScroll = Timeline->GetViewStartNanoseconds();
+    const FRectangle ScrollBounds = TimelineScrollBar->GetContentRectangle();
+    const IntVector2 PageRight(ScrollBounds.GetRight() - 2, ScrollBounds.Position.Y + (ScrollBounds.Height / 2));
+    TimelineScrollBar->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, PageRight));
+    TimelineScrollBar->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, PageRight));
+
+    TEST_EXPECT(Timeline->GetViewStartNanoseconds() > StartBeforeScroll);
+
+    TEST_SECTION("Refilling the lanes leaves a view the user moved where it was");
+
+    const float ZoomedSpan  = Timeline->GetViewSpanNanoseconds();
+    const float ZoomedStart = Timeline->GetViewStartNanoseconds();
+    Timeline->SetLanes(MakeTimelineLanes(FreeRunningBase + 16000000ull));
+
+    TEST_EXPECT_EQ(Timeline->GetViewSpanNanoseconds(), ZoomedSpan);
+    TEST_EXPECT_EQ(Timeline->GetViewStartNanoseconds(), ZoomedStart);
+
+    TEST_SECTION("Fitting hands the view back to whatever fills the lanes");
+
+    Timeline->ResetView();
+
+    TEST_EXPECT(!Timeline->IsViewUserAdjusted());
+    TEST_EXPECT(!Timeline->IsHorizontalScrollBarVisible());
+    TEST_EXPECT(!TimelineScrollBar->IsScrollable());
+    TEST_EXPECT_EQ(Timeline->GetViewSpanNanoseconds(), 1000000.0f);
+
+    TEST_SECTION("A selection survives a refill that leaves the same scopes in place");
+
+    Timeline->SetSelectedBar(0, 1);
+    Timeline->SetLanes(MakeTimelineLanes(FreeRunningBase + 32000000ull));
+
+    TEST_EXPECT_EQ(Timeline->GetSelectedLane(), 0);
+    TEST_EXPECT_EQ(Timeline->GetSelectedBar(), 1);
+
+    TEST_SECTION("A lane set with nothing in it leaves the widget standing rather than dividing by zero");
+
+    Timeline->SetLanes(TArray<FProfilerTimelineLane>());
+
+    TEST_EXPECT_EQ(Timeline->GetTotalSpanNanoseconds(), 0ull);
+    TEST_EXPECT_EQ(Timeline->GetSelectedLane(), FProfilerTimeline::InvalidIndex);
+    TEST_EXPECT(Timeline->GetViewSpanNanoseconds() > 0.0f);
+
+    FDrawCommandList Commands;
+    Timeline->OnDraw(FDrawGeometry(Bounds, 1.0f), Commands, 0);
+
+    TEST_SECTION("A name is only written across a bar wide enough to hold the whole of it");
+
+    FProfilerTimelineLane LabelLane;
+    LabelLane.Label = String("GameThread");
+
+    FProfilerTimelineBar FittingBar;
+    FittingBar.Name             = "Fits";
+    FittingBar.StartNanoseconds = 0;
+    FittingBar.EndNanoseconds   = 1000000;
+    LabelLane.Bars.Add(FittingBar);
+
+    FProfilerTimelineBar OverflowingBar;
+    OverflowingBar.Name             = "VeryLongScopeNameHere";
+    OverflowingBar.StartNanoseconds = 0;
+    OverflowingBar.EndNanoseconds   = 400000;
+    OverflowingBar.Depth            = 1;
+    OverflowingBar.ParentIndex      = 0;
+    LabelLane.Bars.Add(OverflowingBar);
+
+    TArray<FProfilerTimelineLane> LabelLanes;
+    LabelLanes.Add(LabelLane);
+
+    Timeline->ResetView();
+    Timeline->SetLanes(LabelLanes);
+    LayoutElement(Timeline, Bounds);
+
+    FDrawCommandList LabelCommands;
+    Timeline->OnDraw(FDrawGeometry(Bounds, 1.0f), LabelCommands, 0);
+
+    bool bWroteFittingName     = false;
+    bool bWroteOverflowingName = false;
+
+    for (const FDrawCommand& Command : LabelCommands.GetCommands())
+    {
+        if (Command.Type != EDrawCommandType::Text)
+        {
+            continue;
+        }
+
+        if (Command.Text == String("Fits"))
+        {
+            bWroteFittingName = true;
+        }
+        else if (Command.Text == String("VeryLongScopeNameHere"))
+        {
+            bWroteOverflowingName = true;
+        }
+    }
+
+    TEST_EXPECT(bWroteFittingName);
+    TEST_EXPECT(!bWroteOverflowingName);
+
+    TEST_SECTION("A dimmed bar is drawn with reduced fill alpha and without its label");
+
+    FProfilerTimelineLane DimLane;
+    DimLane.Label = String("GameThread");
+
+    FProfilerTimelineBar MatchBar;
+    MatchBar.Name             = "Tessellate";
+    MatchBar.StartNanoseconds = 0;
+    MatchBar.EndNanoseconds   = 500000;
+    MatchBar.bDimmed          = false;
+    DimLane.Bars.Add(MatchBar);
+
+    FProfilerTimelineBar DimBar;
+    DimBar.Name             = "Other";
+    DimBar.StartNanoseconds = 500000;
+    DimBar.EndNanoseconds   = 1000000;
+    DimBar.bDimmed          = true;
+    DimLane.Bars.Add(DimBar);
+
+    TArray<FProfilerTimelineLane> DimLanes;
+    DimLanes.Add(DimLane);
+    Timeline->ResetView();
+    Timeline->SetLanes(DimLanes);
+    LayoutElement(Timeline, Bounds);
+
+    FDrawCommandList DimCommands;
+    Timeline->OnDraw(FDrawGeometry(Bounds, 1.0f), DimCommands, 0);
+
+    bool bWroteTessellate = false;
+    bool bWroteOther      = false;
+    bool bFoundDimmedFill = false;
+
+    for (const FDrawCommand& Command : DimCommands.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Text)
+        {
+            if (Command.Text == String("Tessellate"))
+            {
+                bWroteTessellate = true;
+            }
+            else if (Command.Text == String("Other"))
+            {
+                bWroteOther = true;
+            }
+        }
+        else if (Command.Type == EDrawCommandType::Box && Command.Tint.A > 0.0f && Command.Tint.A < 0.5f)
+        {
+            bFoundDimmedFill = true;
+        }
+    }
+
+    TEST_EXPECT(bWroteTessellate);
+    TEST_EXPECT(!bWroteOther);
+    TEST_EXPECT(bFoundDimmedFill);
 
     TEST_END();
 }

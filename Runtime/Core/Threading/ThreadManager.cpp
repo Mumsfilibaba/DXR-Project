@@ -70,6 +70,17 @@ void FThreadManager::UnregisterThread(IPlatformThread* InThread)
 
 IPlatformThread* FThreadManager::GetThreadFromHandle(void* ThreadHandle)
 {
+    IPlatformThread* Thread = FindThreadFromHandle(ThreadHandle);
+    if (!Thread)
+    {
+        LOG_WARNING("No thread registered with the handle '%llu'", ThreadHandle);
+    }
+
+    return Thread;
+}
+
+IPlatformThread* FThreadManager::FindThreadFromHandle(void* ThreadHandle)
+{
     TScopedLock Lock(ThreadsCS);
 
     for (IPlatformThread* Thread : Threads)
@@ -80,6 +91,5 @@ IPlatformThread* FThreadManager::GetThreadFromHandle(void* ThreadHandle)
         }
     }
 
-    LOG_WARNING("No thread registered with the handle '%llu'", ThreadHandle);
     return nullptr;
 }

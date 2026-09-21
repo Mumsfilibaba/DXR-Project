@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/Map.h"
 #include "Core/Threading/Spinlock.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
@@ -18,9 +19,17 @@ static constexpr int32 GPU_PROFILER_BUFFER_COUNT = 3;
 
 struct FGPUProfileScopeQueries
 {
-    FRHIQueryRef BeginQuery[GPU_PROFILER_BUFFER_COUNT];
-    FRHIQueryRef EndQuery[GPU_PROFILER_BUFFER_COUNT];
     FRHIQueryRef PipelineStatsQuery[GPU_PROFILER_BUFFER_COUNT];
+};
+
+struct FGPUPendingScope
+{
+    const CHAR*  Name        = nullptr;
+    int32        ParentIndex = -1;
+    int32        Depth       = 0;
+    FRHIQueryRef BeginQuery;
+    FRHIQueryRef EndQuery;
+    bool         bOwnsPipelineStats = false;
 };
 
 class FGPUProfiler : public IGPUProfiler
@@ -33,62 +42,48 @@ public:
 
 public:
 
-    // IGPUProfiler interface
     virtual void Enable()  override final;
     virtual void Disable() override final;
     virtual void Reset()   override final;
+    virtual void Release() override final;
 
     virtual void BeginGPUFrame(FRHICommandList& CmdList) override final;
     virtual void EndGPUFrame(FRHICommandList& CmdList)   override final;
+    virtual void BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name) override final;
+    virtual void EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name) override final;
 
+    virtual void SetRetainAllFrames(bool bInRetainAllFrames) override final;
     virtual void EnablePipelineStatistics()    override final;
     virtual void DisablePipelineStatistics()   override final;
     virtual bool IsPipelineStatisticsEnabled() const override final;
 
-    virtual void GetGPUSamples(GPUProfileSamplesMap& OutGPUSamples) override final;
-    
-    virtual const FGPUProfileSample& GetGPUFrameTime() const override final
-    {
-        return FrameTime;
-    }
-    
-    virtual const FRHIPipelineStatistics& GetPipelineStatistics() const override final
-    {
-        return LastPipelineStats;
-    }
-
-    virtual const FPipelineStatisticsMinMax& GetPipelineStatisticsMinMax() const override final
-    {
-        return PipelineStatsMinMax;
-    }
-    
-    /** @brief Releases all query objects */
-    void Release();
-
-    /** @brief Begin a GPU scope */
-    void BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name);
-
-    /** @brief End a GPU scope */
-    void EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name);
+    virtual int32 GetStoredFrameCount() const override final;
+    virtual bool GetStoredFrame(int32 OldestIndex, FProfilerGpuFrame& OutFrame) const override final;
+    virtual bool FindFrameForCpuFrame(int32 CpuFrameIndex, FProfilerGpuFrame& OutFrame) const override final;
+    virtual bool GetLatestFrame(FProfilerGpuFrame& OutFrame) const override final;
 
 private:
     FGPUProfiler();
     ~FGPUProfiler();
 
     void CollectResults();
+    void ReleaseQueries();
 
-    FGPUProfileSample                     FrameTime;
-    GPUProfileSamplesMap                  Samples;
-    FSpinLock                             SamplesLock;
+    mutable FSpinLock                     StateLock;
     FRHIQueryRef                          FrameBeginQuery[GPU_PROFILER_BUFFER_COUNT];
     FRHIQueryRef                          FrameEndQuery[GPU_PROFILER_BUFFER_COUNT];
+    int32                                 PendingCpuFrameIndex[GPU_PROFILER_BUFFER_COUNT];
     TMap<String, FGPUProfileScopeQueries> ScopeQueries;
-    FRHIPipelineStatistics                LastPipelineStats;
-    FPipelineStatisticsMinMax             PipelineStatsMinMax;
+    TArray<FGPUPendingScope>              PendingScopes[GPU_PROFILER_BUFFER_COUNT];
+    int32                                 NumPendingScopes[GPU_PROFILER_BUFFER_COUNT];
+    TArray<int32>                         OpenTraceStack;
+    TProfilerFrameRing<FProfilerGpuFrame> StoredFrames;
+    FRHIQuery*                            OpenPipelineStatsQuery;
+    int32                                 PipelineStatsScopeIndex;
     bool                                  bEnabled;
     bool                                  bPipelineStatsEnabled;
+    bool                                  bFrameOpen;
     int32                                 WriteIndex;
-    int32                                 PipelineStatsNestingDepth;
 
     static FGPUProfiler GPUProfiler;
 };

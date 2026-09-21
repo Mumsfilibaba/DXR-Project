@@ -200,8 +200,6 @@ void FEditorSelectionIDPass::Record(FRHICommandList& CommandList, FFrameResource
 
     RHI_EVENT_SCOPE(CommandList, "Editor SelectionID");
     TRACE_SCOPE("Editor SelectionID");
-    GPU_TRACE_SCOPE(CommandList, "Editor SelectionID");
-
     const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
     const float RenderHeight = float(FrameResources.CurrentRenderHeight);
 

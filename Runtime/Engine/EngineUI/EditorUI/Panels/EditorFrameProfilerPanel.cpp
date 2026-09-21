@@ -8,20 +8,10 @@
 #include "Application/Elements/ScrollBox.h"
 #include "Application/Elements/TextBlock.h"
 #include "Application/Elements/ToolBar.h"
+#include "Core/Misc/ProfilerReport.h"
 #include "Core/PlatformInterface/IPlatformThread.h"
-#include "Core/Templates/NumericLimits.h"
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Time/Time.h"
-
-static float ResolveMinimum(float Value)
-{
-    return Value == TNumericLimits<float>::Max() ? 0.0f : Value;
-}
-
-static float ResolveMaximum(float Value)
-{
-    return Value == TNumericLimits<float>::Lowest() ? 0.0f : Value;
-}
 
 FEditorFrameProfilerPanel::FEditorFrameProfilerPanel(FEditorEngine* InEditorEngine)
     : FEditorPanel(InEditorEngine, "FrameProfiler", "Frame Profiler")
@@ -30,7 +20,7 @@ FEditorFrameProfilerPanel::FEditorFrameProfilerPanel(FEditorEngine* InEditorEngi
     , ThreadsColumn(nullptr)
     , ThreadSections()
     , ThreadInfos()
-    , LastFrameTimeSample(-1)
+    , LastIngestedFrameIndex(-1)
     , bIsProfilingRequested(true)
 {
 }
@@ -48,7 +38,7 @@ bool FEditorFrameProfilerPanel::Initialize()
     }
 
     FHistogram::FDesc HistogramDesc;
-    HistogramDesc.Capacity        = NUM_PROFILER_SAMPLES;
+    HistogramDesc.Capacity        = NUM_LIVE_PROFILER_FRAMES;
     HistogramDesc.Font            = FEditorStyle::GetFonts().Body;
     HistogramDesc.Label           = "CPU Frame Time (ms)";
     HistogramDesc.PreferredHeight = 80;
@@ -108,7 +98,7 @@ TSharedPtr<FToolBar> FEditorFrameProfilerPanel::BuildToolBar()
         FFrameProfiler::Get().Reset();
 
         FrameTimeHistogram->Clear();
-        LastFrameTimeSample = -1;
+        LastIngestedFrameIndex = -1;
     }));
 
     return Bar;
@@ -171,21 +161,24 @@ void FEditorFrameProfilerPanel::Tick(float /*DeltaTime*/)
 
 void FEditorFrameProfilerPanel::RefreshFrameTime()
 {
-    const FFrameProfilerFunctionInfo& FrameTime = FFrameProfiler::Get().GetCPUFrameTime();
-    if (FrameTime.SampleCount < 1 || FrameTime.CurrentSample == LastFrameTimeSample)
+    const FFrameProfiler& Cpu = FFrameProfiler::Get();
+    const int32 Count = Cpu.GetStoredFrameCount();
+    for (int32 Index = 0; Index < Count; ++Index)
     {
-        return;
+        const FProfilerFrame* Frame = Cpu.GetStoredFrame(Index);
+        if (!Frame || Frame->FrameIndex <= LastIngestedFrameIndex)
+        {
+            continue;
+        }
+
+        FrameTimeHistogram->AddSample(Frame->CpuMilliseconds);
+        LastIngestedFrameIndex = Frame->FrameIndex;
     }
-
-    LastFrameTimeSample = FrameTime.CurrentSample;
-
-    const int32 NewestSample = (FrameTime.CurrentSample + NUM_PROFILER_SAMPLES - 1) % NUM_PROFILER_SAMPLES;
-    FrameTimeHistogram->AddSample(FrameTime.Samples[NewestSample]);
 }
 
 void FEditorFrameProfilerPanel::RefreshThreads()
 {
-    FFrameProfiler::Get().GetFunctionInfo(ThreadInfos);
+    FProfilerReport::CollectThreadAggregates(ThreadInfos);
 
     if (ThreadInfos.Size() != ThreadSections.Size())
     {
@@ -209,50 +202,49 @@ void FEditorFrameProfilerPanel::RefreshThreads()
 
     for (int32 ThreadIndex = 0; ThreadIndex < ThreadSections.Size(); ++ThreadIndex)
     {
-        const FFrameProfilerThreadInfo& ThreadInfo = ThreadInfos[ThreadIndex];
+        const FProfilerThreadAggregate& ThreadInfo = ThreadInfos[ThreadIndex];
 
         FThreadSection& ThreadSection = ThreadSections[ThreadIndex];
         ThreadSection.Section->SetLabel(ResolveThreadName(ThreadInfo, ThreadIndex));
 
-        if (ThreadInfo.FunctionInfoMap.Size() != ThreadSection.Values.Size())
+        if (ThreadInfo.Scopes.Size() != ThreadSection.Values.Size())
         {
             RebuildThreadRows(ThreadSection, ThreadInfo);
         }
 
-        for (auto Scope : ThreadInfo.FunctionInfoMap)
+        for (const FProfilerScopeAggregate& Scope : ThreadInfo.Scopes)
         {
-            TSharedPtr<FTextBlock>* Value = ThreadSection.Values.Find(Scope.First);
+            TSharedPtr<FTextBlock>* Value = ThreadSection.Values.Find(Scope.Name);
             if (!Value)
             {
                 continue;
             }
 
-            const float Average = Time::ToMilliseconds<float>(Scope.Second.GetAverage());
-            const float Minimum = Time::ToMilliseconds<float>(ResolveMinimum(Scope.Second.Min));
-            const float Maximum = Time::ToMilliseconds<float>(ResolveMaximum(Scope.Second.Max));
-
-            (*Value)->SetText(String::Printf("%.3f  %.3f  %.3f  %d", Average, Minimum, Maximum, Scope.Second.TotalCalls));
+            const float Average = Time::ToMilliseconds<float>(Scope.Calls > 0
+                ? static_cast<float>(Scope.InclusiveNanoseconds / static_cast<uint64>(Scope.Calls))
+                : 0.0f);
+            (*Value)->SetText(String::Printf("%.3f  %d", Average, Scope.Calls));
         }
     }
 }
 
-void FEditorFrameProfilerPanel::RebuildThreadRows(FThreadSection& ThreadSection, const FFrameProfilerThreadInfo& ThreadInfo)
+void FEditorFrameProfilerPanel::RebuildThreadRows(FThreadSection& ThreadSection, const FProfilerThreadAggregate& ThreadInfo)
 {
     ThreadSection.Table->ClearRows();
     ThreadSection.Values.Clear();
 
-    ThreadSection.Table->AddHeaderRow("Scope  (avg / min / max in ms, calls)");
+    ThreadSection.Table->AddHeaderRow("Scope  (avg ms, calls)");
 
-    for (auto Scope : ThreadInfo.FunctionInfoMap)
+    for (const FProfilerScopeAggregate& Scope : ThreadInfo.Scopes)
     {
         TSharedPtr<FTextBlock> Value = CreateValueText("-");
 
-        ThreadSection.Table->AddRow(Scope.First, Value).ToolTipText = "Average, minimum and maximum time in the scope, in milliseconds, and how many times it was entered";
-        ThreadSection.Values.Add(Scope.First, Value);
+        ThreadSection.Table->AddRow(Scope.Name, Value).ToolTipText = "Average inclusive time in the scope, in milliseconds, and how many times it was entered";
+        ThreadSection.Values.Add(Scope.Name, Value);
     }
 }
 
-String FEditorFrameProfilerPanel::ResolveThreadName(const FFrameProfilerThreadInfo& ThreadInfo, int32 ThreadIndex)
+String FEditorFrameProfilerPanel::ResolveThreadName(const FProfilerThreadAggregate& ThreadInfo, int32 ThreadIndex)
 {
     if (FThreadManager::Get().IsMainThread(ThreadInfo.ThreadHandle))
     {

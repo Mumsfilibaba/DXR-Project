@@ -2,8 +2,7 @@
 #include "Engine/EngineUI/EditorUI/EditorPanel.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorAboutPanel.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorContentBrowserPanel.h"
-#include "Engine/EngineUI/EditorUI/Panels/EditorFrameProfilerPanel.h"
-#include "Engine/EngineUI/EditorUI/Panels/EditorGPUProfilerPanel.h"
+#include "Engine/EngineUI/EditorUI/Panels/EditorProfilerPanel.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorOutputLogPanel.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorPropertiesPanel.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorRHIInfoPanel.h"
@@ -95,12 +94,7 @@ bool FEditorPanelRegistry::RegisterAll()
         return false;
     }
 
-    if (!Add(MakeSharedPtr<FEditorGPUProfilerPanel>(EditorEngine)))
-    {
-        return false;
-    }
-
-    if (!Add(MakeSharedPtr<FEditorFrameProfilerPanel>(EditorEngine)))
+    if (!Add(MakeSharedPtr<FEditorProfilerPanel>(EditorEngine)))
     {
         return false;
     }

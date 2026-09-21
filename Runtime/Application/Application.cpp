@@ -9,6 +9,7 @@
 #include "Application/Menus/DragDropService.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Modules/ModuleManager.h"
@@ -1103,6 +1104,7 @@ void FApplication::RecordWindow(const TSharedPtr<FWindow>& InWindow)
 
     if (InWindow->IsLayoutStale())
     {
+        TRACE_SCOPE("UI Layout");
         LayoutWindow(InWindow);
     }
 
@@ -1110,10 +1112,15 @@ void FApplication::RecordWindow(const TSharedPtr<FWindow>& InWindow)
     {
         const FDrawGeometry WindowGeometry = FDrawGeometry(InWindow->GetContentRectangle(), InWindow->GetWindowDPIScale());
 
-        const int32 TopLayerId = InWindow->OnDraw(WindowGeometry, *CommandList, 0);
-        OnWindowPaintingEvent.Broadcast(InWindow);
+        int32 TopLayerId = 0;
+        {
+            TRACE_SCOPE("UI Element Paint");
 
-        InWindow->PaintDeferred(*CommandList, TopLayerId + 1);
+            TopLayerId = InWindow->OnDraw(WindowGeometry, *CommandList, 0);
+            OnWindowPaintingEvent.Broadcast(InWindow);
+            InWindow->PaintDeferred(*CommandList, TopLayerId + 1);
+        }
+
         Renderer->EndWindow(InWindow);
     }
 }

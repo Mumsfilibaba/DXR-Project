@@ -1,6 +1,17 @@
 #include "Application/Style/UIStyle.h"
+#include "Application/Text/IFontFace.h"
 
 static FUIStyle GDefaultStyle;
+
+int32 FUIStyleMetrics::ResolveButtonMinWidth(const IFontFace* Face, const FMargin& Padding) const
+{
+    if (!Face || !ButtonMinLabel)
+    {
+        return 0;
+    }
+
+    return Face->MeasureWidth(StringView(ButtonMinLabel)) + Padding.GetTotalHorizontal();
+}
 
 const FUIStyle& FUIStyle::GetDefault()
 {

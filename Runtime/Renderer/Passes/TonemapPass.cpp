@@ -159,8 +159,6 @@ void FTonemapPass::Record(FRHICommandList& CommandList, const FFrameResources& F
 
     TRACE_SCOPE("Tonemapping");
 
-    GPU_TRACE_SCOPE(CommandList, "Tonemapping");
-
     const float RenderWidth  = static_cast<float>(FrameResources.CurrentRenderWidth);
     const float RenderHeight = static_cast<float>(FrameResources.CurrentRenderHeight);
 

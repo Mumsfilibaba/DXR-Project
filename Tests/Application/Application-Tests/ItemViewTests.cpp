@@ -1,4 +1,5 @@
 #include "ItemViewTests.h"
+#include "StubPlatformApplication.h"
 
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
@@ -9,8 +10,23 @@
 #include <Application/Elements/TileView.h>
 #include <Application/Elements/TreeView.h>
 #include <Application/Input/Keys.h>
+#include <Application/Menus/ToolTipService.h>
 #include <Application/Style/UIStyle.h>
 #include <Application/Text/FixedWidthFontFace.h>
+
+class FScopedItemViewTestServices
+{
+public:
+    FScopedItemViewTestServices() = default;
+
+    ~FScopedItemViewTestServices()
+    {
+        FToolTipService::Shutdown();
+    }
+
+    FScopedItemViewTestServices(const FScopedItemViewTestServices&) = delete;
+    FScopedItemViewTestServices& operator=(const FScopedItemViewTestServices&) = delete;
+};
 
 static TSharedPtr<IFontFace> CreateFont()
 {
@@ -242,6 +258,29 @@ bool TreeViewSelection_Test()
     }
     TEST_EXPECT(bFoundRoundedSelection);
 
+    TEST_SECTION("A selected row draws its name in the color meant for the selection fill, and its neighbours keep theirs");
+    FFloatColor SelectedLabelTint;
+    FFloatColor RestingLabelTint;
+    for (const FDrawCommand& Command : SelectionCommands.GetCommands())
+    {
+        if (Command.Type != EDrawCommandType::Text)
+        {
+            continue;
+        }
+
+        if (Command.Text == "Alpha")
+        {
+            SelectedLabelTint = Command.Tint;
+        }
+        else if (Command.Text == "Beta")
+        {
+            RestingLabelTint = Command.Tint;
+        }
+    }
+
+    TEST_EXPECT(SelectedLabelTint == Desc.Style.SelectedLabelText);
+    TEST_EXPECT(RestingLabelTint == Desc.Style.LabelText);
+
     TEST_SECTION("A chord click adds a row without dropping the one already held");
     TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(100, 50), EModifierFlag::Ctrl));
 
@@ -386,6 +425,32 @@ bool TreeViewFiltering_Test()
     TEST_EXPECT_EQ(TreeView->GetVisibleRows().Size(), 2);
     TEST_EXPECT(TreeView->GetVisibleRows()[0] == Assets);
     TEST_EXPECT(TreeView->GetVisibleRows()[1] == Scenes);
+
+    TEST_SECTION("The type column answers the filter as well as the label does");
+    TSharedPtr<FTreeItem> Scope = FTreeItem::Create("SSAO");
+    Scope->TypeLabel            = "3 0.120";
+
+    TSharedPtr<FTreeView> TypeColumnTree = FTreeView::Create(Desc);
+    TypeColumnTree->SetRootItems({ Scope });
+    LayoutElement(TypeColumnTree, FRectangle(IntVector2(0, 0), 200, 200));
+    TypeColumnTree->SetFilterText("0.120");
+
+    TEST_EXPECT_EQ(TypeColumnTree->GetVisibleRows().Size(), 1);
+
+    TEST_SECTION("A view of numbers can keep the filter off the type column, where any digit would answer");
+    FTreeView::FDesc LabelOnlyDesc         = Desc;
+    LabelOnlyDesc.bFilterMatchesTypeColumn = false;
+
+    TSharedPtr<FTreeView> LabelOnlyTree = FTreeView::Create(LabelOnlyDesc);
+    LabelOnlyTree->SetRootItems({ Scope });
+    LayoutElement(LabelOnlyTree, FRectangle(IntVector2(0, 0), 200, 200));
+    LabelOnlyTree->SetFilterText("0.120");
+
+    TEST_EXPECT_EQ(LabelOnlyTree->GetVisibleRows().Size(), 0);
+
+    LabelOnlyTree->SetFilterText("ssao");
+
+    TEST_EXPECT_EQ(LabelOnlyTree->GetVisibleRows().Size(), 1);
 
     TEST_END();
 }
@@ -686,6 +751,110 @@ bool TreeViewColumnsAndIndent_Test()
     TEST_EXPECT(PlainView->GetItemLabelBounds(PlainParent).Position.X < FilterLabelX);
     TEST_EXPECT_EQ(PlainView->GetItemLabelBounds(PlainChild).Position.X,
         PlainView->GetItemLabelBounds(PlainParent).Position.X + IndentDesc.IndentPerLevel);
+
+    TEST_END();
+}
+
+bool TreeViewHeaderToolTips_Test()
+{
+    TEST_BEGIN();
+
+    FScopedStubApplication     Application;
+    FScopedItemViewTestServices Services;
+
+    constexpr int32 HeaderHeight    = 24;
+    constexpr int32 ViewWidth       = 320;
+    constexpr int32 TypeColumnWidth = 120;
+    constexpr int32 TypeColumnX     = ViewWidth - TypeColumnWidth;
+
+    const String CallsToolTip = "How many times the scope was entered";
+    const String InclToolTip  = "Time spent in the scope, its children included";
+
+    FTreeView::FDesc Desc;
+    Desc.Font               = CreateFont();
+    Desc.RowHeight          = 20;
+    Desc.HeaderHeight       = HeaderHeight;
+    Desc.LabelColumnHeader  = "Scope";
+    Desc.TypeColumnHeader   = "Calls   Incl ms";
+    Desc.TypeColumnWidth    = TypeColumnWidth;
+    Desc.LabelColumnToolTip = "The scopes, nested the way they ran";
+    Desc.TypeColumnToolTips = { CallsToolTip, InclToolTip };
+
+    TSharedPtr<FTreeView> TreeView = FTreeView::Create(Desc);
+    TreeView->SetRootItems(CreateLeafRows(4));
+    LayoutElement(TreeView, FRectangle(IntVector2(0, 0), ViewWidth, 100));
+
+    FToolTipService& ToolTips = FToolTipService::Get();
+
+    TEST_SECTION("Resting on a caption asks for the tip explaining that column");
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(10, HeaderHeight / 2)));
+
+    TEST_EXPECT(ToolTips.IsPending());
+    TEST_EXPECT_EQ(ToolTips.GetOwner(), StaticCastSharedPtr<FVisualElement>(TreeView));
+    TEST_EXPECT_EQ(ToolTips.GetRequestedText(), Desc.LabelColumnToolTip);
+
+    TEST_SECTION("Every caption in the type column carries its own tip, rather than one for the lot");
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 10, HeaderHeight / 2)));
+
+    TEST_EXPECT(ToolTips.IsPending());
+    TEST_EXPECT_EQ(ToolTips.GetRequestedText(), CallsToolTip);
+
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 60, HeaderHeight / 2)));
+
+    TEST_EXPECT(ToolTips.IsPending());
+    TEST_EXPECT_EQ(ToolTips.GetRequestedText(), InclToolTip);
+
+    TEST_SECTION("The gap between two captions belongs to the nearer of them");
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 45, HeaderHeight / 2)));
+    TEST_EXPECT_EQ(ToolTips.GetRequestedText(), CallsToolTip);
+
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 55, HeaderHeight / 2)));
+    TEST_EXPECT_EQ(ToolTips.GetRequestedText(), InclToolTip);
+
+    TEST_SECTION("Past the last caption the column still reads as that caption's");
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(ViewWidth - 2, HeaderHeight / 2)));
+    TEST_EXPECT_EQ(ToolTips.GetRequestedText(), InclToolTip);
+
+    TEST_SECTION("A column with one tip hangs it off the whole of it");
+    FTreeView::FDesc SharedDesc = Desc;
+    SharedDesc.TypeColumnToolTips = { CallsToolTip };
+
+    TSharedPtr<FTreeView> SharedView = FTreeView::Create(SharedDesc);
+    SharedView->SetRootItems(CreateLeafRows(4));
+    LayoutElement(SharedView, FRectangle(IntVector2(0, 0), ViewWidth, 100));
+
+    SharedView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 10, HeaderHeight / 2)));
+    TEST_EXPECT_EQ(ToolTips.GetRequestedText(), CallsToolTip);
+
+    SharedView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 100, HeaderHeight / 2)));
+    TEST_EXPECT_EQ(ToolTips.GetRequestedText(), CallsToolTip);
+
+    SharedView->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+
+    TEST_SECTION("Dropping onto the rows takes the tip down, since only the captions explain themselves");
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 10, HeaderHeight / 2)));
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(10, HeaderHeight + 10)));
+
+    TEST_EXPECT(!ToolTips.IsPending());
+
+    TEST_SECTION("Leaving the view takes the tip with it");
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(10, HeaderHeight / 2)));
+    TEST_EXPECT(ToolTips.IsPending());
+
+    TreeView->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    TEST_EXPECT(!ToolTips.IsPending());
+
+    TEST_SECTION("A view whose columns speak for themselves asks for nothing");
+    Desc.LabelColumnToolTip.Clear();
+    Desc.TypeColumnToolTips.Clear();
+
+    TSharedPtr<FTreeView> BareView = FTreeView::Create(Desc);
+    BareView->SetRootItems(CreateLeafRows(4));
+    LayoutElement(BareView, FRectangle(IntVector2(0, 0), ViewWidth, 100));
+
+    BareView->OnMouseMove(MakeMoveEvent(IntVector2(10, HeaderHeight / 2)));
+
+    TEST_EXPECT(!ToolTips.IsPending());
 
     TEST_END();
 }

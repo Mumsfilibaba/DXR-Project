@@ -1,4 +1,6 @@
+#include "Core/Math/Math.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "Core/Templates/NumericLimits.h"
 #include "Core/Time/Time.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
@@ -12,8 +14,7 @@ static IGPUProfiler* GetGPUProfiler()
 }
 
 FEditorGPUProfilerWidget::FEditorGPUProfilerWidget()
-    : Samples()
-    , ImGuiDelegateHandle()
+    : ImGuiDelegateHandle()
     , bVisible(false)
 {
     if (IImguiPlugin::IsEnabled())
@@ -49,6 +50,9 @@ void FEditorGPUProfilerWidget::DrawGPUData()
     if (!Profiler)
         return;
 
+    FProfilerGpuFrame Latest;
+    Profiler->GetLatestFrame(Latest);
+
     const ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
 
     if (ImGui::BeginTable("Frame Statistics", 1, TableFlags))
@@ -56,19 +60,35 @@ void FEditorGPUProfilerWidget::DrawGPUData()
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
 
-        const FGPUProfileSample& GPUFrameTime = Profiler->GetGPUFrameTime();
+        FProfilerGpuFrame HistogramLatest;
 
-        float Avg = GPUFrameTime.GetAverage();
-        float Min = GPUFrameTime.Min;
-        if (Min == TNumericLimits<float>::Max())
+        float Avg = 0.0f;
+        float Min = 0.0f;
+        float Max = 0.0f;
+
+        TArray<float> HistogramSamples;
+        if (Profiler->GetLatestFrame(HistogramLatest))
         {
-            Min = 0.0f;
+            Avg = HistogramLatest.GpuMilliseconds;
+            Min = Avg;
+            Max = Avg;
         }
 
-        float Max = GPUFrameTime.Max;
-        if (Max == TNumericLimits<float>::Lowest())
+        const int32 Stored = Profiler->GetStoredFrameCount();
+
+        FProfilerGpuFrame StoredFrame;
+        for (int32 Index = 0; Index < Stored; ++Index)
         {
-            Max = 0.0f;
+            if (!Profiler->GetStoredFrame(Index, StoredFrame))
+            {
+                continue;
+            }
+
+            HistogramSamples.Add(StoredFrame.GpuMilliseconds);
+
+            Min = (Index == 0) ? StoredFrame.GpuMilliseconds : Math::Min(Min, StoredFrame.GpuMilliseconds);
+            Max = Math::Max(Max, StoredFrame.GpuMilliseconds);
+            Avg = StoredFrame.GpuMilliseconds;
         }
 
         ImGui::Text("FrameTime:");
@@ -101,7 +121,7 @@ void FEditorGPUProfilerWidget::DrawGPUData()
         };
 
         const float Width = ImGui::GetContentRegionAvail().x;
-        ImGui::PlotHistogram("", GPUFrameTime.Samples.Data(), GPUFrameTime.SampleCount, GPUFrameTime.CurrentSample, nullptr, 0.0f, GetMaxLimit(Avg), ImVec2(Width * 0.98f, 80.0f));
+        ImGui::PlotHistogram("", HistogramSamples.IsEmpty() ? nullptr : HistogramSamples.Data(), HistogramSamples.Size(), 0, nullptr, 0.0f, GetMaxLimit(Avg), ImVec2(Width * 0.98f, 80.0f));
 
         ImGui::EndTable();
     }
@@ -114,29 +134,22 @@ void FEditorGPUProfilerWidget::DrawGPUData()
         ImGui::TableSetupColumn("Max");
         ImGui::TableHeadersRow();
 
-        Profiler->GetGPUSamples(Samples);
-        for (auto Sample : Samples)
+        for (const FGPUProfilerInterval& Interval : Latest.Intervals)
         {
             ImGui::TableNextRow();
 
-            const float Avg = Sample.Second.GetAverage();
-            const float Min = Sample.Second.Min;
-            const float Max = Sample.Second.Max;
-
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text("%s", *Sample.First);
+            ImGui::Text("%s", Interval.Name ? Interval.Name : "<unnamed>");
 
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text("%.4f ms", Time::ToMilliseconds<float>(Avg));
+            ImGui::Text("%.4f ms", Time::ToMilliseconds<float>(static_cast<float>(Interval.InclusiveNanoseconds)));
 
             ImGui::TableSetColumnIndex(2);
-            ImGui::Text("%.4f ms", Time::ToMilliseconds<float>(Min));
+            ImGui::Text("%.4f ms", Time::ToMilliseconds<float>(static_cast<float>(Interval.ExclusiveNanoseconds)));
 
             ImGui::TableSetColumnIndex(3);
-            ImGui::Text("%.4f ms", Time::ToMilliseconds<float>(Max));
+            ImGui::Text("%d", Interval.Depth);
         }
-
-        Samples.Clear();
 
         ImGui::EndTable();
     }
@@ -153,9 +166,9 @@ static void FormatWithSeparators(CHAR* Buffer, int32 BufferSize, uint64 Value)
     CHAR Raw[32];
     snprintf(Raw, sizeof(Raw), "%llu", Value);
 
-    const int32 RawLen = static_cast<int32>(strlen(Raw));
+    const int32 RawLen        = static_cast<int32>(strlen(Raw));
     const int32 NumSeparators = (RawLen - 1) / 3;
-    const int32 FinalLen = RawLen + NumSeparators;
+    const int32 FinalLen      = RawLen + NumSeparators;
 
     if (FinalLen >= BufferSize)
     {
@@ -216,8 +229,34 @@ void FEditorGPUProfilerWidget::DrawPipelineStatistics()
     ImGui::TextUnformatted("Frame Total (aggregated from per-pass)");
     ImGui::Spacing();
 
-    const FRHIPipelineStatistics&     Stats    = Profiler->GetPipelineStatistics();
-    const FPipelineStatisticsMinMax&  MinMax   = Profiler->GetPipelineStatisticsMinMax();
+    FProfilerGpuFrame Latest;
+    FRHIPipelineStatistics Stats = {};
+    if (Profiler->GetLatestFrame(Latest))
+    {
+        for (const FGPUProfilerInterval& Interval : Latest.Intervals)
+        {
+            if (!Interval.bHasPipelineStats)
+            {
+                continue;
+            }
+
+            Stats.IAVertices    += Interval.PipelineStats.IAVertices;
+            Stats.IAPrimitives  += Interval.PipelineStats.IAPrimitives;
+            Stats.VSInvocations += Interval.PipelineStats.VSInvocations;
+            Stats.GSInvocations += Interval.PipelineStats.GSInvocations;
+            Stats.GSPrimitives  += Interval.PipelineStats.GSPrimitives;
+            Stats.CInvocations  += Interval.PipelineStats.CInvocations;
+            Stats.CPrimitives   += Interval.PipelineStats.CPrimitives;
+            Stats.PSInvocations += Interval.PipelineStats.PSInvocations;
+            Stats.HSInvocations += Interval.PipelineStats.HSInvocations;
+            Stats.DSInvocations += Interval.PipelineStats.DSInvocations;
+            Stats.CSInvocations += Interval.PipelineStats.CSInvocations;
+            Stats.ASInvocations += Interval.PipelineStats.ASInvocations;
+            Stats.MSInvocations += Interval.PipelineStats.MSInvocations;
+            Stats.MSPrimitives  += Interval.PipelineStats.MSPrimitives;
+        }
+    }
+
     const ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
 
     if (ImGui::BeginTable("PipelineStatistics", 4, TableFlags))
@@ -259,20 +298,20 @@ void FEditorGPUProfilerWidget::DrawPipelineStatistics()
             }
         };
 
-        Row("IA Vertices",          Stats.IAVertices,    MinMax.Min.IAVertices,    MinMax.Max.IAVertices);
-        Row("IA Primitives",        Stats.IAPrimitives,  MinMax.Min.IAPrimitives,  MinMax.Max.IAPrimitives);
-        Row("VS Invocations",       Stats.VSInvocations, MinMax.Min.VSInvocations, MinMax.Max.VSInvocations);
-        Row("GS Invocations",       Stats.GSInvocations, MinMax.Min.GSInvocations, MinMax.Max.GSInvocations);
-        Row("GS Primitives",        Stats.GSPrimitives,  MinMax.Min.GSPrimitives,  MinMax.Max.GSPrimitives);
-        Row("Clipping Invocations", Stats.CInvocations,  MinMax.Min.CInvocations,  MinMax.Max.CInvocations);
-        Row("Clipping Primitives",  Stats.CPrimitives,   MinMax.Min.CPrimitives,   MinMax.Max.CPrimitives);
-        Row("PS Invocations",       Stats.PSInvocations, MinMax.Min.PSInvocations, MinMax.Max.PSInvocations);
-        Row("HS Invocations",       Stats.HSInvocations, MinMax.Min.HSInvocations, MinMax.Max.HSInvocations);
-        Row("DS Invocations",       Stats.DSInvocations, MinMax.Min.DSInvocations, MinMax.Max.DSInvocations);
-        Row("CS Invocations",       Stats.CSInvocations, MinMax.Min.CSInvocations, MinMax.Max.CSInvocations);
-        Row("AS Invocations",       Stats.ASInvocations, MinMax.Min.ASInvocations, MinMax.Max.ASInvocations);
-        Row("MS Invocations",       Stats.MSInvocations, MinMax.Min.MSInvocations, MinMax.Max.MSInvocations);
-        Row("MS Primitives",        Stats.MSPrimitives,  MinMax.Min.MSPrimitives,  MinMax.Max.MSPrimitives);
+        Row("IA Vertices",          Stats.IAVertices,    Stats.IAVertices,    Stats.IAVertices);
+        Row("IA Primitives",        Stats.IAPrimitives,  Stats.IAPrimitives,  Stats.IAPrimitives);
+        Row("VS Invocations",       Stats.VSInvocations, Stats.VSInvocations, Stats.VSInvocations);
+        Row("GS Invocations",       Stats.GSInvocations, Stats.GSInvocations, Stats.GSInvocations);
+        Row("GS Primitives",        Stats.GSPrimitives,  Stats.GSPrimitives,  Stats.GSPrimitives);
+        Row("Clipping Invocations", Stats.CInvocations,  Stats.CInvocations,  Stats.CInvocations);
+        Row("Clipping Primitives",  Stats.CPrimitives,   Stats.CPrimitives,   Stats.CPrimitives);
+        Row("PS Invocations",       Stats.PSInvocations, Stats.PSInvocations, Stats.PSInvocations);
+        Row("HS Invocations",       Stats.HSInvocations, Stats.HSInvocations, Stats.HSInvocations);
+        Row("DS Invocations",       Stats.DSInvocations, Stats.DSInvocations, Stats.DSInvocations);
+        Row("CS Invocations",       Stats.CSInvocations, Stats.CSInvocations, Stats.CSInvocations);
+        Row("AS Invocations",       Stats.ASInvocations, Stats.ASInvocations, Stats.ASInvocations);
+        Row("MS Invocations",       Stats.MSInvocations, Stats.MSInvocations, Stats.MSInvocations);
+        Row("MS Primitives",        Stats.MSPrimitives,  Stats.MSPrimitives,  Stats.MSPrimitives);
 
         ImGui::EndTable();
     }

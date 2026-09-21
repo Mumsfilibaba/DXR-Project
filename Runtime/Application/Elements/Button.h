@@ -22,6 +22,7 @@ public:
             , HorizontalContentAlignment(EHorizontalAlignment::Center)
             , VerticalContentAlignment(EVerticalAlignment::Center)
             , MinHeight(FUIStyle::GetDefault().Metrics.ButtonHeight)
+            , MinWidth(0)
             , bHasBorder(false)
             , bIsGhost(false)
             , OnClicked()
@@ -72,14 +73,9 @@ public:
         EHorizontalAlignment       HorizontalContentAlignment;
         EVerticalAlignment         VerticalContentAlignment;
         int32                      MinHeight;
+        int32                      MinWidth;
         bool                       bHasBorder : 1;
-
-        /**
-         * @brief True paints no fill at rest, so the frame only appears once the cursor arrives, which is
-         * what a button sitting on a tool bar rather than on a panel wants.
-         */
-        bool bIsGhost : 1;
-
+        bool                       bIsGhost : 1;
         FOnClicked                 OnClicked;
         TSharedPtr<FVisualElement> Content;
     };
@@ -148,10 +144,12 @@ protected:
 
 private:
     TSharedPtr<class FTextBlock> Label;
+    TSharedPtr<IFontFace>        Font;
     FCornerRadii                 CornerRadius;
     EHorizontalAlignment         HorizontalContentAlignment;
     EVerticalAlignment           VerticalContentAlignment;
     int32                        MinHeight;
+    int32                        MinWidth;
     bool                         bHasBorder;
     bool                         bIsGhost;
     bool                         bIsHighlighted;

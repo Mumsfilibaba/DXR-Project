@@ -147,6 +147,8 @@
 #include "Core/Misc/CoreDelegates.h"
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/BootProfiler.h"
+#include "Core/Misc/ProfilerTypes.h"
 #include "Core/Misc/IniFile.h"
 #include "Core/Misc/IOutputDevice.h"
 #include "Core/Misc/OutputDeviceLogger.h"

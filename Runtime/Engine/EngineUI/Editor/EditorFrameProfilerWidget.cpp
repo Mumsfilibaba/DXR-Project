@@ -1,4 +1,7 @@
 #include "EditorFrameProfilerWidget.h"
+#include "Core/Math/Math.h"
+#include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/ProfilerReport.h"
 #include "Core/Time/ElapsedTime.h"
 #include "Core/Threading/ThreadManager.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
@@ -43,19 +46,22 @@ void FEditorFrameProfilerWidget::DrawCPUData(float Width)
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
 
-        const FFrameProfilerFunctionInfo& CPUFrameTime = FFrameProfiler::Get().GetCPUFrameTime();
+        const float Avg    = FFrameProfiler::Get().GetLatestCpuMilliseconds();
+        float       Min    = Avg;
+        float       Max    = Avg;
+        const int32 Stored = FFrameProfiler::Get().GetStoredFrameCount();
 
-        float Avg = CPUFrameTime.GetAverage();
-        float Min = CPUFrameTime.Min;
-        if (Min == TNumericLimits<float>::Max())
-        {
-            Min = 0.0f;
-        }
+        TArray<float> Samples;
+        Samples.Reserve(Stored);
 
-        float Max = CPUFrameTime.Max;
-        if (Max == TNumericLimits<float>::Lowest())
+        for (int32 Index = 0; Index < Stored; ++Index)
         {
-            Max = 0.0f;
+            if (const FProfilerFrame* Frame = FFrameProfiler::Get().GetStoredFrame(Index))
+            {
+                Samples.Add(Frame->CpuMilliseconds);
+                Min = Math::Min(Min, Frame->CpuMilliseconds);
+                Max = Math::Max(Max, Frame->CpuMilliseconds);
+            }
         }
 
         ImGui::Text("FrameTime:");
@@ -99,7 +105,7 @@ void FEditorFrameProfilerWidget::DrawCPUData(float Width)
             }
         };
 
-        ImGui::PlotHistogram("", CPUFrameTime.Samples.Data(), CPUFrameTime.SampleCount, CPUFrameTime.CurrentSample, nullptr, 0.0f, GetMaxLimit(Avg), ImVec2(Width * 0.9825f, 80.0f));
+        ImGui::PlotHistogram("", Samples.IsEmpty() ? nullptr : Samples.Data(), Samples.Size(), 0, nullptr, 0.0f, GetMaxLimit(Avg), ImVec2(Width * 0.9825f, 80.0f));
 
         ImGui::EndTable();
     }
@@ -113,10 +119,10 @@ void FEditorFrameProfilerWidget::DrawCPUData(float Width)
     const float NameColumnWidth  = Width * NameColumnWidthPercentage;
     const float OtherColumnWidth = (Width * OtherColumnWidthPercentage) / static_cast<float>(NumColumnsExceptName);
 
-    FFrameProfiler::Get().GetFunctionInfo(ThreadInfos);
+    FProfilerReport::CollectThreadAggregates(ThreadInfos);
 
     int32 ThreadIndex = 0;
-    for (const FFrameProfilerThreadInfo& ThreadInfo : ThreadInfos)
+    for (const FProfilerThreadAggregate& ThreadInfo : ThreadInfos)
     {
         bool bIsMainThread = false;
 
@@ -155,18 +161,21 @@ void FEditorFrameProfilerWidget::DrawCPUData(float Width)
 
                 ImGui::TableHeadersRow();
 
-                for (auto Sample : ThreadInfo.FunctionInfoMap)
+                for (const FProfilerScopeAggregate& Sample : ThreadInfo.Scopes)
                 {
                     ImGui::TableNextRow();
 
                     constexpr float MillisecondMultiplier = 1.0f / (1000.0f * 1000.0f);
-                    float Avg   = Sample.Second.GetAverage() * MillisecondMultiplier;
-                    float Min   = Sample.Second.Min * MillisecondMultiplier;
-                    float Max   = Sample.Second.Max * MillisecondMultiplier;
-                    int32 Calls = Sample.Second.TotalCalls;
+                    const float AvgNs = Sample.Calls > 0
+                        ? static_cast<float>(Sample.InclusiveNanoseconds / static_cast<uint64>(Sample.Calls))
+                        : 0.0f;
+                    float Avg   = AvgNs * MillisecondMultiplier;
+                    float Min   = Avg;
+                    float Max   = Avg;
+                    int32 Calls = Sample.Calls;
 
                     ImGui::TableSetColumnIndex(0);
-                    ImGui::Text("%s", *Sample.First);
+                    ImGui::Text("%s", *Sample.Name);
 
                     ImGui::TableSetColumnIndex(1);
                     ImGui::Text("%d", Calls);

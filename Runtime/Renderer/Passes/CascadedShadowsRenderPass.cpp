@@ -267,8 +267,6 @@ void FCascadedShadowsRenderPass::Record(FRHICommandList& CommandList, const FFra
 
     TRACE_SCOPE("Render DirectionalLight ShadowMaps");
 
-    GPU_TRACE_SCOPE(CommandList, "DirectionalLight ShadowMaps");
-
     const ECascadeRenderPassType RenderPassType = GetRenderMapRenderPassType();
     if (Scene->GetDirectionalLight())
     {

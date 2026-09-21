@@ -136,8 +136,6 @@ void FShadowMaskRenderPass::Record(FRHICommandList& CommandList, const FFrameRes
 
     TRACE_SCOPE("Render ShadowMasks");
 
-    GPU_TRACE_SCOPE(CommandList, "DirectionalLight Shadow Mask");
-
     const FDirectionalShadowSettingsHLSL ShadowSettings = CreateShadowSettings(Resources, GetRenderer()->GetFrameCounter().GetFrameIndex());
 
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(ShadowSettingsBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest));

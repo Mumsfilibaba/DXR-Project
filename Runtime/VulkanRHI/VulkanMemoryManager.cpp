@@ -96,6 +96,27 @@ void VulkanQueryBufferMemoryRequirements(FVulkanDevice* Device, const VkBufferCr
     vkDestroyBuffer(VulkanDevice, TempBuffer, nullptr);
 }
 
+static bool VulkanMapDedicatedAllocation(FVulkanDevice* Device, uint32 MemoryTypeIndex, VkDeviceMemory DeviceMemory, FVulkanMemoryLocation& OutLocation)
+{
+    const VkPhysicalDeviceMemoryProperties& MemoryProperties = Device->GetPhysicalDevice()->GetMemoryProperties();
+    if (!(MemoryProperties.memoryTypes[MemoryTypeIndex].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
+    {
+        return true;
+    }
+
+    void* Mapped = nullptr;
+
+    VkResult Result = vkMapMemory(Device->GetVkDevice(), DeviceMemory, 0, VK_WHOLE_SIZE, 0, &Mapped);
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR_CRITICAL("Dedicated vkMapMemory failed with %s", ToString(Result));
+        return false;
+    }
+
+    OutLocation.SetMappedBaseAddress(Mapped);
+    return true;
+}
+
 void VulkanQueryImageMemoryRequirements(FVulkanDevice* Device, const VkImageCreateInfo& ImageCreateInfo, VkMemoryRequirements2& OutRequirements, VkImage ExistingImage)
 {
     VkDevice VulkanDevice = Device->GetVkDevice();
@@ -1917,6 +1938,11 @@ bool FVulkanBufferAllocator::TryAllocate(VkMemoryPropertyFlags MemoryProperties,
         OutLocation.SetSize(MemoryRequirements.size);
         OutLocation.SetLocationType(EVulkanMemoryLocationType::Dedicated);
 
+        if (!VulkanMapDedicatedAllocation(GetDevice(), static_cast<uint32>(MemoryTypeIndex), DedicatedMemory, OutLocation))
+        {
+            return false;
+        }
+
     #if VULKAN_ENABLE_MEMORY_LOGGING
         if (CVarVulkanLogMemoryAllocations.GetValue())
         {
@@ -2152,7 +2178,8 @@ bool FVulkanBufferAllocator::TryAllocate(VkMemoryPropertyFlags MemoryProperties,
         OutLocation.SetMemoryOffset(0);
         OutLocation.SetSize(MemoryRequirements.size);
         OutLocation.SetLocationType(EVulkanMemoryLocationType::Dedicated);
-        return true;
+
+        return VulkanMapDedicatedAllocation(GetDevice(), static_cast<uint32>(MemoryTypeIndex), DedicatedMemory, OutLocation);
     }
 
     SCOPED_LOCK(PoolsCS);

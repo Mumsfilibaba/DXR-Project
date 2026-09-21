@@ -18,3 +18,4 @@ bool SearchBoxClearStyle_Test();
 bool NumericEntryControl_Test();
 bool ProgressBarControl_Test();
 bool HistogramControl_Test();
+bool ProfilerTimelineControl_Test();

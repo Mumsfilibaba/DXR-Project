@@ -72,6 +72,9 @@ DECLARE_DELEGATE(FOnTreeItemExpansionChanged, const TSharedPtr<FTreeItem>& /*Ite
 /** @brief Called once the cursor has moved far enough with the left button held on a row to mean a drag. */
 DECLARE_DELEGATE(FOnTreeItemDragDetected, const TSharedPtr<FTreeItem>& /*Item*/, const FCursorEvent& /*CursorEvent*/);
 
+/** @brief Builds the context menu for a row; returning null leaves the right-click unhandled. */
+DECLARE_RETURN_DELEGATE(FOnGetTreeItemContextMenu, TSharedPtr<FVisualElement>, const TSharedPtr<FTreeItem>& /*Item*/);
+
 class APPLICATION_API FTreeView final : public FVisualElement
 {
 public:
@@ -107,6 +110,21 @@ public:
         /** @brief The caption over the type column, drawn only when TypeColumnWidth is not zero. */
         String TypeColumnHeader;
 
+        /** @brief Explains the label column once the cursor has rested on its caption, a newline starting
+         * a further line. Empty for a column that speaks for itself. */
+        String LabelColumnToolTip;
+
+        /**
+         * @brief Explains the type column, one entry per caption in TypeColumnHeader and in that order,
+         * a newline starting a further line.
+         *
+         * The captions are taken to be whatever the header holds between its runs of two or more spaces,
+         * which is how a header naming several columns of numbers spaces them out, so "Incl ms" stays one
+         * caption. A view with a single entry hangs it off the whole column, and an empty array asks for
+         * no tip at all. An entry left empty leaves its own column without one.
+         */
+        TArray<String> TypeColumnToolTips;
+
         /** @brief How tall the header is, in pixels. */
         int32 HeaderHeight = FUIStyle::GetDefault().Metrics.RowHeight;
 
@@ -122,6 +140,9 @@ public:
         /** @brief True to let a chord click or a shift click put more than one row in the selection. */
         bool bAllowMultiSelect = true;
 
+        /** @brief Whether the filter also reads the type column, which a view of numbers wants off. */
+        bool bFilterMatchesTypeColumn = true;
+
         /** @brief Fired with the whole selection after it changed. */
         FOnTreeSelectionChanged OnSelectionChanged;
 
@@ -133,6 +154,9 @@ public:
 
         /** @brief Fired once the cursor has moved far enough with the left button held on a row to mean a drag. */
         FOnTreeItemDragDetected OnDragDetected;
+
+        /** @brief Builds the menu shown by a right-click on a row. */
+        FOnGetTreeItemContextMenu OnGetContextMenu;
     };
 
 public:
@@ -306,6 +330,7 @@ private:
 
     static void SetSubtreeExpanded(const TArray<TSharedPtr<FTreeItem>>& Items, bool bExpanded);
 
+    NODISCARD const String* FindHeaderToolTip(const IntVector2& ClientPosition) const;    
     NODISCARD bool MatchesFilterText(const TSharedPtr<FTreeItem>& Item) const;
     NODISCARD bool PassesFilter(const TSharedPtr<FTreeItem>& Item) const;
     NODISCARD bool IsAncestorOfSelection(const TSharedPtr<FTreeItem>& Item) const;
@@ -320,7 +345,9 @@ private:
     NODISCARD int32 FindRowIndex(const TSharedPtr<FTreeItem>& Item) const;
     NODISCARD int32 GetCurrentRowIndex() const;
     NODISCARD int32 GetMaxScrollOffset() const;
-
+    
+    void UpdateHeaderToolTip(const FCursorEvent& CursorEvent);
+    void RebuildTypeColumnToolTipSplits();
     void RebuildVisibleRows() const;
     void AppendVisibleRows(const TArray<TSharedPtr<FTreeItem>>& Items) const;
     void ApplySelectionFromClick(int32 RowIndex, const FModifierKeyState& Modifiers);
@@ -342,6 +369,9 @@ private:
     String                                FilterText;
     String                                LabelColumnHeader;
     String                                TypeColumnHeader;
+    String                                LabelColumnToolTip;
+    TArray<String>                        TypeColumnToolTips;
+    TArray<int32>                         TypeColumnToolTipSplits;
     IntVector2                            PressPosition;
     int32                                 ArrowSize;
     int32                                 TypeColumnWidth;
@@ -356,10 +386,12 @@ private:
     bool                                  bAlternateRowColors;
     bool                                  bHighlightAncestors;
     bool                                  bAllowMultiSelect;
+    bool                                  bFilterMatchesTypeColumn;
     mutable bool                          bRowsDirty;
     mutable bool                          bReserveIconColumn;
     FOnTreeSelectionChanged               OnSelectionChangedDelegate;
     FOnTreeItemActivated                  OnItemActivatedDelegate;
     FOnTreeItemExpansionChanged           OnExpansionChangedDelegate;
     FOnTreeItemDragDetected               OnDragDetectedDelegate;
+    FOnGetTreeItemContextMenu             OnGetContextMenuDelegate;
 };

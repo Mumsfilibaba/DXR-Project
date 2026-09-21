@@ -6,8 +6,13 @@
 #include "Application/Graph/GraphNodeElement.h"
 #include "Application/Text/IFontFace.h"
 
-/** @brief Builds the menu a right-click on empty canvas opens, given where in graph space it landed. */
-DECLARE_RETURN_DELEGATE(FOnGetGraphContextMenu, TSharedPtr<FVisualElement>, const Vector2& /*GraphPosition*/);
+/**
+ * @brief Builds the menu a right-click opens.
+ *
+ * NodeId is -1 over empty canvas; GraphPosition is retained for authoring menus that add a node at
+ * the cursor.
+ */
+DECLARE_RETURN_DELEGATE(FOnGetGraphContextMenu, TSharedPtr<FVisualElement>, const Vector2& /*GraphPosition*/, int32 /*NodeId*/);
 
 /** @brief Called when the set of selected nodes changed. */
 DECLARE_DELEGATE(FOnGraphSelectionChanged);
@@ -99,7 +104,7 @@ public:
          */
         bool bIsViewer : 1 = false;
 
-        /** @brief Builds the menu a right-click on empty canvas opens, given where in graph space it landed. */
+        /** @brief Builds the menu a right-click opens, given its graph position and node, if any. */
         FOnGetGraphContextMenu OnGetContextMenu;
 
         /** @brief Fired when the set of selected nodes changed. */

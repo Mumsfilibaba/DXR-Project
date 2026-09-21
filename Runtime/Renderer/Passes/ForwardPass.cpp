@@ -244,8 +244,6 @@ void FForwardPass::Record(FRHICommandList& CommandList, const FFrameResources& F
 
     TRACE_SCOPE("ForwardPass");
 
-    GPU_TRACE_SCOPE(CommandList, "Forward Pass");
-
     const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
     const float RenderHeight = float(FrameResources.CurrentRenderHeight);
 

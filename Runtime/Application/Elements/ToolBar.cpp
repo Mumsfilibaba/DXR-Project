@@ -6,16 +6,16 @@
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
 
-// The space either side of an entry's contents, and the gap between its icon and its label
 constexpr int32 TOOLBAR_ITEM_PADDING = 6;
 constexpr int32 TOOLBAR_ICON_SPACING = 4;
 
-// The room a dropdown arrow takes after the label, and half the width of the arrow itself
 constexpr int32 TOOLBAR_ARROW_WIDTH  = 14;
 constexpr float TOOLBAR_ARROW_EXTENT = 3.5f;
 
-// How far short of the strip's full height a rule between groups stops
 constexpr int32 TOOLBAR_RULE_INSET = 3;
+
+constexpr int32 TOOLBAR_RULE_THICKNESS = 2;
+constexpr int32 TOOLBAR_RULE_GAP       = 8;
 
 TSharedPtr<FToolBarButton> FToolBarButton::Create(const FToolBarItemDesc& Item, EToolBarItemType InType, const TSharedPtr<IFontFace>& InFont, int32 InIconSize)
 {
@@ -70,9 +70,13 @@ IntVector2 FToolBarButton::ComputeDesiredSize() const
         ContentSize.Y = Math::Max(ContentSize.Y, Font->GetLineHeight());
     }
 
+    const FUIStyleMetrics& Metrics = FUIStyle::GetDefault().Metrics;
+
+    const int32 Floor = Math::Max(MinWidth, Label.IsEmpty() ? 0 : Metrics.ResolveButtonMinWidth(Font.Get(), Inset));
+
     IntVector2 DesiredSize(ContentSize.X + Inset.GetTotalHorizontal(), ContentSize.Y + Inset.GetTotalVertical());
-    DesiredSize.X = Math::Max(DesiredSize.X, MinWidth);
-    DesiredSize.Y = Math::Max(DesiredSize.Y, FUIStyle::GetDefault().Metrics.ButtonHeight);
+    DesiredSize.X = Math::Max(DesiredSize.X, Floor);
+    DesiredSize.Y = Math::Max(DesiredSize.Y, Metrics.ButtonHeight);
     return DesiredSize;
 }
 
@@ -429,8 +433,11 @@ void FToolBar::EndGroup()
 
 void FToolBar::AddSeparator()
 {
-    TSharedPtr<FSeparator> Rule = Orientation == EOrientation::Horizontal ? FSeparator::CreateVertical() : FSeparator::CreateHorizontal();
-    AppendSlot(Rule, nullptr, EToolBarItemType::Separator);
+    FSeparator::FDesc RuleDesc;
+    RuleDesc.Orientation = Orientation == EOrientation::Horizontal ? EOrientation::Vertical : EOrientation::Horizontal;
+    RuleDesc.Thickness   = TOOLBAR_RULE_THICKNESS;
+
+    AppendSlot(FSeparator::Create(RuleDesc), nullptr, EToolBarItemType::Separator);
 }
 
 void FToolBar::AddFlexibleSpace()
@@ -529,7 +536,8 @@ FBoxSlot& FToolBar::AppendSlot(const TSharedPtr<FVisualElement>& Element, const 
     const bool  bIsSeparator   = Type == EToolBarItemType::Separator;
     const bool  bIsInsideGroup = GroupStartIndex >= 0 && Items.Size() > GroupStartIndex;
     const bool  bWantsGap      = !bIsInsideGroup && !Items.IsEmpty() && Type != EToolBarItemType::FlexibleSpace && Items.Last().Type != EToolBarItemType::FlexibleSpace;
-    const int32 LeadingGap     = bWantsGap ? ItemSpacing : 0;
+    const bool  bTouchesRule   = bIsSeparator || (!Items.IsEmpty() && Items.Last().Type == EToolBarItemType::Separator);
+    const int32 LeadingGap     = bWantsGap ? (bTouchesRule ? TOOLBAR_RULE_GAP : ItemSpacing) : 0;
 
     FBoxSlot& Slot = Panel->AddSlot(Element);
     if (Orientation == EOrientation::Horizontal)

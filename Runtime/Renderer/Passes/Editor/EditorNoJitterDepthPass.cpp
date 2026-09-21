@@ -165,8 +165,6 @@ void FEditorNoJitterDepthPass::Record(FRHICommandList& CommandList, FFrameResour
 
     RHI_EVENT_SCOPE(CommandList, "Editor NoJitter Depth");
     TRACE_SCOPE("Editor NoJitter Depth");
-    GPU_TRACE_SCOPE(CommandList, "Editor NoJitter Depth");
-
     const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
     const float RenderHeight = float(FrameResources.CurrentRenderHeight);
 

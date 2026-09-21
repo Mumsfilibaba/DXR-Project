@@ -184,8 +184,6 @@ void FScreenSpaceOcclusionPass::Record(FRHICommandList& CommandList, const FPass
 
     TRACE_SCOPE("SSAO");
 
-    GPU_TRACE_SCOPE(CommandList, "SSAO");
-
     FSSAOSettingsHLSL SSAOSettings;
 
     const uint32 Width         = PassResources.SSAOBuffer->GetDesc().Extent.X;

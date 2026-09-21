@@ -1,4 +1,5 @@
 #include "Engine/EditorEngine.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Engine/EngineUI/Editor/EditorDockspaceWidget.h"
 #include "Engine/EngineUI/Editor/EditorFooterWidget.h"

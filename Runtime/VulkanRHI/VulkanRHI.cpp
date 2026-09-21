@@ -1409,14 +1409,21 @@ bool FVulkanDeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQuer
         return false;
     }
 
+    if (!VulkanQuery->SyncFence)
+    {
+        return false;
+    }
+
     if (Mode == EQueryResultMode::Wait)
     {
-        if (!VulkanQuery->SyncFence)
+        if (!VulkanQuery->SyncFence->Wait(UINT64_MAX))
         {
             return false;
         }
-
-        VulkanQuery->SyncFence->Wait(UINT64_MAX);
+    }
+    else if (!VulkanQuery->SyncFence->IsSignaled())
+    {
+        return false;
     }
 
     OutResult = *VulkanQuery->QueryResult;
@@ -1431,14 +1438,21 @@ bool FVulkanDeviceRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelin
         return false;
     }
 
+    if (!VulkanQuery->SyncFence)
+    {
+        return false;
+    }
+        
     if (Mode == EQueryResultMode::Wait)
     {
-        if (!VulkanQuery->SyncFence)
+        if (!VulkanQuery->SyncFence->Wait(UINT64_MAX))
         {
             return false;
         }
-        
-        VulkanQuery->SyncFence->Wait(UINT64_MAX);
+    }
+    else if (!VulkanQuery->SyncFence->IsSignaled())
+    {
+        return false;
     }
 
     OutResult = *reinterpret_cast<const FRHIPipelineStatistics*>(VulkanQuery->QueryResult);

@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Containers/Array.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/UniquePtr.h"
 #include "Application/Elements/CompoundElement.h"
@@ -20,6 +21,14 @@ enum class EToolTipPlacement : uint8
 class APPLICATION_API FToolTip final : public FCompoundElement
 {
 public:
+
+    /**
+     * @brief Builds a tip showing a run of text, where a newline starts a further line.
+     *
+     * @param InText The text to show, which may carry newlines.
+     * @param InFont The face to draw it with.
+     * @return The new tip.
+     */
     static TSharedPtr<FToolTip> Create(const String& InText, const TSharedPtr<IFontFace>& InFont);
 
 public:
@@ -32,20 +41,27 @@ public:
     virtual void SetOuterCornerRadius(float InCornerRadius) override;
 
     /**
-     * @brief Sets the text the tip shows.
+     * @brief Sets the text the tip shows, where a newline starts a further line.
      *
-     * @param InText The text to show.
+     * @param InText The text to show, which may carry newlines.
      */
     void SetText(const String& InText);
 
-    /** @return The text the tip shows. */
+    /** @return The text the tip shows, newlines and all. */
     NODISCARD FORCEINLINE const String& GetText() const
     {
         return Text;
     }
 
+    /** @return The text broken at its newlines, which is one entry for the usual single-line tip. */
+    NODISCARD FORCEINLINE const TArray<String>& GetLines() const
+    {
+        return Lines;
+    }
+
 private:
     String                Text;
+    TArray<String>        Lines;
     TSharedPtr<IFontFace> Font;
     float                 CornerRadius;
 };
@@ -183,6 +199,12 @@ public:
     NODISCARD FORCEINLINE const TSharedPtr<FVisualElement>& GetOwner() const
     {
         return Owner;
+    }
+
+    /** @return The text of the shown or pending tip, which is empty for a tip built from an element. */
+    NODISCARD FORCEINLINE const String& GetRequestedText() const
+    {
+        return RequestedText;
     }
 
     /** @return The window the tip was given because it did not fit its host, or null in every other case. */

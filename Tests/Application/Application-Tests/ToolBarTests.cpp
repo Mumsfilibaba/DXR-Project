@@ -157,12 +157,26 @@ bool ToolBarComposition_Test()
     TEST_SECTION("An entry is as wide as what it shows, and as tall as a row whatever that is");
     LayoutElement(ToolBar, FRectangle(IntVector2(0, 0), 400, 40));
 
-    // Six either side of the contents, four eight-pixel characters, and a row is taller than a line of text
-    TEST_EXPECT_EQ(Save->GetCachedDesiredSize(), IntVector2(44, 24));
+    TEST_EXPECT_EQ(Save->GetCachedDesiredSize(), IntVector2(52, 24));
     TEST_EXPECT_EQ(Undo->GetCachedDesiredSize(), IntVector2(28, 24));
 
     TEST_SECTION("A dropdown reserves the room its arrow is drawn in");
     TEST_EXPECT_EQ(ToolBar->GetButton(4)->GetCachedDesiredSize(), IntVector2(58, 24));
+
+    TEST_SECTION("A word too short to fill an entry is widened to the shared floor, which an icon is spared");
+    TSharedPtr<FToolBar>       Narrow = FToolBar::Create(Desc);
+    TSharedPtr<FToolBarButton> Fit    = Narrow->AddButton(FToolBarItemDesc().SetLabel("Fit"), FOnClicked());
+    TSharedPtr<FToolBarButton> Icon   = Narrow->AddButton(FToolBarItemDesc().SetIcon(MakeIcon()), FOnClicked());
+
+    LayoutElement(Narrow, FRectangle(IntVector2(0, 0), 400, 40));
+
+    const FUIStyleMetrics& Metrics = FUIStyle::GetDefault().Metrics;
+    const int32 LabelFloor = Metrics.ResolveButtonMinWidth(Font.Get(), Fit->GetPadding());
+
+    TEST_EXPECT_EQ(LabelFloor, Font->MeasureWidth(StringView(Metrics.ButtonMinLabel)) + Fit->GetPadding().GetTotalHorizontal());
+    TEST_EXPECT_EQ(Fit->GetCachedDesiredSize().X, LabelFloor);
+    TEST_EXPECT_EQ(Save->GetCachedDesiredSize().X, LabelFloor);
+    TEST_EXPECT_EQ(Icon->GetCachedDesiredSize().X, 28);
 
     TEST_SECTION("An entry showing both an icon and a label is as wide as the two and the gap between them");
     TSharedPtr<FToolBar> IconAndLabel = FToolBar::Create(Desc);
@@ -173,9 +187,10 @@ bool ToolBarComposition_Test()
 
     TEST_SECTION("The strip runs left to right, spaced, inside its own padding");
     TEST_EXPECT_EQ(Save->GetContentRectangle().Position.X, 4);
-    TEST_EXPECT_EQ(Undo->GetContentRectangle().Position.X, 50);
-    TEST_EXPECT_EQ(Grid->GetContentRectangle().Position.X, 83);
-    TEST_EXPECT_EQ(ToolBar->GetButton(4)->GetContentRectangle().Position.X, 129);
+    TEST_EXPECT_EQ(Undo->GetContentRectangle().Position.X, 58);
+
+    TEST_EXPECT_EQ(Grid->GetContentRectangle().Position.X, 104);
+    TEST_EXPECT_EQ(ToolBar->GetButton(4)->GetContentRectangle().Position.X, 158);
 
     TEST_SECTION("Every entry is the same height and centred, however tall the strip is");
     TEST_EXPECT_EQ(Save->GetContentRectangle().Height, 24);
@@ -184,12 +199,17 @@ bool ToolBarComposition_Test()
 
     TEST_SECTION("A rule stops short of the strip's full height, so it reads as a divider rather than a wall");
     const FRectangle RuleBounds = ToolBar->GetItems()[2].Element->GetContentRectangle();
-    TEST_EXPECT_EQ(RuleBounds.Position.X, 80);
+    TEST_EXPECT_EQ(RuleBounds.Position.X, 94);
     TEST_EXPECT_EQ(RuleBounds.Position.Y, 5);
     TEST_EXPECT_EQ(RuleBounds.Height, 30);
 
+    TEST_SECTION("A rule is drawn heavier than a hairline, and stands further off its neighbours than they do");
+    TEST_EXPECT_EQ(RuleBounds.Width, 2);
+    TEST_EXPECT_EQ(RuleBounds.Position.X - Undo->GetContentRectangle().GetRight(), 8);
+    TEST_EXPECT_EQ(Grid->GetContentRectangle().Position.X - RuleBounds.GetRight(), 8);
+
     TEST_SECTION("The strip asks for what its entries add up to, plus the gaps and its own padding");
-    TEST_EXPECT_EQ(ToolBar->GetCachedDesiredSize(), IntVector2(191, 28));
+    TEST_EXPECT_EQ(ToolBar->GetCachedDesiredSize(), IntVector2(220, 28));
 
     TEST_SECTION("A vertical strip stacks its entries down and gives them all one width");
     FToolBar::FDesc VerticalDesc;

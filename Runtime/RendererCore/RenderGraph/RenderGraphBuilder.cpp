@@ -3,6 +3,8 @@
 #include "RendererCore/RenderGraph/RenderGraphResourcePool.h"
 #include "RendererCore/RenderGraph/RenderGraphViewCache.h"
 #include "RendererCore/RenderGraph/RenderGraphViewValidation.h"
+#include "RendererCore/Interfaces/IRendererModule.h"
+#include "RendererCore/Interfaces/IGPUProfiler.h"
 
 struct FRenderGraphSubresourceSpan
 {
@@ -1325,6 +1327,13 @@ void FRenderGraphBuilder::Execute(FRHICommandList& CommandList)
 
         RHI_EVENT_SCOPE(CommandList, Pass->GetName());
 
+        IGPUProfiler* GpuProfiler = nullptr;
+        if (IRendererModule* RendererModule = IRendererModule::Get())
+        {
+            GpuProfiler = &RendererModule->GetGPUProfiler();
+            GpuProfiler->BeginGPUTrace(CommandList, Pass->GetName());
+        }
+
         if (!Pass->GetTransitions().IsEmpty())
         {
             CommandList.TransitionBarrier(MakeArrayView(Pass->GetTransitions()));
@@ -1359,6 +1368,11 @@ void FRenderGraphBuilder::Execute(FRHICommandList& CommandList)
         if (bHasRenderPass)
         {
             CommandList.EndRenderPass();
+        }
+
+        if (GpuProfiler)
+        {
+            GpuProfiler->EndGPUTrace(CommandList, Pass->GetName());
         }
     }
 

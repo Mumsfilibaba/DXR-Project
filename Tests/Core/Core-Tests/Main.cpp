@@ -8,6 +8,7 @@
 
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
+#include "LaunchProgram/ProgramEntry.h"
 
 #include "TaskGraphTests.h"
 #include "CommandLineTests.h"
@@ -21,6 +22,7 @@
 #include "PlatformTimeTests.h"
 #include "MemoryStackTests.h"
 #include "PlatformEventPoolTests.h"
+#include "ProfilerTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -29,11 +31,8 @@
 IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 #endif
 
-int main(int Argc, const CHAR* Argv[])
+static int32 RunCoreTests()
 {
-    UNREFERENCED_VARIABLE(Argc);
-    UNREFERENCED_VARIABLE(Argv);
-
     TestHarness::Initialize("TestResults_Core.log");
     LOG_INFO("=== Core Tests ===");
 
@@ -59,6 +58,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("PlatformTime", PlatformTime_Test());
     RUN_TEST("MemoryStack", MemoryStack_Test());
     RUN_TEST("PlatformEventPool", PlatformEventPool_Test());
+    RUN_TEST("Profiler", Profiler_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();
@@ -67,3 +67,5 @@ int main(int Argc, const CHAR* Argv[])
     TestHarness::Shutdown();
     return ExitCode;
 }
+
+IMPLEMENT_PROGRAM_MAIN("Core-Tests", RunCoreTests);

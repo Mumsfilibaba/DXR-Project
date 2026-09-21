@@ -971,7 +971,8 @@ void FGraphCanvas::OpenContextMenu(const FCursorEvent& CursorEvent)
 
     const Vector2 ClientPosition(static_cast<float>(CursorEvent.GetClientPosition().X), static_cast<float>(CursorEvent.GetClientPosition().Y));
 
-    TSharedPtr<FVisualElement> Menu = OnGetContextMenuDelegate.Execute(ScreenToGraph(ClientPosition));
+    TSharedPtr<FVisualElement> Menu = OnGetContextMenuDelegate.Execute(
+        ScreenToGraph(ClientPosition), FindNodeAt(CursorEvent.GetClientPosition()));
     if (!Menu)
     {
         return;

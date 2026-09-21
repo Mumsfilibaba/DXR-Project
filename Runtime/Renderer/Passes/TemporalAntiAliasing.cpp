@@ -90,8 +90,6 @@ void FTemporalAntiAliasing::Record(FRHICommandList& CommandList, FFrameResources
 
     TRACE_SCOPE("TAA");
 
-    GPU_TRACE_SCOPE(CommandList, "TAA");
-
     CommandList.SetComputePipelineState(TemporalAntiAliasingPSO.Get());
 
     CommandList.SetConstantBuffer(TemporalAntiAliasingShader.Get(), FrameResources.CameraBuffer.Get(), 0);
@@ -125,8 +123,6 @@ void FTemporalAntiAliasing::RecordHistorySeed(FRHICommandList& CommandList, FFra
     RHI_EVENT_SCOPE(CommandList, "TAAHistorySeed");
 
     TRACE_SCOPE("TAAHistorySeed");
-
-    GPU_TRACE_SCOPE(CommandList, "TAAHistorySeed");
 
     for (FRHITextureRef& HistoryBuffer : TAAHistoryBuffers)
     {

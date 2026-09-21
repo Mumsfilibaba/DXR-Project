@@ -85,8 +85,6 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
 
 void FCascadeGenerationPass::Record(FRHICommandList& CommandList, FFrameResources& Resources)
 {
-    GPU_TRACE_SCOPE(CommandList, "Generate Cascade Matrices");
-
     CommandList.SetComputePipelineState(CascadeGen.Get());
 
     CommandList.SetConstantBuffer(CascadeGenShader.Get(), Resources.CameraBuffer.Get(), 0);

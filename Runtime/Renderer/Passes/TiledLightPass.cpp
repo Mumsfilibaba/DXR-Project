@@ -281,8 +281,6 @@ void FTiledLightPass::Record(FRHICommandList& CommandList, const FFrameResources
 
     TRACE_SCOPE("LightPass");
 
-    GPU_TRACE_SCOPE(CommandList, "Light Pass");
-
     const bool bDrawCascades = GCSMDebugCascades;
 
     FRHIComputeShader* LightPassShader;

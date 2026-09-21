@@ -121,8 +121,6 @@ void FDepthReducePass::RecordInitialReduction(FRHICommandList& CommandList, FFra
 
     TRACE_SCOPE("Depth Reduction Initial");
 
-    GPU_TRACE_SCOPE(CommandList, "Depth Reduction Initial");
-
     FReductionConstants ReductionConstants;
 
     FSceneCamera* Camera = Scene->GetCamera();
@@ -154,8 +152,6 @@ void FDepthReducePass::RecordReduction(FRHICommandList& CommandList, FFrameResou
     }
 
     TRACE_SCOPE("Depth Reduction");
-
-    GPU_TRACE_SCOPE(CommandList, "Depth Reduction");
 
     CommandList.SetComputePipelineState(ReduceDepthPSO.Get());
 

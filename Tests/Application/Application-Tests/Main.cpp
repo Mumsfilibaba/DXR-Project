@@ -4,6 +4,7 @@
 
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
+#include "LaunchProgram/ProgramEntry.h"
 
 #include "ApplicationRendererTests.h"
 #include "ConsoleCommandLineTests.h"
@@ -37,11 +38,8 @@
 IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 #endif
 
-int main(int Argc, const CHAR* Argv[])
+static int32 RunApplicationTests()
 {
-    UNREFERENCED_VARIABLE(Argc);
-    UNREFERENCED_VARIABLE(Argv);
-
     TestHarness::Initialize("TestResults_Application.log");
     LOG_INFO("=== Application Tests ===");
 
@@ -130,6 +128,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("NumericEntryControl", NumericEntryControl_Test());
     RUN_TEST("ProgressBarControl", ProgressBarControl_Test());
     RUN_TEST("HistogramControl", HistogramControl_Test());
+    RUN_TEST("ProfilerTimelineControl", ProfilerTimelineControl_Test());
 
     RUN_TEST("TreeViewModel", TreeViewModel_Test());
     RUN_TEST("TreeViewSelection", TreeViewSelection_Test());
@@ -137,6 +136,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("TreeViewKeyboard", TreeViewKeyboard_Test());
     RUN_TEST("TreeViewScrolling", TreeViewScrolling_Test());
     RUN_TEST("TreeViewColumnsAndIndent", TreeViewColumnsAndIndent_Test());
+    RUN_TEST("TreeViewHeaderToolTips", TreeViewHeaderToolTips_Test());
     RUN_TEST("TileViewLayout", TileViewLayout_Test());
     RUN_TEST("TileViewSelection", TileViewSelection_Test());
     RUN_TEST("TileViewDrag", TileViewDrag_Test());
@@ -274,3 +274,5 @@ int main(int Argc, const CHAR* Argv[])
     TestHarness::Shutdown();
     return ExitCode;
 }
+
+IMPLEMENT_PROGRAM_MAIN("Application-Tests", RunApplicationTests);

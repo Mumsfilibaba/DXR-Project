@@ -3,6 +3,7 @@
 #include "Application/Text/FontAtlas.h"
 #include "Application/Text/IFontFace.h"
 #include "Core/Math/Math.h"
+#include "Core/Misc/FrameProfiler.h"
 
 constexpr float DIRECTION_EPSILON = 1.0e-4f;
 
@@ -59,121 +60,128 @@ void FUIDrawData::BuildFromCommandList(const FDrawCommandList& CommandList)
     }
 
     TArray<int32> SortedIndices;
-    SortedIndices.Reserve(Commands.Size());
-
-    for (int32 Index = 0; Index < Commands.Size(); ++Index)
     {
-        SortedIndices.Add(Index);
-    }
+        TRACE_SCOPE("UI Build Sort Commands");
 
-    SortedIndices.SortWithPredicate([&Commands](int32 First, int32 Second)
-    {
-        if (Commands[First].LayerId != Commands[Second].LayerId)
+        SortedIndices.Reserve(Commands.Size());
+        for (int32 Index = 0; Index < Commands.Size(); ++Index)
         {
-            return Commands[First].LayerId < Commands[Second].LayerId;
+            SortedIndices.Add(Index);
         }
 
-        return First < Second;
-    });
-
-    for (int32 SortedIndex = 0; SortedIndex < SortedIndices.Size(); ++SortedIndex)
-    {
-        const FDrawCommand& Command = Commands[SortedIndices[SortedIndex]];
-
-        ActiveClipRectangle = Command.ClipRectangle;
-        bHasActiveClip      = Command.bIsClipped;
-
-        switch (Command.Type)
+        SortedIndices.SortWithPredicate([&Commands](int32 First, int32 Second)
         {
-            case EDrawCommandType::Box:
-            case EDrawCommandType::Line:
+            if (Commands[First].LayerId != Commands[Second].LayerId)
             {
-                if (!IsCulledByClip(Command.Bounds))
-                {
-                    AddBox(Command);
-                }
-
-                break;
+                return Commands[First].LayerId < Commands[Second].LayerId;
             }
 
-            case EDrawCommandType::BoxOutline:
+            return First < Second;
+        });
+    }
+
+    {
+        TRACE_SCOPE("UI Build Tessellate");
+
+        for (int32 SortedIndex = 0; SortedIndex < SortedIndices.Size(); ++SortedIndex)
+        {
+            const FDrawCommand& Command = Commands[SortedIndices[SortedIndex]];
+
+            ActiveClipRectangle = Command.ClipRectangle;
+            bHasActiveClip      = Command.bIsClipped;
+
+            switch (Command.Type)
             {
-                if (!IsCulledByClip(Command.Bounds))
+                case EDrawCommandType::Box:
+                case EDrawCommandType::Line:
                 {
-                    AddBoxOutline(Command);
+                    if (!IsCulledByClip(Command.Bounds))
+                    {
+                        AddBox(Command);
+                    }
+
+                    break;
                 }
 
-                break;
-            }
-
-            case EDrawCommandType::Text:
-            {
-                if (!IsCulledByClip(Command.Bounds))
+                case EDrawCommandType::BoxOutline:
                 {
-                    AddText(Command);
+                    if (!IsCulledByClip(Command.Bounds))
+                    {
+                        AddBoxOutline(Command);
+                    }
+
+                    break;
                 }
 
-                break;
-            }
-
-            case EDrawCommandType::Image:
-            {
-                if (!IsCulledByClip(Command.Bounds))
+                case EDrawCommandType::Text:
                 {
-                    AddImage(Command);
+                    if (!IsCulledByClip(Command.Bounds))
+                    {
+                        AddText(Command);
+                    }
+
+                    break;
                 }
 
-                break;
-            }
-
-            case EDrawCommandType::RoundedBottomBar:
-            {
-                if (!IsCulledByClip(Command.Bounds))
+                case EDrawCommandType::Image:
                 {
-                    AddRoundedBottomBar(Command);
+                    if (!IsCulledByClip(Command.Bounds))
+                    {
+                        AddImage(Command);
+                    }
+
+                    break;
                 }
 
-                break;
-            }
-
-            case EDrawCommandType::RoundedAccentRing:
-            {
-                if (!IsCulledByClip(Command.Bounds))
+                case EDrawCommandType::RoundedBottomBar:
                 {
-                    AddRoundedAccentRing(Command);
+                    if (!IsCulledByClip(Command.Bounds))
+                    {
+                        AddRoundedBottomBar(Command);
+                    }
+
+                    break;
                 }
 
-                break;
-            }
-
-            case EDrawCommandType::Polyline:
-            {
-                const TArrayView<const Vector2> Points = CommandList.GetCommandPoints(Command);
-                if (!IsCulledByClip(ComputePointBounds(Points, Command.Thickness)))
+                case EDrawCommandType::RoundedAccentRing:
                 {
-                    GetOrOpenBatch(FUITextureHandle());
-                    AddPolyline(Points, Command.Thickness, Command.bIsClosed, Command.Tint.ToColor().ToPackedRGBA());
+                    if (!IsCulledByClip(Command.Bounds))
+                    {
+                        AddRoundedAccentRing(Command);
+                    }
+
+                    break;
                 }
 
-                break;
-            }
-
-            case EDrawCommandType::ConvexPolygon:
-            {
-                const TArrayView<const Vector2> Points = CommandList.GetCommandPoints(Command);
-                if (!IsCulledByClip(ComputePointBounds(Points, 0.0f)))
+                case EDrawCommandType::Polyline:
                 {
-                    GetOrOpenBatch(FUITextureHandle());
-                    AddConvexPolygon(Points, Command.Tint.ToColor().ToPackedRGBA());
+                    const TArrayView<const Vector2> Points = CommandList.GetCommandPoints(Command);
+                    if (!IsCulledByClip(ComputePointBounds(Points, Command.Thickness)))
+                    {
+                        GetOrOpenBatch(FUITextureHandle());
+                        AddPolyline(Points, Command.Thickness, Command.bIsClosed, Command.Tint.ToColor().ToPackedRGBA());
+                    }
+
+                    break;
                 }
 
-                break;
-            }
+                case EDrawCommandType::ConvexPolygon:
+                {
+                    const TArrayView<const Vector2> Points = CommandList.GetCommandPoints(Command);
+                    if (!IsCulledByClip(ComputePointBounds(Points, 0.0f)))
+                    {
+                        GetOrOpenBatch(FUITextureHandle());
+                        AddConvexPolygon(Points, Command.Tint.ToColor().ToPackedRGBA());
+                    }
 
-            case EDrawCommandType::ClipPush:
-            case EDrawCommandType::ClipPop:
-            {
-                break;
+                    break;
+                }
+
+                case EDrawCommandType::ClipPush:
+                case EDrawCommandType::ClipPop:
+                {
+                    break;
+                }
             }
         }
     }

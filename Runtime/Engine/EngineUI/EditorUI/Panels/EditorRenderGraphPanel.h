@@ -23,6 +23,9 @@ public:
     virtual void Release() override final;
     virtual void Tick(float DeltaTime) override final;
 
+    /** @brief Opens and selects the render-graph node whose pass name matches, if it is present. */
+    void ShowPassByName(const String& PassName);
+
 private:
     struct FBuiltPass
     {
@@ -51,6 +54,9 @@ private:
 #endif
 
     NODISCARD TSharedPtr<FVisualElement> BuildHeaderRow();
+    NODISCARD TSharedPtr<FVisualElement> BuildNodeContextMenu(const Vector2& GraphPosition, int32 NodeId);
+    void ShowPassInProfiler(const String& PassName);
+    void ApplyPendingPassSelection();
 
     void SetCaptureEnabled(bool bEnabled);
     void RunAutoLayout();
@@ -62,6 +68,7 @@ private:
     TMap<String, Vector2>    PositionsByPassName;
     TArray<FBuiltPass>       BuiltPasses;
     String                   BuiltSignature;
+    String                   PendingPassName;
     bool                     bIsCapturing;
     bool                     bShowCulled;
     bool                     bNeedsFitView;

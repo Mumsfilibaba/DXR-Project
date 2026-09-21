@@ -63,6 +63,32 @@ struct FApplicationUIConstants
     float ProjectionMatrix[4][4];
 };
 
+struct FScopedApplicationGPUTrace
+{
+    FScopedApplicationGPUTrace(IGPUProfiler* InProfiler, FRHICommandList& InCommandList, const CHAR* InName)
+        : Profiler(InProfiler)
+        , CommandList(InCommandList)
+        , Name(InName)
+    {
+        if (Profiler)
+        {
+            Profiler->BeginGPUTrace(CommandList, Name);
+        }
+    }
+
+    ~FScopedApplicationGPUTrace()
+    {
+        if (Profiler)
+        {
+            Profiler->EndGPUTrace(CommandList, Name);
+        }
+    }
+
+    IGPUProfiler*    Profiler;
+    FRHICommandList& CommandList;
+    const CHAR*      Name;
+};
+
 static String DescribeRectangle(const FRectangle& Rectangle)
 {
     return String::Printf("(%d, %d, %d x %d)", Rectangle.Position.X, Rectangle.Position.Y, Rectangle.Width, Rectangle.Height);
@@ -302,6 +328,8 @@ void FApplicationRenderer::EndWindow(const TSharedPtr<FWindow>& InWindow)
         {
             WindowState.Stats.ElementWalkTime = ToMillisecondsSince(WindowState.WalkStartTime);
 
+            TRACE_SCOPE("UI Build Draw Data");
+
             const uint64 BuildStartTime = FPlatformTime::QueryPerformanceCounter();
 
             WindowState.DrawData.SetAntiAliasingEnabled(CVarUIAntiAliasing.GetValue());
@@ -450,6 +478,8 @@ bool FApplicationRenderer::PreparePipelineState(EFormat OutputFormat)
 
 bool FApplicationRenderer::PrepareGeometry(FRHICommandList& InCommandList, FWindowDrawState& WindowState)
 {
+    TRACE_SCOPE("UI Upload Geometry");
+
     const FUIDrawData& DrawData = WindowState.DrawData;
 
     const int32 VertexCount = DrawData.GetVertices().Size();
@@ -595,6 +625,8 @@ FRHIShaderResourceView* FApplicationRenderer::PrepareBrushTexture(FRHICommandLis
 
 void FApplicationRenderer::PrepareBatchTextures(FRHICommandList& InCommandList, const FUIDrawData& DrawData)
 {
+    TRACE_SCOPE("UI Prepare Textures");
+
     for (const FUIDrawBatch& Batch : DrawData.GetBatches())
     {
         if (Batch.Texture.Atlas)
@@ -850,7 +882,10 @@ void FApplicationRenderer::BeginFrame()
 {
     CHECK_MAIN_THREAD();
 
-    SyncWindowSurfaces();
+    {
+        TRACE_SCOPE("UI Sync Surfaces");
+        SyncWindowSurfaces();
+    }
 
     CommandList.BeginFrame();
     bHasOpenFrame = true;
@@ -871,9 +906,16 @@ void FApplicationRenderer::RecordWindows()
     }
 #endif
 
-    FApplication::Get().DrawWindows();
+    {
+        TRACE_SCOPE("UI Draw Windows");
+        FApplication::Get().DrawWindows();
+    }
 
-    RenderWindowSurfaces(CommandList);
+    {
+        TRACE_SCOPE("UI Record Surfaces");
+        FScopedApplicationGPUTrace GPUTrace(GPUProfiler, CommandList, "UI Render");
+        RenderWindowSurfaces(CommandList);
+    }
 }
 
 void FApplicationRenderer::EndFrameAndPresent()
@@ -892,10 +934,16 @@ void FApplicationRenderer::EndFrameAndPresent()
         GPUProfiler->EndGPUFrame(CommandList);
     }
 
-    PresentWindowSurfaces(CommandList);
+    {
+        TRACE_SCOPE("UI Present Windows");
+        PresentWindowSurfaces(CommandList);
+    }
 
-    CommandList.EndFrame();
-    CommandList.FlushDeletedResources();
+    {
+        TRACE_SCOPE("UI Finalize Command List");
+        CommandList.EndFrame();
+        CommandList.FlushDeletedResources();
+    }
 
     {
         TRACE_SCOPE("ExecuteCommandList");
@@ -1061,6 +1109,8 @@ void FApplicationRenderer::RenderWindow(FRHICommandList& InCommandList, const FW
 
 void FApplicationRenderer::RenderDrawData(FRHICommandList& InCommandList, const FWindowDrawState& WindowState, const IntVector2& GeometrySize, float SupersampleScale)
 {
+    TRACE_SCOPE("UI Record Draw Batches");
+
     const float GeometryWidth  = static_cast<float>(GeometrySize.X);
     const float GeometryHeight = static_cast<float>(GeometrySize.Y);
     const float FramebufferW   = GeometryWidth * SupersampleScale;

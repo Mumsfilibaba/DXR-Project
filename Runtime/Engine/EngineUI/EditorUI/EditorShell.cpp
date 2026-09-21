@@ -326,7 +326,7 @@ FDockNode FEditorShell::BuildDefaultLayout()
     Upper.ChildFractions = { 0.78f, 0.22f };
 
     FDockNode Root = FDockNode::CreateSplit(EDockSplitOrientation::Vertical,
-        Upper, FDockNode::CreateTabs({ "OutputLog", "ContentBrowser", "GPUProfiler", "FrameProfiler", "RenderGraph" }));
+        Upper, FDockNode::CreateTabs({ "OutputLog", "ContentBrowser", "Profiler", "RenderGraph" }));
     Root.ChildFractions = { 0.72f, 0.28f };
 
     return Root;

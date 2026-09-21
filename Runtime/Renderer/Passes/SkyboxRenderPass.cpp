@@ -217,8 +217,6 @@ void FSkyboxRenderPass::Record(FRHICommandList& CommandList, const FFrameResourc
 {
     RHI_EVENT_SCOPE(CommandList, "Skybox");
 
-    GPU_TRACE_SCOPE(CommandList, "Skybox");
-
     TRACE_SCOPE("Render Skybox");
 
     const float RenderWidth  = float(FrameResources.CurrentRenderWidth);

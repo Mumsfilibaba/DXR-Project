@@ -521,11 +521,18 @@ bool GraphCanvasInteraction_Test()
     const int32 SecondId = Model->AddNode(MakeNode("Sink", Vector2(300.0f, 40.0f), "Texture"));
 
     int32 SelectionChanges = 0;
+    int32 ContextNodeId    = -2;
 
     FGraphCanvas::FDesc Desc;
     Desc.Font               = CreateFont();
     Desc.Model              = Model;
     Desc.OnSelectionChanged = FOnGraphSelectionChanged::CreateLambda([&SelectionChanges]() { SelectionChanges++; });
+    Desc.OnGetContextMenu   = FOnGetGraphContextMenu::CreateLambda(
+        [&ContextNodeId](const Vector2&, int32 NodeId) -> TSharedPtr<FVisualElement>
+    {
+        ContextNodeId = NodeId;
+        return nullptr;
+    });
 
     TSharedPtr<FGraphCanvas> Canvas = FGraphCanvas::Create(Desc);
     LayoutElement(Canvas, FRectangle(IntVector2(0, 0), 600, 400));
@@ -534,6 +541,11 @@ bool GraphCanvasInteraction_Test()
     const IntVector2 SourceTitle(20 + 70, 20 + 12);
     const IntVector2 SinkTitle(300 + 70, 40 + 12);
     const IntVector2 EmptyCanvas(500, 350);
+
+    TEST_SECTION("A node context request identifies the node without activating its normal selection action");
+    Canvas->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, Keys::MouseButtonRight, SourceTitle));
+    TEST_EXPECT_EQ(ContextNodeId, FirstId);
+    TEST_EXPECT(Canvas->GetSelectedNodes().IsEmpty());
 
     TEST_SECTION("Clicking a node selects it and clicking empty canvas drops the selection");
     Canvas->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, Keys::MouseButtonLeft, SourceTitle));

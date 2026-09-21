@@ -10,17 +10,42 @@
 
 TUniquePtr<FToolTipService> FToolTipService::ToolTipService = nullptr;
 
+static TArray<String> SplitTextIntoLines(const String& Text)
+{
+    TArray<String> Lines;
+    if (Text.IsEmpty())
+    {
+        return Lines;
+    }
+
+    const CHAR* const End       = Text.Data() + Text.Length();
+    const CHAR*       LineStart = Text.Data();
+
+    for (const CHAR* Current = LineStart; Current != End; ++Current)
+    {
+        if (*Current == '\n')
+        {
+            Lines.Emplace(LineStart, static_cast<int32>(Current - LineStart));
+            LineStart = Current + 1;
+        }
+    }
+
+    Lines.Emplace(LineStart, static_cast<int32>(End - LineStart));
+    return Lines;
+}
+
 TSharedPtr<FToolTip> FToolTip::Create(const String& InText, const TSharedPtr<IFontFace>& InFont)
 {
     TSharedPtr<FToolTip> NewToolTip = MakeSharedPtr<FToolTip>();
-    NewToolTip->Text = InText;
     NewToolTip->Font = InFont;
+    NewToolTip->SetText(InText);
     return NewToolTip;
 }
 
 FToolTip::FToolTip()
     : FCompoundElement()
     , Text()
+    , Lines()
     , Font(nullptr)
     , CornerRadius(FUIStyle::GetDefault().Metrics.CornerRadius)
 {
@@ -36,8 +61,14 @@ IntVector2 FToolTip::ComputeDesiredSize() const
     IntVector2 DesiredSize(Inset.GetTotalHorizontal(), Inset.GetTotalVertical());
     if (Font)
     {
-        DesiredSize.X += Font->MeasureWidth(StringView(Text.Data(), Text.Length()));
-        DesiredSize.Y += Font->GetLineHeight();
+        int32 WidestLine = 0;
+        for (const String& Line : Lines)
+        {
+            WidestLine = Math::Max(WidestLine, Font->MeasureWidth(StringView(Line.Data(), Line.Length())));
+        }
+
+        DesiredSize.X += WidestLine;
+        DesiredSize.Y += Font->GetLineHeight() * Math::Max(Lines.Size(), 1);
     }
 
     return DesiredSize;
@@ -52,9 +83,18 @@ int32 FToolTip::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& 
     OutCommandList.AddBox(LayerId, Bounds, Style.Colors.PanelBackground, Radii);
     OutCommandList.AddBoxOutline(LayerId, Bounds, Style.Colors.Border, 1.0f, Radii);
 
-    if (Font && !Text.IsEmpty())
+    if (Font)
     {
-        OutCommandList.AddText(LayerId + 1, Bounds.Deflate(GetPadding()), Text, Font.Get(), Style.Colors.Text);
+        const FRectangle TextBounds = Bounds.Deflate(GetPadding());
+        const int32      LineHeight = Font->GetLineHeight();
+
+        for (int32 LineIndex = 0; LineIndex < Lines.Size(); ++LineIndex)
+        {
+            const FRectangle LineBounds(IntVector2(TextBounds.Position.X, TextBounds.Position.Y + (LineIndex * LineHeight)),
+                TextBounds.Width, LineHeight);
+
+            OutCommandList.AddText(LayerId + 1, LineBounds, Lines[LineIndex], Font.Get(), Style.Colors.Text);
+        }
     }
 
     return LayerId + 1;
@@ -67,7 +107,8 @@ void FToolTip::SetOuterCornerRadius(float InCornerRadius)
 
 void FToolTip::SetText(const String& InText)
 {
-    Text = InText;
+    Text  = InText;
+    Lines = SplitTextIntoLines(Text);
 }
 
 TSharedPtr<FToolTipHost> FToolTipHost::Create(

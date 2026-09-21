@@ -199,8 +199,6 @@ void FDebugViewPass::RecordInternal(FRHICommandList& CommandList, const FSceneRe
     }
 
     TRACE_SCOPE("DebugView");
-    GPU_TRACE_SCOPE(CommandList, "DebugView");
-
     const int32 TargetWidth  = static_cast<int32>(RenderTarget->GetDesc().Extent.X);
     const int32 TargetHeight = static_cast<int32>(RenderTarget->GetDesc().Extent.Y);
     const int32 ViewX        = Math::Clamp(X, 0, TargetWidth);

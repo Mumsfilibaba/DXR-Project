@@ -1,5 +1,6 @@
 #pragma once
-#include "Core/Misc/FrameProfiler.h"
+#include "Core/Containers/Array.h"
+#include "Core/Misc/ProfilerReport.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
 class FEditorFrameProfilerWidget
@@ -23,7 +24,7 @@ public:
     }
 
 private:
-    TArray<FFrameProfilerThreadInfo> ThreadInfos;
+    TArray<FProfilerThreadAggregate> ThreadInfos;
     FDelegateHandle                  ImGuiDelegateHandle;
     bool                             bVisible;
 };

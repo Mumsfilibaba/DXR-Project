@@ -1,5 +1,7 @@
 #include "Application/Elements/Histogram.h"
+#include "Application/Application.h"
 #include "Application/Draw/DrawCommandList.h"
+#include "Application/Input/Keys.h"
 #include "Core/Math/Math.h"
 
 constexpr int32 HISTOGRAM_TEXT_PADDING = 4;
@@ -27,7 +29,12 @@ FHistogram::FHistogram()
     , NumSamples(0)
     , PreferredHeight(64)
     , HoveredSample(InvalidSampleIndex)
+    , SelectedSample(InvalidSampleIndex)
+    , SelectedBarColor(FUIStyle::GetDefault().Colors.TextSelectionBackground)
+    , DrawMode(EHistogramDrawMode::Bars)
+    , LineThickness(2.0f)
     , bAutoScale(true)
+    , bIsScrubbing(false)
 {
     Samples.Resize(Capacity);
     Samples.Fill(0.0f);
@@ -42,6 +49,9 @@ void FHistogram::Initialize(const FDesc& Desc)
     BarColor         = Desc.BarColor;
     BackgroundColor  = Desc.BackgroundColor;
     WarningColor     = Desc.WarningColor;
+    SelectedBarColor = Desc.SelectedBarColor;
+    DrawMode         = Desc.DrawMode;
+    LineThickness    = Math::Max(Desc.LineThickness, 1.0f);
     MinValue         = Desc.MinValue;
     MaxValue         = Math::Max(Desc.MaxValue, Desc.MinValue);
     WarningThreshold = Desc.WarningThreshold;
@@ -69,54 +79,126 @@ int32 FHistogram::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
     const int32 ColumnWidth = ResolveColumnWidth(Bounds.Width);
     const float Range       = ResolveUpperBound() - MinValue;
 
-    for (int32 Index = 0; Index < NumSamples; ++Index)
+    int32 MaxLayerId = LayerId + 1;
+
+    if (DrawMode == EHistogramDrawMode::Line)
     {
-        const int32 Left = Bounds.Position.X + (Index * ColumnWidth);
-        if (Left >= Bounds.GetRight())
+        if (SelectedSample != InvalidSampleIndex)
         {
-            break;
+            const int32 Left = Bounds.Position.X + (SelectedSample * ColumnWidth);
+            const FRectangle Selection(IntVector2(Left, Bounds.Position.Y),
+                Math::Min(ColumnWidth, Math::Max(Bounds.GetRight() - Left, 0)), Bounds.Height);
+            if (!Selection.IsEmpty())
+            {
+                OutCommandList.AddBox(LayerId + 1, Selection, SelectedBarColor);
+            }
         }
 
-        const float Value    = GetSample(Index);
-        const float Fraction = Range > 0.0f ? Math::Saturate((Value - MinValue) / Range) : 0.0f;
+        TArray<Vector2> Points;
+        Points.Reserve(NumSamples);
 
-        FRectangle Bar;
-        Bar.Width      = ColumnWidth;
-        Bar.Height     = Math::RoundToInt(Fraction * static_cast<float>(Bounds.Height));
-        Bar.Position.X = Left;
-        Bar.Position.Y = Bounds.GetBottom() - Bar.Height;
-
-        if (!Bar.IsEmpty())
+        for (int32 Index = 0; Index < NumSamples; ++Index)
         {
-            const bool bIsWarning = WarningThreshold > 0.0f && Value > WarningThreshold;
-            OutCommandList.AddBox(LayerId + 1, Bar, bIsWarning ? WarningColor : BarColor);
+            const int32 Left = Bounds.Position.X + (Index * ColumnWidth);
+            if (Left >= Bounds.GetRight())
+            {
+                break;
+            }
+
+            const float Value    = GetSample(Index);
+            const float Fraction = Range > 0.0f ? Math::Saturate((Value - MinValue) / Range) : 0.0f;
+            const float X        = static_cast<float>(Math::Min(Left + (ColumnWidth / 2), Bounds.GetRight() - 1));
+            const float Y        = static_cast<float>(Bounds.GetBottom() - 1) - (Fraction * static_cast<float>(Math::Max(Bounds.Height - 1, 0)));
+
+            Points.Add(Vector2(X, Y));
+        }
+
+        if (Points.Size() >= 2)
+        {
+            OutCommandList.AddPolyline(LayerId + 2, Points, BarColor, LineThickness);
+            MaxLayerId = LayerId + 2;
+        }
+        else if (Points.Size() == 1)
+        {
+            OutCommandList.AddCircleFilled(LayerId + 2, Points[0], Math::Max(LineThickness, 2.0f), BarColor, 8);
+            MaxLayerId = LayerId + 2;
+        }
+
+        if (WarningThreshold > MinValue && WarningThreshold < ResolveUpperBound())
+        {
+            const float WarningFraction = (WarningThreshold - MinValue) / Range;
+            const int32 WarningY        = Bounds.GetBottom() - 1 - 
+                Math::RoundToInt(WarningFraction * static_cast<float>(Math::Max(Bounds.Height - 1, 0)));
+            
+            OutCommandList.AddLine(LayerId + 2, FRectangle(IntVector2(Bounds.Position.X, WarningY), Bounds.Width, 1), WarningColor);
+            MaxLayerId = LayerId + 2;
         }
     }
+    else
+    {
+        for (int32 Index = 0; Index < NumSamples; ++Index)
+        {
+            const int32 Left = Bounds.Position.X + (Index * ColumnWidth);
+            if (Left >= Bounds.GetRight())
+            {
+                break;
+            }
 
-    int32 MaxLayerId = LayerId + 1;
+            const float Value    = GetSample(Index);
+            const float Fraction = Range > 0.0f ? Math::Saturate((Value - MinValue) / Range) : 0.0f;
+
+            FRectangle Bar;
+            Bar.Width      = ColumnWidth;
+            Bar.Height     = Math::RoundToInt(Fraction * static_cast<float>(Bounds.Height));
+            Bar.Position.X = Left;
+            Bar.Position.Y = Bounds.GetBottom() - Bar.Height;
+
+            if (!Bar.IsEmpty())
+            {
+                const bool bIsSelected = Index == SelectedSample;
+                const bool bIsWarning  = WarningThreshold > 0.0f && Value > WarningThreshold;
+
+                const FFloatColor& Fill = bIsSelected ? SelectedBarColor : (bIsWarning ? WarningColor : BarColor);
+                OutCommandList.AddBox(LayerId + 1, Bar, Fill);
+            }
+        }
+    }
 
     if (Font)
     {
         const FRectangle TextBounds = Bounds.Deflate(FMargin(HISTOGRAM_TEXT_PADDING));
-        const IntVector2 TextSize(TextBounds.Width, Font->GetLineHeight());
+
+        String Value;
+
+        int32 ValueWidth = 0;
+        if (HoveredSample != InvalidSampleIndex)
+        {
+            Value      = String::Printf("%.2f", GetSample(HoveredSample));
+            ValueWidth = Font->MeasureWidth(StringView(Value.Data(), Value.Length()));
+        }
+
+        if (!Value.IsEmpty() && ValueWidth <= TextBounds.Width)
+        {
+            const FRectangle ValueBounds = FRectangle::AlignInBounds(TextBounds, IntVector2(ValueWidth, Font->GetLineHeight()),
+                EHorizontalAlignment::Right, EVerticalAlignment::Top);
+            OutCommandList.AddText(LayerId + 3, ValueBounds, Value, Font.Get(), Style.Colors.Text);
+
+            MaxLayerId = LayerId + 3;
+        }
 
         if (!Label.IsEmpty())
         {
-            const FRectangle LabelBounds = FRectangle::AlignInBounds(TextBounds, TextSize, EHorizontalAlignment::Left, EVerticalAlignment::Top);
-            OutCommandList.AddText(LayerId + 2, LabelBounds, Label, Font.Get(), Style.Colors.Text);
+            const int32  LabelWidth = ValueWidth > 0 ? (TextBounds.Width - ValueWidth - HISTOGRAM_TEXT_PADDING) : TextBounds.Width;
+            const String Elided     = Font->ElideText(StringView(Label.Data(), Label.Length()), LabelWidth);
 
-            MaxLayerId = LayerId + 2;
-        }
+            if (!Elided.IsEmpty())
+            {
+                const FRectangle LabelBounds = FRectangle::AlignInBounds(TextBounds, IntVector2(LabelWidth, Font->GetLineHeight()),
+                    EHorizontalAlignment::Left, EVerticalAlignment::Top);
+                OutCommandList.AddText(LayerId + 3, LabelBounds, Elided, Font.Get(), Style.Colors.Text);
 
-        if (HoveredSample != InvalidSampleIndex)
-        {
-            const String     Value = String::Printf("%.2f", GetSample(HoveredSample));
-            const IntVector2 ValueSize(Font->MeasureWidth(StringView(Value.Data(), Value.Length())), Font->GetLineHeight());
-
-            const FRectangle ValueBounds = FRectangle::AlignInBounds(TextBounds, ValueSize, EHorizontalAlignment::Right, EVerticalAlignment::Top);
-            OutCommandList.AddText(LayerId + 2, ValueBounds, Value, Font.Get(), Style.Colors.Text);
-
-            MaxLayerId = LayerId + 2;
+                MaxLayerId = LayerId + 3;
+            }
         }
     }
 
@@ -126,27 +208,67 @@ int32 FHistogram::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
 
 FEventResponse FHistogram::OnMouseMove(const FCursorEvent& CursorEvent)
 {
-    const FRectangle Bounds         = GetContentRectangle();
     const IntVector2 ClientPosition = CursorEvent.GetClientPosition();
 
-    HoveredSample = InvalidSampleIndex;
+    HoveredSample = ResolveSampleAt(ClientPosition, false);
 
-    if (Bounds.EncapsulatesPoint(ClientPosition))
+    if (bIsScrubbing)
     {
-        const int32 Index = (ClientPosition.X - Bounds.Position.X) / ResolveColumnWidth(Bounds.Width);
-        if (Index >= 0 && Index < NumSamples)
+        const int32 Index = ResolveSampleAt(ClientPosition, true);
+        if (Index != InvalidSampleIndex)
         {
-            HoveredSample = Index;
+            SelectedSample = Index;
         }
+
+        return FEventResponse::Handled();
     }
 
     return FEventResponse::Unhandled();
 }
 
-FEventResponse FHistogram::OnMouseLeft(const FCursorEvent& CursorEvent)
+FEventResponse FHistogram::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 {
-    UNREFERENCED_VARIABLE(CursorEvent);
+    if (CursorEvent.GetKey() != Keys::MouseButtonLeft)
+    {
+        return FEventResponse::Unhandled();
+    }
 
+    const int32 Index = ResolveSampleAt(CursorEvent.GetClientPosition(), false);
+    if (Index == InvalidSampleIndex)
+    {
+        return FEventResponse::Unhandled();
+    }
+
+    HoveredSample  = Index;
+    SelectedSample = Index;
+    bIsScrubbing   = true;
+
+    if (FApplication::IsInitialized())
+    {
+        FApplication::Get().CaptureMouse(AsSharedPtr());
+    }
+
+    return FEventResponse::Handled();
+}
+
+FEventResponse FHistogram::OnMouseButtonUp(const FCursorEvent& CursorEvent)
+{
+    if (CursorEvent.GetKey() != Keys::MouseButtonLeft || !bIsScrubbing)
+    {
+        return FEventResponse::Unhandled();
+    }
+
+    bIsScrubbing = false;
+    if (FApplication::IsInitialized())
+    {
+        FApplication::Get().ReleaseMouseCapture(AsSharedPtr());
+    }
+
+    return FEventResponse::Handled();
+}
+
+FEventResponse FHistogram::OnMouseLeft(const FCursorEvent& /* CursorEvent */)
+{
     HoveredSample = InvalidSampleIndex;
     return FEventResponse::Unhandled();
 }
@@ -169,9 +291,10 @@ void FHistogram::Clear()
 {
     Samples.Fill(0.0f);
 
-    OldestSample  = 0;
-    NumSamples    = 0;
-    HoveredSample = InvalidSampleIndex;
+    OldestSample   = 0;
+    NumSamples     = 0;
+    HoveredSample  = InvalidSampleIndex;
+    SelectedSample = InvalidSampleIndex;
 }
 
 float FHistogram::GetSample(int32 Index) const
@@ -232,6 +355,11 @@ void FHistogram::SetAutoScale(bool bInAutoScale)
     bAutoScale = bInAutoScale;
 }
 
+void FHistogram::SetSelectedSample(int32 Index)
+{
+    SelectedSample = (Index >= 0 && Index < NumSamples) ? Index : InvalidSampleIndex;
+}
+
 float FHistogram::ResolveUpperBound() const
 {
     const float UpperBound = bAutoScale ? Math::Max(MaxValue, GetMaximum()) : MaxValue;
@@ -241,4 +369,28 @@ float FHistogram::ResolveUpperBound() const
 int32 FHistogram::ResolveColumnWidth(int32 AvailableWidth) const
 {
     return Math::Max(AvailableWidth / Math::Max(Capacity, 1), 1);
+}
+
+int32 FHistogram::ResolveSampleAt(const IntVector2& ClientPosition, bool bClampToStrip) const
+{
+    if (NumSamples <= 0)
+    {
+        return InvalidSampleIndex;
+    }
+
+    const FRectangle Bounds = GetContentRectangle();
+    const int32      Offset = ClientPosition.X - Bounds.Position.X;
+    const int32      Index  = Offset >= 0 ? (Offset / ResolveColumnWidth(Bounds.Width)) : -1;
+
+    if (bClampToStrip)
+    {
+        return Math::Clamp(Index, 0, NumSamples - 1);
+    }
+
+    if (!Bounds.EncapsulatesPoint(ClientPosition) || Index < 0 || Index >= NumSamples)
+    {
+        return InvalidSampleIndex;
+    }
+
+    return Index;
 }

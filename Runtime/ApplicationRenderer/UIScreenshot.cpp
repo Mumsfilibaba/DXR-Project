@@ -76,7 +76,7 @@ static bool GHasReadCommandLine = false;
 static void ReadCommandLineRequest()
 {
     StringView Path;
-    if (!CommandLine::FindOption("-UIScreenshot", Path) || Path.IsEmpty())
+    if (!CommandLine::FindOption("UIScreenshot", Path) || Path.IsEmpty())
     {
         return;
     }
@@ -84,7 +84,7 @@ static void ReadCommandLineRequest()
     int32 Frames = DEFAULT_SETTLE_FRAMES;
 
     StringView FrameText;
-    if (CommandLine::FindOption("-UIScreenshotFrame", FrameText) && !FrameText.IsEmpty())
+    if (CommandLine::FindOption("UIScreenshotFrame", FrameText) && !FrameText.IsEmpty())
     {
         Frames = CString::Atoi(*String(FrameText));
     }
@@ -124,8 +124,7 @@ static bool WriteTextureToPng(const FRHITextureRef& Texture, const String& Filen
     Fence->SetDebugName("UIScreenshot Fence");
 
     FRHICommandList CommandList;
-    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(
-        Texture.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::CopySource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Texture.Get(), ERHIResourceState::CopySource));
 
     for (uint32 Row = 0; Row < Height; ++Row)
     {
@@ -133,15 +132,16 @@ static bool WriteTextureToPng(const FRHITextureRef& Texture, const String& Filen
             Texture.Get(), FTextureRegion2D(Width, 1, 0, Row), 0);
     }
 
-    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(
-        Texture.Get(), ERHIResourceState::CopySource, ERHIResourceState::PixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Texture.Get(), ERHIResourceState::PixelShaderResource));
 
     CommandList.WriteFence(Fence.Get());
     FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
 
+    FRHICommandListExecutor::Get().WaitForCommands();
+
     if (!Fence->Wait())
     {
-        LOG_ERROR("[UIScreenshot]: Timed out waiting for the readback of '%s'", *Filename);
+        LOG_ERROR("[UIScreenshot]: The readback of '%s' never completed", *Filename);
         return false;
     }
 

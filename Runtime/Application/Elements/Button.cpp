@@ -14,10 +14,12 @@ TSharedPtr<FButton> FButton::Create(const FDesc& Desc)
 FButton::FButton()
     : FInteractiveElement()
     , Label(nullptr)
+    , Font(nullptr)
     , CornerRadius()
     , HorizontalContentAlignment(EHorizontalAlignment::Center)
     , VerticalContentAlignment(EVerticalAlignment::Center)
     , MinHeight(0)
+    , MinWidth(0)
     , bHasBorder(false)
     , bIsGhost(false)
     , bIsHighlighted(false)
@@ -29,10 +31,12 @@ FButton::~FButton() = default;
 
 void FButton::Initialize(const FDesc& Desc)
 {
+    Font                       = Desc.Font;
     CornerRadius               = Desc.CornerRadius;
     HorizontalContentAlignment = Desc.HorizontalContentAlignment;
     VerticalContentAlignment   = Desc.VerticalContentAlignment;
     MinHeight                  = Desc.MinHeight;
+    MinWidth                   = Desc.MinWidth;
     bHasBorder                 = Desc.bHasBorder;
     bIsGhost                   = Desc.bIsGhost;
     OnClickedDelegate          = Desc.OnClicked;
@@ -58,6 +62,13 @@ IntVector2 FButton::ComputeDesiredSize() const
 {
     IntVector2 DesiredSize = FCompoundElement::ComputeDesiredSize();
     DesiredSize.Y          = Math::Max(DesiredSize.Y, MinHeight);
+
+    if (Label)
+    {
+        const int32 Floor = Math::Max(MinWidth, FUIStyle::GetDefault().Metrics.ResolveButtonMinWidth(Font.Get(), GetPadding()));
+        DesiredSize.X     = Math::Max(DesiredSize.X, Floor);
+    }
+
     return DesiredSize;
 }
 

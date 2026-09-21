@@ -694,7 +694,7 @@ void FEditorFooterPanel::Refresh()
 
     const FFrameProfiler& Profiler = FFrameProfiler::Get();
 
-    const float FrameTimeMs = Profiler.GetCPUFrameTime().GetAverage();
+    const float FrameTimeMs = Profiler.GetLatestCpuMilliseconds();
     const float FramesPerSecond = FrameTimeMs > 0.0f ? (1000.0f / FrameTimeMs) : 0.0f;
 
     StatusLabel->SetText(String::Printf("%.1f FPS  %.2f ms", FramesPerSecond, FrameTimeMs));

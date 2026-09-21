@@ -8,6 +8,7 @@
 #include "Application/Elements/ScrollBox.h"
 #include "Application/Elements/TextBlock.h"
 #include "Application/Elements/ToolBar.h"
+#include "Core/Misc/ProfilerTypes.h"
 #include "Core/Templates/NumericLimits.h"
 #include "Core/Time/Time.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
@@ -42,26 +43,15 @@ static IGPUProfiler* GetGPUProfiler()
     return RendererModule ? &RendererModule->GetGPUProfiler() : nullptr;
 }
 
-static float ResolveMinimum(float Value)
-{
-    return Value == TNumericLimits<float>::Max() ? 0.0f : Value;
-}
-
-static float ResolveMaximum(float Value)
-{
-    return Value == TNumericLimits<float>::Lowest() ? 0.0f : Value;
-}
-
 FEditorGPUProfilerPanel::FEditorGPUProfilerPanel(FEditorEngine* InEditorEngine)
     : FEditorPanel(InEditorEngine, "GPUProfiler", "GPU Profiler")
     , ToolBar(nullptr)
     , FrameTimeHistogram(nullptr)
     , PassTable(nullptr)
     , PipelineStatisticsTable(nullptr)
-    , Samples()
     , PassValues()
     , PipelineStatisticsValues()
-    , LastFrameTimeSample(-1)
+    , LastIngestedCpuFrameIndex(-1)
     , bIsProfilingRequested(false)
 {
 }
@@ -79,7 +69,7 @@ bool FEditorGPUProfilerPanel::Initialize()
     }
 
     FHistogram::FDesc HistogramDesc;
-    HistogramDesc.Capacity        = NUM_GPU_PROFILER_SAMPLES;
+    HistogramDesc.Capacity        = NUM_LIVE_PROFILER_FRAMES;
     HistogramDesc.Font            = FEditorStyle::GetFonts().Body;
     HistogramDesc.Label           = "GPU Frame Time (ms)";
     HistogramDesc.PreferredHeight = 80;
@@ -194,7 +184,7 @@ TSharedPtr<FToolBar> FEditorGPUProfilerPanel::BuildToolBar()
         }
 
         FrameTimeHistogram->Clear();
-        LastFrameTimeSample = -1;
+        LastIngestedCpuFrameIndex = -1;
     }));
 
     return Bar;
@@ -209,7 +199,6 @@ void FEditorGPUProfilerPanel::Release()
     FrameTimeHistogram.Reset();
     PassTable.Reset();
     PipelineStatisticsTable.Reset();
-    Samples.Clear();
     PassValues.Clear();
     PipelineStatisticsValues.Clear();
 
@@ -272,57 +261,68 @@ void FEditorGPUProfilerPanel::Tick(float /*DeltaTime*/)
 
 void FEditorGPUProfilerPanel::RefreshFrameTime(IGPUProfiler& Profiler)
 {
-    const FGPUProfileSample& FrameTime = Profiler.GetGPUFrameTime();
-    if (FrameTime.SampleCount < 1 || FrameTime.CurrentSample == LastFrameTimeSample)
+    const int32 Count = Profiler.GetStoredFrameCount();
+
+    FProfilerGpuFrame Frame;
+    for (int32 Index = 0; Index < Count; ++Index)
     {
-        return;
+        if (!Profiler.GetStoredFrame(Index, Frame))
+        {
+            continue;
+        }
+
+        if (Frame.CpuFrameIndex <= LastIngestedCpuFrameIndex && LastIngestedCpuFrameIndex >= 0)
+        {
+            continue;
+        }
+
+        FrameTimeHistogram->AddSample(Frame.GpuMilliseconds);
+        LastIngestedCpuFrameIndex = Frame.CpuFrameIndex;
     }
-
-    LastFrameTimeSample = FrameTime.CurrentSample;
-
-    const int32 NewestSample = (FrameTime.CurrentSample + NUM_GPU_PROFILER_SAMPLES - 1) % NUM_GPU_PROFILER_SAMPLES;
-    FrameTimeHistogram->AddSample(FrameTime.Samples[NewestSample]);
 }
 
 void FEditorGPUProfilerPanel::RefreshPasses(IGPUProfiler& Profiler)
 {
-    Profiler.GetGPUSamples(Samples);
-
-    if (Samples.Size() != PassValues.Size())
+    FProfilerGpuFrame Latest;
+    if (!Profiler.GetLatestFrame(Latest))
     {
-        RebuildPassTable();
+        return;
     }
 
-    for (auto Sample : Samples)
+    if (Latest.Intervals.Size() != PassValues.Size())
     {
-        TSharedPtr<FTextBlock>* Value = PassValues.Find(Sample.First);
+        PassTable->ClearRows();
+        PassValues.Clear();
+
+        PassTable->AddHeaderRow("Pass  (inclusive / exclusive ms)");
+        for (const FGPUProfilerInterval& Interval : Latest.Intervals)
+        {
+            const String Name = Interval.Name ? Interval.Name : "<unnamed>";
+
+            TSharedPtr<FTextBlock> Value = CreateValueText("-");
+            PassTable->AddRow(Name, Value);
+            PassValues.Add(Name, Value);
+        }
+    }
+
+    for (const FGPUProfilerInterval& Interval : Latest.Intervals)
+    {
+        const String Name = Interval.Name ? Interval.Name : "<unnamed>";
+
+        TSharedPtr<FTextBlock>* Value = PassValues.Find(Name);
         if (!Value)
         {
             continue;
         }
 
-        const float Average = Time::ToMilliseconds<float>(Sample.Second.GetAverage());
-        const float Minimum = Time::ToMilliseconds<float>(ResolveMinimum(Sample.Second.Min));
-        const float Maximum = Time::ToMilliseconds<float>(ResolveMaximum(Sample.Second.Max));
-
-        (*Value)->SetText(String::Printf("%.3f  %.3f  %.3f", Average, Minimum, Maximum));
+        (*Value)->SetText(String::Printf("%.3f  %.3f",
+            Time::ToMilliseconds<float>(static_cast<float>(Interval.InclusiveNanoseconds)),
+            Time::ToMilliseconds<float>(static_cast<float>(Interval.ExclusiveNanoseconds))));
     }
 }
 
 void FEditorGPUProfilerPanel::RebuildPassTable()
 {
-    PassTable->ClearRows();
-    PassValues.Clear();
-
-    PassTable->AddHeaderRow("Pass  (avg / min / max in ms)");
-
-    for (auto Sample : Samples)
-    {
-        TSharedPtr<FTextBlock> Value = CreateValueText("-");
-
-        PassTable->AddRow(Sample.First, Value).ToolTipText = "Average, minimum and maximum GPU time for the pass, in milliseconds";
-        PassValues.Add(Sample.First, Value);
-    }
 }
 
 void FEditorGPUProfilerPanel::RefreshPipelineStatistics(IGPUProfiler& Profiler)
@@ -332,7 +332,34 @@ void FEditorGPUProfilerPanel::RefreshPipelineStatistics(IGPUProfiler& Profiler)
         return;
     }
 
-    const FRHIPipelineStatistics& Statistics = Profiler.GetPipelineStatistics();
+    FProfilerGpuFrame      Latest;
+    FRHIPipelineStatistics Statistics = {};
+
+    if (Profiler.GetLatestFrame(Latest))
+    {
+        for (const FGPUProfilerInterval& Interval : Latest.Intervals)
+        {
+            if (!Interval.bHasPipelineStats)
+            {
+                continue;
+            }
+
+            Statistics.IAVertices    += Interval.PipelineStats.IAVertices;
+            Statistics.IAPrimitives  += Interval.PipelineStats.IAPrimitives;
+            Statistics.VSInvocations += Interval.PipelineStats.VSInvocations;
+            Statistics.GSInvocations += Interval.PipelineStats.GSInvocations;
+            Statistics.GSPrimitives  += Interval.PipelineStats.GSPrimitives;
+            Statistics.CInvocations  += Interval.PipelineStats.CInvocations;
+            Statistics.CPrimitives   += Interval.PipelineStats.CPrimitives;
+            Statistics.PSInvocations += Interval.PipelineStats.PSInvocations;
+            Statistics.HSInvocations += Interval.PipelineStats.HSInvocations;
+            Statistics.DSInvocations += Interval.PipelineStats.DSInvocations;
+            Statistics.CSInvocations += Interval.PipelineStats.CSInvocations;
+            Statistics.ASInvocations += Interval.PipelineStats.ASInvocations;
+            Statistics.MSInvocations += Interval.PipelineStats.MSInvocations;
+            Statistics.MSPrimitives  += Interval.PipelineStats.MSPrimitives;
+        }
+    }
 
     for (int32 Index = 0; Index < PipelineStatisticsValues.Size(); ++Index)
     {

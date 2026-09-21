@@ -263,6 +263,16 @@ struct FUITreeRowStyle
     /** @brief The color of the trailing column, which runs dimmer than the name. */
     FFloatColor SecondaryText = FFloatColor(122.0f / 255.0f, 122.0f / 255.0f, 122.0f / 255.0f, 1.0f);
 
+    /**
+     * @brief The name's color on a selected row, which has to carry against the selection fill rather
+     * than against the row. The resting colors are dark greys picked to sit on a near-black row, and a
+     * saturated fill under them leaves the text with almost no contrast left.
+     */
+    FFloatColor SelectedLabelText = FFloatColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+    /** @brief The trailing column's color on a selected row, dimmer than the name as it is at rest. */
+    FFloatColor SelectedSecondaryText = FFloatColor(222.0f / 255.0f, 230.0f / 255.0f, 240.0f / 255.0f, 1.0f);
+
     /** @brief The fill behind the run of a name a search matched. */
     FFloatColor SearchHighlight = FFloatColor(139.0f / 255.0f, 194.0f / 255.0f, 74.0f / 255.0f, 1.0f);
 
@@ -554,6 +564,28 @@ struct FUIStyleMetrics
     /** @brief How tall a button is, which is taller than a row so a strip of them does not read as a list. */
     int32 ButtonHeight = 24;
 
+    /**
+     * @brief The label every button drawing a word of its own is given at least the room for. A short
+     * word like "Fit" would otherwise come out a chip beside a neighbour twice its width, so the
+     * narrowest a labelled button gets is what one carrying this word measures, which is what makes a
+     * row of them read as one strip. A button carrying content of its own is sized to that content
+     * instead, which is what keeps an icon button square.
+     *
+     * Held as a word rather than as a pixel count because the room it takes is a property of the face
+     * it is drawn with: a count picked against one UI font is wrong the moment that font changes size.
+     */
+    const CHAR* ButtonMinLabel = "Reset";
+
+    /**
+     * @brief Works out how narrow a labelled button may be, which is the room ButtonMinLabel takes at
+     * the button's own face with the same padding it puts around a label of its own.
+     *
+     * @param Face    The face the label is drawn with, or null for a button with none.
+     * @param Padding The space between the button's bounds and its label.
+     * @return The floor in pixels, which is zero for a button with no face to measure against.
+     */
+    NODISCARD int32 ResolveButtonMinWidth(const IFontFace* Face, const FMargin& Padding) const;
+
     /** @brief How wide a scroll bar is across its short axis, in pixels. */
     int32 ScrollBarThickness = 12;
 
@@ -575,14 +607,6 @@ struct FUIStyleMetrics
     int32 TitleBarLeadingInset = 8;
 };
 
-/**
- * @brief The shipped hybrid theme.
- *
- * Shell and footer share WindowBackground. Docked leaves use Panel (8px radius, 1px outline, 6px gap).
- * Primary views use InnerFrame. Nested expanders use Header, including ExpandDuration. Tabs, popups,
- * and controls keep their own tokens; hover, focus, selected, disabled, and splitter states live on
- * Colors, Tab, Menu, and Metrics.SplitterHintThickness.
- */
 struct APPLICATION_API FUIStyle
 {
     /**

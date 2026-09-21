@@ -1,4 +1,5 @@
 #include "Engine/RuntimeEngine.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Engine/EngineUI/Runtime/OverlayConsole.h"
 #include "Engine/EngineUI/Runtime/RuntimeConsoleWidget.h"
 #include "Engine/EngineUI/Editor/EditorFrameProfilerWidget.h"

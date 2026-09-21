@@ -1268,10 +1268,10 @@ bool TabMinimumWidth_Test()
     if (Body)
     {
         const int32 Chrome           = TabStyle.HorizontalPadding + TabStyle.LabelCloseGap + TabStyle.CloseSize + TabStyle.CloseInset;
-        const int32 FrameProfiler    = Chrome + Body->MeasureWidth(StringView("Frame Profiler", 14));
+        const int32 ProfilerTab      = Chrome + Body->MeasureWidth(StringView("Profiler", 8));
         const int32 RendererSettings = Chrome + Body->MeasureWidth(StringView("Renderer Settings", 17));
 
-        TEST_EXPECT(FrameProfiler <= TabStyle.MinWidth);
+        TEST_EXPECT(ProfilerTab <= TabStyle.MinWidth);
         TEST_EXPECT(RendererSettings > TabStyle.MinWidth);
     }
 

@@ -1352,6 +1352,20 @@ bool ToolTipService_Test()
 
     ToolTips.DismissToolTip();
 
+    TEST_SECTION("A tip breaks at its newlines, so a row of columns can be explained one line each");
+    TSharedPtr<FToolTip> OneLine    = FToolTip::Create("Incl ms", Font);
+    TSharedPtr<FToolTip> ThreeLines = FToolTip::Create("Calls\nIncl ms\nExcl ms of the scope", Font);
+
+    TEST_EXPECT_EQ(OneLine->GetLines().Size(), 1);
+    TEST_EXPECT_EQ(ThreeLines->GetLines().Size(), 3);
+
+    TEST_SECTION("It grows a line at a time rather than running off the side of the screen");
+    TEST_EXPECT_EQ(ThreeLines->ComputeDesiredSize().Y - OneLine->ComputeDesiredSize().Y, 2 * Font->GetLineHeight());
+
+    TEST_SECTION("Its width is that of the widest line rather than of the whole run of text");
+    TSharedPtr<FToolTip> WidestLine = FToolTip::Create("Excl ms of the scope", Font);
+    TEST_EXPECT_EQ(ThreeLines->ComputeDesiredSize().X, WidestLine->ComputeDesiredSize().X);
+
     TEST_END();
 }
 
