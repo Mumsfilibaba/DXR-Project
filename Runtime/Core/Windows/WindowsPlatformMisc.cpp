@@ -1,7 +1,7 @@
 #include "Core/Windows/WindowsPlatformMisc.h"
 #include "Core/Windows/WindowsPlatformStackTrace.h"
 #include "Core/Misc/CrashReporter.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformAtomic.h"
 
 #include <eh.h>

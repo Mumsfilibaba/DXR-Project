@@ -1,4 +1,4 @@
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Platform/PlatformSystemClipboard.h"

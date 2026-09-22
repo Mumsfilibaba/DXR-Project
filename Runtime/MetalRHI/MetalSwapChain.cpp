@@ -1,6 +1,8 @@
 #include "Core/Mac/MacThreadManager.h"
 #include "Core/Platform/PlatformEvent.h"
 #include "MetalRHI/MetalSwapChain.h"
+#include "RHI/RHI.h"
+#include <CoreGraphics/CoreGraphics.h>
 
 @implementation FMetalWindowView
 
@@ -59,19 +61,22 @@ void* FMetalSwapChainRHI::GetRHINativeResourceFromIndex(uint32 Index) const
 void* FMetalSwapChainRHI::GetRHINativeRenderTargetViewFromIndex(uint32 Index) const
 {
     UNREFERENCED_VARIABLE(Index);
-    return nullptr;
+    FRHIRenderTargetView* View = GetRenderTargetView();
+    return View ? View->GetRHINativeHandle() : nullptr;
 }
 
 void* FMetalSwapChainRHI::GetRHINativeUnorderedAccessViewFromIndex(uint32 Index) const
 {
     UNREFERENCED_VARIABLE(Index);
-    return nullptr;
+    FRHIUnorderedAccessView* View = GetUnorderedAccessView();
+    return View ? View->GetRHINativeHandle() : nullptr;
 }
 
 void* FMetalSwapChainRHI::GetRHINativeShaderResourceViewFromIndex(uint32 Index) const
 {
     UNREFERENCED_VARIABLE(Index);
-    return nullptr;
+    FRHIShaderResourceView* View = GetShaderResourceView();
+    return View ? View->GetRHINativeHandle() : nullptr;
 }
 
 FRHITexture* FMetalSwapChainRHI::GetBackBuffer() const
@@ -81,17 +86,17 @@ FRHITexture* FMetalSwapChainRHI::GetBackBuffer() const
 
 FRHIRenderTargetView* FMetalSwapChainRHI::GetRenderTargetView() const
 {
-    return nullptr;
+    return BackBuffer ? BackBuffer->GetRenderTargetView() : nullptr;
 }
 
 FRHIUnorderedAccessView* FMetalSwapChainRHI::GetUnorderedAccessView() const
 {
-    return nullptr;
+    return BackBuffer ? BackBuffer->GetUnorderedAccessView() : nullptr;
 }
 
 FRHIShaderResourceView* FMetalSwapChainRHI::GetShaderResourceView() const
 {
-    return nullptr;
+    return BackBuffer ? BackBuffer->GetShaderResourceView() : nullptr;
 }
 
 uint32 FMetalSwapChainRHI::GetNumResources() const
@@ -101,7 +106,86 @@ uint32 FMetalSwapChainRHI::GetNumResources() const
 
 bool FMetalSwapChainRHI::IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const
 {
-    return Format != EFormat::Unknown && ColorSpace == EColorSpace::RGB_Full_G22_None_P709;
+    const MTLPixelFormat PixelFormat = MetalRHI::ConvertFormat(Format);
+    if (PixelFormat == MTLPixelFormatInvalid)
+    {
+        return false;
+    }
+
+    if (ColorSpace == EColorSpace::RGB_Full_G22_None_P709)
+    {
+        return PixelFormat == MTLPixelFormatBGRA8Unorm
+            || PixelFormat == MTLPixelFormatBGRA8Unorm_sRGB
+            || PixelFormat == MTLPixelFormatRGBA8Unorm
+            || PixelFormat == MTLPixelFormatRGBA8Unorm_sRGB;
+    }
+
+    if (ColorSpace == EColorSpace::RGB_Full_G10_None_P709)
+    {
+        return PixelFormat == MTLPixelFormatRGBA16Float;
+    }
+
+    if (ColorSpace == EColorSpace::RGB_Full_G2084_None_P2020 || ColorSpace == EColorSpace::RGB_Full_G22_None_P2020)
+    {
+        FRHIDisplayHDRInfo DisplayInfo;
+        if (!QueryDisplayHDRInfo(DisplayInfo))
+        {
+            return false;
+        }
+
+        return PixelFormat == MTLPixelFormatRGBA16Float || PixelFormat == MTLPixelFormatRGB10A2Unorm;
+    }
+
+    return false;
+}
+
+bool FMetalSwapChainRHI::QueryDisplayHDRInfo(FRHIDisplayHDRInfo& OutInfo) const
+{
+    OutInfo = FRHIDisplayHDRInfo();
+
+    NSScreen* Screen = nil;
+    if (Desc.WindowHandle)
+    {
+        FCocoaWindow* CocoaWindow = reinterpret_cast<FCocoaWindow*>(Desc.WindowHandle);
+        Screen = CocoaWindow.screen;
+    }
+
+    if (!Screen)
+    {
+        Screen = [NSScreen mainScreen];
+    }
+
+    if (!Screen)
+    {
+        return false;
+    }
+
+    const CGFloat MaxEDR = Screen.maximumPotentialExtendedDynamicRangeColorComponentValue;
+    if (MaxEDR <= 1.0)
+    {
+        return false;
+    }
+
+    NSColorSpace* ScreenColorSpace = Screen.colorSpace;
+    CGColorSpaceRef CGSpace = ScreenColorSpace ? ScreenColorSpace.CGColorSpace : nullptr;
+    const CFStringRef ColorSpaceName = CGSpace ? CGColorSpaceGetName(CGSpace) : nullptr;
+
+    OutInfo.ColorSpace = EColorSpace::RGB_Full_G10_None_P709;
+    if (ColorSpaceName && CFEqual(ColorSpaceName, kCGColorSpaceITUR_2100_PQ))
+    {
+        OutInfo.ColorSpace = EColorSpace::RGB_Full_G2084_None_P2020;
+    }
+    else if (ColorSpaceName && CFEqual(ColorSpaceName, kCGColorSpaceITUR_2020))
+    {
+        OutInfo.ColorSpace = EColorSpace::RGB_Full_G22_None_P2020;
+    }
+
+    OutInfo.MinLuminance          = 0.001f;
+    OutInfo.MaxLuminance          = static_cast<float>(100.0 * MaxEDR);
+    OutInfo.MaxFullFrameLuminance = OutInfo.MaxLuminance;
+    OutInfo.BitsPerColor          = 10;
+    OutInfo.WhitePoint            = { 0.3127f, 0.3290f };
+    return true;
 }
 
 bool FMetalSwapChainRHI::Initialize()
@@ -115,6 +199,16 @@ bool FMetalSwapChainRHI::Initialize()
     if (Desc.ColorSpace == EColorSpace::Unknown)
     {
         Desc.ColorSpace = EColorSpace::RGB_Full_G22_None_P709;
+    }
+
+    if (Desc.ColorFormat == EFormat::Unknown)
+    {
+        Desc.ColorFormat = (RHI::DefaultSwapChainFormat != EFormat::Unknown) ? RHI::DefaultSwapChainFormat : EFormat::B8G8R8A8_Unorm;
+    }
+    else if (!IsFormatSupported(Desc.ColorFormat, Desc.ColorSpace))
+    {
+        METAL_ERROR("Requested back-buffer (%s, %s) is not supported on this device", ToString(Desc.ColorFormat), ToString(Desc.ColorSpace));
+        return false;
     }
 
     __block bool bResult = false;
@@ -161,6 +255,8 @@ bool FMetalSwapChainRHI::Initialize()
 
         [NewMetalLayer setDevice:GetDevice()->GetMTLDevice()];
         [NewMetalLayer setFramebufferOnly:NO];
+        NewMetalLayer.allowsNextDrawableTimeout = YES;
+        NewMetalLayer.pixelFormat = MetalRHI::ConvertFormat(Desc.ColorFormat);
         [NewMetalLayer removeAllAnimations];
 
         [MetalView setLayer:NewMetalLayer];
@@ -180,54 +276,220 @@ bool FMetalSwapChainRHI::Initialize()
 
     MetalLayer = NewMetalLayer;
 
+    if (!ApplyLayerColorSpace())
+    {
+        METAL_WARNING("Failed to apply swap-chain color space %s", ToString(Desc.ColorSpace));
+    }
+
+    if (Desc.ColorSpace == EColorSpace::RGB_Full_G2084_None_P2020 && !Desc.HDRMetadata.bIsValid)
+    {
+        FRHIHDRMetadata DefaultMetadata = RHI::GetDefaultHDRMetadata();
+
+        FRHIDisplayHDRInfo DisplayInfo;
+        if (RHI::ShouldUseDisplayLuminance() && QueryDisplayHDRInfo(DisplayInfo))
+        {
+            DefaultMetadata.MinMasteringLuminance     = DisplayInfo.MinLuminance;
+            DefaultMetadata.MaxMasteringLuminance     = DisplayInfo.MaxLuminance;
+            DefaultMetadata.MaxFrameAverageLightLevel = DisplayInfo.MaxFullFrameLuminance;
+        }
+
+        SetHDRMetadata(DefaultMetadata);
+    }
+    else
+    {
+        ApplyHDRMetadata();
+    }
+
+    return RefreshBackBuffer();
+}
+
+bool FMetalSwapChainRHI::RefreshBackBuffer()
+{
     const ETextureUsageFlags Flags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
     FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat, Desc.Width, Desc.Height, 1, 1, Flags);
     BackBuffer = new FMetalTextureRHI(GetDevice(), BackBufferDesc);
     BackBuffer->SetSwapChain(this);
+    if (!BackBuffer->CreateDefaultViews())
+    {
+        return false;
+    }
+
     return true;
 }
 
-bool FMetalSwapChainRHI::Resize(uint32 InWidth, uint32 InHeight)
+bool FMetalSwapChainRHI::ApplyLayerColorSpace()
 {
-    SCOPED_AUTORELEASE_POOL();
-    
-    if (Desc.Width != InWidth || Desc.Height != InHeight)
+    if (!MetalLayer)
     {
-        FMacThreadManager::Get().MainThreadDispatch(^
+        return false;
+    }
+
+    __block bool bApplied = false;
+    FMacThreadManager::Get().MainThreadDispatch(^
+    {
+        CFStringRef ColorSpaceName = kCGColorSpaceSRGB;
+        BOOL bWantsEDR = NO;
+        switch (Desc.ColorSpace)
         {
-            CAMetalLayer* MetalLayer = GetMetalLayer();
-            if (MetalLayer)
-            {
-                MetalLayer.drawableSize = CGSizeMake(InWidth, InHeight);
-            }
-        }, NSDefaultRunLoopMode, true);
+            case EColorSpace::RGB_Full_G10_None_P709:
+                ColorSpaceName = kCGColorSpaceExtendedLinearSRGB;
+                bWantsEDR = YES;
+                break;
+            case EColorSpace::RGB_Full_G2084_None_P2020:
+                ColorSpaceName = kCGColorSpaceITUR_2100_PQ;
+                bWantsEDR = YES;
+                break;
+            case EColorSpace::RGB_Full_G22_None_P2020:
+                ColorSpaceName = kCGColorSpaceITUR_2020;
+                bWantsEDR = YES;
+                break;
+            default:
+                ColorSpaceName = kCGColorSpaceSRGB;
+                break;
+        }
 
-        Desc.Width  = uint16(InWidth);
-        Desc.Height = uint16(InHeight);
-    }
+        CGColorSpaceRef ColorSpace = CGColorSpaceCreateWithName(ColorSpaceName);
+        MetalLayer.colorspace = ColorSpace;
+        MetalLayer.wantsExtendedDynamicRangeContent = bWantsEDR;
+        if (ColorSpace)
+        {
+            CGColorSpaceRelease(ColorSpace);
+        }
 
-    return true;
+        bApplied = true;
+    }, NSDefaultRunLoopMode, true);
+
+    return bApplied;
 }
 
-bool FMetalSwapChainRHI::Present(bool bVerticalSync)
+bool FMetalSwapChainRHI::ApplyHDRMetadata()
+{
+    if (!MetalLayer)
+    {
+        return false;
+    }
+
+    __block bool bApplied = false;
+    FMacThreadManager::Get().MainThreadDispatch(^
+    {
+        const bool bIsHDRColorSpace = (Desc.ColorSpace == EColorSpace::RGB_Full_G2084_None_P2020);
+        if (!Desc.HDRMetadata.bIsValid || !bIsHDRColorSpace)
+        {
+            MetalLayer.EDRMetadata = nil;
+            bApplied = true;
+            return;
+        }
+
+        const FRHIHDRMetadata& Source = Desc.HDRMetadata;
+        MetalLayer.EDRMetadata = [CAEDRMetadata HDR10MetadataWithMinLuminance:Source.MinMasteringLuminance
+                                                                maxLuminance:Source.MaxMasteringLuminance
+                                                          opticalOutputScale:100.0];
+        MetalLayer.wantsExtendedDynamicRangeContent = YES;
+        bApplied = MetalLayer.EDRMetadata != nil;
+    }, NSDefaultRunLoopMode, true);
+
+    return bApplied;
+}
+
+bool FMetalSwapChainRHI::SetHDRMetadata(const FRHIHDRMetadata& Metadata)
+{
+    Desc.HDRMetadata = Metadata;
+    return ApplyHDRMetadata();
+}
+
+bool FMetalSwapChainRHI::Resize(uint32 InWidth, uint32 InHeight, EFormat Format, EColorSpace ColorSpace)
 {
     SCOPED_AUTORELEASE_POOL();
 
-    CAMetalLayer* MetalLayer = GetMetalLayer();
-    if (MetalLayer)
+    const uint32      ResolvedWidth       = (InWidth  > 0u) ? InWidth  : Desc.Width;
+    const uint32      ResolvedHeight      = (InHeight > 0u) ? InHeight : Desc.Height;
+    const EFormat     EffectiveFormat     = (Format     == EFormat::Unknown)     ? Desc.ColorFormat : Format;
+    const EColorSpace EffectiveColorSpace = (ColorSpace == EColorSpace::Unknown) ? Desc.ColorSpace  : ColorSpace;
+
+    const bool bSizeChanged       = (ResolvedWidth != Desc.Width || ResolvedHeight != Desc.Height) && ResolvedWidth > 0u && ResolvedHeight > 0u;
+    const bool bFormatChanged     = (Format     != EFormat::Unknown)     && (EffectiveFormat     != Desc.ColorFormat);
+    const bool bColorSpaceChanged = (ColorSpace != EColorSpace::Unknown) && (EffectiveColorSpace != Desc.ColorSpace);
+
+    if (bFormatChanged || bColorSpaceChanged)
     {
-        MetalLayer.displaySyncEnabled = bVerticalSync;
+        if (!IsFormatSupported(EffectiveFormat, EffectiveColorSpace))
+        {
+            METAL_WARNING("Resize: (%s, %s) not supported on this swap-chain; leaving unchanged.",
+                ToString(EffectiveFormat), ToString(EffectiveColorSpace));
+            return false;
+        }
     }
 
-    id<MTLDrawable> CurrentDrawable = GetDrawable();
-    if (CurrentDrawable)
+    if (!bSizeChanged && !bFormatChanged && !bColorSpaceChanged)
     {
-        [CurrentDrawable present];
+        return true;
+    }
+
+    if (Drawable)
+    {
         [Drawable release];
         Drawable = nullptr;
     }
 
-    return true;
+    if (bSizeChanged)
+    {
+        Desc.Width  = uint16(ResolvedWidth);
+        Desc.Height = uint16(ResolvedHeight);
+    }
+
+    if (bFormatChanged)
+    {
+        Desc.ColorFormat = EffectiveFormat;
+    }
+
+    if (bColorSpaceChanged)
+    {
+        Desc.ColorSpace = EffectiveColorSpace;
+    }
+
+    FMacThreadManager::Get().MainThreadDispatch(^
+    {
+        CAMetalLayer* Layer = GetMetalLayer();
+        if (Layer)
+        {
+            Layer.drawableSize = CGSizeMake(Desc.Width, Desc.Height);
+            Layer.pixelFormat  = MetalRHI::ConvertFormat(Desc.ColorFormat);
+        }
+    }, NSDefaultRunLoopMode, true);
+
+    if (!ApplyLayerColorSpace())
+    {
+        return false;
+    }
+
+    ApplyHDRMetadata();
+    return RefreshBackBuffer();
+}
+
+bool FMetalSwapChainRHI::Present(id<MTLCommandBuffer> CommandBuffer, bool bVerticalSync)
+{
+    SCOPED_AUTORELEASE_POOL();
+
+    CAMetalLayer* Layer = GetMetalLayer();
+    if (Layer)
+    {
+        Layer.displaySyncEnabled = bVerticalSync;
+    }
+
+    id<CAMetalDrawable> CurrentDrawable = GetDrawable();
+    if (!CurrentDrawable)
+    {
+        return false;
+    }
+
+    if (CommandBuffer)
+    {
+        [CommandBuffer presentDrawable:CurrentDrawable];
+    }
+
+    [Drawable release];
+    Drawable = nullptr;
+    return CommandBuffer != nil;
 }
 
 void FMetalSwapChainRHI::AcquireNextBackBuffer()
@@ -239,13 +501,22 @@ void FMetalSwapChainRHI::AcquireNextBackBuffer()
         return;
     }
 
-    CAMetalLayer* MetalLayer = GetMetalLayer();
-    Drawable = [MetalLayer nextDrawable];
-
-    if (Drawable)
+    CAMetalLayer* Layer = GetMetalLayer();
+    if (!Layer)
     {
-        [Drawable retain];
+        METAL_ERROR("AcquireNextBackBuffer: CAMetalLayer is nil");
+        return;
     }
+
+    Layer.allowsNextDrawableTimeout = YES;
+    Drawable = [Layer nextDrawable];
+    if (!Drawable)
+    {
+        METAL_ERROR("AcquireNextBackBuffer: nextDrawable returned nil");
+        return;
+    }
+
+    [Drawable retain];
 }
 
 id<CAMetalDrawable> FMetalSwapChainRHI::GetDrawable()

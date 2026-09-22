@@ -285,11 +285,6 @@ public:
         return PipelineState;
     }
 
-    uint32 GetMaxTotalThreadsPerThreadgroup() const
-    {
-        return MaxTotalThreadsPerThreadgroup;
-    }
-
     uint16 GetThreadGroupSizeX() const { return ThreadGroupSizeX; }
     uint16 GetThreadGroupSizeY() const { return ThreadGroupSizeY; }
     uint16 GetThreadGroupSizeZ() const { return ThreadGroupSizeZ; }
@@ -298,7 +293,6 @@ private:
     id<MTLComputePipelineState>        PipelineState;
     FMetalPipelineBindingLayout        Bindings;
     TArray<FMetalStaticSamplerBinding> StaticSamplers;
-    uint32                             MaxTotalThreadsPerThreadgroup;
     uint16                             ThreadGroupSizeX;
     uint16                             ThreadGroupSizeY;
     uint16                             ThreadGroupSizeZ;

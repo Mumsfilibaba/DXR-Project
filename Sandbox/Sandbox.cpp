@@ -3,7 +3,7 @@
 #include "SandboxProjectile.h"
 #include "GameComponents.h"
 #include <Core/Math/Math.h>
-#include <Core/Misc/OutputDeviceLogger.h>
+#include <Core/Misc/OutputDeviceManager.h>
 #include <Engine/Engine.h>
 #include <Engine/Assets/AssetManager.h>
 #include <Engine/Assets/MeshFactory.h>

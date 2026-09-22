@@ -5,7 +5,7 @@
 #include "TestCommon/TestMacros.h"
 
 #include <Core/Containers/SharedPtr.h>
-#include <Core/Misc/OutputDeviceLogger.h>
+#include <Core/Misc/OutputDeviceManager.h>
 #include <Application/Console/ConsoleLogBuffer.h>
 #include <Application/Draw/DrawCommandList.h>
 #include <Application/Elements/LogView.h>

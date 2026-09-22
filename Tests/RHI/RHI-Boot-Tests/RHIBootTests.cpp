@@ -5,6 +5,7 @@
 #include <Core/Memory/Memory.h>
 #include <Core/Misc/ConsoleManager.h>
 #include <Core/Misc/Paths.h>
+#include <Core/Platform/PlatformMisc.h>
 #include <RHI/RHI.h>
 #include <RHI/RHICommandList.h>
 #include <RHI/RHIIndirect.h>
@@ -1374,6 +1375,38 @@ static bool ProbeCopyQueue()
         }
     }
 
+    TEST_SECTION("Heap-slice CreateBuffer initial data");
+    {
+        const uint32 SourceValue = 0x11223344u;
+        FRHIBufferRef SourceBuffer = RHI::CreateBuffer(
+            FRHIBufferDesc(EBufferFlags::Default | EBufferFlags::CopySource, sizeof(uint32), sizeof(uint32)),
+            ERHIResourceState::Common,
+            &SourceValue);
+        TEST_EXPECT(SourceBuffer != nullptr);
+
+        FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(sizeof(uint32)));
+        TEST_EXPECT(ReadbackBuffer != nullptr);
+
+        if (SourceBuffer && ReadbackBuffer)
+        {
+            FRHIFenceRef Fence = RHI::CreateFence();
+            FRHICommandList CommandList;
+            CommandList.CopyBuffer(ReadbackBuffer.Get(), SourceBuffer.Get(), FRHIBufferCopyDesc(0, 0, sizeof(uint32)));
+            CommandList.WriteFence(Fence.Get());
+            FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+            FRHICommandListExecutor::Get().WaitForCommands();
+            TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
+
+            const uint32* Mapped = static_cast<const uint32*>(ReadbackBuffer->Map());
+            TEST_EXPECT(Mapped != nullptr);
+            if (Mapped)
+            {
+                TEST_EXPECT_EQ(*Mapped, SourceValue);
+                ReadbackBuffer->Unmap();
+            }
+        }
+    }
+
     TEST_SECTION("Deferred delete after Copy submit recycles after Copy completion");
     {
         const uint32 SourceValue = 7u;
@@ -1769,11 +1802,32 @@ static bool ProbeCapabilityHonesty(ERHIType ExpectedType)
 
         TEST_SECTION("Metal overwrites Null leftover capability flags");
         TEST_EXPECT(RHI::bSupportsGeometryShaders == false);
-        TEST_EXPECT(RHI::SamplePositionsTier == ESamplePositionsTier::NotSupported);
         TEST_EXPECT(RHI::bSupportsVRS == false);
         TEST_EXPECT(RHI::MaxShaderModel == EShaderModel::SM_6_6);
         TEST_EXPECT(RHI::bSupportRenderTargetArrayIndexFromVertexShader);
         TEST_EXPECT(RHI::bSupportsDynamicDepthBias);
+
+        TEST_SECTION("Metal sample counts and sample positions match the device");
+        {
+            uint32 SampleCounts = 0;
+            TEST_EXPECT(RHI::Device->QuerySupportedSampleCounts(EFormat::B8G8R8A8_Unorm, SampleCounts));
+            TEST_EXPECT((SampleCounts & RHI_SAMPLE_COUNT_1) != 0);
+
+#if PLATFORM_MACOS
+            TEST_EXPECT(RHI::bSupportsProgrammableSamplePositions == GMetalSupportsProgrammableSamplePositions);
+            if (GMetalSupportsProgrammableSamplePositions)
+            {
+                TEST_EXPECT(RHI::SamplePositionsTier == ESamplePositionsTier::Tier1);
+                TEST_EXPECT(RHI::MaxSamplePositionGridWidth == 1);
+                TEST_EXPECT(RHI::MaxSamplePositionGridHeight == 1);
+            }
+            else
+            {
+                TEST_EXPECT(RHI::SamplePositionsTier == ESamplePositionsTier::NotSupported);
+            }
+#endif
+            TEST_EXPECT(RHI::bSupportsGPUTimestampBubblesRemoval == RHI::bSupportsTimestampQueries);
+        }
     }
 
     TEST_END();
@@ -1793,6 +1847,7 @@ static bool BootRHI(ERHIType ExpectedType)
     {
         SetConsoleVariable("RHI.EnableDebugLayer", true);
 #if PLATFORM_MACOS
+        FPlatformMisc::PrepareMetalDebugLayerEnvironment(true);
         MetalResetValidationErrors();
 #endif
     }

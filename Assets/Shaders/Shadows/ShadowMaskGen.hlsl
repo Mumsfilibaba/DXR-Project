@@ -34,13 +34,8 @@ struct FDirectionalShadowSettings
     uint  Padding2;
 };
 
-#if SHADER_BACKEND == SHADER_BACKEND_METAL
-    ConstantBuffer<FCamera>           CameraBuffer : register(b2);
-    ConstantBuffer<FDirectionalLight> LightBuffer  : register(b3);
-#else
-    ConstantBuffer<FCamera>           CameraBuffer : register(b0);
-    ConstantBuffer<FDirectionalLight> LightBuffer  : register(b1);
-#endif
+ConstantBuffer<FCamera>           CameraBuffer : register(b0);
+ConstantBuffer<FDirectionalLight> LightBuffer  : register(b1);
 
 ConstantBuffer<FDirectionalShadowSettings> SettingsBuffer : register(b2);
 

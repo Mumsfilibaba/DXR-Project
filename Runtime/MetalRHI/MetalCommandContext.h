@@ -225,7 +225,6 @@ private:
     void StartCopyEncoder(bool bRouteToCopyQueue);
     void FinishEncoders();
     void FinishDirectEncoders();
-    void SubmitDirectWorkAndWait();
     uint64 SubmitCurrentPayload();
     void FlushCopyWork();
     void EnsureTimestampEncoder();

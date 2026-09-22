@@ -1,7 +1,7 @@
 #pragma once
 #include "TestHarness.h"
 
-#include <Core/Misc/OutputDeviceLogger.h>
+#include <Core/Misc/OutputDeviceManager.h>
 
 /** @brief Fail the current test (which must return bool) if Condition is false. */
 #define TEST_CHECK(Condition) \

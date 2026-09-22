@@ -8,7 +8,7 @@
 #include <Core/Misc/ConsoleManager.h>
 #include <Core/Misc/CoreDelegates.h>
 #include <Core/Misc/FileOutputDevice.h>
-#include <Core/Misc/OutputDeviceLogger.h>
+#include <Core/Misc/OutputDeviceManager.h>
 #include <Core/Misc/Paths.h>
 #include <Core/Modules/ModuleManager.h>
 #include <Core/Platform/PlatformMisc.h>
@@ -97,27 +97,29 @@ static void InitializeOutputDevices()
     {
         GConsoleWindow->Show(true);
         GConsoleWindow->SetTitle("UI Playground Output");
-        FOutputDeviceLogger::Get()->RegisterOutputDevice(GConsoleWindow.Get());
+        FOutputDeviceManager::Get()->RegisterOutputDevice(GConsoleWindow.Get());
     }
 
     GFileOutputDevice = MakeUniquePtr<FFileOutputDevice>(Paths::GetProjectDir() + "/PlaygroundLog.txt");
     if (GFileOutputDevice && GFileOutputDevice->IsValid())
     {
-        FOutputDeviceLogger::Get()->RegisterOutputDevice(GFileOutputDevice.Get());
+        FOutputDeviceManager::Get()->RegisterOutputDevice(GFileOutputDevice.Get());
     }
+
+    FOutputDeviceManager::Get()->FlushPendingLines();
 }
 
 static void ReleaseOutputDevices()
 {
     if (GFileOutputDevice)
     {
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(GFileOutputDevice.Get());
+        FOutputDeviceManager::Get()->UnregisterOutputDevice(GFileOutputDevice.Get());
         GFileOutputDevice.Reset();
     }
 
     if (GConsoleWindow)
     {
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(GConsoleWindow.Get());
+        FOutputDeviceManager::Get()->UnregisterOutputDevice(GConsoleWindow.Get());
         GConsoleWindow.Reset();
     }
 }
@@ -182,6 +184,8 @@ int32 FPlaygroundLoop::PreInit(const CHAR** Args, int32 NumArgs)
         LOG_ERROR("[FPlaygroundLoop]: Failed to initialize the config");
         return -1;
     }
+
+    GConfig->LoadConsoleVariables();
 
     if (IConsoleVariable* RHIThreadVariable = FConsoleManager::Get().FindConsoleVariable("TaskGraph.EnableRHIThread"))
     {

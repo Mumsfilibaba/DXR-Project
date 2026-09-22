@@ -1,5 +1,5 @@
 #include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Engine/EngineUI/Editor/EditorContentBrowserWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "ImGuiPlugin/ImGuiCore.h"

@@ -1,5 +1,5 @@
 #include "Core/Math/Math.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Mac/MacThreadManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Threading/ScopedLock.h"

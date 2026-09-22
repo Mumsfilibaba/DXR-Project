@@ -1,16 +1,18 @@
 #include "Core/Mac/Mac.h"
 #include "Core/Mac/MacThreadManager.h"
+#include "Core/Misc/Config.h"
+#include "Core/Misc/CommandLine.h"
+#include "Core/Platform/PlatformMisc.h"
 #include "Core/Containers/String.h"
 #include <Appkit/Appkit.h>
 #include <pthread.h>
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-// Forward declaration of the EngineMain function, which serves as the entry point for the engine
 extern int32 EngineMain(const CHAR* Args[], int32 NumArgs);
 
-static String GMacCommandLine;     // Stores the command-line arguments as a single string
-static int32 GEngineMainResult = 0; // Stores the result returned by EngineMain
+static String GMacCommandLine;
+static int32  GEngineMainResult = 0;
 
 @interface FCocoaAppDelegate : NSObject<NSApplicationDelegate>
 
@@ -37,7 +39,6 @@ static int32 GEngineMainResult = 0; // Stores the result returned by EngineMain
     const char* CommandLine = *GMacCommandLine;
     GEngineMainResult = EngineMain(&CommandLine, 1);
     
-    // If EngineMain indicates success or a specific condition, schedule application termination
     if (GEngineMainResult == 0)
     {
         FMacThreadManager::Get().MainThreadDispatch(^
@@ -63,15 +64,46 @@ static int32 GEngineMainResult = 0; // Stores the result returned by EngineMain
 
 @end
 
+// Resolves RHI.EnableDebugLayer the way the console variable would later, with the command line
+// outranking the config layers, because the variable itself does not exist yet at this point.
+static bool IsDebugLayerEnabledAtLaunch()
+{
+    StringView CommandLineValue;
+    if (CommandLine::FindOption("RHI.EnableDebugLayer", CommandLineValue))
+    {
+        if (CommandLineValue.IsEmpty())
+        {
+            return true;
+        }
+
+        bool bFromCommandLine = false;
+        if (TTypeFromString<bool>::FromString(String(CommandLineValue), bFromCommandLine))
+        {
+            return bFromCommandLine;
+        }
+    }
+
+    bool bFromConfig = false;
+    return GConfig->GetBool("RHI", "RHI.EnableDebugLayer", bFromConfig) ? bFromConfig : false;
+}
+
 int main(int NumArgs, const CHAR** Args)
 {
+    // AppKit creates the first MTLDevice below, which is where Metal latches its debug layer, so the
+    // layer has to be armed here rather than anywhere the console variable would already exist.
+    // argv[0] is a path, and a dash anywhere in it would be read as an option.
+    CommandLine::Initialize(Args + 1, NumArgs - 1);
+    FConfig::Initialize();
+    FPlatformMisc::PrepareMetalDebugLayerEnvironment(IsDebugLayerEnabledAtLaunch());
+
     // The first argument is always the path to the application, so start processing from index 1
     for (int32 Index = 1; Index < NumArgs; Index++)
     {
         GMacCommandLine += " ";
         String CurrentArg(Args[Index]);
         
-        // If the current argument contains spaces, handle it appropriately
+        // An argument carrying a space has to reach the command line quoted, and a key=value pair
+        // takes the quotes around the value alone so that the key still parses.
         if (CurrentArg.Contains(' '))
         {
             if (CurrentArg.Contains('='))
@@ -80,30 +112,29 @@ int main(int NumArgs, const CHAR** Args)
                 String ArgumentValue;
                 CurrentArg.Split('=', Argument, ArgumentValue);
                 
-                // Format as key="value" to handle spaces within the value
                 CurrentArg = String::Printf("%s=\"%s\"", *Argument, *ArgumentValue);
             }
             else
             {
-                // Wrap the entire argument in quotes to handle spaces
                 CurrentArg = String::Printf("\"%s\"", *CurrentArg);
             }
         }
         
-        GMacCommandLine += CurrentArg; // Append the formatted argument to the command line string
+        GMacCommandLine += CurrentArg;
     }
     
-    [NSApplication sharedApplication];                                // Get the shared NSApplication instance
-    [NSApp setDelegate:[FCocoaAppDelegate new]];                      // Set the application delegate to an instance of FCocoaAppDelegate
-    [NSApp activateIgnoringOtherApps:YES];                            // Activate the application, bringing it to the foreground
-    [NSApp setPresentationOptions:NSApplicationPresentationDefault];  // Set presentation options to default
-    [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular]; // Set activation policy to regular (shows dock icon and menu bar)
-    [NSApp run];                                                      // Start the application's main run loop
+    [NSApplication sharedApplication];
+    [NSApp setDelegate:[FCocoaAppDelegate new]];
+    [NSApp activateIgnoringOtherApps:YES];
+    [NSApp setPresentationOptions:NSApplicationPresentationDefault];
+
+    // Regular gets the dock icon and the menu bar, which a bare executable does not have by default
+    [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+    [NSApp run];
     
-    // After the run loop exits, shut down the application thread
     FMacThreadManager::ShutdownAppThread();
     
-    return GEngineMainResult; // Return the result from EngineMain as the exit code
+    return GEngineMainResult;
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

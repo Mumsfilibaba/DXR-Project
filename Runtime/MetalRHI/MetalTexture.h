@@ -64,8 +64,9 @@ public:
         return UnorderedAccessView.Get();
     }
 
-private:
     bool CreateDefaultViews();
+
+private:
     bool UploadInitialData(const IRHITextureData* InInitialData);
 
     id<MTLTexture>                           Texture;

@@ -25,11 +25,10 @@ struct EConfigFile
 class CORE_API FConfig
 {
 public:
-    FConfig();
-    ~FConfig();
-
     static bool Initialize();
     static void Release();
+
+public:
 
     /** @brief Loads a file and keeps it open, without making it part of any layer */
     FIniFile* LoadFile(const String& Filename);
@@ -59,7 +58,11 @@ public:
     void LoadConsoleVariables();
 
 private:
+    FConfig();
+    ~FConfig();
+
     FIniFile* AddLayer(EConfigFile::Type ConfigFile, const String& Filename);
+    void AddDefaultLayers();
 
     TMap<String, FIniFile> ConfigFiles;
     FIniFile*              LayerFiles[EConfigFile::Count];

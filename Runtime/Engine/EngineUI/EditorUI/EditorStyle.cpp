@@ -1,6 +1,6 @@
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
 #include "Engine/EngineUI/EditorUI/EditorIcons.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Paths.h"
 #include "Application/Elements/Border.h"
 #include "Application/Text/TrueTypeFontFace.h"

@@ -2,7 +2,7 @@
 #include "Core/Mac/MacPlatformMisc.h"
 #include "Core/Platform/PlatformString.h"
 #include "Core/Memory/Memory.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include <aio.h>
 #include <fcntl.h>
 #include <string.h>
@@ -79,7 +79,6 @@ int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
                 return static_cast<int32>(BytesRead);
             }
 
-            // Update vars and read again to satisfy the BytesToRead
             Dst         += Size;
             BytesToRead -= Size;
 
@@ -87,14 +86,13 @@ int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
         }
         else if (Read == -1)
         {
+            // EINVAL on a large request means the size itself was refused, so it is worth retrying
             if ((MaxReadSize > 1024) && (errno == EINVAL))
             {
-                // We try to read again but with a smaller buffer
                 MaxReadSize /= 2;
             }
             else
             {
-                // The file descriptor was invalid
                 return static_cast<int32>(BytesRead);
             }
         }
@@ -163,7 +161,6 @@ void FMacFileHandle::Close()
             CHECK(Result >= 0);
         }
 
-        // Unlock the file
         ::flock(FileHandle, LOCK_UN | LOCK_NB);
 
         {
@@ -211,16 +208,74 @@ bool FMacAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
     Pending->ControlBlock.aio_offset = WriteOffset;
 
     int32 Result = ::aio_write(&Pending->ControlBlock);
+    if (Result != 0 && errno == EAGAIN)
+    {
+        // kern.aioprocmax caps the in-flight writes at sixteen per process, so any burst fills the queue.
+        WaitForPendingWrites();
+        Result = ::aio_write(&Pending->ControlBlock);
+    }
+
     if (Result != 0)
     {
-        Memory::Free(Pending->Buffer);
-        delete Pending;
-        return false;
+        // A caller cannot tell a refused write from one that has merely not landed, so stall rather than lose the bytes.
+        const bool bWritten = WriteBlockingAtOffset(Pending->Buffer, BytesToWrite, WriteOffset);
+        FreePendingWrite(Pending);
+
+        if (!bWritten)
+        {
+            return false;
+        }
+
+        WriteOffset += BytesToWrite;
+        return true;
     }
 
     WriteOffset += BytesToWrite;
     PendingWrites.Emplace(Pending);
     return true;
+}
+
+bool FMacAsyncFileHandle::WriteBlockingAtOffset(const uint8* Src, uint32 BytesToWrite, int64 Offset)
+{
+    uint32 TotalWritten = 0;
+    while (TotalWritten < BytesToWrite)
+    {
+        const ssize_t Written = ::pwrite(FileDescriptor, Src + TotalWritten, BytesToWrite - TotalWritten, Offset + TotalWritten);
+        if (Written < 0)
+        {
+            if (errno == EINTR)
+            {
+                continue;
+            }
+
+            ReportWriteFailure("Blocking write failed", errno);
+            return false;
+        }
+
+        if (Written == 0)
+        {
+            ReportWriteFailure("Blocking write accepted no bytes", EIO);
+            return false;
+        }
+
+        TotalWritten += static_cast<uint32>(Written);
+    }
+
+    return true;
+}
+
+void FMacAsyncFileHandle::ReportWriteFailure(const CHAR* What, int32 ErrorCode)
+{
+    if (bHasWriteError)
+    {
+        return;
+    }
+
+    // Reporting goes through the log, so the line comes back to this handle. Raising the flag first
+    // means the flush that eventually carries it finds a handle that has already failed and drops the
+    // batch, rather than driving another write into the same failure.
+    bHasWriteError = true;
+    LOG_ERROR("[FMacAsyncFileHandle] %s: %s", What, strerror(ErrorCode));
 }
 
 void FMacAsyncFileHandle::WaitForPendingWrites()
@@ -245,8 +300,7 @@ void FMacAsyncFileHandle::WaitForPendingWrites()
                 const ssize_t Written = ::aio_return(&PendingWrites[i]->ControlBlock);
                 if (Error != 0 || Written < 0)
                 {
-                    LOG_ERROR("[FMacAsyncFileHandle] Async write failed: %s", strerror(Error));
-                    bHasWriteError = true;
+                    ReportWriteFailure("Async write failed", Error);
                 }
 
                 FreePendingWrite(PendingWrites[i]);
@@ -260,6 +314,11 @@ bool FMacAsyncFileHandle::HasPendingWrites() const
 {
     const_cast<FMacAsyncFileHandle*>(this)->GarbageCollectCompleted();
     return !PendingWrites.IsEmpty();
+}
+
+bool FMacAsyncFileHandle::HasWriteError() const
+{
+    return bHasWriteError;
 }
 
 bool FMacAsyncFileHandle::IsValid() const
@@ -291,8 +350,7 @@ void FMacAsyncFileHandle::GarbageCollectCompleted()
             const ssize_t Written = ::aio_return(&PendingWrites[i]->ControlBlock);
             if (Error != 0 || Written < 0)
             {
-                LOG_ERROR("[FMacAsyncFileHandle] Async write failed: %s", strerror(Error));
-                bHasWriteError = true;
+                ReportWriteFailure("Async write failed", Error);
             }
 
             FreePendingWrite(PendingWrites[i]);

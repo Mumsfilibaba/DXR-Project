@@ -393,7 +393,23 @@ void FMetalDevice::ReadDeviceProperties()
         }
     }
 
-    METAL_INFO("Selected Device=%s", *Properties.Name);
+    const String DeviceClass([[Device class] description]);
+    METAL_INFO("Selected Device=%s (%s)", *Properties.Name, *DeviceClass);
+
+#if METAL_ENABLE_DEBUG_LAYER
+    if (DeviceClass.Contains("MTLDebug"))
+    {
+        METAL_INFO("Metal debug layer is live, the selected device is a debug wrapper");
+    }
+    else if (DeviceClass.Contains("Capture"))
+    {
+        METAL_INFO("Metal GPU capture is wrapping the device, the debug layer sits underneath and cannot be read from the class");
+    }
+    else if (MetalIsDebugLayerRequested())
+    {
+        METAL_WARNING("Metal debug layer was requested but is not wrapping the device, something created an MTLDevice before the environment was latched");
+    }
+#endif
 }
 
 bool FMetalDevice::Initialize()
@@ -492,11 +508,13 @@ bool FMetalDevice::QueryDeviceFeatureSupport()
     {
         const SEL        Selector           = @selector(maxVertexAmplificationCount);
         const NSUInteger AmplificationCount = ((NSUInteger (*)(id, SEL))objc_msgSend)(Device, Selector);
-        GMetalMaxVertexAmplificationCount = Math::Max(static_cast<uint32>(AmplificationCount), 1u);
+        GMetalMaxVertexAmplificationCount   = Math::Max(static_cast<uint32>(AmplificationCount), 1u);
     }
 
-    GMetalMaxTextureArrayLayers        = 2048;
-    GMetalSupportsBCTextureCompression = Device.supportsBCTextureCompression;
+    GMetalMaxTextureArrayLayers               = 2048;
+    GMetalSupportsBCTextureCompression        = Device.supportsBCTextureCompression;
+    GMetalSupportsProgrammableSamplePositions = Device.areProgrammableSamplePositionsSupported;
+    GMetalSupportsStencilResolve              = [Device supportsFamily:MTLGPUFamilyApple5] || [Device supportsFamily:MTLGPUFamilyMac2];
 
     GMetalSupportsCounterSampling =
         [Device supportsCounterSampling:MTLCounterSamplingPointAtStageBoundary] ||

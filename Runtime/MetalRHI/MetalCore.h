@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Mac/Mac.h"
 #include "Core/Math/Math.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Debug.h"
 #include "RHI/RHIResources.h"
 #include "MetalRHI/MetalConfiguration.h"
@@ -753,6 +753,19 @@ constexpr MTLPrimitiveType ConvertPrimitiveTopology(EPrimitiveTopology Primitive
         case EPrimitiveTopology::TriangleList:  return MTLPrimitiveTypeTriangle;
         case EPrimitiveTopology::TriangleStrip: return MTLPrimitiveTypeTriangleStrip;
         default:                                return MTLPrimitiveType(-1);
+    }
+}
+
+constexpr MTLPrimitiveTopologyClass ConvertPrimitiveTopologyClass(EPrimitiveTopology PrimitiveTopology)
+{
+    switch (PrimitiveTopology)
+    {
+        case EPrimitiveTopology::PointList:     return MTLPrimitiveTopologyClassPoint;
+        case EPrimitiveTopology::LineList:
+        case EPrimitiveTopology::LineStrip:     return MTLPrimitiveTopologyClassLine;
+        case EPrimitiveTopology::TriangleList:
+        case EPrimitiveTopology::TriangleStrip: return MTLPrimitiveTopologyClassTriangle;
+        default:                                return MTLPrimitiveTopologyClassUnspecified;
     }
 }
 

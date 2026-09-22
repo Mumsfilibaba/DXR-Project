@@ -1,6 +1,6 @@
 #include "SandboxPlayer.h"
 #include "SandboxProjectile.h"
-#include <Core/Misc/OutputDeviceLogger.h>
+#include <Core/Misc/OutputDeviceManager.h>
 #include <Engine/Engine.h>
 #include <Engine/World/World.h>
 #include <Engine/World/Actors/CameraActor.h>

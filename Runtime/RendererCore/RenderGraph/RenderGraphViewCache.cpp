@@ -1,4 +1,4 @@
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "RHI/RHI.h"
 #include "RendererCore/RenderGraph/RenderGraphViewCache.h"
 

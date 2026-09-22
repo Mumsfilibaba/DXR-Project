@@ -109,7 +109,7 @@ void* FMetalBufferRHI::Map(uint64 Offset, uint64 Size)
     }
 
     uint8* Contents = static_cast<uint8*>([BufferHandle contents]);
-    return Contents ? (Contents + ResourceStorage.GetResourceOffset() + Offset) : nullptr;
+    return Contents ? (Contents + GetMetalBindOffset() + Offset) : nullptr;
 }
 
 void FMetalBufferRHI::Unmap(uint64 Offset, uint64 Size)
@@ -156,7 +156,7 @@ bool FMetalBufferRHI::Initialize(ERHIResourceState InInitialAccess, const void* 
 
     if (NewBuffer.storageMode == MTLStorageModeShared)
     {
-        Memory::Memcpy(static_cast<uint8*>(NewBuffer.contents) + ResourceStorage.GetResourceOffset(), InInitialData, Desc.Size);
+        Memory::Memcpy(static_cast<uint8*>(NewBuffer.contents) + GetMetalBindOffset(), InInitialData, Desc.Size);
         return true;
     }
 
@@ -177,7 +177,7 @@ bool FMetalBufferRHI::Initialize(ERHIResourceState InInitialAccess, const void* 
     [UploadBatch.GetBlitEncoder() copyFromBuffer:StagingStorage.GetBuffer()
                                     sourceOffset:StagingStorage.GetResourceOffset()
                                         toBuffer:NewBuffer
-                               destinationOffset:ResourceStorage.GetResourceOffset()
+                               destinationOffset:GetMetalBindOffset()
                                             size:Desc.Size];
 
     LastUsedValue = UploadBatch.Submit();

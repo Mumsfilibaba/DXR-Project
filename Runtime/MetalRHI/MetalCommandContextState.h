@@ -70,7 +70,7 @@ struct FMetalVertexBufferCache
 
     void Clear()
     {
-        for (uint32 Index = 0; Index < RHI_MAX_VERTEX_BUFFERS; Index++)
+        for (uint32 Index = 0; Index < MSL_MAX_BUFFER_SLOTS; Index++)
         {
             VertexBuffers[Index] = nil;
             Offsets[Index]       = 0;
@@ -80,8 +80,15 @@ struct FMetalVertexBufferCache
         NumVertexBuffers = 0;
     }
 
-    id<MTLBuffer> VertexBuffers[RHI_MAX_VERTEX_BUFFERS];
-    NSUInteger    Offsets[RHI_MAX_VERTEX_BUFFERS];
+    void MarkAllDirty()
+    {
+        DirtyRange = (NumVertexBuffers > 0)
+            ? NSMakeRange(GetMSLVertexStreamBufferIndex(NumVertexBuffers - 1), NumVertexBuffers)
+            : NSMakeRange(0, 0);
+    }
+
+    id<MTLBuffer> VertexBuffers[MSL_MAX_BUFFER_SLOTS];
+    NSUInteger    Offsets[MSL_MAX_BUFFER_SLOTS];
     NSRange       DirtyRange;
     uint32        NumVertexBuffers;
 };
@@ -95,16 +102,14 @@ struct FMetalIndexBufferCache
 
     void Clear()
     {
-        IndexBuffer    = nil;
-        BufferResource = nullptr;
-        Offset         = 0;
-        IndexType      = MTLIndexTypeUInt32;
+        IndexBuffer = nil;
+        Offset      = 0;
+        IndexType   = MTLIndexTypeUInt32;
     }
 
-    id<MTLBuffer>    IndexBuffer;
-    FMetalBufferRHI* BufferResource;
-    NSUInteger       Offset;
-    MTLIndexType     IndexType;
+    id<MTLBuffer> IndexBuffer;
+    NSUInteger    Offset;
+    MTLIndexType  IndexType;
 };
 
 struct FMetalRenderTargetCache
@@ -264,13 +269,8 @@ public:
 
     bool Initialize();
 
-    void PrepareGraphicsState();
-    void PrepareComputeState();
-
     void BindGraphicsState();
     void BindComputeState();
-
-    void BindShaderConstants(EShaderVisibility::Type ShaderStage);
 
     void ResetState();
     void ResetStateResources();
@@ -296,6 +296,7 @@ public:
     void SetCBV(FMetalBufferRHI* Buffer, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
     void SetSampler(FMetalSamplerStateRHI* SamplerState, EShaderVisibility::Type ShaderStage, uint32 SamplerIndex);
     void SetShaderConstants(EShaderVisibility::Type ShaderStage, const uint32* ShaderConstants, uint32 NumShaderConstants);
+    void SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc);
 
     FORCEINLINE FMetalCommandContext& GetContext()
     {
@@ -325,6 +326,11 @@ public:
     FORCEINLINE const FMetalIndexBufferCache& GetIndexBufferCache() const
     {
         return GraphicsState.IndexBufferCache;
+    }
+
+    FORCEINLINE const FRHISamplePositionsDesc& GetSamplePositions() const
+    {
+        return GraphicsState.SamplePositions;
     }
 
     FORCEINLINE void GetRenderTargets(FMetalRenderTargetViewRHI** RenderTargetViews, uint32& OutNumRenderTargets, FMetalDepthStencilViewRHI** DepthStencilView) const
@@ -376,7 +382,6 @@ private:
     void BindGraphicsSamplers(EShaderVisibility::Type ShaderStage);
     void BindGraphicsShaderConstants(EShaderVisibility::Type ShaderStage);
     void BindBindlessHeaps(EShaderVisibility::Type ShaderStage);
-
     void BindComputeResources();
     void BindComputeSamplers();
     void BindComputeShaderConstants();
@@ -397,23 +402,21 @@ private:
             , RenderTargetCache()
             , IndexBufferCache()
             , VertexBufferCache()
+            , SamplePositions()
         {
             Memory::Memzero(BlendFactor, sizeof(BlendFactor));
             Memory::Memzero(DepthBias, sizeof(DepthBias));
             Memory::Memzero(Viewports, sizeof(Viewports));
             Memory::Memzero(ScissorRects, sizeof(ScissorRects));
 
-            bBindPipelineState       = false;
-            bBindPrimitiveTopology   = false;
-            bBindRenderTargets       = false;
-            bBindViewports           = false;
-            bBindScissorRects        = false;
-            bBindBlendFactor         = false;
-            bBindStencilRef          = false;
-            bBindDepthBias           = false;
-            bBindVertexBuffers       = false;
-            bBindIndexBuffer         = false;
-            bBindShaderConstants     = false;
+            bBindPipelineState   = false;
+            bBindViewports       = false;
+            bBindScissorRects    = false;
+            bBindBlendFactor     = false;
+            bBindStencilRef      = false;
+            bBindDepthBias       = false;
+            bBindVertexBuffers   = false;
+            bBindShaderConstants = false;
         }
 
         FMetalGraphicsPipelineStateRef PipelineState;
@@ -429,18 +432,16 @@ private:
         FMetalRenderTargetCache        RenderTargetCache;
         FMetalIndexBufferCache         IndexBufferCache;
         FMetalVertexBufferCache        VertexBufferCache;
+        FRHISamplePositionsDesc        SamplePositions;
 
-        bool bBindPipelineState     : 1;
-        bool bBindPrimitiveTopology : 1;
-        bool bBindRenderTargets     : 1;
-        bool bBindViewports         : 1;
-        bool bBindScissorRects      : 1;
-        bool bBindBlendFactor       : 1;
-        bool bBindStencilRef        : 1;
-        bool bBindDepthBias         : 1;
-        bool bBindVertexBuffers     : 1;
-        bool bBindIndexBuffer       : 1;
-        bool bBindShaderConstants   : 1;
+        bool bBindPipelineState   : 1;
+        bool bBindViewports       : 1;
+        bool bBindScissorRects    : 1;
+        bool bBindBlendFactor     : 1;
+        bool bBindStencilRef      : 1;
+        bool bBindDepthBias       : 1;
+        bool bBindVertexBuffers   : 1;
+        bool bBindShaderConstants : 1;
     } GraphicsState;
 
     struct FComputeState

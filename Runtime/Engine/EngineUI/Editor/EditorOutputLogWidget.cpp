@@ -1,6 +1,6 @@
 #include "Core/Templates/CString.h"
 #include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Engine/EngineUI/Editor/EditorOutputLogWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "ImGuiPlugin/ImGuiCore.h"
@@ -35,7 +35,7 @@ FEditorOutputLogWidget::FEditorOutputLogWidget()
     , bFilterError(true)
     , bVisible(true)
 {
-    if (FOutputDeviceLogger* Logger = FOutputDeviceLogger::Get())
+    if (FOutputDeviceManager* Logger = FOutputDeviceManager::Get())
     {
         Logger->RegisterOutputDevice(this);
     }
@@ -56,7 +56,7 @@ FEditorOutputLogWidget::FEditorOutputLogWidget()
 
 FEditorOutputLogWidget::~FEditorOutputLogWidget()
 {
-    if (FOutputDeviceLogger* Logger = FOutputDeviceLogger::Get())
+    if (FOutputDeviceManager* Logger = FOutputDeviceManager::Get())
     {
         Logger->UnregisterOutputDevice(this);
     }

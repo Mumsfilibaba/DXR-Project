@@ -7,7 +7,7 @@
 #include "Core/Tasks/TaskGraph.h"
 #include "Core/Tasks/Tasks.h"
 #include "Core/Misc/CoreDelegates.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Config.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
@@ -76,7 +76,7 @@ static bool InitializeOutputDevices()
     {
         GConsoleWindow->Show(true);
         GConsoleWindow->SetTitle("DXR-Engine Output Console");
-        FOutputDeviceLogger::Get()->RegisterOutputDevice(GConsoleWindow.Get());
+        FOutputDeviceManager::Get()->RegisterOutputDevice(GConsoleWindow.Get());
     }
     else
     {
@@ -87,7 +87,7 @@ static bool InitializeOutputDevices()
     if (FPlatformMisc::IsDebuggerPresent())
     {
         GDebuggerOutputDevice = MakeUniquePtr<FDebuggerOutputDevice>();
-        FOutputDeviceLogger::Get()->RegisterOutputDevice(GDebuggerOutputDevice.Get());
+        FOutputDeviceManager::Get()->RegisterOutputDevice(GDebuggerOutputDevice.Get());
     }
 
     const String OutputLogPath = Paths::GetProjectDir() + "/OutputLog.txt";
@@ -95,9 +95,10 @@ static bool InitializeOutputDevices()
     
     if (GFileOutputDevice && GFileOutputDevice->IsValid())
     {
-        FOutputDeviceLogger::Get()->RegisterOutputDevice(GFileOutputDevice.Get());
+        FOutputDeviceManager::Get()->RegisterOutputDevice(GFileOutputDevice.Get());
     }
 
+    FOutputDeviceManager::Get()->FlushPendingLines();
     return true;
 }
 
@@ -211,6 +212,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         return -1;
     }
 
+    GConfig->LoadConsoleVariables();
     FConsoleManager::Get().LoadConsoleVariablesFromCommandLine();
 
     if (!FThreadManager::Initialize())

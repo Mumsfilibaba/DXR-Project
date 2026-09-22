@@ -5,7 +5,7 @@
 #include "Core/Platform/PlatformTime.h"
 #include "Core/Filesystem/File.h"
 #include "Core/Memory/Malloc.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CRC.h"
 #include "RHI/RHI.h"
@@ -875,6 +875,7 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
 
     TComPtr<IDxcBlob> PreprocessedBlob;
     hr = PreprocessResult->GetOutput(DXC_OUT_HLSL, IID_PPV_ARGS(&PreprocessedBlob), nullptr);
+
     if (FAILED(hr))
     {
         LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to retrieve pre-processed shader");
@@ -896,7 +897,6 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
         return false;
     }
 
-    // Convert preprocessed source to DxcBuffer
     SourceBuffer.Ptr  = Source.Data();
     SourceBuffer.Size = Source.Size();
 
@@ -920,7 +920,6 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     // If the error encountered an error
     if (FAILED(CompilationResult))
     {
-        // Retrieve errors
         TComPtr<IDxcBlobUtf8> PrintBlob;
         Result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&PrintBlob), nullptr);
 
@@ -938,7 +937,6 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
 
     if (bVerboseLogging)
     {
-        // Retrieve errors
         TComPtr<IDxcBlobUtf8> PrintBlob;
         Result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&PrintBlob), nullptr);
 
@@ -956,6 +954,7 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     // Retrieve the compiled blob
     TComPtr<IDxcBlob> CompiledBlob;
     hr = Result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&CompiledBlob), nullptr);
+
     if (FAILED(hr))
     {
         LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to retrieve compiled shader");
@@ -1128,6 +1127,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
         if (!GatherMSLResources(CompilerMSL, Resources, ResourceType, ReflectedResources))
         {
             spvc_context_destroy(Context);
+
             DEBUG_BREAK();
             return false;
         }
@@ -1205,14 +1205,17 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
         {
             spvc_msl_resource_binding ResourceBinding;
             spvc_msl_resource_binding_init(&ResourceBinding);
-            ResourceBinding.stage      = ExecutionModel;
-            ResourceBinding.desc_set   = MSL_BINDLESS_HEAP_MARKER_SET;
-            ResourceBinding.binding    = Binding;
+
+            ResourceBinding.stage    = ExecutionModel;
+            ResourceBinding.desc_set = MSL_BINDLESS_HEAP_MARKER_SET;
+            ResourceBinding.binding  = Binding;
+
             // Runtime-array heaps still emit as [[buffer(n)]], but SPIRV-Cross picks
             // msl_texture / msl_sampler when the SPIR-V type is Image or Sampler.
             ResourceBinding.msl_buffer  = BufferIndex;
             ResourceBinding.msl_texture = BufferIndex;
             ResourceBinding.msl_sampler = BufferIndex;
+
             return spvc_compiler_msl_add_resource_binding(CompilerMSL, &ResourceBinding) == SPVC_SUCCESS;
         };
 
@@ -1221,6 +1224,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
         {
             LOG_ERROR("[FShaderCompiler]: Failed to pin the MSL bindless heap buffer slots");
             spvc_context_destroy(Context);
+
             DEBUG_BREAK();
             return false;
         }
@@ -1261,9 +1265,11 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
                 case EMSLBindingTable::Texture:
                     TableName = "texture";
                     break;
+
                 case EMSLBindingTable::Sampler:
                     TableName = "sampler";
                     break;
+
                 default:
                     break;
             }
@@ -1273,6 +1279,25 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
             spvc_context_destroy(Context);
             DEBUG_BREAK();
             return false;
+        }
+
+        // Two resources sharing a register take separate MSL slots, and the binding table the RHI
+        // builds from this array holds one slot per register. DXC does not diagnose the overlap when
+        // it lowers to SPIR-V, so it has to be caught here while the shader can still be named.
+        if (ReflectedResource.BindingType != EMSLBindingType::ShaderConstants &&
+            ReflectedResource.BindingType != EMSLBindingType::BindlessResourceHeap &&
+            ReflectedResource.BindingType != EMSLBindingType::BindlessSamplerHeap)
+        {
+            for (const FMSLShaderBinding& Existing : Bindings)
+            {
+                if (Existing.BindingType == ReflectedResource.BindingType && Existing.RegisterIndex == ReflectedResource.RegisterIndex)
+                {
+                    LOG_ERROR("[FShaderCompiler]: '%s' declares two %s resources on register %u",
+                        FilePath.IsEmpty() ? *CompileInfo.EntryPoint : *FilePath, ToString(ReflectedResource.BindingType), ReflectedResource.RegisterIndex);
+                    spvc_context_destroy(Context);
+                    return false;
+                }
+            }
         }
 
         Bindings.Emplace(FMSLShaderBinding{ ReflectedResource.BindingType, ReflectedResource.RegisterIndex, static_cast<uint8>(Slot), 0 });
@@ -1292,6 +1317,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
         {
             LOG_ERROR("[FShaderCompiler]: Failed to reflect the shader-constant block size");
             spvc_context_destroy(Context);
+
             DEBUG_BREAK();
             return false;
         }
@@ -1300,6 +1326,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
         {
             LOG_ERROR("[FShaderCompiler]: Shader-constant block size %zu exceeds UINT16_MAX", StructSize);
             spvc_context_destroy(Context);
+
             DEBUG_BREAK();
             return false;
         }

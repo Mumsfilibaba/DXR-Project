@@ -1,6 +1,6 @@
 #include "Engine/Assets/MeshData.h"
 #include "Core/Containers/Map.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 
 // Below this a tangent is treated as collapsed, since normalizing it in a shader would produce NaN.
 constexpr float TangentLengthSquaredEpsilon = 1.0e-12f;

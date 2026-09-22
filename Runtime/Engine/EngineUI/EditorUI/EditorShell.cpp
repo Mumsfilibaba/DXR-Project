@@ -8,7 +8,7 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorViewportPanel.h"
 #include "Engine/EditorEngine.h"
 #include "Core/Misc/IniFile.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Paths.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Application/Docking/DockInputHandler.h"

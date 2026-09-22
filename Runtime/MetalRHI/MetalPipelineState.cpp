@@ -374,10 +374,11 @@ bool FMetalPipelineBindingLayout::ConflictsWithVertexInputs(const FMetalInputLay
             continue;
         }
 
-        const uint32 InputSlot = Element->InputSlot;
-        auto OccupiesSlot = [InputSlot](uint8 Slot) -> bool
+        const uint32 InputSlot         = Element->InputSlot;
+        const uint8  StreamBufferIndex = GetMSLVertexStreamBufferIndex(InputSlot);
+        auto OccupiesSlot = [StreamBufferIndex](uint8 Slot) -> bool
         {
-            return Slot != InvalidSlot && Slot == InputSlot;
+            return Slot != InvalidSlot && Slot == StreamBufferIndex;
         };
 
         const EShaderVisibility::Type VertexStage = EShaderVisibility::Vertex;
@@ -385,7 +386,7 @@ bool FMetalPipelineBindingLayout::ConflictsWithVertexInputs(const FMetalInputLay
         {
             if (OccupiesSlot(ConstantBuffers[VertexStage][RegisterIndex]))
             {
-                METAL_ERROR("Vertex shader constant buffer register %u uses MSL slot %u, which is also input stream slot %u",
+                METAL_ERROR("Vertex shader constant buffer register %u uses MSL slot %u, which is reserved for input stream slot %u",
                     RegisterIndex, ConstantBuffers[VertexStage][RegisterIndex], InputSlot);
                 return true;
             }
@@ -395,7 +396,7 @@ bool FMetalPipelineBindingLayout::ConflictsWithVertexInputs(const FMetalInputLay
         {
             if (OccupiesSlot(ShaderResourceBuffers[VertexStage][RegisterIndex]))
             {
-                METAL_ERROR("Vertex shader SRV buffer register %u uses MSL slot %u, which is also input stream slot %u",
+                METAL_ERROR("Vertex shader SRV buffer register %u uses MSL slot %u, which is reserved for input stream slot %u",
                     RegisterIndex, ShaderResourceBuffers[VertexStage][RegisterIndex], InputSlot);
                 return true;
             }
@@ -405,7 +406,7 @@ bool FMetalPipelineBindingLayout::ConflictsWithVertexInputs(const FMetalInputLay
         {
             if (OccupiesSlot(UnorderedAccessBuffers[VertexStage][RegisterIndex]))
             {
-                METAL_ERROR("Vertex shader UAV buffer register %u uses MSL slot %u, which is also input stream slot %u",
+                METAL_ERROR("Vertex shader UAV buffer register %u uses MSL slot %u, which is reserved for input stream slot %u",
                     RegisterIndex, UnorderedAccessBuffers[VertexStage][RegisterIndex], InputSlot);
                 return true;
             }
@@ -413,21 +414,21 @@ bool FMetalPipelineBindingLayout::ConflictsWithVertexInputs(const FMetalInputLay
 
         if (OccupiesSlot(ShaderConstants[VertexStage]))
         {
-            METAL_ERROR("Vertex shader constants use MSL slot %u, which is also input stream slot %u",
+            METAL_ERROR("Vertex shader constants use MSL slot %u, which is reserved for input stream slot %u",
                 ShaderConstants[VertexStage], InputSlot);
             return true;
         }
 
         if (OccupiesSlot(ResourceHeapSlot[VertexStage]))
         {
-            METAL_ERROR("Vertex shader bindless resource heap uses MSL slot %u, which is also input stream slot %u",
+            METAL_ERROR("Vertex shader bindless resource heap uses MSL slot %u, which is reserved for input stream slot %u",
                 ResourceHeapSlot[VertexStage], InputSlot);
             return true;
         }
 
         if (OccupiesSlot(SamplerHeapSlot[VertexStage]))
         {
-            METAL_ERROR("Vertex shader bindless sampler heap uses MSL slot %u, which is also input stream slot %u",
+            METAL_ERROR("Vertex shader bindless sampler heap uses MSL slot %u, which is reserved for input stream slot %u",
                 SamplerHeapSlot[VertexStage], InputSlot);
             return true;
         }
@@ -488,13 +489,21 @@ FMetalInputLayoutRHI::FMetalInputLayoutRHI(const TArray<FRHIInputElementDesc>& I
     for (int32 Index = 0; Index < InputElements.Size(); ++Index)
     {
         const FRHIInputElementDesc& Element = InputElements[Index];
+        if (Element.InputSlot >= MSL_MAX_VERTEX_STREAMS)
+        {
+            METAL_ERROR("Input element %d uses vertex stream slot %u, past the %u streams Metal reserves",
+                Index, Element.InputSlot, MSL_MAX_VERTEX_STREAMS);
+            continue;
+        }
+
+        const uint8 StreamBufferIndex = GetMSLVertexStreamBufferIndex(Element.InputSlot);
         VertexDescriptor.attributes[Index].format      = MetalRHI::ConvertVertexFormat(Element.Format);
         VertexDescriptor.attributes[Index].offset      = Element.ByteOffset;
-        VertexDescriptor.attributes[Index].bufferIndex = Element.InputSlot;
+        VertexDescriptor.attributes[Index].bufferIndex = StreamBufferIndex;
 
-        VertexDescriptor.layouts[Element.InputSlot].stride       = Element.VertexStride;
-        VertexDescriptor.layouts[Element.InputSlot].stepFunction = MetalRHI::ConvertVertexInputClass(Element.InputClass);
-        VertexDescriptor.layouts[Element.InputSlot].stepRate     = Element.InputClass == EVertexInputClass::Vertex ? 1 : Element.InstanceStepRate;
+        VertexDescriptor.layouts[StreamBufferIndex].stride       = Element.VertexStride;
+        VertexDescriptor.layouts[StreamBufferIndex].stepFunction = MetalRHI::ConvertVertexInputClass(Element.InputClass);
+        VertexDescriptor.layouts[StreamBufferIndex].stepRate     = Element.InputClass == EVertexInputClass::Vertex ? 1 : Element.InstanceStepRate;
     }
 }
 
@@ -765,6 +774,8 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
     ApplyDepthStencilFormats(Descriptor, Desc.RasterizerOutputFormats.DepthStencilFormat);
     Descriptor.rasterSampleCount = Math::Max(Desc.MultiSampleState.SampleCount, 1u);
 
+    Descriptor.inputPrimitiveTopology = MetalRHI::ConvertPrimitiveTopologyClass(Desc.PrimitiveTopology);
+
     Descriptor.vertexDescriptor = InputLayout ? InputLayout->GetMTLVertexDescriptor() : nil;
     if (AmplificationCount > 1)
     {
@@ -818,7 +829,6 @@ FMetalComputePipelineStateRHI::FMetalComputePipelineStateRHI(FMetalDevice* InDev
     : FRHIComputePipelineState()
     , FMetalDeviceChild(InDevice)
     , PipelineState(nil)
-    , MaxTotalThreadsPerThreadgroup(0)
     , ThreadGroupSizeX(0)
     , ThreadGroupSizeY(0)
     , ThreadGroupSizeZ(0)
@@ -861,7 +871,6 @@ bool FMetalComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
         return false;
     }
 
-    MaxTotalThreadsPerThreadgroup = static_cast<uint32>(PipelineState.maxTotalThreadsPerThreadgroup);
     ThreadGroupSizeX = ComputeShader->GetThreadGroupSizeX();
     ThreadGroupSizeY = ComputeShader->GetThreadGroupSizeY();
     ThreadGroupSizeZ = ComputeShader->GetThreadGroupSizeZ();

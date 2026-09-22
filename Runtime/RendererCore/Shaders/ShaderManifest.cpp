@@ -3,7 +3,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CRC.h"
 #include "Core/Memory/Memory.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Paths.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Templates/CString.h"

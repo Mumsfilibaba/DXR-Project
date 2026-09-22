@@ -3,7 +3,7 @@
 #include "Core/Containers/Set.h"
 #include "Core/Containers/String.h"
 #include "Core/Misc/Debug.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "Core/Platform/PlatformStackTrace.h"
@@ -126,7 +126,7 @@ EAssertAction Assert::OnFailed(const CHAR* Expression, const CHAR* Filename, int
         }
     }
 
-    FOutputDeviceLogger::Get()->Flush();
+    FOutputDeviceManager::Get()->Flush();
 
     SetHandlingAssertOnThisThread(false);
 

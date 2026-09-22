@@ -1,5 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Tasks/ParallelFor.h"
 #include "Core/Tasks/Tasks.h"
 #include "RendererCore/Shaders/ShaderBytecodeCache.h"

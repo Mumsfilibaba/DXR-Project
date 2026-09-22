@@ -2,7 +2,7 @@
 #include <Core/CoreTypes.h>
 #include <Core/Time/Time.h>
 #include <Core/Platform/PlatformTime.h>
-#include <Core/Misc/OutputDeviceLogger.h>
+#include <Core/Misc/OutputDeviceManager.h>
 
 struct FClock
 {

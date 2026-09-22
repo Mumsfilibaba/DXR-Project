@@ -1,7 +1,7 @@
 #include "Engine/EngineUI/EditorUI/EditorIcons.h"
 #include "Application/Draw/UIAtlas.h"
 #include "Core/Containers/Array.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Paths.h"
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Memory/Memory.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Debug.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/ArrayView.h"

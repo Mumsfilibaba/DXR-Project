@@ -35,13 +35,12 @@ public:
     virtual uint32                   GetNumResources()        const override final;
 
     virtual bool IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const override final;
-    virtual bool QueryDisplayHDRInfo(FRHIDisplayHDRInfo& /*OutInfo*/) const override final { return false; }
+    virtual bool QueryDisplayHDRInfo(FRHIDisplayHDRInfo& OutInfo) const override final;
 
     bool Initialize();
-
-    bool Resize(uint32 InWidth, uint32 InHeight);
-    bool Present(bool bVerticalSync);
-    bool SetHDRMetadata(const FRHIHDRMetadata& /*Metadata*/) { return false; }
+    bool Resize(uint32 InWidth, uint32 InHeight, EFormat Format, EColorSpace ColorSpace);
+    bool Present(id<MTLCommandBuffer> CommandBuffer, bool bVerticalSync);
+    bool SetHDRMetadata(const FRHIHDRMetadata& Metadata);
     void AcquireNextBackBuffer();
 
     id<CAMetalDrawable> GetDrawable();
@@ -58,6 +57,10 @@ public:
     }
     
 private:
+    bool RefreshBackBuffer();
+    bool ApplyLayerColorSpace();
+    bool ApplyHDRMetadata();
+
     FMetalTextureRef    BackBuffer;
     FMetalWindowView*   MetalView;
     CAMetalLayer*       MetalLayer;

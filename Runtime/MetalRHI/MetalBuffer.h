@@ -30,6 +30,11 @@ public:
         return Buffer; 
     }
 
+    FORCEINLINE NSUInteger GetMetalBindOffset() const
+    {
+        return IsHeapPlaced() ? 0 : static_cast<NSUInteger>(ResourceStorage.GetResourceOffset());
+    }
+
     FORCEINLINE void SetMTLBuffer(id<MTLBuffer> InBuffer) 
     { 
         [InBuffer retain];

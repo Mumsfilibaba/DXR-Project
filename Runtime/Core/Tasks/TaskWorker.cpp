@@ -4,7 +4,7 @@
 #include "Core/Platform/PlatformEvent.h"
 #include "Core/Platform/PlatformThread.h"
 #include "Core/Platform/PlatformTLS.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 
 uint32 FTaskWorker::CurrentWorkerTLSSlot = CORE_INVALID_TLS_INDEX;
 

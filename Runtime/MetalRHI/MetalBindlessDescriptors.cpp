@@ -383,14 +383,13 @@ void FMetalBindlessDescriptorManager::WriteTexture(FRHIDescriptorHandle Handle, 
 
 void FMetalBindlessDescriptorManager::WriteBuffer(FRHIDescriptorHandle Handle, id<MTLBuffer> Buffer, uint64 Offset, bool bWritable, bool bIsView, bool bHeapPlaced, bool bImmediate)
 {
-    UNREFERENCED_VARIABLE(bHeapPlaced);
     if (!Handle.IsValid() || !Buffer)
     {
         return;
     }
 
     FMetalBindlessDescriptorEntry Entry;
-    Entry.Resource = MetalBufferGpuAddress(Buffer, Offset);
+    Entry.Resource = MetalBufferGpuAddress(Buffer, bHeapPlaced ? 0 : Offset);
     WriteSlot(GetHeap(Handle.Type), Handle.Index, Entry, Buffer, bWritable, bIsView, bImmediate);
 }
 

@@ -10,7 +10,7 @@
 #include <Core/Memory/Memory.h>
 #include <Core/Misc/CommandLine.h>
 #include <Core/Misc/IOutputDevice.h>
-#include <Core/Misc/OutputDeviceLogger.h>
+#include <Core/Misc/OutputDeviceManager.h>
 #include <Core/Platform/PlatformFile.h>
 #include <Core/Tasks/TaskGraph.h>
 #include <Core/Templates/CString.h>
@@ -341,14 +341,14 @@ int main(int Argc, const CHAR* Argv[])
     GIsUnattended = true;
 
     FConsoleOutputDevice ConsoleDevice;
-    FOutputDeviceLogger::Get()->RegisterOutputDevice(&ConsoleDevice);
+    FOutputDeviceManager::Get()->RegisterOutputDevice(&ConsoleDevice);
 
     CommandLine::Initialize(Argv, Argc);
 
     if ((Argc <= 1) || CommandLine::FindOption("help") || CommandLine::FindOption("h"))
     {
         PrintUsage();
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
+        FOutputDeviceManager::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 0;
     }
 
@@ -358,7 +358,7 @@ int main(int Argc, const CHAR* Argv[])
         LOG_ERROR("[BlueNoiseGen] --type is required");
         
         PrintUsage();
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
+        FOutputDeviceManager::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 1;
     }
 
@@ -391,7 +391,7 @@ int main(int Argc, const CHAR* Argv[])
     {
         LOG_ERROR("[BlueNoiseGen] Unknown --type '%s'", Type.Data());
         PrintUsage();
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
+        FOutputDeviceManager::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 1;
     }
 
@@ -419,14 +419,14 @@ int main(int Argc, const CHAR* Argv[])
     if ((Params.Width <= 0) || (Params.Depth <= 0) || (Params.Channels <= 0))
     {
         LOG_ERROR("[BlueNoiseGen] Size, depth and channels must all be positive");
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
+        FOutputDeviceManager::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 1;
     }
 
     if ((Params.Algorithm == EBlueNoiseAlgorithm::VoidAndCluster) && (Params.Channels != 1))
     {
         LOG_ERROR("[BlueNoiseGen] Void-and-cluster produces a scalar rank ordering, so it needs --channels=1");
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
+        FOutputDeviceManager::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 1;
     }
 
@@ -434,7 +434,7 @@ int main(int Argc, const CHAR* Argv[])
     if (!GetStringOption("out", OutputPath))
     {
         LOG_ERROR("[BlueNoiseGen] --out is required");
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
+        FOutputDeviceManager::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 1;
     }
 
@@ -449,7 +449,7 @@ int main(int Argc, const CHAR* Argv[])
         LOG_ERROR("[BlueNoiseGen] Failed to initialize the task graph");
 
         FThreadManager::Release();
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
+        FOutputDeviceManager::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 1;
     }
 
@@ -543,7 +543,7 @@ int main(int Argc, const CHAR* Argv[])
     if (!Directory.IsEmpty() && !File::CreateDirectoryTree(Directory))
     {
         LOG_ERROR("[BlueNoiseGen] Failed to create directory '%s'", Directory.Data());
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
+        FOutputDeviceManager::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 1;
     }
 
@@ -551,13 +551,13 @@ int main(int Argc, const CHAR* Argv[])
     if (SaveResult != tinyddsloader::Result::Success)
     {
         LOG_ERROR("[BlueNoiseGen] Failed to write '%s' (tinyddsloader result %d)", OutputPath.Data(), static_cast<int32>(SaveResult));
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
+        FOutputDeviceManager::Get()->UnregisterOutputDevice(&ConsoleDevice);
         return 1;
     }
 
     LOG_INFO("[BlueNoiseGen] Wrote '%s' (%dx%dx%d, %d channel(s), %d bits)", OutputPath.Data(), OutputWidth, OutputHeight, OutputDepth, OutputChannels, static_cast<int32>(Bits));
     LOG_INFO("[BlueNoiseGen] Done");
 
-    FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
+    FOutputDeviceManager::Get()->UnregisterOutputDevice(&ConsoleDevice);
     return 0;
 }

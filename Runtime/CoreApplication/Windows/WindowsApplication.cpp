@@ -1,6 +1,6 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "CoreApplication/Windows/WindowsApplication.h"
 #include "CoreApplication/Windows/WindowsInputMapper.h"
 #include "CoreApplication/Windows/WindowsCursor.h"

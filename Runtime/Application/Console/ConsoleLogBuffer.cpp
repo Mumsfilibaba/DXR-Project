@@ -1,6 +1,6 @@
 #include "Application/Console/ConsoleLogBuffer.h"
 #include "Core/Math/Math.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Threading/ScopedLock.h"
 
 FFloatColor FConsoleLogBuffer::GetSeverityColor(ELogSeverity Severity)
@@ -59,7 +59,7 @@ void FConsoleLogBuffer::RegisterWithLogger()
 {
     if (!bIsRegisteredWithLogger)
     {
-        FOutputDeviceLogger::Get()->RegisterOutputDevice(this);
+        FOutputDeviceManager::Get()->RegisterOutputDevice(this);
         bIsRegisteredWithLogger = true;
     }
 }
@@ -68,7 +68,7 @@ void FConsoleLogBuffer::UnregisterFromLogger()
 {
     if (bIsRegisteredWithLogger)
     {
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(this);
+        FOutputDeviceManager::Get()->UnregisterOutputDevice(this);
         bIsRegisteredWithLogger = false;
     }
 }

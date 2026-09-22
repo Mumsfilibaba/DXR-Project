@@ -148,7 +148,7 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/IniFile.h"
 #include "Core/Misc/IOutputDevice.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 
 #include "Core/Modules/ModuleManager.h"
 

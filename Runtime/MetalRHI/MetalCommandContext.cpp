@@ -4,7 +4,6 @@
 #include "MetalRHI/MetalQueue.h"
 #include "MetalRHI/MetalAllocators.h"
 #include "MetalRHI/MetalResource.h"
-#include "MetalRHI/MetalResource.h"
 #include "MetalRHI/MetalBuffer.h"
 #include "MetalRHI/MetalTexture.h"
 #include "MetalRHI/MetalSwapChain.h"
@@ -15,6 +14,7 @@
 #include "MetalRHI/MetalCapabilities.h"
 #include "MetalRHI/MetalStats.h"
 #include "RHI/RHIIndirect.h"
+#include "RHI/RHICore.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Platform/PlatformTLS.h"
@@ -568,9 +568,7 @@ void FMetalCommandContext::SetDepthBounds(float MinDepth, float MaxDepth)
 
 void FMetalCommandContext::SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc)
 {
-    UNREFERENCED_VARIABLE(SamplePositionsDesc);
-
-    METAL_ERROR("SetSamplePositions: programmable sample positions are not supported by the Metal backend");
+    ContextState.SetSamplePositions(SamplePositionsDesc);
 }
 
 void FMetalCommandContext::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)
@@ -878,7 +876,7 @@ void FMetalCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& Bu
 
     if (DstBuffer.storageMode == MTLStorageModeShared)
     {
-        Memory::Memcpy(reinterpret_cast<uint8*>(DstBuffer.contents) + MetalDst->GetResourceStorage().GetResourceOffset() + BufferRegion.Offset, SourceData, Size);
+        Memory::Memcpy(reinterpret_cast<uint8*>(DstBuffer.contents) + MetalDst->GetMetalBindOffset() + BufferRegion.Offset, SourceData, Size);
         return;
     }
 
@@ -898,7 +896,7 @@ void FMetalCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& Bu
     [CopyContext.GetMTLCopyEncoder() copyFromBuffer:StagingStorage.GetBuffer()
                                        sourceOffset:StagingStorage.GetResourceOffset()
                                            toBuffer:DstBuffer
-                                  destinationOffset:BufferRegion.Offset
+                                  destinationOffset:MetalDst->GetMetalBindOffset() + BufferRegion.Offset
                                                size:Size];
 }
 
@@ -986,18 +984,33 @@ void FMetalCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
         DepthAttachment.loadAction     = MTLLoadActionLoad;
         DepthAttachment.storeAction    = MTLStoreActionMultisampleResolve;
 
-        if (bIsStencil)
+        if (bIsStencil && GMetalSupportsStencilResolve)
         {
-            METAL_ERROR("ResolveTexture: combined depth/stencil resolve is not supported");
-            [RenderPassDescriptor release];
-            return;
+            MTLRenderPassStencilAttachmentDescriptor* StencilAttachment = RenderPassDescriptor.stencilAttachment;
+            StencilAttachment.texture        = SrcTexture;
+            StencilAttachment.resolveTexture = DstTexture;
+            StencilAttachment.loadAction     = MTLLoadActionLoad;
+            StencilAttachment.storeAction    = MTLStoreActionMultisampleResolve;
+        }
+        else if (bIsStencil)
+        {
+            METAL_WARNING("ResolveTexture: this device cannot resolve the stencil half, resolving depth only");
         }
     }
     else if (bIsStencil)
     {
-        METAL_ERROR("ResolveTexture: stencil resolve is not supported");
-        [RenderPassDescriptor release];
-        return;
+        if (!GMetalSupportsStencilResolve)
+        {
+            METAL_ERROR("ResolveTexture: stencil resolve is not supported by this device");
+            [RenderPassDescriptor release];
+            return;
+        }
+
+        MTLRenderPassStencilAttachmentDescriptor* StencilAttachment = RenderPassDescriptor.stencilAttachment;
+        StencilAttachment.texture        = SrcTexture;
+        StencilAttachment.resolveTexture = DstTexture;
+        StencilAttachment.loadAction     = MTLLoadActionLoad;
+        StencilAttachment.storeAction    = MTLStoreActionMultisampleResolve;
     }
     else
     {
@@ -1052,9 +1065,9 @@ void FMetalCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FR
 
     id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
     [CopyEncoder copyFromBuffer:MetalSrc->GetMTLBuffer()
-                   sourceOffset:CopyDesc.SrcOffset
+                   sourceOffset:CopyDesc.SrcOffset + MetalSrc->GetMetalBindOffset()
                        toBuffer:MetalDst->GetMTLBuffer()
-              destinationOffset:CopyDesc.DstOffset
+              destinationOffset:CopyDesc.DstOffset + MetalDst->GetMetalBindOffset()
                            size:CopyDesc.Size];
 }
 
@@ -1287,14 +1300,21 @@ void FMetalCommandContext::PrepareForDraw()
 {
     CHECK(GraphicsEncoder != nil);
 
-    ContextState.PrepareGraphicsState();
     ContextState.BindGraphicsState();
-    ApplyVertexAmplification();
 
-    const FMetalIndexBufferCache& IndexBufferCache = ContextState.GetIndexBufferCache();
-    if (IndexBufferCache.IndexBuffer)
+    if (FMetalMeshletPipelineStateRHI* MeshletPipeline = ContextState.GetMeshletPipelineState())
     {
-        DeclareResident(IndexBufferCache.IndexBuffer, true, false);
+        ApplyVertexAmplification(MeshletPipeline->GetViewInstancingState());
+    }
+    else
+    {
+        ApplyVertexAmplification();
+
+        const FMetalIndexBufferCache& IndexBufferCache = ContextState.GetIndexBufferCache();
+        if (IndexBufferCache.IndexBuffer)
+        {
+            DeclareResident(IndexBufferCache.IndexBuffer, true, false);
+        }
     }
 
     FlushResidency();
@@ -1302,17 +1322,7 @@ void FMetalCommandContext::PrepareForDraw()
 
 void FMetalCommandContext::PrepareForMesh()
 {
-    CHECK(GraphicsEncoder != nil);
-
-    ContextState.PrepareGraphicsState();
-    ContextState.BindGraphicsState();
-
-    if (FMetalMeshletPipelineStateRHI* MeshletPipeline = ContextState.GetMeshletPipelineState())
-    {
-        ApplyVertexAmplification(MeshletPipeline->GetViewInstancingState());
-    }
-
-    FlushResidency();
+    PrepareForDraw();
 }
 
 void FMetalCommandContext::PrepareForDispatch()
@@ -1334,7 +1344,6 @@ void FMetalCommandContext::PrepareForDispatch()
         STAT_ADD(STAT_Metal_EncoderCount, 1);
     }
 
-    ContextState.PrepareComputeState();
     ContextState.BindComputeState();
     FlushResidency();
 }
@@ -1628,26 +1637,6 @@ void FMetalCommandContext::FinishDirectEncoders()
         ContextState.ResetBoundConstantSlots();
         bEncoderFencePending = true;
     }
-}
-
-void FMetalCommandContext::SubmitDirectWorkAndWait()
-{
-    CHECK(CommandBuffer != nil);
-
-    FinishDirectEncoders();
-    ContextState.EndCommandBuffer();
-
-    FMetalDeviceRHI::Get()->FlushDeletionQueue(Commands);
-    Queue.SubmitCommands(Commands);
-    Queue.WaitForCompletion();
-
-    Commands      = Queue.ObtainCommands();
-    CommandBuffer = Commands->CommandBuffer;
-
-    bEncoderFencePending  = false;
-    bDirectHasEncodedWork = false;
-
-    ContextState.BeginCommandBuffer();
 }
 
 void FMetalCommandContext::FlushCopyWork()
@@ -1998,11 +1987,7 @@ void FMetalCommandContext::DrawIndirect(FRHIBuffer* ArgumentBuffer, uint64 Argum
     CHECK(PrimitiveType != MTLPrimitiveType(-1));
 
     id<MTLBuffer> ArgumentMTLBuffer = Arguments->GetMTLBuffer();
-    uint64       BaseOffset        = ArgumentBufferOffset;
-    if (!Arguments->IsHeapPlaced())
-    {
-        BaseOffset += Arguments->GetResourceStorage().GetResourceOffset();
-    }
+    const uint64 BaseOffset        = ArgumentBufferOffset + Arguments->GetMetalBindOffset();
 
     for (uint32 CommandIndex = 0; CommandIndex < CommandCount; ++CommandIndex)
     {
@@ -2038,11 +2023,7 @@ void FMetalCommandContext::DrawIndexedIndirect(FRHIBuffer* ArgumentBuffer, uint6
     CHECK(PrimitiveType                != MTLPrimitiveType(-1));
 
     id<MTLBuffer> ArgumentMTLBuffer = Arguments->GetMTLBuffer();
-    uint64       BaseOffset        = ArgumentBufferOffset;
-    if (!Arguments->IsHeapPlaced())
-    {
-        BaseOffset += Arguments->GetResourceStorage().GetResourceOffset();
-    }
+    const uint64 BaseOffset        = ArgumentBufferOffset + Arguments->GetMetalBindOffset();
 
     for (uint32 CommandIndex = 0; CommandIndex < CommandCount; ++CommandIndex)
     {
@@ -2081,11 +2062,7 @@ void FMetalCommandContext::DispatchIndirect(FRHIBuffer* ArgumentBuffer, uint64 A
         return;
     }
 
-    uint64 IndirectOffset = ArgumentBufferOffset;
-    if (!Arguments->IsHeapPlaced())
-    {
-        IndirectOffset += Arguments->GetResourceStorage().GetResourceOffset();
-    }
+    const uint64 IndirectOffset = ArgumentBufferOffset + Arguments->GetMetalBindOffset();
 
     [ComputeEncoder dispatchThreadgroupsWithIndirectBuffer:Arguments->GetMTLBuffer()
                                       indirectBufferOffset:IndirectOffset
@@ -2162,11 +2139,7 @@ void FMetalCommandContext::DispatchMeshIndirect(FRHIBuffer* ArgumentBuffer, uint
     }
 
     id<MTLBuffer> ArgumentMTLBuffer = Arguments->GetMTLBuffer();
-    uint64       BaseOffset        = ArgumentBufferOffset;
-    if (!Arguments->IsHeapPlaced())
-    {
-        BaseOffset += Arguments->GetResourceStorage().GetResourceOffset();
-    }
+    const uint64 BaseOffset        = ArgumentBufferOffset + Arguments->GetMetalBindOffset();
 
     const MTLSize ObjectSize = PipelineState->GetObjectThreadgroupSize();
 
@@ -2190,16 +2163,39 @@ void FMetalCommandContext::AcquireNextBackBuffer(FRHISwapChain* SwapChain)
 void FMetalCommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync)
 {
     FMetalSwapChainRHI* MetalSwapChain = static_cast<FMetalSwapChainRHI*>(SwapChain);
-    MetalSwapChain->Present(bVerticalSync);
+
+    if (Commands)
+    {
+        ContextState.EndCommandBuffer();
+        FinishEncoders();
+        FlushCopyWork();
+        MetalSwapChain->Present(CommandBuffer, bVerticalSync);
+
+        FMetalDeviceRHI::Get()->FlushDeletionQueue(Commands);
+        Queue.SubmitCommands(Commands);
+
+        Commands      = Queue.ObtainCommands();
+        CommandBuffer = Commands->CommandBuffer;
+
+        bEncoderFencePending  = false;
+        bDirectHasEncodedWork = false;
+
+        ContextState.BeginCommandBuffer();
+        return;
+    }
+
+    MetalSwapChain->Present(nil, bVerticalSync);
 }
 
-void FMetalCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat /*Format*/, EColorSpace /*ColorSpace*/)
+void FMetalCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace)
 {
     FMetalSwapChainRHI* MetalSwapChain = static_cast<FMetalSwapChainRHI*>(SwapChain);
+    if (GraphicsEncoder || ComputeEncoder || CopyContext.GetMTLCopyEncoder())
+    {
+        FinishEncoders();
+    }
 
-    const uint32 ResolvedWidth  = (Width  > 0u) ? Width  : MetalSwapChain->GetDesc().Width;
-    const uint32 ResolvedHeight = (Height > 0u) ? Height : MetalSwapChain->GetDesc().Height;
-    MetalSwapChain->Resize(ResolvedWidth, ResolvedHeight);
+    MetalSwapChain->Resize(Width, Height, Format, ColorSpace);
 }
 
 void FMetalCommandContext::SetSwapChainHDRMetadata(FRHISwapChain* SwapChain, const FRHIHDRMetadata& Metadata)
@@ -2548,6 +2544,24 @@ MTLRenderPassDescriptor* FMetalCommandContext::CreateRenderPassDescriptor(const 
     }
 
     RenderPassDescriptor.renderTargetArrayLength = ArrayLength;
+
+    const FRHISamplePositionsDesc& SamplePositions = ContextState.GetSamplePositions();
+    if (SamplePositions.NumSamplesPerPixel > 0)
+    {
+        const NSUInteger SampleCount = static_cast<NSUInteger>(SamplePositions.NumSamplesPerPixel);
+        MTLSamplePosition Positions[RHI_MAX_SAMPLE_POSITIONS];
+        Memory::Memzero(Positions, sizeof(Positions));
+
+        const NSUInteger Count = Math::Min(SampleCount, static_cast<NSUInteger>(RHI_MAX_SAMPLE_POSITIONS));
+        for (NSUInteger Index = 0; Index < Count; ++Index)
+        {
+            Positions[Index].x = Math::Clamp(0.5f + SamplePositions.Positions[Index].X, 0.0f, 1.0f);
+            Positions[Index].y = Math::Clamp(0.5f + SamplePositions.Positions[Index].Y, 0.0f, 1.0f);
+        }
+
+        [RenderPassDescriptor setSamplePositions:Positions count:Count];
+    }
+
     return RenderPassDescriptor;
 }
 

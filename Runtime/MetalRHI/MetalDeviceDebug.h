@@ -6,6 +6,9 @@
 /** @brief Turns on Metal's debug layer when RHI.EnableDebugLayer is set, before any MTLDevice is created. */
 void MetalEnableDebugLayer();
 
+/** @return True when RHI.EnableDebugLayer or one of Apple's environment variables asked for the layer */
+bool MetalIsDebugLayerRequested();
+
 /** @brief Mirrors Metal validation text from stderr into the engine log, leaving stderr itself intact. */
 void MetalStartValidationCapture();
 

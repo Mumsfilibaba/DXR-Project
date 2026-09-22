@@ -52,11 +52,7 @@ struct FPerCascade
 
 ConstantBuffer<FPerObject> PerObjectBuffer : register(b1);
 
-#if SHADER_BACKEND == SHADER_BACKEND_METAL
-    ConstantBuffer<FPerCascade> PerCascadeBuffer : register(b2);
-#else
-    ConstantBuffer<FPerCascade> PerCascadeBuffer : register(b0);
-#endif
+ConstantBuffer<FPerCascade> PerCascadeBuffer : register(b0);
 
 StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
 

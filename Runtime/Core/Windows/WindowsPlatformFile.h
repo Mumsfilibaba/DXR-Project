@@ -36,6 +36,7 @@ public:
     virtual bool WriteAsync(const uint8* Src, uint32 BytesToWrite) override final;
     virtual void WaitForPendingWrites() override final;
     virtual bool HasPendingWrites() const override final;
+    virtual bool HasWriteError() const override final;
     virtual bool IsValid() const override final;
     virtual void Close() override final;
 
@@ -49,10 +50,14 @@ private:
 
     void GarbageCollectCompleted();
     void FreePendingWrite(FPendingWrite* PendingWrite);
+    bool WriteBlockingAtOffset(const uint8* Src, uint32 BytesToWrite, int64 Offset);
+    void CollectWriteResult(FPendingWrite* PendingWrite, bool bWait);
+    void ReportWriteFailure(const CHAR* What, uint32 ErrorCode);
 
     HANDLE                 FileHandle;
     int64                  WriteOffset;
     TArray<FPendingWrite*> PendingWrites;
+    bool                   bHasWriteError;
 };
 
 struct CORE_API FWindowsPlatformFile : public IPlatformFileSystem

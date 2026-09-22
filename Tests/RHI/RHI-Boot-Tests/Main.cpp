@@ -1,6 +1,7 @@
 #include <Core/CoreTypes.h>
 #include <Core/CoreDefines.h>
 #include <Core/CoreGlobals.h>
+#include <Core/Platform/PlatformMisc.h>
 #include <Core/Tasks/TaskGraph.h>
 #include <Core/Threading/ThreadManager.h>
 
@@ -20,6 +21,10 @@ int main(int Argc, const CHAR* Argv[])
 {
     UNREFERENCED_VARIABLE(Argc);
     UNREFERENCED_VARIABLE(Argv);
+
+#if PLATFORM_MACOS
+    FPlatformMisc::PrepareMetalDebugLayerEnvironment(true);
+#endif
 
     TestHarness::Initialize("TestResults_RHIBoot.log");
     LOG_INFO("=== RHI Boot Tests ===");

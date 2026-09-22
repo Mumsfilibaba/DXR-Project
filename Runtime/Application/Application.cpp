@@ -9,7 +9,7 @@
 #include "Application/Menus/DragDropService.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Tasks/Tasks.h"

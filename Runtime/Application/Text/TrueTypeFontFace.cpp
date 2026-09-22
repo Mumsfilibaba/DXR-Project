@@ -2,7 +2,7 @@
 #include "Core/Filesystem/File.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformFile.h"
 
 static FORCEINLINE int32 ToCodepoint(CHAR Character)

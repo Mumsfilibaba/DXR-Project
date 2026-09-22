@@ -1,4 +1,4 @@
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "RendererCore/RenderSettings.h"
 
 RENDERERCORE_API uint32 RenderSettings::RenderWidth  = 1920;

@@ -158,11 +158,20 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
     RHI::bSupportsSamplerFeedback = false;
     RHI::SamplerFeedbackTier      = ESamplerFeedbackTier::NotSupported;
 
-    RHI::bSupportsProgrammableSamplePositions = false;
-    RHI::SamplePositionsTier                  = ESamplePositionsTier::NotSupported;
-    RHI::MaxSamplePositionGridWidth           = 0;
-    RHI::MaxSamplePositionGridHeight          = 0;
+    RHI::bSupportsProgrammableSamplePositions = GMetalSupportsProgrammableSamplePositions;
+    RHI::SamplePositionsTier                  = GMetalSupportsProgrammableSamplePositions ? ESamplePositionsTier::Tier1 : ESamplePositionsTier::NotSupported;
+    RHI::MaxSamplePositionGridWidth           = GMetalSupportsProgrammableSamplePositions ? 1u : 0u;
+    RHI::MaxSamplePositionGridHeight          = GMetalSupportsProgrammableSamplePositions ? 1u : 0u;
     RHI::SupportedSamplePositionSampleCounts  = 0;
+
+    if (GMetalSupportsProgrammableSamplePositions)
+    {
+        uint32 SampleCounts = 0;
+        if (QuerySupportedSampleCounts(EFormat::B8G8R8A8_Unorm, SampleCounts))
+        {
+            RHI::SupportedSamplePositionSampleCounts = SampleCounts;
+        }
+    }
 
     RHI::bSupportsDrawIndirect               = true;
     RHI::bSupportsDrawIndirectCount          = false;
@@ -196,7 +205,7 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
 
     RHI::bSupportsTimestampQueries           = GMetalSupportsTimestampQueries;
     RHI::bSupportsPipelineStatisticsQueries  = false;
-    RHI::bSupportsGPUTimestampBubblesRemoval = false;
+    RHI::bSupportsGPUTimestampBubblesRemoval = GMetalSupportsTimestampQueries;
 
     RHI::DefaultSwapChainFormat = EFormat::B8G8R8A8_Unorm;
 
@@ -678,8 +687,29 @@ bool FMetalDeviceRHI::QueryUAVFormatSupport(EFormat Format) const
 
 bool FMetalDeviceRHI::QuerySupportedSampleCounts(EFormat Format, uint32& OutSampleCounts) const
 {
-    OutSampleCounts = RHI_SAMPLE_COUNT_1;
-    return true;
+    OutSampleCounts = 0;
+
+    const MTLPixelFormat PixelFormat = MetalRHI::ConvertFormat(Format);
+    if (PixelFormat == MTLPixelFormatInvalid)
+    {
+        return false;
+    }
+
+    id<MTLDevice> MTLDevice = Device ? Device->GetMTLDevice() : nil;
+    if (!MTLDevice)
+    {
+        return false;
+    }
+
+    for (uint32 SampleCount = 1; SampleCount <= RHI_MAX_SAMPLE_COUNT; SampleCount <<= 1)
+    {
+        if ([MTLDevice supportsTextureSampleCount:SampleCount])
+        {
+            OutSampleCounts |= SampleCount;
+        }
+    }
+
+    return OutSampleCounts != 0;
 }
 
 bool FMetalDeviceRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const

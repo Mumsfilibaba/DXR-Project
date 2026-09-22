@@ -32,8 +32,6 @@ static TAutoConsoleVariable<bool> CVarBreakOnValidationError(
     "Enables breakpoints when the Metal debug layer reports an error",
     false);
 
-static AtomicBool GReportingDisabled;
-
 static bool IsEnvFlagEnabled(const CHAR* Name)
 {
     String Value;
@@ -91,6 +89,9 @@ static bool IsFatalValidationLine(const CHAR* Text)
     return CString::Stristr(Text, "failed assertion") != nullptr;
 }
 
+static String GLastReportedLine;
+static int32  GRepeatedLineCount = 0;
+
 static bool IsMetalValidationError(const CHAR* Text)
 {
     return IsFatalValidationLine(Text)
@@ -99,23 +100,33 @@ static bool IsMetalValidationError(const CHAR* Text)
         || CString::Stristr(Text, "faulted") != nullptr;
 }
 
+static void FlushRepeatedLine()
+{
+    if (GRepeatedLineCount > 0)
+    {
+        METAL_WARNING("[Metal Validation] previous line repeated %d more times", GRepeatedLineCount);
+        GRepeatedLineCount = 0;
+    }
+}
+
 static void ReportValidationLine(const CHAR* RawText)
 {
-    if (GReportingDisabled.Load())
+    const CHAR* Text = SkipNSLogPrefix(RawText);
+
+    if (!GLastReportedLine.IsEmpty() && CString::Strcmp(*GLastReportedLine, Text) == 0)
     {
+        GRepeatedLineCount++;
         return;
     }
 
-    const CHAR* Text = SkipNSLogPrefix(RawText);
+    FlushRepeatedLine();
+    GLastReportedLine = Text;
+
     if (IsMetalValidationError(Text))
     {
-        if (IsFatalValidationLine(Text))
-        {
-            GReportingDisabled.Store(true);
-        }
-
         METAL_ERROR("[Metal Validation] %s", Text);
         GValidationErrorCount.Add(1);
+
         if (CVarBreakOnValidationError.GetValue())
         {
             DEBUG_BREAK();
@@ -185,6 +196,9 @@ public:
         close(PipeFds[1]);
 
         bStop.Store(false);
+        GLastReportedLine.Clear();
+
+        GRepeatedLineCount = 0;
 
         Thread = FPlatformThread::Create(this, "MetalValidationLog");
         if (!Thread || !Thread->Start())
@@ -302,6 +316,7 @@ public:
             ReportValidationLine(*Line);
         }
 
+        FlushRepeatedLine();
         return 0;
     }
 
@@ -315,6 +330,11 @@ private:
 
 static FMetalStderrCapture GStderrCapture;
 
+bool MetalIsDebugLayerRequested()
+{
+    return IsMetalDebugLayerRequested();
+}
+
 void MetalEnableDebugLayer()
 {
     if (!IsMetalDebugLayerRequested())
@@ -322,11 +342,7 @@ void MetalEnableDebugLayer()
         return;
     }
 
-    if (!IsEnvFlagEnabled("MTL_DEBUG_LAYER"))
-    {
-        FPlatformMisc::SetEnvironmentVariable("MTL_DEBUG_LAYER", "1");
-    }
-
+    FPlatformMisc::PrepareMetalDebugLayerEnvironment(true);
     METAL_INFO("Metal debug layer enabled");
 }
 
@@ -374,6 +390,7 @@ void MetalBeginFrameCapture(id<MTLDevice> Device)
 
     MTLCaptureDescriptor* Descriptor = [[MTLCaptureDescriptor new] autorelease];
     Descriptor.captureObject = Device;
+
     if ([Manager supportsDestination:MTLCaptureDestinationDeveloperTools])
     {
         Descriptor.destination = MTLCaptureDestinationDeveloperTools;

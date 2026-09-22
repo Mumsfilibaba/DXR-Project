@@ -1,6 +1,6 @@
 #include "Engine/EngineUI/EditorUI/EditorFooterPanel.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Math/Math.h"
 #include "Application/Console/ConsoleCommandLine.h"
@@ -373,7 +373,7 @@ EKeyInterceptResult FEditorFooterPanel::OnFieldKeyDown(const FKeyEvent& KeyEvent
 
     if (Key == Keys::Enter)
     {
-        CommandLine->Submit(*FOutputDeviceLogger::Get());
+        CommandLine->Submit(*FOutputDeviceManager::Get());
         SyncFieldFromCommandLine();
         RebuildCandidateList();
 

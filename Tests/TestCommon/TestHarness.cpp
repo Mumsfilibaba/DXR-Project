@@ -2,7 +2,7 @@
 #include "TestConsoleOutputDevice.h"
 
 #include <Core/CoreGlobals.h>
-#include <Core/Misc/OutputDeviceLogger.h>
+#include <Core/Misc/OutputDeviceManager.h>
 
 FTestConsoleOutputDevice TestHarness::ConsoleDevice;
 int32 TestHarness::NumPassed = 0;
@@ -14,7 +14,8 @@ void TestHarness::Initialize(const CHAR* LogFileName)
     GIsUnattended = true;
 
     ConsoleDevice.OpenLogFile(LogFileName);
-    FOutputDeviceLogger::Get()->RegisterOutputDevice(&ConsoleDevice);
+    FOutputDeviceManager::Get()->RegisterOutputDevice(&ConsoleDevice);
+    FOutputDeviceManager::Get()->FlushPendingLines();
     
     NumPassed = 0;
     NumFailed = 0;
@@ -22,7 +23,7 @@ void TestHarness::Initialize(const CHAR* LogFileName)
 
 void TestHarness::Shutdown()
 {
-    FOutputDeviceLogger::Get()->UnregisterOutputDevice(&ConsoleDevice);
+    FOutputDeviceManager::Get()->UnregisterOutputDevice(&ConsoleDevice);
     ConsoleDevice.CloseLogFile();
 }
 

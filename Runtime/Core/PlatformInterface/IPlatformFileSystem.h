@@ -44,7 +44,14 @@ struct IPlatformAsyncFile
 {
     virtual ~IPlatformAsyncFile() = default;
 
-    /** @brief Submits an asynchronous write. Copies Src internally and returns immediately. */
+    /**
+     * @brief Submits an asynchronous write at the offset the handle holds now. The handle is not
+     * thread-safe, so concurrent callers must serialize or two writes will claim the same offset.
+     *
+     * @param Src          Bytes to write, copied before the call returns
+     * @param BytesToWrite Number of bytes to take from Src
+     * @return Returns true if the write was submitted
+     */
     virtual bool WriteAsync(const uint8* Src, uint32 BytesToWrite) = 0;
 
     /** @brief Blocks until all pending async writes have completed */
@@ -52,6 +59,9 @@ struct IPlatformAsyncFile
 
     /** @return Returns true if there are async writes still in-flight */
     virtual bool HasPendingWrites() const = 0;
+
+    /** @return Returns true once a write has failed, after which the handle never accepts data again */
+    virtual bool HasWriteError() const = 0;
 
     /** @return Returns true if the handle is valid */
     virtual bool IsValid() const = 0;

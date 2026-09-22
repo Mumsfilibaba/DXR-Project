@@ -22,6 +22,7 @@
 #include "PlatformMiscTests.h"
 #include "MemoryStackTests.h"
 #include "PlatformEventPoolTests.h"
+#include "FileOutputDeviceTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -61,6 +62,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("PlatformMisc", PlatformMisc_Test());
     RUN_TEST("MemoryStack", MemoryStack_Test());
     RUN_TEST("PlatformEventPool", PlatformEventPool_Test());
+    RUN_TEST("FileOutputDevice", FileOutputDevice_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();

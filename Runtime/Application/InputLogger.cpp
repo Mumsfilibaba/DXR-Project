@@ -1,7 +1,7 @@
 #include "Application/InputLogger.h"
 #include "Core/Containers/String.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 
 #if APPLICATION_ENABLE_INPUT_LOGGING
 

@@ -4,7 +4,7 @@
 #include "ImGuiPluginStats.h"
 #include "Core/Time/ElapsedTime.h"
 #include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Containers/Array.h"
 #include "Core/Math/Math.h"
 #include "Core/Misc/ConsoleManager.h"

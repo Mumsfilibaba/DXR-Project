@@ -3,7 +3,7 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Platform/PlatformTime.h"
 #include "Core/Tasks/Tasks.h"

@@ -3,7 +3,7 @@
 #include "Core/Templates/CString.h"
 #include "Core/Containers/Stream.h"
 #include "Core/Misc/Parse.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/CRC.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetImporters/ModelImporter.h"

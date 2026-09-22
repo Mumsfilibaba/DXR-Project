@@ -70,6 +70,17 @@ static constexpr uint8 MSL_BINDLESS_RESOURCE_HEAP_BUFFER_INDEX = 29;
 /** @brief Fixed MSL buffer index for the sampler descriptor table. */
 static constexpr uint8 MSL_BINDLESS_SAMPLER_HEAP_BUFFER_INDEX = 30;
 
+/** @brief MSL buffer index of vertex stream 0. Later streams take the indices below it. */
+static constexpr uint8 MSL_VERTEX_STREAM_BUFFER_INDEX = 28;
+
+/** @brief Number of vertex streams the run ending at MSL_VERTEX_STREAM_BUFFER_INDEX holds. */
+static constexpr uint8 MSL_MAX_VERTEX_STREAMS = 8;
+
+inline uint8 GetMSLVertexStreamBufferIndex(uint32 InputSlot)
+{
+    return static_cast<uint8>(MSL_VERTEX_STREAM_BUFFER_INDEX - InputSlot);
+}
+
 inline EMSLBindingTable GetMSLBindingTable(EMSLBindingType BindingType)
 {
     switch (BindingType)
@@ -152,12 +163,14 @@ struct FMSLShaderHeader
     uint16 ThreadGroupSizeX;
     uint16 ThreadGroupSizeY;
     uint16 ThreadGroupSizeZ;
-
     uint16 ShaderConstantsSize;
+
     /** @brief MSL buffer index of ResourceDescriptorHeap, or UINT8_MAX. */
-    uint8  ResourceHeapSlot;
+    uint8 ResourceHeapSlot;
+
     /** @brief MSL buffer index of SamplerDescriptorHeap, or UINT8_MAX. */
-    uint8  SamplerHeapSlot;
+    uint8 SamplerHeapSlot;
+
     uint16 Padding0;
 };
 
@@ -189,6 +202,7 @@ inline bool ParseMSLShaderByteCode(const TArray<uint8>& ByteCode, TArray<FMSLSha
 
     const uint64 BindingsSize = uint64(Header.NumBindings) * sizeof(FMSLShaderBinding);
     const uint64 ExpectedSize = sizeof(FMSLShaderHeader) + BindingsSize + Header.SourceSize;
+
     if (ExpectedSize > uint64(ByteCode.Size()))
     {
         return false;
