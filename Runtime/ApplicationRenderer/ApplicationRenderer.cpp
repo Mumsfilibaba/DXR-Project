@@ -1209,7 +1209,11 @@ void FApplicationRenderer::EndFrameAndPresent()
 
         if (LastFrameFinishedEvent)
         {
-            LastFrameFinishedEvent->Wait(FTimespan::Infinity());
+            {
+                TRACE_SCOPE("UI RHI Wait Prior Frame");
+                LastFrameFinishedEvent->Wait(FTimespan::Infinity());
+            }
+
             FPlatformEvent::Recycle(LastFrameFinishedEvent);
             LastFrameFinishedEvent = nullptr;
         }
@@ -1220,7 +1224,10 @@ void FApplicationRenderer::EndFrameAndPresent()
             CommandList.SetEvent(LastFrameFinishedEvent);
         }
 
-        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+        {
+            TRACE_SCOPE("UI RHI Dispatch Command List");
+            FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+        }
     }
 
     UIScreenshot::Tick();

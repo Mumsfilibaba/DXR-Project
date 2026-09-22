@@ -293,7 +293,11 @@ void FVulkanCommandContext::ObtainCommandBuffer()
 
     if (!CommandPool)
     {
-        CommandPool = Queue.ObtainCommandPool();
+        {
+            TRACE_SCOPE("Vulkan Obtain Command Pool");
+            CommandPool = Queue.ObtainCommandPool();
+        }
+
         if (!CommandPool)
         {
             VULKAN_ERROR_CRITICAL("Failed to Obtain CommandPool");
@@ -304,31 +308,51 @@ void FVulkanCommandContext::ObtainCommandBuffer()
     // At this point we cannot have a valid CommandBuffer
     if (!CommandBuffer)
     {
-        CommandBuffer = CommandPool->GetOrCreateBuffer();
-        if (!CommandBuffer)
         {
-            VULKAN_ERROR_CRITICAL("Failed to Obtain CommandBuffer");
-            return;
+            TRACE_SCOPE("Vulkan Get Command Buffer");
+
+            CommandBuffer = CommandPool->GetOrCreateBuffer();
+            if (!CommandBuffer)
+            {
+                VULKAN_ERROR_CRITICAL("Failed to Obtain CommandBuffer");
+                return;
+            }
         }
 
-        // Begin to record to this CommandBuffer
-        const VkCommandBufferUsageFlags Flags = GVulkanAllowResetCommandBuffers ? 0 : VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        if (!CommandBuffer->Begin(Flags))
         {
-            VULKAN_ERROR_CRITICAL("Failed to Begin CommandBuffer");
+            TRACE_SCOPE("Vulkan Begin Command Buffer");
+
+            const VkCommandBufferUsageFlags Flags = GVulkanAllowResetCommandBuffers ? 0 : VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+            {
+                TRACE_SCOPE("Vulkan Begin Command Buffer Recording");
+                
+                if (!CommandBuffer->Begin(Flags))
+                {
+                    VULKAN_ERROR_CRITICAL("Failed to Begin CommandBuffer");
+                }
+            }
+
+            {
+                TRACE_SCOPE("Vulkan Insert Begin Timestamp");
+                CommandBuffer->InsertBeginTimestamp(TimestampQueryAllocator);
+            }
         }
 
-        CommandBuffer->InsertBeginTimestamp(TimestampQueryAllocator);
+        {
+            TRACE_SCOPE("Vulkan Initialize Command Buffer State");
 
-        ReopenEventStack();
+            ReopenEventStack();
 
-        ContextState.BeginCommandBuffer();
+            ContextState.BeginCommandBuffer();
 
-        FVulkanDeviceRHI::Get()->NotifyCommandBufferOpened();
+            FVulkanDeviceRHI::Get()->NotifyCommandBufferOpened();
+        }
     }
 
     if (!Commands)
     {
+        TRACE_SCOPE("Vulkan Allocate Command Submission");
+
         Commands = new FVulkanCommands(GetDevice(), Queue);
         Commands->AcquireFence();
     }

@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Threading/ScopedLock.h"
 #include "RHI/RHIQuery.h"
 #include "VulkanRHI/VulkanQueue.h"
@@ -371,6 +372,8 @@ void FVulkanQueue::RetireDeferredObjects(TArray<FVulkanDeferredObject>&& InObjec
 
 void FVulkanQueue::SubmitCommands(FVulkanCommands* Commands)
 {
+    TRACE_SCOPE("Vulkan Queue Submit");
+
     CHECK(Commands != nullptr);
     if (Commands->IsEmpty())
     {
@@ -438,7 +441,11 @@ void FVulkanQueue::SubmitCommands(FVulkanCommands* Commands)
             FVulkanCommands* Oldest = nullptr;
             if (PendingSubmissions.Peek(Oldest) && Oldest)
             {
-                Oldest->Fence->Wait(UINT64_MAX);
+                {
+                    TRACE_SCOPE("Vulkan Queue Backpressure Wait");
+                    Oldest->Fence->Wait(UINT64_MAX);
+                }
+
                 PendingSubmissions.Dequeue();
                 Oldest->PostExecute();
             }

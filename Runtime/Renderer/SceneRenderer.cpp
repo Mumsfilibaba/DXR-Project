@@ -583,6 +583,8 @@ bool FSceneRenderer::InitializeRenderPasses()
 
 void FSceneRenderer::RenderThread_BeginSceneCommandList()
 {
+    TRACE_SCOPE("SceneRender Begin Frame");
+
     CHECK_RENDER_THREAD();
 
     FRHICommandListExecutor::Get().Tick();
@@ -614,7 +616,10 @@ void FSceneRenderer::RenderThread_RenderSceneFrame(const FSceneRenderPacket& Pac
 
     CommandList.PopEvent();
 
-    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    {
+        TRACE_SCOPE("SceneRender Submit");
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    }
 }
 
 void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& SceneRenderView, FScene* Scene)
@@ -849,6 +854,8 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
 
     // Debug geometry draws after composite
     {
+        TRACE_SCOPE("SceneRender Post Graph");
+
         const bool bAnyDebugDraw =
             GDrawPointLights ||
             GDrawLightProbes ||

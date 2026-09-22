@@ -735,7 +735,7 @@ void FD3D12SwapChainRHI::SwapResources(uint32 Index)
 
 bool FD3D12SwapChainRHI::Present(bool bVerticalSync)
 {
-    TRACE_FUNCTION_SCOPE();
+    TRACE_SCOPE("D3D12 SwapChain Present");
 
     const int32  SyncIntervalOverride = CVarSyncInterval.GetValue();
     const uint32 SyncInterval         = (SyncIntervalOverride >= 0) ? Math::Clamp<uint32>(SyncIntervalOverride, 0, 4) : (bVerticalSync ? 1 : 0);
@@ -746,13 +746,20 @@ bool FD3D12SwapChainRHI::Present(bool bVerticalSync)
         PresentFlags = DXGI_PRESENT_ALLOW_TEARING;
     }
 
-    HRESULT Result = SwapChain->Present(SyncInterval, PresentFlags);
-    D3D12Debug::CheckDeviceRemoved(GetDevice(), Result, "Present");
+    HRESULT Result;
+    {
+        TRACE_SCOPE("D3D12 DXGI Present");
+
+        Result = SwapChain->Present(SyncInterval, PresentFlags);
+        D3D12Debug::CheckDeviceRemoved(GetDevice(), Result, "Present");
+    }
 
     if (SUCCEEDED(Result))
     {
         if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
         {
+            TRACE_SCOPE("D3D12 SwapChain Latency Wait");
+
             const DWORD WaitResult = WaitForSingleObjectEx(SwapChainWaitableObject, INFINITE, TRUE);
             if (WaitResult != WAIT_OBJECT_0)
             {
@@ -760,7 +767,10 @@ bool FD3D12SwapChainRHI::Present(bool bVerticalSync)
             }
         }
 
-        ApplySettingsChanges();
+        {
+            TRACE_SCOPE("D3D12 SwapChain Apply Settings");
+            ApplySettingsChanges();
+        }
         return true;
     }
     else

@@ -381,10 +381,12 @@ bool FD3D12CommandContext::Initialize()
 
 void FD3D12CommandContext::ObtainCommandList()
 {
-    TRACE_FUNCTION_SCOPE();
+    TRACE_SCOPE("D3D12 Obtain Command List");
 
     if (!CommandAllocator)
     {
+        TRACE_SCOPE("D3D12 Obtain Allocator");
+
         CommandAllocator = Queue.ObtainAllocator();
         if (!CommandAllocator)
         {
@@ -394,22 +396,35 @@ void FD3D12CommandContext::ObtainCommandList()
 
     if (!CommandList)
     {
-        CommandList = Queue.ObtainCommandList(CommandAllocator, nullptr);
-        if (!CommandList)
         {
-            D3D12_ERROR_CRITICAL("Failed to initialize CommandList");
+            TRACE_SCOPE("D3D12 Get Command List");
+
+            CommandList = Queue.ObtainCommandList(CommandAllocator, nullptr);
+            if (!CommandList)
+            {
+                D3D12_ERROR_CRITICAL("Failed to initialize CommandList");
+            }
         }
 
-        CommandList->InsertBeginTimestamp(TimingQueryAllocator);
-        ReopenEventStack();
+        {
+            TRACE_SCOPE("D3D12 Insert Begin Timestamp");
+            CommandList->InsertBeginTimestamp(TimingQueryAllocator);
+        }
 
-        ContextState.BeginCommandList();
+        {
+            TRACE_SCOPE("D3D12 Initialize Command List State");
 
-        FD3D12DeviceRHI::Get()->NotifyCommandListOpened();
+            ReopenEventStack();
+
+            ContextState.BeginCommandList();
+
+            FD3D12DeviceRHI::Get()->NotifyCommandListOpened();
+        }
     }
 
     if (!Commands)
     {
+        TRACE_SCOPE("D3D12 Allocate Command Submission");
         Commands = new FD3D12Commands(GetDevice(), &Queue);
     }
 }
@@ -505,7 +520,7 @@ void FD3D12CommandContext::AddPendingBarrier(FD3D12Resource* Resource, D3D12_RES
 
 void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolveQueries, FD3D12FenceSyncPoint* OutSyncPoint)
 {
-    TRACE_FUNCTION_SCOPE();
+    TRACE_SCOPE("D3D12 Finish Command List");
 
     ContextState.EndCommandList();
 
@@ -516,18 +531,29 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
     // before the GPU starts executing it. Safe no-op when no writes were enqueued.
     // -------------------------------------------------------------------------------------------
 
-    if (FD3D12BindlessDescriptorHeap* ResourceBindlessHeap = GetDevice()->GetResourceBindlessHeap())
     {
-        ResourceBindlessHeap->Flush();
+        TRACE_SCOPE("D3D12 Flush Bindless Descriptors");
+
+        if (FD3D12BindlessDescriptorHeap* ResourceBindlessHeap = GetDevice()->GetResourceBindlessHeap())
+        {
+            ResourceBindlessHeap->Flush();
+        }
+
+        if (FD3D12BindlessDescriptorHeap* SamplerBindlessHeap = GetDevice()->GetSamplerBindlessHeap())
+        {
+            SamplerBindlessHeap->Flush();
+        }
     }
 
-    if (FD3D12BindlessDescriptorHeap* SamplerBindlessHeap = GetDevice()->GetSamplerBindlessHeap())
     {
-        SamplerBindlessHeap->Flush();
+        TRACE_SCOPE("D3D12 Flush Barriers");
+        BarrierBatcher.FlushBarriers(GetCommandList());
     }
 
-    BarrierBatcher.FlushBarriers(GetCommandList());
-    CommandList->InsertEndTimestamp(TimingQueryAllocator);
+    {
+        TRACE_SCOPE("D3D12 Insert End Timestamp");
+        CommandList->InsertEndTimestamp(TimingQueryAllocator);
+    }
 
     const bool   bHasPendingState = !PendingBarriers.IsEmpty() || !PendingResourceStates.IsEmpty();
     const uint32 RecordedCommands = CommandList->GetNumCommands();
@@ -544,6 +570,8 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
     {
         if (bResolveQueries)
         {
+            TRACE_SCOPE("D3D12 Resolve Queries");
+
             TimingQueryAllocator.Reset(Commands->QueryRanges);
             OcclusionQueryAllocator.Reset(Commands->QueryRanges);
             PipelineStatsQueryAllocator.Reset(Commands->QueryRanges);
@@ -606,12 +634,16 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
             }
         }
 
-        CloseEventStack();
-
-        if (!CommandList->Close())
         {
-            D3D12_ERROR_CRITICAL("Failed to close CommandList");
-            return;
+            TRACE_SCOPE("D3D12 Close Command List");
+
+            CloseEventStack();
+
+            if (!CommandList->Close())
+            {
+                D3D12_ERROR_CRITICAL("Failed to close CommandList");
+                return;
+            }
         }
 
         CHECK(Commands != nullptr);

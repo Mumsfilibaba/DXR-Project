@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Threading/ScopedLock.h"
 #include "RHI/RHIQuery.h"
 #include "D3D12RHI/D3D12Queue.h"
@@ -268,7 +269,10 @@ FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandLists(FD3D12CommandList* const* 
 
 FD3D12FenceSyncPoint FD3D12Queue::SubmitCommands(FD3D12Commands* Commands)
 {
+    TRACE_SCOPE("D3D12 Queue Submit");
+
     CHECK(Commands != nullptr);
+
     if (Commands->IsEmpty())
     {
         return FD3D12FenceSyncPoint();
@@ -338,6 +342,8 @@ FD3D12FenceSyncPoint FD3D12Queue::SubmitCommands(FD3D12Commands* Commands)
             FD3D12Commands* Oldest = nullptr;
             if (PendingSubmissions.Peek(Oldest) && Oldest)
             {
+                TRACE_SCOPE("D3D12 Queue Backpressure Wait");
+
                 Oldest->SyncPoint.Wait();
                 PendingSubmissions.Dequeue();
                 Oldest->PostExecute();

@@ -1,3 +1,4 @@
+#include "Core/Misc/FrameProfiler.h"
 #include "Renderer/SceneRenderer.h"
 #include "Renderer/Graph/SceneRenderGraphContext.h"
 #include "Renderer/Graph/PassResources.h"
@@ -140,380 +141,386 @@ void FSceneRenderer::BuildAndExecuteSceneGraph(const FSceneRenderView& SceneRend
     const uint32     RenderWidth       = FrameResourcesRef.CurrentRenderWidth;
     const uint32     RenderHeight      = FrameResourcesRef.CurrentRenderHeight;
 
-    FRenderGraphBuilder GraphBuilder("Scene");
-
-    FSceneRenderGraphContext Context;
-    Context.SceneRenderer         = this;
-    Context.Scene                 = Scene;
-    Context.View                  = &SceneRenderView;
-    Context.FrameResources        = &FrameResourcesRef;
-    Context.SelectedObjectIDs     = &SelectedObjectIDs;
-    Context.GBufferAlbedo         = GraphBuilder.CreateTexture(CreateGBufferDesc(RendererTextureFormats::AlbedoFormat, RenderWidth, RenderHeight), "GBufferAlbedo");
-    Context.GBufferNormal         = GraphBuilder.CreateTexture(CreateGBufferDesc(RendererTextureFormats::NormalFormat, RenderWidth, RenderHeight), "GBufferNormal");
-    Context.GBufferMaterial       = GraphBuilder.CreateTexture(CreateGBufferDesc(RendererTextureFormats::MaterialFormat, RenderWidth, RenderHeight), "GBufferMaterial");
-    Context.GBufferVelocity       = GraphBuilder.CreateTexture(CreateGBufferDesc(RendererTextureFormats::VelocityFormat, RenderWidth, RenderHeight), "GBufferVelocity");
-    Context.GBufferDepth          = GraphBuilder.CreateTexture(CreateDepthDesc(RenderWidth, RenderHeight), "SceneDepth");
-    Context.SSAOBuffer            = GraphBuilder.CreateTexture(CreateUnorderedAccessDesc(RendererTextureFormats::SSAOBufferFormat, RenderWidth, RenderHeight), "SSAO");
-    Context.SceneTarget           = GraphBuilder.CreateTexture(CreateSceneTargetDesc(RendererTextureFormats::SceneTargetFormat, RenderWidth, RenderHeight), "SceneTarget");
-    Context.DirectionalShadowMask = GraphBuilder.CreateTexture(CreateUnorderedAccessDesc(RendererTextureFormats::ShadowMaskFormat, RenderWidth, RenderHeight), "DirectionalShadowMask");
-    Context.CascadeIndexBuffer    = GraphBuilder.CreateTexture(CreateUnorderedAccessDesc(RendererTextureFormats::CascadeIndexFormat, RenderWidth, RenderHeight), "CascadeIndexBuffer");
-    Context.ReducedDepthBuffer0   = GraphBuilder.CreateTexture(CreateReducedDepthDesc(RenderWidth, RenderHeight), "ReducedDepth0");
-    Context.ReducedDepthBuffer1   = GraphBuilder.CreateTexture(CreateReducedDepthDesc(RenderWidth, RenderHeight), "ReducedDepth1");
-
-    const bool bIsRayTracingActive   = RHI::bSupportsRayTracing && GRayTracingEnabled;
-    const bool bNeedsPrimaryRayDebug = bIsRayTracingActive && RayTracingPrimaryDebugPass->IsEnabled(SceneRenderView);
-
-    if (bIsRayTracingActive)
-    {
-        if (!bRayTracingWasActive)
-        {
-            ReflectionDenoisePass->InvalidateHistory();
-        }
-
-        RayTracingSceneBuilder->BuildSceneAccelerationData(CommandList, FrameResourcesRef, Scene,
-            RayTracingReflectionsPass->NeedsBindlessData() || bNeedsPrimaryRayDebug);
-    }
-    else if (bRayTracingWasActive)
-    {
-        RayTracingSceneBuilder->ReleaseRayTracingResources(Scene);
-    }
-
-    bRayTracingWasActive = bIsRayTracingActive;
-
 #if EDITOR_BUILD
     const bool bEditorOverlays = SceneRenderView.bEditorOverlaysEnabled;
-
-    if (bEditorOverlays)
-    {
-        Context.TonemappedTarget = GraphBuilder.CreateTexture(
-            CreateGBufferDesc(RendererTextureFormats::RenderTargetFormat, RenderWidth, RenderHeight), "TonemappedTarget");
-
-        if (FrameResourcesRef.EditorNoJitterDepth)
-        {
-            Context.EditorNoJitterDepth = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.EditorNoJitterDepth.Get(), "EditorNoJitterDepth",
-                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-        }
-
-        if (FrameResourcesRef.EditorObjectID_NoJitter)
-        {
-            Context.EditorObjectID_NoJitter = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.EditorObjectID_NoJitter.Get(), "EditorObjectID",
-                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-        }
-
-        // The outline chain ping-pongs between these, so the graph has to see every step of it
-        if (FRHITexture* SelectionMask = SelectionOutlinePass->GetSelectionMask())
-        {
-            Context.SelectionMask = GraphBuilder.RegisterExternalTexture(SelectionMask, "SelectionMask",
-                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-        }
-
-        if (FRHITexture* ErosionTemp = SelectionOutlinePass->GetErosionTemp())
-        {
-            Context.SelectionErosionTemp = GraphBuilder.RegisterExternalTexture(ErosionTemp, "SelectionErosionTemp",
-                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-        }
-
-        if (FRHITexture* ErodedMask = SelectionOutlinePass->GetErodedMask())
-        {
-            Context.SelectionErodedMask = GraphBuilder.RegisterExternalTexture(ErodedMask, "SelectionErodedMask",
-                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-        }
-
-        if (FRHITexture* DilationTemp = SelectionOutlinePass->GetDilationTemp())
-        {
-            Context.SelectionDilationTemp = GraphBuilder.RegisterExternalTexture(DilationTemp, "SelectionDilationTemp",
-                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-        }
-
-        if (FRHITexture* DilatedMask = SelectionOutlinePass->GetDilatedMask())
-        {
-            Context.SelectionDilatedMask = GraphBuilder.RegisterExternalTexture(DilatedMask, "SelectionDilatedMask",
-                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-        }
-
-        if (FRHITexture* RingMask = SelectionOutlinePass->GetRingMask())
-        {
-            Context.SelectionRing = GraphBuilder.RegisterExternalTexture(RingMask, "SelectionRing",
-                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-        }
-
-        if (FRHIBuffer* SelectedIDsBuffer = SelectionOutlinePass->GetSelectedIDsBuffer())
-        {
-            Context.SelectedIDsBuffer = GraphBuilder.RegisterExternalBuffer(SelectedIDsBuffer, "SelectedIDs",
-                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-        }
-    }
 #endif
 
-    if (SceneRenderView.RenderTarget)
-    {
-        Context.SceneOutput = GraphBuilder.RegisterExternalTexture(SceneRenderView.RenderTarget, "SceneOutput",
-            ERHIResourceState::RenderTarget, ERHIResourceState::RenderTarget);
-    }
-
-    Context.CameraBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.CameraBuffer.Get(), "Camera",
-        ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
-
-    Context.PerObjectBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.PerObjectBuffer.Get(), "PerObject",
-        ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
-
-    Context.MaterialDataBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.MaterialDataBuffer.Get(), "MaterialData",
-        ERHIResourceState::NonPixelShaderResource, ERHIResourceState::NonPixelShaderResource);
-
-    Context.PointLightsBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.PointLightsBuffer.Get(), "PointLights",
-        ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
-
-    Context.PointLightsPosRadBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.PointLightsPosRadBuffer.Get(), "PointLightsPosRad",
-        ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
-
-    Context.ShadowCastingPointLightsBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.ShadowCastingPointLightsBuffer.Get(), "ShadowCastingPointLights",
-        ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
-
-    Context.ShadowCastingPointLightsPosRadBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.ShadowCastingPointLightsPosRadBuffer.Get(), "ShadowCastingPointLightsPosRad",
-        ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
-
-    Context.DirectionalLightDataBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.DirectionalLightDataBuffer.Get(), "DirectionalLight",
-        ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
-
-    Context.CascadeGenerationDataBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.CascadeGenerationDataBuffer.Get(), "CascadeGeneration",
-        ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
-
-    Context.CascadeMatrixBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.CascadeMatrixBuffer.Get(), "CascadeMatrices",
-        ERHIResourceState::NonPixelShaderResource, ERHIResourceState::NonPixelShaderResource);
-
-    Context.CascadeSplitsBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.CascadeSplitsBuffer.Get(), "CascadeSplits",
-        ERHIResourceState::NonPixelShaderResource, ERHIResourceState::NonPixelShaderResource);
-
-    Context.LightProbeBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.LightProbeBuffer.Get(), "LightProbes",
-        ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
+    FRenderGraphBuilder GraphBuilder("Scene");
 
     {
-        auto ClampAndSnapPow2 = [](int32 MinSize, int32 MaxSize, int32 Value) -> int32
+        TRACE_SCOPE("SceneRender Graph Build");
+
+        FSceneRenderGraphContext Context;
+        Context.SceneRenderer         = this;
+        Context.Scene                 = Scene;
+        Context.View                  = &SceneRenderView;
+        Context.FrameResources        = &FrameResourcesRef;
+        Context.SelectedObjectIDs     = &SelectedObjectIDs;
+        Context.GBufferAlbedo         = GraphBuilder.CreateTexture(CreateGBufferDesc(RendererTextureFormats::AlbedoFormat, RenderWidth, RenderHeight), "GBufferAlbedo");
+        Context.GBufferNormal         = GraphBuilder.CreateTexture(CreateGBufferDesc(RendererTextureFormats::NormalFormat, RenderWidth, RenderHeight), "GBufferNormal");
+        Context.GBufferMaterial       = GraphBuilder.CreateTexture(CreateGBufferDesc(RendererTextureFormats::MaterialFormat, RenderWidth, RenderHeight), "GBufferMaterial");
+        Context.GBufferVelocity       = GraphBuilder.CreateTexture(CreateGBufferDesc(RendererTextureFormats::VelocityFormat, RenderWidth, RenderHeight), "GBufferVelocity");
+        Context.GBufferDepth          = GraphBuilder.CreateTexture(CreateDepthDesc(RenderWidth, RenderHeight), "SceneDepth");
+        Context.SSAOBuffer            = GraphBuilder.CreateTexture(CreateUnorderedAccessDesc(RendererTextureFormats::SSAOBufferFormat, RenderWidth, RenderHeight), "SSAO");
+        Context.SceneTarget           = GraphBuilder.CreateTexture(CreateSceneTargetDesc(RendererTextureFormats::SceneTargetFormat, RenderWidth, RenderHeight), "SceneTarget");
+        Context.DirectionalShadowMask = GraphBuilder.CreateTexture(CreateUnorderedAccessDesc(RendererTextureFormats::ShadowMaskFormat, RenderWidth, RenderHeight), "DirectionalShadowMask");
+        Context.CascadeIndexBuffer    = GraphBuilder.CreateTexture(CreateUnorderedAccessDesc(RendererTextureFormats::CascadeIndexFormat, RenderWidth, RenderHeight), "CascadeIndexBuffer");
+        Context.ReducedDepthBuffer0   = GraphBuilder.CreateTexture(CreateReducedDepthDesc(RenderWidth, RenderHeight), "ReducedDepth0");
+        Context.ReducedDepthBuffer1   = GraphBuilder.CreateTexture(CreateReducedDepthDesc(RenderWidth, RenderHeight), "ReducedDepth1");
+
+        const bool bIsRayTracingActive   = RHI::bSupportsRayTracing && GRayTracingEnabled;
+        const bool bNeedsPrimaryRayDebug = bIsRayTracingActive && RayTracingPrimaryDebugPass->IsEnabled(SceneRenderView);
+
+        if (bIsRayTracingActive)
         {
-            return Math::ClosestPowerOfTwo(Math::Clamp(Value, MinSize, MaxSize));
+            if (!bRayTracingWasActive)
+            {
+                ReflectionDenoisePass->InvalidateHistory();
+            }
+
+            RayTracingSceneBuilder->BuildSceneAccelerationData(CommandList, FrameResourcesRef, Scene,
+                RayTracingReflectionsPass->NeedsBindlessData() || bNeedsPrimaryRayDebug);
+        }
+        else if (bRayTracingWasActive)
+        {
+            RayTracingSceneBuilder->ReleaseRayTracingResources(Scene);
+        }
+
+        bRayTracingWasActive = bIsRayTracingActive;
+
+    #if EDITOR_BUILD
+        if (bEditorOverlays)
+        {
+            Context.TonemappedTarget = GraphBuilder.CreateTexture(
+                CreateGBufferDesc(RendererTextureFormats::RenderTargetFormat, RenderWidth, RenderHeight), "TonemappedTarget");
+
+            if (FrameResourcesRef.EditorNoJitterDepth)
+            {
+                Context.EditorNoJitterDepth = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.EditorNoJitterDepth.Get(), "EditorNoJitterDepth",
+                    ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+            }
+
+            if (FrameResourcesRef.EditorObjectID_NoJitter)
+            {
+                Context.EditorObjectID_NoJitter = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.EditorObjectID_NoJitter.Get(), "EditorObjectID",
+                    ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+            }
+
+            // The outline chain ping-pongs between these, so the graph has to see every step of it
+            if (FRHITexture* SelectionMask = SelectionOutlinePass->GetSelectionMask())
+            {
+                Context.SelectionMask = GraphBuilder.RegisterExternalTexture(SelectionMask, "SelectionMask",
+                    ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+            }
+
+            if (FRHITexture* ErosionTemp = SelectionOutlinePass->GetErosionTemp())
+            {
+                Context.SelectionErosionTemp = GraphBuilder.RegisterExternalTexture(ErosionTemp, "SelectionErosionTemp",
+                    ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+            }
+
+            if (FRHITexture* ErodedMask = SelectionOutlinePass->GetErodedMask())
+            {
+                Context.SelectionErodedMask = GraphBuilder.RegisterExternalTexture(ErodedMask, "SelectionErodedMask",
+                    ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+            }
+
+            if (FRHITexture* DilationTemp = SelectionOutlinePass->GetDilationTemp())
+            {
+                Context.SelectionDilationTemp = GraphBuilder.RegisterExternalTexture(DilationTemp, "SelectionDilationTemp",
+                    ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+            }
+
+            if (FRHITexture* DilatedMask = SelectionOutlinePass->GetDilatedMask())
+            {
+                Context.SelectionDilatedMask = GraphBuilder.RegisterExternalTexture(DilatedMask, "SelectionDilatedMask",
+                    ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+            }
+
+            if (FRHITexture* RingMask = SelectionOutlinePass->GetRingMask())
+            {
+                Context.SelectionRing = GraphBuilder.RegisterExternalTexture(RingMask, "SelectionRing",
+                    ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+            }
+
+            if (FRHIBuffer* SelectedIDsBuffer = SelectionOutlinePass->GetSelectedIDsBuffer())
+            {
+                Context.SelectedIDsBuffer = GraphBuilder.RegisterExternalBuffer(SelectedIDsBuffer, "SelectedIDs",
+                    ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+            }
+        }
+    #endif
+
+        if (SceneRenderView.RenderTarget)
+        {
+            Context.SceneOutput = GraphBuilder.RegisterExternalTexture(SceneRenderView.RenderTarget, "SceneOutput",
+                ERHIResourceState::RenderTarget, ERHIResourceState::RenderTarget);
+        }
+
+        Context.CameraBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.CameraBuffer.Get(), "Camera",
+            ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
+
+        Context.PerObjectBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.PerObjectBuffer.Get(), "PerObject",
+            ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
+
+        Context.MaterialDataBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.MaterialDataBuffer.Get(), "MaterialData",
+            ERHIResourceState::NonPixelShaderResource, ERHIResourceState::NonPixelShaderResource);
+
+        Context.PointLightsBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.PointLightsBuffer.Get(), "PointLights",
+            ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
+
+        Context.PointLightsPosRadBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.PointLightsPosRadBuffer.Get(), "PointLightsPosRad",
+            ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
+
+        Context.ShadowCastingPointLightsBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.ShadowCastingPointLightsBuffer.Get(), "ShadowCastingPointLights",
+            ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
+
+        Context.ShadowCastingPointLightsPosRadBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.ShadowCastingPointLightsPosRadBuffer.Get(), "ShadowCastingPointLightsPosRad",
+            ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
+
+        Context.DirectionalLightDataBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.DirectionalLightDataBuffer.Get(), "DirectionalLight",
+            ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
+
+        Context.CascadeGenerationDataBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.CascadeGenerationDataBuffer.Get(), "CascadeGeneration",
+            ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
+
+        Context.CascadeMatrixBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.CascadeMatrixBuffer.Get(), "CascadeMatrices",
+            ERHIResourceState::NonPixelShaderResource, ERHIResourceState::NonPixelShaderResource);
+
+        Context.CascadeSplitsBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.CascadeSplitsBuffer.Get(), "CascadeSplits",
+            ERHIResourceState::NonPixelShaderResource, ERHIResourceState::NonPixelShaderResource);
+
+        Context.LightProbeBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.LightProbeBuffer.Get(), "LightProbes",
+            ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
+
+        {
+            auto ClampAndSnapPow2 = [](int32 MinSize, int32 MaxSize, int32 Value) -> int32
+            {
+                return Math::ClosestPowerOfTwo(Math::Clamp(Value, MinSize, MaxSize));
+            };
+
+            const int32 NewCascadeSize = ClampAndSnapPow2(512, 4096, GCSMCascadeSize);
+            if (NewCascadeSize != FrameResourcesRef.CascadeSize)
+            {
+                FrameResourcesRef.CascadeSize = NewCascadeSize;
+                CascadedShadowsRenderPass->CreateResources(FrameResourcesRef);
+            }
+
+            const int32 NewPointLightSize = ClampAndSnapPow2(128, 1024, GPointLightShadowMapSize);
+            if (NewPointLightSize != FrameResourcesRef.PointLightShadowSize)
+            {
+                FrameResourcesRef.PointLightShadowSize = NewPointLightSize;
+                PointLightRenderPass->CreateResources(FrameResourcesRef);
+            }
+        }
+
+        if (FrameResourcesRef.ShadowCascades)
+        {
+            Context.ShadowCascades = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.ShadowCascades.Get(), "ShadowCascades",
+                ERHIResourceState::NonPixelShaderResource, ERHIResourceState::NonPixelShaderResource);
+        }
+
+        if (FrameResourcesRef.PointLightShadowMaps)
+        {
+            Context.PointLightShadowMaps = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.PointLightShadowMaps.Get(), "PointLightShadowMaps",
+                ERHIResourceState::NonPixelShaderResource, ERHIResourceState::NonPixelShaderResource);
+        }
+
+        if (FRHIBuffer* PerCascadeBuffer = CascadedShadowsRenderPass->GetPerCascadeBuffer())
+        {
+            Context.PerCascadeBuffer = GraphBuilder.RegisterExternalBuffer(PerCascadeBuffer, "PerCascade",
+                ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
+        }
+
+        if (FRHIBuffer* ShadowSettingsBuffer = ShadowMaskRenderPass->GetShadowSettingsBuffer())
+        {
+            Context.ShadowSettingsBuffer = GraphBuilder.RegisterExternalBuffer(ShadowSettingsBuffer, "ShadowSettings",
+                ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
+        }
+
+        if (FRHIBuffer* PerShadowMapBuffer = PointLightRenderPass->GetPerShadowMapBuffer())
+        {
+            Context.PerShadowMapBuffer = GraphBuilder.RegisterExternalBuffer(PerShadowMapBuffer, "PerShadowMap",
+                ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
+        }
+
+        if (FRHIBuffer* SinglePassShadowMapBuffer = PointLightRenderPass->GetSinglePassShadowMapBuffer())
+        {
+            Context.SinglePassShadowMapBuffer = GraphBuilder.RegisterExternalBuffer(SinglePassShadowMapBuffer, "SinglePassShadowMap",
+                ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
+        }
+
+        if (FrameResourcesRef.IntegrationLUT)
+        {
+            Context.IntegrationLUT = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.IntegrationLUT.Get(), "IntegrationLUT",
+                ERHIResourceState::ShaderResource, ERHIResourceState::ShaderResource);
+        }
+
+        if (FRHIBuffer* SkyboxVertexBuffer = SkyboxRenderPass->GetVertexBuffer())
+        {
+            Context.SkyboxVertexBuffer = GraphBuilder.RegisterExternalBuffer(SkyboxVertexBuffer, "SkyboxVertices",
+                ERHIResourceState::VertexBuffer, ERHIResourceState::VertexBuffer);
+        }
+
+        if (FRHIBuffer* SkyboxIndexBuffer = SkyboxRenderPass->GetIndexBuffer())
+        {
+            Context.SkyboxIndexBuffer = GraphBuilder.RegisterExternalBuffer(SkyboxIndexBuffer, "SkyboxIndices",
+                ERHIResourceState::IndexBuffer, ERHIResourceState::IndexBuffer);
+        }
+
+        if (FrameResourcesRef.RayTracingOutput)
+        {
+            Context.RayTracingOutput = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.RayTracingOutput.Get(), "RayTracingOutput",
+                ERHIResourceState::UnorderedAccess, ERHIResourceState::UnorderedAccess);
+        }
+
+        if (FrameResourcesRef.ReflectionTrace)
+        {
+            Context.ReflectionTrace = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.ReflectionTrace.Get(), "ReflectionTrace",
+                ERHIResourceState::UnorderedAccess, ERHIResourceState::UnorderedAccess);
+        }
+
+        const CHAR* ReflectionHistoryNames[2] =
+        {
+            "ReflectionHistory0", "ReflectionHistory1"
         };
 
-        const int32 NewCascadeSize = ClampAndSnapPow2(512, 4096, GCSMCascadeSize);
-        if (NewCascadeSize != FrameResourcesRef.CascadeSize)
+        const CHAR* ReflectionMomentsNames[2] =
         {
-            FrameResourcesRef.CascadeSize = NewCascadeSize;
-            CascadedShadowsRenderPass->CreateResources(FrameResourcesRef);
+            "ReflectionMoments0", "ReflectionMoments1"
+        };
+
+        const CHAR* ReflectionDenoisedNames[2] =
+        {
+            "ReflectionDenoised0", "ReflectionDenoised1"
+        };
+
+        for (int32 ReflectionIndex = 0; ReflectionIndex < 2; ++ReflectionIndex)
+        {
+            if (FrameResourcesRef.ReflectionHistory[ReflectionIndex])
+            {
+                Context.ReflectionHistory[ReflectionIndex] = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.ReflectionHistory[ReflectionIndex].Get(), ReflectionHistoryNames[ReflectionIndex],
+                    ERHIResourceState::UnorderedAccess, ERHIResourceState::UnorderedAccess);
+            }
+
+            if (FrameResourcesRef.ReflectionMoments[ReflectionIndex])
+            {
+                Context.ReflectionMoments[ReflectionIndex] = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.ReflectionMoments[ReflectionIndex].Get(), ReflectionMomentsNames[ReflectionIndex],
+                    ERHIResourceState::UnorderedAccess, ERHIResourceState::UnorderedAccess);
+            }
+
+            if (FrameResourcesRef.ReflectionDenoised[ReflectionIndex])
+            {
+                Context.ReflectionDenoised[ReflectionIndex] = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.ReflectionDenoised[ReflectionIndex].Get(), ReflectionDenoisedNames[ReflectionIndex],
+                    ERHIResourceState::UnorderedAccess, ERHIResourceState::UnorderedAccess);
+            }
         }
 
-        const int32 NewPointLightSize = ClampAndSnapPow2(128, 1024, GPointLightShadowMapSize);
-        if (NewPointLightSize != FrameResourcesRef.PointLightShadowSize)
+        if (FrameResourcesRef.RayTracingSceneConstantsBuffer)
         {
-            FrameResourcesRef.PointLightShadowSize = NewPointLightSize;
-            PointLightRenderPass->CreateResources(FrameResourcesRef);
-        }
-    }
-
-    if (FrameResourcesRef.ShadowCascades)
-    {
-        Context.ShadowCascades = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.ShadowCascades.Get(), "ShadowCascades",
-            ERHIResourceState::NonPixelShaderResource, ERHIResourceState::NonPixelShaderResource);
-    }
-
-    if (FrameResourcesRef.PointLightShadowMaps)
-    {
-        Context.PointLightShadowMaps = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.PointLightShadowMaps.Get(), "PointLightShadowMaps",
-            ERHIResourceState::NonPixelShaderResource, ERHIResourceState::NonPixelShaderResource);
-    }
-
-    if (FRHIBuffer* PerCascadeBuffer = CascadedShadowsRenderPass->GetPerCascadeBuffer())
-    {
-        Context.PerCascadeBuffer = GraphBuilder.RegisterExternalBuffer(PerCascadeBuffer, "PerCascade",
-            ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
-    }
-
-    if (FRHIBuffer* ShadowSettingsBuffer = ShadowMaskRenderPass->GetShadowSettingsBuffer())
-    {
-        Context.ShadowSettingsBuffer = GraphBuilder.RegisterExternalBuffer(ShadowSettingsBuffer, "ShadowSettings",
-            ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
-    }
-
-    if (FRHIBuffer* PerShadowMapBuffer = PointLightRenderPass->GetPerShadowMapBuffer())
-    {
-        Context.PerShadowMapBuffer = GraphBuilder.RegisterExternalBuffer(PerShadowMapBuffer, "PerShadowMap",
-            ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
-    }
-
-    if (FRHIBuffer* SinglePassShadowMapBuffer = PointLightRenderPass->GetSinglePassShadowMapBuffer())
-    {
-        Context.SinglePassShadowMapBuffer = GraphBuilder.RegisterExternalBuffer(SinglePassShadowMapBuffer, "SinglePassShadowMap",
-            ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
-    }
-
-    if (FrameResourcesRef.IntegrationLUT)
-    {
-        Context.IntegrationLUT = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.IntegrationLUT.Get(), "IntegrationLUT",
-            ERHIResourceState::ShaderResource, ERHIResourceState::ShaderResource);
-    }
-
-    if (FRHIBuffer* SkyboxVertexBuffer = SkyboxRenderPass->GetVertexBuffer())
-    {
-        Context.SkyboxVertexBuffer = GraphBuilder.RegisterExternalBuffer(SkyboxVertexBuffer, "SkyboxVertices",
-            ERHIResourceState::VertexBuffer, ERHIResourceState::VertexBuffer);
-    }
-
-    if (FRHIBuffer* SkyboxIndexBuffer = SkyboxRenderPass->GetIndexBuffer())
-    {
-        Context.SkyboxIndexBuffer = GraphBuilder.RegisterExternalBuffer(SkyboxIndexBuffer, "SkyboxIndices",
-            ERHIResourceState::IndexBuffer, ERHIResourceState::IndexBuffer);
-    }
-
-    if (FrameResourcesRef.RayTracingOutput)
-    {
-        Context.RayTracingOutput = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.RayTracingOutput.Get(), "RayTracingOutput",
-            ERHIResourceState::UnorderedAccess, ERHIResourceState::UnorderedAccess);
-    }
-
-    if (FrameResourcesRef.ReflectionTrace)
-    {
-        Context.ReflectionTrace = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.ReflectionTrace.Get(), "ReflectionTrace",
-            ERHIResourceState::UnorderedAccess, ERHIResourceState::UnorderedAccess);
-    }
-
-    const CHAR* ReflectionHistoryNames[2] =
-    {
-        "ReflectionHistory0", "ReflectionHistory1"
-    };
-
-    const CHAR* ReflectionMomentsNames[2] =
-    {
-        "ReflectionMoments0", "ReflectionMoments1"
-    };
-
-    const CHAR* ReflectionDenoisedNames[2] =
-    {
-        "ReflectionDenoised0", "ReflectionDenoised1"
-    };
-
-    for (int32 ReflectionIndex = 0; ReflectionIndex < 2; ++ReflectionIndex)
-    {
-        if (FrameResourcesRef.ReflectionHistory[ReflectionIndex])
-        {
-            Context.ReflectionHistory[ReflectionIndex] = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.ReflectionHistory[ReflectionIndex].Get(), ReflectionHistoryNames[ReflectionIndex],
-                ERHIResourceState::UnorderedAccess, ERHIResourceState::UnorderedAccess);
+            Context.RayTracingSceneConstantsBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.RayTracingSceneConstantsBuffer.Get(), "RayTracingSceneConstants",
+                ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
         }
 
-        if (FrameResourcesRef.ReflectionMoments[ReflectionIndex])
+        if (FrameResourcesRef.RayTracingGeometryTableBuffer)
         {
-            Context.ReflectionMoments[ReflectionIndex] = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.ReflectionMoments[ReflectionIndex].Get(), ReflectionMomentsNames[ReflectionIndex],
-                ERHIResourceState::UnorderedAccess, ERHIResourceState::UnorderedAccess);
+            Context.RayTracingGeometryTableBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.RayTracingGeometryTableBuffer.Get(), "RayTracingGeometryTable",
+                ERHIResourceState::GenericRead, ERHIResourceState::GenericRead);
         }
 
-        if (FrameResourcesRef.ReflectionDenoised[ReflectionIndex])
+        if (FRHITexture* ReflectionNoise = RayTracingReflectionsPass->GetReflectionNoiseMask())
         {
-            Context.ReflectionDenoised[ReflectionIndex] = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.ReflectionDenoised[ReflectionIndex].Get(), ReflectionDenoisedNames[ReflectionIndex],
-                ERHIResourceState::UnorderedAccess, ERHIResourceState::UnorderedAccess);
+            Context.ReflectionNoise = GraphBuilder.RegisterExternalTexture(ReflectionNoise, "ReflectionNoise",
+                ERHIResourceState::ShaderResource, ERHIResourceState::ShaderResource);
         }
-    }
 
-    if (FrameResourcesRef.RayTracingSceneConstantsBuffer)
-    {
-        Context.RayTracingSceneConstantsBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.RayTracingSceneConstantsBuffer.Get(), "RayTracingSceneConstants",
-            ERHIResourceState::ConstantBuffer, ERHIResourceState::ConstantBuffer);
-    }
+        if (FRHITexture* HistoryBuffer = TemporalAntiAliasing->GetHistoryBuffer(0))
+        {
+            Context.TAAHistory[0] = GraphBuilder.RegisterExternalTexture(HistoryBuffer, "TAAHistory0",
+                ERHIResourceState::NonPixelShaderResource, ERHIResourceState::NonPixelShaderResource);
+        }
 
-    if (FrameResourcesRef.RayTracingGeometryTableBuffer)
-    {
-        Context.RayTracingGeometryTableBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.RayTracingGeometryTableBuffer.Get(), "RayTracingGeometryTable",
-            ERHIResourceState::GenericRead, ERHIResourceState::GenericRead);
-    }
+        if (FRHITexture* HistoryBuffer = TemporalAntiAliasing->GetHistoryBuffer(1))
+        {
+            Context.TAAHistory[1] = GraphBuilder.RegisterExternalTexture(HistoryBuffer, "TAAHistory1",
+                ERHIResourceState::NonPixelShaderResource, ERHIResourceState::NonPixelShaderResource);
+        }
 
-    if (FRHITexture* ReflectionNoise = RayTracingReflectionsPass->GetReflectionNoiseMask())
-    {
-        Context.ReflectionNoise = GraphBuilder.RegisterExternalTexture(ReflectionNoise, "ReflectionNoise",
-            ERHIResourceState::ShaderResource, ERHIResourceState::ShaderResource);
-    }
+        CreateSceneGraphViews(GraphBuilder, Context, FrameResourcesRef);
 
-    if (FRHITexture* HistoryBuffer = TemporalAntiAliasing->GetHistoryBuffer(0))
-    {
-        Context.TAAHistory[0] = GraphBuilder.RegisterExternalTexture(HistoryBuffer, "TAAHistory0",
-            ERHIResourceState::NonPixelShaderResource, ERHIResourceState::NonPixelShaderResource);
-    }
+        const bool bRestorePrevSamplePositions = PrevFrameSamplePositions.NumSamplesPerPixel > 0;
+        if (bRestorePrevSamplePositions)
+        {
+            CommandList.SetSamplePositions(PrevFrameSamplePositions);
+        }
 
-    if (FRHITexture* HistoryBuffer = TemporalAntiAliasing->GetHistoryBuffer(1))
-    {
-        Context.TAAHistory[1] = GraphBuilder.RegisterExternalTexture(HistoryBuffer, "TAAHistory1",
-            ERHIResourceState::NonPixelShaderResource, ERHIResourceState::NonPixelShaderResource);
-    }
+        DepthPrePass->AddRenderGraphPass(GraphBuilder, Context);
+        BasePass->AddRenderGraphPass(GraphBuilder, Context);
+        DepthReducePass->AddRenderGraphPass(GraphBuilder, Context);
 
-    CreateSceneGraphViews(GraphBuilder, Context, FrameResourcesRef);
+        if (bUseHardwareJitter)
+        {
+            CommandList.SetSamplePositions(FRHISamplePositionsDesc());
+        }
 
-    const bool bRestorePrevSamplePositions = PrevFrameSamplePositions.NumSamplesPerPixel > 0;
-    if (bRestorePrevSamplePositions)
-    {
-        CommandList.SetSamplePositions(PrevFrameSamplePositions);
-    }
+        RayTracingReflectionsPass->AddRenderGraphPass(GraphBuilder, Context, ReflectionDenoisePass->IsDenoiseEnabled(FrameResourcesRef));
+        ReflectionDenoisePass->AddRenderGraphPass(GraphBuilder, Context, RayTracingReflectionsPass->IsTraceEnabled());
 
-    DepthPrePass->AddRenderGraphPass(GraphBuilder, Context);
-    BasePass->AddRenderGraphPass(GraphBuilder, Context);
-    DepthReducePass->AddRenderGraphPass(GraphBuilder, Context);
+        ScreenSpaceOcclusionPass->AddRenderGraphPass(GraphBuilder, Context);
 
-    if (bUseHardwareJitter)
-    {
-        CommandList.SetSamplePositions(FRHISamplePositionsDesc());
-    }
+        PointLightRenderPass->AddRenderGraphPass(GraphBuilder, Context);
+        CascadeGenerationPass->AddRenderGraphPass(GraphBuilder, Context);
+        CascadedShadowsRenderPass->AddRenderGraphPass(GraphBuilder, Context);
+        ShadowMaskRenderPass->AddRenderGraphPass(GraphBuilder, Context);
 
-    RayTracingReflectionsPass->AddRenderGraphPass(GraphBuilder, Context, ReflectionDenoisePass->IsDenoiseEnabled(FrameResourcesRef));
-    ReflectionDenoisePass->AddRenderGraphPass(GraphBuilder, Context, RayTracingReflectionsPass->IsTraceEnabled());
+        TiledLightPass->AddRenderGraphPass(GraphBuilder, Context);
 
-    ScreenSpaceOcclusionPass->AddRenderGraphPass(GraphBuilder, Context);
+        if (bUseHardwareJitter)
+        {
+            CommandList.SetSamplePositions(FrameSamplePositions);
+        }
 
-    PointLightRenderPass->AddRenderGraphPass(GraphBuilder, Context);
-    CascadeGenerationPass->AddRenderGraphPass(GraphBuilder, Context);
-    CascadedShadowsRenderPass->AddRenderGraphPass(GraphBuilder, Context);
-    ShadowMaskRenderPass->AddRenderGraphPass(GraphBuilder, Context);
+        SkyboxRenderPass->AddRenderGraphPass(GraphBuilder, Context);
+        ForwardPass->AddRenderGraphPass(GraphBuilder, Context);
+        TemporalAntiAliasing->AddRenderGraphPass(GraphBuilder, Context);
 
-    TiledLightPass->AddRenderGraphPass(GraphBuilder, Context);
+        if (bUseHardwareJitter)
+        {
+            CommandList.SetSamplePositions(FRHISamplePositionsDesc());
+        }
 
-    if (bUseHardwareJitter)
-    {
-        CommandList.SetSamplePositions(FrameSamplePositions);
-    }
+    #if EDITOR_BUILD
+        if (bEditorOverlays)
+        {
+            EditorNoJitterDepthPass->AddRenderGraphPass(GraphBuilder, Context);
+            EditorSelectionIDPass->AddRenderGraphPass(GraphBuilder, Context);
+            SelectionOutlinePass->AddRenderGraphPass(GraphBuilder, Context);
+        }
+    #endif
 
-    SkyboxRenderPass->AddRenderGraphPass(GraphBuilder, Context);
-    ForwardPass->AddRenderGraphPass(GraphBuilder, Context);
-    TemporalAntiAliasing->AddRenderGraphPass(GraphBuilder, Context);
+        FXAAPass->AddRenderGraphPass(GraphBuilder, Context);
 
-    if (bUseHardwareJitter)
-    {
-        CommandList.SetSamplePositions(FRHISamplePositionsDesc());
-    }
-
-#if EDITOR_BUILD
-    if (bEditorOverlays)
-    {
-        EditorNoJitterDepthPass->AddRenderGraphPass(GraphBuilder, Context);
-        EditorSelectionIDPass->AddRenderGraphPass(GraphBuilder, Context);
-        SelectionOutlinePass->AddRenderGraphPass(GraphBuilder, Context);
-    }
-#endif
-
-    FXAAPass->AddRenderGraphPass(GraphBuilder, Context);
-
-#if EDITOR_BUILD
-    if (bEditorOverlays)
-    {
-        TonemapPass->AddRenderGraphPass(GraphBuilder, Context, nullptr, false);
-        FinalCompositePass->AddRenderGraphPass(GraphBuilder, Context);
-    }
-    else
-    {
+    #if EDITOR_BUILD
+        if (bEditorOverlays)
+        {
+            TonemapPass->AddRenderGraphPass(GraphBuilder, Context, nullptr, false);
+            FinalCompositePass->AddRenderGraphPass(GraphBuilder, Context);
+        }
+        else
+        {
+            TonemapPass->AddRenderGraphPass(GraphBuilder, Context, SceneRenderView.RenderTarget, true);
+        }
+    #else
         TonemapPass->AddRenderGraphPass(GraphBuilder, Context, SceneRenderView.RenderTarget, true);
+    #endif
+
+        RayTracingPrimaryDebugPass->AddRenderGraphPass(GraphBuilder, Context);
+
+        DebugViewPass->AddRenderGraphPass(GraphBuilder, Context);
+        DebugViewPass->AddRenderGraphOverlayPass(GraphBuilder, Context);
+
+        PrevFrameSamplePositions = bUseHardwareJitter ? FrameSamplePositions : FRHISamplePositionsDesc();
     }
-#else
-    TonemapPass->AddRenderGraphPass(GraphBuilder, Context, SceneRenderView.RenderTarget, true);
-#endif
-
-    RayTracingPrimaryDebugPass->AddRenderGraphPass(GraphBuilder, Context);
-
-    DebugViewPass->AddRenderGraphPass(GraphBuilder, Context);
-    DebugViewPass->AddRenderGraphOverlayPass(GraphBuilder, Context);
-
-    PrevFrameSamplePositions = bUseHardwareJitter ? FrameSamplePositions : FRHISamplePositionsDesc();
 
 #if EDITOR_BUILD
     if (RenderGraphDebug::IsCaptureEnabled())
@@ -527,7 +534,10 @@ void FSceneRenderer::BuildAndExecuteSceneGraph(const FSceneRenderView& SceneRend
     }
 #endif
 
-    GraphBuilder.Execute(CommandList);
+    {
+        TRACE_SCOPE("SceneRender Graph Execute");
+        GraphBuilder.Execute(CommandList);
+    }
 
 #if EDITOR_BUILD
     if (bEditorOverlays)

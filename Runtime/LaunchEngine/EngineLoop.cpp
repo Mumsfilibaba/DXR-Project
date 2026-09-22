@@ -463,9 +463,15 @@ void FEngineLoop::Tick()
         TRACE_FUNCTION_SCOPE();
 
         // Run any work that was queued onto the main thread since the last tick.
-        Tasks::ProcessMainThreadTasks();
+        {
+            TRACE_SCOPE("Process Main Thread Tasks");
+            Tasks::ProcessMainThreadTasks();
+        }
 
-        FrameTimer.Tick();
+        {
+            TRACE_SCOPE("Frame Timer Tick");
+            FrameTimer.Tick();
+        }
 
         const float DeltaTime = static_cast<float>(FrameTimer.GetDeltaTime().AsSeconds());
         FApplication::Get().Tick(DeltaTime);
@@ -482,7 +488,10 @@ void FEngineLoop::Tick()
         IGPUProfiler& GPUProfiler = RendererModule->GetGPUProfiler();
 
         UIRenderer->EndFrameAndPresent();
-        GPUProfiler.EndGPUFrame();
+        {
+            TRACE_SCOPE("GPU Profiler End Frame");
+            GPUProfiler.EndGPUFrame();
+        }
 
         FApplication::Get().ProcessDeferredEvents();
 
@@ -491,13 +500,17 @@ void FEngineLoop::Tick()
             FEngine::Get()->Tick(DeltaTime);
         }
 
-        GPUProfiler.BeginGPUFrame();
+        {
+            TRACE_SCOPE("GPU Profiler Begin Frame");
+            GPUProfiler.BeginGPUFrame();
+        }
 
         UIRenderer->BeginFrame();
         UIRenderer->RecordWindows();
 
         if (IImguiPlugin::IsEnabled())
         {
+            TRACE_SCOPE("ImGui Draw");
             IImguiPlugin::Get().Draw(UIRenderer->GetCommandList());
             IImguiPlugin::Get().DrawViewports(UIRenderer->GetCommandList());
         }
@@ -507,8 +520,15 @@ void FEngineLoop::Tick()
         FSceneRenderPacket Packet = FEngine::Get()->BuildRenderPacket();
         RendererModule->KickSceneRender(::Move(Packet));
 
-        FMemoryPagePool::Get().Tick();
-        FPlatformEventPool::Get().Tick();
+        {
+            TRACE_SCOPE("Memory Page Pool Tick");
+            FMemoryPagePool::Get().Tick();
+        }
+
+        {
+            TRACE_SCOPE("Platform Event Pool Tick");
+            FPlatformEventPool::Get().Tick();
+        }
     }
 
     FFrameProfiler::Get().Tick();
