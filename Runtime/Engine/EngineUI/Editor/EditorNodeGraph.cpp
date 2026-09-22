@@ -1,4 +1,5 @@
 #include "Engine/EngineUI/Editor/EditorNodeGraph.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Containers/Map.h"
 #include "Core/Containers/String.h"
 #include "Core/Math/Math.h"
@@ -715,7 +716,7 @@ void EditorNodeGraph::LayoutLayered(const FRenderGraphDebugSnapshot& Snapshot, T
     // Seed each column by builder submission order, not local index.
     for (int32 Column = 0; Column < Columns.Size(); ++Column)
     {
-        Columns[Column].SortWithPredicate(PassOrderLess);
+        Algorithm::Sort(Columns[Column], PassOrderLess);
     }
 
     auto OrderIndexInColumn = [&](int32 Local) -> int32
@@ -836,7 +837,7 @@ void EditorNodeGraph::LayoutLayered(const FRenderGraphDebugSnapshot& Snapshot, T
         for (int32 Column = 1; Column < Columns.Size(); ++Column)
         {
             TArray<int32>& Order = Columns[Column];
-            Order.SortWithPredicate([&](int32 A, int32 B)
+            Algorithm::Sort(Order, [&](int32 A, int32 B)
             {
                 const float Ba = Barycenter(A, true);
                 const float Bb = Barycenter(B, true);
@@ -855,7 +856,7 @@ void EditorNodeGraph::LayoutLayered(const FRenderGraphDebugSnapshot& Snapshot, T
         for (int32 Column = Columns.Size() - 2; Column >= 0; --Column)
         {
             TArray<int32>& Order = Columns[Column];
-            Order.SortWithPredicate([&](int32 A, int32 B)
+            Algorithm::Sort(Order, [&](int32 A, int32 B)
             {
                 const float Ba = Barycenter(A, false);
                 const float Bb = Barycenter(B, false);

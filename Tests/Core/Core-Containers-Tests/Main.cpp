@@ -27,6 +27,7 @@
 #include "StringView_Test.h"
 #include "StaticString_Test.h"
 #include "CRC_Test.h"
+#include "Sort_Test.h"
 
 /**
  *  Check for memory leaks 
@@ -137,6 +138,10 @@ void Tests(int32 Argc, const CHAR* Argv[])
 
 #if RUN_CRC_TEST
     RUN_TEST("CRC32", CRC_Test());
+#endif
+
+#if RUN_SORT_TEST
+    RUN_TEST("Sort", Sort_Test());
 #endif
 }
 

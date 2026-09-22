@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Templates/NumericLimits.h"
 #include "Core/Math/Math.h"
 #include "VulkanRHI/VulkanMemoryManager.h"
@@ -1177,7 +1178,7 @@ void FVulkanPoolAllocatorPage::CoalesceFreeRanges()
         return;
     }
 
-    FreeRanges.SortWithPredicate([](const FFreeRange& A, const FFreeRange& B)
+    Algorithm::Sort(FreeRanges, [](const FFreeRange& A, const FFreeRange& B)
     {
         return A.Offset < B.Offset;
     });

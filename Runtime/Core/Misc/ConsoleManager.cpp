@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Misc/Config.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/FileOutputDevice.h"
@@ -1812,7 +1813,7 @@ void FConsoleManager::DumpConsoleVariableValues(IOutputDevice& OutputDevice, con
         }
     }
 
-    ConsoleVariables.SortWithPredicate([](const TPair<String, IConsoleVariable*>& A, const TPair<String, IConsoleVariable*>& B)
+    Algorithm::Sort(ConsoleVariables, [](const TPair<String, IConsoleVariable*>& A, const TPair<String, IConsoleVariable*>& B)
     {
         return A.First < B.First;
     });

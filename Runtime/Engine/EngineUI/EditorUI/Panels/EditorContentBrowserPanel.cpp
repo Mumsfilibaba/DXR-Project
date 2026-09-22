@@ -1,4 +1,5 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorContentBrowserPanel.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Engine/EngineUI/EditorUI/EditorConfirmDialog.h"
 #include "Engine/EngineUI/EditorUI/EditorErrorDialog.h"
 #include "Engine/EngineUI/EditorUI/EditorIcons.h"
@@ -1457,7 +1458,7 @@ void FEditorContentBrowserPanel::DeleteEntries(const FEntryPath& ParentPath, con
     }
 
     TArray<int32> Sorted = ChildIndices;
-    Sorted.SortWithPredicate([](int32 Left, int32 Right) { return Left > Right; });
+    Algorithm::Sort(Sorted, [](int32 Left, int32 Right) { return Left > Right; });
 
     for (const int32 ChildIndex : Sorted)
     {
@@ -1574,7 +1575,7 @@ void FEditorContentBrowserPanel::MoveEntries(const FEntryPath& SourceParentPath,
 
     TArray<FEntry> Moved;
     TArray<int32>  Sorted = Legal;
-    Sorted.SortWithPredicate([](int32 Left, int32 Right) { return Left > Right; });
+    Algorithm::Sort(Sorted, [](int32 Left, int32 Right) { return Left > Right; });
 
     for (const int32 ChildIndex : Sorted)
     {

@@ -1,4 +1,5 @@
 #include "Core/Misc/ProfilerTypes.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Containers/Map.h"
 #include "Core/Math/Math.h"
 #include "Core/Templates/CString.h"
@@ -82,7 +83,7 @@ void FinalizeProfilerIntervals(TArray<FProfilerInterval>& Intervals, uint64 Freq
         return;
     }
 
-    Intervals.SortWithPredicate([](const FProfilerInterval& Left, const FProfilerInterval& Right)
+    Algorithm::Sort(Intervals, [](const FProfilerInterval& Left, const FProfilerInterval& Right)
     {
         if (Left.StartTimeStamp != Right.StartTimeStamp)
         {
@@ -149,7 +150,7 @@ void SortProfilerThreadFrames(TArray<FProfilerThreadFrame>& Threads)
         Order.Add(ThreadFrame.ThreadHandle, Entry);
     }
 
-    Threads.SortWithPredicate([&Order](const FProfilerThreadFrame& Left, const FProfilerThreadFrame& Right)
+    Algorithm::Sort(Threads, [&Order](const FProfilerThreadFrame& Left, const FProfilerThreadFrame& Right)
     {
         const FThreadOrder* LeftOrder  = Order.Find(Left.ThreadHandle);
         const FThreadOrder* RightOrder = Order.Find(Right.ThreadHandle);

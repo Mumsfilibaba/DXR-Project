@@ -1,4 +1,5 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorProfilerPanel.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorRenderGraphPanel.h"
 #include "Engine/EditorEngine.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
@@ -1926,7 +1927,7 @@ TArray<FProfilerOptimizationTarget> FEditorProfilerPanel::CollectGpuOptimization
         Sorted.Add(Pair.Second);
     }
 
-    Sorted.SortWithPredicate([](const FHotPass& Left, const FHotPass& Right)
+    Algorithm::Sort(Sorted, [](const FHotPass& Left, const FHotPass& Right)
     {
         return Left.Exclusive > Right.Exclusive;
     });

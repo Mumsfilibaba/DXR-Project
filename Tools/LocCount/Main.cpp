@@ -1,4 +1,5 @@
 #include <LaunchProgram/ProgramEntry.h>
+#include <Core/Algorithms/Algorithm.h>
 #include <Core/Containers/Array.h>
 #include <Core/Containers/Map.h>
 #include <Core/Containers/String.h>
@@ -124,7 +125,7 @@ static TArray<FLocEntry> SortedByTotal(TMap<String, FLocTotals>& Buckets)
         Entries.Emplace(FLocEntry{ It.GetKey(), It.GetValue() });
     }
 
-    Entries.SortWithPredicate([](const FLocEntry& First, const FLocEntry& Second) -> bool
+    Algorithm::Sort(Entries, [](const FLocEntry& First, const FLocEntry& Second) -> bool
     {
         return First.Totals.Total > Second.Totals.Total;
     });

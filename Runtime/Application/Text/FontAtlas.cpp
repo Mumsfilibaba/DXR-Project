@@ -1,4 +1,5 @@
 #include "Application/Text/FontAtlas.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/OutputDeviceLogger.h"
@@ -201,7 +202,7 @@ bool FFontAtlas::PackAtSize(int32 InWidth, int32 InHeight)
         PageIndices.Add(0);
     }
 
-    PageIndices.Sort();
+    Algorithm::Sort(PageIndices);
 
     PackState->Close();
     Pages.Clear();

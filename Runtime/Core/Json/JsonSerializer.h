@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Json/JsonArchive.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Map.h"
 #include "Core/Containers/Optional.h"
@@ -427,7 +428,7 @@ struct TJsonSerializer<TMap<String, T>>
     static void Save(FJsonValue& OutValue, const MapType& InValue)
     {
         TArray<String> Keys = InValue.GetKeys();
-        Keys.SortWithPredicate([](const String& LHS, const String& RHS) { return LHS.Compare(RHS) < 0; });
+        Algorithm::Sort(Keys, [](const String& LHS, const String& RHS) { return LHS.Compare(RHS) < 0; });
 
         OutValue = FJsonValue::MakeObject();
         for (int32 Index = 0; Index < Keys.Size(); ++Index)

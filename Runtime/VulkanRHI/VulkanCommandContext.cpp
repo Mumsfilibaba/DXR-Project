@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHIShader.h"
 #include "VulkanRHI/VulkanCommandContext.h"
@@ -451,7 +452,7 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
 
         TArray<FVulkanQueryRange>& AllRanges = Commands->QueryRanges;
 
-        AllRanges.SortWithPredicate([](const FVulkanQueryRange& FirstRange, const FVulkanQueryRange& SecondRange)
+        Algorithm::Sort(AllRanges, [](const FVulkanQueryRange& FirstRange, const FVulkanQueryRange& SecondRange)
         {
             if (FirstRange.Pool != SecondRange.Pool)
             {

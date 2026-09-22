@@ -1,4 +1,5 @@
 #include "Core/Math/Math.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "D3D12RHI/D3D12Allocators.h"
 #include "D3D12RHI/D3D12Stats.h"
@@ -822,7 +823,7 @@ void FD3D12PoolAllocatorPage::CoalesceFreeRanges()
         return;
     }
 
-    FreeRanges.SortWithPredicate([](const FFreeRange& A, const FFreeRange& B)
+    Algorithm::Sort(FreeRanges, [](const FFreeRange& A, const FFreeRange& B)
     {
         return A.Offset < B.Offset;
     });
@@ -1358,7 +1359,7 @@ FD3D12BucketAllocator::FD3D12BucketAllocator(FD3D12Device* InDevice, const TArra
         Bucket.FreeBlocks.Clear();
     }
 
-    Buckets.SortWithPredicate([](const FBucket& A, const FBucket& B)
+    Algorithm::Sort(Buckets, [](const FBucket& A, const FBucket& B)
     {
         return A.BlockSize < B.BlockSize;
     });

@@ -2,6 +2,7 @@
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Text/FontAtlas.h"
 #include "Application/Text/IFontFace.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/FrameProfiler.h"
@@ -19,95 +20,6 @@ static FORCEINLINE void ReserveForAppend(TArray<ElementType>& Array, int32 Appen
     {
         Array.Reserve(Math::Max(RequiredCapacity, Array.Capacity() * 2));
     }
-}
-
-static void SortCommandIndicesByLayer(const TArray<FDrawCommand>& Commands, TArray<int32>& OutIndices, TArray<int32>& ScratchIndices)
-{
-    OutIndices.ResizeUninitialized(Commands.Size());
-
-    int32 MinLayer = Commands[0].LayerId;
-    int32 MaxLayer = MinLayer;
-    for (int32 Index = 1; Index < Commands.Size(); ++Index)
-    {
-        MinLayer = Math::Min(MinLayer, Commands[Index].LayerId);
-        MaxLayer = Math::Max(MaxLayer, Commands[Index].LayerId);
-    }
-
-    constexpr int32 MaxCountingSortLayers = 1024;
-    const int64 LayerRange64 = static_cast<int64>(MaxLayer) - static_cast<int64>(MinLayer) + 1;
-    if (LayerRange64 <= MaxCountingSortLayers)
-    {
-        const int32 LayerRange = static_cast<int32>(LayerRange64);
-        uint32 Counts[MaxCountingSortLayers] = {};
-
-        for (const FDrawCommand& Command : Commands)
-        {
-            ++Counts[Command.LayerId - MinLayer];
-        }
-
-        uint32 Offset = 0;
-        for (int32 Layer = 0; Layer < LayerRange; ++Layer)
-        {
-            const uint32 Count = Counts[Layer];
-            Counts[Layer] = Offset;
-            Offset += Count;
-        }
-
-        for (int32 Index = 0; Index < Commands.Size(); ++Index)
-        {
-            OutIndices[static_cast<int32>(Counts[Commands[Index].LayerId - MinLayer]++)] = Index;
-        }
-
-        return;
-    }
-
-    ScratchIndices.ResizeUninitialized(Commands.Size());
-
-    for (int32 Index = 0; Index < Commands.Size(); ++Index)
-    {
-        OutIndices[Index] = Index;
-    }
-
-    for (uint32 ByteIndex = 0; ByteIndex < 4; ++ByteIndex)
-    {
-        uint32 Counts[256] = {};
-        const uint32 Shift = ByteIndex * 8;
-
-        for (const int32 CommandIndex : OutIndices)
-        {
-            const uint32 Key = static_cast<uint32>(Commands[CommandIndex].LayerId) ^ 0x80000000u;
-            ++Counts[(Key >> Shift) & 0xffu];
-        }
-
-        uint32 Offset = 0;
-        for (uint32 Bucket = 0; Bucket < 256; ++Bucket)
-        {
-            const uint32 Count = Counts[Bucket];
-            Counts[Bucket] = Offset;
-            Offset += Count;
-        }
-
-        for (const int32 CommandIndex : OutIndices)
-        {
-            const uint32 Key = static_cast<uint32>(Commands[CommandIndex].LayerId) ^ 0x80000000u;
-            ScratchIndices[static_cast<int32>(Counts[(Key >> Shift) & 0xffu]++)] = CommandIndex;
-        }
-
-        ::Swap(OutIndices, ScratchIndices);
-    }
-}
-
-static bool AreLayersOrdered(const TArray<FDrawCommand>& Commands)
-{
-    for (int32 Index = 1; Index < Commands.Size(); ++Index)
-    {
-        if (Commands[Index].LayerId < Commands[Index - 1].LayerId)
-        {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 static uint64 HashBytes(const void* Data, int32 ByteCount)
@@ -300,17 +212,21 @@ void FUIDrawData::BuildFromCommandList(const FDrawCommandList& CommandList)
     ReserveForAppend(TextGlyphInstances, Commands.Size() * 4);
 
     {
-        if (AreLayersOrdered(Commands))
+        SortedCommandIndices.ResizeUninitialized(Commands.Size());
+        for (int32 Index = 0; Index < Commands.Size(); ++Index)
         {
-            SortedCommandIndices.ResizeUninitialized(Commands.Size());
-            for (int32 Index = 0; Index < Commands.Size(); ++Index)
-            {
-                SortedCommandIndices[Index] = Index;
-            }
+            SortedCommandIndices[Index] = Index;
         }
-        else
+
+        if (!Algorithm::IsSorted(Commands, [](const FDrawCommand& Left, const FDrawCommand& Right)
         {
-            SortCommandIndicesByLayer(Commands, SortedCommandIndices, SortScratchIndices);
+            return Left.LayerId < Right.LayerId;
+        }))
+        {
+            Algorithm::IntegerSortBy(SortedCommandIndices, [&](int32 CommandIndex)
+            {
+                return Commands[CommandIndex].LayerId;
+            }, SortScratchIndices);
         }
     }
 

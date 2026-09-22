@@ -1,4 +1,5 @@
 #include "Core/Misc/ProfilerReport.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Misc/BootProfiler.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/BuildInfo.h"
@@ -218,7 +219,7 @@ TArray<FProfilerOptimizationTarget> FProfilerReport::CollectOptimizationTargets(
         SortedSelf.Add(Pair.Second);
     }
 
-    SortedSelf.SortWithPredicate([](const FHotScope& Left, const FHotScope& Right)
+    Algorithm::Sort(SortedSelf, [](const FHotScope& Left, const FHotScope& Right)
     {
         return Left.Exclusive > Right.Exclusive;
     });
@@ -438,7 +439,7 @@ String FProfilerReport::BuildCpuAndBootText()
         SortedHot.Add(Pair.Second);
     }
 
-    SortedHot.SortWithPredicate([](const FHotScope& Left, const FHotScope& Right)
+    Algorithm::Sort(SortedHot, [](const FHotScope& Left, const FHotScope& Right)
     {
         return Left.Inclusive > Right.Inclusive;
     });

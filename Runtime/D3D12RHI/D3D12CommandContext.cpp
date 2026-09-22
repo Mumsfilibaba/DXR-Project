@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Math/Vector2.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "D3D12RHI/D3D12Device.h"
@@ -579,7 +580,7 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
             Commands->Flags |= ED3D12CommandsFlags::ResolveQueries;
 
             TArray<FD3D12QueryRange>& AllRanges = Commands->QueryRanges;
-            AllRanges.SortWithPredicate([](const FD3D12QueryRange& FirstRange, const FD3D12QueryRange& SecondRange)
+            Algorithm::Sort(AllRanges, [](const FD3D12QueryRange& FirstRange, const FD3D12QueryRange& SecondRange)
             {
                 if (FirstRange.Heap != SecondRange.Heap)
                 {

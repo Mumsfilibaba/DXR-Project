@@ -12,6 +12,7 @@
 #include "Map_Benchmark.h"
 #include "TaskGraph_Benchmark.h"
 #include "MemoryStack_Benchmark.h"
+#include "Sort_Benchmark.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -54,6 +55,10 @@ int main(int Argc, const CHAR* Argv[])
 
 #if RUN_MEMORYSTACK_BENCHMARKS
     MemoryStack_Benchmark();
+#endif
+
+#if RUN_SORT_BENCHMARKS
+    Sort_Benchmark();
 #endif
 
     FTaskGraph::Release();

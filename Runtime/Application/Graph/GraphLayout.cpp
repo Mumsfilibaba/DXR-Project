@@ -1,4 +1,5 @@
 #include "Application/Graph/GraphLayout.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Math/Math.h"
 
 // The width a column falls back to when every node in it measured narrower than this
@@ -138,7 +139,7 @@ void FGraphLayout::LayoutLayered(
 
     for (int32 Column = 0; Column < Columns.Size(); ++Column)
     {
-        Columns[Column].SortWithPredicate(InputOrderLess);
+        Algorithm::Sort(Columns[Column], InputOrderLess);
     }
 
     auto OrderIndexInColumn = [&](int32 Index) -> int32
@@ -255,7 +256,7 @@ void FGraphLayout::LayoutLayered(
     {
         for (int32 Column = 1; Column < Columns.Size(); ++Column)
         {
-            Columns[Column].SortWithPredicate([&](int32 A, int32 B)
+            Algorithm::Sort(Columns[Column], [&](int32 A, int32 B)
             {
                 const float BarycenterA = Barycenter(A, true);
                 const float BarycenterB = Barycenter(B, true);
@@ -268,7 +269,7 @@ void FGraphLayout::LayoutLayered(
 
         for (int32 Column = Columns.Size() - 2; Column >= 0; --Column)
         {
-            Columns[Column].SortWithPredicate([&](int32 A, int32 B)
+            Algorithm::Sort(Columns[Column], [&](int32 A, int32 B)
             {
                 const float BarycenterA = Barycenter(A, false);
                 const float BarycenterB = Barycenter(B, false);

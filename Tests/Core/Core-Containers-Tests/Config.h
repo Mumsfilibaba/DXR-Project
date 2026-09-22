@@ -29,3 +29,4 @@
 #define RUN_STRINGVIEW_SUITE (1)
 #define RUN_STATICSTRING_SUITE (1)
 #define RUN_CRC_TEST (1)
+#define RUN_SORT_TEST (1)

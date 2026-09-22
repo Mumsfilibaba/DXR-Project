@@ -1,4 +1,5 @@
 #include "Core/Misc/FrameProfiler.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Engine/EngineUI/Editor/EditorContentBrowserWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
@@ -3955,7 +3956,7 @@ void FEditorContentBrowserWidget::DeleteSelectedContentItems()
     }
 
     TArray<int32> SortedIndices = SelectedItemIndices;
-    SortedIndices.Sort();
+    Algorithm::Sort(SortedIndices);
 
     for (int32 i = SortedIndices.Size() - 1; i >= 0; --i)
     {
