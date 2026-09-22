@@ -1018,10 +1018,15 @@ void FApplication::DestroyWindow(const TSharedPtr<FWindow>& DestroyedWindow)
 
 void FApplication::Tick(float Delta)
 {
+    TRACE_SCOPE("Application Tick");
+
     ProcessEvents();
     ProcessDeferredEvents();
 
-    PlatformApplication->Tick(Delta);
+    {
+        TRACE_SCOPE("Platform Application Tick");
+        PlatformApplication->Tick(Delta);
+    }
 
     UpdateInputDevices();
 
@@ -1069,8 +1074,16 @@ void FApplication::LayoutWindow(const TSharedPtr<FWindow>& InWindow)
     WindowRectangle.Width    = InWindow->GetSize().X;
     WindowRectangle.Height   = InWindow->GetSize().Y;
 
-    InWindow->PrepareDesiredSize();
-    InWindow->Tick(WindowRectangle);
+    {
+        TRACE_SCOPE("Layout Measure");
+        InWindow->PrepareDesiredSize();
+    }
+
+    {
+        TRACE_SCOPE("Layout Arrange");
+        InWindow->Tick(WindowRectangle);
+    }
+
     InWindow->ClearLayoutIsStale();
 }
 
@@ -1106,7 +1119,6 @@ void FApplication::RecordWindow(const TSharedPtr<FWindow>& InWindow)
 
     if (InWindow->IsLayoutStale())
     {
-        TRACE_SCOPE("UI Layout");
         LayoutWindow(InWindow);
     }
 
@@ -1115,9 +1127,13 @@ void FApplication::RecordWindow(const TSharedPtr<FWindow>& InWindow)
         const FDrawGeometry WindowGeometry = FDrawGeometry(InWindow->GetContentRectangle(), InWindow->GetWindowDPIScale());
 
         int32 TopLayerId = 0;
-        TopLayerId = InWindow->OnDraw(WindowGeometry, *CommandList, 0);
-        OnWindowPaintingEvent.Broadcast(InWindow);
-        InWindow->PaintDeferred(*CommandList, TopLayerId + 1);
+        {
+            TRACE_SCOPE("UI Element Paint");
+
+            TopLayerId = InWindow->OnDraw(WindowGeometry, *CommandList, 0);
+            OnWindowPaintingEvent.Broadcast(InWindow);
+            InWindow->PaintDeferred(*CommandList, TopLayerId + 1);
+        }
 
         Renderer->EndWindow(InWindow);
     }
@@ -1135,11 +1151,13 @@ void FApplication::SetOnWindowLiveResize(const FOnWindowLiveResize& InOnWindowLi
 
 void FApplication::ProcessEvents()
 {
+    TRACE_SCOPE("Process Events");
     PlatformApplication->ProcessEvents();
 }
 
 void FApplication::ProcessDeferredEvents()
 {
+    TRACE_SCOPE("Process Deferred Events");
     PlatformApplication->ProcessDeferredEvents();
 
     if (!bIsApplicationActive || !FocusWindow.IsValid())
@@ -1150,6 +1168,7 @@ void FApplication::ProcessDeferredEvents()
 
 void FApplication::UpdateInputDevices()
 {
+    TRACE_SCOPE("Update Input Devices");
     PlatformApplication->UpdateInputDevices();
 }
 

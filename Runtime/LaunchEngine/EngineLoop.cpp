@@ -486,7 +486,10 @@ void FEngineLoop::Tick()
 
         FApplication::Get().ProcessDeferredEvents();
 
-        FEngine::Get()->Tick(DeltaTime);
+        {
+            TRACE_SCOPE("Engine Tick");
+            FEngine::Get()->Tick(DeltaTime);
+        }
 
         GPUProfiler.BeginGPUFrame();
 

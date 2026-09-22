@@ -7,6 +7,7 @@
 #include "Engine/EngineUI/EditorUI/EditorTitleBar.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorViewportPanel.h"
 #include "Engine/EditorEngine.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/IniFile.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/Paths.h"
@@ -269,6 +270,8 @@ void FEditorShell::Release()
 
 void FEditorShell::Tick(float DeltaTime)
 {
+    TRACE_SCOPE("Editor Shell Tick");
+
     FMenuInputHandler::Tick(DeltaTime);
 
     if (FDockWindowManager::IsInitialized())
