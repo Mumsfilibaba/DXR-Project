@@ -87,12 +87,17 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
 
     if (Font)
     {
-        const int32 LabelWidth  = Font->MeasureWidth(StringView(Label));
-        const int32 LabelHeight = Font->GetLineHeight();
-        const int32 LabelY      = Bounds.Position.Y + ((Bounds.Height - LabelHeight) / 2) + Style.LabelOffsetY;
+        const int32 LabelWidth = Font->MeasureWidth(StringView(Label));
 
-        const FRectangle LabelBounds(IntVector2(Bounds.Position.X + Style.HorizontalPadding, LabelY),
-            LabelWidth, LabelHeight);
+        const int32 LabelRegionRight = bIsClosable
+            ? GetCloseButtonRectangle().Position.X
+            : Bounds.GetRight();
+
+        const int32 LabelRegionWidth = Math::Max(LabelRegionRight - Bounds.Position.X, 0);
+        const int32 LabelX           = Bounds.Position.X + Math::Max((LabelRegionWidth - LabelWidth) / 2, 0);
+        const int32 LabelY           = Bounds.Position.Y + Style.LabelOffsetY;
+
+        const FRectangle LabelBounds(IntVector2(LabelX, LabelY), LabelWidth, Math::Max(Bounds.Height - Style.LabelOffsetY, 0));
 
         const FFloatColor& LabelColor = bIsActive ? Colors.Text : Colors.TextDisabled;
         OutCommandList.AddText(LayerId + 1, LabelBounds, Label, Font.Get(), LabelColor);

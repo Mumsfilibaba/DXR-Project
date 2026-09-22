@@ -446,10 +446,10 @@ struct FUITabStyle
     int32 BottomInset = 4;
 
     /** @brief How far a tab's corners are rounded, in pixels, which is what makes it read as a pill. */
-    float CornerRadius = 8.0f;
+    float CornerRadius = 5.0f;
 
-    /** @brief How far the close button's corners are rounded, which runs tighter than the tab's own. */
-    float CloseCornerRadius = 4.0f;
+    /** @brief How far the close button's corners are rounded, matching the tab's own. */
+    float CloseCornerRadius = 5.0f;
 
     /** @brief The height of the strip, in pixels, which the pill fills bar its two insets. */
     int32 StripHeight = 40;
@@ -467,13 +467,13 @@ struct FUITabStyle
     int32 LabelCloseGap = 6;
 
     /** @brief The side of the square the close button fills, in pixels, which stays inside the pill. */
-    int32 CloseSize = 18;
+    int32 CloseSize = 22;
 
     /** @brief How far the close button is held off the tab's trailing edge, in pixels. */
     int32 CloseInset = 4;
 
     /** @brief The side of the glyph centred in that square, in pixels. */
-    int32 CloseIconSize = 14;
+    int32 CloseIconSize = 16;
 
     /** @brief The width of the rule between two tabs, which is off while the pills carry the separation. */
     int32 SeparatorThickness = 0;

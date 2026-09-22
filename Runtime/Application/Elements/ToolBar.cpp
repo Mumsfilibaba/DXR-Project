@@ -168,6 +168,17 @@ void FToolBarButton::SetLabel(const String& InLabel)
     }
 }
 
+void FToolBarButton::SetIcon(const FUIBrush& InIcon)
+{
+    Icon = InIcon;
+    InvalidateDesiredSize();
+}
+
+void FToolBarButton::SetToolTipText(const String& InToolTipText)
+{
+    ToolTipText = InToolTipText;
+}
+
 void FToolBarButton::SetOnClicked(const FOnClicked& InOnClicked)
 {
     OnClickedDelegate = InOnClicked;

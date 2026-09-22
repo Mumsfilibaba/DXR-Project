@@ -18,6 +18,7 @@ FRichTextBlock::FRichTextBlock()
     , Layout()
     , Margin()
     , SearchText()
+    , SearchCaseType(EStringCaseType::CaseSensitive)
     , SearchMatches()
     , SearchRanges()
     , WrapWidth(0)
@@ -164,7 +165,7 @@ void FRichTextBlock::SetRuns(const TArray<FTextRun>& InRuns)
     InvalidateDesiredSize();
 }
 
-void FRichTextBlock::SetRunsAndSearchText(const TArray<FTextRun>& InRuns, const String& InSearchText)
+void FRichTextBlock::SetRunsAndSearchText(const TArray<FTextRun>& InRuns, const String& InSearchText, EStringCaseType InCaseType)
 {
     Layout.Clear();
     for (const FTextRun& Run : InRuns)
@@ -174,7 +175,8 @@ void FRichTextBlock::SetRunsAndSearchText(const TArray<FTextRun>& InRuns, const 
 
     ClearSelection();
 
-    SearchText = InSearchText;
+    SearchText     = InSearchText;
+    SearchCaseType = InCaseType;
     RefreshSearchMatches();
     InvalidateDesiredSize();
 }
@@ -204,6 +206,17 @@ void FRichTextBlock::SetSearchText(const String& InSearchText)
     }
 
     SearchText = InSearchText;
+    RefreshSearchMatches();
+}
+
+void FRichTextBlock::SetSearchCaseType(EStringCaseType InCaseType)
+{
+    if (SearchCaseType == InCaseType)
+    {
+        return;
+    }
+
+    SearchCaseType = InCaseType;
     RefreshSearchMatches();
 }
 
@@ -364,7 +377,7 @@ void FRichTextBlock::RefreshSearchMatches()
         return;
     }
 
-    for (int32 Index = Text.Find(SearchText.Data(), 0); Index >= 0 && Index + MatchLength <= TextLength;)
+    for (int32 Index = Text.Find(SearchText.Data(), 0, SearchCaseType); Index >= 0 && Index + MatchLength <= TextLength;)
     {
         SearchMatches.Add(Index);
         SearchRanges.Emplace(Index, Index + MatchLength);
@@ -375,7 +388,7 @@ void FRichTextBlock::RefreshSearchMatches()
             break;
         }
 
-        Index = Text.Find(SearchText.Data(), NextIndex);
+        Index = Text.Find(SearchText.Data(), NextIndex, SearchCaseType);
     }
 }
 

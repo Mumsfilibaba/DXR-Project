@@ -5,6 +5,7 @@
 #include "Application/ElementPath.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/Button.h"
+#include "Application/Elements/CheckBox.h"
 #include "Application/Elements/Image.h"
 #include "Application/Elements/LogView.h"
 #include "Application/Elements/SearchBox.h"
@@ -118,6 +119,12 @@ TSharedPtr<FToolBar> FEditorOutputLogPanel::BuildToolBar()
         FOnSearchTextChanged::CreateRaw(this, &FEditorOutputLogPanel::OnSearchTextChanged)));
 
     Bar->AddWidget(SearchBox, LOG_SEARCH_FILL);
+    MatchCaseItem = Bar->AddToggle(
+        FToolBarItemDesc()
+            .SetIcon(FEditorIcons::MatchCase)
+            .SetToolTipText("Match Case"),
+        ECheckBoxState::Unchecked,
+        FOnCheckStateChanged::CreateRaw(this, &FEditorOutputLogPanel::OnMatchCaseChanged));
     Bar->AddWidget(BuildFilterButton());
     Bar->AddFlexibleSpace();
 
@@ -233,6 +240,7 @@ void FEditorOutputLogPanel::Release()
     }
 
     SearchBox.Reset();
+    MatchCaseItem.Reset();
     ToolBar.Reset();
     LogArea.Reset();
     FilterButton.Reset();
@@ -244,6 +252,17 @@ void FEditorOutputLogPanel::Release()
 void FEditorOutputLogPanel::OnSearchTextChanged(const String& SearchText)
 {
     LogView->SetSearchText(SearchText, !SearchText.IsEmpty());
+}
+
+void FEditorOutputLogPanel::OnMatchCaseChanged(ECheckBoxState NewState)
+{
+    const bool bCaseSensitive = NewState == ECheckBoxState::Checked;
+    LogView->SetSearchCaseSensitive(bCaseSensitive);
+
+    if (MatchCaseItem)
+    {
+        MatchCaseItem->SetToolTipText(bCaseSensitive ? "Match Case (on)" : "Match Case");
+    }
 }
 
 void FEditorOutputLogPanel::OnLogContextMenu(const IntVector2& ScreenPosition)

@@ -726,7 +726,7 @@ bool TabStripReorder_Test()
     TEST_EXPECT_EQ(OutlinerClose.Width, TabStyle.CloseSize);
     TEST_EXPECT(OutlinerClose.Position.X > OutlinerBounds.Position.X + TabStyle.HorizontalPadding);
 
-    TEST_SECTION("Its label is centred in the pill and then lifted by the style's nudge, so it reads level with the cross");
+    TEST_SECTION("Its label is centred between the leading edge and the close button, and fills the pill so the face can sit level with the cross");
     FDrawCommandList LabelCommands;
     DrawElement(FindTab(Strip, "Outliner"), LabelCommands);
 
@@ -735,9 +735,13 @@ bool TabStripReorder_Test()
 
     if (Label)
     {
-        TEST_EXPECT_EQ(Label->Bounds.Position.Y,
-            OutlinerBounds.Position.Y + ((OutlinerBounds.Height - Font->GetLineHeight()) / 2) + TabStyle.LabelOffsetY);
-        TEST_EXPECT(Label->Bounds.GetCenter().Y <= OutlinerClose.GetCenter().Y);
+        const int32 LabelRegionWidth = OutlinerClose.Position.X - OutlinerBounds.Position.X;
+
+        TEST_EXPECT_EQ(Label->Bounds.Position.Y, OutlinerBounds.Position.Y + TabStyle.LabelOffsetY);
+        TEST_EXPECT_EQ(Label->Bounds.Height, OutlinerBounds.Height - TabStyle.LabelOffsetY);
+        TEST_EXPECT_EQ(Label->Bounds.Position.X,
+            OutlinerBounds.Position.X + ((LabelRegionWidth - Label->Bounds.Width) / 2));
+        TEST_EXPECT(Label->Bounds.GetCenter().Y <= OutlinerClose.GetCenter().Y + 1);
     }
 
     TEST_SECTION("A hovered tab puts the hand under the cursor, over its close button as much as over its label");

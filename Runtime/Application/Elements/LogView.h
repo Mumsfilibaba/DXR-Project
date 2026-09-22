@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Containers/String.h"
+#include "Core/Containers/StringView.h"
 #include "Core/Misc/IOutputDevice.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Application/Elements/CompoundElement.h"
@@ -104,10 +105,23 @@ public:
      */
     void SetSearchText(const String& InSearchText, bool bInFilterToMatches);
 
+    /**
+     * @brief Sets whether the search must use the same case as the filter string.
+     *
+     * @param bInCaseSensitive True so "Create" does not match "create".
+     */
+    void SetSearchCaseSensitive(bool bInCaseSensitive);
+
     /** @return The string the lines are searched for, which is empty when there is no search. */
     NODISCARD FORCEINLINE const String& GetSearchText() const
     {
         return SearchText;
+    }
+
+    /** @return True when "Create" and "create" are treated as different searches. */
+    NODISCARD FORCEINLINE bool IsSearchCaseSensitive() const
+    {
+        return SearchCaseType == EStringCaseType::CaseSensitive;
     }
 
     /** @return True when non-matching lines are hidden rather than only left unhighlighted. */
@@ -203,6 +217,7 @@ private:
     TArray<FLogLine>           PendingLines;
     TArray<FLogLine>           Lines;
     String                     SearchText;
+    EStringCaseType            SearchCaseType;
     uint8                      VisibleSeverities;
     int32                      MaxLineCount;
     bool                       bFilterToMatches        : 1;

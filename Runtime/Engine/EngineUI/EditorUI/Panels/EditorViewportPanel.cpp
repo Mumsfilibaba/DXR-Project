@@ -1,6 +1,7 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorViewportPanel.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorViewportImage.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorViewportSurface.h"
+#include "Engine/EngineUI/EditorUI/EditorIcons.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
 #include "Engine/EngineUI/Editor/EditorActorFactory.h"
 #include "Engine/EngineUI/Editor/EditorCameraController.h"
@@ -38,13 +39,8 @@ constexpr int32 TOOLBAR_GROUP_GAP = 8;
 
 static const FMargin TOOLBAR_INSET = FMargin(12, 6, 12, 6);
 
-constexpr int32 TRANSLATION_BUTTON_WIDTH = 76;
-constexpr int32 ROTATE_BUTTON_WIDTH      = 56;
-constexpr int32 SCALE_BUTTON_WIDTH       = 52;
-constexpr int32 PLACEMENT_BUTTON_WIDTH   = 56;
-constexpr int32 ORIENTATION_BUTTON_WIDTH = 52;
-constexpr int32 PLAY_BUTTON_WIDTH        = 52;
-constexpr int32 PAUSE_BUTTON_WIDTH       = 56;
+constexpr int32 VIEWPORT_TOOLBAR_ICON_SIZE = 20;
+constexpr int32 TRANSPORT_BUTTON_WIDTH     = 64;
 constexpr int32 CAMERA_BUTTON_WIDTH      = 118;
 
 constexpr int32 VIEW_BUTTON_MAX_WIDTH = 128;
@@ -423,7 +419,7 @@ TSharedPtr<FToolBar> FEditorViewportPanel::BuildToolBar()
 {
     FToolBar::FDesc Desc;
     Desc.Font           = FEditorStyle::GetFonts().Body;
-    Desc.IconSize       = FEditorStyle::IconSize;
+    Desc.IconSize       = VIEWPORT_TOOLBAR_ICON_SIZE;
     Desc.Padding        = TOOLBAR_INSET;
     Desc.ItemSpacing    = TOOLBAR_GROUP_GAP;
     Desc.bHasBackground = true;
@@ -437,21 +433,21 @@ TSharedPtr<FToolBar> FEditorViewportPanel::BuildToolBar()
     Bar->BeginGroup();
 
     TranslateItem = Bar->AddButton(
-        FToolBarItemDesc().SetLabel("Translation").SetToolTipText("Translate the selection").SetMinWidth(TRANSLATION_BUTTON_WIDTH),
+        FToolBarItemDesc().SetIcon(FEditorIcons::Translate).SetToolTipText("Translate the selection"),
         FOnClicked::CreateLambda([this]()
         {
             SetGizmoOperation(EGizmoOperation::Translate);
         }));
 
     RotateItem = Bar->AddButton(
-        FToolBarItemDesc().SetLabel("Rotate").SetToolTipText("Rotate the selection").SetMinWidth(ROTATE_BUTTON_WIDTH),
+        FToolBarItemDesc().SetIcon(FEditorIcons::Rotate).SetToolTipText("Rotate the selection"),
         FOnClicked::CreateLambda([this]()
         {
             SetGizmoOperation(EGizmoOperation::Rotate);
         }));
 
     ScaleItem = Bar->AddButton(
-        FToolBarItemDesc().SetLabel("Scale").SetToolTipText("Scale the selection").SetMinWidth(SCALE_BUTTON_WIDTH),
+        FToolBarItemDesc().SetIcon(FEditorIcons::Scale).SetToolTipText("Scale the selection"),
         FOnClicked::CreateLambda([this]()
         {
             SetGizmoOperation(EGizmoOperation::Scale);
@@ -462,14 +458,14 @@ TSharedPtr<FToolBar> FEditorViewportPanel::BuildToolBar()
     Bar->BeginGroup();
 
     CenterItem = Bar->AddButton(
-        FToolBarItemDesc().SetLabel("Center").SetToolTipText("Put the handles at the bounds centre").SetMinWidth(PLACEMENT_BUTTON_WIDTH),
+        FToolBarItemDesc().SetIcon(FEditorIcons::GizmoCenter).SetToolTipText("Put the handles at the bounds centre"),
         FOnClicked::CreateLambda([this]()
         {
             SetGizmoPlacement(EEditorGizmoPlacement::Center);
         }));
 
     PivotItem = Bar->AddButton(
-        FToolBarItemDesc().SetLabel("Pivot").SetToolTipText("Put the handles at the pivot").SetMinWidth(PLACEMENT_BUTTON_WIDTH),
+        FToolBarItemDesc().SetIcon(FEditorIcons::GizmoPivot).SetToolTipText("Put the handles at the pivot"),
         FOnClicked::CreateLambda([this]()
         {
             SetGizmoPlacement(EEditorGizmoPlacement::Pivot);
@@ -480,14 +476,14 @@ TSharedPtr<FToolBar> FEditorViewportPanel::BuildToolBar()
     Bar->BeginGroup();
 
     LocalItem = Bar->AddButton(
-        FToolBarItemDesc().SetLabel("Local").SetToolTipText("Align the handles to the selection").SetMinWidth(ORIENTATION_BUTTON_WIDTH),
+        FToolBarItemDesc().SetIcon(FEditorIcons::GizmoLocal).SetToolTipText("Align the handles to the selection"),
         FOnClicked::CreateLambda([this]()
         {
             SetGizmoMode(EGizmoMode::Local);
         }));
 
     WorldItem = Bar->AddButton(
-        FToolBarItemDesc().SetLabel("World").SetToolTipText("Align the handles to the world axes").SetMinWidth(ORIENTATION_BUTTON_WIDTH),
+        FToolBarItemDesc().SetIcon(FEditorIcons::GizmoWorld).SetToolTipText("Align the handles to the world axes"),
         FOnClicked::CreateLambda([this]()
         {
             SetGizmoMode(EGizmoMode::World);
@@ -513,7 +509,7 @@ TSharedPtr<FToolBar> FEditorViewportPanel::BuildTransportBar()
 {
     FToolBar::FDesc Desc;
     Desc.Font           = FEditorStyle::GetFonts().Body;
-    Desc.IconSize       = FEditorStyle::IconSize;
+    Desc.IconSize       = VIEWPORT_TOOLBAR_ICON_SIZE;
     Desc.Padding        = FMargin();
     Desc.ItemSpacing    = TOOLBAR_GROUP_GAP;
     Desc.bHasBackground = false;
@@ -527,11 +523,11 @@ TSharedPtr<FToolBar> FEditorViewportPanel::BuildTransportBar()
     Bar->BeginGroup();
 
     PlayItem = Bar->AddButton(
-        FToolBarItemDesc().SetLabel("Play").SetToolTipText("Run the world in the editor").SetMinWidth(PLAY_BUTTON_WIDTH),
+        FToolBarItemDesc().SetIcon(FEditorIcons::Play).SetToolTipText("Run the world in the editor").SetMinWidth(TRANSPORT_BUTTON_WIDTH),
         FOnClicked::CreateRaw(this, &FEditorViewportPanel::TogglePlay));
 
     PauseItem = Bar->AddButton(
-        FToolBarItemDesc().SetLabel("Pause").SetToolTipText("Freeze the running world").SetMinWidth(PAUSE_BUTTON_WIDTH),
+        FToolBarItemDesc().SetIcon(FEditorIcons::Pause).SetToolTipText("Freeze the running world").SetMinWidth(TRANSPORT_BUTTON_WIDTH),
         FOnClicked::CreateLambda([this]()
         {
             EditorEngine->TogglePause();
@@ -603,7 +599,8 @@ void FEditorViewportPanel::RefreshToolBarState()
 
     if (PlayItem)
     {
-        PlayItem->SetLabel(bIsEditing ? "Play" : "Stop");
+        PlayItem->SetIcon(bIsEditing ? FEditorIcons::Play : FEditorIcons::Stop);
+        PlayItem->SetToolTipText(bIsEditing ? "Run the world in the editor" : "Stop the running world");
         PlayItem->SetHighlighted(!bIsEditing);
     }
 

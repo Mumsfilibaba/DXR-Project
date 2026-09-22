@@ -46,6 +46,7 @@ FDockingArea::FDockingArea()
     , PanelsById()
     , Leaves()
     , Font(nullptr)
+    , TabFont(nullptr)
     , bAllowTearOut(true)
     , bIsDropTarget(true)
     , bNeedsRebuild(false)
@@ -66,6 +67,7 @@ FDockingArea::~FDockingArea()
 void FDockingArea::Initialize(const FDesc& Desc)
 {
     Font                   = Desc.Font;
+    TabFont                = Desc.TabFont ? Desc.TabFont : Desc.Font;
     TabStyle               = Desc.TabStyle;
     TabCloseIcon           = Desc.TabCloseIcon;
     bAllowTearOut          = Desc.bAllowTearOut;
@@ -514,7 +516,7 @@ TSharedPtr<FVisualElement> FDockingArea::BuildNode(FDockNode& Node, const TArray
     if (Node.Kind == EDockNodeKind::Tabs)
     {
         FTabStrip::FDesc StripDesc;
-        StripDesc.Font           = Font;
+        StripDesc.Font           = TabFont ? TabFont : Font;
         StripDesc.Style          = TabStyle;
         StripDesc.CloseIcon      = TabCloseIcon;
         StripDesc.bAllowTearOut  = bAllowTearOut;

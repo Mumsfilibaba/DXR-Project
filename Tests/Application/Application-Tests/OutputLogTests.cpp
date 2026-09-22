@@ -10,6 +10,7 @@
 #include <Application/Draw/DrawCommandList.h>
 #include <Application/Elements/LogView.h>
 #include <Application/Elements/RichTextBlock.h>
+#include <Core/Containers/StringView.h>
 #include <Application/Elements/ScrollBox.h>
 #include <Application/Input/Keys.h>
 #include <Application/Style/UIStyle.h>
@@ -427,6 +428,22 @@ bool RichTextSearch_Test()
 
     TEST_EXPECT_EQ(Block->GetSearchMatches().Size(), 3);
 
+    TEST_SECTION("A case-sensitive search does not treat Create and create as the same");
+    TSharedPtr<FRichTextBlock> Cased = MakeBlock(Font, { "Create create CREATE" });
+    LayoutElement(Cased, FRectangle(IntVector2(0, 0), 400, 60));
+
+    Cased->SetSearchText("Create");
+    TEST_EXPECT_EQ(Cased->GetSearchMatches().Size(), 1);
+    TEST_EXPECT_EQ(Cased->GetSearchMatches()[0], 0);
+
+    TEST_SECTION("Ignoring case finds every spelling of the same word");
+    Cased->SetSearchCaseType(EStringCaseType::NoCase);
+    TEST_EXPECT_EQ(Cased->GetSearchMatches().Size(), 3);
+
+    TEST_SECTION("Turning case matching back on drops the extra hits");
+    Cased->SetSearchCaseType(EStringCaseType::CaseSensitive);
+    TEST_EXPECT_EQ(Cased->GetSearchMatches().Size(), 1);
+
     TEST_END();
 }
 
@@ -623,6 +640,36 @@ bool LogViewFiltering_Test()
     TEST_EXPECT_EQ(LogView->GetNumVisibleLines(), 2);
     TEST_EXPECT_EQ(LogView->GetTextBlock()->GetSearchMatches().Size(), 2);
     TEST_EXPECT(!LogView->GetTextBlock()->GetText().Contains("device lost"));
+
+    TEST_SECTION("By default Create and create are the same search");
+    LogView->SetSearchText("", false);
+    LogView->Log(ELogSeverity::Info, "Create actor");
+    LogView->Log(ELogSeverity::Info, "create material");
+    LogView->Flush();
+
+    TEST_EXPECT(!LogView->IsSearchCaseSensitive());
+
+    LogView->SetSearchText("Create", true);
+    LogView->Flush();
+
+    TEST_EXPECT_EQ(LogView->GetNumVisibleLines(), 2);
+    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetSearchMatches().Size(), 2);
+
+    TEST_SECTION("Match Case hides the line that only matches ignoring case");
+    LogView->SetSearchCaseSensitive(true);
+    LogView->Flush();
+
+    TEST_EXPECT(LogView->IsSearchCaseSensitive());
+    TEST_EXPECT_EQ(LogView->GetNumVisibleLines(), 1);
+    TEST_EXPECT_EQ(LogView->GetVisibleMessages()[0], String("Create actor"));
+    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetSearchMatches().Size(), 1);
+
+    TEST_SECTION("Turning Match Case off brings the other spelling back");
+    LogView->SetSearchCaseSensitive(false);
+    LogView->Flush();
+
+    TEST_EXPECT_EQ(LogView->GetNumVisibleLines(), 2);
+    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetSearchMatches().Size(), 2);
 
     TEST_END();
 }

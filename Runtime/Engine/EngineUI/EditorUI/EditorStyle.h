@@ -20,6 +20,9 @@ struct FEditorFonts
     /** @brief The larger face the window caption is drawn with. */
     TSharedPtr<IFontFace> Title;
 
+    /** @brief The face docked tab labels are drawn with, a step larger than Body. */
+    TSharedPtr<IFontFace> Tab;
+
     /** @brief The fixed-width face the console, the log and any number column are drawn with. */
     TSharedPtr<IFontFace> Monospace;
 };

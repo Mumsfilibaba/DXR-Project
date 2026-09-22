@@ -152,6 +152,20 @@ public:
     void SetLabel(const String& InLabel);
 
     /**
+     * @brief Sets the icon drawn ahead of the label, empty for a text-only entry.
+     *
+     * @param InIcon The brush to draw.
+     */
+    void SetIcon(const FUIBrush& InIcon);
+
+    /**
+     * @brief Sets the tip shown once the cursor has rested on the entry.
+     *
+     * @param InToolTipText The text to show, which is empty for an entry with no tip.
+     */
+    void SetToolTipText(const String& InToolTipText);
+
+    /**
      * @brief Sets what a click on the entry does.
      *
      * @param InOnClicked The delegate to fire.

@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Misc/IOutputDevice.h"
 #include "Engine/EngineUI/EditorUI/EditorPanel.h"
+#include "Application/Elements/CheckBox.h"
 #include "Application/Elements/CompoundElement.h"
 
 class FLogView;
@@ -68,12 +69,14 @@ private:
     NODISCARD TSharedPtr<FVisualElement> BuildFilterMenu();
 
     void OnSearchTextChanged(const String& SearchText);
+    void OnMatchCaseChanged(ECheckBoxState NewState);
     void OnLogContextMenu(const IntVector2& ScreenPosition);
 
     TSharedPtr<FLogView>              LogView;
     TSharedPtr<FSearchBox>            SearchBox;
     TSharedPtr<FToolBar>              ToolBar;
     TSharedPtr<FEditorLogContextArea> LogArea;
+    TSharedPtr<class FToolBarButton>  MatchCaseItem;
     TSharedPtr<class FButton>         FilterButton;
     TSharedPtr<FMenuAnchor>           FilterAnchor;
 };

@@ -25,6 +25,7 @@ FLogView::FLogView()
     , PendingLines()
     , Lines()
     , SearchText()
+    , SearchCaseType(EStringCaseType::NoCase)
     , VisibleSeverities(LOG_VIEW_ALL_SEVERITIES)
     , MaxLineCount(DefaultMaxLineCount)
     , bFilterToMatches(false)
@@ -148,6 +149,18 @@ void FLogView::SetSearchText(const String& InSearchText, bool bInFilterToMatches
 
     SearchText       = InSearchText;
     bFilterToMatches = bInFilterToMatches;
+    MarkLayoutStale();
+}
+
+void FLogView::SetSearchCaseSensitive(bool bInCaseSensitive)
+{
+    const EStringCaseType NewCaseType = bInCaseSensitive ? EStringCaseType::CaseSensitive : EStringCaseType::NoCase;
+    if (SearchCaseType == NewCaseType)
+    {
+        return;
+    }
+
+    SearchCaseType = NewCaseType;
     MarkLayoutStale();
 }
 
@@ -328,7 +341,7 @@ void FLogView::RebuildLayout()
         }
     }
 
-    TextBlock->SetRunsAndSearchText(Runs, SearchText);
+    TextBlock->SetRunsAndSearchText(Runs, SearchText, SearchCaseType);
 }
 
 bool FLogView::IsLineVisible(const FLogLine& Line) const
@@ -343,7 +356,7 @@ bool FLogView::IsLineVisible(const FLogLine& Line) const
         return true;
     }
 
-    return Line.Message.Contains(SearchText);
+    return Line.Message.Contains(SearchText, SearchCaseType);
 }
 
 void FLogView::TrimToMaxLineCount()

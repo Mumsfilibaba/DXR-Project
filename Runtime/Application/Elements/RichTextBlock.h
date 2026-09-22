@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Containers/StringView.h"
 #include "Core/Delegates/Delegate.h"
 #include "Application/Elements/InteractiveElement.h"
 #include "Application/Text/TextLayout.h"
@@ -54,8 +55,9 @@ public:
      *
      * @param InRuns       The runs, in reading order.
      * @param InSearchText The text to look for. An empty string clears the search.
+     * @param InCaseType   Whether matches must use the same case as InSearchText.
      */
-    void SetRunsAndSearchText(const TArray<FTextRun>& InRuns, const String& InSearchText);
+    void SetRunsAndSearchText(const TArray<FTextRun>& InRuns, const String& InSearchText, EStringCaseType InCaseType = EStringCaseType::CaseSensitive);
 
     /**
      * @brief Appends one run to the end of the text.
@@ -74,10 +76,23 @@ public:
      */
     void SetSearchText(const String& InSearchText);
 
+    /**
+     * @brief Sets whether matches must use the same case as the search string.
+     *
+     * @param InCaseType CaseSensitive to require the same case, NoCase to treat "Create" and "create" as one.
+     */
+    void SetSearchCaseType(EStringCaseType InCaseType);
+
     /** @return The string the block highlights every occurrence of, or empty when there is no search. */
     NODISCARD FORCEINLINE const String& GetSearchText() const
     {
         return SearchText;
+    }
+
+    /** @return Whether matches must use the same case as the search string. */
+    NODISCARD FORCEINLINE EStringCaseType GetSearchCaseType() const
+    {
+        return SearchCaseType;
     }
 
     /** @return The start of each search match in the concatenated text, in order and never overlapping. */
@@ -153,6 +168,7 @@ private:
     mutable FTextLayout Layout;
     FMargin             Margin;
     String              SearchText;
+    EStringCaseType     SearchCaseType;
     TArray<int32>       SearchMatches;
     TArray<FTextRange>  SearchRanges;
     int32               WrapWidth;

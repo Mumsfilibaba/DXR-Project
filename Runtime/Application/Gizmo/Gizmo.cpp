@@ -15,10 +15,10 @@ static TAutoConsoleVariable<float> CVarGizmoSize(
 
 constexpr float GIZMO_SHAFT_START       = 0.16f;
 constexpr float GIZMO_ARROW_LENGTH      = 13.0f;
-constexpr float GIZMO_ARROW_HALF_WIDTH  = 5.0f;
+constexpr float GIZMO_ARROW_HALF_WIDTH  = 6.0f;
 constexpr float GIZMO_CONE_SHADE        = 0.72f;
 constexpr float GIZMO_KNOB_HALF_SIZE    = 6.0f;
-constexpr float GIZMO_SHAFT_THICKNESS   = 3.0f;
+constexpr float GIZMO_SHAFT_THICKNESS   = 5.0f;
 constexpr float GIZMO_RING_THICKNESS    = 4.0f;
 constexpr float GIZMO_OUTLINE_THICKNESS = 1.0f;
 constexpr float GIZMO_PLANE_OPACITY     = 0.32f;
@@ -890,11 +890,13 @@ void FGizmo::DrawTranslate(FDrawCommandList& OutCommandList, int32 LayerId) cons
         }
 
         const FFloatColor Color = GetHandleColor(CreateHandle(EGizmoHandle::TranslateX, AxisIndex), AxisIndex);
-        OutCommandList.AddLine(LayerId + 1, Start, End, Color, GIZMO_SHAFT_THICKNESS);
 
-        const Vector2 Along = (End - Start).GetNormalized();
-        const Vector2 Side(-Along.Y, Along.X);
-        const Vector2 Base = End - (Along * GIZMO_ARROW_LENGTH);
+        const Vector2 Along    = (End - Start).GetNormalized();
+        const Vector2 Side     = Vector2(-Along.Y, Along.X);
+        const Vector2 Base     = End - (Along * GIZMO_ARROW_LENGTH);
+        const Vector2 ShaftEnd = Base + (Along * 1.0f);
+
+        OutCommandList.AddLine(LayerId + 1, Start, ShaftEnd, Color, GIZMO_SHAFT_THICKNESS);
 
         FFloatColor ShadeColor = Color;
         ShadeColor.R *= GIZMO_CONE_SHADE;

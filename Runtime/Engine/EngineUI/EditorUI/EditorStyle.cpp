@@ -13,6 +13,7 @@ static FUIStyle     GStyle;
 
 constexpr int32 BODY_PIXEL_HEIGHT      = 20;
 constexpr int32 TITLE_PIXEL_HEIGHT     = 20;
+constexpr int32 TAB_PIXEL_HEIGHT       = 22;
 constexpr int32 MONOSPACE_PIXEL_HEIGHT = 14;
 
 constexpr float INPUT_FIELD_BORDER_THICKNESS = 1.0f;
@@ -56,9 +57,10 @@ bool FEditorStyle::Initialize()
     GFonts.Body      = LoadFace("segoeui.ttf", BODY_PIXEL_HEIGHT);
     GFonts.BodyBold  = LoadFace("segoeuib.ttf", BODY_PIXEL_HEIGHT);
     GFonts.Title     = LoadFace("segoeui.ttf", TITLE_PIXEL_HEIGHT);
+    GFonts.Tab       = LoadFace("segoeui.ttf", TAB_PIXEL_HEIGHT);
     GFonts.Monospace = LoadFace("consola.ttf", MONOSPACE_PIXEL_HEIGHT);
 
-    if (!GFonts.Body || !GFonts.BodyBold || !GFonts.Title || !GFonts.Monospace)
+    if (!GFonts.Body || !GFonts.BodyBold || !GFonts.Title || !GFonts.Tab || !GFonts.Monospace)
     {
         Release();
         return false;
@@ -124,7 +126,10 @@ bool FEditorStyle::Initialize()
     GStyle.Tab.Spacing                    = 4;
     GStyle.Tab.TopInset                   = 4;
     GStyle.Tab.BottomInset                = 4;
-    GStyle.Tab.CornerRadius               = 8.0f;
+    GStyle.Tab.CornerRadius               = 5.0f;
+    GStyle.Tab.CloseCornerRadius          = 5.0f;
+    GStyle.Tab.CloseSize                  = 22;
+    GStyle.Tab.CloseIconSize              = 16;
     GStyle.Tab.StripHeight                = FDockMetrics::TabStripHeight;
     GStyle.Tab.LabelOffsetY               = 0;
 
@@ -152,6 +157,7 @@ void FEditorStyle::Release()
     GFonts.Body.Reset();
     GFonts.BodyBold.Reset();
     GFonts.Title.Reset();
+    GFonts.Tab.Reset();
     GFonts.Monospace.Reset();
 
     GStyle = FUIStyle();

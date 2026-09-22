@@ -37,6 +37,9 @@ public:
         /** @brief The face every tab label is drawn with. */
         TSharedPtr<IFontFace> Font = nullptr;
 
+        /** @brief The face docked tab labels use, which falls back to Font when null. */
+        TSharedPtr<IFontFace> TabFont = nullptr;
+
         /** @brief The look of every tab strip the area builds, which defaults to the shared tab style. */
         FUITabStyle TabStyle = FUIStyle::GetDefault().Tab;
 
@@ -311,6 +314,7 @@ private:
     TMap<String, FPanelEntry> PanelsById;
     TArray<FLeafGeometry>     Leaves;
     TSharedPtr<IFontFace>     Font;
+    TSharedPtr<IFontFace>     TabFont;
     FUITabStyle               TabStyle;
     FUIBrush                  TabCloseIcon;
     bool                      bAllowTearOut;
