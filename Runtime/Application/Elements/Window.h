@@ -71,6 +71,7 @@ public:
     virtual ~FWindow();
 
     // FVisualElement Interface
+    virtual IntVector2 PrepareDesiredSize() override final;
     virtual void Tick(const FRectangle& AssignedBounds) override final;
     virtual bool IsWindow() const override final;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final;

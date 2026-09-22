@@ -338,6 +338,14 @@ void FSplitter::AddChild(const TSharedPtr<FVisualElement>& InChild, const IntVec
 
 void FSplitter::ClearChildren()
 {
+    for (const TSharedPtr<FVisualElement>& Child : Children)
+    {
+        if (Child)
+        {
+            Child->SetParentElement(TWeakPtr<FVisualElement>());
+        }
+    }
+
     Children.Clear();
     MinimumSizes.Clear();
     Fractions.Clear();
@@ -345,6 +353,7 @@ void FSplitter::ClearChildren()
 
     ActiveHandleIndex  = -1;
     HoveredHandleIndex = -1;
+    InvalidateDesiredSize();
 }
 
 void FSplitter::SetFractions(const TArray<float>& InFractions)

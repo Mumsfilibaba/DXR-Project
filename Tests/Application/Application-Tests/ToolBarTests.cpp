@@ -105,7 +105,7 @@ static void DrawElement(const TSharedPtr<FVisualElement>& Element, FDrawCommandL
     Element->OnDraw(FDrawGeometry(Element->GetContentRectangle(), 1.0f), OutCommandList, 0);
 }
 
-static FFloatColor FindFillColor(const FDrawCommandList& CommandList, const TSharedPtr<FVisualElement>& Element)
+static bool FindFillHasTint(const FDrawCommandList& CommandList, const TSharedPtr<FVisualElement>& Element, const FFloatColor& Tint)
 {
     const FRectangle Bounds = Element->GetContentRectangle();
 
@@ -113,11 +113,11 @@ static FFloatColor FindFillColor(const FDrawCommandList& CommandList, const TSha
     {
         if (Command.Type == EDrawCommandType::Box && Command.Bounds == Bounds)
         {
-            return Command.Tint;
+            return Command.HasTint(Tint);
         }
     }
 
-    return FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+    return false;
 }
 
 bool ToolBarComposition_Test()
@@ -311,16 +311,16 @@ bool ToolBarInteraction_Test()
 
     TEST_EXPECT_EQ(CountCommands(IdleList, EDrawCommandType::Box), 3);
     TEST_EXPECT_EQ(CountCommands(IdleList, EDrawCommandType::Text), 2);
-    TEST_EXPECT(FindFillColor(IdleList, Save) == Style.Colors.ButtonNormal);
-    TEST_EXPECT(FindFillColor(IdleList, Grid) == Style.Colors.ButtonNormal);
+    TEST_EXPECT(FindFillHasTint(IdleList, Save, Style.Colors.ButtonNormal));
+    TEST_EXPECT(FindFillHasTint(IdleList, Grid, Style.Colors.ButtonNormal));
 
     TEST_SECTION("Hovering lifts the fill of the entry under the cursor and leaves its neighbours alone");
     Save->OnMouseEntered(MakeMoveEvent(Save->GetContentRectangle().GetCenter()));
 
     FDrawCommandList HoveredList;
     DrawElement(ToolBar, HoveredList);
-    TEST_EXPECT(FindFillColor(HoveredList, Save) == Style.Colors.ButtonHovered);
-    TEST_EXPECT(FindFillColor(HoveredList, Grid) == Style.Colors.ButtonNormal);
+    TEST_EXPECT(FindFillHasTint(HoveredList, Save, Style.Colors.ButtonHovered));
+    TEST_EXPECT(FindFillHasTint(HoveredList, Grid, Style.Colors.ButtonNormal));
 
     TEST_SECTION("Latching switches the fill to the accent, and hovering a latched entry brightens it");
     Save->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
@@ -328,13 +328,13 @@ bool ToolBarInteraction_Test()
 
     FDrawCommandList CheckedList;
     DrawElement(ToolBar, CheckedList);
-    TEST_EXPECT(FindFillColor(CheckedList, Grid) == Style.Colors.Accent);
+    TEST_EXPECT(FindFillHasTint(CheckedList, Grid, Style.Colors.Accent));
 
     Grid->OnMouseEntered(MakeMoveEvent(Grid->GetContentRectangle().GetCenter()));
 
     FDrawCommandList CheckedHoveredList;
     DrawElement(ToolBar, CheckedHoveredList);
-    TEST_EXPECT(FindFillColor(CheckedHoveredList, Grid) == Style.Colors.AccentHovered);
+    TEST_EXPECT(FindFillHasTint(CheckedHoveredList, Grid, Style.Colors.AccentHovered));
 
     Grid->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
 
@@ -346,7 +346,7 @@ bool ToolBarInteraction_Test()
 
     FDrawCommandList LitList;
     DrawElement(ToolBar, LitList);
-    TEST_EXPECT(FindFillColor(LitList, Save) == Style.Colors.Accent);
+    TEST_EXPECT(FindFillHasTint(LitList, Save, Style.Colors.Accent));
 
     Save->SetHighlighted(false);
     TEST_EXPECT(!Save->IsHighlighted());
@@ -430,7 +430,7 @@ bool ToolBarGroups_Test()
     int32 MoveLabelLeft = -1;
     for (const FDrawCommand& Command : CommandList.GetCommands())
     {
-        if (Command.Type == EDrawCommandType::Text && Command.Text == String("Move"))
+        if (Command.Type == EDrawCommandType::Text && CommandList.GetCommandText(Command) == StringView("Move"))
         {
             MoveLabelLeft = Command.Bounds.Position.X;
         }
@@ -542,9 +542,19 @@ bool ToolBarFlexibleSpace_Test()
         (static_cast<float>(Field.Position.Y) + static_cast<float>(Field.GetBottom())) * 0.5f);
 
     bool bFoundField = false;
-    for (const FUIVertex& Vertex : DrawData.GetVertices())
+    for (const FUIShapeVertex& Vertex : DrawData.GetShapeVertices())
     {
-        bFoundField |= Vertex.Position == FieldCentre;
+        const Vector2 Origin = Vertex.Position - Vertex.LocalPos;
+        bFoundField |= FieldCentre.X >= Origin.X && FieldCentre.X <= Origin.X + Vertex.RectSize.X
+            && FieldCentre.Y >= Origin.Y && FieldCentre.Y <= Origin.Y + Vertex.RectSize.Y;
+    }
+
+    if (!bFoundField)
+    {
+        for (const FUIVertex& Vertex : DrawData.GetVertices())
+        {
+            bFoundField |= Vertex.Position == FieldCentre;
+        }
     }
 
     TEST_EXPECT(bFoundField);

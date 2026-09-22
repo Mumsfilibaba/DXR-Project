@@ -181,6 +181,7 @@ void FTab::SetActive(bool bInIsActive)
 void FTab::SetStyle(const FUITabStyle& InStyle)
 {
     Style = InStyle;
+    InvalidateDesiredSize();
 }
 
 void FTab::SetCloseIcon(const FUIBrush& InCloseIcon)
@@ -512,7 +513,10 @@ void FTabStrip::RemoveTab(const String& PanelId)
         }
 
         const bool bWasActive = Tabs[Index]->IsActive();
+        Tabs[Index]->SetOwner(nullptr);
+        Tabs[Index]->SetParentElement(TWeakPtr<FVisualElement>());
         Tabs.RemoveAt(Index);
+        InvalidateDesiredSize();
 
         if (bWasActive)
         {
@@ -555,12 +559,14 @@ void FTabStrip::ClearTabs()
     for (const TSharedPtr<FTab>& Tab : Tabs)
     {
         Tab->SetOwner(nullptr);
+        Tab->SetParentElement(TWeakPtr<FVisualElement>());
     }
 
     Tabs.Clear();
     ActivePanelId.Clear();
     DraggedPanelId.Clear();
     DetachedPanelId.Clear();
+    InvalidateDesiredSize();
 }
 
 void FTabStrip::OnTabPressed(FTab* Tab, const IntVector2& ClientPosition)

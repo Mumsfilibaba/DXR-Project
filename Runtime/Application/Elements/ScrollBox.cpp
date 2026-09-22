@@ -216,12 +216,21 @@ void FScrollBox::SetScrollAmountPerWheelStep(int32 InAmount)
 
 void FScrollBox::SetScrollBarVisibility(EScrollBarVisibility InVisibility)
 {
-    ScrollBarVisibility = InVisibility;
+    if (ScrollBarVisibility != InVisibility)
+    {
+        ScrollBarVisibility = InVisibility;
+        InvalidateDesiredSize();
+    }
 }
 
 void FScrollBox::SetScrollBarGutter(int32 InGutter)
 {
-    ScrollBarGutter = Math::Max(0, InGutter);
+    const int32 NewGutter = Math::Max(0, InGutter);
+    if (ScrollBarGutter != NewGutter)
+    {
+        ScrollBarGutter = NewGutter;
+        InvalidateDesiredSize();
+    }
 }
 
 bool FScrollBox::IsScrollBarVisible() const

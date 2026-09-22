@@ -186,8 +186,14 @@ int32 FPropertyTable::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
 
     for (int32 Index = 0; Index < Rows.Size(); ++Index)
     {
-        const FPropertyRow& Row       = Rows[Index];
-        const FRectangle    RowBounds = GetRowRectangle(Index, AllottedGeometry.Bounds);
+        const FPropertyRow& Row        = Rows[Index];
+        const FRectangle    RowBounds  = GetRowRectangle(Index, AllottedGeometry.Bounds);
+        const FRectangle&   ClipBounds = OutCommandList.GetCurrentClipRectangle();
+
+        if (!ClipBounds.IsEmpty() && ClipBounds.Intersect(RowBounds).IsEmpty())
+        {
+            continue;
+        }
 
         if (Row.bIsHeader)
         {
@@ -257,14 +263,26 @@ int32 FPropertyTable::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
     {
         if (Row.Editor && Row.Editor->IsVisible())
         {
-            const FDrawGeometry EditorGeometry(Row.Editor->GetContentRectangle(), AllottedGeometry.Scale);
-            NextLayerId = Math::Max(NextLayerId, Row.Editor->OnDraw(EditorGeometry, OutCommandList, LayerId + 1));
+            const FRectangle  EditorBounds = Row.Editor->GetContentRectangle();
+            const FRectangle& ClipBounds   = OutCommandList.GetCurrentClipRectangle();
+
+            if (ClipBounds.IsEmpty() || !ClipBounds.Intersect(EditorBounds).IsEmpty())
+            {
+                const FDrawGeometry EditorGeometry(EditorBounds, AllottedGeometry.Scale);
+                NextLayerId = Math::Max(NextLayerId, Row.Editor->OnDraw(EditorGeometry, OutCommandList, LayerId + 1));
+            }
         }
 
         if (Row.LabelAccessory && Row.LabelAccessory->IsVisible())
         {
-            const FDrawGeometry AccessoryGeometry(Row.LabelAccessory->GetContentRectangle(), AllottedGeometry.Scale);
-            NextLayerId = Math::Max(NextLayerId, Row.LabelAccessory->OnDraw(AccessoryGeometry, OutCommandList, LayerId + 1));
+            const FRectangle  AccessoryBounds = Row.LabelAccessory->GetContentRectangle();
+            const FRectangle& ClipBounds      = OutCommandList.GetCurrentClipRectangle();
+
+            if (ClipBounds.IsEmpty() || !ClipBounds.Intersect(AccessoryBounds).IsEmpty())
+            {
+                const FDrawGeometry AccessoryGeometry(AccessoryBounds, AllottedGeometry.Scale);
+                NextLayerId = Math::Max(NextLayerId, Row.LabelAccessory->OnDraw(AccessoryGeometry, OutCommandList, LayerId + 1));
+            }
         }
     }
 
@@ -278,9 +296,9 @@ FEventResponse FPropertyTable::OnMouseButtonDown(const FCursorEvent& CursorEvent
         return FEventResponse::Unhandled();
     }
 
-    const IntVector2 Position = CursorEvent.GetClientPosition();
+    const IntVector2 Position  = CursorEvent.GetClientPosition();
+    const int32      RevertRow = FindRevertRowAtPoint(Position);
 
-    const int32 RevertRow = FindRevertRowAtPoint(Position);
     if (RevertRow != InvalidRowIndex)
     {
         PressedRevertRow = RevertRow;
@@ -431,6 +449,7 @@ FPropertyRow& FPropertyTable::AddRow(const String& Label, const TSharedPtr<FVisu
         Editor->SetParentElement(AsWeakPtr());
     }
 
+    InvalidateDesiredSize();
     return NewRow;
 }
 
@@ -439,6 +458,8 @@ FPropertyRow& FPropertyTable::AddHeaderRow(const String& Label)
     FPropertyRow& NewRow = Rows.Emplace();
     NewRow.Label         = Label;
     NewRow.bIsHeader     = true;
+
+    InvalidateDesiredSize();
     return NewRow;
 }
 
@@ -452,6 +473,8 @@ void FPropertyTable::SetRowLabelAccessory(int32 Index, const TSharedPtr<FVisualE
     {
         Accessory->SetParentElement(AsWeakPtr());
     }
+
+    InvalidateDesiredSize();
 }
 
 void FPropertyTable::ClearRows()
@@ -462,6 +485,8 @@ void FPropertyTable::ClearRows()
 
     bIsDraggingDivider = false;
     bIsDividerHovered  = false;
+
+    InvalidateDesiredSize();
 }
 
 const FPropertyRow& FPropertyTable::GetRow(int32 Index) const

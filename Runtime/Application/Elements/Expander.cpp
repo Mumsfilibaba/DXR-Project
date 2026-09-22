@@ -54,6 +54,7 @@ FExpander::FExpander()
     , HeaderHeight(FUIStyle::GetDefault().Metrics.RowHeight)
     , AnimationStartHeight(0)
     , AnimationStartCounter(FPlatformTime::QueryPerformanceCounter())
+    , AnimationAlpha(1.0f)
     , bIsExpanded(true)
     , bIsHeaderHovered(false)
     , bDrawBottomBorderWhenClosed(false)
@@ -78,8 +79,26 @@ void FExpander::Initialize(const FDesc& Desc)
     OnStateChangedDelegate      = Desc.OnStateChanged;
     AnimationStartHeight        = HeaderHeight;
     AnimationStartCounter       = FPlatformTime::QueryPerformanceCounter();
+    AnimationAlpha              = 1.0f;
 
     SetContent(Desc.Content);
+}
+
+IntVector2 FExpander::PrepareDesiredSize()
+{
+    AnimationAlpha = ComputeAnimationAlpha();
+
+    return FVisualElement::PrepareDesiredSize();
+}
+
+void FExpander::Tick(const FRectangle& AssignedBounds)
+{
+    if (AnimationAlpha < 1.0f)
+    {
+        InvalidateDesiredSize();
+    }
+
+    FVisualElement::Tick(AssignedBounds);
 }
 
 IntVector2 FExpander::ComputeDesiredSize() const
@@ -241,6 +260,8 @@ void FExpander::SetContent(const TSharedPtr<FVisualElement>& InContent)
     {
         Content->SetParentElement(AsWeakPtr());
     }
+
+    InvalidateDesiredSize();
 }
 
 void FExpander::SetExpanded(bool bInIsExpanded)
@@ -252,13 +273,19 @@ void FExpander::SetExpanded(bool bInIsExpanded)
 
     AnimationStartHeight  = GetDisplayedHeight();
     AnimationStartCounter = FPlatformTime::QueryPerformanceCounter();
+    AnimationAlpha        = 0.0f;
     bIsExpanded           = bInIsExpanded;
+    InvalidateDesiredSize();
     OnStateChangedDelegate.ExecuteIfBound(bIsExpanded);
 }
 
 void FExpander::SetLabel(const String& InLabel)
 {
-    Label = InLabel;
+    if (Label != InLabel)
+    {
+        Label = InLabel;
+        InvalidateDesiredSize();
+    }
 }
 
 FRectangle FExpander::GetHeaderBounds(const FRectangle& AllottedBounds) const
@@ -310,7 +337,7 @@ double FExpander::GetSecondsSinceAnimationStart() const
     return static_cast<double>(Now - AnimationStartCounter) / static_cast<double>(FPlatformTime::QueryPerformanceFrequency());
 }
 
-float FExpander::GetAnimationAlpha() const
+float FExpander::ComputeAnimationAlpha() const
 {
     if (Style.ExpandDuration <= 0.0f)
     {

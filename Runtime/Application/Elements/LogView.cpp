@@ -124,7 +124,7 @@ void FLogView::SetSeverityVisible(ELogSeverity Severity, bool bIsVisible)
     }
 
     VisibleSeverities = Mask;
-    bLayoutIsStale    = true;
+    MarkLayoutStale();
 }
 
 bool FLogView::IsSeverityVisible(ELogSeverity Severity) const
@@ -148,7 +148,7 @@ void FLogView::SetSearchText(const String& InSearchText, bool bInFilterToMatches
 
     SearchText       = InSearchText;
     bFilterToMatches = bInFilterToMatches;
-    bLayoutIsStale   = true;
+    MarkLayoutStale();
 }
 
 void FLogView::SetAutoScroll(bool bInAutoScroll)
@@ -185,7 +185,7 @@ void FLogView::Clear()
     }
 
     Lines.Clear();
-    bLayoutIsStale = true;
+    MarkLayoutStale();
 }
 
 void FLogView::SelectAll()
@@ -213,7 +213,7 @@ void FLogView::SetMaxLineCount(int32 InMaxLineCount)
 
     if (Lines.Size() != NumLinesBefore)
     {
-        bLayoutIsStale = true;
+        MarkLayoutStale();
     }
 }
 
@@ -273,12 +273,18 @@ void FLogView::DrainPendingLines()
     }
 
     TrimToMaxLineCount();
-    bLayoutIsStale = true;
+    MarkLayoutStale();
 
     if (bAutoScroll && bWasAtBottom)
     {
         ScrollToBottom();
     }
+}
+
+void FLogView::MarkLayoutStale()
+{
+    bLayoutIsStale = true;
+    InvalidateDesiredSize();
 }
 
 void FLogView::RebuildLayout()

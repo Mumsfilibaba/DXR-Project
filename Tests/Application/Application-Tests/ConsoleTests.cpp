@@ -68,7 +68,7 @@ static int32 FindBoxCommand(const FDrawCommandList& CommandList, const FFloatCol
 {
     for (int32 Index = 0; Index < CommandList.Size(); ++Index)
     {
-        if (CommandList[Index].Type == EDrawCommandType::Box && CommandList[Index].Tint == Tint)
+        if (CommandList[Index].Type == EDrawCommandType::Box && CommandList[Index].HasTint(Tint))
         {
             return Index;
         }
@@ -77,12 +77,12 @@ static int32 FindBoxCommand(const FDrawCommandList& CommandList, const FFloatCol
     return FDrawCommandList::InvalidIndex;
 }
 
-static int32 FindHighestClipPopLayer(const FDrawCommandList& CommandList)
+static int32 FindHighestClippedLayer(const FDrawCommandList& CommandList)
 {
     int32 HighestLayer = -1;
     for (int32 Index = 0; Index < CommandList.Size(); ++Index)
     {
-        if (CommandList[Index].Type == EDrawCommandType::ClipPop)
+        if (CommandList[Index].IsClipped())
         {
             HighestLayer = Math::Max(HighestLayer, CommandList[Index].LayerId);
         }
@@ -103,39 +103,6 @@ static TArray<int32> GetRowCellPositions(const FDrawCommandList& CommandList, in
     }
 
     return Positions;
-}
-
-static int32 FindVertex(const FUIDrawData& DrawData, const Vector2& Position)
-{
-    const TArray<FUIVertex>& Vertices = DrawData.GetVertices();
-    for (int32 Index = 0; Index < Vertices.Size(); ++Index)
-    {
-        if (Vertices[Index].Position == Position)
-        {
-            return Index;
-        }
-    }
-
-    return -1;
-}
-
-static int32 FindBatchDrawingVertex(const FUIDrawData& DrawData, int32 VertexIndex)
-{
-    const TArray<uint32>& Indices = DrawData.GetIndices();
-
-    for (int32 BatchIndex = 0; BatchIndex < DrawData.GetBatches().Size(); ++BatchIndex)
-    {
-        const FUIDrawBatch& Batch = DrawData.GetBatches()[BatchIndex];
-        for (int32 Index = Batch.IndexOffset; Index < Batch.IndexOffset + Batch.IndexCount; ++Index)
-        {
-            if (static_cast<int32>(Indices[Index]) == VertexIndex)
-            {
-                return BatchIndex;
-            }
-        }
-    }
-
-    return -1;
 }
 
 bool ConsoleToggle_Test()
@@ -249,9 +216,9 @@ bool ConsoleLogDraw_Test()
     TEST_SECTION("Each line is drawn in the color of its severity");
     if (InfoIndex != FDrawCommandList::InvalidIndex && WarningIndex != FDrawCommandList::InvalidIndex && ErrorIndex != FDrawCommandList::InvalidIndex)
     {
-        TEST_EXPECT(CommandList[InfoIndex].Tint == FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Info));
-        TEST_EXPECT(CommandList[WarningIndex].Tint == FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Warning));
-        TEST_EXPECT(CommandList[ErrorIndex].Tint == FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Error));
+        TEST_EXPECT(CommandList[InfoIndex].HasTint(FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Info)));
+        TEST_EXPECT(CommandList[WarningIndex].HasTint(FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Warning)));
+        TEST_EXPECT(CommandList[ErrorIndex].HasTint(FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Error)));
     }
 
     TEST_SECTION("The lines are stacked in the order they were logged");
@@ -370,7 +337,7 @@ bool ConsoleCandidateHighlight_Test()
 
     for (int32 Index = 0; Index < CommandList.Size(); ++Index)
     {
-        if (CommandList[Index].Type == EDrawCommandType::Box && CommandList[Index].Tint == HighlightColor)
+        if (CommandList[Index].Type == EDrawCommandType::Box && CommandList[Index].HasTint(HighlightColor))
         {
             HighlightIndex = Index;
             NumHighlights++;
@@ -424,7 +391,7 @@ bool ConsoleCandidateHighlight_Test()
     int32 InputFillIndex = FDrawCommandList::InvalidIndex;
     for (int32 Index = 0; Index < CommandList.Size(); ++Index)
     {
-        if (CommandList[Index].Type == EDrawCommandType::Box && CommandList[Index].Tint == InputColor)
+        if (CommandList[Index].Type == EDrawCommandType::Box && CommandList[Index].HasTint(InputColor))
         {
             InputFillIndex = Index;
             break;
@@ -737,7 +704,7 @@ bool ConsoleInputFieldSurvives_Test()
     TEST_EXPECT(InputBoxBounds.GetBottom() <= Console->GetContentRectangle().GetBottom());
 
     TEST_SECTION("It is drawn above every clip region the rows are drawn inside");
-    TEST_EXPECT(CommandList[InputBoxIndex].LayerId > FindHighestClipPopLayer(CommandList));
+    TEST_EXPECT(CommandList[InputBoxIndex].LayerId > FindHighestClippedLayer(CommandList));
 
     FUIDrawData DrawData;
     DrawData.BuildFromCommandList(CommandList);
@@ -745,31 +712,22 @@ bool ConsoleInputFieldSurvives_Test()
     TEST_SECTION("The whole frame fits the vertex budget, so nothing was truncated away");
     TEST_EXPECT(DrawData.GetVertices().Size() < FUIDrawData::MaxVertexCount);
 
-    const Vector2 FanCenter(
-        static_cast<float>(InputBoxBounds.Position.X + InputBoxBounds.GetRight()) * 0.5f,
-        static_cast<float>(InputBoxBounds.Position.Y + InputBoxBounds.GetBottom()) * 0.5f);
-
-    const int32 CenterVertex = FindVertex(DrawData, FanCenter);
-
     TEST_SECTION("Its geometry survives the translation into triangles");
     TEST_EXPECT(CommandList[InputBoxIndex].CornerRadius.GetLargest() > 0.0f);
-    TEST_EXPECT(CenterVertex >= 0);
+    TEST_EXPECT(!DrawData.GetShapeVertices().IsEmpty());
 
-    if (CenterVertex < 0)
+    bool bFoundUnclippedShape = false;
+    for (const FUIDrawBatch& Batch : DrawData.GetBatches())
     {
-        TEST_END();
+        if (Batch.Kind == EUIDrawBatchKind::Shape && Batch.IndexCount > 0 && !Batch.bIsClipped)
+        {
+            bFoundUnclippedShape = true;
+            break;
+        }
     }
-
-    const int32 BatchIndex = FindBatchDrawingVertex(DrawData, CenterVertex);
 
     TEST_SECTION("And the batch carrying it draws, unclipped");
-    TEST_EXPECT(BatchIndex >= 0);
-
-    if (BatchIndex >= 0)
-    {
-        TEST_EXPECT(DrawData.GetBatches()[BatchIndex].IndexCount > 0);
-        TEST_EXPECT(!DrawData.GetBatches()[BatchIndex].bIsClipped);
-    }
+    TEST_EXPECT(bFoundUnclippedShape);
 
     TEST_SECTION("The text cursor is drawn over the field rather than under the rows");
     int32 TextCursorLayer = -1;

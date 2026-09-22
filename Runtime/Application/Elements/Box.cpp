@@ -32,7 +32,15 @@ int32 FBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
             continue;
         }
 
-        const FDrawGeometry ChildGeometry(Slot.Element->GetContentRectangle(), AllottedGeometry.Scale);
+        const FRectangle  ChildBounds = Slot.Element->GetContentRectangle();
+        const FRectangle& ClipBounds  = OutCommandList.GetCurrentClipRectangle();
+
+        if (!ClipBounds.IsEmpty() && ClipBounds.Intersect(ChildBounds).IsEmpty())
+        {
+            continue;
+        }
+
+        const FDrawGeometry ChildGeometry(ChildBounds, AllottedGeometry.Scale);
         MaxLayerId = Slot.Element->OnDraw(ChildGeometry, OutCommandList, MaxLayerId + 1);
     }
 
@@ -68,6 +76,7 @@ FBoxSlot& FBox::AddSlot(const TSharedPtr<FVisualElement>& InElement)
 void FBox::ClearSlots()
 {
     Slots.Clear();
+    InvalidateDesiredSize();
 }
 
 FRectangle FBox::ArrangeInSlot(const FRectangle& SlotBounds, const IntVector2& ChildDesiredSize, const FBoxSlot& Slot)

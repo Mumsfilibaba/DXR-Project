@@ -91,7 +91,11 @@ int32 FSeparatorText::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
 
 void FSeparatorText::SetText(const String& InText)
 {
-    Text = InText;
+    if (Text != InText)
+    {
+        Text = InText;
+        InvalidateDesiredSize();
+    }
 }
 
 int32 FSeparatorText::GetTextWidth() const

@@ -59,6 +59,16 @@ void FWindow::Initialize(const FDesc& Desc)
     FVisualElement::SetActivationPolicy(EElementActivationPolicy::AutoFocusOnWindowActivate);
 }
 
+IntVector2 FWindow::PrepareDesiredSize()
+{
+    if (Content)
+    {
+        Content->PrepareDesiredSize();
+    }
+
+    return FVisualElement::PrepareDesiredSize();
+}
+
 void FWindow::Tick(const FRectangle& AssignedBounds)
 {
     SetContentRectangle(AssignedBounds);
@@ -300,7 +310,11 @@ void FWindow::Resize(const IntVector2& InSize)
 
 void FWindow::SetSize(const IntVector2& InSize)
 {
-    CachedSize = InSize;
+    if (CachedSize != InSize)
+    {
+        CachedSize = InSize;
+        InvalidateDesiredSize();
+    }
 }
 
 void FWindow::SetPosition(const IntVector2& InPosition)

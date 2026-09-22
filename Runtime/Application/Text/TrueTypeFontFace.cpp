@@ -53,6 +53,7 @@ TSharedPtr<FTrueTypeFontFace> FTrueTypeFontFace::CreateFromFile(const String& Fi
 FTrueTypeFontFace::FTrueTypeFontFace()
     : Atlas()
     , ShapedRuns()
+    , ShapedRunReplacementWays()
 {
 }
 
@@ -85,21 +86,29 @@ int32 FTrueTypeFontFace::GetCapHeight() const
 
 const FShapedRun& FTrueTypeFontFace::ShapeText(const StringView& Text) const
 {
-    FCachedRun& Cached = ShapedRuns[static_cast<int32>(HashText(Text) % ShapedRunCacheSize)];
+    const int32  SetIndex  = static_cast<int32>(HashText(Text) & (ShapedRunCacheSetCount - 1));
+    const int32  SetOffset = SetIndex * ShapedRunCacheWays;
+    const uint64 Revision  = Atlas.GetRevision();
 
-    const bool bIsHit = Cached.Revision == Atlas.GetRevision()
-        && Cached.Text.Length() == Text.Length()
-        && Memory::Memcmp(Cached.Text.Data(), Text.Data(), static_cast<uint64>(Text.Length())) == 0;
-
-    if (bIsHit)
+    for (int32 Way = 0; Way < ShapedRunCacheWays; ++Way)
     {
-        return Cached.Run;
+        FCachedRun& Candidate = ShapedRuns[SetOffset + Way];
+        if (Candidate.Revision == Revision
+            && Candidate.Text.Length() == Text.Length()
+            && Memory::Memcmp(Candidate.Text.Data(), Text.Data(), static_cast<uint64>(Text.Length())) == 0)
+        {
+            return Candidate.Run;
+        }
     }
+
+    uint8& ReplacementWay = ShapedRunReplacementWays[SetIndex];
+    FCachedRun& Cached = ShapedRuns[SetOffset + ReplacementWay];
+    ReplacementWay = static_cast<uint8>((ReplacementWay + 1) % ShapedRunCacheWays);
 
     ShapeRun(Text, Cached.Run);
 
     Cached.Text     = String(Text.Data(), Text.Length());
-    Cached.Revision = Atlas.GetRevision();
+    Cached.Revision = Revision;
     return Cached.Run;
 }
 
@@ -118,8 +127,8 @@ void FTrueTypeFontFace::ShapeRun(const StringView& Text, FShapedRun& OutRun) con
     int32 Pen = 0;
     for (int32 Index = 0; Index < Text.Length(); ++Index)
     {
-        const int32 Codepoint = ToCodepoint(Text[Index]);
-        const FGlyph& Glyph   = Atlas.GetGlyph(Codepoint);
+        const int32   Codepoint = ToCodepoint(Text[Index]);
+        const FGlyph& Glyph     = Atlas.GetGlyph(Codepoint);
 
         FShapedGlyph& Shaped = OutRun.Glyphs.Emplace();
         Shaped.Offset      = Pen;

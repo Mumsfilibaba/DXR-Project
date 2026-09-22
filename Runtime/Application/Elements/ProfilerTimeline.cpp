@@ -149,10 +149,10 @@ FProfilerTimeline::~FProfilerTimeline() = default;
 
 void FProfilerTimeline::Initialize(const FDesc& Desc)
 {
-    Font            = Desc.Font;
-    OnBarSelected   = Desc.OnBarSelected;
+    Font                = Desc.Font;
+    OnBarSelected       = Desc.OnBarSelected;
     OnGetBarContextMenu = Desc.OnGetBarContextMenu;
-    PreferredHeight = Math::Max(Desc.PreferredHeight, 64);
+    PreferredHeight     = Math::Max(Desc.PreferredHeight, 64);
 
     FScrollBar::FDesc ScrollDesc;
     ScrollDesc.Orientation     = EOrientation::Horizontal;
@@ -282,6 +282,7 @@ int32 FProfilerTimeline::GetLaneTop(const FRectangle& Bounds, int32 LaneIndex) c
 
 void FProfilerTimeline::SetLanes(TArray<FProfilerTimelineLane> InLanes)
 {
+    const IntVector2 PreviousDesiredSize = ComputeDesiredSize();
     Lanes = Move(InLanes);
 
     uint64 MinStart = TNumericLimits<uint64>::Max();
@@ -322,6 +323,11 @@ void FProfilerTimeline::SetLanes(TArray<FProfilerTimelineLane> InLanes)
 
     HoveredLane = InvalidIndex;
     HoveredBar  = InvalidIndex;
+
+    if (ComputeDesiredSize() != PreviousDesiredSize)
+    {
+        InvalidateDesiredSize();
+    }
 
     if (bViewIsUserAdjusted)
     {
@@ -389,8 +395,10 @@ void FProfilerTimeline::SyncScrollBar()
     }
 
     const float Total = static_cast<float>(TotalSpanNanoseconds);
+
     const int32 View = Math::Clamp(Math::RoundToInt((ViewSpanNs / Total) * static_cast<float>(PROFILER_SCROLL_RESOLUTION)),
         1, PROFILER_SCROLL_RESOLUTION);
+
     const int32 Offset = Math::Clamp(Math::RoundToInt((ViewStartNs / Total) * static_cast<float>(PROFILER_SCROLL_RESOLUTION)),
         0, PROFILER_SCROLL_RESOLUTION - View);
 
@@ -430,8 +438,8 @@ bool FProfilerTimeline::ProjectBar(const FRectangle& Track, const FProfilerTimel
     const int32 Right      = Track.Position.X + Math::RoundToInt(Math::Min(End, 1.0f) * static_cast<float>(TrackWidth));
 
     OutLeft  = Left;
-    OutWidth = Bar.bInstant ? 3 : Math::Max(Right - Left, 1);
-    return true;
+    OutWidth = Bar.bInstant ? 3 : (Right - Left);
+    return Bar.bInstant || OutWidth >= 1;
 }
 
 FProfilerTimeline::FHit FProfilerTimeline::HitTest(const IntVector2& ClientPosition) const
@@ -588,13 +596,24 @@ int32 FProfilerTimeline::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
     const FFloatColor HoverFill    = FromBytes(96, 96, 100);
     const FFloatColor LaneBand     = FromBytes(30, 30, 30);
     const int32       RowHeight    = GetRowHeight();
+    int32             LaneTop      = GetLanesBounds(Bounds).Position.Y + PROFILER_LANE_PADDING;
 
     for (int32 LaneIndex = 0; LaneIndex < Lanes.Size(); ++LaneIndex)
     {
         const FProfilerTimelineLane& Lane = Lanes[LaneIndex];
 
-        const int32 LaneTop    = GetLaneTop(Bounds, LaneIndex);
-        const int32 LaneHeight = GetLaneRowCount(Lane) * RowHeight;
+        const int32 LaneRowCount = GetLaneRowCount(Lane);
+        const int32 LaneHeight   = LaneRowCount * RowHeight;
+        const int32 NextLaneTop  = LaneTop + LaneHeight + PROFILER_LANE_PADDING;
+
+        const FRectangle  LaneBounds = FRectangle(IntVector2(Bounds.Position.X, LaneTop), Bounds.Width, LaneHeight);
+        const FRectangle& ClipBounds = OutCommandList.GetCurrentClipRectangle();
+
+        if (!ClipBounds.IsEmpty() && ClipBounds.Intersect(LaneBounds).IsEmpty())
+        {
+            LaneTop = NextLaneTop;
+            continue;
+        }
 
         if ((LaneIndex % 2) == 1)
         {
@@ -604,10 +623,10 @@ int32 FProfilerTimeline::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
         if (Font)
         {
             const FRectangle LabelBounds(IntVector2(Bounds.Position.X + 6, LaneTop), PROFILER_LANE_LABEL_WIDTH - 10, RowHeight);
-            OutCommandList.AddText(TextLayer, LabelBounds, 
+            OutCommandList.AddText(TextLayer, LabelBounds,
                 Font->ElideText(StringView(Lane.Label.Data(), Lane.Label.Length()), LabelBounds.Width), Font.Get(), Style.Colors.Text);
 
-            if (!Lane.SubLabel.IsEmpty() && GetLaneRowCount(Lane) > 1)
+            if (!Lane.SubLabel.IsEmpty() && LaneRowCount > 1)
             {
                 const FRectangle SubBounds(IntVector2(Bounds.Position.X + 6, LaneTop + RowHeight),
                     PROFILER_LANE_LABEL_WIDTH - 10, RowHeight);
@@ -650,16 +669,17 @@ int32 FProfilerTimeline::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
                 const FRectangle TextBounds = BarBounds.Deflate(FMargin(PROFILER_BAR_LABEL_PADDING, 0, PROFILER_BAR_LABEL_PADDING, 0));
                 if (TextBounds.Width > 0 && Font->MeasureWidth(StringView(Bar.Name)) <= TextBounds.Width)
                 {
-                    OutCommandList.AddText(TextLayer, TextBounds, String(Bar.Name), Font.Get(), GetBarLabelColor(Fill));
+                    OutCommandList.AddText(TextLayer, TextBounds, StringView(Bar.Name), Font.Get(), GetBarLabelColor(Fill));
                 }
             }
         }
+
+        LaneTop = NextLaneTop;
     }
 
     OutCommandList.AddLine(GridLayer, FRectangle(IntVector2(Track.Position.X, Bounds.Position.Y), 1, Bounds.Height), FromBytes(38, 38, 38));
 
     int32 MaxLayer = TextLayer;
-
     if (HorizontalScrollBar && IsHorizontalScrollBarVisible())
     {
         const FDrawGeometry ScrollGeometry(HorizontalScrollBar->GetContentRectangle(), AllottedGeometry.Scale);
@@ -712,6 +732,7 @@ FEventResponse FProfilerTimeline::OnMouseButtonDown(const FCursorEvent& CursorEv
 
     const FHit Hit = HitTest(CursorEvent.GetClientPosition());
     SetSelectedBar(Hit.Lane, Hit.Bar);
+
     OnBarSelected.ExecuteIfBound(SelectedLane, SelectedBar);
     return FEventResponse::Handled();
 }

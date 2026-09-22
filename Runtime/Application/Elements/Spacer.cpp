@@ -32,5 +32,9 @@ IntVector2 FSpacer::ComputeDesiredSize() const
 
 void FSpacer::SetSize(const IntVector2& InSize)
 {
-    Size = InSize;
+    if (Size != InSize)
+    {
+        Size = InSize;
+        InvalidateDesiredSize();
+    }
 }

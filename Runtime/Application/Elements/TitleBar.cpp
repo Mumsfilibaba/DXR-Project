@@ -176,7 +176,11 @@ bool FCaptionButton::GetCursor(ECursor& OutCursor) const
 
 void FCaptionButton::SetButtonSize(const IntVector2& InSize)
 {
-    ButtonSize = InSize;
+    if (ButtonSize != InSize)
+    {
+        ButtonSize = InSize;
+        InvalidateDesiredSize();
+    }
 }
 
 void FCaptionButton::OnClicked()

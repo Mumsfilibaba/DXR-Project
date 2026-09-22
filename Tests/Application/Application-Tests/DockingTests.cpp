@@ -145,6 +145,19 @@ static const FDrawCommand* FindCommand(const FDrawCommandList& CommandList, EDra
     return nullptr;
 }
 
+static const FDrawCommand* FindFirstClippedCommand(const FDrawCommandList& CommandList)
+{
+    for (const FDrawCommand& Command : CommandList.GetCommands())
+    {
+        if (Command.IsClipped())
+        {
+            return &Command;
+        }
+    }
+
+    return nullptr;
+}
+
 static TArray<String> GetTabOrder(const TSharedPtr<FTabStrip>& Strip)
 {
     TArray<String> Order;
@@ -922,9 +935,8 @@ bool TabStripScroll_Test()
     FDrawCommandList ScrolledCommands;
     DrawElement(Strip, ScrolledCommands);
 
-    TEST_EXPECT_EQ(CountCommands(ScrolledCommands, EDrawCommandType::ClipPush), 1);
-    TEST_EXPECT_EQ(CountCommands(ScrolledCommands, EDrawCommandType::ClipPop), 1);
-    TEST_EXPECT_EQ(FindCommand(ScrolledCommands, EDrawCommandType::ClipPush)->Bounds, Strip->GetContentRectangle());
+    TEST_EXPECT(FindFirstClippedCommand(ScrolledCommands) != nullptr);
+    TEST_EXPECT_EQ(ScrolledCommands.GetCommandClipRectangle(*FindFirstClippedCommand(ScrolledCommands)), Strip->GetContentRectangle());
 
     TEST_SECTION("It stops answering for a point out there too, so the tab cannot be clicked through the panel below");
     FElementPath OutsidePath;
@@ -983,7 +995,7 @@ bool TabStripScroll_Test()
 
     FDrawCommandList FittedCommands;
     DrawElement(Strip, FittedCommands);
-    TEST_EXPECT_EQ(CountCommands(FittedCommands, EDrawCommandType::ClipPush), 1);
+    TEST_EXPECT(FindFirstClippedCommand(FittedCommands) != nullptr);
 
     TEST_END();
 }
@@ -1053,7 +1065,7 @@ bool TabStripStyle_Test()
 
     TEST_EXPECT(!StripCommands.GetCommands().IsEmpty());
     TEST_EXPECT_EQ(StripCommands.GetCommands()[0].Type, EDrawCommandType::Box);
-    TEST_EXPECT(StripCommands.GetCommands()[0].Tint == TabStyle.StripFill);
+    TEST_EXPECT(StripCommands.GetCommands()[0].HasTint(TabStyle.StripFill));
 
     TEST_SECTION("A resting tab paints no fill at all, so the rule the description turned back on comes first");
     FDrawCommandList InactiveCommands;
@@ -1063,12 +1075,12 @@ bool TabStripStyle_Test()
 
     for (const FDrawCommand& Command : InactiveCommands.GetCommands())
     {
-        TEST_EXPECT(!(Command.Tint == TabStyle.Fill));
+        TEST_EXPECT(!(Command.HasTint(TabStyle.Fill)));
     }
 
     const FDrawCommand& Rule = InactiveCommands.GetCommands()[0];
     TEST_EXPECT_EQ(Rule.Type, EDrawCommandType::Box);
-    TEST_EXPECT(Rule.Tint == TabStyle.Separator);
+    TEST_EXPECT(Rule.HasTint(TabStyle.Separator));
     TEST_EXPECT_EQ(Rule.Bounds.Width, TabStyle.SeparatorThickness);
     TEST_EXPECT_EQ(Rule.Bounds.GetRight(), DetailsTab->GetContentRectangle().GetRight());
 
@@ -1087,7 +1099,7 @@ bool TabStripStyle_Test()
     {
         const FDrawCommand& Command = ActiveCommands.GetCommands()[Index];
 
-        if (!Pill && Command.Type == EDrawCommandType::Box && Command.Tint == TabStyle.FillActive)
+        if (!Pill && Command.Type == EDrawCommandType::Box && Command.HasTint(TabStyle.FillActive))
         {
             Pill      = &Command;
             PillIndex = Index;
@@ -1119,7 +1131,7 @@ bool TabStripStyle_Test()
         TEST_EXPECT_EQ(Accent->Bounds, OutlinerTab->GetContentRectangle());
         TEST_EXPECT_EQ(Accent->CornerRadius.TopLeft, TabStyle.CornerRadius);
         TEST_EXPECT_EQ(Accent->CornerRadius.BottomRight, TabStyle.CornerRadius);
-        TEST_EXPECT(Accent->Tint == TabStyle.ActiveStrip);
+        TEST_EXPECT(Accent->HasTint(TabStyle.ActiveStrip));
         TEST_EXPECT_EQ(Accent->Thickness, static_cast<float>(TabStyle.ActiveStripThickness));
         TEST_EXPECT_EQ(Accent->FadeFraction, TabStyle.ActiveStripFadeFraction);
         TEST_EXPECT_EQ(Accent->TrailAlpha, TabStyle.ActiveStripTrailAlpha);
@@ -1134,7 +1146,7 @@ bool TabStripStyle_Test()
     const FDrawCommand* HoverFill = nullptr;
     for (const FDrawCommand& Command : HoveredCommands.GetCommands())
     {
-        if (Command.Type == EDrawCommandType::Box && Command.Tint == TabStyle.FillHovered)
+        if (Command.Type == EDrawCommandType::Box && Command.HasTint(TabStyle.FillHovered))
         {
             HoverFill = &Command;
             break;
@@ -1154,7 +1166,7 @@ bool TabStripStyle_Test()
 
     for (const FDrawCommand& Command : HoveredCommands.GetCommands())
     {
-        TEST_EXPECT(!(Command.Tint == TabStyle.ActiveStrip));
+        TEST_EXPECT(!(Command.HasTint(TabStyle.ActiveStrip)));
     }
 
     DetailsTab->OnMouseLeft(MakeMoveEvent(IntVector2(-100, -100)));
@@ -1164,7 +1176,7 @@ bool TabStripStyle_Test()
     bool bRestingHasAccent = false;
     for (const FDrawCommand& Command : InactiveCommands.GetCommands())
     {
-        if (Command.Tint == TabStyle.ActiveStrip)
+        if (Command.HasTint(TabStyle.ActiveStrip))
         {
             bRestingHasAccent = true;
         }
@@ -1228,7 +1240,7 @@ bool TabStripStyle_Test()
 
     const FDrawCommand& PlainFill = PlainCommands.GetCommands()[0];
     TEST_EXPECT_EQ(PlainFill.Type, EDrawCommandType::Box);
-    TEST_EXPECT(PlainFill.Tint == PlainStyle.FillActive);
+    TEST_EXPECT(PlainFill.HasTint(PlainStyle.FillActive));
     TEST_EXPECT_EQ(PlainFill.Bounds, PlainTab->GetContentRectangle());
     TEST_EXPECT_EQ(PlainFill.CornerRadius.TopLeft, PlainStyle.CornerRadius);
     TEST_EXPECT_EQ(PlainFill.CornerRadius.BottomRight, PlainStyle.CornerRadius);

@@ -1,12 +1,20 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Containers/ArrayView.h"
+#include "Core/Containers/String.h"
 #include "Core/Math/Vector2.h"
 #include "Application/Draw/DrawTypes.h"
 
 class FDrawCommandList;
 class FFontAtlas;
 class FRHITexture;
+
+enum class EUIDrawBatchKind : uint8
+{
+    Textured = 0,
+    Shape    = 1,
+    Text     = 2,
+};
 
 struct FUIVertex
 {
@@ -19,6 +27,44 @@ struct FUIVertex
 
     Vector2 Position;
     Vector2 TexCoord;
+    uint32  Color;
+};
+
+struct FUIShapeVertex
+{
+    Vector2 Position;
+    uint32  Color;
+    Vector2 LocalPos;
+    Vector2 RectSize;
+    float   RadiusTL;
+    float   RadiusTR;
+    float   RadiusBR;
+    float   RadiusBL;
+    float   Thickness;
+    float   ShapeKind;
+};
+
+struct FUIShapeInstance
+{
+    Vector2 Position;
+    uint32  Color;
+    Vector2 DrawSize;
+    Vector2 LocalOrigin;
+    Vector2 RectSize;
+    float   RadiusTL;
+    float   RadiusTR;
+    float   RadiusBR;
+    float   RadiusBL;
+    float   Thickness;
+    float   ShapeKind;
+};
+
+struct FUITextGlyphInstance
+{
+    Vector2 Position;
+    Vector2 Size;
+    Vector2 MinTexCoord;
+    Vector2 MaxTexCoord;
     uint32  Color;
 };
 
@@ -73,6 +119,7 @@ struct FUIDrawBatch
         , IndexOffset(0)
         , IndexCount(0)
         , bIsClipped(false)
+        , Kind(EUIDrawBatchKind::Textured)
     {
     }
 
@@ -81,6 +128,7 @@ struct FUIDrawBatch
     int32            IndexOffset;
     int32            IndexCount;
     bool             bIsClipped;
+    EUIDrawBatchKind Kind;
 };
 
 class APPLICATION_API FUIDrawData
@@ -107,6 +155,10 @@ public:
 
     /** @brief How wide the soft edge laid over a curved silhouette is, in pixels. */
     static constexpr float FringeWidth = 1.0f;
+
+    static constexpr float ShapeKindFill   = 0.0f;
+    static constexpr float ShapeKindStroke = 1.0f;
+    static constexpr float ShapeKindWedge  = 2.0f;
 
 public:
     FUIDrawData();
@@ -145,6 +197,20 @@ public:
         return Indices;
     }
 
+    NODISCARD const TArray<FUIShapeVertex>& GetShapeVertices() const;
+
+    NODISCARD const TArray<uint32>& GetShapeIndices() const;
+
+    NODISCARD FORCEINLINE const TArray<FUIShapeInstance>& GetShapeInstances() const
+    {
+        return ShapeInstances;
+    }
+
+    NODISCARD FORCEINLINE const TArray<FUITextGlyphInstance>& GetTextGlyphInstances() const
+    {
+        return TextGlyphInstances;
+    }
+
     NODISCARD FORCEINLINE const TArray<FUIDrawBatch>& GetBatches() const
     {
         return Batches;
@@ -155,7 +221,20 @@ public:
         return Batches.IsEmpty();
     }
 
+    NODISCARD uint64 ComputeGeometryHash() const;
+
 private:
+    struct FTextGeometryCacheEntry
+    {
+        uint64 AtlasRevision = 0;
+        String Text;
+        const IFontFace* Font = nullptr;
+        FRectangle Bounds;
+        uint32 PackedColor = 0;
+        TArray<FUITextGlyphInstance> Instances;
+        bool bValid = false;
+    };
+
     NODISCARD static FRectangle ComputePointBounds(TArrayView<const Vector2> Points, float Thickness);
     NODISCARD static float ComputeWindingSign(TArrayView<const Vector2> Points);
 
@@ -164,8 +243,9 @@ private:
 
     NODISCARD bool IsCulledByClip(const FRectangle& Bounds) const;
 
-    FUIDrawBatch& GetOrOpenBatch(const FUITextureHandle& Texture);
+    FUIDrawBatch& GetOrOpenBatch(const FUITextureHandle& Texture, EUIDrawBatchKind Kind = EUIDrawBatchKind::Textured);
 
+    void ApplyCommandClip(const FDrawCommand& Command, const FDrawCommandList& CommandList);
     void AddBox(const FDrawCommand& Command);
     void AddBoxOutline(const FDrawCommand& Command);
     void AddText(const FDrawCommand& Command);
@@ -177,16 +257,29 @@ private:
     void AddQuad(const FRectangle& Bounds, const Vector2& MinTexCoord, const Vector2& MaxTexCoord, uint32 PackedColor);
     void AddRoundedBox(const FRectangle& Bounds, const FCornerRadii& Radius, uint32 PackedColor,
         const Vector2& MinTexCoord = Vector2(0.0f, 0.0f), const Vector2& MaxTexCoord = Vector2(1.0f, 1.0f));
+    void AddSdfRoundedQuad(const FRectangle& Bounds, const FCornerRadii& Radius, uint32 PackedColor, float Thickness, float ShapeKind);
+    void BuildShapeCompatibilityGeometry() const;
     void EmplaceVertex(const Vector2& Position, uint32 PackedColor);
     void EmplaceFillVertex(const Vector2& Position, const FRectangle& Bounds, uint32 PackedColor,
         const Vector2& MinTexCoord = Vector2(0.0f, 0.0f), const Vector2& MaxTexCoord = Vector2(1.0f, 1.0f));
 
-    TArray<FUIVertex>    Vertices;
-    TArray<uint32>       Indices;
-    TArray<FUIDrawBatch> Batches;
-    TArray<Vector2>      ScratchPoints;
-    TArray<Vector2>      ScratchOffsets;
-    FRectangle           ActiveClipRectangle;
-    bool                 bHasActiveClip;
-    bool                 bAntiAliasingEnabled;
+    TArray<FUIVertex>               Vertices;
+    TArray<uint32>                  Indices;
+    TArray<FUIShapeInstance>        ShapeInstances;
+    mutable TArray<FUIShapeVertex>  ShapeVertices;
+    mutable TArray<uint32>          ShapeIndices;
+    mutable bool                    bShapeCompatibilityDirty;
+    TArray<FUITextGlyphInstance>    TextGlyphInstances;
+    TArray<FUIDrawBatch>            Batches;
+    TArray<Vector2>                 ScratchPoints;
+    TArray<Vector2>                 ScratchOffsets;
+    TArray<int32>                   SortedCommandIndices;
+    TArray<int32>                   SortScratchIndices;
+    TArray<FTextGeometryCacheEntry> TextGeometryCache;
+    int32                           TextCommandOrdinal;
+    const FDrawCommandList*         SourceCommandList;
+    uint16                          ActiveClipId;
+    FRectangle                      ActiveClipRectangle;
+    bool                            bHasActiveClip;
+    bool                            bAntiAliasingEnabled;
 };

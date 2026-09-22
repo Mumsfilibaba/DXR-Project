@@ -1,6 +1,7 @@
 #include "ApplicationRenderer/ApplicationRenderer.h"
 #include "ApplicationRenderer/UIScreenshot.h"
 #include "Core/Math/Math.h"
+#include "Core/Math/VectorMath/VectorMath.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
@@ -49,13 +50,33 @@ static FAutoConsoleVariableRef CVarVSyncEnabled(
     GVSyncEnabled,
     EConsoleVariableFlags::Default);
 
-static constexpr int32 GPaintTimingFrames = 120;
-static constexpr EFormat GSnapshotFormat = EFormat::R8G8B8A8_Unorm;
+static constexpr int32   GPaintTimingFrames = 120;
+static constexpr EFormat GSnapshotFormat    = EFormat::R8G8B8A8_Unorm;
 
 static float ToMillisecondsSince(uint64 StartTime)
 {
     const uint64 Elapsed = FPlatformTime::QueryPerformanceCounter() - StartTime;
     return static_cast<float>((static_cast<double>(Elapsed) * 1000.0) / static_cast<double>(FPlatformTime::QueryPerformanceFrequency()));
+}
+
+static void ConvertIndicesToUInt16(const uint32* Source, uint16* Destination, int32 Count)
+{
+    int32 Index = 0;
+
+#if USE_INT_VECTOR_MATH
+    for (; Index + 8 <= Count; Index += 8)
+    {
+        const FInt128 Low    = FVectorMath::VectorLoadUInt(Source + Index);
+        const FInt128 High   = FVectorMath::VectorLoadUInt(Source + Index + 4);
+        const FInt128 Packed = FVectorMath::VectorPackUInt32ToUInt16(Low, High);
+        FVectorMath::VectorStoreUInt16(Packed, Destination + Index);
+    }
+#endif
+
+    for (; Index < Count; ++Index)
+    {
+        Destination[Index] = static_cast<uint16>(Source[Index]);
+    }
 }
 
 struct FApplicationUIConstants
@@ -106,13 +127,14 @@ static const CHAR* DescribeBatchTexture(const FUITextureHandle& Texture)
 
 static void DumpWindowDrawData(const FWindow& Window, const FDrawCommandList& Commands, const FUIDrawData& DrawData)
 {
-    LOG_INFO("[FApplicationRenderer]: Draw data for '%s': %d commands (%d box, %d outline, %d text, %d line, %d polyline, %d polygon, %d image, %d clip push, %d clip pop), %d vertices, %d indices, %d batches",
+    LOG_INFO("[FApplicationRenderer]: Draw data for '%s': %d commands (%d box, %d outline, %d text, %d line, %d polyline, "
+        "%d polygon, %d image, %d clip push, %d clip pop), %d vertices, %d indices, %d batches",
         *Window.GetTitle(), Commands.Size(), Commands.CountCommandsOfType(EDrawCommandType::Box),
         Commands.CountCommandsOfType(EDrawCommandType::BoxOutline), Commands.CountCommandsOfType(EDrawCommandType::Text),
         Commands.CountCommandsOfType(EDrawCommandType::Line), Commands.CountCommandsOfType(EDrawCommandType::Polyline),
         Commands.CountCommandsOfType(EDrawCommandType::ConvexPolygon), Commands.CountCommandsOfType(EDrawCommandType::Image),
-        Commands.CountCommandsOfType(EDrawCommandType::ClipPush), Commands.CountCommandsOfType(EDrawCommandType::ClipPop),
-        DrawData.GetVertices().Size(), DrawData.GetIndices().Size(), DrawData.GetBatches().Size());
+        0, 0, DrawData.GetVertices().Size() + DrawData.GetShapeVertices().Size(),
+        DrawData.GetIndices().Size() + DrawData.GetShapeIndices().Size(), DrawData.GetBatches().Size());
 
     if (DrawData.GetVertices().Size() >= FUIDrawData::MaxVertexCount)
     {
@@ -141,14 +163,22 @@ FApplicationRenderer::FApplicationRenderer()
     , VShader(nullptr)
     , PShader(nullptr)
     , InputLayout(nullptr)
+    , ShapeVShader(nullptr)
+    , ShapePShader(nullptr)
+    , ShapeInputLayout(nullptr)
+    , TextVShader(nullptr)
+    , TextInputLayout(nullptr)
     , DepthStencilState(nullptr)
     , RasterizerState(nullptr)
     , BlendState(nullptr)
     , LinearSampler(nullptr)
     , PipelineState(nullptr)
+    , ShapePipelineState(nullptr)
+    , TextPipelineState(nullptr)
     , DefaultTexture(nullptr)
     , AtlasTextures()
     , PipelineStateFormat(EFormat::Unknown)
+    , ActiveWindowState(nullptr)
 {
 }
 
@@ -196,6 +226,77 @@ bool FApplicationRenderer::InitializeRHI()
 
     InputLayout = RHI::CreateInputLayout(InputElements);
     if (!InputLayout)
+    {
+        return false;
+    }
+
+    CompileInfo = FShaderCompileInfo("VSText", EShaderModel::SM_6_2, EShaderStage::Vertex);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
+    {
+        LOG_ERROR("[FApplicationRenderer]: Failed to compile the text vertex shader");
+        return false;
+    }
+
+    TextVShader = RHI::CreateVertexShader(ShaderCode);
+    if (!TextVShader)
+    {
+        return false;
+    }
+
+    TArray<FRHIInputElementDesc> TextInputElements =
+    {
+        { "POSITION", 0, EFormat::R32G32_Float,   sizeof(FUITextGlyphInstance), 0, static_cast<uint32>(offsetof(FUITextGlyphInstance, Position)),    0, EVertexInputClass::Instance, 1 },
+        { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(FUITextGlyphInstance), 0, static_cast<uint32>(offsetof(FUITextGlyphInstance, Size)),        1, EVertexInputClass::Instance, 1 },
+        { "TEXCOORD", 1, EFormat::R32G32_Float,   sizeof(FUITextGlyphInstance), 0, static_cast<uint32>(offsetof(FUITextGlyphInstance, MinTexCoord)), 2, EVertexInputClass::Instance, 1 },
+        { "TEXCOORD", 2, EFormat::R32G32_Float,   sizeof(FUITextGlyphInstance), 0, static_cast<uint32>(offsetof(FUITextGlyphInstance, MaxTexCoord)), 3, EVertexInputClass::Instance, 1 },
+        { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(FUITextGlyphInstance), 0, static_cast<uint32>(offsetof(FUITextGlyphInstance, Color)),       4, EVertexInputClass::Instance, 1 },
+    };
+
+    TextInputLayout = RHI::CreateInputLayout(TextInputElements);
+    if (!TextInputLayout)
+    {
+        return false;
+    }
+
+    CompileInfo = FShaderCompileInfo("VSShape", EShaderModel::SM_6_2, EShaderStage::Vertex);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
+    {
+        LOG_ERROR("[FApplicationRenderer]: Failed to compile the shape vertex shader");
+        return false;
+    }
+
+    ShapeVShader = RHI::CreateVertexShader(ShaderCode);
+    if (!ShapeVShader)
+    {
+        return false;
+    }
+
+    CompileInfo = FShaderCompileInfo("PSShape", EShaderModel::SM_6_2, EShaderStage::Pixel);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
+    {
+        LOG_ERROR("[FApplicationRenderer]: Failed to compile the shape pixel shader");
+        return false;
+    }
+
+    ShapePShader = RHI::CreatePixelShader(ShaderCode);
+    if (!ShapePShader)
+    {
+        return false;
+    }
+
+    TArray<FRHIInputElementDesc> ShapeInputElements =
+    {
+        { "POSITION",  0, EFormat::R32G32_Float,       sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, Position)),    0, EVertexInputClass::Instance, 1 },
+        { "COLOR",     0, EFormat::R8G8B8A8_Unorm,     sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, Color)),       1, EVertexInputClass::Instance, 1 },
+        { "TEXCOORD",  0, EFormat::R32G32_Float,       sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, DrawSize)),    2, EVertexInputClass::Instance, 1 },
+        { "TEXCOORD",  1, EFormat::R32G32_Float,       sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, LocalOrigin)), 3, EVertexInputClass::Instance, 1 },
+        { "TEXCOORD",  2, EFormat::R32G32_Float,       sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, RectSize)),    4, EVertexInputClass::Instance, 1 },
+        { "TEXCOORD",  3, EFormat::R32G32B32A32_Float, sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, RadiusTL)),    5, EVertexInputClass::Instance, 1 },
+        { "TEXCOORD",  4, EFormat::R32G32_Float,       sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, Thickness)),   6, EVertexInputClass::Instance, 1 },
+    };
+
+    ShapeInputLayout = RHI::CreateInputLayout(ShapeInputElements);
+    if (!ShapeInputLayout)
     {
         return false;
     }
@@ -284,15 +385,23 @@ void FApplicationRenderer::ReleaseRHI()
     VShader.Reset();
     PShader.Reset();
     InputLayout.Reset();
+    ShapeVShader.Reset();
+    ShapePShader.Reset();
+    ShapeInputLayout.Reset();
+    TextVShader.Reset();
+    TextInputLayout.Reset();
     DepthStencilState.Reset();
     RasterizerState.Reset();
     BlendState.Reset();
     LinearSampler.Reset();
     PipelineState.Reset();
+    ShapePipelineState.Reset();
+    TextPipelineState.Reset();
     DefaultTexture.Reset();
     AtlasTextures.Clear();
 
     PipelineStateFormat = EFormat::Unknown;
+    ActiveWindowState   = nullptr;
 }
 
 FDrawCommandList* FApplicationRenderer::BeginWindow(const TSharedPtr<FWindow>& InWindow)
@@ -312,6 +421,7 @@ FDrawCommandList* FApplicationRenderer::BeginWindow(const TSharedPtr<FWindow>& I
     WindowState->DrawData.Reset();
 
     WindowState->WalkStartTime = FPlatformTime::QueryPerformanceCounter();
+    ActiveWindowState = WindowState;
     return &WindowState->Commands;
 }
 
@@ -322,34 +432,40 @@ void FApplicationRenderer::EndWindow(const TSharedPtr<FWindow>& InWindow)
         return;
     }
 
-    for (FWindowDrawState& WindowState : WindowStates)
+    FWindowDrawState* WindowState = ActiveWindowState;
+    if (!WindowState || WindowState->Window != InWindow)
     {
-        if (WindowState.Window == InWindow)
-        {
-            WindowState.Stats.ElementWalkTime = ToMillisecondsSince(WindowState.WalkStartTime);
-
-            TRACE_SCOPE("UI Build Draw Data");
-
-            const uint64 BuildStartTime = FPlatformTime::QueryPerformanceCounter();
-
-            WindowState.DrawData.SetAntiAliasingEnabled(CVarUIAntiAliasing.GetValue());
-            WindowState.DrawData.BuildFromCommandList(WindowState.Commands);
-
-            WindowState.Stats.GeometryBuildTime = ToMillisecondsSince(BuildStartTime);
-            WindowState.Stats.CommandCount      = WindowState.Commands.GetCommands().Size();
-            WindowState.Stats.VertexCount       = WindowState.DrawData.GetVertices().Size();
-            WindowState.Stats.BatchCount        = WindowState.DrawData.GetBatches().Size();
-
-            const int32 NumFramesToDump = CVarDumpDrawData.GetValue();
-            if (NumFramesToDump > 0)
-            {
-                DumpWindowDrawData(*InWindow, WindowState.Commands, WindowState.DrawData);
-                CVarDumpDrawData->SetAsInt(NumFramesToDump - 1, EConsoleVariableFlags::SetByCode);
-            }
-
-            return;
-        }
+        WindowState = FindWindowState(InWindow);
     }
+
+    if (!WindowState)
+    {
+        return;
+    }
+
+    WindowState->Stats.ElementWalkTime = ToMillisecondsSince(WindowState->WalkStartTime);
+
+    const uint64 BuildStartTime = FPlatformTime::QueryPerformanceCounter();
+    WindowState->DrawData.SetAntiAliasingEnabled(CVarUIAntiAliasing.GetValue());
+    WindowState->DrawData.BuildFromCommandList(WindowState->Commands);
+
+    WindowState->Stats.GeometryBuildTime = ToMillisecondsSince(BuildStartTime);
+    WindowState->Stats.CommandCount      = WindowState->Commands.GetCommands().Size();
+    
+    WindowState->Stats.VertexCount = WindowState->DrawData.GetVertices().Size() 
+        + WindowState->DrawData.GetShapeInstances().Size()
+        + WindowState->DrawData.GetTextGlyphInstances().Size();
+
+    WindowState->Stats.BatchCount = WindowState->DrawData.GetBatches().Size();
+
+    const int32 NumFramesToDump = CVarDumpDrawData.GetValue();
+    if (NumFramesToDump > 0)
+    {
+        DumpWindowDrawData(*InWindow, WindowState->Commands, WindowState->DrawData);
+        CVarDumpDrawData->SetAsInt(NumFramesToDump - 1, EConsoleVariableFlags::SetByCode);
+    }
+
+    ActiveWindowState = nullptr;
 }
 
 void FApplicationRenderer::ReportPaintStats(FWindowDrawState& WindowState)
@@ -448,7 +564,7 @@ FWindowDrawState* FApplicationRenderer::FindOrAddWindowState(const TSharedPtr<FW
 
 bool FApplicationRenderer::PreparePipelineState(EFormat OutputFormat)
 {
-    if (PipelineState && PipelineStateFormat == OutputFormat)
+    if (PipelineState && ShapePipelineState && TextPipelineState && PipelineStateFormat == OutputFormat)
     {
         return true;
     }
@@ -471,34 +587,122 @@ bool FApplicationRenderer::PreparePipelineState(EFormat OutputFormat)
         return false;
     }
 
+    PipelineStateDesc.VertexShader = ShapeVShader.Get();
+    PipelineStateDesc.PixelShader  = ShapePShader.Get();
+    PipelineStateDesc.InputLayout  = ShapeInputLayout.Get();
+
+    FRHIGraphicsPipelineStateRef NewShapePipelineState = RHI::CreateGraphicsPipelineState(PipelineStateDesc);
+    if (!NewShapePipelineState)
+    {
+        LOG_ERROR("[FApplicationRenderer]: Failed to create the shape pipeline state");
+        return false;
+    }
+
+    PipelineStateDesc.VertexShader = TextVShader.Get();
+    PipelineStateDesc.PixelShader  = PShader.Get();
+    PipelineStateDesc.InputLayout  = TextInputLayout.Get();
+
+    FRHIGraphicsPipelineStateRef NewTextPipelineState = RHI::CreateGraphicsPipelineState(PipelineStateDesc);
+    if (!NewTextPipelineState)
+    {
+        LOG_ERROR("[FApplicationRenderer]: Failed to create the text pipeline state");
+        return false;
+    }
+
     PipelineState       = NewPipelineState;
+    ShapePipelineState  = NewShapePipelineState;
+    TextPipelineState   = NewTextPipelineState;
     PipelineStateFormat = OutputFormat;
     return true;
 }
 
 bool FApplicationRenderer::PrepareGeometry(FRHICommandList& InCommandList, FWindowDrawState& WindowState)
 {
-    TRACE_SCOPE("UI Upload Geometry");
-
     const FUIDrawData& DrawData = WindowState.DrawData;
-
-    const int32 VertexCount = DrawData.GetVertices().Size();
-    const int32 IndexCount  = DrawData.GetIndices().Size();
 
     WindowState.Stats.BufferUploadTime = 0.0f;
 
-    if (VertexCount <= 0 || IndexCount <= 0)
+    const bool bHasTextured = DrawData.GetVertices().Size() > 0 && DrawData.GetIndices().Size() > 0;
+    const bool bHasShape    = !DrawData.GetShapeInstances().IsEmpty();
+    const bool bHasText     = !DrawData.GetTextGlyphInstances().IsEmpty();
+
+    if (!bHasTextured && !bHasShape && !bHasText)
     {
         return false;
     }
 
+    const bool bTexturedReady = !bHasTextured || (WindowState.VertexBuffer && WindowState.IndexBuffer);
+    const bool bShapeReady    = !bHasShape || WindowState.ShapeVertexBuffer;
+    const bool bTextReady     = !bHasText || WindowState.TextGlyphBuffer;
+
+    const uint64 GeometryHash = DrawData.ComputeGeometryHash();
+    if (GeometryHash == WindowState.UploadedGeometryHash && bTexturedReady && bShapeReady && bTextReady)
+    {
+        ReportPaintStats(WindowState);
+        return true;
+    }
+
     const uint64 UploadStartTime = FPlatformTime::QueryPerformanceCounter();
-    if (!WindowState.VertexBuffer || VertexCount > WindowState.VertexCapacity)
+
+    if (bHasTextured)
+    {
+        if (!UploadStream(InCommandList, WindowState.VertexBuffer, WindowState.IndexBuffer, WindowState.VertexCapacity,
+                WindowState.IndexCapacity, WindowState.IndexFormat, DrawData.GetVertices().Data(), static_cast<int32>(sizeof(FUIVertex)),
+                DrawData.GetVertices().Size(), DrawData.GetIndices().Data(), DrawData.GetIndices().Size(),
+                "ApplicationUI VertexBuffer", "ApplicationUI IndexBuffer"))
+        {
+            return false;
+        }
+    }
+
+    if (bHasShape)
+    {
+        if (!UploadVertexStream(InCommandList, WindowState.ShapeVertexBuffer, WindowState.ShapeVertexCapacity,
+                DrawData.GetShapeInstances().Data(), static_cast<int32>(sizeof(FUIShapeInstance)),
+                DrawData.GetShapeInstances().Size(), "ApplicationUI ShapeInstanceBuffer"))
+        {
+            return false;
+        }
+    }
+
+    if (bHasText)
+    {
+        if (!UploadVertexStream(InCommandList, WindowState.TextGlyphBuffer, WindowState.TextGlyphCapacity,
+                DrawData.GetTextGlyphInstances().Data(), static_cast<int32>(sizeof(FUITextGlyphInstance)),
+                DrawData.GetTextGlyphInstances().Size(), "ApplicationUI TextGlyphBuffer"))
+        {
+            return false;
+        }
+    }
+
+    WindowState.UploadedGeometryHash = GeometryHash;
+    WindowState.Stats.BufferUploadTime = ToMillisecondsSince(UploadStartTime);
+
+    ReportPaintStats(WindowState);
+    return true;
+}
+
+bool FApplicationRenderer::UploadStream(
+    FRHICommandList& InCommandList, 
+    FRHIBufferRef&   VertexBuffer, 
+    FRHIBufferRef&   IndexBuffer,
+    int32&           VertexCapacity, 
+    int32&           IndexCapacity, 
+    EIndexFormat&    IndexFormat, 
+    const void*      Vertices, 
+    int32            VertexStride, 
+    int32            VertexCount,
+    const uint32*    Indices, 
+    int32            IndexCount, 
+    const CHAR*      VertexDebugName, 
+    const CHAR*      IndexDebugName)
+{
+    if (!VertexBuffer || VertexCount > VertexCapacity)
     {
         const int32 NewCapacity = VertexCount + GVertexGrowth;
 
         const FRHIBufferDesc VertexBufferDesc = FRHIBufferDesc::CreateVertexBuffer(
-            sizeof(FUIVertex), static_cast<uint32>(NewCapacity), EBufferFlags::Default | EBufferFlags::CopyDest);
+            static_cast<uint32>(VertexStride), static_cast<uint32>(NewCapacity), EBufferFlags::Default | EBufferFlags::CopyDest);
 
         FRHIBufferRef NewVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::GenericRead, nullptr);
         if (!NewVertexBuffer)
@@ -506,23 +710,31 @@ bool FApplicationRenderer::PrepareGeometry(FRHICommandList& InCommandList, FWind
             return false;
         }
 
-        NewVertexBuffer->SetDebugName("ApplicationUI VertexBuffer");
+        NewVertexBuffer->SetDebugName(VertexDebugName);
 
-        if (WindowState.VertexBuffer)
+        if (VertexBuffer)
         {
-            RetiredBuffers.Add(FRetiredBuffer{ Move(WindowState.VertexBuffer), FrameCounter });
+            RetiredBuffers.Add(FRetiredBuffer{ Move(VertexBuffer), FrameCounter });
         }
 
-        WindowState.VertexBuffer   = NewVertexBuffer;
-        WindowState.VertexCapacity = NewCapacity;
+        VertexBuffer   = NewVertexBuffer;
+        VertexCapacity = NewCapacity;
     }
 
-    if (!WindowState.IndexBuffer || IndexCount > WindowState.IndexCapacity)
+    const EIndexFormat DesiredFormat = (VertexCount <= 65535) 
+        ? EIndexFormat::uint16 
+        : EIndexFormat::uint32;
+    
+    const int32 IndexStride = (DesiredFormat == EIndexFormat::uint16) 
+        ? static_cast<int32>(sizeof(uint16)) 
+        : static_cast<int32>(sizeof(uint32));
+
+    if (!IndexBuffer || IndexCount > IndexCapacity || IndexFormat != DesiredFormat)
     {
         const int32 NewCapacity = IndexCount + GIndexGrowth;
 
         const FRHIBufferDesc IndexBufferDesc = FRHIBufferDesc::CreateIndexBuffer(
-            sizeof(uint32), static_cast<uint32>(NewCapacity), EBufferFlags::Default | EBufferFlags::CopyDest);
+            static_cast<uint32>(IndexStride), static_cast<uint32>(NewCapacity), EBufferFlags::Default | EBufferFlags::CopyDest);
 
         FRHIBufferRef NewIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::GenericRead, nullptr);
         if (!NewIndexBuffer)
@@ -530,41 +742,85 @@ bool FApplicationRenderer::PrepareGeometry(FRHICommandList& InCommandList, FWind
             return false;
         }
 
-        NewIndexBuffer->SetDebugName("ApplicationUI IndexBuffer");
+        NewIndexBuffer->SetDebugName(IndexDebugName);
 
-        if (WindowState.IndexBuffer)
+        if (IndexBuffer)
         {
-            RetiredBuffers.Add(FRetiredBuffer{ Move(WindowState.IndexBuffer), FrameCounter });
+            RetiredBuffers.Add(FRetiredBuffer{ Move(IndexBuffer), FrameCounter });
         }
 
-        WindowState.IndexBuffer   = NewIndexBuffer;
-        WindowState.IndexCapacity = NewCapacity;
+        IndexBuffer   = NewIndexBuffer;
+        IndexCapacity = NewCapacity;
+        IndexFormat   = DesiredFormat;
     }
 
     const FRHITransitionBarrierDesc ToCopyDest[] =
     {
-        FRHITransitionBarrierDesc::CreateBuffer(WindowState.VertexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest),
-        FRHITransitionBarrierDesc::CreateBuffer(WindowState.IndexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest),
+        FRHITransitionBarrierDesc::CreateBuffer(VertexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest),
+        FRHITransitionBarrierDesc::CreateBuffer(IndexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest),
     };
 
     InCommandList.TransitionBarrier(ToCopyDest);
+    InCommandList.UpdateBuffer(VertexBuffer.Get(), FBufferRegion(0, VertexCount * VertexStride), Vertices);
 
-    InCommandList.UpdateBuffer(WindowState.VertexBuffer.Get(), 
-        FBufferRegion(0, VertexCount * sizeof(FUIVertex)), DrawData.GetVertices().Data());
-    InCommandList.UpdateBuffer(WindowState.IndexBuffer.Get(), 
-        FBufferRegion(0, IndexCount * sizeof(uint32)), DrawData.GetIndices().Data());
+    if (DesiredFormat == EIndexFormat::uint16)
+    {
+        Index16Scratch.ResizeUninitialized(IndexCount);
+        ConvertIndicesToUInt16(Indices, Index16Scratch.Data(), IndexCount);
+
+        InCommandList.UpdateBuffer(IndexBuffer.Get(), FBufferRegion(0, IndexCount * static_cast<int32>(sizeof(uint16))), Index16Scratch.Data());
+    }
+    else
+    {
+        InCommandList.UpdateBuffer(IndexBuffer.Get(), FBufferRegion(0, IndexCount * static_cast<int32>(sizeof(uint32))), Indices);
+    }
 
     const FRHITransitionBarrierDesc ToGenericRead[] =
     {
-        FRHITransitionBarrierDesc::CreateBuffer(WindowState.VertexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::GenericRead),
-        FRHITransitionBarrierDesc::CreateBuffer(WindowState.IndexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::GenericRead),
+        FRHITransitionBarrierDesc::CreateBuffer(VertexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::GenericRead),
+        FRHITransitionBarrierDesc::CreateBuffer(IndexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::GenericRead),
     };
 
     InCommandList.TransitionBarrier(ToGenericRead);
+    return true;
+}
 
-    WindowState.Stats.BufferUploadTime = ToMillisecondsSince(UploadStartTime);
+bool FApplicationRenderer::UploadVertexStream(
+    FRHICommandList& InCommandList, 
+    FRHIBufferRef&   VertexBuffer, 
+    int32&           VertexCapacity,
+    const void*      Vertices, 
+    int32            VertexStride, 
+    int32            VertexCount, 
+    const CHAR*      VertexDebugName)
+{
+    if (!VertexBuffer || VertexCount > VertexCapacity)
+    {
+        const int32 NewCapacity = VertexCount + GVertexGrowth;
+        const FRHIBufferDesc VertexBufferDesc = FRHIBufferDesc::CreateVertexBuffer(
+            static_cast<uint32>(VertexStride), static_cast<uint32>(NewCapacity), EBufferFlags::Default | EBufferFlags::CopyDest);
 
-    ReportPaintStats(WindowState);
+        FRHIBufferRef NewVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::GenericRead, nullptr);
+        if (!NewVertexBuffer)
+        {
+            return false;
+        }
+
+        NewVertexBuffer->SetDebugName(VertexDebugName);
+        if (VertexBuffer)
+        {
+            RetiredBuffers.Add(FRetiredBuffer{ Move(VertexBuffer), FrameCounter });
+        }
+
+        VertexBuffer   = NewVertexBuffer;
+        VertexCapacity = NewCapacity;
+    }
+
+    InCommandList.TransitionBarrier(
+        FRHITransitionBarrierDesc::CreateBuffer(VertexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest));
+    InCommandList.UpdateBuffer(VertexBuffer.Get(), FBufferRegion(0, VertexCount * VertexStride), Vertices);
+    InCommandList.TransitionBarrier(
+        FRHITransitionBarrierDesc::CreateBuffer(VertexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::GenericRead));
     return true;
 }
 
@@ -852,7 +1108,8 @@ void FApplicationRenderer::PresentWindowSurfaces(FRHICommandList& InCommandList)
         Surface.bIsRendered = false;
 
         FRHITexture* BackBuffer = Surface.SwapChain->GetBackBuffer();
-        InCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::Present));
+        InCommandList.TransitionBarrier(
+            FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::Present));
         InCommandList.PresentSwapChain(Surface.SwapChain.Get(), Surface.bIsPrimary && GVSyncEnabled);
 
         switch (Surface.DeferredShowState)
@@ -913,6 +1170,7 @@ void FApplicationRenderer::RecordWindows()
 
     {
         TRACE_SCOPE("UI Record Surfaces");
+
         FScopedApplicationGPUTrace GPUTrace(GPUProfiler, CommandList, "UI Render");
         RenderWindowSurfaces(CommandList);
     }
@@ -941,6 +1199,7 @@ void FApplicationRenderer::EndFrameAndPresent()
 
     {
         TRACE_SCOPE("UI Finalize Command List");
+
         CommandList.EndFrame();
         CommandList.FlushDeletedResources();
     }
@@ -1009,7 +1268,6 @@ FApplicationRenderer::FWindowSurface* FApplicationRenderer::FindRedrawableSurfac
 void FApplicationRenderer::RedrawWindowSurface(FRHICommandList& InCommandList, FWindowSurface& Surface)
 {
     ReconcileSurfaceSize(InCommandList, Surface);
-
     RenderWindowToSwapChain(InCommandList, Surface.Window, EAttachmentLoadAction::Clear);
 
     FRHITexture* BackBuffer = Surface.SwapChain->GetBackBuffer();
@@ -1050,8 +1308,27 @@ void FApplicationRenderer::RetireWindowBuffers(FWindowDrawState& WindowState)
         RetiredBuffers.Add(FRetiredBuffer{ Move(WindowState.IndexBuffer), FrameCounter });
     }
 
-    WindowState.VertexCapacity = 0;
-    WindowState.IndexCapacity  = 0;
+    if (WindowState.ShapeVertexBuffer)
+    {
+        RetiredBuffers.Add(FRetiredBuffer{ Move(WindowState.ShapeVertexBuffer), FrameCounter });
+    }
+
+    if (WindowState.ShapeIndexBuffer)
+    {
+        RetiredBuffers.Add(FRetiredBuffer{ Move(WindowState.ShapeIndexBuffer), FrameCounter });
+    }
+
+    if (WindowState.TextGlyphBuffer)
+    {
+        RetiredBuffers.Add(FRetiredBuffer{ Move(WindowState.TextGlyphBuffer), FrameCounter });
+    }
+
+    WindowState.VertexCapacity       = 0;
+    WindowState.IndexCapacity        = 0;
+    WindowState.ShapeVertexCapacity  = 0;
+    WindowState.ShapeIndexCapacity   = 0;
+    WindowState.TextGlyphCapacity    = 0;
+    WindowState.UploadedGeometryHash = 0;
 }
 
 void FApplicationRenderer::ReleaseRetiredResources(bool bReleaseEverything)
@@ -1109,8 +1386,6 @@ void FApplicationRenderer::RenderWindow(FRHICommandList& InCommandList, const FW
 
 void FApplicationRenderer::RenderDrawData(FRHICommandList& InCommandList, const FWindowDrawState& WindowState, const IntVector2& GeometrySize, float SupersampleScale)
 {
-    TRACE_SCOPE("UI Record Draw Batches");
-
     const float GeometryWidth  = static_cast<float>(GeometrySize.X);
     const float GeometryHeight = static_cast<float>(GeometrySize.Y);
     const float FramebufferW   = GeometryWidth * SupersampleScale;
@@ -1127,13 +1402,17 @@ void FApplicationRenderer::RenderDrawData(FRHICommandList& InCommandList, const 
     FApplicationUIConstants Constants;
     Memory::Memcpy(&Constants.ProjectionMatrix, Matrix, sizeof(Matrix));
 
-    InCommandList.SetGraphicsPipelineState(PipelineState.Get());
     InCommandList.SetViewport(FViewportRegion(FramebufferW, FramebufferH, 0.0f, 0.0f, 0.0f, 1.0f));
-    InCommandList.SetVertexBuffers(MakeArrayView(&WindowState.VertexBuffer, 1), 0);
-    InCommandList.SetIndexBuffer(WindowState.IndexBuffer.Get(), EIndexFormat::uint32);
     InCommandList.SetBlendFactor(Vector4{ 0.0f, 0.0f, 0.0f, 0.0f });
-    InCommandList.SetSamplerState(PShader.Get(), LinearSampler.Get(), 0);
-    InCommandList.SetShaderConstants(PShader.Get(), &Constants, 16);
+
+    EUIDrawBatchKind        BoundKind     = EUIDrawBatchKind::Textured;
+    FRHIShaderResourceView* BoundView     = nullptr;
+    bool                    bScissorValid = false;
+    float                   BoundScissorX = -1.0f;
+    float                   BoundScissorY = -1.0f;
+    float                   BoundScissorW = -1.0f;
+    float                   BoundScissorH = -1.0f;
+    bool                    bHasBoundKind = false;
 
     for (const FUIDrawBatch& Batch : WindowState.DrawData.GetBatches())
     {
@@ -1165,15 +1444,88 @@ void FApplicationRenderer::RenderDrawData(FRHICommandList& InCommandList, const 
             ScissorHeight = MaxY - MinY;
         }
 
-        FRHIShaderResourceView* TextureView = GetBatchShaderResourceView(Batch.Texture);
-        if (!TextureView)
+        if (!bHasBoundKind || BoundKind != Batch.Kind)
         {
-            continue;
+            if (Batch.Kind == EUIDrawBatchKind::Shape)
+            {
+                if (!WindowState.ShapeVertexBuffer)
+                {
+                    continue;
+                }
+
+                InCommandList.SetGraphicsPipelineState(ShapePipelineState.Get());
+                InCommandList.SetVertexBuffers(MakeArrayView(&WindowState.ShapeVertexBuffer, 1), 0);
+                InCommandList.SetShaderConstants(ShapePShader.Get(), &Constants, 16);
+            }
+            else if (Batch.Kind == EUIDrawBatchKind::Text)
+            {
+                if (!WindowState.TextGlyphBuffer)
+                {
+                    continue;
+                }
+
+                InCommandList.SetGraphicsPipelineState(TextPipelineState.Get());
+                InCommandList.SetVertexBuffers(MakeArrayView(&WindowState.TextGlyphBuffer, 1), 0);
+                InCommandList.SetSamplerState(PShader.Get(), LinearSampler.Get(), 0);
+                InCommandList.SetShaderConstants(PShader.Get(), &Constants, 16);
+            }
+            else
+            {
+                if (!WindowState.VertexBuffer || !WindowState.IndexBuffer)
+                {
+                    continue;
+                }
+
+                InCommandList.SetGraphicsPipelineState(PipelineState.Get());
+                InCommandList.SetVertexBuffers(MakeArrayView(&WindowState.VertexBuffer, 1), 0);
+                InCommandList.SetIndexBuffer(WindowState.IndexBuffer.Get(), WindowState.IndexFormat);
+                InCommandList.SetSamplerState(PShader.Get(), LinearSampler.Get(), 0);
+                InCommandList.SetShaderConstants(PShader.Get(), &Constants, 16);
+            }
+
+            BoundKind     = Batch.Kind;
+            bHasBoundKind = true;
+            BoundView     = nullptr;
         }
 
-        InCommandList.SetShaderResourceView(PShader.Get(), TextureView, 0);
-        InCommandList.SetScissorRect(FScissorRegion(ScissorWidth, ScissorHeight, ScissorX, ScissorY));
-        InCommandList.DrawIndexedInstanced(static_cast<uint32>(Batch.IndexCount), 1, static_cast<uint32>(Batch.IndexOffset), 0, 0);
+        if (Batch.Kind != EUIDrawBatchKind::Shape)
+        {
+            FRHIShaderResourceView* TextureView = GetBatchShaderResourceView(Batch.Texture);
+            if (!TextureView)
+            {
+                continue;
+            }
+
+            if (TextureView != BoundView)
+            {
+                InCommandList.SetShaderResourceView(PShader.Get(), TextureView, 0);
+                BoundView = TextureView;
+            }
+        }
+
+        if (!bScissorValid || ScissorX != BoundScissorX || ScissorY != BoundScissorY || ScissorWidth != BoundScissorW
+            || ScissorHeight != BoundScissorH)
+        {
+            InCommandList.SetScissorRect(FScissorRegion(ScissorWidth, ScissorHeight, ScissorX, ScissorY));
+            BoundScissorX = ScissorX;
+            BoundScissorY = ScissorY;
+            BoundScissorW = ScissorWidth;
+            BoundScissorH = ScissorHeight;
+            bScissorValid = true;
+        }
+
+        if (Batch.Kind == EUIDrawBatchKind::Text)
+        {
+            InCommandList.DrawInstanced(6, static_cast<uint32>(Batch.IndexCount), 0, static_cast<uint32>(Batch.IndexOffset));
+        }
+        else if (Batch.Kind == EUIDrawBatchKind::Shape)
+        {
+            InCommandList.DrawInstanced(6, static_cast<uint32>(Batch.IndexCount / 6), 0, static_cast<uint32>(Batch.IndexOffset / 6));
+        }
+        else
+        {
+            InCommandList.DrawIndexedInstanced(static_cast<uint32>(Batch.IndexCount), 1, static_cast<uint32>(Batch.IndexOffset), 0, 0);
+        }
     }
 }
 
@@ -1188,6 +1540,7 @@ FRHITextureRef FApplicationRenderer::RenderElementToTexture(const TSharedPtr<FVi
 
     FWindowDrawState SnapshotState;
     Element->OnDraw(FDrawGeometry(FRectangle(IntVector2(0, 0), Size.X, Size.Y), ClampedScale), SnapshotState.Commands, 0);
+
     SnapshotState.DrawData.BuildFromCommandList(SnapshotState.Commands);
 
     if (SnapshotState.DrawData.IsEmpty())
@@ -1195,9 +1548,10 @@ FRHITextureRef FApplicationRenderer::RenderElementToTexture(const TSharedPtr<FVi
         return nullptr;
     }
 
-    const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget |
-                                          ETextureUsageFlags::ShaderResourceTexture |
-                                          ETextureUsageFlags::CopySource;
+    const ETextureUsageFlags UsageFlags = 
+        ETextureUsageFlags::RenderTarget |
+        ETextureUsageFlags::ShaderResourceTexture |
+        ETextureUsageFlags::CopySource;
 
     const FClearValue ClearValue(GSnapshotFormat, 0.0f, 0.0f, 0.0f, 0.0f);
 

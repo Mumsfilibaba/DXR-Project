@@ -742,19 +742,20 @@ void FEditorProfilerPanel::Tick(float DeltaTime)
     TimeSinceDetailRefresh    += DeltaTime;
     TimeSinceAggregateRefresh += DeltaTime;
 
-    RefreshHeader();
-    if (bCollectOptimizationTargets && TimeSinceAggregateRefresh >= LIVE_REFRESH_INTERVAL)
+    const bool bRefreshLivePresentation = !bIsFrozen && TimeSinceDetailRefresh >= LIVE_REFRESH_INTERVAL;
+    if (bRefreshLivePresentation)
     {
-        TimeSinceAggregateRefresh = 0.0f;
-        RefreshOptimizationTargets();
-    }
-
-    if (!bIsFrozen)
-    {
+        RefreshHeader();
         RefreshHistograms();
         RefreshFrameSelection();
         RefreshPipelineStatistics();
         RefreshWorstFrames();
+    }
+
+    if (bCollectOptimizationTargets && TimeSinceAggregateRefresh >= LIVE_REFRESH_INTERVAL)
+    {
+        TimeSinceAggregateRefresh = 0.0f;
+        RefreshOptimizationTargets();
     }
 
     const bool bIsThrottled  = bFollowLatestFrame && (TimeSinceDetailRefresh < LIVE_REFRESH_INTERVAL);

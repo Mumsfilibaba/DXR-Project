@@ -223,7 +223,10 @@ void FVulkanCommandContextState::BindGraphicsState()
     if (GraphicsState.bBindIndexBuffer || GVulkanForceBinding)
     {
         FVulkanIndexBufferCache& IndexBufferCache = GraphicsState.IndexBufferCache;
-        Context.GetCommandBuffer()->BindIndexBuffer(IndexBufferCache.IndexBuffer, IndexBufferCache.Offset, IndexBufferCache.IndexType);
+        if (IndexBufferCache.IndexBuffer != VK_NULL_HANDLE)
+        {
+            Context.GetCommandBuffer()->BindIndexBuffer(IndexBufferCache.IndexBuffer, IndexBufferCache.Offset, IndexBufferCache.IndexType);
+        }
         GraphicsState.bBindIndexBuffer = false;
     }
 

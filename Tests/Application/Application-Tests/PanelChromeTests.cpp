@@ -166,7 +166,7 @@ bool PanelChromeGeometry_Test()
             continue;
         }
 
-        if (Command.Tint == Style.Panel.Border)
+        if (Command.HasTint(Style.Panel.Border))
         {
             ++RoundedOutlines;
             CardBounds.Add(Command.Bounds);
@@ -176,7 +176,7 @@ bool PanelChromeGeometry_Test()
 
     for (const FDrawCommand& Command : CommandList.GetCommands())
     {
-        if (Command.CornerRadius.IsZero() || Command.Type != EDrawCommandType::Box || !(Command.Tint == Style.Panel.Fill))
+        if (Command.CornerRadius.IsZero() || Command.Type != EDrawCommandType::Box || !(Command.HasTint(Style.Panel.Fill)))
         {
             continue;
         }
@@ -198,7 +198,7 @@ bool PanelChromeGeometry_Test()
 
     for (const FDrawCommand& Command : CommandList.GetCommands())
     {
-        if (Command.Type == EDrawCommandType::BoxOutline && Command.Tint == Style.Panel.Border)
+        if (Command.Type == EDrawCommandType::BoxOutline && Command.HasTint(Style.Panel.Border))
         {
             TEST_EXPECT(Command.CornerRadius.TopLeft == Style.Panel.CornerRadius);
             TEST_EXPECT(Command.CornerRadius.BottomRight == Style.Panel.CornerRadius);
@@ -228,7 +228,7 @@ bool PanelChromeGap_Test()
     TEST_EXPECT(Backdrop != nullptr);
     if (Backdrop)
     {
-        TEST_EXPECT(Backdrop->Tint == Style.Colors.WindowBackground);
+        TEST_EXPECT(Backdrop->HasTint(Style.Colors.WindowBackground));
         TEST_EXPECT(Backdrop->CornerRadius.IsZero());
     }
 
@@ -301,7 +301,7 @@ bool SplitterHintThickness_Test()
         const FDrawCommand* Hint = nullptr;
         for (const FDrawCommand& Command : HoveredList.GetCommands())
         {
-            if (Command.Type == EDrawCommandType::Box && Command.Tint == Style.Colors.SeparatorHovered)
+            if (Command.Type == EDrawCommandType::Box && Command.HasTint(Style.Colors.SeparatorHovered))
             {
                 Hint = &Command;
             }
@@ -353,7 +353,7 @@ bool TabStripBlendsIntoPanel_Test()
         const bool bCoversWholeStrip = Command.Bounds.Width >= 400 && Command.Bounds.Height >= Style.Tab.StripHeight;
         if (Command.Type == EDrawCommandType::Box && bCoversWholeStrip)
         {
-            TEST_EXPECT(Command.Tint.A == 0.0f);
+            TEST_EXPECT(Command.PackedAlpha() == 0);
         }
     }
 
@@ -389,11 +389,11 @@ bool PanelChromeFocusStroke_Test()
             continue;
         }
 
-        if (Command.Tint == Style.Panel.Border)
+        if (Command.HasTint(Style.Panel.Border))
         {
             ++RestingStrokes;
         }
-        else if (Command.Tint == Style.Panel.BorderFocused)
+        else if (Command.HasTint(Style.Panel.BorderFocused))
         {
             ++FocusedStrokes;
         }

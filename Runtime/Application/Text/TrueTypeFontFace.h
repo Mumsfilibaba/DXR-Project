@@ -31,7 +31,9 @@ public:
     virtual const FShapedRun& ShapeText(const StringView& Text) const override final;
 
 private:
-    static constexpr int32 ShapedRunCacheSize = 64;
+    static constexpr int32 ShapedRunCacheWays     = 4;
+    static constexpr int32 ShapedRunCacheSetCount = 512;
+    static constexpr int32 ShapedRunCacheSize     = ShapedRunCacheWays * ShapedRunCacheSetCount;
 
     struct FCachedRun
     {
@@ -49,6 +51,7 @@ private:
 
     void ShapeRun(const StringView& Text, FShapedRun& OutRun) const;
 
-    FFontAtlas Atlas;
+    FFontAtlas                                           Atlas;
     mutable TStaticArray<FCachedRun, ShapedRunCacheSize> ShapedRuns;
+    mutable TStaticArray<uint8, ShapedRunCacheSetCount>  ShapedRunReplacementWays;
 };

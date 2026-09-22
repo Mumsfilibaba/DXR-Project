@@ -9,6 +9,7 @@ FVisualElement::FVisualElement()
     , ContentRectangle()
     , CachedDesiredSize()
     , ParentElement()
+    , bDesiredSizeDirty(true)
 {
 }
 
@@ -156,6 +157,11 @@ int32 FVisualElement::GetContentTopInset() const
 
 IntVector2 FVisualElement::PrepareDesiredSize()
 {
+    if (!bDesiredSizeDirty)
+    {
+        return CachedDesiredSize;
+    }
+
     TArray<TSharedPtr<FVisualElement>> Children;
     GetChildren(Children);
 
@@ -167,8 +173,35 @@ IntVector2 FVisualElement::PrepareDesiredSize()
         }
     }
 
-    CachedDesiredSize = ComputeDesiredSize();
+    bDesiredSizeDirty = false;
+
+    const IntVector2 DesiredSize = ComputeDesiredSize();
+    if (DesiredSize != CachedDesiredSize)
+    {
+        CachedDesiredSize = DesiredSize;
+
+        if (TSharedPtr<FVisualElement> Parent = ParentElement.ToSharedPtr())
+        {
+            Parent->InvalidateDesiredSize();
+        }
+    }
+
     return CachedDesiredSize;
+}
+
+void FVisualElement::InvalidateDesiredSize()
+{
+    if (bDesiredSizeDirty)
+    {
+        return;
+    }
+
+    bDesiredSizeDirty = true;
+
+    if (TSharedPtr<FVisualElement> Parent = ParentElement.ToSharedPtr())
+    {
+        Parent->InvalidateDesiredSize();
+    }
 }
 
 void FVisualElement::FindParentElements(FElementPath& OutRootPath)
@@ -191,12 +224,30 @@ void FVisualElement::FindChildrenContainingPoint(const IntVector2& ClientPositio
 
 void FVisualElement::SetVisibility(EVisibility InVisibility)
 {
-    Visibility = InVisibility;
+    if (Visibility != InVisibility)
+    {
+        Visibility = InVisibility;
+        InvalidateDesiredSize();
+    }
 }
 
 void FVisualElement::SetParentElement(const TWeakPtr<FVisualElement>& InParentElement)
 {
+    TSharedPtr<FVisualElement> PreviousParent = ParentElement.ToSharedPtr();
     ParentElement = InParentElement;
+
+    InvalidateDesiredSize();
+
+    TSharedPtr<FVisualElement> Parent = ParentElement.ToSharedPtr();
+    if (Parent)
+    {
+        Parent->InvalidateDesiredSize();
+    }
+
+    if (PreviousParent && PreviousParent != Parent)
+    {
+        PreviousParent->InvalidateDesiredSize();
+    }
 }
 
 void FVisualElement::SetContentRectangle(const FRectangle& InContentRectangle)

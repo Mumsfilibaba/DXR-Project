@@ -66,7 +66,15 @@ int32 FOverlay::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& 
             continue;
         }
 
-        const FDrawGeometry ChildGeometry(Slot.Element->GetContentRectangle(), AllottedGeometry.Scale);
+        const FRectangle  ChildBounds = Slot.Element->GetContentRectangle();
+        const FRectangle& ClipBounds  = OutCommandList.GetCurrentClipRectangle();
+
+        if (!ClipBounds.IsEmpty() && ClipBounds.Intersect(ChildBounds).IsEmpty())
+        {
+            continue;
+        }
+
+        const FDrawGeometry ChildGeometry(ChildBounds, AllottedGeometry.Scale);
         MaxLayerId = Slot.Element->OnDraw(ChildGeometry, OutCommandList, MaxLayerId + 1);
     }
 
@@ -113,6 +121,7 @@ bool FOverlay::RemoveSlot(const TSharedPtr<FVisualElement>& InElement)
         if (Slots[Index].Element == InElement)
         {
             Slots.RemoveAt(Index);
+            InvalidateDesiredSize();
             return true;
         }
     }
@@ -123,4 +132,5 @@ bool FOverlay::RemoveSlot(const TSharedPtr<FVisualElement>& InElement)
 void FOverlay::ClearSlots()
 {
     Slots.Clear();
+    InvalidateDesiredSize();
 }

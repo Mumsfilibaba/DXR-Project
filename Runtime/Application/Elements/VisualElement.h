@@ -268,6 +268,27 @@ public:
     virtual IntVector2 PrepareDesiredSize();
 
     /**
+     * @brief Marks the cached desired size of this element and every parent above it as out of date, so that
+     * the next PrepareDesiredSize measures them again.
+     *
+     * Anything that changes what ComputeDesiredSize would return has to call this, including an element whose
+     * size follows an animation or data outside the tree, which calls it for as long as that size keeps moving.
+     * A clean element stops PrepareDesiredSize from walking its children, so a mutation that forgets this stays
+     * wrong until something else dirties the same branch.
+     */
+    void InvalidateDesiredSize();
+
+    /**
+     * @brief Checks whether this element is waiting to be measured again.
+     *
+     * @return True when the next PrepareDesiredSize will recompute the desired size.
+     */
+    NODISCARD bool IsDesiredSizeDirty() const
+    {
+        return bDesiredSizeDirty;
+    }
+
+    /**
      * @brief The size cached by the last PrepareDesiredSize call.
      *
      * @return The cached desired size in pixels.
@@ -370,4 +391,5 @@ private:
     FRectangle               ContentRectangle;
     IntVector2               CachedDesiredSize;
     TWeakPtr<FVisualElement> ParentElement;
+    bool                     bDesiredSizeDirty;
 };

@@ -54,7 +54,7 @@ bool DrawCommandList_Test()
     TEST_EXPECT_EQ(CommandList[2].LayerId, 2);
 
     TEST_SECTION("A text command keeps its string and face");
-    TEST_EXPECT(CommandList[1].Text.Equals("Hello"));
+    TEST_EXPECT(CommandList.GetCommandText(CommandList[1]).Equals("Hello"));
     TEST_EXPECT(CommandList[1].Font == Font.Get());
 
     TEST_SECTION("Counting by type only counts that type");
@@ -181,8 +181,12 @@ bool DrawClipNesting_Test()
     TEST_EXPECT_EQ(Nested.Width, 50);
     TEST_EXPECT_EQ(Nested.Height, 50);
 
-    TEST_SECTION("The recorded push carries the intersected region");
-    TEST_EXPECT(CommandList[1].Bounds == Nested);
+    TEST_SECTION("A draw recorded inside the nested region stores that clip");
+    CommandList.AddBox(2, FRectangle(IntVector2(60, 60), 10, 10), FFloatColor::White);
+    TEST_EXPECT_EQ(CommandList.Size(), 1);
+    TEST_EXPECT(CommandList[0].IsClipped());
+    TEST_EXPECT(CommandList.GetCommandClipRectangle(CommandList[0]) == Nested);
+    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::ClipPush), 0);
 
     TEST_SECTION("Popping restores the enclosing region");
     CommandList.PopClip(1);
@@ -193,14 +197,14 @@ bool DrawClipNesting_Test()
 
     CommandList.PopClip(0);
     TEST_EXPECT(CommandList.IsClipStackBalanced());
-    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::ClipPush), 2);
-    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::ClipPop), 2);
+    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::ClipPush), 0);
+    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::ClipPop), 0);
 
     TEST_SECTION("An extra pop leaves the list unbalanced too");
     CommandList.PopClip(0);
     TEST_EXPECT(!CommandList.IsClipStackBalanced());
 
-    TEST_SECTION("A scroll box wraps its child in exactly one push and one pop");
+    TEST_SECTION("A scroll box clips its children without recording clip commands");
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
     TSharedPtr<FVerticalBox> Content = FVerticalBox::Create();
@@ -217,10 +221,22 @@ bool DrawClipNesting_Test()
     FDrawCommandList ScrollCommandList;
     ScrollBox->OnDraw(FDrawGeometry(ScrollBox->GetContentRectangle(), 1.0f), ScrollCommandList, 0);
 
-    TEST_EXPECT_EQ(ScrollCommandList.CountCommandsOfType(EDrawCommandType::ClipPush), 1);
-    TEST_EXPECT_EQ(ScrollCommandList.CountCommandsOfType(EDrawCommandType::ClipPop), 1);
+    TEST_EXPECT_EQ(ScrollCommandList.CountCommandsOfType(EDrawCommandType::ClipPush), 0);
+    TEST_EXPECT_EQ(ScrollCommandList.CountCommandsOfType(EDrawCommandType::ClipPop), 0);
     TEST_EXPECT(ScrollCommandList.IsClipStackBalanced());
-    TEST_EXPECT_EQ(ScrollCommandList.CountCommandsOfType(EDrawCommandType::Text), 10);
+    TEST_EXPECT(ScrollCommandList.CountCommandsOfType(EDrawCommandType::Text) > 0);
+    TEST_EXPECT(ScrollCommandList.CountCommandsOfType(EDrawCommandType::Text) < 10);
+
+    bool bFoundClippedText = false;
+    for (const FDrawCommand& Command : ScrollCommandList.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Text && Command.IsClipped())
+        {
+            bFoundClippedText = true;
+            break;
+        }
+    }
+    TEST_EXPECT(bFoundClippedText);
 
     TEST_END();
 }
@@ -360,33 +376,13 @@ bool BoxLayerSequencing_Test()
     FDrawCommandList CommandList;
     RootBox->OnDraw(FDrawGeometry(RootBox->GetContentRectangle(), 1.0f), CommandList, 0);
 
-    int32 ClipPushLayerId = -1;
-    int32 ClipPopLayerId  = -1;
-    int32 BoxLayerId      = -1;
+    int32 BoxLayerId = -1;
 
     for (const FDrawCommand& Command : CommandList.GetCommands())
     {
-        switch (Command.Type)
+        if (Command.Type == EDrawCommandType::Box)
         {
-            case EDrawCommandType::ClipPush:
-            {
-                ClipPushLayerId = Command.LayerId;
-                break;
-            }
-            case EDrawCommandType::ClipPop:
-            {
-                ClipPopLayerId = Command.LayerId;
-                break;
-            }
-            case EDrawCommandType::Box:
-            {
-                BoxLayerId = Command.LayerId;
-                break;
-            }
-            default:
-            {
-                break;
-            }
+            BoxLayerId = Command.LayerId;
         }
     }
 
@@ -397,20 +393,20 @@ bool BoxLayerSequencing_Test()
     TEST_EXPECT(CommandList.IsClipStackBalanced());
     TEST_EXPECT(LogIndex != FDrawCommandList::InvalidIndex);
     TEST_EXPECT(InputIndex != FDrawCommandList::InvalidIndex);
-    TEST_EXPECT(ClipPushLayerId >= 0 && ClipPopLayerId >= 0 && BoxLayerId >= 0);
+    TEST_EXPECT(BoxLayerId >= 0);
 
     if (LogIndex == FDrawCommandList::InvalidIndex || InputIndex == FDrawCommandList::InvalidIndex)
     {
         TEST_END();
     }
 
-    TEST_SECTION("The scrolled lines fall inside the region, which is what clips them");
-    TEST_EXPECT(CommandList[LogIndex].LayerId >= ClipPushLayerId);
-    TEST_EXPECT(CommandList[LogIndex].LayerId <= ClipPopLayerId);
+    TEST_SECTION("The scrolled lines carry the clip, which is what clips them");
+    TEST_EXPECT(CommandList[LogIndex].IsClipped());
 
-    TEST_SECTION("The row after it starts above the region, so the layer sort leaves it unclipped");
-    TEST_EXPECT(BoxLayerId > ClipPopLayerId);
-    TEST_EXPECT(CommandList[InputIndex].LayerId > ClipPopLayerId);
+    TEST_SECTION("The row after it is recorded outside the region, so the layer sort leaves it unclipped");
+    TEST_EXPECT(!CommandList[InputIndex].IsClipped());
+    TEST_EXPECT(BoxLayerId > CommandList[LogIndex].LayerId);
+    TEST_EXPECT(CommandList[InputIndex].LayerId > CommandList[LogIndex].LayerId);
 
     TEST_END();
 }

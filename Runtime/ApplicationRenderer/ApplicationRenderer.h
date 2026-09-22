@@ -22,8 +22,17 @@ struct FWindowDrawState
         , SwapChain(nullptr)
         , VertexBuffer(nullptr)
         , IndexBuffer(nullptr)
+        , ShapeVertexBuffer(nullptr)
+        , ShapeIndexBuffer(nullptr)
+        , TextGlyphBuffer(nullptr)
         , VertexCapacity(0)
         , IndexCapacity(0)
+        , ShapeVertexCapacity(0)
+        , ShapeIndexCapacity(0)
+        , TextGlyphCapacity(0)
+        , UploadedGeometryHash(0)
+        , IndexFormat(EIndexFormat::uint32)
+        , ShapeIndexFormat(EIndexFormat::uint32)
         , Stats()
         , AccumulatedStats()
         , WalkStartTime(0)
@@ -37,8 +46,17 @@ struct FWindowDrawState
     FRHISwapChain*    SwapChain;
     FRHIBufferRef     VertexBuffer;
     FRHIBufferRef     IndexBuffer;
+    FRHIBufferRef     ShapeVertexBuffer;
+    FRHIBufferRef     ShapeIndexBuffer;
+    FRHIBufferRef     TextGlyphBuffer;
     int32             VertexCapacity;
     int32             IndexCapacity;
+    int32             ShapeVertexCapacity;
+    int32             ShapeIndexCapacity;
+    int32             TextGlyphCapacity;
+    uint64            UploadedGeometryHash;
+    EIndexFormat      IndexFormat;
+    EIndexFormat      ShapeIndexFormat;
     FUIPaintStats     Stats;
     FUIPaintStats     AccumulatedStats;
     uint64            WalkStartTime;
@@ -170,6 +188,31 @@ private:
     void                    RedrawWindowSurface(FRHICommandList& InCommandList, FWindowSurface& Surface);
     bool                    PreparePipelineState(EFormat OutputFormat);
     bool                    PrepareGeometry(FRHICommandList& InCommandList, FWindowDrawState& WindowState);
+    
+    bool UploadStream(
+        FRHICommandList& InCommandList, 
+        FRHIBufferRef&   VertexBuffer, 
+        FRHIBufferRef&   IndexBuffer,
+        int32&           VertexCapacity,
+        int32&           IndexCapacity,
+        EIndexFormat&    IndexFormat,
+        const void*      Vertices,
+        int32            VertexStride,
+        int32            VertexCount,
+        const uint32*    Indices,
+        int32            IndexCount,
+        const CHAR*      VertexDebugName,
+        const CHAR*      IndexDebugName);
+    
+    bool UploadVertexStream(
+        FRHICommandList& InCommandList,
+        FRHIBufferRef&   VertexBuffer,
+        int32&           VertexCapacity,
+        const void*      Vertices,
+        int32            VertexStride,
+        int32            VertexCount,
+        const CHAR*      VertexDebugName);
+
     FRHIShaderResourceView* PrepareAtlasTexture(FRHICommandList& InCommandList, const FFontAtlas* Atlas);
     FRHIShaderResourceView* PrepareBrushTexture(FRHICommandList& InCommandList, FRHITexture* Texture);
     void                    PrepareBatchTextures(FRHICommandList& InCommandList, const FUIDrawData& DrawData);
@@ -198,12 +241,21 @@ private:
     FRHIVertexShaderRef                  VShader;
     FRHIPixelShaderRef                   PShader;
     FRHIInputLayoutRef                   InputLayout;
+    FRHIVertexShaderRef                  ShapeVShader;
+    FRHIPixelShaderRef                   ShapePShader;
+    FRHIInputLayoutRef                   ShapeInputLayout;
+    FRHIVertexShaderRef                  TextVShader;
+    FRHIInputLayoutRef                   TextInputLayout;
     FRHIDepthStencilStateRef             DepthStencilState;
     FRHIRasterizerStateRef               RasterizerState;
     FRHIBlendStateRef                    BlendState;
     FRHISamplerStateRef                  LinearSampler;
     FRHIGraphicsPipelineStateRef         PipelineState;
+    FRHIGraphicsPipelineStateRef         ShapePipelineState;
+    FRHIGraphicsPipelineStateRef         TextPipelineState;
     FRHITextureRef                       DefaultTexture;
     TMap<const FFontAtlas*, FAtlasEntry> AtlasTextures;
     EFormat                              PipelineStateFormat;
+    FWindowDrawState*                    ActiveWindowState;
+    TArray<uint16>                       Index16Scratch;
 };

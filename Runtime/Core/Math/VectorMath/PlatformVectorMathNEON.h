@@ -702,6 +702,29 @@ public:
     }
 
     // ---------------------------------------------------------------------------------------------
+    // Unsigned int ops
+    // ---------------------------------------------------------------------------------------------
+
+    static FORCEINLINE FInt128 VECTORCALL VectorLoadUInt(const uint32* Source) noexcept
+    {
+        return vreinterpretq_s32_u32(vld1q_u32(Source));
+    }
+
+    static FORCEINLINE void VECTORCALL VectorStoreUInt16(FInt128 Vector, uint16* Dest) noexcept
+    {
+        vst1q_u16(Dest, vreinterpretq_u16_s32(Vector));
+    }
+
+    static FORCEINLINE FInt128 VECTORCALL VectorPackUInt32ToUInt16(FInt128 VectorA, FInt128 VectorB) noexcept
+    {
+        // vqmovun narrows signed 32-bit lanes with unsigned saturation, so negatives land on 0 and anything
+        // above 16 bits lands on 0xFFFF, which is what the x86 unsigned pack does.
+        const uint16x4_t LowHalf  = vqmovun_s32(VectorA);
+        const uint16x4_t HighHalf = vqmovun_s32(VectorB);
+        return vreinterpretq_s32_u16(vcombine_u16(LowHalf, HighHalf));
+    }
+
+    // ---------------------------------------------------------------------------------------------
     // Rounding
     // ---------------------------------------------------------------------------------------------
 

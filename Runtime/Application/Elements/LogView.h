@@ -190,6 +190,7 @@ private:
     NODISCARD static uint8 GetSeverityBit(ELogSeverity Severity);
 
     void DrainPendingLines();
+    void MarkLayoutStale();
     void RebuildLayout();
     void TrimToMaxLineCount();
 

@@ -53,7 +53,13 @@ IntVector2 FRichTextBlock::ComputeDesiredSize() const
 
 void FRichTextBlock::OnArrange(const FRectangle& AllottedBounds)
 {
+    const IntVector2 PreviousSize = Layout.GetSize();
     RefreshLayout(Math::Max(0, AllottedBounds.Width - Margin.GetTotalHorizontal()));
+
+    if (Layout.GetSize() != PreviousSize)
+    {
+        InvalidateDesiredSize();
+    }
 }
 
 int32 FRichTextBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -155,6 +161,7 @@ void FRichTextBlock::SetRuns(const TArray<FTextRun>& InRuns)
 
     ClearSelection();
     RefreshSearchMatches();
+    InvalidateDesiredSize();
 }
 
 void FRichTextBlock::SetRunsAndSearchText(const TArray<FTextRun>& InRuns, const String& InSearchText)
@@ -169,12 +176,14 @@ void FRichTextBlock::SetRunsAndSearchText(const TArray<FTextRun>& InRuns, const 
 
     SearchText = InSearchText;
     RefreshSearchMatches();
+    InvalidateDesiredSize();
 }
 
 void FRichTextBlock::AppendRun(const FTextRun& Run)
 {
     Layout.AppendRun(Run);
     RefreshSearchMatches();
+    InvalidateDesiredSize();
 }
 
 void FRichTextBlock::ClearRuns()
@@ -184,6 +193,7 @@ void FRichTextBlock::ClearRuns()
     ClearSelection();
     SearchMatches.Clear();
     SearchRanges.Clear();
+    InvalidateDesiredSize();
 }
 
 void FRichTextBlock::SetSearchText(const String& InSearchText)

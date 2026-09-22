@@ -122,12 +122,20 @@ bool FBorder::GetCursor(ECursor& OutCursor) const
 
 void FBorder::SetMinWidth(int32 InMinWidth)
 {
-    MinWidth = InMinWidth;
+    if (MinWidth != InMinWidth)
+    {
+        MinWidth = InMinWidth;
+        InvalidateDesiredSize();
+    }
 }
 
 void FBorder::SetMinHeight(int32 InMinHeight)
 {
-    MinHeight = InMinHeight;
+    if (MinHeight != InMinHeight)
+    {
+        MinHeight = InMinHeight;
+        InvalidateDesiredSize();
+    }
 }
 
 void FBorder::SetCursor(ECursor InCursor)

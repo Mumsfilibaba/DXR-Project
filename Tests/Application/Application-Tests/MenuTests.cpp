@@ -347,7 +347,7 @@ bool MenuItemLayout_Test()
     FDrawCommandList ShortcutCommands;
     DrawElement(WithShortcut, ShortcutCommands);
     TEST_EXPECT_EQ(CountCommands(ShortcutCommands, EDrawCommandType::Text), 2);
-    TEST_EXPECT_EQ(ShortcutCommands.GetCommands()[1].Text, String("CTRL+O"));
+    TEST_EXPECT(ShortcutCommands.GetCommandText(ShortcutCommands.GetCommands()[1]) == StringView("CTRL+O"));
 
     TEST_SECTION("A submenu widens the row by the arrow it has to draw");
     FMenuItem::FDesc SubMenuDesc;
@@ -463,12 +463,12 @@ bool MenuItemLayout_Test()
     const FDrawCommand& Ring = ChromeCommands.GetCommands()[1];
     TEST_EXPECT_EQ(Ring.Type, EDrawCommandType::BoxOutline);
     TEST_EXPECT_EQ(Ring.Bounds, FRectangle(IntVector2(0, 0), 160, 80));
-    TEST_EXPECT(Ring.Tint == Style.Menu.Border);
+    TEST_EXPECT(Ring.HasTint(Style.Menu.Border));
 
     TEST_SECTION("The fill behind it comes from the menu style");
     const FDrawCommand& Fill = ChromeCommands.GetCommands()[0];
     TEST_EXPECT_EQ(Fill.Type, EDrawCommandType::Box);
-    TEST_EXPECT(Fill.Tint == Style.Menu.Background);
+    TEST_EXPECT(Fill.HasTint(Style.Menu.Background));
 
     TEST_END();
 }
@@ -503,11 +503,11 @@ bool MenuStyle_Test()
     FDrawCommandList Commands;
     DrawElement(Menu, Commands);
 
-    TEST_EXPECT(Commands.GetCommands()[0].Tint == MenuStyle.Background);
+    TEST_EXPECT(Commands.GetCommands()[0].HasTint(MenuStyle.Background));
     TEST_EXPECT_EQ(Commands.GetCommands()[0].CornerRadius.TopLeft, MenuStyle.CornerRadius);
     TEST_EXPECT_EQ(Commands.GetCommands()[0].CornerRadius.BottomRight, MenuStyle.CornerRadius);
 
-    TEST_EXPECT(Commands.GetCommands()[1].Tint == MenuStyle.Border);
+    TEST_EXPECT(Commands.GetCommands()[1].HasTint(MenuStyle.Border));
     TEST_EXPECT_EQ(Commands.GetCommands()[1].CornerRadius.TopLeft, MenuStyle.CornerRadius);
 
     TEST_SECTION("The rule and the heading it already held take it too, not only the rows");
@@ -528,8 +528,8 @@ bool MenuStyle_Test()
 
         for (const FDrawCommand& Command : EntryCommands.GetCommands())
         {
-            bFoundSeparatorFill |= Command.Type == EDrawCommandType::Box && Command.Tint == MenuStyle.Separator;
-            bFoundSectionText |= Command.Type == EDrawCommandType::Text && Command.Tint == MenuStyle.SectionText;
+            bFoundSeparatorFill |= Command.Type == EDrawCommandType::Box && Command.HasTint(MenuStyle.Separator);
+            bFoundSectionText |= Command.Type == EDrawCommandType::Text && Command.HasTint(MenuStyle.SectionText);
         }
     }
 
@@ -545,7 +545,7 @@ bool MenuStyle_Test()
 
     const FDrawCommand& Highlight = ItemCommands.GetCommands()[0];
     TEST_EXPECT_EQ(Highlight.Type, EDrawCommandType::Box);
-    TEST_EXPECT(Highlight.Tint == MenuStyle.ItemHovered);
+    TEST_EXPECT(Highlight.HasTint(MenuStyle.ItemHovered));
     TEST_EXPECT(Highlight.CornerRadius == FCornerRadii(MenuStyle.ItemCornerRadius));
     TEST_EXPECT_EQ(Highlight.Bounds.Position.X, Item->GetContentRectangle().Position.X + MenuStyle.ItemHighlightInset);
     TEST_EXPECT_EQ(Highlight.Bounds.GetRight(), Item->GetContentRectangle().GetRight() - MenuStyle.ItemHighlightInset);
@@ -565,7 +565,7 @@ bool MenuStyle_Test()
 
     FDrawCommandList LateCommands;
     DrawElement(Late, LateCommands);
-    TEST_EXPECT(LateCommands.GetCommands()[0].Tint == MenuStyle.ItemHovered);
+    TEST_EXPECT(LateCommands.GetCommands()[0].HasTint(MenuStyle.ItemHovered));
 
     TEST_SECTION("A menu left alone still draws in the shipped colours, so the override stayed with the one menu");
     TSharedPtr<FMenu> Plain = CreateMenu(Font, { "Open" });
@@ -575,8 +575,8 @@ bool MenuStyle_Test()
     FDrawCommandList PlainCommands;
     DrawElement(Plain, PlainCommands);
 
-    TEST_EXPECT(PlainCommands.GetCommands()[0].Tint == FUIStyle::GetDefault().Menu.Background);
-    TEST_EXPECT(PlainCommands.GetCommands()[1].Tint == FUIStyle::GetDefault().Menu.Border);
+    TEST_EXPECT(PlainCommands.GetCommands()[0].HasTint(FUIStyle::GetDefault().Menu.Background));
+    TEST_EXPECT(PlainCommands.GetCommands()[1].HasTint(FUIStyle::GetDefault().Menu.Border));
     TEST_EXPECT(!(FUIStyle::GetDefault().Menu.Background == MenuStyle.Background));
 
     TEST_END();
@@ -1039,7 +1039,7 @@ bool MenuBarHighlight_Test()
     const FRectangle&   ButtonBounds = FileButton->GetContentRectangle();
     const FDrawCommand& Pill         = HoveredCommands.GetCommands()[0];
 
-    TEST_EXPECT(Pill.Tint == BarStyle.ItemHovered);
+    TEST_EXPECT(Pill.HasTint(BarStyle.ItemHovered));
     TEST_EXPECT(Pill.CornerRadius == FCornerRadii(BarStyle.ItemCornerRadius));
     TEST_EXPECT_EQ(Pill.Bounds.Position.Y, ButtonBounds.Position.Y);
     TEST_EXPECT_EQ(Pill.Bounds.GetBottom(), ButtonBounds.GetBottom());
@@ -1056,7 +1056,7 @@ bool MenuBarHighlight_Test()
     FDrawCommandList OpenCommands;
     DrawElement(FileButton, OpenCommands);
     TEST_EXPECT_EQ(CountCommands(OpenCommands, EDrawCommandType::Box), 1);
-    TEST_EXPECT(OpenCommands.GetCommands()[0].Tint == BarStyle.ItemActive);
+    TEST_EXPECT(OpenCommands.GetCommands()[0].HasTint(BarStyle.ItemActive));
     TEST_EXPECT_EQ(OpenCommands.GetCommands()[0].Bounds, Pill.Bounds);
 
     TEST_SECTION("The anchor holds no inset of its own now, and the menu still meets the pill with no gap under it");
@@ -1081,7 +1081,7 @@ bool MenuBarHighlight_Test()
     DrawElement(FileButton, CustomCommands);
 
     const FDrawCommand& CustomPill = CustomCommands.GetCommands()[0];
-    TEST_EXPECT(CustomPill.Tint == CustomStyle.ItemHovered);
+    TEST_EXPECT(CustomPill.HasTint(CustomStyle.ItemHovered));
     TEST_EXPECT(CustomPill.CornerRadius == FCornerRadii(2.0f));
     TEST_EXPECT_EQ(CustomPill.Bounds.Position.Y, FileButton->GetContentRectangle().Position.Y);
 

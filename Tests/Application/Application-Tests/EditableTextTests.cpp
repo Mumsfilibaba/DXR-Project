@@ -706,19 +706,19 @@ bool EditableTextBandAlignment_Test()
     FUIDrawData DrawData;
     DrawData.BuildFromCommandList(TextOnlyList);
 
-    TEST_EXPECT(!DrawData.GetVertices().IsEmpty());
+    TEST_EXPECT(!DrawData.GetTextGlyphInstances().IsEmpty());
 
-    if (DrawData.GetVertices().IsEmpty())
+    if (DrawData.GetTextGlyphInstances().IsEmpty())
     {
         TEST_END();
     }
 
     float InkTop    = static_cast<float>(BoxHeight);
     float InkBottom = 0.0f;
-    for (const FUIVertex& Vertex : DrawData.GetVertices())
+    for (const FUITextGlyphInstance& Glyph : DrawData.GetTextGlyphInstances())
     {
-        InkTop    = Math::Min(InkTop, Vertex.Position.Y);
-        InkBottom = Math::Max(InkBottom, Vertex.Position.Y);
+        InkTop    = Math::Min(InkTop, Glyph.Position.Y);
+        InkBottom = Math::Max(InkBottom, Glyph.Position.Y + Glyph.Size.Y);
     }
 
     TEST_SECTION("An ascender and a descender both stay inside it, so the two cannot drift apart");

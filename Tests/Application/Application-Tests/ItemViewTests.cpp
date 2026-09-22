@@ -250,7 +250,7 @@ bool TreeViewSelection_Test()
     bool              bFoundRoundedSelection = false;
     for (const FDrawCommand& Command : SelectionCommands.GetCommands())
     {
-        if (Command.Type == EDrawCommandType::Box && Command.Tint == InactiveSelection)
+        if (Command.Type == EDrawCommandType::Box && Command.HasTint(InactiveSelection))
         {
             bFoundRoundedSelection = !Command.CornerRadius.IsZero();
             break;
@@ -268,13 +268,15 @@ bool TreeViewSelection_Test()
             continue;
         }
 
-        if (Command.Text == "Alpha")
+        if (SelectionCommands.GetCommandText(Command) == StringView("Alpha"))
         {
-            SelectedLabelTint = Command.Tint;
+            TEST_EXPECT(Command.HasTint(Desc.Style.SelectedLabelText));
+            SelectedLabelTint = Desc.Style.SelectedLabelText;
         }
-        else if (Command.Text == "Beta")
+        else if (SelectionCommands.GetCommandText(Command) == StringView("Beta"))
         {
-            RestingLabelTint = Command.Tint;
+            TEST_EXPECT(Command.HasTint(Desc.Style.LabelText));
+            RestingLabelTint = Desc.Style.LabelText;
         }
     }
 
@@ -637,7 +639,7 @@ bool TreeViewScrolling_Test()
     bool              bFoundInsetHighlight = false;
     for (const FDrawCommand& Command : HighlightCommands.GetCommands())
     {
-        if (Command.Type == EDrawCommandType::Box && Command.Tint == InactiveSelection)
+        if (Command.Type == EDrawCommandType::Box && Command.HasTint(InactiveSelection))
         {
             const int32 Thickness = FUIStyle::GetDefault().Metrics.ScrollBarThickness;
             TEST_EXPECT(Command.Bounds.GetRight() <= BarView->GetContentRectangle().GetRight() - Thickness);
@@ -874,7 +876,7 @@ static bool DrawsHoverForItem(const TSharedPtr<FTreeView>& Tree, const TSharedPt
     const FRectangle Highlight = Tree->GetItemHighlightBounds(Item);
     for (const FDrawCommand& Command : Commands.GetCommands())
     {
-        if (Command.Type == EDrawCommandType::Box && Command.Tint == HoverFill && Command.Bounds == Highlight)
+        if (Command.Type == EDrawCommandType::Box && Command.HasTint(HoverFill) && Command.Bounds == Highlight)
         {
             return true;
         }

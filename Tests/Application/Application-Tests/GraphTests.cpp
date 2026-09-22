@@ -95,17 +95,17 @@ static const FDrawCommand* FindBoxCommand(const FDrawCommandList& CommandList, c
     return nullptr;
 }
 
-static FFloatColor FindOutlineColor(const FDrawCommandList& CommandList, const FRectangle& Bounds)
+static bool FindOutlineHasTint(const FDrawCommandList& CommandList, const FRectangle& Bounds, const FFloatColor& Tint)
 {
     for (const FDrawCommand& Command : CommandList.GetCommands())
     {
-        if (Command.Type == EDrawCommandType::BoxOutline && Command.Bounds == Bounds)
+        if (Command.Type == EDrawCommandType::BoxOutline && Command.Bounds == Bounds && Command.HasTint(Tint))
         {
-            return Command.Tint;
+            return true;
         }
     }
 
-    return FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+    return false;
 }
 
 static int32 CountPolylinesTinted(const FDrawCommandList& CommandList, const FFloatColor& Tint)
@@ -113,7 +113,7 @@ static int32 CountPolylinesTinted(const FDrawCommandList& CommandList, const FFl
     int32 Count = 0;
     for (const FDrawCommand& Command : CommandList.GetCommands())
     {
-        Count += (Command.Type == EDrawCommandType::Polyline && Command.Tint == Tint) ? 1 : 0;
+        Count += (Command.Type == EDrawCommandType::Polyline && Command.HasTint(Tint)) ? 1 : 0;
     }
 
     return Count;
@@ -490,7 +490,7 @@ bool GraphCanvasView_Test()
 
     for (const FDrawCommand& Command : RoundedCommands.GetCommands())
     {
-        if (Command.Type == EDrawCommandType::ConvexPolygon && Command.Tint == FFloatColor::Red)
+        if (Command.Type == EDrawCommandType::ConvexPolygon && Command.HasTint(FFloatColor::Red))
         {
             ++WedgeCount;
             TopWedgeLayer = Math::Max(TopWedgeLayer, Command.LayerId);
@@ -708,7 +708,7 @@ bool GraphNodeStyle_Test()
     TEST_SECTION("The body takes the style's fill, rounded on all four corners at the unzoomed radius");
     const FDrawCommand* BodyCommand = FindBoxCommand(CommandList, NodeBounds);
     TEST_EXPECT(BodyCommand != nullptr);
-    TEST_EXPECT_EQ(BodyCommand->Tint, Body);
+    TEST_EXPECT(BodyCommand->HasTint(Body));
     TEST_EXPECT_EQ(BodyCommand->CornerRadius.TopLeft, 6.0f);
     TEST_EXPECT_EQ(BodyCommand->CornerRadius.BottomLeft, 6.0f);
 
@@ -723,7 +723,7 @@ bool GraphNodeStyle_Test()
     TEST_EXPECT_EQ(TitleCommand->CornerRadius.BottomRight, 0.0f);
 
     TEST_SECTION("The outline takes the style's border, and every pin is stroked with the outline color");
-    TEST_EXPECT_EQ(FindOutlineColor(CommandList, NodeBounds), Border);
+    TEST_EXPECT(FindOutlineHasTint(CommandList, NodeBounds, Border));
     TEST_EXPECT_EQ(CountPolylinesTinted(CommandList, PinOutline), 3);
 
     TEST_SECTION("A muted node swaps to the second color set rather than fading the first");
@@ -734,8 +734,8 @@ bool GraphNodeStyle_Test()
     const FDrawCommand* MutedBox    = FindBoxCommand(MutedCommands, MutedBounds);
 
     TEST_EXPECT(MutedBox != nullptr);
-    TEST_EXPECT_EQ(MutedBox->Tint, MutedBody);
-    TEST_EXPECT_EQ(FindOutlineColor(MutedCommands, MutedBounds), MutedBorder);
+    TEST_EXPECT(MutedBox->HasTint(MutedBody));
+    TEST_EXPECT(FindOutlineHasTint(MutedCommands, MutedBounds, MutedBorder));
 
     TEST_SECTION("The radius tracks the zoom, so a node twice the size is rounded twice as far");
     Canvas->SetZoom(2.0f);

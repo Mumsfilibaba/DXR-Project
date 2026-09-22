@@ -404,11 +404,11 @@ bool RichTextSearch_Test()
             continue;
         }
 
-        if (Command.Tint == Style.Colors.SearchTextHighlight)
+        if (Command.HasTint(Style.Colors.SearchTextHighlight))
         {
             SearchLayer = Command.LayerId;
         }
-        else if (Command.Tint == Style.Colors.TextSelectionBackground)
+        else if (Command.HasTint(Style.Colors.TextSelectionBackground))
         {
             SelectionLayer = Command.LayerId;
         }

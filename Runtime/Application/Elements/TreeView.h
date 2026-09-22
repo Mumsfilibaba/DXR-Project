@@ -350,6 +350,7 @@ private:
     NODISCARD int32 GetCurrentRowIndex() const;
     NODISCARD int32 GetMaxScrollOffset() const;
     
+    void MarkRowsDirty();
     void UpdateHeaderToolTip(const FCursorEvent& CursorEvent);
     void RebuildTypeColumnToolTipSplits();
     void RebuildVisibleRows() const;

@@ -277,10 +277,10 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 
     FFloatColor HoverFill = Style.HoveredFill;
     HoverFill.A           = TREE_HOVER_OPACITY;
-    const FCornerRadii HighlightRadii(Style.CornerRadius);
 
-    const int32 FirstRow = Math::Clamp(ScrollOffset / RowHeight, 0, Math::Max(Rows.Size() - 1, 0));
-    const int32 LastRow  = Math::Min(Rows.Size() - 1, (ScrollOffset + Bounds.Height) / RowHeight);
+    const FCornerRadii HighlightRadii = FCornerRadii(Style.CornerRadius);
+    const int32        FirstRow       = Math::Clamp(ScrollOffset / RowHeight, 0, Math::Max(Rows.Size() - 1, 0));
+    const int32        LastRow        = Math::Min(Rows.Size() - 1, (ScrollOffset + Bounds.Height) / RowHeight);
 
     for (int32 RowIndex = FirstRow; RowIndex <= LastRow; ++RowIndex)
     {
@@ -318,6 +318,7 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         {
             const FFloatColor& ArrowTint  = bIsRowSelected ? Style.SelectedLabelText : Style.ArrowTint;
             const FUIBrush&    ArrowBrush = Item->bIsExpanded ? ExpandedArrow : CollapsedArrow;
+
             if (ArrowBrush.IsValid())
             {
                 OutCommandList.AddImage(LayerId + 1, DisclosureBounds, ArrowBrush, ArrowTint);
@@ -339,11 +340,11 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 
         if (Font && !Item->Label.IsEmpty())
         {
-            const int32      LabelRight = TypeColumnWidth > 0 ? Math::Min(TypeColumnX, RowBounds.GetRight()) : RowBounds.GetRight();
-            const IntVector2 LabelPosition(PenX, RowBounds.Position.Y + Font->GetTextBandOffset(RowHeight));
-            const FRectangle LabelBounds(LabelPosition, Math::Max(LabelRight - PenX, 0), Font->GetTextBandHeight());
+            const int32      LabelRight    = TypeColumnWidth > 0 ? Math::Min(TypeColumnX, RowBounds.GetRight()) : RowBounds.GetRight();
+            const IntVector2 LabelPosition = IntVector2(PenX, RowBounds.Position.Y + Font->GetTextBandOffset(RowHeight));
+            const FRectangle LabelBounds   = FRectangle(LabelPosition, Math::Max(LabelRight - PenX, 0), Font->GetTextBandHeight());
+            const int32      MatchOffset   = FilterText.IsEmpty() ? String::InvalidIndex : Item->Label.Find(FilterText, EStringCaseType::NoCase);
 
-            const int32 MatchOffset = FilterText.IsEmpty() ? String::InvalidIndex : Item->Label.Find(FilterText, EStringCaseType::NoCase);
             if (MatchOffset == String::InvalidIndex)
             {
                 OutCommandList.AddText(LayerId + 2, LabelBounds, Item->Label, Font.Get(), RowLabelColor);
@@ -357,8 +358,8 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 
         if (Font && TypeColumnWidth > 0 && !Item->TypeLabel.IsEmpty())
         {
-            const IntVector2 TypePosition(TypeColumnX, RowBounds.Position.Y + Font->GetTextBandOffset(RowHeight));
-            const FRectangle TypeBounds(TypePosition, TypeColumnWidth, Font->GetTextBandHeight());
+            const IntVector2 TypePosition = IntVector2(TypeColumnX, RowBounds.Position.Y + Font->GetTextBandOffset(RowHeight));
+            const FRectangle TypeBounds   = FRectangle(TypePosition, TypeColumnWidth, Font->GetTextBandHeight());
 
             OutCommandList.AddText(LayerId + 2, TypeBounds, Item->TypeLabel, Font.Get(), RowSecondaryColor);
         }
@@ -392,8 +393,7 @@ FEventResponse FTreeView::OnMouseButtonDown(const FCursorEvent& CursorEvent)
             return FEventResponse::Unhandled();
         }
 
-        FMenuStack::Get().PushMenu(AsSharedPtr(),
-            FRectangle(CursorEvent.GetScreenPosition(), 0, 0), EMenuPlacement::AtCursor, Menu);
+        FMenuStack::Get().PushMenu(AsSharedPtr(), FRectangle(CursorEvent.GetScreenPosition(), 0, 0), EMenuPlacement::AtCursor, Menu);
         return FEventResponse::Handled();
     }
 
@@ -404,6 +404,7 @@ FEventResponse FTreeView::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 
     const IntVector2 ClientPosition = CursorEvent.GetClientPosition();
     const int32      RowIndex       = FindRowAt(ClientPosition);
+
     if (RowIndex == InvalidRowIndex)
     {
         return FEventResponse::Unhandled();
@@ -476,11 +477,10 @@ FEventResponse FTreeView::OnMouseDoubleClick(const FCursorEvent& CursorEvent)
 FEventResponse FTreeView::OnMouseMove(const FCursorEvent& CursorEvent)
 {
     const IntVector2 ClientPosition = CursorEvent.GetClientPosition();
-
     LastCursorPosition = ClientPosition;
     bHasCursorInside   = true;
-    UpdateHoveredRow();
 
+    UpdateHoveredRow();
     UpdateHeaderToolTip(CursorEvent);
 
     if (PressedRowIndex != InvalidRowIndex && OnDragDetectedDelegate.IsBound())
@@ -532,6 +532,7 @@ FEventResponse FTreeView::OnMouseEntered(const FCursorEvent& CursorEvent)
 {
     LastCursorPosition = CursorEvent.GetClientPosition();
     bHasCursorInside   = true;
+
     UpdateHoveredRow();
 
     if (ScrollBar)
@@ -546,6 +547,7 @@ FEventResponse FTreeView::OnMouseLeft(const FCursorEvent& /* CursorEvent */)
 {
     bHasCursorInside = false;
     PressedRowIndex  = InvalidRowIndex;
+
     UpdateHoveredRow();
 
     FToolTipService::Get().CancelToolTip(AsSharedPtr());
@@ -605,15 +607,22 @@ void FTreeView::SetRootItems(const TArray<TSharedPtr<FTreeItem>>& InRoots)
     RootItems       = InRoots;
     AnchorRowIndex  = InvalidRowIndex;
     PressedRowIndex = InvalidRowIndex;
-    bRowsDirty      = true;
 
+    MarkRowsDirty();
     UpdateHoveredRow();
 }
 
 void FTreeView::RequestRefresh()
 {
-    bRowsDirty = true;
+    MarkRowsDirty();
     UpdateHoveredRow();
+}
+
+void FTreeView::MarkRowsDirty()
+{
+    bRowsDirty = true;
+
+    InvalidateDesiredSize();
 }
 
 const TArray<TSharedPtr<FTreeItem>>& FTreeView::GetVisibleRows() const
@@ -647,23 +656,24 @@ void FTreeView::SetItemExpanded(const TSharedPtr<FTreeItem>& Item, bool bExpande
     }
 
     Item->bIsExpanded = bExpanded;
-    bRowsDirty        = true;
 
+    MarkRowsDirty();
     UpdateHoveredRow();
+
     OnExpansionChangedDelegate.ExecuteIfBound(Item, bExpanded);
 }
 
 void FTreeView::ExpandAll()
 {
     SetSubtreeExpanded(RootItems, true);
-    bRowsDirty = true;
+    MarkRowsDirty();
     UpdateHoveredRow();
 }
 
 void FTreeView::CollapseAll()
 {
     SetSubtreeExpanded(RootItems, false);
-    bRowsDirty = true;
+    MarkRowsDirty();
     UpdateHoveredRow();
 }
 
@@ -675,7 +685,7 @@ void FTreeView::SetFilterText(const String& InFilter)
     }
 
     FilterText = InFilter;
-    bRowsDirty = true;
+    MarkRowsDirty();
     UpdateHoveredRow();
 }
 
@@ -930,8 +940,8 @@ FRectangle FTreeView::ComputeHighlightBounds(const FRectangle& RowBounds) const
 
 FRectangle FTreeView::ComputeDisclosureBounds(const FRectangle& RowBounds, int32 Depth) const
 {
-    const int32      Extent = GetArrowExtent();
-    const IntVector2 Position(RowBounds.Position.X + Style.ContentInset + (Depth * IndentPerLevel), RowBounds.Position.Y + ((RowHeight - Extent) / 2));
+    const int32      Extent   = GetArrowExtent();
+    const IntVector2 Position = IntVector2(RowBounds.Position.X + Style.ContentInset + (Depth * IndentPerLevel), RowBounds.Position.Y + ((RowHeight - Extent) / 2));
     return FRectangle(Position, Extent, Extent);
 }
 

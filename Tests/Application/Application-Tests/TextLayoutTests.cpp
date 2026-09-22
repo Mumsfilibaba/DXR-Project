@@ -407,7 +407,7 @@ bool TextLayoutDraw_Test()
     if (SecondIndex != FDrawCommandList::InvalidIndex)
     {
         TEST_EXPECT(CommandList[SecondIndex].Font == Font.Get());
-        TEST_EXPECT(CommandList[SecondIndex].Tint == FFloatColor::Red);
+        TEST_EXPECT(CommandList[SecondIndex].HasTint(FFloatColor::Red));
     }
 
     TEST_SECTION("A second line is drawn one line height below the first");

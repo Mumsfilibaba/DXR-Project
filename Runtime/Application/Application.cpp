@@ -1062,6 +1062,8 @@ void FApplication::LayoutWindow(const TSharedPtr<FWindow>& InWindow)
         return;
     }
 
+    TRACE_SCOPE("UI Layout");
+
     FRectangle WindowRectangle;
     WindowRectangle.Position = IntVector2(0, 0);
     WindowRectangle.Width    = InWindow->GetSize().X;
@@ -1113,13 +1115,9 @@ void FApplication::RecordWindow(const TSharedPtr<FWindow>& InWindow)
         const FDrawGeometry WindowGeometry = FDrawGeometry(InWindow->GetContentRectangle(), InWindow->GetWindowDPIScale());
 
         int32 TopLayerId = 0;
-        {
-            TRACE_SCOPE("UI Element Paint");
-
-            TopLayerId = InWindow->OnDraw(WindowGeometry, *CommandList, 0);
-            OnWindowPaintingEvent.Broadcast(InWindow);
-            InWindow->PaintDeferred(*CommandList, TopLayerId + 1);
-        }
+        TopLayerId = InWindow->OnDraw(WindowGeometry, *CommandList, 0);
+        OnWindowPaintingEvent.Broadcast(InWindow);
+        InWindow->PaintDeferred(*CommandList, TopLayerId + 1);
 
         Renderer->EndWindow(InWindow);
     }

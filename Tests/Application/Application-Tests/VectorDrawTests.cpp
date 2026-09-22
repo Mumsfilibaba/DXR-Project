@@ -27,22 +27,32 @@ struct FGeometryExtent
 static FGeometryExtent MeasureGeometry(const FUIDrawData& DrawData)
 {
     FGeometryExtent Extent;
-    if (DrawData.GetVertices().IsEmpty())
-    {
-        return Extent;
-    }
+    bool            bHasVertex = false;
 
-    Extent.MinX = DrawData.GetVertices()[0].Position.X;
-    Extent.MinY = DrawData.GetVertices()[0].Position.Y;
-    Extent.MaxX = Extent.MinX;
-    Extent.MaxY = Extent.MinY;
+    auto Include = [&](float X, float Y)
+    {
+        if (!bHasVertex)
+        {
+            Extent.MinX = Extent.MaxX = X;
+            Extent.MinY = Extent.MaxY = Y;
+            bHasVertex = true;
+            return;
+        }
+
+        Extent.MinX = Math::Min(Extent.MinX, X);
+        Extent.MinY = Math::Min(Extent.MinY, Y);
+        Extent.MaxX = Math::Max(Extent.MaxX, X);
+        Extent.MaxY = Math::Max(Extent.MaxY, Y);
+    };
 
     for (const FUIVertex& Vertex : DrawData.GetVertices())
     {
-        Extent.MinX = Math::Min(Extent.MinX, Vertex.Position.X);
-        Extent.MinY = Math::Min(Extent.MinY, Vertex.Position.Y);
-        Extent.MaxX = Math::Max(Extent.MaxX, Vertex.Position.X);
-        Extent.MaxY = Math::Max(Extent.MaxY, Vertex.Position.Y);
+        Include(Vertex.Position.X, Vertex.Position.Y);
+    }
+
+    for (const FUIShapeVertex& Vertex : DrawData.GetShapeVertices())
+    {
+        Include(Vertex.Position.X, Vertex.Position.Y);
     }
 
     return Extent;
@@ -117,17 +127,17 @@ bool VectorDrawCommands_Test()
 
     TEST_SECTION("The points live in one pool and each command names its own slice of it");
     TEST_EXPECT_EQ(CommandList.GetPoints().Size(), 6);
-    TEST_EXPECT_EQ(CommandList[0].PointOffset, 0);
-    TEST_EXPECT_EQ(CommandList[0].PointCount, 3);
-    TEST_EXPECT_EQ(CommandList[1].PointOffset, 3);
-    TEST_EXPECT_EQ(CommandList[1].PointCount, 3);
+    TEST_EXPECT_EQ(CommandList[0].PayloadOffset, 0);
+    TEST_EXPECT_EQ(CommandList[0].PayloadCount, 3);
+    TEST_EXPECT_EQ(CommandList[1].PayloadOffset, 3);
+    TEST_EXPECT_EQ(CommandList[1].PayloadCount, 3);
 
     const TArrayView<const Vector2> FirstPoints = CommandList.GetCommandPoints(CommandList[0]);
     TEST_EXPECT_EQ(FirstPoints.Size(), 3);
     TEST_EXPECT(FirstPoints[1] == Vector2(10.0f, 10.0f));
 
     TEST_SECTION("A command that carries no points names an empty slice");
-    TEST_EXPECT_EQ(CommandList[2].PointCount, 0);
+    TEST_EXPECT_EQ(CommandList[2].PayloadCount, 0);
     TEST_EXPECT(CommandList.GetCommandPoints(CommandList[2]).IsEmpty());
 
     TEST_SECTION("A degenerate primitive is refused rather than recorded and skipped later");
@@ -370,7 +380,7 @@ bool VectorDrawBezier_Test()
     CurveList.AddBezier(0, Vector2(0.0f, 0.0f), Vector2(50.0f, 0.0f), Vector2(50.0f, 100.0f), Vector2(100.0f, 100.0f), FFloatColor::White, 2.0f, 16);
 
     TEST_EXPECT_EQ(CurveList.CountCommandsOfType(EDrawCommandType::Polyline), 1);
-    TEST_EXPECT_EQ(CurveList[0].PointCount, 17);
+    TEST_EXPECT_EQ(CurveList[0].PayloadCount, 17);
 
     TEST_SECTION("The curve starts and ends on its endpoints");
     const TArrayView<const Vector2> Points = CurveList.GetCommandPoints(CurveList[0]);
@@ -400,9 +410,9 @@ bool VectorDrawBezier_Test()
     FDrawCommandList LongList;
     LongList.AddBezier(0, Vector2(0.0f, 0.0f), Vector2(300.0f, 0.0f), Vector2(600.0f, 200.0f), Vector2(900.0f, 200.0f), FFloatColor::White, 1.0f);
 
-    TEST_EXPECT(LongList[0].PointCount > ShortList[0].PointCount);
-    TEST_EXPECT(ShortList[0].PointCount >= FDrawCommandList::MinBezierSegments + 1);
-    TEST_EXPECT(LongList[0].PointCount <= FDrawCommandList::MaxBezierSegments + 1);
+    TEST_EXPECT(LongList[0].PayloadCount > ShortList[0].PayloadCount);
+    TEST_EXPECT(ShortList[0].PayloadCount >= FDrawCommandList::MinBezierSegments + 1);
+    TEST_EXPECT(LongList[0].PayloadCount <= FDrawCommandList::MaxBezierSegments + 1);
 
     TEST_SECTION("The flattened curve tessellates as an ordinary stroke");
     DrawData.BuildFromCommandList(CurveList);
@@ -426,34 +436,21 @@ bool VectorDrawPerCornerRounding_Test()
     TitleBarList.AddBox(0, Bounds, FFloatColor::White, FCornerRadii::Top(8.0f));
     DrawData.BuildFromCommandList(TitleBarList);
 
-    bool bHasBottomLeftCorner  = false;
-    bool bHasBottomRightCorner = false;
-    bool bHasTopLeftCorner     = false;
-    bool bHasTopRightCorner    = false;
+    TEST_EXPECT_EQ(DrawData.GetShapeVertices().Size(), 4);
+    TEST_EXPECT(DrawData.GetVertices().IsEmpty());
+    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].RadiusTL, 8.0f);
+    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].RadiusTR, 8.0f);
+    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].RadiusBL, 0.0f);
+    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].RadiusBR, 0.0f);
 
-    for (const FUIVertex& Vertex : DrawData.GetVertices())
-    {
-        bHasTopLeftCorner     |= IsNearly(Vertex.Position.X, 0.0f) && IsNearly(Vertex.Position.Y, 0.0f);
-        bHasTopRightCorner    |= IsNearly(Vertex.Position.X, 100.0f) && IsNearly(Vertex.Position.Y, 0.0f);
-        bHasBottomLeftCorner  |= IsNearly(Vertex.Position.X, 0.0f) && IsNearly(Vertex.Position.Y, 40.0f);
-        bHasBottomRightCorner |= IsNearly(Vertex.Position.X, 100.0f) && IsNearly(Vertex.Position.Y, 40.0f);
-    }
-
-    TEST_EXPECT(!bHasTopLeftCorner);
-    TEST_EXPECT(!bHasTopRightCorner);
-    TEST_EXPECT(bHasBottomLeftCorner);
-    TEST_EXPECT(bHasBottomRightCorner);
-
-    TEST_SECTION("A square corner costs one point where a rounded one costs several");
+    TEST_SECTION("A uniformly rounded box still uses one quad, with every radius set");
     FDrawCommandList UniformList;
     UniformList.AddBox(0, Bounds, FFloatColor::White, FCornerRadii(8.0f));
     DrawData.BuildFromCommandList(UniformList);
-    const int32 UniformVertexCount = DrawData.GetVertices().Size();
 
-    DrawData.BuildFromCommandList(TitleBarList);
-    const int32 TitleBarVertexCount = DrawData.GetVertices().Size();
-
-    TEST_EXPECT(TitleBarVertexCount < UniformVertexCount);
+    TEST_EXPECT_EQ(DrawData.GetShapeVertices().Size(), 4);
+    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].RadiusTL, 8.0f);
+    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].RadiusBR, 8.0f);
 
     TEST_SECTION("The shape still fills the whole rectangle");
     const FGeometryExtent Extent = MeasureGeometry(DrawData);
@@ -467,7 +464,10 @@ bool VectorDrawPerCornerRounding_Test()
     OversizedList.AddBox(0, FRectangle(IntVector2(0, 0), 10, 10), FFloatColor::White, FCornerRadii(0.0f, 50.0f, 0.0f, 0.0f));
     DrawData.BuildFromCommandList(OversizedList);
 
-    for (const FUIVertex& Vertex : DrawData.GetVertices())
+    TEST_EXPECT_EQ(DrawData.GetShapeVertices().Size(), 4);
+    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].RadiusTR, 5.0f);
+
+    for (const FUIShapeVertex& Vertex : DrawData.GetShapeVertices())
     {
         TEST_EXPECT(Vertex.Position.X >= -GTolerance && Vertex.Position.X <= 10.0f + GTolerance);
         TEST_EXPECT(Vertex.Position.Y >= -GTolerance && Vertex.Position.Y <= 10.0f + GTolerance);
@@ -483,13 +483,15 @@ bool VectorDrawBoxOutline_Test()
     FUIDrawData DrawData;
     DrawData.SetAntiAliasingEnabled(false);
 
-    TEST_SECTION("A square outline is a closed four-point ring");
+    TEST_SECTION("A square outline is one SDF stroke quad");
     FDrawCommandList OutlineList;
     OutlineList.AddBoxOutline(0, FRectangle(IntVector2(0, 0), 100, 40), FFloatColor::White, 2.0f);
     DrawData.BuildFromCommandList(OutlineList);
 
-    TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 8);
-    TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 4 * 6);
+    TEST_EXPECT_EQ(DrawData.GetShapeVertices().Size(), 4);
+    TEST_EXPECT_EQ(DrawData.GetShapeIndices().Size(), 6);
+    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].Thickness, 2.0f);
+    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].ShapeKind, FUIDrawData::ShapeKindStroke);
 
     TEST_SECTION("The stroke stays inside the rectangle it was asked to outline");
     const FGeometryExtent Extent = MeasureGeometry(DrawData);
@@ -520,7 +522,8 @@ bool VectorDrawBoxOutline_Test()
     RoundedList.AddBoxOutline(0, FRectangle(IntVector2(0, 0), 100, 40), FFloatColor::White, 2.0f, FCornerRadii(6.0f));
     DrawData.BuildFromCommandList(RoundedList);
 
-    TEST_EXPECT(DrawData.GetVertices().Size() > 8);
+    TEST_EXPECT_EQ(DrawData.GetShapeVertices().Size(), 4);
+    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].RadiusTL, 6.0f);
 
     TEST_SECTION("An outline thicker than the rectangle fills it instead of folding through itself");
     FDrawCommandList ThickList;

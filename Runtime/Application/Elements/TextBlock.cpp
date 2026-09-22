@@ -74,7 +74,11 @@ int32 FTextBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
 
 void FTextBlock::SetText(const String& InText)
 {
-    Text = InText;
+    if (Text != InText)
+    {
+        Text = InText;
+        InvalidateDesiredSize();
+    }
 }
 
 void FTextBlock::SetColorAndOpacity(const FFloatColor& InColorAndOpacity)
@@ -84,10 +88,15 @@ void FTextBlock::SetColorAndOpacity(const FFloatColor& InColorAndOpacity)
 
 void FTextBlock::SetFont(const TSharedPtr<IFontFace>& InFont)
 {
-    Font = InFont;
+    if (Font != InFont)
+    {
+        Font = InFont;
+        InvalidateDesiredSize();
+    }
 }
 
 void FTextBlock::SetMargin(const FMargin& InMargin)
 {
     Margin = InMargin;
+    InvalidateDesiredSize();
 }

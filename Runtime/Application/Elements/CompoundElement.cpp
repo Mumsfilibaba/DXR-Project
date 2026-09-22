@@ -68,9 +68,12 @@ void FCompoundElement::SetContent(const TSharedPtr<FVisualElement>& InContent)
     {
         Content->SetParentElement(AsWeakPtr());
     }
+
+    InvalidateDesiredSize();
 }
 
 void FCompoundElement::SetPadding(const FMargin& InPadding)
 {
     Padding = InPadding;
+    InvalidateDesiredSize();
 }

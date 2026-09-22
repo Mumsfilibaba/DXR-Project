@@ -478,6 +478,7 @@ void FEditableText::SetTextSilently(const String& InText)
 
     ClearSelection();
     ResetTextCursorBlink();
+    InvalidateDesiredSize();
 }
 
 void FEditableText::ClearText()
@@ -726,7 +727,11 @@ void FEditableText::PasteFromClipboard()
 
 void FEditableText::SetFont(const TSharedPtr<IFontFace>& InFont)
 {
-    Font = InFont;
+    if (Font != InFont)
+    {
+        Font = InFont;
+        InvalidateDesiredSize();
+    }
 }
 
 void FEditableText::SetHintColor(const FFloatColor& InHintColor)
@@ -736,6 +741,8 @@ void FEditableText::SetHintColor(const FFloatColor& InHintColor)
 
 void FEditableText::NotifyTextChanged()
 {
+    InvalidateDesiredSize();
+
     ResetTextCursorBlink();
     OnTextChanged.ExecuteIfBound(Text);
 }

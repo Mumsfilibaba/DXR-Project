@@ -116,17 +116,17 @@ static const FDrawCommand* FindLastBox(const FDrawCommandList& CommandList)
     return Last;
 }
 
-static FFloatColor FindFirstOutlineColor(const FDrawCommandList& CommandList)
+static bool FindFirstOutlineHasTint(const FDrawCommandList& CommandList, const FFloatColor& Tint)
 {
     for (const FDrawCommand& Command : CommandList.GetCommands())
     {
         if (Command.Type == EDrawCommandType::BoxOutline)
         {
-            return Command.Tint;
+            return Command.HasTint(Tint);
         }
     }
 
-    return FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+    return false;
 }
 
 /** @brief Counts how many commands of a type the list holds. */
@@ -231,7 +231,7 @@ bool ButtonControl_Test()
 
     const FDrawCommand* NormalBox = FindFirstBox(NormalCommands);
     TEST_EXPECT(NormalBox != nullptr);
-    TEST_EXPECT(NormalBox->Tint == Style.Colors.ButtonNormal);
+    TEST_EXPECT(NormalBox->HasTint(Style.Colors.ButtonNormal));
 
     Button->OnMouseEntered(MakeMoveEvent(IntVector2(50, 20)));
 
@@ -240,7 +240,7 @@ bool ButtonControl_Test()
 
     const FDrawCommand* HoveredBox = FindFirstBox(HoveredCommands);
     TEST_EXPECT(HoveredBox != nullptr);
-    TEST_EXPECT(HoveredBox->Tint == Style.Colors.ButtonHovered);
+    TEST_EXPECT(HoveredBox->HasTint(Style.Colors.ButtonHovered));
 
     TEST_SECTION("The label is drawn inside the fill, centred by default");
     TEST_EXPECT_EQ(CountCommands(NormalCommands, EDrawCommandType::Text), 1);
@@ -356,14 +356,14 @@ bool GhostButtonControl_Test()
 
     const FDrawCommand* HoveredFill = FindFirstBox(HoveredCommands);
     TEST_EXPECT(HoveredFill != nullptr);
-    TEST_EXPECT(HoveredFill->Tint == Style.Colors.ButtonNormal);
+    TEST_EXPECT(HoveredFill->HasTint(Style.Colors.ButtonNormal));
 
     TEST_SECTION("Pressing it takes the next step up rather than sinking, since there is nothing below to sink to");
     Ghost->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(50, 20)));
 
     FDrawCommandList PressedCommands;
     DrawElement(Ghost, PressedCommands);
-    TEST_EXPECT(FindFirstBox(PressedCommands)->Tint == Style.Colors.ButtonHovered);
+    TEST_EXPECT(FindFirstBox(PressedCommands)->HasTint(Style.Colors.ButtonHovered));
 
     Ghost->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(50, 20)));
     Ghost->OnMouseLeft(MakeMoveEvent(IntVector2(900, 900)));
@@ -374,7 +374,7 @@ bool GhostButtonControl_Test()
 
     FDrawCommandList HighlightedCommands;
     DrawElement(Ghost, HighlightedCommands);
-    TEST_EXPECT(FindFirstBox(HighlightedCommands)->Tint == Style.Colors.ButtonHovered);
+    TEST_EXPECT(FindFirstBox(HighlightedCommands)->HasTint(Style.Colors.ButtonHovered));
 
     Ghost->SetHighlighted(false);
 
@@ -391,7 +391,7 @@ bool GhostButtonControl_Test()
 
     FDrawCommandList PlainCommands;
     DrawElement(Plain, PlainCommands);
-    TEST_EXPECT(FindFirstBox(PlainCommands)->Tint == Style.Colors.ButtonNormal);
+    TEST_EXPECT(FindFirstBox(PlainCommands)->HasTint(Style.Colors.ButtonNormal));
 
     TEST_END();
 }
@@ -1028,11 +1028,11 @@ bool OverlayControl_Test()
             continue;
         }
 
-        if (Command.Text == String("0123456789"))
+        if (Commands.GetCommandText(Command) == StringView("0123456789"))
         {
             BaseLayer = Command.LayerId;
         }
-        else if (Command.Text == String("9"))
+        else if (Commands.GetCommandText(Command) == StringView("9"))
         {
             BadgeLayer = Command.LayerId;
         }
@@ -1407,24 +1407,24 @@ bool SearchBoxControl_Test()
 
     const FDrawCommand* FrameFill = FindFirstBox(NormalList);
     TEST_EXPECT(FrameFill != nullptr);
-    TEST_EXPECT(FrameFill->Tint == FrameStyle.Fill);
+    TEST_EXPECT(FrameFill->HasTint(FrameStyle.Fill));
 
     TEST_SECTION("An untouched field carries the normal stroke");
-    TEST_EXPECT(FindFirstOutlineColor(NormalList) == FrameStyle.BorderNormal);
+    TEST_EXPECT(FindFirstOutlineHasTint(NormalList, FrameStyle.BorderNormal));
 
     TEST_SECTION("The cursor resting over it replaces that with the hovered one");
     SearchBox->OnMouseEntered(MakeMoveEvent(Bounds.GetCenter()));
 
     FDrawCommandList HoveredList;
     DrawElement(SearchBox, HoveredList);
-    TEST_EXPECT(FindFirstOutlineColor(HoveredList) == FrameStyle.BorderHovered);
+    TEST_EXPECT(FindFirstOutlineHasTint(HoveredList, FrameStyle.BorderHovered));
 
     TEST_SECTION("Focus outranks hover, so the focused stroke wins while typing lands here");
     SearchBox->GetEditor()->OnFocusGained();
 
     FDrawCommandList FocusedList;
     DrawElement(SearchBox, FocusedList);
-    TEST_EXPECT(FindFirstOutlineColor(FocusedList) == FrameStyle.BorderFocused);
+    TEST_EXPECT(FindFirstOutlineHasTint(FocusedList, FrameStyle.BorderFocused));
 
     TEST_SECTION("Losing both puts the normal stroke back");
     SearchBox->GetEditor()->OnFocusLost();
@@ -1432,7 +1432,7 @@ bool SearchBoxControl_Test()
 
     FDrawCommandList IdleList;
     DrawElement(SearchBox, IdleList);
-    TEST_EXPECT(FindFirstOutlineColor(IdleList) == FrameStyle.BorderNormal);
+    TEST_EXPECT(FindFirstOutlineHasTint(IdleList, FrameStyle.BorderNormal));
 
     TEST_SECTION("An empty box has no clear button, so its right edge offers no shape");
     ECursor Cursor = ECursor::Arrow;
@@ -1494,7 +1494,7 @@ bool SearchBoxClearStyle_Test()
     const FDrawCommand* Pill = FindLastBox(HoveredList);
     TEST_EXPECT(Pill != nullptr);
     TEST_EXPECT_EQ(Pill->Bounds, ClearBounds);
-    TEST_EXPECT(Pill->Tint == FrameStyle.ClearHovered);
+    TEST_EXPECT(Pill->HasTint(FrameStyle.ClearHovered));
     TEST_EXPECT(Pill->CornerRadius == FCornerRadii(9.0f));
     TEST_EXPECT(FInputFrameStyle().ClearCornerRadius != FrameStyle.ClearCornerRadius);
 
@@ -1809,7 +1809,7 @@ bool ProgressBarControl_Test()
     DrawElement(ProgressBar, RedCommands);
 
     TEST_EXPECT_EQ(CountCommands(RedCommands, EDrawCommandType::Box), 2);
-    TEST_EXPECT(RedCommands[1].Tint == FFloatColor::Red);
+    TEST_EXPECT(RedCommands[1].HasTint(FFloatColor::Red));
 
     TEST_SECTION("The overlay text waits for a font before there is anything to draw it with");
     ProgressBar->SetOverlayText("50%");
@@ -1903,7 +1903,7 @@ bool HistogramControl_Test()
     TArray<int32> AutoScaledBars;
     for (const FDrawCommand& Command : AutoScaledCommands.GetCommands())
     {
-        if (Command.Type == EDrawCommandType::Box && Command.Tint == Style.Colors.Accent)
+        if (Command.Type == EDrawCommandType::Box && Command.HasTint(Style.Colors.Accent))
         {
             AutoScaledBars.Add(Command.Bounds.Height);
         }
@@ -1947,7 +1947,7 @@ bool HistogramControl_Test()
     int32 TallestRangedBar = 0;
     for (const FDrawCommand& Command : RangedCommands.GetCommands())
     {
-        if (Command.Type == EDrawCommandType::Box && Command.Tint == Style.Colors.Accent)
+        if (Command.Type == EDrawCommandType::Box && Command.HasTint(Style.Colors.Accent))
         {
             TallestRangedBar = Math::Max(TallestRangedBar, Command.Bounds.Height);
         }
@@ -2222,11 +2222,11 @@ bool ProfilerTimelineControl_Test()
             continue;
         }
 
-        if (Command.Text == String("Fits"))
+        if (LabelCommands.GetCommandText(Command) == StringView("Fits"))
         {
             bWroteFittingName = true;
         }
-        else if (Command.Text == String("VeryLongScopeNameHere"))
+        else if (LabelCommands.GetCommandText(Command) == StringView("VeryLongScopeNameHere"))
         {
             bWroteOverflowingName = true;
         }
@@ -2271,16 +2271,16 @@ bool ProfilerTimelineControl_Test()
     {
         if (Command.Type == EDrawCommandType::Text)
         {
-            if (Command.Text == String("Tessellate"))
+            if (DimCommands.GetCommandText(Command) == StringView("Tessellate"))
             {
                 bWroteTessellate = true;
             }
-            else if (Command.Text == String("Other"))
+            else if (DimCommands.GetCommandText(Command) == StringView("Other"))
             {
                 bWroteOther = true;
             }
         }
-        else if (Command.Type == EDrawCommandType::Box && Command.Tint.A > 0.0f && Command.Tint.A < 0.5f)
+        else if (Command.Type == EDrawCommandType::Box && Command.PackedAlpha() > 0 && Command.PackedAlpha() < 128)
         {
             bFoundDimmedFill = true;
         }

@@ -1,6 +1,8 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Containers/ArrayView.h"
+#include "Core/Containers/String.h"
+#include "Core/Containers/StringView.h"
 #include "Application/Draw/DrawTypes.h"
 
 class APPLICATION_API FDrawCommandList
@@ -54,7 +56,37 @@ public:
      * @param Font    The face the text was measured with, which may be null.
      * @param Tint    The text color.
      */
-    void AddText(int32 LayerId, const FRectangle& Bounds, const String& InText, const IFontFace* Font, const FFloatColor& Tint);
+    void AddText(int32 LayerId, const FRectangle& Bounds, const StringView& InText, const IFontFace* Font, const FFloatColor& Tint);
+
+    /**
+     * @brief Appends a run of text on one line.
+     *
+     * @param LayerId The layer to draw on.
+     * @param Bounds  The rectangle the text is anchored to at the top-left.
+     * @param InText  The text to draw.
+     * @param Font    The face the text was measured with, which may be null.
+     * @param Tint    The text color.
+     */
+    FORCEINLINE void AddText(int32 LayerId, const FRectangle& Bounds, const String& InText, const IFontFace* Font, const FFloatColor& Tint)
+    {
+        AddText(LayerId, Bounds, StringView(InText), Font, Tint);
+    }
+
+    /**
+     * @brief Appends a run of text on one line.
+     *
+     * A literal converts to both String and StringView, so it needs an overload of its own to call.
+     *
+     * @param LayerId The layer to draw on.
+     * @param Bounds  The rectangle the text is anchored to at the top-left.
+     * @param InText  The null-terminated text to draw.
+     * @param Font    The face the text was measured with, which may be null.
+     * @param Tint    The text color.
+     */
+    FORCEINLINE void AddText(int32 LayerId, const FRectangle& Bounds, const CHAR* InText, const IFontFace* Font, const FFloatColor& Tint)
+    {
+        AddText(LayerId, Bounds, StringView(InText), Font, Tint);
+    }
 
     /**
      * @brief Appends a thin axis-aligned rule.
@@ -271,10 +303,10 @@ public:
      */
     NODISCARD FORCEINLINE const FRectangle& GetCurrentClipRectangle() const
     {
-        return ClipStack.IsEmpty() ? EmptyClipRectangle : ClipStack.Last();
+        return ClipStack.IsEmpty() ? EmptyClipRectangle : ClipRects[ClipStack.Last() - 1];
     }
 
-    /** @return The number of commands the list holds, counting the clip pushes and pops. */
+    /** @return The number of commands the list holds. */
     NODISCARD FORCEINLINE int32 Size() const
     {
         return Commands.Size();
@@ -306,10 +338,35 @@ public:
      */
     NODISCARD TArrayView<const Vector2> GetCommandPoints(const FDrawCommand& Command) const;
 
-    NODISCARD FORCEINLINE const FDrawCommand& operator[](int32 Index) const
-    {
-        return Commands[Index];
-    }
+    /**
+     * @brief The text one command owns, which is empty for anything but a text command that carries characters.
+     *
+     * The characters live in a pool shared by the whole list, so appending to the list or resetting it can move
+     * them and leave the view dangling. Read it before emitting more commands, or copy it.
+     *
+     * @param Command The command to read the range from.
+     * @return A view over the command's characters, which is not null terminated.
+     */
+    NODISCARD StringView GetCommandText(const FDrawCommand& Command) const;
+
+    /**
+     * @brief The brush one command owns, which only an image command has.
+     *
+     * The brushes live in a pool shared by the whole list, so appending to the list or resetting it can move them
+     * and leave the pointer dangling.
+     *
+     * @param Command The command to read the brush from.
+     * @return The command's brush, or null when the command is not an image or carries no brush.
+     */
+    NODISCARD const FUIBrush* GetCommandBrush(const FDrawCommand& Command) const;
+
+    /**
+     * @brief The rectangle one command is clipped to, which is how a batch decides what it may cover.
+     *
+     * @param Command The command to read the clip from.
+     * @return The command's clip rectangle, or an empty rectangle when the command is not clipped.
+     */
+    NODISCARD const FRectangle& GetCommandClipRectangle(const FDrawCommand& Command) const;
 
     /**
      * @brief Counts the commands of one type, so a test can check what an element emitted.
@@ -327,17 +384,26 @@ public:
      */
     NODISCARD int32 FindTextCommand(const StringView& InText) const;
 
+    NODISCARD FORCEINLINE const FDrawCommand& operator[](int32 Index) const
+    {
+        return Commands[Index];
+    }
+
 private:
     NODISCARD static int32 ResolveCircleSegments(float Radius, float AngleSweep, int32 RequestedSegments);
 
     FDrawCommand& EmplaceCommand(EDrawCommandType Type, int32 LayerId);
     void StorePoints(FDrawCommand& Command, TArrayView<const Vector2> InPoints);
+    void StoreText(FDrawCommand& Command, StringView InText);
     void BuildArcPoints(const Vector2& Center, float Radius, float StartAngle, float EndAngle, int32 Segments);
 
     TArray<FDrawCommand> Commands;
     TArray<Vector2>      Points;
+    TArray<CHAR>         TextPool;
+    TArray<FUIBrush>     Brushes;
+    TArray<FRectangle>   ClipRects;
     TArray<Vector2>      ScratchPoints;
-    TArray<FRectangle>   ClipStack;
+    TArray<uint16>       ClipStack;
     FRectangle           EmptyClipRectangle;
     int32                UnmatchedPopCount;
 };

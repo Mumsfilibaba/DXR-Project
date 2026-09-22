@@ -103,7 +103,14 @@ FEventResponse FTexturePreview::OnMouseLeft(const FCursorEvent& CursorEvent)
 
 void FTexturePreview::SetBrush(const FUIBrush& InBrush)
 {
+    const bool bWasValid = Brush.IsValid();
+
     Brush = InBrush;
+
+    if (bWasValid != Brush.IsValid())
+    {
+        InvalidateDesiredSize();
+    }
 }
 
 FRectangle FTexturePreview::GetImageRectangle(const FRectangle& Bounds) const

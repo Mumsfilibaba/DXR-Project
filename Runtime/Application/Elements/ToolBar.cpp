@@ -161,7 +161,11 @@ void FToolBarButton::SetCheckState(ECheckBoxState InState)
 
 void FToolBarButton::SetLabel(const String& InLabel)
 {
-    Label = InLabel;
+    if (Label != InLabel)
+    {
+        Label = InLabel;
+        InvalidateDesiredSize();
+    }
 }
 
 void FToolBarButton::SetOnClicked(const FOnClicked& InOnClicked)
@@ -186,7 +190,12 @@ void FToolBarButton::SetCornerRadius(const FCornerRadii& InCornerRadius)
 
 void FToolBarButton::SetMinWidth(int32 InMinWidth)
 {
-    MinWidth = Math::Max(InMinWidth, 0);
+    const int32 NewMinWidth = Math::Max(InMinWidth, 0);
+    if (MinWidth != NewMinWidth)
+    {
+        MinWidth = NewMinWidth;
+        InvalidateDesiredSize();
+    }
 }
 
 bool FToolBarButton::IsHighlighted() const

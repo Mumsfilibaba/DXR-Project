@@ -66,6 +66,8 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
+    virtual IntVector2 PrepareDesiredSize() override;
+    virtual void Tick(const FRectangle& AssignedBounds) override;
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
@@ -124,7 +126,19 @@ private:
     NODISCARD int32 GetDisplayedHeight() const;
     NODISCARD int32 GetContentDesiredHeight() const;
     NODISCARD double GetSecondsSinceAnimationStart() const;
-    NODISCARD float GetAnimationAlpha() const;
+
+    /** @return How far the expand animation has run, sampled from the clock. */
+    NODISCARD float ComputeAnimationAlpha() const;
+
+    /**
+     * @return How far the expand animation had run when the frame was measured, which is what the height
+     * follows so that measuring and drawing the same frame agree on it.
+     */
+    NODISCARD float GetAnimationAlpha() const
+    {
+        return AnimationAlpha;
+    }
+
     NODISCARD bool IsContentShown() const;
 
     TSharedPtr<FVisualElement> Content;
@@ -138,6 +152,7 @@ private:
     int32                      HeaderHeight;
     int32                      AnimationStartHeight;
     uint64                     AnimationStartCounter;
+    float                      AnimationAlpha;
     bool                       bIsExpanded;
     bool                       bIsHeaderHovered;
     bool                       bDrawBottomBorderWhenClosed;

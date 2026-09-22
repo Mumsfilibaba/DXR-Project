@@ -877,7 +877,8 @@ void FGraphCanvas::DrawGrid(const FRectangle& Bounds, FDrawCommandList& OutComma
         }
 
         const bool bIsMajor = (Index % GRAPH_GRID_MAJOR_EVERY) == 0;
-        OutCommandList.AddLine(LayerId, Vector2(X, static_cast<float>(Bounds.Position.Y)), Vector2(X, static_cast<float>(Bounds.GetBottom())), bIsMajor ? MajorColor : MinorColor, 1.0f);
+        const int32 LineX = Math::RoundToInt(X);
+        OutCommandList.AddLine(LayerId, FRectangle(IntVector2(LineX, Bounds.Position.Y), 1, Bounds.Height), bIsMajor ? MajorColor : MinorColor);
     }
 
     Index = 0;
@@ -889,7 +890,8 @@ void FGraphCanvas::DrawGrid(const FRectangle& Bounds, FDrawCommandList& OutComma
         }
 
         const bool bIsMajor = (Index % GRAPH_GRID_MAJOR_EVERY) == 0;
-        OutCommandList.AddLine(LayerId, Vector2(static_cast<float>(Bounds.Position.X), Y), Vector2(static_cast<float>(Bounds.GetRight()), Y), bIsMajor ? MajorColor : MinorColor, 1.0f);
+        const int32 LineY = Math::RoundToInt(Y);
+        OutCommandList.AddLine(LayerId, FRectangle(IntVector2(Bounds.Position.X, LineY), Bounds.Width, 1), bIsMajor ? MajorColor : MinorColor);
     }
 }
 

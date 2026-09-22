@@ -297,7 +297,12 @@ bool FTileView::IsSelected(int32 Index) const
 
 void FTileView::SetTileSize(const IntVector2& InTileSize)
 {
-    TileSize = IntVector2(Math::Max(InTileSize.X, 1), Math::Max(InTileSize.Y, 1));
+    const IntVector2 ClampedSize(Math::Max(InTileSize.X, 1), Math::Max(InTileSize.Y, 1));
+    if (TileSize != ClampedSize)
+    {
+        TileSize = ClampedSize;
+        InvalidateDesiredSize();
+    }
 }
 
 void FTileView::SetScrollOffset(int32 InScrollOffset)
