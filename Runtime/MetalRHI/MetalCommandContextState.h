@@ -277,6 +277,10 @@ public:
 
     void BeginCommandBuffer();
     void EndCommandBuffer();
+
+    void BeginRenderEncoder();
+    void BeginComputeEncoder();
+
     void ResetBoundConstantSlots();
 
     void SetGraphicsPipelineState(FMetalGraphicsPipelineStateRHI* InGraphicsPipelineState);

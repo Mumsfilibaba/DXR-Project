@@ -2,6 +2,7 @@
 #include "Core/Math/Math.h"
 #include "Core/Threading/ScopedLock.h"
 #include "RHI/RHICommandList.h"
+#include "RHI/RHIStats.h"
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalCapabilities.h"
 #include "MetalRHI/MetalDeviceDebug.h"
@@ -109,6 +110,8 @@ FMetalDeviceRHI::~FMetalDeviceRHI()
     FlushDeferredDeletions();
 
     SAFE_DELETE(Device);
+
+    FlushDeferredDeletions();
 
 #if METAL_ENABLE_DEBUG_LAYER
     MetalStopValidationCapture();
@@ -732,6 +735,22 @@ void FMetalDeviceRHI::BeginFrame()
 void FMetalDeviceRHI::EndFrame()
 {
     Device->EndFrame();
+
+#if METAL_ENABLE_STATS
+    FRHIVideoMemoryInfo LocalMemory;
+    if (QueryVideoMemoryInfo(EVideoMemoryType::Local, LocalMemory))
+    {
+        STAT_SET(STAT_RHI_LocalMemoryBudget, LocalMemory.MemoryBudget);
+        STAT_SET(STAT_RHI_LocalMemoryUsage,  LocalMemory.MemoryUsage);
+    }
+
+    FRHIVideoMemoryInfo NonLocalMemory;
+    if (QueryVideoMemoryInfo(EVideoMemoryType::NonLocal, NonLocalMemory))
+    {
+        STAT_SET(STAT_RHI_NonLocalMemoryBudget, NonLocalMemory.MemoryBudget);
+        STAT_SET(STAT_RHI_NonLocalMemoryUsage,  NonLocalMemory.MemoryUsage);
+    }
+#endif
 }
 
 FRHIFence* FMetalDeviceRHI::CreateFence()

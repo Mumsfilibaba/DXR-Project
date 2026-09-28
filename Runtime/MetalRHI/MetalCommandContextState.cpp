@@ -47,6 +47,14 @@ void FMetalCommandContextState::ResetStateResources()
 
 void FMetalCommandContextState::BeginCommandBuffer()
 {
+    BeginRenderEncoder();
+    BeginComputeEncoder();
+}
+
+void FMetalCommandContextState::BeginRenderEncoder()
+{
+    Context.ResetGraphicsEncoderBindings();
+
     GraphicsState.bBindPipelineState   = GraphicsState.PipelineState != nullptr || GraphicsState.MeshletPipelineState != nullptr;
     GraphicsState.bBindViewports       = GraphicsState.NumViewports > 0;
     GraphicsState.bBindScissorRects    = GraphicsState.NumScissorRects > 0;
@@ -58,15 +66,27 @@ void FMetalCommandContextState::BeginCommandBuffer()
 
     GraphicsState.VertexBufferCache.MarkAllDirty();
 
-    ComputeState.bBindPipelineState   = ComputeState.PipelineState != nullptr;
-    ComputeState.bBindShaderConstants = true;
-
     ResetBoundConstantSlots();
 
     CommonState.ConstantBufferCache.DirtyResourcesAll();
     CommonState.ShaderResourceViewCache.DirtyResourcesAll();
     CommonState.UnorderedAccessViewCache.DirtyResourcesAll();
     CommonState.SamplerStateCache.DirtyResourcesAll();
+}
+
+void FMetalCommandContextState::BeginComputeEncoder()
+{
+    Context.ResetComputeEncoderBindings();
+
+    ComputeState.bBindPipelineState   = ComputeState.PipelineState != nullptr;
+    ComputeState.bBindShaderConstants = true;
+
+    ResetBoundConstantSlots();
+
+    CommonState.ConstantBufferCache.DirtyResources(EShaderVisibility::Compute);
+    CommonState.ShaderResourceViewCache.DirtyResources(EShaderVisibility::Compute);
+    CommonState.UnorderedAccessViewCache.DirtyResources(EShaderVisibility::Compute);
+    CommonState.SamplerStateCache.DirtyResources(EShaderVisibility::Compute);
 }
 
 void FMetalCommandContextState::SetGraphicsPipelineState(FMetalGraphicsPipelineStateRHI* InGraphicsPipelineState)
@@ -166,7 +186,13 @@ void FMetalCommandContextState::SetViewports(const MTLViewport* Viewports, uint3
 
     if (Viewports && NumViewports > 0)
     {
-        Memory::Memcpy(GraphicsState.Viewports, Viewports, sizeof(MTLViewport) * NumViewports);
+        const uint64 NumBytes = sizeof(MTLViewport) * NumViewports;
+        if (GraphicsState.NumViewports == NumViewports && Memory::Memcmp(GraphicsState.Viewports, Viewports, NumBytes) == 0)
+        {
+            return;
+        }
+
+        Memory::Memcpy(GraphicsState.Viewports, Viewports, NumBytes);
     }
 
     GraphicsState.NumViewports   = NumViewports;
@@ -179,7 +205,13 @@ void FMetalCommandContextState::SetScissorRects(const MTLScissorRect* ScissorRec
 
     if (ScissorRects && NumScissorRects > 0)
     {
-        Memory::Memcpy(GraphicsState.ScissorRects, ScissorRects, sizeof(MTLScissorRect) * NumScissorRects);
+        const uint64 NumBytes = sizeof(MTLScissorRect) * NumScissorRects;
+        if (GraphicsState.NumScissorRects == NumScissorRects && Memory::Memcmp(GraphicsState.ScissorRects, ScissorRects, NumBytes) == 0)
+        {
+            return;
+        }
+
+        Memory::Memcpy(GraphicsState.ScissorRects, ScissorRects, NumBytes);
     }
 
     GraphicsState.NumScissorRects   = NumScissorRects;
@@ -311,16 +343,23 @@ void FMetalCommandContextState::SetShaderConstants(EShaderVisibility::Type Shade
     CHECK(ShaderStage < EShaderVisibility::Count);
     CHECK(NumShaderConstants <= MAX_SHADER_CONSTANTS);
 
+    const bool  bIsCompute = (ShaderStage == EShaderVisibility::Compute);
+    const uint8 FirstStage = bIsCompute ? EShaderVisibility::Compute : EShaderVisibility::Vertex;
+    const uint8 LastStage  = bIsCompute ? EShaderVisibility::Compute : EShaderVisibility::Amplification;
+
     FMetalShaderConstantsCache& Cache = CommonState.ShaderConstantsCache;
-    Memory::Memzero(Cache.Constants[ShaderStage], sizeof(Cache.Constants[ShaderStage]));
-    if (ShaderConstants && NumShaderConstants > 0)
+    for (uint8 Stage = FirstStage; Stage <= LastStage; ++Stage)
     {
-        Memory::Memcpy(Cache.Constants[ShaderStage], ShaderConstants, sizeof(uint32) * NumShaderConstants);
+        Memory::Memzero(Cache.Constants[Stage], sizeof(Cache.Constants[Stage]));
+        if (ShaderConstants && NumShaderConstants > 0)
+        {
+            Memory::Memcpy(Cache.Constants[Stage], ShaderConstants, sizeof(uint32) * NumShaderConstants);
+        }
+
+        Cache.NumConstants[Stage] = NumShaderConstants;
     }
 
-    Cache.NumConstants[ShaderStage] = NumShaderConstants;
-
-    if (ShaderStage == EShaderVisibility::Compute)
+    if (bIsCompute)
     {
         ComputeState.bBindShaderConstants = true;
     }
@@ -355,6 +394,8 @@ void FMetalCommandContextState::BindGraphicsState()
     {
         return;
     }
+
+    const bool bPipelineChanged = GraphicsState.bBindPipelineState;
 
     if (GraphicsState.bBindPipelineState)
     {
@@ -419,16 +460,22 @@ void FMetalCommandContextState::BindGraphicsState()
         GraphicsState.bBindDepthBias = false;
     }
 
-    if (GraphicsState.bBindVertexBuffers && GraphicsState.VertexBufferCache.DirtyRange.length > 0)
+    if (GraphicsState.bBindVertexBuffers || bPipelineChanged)
     {
         FMetalVertexBufferCache& Cache = GraphicsState.VertexBufferCache;
-        [Encoder setVertexBuffers:Cache.VertexBuffers + Cache.DirtyRange.location
-                          offsets:Cache.Offsets + Cache.DirtyRange.location
-                        withRange:Cache.DirtyRange];
 
-        for (NSUInteger Index = Cache.DirtyRange.location; Index < Cache.DirtyRange.location + Cache.DirtyRange.length; ++Index)
+        const uint32 NumStreams = GraphicsPipeline ? GraphicsPipeline->GetNumVertexStreams() : 0;
+        for (uint32 Stream = 0; Stream < MSL_MAX_VERTEX_STREAMS; ++Stream)
         {
-            Context.DeclareResident(Cache.VertexBuffers[Index], true, false);
+            const uint8 BufferIndex = GetMSLVertexStreamBufferIndex(Stream);
+            if (Stream >= NumStreams)
+            {
+                Context.SetGraphicsBuffer(EShaderVisibility::Vertex, nil, 0, BufferIndex);
+                continue;
+            }
+
+            Context.DeclareResident(Cache.VertexBuffers[BufferIndex], true, false);
+            Context.SetGraphicsBuffer(EShaderVisibility::Vertex, Cache.VertexBuffers[BufferIndex], Cache.Offsets[BufferIndex], BufferIndex);
         }
 
         Cache.DirtyRange                 = NSMakeRange(0, 0);
@@ -479,6 +526,8 @@ void FMetalCommandContextState::BindComputeState()
         {
             [Encoder setComputePipelineState:PipelineState];
         }
+
+        Context.ClearUnusedComputeBindings(Pipeline->GetBindings());
 
         ComputeState.bBindPipelineState = false;
     }
@@ -776,7 +825,7 @@ void FMetalCommandContextState::BindComputeResources()
             id<MTLBuffer> MTLBufferHandle = Buffer ? Buffer->GetMTLBuffer() : nil;
             const NSUInteger Offset = Buffer ? Buffer->GetMetalBindOffset() : 0;
             Context.DeclareResident(MTLBufferHandle, true, false);
-            [Encoder setBuffer:MTLBufferHandle offset:Offset atIndex:Slot];
+            Context.SetComputeBuffer(MTLBufferHandle, Offset, Slot);
         }
 
         CBVCache.ClearResourcesDirty(EShaderVisibility::Compute);
@@ -794,7 +843,7 @@ void FMetalCommandContextState::BindComputeResources()
                 id<MTLBuffer> MTLBufferHandle = View ? View->GetMTLBuffer() : nil;
                 const NSUInteger Offset = View ? View->GetBufferOffset() : 0;
                 Context.DeclareResident(MTLBufferHandle, true, true);
-                [Encoder setBuffer:MTLBufferHandle offset:Offset atIndex:BufferSlot];
+                Context.SetComputeBuffer(MTLBufferHandle, Offset, BufferSlot);
                 continue;
             }
 
@@ -803,7 +852,7 @@ void FMetalCommandContextState::BindComputeResources()
             {
                 id<MTLTexture> MTLTextureHandle = View ? View->GetMTLTexture() : nil;
                 Context.DeclareResident(MTLTextureHandle, true, true);
-                [Encoder setTexture:MTLTextureHandle atIndex:TextureSlot];
+                Context.SetComputeTexture(MTLTextureHandle, TextureSlot);
             }
         }
 
@@ -822,7 +871,7 @@ void FMetalCommandContextState::BindComputeResources()
                 id<MTLBuffer> MTLBufferHandle = View ? View->GetMTLBuffer() : nil;
                 const NSUInteger Offset = View ? View->GetBufferOffset() : 0;
                 Context.DeclareResident(MTLBufferHandle, false, true);
-                [Encoder setBuffer:MTLBufferHandle offset:Offset atIndex:BufferSlot];
+                Context.SetComputeBuffer(MTLBufferHandle, Offset, BufferSlot);
                 continue;
             }
 
@@ -831,7 +880,7 @@ void FMetalCommandContextState::BindComputeResources()
             {
                 id<MTLTexture> MTLTextureHandle = View ? View->GetMTLTexture() : nil;
                 Context.DeclareResident(MTLTextureHandle, false, true);
-                [Encoder setTexture:MTLTextureHandle atIndex:TextureSlot];
+                Context.SetComputeTexture(MTLTextureHandle, TextureSlot);
             }
         }
 
@@ -870,7 +919,7 @@ void FMetalCommandContextState::BindComputeSamplers()
         FMetalSamplerStateRHI* SamplerState = Cache.SamplerStates[EShaderVisibility::Compute][Index];
 
         id<MTLSamplerState>  MTLSampler = SamplerState ? SamplerState->GetMTLSamplerState() : nil;
-        [Encoder setSamplerState:MTLSampler atIndex:Slot];
+        Context.SetComputeSampler(MTLSampler, Slot);
     }
 
     Cache.ClearResourcesDirty(EShaderVisibility::Compute);

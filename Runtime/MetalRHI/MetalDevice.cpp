@@ -162,6 +162,8 @@ bool FMetalDefaultResources::Initialize(FMetalDevice& InDevice)
     SamplerDesc.tAddressMode = MTLSamplerAddressModeClampToEdge;
     SamplerDesc.rAddressMode = MTLSamplerAddressModeClampToEdge;
 
+    SamplerDesc.supportArgumentBuffers = YES;
+
     DefaultSampler = [DeviceHandle newSamplerStateWithDescriptor:SamplerDesc];
     [SamplerDesc release];
 

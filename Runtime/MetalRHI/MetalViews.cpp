@@ -181,10 +181,11 @@ static uint32 ResolveBufferViewStride(const FRHIBufferDesc& BufferDesc, EBufferV
     }
 }
 
-static void ResolveRTVMipAndSlice(const FRHIRenderTargetViewDesc& InDesc, uint8& OutMipLevel, uint16& OutArrayIndex)
+static void ResolveRTVMipAndSlice(const FRHIRenderTargetViewDesc& InDesc, uint8& OutMipLevel, uint16& OutArrayIndex, uint16& OutNumSlices)
 {
     OutMipLevel   = 0;
     OutArrayIndex = 0;
+    OutNumSlices  = 1;
 
     switch (InDesc.ViewDimension)
     {
@@ -195,6 +196,7 @@ static void ResolveRTVMipAndSlice(const FRHIRenderTargetViewDesc& InDesc, uint8&
         case EViewDimension::Texture1DArray:
             OutMipLevel   = InDesc.Texture1DArray.MipLevel;
             OutArrayIndex = InDesc.Texture1DArray.FirstArraySlice;
+            OutNumSlices  = InDesc.Texture1DArray.NumSlices;
             break;
 
         case EViewDimension::Texture2D:
@@ -204,15 +206,18 @@ static void ResolveRTVMipAndSlice(const FRHIRenderTargetViewDesc& InDesc, uint8&
         case EViewDimension::Texture2DArray:
             OutMipLevel   = InDesc.Texture2DArray.MipLevel;
             OutArrayIndex = InDesc.Texture2DArray.FirstArraySlice;
+            OutNumSlices  = InDesc.Texture2DArray.NumSlices;
             break;
 
         case EViewDimension::TextureCube:
-            OutMipLevel = InDesc.TextureCube.MipLevel;
+            OutMipLevel  = InDesc.TextureCube.MipLevel;
+            OutNumSlices = RHI_NUM_CUBE_FACES;
             break;
 
         case EViewDimension::TextureCubeArray:
             OutMipLevel   = InDesc.TextureCubeArray.MipLevel;
-            OutArrayIndex = InDesc.TextureCubeArray.FirstCube;
+            OutArrayIndex = InDesc.TextureCubeArray.FirstCube * RHI_NUM_CUBE_FACES;
+            OutNumSlices  = InDesc.TextureCubeArray.NumCubes * RHI_NUM_CUBE_FACES;
             break;
 
         case EViewDimension::Texture3D:
@@ -223,22 +228,26 @@ static void ResolveRTVMipAndSlice(const FRHIRenderTargetViewDesc& InDesc, uint8&
         default:
             break;
     }
+
+    OutNumSlices = Math::Max<uint16>(OutNumSlices, 1);
 }
 
-static void ResolveDSVMipAndSlice(const FRHIDepthStencilViewDesc& InDesc, uint8& OutMipLevel, uint16& OutArrayIndex)
+static void ResolveDSVMipAndSlice(const FRHIDepthStencilViewDesc& InDesc, uint8& OutMipLevel, uint16& OutArrayIndex, uint16& OutNumSlices)
 {
     OutMipLevel   = 0;
     OutArrayIndex = 0;
+    OutNumSlices  = 1;
 
     switch (InDesc.ViewDimension)
     {
         case EViewDimension::Texture1D:
             OutMipLevel = InDesc.Texture1D.MipLevel;
             break;
-        
+
         case EViewDimension::Texture1DArray:
             OutMipLevel   = InDesc.Texture1DArray.MipLevel;
             OutArrayIndex = InDesc.Texture1DArray.FirstArraySlice;
+            OutNumSlices  = InDesc.Texture1DArray.NumSlices;
             break;
 
         case EViewDimension::Texture2D:
@@ -248,20 +257,25 @@ static void ResolveDSVMipAndSlice(const FRHIDepthStencilViewDesc& InDesc, uint8&
         case EViewDimension::Texture2DArray:
             OutMipLevel   = InDesc.Texture2DArray.MipLevel;
             OutArrayIndex = InDesc.Texture2DArray.FirstArraySlice;
+            OutNumSlices  = InDesc.Texture2DArray.NumSlices;
             break;
-        
+
         case EViewDimension::TextureCube:
-            OutMipLevel = InDesc.TextureCube.MipLevel;
+            OutMipLevel  = InDesc.TextureCube.MipLevel;
+            OutNumSlices = RHI_NUM_CUBE_FACES;
             break;
-        
-        case EViewDimension::TextureCubeArray: 
-            OutMipLevel   = InDesc.TextureCubeArray.MipLevel; 
-            OutArrayIndex = InDesc.TextureCubeArray.FirstCube;
+
+        case EViewDimension::TextureCubeArray:
+            OutMipLevel   = InDesc.TextureCubeArray.MipLevel;
+            OutArrayIndex = InDesc.TextureCubeArray.FirstCube * RHI_NUM_CUBE_FACES;
+            OutNumSlices  = InDesc.TextureCubeArray.NumCubes * RHI_NUM_CUBE_FACES;
             break;
-        
-        default: 
+
+        default:
             break;
     }
+
+    OutNumSlices = Math::Max<uint16>(OutNumSlices, 1);
 }
 
 FMetalView::FMetalView(FMetalDevice* InDevice)
@@ -533,8 +547,9 @@ FMetalRenderTargetViewRHI::FMetalRenderTargetViewRHI(FMetalDevice* InDevice, FRH
     , FMetalView(InDevice)
     , MipLevel(0)
     , ArrayIndex(0)
+    , NumSlices(1)
 {
-    ResolveRTVMipAndSlice(InDesc, MipLevel, ArrayIndex);
+    ResolveRTVMipAndSlice(InDesc, MipLevel, ArrayIndex, NumSlices);
 }
 
 FMetalRenderTargetViewRHI::~FMetalRenderTargetViewRHI() = default;
@@ -560,9 +575,10 @@ FMetalDepthStencilViewRHI::FMetalDepthStencilViewRHI(FMetalDevice* InDevice, FRH
     , FMetalView(InDevice)
     , MipLevel(0)
     , ArrayIndex(0)
+    , NumSlices(1)
     , Flags(InDesc.Flags)
 {
-    ResolveDSVMipAndSlice(InDesc, MipLevel, ArrayIndex);
+    ResolveDSVMipAndSlice(InDesc, MipLevel, ArrayIndex, NumSlices);
 }
 
 FMetalDepthStencilViewRHI::~FMetalDepthStencilViewRHI() = default;

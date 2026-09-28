@@ -1331,7 +1331,8 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
             return false;
         }
 
-        ShaderConstantsSize = Math::Max(ShaderConstantsSize, static_cast<uint16>(StructSize));
+        const uint16 PaddedSize = static_cast<uint16>((StructSize + 15u) & ~15u);
+        ShaderConstantsSize = Math::Max(ShaderConstantsSize, PaddedSize);
     }
 
     const uint32 SourceLength = CString::Strlen(MSLSource);

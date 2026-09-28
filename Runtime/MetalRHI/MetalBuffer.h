@@ -24,6 +24,7 @@ public:
     virtual void GetDebugName(String& OutDebugName) const override final;
     
     bool Initialize(ERHIResourceState InInitialAccess, const void* InInitialData);
+    bool RelocateTransientStorage(uint64 SizeInBytes, const void* SourceData, FMetalQueue* Queue);
     
     FORCEINLINE id<MTLBuffer> GetMTLBuffer() const 
     { 
@@ -70,11 +71,11 @@ public:
     }
 
 private:
-    id<MTLBuffer>        Buffer;
-    FMetalResourceStorage ResourceStorage;
+    id<MTLBuffer>                Buffer;
+    FMetalResourceStorage        ResourceStorage;
     mutable FRHIDescriptorHandle BindlessHandle;
-    FMetalQueue*         LastUsedQueue;
-    uint64               LastUsedValue;
+    FMetalQueue*                 LastUsedQueue;
+    uint64                       LastUsedValue;
 };
 
 inline FMetalBufferRHI* GetMetalBuffer(FRHIBuffer* Buffer)

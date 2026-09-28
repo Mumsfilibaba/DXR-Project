@@ -97,9 +97,15 @@ public:
         return ArrayIndex;
     }
 
+    uint16 GetNumSlices() const
+    {
+        return NumSlices;
+    }
+
 private:
     uint8  MipLevel;
     uint16 ArrayIndex;
+    uint16 NumSlices;
 };
 
 class FMetalDepthStencilViewRHI : public FRHIDepthStencilView, public FMetalView
@@ -123,6 +129,11 @@ public:
         return ArrayIndex;
     }
 
+    uint16 GetNumSlices() const
+    {
+        return NumSlices;
+    }
+
     EDepthStencilViewFlags GetFlags() const
     {
         return Flags;
@@ -131,6 +142,7 @@ public:
 private:
     uint8                  MipLevel;
     uint16                 ArrayIndex;
+    uint16                 NumSlices;
     EDepthStencilViewFlags Flags;
 };
 

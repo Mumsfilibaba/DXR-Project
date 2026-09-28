@@ -241,13 +241,115 @@ void FMetalPipelineBindingLayout::Reset()
         ShaderConstantsSize[ShaderStage] = 0;
         ResourceHeapSlot[ShaderStage]    = InvalidSlot;
         SamplerHeapSlot[ShaderStage]     = InvalidSlot;
+
+        BufferSlotMask[ShaderStage]     = 0;
+        TextureSlotMask[ShaderStage][0] = 0;
+        TextureSlotMask[ShaderStage][1] = 0;
+        SamplerSlotMask[ShaderStage]    = 0;
     }
+}
+
+static uint64 SlotMaskBit(uint8 Slot)
+{
+    return Slot < 64 ? (uint64(1) << Slot) : 0;
+}
+
+void FMetalPipelineBindingLayout::MarkSlotUsed(EShaderVisibility::Type ShaderStage, EMSLBindingTable BindingTable, uint8 Slot)
+{
+    switch (BindingTable)
+    {
+        case EMSLBindingTable::Buffer:
+        {
+            if (Slot < 64)
+            {
+                BufferSlotMask[ShaderStage] |= (uint64(1) << Slot);
+            }
+
+            break;
+        }
+
+        case EMSLBindingTable::Texture:
+        {
+            TextureSlotMask[ShaderStage][Slot / 64] |= (uint64(1) << (Slot % 64));
+            break;
+        }
+
+        case EMSLBindingTable::Sampler:
+        {
+            if (Slot < 64)
+            {
+                SamplerSlotMask[ShaderStage] |= (uint64(1) << Slot);
+            }
+
+            break;
+        }
+    }
+}
+
+void FMetalPipelineBindingLayout::PruneUnusedSlots(EShaderVisibility::Type ShaderStage, uint64 UsedBufferMask, const uint64 UsedTextureMask[2], uint64 UsedSamplerMask)
+{
+    auto IsUsed = [&](EMSLBindingTable BindingTable, uint8 Slot) -> bool
+    {
+        switch (BindingTable)
+        {
+            case EMSLBindingTable::Buffer:  return Slot < 64 && (UsedBufferMask & (uint64(1) << Slot)) != 0;
+            case EMSLBindingTable::Texture: return (UsedTextureMask[Slot / 64] & (uint64(1) << (Slot % 64))) != 0;
+            case EMSLBindingTable::Sampler: return Slot < 64 && (UsedSamplerMask & (uint64(1) << Slot)) != 0;
+        }
+
+        return false;
+    };
+
+    auto PruneTable = [&](auto& Table, EMSLBindingTable BindingTable)
+    {
+        for (int32 Index = 0; Index < Table.Size(); ++Index)
+        {
+            if (Table[Index] != InvalidSlot && !IsUsed(BindingTable, Table[Index]))
+            {
+                Table[Index] = InvalidSlot;
+            }
+        }
+    };
+
+    PruneTable(ConstantBuffers[ShaderStage], EMSLBindingTable::Buffer);
+    PruneTable(ShaderResourceBuffers[ShaderStage], EMSLBindingTable::Buffer);
+    PruneTable(UnorderedAccessBuffers[ShaderStage], EMSLBindingTable::Buffer);
+    PruneTable(ShaderResourceTextures[ShaderStage], EMSLBindingTable::Texture);
+    PruneTable(UnorderedAccessTextures[ShaderStage], EMSLBindingTable::Texture);
+    PruneTable(Samplers[ShaderStage], EMSLBindingTable::Sampler);
+
+    if (ShaderConstants[ShaderStage] != InvalidSlot && !IsUsed(EMSLBindingTable::Buffer, ShaderConstants[ShaderStage]))
+    {
+        ShaderConstants[ShaderStage]     = InvalidSlot;
+        ShaderConstantsSize[ShaderStage] = 0;
+    }
+
+    const uint64 KeptBufferSlots = SlotMaskBit(ResourceHeapSlot[ShaderStage]) | SlotMaskBit(SamplerHeapSlot[ShaderStage]);
+
+    BufferSlotMask[ShaderStage]     &= (UsedBufferMask | KeptBufferSlots);
+    TextureSlotMask[ShaderStage][0] &= UsedTextureMask[0];
+    TextureSlotMask[ShaderStage][1] &= UsedTextureMask[1];
+    SamplerSlotMask[ShaderStage]    &= UsedSamplerMask;
+}
+
+bool FMetalPipelineBindingLayout::IsSlotUsed(EShaderVisibility::Type ShaderStage, EMSLBindingTable BindingTable, uint8 Slot) const
+{
+    switch (BindingTable)
+    {
+        case EMSLBindingTable::Buffer:   return Slot < 64 && (BufferSlotMask[ShaderStage] & (uint64(1) << Slot)) != 0;
+        case EMSLBindingTable::Texture:  return (TextureSlotMask[ShaderStage][Slot / 64] & (uint64(1) << (Slot % 64))) != 0;
+        case EMSLBindingTable::Sampler:  return Slot < 64 && (SamplerSlotMask[ShaderStage] & (uint64(1) << Slot)) != 0;
+    }
+
+    return false;
 }
 
 bool FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& ShaderBindings, EShaderVisibility::Type ShaderStage, uint16 InShaderConstantsSize)
 {
     for (const FMSLShaderBinding& Binding : ShaderBindings)
     {
+        MarkSlotUsed(ShaderStage, GetMSLBindingTable(Binding.BindingType), Binding.SlotIndex);
+
         switch (Binding.BindingType)
         {
             case EMSLBindingType::ConstantBuffer:
@@ -484,6 +586,7 @@ FMetalInputLayoutRHI::FMetalInputLayoutRHI(const TArray<FRHIInputElementDesc>& I
     : FRHIInputLayout()
     , InputElements(InInputElements)
     , VertexDescriptor(nullptr)
+    , NumVertexStreams(0)
 {
     VertexDescriptor = [[MTLVertexDescriptor vertexDescriptor] retain];
     for (int32 Index = 0; Index < InputElements.Size(); ++Index)
@@ -504,6 +607,8 @@ FMetalInputLayoutRHI::FMetalInputLayoutRHI(const TArray<FRHIInputElementDesc>& I
         VertexDescriptor.layouts[StreamBufferIndex].stride       = Element.VertexStride;
         VertexDescriptor.layouts[StreamBufferIndex].stepFunction = MetalRHI::ConvertVertexInputClass(Element.InputClass);
         VertexDescriptor.layouts[StreamBufferIndex].stepRate     = Element.InputClass == EVertexInputClass::Vertex ? 1 : Element.InstanceStepRate;
+
+        NumVertexStreams = Math::Max(NumVertexStreams, Element.InputSlot + 1);
     }
 }
 
@@ -515,6 +620,12 @@ FMetalInputLayoutRHI::~FMetalInputLayoutRHI()
         [VertexDescriptor release];
         VertexDescriptor = nil;
     }
+}
+
+uint32 FMetalGraphicsPipelineStateRHI::GetNumVertexStreams() const
+{
+    FMetalInputLayoutRHI* MetalInputLayout = static_cast<FMetalInputLayoutRHI*>(Desc.InputLayout);
+    return MetalInputLayout ? MetalInputLayout->GetNumVertexStreams() : 0;
 }
 
 const FRHIInputElementDesc* FMetalInputLayoutRHI::GetInputElementDesc(uint32 Index) const
@@ -845,6 +956,39 @@ FMetalComputePipelineStateRHI::~FMetalComputePipelineStateRHI()
     }
 }
 
+static void PruneBindingsToReflection(FMetalPipelineBindingLayout& Layout, EShaderVisibility::Type ShaderStage, MTLComputePipelineReflection* Reflection)
+{
+    if (!Reflection)
+    {
+        return;
+    }
+
+    uint64 UsedBufferMask     = 0;
+    uint64 UsedTextureMask[2] = { 0, 0 };
+    uint64 UsedSamplerMask    = 0;
+
+    if (@available(macOS 13.0, *))
+    {
+        for (id<MTLBinding> Binding in Reflection.bindings)
+        {
+            const NSUInteger Index = Binding.index;
+            switch (Binding.type)
+            {
+                case MTLBindingTypeBuffer:  UsedBufferMask  |= SlotMaskBit(static_cast<uint8>(Index)); break;
+                case MTLBindingTypeTexture: UsedTextureMask[Index / 64] |= (uint64(1) << (Index % 64)); break;
+                case MTLBindingTypeSampler: UsedSamplerMask |= SlotMaskBit(static_cast<uint8>(Index)); break;
+                default: break;
+            }
+        }
+    }
+    else
+    {
+        return;
+    }
+
+    Layout.PruneUnusedSlots(ShaderStage, UsedBufferMask, UsedTextureMask, UsedSamplerMask);
+}
+
 bool FMetalComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDesc& InDesc)
 {
     SCOPED_AUTORELEASE_POOL();
@@ -860,9 +1004,11 @@ bool FMetalComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
     MTLComputePipelineDescriptor* Descriptor = [[MTLComputePipelineDescriptor new] autorelease];
     Descriptor.computeFunction = ComputeShader->GetMTLFunction();
     Descriptor.label           = PipelineDebugLabel(DebugName, @"ComputePSO");
+
+    MTLComputePipelineReflection* Reflection = nil;
     PipelineState = [GetDevice()->GetMTLDevice() newComputePipelineStateWithDescriptor:Descriptor
-                                                                               options:MTLPipelineOptionNone
-                                                                            reflection:nil
+                                                                               options:MTLPipelineOptionBindingInfo
+                                                                            reflection:&Reflection
                                                                                  error:&Error];
     if (PipelineState == nil)
     {
@@ -879,6 +1025,8 @@ bool FMetalComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
     {
         return false;
     }
+
+    PruneBindingsToReflection(Bindings, EShaderVisibility::Compute, Reflection);
 
     if (!CreateStaticSamplers(StaticSamplers, InDesc.StaticSamplers, Bindings))
     {

@@ -29,6 +29,8 @@ public:
     static void Release();
 
 public:
+    FConfig();
+    ~FConfig();
 
     /** @brief Loads a file and keeps it open, without making it part of any layer */
     FIniFile* LoadFile(const String& Filename);
@@ -58,9 +60,6 @@ public:
     void LoadConsoleVariables();
 
 private:
-    FConfig();
-    ~FConfig();
-
     FIniFile* AddLayer(EConfigFile::Type ConfigFile, const String& Filename);
     void AddDefaultLayers();
 

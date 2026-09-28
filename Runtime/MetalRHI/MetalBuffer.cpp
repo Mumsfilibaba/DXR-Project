@@ -117,6 +117,31 @@ void FMetalBufferRHI::Unmap(uint64 Offset, uint64 Size)
     // Shared storage stays coherent with the GPU, so nothing has to be flushed back.
 }
 
+bool FMetalBufferRHI::RelocateTransientStorage(uint64 SizeInBytes, const void* SourceData, FMetalQueue* Queue)
+{
+    FMetalLinearAllocator* DynamicConstantsAllocator = GetDevice()->GetDynamicConstantsAllocator();
+    if (!DynamicConstantsAllocator || !SourceData || SizeInBytes == 0)
+    {
+        return false;
+    }
+
+    const uint64 Alignment   = MetalRHI::GetMTLBufferAlignment(Desc);
+    const uint64 AlignedSize = Math::AlignUp(SizeInBytes, Alignment);
+
+    ResourceStorage.ReleaseResource();
+
+    void* Mapped = DynamicConstantsAllocator->Allocate(AlignedSize, Alignment, Queue, ResourceStorage);
+    if (!Mapped)
+    {
+        METAL_ERROR("Failed to allocate %llu bytes of dynamic constant memory", AlignedSize);
+        return false;
+    }
+
+    Memory::Memcpy(Mapped, SourceData, SizeInBytes);
+    Buffer = ResourceStorage.GetBuffer();
+    return true;
+}
+
 bool FMetalBufferRHI::Initialize(ERHIResourceState InInitialAccess, const void* InInitialData)
 {
     SCOPED_AUTORELEASE_POOL();

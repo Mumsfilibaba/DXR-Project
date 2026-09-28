@@ -53,6 +53,28 @@ private:
     id<MTLBlitCommandEncoder> CopyEncoder;
 };
 
+class FMetalEncoderBindingCache
+{
+public:
+    static constexpr uint8 MaxBuffers  = 32;
+    static constexpr uint8 MaxTextures = 128;
+    static constexpr uint8 MaxSamplers = 16;
+
+    FMetalEncoderBindingCache();
+
+    void Reset(EShaderVisibility::Type ShaderStage);
+
+    bool UpdateBuffer(EShaderVisibility::Type ShaderStage, id<MTLBuffer> Buffer, NSUInteger Offset, uint8 Slot);
+    bool UpdateTexture(EShaderVisibility::Type ShaderStage, id<MTLTexture> Texture, uint8 Slot);
+    bool UpdateSampler(EShaderVisibility::Type ShaderStage, id<MTLSamplerState> Sampler, uint8 Slot);
+
+private:
+    id<MTLBuffer>       Buffers[EShaderVisibility::Count][MaxBuffers];
+    NSUInteger          BufferOffsets[EShaderVisibility::Count][MaxBuffers];
+    id<MTLTexture>      Textures[EShaderVisibility::Count][MaxTextures];
+    id<MTLSamplerState> Samplers[EShaderVisibility::Count][MaxSamplers];
+};
+
 class FMetalCommandContext final : public FMetalDeviceChild, public IRHICommandContext
 {
 public:
@@ -199,6 +221,16 @@ public:
     void SetGraphicsSampler(EShaderVisibility::Type ShaderStage, id<MTLSamplerState> Sampler, uint8 Slot);
     void SetGraphicsBytes(EShaderVisibility::Type ShaderStage, const void* Bytes, NSUInteger Length, uint8 Slot);
 
+    void SetComputeBuffer(id<MTLBuffer> Buffer, NSUInteger Offset, uint8 Slot);
+    void SetComputeTexture(id<MTLTexture> Texture, uint8 Slot);
+    void SetComputeSampler(id<MTLSamplerState> Sampler, uint8 Slot);
+
+    void ResetGraphicsEncoderBindings();
+    void ResetComputeEncoderBindings();
+
+    void ClearUnusedComputeBindings(const FMetalPipelineBindingLayout& Layout);
+    void ClearAllComputeBindings();
+
     void DeclareResident(id<MTLResource> Resource, bool bReadOnly, bool bIsView);
     void FlushResidency();
 
@@ -275,6 +307,7 @@ private:
     TArray<id<MTLResource>>             ResidentReadResources;
     TArray<id<MTLResource>>             ResidentReadWriteResources;
     FMetalCopyCommandContext            CopyContext;
+    FMetalEncoderBindingCache           EncoderBindings;
     FMetalCommandContextState           ContextState;
     FMetalQueryRHI*                     ActiveOcclusionQuery;
 #if METAL_VALIDATE_CONTEXT_THREAD_OWNERSHIP

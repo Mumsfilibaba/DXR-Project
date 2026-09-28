@@ -31,9 +31,15 @@ public:
         return VertexDescriptor;
     }
 
+    uint32 GetNumVertexStreams() const
+    {
+        return NumVertexStreams;
+    }
+
 private:
     TArray<FRHIInputElementDesc> InputElements;
     MTLVertexDescriptor*         VertexDescriptor;
+    uint32                       NumVertexStreams;
 };
 
 class FMetalDepthStencilStateRHI : public FRHIDepthStencilState, public FMetalDeviceChild
@@ -143,6 +149,9 @@ public:
     bool Collect(const TArray<FMSLShaderBinding>& ShaderBindings, EShaderVisibility::Type ShaderStage, uint16 InShaderConstantsSize);
     bool ConflictsWithVertexInputs(const FMetalInputLayoutRHI* InputLayout) const;
 
+    bool IsSlotUsed(EShaderVisibility::Type ShaderStage, EMSLBindingTable BindingTable, uint8 Slot) const;
+    void PruneUnusedSlots(EShaderVisibility::Type ShaderStage, uint64 UsedBufferMask, const uint64 UsedTextureMask[2], uint64 UsedSamplerMask);
+
     uint8 GetSlot(EShaderVisibility::Type ShaderVisibility, EMSLBindingType BindingType, uint32 RegisterIndex) const;
 
     uint16 GetShaderConstantsSize(EShaderVisibility::Type ShaderStage) const
@@ -174,6 +183,8 @@ public:
     }
 
 private:
+    void MarkSlotUsed(EShaderVisibility::Type ShaderStage, EMSLBindingTable BindingTable, uint8 Slot);
+
     TStaticArray<uint8, MAX_CONSTANT_BUFFERS> ConstantBuffers[EShaderVisibility::Count];
     TStaticArray<uint8, MAX_SRVS>             ShaderResourceBuffers[EShaderVisibility::Count];
     TStaticArray<uint8, MAX_SRVS>             ShaderResourceTextures[EShaderVisibility::Count];
@@ -184,6 +195,10 @@ private:
     uint8                                     ResourceHeapSlot[EShaderVisibility::Count];
     uint8                                     SamplerHeapSlot[EShaderVisibility::Count];
     uint16                                    ShaderConstantsSize[EShaderVisibility::Count];
+    // One bit per slot of each table, so a slot the stage never declares can be told apart from a bound one
+    uint64                                    BufferSlotMask[EShaderVisibility::Count];
+    uint64                                    TextureSlotMask[EShaderVisibility::Count][2];
+    uint64                                    SamplerSlotMask[EShaderVisibility::Count];
 };
 
 struct FMetalStaticSamplerBinding
@@ -216,6 +231,8 @@ public:
 
     void ApplyStaticSamplers(FMetalSamplerStateCache& Cache) const;
     bool HasStaticSampler(EShaderVisibility::Type ShaderStage, uint32 RegisterIndex) const;
+
+    uint32 GetNumVertexStreams() const;
 
     FMetalBlendStateRHI*        GetMetalBlendState()        const { return BlendState.Get(); }
     FMetalDepthStencilStateRHI* GetMetalDepthStencilState() const { return DepthStencilState.Get(); }
@@ -329,13 +346,11 @@ public:
         return PipelineState;
     }
 
-    /** @return Mesh-shader threadgroup size from the MSL header. */
     MTLSize GetMeshThreadgroupSize() const
     {
         return MTLSizeMake(MeshThreadGroupSizeX, MeshThreadGroupSizeY, MeshThreadGroupSizeZ);
     }
 
-    /** @return Object-shader threadgroup size, or {0,0,0} when there is no amplification shader. */
     MTLSize GetObjectThreadgroupSize() const
     {
         return MTLSizeMake(ObjectThreadGroupSizeX, ObjectThreadGroupSizeY, ObjectThreadGroupSizeZ);

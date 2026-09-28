@@ -224,6 +224,7 @@ id<MTLCommandBuffer> FMetalQueue::CreateCommandBuffer()
     {
         [CommandBuffer retain];
     }
+
     return CommandBuffer;
 }
 

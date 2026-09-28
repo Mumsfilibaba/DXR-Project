@@ -72,6 +72,8 @@ bool FMetalSamplerStateRHI::Initialize()
     SamplerDesc.borderColor           = MTLSamplerBorderColorOpaqueBlack;
     SamplerDesc.normalizedCoordinates = YES;
 
+    SamplerDesc.supportArgumentBuffers = YES;
+
     id<MTLDevice> Device = GetDevice()->GetMTLDevice();
     CHECK(Device != nil);
     

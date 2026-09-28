@@ -166,10 +166,12 @@ void FMetalCommandContext::QueryTimestamp(FRHIQuery* Query)
 
 void FMetalCommandContext::BeginFrame()
 {
+    FMetalDeviceRHI::Get()->BeginFrame();
 }
 
 void FMetalCommandContext::EndFrame()
 {
+    FMetalDeviceRHI::Get()->EndFrame();
 }
 
 void FMetalCommandContext::BeginQuery(FRHIQuery* Query)
@@ -435,6 +437,7 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     [GraphicsEncoder retain];
     ApplyEncoderLabel(GraphicsEncoder, @"Render");
     WaitForPendingEncoderFenceOnGraphics();
+    ContextState.BeginRenderEncoder();
     STAT_ADD(STAT_Metal_EncoderCount, 1);
 
     const uint32 NumRenderTargets = BeginRenderPassDesc.NumRenderTargets;
@@ -503,6 +506,18 @@ void FMetalCommandContext::SetViewport(const FViewportRegion& ViewportRegion)
     ContextState.SetViewports(&Viewport, 1);
 }
 
+template<typename TViewType>
+static id<MTLTexture> GetViewMTLTexture(TViewType* View)
+{
+    if (id<MTLTexture> ViewTexture = View->GetMTLTexture())
+    {
+        return ViewTexture;
+    }
+
+    FMetalTextureRHI* Texture = GetMetalTexture(static_cast<FRHITexture*>(View->GetResource()));
+    return Texture ? Texture->GetMTLTexture() : nil;
+}
+
 void FMetalCommandContext::SetScissorRect(const FScissorRegion& ScissorRegion)
 {
     int32 Width  = 1;
@@ -516,11 +531,11 @@ void FMetalCommandContext::SetScissorRect(const FScissorRegion& ScissorRegion)
     id<MTLTexture> ClampTexture = nil;
     if (NumRenderTargets > 0 && RenderTargets[0])
     {
-        ClampTexture = RenderTargets[0]->GetMTLTexture();
+        ClampTexture = GetViewMTLTexture(RenderTargets[0]);
     }
     else if (DepthStencilView)
     {
-        ClampTexture = DepthStencilView->GetMTLTexture();
+        ClampTexture = GetViewMTLTexture(DepthStencilView);
     }
 
     if (ClampTexture)
@@ -539,6 +554,7 @@ void FMetalCommandContext::SetScissorRect(const FScissorRegion& ScissorRegion)
     Rect.y      = static_cast<NSUInteger>(OriginY);
     Rect.width  = static_cast<NSUInteger>(Math::Max(SizeX, 0));
     Rect.height = static_cast<NSUInteger>(Math::Max(SizeY, 0));
+
     ContextState.SetScissorRects(&Rect, 1);
 }
 
@@ -873,6 +889,12 @@ void FMetalCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& Bu
     CHECK(DstBuffer != nil);
 
     const uint64 Size = BufferRegion.IsWholeResource() ? MetalDst->GetDesc().Size : BufferRegion.Size;
+
+    if (MetalDst->GetDesc().IsTransient())
+    {
+        MetalDst->RelocateTransientStorage(Size, SourceData, &Queue);
+        return;
+    }
 
     if (DstBuffer.storageMode == MTLStorageModeShared)
     {
@@ -1341,6 +1363,7 @@ void FMetalCommandContext::PrepareForDispatch()
         [ComputeEncoder retain];
         ApplyEncoderLabel(ComputeEncoder, @"Compute");
         WaitForPendingEncoderFenceOnCompute();
+        ContextState.BeginComputeEncoder();
         STAT_ADD(STAT_Metal_EncoderCount, 1);
     }
 
@@ -1469,6 +1492,7 @@ void FMetalCommandContext::EnsureTimestampEncoder()
         ApplyEncoderLabel(ComputeEncoder, @"Compute");
     
         WaitForPendingEncoderFenceOnCompute();
+        ContextState.BeginComputeEncoder();
         STAT_ADD(STAT_Metal_EncoderCount, 1);
         return;
     }
@@ -1491,6 +1515,7 @@ void FMetalCommandContext::EnsureTimestampEncoder()
         ApplyEncoderLabel(ComputeEncoder, @"Compute");
 
         WaitForPendingEncoderFenceOnCompute();
+        ContextState.BeginComputeEncoder();
         STAT_ADD(STAT_Metal_EncoderCount, 1);
         return;
     }
@@ -1517,6 +1542,7 @@ void FMetalCommandContext::EnsureTimestampEncoder()
         [GraphicsEncoder retain];
 
         WaitForPendingEncoderFenceOnGraphics();
+        ContextState.BeginRenderEncoder();
         STAT_ADD(STAT_Metal_EncoderCount, 1);
         return;
     }
@@ -1551,6 +1577,9 @@ bool FMetalCommandContext::SampleTimestamp(FMetalQueryRHI& Query)
         Timestamps.PrepareComputeSample(ComputeEncoder);
         [ComputeEncoder sampleCountersInBuffer:SampleBuffer atSampleIndex:SampleIndex withBarrier:bBarrier];
         Timestamps.PrepareComputeSample(ComputeEncoder);
+
+        ClearAllComputeBindings();
+        ContextState.BeginComputeEncoder();
     }
     else if (id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder())
     {
@@ -2290,6 +2319,11 @@ void FMetalCommandContext::PopEvent()
 
 void FMetalCommandContext::SetGraphicsBuffer(EShaderVisibility::Type ShaderStage, id<MTLBuffer> Buffer, NSUInteger Offset, uint8 Slot)
 {
+    if (!EncoderBindings.UpdateBuffer(ShaderStage, Buffer, Offset, Slot))
+    {
+        return;
+    }
+
     if (ShaderStage == EShaderVisibility::Vertex)
     {
         [GraphicsEncoder setVertexBuffer:Buffer offset:Offset atIndex:Slot];
@@ -2310,6 +2344,11 @@ void FMetalCommandContext::SetGraphicsBuffer(EShaderVisibility::Type ShaderStage
 
 void FMetalCommandContext::SetGraphicsTexture(EShaderVisibility::Type ShaderStage, id<MTLTexture> Texture, uint8 Slot)
 {
+    if (!EncoderBindings.UpdateTexture(ShaderStage, Texture, Slot))
+    {
+        return;
+    }
+
     if (ShaderStage == EShaderVisibility::Vertex)
     {
         [GraphicsEncoder setVertexTexture:Texture atIndex:Slot];
@@ -2330,6 +2369,11 @@ void FMetalCommandContext::SetGraphicsTexture(EShaderVisibility::Type ShaderStag
 
 void FMetalCommandContext::SetGraphicsSampler(EShaderVisibility::Type ShaderStage, id<MTLSamplerState> Sampler, uint8 Slot)
 {
+    if (!EncoderBindings.UpdateSampler(ShaderStage, Sampler, Slot))
+    {
+        return;
+    }
+
     if (ShaderStage == EShaderVisibility::Vertex)
     {
         [GraphicsEncoder setVertexSamplerState:Sampler atIndex:Slot];
@@ -2366,6 +2410,161 @@ void FMetalCommandContext::SetGraphicsBytes(EShaderVisibility::Type ShaderStage,
     {
         [GraphicsEncoder setObjectBytes:Bytes length:Length atIndex:Slot];
     }
+}
+
+void FMetalCommandContext::SetComputeBuffer(id<MTLBuffer> Buffer, NSUInteger Offset, uint8 Slot)
+{
+    if (EncoderBindings.UpdateBuffer(EShaderVisibility::Compute, Buffer, Offset, Slot))
+    {
+        [ComputeEncoder setBuffer:Buffer offset:Offset atIndex:Slot];
+    }
+}
+
+void FMetalCommandContext::SetComputeTexture(id<MTLTexture> Texture, uint8 Slot)
+{
+    if (EncoderBindings.UpdateTexture(EShaderVisibility::Compute, Texture, Slot))
+    {
+        [ComputeEncoder setTexture:Texture atIndex:Slot];
+    }
+}
+
+void FMetalCommandContext::SetComputeSampler(id<MTLSamplerState> Sampler, uint8 Slot)
+{
+    if (EncoderBindings.UpdateSampler(EShaderVisibility::Compute, Sampler, Slot))
+    {
+        [ComputeEncoder setSamplerState:Sampler atIndex:Slot];
+    }
+}
+
+void FMetalCommandContext::ResetGraphicsEncoderBindings()
+{
+    for (uint32 Stage = EShaderVisibility::Vertex; Stage < EShaderVisibility::Count; ++Stage)
+    {
+        EncoderBindings.Reset(static_cast<EShaderVisibility::Type>(Stage));
+    }
+}
+
+void FMetalCommandContext::ResetComputeEncoderBindings()
+{
+    EncoderBindings.Reset(EShaderVisibility::Compute);
+}
+
+void FMetalCommandContext::ClearAllComputeBindings()
+{
+    for (uint8 Slot = 0; Slot < FMetalEncoderBindingCache::MaxBuffers; ++Slot)
+    {
+        SetComputeBuffer(nil, 0, Slot);
+    }
+
+    for (uint8 Slot = 0; Slot < FMetalEncoderBindingCache::MaxTextures; ++Slot)
+    {
+        SetComputeTexture(nil, Slot);
+    }
+
+    for (uint8 Slot = 0; Slot < FMetalEncoderBindingCache::MaxSamplers; ++Slot)
+    {
+        SetComputeSampler(nil, Slot);
+    }
+}
+
+void FMetalCommandContext::ClearUnusedComputeBindings(const FMetalPipelineBindingLayout& Layout)
+{
+    for (uint8 Slot = 0; Slot < FMetalEncoderBindingCache::MaxBuffers; ++Slot)
+    {
+        if (!Layout.IsSlotUsed(EShaderVisibility::Compute, EMSLBindingTable::Buffer, Slot))
+        {
+            SetComputeBuffer(nil, 0, Slot);
+        }
+    }
+
+    for (uint8 Slot = 0; Slot < FMetalEncoderBindingCache::MaxTextures; ++Slot)
+    {
+        if (!Layout.IsSlotUsed(EShaderVisibility::Compute, EMSLBindingTable::Texture, Slot))
+        {
+            SetComputeTexture(nil, Slot);
+        }
+    }
+
+    for (uint8 Slot = 0; Slot < FMetalEncoderBindingCache::MaxSamplers; ++Slot)
+    {
+        if (!Layout.IsSlotUsed(EShaderVisibility::Compute, EMSLBindingTable::Sampler, Slot))
+        {
+            SetComputeSampler(nil, Slot);
+        }
+    }
+}
+
+FMetalEncoderBindingCache::FMetalEncoderBindingCache()
+{
+    for (uint32 Stage = 0; Stage < EShaderVisibility::Count; ++Stage)
+    {
+        Reset(static_cast<EShaderVisibility::Type>(Stage));
+    }
+}
+
+void FMetalEncoderBindingCache::Reset(EShaderVisibility::Type ShaderStage)
+{
+    CHECK(ShaderStage < EShaderVisibility::Count);
+
+    Memory::Memzero(Buffers[ShaderStage], sizeof(Buffers[ShaderStage]));
+    Memory::Memzero(BufferOffsets[ShaderStage], sizeof(BufferOffsets[ShaderStage]));
+    Memory::Memzero(Textures[ShaderStage], sizeof(Textures[ShaderStage]));
+    Memory::Memzero(Samplers[ShaderStage], sizeof(Samplers[ShaderStage]));
+}
+
+bool FMetalEncoderBindingCache::UpdateBuffer(EShaderVisibility::Type ShaderStage, id<MTLBuffer> Buffer, NSUInteger Offset, uint8 Slot)
+{
+    CHECK(ShaderStage < EShaderVisibility::Count);
+
+    if (Slot >= MaxBuffers)
+    {
+        return true;
+    }
+
+    if (Buffers[ShaderStage][Slot] == Buffer && BufferOffsets[ShaderStage][Slot] == Offset)
+    {
+        return false;
+    }
+
+    Buffers[ShaderStage][Slot]       = Buffer;
+    BufferOffsets[ShaderStage][Slot] = Offset;
+    return true;
+}
+
+bool FMetalEncoderBindingCache::UpdateTexture(EShaderVisibility::Type ShaderStage, id<MTLTexture> Texture, uint8 Slot)
+{
+    CHECK(ShaderStage < EShaderVisibility::Count);
+
+    if (Slot >= MaxTextures)
+    {
+        return true;
+    }
+
+    if (Textures[ShaderStage][Slot] == Texture)
+    {
+        return false;
+    }
+
+    Textures[ShaderStage][Slot] = Texture;
+    return true;
+}
+
+bool FMetalEncoderBindingCache::UpdateSampler(EShaderVisibility::Type ShaderStage, id<MTLSamplerState> Sampler, uint8 Slot)
+{
+    CHECK(ShaderStage < EShaderVisibility::Count);
+
+    if (Slot >= MaxSamplers)
+    {
+        return true;
+    }
+
+    if (Samplers[ShaderStage][Slot] == Sampler)
+    {
+        return false;
+    }
+
+    Samplers[ShaderStage][Slot] = Sampler;
+    return true;
 }
 
 uint64 FMetalCommandContext::SubmitCurrentPayload()
@@ -2518,10 +2717,25 @@ MTLRenderPassDescriptor* FMetalCommandContext::CreateRenderPassDescriptor(const 
     }
 
     NSUInteger ArrayLength = 1;
+    for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
+    {
+        FMetalRenderTargetViewRHI* MetalRTV = CachedRenderTargets[Index];
+        if (MetalRTV && MetalRTV->GetArrayIndex() == 0)
+        {
+            ArrayLength = Math::Max<NSUInteger>(ArrayLength, MetalRTV->GetNumSlices());
+        }
+    }
+
+    if (MetalDSV && MetalDSV->GetArrayIndex() == 0)
+    {
+        ArrayLength = Math::Max<NSUInteger>(ArrayLength, MetalDSV->GetNumSlices());
+    }
+
     const FRHIViewInstancingState& ViewInstancingState = BeginRenderPassDesc.ViewInstancingState;
     if (ViewInstancingState.bEnableViewInstancing && ViewInstancingState.NumArraySlices > 0)
     {
-        ArrayLength = static_cast<NSUInteger>(ViewInstancingState.StartRenderTargetArrayIndex) + ViewInstancingState.NumArraySlices;
+        const NSUInteger ViewInstancingLength = static_cast<NSUInteger>(ViewInstancingState.StartRenderTargetArrayIndex) + ViewInstancingState.NumArraySlices;
+        ArrayLength = Math::Max(ArrayLength, ViewInstancingLength);
 
         NSUInteger TextureArrayLength = 1;
         if (NumRenderTargets > 0 && CachedRenderTargets[0])

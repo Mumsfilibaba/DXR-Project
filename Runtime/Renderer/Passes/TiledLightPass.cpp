@@ -317,6 +317,11 @@ void FTiledLightPass::Record(FRHICommandList& CommandList, const FFrameResources
     {
         CommandList.SetShaderResourceView(LightPassShader, FrameResources.RayTracingOutput->GetShaderResourceView(), 4);
     }
+    else
+    {
+        FRHITexture* const DefaultTexture = FEngine::Get() ? FEngine::Get()->BaseTexture.Get() : nullptr;
+        CommandList.SetShaderResourceView(LightPassShader, SafeGetDefaultSRV(DefaultTexture), 4);
+    }
 
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 5);
 
