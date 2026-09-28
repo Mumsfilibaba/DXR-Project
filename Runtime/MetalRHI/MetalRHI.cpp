@@ -729,11 +729,15 @@ bool FMetalDeviceRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipeline
 
 void FMetalDeviceRHI::BeginFrame()
 {
+    SCOPED_AUTORELEASE_POOL();
+
     Device->BeginFrame();
 }
 
 void FMetalDeviceRHI::EndFrame()
 {
+    SCOPED_AUTORELEASE_POOL();
+
     Device->EndFrame();
 
 #if METAL_ENABLE_STATS

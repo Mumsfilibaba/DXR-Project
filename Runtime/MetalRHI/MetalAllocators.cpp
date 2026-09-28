@@ -345,6 +345,8 @@ void FMetalHeapPool::DropUnusedHeaps()
 #if METAL_ENABLE_STATS
 void FMetalHeapPool::UpdateMemoryStats(FMetalAllocatorUsage& OutUsage) const
 {
+    TScopedLock Lock(PoolCS);
+
     OutUsage = FMetalAllocatorUsage();
     for (const FHeapBlock& Block : HeapBlocks)
     {
@@ -355,6 +357,7 @@ void FMetalHeapPool::UpdateMemoryStats(FMetalAllocatorUsage& OutUsage) const
 
         OutUsage.AllocatedBytes += Block.Size;
         OutUsage.UsedBytes      += Block.UsedBytes;
+        OutUsage.NumBlocks      += 1;
     }
 
     if (OutUsage.AllocatedBytes > OutUsage.UsedBytes)
@@ -540,6 +543,8 @@ FMetalLinearAllocator::FPage* FMetalLinearAllocator::CreatePage(uint64 SizeInByt
     Page->EligibleFromFenceValue   = UINT64_MAX;
     Page->bDedicated               = bDedicated;
     Page->bPendingRetire           = false;
+
+    STAT_ADD(STAT_Metal_UploadPagesCreated, 1);
     return Page;
 }
 
@@ -602,6 +607,7 @@ void FMetalLinearAllocator::ReleasePage(FPage* Page)
         Page->Buffer = nil;
     }
 
+    STAT_ADD(STAT_Metal_UploadPagesReleased, 1);
     delete Page;
 }
 
@@ -639,6 +645,8 @@ void FMetalLinearAllocator::DropUnusedPages()
 #if METAL_ENABLE_STATS
 void FMetalLinearAllocator::UpdateMemoryStats(FMetalAllocatorUsage& OutUsage) const
 {
+    TScopedLock Lock(AllocatorsCS);
+
     OutUsage = FMetalAllocatorUsage();
     for (const FPage* Page : Pages)
     {
@@ -649,6 +657,7 @@ void FMetalLinearAllocator::UpdateMemoryStats(FMetalAllocatorUsage& OutUsage) co
 
         OutUsage.AllocatedBytes += Page->Size;
         OutUsage.UsedBytes      += Page->UsedBytes;
+        OutUsage.NumBlocks      += 1;
     }
 
     if (OutUsage.AllocatedBytes > OutUsage.UsedBytes)
@@ -804,11 +813,13 @@ void FMetalBufferAllocator::Destroy()
 #if METAL_ENABLE_STATS
 void FMetalBufferAllocator::UpdateMemoryStats()
 {
-    FMetalAllocatorUsage HeapUsage;
-    HeapPool.UpdateMemoryStats(HeapUsage);
-    STAT_SET(STAT_Metal_DeviceHeapAllocated, HeapUsage.AllocatedBytes);
-    STAT_SET(STAT_Metal_DeviceHeapUsed, HeapUsage.UsedBytes);
-    STAT_SET(STAT_Metal_DeviceHeapFragmented, HeapUsage.FragmentedBytes);
+    FMetalAllocatorUsage Usage;
+    HeapPool.UpdateMemoryStats(Usage);
+
+    STAT_SET(STAT_Metal_BufferHeapAllocated,  Usage.AllocatedBytes);
+    STAT_SET(STAT_Metal_BufferHeapUsed,       Usage.UsedBytes);
+    STAT_SET(STAT_Metal_BufferHeapFragmented, Usage.FragmentedBytes);
+    STAT_SET(STAT_Metal_BufferHeaps,          Usage.NumBlocks);
 }
 #endif
 
@@ -891,8 +902,9 @@ void FMetalTextureAllocator::UpdateMemoryStats()
 {
     FMetalAllocatorUsage Usage;
     HeapPool.UpdateMemoryStats(Usage);
-    STAT_SET(STAT_Metal_DeviceHeapAllocated,  STAT_GET(STAT_Metal_DeviceHeapAllocated) + static_cast<int64>(Usage.AllocatedBytes));
-    STAT_SET(STAT_Metal_DeviceHeapUsed,       STAT_GET(STAT_Metal_DeviceHeapUsed) + static_cast<int64>(Usage.UsedBytes));
-    STAT_SET(STAT_Metal_DeviceHeapFragmented, STAT_GET(STAT_Metal_DeviceHeapFragmented) + static_cast<int64>(Usage.FragmentedBytes));
+    STAT_SET(STAT_Metal_TextureHeapAllocated,  Usage.AllocatedBytes);
+    STAT_SET(STAT_Metal_TextureHeapUsed,       Usage.UsedBytes);
+    STAT_SET(STAT_Metal_TextureHeapFragmented, Usage.FragmentedBytes);
+    STAT_SET(STAT_Metal_TextureHeaps,          Usage.NumBlocks);
 }
 #endif

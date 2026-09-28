@@ -154,6 +154,7 @@ FMetalQueue::~FMetalQueue()
     {
         delete Commands;
     }
+
     FreeCommands.Clear();
 
     [SubmissionEvent release];
@@ -167,6 +168,7 @@ bool FMetalQueue::Initialize()
 {
     id<MTLDevice> DeviceHandle = GetDevice()->GetMTLDevice();
     CommandQueue = [DeviceHandle newCommandQueue];
+
     if (!CommandQueue)
     {
         METAL_ERROR("Failed to create MTLCommandQueue");
@@ -200,8 +202,9 @@ FMetalCommands* FMetalQueue::ObtainCommands()
         Commands = new FMetalCommands(GetDevice(), this);
     }
 
-    Commands->CommandBuffer    = CreateCommandBuffer();
-    Commands->SubmissionValue  = 0;
+    Commands->CommandBuffer   = CreateCommandBuffer();
+    Commands->SubmissionValue = 0;
+
     Commands->DeferredObjects.Clear();
     Commands->PendingQueries.Clear();
     Commands->PendingSignalEvents.Clear();
@@ -216,6 +219,8 @@ FMetalCommands* FMetalQueue::ObtainCommands()
 
 id<MTLCommandBuffer> FMetalQueue::CreateCommandBuffer()
 {
+    SCOPED_AUTORELEASE_POOL();
+
     MTLCommandBufferDescriptor* Descriptor = [[MTLCommandBufferDescriptor new] autorelease];
     Descriptor.errorOptions = MTLCommandBufferErrorOptionEncoderExecutionStatus;
 
@@ -223,6 +228,7 @@ id<MTLCommandBuffer> FMetalQueue::CreateCommandBuffer()
     if (CommandBuffer)
     {
         [CommandBuffer retain];
+        STAT_ADD(STAT_Metal_CommandBuffersAlive, 1);
     }
 
     return CommandBuffer;
@@ -285,10 +291,12 @@ uint64 FMetalQueue::SubmitCommands(FMetalCommands* Commands)
     {
         UploadHeapAllocator->RetireAllocations(this, Value);
     }
+
     if (FMetalLinearAllocator* StagingBufferAllocator = GetDevice()->GetStagingBufferAllocator())
     {
         StagingBufferAllocator->RetireAllocations(this, Value);
     }
+
     if (FMetalLinearAllocator* DynamicConstantsAllocator = GetDevice()->GetDynamicConstantsAllocator())
     {
         DynamicConstantsAllocator->RetireAllocations(this, Value);
@@ -466,6 +474,8 @@ FMetalCommands::~FMetalCommands()
     {
         [CommandBuffer release];
         CommandBuffer = nil;
+
+        STAT_SUBTRACT(STAT_Metal_CommandBuffersAlive, 1);
     }
 }
 
@@ -511,6 +521,7 @@ void FMetalCommands::AddWait(FMetalQueue* Producer, uint64 Value)
                 Existing.Value    = Value;
                 Existing.bEncoded = false;
             }
+
             return;
         }
     }
@@ -551,6 +562,8 @@ void FMetalCommands::PostExecute()
     {
         [CommandBuffer release];
         CommandBuffer = nil;
+
+        STAT_SUBTRACT(STAT_Metal_CommandBuffersAlive, 1);
     }
 }
 
@@ -575,9 +588,12 @@ FMetalUploadBatch::FMetalUploadBatch(FMetalDevice* InDevice)
     BlitEncoder = [[Commands->CommandBuffer blitCommandEncoder] retain];
     if (BlitEncoder)
     {
+        STAT_ADD(STAT_Metal_EncodersOpen, 1);
+
         BlitEncoder.label = @"Blit";
         Commands->RecordBreadcrumb("Blit");
     }
+
     METAL_ERROR_COND(BlitEncoder != nil, "Failed to create a blit encoder for an upload batch");
 }
 
@@ -613,6 +629,8 @@ uint64 FMetalUploadBatch::Submit()
         [BlitEncoder endEncoding];
         [BlitEncoder release];
         BlitEncoder = nil;
+
+        STAT_SUBTRACT(STAT_Metal_EncodersOpen, 1);
     }
 
     if (!Commands)

@@ -136,6 +136,11 @@ private:
 
     void ReadDeviceProperties();
 
+#if METAL_ENABLE_STATS
+    void UpdateMemoryStats();
+    void LogMemoryStats();
+#endif
+
     id<MTLDevice>                    Device;
     FMetalUploadHeapAllocator*       UploadHeapAllocator;
     FMetalLinearAllocator*           StagingBufferAllocator;
@@ -151,4 +156,5 @@ private:
     FMetalTimestampQueries           TimestampQueries;
     FMetalOcclusionQueries           OcclusionQueries;
     uint64                           FrameCounter;
+    uint64                           LastMemoryLogTime;
 };

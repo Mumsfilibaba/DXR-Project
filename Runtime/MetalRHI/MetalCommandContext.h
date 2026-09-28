@@ -9,6 +9,7 @@
 #include "MetalRHI/MetalCommandContextState.h"
 #include "MetalRHI/MetalConfiguration.h"
 #include "MetalRHI/MetalQueue.h"
+#include "MetalRHI/MetalStats.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -31,9 +32,10 @@ public:
         if (!CopyEncoder)
         {
             CopyEncoder = [[CommandBuffer blitCommandEncoder] retain];
+            STAT_ADD(STAT_Metal_EncodersOpen, 1);
         }
     }
-    
+
     void FinishEncoder()
     {
         if (CopyEncoder)
@@ -41,6 +43,8 @@ public:
             [CopyEncoder endEncoding];
             [CopyEncoder release];
             CopyEncoder = nil;
+
+            STAT_SUBTRACT(STAT_Metal_EncodersOpen, 1);
         }
     }
     
@@ -289,6 +293,7 @@ private:
     FMetalQueue&                        Queue;
     id<MTLCommandBuffer>                CommandBuffer;
     FMetalCommands*                     Commands;
+    NSAutoreleasePool*                  RecordingPool;
     id<MTLCommandBuffer>                CopyCommandBuffer;
     FMetalCommands*                     CopyCommands;
     id<MTLRenderCommandEncoder>         GraphicsEncoder;

@@ -4,15 +4,22 @@
 #include "MetalRHI/MetalAllocators.h"
 #include "MetalRHI/MetalBindlessDescriptors.h"
 #include "MetalRHI/MetalQueue.h"
+#include "MetalRHI/MetalStats.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Platform/PlatformTime.h"
 #include <objc/message.h>
 
 static TAutoConsoleVariable<String> CVarPreferredDeviceName(
     "MetalRHI.PreferredDeviceName",
     "Selects the Metal device whose name contains this text, ignoring the device scoring when it matches",
     "");
+
+static TAutoConsoleVariable<float> CVarLogMemoryStatsInterval(
+    "MetalRHI.LogMemoryStatsInterval",
+    "Logs a summary of Metal memory usage every this many seconds, or never when zero",
+    0.0f);
 
 static MTLTextureType GetNullMTLTextureType(EMetalNullTextureType::Type Type)
 {
@@ -210,6 +217,7 @@ FMetalDevice::FMetalDevice()
     , TimestampQueries(this)
     , OcclusionQueries(this)
     , FrameCounter(0)
+    , LastMemoryLogTime(0)
 {
     Memory::Memzero(DefaultResources.NullTextures, sizeof(DefaultResources.NullTextures));
     Memory::Memzero(DefaultResources.NullRWTextures, sizeof(DefaultResources.NullRWTextures));
@@ -398,6 +406,11 @@ void FMetalDevice::ReadDeviceProperties()
     const String DeviceClass([[Device class] description]);
     METAL_INFO("Selected Device=%s (%s)", *Properties.Name, *DeviceClass);
 
+    if (DeviceClass.Contains("Capture"))
+    {
+        METAL_WARNING("Metal GPU capture is wrapping the device, which inflates the reported memory usage. Disable GPU Frame Capture in the scheme, or launch the app outside Xcode, before measuring memory");
+    }
+
 #if METAL_ENABLE_DEBUG_LAYER
     if (DeviceClass.Contains("MTLDebug"))
     {
@@ -405,7 +418,7 @@ void FMetalDevice::ReadDeviceProperties()
     }
     else if (DeviceClass.Contains("Capture"))
     {
-        METAL_INFO("Metal GPU capture is wrapping the device, the debug layer sits underneath and cannot be read from the class");
+        METAL_INFO("The debug layer sits underneath the capture wrapper and cannot be read from the device class");
     }
     else if (MetalIsDebugLayerRequested())
     {
@@ -571,6 +584,10 @@ void FMetalDevice::EndFrame()
 {
     ProcessQueues();
     MetalEndFrameCapture();
+
+#if METAL_ENABLE_STATS
+    LogMemoryStats();
+#endif
 }
 
 void FMetalDevice::WaitForGPU()
@@ -628,7 +645,65 @@ void FMetalDevice::ProcessQueues()
     {
         TextureAllocator->CleanUp();
     }
+
+#if METAL_ENABLE_STATS
+    UpdateMemoryStats();
+#endif
 }
+
+#if METAL_ENABLE_STATS
+void FMetalDevice::UpdateMemoryStats()
+{
+    if (DynamicConstantsAllocator)
+    {
+        FMetalAllocatorUsage Usage;
+        DynamicConstantsAllocator->UpdateMemoryStats(Usage);
+        STAT_SET(STAT_Metal_DynamicConstantsAllocated, Usage.AllocatedBytes);
+        STAT_SET(STAT_Metal_DynamicConstantsUsed,      Usage.UsedBytes);
+        STAT_SET(STAT_Metal_DynamicConstantsPages,     Usage.NumBlocks);
+    }
+
+    if (StagingBufferAllocator)
+    {
+        FMetalAllocatorUsage Usage;
+        StagingBufferAllocator->UpdateMemoryStats(Usage);
+        STAT_SET(STAT_Metal_StagingAllocated, Usage.AllocatedBytes);
+        STAT_SET(STAT_Metal_StagingUsed,      Usage.UsedBytes);
+        STAT_SET(STAT_Metal_StagingPages,     Usage.NumBlocks);
+    }
+}
+
+void FMetalDevice::LogMemoryStats()
+{
+    const float Interval = CVarLogMemoryStatsInterval.GetValue();
+    if (Interval <= 0.0f || !Device)
+    {
+        return;
+    }
+
+    const uint64 CurrentTime = FPlatformTime::QueryPerformanceCounter();
+    const uint64 Frequency   = FPlatformTime::QueryPerformanceFrequency();
+    if (LastMemoryLogTime != 0 && static_cast<double>(CurrentTime - LastMemoryLogTime) / static_cast<double>(Frequency) < static_cast<double>(Interval))
+    {
+        return;
+    }
+
+    LastMemoryLogTime = CurrentTime;
+
+    const auto ToMB = [](int64 Bytes) -> double { return static_cast<double>(Bytes) / (1024.0 * 1024.0); };
+
+    METAL_INFO("[MemoryStats] Frame=%llu Device=%.1f/%.1f MB CommandBuffersAlive=%lld EncodersOpen=%lld "
+        "DynamicConstants=%.1f MB (%lld pages) Staging=%.1f MB (%lld pages) UploadHeap=%.1f MB UploadPages=+%lld/-%lld "
+        "BufferHeaps=%.1f MB (%lld) TextureHeaps=%.1f MB (%lld) StandaloneBuffers=%.1f MB (%lld) StandaloneTextures=%.1f MB (%lld) Bindless=%.1f MB",
+        FrameCounter, ToMB(static_cast<int64>(Device.currentAllocatedSize)), ToMB(static_cast<int64>(Device.recommendedMaxWorkingSetSize)),
+        STAT_GET(STAT_Metal_CommandBuffersAlive), STAT_GET(STAT_Metal_EncodersOpen),
+        ToMB(STAT_GET(STAT_Metal_DynamicConstantsAllocated)), STAT_GET(STAT_Metal_DynamicConstantsPages), ToMB(STAT_GET(STAT_Metal_StagingAllocated)), STAT_GET(STAT_Metal_StagingPages),
+        ToMB(STAT_GET(STAT_Metal_UploadHeapAllocated)), STAT_GET(STAT_Metal_UploadPagesCreated), STAT_GET(STAT_Metal_UploadPagesReleased),
+        ToMB(STAT_GET(STAT_Metal_BufferHeapAllocated)), STAT_GET(STAT_Metal_BufferHeaps), ToMB(STAT_GET(STAT_Metal_TextureHeapAllocated)), STAT_GET(STAT_Metal_TextureHeaps),
+        ToMB(STAT_GET(STAT_Metal_StandaloneBufferBytes)), STAT_GET(STAT_Metal_StandaloneBuffers), ToMB(STAT_GET(STAT_Metal_StandaloneTextureBytes)), STAT_GET(STAT_Metal_StandaloneTextures),
+        ToMB(STAT_GET(STAT_Metal_BindlessTableBytes)));
+}
+#endif
 
 bool FMetalDevice::SupportsFamily(MTLGPUFamily Family) const
 {
@@ -643,11 +718,14 @@ bool FMetalDevice::QueryVideoMemoryInfo(EVideoMemoryType Type, FRHIVideoMemoryIn
         return false;
     }
 
-    OutInfo.MemoryType   = Type;
-    OutInfo.MemoryBudget = Device.recommendedMaxWorkingSetSize;
-    OutInfo.MemoryUsage  = Device.currentAllocatedSize;
+    OutInfo.MemoryType = Type;
 
-    if (Type == EVideoMemoryType::NonLocal && Device.hasUnifiedMemory)
+    if (Type == EVideoMemoryType::Local)
+    {
+        OutInfo.MemoryBudget = Device.recommendedMaxWorkingSetSize;
+        OutInfo.MemoryUsage  = Device.currentAllocatedSize;
+    }
+    else
     {
         OutInfo.MemoryBudget = 0;
         OutInfo.MemoryUsage  = 0;

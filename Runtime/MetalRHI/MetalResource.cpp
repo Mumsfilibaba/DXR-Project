@@ -2,6 +2,7 @@
 #include "MetalRHI/MetalAllocators.h"
 #include "MetalRHI/MetalHeap.h"
 #include "MetalRHI/MetalRHI.h"
+#include "MetalRHI/MetalStats.h"
 
 FMetalResourceStorage::FMetalResourceStorage(FMetalDevice* InDevice)
     : FMetalDeviceChild(InDevice)
@@ -31,6 +32,9 @@ void FMetalResourceStorage::InitStandalone(id<MTLBuffer> InBuffer, uint64 InSize
     Buffer      = InBuffer;
     Size        = InSize;
     StorageType = EMetalResourceStorageType::Standalone;
+
+    STAT_ADD(STAT_Metal_StandaloneBufferBytes, [InBuffer allocatedSize]);
+    STAT_ADD(STAT_Metal_StandaloneBuffers, 1);
 }
 
 void FMetalResourceStorage::InitStandalone(id<MTLTexture> InTexture, uint64 InSize)
@@ -39,6 +43,9 @@ void FMetalResourceStorage::InitStandalone(id<MTLTexture> InTexture, uint64 InSi
     Texture     = InTexture;
     Size        = InSize;
     StorageType = EMetalResourceStorageType::Standalone;
+
+    STAT_ADD(STAT_Metal_StandaloneTextureBytes, [InTexture allocatedSize]);
+    STAT_ADD(STAT_Metal_StandaloneTextures, 1);
 }
 
 void FMetalResourceStorage::InitSuballocatedResource(id<MTLBuffer> InBuffer, uint64 InOffset, uint64 InSize, void* InMappedAddress, FMetalLinearAllocator* InLinearAllocator, FMetalUploadHeapAllocator* InUploadAllocator)
@@ -127,6 +134,18 @@ void FMetalResourceStorage::ReleaseResource()
     }
     else if (StorageType == EMetalResourceStorageType::Standalone)
     {
+        if (Buffer)
+        {
+            STAT_SUBTRACT(STAT_Metal_StandaloneBufferBytes, [Buffer allocatedSize]);
+            STAT_SUBTRACT(STAT_Metal_StandaloneBuffers, 1);
+        }
+
+        if (Texture)
+        {
+            STAT_SUBTRACT(STAT_Metal_StandaloneTextureBytes, [Texture allocatedSize]);
+            STAT_SUBTRACT(STAT_Metal_StandaloneTextures, 1);
+        }
+
         ReleaseOwnedResource();
     }
 

@@ -13,6 +13,7 @@ struct FMetalAllocatorUsage
     uint64 AllocatedBytes  = 0;
     uint64 UsedBytes       = 0;
     uint64 FragmentedBytes = 0;
+    uint32 NumBlocks       = 0;
 };
 #endif
 
@@ -70,7 +71,7 @@ private:
     static constexpr uint64 DefaultHeapSize    = 64ull * 1024ull * 1024ull;
     static constexpr uint64 MaxUnusedHeapBytes = 64ull * 1024ull * 1024ull;
 
-    FCriticalSection         PoolCS;
+    mutable FCriticalSection PoolCS;
     TArray<FHeapBlock>       HeapBlocks;
     TArray<FPendingHeapFree> PendingHeapFrees;
 };
@@ -110,11 +111,11 @@ private:
 
     static constexpr uint64 MaxUnusedBytes = 32ull * 1024ull * 1024ull;
 
-    FCriticalSection AllocatorsCS;
-    TArray<FPage*>   Pages;
-    FPage*           ActivePage;
-    uint64           PageSizeBytes;
-    uint64           LargeAllocationThreshold;
+    mutable FCriticalSection AllocatorsCS;
+    TArray<FPage*>           Pages;
+    FPage*                   ActivePage;
+    uint64                   PageSizeBytes;
+    uint64                   LargeAllocationThreshold;
 };
 
 class FMetalUploadHeapAllocator : public FMetalDeviceChild

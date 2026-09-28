@@ -23,13 +23,16 @@
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 @interface NSObject (MetalRHIMeshEncode)
+
 - (void)drawMeshThreadgroups:(MTLSize)threadgroupsPerGrid
 threadsPerObjectThreadgroup:(MTLSize)threadsPerObjectThreadgroup
   threadsPerMeshThreadgroup:(MTLSize)threadsPerMeshThreadgroup;
+
 - (void)drawMeshThreadgroupsWithIndirectBuffer:(id<MTLBuffer>)indirectBuffer
                           indirectBufferOffset:(NSUInteger)indirectBufferOffset
                  threadsPerObjectThreadgroup:(MTLSize)threadsPerObjectThreadgroup
                    threadsPerMeshThreadgroup:(MTLSize)threadsPerMeshThreadgroup;
+
 @end
 
 static constexpr MTLRenderStages GraphicsFenceStages = MTLRenderStageVertex | MTLRenderStageFragment;
@@ -40,6 +43,7 @@ FMetalCommandContext::FMetalCommandContext(FMetalDevice* InDevice, FMetalQueue& 
     , Queue(InQueue)
     , CommandBuffer(nil)
     , Commands(nullptr)
+    , RecordingPool(nil)
     , CopyCommandBuffer(nil)
     , CopyCommands(nullptr)
     , GraphicsEncoder(nil)
@@ -98,6 +102,8 @@ void FMetalCommandContext::StartContext()
     AcquireOwnership();
     bIsRecording = true;
 
+    RecordingPool = [NSAutoreleasePool new];
+
     Commands      = Queue.ObtainCommands();
     CommandBuffer = Commands->CommandBuffer;
 
@@ -126,6 +132,9 @@ void FMetalCommandContext::FinishContext()
     Commands      = nullptr;
     CommandBuffer = nil;
     bIsRecording  = false;
+
+    [RecordingPool release];
+    RecordingPool = nil;
 
     ReleaseOwnership();
 }
@@ -435,10 +444,13 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     CHECK(RenderPassDescriptor != nil);
     GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
     [GraphicsEncoder retain];
+
     ApplyEncoderLabel(GraphicsEncoder, @"Render");
     WaitForPendingEncoderFenceOnGraphics();
     ContextState.BeginRenderEncoder();
+
     STAT_ADD(STAT_Metal_EncoderCount, 1);
+    STAT_ADD(STAT_Metal_EncodersOpen, 1);
 
     const uint32 NumRenderTargets = BeginRenderPassDesc.NumRenderTargets;
     for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
@@ -488,6 +500,7 @@ void FMetalCommandContext::EndRenderPass()
     [GraphicsEncoder endEncoding];
     [GraphicsEncoder release];
     GraphicsEncoder = nil;
+    STAT_SUBTRACT(STAT_Metal_EncodersOpen, 1);
     ContextState.ResetBoundConstantSlots();
     ResetResidency();
     bDirectHasEncodedWork = true;
@@ -1361,10 +1374,13 @@ void FMetalCommandContext::PrepareForDispatch()
 
         ComputeEncoder = [CommandBuffer computeCommandEncoder];
         [ComputeEncoder retain];
+
         ApplyEncoderLabel(ComputeEncoder, @"Compute");
         WaitForPendingEncoderFenceOnCompute();
         ContextState.BeginComputeEncoder();
+
         STAT_ADD(STAT_Metal_EncoderCount, 1);
+        STAT_ADD(STAT_Metal_EncodersOpen, 1);
     }
 
     ContextState.BindComputeState();
@@ -1417,6 +1433,7 @@ void FMetalCommandContext::StartCopyEncoder(bool bRouteToCopyQueue)
         CopyCommands->EncodePendingWaits();
         CopyContext.StartEncoder(CopyCommandBuffer);
         bBlitOnCopyQueue = true;
+
         ApplyEncoderLabel(CopyContext.GetMTLCopyEncoder(), @"Blit");
 
         if (bOpenedEncoder)
@@ -1444,6 +1461,7 @@ void FMetalCommandContext::StartCopyEncoder(bool bRouteToCopyQueue)
     const bool bOpenedEncoder = (CopyContext.GetMTLCopyEncoder() == nil);
     CopyContext.StartEncoder(CommandBuffer);
     bBlitOnCopyQueue = false;
+
     ApplyEncoderLabel(CopyContext.GetMTLCopyEncoder(), @"Blit");
 
     if (bOpenedEncoder)
@@ -1489,11 +1507,13 @@ void FMetalCommandContext::EnsureTimestampEncoder()
     
         ComputeEncoder = [CommandBuffer computeCommandEncoder];
         [ComputeEncoder retain];
+
         ApplyEncoderLabel(ComputeEncoder, @"Compute");
-    
         WaitForPendingEncoderFenceOnCompute();
         ContextState.BeginComputeEncoder();
+
         STAT_ADD(STAT_Metal_EncoderCount, 1);
+        STAT_ADD(STAT_Metal_EncodersOpen, 1);
         return;
     }
 
@@ -1512,11 +1532,13 @@ void FMetalCommandContext::EnsureTimestampEncoder()
 
         ComputeEncoder = [CommandBuffer computeCommandEncoder];
         [ComputeEncoder retain];
-        ApplyEncoderLabel(ComputeEncoder, @"Compute");
 
+        ApplyEncoderLabel(ComputeEncoder, @"Compute");
         WaitForPendingEncoderFenceOnCompute();
         ContextState.BeginComputeEncoder();
+
         STAT_ADD(STAT_Metal_EncoderCount, 1);
+        STAT_ADD(STAT_Metal_EncodersOpen, 1);
         return;
     }
 
@@ -1543,7 +1565,9 @@ void FMetalCommandContext::EnsureTimestampEncoder()
 
         WaitForPendingEncoderFenceOnGraphics();
         ContextState.BeginRenderEncoder();
+
         STAT_ADD(STAT_Metal_EncoderCount, 1);
+        STAT_ADD(STAT_Metal_EncodersOpen, 1);
         return;
     }
 
@@ -1563,6 +1587,7 @@ bool FMetalCommandContext::SampleTimestamp(FMetalQueryRHI& Query)
 
     const NSUInteger SampleIndex = Query.SampleIndex;
     BOOL             bBarrier    = Timestamps.UseSampleBarrier() ? YES : NO;
+
     if (!bBarrier && !GraphicsEncoder)
     {
         bBarrier = YES;
@@ -1642,6 +1667,7 @@ void FMetalCommandContext::FinishDirectEncoders()
         [GraphicsEncoder updateFence:EncoderFence afterStages:GraphicsFenceStages];
         [GraphicsEncoder endEncoding];
         [GraphicsEncoder release];
+        STAT_SUBTRACT(STAT_Metal_EncodersOpen, 1);
 
         GraphicsEncoder = nil;
         bEndedEncoder = true;
@@ -1654,6 +1680,7 @@ void FMetalCommandContext::FinishDirectEncoders()
         [ComputeEncoder updateFence:EncoderFence];
         [ComputeEncoder endEncoding];
         [ComputeEncoder release];
+        STAT_SUBTRACT(STAT_Metal_EncodersOpen, 1);
 
         ComputeEncoder = nil;
         bEndedEncoder = true;
@@ -2795,7 +2822,10 @@ void FMetalCommandContext::BeginParallelRenderPass(const FRHIBeginRenderPassDesc
     MTLRenderPassDescriptor* RenderPassDescriptor = CreateRenderPassDescriptor(BeginRenderPassDesc);
     ParallelEncoder = [[CommandBuffer parallelRenderCommandEncoderWithDescriptor:RenderPassDescriptor] retain];
     ApplyEncoderLabel(static_cast<id<MTLCommandEncoder>>(ParallelEncoder), @"ParallelRender");
+
     STAT_ADD(STAT_Metal_EncoderCount, 1);
+    STAT_ADD(STAT_Metal_EncodersOpen, 1);
+
     [RenderPassDescriptor release];
 }
 
@@ -2823,6 +2853,7 @@ void FMetalCommandContext::EndParallelRenderPass()
     [ParallelEncoder endEncoding];
     [ParallelEncoder release];
     ParallelEncoder = nil;
+    STAT_SUBTRACT(STAT_Metal_EncodersOpen, 1);
     bDirectHasEncodedWork = true;
 }
 
@@ -2832,12 +2863,17 @@ void FMetalCommandContext::AttachParallelChild(FMetalCommandContext& Parent)
     CHECK(Parent.ParallelEncoder != nil);
 
     AcquireOwnership();
-    bIsRecording     = true;
-    bParallelChild   = true;
-    ParallelParent   = &Parent;
-    Commands         = Parent.Commands;
-    CommandBuffer    = Parent.CommandBuffer;
-    GraphicsEncoder  = [[Parent.ParallelEncoder renderCommandEncoder] retain];
+
+    RecordingPool   = [NSAutoreleasePool new];
+    bIsRecording    = true;
+    bParallelChild  = true;
+    ParallelParent  = &Parent;
+    Commands        = Parent.Commands;
+    CommandBuffer   = Parent.CommandBuffer;
+    GraphicsEncoder = [[Parent.ParallelEncoder renderCommandEncoder] retain];
+
+    STAT_ADD(STAT_Metal_EncodersOpen, 1);
+
     ApplyEncoderLabel(GraphicsEncoder, @"Render");
     ContextState.BeginCommandBuffer();
 }
@@ -2851,6 +2887,8 @@ void FMetalCommandContext::DetachParallelChild()
         [GraphicsEncoder endEncoding];
         [GraphicsEncoder release];
         GraphicsEncoder = nil;
+
+        STAT_SUBTRACT(STAT_Metal_EncodersOpen, 1);
     }
 
     ContextState.EndCommandBuffer();
@@ -2859,6 +2897,10 @@ void FMetalCommandContext::DetachParallelChild()
     ParallelParent   = nullptr;
     bParallelChild   = false;
     bIsRecording     = false;
+
+    [RecordingPool release];
+    RecordingPool = nil;
+
     ReleaseOwnership();
 }
 
