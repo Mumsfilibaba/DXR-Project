@@ -72,6 +72,8 @@ FGraphCanvas::~FGraphCanvas() = default;
 
 void FGraphCanvas::Initialize(const FDesc& Desc)
 {
+    SetDrawCachePolicy(EDrawCachePolicy::Never);
+
     Font                       = Desc.Font;
     NodeStyle                  = Desc.NodeStyle;
     BackgroundColor            = Desc.BackgroundColor;
@@ -157,7 +159,7 @@ int32 FGraphCanvas::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
         }
 
         const FDrawGeometry ChildGeometry(ElementBounds, AllottedGeometry.Scale);
-        MaxLayerId = Element->OnDraw(ChildGeometry, OutCommandList, MaxLayerId + 1);
+        MaxLayerId = Element->Draw(ChildGeometry, OutCommandList, MaxLayerId + 1);
     }
 
     if (DragMode == EGraphDragMode::Marquee && !MarqueeBounds.IsEmpty())

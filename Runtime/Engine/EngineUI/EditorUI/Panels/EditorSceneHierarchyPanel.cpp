@@ -412,7 +412,7 @@ int32 FEditorSceneHierarchyView::OnDraw(const FDrawGeometry& AllottedGeometry, F
     if (TreeView)
     {
         const FDrawGeometry TreeGeometry(TreeView->GetContentRectangle(), AllottedGeometry.Scale);
-        MaxLayerId = TreeView->OnDraw(TreeGeometry, OutCommandList, LayerId + 1);
+        MaxLayerId = TreeView->Draw(TreeGeometry, OutCommandList, LayerId + 1);
     }
 
     MaxLayerId += 1;
@@ -451,7 +451,7 @@ int32 FEditorSceneHierarchyView::OnDraw(const FDrawGeometry& AllottedGeometry, F
             OutCommandList.AddBoxOutline(MaxLayerId, FieldBounds, Style.Colors.Accent, Style.Metrics.BorderThickness, Radii);
 
             const FDrawGeometry FieldGeometry(FieldBounds, AllottedGeometry.Scale);
-            MaxLayerId = RenameField->OnDraw(FieldGeometry, OutCommandList, MaxLayerId + 1);
+            MaxLayerId = RenameField->Draw(FieldGeometry, OutCommandList, MaxLayerId + 1);
         }
     }
 

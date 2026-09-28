@@ -5,10 +5,29 @@
 #include "Core/Containers/StringView.h"
 #include "Application/Draw/DrawTypes.h"
 
+struct FDrawCacheBlock;
+
 class APPLICATION_API FDrawCommandList
 {
 public:
+    struct FDrawCacheMarker
+    {
+        int32 CommandBase;
+        int32 PointBase;
+        int32 TextBase;
+        int32 BrushBase;
+        int32 ClipBase;
+        int32 ClipDepth;
+        int32 BlockCounter;
+    };
+
     static constexpr int32 InvalidIndex = -1;
+
+    /**
+     * @brief The clip id a captured command carries when it was clipped by something outside its own block,
+     * which replay rewrites to whatever clip is open at that point.
+     */
+    static constexpr uint16 InheritedClipId = 0xFFFF;
 
     /** @brief The fewest segments a circle or an arc is tessellated into. */
     static constexpr int32 MinCircleSegments = 6;
@@ -269,8 +288,14 @@ public:
      * @param TrailAlpha   What the stroke keeps of that color once the fade is done, as a share of it, which
      * is what runs round the sides and the bottom. Zero leaves the top rule on its own.
      */
-    void AddRoundedAccentRing(int32 LayerId, const FRectangle& Bounds, const FCornerRadii& CornerRadius, float Thickness,
-        const FFloatColor& Tint, float FadeFraction, float TrailAlpha);
+    void AddRoundedAccentRing(
+        int32               LayerId, 
+        const FRectangle&   Bounds, 
+        const FCornerRadii& CornerRadius, 
+        float               Thickness,
+        const FFloatColor&  Tint, 
+        float               FadeFraction, 
+        float               TrailAlpha);
 
     /**
      * @brief Opens a clip region, intersected with whatever region is already open.
@@ -389,7 +414,132 @@ public:
         return Commands[Index];
     }
 
+    /** @return How many clips are open, which a cached block has to find unchanged to be replayable. */
+    NODISCARD FORCEINLINE int32 GetClipDepth() const
+    {
+        return ClipStack.Size();
+    }
+
+    /**
+     * @brief Notes where the list stands, so a subtree about to record can have its range lifted out after.
+     *
+     * @return The marker to hand back to CaptureDrawCache.
+     */
+    NODISCARD FDrawCacheMarker BeginDrawCache() const;
+
+    /** @brief Closes a capture without keeping it, for a subtree that turned out not to be worth caching. */
+    void AbandonDrawCache() const;
+
+    /**
+     * @brief Makes every element record into this list rather than replay into it, without dropping what they
+     * hold, so the same tree can be recorded twice over and the two recordings compared.
+     *
+     * @param bSuppressed True to walk the tree in full.
+     */
+    FORCEINLINE void SetDrawCacheSuppressed(bool bSuppressed)
+    {
+        bDrawCacheSuppressed = bSuppressed;
+    }
+
+    /** @return True while the list refuses both replay and capture. */
+    NODISCARD FORCEINLINE bool IsDrawCacheSuppressed() const
+    {
+        return bDrawCacheSuppressed;
+    }
+
+    /**
+     * @return How many times something recording into this list has refused to be cached, which an element
+     * compares against its marker to tell a capture worth retrying next frame from one that never will be.
+     */
+    NODISCARD FORCEINLINE int32 GetDrawCacheBlockCounter() const
+    {
+        return DrawCacheBlockCounter;
+    }
+
+    /** @return True while some subtree is between BeginDrawCache and CaptureDrawCache, which suppresses nesting. */
+    NODISCARD FORCEINLINE bool IsDrawCacheOpen() const
+    {
+        return OpenDrawCacheCount > 0;
+    }
+
+    /**
+     * @brief Says that whatever is recording now cannot be replayed later, discarding every capture open
+     * around it rather than freezing the moving part into a recording.
+     */
+    void BlockDrawCache();
+
+    /**
+     * @brief Lifts the range one subtree recorded out of the list and into a block it can be replayed from,
+     * rewriting every copied offset to index the block's own pools.
+     *
+     * @param Marker           Where the list stood before the subtree recorded.
+     * @param AllottedGeometry The geometry the subtree was drawn into, which replay has to find unchanged.
+     * @param BaseLayerId      The layer the subtree was asked to draw on.
+     * @param MaxLayerId       The layer the subtree reported back.
+     * @param OutBlock         The block to fill.
+     * @return True when the range was captured, false when something about it made it unfit to replay.
+     */
+    bool CaptureDrawCache(
+        const FDrawCacheMarker& Marker,
+        const FDrawGeometry&    AllottedGeometry,
+        int32                   BaseLayerId,
+        int32                   MaxLayerId,
+        FDrawCacheBlock&        OutBlock) const;
+
+    /**
+     * @brief Appends everything a block recorded, rebasing each offset onto this list's pools.
+     *
+     * @param Block The block to replay, which has already been checked against the reuse guard.
+     * @return The highest layer the block drew on.
+     */
+    int32 AppendDrawCache(FDrawCacheBlock& Block);
+
+    /**
+     * @brief Finds the span a replayed block occupies, so tessellation can splice in its geometry instead.
+     *
+     * @param CommandIndex The first command of the span, in the order the commands were appended.
+     * @return The block that produced the span starting there, or null when no span starts there.
+     */
+    NODISCARD FDrawCacheBlock* FindReplayedSpanAt(int32 CommandIndex) const;
+
+    /** @return True when at least one block was replayed into the list. */
+    NODISCARD FORCEINLINE bool HasReplayedSpans() const
+    {
+        return !ReplayedSpans.IsEmpty();
+    }
+
+    /** @return True when every command in the list came from a replayed block. */
+    NODISCARD bool WasFullyReplayed() const;
+
+    /** @return How many of the list's commands came from replayed blocks rather than from walking the tree. */
+    NODISCARD FORCEINLINE int32 GetReplayedCommandCount() const
+    {
+        return ReplayedCommandCount;
+    }
+
+    /**
+     * @brief Finds where two recordings of the same tree stop agreeing, comparing offsets and clip ids
+     * through the pools they index rather than raw.
+     *
+     * @param Left      The recording to check, normally the one with blocks replayed into it.
+     * @param Right     The recording to check it against, normally one taken with every block released.
+     * @param OutIndex  The first command that differs, or the count of the shorter list when only the lengths do.
+     * @param OutReason What differed there.
+     * @return True when a difference was found.
+     */
+    NODISCARD static bool FindFirstDifference(
+        const FDrawCommandList& Left,
+        const FDrawCommandList& Right,
+        int32&                  OutIndex,
+        String&                 OutReason);
+
 private:
+    struct FReplayedSpan
+    {
+        FDrawCacheBlock* Block;
+        int32            CommandIndex;
+    };
+
     NODISCARD static int32 ResolveCircleSegments(float Radius, float AngleSweep, int32 RequestedSegments);
 
     FDrawCommand& EmplaceCommand(EDrawCommandType Type, int32 LayerId);
@@ -397,13 +547,19 @@ private:
     void StoreText(FDrawCommand& Command, StringView InText);
     void BuildArcPoints(const Vector2& Center, float Radius, float StartAngle, float EndAngle, int32 Segments);
 
-    TArray<FDrawCommand> Commands;
-    TArray<Vector2>      Points;
-    TArray<CHAR>         TextPool;
-    TArray<FUIBrush>     Brushes;
-    TArray<FRectangle>   ClipRects;
-    TArray<Vector2>      ScratchPoints;
-    TArray<uint16>       ClipStack;
-    FRectangle           EmptyClipRectangle;
-    int32                UnmatchedPopCount;
+    TArray<FDrawCommand>  Commands;
+    TArray<Vector2>       Points;
+    TArray<CHAR>          TextPool;
+    TArray<FUIBrush>      Brushes;
+    TArray<FRectangle>    ClipRects;
+    TArray<Vector2>       ScratchPoints;
+    TArray<uint16>        ClipStack;
+    TArray<FReplayedSpan> ReplayedSpans;
+    FRectangle            EmptyClipRectangle;
+    int32                 UnmatchedPopCount;
+    mutable int32         OpenDrawCacheCount;
+    mutable int32         DrawCacheBlockCounter;
+    mutable int32         MinClipDepthSinceDrawCache;
+    int32                 ReplayedCommandCount;
+    bool                  bDrawCacheSuppressed;
 };

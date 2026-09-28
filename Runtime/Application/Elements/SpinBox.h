@@ -197,11 +197,14 @@ protected:
     // FInteractiveElement Interface
     virtual void OnClicked() override;
     virtual void OnDragged(const FCursorEvent& CursorEvent) override;
+    virtual void OnInteractionStateChanged() override;
 
 private:
     NODISCARD float SanitizeValue(float InValue) const;
 
     void ApplyValue(float InValue);
+
+    void ApplyLabelColor();
     void UpdateLabel();
     void HandleTextCommitted(const String& InText);
 

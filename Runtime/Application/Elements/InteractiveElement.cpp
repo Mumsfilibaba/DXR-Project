@@ -166,6 +166,7 @@ void FInteractiveElement::OnClicked()
 
 void FInteractiveElement::OnInteractionStateChanged()
 {
+    InvalidatePaint();
 }
 
 bool FInteractiveElement::AcceptsPressFromKey(FKey Key) const

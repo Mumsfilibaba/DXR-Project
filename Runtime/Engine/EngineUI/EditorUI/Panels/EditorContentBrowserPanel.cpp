@@ -413,7 +413,7 @@ int32 FEditorContentBrowserView::OnDraw(const FDrawGeometry& AllottedGeometry, F
     if (View)
     {
         const FDrawGeometry ViewGeometry(View->GetContentRectangle(), AllottedGeometry.Scale);
-        MaxLayerId = View->OnDraw(ViewGeometry, OutCommandList, LayerId + 1);
+        MaxLayerId = View->Draw(ViewGeometry, OutCommandList, LayerId + 1);
     }
 
     MaxLayerId += 1;
@@ -444,7 +444,7 @@ int32 FEditorContentBrowserView::OnDraw(const FDrawGeometry& AllottedGeometry, F
             OutCommandList.AddBoxOutline(MaxLayerId, FieldBounds, Style.Colors.Accent, Style.Metrics.BorderThickness, Radii);
 
             const FDrawGeometry FieldGeometry(FieldBounds, AllottedGeometry.Scale);
-            MaxLayerId = RenameField->OnDraw(FieldGeometry, OutCommandList, MaxLayerId + 1);
+            MaxLayerId = RenameField->Draw(FieldGeometry, OutCommandList, MaxLayerId + 1);
         }
     }
 

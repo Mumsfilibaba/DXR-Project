@@ -68,6 +68,8 @@ struct FUITextGlyphInstance
     uint32  Color;
 };
 
+struct FDrawCacheBlock;
+
 struct FUITextureHandle
 {
     FUITextureHandle()
@@ -223,6 +225,21 @@ public:
 
     NODISCARD uint64 ComputeGeometryHash() const;
 
+    /**
+     * @return True when the whole build was spliced from cached blocks, so nothing was tessellated afresh
+     * and the streams are the same bytes as the last frame that replayed the same blocks in the same order.
+     */
+    NODISCARD FORCEINLINE bool IsFullyReplayed() const
+    {
+        return bFullyReplayedGeometry && !Batches.IsEmpty();
+    }
+
+    /** @return What the replayed blocks were and how big they were, which stands in for hashing the streams. */
+    NODISCARD FORCEINLINE uint64 GetReplayFingerprint() const
+    {
+        return ReplayFingerprint;
+    }
+
 private:
     struct FTextGeometryCacheEntry
     {
@@ -234,6 +251,26 @@ private:
         TArray<FUITextGlyphInstance> Instances;
         bool bValid = false;
     };
+
+    struct FDrawCacheGeometryMarker
+    {
+        int32 VertexBase;
+        int32 IndexBase;
+        int32 ShapeInstanceBase;
+        int32 TextInstanceBase;
+        int32 BatchBase;
+        int32 OpenBatchIndexCount;
+    };
+
+    NODISCARD int32 ProcessDrawCacheSpan(int32 SortedIndex, const FDrawCommandList& CommandList);
+
+    void BeginDrawCacheGeometry(FDrawCacheGeometryMarker& OutMarker) const;
+    void CaptureDrawCacheGeometry(const FDrawCacheGeometryMarker& Marker, FDrawCacheBlock& Block) const;
+    void AppendDrawCacheGeometry(const FDrawCacheBlock& Block);
+
+    NODISCARD static int32 GetStreamBase(const FDrawCacheGeometryMarker& Marker, EUIDrawBatchKind Kind);
+
+    void TessellateCommand(const FDrawCommand& Command, const FDrawCommandList& CommandList);
 
     NODISCARD static FRectangle ComputePointBounds(TArrayView<const Vector2> Points, float Thickness);
     NODISCARD static float ComputeWindingSign(TArrayView<const Vector2> Points);
@@ -248,7 +285,7 @@ private:
     void ApplyCommandClip(const FDrawCommand& Command, const FDrawCommandList& CommandList);
     void AddBox(const FDrawCommand& Command);
     void AddBoxOutline(const FDrawCommand& Command);
-    void AddText(const FDrawCommand& Command);
+    void AddText(const FDrawCommand& Command, int32 CacheIndex);
     void AddImage(const FDrawCommand& Command);
     void AddRoundedBottomBar(const FDrawCommand& Command);
     void AddRoundedAccentRing(const FDrawCommand& Command);
@@ -277,6 +314,8 @@ private:
     TArray<int32>                   SortScratchIndices;
     TArray<FTextGeometryCacheEntry> TextGeometryCache;
     int32                           TextCommandOrdinal;
+    uint64                          ReplayFingerprint;
+    bool                            bFullyReplayedGeometry;
     const FDrawCommandList*         SourceCommandList;
     uint16                          ActiveClipId;
     FRectangle                      ActiveClipRectangle;

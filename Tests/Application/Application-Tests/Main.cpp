@@ -23,6 +23,7 @@
 #include "OutputLogTests.h"
 #include "PanelChromeTests.h"
 #include "PropertyTableTests.h"
+#include "DrawCacheTests.h"
 #include "DrawTests.h"
 #include "StyleTests.h"
 #include "TextLayoutTests.h"
@@ -78,6 +79,17 @@ static int32 RunApplicationTests()
     RUN_TEST("UIDrawDataClipCulling", UIDrawDataClipCulling_Test());
     RUN_TEST("UIDrawDataSiblingClips", UIDrawDataSiblingClips_Test());
     RUN_TEST("UIDrawDataAntiAliasing", UIDrawDataAntiAliasing_Test());
+
+    RUN_TEST("DrawCacheEquivalence", DrawCacheEquivalence_Test());
+    RUN_TEST("DrawCacheGuards", DrawCacheGuards_Test());
+    RUN_TEST("DrawCacheNesting", DrawCacheNesting_Test());
+    RUN_TEST("DrawCacheInvalidation", DrawCacheInvalidation_Test());
+    RUN_TEST("DrawCacheAtlasRevision", DrawCacheAtlasRevision_Test());
+    RUN_TEST("DrawCacheGeometry", DrawCacheGeometry_Test());
+    RUN_TEST("DrawCacheMenuHost", DrawCacheMenuHost_Test());
+    RUN_TEST("DrawCacheWindowDeferred", DrawCacheWindowDeferred_Test());
+    RUN_TEST("DrawCacheMenuBar", DrawCacheMenuBar_Test());
+    RUN_TEST("DrawCacheToolTip", DrawCacheToolTip_Test());
 
     RUN_TEST("CornerRadiiTypes", CornerRadiiTypes_Test());
     RUN_TEST("VectorDrawCommands", VectorDrawCommands_Test());

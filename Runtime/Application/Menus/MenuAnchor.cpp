@@ -50,7 +50,41 @@ void FMenuAnchor::Open()
     Menu = FMenuStack::Get().PushMenu(AsSharedPtr(), AnchorBounds, Placement, ContentToShow);
     if (Menu)
     {
+        TWeakPtr<FVisualElement> WeakThis = AsWeakPtr();
+        Menu->OnDismissed = FOnMenuDismissed::CreateLambda([WeakThis]()
+        {
+            TWeakPtr<FVisualElement> WeakAnchor = WeakThis;
+            if (TSharedPtr<FVisualElement> Anchor = WeakAnchor.ToSharedPtr())
+            {
+                static_cast<FMenuAnchor*>(Anchor.Get())->NotifyMenuDismissed();
+            }
+        });
+
+        InvalidateOpenChrome();
         OnOpenChangedDelegate.ExecuteIfBound(true);
+    }
+}
+
+void FMenuAnchor::NotifyMenuDismissed()
+{
+    if (!Menu)
+    {
+        return;
+    }
+
+    Menu = nullptr;
+
+    InvalidateOpenChrome();
+    OnOpenChangedDelegate.ExecuteIfBound(false);
+}
+
+void FMenuAnchor::InvalidateOpenChrome()
+{
+    InvalidatePaint();
+
+    if (const TSharedPtr<FVisualElement>& AnchorContent = GetContent())
+    {
+        AnchorContent->InvalidatePaint();
     }
 }
 
@@ -64,8 +98,13 @@ void FMenuAnchor::Close()
     FMenuStack& Stack = FMenuStack::Get();
     Stack.DismissToDepth(Stack.GetMenuDepth(Menu) - 1);
 
-    Menu = nullptr;
-    OnOpenChangedDelegate.ExecuteIfBound(false);
+    if (Menu)
+    {
+        Menu = nullptr;
+
+        InvalidateOpenChrome();
+        OnOpenChangedDelegate.ExecuteIfBound(false);
+    }
 }
 
 void FMenuAnchor::Toggle()
@@ -112,6 +151,8 @@ void FMenuAnchor::SyncOpenState() const
     if (Menu && !FMenuStack::Get().IsMenuOpen(Menu))
     {
         Menu = nullptr;
+
+        const_cast<FMenuAnchor*>(this)->InvalidateOpenChrome();
         OnOpenChangedDelegate.ExecuteIfBound(false);
     }
 }

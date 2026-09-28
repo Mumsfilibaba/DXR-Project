@@ -85,12 +85,25 @@ int32 FScrollBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
 
 void FScrollBar::SetOpacity(float InOpacity)
 {
-    Opacity = Math::Clamp(InOpacity, 0.0f, 1.0f);
+    const float ClampedOpacity = Math::Clamp(InOpacity, 0.0f, 1.0f);
+    if (Opacity == ClampedOpacity)
+    {
+        return;
+    }
+
+    Opacity = ClampedOpacity;
+    InvalidatePaint();
 }
 
 void FScrollBar::SetRevealed(bool bInIsRevealed)
 {
+    if (bIsRevealed == bInIsRevealed)
+    {
+        return;
+    }
+
     bIsRevealed = bInIsRevealed;
+    InvalidatePaint();
 }
 
 void FScrollBar::AdvanceFade()
@@ -110,14 +123,15 @@ void FScrollBar::AdvanceFade()
 
     if (Duration <= 0.0f)
     {
-        Opacity = Target;
+        SetOpacity(Target);
         return;
     }
 
     const float Step = static_cast<float>(Elapsed) / Duration;
-    Opacity = Target > Opacity
+
+    SetOpacity(Target > Opacity
         ? Math::Min(Opacity + Step, Target)
-        : Math::Max(Opacity - Step, Target);
+        : Math::Max(Opacity - Step, Target));
 }
 
 FFloatColor FScrollBar::ApplyOpacity(const FFloatColor& Color) const
@@ -156,14 +170,32 @@ FEventResponse FScrollBar::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 
 void FScrollBar::SetScrollState(int32 InContentLength, int32 InViewLength, int32 InOffset)
 {
-    ContentLength = Math::Max(InContentLength, 0);
-    ViewLength    = Math::Max(InViewLength, 0);
+    const int32 NewContentLength = Math::Max(InContentLength, 0);
+    const int32 NewViewLength    = Math::Max(InViewLength, 0);
+
+    if (ContentLength == NewContentLength && ViewLength == NewViewLength)
+    {
+        SetOffset(InOffset);
+        return;
+    }
+
+    ContentLength = NewContentLength;
+    ViewLength    = NewViewLength;
     Offset        = Math::Clamp(InOffset, 0, GetMaxOffset());
+
+    InvalidatePaint();
 }
 
 void FScrollBar::SetOffset(int32 InOffset)
 {
-    Offset = Math::Clamp(InOffset, 0, GetMaxOffset());
+    const int32 NewOffset = Math::Clamp(InOffset, 0, GetMaxOffset());
+    if (Offset == NewOffset)
+    {
+        return;
+    }
+
+    Offset = NewOffset;
+    InvalidatePaint();
 }
 
 int32 FScrollBar::GetMaxOffset() const
@@ -242,6 +274,8 @@ void FScrollBar::ApplyOffset(int32 InOffset)
     }
 
     Offset = NewOffset;
+    InvalidatePaint();
+
     OnOffsetChangedDelegate.ExecuteIfBound(Offset);
 }
 

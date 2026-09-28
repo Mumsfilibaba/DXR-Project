@@ -1,4 +1,6 @@
 #include "Application/Draw/DrawCommandList.h"
+#include "Application/Draw/DrawCache.h"
+#include "Application/Text/FontAtlas.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 
@@ -10,6 +12,31 @@ static FORCEINLINE void ReserveAtLeast(TArray<Vector2>& Array, int32 RequiredCap
     }
 }
 
+template<typename ElementType>
+static FORCEINLINE void CopyPoolSlice(const TArray<ElementType>& Source, int32 Base, TArray<ElementType>& Destination)
+{
+    const int32 Count = Source.Size() - Base;
+    Destination.ResizeUninitialized(Math::Max(Count, 0));
+
+    if (Count > 0)
+    {
+        Memory::Memcpy(Destination.Data(), Source.Data() + Base, Count * static_cast<int32>(sizeof(ElementType)));
+    }
+}
+
+template<typename ElementType>
+static FORCEINLINE void AppendPoolSlice(const TArray<ElementType>& Source, TArray<ElementType>& Destination)
+{
+    if (Source.IsEmpty())
+    {
+        return;
+    }
+
+    const int32 Base = Destination.Size();
+    Destination.ResizeUninitialized(Base + Source.Size());
+    Memory::Memcpy(Destination.Data() + Base, Source.Data(), Source.Size() * static_cast<int32>(sizeof(ElementType)));
+}
+
 FDrawCommandList::FDrawCommandList()
     : Commands()
     , Points()
@@ -18,8 +45,14 @@ FDrawCommandList::FDrawCommandList()
     , ClipRects()
     , ScratchPoints()
     , ClipStack()
+    , ReplayedSpans()
     , EmptyClipRectangle()
     , UnmatchedPopCount(0)
+    , OpenDrawCacheCount(0)
+    , DrawCacheBlockCounter(0)
+    , MinClipDepthSinceDrawCache(0)
+    , ReplayedCommandCount(0)
+    , bDrawCacheSuppressed(false)
 {
 }
 
@@ -323,6 +356,7 @@ void FDrawCommandList::PopClip(int32 /*LayerId*/)
     else
     {
         ClipStack.RemoveAt(ClipStack.LastIndex());
+        MinClipDepthSinceDrawCache = Math::Min(MinClipDepthSinceDrawCache, ClipStack.Size());
     }
 }
 
@@ -335,7 +369,407 @@ void FDrawCommandList::Reset()
     ClipRects.Clear();
     ScratchPoints.Clear();
     ClipStack.Clear();
-    UnmatchedPopCount = 0;
+    ReplayedSpans.Clear();
+
+    UnmatchedPopCount          = 0;
+    OpenDrawCacheCount         = 0;
+    DrawCacheBlockCounter      = 0;
+    MinClipDepthSinceDrawCache = 0;
+    ReplayedCommandCount       = 0;
+}
+
+FDrawCommandList::FDrawCacheMarker FDrawCommandList::BeginDrawCache() const
+{
+    FDrawCacheMarker Marker;
+    Marker.CommandBase  = Commands.Size();
+    Marker.PointBase    = Points.Size();
+    Marker.TextBase     = TextPool.Size();
+    Marker.BrushBase    = Brushes.Size();
+    Marker.ClipBase     = ClipRects.Size();
+    Marker.ClipDepth    = ClipStack.Size();
+    Marker.BlockCounter = DrawCacheBlockCounter;
+
+    if (OpenDrawCacheCount == 0)
+    {
+        MinClipDepthSinceDrawCache = ClipStack.Size();
+    }
+
+    ++OpenDrawCacheCount;
+    return Marker;
+}
+
+void FDrawCommandList::AbandonDrawCache() const
+{
+    CHECK(OpenDrawCacheCount > 0);
+    --OpenDrawCacheCount;
+}
+
+void FDrawCommandList::BlockDrawCache()
+{
+    ++DrawCacheBlockCounter;
+}
+
+bool FDrawCommandList::CaptureDrawCache(
+    const FDrawCacheMarker& Marker,
+    const FDrawGeometry& AllottedGeometry,
+    int32                BaseLayerId,
+    int32                MaxLayerId,
+    FDrawCacheBlock& OutBlock) const
+{
+    CHECK(OpenDrawCacheCount > 0);
+    --OpenDrawCacheCount;
+
+    if (DrawCacheBlockCounter != Marker.BlockCounter)
+    {
+        return false;
+    }
+
+    if (ClipStack.Size() != Marker.ClipDepth || MinClipDepthSinceDrawCache < Marker.ClipDepth)
+    {
+        return false;
+    }
+
+    const int32 CommandCount = Commands.Size() - Marker.CommandBase;
+    if (CommandCount <= 0)
+    {
+        return false;
+    }
+
+    const int64 PreviousByteSize = OutBlock.GetByteSize();
+
+    OutBlock.Commands.ResizeUninitialized(CommandCount);
+    Memory::Memcpy(OutBlock.Commands.Data(), Commands.Data() + Marker.CommandBase,
+        CommandCount * static_cast<int32>(sizeof(FDrawCommand)));
+
+    CopyPoolSlice(Points, Marker.PointBase, OutBlock.Points);
+    CopyPoolSlice(TextPool, Marker.TextBase, OutBlock.TextPool);
+    CopyPoolSlice(Brushes, Marker.BrushBase, OutBlock.Brushes);
+    CopyPoolSlice(ClipRects, Marker.ClipBase, OutBlock.ClipRects);
+
+    int32 TextCommandCount = 0;
+
+    for (FDrawCommand& Command : OutBlock.Commands)
+    {
+        switch (Command.Type)
+        {
+            case EDrawCommandType::Polyline:
+            case EDrawCommandType::ConvexPolygon:
+            {
+                Command.PayloadOffset -= Marker.PointBase;
+                break;
+            }
+
+            case EDrawCommandType::Text:
+            {
+                Command.PayloadOffset -= Marker.TextBase;
+                ++TextCommandCount;
+                break;
+            }
+
+            case EDrawCommandType::Image:
+            {
+                Command.PayloadOffset -= Marker.BrushBase;
+                break;
+            }
+
+            default:
+            {
+                break;
+            }
+        }
+
+        if (Command.PayloadOffset < 0)
+        {
+            OutBlock.Reset();
+            return false;
+        }
+
+        if (Command.IsClipped())
+        {
+            const int32 ClipIndex = static_cast<int32>(Command.ClipId) - 1;
+            Command.ClipId = (ClipIndex >= Marker.ClipBase)
+                ? static_cast<uint16>(ClipIndex - Marker.ClipBase + 1)
+                : InheritedClipId;
+        }
+    }
+
+    OutBlock.CapturedRectangle     = AllottedGeometry.Bounds;
+    OutBlock.CapturedScale         = AllottedGeometry.Scale;
+    OutBlock.CapturedClipRectangle = GetCurrentClipRectangle();
+    OutBlock.CapturedEpoch         = DrawCacheEpoch::Get();
+    OutBlock.BaseLayerId           = BaseLayerId;
+    OutBlock.MaxLayerId            = MaxLayerId;
+    OutBlock.CapturedClipDepth     = Marker.ClipDepth;
+    OutBlock.TextCommandCount      = TextCommandCount;
+    OutBlock.LastUsedFrame         = DrawCacheRegistry::GetCurrentFrame();
+    OutBlock.bValid                = true;
+    OutBlock.bGeometryValid        = false;
+    OutBlock.bHasCapturedClip      = Marker.ClipDepth > 0;
+
+    OutBlock.AtlasDependencies.Clear();
+    for (const FDrawCommand& Command : OutBlock.Commands)
+    {
+        if (Command.Type != EDrawCommandType::Text || !Command.Font)
+        {
+            continue;
+        }
+
+        const FFontAtlas* Atlas = Command.Font->GetAtlas();
+        if (!Atlas)
+        {
+            continue;
+        }
+
+        bool bAlreadyTracked = false;
+        for (const FDrawCacheAtlasDependency& Dependency : OutBlock.AtlasDependencies)
+        {
+            if (Dependency.Atlas == Atlas)
+            {
+                bAlreadyTracked = true;
+                break;
+            }
+        }
+
+        if (!bAlreadyTracked)
+        {
+            OutBlock.AtlasDependencies.Emplace(Atlas, Atlas->GetRevision());
+        }
+    }
+
+    DrawCacheRegistry::NotifySizeChanged(OutBlock.GetByteSize() - PreviousByteSize);
+    return true;
+}
+
+int32 FDrawCommandList::AppendDrawCache(FDrawCacheBlock& Block)
+{
+    CHECK(Block.bValid);
+
+    const int32 CommandBase = Commands.Size();
+    const int32 PointBase   = Points.Size();
+    const int32 TextBase    = TextPool.Size();
+    const int32 BrushBase   = Brushes.Size();
+    const int32 ClipBase    = ClipRects.Size();
+
+    AppendPoolSlice(Block.Points, Points);
+    AppendPoolSlice(Block.TextPool, TextPool);
+    AppendPoolSlice(Block.Brushes, Brushes);
+    AppendPoolSlice(Block.ClipRects, ClipRects);
+
+    const uint16 InheritedId = ClipStack.IsEmpty() ? 0 : ClipStack.Last();
+
+    Commands.ResizeUninitialized(CommandBase + Block.Commands.Size());
+    FDrawCommand* Output = Commands.Data() + CommandBase;
+    Memory::Memcpy(Output, Block.Commands.Data(), Block.Commands.Size() * static_cast<int32>(sizeof(FDrawCommand)));
+
+    for (int32 Index = 0; Index < Block.Commands.Size(); ++Index)
+    {
+        FDrawCommand& Command = Output[Index];
+
+        switch (Command.Type)
+        {
+            case EDrawCommandType::Polyline:
+            case EDrawCommandType::ConvexPolygon:
+            {
+                Command.PayloadOffset += PointBase;
+                break;
+            }
+
+            case EDrawCommandType::Text:
+            {
+                Command.PayloadOffset += TextBase;
+                break;
+            }
+
+            case EDrawCommandType::Image:
+            {
+                Command.PayloadOffset += BrushBase;
+                break;
+            }
+
+            default:
+            {
+                break;
+            }
+        }
+
+        if (Command.IsClipped())
+        {
+            Command.ClipId = (Command.ClipId == InheritedClipId)
+                ? InheritedId
+                : static_cast<uint16>(Command.ClipId + ClipBase);
+        }
+    }
+
+    FReplayedSpan& Span = ReplayedSpans.Emplace();
+    Span.Block        = &Block;
+    Span.CommandIndex = CommandBase;
+
+    ReplayedCommandCount += Block.Commands.Size();
+    return Block.MaxLayerId;
+}
+
+FDrawCacheBlock* FDrawCommandList::FindReplayedSpanAt(int32 CommandIndex) const
+{
+    int32 Low  = 0;
+    int32 High = ReplayedSpans.Size() - 1;
+
+    while (Low <= High)
+    {
+        const int32 Middle = Low + ((High - Low) / 2);
+        const int32 Probe  = ReplayedSpans[Middle].CommandIndex;
+
+        if (Probe == CommandIndex)
+        {
+            return ReplayedSpans[Middle].Block;
+        }
+
+        if (Probe < CommandIndex)
+        {
+            Low = Middle + 1;
+        }
+        else
+        {
+            High = Middle - 1;
+        }
+    }
+
+    return nullptr;
+}
+
+bool FDrawCommandList::WasFullyReplayed() const
+{
+    return !Commands.IsEmpty() && ReplayedCommandCount == Commands.Size();
+}
+
+bool FDrawCommandList::FindFirstDifference(
+    const FDrawCommandList& Left,
+    const FDrawCommandList& Right,
+    int32&                  OutIndex,
+    String&                 OutReason)
+{
+    const int32 SharedCount = Math::Min(Left.Commands.Size(), Right.Commands.Size());
+
+    for (int32 Index = 0; Index < SharedCount; ++Index)
+    {
+        const FDrawCommand& LeftCommand  = Left.Commands[Index];
+        const FDrawCommand& RightCommand = Right.Commands[Index];
+
+        OutIndex = Index;
+
+        if (LeftCommand.Type != RightCommand.Type)
+        {
+            OutReason = "command type";
+            return true;
+        }
+
+        if (LeftCommand.Flags != RightCommand.Flags || LeftCommand.LayerId != RightCommand.LayerId)
+        {
+            OutReason = "flags or layer";
+            return true;
+        }
+
+        if (LeftCommand.Bounds != RightCommand.Bounds)
+        {
+            OutReason = "bounds";
+            return true;
+        }
+
+        if (LeftCommand.PackedColor != RightCommand.PackedColor)
+        {
+            OutReason = "colour";
+            return true;
+        }
+
+        if (LeftCommand.CornerRadius != RightCommand.CornerRadius
+            || LeftCommand.Thickness != RightCommand.Thickness
+            || LeftCommand.FadeWidth != RightCommand.FadeWidth
+            || LeftCommand.FadeFraction != RightCommand.FadeFraction
+            || LeftCommand.TrailAlpha != RightCommand.TrailAlpha)
+        {
+            OutReason = "shape parameters";
+            return true;
+        }
+
+        if (LeftCommand.Font != RightCommand.Font || LeftCommand.PayloadCount != RightCommand.PayloadCount)
+        {
+            OutReason = "font or payload size";
+            return true;
+        }
+
+        if (LeftCommand.IsClipped() && Left.GetCommandClipRectangle(LeftCommand) != Right.GetCommandClipRectangle(RightCommand))
+        {
+            OutReason = "clip rectangle";
+            return true;
+        }
+
+        switch (LeftCommand.Type)
+        {
+            case EDrawCommandType::Text:
+            {
+                const StringView LeftText  = Left.GetCommandText(LeftCommand);
+                const StringView RightText = Right.GetCommandText(RightCommand);
+
+                if (!LeftText.Equals(RightText))
+                {
+                    OutReason = "text";
+                    return true;
+                }
+
+                break;
+            }
+
+            case EDrawCommandType::Polyline:
+            case EDrawCommandType::ConvexPolygon:
+            {
+                const TArrayView<const Vector2> LeftPoints  = Left.GetCommandPoints(LeftCommand);
+                const TArrayView<const Vector2> RightPoints = Right.GetCommandPoints(RightCommand);
+
+                if (LeftPoints.Size() != RightPoints.Size()
+                    || (LeftPoints.Size() > 0 && Memory::Memcmp(LeftPoints.Data(), RightPoints.Data(),
+                        LeftPoints.Size() * static_cast<int32>(sizeof(Vector2))) != 0))
+                {
+                    OutReason = "points";
+                    return true;
+                }
+
+                break;
+            }
+
+            case EDrawCommandType::Image:
+            {
+                const FUIBrush* LeftBrush  = Left.GetCommandBrush(LeftCommand);
+                const FUIBrush* RightBrush = Right.GetCommandBrush(RightCommand);
+
+                if (!LeftBrush != !RightBrush)
+                {
+                    OutReason = "brush presence";
+                    return true;
+                }
+
+                if (LeftBrush && Memory::Memcmp(LeftBrush, RightBrush, sizeof(FUIBrush)) != 0)
+                {
+                    OutReason = "brush";
+                    return true;
+                }
+
+                break;
+            }
+
+            default:
+            {
+                break;
+            }
+        }
+    }
+
+    if (Left.Commands.Size() != Right.Commands.Size())
+    {
+        OutIndex  = SharedCount;
+        OutReason = "command count";
+        return true;
+    }
+
+    return false;
 }
 
 TArrayView<const Vector2> FDrawCommandList::GetCommandPoints(const FDrawCommand& Command) const

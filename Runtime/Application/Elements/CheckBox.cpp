@@ -47,6 +47,8 @@ void FCheckBox::Initialize(const FDesc& Desc)
 
         LabelText = FTextBlock::Create(LabelDesc);
         SetContent(LabelText);
+
+        ApplyLabelColor();
     }
 }
 
@@ -127,17 +129,33 @@ int32 FCheckBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         OutCommandList.AddBox(LayerId, Dash, MarkColor);
     }
 
+    return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
+}
+
+void FCheckBox::OnInteractionStateChanged()
+{
+    FInteractiveElement::OnInteractionStateChanged();
+
+    ApplyLabelColor();
+}
+
+void FCheckBox::ApplyLabelColor()
+{
     if (LabelText)
     {
-        LabelText->SetColorAndOpacity(Style.GetTextColor(State));
+        LabelText->SetColorAndOpacity(FUIStyle::GetDefault().GetTextColor(GetInteractionState()));
     }
-
-    return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
 }
 
 void FCheckBox::SetCheckState(ECheckBoxState InState)
 {
+    if (CheckState == InState)
+    {
+        return;
+    }
+
     CheckState = InState;
+    InvalidatePaint();
 }
 
 FRectangle FCheckBox::GetBoxBounds() const
@@ -147,7 +165,7 @@ FRectangle FCheckBox::GetBoxBounds() const
 
 void FCheckBox::OnClicked()
 {
-    CheckState = GetNextState();
+    SetCheckState(GetNextState());
     OnStateChangedDelegate.ExecuteIfBound(CheckState);
 }
 

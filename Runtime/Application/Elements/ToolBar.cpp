@@ -156,7 +156,13 @@ void FToolBarButton::SetOwner(FToolBar* InOwnerBar, FMenuAnchor* InAnchor)
 
 void FToolBarButton::SetCheckState(ECheckBoxState InState)
 {
+    if (CheckState == InState)
+    {
+        return;
+    }
+
     CheckState = InState;
+    InvalidatePaint();
 }
 
 void FToolBarButton::SetLabel(const String& InLabel)
@@ -191,12 +197,19 @@ void FToolBarButton::SetOnStateChanged(const FOnCheckStateChanged& InOnStateChan
 
 void FToolBarButton::SetHighlighted(bool bInIsHighlighted)
 {
+    if (bIsHighlighted == bInIsHighlighted)
+    {
+        return;
+    }
+
     bIsHighlighted = bInIsHighlighted;
+    InvalidatePaint();
 }
 
 void FToolBarButton::SetCornerRadius(const FCornerRadii& InCornerRadius)
 {
     CornerRadius = InCornerRadius;
+    InvalidatePaint();
 }
 
 void FToolBarButton::SetMinWidth(int32 InMinWidth)
@@ -230,7 +243,7 @@ void FToolBarButton::OnClicked()
     {
         case EToolBarItemType::Toggle:
         {
-            CheckState = IsChecked() ? ECheckBoxState::Unchecked : ECheckBoxState::Checked;
+            SetCheckState(IsChecked() ? ECheckBoxState::Unchecked : ECheckBoxState::Checked);
             OnStateChangedDelegate.ExecuteIfBound(CheckState);
             break;
         }

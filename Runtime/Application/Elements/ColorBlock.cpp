@@ -49,6 +49,7 @@ int32 FColorBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLis
 void FColorBlock::SetColor(const FFloatColor& InColor)
 {
     Color = InColor;
+    InvalidatePaint();
 }
 
 void FColorBlock::OnClicked()

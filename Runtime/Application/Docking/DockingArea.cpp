@@ -6,6 +6,7 @@
 #include "Application/Docking/Splitter.h"
 #include "Application/Docking/TabStrip.h"
 #include "Application/Draw/DrawCommandList.h"
+#include "Application/Draw/DrawCache.h"
 #include "Application/Elements/Border.h"
 #include "Application/Elements/Box.h"
 #include "Application/Style/UIStyle.h"
@@ -74,6 +75,8 @@ void FDockingArea::Initialize(const FDesc& Desc)
     bIsDropTarget          = Desc.bIsDropTarget;
     OnPanelTornOutDelegate = Desc.OnPanelTornOut;
     OnPanelClosedDelegate  = Desc.OnPanelClosed;
+
+    DrawCacheEpoch::Advance();
 
     if (bIsDropTarget)
     {

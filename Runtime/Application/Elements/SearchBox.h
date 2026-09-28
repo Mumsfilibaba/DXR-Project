@@ -116,6 +116,8 @@ private:
     NODISCARD FRectangle GetEditorRectangle(const FRectangle& Bounds) const;
     NODISCARD FRectangle GetIconRectangle(const FRectangle& Bounds) const;
 
+    void SetHoverState(bool bInIsHovered, bool bInIsClearHovered);
+
     TSharedPtr<class FEditableText> Editor;
     FUIBrush                       SearchIcon;
     FUIBrush                       ClearIcon;

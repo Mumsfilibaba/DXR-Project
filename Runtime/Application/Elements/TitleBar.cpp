@@ -86,6 +86,12 @@ float FCaptionButton::GetHoverFillAlpha() const
     }
 
     const float Progress = Math::Clamp(static_cast<float>(GetSecondsSinceHoverFadeStart()) / CAPTION_HOVER_FADE_SECONDS, 0.0f, 1.0f);
+
+    if (Progress < 1.0f)
+    {
+        RequestContinuousPaint();
+    }
+
     return Math::Lerp(HoverFadeStartAlpha, Target, Progress);
 }
 
@@ -377,6 +383,8 @@ void FTitleBar::SetLeadingContent(const TSharedPtr<FVisualElement>& InContent)
     {
         Panel->GetSlot(LeadingHostSlotIndex).SetFillCoefficient(InContent ? 1.0f : 0.0f);
         Panel->GetSlot(FlexibleSpacerSlotIndex).SetFillCoefficient(InContent ? 0.0f : 1.0f);
+
+        Panel->InvalidateDesiredSize();
     }
 
     if (TitleLabel)

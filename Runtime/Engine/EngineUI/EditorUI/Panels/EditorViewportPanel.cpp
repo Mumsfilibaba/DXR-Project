@@ -242,7 +242,7 @@ int32 FViewportTransportLayer::OnDraw(const FDrawGeometry& AllottedGeometry, FDr
     }
 
     const FDrawGeometry TransportGeometry(Transport->GetContentRectangle(), AllottedGeometry.Scale);
-    return Transport->OnDraw(TransportGeometry, OutCommandList, LayerId);
+    return Transport->Draw(TransportGeometry, OutCommandList, LayerId);
 }
 
 void FViewportTransportLayer::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)

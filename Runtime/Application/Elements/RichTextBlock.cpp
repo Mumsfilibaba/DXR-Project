@@ -68,8 +68,6 @@ int32 FRichTextBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
     const FUIStyle&  Style      = FUIStyle::GetDefault();
     const FRectangle TextBounds = GetTextBounds();
 
-    RefreshLayout(TextBounds.Width);
-
     const FMargin&     HighlightPadding = Style.Metrics.TextHighlightPadding;
     const FCornerRadii HighlightRadii(Style.Metrics.TextHighlightCornerRadius);
 
@@ -116,6 +114,7 @@ FEventResponse FRichTextBlock::OnMouseButtonDown(const FCursorEvent& CursorEvent
     const int32 CharacterIndex = FindCharacterIndexAt(CursorEvent.GetClientPosition());
     SelectionAnchor = CharacterIndex;
     SelectionCursor = CharacterIndex;
+    InvalidatePaint();
 
     OnSelectionChangedDelegate.ExecuteIfBound(String());
     return Response;
@@ -207,6 +206,8 @@ void FRichTextBlock::SetSearchText(const String& InSearchText)
 
     SearchText = InSearchText;
     RefreshSearchMatches();
+
+    InvalidatePaint();
 }
 
 void FRichTextBlock::SetSearchCaseType(EStringCaseType InCaseType)
@@ -218,6 +219,7 @@ void FRichTextBlock::SetSearchCaseType(EStringCaseType InCaseType)
 
     SearchCaseType = InCaseType;
     RefreshSearchMatches();
+    InvalidatePaint();
 }
 
 bool FRichTextBlock::HasSelection() const
@@ -260,6 +262,7 @@ void FRichTextBlock::ClearSelection()
 
     SelectionAnchor = 0;
     SelectionCursor = 0;
+    InvalidatePaint();
 
     OnSelectionChangedDelegate.ExecuteIfBound(String());
 }
@@ -268,8 +271,17 @@ void FRichTextBlock::SetSelection(int32 StartIndex, int32 EndIndex)
 {
     const int32 CharacterCount = Layout.GetCharacterCount();
 
-    SelectionAnchor = Math::Clamp(StartIndex, 0, CharacterCount);
-    SelectionCursor = Math::Clamp(EndIndex, 0, CharacterCount);
+    const int32 NewAnchor = Math::Clamp(StartIndex, 0, CharacterCount);
+    const int32 NewCursor = Math::Clamp(EndIndex, 0, CharacterCount);
+
+    if (SelectionAnchor == NewAnchor && SelectionCursor == NewCursor)
+    {
+        return;
+    }
+
+    SelectionAnchor = NewAnchor;
+    SelectionCursor = NewCursor;
+    InvalidatePaint();
 
     OnSelectionChangedDelegate.ExecuteIfBound(GetSelectedText());
 }
@@ -332,6 +344,8 @@ void FRichTextBlock::OnDragged(const FCursorEvent& CursorEvent)
     }
 
     SelectionCursor = CharacterIndex;
+    InvalidatePaint();
+
     OnSelectionChangedDelegate.ExecuteIfBound(GetSelectedText());
 }
 

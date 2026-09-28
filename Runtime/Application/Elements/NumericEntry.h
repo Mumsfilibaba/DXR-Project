@@ -484,7 +484,7 @@ int32 TNumericEntry<T>::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComma
     {
         const FDrawGeometry EditorGeometry(Editor->GetContentRectangle(), AllottedGeometry.Scale);
         OutCommandList.PushClip(LayerId, AllottedGeometry.Bounds);
-        NextLayerId = Math::Max(NextLayerId, Editor->OnDraw(EditorGeometry, OutCommandList, LayerId));
+        NextLayerId = Math::Max(NextLayerId, Editor->Draw(EditorGeometry, OutCommandList, LayerId));
         OutCommandList.PopClip(NextLayerId);
     }
 
@@ -588,6 +588,7 @@ void TNumericEntry<T>::SetValue(T InValue)
 {
     Value = SanitizeValue(InValue);
     UpdateEditorText();
+    this->InvalidatePaint();
 }
 
 template<typename T>
@@ -656,6 +657,8 @@ void TNumericEntry<T>::ApplyValue(T InValue)
     Value = NewValue;
 
     UpdateEditorText();
+    this->InvalidatePaint();
+
     OnValueChangedDelegate.ExecuteIfBound(Value);
 }
 

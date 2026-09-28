@@ -149,6 +149,8 @@ FProfilerTimeline::~FProfilerTimeline() = default;
 
 void FProfilerTimeline::Initialize(const FDesc& Desc)
 {
+    SetDrawCachePolicy(EDrawCachePolicy::Never);
+
     Font                = Desc.Font;
     OnBarSelected       = Desc.OnBarSelected;
     OnGetBarContextMenu = Desc.OnGetBarContextMenu;
@@ -683,7 +685,7 @@ int32 FProfilerTimeline::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
     if (HorizontalScrollBar && IsHorizontalScrollBarVisible())
     {
         const FDrawGeometry ScrollGeometry(HorizontalScrollBar->GetContentRectangle(), AllottedGeometry.Scale);
-        MaxLayer = HorizontalScrollBar->OnDraw(ScrollGeometry, OutCommandList, ScrollLayer);
+        MaxLayer = HorizontalScrollBar->Draw(ScrollGeometry, OutCommandList, ScrollLayer);
     }
 
     OutCommandList.PopClip(MaxLayer);

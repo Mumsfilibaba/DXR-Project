@@ -200,7 +200,7 @@ int32 FExpander::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     OutCommandList.PushClip(LayerId + 2, PanelBounds);
 
     const FDrawGeometry ContentGeometry(Content->GetContentRectangle(), AllottedGeometry.Scale);
-    const int32         NextLayerId = Content->OnDraw(ContentGeometry, OutCommandList, LayerId + 3);
+    const int32         NextLayerId = Content->Draw(ContentGeometry, OutCommandList, LayerId + 3);
 
     OutCommandList.PopClip(NextLayerId);
     return NextLayerId;

@@ -78,7 +78,7 @@ public:
         }
 
         const FDrawGeometry ChildGeometry(Child->GetContentRectangle(), AllottedGeometry.Scale);
-        return Child->OnDraw(ChildGeometry, OutCommandList, LayerId + 1);
+        return Child->Draw(ChildGeometry, OutCommandList, LayerId + 1);
     }
 
     virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override final

@@ -160,7 +160,7 @@ int32 FSplitter::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         if (Child && Child->IsVisible())
         {
             const FDrawGeometry ChildGeometry(Child->GetContentRectangle(), AllottedGeometry.Scale);
-            NextLayerId = Child->OnDraw(ChildGeometry, OutCommandList, NextLayerId + 1);
+            NextLayerId = Child->Draw(ChildGeometry, OutCommandList, NextLayerId + 1);
         }
     }
 
@@ -242,6 +242,8 @@ FEventResponse FSplitter::OnMouseButtonDown(const FCursorEvent& CursorEvent)
     DragStartFractions     = Fractions;
     DragStartFixedLengths  = FixedLengths;
 
+    InvalidatePaint();
+
     if (FApplication::IsInitialized())
     {
         FApplication::Get().CaptureMouse(AsSharedPtr());
@@ -260,6 +262,8 @@ FEventResponse FSplitter::OnMouseButtonUp(const FCursorEvent& CursorEvent)
     ActiveHandleIndex  = -1;
     HoveredHandleIndex = GetHandleIndexAt(CursorEvent.GetClientPosition());
 
+    InvalidatePaint();
+
     if (FApplication::IsInitialized())
     {
         FApplication::Get().ReleaseMouseCapture(AsSharedPtr());
@@ -275,7 +279,13 @@ FEventResponse FSplitter::OnMouseMove(const FCursorEvent& CursorEvent)
 
     if (ActiveHandleIndex < 0)
     {
-        HoveredHandleIndex = GetHandleIndexAt(Position);
+        const int32 NewHoveredHandleIndex = GetHandleIndexAt(Position);
+        if (HoveredHandleIndex != NewHoveredHandleIndex)
+        {
+            HoveredHandleIndex = NewHoveredHandleIndex;
+            InvalidatePaint();
+        }
+
         return HoveredHandleIndex >= 0 ? FEventResponse::Handled() : FEventResponse::Unhandled();
     }
 
@@ -294,9 +304,10 @@ FEventResponse FSplitter::OnMouseLeft(const FCursorEvent& CursorEvent)
 {
     UNREFERENCED_VARIABLE(CursorEvent);
 
-    if (ActiveHandleIndex < 0)
+    if (ActiveHandleIndex < 0 && HoveredHandleIndex != -1)
     {
         HoveredHandleIndex = -1;
+        InvalidatePaint();
     }
 
     return FEventResponse::Unhandled();

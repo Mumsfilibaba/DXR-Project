@@ -47,4 +47,5 @@ int32 FImage::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& Ou
 void FImage::SetBrush(const FUIBrush& InBrush)
 {
     Brush = InBrush;
+    InvalidatePaint();
 }

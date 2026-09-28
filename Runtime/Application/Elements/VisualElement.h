@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedPtr.h"
+#include "Core/Containers/UniquePtr.h"
 #include "Application/Events.h"
 #include "Application/Layout/LayoutTypes.h"
 #include "CoreApplication/PlatformInterface/IPlatformCursor.h"
@@ -9,18 +10,22 @@ class FElementPath;
 class FDrawCommandList;
 class FScrollBox;
 struct FDrawGeometry;
+struct FDrawCacheBlock;
 
-/** @brief Enumeration for element visibility states. */
 enum class EVisibility
 {
-    None    = 0,      /** @brief No visibility flags set. */
-    Hidden  = BIT(1), /** @brief Element is hidden. */
-    Visible = BIT(2), /** @brief Element is visible. */
+    /** @brief No visibility flags set. */
+    None = 0,
+    
+    /** @brief Element is hidden. */
+    Hidden = BIT(1),
+    
+    /** @brief Element is visible. */
+    Visible = BIT(2), 
 };
 
 ENUM_CLASS_OPERATORS(EVisibility);
 
-/** @brief Policy controlling whether an element should automatically receive focus when its owning window becomes active. */
 enum class EElementActivationPolicy
 {
     /** @brief When the owning window is activated, focus the window content element. */
@@ -28,6 +33,23 @@ enum class EElementActivationPolicy
 
     /** @brief Do not automatically focus this element when the owning window is activated. */
     DoNotAutoFocusOnWindowActivate,
+};
+
+enum class EDrawCachePolicy : uint8
+{
+    /** @brief Let the heuristic decide, promoting the subtree once it is both large enough and stable. */
+    Auto,
+
+    /**
+     * @brief Never cache, for an element whose look follows something no mutation of the tree announces: a
+     * caret blinking off wall-clock time, a histogram or log view fed every frame from a live source, a
+     * viewport or gizmo that follows the scene camera, a canvas being panned under the cursor. A Never
+     * element also blocks captures by its ancestors, so the cache root settles below it.
+     */
+    Never,
+
+    /** @brief Cache as soon as the subtree is clean, whatever size the heuristic would have asked for. */
+    Always,
 };
 
 class APPLICATION_API FVisualElement : public TSharedFromThis<FVisualElement>
@@ -218,12 +240,27 @@ public:
     /**
      * @brief Appends the draw commands for this element and its children.
      *
+     * A container calls Draw on its children rather than this, so that a clean subtree can be replayed from
+     * what it recorded before.
+     *
      * @param AllottedGeometry The rectangle and scale the element was arranged into.
      * @param OutCommandList   The list to append to.
      * @param LayerId          The layer this element draws on.
      * @return The highest layer this element or any descendant drew on.
      */
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const;
+
+    /**
+     * @brief Records the element into the command list, replaying what it recorded before when nothing that
+     * would change the result has moved since, so that the commands appended and the layer returned always
+     * match what OnDraw alone would give.
+     *
+     * @param AllottedGeometry The rectangle and scale the element was arranged into.
+     * @param OutCommandList   The list to append to.
+     * @param LayerId          The layer this element draws on.
+     * @return The highest layer this element or any descendant drew on.
+     */
+    int32 Draw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const;
 
     /**
      * @brief Rounds the outline the element draws around itself, which a popup sets on its content when the
@@ -287,6 +324,52 @@ public:
     {
         return bDesiredSizeDirty;
     }
+
+    /**
+     * @brief Marks what this element and every parent above it draw as out of date, so the next Draw records
+     * them again instead of replaying what they recorded before.
+     *
+     * Anything that changes what OnDraw would append has to call this, including changes that leave the
+     * measured size alone: a hover, a selection, a scroll offset, a tint. InvalidateDesiredSize dirties
+     * paint too, since anything that resizes an element also changes what it draws.
+     */
+    void InvalidatePaint();
+
+    /**
+     * @brief Checks whether this element has to be recorded again rather than replayed.
+     *
+     * @return True when the next Draw will walk the element instead of replaying a cached recording.
+     */
+    NODISCARD bool IsPaintDirty() const
+    {
+        return bPaintDirty;
+    }
+
+    /**
+     * @brief Called from inside OnDraw by an element mid-animation, to say it has to be drawn again next
+     * frame even though nothing mutated it, which also stops the enclosing subtree from being cached.
+     */
+    void RequestContinuousPaint() const;
+
+    /**
+     * @brief Sets whether this element may keep and replay the commands its subtree records.
+     *
+     * @param InPolicy Never for an element whose look changes without the tree being told, Always to cache
+     * as soon as it is clean, Auto to leave it to the heuristic.
+     */
+    void SetDrawCachePolicy(EDrawCachePolicy InPolicy);
+
+    /** @return Whether this element may keep and replay the commands its subtree records. */
+    NODISCARD EDrawCachePolicy GetDrawCachePolicy() const
+    {
+        return DrawCachePolicy;
+    }
+
+    /** @brief Drops whatever this element has cached, so the next Draw records it again. */
+    void ReleaseDrawCache();
+
+    /** @return True while this element holds a recording it could replay. */
+    NODISCARD bool HasDrawCache() const;
 
     /**
      * @brief The size cached by the last PrepareDesiredSize call.
@@ -386,10 +469,20 @@ public:
     }
 
 private:
-    EVisibility              Visibility;
-    EElementActivationPolicy ActivationPolicy;
-    FRectangle               ContentRectangle;
-    IntVector2               CachedDesiredSize;
-    TWeakPtr<FVisualElement> ParentElement;
-    bool                     bDesiredSizeDirty;
+    NODISCARD bool ShouldUseDrawCache() const;
+    void NoteWalked(int32 CommandCount) const;
+
+    EVisibility                         Visibility;
+    EElementActivationPolicy            ActivationPolicy;
+    FRectangle                          ContentRectangle;
+    IntVector2                          CachedDesiredSize;
+    TWeakPtr<FVisualElement>            ParentElement;
+    mutable TUniquePtr<FDrawCacheBlock> DrawCacheBlock;
+    EDrawCachePolicy                    DrawCachePolicy;
+    mutable uint16                      LastRecordedCommandCount;
+    mutable bool                        bDrawCacheBlocked;
+    mutable uint8                       CleanPaintFrameCount;
+    mutable uint8                       RecentDirtyFrameCount;
+    bool                                bDesiredSizeDirty : 1;
+    mutable bool                        bPaintDirty       : 1;
 };

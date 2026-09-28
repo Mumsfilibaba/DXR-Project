@@ -62,11 +62,11 @@ void FScrollBox::OnArrange(const FRectangle& AllottedBounds)
 
     if (bIsScrollToEndPending)
     {
-        ScrollOffset          = GetMaxScrollOffset();
         bIsScrollToEndPending = false;
+        SetScrollOffset(GetMaxScrollOffset());
     }
 
-    ScrollOffset = Math::Clamp(ScrollOffset, 0, GetMaxScrollOffset());
+    SetScrollOffset(ScrollOffset);
 
     if (Content)
     {
@@ -115,7 +115,7 @@ int32 FScrollBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
     if (IsScrollBarVisible())
     {
         const FDrawGeometry BarGeometry(ScrollBar->GetContentRectangle(), AllottedGeometry.Scale);
-        MaxLayerId = ScrollBar->OnDraw(BarGeometry, OutCommandList, MaxLayerId + 1);
+        MaxLayerId = ScrollBar->Draw(BarGeometry, OutCommandList, MaxLayerId + 1);
     }
 
     return MaxLayerId;
@@ -151,7 +151,8 @@ FEventResponse FScrollBox::OnMouseScroll(const FCursorEvent& CursorEvent)
     }
 
     const int32 Delta = static_cast<int32>(CursorEvent.GetScrollDelta() * static_cast<float>(ScrollAmountPerWheelStep));
-    ScrollOffset = Math::Clamp(ScrollOffset - Delta, 0, MaxScrollOffset);
+    SetScrollOffset(ScrollOffset - Delta);
+
     return FEventResponse::Handled();
 }
 
@@ -184,19 +185,24 @@ void FScrollBox::ScrollIntoView(const FRectangle& ContentRelativeBounds)
 {
     if (ContentRelativeBounds.Position.Y < ScrollOffset)
     {
-        ScrollOffset = ContentRelativeBounds.Position.Y;
+        SetScrollOffset(ContentRelativeBounds.Position.Y);
     }
     else if (ContentRelativeBounds.GetBottom() > (ScrollOffset + ViewHeight))
     {
-        ScrollOffset = ContentRelativeBounds.GetBottom() - ViewHeight;
+        SetScrollOffset(ContentRelativeBounds.GetBottom() - ViewHeight);
     }
-
-    ScrollOffset = Math::Clamp(ScrollOffset, 0, GetMaxScrollOffset());
 }
 
 void FScrollBox::SetScrollOffset(int32 InScrollOffset)
 {
-    ScrollOffset = Math::Clamp(InScrollOffset, 0, GetMaxScrollOffset());
+    const int32 NewScrollOffset = Math::Clamp(InScrollOffset, 0, GetMaxScrollOffset());
+    if (ScrollOffset == NewScrollOffset)
+    {
+        return;
+    }
+
+    ScrollOffset = NewScrollOffset;
+    InvalidatePaint();
 }
 
 int32 FScrollBox::GetMaxScrollOffset() const

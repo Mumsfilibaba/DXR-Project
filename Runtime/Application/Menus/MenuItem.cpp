@@ -183,22 +183,36 @@ FEventResponse FMenuItem::OnMouseLeft(const FCursorEvent& CursorEvent)
 
 void FMenuItem::SetCheckState(ECheckBoxState InCheckState)
 {
+    if (CheckState == InCheckState)
+    {
+        return;
+    }
+
     CheckState = InCheckState;
+    InvalidatePaint();
 }
 
 void FMenuItem::SetHighlighted(bool bInIsHighlighted)
 {
+    if (bIsHighlighted == bInIsHighlighted)
+    {
+        return;
+    }
+
     bIsHighlighted = bInIsHighlighted;
+    InvalidatePaint();
 }
 
 void FMenuItem::SetStyle(const FUIMenuStyle& InStyle)
 {
     Style = InStyle;
+    InvalidateDesiredSize();
 }
 
 void FMenuItem::SetHighlightFill(const FFloatColor& InHighlightFill)
 {
     Style.ItemHovered = InHighlightFill;
+    InvalidatePaint();
 }
 
 void FMenuItem::Activate()
@@ -273,6 +287,7 @@ int32 FMenuSeparator::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
 void FMenuSeparator::SetStyle(const FUIMenuStyle& InStyle)
 {
     Style = InStyle;
+    InvalidatePaint();
 }
 
 TSharedPtr<FMenuSectionHeader> FMenuSectionHeader::Create(const String& Label, const TSharedPtr<IFontFace>& Font)
@@ -345,4 +360,5 @@ int32 FMenuSectionHeader::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCom
 void FMenuSectionHeader::SetStyle(const FUIMenuStyle& InStyle)
 {
     Style = InStyle;
+    InvalidatePaint();
 }

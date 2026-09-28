@@ -142,12 +142,12 @@ int32 FEditorViewportSurface::OnDraw(const FDrawGeometry& AllottedGeometry, FDra
 
     if (Image)
     {
-        CurrentLayer = Image->OnDraw(FDrawGeometry(Image->GetContentRectangle(), AllottedGeometry.Scale), OutCommandList, CurrentLayer) + 1;
+        CurrentLayer = Image->Draw(FDrawGeometry(Image->GetContentRectangle(), AllottedGeometry.Scale), OutCommandList, CurrentLayer) + 1;
     }
 
     if (Gizmo && Gizmo->IsVisible() && Gizmo->IsProjected())
     {
-        CurrentLayer = Gizmo->OnDraw(FDrawGeometry(Gizmo->GetContentRectangle(), AllottedGeometry.Scale), OutCommandList, CurrentLayer) + 1;
+        CurrentLayer = Gizmo->Draw(FDrawGeometry(Gizmo->GetContentRectangle(), AllottedGeometry.Scale), OutCommandList, CurrentLayer) + 1;
     }
 
     if (bMarqueeActive)
@@ -168,6 +168,8 @@ int32 FEditorViewportSurface::OnDraw(const FDrawGeometry& AllottedGeometry, FDra
     {
         if (DrawFps->GetBool())
         {
+            RequestContinuousPaint();
+
             const FUIStyle& Style = FUIStyle::GetDefault();
 
             const IFontFace* Font = Style.MonospaceFont ? Style.MonospaceFont : Style.NormalFont;
@@ -210,7 +212,13 @@ int32 FEditorViewportSurface::OnDraw(const FDrawGeometry& AllottedGeometry, FDra
 
 void FEditorViewportSurface::SetPlayBorderVisible(bool bInShowPlayBorder)
 {
+    if (bShowPlayBorder == bInShowPlayBorder)
+    {
+        return;
+    }
+
     bShowPlayBorder = bInShowPlayBorder;
+    InvalidatePaint();
 }
 
 bool FEditorViewportSurface::IsGizmoBusy() const

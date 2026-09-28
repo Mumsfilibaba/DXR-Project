@@ -229,22 +229,41 @@ void FGraphNodeElement::DrawPinSeparator(const FRectangle& Bounds, FDrawCommandL
 
 void FGraphNodeElement::SetZoom(float InZoom)
 {
+    if (Zoom == InZoom)
+    {
+        return;
+    }
+
     Zoom = InZoom;
+    InvalidateDesiredSize();
 }
 
 void FGraphNodeElement::SetStyle(const FGraphNodeStyle& InStyle)
 {
     Style = InStyle;
+    InvalidateDesiredSize();
 }
 
 void FGraphNodeElement::SetSelected(bool bInIsSelected)
 {
+    if (bIsSelected == bInIsSelected)
+    {
+        return;
+    }
+
     bIsSelected = bInIsSelected;
+    InvalidatePaint();
 }
 
 void FGraphNodeElement::SetHoveredPin(int32 InPinId)
 {
+    if (HoveredPinId == InPinId)
+    {
+        return;
+    }
+
     HoveredPinId = InPinId;
+    InvalidatePaint();
 }
 
 bool FGraphNodeElement::GetPinCenter(int32 PinId, Vector2& OutPosition) const

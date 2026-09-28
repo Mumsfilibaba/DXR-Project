@@ -112,7 +112,7 @@ void FVulkanCommandContextState::PrepareGraphicsState()
     CHECK(PipelineLayout == GraphicsState.CurrentDescriptorState->GetLayout());
     ResolveSampledImageLayouts(GraphicsState.CurrentDescriptorState);
 
-    if (GraphicsState.CurrentDescriptorState->IsResourcesDirty())
+    if (GraphicsState.CurrentDescriptorState->IsResourcesDirty() || GraphicsState.CurrentDescriptorState->IsDescriptorSetDirty())
     {
         GraphicsState.CurrentDescriptorState->UpdateDescriptorSets(Context.GetTransientDescriptorAllocator());
         GraphicsState.CurrentDescriptorState->ClearResourcesDirty();
@@ -298,7 +298,7 @@ void FVulkanCommandContextState::PrepareComputeState()
 
     MAYBE_UNUSED FVulkanPipelineLayout* PipelineLayout = ComputeState.PipelineState->GetPipelineLayout();
     CHECK(PipelineLayout == ComputeState.CurrentDescriptorState->GetLayout());
-    if (ComputeState.CurrentDescriptorState->IsResourcesDirty())
+    if (ComputeState.CurrentDescriptorState->IsResourcesDirty() || ComputeState.CurrentDescriptorState->IsDescriptorSetDirty())
     {
         ComputeState.CurrentDescriptorState->UpdateDescriptorSets(Context.GetTransientDescriptorAllocator());
         ComputeState.CurrentDescriptorState->ClearResourcesDirty();
@@ -351,7 +351,7 @@ void FVulkanCommandContextState::PrepareMeshletState()
     CHECK(PipelineLayout == MeshletState.CurrentDescriptorState->GetLayout());
     ResolveSampledImageLayouts(MeshletState.CurrentDescriptorState);
 
-    if (MeshletState.CurrentDescriptorState->IsResourcesDirty())
+    if (MeshletState.CurrentDescriptorState->IsResourcesDirty() || MeshletState.CurrentDescriptorState->IsDescriptorSetDirty())
     {
         MeshletState.CurrentDescriptorState->UpdateDescriptorSets(Context.GetTransientDescriptorAllocator());
         MeshletState.CurrentDescriptorState->ClearResourcesDirty();
@@ -1097,6 +1097,11 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
             GraphicsState.CurrentDescriptorState = nullptr;
         }
 
+        if (GraphicsState.CurrentDescriptorState)
+        {
+            GraphicsState.CurrentDescriptorState->DirtyDescriptorSet();
+        }
+
         // NOTE: When we change PipelineLayout/PipelineState we need to ensure that PushConstants are also bound
         GraphicsState.bBindPushConstants = true;
 
@@ -1150,6 +1155,11 @@ void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineS
             ComputeState.CurrentDescriptorState = nullptr;
         }
 
+        if (ComputeState.CurrentDescriptorState)
+        {
+            ComputeState.CurrentDescriptorState->DirtyDescriptorSet();
+        }
+
         // NOTE: When we change PipelineLayout/PipelineState we need to ensure that PushConstants are also bound
         ComputeState.bBindPushConstants = true;
     }
@@ -1195,6 +1205,11 @@ void FVulkanCommandContextState::SetMeshletPipelineState(FVulkanMeshletPipelineS
         {
             MeshletState.CurrentLayout          = nullptr;
             MeshletState.CurrentDescriptorState = nullptr;
+        }
+
+        if (MeshletState.CurrentDescriptorState)
+        {
+            MeshletState.CurrentDescriptorState->DirtyDescriptorSet();
         }
 
         // NOTE: When we change PipelineLayout/PipelineState we need to ensure that PushConstants are also bound
@@ -1673,6 +1688,11 @@ void FVulkanCommandContextState::SetRayTracingPipelineState(FVulkanRayTracingPip
             RayTracingState.CurrentDescriptorState = nullptr;
         }
 
+        if (RayTracingState.CurrentDescriptorState)
+        {
+            RayTracingState.CurrentDescriptorState->DirtyDescriptorSet();
+        }
+
         RayTracingState.bBindPushConstants = true;
     }
 }
@@ -1684,7 +1704,7 @@ void FVulkanCommandContextState::PrepareRayTracingState()
         return;
     }
 
-    if (RayTracingState.CurrentDescriptorState->IsResourcesDirty())
+    if (RayTracingState.CurrentDescriptorState->IsResourcesDirty() || RayTracingState.CurrentDescriptorState->IsDescriptorSetDirty())
     {
         RayTracingState.CurrentDescriptorState->UpdateDescriptorSets(Context.GetTransientDescriptorAllocator());
         RayTracingState.CurrentDescriptorState->ClearResourcesDirty();

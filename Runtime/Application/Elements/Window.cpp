@@ -106,17 +106,7 @@ int32 FWindow::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
     if (Content && Content->IsVisible())
     {
         const FDrawGeometry ContentGeometry(Content->GetContentRectangle(), AllottedGeometry.Scale);
-        MaxLayerId = Content->OnDraw(ContentGeometry, OutCommandList, LayerId + 1);
-    }
-
-    if (Overlay && Overlay->IsVisible())
-    {
-        QueueDeferredPainting(Overlay, FDrawGeometry(Overlay->GetContentRectangle(), AllottedGeometry.Scale));
-    }
-
-    if (MenuHost && MenuHost->IsVisible() && !MenuHost->IsEmpty())
-    {
-        QueueDeferredPainting(MenuHost, FDrawGeometry(MenuHost->GetContentRectangle(), AllottedGeometry.Scale));
+        MaxLayerId = Content->Draw(ContentGeometry, OutCommandList, LayerId + 1);
     }
 
     return MaxLayerId;
@@ -149,12 +139,24 @@ int32 FWindow::PaintDeferred(FDrawCommandList& OutCommandList, int32 LayerId) co
 {
     int32 MaxLayerId = LayerId;
 
+    const float Scale = GetWindowDPIScale();
+
+    if (Overlay && Overlay->IsVisible())
+    {
+        MaxLayerId = Overlay->Draw(FDrawGeometry(Overlay->GetContentRectangle(), Scale), OutCommandList, MaxLayerId + 1);
+    }
+
+    if (MenuHost && MenuHost->IsVisible() && !MenuHost->IsEmpty())
+    {
+        MaxLayerId = MenuHost->Draw(FDrawGeometry(MenuHost->GetContentRectangle(), Scale), OutCommandList, MaxLayerId + 1);
+    }
+
     for (int32 Index = 0; Index < DeferredPaints.Size(); ++Index)
     {
         const FDeferredPaint& Paint = DeferredPaints[Index];
         if (Paint.Element)
         {
-            MaxLayerId = Paint.Element->OnDraw(Paint.Geometry, OutCommandList, MaxLayerId + 1);
+            MaxLayerId = Paint.Element->Draw(Paint.Geometry, OutCommandList, MaxLayerId + 1);
         }
         else if (Paint.OnPaint.IsBound())
         {
@@ -247,6 +249,8 @@ void FWindow::OnWindowDestroyed()
 
 void FWindow::OnWindowFocusChanged(bool)
 {
+    InvalidatePaint();
+
     OnWindowFocusChangedDelegate.ExecuteIfBound();
 }
 
@@ -359,6 +363,10 @@ void FWindow::SetOverlay(const TSharedPtr<FVisualElement>& InOverlay)
     {
         Overlay->SetParentElement(AsWeakPtr());
     }
+    else
+    {
+        InvalidateDesiredSize();
+    }
 }
 
 void FWindow::SetContent(const TSharedPtr<FVisualElement>& InContent)
@@ -367,6 +375,10 @@ void FWindow::SetContent(const TSharedPtr<FVisualElement>& InContent)
     if (Content)
     {
         Content->SetParentElement(AsWeakPtr());
+    }
+    else
+    {
+        InvalidateDesiredSize();
     }
 }
 

@@ -187,6 +187,7 @@ public:
 
 private:
     void ClearTarget();
+    void InvalidateDropZones() const;
 
     String                     DraggedPanelId;
     String                     DraggedPanelLabel;

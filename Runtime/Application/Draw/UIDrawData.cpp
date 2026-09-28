@@ -1,11 +1,19 @@
 #include "Application/Draw/UIDrawData.h"
 #include "Application/Draw/DrawCommandList.h"
+#include "Application/Draw/DrawCache.h"
 #include "Application/Text/FontAtlas.h"
 #include "Application/Text/IFontFace.h"
 #include "Core/Algorithms/Algorithm.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
+
+static TAutoConsoleVariable<bool> CVarDrawCacheGeometry(
+    "UI.DrawCache.Geometry",
+    "Splices the tessellated geometry a cached block captured instead of tessellating its commands again",
+    false,
+    EConsoleVariableFlags::Default);
 
 constexpr float DIRECTION_EPSILON = 1.0e-4f;
 
@@ -20,6 +28,32 @@ static FORCEINLINE void ReserveForAppend(TArray<ElementType>& Array, int32 Appen
     {
         Array.Reserve(Math::Max(RequiredCapacity, Array.Capacity() * 2));
     }
+}
+
+template<typename ElementType>
+static FORCEINLINE void CopyGeometrySlice(const TArray<ElementType>& Source, int32 Base, TArray<ElementType>& Destination)
+{
+    const int32 Count = Source.Size() - Base;
+    Destination.ResizeUninitialized(Math::Max(Count, 0));
+
+    if (Count > 0)
+    {
+        Memory::Memcpy(Destination.Data(), Source.Data() + Base, Count * static_cast<int32>(sizeof(ElementType)));
+    }
+}
+
+template<typename ElementType>
+static FORCEINLINE void AppendGeometrySlice(const TArray<ElementType>& Source, TArray<ElementType>& Destination)
+{
+    if (Source.IsEmpty())
+    {
+        return;
+    }
+
+    const int32 Base = Destination.Size();
+    ReserveForAppend(Destination, Source.Size());
+    Destination.ResizeUninitialized(Base + Source.Size());
+    Memory::Memcpy(Destination.Data() + Base, Source.Data(), Source.Size() * static_cast<int32>(sizeof(ElementType)));
 }
 
 static uint64 HashBytes(const void* Data, int32 ByteCount)
@@ -96,6 +130,8 @@ FUIDrawData::FUIDrawData()
     , SortScratchIndices()
     , TextGeometryCache()
     , TextCommandOrdinal(0)
+    , ReplayFingerprint(0)
+    , bFullyReplayedGeometry(true)
     , SourceCommandList(nullptr)
     , ActiveClipId(0)
     , ActiveClipRectangle()
@@ -120,6 +156,8 @@ void FUIDrawData::Reset()
     
     bShapeCompatibilityDirty = false;
     TextCommandOrdinal       = 0;
+    ReplayFingerprint        = 0;
+    bFullyReplayedGeometry   = true;
     SourceCommandList        = nullptr;
     ActiveClipId             = 0;
     ActiveClipRectangle      = FRectangle();
@@ -212,6 +250,8 @@ void FUIDrawData::BuildFromCommandList(const FDrawCommandList& CommandList)
     ReserveForAppend(TextGlyphInstances, Commands.Size() * 4);
 
     {
+        TRACE_SCOPE("UI Sort Commands");
+
         SortedCommandIndices.ResizeUninitialized(Commands.Size());
         for (int32 Index = 0; Index < Commands.Size(); ++Index)
         {
@@ -231,110 +271,350 @@ void FUIDrawData::BuildFromCommandList(const FDrawCommandList& CommandList)
     }
 
     {
-        for (int32 SortedIndex = 0; SortedIndex < SortedCommandIndices.Size(); ++SortedIndex)
+        TRACE_SCOPE("UI Tessellate");
+
+        for (int32 SortedIndex = 0; SortedIndex < SortedCommandIndices.Size(); )
         {
-            const FDrawCommand& Command = Commands[SortedCommandIndices[SortedIndex]];
-
-            ApplyCommandClip(Command, CommandList);
-
-            switch (Command.Type)
+            const int32 SpanLength = ProcessDrawCacheSpan(SortedIndex, CommandList);
+            if (SpanLength > 0)
             {
-                case EDrawCommandType::Box:
-                case EDrawCommandType::Line:
-                {
-                    if (!IsCulledByClip(Command.Bounds))
-                    {
-                        AddBox(Command);
-                    }
-
-                    break;
-                }
-
-                case EDrawCommandType::BoxOutline:
-                {
-                    if (!IsCulledByClip(Command.Bounds))
-                    {
-                        AddBoxOutline(Command);
-                    }
-
-                    break;
-                }
-
-                case EDrawCommandType::Text:
-                {
-                    if (!IsCulledByClip(Command.Bounds))
-                    {
-                        AddText(Command);
-                    }
-
-                    break;
-                }
-
-                case EDrawCommandType::Image:
-                {
-                    if (!IsCulledByClip(Command.Bounds))
-                    {
-                        AddImage(Command);
-                    }
-
-                    break;
-                }
-
-                case EDrawCommandType::RoundedBottomBar:
-                {
-                    if (!IsCulledByClip(Command.Bounds))
-                    {
-                        AddRoundedBottomBar(Command);
-                    }
-
-                    break;
-                }
-
-                case EDrawCommandType::RoundedAccentRing:
-                {
-                    if (!IsCulledByClip(Command.Bounds))
-                    {
-                        AddRoundedAccentRing(Command);
-                    }
-
-                    break;
-                }
-
-                case EDrawCommandType::Polyline:
-                {
-                    const TArrayView<const Vector2> Points = CommandList.GetCommandPoints(Command);
-                    if (!IsCulledByClip(ComputePointBounds(Points, Command.Thickness)))
-                    {
-                        GetOrOpenBatch(FUITextureHandle());
-                        AddPolyline(Points, Command.Thickness, Command.IsClosed(), Command.PackedColor);
-                    }
-
-                    break;
-                }
-
-                case EDrawCommandType::ConvexPolygon:
-                {
-                    const TArrayView<const Vector2> Points = CommandList.GetCommandPoints(Command);
-                    if (!IsCulledByClip(ComputePointBounds(Points, 0.0f)))
-                    {
-                        GetOrOpenBatch(FUITextureHandle());
-                        AddConvexPolygon(Points, Command.PackedColor);
-                    }
-
-                    break;
-                }
-
-                case EDrawCommandType::ClipPush:
-                case EDrawCommandType::ClipPop:
-                {
-                    break;
-                }
+                SortedIndex += SpanLength;
+                continue;
             }
 
+            TessellateCommand(Commands[SortedCommandIndices[SortedIndex]], CommandList);
+            ++SortedIndex;
         }
     }
 
     SourceCommandList = nullptr;
+}
+
+int32 FUIDrawData::ProcessDrawCacheSpan(int32 SortedIndex, const FDrawCommandList& CommandList)
+{
+    if (!CVarDrawCacheGeometry.GetValue() || !CommandList.HasReplayedSpans())
+    {
+        return 0;
+    }
+
+    const int32 CommandIndex = SortedCommandIndices[SortedIndex];
+
+    FDrawCacheBlock* Block = CommandList.FindReplayedSpanAt(CommandIndex);
+    if (!Block)
+    {
+        return 0;
+    }
+
+    if (!Block->bGeometryContiguous)
+    {
+        return 0;
+    }
+
+    const int32 SpanLength = Block->GetCommandCount();
+    if (SortedIndex + SpanLength > SortedCommandIndices.Size())
+    {
+        Block->bGeometryContiguous = false;
+        return 0;
+    }
+
+    for (int32 Offset = 1; Offset < SpanLength; ++Offset)
+    {
+        if (SortedCommandIndices[SortedIndex + Offset] != CommandIndex + Offset)
+        {
+            Block->bGeometryContiguous = false;
+            return 0;
+        }
+    }
+
+    const TArray<FDrawCommand>& Commands    = CommandList.GetCommands();
+    const FDrawCommand&         LastCommand = Commands[CommandIndex + SpanLength - 1];
+
+    if (Block->bGeometryValid && Block->AreAtlasDependenciesCurrent())
+    {
+        AppendDrawCacheGeometry(*Block);
+
+        ApplyCommandClip(LastCommand, CommandList);
+        TextCommandOrdinal += Block->TextCommandCount;
+        return SpanLength;
+    }
+
+    FDrawCacheGeometryMarker Marker;
+    BeginDrawCacheGeometry(Marker);
+
+    for (int32 Offset = 0; Offset < SpanLength; ++Offset)
+    {
+        TessellateCommand(Commands[CommandIndex + Offset], CommandList);
+    }
+
+    CaptureDrawCacheGeometry(Marker, *Block);
+    return SpanLength;
+}
+
+void FUIDrawData::BeginDrawCacheGeometry(FDrawCacheGeometryMarker& OutMarker) const
+{
+    OutMarker.VertexBase        = Vertices.Size();
+    OutMarker.IndexBase         = Indices.Size();
+    OutMarker.ShapeInstanceBase = ShapeInstances.Size();
+    OutMarker.TextInstanceBase  = TextGlyphInstances.Size();
+    OutMarker.BatchBase         = Batches.Size();
+    OutMarker.OpenBatchIndexCount = Batches.IsEmpty() ? 0 : Batches.Last().IndexCount;
+}
+
+void FUIDrawData::CaptureDrawCacheGeometry(const FDrawCacheGeometryMarker& Marker, FDrawCacheBlock& Block) const
+{
+    const int64 PreviousByteSize = Block.GetByteSize();
+
+    CopyGeometrySlice(Vertices, Marker.VertexBase, Block.Vertices);
+    CopyGeometrySlice(ShapeInstances, Marker.ShapeInstanceBase, Block.ShapeInstances);
+    CopyGeometrySlice(TextGlyphInstances, Marker.TextInstanceBase, Block.TextGlyphInstances);
+
+    const int32 IndexCount = Indices.Size() - Marker.IndexBase;
+    Block.Indices.ResizeUninitialized(Math::Max(IndexCount, 0));
+
+    for (int32 Index = 0; Index < IndexCount; ++Index)
+    {
+        Block.Indices[Index] = Indices[Marker.IndexBase + Index] - static_cast<uint32>(Marker.VertexBase);
+    }
+
+    Block.Batches.Clear();
+
+    if (Marker.BatchBase > 0)
+    {
+        const FUIDrawBatch& SharedBatch = Batches[Marker.BatchBase - 1];
+        const int32         SharedCount = SharedBatch.IndexCount - Marker.OpenBatchIndexCount;
+
+        if (SharedCount > 0)
+        {
+            FUIDrawBatch& Leading = Block.Batches.Emplace(SharedBatch);
+            Leading.IndexOffset = 0;
+            Leading.IndexCount  = SharedCount;
+        }
+    }
+
+    for (int32 BatchIndex = Marker.BatchBase; BatchIndex < Batches.Size(); ++BatchIndex)
+    {
+        const FUIDrawBatch& Batch = Batches[BatchIndex];
+        if (Batch.IndexCount <= 0)
+        {
+            continue;
+        }
+
+        FUIDrawBatch& Captured = Block.Batches.Emplace(Batch);
+        Captured.IndexOffset = Batch.IndexOffset - GetStreamBase(Marker, Batch.Kind);
+    }
+
+    Block.bGeometryValid = true;
+    DrawCacheRegistry::NotifySizeChanged(Block.GetByteSize() - PreviousByteSize);
+}
+
+void FUIDrawData::AppendDrawCacheGeometry(const FDrawCacheBlock& Block)
+{
+    const uint64 BlockIdentity[] =
+    {
+        static_cast<uint64>(reinterpret_cast<uintptr_t>(&Block)),
+        static_cast<uint64>(Block.Vertices.Size()),
+        static_cast<uint64>(Block.Indices.Size()),
+        static_cast<uint64>(Block.ShapeInstances.Size()),
+        static_cast<uint64>(Block.TextGlyphInstances.Size()),
+        static_cast<uint64>(Block.Batches.Size()),
+    };
+
+    for (const uint64 Part : BlockIdentity)
+    {
+        ReplayFingerprint = (ReplayFingerprint ^ Part) * 1099511628211ull;
+    }
+
+    const int32 VertexBase        = Vertices.Size();
+    const int32 IndexBase         = Indices.Size();
+    const int32 ShapeInstanceBase = ShapeInstances.Size();
+    const int32 TextInstanceBase  = TextGlyphInstances.Size();
+
+    AppendGeometrySlice(Block.Vertices, Vertices);
+    AppendGeometrySlice(Block.ShapeInstances, ShapeInstances);
+    AppendGeometrySlice(Block.TextGlyphInstances, TextGlyphInstances);
+
+    const int32 IndexCount = Block.Indices.Size();
+    if (IndexCount > 0)
+    {
+        ReserveForAppend(Indices, IndexCount);
+        Indices.ResizeUninitialized(IndexBase + IndexCount);
+
+        for (int32 Index = 0; Index < IndexCount; ++Index)
+        {
+            Indices[IndexBase + Index] = Block.Indices[Index] + static_cast<uint32>(VertexBase);
+        }
+    }
+
+    if (!Block.ShapeInstances.IsEmpty())
+    {
+        bShapeCompatibilityDirty = true;
+    }
+
+    for (int32 BatchIndex = 0; BatchIndex < Block.Batches.Size(); ++BatchIndex)
+    {
+        const FUIDrawBatch& Source = Block.Batches[BatchIndex];
+
+        int32 StreamBase = IndexBase;
+        if (Source.Kind == EUIDrawBatchKind::Shape)
+        {
+            StreamBase = ShapeInstanceBase * 6;
+        }
+        else if (Source.Kind == EUIDrawBatchKind::Text)
+        {
+            StreamBase = TextInstanceBase;
+        }
+
+        const int32 StreamOffset = StreamBase + Source.IndexOffset;
+
+        if (BatchIndex == 0 && !Batches.IsEmpty())
+        {
+            FUIDrawBatch& OpenBatch = Batches.Last();
+            if (OpenBatch.IndexCount == 0)
+            {
+                OpenBatch             = Source;
+                OpenBatch.IndexOffset = StreamOffset;
+                continue;
+            }
+
+            const bool bSameTarget = OpenBatch.Kind == Source.Kind && OpenBatch.Texture == Source.Texture
+                && OpenBatch.bIsClipped == Source.bIsClipped && OpenBatch.ScissorRectangle == Source.ScissorRectangle;
+
+            if (bSameTarget && (OpenBatch.IndexOffset + OpenBatch.IndexCount) == StreamOffset)
+            {
+                OpenBatch.IndexCount += Source.IndexCount;
+                continue;
+            }
+        }
+
+        FUIDrawBatch& Appended = Batches.Emplace(Source);
+        Appended.IndexOffset = StreamOffset;
+    }
+}
+
+int32 FUIDrawData::GetStreamBase(const FDrawCacheGeometryMarker& Marker, EUIDrawBatchKind Kind)
+{
+    switch (Kind)
+    {
+        case EUIDrawBatchKind::Shape:
+        {
+            return Marker.ShapeInstanceBase * 6;
+        }
+
+        case EUIDrawBatchKind::Text:
+        {
+            return Marker.TextInstanceBase;
+        }
+
+        default:
+        {
+            return Marker.IndexBase;
+        }
+    }
+}
+
+void FUIDrawData::TessellateCommand(const FDrawCommand& Command, const FDrawCommandList& CommandList)
+{
+    if (Command.Type != EDrawCommandType::ClipPush && Command.Type != EDrawCommandType::ClipPop)
+    {
+        bFullyReplayedGeometry = false;
+    }
+
+    ApplyCommandClip(Command, CommandList);
+
+    switch (Command.Type)
+    {
+        case EDrawCommandType::Box:
+        case EDrawCommandType::Line:
+        {
+            if (!IsCulledByClip(Command.Bounds))
+            {
+                AddBox(Command);
+            }
+
+            break;
+        }
+
+        case EDrawCommandType::BoxOutline:
+        {
+            if (!IsCulledByClip(Command.Bounds))
+            {
+                AddBoxOutline(Command);
+            }
+
+            break;
+        }
+
+        case EDrawCommandType::Text:
+        {
+            const int32 CacheIndex = TextCommandOrdinal++;
+            if (!IsCulledByClip(Command.Bounds))
+            {
+                AddText(Command, CacheIndex);
+            }
+
+            break;
+        }
+
+        case EDrawCommandType::Image:
+        {
+            if (!IsCulledByClip(Command.Bounds))
+            {
+                AddImage(Command);
+            }
+
+            break;
+        }
+
+        case EDrawCommandType::RoundedBottomBar:
+        {
+            if (!IsCulledByClip(Command.Bounds))
+            {
+                AddRoundedBottomBar(Command);
+            }
+
+            break;
+        }
+
+        case EDrawCommandType::RoundedAccentRing:
+        {
+            if (!IsCulledByClip(Command.Bounds))
+            {
+                AddRoundedAccentRing(Command);
+            }
+
+            break;
+        }
+
+        case EDrawCommandType::Polyline:
+        {
+            const TArrayView<const Vector2> Points = CommandList.GetCommandPoints(Command);
+            if (!IsCulledByClip(ComputePointBounds(Points, Command.Thickness)))
+            {
+                GetOrOpenBatch(FUITextureHandle());
+                AddPolyline(Points, Command.Thickness, Command.IsClosed(), Command.PackedColor);
+            }
+
+            break;
+        }
+
+        case EDrawCommandType::ConvexPolygon:
+        {
+            const TArrayView<const Vector2> Points = CommandList.GetCommandPoints(Command);
+            if (!IsCulledByClip(ComputePointBounds(Points, 0.0f)))
+            {
+                GetOrOpenBatch(FUITextureHandle());
+                AddConvexPolygon(Points, Command.PackedColor);
+            }
+
+            break;
+        }
+
+        case EDrawCommandType::ClipPush:
+        case EDrawCommandType::ClipPop:
+        {
+            break;
+        }
+    }
 }
 
 bool FUIDrawData::IsCulledByClip(const FRectangle& Bounds) const
@@ -429,7 +709,7 @@ void FUIDrawData::AddBoxOutline(const FDrawCommand& Command)
     AddSdfRoundedQuad(Command.Bounds, Radius, Command.PackedColor, Command.Thickness, ShapeKindStroke);
 }
 
-void FUIDrawData::AddText(const FDrawCommand& Command)
+void FUIDrawData::AddText(const FDrawCommand& Command, int32 CacheIndex)
 {
     if (!Command.Font || !SourceCommandList)
     {
@@ -449,8 +729,8 @@ void FUIDrawData::AddText(const FDrawCommand& Command)
     }
 
     const uint64 AtlasRevision = Atlas->GetRevision();
-    const int32 CacheIndex = TextCommandOrdinal++;
-    if (CacheIndex >= TextGeometryCache.Size())
+
+    while (CacheIndex >= TextGeometryCache.Size())
     {
         TextGeometryCache.Emplace();
     }
@@ -1533,7 +1813,6 @@ uint64 FUIDrawData::ComputeGeometryHash() const
         Hash ^= TextGlyphHash;
         Hash *= 1099511628211ull;
     }
-
 
     return Hash;
 }

@@ -78,9 +78,22 @@ void FDockDragState::BeginDrag(const String& PanelId, FDockingArea* InSourceArea
     UpdateDrag(ScreenPosition);
 }
 
+void FDockDragState::InvalidateDropZones() const
+{
+    for (FDockingArea* const Area : RegisteredAreas)
+    {
+        if (Area)
+        {
+            Area->InvalidatePaint();
+        }
+    }
+}
+
 void FDockDragState::UpdateDrag(const IntVector2& ScreenPosition)
 {
     CursorPosition = ScreenPosition;
+
+    InvalidateDropZones();
 
     if (!IsDragging())
     {
@@ -126,6 +139,7 @@ void FDockDragState::EndDrag()
     SourceArea = nullptr;
 
     ClearTarget();
+    InvalidateDropZones();
 
     if (Area)
     {
@@ -156,6 +170,7 @@ void FDockDragState::CancelDrag()
     SourceArea = nullptr;
 
     ClearTarget();
+    InvalidateDropZones();
 
     if (bWasDragging)
     {

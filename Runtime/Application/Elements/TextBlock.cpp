@@ -83,7 +83,13 @@ void FTextBlock::SetText(const String& InText)
 
 void FTextBlock::SetColorAndOpacity(const FFloatColor& InColorAndOpacity)
 {
+    if (ColorAndOpacity == InColorAndOpacity)
+    {
+        return;
+    }
+
     ColorAndOpacity = InColorAndOpacity;
+    InvalidatePaint();
 }
 
 void FTextBlock::SetFont(const TSharedPtr<IFontFace>& InFont)

@@ -185,7 +185,14 @@ FEventResponse FSlider::OnKeyDown(const FKeyEvent& KeyEvent)
 
 void FSlider::SetValue(float InValue)
 {
-    Value = SanitizeValue(InValue);
+    const float NewValue = SanitizeValue(InValue);
+    if (Value == NewValue)
+    {
+        return;
+    }
+
+    Value = NewValue;
+    InvalidatePaint();
 }
 
 void FSlider::SetRange(float InMinValue, float InMaxValue)
@@ -193,6 +200,8 @@ void FSlider::SetRange(float InMinValue, float InMaxValue)
     MinValue = InMinValue;
     MaxValue = Math::Max(InMaxValue, InMinValue);
     Value    = SanitizeValue(Value);
+
+    InvalidatePaint();
 }
 
 float FSlider::GetNormalizedValue() const
@@ -243,6 +252,8 @@ void FSlider::ApplyValue(float InValue)
     }
 
     Value = NewValue;
+    InvalidatePaint();
+
     OnValueChangedDelegate.ExecuteIfBound(Value);
 }
 

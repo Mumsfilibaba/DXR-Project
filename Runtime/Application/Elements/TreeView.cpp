@@ -371,7 +371,7 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     if (ScrollBar && ScrollBar->IsScrollable())
     {
         const FDrawGeometry BarGeometry(ScrollBar->GetContentRectangle(), AllottedGeometry.Scale);
-        MaxLayerId = ScrollBar->OnDraw(BarGeometry, OutCommandList, MaxLayerId + 1);
+        MaxLayerId = ScrollBar->Draw(BarGeometry, OutCommandList, MaxLayerId + 1);
     }
 
     return MaxLayerId;
@@ -421,6 +421,7 @@ FEventResponse FTreeView::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 
     PressedRowIndex = RowIndex;
     PressPosition   = ClientPosition;
+    InvalidatePaint();
 
     ApplySelectionFromClick(RowIndex, CursorEvent.GetModifierKeys());
     return FEventResponse::Handled();
@@ -436,7 +437,11 @@ FEventResponse FTreeView::OnMouseButtonUp(const FCursorEvent& CursorEvent)
     const int32 ClickedRowIndex = FindRowAt(CursorEvent.GetClientPosition());
     const int32 ReleasedOnPress = ClickedRowIndex == PressedRowIndex ? ClickedRowIndex : InvalidRowIndex;
 
-    PressedRowIndex = InvalidRowIndex;
+    if (PressedRowIndex != InvalidRowIndex)
+    {
+        PressedRowIndex = InvalidRowIndex;
+        InvalidatePaint();
+    }
 
     if (ClickedRowIndex == InvalidRowIndex)
     {
@@ -516,8 +521,14 @@ FEventResponse FTreeView::OnMouseScroll(const FCursorEvent& CursorEvent)
         return FEventResponse::Unhandled();
     }
 
-    const int32 Delta = static_cast<int32>(CursorEvent.GetScrollDelta() * static_cast<float>(RowsPerWheelStep * RowHeight));
-    ScrollOffset = Math::Clamp(ScrollOffset - Delta, 0, MaxScrollOffset);
+    const int32 Delta           = static_cast<int32>(CursorEvent.GetScrollDelta() * static_cast<float>(RowsPerWheelStep * RowHeight));
+    const int32 NewScrollOffset = Math::Clamp(ScrollOffset - Delta, 0, MaxScrollOffset);
+
+    if (ScrollOffset != NewScrollOffset)
+    {
+        ScrollOffset = NewScrollOffset;
+        InvalidatePaint();
+    }
 
     if (ScrollBar)
     {
@@ -545,6 +556,11 @@ FEventResponse FTreeView::OnMouseEntered(const FCursorEvent& CursorEvent)
 
 FEventResponse FTreeView::OnMouseLeft(const FCursorEvent& /* CursorEvent */)
 {
+    if (PressedRowIndex != InvalidRowIndex)
+    {
+        InvalidatePaint();
+    }
+
     bHasCursorInside = false;
     PressedRowIndex  = InvalidRowIndex;
 
@@ -635,12 +651,16 @@ void FTreeView::SetSelection(const TArray<TSharedPtr<FTreeItem>>& InSelection)
 {
     Selection      = InSelection;
     AnchorRowIndex = InvalidRowIndex;
+
+    InvalidatePaint();
 }
 
 void FTreeView::ClearSelection()
 {
     Selection.Clear();
     AnchorRowIndex = InvalidRowIndex;
+
+    InvalidatePaint();
 }
 
 bool FTreeView::IsSelected(const TSharedPtr<FTreeItem>& Item) const
@@ -1052,17 +1072,32 @@ int32 FTreeView::GetMaxScrollOffset() const
 
 void FTreeView::OnScrollBarMoved(int32 NewOffset)
 {
-    ScrollOffset = Math::Clamp(NewOffset, 0, GetMaxScrollOffset());
+    const int32 ClampedOffset = Math::Clamp(NewOffset, 0, GetMaxScrollOffset());
+    if (ScrollOffset != ClampedOffset)
+    {
+        ScrollOffset = ClampedOffset;
+        InvalidatePaint();
+    }
+
     UpdateHoveredRow();
 }
 
 void FTreeView::UpdateHoveredRow()
 {
-    HoveredRowIndex = bHasCursorInside ? FindRowAt(LastCursorPosition) : InvalidRowIndex;
+    const int32 NewHoveredRowIndex = bHasCursorInside ? FindRowAt(LastCursorPosition) : InvalidRowIndex;
+    if (HoveredRowIndex == NewHoveredRowIndex)
+    {
+        return;
+    }
+
+    HoveredRowIndex = NewHoveredRowIndex;
+    InvalidatePaint();
 }
 
 void FTreeView::ApplySelectionFromClick(int32 RowIndex, const FModifierKeyState& Modifiers)
 {
+    InvalidatePaint();
+
     const TArray<TSharedPtr<FTreeItem>>& Rows = GetVisibleRows();
 
     if (bAllowMultiSelect && Modifiers.IsShortcutChordDown())
@@ -1120,6 +1155,7 @@ void FTreeView::SelectSingleRow(int32 RowIndex)
     Selection.Clear();
     Selection.Add(Rows[RowIndex]);
     AnchorRowIndex = RowIndex;
+    InvalidatePaint();
 
     ScrollRowIntoView(RowIndex);
     OnSelectionChangedDelegate.ExecuteIfBound(Selection);
@@ -1187,16 +1223,24 @@ void FTreeView::ScrollRowIntoView(int32 RowIndex)
     const int32 RowBottom  = RowTop + RowHeight;
     const int32 BandHeight = ViewHeight - GetHeaderExtent();
 
+    int32 NewScrollOffset = ScrollOffset;
+
     if (RowTop < ScrollOffset)
     {
-        ScrollOffset = RowTop;
+        NewScrollOffset = RowTop;
     }
     else if (RowBottom > (ScrollOffset + BandHeight))
     {
-        ScrollOffset = RowBottom - BandHeight;
+        NewScrollOffset = RowBottom - BandHeight;
     }
 
-    ScrollOffset = Math::Clamp(ScrollOffset, 0, GetMaxScrollOffset());
+    NewScrollOffset = Math::Clamp(NewScrollOffset, 0, GetMaxScrollOffset());
+
+    if (ScrollOffset != NewScrollOffset)
+    {
+        ScrollOffset = NewScrollOffset;
+        InvalidatePaint();
+    }
 
     if (ScrollBar)
     {

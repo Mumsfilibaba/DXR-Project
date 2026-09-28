@@ -37,7 +37,12 @@ void FMenuHost::SetChildBounds(const TSharedPtr<FVisualElement>& InContent, cons
     {
         if (Child.Content == InContent)
         {
-            Child.ClientBounds = InClientBounds;
+            if (Child.ClientBounds != InClientBounds)
+            {
+                Child.ClientBounds = InClientBounds;
+                InvalidatePaint();
+            }
+
             Child.Content->Tick(InClientBounds);
             return;
         }
@@ -50,7 +55,10 @@ void FMenuHost::RemoveChild(const TSharedPtr<FVisualElement>& InContent)
     {
         if (Children[Index].Content == InContent)
         {
+            Children[Index].Content->SetParentElement(TWeakPtr<FVisualElement>());
             Children.RemoveAt(Index);
+
+            InvalidatePaint();
             return;
         }
     }
@@ -101,7 +109,7 @@ int32 FMenuHost::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         }
 
         const FDrawGeometry ChildGeometry(Child.Content->GetContentRectangle(), AllottedGeometry.Scale);
-        MaxLayerId = Child.Content->OnDraw(ChildGeometry, OutCommandList, MaxLayerId + 1);
+        MaxLayerId = Child.Content->Draw(ChildGeometry, OutCommandList, MaxLayerId + 1);
     }
 
     OutCommandList.PopClip(MaxLayerId);

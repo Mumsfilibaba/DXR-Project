@@ -31,6 +31,7 @@ struct FWindowDrawState
         , ShapeIndexCapacity(0)
         , TextGlyphCapacity(0)
         , UploadedGeometryHash(0)
+        , bUploadedGeometryFromReplay(false)
         , IndexFormat(EIndexFormat::uint32)
         , ShapeIndexFormat(EIndexFormat::uint32)
         , Stats()
@@ -55,6 +56,7 @@ struct FWindowDrawState
     int32             ShapeIndexCapacity;
     int32             TextGlyphCapacity;
     uint64            UploadedGeometryHash;
+    bool              bUploadedGeometryFromReplay;
     EIndexFormat      IndexFormat;
     EIndexFormat      ShapeIndexFormat;
     FUIPaintStats     Stats;

@@ -48,7 +48,7 @@ int32 FCompoundElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComma
     }
 
     const FDrawGeometry ContentGeometry(Content->GetContentRectangle(), AllottedGeometry.Scale);
-    return Content->OnDraw(ContentGeometry, OutCommandList, LayerId + 1);
+    return Content->Draw(ContentGeometry, OutCommandList, LayerId + 1);
 }
 
 void FCompoundElement::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)

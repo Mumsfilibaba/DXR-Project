@@ -107,6 +107,8 @@ protected:
     virtual void OnDragged(const FCursorEvent& CursorEvent) override;
 
 private:
+    void SetCloseHovered(bool bInIsCloseHovered);
+
     String                PanelId;
     String                Label;
     TSharedPtr<IFontFace> Font;

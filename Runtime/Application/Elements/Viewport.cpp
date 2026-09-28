@@ -29,6 +29,8 @@ FViewport::~FViewport()
 
 void FViewport::Initialize(const FDesc& Desc)
 {
+    SetDrawCachePolicy(EDrawCachePolicy::Never);
+
     ViewportInterface = Desc.ViewportInterface;
 }
 

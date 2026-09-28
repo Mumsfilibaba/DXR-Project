@@ -41,7 +41,7 @@ int32 FBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
         }
 
         const FDrawGeometry ChildGeometry(ChildBounds, AllottedGeometry.Scale);
-        MaxLayerId = Slot.Element->OnDraw(ChildGeometry, OutCommandList, MaxLayerId + 1);
+        MaxLayerId = Slot.Element->Draw(ChildGeometry, OutCommandList, MaxLayerId + 1);
     }
 
     return MaxLayerId;

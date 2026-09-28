@@ -103,12 +103,20 @@ int32 FToolTip::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& 
 void FToolTip::SetOuterCornerRadius(float InCornerRadius)
 {
     CornerRadius = InCornerRadius;
+    InvalidatePaint();
 }
 
 void FToolTip::SetText(const String& InText)
 {
+    if (Text == InText)
+    {
+        return;
+    }
+
     Text  = InText;
     Lines = SplitTextIntoLines(Text);
+
+    InvalidateDesiredSize();
 }
 
 TSharedPtr<FToolTipHost> FToolTipHost::Create(

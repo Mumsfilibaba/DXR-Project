@@ -12,6 +12,7 @@
 #include "Core/Time/Timespan.h"
 #include "Application/Application.h"
 #include "Application/Draw/DrawCommandList.h"
+#include "Application/Draw/DrawCache.h"
 #include "Application/Elements/Window.h"
 #include "Application/Style/UIStyle.h"
 #include "Application/Text/FontAtlas.h"
@@ -363,6 +364,8 @@ bool FApplicationRenderer::InitializeRHI()
 
 void FApplicationRenderer::ReleaseRHI()
 {
+    DrawCacheEpoch::Advance();
+
     if (LastFrameFinishedEvent)
     {
         LastFrameFinishedEvent->Wait(FTimespan::Infinity());
@@ -635,12 +638,29 @@ bool FApplicationRenderer::PrepareGeometry(FRHICommandList& InCommandList, FWind
     const bool bShapeReady    = !bHasShape || WindowState.ShapeVertexBuffer;
     const bool bTextReady     = !bHasText || WindowState.TextGlyphBuffer;
 
-    const uint64 GeometryHash = DrawData.ComputeGeometryHash();
-    if (GeometryHash == WindowState.UploadedGeometryHash && bTexturedReady && bShapeReady && bTextReady)
+    const bool bFromReplay = DrawData.IsFullyReplayed();
+
+    uint64 GeometryHash = 0;
+    if (bFromReplay)
+    {
+        GeometryHash = DrawData.GetReplayFingerprint();
+    }
+    else
+    {
+        TRACE_SCOPE("UI Geometry Hash");
+        GeometryHash = DrawData.ComputeGeometryHash();
+    }
+
+    const bool bSameSignature = GeometryHash == WindowState.UploadedGeometryHash
+        && bFromReplay == WindowState.bUploadedGeometryFromReplay;
+
+    if (bSameSignature && bTexturedReady && bShapeReady && bTextReady)
     {
         ReportPaintStats(WindowState);
         return true;
     }
+
+    TRACE_SCOPE("UI Geometry Upload");
 
     const uint64 UploadStartTime = FPlatformTime::QueryPerformanceCounter();
 
@@ -675,8 +695,9 @@ bool FApplicationRenderer::PrepareGeometry(FRHICommandList& InCommandList, FWind
         }
     }
 
-    WindowState.UploadedGeometryHash = GeometryHash;
-    WindowState.Stats.BufferUploadTime = ToMillisecondsSince(UploadStartTime);
+    WindowState.UploadedGeometryHash        = GeometryHash;
+    WindowState.bUploadedGeometryFromReplay = bFromReplay;
+    WindowState.Stats.BufferUploadTime      = ToMillisecondsSince(UploadStartTime);
 
     ReportPaintStats(WindowState);
     return true;
@@ -1335,7 +1356,8 @@ void FApplicationRenderer::RetireWindowBuffers(FWindowDrawState& WindowState)
     WindowState.ShapeVertexCapacity  = 0;
     WindowState.ShapeIndexCapacity   = 0;
     WindowState.TextGlyphCapacity    = 0;
-    WindowState.UploadedGeometryHash = 0;
+    WindowState.UploadedGeometryHash        = 0;
+    WindowState.bUploadedGeometryFromReplay = false;
 }
 
 void FApplicationRenderer::ReleaseRetiredResources(bool bReleaseEverything)
@@ -1546,6 +1568,7 @@ FRHITextureRef FApplicationRenderer::RenderElementToTexture(const TSharedPtr<FVi
     const float ClampedScale = Math::Max(1.0f, DPIScale);
 
     FWindowDrawState SnapshotState;
+
     Element->OnDraw(FDrawGeometry(FRectangle(IntVector2(0, 0), Size.X, Size.Y), ClampedScale), SnapshotState.Commands, 0);
 
     SnapshotState.DrawData.BuildFromCommandList(SnapshotState.Commands);

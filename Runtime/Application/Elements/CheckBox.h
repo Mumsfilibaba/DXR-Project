@@ -130,9 +130,12 @@ protected:
 
     // FInteractiveElement Interface
     virtual void OnClicked() override;
+    virtual void OnInteractionStateChanged() override;
 
 private:
     NODISCARD ECheckBoxState GetNextState() const;
+
+    void ApplyLabelColor();
 
     TSharedPtr<class FTextBlock> LabelText;
     ECheckBoxState               CheckState;

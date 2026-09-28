@@ -179,6 +179,8 @@ void FColorPicker::SetColor(const FFloatColor& InColor)
     {
         Hue = NewHue;
     }
+
+    InvalidatePaint();
 }
 
 FFloatColor FColorPicker::GetColor() const
@@ -215,6 +217,7 @@ void FColorPicker::ApplyCursor(const IntVector2& ClientPosition)
         Brightness = 1.0f - Math::Clamp(static_cast<float>(ClientPosition.Y - Square.Position.Y) / static_cast<float>(Math::Max(1, Square.Height)), 0.0f, 1.0f);
     }
 
+    InvalidatePaint();
     NotifyColorPicked();
 }
 

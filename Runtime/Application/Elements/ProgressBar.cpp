@@ -69,15 +69,29 @@ int32 FProgressBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
 
 void FProgressBar::SetPercent(float InPercent)
 {
-    Percent = Math::Saturate(InPercent);
+    const float NewPercent = Math::Saturate(InPercent);
+    if (Percent == NewPercent)
+    {
+        return;
+    }
+
+    Percent = NewPercent;
+    InvalidatePaint();
 }
 
 void FProgressBar::SetOverlayText(const String& InText)
 {
+    if (OverlayText == InText)
+    {
+        return;
+    }
+
     OverlayText = InText;
+    InvalidatePaint();
 }
 
 void FProgressBar::SetFillColor(const FFloatColor& InColor)
 {
     FillColor = InColor;
+    InvalidatePaint();
 }

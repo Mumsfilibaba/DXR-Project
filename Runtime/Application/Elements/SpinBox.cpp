@@ -63,6 +63,7 @@ void FSpinBox::Initialize(const FDesc& Desc)
 
     Label = FTextBlock::Create(LabelDesc);
     UpdateLabel();
+    ApplyLabelColor();
 
     FEditableText::FDesc EditorDesc;
     EditorDesc.Font            = Desc.Font;
@@ -104,8 +105,7 @@ void FSpinBox::OnArrange(const FRectangle& AllottedBounds)
 
 int32 FSpinBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FUIStyle&         Style = FUIStyle::GetDefault();
-    const EInteractionState State = GetInteractionState();
+    const FUIStyle& Style = FUIStyle::GetDefault();
 
     OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.ControlNormal, CornerRadius);
 
@@ -122,12 +122,22 @@ int32 FSpinBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& 
 
     OutCommandList.AddBoxOutline(LayerId, AllottedGeometry.Bounds, IsHovered() ? Style.Colors.Accent : Style.Colors.Border, Style.Metrics.BorderThickness, CornerRadius);
 
+    return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
+}
+
+void FSpinBox::OnInteractionStateChanged()
+{
+    FInteractiveElement::OnInteractionStateChanged();
+
+    ApplyLabelColor();
+}
+
+void FSpinBox::ApplyLabelColor()
+{
     if (Label)
     {
-        Label->SetColorAndOpacity(Style.GetTextColor(State));
+        Label->SetColorAndOpacity(FUIStyle::GetDefault().GetTextColor(GetInteractionState()));
     }
-
-    return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
 }
 
 FEventResponse FSpinBox::OnMouseButtonDown(const FCursorEvent& CursorEvent)
@@ -181,6 +191,8 @@ void FSpinBox::SetValue(float InValue)
 {
     Value = SanitizeValue(InValue);
     UpdateLabel();
+
+    InvalidatePaint();
 }
 
 void FSpinBox::BeginTyping()
@@ -253,6 +265,8 @@ void FSpinBox::ApplyValue(float InValue)
 
     Value = NewValue;
     UpdateLabel();
+    InvalidatePaint();
+
     OnValueChangedDelegate.ExecuteIfBound(Value);
 }
 

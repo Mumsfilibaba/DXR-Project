@@ -143,6 +143,8 @@ FGizmo::~FGizmo() = default;
 
 void FGizmo::Initialize(const FDesc& Desc)
 {
+    SetDrawCachePolicy(EDrawCachePolicy::Never);
+
     Operation                  = Desc.Operation;
     Mode                       = Desc.Mode;
     Snap                       = Desc.Snap;

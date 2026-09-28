@@ -159,6 +159,7 @@ FEventResponse FTileView::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 
     PressedIndex  = Index;
     PressPosition = CursorEvent.GetClientPosition();
+    InvalidatePaint();
 
     OnSelectionChangedDelegate.ExecuteIfBound(SelectedIndices);
     return FEventResponse::Handled();
@@ -171,13 +172,23 @@ FEventResponse FTileView::OnMouseButtonUp(const FCursorEvent& CursorEvent)
         return FEventResponse::Unhandled();
     }
 
-    PressedIndex = InvalidTileIndex;
+    if (PressedIndex != InvalidTileIndex)
+    {
+        PressedIndex = InvalidTileIndex;
+        InvalidatePaint();
+    }
+
     return FEventResponse::Unhandled();
 }
 
 FEventResponse FTileView::OnMouseMove(const FCursorEvent& CursorEvent)
 {
-    HoveredIndex = FindTileAt(CursorEvent.GetClientPosition());
+    const int32 NewHoveredIndex = FindTileAt(CursorEvent.GetClientPosition());
+    if (HoveredIndex != NewHoveredIndex)
+    {
+        HoveredIndex = NewHoveredIndex;
+        InvalidatePaint();
+    }
 
     if (PressedIndex != InvalidTileIndex)
     {
@@ -186,6 +197,7 @@ FEventResponse FTileView::OnMouseMove(const FCursorEvent& CursorEvent)
         {
             const int32 DraggedIndex = PressedIndex;
             PressedIndex             = InvalidTileIndex;
+            InvalidatePaint();
 
             OnDragDetectedDelegate.ExecuteIfBound(DraggedIndex, CursorEvent);
             return FEventResponse::Handled();
@@ -199,8 +211,13 @@ FEventResponse FTileView::OnMouseLeft(const FCursorEvent& CursorEvent)
 {
     UNREFERENCED_VARIABLE(CursorEvent);
 
-    HoveredIndex = InvalidTileIndex;
-    PressedIndex = InvalidTileIndex;
+    if (HoveredIndex != InvalidTileIndex || PressedIndex != InvalidTileIndex)
+    {
+        HoveredIndex = InvalidTileIndex;
+        PressedIndex = InvalidTileIndex;
+        InvalidatePaint();
+    }
+
     return FEventResponse::Unhandled();
 }
 
@@ -235,7 +252,8 @@ FEventResponse FTileView::OnMouseScroll(const FCursorEvent& CursorEvent)
     }
 
     const int32 Delta = static_cast<int32>(CursorEvent.GetScrollDelta() * static_cast<float>(DefaultScrollAmountPerWheelStep));
-    ScrollOffset = Math::Clamp(ScrollOffset - Delta, 0, MaxScrollOffset);
+    SetScrollOffset(ScrollOffset - Delta);
+
     return FEventResponse::Handled();
 }
 
@@ -254,11 +272,19 @@ void FTileView::SetItems(const TArray<FTileItem>& InItems)
     AnchorIndex  = InvalidTileIndex;
     PressedIndex = InvalidTileIndex;
     ScrollOffset = 0;
+
+    InvalidateDesiredSize();
 }
 
 void FTileView::SetFilterText(const String& InFilter)
 {
+    if (FilterText == InFilter)
+    {
+        return;
+    }
+
     FilterText = InFilter;
+    InvalidatePaint();
 }
 
 void FTileView::ClearSelection()
@@ -271,6 +297,7 @@ void FTileView::ClearSelection()
     SelectedIndices.Clear();
 
     AnchorIndex = InvalidTileIndex;
+    InvalidatePaint();
 
     OnSelectionChangedDelegate.ExecuteIfBound(SelectedIndices);
 }
@@ -286,6 +313,7 @@ void FTileView::SetSelection(int32 Index)
     SelectedIndices.Add(Index);
 
     AnchorIndex = Index;
+    InvalidatePaint();
 
     OnSelectionChangedDelegate.ExecuteIfBound(SelectedIndices);
 }
@@ -307,7 +335,14 @@ void FTileView::SetTileSize(const IntVector2& InTileSize)
 
 void FTileView::SetScrollOffset(int32 InScrollOffset)
 {
-    ScrollOffset = Math::Clamp(InScrollOffset, 0, GetMaxScrollOffset());
+    const int32 NewScrollOffset = Math::Clamp(InScrollOffset, 0, GetMaxScrollOffset());
+    if (ScrollOffset == NewScrollOffset)
+    {
+        return;
+    }
+
+    ScrollOffset = NewScrollOffset;
+    InvalidatePaint();
 }
 
 int32 FTileView::GetMaxScrollOffset() const
@@ -327,16 +362,24 @@ void FTileView::ScrollToTile(int32 Index)
     const int32 TileTop        = RowIndex * (TileSize.Y + TileSpacing);
     const int32 TileBottom     = TileTop + TileSize.Y;
 
+    int32 NewScrollOffset = ScrollOffset;
+
     if (TileTop < ScrollOffset)
     {
-        ScrollOffset = TileTop;
+        NewScrollOffset = TileTop;
     }
     else if (TileBottom > (ScrollOffset + ViewHeight))
     {
-        ScrollOffset = TileBottom - ViewHeight;
+        NewScrollOffset = TileBottom - ViewHeight;
     }
 
-    ScrollOffset = Math::Clamp(ScrollOffset, 0, Math::Max(ComputeContentHeight(AvailableWidth) - ViewHeight, 0));
+    NewScrollOffset = Math::Clamp(NewScrollOffset, 0, Math::Max(ComputeContentHeight(AvailableWidth) - ViewHeight, 0));
+
+    if (ScrollOffset != NewScrollOffset)
+    {
+        ScrollOffset = NewScrollOffset;
+        InvalidatePaint();
+    }
 }
 
 int32 FTileView::ResolveNumColumns(int32 AvailableWidth) const
@@ -433,6 +476,8 @@ int32 FTileView::FindTileAt(const IntVector2& ClientPosition) const
 
 void FTileView::SelectTile(int32 Index, bool bToggle, bool bExtend)
 {
+    InvalidatePaint();
+
     if (bToggle)
     {
         if (SelectedIndices.Contains(Index))

@@ -5,6 +5,8 @@
 #include "Application/Input/InputMapper.h"
 #include "Application/Docking/DockDragState.h"
 #include "Application/Draw/DrawCommandList.h"
+#include "Application/Draw/DrawCache.h"
+#include "Application/Elements/MenuHost.h"
 #include "Application/Elements/VisualElement.h"
 #include "Application/Menus/DragDropService.h"
 #include "Application/Style/UIStyle.h"
@@ -20,6 +22,12 @@
 #include "RHI/RHICommandList.h"
 
 IMPLEMENT_ENGINE_MODULE(IModule, Application);
+
+static TAutoConsoleVariable<bool> CVarDrawCacheValidation(
+    "UI.DrawCache.Validation",
+    "Records every window a second time with the draw cache off and reports where the two recordings disagree",
+    false,
+    EConsoleVariableFlags::Default);
 
 /* ---------------------------------------------------------------------------------------------------------- */
 // FEventDispatcher is a helper class that dispatches events with a specified dispatch policy.
@@ -1094,6 +1102,8 @@ void FApplication::DrawWindows()
         return;
     }
 
+    DrawCacheRegistry::BeginFrame();
+
     for (const TSharedPtr<FWindow>& CurrentWindow : Windows)
     {
         RecordWindow(CurrentWindow);
@@ -1130,13 +1140,69 @@ void FApplication::RecordWindow(const TSharedPtr<FWindow>& InWindow)
         {
             TRACE_SCOPE("UI Element Paint");
 
-            TopLayerId = InWindow->OnDraw(WindowGeometry, *CommandList, 0);
+            TopLayerId = InWindow->Draw(WindowGeometry, *CommandList, 0);
+
+            if (CVarDrawCacheValidation.GetValue())
+            {
+                ValidateDrawCache(InWindow, WindowGeometry, *CommandList);
+            }
+
             OnWindowPaintingEvent.Broadcast(InWindow);
             InWindow->PaintDeferred(*CommandList, TopLayerId + 1);
         }
 
         Renderer->EndWindow(InWindow);
     }
+}
+
+void FApplication::ValidateDrawCache(const TSharedPtr<FWindow>& InWindow, const FDrawGeometry& WindowGeometry, const FDrawCommandList& RecordedCommands)
+{
+    FDrawCommandList FreshCommands;
+    FreshCommands.SetDrawCacheSuppressed(true);
+    InWindow->Draw(WindowGeometry, FreshCommands, 0);
+
+    int32  DifferenceIndex = 0;
+    String Reason;
+
+    if (FDrawCommandList::FindFirstDifference(RecordedCommands, FreshCommands, DifferenceIndex, Reason))
+    {
+        ReportDrawCacheDivergence(InWindow, DifferenceIndex, Reason);
+        return;
+    }
+
+    if (const TSharedPtr<FMenuHost>& Host = InWindow->GetMenuHost())
+    {
+        if (!Host->IsEmpty())
+        {
+            ValidateDrawCacheSubtree(InWindow, Host, FDrawGeometry(Host->GetContentRectangle(), InWindow->GetWindowDPIScale()));
+        }
+    }
+}
+
+void FApplication::ValidateDrawCacheSubtree(const TSharedPtr<FWindow>& InWindow, const TSharedPtr<FVisualElement>& Element, const FDrawGeometry& Geometry)
+{
+    FDrawCommandList ReplayedCommands;
+    Element->Draw(Geometry, ReplayedCommands, 0);
+
+    FDrawCommandList FreshCommands;
+    FreshCommands.SetDrawCacheSuppressed(true);
+    Element->Draw(Geometry, FreshCommands, 0);
+
+    int32  DifferenceIndex = 0;
+    String Reason;
+
+    if (FDrawCommandList::FindFirstDifference(ReplayedCommands, FreshCommands, DifferenceIndex, Reason))
+    {
+        ReportDrawCacheDivergence(InWindow, DifferenceIndex, Reason);
+    }
+}
+
+void FApplication::ReportDrawCacheDivergence(const TSharedPtr<FWindow>& InWindow, int32 DifferenceIndex, const String& Reason)
+{
+    LOG_WARNING("The draw cache diverged from a fresh recording of '%s' at command %d (%s). An element drew "
+        "something different without calling InvalidatePaint.", InWindow->GetTitle().Data(), DifferenceIndex, Reason.Data());
+
+    DrawCacheRegistry::ReleaseAll();
 }
 
 void FApplication::SetRenderer(const TSharedPtr<IApplicationRenderer>& InRenderer)
@@ -1299,6 +1365,7 @@ void FApplication::SetFocusElements(const FElementPath& NewFocusPath)
         const TSharedPtr<FVisualElement>& CurrentElement = FocusPath[Index];
         if (!NewFocusPath.Contains(CurrentElement))
         {
+            CurrentElement->InvalidatePaint();
             CurrentElement->OnFocusLost();
         }
     }
@@ -1310,6 +1377,7 @@ void FApplication::SetFocusElements(const FElementPath& NewFocusPath)
         const TSharedPtr<FVisualElement>& CurrentElement = NewFocusPath[Index];
         if (!FocusPath.Contains(CurrentElement))
         {
+            CurrentElement->InvalidatePaint();
             CurrentElement->OnFocusGained();
         }
     }

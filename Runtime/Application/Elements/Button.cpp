@@ -56,6 +56,8 @@ void FButton::Initialize(const FDesc& Desc)
 
     Label = FTextBlock::Create(LabelDesc);
     SetContent(Label);
+
+    ApplyLabelColor();
 }
 
 IntVector2 FButton::ComputeDesiredSize() const
@@ -109,12 +111,22 @@ int32 FButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
         OutCommandList.AddBoxOutline(LayerId, AllottedGeometry.Bounds, Style.Colors.Border, Style.Metrics.BorderThickness, CornerRadius);
     }
 
+    return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
+}
+
+void FButton::OnInteractionStateChanged()
+{
+    FInteractiveElement::OnInteractionStateChanged();
+
+    ApplyLabelColor();
+}
+
+void FButton::ApplyLabelColor()
+{
     if (Label)
     {
-        Label->SetColorAndOpacity(Style.GetTextColor(State));
+        Label->SetColorAndOpacity(FUIStyle::GetDefault().GetTextColor(GetInteractionState()));
     }
-
-    return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
 }
 
 void FButton::SetOnClicked(const FOnClicked& InOnClicked)
@@ -124,7 +136,13 @@ void FButton::SetOnClicked(const FOnClicked& InOnClicked)
 
 void FButton::SetHighlighted(bool bInIsHighlighted)
 {
+    if (bIsHighlighted == bInIsHighlighted)
+    {
+        return;
+    }
+
     bIsHighlighted = bInIsHighlighted;
+    InvalidatePaint();
 }
 
 void FButton::SetText(const String& InText)

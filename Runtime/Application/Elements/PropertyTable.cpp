@@ -269,7 +269,7 @@ int32 FPropertyTable::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
             if (ClipBounds.IsEmpty() || !ClipBounds.Intersect(EditorBounds).IsEmpty())
             {
                 const FDrawGeometry EditorGeometry(EditorBounds, AllottedGeometry.Scale);
-                NextLayerId = Math::Max(NextLayerId, Row.Editor->OnDraw(EditorGeometry, OutCommandList, LayerId + 1));
+                NextLayerId = Math::Max(NextLayerId, Row.Editor->Draw(EditorGeometry, OutCommandList, LayerId + 1));
             }
         }
 
@@ -281,7 +281,7 @@ int32 FPropertyTable::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
             if (ClipBounds.IsEmpty() || !ClipBounds.Intersect(AccessoryBounds).IsEmpty())
             {
                 const FDrawGeometry AccessoryGeometry(AccessoryBounds, AllottedGeometry.Scale);
-                NextLayerId = Math::Max(NextLayerId, Row.LabelAccessory->OnDraw(AccessoryGeometry, OutCommandList, LayerId + 1));
+                NextLayerId = Math::Max(NextLayerId, Row.LabelAccessory->Draw(AccessoryGeometry, OutCommandList, LayerId + 1));
             }
         }
     }
@@ -302,6 +302,8 @@ FEventResponse FPropertyTable::OnMouseButtonDown(const FCursorEvent& CursorEvent
     if (RevertRow != InvalidRowIndex)
     {
         PressedRevertRow = RevertRow;
+        InvalidatePaint();
+
         return FEventResponse::Handled();
     }
 
@@ -315,6 +317,8 @@ FEventResponse FPropertyTable::OnMouseButtonDown(const FCursorEvent& CursorEvent
     DragOrigin         = CursorEvent.GetClientPosition();
     DragStartFraction  = LabelColumnFraction;
     DragStartWidth     = LabelColumnWidth;
+
+    InvalidatePaint();
 
     if (FApplication::IsInitialized())
     {
@@ -347,6 +351,7 @@ FEventResponse FPropertyTable::OnMouseButtonUp(const FCursorEvent& CursorEvent)
     {
         const int32 ReleasedRow = PressedRevertRow;
         PressedRevertRow        = InvalidRowIndex;
+        InvalidatePaint();
 
         if (FindRevertRowAtPoint(CursorEvent.GetClientPosition()) == ReleasedRow)
         {
@@ -363,6 +368,7 @@ FEventResponse FPropertyTable::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 
     bIsDraggingDivider = false;
     bIsDividerHovered  = IsPointOnDivider(CursorEvent.GetClientPosition());
+    InvalidatePaint();
 
     if (FApplication::IsInitialized())
     {
@@ -380,8 +386,16 @@ FEventResponse FPropertyTable::OnMouseMove(const FCursorEvent& CursorEvent)
     {
         UpdateHoveredRow(Position);
 
-        HoveredRevertRow  = FindRevertRowAtPoint(Position);
-        bIsDividerHovered = IsPointOnDivider(Position);
+        const int32 NewHoveredRevertRow = FindRevertRowAtPoint(Position);
+        const bool  bNewDividerHovered  = IsPointOnDivider(Position);
+
+        if (HoveredRevertRow != NewHoveredRevertRow || bIsDividerHovered != bNewDividerHovered)
+        {
+            HoveredRevertRow  = NewHoveredRevertRow;
+            bIsDividerHovered = bNewDividerHovered;
+
+            InvalidatePaint();
+        }
 
         return bIsDividerHovered ? FEventResponse::Handled() : FEventResponse::Unhandled();
     }
@@ -415,8 +429,13 @@ FEventResponse FPropertyTable::OnMouseLeft(const FCursorEvent& CursorEvent)
 {
     ClearHoveredRow();
 
-    HoveredRevertRow = InvalidRowIndex;
-    PressedRevertRow = InvalidRowIndex;
+    if (HoveredRevertRow != InvalidRowIndex || PressedRevertRow != InvalidRowIndex)
+    {
+        HoveredRevertRow = InvalidRowIndex;
+        PressedRevertRow = InvalidRowIndex;
+
+        InvalidatePaint();
+    }
 
     return FVisualElement::OnMouseLeft(CursorEvent);
 }
@@ -497,7 +516,14 @@ const FPropertyRow& FPropertyTable::GetRow(int32 Index) const
 
 void FPropertyTable::SetLabelColumnFraction(float InFraction)
 {
-    LabelColumnFraction = Math::Clamp(InFraction, MinLabelColumnFraction, MaxLabelColumnFraction);
+    const float ClampedFraction = Math::Clamp(InFraction, MinLabelColumnFraction, MaxLabelColumnFraction);
+    if (LabelColumnFraction == ClampedFraction)
+    {
+        return;
+    }
+
+    LabelColumnFraction = ClampedFraction;
+    InvalidateDesiredSize();
 }
 
 FRectangle FPropertyTable::GetRowRectangle(int32 Index, const FRectangle& Bounds) const
@@ -702,6 +728,7 @@ void FPropertyTable::UpdateHoveredRow(const IntVector2& ClientPosition)
 
     ClearHoveredRow();
     HoveredRowIndex = RowIndex;
+    InvalidatePaint();
 
     if (RowIndex == InvalidRowIndex)
     {
@@ -728,6 +755,8 @@ void FPropertyTable::ClearHoveredRow()
     }
 
     HoveredRowIndex = InvalidRowIndex;
+    InvalidatePaint();
+
     FToolTipService::Get().CancelToolTip(AsSharedPtr());
 }
 

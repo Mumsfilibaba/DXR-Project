@@ -82,31 +82,37 @@ int32 FBorder::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
 void FBorder::SetBackgroundColor(const FFloatColor& InBackgroundColor)
 {
     BackgroundColor = InBackgroundColor;
+    InvalidatePaint();
 }
 
 void FBorder::SetBorderColor(const FFloatColor& InBorderColor)
 {
     BorderColor = InBorderColor;
+    InvalidatePaint();
 }
 
 void FBorder::SetCornerRadius(const FCornerRadii& InCornerRadius)
 {
     CornerRadius = InCornerRadius;
+    InvalidatePaint();
 }
 
 void FBorder::SetOuterCornerRadius(float InCornerRadius)
 {
     CornerRadius = FCornerRadii(InCornerRadius);
+    InvalidatePaint();
 }
 
 void FBorder::SetDrawBorderOverContent(bool bInDrawBorderOverContent)
 {
     bDrawBorderOverContent = bInDrawBorderOverContent;
+    InvalidatePaint();
 }
 
 void FBorder::SetBorderThickness(float InBorderThickness)
 {
     BorderThickness = InBorderThickness;
+    InvalidatePaint();
 }
 
 bool FBorder::GetCursor(ECursor& OutCursor) const

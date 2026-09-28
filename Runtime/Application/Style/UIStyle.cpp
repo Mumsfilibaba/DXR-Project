@@ -1,4 +1,5 @@
 #include "Application/Style/UIStyle.h"
+#include "Application/Draw/DrawCache.h"
 #include "Application/Text/IFontFace.h"
 
 static FUIStyle GDefaultStyle;
@@ -21,11 +22,14 @@ const FUIStyle& FUIStyle::GetDefault()
 void FUIStyle::SetDefault(const FUIStyle& InStyle)
 {
     GDefaultStyle = InStyle;
+
+    DrawCacheEpoch::Advance();
 }
 
 void FUIStyle::ResetDefault()
 {
     GDefaultStyle = FUIStyle();
+    DrawCacheEpoch::Advance();
 }
 
 const FFloatColor& FUIStyle::GetControlColor(EInteractionState State) const

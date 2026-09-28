@@ -44,6 +44,8 @@ FHistogram::~FHistogram() = default;
 
 void FHistogram::Initialize(const FDesc& Desc)
 {
+    SetDrawCachePolicy(EDrawCachePolicy::Never);
+
     Font             = Desc.Font;
     Label            = Desc.Label;
     BarColor         = Desc.BarColor;

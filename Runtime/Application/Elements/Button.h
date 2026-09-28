@@ -141,8 +141,11 @@ protected:
 
     // FInteractiveElement Interface
     virtual void OnClicked() override;
+    virtual void OnInteractionStateChanged() override;
 
 private:
+    void ApplyLabelColor();
+
     TSharedPtr<class FTextBlock> Label;
     TSharedPtr<IFontFace>        Font;
     FCornerRadii                 CornerRadius;

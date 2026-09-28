@@ -376,6 +376,8 @@ void FMenuStack::CloseLayer(const FMenuHandle& Menu)
         return;
     }
 
+    Menu->OnDismissed.ExecuteIfBound();
+
     if (Menu->bIsInline)
     {
         if (Menu->HostWindow)

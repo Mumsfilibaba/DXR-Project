@@ -48,6 +48,8 @@ FEditableText::~FEditableText() = default;
 
 void FEditableText::Initialize(const FDesc& Desc)
 {
+    SetDrawCachePolicy(EDrawCachePolicy::Never);
+
     Text                  = Desc.Text;
     HintText              = Desc.HintText;
     Font                  = Desc.Font;

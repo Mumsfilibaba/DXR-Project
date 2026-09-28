@@ -43,6 +43,8 @@ FLogView::~FLogView()
 
 void FLogView::Initialize(const FDesc& Desc)
 {
+    SetDrawCachePolicy(EDrawCachePolicy::Never);
+
     Font                = Desc.Font;
     MaxLineCount        = Math::Max(1, Desc.MaxLineCount);
     bAutoScroll         = Desc.bAutoScroll;
