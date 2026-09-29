@@ -2,17 +2,18 @@
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Queue.h"
 #include "Core/Containers/String.h"
+#include "Core/Containers/StringView.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Threading/Atomic/AtomicInt.h"
 #include "MetalRHI/MetalDeviceChild.h"
 #include "MetalRHI/MetalDeletionQueue.h"
+#include "MetalRHI/MetalEncoderManager.h"
 #include "MetalRHI/MetalRecyclePool.h"
 #include "MetalRHI/MetalResource.h"
 
 class FMetalDevice;
+class FMetalQueue;
 class FMetalCommandContext;
-class FMetalBufferRHI;
-class FMetalTextureRHI;
 struct FMetalCommands;
 struct FMetalQueryRHI;
 
@@ -21,13 +22,41 @@ enum class EMetalQueueType : uint8
     Direct  = 0,
     Compute = 1,
     Copy    = 2,
+    Count   = 3,
 };
 
-struct FMetalQueueFence
+struct FMetalSyncPoint
 {
-    id<MTLSharedEvent> Event;
-    uint64             Value;
-    bool               bEncoded;
+    FMetalQueue* Queue = nullptr;
+    uint64       Value = 0;
+};
+
+struct FMetalBreadcrumbRing
+{
+    static constexpr uint32 NumEntries  = 64;
+    static constexpr uint32 EntryLength = 48;
+
+    void Push(const StringView& Name);
+
+    void Reset()
+    {
+        Head  = 0;
+        Count = 0;
+    }
+
+    template<typename FunctionType>
+    void ForEach(FunctionType&& Function) const
+    {
+        const uint32 First = (Head + NumEntries - Count) % NumEntries;
+        for (uint32 Index = 0; Index < Count; ++Index)
+        {
+            Function(Entries[(First + Index) % NumEntries]);
+        }
+    }
+
+    CHAR   Entries[NumEntries][EntryLength];
+    uint32 Head  = 0;
+    uint32 Count = 0;
 };
 
 class FMetalQueue : public FMetalDeviceChild
@@ -73,11 +102,18 @@ public:
         return SubmissionEvent;
     }
 
+    FMetalEncoderFence& GetEncoderFence()
+    {
+        return EncoderFence;
+    }
+
 private:
     void RecycleCommands(FMetalCommands* Commands);
 
     id<MTLCommandQueue>                       CommandQueue;
+    MTLCommandBufferDescriptor*               CommandBufferDescriptor;
     id<MTLSharedEvent>                        SubmissionEvent;
+    FMetalEncoderFence                        EncoderFence;
     TAtomicInt<uint64>                        NextSubmissionValue;
     TQueue<FMetalCommands*, EQueueType::MPSC> PendingSubmissions;
     TArray<FMetalCommands*>                   FreeCommands;
@@ -88,16 +124,20 @@ private:
     EMetalQueueType                           QueueType;
 };
 
+struct FMetalEventValue
+{
+    id<MTLSharedEvent> Event = nil;
+    uint64             Value = 0;
+};
+
 struct FMetalCommands
 {
-    static constexpr int32 MaxBreadcrumbs = 64;
-
     FMetalCommands(FMetalDevice* InDevice, FMetalQueue* InQueue);
     ~FMetalCommands();
 
+    void Reset();
     void PostExecute();
-    void RecordBreadcrumb(const String& Name);
-    void AddWait(FMetalQueue* Producer, uint64 Value);
+    void AddWait(const FMetalSyncPoint& SyncPoint);
     void EncodePendingWaits();
 
     FMetalQueue*                  Queue;
@@ -106,37 +146,8 @@ struct FMetalCommands
     uint64                        SubmissionValue;
     TArray<FMetalDeferredObject>  DeferredObjects;
     TArray<FMetalQueryRHI*>       PendingQueries;
-    TArray<id<MTLSharedEvent>>    PendingSignalEvents;
-    TArray<uint64>                PendingSignalValues;
-    TArray<FMetalQueueFence>      PendingWaits;
-    TArray<FMetalBufferRHI*>      UsedBuffers;
-    TArray<FMetalTextureRHI*>     UsedTextures;
-    TArray<String>                Breadcrumbs;
-    String                        DebugLabel;
-};
-
-class FMetalUploadBatch
-{
-public:
-    explicit FMetalUploadBatch(FMetalDevice* InDevice);
-    ~FMetalUploadBatch();
-
-    bool CreateStagingBuffer(uint64 Size, FMetalResourceStorage& OutStorage);
-    uint64 Submit();
-
-    bool IsValid() const
-    {
-        return BlitEncoder != nil;
-    }
-
-    id<MTLBlitCommandEncoder> GetBlitEncoder() const
-    {
-        return BlitEncoder;
-    }
-
-private:
-    FMetalDevice*             Device;
-    FMetalQueue*              Queue;
-    FMetalCommands*           Commands;
-    id<MTLBlitCommandEncoder> BlitEncoder;
+    TArray<FMetalEventValue>      PendingSignals;
+    TArray<FMetalSyncPoint>       PendingWaits;
+    FMetalBreadcrumbRing          Breadcrumbs;
+    bool                          bUpdatesEncoderFence;
 };

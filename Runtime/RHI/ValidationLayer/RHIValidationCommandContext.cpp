@@ -599,6 +599,7 @@ void FRHIValidationCommandContext::SetGraphicsPipelineState(FRHIGraphicsPipeline
     }
 
     GraphicsPipelineState = PipelineState;
+    MeshletPipelineState  = nullptr;
     CommandContext->SetGraphicsPipelineState(PipelineState);
 }
 
@@ -649,7 +650,8 @@ void FRHIValidationCommandContext::SetMeshletPipelineState(FRHIMeshletPipelineSt
         return;
     }
 
-    MeshletPipelineState = PipelineState;
+    MeshletPipelineState  = PipelineState;
+    GraphicsPipelineState = nullptr;
     CommandContext->SetMeshletPipelineState(PipelineState);
 }
 

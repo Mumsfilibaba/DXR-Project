@@ -19,7 +19,7 @@
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalDeletionQueue.h"
 #include "MetalRHI/MetalTypeTraits.h"
-#include "MetalRHI/MetalBufferClear.h"
+#include "MetalRHI/MetalUAVClear.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -40,19 +40,21 @@ public:
     template<typename... ArgTypes>
     static void DeferDeletion(ArgTypes&&... Args)
     {
-        Get()->DeferDeletionInternal(Forward<ArgTypes>(Args)...);
+        FMetalDeviceRHI* DeviceRHI = Get();
+        TScopedLock Lock(DeviceRHI->DeferredObjectsCS);
+        DeviceRHI->DeferredObjects.Emplace(Forward<ArgTypes>(Args)...);
     }
 
-    template<typename TRHIType>
-    static FORCEINLINE typename TAddPointer<typename TMetalRHIResourceType<TRHIType>::Type>::Type ResourceCast(TRHIType* Resource)
+    template<typename RHIType>
+    static FORCEINLINE typename TAddPointer<typename TMetalRHIResourceType<RHIType>::Type>::Type ResourceCast(RHIType* Resource)
     {
-        return static_cast<typename TAddPointer<typename TMetalRHIResourceType<TRHIType>::Type>::Type>(Resource);
+        return static_cast<typename TAddPointer<typename TMetalRHIResourceType<RHIType>::Type>::Type>(Resource);
     }
 
-    template<typename TRHIType>
-    static FORCEINLINE typename TAddPointer<const typename TMetalRHIResourceType<TRHIType>::Type>::Type ResourceCast(const TRHIType* Resource)
+    template<typename RHIType>
+    static FORCEINLINE typename TAddPointer<const typename TMetalRHIResourceType<RHIType>::Type>::Type ResourceCast(const RHIType* Resource)
     {
-        return static_cast<typename TAddPointer<const typename TMetalRHIResourceType<TRHIType>::Type>::Type>(Resource);
+        return static_cast<typename TAddPointer<const typename TMetalRHIResourceType<RHIType>::Type>::Type>(Resource);
     }
 
 public:
@@ -139,29 +141,20 @@ public:
         return Device;
     }
 
-    FMetalBufferClearPipelines& GetBufferClearPipelines()
+    FMetalUAVClearPipelines& GetUAVClearPipelines()
     {
-        return BufferClearPipelines;
-    }
-
-    FMetalCommandContext* ObtainMetalCommandContext()
-    {
-        return CommandContext;
+        return UAVClearPipelines;
     }
 
 private:
-    template<typename... ArgTypes>
-    void DeferDeletionInternal(ArgTypes&&... Args)
-    {
-        TScopedLock Lock(DeferredObjectsCS);
-        DeferredObjects.Emplace(Forward<ArgTypes>(Args)...);
-    }
-
     typedef TMap<FRHISamplerStateDesc, TSharedRef<FMetalSamplerStateRHI>> FSamplerStateMap;
+
+    template<typename MetalShaderType>
+    MetalShaderType* CreateShader(const TArray<uint8>& ShaderCode);
 
     FMetalDevice*                Device;
     FMetalCommandContext*        CommandContext;
-    FMetalBufferClearPipelines   BufferClearPipelines;
+    FMetalUAVClearPipelines      UAVClearPipelines;
     TArray<FMetalDeferredObject> DeferredObjects;
     FCriticalSection             DeferredObjectsCS;
     FSamplerStateMap             SamplerStateMap;

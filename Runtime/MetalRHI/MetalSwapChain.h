@@ -51,11 +51,6 @@ public:
         return MetalLayer;
     }
 
-    FMetalWindowView* GetMetalView() const
-    {
-        return MetalView;
-    }
-    
 private:
     bool RefreshBackBuffer();
     bool ApplyLayerColorSpace();

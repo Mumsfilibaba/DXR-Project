@@ -8,7 +8,6 @@
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 typedef TSharedRef<class FMetalInputLayoutRHI>             FMetalVertexInputLayoutRef;
-typedef TSharedRef<class FMetalDepthStencilStateRHI>       FMetalDepthStencilStateRef;
 typedef TSharedRef<class FMetalGraphicsPipelineStateRHI>   FMetalGraphicsPipelineStateRef;
 typedef TSharedRef<class FMetalComputePipelineStateRHI>    FMetalComputePipelineStateRef;
 typedef TSharedRef<class FMetalMeshletPipelineStateRHI>    FMetalMeshletPipelineStateRef;
@@ -42,24 +41,14 @@ private:
     uint32                       NumVertexStreams;
 };
 
-class FMetalDepthStencilStateRHI : public FRHIDepthStencilState, public FMetalDeviceChild
+class FMetalDepthStencilStateRHI : public FRHIDepthStencilState
 {
 public:
-    FMetalDepthStencilStateRHI(FMetalDevice* InDevice, const FRHIDepthStencilStateDesc& InDesc);
+    FMetalDepthStencilStateRHI(const FRHIDepthStencilStateDesc& InDesc);
     virtual ~FMetalDepthStencilStateRHI();
 
     // FRHIDepthStencilState Interface
     virtual void* GetRHINativeState() const override final;
-
-    bool Initialize();
-
-    id<MTLDepthStencilState> GetMTLDepthStencilState() const
-    {
-        return DepthStencilState;
-    }
-
-private:
-    id<MTLDepthStencilState> DepthStencilState;
 };
 
 class FMetalRasterizerStateRHI : public FRHIRasterizerState
@@ -70,26 +59,6 @@ public:
 
     // FRHIRasterizerState Interface
     virtual void* GetRHINativeState() const override final;
-
-    MTLTriangleFillMode GetMTLFillMode() const
-    {
-        return FillMode;
-    }
-
-    MTLWinding GetMTLFrontFaceWinding() const
-    {
-        return FrontFaceWinding;
-    }
-
-    MTLCullMode GetMTLCullMode() const
-    {
-        return CullMode;
-    }
-
-private:
-    MTLTriangleFillMode FillMode;
-    MTLWinding          FrontFaceWinding;
-    MTLCullMode         CullMode;
 };
 
 class FMetalBlendStateRHI : public FRHIBlendState
@@ -135,85 +104,123 @@ private:
     bool             bLogicOpEnable;
 };
 
+static_assert(MAX_CONSTANT_BUFFERS <= 16 && MAX_SRVS <= 16 && MAX_UAVS <= 16 && MAX_SAMPLER_STATES <= 16, "Bind plan masks are 16 bits wide");
+
+struct FMetalStageBindPlan
+{
+    bool operator==(const FMetalStageBindPlan&) const = default;
+
+    uint8  ConstantBufferSlots[MAX_CONSTANT_BUFFERS];
+    uint8  ShaderResourceSlots[MAX_SRVS];
+    uint8  UnorderedAccessSlots[MAX_UAVS];
+    uint8  SamplerSlots[MAX_SAMPLER_STATES];
+    uint16 ConstantBufferMask;
+    uint16 ShaderResourceMask;
+    uint16 ShaderResourceBufferMask;
+    uint16 UnorderedAccessMask;
+    uint16 UnorderedAccessBufferMask;
+    uint16 SamplerMask;
+    uint16 StaticSamplerMask;
+    uint8  ShaderConstantsSlot;
+    uint8  ResourceHeapSlot;
+    uint8  SamplerHeapSlot;
+    uint8  NumShaderConstants;
+    uint8  ShaderResourceNullTypes[MAX_SRVS];
+    uint8  UnorderedAccessNullTypes[MAX_UAVS];
+};
+
 struct FMetalPipelineBindingLayout
 {
-public:
     static constexpr uint8 InvalidSlot = UINT8_MAX;
 
-public:
     FMetalPipelineBindingLayout();
     ~FMetalPipelineBindingLayout();
 
-    void Reset();
-
-    bool Collect(const TArray<FMSLShaderBinding>& ShaderBindings, EShaderVisibility::Type ShaderStage, uint16 InShaderConstantsSize);
+    bool Collect(const TArray<FMSLShaderBinding>& ShaderBindings, EShaderVisibility::Type Stage, uint16 ShaderConstantsSize);
+    void PruneToReflection(EShaderVisibility::Type Stage, NSArray<id<MTLBinding>>* ReflectedBindings);
     bool ConflictsWithVertexInputs(const FMetalInputLayoutRHI* InputLayout) const;
 
-    bool IsSlotUsed(EShaderVisibility::Type ShaderStage, EMSLBindingTable BindingTable, uint8 Slot) const;
-    void PruneUnusedSlots(EShaderVisibility::Type ShaderStage, uint64 UsedBufferMask, const uint64 UsedTextureMask[2], uint64 UsedSamplerMask);
-
-    uint8 GetSlot(EShaderVisibility::Type ShaderVisibility, EMSLBindingType BindingType, uint32 RegisterIndex) const;
-
-    uint16 GetShaderConstantsSize(EShaderVisibility::Type ShaderStage) const
-    {
-        return ShaderConstantsSize[ShaderStage];
-    }
-
-    uint8 GetResourceHeapSlot(EShaderVisibility::Type ShaderStage) const
-    {
-        return ResourceHeapSlot[ShaderStage];
-    }
-
-    uint8 GetSamplerHeapSlot(EShaderVisibility::Type ShaderStage) const
-    {
-        return SamplerHeapSlot[ShaderStage];
-    }
+    uint8 GetSlot(EShaderVisibility::Type Stage, EMSLBindingType BindingType, uint32 RegisterIndex) const;
 
     bool UsesBindlessHeaps() const
     {
-        for (uint32 ShaderStage = 0; ShaderStage < EShaderVisibility::Count; ++ShaderStage)
-        {
-            if (ResourceHeapSlot[ShaderStage] != InvalidSlot || SamplerHeapSlot[ShaderStage] != InvalidSlot)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return bUsesBindlessHeaps;
     }
 
-private:
-    void MarkSlotUsed(EShaderVisibility::Type ShaderStage, EMSLBindingTable BindingTable, uint8 Slot);
-
-    TStaticArray<uint8, MAX_CONSTANT_BUFFERS> ConstantBuffers[EShaderVisibility::Count];
-    TStaticArray<uint8, MAX_SRVS>             ShaderResourceBuffers[EShaderVisibility::Count];
-    TStaticArray<uint8, MAX_SRVS>             ShaderResourceTextures[EShaderVisibility::Count];
-    TStaticArray<uint8, MAX_UAVS>             UnorderedAccessBuffers[EShaderVisibility::Count];
-    TStaticArray<uint8, MAX_UAVS>             UnorderedAccessTextures[EShaderVisibility::Count];
-    TStaticArray<uint8, MAX_SAMPLER_STATES>   Samplers[EShaderVisibility::Count];
-    uint8                                     ShaderConstants[EShaderVisibility::Count];
-    uint8                                     ResourceHeapSlot[EShaderVisibility::Count];
-    uint8                                     SamplerHeapSlot[EShaderVisibility::Count];
-    uint16                                    ShaderConstantsSize[EShaderVisibility::Count];
-    // One bit per slot of each table, so a slot the stage never declares can be told apart from a bound one
-    uint64                                    BufferSlotMask[EShaderVisibility::Count];
-    uint64                                    TextureSlotMask[EShaderVisibility::Count][2];
-    uint64                                    SamplerSlotMask[EShaderVisibility::Count];
+    FMetalStageBindPlan Stages[EShaderVisibility::Count];
+    bool                bUsesBindlessHeaps;
 };
 
 struct FMetalStaticSamplerBinding
 {
-    /** @brief Stage whose sampler table this entry occupies. */
-    EShaderVisibility::Type Stage;
-
-    /** @brief HLSL s# register. */
-    uint8 RegisterIndex;
-
-    /** @brief Sampler created from the static-sampler desc. */
+    EShaderVisibility::Type           Stage;
+    uint8                             RegisterIndex;
     TSharedRef<FMetalSamplerStateRHI> Sampler;
 };
 
-struct FMetalSamplerStateCache;
+enum class EMetalRenderPipelineType : uint8
+{
+    Graphics = 0,
+    Meshlet  = 1,
+};
+
+struct FMetalRenderStateBlock
+{
+    bool operator==(const FMetalRenderStateBlock&) const = default;
+
+    id<MTLDepthStencilState> DepthStencilState  = nil;
+    MTLWinding               FrontFacingWinding = MTLWindingClockwise;
+    MTLCullMode              CullMode           = MTLCullModeNone;
+    MTLTriangleFillMode      FillMode           = MTLTriangleFillModeFill;
+    MTLDepthClipMode         DepthClipMode      = MTLDepthClipModeClip;
+};
+
+class FMetalRenderPipeline : public FMetalDeviceChild
+{
+public:
+    FMetalRenderPipeline(FMetalDevice* InDevice, EMetalRenderPipelineType InType);
+    virtual ~FMetalRenderPipeline();
+
+    bool Initialize(
+        const FRHIDepthStencilStateDesc&   DepthStencilDesc, 
+        const FRHIRasterizerStateDesc&     RasterizerDesc, 
+        const FRHIGraphicsPipelineFormats& Formats,
+        const FRHIViewInstancingState&     InViewInstancing);
+
+    bool CreateStaticSamplers(const TArrayView<const FRHIStaticSamplerInfo>& Infos);
+    void SetPipelineState(id<MTLRenderPipelineState> InPipelineState, MTLRenderPipelineReflection* Reflection);
+
+    void Apply(id<MTLRenderCommandEncoder> Encoder, const FMetalRenderPipeline* Previous) const;
+
+    FMetalPipelineBindingLayout&              GetBindings()               { return Bindings; }
+    const FMetalPipelineBindingLayout&        GetBindings()         const { return Bindings; }
+    const TArray<FMetalStaticSamplerBinding>& GetStaticSamplers()   const { return StaticSamplers; }
+    id<MTLRenderPipelineState>                GetMTLPipelineState() const { return PipelineState; }
+    MTLPrimitiveType                          GetPrimitiveType()    const { return PrimitiveType; }
+    EMetalRenderPipelineType                  GetType()             const { return Type; }
+    const FRHIViewInstancingState&            GetViewInstancing()   const { return ViewInstancing; }
+    uint32                                    GetNumVertexStreams() const { return NumVertexStreams; }
+
+    void SetPrimitiveType(MTLPrimitiveType InPrimitiveType)
+    {
+        PrimitiveType = InPrimitiveType;
+    }
+
+    void SetNumVertexStreams(uint32 InNumVertexStreams)
+    {
+        NumVertexStreams = InNumVertexStreams;
+    }
+
+private:
+    EMetalRenderPipelineType           Type;
+    id<MTLRenderPipelineState>         PipelineState;
+    FMetalRenderStateBlock             RenderState;
+    FMetalPipelineBindingLayout        Bindings;
+    TArray<FMetalStaticSamplerBinding> StaticSamplers;
+    MTLPrimitiveType                   PrimitiveType;
+    FRHIViewInstancingState            ViewInstancing;
+    uint32                             NumVertexStreams;
+};
 
 class FMetalGraphicsPipelineStateRHI : public FRHIGraphicsPipelineState, public FMetalDeviceChild
 {
@@ -229,56 +236,18 @@ public:
 
     bool Initialize();
 
-    void ApplyStaticSamplers(FMetalSamplerStateCache& Cache) const;
-    bool HasStaticSampler(EShaderVisibility::Type ShaderStage, uint32 RegisterIndex) const;
-
-    uint32 GetNumVertexStreams() const;
-
-    FMetalBlendStateRHI*        GetMetalBlendState()        const { return BlendState.Get(); }
-    FMetalDepthStencilStateRHI* GetMetalDepthStencilState() const { return DepthStencilState.Get(); }
-    FMetalRasterizerStateRHI*   GetMetalRasterizerState()   const { return RasterizerState.Get(); }
-
-    const FMetalPipelineBindingLayout& GetBindings() const
-    {
-        return Bindings;
-    }
-
-    id<MTLRenderPipelineState> GetMTLPipelineState() const
-    {
-        return PipelineState;
-    }
-
-    MTLPrimitiveType GetMTLPrimitiveType() const
-    {
-        return PrimitiveType;
-    }
-
-    const FRHIViewInstancingState& GetViewInstancingState() const
-    {
-        return Desc.ViewInstancingState;
-    }
-
-    bool HasDepthStencilAttachment() const
-    {
-        return Desc.RasterizerOutputFormats.DepthStencilFormat != EFormat::Unknown;
-    }
+    const FMetalRenderPipeline& GetRenderPipeline() const { return RenderPipeline; }
 
 private:
-    FRHIGraphicsPipelineStateDesc          Desc;
-    TSharedRef<FMetalBlendStateRHI>        BlendState;
-    TSharedRef<FMetalDepthStencilStateRHI> DepthStencilState;
-    TSharedRef<FMetalRasterizerStateRHI>   RasterizerState;
-    id<MTLRenderPipelineState>             PipelineState;
-    FMetalPipelineBindingLayout            Bindings;
-    TArray<FMetalStaticSamplerBinding>     StaticSamplers;
-    MTLPrimitiveType                       PrimitiveType;
-    String                                 DebugName;
+    FRHIGraphicsPipelineStateDesc Desc;
+    FMetalRenderPipeline          RenderPipeline;
+    String                        DebugName;
 };
 
 class FMetalComputePipelineStateRHI : public FRHIComputePipelineState, public FMetalDeviceChild
 {
 public:
-    FMetalComputePipelineStateRHI(FMetalDevice* InDevice);
+    FMetalComputePipelineStateRHI(FMetalDevice* InDevice, const FRHIComputePipelineStateDesc& InDesc);
     virtual ~FMetalComputePipelineStateRHI();
 
     // FRHIPipelineState Interface
@@ -287,32 +256,19 @@ public:
     virtual void SetDebugName(const String& InName)       override final;
     virtual void GetDebugName(String& OutDebugName) const override final;
 
-    bool Initialize(const FRHIComputePipelineStateDesc& InDesc);
+    bool Initialize();
 
-    void ApplyStaticSamplers(FMetalSamplerStateCache& Cache) const;
-    bool HasStaticSampler(EShaderVisibility::Type ShaderStage, uint32 RegisterIndex) const;
-
-    const FMetalPipelineBindingLayout& GetBindings() const
-    {
-        return Bindings;
-    }
-
-    id<MTLComputePipelineState> GetMTLPipelineState() const
-    {
-        return PipelineState;
-    }
-
-    uint16 GetThreadGroupSizeX() const { return ThreadGroupSizeX; }
-    uint16 GetThreadGroupSizeY() const { return ThreadGroupSizeY; }
-    uint16 GetThreadGroupSizeZ() const { return ThreadGroupSizeZ; }
+    const FMetalPipelineBindingLayout&        GetBindings() const              { return Bindings; }
+    const TArray<FMetalStaticSamplerBinding>& GetStaticSamplers() const        { return StaticSamplers; }
+    id<MTLComputePipelineState>               GetMTLPipelineState() const      { return PipelineState; }
+    MTLSize                                   GetThreadsPerThreadgroup() const { return ThreadsPerThreadgroup; }
 
 private:
+    FRHIComputePipelineStateDesc       Desc;
     id<MTLComputePipelineState>        PipelineState;
     FMetalPipelineBindingLayout        Bindings;
     TArray<FMetalStaticSamplerBinding> StaticSamplers;
-    uint16                             ThreadGroupSizeX;
-    uint16                             ThreadGroupSizeY;
-    uint16                             ThreadGroupSizeZ;
+    MTLSize                            ThreadsPerThreadgroup;
     String                             DebugName;
 };
 
@@ -330,57 +286,16 @@ public:
 
     bool Initialize();
 
-    void ApplyStaticSamplers(FMetalSamplerStateCache& Cache) const;
-    bool HasStaticSampler(EShaderVisibility::Type ShaderStage, uint32 RegisterIndex) const;
-
-    FMetalDepthStencilStateRHI* GetMetalDepthStencilState() const { return DepthStencilState.Get(); }
-    FMetalRasterizerStateRHI*   GetMetalRasterizerState()   const { return RasterizerState.Get(); }
-
-    const FMetalPipelineBindingLayout& GetBindings() const
-    {
-        return Bindings;
-    }
-
-    id<MTLRenderPipelineState> GetMTLPipelineState() const
-    {
-        return PipelineState;
-    }
-
-    MTLSize GetMeshThreadgroupSize() const
-    {
-        return MTLSizeMake(MeshThreadGroupSizeX, MeshThreadGroupSizeY, MeshThreadGroupSizeZ);
-    }
-
-    MTLSize GetObjectThreadgroupSize() const
-    {
-        return MTLSizeMake(ObjectThreadGroupSizeX, ObjectThreadGroupSizeY, ObjectThreadGroupSizeZ);
-    }
-
-    const FRHIViewInstancingState& GetViewInstancingState() const
-    {
-        return Desc.ViewInstancingState;
-    }
-
-    bool HasDepthStencilAttachment() const
-    {
-        return Desc.RasterizerOutputFormats.DepthStencilFormat != EFormat::Unknown;
-    }
+    const FMetalRenderPipeline& GetRenderPipeline() const        { return RenderPipeline; }
+    MTLSize                     GetMeshThreadgroupSize() const   { return MeshThreadgroupSize; }
+    MTLSize                     GetObjectThreadgroupSize() const { return ObjectThreadgroupSize; }
 
 private:
-    FRHIMeshletPipelineStateDesc           Desc;
-    TSharedRef<FMetalBlendStateRHI>        BlendState;
-    TSharedRef<FMetalDepthStencilStateRHI> DepthStencilState;
-    TSharedRef<FMetalRasterizerStateRHI>   RasterizerState;
-    id<MTLRenderPipelineState>             PipelineState;
-    FMetalPipelineBindingLayout            Bindings;
-    TArray<FMetalStaticSamplerBinding>     StaticSamplers;
-    uint16                                 MeshThreadGroupSizeX;
-    uint16                                 MeshThreadGroupSizeY;
-    uint16                                 MeshThreadGroupSizeZ;
-    uint16                                 ObjectThreadGroupSizeX;
-    uint16                                 ObjectThreadGroupSizeY;
-    uint16                                 ObjectThreadGroupSizeZ;
-    String                                 DebugName;
+    FRHIMeshletPipelineStateDesc Desc;
+    FMetalRenderPipeline         RenderPipeline;
+    MTLSize                      MeshThreadgroupSize;
+    MTLSize                      ObjectThreadgroupSize;
+    String                       DebugName;
 };
 
 class FMetalRayTracingPipelineStateRHI : public FRHIRayTracingPipelineState, public FMetalDeviceChild

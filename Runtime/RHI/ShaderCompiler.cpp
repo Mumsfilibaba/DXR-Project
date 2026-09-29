@@ -518,6 +518,74 @@ static bool GatherMSLResources(spvc_compiler Compiler, spvc_resources Resources,
     return true;
 }
 
+static uint8 GetMSLNullTextureType(spvc_compiler Compiler, const FMSLReflectedResource& Resource)
+{
+    if (Resource.BindingType != EMSLBindingType::ShaderResourceTexture && Resource.BindingType != EMSLBindingType::UnorderedAccessTexture)
+    {
+        return 0;
+    }
+
+    const spvc_type Type = spvc_compiler_get_type_handle(Compiler, Resource.BaseTypeId);
+    if (spvc_type_get_basetype(Type) != SPVC_BASETYPE_IMAGE)
+    {
+        return 0;
+    }
+
+    const bool bArrayed      = spvc_type_get_image_arrayed(Type);
+    const bool bMultisampled = spvc_type_get_image_multisampled(Type);
+
+    EMSLTextureDimension Dimension = EMSLTextureDimension::Texture2D;
+    switch (spvc_type_get_image_dimension(Type))
+    {
+        case SpvDim1D:
+            Dimension = bArrayed ? EMSLTextureDimension::Texture1DArray : EMSLTextureDimension::Texture1D;
+            break;
+        case SpvDim2D:
+            Dimension = bMultisampled ? EMSLTextureDimension::Texture2DMS : (bArrayed ? EMSLTextureDimension::Texture2DArray : EMSLTextureDimension::Texture2D);
+            break;
+        case SpvDimCube:
+            Dimension = bArrayed ? EMSLTextureDimension::TextureCubeArray : EMSLTextureDimension::TextureCube;
+            break;
+        case SpvDim3D:
+            Dimension = EMSLTextureDimension::Texture3D;
+            break;
+        case SpvDimBuffer:
+            Dimension = EMSLTextureDimension::TextureBuffer;
+            break;
+        default:
+            break;
+    }
+
+    EMSLTextureComponent Component = EMSLTextureComponent::Float;
+    if (Resource.BindingType == EMSLBindingType::ShaderResourceTexture && spvc_compiler_variable_is_depth_or_compare(Compiler, Resource.Id))
+    {
+        Component = EMSLTextureComponent::Depth;
+    }
+    else
+    {
+        const spvc_type SampledType = spvc_compiler_get_type_handle(Compiler, spvc_type_get_image_sampled_type(Type));
+        switch (spvc_type_get_basetype(SampledType))
+        {
+            case SPVC_BASETYPE_INT8:
+            case SPVC_BASETYPE_INT16:
+            case SPVC_BASETYPE_INT32:
+            case SPVC_BASETYPE_INT64:
+                Component = EMSLTextureComponent::Int;
+                break;
+            case SPVC_BASETYPE_UINT8:
+            case SPVC_BASETYPE_UINT16:
+            case SPVC_BASETYPE_UINT32:
+            case SPVC_BASETYPE_UINT64:
+                Component = EMSLTextureComponent::Uint;
+                break;
+            default:
+                break;
+        }
+    }
+
+    return MakeMSLNullTextureType(Dimension, Component);
+}
+
 FShaderCompiler* FShaderCompiler::ShaderCompiler = nullptr;
 
 FShaderCompiler::FShaderCompiler(const String& InAssetPath)
@@ -1300,7 +1368,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
             }
         }
 
-        Bindings.Emplace(FMSLShaderBinding{ ReflectedResource.BindingType, ReflectedResource.RegisterIndex, static_cast<uint8>(Slot), 0 });
+        Bindings.Emplace(FMSLShaderBinding{ ReflectedResource.BindingType, ReflectedResource.RegisterIndex, static_cast<uint8>(Slot), GetMSLNullTextureType(CompilerMSL, ReflectedResource) });
     }
 
     uint16 ShaderConstantsSize = 0;
@@ -1362,7 +1430,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
         }
     }
 
-    if (CompileInfo.ShaderStage == EShaderStage::Compute)
+    if (CompileInfo.ShaderStage == EShaderStage::Compute || CompileInfo.ShaderStage == EShaderStage::Mesh || CompileInfo.ShaderStage == EShaderStage::Amplification)
     {
         Header.ThreadGroupSizeX = static_cast<uint16>(spvc_compiler_get_execution_mode_argument_by_index(CompilerMSL, SpvExecutionModeLocalSize, 0));
         Header.ThreadGroupSizeY = static_cast<uint16>(spvc_compiler_get_execution_mode_argument_by_index(CompilerMSL, SpvExecutionModeLocalSize, 1));

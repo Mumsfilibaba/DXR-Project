@@ -21,6 +21,7 @@
 #include <MetalRHI/MetalCapabilities.h>
 #include <MetalRHI/MetalCommandContext.h>
 #include <MetalRHI/MetalDeviceDebug.h>
+#include <MetalRHI/MetalParallelRenderPass.h>
 #include <MetalRHI/MetalPipelineState.h>
 #include <MetalRHI/MetalQueue.h>
 #include <MetalRHI/MetalRHI.h>
@@ -70,6 +71,34 @@ private:
     void* Data;
     int64 RowPitch;
     int64 SlicePitch;
+};
+
+class FBootMipChainData final : public IRHITextureData
+{
+public:
+    static constexpr uint32 MaxMips = 4;
+
+    FBootMipChainData(const void* const* InMipData, const int64* InRowPitches, const int64* InSlicePitches, uint32 InNumMips)
+        : NumMips(InNumMips)
+    {
+        CHECK(NumMips <= MaxMips);
+        for (uint32 MipLevel = 0; MipLevel < NumMips; ++MipLevel)
+        {
+            Data[MipLevel]         = const_cast<void*>(InMipData[MipLevel]);
+            RowPitches[MipLevel]   = InRowPitches[MipLevel];
+            SlicePitches[MipLevel] = InSlicePitches[MipLevel];
+        }
+    }
+
+    virtual int64 GetMipRowPitch(uint32 MipLevel = 0)   const override final { return MipLevel < NumMips ? RowPitches[MipLevel] : 0; }
+    virtual int64 GetMipSlicePitch(uint32 MipLevel = 0) const override final { return MipLevel < NumMips ? SlicePitches[MipLevel] : 0; }
+    virtual void* GetMipData(uint32 MipLevel = 0)       const override final { return MipLevel < NumMips ? Data[MipLevel] : nullptr; }
+
+private:
+    void*  Data[MaxMips]         = {};
+    int64  RowPitches[MaxMips]   = {};
+    int64  SlicePitches[MaxMips] = {};
+    uint32 NumMips;
 };
 
 static bool ProbeBuffers(bool bCanMap)
@@ -395,7 +424,7 @@ static bool ProbeShaders()
                 {
                     const FMetalComputePipelineStateRHI* MetalPipeline = static_cast<const FMetalComputePipelineStateRHI*>(SamplerPipelineState.Get());
                     TEST_EXPECT(MetalPipeline->GetBindings().GetSlot(EShaderVisibility::Compute, EMSLBindingType::Sampler, 0) != FMetalPipelineBindingLayout::InvalidSlot);
-                    TEST_EXPECT(MetalPipeline->HasStaticSampler(EShaderVisibility::Compute, 0));
+                    TEST_EXPECT((MetalPipeline->GetBindings().Stages[EShaderVisibility::Compute].StaticSamplerMask & 1u) != 0);
                 }
             }
         }
@@ -611,6 +640,200 @@ static bool ProbeCommandRecording()
                 }
             }
 
+            TEST_SECTION("Each dispatch reads its own update of a transient constant buffer");
+            {
+                const String ConstantsSource(
+                    "cbuffer Params : register(b0) { uint Index; uint Value; uint2 Padding; };\n"
+                    "RWBuffer<uint> Dest : register(u0);\n"
+                    "[numthreads(1, 1, 1)]\n"
+                    "void Main()\n"
+                    "{\n"
+                    "    Dest[Index] = Value;\n"
+                    "}\n");
+
+                TArray<uint8> ConstantsByteCode;
+                const FShaderCompileInfo ConstantsCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+                const bool bConstantsCompiled = FShaderCompiler::Get().CompileFromSource(ConstantsSource, ConstantsCompileInfo, ConstantsByteCode);
+                TEST_EXPECT(bConstantsCompiled);
+
+                if (bConstantsCompiled)
+                {
+                    FRHIComputeShaderRef ConstantsShader = RHI::CreateComputeShader(ConstantsByteCode);
+                    TEST_EXPECT(ConstantsShader != nullptr);
+
+                    FRHIComputePipelineStateDesc ConstantsPipelineDesc;
+                    ConstantsPipelineDesc.Shader = ConstantsShader.Get();
+                    FRHIComputePipelineStateRef ConstantsPipeline = RHI::CreateComputePipelineState(ConstantsPipelineDesc);
+                    TEST_EXPECT(ConstantsPipeline != nullptr);
+
+                    constexpr uint32 NumDispatches = 3;
+                    const uint32     Zeros[NumDispatches] = { 0, 0, 0 };
+
+                    FRHIBufferRef ConstantBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateConstantBuffer(4 * sizeof(uint32), EBufferFlags::Transient), ERHIResourceState::Common, nullptr);
+                    FRHIBufferRef DestBuffer     = RHI::CreateBuffer(
+                        FRHIBufferDesc(EBufferFlags::Default | EBufferFlags::RWBuffer | EBufferFlags::CopySource, sizeof(uint32), sizeof(Zeros)),
+                        ERHIResourceState::Common,
+                        Zeros);
+                    FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(sizeof(Zeros)));
+                    TEST_EXPECT(ConstantBuffer != nullptr);
+                    TEST_EXPECT(DestBuffer != nullptr);
+                    TEST_EXPECT(ReadbackBuffer != nullptr);
+
+                    if (ConstantsShader && ConstantsPipeline && ConstantBuffer && DestBuffer && ReadbackBuffer)
+                    {
+                        FRHIUnorderedAccessViewRef DestUAV = RHI::CreateUnorderedAccessView(
+                            DestBuffer.Get(), FRHIUnorderedAccessViewDesc::CreateTypedBuffer(0, NumDispatches, EFormat::R32_Uint));
+                        TEST_EXPECT(DestUAV != nullptr);
+
+                        if (DestUAV)
+                        {
+                            const uint32 Params[NumDispatches][4] = { { 0, 11, 0, 0 }, { 1, 22, 0, 0 }, { 2, 33, 0, 0 } };
+
+                            FRHIFenceRef Fence = RHI::CreateFence();
+                            FRHICommandList CommandList;
+                            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(
+                                DestBuffer.Get(), ERHIResourceState::Common, ERHIResourceState::UnorderedAccess));
+                            CommandList.SetComputePipelineState(ConstantsPipeline.Get());
+                            CommandList.SetUnorderedAccessView(ConstantsShader.Get(), DestUAV.Get(), 0);
+
+                            for (uint32 Index = 0; Index < NumDispatches; ++Index)
+                            {
+                                CommandList.UpdateBuffer(ConstantBuffer.Get(), FBufferRegion(0, sizeof(Params[Index])), Params[Index]);
+                                if (Index < 2)
+                                {
+                                    CommandList.SetConstantBuffer(ConstantsShader.Get(), ConstantBuffer.Get(), 0);
+                                }
+
+                                CommandList.Dispatch(1, 1, 1);
+                                CommandList.UnorderedAccessBarrier(DestBuffer.Get());
+                            }
+
+                            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(
+                                DestBuffer.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
+                            CommandList.CopyBuffer(ReadbackBuffer.Get(), DestBuffer.Get(), FRHIBufferCopyDesc(0, 0, sizeof(Zeros)));
+                            CommandList.WriteFence(Fence.Get());
+                            FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+                            FRHICommandListExecutor::Get().WaitForCommands();
+
+                            TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
+
+                            const uint32* Mapped = static_cast<const uint32*>(ReadbackBuffer->Map());
+                            TEST_EXPECT(Mapped != nullptr);
+                            if (Mapped)
+                            {
+                                TEST_EXPECT_EQ(Mapped[0], 11u);
+                                TEST_EXPECT_EQ(Mapped[1], 22u);
+                                TEST_EXPECT_EQ(Mapped[2], 33u);
+                                ReadbackBuffer->Unmap();
+                            }
+                        }
+                    }
+                }
+            }
+
+            TEST_SECTION("Views of a transient buffer follow it to each update's storage");
+            {
+                const String ViewsSource(
+                    "StructuredBuffer<uint> Structured : register(t0);\n"
+                    "Buffer<uint> Typed : register(t1);\n"
+                    "RWBuffer<uint> Dest : register(u0);\n"
+                    "[numthreads(1, 1, 1)]\n"
+                    "void Main()\n"
+                    "{\n"
+                    "    const uint Index = Structured[0];\n"
+                    "    Dest[Index * 2 + 0] = Structured[1];\n"
+                    "    Dest[Index * 2 + 1] = Typed[1];\n"
+                    "}\n");
+
+                TArray<uint8> ViewsByteCode;
+                const FShaderCompileInfo ViewsCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+                const bool bViewsCompiled = FShaderCompiler::Get().CompileFromSource(ViewsSource, ViewsCompileInfo, ViewsByteCode);
+                TEST_EXPECT(bViewsCompiled);
+
+                if (bViewsCompiled)
+                {
+                    FRHIComputeShaderRef ViewsShader = RHI::CreateComputeShader(ViewsByteCode);
+                    TEST_EXPECT(ViewsShader != nullptr);
+
+                    FRHIComputePipelineStateDesc ViewsPipelineDesc;
+                    ViewsPipelineDesc.Shader = ViewsShader.Get();
+                    FRHIComputePipelineStateRef ViewsPipeline = RHI::CreateComputePipelineState(ViewsPipelineDesc);
+                    TEST_EXPECT(ViewsPipeline != nullptr);
+
+                    constexpr uint32 NumUpdates = 2;
+                    const uint32     Zeros[NumUpdates * 2] = { 0, 0, 0, 0 };
+
+                    FRHIBufferRef SourceBuffer = RHI::CreateBuffer(
+                        FRHIBufferDesc(EBufferFlags::Transient | EBufferFlags::ShaderResourceBuffer, sizeof(uint32), 2 * sizeof(uint32)),
+                        ERHIResourceState::Common,
+                        nullptr);
+                    FRHIBufferRef DestBuffer = RHI::CreateBuffer(
+                        FRHIBufferDesc(EBufferFlags::Default | EBufferFlags::RWBuffer | EBufferFlags::CopySource, sizeof(uint32), sizeof(Zeros)),
+                        ERHIResourceState::Common,
+                        Zeros);
+                    FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(sizeof(Zeros)));
+                    TEST_EXPECT(SourceBuffer != nullptr);
+                    TEST_EXPECT(DestBuffer != nullptr);
+                    TEST_EXPECT(ReadbackBuffer != nullptr);
+
+                    if (ViewsShader && ViewsPipeline && SourceBuffer && DestBuffer && ReadbackBuffer)
+                    {
+                        FRHIShaderResourceViewRef  StructuredSRV = RHI::CreateShaderResourceView(SourceBuffer.Get(), FRHIShaderResourceViewDesc::CreateBuffer(0, 2));
+                        FRHIShaderResourceViewRef  TypedSRV      = RHI::CreateShaderResourceView(SourceBuffer.Get(), FRHIShaderResourceViewDesc::CreateTypedBuffer(0, 2, EFormat::R32_Uint));
+                        FRHIUnorderedAccessViewRef DestUAV       = RHI::CreateUnorderedAccessView(
+                            DestBuffer.Get(), FRHIUnorderedAccessViewDesc::CreateTypedBuffer(0, NumUpdates * 2, EFormat::R32_Uint));
+                        TEST_EXPECT(StructuredSRV != nullptr);
+                        TEST_EXPECT(TypedSRV != nullptr);
+                        TEST_EXPECT(DestUAV != nullptr);
+
+                        if (StructuredSRV && TypedSRV && DestUAV)
+                        {
+                            const uint32 Contents[NumUpdates][2] = { { 0, 11 }, { 1, 22 } };
+
+                            FRHIFenceRef Fence = RHI::CreateFence();
+                            FRHICommandList CommandList;
+                            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(
+                                DestBuffer.Get(), ERHIResourceState::Common, ERHIResourceState::UnorderedAccess));
+                            CommandList.SetComputePipelineState(ViewsPipeline.Get());
+                            CommandList.SetUnorderedAccessView(ViewsShader.Get(), DestUAV.Get(), 0);
+
+                            for (uint32 Index = 0; Index < NumUpdates; ++Index)
+                            {
+                                CommandList.UpdateBuffer(SourceBuffer.Get(), FBufferRegion(0, sizeof(Contents[Index])), Contents[Index]);
+                                if (Index == 0)
+                                {
+                                    CommandList.SetShaderResourceView(ViewsShader.Get(), StructuredSRV.Get(), 0);
+                                    CommandList.SetShaderResourceView(ViewsShader.Get(), TypedSRV.Get(), 1);
+                                }
+
+                                CommandList.Dispatch(1, 1, 1);
+                                CommandList.UnorderedAccessBarrier(DestBuffer.Get());
+                            }
+
+                            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(
+                                DestBuffer.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
+                            CommandList.CopyBuffer(ReadbackBuffer.Get(), DestBuffer.Get(), FRHIBufferCopyDesc(0, 0, sizeof(Zeros)));
+                            CommandList.WriteFence(Fence.Get());
+                            FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+                            FRHICommandListExecutor::Get().WaitForCommands();
+
+                            TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
+
+                            const uint32* Mapped = static_cast<const uint32*>(ReadbackBuffer->Map());
+                            TEST_EXPECT(Mapped != nullptr);
+                            if (Mapped)
+                            {
+                                TEST_EXPECT_EQ(Mapped[0], 11u);
+                                TEST_EXPECT_EQ(Mapped[1], 11u);
+                                TEST_EXPECT_EQ(Mapped[2], 22u);
+                                TEST_EXPECT_EQ(Mapped[3], 22u);
+                                ReadbackBuffer->Unmap();
+                            }
+                        }
+                    }
+                }
+            }
+
             TEST_SECTION("An offscreen Draw(3) writes a red pixel");
             {
                 const String VertexSource(
@@ -679,7 +902,7 @@ static bool ProbeCommandRecording()
                         if (InstancedPipeline)
                         {
                             const FMetalGraphicsPipelineStateRHI* MetalPipeline = static_cast<const FMetalGraphicsPipelineStateRHI*>(InstancedPipeline.Get());
-                            TEST_EXPECT(MetalPipeline->GetViewInstancingState().bEnableViewInstancing);
+                            TEST_EXPECT(MetalPipeline->GetRenderPipeline().GetViewInstancing().bEnableViewInstancing);
                         }
                     }
 
@@ -1482,15 +1705,13 @@ static bool ProbeParallelRender()
                 EAttachmentStoreAction::Store,
                 FFloatColor(1.0f, 0.0f, 0.0f, 1.0f));
 
-            Context->BeginParallelRenderPass(FRHIBeginRenderPassDesc(Attachments, 1));
-            FMetalCommandContext* ChildContext = Context->ObtainParallelChildContext();
+            FMetalParallelRenderPass ParallelPass(*Context, FRHIBeginRenderPassDesc(Attachments, 1));
+            FMetalCommandContext* ChildContext = ParallelPass.ObtainChildContext();
             TEST_EXPECT(ChildContext != nullptr);
             if (ChildContext)
             {
-                Context->ReleaseParallelChildContext(ChildContext);
+                ParallelPass.ReleaseChildContext(ChildContext);
             }
-
-            Context->EndParallelRenderPass();
         }
 
         FRHIFenceRef Fence = RHI::CreateFence();
@@ -1653,7 +1874,7 @@ static bool ProbeBindlessDescriptors()
             TEST_EXPECT(MetalTextureB != nullptr && MetalTextureB->GetMTLTexture() != nil);
             if (Manager && MetalTextureB && MetalTextureB->GetMTLTexture())
             {
-                Manager->WriteTexture(TextureHandle, MetalTextureB->GetMTLTexture(), false, true, false);
+                Manager->WriteTexture(TextureHandle, MetalTextureB->GetMTLTexture(), false, true);
             }
 
             uint32 UpdateParams[4] = { TextureHandle.Index, SamplerHandle.Index, 0, 0 };
@@ -1763,6 +1984,351 @@ static bool ProbeBindlessDescriptors()
         TEST_EXPECT_EQ(SecondHandle.Index, FirstIndex);
     }
 
+    TEST_SECTION("A recycled bindless slot reads zeros");
+    {
+        static const CHAR Source[] =
+            "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+            "cbuffer Params : register(b0) { uint ResourceIndex; uint Pad0; uint Pad1; uint Pad2; };\n"
+            "[numthreads(1,1,1)]\n"
+            "void Main()\n"
+            "{\n"
+            "    Texture2D<float4> Tex = ResourceDescriptorHeap[ResourceIndex];\n"
+            "    float4 Color = Tex.Load(int3(0, 0, 0));\n"
+            "    OutBuffer[0] = (asuint(Color.x) | asuint(Color.y) | asuint(Color.z) | asuint(Color.w)) ^ 0xA5A5A5A5u;\n"
+            "}\n";
+
+        TArray<uint8> ByteCode;
+        TEST_EXPECT(CompileBindless(Source, ByteCode));
+        FRHIComputeShaderRef Shader = RHI::CreateComputeShader(ByteCode);
+        FRHIComputePipelineStateDesc PipelineDesc;
+        PipelineDesc.Shader = Shader.Get();
+        FRHIComputePipelineStateRef Pipeline = Shader ? RHI::CreateComputePipelineState(PipelineDesc) : nullptr;
+        TEST_EXPECT(Pipeline != nullptr);
+
+        const uint8 White[4] = { 255, 255, 255, 255 };
+        FBootTextureData WhiteData(White, 4, 4);
+        FRHIBufferRef Params;
+        {
+            FRHITextureRef Texture = RHI::CreateTexture(
+                FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, 1, 1, 1, 1, ETextureUsageFlags::ShaderResourceTexture),
+                ERHIResourceState::Common,
+                &WhiteData);
+            TEST_EXPECT(Texture != nullptr);
+
+            const FRHIDescriptorHandle Handle = Texture ? Texture->GetBindlessSRVHandle() : FRHIDescriptorHandle();
+            TEST_EXPECT(Handle.IsValid());
+
+            uint32 ParamsData[4] = { Handle.Index, 0, 0, 0 };
+            Params = RHI::CreateBuffer(FRHIBufferDesc::CreateConstantBuffer(sizeof(ParamsData)), ERHIResourceState::Common, ParamsData);
+            TEST_EXPECT(Params != nullptr);
+
+            if (Pipeline && Shader && Params && OutputBuffer && OutputUAV)
+            {
+                TEST_EXPECT(DispatchAndReadUint(Pipeline.Get(), Shader.Get(), Params.Get(), OutputBuffer.Get(), OutputUAV.Get(), 0x3F800000u ^ 0xA5A5A5A5u));
+            }
+        }
+
+        if (FRHICommandListExecutor::IsInitialized())
+        {
+            FRHICommandListExecutor::Get().WaitForGPU();
+        }
+
+        if (Pipeline && Shader && Params && OutputBuffer && OutputUAV)
+        {
+            TEST_EXPECT(DispatchAndReadUint(Pipeline.Get(), Shader.Get(), Params.Get(), OutputBuffer.Get(), OutputUAV.Get(), 0xA5A5A5A5u));
+        }
+    }
+
+    FShaderCompiler::Destroy();
+    TEST_END();
+}
+
+static bool ProbeDefaultResourcesAndClears()
+{
+    TEST_BEGIN();
+
+    if (!FShaderCompiler::Initialize(Paths::GetAssetDir()))
+    {
+        TEST_EXPECT(false);
+        TEST_END();
+    }
+
+    auto CreateComputePipeline = [](const CHAR* Source, FRHIComputeShaderRef& OutShader) -> FRHIComputePipelineState*
+    {
+        TArray<uint8> ByteCode;
+        const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+        if (!FShaderCompiler::Get().CompileFromSource(Source, CompileInfo, ByteCode))
+        {
+            return nullptr;
+        }
+
+        OutShader = RHI::CreateComputeShader(ByteCode);
+        if (!OutShader)
+        {
+            return nullptr;
+        }
+
+        FRHIComputePipelineStateDesc PipelineDesc;
+        PipelineDesc.Shader = OutShader.Get();
+        return RHI::CreateComputePipelineState(PipelineDesc);
+    };
+
+    auto SubmitAndWait = [](FRHICommandList& CommandList) -> bool
+    {
+        FRHIFenceRef Fence = RHI::CreateFence();
+        CommandList.WriteFence(Fence.Get());
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+        FRHICommandListExecutor::Get().WaitForCommands();
+        return Fence->Wait(5ull * 1000ull * 1000ull * 1000ull);
+    };
+
+    auto DispatchAndRead = [&SubmitAndWait](FRHIComputePipelineState* Pipeline, FRHIComputeShader* Shader, uint32 NumValues, uint32* OutValues, auto&& Prepare, auto&& Bind) -> bool
+    {
+        const uint64 ByteSize = static_cast<uint64>(NumValues) * sizeof(uint32);
+        FRHIBufferRef Output   = RHI::CreateBuffer(FRHIBufferDesc(EBufferFlags::Default | EBufferFlags::RWBuffer | EBufferFlags::CopySource, sizeof(uint32), ByteSize));
+        FRHIBufferRef Readback = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(ByteSize));
+        FRHIUnorderedAccessViewRef OutputUAV = Output
+            ? RHI::CreateUnorderedAccessView(Output.Get(), FRHIUnorderedAccessViewDesc::CreateBuffer(0, NumValues, EBufferViewType::Structured))
+            : nullptr;
+
+        if (!Pipeline || !Shader || !Readback || !OutputUAV)
+        {
+            return false;
+        }
+
+        FRHICommandList CommandList;
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Output.Get(), ERHIResourceState::Common, ERHIResourceState::UnorderedAccess));
+        Prepare(CommandList);
+        CommandList.SetComputePipelineState(Pipeline);
+        Bind(CommandList);
+        CommandList.SetUnorderedAccessView(Shader, OutputUAV.Get(), 0);
+        CommandList.Dispatch(1, 1, 1);
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Output.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
+        CommandList.CopyBuffer(Readback.Get(), Output.Get(), FRHIBufferCopyDesc(0, 0, ByteSize));
+        if (!SubmitAndWait(CommandList))
+        {
+            return false;
+        }
+
+        const uint32* Mapped = static_cast<const uint32*>(Readback->Map());
+        if (!Mapped)
+        {
+            return false;
+        }
+
+        Memory::Memcpy(OutValues, Mapped, ByteSize);
+        Readback->Unmap();
+        return true;
+    };
+
+    auto NoCommands = [](FRHICommandList&) {};
+
+    TEST_SECTION("Unbound SRV, UAV and constant buffer registers read zeros");
+    {
+        static const CHAR Source[] =
+            "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+            "RWBuffer<uint> NullRWBuffer : register(u1);\n"
+            "Texture2D<float4> NullTexture : register(t0);\n"
+            "Buffer<uint> NullTypedBuffer : register(t1);\n"
+            "StructuredBuffer<uint> NullStructuredBuffer : register(t2);\n"
+            "cbuffer NullConstants : register(b0) { uint4 NullValue; };\n"
+            "[numthreads(1, 1, 1)]\n"
+            "void Main()\n"
+            "{\n"
+            "    float4 Color = NullTexture.Load(int3(0, 0, 0));\n"
+            "    uint Bits = asuint(Color.x) | asuint(Color.y) | asuint(Color.z) | asuint(Color.w);\n"
+            "    Bits |= NullTypedBuffer[0] | NullStructuredBuffer[0] | NullRWBuffer[0];\n"
+            "    Bits |= NullValue.x | NullValue.y | NullValue.z | NullValue.w;\n"
+            "    OutBuffer[0] = Bits ^ 0xA5A5A5A5u;\n"
+            "}\n";
+
+        FRHIComputeShaderRef Shader;
+        FRHIComputePipelineStateRef Pipeline = CreateComputePipeline(Source, Shader);
+        TEST_EXPECT(Pipeline != nullptr);
+
+        uint32 Value = 0;
+        TEST_EXPECT(DispatchAndRead(Pipeline.Get(), Shader.Get(), 1, &Value, NoCommands, NoCommands));
+        TEST_EXPECT_EQ(Value, 0xA5A5A5A5u);
+    }
+
+    TEST_SECTION("An anisotropic sampler filters linearly between mips");
+    {
+        static const CHAR Source[] =
+            "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+            "Texture2D<float4> MipTexture : register(t0);\n"
+            "SamplerState AnisotropicSampler : register(s0);\n"
+            "[numthreads(1, 1, 1)]\n"
+            "void Main()\n"
+            "{\n"
+            "    OutBuffer[0] = (uint)(MipTexture.SampleLevel(AnisotropicSampler, float2(0.5, 0.5), 0.5).x * 255.0 + 0.5);\n"
+            "}\n";
+
+        FRHIComputeShaderRef Shader;
+        FRHIComputePipelineStateRef Pipeline = CreateComputePipeline(Source, Shader);
+        TEST_EXPECT(Pipeline != nullptr);
+
+        const uint8  BlackMip[2 * 2 * 4] = { 0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255 };
+        const uint8  WhiteMip[4]         = { 255, 255, 255, 255 };
+        const void*  MipData[2]          = { BlackMip, WhiteMip };
+        const int64  RowPitches[2]       = { 2 * 4, 4 };
+        const int64  SlicePitches[2]     = { 2 * 2 * 4, 4 };
+        FBootMipChainData MipChainData(MipData, RowPitches, SlicePitches, 2);
+
+        FRHITextureRef MipTexture = RHI::CreateTexture(
+            FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, 2, 2, 2, 1, ETextureUsageFlags::ShaderResourceTexture),
+            ERHIResourceState::Common,
+            &MipChainData);
+        TEST_EXPECT(MipTexture != nullptr && MipTexture->GetShaderResourceView() != nullptr);
+
+        FRHISamplerStateDesc SamplerDesc = FRHISamplerStateDesc::Create(ESamplerMode::Clamp, ESamplerFilter::Anistrotopic);
+        SamplerDesc.MaxAnisotropy = 16;
+        FRHISamplerStateRef Sampler = RHI::CreateSamplerState(SamplerDesc);
+        TEST_EXPECT(Sampler != nullptr);
+
+        if (MipTexture && MipTexture->GetShaderResourceView() && Sampler)
+        {
+            auto Prepare = [&MipTexture](FRHICommandList& CommandList)
+            {
+                CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(MipTexture.Get(), ERHIResourceState::Common, ERHIResourceState::ShaderResource));
+            };
+
+            auto Bind = [&](FRHICommandList& CommandList)
+            {
+                CommandList.SetShaderResourceView(Shader.Get(), MipTexture->GetShaderResourceView(), 0);
+                CommandList.SetSamplerState(Shader.Get(), Sampler.Get(), 0);
+            };
+
+            // Halfway between a black and a white mip, a nearest mip filter would give 0 or 255
+            uint32 Value = 0;
+            TEST_EXPECT(DispatchAndRead(Pipeline.Get(), Shader.Get(), 1, &Value, Prepare, Bind));
+            TEST_EXPECT(Value >= 112u && Value <= 143u);
+        }
+    }
+
+    TEST_SECTION("A UAV clear of a 2D array texture covers every slice");
+    {
+        static const CHAR Source[] =
+            "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+            "Texture2DArray<uint> ClearedTexture : register(t0);\n"
+            "[numthreads(1, 1, 1)]\n"
+            "void Main()\n"
+            "{\n"
+            "    for (uint Slice = 0; Slice < 3; ++Slice)\n"
+            "    {\n"
+            "        OutBuffer[Slice] = ClearedTexture.Load(int4(3, 3, Slice, 0));\n"
+            "    }\n"
+            "}\n";
+
+        FRHIComputeShaderRef Shader;
+        FRHIComputePipelineStateRef Pipeline = CreateComputePipeline(Source, Shader);
+        TEST_EXPECT(Pipeline != nullptr);
+
+        FRHITextureRef ArrayTexture = RHI::CreateTexture(FRHITextureDesc::CreateTexture2DArray(
+            EFormat::R32_Uint, 4, 4, 3, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture));
+        TEST_EXPECT(ArrayTexture != nullptr);
+        TEST_EXPECT(ArrayTexture && ArrayTexture->GetUnorderedAccessView() != nullptr && ArrayTexture->GetShaderResourceView() != nullptr);
+
+        if (ArrayTexture && ArrayTexture->GetUnorderedAccessView() && ArrayTexture->GetShaderResourceView())
+        {
+            auto Prepare = [&ArrayTexture](FRHICommandList& CommandList)
+            {
+                const uint32 ClearValues[4] = { 0x5EEDu, 0u, 0u, 0u };
+                CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(ArrayTexture.Get(), ERHIResourceState::Common, ERHIResourceState::UnorderedAccess));
+                CommandList.ClearUnorderedAccessViewUint(ArrayTexture->GetUnorderedAccessView(), ClearValues);
+                CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(ArrayTexture.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::ShaderResource));
+            };
+
+            auto Bind = [&](FRHICommandList& CommandList)
+            {
+                CommandList.SetShaderResourceView(Shader.Get(), ArrayTexture->GetShaderResourceView(), 0);
+            };
+
+            uint32 Values[3] = {};
+            TEST_EXPECT(DispatchAndRead(Pipeline.Get(), Shader.Get(), 3, Values, Prepare, Bind));
+            TEST_EXPECT_EQ(Values[0], 0x5EEDu);
+            TEST_EXPECT_EQ(Values[1], 0x5EEDu);
+            TEST_EXPECT_EQ(Values[2], 0x5EEDu);
+        }
+    }
+
+    auto ReadRenderTarget = [&SubmitAndWait](FRHITexture* RenderTarget, auto&& Record, uint8* OutPixel) -> bool
+    {
+        FRHIBufferRef Readback = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(256));
+        if (!Readback)
+        {
+            return false;
+        }
+
+        FRHICommandList CommandList;
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(RenderTarget, ERHIResourceState::Common, ERHIResourceState::RenderTarget));
+        Record(CommandList);
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(RenderTarget, ERHIResourceState::RenderTarget, ERHIResourceState::CopySource));
+        CommandList.CopyTextureRegionToBuffer(Readback.Get(), 0, RenderTarget, FTextureRegion2D(1, 1), 0);
+        if (!SubmitAndWait(CommandList))
+        {
+            return false;
+        }
+
+        const uint8* Mapped = static_cast<const uint8*>(Readback->Map());
+        if (!Mapped)
+        {
+            return false;
+        }
+
+        Memory::Memcpy(OutPixel, Mapped, 4);
+        Readback->Unmap();
+        return true;
+    };
+
+    const FRHITextureDesc RenderTargetDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, 4, 4, 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::CopySource);
+
+    TEST_SECTION("A render target clear with no pass after it still reaches the texture");
+    {
+        FRHITextureRef RenderTarget = RHI::CreateTexture(RenderTargetDesc);
+        TEST_EXPECT(RenderTarget != nullptr && RenderTarget->GetRenderTargetView() != nullptr);
+
+        if (RenderTarget && RenderTarget->GetRenderTargetView())
+        {
+            auto Record = [&RenderTarget](FRHICommandList& CommandList)
+            {
+                CommandList.ClearRenderTargetView(RenderTarget->GetRenderTargetView(), Vector4(0.0f, 0.0f, 1.0f, 1.0f));
+                CommandList.ClearRenderTargetView(RenderTarget->GetRenderTargetView(), Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+            };
+
+            uint8 Pixel[4] = {};
+            TEST_EXPECT(ReadRenderTarget(RenderTarget.Get(), Record, Pixel));
+            TEST_EXPECT_EQ(Pixel[0], static_cast<uint8>(255));
+            TEST_EXPECT_EQ(Pixel[1], static_cast<uint8>(0));
+            TEST_EXPECT_EQ(Pixel[2], static_cast<uint8>(0));
+        }
+    }
+
+    TEST_SECTION("A render target clear folds into the load action of the next pass");
+    {
+        FRHITextureRef RenderTarget = RHI::CreateTexture(RenderTargetDesc);
+        TEST_EXPECT(RenderTarget != nullptr && RenderTarget->GetRenderTargetView() != nullptr);
+
+        if (RenderTarget && RenderTarget->GetRenderTargetView())
+        {
+            auto Record = [&RenderTarget](FRHICommandList& CommandList)
+            {
+                CommandList.ClearRenderTargetView(RenderTarget->GetRenderTargetView(), Vector4(0.0f, 1.0f, 0.0f, 1.0f));
+
+                FRHIBeginRenderPassDesc::FRenderTargetAttachments Attachments;
+                Attachments[0] = FRHIRenderTargetAttachment(RenderTarget->GetRenderTargetView(), EAttachmentLoadAction::Load, EAttachmentStoreAction::Store);
+                CommandList.BeginRenderPass(FRHIBeginRenderPassDesc(Attachments, 1));
+                CommandList.EndRenderPass();
+            };
+
+            uint8 Pixel[4] = {};
+            TEST_EXPECT(ReadRenderTarget(RenderTarget.Get(), Record, Pixel));
+            TEST_EXPECT_EQ(Pixel[0], static_cast<uint8>(0));
+            TEST_EXPECT_EQ(Pixel[1], static_cast<uint8>(255));
+            TEST_EXPECT_EQ(Pixel[2], static_cast<uint8>(0));
+        }
+    }
+
+    FShaderCompiler::Destroy();
     TEST_END();
 }
 #endif
@@ -1826,8 +2392,19 @@ static bool ProbeCapabilityHonesty(ERHIType ExpectedType)
                 TEST_EXPECT(RHI::SamplePositionsTier == ESamplePositionsTier::NotSupported);
             }
 #endif
-            TEST_EXPECT(RHI::bSupportsGPUTimestampBubblesRemoval == RHI::bSupportsTimestampQueries);
+            TEST_EXPECT(RHI::bSupportsGPUTimestampBubblesRemoval == false);
+
+            uint32 CompressedSampleCounts = 0;
+            TEST_EXPECT(!RHI::Device->QuerySupportedSampleCounts(EFormat::BC1_UNorm, CompressedSampleCounts));
+            TEST_EXPECT(CompressedSampleCounts == 0);
         }
+
+        TEST_SECTION("Metal reports only what the backend implements");
+        TEST_EXPECT(RHI::bSupportsViewInstancing == false);
+        TEST_EXPECT(RHI::MaxViewInstanceCount == 1);
+        TEST_EXPECT(RHI::MaxTexture3DWidth == 2048);
+        TEST_EXPECT(RHI::MaxTexture3DHeight == 2048);
+        TEST_EXPECT(RHI::MaxTexture3DDepth == 2048);
     }
 
     TEST_END();
@@ -1880,6 +2457,7 @@ static bool BootRHI(ERHIType ExpectedType)
                 TEST_EXPECT(ProbeCopyQueue());
                 TEST_EXPECT(ProbeParallelRender());
                 TEST_EXPECT(ProbeBindlessDescriptors());
+                TEST_EXPECT(ProbeDefaultResourcesAndClears());
             }
 #endif
             TEST_EXPECT(ProbeCapabilityHonesty(ExpectedType));

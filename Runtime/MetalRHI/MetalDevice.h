@@ -1,10 +1,15 @@
 #pragma once
+#include "Core/Containers/Map.h"
+#include "Core/Containers/StaticArray.h"
+#include "Core/Threading/Atomic/AtomicBool.h"
 #include "MetalRHI/MetalCore.h"
 #include "MetalRHI/MetalQueue.h"
 #include "MetalRHI/MetalQuery.h"
 #include "RHI/RHIDevice.h"
+#include "RHI/RHIPipelineState.h"
 
 class FMetalDevice;
+class FMetalResidencySet;
 class FMetalUploadHeapAllocator;
 class FMetalLinearAllocator;
 class FMetalBufferAllocator;
@@ -27,134 +32,122 @@ struct FMetalDeviceProperties
     bool bIsHeadless       : 1;
 };
 
-struct EMetalNullTextureType
-{
-    enum Type : uint8
-    {
-        Texture1D        = 0,
-        Texture1DArray   = 1,
-        Texture2D        = 2,
-        Texture2DArray   = 3,
-        TextureCube      = 4,
-        TextureCubeArray = 5,
-        Texture3D        = 6,
-        Count            = 7,
-    };
-};
-
 struct FMetalDefaultResources
 {
-    bool Initialize(FMetalDevice& Device);
-    void Release();
+    static constexpr uint32 NullBufferSize = 64 * 1024;
 
-    id<MTLTexture> GetNullTexture(EMetalNullTextureType::Type Type) const
+    id<MTLTexture> GetNullTexture(uint8 NullTextureType) const
     {
-        CHECK(Type < EMetalNullTextureType::Count);
-        return NullTextures[Type];
+        CHECK(NullTextureType < MSL_NUM_NULL_TEXTURE_TYPES);
+        return NullTextures[NullTextureType];
     }
 
-    // Metal has no writable cube textures, so those entries are nil
-    id<MTLTexture> GetNullRWTexture(EMetalNullTextureType::Type Type) const
+    id<MTLTexture> GetNullRWTexture(uint8 NullTextureType) const
     {
-        CHECK(Type < EMetalNullTextureType::Count);
-        CHECK(NullRWTextures[Type] != nil);
-        return NullRWTextures[Type];
+        CHECK(NullTextureType < MSL_NUM_NULL_TEXTURE_TYPES);
+        return NullRWTextures[NullTextureType];
     }
 
-    id<MTLTexture>      NullTextures[EMetalNullTextureType::Count];
-    id<MTLTexture>      NullRWTextures[EMetalNullTextureType::Count];
-    id<MTLBuffer>       NullBuffer;
-    id<MTLSamplerState> DefaultSampler;
+    id<MTLHeap>            Heap;
+    TArray<id<MTLTexture>> OwnedTextures;
+    id<MTLTexture>         NullTextures[MSL_NUM_NULL_TEXTURE_TYPES];
+    id<MTLTexture>         NullRWTextures[MSL_NUM_NULL_TEXTURE_TYPES];
+    id<MTLBuffer>          NullBuffer;
+    id<MTLSamplerState>    DefaultSampler;
 };
 
 class METALRHI_API FMetalDevice
 {
 public:
-
-    // Returns a retained device, the caller owns the reference
-    static id<MTLDevice> SelectDevice();
-
-public:
     FMetalDevice();
     ~FMetalDevice();
 
     bool Initialize();
-    bool QueryDeviceFeatureSupport();
-    bool InitializeDefaultResources();
-
     void BeginFrame();
     void EndFrame();
+
     void WaitForGPU();
-
-    bool SupportsFamily(MTLGPUFamily Family) const;
-    bool QueryVideoMemoryInfo(EVideoMemoryType Type, FRHIVideoMemoryInfo& OutInfo) const;
-
-    FMetalQueue*        GetQueue(EMetalQueueType Type = EMetalQueueType::Direct) const;
-    id<MTLCommandQueue> GetMTLCommandQueue() const;
-
     void ProcessQueues();
 
-    FMetalUploadHeapAllocator* GetUploadHeapAllocator() const
+    void PublishUploadValue(uint64 Value);
+
+    bool QueryVideoMemoryInfo(EVideoMemoryType Type, FRHIVideoMemoryInfo& OutInfo) const;
+
+    id<MTLDepthStencilState> GetDepthStencilState(const FRHIDepthStencilStateDesc& Desc);
+
+    FMetalResidencySet&              GetResidencySet()              const { return *ResidencySet; }
+    FMetalBindlessDescriptorManager* GetBindlessDescriptorManager() const { return BindlessDescriptorManager; }
+    FMetalLinearAllocator*           GetStagingBufferAllocator()    const { return StagingBufferAllocator; }
+    FMetalLinearAllocator*           GetDynamicConstantsAllocator() const { return DynamicConstantsAllocator; }
+    FMetalBufferAllocator*           GetBufferAllocator()           const { return BufferAllocator; }
+    FMetalTextureAllocator*          GetTextureAllocator()          const { return TextureAllocator; }
+    FMetalUploadHeapAllocator*       GetUploadHeapAllocator()       const { return UploadHeapAllocator; }
+    FMetalTimestampQueries&          GetTimestampQueries()                { return TimestampQueries; }
+    FMetalOcclusionQueries&          GetOcclusionQueries()                { return OcclusionQueries; }
+    const FMetalDefaultResources&    GetDefaultResources()          const { return DefaultResources; }
+    const FMetalDeviceProperties&    GetProperties()                const { return Properties; }
+
+    template<typename FunctionType>
+    FORCEINLINE void ForEachQueue(FunctionType&& Function) const
     {
-        return UploadHeapAllocator;
+        for (FMetalQueue* Queue : Queues)
+        {
+            if (Queue)
+            {
+                Function(*Queue);
+            }
+        }
     }
 
-    FMetalLinearAllocator* GetStagingBufferAllocator() const
+    FMetalQueue* GetQueue(EMetalQueueType QueueType) const
     {
-        return StagingBufferAllocator;
+        return Queues[static_cast<uint32>(QueueType)];
     }
 
-    FMetalLinearAllocator* GetDynamicConstantsAllocator() const
+    uint64 GetLatestUploadValue() const
     {
-        return DynamicConstantsAllocator;
+        return LatestUploadValue.Load();
     }
 
-    FMetalBufferAllocator* GetBufferAllocator() const
+    FORCEINLINE id<MTLDevice> GetMTLDevice() const
     {
-        return BufferAllocator;
+        return Device;
     }
-
-    FMetalTextureAllocator* GetTextureAllocator() const
-    {
-        return TextureAllocator;
-    }
-
-    FMetalBindlessDescriptorManager* GetBindlessDescriptorManager() const
-    {
-        return BindlessDescriptorManager;
-    }
-
-    FMetalTimestampQueries& GetTimestampQueries() { return TimestampQueries; }
-    FMetalOcclusionQueries& GetOcclusionQueries() { return OcclusionQueries; }
-
-    id<MTLDevice>                 GetMTLDevice()        const { return Device; }
-    const FMetalDeviceProperties& GetProperties()       const { return Properties; }
-    FMetalDefaultResources&       GetDefaultResources()       { return DefaultResources; }
 
 private:
     static int32 ScoreDevice(id<MTLDevice> CandidateDevice);
 
+    id<MTLDevice> SelectDevice();
     void ReadDeviceProperties();
+
+    bool CreateDevice();
+    bool CreateCommandQueues();
+    bool CreateDefaultResources();
+    void QueryDeviceFeatureSupport();
 
 #if METAL_ENABLE_STATS
     void UpdateMemoryStats();
     void LogMemoryStats();
 #endif
 
-    id<MTLDevice>                    Device;
-    FMetalUploadHeapAllocator*       UploadHeapAllocator;
-    FMetalLinearAllocator*           StagingBufferAllocator;
-    FMetalLinearAllocator*           DynamicConstantsAllocator;
-    FMetalBufferAllocator*           BufferAllocator;
-    FMetalTextureAllocator*          TextureAllocator;
-    FMetalBindlessDescriptorManager* BindlessDescriptorManager;
-    FMetalQueue*                     Queue;
-    FMetalQueue*                     ComputeQueue;
-    FMetalQueue*                     CopyQueue;
-    FMetalDeviceProperties           Properties;
-    FMetalDefaultResources           DefaultResources;
-    FMetalTimestampQueries           TimestampQueries;
-    FMetalOcclusionQueries           OcclusionQueries;
-    uint64                           FrameCounter;
-    uint64                           LastMemoryLogTime;
+    FMetalResidencySet*                                                     ResidencySet;
+    FMetalBindlessDescriptorManager*                                        BindlessDescriptorManager;
+    FMetalLinearAllocator*                                                  StagingBufferAllocator;
+    FMetalLinearAllocator*                                                  DynamicConstantsAllocator;
+    FMetalBufferAllocator*                                                  BufferAllocator;
+    FMetalTextureAllocator*                                                 TextureAllocator;
+    FMetalUploadHeapAllocator*                                              UploadHeapAllocator;
+    TStaticArray<FMetalQueue*, static_cast<uint32>(EMetalQueueType::Count)> Queues;
+    FMetalTimestampQueries                                                  TimestampQueries;
+    FMetalOcclusionQueries                                                  OcclusionQueries;
+    FMetalDefaultResources                                                  DefaultResources;
+    TMap<FRHIDepthStencilStateDesc, id<MTLDepthStencilState>>               DepthStencilStates;
+    FCriticalSection                                                        DepthStencilStatesCS;
+    TAtomicInt<uint64>                                                      LatestUploadValue;
+    uint64                                                                  FrameCounter;
+    uint64                                                                  LastMemoryLogTime;
+    FMetalDeviceProperties                                                  Properties;
+    id<MTLDevice>                                                           Device;
+    id<NSObject>                                                            DeviceObserver;
+    AtomicBool                                                              bDeviceRemoved;
 };

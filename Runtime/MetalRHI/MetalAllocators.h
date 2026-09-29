@@ -24,7 +24,7 @@ public:
     ~FMetalHeapPool();
 
     bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, uint32& OutHeapIndex, uint64& OutOffset, FMetalHeap*& OutHeap);
-    void Deallocate(uint32 HeapIndex, uint64 Offset, uint64 Size, FMetalQueue* LastUsedQueue = nullptr, uint64 LastUsedValue = 0);
+    void Deallocate(uint32 HeapIndex, uint64 Offset, uint64 Size);
     void CleanUp();
     void Destroy();
 
@@ -53,8 +53,6 @@ private:
         uint32       HeapIndex;
         uint64       Offset;
         uint64       Size;
-        FMetalQueue* LastUsedQueue;
-        uint64       LastUsedValue;
         uint64       DirectFenceValue;
         uint64       ComputeFenceValue;
         uint64       CopyFenceValue;
@@ -65,7 +63,6 @@ private:
     void        ReturnHeapRange(uint32 HeapIndex, uint64 Offset, uint64 Size);
     void        RecyclePendingHeapFrees();
     void        DropUnusedHeaps();
-    void        StampPendingHeapFree(FPendingHeapFree& PendingFree, FMetalQueue* LastUsedQueue, uint64 LastUsedValue) const;
     bool        IsHeapFreeEligible(const FPendingHeapFree& PendingFree) const;
 
     static constexpr uint64 DefaultHeapSize    = 64ull * 1024ull * 1024ull;
@@ -76,14 +73,22 @@ private:
     TArray<FPendingHeapFree> PendingHeapFrees;
 };
 
+enum class EMetalAllocationLifetime : uint8
+{
+    Submission,
+    Frame,
+};
+
 class FMetalLinearAllocator : public FMetalDeviceChild
 {
 public:
-    FMetalLinearAllocator(FMetalDevice* InDevice, uint64 InPageSizeBytes, uint64 InLargeAllocationThreshold);
+    FMetalLinearAllocator(FMetalDevice* InDevice, uint64 InPageSizeBytes, uint64 InLargeAllocationThreshold, MTLResourceOptions InOptions, bool bInBindlessReachable, EMetalAllocationLifetime InLifetime);
     ~FMetalLinearAllocator();
 
     void* Allocate(uint64 SizeInBytes, uint64 Alignment, FMetalQueue* Queue, FMetalResourceStorage& OutStorage);
     void  RetireAllocations(FMetalQueue* Queue, uint64 SubmissionValue);
+
+    void  EndFrame();
     void  CleanUp();
     void  Destroy();
 
@@ -100,6 +105,8 @@ private:
         uint64        UsedBytes;
         FMetalQueue*  Queue;
         uint64        EligibleFromFenceValue;
+        uint64        DirtyBegin;
+        uint64        DirtyEnd;
         bool          bDedicated;
         bool          bPendingRetire;
     };
@@ -116,17 +123,21 @@ private:
     FPage*                   ActivePage;
     uint64                   PageSizeBytes;
     uint64                   LargeAllocationThreshold;
+    MTLResourceOptions       Options;
+    EMetalAllocationLifetime Lifetime;
+    bool                     bManaged;
+    bool                     bBindlessReachable;
 };
 
 class FMetalUploadHeapAllocator : public FMetalDeviceChild
 {
 public:
-    FMetalUploadHeapAllocator(FMetalDevice* InDevice, uint64 InPageSizeBytes, uint64 InConstantPageSizeBytes, uint64 InLargeAllocationThreshold);
+    FMetalUploadHeapAllocator(FMetalDevice* InDevice, uint64 InPageSizeBytes, uint64 InLargeAllocationThreshold);
     ~FMetalUploadHeapAllocator();
 
     void* Allocate(uint64 SizeInBytes, uint64 Alignment, FMetalQueue* Queue, FMetalResourceStorage& OutStorage);
-    void* AllocateConstants(uint64 SizeInBytes, uint64 Alignment, FMetalQueue* Queue, FMetalResourceStorage& OutStorage);
     void  RetireAllocations(FMetalQueue* Queue, uint64 SubmissionValue);
+    void  EndFrame();
     void  CleanUp();
     void  Destroy();
 
@@ -136,7 +147,6 @@ public:
 
 private:
     FMetalLinearAllocator UploadAllocator;
-    FMetalLinearAllocator ConstantsAllocator;
 };
 
 class FMetalBufferAllocator : public FMetalDeviceChild
@@ -145,7 +155,7 @@ public:
     explicit FMetalBufferAllocator(FMetalDevice* InDevice);
     ~FMetalBufferAllocator();
 
-    bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, MTLResourceOptions Options, FMetalResourceStorage& OutStorage);
+    bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, MTLResourceOptions Options, bool bBindlessReachable, FMetalResourceStorage& OutStorage);
     void Deallocate(FMetalResourceStorage& Storage);
     void CleanUp();
     void Destroy();

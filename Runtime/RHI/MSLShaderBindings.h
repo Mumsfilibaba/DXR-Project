@@ -132,6 +132,44 @@ inline const CHAR* ToString(EMSLBindingType BindingType)
     return BindingTypeStrings[static_cast<int32>(BindingType)];
 }
 
+/** @brief Texture type a texture binding declares, the dimension half of FMSLShaderBinding::NullTextureType. */
+enum class EMSLTextureDimension : uint8
+{
+    Texture1D        = 0,
+    Texture1DArray   = 1,
+    Texture2D        = 2,
+    Texture2DArray   = 3,
+    TextureCube      = 4,
+    TextureCubeArray = 5,
+    Texture3D        = 6,
+    Texture2DMS      = 7,
+    TextureBuffer    = 8,
+    Count            = 9,
+};
+
+/** @brief Component type a texture binding declares. Depth is a depth texture, which only accepts a depth pixel format. */
+enum class EMSLTextureComponent : uint8
+{
+    Float = 0,
+    Int   = 1,
+    Uint  = 2,
+    Depth = 3,
+    Count = 4,
+};
+
+/** @brief Number of distinct FMSLShaderBinding::NullTextureType values. */
+static constexpr uint8 MSL_NUM_NULL_TEXTURE_TYPES = static_cast<uint8>(EMSLTextureDimension::Count) * static_cast<uint8>(EMSLTextureComponent::Count);
+
+/**
+ * @param Dimension Texture type the binding declares
+ * @param Component Component type the binding declares
+ * @return Index of the null texture matching both, in the range [0, MSL_NUM_NULL_TEXTURE_TYPES)
+ */
+constexpr uint8 MakeMSLNullTextureType(EMSLTextureDimension Dimension, EMSLTextureComponent Component)
+{
+    return static_cast<uint8>(static_cast<uint8>(Component) * static_cast<uint8>(EMSLTextureDimension::Count) + static_cast<uint8>(Dimension));
+}
+
 struct FMSLShaderBinding
 {
     /** @brief Namespace the slot was allocated from. */
@@ -143,7 +181,8 @@ struct FMSLShaderBinding
     /** @brief Index into the MSL buffer, texture or sampler table, whichever the type selects. */
     uint8 SlotIndex;
 
-    uint8 Padding0;
+    /** @brief Null texture bound when the register is empty, from MakeMSLNullTextureType. Zero for every other binding type. */
+    uint8 NullTextureType;
 };
 
 static_assert(sizeof(FMSLShaderBinding) == 4, "FMSLShaderBinding is serialized verbatim and must not carry padding");
@@ -154,7 +193,7 @@ struct FMSLShaderHeader
     static constexpr uint32 ExpectedMagic = 0x4D534C42;
 
     /** @brief Layout revision, bumped whenever the header or the binding array changes shape. */
-    static constexpr uint32 ExpectedVersion = 4;
+    static constexpr uint32 ExpectedVersion = 5;
 
     uint32 Magic;
     uint32 Version;

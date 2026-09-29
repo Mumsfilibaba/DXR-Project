@@ -3,6 +3,7 @@
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalAllocators.h"
 #include "MetalRHI/MetalQueue.h"
+#include "MetalRHI/MetalUploadBatch.h"
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalSwapChain.h"
 
@@ -140,8 +141,6 @@ FMetalTextureRHI::FMetalTextureRHI(FMetalDevice* InDevice, const FRHITextureDesc
     , UnorderedAccessView(nullptr)
     , RenderTargetView(nullptr)
     , DepthStencilView(nullptr)
-    , LastUsedQueue(nullptr)
-    , LastUsedValue(0)
 {
 }
 
@@ -191,6 +190,7 @@ bool FMetalTextureRHI::Initialize(ERHIResourceState InInitialAccess, const IRHIT
     SCOPED_AUTORELEASE_POOL();
 
     MTLTextureDescriptor* TextureDescriptor = CreateTextureDescriptor(Desc);
+
     if (TextureDescriptor.pixelFormat == MTLPixelFormatInvalid)
     {
         METAL_ERROR("Format '%s' has no Metal equivalent", ToString(Desc.Format));
@@ -204,6 +204,7 @@ bool FMetalTextureRHI::Initialize(ERHIResourceState InInitialAccess, const IRHIT
     }
 
     Texture = ResourceStorage.GetTexture();
+
     if (!Texture)
     {
         METAL_ERROR("Failed to create a %s texture", ToString(Desc.Dimension));
@@ -252,12 +253,14 @@ bool FMetalTextureRHI::UploadInitialData(const IRHITextureData* InInitialData)
     }
 
     FMetalUploadBatch UploadBatch(GetDevice());
+
     if (!UploadBatch.IsValid())
     {
         return false;
     }
 
     FMetalResourceStorage StagingStorage(GetDevice());
+
     if (!UploadBatch.CreateStagingBuffer(StagingSize, StagingStorage))
     {
         return false;
@@ -273,6 +276,7 @@ bool FMetalTextureRHI::UploadInitialData(const IRHITextureData* InInitialData)
     for (uint32 MipIndex = 0; MipIndex < NumMipLevels; ++MipIndex)
     {
         const uint8* MipData = reinterpret_cast<const uint8*>(InInitialData->GetMipData(MipIndex));
+
         if (!MipData)
         {
             break;
@@ -313,6 +317,7 @@ bool FMetalTextureRHI::CreateDefaultViews()
     if (Desc.IsShaderResourceTexture() && !Desc.IsNoDefaultSRV())
     {
         ShaderResourceView = new FMetalShaderResourceViewRHI(GetDevice(), this, CreateDefaultSRVDesc(Desc));
+
         if (!ShaderResourceView->Initialize())
         {
             return false;
@@ -322,6 +327,7 @@ bool FMetalTextureRHI::CreateDefaultViews()
     if (Desc.IsUnorderedAccessTexture() && !Desc.IsNoDefaultUAV() && !IsTextureCube(Desc.Dimension))
     {
         UnorderedAccessView = new FMetalUnorderedAccessViewRHI(GetDevice(), this, CreateDefaultUAVDesc(Desc));
+
         if (!UnorderedAccessView->Initialize())
         {
             return false;
@@ -331,6 +337,7 @@ bool FMetalTextureRHI::CreateDefaultViews()
     if (Desc.IsRenderTarget() && !Desc.IsNoDefaultRTV())
     {
         RenderTargetView = new FMetalRenderTargetViewRHI(GetDevice(), this, CreateDefaultRTVDesc(Desc));
+
         if (!RenderTargetView->Initialize())
         {
             return false;
@@ -340,6 +347,7 @@ bool FMetalTextureRHI::CreateDefaultViews()
     if (Desc.IsDepthStencil() && !Desc.IsNoDefaultDSV())
     {
         DepthStencilView = new FMetalDepthStencilViewRHI(GetDevice(), this, CreateDefaultDSVDesc(Desc));
+
         if (!DepthStencilView->Initialize())
         {
             return false;
@@ -349,11 +357,22 @@ bool FMetalTextureRHI::CreateDefaultViews()
     return true;
 }
 
+bool FMetalTextureRHI::ResizeSwapChainTexture(const FRHITextureDesc& InTextureDesc)
+{
+    CHECK(SwapChain != nullptr);
+
+    const bool bFormatChanged = InTextureDesc.Format != Desc.Format;
+    Desc = InTextureDesc;
+
+    return !bFormatChanged || CreateDefaultViews();
+}
+
 void FMetalTextureRHI::SetDebugName(const String& InName)
 {
     @autoreleasepool
     {
         id<MTLTexture> TextureHandle = GetMTLTexture();
+
         if (TextureHandle)
         {
             TextureHandle.label = InName.GetNSString();
@@ -368,6 +387,7 @@ void FMetalTextureRHI::GetDebugName(String& OutDebugName) const
     @autoreleasepool
     {
         id<MTLTexture> TextureHandle = GetMTLTexture();
+
         if (TextureHandle)
         {
             OutDebugName = String(TextureHandle.label);
@@ -386,12 +406,4 @@ id<MTLTexture> FMetalTextureRHI::GetMTLTexture() const
         return Texture;
     }
 }
-
-void FMetalTextureRHI::StampLastUse(FMetalQueue* InQueue, uint64 InValue)
-{
-    LastUsedQueue = InQueue;
-    LastUsedValue = InValue;
-    ResourceStorage.StampLastUse(InQueue, InValue);
-}
-
 ENABLE_UNREFERENCED_VARIABLE_WARNING

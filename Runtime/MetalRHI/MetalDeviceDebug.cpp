@@ -7,21 +7,18 @@
 #include "Core/Threading/Atomic/AtomicBool.h"
 #include "Core/Threading/Atomic/AtomicInt.h"
 #include "Core/Threading/Runnable.h"
+#if METAL_ENABLE_DEBUG_LAYER
+    #include <cerrno>
+    #include <cstdio>
+    #include <unistd.h>
+#endif
 
 static TAutoConsoleVariable<bool> CVarCaptureNextFrame(
     "MetalRHI.CaptureNextFrame",
     "Captures the next BeginFrame/EndFrame pair with MTLCaptureManager",
     false);
 
-static AtomicInt32 GValidationErrorCount;
-static bool        GCaptureActive = false;
-
 #if METAL_ENABLE_DEBUG_LAYER
-
-#include <cerrno>
-#include <cstdio>
-#include <unistd.h>
-
 static TAutoConsoleVariable<bool> CVarCaptureValidationOutput(
     "MetalRHI.CaptureValidationOutput",
     "Redirects the Metal debug layer's stderr output into the engine log",
@@ -31,29 +28,23 @@ static TAutoConsoleVariable<bool> CVarBreakOnValidationError(
     "MetalRHI.BreakOnValidationError",
     "Enables breakpoints when the Metal debug layer reports an error",
     false);
+#endif
+
+static AtomicInt32 GValidationErrorCount;
+static bool        GCaptureActive = false;
+
+#if METAL_ENABLE_DEBUG_LAYER
 
 static bool IsEnvFlagEnabled(const CHAR* Name)
 {
     String Value;
+
     if (!FPlatformMisc::GetEnvironmentVariable(Name, Value) || Value.IsEmpty() || Value[0] == '0')
     {
         return false;
     }
 
     return CString::Stricmp(*Value, "false") != 0 && CString::Stricmp(*Value, "off") != 0;
-}
-
-static bool IsMetalDebugLayerRequested()
-{
-    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
-    {
-        if (CVarEnableDebugLayer->GetBool())
-        {
-            return true;
-        }
-    }
-
-    return IsEnvFlagEnabled("MTL_DEBUG_LAYER") || IsEnvFlagEnabled("METAL_DEVICE_WRAPPER_TYPE");
 }
 
 static bool IsMetalValidationLine(const CHAR* Text)
@@ -84,21 +75,8 @@ static const CHAR* SkipNSLogPrefix(const CHAR* Text)
     return Separator + 2;
 }
 
-static bool IsFatalValidationLine(const CHAR* Text)
-{
-    return CString::Stristr(Text, "failed assertion") != nullptr;
-}
-
 static String GLastReportedLine;
 static int32  GRepeatedLineCount = 0;
-
-static bool IsMetalValidationError(const CHAR* Text)
-{
-    return IsFatalValidationLine(Text)
-        || CString::Stristr(Text, "error") != nullptr
-        || CString::Stristr(Text, "page fault") != nullptr
-        || CString::Stristr(Text, "faulted") != nullptr;
-}
 
 static void FlushRepeatedLine()
 {
@@ -122,7 +100,12 @@ static void ReportValidationLine(const CHAR* RawText)
     FlushRepeatedLine();
     GLastReportedLine = Text;
 
-    if (IsMetalValidationError(Text))
+    const bool bIsError = CString::Stristr(Text, "failed assertion") != nullptr
+        || CString::Stristr(Text, "error")      != nullptr
+        || CString::Stristr(Text, "page fault") != nullptr
+        || CString::Stristr(Text, "faulted")    != nullptr;
+
+    if (bIsError)
     {
         METAL_ERROR("[Metal Validation] %s", Text);
         GValidationErrorCount.Add(1);
@@ -161,6 +144,7 @@ public:
         setvbuf(stderr, nullptr, _IONBF, 0);
 
         OriginalStderr = dup(STDERR_FILENO);
+
         if (OriginalStderr < 0)
         {
             METAL_ERROR("Failed to duplicate stderr for Metal validation capture");
@@ -168,6 +152,7 @@ public:
         }
 
         int PipeFds[2] = { -1, -1 };
+
         if (pipe(PipeFds) != 0)
         {
             METAL_ERROR("Failed to create a pipe for Metal validation capture");
@@ -179,6 +164,7 @@ public:
         }
 
         PipeRead = PipeFds[0];
+
         if (dup2(PipeFds[1], STDERR_FILENO) < 0)
         {
             METAL_ERROR("Failed to redirect stderr for Metal validation capture");
@@ -201,6 +187,7 @@ public:
         GRepeatedLineCount = 0;
 
         Thread = FPlatformThread::Create(this, "MetalValidationLog");
+
         if (!Thread || !Thread->Start())
         {
             METAL_ERROR("Failed to start the Metal validation capture thread");
@@ -254,6 +241,7 @@ public:
         while (!bStop.Load())
         {
             const ssize_t BytesRead = read(PipeRead, Chunk, sizeof(Chunk));
+
             if (BytesRead < 0)
             {
                 if (errno == EINTR)
@@ -275,6 +263,7 @@ public:
                 while (Written < BytesRead)
                 {
                     const ssize_t Result = write(OriginalStderr, Chunk + Written, static_cast<size_t>(BytesRead - Written));
+
                     if (Result < 0)
                     {
                         if (errno == EINTR)
@@ -292,6 +281,7 @@ public:
             for (ssize_t Index = 0; Index < BytesRead; ++Index)
             {
                 const CHAR Character = Chunk[Index];
+
                 if (Character == '\n' || Character == '\r')
                 {
                     if (!Line.IsEmpty())
@@ -332,12 +322,20 @@ static FMetalStderrCapture GStderrCapture;
 
 bool MetalIsDebugLayerRequested()
 {
-    return IsMetalDebugLayerRequested();
+    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
+    {
+        if (CVarEnableDebugLayer->GetBool())
+        {
+            return true;
+        }
+    }
+
+    return IsEnvFlagEnabled("MTL_DEBUG_LAYER") || IsEnvFlagEnabled("METAL_DEVICE_WRAPPER_TYPE");
 }
 
 void MetalEnableDebugLayer()
 {
-    if (!IsMetalDebugLayerRequested())
+    if (!MetalIsDebugLayerRequested())
     {
         return;
     }
@@ -348,7 +346,7 @@ void MetalEnableDebugLayer()
 
 void MetalStartValidationCapture()
 {
-    if (!IsMetalDebugLayerRequested() || !CVarCaptureValidationOutput.GetValue())
+    if (!MetalIsDebugLayerRequested() || !CVarCaptureValidationOutput.GetValue())
     {
         return;
     }
@@ -383,6 +381,7 @@ void MetalBeginFrameCapture(id<MTLDevice> Device)
     CVarCaptureNextFrame.SetVariable(false);
 
     MTLCaptureManager* Manager = [MTLCaptureManager sharedCaptureManager];
+
     if (!Manager)
     {
         return;
@@ -407,6 +406,7 @@ void MetalBeginFrameCapture(id<MTLDevice> Device)
     }
 
     NSError* Error = nil;
+
     if (![Manager startCaptureWithDescriptor:Descriptor error:&Error])
     {
         const String ErrorString(Error ? [Error localizedDescription] : @"unknown error");

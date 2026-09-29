@@ -12,11 +12,10 @@ struct FMetalDeferredObject
 
     enum class EType : uint8
     {
-        RHIResource  = 1,
-        MTLResource  = 2,
-        MTLHeap      = 3,
-        MTLObject    = 4,
-        BindlessSlot = 5,
+        RHIResource        = 1,
+        ObjCObject         = 2,
+        BindlessSlot       = 3,
+        StandaloneResource = 4,
     };
 
     FMetalDeferredObject(FRHIResource* InResource)
@@ -26,46 +25,11 @@ struct FMetalDeferredObject
         RHIResource = InResource;
     }
 
-    FMetalDeferredObject(id<MTLResource> InResource)
-        : Type(EType::MTLResource)
+    explicit FMetalDeferredObject(id<NSObject> InObject)
+        : Type(EType::ObjCObject)
     {
-        CHECK(InResource != nil);
-        Resource = [InResource retain];
-    }
-
-    FMetalDeferredObject(id<MTLHeap> InHeap)
-        : Type(EType::MTLHeap)
-    {
-        CHECK(InHeap != nil);
-        Heap = [InHeap retain];
-    }
-
-    FMetalDeferredObject(id<MTLRenderPipelineState> InPipelineState)
-        : Type(EType::MTLObject)
-    {
-        CHECK(InPipelineState != nil);
-        Object = [InPipelineState retain];
-    }
-
-    FMetalDeferredObject(id<MTLComputePipelineState> InPipelineState)
-        : Type(EType::MTLObject)
-    {
-        CHECK(InPipelineState != nil);
-        Object = [InPipelineState retain];
-    }
-
-    FMetalDeferredObject(id<MTLDepthStencilState> InDepthStencilState)
-        : Type(EType::MTLObject)
-    {
-        CHECK(InDepthStencilState != nil);
-        Object = [InDepthStencilState retain];
-    }
-
-    FMetalDeferredObject(MTLVertexDescriptor* InVertexDescriptor)
-        : Type(EType::MTLObject)
-    {
-        CHECK(InVertexDescriptor != nil);
-        Object = [InVertexDescriptor retain];
+        CHECK(InObject != nil);
+        Object = [InObject retain];
     }
 
     FMetalDeferredObject(FMetalBindlessDescriptorManager* InManager, FRHIDescriptorHandle InHandle)
@@ -75,6 +39,14 @@ struct FMetalDeferredObject
         CHECK(InHandle.IsValid());
         BindlessSlot.Manager = InManager;
         BindlessSlot.Handle  = InHandle;
+    }
+
+    FMetalDeferredObject(EType InType, id<MTLResource> InResource)
+        : Type(InType)
+    {
+        CHECK(InType == EType::StandaloneResource);
+        CHECK(InResource != nil);
+        Resource = [InResource retain];
     }
 
     EType const Type;
@@ -88,9 +60,8 @@ struct FMetalDeferredObject
     union
     {
         FRHIResource*     RHIResource;
+        id<NSObject>      Object;
         id<MTLResource>   Resource;
-        id<MTLHeap>       Heap;
-        NSObject*         Object;
         FBindlessSlotData BindlessSlot;
     };
 };

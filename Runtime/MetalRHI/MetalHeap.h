@@ -20,13 +20,7 @@ public:
         return Size;
     }
 
-    FORCEINLINE MTLStorageMode GetStorageMode() const
-    {
-        return StorageMode;
-    }
-
 private:
-    id<MTLHeap>    Heap;
-    uint64         Size;
-    MTLStorageMode StorageMode;
+    id<MTLHeap> Heap;
+    uint64      Size;
 };

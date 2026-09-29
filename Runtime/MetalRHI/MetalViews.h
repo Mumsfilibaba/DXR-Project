@@ -4,6 +4,9 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
+class FMetalTextureRHI;
+class FMetalBufferRHI;
+
 class FMetalView : public FMetalDeviceChild
 {
 public:
@@ -14,6 +17,9 @@ public:
         uint32 InFirstMip, uint32 InNumMips, uint32 InFirstSlice, uint32 InNumSlices);
     bool InitializeBufferView(FRHIBuffer* InBuffer, uint64 InOffset, uint64 InSize);
     bool InitializeBufferTextureView(EFormat InFormat, bool bWritable);
+
+    void OnBufferRelocated();
+    void OnBufferReleased();
 
     id<MTLTexture> GetMTLTexture() const
     {
@@ -35,11 +41,31 @@ public:
         return BufferSize;
     }
 
+    FMetalBufferRHI* GetSourceBuffer() const
+    {
+        return SourceBuffer;
+    }
+
+protected:
+    FRHIDescriptorHandle EnsureBindlessHandle(EDescriptorType DescriptorType, bool bWritable) const;
+    void DeclareBindlessResidency();
+
 private:
-    id<MTLTexture> TextureView;
-    id<MTLBuffer>  BufferView;
-    uint64         BufferOffset;
-    uint64         BufferSize;
+    bool CreateBufferTexture();
+    void ReleaseTextureView();
+    void FreeBindlessHandle();
+
+    FMetalBufferRHI*             SourceBuffer;
+    id<MTLTexture>               TextureView;
+    id<MTLBuffer>                BufferView;
+    uint64                       BufferOffset;
+    uint64                       SourceOffset;
+    uint64                       BufferSize;
+    mutable FRHIDescriptorHandle BindlessHandle;
+    EFormat                      BufferTextureFormat;
+    bool                         bBufferTextureWritable;
+    bool                         bOwnsTextureView;
+    bool                         bDeclaredResident;
 };
 
 class FMetalShaderResourceViewRHI : public FRHIShaderResourceView, public FMetalView
@@ -54,9 +80,6 @@ public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     bool Initialize();
-
-private:
-    mutable FRHIDescriptorHandle BindlessHandle;
 };
 
 class FMetalUnorderedAccessViewRHI : public FRHIUnorderedAccessView, public FMetalView
@@ -71,12 +94,43 @@ public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     bool Initialize();
-
-private:
-    mutable FRHIDescriptorHandle BindlessHandle;
 };
 
-class FMetalRenderTargetViewRHI : public FRHIRenderTargetView, public FMetalView
+struct FMetalSubresource
+{
+    uint16 ArrayIndex = 0;
+    uint16 NumSlices  = 1;
+    uint8  MipLevel   = 0;
+};
+
+class FMetalAttachmentView : public FMetalView
+{
+public:
+    FMetalAttachmentView(FMetalDevice* InDevice, FRHITexture* InTexture, const FMetalSubresource& InSubresource);
+    virtual ~FMetalAttachmentView();
+
+    bool InitializeAttachment(EFormat InFormat, EViewDimension InViewDimension);
+
+    void ApplyToAttachment(MTLRenderPassAttachmentDescriptor* Attachment) const;
+
+    id<MTLTexture> GetAttachmentTexture() const;
+
+    uint16 GetArrayIndex() const
+    {
+        return Subresource.ArrayIndex;
+    }
+
+    uint16 GetNumSlices() const
+    {
+        return Subresource.NumSlices;
+    }
+
+private:
+    FMetalTextureRHI* Texture;
+    FMetalSubresource Subresource;
+};
+
+class FMetalRenderTargetViewRHI : public FRHIRenderTargetView, public FMetalAttachmentView
 {
 public:
     FMetalRenderTargetViewRHI(FMetalDevice* InDevice, FRHITexture* InTexture, const FRHIRenderTargetViewDesc& InDesc);
@@ -86,29 +140,9 @@ public:
     virtual void* GetRHINativeHandle() const override final;
 
     bool Initialize();
-
-    uint8 GetMipLevel() const
-    {
-        return MipLevel;
-    }
-
-    uint16 GetArrayIndex() const
-    {
-        return ArrayIndex;
-    }
-
-    uint16 GetNumSlices() const
-    {
-        return NumSlices;
-    }
-
-private:
-    uint8  MipLevel;
-    uint16 ArrayIndex;
-    uint16 NumSlices;
 };
 
-class FMetalDepthStencilViewRHI : public FRHIDepthStencilView, public FMetalView
+class FMetalDepthStencilViewRHI : public FRHIDepthStencilView, public FMetalAttachmentView
 {
 public:
     FMetalDepthStencilViewRHI(FMetalDevice* InDevice, FRHITexture* InTexture, const FRHIDepthStencilViewDesc& InDesc);
@@ -119,30 +153,12 @@ public:
 
     bool Initialize();
 
-    uint8 GetMipLevel() const
-    {
-        return MipLevel;
-    }
-
-    uint16 GetArrayIndex() const
-    {
-        return ArrayIndex;
-    }
-
-    uint16 GetNumSlices() const
-    {
-        return NumSlices;
-    }
-
     EDepthStencilViewFlags GetFlags() const
     {
         return Flags;
     }
 
 private:
-    uint8                  MipLevel;
-    uint16                 ArrayIndex;
-    uint16                 NumSlices;
     EDepthStencilViewFlags Flags;
 };
 

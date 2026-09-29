@@ -8,6 +8,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Threading/ScopedLock.h"
 #include "RHI/MSLShaderBindings.h"
+#include <string.h>
 
 static TAutoConsoleVariable<bool> CVarEnableBindless(
     "MetalRHI.EnableBindless",
@@ -26,9 +27,11 @@ static TAutoConsoleVariable<int32> CVarNumBindlessSamplerDescriptors(
 
 static constexpr uint32 MetalBindlessHardMaxSlots = 1u << 20;
 
+static constexpr uint8 MetalNullEntryDefaultResource = MakeMSLNullTextureType(EMSLTextureDimension::Texture2D, EMSLTextureComponent::Float);
+
 static uint64 MetalCopyResourceID(id Object)
 {
-    if (!Object || ![Object respondsToSelector:@selector(gpuResourceID)])
+    if (!Object)
     {
         return 0;
     }
@@ -40,18 +43,9 @@ static uint64 MetalCopyResourceID(id Object)
     return Value;
 }
 
-static uint64 MetalBufferGpuAddress(id<MTLBuffer> Buffer, uint64 Offset)
-{
-    if (!Buffer || ![Buffer respondsToSelector:@selector(gpuAddress)])
-    {
-        return 0;
-    }
-
-    return static_cast<uint64>([Buffer gpuAddress]) + Offset;
-}
-
 FMetalBindlessDescriptorManager::FMetalBindlessDescriptorManager(FMetalDevice* InDevice)
     : FMetalDeviceChild(InDevice)
+    , NullEntries()
     , ResourceHeap()
     , SamplerHeap()
     , AllocCS()
@@ -73,24 +67,29 @@ FMetalBindlessDescriptorManager::~FMetalBindlessDescriptorManager()
 bool FMetalBindlessDescriptorManager::Initialize()
 {
     id<MTLDevice> Device = GetDevice()->GetMTLDevice();
+
     if (!Device || !CVarEnableBindless.GetValue())
     {
         return false;
     }
 
-    bool bHasBindlessABI = false;
-    if (@available(macOS 13.0, *))
+    if (!MetalRHI::SupportsMetal3() || GMetalFeatures.ArgumentBuffersTier != MTLArgumentBuffersTier2)
     {
-        bHasBindlessABI = true;
-    }
-
-    if (!bHasBindlessABI)
-    {
-        METAL_INFO("Bindless descriptors are disabled; Metal 3 gpuResourceID requires macOS 13 or later");
+        METAL_INFO("Bindless descriptors are disabled; they require a Metal 3 GPU with Tier 2 argument buffers");
         return false;
     }
 
     HardMaxSlots = MetalBindlessHardMaxSlots;
+
+    const FMetalDefaultResources& Defaults = GetDevice()->GetDefaultResources();
+    for (uint8 NullTextureType = 0; NullTextureType < MSL_NUM_NULL_TEXTURE_TYPES; ++NullTextureType)
+    {
+        NullEntries[NullTextureType].Resource                              = MetalCopyResourceID(Defaults.GetNullTexture(NullTextureType));
+        NullEntries[MetalNullEntryWritableBase + NullTextureType].Resource = MetalCopyResourceID(Defaults.GetNullRWTexture(NullTextureType));
+    }
+
+    NullEntries[MetalNullEntryBuffer].Resource  = static_cast<uint64>([Defaults.NullBuffer gpuAddress]);
+    NullEntries[MetalNullEntrySampler].Resource = MetalCopyResourceID(Defaults.DefaultSampler);
 
     const uint32 ResourceCount = static_cast<uint32>(Math::Max<int32>(1, CVarNumBindlessResourceDescriptors.GetValue()));
     const uint32 SamplerCount  = static_cast<uint32>(Math::Max<int32>(1, CVarNumBindlessSamplerDescriptors.GetValue()));
@@ -117,7 +116,7 @@ bool FMetalBindlessDescriptorManager::CreateTable(FHeap& Heap, uint32 Capacity, 
 
     id<MTLDevice>    Device   = GetDevice()->GetMTLDevice();
     const NSUInteger ByteSize = static_cast<NSUInteger>(Capacity) * sizeof(FMetalBindlessDescriptorEntry);
-    id<MTLBuffer>    Buffer   = [Device newBufferWithLength:ByteSize options:MTLResourceStorageModeShared];
+    id<MTLBuffer>    Buffer   = [Device newBufferWithLength:ByteSize options:MetalRHI::GetMTLResourceOptions(EMetalMemoryClass::CPUWriteGPURead)];
 
     if (!Buffer)
     {
@@ -125,48 +124,52 @@ bool FMetalBindlessDescriptorManager::CreateTable(FHeap& Heap, uint32 Capacity, 
     }
 
     Buffer.label = [NSString stringWithUTF8String:DebugName];
-    Memory::Memzero([Buffer contents], ByteSize);
 
     Heap.Buffer     = Buffer;
     Heap.Mapped     = static_cast<FMetalBindlessDescriptorEntry*>([Buffer contents]);
     Heap.Capacity   = Capacity;
     Heap.NextFresh  = 0;
 
+    FillNullEntries(Heap, 0, Capacity);
+    MarkDirty(Heap, 0, Capacity);
+
     Heap.Slots.Resize(static_cast<int32>(Capacity));
-    Heap.Occupied.Clear();
+    Heap.NumOccupied = 0;
     Heap.FreeStack.Clear();
     return true;
 }
 
+void FMetalBindlessDescriptorManager::FillNullEntries(FHeap& Heap, uint32 FirstSlot, uint32 NumSlots)
+{
+    static_assert(sizeof(FMetalBindlessDescriptorEntry) == 8, "memset_pattern8 writes one entry per pattern");
+
+    const FMetalBindlessDescriptorEntry& Pattern = NullEntries[Heap.bSampler ? MetalNullEntrySampler : MetalNullEntryDefaultResource];
+    memset_pattern8(Heap.Mapped + FirstSlot, &Pattern, static_cast<size_t>(NumSlots) * sizeof(FMetalBindlessDescriptorEntry));
+}
+
 void FMetalBindlessDescriptorManager::DestroyTable(FHeap& Heap)
 {
-    for (FSlotState& Slot : Heap.Slots)
-    {
-        if (Slot.Resource)
-        {
-            [Slot.Resource release];
-            Slot.Resource = nil;
-        }
-    }
-
     if (Heap.Buffer)
     {
         [Heap.Buffer release];
         Heap.Buffer = nil;
     }
 
-    Heap.Mapped    = nullptr;
-    Heap.Capacity  = 0;
-    Heap.NextFresh = 0;
+    Heap.Mapped     = nullptr;
+    Heap.Capacity   = 0;
+    Heap.NextFresh  = 0;
+    Heap.DirtyBegin = UINT32_MAX;
+    Heap.DirtyEnd   = 0;
 
     Heap.Slots.Clear();
-    Heap.Occupied.Clear();
+    Heap.NumOccupied = 0;
     Heap.FreeStack.Clear();
 }
 
 bool FMetalBindlessDescriptorManager::GrowTable(FHeap& Heap)
 {
     const uint32 Grown = Math::Min(HardMaxSlots, Math::Max(Heap.Capacity * 2u, Heap.Capacity + 64u));
+
     if (Grown <= Heap.Capacity)
     {
         METAL_ERROR("Bindless %s table exhausted at %u slots", Heap.bSampler ? "sampler" : "resource", Heap.Capacity);
@@ -177,7 +180,7 @@ bool FMetalBindlessDescriptorManager::GrowTable(FHeap& Heap)
 
     id<MTLDevice>    Device    = GetDevice()->GetMTLDevice();
     const NSUInteger ByteSize  = static_cast<NSUInteger>(Grown) * sizeof(FMetalBindlessDescriptorEntry);
-    id<MTLBuffer>    NewBuffer = [Device newBufferWithLength:ByteSize options:MTLResourceStorageModeShared];
+    id<MTLBuffer>    NewBuffer = [Device newBufferWithLength:ByteSize options:MetalRHI::GetMTLResourceOptions(EMetalMemoryClass::CPUWriteGPURead)];
 
     if (!NewBuffer)
     {
@@ -186,7 +189,8 @@ bool FMetalBindlessDescriptorManager::GrowTable(FHeap& Heap)
     }
 
     NewBuffer.label = Heap.bSampler ? @"MetalBindlessSamplerHeap" : @"MetalBindlessResourceHeap";
-    Memory::Memzero([NewBuffer contents], ByteSize);
+
+    TScopedLock Lock(PendingWritesCS);
 
     if (Heap.Mapped && Heap.Capacity > 0)
     {
@@ -199,9 +203,15 @@ bool FMetalBindlessDescriptorManager::GrowTable(FHeap& Heap)
         [Heap.Buffer release];
     }
 
+    const uint32 OldCapacity = Heap.Capacity;
     Heap.Buffer   = NewBuffer;
     Heap.Mapped   = static_cast<FMetalBindlessDescriptorEntry*>([NewBuffer contents]);
     Heap.Capacity = Grown;
+
+    FillNullEntries(Heap, OldCapacity, Grown - OldCapacity);
+    Heap.DirtyBegin = UINT32_MAX;
+    Heap.DirtyEnd   = 0;
+    MarkDirty(Heap, 0, Grown);
 
     Heap.Slots.Resize(static_cast<int32>(Grown));
     Heap.GrowthCount++;
@@ -210,15 +220,22 @@ bool FMetalBindlessDescriptorManager::GrowTable(FHeap& Heap)
     return true;
 }
 
-void FMetalBindlessDescriptorManager::NotifyTableModified(FHeap& Heap, uint32 SlotIndex)
+void FMetalBindlessDescriptorManager::MarkDirty(FHeap& Heap, uint32 FirstSlot, uint32 NumSlots)
 {
-    if (!Heap.Buffer || Heap.Buffer.storageMode != MTLStorageModeManaged)
+    Heap.DirtyBegin = Math::Min(Heap.DirtyBegin, FirstSlot);
+    Heap.DirtyEnd   = Math::Max(Heap.DirtyEnd, FirstSlot + NumSlots);
+}
+
+void FMetalBindlessDescriptorManager::FlushDirtyRange(FHeap& Heap)
+{
+    if (Heap.DirtyEnd <= Heap.DirtyBegin)
     {
         return;
     }
 
-    const NSRange Range = NSMakeRange(SlotIndex * sizeof(FMetalBindlessDescriptorEntry), sizeof(FMetalBindlessDescriptorEntry));
-    [Heap.Buffer didModifyRange:Range];
+    MetalRHI::FlushCPUWrite(Heap.Buffer, Heap.DirtyBegin * sizeof(FMetalBindlessDescriptorEntry), (Heap.DirtyEnd - Heap.DirtyBegin) * sizeof(FMetalBindlessDescriptorEntry));
+    Heap.DirtyBegin = UINT32_MAX;
+    Heap.DirtyEnd   = 0;
 }
 
 FMetalBindlessDescriptorManager::FHeap& FMetalBindlessDescriptorManager::GetHeap(EDescriptorType Type)
@@ -236,6 +253,7 @@ uint32 FMetalBindlessDescriptorManager::AllocateSlot(FHeap& Heap)
     TScopedLock Lock(AllocCS);
 
     uint32 SlotIndex = FRHIDescriptorHandle::InvalidHandle;
+
     if (!Heap.FreeStack.IsEmpty())
     {
         SlotIndex = Heap.FreeStack.Last();
@@ -251,8 +269,10 @@ uint32 FMetalBindlessDescriptorManager::AllocateSlot(FHeap& Heap)
         SlotIndex = Heap.NextFresh++;
     }
 
-    Heap.Slots[static_cast<int32>(SlotIndex)].bOccupied = true;
-    Heap.Occupied.Add(SlotIndex);
+    FSlotState& Slot = Heap.Slots[static_cast<int32>(SlotIndex)];
+    Slot.bOccupied = true;
+    Slot.NullEntry = Heap.bSampler ? MetalNullEntrySampler : MetalNullEntryDefaultResource;
+    Heap.NumOccupied++;
     return SlotIndex;
 }
 
@@ -265,6 +285,7 @@ FRHIDescriptorHandle FMetalBindlessDescriptorManager::Allocate(EDescriptorType I
 
     FHeap& Heap = GetHeap(InType);
     const uint32 SlotIndex = AllocateSlot(Heap);
+
     if (SlotIndex == FRHIDescriptorHandle::InvalidHandle)
     {
         return FRHIDescriptorHandle();
@@ -297,31 +318,17 @@ void FMetalBindlessDescriptorManager::RecycleSlot(FRHIDescriptorHandle Handle)
 
     TScopedLock Lock(AllocCS);
     FSlotState& Slot = Heap.Slots[static_cast<int32>(SlotIndex)];
-    if (Slot.Resource)
-    {
-        [Slot.Resource release];
-        Slot.Resource = nil;
-    }
-
+    CHECK(Slot.bOccupied);
     Slot.bOccupied = false;
-    Slot.bWritable = false;
-    Slot.bIsView   = false;
 
     if (Heap.Mapped)
     {
-        Heap.Mapped[SlotIndex].Resource = 0;
-        NotifyTableModified(Heap, SlotIndex);
+        TScopedLock WriteLock(PendingWritesCS);
+        Heap.Mapped[SlotIndex] = NullEntries[Slot.NullEntry];
+        MarkDirty(Heap, SlotIndex, 1);
     }
 
-    for (int32 Index = Heap.Occupied.Size() - 1; Index >= 0; --Index)
-    {
-        if (Heap.Occupied[Index] == SlotIndex)
-        {
-            Heap.Occupied.RemoveAt(Index);
-            break;
-        }
-    }
-
+    Heap.NumOccupied--;
     Heap.FreeStack.Add(SlotIndex);
     UpdateStats();
 }
@@ -330,35 +337,26 @@ void FMetalBindlessDescriptorManager::WriteSlot(
     FHeap& Heap,
     uint32 SlotIndex,
     FMetalBindlessDescriptorEntry Entry,
-    id<MTLResource> Resource,
-    bool bWritable,
-    bool bIsView,
+    uint8 NullEntry,
     bool bImmediate)
 {
     CHECK(SlotIndex < Heap.Capacity);
 
     {
         TScopedLock Lock(AllocCS);
-        FSlotState& Slot = Heap.Slots[static_cast<int32>(SlotIndex)];
-        if (Slot.Resource != Resource)
-        {
-            [Resource retain];
-            [Slot.Resource release];
-            Slot.Resource = Resource;
-        }
-
-        Slot.bWritable = bWritable;
-        Slot.bIsView   = bIsView;
+        Heap.Slots[static_cast<int32>(SlotIndex)].NullEntry = NullEntry;
     }
 
     if (bImmediate)
     {
         TScopedLock Lock(PendingWritesCS);
+
         if (Heap.Mapped)
         {
             Heap.Mapped[SlotIndex] = Entry;
-            NotifyTableModified(Heap, SlotIndex);
+            MarkDirty(Heap, SlotIndex, 1);
         }
+
         return;
     }
 
@@ -369,180 +367,82 @@ void FMetalBindlessDescriptorManager::WriteSlot(
     Write.bSampler  = Heap.bSampler;
 }
 
-void FMetalBindlessDescriptorManager::WriteTexture(FRHIDescriptorHandle Handle, id<MTLTexture> Texture, bool bWritable, bool bIsView, bool bImmediate)
+void FMetalBindlessDescriptorManager::WriteTexture(FRHIDescriptorHandle Handle, id<MTLTexture> Texture, bool bWritable, bool bImmediate)
 {
-    if (!Handle.IsValid() || !Texture)
+    if (!Handle.IsValid())
     {
         return;
     }
 
-    FMetalBindlessDescriptorEntry Entry;
-    Entry.Resource = MetalCopyResourceID(Texture);
-    WriteSlot(GetHeap(Handle.Type), Handle.Index, Entry, Texture, bWritable, bIsView, bImmediate);
+    const uint8 NullTextureType = Texture
+        ? MetalRHI::GetNullTextureType(Texture.textureType, Texture.pixelFormat)
+        : MetalNullEntryDefaultResource;
+    const uint8 NullEntry       = bWritable ? MetalNullEntryWritableBase + NullTextureType : NullTextureType;
+
+    const FMetalBindlessDescriptorEntry Entry = Texture
+        ? FMetalBindlessDescriptorEntry{ MetalCopyResourceID(Texture) }
+        : NullEntries[NullEntry];
+    WriteSlot(GetHeap(Handle.Type), Handle.Index, Entry, NullEntry, bImmediate);
 }
 
-void FMetalBindlessDescriptorManager::WriteBuffer(FRHIDescriptorHandle Handle, id<MTLBuffer> Buffer, uint64 Offset, bool bWritable, bool bIsView, bool bHeapPlaced, bool bImmediate)
+void FMetalBindlessDescriptorManager::WriteBuffer(FRHIDescriptorHandle Handle, id<MTLBuffer> Buffer, uint64 Offset, bool bHeapPlaced, bool bImmediate)
 {
-    if (!Handle.IsValid() || !Buffer)
+    if (!Handle.IsValid())
     {
         return;
     }
 
-    FMetalBindlessDescriptorEntry Entry;
-    Entry.Resource = MetalBufferGpuAddress(Buffer, bHeapPlaced ? 0 : Offset);
-    WriteSlot(GetHeap(Handle.Type), Handle.Index, Entry, Buffer, bWritable, bIsView, bImmediate);
+    const FMetalBindlessDescriptorEntry Entry = Buffer
+        ? FMetalBindlessDescriptorEntry{ static_cast<uint64>([Buffer gpuAddress]) + (bHeapPlaced ? 0 : Offset) }
+        : NullEntries[MetalNullEntryBuffer];
+    WriteSlot(GetHeap(Handle.Type), Handle.Index, Entry, MetalNullEntryBuffer, bImmediate);
 }
 
 void FMetalBindlessDescriptorManager::WriteSampler(FRHIDescriptorHandle Handle, id<MTLSamplerState> Sampler, bool bImmediate)
 {
-    if (!Handle.IsValid() || !Sampler)
+    if (!Handle.IsValid())
     {
         return;
     }
 
-    FMetalBindlessDescriptorEntry Entry;
-    Entry.Resource = MetalCopyResourceID(Sampler);
-    WriteSlot(SamplerHeap, Handle.Index, Entry, nil, false, false, bImmediate);
-}
-
-void FMetalBindlessDescriptorManager::WriteAccelerationStructure(FRHIDescriptorHandle Handle, id<MTLAccelerationStructure> AccelerationStructure, bool bImmediate)
-{
-    if (!Handle.IsValid() || !AccelerationStructure)
-    {
-        return;
-    }
-
-    FMetalBindlessDescriptorEntry Entry;
-    Entry.Resource = MetalCopyResourceID(AccelerationStructure);
-    WriteSlot(ResourceHeap, Handle.Index, Entry, AccelerationStructure, false, true, bImmediate);
+    const FMetalBindlessDescriptorEntry Entry = Sampler
+        ? FMetalBindlessDescriptorEntry{ MetalCopyResourceID(Sampler) }
+        : NullEntries[MetalNullEntrySampler];
+    WriteSlot(SamplerHeap, Handle.Index, Entry, MetalNullEntrySampler, bImmediate);
 }
 
 void FMetalBindlessDescriptorManager::Flush()
 {
-    TArray<FPendingWrite> LocalWrites;
+    TScopedLock Lock(PendingWritesCS);
+
+    if (!PendingWrites.IsEmpty())
     {
-        TScopedLock Lock(PendingWritesCS);
-        if (PendingWrites.IsEmpty())
+        for (const FPendingWrite& Write : PendingWrites)
         {
-            return;
-        }
+            FHeap& Heap = Write.bSampler ? SamplerHeap : ResourceHeap;
 
-        LocalWrites = Move(PendingWrites);
-        PendingWrites.Clear();
-    }
-
-    for (const FPendingWrite& Write : LocalWrites)
-    {
-        FHeap& Heap = Write.bSampler ? SamplerHeap : ResourceHeap;
-        if (!Heap.Mapped || Write.SlotIndex >= Heap.Capacity)
-        {
-            continue;
-        }
-
-        Heap.Mapped[Write.SlotIndex] = Write.Entry;
-        NotifyTableModified(Heap, Write.SlotIndex);
-    }
-
-    UpdateStats();
-}
-
-void FMetalBindlessDescriptorManager::BindHeaps(FMetalCommandContext& Context, EShaderVisibility::Type Stage, uint8 ResourceSlot, uint8 SamplerSlot)
-{
-    if (!bEnabled)
-    {
-        return;
-    }
-
-    if (Stage == EShaderVisibility::Compute)
-    {
-        id<MTLComputeCommandEncoder> Encoder = Context.GetComputeEncoder();
-        if (!Encoder)
-        {
-            return;
-        }
-
-        if (ResourceSlot != FMetalPipelineBindingLayout::InvalidSlot && ResourceHeap.Buffer)
-        {
-            Context.DeclareResident(ResourceHeap.Buffer, true, false);
-            [Encoder setBuffer:ResourceHeap.Buffer offset:0 atIndex:ResourceSlot];
-        }
-
-        if (SamplerSlot != FMetalPipelineBindingLayout::InvalidSlot && SamplerHeap.Buffer)
-        {
-            Context.DeclareResident(SamplerHeap.Buffer, true, false);
-            [Encoder setBuffer:SamplerHeap.Buffer offset:0 atIndex:SamplerSlot];
-        }
-
-        return;
-    }
-
-    if (Context.GetGraphicsEncoder() == nil)
-    {
-        return;
-    }
-
-    if (ResourceSlot != FMetalPipelineBindingLayout::InvalidSlot && ResourceHeap.Buffer)
-    {
-        Context.DeclareResident(ResourceHeap.Buffer, true, false);
-        Context.SetGraphicsBuffer(Stage, ResourceHeap.Buffer, 0, ResourceSlot);
-    }
-
-    if (SamplerSlot != FMetalPipelineBindingLayout::InvalidSlot && SamplerHeap.Buffer)
-    {
-        Context.DeclareResident(SamplerHeap.Buffer, true, false);
-        Context.SetGraphicsBuffer(Stage, SamplerHeap.Buffer, 0, SamplerSlot);
-    }
-}
-
-void FMetalBindlessDescriptorManager::DeclareResidency(FMetalCommandContext& Context)
-{
-    if (!bEnabled)
-    {
-        return;
-    }
-
-    auto DeclareHeap = [&](FHeap& Heap)
-    {
-        TScopedLock Lock(AllocCS);
-        for (uint32 SlotIndex : Heap.Occupied)
-        {
-            const FSlotState& Slot = Heap.Slots[static_cast<int32>(SlotIndex)];
-            if (Slot.Resource)
+            if (!Heap.Mapped || Write.SlotIndex >= Heap.Capacity)
             {
-                Context.DeclareResident(Slot.Resource, !Slot.bWritable, Slot.bIsView);
+                continue;
             }
+
+            Heap.Mapped[Write.SlotIndex] = Write.Entry;
+            MarkDirty(Heap, Write.SlotIndex, 1);
         }
-    };
 
-    DeclareHeap(ResourceHeap);
-    DeclareHeap(SamplerHeap);
-}
-
-uint64 FMetalBindlessDescriptorManager::ReadResourceEntry(uint32 Index) const
-{
-    if (!ResourceHeap.Mapped || Index >= ResourceHeap.Capacity)
-    {
-        return 0;
+        PendingWrites.Clear();
+        UpdateStats();
     }
 
-    return ResourceHeap.Mapped[Index].Resource;
-}
-
-uint64 FMetalBindlessDescriptorManager::ReadSamplerEntry(uint32 Index) const
-{
-    if (!SamplerHeap.Mapped || Index >= SamplerHeap.Capacity)
-    {
-        return 0;
-    }
-
-    return SamplerHeap.Mapped[Index].Resource;
+    FlushDirtyRange(ResourceHeap);
+    FlushDirtyRange(SamplerHeap);
 }
 
 void FMetalBindlessDescriptorManager::UpdateStats()
 {
 #if METAL_ENABLE_STATS
-    STAT_SET(STAT_Metal_BindlessResourceSlots, ResourceHeap.Occupied.Size());
-    STAT_SET(STAT_Metal_BindlessSamplerSlots, SamplerHeap.Occupied.Size());
+    STAT_SET(STAT_Metal_BindlessResourceSlots, ResourceHeap.NumOccupied);
+    STAT_SET(STAT_Metal_BindlessSamplerSlots, SamplerHeap.NumOccupied);
     STAT_SET(STAT_Metal_BindlessTableBytes,
         static_cast<int64>(ResourceHeap.Capacity + SamplerHeap.Capacity) * static_cast<int64>(sizeof(FMetalBindlessDescriptorEntry)));
     STAT_SET(STAT_Metal_BindlessPendingWrites, PendingWrites.Size());

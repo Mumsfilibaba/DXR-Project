@@ -1,5 +1,7 @@
 #include "MetalRHI/MetalDeletionQueue.h"
 #include "MetalRHI/MetalBindlessDescriptors.h"
+#include "MetalRHI/MetalResidencySet.h"
+#include "MetalRHI/MetalRHI.h"
 
 void FMetalDeferredObject::ProcessItems(const TArray<FMetalDeferredObject>& Items)
 {
@@ -14,21 +16,7 @@ void FMetalDeferredObject::ProcessItems(const TArray<FMetalDeferredObject>& Item
                 break;
             }
 
-            case FMetalDeferredObject::EType::MTLResource:
-            {
-                CHECK(Item.Resource != nil);
-                [Item.Resource release];
-                break;
-            }
-
-            case FMetalDeferredObject::EType::MTLHeap:
-            {
-                CHECK(Item.Heap != nil);
-                [Item.Heap release];
-                break;
-            }
-
-            case FMetalDeferredObject::EType::MTLObject:
+            case FMetalDeferredObject::EType::ObjCObject:
             {
                 CHECK(Item.Object != nil);
                 [Item.Object release];
@@ -39,6 +27,19 @@ void FMetalDeferredObject::ProcessItems(const TArray<FMetalDeferredObject>& Item
             {
                 CHECK(Item.BindlessSlot.Manager != nullptr);
                 Item.BindlessSlot.Manager->RecycleSlot(Item.BindlessSlot.Handle);
+                break;
+            }
+
+            case FMetalDeferredObject::EType::StandaloneResource:
+            {
+                CHECK(Item.Resource != nil);
+
+                if (FMetalDevice* Device = FMetalDeviceRHI::Get()->GetMetalDevice())
+                {
+                    Device->GetResidencySet().Remove(Item.Resource);
+                }
+
+                [Item.Resource release];
                 break;
             }
         }

@@ -1,8 +1,13 @@
 #pragma once
+#include "Core/Containers/Array.h"
+#include "Core/Platform/CriticalSection.h"
 #include "RHI/RHIResources.h"
 #include "MetalRHI/MetalDeviceChild.h"
 #include "MetalRHI/MetalResource.h"
 DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+class FMetalQueue;
+class FMetalView;
 
 typedef TSharedRef<class FMetalBufferRHI> FMetalBufferRef;
 
@@ -25,40 +30,19 @@ public:
     
     bool Initialize(ERHIResourceState InInitialAccess, const void* InInitialData);
     bool RelocateTransientStorage(uint64 SizeInBytes, const void* SourceData, FMetalQueue* Queue);
+
+    void AddRelocationListener(FMetalView* View);
+    void RemoveRelocationListener(FMetalView* View);
     
-    FORCEINLINE id<MTLBuffer> GetMTLBuffer() const 
-    { 
-        return Buffer; 
+    FORCEINLINE id<MTLBuffer> GetMTLBuffer() const
+    {
+        return ResourceStorage.GetBuffer();
     }
 
     FORCEINLINE NSUInteger GetMetalBindOffset() const
     {
         return IsHeapPlaced() ? 0 : static_cast<NSUInteger>(ResourceStorage.GetResourceOffset());
     }
-
-    FORCEINLINE void SetMTLBuffer(id<MTLBuffer> InBuffer) 
-    { 
-        [InBuffer retain];
-        [Buffer release];
-        Buffer = InBuffer;
-    } 
-
-    FORCEINLINE uint64 GetLastWriteValue() const
-    {
-        return LastUsedValue;
-    }
-
-    FORCEINLINE FMetalQueue* GetLastUsedQueue() const
-    {
-        return LastUsedQueue;
-    }
-
-    FORCEINLINE uint64 GetLastUsedValue() const
-    {
-        return LastUsedValue;
-    }
-
-    void StampLastUse(FMetalQueue* InQueue, uint64 InValue);
 
     FORCEINLINE bool IsHeapPlaced() const
     {
@@ -71,11 +55,10 @@ public:
     }
 
 private:
-    id<MTLBuffer>                Buffer;
     FMetalResourceStorage        ResourceStorage;
     mutable FRHIDescriptorHandle BindlessHandle;
-    FMetalQueue*                 LastUsedQueue;
-    uint64                       LastUsedValue;
+    TArray<FMetalView*>          RelocationListeners;
+    FCriticalSection             RelocationListenersCS;
 };
 
 inline FMetalBufferRHI* GetMetalBuffer(FRHIBuffer* Buffer)

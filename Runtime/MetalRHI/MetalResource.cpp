@@ -1,6 +1,7 @@
 #include "MetalRHI/MetalResource.h"
 #include "MetalRHI/MetalAllocators.h"
 #include "MetalRHI/MetalHeap.h"
+#include "MetalRHI/MetalResidencySet.h"
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalStats.h"
 
@@ -16,8 +17,6 @@ FMetalResourceStorage::FMetalResourceStorage(FMetalDevice* InDevice)
     , HeapIndex(UINT32_MAX)
     , StorageType(EMetalResourceStorageType::Unknown)
     , AllocatorType(EMetalAllocatorType::None)
-    , LastUsedQueue(nullptr)
-    , LastUsedValue(0)
 {
 }
 
@@ -26,23 +25,27 @@ FMetalResourceStorage::~FMetalResourceStorage()
     ReleaseResource();
 }
 
-void FMetalResourceStorage::InitStandalone(id<MTLBuffer> InBuffer, uint64 InSize)
+void FMetalResourceStorage::InitStandalone(id<MTLBuffer> InBuffer, uint64 InSize, bool bBindlessReachable)
 {
     Reset();
     Buffer      = InBuffer;
     Size        = InSize;
     StorageType = EMetalResourceStorageType::Standalone;
 
+    GetDevice()->GetResidencySet().Add(InBuffer, bBindlessReachable);
+
     STAT_ADD(STAT_Metal_StandaloneBufferBytes, [InBuffer allocatedSize]);
     STAT_ADD(STAT_Metal_StandaloneBuffers, 1);
 }
 
-void FMetalResourceStorage::InitStandalone(id<MTLTexture> InTexture, uint64 InSize)
+void FMetalResourceStorage::InitStandalone(id<MTLTexture> InTexture, uint64 InSize, bool bBindlessReachable)
 {
     Reset();
     Texture     = InTexture;
     Size        = InSize;
     StorageType = EMetalResourceStorageType::Standalone;
+
+    GetDevice()->GetResidencySet().Add(InTexture, bBindlessReachable);
 
     STAT_ADD(STAT_Metal_StandaloneTextureBytes, [InTexture allocatedSize]);
     STAT_ADD(STAT_Metal_StandaloneTextures, 1);
@@ -95,19 +98,31 @@ void FMetalResourceStorage::InitSuballocatedHeap(id<MTLTexture> InTexture, FMeta
     AllocatorPointers.TextureAllocator = InTextureAllocator;
 }
 
-void FMetalResourceStorage::ReleaseOwnedResource()
+void FMetalResourceStorage::ReleaseOwnedResource(bool bStandalone)
 {
+    const auto Defer = [bStandalone](id<MTLResource> Resource)
+    {
+        if (bStandalone)
+        {
+            FMetalDeviceRHI::DeferDeletion(FMetalDeferredObject::EType::StandaloneResource, Resource);
+        }
+        else
+        {
+            FMetalDeviceRHI::DeferDeletion(Resource);
+        }
+
+        [Resource release];
+    };
+
     if (Buffer)
     {
-        FMetalDeviceRHI::DeferDeletion(Buffer);
-        [Buffer release];
+        Defer(Buffer);
         Buffer = nil;
     }
 
     if (Texture)
     {
-        FMetalDeviceRHI::DeferDeletion(Texture);
-        [Texture release];
+        Defer(Texture);
         Texture = nil;
     }
 }
@@ -121,7 +136,7 @@ void FMetalResourceStorage::ReleaseResource()
 
     if (StorageType == EMetalResourceStorageType::SuballocatedHeap)
     {
-        ReleaseOwnedResource();
+        ReleaseOwnedResource(false);
 
         if (AllocatorType == EMetalAllocatorType::BufferAllocator && AllocatorPointers.BufferAllocator)
         {
@@ -146,7 +161,7 @@ void FMetalResourceStorage::ReleaseResource()
             STAT_SUBTRACT(STAT_Metal_StandaloneTextures, 1);
         }
 
-        ReleaseOwnedResource();
+        ReleaseOwnedResource(true);
     }
 
     Reset();
@@ -164,12 +179,4 @@ void FMetalResourceStorage::Reset()
     StorageType       = EMetalResourceStorageType::Unknown;
     AllocatorType     = EMetalAllocatorType::None;
     AllocatorPointers.AsVoid = nullptr;
-    LastUsedQueue     = nullptr;
-    LastUsedValue     = 0;
-}
-
-void FMetalResourceStorage::StampLastUse(FMetalQueue* InQueue, uint64 InValue)
-{
-    LastUsedQueue = InQueue;
-    LastUsedValue = InValue;
 }

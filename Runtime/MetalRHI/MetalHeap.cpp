@@ -5,7 +5,6 @@ FMetalHeap::FMetalHeap(FMetalDevice* InDevice, id<MTLHeap> InHeap, uint64 InSize
     : FMetalDeviceChild(InDevice)
     , Heap(InHeap)
     , Size(InSize)
-    , StorageMode(InHeap ? InHeap.storageMode : MTLStorageModePrivate)
 {
     CHECK(Heap != nil);
 }

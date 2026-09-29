@@ -3,62 +3,10 @@
 #include "MetalRHI/MetalBuffer.h"
 #include "MetalRHI/MetalCapabilities.h"
 #include "MetalRHI/MetalDevice.h"
+#include "MetalRHI/MetalResidencySet.h"
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalTexture.h"
 #include "Core/Math/Math.h"
-
-static FRHIDescriptorHandle EnsureViewBindlessHandle(
-    FMetalDevice* Device,
-    FRHIDescriptorHandle& BindlessHandle,
-    EDescriptorType DescriptorType,
-    bool bWritable,
-    id<MTLTexture> TextureView,
-    id<MTLBuffer> BufferView,
-    uint64 BufferOffset)
-{
-    if (BindlessHandle.IsValid())
-    {
-        return BindlessHandle;
-    }
-
-    FMetalBindlessDescriptorManager* BindlessManager = Device ? Device->GetBindlessDescriptorManager() : nullptr;
-    if (!BindlessManager || !BindlessManager->IsEnabled())
-    {
-        return FRHIDescriptorHandle();
-    }
-
-    BindlessHandle = BindlessManager->Allocate(DescriptorType);
-    if (!BindlessHandle.IsValid())
-    {
-        return FRHIDescriptorHandle();
-    }
-
-    if (TextureView)
-    {
-        BindlessManager->WriteTexture(BindlessHandle, TextureView, bWritable, true, true);
-    }
-    else if (BufferView)
-    {
-        BindlessManager->WriteBuffer(BindlessHandle, BufferView, BufferOffset, bWritable, false, BufferView.heap != nil, true);
-    }
-
-    return BindlessHandle;
-}
-
-static void FreeViewBindlessHandle(FMetalDevice* Device, FRHIDescriptorHandle& BindlessHandle)
-{
-    if (!BindlessHandle.IsValid())
-    {
-        return;
-    }
-
-    if (FMetalBindlessDescriptorManager* BindlessManager = Device ? Device->GetBindlessDescriptorManager() : nullptr)
-    {
-        BindlessManager->Free(BindlessHandle);
-    }
-
-    BindlessHandle = FRHIDescriptorHandle();
-}
 
 struct FMetalSubresourceRange
 {
@@ -68,100 +16,58 @@ struct FMetalSubresourceRange
     uint32 NumSlices  = 1;
 };
 
-static FMetalSubresourceRange ResolveSRVRange(const FRHIShaderResourceViewDesc& InDesc)
+template<typename ViewDescType>
+static FMetalSubresourceRange ResolveViewRange(const ViewDescType& InDesc)
 {
     FMetalSubresourceRange Range;
+    auto ResolveMips = [&Range](const auto& DimensionDesc)
+    {
+        if constexpr (TIsSame<ViewDescType, FRHIShaderResourceViewDesc>::Value)
+        {
+            Range.FirstMip = DimensionDesc.FirstMipLevel;
+            Range.NumMips  = DimensionDesc.NumMips;
+        }
+        else
+        {
+            Range.FirstMip = DimensionDesc.MipLevel;
+        }
+    };
 
     switch (InDesc.ViewDimension)
     {
         case EViewDimension::Texture1D:
-            Range.FirstMip = InDesc.Texture1D.FirstMipLevel;
-            Range.NumMips  = InDesc.Texture1D.NumMips;
+            ResolveMips(InDesc.Texture1D);
             break;
 
         case EViewDimension::Texture1DArray:
-            Range.FirstMip   = InDesc.Texture1DArray.FirstMipLevel;
-            Range.NumMips    = InDesc.Texture1DArray.NumMips;
+            ResolveMips(InDesc.Texture1DArray);
             Range.FirstSlice = InDesc.Texture1DArray.FirstArraySlice;
             Range.NumSlices  = InDesc.Texture1DArray.NumSlices;
             break;
 
         case EViewDimension::Texture2D:
-            Range.FirstMip = InDesc.Texture2D.FirstMipLevel;
-            Range.NumMips  = InDesc.Texture2D.NumMips;
+            ResolveMips(InDesc.Texture2D);
             break;
 
         case EViewDimension::Texture2DArray:
-            Range.FirstMip   = InDesc.Texture2DArray.FirstMipLevel;
-            Range.NumMips    = InDesc.Texture2DArray.NumMips;
+            ResolveMips(InDesc.Texture2DArray);
             Range.FirstSlice = InDesc.Texture2DArray.FirstArraySlice;
             Range.NumSlices  = InDesc.Texture2DArray.NumSlices;
             break;
 
         case EViewDimension::TextureCube:
-            Range.FirstMip  = InDesc.TextureCube.FirstMipLevel;
-            Range.NumMips   = InDesc.TextureCube.NumMips;
+            ResolveMips(InDesc.TextureCube);
             Range.NumSlices = RHI_NUM_CUBE_FACES;
             break;
 
         case EViewDimension::TextureCubeArray:
-            Range.FirstMip   = InDesc.TextureCubeArray.FirstMipLevel;
-            Range.NumMips    = InDesc.TextureCubeArray.NumMips;
+            ResolveMips(InDesc.TextureCubeArray);
             Range.FirstSlice = InDesc.TextureCubeArray.FirstCube * RHI_NUM_CUBE_FACES;
             Range.NumSlices  = InDesc.TextureCubeArray.NumCubes * RHI_NUM_CUBE_FACES;
             break;
 
         case EViewDimension::Texture3D:
-            Range.FirstMip = InDesc.Texture3D.FirstMipLevel;
-            Range.NumMips  = InDesc.Texture3D.NumMips;
-            break;
-
-        default:
-            break;
-    }
-
-    return Range;
-}
-
-static FMetalSubresourceRange ResolveUAVRange(const FRHIUnorderedAccessViewDesc& InDesc)
-{
-    FMetalSubresourceRange Range;
-
-    switch (InDesc.ViewDimension)
-    {
-        case EViewDimension::Texture1D:
-            Range.FirstMip = InDesc.Texture1D.MipLevel;
-            break;
-
-        case EViewDimension::Texture1DArray:
-            Range.FirstMip   = InDesc.Texture1DArray.MipLevel;
-            Range.FirstSlice = InDesc.Texture1DArray.FirstArraySlice;
-            Range.NumSlices  = InDesc.Texture1DArray.NumSlices;
-            break;
-
-        case EViewDimension::Texture2D:
-            Range.FirstMip = InDesc.Texture2D.MipLevel;
-            break;
-
-        case EViewDimension::Texture2DArray:
-            Range.FirstMip   = InDesc.Texture2DArray.MipLevel;
-            Range.FirstSlice = InDesc.Texture2DArray.FirstArraySlice;
-            Range.NumSlices  = InDesc.Texture2DArray.NumSlices;
-            break;
-
-        case EViewDimension::TextureCube:
-            Range.FirstMip  = InDesc.TextureCube.MipLevel;
-            Range.NumSlices = RHI_NUM_CUBE_FACES;
-            break;
-
-        case EViewDimension::TextureCubeArray:
-            Range.FirstMip   = InDesc.TextureCubeArray.MipLevel;
-            Range.FirstSlice = InDesc.TextureCubeArray.FirstCube * RHI_NUM_CUBE_FACES;
-            Range.NumSlices  = InDesc.TextureCubeArray.NumCubes * RHI_NUM_CUBE_FACES;
-            break;
-
-        case EViewDimension::Texture3D:
-            Range.FirstMip = InDesc.Texture3D.MipLevel;
+            ResolveMips(InDesc.Texture3D);
             break;
 
         default:
@@ -181,120 +87,85 @@ static uint32 ResolveBufferViewStride(const FRHIBufferDesc& BufferDesc, EBufferV
     }
 }
 
-static void ResolveRTVMipAndSlice(const FRHIRenderTargetViewDesc& InDesc, uint8& OutMipLevel, uint16& OutArrayIndex, uint16& OutNumSlices)
+template<typename ViewDescType>
+static FMetalSubresource ResolveAttachmentSubresource(const ViewDescType& InDesc)
 {
-    OutMipLevel   = 0;
-    OutArrayIndex = 0;
-    OutNumSlices  = 1;
-
+    FMetalSubresource Result;
     switch (InDesc.ViewDimension)
     {
         case EViewDimension::Texture1D:
-            OutMipLevel = InDesc.Texture1D.MipLevel;
+            Result.MipLevel = InDesc.Texture1D.MipLevel;
             break;
 
         case EViewDimension::Texture1DArray:
-            OutMipLevel   = InDesc.Texture1DArray.MipLevel;
-            OutArrayIndex = InDesc.Texture1DArray.FirstArraySlice;
-            OutNumSlices  = InDesc.Texture1DArray.NumSlices;
+            Result.MipLevel   = InDesc.Texture1DArray.MipLevel;
+            Result.ArrayIndex = InDesc.Texture1DArray.FirstArraySlice;
+            Result.NumSlices  = InDesc.Texture1DArray.NumSlices;
             break;
 
         case EViewDimension::Texture2D:
-            OutMipLevel = InDesc.Texture2D.MipLevel;
+            Result.MipLevel = InDesc.Texture2D.MipLevel;
             break;
 
         case EViewDimension::Texture2DArray:
-            OutMipLevel   = InDesc.Texture2DArray.MipLevel;
-            OutArrayIndex = InDesc.Texture2DArray.FirstArraySlice;
-            OutNumSlices  = InDesc.Texture2DArray.NumSlices;
+            Result.MipLevel   = InDesc.Texture2DArray.MipLevel;
+            Result.ArrayIndex = InDesc.Texture2DArray.FirstArraySlice;
+            Result.NumSlices  = InDesc.Texture2DArray.NumSlices;
             break;
 
         case EViewDimension::TextureCube:
-            OutMipLevel  = InDesc.TextureCube.MipLevel;
-            OutNumSlices = RHI_NUM_CUBE_FACES;
+            Result.MipLevel  = InDesc.TextureCube.MipLevel;
+            Result.NumSlices = RHI_NUM_CUBE_FACES;
             break;
 
         case EViewDimension::TextureCubeArray:
-            OutMipLevel   = InDesc.TextureCubeArray.MipLevel;
-            OutArrayIndex = InDesc.TextureCubeArray.FirstCube * RHI_NUM_CUBE_FACES;
-            OutNumSlices  = InDesc.TextureCubeArray.NumCubes * RHI_NUM_CUBE_FACES;
+            Result.MipLevel   = InDesc.TextureCubeArray.MipLevel;
+            Result.ArrayIndex = InDesc.TextureCubeArray.FirstCube * RHI_NUM_CUBE_FACES;
+            Result.NumSlices  = InDesc.TextureCubeArray.NumCubes * RHI_NUM_CUBE_FACES;
             break;
 
         case EViewDimension::Texture3D:
-            OutMipLevel   = InDesc.Texture3D.MipLevel;
-            OutArrayIndex = InDesc.Texture3D.FirstWSlice;
+            if constexpr (TIsSame<ViewDescType, FRHIRenderTargetViewDesc>::Value)
+            {
+                Result.MipLevel   = InDesc.Texture3D.MipLevel;
+                Result.ArrayIndex = InDesc.Texture3D.FirstWSlice;
+            }
             break;
 
         default:
             break;
     }
 
-    OutNumSlices = Math::Max<uint16>(OutNumSlices, 1);
-}
-
-static void ResolveDSVMipAndSlice(const FRHIDepthStencilViewDesc& InDesc, uint8& OutMipLevel, uint16& OutArrayIndex, uint16& OutNumSlices)
-{
-    OutMipLevel   = 0;
-    OutArrayIndex = 0;
-    OutNumSlices  = 1;
-
-    switch (InDesc.ViewDimension)
-    {
-        case EViewDimension::Texture1D:
-            OutMipLevel = InDesc.Texture1D.MipLevel;
-            break;
-
-        case EViewDimension::Texture1DArray:
-            OutMipLevel   = InDesc.Texture1DArray.MipLevel;
-            OutArrayIndex = InDesc.Texture1DArray.FirstArraySlice;
-            OutNumSlices  = InDesc.Texture1DArray.NumSlices;
-            break;
-
-        case EViewDimension::Texture2D:
-            OutMipLevel = InDesc.Texture2D.MipLevel;
-            break;
-
-        case EViewDimension::Texture2DArray:
-            OutMipLevel   = InDesc.Texture2DArray.MipLevel;
-            OutArrayIndex = InDesc.Texture2DArray.FirstArraySlice;
-            OutNumSlices  = InDesc.Texture2DArray.NumSlices;
-            break;
-
-        case EViewDimension::TextureCube:
-            OutMipLevel  = InDesc.TextureCube.MipLevel;
-            OutNumSlices = RHI_NUM_CUBE_FACES;
-            break;
-
-        case EViewDimension::TextureCubeArray:
-            OutMipLevel   = InDesc.TextureCubeArray.MipLevel;
-            OutArrayIndex = InDesc.TextureCubeArray.FirstCube * RHI_NUM_CUBE_FACES;
-            OutNumSlices  = InDesc.TextureCubeArray.NumCubes * RHI_NUM_CUBE_FACES;
-            break;
-
-        default:
-            break;
-    }
-
-    OutNumSlices = Math::Max<uint16>(OutNumSlices, 1);
+    Result.NumSlices = Math::Max<uint16>(Result.NumSlices, 1);
+    return Result;
 }
 
 FMetalView::FMetalView(FMetalDevice* InDevice)
     : FMetalDeviceChild(InDevice)
+    , SourceBuffer(nullptr)
     , TextureView(nil)
     , BufferView(nil)
     , BufferOffset(0)
+    , SourceOffset(0)
     , BufferSize(0)
+    , BindlessHandle()
+    , BufferTextureFormat(EFormat::Unknown)
+    , bBufferTextureWritable(false)
+    , bOwnsTextureView(false)
+    , bDeclaredResident(false)
 {
 }
 
 FMetalView::~FMetalView()
 {
-    if (TextureView)
+    if (SourceBuffer)
     {
-        FMetalDeviceRHI::DeferDeletion(TextureView);
-        [TextureView release];
-        TextureView = nil;
+        SourceBuffer->RemoveRelocationListener(this);
+        SourceBuffer = nullptr;
     }
+
+    FreeBindlessHandle();
+    ReleaseTextureView();
 
     if (BufferView)
     {
@@ -304,10 +175,123 @@ FMetalView::~FMetalView()
     }
 }
 
+void FMetalView::ReleaseTextureView()
+{
+    if (!TextureView)
+    {
+        return;
+    }
+
+    if (bDeclaredResident)
+    {
+        FMetalDeviceRHI::DeferDeletion(FMetalDeferredObject::EType::StandaloneResource, TextureView);
+    }
+    else
+    {
+        FMetalDeviceRHI::DeferDeletion(TextureView);
+    }
+
+    [TextureView release];
+    TextureView       = nil;
+    bOwnsTextureView  = false;
+    bDeclaredResident = false;
+}
+
+void FMetalView::FreeBindlessHandle()
+{
+    if (!BindlessHandle.IsValid())
+    {
+        return;
+    }
+
+    if (FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager())
+    {
+        BindlessManager->Free(BindlessHandle);
+    }
+
+    BindlessHandle = FRHIDescriptorHandle();
+}
+
+FRHIDescriptorHandle FMetalView::EnsureBindlessHandle(EDescriptorType DescriptorType, bool bWritable) const
+{
+    if (BindlessHandle.IsValid())
+    {
+        return BindlessHandle;
+    }
+
+    FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager();
+
+    if (!BindlessManager || !BindlessManager->IsEnabled())
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    BindlessHandle = BindlessManager->Allocate(DescriptorType);
+
+    if (!BindlessHandle.IsValid())
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    if (TextureView)
+    {
+        BindlessManager->WriteTexture(BindlessHandle, TextureView, bWritable, true);
+    }
+    else if (BufferView)
+    {
+        BindlessManager->WriteBuffer(BindlessHandle, BufferView, BufferOffset, false, true);
+    }
+
+    return BindlessHandle;
+}
+
+void FMetalView::DeclareBindlessResidency()
+{
+    FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager();
+    FMetalResidencySet&              ResidencySet    = GetDevice()->GetResidencySet();
+
+    if (!bOwnsTextureView || bDeclaredResident || !ResidencySet.UsesEncoderFallback() || !BindlessManager || !BindlessManager->IsEnabled())
+    {
+        return;
+    }
+
+    ResidencySet.Add(TextureView, true);
+    bDeclaredResident = true;
+}
+
+void FMetalView::OnBufferRelocated()
+{
+    CHECK(SourceBuffer != nullptr);
+
+    id<MTLBuffer> NewBuffer = [SourceBuffer->GetMTLBuffer() retain];
+    [BufferView release];
+    BufferView   = NewBuffer;
+    BufferOffset = SourceBuffer->GetMetalBindOffset() + SourceOffset;
+
+    if (bOwnsTextureView)
+    {
+        const bool bWasResident = bDeclaredResident;
+        ReleaseTextureView();
+
+        if (CreateBufferTexture() && bWasResident)
+        {
+            DeclareBindlessResidency();
+        }
+    }
+
+    FreeBindlessHandle();
+}
+
+void FMetalView::OnBufferReleased()
+{
+    SourceBuffer = nullptr;
+}
+
 bool FMetalView::InitializeTextureView(FRHITexture* InTexture, EFormat InFormat, EViewDimension InViewDimension, 
     uint32 InFirstMip, uint32 InNumMips, uint32 InFirstSlice, uint32 InNumSlices)
 {
     FMetalTextureRHI* MetalTexture = GetMetalTexture(InTexture);
+
     if (!MetalTexture)
     {
         METAL_ERROR("Cannot create a texture view without a texture");
@@ -315,6 +299,7 @@ bool FMetalView::InitializeTextureView(FRHITexture* InTexture, EFormat InFormat,
     }
 
     id<MTLTexture> ParentTexture = MetalTexture->GetMTLTexture();
+
     if (!ParentTexture)
     {
         METAL_ERROR("Cannot create a texture view of an unallocated texture");
@@ -358,18 +343,21 @@ bool FMetalView::InitializeTextureView(FRHITexture* InTexture, EFormat InFormat,
                                                    textureType:ViewType
                                                         levels:NSMakeRange(InFirstMip, NumMips)
                                                         slices:NSMakeRange(InFirstSlice, NumSlices)];
+
     if (!TextureView)
     {
         METAL_ERROR("Failed to create a texture view");
         return false;
     }
 
+    bOwnsTextureView = true;
     return true;
 }
 
 bool FMetalView::InitializeBufferView(FRHIBuffer* InBuffer, uint64 InOffset, uint64 InSize)
 {
     FMetalBufferRHI* MetalBuffer = GetMetalBuffer(InBuffer);
+
     if (!MetalBuffer)
     {
         METAL_ERROR("Cannot create a buffer view without a buffer");
@@ -377,21 +365,30 @@ bool FMetalView::InitializeBufferView(FRHIBuffer* InBuffer, uint64 InOffset, uin
     }
 
     id<MTLBuffer> ParentBuffer = MetalBuffer->GetMTLBuffer();
+
     if (!ParentBuffer)
     {
         METAL_ERROR("Cannot create a buffer view of an unallocated buffer");
         return false;
     }
 
-    if ((InOffset + InSize) > ParentBuffer.length)
+    if ((InOffset + InSize) > MetalBuffer->GetDesc().Size)
     {
         METAL_ERROR("Buffer view range lies outside the buffer");
         return false;
     }
 
     BufferView   = [ParentBuffer retain];
-    BufferOffset = InOffset;
+    BufferOffset = MetalBuffer->GetMetalBindOffset() + InOffset;
+    SourceOffset = InOffset;
     BufferSize   = InSize;
+
+    if (MetalBuffer->GetDesc().IsTransient())
+    {
+        SourceBuffer = MetalBuffer;
+        SourceBuffer->AddRelocationListener(this);
+    }
+
     return true;
 }
 
@@ -403,20 +400,31 @@ bool FMetalView::InitializeBufferTextureView(EFormat InFormat, bool bWritable)
         return false;
     }
 
+    BufferTextureFormat    = InFormat;
+    bBufferTextureWritable = bWritable;
+    return CreateBufferTexture();
+}
+
+bool FMetalView::CreateBufferTexture()
+{
+    const EFormat        InFormat    = BufferTextureFormat;
+    const bool           bWritable   = bBufferTextureWritable;
     const MTLPixelFormat PixelFormat = MetalRHI::ConvertFormat(InFormat);
+
     if (PixelFormat == MTLPixelFormatInvalid)
     {
         METAL_ERROR("Typed buffer view has an unsupported format '%s'", ToString(InFormat));
         return false;
     }
 
-    if (bWritable && !MetalRHI::MetalFormatSupportsShaderWrite(PixelFormat))
+    if (bWritable && !MetalRHI::FormatSupportsShaderWrite(PixelFormat))
     {
         METAL_ERROR("Format '%s' cannot be written from a shader on this device", ToString(InFormat));
         return false;
     }
 
     const uint32 Stride = GetByteStrideFromFormat(InFormat);
+
     if (Stride == 0 || (BufferSize % Stride) != 0)
     {
         METAL_ERROR("Typed buffer view size %llu is not a multiple of the %u-byte format stride", BufferSize, Stride);
@@ -425,6 +433,7 @@ bool FMetalView::InitializeBufferTextureView(EFormat InFormat, bool bWritable)
 
     const NSUInteger NumElements = static_cast<NSUInteger>(BufferSize / Stride);
     MTLTextureUsage Usage = MTLTextureUsageShaderRead;
+
     if (bWritable)
     {
         Usage |= MTLTextureUsageShaderWrite;
@@ -436,26 +445,24 @@ bool FMetalView::InitializeBufferTextureView(EFormat InFormat, bool bWritable)
                                                                                               usage:Usage];
     const NSUInteger BytesPerRow = Math::AlignUp<NSUInteger>(NumElements * Stride, 32);
     TextureView = [BufferView newTextureWithDescriptor:Descriptor offset:BufferOffset bytesPerRow:BytesPerRow];
+
     if (!TextureView)
     {
         METAL_ERROR("Failed to create a texel-buffer texture");
         return false;
     }
 
+    bOwnsTextureView = true;
     return true;
 }
 
 FMetalShaderResourceViewRHI::FMetalShaderResourceViewRHI(FMetalDevice* InDevice, FRHIResource* InResource, const FRHIShaderResourceViewDesc& InRHIDesc)
     : FRHIShaderResourceView(InResource, InRHIDesc)
     , FMetalView(InDevice)
-    , BindlessHandle()
 {
 }
 
-FMetalShaderResourceViewRHI::~FMetalShaderResourceViewRHI()
-{
-    FreeViewBindlessHandle(GetDevice(), BindlessHandle);
-}
+FMetalShaderResourceViewRHI::~FMetalShaderResourceViewRHI() = default;
 
 bool FMetalShaderResourceViewRHI::Initialize()
 {
@@ -467,136 +474,165 @@ bool FMetalShaderResourceViewRHI::Initialize()
     if (Desc.IsBufferSRV())
     {
         FRHIBuffer* Buffer = static_cast<FRHIBuffer*>(GetResource());
+
         if (!Buffer)
         {
             return false;
         }
 
         const uint32 Stride = ResolveBufferViewStride(Buffer->GetDesc(), Desc.Buffer.Type, Desc.Buffer.Format);
+
         if (!InitializeBufferView(Buffer, uint64(Desc.Buffer.FirstElement) * Stride, uint64(Desc.Buffer.NumElements) * Stride))
         {
             return false;
         }
 
-        if (Desc.Buffer.Type == EBufferViewType::Typed)
+        if (Desc.Buffer.Type == EBufferViewType::Typed && !InitializeBufferTextureView(Desc.Buffer.Format, false))
         {
-            return InitializeBufferTextureView(Desc.Buffer.Format, false);
+            return false;
         }
+    }
+    else
+    {
+        const FMetalSubresourceRange Range = ResolveViewRange(Desc);
 
-        return true;
+        if (!InitializeTextureView(static_cast<FRHITexture*>(GetResource()), Desc.GetFormat(), Desc.ViewDimension, Range.FirstMip, Range.NumMips, Range.FirstSlice, Range.NumSlices))
+        {
+            return false;
+        }
     }
 
-    const FMetalSubresourceRange Range = ResolveSRVRange(Desc);
-    return InitializeTextureView(static_cast<FRHITexture*>(GetResource()), Desc.GetFormat(),
-        Desc.ViewDimension, Range.FirstMip, Range.NumMips, Range.FirstSlice, Range.NumSlices);
+    DeclareBindlessResidency();
+    return true;
 }
 
 FMetalUnorderedAccessViewRHI::FMetalUnorderedAccessViewRHI(FMetalDevice* InDevice, FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InRHIDesc)
     : FRHIUnorderedAccessView(InResource, InRHIDesc)
     , FMetalView(InDevice)
-    , BindlessHandle()
 {
 }
 
-FMetalUnorderedAccessViewRHI::~FMetalUnorderedAccessViewRHI()
-{
-    FreeViewBindlessHandle(GetDevice(), BindlessHandle);
-}
+FMetalUnorderedAccessViewRHI::~FMetalUnorderedAccessViewRHI() = default;
 
 bool FMetalUnorderedAccessViewRHI::Initialize()
 {
     if (Desc.IsBufferUAV())
     {
         FRHIBuffer* Buffer = static_cast<FRHIBuffer*>(GetResource());
+
         if (!Buffer)
         {
             return false;
         }
 
         const uint32 Stride = ResolveBufferViewStride(Buffer->GetDesc(), Desc.Buffer.Type, Desc.Buffer.Format);
+
         if (!InitializeBufferView(Buffer, uint64(Desc.Buffer.FirstElement) * Stride, uint64(Desc.Buffer.NumElements) * Stride))
         {
             return false;
         }
 
-        if (Desc.Buffer.Type == EBufferViewType::Typed)
+        if (Desc.Buffer.Type == EBufferViewType::Typed && !InitializeBufferTextureView(Desc.Buffer.Format, true))
         {
-            return InitializeBufferTextureView(Desc.Buffer.Format, true);
+            return false;
+        }
+    }
+    else
+    {
+        if (!MetalRHI::FormatSupportsShaderWrite(MetalRHI::ConvertFormat(Desc.GetFormat())))
+        {
+            METAL_ERROR("Format '%s' cannot be written from a shader on this device", ToString(Desc.GetFormat()));
+            return false;
         }
 
-        return true;
+        const EViewDimension ViewDimension = IsCubeViewDimension(Desc.ViewDimension)
+            ? EViewDimension::Texture2DArray
+            : Desc.ViewDimension;
+
+        const FMetalSubresourceRange Range = ResolveViewRange(Desc);
+
+        if (!InitializeTextureView(static_cast<FRHITexture*>(GetResource()), Desc.GetFormat(), ViewDimension, Range.FirstMip, Range.NumMips, Range.FirstSlice, Range.NumSlices))
+        {
+            return false;
+        }
     }
 
-    if (!MetalRHI::MetalFormatSupportsShaderWrite(MetalRHI::ConvertFormat(Desc.GetFormat())))
+    DeclareBindlessResidency();
+    return true;
+}
+
+FMetalAttachmentView::FMetalAttachmentView(FMetalDevice* InDevice, FRHITexture* InTexture, const FMetalSubresource& InSubresource)
+    : FMetalView(InDevice)
+    , Texture(GetMetalTexture(InTexture))
+    , Subresource(InSubresource)
+{
+}
+
+FMetalAttachmentView::~FMetalAttachmentView() = default;
+
+bool FMetalAttachmentView::InitializeAttachment(EFormat InFormat, EViewDimension InViewDimension)
+{
+    if (!Texture)
     {
-        METAL_ERROR("Format '%s' cannot be written from a shader on this device", ToString(Desc.GetFormat()));
         return false;
     }
 
-    const EViewDimension ViewDimension = IsCubeViewDimension(Desc.ViewDimension)
-        ? EViewDimension::Texture2DArray
-        : Desc.ViewDimension;
+    if (InFormat == Texture->GetDesc().Format)
+    {
+        return true;
+    }
 
-    const FMetalSubresourceRange Range = ResolveUAVRange(Desc);
-    return InitializeTextureView(static_cast<FRHITexture*>(GetResource()), Desc.GetFormat(),
-        ViewDimension, Range.FirstMip, Range.NumMips, Range.FirstSlice, Range.NumSlices);
+    if (InViewDimension == EViewDimension::Texture3D)
+    {
+        return InitializeTextureView(Texture, InFormat, InViewDimension, Subresource.MipLevel, 1, 0, 1);
+    }
+
+    return InitializeTextureView(Texture, InFormat, InViewDimension, Subresource.MipLevel, 1, Subresource.ArrayIndex, Subresource.NumSlices);
+}
+
+id<MTLTexture> FMetalAttachmentView::GetAttachmentTexture() const
+{
+    id<MTLTexture> FormatView = GetMTLTexture();
+    return FormatView ? FormatView : (Texture ? Texture->GetMTLTexture() : nil);
+}
+
+void FMetalAttachmentView::ApplyToAttachment(MTLRenderPassAttachmentDescriptor* Attachment) const
+{
+    const bool     bFormatView       = GetMTLTexture() != nil;
+    id<MTLTexture> AttachmentTexture = GetAttachmentTexture();
+    const bool     b3D               = AttachmentTexture.textureType == MTLTextureType3D;
+
+    Attachment.texture    = AttachmentTexture;
+    Attachment.level      = bFormatView ? 0 : Subresource.MipLevel;
+    Attachment.slice      = (bFormatView || b3D) ? 0 : Subresource.ArrayIndex;
+    Attachment.depthPlane = b3D ? Subresource.ArrayIndex : 0;
 }
 
 FMetalRenderTargetViewRHI::FMetalRenderTargetViewRHI(FMetalDevice* InDevice, FRHITexture* InTexture, const FRHIRenderTargetViewDesc& InDesc)
     : FRHIRenderTargetView(InTexture, InDesc)
-    , FMetalView(InDevice)
-    , MipLevel(0)
-    , ArrayIndex(0)
-    , NumSlices(1)
+    , FMetalAttachmentView(InDevice, InTexture, ResolveAttachmentSubresource(InDesc))
 {
-    ResolveRTVMipAndSlice(InDesc, MipLevel, ArrayIndex, NumSlices);
 }
 
 FMetalRenderTargetViewRHI::~FMetalRenderTargetViewRHI() = default;
 
 bool FMetalRenderTargetViewRHI::Initialize()
 {
-    FMetalTextureRHI* MetalTexture = GetMetalTexture(static_cast<FRHITexture*>(GetResource()));
-    if (!MetalTexture)
-    {
-        return false;
-    }
-
-    if (Desc.GetFormat() == MetalTexture->GetDesc().Format)
-    {
-        return true;
-    }
-
-    return InitializeTextureView(MetalTexture, Desc.GetFormat(), Desc.ViewDimension, MipLevel, 1, ArrayIndex, 1);
+    return InitializeAttachment(Desc.GetFormat(), Desc.ViewDimension);
 }
 
 FMetalDepthStencilViewRHI::FMetalDepthStencilViewRHI(FMetalDevice* InDevice, FRHITexture* InTexture, const FRHIDepthStencilViewDesc& InDesc)
     : FRHIDepthStencilView(InTexture, InDesc)
-    , FMetalView(InDevice)
-    , MipLevel(0)
-    , ArrayIndex(0)
-    , NumSlices(1)
+    , FMetalAttachmentView(InDevice, InTexture, ResolveAttachmentSubresource(InDesc))
     , Flags(InDesc.Flags)
 {
-    ResolveDSVMipAndSlice(InDesc, MipLevel, ArrayIndex, NumSlices);
 }
 
 FMetalDepthStencilViewRHI::~FMetalDepthStencilViewRHI() = default;
 
 bool FMetalDepthStencilViewRHI::Initialize()
 {
-    FMetalTextureRHI* MetalTexture = GetMetalTexture(static_cast<FRHITexture*>(GetResource()));
-    if (!MetalTexture)
-    {
-        return false;
-    }
-
-    if (Desc.GetFormat() == MetalTexture->GetDesc().Format)
-    {
-        return true;
-    }
-
-    return InitializeTextureView(MetalTexture, Desc.GetFormat(), Desc.ViewDimension, MipLevel, 1, ArrayIndex, 1);
+    return InitializeAttachment(Desc.GetFormat(), Desc.ViewDimension);
 }
 
 void* FMetalShaderResourceViewRHI::GetRHINativeHandle() const
@@ -606,7 +642,7 @@ void* FMetalShaderResourceViewRHI::GetRHINativeHandle() const
 
 FRHIDescriptorHandle FMetalShaderResourceViewRHI::GetBindlessHandle() const
 {
-    return EnsureViewBindlessHandle(GetDevice(), BindlessHandle, EDescriptorType::ShaderResource, false, GetMTLTexture(), GetMTLBuffer(), GetBufferOffset());
+    return EnsureBindlessHandle(EDescriptorType::ShaderResource, false);
 }
 
 void* FMetalUnorderedAccessViewRHI::GetRHINativeHandle() const
@@ -616,7 +652,7 @@ void* FMetalUnorderedAccessViewRHI::GetRHINativeHandle() const
 
 FRHIDescriptorHandle FMetalUnorderedAccessViewRHI::GetBindlessHandle() const
 {
-    return EnsureViewBindlessHandle(GetDevice(), BindlessHandle, EDescriptorType::UnorderedAccess, true, GetMTLTexture(), GetMTLBuffer(), GetBufferOffset());
+    return EnsureBindlessHandle(EDescriptorType::UnorderedAccess, true);
 }
 
 void* FMetalRenderTargetViewRHI::GetRHINativeHandle() const

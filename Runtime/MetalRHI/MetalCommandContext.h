@@ -2,90 +2,38 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Array.h"
 #include "Core/Platform/PlatformTLS.h"
+#include "Core/Templates/Utility/EnumOperators.h"
 #include "Core/Templates/Utility/NonCopyable.h"
 #include "Core/Threading/Atomic/AtomicInt.h"
 #include "RHI/IRHICommandContext.h"
 #include "RHI/RHIPipelineState.h"
 #include "MetalRHI/MetalCommandContextState.h"
 #include "MetalRHI/MetalConfiguration.h"
+#include "MetalRHI/MetalEncoderManager.h"
 #include "MetalRHI/MetalQueue.h"
-#include "MetalRHI/MetalStats.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FMetalDevice;
+class FMetalResourceStorage;
 struct FMetalCommands;
 struct FMetalQueryRHI;
-class FMetalBufferRHI;
-class FMetalTextureRHI;
 
-class FMetalCopyCommandContext final
+enum class EMetalSubmitFlags : uint8
 {
-public:
-    FMetalCopyCommandContext()
-        : CopyEncoder(nil)
-    {
-    }
-    
-    void StartEncoder(id<MTLCommandBuffer> CommandBuffer)
-    {
-        if (!CopyEncoder)
-        {
-            CopyEncoder = [[CommandBuffer blitCommandEncoder] retain];
-            STAT_ADD(STAT_Metal_EncodersOpen, 1);
-        }
-    }
-
-    void FinishEncoder()
-    {
-        if (CopyEncoder)
-        {
-            [CopyEncoder endEncoding];
-            [CopyEncoder release];
-            CopyEncoder = nil;
-
-            STAT_SUBTRACT(STAT_Metal_EncodersOpen, 1);
-        }
-    }
-    
-    id<MTLBlitCommandEncoder> GetMTLCopyEncoder() const 
-    {
-        return CopyEncoder;
-    };
-    
-private:
-    id<MTLBlitCommandEncoder> CopyEncoder;
+    None   = 0,
+    Reopen = (1 << 0),
+    Wait   = (1 << 1),
 };
-
-class FMetalEncoderBindingCache
-{
-public:
-    static constexpr uint8 MaxBuffers  = 32;
-    static constexpr uint8 MaxTextures = 128;
-    static constexpr uint8 MaxSamplers = 16;
-
-    FMetalEncoderBindingCache();
-
-    void Reset(EShaderVisibility::Type ShaderStage);
-
-    bool UpdateBuffer(EShaderVisibility::Type ShaderStage, id<MTLBuffer> Buffer, NSUInteger Offset, uint8 Slot);
-    bool UpdateTexture(EShaderVisibility::Type ShaderStage, id<MTLTexture> Texture, uint8 Slot);
-    bool UpdateSampler(EShaderVisibility::Type ShaderStage, id<MTLSamplerState> Sampler, uint8 Slot);
-
-private:
-    id<MTLBuffer>       Buffers[EShaderVisibility::Count][MaxBuffers];
-    NSUInteger          BufferOffsets[EShaderVisibility::Count][MaxBuffers];
-    id<MTLTexture>      Textures[EShaderVisibility::Count][MaxTextures];
-    id<MTLSamplerState> Samplers[EShaderVisibility::Count][MaxSamplers];
-};
+ENUM_CLASS_OPERATORS(EMetalSubmitFlags);
 
 class FMetalCommandContext final : public FMetalDeviceChild, public IRHICommandContext
 {
+    friend class FMetalParallelRenderPass;
+
 public:
     FMetalCommandContext(FMetalDevice* InDevice, FMetalQueue& InQueue);
     ~FMetalCommandContext();
-
-    bool Initialize();
 
     // IRHICommandContext Interface
     virtual void BeginFrame() override final;
@@ -180,68 +128,8 @@ public:
 
     virtual void* GetRHINativeCommandList() override final;
 
-    FORCEINLINE FMetalCommandContextState& GetContextState()
-    {
-        return ContextState;
-    }
-
-    FORCEINLINE FMetalQueue& GetQueue() const
-    {
-        return Queue;
-    }
-
-    FORCEINLINE bool IsRecording() const
-    {
-        return bIsRecording;
-    }
-
-    FORCEINLINE void SetLastUsedFrame(uint64 InFrame)
-    {
-        LastUsedFrame = InFrame;
-    }
-
-    FORCEINLINE uint64 GetLastUsedFrame() const
-    {
-        return LastUsedFrame;
-    }
-
-    FORCEINLINE id<MTLCommandBuffer> GetCommandBuffer() const
-    {
-        return CommandBuffer;
-    }
-
-    FORCEINLINE id<MTLRenderCommandEncoder> GetGraphicsEncoder() const
-    {
-        return GraphicsEncoder;
-    }
-
-    FORCEINLINE id<MTLComputeCommandEncoder> GetComputeEncoder() const
-    {
-        return ComputeEncoder;
-    }
-
-    void SetGraphicsBuffer(EShaderVisibility::Type ShaderStage, id<MTLBuffer> Buffer, NSUInteger Offset, uint8 Slot);
-    void SetGraphicsTexture(EShaderVisibility::Type ShaderStage, id<MTLTexture> Texture, uint8 Slot);
-    void SetGraphicsSampler(EShaderVisibility::Type ShaderStage, id<MTLSamplerState> Sampler, uint8 Slot);
-    void SetGraphicsBytes(EShaderVisibility::Type ShaderStage, const void* Bytes, NSUInteger Length, uint8 Slot);
-
-    void SetComputeBuffer(id<MTLBuffer> Buffer, NSUInteger Offset, uint8 Slot);
-    void SetComputeTexture(id<MTLTexture> Texture, uint8 Slot);
-    void SetComputeSampler(id<MTLSamplerState> Sampler, uint8 Slot);
-
-    void ResetGraphicsEncoderBindings();
-    void ResetComputeEncoderBindings();
-
-    void ClearUnusedComputeBindings(const FMetalPipelineBindingLayout& Layout);
-    void ClearAllComputeBindings();
-
-    void DeclareResident(id<MTLResource> Resource, bool bReadOnly, bool bIsView);
-    void FlushResidency();
-
-    void BeginParallelRenderPass(const FRHIBeginRenderPassDesc& BeginRenderPassDesc);
-    FMetalCommandContext* ObtainParallelChildContext();
-    void ReleaseParallelChildContext(FMetalCommandContext* ChildContext);
-    void EndParallelRenderPass();
+    void BeginParallelChild(FMetalCommands& ParentCommands, id<MTLRenderCommandEncoder> SubEncoder);
+    void EndParallelChild();
 
 #if METAL_VALIDATE_CONTEXT_THREAD_OWNERSHIP
     void AcquireOwnership();
@@ -253,70 +141,54 @@ public:
     FORCEINLINE void VerifyOwnerThread() const { }
 #endif
 
+    FMetalEncoderManager& GetEncoders()
+    {
+        return Encoders;
+    }
+
+    FMetalCommandContextState& GetContextState()
+    {
+        return ContextState;
+    }
+
+    FMetalQueue& GetQueue() const
+    {
+        return Queue;
+    }
+
+    bool IsRecording() const
+    {
+        return bIsRecording;
+    }
+
+    void SetLastUsedFrame(uint64 InFrame)
+    {
+        LastUsedFrame = InFrame;
+    }
+
+    uint64 GetLastUsedFrame() const
+    {
+        return LastUsedFrame;
+    }
+
 private:
-    void PrepareForDraw();
-    void PrepareForMesh();
-    void PrepareForDispatch();
+    static FMetalRenderPassInfo GetRenderPassInfo(MTLRenderPassDescriptor* Descriptor, uint32 NumRenderTargets);
 
-    void StartCopyEncoder(bool bRouteToCopyQueue);
-    void FinishEncoders();
-    void FinishDirectEncoders();
-    uint64 SubmitCurrentPayload();
-    void FlushCopyWork();
-    void EnsureTimestampEncoder();
-    bool SampleTimestamp(FMetalQueryRHI& Query);
+    uint64 Submit(EMetalSubmitFlags Flags);
     void AddPendingQuery(FMetalQueryRHI* Query);
-    void ApplyVertexAmplification();
-    void ApplyVertexAmplification(const FRHIViewInstancingState& ViewInstancingState);
-    void ApplyEncoderLabel(id<MTLCommandEncoder> Encoder, NSString* Kind);
-    void InsertDrawDispatchSignpost(NSString* Name);
+    void FillRenderPassDescriptor(MTLRenderPassDescriptor* Descriptor, const FRHIBeginRenderPassDesc& Desc) const;
+    id<MTLBuffer> CreateStagingBuffer(uint64 Size, FMetalResourceStorage& OutStorage);
 
-    void WaitForPendingEncoderFenceOnGraphics();
-    void WaitForPendingEncoderFenceOnCompute();
-    void WaitForPendingEncoderFenceOnBlit();
-    void InsertMemoryBarrier();
-    void SubmitCommandBufferAndObtainNew();
-
-    id<MTLBuffer> CreateStagingBuffer(uint64 Size, class FMetalResourceStorage& OutStorage);
-    void ResetResidency();
-    void DeclareCopyResources(id<MTLResource> Source, id<MTLResource> Destination);
-    void AssertCanOpenGraphics() const;
-    void AssertCanOpenCompute() const;
-    void AssertCanOpenBlit() const;
-    void EncodePayloadWaits();
-    void NoteBufferUse(FMetalBufferRHI* Buffer);
-    void NoteTextureUse(FMetalTextureRHI* Texture);
-    void AttachParallelChild(FMetalCommandContext& Parent);
-    void DetachParallelChild();
-    MTLRenderPassDescriptor* CreateRenderPassDescriptor(const FRHIBeginRenderPassDesc& BeginRenderPassDesc);
-
-    FMetalQueue&                        Queue;
-    id<MTLCommandBuffer>                CommandBuffer;
-    FMetalCommands*                     Commands;
-    NSAutoreleasePool*                  RecordingPool;
-    id<MTLCommandBuffer>                CopyCommandBuffer;
-    FMetalCommands*                     CopyCommands;
-    id<MTLRenderCommandEncoder>         GraphicsEncoder;
-    id<MTLComputeCommandEncoder>        ComputeEncoder;
-    id<MTLParallelRenderCommandEncoder> ParallelEncoder;
-    FMetalCommandContext*               ParallelParent;
-    id<MTLFence>                        EncoderFence;
-    bool                                bEncoderFencePending;
-    bool                                bDirectHasEncodedWork;
-    bool                                bBlitOnCopyQueue;
-    bool                                bResidencyDirty;
-    bool                                bIsRecording;
-    bool                                bParallelChild;
-    uint64                              LastUsedFrame;
-    TArray<id<MTLHeap>>                 ResidentHeaps;
-    TArray<id<MTLResource>>             ResidentReadResources;
-    TArray<id<MTLResource>>             ResidentReadWriteResources;
-    FMetalCopyCommandContext            CopyContext;
-    FMetalEncoderBindingCache           EncoderBindings;
-    FMetalCommandContextState           ContextState;
-    FMetalQueryRHI*                     ActiveOcclusionQuery;
+    FMetalQueue&              Queue;
+    FMetalEncoderManager      Encoders;
+    FMetalCommandContextState ContextState;
+    NSAutoreleasePool*        RecordingPool;
+    FMetalQueryRHI*           ActiveOcclusionQuery;
+    uint64                    LastUsedFrame;
+    bool                      bIsRecording;
+    TArray<String>            DebugGroups;
 #if METAL_VALIDATE_CONTEXT_THREAD_OWNERSHIP
-    TAtomicInt<uint32>                  OwnerThreadID;
+    TAtomicInt<uint32>        OwnerThreadID;
 #endif
 };
 

@@ -29,6 +29,7 @@ public:
         }
 
         ObjectType* Created = Create(AllObjects.Size());
+
         if (Created)
         {
             AllObjects.Add(Created);
@@ -58,6 +59,7 @@ public:
             }
 
             ObjectType* Candidate = FreeObjects[Index];
+
             if (!ShouldPrune(Candidate))
             {
                 continue;

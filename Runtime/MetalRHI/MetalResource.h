@@ -7,7 +7,6 @@ class FMetalLinearAllocator;
 class FMetalBufferAllocator;
 class FMetalTextureAllocator;
 class FMetalUploadHeapAllocator;
-class FMetalQueue;
 
 enum class EMetalResourceStorageType : uint8
 {
@@ -32,8 +31,8 @@ public:
     explicit FMetalResourceStorage(FMetalDevice* InDevice);
     ~FMetalResourceStorage();
 
-    void InitStandalone(id<MTLBuffer> InBuffer, uint64 InSize);
-    void InitStandalone(id<MTLTexture> InTexture, uint64 InSize);
+    void InitStandalone(id<MTLBuffer> InBuffer, uint64 InSize, bool bBindlessReachable);
+    void InitStandalone(id<MTLTexture> InTexture, uint64 InSize, bool bBindlessReachable);
     void InitSuballocatedResource(id<MTLBuffer> InBuffer, uint64 InOffset, uint64 InSize, void* InMappedAddress, FMetalLinearAllocator* InLinearAllocator, FMetalUploadHeapAllocator* InUploadAllocator);
     void InitSuballocatedHeap(id<MTLBuffer> InBuffer, FMetalHeap* InHeap, uint64 InOffset, uint64 InSize, uint32 InHeapIndex, FMetalBufferAllocator* InBufferAllocator);
     void InitSuballocatedHeap(id<MTLTexture> InTexture, FMetalHeap* InHeap, uint64 InOffset, uint64 InSize, uint32 InHeapIndex, FMetalTextureAllocator* InTextureAllocator);
@@ -91,20 +90,8 @@ public:
         return HeapIndex;
     }
 
-    void StampLastUse(FMetalQueue* InQueue, uint64 InValue);
-
-    FORCEINLINE FMetalQueue* GetLastUsedQueue() const
-    {
-        return LastUsedQueue;
-    }
-
-    FORCEINLINE uint64 GetLastUsedValue() const
-    {
-        return LastUsedValue;
-    }
-
 private:
-    void ReleaseOwnedResource();
+    void ReleaseOwnedResource(bool bStandalone);
 
     union FAllocatorPointers
     {
@@ -129,6 +116,4 @@ private:
     uint32                    HeapIndex;
     EMetalResourceStorageType StorageType;
     EMetalAllocatorType       AllocatorType;
-    FMetalQueue*              LastUsedQueue;
-    uint64                    LastUsedValue;
 };

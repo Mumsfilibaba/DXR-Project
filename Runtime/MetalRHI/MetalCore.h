@@ -4,7 +4,10 @@
 #include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Debug.h"
 #include "RHI/RHIResources.h"
+#include "RHI/RHIShader.h"
+#include "RHI/MSLShaderBindings.h"
 #include "MetalRHI/MetalConfiguration.h"
+#include "MetalRHI/MetalCapabilities.h"
 #include <Metal/Metal.h>
 #include <QuartzCore/QuartzCore.h>
 
@@ -75,9 +78,6 @@ constexpr uint32 MAX_UAVS             = 16;
 constexpr uint32 MAX_CONSTANT_BUFFERS = 16;
 constexpr uint32 MAX_SAMPLER_STATES   = 16;
 
-constexpr uint32 MAX_TEXTURES = 32;
-constexpr uint32 MAX_BUFFERS  = 31;
-
 constexpr uint32 MAX_SHADER_CONSTANTS = 32;
 constexpr uint32 MAX_VIEWPORTS        = 16;
 
@@ -85,10 +85,55 @@ constexpr uint32 BUFFER_ALIGNMENT                 = 16;
 constexpr uint32 CONSTANT_BUFFER_ALIGNMENT        = 256;
 constexpr uint32 ACCELERATION_STRUCTURE_ALIGNMENT = 256;
 
+constexpr uint32 TEXEL_BUFFER_ALIGNMENT = 256;
+
 constexpr uint32 TEXTURE_UPLOAD_ALIGNMENT = 256;
+
+struct EShaderVisibility
+{
+    enum Type : uint8
+    {
+        Compute       = 0,
+        Vertex        = 1,
+        Pixel         = 2,
+        Mesh          = 3,
+        Amplification = 4,
+        Count         = Amplification + 1,
+    };
+};
+
+enum class EMetalMemoryClass : uint8
+{
+    GPUOnly = 0,
+    Upload,
+    CPUWriteGPURead,
+    Readback,
+};
 
 namespace MetalRHI
 {
+
+constexpr EShaderVisibility::Type GetShaderVisibility(EShaderStage ShaderStage)
+{
+    switch (ShaderStage)
+    {
+        case EShaderStage::Vertex:        return EShaderVisibility::Vertex;
+        case EShaderStage::Pixel:         return EShaderVisibility::Pixel;
+        case EShaderStage::Mesh:          return EShaderVisibility::Mesh;
+        case EShaderStage::Amplification: return EShaderVisibility::Amplification;
+        default:                          return EShaderVisibility::Compute;
+    }
+}
+
+FORCEINLINE uint32 FirstSetBit(uint32 Mask)
+{
+    return static_cast<uint32>(__builtin_ctz(Mask));
+}
+
+FORCEINLINE uint32 FirstSetBit(uint64 Mask)
+{
+    return static_cast<uint32>(__builtin_ctzll(Mask));
+}
 
 constexpr MTLLoadAction ConvertAttachmentLoadAction(EAttachmentLoadAction LoadAction)
 {
@@ -133,6 +178,8 @@ constexpr MTLSamplerMinMagFilter ConvertSamplerFilterToMinFilter(ESamplerFilter 
         case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear:
         case ESamplerFilter::Comparison_MinMagLinear_MipPoint:
         case ESamplerFilter::Comparison_MinMagMipLinear:
+        case ESamplerFilter::Anistrotopic:
+        case ESamplerFilter::Comparison_Anisotropic:
             return MTLSamplerMinMagFilterLinear;
             
         default:
@@ -162,6 +209,8 @@ constexpr MTLSamplerMinMagFilter ConvertSamplerFilterToMagFilter(ESamplerFilter 
         case ESamplerFilter::Comparison_MinMagMipLinear:
         case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:
         case ESamplerFilter::Comparison_MinPoint_MagMipLinear:
+        case ESamplerFilter::Anistrotopic:
+        case ESamplerFilter::Comparison_Anisotropic:
             return MTLSamplerMinMagFilterLinear;
             
         default:
@@ -191,6 +240,8 @@ constexpr MTLSamplerMipFilter ConvertSamplerFilterToMipmapMode(ESamplerFilter Sa
         case ESamplerFilter::MinMagMipLinear:
         case ESamplerFilter::Comparison_MinMagMipLinear:
         case ESamplerFilter::Comparison_MinPoint_MagMipLinear:
+        case ESamplerFilter::Anistrotopic:
+        case ESamplerFilter::Comparison_Anisotropic:
             return MTLSamplerMipFilterLinear;
             
         default:
@@ -224,7 +275,7 @@ constexpr bool IsAnisotropySampler(ESamplerFilter SamplerFilter)
     }
 }
 
-constexpr bool IsComparissonSampler(ESamplerFilter SamplerFilter)
+constexpr bool IsComparisonSampler(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
     {
@@ -241,22 +292,6 @@ constexpr bool IsComparissonSampler(ESamplerFilter SamplerFilter)
             
         default:
             return false;
-    }
-}
-
-constexpr MTLCompareFunction ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
-{
-    switch (ComparisonFunc)
-    {
-    case EComparisonFunc::Never:        return MTLCompareFunctionNever;
-    case EComparisonFunc::Less:         return MTLCompareFunctionLess;
-    case EComparisonFunc::Equal:        return MTLCompareFunctionEqual;
-    case EComparisonFunc::LessEqual:    return MTLCompareFunctionLessEqual;
-    case EComparisonFunc::Greater:      return MTLCompareFunctionGreater;
-    case EComparisonFunc::NotEqual:     return MTLCompareFunctionNotEqual;
-    case EComparisonFunc::GreaterEqual: return MTLCompareFunctionGreaterEqual;
-    case EComparisonFunc::Always:       return MTLCompareFunctionAlways;
-    default:                            return MTLCompareFunctionNever;
     }
 }
 
@@ -303,6 +338,7 @@ constexpr MTLBlendFactor ConvertBlend(EBlendType  Blend)
 constexpr MTLColorWriteMask ConvertColorWriteFlags(EColorWriteFlags ColorWriteFlags)
 {
     MTLColorWriteMask ColorWriteMask = MTLColorWriteMaskNone;
+
     if (ColorWriteFlags == EColorWriteFlags::All)
     {
         ColorWriteMask = MTLColorWriteMaskAll;
@@ -313,14 +349,17 @@ constexpr MTLColorWriteMask ConvertColorWriteFlags(EColorWriteFlags ColorWriteFl
         {
             ColorWriteMask |= MTLColorWriteMaskRed;
         }
+
         if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Green))
         {
             ColorWriteMask |= MTLColorWriteMaskGreen;
         }
+
         if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Blue))
         {
             ColorWriteMask |= MTLColorWriteMaskBlue;
         }
+
         if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Alpha))
         {
             ColorWriteMask |= MTLColorWriteMaskAlpha;
@@ -373,22 +412,27 @@ constexpr MTLTextureType GetMTLTextureType(EViewDimension ViewDimension, bool bI
 constexpr MTLTextureUsage ConvertTextureFlags(ETextureUsageFlags Flag)
 {
     MTLTextureUsage Result = MTLTextureUsageUnknown;
+
     if (IsEnumFlagSet(Flag, ETextureUsageFlags::UnorderedAccessTexture))
     {
         Result |= MTLTextureUsageShaderWrite;
     }
+
     if (IsEnumFlagSet(Flag, ETextureUsageFlags::RenderTarget))
     {
         Result |= MTLTextureUsageRenderTarget;
     }
+
     if (IsEnumFlagSet(Flag, ETextureUsageFlags::DepthStencil))
     {
         Result |= MTLTextureUsageRenderTarget;
     }
+
     if (IsEnumFlagSet(Flag, ETextureUsageFlags::ShaderResourceTexture))
     {
         Result |= MTLTextureUsageShaderRead;
     }
+
     if (IsEnumFlagSet(Flag, ETextureUsageFlags::CopySource))
     {
         Result |= MTLTextureUsageShaderRead;
@@ -397,19 +441,46 @@ constexpr MTLTextureUsage ConvertTextureFlags(ETextureUsageFlags Flag)
     return Result;
 }
 
-constexpr MTLResourceOptions GetMTLBufferResourceOptions(const FRHIBufferDesc& BufferDesc)
+constexpr EMetalMemoryClass GetMetalMemoryClass(const FRHIBufferDesc& BufferDesc)
 {
     if (BufferDesc.IsReadBack())
     {
-        return MTLResourceStorageModeShared | MTLResourceCPUCacheModeDefaultCache | MTLResourceHazardTrackingModeDefault;
+        return EMetalMemoryClass::Readback;
     }
 
     if (BufferDesc.IsDynamic() || BufferDesc.IsTransient())
     {
-        return MTLResourceStorageModeShared | MTLResourceCPUCacheModeWriteCombined | MTLResourceHazardTrackingModeDefault;
+        return EMetalMemoryClass::CPUWriteGPURead;
     }
 
-    return MTLResourceStorageModePrivate | MTLResourceCPUCacheModeDefaultCache | MTLResourceHazardTrackingModeDefault;
+    return EMetalMemoryClass::GPUOnly;
+}
+
+FORCEINLINE MTLResourceOptions GetMTLResourceOptions(EMetalMemoryClass MemoryClass)
+{
+    constexpr MTLResourceOptions Untracked = MTLResourceHazardTrackingModeUntracked;
+
+    switch (MemoryClass)
+    {
+        case EMetalMemoryClass::GPUOnly:
+            return MTLResourceStorageModePrivate | Untracked;
+        case EMetalMemoryClass::Upload:
+            return MTLResourceStorageModeShared | MTLResourceCPUCacheModeWriteCombined | Untracked;
+        case EMetalMemoryClass::Readback:
+            return MTLResourceStorageModeShared | MTLResourceCPUCacheModeDefaultCache | Untracked;
+        case EMetalMemoryClass::CPUWriteGPURead:
+            return (HasUnifiedMemory() ? MTLResourceStorageModeShared : MTLResourceStorageModeManaged) | MTLResourceCPUCacheModeWriteCombined | Untracked;
+    }
+
+    return MTLResourceStorageModePrivate | Untracked;
+}
+
+FORCEINLINE void FlushCPUWrite(id<MTLBuffer> Buffer, uint64 Offset, uint64 Size)
+{
+    if (!HasUnifiedMemory() && Buffer.storageMode == MTLStorageModeManaged)
+    {
+        [Buffer didModifyRange:NSMakeRange(Offset, Size)];
+    }
 }
 
 constexpr uint64 GetMTLBufferAlignment(const FRHIBufferDesc& BufferDesc)
@@ -424,12 +495,12 @@ constexpr uint64 GetMTLBufferAlignment(const FRHIBufferDesc& BufferDesc)
         return CONSTANT_BUFFER_ALIGNMENT;
     }
 
-    return BUFFER_ALIGNMENT;
-}
+    if (BufferDesc.IsShaderResourceBuffer() || BufferDesc.IsUnorderedAccessBuffer())
+    {
+        return TEXEL_BUFFER_ALIGNMENT;
+    }
 
-constexpr bool IsMTLBufferMappable(const FRHIBufferDesc& BufferDesc)
-{
-    return BufferDesc.IsDynamic() || BufferDesc.IsReadBack() || BufferDesc.IsTransient();
+    return BUFFER_ALIGNMENT;
 }
 
 constexpr MTLPixelFormat ConvertFormat(EFormat Format)
@@ -535,7 +606,7 @@ constexpr MTLPixelFormat ConvertFormat(EFormat Format)
     }
 }
 
-NODISCARD inline bool MetalFormatSupportsShaderWrite(MTLPixelFormat Format)
+NODISCARD inline bool FormatSupportsShaderWrite(MTLPixelFormat Format)
 {
     switch (Format)
     {
@@ -590,7 +661,48 @@ NODISCARD inline bool MetalFormatSupportsShaderWrite(MTLPixelFormat Format)
     }
 }
 
-NODISCARD inline bool MetalFormatSupportsShaderReadWrite(MTLPixelFormat Format, MTLReadWriteTextureTier ReadWriteTextureTier)
+NODISCARD inline bool FormatIsRenderable(MTLPixelFormat Format)
+{
+    switch (Format)
+    {
+        case MTLPixelFormatInvalid:
+        case MTLPixelFormatBC1_RGBA:
+        case MTLPixelFormatBC1_RGBA_sRGB:
+        case MTLPixelFormatBC2_RGBA:
+        case MTLPixelFormatBC2_RGBA_sRGB:
+        case MTLPixelFormatBC3_RGBA:
+        case MTLPixelFormatBC3_RGBA_sRGB:
+        case MTLPixelFormatBC4_RUnorm:
+        case MTLPixelFormatBC4_RSnorm:
+        case MTLPixelFormatBC5_RGUnorm:
+        case MTLPixelFormatBC5_RGSnorm:
+        case MTLPixelFormatBC6H_RGBFloat:
+        case MTLPixelFormatBC6H_RGBUfloat:
+        case MTLPixelFormatBC7_RGBAUnorm:
+        case MTLPixelFormatBC7_RGBAUnorm_sRGB:
+        {
+            return false;
+        }
+
+        case MTLPixelFormatRGB9E5Float:
+        {
+            return IsAppleGPU();
+        }
+
+        case MTLPixelFormatDepth24Unorm_Stencil8:
+        case MTLPixelFormatX24_Stencil8:
+        {
+            return SupportsDepth24Stencil8();
+        }
+
+        default:
+        {
+            return true;
+        }
+    }
+}
+
+NODISCARD inline bool FormatSupportsShaderReadWrite(MTLPixelFormat Format, MTLReadWriteTextureTier ReadWriteTextureTier)
 {
     if (Format == MTLPixelFormatInvalid || ReadWriteTextureTier == MTLReadWriteTextureTierNone)
     {
@@ -814,6 +926,67 @@ constexpr bool IsStencilPixelFormat(MTLPixelFormat Format)
         default:
             return false;
     }
+}
+
+constexpr EMSLTextureComponent GetTextureComponent(MTLPixelFormat Format)
+{
+    switch (Format)
+    {
+        case MTLPixelFormatR8Uint:
+        case MTLPixelFormatR16Uint:
+        case MTLPixelFormatR32Uint:
+        case MTLPixelFormatRG8Uint:
+        case MTLPixelFormatRG16Uint:
+        case MTLPixelFormatRG32Uint:
+        case MTLPixelFormatRGBA8Uint:
+        case MTLPixelFormatRGBA16Uint:
+        case MTLPixelFormatRGBA32Uint:
+        case MTLPixelFormatRGB10A2Uint:
+        case MTLPixelFormatStencil8:
+        case MTLPixelFormatX24_Stencil8:
+        case MTLPixelFormatX32_Stencil8:
+            return EMSLTextureComponent::Uint;
+
+        case MTLPixelFormatR8Sint:
+        case MTLPixelFormatR16Sint:
+        case MTLPixelFormatR32Sint:
+        case MTLPixelFormatRG8Sint:
+        case MTLPixelFormatRG16Sint:
+        case MTLPixelFormatRG32Sint:
+        case MTLPixelFormatRGBA8Sint:
+        case MTLPixelFormatRGBA16Sint:
+        case MTLPixelFormatRGBA32Sint:
+            return EMSLTextureComponent::Int;
+
+        case MTLPixelFormatDepth16Unorm:
+        case MTLPixelFormatDepth32Float:
+        case MTLPixelFormatDepth24Unorm_Stencil8:
+        case MTLPixelFormatDepth32Float_Stencil8:
+            return EMSLTextureComponent::Depth;
+
+        default:
+            return EMSLTextureComponent::Float;
+    }
+}
+
+constexpr uint8 GetNullTextureType(MTLTextureType TextureType, MTLPixelFormat Format)
+{
+    EMSLTextureDimension Dimension = EMSLTextureDimension::Texture2D;
+    switch (TextureType)
+    {
+        case MTLTextureType1D:                 Dimension = EMSLTextureDimension::Texture1D;        break;
+        case MTLTextureType1DArray:            Dimension = EMSLTextureDimension::Texture1DArray;   break;
+        case MTLTextureType2DArray:            Dimension = EMSLTextureDimension::Texture2DArray;   break;
+        case MTLTextureType2DMultisample:
+        case MTLTextureType2DMultisampleArray: Dimension = EMSLTextureDimension::Texture2DMS;      break;
+        case MTLTextureTypeCube:               Dimension = EMSLTextureDimension::TextureCube;      break;
+        case MTLTextureTypeCubeArray:          Dimension = EMSLTextureDimension::TextureCubeArray; break;
+        case MTLTextureType3D:                 Dimension = EMSLTextureDimension::Texture3D;        break;
+        case MTLTextureTypeTextureBuffer:      Dimension = EMSLTextureDimension::TextureBuffer;    break;
+        default:                                                                                   break;
+    }
+
+    return MakeMSLNullTextureType(Dimension, GetTextureComponent(Format));
 }
 
 constexpr NSUInteger GetMipExtent(NSUInteger Extent, uint32 MipLevel)

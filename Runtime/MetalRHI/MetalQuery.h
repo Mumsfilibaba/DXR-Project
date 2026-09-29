@@ -49,38 +49,13 @@ public:
         return SampleBuffer != nil;
     }
 
-    bool CanSampleGraphics() const { return bCanSampleGraphics; }
-    bool CanSampleCompute()  const { return bCanSampleCompute; }
-    bool CanSampleBlit()     const { return bCanSampleBlit; }
-    bool UseSampleBarrier()  const { return bUseSampleBarrier; }
-
-    void PrepareBlitSample(id<MTLBlitCommandEncoder> Encoder);
-    void PrepareComputeSample(id<MTLComputeCommandEncoder> Encoder);
-
-    id<MTLTexture> GetDummyRenderTarget() const
-    {
-        return DummyRenderTarget;
-    }
-
-    id<MTLComputePipelineState> GetDummyComputePipeline() const
-    {
-        return DummyComputePipeline;
-    }
-
 private:
     void FreeSlot(uint32 Index);
 
-    id<MTLCounterSampleBuffer>  SampleBuffer;
-    id<MTLBuffer>               ResolveBuffer;
-    id<MTLTexture>              DummyRenderTarget;
-    id<MTLBuffer>               DummyFillBuffer;
-    id<MTLComputePipelineState> DummyComputePipeline;
-    TArray<uint8>               Occupied;
-    uint32                      NextSlot;
-    bool                        bCanSampleGraphics;
-    bool                        bCanSampleCompute;
-    bool                        bCanSampleBlit;
-    bool                        bUseSampleBarrier;
+    id<MTLCounterSampleBuffer> SampleBuffer;
+    id<MTLBuffer>              ResolveBuffer;
+    TArray<uint8>              Occupied;
+    uint32                     NextSlot;
 };
 
 class FMetalOcclusionQueries : public FMetalDeviceChild

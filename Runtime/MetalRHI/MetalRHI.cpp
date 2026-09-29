@@ -17,6 +17,7 @@ FMetalDeviceRHI* FMetalDeviceRHI::MetalDeviceRHI = nullptr;
 FRHIDevice* FMetalModuleRHI::CreateDevice()
 {
     TUniquePtr<FMetalDeviceRHI> NewRHI = MakeUniquePtr<FMetalDeviceRHI>();
+
     if (!NewRHI->Initialize())
     {
         return nullptr;
@@ -70,6 +71,7 @@ void FMetalDeviceRHI::FlushDeferredDeletions()
 void FMetalDeviceRHI::FlushDeletionQueue(FMetalCommands* Commands)
 {
     TScopedLock Lock(DeferredObjectsCS);
+
     if (!Commands)
     {
         return;
@@ -94,7 +96,7 @@ FMetalDeviceRHI::~FMetalDeviceRHI()
     }
 
     FlushDeferredDeletions();
-    BufferClearPipelines.Release();
+    UAVClearPipelines.Release();
 
     if (CommandContext && Device)
     {
@@ -132,8 +134,13 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
     RHI::MaxShaderModel                                 = EShaderModel::SM_6_6;
     RHI::bSupportsBindless                              = GMetalSupportsBindless;
 
-    RHI::MaxViewInstanceCount    = Math::Max(GMetalMaxVertexAmplificationCount, 1u);
-    RHI::bSupportsViewInstancing = RHI::MaxViewInstanceCount > 1;
+    // The GPU can amplify vertices (GMetalFeatures.MaxVertexAmplificationCount), but SV_ViewID never reaches
+    // the shader: SPIRV-Cross cannot emit [[amplification_id]], and without its multiview option it compiles
+    // SV_ViewID to a constant 0, so every amplified view would render view 0. Re-enabling this needs SPIRV-Cross
+    // multiview emulation (multiview plus multiview_layered_rendering and a view-mask buffer, as MoltenVK does),
+    // which derives the view from the instance index and is not capped at the amplification count.
+    RHI::bSupportsViewInstancing = false;
+    RHI::MaxViewInstanceCount    = 1;
 
     RHI::bSupportsRayTracing                                       = false;
     RHI::RayTracingTier                                            = ERayTracingTier::NotSupported;
@@ -162,7 +169,9 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
     RHI::SamplerFeedbackTier      = ESamplerFeedbackTier::NotSupported;
 
     RHI::bSupportsProgrammableSamplePositions = GMetalSupportsProgrammableSamplePositions;
-    RHI::SamplePositionsTier                  = GMetalSupportsProgrammableSamplePositions ? ESamplePositionsTier::Tier1 : ESamplePositionsTier::NotSupported;
+    RHI::SamplePositionsTier                  = GMetalSupportsProgrammableSamplePositions
+        ? ESamplePositionsTier::Tier1
+        : ESamplePositionsTier::NotSupported;
     RHI::MaxSamplePositionGridWidth           = GMetalSupportsProgrammableSamplePositions ? 1u : 0u;
     RHI::MaxSamplePositionGridHeight          = GMetalSupportsProgrammableSamplePositions ? 1u : 0u;
     RHI::SupportedSamplePositionSampleCounts  = 0;
@@ -170,6 +179,7 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
     if (GMetalSupportsProgrammableSamplePositions)
     {
         uint32 SampleCounts = 0;
+
         if (QuerySupportedSampleCounts(EFormat::B8G8R8A8_Unorm, SampleCounts))
         {
             RHI::SupportedSamplePositionSampleCounts = SampleCounts;
@@ -188,9 +198,9 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
     RHI::MaxTexture1DArrayLayers = GMetalMaxTextureArrayLayers;
     RHI::MaxTexture2DSize        = GMetalMaxTexture2DSize;
     RHI::MaxTexture2DArrayLayers = GMetalMaxTextureArrayLayers;
-    RHI::MaxTexture3DWidth       = GMetalMaxTexture2DSize;
-    RHI::MaxTexture3DHeight      = GMetalMaxTexture2DSize;
-    RHI::MaxTexture3DDepth       = Math::Min<uint32>(GMetalMaxTexture2DSize, 2048);
+    RHI::MaxTexture3DWidth       = GMetalMaxTexture3DSize;
+    RHI::MaxTexture3DHeight      = GMetalMaxTexture3DSize;
+    RHI::MaxTexture3DDepth       = GMetalMaxTexture3DSize;
     RHI::MaxCubeTextureSize      = GMetalMaxTexture2DSize;
     RHI::MaxCubeArrayCount       = GMetalMaxTextureArrayLayers / RHI_NUM_CUBE_FACES;
 
@@ -208,9 +218,17 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
 
     RHI::bSupportsTimestampQueries           = GMetalSupportsTimestampQueries;
     RHI::bSupportsPipelineStatisticsQueries  = false;
-    RHI::bSupportsGPUTimestampBubblesRemoval = GMetalSupportsTimestampQueries;
+    RHI::bSupportsGPUTimestampBubblesRemoval = false;
 
     RHI::DefaultSwapChainFormat = EFormat::B8G8R8A8_Unorm;
+
+    // A feature reported to the renderer without the hardware behind it would otherwise only fail inside a pass
+    CHECK(!RHI::bSupportsBindless || (MetalRHI::SupportsMetal3() && GMetalFeatures.ArgumentBuffersTier == MTLArgumentBuffersTier2));
+    CHECK(!RHI::bSupportsDispatchMeshIndirect || MetalRHI::SupportsMetal3());
+    CHECK(!RHI::bSupportsProgrammableSamplePositions || GMetalSupportsProgrammableSamplePositions);
+    CHECK(!RHI::bSupportsTimestampQueries || GMetalSupportsCounterSampling);
+    CHECK(!RHI::bSupportsViewInstancing || GMetalFeatures.MaxVertexAmplificationCount >= RHI::MaxViewInstanceCount);
+    CHECK(!RHI::bSupportsRayTracing || GMetalFeatures.bRayTracing);
 
     return true;
 }
@@ -223,6 +241,7 @@ bool FMetalDeviceRHI::Initialize()
 #endif
 
     Device = new FMetalDevice();
+
     if (!Device->Initialize())
     {
         METAL_ERROR("Failed to initialize FMetalDevice");
@@ -232,6 +251,7 @@ bool FMetalDeviceRHI::Initialize()
     METAL_INFO("Created FMetalDevice");
 
     CommandContext = Device->GetQueue(EMetalQueueType::Direct)->ObtainCommandContext();
+
     if (!CommandContext)
     {
         METAL_ERROR("Failed to initialize FMetalCommandContext");
@@ -244,12 +264,14 @@ bool FMetalDeviceRHI::Initialize()
         return false;
     }
 
+    DumpMetalCapabilities();
     return true;
 }
 
 FRHITexture* FMetalDeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, ERHIResourceState InInitialState, const IRHITextureData* InInitialData)
 {
     FMetalTextureRef NewTexture = new FMetalTextureRHI(GetMetalDevice(), InTextureDesc);
+
     if (!NewTexture->Initialize(InInitialState, InInitialData))
     {
         return nullptr;
@@ -263,6 +285,7 @@ FRHITexture* FMetalDeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc
 FRHIBuffer* FMetalDeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, ERHIResourceState InInitialState, const void* InInitialData)
 {
     FMetalBufferRef NewBuffer = new FMetalBufferRHI(GetMetalDevice(), InBufferDesc);
+
     if (!NewBuffer->Initialize(InInitialState, InInitialData))
     {
         return nullptr;
@@ -286,6 +309,7 @@ FRHISamplerState* FMetalDeviceRHI::CreateSamplerState(const FRHISamplerStateDesc
     else
     {
         Result = new FMetalSamplerStateRHI(GetMetalDevice(), InSamplerDesc);
+
         if (!Result->Initialize())
         {
             return nullptr;
@@ -301,12 +325,12 @@ FRHISamplerState* FMetalDeviceRHI::CreateSamplerState(const FRHISamplerStateDesc
 
 FRHISceneAccelerationStructure* FMetalDeviceRHI::CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& Desc)
 {
-    return new FMetalSceneAccelerationStructureRHI(GetMetalDevice(), Desc);
+    return RHI::bSupportsRayTracing ? new FMetalSceneAccelerationStructureRHI(GetMetalDevice(), Desc) : nullptr;
 }
 
 FRHIGeometryAccelerationStructure* FMetalDeviceRHI::CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
 {
-    return new FMetalGeometryAccelerationStructureRHI(InGeometryDesc);
+    return RHI::bSupportsRayTracing ? new FMetalGeometryAccelerationStructureRHI(InGeometryDesc) : nullptr;
 }
 
 FRHIShaderResourceView* FMetalDeviceRHI::CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc)
@@ -322,6 +346,7 @@ FRHIShaderResourceView* FMetalDeviceRHI::CreateShaderResourceView(FRHIResource* 
     }
 
     TSharedRef<FMetalShaderResourceViewRHI> NewView = new FMetalShaderResourceViewRHI(GetMetalDevice(), InResource, InDesc);
+
     if (!NewView->Initialize())
     {
         return nullptr;
@@ -340,6 +365,7 @@ FRHIRenderTargetView* FMetalDeviceRHI::CreateRenderTargetView(FRHIResource* InRe
     FRHITexture* Texture = static_cast<FRHITexture*>(InResource);
 
     TSharedRef<FMetalRenderTargetViewRHI> NewView = new FMetalRenderTargetViewRHI(GetMetalDevice(), Texture, InDesc);
+
     if (!NewView->Initialize())
     {
         return nullptr;
@@ -358,6 +384,7 @@ FRHIDepthStencilView* FMetalDeviceRHI::CreateDepthStencilView(FRHIResource* InRe
     FRHITexture* Texture = static_cast<FRHITexture*>(InResource);
 
     TSharedRef<FMetalDepthStencilViewRHI> NewView = new FMetalDepthStencilViewRHI(GetMetalDevice(), Texture, InDesc);
+
     if (!NewView->Initialize())
     {
         return nullptr;
@@ -379,6 +406,7 @@ FRHIUnorderedAccessView* FMetalDeviceRHI::CreateUnorderedAccessView(FRHIResource
     }
 
     TSharedRef<FMetalUnorderedAccessViewRHI> NewView = new FMetalUnorderedAccessViewRHI(GetMetalDevice(), InResource, InDesc);
+
     if (!NewView->Initialize())
     {
         return nullptr;
@@ -393,30 +421,21 @@ FRHIUnorderedAccessView* FMetalDeviceRHI::CreateSamplerFeedbackUnorderedAccessVi
     return nullptr;
 }
 
+template<typename MetalShaderType>
+MetalShaderType* FMetalDeviceRHI::CreateShader(const TArray<uint8>& ShaderCode)
+{
+    TSharedRef<MetalShaderType> NewShader = new MetalShaderType(GetMetalDevice());
+    return NewShader->Initialize(ShaderCode) ? NewShader.ReleaseOwnership() : nullptr;
+}
+
 FRHIComputeShader* FMetalDeviceRHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
 {
-    FMetalComputeShaderRef NewShader = new FMetalComputeShaderRHI(GetMetalDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateShader<FMetalComputeShaderRHI>(ShaderCode);
 }
 
 FRHIVertexShader* FMetalDeviceRHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
-    FMetalVertexShaderRef NewShader = new FMetalVertexShaderRHI(GetMetalDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateShader<FMetalVertexShaderRHI>(ShaderCode);
 }
 
 FRHIHullShader* FMetalDeviceRHI::CreateHullShader(const TArray<uint8>& ShaderCode)
@@ -441,15 +460,7 @@ FRHIMeshShader* FMetalDeviceRHI::CreateMeshShader(const TArray<uint8>& ShaderCod
         return nullptr;
     }
 
-    FMetalMeshShaderRef NewShader = new FMetalMeshShaderRHI(GetMetalDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateShader<FMetalMeshShaderRHI>(ShaderCode);
 }
 
 FRHIAmplificationShader* FMetalDeviceRHI::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
@@ -459,119 +470,47 @@ FRHIAmplificationShader* FMetalDeviceRHI::CreateAmplificationShader(const TArray
         return nullptr;
     }
 
-    FMetalAmplificationShaderRef NewShader = new FMetalAmplificationShaderRHI(GetMetalDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateShader<FMetalAmplificationShaderRHI>(ShaderCode);
 }
 
 FRHIPixelShader* FMetalDeviceRHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
-    FMetalPixelShaderRef NewShader = new FMetalPixelShaderRHI(GetMetalDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateShader<FMetalPixelShaderRHI>(ShaderCode);
 }
 
 FRHIRayGenShader* FMetalDeviceRHI::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
-    FMetalRayGenShaderRef NewShader = new FMetalRayGenShaderRHI(GetMetalDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return RHI::bSupportsRayTracing ? CreateShader<FMetalRayGenShaderRHI>(ShaderCode) : nullptr;
 }
 
 FRHIRayAnyHitShader* FMetalDeviceRHI::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
-    FMetalRayAnyHitShaderRef NewShader = new FMetalRayAnyHitShaderRHI(GetMetalDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return RHI::bSupportsRayTracing ? CreateShader<FMetalRayAnyHitShaderRHI>(ShaderCode) : nullptr;
 }
 
 FRHIRayClosestHitShader* FMetalDeviceRHI::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
-    FMetalRayClosestHitShaderRef NewShader = new FMetalRayClosestHitShaderRHI(GetMetalDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return RHI::bSupportsRayTracing ? CreateShader<FMetalRayClosestHitShaderRHI>(ShaderCode) : nullptr;
 }
 
 FRHIRayMissShader* FMetalDeviceRHI::CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
-    FMetalRayMissShaderRef NewShader = new FMetalRayMissShaderRHI(GetMetalDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return RHI::bSupportsRayTracing ? CreateShader<FMetalRayMissShaderRHI>(ShaderCode) : nullptr;
 }
 
 FRHIRayIntersectionShader* FMetalDeviceRHI::CreateRayIntersectionShader(const TArray<uint8>& ShaderCode)
 {
-    FMetalRayIntersectionShaderRef NewShader = new FMetalRayIntersectionShaderRHI(GetMetalDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return RHI::bSupportsRayTracing ? CreateShader<FMetalRayIntersectionShaderRHI>(ShaderCode) : nullptr;
 }
 
 FRHIRayCallableShader* FMetalDeviceRHI::CreateRayCallableShader(const TArray<uint8>& ShaderCode)
 {
-    FMetalRayCallableShaderRef NewShader = new FMetalRayCallableShaderRHI(GetMetalDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return RHI::bSupportsRayTracing ? CreateShader<FMetalRayCallableShaderRHI>(ShaderCode) : nullptr;
 }
 
 FRHIDepthStencilState* FMetalDeviceRHI::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
 {
-    FMetalDepthStencilStateRef NewDepthStencilState = new FMetalDepthStencilStateRHI(GetMetalDevice(), InDesc);
-    if (!NewDepthStencilState->Initialize())
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewDepthStencilState.ReleaseOwnership();
-    }
+    return new FMetalDepthStencilStateRHI(InDesc);
 }
 
 FRHIRasterizerState* FMetalDeviceRHI::CreateRasterizerState(const FRHIRasterizerStateDesc& InDesc)
@@ -592,6 +531,7 @@ FRHIInputLayout* FMetalDeviceRHI::CreateInputLayout(const TArray<FRHIInputElemen
 FRHIGraphicsPipelineState* FMetalDeviceRHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc)
 {
     FMetalGraphicsPipelineStateRef NewPipelineState = new FMetalGraphicsPipelineStateRHI(GetMetalDevice(), InDesc);
+
     if (!NewPipelineState->Initialize())
     {
         return nullptr;
@@ -602,8 +542,9 @@ FRHIGraphicsPipelineState* FMetalDeviceRHI::CreateGraphicsPipelineState(const FR
 
 FRHIComputePipelineState* FMetalDeviceRHI::CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)
 {
-    FMetalComputePipelineStateRef NewPipelineState = new FMetalComputePipelineStateRHI(GetMetalDevice());
-    if (!NewPipelineState->Initialize(InDesc))
+    FMetalComputePipelineStateRef NewPipelineState = new FMetalComputePipelineStateRHI(GetMetalDevice(), InDesc);
+
+    if (!NewPipelineState->Initialize())
     {
         return nullptr;
     }
@@ -619,6 +560,7 @@ FRHIMeshletPipelineState* FMetalDeviceRHI::CreateMeshletPipelineState(const FRHI
     }
 
     FMetalMeshletPipelineStateRef NewPipelineState = new FMetalMeshletPipelineStateRHI(GetMetalDevice(), InDesc);
+
     if (!NewPipelineState->Initialize())
     {
         return nullptr;
@@ -629,12 +571,13 @@ FRHIMeshletPipelineState* FMetalDeviceRHI::CreateMeshletPipelineState(const FRHI
 
 FRHIRayTracingPipelineState* FMetalDeviceRHI::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& Desc)
 {
-    if (!GMetalSupportsRayTracing)
+    if (!RHI::bSupportsRayTracing)
     {
         return nullptr;
     }
 
     FMetalRayTracingPipelineStateRef NewPipelineState = new FMetalRayTracingPipelineStateRHI(GetMetalDevice(), Desc);
+
     if (!NewPipelineState->Initialize())
     {
         return nullptr;
@@ -651,12 +594,14 @@ FRHIQuery* FMetalDeviceRHI::CreateQuery(EQueryType InQueryType)
 FRHISwapChain* FMetalDeviceRHI::CreateSwapChain(const FRHISwapChainDesc& SwapChainDesc)
 {
     FCocoaWindow* Window = reinterpret_cast<FCocoaWindow*>(SwapChainDesc.WindowHandle);
+
     if (!Window)
     {
         return nullptr;
     }
 
     FRHISwapChainDesc NewViewportDesc(SwapChainDesc);
+
     if (SwapChainDesc.Width == 0 || SwapChainDesc.Height == 0)
     {
         __block NSRect Frame;
@@ -672,6 +617,7 @@ FRHISwapChain* FMetalDeviceRHI::CreateSwapChain(const FRHISwapChainDesc& SwapCha
     }
     
     FMetalSwapChainRef NewSwapChain = new FMetalSwapChainRHI(GetMetalDevice(), NewViewportDesc);
+
     if (!NewSwapChain->Initialize())
     {
         return nullptr;
@@ -685,33 +631,19 @@ FRHISwapChain* FMetalDeviceRHI::CreateSwapChain(const FRHISwapChainDesc& SwapCha
 bool FMetalDeviceRHI::QueryUAVFormatSupport(EFormat Format) const
 {
     const MTLPixelFormat PixelFormat = MetalRHI::ConvertFormat(Format);
-    return MetalRHI::MetalFormatSupportsShaderWrite(PixelFormat);
+    return MetalRHI::FormatSupportsShaderWrite(PixelFormat);
 }
 
 bool FMetalDeviceRHI::QuerySupportedSampleCounts(EFormat Format, uint32& OutSampleCounts) const
 {
     OutSampleCounts = 0;
 
-    const MTLPixelFormat PixelFormat = MetalRHI::ConvertFormat(Format);
-    if (PixelFormat == MTLPixelFormatInvalid)
+    if (!MetalRHI::FormatIsRenderable(MetalRHI::ConvertFormat(Format)))
     {
         return false;
     }
 
-    id<MTLDevice> MTLDevice = Device ? Device->GetMTLDevice() : nil;
-    if (!MTLDevice)
-    {
-        return false;
-    }
-
-    for (uint32 SampleCount = 1; SampleCount <= RHI_MAX_SAMPLE_COUNT; SampleCount <<= 1)
-    {
-        if ([MTLDevice supportsTextureSampleCount:SampleCount])
-        {
-            OutSampleCounts |= SampleCount;
-        }
-    }
-
+    OutSampleCounts = GMetalFeatures.SupportedSampleCounts;
     return OutSampleCounts != 0;
 }
 
@@ -742,6 +674,7 @@ void FMetalDeviceRHI::EndFrame()
 
 #if METAL_ENABLE_STATS
     FRHIVideoMemoryInfo LocalMemory;
+
     if (QueryVideoMemoryInfo(EVideoMemoryType::Local, LocalMemory))
     {
         STAT_SET(STAT_RHI_LocalMemoryBudget, LocalMemory.MemoryBudget);
@@ -749,6 +682,7 @@ void FMetalDeviceRHI::EndFrame()
     }
 
     FRHIVideoMemoryInfo NonLocalMemory;
+
     if (QueryVideoMemoryInfo(EVideoMemoryType::NonLocal, NonLocalMemory))
     {
         STAT_SET(STAT_RHI_NonLocalMemoryBudget, NonLocalMemory.MemoryBudget);
@@ -772,6 +706,7 @@ bool FMetalDeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQuery
     OutResult = 0;
 
     FMetalQueryRHI* MetalQuery = ResourceCast(Query);
+
     if (!MetalQuery || !MetalQuery->QueryResult)
     {
         return false;
@@ -784,7 +719,8 @@ bool FMetalDeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQuery
 
     if (!MetalQuery->bResolved)
     {
-        FMetalQueue* Queue = MetalQuery->SubmittedQueue ? MetalQuery->SubmittedQueue : Device->GetQueue();
+        FMetalQueue* Queue = MetalQuery->SubmittedQueue ? MetalQuery->SubmittedQueue : Device->GetQueue(EMetalQueueType::Direct);
+
         if (Mode == EQueryResultMode::Wait)
         {
             if (MetalQuery->SubmissionValue != 0)

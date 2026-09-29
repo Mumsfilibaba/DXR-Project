@@ -529,7 +529,7 @@ for BACKEND in $BACKENDS; do
     fi
 
     # Mirrors RHI::bSupportsBindless and RHI::bSupportsRayTracing. MetalRHI enables
-    # bindless on Metal 3; ray tracing remains Phase 12.
+    # bindless on Metal 3 and does not implement ray tracing yet.
     if [ "$BACKEND" = "metal" ]; then
         BACKEND_SUPPORTS_BINDLESS=1
         BACKEND_SUPPORTS_RAYTRACING=0

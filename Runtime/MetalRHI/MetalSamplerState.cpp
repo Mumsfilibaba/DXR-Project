@@ -33,12 +33,14 @@ FRHIDescriptorHandle FMetalSamplerStateRHI::GetBindlessHandle() const
     }
 
     FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager();
+
     if (!BindlessManager || !BindlessManager->IsEnabled() || !SamplerState)
     {
         return FRHIDescriptorHandle();
     }
 
     BindlessHandle = BindlessManager->Allocate(EDescriptorType::Sampler);
+
     if (!BindlessHandle.IsValid())
     {
         return FRHIDescriptorHandle();
@@ -58,25 +60,31 @@ bool FMetalSamplerStateRHI::Initialize()
     SCOPED_AUTORELEASE_POOL();
 
     MTLSamplerDescriptor* SamplerDesc = [[MTLSamplerDescriptor new] autorelease];
-    SamplerDesc.rAddressMode          = MetalRHI::ConvertSamplerMode(Desc.AddressU);
-    SamplerDesc.sAddressMode          = MetalRHI::ConvertSamplerMode(Desc.AddressV);
-    SamplerDesc.tAddressMode          = MetalRHI::ConvertSamplerMode(Desc.AddressW);
-    SamplerDesc.minFilter             = MetalRHI::ConvertSamplerFilterToMinFilter(Desc.Filter);
-    SamplerDesc.magFilter             = MetalRHI::ConvertSamplerFilterToMagFilter(Desc.Filter);
-    SamplerDesc.mipFilter             = MetalRHI::ConvertSamplerFilterToMipmapMode(Desc.Filter);
-    SamplerDesc.lodMinClamp           = Desc.MinLOD;
-    SamplerDesc.lodMaxClamp           = Desc.MaxLOD;
-    SamplerDesc.lodAverage            = YES;
-    SamplerDesc.maxAnisotropy         = Desc.MaxAnisotropy;
-    SamplerDesc.compareFunction       = MetalRHI::ConvertComparisonFunc(Desc.ComparisonFunc);
-    SamplerDesc.borderColor           = MTLSamplerBorderColorOpaqueBlack;
-    SamplerDesc.normalizedCoordinates = YES;
+    SamplerDesc.rAddressMode = MetalRHI::ConvertSamplerMode(Desc.AddressU);
+    SamplerDesc.sAddressMode = MetalRHI::ConvertSamplerMode(Desc.AddressV);
+    SamplerDesc.tAddressMode = MetalRHI::ConvertSamplerMode(Desc.AddressW);
+    SamplerDesc.minFilter    = MetalRHI::ConvertSamplerFilterToMinFilter(Desc.Filter);
+    SamplerDesc.magFilter    = MetalRHI::ConvertSamplerFilterToMagFilter(Desc.Filter);
+    SamplerDesc.mipFilter    = MetalRHI::ConvertSamplerFilterToMipmapMode(Desc.Filter);
+    SamplerDesc.lodMinClamp  = Desc.MinLOD;
+    SamplerDesc.lodMaxClamp  = Desc.MaxLOD;
+    SamplerDesc.lodAverage   = YES;
 
+    SamplerDesc.maxAnisotropy = MetalRHI::IsAnisotropySampler(Desc.Filter)
+        ? Math::Clamp<NSUInteger>(Desc.MaxAnisotropy, 1, 16)
+        : 1;
+
+    SamplerDesc.compareFunction = MetalRHI::IsComparisonSampler(Desc.Filter)
+        ? MetalRHI::ConvertCompareFunction(Desc.ComparisonFunc)
+        : MTLCompareFunctionNever;
+
+    SamplerDesc.borderColor            = MTLSamplerBorderColorOpaqueBlack;
+    SamplerDesc.normalizedCoordinates  = YES;
     SamplerDesc.supportArgumentBuffers = YES;
 
     id<MTLDevice> Device = GetDevice()->GetMTLDevice();
     CHECK(Device != nil);
-    
+
     id<MTLSamplerState> NewSamplerState = [Device newSamplerStateWithDescriptor:SamplerDesc];
     if (!NewSamplerState)
     {

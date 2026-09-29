@@ -22,20 +22,6 @@ class FMetalInputLayoutRHI;
 class FMetalRasterizerStateRHI;
 class FMetalDepthStencilStateRHI;
 class FMetalBlendStateRHI;
-class FMetalVertexShaderRHI;
-class FMetalHullShaderRHI;
-class FMetalDomainShaderRHI;
-class FMetalGeometryShaderRHI;
-class FMetalPixelShaderRHI;
-class FMetalMeshShaderRHI;
-class FMetalAmplificationShaderRHI;
-class FMetalComputeShaderRHI;
-class FMetalRayGenShaderRHI;
-class FMetalRayAnyHitShaderRHI;
-class FMetalRayClosestHitShaderRHI;
-class FMetalRayMissShaderRHI;
-class FMetalRayIntersectionShaderRHI;
-class FMetalRayCallableShaderRHI;
 
 template<typename T>
 struct TMetalRHIResourceType
@@ -140,74 +126,4 @@ template<> struct TMetalRHIResourceType<FRHIDepthStencilState>
 template<> struct TMetalRHIResourceType<FRHIBlendState>
 {
     typedef FMetalBlendStateRHI Type;
-};
-
-template<> struct TMetalRHIResourceType<FRHIVertexShader>
-{
-    typedef FMetalVertexShaderRHI Type;
-};
-
-template<> struct TMetalRHIResourceType<FRHIHullShader>
-{
-    typedef FMetalHullShaderRHI Type;
-};
-
-template<> struct TMetalRHIResourceType<FRHIDomainShader>
-{
-    typedef FMetalDomainShaderRHI Type;
-};
-
-template<> struct TMetalRHIResourceType<FRHIGeometryShader>
-{
-    typedef FMetalGeometryShaderRHI Type;
-};
-
-template<> struct TMetalRHIResourceType<FRHIPixelShader>
-{
-    typedef FMetalPixelShaderRHI Type;
-};
-
-template<> struct TMetalRHIResourceType<FRHIMeshShader>
-{
-    typedef FMetalMeshShaderRHI Type;
-};
-
-template<> struct TMetalRHIResourceType<FRHIAmplificationShader>
-{
-    typedef FMetalAmplificationShaderRHI Type;
-};
-
-template<> struct TMetalRHIResourceType<FRHIComputeShader>
-{
-    typedef FMetalComputeShaderRHI Type;
-};
-
-template<> struct TMetalRHIResourceType<FRHIRayGenShader>
-{
-    typedef FMetalRayGenShaderRHI Type;
-};
-
-template<> struct TMetalRHIResourceType<FRHIRayAnyHitShader>
-{
-    typedef FMetalRayAnyHitShaderRHI Type;
-};
-
-template<> struct TMetalRHIResourceType<FRHIRayClosestHitShader>
-{
-    typedef FMetalRayClosestHitShaderRHI Type;
-};
-
-template<> struct TMetalRHIResourceType<FRHIRayMissShader>
-{
-    typedef FMetalRayMissShaderRHI Type;
-};
-
-template<> struct TMetalRHIResourceType<FRHIRayIntersectionShader>
-{
-    typedef FMetalRayIntersectionShaderRHI Type;
-};
-
-template<> struct TMetalRHIResourceType<FRHIRayCallableShader>
-{
-    typedef FMetalRayCallableShaderRHI Type;
 };

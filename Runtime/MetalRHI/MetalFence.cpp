@@ -51,6 +51,7 @@ bool FMetalFenceRHI::Wait(uint64 TimeoutNs) const
 void FMetalFenceRHI::SetDebugName(const String& InName)
 {
     DebugName = InName;
+
     if (SharedEvent)
     {
         SharedEvent.label = InName.GetNSString();

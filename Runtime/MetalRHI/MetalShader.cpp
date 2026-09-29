@@ -4,6 +4,7 @@
 static NSString* ResolveMetalFunctionName(id<MTLLibrary> Library)
 {
     NSArray<NSString*>* FunctionNames = [Library functionNames];
+
     if (FunctionNames.count == 0)
     {
         return nil;
@@ -17,11 +18,10 @@ static NSString* ResolveMetalFunctionName(id<MTLLibrary> Library)
     return FunctionNames.firstObject;
 }
 
-FMetalShader::FMetalShader(FMetalDevice* InDevice, EShaderVisibility::Type InVisibility)
+FMetalShader::FMetalShader(FMetalDevice* InDevice)
     : FMetalDeviceChild(InDevice)
     , Library(nil)
     , FunctionName(nil)
-    , Visibility(InVisibility)
     , Function(nil)
     , ThreadGroupSizeX(0)
     , ThreadGroupSizeY(0)
@@ -40,6 +40,7 @@ FMetalShader::~FMetalShader()
 bool FMetalShader::Initialize(const TArray<uint8>& InCode)
 {
     TArrayView<const uint8> Source;
+
     if (!ParseMSLShaderByteCode(InCode, Bindings, Source))
     {
         LOG_ERROR("Shader bytecode is not a valid MSL blob");
@@ -77,6 +78,7 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
         
         NSError* Error = nil;
         Library = [Device newLibraryWithSource:Source options:nil error:&Error];
+
         if (!Library)
         {
             const String ErrorString([Error localizedDescription]);
@@ -85,6 +87,7 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
         }
         
         FunctionName = [ResolveMetalFunctionName(Library) retain];
+
         if (!FunctionName)
         {
             LOG_ERROR("Compiled Library does not contain an entry-point");
@@ -92,6 +95,7 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
         }
 
         Function = [Library newFunctionWithName:FunctionName];
+
         if (!Function)
         {
             const String NameString(FunctionName);
@@ -103,48 +107,8 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
     return true;
 }
 
-FMetalVertexShaderRHI::FMetalVertexShaderRHI(FMetalDevice* InDevice)
-    : FRHIVertexShader()
-    , FMetalShader(InDevice, EShaderVisibility::Vertex)
-{
-}
-
-FMetalVertexShaderRHI::~FMetalVertexShaderRHI() = default;
-
-FMetalPixelShaderRHI::FMetalPixelShaderRHI(FMetalDevice* InDevice)
-    : FRHIPixelShader()
-    , FMetalShader(InDevice, EShaderVisibility::Pixel)
-{
-}
-
-FMetalPixelShaderRHI::~FMetalPixelShaderRHI() = default;
-
-FMetalMeshShaderRHI::FMetalMeshShaderRHI(FMetalDevice* InDevice)
-    : FRHIMeshShader()
-    , FMetalShader(InDevice, EShaderVisibility::Mesh)
-{
-}
-
-FMetalMeshShaderRHI::~FMetalMeshShaderRHI() = default;
-
-FMetalAmplificationShaderRHI::FMetalAmplificationShaderRHI(FMetalDevice* InDevice)
-    : FRHIAmplificationShader()
-    , FMetalShader(InDevice, EShaderVisibility::Amplification)
-{
-}
-
-FMetalAmplificationShaderRHI::~FMetalAmplificationShaderRHI() = default;
-
-FMetalComputeShaderRHI::FMetalComputeShaderRHI(FMetalDevice* InDevice)
-    : FRHIComputeShader()
-    , FMetalShader(InDevice, EShaderVisibility::Compute)
-{
-}
-
-FMetalComputeShaderRHI::~FMetalComputeShaderRHI() = default;
-
 FMetalRayTracingShader::FMetalRayTracingShader(FMetalDevice* InDevice)
-    : FMetalShader(InDevice, EShaderVisibility::Compute)
+    : FMetalShader(InDevice)
 {
 }
 
@@ -159,162 +123,4 @@ bool FMetalRayTracingShader::Initialize(const TArray<uint8>& InCode)
 
     Identifier = String(FunctionName);
     return true;
-}
-
-FMetalRayGenShaderRHI::FMetalRayGenShaderRHI(FMetalDevice* InDevice)
-    : FRHIRayGenShader()
-    , FMetalRayTracingShader(InDevice)
-{
-}
-
-FMetalRayGenShaderRHI::~FMetalRayGenShaderRHI() = default;
-
-FMetalRayAnyHitShaderRHI::FMetalRayAnyHitShaderRHI(FMetalDevice* InDevice)
-    : FRHIRayAnyHitShader()
-    , FMetalRayTracingShader(InDevice)
-{
-}
-
-FMetalRayAnyHitShaderRHI::~FMetalRayAnyHitShaderRHI() = default;
-
-FMetalRayClosestHitShaderRHI::FMetalRayClosestHitShaderRHI(FMetalDevice* InDevice)
-    : FRHIRayClosestHitShader()
-    , FMetalRayTracingShader(InDevice)
-{
-}
-
-FMetalRayClosestHitShaderRHI::~FMetalRayClosestHitShaderRHI() = default;
-
-FMetalRayMissShaderRHI::FMetalRayMissShaderRHI(FMetalDevice* InDevice)
-    : FRHIRayMissShader()
-    , FMetalRayTracingShader(InDevice)
-{
-}
-
-FMetalRayMissShaderRHI::~FMetalRayMissShaderRHI() = default;
-
-FMetalRayIntersectionShaderRHI::FMetalRayIntersectionShaderRHI(FMetalDevice* InDevice)
-    : FRHIRayIntersectionShader()
-    , FMetalRayTracingShader(InDevice)
-{
-}
-
-FMetalRayIntersectionShaderRHI::~FMetalRayIntersectionShaderRHI() = default;
-
-FMetalRayCallableShaderRHI::FMetalRayCallableShaderRHI(FMetalDevice* InDevice)
-    : FRHIRayCallableShader()
-    , FMetalRayTracingShader(InDevice)
-{
-}
-
-FMetalRayCallableShaderRHI::~FMetalRayCallableShaderRHI() = default;
-
-void* FMetalVertexShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalVertexShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalShader*>(this);
-}
-
-void* FMetalPixelShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalPixelShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalShader*>(this);
-}
-
-void* FMetalMeshShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalMeshShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalShader*>(this);
-}
-
-void* FMetalAmplificationShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalAmplificationShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalShader*>(this);
-}
-
-void* FMetalRayGenShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalRayGenShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalRayTracingShader*>(this);
-}
-
-void* FMetalRayAnyHitShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalRayAnyHitShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalRayTracingShader*>(this);
-}
-
-void* FMetalRayClosestHitShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalRayClosestHitShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalRayTracingShader*>(this);
-}
-
-void* FMetalRayMissShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalRayMissShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalRayTracingShader*>(this);
-}
-
-void* FMetalRayIntersectionShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalRayIntersectionShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalRayTracingShader*>(this);
-}
-
-void* FMetalRayCallableShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalRayCallableShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalRayTracingShader*>(this);
-}
-
-void* FMetalComputeShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalComputeShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalShader*>(this);
 }
