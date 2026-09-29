@@ -18,9 +18,10 @@ enum class ERHIType : uint32
     Unknown = 0,
 
     Null   = 1,
-    D3D12  = 2,
-    Vulkan = 3,
-    Metal  = 4,
+    D3D11  = 2,
+    D3D12  = 3,
+    Vulkan = 4,
+    Metal  = 5,
 };
 
 NODISCARD constexpr const CHAR* ToString(ERHIType RenderLayerApi)
@@ -28,6 +29,7 @@ NODISCARD constexpr const CHAR* ToString(ERHIType RenderLayerApi)
     switch (RenderLayerApi)
     {
         case ERHIType::Null:   return "Null";
+        case ERHIType::D3D11:  return "D3D11";
         case ERHIType::D3D12:  return "D3D12";
         case ERHIType::Vulkan: return "Vulkan";
         case ERHIType::Metal:  return "Metal";

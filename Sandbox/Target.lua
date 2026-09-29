@@ -18,6 +18,7 @@ if IsPlatformMac() then
     table.insert(SandboxModules, "MetalRHI")
 elseif IsPlatformWindows() then
     table.insert(SandboxModules, "D3D12RHI")
+    table.insert(SandboxModules, "D3D11RHI")
 end
 
 -- Sandbox Project

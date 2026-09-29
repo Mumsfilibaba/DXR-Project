@@ -35,6 +35,9 @@ struct RHI
         return Device != nullptr;
     }
 
+    /** @return Returns true if the RHI type can be created on the current platform */
+    static RHI_API bool IsRHISupportedByPlatform(ERHIType RHIType);
+
     // -------------------------------------------------------------------------------------------
     // Create functions (Forward to RHI::Device)
     // -------------------------------------------------------------------------------------------

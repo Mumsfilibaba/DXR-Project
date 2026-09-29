@@ -33,6 +33,10 @@ static ERHIType GetRHITypeFromConfig()
     {
         return ERHIType::D3D12;
     }
+    else if (RHITypeString.Equals("D3D11", EStringCaseType::NoCase))
+    {
+        return ERHIType::D3D11;
+    }
     else if (RHITypeString.Equals("Vulkan", EStringCaseType::NoCase))
     {
         return ERHIType::Vulkan;
@@ -60,11 +64,12 @@ static ERHIType GetPlatformDefaultRHI()
 #endif
 }
 
-static bool IsRHISupportedByPlatform(ERHIType RHIType)
+bool RHI::IsRHISupportedByPlatform(ERHIType RHIType)
 {
     switch(RHIType)
     {
         case ERHIType::D3D12:
+        case ERHIType::D3D11:
         {
         #if PLATFORM_WINDOWS
             return true;
@@ -101,7 +106,7 @@ static ERHIType GetRHIType()
 {
     ERHIType RHIType = GetRHITypeFromConfig();
 
-    const bool bIsRHISupported = IsRHISupportedByPlatform(RHIType);
+    const bool bIsRHISupported = RHI::IsRHISupportedByPlatform(RHIType);
     if (RHIType == ERHIType::Unknown || !bIsRHISupported)
     {
         switch(RHIType)
@@ -109,6 +114,12 @@ static ERHIType GetRHIType()
             case ERHIType::D3D12:
             {
                 LOG_ERROR("D3D12RHI Is not supported on this platform, falling back to default RHI for the platform");
+                break;
+            }
+
+            case ERHIType::D3D11:
+            {
+                LOG_ERROR("D3D11RHI Is not supported on this platform, falling back to default RHI for the platform");
                 break;
             }
 
@@ -270,6 +281,10 @@ bool RHI::Initialize()
     if (RHIType == ERHIType::D3D12)
     {
         RHIModule = FModuleManager::Get().LoadModule<FRHIModule>("D3D12RHI");
+    }
+    else if (RHIType == ERHIType::D3D11)
+    {
+        RHIModule = FModuleManager::Get().LoadModule<FRHIModule>("D3D11RHI");
     }
     else if (RHIType == ERHIType::Vulkan)
     {

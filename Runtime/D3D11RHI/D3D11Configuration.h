@@ -1,0 +1,24 @@
+#pragma once
+#include "Core/Core.h"
+#include "Core/Stats/Stats.h"
+#include <d3d11_4.h>
+
+#ifndef D3D11_ENABLE_STATS
+    #define D3D11_ENABLE_STATS (STATS_ENABLED)
+#endif
+
+#ifndef D3D11_ENABLE_LOGGING
+    #define D3D11_ENABLE_LOGGING (!RELEASE_BUILD)
+#endif
+
+#ifndef D3D11_ENABLE_ANNOTATIONS
+    #define D3D11_ENABLE_ANNOTATIONS (!RELEASE_BUILD)
+#endif
+
+#ifndef D3D11_ENABLE_RESOURCE_STATE_LOGGING
+    #define D3D11_ENABLE_RESOURCE_STATE_LOGGING (0)
+#endif
+
+#ifndef D3D11_VALIDATE_CONTEXT_THREAD_OWNERSHIP
+    #define D3D11_VALIDATE_CONTEXT_THREAD_OWNERSHIP (!RELEASE_BUILD)
+#endif
