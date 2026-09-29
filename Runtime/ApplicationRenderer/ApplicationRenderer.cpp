@@ -725,7 +725,7 @@ bool FApplicationRenderer::UploadStream(
         const FRHIBufferDesc VertexBufferDesc = FRHIBufferDesc::CreateVertexBuffer(
             static_cast<uint32>(VertexStride), static_cast<uint32>(NewCapacity), EBufferFlags::Default | EBufferFlags::CopyDest);
 
-        FRHIBufferRef NewVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::GenericRead, nullptr);
+        FRHIBufferRef NewVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::VertexBuffer, nullptr);
         if (!NewVertexBuffer)
         {
             return false;
@@ -757,7 +757,7 @@ bool FApplicationRenderer::UploadStream(
         const FRHIBufferDesc IndexBufferDesc = FRHIBufferDesc::CreateIndexBuffer(
             static_cast<uint32>(IndexStride), static_cast<uint32>(NewCapacity), EBufferFlags::Default | EBufferFlags::CopyDest);
 
-        FRHIBufferRef NewIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::GenericRead, nullptr);
+        FRHIBufferRef NewIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::IndexBuffer, nullptr);
         if (!NewIndexBuffer)
         {
             return false;
@@ -777,8 +777,8 @@ bool FApplicationRenderer::UploadStream(
 
     const FRHITransitionBarrierDesc ToCopyDest[] =
     {
-        FRHITransitionBarrierDesc::CreateBuffer(VertexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest),
-        FRHITransitionBarrierDesc::CreateBuffer(IndexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest),
+        FRHITransitionBarrierDesc::CreateBuffer(VertexBuffer.Get(), ERHIResourceState::VertexBuffer, ERHIResourceState::CopyDest),
+        FRHITransitionBarrierDesc::CreateBuffer(IndexBuffer.Get(), ERHIResourceState::IndexBuffer, ERHIResourceState::CopyDest),
     };
 
     InCommandList.TransitionBarrier(ToCopyDest);
@@ -796,13 +796,13 @@ bool FApplicationRenderer::UploadStream(
         InCommandList.UpdateBuffer(IndexBuffer.Get(), FBufferRegion(0, IndexCount * static_cast<int32>(sizeof(uint32))), Indices);
     }
 
-    const FRHITransitionBarrierDesc ToGenericRead[] =
+    const FRHITransitionBarrierDesc ToDrawInput[] =
     {
-        FRHITransitionBarrierDesc::CreateBuffer(VertexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::GenericRead),
-        FRHITransitionBarrierDesc::CreateBuffer(IndexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::GenericRead),
+        FRHITransitionBarrierDesc::CreateBuffer(VertexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::VertexBuffer),
+        FRHITransitionBarrierDesc::CreateBuffer(IndexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::IndexBuffer),
     };
 
-    InCommandList.TransitionBarrier(ToGenericRead);
+    InCommandList.TransitionBarrier(ToDrawInput);
     return true;
 }
 
@@ -821,7 +821,7 @@ bool FApplicationRenderer::UploadVertexStream(
         const FRHIBufferDesc VertexBufferDesc = FRHIBufferDesc::CreateVertexBuffer(
             static_cast<uint32>(VertexStride), static_cast<uint32>(NewCapacity), EBufferFlags::Default | EBufferFlags::CopyDest);
 
-        FRHIBufferRef NewVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::GenericRead, nullptr);
+        FRHIBufferRef NewVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::VertexBuffer, nullptr);
         if (!NewVertexBuffer)
         {
             return false;
@@ -838,10 +838,10 @@ bool FApplicationRenderer::UploadVertexStream(
     }
 
     InCommandList.TransitionBarrier(
-        FRHITransitionBarrierDesc::CreateBuffer(VertexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest));
+        FRHITransitionBarrierDesc::CreateBuffer(VertexBuffer.Get(), ERHIResourceState::VertexBuffer, ERHIResourceState::CopyDest));
     InCommandList.UpdateBuffer(VertexBuffer.Get(), FBufferRegion(0, VertexCount * VertexStride), Vertices);
     InCommandList.TransitionBarrier(
-        FRHITransitionBarrierDesc::CreateBuffer(VertexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::GenericRead));
+        FRHITransitionBarrierDesc::CreateBuffer(VertexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::VertexBuffer));
     return true;
 }
 
@@ -965,19 +965,24 @@ void FApplicationRenderer::RenderWindowToSwapChain(FRHICommandList& InCommandLis
     FRHISwapChain* SwapChain = WindowState->SwapChain;
     InCommandList.AcquireNextBackBuffer(SwapChain);
 
-    if (LoadAction == EAttachmentLoadAction::Clear)
+    bool bHasGeometry = false;
     {
-        FRHITexture* BackBuffer = SwapChain->GetBackBuffer();
-        InCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::Undefined, ERHIResourceState::RenderTarget));
-    }
+        FScopedApplicationGPUTrace GPUTrace(GPUProfiler, InCommandList, "UI Upload");
 
-    const bool bHasGeometry = !WindowState->DrawData.IsEmpty()
-        && PrepareGeometry(InCommandList, *WindowState)
-        && PreparePipelineState(SwapChain->GetDesc().ColorFormat);
+        if (LoadAction == EAttachmentLoadAction::Clear)
+        {
+            FRHITexture* BackBuffer = SwapChain->GetBackBuffer();
+            InCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::Undefined, ERHIResourceState::RenderTarget));
+        }
 
-    if (bHasGeometry)
-    {
-        PrepareBatchTextures(InCommandList, WindowState->DrawData);
+        bHasGeometry = !WindowState->DrawData.IsEmpty()
+            && PrepareGeometry(InCommandList, *WindowState)
+            && PreparePipelineState(SwapChain->GetDesc().ColorFormat);
+
+        if (bHasGeometry)
+        {
+            PrepareBatchTextures(InCommandList, WindowState->DrawData);
+        }
     }
 
     const FFloatColor ClearColor = SwapChain->GetDesc().IsTransparent()
@@ -987,11 +992,16 @@ void FApplicationRenderer::RenderWindowToSwapChain(FRHICommandList& InCommandLis
     const FRHIRenderTargetAttachment Attachment(SwapChain->GetRenderTargetView(), LoadAction,
         EAttachmentStoreAction::Store, ClearColor);
 
-    FRHIBeginRenderPassDesc RenderPassDesc({ Attachment }, 1);
-    InCommandList.BeginRenderPass(RenderPassDesc);
+    {
+        FScopedApplicationGPUTrace GPUTrace(GPUProfiler, InCommandList, "UI Clear");
+
+        FRHIBeginRenderPassDesc RenderPassDesc({ Attachment }, 1);
+        InCommandList.BeginRenderPass(RenderPassDesc);
+    }
 
     if (bHasGeometry)
     {
+        FScopedApplicationGPUTrace GPUTrace(GPUProfiler, InCommandList, "UI Draws");
         RenderWindow(InCommandList, *WindowState);
     }
 

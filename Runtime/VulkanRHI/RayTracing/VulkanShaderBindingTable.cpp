@@ -2,6 +2,7 @@
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/VulkanBuffer.h"
+#include "VulkanRHI/VulkanCommandContext.h"
 
 static constexpr uint32 GVulkanSBTLocalRecordBytes = 32;
 
@@ -66,8 +67,8 @@ bool FVulkanShaderBindingTable::Initialize()
         return false;
     }
 
-    const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-    const VkBufferUsageFlags    Usage            = VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+    const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    const VkBufferUsageFlags    Usage            = VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     const VkMemoryAllocateFlags AllocateFlags    = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
 
     const uint32 BaseAlignment = Pipeline ? Pipeline->GetShaderGroupBaseAlignment() : 256;
@@ -171,7 +172,7 @@ void FVulkanShaderBindingTable::ClearTableRecords()
     Memory::Memzero(CpuShadow.Data(), CpuShadow.SizeInBytes());
 }
 
-void FVulkanShaderBindingTable::Build()
+void FVulkanShaderBindingTable::Build(FVulkanCommandContext& CmdContext)
 {
     const uint64 RequiredSize = uint64(CpuShadow.SizeInBytes());
     if (RequiredSize == 0)
@@ -181,14 +182,43 @@ void FVulkanShaderBindingTable::Build()
 
     CHECK(TableLocation.IsValid() && TableLocation.GetSize() >= RequiredSize);
 
-    if (void* Mapped = TableLocation.GetMappedBaseAddress())
+    FVulkanMemoryLocation UploadLocation(GetDevice());
+    void* MappedMemory = GetDevice()->GetMemoryManager().AllocateUploadMemory(RequiredSize, 1, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, UploadLocation);
+    if (!MappedMemory)
     {
-        Memory::Memcpy(Mapped, CpuShadow.Data(), CpuShadow.SizeInBytes());
+        VULKAN_ERROR("Failed to allocate upload memory for the shader-binding-table");
+        return;
     }
-    else
-    {
-        VULKAN_ERROR("Failed to map shader-binding-table memory");
-    }
+
+    Memory::Memcpy(MappedMemory, CpuShadow.Data(), RequiredSize);
+
+    VkMemoryBarrier2KHR ReadToCopyBarrier = {};
+    ReadToCopyBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2_KHR;
+    ReadToCopyBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_RAY_TRACING_SHADER_BIT_KHR;
+    ReadToCopyBarrier.srcAccessMask = VK_ACCESS_2_NONE_KHR;
+    ReadToCopyBarrier.dstStageMask  = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
+    ReadToCopyBarrier.dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
+
+    FVulkanBarrierBatcher& BarrierBatcher = CmdContext.GetBarrierBatcher();
+    BarrierBatcher.AddMemoryBarrier(0, ReadToCopyBarrier);
+    BarrierBatcher.FlushBarriers(CmdContext.GetCommandBuffer());
+
+    VkBufferCopy BufferCopy = {};
+    BufferCopy.srcOffset = UploadLocation.GetBufferOffset();
+    BufferCopy.dstOffset = TableLocation.GetBufferOffset();
+    BufferCopy.size      = RequiredSize;
+
+    CmdContext.GetCommandBuffer()->CopyBuffer(UploadLocation.GetBackingBuffer(), TableLocation.GetBackingBuffer(), 1, &BufferCopy);
+
+    // SHADER_READ includes SHADER_BINDING_TABLE_READ when VK_KHR_ray_tracing_maintenance1 is enabled.
+    VkMemoryBarrier2KHR CopyToReadBarrier = {};
+    CopyToReadBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2_KHR;
+    CopyToReadBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
+    CopyToReadBarrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
+    CopyToReadBarrier.dstStageMask  = VK_PIPELINE_STAGE_2_RAY_TRACING_SHADER_BIT_KHR;
+    CopyToReadBarrier.dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT_KHR;
+
+    BarrierBatcher.AddMemoryBarrier(0, CopyToReadBarrier);
 }
 
 VkStridedDeviceAddressRegionKHR FVulkanShaderBindingTable::GetRayGenRegion() const

@@ -9,6 +9,7 @@ FD3D12QueryRHI::FD3D12QueryRHI(FD3D12Device* InDevice, EQueryType InQueryType)
     , CurrentQuery()
     , SyncPoint()
     , QueryResult(static_cast<uint64*>(Memory::Malloc(GetQueryResultElementCount(InQueryType) * sizeof(uint64))))
+    , bResultReady(0)
 {
     Memory::Memzero(QueryResult, GetQueryResultElementCount(InQueryType) * sizeof(uint64));
 }

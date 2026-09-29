@@ -12,6 +12,8 @@
 #include "Core/Templates/CString.h"
 #include "Core/Templates/NumericLimits.h"
 #include "Core/Time/Time.h"
+#include "RHI/RHI.h"
+#include "RHI/RHIDevice.h"
 #include "RendererCore/Interfaces/IGPUProfiler.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 
@@ -31,6 +33,7 @@ static String BuildFullProfileReport()
 {
     String Text = FProfilerReport::BuildCpuAndBootText();
     Text.Append("\n== GPU ==\n");
+    Text.Append(String::Printf("RHI=%s\n", RHI::Device ? ToString(RHI::Device->GetRHIType()) : "None"));
 
     IRendererModule* RendererModule = IRendererModule::Get();
     if (!RendererModule)
@@ -59,7 +62,9 @@ static String BuildFullProfileReport()
         MinMs = Math::Min(MinMs, Stored.GpuMilliseconds);
         MaxMs = Math::Max(MaxMs, Stored.GpuMilliseconds);
         Sum  += static_cast<double>(Stored.GpuMilliseconds);
+        
         ++Count;
+
         Latest = Stored;
     }
 
@@ -106,10 +111,15 @@ static String BuildChromeGpuEvents(IGPUProfiler& Gpu)
             continue;
         }
 
+        if (GpuFrame.GpuMilliseconds > 0.0f)
+        {
+            FProfilerReport::AppendChromeCompleteEvent(Events, "GPU Frame", "gpu", FrameStartUs,
+                static_cast<double>(GpuFrame.GpuMilliseconds) * 1000.0, 1, 1);
+        }
+
         for (const FGPUProfilerInterval& Interval : GpuFrame.Intervals)
         {
-            const double TimestampUs =
-                FrameStartUs + Time::ToMicroseconds(static_cast<double>(Interval.StartNanoseconds));
+            const double TimestampUs = FrameStartUs + Time::ToMicroseconds(static_cast<double>(Interval.StartNanoseconds));
             const CHAR* Name = Interval.Name ? Interval.Name : "<unnamed>";
 
             if (Interval.bInstant || Interval.InclusiveNanoseconds == 0)
@@ -118,8 +128,7 @@ static String BuildChromeGpuEvents(IGPUProfiler& Gpu)
             }
             else
             {
-                const double DurationUs =
-                    Time::ToMicroseconds(static_cast<double>(Interval.InclusiveNanoseconds));
+                const double DurationUs = Time::ToMicroseconds(static_cast<double>(Interval.InclusiveNanoseconds));
                 FProfilerReport::AppendChromeCompleteEvent(Events, Name, "gpu", TimestampUs, DurationUs, 1, 0);
             }
         }
@@ -137,9 +146,8 @@ static void WriteReportsAndExit()
 
     GReportWritten = true;
 
-    const uint64 Stamp = FPlatformTime::QueryPerformanceCounter();
-    const String BasePath =
-        File::CombinePath(Paths::GetProjectDir(), String::Printf("Profiling/ProfileRun_%llu", Stamp));
+    const uint64 Stamp    = FPlatformTime::QueryPerformanceCounter();
+    const String BasePath = File::CombinePath(Paths::GetProjectDir(), String::Printf("Profiling/ProfileRun_%llu", Stamp));
 
     FProfilerReport::WriteFile(BasePath + ".txt", BuildFullProfileReport());
 
@@ -149,10 +157,7 @@ static void WriteReportsAndExit()
         GpuEvents = BuildChromeGpuEvents(RendererModule->GetGPUProfiler());
     }
 
-    FProfilerReport::WriteFile(
-        BasePath + ".json",
-        FProfilerReport::MergeChromeJson(FProfilerReport::BuildChromeCpuJson(), GpuEvents));
-
+    FProfilerReport::WriteFile(BasePath + ".json", FProfilerReport::MergeChromeJson(FProfilerReport::BuildChromeCpuJson(), GpuEvents));
     RequestEngineExit("ProfileRun complete");
 }
 
@@ -164,8 +169,9 @@ void FProfileRun::ConfigureFromCommandLine()
     StringView ProfileDurationText;
     if (CommandLine::FindOption("ProfileDuration", ProfileDurationText) && !ProfileDurationText.IsEmpty())
     {
-        const String DurationString(ProfileDurationText);
-        const float ParsedDuration = CString::Atof(*DurationString);
+        const String DurationString = String(ProfileDurationText);
+        const float  ParsedDuration = CString::Atof(*DurationString);
+
         if (ParsedDuration > 0.0f)
         {
             CVarProfileDuration.SetVariable(ParsedDuration, EConsoleVariableFlags::SetByCommandLine);

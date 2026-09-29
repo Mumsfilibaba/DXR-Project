@@ -1499,7 +1499,15 @@ void FRHIValidationCommandContext::BuildSceneAccelerationStructure(FRHISceneAcce
         return;
     }
 
+    for (uint32 Index = 0; Index < BuildDesc.NumInstances; ++Index)
+    {
+        ValidateAccelerationStructureBarrier(BuildDesc.Instances[Index].Geometry, "BuildSceneAccelerationStructure (instance geometry)");
+    }
+
+    ValidateAccelerationStructureBarrier(RayTracingScene, "BuildSceneAccelerationStructure");
+
     CommandContext->BuildSceneAccelerationStructure(RayTracingScene, BuildDesc);
+    MarkAccelerationStructureWritten(RayTracingScene);
 }
 
 void FRHIValidationCommandContext::BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* RayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc)
@@ -1562,7 +1570,10 @@ void FRHIValidationCommandContext::BuildGeometryAccelerationStructure(FRHIGeomet
         return;
     }
 
+    ValidateAccelerationStructureBarrier(RayTracingGeometry, "BuildGeometryAccelerationStructure");
+
     CommandContext->BuildGeometryAccelerationStructure(RayTracingGeometry, BuildDesc);
+    MarkAccelerationStructureWritten(RayTracingGeometry);
 }
 
 void FRHIValidationCommandContext::SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
@@ -1714,6 +1725,8 @@ void FRHIValidationCommandContext::DispatchRays(FRHIShaderBindingTable* ShaderBi
         return;
     }
 
+    ValidateSceneAccelerationStructureBarriers("DispatchRays");
+
     CommandContext->DispatchRays(ValidationShaderBindingTable->GetRHI(), Width, Height, Depth);
 }
 
@@ -1762,6 +1775,8 @@ void FRHIValidationCommandContext::DispatchRaysIndirect(FRHIShaderBindingTable* 
     {
         return;
     }
+
+    ValidateSceneAccelerationStructureBarriers("DispatchRaysIndirect");
 
     CommandContext->DispatchRaysIndirect(ValidationShaderBindingTable->GetRHI(), ArgumentBuffer, ArgumentBufferOffset);
 }
@@ -1903,6 +1918,11 @@ void FRHIValidationCommandContext::WriteAccelerationStructurePostBuildInfo(FRHIB
         return;
     }
 
+    for (uint32 Index = 0; Index < NumSources; ++Index)
+    {
+        ValidateAccelerationStructureBarrier(Sources[Index], "WriteAccelerationStructurePostBuildInfo");
+    }
+
     CommandContext->WriteAccelerationStructurePostBuildInfo(DstBuffer, DstOffset, InfoType, Sources, NumSources);
 }
 
@@ -1945,7 +1965,11 @@ void FRHIValidationCommandContext::CopyAccelerationStructure(FRHIRayTracingAccel
         return;
     }
 
+    ValidateAccelerationStructureBarrier(Source, "CopyAccelerationStructure (source)");
+    ValidateAccelerationStructureBarrier(Destination, "CopyAccelerationStructure (destination)");
+
     CommandContext->CopyAccelerationStructure(Destination, Source, CopyMode);
+    MarkAccelerationStructureWritten(Destination);
 }
 
 void FRHIValidationCommandContext::CompactAccelerationStructure(FRHIRayTracingAccelerationStructure* AccelerationStructure, uint64 CompactedSizeInBytes)
@@ -1983,7 +2007,10 @@ void FRHIValidationCommandContext::CompactAccelerationStructure(FRHIRayTracingAc
         return;
     }
 
+    ValidateAccelerationStructureBarrier(AccelerationStructure, "CompactAccelerationStructure");
+
     CommandContext->CompactAccelerationStructure(AccelerationStructure, CompactedSizeInBytes);
+    MarkAccelerationStructureWritten(AccelerationStructure);
 }
 
 void FRHIValidationCommandContext::SerializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Source, FRHIBuffer* DstBuffer, uint64 DstOffset)
@@ -2002,6 +2029,8 @@ void FRHIValidationCommandContext::SerializeAccelerationStructure(FRHIRayTracing
         RHI_VALIDATION_ERROR("SerializeAccelerationStructure: DstBuffer and Source must both be non-null.");
         return;
     }
+
+    ValidateAccelerationStructureBarrier(Source, "SerializeAccelerationStructure");
 
     CommandContext->SerializeAccelerationStructure(Source, DstBuffer, DstOffset);
 }
@@ -2023,7 +2052,10 @@ void FRHIValidationCommandContext::DeserializeAccelerationStructure(FRHIRayTraci
         return;
     }
 
+    ValidateAccelerationStructureBarrier(Destination, "DeserializeAccelerationStructure");
+
     CommandContext->DeserializeAccelerationStructure(Destination, SourceBuffer, SourceOffset);
+    MarkAccelerationStructureWritten(Destination);
 }
 
 FRHIValidationCommandContext::FOpenSplitKey FRHIValidationCommandContext::CreateSplitKey(const FRHITransitionBarrierDesc& Desc)
@@ -2075,6 +2107,38 @@ bool FRHIValidationCommandContext::ValidateNoOpenSplit(const FRHIResource* Resou
     }
 
     return true;
+}
+
+void FRHIValidationCommandContext::MarkAccelerationStructureWritten(const FRHIRayTracingAccelerationStructure* AccelerationStructure)
+{
+    if (ShouldValidateResourceStates() && AccelerationStructure)
+    {
+        const bool bIsScene = AccelerationStructure->GetAccelerationStructureType() == ERayTracingAccelerationStructureType::Scene;
+        StateTracker->MarkAccelerationStructureWritten(AccelerationStructure, bIsScene);
+    }
+}
+
+void FRHIValidationCommandContext::ValidateAccelerationStructureBarrier(const FRHIRayTracingAccelerationStructure* AccelerationStructure, const CHAR* Caller)
+{
+    if (ShouldValidateResourceStates() && StateTracker->ConsumeAccelerationStructureWrite(AccelerationStructure))
+    {
+        RHI_VALIDATION_ERROR("%s: %s accesses an acceleration structure that was written without a following UnorderedAccessBarrier. "
+            "Call UnorderedAccessBarrier(AccelerationStructure) after the build, copy, compaction or deserialize.", *GetResourceIdentity(AccelerationStructure), Caller);
+    }
+}
+
+void FRHIValidationCommandContext::ValidateSceneAccelerationStructureBarriers(const CHAR* Caller)
+{
+    if (!ShouldValidateResourceStates())
+    {
+        return;
+    }
+
+    if (const FRHIResource* Scene = StateTracker->ConsumeAnySceneAccelerationStructureWrite())
+    {
+        RHI_VALIDATION_ERROR("%s: %s runs while a scene acceleration structure was written without a following UnorderedAccessBarrier. "
+            "Call UnorderedAccessBarrier(RayTracingScene) after BuildSceneAccelerationStructure.", *GetResourceIdentity(Scene), Caller);
+    }
 }
 
 bool FRHIValidationCommandContext::ValidateTransitionBarrierDesc(const FRHITransitionBarrierDesc& Desc)
@@ -2370,7 +2434,7 @@ void FRHIValidationCommandContext::TransitionBarrier(TArrayView<const FRHITransi
     {
         if (!ValidateTransitionBarrierDesc(Desc))
         {
-            return;
+            continue;
         }
 
         CommandContext->TransitionBarrier(TArrayView<const FRHITransitionBarrierDesc>(&Desc, 1));
@@ -2420,6 +2484,17 @@ bool FRHIValidationCommandContext::ValidateUnorderedAccessBarrierDesc(const FRHI
         return ValidateNoOpenSplit(Texture, "UnorderedAccessBarrier");
     }
 
+    if (Desc.IsAccelerationStructure())
+    {
+        if (!Desc.AccelerationStructure.Resource)
+        {
+            RHI_VALIDATION_ERROR("Invalid to call UnorderedAccessBarrier when the acceleration-structure is nullptr.");
+            return false;
+        }
+
+        return true;
+    }
+
     FRHIBuffer* Buffer = Desc.Buffer.Resource;
     if (!Buffer)
     {
@@ -2457,15 +2532,31 @@ void FRHIValidationCommandContext::UnorderedAccessBarrier(TArrayView<const FRHIU
         return;
     }
 
+    TArray<FRHIUnorderedAccessBarrierDesc> ValidDescs;
+    ValidDescs.Reserve(BarrierDescs.Size());
+
     for (const FRHIUnorderedAccessBarrierDesc& Desc : BarrierDescs)
     {
-        if (!ValidateUnorderedAccessBarrierDesc(Desc))
+        if (ValidateUnorderedAccessBarrierDesc(Desc))
         {
-            return;
+            ValidDescs.Add(Desc);
         }
     }
 
-    CommandContext->UnorderedAccessBarrier(BarrierDescs);
+    if (ValidDescs.IsEmpty())
+    {
+        return;
+    }
+
+    CommandContext->UnorderedAccessBarrier(MakeArrayView(ValidDescs));
+
+    for (const FRHIUnorderedAccessBarrierDesc& Desc : ValidDescs)
+    {
+        if (Desc.IsAccelerationStructure())
+        {
+            StateTracker->ClearAccelerationStructureWrite(Desc.AccelerationStructure.Resource);
+        }
+    }
 }
 
 void FRHIValidationCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
@@ -2482,6 +2573,7 @@ void FRHIValidationCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLo
         return;
     }
 
+    ValidateSceneAccelerationStructureBarriers("Draw");
     CommandContext->Draw(VertexCount, StartVertexLocation);
 }
 
@@ -2499,6 +2591,7 @@ void FRHIValidationCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIn
         return;
     }
 
+    ValidateSceneAccelerationStructureBarriers("DrawIndexed");
     CommandContext->DrawIndexed(IndexCount, StartIndexLocation, BaseVertexLocation);
 }
 
@@ -2516,6 +2609,7 @@ void FRHIValidationCommandContext::DrawInstanced(uint32 VertexCountPerInstance, 
         return;
     }
 
+    ValidateSceneAccelerationStructureBarriers("DrawInstanced");
     CommandContext->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
@@ -2533,6 +2627,7 @@ void FRHIValidationCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInst
         return;
     }
 
+    ValidateSceneAccelerationStructureBarriers("DrawIndexedInstanced");
     CommandContext->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
 }
 
@@ -2550,6 +2645,7 @@ void FRHIValidationCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroup
         return;
     }
 
+    ValidateSceneAccelerationStructureBarriers("Dispatch");
     CommandContext->Dispatch(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
 }
 
@@ -2567,6 +2663,7 @@ void FRHIValidationCommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32
         return;
     }
 
+    ValidateSceneAccelerationStructureBarriers("DispatchMesh");
     CommandContext->DispatchMesh(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
 }
 
@@ -2586,6 +2683,7 @@ void FRHIValidationCommandContext::DrawIndirect(FRHIBuffer* ArgumentBuffer, uint
 
     if (ValidateIndirectArguments<FRHIDrawIndirectParameters>("DrawIndirect", ArgumentBuffer, ArgumentBufferOffset, CommandCount))
     {
+        ValidateSceneAccelerationStructureBarriers("DrawIndirect");
         CommandContext->DrawIndirect(ArgumentBuffer, ArgumentBufferOffset, CommandCount);
     }
 }
@@ -2607,6 +2705,7 @@ void FRHIValidationCommandContext::DrawIndirectCount(FRHIBuffer* ArgumentBuffer,
     if (ValidateIndirectArguments<FRHIDrawIndirectParameters>("DrawIndirectCount", ArgumentBuffer, ArgumentBufferOffset, MaxCommandCount) &&
         ValidateIndirectCountBuffer("DrawIndirectCount", CountBuffer, CountBufferOffset))
     {
+        ValidateSceneAccelerationStructureBarriers("DrawIndirectCount");
         CommandContext->DrawIndirectCount(ArgumentBuffer, ArgumentBufferOffset, CountBuffer, CountBufferOffset, MaxCommandCount);
     }
 }
@@ -2627,6 +2726,7 @@ void FRHIValidationCommandContext::DrawIndexedIndirect(FRHIBuffer* ArgumentBuffe
 
     if (ValidateIndirectArguments<FRHIDrawIndexedIndirectParameters>("DrawIndexedIndirect", ArgumentBuffer, ArgumentBufferOffset, CommandCount))
     {
+        ValidateSceneAccelerationStructureBarriers("DrawIndexedIndirect");
         CommandContext->DrawIndexedIndirect(ArgumentBuffer, ArgumentBufferOffset, CommandCount);
     }
 }
@@ -2648,6 +2748,7 @@ void FRHIValidationCommandContext::DrawIndexedIndirectCount(FRHIBuffer* Argument
     if (ValidateIndirectArguments<FRHIDrawIndexedIndirectParameters>("DrawIndexedIndirectCount", ArgumentBuffer, ArgumentBufferOffset, MaxCommandCount) &&
         ValidateIndirectCountBuffer("DrawIndexedIndirectCount", CountBuffer, CountBufferOffset))
     {
+        ValidateSceneAccelerationStructureBarriers("DrawIndexedIndirectCount");
         CommandContext->DrawIndexedIndirectCount(ArgumentBuffer, ArgumentBufferOffset, CountBuffer, CountBufferOffset, MaxCommandCount);
     }
 }
@@ -2668,6 +2769,7 @@ void FRHIValidationCommandContext::DispatchIndirect(FRHIBuffer* ArgumentBuffer, 
 
     if (ValidateIndirectArguments<FRHIDispatchIndirectParameters>("DispatchIndirect", ArgumentBuffer, ArgumentBufferOffset, 1))
     {
+        ValidateSceneAccelerationStructureBarriers("DispatchIndirect");
         CommandContext->DispatchIndirect(ArgumentBuffer, ArgumentBufferOffset);
     }
 }
@@ -2688,6 +2790,7 @@ void FRHIValidationCommandContext::DispatchMeshIndirect(FRHIBuffer* ArgumentBuff
 
     if (ValidateIndirectArguments<FRHIDispatchMeshIndirectParameters>("DispatchMeshIndirect", ArgumentBuffer, ArgumentBufferOffset, CommandCount))
     {
+        ValidateSceneAccelerationStructureBarriers("DispatchMeshIndirect");
         CommandContext->DispatchMeshIndirect(ArgumentBuffer, ArgumentBufferOffset, CommandCount);
     }
 }
@@ -2709,6 +2812,7 @@ void FRHIValidationCommandContext::DispatchMeshIndirectCount(FRHIBuffer* Argumen
     if (ValidateIndirectArguments<FRHIDispatchMeshIndirectParameters>("DispatchMeshIndirectCount", ArgumentBuffer, ArgumentBufferOffset, MaxCommandCount) &&
         ValidateIndirectCountBuffer("DispatchMeshIndirectCount", CountBuffer, CountBufferOffset))
     {
+        ValidateSceneAccelerationStructureBarriers("DispatchMeshIndirectCount");
         CommandContext->DispatchMeshIndirectCount(ArgumentBuffer, ArgumentBufferOffset, CountBuffer, CountBufferOffset, MaxCommandCount);
     }
 }

@@ -22,6 +22,13 @@ enum class ED3D12CommandsFlags : uint32
 
 ENUM_CLASS_OPERATORS(ED3D12CommandsFlags);
 
+struct FD3D12TimestampIdleState
+{
+    uint64 AccumulatedIdleTicks    = 0;
+    uint64 LastCommandListEndTicks = 0;
+    bool   bHaveLastCommandListEnd = false;
+};
+
 struct FD3D12Commands
 {
     FD3D12Commands(FD3D12Device* InDevice, FD3D12Queue* InQueue);
@@ -57,6 +64,7 @@ struct FD3D12Commands
     TArray<FD3D12Query>                        OcclusionQueries;
     TArray<FD3D12Query>                        PipelineStatsQueries;
     TArray<struct FD3D12QueryRHI*>             PendingQueries;
+    TArray<FD3D12QueryRHIRef>                  SubmittedQueries;
     TArray<FD3D12DeferredObject>               DeferredObjects;
     TArray<FD3D12PendingBarrier>               PendingBarriers;
     TMap<FD3D12Resource*, FD3D12ResourceState> PendingResourceStates;
@@ -119,6 +127,11 @@ public:
         return Frequency;
     }
 
+    FD3D12TimestampIdleState& GetTimestampIdleState()
+    {
+        return TimestampIdleState;
+    }
+
 private:
     typedef TQueue<FD3D12Commands*, EQueueType::MPSC> FCommandsQueue;
 
@@ -134,6 +147,7 @@ private:
     FCommandsQueue                            PendingSubmissions;
     FCriticalSection                          SubmissionCS;
     FCriticalSection                          ConsumerCS;
+    FD3D12TimestampIdleState                  TimestampIdleState;
     TArray<FD3D12QueryRange>                  PendingQueryRanges;
     TArray<FD3D12Query>                       PendingTimestampQueries;
     TArray<FD3D12Query>                       PendingOcclusionQueries;

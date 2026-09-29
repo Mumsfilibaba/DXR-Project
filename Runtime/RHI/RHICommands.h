@@ -1054,9 +1054,13 @@ DECLARE_RHICOMMAND(FRHICommandUnorderedAccessBarrier)
             {
                 CHECK(Desc.Texture.Resource != nullptr);
             }
-            else
+            else if (Desc.IsBuffer())
             {
                 CHECK(Desc.Buffer.Resource != nullptr);
+            }
+            else
+            {
+                CHECK(Desc.IsAccelerationStructure() && Desc.AccelerationStructure.Resource != nullptr);
             }
         }
     }

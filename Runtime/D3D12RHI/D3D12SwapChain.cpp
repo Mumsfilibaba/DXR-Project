@@ -392,7 +392,10 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
         return false;
     }
 
-    D3D12_INFO("[FD3D12SwapChainRHI]: Created SwapChain (%s, %s)", ToString(ResolvedFormat), ToString(ResolvedColorSpace));
+    D3D12_INFO("[FD3D12SwapChainRHI]: Created SwapChain (%s, %s, BufferCount=%u, AlphaMode=%s, Composition=%s, AllowTearing=%s)",
+        ToString(ResolvedFormat), ToString(ResolvedColorSpace), NumSwapChainBuffers, bUseComposition ? "Premultiplied" : "Ignore",
+        bUseComposition ? "Yes" : "No", (Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING) ? "Yes" : "No");
+
     return true;
 }
 

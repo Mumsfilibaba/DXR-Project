@@ -125,6 +125,13 @@ void FVulkanCommandContextState::PrepareGraphicsState()
     {
         if (IsInsideRenderPass())
         {
+        #if VULKAN_ENABLE_BARRIER_STATS
+            if (FVulkanBarrierStats::IsEnabled())
+            {
+                FVulkanBarrierStats::RecordRenderPassPause(Context.GetBarrierBatcher().GetDebugReasons());
+            }
+        #endif
+
             PauseRenderPass();
         }
 
@@ -364,6 +371,13 @@ void FVulkanCommandContextState::PrepareMeshletState()
     {
         if (IsInsideRenderPass())
         {
+        #if VULKAN_ENABLE_BARRIER_STATS
+            if (FVulkanBarrierStats::IsEnabled())
+            {
+                FVulkanBarrierStats::RecordRenderPassPause(Context.GetBarrierBatcher().GetDebugReasons());
+            }
+        #endif
+
             PauseRenderPass();
         }
 

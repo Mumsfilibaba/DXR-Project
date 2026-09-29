@@ -20,6 +20,26 @@ class FVulkanShaderResourceViewRHI;
 class FVulkanUnorderedAccessViewRHI;
 class FVulkanSamplerStateRHI;
 
+#if VULKAN_ENABLE_BARRIER_STATS
+struct FVulkanBarrierStats
+{
+    static bool IsEnabled();
+    static void RecordPipelineBarrier(const VkDependencyInfoKHR& DependencyInfo);
+    static void RecordRenderPassPause(const TArray<String>& Reasons);
+    static void EndFrame();
+};
+#endif
+
+struct FVulkanLayoutSyncScope
+{
+    VkPipelineStageFlags2KHR Stages;
+    VkAccessFlags2KHR        WriteAccess;
+    VkAccessFlags2KHR        Access;
+    bool                     bReadOnly;
+};
+
+FVulkanLayoutSyncScope GetImageLayoutSyncScope(VkImageLayout Layout);
+
 class FVulkanBarrierBatcher
 {
     struct FBatch
@@ -53,8 +73,29 @@ public:
         return !Batches.IsEmpty();
     }
 
+#if VULKAN_ENABLE_BARRIER_STATS
+    uint32 GetGeneration() const
+    {
+        return Generation;
+    }
+
+    void AddDebugReason(String&& Reason)
+    {
+        DebugReasons.Add(Move(Reason));
+    }
+
+    const TArray<String>& GetDebugReasons() const
+    {
+        return DebugReasons;
+    }
+#endif
+
 private:
     TArray<FBatch>           Batches;
+#if VULKAN_ENABLE_BARRIER_STATS
+    TArray<String>           DebugReasons;
+    uint32                   Generation = 0;
+#endif
 #if VK_EXT_sample_locations
     VkSampleLocationEXT      SampleLocations[RHI_MAX_SAMPLE_POSITIONS] = { };
     VkSampleLocationsInfoEXT SampleLocationsInfo                       = { };
@@ -181,7 +222,8 @@ public:
     
     void ApplyTrackingModeChange(class FVulkanTextureRHI* Texture, const FRHITransitionBarrierDesc& Desc);
 
-    void AddAccelerationStructureMemoryBarrier();
+    void AddAccelerationStructureBuildInputBarrier();
+    void AddAccelerationStructureBarrier();
 
     void ObtainCommandBuffer();
     void FinishCommandBuffer(bool bFlushPool, bool bResolveQueries = true);

@@ -2,6 +2,10 @@
 #include "RHI/ValidationLayer/RHIValidationStateTracker.h"
 #include "RHI/ValidationLayer/RHIValidationInternal.h"
 
+FRHIValidationStateTracker::FRHIValidationStateTracker() = default;
+
+FRHIValidationStateTracker::~FRHIValidationStateTracker() = default;
+
 void FRHIValidationStateTracker::RegisterResource(const FRHIResource* Resource, ERHIResourceState InitialState, ERHIResourceStateTrackingMode TrackingMode)
 {
     if (!Resource)
@@ -40,8 +44,71 @@ void FRHIValidationStateTracker::UnregisterResource(const FRHIResource* Resource
         return;
     }
 
-    TScopedLock Lock(ResourceStatesCS);
-    (void)ResourceStates.RemoveKey(Resource);
+    {
+        TScopedLock Lock(ResourceStatesCS);
+        ResourceStates.Remove(Resource);
+    }
+
+    ClearAccelerationStructureWrite(Resource);
+}
+
+void FRHIValidationStateTracker::MarkAccelerationStructureWritten(const FRHIResource* AccelerationStructure, bool bIsScene)
+{
+    if (!AccelerationStructure)
+    {
+        return;
+    }
+
+    TScopedLock Lock(AccelerationStructureWritesCS);
+    PendingAccelerationStructureWrites.Add(AccelerationStructure);
+
+    if (bIsScene)
+    {
+        PendingSceneAccelerationStructureWrites.Add(AccelerationStructure);
+    }
+}
+
+void FRHIValidationStateTracker::ClearAccelerationStructureWrite(const FRHIResource* AccelerationStructure)
+{
+    if (!AccelerationStructure)
+    {
+        return;
+    }
+
+    TScopedLock Lock(AccelerationStructureWritesCS);
+    PendingAccelerationStructureWrites.Remove(AccelerationStructure);
+    PendingSceneAccelerationStructureWrites.Remove(AccelerationStructure);
+}
+
+bool FRHIValidationStateTracker::ConsumeAccelerationStructureWrite(const FRHIResource* AccelerationStructure)
+{
+    if (!AccelerationStructure)
+    {
+        return false;
+    }
+
+    TScopedLock Lock(AccelerationStructureWritesCS);
+    if (!PendingAccelerationStructureWrites.RemoveKey(AccelerationStructure))
+    {
+        return false;
+    }
+
+    PendingSceneAccelerationStructureWrites.Remove(AccelerationStructure);
+    return true;
+}
+
+const FRHIResource* FRHIValidationStateTracker::ConsumeAnySceneAccelerationStructureWrite()
+{
+    TScopedLock Lock(AccelerationStructureWritesCS);
+    if (PendingSceneAccelerationStructureWrites.IsEmpty())
+    {
+        return nullptr;
+    }
+
+    const FRHIResource* Scene = *PendingSceneAccelerationStructureWrites.begin();
+    PendingSceneAccelerationStructureWrites.Remove(Scene);
+    PendingAccelerationStructureWrites.Remove(Scene);
+    return Scene;
 }
 
 bool FRHIValidationStateTracker::ApplyTransition(const FRHITransitionBarrierDesc& Desc)

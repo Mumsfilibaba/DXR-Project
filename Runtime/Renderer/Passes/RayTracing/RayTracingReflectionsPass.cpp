@@ -602,7 +602,17 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
         return;
     }
 
-    const uint32 NumHitGroupRecords = Math::Max<uint32>(static_cast<uint32>(Resources.RayTracingHitGroupBindings.Size()), 1u);
+    const uint32 NumHitGroupBindings = static_cast<uint32>(Resources.RayTracingHitGroupBindings.Size());
+
+    uint32 NumReferencedHitGroups = 0;
+    for (const FRHIGeometryAccelerationStructureInstance& Instance : Resources.RayTracingGeometryInstances)
+    {
+        NumReferencedHitGroups = Math::Max<uint32>(NumReferencedHitGroups, Instance.HitGroupIndex + 1);
+    }
+
+    CHECK(NumHitGroupBindings >= NumReferencedHitGroups);
+
+    const uint32 NumHitGroupRecords = Math::Max<uint32>(Math::Max<uint32>(NumHitGroupBindings, NumReferencedHitGroups), 1u);
     if (!ActiveShaderBindingTable || NumHitGroupRecords > ActiveCapacity)
     {
         FRHIShaderBindingTableDesc SBTDesc = FRHIShaderBindingTableDesc(ActivePipeline, 1, 1, 0, NumHitGroupRecords);
@@ -619,15 +629,17 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
     CommandList.SetHitRecordLocalShaderBindings(ShaderBindingTable, ERayTracingShaderRecordKind::RayGeneration, 0, nullptr, 0);
     CommandList.SetHitRecordLocalShaderBindings(ShaderBindingTable, ERayTracingShaderRecordKind::Miss, 0, nullptr, 0);
 
-    uint32 RecordIndex = 0;
-    for (const TArray<FRHIHitGroupLocalShaderBinding>& Record : Resources.RayTracingHitGroupBindings)
+    for (uint32 RecordIndex = 0; RecordIndex < NumHitGroupRecords; ++RecordIndex)
     {
-        CommandList.SetHitRecordLocalShaderBindings(ShaderBindingTable, ERayTracingShaderRecordKind::HitGroup, RecordIndex++, Record.Data(), Record.Size());
-    }
-
-    if (RecordIndex == 0)
-    {
-        CommandList.SetHitRecordLocalShaderBindings(ShaderBindingTable, ERayTracingShaderRecordKind::HitGroup, 0, nullptr, 0);
+        if (RecordIndex < NumHitGroupBindings)
+        {
+            const TArray<FRHIHitGroupLocalShaderBinding>& Record = Resources.RayTracingHitGroupBindings[RecordIndex];
+            CommandList.SetHitRecordLocalShaderBindings(ShaderBindingTable, ERayTracingShaderRecordKind::HitGroup, RecordIndex, Record.Data(), Record.Size());
+        }
+        else
+        {
+            CommandList.SetHitRecordLocalShaderBindings(ShaderBindingTable, ERayTracingShaderRecordKind::HitGroup, RecordIndex, nullptr, 0);
+        }
     }
 
     CommandList.BuildShaderBindingTable(ShaderBindingTable);

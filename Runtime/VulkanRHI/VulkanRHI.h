@@ -138,6 +138,7 @@ public:
     void NotifyCommandBufferRetired(FVulkanCommands* Commands);
 
     void FlushCompletedSubmissions();
+    bool IsQueryResultResolved(struct FVulkanQueryRHI* VulkanQuery);
 
     FVulkanInstance* GetInstance()
     {

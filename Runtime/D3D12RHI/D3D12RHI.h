@@ -133,6 +133,7 @@ public:
     void NotifyCommandListRetired(FD3D12Commands* Commands);
 
     void FlushCompletedSubmissions();
+    bool IsQueryResultResolved(struct FD3D12QueryRHI* D3D12Query);
 
     FD3D12Adapter* GetAdapter() const
     {

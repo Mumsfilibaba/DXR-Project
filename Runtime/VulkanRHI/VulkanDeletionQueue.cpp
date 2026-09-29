@@ -78,6 +78,13 @@ void FVulkanDeferredObject::ProcessItems(FVulkanDevice* Device, TArray<FVulkanDe
                 vkDestroyQueryPool(Device->GetVkDevice(), Item.QueryPool, nullptr);
                 break;
             }
+
+            case FVulkanDeferredObject::EType::AccelerationStructure:
+            {
+                CHECK(Item.AccelerationStructure != VK_NULL_HANDLE);
+                vkDestroyAccelerationStructureKHR(Device->GetVkDevice(), Item.AccelerationStructure, nullptr);
+                break;
+            }
         }
     }
 }

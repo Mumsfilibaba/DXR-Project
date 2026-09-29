@@ -5,6 +5,7 @@
 
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
+#include "LaunchProgram/ProgramEntry.h"
 
 #include "HDRMetadataTests.h"
 #include "PrimitiveTopologyTests.h"
@@ -19,11 +20,8 @@
 IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 #endif
 
-int main(int Argc, const CHAR* Argv[])
+static int32 RunRHITests()
 {
-    UNREFERENCED_VARIABLE(Argc);
-    UNREFERENCED_VARIABLE(Argv);
-
     TestHarness::Initialize("TestResults_RHI.log");
     LOG_INFO("=== RHI Tests ===");
 
@@ -37,3 +35,5 @@ int main(int Argc, const CHAR* Argv[])
     TestHarness::Shutdown();
     return ExitCode;
 }
+
+IMPLEMENT_PROGRAM_MAIN("RHI-Tests", RunRHITests);

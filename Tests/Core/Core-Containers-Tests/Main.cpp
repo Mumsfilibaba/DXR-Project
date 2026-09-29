@@ -6,6 +6,7 @@
 
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
+#include "LaunchProgram/ProgramEntry.h"
 
 #include "Array_Test.h"
 #include "SharedPtr_Test.h"
@@ -51,11 +52,8 @@ IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-void Tests(int32 Argc, const CHAR* Argv[])
+void Tests()
 {
-    UNREFERENCED_VARIABLE(Argc);
-    UNREFERENCED_VARIABLE(Argv);
-
 #if RUN_TARRAY_TEST
     RUN_TEST("Array", TArray_Test());
 #endif
@@ -162,7 +160,7 @@ struct FDebuggerOutputDevice : public IOutputDevice
     }
 };
 
-int main(int Argc, const CHAR* Argv[])
+static int32 RunContainerTests()
 {
 #ifdef _WIN32
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -172,7 +170,7 @@ int main(int Argc, const CHAR* Argv[])
     LOG_INFO("=== Container Tests ===");
 
 #if RUN_TESTS
-    Tests(Argc, Argv);
+    Tests();
 #endif
 
     const int32 ExitCode = TestHarness::Report();
@@ -190,3 +188,5 @@ int main(int Argc, const CHAR* Argv[])
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
+
+IMPLEMENT_PROGRAM_MAIN("Core-Containers-Tests", RunContainerTests);

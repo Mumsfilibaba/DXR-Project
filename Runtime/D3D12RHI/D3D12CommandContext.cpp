@@ -93,30 +93,36 @@ static void D3D12WarnOnDroppedTransition(MAYBE_UNUSED const FD3D12Resource* Reso
 #endif
 }
 
-static D3D12_GPU_VIRTUAL_ADDRESS GetD3D12AccelerationStructureGPUAddress(FRHIRayTracingAccelerationStructure* AccelerationStructure)
+static FD3D12AccelerationStructure* GetD3D12AccelerationStructure(FRHIRayTracingAccelerationStructure* AccelerationStructure)
 {
     if (!AccelerationStructure)
     {
-        return 0;
+        return nullptr;
     }
 
     switch (AccelerationStructure->GetAccelerationStructureType())
     {
         case ERayTracingAccelerationStructureType::Geometry:
         {
-            return static_cast<FD3D12GeometryAccelerationStructureRHI*>(AccelerationStructure)->GetGPUVirtualAddress();
+            return static_cast<FD3D12GeometryAccelerationStructureRHI*>(AccelerationStructure);
         }
 
         case ERayTracingAccelerationStructureType::Scene:
         {
-            return static_cast<FD3D12SceneAccelerationStructureRHI*>(AccelerationStructure)->GetGPUVirtualAddress();
+            return static_cast<FD3D12SceneAccelerationStructureRHI*>(AccelerationStructure);
         }
 
         default:
         {
-            return 0;
+            return nullptr;
         }
     }
+}
+
+static D3D12_GPU_VIRTUAL_ADDRESS GetD3D12AccelerationStructureGPUAddress(FRHIRayTracingAccelerationStructure* AccelerationStructure)
+{
+    FD3D12AccelerationStructure* D3D12AccelerationStructure = GetD3D12AccelerationStructure(AccelerationStructure);
+    return D3D12AccelerationStructure ? D3D12AccelerationStructure->GetGPUVirtualAddress() : 0;
 }
 
 static uint64 GetRayTracingPostBuildInfoStride(EAccelerationStructurePostBuildInfoType InfoType)
@@ -938,6 +944,7 @@ void FD3D12CommandContext::BeginQuery(FRHIQuery* Query)
     }
 
     GetCommandList().BeginQuery(D3D12Query->CurrentQuery);
+    D3D12Query->bResultReady.Store(0);
     PendingQueries.Add(D3D12Query);
     
     ActiveQueryCount++;
@@ -972,6 +979,7 @@ void FD3D12CommandContext::QueryTimestamp(FRHIQuery* Query)
     }
 
     GetCommandList().EndQuery(D3D12Query->CurrentQuery);
+    D3D12Query->bResultReady.Store(0);
     PendingQueries.Add(D3D12Query);
 }
 
@@ -2758,14 +2766,33 @@ void FD3D12CommandContext::UnorderedAccessBarrier(TArrayView<const FRHIUnordered
 
             BarrierBatcher.AddUnorderedAccessBarrier(D3D12Texture->GetResource());
         }
-        else
+        else if (Desc.IsBuffer())
         {
             FD3D12BufferRHI* D3D12Buffer = FD3D12DeviceRHI::ResourceCast(Desc.Buffer.Resource);
             CHECK(D3D12Buffer != nullptr);
 
             BarrierBatcher.AddUnorderedAccessBarrier(D3D12Buffer->GetResource());
         }
+        else
+        {
+            CHECK(Desc.IsAccelerationStructure());
+
+            FD3D12AccelerationStructure* D3D12AccelerationStructure = GetD3D12AccelerationStructure(Desc.AccelerationStructure.Resource);
+            CHECK(D3D12AccelerationStructure != nullptr);
+
+            AccelerationStructureBarrier(D3D12AccelerationStructure);
+        }
     }
+}
+
+void FD3D12CommandContext::AccelerationStructureBarrier(FD3D12AccelerationStructure* AccelerationStructure)
+{
+    CHECK(AccelerationStructure != nullptr);
+
+    FD3D12Resource* Resource = AccelerationStructure->GetResource();
+    CHECK(Resource != nullptr);
+
+    BarrierBatcher.AddUnorderedAccessBarrier(Resource);
 }
 
 void FD3D12CommandContext::AliasingBarrier(FD3D12Resource* ResourceAfter, ID3D12Resource* ResourceBefore)
@@ -3449,6 +3476,7 @@ void FD3D12CommandContext::CopyAccelerationStructure(FRHIRayTracingAccelerationS
     const D3D12_GPU_VIRTUAL_ADDRESS SourceAddress                         = GetD3D12AccelerationStructureGPUAddress(Source);
     const D3D12_GPU_VIRTUAL_ADDRESS DestinationAddress                    = GetD3D12AccelerationStructureGPUAddress(Destination);
     const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE D3D12CopyMode = ConvertAccelerationStructureCopyMode(CopyMode);
+    CHECK(SourceAddress != 0 && DestinationAddress != 0);
 
     ConditionalSplitCommandList();
     BarrierBatcher.FlushBarriers(GetCommandList());
@@ -3470,28 +3498,7 @@ void FD3D12CommandContext::CompactAccelerationStructure(FRHIRayTracingAccelerati
         return;
     }
 
-    FD3D12AccelerationStructure* D3D12AccelerationStructure = nullptr;
-    switch (AccelerationStructure->GetAccelerationStructureType())
-    {
-        case ERayTracingAccelerationStructureType::Geometry:
-        {
-            D3D12AccelerationStructure = static_cast<FD3D12GeometryAccelerationStructureRHI*>(AccelerationStructure);
-            break;
-        }
-
-        case ERayTracingAccelerationStructureType::Scene:
-        {
-            D3D12AccelerationStructure = static_cast<FD3D12SceneAccelerationStructureRHI*>(AccelerationStructure);
-            break;
-        }
-
-        default:
-        {
-            break;
-        }
-    }
-
-    if (D3D12AccelerationStructure)
+    if (FD3D12AccelerationStructure* D3D12AccelerationStructure = GetD3D12AccelerationStructure(AccelerationStructure))
     {
         ConditionalSplitCommandList();
         D3D12AccelerationStructure->CompactInPlace(*this, CompactedSizeInBytes);
@@ -3513,6 +3520,7 @@ void FD3D12CommandContext::SerializeAccelerationStructure(FRHIRayTracingAccelera
 
     const D3D12_GPU_VIRTUAL_ADDRESS DestinationAddress = D3D12DestinationBuffer->GetGPUVirtualAddress() + DstOffset;
     const D3D12_GPU_VIRTUAL_ADDRESS SourceAddress      = GetD3D12AccelerationStructureGPUAddress(Source);
+    CHECK(SourceAddress != 0);
 
     ConditionalSplitCommandList();
 
@@ -3539,6 +3547,7 @@ void FD3D12CommandContext::DeserializeAccelerationStructure(FRHIRayTracingAccele
 
     const D3D12_GPU_VIRTUAL_ADDRESS DestinationAddress = GetD3D12AccelerationStructureGPUAddress(Destination);
     const D3D12_GPU_VIRTUAL_ADDRESS SourceAddress      = D3D12SourceBuffer->GetGPUVirtualAddress() + SourceOffset;
+    CHECK(DestinationAddress != 0);
 
     ConditionalSplitCommandList();
 

@@ -16,20 +16,21 @@ struct FVulkanDeferredObject
 
     enum class EType : uint8
     {
-        RHIResource         = 1,
-        VulkanResource      = 2,
-        BuddyAllocatorBlock = 3,
-        PoolAllocatorBlock  = 4,
+        RHIResource               = 1,
+        VulkanResource            = 2,
+        BuddyAllocatorBlock       = 3,
+        PoolAllocatorBlock        = 4,
 
         /** Dedicated buffer (owns VkBuffer + VkDeviceMemory) */
         DedicatedBufferAllocation = 5,
 
         /** Dedicated memory only (image memory; VkImage destroyed by the texture) */
-        DedicatedAllocation = 6,
+        DedicatedAllocation       = 6,
 
-        LinearAllocatorPage = 7,
-        DescriptorPool      = 8,
-        QueryPool           = 9,
+        LinearAllocatorPage       = 7,
+        DescriptorPool            = 8,
+        QueryPool                 = 9,
+        AccelerationStructure     = 10,
     };
 
     FVulkanDeferredObject(FRHIResource* InResource)
@@ -104,6 +105,13 @@ struct FVulkanDeferredObject
         QueryPool = InQueryPool;
     }
 
+    FVulkanDeferredObject(VkAccelerationStructureKHR InAccelerationStructure)
+        : Type(EType::AccelerationStructure)
+    {
+        CHECK(InAccelerationStructure != VK_NULL_HANDLE);
+        AccelerationStructure = InAccelerationStructure;
+    }
+
     EType const Type;
 
     struct FBuddyAllocatorBlockData
@@ -152,5 +160,6 @@ struct FVulkanDeferredObject
         FLinearAllocatorPageData       LinearAllocatorPage;
         FDescriptorPoolData            DescriptorPoolData;
         VkQueryPool                    QueryPool;
+        VkAccelerationStructureKHR     AccelerationStructure;
     };
 };

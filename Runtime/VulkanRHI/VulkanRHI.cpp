@@ -650,7 +650,11 @@ FRHISceneAccelerationStructure* FVulkanDeviceRHI::CreateSceneAccelerationStructu
 
     {
         FVulkanScopedCommandContext BuildContext(*GetDevice()->GetGraphicsQueue());
-        if (!NewScene->Build(*BuildContext, BuildDesc))
+        if (NewScene->Build(*BuildContext, BuildDesc))
+        {
+            BuildContext->AddAccelerationStructureBarrier();
+        }
+        else
         {
             DEBUG_BREAK();
             NewScene.Reset();
@@ -675,7 +679,11 @@ FRHIGeometryAccelerationStructure* FVulkanDeviceRHI::CreateGeometryAccelerationS
 
     {
         FVulkanScopedCommandContext BuildContext(*GetDevice()->GetGraphicsQueue());
-        if (!NewGeometry->Build(*BuildContext, BuildDesc))
+        if (NewGeometry->Build(*BuildContext, BuildDesc))
+        {
+            BuildContext->AddAccelerationStructureBarrier();
+        }
+        else
         {
             DEBUG_BREAK();
             NewGeometry.Reset();
@@ -1401,6 +1409,17 @@ bool FVulkanDeviceRHI::QuerySupportedSampleCounts(EFormat Format, uint32& OutSam
     return OutSampleCounts != 0;
 }
 
+bool FVulkanDeviceRHI::IsQueryResultResolved(FVulkanQueryRHI* VulkanQuery)
+{
+    if (VulkanQuery->bResultReady.Load())
+    {
+        return true;
+    }
+
+    FlushCompletedSubmissions();
+    return VulkanQuery->bResultReady.Load() != 0;
+}
+
 bool FVulkanDeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode)
 {
     FVulkanQueryRHI* VulkanQuery = FVulkanDeviceRHI::ResourceCast(Query);
@@ -1422,6 +1441,11 @@ bool FVulkanDeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQuer
         }
     }
     else if (!VulkanQuery->SyncFence->IsSignaled())
+    {
+        return false;
+    }
+
+    if (!IsQueryResultResolved(VulkanQuery))
     {
         return false;
     }
@@ -1451,6 +1475,11 @@ bool FVulkanDeviceRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelin
         }
     }
     else if (!VulkanQuery->SyncFence->IsSignaled())
+    {
+        return false;
+    }
+
+    if (!IsQueryResultResolved(VulkanQuery))
     {
         return false;
     }
@@ -1597,12 +1626,40 @@ VkPipelineStageFlags2KHR FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(ERH
         AllNonPixelShaderBits |= VK_PIPELINE_STAGE_2_TESSELLATION_CONTROL_SHADER_BIT_KHR | VK_PIPELINE_STAGE_2_TESSELLATION_EVALUATION_SHADER_BIT_KHR;
     }
 
-    if (ResourceState == ERHIResourceState::Common || IsEnumFlagSet(ResourceState, ERHIResourceState::GenericRead))
+    if (ResourceState == ERHIResourceState::Common)
     {
         return VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
     }
 
     VkPipelineStageFlags2KHR Stages = VK_PIPELINE_STAGE_2_NONE_KHR;
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::GenericRead))
+    {
+        // Same reads as D3D12_RESOURCE_STATE_GENERIC_READ: vertex/constant, index, shader resource in any stage, indirect argument and copy source
+        Stages |= VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR | AllShaderBits | VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT_KHR | VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
+
+    #if VK_EXT_mesh_shader
+        if (GVulkanSupportsMeshShaders)
+        {
+            Stages |= VK_PIPELINE_STAGE_2_MESH_SHADER_BIT_EXT;
+        }
+
+        if (GVulkanSupportsTaskShaders)
+        {
+            Stages |= VK_PIPELINE_STAGE_2_TASK_SHADER_BIT_EXT;
+        }
+    #endif
+
+        if (GVulkanSupportsAccelerationStructures)
+        {
+            Stages |= VK_PIPELINE_STAGE_2_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+        }
+
+        if (GVulkanSupportsRayTracingPipeline)
+        {
+            Stages |= VK_PIPELINE_STAGE_2_RAY_TRACING_SHADER_BIT_KHR;
+        }
+    }
+
     if (IsEnumFlagSet(ResourceState, ERHIResourceState::CopyDest))
     {
         Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
@@ -1713,12 +1770,17 @@ VkAccessFlags2KHR FVulkanDeviceRHI::ResourceStateToAccessFlags(ERHIResourceState
         return VK_ACCESS_2_NONE_KHR;
     }
 
+    VkAccessFlags2KHR Access = VK_ACCESS_2_NONE_KHR;
     if (IsEnumFlagSet(ResourceState, ERHIResourceState::GenericRead))
     {
-        return VK_ACCESS_2_MEMORY_READ_BIT_KHR;
+        Access |= VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT_KHR |
+            VK_ACCESS_2_INDEX_READ_BIT_KHR |
+            VK_ACCESS_2_UNIFORM_READ_BIT_KHR |
+            VK_ACCESS_2_SHADER_READ_BIT_KHR |
+            VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT_KHR |
+            VK_ACCESS_2_TRANSFER_READ_BIT_KHR;
     }
 
-    VkAccessFlags2KHR Access = VK_ACCESS_2_NONE_KHR;
     if (IsEnumFlagSet(ResourceState, ERHIResourceState::CopyDest))
     {
         Access |= VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;

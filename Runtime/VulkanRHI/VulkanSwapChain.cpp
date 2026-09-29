@@ -382,6 +382,9 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
 		return false;
 	}
 
+	VULKAN_INFO("Created SwapChain (Images=%u, CompositeAlpha=0x%x, Usage=0x%x, PreTransform=0x%x)", BufferCount,
+		static_cast<uint32>(SelectedCompositeAlpha), static_cast<uint32>(FinalUsage), static_cast<uint32>(PreTransform));
+
 	Extent         = CurrentExtent;
 	Format         = SelectedFormat;
 	CompositeAlpha = SelectedCompositeAlpha;

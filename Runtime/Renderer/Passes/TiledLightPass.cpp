@@ -198,6 +198,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         FrameResources.IntegrationLUT.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ShaderResource, ERHIResourceStateTrackingMode::Static));
 
     FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    FRHICommandListExecutor::Get().WaitForCommands();
 
     FDeferredLightPassCS::FPermutation LightPassPermutation;
     LightPassPermutation.Set<FTiledLightDebug>(ETiledLightDebugMode::None);

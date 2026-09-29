@@ -474,15 +474,27 @@ bool FModel::Initialize(const FModelData& ModelData)
 
 bool FModel::BuildAccelerationStructure(FRHICommandList& CommandList)
 {
+    TArray<FRHIUnorderedAccessBarrierDesc> Barriers;
+    Barriers.Reserve(Meshes.Size());
+
+    bool bResult = true;
     for (const TSharedPtr<FMesh>& Mesh : Meshes)
     {
         if (!Mesh->BuildAccelerationStructure(CommandList))
         {
-            return false;
+            bResult = false;
+            break;
         }
+
+        Barriers.Add(FRHIUnorderedAccessBarrierDesc::CreateAccelerationStructure(Mesh->GetRayTracingGeometry()));
     }
-    
-    return true;
+
+    if (!Barriers.IsEmpty())
+    {
+        CommandList.UnorderedAccessBarrier(MakeArrayView(Barriers));
+    }
+
+    return bResult;
 }
 
 void FModel::AddToWorld(FWorld* World)

@@ -2124,7 +2124,7 @@ void FRHIValidationDevice::EnqueueResourceDeletion(FRHIResource* Resource)
         if (FRHITexture* BackBuffer = ValidationSwapChain->GetBackBuffer())
         {
             StateTracker.UnregisterResource(BackBuffer);
-            (void)BackBufferToSwapChain.RemoveKey(BackBuffer);
+            BackBufferToSwapChain.Remove(BackBuffer);
         }
 
         delete ValidationSwapChain;

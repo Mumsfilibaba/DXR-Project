@@ -78,6 +78,7 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
 
     Resources.RayTracingGeometryInstances.Clear();
     Resources.RayTracingHitGroupBindings.Clear();
+    Resources.RayTracingMeshToHitGroupIndex.Clear();
     Resources.RayTracingGeometryTableData.Clear();
 
     uint32 NextInstanceIndex       = 0;
@@ -205,6 +206,7 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
         BuildSceneDesc.bUpdate      = false;
 
         CommandList.BuildSceneAccelerationStructure(Resources.RayTracingScene.Get(), BuildSceneDesc);
+        CommandList.UnorderedAccessBarrier(Resources.RayTracingScene.Get());
     }
 
     if (GRayTracingCompaction || GRayTracingASCache)

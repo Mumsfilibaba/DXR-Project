@@ -9,6 +9,7 @@
 
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
+#include "LaunchProgram/ProgramEntry.h"
 
 #include "RenderGraphTests.h"
 #include "SwapChainAcquireTests.h"
@@ -44,11 +45,8 @@ static void SetConsoleVariable(const CHAR* VariableName, const CHAR* Value)
     }
 }
 
-int main(int Argc, const CHAR* Argv[])
+static int32 RunRendererCoreTests()
 {
-    UNREFERENCED_VARIABLE(Argc);
-    UNREFERENCED_VARIABLE(Argv);
-
     TestHarness::Initialize("TestResults_RendererCore.log");
     LOG_INFO("=== RendererCore Tests ===");
 
@@ -115,3 +113,5 @@ int main(int Argc, const CHAR* Argv[])
     TestHarness::Shutdown();
     return ExitCode;
 }
+
+IMPLEMENT_PROGRAM_MAIN("RendererCore-Tests", RunRendererCoreTests);

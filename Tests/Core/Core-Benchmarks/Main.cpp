@@ -7,6 +7,7 @@
 #include <Core/Tasks/TaskGraph.h>
 
 #include "TestCommon/TestHarness.h"
+#include "LaunchProgram/ProgramEntry.h"
 
 #include "Array_Benchmark.h"
 #include "Map_Benchmark.h"
@@ -21,11 +22,8 @@
 IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 #endif
 
-int main(int Argc, const CHAR* Argv[])
+static int32 RunCoreBenchmarks()
 {
-    UNREFERENCED_VARIABLE(Argc);
-    UNREFERENCED_VARIABLE(Argv);
-
     // The harness is used here for its logging and output-device setup only; benchmarks
     // report timings rather than pass/fail, so there is nothing to tally.
     TestHarness::Initialize("BenchmarkResults_Core.log");
@@ -68,3 +66,5 @@ int main(int Argc, const CHAR* Argv[])
     TestHarness::Shutdown();
     return 0;
 }
+
+IMPLEMENT_PROGRAM_MAIN("Core-Benchmarks", RunCoreBenchmarks);

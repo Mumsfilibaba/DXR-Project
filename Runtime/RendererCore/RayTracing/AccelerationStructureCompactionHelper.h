@@ -78,6 +78,7 @@ public:
             if (CompactedSize > 0)
             {
                 CommandList.CompactAccelerationStructure(Pending.Source, CompactedSize);
+                CommandList.UnorderedAccessBarrier(Pending.Source);
             }
 
             PendingCompactions.RemoveAt(Index);

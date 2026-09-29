@@ -237,7 +237,7 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
         }
     }
 
-    CmdContext.AddAccelerationStructureMemoryBarrier();
+    CmdContext.AddAccelerationStructureBuildInputBarrier();
     CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandBuffer());
 
     CmdContext.GetCommandBuffer()->BuildAccelerationStructures(1, &AccelerationStructureBuildGeometryInfo, BuildRangeInfos);
@@ -300,7 +300,6 @@ bool FVulkanGeometryAccelerationStructureRHI::CompactInPlace(FVulkanCommandConte
     CopyInfo.dst   = CompactedGeometry;
     CopyInfo.mode  = VK_COPY_ACCELERATION_STRUCTURE_MODE_COMPACT_KHR;
 
-    CmdContext.AddAccelerationStructureMemoryBarrier();
     CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandBuffer());
 
     CmdContext.GetCommandBuffer()->CopyAccelerationStructure(&CopyInfo);
@@ -407,13 +406,12 @@ bool FVulkanSceneAccelerationStructureRHI::Build(FVulkanCommandContext& CmdConte
     {
         InstanceLocation.ReleaseMemory();
 
-        const VkMemoryPropertyFlags InstanceMemoryProperties = 
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | 
-            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+        const VkMemoryPropertyFlags InstanceMemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
         const VkBufferUsageFlags InstanceUsage = 
             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | 
-            VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+            VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
         if (!MemoryManager.AllocateBufferMemory(InstanceMemoryProperties, InstanceUsage, AllocateFlags, InstanceBufferSize, 16, InstanceLocation))
         {
@@ -424,8 +422,9 @@ bool FVulkanSceneAccelerationStructureRHI::Build(FVulkanCommandContext& CmdConte
         InstanceCapacity = NumInstances;
     }
 
+    FVulkanMemoryLocation UploadLocation(GetDevice());
     uint32 OutCount = 0;
-    if (uint8* MappedInstances = reinterpret_cast<uint8*>(InstanceLocation.GetMappedBaseAddress()))
+    if (uint8* MappedInstances = reinterpret_cast<uint8*>(MemoryManager.AllocateUploadMemory(InstanceBufferSize, 16, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, UploadLocation)))
     {
         VkAccelerationStructureInstanceKHR* InstanceData = reinterpret_cast<VkAccelerationStructureInstanceKHR*>(MappedInstances);
         for (uint32 Index = 0; Index < NumInstances; ++Index)
@@ -452,8 +451,29 @@ bool FVulkanSceneAccelerationStructureRHI::Build(FVulkanCommandContext& CmdConte
     }
     else
     {
-        VULKAN_ERROR_CRITICAL("Instance-buffer memory is not host-visible");
+        VULKAN_ERROR_CRITICAL("Failed to allocate upload memory for the instance-buffer");
         return false;
+    }
+
+    FVulkanBarrierBatcher& BarrierBatcher = CmdContext.GetBarrierBatcher();
+    if (OutCount > 0)
+    {
+        VkMemoryBarrier2KHR BuildToCopyBarrier = {};
+        BuildToCopyBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2_KHR;
+        BuildToCopyBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+        BuildToCopyBarrier.srcAccessMask = VK_ACCESS_2_NONE_KHR;
+        BuildToCopyBarrier.dstStageMask  = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
+        BuildToCopyBarrier.dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
+
+        BarrierBatcher.AddMemoryBarrier(0, BuildToCopyBarrier);
+        BarrierBatcher.FlushBarriers(CmdContext.GetCommandBuffer());
+
+        VkBufferCopy BufferCopy = {};
+        BufferCopy.srcOffset = UploadLocation.GetBufferOffset();
+        BufferCopy.dstOffset = InstanceLocation.GetBufferOffset();
+        BufferCopy.size      = uint64(OutCount) * sizeof(VkAccelerationStructureInstanceKHR);
+
+        CmdContext.GetCommandBuffer()->CopyBuffer(UploadLocation.GetBackingBuffer(), InstanceLocation.GetBackingBuffer(), 1, &BufferCopy);
     }
 
     VkAccelerationStructureGeometryKHR AccelerationStructureGeometry = {};
@@ -464,7 +484,7 @@ bool FVulkanSceneAccelerationStructureRHI::Build(FVulkanCommandContext& CmdConte
     AccelerationStructureGeometry.geometry.instances.arrayOfPointers    = VK_FALSE;
     AccelerationStructureGeometry.geometry.instances.data.deviceAddress = InstanceLocation.GetDeviceAddress();
 
-    const VkBuildAccelerationStructureModeKHR BuildMode = (BuildDesc.bUpdate && VULKAN_CHECK_HANDLE(AccelerationStructure))
+    VkBuildAccelerationStructureModeKHR BuildMode = (BuildDesc.bUpdate && VULKAN_CHECK_HANDLE(AccelerationStructure))
         ? VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR
         : VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
 
@@ -490,11 +510,16 @@ bool FVulkanSceneAccelerationStructureRHI::Build(FVulkanCommandContext& CmdConte
     const VkBufferUsageFlags    SceneUsage             = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
     const VkBufferUsageFlags    ScratchUsage           = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
-    if (!VULKAN_CHECK_HANDLE(AccelerationStructure) || SceneLocation.GetSize() < BuildSizesInfo.accelerationStructureSize)
+    const bool bRecreated = !VULKAN_CHECK_HANDLE(AccelerationStructure) || SceneLocation.GetSize() < BuildSizesInfo.accelerationStructureSize;
+    if (bRecreated)
     {
         if (VULKAN_CHECK_HANDLE(AccelerationStructure))
         {
-            vkDestroyAccelerationStructureKHR(GetDevice()->GetVkDevice(), AccelerationStructure, nullptr);
+            VULKAN_INFO("Re-creating scene AccelerationStructure (%llu -> %llu bytes, %u instances)",
+                static_cast<unsigned long long>(SceneLocation.GetSize()), static_cast<unsigned long long>(BuildSizesInfo.accelerationStructureSize), OutCount);
+
+            // Frames that are still in flight may trace against the old structure
+            FVulkanDeviceRHI::DeferDeletion(AccelerationStructure);
             AccelerationStructure = VK_NULL_HANDLE;
             SceneLocation.ReleaseMemory();
         }
@@ -518,6 +543,9 @@ bool FVulkanSceneAccelerationStructureRHI::Build(FVulkanCommandContext& CmdConte
             VULKAN_ERROR_CRITICAL("Failed to create scene AccelerationStructure");
             return false;
         }
+
+        BuildMode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+        BuildGeometryInfo.mode = BuildMode;
     }
 
     const VkDeviceSize RequiredScratchSize = Math::Max<VkDeviceSize>(BuildSizesInfo.buildScratchSize, BuildSizesInfo.updateScratchSize);
@@ -549,8 +577,7 @@ bool FVulkanSceneAccelerationStructureRHI::Build(FVulkanCommandContext& CmdConte
 
     VkAccelerationStructureBuildRangeInfoKHR* BuildRangeInfos[] = { &BuildRangeInfo };
 
-    // The instance data was written through a host-visible mapping, the scratch may be reused from an earlier build.
-    CmdContext.AddAccelerationStructureMemoryBarrier();
+    CmdContext.AddAccelerationStructureBuildInputBarrier();
     CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandBuffer());
 
     CmdContext.GetCommandBuffer()->BuildAccelerationStructures(1, &BuildGeometryInfo, BuildRangeInfos);
@@ -569,6 +596,14 @@ bool FVulkanSceneAccelerationStructureRHI::Build(FVulkanCommandContext& CmdConte
         if (!View->Initialize(this, FRHIShaderResourceViewDesc::CreateAccelerationStructure()))
         {
             VULKAN_ERROR_CRITICAL("Failed to create scene acceleration-structure view");
+            return false;
+        }
+    }
+    else if (bRecreated)
+    {
+        if (!View->InitializeAccelerationStructureView(AccelerationStructure))
+        {
+            VULKAN_ERROR_CRITICAL("Failed to update scene acceleration-structure view");
             return false;
         }
     }
@@ -734,6 +769,16 @@ bool FVulkanOpacityMicromap::Build(FVulkanCommandContext& CmdContext, const FRHI
     CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandBuffer());
 
     CmdContext.GetCommandBuffer()->BuildMicromaps(1, &BuildInfo);
+
+    // Opacity micromaps cannot be named by FRHIUnorderedAccessBarrierDesc, so the build orders itself before later geometry builds.
+    VkMemoryBarrier2KHR MicromapBarrier = {};
+    MicromapBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2_KHR;
+    MicromapBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_MICROMAP_BUILD_BIT_EXT;
+    MicromapBarrier.srcAccessMask = VK_ACCESS_2_MICROMAP_WRITE_BIT_EXT;
+    MicromapBarrier.dstStageMask  = VK_PIPELINE_STAGE_2_ACCELERATION_STRUCTURE_BUILD_BIT_KHR | VK_PIPELINE_STAGE_2_MICROMAP_BUILD_BIT_EXT;
+    MicromapBarrier.dstAccessMask = VK_ACCESS_2_MICROMAP_READ_BIT_EXT | VK_ACCESS_2_MICROMAP_WRITE_BIT_EXT;
+
+    CmdContext.GetBarrierBatcher().AddMemoryBarrier(0, MicromapBarrier);
     return true;
 #else
     UNREFERENCED_VARIABLE(CmdContext);
