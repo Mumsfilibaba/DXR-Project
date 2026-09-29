@@ -9,6 +9,7 @@
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/ElementPath.h"
 #include "Application/Elements/EditableText.h"
+#include "Application/Elements/NumericRange.h"
 #include "Application/Elements/VisualElement.h"
 #include "Application/Input/Keys.h"
 #include "Application/Style/UIStyle.h"
@@ -222,8 +223,6 @@ public:
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
@@ -258,7 +257,7 @@ public:
     /** @return True while a press is being dragged, whether or not it has passed the scrub threshold. */
     NODISCARD FORCEINLINE bool IsScrubbing() const
     {
-        return bIsScrubbing;
+        return Scrubber.IsPressed();
     }
 
     /**
@@ -277,9 +276,12 @@ public:
      */
     NODISCARD FRectangle GetEditorRectangle(const FRectangle& Bounds) const;
 
+protected:
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
+    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+
 private:
     NODISCARD bool HasFillTrack() const;
-    NODISCARD T SanitizeValue(T InValue) const;
     NODISCARD String FormatValue() const;
 
     void ApplyValue(T InValue);
@@ -294,19 +296,14 @@ private:
     FFloatColor               LabelColor;
     FFloatColor               AccentEdge;
     T                         Value;
-    T                         MinValue;
-    T                         MaxValue;
-    T                         Step;
-    T                         ScrubStartValue;
-    IntVector2                ScrubStartPosition;
+    TNumericRange<T>          Range;
+    TValueScrubber<T>         Scrubber;
+    T                         ScrubStep;
     int32                     LabelWidth;
-    int32                     Precision;
     bool                      bShowLabel;
     bool                      bDynamicPrecision;
     bool                      bShowFillTrack;
     bool                      bIsReadOnly;
-    bool                      bIsScrubbing;
-    bool                      bHasScrubbed;
     FOnValueChanged           OnValueChangedDelegate;
 };
 
@@ -328,21 +325,19 @@ TNumericEntry<T>::TNumericEntry()
     , LabelColor(0.62f, 0.20f, 0.22f, 1.0f)
     , AccentEdge(0.0f, 0.0f, 0.0f, 0.0f)
     , Value(T(0))
-    , MinValue(TNumericLimits<T>::Lowest())
-    , MaxValue(TNumericLimits<T>::Max())
-    , Step(TNumericEntryTraits<T>::GetDefaultStep())
-    , ScrubStartValue(T(0))
-    , ScrubStartPosition()
+    , Range()
+    , Scrubber()
+    , ScrubStep(TNumericEntryTraits<T>::GetDefaultStep())
     , LabelWidth(14)
-    , Precision(3)
     , bShowLabel(true)
     , bDynamicPrecision(false)
     , bShowFillTrack(false)
     , bIsReadOnly(false)
-    , bIsScrubbing(false)
-    , bHasScrubbed(false)
     , OnValueChangedDelegate()
 {
+    Range.Min       = TNumericLimits<T>::Lowest();
+    Range.Max       = TNumericLimits<T>::Max();
+    Range.Precision = 3;
 }
 
 template<typename T>
@@ -353,18 +348,18 @@ void TNumericEntry<T>::Initialize(const FDesc& Desc)
     Suffix                 = Desc.Suffix;
     LabelColor             = Desc.LabelColor;
     AccentEdge             = Desc.AccentEdge;
-    MinValue               = Desc.MinValue;
-    MaxValue               = Math::Max(Desc.MaxValue, Desc.MinValue);
-    Step                   = Desc.Step;
+    Range.Min              = Desc.MinValue;
+    Range.Max              = Math::Max(Desc.MaxValue, Desc.MinValue);
+    Range.Precision        = Math::Max(0, Desc.Precision);
+    ScrubStep              = Desc.Step;
     LabelWidth             = Math::Max(0, Desc.LabelWidth);
-    Precision              = Math::Max(0, Desc.Precision);
     bShowLabel             = Desc.bShowLabel;
     bDynamicPrecision      = Desc.bDynamicPrecision;
     bShowFillTrack         = Desc.bShowFillTrack;
     bIsReadOnly            = Desc.bIsReadOnly;
     OnValueChangedDelegate = Desc.OnValueChanged;
 
-    Value = SanitizeValue(Desc.Value);
+    Value = Range.Sanitize(Desc.Value);
 
     FEditableText::FDesc EditorDesc;
     EditorDesc.Text            = FormatValue();
@@ -403,27 +398,22 @@ void TNumericEntry<T>::OnArrange(const FRectangle& AllottedBounds)
 {
     if (Editor)
     {
-        Editor->Tick(GetEditorRectangle(AllottedBounds));
+        Editor->Arrange(GetEditorRectangle(AllottedBounds));
     }
 }
 
 template<typename T>
-void TNumericEntry<T>::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit TNumericEntry<T>::VisitChildren(FChildVisitor& Visitor, EChildOrder /*Order*/) const
 {
-    if (Editor)
-    {
-        OutChildren.Add(Editor);
-    }
+    return FVisualElement::VisitChild(Visitor, Editor);
 }
 
 template<typename T>
-void TNumericEntry<T>::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+void TNumericEntry<T>::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
 {
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
     if (Editor && Editor->HasKeyboardFocus())
     {
-        Editor->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        Editor->HitTest(ClientPosition, OutPath);
     }
 }
 
@@ -437,7 +427,7 @@ int32 TNumericEntry<T>::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComma
 
     if (HasFillTrack())
     {
-        const float Fraction = Math::Clamp(static_cast<float>(Value - MinValue) / static_cast<float>(MaxValue - MinValue), 0.0f, 1.0f);
+        const float Fraction = Range.GetFraction(Value);
 
         FRectangle Filled = AllottedGeometry.Bounds;
         Filled.Width      = static_cast<int32>(static_cast<float>(Filled.Width) * Fraction);
@@ -504,10 +494,7 @@ FEventResponse TNumericEntry<T>::OnMouseButtonDown(const FCursorEvent& CursorEve
         return FEventResponse::Unhandled();
     }
 
-    bIsScrubbing       = true;
-    bHasScrubbed       = false;
-    ScrubStartValue    = Value;
-    ScrubStartPosition = CursorEvent.GetClientPosition();
+    Scrubber.Begin(CursorEvent.GetClientPosition(), Value);
 
     if (FApplication::IsInitialized())
     {
@@ -520,19 +507,19 @@ FEventResponse TNumericEntry<T>::OnMouseButtonDown(const FCursorEvent& CursorEve
 template<typename T>
 FEventResponse TNumericEntry<T>::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 {
-    if (!bIsScrubbing || CursorEvent.GetKey() != Keys::MouseButtonLeft)
+    if (!Scrubber.IsPressed() || CursorEvent.GetKey() != Keys::MouseButtonLeft)
     {
         return FEventResponse::Unhandled();
     }
 
-    bIsScrubbing = false;
+    const bool bWasScrub = Scrubber.End();
 
     if (FApplication::IsInitialized())
     {
         FApplication::Get().ReleaseMouseCapture(AsSharedPtr());
     }
 
-    if (!bHasScrubbed)
+    if (!bWasScrub)
     {
         BeginEditing(CursorEvent.GetClientPosition());
     }
@@ -543,18 +530,16 @@ FEventResponse TNumericEntry<T>::OnMouseButtonUp(const FCursorEvent& CursorEvent
 template<typename T>
 FEventResponse TNumericEntry<T>::OnMouseMove(const FCursorEvent& CursorEvent)
 {
-    if (!bIsScrubbing)
+    if (!Scrubber.IsPressed())
     {
         return FEventResponse::Unhandled();
     }
 
-    const int32 Travel = CursorEvent.GetClientPosition().X - ScrubStartPosition.X;
-    if (!bHasScrubbed && Math::Abs(Travel) < ScrubThreshold)
+    int32 Travel = 0;
+    if (!Scrubber.Update(CursorEvent.GetClientPosition(), ScrubThreshold, Travel))
     {
         return FEventResponse::Handled();
     }
-
-    bHasScrubbed = true;
 
     if (HasFillTrack())
     {
@@ -563,11 +548,11 @@ FEventResponse TNumericEntry<T>::OnMouseMove(const FCursorEvent& CursorEvent)
             ? Math::Saturate(static_cast<float>(CursorEvent.GetClientPosition().X - Bounds.Position.X) / static_cast<float>(Bounds.Width))
             : 0.0f;
 
-        ApplyValue(MinValue + static_cast<T>(static_cast<float>(MaxValue - MinValue) * Alpha));
+        ApplyValue(Range.FromFraction(Alpha));
         return FEventResponse::Handled();
     }
 
-    ApplyValue(ScrubStartValue + (static_cast<T>(Travel) * Step));
+    ApplyValue(Scrubber.GetStartValue() + (static_cast<T>(Travel) * ScrubStep));
     return FEventResponse::Handled();
 }
 
@@ -586,7 +571,7 @@ bool TNumericEntry<T>::GetCursor(ECursor& OutCursor) const
 template<typename T>
 void TNumericEntry<T>::SetValue(T InValue)
 {
-    Value = SanitizeValue(InValue);
+    Value = Range.Sanitize(InValue);
     UpdateEditorText();
     this->InvalidatePaint();
 }
@@ -594,10 +579,7 @@ void TNumericEntry<T>::SetValue(T InValue)
 template<typename T>
 bool TNumericEntry<T>::HasFillTrack() const
 {
-    return bShowFillTrack
-        && MaxValue > MinValue
-        && MinValue > TNumericLimits<T>::Lowest()
-        && MaxValue < TNumericLimits<T>::Max();
+    return bShowFillTrack && Range.IsBounded();
 }
 
 template<typename T>
@@ -630,7 +612,7 @@ FRectangle TNumericEntry<T>::GetEditorRectangle(const FRectangle& Bounds) const
 template<typename T>
 String TNumericEntry<T>::FormatValue() const
 {
-    String Text = bDynamicPrecision ? TNumericEntryTraits<T>::FormatDynamic(Value) : TNumericEntryTraits<T>::Format(Value, Precision);
+    String Text = bDynamicPrecision ? TNumericEntryTraits<T>::FormatDynamic(Value) : TNumericEntryTraits<T>::Format(Value, Range.Precision);
     if (!Suffix.IsEmpty())
     {
         Text += Suffix;
@@ -640,15 +622,9 @@ String TNumericEntry<T>::FormatValue() const
 }
 
 template<typename T>
-T TNumericEntry<T>::SanitizeValue(T InValue) const
-{
-    return Math::Clamp(InValue, MinValue, MaxValue);
-}
-
-template<typename T>
 void TNumericEntry<T>::ApplyValue(T InValue)
 {
-    const T NewValue = SanitizeValue(InValue);
+    const T NewValue = Range.Sanitize(InValue);
     if (NewValue == Value)
     {
         return;

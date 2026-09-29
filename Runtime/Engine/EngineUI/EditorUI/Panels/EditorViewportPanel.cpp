@@ -74,6 +74,7 @@ constexpr FDebugViewEntry DEBUG_VIEW_ENTRIES[] =
 };
 
 constexpr int32 NUM_DEBUG_VIEW_ENTRIES       = static_cast<int32>(ARRAY_COUNT(DEBUG_VIEW_ENTRIES));
+
 constexpr int32 FIRST_SHADOW_DEBUG_VIEW      = 8;
 constexpr int32 FIRST_RAY_TRACING_DEBUG_VIEW = 11;
 
@@ -222,16 +223,13 @@ void FViewportTransportLayer::OnArrange(const FRectangle& AllottedBounds)
 
     const FRectangle TransportBounds(IntVector2(PositionX, PositionY), Size.X, Size.Y);
 
-    Transport->Tick(TransportBounds);
+    Transport->Arrange(TransportBounds);
     SetContentRectangle(TransportBounds);
 }
 
-void FViewportTransportLayer::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FViewportTransportLayer::VisitChildren(FChildVisitor& Visitor, EChildOrder /*Order*/) const
 {
-    if (Transport)
-    {
-        OutChildren.Add(Transport);
-    }
+    return VisitChild(Visitor, Transport);
 }
 
 int32 FViewportTransportLayer::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -243,16 +241,6 @@ int32 FViewportTransportLayer::OnDraw(const FDrawGeometry& AllottedGeometry, FDr
 
     const FDrawGeometry TransportGeometry(Transport->GetContentRectangle(), AllottedGeometry.Scale);
     return Transport->Draw(TransportGeometry, OutCommandList, LayerId);
-}
-
-void FViewportTransportLayer::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
-{
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
-    if (Transport && Transport->IsVisible())
-    {
-        Transport->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-    }
 }
 
 int32 FViewportTransportLayer::GetLeadingRight(const FRectangle& AllottedBounds) const

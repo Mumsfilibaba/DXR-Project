@@ -1,4 +1,5 @@
 #include "ConsoleTests.h"
+#include "UITestUtils.h"
 #include "ConsoleTestVariables.h"
 #include "StubPlatformApplication.h"
 
@@ -58,7 +59,7 @@ static void TypeText(const TSharedPtr<FConsole>& Console, const CHAR* Text)
 static void LayOutAndDraw(const TSharedPtr<FConsole>& Console, FDrawCommandList& OutCommandList)
 {
     Console->PrepareDesiredSize();
-    Console->Tick(FRectangle(IntVector2(0, 0), 1280, 720));
+    Console->Arrange(FRectangle(IntVector2(0, 0), 1280, 720));
 
     OutCommandList.Reset();
     Console->OnDraw(FDrawGeometry(Console->GetContentRectangle(), 1.0f), OutCommandList, 0);
@@ -160,7 +161,7 @@ bool ConsoleLayout_Test()
     Console->GetLogBuffer().Log(ELogSeverity::Info, "A line of log");
 
     Console->PrepareDesiredSize();
-    Console->Tick(FRectangle(IntVector2(0, 0), 1280, 720));
+    Console->Arrange(FRectangle(IntVector2(0, 0), 1280, 720));
 
     TEST_SECTION("The console takes the full width but only the text-area height");
     TEST_EXPECT_EQ(Console->GetContentRectangle().Width, 1280);
@@ -180,7 +181,7 @@ bool ConsoleLayout_Test()
     TSharedPtr<FConsole> SmallConsole = CreateConsole();
     SmallConsole->SetIsOpen(true);
     SmallConsole->PrepareDesiredSize();
-    SmallConsole->Tick(FRectangle(IntVector2(0, 0), 640, 200));
+    SmallConsole->Arrange(FRectangle(IntVector2(0, 0), 640, 200));
 
     TEST_EXPECT_EQ(SmallConsole->GetContentRectangle().Height, 200);
 
@@ -591,7 +592,7 @@ bool ConsoleCursorShape_Test()
     TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
     Console->PrepareDesiredSize();
-    Console->Tick(FRectangle(IntVector2(0, 0), 1280, 720));
+    Console->Arrange(FRectangle(IntVector2(0, 0), 1280, 720));
 
     TEST_SECTION("An element has no opinion on the shape unless it says so");
     ECursor ElementCursor = ECursor::None;
@@ -618,7 +619,7 @@ bool ConsoleCursorShape_Test()
     const IntVector2 RingPoint(TextBounds.Position.X - 5, TextBounds.Position.Y + 2);
 
     FElementPath RingPath;
-    Console->FindChildrenContainingPoint(RingPoint, RingPath);
+    Console->HitTest(RingPoint, RingPath);
 
     TEST_EXPECT(!RingPath.IsEmpty());
     TEST_EXPECT(!RingPath.Contains(Console->GetInput()));
@@ -626,7 +627,7 @@ bool ConsoleCursorShape_Test()
 
     TEST_SECTION("The area above it leaves the arrow, since nothing on that path edits text");
     FElementPath LogPath;
-    Console->FindChildrenContainingPoint(Console->GetScrollBox()->GetContentRectangle().Position, LogPath);
+    Console->HitTest(Console->GetScrollBox()->GetContentRectangle().Position, LogPath);
 
     TEST_EXPECT(!LogPath.IsEmpty());
     TEST_EXPECT(FApplication::ResolveCursor(LogPath) == ECursor::Arrow);
@@ -714,7 +715,7 @@ bool ConsoleInputFieldSurvives_Test()
 
     TEST_SECTION("Its geometry survives the translation into triangles");
     TEST_EXPECT(CommandList[InputBoxIndex].CornerRadius.GetLargest() > 0.0f);
-    TEST_EXPECT(!DrawData.GetShapeVertices().IsEmpty());
+    TEST_EXPECT(!GetShapeVertices(DrawData).IsEmpty());
 
     bool bFoundUnclippedShape = false;
     for (const FUIDrawBatch& Batch : DrawData.GetBatches())
@@ -781,7 +782,7 @@ bool ConsoleModalInput_Test()
     TEST_EXPECT(!Console->CapturesAllInput());
 
     FElementPath ClosedPath;
-    Window->FindChildrenContainingPoint(IntVector2(640, 600), ClosedPath);
+    Window->HitTest(IntVector2(640, 600), ClosedPath);
     TEST_EXPECT(ClosedPath.Contains(Content));
 
     TEST_SECTION("An open console reports that it takes everything");
@@ -791,14 +792,14 @@ bool ConsoleModalInput_Test()
 
     TEST_SECTION("A click below the console never reaches the content underneath it");
     FElementPath BelowConsolePath;
-    Window->FindChildrenContainingPoint(IntVector2(640, 600), BelowConsolePath);
+    Window->HitTest(IntVector2(640, 600), BelowConsolePath);
 
     TEST_EXPECT(!BelowConsolePath.Contains(Content));
     TEST_EXPECT(!BelowConsolePath.IsEmpty());
 
     TEST_SECTION("A click on the console still reaches the console");
     FElementPath OnConsolePath;
-    Window->FindChildrenContainingPoint(IntVector2(640, 40), OnConsolePath);
+    Window->HitTest(IntVector2(640, 40), OnConsolePath);
 
     TEST_EXPECT(OnConsolePath.Contains(Console));
     TEST_EXPECT(!OnConsolePath.Contains(Content));
@@ -808,7 +809,7 @@ bool ConsoleModalInput_Test()
     FApplication::LayoutWindow(Window);
 
     FElementPath ReopenedPath;
-    Window->FindChildrenContainingPoint(IntVector2(640, 600), ReopenedPath);
+    Window->HitTest(IntVector2(640, 600), ReopenedPath);
     TEST_EXPECT(ReopenedPath.Contains(Content));
 
     TEST_END();
@@ -846,7 +847,7 @@ bool ConsoleClickFocus_Test()
 
     TEST_SECTION("Clicking the log leaves it there, since nothing along that path reads a keyboard");
     FElementPath LogPath;
-    Window->FindChildrenContainingPoint(Console->GetScrollBox()->GetContentRectangle().Position, LogPath);
+    Window->HitTest(Console->GetScrollBox()->GetContentRectangle().Position, LogPath);
 
     TEST_EXPECT(!LogPath.IsEmpty());
     TEST_EXPECT(!LogPath.Contains(Input));
@@ -856,7 +857,7 @@ bool ConsoleClickFocus_Test()
 
     TEST_SECTION("So does clicking below the console, where the window is all there is under the cursor");
     FElementPath BelowPath;
-    Window->FindChildrenContainingPoint(IntVector2(640, 600), BelowPath);
+    Window->HitTest(IntVector2(640, 600), BelowPath);
 
     TEST_EXPECT(!BelowPath.Contains(Content));
 
@@ -872,7 +873,7 @@ bool ConsoleClickFocus_Test()
 
     TEST_SECTION("Clicking the field itself keeps it focused");
     FElementPath FieldPath;
-    Window->FindChildrenContainingPoint(Input->GetContentRectangle().Position, FieldPath);
+    Window->HitTest(Input->GetContentRectangle().Position, FieldPath);
 
     TEST_EXPECT(FieldPath.Contains(Input));
 
@@ -1003,7 +1004,7 @@ bool ConsoleTypeAndExecute_Test()
 
     TEST_SECTION("The tree lays out and draws without a device");
     Console->PrepareDesiredSize();
-    Console->Tick(FRectangle(IntVector2(0, 0), 1280, 720));
+    Console->Arrange(FRectangle(IntVector2(0, 0), 1280, 720));
 
     FDrawCommandList CommandList;
     Console->OnDraw(FDrawGeometry(Console->GetContentRectangle(), 1.0f), CommandList, 0);

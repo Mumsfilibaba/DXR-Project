@@ -4,29 +4,20 @@
 #include "Application/Docking/DockWindowManager.h"
 #include "Application/Input/Keys.h"
 
-TSharedPtr<FDockInputHandler> FDockInputHandler::Register()
+void FDockInputHandler::OnUnregistered()
 {
-    TSharedPtr<FDockInputHandler> InputHandler = MakeSharedPtr<FDockInputHandler>();
-    if (FApplication::IsInitialized())
-    {
-        FApplication::Get().RegisterInputHandler(InputHandler);
-    }
-
-    return InputHandler;
-}
-
-void FDockInputHandler::Unregister(const TSharedPtr<FDockInputHandler>& InputHandler)
-{
-    if (InputHandler && FApplication::IsInitialized())
-    {
-        FApplication::Get().UnregisterInputHandler(InputHandler);
-    }
-
     if (FDockDragState::IsInitialized())
     {
         FDockDragState::Get().CancelDrag();
     }
 }
+
+FDockInputHandler::FDockInputHandler()
+    : FInputHandler()
+{
+}
+
+FDockInputHandler::~FDockInputHandler() = default;
 
 bool FDockInputHandler::OnKeyDown(const FKeyEvent& KeyEvent)
 {

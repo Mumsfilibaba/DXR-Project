@@ -144,3 +144,25 @@ constexpr uint64 HashIntegers(const T* Entries)
 
     return Result;
 }
+
+/**
+ * @brief Hashes a run of bytes with 64-bit FNV-1a, which is quick for the short keys it serves, such as text looked
+ * up in a cache, and spreads them well enough that the low bits can pick a cache set.
+ *
+ * @param Data     The bytes to hash.
+ * @param NumBytes How many bytes there are.
+ * @return The hash.
+ */
+NODISCARD inline uint64 HashBytes(const void* Data, uint64 NumBytes)
+{
+    const uint8* Bytes = static_cast<const uint8*>(Data);
+
+    uint64 Hash = 14695981039346656037ull;
+    for (uint64 Index = 0; Index < NumBytes; ++Index)
+    {
+        Hash ^= static_cast<uint64>(Bytes[Index]);
+        Hash *= 1099511628211ull;
+    }
+
+    return Hash;
+}

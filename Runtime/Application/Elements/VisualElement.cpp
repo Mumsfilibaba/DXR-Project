@@ -1,4 +1,5 @@
 #include "Application/Elements/VisualElement.h"
+#include "Application/Elements/ScrollBox.h"
 #include "Application/ElementPath.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Draw/DrawCache.h"
@@ -29,21 +30,29 @@ static TAutoConsoleVariable<int32> CVarDrawCacheMaxDirtyFrames(
     3,
     EConsoleVariableFlags::Default);
 
+static uint64 GHitTestGeneration = 0;
+
+static IntVector2            GArrangeTranslation(0, 0);
+
+static const FVisualElement* GArrangeTranslationOwner = nullptr;
+
+uint64 FVisualElement::GetHitTestGeneration()
+{
+    return GHitTestGeneration;
+}
+
 FVisualElement::FVisualElement()
     : TSharedFromThis<FVisualElement>()
-    , Visibility(EVisibility::Visible)
-    , ActivationPolicy(EElementActivationPolicy::DoNotAutoFocusOnWindowActivate)
     , ContentRectangle()
     , CachedDesiredSize()
     , ParentElement()
     , DrawCacheBlock(nullptr)
-    , DrawCachePolicy(EDrawCachePolicy::Auto)
     , LastRecordedCommandCount(0)
-    , bDrawCacheBlocked(false)
+    , Flags(EElementFlags::DesiredSizeDirty | EElementFlags::ArrangeDirty | EElementFlags::PaintDirty | EElementFlags::HitTestable)
+    , Visibility(EVisibility::Visible)
+    , DrawCachePolicy(EDrawCachePolicy::Auto)
     , CleanPaintFrameCount(0)
     , RecentDirtyFrameCount(0)
-    , bDesiredSizeDirty(true)
-    , bPaintDirty(true)
 {
 }
 
@@ -51,20 +60,77 @@ FVisualElement::~FVisualElement()
 {
 }
 
-void FVisualElement::Tick(const FRectangle& AssignedBounds)
+void FVisualElement::Arrange(const FRectangle& AssignedBounds)
 {
+    if (!IsArrangeDirty() && ContentRectangle == AssignedBounds)
+    {
+        return;
+    }
+
+    const FRectangle PreviousRectangle = ContentRectangle;
+
     SetContentRectangle(AssignedBounds);
+    ClearElementFlags(EElementFlags::ArrangeDirty);
+
+    const FVisualElement* const OuterOwner       = GArrangeTranslationOwner;
+    const IntVector2            OuterTranslation = GArrangeTranslation;
+
+    const bool bOnlyMoved = PreviousRectangle.Width == AssignedBounds.Width && PreviousRectangle.Height == AssignedBounds.Height;
+    GArrangeTranslationOwner = this;
+    GArrangeTranslation      = bOnlyMoved ? AssignedBounds.Position - PreviousRectangle.Position : IntVector2(0, 0);
+
     OnArrange(AssignedBounds);
+
+    GArrangeTranslationOwner = OuterOwner;
+    GArrangeTranslation      = OuterTranslation;
 }
 
-bool FVisualElement::IsWindow() const
+void FVisualElement::InvalidateArrange()
 {
-    return false;
+    RequestContinuousArrange();
 }
 
-bool FVisualElement::IsInteractive() const
+void FVisualElement::RequestContinuousArrange() const
 {
-    return false;
+    SetElementFlags(EElementFlags::ArrangeDirty);
+
+    for (FVisualElement* Parent = GetLiveParent(); Parent && !Parent->IsArrangeDirty(); Parent = Parent->GetLiveParent())
+    {
+        Parent->SetElementFlags(EElementFlags::ArrangeDirty);
+    }
+}
+
+FScrollBox* FVisualElement::AsScrollBox()
+{
+    return HasAnyElementFlags(EElementFlags::IsScrollBox) ? static_cast<FScrollBox*>(this) : nullptr;
+}
+
+void FVisualElement::SetHitTestable(bool bInHitTestable)
+{
+    ++GHitTestGeneration;
+
+    if (bInHitTestable)
+    {
+        SetElementFlags(EElementFlags::HitTestable);
+    }
+    else
+    {
+        ClearElementFlags(EElementFlags::HitTestable);
+    }
+}
+
+void FVisualElement::EnableHitTestOverflow()
+{
+    SetElementFlags(EElementFlags::HitTestOverflow);
+    PropagateHitTestOverflow();
+}
+
+void FVisualElement::PropagateHitTestOverflow()
+{
+    for (FVisualElement* Parent = GetLiveParent(); Parent && !Parent->HasAnyElementFlags(EElementFlags::HitTestOverflow); Parent = Parent->GetLiveParent())
+    {
+        Parent->SetElementFlags(EElementFlags::HitTestOverflow);
+    }
 }
 
 bool FVisualElement::CapturesAllInput() const
@@ -171,8 +237,18 @@ void FVisualElement::OnArrange(const FRectangle& /*AllottedBounds*/)
 {
 }
 
-void FVisualElement::GetChildren(TArray<TSharedPtr<FVisualElement>>& /*OutChildren*/) const
+EChildVisit FVisualElement::VisitChildren(FChildVisitor& /*Visitor*/, EChildOrder /*Order*/) const
 {
+    return EChildVisit::Continue;
+}
+
+void FVisualElement::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+{
+    ForEachChild([&OutChildren](FVisualElement& Child)
+    {
+        OutChildren.Add(Child.AsSharedPtr());
+        return EChildVisit::Continue;
+    });
 }
 
 int32 FVisualElement::OnDraw(const FDrawGeometry& /*AllottedGeometry*/, FDrawCommandList& /*OutCommandList*/, int32 LayerId) const
@@ -186,23 +262,29 @@ int32 FVisualElement::Draw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
     {
         OutCommandList.BlockDrawCache();
 
-        bPaintDirty = false;
+        ClearElementFlags(EElementFlags::PaintDirty);
         return OnDraw(AllottedGeometry, OutCommandList, LayerId);
     }
 
     if (!CVarDrawCacheEnable.GetValue() || OutCommandList.IsDrawCacheSuppressed())
     {
-        bPaintDirty = false;
+        ClearElementFlags(EElementFlags::PaintDirty);
         return OnDraw(AllottedGeometry, OutCommandList, LayerId);
     }
 
-    if (!bPaintDirty && DrawCacheBlock)
+    if (!IsPaintDirty() && DrawCacheBlock)
     {
         const int32       ClipDepth     = OutCommandList.GetClipDepth();
         const FRectangle& ClipRectangle = OutCommandList.GetCurrentClipRectangle();
 
-        if (DrawCacheBlock->CanReplay(AllottedGeometry, LayerId, ClipDepth, ClipRectangle))
+        IntVector2 ReplayOffset(0, 0);
+        if (DrawCacheBlock->CanReplay(AllottedGeometry, LayerId, ClipDepth, ClipRectangle, ReplayOffset))
         {
+            if (ReplayOffset != IntVector2(0, 0))
+            {
+                DrawCacheBlock->Translate(ReplayOffset);
+            }
+
             DrawCacheBlock->LastUsedFrame = DrawCacheRegistry::GetCurrentFrame();
 
             CleanPaintFrameCount = TNumericLimits<uint8>::Max();
@@ -216,7 +298,7 @@ int32 FVisualElement::Draw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
     {
         DrawCacheBlock.Reset();
 
-        bPaintDirty = false;
+        ClearElementFlags(EElementFlags::PaintDirty);
         const int32 MaxLayerId = OnDraw(AllottedGeometry, OutCommandList, LayerId);
 
         NoteWalked(OutCommandList.GetCommands().Size() - CommandBase);
@@ -225,10 +307,10 @@ int32 FVisualElement::Draw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
 
     const FDrawCommandList::FDrawCacheMarker Marker = OutCommandList.BeginDrawCache();
 
-    bPaintDirty = false;
+    ClearElementFlags(EElementFlags::PaintDirty);
     const int32 MaxLayerId = OnDraw(AllottedGeometry, OutCommandList, LayerId);
 
-    const bool  bStillClean  = !bPaintDirty;
+    const bool  bStillClean  = !IsPaintDirty();
     const int32 CommandCount = OutCommandList.GetCommands().Size() - CommandBase;
 
     const bool bWorthKeeping = bStillClean
@@ -254,7 +336,7 @@ int32 FVisualElement::Draw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
 
     if (OutCommandList.GetDrawCacheBlockCounter() != Marker.BlockCounter)
     {
-        bDrawCacheBlocked = true;
+        SetElementFlags(EElementFlags::DrawCacheBlocked);
     }
 
     NoteWalked(CommandCount);
@@ -268,7 +350,7 @@ bool FVisualElement::ShouldUseDrawCache() const
         return true;
     }
 
-    if (bDrawCacheBlocked)
+    if (HasAnyElementFlags(EElementFlags::DrawCacheBlocked))
     {
         return false;
     }
@@ -313,30 +395,25 @@ int32 FVisualElement::GetContentTopInset() const
 
 IntVector2 FVisualElement::PrepareDesiredSize()
 {
-    if (!bDesiredSizeDirty)
+    if (!IsDesiredSizeDirty())
     {
         return CachedDesiredSize;
     }
 
-    TArray<TSharedPtr<FVisualElement>> Children;
-    GetChildren(Children);
-
-    for (const TSharedPtr<FVisualElement>& Child : Children)
+    ForEachChild([](FVisualElement& Child)
     {
-        if (Child)
-        {
-            Child->PrepareDesiredSize();
-        }
-    }
+        Child.PrepareDesiredSize();
+        return EChildVisit::Continue;
+    });
 
-    bDesiredSizeDirty = false;
+    ClearElementFlags(EElementFlags::DesiredSizeDirty);
 
     const IntVector2 DesiredSize = ComputeDesiredSize();
     if (DesiredSize != CachedDesiredSize)
     {
         CachedDesiredSize = DesiredSize;
 
-        if (TSharedPtr<FVisualElement> Parent = ParentElement.ToSharedPtr())
+        if (FVisualElement* Parent = GetLiveParent())
         {
             Parent->InvalidateDesiredSize();
         }
@@ -348,17 +425,18 @@ IntVector2 FVisualElement::PrepareDesiredSize()
 void FVisualElement::InvalidateDesiredSize()
 {
     InvalidatePaint();
+    InvalidateArrange();
 
-    bDrawCacheBlocked = false;
+    ClearElementFlags(EElementFlags::DrawCacheBlocked);
 
-    if (bDesiredSizeDirty)
+    if (IsDesiredSizeDirty())
     {
         return;
     }
 
-    bDesiredSizeDirty = true;
+    SetElementFlags(EElementFlags::DesiredSizeDirty);
 
-    if (TSharedPtr<FVisualElement> Parent = ParentElement.ToSharedPtr())
+    if (FVisualElement* Parent = GetLiveParent())
     {
         Parent->InvalidateDesiredSize();
     }
@@ -366,12 +444,14 @@ void FVisualElement::InvalidateDesiredSize()
 
 void FVisualElement::InvalidatePaint()
 {
-    if (bPaintDirty)
+    ++GHitTestGeneration;
+
+    if (IsPaintDirty())
     {
         return;
     }
 
-    bPaintDirty          = true;
+    SetElementFlags(EElementFlags::PaintDirty);
     CleanPaintFrameCount = 0;
 
     if (RecentDirtyFrameCount < TNumericLimits<uint8>::Max())
@@ -379,7 +459,7 @@ void FVisualElement::InvalidatePaint()
         ++RecentDirtyFrameCount;
     }
 
-    if (TSharedPtr<FVisualElement> Parent = ParentElement.ToSharedPtr())
+    if (FVisualElement* Parent = GetLiveParent())
     {
         Parent->InvalidatePaint();
     }
@@ -387,12 +467,14 @@ void FVisualElement::InvalidatePaint()
 
 void FVisualElement::RequestContinuousPaint() const
 {
-    bPaintDirty          = true;
+    ++GHitTestGeneration;
+
+    SetElementFlags(EElementFlags::PaintDirty);
     CleanPaintFrameCount = 0;
 
-    for (FVisualElement* Parent = GetParentElement().Get(); Parent; Parent = Parent->GetParentElement().Get())
+    for (FVisualElement* Parent = GetLiveParent(); Parent; Parent = Parent->GetLiveParent())
     {
-        Parent->bPaintDirty          = true;
+        Parent->SetElementFlags(EElementFlags::PaintDirty);
         Parent->CleanPaintFrameCount = 0;
     }
 }
@@ -434,18 +516,44 @@ void FVisualElement::FindParentElements(FElementPath& OutRootPath)
     OutRootPath.Add(Visibility, AsSharedPtr());
 }
 
-void FVisualElement::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+bool FVisualElement::HitTest(const IntVector2& ClientPosition, FElementPath& OutPath)
 {
-    if (ContentRectangle.EncapsulatesPoint(ClientPosition))
+    if (!IsVisible() || !IsHitTestable())
     {
-        OutChildElements.Add(Visibility, AsSharedPtr());
+        return false;
     }
+
+    if (!ContentRectangle.EncapsulatesPoint(ClientPosition))
+    {
+        if (!HasAnyElementFlags(EElementFlags::HitTestOverflow))
+        {
+            return false;
+        }
+
+        const int32 PathSize = OutPath.Size();
+        HitTestChildren(ClientPosition, OutPath);
+        return OutPath.Size() != PathSize;
+    }
+
+    OutPath.Add(Visibility, AsSharedPtr());
+    HitTestChildren(ClientPosition, OutPath);
+    return true;
+}
+
+void FVisualElement::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+{
+    ForEachChild([&ClientPosition, &OutPath](FVisualElement& Child)
+    {
+        return Child.HitTest(ClientPosition, OutPath) ? EChildVisit::Stop : EChildVisit::Continue;
+    }, EChildOrder::FrontToBack);
 }
 
 void FVisualElement::SetVisibility(EVisibility InVisibility)
 {
     if (Visibility != InVisibility)
     {
+        ++GHitTestGeneration;
+
         Visibility = InVisibility;
         InvalidateDesiredSize();
     }
@@ -453,8 +561,15 @@ void FVisualElement::SetVisibility(EVisibility InVisibility)
 
 void FVisualElement::SetParentElement(const TWeakPtr<FVisualElement>& InParentElement)
 {
+    ++GHitTestGeneration;
+
     TSharedPtr<FVisualElement> PreviousParent = ParentElement.ToSharedPtr();
     ParentElement = InParentElement;
+
+    if (HasAnyElementFlags(EElementFlags::HitTestOverflow))
+    {
+        PropagateHitTestOverflow();
+    }
 
     InvalidateDesiredSize();
 
@@ -472,11 +587,31 @@ void FVisualElement::SetParentElement(const TWeakPtr<FVisualElement>& InParentEl
 
 void FVisualElement::SetContentRectangle(const FRectangle& InContentRectangle)
 {
+    const bool       bPlacedByParent = GArrangeTranslationOwner != nullptr && GArrangeTranslationOwner != this && GArrangeTranslationOwner == GetLiveParent();
+    const IntVector2 ParentMove      = bPlacedByParent ? GArrangeTranslation : IntVector2(0, 0);
+    const bool       bParentMoved    = ParentMove != IntVector2(0, 0);
+
     if (ContentRectangle == InContentRectangle)
     {
+        if (bParentMoved)
+        {
+            InvalidatePaint();
+        }
+
         return;
     }
 
+    const bool bCarriedAlong = bParentMoved
+        && InContentRectangle.Width == ContentRectangle.Width
+        && InContentRectangle.Height == ContentRectangle.Height
+        && InContentRectangle.Position - ContentRectangle.Position == ParentMove;
+
+    ++GHitTestGeneration;
+
     ContentRectangle = InContentRectangle;
-    InvalidatePaint();
+
+    if (!bCarriedAlong)
+    {
+        InvalidatePaint();
+    }
 }

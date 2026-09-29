@@ -96,9 +96,6 @@ struct FUIHeaderStyle
     /** @brief The one thin stroke around the nested panel. */
     FFloatColor Border = FFloatColor(0.19f, 0.19f, 0.19f, 1.0f);
 
-    /** @brief Unused once the nested panel carries its own outline. Kept so older callers still compile. */
-    FFloatColor BottomBorder = FFloatColor(0.19f, 0.19f, 0.19f, 1.0f);
-
     /** @brief The space between the header's edges and its label. */
     FMargin FramePadding = FMargin(10, 8, 10, 8);
 

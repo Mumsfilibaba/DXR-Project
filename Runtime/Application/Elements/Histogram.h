@@ -3,6 +3,7 @@
 #include "Core/Containers/String.h"
 #include "Application/Elements/VisualElement.h"
 #include "Application/Style/UIStyle.h"
+#include "Application/Text/CachedTextMetrics.h"
 #include "Application/Text/IFontFace.h"
 
 enum class EHistogramDrawMode : uint8
@@ -164,24 +165,26 @@ private:
     NODISCARD int32 ResolveColumnWidth(int32 AvailableWidth) const;
     NODISCARD int32 ResolveSampleAt(const IntVector2& ClientPosition, bool bClampToStrip) const;
 
-    TSharedPtr<IFontFace> Font;
-    String                Label;
-    TArray<float>         Samples;
-    FFloatColor           BarColor;
-    FFloatColor           BackgroundColor;
-    FFloatColor           WarningColor;
-    float                 MinValue;
-    float                 MaxValue;
-    float                 WarningThreshold;
-    int32                 Capacity;
-    int32                 OldestSample;
-    int32                 NumSamples;
-    int32                 PreferredHeight;
-    int32                 HoveredSample;
-    int32                 SelectedSample;
-    FFloatColor           SelectedBarColor;
-    EHistogramDrawMode    DrawMode;
-    float                 LineThickness;
-    bool                  bAutoScale;
-    bool                  bIsScrubbing;
+    TSharedPtr<IFontFace>      Font;
+    String                     Label;
+    mutable FCachedTextMetrics LabelMetrics;
+    mutable FCachedTextMetrics ValueMetrics;
+    TArray<float>              Samples;
+    FFloatColor                BarColor;
+    FFloatColor                BackgroundColor;
+    FFloatColor                WarningColor;
+    float                      MinValue;
+    float                      MaxValue;
+    float                      WarningThreshold;
+    int32                      Capacity;
+    int32                      OldestSample;
+    int32                      NumSamples;
+    int32                      PreferredHeight;
+    int32                      HoveredSample;
+    int32                      SelectedSample;
+    FFloatColor                SelectedBarColor;
+    EHistogramDrawMode         DrawMode;
+    float                      LineThickness;
+    bool                       bAutoScale;
+    bool                       bIsScrubbing;
 };

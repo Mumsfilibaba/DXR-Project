@@ -4,6 +4,7 @@
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
 
+#include <Core/Algorithms/Algorithm.h>
 #include <Core/Containers/SharedPtr.h>
 #include <Application/Draw/DrawCommandList.h>
 #include <Application/Graph/GraphCanvas.h>
@@ -23,7 +24,7 @@ static TSharedPtr<IFontFace> CreateFont()
 static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRectangle& Bounds)
 {
     Element->PrepareDesiredSize();
-    Element->Tick(Bounds);
+    Element->Arrange(Bounds);
 }
 
 static FCursorEvent MakeMoveEvent(const IntVector2& ClientPosition)
@@ -251,12 +252,12 @@ bool GraphLayoutLayered_Test()
     TArray<Vector2> Positions;
 
     TEST_SECTION("An empty graph lays out to nothing at all");
-    FGraphLayout::LayoutLayered(MakeArrayView(NoSizes), MakeArrayView(NoEdges), Settings, Positions);
+    FLayeredGraphLayout::Layout(MakeArrayView(NoSizes), MakeArrayView(NoEdges), Settings, Positions);
     TEST_EXPECT(Positions.IsEmpty());
 
     TEST_SECTION("A lone node sits at the origin");
     TArray<Vector2> OneSize = { Vector2(100.0f, 50.0f) };
-    FGraphLayout::LayoutLayered(MakeArrayView(OneSize), MakeArrayView(NoEdges), Settings, Positions);
+    FLayeredGraphLayout::Layout(MakeArrayView(OneSize), MakeArrayView(NoEdges), Settings, Positions);
 
     TEST_EXPECT_EQ(Positions.Size(), 1);
     TEST_EXPECT_EQ(Positions[0], Vector2(0.0f, 0.0f));
@@ -278,7 +279,7 @@ bool GraphLayoutLayered_Test()
         FGraphLayoutEdge(2, 3),
     };
 
-    FGraphLayout::LayoutLayered(MakeArrayView(Sizes), MakeArrayView(Edges), Settings, Positions);
+    FLayeredGraphLayout::Layout(MakeArrayView(Sizes), MakeArrayView(Edges), Settings, Positions);
 
     TEST_SECTION("Rank puts every node one column right of the furthest thing feeding it");
     TEST_EXPECT_EQ(Positions.Size(), 4);
@@ -296,7 +297,7 @@ bool GraphLayoutLayered_Test()
 
     TEST_SECTION("The layout is a function of its input, so the same graph lays out the same way twice");
     TArray<Vector2> SecondRun;
-    FGraphLayout::LayoutLayered(MakeArrayView(Sizes), MakeArrayView(Edges), Settings, SecondRun);
+    FLayeredGraphLayout::Layout(MakeArrayView(Sizes), MakeArrayView(Edges), Settings, SecondRun);
 
     for (int32 Index = 0; Index < Positions.Size(); ++Index)
     {
@@ -312,7 +313,7 @@ bool GraphLayoutLayered_Test()
     };
 
     TArray<Vector2> ThreeSizes = { Vector2(100.0f, 50.0f), Vector2(100.0f, 50.0f), Vector2(100.0f, 50.0f) };
-    FGraphLayout::LayoutLayered(MakeArrayView(ThreeSizes), MakeArrayView(SkippingEdges), Settings, Positions);
+    FLayeredGraphLayout::Layout(MakeArrayView(ThreeSizes), MakeArrayView(SkippingEdges), Settings, Positions);
 
     TEST_EXPECT_EQ(Positions[0].X, 0.0f);
     TEST_EXPECT_EQ(Positions[1].X, 200.0f);
@@ -322,8 +323,65 @@ bool GraphLayoutLayered_Test()
     TArray<Vector2> WideSizes = { Vector2(300.0f, 50.0f), Vector2(100.0f, 50.0f) };
     TArray<FGraphLayoutEdge> OneEdge = { FGraphLayoutEdge(0, 1) };
 
-    FGraphLayout::LayoutLayered(MakeArrayView(WideSizes), MakeArrayView(OneEdge), Settings, Positions);
+    FLayeredGraphLayout::Layout(MakeArrayView(WideSizes), MakeArrayView(OneEdge), Settings, Positions);
     TEST_EXPECT_EQ(Positions[1].X, 380.0f);
+
+    TEST_SECTION("Counting crossings as inversions agrees with testing every pair, shared ends included");
+    {
+        TArray<FLayerEdge> LayerEdges;
+        uint32 State = 12345u;
+        for (int32 Index = 0; Index < 60; ++Index)
+        {
+            State = (State * 1664525u) + 1013904223u;
+            const int32 Upper = static_cast<int32>((State >> 8) % 9u);
+            State = (State * 1664525u) + 1013904223u;
+            const int32 Lower = static_cast<int32>((State >> 8) % 11u);
+            LayerEdges.Add(FLayerEdge{ Upper, Lower });
+        }
+
+        Algorithm::Sort(LayerEdges, [](const FLayerEdge& A, const FLayerEdge& B)
+        {
+            return A.UpperPosition != B.UpperPosition ? A.UpperPosition < B.UpperPosition : A.LowerPosition < B.LowerPosition;
+        });
+
+        int64 PairwiseCrossings = 0;
+        for (int32 First = 0; First < LayerEdges.Size(); ++First)
+        {
+            for (int32 Second = First + 1; Second < LayerEdges.Size(); ++Second)
+            {
+                const int32 UpperDelta = LayerEdges[First].UpperPosition - LayerEdges[Second].UpperPosition;
+                const int32 LowerDelta = LayerEdges[First].LowerPosition - LayerEdges[Second].LowerPosition;
+                PairwiseCrossings += (UpperDelta * LowerDelta < 0) ? 1 : 0;
+            }
+        }
+
+        TEST_EXPECT_EQ(FLayeredGraphLayout::CountCrossings(MakeArrayView(LayerEdges), 11), PairwiseCrossings);
+    }
+
+    TEST_SECTION("A cycle is cut where it closes, so its nodes still land in distinct, finite columns");
+    TArray<FGraphLayoutEdge> CycleEdges = { FGraphLayoutEdge(0, 1), FGraphLayoutEdge(1, 2), FGraphLayoutEdge(2, 0) };
+    FLayeredGraphLayout::Layout(MakeArrayView(ThreeSizes), MakeArrayView(CycleEdges), Settings, Positions);
+
+    TEST_EXPECT_EQ(Positions[0].X, 0.0f);
+    TEST_EXPECT_EQ(Positions[1].X, 200.0f);
+    TEST_EXPECT_EQ(Positions[2].X, 400.0f);
+
+    TEST_SECTION("Seed keys order a column where nothing else decides it");
+    TArray<int32> ReversedKeys = { 2, 1, 0 };
+    FLayeredGraphLayout::Layout(MakeArrayView(ThreeSizes), MakeArrayView(NoEdges), Settings, Positions, MakeArrayView(ReversedKeys));
+
+    TEST_EXPECT(Positions[2].Y < Positions[1].Y);
+    TEST_EXPECT(Positions[1].Y < Positions[0].Y);
+
+    TEST_SECTION("A source can be told to keep up with the node before it");
+    FGraphLayoutSettings FollowSettings = Settings;
+    FollowSettings.bSourcesFollowPreviousNode = true;
+
+    TArray<FGraphLayoutEdge> ChainThenSource = { FGraphLayoutEdge(0, 1) };
+    FLayeredGraphLayout::Layout(MakeArrayView(ThreeSizes), MakeArrayView(ChainThenSource), FollowSettings, Positions);
+
+    TEST_EXPECT_EQ(Positions[1].X, 200.0f);
+    TEST_EXPECT_EQ(Positions[2].X, 200.0f);
 
     TEST_END();
 }
@@ -490,18 +548,20 @@ bool GraphCanvasView_Test()
 
     for (const FDrawCommand& Command : RoundedCommands.GetCommands())
     {
-        if (Command.Type == EDrawCommandType::ConvexPolygon && Command.HasTint(FFloatColor::Red))
+        if (Command.Type == EDrawCommandType::CornerWedges && Command.HasTint(FFloatColor::Red))
         {
             ++WedgeCount;
             TopWedgeLayer = Math::Max(TopWedgeLayer, Command.LayerId);
+
+            TEST_EXPECT(Command.CornerRadius == FCornerRadii(CanvasRadius));
         }
     }
 
-    TEST_EXPECT_EQ(WedgeCount, 4);
+    TEST_EXPECT_EQ(WedgeCount, 1);
 
     for (const FDrawCommand& Command : RoundedCommands.GetCommands())
     {
-        if (Command.Type != EDrawCommandType::ConvexPolygon)
+        if (Command.Type != EDrawCommandType::CornerWedges)
         {
             TEST_EXPECT(Command.LayerId <= TopWedgeLayer);
         }

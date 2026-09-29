@@ -48,6 +48,85 @@ DECLARE_DELEGATE(FOnHierarchyRenameCommitted, const TSharedPtr<FTreeItem>& /*Ite
 /** @brief Called with the dragged rows once they were dropped, whose target is null for the space below the rows. */
 DECLARE_DELEGATE(FOnHierarchyItemsDropped, const TArray<TSharedPtr<FTreeItem>>& /*Items*/, const TSharedPtr<FTreeItem>& /*TargetItem*/);
 
+class FEditorSceneHierarchyView final : public FVisualElement
+{
+public:
+    static TSharedPtr<FEditorSceneHierarchyView> Create(const TSharedPtr<FTreeView>& InTreeView, const TSharedPtr<IFontFace>& InFont);
+
+public:
+    FEditorSceneHierarchyView();
+    virtual ~FEditorSceneHierarchyView();
+
+    // FVisualElement Interface
+    virtual IntVector2 ComputeDesiredSize() const override final;
+    virtual void OnArrange(const FRectangle& AllottedBounds) override final;
+    virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final;
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override final;
+    virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override final;
+    virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override final;
+    virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override final;
+    virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override final;
+
+    /**
+     * @brief Puts an editable field over the row's label and hands it the keyboard, replacing any edit
+     * already open.
+     *
+     * @param Item The row to rename, which may be null and is then ignored.
+     */
+    void BeginRename(const TSharedPtr<FTreeItem>& Item);
+
+    /**
+     * @brief Starts dragging a row, which is the whole selection when the row is part of it and the row
+     * alone when it is not. Does nothing while an edit is open.
+     *
+     * @param Item        The row the drag started on.
+     * @param CursorEvent The move that crossed the drag threshold.
+     */
+    void BeginDrag(const TSharedPtr<FTreeItem>& Item, const FCursorEvent& CursorEvent);
+
+    /** @brief Drops the field without writing anything back, and returns the keyboard to the tree. */
+    void CancelRename();
+
+    /** @return True while an editable field is open over a row. */
+    NODISCARD bool IsRenaming() const
+    {
+        return RenameField != nullptr;
+    }
+
+    /** @brief Fired with the row that was right-clicked, which is null when the click landed below the rows. */
+    FOnHierarchyContextMenu OnContextMenu;
+
+    /** @brief Fired when the Delete key went down on the tree. */
+    FOnHierarchyDeleteRequested OnDeleteRequested;
+
+    /** @brief Fired with the name an edit committed. */
+    FOnHierarchyRenameCommitted OnRenameCommitted;
+
+    /** @brief Fired with the dragged rows once they were dropped. */
+    FOnHierarchyItemsDropped OnItemsDropped;
+
+private:
+    void Initialize(const TSharedPtr<FTreeView>& InTreeView, const TSharedPtr<IFontFace>& InFont);
+    void CommitRename(const String& NewName);
+    void ReleaseRenameField();
+    void HandleDrop(const FDragDropPayload& Payload, const IntVector2& ScreenPosition);
+    void ClearDragState();
+
+    NODISCARD EKeyInterceptResult HandleRenameFieldKeyDown(const FKeyEvent& KeyEvent);
+    NODISCARD bool CanDropOn(const TSharedPtr<FTreeItem>& TargetItem) const;
+
+    TSharedPtr<FTreeView>         TreeView;
+    TSharedPtr<IFontFace>         Font;
+    TSharedPtr<FEditableText>     RenameField;
+    TSharedPtr<FEditableText>     RetiredRenameField;
+    TSharedPtr<FTreeItem>         RenamedItem;
+    TArray<TSharedPtr<FTreeItem>> DraggedItems;
+    TSharedPtr<FTreeItem>         DropTargetItem;
+    bool                          bIsDragging;
+    bool                          bIsCursorInsideView;
+    bool                          bRestoreTreeFocus;
+};
+
 static FHierarchyNode* GetItemNode(const TSharedPtr<FTreeItem>& Item)
 {
     return Item ? static_cast<FHierarchyNode*>(Item->UserData) : nullptr;
@@ -226,86 +305,6 @@ static TSharedPtr<FMenu> BuildPlaceActorMenu(FEditorEngine* EditorEngine)
     return Menu;
 }
 
-class FEditorSceneHierarchyView final : public FVisualElement
-{
-public:
-    static TSharedPtr<FEditorSceneHierarchyView> Create(const TSharedPtr<FTreeView>& InTreeView, const TSharedPtr<IFontFace>& InFont);
-
-public:
-    FEditorSceneHierarchyView();
-    virtual ~FEditorSceneHierarchyView();
-
-    // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override final;
-    virtual void OnArrange(const FRectangle& AllottedBounds) override final;
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override final;
-    virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final;
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override final;
-    virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override final;
-    virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override final;
-    virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override final;
-    virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override final;
-
-    /**
-     * @brief Puts an editable field over the row's label and hands it the keyboard, replacing any edit
-     * already open.
-     *
-     * @param Item The row to rename, which may be null and is then ignored.
-     */
-    void BeginRename(const TSharedPtr<FTreeItem>& Item);
-
-    /**
-     * @brief Starts dragging a row, which is the whole selection when the row is part of it and the row
-     * alone when it is not. Does nothing while an edit is open.
-     *
-     * @param Item        The row the drag started on.
-     * @param CursorEvent The move that crossed the drag threshold.
-     */
-    void BeginDrag(const TSharedPtr<FTreeItem>& Item, const FCursorEvent& CursorEvent);
-
-    /** @brief Drops the field without writing anything back, and returns the keyboard to the tree. */
-    void CancelRename();
-
-    /** @return True while an editable field is open over a row. */
-    NODISCARD bool IsRenaming() const
-    {
-        return RenameField != nullptr;
-    }
-
-    /** @brief Fired with the row that was right-clicked, which is null when the click landed below the rows. */
-    FOnHierarchyContextMenu OnContextMenu;
-
-    /** @brief Fired when the Delete key went down on the tree. */
-    FOnHierarchyDeleteRequested OnDeleteRequested;
-
-    /** @brief Fired with the name an edit committed. */
-    FOnHierarchyRenameCommitted OnRenameCommitted;
-
-    /** @brief Fired with the dragged rows once they were dropped. */
-    FOnHierarchyItemsDropped OnItemsDropped;
-
-private:
-    void Initialize(const TSharedPtr<FTreeView>& InTreeView, const TSharedPtr<IFontFace>& InFont);
-    void CommitRename(const String& NewName);
-    void ReleaseRenameField();
-    void HandleDrop(const FDragDropPayload& Payload, const IntVector2& ScreenPosition);
-    void ClearDragState();
-
-    NODISCARD EKeyInterceptResult HandleRenameFieldKeyDown(const FKeyEvent& KeyEvent);
-    NODISCARD bool CanDropOn(const TSharedPtr<FTreeItem>& TargetItem) const;
-
-    TSharedPtr<FTreeView>         TreeView;
-    TSharedPtr<IFontFace>         Font;
-    TSharedPtr<FEditableText>     RenameField;
-    TSharedPtr<FEditableText>     RetiredRenameField;
-    TSharedPtr<FTreeItem>         RenamedItem;
-    TArray<TSharedPtr<FTreeItem>> DraggedItems;
-    TSharedPtr<FTreeItem>         DropTargetItem;
-    bool                          bIsDragging;
-    bool                          bIsCursorInsideView;
-    bool                          bRestoreTreeFocus;
-};
-
 TSharedPtr<FEditorSceneHierarchyView> FEditorSceneHierarchyView::Create(const TSharedPtr<FTreeView>& InTreeView, const TSharedPtr<IFontFace>& InFont)
 {
     TSharedPtr<FEditorSceneHierarchyView> NewView = MakeSharedPtr<FEditorSceneHierarchyView>();
@@ -374,7 +373,7 @@ void FEditorSceneHierarchyView::OnArrange(const FRectangle& AllottedBounds)
 
     if (TreeView)
     {
-        TreeView->Tick(AllottedBounds);
+        TreeView->Arrange(AllottedBounds);
     }
 
     if (RenameField && TreeView)
@@ -386,22 +385,16 @@ void FEditorSceneHierarchyView::OnArrange(const FRectangle& AllottedBounds)
         }
         else
         {
-            RenameField->Tick(LabelBounds);
+            RenameField->Arrange(LabelBounds);
+
+            RequestContinuousArrange();
         }
     }
 }
 
-void FEditorSceneHierarchyView::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FEditorSceneHierarchyView::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const
 {
-    if (TreeView)
-    {
-        OutChildren.Add(TreeView);
-    }
-
-    if (RenameField)
-    {
-        OutChildren.Add(RenameField);
-    }
+    return VisitChildList(Visitor, Order, TreeView, RenameField);
 }
 
 int32 FEditorSceneHierarchyView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -457,22 +450,6 @@ int32 FEditorSceneHierarchyView::OnDraw(const FDrawGeometry& AllottedGeometry, F
 
     OutCommandList.PopClip(MaxLayerId);
     return MaxLayerId;
-}
-
-void FEditorSceneHierarchyView::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
-{
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
-    if (RenameField && RenameField->GetContentRectangle().EncapsulatesPoint(ClientPosition))
-    {
-        RenameField->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-        return;
-    }
-
-    if (TreeView)
-    {
-        TreeView->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-    }
 }
 
 FEventResponse FEditorSceneHierarchyView::OnMouseButtonDown(const FCursorEvent& CursorEvent)
@@ -661,6 +638,8 @@ void FEditorSceneHierarchyView::ReleaseRenameField()
     RenamedItem.Reset();
 
     bRestoreTreeFocus = true;
+    InvalidateArrange();
+    InvalidatePaint();
 }
 
 EKeyInterceptResult FEditorSceneHierarchyView::HandleRenameFieldKeyDown(const FKeyEvent& KeyEvent)

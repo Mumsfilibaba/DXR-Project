@@ -123,7 +123,7 @@ void FGraphNodeElement::OnArrange(const FRectangle& AllottedBounds)
         Math::Max(AllottedBounds.Width - (Inset * 2), 0),
         ContentBottom - ContentTop);
 
-    Content->Tick(ContentBounds);
+    Content->Arrange(ContentBounds);
 }
 
 int32 FGraphNodeElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const

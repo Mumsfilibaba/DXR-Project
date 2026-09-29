@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Delegates/Delegate.h"
+#include "Application/Animation/UIAnimation.h"
 #include "Application/Elements/InteractiveElement.h"
 #include "Application/Layout/LayoutTypes.h"
 
@@ -140,6 +141,7 @@ protected:
 
     // FInteractiveElement Interface
     virtual void OnDragged(const FCursorEvent& CursorEvent) override;
+    virtual void OnInteractionStateChanged() override;
 
     virtual bool IsPressable() const override { return false; }
 
@@ -151,7 +153,7 @@ private:
 
     void ApplyOffset(int32 InOffset);
     void SetOffsetFromPosition(const IntVector2& ClientPosition);
-    void AdvanceFade();
+    void UpdateFadeTarget();
 
     EOrientation              Orientation;
     int32                     Thickness;
@@ -163,7 +165,7 @@ private:
     int32                     Offset;
     int32                     ThumbGrabOffset;
     float                     Opacity;
-    uint64                    FadeCounter;
+    FUIAnimation              Fade;
     bool                      bAutoHide;
     bool                      bIsRevealed;
 

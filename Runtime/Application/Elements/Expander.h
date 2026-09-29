@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/String.h"
 #include "Core/Delegates/Delegate.h"
+#include "Application/Animation/UIAnimation.h"
 #include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/VisualElement.h"
 #include "Application/Style/UIStyle.h"
@@ -67,11 +68,8 @@ public:
 
     // FVisualElement Interface
     virtual IntVector2 PrepareDesiredSize() override;
-    virtual void Tick(const FRectangle& AssignedBounds) override;
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
@@ -119,21 +117,18 @@ public:
         return Label;
     }
 
+protected:
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
+    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+
 private:
     NODISCARD FRectangle GetHeaderBounds(const FRectangle& AllottedBounds) const;
     NODISCARD int32 GetArrowExtent() const;
     NODISCARD int32 GetSettledHeight() const;
     NODISCARD int32 GetDisplayedHeight() const;
     NODISCARD int32 GetContentDesiredHeight() const;
-    NODISCARD double GetSecondsSinceAnimationStart() const;
-
-    /** @return How far the expand animation has run, sampled from the clock. */
     NODISCARD float ComputeAnimationAlpha() const;
 
-    /**
-     * @return How far the expand animation had run when the frame was measured, which is what the height
-     * follows so that measuring and drawing the same frame agree on it.
-     */
     NODISCARD float GetAnimationAlpha() const
     {
         return AnimationAlpha;
@@ -151,7 +146,7 @@ private:
     int32                      ArrowSize;
     int32                      HeaderHeight;
     int32                      AnimationStartHeight;
-    uint64                     AnimationStartCounter;
+    FUIAnimation               ExpandAnimation;
     float                      AnimationAlpha;
     bool                       bIsExpanded;
     bool                       bIsHeaderHovered;

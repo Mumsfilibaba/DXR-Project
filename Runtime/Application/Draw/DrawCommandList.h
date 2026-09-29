@@ -495,12 +495,13 @@ public:
     int32 AppendDrawCache(FDrawCacheBlock& Block);
 
     /**
-     * @brief Finds the span a replayed block occupies, so tessellation can splice in its geometry instead.
+     * @brief Finds the replayed span a command belongs to, so tessellation can splice in its geometry instead.
      *
-     * @param CommandIndex The first command of the span, in the order the commands were appended.
-     * @return The block that produced the span starting there, or null when no span starts there.
+     * @param CommandIndex Any command, in the order the commands were appended.
+     * @param OutSpanStart Where the span begins, written only when one is found.
+     * @return The block that produced the span holding the command, or null when it was recorded rather than replayed.
      */
-    NODISCARD FDrawCacheBlock* FindReplayedSpanAt(int32 CommandIndex) const;
+    NODISCARD FDrawCacheBlock* FindReplayedSpanContaining(int32 CommandIndex, int32& OutSpanStart) const;
 
     /** @return True when at least one block was replayed into the list. */
     NODISCARD FORCEINLINE bool HasReplayedSpans() const

@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/String.h"
 #include "Core/Math/Color.h"
+#include "Application/Text/CachedTextMetrics.h"
 #include "Application/Text/IFontFace.h"
 #include "Application/Elements/VisualElement.h"
 
@@ -70,10 +71,11 @@ public:
     void SetMargin(const FMargin& InMargin);
 
 private:
-    String                Text;
-    TSharedPtr<IFontFace> Font;
-    FFloatColor           ColorAndOpacity;
-    FMargin               Margin;
-    ETextOverflow         Overflow;
-    EVerticalAlignment    VerticalAlignment;
+    String                     Text;
+    TSharedPtr<IFontFace>      Font;
+    mutable FCachedTextMetrics ElideMetrics;
+    FFloatColor                ColorAndOpacity;
+    FMargin                    Margin;
+    ETextOverflow              Overflow;
+    EVerticalAlignment         VerticalAlignment;
 };

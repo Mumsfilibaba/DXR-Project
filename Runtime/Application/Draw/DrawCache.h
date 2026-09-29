@@ -48,18 +48,29 @@ struct APPLICATION_API FDrawCacheBlock : public FNonCopyable
     NODISCARD bool AreAtlasDependenciesCurrent() const;
 
     /**
-     * @brief Whether the block can be spliced into a list standing exactly where it was recorded.
+     * @brief Whether the block can be spliced into a list standing where it was recorded, or moved without resizing
+     * together with the clip it was recorded under.
      *
      * @param AllottedGeometry The geometry the element is being drawn into now.
      * @param InBaseLayerId    The layer the element is being asked to draw on now.
      * @param ClipDepth        How many clips are open around the element now.
      * @param ClipRectangle    The clip the element would be cut against now.
+     * @param OutOffset        How far the element moved since it recorded, which Translate has to apply first.
      */
     NODISCARD bool CanReplay(
         const FDrawGeometry& AllottedGeometry,
         int32                InBaseLayerId,
         int32                ClipDepth,
-        const FRectangle&    ClipRectangle) const;
+        const FRectangle&    ClipRectangle,
+        IntVector2&          OutOffset) const;
+
+    /**
+     * @brief Moves everything the block recorded, so it replays where the element stands now. The captured geometry
+     * was built at the old position, so it is dropped and captured again on the next splice.
+     *
+     * @param Offset How far to move, in pixels.
+     */
+    void Translate(const IntVector2& Offset);
 
     /** @return The number of commands the block replays, which is also its span in the frame's command list. */
     NODISCARD FORCEINLINE int32 GetCommandCount() const
@@ -109,6 +120,9 @@ struct APPLICATION_API FDrawCacheBlock : public FNonCopyable
     /** @brief The epoch the block recorded in, which has to still be current for the pointers inside it to mean anything. */
     uint64 CapturedEpoch;
 
+    /** @brief The frame the block was last recorded or replayed on, which is the order the budget evicts in. */
+    uint64 LastUsedFrame;
+
     /** @brief The DPI scale the element was drawn at, which every pixel position in the block was rounded to. */
     float CapturedScale;
 
@@ -124,9 +138,6 @@ struct APPLICATION_API FDrawCacheBlock : public FNonCopyable
     /** @brief How many text commands the block holds, which keeps the ordinal text cache aligned when they are skipped. */
     int32 TextCommandCount;
 
-    /** @brief The frame the block was last recorded or replayed on, which is the order the budget evicts in. */
-    uint64 LastUsedFrame;
-
     /** @brief True once the block holds a complete recording, and false while it is an empty shell kept for reuse. */
     bool bValid;
 
@@ -139,6 +150,8 @@ struct APPLICATION_API FDrawCacheBlock : public FNonCopyable
     /** @brief True when a clip was open around the element as it recorded. */
     bool bHasCapturedClip;
 };
+
+static_assert(sizeof(FDrawCacheBlock) == 248, "FDrawCacheBlock grew; every cached subtree pays for it");
 
 struct APPLICATION_API DrawCacheRegistry
 {

@@ -1,38 +1,11 @@
 #include "Application/Elements/Expander.h"
 #include "Application/ElementPath.h"
+#include "Application/Draw/DisclosureGlyph.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Input/Keys.h"
 #include "Core/Math/Math.h"
-#include "Core/Platform/PlatformTime.h"
-
 constexpr int32 EXPANDER_DISCLOSURE_SIZE    = 8;
 constexpr int32 EXPANDER_DISCLOSURE_SPACING = 4;
-
-static void DrawDisclosureTriangle(FDrawCommandList& OutCommandList, int32 LayerId, const FRectangle& Bounds, bool bIsExpanded, const FFloatColor& Tint)
-{
-    const float Left   = static_cast<float>(Bounds.Position.X);
-    const float Top    = static_cast<float>(Bounds.Position.Y);
-    const float Right  = static_cast<float>(Bounds.GetRight());
-    const float Bottom = static_cast<float>(Bounds.GetBottom());
-
-    Vector2 Corners[3];
-    if (bIsExpanded)
-    {
-        const float CenterX = (Left + Right) * 0.5f;
-        Corners[0] = Vector2(Left, Top);
-        Corners[1] = Vector2(Right, Top);
-        Corners[2] = Vector2(CenterX, Bottom);
-    }
-    else
-    {
-        const float CenterY = (Top + Bottom) * 0.5f;
-        Corners[0] = Vector2(Left, Top);
-        Corners[1] = Vector2(Right, CenterY);
-        Corners[2] = Vector2(Left, Bottom);
-    }
-
-    OutCommandList.AddConvexPolygon(LayerId, TArrayView<const Vector2>(Corners, 3), Tint);
-}
 
 TSharedPtr<FExpander> FExpander::Create(const FDesc& Desc)
 {
@@ -53,7 +26,7 @@ FExpander::FExpander()
     , ArrowSize(16)
     , HeaderHeight(FUIStyle::GetDefault().Metrics.RowHeight)
     , AnimationStartHeight(0)
-    , AnimationStartCounter(FPlatformTime::QueryPerformanceCounter())
+    , ExpandAnimation()
     , AnimationAlpha(1.0f)
     , bIsExpanded(true)
     , bIsHeaderHovered(false)
@@ -78,8 +51,8 @@ void FExpander::Initialize(const FDesc& Desc)
     bDrawBottomBorderWhenClosed = Desc.bDrawBottomBorderWhenClosed;
     OnStateChangedDelegate      = Desc.OnStateChanged;
     AnimationStartHeight        = HeaderHeight;
-    AnimationStartCounter       = FPlatformTime::QueryPerformanceCounter();
     AnimationAlpha              = 1.0f;
+    ExpandAnimation.Start(Style.ExpandDuration, 0.0f, 1.0f);
 
     SetContent(Desc.Content);
 }
@@ -89,16 +62,6 @@ IntVector2 FExpander::PrepareDesiredSize()
     AnimationAlpha = ComputeAnimationAlpha();
 
     return FVisualElement::PrepareDesiredSize();
-}
-
-void FExpander::Tick(const FRectangle& AssignedBounds)
-{
-    if (AnimationAlpha < 1.0f)
-    {
-        InvalidateDesiredSize();
-    }
-
-    FVisualElement::Tick(AssignedBounds);
 }
 
 IntVector2 FExpander::ComputeDesiredSize() const
@@ -121,6 +84,11 @@ IntVector2 FExpander::ComputeDesiredSize() const
 
 void FExpander::OnArrange(const FRectangle& AllottedBounds)
 {
+    if (AnimationAlpha < 1.0f)
+    {
+        InvalidateDesiredSize();
+    }
+
     if (!IsContentShown() || !Content)
     {
         return;
@@ -132,24 +100,19 @@ void FExpander::OnArrange(const FRectangle& AllottedBounds)
     ContentBounds.Position.Y += HeaderRoom;
     ContentBounds.Height      = Math::Max(0, AllottedBounds.Height - HeaderRoom);
 
-    Content->Tick(ContentBounds.Deflate(ContentPadding));
+    Content->Arrange(ContentBounds.Deflate(ContentPadding));
 }
 
-void FExpander::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FExpander::VisitChildren(FChildVisitor& Visitor, EChildOrder /*Order*/) const
 {
-    if (Content)
-    {
-        OutChildren.Add(Content);
-    }
+    return VisitChild(Visitor, Content);
 }
 
-void FExpander::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+void FExpander::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
 {
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
     if (IsContentShown() && Content)
     {
-        Content->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        Content->HitTest(ClientPosition, OutPath);
     }
 }
 
@@ -179,7 +142,7 @@ int32 FExpander::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     }
     else
     {
-        DrawDisclosureTriangle(OutCommandList, LayerId + 1, ArrowBounds, bIsExpanded, Style.ArrowTint);
+        FDisclosureGlyph::Draw(OutCommandList, LayerId + 1, ArrowBounds, bIsExpanded, Style.ArrowTint);
     }
 
     if (Font && !Label.IsEmpty())
@@ -271,10 +234,10 @@ void FExpander::SetExpanded(bool bInIsExpanded)
         return;
     }
 
-    AnimationStartHeight  = GetDisplayedHeight();
-    AnimationStartCounter = FPlatformTime::QueryPerformanceCounter();
-    AnimationAlpha        = 0.0f;
-    bIsExpanded           = bInIsExpanded;
+    AnimationStartHeight = GetDisplayedHeight();
+    AnimationAlpha       = 0.0f;
+    bIsExpanded          = bInIsExpanded;
+    ExpandAnimation.Start(Style.ExpandDuration, 0.0f, 1.0f);
     InvalidateDesiredSize();
     OnStateChangedDelegate.ExecuteIfBound(bIsExpanded);
 }
@@ -331,12 +294,6 @@ int32 FExpander::GetDisplayedHeight() const
     return Math::RoundToInt(Math::Lerp(static_cast<float>(AnimationStartHeight), static_cast<float>(Target), Alpha));
 }
 
-double FExpander::GetSecondsSinceAnimationStart() const
-{
-    const uint64 Now = FPlatformTime::QueryPerformanceCounter();
-    return static_cast<double>(Now - AnimationStartCounter) / static_cast<double>(FPlatformTime::QueryPerformanceFrequency());
-}
-
 float FExpander::ComputeAnimationAlpha() const
 {
     if (Style.ExpandDuration <= 0.0f)
@@ -344,7 +301,7 @@ float FExpander::ComputeAnimationAlpha() const
         return 1.0f;
     }
 
-    const float Linear = Math::Clamp(static_cast<float>(GetSecondsSinceAnimationStart()) / Style.ExpandDuration, 0.0f, 1.0f);
+    const float Linear = ExpandAnimation.GetProgress();
     return Linear * Linear * (3.0f - (2.0f * Linear));
 }
 

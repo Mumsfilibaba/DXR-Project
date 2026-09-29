@@ -18,7 +18,9 @@ TSharedPtr<FTileView> FTileView::Create(const FDesc& Desc)
 FTileView::FTileView()
     : FVisualElement()
     , Items()
+    , LabelMetrics()
     , SelectedIndices()
+    , SelectedFlags()
     , Font(nullptr)
     , FilterText()
     , TileSize(80, 92)
@@ -82,8 +84,12 @@ int32 FTileView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 
     OutCommandList.PushClip(LayerId, Bounds);
 
+    const int32 NumColumns = ResolveNumColumns(Bounds.Width);
+    const int32 StrideY    = TileSize.Y + TileSpacing;
+    const int32 FirstRow   = StrideY > 0 ? Math::Max(0, (ScrollOffset - TileSize.Y) / StrideY) : 0;
+
     int32 MaxLayerId = LayerId;
-    for (int32 Index = 0; Index < Items.Size(); ++Index)
+    for (int32 Index = FirstRow * NumColumns; Index < Items.Size(); ++Index)
     {
         const FRectangle Tile = ComputeTileBounds(Index, Bounds);
         if (Tile.Position.Y > Bounds.GetBottom())
@@ -116,9 +122,10 @@ int32 FTileView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         const FRectangle LabelBand = ComputeLabelBounds(Tile);
         if (Font && !Item.Label.IsEmpty() && !LabelBand.IsEmpty())
         {
-            const String     LabelText   = Font->ElideText(StringView(Item.Label.Data(), Item.Label.Length()), LabelBand.Width);
+            FCachedTextMetrics& Metrics  = LabelMetrics[Index];
+            const String&    LabelText   = Metrics.GetElided(Font.Get(), StringView(Item.Label.Data(), Item.Label.Length()), LabelBand.Width);
             const IntVector2 LabelSize   = IntVector2(Font->MeasureWidth(StringView(LabelText.Data(), LabelText.Length())), Font->GetLineHeight());
-            const FRectangle LabelBounds = FRectangle::AlignInBounds(LabelBand, LabelSize, EHorizontalAlignment::Center, EVerticalAlignment::Top);
+            const FRectangle LabelBounds = FLayout::AlignInBounds(LabelBand, LabelSize, EHorizontalAlignment::Center, EVerticalAlignment::Top);
 
             // Matching the elided label rather than the whole one, so a match in the elided tail draws plain
             const int32 MatchOffset = FilterText.IsEmpty() ? String::InvalidIndex : LabelText.Find(FilterText, EStringCaseType::NoCase);
@@ -266,7 +273,11 @@ void FTileView::SetItems(const TArray<FTileItem>& InItems)
 {
     Items = InItems;
 
+    LabelMetrics.Clear();
+    LabelMetrics.Resize(Items.Size());
+
     SelectedIndices.Clear();
+    SelectedFlags.Reset(Items.Size(), 0);
 
     HoveredIndex = InvalidTileIndex;
     AnchorIndex  = InvalidTileIndex;
@@ -294,7 +305,7 @@ void FTileView::ClearSelection()
         return;
     }
 
-    SelectedIndices.Clear();
+    ClearSelectedTiles();
 
     AnchorIndex = InvalidTileIndex;
     InvalidatePaint();
@@ -309,8 +320,8 @@ void FTileView::SetSelection(int32 Index)
         return;
     }
 
-    SelectedIndices.Clear();
-    SelectedIndices.Add(Index);
+    ClearSelectedTiles();
+    SetTileSelected(Index, true);
 
     AnchorIndex = Index;
     InvalidatePaint();
@@ -320,7 +331,36 @@ void FTileView::SetSelection(int32 Index)
 
 bool FTileView::IsSelected(int32 Index) const
 {
-    return SelectedIndices.Contains(Index);
+    return Index >= 0 && Index < SelectedFlags.Size() && SelectedFlags[Index] != 0;
+}
+
+void FTileView::SetTileSelected(int32 Index, bool bSelected)
+{
+    if (Index < 0 || Index >= SelectedFlags.Size() || (SelectedFlags[Index] != 0) == bSelected)
+    {
+        return;
+    }
+
+    SelectedFlags[Index] = bSelected ? 1 : 0;
+
+    if (bSelected)
+    {
+        SelectedIndices.Add(Index);
+    }
+    else
+    {
+        SelectedIndices.Remove(Index);
+    }
+}
+
+void FTileView::ClearSelectedTiles()
+{
+    for (const int32 Index : SelectedIndices)
+    {
+        SelectedFlags[Index] = 0;
+    }
+
+    SelectedIndices.Clear();
 }
 
 void FTileView::SetTileSize(const IntVector2& InTileSize)
@@ -463,15 +503,25 @@ int32 FTileView::FindTileAt(const IntVector2& ClientPosition) const
         return InvalidTileIndex;
     }
 
-    for (int32 Index = 0; Index < Items.Size(); ++Index)
+    const int32 StrideX = TileSize.X + TileSpacing;
+    const int32 StrideY = TileSize.Y + TileSpacing;
+    if (StrideX <= 0 || StrideY <= 0)
     {
-        if (ComputeTileBounds(Index, Bounds).EncapsulatesPoint(ClientPosition))
-        {
-            return Index;
-        }
+        return InvalidTileIndex;
     }
 
-    return InvalidTileIndex;
+    const int32 LocalX     = ClientPosition.X - Bounds.Position.X;
+    const int32 LocalY     = ClientPosition.Y - Bounds.Position.Y + ScrollOffset;
+    const int32 NumColumns = ResolveNumColumns(Bounds.Width);
+    const int32 Column     = LocalX / StrideX;
+
+    if (LocalY < 0 || Column >= NumColumns || (LocalX % StrideX) >= TileSize.X || (LocalY % StrideY) >= TileSize.Y)
+    {
+        return InvalidTileIndex;
+    }
+
+    const int32 Index = ((LocalY / StrideY) * NumColumns) + Column;
+    return Index < Items.Size() ? Index : InvalidTileIndex;
 }
 
 void FTileView::SelectTile(int32 Index, bool bToggle, bool bExtend)
@@ -480,14 +530,7 @@ void FTileView::SelectTile(int32 Index, bool bToggle, bool bExtend)
 
     if (bToggle)
     {
-        if (SelectedIndices.Contains(Index))
-        {
-            SelectedIndices.Remove(Index);
-        }
-        else
-        {
-            SelectedIndices.Add(Index);
-        }
+        SetTileSelected(Index, !IsSelected(Index));
 
         AnchorIndex = Index;
         return;
@@ -498,18 +541,18 @@ void FTileView::SelectTile(int32 Index, bool bToggle, bool bExtend)
         const int32 First = Math::Min(AnchorIndex, Index);
         const int32 Last  = Math::Max(AnchorIndex, Index);
 
-        SelectedIndices.Clear();
+        ClearSelectedTiles();
 
         for (int32 Current = First; Current <= Last; ++Current)
         {
-            SelectedIndices.Add(Current);
+            SetTileSelected(Current, true);
         }
 
         return;
     }
 
-    SelectedIndices.Clear();
-    SelectedIndices.Add(Index);
+    ClearSelectedTiles();
+    SetTileSelected(Index, true);
 
     AnchorIndex = Index;
 }

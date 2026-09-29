@@ -1,5 +1,6 @@
 #include "Application/Elements/InteractiveElement.h"
 #include "Application/Application.h"
+#include "Application/Elements/TextBlock.h"
 
 FInteractiveElement::FInteractiveElement()
     : FCompoundElement()
@@ -7,6 +8,7 @@ FInteractiveElement::FInteractiveElement()
     , bIsPressed(false)
     , bIsEnabled(true)
 {
+    AddElementFlags(EElementFlags::IsInteractive);
 }
 
 FInteractiveElement::~FInteractiveElement() = default;
@@ -107,11 +109,6 @@ bool FInteractiveElement::SupportsKeyboardFocus() const
     return bIsEnabled;
 }
 
-bool FInteractiveElement::IsInteractive() const
-{
-    return true;
-}
-
 bool FInteractiveElement::GetCursor(ECursor& OutCursor) const
 {
     if (!bIsEnabled || !bIsHovered || !IsPressable())
@@ -167,6 +164,14 @@ void FInteractiveElement::OnClicked()
 void FInteractiveElement::OnInteractionStateChanged()
 {
     InvalidatePaint();
+}
+
+void FInteractiveElement::ApplyInteractionTextColor(FTextBlock* Label) const
+{
+    if (Label)
+    {
+        Label->SetColorAndOpacity(FUIStyle::GetDefault().GetTextColor(GetInteractionState()));
+    }
 }
 
 bool FInteractiveElement::AcceptsPressFromKey(FKey Key) const

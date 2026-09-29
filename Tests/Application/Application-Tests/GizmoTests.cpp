@@ -61,7 +61,7 @@ static TSharedPtr<FGizmo> MakeGizmo(EGizmoOperation Operation, EGizmoMode Mode, 
 
     TSharedPtr<FGizmo> Gizmo = FGizmo::Create(Desc);
     Gizmo->PrepareDesiredSize();
-    Gizmo->Tick(GetViewport());
+    Gizmo->Arrange(GetViewport());
     Gizmo->SetCamera(MakeFrontView(), MakeOrthographic(), true);
 
     return Gizmo;

@@ -54,6 +54,10 @@ static int32 RunApplicationTests()
     RUN_TEST("ScrollBoxClamping", ScrollBoxClamping_Test());
     RUN_TEST("ScrollBoxScrollIntoView", ScrollBoxScrollIntoView_Test());
     RUN_TEST("ScrollBoxHitTestClipping", ScrollBoxHitTestClipping_Test());
+    RUN_TEST("HitTestPruning", HitTestPruning_Test());
+    RUN_TEST("ArrangeSkip", ArrangeSkip_Test());
+    RUN_TEST("UIAnimation", UIAnimation_Test());
+    RUN_TEST("PopupPlacement", PopupPlacement_Test());
     RUN_TEST("WindowLayoutOrigin", WindowLayoutOrigin_Test());
     RUN_TEST("WindowOverlayMeasure", WindowOverlayMeasure_Test());
 
@@ -66,6 +70,7 @@ static int32 RunApplicationTests()
 
     RUN_TEST("FontAtlasPacking", FontAtlasPacking_Test());
     RUN_TEST("FontGlyphLookup", FontGlyphLookup_Test());
+    RUN_TEST("FontAtlasIncremental", FontAtlasIncremental_Test());
     RUN_TEST("FontKerning", FontKerning_Test());
     RUN_TEST("FontMeasurement", FontMeasurement_Test());
     RUN_TEST("FontElision", FontElision_Test());
@@ -79,6 +84,7 @@ static int32 RunApplicationTests()
     RUN_TEST("UIDrawDataClipCulling", UIDrawDataClipCulling_Test());
     RUN_TEST("UIDrawDataSiblingClips", UIDrawDataSiblingClips_Test());
     RUN_TEST("UIDrawDataAntiAliasing", UIDrawDataAntiAliasing_Test());
+    RUN_TEST("UIDrawDataTextCacheTrim", UIDrawDataTextCacheTrim_Test());
 
     RUN_TEST("DrawCacheEquivalence", DrawCacheEquivalence_Test());
     RUN_TEST("DrawCacheGuards", DrawCacheGuards_Test());
@@ -90,6 +96,9 @@ static int32 RunApplicationTests()
     RUN_TEST("DrawCacheWindowDeferred", DrawCacheWindowDeferred_Test());
     RUN_TEST("DrawCacheMenuBar", DrawCacheMenuBar_Test());
     RUN_TEST("DrawCacheToolTip", DrawCacheToolTip_Test());
+    RUN_TEST("DrawCacheLayerOrder", DrawCacheLayerOrder_Test());
+    RUN_TEST("DrawCacheTranslation", DrawCacheTranslation_Test());
+    RUN_TEST("DrawCommandPayload", DrawCommandPayload_Test());
 
     RUN_TEST("CornerRadiiTypes", CornerRadiiTypes_Test());
     RUN_TEST("VectorDrawCommands", VectorDrawCommands_Test());

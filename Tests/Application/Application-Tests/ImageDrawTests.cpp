@@ -231,7 +231,7 @@ bool ImageNineSlice_Test()
 
     TEST_SECTION("Every patch stays in one batch, since they all sample the same texture");
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
-    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Texture == MakeTextureKey(0x10));
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetTexture() == MakeTextureKey(0x10));
 
     TEST_END();
 }
@@ -260,8 +260,8 @@ bool ImageBatching_Test()
     DrawData.BuildFromCommandList(DifferentList);
 
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 2);
-    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Texture == MakeTextureKey(0x10));
-    TEST_EXPECT(DrawData.GetBatches()[1].Texture.Texture == MakeTextureKey(0x20));
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetTexture() == MakeTextureKey(0x10));
+    TEST_EXPECT(DrawData.GetBatches()[1].Texture.GetTexture() == MakeTextureKey(0x20));
 
     TEST_SECTION("A texture and a box are separate batches, and going back costs a third");
     FDrawCommandList MixedList;
@@ -272,7 +272,7 @@ bool ImageBatching_Test()
 
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 3);
     TEST_EXPECT(DrawData.GetBatches()[0].Texture.IsEmpty());
-    TEST_EXPECT(DrawData.GetBatches()[1].Texture.Texture == MakeTextureKey(0x10));
+    TEST_EXPECT(DrawData.GetBatches()[1].Texture.GetTexture() == MakeTextureKey(0x10));
     TEST_EXPECT(DrawData.GetBatches()[2].Texture.IsEmpty());
 
     TEST_SECTION("An image over no texture is untextured geometry, so it joins the boxes");
@@ -311,10 +311,10 @@ bool ImageBatching_Test()
     DrawData.BuildFromCommandList(AtlasList);
 
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 2);
-    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Texture == MakeTextureKey(0x10));
-    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Atlas == nullptr);
-    TEST_EXPECT(DrawData.GetBatches()[1].Texture.Atlas == Font->GetAtlas());
-    TEST_EXPECT(DrawData.GetBatches()[1].Texture.Texture == nullptr);
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetTexture() == MakeTextureKey(0x10));
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetAtlas() == nullptr);
+    TEST_EXPECT(DrawData.GetBatches()[1].Texture.GetAtlas() == Font->GetAtlas());
+    TEST_EXPECT(DrawData.GetBatches()[1].Texture.GetTexture() == nullptr);
 
     TEST_END();
 }

@@ -24,6 +24,17 @@ static TAutoConsoleVariable<int32> CVarMaxCommandsPerCommandList(
     "Number of commands allowed before submitting the current CommandList to the GPU",
     10000);
 
+struct FD3D12BarrierSubresourceRange
+{
+    uint32 FirstMip;
+    uint32 NumMips;
+    uint32 FirstArraySlice;
+    uint32 NumArraySlices;
+    uint32 TotalMipLevels;
+    uint32 TotalArraySlices;
+    bool   bWholeResource;
+};
+
 static D3D12_RESOURCE_STATES D3D12ResolveRestingState(const FD3D12Resource* Resource, D3D12_RESOURCE_STATES DesiredState)
 {
     // COMMON/PRESENT is a state in its own right and must never be promoted into the resting state.
@@ -43,17 +54,6 @@ static D3D12_RESOURCE_STATES D3D12ResolveRestingState(const FD3D12Resource* Reso
 
     return DesiredState;
 }
-
-struct FD3D12BarrierSubresourceRange
-{
-    uint32 FirstMip;
-    uint32 NumMips;
-    uint32 FirstArraySlice;
-    uint32 NumArraySlices;
-    uint32 TotalMipLevels;
-    uint32 TotalArraySlices;
-    bool   bWholeResource;
-};
 
 static FD3D12BarrierSubresourceRange D3D12ResolveSubresourceRange(const FD3D12Resource* Resource, const FRHITextureSubresourceRange& Subresources)
 {
@@ -1548,10 +1548,16 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
     uint8*       WritePtr = reinterpret_cast<uint8*>(ResourceStorage.GetMappedBaseAddress());
     const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
     
-    const uint32 SrcNumRows = D3D12CalculateRegionNumRows(Dst->GetDesc().Format, TextureRegion.Height);
+    const EFormat Format     = Dst->GetDesc().Format;
+    const uint32  SrcNumRows = D3D12CalculateRegionNumRows(Format, TextureRegion.Height);
+
+    const uint64 RegionRowBytes = IsBlockCompressed(Format)
+        ? SrcRowPitch
+        : Math::Min<uint64>(SrcRowPitch, static_cast<uint64>(TextureRegion.Width) * GetByteStrideFromFormat(Format));
+
     for (uint64 y = 0; y < Math::Min<uint64>(NumRows, SrcNumRows); y++)
     {
-        Memory::Memcpy(WritePtr, Source, SrcRowPitch);
+        Memory::Memcpy(WritePtr, Source, RegionRowBytes);
         
         WritePtr += PlacedSubresourceFootprint.Footprint.RowPitch;
         Source   += SrcRowPitch;

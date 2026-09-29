@@ -127,7 +127,7 @@ void FSplitter::OnArrange(const FRectangle& AllottedBounds)
                 ? FRectangle(IntVector2(Offset, AllottedBounds.Position.Y), Length, AllottedBounds.Height)
                 : FRectangle(IntVector2(AllottedBounds.Position.X, Offset), AllottedBounds.Width, Length);
 
-            Children[Index]->Tick(ChildBounds);
+            Children[Index]->Arrange(ChildBounds);
         }
 
         Offset += Length;
@@ -139,15 +139,12 @@ void FSplitter::OnArrange(const FRectangle& AllottedBounds)
     }
 }
 
-void FSplitter::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FSplitter::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const
 {
-    for (const TSharedPtr<FVisualElement>& Child : Children)
+    return VisitChildArray(Visitor, Order, Children, [](const TSharedPtr<FVisualElement>& Child) -> const TSharedPtr<FVisualElement>&
     {
-        if (Child)
-        {
-            OutChildren.Add(Child);
-        }
-    }
+        return Child;
+    });
 }
 
 int32 FSplitter::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -194,22 +191,14 @@ int32 FSplitter::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     return NextLayerId + 1;
 }
 
-void FSplitter::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+void FSplitter::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
 {
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
     if (GetHandleIndexAt(ClientPosition) >= 0)
     {
         return;
     }
 
-    for (const TSharedPtr<FVisualElement>& Child : Children)
-    {
-        if (Child)
-        {
-            Child->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-        }
-    }
+    FVisualElement::HitTestChildren(ClientPosition, OutPath);
 }
 
 bool FSplitter::GetCursor(ECursor& OutCursor) const
@@ -317,6 +306,7 @@ void FSplitter::AddChild(const TSharedPtr<FVisualElement>& InChild, const IntVec
 {
     const int32 ChildIndex = Children.Size();
     Children.Add(InChild);
+    InvalidateDesiredSize();
 
     if (ChildIndex >= MinimumSizes.Size())
     {
@@ -374,7 +364,11 @@ void FSplitter::SetFractions(const TArray<float>& InFractions)
         return;
     }
 
-    TryNormalizeFractions(InFractions);
+    if (TryNormalizeFractions(InFractions))
+    {
+        InvalidateArrange();
+        InvalidatePaint();
+    }
 }
 
 bool FSplitter::TryNormalizeFractions(const TArray<float>& InFractions)

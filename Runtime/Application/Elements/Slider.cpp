@@ -14,17 +14,15 @@ TSharedPtr<FSlider> FSlider::Create(const FDesc& Desc)
 
 FSlider::FSlider()
     : FInteractiveElement()
-    , MinValue(0.0f)
-    , MaxValue(1.0f)
+    , Range()
     , Value(0.0f)
-    , StepSize(0.0f)
     , Orientation(EOrientation::Horizontal)
     , HandleSize(12)
     , TrackThickness(4)
     , MinLength(96)
-    , Precision(2)
     , bShowValueText(false)
     , Font(nullptr)
+    , ValueTextMetrics()
     , OnValueChangedDelegate()
     , OnValueCommittedDelegate()
 {
@@ -34,20 +32,20 @@ FSlider::~FSlider() = default;
 
 void FSlider::Initialize(const FDesc& Desc)
 {
-    MinValue                 = Desc.MinValue;
-    MaxValue                 = Math::Max(Desc.MaxValue, Desc.MinValue);
-    StepSize                 = Math::Max(Desc.StepSize, 0.0f);
+    Range.Min                = Desc.MinValue;
+    Range.Max                = Math::Max(Desc.MaxValue, Desc.MinValue);
+    Range.Step               = Math::Max(Desc.StepSize, 0.0f);
+    Range.Precision          = Math::Clamp(Desc.Precision, 0, 9);
     Orientation              = Desc.Orientation;
     HandleSize               = Math::Max(Desc.HandleSize, 1);
     TrackThickness           = Math::Max(Desc.TrackThickness, 1);
     MinLength                = Math::Max(Desc.MinLength, HandleSize);
-    Precision                = Math::Clamp(Desc.Precision, 0, 9);
     bShowValueText           = Desc.bShowValueText;
     Font                     = Desc.Font;
     OnValueChangedDelegate   = Desc.OnValueChanged;
     OnValueCommittedDelegate = Desc.OnValueCommitted;
 
-    Value = SanitizeValue(Desc.Value);
+    Value = Range.Sanitize(Desc.Value);
 }
 
 IntVector2 FSlider::ComputeDesiredSize() const
@@ -108,7 +106,7 @@ int32 FSlider::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
     if (bShowValueText && Font)
     {
         const String Text      = GetFormattedValue();
-        const int32  TextWidth = Font->MeasureWidth(StringView(Text.Data(), Text.Length()));
+        const int32  TextWidth = ValueTextMetrics.GetWidth(Font.Get(), StringView(Text.Data(), Text.Length()));
         const int32  CapInset  = Math::Max(Font->GetAscent() - Font->GetCapHeight(), 0);
         const int32  TextX     = AllottedGeometry.Bounds.Position.X + ((AllottedGeometry.Bounds.Width - TextWidth) / 2);
         const int32  TextY     = TrackArea.GetBottom() + VALUE_TEXT_SPACING - CapInset;
@@ -155,7 +153,7 @@ FEventResponse FSlider::OnKeyDown(const FKeyEvent& KeyEvent)
         return FEventResponse::Unhandled();
     }
 
-    const float Nudge = StepSize > 0.0f ? StepSize : (MaxValue - MinValue) * 0.01f;
+    const float Nudge = Range.Step > 0.0f ? Range.Step : (Range.Max - Range.Min) * 0.01f;
 
     const FKey Key = KeyEvent.GetKey();
     if (Key == Keys::Left || Key == Keys::Down)
@@ -168,11 +166,11 @@ FEventResponse FSlider::OnKeyDown(const FKeyEvent& KeyEvent)
     }
     else if (Key == Keys::Home)
     {
-        ApplyValue(MinValue);
+        ApplyValue(Range.Min);
     }
     else if (Key == Keys::End)
     {
-        ApplyValue(MaxValue);
+        ApplyValue(Range.Max);
     }
     else
     {
@@ -185,7 +183,7 @@ FEventResponse FSlider::OnKeyDown(const FKeyEvent& KeyEvent)
 
 void FSlider::SetValue(float InValue)
 {
-    const float NewValue = SanitizeValue(InValue);
+    const float NewValue = Range.Sanitize(InValue);
     if (Value == NewValue)
     {
         return;
@@ -197,17 +195,16 @@ void FSlider::SetValue(float InValue)
 
 void FSlider::SetRange(float InMinValue, float InMaxValue)
 {
-    MinValue = InMinValue;
-    MaxValue = Math::Max(InMaxValue, InMinValue);
-    Value    = SanitizeValue(Value);
+    Range.Min = InMinValue;
+    Range.Max = Math::Max(InMaxValue, InMinValue);
+    Value     = Range.Sanitize(Value);
 
     InvalidatePaint();
 }
 
 float FSlider::GetNormalizedValue() const
 {
-    const float Range = MaxValue - MinValue;
-    return Range > 0.0f ? Math::Saturate((Value - MinValue) / Range) : 0.0f;
+    return Range.GetFraction(Value);
 }
 
 FRectangle FSlider::GetHandleBounds() const
@@ -222,7 +219,7 @@ FRectangle FSlider::GetTrackBounds() const
 
 String FSlider::GetFormattedValue() const
 {
-    return String::Printf("%.*f", Precision, Value);
+    return Range.Format(Value);
 }
 
 void FSlider::OnDragged(const FCursorEvent& CursorEvent)
@@ -230,22 +227,9 @@ void FSlider::OnDragged(const FCursorEvent& CursorEvent)
     SetValueFromPosition(CursorEvent.GetClientPosition());
 }
 
-float FSlider::SanitizeValue(float InValue) const
-{
-    float Result = Math::Clamp(InValue, MinValue, MaxValue);
-
-    if (StepSize > 0.0f)
-    {
-        const float Steps = Math::Round((Result - MinValue) / StepSize);
-        Result            = Math::Clamp(MinValue + (Steps * StepSize), MinValue, MaxValue);
-    }
-
-    return Result;
-}
-
 void FSlider::ApplyValue(float InValue)
 {
-    const float NewValue = SanitizeValue(InValue);
+    const float NewValue = Range.Sanitize(InValue);
     if (NewValue == Value)
     {
         return;
@@ -274,7 +258,7 @@ void FSlider::SetValueFromPosition(const IntVector2& ClientPosition)
         Fraction = static_cast<float>(Track.GetBottom() - ClientPosition.Y) / static_cast<float>(Track.Height);
     }
 
-    ApplyValue(MinValue + (Math::Saturate(Fraction) * (MaxValue - MinValue)));
+    ApplyValue(Range.FromFraction(Fraction));
 }
 
 FRectangle FSlider::ComputeHandleBounds(const FRectangle& Bounds) const

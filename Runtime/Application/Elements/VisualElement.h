@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/Function.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/UniquePtr.h"
 #include "Application/Events.h"
@@ -9,10 +10,11 @@
 class FElementPath;
 class FDrawCommandList;
 class FScrollBox;
+class FVisualElement;
 struct FDrawGeometry;
 struct FDrawCacheBlock;
 
-enum class EVisibility
+enum class EVisibility : uint8
 {
     /** @brief No visibility flags set. */
     None = 0,
@@ -26,7 +28,67 @@ enum class EVisibility
 
 ENUM_CLASS_OPERATORS(EVisibility);
 
-enum class EElementActivationPolicy
+enum class EChildVisit : uint8
+{
+    /** @brief Carry on with the next child. */
+    Continue,
+
+    /** @brief Stop, leaving the remaining children unvisited. */
+    Stop,
+};
+
+enum class EChildOrder : uint8
+{
+    /** @brief The order the children are painted in, so the first child visited is the one furthest back. */
+    BackToFront,
+
+    /** @brief The reverse of the paint order, so the first child visited is the one on top, which is the hit-test order. */
+    FrontToBack,
+};
+
+using FChildVisitor = TFunctionRef<EChildVisit(FVisualElement&)>;
+
+enum class EElementFlags : uint16
+{
+    None = 0,
+
+    /** @brief The next PrepareDesiredSize measures the element again. */
+    DesiredSizeDirty = FLAG(0),
+
+    /** @brief The next Arrange runs OnArrange even when the element is given the same bounds as before. */
+    ArrangeDirty = FLAG(1),
+
+    /** @brief The next Draw records the element again instead of replaying what it recorded before. */
+    PaintDirty = FLAG(2),
+
+    /** @brief A capture of the subtree was refused, so the element stops volunteering as a cache root. */
+    DrawCacheBlocked = FLAG(3),
+
+    /** @brief The element takes part in hit testing. Clearing it lets the cursor pass through to what lies below. */
+    HitTestable = FLAG(4),
+
+    /** @brief The element is an FWindow. */
+    IsWindow = FLAG(5),
+
+    /** @brief The element answers mouse input rather than only drawing. */
+    IsInteractive = FLAG(6),
+
+    /** @brief The element is an FScrollBox. */
+    IsScrollBox = FLAG(7),
+
+    /** @brief The window content is focused when its window is activated, which EElementActivationPolicy describes. */
+    AutoFocusOnWindowActivate = FLAG(8),
+
+    /**
+     * @brief The element, or something below it, places children outside its own rectangle, so a hit test outside
+     * the rectangle still has to look below it. Attaching such an element to a parent marks every ancestor too.
+     */
+    HitTestOverflow = FLAG(9),
+};
+
+ENUM_CLASS_OPERATORS(EElementFlags);
+
+enum class EElementActivationPolicy : uint8
 {
     /** @brief When the owning window is activated, focus the window content element. */
     AutoFocusOnWindowActivate,
@@ -58,24 +120,72 @@ public:
     FVisualElement();
     virtual ~FVisualElement();
 
-    /** @brief Stores the assigned bounds as the content rectangle and then arranges the children inside it. */
-    virtual void Tick(const FRectangle& AssignedBounds);
+    /**
+     * @brief Stores the assigned bounds as the content rectangle and then arranges the children inside it. The
+     * arrange is skipped when the bounds are the ones the element already has and nothing marked it arrange-dirty
+     * since, which is what lets a clean subtree cost one comparison per frame.
+     *
+     * @param AssignedBounds The rectangle the parent gives the element.
+     */
+    void Arrange(const FRectangle& AssignedBounds);
+
+    /**
+     * @brief Marks this element and every parent above it to be arranged again even if the bounds they are given do
+     * not change, which is what a setter calls when it moves children without changing any desired size: a scroll
+     * offset, a splitter fraction, a pan or zoom. InvalidateDesiredSize does this too.
+     */
+    void InvalidateArrange();
+
+    /**
+     * @brief Called from inside OnArrange by an element mid-animation or following something outside the tree, to
+     * say it has to be arranged again next frame even though nothing mutated it.
+     */
+    void RequestContinuousArrange() const;
+
+    /** @return True when the next Arrange runs OnArrange whatever bounds it is given. */
+    NODISCARD FORCEINLINE bool IsArrangeDirty() const
+    {
+        return HasAnyElementFlags(EElementFlags::ArrangeDirty);
+    }
 
     /**
      * @brief Checks if the element is a window.
      *
      * @return True if the element is an FWindow, false otherwise.
      */
-    virtual bool IsWindow() const;
+    NODISCARD FORCEINLINE bool IsWindow() const
+    {
+        return HasAnyElementFlags(EElementFlags::IsWindow);
+    }
 
     /**
      * @brief Whether the element answers mouse input rather than only drawing.
      *
      * A title bar asks this of its descendants to work out which parts of the caption stay clickable
      * instead of dragging the window.
-     * @return True if the element is an FInteractiveElement, false otherwise.
+     * @return True for an FInteractiveElement or anything else that marked itself interactive.
      */
-    virtual bool IsInteractive() const;
+    NODISCARD FORCEINLINE bool IsInteractive() const
+    {
+        return HasAnyElementFlags(EElementFlags::IsInteractive);
+    }
+
+    /** @return This element as a scroll box, or null when it is not one. */
+    NODISCARD FScrollBox* AsScrollBox();
+
+    /** @return True while the element takes part in hit testing. */
+    NODISCARD FORCEINLINE bool IsHitTestable() const
+    {
+        return HasAnyElementFlags(EElementFlags::HitTestable);
+    }
+
+    /**
+     * @brief Sets whether the element takes part in hit testing. An element that does not is skipped together
+     * with its whole subtree, so the cursor reaches whatever lies below it.
+     *
+     * @param bInHitTestable True to let the cursor find the element.
+     */
+    void SetHitTestable(bool bInHitTestable);
 
     /**
      * @brief Whether this element takes every mouse event in its window while it is up.
@@ -231,11 +341,23 @@ public:
     virtual void OnArrange(const FRectangle& AllottedBounds);
 
     /**
-     * @brief Appends the direct children of this element in front to back order.
+     * @brief Calls a visitor with every direct child of this element, without collecting them anywhere first.
+     *
+     * @param Visitor Called once per child, and able to stop the walk early.
+     * @param Order   The order to walk the children in.
+     * @return Stop when the visitor stopped the walk, Continue when it saw every child.
+     */
+    FORCEINLINE EChildVisit ForEachChild(FChildVisitor Visitor, EChildOrder Order = EChildOrder::BackToFront) const
+    {
+        return VisitChildren(Visitor, Order);
+    }
+
+    /**
+     * @brief Appends the direct children of this element in paint order, back to front.
      *
      * @param OutChildren The array to append to.
      */
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const;
+    void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const;
 
     /**
      * @brief Appends the draw commands for this element and its children.
@@ -284,19 +406,31 @@ public:
      *
      * @param OutParentElements The path to populate, from the window down to this element, which ends up last.
      */
-    virtual void FindParentElements(FElementPath& OutParentElements);
+    void FindParentElements(FElementPath& OutParentElements);
 
     /**
-     * @brief Adds all child elements under a specified point to the element path.
+     * @brief Appends this element and the chain of descendants under a point to a path, ordered from this element
+     * down to the one on top. A hidden or non hit-testable element, or one the point falls outside of, adds
+     * nothing and is not descended into, so the cost follows the depth of the tree rather than its size.
      *
      * @param ClientPosition The position to check, in the client space the elements were arranged in.
-     * @param OutChildElements The element path to populate with child elements.
+     * @param OutPath        The path to append to.
+     * @return True when the element took the point and was added to the path.
      */
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements);
+    bool HitTest(const IntVector2& ClientPosition, FElementPath& OutPath);
+
+    /**
+     * @brief A counter that moves whenever anything that could change a hit test result changes: an arranged
+     * rectangle, a visibility or hit-testability flag, a parent, or any state an element repaints for. A path
+     * found at one value stays valid for as long as the counter holds it.
+     *
+     * @return The current value.
+     */
+    NODISCARD static uint64 GetHitTestGeneration();
 
     /**
      * @brief Recomputes and caches the desired size of this element and every descendant. Run this before
-     * Tick, because a container sizes its slots from the cached child sizes.
+     * Arrange, because a container sizes its slots from the cached child sizes.
      *
      * An element whose children are sized from something outside the tree overrides this to read that
      * something first, since by the time ComputeDesiredSize runs the children have already been measured.
@@ -322,7 +456,7 @@ public:
      */
     NODISCARD bool IsDesiredSizeDirty() const
     {
-        return bDesiredSizeDirty;
+        return HasAnyElementFlags(EElementFlags::DesiredSizeDirty);
     }
 
     /**
@@ -342,7 +476,7 @@ public:
      */
     NODISCARD bool IsPaintDirty() const
     {
-        return bPaintDirty;
+        return HasAnyElementFlags(EElementFlags::PaintDirty);
     }
 
     /**
@@ -432,12 +566,6 @@ public:
         return ParentElement;
     }
 
-    /** @return This element as a scroll box, or null when it is not one. */
-    NODISCARD virtual FScrollBox* AsScrollBox()
-    {
-        return nullptr;
-    }
-
     /**
      * @brief Gets the content rectangle of the element.
      * 
@@ -455,7 +583,9 @@ public:
      */
     EElementActivationPolicy GetActivationPolicy() const
     {
-        return ActivationPolicy;
+        return HasAnyElementFlags(EElementFlags::AutoFocusOnWindowActivate)
+            ? EElementActivationPolicy::AutoFocusOnWindowActivate
+            : EElementActivationPolicy::DoNotAutoFocusOnWindowActivate;
     }
 
     /**
@@ -465,24 +595,104 @@ public:
      */
     void SetActivationPolicy(EElementActivationPolicy InActivationPolicy)
     {
-        ActivationPolicy = InActivationPolicy;
+        if (InActivationPolicy == EElementActivationPolicy::AutoFocusOnWindowActivate)
+        {
+            SetElementFlags(EElementFlags::AutoFocusOnWindowActivate);
+        }
+        else
+        {
+            ClearElementFlags(EElementFlags::AutoFocusOnWindowActivate);
+        }
+    }
+
+protected:
+
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const;
+    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath);
+
+    FORCEINLINE void AddElementFlags(EElementFlags InFlags)
+    {
+        Flags |= InFlags;
+    }
+
+    void EnableHitTestOverflow();
+
+    template<typename ElementType>
+    NODISCARD static FORCEINLINE EChildVisit VisitChild(FChildVisitor& Visitor, const TSharedPtr<ElementType>& Child)
+    {
+        return Child ? Visitor(*Child) : EChildVisit::Continue;
+    }
+
+    template<typename... ElementTypes>
+    static EChildVisit VisitChildList(FChildVisitor& Visitor, EChildOrder Order, const TSharedPtr<ElementTypes>&... Children)
+    {
+        FVisualElement* const List[] = { static_cast<FVisualElement*>(Children.Get())... };
+
+        constexpr int32 NumChildren = static_cast<int32>(sizeof...(ElementTypes));
+        for (int32 Step = 0; Step < NumChildren; ++Step)
+        {
+            FVisualElement* Child = List[Order == EChildOrder::BackToFront ? Step : (NumChildren - 1 - Step)];
+            if (Child && Visitor(*Child) == EChildVisit::Stop)
+            {
+                return EChildVisit::Stop;
+            }
+        }
+
+        return EChildVisit::Continue;
+    }
+
+    template<typename ArrayType, typename ProjectionType>
+    static EChildVisit VisitChildArray(FChildVisitor& Visitor, EChildOrder Order, const ArrayType& Items, ProjectionType&& Projection)
+    {
+        const int32 NumItems = static_cast<int32>(Items.Size());
+        for (int32 Step = 0; Step < NumItems; ++Step)
+        {
+            const int32 Index = Order == EChildOrder::BackToFront ? Step : (NumItems - 1 - Step);
+            if (VisitChild(Visitor, Projection(Items[Index])) == EChildVisit::Stop)
+            {
+                return EChildVisit::Stop;
+            }
+        }
+
+        return EChildVisit::Continue;
     }
 
 private:
+    NODISCARD FORCEINLINE FVisualElement* GetLiveParent() const
+    {
+        return ParentElement.IsValid() ? ParentElement.Get() : nullptr;
+    }
+
+    NODISCARD FORCEINLINE bool HasAnyElementFlags(EElementFlags InFlags) const
+    {
+        return (Flags & InFlags) != EElementFlags::None;
+    }
+
+    FORCEINLINE void SetElementFlags(EElementFlags InFlags) const
+    {
+        Flags |= InFlags;
+    }
+
+    FORCEINLINE void ClearElementFlags(EElementFlags InFlags) const
+    {
+        Flags &= ~InFlags;
+    }
+
     NODISCARD bool ShouldUseDrawCache() const;
     void NoteWalked(int32 CommandCount) const;
 
-    EVisibility                         Visibility;
-    EElementActivationPolicy            ActivationPolicy;
+    void PropagateHitTestOverflow();
+
     FRectangle                          ContentRectangle;
     IntVector2                          CachedDesiredSize;
     TWeakPtr<FVisualElement>            ParentElement;
     mutable TUniquePtr<FDrawCacheBlock> DrawCacheBlock;
-    EDrawCachePolicy                    DrawCachePolicy;
     mutable uint16                      LastRecordedCommandCount;
-    mutable bool                        bDrawCacheBlocked;
+    mutable EElementFlags               Flags;
+    EVisibility                         Visibility;
+    EDrawCachePolicy                    DrawCachePolicy;
     mutable uint8                       CleanPaintFrameCount;
     mutable uint8                       RecentDirtyFrameCount;
-    bool                                bDesiredSizeDirty : 1;
-    mutable bool                        bPaintDirty       : 1;
 };
+
+static_assert(sizeof(void*) != 8 || sizeof(FVisualElement) == 80, "Every element pays for FVisualElement, so a new member has to fit its padding or be justified");

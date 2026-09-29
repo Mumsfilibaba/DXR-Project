@@ -47,9 +47,7 @@ public:
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
     virtual bool GetCursor(ECursor& OutCursor) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
@@ -96,17 +94,15 @@ public:
      */
     NODISCARD int32 GetHandleIndexAt(const IntVector2& ClientPosition) const;
 
-    /** @return The index of the handle being dragged, or -1 when no drag is in flight. */
-    NODISCARD FORCEINLINE int32 GetActiveHandleIndex() const
-    {
-        return ActiveHandleIndex;
-    }
-
     /** @return Horizontal when the children sit side by side, Vertical when they stack. */
     NODISCARD FORCEINLINE EDockSplitOrientation GetOrientation() const
     {
         return Orientation;
     }
+
+protected:
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
+    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
 
 private:
     bool TryNormalizeFractions(const TArray<float>& InFractions);

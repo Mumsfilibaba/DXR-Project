@@ -56,8 +56,6 @@ public:
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
@@ -109,6 +107,10 @@ public:
      * @return The square, which is empty while the field holds no text.
      */
     NODISCARD FRectangle GetClearButtonRectangle(const FRectangle& Bounds) const;
+
+protected:
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
+    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
 
 private:
     void HandleTextChanged(const String& InText);

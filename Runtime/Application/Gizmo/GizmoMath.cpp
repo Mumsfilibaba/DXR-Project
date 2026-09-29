@@ -1,5 +1,7 @@
 #include "Application/Gizmo/GizmoMath.h"
+#include "Core/Math/Geometry2D.h"
 #include "Core/Math/Math.h"
+#include "Core/Math/Plane.h"
 
 bool FGizmoMath::WorldToClient(
     const Matrix4&    ViewProjection, 
@@ -64,13 +66,9 @@ bool FGizmoMath::IntersectRayPlane(
     const Vector3& RayDirection, 
     Vector3&       OutHit)
 {
-    const float Denominator = PlaneNormal.DotProduct(RayDirection);
-    if (Math::Abs(Denominator) < Math::Constants::Epsilon)
-    {
-        return false;
-    }
+    const Plane HitPlane(PlaneNormal, -PlaneNormal.DotProduct(PlanePoint));
 
-    const float Distance = (PlanePoint - RayOrigin).DotProduct(PlaneNormal) / Denominator;
+    const float Distance = HitPlane.IntersectRay(RayOrigin, RayDirection);
     if (Distance < 0.0f)
     {
         return false;
@@ -94,37 +92,12 @@ Vector3 FGizmoMath::ComputeAxisPlaneNormal(const Vector3& Axis, const Vector3& V
 
 float FGizmoMath::DistanceToSegment(const Vector2& Point, const Vector2& Start, const Vector2& End)
 {
-    const Vector2 Segment       = End - Start;
-    const float   LengthSquared = Segment.DotProduct(Segment);
-
-    if (LengthSquared <= Math::Constants::Epsilon)
-    {
-        return (Point - Start).GetLength();
-    }
-
-    const float   Parameter = Math::Clamp((Point - Start).DotProduct(Segment) / LengthSquared, 0.0f, 1.0f);
-    const Vector2 Closest   = Start + (Segment * Parameter);
-
-    return (Point - Closest).GetLength();
+    return Geometry2D::DistanceToSegment(Point, Start, End);
 }
 
 bool FGizmoMath::IsPointInsideQuad(const Vector2& Point, const Vector2 Quad[4])
 {
-    bool bHasPositive = false;
-    bool bHasNegative = false;
-
-    for (int32 EdgeIndex = 0; EdgeIndex < 4; ++EdgeIndex)
-    {
-        const Vector2& Corner = Quad[EdgeIndex];
-        const Vector2& Next   = Quad[(EdgeIndex + 1) % 4];
-
-        const float Cross = ((Next.X - Corner.X) * (Point.Y - Corner.Y)) - ((Next.Y - Corner.Y) * (Point.X - Corner.X));
-
-        bHasPositive |= Cross > 0.0f;
-        bHasNegative |= Cross < 0.0f;
-    }
-
-    return !(bHasPositive && bHasNegative);
+    return Geometry2D::IsPointInsideQuad(Point, Quad);
 }
 
 bool FGizmoMath::IsPointOverQuad(const Vector2& Point, const Vector2 Quad[4], float Padding)

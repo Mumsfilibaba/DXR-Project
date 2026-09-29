@@ -29,6 +29,8 @@
 #include "StaticString_Test.h"
 #include "CRC_Test.h"
 #include "Sort_Test.h"
+#include "UniformGrid2D_Test.h"
+#include "RingBuffer_Test.h"
 
 /**
  *  Check for memory leaks 
@@ -46,13 +48,27 @@
 IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 #endif
 
+struct FDebuggerOutputDevice : public IOutputDevice
+{
+    virtual void Log(const String& Message)
+    {
+        FPlatformMisc::OutputDebugString(Message.Data());
+        FPlatformMisc::OutputDebugString("\n");
+    }
+
+    virtual void Log(ELogSeverity Severity, const String& Message)
+    {
+        Log(Message);
+    }
+};
+
 /**
  * Tests
  */
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-void Tests()
+static void Tests()
 {
 #if RUN_TARRAY_TEST
     RUN_TEST("Array", TArray_Test());
@@ -141,25 +157,19 @@ void Tests()
 #if RUN_SORT_TEST
     RUN_TEST("Sort", Sort_Test());
 #endif
+
+#if RUN_UNIFORMGRID2D_TEST
+    RUN_TEST("UniformGrid2D", UniformGrid2D_Test());
+#endif
+
+#if RUN_RINGBUFFER_TEST
+    RUN_TEST("RingBuffer", RingBuffer_Test());
+#endif
 }
 
 /**
  * Main
  */
-struct FDebuggerOutputDevice : public IOutputDevice
-{
-    virtual void Log(const String& Message)
-    {
-        FPlatformMisc::OutputDebugString(Message.Data());
-        FPlatformMisc::OutputDebugString("\n");
-    }
-
-    virtual void Log(ELogSeverity Severity, const String& Message)
-    {
-        Log(Message);
-    }
-};
-
 static int32 RunContainerTests()
 {
 #ifdef _WIN32

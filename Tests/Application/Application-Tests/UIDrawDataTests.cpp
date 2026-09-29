@@ -1,4 +1,5 @@
 #include "UIDrawDataTests.h"
+#include "UITestUtils.h"
 
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
@@ -13,6 +14,54 @@
 static TSharedPtr<FTrueTypeFontFace> CreateTrueTypeFont()
 {
     return FTrueTypeFontFace::CreateFromFile(Paths::GetAssetDir() + "/Editor/Fonts/consola.ttf", 16);
+}
+
+bool UIDrawDataTextCacheTrim_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<FTrueTypeFontFace> Font = CreateTrueTypeFont();
+    TEST_EXPECT(Font != nullptr);
+    if (!Font)
+    {
+        TEST_END();
+    }
+
+    const auto BuildFrame = [&Font](FUIDrawData& DrawData, int32 TextCount)
+    {
+        FDrawCommandList Commands;
+        for (int32 Index = 0; Index < TextCount; ++Index)
+        {
+            Commands.AddText(0, FRectangle(IntVector2(0, Index * 16), 80, 16), "Label", Font.Get(), FFloatColor::White);
+        }
+
+        DrawData.BuildFromCommandList(Commands);
+    };
+
+    FUIDrawData DrawData;
+
+    TEST_SECTION("A busy frame grows the cache to one entry per text command");
+    BuildFrame(DrawData, 400);
+    TEST_EXPECT(DrawData.GetTextGeometryCacheSize() >= 400);
+
+    TEST_SECTION("A brief lull keeps it, so a UI that comes straight back does not pay to refill it");
+    for (int32 Frame = 0; Frame < 10; ++Frame)
+    {
+        BuildFrame(DrawData, 10);
+    }
+
+    TEST_EXPECT(DrawData.GetTextGeometryCacheSize() >= 400);
+
+    TEST_SECTION("A lasting lull gives the unused entries back");
+    for (int32 Frame = 0; Frame < 200; ++Frame)
+    {
+        BuildFrame(DrawData, 10);
+    }
+
+    TEST_EXPECT(DrawData.GetTextGeometryCacheSize() < 400);
+    TEST_EXPECT(DrawData.GetTextGeometryCacheSize() >= 10);
+
+    TEST_END();
 }
 
 bool UIDrawDataLayerOrder_Test()
@@ -36,7 +85,7 @@ bool UIDrawDataLayerOrder_Test()
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 6);
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
     TEST_EXPECT_EQ(DrawData.GetBatches()[0].IndexCount, 6);
-    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Atlas == nullptr);
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetAtlas() == nullptr);
 
     TEST_SECTION("The quad spans the bounds of the command");
     TEST_EXPECT(DrawData.GetVertices()[0].Position == Vector2(10.0f, 20.0f));
@@ -323,20 +372,20 @@ bool UIDrawDataRoundedBox_Test()
     DrawData.BuildFromCommandList(RoundedList);
 
     TEST_EXPECT(DrawData.GetVertices().IsEmpty());
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices().Size(), 4);
-    TEST_EXPECT_EQ(DrawData.GetShapeIndices().Size(), 6);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData).Size(), 4);
+    TEST_EXPECT_EQ(GetShapeIndices(DrawData).Size(), 6);
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
     TEST_EXPECT_EQ(DrawData.GetBatches()[0].IndexCount, 6);
     TEST_EXPECT(DrawData.GetBatches()[0].Kind == EUIDrawBatchKind::Shape);
-    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Atlas == nullptr);
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetAtlas() == nullptr);
 
     TEST_SECTION("The quad covers the bounds and carries the corner radii");
-    TEST_EXPECT(DrawData.GetShapeVertices()[0].Position == Vector2(0.0f, 0.0f));
-    TEST_EXPECT(DrawData.GetShapeVertices()[2].Position == Vector2(100.0f, 20.0f));
+    TEST_EXPECT(GetShapeVertices(DrawData)[0].Position == Vector2(0.0f, 0.0f));
+    TEST_EXPECT(GetShapeVertices(DrawData)[2].Position == Vector2(100.0f, 20.0f));
 
     constexpr float EdgeTolerance = 0.01f;
 
-    for (const FUIShapeVertex& Vertex : DrawData.GetShapeVertices())
+    for (const FUIShapeVertex& Vertex : GetShapeVertices(DrawData))
     {
         TEST_EXPECT(Vertex.Position.X >= -EdgeTolerance && Vertex.Position.X <= 100.0f + EdgeTolerance);
         TEST_EXPECT(Vertex.Position.Y >= -EdgeTolerance && Vertex.Position.Y <= 20.0f + EdgeTolerance);
@@ -352,9 +401,9 @@ bool UIDrawDataRoundedBox_Test()
     OversizedList.AddBox(0, FRectangle(IntVector2(0, 0), 10, 10), FFloatColor::White, 50.0f);
     DrawData.BuildFromCommandList(OversizedList);
 
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices().Size(), 4);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData).Size(), 4);
 
-    for (const FUIShapeVertex& Vertex : DrawData.GetShapeVertices())
+    for (const FUIShapeVertex& Vertex : GetShapeVertices(DrawData))
     {
         TEST_EXPECT(Vertex.Position.X >= -EdgeTolerance && Vertex.Position.X <= 10.0f + EdgeTolerance);
         TEST_EXPECT(Vertex.Position.Y >= -EdgeTolerance && Vertex.Position.Y <= 10.0f + EdgeTolerance);
@@ -393,7 +442,7 @@ bool UIDrawDataRoundedBottomBar_Test()
     TEST_SECTION("The band is a strip of column quads, so it carries two vertices and six indices per column");
     TEST_EXPECT(!DrawData.IsEmpty());
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
-    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Atlas == nullptr);
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetAtlas() == nullptr);
 
     const int32 VertexCount = DrawData.GetVertices().Size();
     TEST_EXPECT_EQ(VertexCount % 2, 0);
@@ -643,7 +692,7 @@ bool UIDrawDataText_Test()
     TEST_EXPECT(DrawData.GetVertices().IsEmpty());
     TEST_EXPECT(DrawData.GetIndices().IsEmpty());
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
-    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Atlas == Font->GetAtlas());
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetAtlas() == Font->GetAtlas());
 
     TEST_SECTION("Whitespace advances the pen without adding a quad");
     FDrawCommandList SpacedList;
@@ -739,9 +788,9 @@ bool UIDrawDataText_Test()
     DrawData.BuildFromCommandList(MixedList);
 
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 3);
-    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Atlas == nullptr);
-    TEST_EXPECT(DrawData.GetBatches()[1].Texture.Atlas == Font->GetAtlas());
-    TEST_EXPECT(DrawData.GetBatches()[2].Texture.Atlas == nullptr);
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetAtlas() == nullptr);
+    TEST_EXPECT(DrawData.GetBatches()[1].Texture.GetAtlas() == Font->GetAtlas());
+    TEST_EXPECT(DrawData.GetBatches()[2].Texture.GetAtlas() == nullptr);
 
     TEST_END();
 }
@@ -779,15 +828,15 @@ bool UIDrawDataAntiAliasing_Test()
     DrawData.BuildFromCommandList(RoundedList);
 
     TEST_EXPECT(DrawData.GetVertices().IsEmpty());
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices().Size(), 4);
-    TEST_EXPECT_EQ(DrawData.GetShapeIndices().Size(), 6);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData).Size(), 4);
+    TEST_EXPECT_EQ(GetShapeIndices(DrawData).Size(), 6);
     TEST_EXPECT_EQ(DrawData.GetBatches()[0].IndexCount, 6);
     TEST_EXPECT(DrawData.GetBatches()[0].Kind == EUIDrawBatchKind::Shape);
 
-    TEST_EXPECT(Math::Abs(DrawData.GetShapeVertices()[0].Position.X + HalfFringe) <= Tolerance);
-    TEST_EXPECT(Math::Abs(DrawData.GetShapeVertices()[0].Position.Y + HalfFringe) <= Tolerance);
-    TEST_EXPECT(Math::Abs(DrawData.GetShapeVertices()[2].Position.X - (100.0f + HalfFringe)) <= Tolerance);
-    TEST_EXPECT(Math::Abs(DrawData.GetShapeVertices()[2].Position.Y - (20.0f + HalfFringe)) <= Tolerance);
+    TEST_EXPECT(Math::Abs(GetShapeVertices(DrawData)[0].Position.X + HalfFringe) <= Tolerance);
+    TEST_EXPECT(Math::Abs(GetShapeVertices(DrawData)[0].Position.Y + HalfFringe) <= Tolerance);
+    TEST_EXPECT(Math::Abs(GetShapeVertices(DrawData)[2].Position.X - (100.0f + HalfFringe)) <= Tolerance);
+    TEST_EXPECT(Math::Abs(GetShapeVertices(DrawData)[2].Position.Y - (20.0f + HalfFringe)) <= Tolerance);
 
     TEST_SECTION("A stroke gains a fringe either side, so it is four vertices per point and eighteen indices per segment");
     FDrawCommandList LineList;
@@ -872,8 +921,8 @@ bool UIDrawDataAntiAliasing_Test()
     DrawData.SetAntiAliasingEnabled(false);
     DrawData.BuildFromCommandList(RoundedList);
 
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices().Size(), 4);
-    TEST_EXPECT_EQ(DrawData.GetShapeIndices().Size(), 6);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData).Size(), 4);
+    TEST_EXPECT_EQ(GetShapeIndices(DrawData).Size(), 6);
     TEST_EXPECT(DrawData.GetVertices().IsEmpty());
 
     TEST_END();

@@ -91,17 +91,6 @@ DECLARE_DELEGATE(FOnBrowserDropped, const String& /*PayloadId*/, int32 /*Target*
 DECLARE_DELEGATE(FOnBrowserDragPreview, int32 /*Target*/);
 DECLARE_RETURN_DELEGATE(FOnBrowserHoverTip, String, int32 /*Target*/);
 
-static IntVector2 ScreenToClient(const TSharedPtr<FVisualElement>& Element, const IntVector2& ScreenPosition)
-{
-    const FRectangle ScreenBounds = FMenuStack::GetScreenBounds(Element);
-    if (ScreenBounds.IsEmpty())
-    {
-        return ScreenPosition;
-    }
-
-    return Element->GetContentRectangle().Position + (ScreenPosition - ScreenBounds.Position);
-}
-
 class FBrowserGlyph final : public FVisualElement
 {
 public:
@@ -132,7 +121,7 @@ public:
     {
         if (Brush.IsValid())
         {
-            const FRectangle Bounds = FRectangle::AlignInBounds(AllottedGeometry.Bounds, IntVector2(Size, Size),
+            const FRectangle Bounds = FLayout::AlignInBounds(AllottedGeometry.Bounds, IntVector2(Size, Size),
                 EHorizontalAlignment::Center, EVerticalAlignment::Center);
 
             OutCommandList.AddImage(LayerId, Bounds, Brush, Tint);
@@ -212,9 +201,8 @@ public:
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override final;
     virtual void OnArrange(const FRectangle& AllottedBounds) override final;
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override final;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final;
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override final;
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override final;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override final;
     virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override final;
     virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override final;
@@ -279,6 +267,17 @@ private:
     bool                       bIsCursorInsideView;
     bool                       bRestoreViewFocus;
 };
+
+static IntVector2 ScreenToClient(const TSharedPtr<FVisualElement>& Element, const IntVector2& ScreenPosition)
+{
+    const FRectangle ScreenBounds = FMenuStack::GetScreenBounds(Element);
+    if (ScreenBounds.IsEmpty())
+    {
+        return ScreenPosition;
+    }
+
+    return Element->GetContentRectangle().Position + (ScreenPosition - ScreenBounds.Position);
+}
 
 TSharedPtr<FEditorContentBrowserView> FEditorContentBrowserView::Create(const FDesc& Desc)
 {
@@ -374,7 +373,7 @@ void FEditorContentBrowserView::OnArrange(const FRectangle& AllottedBounds)
 
     if (View)
     {
-        View->Tick(AllottedBounds);
+        View->Arrange(AllottedBounds);
     }
 
     if (RenameField)
@@ -386,22 +385,16 @@ void FEditorContentBrowserView::OnArrange(const FRectangle& AllottedBounds)
         }
         else
         {
-            RenameField->Tick(FieldBounds);
+            RenameField->Arrange(FieldBounds);
+
+            RequestContinuousArrange();
         }
     }
 }
 
-void FEditorContentBrowserView::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FEditorContentBrowserView::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const
 {
-    if (View)
-    {
-        OutChildren.Add(View);
-    }
-
-    if (RenameField)
-    {
-        OutChildren.Add(RenameField);
-    }
+    return VisitChildList(Visitor, Order, View, RenameField);
 }
 
 int32 FEditorContentBrowserView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -450,22 +443,6 @@ int32 FEditorContentBrowserView::OnDraw(const FDrawGeometry& AllottedGeometry, F
 
     OutCommandList.PopClip(MaxLayerId);
     return MaxLayerId;
-}
-
-void FEditorContentBrowserView::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
-{
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
-    if (RenameField && RenameField->GetContentRectangle().EncapsulatesPoint(ClientPosition))
-    {
-        RenameField->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-        return;
-    }
-
-    if (View)
-    {
-        View->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-    }
 }
 
 FEventResponse FEditorContentBrowserView::OnMouseButtonDown(const FCursorEvent& CursorEvent)
@@ -677,6 +654,8 @@ void FEditorContentBrowserView::ReleaseRenameField()
     RenamedTarget = InvalidTarget;
 
     bRestoreViewFocus = true;
+    InvalidateArrange();
+    InvalidatePaint();
 }
 
 EKeyInterceptResult FEditorContentBrowserView::HandleRenameFieldKeyDown(const FKeyEvent& KeyEvent)

@@ -90,22 +90,17 @@ void FSearchBox::OnArrange(const FRectangle& AllottedBounds)
     if (Editor)
     {
         Editor->SetHintColor(Editor->HasKeyboardFocus() ? Style.HintFocused : Style.HintNormal);
-        Editor->Tick(GetEditorRectangle(AllottedBounds));
+        Editor->Arrange(GetEditorRectangle(AllottedBounds));
     }
 }
 
-void FSearchBox::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FSearchBox::VisitChildren(FChildVisitor& Visitor, EChildOrder /*Order*/) const
 {
-    if (Editor)
-    {
-        OutChildren.Add(Editor);
-    }
+    return VisitChild(Visitor, Editor);
 }
 
-void FSearchBox::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+void FSearchBox::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
 {
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
     const FRectangle ClearBounds = GetClearButtonRectangle(GetContentRectangle());
     if (!ClearBounds.IsEmpty() && ClearBounds.EncapsulatesPoint(ClientPosition))
     {
@@ -114,7 +109,7 @@ void FSearchBox::FindChildrenContainingPoint(const IntVector2& ClientPosition, F
 
     if (Editor)
     {
-        Editor->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        Editor->HitTest(ClientPosition, OutPath);
     }
 }
 

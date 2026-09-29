@@ -36,7 +36,7 @@ static TSharedPtr<IFontFace> CreateFont()
 static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRectangle& Bounds)
 {
     Element->PrepareDesiredSize();
-    Element->Tick(Bounds);
+    Element->Arrange(Bounds);
 }
 
 static FCursorEvent MakeMoveEvent(const IntVector2& ClientPosition)
@@ -85,6 +85,30 @@ static TArray<FTileItem> CreateTileItems(int32 NumItems)
     }
 
     return Items;
+}
+
+static FFloatColor MakeTreeHoverFill(const FUITreeRowStyle& Style)
+{
+    FFloatColor Fill = Style.HoveredFill;
+    Fill.A           = 0.5f;
+    return Fill;
+}
+
+static bool DrawsHoverForItem(const TSharedPtr<FTreeView>& Tree, const TSharedPtr<FTreeItem>& Item, const FFloatColor& HoverFill)
+{
+    FDrawCommandList Commands;
+    Tree->OnDraw(FDrawGeometry(Tree->GetContentRectangle(), 1.0f), Commands, 0);
+
+    const FRectangle Highlight = Tree->GetItemHighlightBounds(Item);
+    for (const FDrawCommand& Command : Commands.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Box && Command.HasTint(HoverFill) && Command.Bounds == Highlight)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool TreeViewModel_Test()
@@ -859,30 +883,6 @@ bool TreeViewHeaderToolTips_Test()
     TEST_EXPECT(!ToolTips.IsPending());
 
     TEST_END();
-}
-
-static FFloatColor MakeTreeHoverFill(const FUITreeRowStyle& Style)
-{
-    FFloatColor Fill = Style.HoveredFill;
-    Fill.A           = 0.5f;
-    return Fill;
-}
-
-static bool DrawsHoverForItem(const TSharedPtr<FTreeView>& Tree, const TSharedPtr<FTreeItem>& Item, const FFloatColor& HoverFill)
-{
-    FDrawCommandList Commands;
-    Tree->OnDraw(FDrawGeometry(Tree->GetContentRectangle(), 1.0f), Commands, 0);
-
-    const FRectangle Highlight = Tree->GetItemHighlightBounds(Item);
-    for (const FDrawCommand& Command : Commands.GetCommands())
-    {
-        if (Command.Type == EDrawCommandType::Box && Command.HasTint(HoverFill) && Command.Bounds == Highlight)
-        {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 bool TreeViewHoverAndRowClick_Test()

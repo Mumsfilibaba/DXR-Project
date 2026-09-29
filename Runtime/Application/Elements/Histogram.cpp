@@ -17,6 +17,8 @@ FHistogram::FHistogram()
     : FVisualElement()
     , Font(nullptr)
     , Label()
+    , LabelMetrics()
+    , ValueMetrics()
     , Samples()
     , BarColor(FUIStyle::GetDefault().Colors.Accent)
     , BackgroundColor(FUIStyle::GetDefault().Colors.ControlNormal)
@@ -176,12 +178,12 @@ int32 FHistogram::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
         if (HoveredSample != InvalidSampleIndex)
         {
             Value      = String::Printf("%.2f", GetSample(HoveredSample));
-            ValueWidth = Font->MeasureWidth(StringView(Value.Data(), Value.Length()));
+            ValueWidth = ValueMetrics.GetWidth(Font.Get(), StringView(Value.Data(), Value.Length()));
         }
 
         if (!Value.IsEmpty() && ValueWidth <= TextBounds.Width)
         {
-            const FRectangle ValueBounds = FRectangle::AlignInBounds(TextBounds, IntVector2(ValueWidth, Font->GetLineHeight()),
+            const FRectangle ValueBounds = FLayout::AlignInBounds(TextBounds, IntVector2(ValueWidth, Font->GetLineHeight()),
                 EHorizontalAlignment::Right, EVerticalAlignment::Top);
             OutCommandList.AddText(LayerId + 3, ValueBounds, Value, Font.Get(), Style.Colors.Text);
 
@@ -191,11 +193,11 @@ int32 FHistogram::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
         if (!Label.IsEmpty())
         {
             const int32  LabelWidth = ValueWidth > 0 ? (TextBounds.Width - ValueWidth - HISTOGRAM_TEXT_PADDING) : TextBounds.Width;
-            const String Elided     = Font->ElideText(StringView(Label.Data(), Label.Length()), LabelWidth);
+            const String& Elided    = LabelMetrics.GetElided(Font.Get(), StringView(Label.Data(), Label.Length()), LabelWidth);
 
             if (!Elided.IsEmpty())
             {
-                const FRectangle LabelBounds = FRectangle::AlignInBounds(TextBounds, IntVector2(LabelWidth, Font->GetLineHeight()),
+                const FRectangle LabelBounds = FLayout::AlignInBounds(TextBounds, IntVector2(LabelWidth, Font->GetLineHeight()),
                     EHorizontalAlignment::Left, EVerticalAlignment::Top);
                 OutCommandList.AddText(LayerId + 3, LabelBounds, Elided, Font.Get(), Style.Colors.Text);
 

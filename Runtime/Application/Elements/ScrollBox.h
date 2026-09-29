@@ -31,9 +31,7 @@ public:
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
     virtual FEventResponse OnMouseScroll(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
@@ -107,17 +105,15 @@ public:
      */
     NODISCARD bool IsScrollBarVisible() const;
 
-    /** @return This element as a scroll box. */
-    NODISCARD virtual FScrollBox* AsScrollBox() override
-    {
-        return this;
-    }
-
     /** @return The scroll bar the box hosts, which a caller can style but does not own. */
     NODISCARD FORCEINLINE const TSharedPtr<class FScrollBar>& GetScrollBar() const
     {
         return ScrollBar;
     }
+
+protected:
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
+    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
 
 private:
     NODISCARD FRectangle GetViewBounds(const FRectangle& AllottedBounds) const;

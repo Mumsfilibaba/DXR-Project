@@ -29,9 +29,9 @@ FFloatColor FConsoleLogBuffer::GetSeverityColor(ELogSeverity Severity)
 FConsoleLogBuffer::FConsoleLogBuffer(int32 InMaxLines)
     : IOutputDevice()
     , LinesCS()
-    , Lines()
-    , MaxLines(Math::Max(1, InMaxLines))
+    , Lines(Math::Max(1, InMaxLines))
     , Revision(0)
+    , ClearRevision(0)
     , bIsRegisteredWithLogger(false)
 {
 }
@@ -51,7 +51,6 @@ void FConsoleLogBuffer::Log(ELogSeverity Severity, const String& Message)
     TScopedLock Lock(LinesCS);
 
     Lines.Emplace(Message, Severity);
-    TrimToMaxLines();
     Revision++;
 }
 
@@ -79,12 +78,26 @@ void FConsoleLogBuffer::Clear()
 
     Lines.Clear();
     Revision++;
+    ClearRevision = Revision;
 }
 
-void FConsoleLogBuffer::GetSnapshot(TArray<FConsoleLogLine>& OutLines) const
+uint64 FConsoleLogBuffer::GetSnapshot(TArray<FConsoleLogLine>& OutLines) const
 {
     TScopedLock Lock(LinesCS);
-    OutLines = Lines;
+
+    CopyNewestLines(Lines.Size(), OutLines);
+    return Revision;
+}
+
+uint64 FConsoleLogBuffer::GetLinesSince(uint64 SinceRevision, TArray<FConsoleLogLine>& OutLines, bool& bOutContinuous) const
+{
+    TScopedLock Lock(LinesCS);
+
+    const uint64 NumMissing = Revision - Math::Min(SinceRevision, Revision);
+    bOutContinuous = SinceRevision >= ClearRevision && NumMissing <= static_cast<uint64>(Lines.Size());
+
+    CopyNewestLines(bOutContinuous ? static_cast<int32>(NumMissing) : Lines.Size(), OutLines);
+    return Revision;
 }
 
 int32 FConsoleLogBuffer::GetNumLines() const
@@ -97,8 +110,14 @@ void FConsoleLogBuffer::SetMaxLines(int32 InMaxLines)
 {
     TScopedLock Lock(LinesCS);
 
-    MaxLines = Math::Max(1, InMaxLines);
-    TrimToMaxLines();
+    const int32 NewMaxLines = Math::Max(1, InMaxLines);
+    if (NewMaxLines < Lines.Size())
+    {
+        Revision++;
+        ClearRevision = Revision;
+    }
+
+    Lines.SetCapacity(NewMaxLines);
 }
 
 uint64 FConsoleLogBuffer::GetRevision() const
@@ -107,12 +126,14 @@ uint64 FConsoleLogBuffer::GetRevision() const
     return Revision;
 }
 
-void FConsoleLogBuffer::TrimToMaxLines()
+void FConsoleLogBuffer::CopyNewestLines(int32 NumLines, TArray<FConsoleLogLine>& OutLines) const
 {
     // Called with the lock already held
-    const int32 NumLinesToDrop = Lines.Size() - MaxLines;
-    if (NumLinesToDrop > 0)
+    OutLines.Clear();
+    OutLines.Reserve(NumLines);
+
+    for (int32 Index = Lines.Size() - NumLines; Index < Lines.Size(); ++Index)
     {
-        Lines.RemoveAt(0, NumLinesToDrop);
+        OutLines.Add(Lines[Index]);
     }
 }

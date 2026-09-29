@@ -218,22 +218,16 @@ void FProfilerTimeline::OnArrange(const FRectangle& /* AllottedBounds */)
     }
 }
 
-void FProfilerTimeline::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FProfilerTimeline::VisitChildren(FChildVisitor& Visitor, EChildOrder /*Order*/) const
 {
-    if (HorizontalScrollBar)
-    {
-        OutChildren.Add(HorizontalScrollBar);
-    }
+    return VisitChild(Visitor, HorizontalScrollBar);
 }
 
-void FProfilerTimeline::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+void FProfilerTimeline::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
 {
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
-    if (HorizontalScrollBar && IsHorizontalScrollBarVisible()
-        && HorizontalScrollBar->GetContentRectangle().EncapsulatesPoint(ClientPosition))
+    if (HorizontalScrollBar && IsHorizontalScrollBarVisible())
     {
-        HorizontalScrollBar->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        HorizontalScrollBar->HitTest(ClientPosition, OutPath);
     }
 }
 
@@ -392,7 +386,7 @@ void FProfilerTimeline::SyncScrollBar()
     if (!IsHorizontalScrollBarVisible())
     {
         HorizontalScrollBar->SetScrollState(PROFILER_SCROLL_RESOLUTION, PROFILER_SCROLL_RESOLUTION, 0);
-        HorizontalScrollBar->Tick(GetScrollBarBounds(GetContentRectangle()));
+        HorizontalScrollBar->Arrange(GetScrollBarBounds(GetContentRectangle()));
         return;
     }
 
@@ -405,7 +399,7 @@ void FProfilerTimeline::SyncScrollBar()
         0, PROFILER_SCROLL_RESOLUTION - View);
 
     HorizontalScrollBar->SetScrollState(PROFILER_SCROLL_RESOLUTION, View, Offset);
-    HorizontalScrollBar->Tick(GetScrollBarBounds(GetContentRectangle()));
+    HorizontalScrollBar->Arrange(GetScrollBarBounds(GetContentRectangle()));
 }
 
 void FProfilerTimeline::OnScrollBarMoved(int32 NewOffset)
@@ -587,7 +581,7 @@ int32 FProfilerTimeline::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
     {
         const String     Empty      = String("Nothing was captured for this frame");
         const IntVector2 Size       = IntVector2(Font->MeasureWidth(StringView(Empty.Data(), Empty.Length())), Font->GetLineHeight());
-        const FRectangle TextBounds = FRectangle::AlignInBounds(Bounds, Size, EHorizontalAlignment::Center, EVerticalAlignment::Center);
+        const FRectangle TextBounds = FLayout::AlignInBounds(Bounds, Size, EHorizontalAlignment::Center, EVerticalAlignment::Center);
 
         OutCommandList.AddText(TextLayer, TextBounds, Empty, Font.Get(), Style.Colors.TextDisabled);
         OutCommandList.PopClip(TextLayer);

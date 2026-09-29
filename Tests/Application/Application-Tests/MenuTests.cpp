@@ -23,11 +23,6 @@
 #include <Application/Style/UIStyle.h>
 #include <Application/Text/FixedWidthFontFace.h>
 
-static TSharedPtr<IFontFace> CreateFont()
-{
-    return MakeSharedPtr<FFixedWidthFontFace>(8, 16);
-}
-
 class FScopedMenuTestServices
 {
 public:
@@ -42,6 +37,11 @@ public:
     FScopedMenuTestServices(const FScopedMenuTestServices&) = delete;
     FScopedMenuTestServices& operator=(const FScopedMenuTestServices&) = delete;
 };
+
+static TSharedPtr<IFontFace> CreateFont()
+{
+    return MakeSharedPtr<FFixedWidthFontFace>(8, 16);
+}
 
 static TSharedPtr<FMenu> CreateMenu(const TSharedPtr<IFontFace>& Font, const TArray<String>& Labels)
 {
@@ -61,7 +61,7 @@ static TSharedPtr<FVisualElement> CreateDropTarget(const FRectangle& ScreenBound
 {
     TSharedPtr<FSpacer> Target = FSpacer::Create(ScreenBounds.GetSize());
     Target->PrepareDesiredSize();
-    Target->Tick(ScreenBounds);
+    Target->Arrange(ScreenBounds);
 
     return Target;
 }
@@ -342,7 +342,7 @@ bool MenuItemLayout_Test()
     TEST_EXPECT_EQ(WithShortcut->GetCachedDesiredSize().X, Plain->GetCachedDesiredSize().X + FMenuItem::ShortcutGap + (6 * 8));
 
     TEST_SECTION("The hint is drawn upper case, whatever case the accelerator was named in");
-    WithShortcut->Tick(FRectangle(IntVector2(0, 0), 200, 26));
+    WithShortcut->Arrange(FRectangle(IntVector2(0, 0), 200, 26));
 
     FDrawCommandList ShortcutCommands;
     DrawElement(WithShortcut, ShortcutCommands);
@@ -360,7 +360,7 @@ bool MenuItemLayout_Test()
     TEST_EXPECT_EQ(WithSubMenu->GetCachedDesiredSize().X, Plain->GetCachedDesiredSize().X + FMenuItem::ShortcutGap + FMenuItem::ArrowWidth);
 
     TEST_SECTION("A row draws its label and nothing behind it until it is highlighted");
-    Plain->Tick(FRectangle(IntVector2(0, 0), 160, 24));
+    Plain->Arrange(FRectangle(IntVector2(0, 0), 160, 24));
 
     FDrawCommandList Commands;
     DrawElement(Plain, Commands);
@@ -383,7 +383,7 @@ bool MenuItemLayout_Test()
 
     TSharedPtr<FMenuItem> Checkable = FMenuItem::Create(CheckDesc);
     Checkable->PrepareDesiredSize();
-    Checkable->Tick(FRectangle(IntVector2(0, 0), 160, 24));
+    Checkable->Arrange(FRectangle(IntVector2(0, 0), 160, 24));
 
     FDrawCommandList CheckedCommands;
     DrawElement(Checkable, CheckedCommands);
@@ -403,7 +403,7 @@ bool MenuItemLayout_Test()
     TEST_EXPECT_EQ(CountCommands(UncheckedCommands, EDrawCommandType::Box), 0);
 
     TEST_SECTION("A row with a submenu draws the arrow that says so");
-    WithSubMenu->Tick(FRectangle(IntVector2(0, 0), 200, 24));
+    WithSubMenu->Arrange(FRectangle(IntVector2(0, 0), 200, 24));
 
     FDrawCommandList ArrowCommands;
     DrawElement(WithSubMenu, ArrowCommands);
@@ -414,7 +414,7 @@ bool MenuItemLayout_Test()
     Separator->PrepareDesiredSize();
     TEST_EXPECT_EQ(Separator->GetCachedDesiredSize().Y, Style.Metrics.MenuSeparatorThickness + 8);
 
-    Separator->Tick(FRectangle(IntVector2(0, 0), 160, Separator->GetCachedDesiredSize().Y));
+    Separator->Arrange(FRectangle(IntVector2(0, 0), 160, Separator->GetCachedDesiredSize().Y));
 
     FDrawCommandList SeparatorCommands;
     DrawElement(Separator, SeparatorCommands);
@@ -431,7 +431,7 @@ bool MenuItemLayout_Test()
     TEST_EXPECT_EQ(Header->GetLabel(), String("OPEN"));
 
     const int32 HeaderHeight = Header->GetCachedDesiredSize().Y;
-    Header->Tick(FRectangle(IntVector2(0, 0), 160, HeaderHeight));
+    Header->Arrange(FRectangle(IntVector2(0, 0), 160, HeaderHeight));
 
     FDrawCommandList HeaderCommands;
     DrawElement(Header, HeaderCommands);
@@ -454,7 +454,7 @@ bool MenuItemLayout_Test()
     TEST_SECTION("A menu is a fill behind a single ring, with no bevel inside it");
     TSharedPtr<FMenu> Chrome = CreateMenu(Font, { "Open" });
     Chrome->PrepareDesiredSize();
-    Chrome->Tick(FRectangle(IntVector2(0, 0), 160, 80));
+    Chrome->Arrange(FRectangle(IntVector2(0, 0), 160, 80));
 
     FDrawCommandList ChromeCommands;
     DrawElement(Chrome, ChromeCommands);
@@ -497,7 +497,7 @@ bool MenuStyle_Test()
     Menu->SetStyle(MenuStyle);
 
     Menu->PrepareDesiredSize();
-    Menu->Tick(FRectangle(IntVector2(0, 0), 160, 110));
+    Menu->Arrange(FRectangle(IntVector2(0, 0), 160, 110));
 
     TEST_SECTION("The menu's own fill and ring come from the style it was given, both rounded to its radius");
     FDrawCommandList Commands;
@@ -559,7 +559,7 @@ bool MenuStyle_Test()
     TSharedPtr<FMenuItem> Late = FMenuItem::Create(LateDesc);
     Menu->AddItem(Late);
     Menu->PrepareDesiredSize();
-    Menu->Tick(FRectangle(IntVector2(0, 0), 160, 110));
+    Menu->Arrange(FRectangle(IntVector2(0, 0), 160, 110));
 
     Late->SetHighlighted(true);
 
@@ -570,7 +570,7 @@ bool MenuStyle_Test()
     TEST_SECTION("A menu left alone still draws in the shipped colours, so the override stayed with the one menu");
     TSharedPtr<FMenu> Plain = CreateMenu(Font, { "Open" });
     Plain->PrepareDesiredSize();
-    Plain->Tick(FRectangle(IntVector2(0, 0), 160, 80));
+    Plain->Arrange(FRectangle(IntVector2(0, 0), 160, 80));
 
     FDrawCommandList PlainCommands;
     DrawElement(Plain, PlainCommands);
@@ -976,14 +976,14 @@ bool MenuBlocksHoverBehindIt_Test()
 
     TEST_SECTION("Over the menu, only the menu is in the path, so the row behind it cannot hover along");
     FElementPath CoveredPath;
-    Window->FindChildrenContainingPoint(InsideMenu, CoveredPath);
+    Window->HitTest(InsideMenu, CoveredPath);
     TEST_EXPECT(CoveredPath.Contains(Menu));
     TEST_EXPECT(!CoveredPath.Contains(Behind));
     TEST_EXPECT(!CoveredPath.Contains(Root));
 
     TEST_SECTION("Clear of the menu the content is reached as before");
     FElementPath UncoveredPath;
-    Window->FindChildrenContainingPoint(BelowMenu, UncoveredPath);
+    Window->HitTest(BelowMenu, UncoveredPath);
     TEST_EXPECT(!UncoveredPath.Contains(Menu));
     TEST_EXPECT(UncoveredPath.Contains(Behind));
 
@@ -991,7 +991,7 @@ bool MenuBlocksHoverBehindIt_Test()
     FMenuStack::Get().DismissAll();
 
     FElementPath RestoredPath;
-    Window->FindChildrenContainingPoint(InsideMenu, RestoredPath);
+    Window->HitTest(InsideMenu, RestoredPath);
     TEST_EXPECT(RestoredPath.Contains(Behind));
 
     TEST_END();
@@ -1244,7 +1244,7 @@ bool ToolTipService_Test()
 
     TEST_SECTION("A tip takes no input, so it cannot steal the hover keeping it up");
     FElementPath HoverPath;
-    Window->FindChildrenContainingPoint(ToolTips.GetToolTipBounds().GetCenter() - Window->GetPosition(), HoverPath);
+    Window->HitTest(ToolTips.GetToolTipBounds().GetCenter() - Window->GetPosition(), HoverPath);
     TEST_EXPECT(!HoverPath.Contains(Window->GetMenuHost()));
 
     TEST_SECTION("It follows the cursor rather than being torn down and built again");

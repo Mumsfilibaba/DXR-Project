@@ -38,6 +38,7 @@ FWindow::FWindow()
     , Content()
     , PlatformWindow(nullptr)
 {
+    AddElementFlags(EElementFlags::IsWindow);
 }
 
 FWindow::~FWindow()
@@ -69,29 +70,22 @@ IntVector2 FWindow::PrepareDesiredSize()
     return FVisualElement::PrepareDesiredSize();
 }
 
-void FWindow::Tick(const FRectangle& AssignedBounds)
+void FWindow::OnArrange(const FRectangle& AllottedBounds)
 {
-    SetContentRectangle(AssignedBounds);
-
     if (Content)
     {
-        Content->Tick(AssignedBounds);
+        Content->Arrange(AllottedBounds);
     }
 
     if (Overlay)
     {
-        Overlay->Tick(AssignedBounds);
+        Overlay->Arrange(AllottedBounds);
     }
 
     if (MenuHost)
     {
-        MenuHost->Tick(AssignedBounds);
+        MenuHost->Arrange(AllottedBounds);
     }
-}
-
-bool FWindow::IsWindow() const
-{
-    return true;
 }
 
 bool FWindow::SupportsKeyboardFocus() const
@@ -168,52 +162,29 @@ int32 FWindow::PaintDeferred(FDrawCommandList& OutCommandList, int32 LayerId) co
     return MaxLayerId;
 }
 
-void FWindow::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FWindow::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const
 {
-    if (Content)
+    return VisitChildList(Visitor, Order, Content, Overlay, MenuHost);
+}
+
+void FWindow::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+{
+    const bool bIsCoveredByMenu = MenuHost && MenuHost->IsVisible() && MenuHost->CoversPoint(ClientPosition);
+    const bool bIsOverlayModal  = Overlay && Overlay->IsVisible() && Overlay->CapturesAllInput();
+
+    if (Content && !bIsOverlayModal && !bIsCoveredByMenu)
     {
-        OutChildren.Add(Content);
+        Content->HitTest(ClientPosition, OutPath);
     }
 
-    if (Overlay)
+    if (Overlay && !bIsCoveredByMenu)
     {
-        OutChildren.Add(Overlay);
+        Overlay->HitTest(ClientPosition, OutPath);
     }
 
     if (MenuHost)
     {
-        OutChildren.Add(MenuHost);
-    }
-}
-
-void FWindow::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutParentElements)
-{
-    FRectangle WindowBounds = GetContentRectangle();
-    if (WindowBounds.EncapsulatesPoint(ClientPosition))
-    {
-        const EVisibility CurrentVisibility = GetVisibility();
-        if (OutParentElements.AcceptVisbility(CurrentVisibility))
-        {
-            OutParentElements.Add(CurrentVisibility, AsSharedPtr());
-
-            const bool bIsCoveredByMenu = MenuHost && MenuHost->IsVisible() && MenuHost->CoversPoint(ClientPosition);
-            const bool bIsOverlayModal  = Overlay && Overlay->IsVisible() && Overlay->CapturesAllInput();
-
-            if (Content && !bIsOverlayModal && !bIsCoveredByMenu)
-            {
-                Content->FindChildrenContainingPoint(ClientPosition, OutParentElements);
-            }
-
-            if (Overlay && !bIsCoveredByMenu)
-            {
-                Overlay->FindChildrenContainingPoint(ClientPosition, OutParentElements);
-            }
-
-            if (MenuHost)
-            {
-                MenuHost->FindChildrenContainingPoint(ClientPosition, OutParentElements);
-            }
-        }
+        MenuHost->HitTestHostedChild(ClientPosition, OutPath);
     }
 }
 
@@ -395,7 +366,7 @@ TSharedPtr<FMenuHost> FWindow::GetOrCreateMenuHost()
         MenuHost->SetParentElement(AsWeakPtr());
 
         const IntVector2 Size = GetSize();
-        MenuHost->Tick(FRectangle(IntVector2(), Size.X, Size.Y));
+        MenuHost->Arrange(FRectangle(IntVector2(), Size.X, Size.Y));
     }
 
     return MenuHost;

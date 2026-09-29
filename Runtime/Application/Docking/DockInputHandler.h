@@ -1,27 +1,17 @@
 #pragma once
 #include "Application/InputHandler.h"
+#include "Application/InputService.h"
 
-class APPLICATION_API FDockInputHandler final : public FInputHandler
+class APPLICATION_API FDockInputHandler final : public FInputHandler, public TApplicationInputService<FDockInputHandler>
 {
 public:
 
-    /**
-     * @brief Creates the handler and registers it with the application.
-     *
-     * @return The handler, which is only registered when an application exists to register it with.
-     */
-    static TSharedPtr<FDockInputHandler> Register();
-
-    /**
-     * @brief Unregisters a handler and ends whatever drag it was watching.
-     *
-     * @param InputHandler The handler to remove.
-     */
-    static void Unregister(const TSharedPtr<FDockInputHandler>& InputHandler);
+    /** @brief Cancels whatever drag the handler was watching, which nothing would finish once it is gone. */
+    static void OnUnregistered();
 
 public:
-    FDockInputHandler() = default;
-    virtual ~FDockInputHandler() = default;
+    FDockInputHandler();
+    virtual ~FDockInputHandler();
 
     // FInputHandler Interface
     virtual bool OnKeyDown(const FKeyEvent& KeyEvent) override final;

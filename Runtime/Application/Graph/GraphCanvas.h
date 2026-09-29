@@ -1,4 +1,6 @@
 #pragma once
+#include "Core/Containers/Map.h"
+#include "Core/Containers/UniformGrid2D.h"
 #include "Core/Delegates/Delegate.h"
 #include "Application/Elements/InteractiveElement.h"
 #include "Application/Graph/GraphLayout.h"
@@ -129,9 +131,7 @@ public:
     virtual IntVector2 PrepareDesiredSize() override;
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override;
@@ -155,7 +155,7 @@ public:
     /** @brief Pans and zooms so every node fits, which is the Reset View action. */
     void FitToNodes();
 
-    /** @brief Runs FGraphLayout over the model and writes the resulting positions back into it. */
+    /** @brief Runs FLayeredGraphLayout over the model and writes the resulting positions back into it. */
     void AutoLayout();
 
     /**
@@ -322,6 +322,7 @@ public:
     NODISCARD TSharedPtr<FGraphNodeElement> FindNodeElement(int32 NodeId) const;
 
 protected:
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
 
     // FInteractiveElement Interface
     virtual void OnDragged(const FCursorEvent& CursorEvent) override;
@@ -336,7 +337,22 @@ private:
     void EndDrag(const IntVector2& ClientPosition);
 
     NODISCARD bool GetLinkCurve(const FGraphLink& Link, Vector2& OutStart, Vector2& OutStartControl, Vector2& OutEndControl, Vector2& OutEnd) const;
-    NODISCARD float DistanceToLink(const FGraphLink& Link, const Vector2& ClientPosition) const;
+
+    struct FLinkCurve
+    {
+        int32   LinkId;
+        int32   FromPinId;
+        Vector2 Start;
+        Vector2 StartControl;
+        Vector2 EndControl;
+        Vector2 End;
+        int32   FirstPoint;
+    };
+
+    void RefreshSpatialIndex() const;
+    void MarkSpatialIndexDirty();
+    void MarkViewChanged();
+    NODISCARD TArrayView<const Vector2> GetLinkPoints(const FLinkCurve& Curve) const;
 
     void DrawGrid(const FRectangle& Bounds, FDrawCommandList& OutCommandList, int32 LayerId) const;
     void DrawLinks(FDrawCommandList& OutCommandList, int32 LayerId) const;
@@ -348,6 +364,14 @@ private:
     TSharedPtr<FGraphModel>                Model;
     TSharedPtr<IFontFace>                  Font;
     TArray<TSharedPtr<FGraphNodeElement>>  NodeElements;
+    TMap<int32, int32>                     NodeElementIndexById;
+    mutable TArray<FLinkCurve>             LinkCurves;
+    mutable TArray<Vector2>                LinkPoints;
+    mutable TArray<FRectangle>             ScratchItemBounds;
+    mutable FUniformGrid2D                 NodeGrid;
+    mutable FUniformGrid2D                 LinkGrid;
+    mutable int32                          IndexedRevision;
+    mutable bool                           bIsSpatialIndexDirty;
     TArray<int32>                          SelectedNodeIds;
     FGraphNodeStyle                        NodeStyle;
     FFloatColor                            BackgroundColor;

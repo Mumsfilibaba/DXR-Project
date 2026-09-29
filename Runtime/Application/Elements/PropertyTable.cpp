@@ -61,6 +61,7 @@ TSharedPtr<FPropertyTable> FPropertyTable::Create(const FDesc& Desc)
 FPropertyTable::FPropertyTable()
     : FVisualElement()
     , Rows()
+    , RowOffsets()
     , Font(nullptr)
     , Style()
     , RevertIcon()
@@ -104,11 +105,14 @@ void FPropertyTable::Initialize(const FDesc& Desc)
 
 IntVector2 FPropertyTable::ComputeDesiredSize() const
 {
+    RebuildRowOffsets();
     return IntVector2(0, GetTotalRowHeight());
 }
 
 void FPropertyTable::OnArrange(const FRectangle& AllottedBounds)
 {
+    RebuildRowOffsets();
+
     const int32 DividerX    = AllottedBounds.Position.X + GetDividerOffset(AllottedBounds);
     const int32 EditorRight = GetEditorColumnRight(AllottedBounds);
 
@@ -118,7 +122,7 @@ void FPropertyTable::OnArrange(const FRectangle& AllottedBounds)
 
         if (Row.LabelAccessory)
         {
-            Row.LabelAccessory->Tick(GetLabelAccessoryRectangle(Index, AllottedBounds));
+            Row.LabelAccessory->Arrange(GetLabelAccessoryRectangle(Index, AllottedBounds));
         }
 
         if (!Row.Editor)
@@ -135,45 +139,44 @@ void FPropertyTable::OnArrange(const FRectangle& AllottedBounds)
 
         EditorBounds = EditorBounds.Deflate(FMargin(0, Style.CellPadding.Top, 0, Style.CellPadding.Bottom));
 
-        Row.Editor->Tick(EditorBounds);
+        Row.Editor->Arrange(EditorBounds);
     }
 }
 
-void FPropertyTable::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FPropertyTable::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const
 {
-    for (const FPropertyRow& Row : Rows)
+    const int32 NumRows = Rows.Size();
+    for (int32 Step = 0; Step < NumRows; ++Step)
     {
-        if (Row.Editor)
+        const FPropertyRow& Row = Rows[Order == EChildOrder::BackToFront ? Step : (NumRows - 1 - Step)];
+        if (VisitChildList(Visitor, Order, Row.Editor, Row.LabelAccessory) == EChildVisit::Stop)
         {
-            OutChildren.Add(Row.Editor);
-        }
-
-        if (Row.LabelAccessory)
-        {
-            OutChildren.Add(Row.LabelAccessory);
+            return EChildVisit::Stop;
         }
     }
+
+    return EChildVisit::Continue;
 }
 
-void FPropertyTable::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+void FPropertyTable::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
 {
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
     if (IsPointOnDivider(ClientPosition))
     {
         return;
     }
 
-    for (const FPropertyRow& Row : Rows)
+    const int32 RowIndex = FindRowAtPoint(ClientPosition);
+    if (RowIndex == InvalidRowIndex)
+    {
+        return;
+    }
+
+    const FPropertyRow& Row = Rows[RowIndex];
+    if (!Row.LabelAccessory || !Row.LabelAccessory->HitTest(ClientPosition, OutPath))
     {
         if (Row.Editor)
         {
-            Row.Editor->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-        }
-
-        if (Row.LabelAccessory)
-        {
-            Row.LabelAccessory->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+            Row.Editor->HitTest(ClientPosition, OutPath);
         }
     }
 }
@@ -501,6 +504,7 @@ void FPropertyTable::ClearRows()
     ClearHoveredRow();
 
     Rows.Clear();
+    RowOffsets.Reset();
 
     bIsDraggingDivider = false;
     bIsDividerHovered  = false;
@@ -559,6 +563,31 @@ int32 FPropertyTable::FindRowAtPoint(const IntVector2& ClientPosition) const
 
     const int32 Offset = ClientPosition.Y - Bounds.Position.Y;
 
+    if (HasRowOffsets())
+    {
+        if (Offset >= RowOffsets.Last())
+        {
+            return InvalidRowIndex;
+        }
+
+        int32 Low  = 0;
+        int32 High = Rows.Size();
+        while (Low < High)
+        {
+            const int32 Mid = (Low + High) / 2;
+            if (RowOffsets[Mid + 1] <= Offset)
+            {
+                Low = Mid + 1;
+            }
+            else
+            {
+                High = Mid;
+            }
+        }
+
+        return Low;
+    }
+
     int32 Top = 0;
     for (int32 Index = 0; Index < Rows.Size(); ++Index)
     {
@@ -600,10 +629,36 @@ IFontFace* FPropertyTable::GetRowFont(int32 Index) const
     return Font.Get();
 }
 
+bool FPropertyTable::HasRowOffsets() const
+{
+    return RowOffsets.Size() == Rows.Size() + 1;
+}
+
+void FPropertyTable::RebuildRowOffsets() const
+{
+    RowOffsets.Reset();
+    RowOffsets.Reserve(Rows.Size() + 1);
+
+    int32 Offset = 0;
+    for (int32 Index = 0; Index < Rows.Size(); ++Index)
+    {
+        RowOffsets.Add(Offset);
+        Offset += GetRowHeight(Index);
+    }
+
+    RowOffsets.Add(Offset);
+}
+
 int32 FPropertyTable::GetRowOffset(int32 Index) const
 {
+    const int32 ClampedIndex = Math::Clamp(Index, 0, Rows.Size());
+    if (HasRowOffsets())
+    {
+        return RowOffsets[ClampedIndex];
+    }
+
     int32 Offset = 0;
-    for (int32 Row = 0; Row < Index && Row < Rows.Size(); ++Row)
+    for (int32 Row = 0; Row < ClampedIndex; ++Row)
     {
         Offset += GetRowHeight(Row);
     }

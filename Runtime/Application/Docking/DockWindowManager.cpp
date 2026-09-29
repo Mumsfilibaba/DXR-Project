@@ -222,7 +222,7 @@ void FDockWindowManager::UpdateDropPreview()
     }
 
     DecoratorArea->PrepareDesiredSize();
-    DecoratorArea->Tick(FRectangle(IntVector2(0, 0), PreviewSize.X, PreviewSize.Y));
+    DecoratorArea->Arrange(FRectangle(IntVector2(0, 0), PreviewSize.X, PreviewSize.Y));
 
     FRHITextureRef Texture = Renderer->RenderElementToTexture(DecoratorArea, PreviewSize, 1.0f);
 

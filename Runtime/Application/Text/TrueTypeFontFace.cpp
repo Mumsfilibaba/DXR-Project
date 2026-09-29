@@ -4,22 +4,11 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Templates/TypeHash.h"
 
 static FORCEINLINE int32 ToCodepoint(CHAR Character)
 {
     return static_cast<int32>(static_cast<uint8>(Character));
-}
-
-static uint64 HashText(const StringView& Text)
-{
-    uint64 Hash = 14695981039346656037ull;
-    for (int32 Index = 0; Index < Text.Length(); ++Index)
-    {
-        Hash ^= static_cast<uint64>(static_cast<uint8>(Text[Index]));
-        Hash *= 1099511628211ull;
-    }
-
-    return Hash;
 }
 
 TSharedPtr<FTrueTypeFontFace> FTrueTypeFontFace::CreateFromFile(const String& Filename, int32 PixelHeight)
@@ -86,7 +75,7 @@ int32 FTrueTypeFontFace::GetCapHeight() const
 
 const FShapedRun& FTrueTypeFontFace::ShapeText(const StringView& Text) const
 {
-    const int32  SetIndex  = static_cast<int32>(HashText(Text) & (ShapedRunCacheSetCount - 1));
+    const int32  SetIndex  = static_cast<int32>(HashBytes(Text.Data(), static_cast<uint64>(Text.Length())) & (ShapedRunCacheSetCount - 1));
     const int32  SetOffset = SetIndex * ShapedRunCacheWays;
     const uint64 Revision  = Atlas.GetRevision();
 
@@ -107,42 +96,43 @@ const FShapedRun& FTrueTypeFontFace::ShapeText(const StringView& Text) const
 
     ShapeRun(Text, Cached.Run);
 
+    // Shaping can pack pages, and the run is valid at the revision it ended on rather than the one it started from
     Cached.Text     = String(Text.Data(), Text.Length());
-    Cached.Revision = Revision;
+    Cached.Revision = Atlas.GetRevision();
     return Cached.Run;
 }
 
 void FTrueTypeFontFace::ShapeRun(const StringView& Text, FShapedRun& OutRun) const
 {
-    OutRun.Glyphs.Clear();
-    OutRun.Width = 0;
-
-    for (int32 Index = 0; Index < Text.Length(); ++Index)
+    uint64 LayoutRevision = 0;
+    do
     {
-        static_cast<void>(Atlas.GetGlyph(ToCodepoint(Text[Index])));
-    }
+        LayoutRevision = Atlas.GetLayoutRevision();
 
-    OutRun.Glyphs.Reserve(Text.Length());
+        OutRun.Glyphs.Clear();
+        OutRun.Glyphs.Reserve(Text.Length());
 
-    int32 Pen = 0;
-    for (int32 Index = 0; Index < Text.Length(); ++Index)
-    {
-        const int32   Codepoint = ToCodepoint(Text[Index]);
-        const FGlyph& Glyph     = Atlas.GetGlyph(Codepoint);
-
-        FShapedGlyph& Shaped = OutRun.Glyphs.Emplace();
-        Shaped.Offset      = Pen;
-        Shaped.SourceIndex = Index;
-        Shaped.Glyph       = &Glyph;
-        Shaped.Advance     = Glyph.Advance;
-
-        if (Index + 1 < Text.Length())
+        int32 Pen = 0;
+        for (int32 Index = 0; Index < Text.Length(); ++Index)
         {
-            Shaped.Advance += Atlas.GetKerning(Codepoint, ToCodepoint(Text[Index + 1]));
+            const int32   Codepoint = ToCodepoint(Text[Index]);
+            const FGlyph& Glyph     = Atlas.GetGlyph(Codepoint);
+
+            FShapedGlyph& Shaped = OutRun.Glyphs.Emplace();
+            Shaped.Offset      = Pen;
+            Shaped.SourceIndex = Index;
+            Shaped.Codepoint   = Codepoint;
+            Shaped.Advance     = Glyph.Advance;
+
+            if (Index + 1 < Text.Length())
+            {
+                Shaped.Advance += Atlas.GetKerning(Codepoint, ToCodepoint(Text[Index + 1]));
+            }
+
+            Pen += Shaped.Advance;
         }
 
-        Pen += Shaped.Advance;
+        OutRun.Width = Pen;
     }
-
-    OutRun.Width = Pen;
+    while (Atlas.GetLayoutRevision() != LayoutRevision);
 }

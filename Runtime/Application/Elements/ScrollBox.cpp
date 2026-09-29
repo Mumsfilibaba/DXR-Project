@@ -22,6 +22,7 @@ FScrollBox::FScrollBox()
     , ScrollBarGutter(0)
     , bIsScrollToEndPending(false)
 {
+    AddElementFlags(EElementFlags::IsScrollBox);
 }
 
 FScrollBox::~FScrollBox() = default;
@@ -55,10 +56,10 @@ IntVector2 FScrollBox::ComputeDesiredSize() const
 
 void FScrollBox::OnArrange(const FRectangle& AllottedBounds)
 {
-    const FRectangle ViewBounds = GetViewBounds(AllottedBounds);
-
-    ViewHeight    = ViewBounds.Height;
+    ViewHeight    = AllottedBounds.Deflate(Padding).Height;
     ContentHeight = Content ? Content->GetCachedDesiredSize().Y : 0;
+
+    const FRectangle ViewBounds = GetViewBounds(AllottedBounds);
 
     if (bIsScrollToEndPending)
     {
@@ -73,7 +74,7 @@ void FScrollBox::OnArrange(const FRectangle& AllottedBounds)
         FRectangle ChildBounds = ViewBounds;
         ChildBounds.Position.Y -= ScrollOffset;
         ChildBounds.Height      = Math::Max(ContentHeight, ViewBounds.Height);
-        Content->Tick(ChildBounds);
+        Content->Arrange(ChildBounds);
     }
 
     if (ScrollBar)
@@ -91,18 +92,13 @@ void FScrollBox::OnArrange(const FRectangle& AllottedBounds)
         BarBounds.Width      = BarWidth;
         BarBounds.Position.X = Inner.GetRight() - BarWidth;
 
-        ScrollBar->Tick(BarBounds);
+        ScrollBar->Arrange(BarBounds);
     }
 }
 
-void FScrollBox::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FScrollBox::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const
 {
-    FCompoundElement::GetChildren(OutChildren);
-
-    if (ScrollBar)
-    {
-        OutChildren.Add(ScrollBar);
-    }
+    return VisitChildList(Visitor, Order, Content, ScrollBar);
 }
 
 int32 FScrollBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -121,19 +117,17 @@ int32 FScrollBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
     return MaxLayerId;
 }
 
-void FScrollBox::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+void FScrollBox::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
 {
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
     if (IsScrollBarVisible() && ScrollBar->GetContentRectangle().EncapsulatesPoint(ClientPosition))
     {
-        ScrollBar->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        ScrollBar->HitTest(ClientPosition, OutPath);
         return;
     }
 
     if (Content && GetViewBounds(GetContentRectangle()).EncapsulatesPoint(ClientPosition))
     {
-        Content->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        Content->HitTest(ClientPosition, OutPath);
     }
 }
 
@@ -179,6 +173,7 @@ FEventResponse FScrollBox::OnMouseLeft(const FCursorEvent& CursorEvent)
 void FScrollBox::ScrollToEnd()
 {
     bIsScrollToEndPending = true;
+    InvalidateArrange();
 }
 
 void FScrollBox::ScrollIntoView(const FRectangle& ContentRelativeBounds)
@@ -202,6 +197,7 @@ void FScrollBox::SetScrollOffset(int32 InScrollOffset)
     }
 
     ScrollOffset = NewScrollOffset;
+    InvalidateArrange();
     InvalidatePaint();
 }
 

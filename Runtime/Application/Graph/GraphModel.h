@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Containers/Map.h"
 #include "Application/Graph/GraphTypes.h"
 
 class APPLICATION_API FGraphModel
@@ -126,13 +127,25 @@ public:
     }
 
 private:
-    NODISCARD bool CanReachNode(int32 FromNodeId, int32 TargetNodeId) const;
+    struct FPinLocation
+    {
+        int32 NodeIndex;
+        int32 PinIndex;
+    };
 
-    TArray<FGraphNode> Nodes;
-    TArray<FGraphLink> Links;
-    int32              NextNodeId;
-    int32              NextPinId;
-    int32              NextLinkId;
-    int32              Revision;
-    bool               bIsReadOnly;
+    NODISCARD bool CanReachNode(int32 FromNodeId, int32 TargetNodeId) const;
+    NODISCARD int32 FindNodeIndex(int32 NodeId) const;
+    void EnsureIndex() const;
+    void MarkIndexDirty();
+
+    TArray<FGraphNode>                  Nodes;
+    TArray<FGraphLink>                  Links;
+    mutable TMap<int32, int32>          NodeIndexById;
+    mutable TMap<int32, FPinLocation>   PinLocationById;
+    int32                               NextNodeId;
+    int32                               NextPinId;
+    int32                               NextLinkId;
+    int32                               Revision;
+    bool                                bIsReadOnly;
+    mutable bool                        bIsIndexDirty;
 };

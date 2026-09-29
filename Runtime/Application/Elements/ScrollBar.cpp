@@ -2,7 +2,6 @@
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
-#include "Core/Platform/PlatformTime.h"
 
 TSharedPtr<FScrollBar> FScrollBar::Create(const FDesc& Desc)
 {
@@ -23,7 +22,7 @@ FScrollBar::FScrollBar()
     , Offset(0)
     , ThumbGrabOffset(0)
     , Opacity(1.0f)
-    , FadeCounter(FPlatformTime::QueryPerformanceCounter())
+    , Fade()
     , bAutoHide(false)
     , bIsRevealed(false)
     , OnOffsetChangedDelegate()
@@ -42,8 +41,8 @@ void FScrollBar::Initialize(const FDesc& Desc)
     OnOffsetChangedDelegate = Desc.OnOffsetChanged;
     bAutoHide               = Desc.bAutoHide;
 
-    Opacity     = bAutoHide ? 0.0f : 1.0f;
-    FadeCounter = FPlatformTime::QueryPerformanceCounter();
+    Opacity = bAutoHide ? 0.0f : 1.0f;
+    Fade.Settle(Opacity);
 }
 
 IntVector2 FScrollBar::ComputeDesiredSize() const
@@ -54,7 +53,18 @@ IntVector2 FScrollBar::ComputeDesiredSize() const
 void FScrollBar::OnArrange(const FRectangle& AllottedBounds)
 {
     FInteractiveElement::OnArrange(AllottedBounds);
-    AdvanceFade();
+
+    if (!bAutoHide)
+    {
+        return;
+    }
+
+    SetOpacity(Fade.Evaluate());
+
+    if (Fade.IsRunning())
+    {
+        RequestContinuousArrange();
+    }
 }
 
 int32 FScrollBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -104,34 +114,33 @@ void FScrollBar::SetRevealed(bool bInIsRevealed)
 
     bIsRevealed = bInIsRevealed;
     InvalidatePaint();
+    UpdateFadeTarget();
 }
 
-void FScrollBar::AdvanceFade()
+void FScrollBar::OnInteractionStateChanged()
+{
+    FInteractiveElement::OnInteractionStateChanged();
+    UpdateFadeTarget();
+}
+
+void FScrollBar::UpdateFadeTarget()
 {
     if (!bAutoHide)
     {
         return;
     }
 
-    const uint64 Now     = FPlatformTime::QueryPerformanceCounter();
-    const double Elapsed = static_cast<double>(Now - FadeCounter) / static_cast<double>(FPlatformTime::QueryPerformanceFrequency());
-
-    FadeCounter = Now;
-
-    const float Target   = (bIsRevealed || IsPressed()) ? 1.0f : 0.0f;
-    const float Duration = Target > Opacity ? Style.FadeInDuration : Style.FadeOutDuration;
-
-    if (Duration <= 0.0f)
+    const float Target = (bIsRevealed || IsPressed()) ? 1.0f : 0.0f;
+    if (Fade.GetTarget() == Target)
     {
-        SetOpacity(Target);
         return;
     }
 
-    const float Step = static_cast<float>(Elapsed) / Duration;
+    const float Current  = Fade.Evaluate();
+    const float Duration = Target > Current ? Style.FadeInDuration : Style.FadeOutDuration;
 
-    SetOpacity(Target > Opacity
-        ? Math::Min(Opacity + Step, Target)
-        : Math::Max(Opacity - Step, Target));
+    Fade.Start(Duration * Math::Abs(Target - Current), Current, Target);
+    InvalidateArrange();
 }
 
 FFloatColor FScrollBar::ApplyOpacity(const FFloatColor& Color) const

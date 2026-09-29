@@ -1,4 +1,5 @@
 #include "VectorDrawTests.h"
+#include "UITestUtils.h"
 
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
@@ -6,14 +7,6 @@
 #include <Application/Draw/DrawCommandList.h>
 #include <Application/Draw/UIDrawData.h>
 #include <Core/Math/Math.h>
-
-/** @brief How far apart two positions may be and still count as the same pixel. */
-constexpr float GTolerance = 0.01f;
-
-static bool IsNearly(float First, float Second, float Tolerance = GTolerance)
-{
-    return Math::Abs(First - Second) <= Tolerance;
-}
 
 /** @brief The axis-aligned extent of the geometry, which is what a stroke width can be read off. */
 struct FGeometryExtent
@@ -23,6 +16,14 @@ struct FGeometryExtent
     float MaxX = 0.0f;
     float MaxY = 0.0f;
 };
+
+/** @brief How far apart two positions may be and still count as the same pixel. */
+constexpr float GTolerance = 0.01f;
+
+static bool IsNearly(float First, float Second, float Tolerance = GTolerance)
+{
+    return Math::Abs(First - Second) <= Tolerance;
+}
 
 static FGeometryExtent MeasureGeometry(const FUIDrawData& DrawData)
 {
@@ -50,7 +51,7 @@ static FGeometryExtent MeasureGeometry(const FUIDrawData& DrawData)
         Include(Vertex.Position.X, Vertex.Position.Y);
     }
 
-    for (const FUIShapeVertex& Vertex : DrawData.GetShapeVertices())
+    for (const FUIShapeVertex& Vertex : GetShapeVertices(DrawData))
     {
         Include(Vertex.Position.X, Vertex.Position.Y);
     }
@@ -436,21 +437,21 @@ bool VectorDrawPerCornerRounding_Test()
     TitleBarList.AddBox(0, Bounds, FFloatColor::White, FCornerRadii::Top(8.0f));
     DrawData.BuildFromCommandList(TitleBarList);
 
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices().Size(), 4);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData).Size(), 4);
     TEST_EXPECT(DrawData.GetVertices().IsEmpty());
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].RadiusTL, 8.0f);
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].RadiusTR, 8.0f);
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].RadiusBL, 0.0f);
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].RadiusBR, 0.0f);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].RadiusTL, 8.0f);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].RadiusTR, 8.0f);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].RadiusBL, 0.0f);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].RadiusBR, 0.0f);
 
     TEST_SECTION("A uniformly rounded box still uses one quad, with every radius set");
     FDrawCommandList UniformList;
     UniformList.AddBox(0, Bounds, FFloatColor::White, FCornerRadii(8.0f));
     DrawData.BuildFromCommandList(UniformList);
 
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices().Size(), 4);
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].RadiusTL, 8.0f);
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].RadiusBR, 8.0f);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData).Size(), 4);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].RadiusTL, 8.0f);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].RadiusBR, 8.0f);
 
     TEST_SECTION("The shape still fills the whole rectangle");
     const FGeometryExtent Extent = MeasureGeometry(DrawData);
@@ -464,10 +465,10 @@ bool VectorDrawPerCornerRounding_Test()
     OversizedList.AddBox(0, FRectangle(IntVector2(0, 0), 10, 10), FFloatColor::White, FCornerRadii(0.0f, 50.0f, 0.0f, 0.0f));
     DrawData.BuildFromCommandList(OversizedList);
 
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices().Size(), 4);
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].RadiusTR, 5.0f);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData).Size(), 4);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].RadiusTR, 5.0f);
 
-    for (const FUIShapeVertex& Vertex : DrawData.GetShapeVertices())
+    for (const FUIShapeVertex& Vertex : GetShapeVertices(DrawData))
     {
         TEST_EXPECT(Vertex.Position.X >= -GTolerance && Vertex.Position.X <= 10.0f + GTolerance);
         TEST_EXPECT(Vertex.Position.Y >= -GTolerance && Vertex.Position.Y <= 10.0f + GTolerance);
@@ -488,10 +489,10 @@ bool VectorDrawBoxOutline_Test()
     OutlineList.AddBoxOutline(0, FRectangle(IntVector2(0, 0), 100, 40), FFloatColor::White, 2.0f);
     DrawData.BuildFromCommandList(OutlineList);
 
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices().Size(), 4);
-    TEST_EXPECT_EQ(DrawData.GetShapeIndices().Size(), 6);
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].Thickness, 2.0f);
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].ShapeKind, FUIDrawData::ShapeKindStroke);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData).Size(), 4);
+    TEST_EXPECT_EQ(GetShapeIndices(DrawData).Size(), 6);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].Thickness, 2.0f);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].ShapeKind, FUIDrawData::ShapeKindStroke);
 
     TEST_SECTION("The stroke stays inside the rectangle it was asked to outline");
     const FGeometryExtent Extent = MeasureGeometry(DrawData);
@@ -522,8 +523,8 @@ bool VectorDrawBoxOutline_Test()
     RoundedList.AddBoxOutline(0, FRectangle(IntVector2(0, 0), 100, 40), FFloatColor::White, 2.0f, FCornerRadii(6.0f));
     DrawData.BuildFromCommandList(RoundedList);
 
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices().Size(), 4);
-    TEST_EXPECT_EQ(DrawData.GetShapeVertices()[0].RadiusTL, 6.0f);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData).Size(), 4);
+    TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].RadiusTL, 6.0f);
 
     TEST_SECTION("An outline thicker than the rectangle fills it instead of folding through itself");
     FDrawCommandList ThickList;

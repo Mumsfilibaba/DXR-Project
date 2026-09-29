@@ -58,7 +58,7 @@ int32 FProgressBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
     if (Font && !OverlayText.IsEmpty())
     {
         const IntVector2 TextSize(Font->MeasureWidth(StringView(OverlayText.Data(), OverlayText.Length())), Font->GetLineHeight());
-        const FRectangle TextBounds = FRectangle::AlignInBounds(Bounds, TextSize, EHorizontalAlignment::Center, EVerticalAlignment::Center);
+        const FRectangle TextBounds = FLayout::AlignInBounds(Bounds, TextSize, EHorizontalAlignment::Center, EVerticalAlignment::Center);
 
         OutCommandList.AddText(LayerId + 1, TextBounds, OverlayText, Font.Get(), TextColor);
         return LayerId + 1;

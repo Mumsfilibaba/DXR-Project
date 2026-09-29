@@ -28,7 +28,7 @@ void FMenuHost::AddChild(const TSharedPtr<FVisualElement>& InContent, const FRec
     Child.bHitTestable  = bInHitTestable;
 
     InContent->SetParentElement(AsWeakPtr());
-    InContent->Tick(InClientBounds);
+    InContent->Arrange(InClientBounds);
 }
 
 void FMenuHost::SetChildBounds(const TSharedPtr<FVisualElement>& InContent, const FRectangle& InClientBounds)
@@ -43,7 +43,7 @@ void FMenuHost::SetChildBounds(const TSharedPtr<FVisualElement>& InContent, cons
                 InvalidatePaint();
             }
 
-            Child.Content->Tick(InClientBounds);
+            Child.Content->Arrange(InClientBounds);
             return;
         }
     }
@@ -75,20 +75,17 @@ void FMenuHost::OnArrange(const FRectangle&)
     {
         if (Child.Content)
         {
-            Child.Content->Tick(Child.ClientBounds);
+            Child.Content->Arrange(Child.ClientBounds);
         }
     }
 }
 
-void FMenuHost::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FMenuHost::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const
 {
-    for (const FHostedChild& Child : Children)
+    return VisitChildArray(Visitor, Order, Children, [](const FHostedChild& Child) -> const TSharedPtr<FVisualElement>&
     {
-        if (Child.Content)
-        {
-            OutChildren.Add(Child.Content);
-        }
-    }
+        return Child.Content;
+    });
 }
 
 int32 FMenuHost::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -141,11 +138,18 @@ bool FMenuHost::CoversPoint(const IntVector2& ClientPosition) const
     return FindChildAtPoint(ClientPosition) != nullptr;
 }
 
-void FMenuHost::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+void FMenuHost::HitTestHostedChild(const IntVector2& ClientPosition, FElementPath& OutPath)
+{
+    if (FindChildAtPoint(ClientPosition))
+    {
+        HitTest(ClientPosition, OutPath);
+    }
+}
+
+void FMenuHost::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
 {
     if (const FHostedChild* Child = FindChildAtPoint(ClientPosition))
     {
-        OutChildElements.Add(GetVisibility(), AsSharedPtr());
-        Child->Content->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        Child->Content->HitTest(ClientPosition, OutPath);
     }
 }

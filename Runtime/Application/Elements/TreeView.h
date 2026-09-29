@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/Set.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/String.h"
 #include "Core/Delegates/Delegate.h"
@@ -55,6 +56,12 @@ struct APPLICATION_API FTreeItem : public TSharedFromThis<FTreeItem>
 
     /** @brief True while the children have rows of their own below this one. */
     bool bIsExpanded = false;
+
+    /** @brief Whether the node's own text matched the view's filter, as of the last row rebuild under a filter. */
+    bool bMatchesFilter = false;
+
+    /** @brief Whether the node or anything below it matched the view's filter, as of the last row rebuild under a filter. */
+    bool bPassesFilter = false;
 
     /** @brief The node this one hangs off, which is unset for a root. */
     TWeakPtr<FTreeItem> Parent;
@@ -188,8 +195,6 @@ public:
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
@@ -329,14 +334,18 @@ public:
      */
     NODISCARD FRectangle GetItemLabelBounds(const TSharedPtr<FTreeItem>& Item) const;
 
+protected:
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
+    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+
 private:
     static constexpr int32 InvalidRowIndex = TArray<TSharedPtr<FTreeItem>>::InvalidIndex;
 
     static void SetSubtreeExpanded(const TArray<TSharedPtr<FTreeItem>>& Items, bool bExpanded);
 
     NODISCARD const String* FindHeaderToolTip(const IntVector2& ClientPosition) const;    
-    NODISCARD bool MatchesFilterText(const TSharedPtr<FTreeItem>& Item) const;
-    NODISCARD bool PassesFilter(const TSharedPtr<FTreeItem>& Item) const;
+    NODISCARD bool MatchesFilterText(const FTreeItem& Item) const;
+    bool MarkFilterMatches(FTreeItem& Item) const;
     NODISCARD bool IsAncestorOfSelection(const TSharedPtr<FTreeItem>& Item) const;
     NODISCARD int32 GetArrowExtent() const;
     NODISCARD int32 GetHeaderExtent() const;
@@ -351,6 +360,8 @@ private:
     NODISCARD int32 GetMaxScrollOffset() const;
     
     void MarkRowsDirty();
+    void MarkSelectionChanged();
+    void RebuildSelectionIndex() const;
     void UpdateHeaderToolTip(const FCursorEvent& CursorEvent);
     void RebuildTypeColumnToolTipSplits();
     void RebuildVisibleRows() const;
@@ -366,6 +377,8 @@ private:
 
     TArray<TSharedPtr<FTreeItem>>         RootItems;
     TArray<TSharedPtr<FTreeItem>>         Selection;
+    mutable TSet<const FTreeItem*>        SelectedItems;
+    mutable TSet<const FTreeItem*>        SelectionAncestors;
     mutable TArray<TSharedPtr<FTreeItem>> VisibleRows;
     TSharedPtr<IFontFace>                 Font;
     TSharedPtr<class FScrollBar>          ScrollBar;
@@ -398,6 +411,7 @@ private:
     bool                                  bHasCursorInside;
     mutable bool                          bRowsDirty;
     mutable bool                          bReserveIconColumn;
+    mutable bool                          bSelectionIndexDirty;
     FOnTreeSelectionChanged               OnSelectionChangedDelegate;
     FOnTreeItemActivated                  OnItemActivatedDelegate;
     FOnTreeItemExpansionChanged           OnExpansionChangedDelegate;

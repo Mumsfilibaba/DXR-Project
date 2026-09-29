@@ -50,7 +50,7 @@ static void SpinForSeconds(double Seconds)
 static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRectangle& Bounds)
 {
     Element->PrepareDesiredSize();
-    Element->Tick(Bounds);
+    Element->Arrange(Bounds);
 }
 
 static FCursorEvent MakeMoveEvent(const IntVector2& ClientPosition)
@@ -207,7 +207,7 @@ bool ButtonControl_Test()
     TEST_EXPECT_EQ(DesiredSize.Y, Math::Max(16 + Style.Metrics.ButtonPadding.GetTotalVertical(), Style.Metrics.ButtonHeight));
 
     TEST_SECTION("Clicking it fires the delegate once");
-    Button->Tick(FRectangle(IntVector2(10, 10), 120, 32));
+    Button->Arrange(FRectangle(IntVector2(10, 10), 120, 32));
 
     Button->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(50, 20)));
     Button->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(50, 20)));
@@ -1043,13 +1043,13 @@ bool OverlayControl_Test()
 
     TEST_SECTION("A click lands on the topmost layer under it");
     FElementPath Path;
-    Overlay->FindChildrenContainingPoint(IntVector2(196, 4), Path);
+    Overlay->HitTest(IntVector2(196, 4), Path);
 
     TEST_EXPECT(Path.GetElements().Size() >= 2);
     TEST_EXPECT(Path.GetElements().Last() == StaticCastSharedPtr<FVisualElement>(Badge));
 
     FElementPath BasePath;
-    Overlay->FindChildrenContainingPoint(IntVector2(20, 60), BasePath);
+    Overlay->HitTest(IntVector2(20, 60), BasePath);
     TEST_EXPECT(BasePath.GetElements().Last() == StaticCastSharedPtr<FVisualElement>(Base));
 
     TEST_SECTION("Removing a layer takes it out of measurement and hit testing alike");

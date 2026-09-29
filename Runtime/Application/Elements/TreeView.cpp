@@ -2,6 +2,7 @@
 #include "Application/Application.h"
 #include "Application/ElementPath.h"
 #include "Application/Elements/ScrollBar.h"
+#include "Application/Draw/DisclosureGlyph.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Menus/MenuStack.h"
 #include "Application/Menus/ToolTipService.h"
@@ -17,32 +18,6 @@ constexpr int32 TREE_ICON_SPACING = 4;
 constexpr int32 TREE_HEADER_PADDING = 4;
 
 constexpr float TREE_HOVER_OPACITY = 0.5f;
-
-static void DrawDisclosureTriangle(FDrawCommandList& OutCommandList, int32 LayerId, const FRectangle& Bounds, bool bIsExpanded, const FFloatColor& Tint)
-{
-    const float Left   = static_cast<float>(Bounds.Position.X);
-    const float Top    = static_cast<float>(Bounds.Position.Y);
-    const float Right  = static_cast<float>(Bounds.GetRight());
-    const float Bottom = static_cast<float>(Bounds.GetBottom());
-
-    Vector2 Corners[3];
-    if (bIsExpanded)
-    {
-        const float CenterX = (Left + Right) * 0.5f;
-        Corners[0] = Vector2(Left, Top);
-        Corners[1] = Vector2(Right, Top);
-        Corners[2] = Vector2(CenterX, Bottom);
-    }
-    else
-    {
-        const float CenterY = (Top + Bottom) * 0.5f;
-        Corners[0] = Vector2(Left, Top);
-        Corners[1] = Vector2(Right, CenterY);
-        Corners[2] = Vector2(Left, Bottom);
-    }
-
-    OutCommandList.AddConvexPolygon(LayerId, TArrayView<const Vector2>(Corners, 3), Tint);
-}
 
 TSharedPtr<FTreeItem> FTreeItem::Create(const String& InLabel, void* InUserData)
 {
@@ -98,6 +73,8 @@ FTreeView::FTreeView()
     : FVisualElement()
     , RootItems()
     , Selection()
+    , SelectedItems()
+    , SelectionAncestors()
     , VisibleRows()
     , Font(nullptr)
     , ScrollBar(nullptr)
@@ -130,6 +107,7 @@ FTreeView::FTreeView()
     , bHasCursorInside(false)
     , bRowsDirty(true)
     , bReserveIconColumn(false)
+    , bSelectionIndexDirty(true)
     , OnSelectionChangedDelegate()
     , OnItemActivatedDelegate()
     , OnExpansionChangedDelegate()
@@ -209,26 +187,21 @@ void FTreeView::OnArrange(const FRectangle& AllottedBounds)
         const int32 Thickness    = FUIStyle::GetDefault().Metrics.ScrollBarThickness;
 
         ScrollBar->SetScrollState(GetVisibleRows().Size() * RowHeight, ViewHeight - HeaderExtent, ScrollOffset);
-        ScrollBar->Tick(FRectangle(IntVector2(AllottedBounds.GetRight() - Thickness, AllottedBounds.Position.Y + HeaderExtent),
+        ScrollBar->Arrange(FRectangle(IntVector2(AllottedBounds.GetRight() - Thickness, AllottedBounds.Position.Y + HeaderExtent),
             Thickness, Math::Max(AllottedBounds.Height - HeaderExtent, 0)));
     }
 }
 
-void FTreeView::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FTreeView::VisitChildren(FChildVisitor& Visitor, EChildOrder /*Order*/) const
 {
-    if (ScrollBar)
-    {
-        OutChildren.Add(ScrollBar);
-    }
+    return VisitChild(Visitor, ScrollBar);
 }
 
-void FTreeView::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+void FTreeView::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
 {
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
-    if (ScrollBar && ScrollBar->IsScrollable() && ScrollBar->GetContentRectangle().EncapsulatesPoint(ClientPosition))
+    if (ScrollBar && ScrollBar->IsScrollable())
     {
-        ScrollBar->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        ScrollBar->HitTest(ClientPosition, OutPath);
     }
 }
 
@@ -325,7 +298,7 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
             }
             else
             {
-                DrawDisclosureTriangle(OutCommandList, LayerId + 1, DisclosureBounds, Item->bIsExpanded, ArrowTint);
+                FDisclosureGlyph::Draw(OutCommandList, LayerId + 1, DisclosureBounds, Item->bIsExpanded, ArrowTint);
             }
         }
 
@@ -638,7 +611,48 @@ void FTreeView::MarkRowsDirty()
 {
     bRowsDirty = true;
 
+    bSelectionIndexDirty = true;
+
     InvalidateDesiredSize();
+}
+
+void FTreeView::MarkSelectionChanged()
+{
+    bSelectionIndexDirty = true;
+    InvalidatePaint();
+}
+
+void FTreeView::RebuildSelectionIndex() const
+{
+    if (!bSelectionIndexDirty)
+    {
+        return;
+    }
+
+    bSelectionIndexDirty = false;
+
+    SelectedItems.Clear();
+    SelectionAncestors.Clear();
+
+    for (const TSharedPtr<FTreeItem>& Selected : Selection)
+    {
+        if (!Selected)
+        {
+            continue;
+        }
+
+        SelectedItems.Add(Selected.Get());
+
+        for (TWeakPtr<FTreeItem> Current = Selected->Parent; Current.IsValid(); Current = Current->Parent)
+        {
+            if (SelectionAncestors.Contains(Current.Get()))
+            {
+                break;
+            }
+
+            SelectionAncestors.Add(Current.Get());
+        }
+    }
 }
 
 const TArray<TSharedPtr<FTreeItem>>& FTreeView::GetVisibleRows() const
@@ -652,7 +666,7 @@ void FTreeView::SetSelection(const TArray<TSharedPtr<FTreeItem>>& InSelection)
     Selection      = InSelection;
     AnchorRowIndex = InvalidRowIndex;
 
-    InvalidatePaint();
+    MarkSelectionChanged();
 }
 
 void FTreeView::ClearSelection()
@@ -660,12 +674,13 @@ void FTreeView::ClearSelection()
     Selection.Clear();
     AnchorRowIndex = InvalidRowIndex;
 
-    InvalidatePaint();
+    MarkSelectionChanged();
 }
 
 bool FTreeView::IsSelected(const TSharedPtr<FTreeItem>& Item) const
 {
-    return Selection.Contains(Item);
+    RebuildSelectionIndex();
+    return SelectedItems.Contains(Item.Get());
 }
 
 void FTreeView::SetItemExpanded(const TSharedPtr<FTreeItem>& Item, bool bExpanded)
@@ -769,6 +784,17 @@ void FTreeView::RebuildVisibleRows() const
 
     bRowsDirty = false;
 
+    if (!FilterText.IsEmpty())
+    {
+        for (const TSharedPtr<FTreeItem>& Root : RootItems)
+        {
+            if (Root)
+            {
+                MarkFilterMatches(*Root);
+            }
+        }
+    }
+
     VisibleRows.Clear();
     AppendVisibleRows(RootItems);
 
@@ -789,7 +815,7 @@ void FTreeView::AppendVisibleRows(const TArray<TSharedPtr<FTreeItem>>& Items) co
 
     for (const TSharedPtr<FTreeItem>& Item : Items)
     {
-        if (!Item || (bIsFiltered && !PassesFilter(Item)))
+        if (!Item || (bIsFiltered && !Item->bPassesFilter))
         {
             continue;
         }
@@ -801,7 +827,7 @@ void FTreeView::AppendVisibleRows(const TArray<TSharedPtr<FTreeItem>>& Items) co
             continue;
         }
 
-        const bool bIsForcedOpen = bIsFiltered && !MatchesFilterText(Item);
+        const bool bIsForcedOpen = bIsFiltered && !Item->bMatchesFilter;
         if (Item->bIsExpanded || bIsForcedOpen)
         {
             AppendVisibleRows(Item->Children);
@@ -909,32 +935,31 @@ void FTreeView::UpdateHeaderToolTip(const FCursorEvent& CursorEvent)
     }
 }
 
-bool FTreeView::MatchesFilterText(const TSharedPtr<FTreeItem>& Item) const
+bool FTreeView::MatchesFilterText(const FTreeItem& Item) const
 {
-    if (Item->Label.Contains(FilterText, EStringCaseType::NoCase))
+    if (Item.Label.Contains(FilterText, EStringCaseType::NoCase))
     {
         return true;
     }
 
-    return bFilterMatchesTypeColumn && !Item->TypeLabel.IsEmpty() && Item->TypeLabel.Contains(FilterText, EStringCaseType::NoCase);
+    return bFilterMatchesTypeColumn && !Item.TypeLabel.IsEmpty() && Item.TypeLabel.Contains(FilterText, EStringCaseType::NoCase);
 }
 
-bool FTreeView::PassesFilter(const TSharedPtr<FTreeItem>& Item) const
+bool FTreeView::MarkFilterMatches(FTreeItem& Item) const
 {
-    if (MatchesFilterText(Item))
-    {
-        return true;
-    }
+    Item.bMatchesFilter = MatchesFilterText(Item);
 
-    for (const TSharedPtr<FTreeItem>& Child : Item->Children)
+    bool bSubtreeMatches = Item.bMatchesFilter;
+    for (const TSharedPtr<FTreeItem>& Child : Item.Children)
     {
-        if (Child && PassesFilter(Child))
+        if (Child)
         {
-            return true;
+            bSubtreeMatches |= MarkFilterMatches(*Child);
         }
     }
 
-    return false;
+    Item.bPassesFilter = bSubtreeMatches;
+    return bSubtreeMatches;
 }
 
 FRectangle FTreeView::ComputeRowBounds(const FRectangle& ViewBounds, int32 RowIndex) const
@@ -995,21 +1020,8 @@ int32 FTreeView::ComputeLabelStartX(const FRectangle& RowBounds, const TSharedPt
 
 bool FTreeView::IsAncestorOfSelection(const TSharedPtr<FTreeItem>& Item) const
 {
-    for (const TSharedPtr<FTreeItem>& Selected : Selection)
-    {
-        TWeakPtr<FTreeItem> Current = Selected ? Selected->Parent : TWeakPtr<FTreeItem>();
-        while (Current.IsValid())
-        {
-            if (Current.Get() == Item.Get())
-            {
-                return true;
-            }
-
-            Current = Current->Parent;
-        }
-    }
-
-    return false;
+    RebuildSelectionIndex();
+    return SelectionAncestors.Contains(Item.Get());
 }
 
 int32 FTreeView::GetArrowExtent() const
@@ -1096,8 +1108,6 @@ void FTreeView::UpdateHoveredRow()
 
 void FTreeView::ApplySelectionFromClick(int32 RowIndex, const FModifierKeyState& Modifiers)
 {
-    InvalidatePaint();
-
     const TArray<TSharedPtr<FTreeItem>>& Rows = GetVisibleRows();
 
     if (bAllowMultiSelect && Modifiers.IsShortcutChordDown())
@@ -1112,6 +1122,7 @@ void FTreeView::ApplySelectionFromClick(int32 RowIndex, const FModifierKeyState&
             Selection.Add(Item);
         }
 
+        MarkSelectionChanged();
         AnchorRowIndex = RowIndex;
         OnSelectionChangedDelegate.ExecuteIfBound(Selection);
         return;
@@ -1131,6 +1142,7 @@ void FTreeView::ApplySelectionFromClick(int32 RowIndex, const FModifierKeyState&
                 Selection.Add(Rows[Index]);
             }
 
+            MarkSelectionChanged();
             OnSelectionChangedDelegate.ExecuteIfBound(Selection);
             return;
         }
@@ -1138,6 +1150,7 @@ void FTreeView::ApplySelectionFromClick(int32 RowIndex, const FModifierKeyState&
 
     Selection.Clear();
     Selection.Add(Rows[RowIndex]);
+    MarkSelectionChanged();
 
     AnchorRowIndex = RowIndex;
 
@@ -1155,7 +1168,7 @@ void FTreeView::SelectSingleRow(int32 RowIndex)
     Selection.Clear();
     Selection.Add(Rows[RowIndex]);
     AnchorRowIndex = RowIndex;
-    InvalidatePaint();
+    MarkSelectionChanged();
 
     ScrollRowIntoView(RowIndex);
     OnSelectionChangedDelegate.ExecuteIfBound(Selection);

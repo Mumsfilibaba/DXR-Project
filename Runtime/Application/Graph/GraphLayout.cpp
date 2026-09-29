@@ -2,17 +2,50 @@
 #include "Core/Algorithms/Algorithm.h"
 #include "Core/Math/Math.h"
 
-// The width a column falls back to when every node in it measured narrower than this
-constexpr float GRAPH_LAYOUT_MIN_COLUMN_WIDTH = 120.0f;
+static int32 FenwickPrefixSum(const TArray<int32>& Tree, int32 Index)
+{
+    int32 Sum = 0;
+    for (; Index > 0; Index -= Index & -Index)
+    {
+        Sum += Tree[Index];
+    }
+
+    return Sum;
+}
+
+static void FenwickAdd(TArray<int32>& Tree, int32 Index, int32 Value)
+{
+    for (; Index < Tree.Size(); Index += Index & -Index)
+    {
+        Tree[Index] += Value;
+    }
+}
 
 // How many adjacent swaps one transpose pass will try before it gives up on the column
 constexpr int32 GRAPH_LAYOUT_TRANSPOSE_PASSES = 8;
 
-void FGraphLayout::LayoutLayered(
+int64 FLayeredGraphLayout::CountCrossings(TArrayView<const FLayerEdge> SortedEdges, int32 LowerLayerSize)
+{
+    TArray<int32> Tree;
+    Tree.Reset(LowerLayerSize + 1, 0);
+
+    int64 Crossings = 0;
+    for (int32 Index = 0; Index < SortedEdges.Size(); ++Index)
+    {
+        const int32 Lower = SortedEdges[Index].LowerPosition + 1;
+        Crossings += Index - FenwickPrefixSum(Tree, Lower);
+        FenwickAdd(Tree, Lower, 1);
+    }
+
+    return Crossings;
+}
+
+void FLayeredGraphLayout::Layout(
     TArrayView<const Vector2>          NodeSizes,
     TArrayView<const FGraphLayoutEdge> Edges,
     const FGraphLayoutSettings&        Settings,
-    TArray<Vector2>&                   OutPositions)
+    TArray<Vector2>&                   OutPositions,
+    TArrayView<const int32>            SeedKeys)
 {
     const int32 NumNodes = NodeSizes.Size();
 
@@ -23,6 +56,8 @@ void FGraphLayout::LayoutLayered(
     {
         return;
     }
+
+    const bool bHasSeedKeys = SeedKeys.Size() == NumNodes;
 
     TArray<TArray<int32>> Successors;
     Successors.Resize(NumNodes);
@@ -46,27 +81,73 @@ void FGraphLayout::LayoutLayered(
     }
 
     TArray<int32> Rank;
-    Rank.Resize(NumNodes);
+    Rank.Reset(NumNodes, 0);
+
+    TArray<int32> PendingPredecessors;
+    PendingPredecessors.Resize(NumNodes);
+
+    TArray<uint8> bIsRanked;
+    bIsRanked.Reset(NumNodes, 0);
+
+    TArray<int32> Ready;
+    Ready.Reserve(NumNodes);
 
     for (int32 Index = 0; Index < NumNodes; ++Index)
     {
-        Rank[Index] = 0;
+        PendingPredecessors[Index] = Predecessors[Index].Size();
+        if (PendingPredecessors[Index] == 0)
+        {
+            Ready.Add(Index);
+        }
     }
 
-    bool bChanged = true;
-    for (int32 Iteration = 0; Iteration < NumNodes && bChanged; ++Iteration)
+    int32 RankedCount        = 0;
+    int32 NextCycleCandidate = 0;
+    while (RankedCount < NumNodes)
     {
-        bChanged = false;
-        for (int32 Index = 0; Index < NumNodes; ++Index)
+        if (Ready.IsEmpty())
         {
-            for (const int32 Successor : Successors[Index])
+            while (bIsRanked[NextCycleCandidate])
             {
-                const int32 Candidate = Rank[Index] + 1;
-                if (Candidate > Rank[Successor])
-                {
-                    Rank[Successor] = Candidate;
-                    bChanged        = true;
-                }
+                ++NextCycleCandidate;
+            }
+
+            Ready.Add(NextCycleCandidate);
+        }
+
+        const int32 Node = Ready.Last();
+        Ready.Pop();
+
+        if (bIsRanked[Node])
+        {
+            continue;
+        }
+
+        bIsRanked[Node] = 1;
+        ++RankedCount;
+
+        for (const int32 Successor : Successors[Node])
+        {
+            if (bIsRanked[Successor])
+            {
+                continue;
+            }
+
+            Rank[Successor] = Math::Max(Rank[Successor], Rank[Node] + 1);
+            if (--PendingPredecessors[Successor] == 0)
+            {
+                Ready.Add(Successor);
+            }
+        }
+    }
+
+    if (Settings.bSourcesFollowPreviousNode)
+    {
+        for (int32 Index = 1; Index < NumNodes; ++Index)
+        {
+            if (Predecessors[Index].IsEmpty())
+            {
+                Rank[Index] = Math::Max(Rank[Index], Rank[Index - 1]);
             }
         }
     }
@@ -124,7 +205,7 @@ void FGraphLayout::LayoutLayered(
         Columns[Rank[Index]].Add(Index);
     }
 
-    auto InputOrderLess = [&](int32 A, int32 B) -> bool
+    const auto SeedLess = [&](int32 A, int32 B) -> bool
     {
         const bool bIsARealNode = A < NumNodes;
         const bool bIsBRealNode = B < NumNodes;
@@ -134,99 +215,101 @@ void FGraphLayout::LayoutLayered(
             return bIsARealNode;
         }
 
+        if (bIsARealNode && bHasSeedKeys && SeedKeys[A] != SeedKeys[B])
+        {
+            return SeedKeys[A] < SeedKeys[B];
+        }
+
         return A < B;
+    };
+
+    TArray<int32> Position;
+    Position.Resize(NumLayoutNodes);
+
+    const auto UpdatePositions = [&](int32 Column)
+    {
+        const TArray<int32>& Order = Columns[Column];
+        for (int32 Index = 0; Index < Order.Size(); ++Index)
+        {
+            Position[Order[Index]] = Index;
+        }
     };
 
     for (int32 Column = 0; Column < Columns.Size(); ++Column)
     {
-        Algorithm::Sort(Columns[Column], InputOrderLess);
+        Algorithm::Sort(Columns[Column], SeedLess);
+        UpdatePositions(Column);
     }
 
-    auto OrderIndexInColumn = [&](int32 Index) -> int32
+    TArray<float> Barycenters;
+    Barycenters.Resize(NumLayoutNodes);
+
+    const auto SortByBarycenter = [&](int32 Column, bool bUsePredecessors)
     {
-        const TArray<int32>& Order = Columns[Rank[Index]];
-        for (int32 OrderIndex = 0; OrderIndex < Order.Size(); ++OrderIndex)
+        TArray<int32>& Order = Columns[Column];
+        for (const int32 Node : Order)
         {
-            if (Order[OrderIndex] == Index)
+            const TArray<int32>& Neighbors = bUsePredecessors ? Predecessors[Node] : Successors[Node];
+            if (Neighbors.IsEmpty())
             {
-                return OrderIndex;
+                Barycenters[Node] = static_cast<float>(Position[Node]);
+                continue;
             }
+
+            float Sum = 0.0f;
+            for (const int32 Neighbor : Neighbors)
+            {
+                Sum += static_cast<float>(Position[Neighbor]);
+            }
+
+            Barycenters[Node] = Sum / static_cast<float>(Neighbors.Size());
         }
 
-        return 0;
+        Algorithm::Sort(Order, [&](int32 A, int32 B)
+        {
+            return Barycenters[A] == Barycenters[B] ? SeedLess(A, B) : Barycenters[A] < Barycenters[B];
+        });
+
+        UpdatePositions(Column);
     };
 
-    auto Barycenter = [&](int32 Index, bool bUsePredecessors) -> float
+    TArray<FLayerEdge> ScratchEdges;
+
+    const auto CrossingsBetween = [&](int32 LeftColumn, int32 RightColumn) -> int64
     {
-        const TArray<int32>& Neighbors = bUsePredecessors ? Predecessors[Index] : Successors[Index];
-        if (Neighbors.IsEmpty())
-        {
-            return static_cast<float>(OrderIndexInColumn(Index));
-        }
-
-        float Sum = 0.0f;
-        for (const int32 Neighbor : Neighbors)
-        {
-            Sum += static_cast<float>(OrderIndexInColumn(Neighbor));
-        }
-
-        return Sum / static_cast<float>(Neighbors.Size());
-    };
-
-    auto CountCrossings = [&](int32 LeftColumn, int32 RightColumn) -> int32
-    {
-        const TArray<int32>& LeftOrder  = Columns[LeftColumn];
-        const TArray<int32>& RightOrder = Columns[RightColumn];
-
-        TArray<int32> LeftPosition;
-        LeftPosition.Resize(NumLayoutNodes);
-
-        TArray<int32> RightPosition;
-        RightPosition.Resize(NumLayoutNodes);
-
-        for (int32 Index = 0; Index < LeftOrder.Size(); ++Index)
-        {
-            LeftPosition[LeftOrder[Index]] = Index;
-        }
-
-        for (int32 Index = 0; Index < RightOrder.Size(); ++Index)
-        {
-            RightPosition[RightOrder[Index]] = Index;
-        }
-
-        TArray<int32> EdgeLeft;
-        TArray<int32> EdgeRight;
-
-        for (const int32 From : LeftOrder)
+        ScratchEdges.Clear();
+        for (const int32 From : Columns[LeftColumn])
         {
             for (const int32 To : Successors[From])
             {
                 if (Rank[To] == RightColumn)
                 {
-                    EdgeLeft.Add(LeftPosition[From]);
-                    EdgeRight.Add(RightPosition[To]);
+                    ScratchEdges.Add(FLayerEdge{ Position[From], Position[To] });
                 }
             }
         }
 
-        int32 Crossings = 0;
-        for (int32 First = 0; First < EdgeLeft.Size(); ++First)
+        Algorithm::Sort(ScratchEdges, [](const FLayerEdge& A, const FLayerEdge& B)
         {
-            for (int32 Second = First + 1; Second < EdgeLeft.Size(); ++Second)
-            {
-                if ((EdgeLeft[First] - EdgeLeft[Second]) * (EdgeRight[First] - EdgeRight[Second]) < 0)
-                {
-                    Crossings++;
-                }
-            }
-        }
+            return A.UpperPosition != B.UpperPosition ? A.UpperPosition < B.UpperPosition : A.LowerPosition < B.LowerPosition;
+        });
 
-        return Crossings;
+        return CountCrossings(ScratchEdges, Columns[RightColumn].Size());
     };
 
-    auto Transpose = [&](int32 Column, int32 FixedNeighborColumn, bool bNeighborIsLeft)
+    const auto Transpose = [&](int32 Column, int32 FixedNeighborColumn, bool bNeighborIsLeft)
     {
         TArray<int32>& Order = Columns[Column];
+
+        const int32 LeftColumn  = bNeighborIsLeft ? FixedNeighborColumn : Column;
+        const int32 RightColumn = bNeighborIsLeft ? Column : FixedNeighborColumn;
+
+        const auto SwapAt = [&](int32 Index)
+        {
+            Order.Swap(Index, Index + 1);
+            Position[Order[Index]]     = Index;
+            Position[Order[Index + 1]] = Index + 1;
+        };
 
         bool bImproved = true;
         for (int32 Pass = 0; Pass < GRAPH_LAYOUT_TRANSPOSE_PASSES && bImproved; ++Pass)
@@ -234,19 +317,17 @@ void FGraphLayout::LayoutLayered(
             bImproved = false;
             for (int32 Index = 0; Index + 1 < Order.Size(); ++Index)
             {
-                const int32 LeftColumn  = bNeighborIsLeft ? FixedNeighborColumn : Column;
-                const int32 RightColumn = bNeighborIsLeft ? Column : FixedNeighborColumn;
-                const int32 Before      = CountCrossings(LeftColumn, RightColumn);
+                const int64 Before = CrossingsBetween(LeftColumn, RightColumn);
 
-                Order.Swap(Index, Index + 1);
+                SwapAt(Index);
 
-                if (CountCrossings(LeftColumn, RightColumn) < Before)
+                if (CrossingsBetween(LeftColumn, RightColumn) < Before)
                 {
                     bImproved = true;
                 }
                 else
                 {
-                    Order.Swap(Index, Index + 1);
+                    SwapAt(Index);
                 }
             }
         }
@@ -256,32 +337,18 @@ void FGraphLayout::LayoutLayered(
     {
         for (int32 Column = 1; Column < Columns.Size(); ++Column)
         {
-            Algorithm::Sort(Columns[Column], [&](int32 A, int32 B)
-            {
-                const float BarycenterA = Barycenter(A, true);
-                const float BarycenterB = Barycenter(B, true);
-
-                return BarycenterA == BarycenterB ? InputOrderLess(A, B) : BarycenterA < BarycenterB;
-            });
-
+            SortByBarycenter(Column, true);
             Transpose(Column, Column - 1, true);
         }
 
         for (int32 Column = Columns.Size() - 2; Column >= 0; --Column)
         {
-            Algorithm::Sort(Columns[Column], [&](int32 A, int32 B)
-            {
-                const float BarycenterA = Barycenter(A, false);
-                const float BarycenterB = Barycenter(B, false);
-
-                return BarycenterA == BarycenterB ? InputOrderLess(A, B) : BarycenterA < BarycenterB;
-            });
-
+            SortByBarycenter(Column, false);
             Transpose(Column, Column + 1, false);
         }
     }
 
-    auto NodeHeight = [&](int32 Index) -> float
+    const auto NodeHeight = [&](int32 Index) -> float
     {
         return Index < NumNodes ? NodeSizes[Index].Y : 0.0f;
     };
@@ -291,7 +358,7 @@ void FGraphLayout::LayoutLayered(
 
     for (int32 Column = 0; Column < Columns.Size(); ++Column)
     {
-        float Width = GRAPH_LAYOUT_MIN_COLUMN_WIDTH;
+        float Width = Settings.MinColumnWidth;
         for (const int32 Index : Columns[Column])
         {
             if (Index < NumNodes)
@@ -316,7 +383,7 @@ void FGraphLayout::LayoutLayered(
         }
     }
 
-    auto NeighborAverageY = [&](int32 Index) -> float
+    const auto NeighborAverageY = [&](int32 Index) -> float
     {
         float Sum   = 0.0f;
         int32 Count = 0;
@@ -342,7 +409,7 @@ void FGraphLayout::LayoutLayered(
         return Count > 0 ? (Sum / static_cast<float>(Count)) : NodeY[Index];
     };
 
-    auto EnforceNonOverlap = [&](const TArray<int32>& Order)
+    const auto EnforceNonOverlap = [&](const TArray<int32>& Order)
     {
         for (int32 Index = 1; Index < Order.Size(); ++Index)
         {

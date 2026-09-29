@@ -31,6 +31,76 @@
 #include <Application/Text/FontAtlas.h>
 #include <Application/Text/TrueTypeFontFace.h>
 
+class FScopedMenuServices
+{
+public:
+    FScopedMenuServices() = default;
+
+    ~FScopedMenuServices()
+    {
+        FMenuStack::Shutdown();
+        FToolTipService::Shutdown();
+    }
+
+    FScopedMenuServices(const FScopedMenuServices&) = delete;
+    FScopedMenuServices& operator=(const FScopedMenuServices&) = delete;
+};
+
+class FLayerStepDownElement final : public FVisualElement
+{
+public:
+    virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override
+    {
+        const FRectangle& Bounds = AllottedGeometry.Bounds;
+
+        // Recorded top first, so the block's own layers go down before they go up again
+        OutCommandList.AddBox(LayerId + 2, FRectangle(Bounds.Position, 10, 10), FFloatColor(1.0f, 0.0f, 0.0f, 1.0f));
+        OutCommandList.AddBox(LayerId, Bounds, FFloatColor(0.0f, 0.0f, 1.0f, 1.0f), FCornerRadii(4.0f));
+        OutCommandList.AddBox(LayerId + 1, FRectangle(Bounds.Position + IntVector2(5, 5), 20, 20), FFloatColor(0.0f, 1.0f, 0.0f, 1.0f));
+        return LayerId + 2;
+    }
+};
+
+class FChildPlacementHost final : public FVisualElement
+{
+public:
+    FChildPlacementHost()
+        : FVisualElement()
+        , Child(nullptr)
+        , bPinChild(false)
+    {
+    }
+
+    virtual void OnArrange(const FRectangle& AllottedBounds) override
+    {
+        if (Child)
+        {
+            const IntVector2 ChildPosition = bPinChild ? IntVector2(0, 0) : AllottedBounds.Position;
+            Child->Arrange(FRectangle(ChildPosition, 20, 20));
+        }
+    }
+
+    virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override
+    {
+        return Child ? Child->Draw(FDrawGeometry(Child->GetContentRectangle(), AllottedGeometry.Scale), OutCommandList, LayerId + 1) : LayerId;
+    }
+
+    void SetChild(const TSharedPtr<FVisualElement>& InChild)
+    {
+        Child = InChild;
+        Child->SetParentElement(AsWeakPtr());
+    }
+
+    TSharedPtr<FVisualElement> Child;
+    bool                       bPinChild;
+
+protected:
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder /*Order*/) const override
+    {
+        return VisitChild(Visitor, Child);
+    }
+};
+
 static TSharedPtr<IFontFace> CreateFont()
 {
     return MakeSharedPtr<FFixedWidthFontFace>(8, 16);
@@ -50,7 +120,7 @@ static FCursorEvent MakeButtonEvent(EInputEventType Type, const IntVector2& Clie
 static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRectangle& Bounds)
 {
     Element->PrepareDesiredSize();
-    Element->Tick(Bounds);
+    Element->Arrange(Bounds);
 }
 
 static void Record(const TSharedPtr<FVisualElement>& Element, FDrawCommandList& OutCommandList, int32 LayerId = 0)
@@ -108,21 +178,6 @@ static bool RecordingReplays(const TSharedPtr<FVisualElement>& Element)
 
     return CommandList.WasFullyReplayed();
 }
-
-class FScopedMenuServices
-{
-public:
-    FScopedMenuServices() = default;
-
-    ~FScopedMenuServices()
-    {
-        FMenuStack::Shutdown();
-        FToolTipService::Shutdown();
-    }
-
-    FScopedMenuServices(const FScopedMenuServices&) = delete;
-    FScopedMenuServices& operator=(const FScopedMenuServices&) = delete;
-};
 
 static TSharedPtr<FMenu> CreateMenu(const TSharedPtr<IFontFace>& Font, const TArray<String>& Labels)
 {
@@ -511,7 +566,7 @@ bool DrawCacheInvalidation_Test()
     Scroller->SetScrollOffset(20);
     TEST_EXPECT(Scroller->IsPaintDirty());
 
-    Scroller->Tick(Scroller->GetContentRectangle());
+    Scroller->Arrange(Scroller->GetContentRectangle());
 
     FDrawCommandList Scrolled;
     Record(Scroller, Scrolled);
@@ -945,5 +1000,184 @@ bool DrawCacheToolTip_Test()
     TEST_EXPECT_EQ(AfterDismiss.FindTextCommand("Opens the file"), FDrawCommandList::InvalidIndex);
 
     DrawCacheRegistry::ReleaseAll();
+    TEST_END();
+}
+
+bool DrawCacheLayerOrder_Test()
+{
+    TEST_BEGIN();
+
+    DrawCacheRegistry::ReleaseAll();
+
+    IConsoleVariable* GeometryVariable = FConsoleManager::Get().FindConsoleVariable("UI.DrawCache.Geometry");
+    TEST_EXPECT(GeometryVariable != nullptr);
+
+    if (!GeometryVariable)
+    {
+        TEST_END();
+    }
+
+    const bool bWasEnabled = GeometryVariable->GetBool();
+    GeometryVariable->SetAsBool(true, EConsoleVariableFlags::SetByCode);
+
+    TSharedPtr<FLayerStepDownElement> Element = MakeSharedPtr<FLayerStepDownElement>();
+    Element->SetDrawCachePolicy(EDrawCachePolicy::Always);
+    LayoutElement(Element, FRectangle(IntVector2(10, 20), 60, 40));
+
+    FDrawCommandList FreshCommands;
+    FreshCommands.SetDrawCacheSuppressed(true);
+    Record(Element, FreshCommands);
+
+    FUIDrawData FreshData;
+    FreshData.BuildFromCommandList(FreshCommands);
+
+    TEST_SECTION("A block whose layers step back down still sorts as one run, so its geometry is kept and spliced");
+    for (int32 Frame = 0; Frame < 2; ++Frame)
+    {
+        FDrawCommandList Warmup;
+        Record(Element, Warmup);
+
+        FUIDrawData WarmupData;
+        WarmupData.BuildFromCommandList(Warmup);
+    }
+
+    FDrawCommandList ReplayCommands;
+    Record(Element, ReplayCommands);
+    TEST_EXPECT(ReplayCommands.WasFullyReplayed());
+
+    FUIDrawData ReplayData;
+    ReplayData.BuildFromCommandList(ReplayCommands);
+    TEST_EXPECT(ReplayData.IsFullyReplayed());
+
+    TEST_SECTION("And the spliced streams are the ones a fresh build sorts into");
+    TEST_EXPECT_EQ(ReplayData.GetVertices().Size(), FreshData.GetVertices().Size());
+    TEST_EXPECT_EQ(ReplayData.GetShapeInstances().Size(), FreshData.GetShapeInstances().Size());
+    TEST_EXPECT_EQ(ReplayData.GetBatches().Size(), FreshData.GetBatches().Size());
+
+    bool bShapesMatch = ReplayData.GetShapeInstances().Size() == FreshData.GetShapeInstances().Size();
+    for (int32 Index = 0; bShapesMatch && Index < FreshData.GetShapeInstances().Size(); ++Index)
+    {
+        bShapesMatch = Memory::Memcmp(&ReplayData.GetShapeInstances()[Index], &FreshData.GetShapeInstances()[Index], sizeof(FUIShapeInstance)) == 0;
+    }
+
+    TEST_EXPECT(bShapesMatch);
+
+    bool bVerticesMatch = ReplayData.GetVertices().Size() == FreshData.GetVertices().Size();
+    for (int32 Index = 0; bVerticesMatch && Index < FreshData.GetVertices().Size(); ++Index)
+    {
+        const FUIVertex& Left  = ReplayData.GetVertices()[Index];
+        const FUIVertex& Right = FreshData.GetVertices()[Index];
+        bVerticesMatch = Left.Position == Right.Position && Left.Color == Right.Color;
+    }
+
+    TEST_EXPECT(bVerticesMatch);
+
+    GeometryVariable->SetAsBool(bWasEnabled, EConsoleVariableFlags::SetByCode);
+
+    DrawCacheRegistry::ReleaseAll();
+    TEST_END();
+}
+
+bool DrawCacheTranslation_Test()
+{
+    TEST_BEGIN();
+
+    DrawCacheRegistry::ReleaseAll();
+
+    const TSharedPtr<IFontFace>  Font  = CreateFont();
+    TSharedPtr<FBorder>          Panel = MakePanel(Font);
+    TSharedPtr<FCompoundElement> Frame = MakeSharedPtr<FCompoundElement>();
+
+    Panel->SetDrawCachePolicy(EDrawCachePolicy::Always);
+    Frame->SetContent(Panel);
+
+    LayoutElement(Frame, FRectangle(IntVector2(0, 0), 200, 160));
+    SettleDrawCache(Frame);
+
+    TEST_SECTION("Moving the frame without resizing carries the panel along, so it stays clean");
+    LayoutElement(Frame, FRectangle(IntVector2(30, 40), 200, 160));
+    TEST_EXPECT(!Panel->IsPaintDirty());
+    TEST_EXPECT(Frame->IsPaintDirty());
+
+    TEST_SECTION("The panel replays its recording moved, and that agrees with walking it where it stands now");
+    FDrawCommandList Moved;
+    Record(Frame, Moved);
+    TEST_EXPECT(Moved.GetReplayedCommandCount() > 0);
+
+    FDrawCommandList Fresh;
+    Fresh.SetDrawCacheSuppressed(true);
+    Record(Frame, Fresh);
+    TEST_EXPECT(RecordingsMatch(Moved, Fresh));
+
+    TEST_SECTION("A resize is not a move, so the panel records again");
+    LayoutElement(Frame, FRectangle(IntVector2(30, 40), 220, 160));
+    TEST_EXPECT(Panel->IsPaintDirty());
+
+    TEST_SECTION("A child placed where its moving parent was is dirtied, while one that moves along is not");
+    TSharedPtr<FChildPlacementHost> Host  = MakeSharedPtr<FChildPlacementHost>();
+    TSharedPtr<FVisualElement>      Child = MakeSharedPtr<FCompoundElement>();
+    Host->SetChild(Child);
+
+    LayoutElement(Host, FRectangle(IntVector2(0, 0), 100, 100));
+    FDrawCommandList Settle;
+    Record(Host, Settle);
+
+    LayoutElement(Host, FRectangle(IntVector2(10, 0), 100, 100));
+    TEST_EXPECT(!Child->IsPaintDirty());
+
+    Record(Host, Settle);
+    Host->bPinChild = true;
+    Host->InvalidateArrange();
+    LayoutElement(Host, FRectangle(IntVector2(20, 0), 100, 100));
+    TEST_EXPECT(Child->IsPaintDirty());
+
+    DrawCacheRegistry::ReleaseAll();
+    TEST_END();
+}
+
+bool DrawCommandPayload_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<IFontFace> Font = CreateFont();
+    const FRectangle      Bounds(IntVector2(0, 0), 40, 20);
+    const FCornerRadii    Radii(1.0f, 2.0f, 3.0f, 4.0f);
+    const FFloatColor     Tint(1.0f, 1.0f, 1.0f, 1.0f);
+
+    TEST_SECTION("Each command keeps the payload its type owns");
+    FDrawCommandList Commands;
+    Commands.AddRoundedBottomBar(0, Bounds, Radii, 2.0f, Tint, 6.0f);
+    Commands.AddRoundedAccentRing(0, Bounds, Radii, 2.0f, Tint, 0.25f, 0.5f);
+    Commands.AddText(0, Bounds, "Text", Font.Get(), Tint);
+
+    const TArray<FDrawCommand>& Recorded = Commands.GetCommands();
+    TEST_EXPECT_EQ(Recorded.Size(), 3);
+    TEST_EXPECT_EQ(Recorded[0].GetFadeWidth(), 6.0f);
+    TEST_EXPECT(Recorded[0].CornerRadius == Radii);
+    TEST_EXPECT_EQ(Recorded[1].GetFadeFraction(), 0.25f);
+    TEST_EXPECT_EQ(Recorded[1].GetTrailAlpha(), 0.5f);
+    TEST_EXPECT(Recorded[2].Font == Font.Get());
+
+    TEST_SECTION("A different fade is a difference, and so is a different face");
+    FDrawCommandList OtherFade;
+    OtherFade.AddRoundedBottomBar(0, Bounds, Radii, 2.0f, Tint, 7.0f);
+    OtherFade.AddRoundedAccentRing(0, Bounds, Radii, 2.0f, Tint, 0.25f, 0.5f);
+    OtherFade.AddText(0, Bounds, "Text", Font.Get(), Tint);
+    TEST_EXPECT(!RecordingsAgree(Commands, OtherFade));
+
+    TSharedPtr<IFontFace> OtherFont = CreateFont();
+    FDrawCommandList      OtherFace;
+    OtherFace.AddRoundedBottomBar(0, Bounds, Radii, 2.0f, Tint, 6.0f);
+    OtherFace.AddRoundedAccentRing(0, Bounds, Radii, 2.0f, Tint, 0.25f, 0.5f);
+    OtherFace.AddText(0, Bounds, "Text", OtherFont.Get(), Tint);
+    TEST_EXPECT(!RecordingsAgree(Commands, OtherFace));
+
+    TEST_SECTION("The same recording twice agrees");
+    FDrawCommandList Same;
+    Same.AddRoundedBottomBar(0, Bounds, Radii, 2.0f, Tint, 6.0f);
+    Same.AddRoundedAccentRing(0, Bounds, Radii, 2.0f, Tint, 0.25f, 0.5f);
+    Same.AddText(0, Bounds, "Text", Font.Get(), Tint);
+    TEST_EXPECT(RecordingsAgree(Commands, Same));
+
     TEST_END();
 }

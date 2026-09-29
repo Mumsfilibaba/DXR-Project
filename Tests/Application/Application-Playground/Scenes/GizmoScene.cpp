@@ -13,6 +13,12 @@
 #include "PlaygroundScene.h"
 #include "ScenePanel.h"
 
+static TSharedPtr<FGizmo>         GGizmo;
+
+static TSharedPtr<FTextBlock>     GGizmoReadout;
+static TSharedPtr<FToolBarButton> GOperationButtons[4];
+static TSharedPtr<FToolBarButton> GModeButtons[2];
+
 // Tall enough that the gizmo is a comfortable size at the distance the camera starts at
 constexpr int32 GIZMO_VIEWPORT_HEIGHT = 460;
 
@@ -74,27 +80,16 @@ public:
 
         if (Gizmo)
         {
-            Gizmo->Tick(AllottedBounds);
+            Gizmo->Arrange(AllottedBounds);
             Gizmo->SetCamera(GetViewMatrix(), GetProjectionMatrix(), false);
         }
+
+        RequestContinuousArrange();
     }
 
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder /*Order*/) const override
     {
-        if (Gizmo)
-        {
-            OutChildren.Add(Gizmo);
-        }
-    }
-
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override
-    {
-        FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
-        if (Gizmo && Gizmo->GetContentRectangle().EncapsulatesPoint(ClientPosition))
-        {
-            Gizmo->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-        }
+        return VisitChild(Visitor, Gizmo);
     }
 
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override
@@ -398,11 +393,7 @@ private:
     IntVector2            LastCursorPosition;
 };
 
-static TSharedPtr<FGizmo>         GGizmo;
 static TSharedPtr<FGizmoViewport> GViewport;
-static TSharedPtr<FTextBlock>     GGizmoReadout;
-static TSharedPtr<FToolBarButton> GOperationButtons[4];
-static TSharedPtr<FToolBarButton> GModeButtons[2];
 
 static const CHAR* GetHandleName(EGizmoHandle Handle)
 {

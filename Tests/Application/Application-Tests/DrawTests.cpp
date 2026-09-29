@@ -26,6 +26,35 @@ static TSharedPtr<FTextBlock> CreateTextBlock(const CHAR* Text, const TSharedPtr
     return FTextBlock::Create(Desc);
 }
 
+static int32 CountCoveredPixels(const FSnapshotImage& Image, const IntVector2& Start, const IntVector2& End)
+{
+    int32 Covered = 0;
+    for (int32 Y = Start.Y; Y <= End.Y; ++Y)
+    {
+        for (int32 X = Start.X; X <= End.X; ++X)
+        {
+            if (Image.GetPixel(X, Y) != 0)
+            {
+                ++Covered;
+            }
+        }
+    }
+
+    return Covered;
+}
+
+static FSnapshotImage RasterizeCommands(const FDrawCommandList& CommandList, int32 Width, int32 Height)
+{
+    FUIDrawData DrawData;
+    DrawData.BuildFromCommandList(CommandList);
+
+    FSnapshotImage Image;
+    Image.Initialize(Width, Height, 0);
+
+    RasterizeDrawData(DrawData, Image);
+    return Image;
+}
+
 bool DrawCommandList_Test()
 {
     TEST_BEGIN();
@@ -60,7 +89,6 @@ bool DrawCommandList_Test()
     TEST_SECTION("Counting by type only counts that type");
     TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::Box), 1);
     TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::Text), 1);
-    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::ClipPush), 0);
 
     TEST_SECTION("Text lookup finds a match and reports a miss");
     TEST_EXPECT_EQ(CommandList.FindTextCommand("Hello"), 1);
@@ -74,35 +102,6 @@ bool DrawCommandList_Test()
     TEST_EXPECT(CommandList.IsClipStackBalanced());
 
     TEST_END();
-}
-
-static int32 CountCoveredPixels(const FSnapshotImage& Image, const IntVector2& Start, const IntVector2& End)
-{
-    int32 Covered = 0;
-    for (int32 Y = Start.Y; Y <= End.Y; ++Y)
-    {
-        for (int32 X = Start.X; X <= End.X; ++X)
-        {
-            if (Image.GetPixel(X, Y) != 0)
-            {
-                ++Covered;
-            }
-        }
-    }
-
-    return Covered;
-}
-
-static FSnapshotImage RasterizeCommands(const FDrawCommandList& CommandList, int32 Width, int32 Height)
-{
-    FUIDrawData DrawData;
-    DrawData.BuildFromCommandList(CommandList);
-
-    FSnapshotImage Image;
-    Image.Initialize(Width, Height, 0);
-
-    RasterizeDrawData(DrawData, Image);
-    return Image;
 }
 
 bool HairlineCoverage_Test()
@@ -186,7 +185,7 @@ bool DrawClipNesting_Test()
     TEST_EXPECT_EQ(CommandList.Size(), 1);
     TEST_EXPECT(CommandList[0].IsClipped());
     TEST_EXPECT(CommandList.GetCommandClipRectangle(CommandList[0]) == Nested);
-    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::ClipPush), 0);
+    TEST_EXPECT_EQ(CommandList.Size(), 1);
 
     TEST_SECTION("Popping restores the enclosing region");
     CommandList.PopClip(1);
@@ -197,8 +196,7 @@ bool DrawClipNesting_Test()
 
     CommandList.PopClip(0);
     TEST_EXPECT(CommandList.IsClipStackBalanced());
-    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::ClipPush), 0);
-    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::ClipPop), 0);
+    TEST_EXPECT_EQ(CommandList.Size(), 1);
 
     TEST_SECTION("An extra pop leaves the list unbalanced too");
     CommandList.PopClip(0);
@@ -216,13 +214,11 @@ bool DrawClipNesting_Test()
     TSharedPtr<FScrollBox> ScrollBox = FScrollBox::Create();
     ScrollBox->SetContent(Content);
     ScrollBox->PrepareDesiredSize();
-    ScrollBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    ScrollBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     FDrawCommandList ScrollCommandList;
     ScrollBox->OnDraw(FDrawGeometry(ScrollBox->GetContentRectangle(), 1.0f), ScrollCommandList, 0);
 
-    TEST_EXPECT_EQ(ScrollCommandList.CountCommandsOfType(EDrawCommandType::ClipPush), 0);
-    TEST_EXPECT_EQ(ScrollCommandList.CountCommandsOfType(EDrawCommandType::ClipPop), 0);
     TEST_EXPECT(ScrollCommandList.IsClipStackBalanced());
     TEST_EXPECT(ScrollCommandList.CountCommandsOfType(EDrawCommandType::Text) > 0);
     TEST_EXPECT(ScrollCommandList.CountCommandsOfType(EDrawCommandType::Text) < 10);
@@ -255,7 +251,7 @@ bool BorderDraw_Test()
 
     TSharedPtr<FBorder> Border = FBorder::Create(Desc);
     Border->PrepareDesiredSize();
-    Border->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    Border->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     FDrawCommandList CommandList;
     const int32      MaxLayerId = Border->OnDraw(FDrawGeometry(Border->GetContentRectangle(), 1.0f), CommandList, 0);
@@ -277,7 +273,7 @@ bool BorderDraw_Test()
 
     TSharedPtr<FBorder> Transparent = FBorder::Create(TransparentDesc);
     Transparent->PrepareDesiredSize();
-    Transparent->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    Transparent->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     FDrawCommandList TransparentCommandList;
     Transparent->OnDraw(FDrawGeometry(Transparent->GetContentRectangle(), 1.0f), TransparentCommandList, 0);
@@ -293,7 +289,7 @@ bool BorderDraw_Test()
 
     TSharedPtr<FBorder> UnderBorder = FBorder::Create(StrokeDesc);
     UnderBorder->PrepareDesiredSize();
-    UnderBorder->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    UnderBorder->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     FDrawCommandList UnderCommandList;
     UnderBorder->OnDraw(FDrawGeometry(UnderBorder->GetContentRectangle(), 1.0f), UnderCommandList, 0);
@@ -307,7 +303,7 @@ bool BorderDraw_Test()
 
     TSharedPtr<FBorder> OverBorder = FBorder::Create(StrokeDesc);
     OverBorder->PrepareDesiredSize();
-    OverBorder->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    OverBorder->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     FDrawCommandList OverCommandList;
     const int32      OverMaxLayerId = OverBorder->OnDraw(FDrawGeometry(OverBorder->GetContentRectangle(), 1.0f), OverCommandList, 0);
@@ -371,7 +367,7 @@ bool BoxLayerSequencing_Test()
     RootBox->AddSlot(FBorder::Create(InputDesc)).SetVerticalAlignment(EVerticalAlignment::Bottom);
 
     RootBox->PrepareDesiredSize();
-    RootBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    RootBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     FDrawCommandList CommandList;
     RootBox->OnDraw(FDrawGeometry(RootBox->GetContentRectangle(), 1.0f), CommandList, 0);

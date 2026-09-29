@@ -328,7 +328,7 @@ bool EditableTextSelection_Test()
     TEST_SECTION("A selection is drawn as a fill behind the text, spanning the selected characters");
     TSharedPtr<FEditableText> Drawn = CreateEditableText("Hello", Font);
     Drawn->PrepareDesiredSize();
-    Drawn->Tick(FRectangle(IntVector2(0, 0), 200, 16));
+    Drawn->Arrange(FRectangle(IntVector2(0, 0), 200, 16));
 
     FDrawCommandList CommandList;
     Drawn->OnDraw(FDrawGeometry(Drawn->GetContentRectangle(), 1.0f), CommandList, 0);
@@ -369,7 +369,7 @@ bool EditableTextMouseSelection_Test()
 
     TSharedPtr<FEditableText> Editable = CreateEditableText("Hello", Font);
     Editable->PrepareDesiredSize();
-    Editable->Tick(FRectangle(IntVector2(20, 10), 200, 16));
+    Editable->Arrange(FRectangle(IntVector2(20, 10), 200, 16));
 
     TEST_SECTION("A press puts the text cursor under the cursor position");
     TEST_EXPECT(Editable->OnMouseButtonDown(CreateMouseButtonEvent(IntVector2(20 + (3 * 8), 12), true)).IsEventHandled());
@@ -607,7 +607,7 @@ bool EditableTextCaretBlink_Test()
 
     TEST_SECTION("A solid cursor draws for as long as the element has focus");
     Solid->PrepareDesiredSize();
-    Solid->Tick(FRectangle(IntVector2(0, 0), 200, 16));
+    Solid->Arrange(FRectangle(IntVector2(0, 0), 200, 16));
     Solid->OnFocusGained();
 
     FDrawCommandList CommandList;
@@ -625,7 +625,7 @@ bool EditableTextCaretBlink_Test()
 
     TSharedPtr<FEditableText> Blinking = FEditableText::Create(BlinkingDesc);
     Blinking->PrepareDesiredSize();
-    Blinking->Tick(FRectangle(IntVector2(0, 0), 200, 16));
+    Blinking->Arrange(FRectangle(IntVector2(0, 0), 200, 16));
     Blinking->OnFocusGained();
 
     for (int32 Index = 0; Index < 64; ++Index)
@@ -663,7 +663,7 @@ bool EditableTextBandAlignment_Test()
 
     const int32 BoxHeight = Font->GetTextBandHeight() + 8;
     Editable->PrepareDesiredSize();
-    Editable->Tick(FRectangle(IntVector2(0, 0), 200, BoxHeight));
+    Editable->Arrange(FRectangle(IntVector2(0, 0), 200, BoxHeight));
 
     FDrawCommandList CommandList;
     Editable->OnDraw(FDrawGeometry(Editable->GetContentRectangle(), 1.0f), CommandList, 0);
@@ -752,7 +752,7 @@ bool EditableTextDraw_Test()
 
     TSharedPtr<FEditableText> Editable = CreateEditableText("Hello", Font);
     Editable->PrepareDesiredSize();
-    Editable->Tick(FRectangle(IntVector2(0, 0), 200, 16));
+    Editable->Arrange(FRectangle(IntVector2(0, 0), 200, 16));
 
     TEST_SECTION("An unfocused element draws its text without a cursor");
     FDrawCommandList CommandList;
@@ -786,7 +786,7 @@ bool EditableTextDraw_Test()
     TEST_SECTION("An empty element draws the hint instead of the text");
     TSharedPtr<FEditableText> Empty = CreateEditableText("", Font);
     Empty->PrepareDesiredSize();
-    Empty->Tick(FRectangle(IntVector2(0, 0), 200, 16));
+    Empty->Arrange(FRectangle(IntVector2(0, 0), 200, 16));
 
     CommandList.Reset();
     Empty->OnDraw(FDrawGeometry(Empty->GetContentRectangle(), 1.0f), CommandList, 0);
@@ -813,7 +813,7 @@ bool EditableTextAlignment_Test()
 
     TSharedPtr<FEditableText> Centered = FEditableText::Create(Desc);
     Centered->PrepareDesiredSize();
-    Centered->Tick(Bounds);
+    Centered->Arrange(Bounds);
 
     TEST_SECTION("Centred text is drawn in the middle of the space rather than against its left edge");
     FDrawCommandList CommandList;
@@ -843,7 +843,7 @@ bool EditableTextAlignment_Test()
 
     TSharedPtr<FEditableText> RightAligned = FEditableText::Create(Desc);
     RightAligned->PrepareDesiredSize();
-    RightAligned->Tick(Bounds);
+    RightAligned->Arrange(Bounds);
 
     CommandList.Reset();
     RightAligned->OnDraw(FDrawGeometry(RightAligned->GetContentRectangle(), 1.0f), CommandList, 0);
@@ -856,7 +856,7 @@ bool EditableTextAlignment_Test()
 
     TSharedPtr<FEditableText> Overflowing = FEditableText::Create(Desc);
     Overflowing->PrepareDesiredSize();
-    Overflowing->Tick(Bounds);
+    Overflowing->Arrange(Bounds);
 
     CommandList.Reset();
     Overflowing->OnDraw(FDrawGeometry(Overflowing->GetContentRectangle(), 1.0f), CommandList, 0);

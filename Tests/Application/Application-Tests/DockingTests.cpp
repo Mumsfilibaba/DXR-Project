@@ -32,7 +32,7 @@ static TSharedPtr<IFontFace> CreateFont()
 static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRectangle& Bounds)
 {
     Element->PrepareDesiredSize();
-    Element->Tick(Bounds);
+    Element->Arrange(Bounds);
 }
 
 static TSharedPtr<FVisualElement> MakePanel(const String& Text, const TSharedPtr<IFontFace>& Font)
@@ -43,6 +43,51 @@ static TSharedPtr<FVisualElement> MakePanel(const String& Text, const TSharedPtr
 
     return FTextBlock::Create(Desc);
 }
+
+struct FDockingFixture
+{
+    FDockingFixture(FScopedStubApplication& Application, const IntVector2& Size, const IntVector2& Position = IntVector2(0, 0))
+        : Font(CreateFont())
+        , Window(Application.CreateWindow(Size, Position))
+        , Area(nullptr)
+    {
+        FDockingArea::FDesc Desc;
+        Desc.Font = Font;
+
+        Area = FDockingArea::Create(Desc);
+
+        Area->RegisterPanel("Outliner", "Outliner", MakePanel("Outliner", Font));
+        Area->RegisterPanel("Details", "Details", MakePanel("Details", Font));
+        Area->RegisterPanel("Content", "Content Browser", MakePanel("Content", Font));
+
+        Window->SetContent(Area);
+    }
+
+    void Layout()
+    {
+        FApplication::LayoutWindow(Window);
+    }
+
+    NODISCARD IntVector2 GetDropZoneCenter(const IntVector2& ClientHint, EDockDirection Direction) const
+    {
+        TArray<FDropZone> Zones;
+        Area->GatherDropZones(ClientHint, Zones);
+
+        for (const FDropZone& Zone : Zones)
+        {
+            if (Zone.Direction == Direction)
+            {
+                return Zone.Bounds.GetCenter() + Window->GetPosition();
+            }
+        }
+
+        return IntVector2(-1, -1);
+    }
+
+    TSharedPtr<IFontFace>    Font;
+    TSharedPtr<FWindow>      Window;
+    TSharedPtr<FDockingArea> Area;
+};
 
 static FCursorEvent MakeButtonEvent(EInputEventType Type, const IntVector2& ClientPosition, bool bIsDown)
 {
@@ -209,51 +254,6 @@ static FStubPlatformWindow* GetStubWindow(const TSharedPtr<FWindow>& Window)
 {
     return static_cast<FStubPlatformWindow*>(Window->GetPlatformWindow().Get());
 }
-
-struct FDockingFixture
-{
-    FDockingFixture(FScopedStubApplication& Application, const IntVector2& Size, const IntVector2& Position = IntVector2(0, 0))
-        : Font(CreateFont())
-        , Window(Application.CreateWindow(Size, Position))
-        , Area(nullptr)
-    {
-        FDockingArea::FDesc Desc;
-        Desc.Font = Font;
-
-        Area = FDockingArea::Create(Desc);
-
-        Area->RegisterPanel("Outliner", "Outliner", MakePanel("Outliner", Font));
-        Area->RegisterPanel("Details", "Details", MakePanel("Details", Font));
-        Area->RegisterPanel("Content", "Content Browser", MakePanel("Content", Font));
-
-        Window->SetContent(Area);
-    }
-
-    void Layout()
-    {
-        FApplication::LayoutWindow(Window);
-    }
-
-    NODISCARD IntVector2 GetDropZoneCenter(const IntVector2& ClientHint, EDockDirection Direction) const
-    {
-        TArray<FDropZone> Zones;
-        Area->GatherDropZones(ClientHint, Zones);
-
-        for (const FDropZone& Zone : Zones)
-        {
-            if (Zone.Direction == Direction)
-            {
-                return Zone.Bounds.GetCenter() + Window->GetPosition();
-            }
-        }
-
-        return IntVector2(-1, -1);
-    }
-
-    TSharedPtr<IFontFace>    Font;
-    TSharedPtr<FWindow>      Window;
-    TSharedPtr<FDockingArea> Area;
-};
 
 bool DockNodeMinimumSize_Test()
 {
@@ -944,11 +944,11 @@ bool TabStripScroll_Test()
 
     TEST_SECTION("It stops answering for a point out there too, so the tab cannot be clicked through the panel below");
     FElementPath OutsidePath;
-    Strip->FindChildrenContainingPoint(IntVector2(ViewWidth + 40, TabStyle.TopInset + 4), OutsidePath);
+    Strip->HitTest(IntVector2(ViewWidth + 40, TabStyle.TopInset + 4), OutsidePath);
     TEST_EXPECT(OutsidePath.GetElements().IsEmpty());
 
     FElementPath InsidePath;
-    Strip->FindChildrenContainingPoint(Strip->GetTabs().Last()->GetContentRectangle().GetCenter(), InsidePath);
+    Strip->HitTest(Strip->GetTabs().Last()->GetContentRectangle().GetCenter(), InsidePath);
     TEST_EXPECT(!InsidePath.GetElements().IsEmpty());
 
     TEST_SECTION("The bar it scrolls with lies along the bottom of the strip, thin enough to leave the pills alone");
@@ -1044,7 +1044,7 @@ bool TabStripStyle_Test()
     TEST_EXPECT_EQ(Strip->GetCachedDesiredSize().Y, TabStyle.StripHeight);
     TEST_EXPECT(TabStyle.StripHeight != FUIStyle::GetDefault().Tab.StripHeight);
 
-    Strip->Tick(FRectangle(IntVector2(0, 0), 600, TabStyle.StripHeight));
+    Strip->Arrange(FRectangle(IntVector2(0, 0), 600, TabStyle.StripHeight));
 
     TEST_SECTION("Its tabs take that description's spacing, inset and padding too");
     const TSharedPtr<FTab> OutlinerTab = FindTab(Strip, "Outliner");
@@ -1137,8 +1137,8 @@ bool TabStripStyle_Test()
         TEST_EXPECT_EQ(Accent->CornerRadius.BottomRight, TabStyle.CornerRadius);
         TEST_EXPECT(Accent->HasTint(TabStyle.ActiveStrip));
         TEST_EXPECT_EQ(Accent->Thickness, static_cast<float>(TabStyle.ActiveStripThickness));
-        TEST_EXPECT_EQ(Accent->FadeFraction, TabStyle.ActiveStripFadeFraction);
-        TEST_EXPECT_EQ(Accent->TrailAlpha, TabStyle.ActiveStripTrailAlpha);
+        TEST_EXPECT_EQ(Accent->GetFadeFraction(), TabStyle.ActiveStripFadeFraction);
+        TEST_EXPECT_EQ(Accent->GetTrailAlpha(), TabStyle.ActiveStripTrailAlpha);
     }
 
     TEST_SECTION("Hovering a resting tab fills it as a pill on every corner, without lending it the accent");

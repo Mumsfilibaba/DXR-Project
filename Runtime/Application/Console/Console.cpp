@@ -139,6 +139,7 @@ FConsole::FConsole()
     , bIsScrollContentDirty(true)
     , bIsScrollToEndPending(false)
     , bIsSyncingInput(false)
+    , bIsShowingLog(false)
 {
 }
 
@@ -210,9 +211,16 @@ void FConsole::OnArrange(const FRectangle& AllottedBounds)
 {
     if (LastLogRevision != LogBuffer.GetRevision())
     {
-        LastLogRevision       = LogBuffer.GetRevision();
-        bIsScrollContentDirty = true;
         bIsScrollToEndPending = true;
+
+        if (bIsShowingLog && !bIsScrollContentDirty && !CommandLine.HasCandidates())
+        {
+            AppendNewLogLines();
+        }
+        else
+        {
+            bIsScrollContentDirty = true;
+        }
     }
 
     if (bIsScrollContentDirty)
@@ -236,6 +244,11 @@ void FConsole::OnArrange(const FRectangle& AllottedBounds)
 
     SetContentRectangle(ConsoleBounds);
     FCompoundElement::OnArrange(ConsoleBounds);
+
+    if (bIsOpen)
+    {
+        RequestContinuousArrange();
+    }
 }
 
 int32 FConsole::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -301,6 +314,9 @@ void FConsole::RebuildScrollContent()
 {
     ScrollContent->ClearSlots();
 
+    LastLogRevision = LogBuffer.GetRevision();
+    bIsShowingLog   = !CommandLine.HasCandidates();
+
     if (CommandLine.HasCandidates())
     {
         const TArray<TPair<IConsoleObject*, String>>& Candidates    = CommandLine.GetCandidates();
@@ -329,12 +345,38 @@ void FConsole::RebuildScrollContent()
     }
 
     TArray<FConsoleLogLine> Lines;
-    LogBuffer.GetSnapshot(Lines);
+    LastLogRevision = LogBuffer.GetSnapshot(Lines);
 
     for (const FConsoleLogLine& Line : Lines)
     {
         AddLogLine(Line);
     }
+}
+
+void FConsole::AppendNewLogLines()
+{
+    TArray<FConsoleLogLine> NewLines;
+    bool                    bIsContinuous = false;
+    LastLogRevision = LogBuffer.GetLinesSince(LastLogRevision, NewLines, bIsContinuous);
+
+    if (!bIsContinuous)
+    {
+        bIsScrollContentDirty = true;
+        return;
+    }
+
+    for (const FConsoleLogLine& Line : NewLines)
+    {
+        AddLogLine(Line);
+    }
+
+    const int32 NumExcess = ScrollContent->GetNumSlots() - LogBuffer.GetMaxLines();
+    for (int32 Index = 0; Index < NumExcess; ++Index)
+    {
+        ScrollContent->RemoveSlotAt(0);
+    }
+
+    ScrollContent->PrepareDesiredSize();
 }
 
 void FConsole::SyncInputFromCommandLine()

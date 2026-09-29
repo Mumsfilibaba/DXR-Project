@@ -47,6 +47,7 @@ int32 FViewport::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 void FViewport::SetPosition(const IntVector2& InPosition, EViewportPositionSpace InSpace)
 {
     Position = InPosition;
+    InvalidateArrange();
 
     if (InSpace == EViewportPositionSpace::Screen)
     {
@@ -70,19 +71,19 @@ void FViewport::SetPosition(const IntVector2& InPosition, EViewportPositionSpace
     }
 }
 
-void FViewport::Tick(const FRectangle& AssignedBounds)
+void FViewport::OnArrange(const FRectangle& AllottedBounds)
 {
     if (Size.X != 0 && Size.Y != 0)
     {
         FRectangle Desired;
-        Desired.Position = AssignedBounds.Position + Position;
+        Desired.Position = AllottedBounds.Position + Position;
         Desired.Width    = Size.X;
         Desired.Height   = Size.Y;
 
-        const int32 ParentLeft    = AssignedBounds.Position.X;
-        const int32 ParentTop     = AssignedBounds.Position.Y;
-        const int32 ParentRight   = ParentLeft + AssignedBounds.Width;
-        const int32 ParentBottom  = ParentTop + AssignedBounds.Height;
+        const int32 ParentLeft    = AllottedBounds.Position.X;
+        const int32 ParentTop     = AllottedBounds.Position.Y;
+        const int32 ParentRight   = ParentLeft + AllottedBounds.Width;
+        const int32 ParentBottom  = ParentTop + AllottedBounds.Height;
 
         const int32 DesiredLeft   = Desired.Position.X;
         const int32 DesiredTop    = Desired.Position.Y;
@@ -102,9 +103,14 @@ void FViewport::Tick(const FRectangle& AssignedBounds)
 
         SetContentRectangle(ViewportRectangle);
     }
-    else
+}
+
+void FViewport::SetSize(const IntVector2& InSize)
+{
+    if (Size != InSize)
     {
-        SetContentRectangle(AssignedBounds);
+        Size = InSize;
+        InvalidateArrange();
     }
 }
 

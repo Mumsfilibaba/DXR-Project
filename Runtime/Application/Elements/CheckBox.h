@@ -135,8 +135,6 @@ protected:
 private:
     NODISCARD ECheckBoxState GetNextState() const;
 
-    void ApplyLabelColor();
-
     TSharedPtr<class FTextBlock> LabelText;
     ECheckBoxState               CheckState;
     int32                        BoxSize;

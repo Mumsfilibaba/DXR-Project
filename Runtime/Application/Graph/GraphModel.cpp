@@ -1,13 +1,17 @@
 #include "Application/Graph/GraphModel.h"
+#include "Core/Containers/Set.h"
 
 FGraphModel::FGraphModel()
     : Nodes()
     , Links()
+    , NodeIndexById()
+    , PinLocationById()
     , NextNodeId(0)
     , NextPinId(0)
     , NextLinkId(0)
     , Revision(0)
     , bIsReadOnly(false)
+    , bIsIndexDirty(false)
 {
 }
 
@@ -29,6 +33,7 @@ int32 FGraphModel::AddNode(const FGraphNode& Node)
     }
 
     Nodes.Add(NewNode);
+    MarkIndexDirty();
     Revision++;
 
     return NewNode.NodeId;
@@ -41,29 +46,27 @@ void FGraphModel::RemoveNode(int32 NodeId)
         return;
     }
 
-    for (int32 Index = 0; Index < Nodes.Size(); ++Index)
+    const int32 Index = FindNodeIndex(NodeId);
+    if (Index < 0)
     {
-        if (Nodes[Index].NodeId != NodeId)
-        {
-            continue;
-        }
-
-        for (int32 LinkIndex = Links.Size() - 1; LinkIndex >= 0; --LinkIndex)
-        {
-            int32 FromNodeId = -1;
-            int32 ToNodeId   = -1;
-
-            if ((FindPin(Links[LinkIndex].FromPinId, FromNodeId) && FromNodeId == NodeId)
-                || (FindPin(Links[LinkIndex].ToPinId, ToNodeId) && ToNodeId == NodeId))
-            {
-                Links.RemoveAt(LinkIndex);
-            }
-        }
-
-        Nodes.RemoveAt(Index);
-        Revision++;
         return;
     }
+
+    for (int32 LinkIndex = Links.Size() - 1; LinkIndex >= 0; --LinkIndex)
+    {
+        int32 FromNodeId = -1;
+        int32 ToNodeId   = -1;
+
+        if ((FindPin(Links[LinkIndex].FromPinId, FromNodeId) && FromNodeId == NodeId)
+            || (FindPin(Links[LinkIndex].ToPinId, ToNodeId) && ToNodeId == NodeId))
+        {
+            Links.RemoveAt(LinkIndex);
+        }
+    }
+
+    Nodes.RemoveAt(Index);
+    MarkIndexDirty();
+    Revision++;
 }
 
 int32 FGraphModel::AddLink(int32 FromPinId, int32 ToPinId)
@@ -139,14 +142,11 @@ void FGraphModel::SetNodePosition(int32 NodeId, const Vector2& Position)
         return;
     }
 
-    for (FGraphNode& Node : Nodes)
+    const int32 Index = FindNodeIndex(NodeId);
+    if (Index >= 0)
     {
-        if (Node.NodeId == NodeId)
-        {
-            Node.Position = Position;
-            Revision++;
-            return;
-        }
+        Nodes[Index].Position = Position;
+        Revision++;
     }
 }
 
@@ -159,6 +159,7 @@ void FGraphModel::Clear()
 
     Nodes.Clear();
     Links.Clear();
+    MarkIndexDirty();
     Revision++;
 }
 
@@ -169,15 +170,8 @@ void FGraphModel::SetReadOnly(bool bInIsReadOnly)
 
 const FGraphNode* FGraphModel::FindNode(int32 NodeId) const
 {
-    for (const FGraphNode& Node : Nodes)
-    {
-        if (Node.NodeId == NodeId)
-        {
-            return &Node;
-        }
-    }
-
-    return nullptr;
+    const int32 Index = FindNodeIndex(NodeId);
+    return Index >= 0 ? &Nodes[Index] : nullptr;
 }
 
 const FGraphLink* FGraphModel::FindLink(int32 LinkId) const
@@ -197,19 +191,17 @@ const FGraphPin* FGraphModel::FindPin(int32 PinId, int32& OutNodeId) const
 {
     OutNodeId = -1;
 
-    for (const FGraphNode& Node : Nodes)
+    EnsureIndex();
+
+    const FPinLocation* Location = PinLocationById.Find(PinId);
+    if (!Location)
     {
-        for (const FGraphPin& Pin : Node.Pins)
-        {
-            if (Pin.PinId == PinId)
-            {
-                OutNodeId = Node.NodeId;
-                return &Pin;
-            }
-        }
+        return nullptr;
     }
 
-    return nullptr;
+    const FGraphNode& Node = Nodes[Location->NodeIndex];
+    OutNodeId = Node.NodeId;
+    return &Node.Pins[Location->PinIndex];
 }
 
 int32 FGraphModel::CountLinksOnPin(int32 PinId) const
@@ -223,6 +215,43 @@ int32 FGraphModel::CountLinksOnPin(int32 PinId) const
     return Count;
 }
 
+int32 FGraphModel::FindNodeIndex(int32 NodeId) const
+{
+    EnsureIndex();
+
+    const int32* Index = NodeIndexById.Find(NodeId);
+    return Index ? *Index : -1;
+}
+
+void FGraphModel::EnsureIndex() const
+{
+    if (!bIsIndexDirty)
+    {
+        return;
+    }
+
+    NodeIndexById.Clear();
+    PinLocationById.Clear();
+
+    for (int32 NodeIndex = 0; NodeIndex < Nodes.Size(); ++NodeIndex)
+    {
+        const FGraphNode& Node = Nodes[NodeIndex];
+        NodeIndexById.Add(Node.NodeId, NodeIndex);
+
+        for (int32 PinIndex = 0; PinIndex < Node.Pins.Size(); ++PinIndex)
+        {
+            PinLocationById.Add(Node.Pins[PinIndex].PinId, FPinLocation{ NodeIndex, PinIndex });
+        }
+    }
+
+    bIsIndexDirty = false;
+}
+
+void FGraphModel::MarkIndexDirty()
+{
+    bIsIndexDirty = true;
+}
+
 bool FGraphModel::CanReachNode(int32 FromNodeId, int32 TargetNodeId) const
 {
     if (FromNodeId == TargetNodeId)
@@ -230,8 +259,20 @@ bool FGraphModel::CanReachNode(int32 FromNodeId, int32 TargetNodeId) const
         return true;
     }
 
+    TMap<int32, TArray<int32>> Successors;
+    for (const FGraphLink& Link : Links)
+    {
+        int32 LinkFromNodeId = -1;
+        int32 LinkToNodeId   = -1;
+
+        if (FindPin(Link.FromPinId, LinkFromNodeId) && FindPin(Link.ToPinId, LinkToNodeId))
+        {
+            Successors.FindOrAdd(LinkFromNodeId).Add(LinkToNodeId);
+        }
+    }
+
     TArray<int32> Pending;
-    TArray<int32> Visited;
+    TSet<int32>   Visited;
 
     Pending.Add(FromNodeId);
 
@@ -247,27 +288,20 @@ bool FGraphModel::CanReachNode(int32 FromNodeId, int32 TargetNodeId) const
 
         Visited.Add(NodeId);
 
-        for (const FGraphLink& Link : Links)
+        const TArray<int32>* NextNodes = Successors.Find(NodeId);
+        if (!NextNodes)
         {
-            int32 LinkFromNodeId = -1;
-            int32 LinkToNodeId   = -1;
+            continue;
+        }
 
-            if (!FindPin(Link.FromPinId, LinkFromNodeId) || LinkFromNodeId != NodeId)
-            {
-                continue;
-            }
-
-            if (!FindPin(Link.ToPinId, LinkToNodeId))
-            {
-                continue;
-            }
-
-            if (LinkToNodeId == TargetNodeId)
+        for (const int32 SuccessorId : *NextNodes)
+        {
+            if (SuccessorId == TargetNodeId)
             {
                 return true;
             }
 
-            Pending.Add(LinkToNodeId);
+            Pending.Add(SuccessorId);
         }
     }
 

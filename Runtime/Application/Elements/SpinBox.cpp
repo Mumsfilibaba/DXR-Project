@@ -18,20 +18,15 @@ FSpinBox::FSpinBox()
     : FInteractiveElement()
     , Label(nullptr)
     , Editor(nullptr)
-    , MinValue(0.0f)
-    , MaxValue(0.0f)
+    , Range()
+    , Scrubber()
     , Value(0.0f)
     , ScrubSpeed(0.1f)
-    , StepSize(0.0f)
-    , ScrubStartValue(0.0f)
-    , ScrubStartPosition()
-    , Precision(2)
     , Prefix()
     , CornerRadius()
     , MinWidth(0)
     , MinHeight(0)
     , bIsTyping(false)
-    , bHasScrubbed(false)
     , OnValueChangedDelegate()
     , OnValueCommittedDelegate()
 {
@@ -41,11 +36,11 @@ FSpinBox::~FSpinBox() = default;
 
 void FSpinBox::Initialize(const FDesc& Desc)
 {
-    MinValue                 = Desc.MinValue;
-    MaxValue                 = Math::Max(Desc.MaxValue, Desc.MinValue);
+    Range.Min                = Desc.MinValue;
+    Range.Max                = Math::Max(Desc.MaxValue, Desc.MinValue);
+    Range.Step               = Math::Max(Desc.StepSize, 0.0f);
+    Range.Precision          = Math::Clamp(Desc.Precision, 0, 9);
     ScrubSpeed               = Desc.ScrubSpeed;
-    StepSize                 = Math::Max(Desc.StepSize, 0.0f);
-    Precision                = Math::Clamp(Desc.Precision, 0, 9);
     Prefix                   = Desc.Prefix;
     CornerRadius             = Desc.CornerRadius;
     MinWidth                 = Desc.MinWidth;
@@ -53,7 +48,7 @@ void FSpinBox::Initialize(const FDesc& Desc)
     OnValueChangedDelegate   = Desc.OnValueChanged;
     OnValueCommittedDelegate = Desc.OnValueCommitted;
 
-    Value = SanitizeValue(Desc.Value);
+    Value = Range.Sanitize(Desc.Value);
 
     SetPadding(Desc.Padding);
 
@@ -63,7 +58,7 @@ void FSpinBox::Initialize(const FDesc& Desc)
 
     Label = FTextBlock::Create(LabelDesc);
     UpdateLabel();
-    ApplyLabelColor();
+    ApplyInteractionTextColor(Label.Get());
 
     FEditableText::FDesc EditorDesc;
     EditorDesc.Font            = Desc.Font;
@@ -100,7 +95,7 @@ void FSpinBox::OnArrange(const FRectangle& AllottedBounds)
     }
 
     const FRectangle Available = AllottedBounds.Deflate(GetPadding());
-    Content->Tick(FRectangle::AlignInBounds(Available, Content->GetCachedDesiredSize(), bIsTyping ? EHorizontalAlignment::Fill : EHorizontalAlignment::Left, EVerticalAlignment::Center));
+    Content->Arrange(FLayout::AlignInBounds(Available, Content->GetCachedDesiredSize(), bIsTyping ? EHorizontalAlignment::Fill : EHorizontalAlignment::Left, EVerticalAlignment::Center));
 }
 
 int32 FSpinBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -109,10 +104,10 @@ int32 FSpinBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& 
 
     OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.ControlNormal, CornerRadius);
 
-    if (MinValue > -TNumericLimits<float>::Max() && MaxValue < TNumericLimits<float>::Max() && MaxValue > MinValue)
+    if (Range.IsBounded())
     {
         FRectangle Filled = AllottedGeometry.Bounds;
-        Filled.Width      = Math::RoundToInt(Math::Saturate((Value - MinValue) / (MaxValue - MinValue)) * static_cast<float>(AllottedGeometry.Bounds.Width));
+        Filled.Width      = Math::RoundToInt(Range.GetFraction(Value) * static_cast<float>(AllottedGeometry.Bounds.Width));
 
         if (Filled.Width > 0)
         {
@@ -129,15 +124,7 @@ void FSpinBox::OnInteractionStateChanged()
 {
     FInteractiveElement::OnInteractionStateChanged();
 
-    ApplyLabelColor();
-}
-
-void FSpinBox::ApplyLabelColor()
-{
-    if (Label)
-    {
-        Label->SetColorAndOpacity(FUIStyle::GetDefault().GetTextColor(GetInteractionState()));
-    }
+    ApplyInteractionTextColor(Label.Get());
 }
 
 FEventResponse FSpinBox::OnMouseButtonDown(const FCursorEvent& CursorEvent)
@@ -150,9 +137,7 @@ FEventResponse FSpinBox::OnMouseButtonDown(const FCursorEvent& CursorEvent)
     const FEventResponse Response = FInteractiveElement::OnMouseButtonDown(CursorEvent);
     if (IsPressed())
     {
-        ScrubStartPosition = CursorEvent.GetClientPosition();
-        ScrubStartValue    = Value;
-        bHasScrubbed       = false;
+        Scrubber.Begin(CursorEvent.GetClientPosition(), Value);
     }
 
     return Response;
@@ -160,9 +145,11 @@ FEventResponse FSpinBox::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 
 FEventResponse FSpinBox::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 {
-    const bool bWasScrubbing = IsPressed() && bHasScrubbed;
+    const bool bWasScrubbing = IsPressed() && Scrubber.HasScrubbed();
 
     const FEventResponse Response = FInteractiveElement::OnMouseButtonUp(CursorEvent);
+    Scrubber.End();
+
     if (bWasScrubbing)
     {
         OnValueCommittedDelegate.ExecuteIfBound(Value);
@@ -189,7 +176,7 @@ TSharedPtr<FVisualElement> FSpinBox::GetFocusTarget()
 
 void FSpinBox::SetValue(float InValue)
 {
-    Value = SanitizeValue(InValue);
+    Value = Range.Sanitize(InValue);
     UpdateLabel();
 
     InvalidatePaint();
@@ -239,25 +226,12 @@ void FSpinBox::EndTyping(bool bCommit)
 
 String FSpinBox::GetFormattedValue() const
 {
-    return String::Printf("%.*f", Precision, Value);
-}
-
-float FSpinBox::SanitizeValue(float InValue) const
-{
-    float Result = Math::Clamp(InValue, MinValue, MaxValue);
-
-    if (StepSize > 0.0f)
-    {
-        const float Steps = Math::Round(Result / StepSize);
-        Result            = Math::Clamp(Steps * StepSize, MinValue, MaxValue);
-    }
-
-    return Result;
+    return Range.Format(Value);
 }
 
 void FSpinBox::ApplyValue(float InValue)
 {
-    const float NewValue = SanitizeValue(InValue);
+    const float NewValue = Range.Sanitize(InValue);
     if (NewValue == Value)
     {
         return;
@@ -286,7 +260,7 @@ void FSpinBox::HandleTextCommitted(const String& InText)
 
 void FSpinBox::OnClicked()
 {
-    if (!bHasScrubbed)
+    if (!Scrubber.HasScrubbed())
     {
         BeginTyping();
     }
@@ -294,12 +268,9 @@ void FSpinBox::OnClicked()
 
 void FSpinBox::OnDragged(const FCursorEvent& CursorEvent)
 {
-    const int32 Travel = CursorEvent.GetClientPosition().X - ScrubStartPosition.X;
-    if (!bHasScrubbed && Math::Abs(Travel) < ScrubThreshold)
+    int32 Travel = 0;
+    if (Scrubber.Update(CursorEvent.GetClientPosition(), ScrubThreshold, Travel))
     {
-        return;
+        ApplyValue(Scrubber.GetStartValue() + (static_cast<float>(Travel) * ScrubSpeed));
     }
-
-    bHasScrubbed = true;
-    ApplyValue(ScrubStartValue + (static_cast<float>(Travel) * ScrubSpeed));
 }

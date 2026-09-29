@@ -8,7 +8,6 @@
 #include "Application/Elements/Window.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
-#include "Core/Platform/PlatformTime.h"
 
 // What a caption button asks for when the platform has no opinion, which is the Windows 11 shape
 constexpr int32 CAPTION_BUTTON_WIDTH  = 46;
@@ -51,8 +50,9 @@ FCaptionButton::FCaptionButton()
     , Kind(ECaptionButtonKind::Close)
     , ButtonSize(CAPTION_BUTTON_WIDTH, CAPTION_BUTTON_HEIGHT)
     , HoverFadeStartAlpha(0.0f)
-    , HoverFadeStartCounter(FPlatformTime::QueryPerformanceCounter())
+    , HoverFade()
 {
+    HoverFade.Start(CAPTION_HOVER_FADE_SECONDS, 0.0f, 1.0f);
 }
 
 FCaptionButton::~FCaptionButton() = default;
@@ -64,14 +64,8 @@ IntVector2 FCaptionButton::ComputeDesiredSize() const
 
 void FCaptionButton::RestartHoverFade()
 {
-    HoverFadeStartAlpha   = GetHoverFillAlpha();
-    HoverFadeStartCounter = FPlatformTime::QueryPerformanceCounter();
-}
-
-double FCaptionButton::GetSecondsSinceHoverFadeStart() const
-{
-    const uint64 Now = FPlatformTime::QueryPerformanceCounter();
-    return static_cast<double>(Now - HoverFadeStartCounter) / static_cast<double>(FPlatformTime::QueryPerformanceFrequency());
+    HoverFadeStartAlpha = GetHoverFillAlpha();
+    HoverFade.Start(CAPTION_HOVER_FADE_SECONDS, 0.0f, 1.0f);
 }
 
 float FCaptionButton::GetHoverFillAlpha() const
@@ -85,7 +79,7 @@ float FCaptionButton::GetHoverFillAlpha() const
         return Target;
     }
 
-    const float Progress = Math::Clamp(static_cast<float>(GetSecondsSinceHoverFadeStart()) / CAPTION_HOVER_FADE_SECONDS, 0.0f, 1.0f);
+    const float Progress = HoverFade.GetProgress();
 
     if (Progress < 1.0f)
     {
@@ -433,7 +427,10 @@ void FTitleBar::PublishRegions()
     Regions = FWindowTitleBarRegions();
     Regions.CaptionRect = ToWindowRect(GetContentRectangle());
 
-    GatherInteractiveRects(GetContent(), Regions.InteractiveRects);
+    if (const TSharedPtr<FVisualElement>& TitleContent = GetContent())
+    {
+        GatherInteractiveRects(*TitleContent, Regions.InteractiveRects);
+    }
 
     if (bShowCaptionButtons)
     {
@@ -452,16 +449,16 @@ void FTitleBar::PublishRegions()
     }
 }
 
-void FTitleBar::GatherInteractiveRects(const TSharedPtr<FVisualElement>& Element, TArray<FWindowRect>& OutRects) const
+void FTitleBar::GatherInteractiveRects(const FVisualElement& Element, TArray<FWindowRect>& OutRects) const
 {
-    if (!Element || !Element->IsVisible())
+    if (!Element.IsVisible())
     {
         return;
     }
 
-    if (Element->IsInteractive())
+    if (Element.IsInteractive())
     {
-        const FRectangle& Bounds = Element->GetContentRectangle();
+        const FRectangle& Bounds = Element.GetContentRectangle();
         if (!Bounds.IsEmpty())
         {
             OutRects.Add(ToWindowRect(Bounds));
@@ -470,11 +467,9 @@ void FTitleBar::GatherInteractiveRects(const TSharedPtr<FVisualElement>& Element
         return;
     }
 
-    TArray<TSharedPtr<FVisualElement>> Children;
-    Element->GetChildren(Children);
-
-    for (const TSharedPtr<FVisualElement>& Child : Children)
+    Element.ForEachChild([this, &OutRects](FVisualElement& Child)
     {
         GatherInteractiveRects(Child, OutRects);
-    }
+        return EChildVisit::Continue;
+    });
 }

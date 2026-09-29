@@ -5,8 +5,6 @@
 #include "Application/Elements/ScrollBar.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
-#include "Core/Platform/PlatformTime.h"
-
 constexpr float TAB_CLOSE_EXTENT    = 4.0f;
 constexpr float TAB_CLOSE_THICKNESS = 1.5f;
 
@@ -25,6 +23,7 @@ FTab::FTab()
     , PanelId()
     , Label()
     , Font(nullptr)
+    , LabelMetrics()
     , Style(FUIStyle::GetDefault().Tab)
     , CloseIcon()
     , OwnerStrip(nullptr)
@@ -38,7 +37,7 @@ FTab::~FTab() = default;
 
 IntVector2 FTab::ComputeDesiredSize() const
 {
-    const int32 LabelWidth = Font ? Font->MeasureWidth(StringView(Label)) : 0;
+    const int32 LabelWidth = LabelMetrics.GetWidth(Font.Get(), StringView(Label));
     const int32 PillHeight = Math::Max(Style.StripHeight - Style.TopInset - Style.BottomInset, 0);
 
     const int32 TrailingWidth = bIsClosable
@@ -87,7 +86,7 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
 
     if (Font)
     {
-        const int32 LabelWidth = Font->MeasureWidth(StringView(Label));
+        const int32 LabelWidth = LabelMetrics.GetWidth(Font.Get(), StringView(Label));
 
         const int32 LabelRegionRight = bIsClosable
             ? GetCloseButtonRectangle().Position.X
@@ -256,9 +255,7 @@ FTabStrip::FTabStrip()
     , ScrollAmountPerWheelStep(DefaultScrollAmountPerWheelStep)
     , ContentWidth(0)
     , ViewWidth(0)
-    , FadeStartCounter(FPlatformTime::QueryPerformanceCounter())
-    , FadeStartOpacity(0.0f)
-    , ScrollBarOpacity(0.0f)
+    , ScrollBarFade()
     , bIsCursorOver(false)
     , bAllowReorder(true)
     , bAllowTearOut(true)
@@ -331,7 +328,7 @@ void FTabStrip::OnArrange(const FRectangle& AllottedBounds)
     for (const TSharedPtr<FTab>& Tab : Tabs)
     {
         const int32 TabWidth = Tab->GetCachedDesiredSize().X;
-        Tab->Tick(FRectangle(IntVector2(Offset, AllottedBounds.Position.Y + Style.TopInset), TabWidth, TabHeight));
+        Tab->Arrange(FRectangle(IntVector2(Offset, AllottedBounds.Position.Y + Style.TopInset), TabWidth, TabHeight));
 
         Offset += TabWidth + Style.Spacing;
     }
@@ -339,17 +336,22 @@ void FTabStrip::OnArrange(const FRectangle& AllottedBounds)
     UpdateScrollBar(AllottedBounds);
 }
 
-void FTabStrip::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FTabStrip::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const
 {
-    for (const TSharedPtr<FTab>& Tab : Tabs)
+    const auto VisitTabs = [this, &Visitor, Order]()
     {
-        OutChildren.Add(Tab);
+        return VisitChildArray(Visitor, Order, Tabs, [](const TSharedPtr<FTab>& Tab) -> const TSharedPtr<FTab>&
+        {
+            return Tab;
+        });
+    };
+
+    if (Order == EChildOrder::BackToFront)
+    {
+        return VisitTabs() == EChildVisit::Stop ? EChildVisit::Stop : VisitChild(Visitor, ScrollBar);
     }
 
-    if (ScrollBar)
-    {
-        OutChildren.Add(ScrollBar);
-    }
+    return VisitChild(Visitor, ScrollBar) == EChildVisit::Stop ? EChildVisit::Stop : VisitTabs();
 }
 
 int32 FTabStrip::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -379,26 +381,19 @@ int32 FTabStrip::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     return NextLayerId;
 }
 
-void FTabStrip::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+void FTabStrip::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
 {
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
-    if (!GetContentRectangle().EncapsulatesPoint(ClientPosition))
-    {
-        return;
-    }
-
     if (ScrollBar && GetMaxScrollOffset() > 0 && ScrollBar->GetContentRectangle().EncapsulatesPoint(ClientPosition))
     {
-        ScrollBar->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        ScrollBar->HitTest(ClientPosition, OutPath);
         return;
     }
 
-    for (const TSharedPtr<FTab>& Tab : Tabs)
+    for (int32 Index = Tabs.Size() - 1; Index >= 0; --Index)
     {
-        if (Tab)
+        if (Tabs[Index] && Tabs[Index]->HitTest(ClientPosition, OutPath))
         {
-            Tab->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+            return;
         }
     }
 }
@@ -437,6 +432,7 @@ void FTabStrip::SetScrollOffset(int32 InScrollOffset)
     }
 
     ScrollOffset = NewScrollOffset;
+    InvalidateArrange();
     InvalidatePaint();
 }
 
@@ -476,17 +472,13 @@ void FTabStrip::SetCursorOver(bool bInIsCursorOver)
         return;
     }
 
-    bIsCursorOver    = bInIsCursorOver;
-    FadeStartOpacity = ScrollBarOpacity;
-    FadeStartCounter = FPlatformTime::QueryPerformanceCounter();
+    bIsCursorOver = bInIsCursorOver;
 
+    const float Duration = bIsCursorOver ? Style.ScrollBarFadeInDuration : Style.ScrollBarFadeOutDuration;
+    ScrollBarFade.Start(Duration, ScrollBarFade.Evaluate(), bIsCursorOver ? 1.0f : 0.0f);
+
+    InvalidateArrange();
     InvalidatePaint();
-}
-
-double FTabStrip::GetSecondsSinceFadeStart() const
-{
-    const uint64 Now = FPlatformTime::QueryPerformanceCounter();
-    return static_cast<double>(Now - FadeStartCounter) / static_cast<double>(FPlatformTime::QueryPerformanceFrequency());
 }
 
 void FTabStrip::UpdateScrollBar(const FRectangle& AllottedBounds)
@@ -496,24 +488,16 @@ void FTabStrip::UpdateScrollBar(const FRectangle& AllottedBounds)
         return;
     }
 
-    const float Target   = bIsCursorOver ? 1.0f : 0.0f;
-    const float Duration = bIsCursorOver ? Style.ScrollBarFadeInDuration : Style.ScrollBarFadeOutDuration;
+    ScrollBar->SetOpacity(ScrollBarFade.Evaluate());
 
-    if (Duration > 0.0f)
+    if (ScrollBarFade.IsRunning())
     {
-        const float Progress = Math::Clamp(static_cast<float>(GetSecondsSinceFadeStart()) / Duration, 0.0f, 1.0f);
-        ScrollBarOpacity     = Math::Lerp(FadeStartOpacity, Target, Progress);
+        RequestContinuousArrange();
     }
-    else
-    {
-        ScrollBarOpacity = Target;
-    }
-
-    ScrollBar->SetOpacity(ScrollBarOpacity);
     ScrollBar->SetScrollState(ContentWidth, ViewWidth, ScrollOffset);
 
     const int32 BarTop = AllottedBounds.GetBottom() - Style.ScrollBarThickness;
-    ScrollBar->Tick(FRectangle(IntVector2(AllottedBounds.Position.X, BarTop), AllottedBounds.Width, Style.ScrollBarThickness));
+    ScrollBar->Arrange(FRectangle(IntVector2(AllottedBounds.Position.X, BarTop), AllottedBounds.Width, Style.ScrollBarThickness));
 }
 
 void FTabStrip::AddTab(const String& PanelId, const String& Label, bool bIsClosable)
@@ -525,6 +509,7 @@ void FTabStrip::AddTab(const String& PanelId, const String& Label, bool bIsClosa
     Tab->SetParentElement(AsWeakPtr());
 
     Tabs.Add(Tab);
+    InvalidateDesiredSize();
 
     if (ActivePanelId.IsEmpty())
     {

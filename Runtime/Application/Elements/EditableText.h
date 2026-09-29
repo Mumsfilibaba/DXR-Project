@@ -324,8 +324,8 @@ private:
     FOnTextChangedDelegate         OnTextChanged;
     FOnTextCommittedDelegate       OnTextCommitted;
     FOnEditableTextKeyDownDelegate OnKeyDownInterceptor;
+    double                         TextCursorBlinkResetTime;
     float                          TextCursorBlinkPeriod;
-    uint64                         TextCursorBlinkResetCounter;
     int32                          TextCursorPosition;
     int32                          SelectionAnchor;
     bool                           bHasKeyboardFocus : 1;

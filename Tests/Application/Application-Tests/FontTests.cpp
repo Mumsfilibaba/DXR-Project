@@ -148,6 +148,66 @@ bool FontGlyphLookup_Test()
     TEST_END();
 }
 
+bool FontAtlasIncremental_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<FTrueTypeFontFace> Font = CreateTrueTypeFont();
+    TEST_EXPECT(Font != nullptr);
+    if (!Font || !Font->GetAtlas())
+    {
+        TEST_END();
+    }
+
+    const FFontAtlas& Atlas = *Font->GetAtlas();
+
+    TEST_SECTION("A fresh atlas starts a layout with nothing changed since");
+    TEST_EXPECT_EQ(Atlas.GetLayoutRevision(), Atlas.GetRevision());
+    TEST_EXPECT(Atlas.GetChangedSinceLayout().IsEmpty());
+
+    TEST_SECTION("A page that fits changes only its own texels; one that does not starts a new layout");
+    static const int32 PageSamples[] = { 0x00E9, 0x03B1, 0x0416, 0x2192, 0x2500 };
+
+    bool bSawFit = false;
+    for (int32 Codepoint : PageSamples)
+    {
+        const uint64      RevisionBefore = Atlas.GetRevision();
+        const uint64      LayoutBefore   = Atlas.GetLayoutRevision();
+        const FGlyph*     AsciiBefore    = &Atlas.GetGlyph('A');
+        const FRectangle  AsciiRectangle = AsciiBefore->AtlasRectangle;
+
+        const FGlyph& Glyph = Atlas.GetGlyph(Codepoint);
+        TEST_EXPECT(Atlas.GetRevision() > RevisionBefore);
+
+        if (Atlas.GetLayoutRevision() == LayoutBefore)
+        {
+            bSawFit = true;
+
+            TEST_EXPECT(&Atlas.GetGlyph('A') == AsciiBefore);
+            TEST_EXPECT(Atlas.GetGlyph('A').AtlasRectangle == AsciiRectangle);
+
+            if (!Glyph.AtlasRectangle.IsEmpty())
+            {
+                TEST_EXPECT(Atlas.GetChangedSinceLayout().Union(Glyph.AtlasRectangle) == Atlas.GetChangedSinceLayout());
+            }
+        }
+        else
+        {
+            TEST_EXPECT_EQ(Atlas.GetLayoutRevision(), Atlas.GetRevision());
+            TEST_EXPECT(Atlas.GetChangedSinceLayout().IsEmpty());
+        }
+    }
+
+    TEST_EXPECT(bSawFit);
+
+    TEST_SECTION("Asking again for a page already packed changes nothing");
+    const uint64 SettledRevision = Atlas.GetRevision();
+    static_cast<void>(Atlas.GetGlyph(0x00E9));
+    TEST_EXPECT_EQ(Atlas.GetRevision(), SettledRevision);
+
+    TEST_END();
+}
+
 bool FontKerning_Test()
 {
     TEST_BEGIN();

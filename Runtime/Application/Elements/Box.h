@@ -86,9 +86,7 @@ public:
     virtual ~FBox();
 
     // FVisualElement Interface
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
 
     /**
      * @brief Appends a slot for the element and returns it so the caller can set padding and fill.
@@ -100,6 +98,13 @@ public:
 
     /** @brief Drops every slot, so the box can be refilled. */
     void ClearSlots();
+
+    /**
+     * @brief Drops one slot, moving the ones after it up.
+     *
+     * @param Index The slot to drop, ignored when out of range.
+     */
+    void RemoveSlotAt(int32 Index);
 
     /** @return How many slots the box holds, counting those whose element is null. */
     NODISCARD FORCEINLINE int32 GetNumSlots() const
@@ -130,14 +135,42 @@ public:
     }
 
 protected:
-    NODISCARD static FRectangle ArrangeInSlot(const FRectangle& SlotBounds, const IntVector2& ChildDesiredSize, const FBoxSlot& Slot);
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
 
-    NODISCARD int32 CountFillSlots() const;
+    NODISCARD static FRectangle ArrangeInSlot(const FRectangle& SlotBounds, const IntVector2& ChildDesiredSize, const FBoxSlot& Slot);
 
     TArray<FBoxSlot> Slots;
 };
 
-class APPLICATION_API FVerticalBox final : public FBox
+template<EOrientation Orientation>
+class TStackBox : public FBox
+{
+public:
+    TStackBox()
+        : FBox()
+        , ArrangedSlots()
+    {
+    }
+
+    // FVisualElement Interface
+    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual void OnArrange(const FRectangle& AllottedBounds) override;
+
+protected:
+    using FAxis = TLayoutAxis<Orientation>;
+
+    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+
+    struct FArrangedSlot
+    {
+        int32 Start;
+        int32 SlotIndex;
+    };
+
+    TArray<FArrangedSlot> ArrangedSlots;
+};
+
+class APPLICATION_API FVerticalBox final : public TStackBox<EOrientation::Vertical>
 {
 public:
     static TSharedPtr<FVerticalBox> Create();
@@ -145,13 +178,9 @@ public:
 public:
     FVerticalBox();
     virtual ~FVerticalBox();
-
-    // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
-    virtual void OnArrange(const FRectangle& AllottedBounds) override;
 };
 
-class APPLICATION_API FHorizontalBox final : public FBox
+class APPLICATION_API FHorizontalBox final : public TStackBox<EOrientation::Horizontal>
 {
 public:
     static TSharedPtr<FHorizontalBox> Create();
@@ -159,8 +188,119 @@ public:
 public:
     FHorizontalBox();
     virtual ~FHorizontalBox();
-
-    // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
-    virtual void OnArrange(const FRectangle& AllottedBounds) override;
 };
+
+template<EOrientation Orientation>
+IntVector2 TStackBox<Orientation>::ComputeDesiredSize() const
+{
+    int32 MainExtent  = 0;
+    int32 CrossExtent = 0;
+
+    for (const FBoxSlot& Slot : Slots)
+    {
+        if (!Slot.Element)
+        {
+            continue;
+        }
+
+        const IntVector2 ChildSize = Slot.Element->GetCachedDesiredSize();
+        MainExtent += FAxis::Main(ChildSize) + FAxis::MainTotal(Slot.Padding);
+        CrossExtent = Math::Max(CrossExtent, FAxis::Cross(ChildSize) + FAxis::CrossTotal(Slot.Padding));
+    }
+
+    return FAxis::MakeSize(MainExtent, CrossExtent);
+}
+
+template<EOrientation Orientation>
+void TStackBox<Orientation>::OnArrange(const FRectangle& AllottedBounds)
+{
+    int32 AutoExtent   = 0;
+    int32 NumFillSlots = 0;
+    float FillTotal    = 0.0f;
+
+    for (const FBoxSlot& Slot : Slots)
+    {
+        if (!Slot.Element)
+        {
+            continue;
+        }
+
+        if (Slot.IsFillSlot())
+        {
+            FillTotal += Slot.FillCoefficient;
+            ++NumFillSlots;
+        }
+        else
+        {
+            AutoExtent += FAxis::Main(Slot.Element->GetCachedDesiredSize()) + FAxis::MainTotal(Slot.Padding);
+        }
+    }
+
+    const int32 Remaining   = Math::Max(0, FAxis::MainExtent(AllottedBounds) - AutoExtent);
+    int32       Cursor      = FAxis::MainStart(AllottedBounds);
+    int32       Distributed = 0;
+    int32       FillSeen    = 0;
+
+    ArrangedSlots.Reset();
+
+    for (int32 SlotIndex = 0; SlotIndex < Slots.Size(); ++SlotIndex)
+    {
+        const FBoxSlot& Slot = Slots[SlotIndex];
+        if (!Slot.Element)
+        {
+            continue;
+        }
+
+        const IntVector2 ChildDesiredSize = Slot.Element->GetCachedDesiredSize();
+
+        int32 Extent = 0;
+        if (Slot.IsFillSlot())
+        {
+            Extent = (++FillSeen == NumFillSlots)
+                ? Remaining - Distributed
+                : static_cast<int32>((static_cast<float>(Remaining) * Slot.FillCoefficient) / FillTotal);
+
+            Distributed += Extent;
+        }
+        else
+        {
+            Extent = FAxis::Main(ChildDesiredSize) + FAxis::MainTotal(Slot.Padding);
+        }
+
+        ArrangedSlots.Add(FArrangedSlot{ Cursor, SlotIndex });
+        Slot.Element->Arrange(ArrangeInSlot(FAxis::MakeSlot(AllottedBounds, Cursor, Extent), ChildDesiredSize, Slot));
+        Cursor += Extent;
+    }
+}
+
+template<EOrientation Orientation>
+void TStackBox<Orientation>::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+{
+    const int32 Coordinate = FAxis::Main(ClientPosition);
+
+    int32 Low  = 0;
+    int32 High = ArrangedSlots.Size();
+    while (Low < High)
+    {
+        const int32 Mid = (Low + High) / 2;
+        if (ArrangedSlots[Mid].Start <= Coordinate)
+        {
+            Low = Mid + 1;
+        }
+        else
+        {
+            High = Mid;
+        }
+    }
+
+    if (Low <= 0)
+    {
+        return;
+    }
+
+    const int32 SlotIndex = ArrangedSlots[Low - 1].SlotIndex;
+    if (SlotIndex < Slots.Size() && Slots[SlotIndex].Element)
+    {
+        Slots[SlotIndex].Element->HitTest(ClientPosition, OutPath);
+    }
+}

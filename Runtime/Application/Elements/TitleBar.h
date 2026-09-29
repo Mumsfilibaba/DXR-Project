@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/String.h"
+#include "Application/Animation/UIAnimation.h"
 #include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/CompoundElement.h"
 #include "Application/Elements/InteractiveElement.h"
@@ -61,34 +62,13 @@ protected:
     virtual void OnClicked() override;
 
 private:
-    /**
-     * @brief Starts the hover fade again from whatever alpha it had reached.
-     *
-     * Called before the base class takes the state change, so the alpha it captures is the one the
-     * fade was at when the cursor moved rather than the one it is heading for.
-     */
     void RestartHoverFade();
-
-    /** @return Seconds since the hover last changed. */
-    NODISCARD double GetSecondsSinceHoverFadeStart() const;
-
-    /**
-     * @return The alpha the hover fill should draw at, interpolated from the alpha held when the
-     *         hover last changed towards the one the current state calls for.
-     *
-     * Derived from a timestamp rather than accumulated per tick so that the first draw after the
-     * cursor arrives is already correct, without waiting on a tick to hand it a delta.
-     */
     NODISCARD float GetHoverFillAlpha() const;
 
     ECaptionButtonKind Kind;
     IntVector2         ButtonSize;
-
-    /** @brief The alpha the hover fill held when the hover last changed, which the fade starts from. */
-    float HoverFadeStartAlpha;
-
-    /** @brief When the hover last changed, which the fade is measured from. */
-    uint64 HoverFadeStartCounter;
+    float              HoverFadeStartAlpha;
+    FUIAnimation       HoverFade;
 };
 
 class APPLICATION_API FTitleBar final : public FCompoundElement
@@ -236,7 +216,7 @@ public:
 private:
     void RefreshMetrics();
     void PublishRegions();
-    void GatherInteractiveRects(const TSharedPtr<FVisualElement>& Element, TArray<FWindowRect>& OutRects) const;
+    void GatherInteractiveRects(const FVisualElement& Element, TArray<FWindowRect>& OutRects) const;
 
     FWindowTitleBarMetrics             Metrics;
     FWindowTitleBarRegions             Regions;

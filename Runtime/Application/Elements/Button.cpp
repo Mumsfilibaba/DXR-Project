@@ -57,7 +57,7 @@ void FButton::Initialize(const FDesc& Desc)
     Label = FTextBlock::Create(LabelDesc);
     SetContent(Label);
 
-    ApplyLabelColor();
+    ApplyInteractionTextColor(Label.Get());
 }
 
 IntVector2 FButton::ComputeDesiredSize() const
@@ -82,7 +82,7 @@ void FButton::OnArrange(const FRectangle& AllottedBounds)
     }
 
     const FRectangle Available = AllottedBounds.Deflate(GetPadding());
-    Content->Tick(FRectangle::AlignInBounds(Available, Content->GetCachedDesiredSize(), HorizontalContentAlignment, VerticalContentAlignment));
+    Content->Arrange(FLayout::AlignInBounds(Available, Content->GetCachedDesiredSize(), HorizontalContentAlignment, VerticalContentAlignment));
 }
 
 int32 FButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -118,15 +118,7 @@ void FButton::OnInteractionStateChanged()
 {
     FInteractiveElement::OnInteractionStateChanged();
 
-    ApplyLabelColor();
-}
-
-void FButton::ApplyLabelColor()
-{
-    if (Label)
-    {
-        Label->SetColorAndOpacity(FUIStyle::GetDefault().GetTextColor(GetInteractionState()));
-    }
+    ApplyInteractionTextColor(Label.Get());
 }
 
 void FButton::SetOnClicked(const FOnClicked& InOnClicked)

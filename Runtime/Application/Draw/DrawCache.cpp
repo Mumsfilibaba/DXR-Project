@@ -59,12 +59,12 @@ FDrawCacheBlock::FDrawCacheBlock()
     , CapturedRectangle()
     , CapturedClipRectangle()
     , CapturedEpoch(0)
+    , LastUsedFrame(0)
     , CapturedScale(1.0f)
     , BaseLayerId(0)
     , MaxLayerId(0)
     , CapturedClipDepth(0)
     , TextCommandCount(0)
-    , LastUsedFrame(0)
     , bValid(false)
     , bGeometryValid(false)
     , bGeometryContiguous(true)
@@ -127,14 +127,20 @@ int64 FDrawCacheBlock::GetByteSize() const
         + ArrayByteSize(AtlasDependencies);
 }
 
-bool FDrawCacheBlock::CanReplay(const FDrawGeometry& AllottedGeometry, int32 InBaseLayerId, int32 ClipDepth, const FRectangle& ClipRectangle) const
+bool FDrawCacheBlock::CanReplay(
+    const FDrawGeometry& AllottedGeometry,
+    int32                InBaseLayerId,
+    int32                ClipDepth,
+    const FRectangle&    ClipRectangle,
+    IntVector2&          OutOffset) const
 {
     if (!bValid || CapturedEpoch != DrawCacheEpoch::Get())
     {
         return false;
     }
 
-    if (CapturedRectangle != AllottedGeometry.Bounds || CapturedScale != AllottedGeometry.Scale)
+    const FRectangle& Bounds = AllottedGeometry.Bounds;
+    if (CapturedRectangle.Width != Bounds.Width || CapturedRectangle.Height != Bounds.Height || CapturedScale != AllottedGeometry.Scale)
     {
         return false;
     }
@@ -144,12 +150,48 @@ bool FDrawCacheBlock::CanReplay(const FDrawGeometry& AllottedGeometry, int32 InB
         return false;
     }
 
-    if (bHasCapturedClip && CapturedClipRectangle != ClipRectangle)
+    OutOffset = Bounds.Position - CapturedRectangle.Position;
+
+    const bool bMoved = OutOffset != IntVector2(0, 0);
+    if (bMoved && !Points.IsEmpty())
     {
         return false;
     }
 
+    if (bHasCapturedClip)
+    {
+        FRectangle ExpectedClip = CapturedClipRectangle;
+        ExpectedClip.Position  += OutOffset;
+
+        if (ExpectedClip != ClipRectangle)
+        {
+            return false;
+        }
+    }
+
     return AreAtlasDependenciesCurrent();
+}
+
+void FDrawCacheBlock::Translate(const IntVector2& Offset)
+{
+    for (FDrawCommand& Command : Commands)
+    {
+        Command.Bounds.Position += Offset;
+    }
+
+    for (FRectangle& ClipRect : ClipRects)
+    {
+        ClipRect.Position += Offset;
+    }
+
+    CapturedRectangle.Position += Offset;
+
+    if (bHasCapturedClip)
+    {
+        CapturedClipRectangle.Position += Offset;
+    }
+
+    bGeometryValid = false;
 }
 
 bool FDrawCacheBlock::AreAtlasDependenciesCurrent() const

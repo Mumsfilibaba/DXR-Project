@@ -1,5 +1,6 @@
 #include "Application/Menus/ToolTipService.h"
 #include "Application/Menus/MenuStack.h"
+#include "Application/Menus/PopupPlacement.h"
 #include "Application/Menus/PopupWindow.h"
 #include "Application/Application.h"
 #include "Application/Draw/DrawCommandList.h"
@@ -7,8 +8,6 @@
 #include "Application/Style/UIStyle.h"
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Math/Math.h"
-
-TUniquePtr<FToolTipService> FToolTipService::ToolTipService = nullptr;
 
 static TArray<String> SplitTextIntoLines(const String& Text)
 {
@@ -33,6 +32,8 @@ static TArray<String> SplitTextIntoLines(const String& Text)
     Lines.Emplace(LineStart, static_cast<int32>(End - LineStart));
     return Lines;
 }
+
+TUniquePtr<FToolTipService> FToolTipService::ToolTipService = nullptr;
 
 TSharedPtr<FToolTip> FToolTip::Create(const String& InText, const TSharedPtr<IFontFace>& InFont)
 {
@@ -404,45 +405,26 @@ void FToolTipService::MoveToolTip()
 
 FRectangle FToolTipService::ResolveBounds(const IntVector2& ToolTipSize) const
 {
-    FRectangle Bounds(IntVector2(), ToolTipSize.X, ToolTipSize.Y);
-
     const int32 Gap = HasAnchorBoundsOverride() ? 0 : AnchorGap;
 
     switch (Placement)
     {
         case EToolTipPlacement::BelowAnchor:
         {
-            const FRectangle Anchor = ResolveAnchorBounds();
-            Bounds.Position = IntVector2(Anchor.Position.X, Anchor.GetBottom() + Gap);
-            break;
+            return FPopupPlacement::Resolve(ResolveAnchorBounds(), ToolTipSize, ClampArea, EPopupSide::Below, EPopupFlip::None, Gap);
         }
 
         case EToolTipPlacement::RightOfAnchor:
         {
-            const FRectangle Anchor   = ResolveAnchorBounds();
-            const int32      FlippedX = Anchor.Position.X - Gap - ToolTipSize.X;
-
-            Bounds.Position = IntVector2(Anchor.GetRight() + Gap, Anchor.Position.Y);
-
-            if (Bounds.GetRight() > ClampArea.GetRight() && FlippedX >= ClampArea.Position.X)
-            {
-                Bounds.Position.X = FlippedX;
-            }
-
-            break;
+            return FPopupPlacement::Resolve(ResolveAnchorBounds(), ToolTipSize, ClampArea, EPopupSide::Right, EPopupFlip::Main, Gap);
         }
 
         default:
         {
-            Bounds.Position = CursorPosition + IntVector2(CursorOffset, CursorOffset);
-            break;
+            const FRectangle CursorPoint(CursorPosition + IntVector2(CursorOffset, CursorOffset), 0, 0);
+            return FPopupPlacement::Resolve(CursorPoint, ToolTipSize, ClampArea, EPopupSide::Below, EPopupFlip::None);
         }
     }
-
-    Bounds.Position.X = Math::Clamp(Bounds.Position.X, ClampArea.Position.X, Math::Max(ClampArea.Position.X, ClampArea.GetRight() - ToolTipSize.X));
-    Bounds.Position.Y = Math::Clamp(Bounds.Position.Y, ClampArea.Position.Y, Math::Max(ClampArea.Position.Y, ClampArea.GetBottom() - ToolTipSize.Y));
-
-    return Bounds;
 }
 
 FRectangle FToolTipService::ResolveAnchorBounds() const

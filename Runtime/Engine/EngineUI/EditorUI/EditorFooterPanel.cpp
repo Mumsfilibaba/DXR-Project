@@ -51,6 +51,12 @@ constexpr int32 CANDIDATE_TOOLTIP_SPACING = 4;
 class FEditorFooterCandidateAnchor final : public FCompoundElement
 {
 public:
+    FEditorFooterCandidateAnchor()
+        : FCompoundElement()
+        , WidthSource(nullptr)
+    {
+        EnableHitTestOverflow();
+    }
 
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override
@@ -75,7 +81,9 @@ public:
         ContentBounds.Position.X = AllottedBounds.Position.X;
         ContentBounds.Position.Y = AllottedBounds.Position.Y - ContentBounds.Height;
 
-        Content->Tick(ContentBounds);
+        Content->Arrange(ContentBounds);
+
+        RequestContinuousArrange();
     }
 
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override
@@ -86,14 +94,6 @@ public:
         }
 
         return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
-    }
-
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override
-    {
-        if (Content && Content->IsVisible() && Content->GetContentRectangle().EncapsulatesPoint(ClientPosition))
-        {
-            Content->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-        }
     }
 
     void SetWidthSource(const TSharedPtr<FVisualElement>& InWidthSource)

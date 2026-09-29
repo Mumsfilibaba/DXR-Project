@@ -16,6 +16,7 @@ FTextBlock::FTextBlock()
     : FVisualElement()
     , Text()
     , Font(nullptr)
+    , ElideMetrics()
     , ColorAndOpacity(FFloatColor::White)
     , Margin()
     , Overflow(ETextOverflow::Overflow)
@@ -60,7 +61,7 @@ int32 FTextBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
 
         if (Overflow == ETextOverflow::Elide && Font)
         {
-            const String Elided = Font->ElideText(StringView(Text.Data(), Text.Length()), TextBounds.Width);
+            const String& Elided = ElideMetrics.GetElided(Font.Get(), StringView(Text.Data(), Text.Length()), TextBounds.Width);
             OutCommandList.AddText(LayerId, TextBounds, Elided, Font.Get(), ColorAndOpacity);
         }
         else

@@ -1,10 +1,12 @@
 #pragma once
 #include "Core/Containers/String.h"
 #include "Core/Delegates/Delegate.h"
+#include "Application/Animation/UIAnimation.h"
 #include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/InteractiveElement.h"
 #include "Application/Elements/VisualElement.h"
 #include "Application/Style/UIStyle.h"
+#include "Application/Text/CachedTextMetrics.h"
 #include "Application/Text/IFontFace.h"
 
 class FTabStrip;
@@ -109,15 +111,16 @@ protected:
 private:
     void SetCloseHovered(bool bInIsCloseHovered);
 
-    String                PanelId;
-    String                Label;
-    TSharedPtr<IFontFace> Font;
-    FUITabStyle           Style;
-    FUIBrush              CloseIcon;
-    FTabStrip*            OwnerStrip;
-    bool                  bIsClosable;
-    bool                  bIsActive;
-    bool                  bIsCloseHovered;
+    String                     PanelId;
+    String                     Label;
+    TSharedPtr<IFontFace>      Font;
+    mutable FCachedTextMetrics LabelMetrics;
+    FUITabStyle                Style;
+    FUIBrush                   CloseIcon;
+    FTabStrip*                 OwnerStrip;
+    bool                       bIsClosable;
+    bool                       bIsActive;
+    bool                       bIsCloseHovered;
 };
 
 class APPLICATION_API FTabStrip final : public FVisualElement
@@ -184,9 +187,7 @@ public:
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
     virtual FEventResponse OnMouseScroll(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
@@ -310,10 +311,13 @@ public:
         return Style;
     }
 
+protected:
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
+    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+
 private:
     NODISCARD int32 FindTabIndexAt(int32 PositionX) const;
     NODISCARD int32 FindTabIndex(const FTab* Tab) const;
-    NODISCARD double GetSecondsSinceFadeStart() const;
 
     void MoveTab(int32 FromIndex, int32 ToIndex);
     void UpdateScrollBar(const FRectangle& AllottedBounds);
@@ -332,9 +336,7 @@ private:
     int32                        ScrollAmountPerWheelStep;
     int32                        ContentWidth;
     int32                        ViewWidth;
-    uint64                       FadeStartCounter;
-    float                        FadeStartOpacity;
-    float                        ScrollBarOpacity;
+    FUIAnimation                 ScrollBarFade;
     bool                         bIsCursorOver;
     bool                         bAllowReorder;
     bool                         bAllowTearOut;

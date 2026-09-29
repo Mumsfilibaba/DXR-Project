@@ -494,5 +494,45 @@ bool ConsoleLogBufferRing_Test()
     RingBuffer.Clear();
     TEST_EXPECT_EQ(RingBuffer.GetNumLines(), 0);
 
+    TEST_SECTION("A view that caught up only takes the lines added since");
+    RingBuffer.SetMaxLines(4);
+    RingBuffer.Log(ELogSeverity::Info, "A");
+    RingBuffer.Log(ELogSeverity::Info, "B");
+
+    const uint64 CaughtUp = RingBuffer.GetSnapshot(Lines);
+    RingBuffer.Log(ELogSeverity::Info, "C");
+
+    bool         bIsContinuous = false;
+    const uint64 NextRevision  = RingBuffer.GetLinesSince(CaughtUp, Lines, bIsContinuous);
+    TEST_EXPECT(bIsContinuous);
+    TEST_EXPECT_EQ(Lines.Size(), 1);
+    TEST_EXPECT(Lines[0].Message.Equals("C"));
+    TEST_EXPECT_EQ(NextRevision, RingBuffer.GetRevision());
+
+    TEST_SECTION("Nothing new is an empty, continuous answer");
+    RingBuffer.GetLinesSince(NextRevision, Lines, bIsContinuous);
+    TEST_EXPECT(bIsContinuous);
+    TEST_EXPECT(Lines.IsEmpty());
+
+    TEST_SECTION("More new lines than the buffer holds means the view has to start over");
+    for (int32 Index = 0; Index < 6; ++Index)
+    {
+        RingBuffer.Log(ELogSeverity::Info, String::Printf("Flood %d", Index));
+    }
+
+    RingBuffer.GetLinesSince(NextRevision, Lines, bIsContinuous);
+    TEST_EXPECT(!bIsContinuous);
+    TEST_EXPECT_EQ(Lines.Size(), 4);
+    TEST_EXPECT(Lines.Last().Message.Equals("Flood 5"));
+
+    TEST_SECTION("So does a clear, however few lines followed it");
+    const uint64 BeforeClear = RingBuffer.GetRevision();
+    RingBuffer.Clear();
+    RingBuffer.Log(ELogSeverity::Info, "After");
+
+    RingBuffer.GetLinesSince(BeforeClear, Lines, bIsContinuous);
+    TEST_EXPECT(!bIsContinuous);
+    TEST_EXPECT_EQ(Lines.Size(), 1);
+
     TEST_END();
 }

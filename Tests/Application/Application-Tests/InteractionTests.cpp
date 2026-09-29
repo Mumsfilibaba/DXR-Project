@@ -52,7 +52,7 @@ static TSharedPtr<FCountingInteractiveElement> CreateElement(const FRectangle& B
 {
     TSharedPtr<FCountingInteractiveElement> Element = MakeSharedPtr<FCountingInteractiveElement>();
     Element->PrepareDesiredSize();
-    Element->Tick(Bounds);
+    Element->Arrange(Bounds);
     return Element;
 }
 

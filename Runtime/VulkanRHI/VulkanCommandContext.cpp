@@ -40,6 +40,14 @@ static int32 GetCrashMarkerLevel()
 }
 #endif
 
+#if VULKAN_ENABLE_BARRIER_STATS
+static TAutoConsoleVariable<bool> CVarLogBarrierStats(
+    "VulkanRHI.LogBarrierStats",
+    "Log per-frame averages of pipeline barriers, ALL_COMMANDS barriers and render-pass pauses, together with the "
+    "resources whose barriers caused the pauses",
+    false);
+#endif
+
 struct FVulkanBarrierSubresourceRange
 {
     uint32 BaseMip;
@@ -48,6 +56,72 @@ struct FVulkanBarrierSubresourceRange
     uint32 LayerCount;
     bool   bWholeResource;
 };
+
+#if VULKAN_ENABLE_BARRIER_STATS
+static constexpr uint32 GBarrierStatsReportFrames = 240;
+
+struct FVulkanBarrierStatsData
+{
+    AtomicInt32 NumPipelineBarriers;
+    AtomicInt32 NumMemoryBarriers;
+    AtomicInt32 NumBufferBarriers;
+    AtomicInt32 NumImageBarriers;
+    AtomicInt32 NumAllCommandsBarriers;
+    AtomicInt32 NumSameLayoutImageBarriers;
+    AtomicInt32 NumRenderPassPauses;
+
+    FCriticalSection    PauseReasonsCS;
+    TMap<String, int32> PauseReasons;
+    uint32              NumFrames = 0;
+};
+
+static FVulkanBarrierStatsData GBarrierStats;
+
+static String GetBarrierDebugName(FVulkanTextureRHI* Texture)
+{
+    String Name;
+    Texture->GetDebugName(Name);
+    return Name.IsEmpty() ? String("Unnamed") : Name;
+}
+
+static String GetBarrierDebugName(FVulkanBufferRHI* Buffer)
+{
+    String Name;
+    Buffer->GetDebugName(Name);
+    return Name.IsEmpty() ? String("Unnamed") : Name;
+}
+
+struct FScopedBarrierReason
+{
+    FScopedBarrierReason(FVulkanBarrierBatcher& InBatcher, FVulkanTextureRHI* InTexture, VkImageLayout InAfterLayout)
+        : Batcher(InBatcher)
+        , Texture(InTexture)
+        , AfterLayout(InAfterLayout)
+        , Generation(InBatcher.GetGeneration())
+    {
+    }
+
+    ~FScopedBarrierReason()
+    {
+        if (Batcher.GetGeneration() != Generation && FVulkanBarrierStats::IsEnabled())
+        {
+            Batcher.AddDebugReason(String::Printf("Texture '%s' -> %s", *GetBarrierDebugName(Texture), ToString(AfterLayout)));
+        }
+    }
+
+    FVulkanBarrierBatcher& Batcher;
+    FVulkanTextureRHI*     Texture;
+    VkImageLayout          AfterLayout;
+    uint32                 Generation;
+};
+#else
+struct FScopedBarrierReason
+{
+    FScopedBarrierReason(FVulkanBarrierBatcher&, FVulkanTextureRHI*, VkImageLayout)
+    {
+    }
+};
+#endif
 
 static FVulkanBarrierSubresourceRange VulkanResolveSubresourceRange(const VkImageCreateInfo& CreateInfo, const FRHITextureSubresourceRange& Subresources)
 {
@@ -82,32 +156,89 @@ static VkImageAspectFlags VulkanResolveAspectMask(VkFormat Format, const FRHITex
     return (AspectMask != 0) ? AspectMask : FullAspectMask;
 }
 
-#if VULKAN_ENABLE_BARRIER_STATS
-static TAutoConsoleVariable<bool> CVarLogBarrierStats(
-    "VulkanRHI.LogBarrierStats",
-    "Log per-frame averages of pipeline barriers, ALL_COMMANDS barriers and render-pass pauses, together with the "
-    "resources whose barriers caused the pauses",
-    false);
-
-static constexpr uint32 GBarrierStatsReportFrames = 240;
-
-struct FVulkanBarrierStatsData
+static VkPipelineStageFlags2KHR GetAllShaderStages()
 {
-    AtomicInt32 NumPipelineBarriers;
-    AtomicInt32 NumMemoryBarriers;
-    AtomicInt32 NumBufferBarriers;
-    AtomicInt32 NumImageBarriers;
-    AtomicInt32 NumAllCommandsBarriers;
-    AtomicInt32 NumSameLayoutImageBarriers;
-    AtomicInt32 NumRenderPassPauses;
+    VkPipelineStageFlags2KHR Stages = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT_KHR | VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT_KHR | VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR;
+    if (GVulkanSupportsGeometryShader)
+    {
+        Stages |= VK_PIPELINE_STAGE_2_GEOMETRY_SHADER_BIT_KHR;
+    }
 
-    FCriticalSection    PauseReasonsCS;
-    TMap<String, int32> PauseReasons;
-    uint32              NumFrames = 0;
-};
+    if (GVulkanSupportsTessellation)
+    {
+        Stages |= VK_PIPELINE_STAGE_2_TESSELLATION_CONTROL_SHADER_BIT_KHR | VK_PIPELINE_STAGE_2_TESSELLATION_EVALUATION_SHADER_BIT_KHR;
+    }
 
-static FVulkanBarrierStatsData GBarrierStats;
+#if VK_EXT_mesh_shader
+    if (GVulkanSupportsMeshShaders)
+    {
+        Stages |= VK_PIPELINE_STAGE_2_MESH_SHADER_BIT_EXT;
+    }
 
+    if (GVulkanSupportsTaskShaders)
+    {
+        Stages |= VK_PIPELINE_STAGE_2_TASK_SHADER_BIT_EXT;
+    }
+#endif
+
+    if (GVulkanSupportsRayTracingPipeline)
+    {
+        Stages |= VK_PIPELINE_STAGE_2_RAY_TRACING_SHADER_BIT_KHR;
+    }
+
+    return Stages;
+}
+
+static bool IsReadOnlySupersetState(VkAccessFlags2KHR CurrentAccess, VkPipelineStageFlags2KHR CurrentStage, VkAccessFlags2KHR DesiredAccess, VkPipelineStageFlags2KHR DesiredStage)
+{
+    constexpr VkAccessFlags2KHR WriteAccessMask =
+        VK_ACCESS_2_SHADER_WRITE_BIT_KHR |
+        VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT_KHR |
+        VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT_KHR |
+        VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT_KHR |
+        VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR |
+        VK_ACCESS_2_HOST_WRITE_BIT_KHR |
+        VK_ACCESS_2_MEMORY_WRITE_BIT_KHR |
+        VK_ACCESS_2_TRANSFORM_FEEDBACK_WRITE_BIT_EXT |
+        VK_ACCESS_2_TRANSFORM_FEEDBACK_COUNTER_WRITE_BIT_EXT |
+        VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+
+    const bool bCoversAccess = (CurrentAccess & VK_ACCESS_2_MEMORY_READ_BIT_KHR) || ((CurrentAccess & DesiredAccess) == DesiredAccess);
+    const bool bCoversStage  = (CurrentStage & VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR) || ((CurrentStage & DesiredStage) == DesiredStage);
+
+    return CurrentAccess != VK_ACCESS_2_NONE_KHR &&
+        (CurrentAccess & WriteAccessMask) == 0 &&
+        (DesiredAccess & WriteAccessMask) == 0 &&
+        bCoversAccess &&
+        bCoversStage;
+}
+
+static bool NeedsFirstTouchBarrier(VkImageLayout Layout)
+{
+    return !GetImageLayoutSyncScope(Layout).bReadOnly;
+}
+
+static VkImageMemoryBarrier2KHR MakeImageLayoutBarrier(VkImage Image, VkImageLayout OldLayout, VkImageLayout NewLayout, const VkImageSubresourceRange& Range)
+{
+    const FVulkanLayoutSyncScope SrcScope = GetImageLayoutSyncScope(OldLayout);
+    const FVulkanLayoutSyncScope DstScope = GetImageLayoutSyncScope(NewLayout);
+
+    VkImageMemoryBarrier2KHR ImageBarrier = {};
+    ImageBarrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR;
+    ImageBarrier.srcAccessMask       = SrcScope.WriteAccess;
+    ImageBarrier.dstAccessMask       = DstScope.Access;
+    ImageBarrier.srcStageMask        = SrcScope.Stages;
+    ImageBarrier.dstStageMask        = DstScope.Stages;
+    ImageBarrier.oldLayout           = OldLayout;
+    ImageBarrier.newLayout           = NewLayout;
+    ImageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    ImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    ImageBarrier.image               = Image;
+    ImageBarrier.subresourceRange    = Range;
+    return ImageBarrier;
+}
+
+#if VULKAN_ENABLE_BARRIER_STATS
 bool FVulkanBarrierStats::IsEnabled()
 {
     return CVarLogBarrierStats.GetValue();
@@ -198,54 +329,7 @@ void FVulkanBarrierStats::EndFrame()
     GBarrierStats.PauseReasons.Clear();
     GBarrierStats.NumFrames = 0;
 }
-
-static String GetBarrierDebugName(FVulkanTextureRHI* Texture)
-{
-    String Name;
-    Texture->GetDebugName(Name);
-    return Name.IsEmpty() ? String("Unnamed") : Name;
-}
-
-static String GetBarrierDebugName(FVulkanBufferRHI* Buffer)
-{
-    String Name;
-    Buffer->GetDebugName(Name);
-    return Name.IsEmpty() ? String("Unnamed") : Name;
-}
 #endif
-
-static VkPipelineStageFlags2KHR GetAllShaderStages()
-{
-    VkPipelineStageFlags2KHR Stages = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT_KHR | VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT_KHR | VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR;
-    if (GVulkanSupportsGeometryShader)
-    {
-        Stages |= VK_PIPELINE_STAGE_2_GEOMETRY_SHADER_BIT_KHR;
-    }
-
-    if (GVulkanSupportsTessellation)
-    {
-        Stages |= VK_PIPELINE_STAGE_2_TESSELLATION_CONTROL_SHADER_BIT_KHR | VK_PIPELINE_STAGE_2_TESSELLATION_EVALUATION_SHADER_BIT_KHR;
-    }
-
-#if VK_EXT_mesh_shader
-    if (GVulkanSupportsMeshShaders)
-    {
-        Stages |= VK_PIPELINE_STAGE_2_MESH_SHADER_BIT_EXT;
-    }
-
-    if (GVulkanSupportsTaskShaders)
-    {
-        Stages |= VK_PIPELINE_STAGE_2_TASK_SHADER_BIT_EXT;
-    }
-#endif
-
-    if (GVulkanSupportsRayTracingPipeline)
-    {
-        Stages |= VK_PIPELINE_STAGE_2_RAY_TRACING_SHADER_BIT_KHR;
-    }
-
-    return Stages;
-}
 
 FVulkanLayoutSyncScope GetImageLayoutSyncScope(VkImageLayout Layout)
 {
@@ -350,88 +434,6 @@ FVulkanLayoutSyncScope GetImageLayoutSyncScope(VkImageLayout Layout)
         }
     }
 }
-
-static VkImageMemoryBarrier2KHR MakeImageLayoutBarrier(VkImage Image, VkImageLayout OldLayout, VkImageLayout NewLayout, const VkImageSubresourceRange& Range)
-{
-    const FVulkanLayoutSyncScope SrcScope = GetImageLayoutSyncScope(OldLayout);
-    const FVulkanLayoutSyncScope DstScope = GetImageLayoutSyncScope(NewLayout);
-
-    VkImageMemoryBarrier2KHR ImageBarrier = {};
-    ImageBarrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR;
-    ImageBarrier.srcAccessMask       = SrcScope.WriteAccess;
-    ImageBarrier.dstAccessMask       = DstScope.Access;
-    ImageBarrier.srcStageMask        = SrcScope.Stages;
-    ImageBarrier.dstStageMask        = DstScope.Stages;
-    ImageBarrier.oldLayout           = OldLayout;
-    ImageBarrier.newLayout           = NewLayout;
-    ImageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    ImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    ImageBarrier.image               = Image;
-    ImageBarrier.subresourceRange    = Range;
-    return ImageBarrier;
-}
-
-static bool NeedsFirstTouchBarrier(VkImageLayout Layout)
-{
-    return !GetImageLayoutSyncScope(Layout).bReadOnly;
-}
-
-static bool IsReadOnlySupersetState(VkAccessFlags2KHR CurrentAccess, VkPipelineStageFlags2KHR CurrentStage, VkAccessFlags2KHR DesiredAccess, VkPipelineStageFlags2KHR DesiredStage)
-{
-    constexpr VkAccessFlags2KHR WriteAccessMask =
-        VK_ACCESS_2_SHADER_WRITE_BIT_KHR |
-        VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT_KHR |
-        VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT_KHR |
-        VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT_KHR |
-        VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR |
-        VK_ACCESS_2_HOST_WRITE_BIT_KHR |
-        VK_ACCESS_2_MEMORY_WRITE_BIT_KHR |
-        VK_ACCESS_2_TRANSFORM_FEEDBACK_WRITE_BIT_EXT |
-        VK_ACCESS_2_TRANSFORM_FEEDBACK_COUNTER_WRITE_BIT_EXT |
-        VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
-
-    const bool bCoversAccess = (CurrentAccess & VK_ACCESS_2_MEMORY_READ_BIT_KHR) || ((CurrentAccess & DesiredAccess) == DesiredAccess);
-    const bool bCoversStage  = (CurrentStage & VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR) || ((CurrentStage & DesiredStage) == DesiredStage);
-
-    return CurrentAccess != VK_ACCESS_2_NONE_KHR &&
-        (CurrentAccess & WriteAccessMask) == 0 &&
-        (DesiredAccess & WriteAccessMask) == 0 &&
-        bCoversAccess &&
-        bCoversStage;
-}
-
-#if VULKAN_ENABLE_BARRIER_STATS
-struct FScopedBarrierReason
-{
-    FScopedBarrierReason(FVulkanBarrierBatcher& InBatcher, FVulkanTextureRHI* InTexture, VkImageLayout InAfterLayout)
-        : Batcher(InBatcher)
-        , Texture(InTexture)
-        , AfterLayout(InAfterLayout)
-        , Generation(InBatcher.GetGeneration())
-    {
-    }
-
-    ~FScopedBarrierReason()
-    {
-        if (Batcher.GetGeneration() != Generation && FVulkanBarrierStats::IsEnabled())
-        {
-            Batcher.AddDebugReason(String::Printf("Texture '%s' -> %s", *GetBarrierDebugName(Texture), ToString(AfterLayout)));
-        }
-    }
-
-    FVulkanBarrierBatcher& Batcher;
-    FVulkanTextureRHI*     Texture;
-    VkImageLayout          AfterLayout;
-    uint32                 Generation;
-};
-#else
-struct FScopedBarrierReason
-{
-    FScopedBarrierReason(FVulkanBarrierBatcher&, FVulkanTextureRHI*, VkImageLayout)
-    {
-    }
-};
-#endif
 
 void FVulkanBarrierBatcher::AddMemoryBarrier(VkDependencyFlags DependencyFlags, const VkMemoryBarrier2KHR& InBarrier)
 {
@@ -1761,8 +1763,30 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
 
     if (VulkanBuffer->GetDesc().IsTransient())
     {
+        const FRHIBufferDesc& Desc = VulkanBuffer->GetDesc();
+
         FVulkanMemoryLocation NewLocation(GetDevice());
-        void* MappedMemory = GetDevice()->GetMemoryManager().AllocateConstants(BufferRegion.Size, VulkanBuffer->GetRequiredAlignment(), NewLocation);
+        void* MappedMemory = nullptr;
+        if (Desc.IsConstantBuffer())
+        {
+            MappedMemory = GetDevice()->GetMemoryManager().AllocateConstants(BufferRegion.Size, VulkanBuffer->GetRequiredAlignment(), NewLocation);
+        }
+        else
+        {
+            VkBufferUsageFlags UsageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+            if (Desc.IsVertexBuffer())
+            {
+                UsageFlags |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+            }
+
+            if (Desc.IsIndexBuffer())
+            {
+                UsageFlags |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+            }
+
+            MappedMemory = GetDevice()->GetMemoryManager().AllocateUploadMemory(BufferRegion.Size, VulkanBuffer->GetRequiredAlignment(), UsageFlags, NewLocation);
+        }
+
         CHECK(MappedMemory != nullptr);
 
         Memory::Memcpy(MappedMemory, SrcData, BufferRegion.Size);

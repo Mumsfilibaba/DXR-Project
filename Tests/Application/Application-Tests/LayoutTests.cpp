@@ -4,13 +4,39 @@
 #include "TestCommon/TestMacros.h"
 
 #include <Application/Application.h>
+#include <Application/Animation/UIAnimation.h>
 #include <Application/ElementPath.h>
 #include <Application/Layout/LayoutTypes.h>
+#include <Application/Menus/PopupPlacement.h>
 #include <Application/Text/FixedWidthFontFace.h>
 #include <Application/Elements/Box.h>
 #include <Application/Elements/ScrollBox.h>
 #include <Application/Elements/TextBlock.h>
 #include <Application/Elements/Window.h>
+
+class FArrangeCounter final : public FVisualElement
+{
+public:
+    FArrangeCounter()
+        : FVisualElement()
+        , ArrangeCount(0)
+        , bArrangesContinuously(false)
+    {
+    }
+
+    virtual void OnArrange(const FRectangle& /*AllottedBounds*/) override
+    {
+        ++ArrangeCount;
+
+        if (bArrangesContinuously)
+        {
+            RequestContinuousArrange();
+        }
+    }
+
+    int32 ArrangeCount;
+    bool  bArrangesContinuously;
+};
 
 static TSharedPtr<IFontFace> CreateTestFont()
 {
@@ -192,7 +218,7 @@ bool VerticalBoxLayout_Test()
     TEST_EXPECT_EQ(DesiredSize.Y, 2 * 16);
 
     TEST_SECTION("Auto slots get exactly their desired height, stacked downward");
-    Box->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    Box->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
     TEST_EXPECT_EQ(First->GetContentRectangle().Position.Y, 0);
     TEST_EXPECT_EQ(First->GetContentRectangle().Height, 16);
     TEST_EXPECT_EQ(Second->GetContentRectangle().Position.Y, 16);
@@ -207,7 +233,7 @@ bool VerticalBoxLayout_Test()
     FillBox->AddSlot(FillSecond).SetFillCoefficient(1.0f);
 
     FillBox->PrepareDesiredSize();
-    FillBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    FillBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     TEST_EXPECT_EQ(FillFirst->GetContentRectangle().Height, 50);
     TEST_EXPECT_EQ(FillSecond->GetContentRectangle().Height, 50);
@@ -222,7 +248,7 @@ bool VerticalBoxLayout_Test()
     OddBox->AddSlot(OddSecond).SetFillCoefficient(1.0f);
 
     OddBox->PrepareDesiredSize();
-    OddBox->Tick(FRectangle(IntVector2(0, 0), 200, 101));
+    OddBox->Arrange(FRectangle(IntVector2(0, 0), 200, 101));
 
     const int32 TotalHeight = OddFirst->GetContentRectangle().Height + OddSecond->GetContentRectangle().Height;
     TEST_EXPECT_EQ(TotalHeight, 101);
@@ -238,7 +264,7 @@ bool VerticalBoxLayout_Test()
     MixedBox->AddSlot(AutoChild);
 
     MixedBox->PrepareDesiredSize();
-    MixedBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    MixedBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     TEST_EXPECT_EQ(FillChild->GetContentRectangle().Height, 84);
     TEST_EXPECT_EQ(AutoChild->GetContentRectangle().Position.Y, 84);
@@ -266,7 +292,7 @@ bool HorizontalBoxLayout_Test()
     TEST_EXPECT_EQ(DesiredSize.Y, 16);
 
     TEST_SECTION("Auto slots get their desired width, stacked rightward");
-    Box->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    Box->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
     TEST_EXPECT_EQ(First->GetContentRectangle().Position.X, 0);
     TEST_EXPECT_EQ(First->GetContentRectangle().Width, 32);
     TEST_EXPECT_EQ(Second->GetContentRectangle().Position.X, 32);
@@ -281,7 +307,7 @@ bool HorizontalBoxLayout_Test()
     FillBox->AddSlot(FillSecond).SetFillCoefficient(3.0f);
 
     FillBox->PrepareDesiredSize();
-    FillBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    FillBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     TEST_EXPECT_EQ(FillFirst->GetContentRectangle().Width, 50);
     TEST_EXPECT_EQ(FillSecond->GetContentRectangle().Width, 150);
@@ -307,7 +333,7 @@ bool BoxSlotAlignment_Test()
     Box->AddSlot(Right).SetHorizontalAlignment(EHorizontalAlignment::Right);
 
     Box->PrepareDesiredSize();
-    Box->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    Box->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     TEST_EXPECT_EQ(Left->GetContentRectangle().Position.X, 0);
     TEST_EXPECT_EQ(Left->GetContentRectangle().Width, 32);
@@ -321,7 +347,7 @@ bool BoxSlotAlignment_Test()
     FillBox->AddSlot(Filled).SetFillCoefficient(1.0f);
 
     FillBox->PrepareDesiredSize();
-    FillBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    FillBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     TEST_EXPECT_EQ(Filled->GetContentRectangle().Width, 200);
     TEST_EXPECT_EQ(Filled->GetContentRectangle().Height, 100);
@@ -337,7 +363,7 @@ bool BoxSlotAlignment_Test()
     VerticalBox->AddSlot(Bottom).SetVerticalAlignment(EVerticalAlignment::Bottom);
 
     VerticalBox->PrepareDesiredSize();
-    VerticalBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    VerticalBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     TEST_EXPECT_EQ(Top->GetContentRectangle().Position.Y, 0);
     TEST_EXPECT_EQ(Middle->GetContentRectangle().Position.Y, (100 - 16) / 2);
@@ -350,7 +376,7 @@ bool BoxSlotAlignment_Test()
     PaddedBox->AddSlot(Padded).SetPadding(FMargin(10, 5)).SetHorizontalAlignment(EHorizontalAlignment::Left);
 
     PaddedBox->PrepareDesiredSize();
-    PaddedBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    PaddedBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     TEST_EXPECT_EQ(Padded->GetContentRectangle().Position.X, 10);
     TEST_EXPECT_EQ(Padded->GetContentRectangle().Position.Y, 5);
@@ -375,7 +401,7 @@ bool ScrollBoxClamping_Test()
     ScrollBox->SetContent(Content);
 
     ScrollBox->PrepareDesiredSize();
-    ScrollBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    ScrollBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     TEST_SECTION("The scrollable range is the content overflow");
     TEST_EXPECT_EQ(ScrollBox->GetMaxScrollOffset(), 60);
@@ -395,7 +421,7 @@ bool ScrollBoxClamping_Test()
     TEST_EXPECT(ScrollBox->IsScrolledToEnd());
 
     TEST_SECTION("The content is offset upward by the scroll amount");
-    ScrollBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    ScrollBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
     TEST_EXPECT_EQ(Content->GetContentRectangle().Position.Y, -60);
 
     TEST_SECTION("ScrollToEnd is applied on the next arrange");
@@ -403,7 +429,7 @@ bool ScrollBoxClamping_Test()
     ScrollBox->ScrollToEnd();
     TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), 0);
 
-    ScrollBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    ScrollBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
     TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), 60);
 
     TEST_SECTION("Content that fits leaves nothing to scroll");
@@ -414,7 +440,7 @@ bool ScrollBoxClamping_Test()
     ShortScrollBox->SetContent(ShortContent);
 
     ShortScrollBox->PrepareDesiredSize();
-    ShortScrollBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    ShortScrollBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     TEST_EXPECT_EQ(ShortScrollBox->GetMaxScrollOffset(), 0);
     TEST_EXPECT(ShortScrollBox->IsScrolledToEnd());
@@ -438,9 +464,9 @@ bool ScrollBoxHitTestClipping_Test()
     ScrollBox->SetContent(Content);
 
     ScrollBox->PrepareDesiredSize();
-    ScrollBox->Tick(FRectangle(IntVector2(0, 100), 200, 100));
+    ScrollBox->Arrange(FRectangle(IntVector2(0, 100), 200, 100));
     ScrollBox->ScrollToEnd();
-    ScrollBox->Tick(FRectangle(IntVector2(0, 100), 200, 100));
+    ScrollBox->Arrange(FRectangle(IntVector2(0, 100), 200, 100));
 
     TEST_SECTION("Scrolling to the end leaves the content reaching above the view");
     TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), 60);
@@ -449,14 +475,216 @@ bool ScrollBoxHitTestClipping_Test()
 
     TEST_SECTION("A point inside the view finds the content");
     FElementPath InsidePath;
-    ScrollBox->FindChildrenContainingPoint(IntVector2(10, 150), InsidePath);
+    ScrollBox->HitTest(IntVector2(10, 150), InsidePath);
     TEST_EXPECT(InsidePath.Contains(StaticCastSharedPtr<FVisualElement>(ScrollBox)));
     TEST_EXPECT(InsidePath.Contains(StaticCastSharedPtr<FVisualElement>(Content)));
 
     TEST_SECTION("The scrolled-out overflow answers for nothing, so what is arranged there stays reachable");
     FElementPath OverflowPath;
-    ScrollBox->FindChildrenContainingPoint(IntVector2(10, 50), OverflowPath);
+    ScrollBox->HitTest(IntVector2(10, 50), OverflowPath);
     TEST_EXPECT(OverflowPath.IsEmpty());
+
+    TEST_END();
+}
+
+bool HitTestPruning_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<IFontFace> Font = CreateTestFont();
+
+    TSharedPtr<FTextBlock>   First  = CreateTextBlock("First", Font);
+    TSharedPtr<FTextBlock>   Second = CreateTextBlock("Second", Font);
+    TSharedPtr<FTextBlock>   Third  = CreateTextBlock("Third", Font);
+    TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
+    Column->AddSlot(First);
+    Column->AddSlot(Second);
+    Column->AddSlot(Third);
+
+    Column->PrepareDesiredSize();
+    Column->Arrange(FRectangle(IntVector2(0, 0), 200, 300));
+
+    const FRectangle& SecondBounds = Second->GetContentRectangle();
+
+    TSharedPtr<FVisualElement> ColumnElement = Column;
+    TSharedPtr<FVisualElement> FirstElement  = First;
+    TSharedPtr<FVisualElement> SecondElement = Second;
+    TSharedPtr<FVisualElement> ThirdElement  = Third;
+
+    TEST_SECTION("A point inside the second row finds only the box and that row");
+    FElementPath RowPath;
+    TEST_EXPECT(Column->HitTest(IntVector2(10, SecondBounds.Position.Y + 1), RowPath));
+    TEST_EXPECT_EQ(RowPath.Size(), 2);
+    TEST_EXPECT(RowPath[0] == ColumnElement);
+    TEST_EXPECT(RowPath[1] == SecondElement);
+
+    TEST_SECTION("The shared edge belongs to the lower row only");
+    FElementPath EdgePath;
+    Column->HitTest(IntVector2(10, SecondBounds.GetBottom()), EdgePath);
+    TEST_EXPECT(!EdgePath.Contains(SecondElement));
+    TEST_EXPECT(EdgePath.Contains(ThirdElement));
+
+    TEST_SECTION("A hidden parent keeps its visible children out of reach");
+    TSharedPtr<FCompoundElement> Hidden = MakeSharedPtr<FCompoundElement>();
+    TSharedPtr<FTextBlock>       Inner  = CreateTextBlock("Inner", Font);
+    Hidden->SetContent(Inner);
+    Hidden->PrepareDesiredSize();
+    Hidden->Arrange(FRectangle(IntVector2(0, 0), 100, 100));
+    Hidden->SetVisibility(EVisibility::Hidden);
+
+    FElementPath HiddenPath;
+    TEST_EXPECT(!Hidden->HitTest(IntVector2(5, 5), HiddenPath));
+    TEST_EXPECT(HiddenPath.IsEmpty());
+
+    TEST_SECTION("A child that is not hit testable lets the point fall through to its parent");
+    Second->SetHitTestable(false);
+    FElementPath PassThroughPath;
+    Column->HitTest(IntVector2(10, SecondBounds.Position.Y + 1), PassThroughPath);
+    TEST_EXPECT_EQ(PassThroughPath.Size(), 1);
+    TEST_EXPECT(PassThroughPath[0] == ColumnElement);
+    Second->SetHitTestable(true);
+
+    TEST_SECTION("A point outside the box is pruned before any child is visited");
+    FElementPath OutsidePath;
+    TEST_EXPECT(!Column->HitTest(IntVector2(250, 10), OutsidePath));
+    TEST_EXPECT(OutsidePath.IsEmpty());
+    TEST_EXPECT(!OutsidePath.Contains(FirstElement));
+
+    TEST_END();
+}
+
+bool ArrangeSkip_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<FArrangeCounter>  Leaf   = MakeSharedPtr<FArrangeCounter>();
+    TSharedPtr<FCompoundElement> Parent = MakeSharedPtr<FCompoundElement>();
+    Parent->SetContent(Leaf);
+
+    const FRectangle Bounds(IntVector2(0, 0), 100, 100);
+
+    TEST_SECTION("The first arrange always runs");
+    Parent->PrepareDesiredSize();
+    Parent->Arrange(Bounds);
+    TEST_EXPECT_EQ(Leaf->ArrangeCount, 1);
+    TEST_EXPECT(!Parent->IsArrangeDirty());
+    TEST_EXPECT(!Leaf->IsArrangeDirty());
+
+    TEST_SECTION("A clean tree given the same bounds is skipped from the root");
+    Parent->Arrange(Bounds);
+    TEST_EXPECT_EQ(Leaf->ArrangeCount, 1);
+
+    TEST_SECTION("New bounds arrange again");
+    Parent->Arrange(FRectangle(IntVector2(0, 0), 120, 100));
+    TEST_EXPECT_EQ(Leaf->ArrangeCount, 2);
+
+    TEST_SECTION("Invalidating a leaf dirties the path to the root, so the next arrange reaches it");
+    Leaf->InvalidateArrange();
+    TEST_EXPECT(Parent->IsArrangeDirty());
+    Parent->Arrange(FRectangle(IntVector2(0, 0), 120, 100));
+    TEST_EXPECT_EQ(Leaf->ArrangeCount, 3);
+    TEST_EXPECT(!Parent->IsArrangeDirty());
+
+    TEST_SECTION("A measure change needs a new arrangement as well");
+    Leaf->InvalidateDesiredSize();
+    TEST_EXPECT(Parent->IsArrangeDirty());
+    Parent->PrepareDesiredSize();
+    Parent->Arrange(FRectangle(IntVector2(0, 0), 120, 100));
+    TEST_EXPECT_EQ(Leaf->ArrangeCount, 4);
+
+    TEST_SECTION("An element asking to arrange continuously is reached every time");
+    Leaf->bArrangesContinuously = true;
+    Leaf->InvalidateArrange();
+    Parent->Arrange(FRectangle(IntVector2(0, 0), 120, 100));
+    Parent->Arrange(FRectangle(IntVector2(0, 0), 120, 100));
+    Parent->Arrange(FRectangle(IntVector2(0, 0), 120, 100));
+    TEST_EXPECT_EQ(Leaf->ArrangeCount, 7);
+    TEST_EXPECT(Parent->IsArrangeDirty());
+
+    TEST_SECTION("Once it stops asking, the next arrange is the last one");
+    Leaf->bArrangesContinuously = false;
+    Parent->Arrange(FRectangle(IntVector2(0, 0), 120, 100));
+    Parent->Arrange(FRectangle(IntVector2(0, 0), 120, 100));
+    TEST_EXPECT_EQ(Leaf->ArrangeCount, 8);
+    TEST_EXPECT(!Parent->IsArrangeDirty());
+
+    TEST_END();
+}
+
+bool UIAnimation_Test()
+{
+    TEST_BEGIN();
+
+    FUIFrameClock::BeginFrame();
+
+    TEST_SECTION("A pinned frame holds one instant, so a move started in it has not moved yet");
+    const double FrameTime = FUIFrameClock::Now();
+    TEST_EXPECT(FUIFrameClock::Now() == FrameTime);
+
+    FUIAnimation Animation;
+    Animation.Start(1.0f, 2.0f, 10.0f);
+    TEST_EXPECT(Animation.IsRunning());
+    TEST_EXPECT_EQ(Animation.GetProgress(), 0.0f);
+    TEST_EXPECT_EQ(Animation.Evaluate(), 2.0f);
+    TEST_EXPECT_EQ(Animation.GetTarget(), 10.0f);
+
+    TEST_SECTION("Settling ends the move on the given value");
+    Animation.Settle(5.0f);
+    TEST_EXPECT(!Animation.IsRunning());
+    TEST_EXPECT_EQ(Animation.Evaluate(), 5.0f);
+
+    TEST_SECTION("A move without a duration lands on its target at once");
+    Animation.Start(0.0f, 0.0f, 3.0f);
+    TEST_EXPECT(!Animation.IsRunning());
+    TEST_EXPECT_EQ(Animation.Evaluate(), 3.0f);
+
+    TEST_SECTION("A default animation is at rest on zero");
+    const FUIAnimation Default;
+    TEST_EXPECT(!Default.IsRunning());
+    TEST_EXPECT_EQ(Default.Evaluate(), 0.0f);
+
+    FUIFrameClock::EndFrame();
+
+    TEST_SECTION("Outside a frame the clock follows the wall clock and never runs backwards");
+    const double Before = FUIFrameClock::Now();
+    const double After  = FUIFrameClock::Now();
+    TEST_EXPECT(After >= Before);
+    TEST_EXPECT(Before >= FrameTime);
+
+    TEST_END();
+}
+
+bool PopupPlacement_Test()
+{
+    TEST_BEGIN();
+
+    const FRectangle Area(IntVector2(0, 0), 400, 300);
+    const IntVector2 Size(100, 80);
+
+    TEST_SECTION("With room, a popup opens under its anchor with left edges flush, a gap below it");
+    const FRectangle Below = FPopupPlacement::Resolve(FRectangle(IntVector2(50, 40), 60, 20), Size, Area, EPopupSide::Below, EPopupFlip::Both, 2);
+    TEST_EXPECT_EQ(Below.Position, IntVector2(50, 62));
+    TEST_EXPECT_EQ(Below.Width, 100);
+
+    TEST_SECTION("Near the bottom it flips above, and near the right it right-aligns to the anchor");
+    const FRectangle Corner = FPopupPlacement::Resolve(FRectangle(IntVector2(330, 250), 60, 20), Size, Area, EPopupSide::Below, EPopupFlip::Both);
+    TEST_EXPECT_EQ(Corner.Position, IntVector2(290, 170));
+
+    TEST_SECTION("Without leave to flip it is only clamped in");
+    const FRectangle Clamped = FPopupPlacement::Resolve(FRectangle(IntVector2(330, 250), 60, 20), Size, Area, EPopupSide::Below, EPopupFlip::None);
+    TEST_EXPECT_EQ(Clamped.Position, IntVector2(300, 220));
+
+    TEST_SECTION("Beside an anchor near the right edge it opens on the left instead, lifted by its offset");
+    const FRectangle Beside = FPopupPlacement::Resolve(FRectangle(IntVector2(320, 100), 60, 20), Size, Area, EPopupSide::Right, EPopupFlip::Main, 0, -4);
+    TEST_EXPECT_EQ(Beside.Position, IntVector2(220, 96));
+
+    TEST_SECTION("A popup with no room either side stays unflipped and is pushed inside");
+    const FRectangle Wide = FPopupPlacement::Resolve(FRectangle(IntVector2(150, 100), 60, 20), IntVector2(380, 80), Area, EPopupSide::Right, EPopupFlip::Main);
+    TEST_EXPECT_EQ(Wide.Position, IntVector2(20, 100));
+
+    TEST_SECTION("A popup larger than the area keeps its top-left inside it");
+    const FRectangle Huge = FPopupPlacement::ClampIntoArea(FRectangle(IntVector2(-50, -50), 500, 400), Area);
+    TEST_EXPECT_EQ(Huge.Position, IntVector2(0, 0));
 
     TEST_END();
 }
@@ -575,7 +803,7 @@ bool ScrollBoxScrollIntoView_Test()
     ScrollBox->SetContent(Content);
 
     ScrollBox->PrepareDesiredSize();
-    ScrollBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    ScrollBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     TEST_SECTION("A target already in view does not move the offset");
     ScrollBox->SetScrollOffset(0);

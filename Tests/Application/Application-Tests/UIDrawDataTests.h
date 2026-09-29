@@ -9,3 +9,4 @@ bool UIDrawDataText_Test();
 bool UIDrawDataClipCulling_Test();
 bool UIDrawDataSiblingClips_Test();
 bool UIDrawDataAntiAliasing_Test();
+bool UIDrawDataTextCacheTrim_Test();

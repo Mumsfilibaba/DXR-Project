@@ -166,44 +166,12 @@ void FDrawCommandList::AddPanelChrome(
 
     const FCornerRadii Clamped = CornerRadius.ClampToBounds(Bounds);
 
-    const float Left   = static_cast<float>(Bounds.Position.X);
-    const float Top    = static_cast<float>(Bounds.Position.Y);
-    const float Right  = static_cast<float>(Bounds.GetRight());
-    const float Bottom = static_cast<float>(Bounds.GetBottom());
-
-    struct FCorner
+    if (Clamped.GetLargest() > 0.0f && BackdropTint.A > 0.0f)
     {
-        Vector2 Point;
-        Vector2 ArcCenter;
-        float   Radius;
-        float   StartAngle;
-        float   EndAngle;
-    };
-
-    const FCorner Corners[4] =
-    {
-        { Vector2(Left,  Top),    Vector2(Left  + Clamped.TopLeft,     Top    + Clamped.TopLeft),     Clamped.TopLeft,     -Math::Constants::HalfPI, -Math::Constants::PI     },
-        { Vector2(Right, Top),    Vector2(Right - Clamped.TopRight,    Top    + Clamped.TopRight),    Clamped.TopRight,    -Math::Constants::HalfPI,  0.0f          },
-        { Vector2(Right, Bottom), Vector2(Right - Clamped.BottomRight, Bottom - Clamped.BottomRight), Clamped.BottomRight,  0.0f,           Math::Constants::HalfPI },
-        { Vector2(Left,  Bottom), Vector2(Left  + Clamped.BottomLeft,  Bottom - Clamped.BottomLeft),  Clamped.BottomLeft,   Math::Constants::HalfPI,  Math::Constants::PI     },
-    };
-
-    for (const FCorner& Corner : Corners)
-    {
-        if (Corner.Radius <= 0.0f)
-        {
-            continue;
-        }
-
-        const int32 Segments = Math::Clamp(
-            ResolveCircleSegments(Corner.Radius, Math::Abs(Corner.EndAngle - Corner.StartAngle), 0),
-            MinCircleSegments,
-            12);
-
-        BuildArcPoints(Corner.ArcCenter, Corner.Radius, Corner.StartAngle, Corner.EndAngle, Segments);
-        ScratchPoints.Insert(0, Corner.Point);
-
-        AddConvexPolygon(LayerId, ScratchPoints, BackdropTint);
+        FDrawCommand& Command = EmplaceCommand(EDrawCommandType::CornerWedges, LayerId);
+        Command.Bounds       = Bounds;
+        Command.PackedColor  = BackdropTint.ToPackedRGBA();
+        Command.CornerRadius = Clamped;
     }
 
     AddBoxOutline(LayerId, Bounds, BorderTint, Thickness, Clamped);
@@ -320,7 +288,7 @@ void FDrawCommandList::AddRoundedBottomBar(int32 LayerId, const FRectangle& Boun
     Command.PackedColor  = Tint.ToPackedRGBA();
     Command.CornerRadius = CornerRadius;
     Command.Thickness    = Thickness;
-    Command.FadeWidth    = Math::Max(FadeWidth, 0.0f);
+    Command.Fade[0]      = Math::Max(FadeWidth, 0.0f);
 }
 
 void FDrawCommandList::AddRoundedAccentRing(int32 LayerId, const FRectangle& Bounds, const FCornerRadii& CornerRadius, float Thickness,
@@ -336,8 +304,8 @@ void FDrawCommandList::AddRoundedAccentRing(int32 LayerId, const FRectangle& Bou
     Command.PackedColor  = Tint.ToPackedRGBA();
     Command.CornerRadius = CornerRadius;
     Command.Thickness    = Thickness;
-    Command.FadeFraction = Math::Clamp(FadeFraction, 0.0f, 1.0f);
-    Command.TrailAlpha   = Math::Clamp(TrailAlpha, 0.0f, 1.0f);
+    Command.Fade[0]      = Math::Clamp(FadeFraction, 0.0f, 1.0f);
+    Command.Fade[1]      = Math::Clamp(TrailAlpha, 0.0f, 1.0f);
 }
 
 void FDrawCommandList::PushClip(int32 /*LayerId*/, const FRectangle& ClipRectangle)
@@ -608,7 +576,7 @@ int32 FDrawCommandList::AppendDrawCache(FDrawCacheBlock& Block)
     return Block.MaxLayerId;
 }
 
-FDrawCacheBlock* FDrawCommandList::FindReplayedSpanAt(int32 CommandIndex) const
+FDrawCacheBlock* FDrawCommandList::FindReplayedSpanContaining(int32 CommandIndex, int32& OutSpanStart) const
 {
     int32 Low  = 0;
     int32 High = ReplayedSpans.Size() - 1;
@@ -616,14 +584,7 @@ FDrawCacheBlock* FDrawCommandList::FindReplayedSpanAt(int32 CommandIndex) const
     while (Low <= High)
     {
         const int32 Middle = Low + ((High - Low) / 2);
-        const int32 Probe  = ReplayedSpans[Middle].CommandIndex;
-
-        if (Probe == CommandIndex)
-        {
-            return ReplayedSpans[Middle].Block;
-        }
-
-        if (Probe < CommandIndex)
+        if (ReplayedSpans[Middle].CommandIndex <= CommandIndex)
         {
             Low = Middle + 1;
         }
@@ -633,7 +594,19 @@ FDrawCacheBlock* FDrawCommandList::FindReplayedSpanAt(int32 CommandIndex) const
         }
     }
 
-    return nullptr;
+    if (High < 0)
+    {
+        return nullptr;
+    }
+
+    const FReplayedSpan& Span = ReplayedSpans[High];
+    if (CommandIndex >= Span.CommandIndex + Span.Block->GetCommandCount())
+    {
+        return nullptr;
+    }
+
+    OutSpanStart = Span.CommandIndex;
+    return Span.Block;
 }
 
 bool FDrawCommandList::WasFullyReplayed() const
@@ -680,17 +653,27 @@ bool FDrawCommandList::FindFirstDifference(
             return true;
         }
 
-        if (LeftCommand.CornerRadius != RightCommand.CornerRadius
-            || LeftCommand.Thickness != RightCommand.Thickness
-            || LeftCommand.FadeWidth != RightCommand.FadeWidth
-            || LeftCommand.FadeFraction != RightCommand.FadeFraction
-            || LeftCommand.TrailAlpha != RightCommand.TrailAlpha)
+        if (LeftCommand.CornerRadius != RightCommand.CornerRadius || LeftCommand.Thickness != RightCommand.Thickness)
         {
             OutReason = "shape parameters";
             return true;
         }
 
-        if (LeftCommand.Font != RightCommand.Font || LeftCommand.PayloadCount != RightCommand.PayloadCount)
+        if (LeftCommand.Type == EDrawCommandType::Text)
+        {
+            if (LeftCommand.Font != RightCommand.Font)
+            {
+                OutReason = "font or payload size";
+                return true;
+            }
+        }
+        else if (LeftCommand.Fade[0] != RightCommand.Fade[0] || LeftCommand.Fade[1] != RightCommand.Fade[1])
+        {
+            OutReason = "shape parameters";
+            return true;
+        }
+
+        if (LeftCommand.PayloadCount != RightCommand.PayloadCount)
         {
             OutReason = "font or payload size";
             return true;
@@ -809,6 +792,7 @@ const FRectangle& FDrawCommandList::GetCommandClipRectangle(const FDrawCommand& 
         return EmptyClipRectangle;
     }
 
+    CHECK(Command.ClipId != InheritedClipId && Command.ClipId <= static_cast<uint16>(ClipRects.Size()));
     return ClipRects[Command.ClipId - 1];
 }
 

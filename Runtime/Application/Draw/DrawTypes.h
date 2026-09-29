@@ -36,11 +36,8 @@ enum class EDrawCommandType : uint8
     /** A stroke round a rounded rectangle, full strength along the top and faded back over the top corners. */
     RoundedAccentRing,
 
-    /** Opens a clip region. Kept for tests and dumps; the list no longer records these as commands. */
-    ClipPush,
-
-    /** Closes the region opened by the matching ClipPush. Kept for tests and dumps. */
-    ClipPop,
+    /** The four regions a rounded rectangle's corners leave uncovered inside its bounds, filled. */
+    CornerWedges,
 };
 
 enum class EDrawCommandFlags : uint8
@@ -250,17 +247,37 @@ struct FDrawCommand
     EDrawCommandType  Type;
     EDrawCommandFlags Flags;
     uint16            ClipId;
-    int32            LayerId;
-    FRectangle       Bounds;
-    uint32           PackedColor;
-    FCornerRadii     CornerRadius;
-    float            Thickness;
-    float            FadeWidth;
-    float            FadeFraction;
-    float            TrailAlpha;
-    int32            PayloadOffset;
-    int32            PayloadCount;
-    const IFontFace* Font;
+    int32             LayerId;
+    FRectangle        Bounds;
+    uint32            PackedColor;
+    int32             PayloadOffset;
+    int32             PayloadCount;
+    float             Thickness;
+    FCornerRadii      CornerRadius;
+
+    union
+    {
+        /** @brief RoundedBottomBar: the fade width. RoundedAccentRing: the fade fraction, then the trail alpha. */
+        float Fade[2];
+
+        /** @brief Text only. */
+        const IFontFace* Font;
+    };
+
+    NODISCARD FORCEINLINE float GetFadeWidth() const
+    {
+        return Fade[0];
+    }
+
+    NODISCARD FORCEINLINE float GetFadeFraction() const
+    {
+        return Fade[0];
+    }
+
+    NODISCARD FORCEINLINE float GetTrailAlpha() const
+    {
+        return Fade[1];
+    }
 
     NODISCARD FORCEINLINE bool IsClipped() const
     {
@@ -282,3 +299,5 @@ struct FDrawCommand
         return static_cast<uint8>(PackedColor >> 24);
     }
 };
+
+static_assert(sizeof(FDrawCommand) == 64, "FDrawCommand is meant to fill exactly one cache line");

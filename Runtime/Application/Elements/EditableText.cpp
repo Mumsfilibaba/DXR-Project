@@ -1,12 +1,11 @@
 #include "Application/Elements/EditableText.h"
+#include "Application/Animation/UIAnimation.h"
 #include "Application/Application.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Input/Keys.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
 #include "Core/Platform/PlatformSystemClipboard.h"
-#include "Core/Platform/PlatformTime.h"
-
 /** @brief The share of a blink the text cursor is drawn for, which is ImGui's 0.8s out of 1.2s. */
 constexpr double TEXT_CURSOR_VISIBLE_FRACTION = 2.0 / 3.0;
 
@@ -35,8 +34,8 @@ FEditableText::FEditableText()
     , OnTextChanged()
     , OnTextCommitted()
     , OnKeyDownInterceptor()
+    , TextCursorBlinkResetTime(FUIFrameClock::Now())
     , TextCursorBlinkPeriod(1.2f)
-    , TextCursorBlinkResetCounter(FPlatformTime::QueryPerformanceCounter())
     , TextCursorPosition(0)
     , SelectionAnchor(0)
     , bHasKeyboardFocus(false)
@@ -178,19 +177,12 @@ bool FEditableText::IsTextCursorVisibleAt(double ElapsedSeconds) const
 
 void FEditableText::ResetTextCursorBlink()
 {
-    TextCursorBlinkResetCounter = FPlatformTime::QueryPerformanceCounter();
+    TextCursorBlinkResetTime = FUIFrameClock::Now();
 }
 
 double FEditableText::GetSecondsSinceTextCursorBlinkReset() const
 {
-    const uint64 Frequency = FPlatformTime::QueryPerformanceFrequency();
-    if (Frequency == 0)
-    {
-        return 0.0;
-    }
-
-    const uint64 Now = FPlatformTime::QueryPerformanceCounter();
-    return static_cast<double>(Now - TextCursorBlinkResetCounter) / static_cast<double>(Frequency);
+    return FUIFrameClock::Now() - TextCursorBlinkResetTime;
 }
 
 FEventResponse FEditableText::OnKeyChar(const FKeyEvent& KeyEvent)

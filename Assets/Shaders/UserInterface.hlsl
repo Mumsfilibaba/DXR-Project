@@ -148,7 +148,7 @@ float4 PSShape(FVSShapeOutput Input) : SV_Target
     float Distance;
     if (ShapeKind > 1.5f)
     {
-        Distance = length(Input.LocalPos - Input.Radii.xy) - Input.Radii.z;
+        Distance = Input.Radii.z - length(Input.LocalPos - Input.Radii.xy);
     }
     else
     {

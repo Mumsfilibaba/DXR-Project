@@ -111,7 +111,6 @@ bool FEditorStyle::Initialize()
 
     GStyle.Header.Fill                    = FromBytes(30, 30, 30);
     GStyle.Header.Border                  = FromBytes(48, 48, 48);
-    GStyle.Header.BottomBorder            = FromBytes(48, 48, 48);
     GStyle.Header.CornerRadius            = 8.0f;
     GStyle.Header.BorderThickness         = 1.0f;
     GStyle.Header.ExpandDuration          = 0.15f;

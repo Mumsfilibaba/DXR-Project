@@ -122,8 +122,6 @@ public:
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
@@ -227,9 +225,15 @@ public:
         OnRowContext = InOnRowContext;
     }
 
+protected:
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
+    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+
 private:
     NODISCARD int32 GetDividerOffset(const FRectangle& Bounds) const;
     NODISCARD bool IsPointOnDivider(const IntVector2& ClientPosition) const;
+    NODISCARD bool HasRowOffsets() const;
+    void RebuildRowOffsets() const;
     NODISCARD int32 GetRowHeight(int32 Index) const;
     NODISCARD int32 GetRowOffset(int32 Index) const;
     NODISCARD int32 GetTotalRowHeight() const;
@@ -246,6 +250,7 @@ private:
     void ClearHoveredRow();
 
     TArray<FPropertyRow>  Rows;
+    mutable TArray<int32> RowOffsets;
     TSharedPtr<IFontFace> Font;
     TSharedPtr<IFontFace> HeaderFont;
     FUIPropertyTableStyle Style;

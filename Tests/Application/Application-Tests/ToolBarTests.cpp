@@ -1,4 +1,5 @@
 #include "ToolBarTests.h"
+#include "UITestUtils.h"
 #include "StubPlatformApplication.h"
 
 #include "TestCommon/TestHarness.h"
@@ -18,18 +19,6 @@
 #include <Application/Style/UIStyle.h>
 #include <Application/Text/FixedWidthFontFace.h>
 
-/** @brief An eight by sixteen face, so every measurement in these tests is exact. */
-static TSharedPtr<IFontFace> CreateFont()
-{
-    return MakeSharedPtr<FFixedWidthFontFace>(8, 16);
-}
-
-/** @brief A brush over a texture that is never sampled, because nothing here rasterizes. */
-static FUIBrush MakeIcon()
-{
-    return FUIBrush(reinterpret_cast<FRHITexture*>(0x10));
-}
-
 /** @brief Takes the menu stack and the tool tip down while the application is still standing. */
 class FScopedToolBarTestServices
 {
@@ -45,6 +34,16 @@ public:
     FScopedToolBarTestServices(const FScopedToolBarTestServices&) = delete;
     FScopedToolBarTestServices& operator=(const FScopedToolBarTestServices&) = delete;
 };
+
+static TSharedPtr<IFontFace> CreateFont()
+{
+    return MakeSharedPtr<FFixedWidthFontFace>(8, 16);
+}
+
+static FUIBrush MakeIcon()
+{
+    return FUIBrush(reinterpret_cast<FRHITexture*>(0x10));
+}
 
 /** @brief A menu of plainly labelled rows, which is all a dropdown needs to have something to open. */
 static TSharedPtr<FMenu> CreateMenu(const TSharedPtr<IFontFace>& Font, const TArray<String>& Labels)
@@ -65,7 +64,7 @@ static TSharedPtr<FMenu> CreateMenu(const TSharedPtr<IFontFace>& Font, const TAr
 static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRectangle& Bounds)
 {
     Element->PrepareDesiredSize();
-    Element->Tick(Bounds);
+    Element->Arrange(Bounds);
 }
 
 static FCursorEvent MakeMoveEvent(const IntVector2& ClientPosition)
@@ -542,7 +541,7 @@ bool ToolBarFlexibleSpace_Test()
         (static_cast<float>(Field.Position.Y) + static_cast<float>(Field.GetBottom())) * 0.5f);
 
     bool bFoundField = false;
-    for (const FUIShapeVertex& Vertex : DrawData.GetShapeVertices())
+    for (const FUIShapeVertex& Vertex : GetShapeVertices(DrawData))
     {
         const Vector2 Origin = Vertex.Position - Vertex.LocalPos;
         bFoundField |= FieldCentre.X >= Origin.X && FieldCentre.X <= Origin.X + Vertex.RectSize.X

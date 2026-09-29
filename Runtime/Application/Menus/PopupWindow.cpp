@@ -1,6 +1,7 @@
 #include "Application/Menus/PopupWindow.h"
 #include "Application/Application.h"
 #include "Application/IApplicationRenderer.h"
+#include "Application/Menus/PopupPlacement.h"
 #include "Core/Math/Math.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "RHI/RHI.h"
@@ -111,11 +112,5 @@ FRectangle Popups::ClampToWorkArea(const FRectangle& Bounds)
         return Bounds;
     }
 
-    FRectangle Result = Bounds;
-    Result.Position.X = Math::Clamp(Result.Position.X, WorkArea.Position.X,
-        Math::Max(WorkArea.Position.X, WorkArea.GetRight() - Bounds.Width));
-    Result.Position.Y = Math::Clamp(Result.Position.Y, WorkArea.Position.Y,
-        Math::Max(WorkArea.Position.Y, WorkArea.GetBottom() - Bounds.Height));
-
-    return Result;
+    return FPopupPlacement::ClampIntoArea(Bounds, WorkArea);
 }

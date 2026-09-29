@@ -72,11 +72,8 @@ public:
 
     // FVisualElement Interface
     virtual IntVector2 PrepareDesiredSize() override final;
-    virtual void Tick(const FRectangle& AssignedBounds) override final;
-    virtual bool IsWindow() const override final;
+    virtual void OnArrange(const FRectangle& AllottedBounds) override final;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final;
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override final;
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutParentElements) override final;
     virtual bool SupportsKeyboardFocus() const override final;
 
     /**
@@ -450,6 +447,10 @@ public:
     {
         bLayoutIsStale = false;
     }
+
+protected:
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override final;
+    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override final;
 
 private:
     struct FDeferredPaint

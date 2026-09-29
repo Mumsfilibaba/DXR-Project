@@ -12,12 +12,13 @@
 static TAutoConsoleVariable<bool> CVarDrawCacheGeometry(
     "UI.DrawCache.Geometry",
     "Splices the tessellated geometry a cached block captured instead of tessellating its commands again",
-    false,
+    true,
     EConsoleVariableFlags::Default);
 
 constexpr float DIRECTION_EPSILON = 1.0e-4f;
 
 constexpr uint32 PACKED_ALPHA_MASK = 0xff000000u;
+
 constexpr uint32 PACKED_COLOR_MASK = 0x00ffffffu;
 
 template<typename ElementType>
@@ -56,57 +57,6 @@ static FORCEINLINE void AppendGeometrySlice(const TArray<ElementType>& Source, T
     Memory::Memcpy(Destination.Data() + Base, Source.Data(), Source.Size() * static_cast<int32>(sizeof(ElementType)));
 }
 
-static uint64 HashBytes(const void* Data, int32 ByteCount)
-{
-    const uint8* Bytes = static_cast<const uint8*>(Data);
-
-    constexpr uint64 Prime1 = 11400714785074694791ull;
-    constexpr uint64 Prime2 = 14029467366897019727ull;
-    constexpr uint64 Prime3 = 1609587929392839161ull;
-
-    const auto RotateLeft = [](uint64 Value, uint32 Bits)
-    {
-        return (Value << Bits) | (Value >> (64u - Bits));
-    };
-
-    uint64 Lane0  = Prime1;
-    uint64 Lane1  = Prime2;
-    uint64 Lane2  = Prime3;
-    uint64 Lane3  = Prime1 ^ Prime2;
-    int32  Offset = 0;
-
-    for (; Offset + 32 <= ByteCount; Offset += 32)
-    {
-        uint64 Words[4];
-        Memory::Memcpy(Words, Bytes + Offset, sizeof(Words));
-
-        Lane0 = (Lane0 ^ Words[0]) * Prime1;
-        Lane1 = (Lane1 ^ Words[1]) * Prime2;
-        Lane2 = (Lane2 ^ Words[2]) * Prime3;
-        Lane3 = (Lane3 ^ Words[3]) * Prime1;
-    }
-
-    uint64 Hash = Lane0 ^ RotateLeft(Lane1, 13) ^ RotateLeft(Lane2, 29) ^ RotateLeft(Lane3, 47);
-    for (; Offset + 8 <= ByteCount; Offset += 8)
-    {
-        uint64 Word;
-        Memory::Memcpy(&Word, Bytes + Offset, sizeof(Word));
-        Hash = RotateLeft(Hash ^ Word, 27) * Prime1 + Prime3;
-    }
-
-    for (; Offset < ByteCount; ++Offset)
-    {
-        Hash = RotateLeft(Hash ^ Bytes[Offset], 11) * Prime2;
-    }
-
-    Hash ^= static_cast<uint64>(ByteCount);
-    Hash ^= Hash >> 33;
-    Hash *= 0xff51afd7ed558ccdull;
-    Hash ^= Hash >> 33;
-    Hash *= 0xc4ceb9fe1a85ec53ull;
-    return Hash ^ (Hash >> 33);
-}
-
 static uint32 PackColorWithAlphaScale(uint32 PackedColor, float Scale)
 {
     const float  Alpha  = static_cast<float>((PackedColor & PACKED_ALPHA_MASK) >> 24);
@@ -119,9 +69,6 @@ FUIDrawData::FUIDrawData()
     : Vertices()
     , Indices()
     , ShapeInstances()
-    , ShapeVertices()
-    , ShapeIndices()
-    , bShapeCompatibilityDirty(false)
     , TextGlyphInstances()
     , Batches()
     , ScratchPoints()
@@ -129,12 +76,13 @@ FUIDrawData::FUIDrawData()
     , SortedCommandIndices()
     , SortScratchIndices()
     , TextGeometryCache()
-    , TextCommandOrdinal(0)
     , ReplayFingerprint(0)
-    , bFullyReplayedGeometry(true)
     , SourceCommandList(nullptr)
-    , ActiveClipId(0)
     , ActiveClipRectangle()
+    , TextCommandOrdinal(0)
+    , ActiveClipId(0)
+    , TextCacheOversizedFrames(0)
+    , bFullyReplayedGeometry(true)
     , bHasActiveClip(false)
     , bAntiAliasingEnabled(true)
 {
@@ -146,15 +94,12 @@ void FUIDrawData::Reset()
 {
     Vertices.Clear();
     Indices.Clear();
-    ShapeVertices.Clear();
-    ShapeIndices.Clear();
     ShapeInstances.Clear();
     TextGlyphInstances.Clear();
     Batches.Clear();
     ScratchPoints.Clear();
     ScratchOffsets.Clear();
-    
-    bShapeCompatibilityDirty = false;
+
     TextCommandOrdinal       = 0;
     ReplayFingerprint        = 0;
     bFullyReplayedGeometry   = true;
@@ -162,69 +107,6 @@ void FUIDrawData::Reset()
     ActiveClipId             = 0;
     ActiveClipRectangle      = FRectangle();
     bHasActiveClip           = false;
-}
-
-const TArray<FUIShapeVertex>& FUIDrawData::GetShapeVertices() const
-{
-    BuildShapeCompatibilityGeometry();
-    return ShapeVertices;
-}
-
-const TArray<uint32>& FUIDrawData::GetShapeIndices() const
-{
-    BuildShapeCompatibilityGeometry();
-    return ShapeIndices;
-}
-
-void FUIDrawData::BuildShapeCompatibilityGeometry() const
-{
-    if (!bShapeCompatibilityDirty)
-    {
-        return;
-    }
-
-    ShapeVertices.ResizeUninitialized(ShapeInstances.Size() * 4);
-    ShapeIndices.ResizeUninitialized(ShapeInstances.Size() * 6);
-
-    static const Vector2 Corners[4] =
-    {
-        Vector2(0.0f, 0.0f),
-        Vector2(1.0f, 0.0f),
-        Vector2(1.0f, 1.0f),
-        Vector2(0.0f, 1.0f),
-    };
-
-    for (int32 InstanceIndex = 0; InstanceIndex < ShapeInstances.Size(); ++InstanceIndex)
-    {
-        const FUIShapeInstance& Instance = ShapeInstances[InstanceIndex];
-        
-        FUIShapeVertex* Quad = ShapeVertices.Data() + (InstanceIndex * 4);
-        for (int32 CornerIndex = 0; CornerIndex < 4; ++CornerIndex)
-        {
-            Quad[CornerIndex].Position  = Instance.Position + (Instance.DrawSize * Corners[CornerIndex]);
-            Quad[CornerIndex].Color     = Instance.Color;
-            Quad[CornerIndex].LocalPos  = Instance.LocalOrigin + (Instance.DrawSize * Corners[CornerIndex]);
-            Quad[CornerIndex].RectSize  = Instance.RectSize;
-            Quad[CornerIndex].RadiusTL  = Instance.RadiusTL;
-            Quad[CornerIndex].RadiusTR  = Instance.RadiusTR;
-            Quad[CornerIndex].RadiusBR  = Instance.RadiusBR;
-            Quad[CornerIndex].RadiusBL  = Instance.RadiusBL;
-            Quad[CornerIndex].Thickness = Instance.Thickness;
-            Quad[CornerIndex].ShapeKind = Instance.ShapeKind;
-        }
-
-        const uint32 BaseVertex = static_cast<uint32>(InstanceIndex * 4);
-
-        uint32* IndicesOut = ShapeIndices.Data() + (InstanceIndex * 6);
-        IndicesOut[0] = BaseVertex + 0;
-        IndicesOut[1] = BaseVertex + 1;
-        IndicesOut[2] = BaseVertex + 2;
-        IndicesOut[3] = BaseVertex + 0;
-        IndicesOut[4] = BaseVertex + 2;
-        IndicesOut[5] = BaseVertex + 3;
-    }
-
-    bShapeCompatibilityDirty = false;
 }
 
 void FUIDrawData::SetAntiAliasingEnabled(bool bEnabled)
@@ -287,7 +169,30 @@ void FUIDrawData::BuildFromCommandList(const FDrawCommandList& CommandList)
         }
     }
 
+    TrimTextGeometryCache();
+
     SourceCommandList = nullptr;
+}
+
+void FUIDrawData::TrimTextGeometryCache()
+{
+    constexpr int32 TrimSlack  = 64;
+    constexpr uint8 TrimFrames = 120;
+
+    if (TextGeometryCache.Size() <= (TextCommandOrdinal * 2) + TrimSlack)
+    {
+        TextCacheOversizedFrames = 0;
+        return;
+    }
+
+    if (++TextCacheOversizedFrames < TrimFrames)
+    {
+        return;
+    }
+
+    TextGeometryCache.Resize(TextCommandOrdinal + TrimSlack);
+    TextGeometryCache.Shrink();
+    TextCacheOversizedFrames = 0;
 }
 
 int32 FUIDrawData::ProcessDrawCacheSpan(int32 SortedIndex, const FDrawCommandList& CommandList)
@@ -297,29 +202,25 @@ int32 FUIDrawData::ProcessDrawCacheSpan(int32 SortedIndex, const FDrawCommandLis
         return 0;
     }
 
-    const int32 CommandIndex = SortedCommandIndices[SortedIndex];
-
-    FDrawCacheBlock* Block = CommandList.FindReplayedSpanAt(CommandIndex);
-    if (!Block)
-    {
-        return 0;
-    }
-
-    if (!Block->bGeometryContiguous)
+    int32            SpanStart = 0;
+    FDrawCacheBlock* Block     = CommandList.FindReplayedSpanContaining(SortedCommandIndices[SortedIndex], SpanStart);
+    if (!Block || !Block->bGeometryContiguous)
     {
         return 0;
     }
 
     const int32 SpanLength = Block->GetCommandCount();
+    const int32 SpanEnd    = SpanStart + SpanLength;
     if (SortedIndex + SpanLength > SortedCommandIndices.Size())
     {
         Block->bGeometryContiguous = false;
         return 0;
     }
 
-    for (int32 Offset = 1; Offset < SpanLength; ++Offset)
+    for (int32 Offset = 0; Offset < SpanLength; ++Offset)
     {
-        if (SortedCommandIndices[SortedIndex + Offset] != CommandIndex + Offset)
+        const int32 CommandIndex = SortedCommandIndices[SortedIndex + Offset];
+        if (CommandIndex < SpanStart || CommandIndex >= SpanEnd)
         {
             Block->bGeometryContiguous = false;
             return 0;
@@ -327,7 +228,7 @@ int32 FUIDrawData::ProcessDrawCacheSpan(int32 SortedIndex, const FDrawCommandLis
     }
 
     const TArray<FDrawCommand>& Commands    = CommandList.GetCommands();
-    const FDrawCommand&         LastCommand = Commands[CommandIndex + SpanLength - 1];
+    const FDrawCommand&         LastCommand = Commands[SortedCommandIndices[SortedIndex + SpanLength - 1]];
 
     if (Block->bGeometryValid && Block->AreAtlasDependenciesCurrent())
     {
@@ -343,7 +244,7 @@ int32 FUIDrawData::ProcessDrawCacheSpan(int32 SortedIndex, const FDrawCommandLis
 
     for (int32 Offset = 0; Offset < SpanLength; ++Offset)
     {
-        TessellateCommand(Commands[CommandIndex + Offset], CommandList);
+        TessellateCommand(Commands[SortedCommandIndices[SortedIndex + Offset]], CommandList);
     }
 
     CaptureDrawCacheGeometry(Marker, *Block);
@@ -445,11 +346,6 @@ void FUIDrawData::AppendDrawCacheGeometry(const FDrawCacheBlock& Block)
         }
     }
 
-    if (!Block.ShapeInstances.IsEmpty())
-    {
-        bShapeCompatibilityDirty = true;
-    }
-
     for (int32 BatchIndex = 0; BatchIndex < Block.Batches.Size(); ++BatchIndex)
     {
         const FUIDrawBatch& Source = Block.Batches[BatchIndex];
@@ -514,10 +410,7 @@ int32 FUIDrawData::GetStreamBase(const FDrawCacheGeometryMarker& Marker, EUIDraw
 
 void FUIDrawData::TessellateCommand(const FDrawCommand& Command, const FDrawCommandList& CommandList)
 {
-    if (Command.Type != EDrawCommandType::ClipPush && Command.Type != EDrawCommandType::ClipPop)
-    {
-        bFullyReplayedGeometry = false;
-    }
+    bFullyReplayedGeometry = false;
 
     ApplyCommandClip(Command, CommandList);
 
@@ -585,6 +478,16 @@ void FUIDrawData::TessellateCommand(const FDrawCommand& Command, const FDrawComm
             break;
         }
 
+        case EDrawCommandType::CornerWedges:
+        {
+            if (!IsCulledByClip(Command.Bounds))
+            {
+                AddCornerWedges(Command);
+            }
+
+            break;
+        }
+
         case EDrawCommandType::Polyline:
         {
             const TArrayView<const Vector2> Points = CommandList.GetCommandPoints(Command);
@@ -606,12 +509,6 @@ void FUIDrawData::TessellateCommand(const FDrawCommand& Command, const FDrawComm
                 AddConvexPolygon(Points, Command.PackedColor);
             }
 
-            break;
-        }
-
-        case EDrawCommandType::ClipPush:
-        case EDrawCommandType::ClipPop:
-        {
             break;
         }
     }
@@ -773,12 +670,12 @@ void FUIDrawData::AddText(const FDrawCommand& Command, int32 CacheIndex)
     int32 InstanceCount = 0;
     for (const FShapedGlyph& Shaped : ShapedRun.Glyphs)
     {
-        if (!Shaped.Glyph || Shaped.Glyph->AtlasRectangle.IsEmpty())
+        const FGlyph& Glyph = Atlas->GetGlyph(Shaped.Codepoint);
+        if (Glyph.AtlasRectangle.IsEmpty())
         {
             continue;
         }
 
-        const FGlyph& Glyph = *Shaped.Glyph;
         const FRectangle GlyphBounds(IntVector2(PenX + Shaped.Offset + Glyph.BearingX, BaselineY + Glyph.BearingY),
             Glyph.AtlasRectangle.Width, Glyph.AtlasRectangle.Height);
 
@@ -961,7 +858,7 @@ void FUIDrawData::AddRoundedBottomBar(const FDrawCommand& Command)
     GetOrOpenBatch(FUITextureHandle());
 
     const uint32 BaseVertex = static_cast<uint32>(Vertices.Size());
-    const float  FadeWidth  = Math::Min(Command.FadeWidth, BarWidth * 0.5f);
+    const float  FadeWidth  = Math::Min(Command.GetFadeWidth(), BarWidth * 0.5f);
     const float  HalfFringe = FringeWidth * 0.5f;
 
     for (int32 ColumnIndex = 0; ColumnIndex <= ColumnCount; ++ColumnIndex)
@@ -1094,8 +991,8 @@ void FUIDrawData::AddRoundedAccentRing(const FDrawCommand& Command)
 
     const uint32 BaseVertex   = static_cast<uint32>(Vertices.Size());
     const float  HalfFringe   = FringeWidth * 0.5f;
-    const float  FadeFraction = Math::Clamp(Command.FadeFraction, 0.0f, 1.0f);
-    const float  TrailAlpha   = Math::Clamp(Command.TrailAlpha, 0.0f, 1.0f);
+    const float  FadeFraction = Math::Clamp(Command.GetFadeFraction(), 0.0f, 1.0f);
+    const float  TrailAlpha   = Math::Clamp(Command.GetTrailAlpha(), 0.0f, 1.0f);
 
     for (int32 CornerIndex = 0; CornerIndex < 4; ++CornerIndex)
     {
@@ -1720,8 +1617,63 @@ void FUIDrawData::AddSdfRoundedQuad(const FRectangle& Bounds, const FCornerRadii
     Instance.Thickness   = Thickness;
     Instance.ShapeKind   = ShapeKind;
 
-    bShapeCompatibilityDirty = true;
     Batches.Last().IndexCount += 6;
+}
+
+void FUIDrawData::AddCornerWedges(const FDrawCommand& Command)
+{
+    const FRectangle&  Bounds = Command.Bounds;
+    const FCornerRadii Radius = Command.CornerRadius.ClampToBounds(Bounds);
+
+    const float Left   = static_cast<float>(Bounds.Position.X);
+    const float Top    = static_cast<float>(Bounds.Position.Y);
+    const float Right  = static_cast<float>(Bounds.GetRight());
+    const float Bottom = static_cast<float>(Bounds.GetBottom());
+
+    struct FWedge
+    {
+        float   Radius;
+        Vector2 SquareMin;
+        Vector2 Center;
+    };
+
+    const FWedge Wedges[4] =
+    {
+        { Radius.TopLeft,     Vector2(Left, Top),                                         Vector2(Left + Radius.TopLeft, Top + Radius.TopLeft)              },
+        { Radius.TopRight,    Vector2(Right - Radius.TopRight, Top),                      Vector2(Right - Radius.TopRight, Top + Radius.TopRight)           },
+        { Radius.BottomRight, Vector2(Right - Radius.BottomRight, Bottom - Radius.BottomRight), Vector2(Right - Radius.BottomRight, Bottom - Radius.BottomRight) },
+        { Radius.BottomLeft,  Vector2(Left, Bottom - Radius.BottomLeft),                  Vector2(Left + Radius.BottomLeft, Bottom - Radius.BottomLeft)     },
+    };
+
+    for (const FWedge& Wedge : Wedges)
+    {
+        if (Wedge.Radius <= 0.0f)
+        {
+            continue;
+        }
+
+        if (ShapeInstances.Size() >= (MaxVertexCount / 4))
+        {
+            return;
+        }
+
+        GetOrOpenBatch(FUITextureHandle(), EUIDrawBatchKind::Shape);
+
+        FUIShapeInstance& Instance = ShapeInstances.Emplace();
+        Instance.Position    = Wedge.SquareMin;
+        Instance.Color       = Command.PackedColor;
+        Instance.DrawSize    = Vector2(Wedge.Radius, Wedge.Radius);
+        Instance.LocalOrigin = Vector2(0.0f, 0.0f);
+        Instance.RectSize    = Vector2(Wedge.Radius, Wedge.Radius);
+        Instance.RadiusTL    = Wedge.Center.X - Wedge.SquareMin.X;
+        Instance.RadiusTR    = Wedge.Center.Y - Wedge.SquareMin.Y;
+        Instance.RadiusBR    = Wedge.Radius;
+        Instance.RadiusBL    = 0.0f;
+        Instance.Thickness   = 0.0f;
+        Instance.ShapeKind   = ShapeKindWedge;
+
+        Batches.Last().IndexCount += 6;
+    }
 }
 
 FUIDrawBatch& FUIDrawData::GetOrOpenBatch(const FUITextureHandle& Texture, EUIDrawBatchKind Kind)
@@ -1761,58 +1713,4 @@ FUIDrawBatch& FUIDrawData::GetOrOpenBatch(const FUITextureHandle& Texture, EUIDr
     NewBatch.Kind             = Kind;
 
     return NewBatch;
-}
-
-uint64 FUIDrawData::ComputeGeometryHash() const
-{
-    const int32  VertexByteCount = Vertices.Size() * static_cast<int32>(sizeof(FUIVertex));
-    const uint64 VertexHash      = VertexByteCount > 0 ? HashBytes(Vertices.Data(), VertexByteCount) : 0;
-
-    const uint64 IndexHash = Indices.IsEmpty()
-        ? 0
-        : HashBytes(Indices.Data(), Indices.Size() * static_cast<int32>(sizeof(uint32)));
-
-    const uint64 ShapeVertexHash = ShapeInstances.IsEmpty()
-        ? 0
-        : HashBytes(ShapeInstances.Data(), ShapeInstances.Size() * static_cast<int32>(sizeof(FUIShapeInstance)));
-
-    const uint64 TextGlyphHash = TextGlyphInstances.IsEmpty()
-        ? 0
-        : HashBytes(TextGlyphInstances.Data(), TextGlyphInstances.Size() * static_cast<int32>(sizeof(FUITextGlyphInstance)));
-
-    uint64 Hash = 14695981039346656037ull;
-    Hash ^= static_cast<uint64>(Vertices.Size());
-    Hash *= 1099511628211ull;
-    Hash ^= static_cast<uint64>(Indices.Size());
-    Hash *= 1099511628211ull;
-    Hash ^= static_cast<uint64>(ShapeInstances.Size());
-    Hash *= 1099511628211ull;
-    Hash ^= static_cast<uint64>(TextGlyphInstances.Size());
-    Hash *= 1099511628211ull;
-
-    if (!Vertices.IsEmpty())
-    {
-        Hash ^= VertexHash;
-        Hash *= 1099511628211ull;
-    }
-
-    if (!Indices.IsEmpty())
-    {
-        Hash ^= IndexHash;
-        Hash *= 1099511628211ull;
-    }
-
-    if (!ShapeInstances.IsEmpty())
-    {
-        Hash ^= ShapeVertexHash;
-        Hash *= 1099511628211ull;
-    }
-
-    if (!TextGlyphInstances.IsEmpty())
-    {
-        Hash ^= TextGlyphHash;
-        Hash *= 1099511628211ull;
-    }
-
-    return Hash;
 }

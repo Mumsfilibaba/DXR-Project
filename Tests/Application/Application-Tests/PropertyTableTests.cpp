@@ -36,7 +36,7 @@ static TSharedPtr<IFontFace> CreateFont()
 static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRectangle& Bounds)
 {
     Element->PrepareDesiredSize();
-    Element->Tick(Bounds);
+    Element->Arrange(Bounds);
 }
 
 static TSharedPtr<FVisualElement> CreateEditor(const String& Text, const TSharedPtr<IFontFace>& Font)
@@ -467,7 +467,7 @@ bool PropertyTableLayout_Test()
 
     TEST_SECTION("A point in the right column finds the editor under it");
     FElementPath Path;
-    Table->FindChildrenContainingPoint(RotationEditor->GetContentRectangle().GetCenter(), Path);
+    Table->HitTest(RotationEditor->GetContentRectangle().GetCenter(), Path);
 
     TEST_EXPECT(Path.GetElements().Size() >= 2);
     TEST_EXPECT(Path.GetElements().Last() == RotationEditor);

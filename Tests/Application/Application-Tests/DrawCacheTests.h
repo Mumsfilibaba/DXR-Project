@@ -10,3 +10,6 @@ bool DrawCacheMenuHost_Test();
 bool DrawCacheWindowDeferred_Test();
 bool DrawCacheMenuBar_Test();
 bool DrawCacheToolTip_Test();
+bool DrawCacheLayerOrder_Test();
+bool DrawCacheTranslation_Test();
+bool DrawCommandPayload_Test();

@@ -71,12 +71,6 @@ void FEditorViewportSurface::SetLayers(const TSharedPtr<FEditorViewportImage>& I
     }
 }
 
-void FEditorViewportSurface::Tick(const FRectangle& AssignedBounds)
-{
-    SetContentRectangle(AssignedBounds);
-    OnArrange(AssignedBounds);
-}
-
 IntVector2 FEditorViewportSurface::ComputeDesiredSize() const
 {
     return IntVector2(0, 0);
@@ -86,51 +80,36 @@ void FEditorViewportSurface::OnArrange(const FRectangle& AllottedBounds)
 {
     if (Image)
     {
-        Image->Tick(AllottedBounds);
+        Image->Arrange(AllottedBounds);
     }
 
     if (HostViewport)
     {
         HostViewport->SetSize(IntVector2(AllottedBounds.Width, AllottedBounds.Height));
-        HostViewport->Tick(AllottedBounds);
+        HostViewport->Arrange(AllottedBounds);
     }
 
     if (Gizmo)
     {
-        Gizmo->Tick(AllottedBounds);
+        Gizmo->Arrange(AllottedBounds);
     }
 }
 
-void FEditorViewportSurface::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FEditorViewportSurface::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const
 {
-    if (Image)
-    {
-        OutChildren.Add(Image);
-    }
+    return VisitChildList(Visitor, Order, Image, HostViewport, Gizmo);
+}
 
+void FEditorViewportSurface::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+{
     if (HostViewport)
     {
-        OutChildren.Add(HostViewport);
+        HostViewport->HitTest(ClientPosition, OutPath);
     }
 
-    if (Gizmo)
+    if (Gizmo && Gizmo->IsProjected())
     {
-        OutChildren.Add(Gizmo);
-    }
-}
-
-void FEditorViewportSurface::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
-{
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
-    if (HostViewport && HostViewport->GetContentRectangle().EncapsulatesPoint(ClientPosition))
-    {
-        HostViewport->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-    }
-
-    if (Gizmo && Gizmo->IsVisible() && Gizmo->IsProjected() && Gizmo->GetContentRectangle().EncapsulatesPoint(ClientPosition))
-    {
-        Gizmo->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        Gizmo->HitTest(ClientPosition, OutPath);
     }
 }
 
