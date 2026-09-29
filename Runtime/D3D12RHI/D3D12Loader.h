@@ -1,5 +1,6 @@
 #pragma once
-#include "RHI/ShaderCompilerInclude.h"
+#include <Unknwn.h>
+#include <dxc/dxcapi.h>
 #include "D3D12RHI/D3D12Constants.h"
 #if DXGI_1_6
     #include <dxgi1_6.h>

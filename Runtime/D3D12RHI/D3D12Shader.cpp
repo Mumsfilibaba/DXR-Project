@@ -5,7 +5,6 @@
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12RootSignature.h"
 #include "D3D12RHI/D3D12Loader.h"
-#include "RHI/ShaderCompiler.h"
 
 static bool IsShaderResourceView(D3D_SHADER_INPUT_TYPE Type)
 {

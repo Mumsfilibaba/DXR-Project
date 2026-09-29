@@ -9,6 +9,7 @@ ImGuiPluginModule.AddModules({
     "CoreApplication",
     "Application",
     "RHI",
+    "ShaderCompiler",
     "RendererCore",
     "ImGui",
 })

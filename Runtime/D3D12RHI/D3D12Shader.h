@@ -1,7 +1,9 @@
 #pragma once
+#include <Unknwn.h>
+#include <dxc/dxcapi.h>
 #include "RHI/RHIShader.h"
 #include "RHI/RHIResources.h"
-#include "RHI/ShaderCompilerInclude.h"
+#include "Core/Containers/ComPtr.h"
 #include "Core/Templates/Utility/EnumOperators.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12Constants.h"

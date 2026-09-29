@@ -8,7 +8,7 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Tasks/Tasks.h"
 #include "RHI/RHI.h"
-#include "RHI/ShaderCompiler.h"
+#include "ShaderCompiler/ShaderCompiler.h"
 #include "Engine/Resources/Model.h"
 #include "Renderer/Shaders/MaterialBindless.h"
 #include "Renderer/SceneRenderer.h"

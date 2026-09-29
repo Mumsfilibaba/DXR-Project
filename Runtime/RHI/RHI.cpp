@@ -1,7 +1,6 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
-#include "RHI/ShaderCompiler.h"
 #include "RHI/RHIValidation.h"
 
 IMPLEMENT_ENGINE_MODULE(FRHIModule, RHI);

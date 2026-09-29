@@ -30,7 +30,7 @@
 #include <ApplicationRenderer/ApplicationRenderer.h>
 #include <RHI/RHI.h>
 #include <RHI/RHICommandList.h>
-#include <RHI/ShaderCompiler.h>
+#include <ShaderCompiler/ShaderCompiler.h>
 #include <RendererCore/Shaders/ShaderBytecodeCache.h>
 #include <RendererCore/Shaders/ShaderCache.h>
 #include <RendererCore/TextureFactory.h>

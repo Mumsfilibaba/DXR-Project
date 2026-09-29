@@ -14,6 +14,11 @@ if IsPlatformWindows() then
         "RHI",
     })
 
+    -- DXC is used for shader reflection
+    D3D12RHI.AddExternalIncludeDirs({
+        CreateExternalThirdpartyPath("DXC/include"),
+    })
+
     -- The Agility SDK is optional, without it we build against the Windows SDK headers
     if HasD3D12AgilitySDK() then
         D3D12RHI.AddIncludeDirs({

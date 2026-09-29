@@ -24,7 +24,7 @@
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Platform/PlatformConsoleWindow.h"
-#include "RHI/ShaderCompiler.h"
+#include "ShaderCompiler/ShaderCompiler.h"
 #include "Engine/Engine.h"
 #include "Engine/Performance/ProfileRun.h"
 #include "RendererCore/RenderGraph/RenderGraphResourcePool.h"

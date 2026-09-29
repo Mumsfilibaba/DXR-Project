@@ -498,8 +498,9 @@ echo
 START=$(date +%s)
 
 for BACKEND in $BACKENDS; do
-    # Mirrors BuildCompileDefines and BuildSpirvCompileArguments in
-    # Runtime/RHI/ShaderCompiler.cpp. MIN16FLOAT_AVAILABLE follows
+    # Mirrors BuildCompileDefines in Runtime/ShaderCompiler/ShaderCompiler.cpp and
+    # BuildSpirvCompileArguments in Runtime/ShaderCompiler/DXC/DXCShaderCompiler.cpp.
+    # MIN16FLOAT_AVAILABLE follows
     # RHI.ShaderCompiler.MapMin16FloatToFloat, which defaults to true, so the
     # SPIR-V backends map the min16float family onto float.
     BACKEND_ARGS=(

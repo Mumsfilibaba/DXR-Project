@@ -19,7 +19,7 @@
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIResources.h"
-#include "RHI/ShaderCompiler.h"
+#include "ShaderCompiler/ShaderCompiler.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/TextureResourceData.h"
 

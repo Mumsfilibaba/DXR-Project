@@ -3,7 +3,7 @@
 #include "Core/Containers/String.h"
 #include "Core/Templates/TypeTraits.h"
 #include "RHI/RHICore.h"
-#include "RHI/ShaderCompiler.h"
+#include "ShaderCompiler/ShaderCompiler.h"
 
 struct FShaderCompilationEnvironment
 {

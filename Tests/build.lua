@@ -38,6 +38,7 @@ end
 
 AddTarget("RHI-Tests")
 AddTarget("RendererCore-Tests")
+AddTarget("ShaderCompiler-Tests")
 AddTarget("Application-Tests")
 AddTarget("Application-Playground")
 

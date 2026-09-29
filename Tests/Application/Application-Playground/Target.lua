@@ -7,6 +7,7 @@ local PlaygroundModules =
     "Application",
     "ApplicationRenderer",
     "RHI",
+    "ShaderCompiler",
     "RendererCore",
     "NullRHI",
     "VulkanRHI",

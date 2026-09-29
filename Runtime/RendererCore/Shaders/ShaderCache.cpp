@@ -7,7 +7,7 @@
 #include "RendererCore/Shaders/ShaderManifest.h"
 #include "RHI/RHI.h"
 #include "RHI/RHIPipelineStateCache.h"
-#include "RHI/ShaderCompiler.h"
+#include "ShaderCompiler/ShaderCompiler.h"
 
 FShaderCache* FShaderCache::ShaderCache = nullptr;
 

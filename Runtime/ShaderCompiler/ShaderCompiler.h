@@ -1,17 +1,21 @@
 #pragma once
+#include "Core/Containers/Array.h"
+#include "Core/Containers/ArrayView.h"
 #include "Core/Containers/Optional.h"
+#include "Core/Containers/String.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Threading/Atomic.h"
 #include "Core/Time/Timespan.h"
 #include "RHI/RHIShader.h"
-#include "RHI/ShaderCompilerInclude.h"
+
+enum class ERHIType : uint32;
 
 enum class EShaderOutputLanguage : uint8
 {
     Unknown = 0,
 
-    /** DXIL for D3D12RHI */
-    HLSL = 1,
+    /** DXIL for D3D12RHI and NullRHI */
+    DXIL = 1,
 
     /** Metal Shading Language for MetalRHI */
     MSL = 2,
@@ -19,6 +23,17 @@ enum class EShaderOutputLanguage : uint8
     /** SPIR-V for VulkanRHI */
     SPIRV = 3,
 };
+
+NODISCARD constexpr const CHAR* ToString(EShaderOutputLanguage OutputLanguage)
+{
+    switch (OutputLanguage)
+    {
+        case EShaderOutputLanguage::DXIL:  return "DXIL";
+        case EShaderOutputLanguage::MSL:   return "MSL";
+        case EShaderOutputLanguage::SPIRV: return "SPIRV";
+        default:                           return "Unknown";
+    }
+}
 
 struct FShaderDefine
 {
@@ -39,10 +54,12 @@ struct FShaderDefine
 };
 
 struct FShaderCompileInfo;
+class FShaderCompilerBackend;
 
-class RHI_API FShaderCompiler
+class SHADERCOMPILER_API FShaderCompiler
 {
 public:
+    static EShaderOutputLanguage GetOutputLanguageForRHI(ERHIType RHIType);
     static EShaderOutputLanguage GetOutputLanguageBasedOnRHI();
 
     static bool Initialize(const String& InAssetPath);
@@ -65,6 +82,12 @@ public:
 
     NODISCARD uint64 ComputeCompileHash(const String& SourceFile, const FShaderCompileInfo& CompileInfo) const;
 
+    /** @return Returns true if one of the compiler backends can produce the output language */
+    NODISCARD bool IsOutputLanguageSupported(EShaderOutputLanguage OutputLanguage) const;
+
+    /** @return Returns the output languages of every RHI that the current platform supports, and that a backend can produce */
+    NODISCARD TArray<EShaderOutputLanguage> GetSupportedOutputLanguages() const;
+
     void LogCompileStats() const;
 
     NODISCARD int64 GetNumCompiles() const
@@ -81,20 +104,17 @@ private:
     FShaderCompiler(const String& InAssetPath);
     ~FShaderCompiler();
 
-    bool InitializeDXC();
+    bool InitializeBackends();
+    FShaderCompilerBackend* FindBackend(EShaderOutputLanguage OutputLanguage) const;
+    void BuildCompileDefines(const FShaderCompileInfo& CompileInfo, TArray<FShaderDefine>& OutDefines) const;
     bool Compile(const String& ShaderSource, const String& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<String>* OutDependencies);
-    bool ConvertSpirvToMetalShader(const String& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
-    bool DumpContentToFile(const TArray<uint8>& OutByteCode, const String& Filename);
-    String CreateArgString(const TArrayView<LPCWSTR> Args);
+    bool DumpContentToFile(const TArray<uint8>& ByteCode, const String& Filename);
 
-    void*                 DXCLib;
-    DxcCreateInstanceProc DxcCreateInstanceFunc;
-    String                AssetPath;
-    uint32                DXCVersionMajor;
-    uint32                DXCVersionMinor;
-    AtomicInt64           NumCompiles;
-    AtomicInt64           TotalCompileTimeNS;
-    FCriticalSection      DumpCS;
+    TArray<FShaderCompilerBackend*> Backends;
+    String                          AssetPath;
+    AtomicInt64                     NumCompiles;
+    AtomicInt64                     TotalCompileTimeNS;
+    FCriticalSection                DumpCS;
 
     static FShaderCompiler* ShaderCompiler;
 };
@@ -110,7 +130,7 @@ struct FShaderCompileInfo
         , EntryPoint()
     {
     }
-    
+
     FShaderCompileInfo(
         const String&                    InEntryPoint,
         EShaderModel                     InShaderModel,
@@ -125,7 +145,7 @@ struct FShaderCompileInfo
         , EntryPoint(InEntryPoint)
     {
     }
-    
+
     EShaderModel              ShaderModel;
     EShaderStage              ShaderStage;
     EShaderOutputLanguage     OutputLanguage;
