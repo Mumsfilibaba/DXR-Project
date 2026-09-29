@@ -1,11 +1,21 @@
 #include "D3D11RHI/D3D11CommandContext.h"
-#include "D3D11RHI/D3D11StubResources.h"
+#include "D3D11RHI/D3D11Device.h"
+#include "D3D11RHI/D3D11RHI.h"
+#include "D3D11RHI/D3D11SwapChain.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+static UINT GetDepthStencilClearFlags(ID3D11DepthStencilView* View)
+{
+    D3D11_DEPTH_STENCIL_VIEW_DESC ViewDesc;
+    View->GetDesc(&ViewDesc);
+    return D3D11_CLEAR_DEPTH | (IsStencilFormat(ViewDesc.Format) ? D3D11_CLEAR_STENCIL : 0);
+}
 
 FD3D11CommandContext::FD3D11CommandContext(FD3D11Device* InDevice)
     : IRHICommandContext()
     , FD3D11DeviceChild(InDevice)
+    , Annotation(nullptr)
 {
 }
 
@@ -13,7 +23,13 @@ FD3D11CommandContext::~FD3D11CommandContext() = default;
 
 bool FD3D11CommandContext::Initialize()
 {
+    GetD3D11Context()->QueryInterface(IID_PPV_ARGS(&Annotation));
     return true;
+}
+
+ID3D11DeviceContext* FD3D11CommandContext::GetD3D11Context() const
+{
+    return GetDevice()->GetD3D11Context();
 }
 
 void FD3D11CommandContext::BeginFrame()
@@ -46,10 +62,22 @@ void FD3D11CommandContext::QueryTimestamp(FRHIQuery* Query)
 
 void FD3D11CommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const Vector4& ClearColor)
 {
+    CHECK(RenderTargetView != nullptr);
+
+    if (ID3D11RenderTargetView* D3D11View = static_cast<ID3D11RenderTargetView*>(RenderTargetView->GetRHINativeHandle()))
+    {
+        GetD3D11Context()->ClearRenderTargetView(D3D11View, ClearColor.XYZW);
+    }
 }
 
 void FD3D11CommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil)
 {
+    CHECK(DepthStencilView != nullptr);
+
+    if (ID3D11DepthStencilView* D3D11View = static_cast<ID3D11DepthStencilView*>(DepthStencilView->GetRHINativeHandle()))
+    {
+        GetD3D11Context()->ClearDepthStencilView(D3D11View, GetDepthStencilClearFlags(D3D11View), Depth, Stencil);
+    }
 }
 
 void FD3D11CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const Vector4& ClearColor)
@@ -62,6 +90,55 @@ void FD3D11CommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView*
 
 void FD3D11CommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginRenderPassDesc)
 {
+    ID3D11DeviceContext*  D3D11Context  = GetD3D11Context();
+    ID3D11DeviceContext1* D3D11Context1 = GetDevice()->GetD3D11Context1();
+
+    ID3D11RenderTargetView* RenderTargetViews[D3D11_MAX_RENDER_TARGET_COUNT] = {};
+
+    const uint32 NumRenderTargets = Math::Min<uint32>(BeginRenderPassDesc.NumRenderTargets, D3D11_MAX_RENDER_TARGET_COUNT);
+    for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
+    {
+        const FRHIRenderTargetAttachment& CurrentAttachment = BeginRenderPassDesc.RenderTargets[Index];
+        if (!CurrentAttachment.View)
+        {
+            continue;
+        }
+
+        ID3D11RenderTargetView* D3D11View = static_cast<ID3D11RenderTargetView*>(CurrentAttachment.View->GetRHINativeHandle());
+        RenderTargetViews[Index] = D3D11View;
+
+        if (!D3D11View)
+        {
+            continue;
+        }
+
+        if (CurrentAttachment.LoadAction == EAttachmentLoadAction::Clear)
+        {
+            D3D11Context->ClearRenderTargetView(D3D11View, CurrentAttachment.ClearValue.RGBA);
+        }
+        else if (CurrentAttachment.LoadAction == EAttachmentLoadAction::DontCare && D3D11Context1)
+        {
+            D3D11Context1->DiscardView(D3D11View);
+        }
+    }
+
+    const FRHIDepthStencilAttachment& CurrentDSAttachment = BeginRenderPassDesc.DepthStencilAttachment;
+
+    ID3D11DepthStencilView* DepthStencilView = CurrentDSAttachment.View ? static_cast<ID3D11DepthStencilView*>(CurrentDSAttachment.View->GetRHINativeHandle()) : nullptr;
+    if (DepthStencilView)
+    {
+        if (CurrentDSAttachment.LoadAction == EAttachmentLoadAction::Clear)
+        {
+            const UINT ClearFlags = GetDepthStencilClearFlags(DepthStencilView);
+            D3D11Context->ClearDepthStencilView(DepthStencilView, ClearFlags, CurrentDSAttachment.ClearValue.Depth, static_cast<UINT8>(CurrentDSAttachment.ClearValue.Stencil));
+        }
+        else if (CurrentDSAttachment.LoadAction == EAttachmentLoadAction::DontCare && D3D11Context1)
+        {
+            D3D11Context1->DiscardView(DepthStencilView);
+        }
+    }
+
+    D3D11Context->OMSetRenderTargets(NumRenderTargets, RenderTargetViews, DepthStencilView);
 }
 
 void FD3D11CommandContext::EndRenderPass()
@@ -70,10 +147,26 @@ void FD3D11CommandContext::EndRenderPass()
 
 void FD3D11CommandContext::SetViewport(const FViewportRegion& ViewportRegion)
 {
+    D3D11_VIEWPORT Viewport = {};
+    Viewport.Width    = ViewportRegion.Width;
+    Viewport.Height   = ViewportRegion.Height;
+    Viewport.TopLeftX = ViewportRegion.PositionX;
+    Viewport.TopLeftY = ViewportRegion.PositionY;
+    Viewport.MaxDepth = ViewportRegion.MaxDepth;
+    Viewport.MinDepth = ViewportRegion.MinDepth;
+
+    GetD3D11Context()->RSSetViewports(1, &Viewport);
 }
 
 void FD3D11CommandContext::SetScissorRect(const FScissorRegion& ScissorRegion)
 {
+    D3D11_RECT ScissorRect = {};
+    ScissorRect.left   = LONG(ScissorRegion.PositionX);
+    ScissorRect.right  = LONG(ScissorRegion.PositionX) + LONG(ScissorRegion.Width);
+    ScissorRect.top    = LONG(ScissorRegion.PositionY);
+    ScissorRect.bottom = LONG(ScissorRegion.PositionY) + LONG(ScissorRegion.Height);
+
+    GetD3D11Context()->RSSetScissorRects(1, &ScissorRect);
 }
 
 void FD3D11CommandContext::SetBlendFactor(const Vector4& Color)
@@ -234,43 +327,55 @@ void FD3D11CommandContext::AcquireNextBackBuffer(FRHISwapChain* SwapChain)
 
 void FD3D11CommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync)
 {
+    FD3D11SwapChainRHI* D3D11SwapChain = FD3D11DeviceRHI::ResourceCast(SwapChain);
+    D3D11SwapChain->Present(bVerticalSync);
 }
 
 void FD3D11CommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace)
 {
-    if (FD3D11StubSwapChainRHI* StubSwapChain = static_cast<FD3D11StubSwapChainRHI*>(SwapChain))
-    {
-        StubSwapChain->Resize(Width, Height, Format);
-    }
+    FD3D11SwapChainRHI* D3D11SwapChain = FD3D11DeviceRHI::ResourceCast(SwapChain);
+    D3D11SwapChain->Resize(Width, Height, Format, ColorSpace);
 }
 
 void FD3D11CommandContext::SetSwapChainHDRMetadata(FRHISwapChain* SwapChain, const FRHIHDRMetadata& Metadata)
 {
-    if (FD3D11StubSwapChainRHI* StubSwapChain = static_cast<FD3D11StubSwapChainRHI*>(SwapChain))
-    {
-        StubSwapChain->SetHDRMetadata(Metadata);
-    }
+    FD3D11SwapChainRHI* D3D11SwapChain = FD3D11DeviceRHI::ResourceCast(SwapChain);
+    D3D11SwapChain->SetHDRMetadata(Metadata);
 }
 
 void FD3D11CommandContext::PushEvent(const StringView& Name)
 {
+#if D3D11_ENABLE_ANNOTATIONS
+    if (Annotation)
+    {
+        Annotation->BeginEvent(*CharToWide(Name));
+    }
+#endif
 }
 
 void FD3D11CommandContext::PopEvent()
 {
+#if D3D11_ENABLE_ANNOTATIONS
+    if (Annotation)
+    {
+        Annotation->EndEvent();
+    }
+#endif
 }
 
 void FD3D11CommandContext::ClearState()
 {
+    GetD3D11Context()->ClearState();
 }
 
 void FD3D11CommandContext::Flush()
 {
+    GetD3D11Context()->Flush();
 }
 
 void* FD3D11CommandContext::GetRHINativeCommandList()
 {
-    return nullptr;
+    return GetD3D11Context();
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

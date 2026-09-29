@@ -125,13 +125,6 @@ public:
     virtual void SetDebugName(const String& InDebugName) override final { DebugName = InDebugName; }
     virtual void GetDebugName(String& OutDebugName) const override final { OutDebugName = DebugName; }
 
-    void UpdateSwapChainTexture(EFormat InFormat, uint32 InWidth, uint32 InHeight)
-    {
-        Desc.Format   = InFormat;
-        Desc.Extent.X = static_cast<int32>(InWidth);
-        Desc.Extent.Y = static_cast<int32>(InHeight);
-    }
-
 private:
     TSharedRef<FD3D11StubShaderResourceViewRHI>  ShaderResourceView;
     TSharedRef<FD3D11StubUnorderedAccessViewRHI> UnorderedAccessView;
@@ -151,91 +144,6 @@ struct FD3D11StubSamplerStateRHI : public FRHISamplerState
 
     virtual void* GetRHINativeSampler() const override final { return nullptr; }
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
-};
-
-class FD3D11StubSwapChainRHI : public FRHISwapChain
-{
-public:
-    FD3D11StubSwapChainRHI(const FRHISwapChainDesc& InSwapChainDesc)
-        : FRHISwapChain(InSwapChainDesc)
-    {
-        if (Desc.ColorSpace == EColorSpace::Unknown)
-        {
-            Desc.ColorSpace = EColorSpace::RGB_Full_G22_None_P709;
-        }
-
-        if (Desc.ColorFormat == EFormat::Unknown)
-        {
-            Desc.ColorFormat = EFormat::R8G8B8A8_Unorm;
-        }
-
-        AllocateBackBuffer();
-    }
-
-    virtual ~FD3D11StubSwapChainRHI();
-
-    virtual void* GetRHINativeHandle()                                   const override final { return nullptr; }
-    virtual void* GetRHINativeResourceFromIndex(uint32 Index)            const override final { return nullptr; }
-    virtual void* GetRHINativeRenderTargetViewFromIndex(uint32 Index)    const override final { return nullptr; }
-    virtual void* GetRHINativeUnorderedAccessViewFromIndex(uint32 Index) const override final { return nullptr; }
-    virtual void* GetRHINativeShaderResourceViewFromIndex(uint32 Index)  const override final { return nullptr; }
-
-    virtual FRHITexture*             GetBackBuffer()          const override final { return BackBuffer.Get(); }
-    virtual FRHIRenderTargetView*    GetRenderTargetView()    const override final { return BackBuffer ? BackBuffer->GetRenderTargetView() : nullptr; }
-    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return BackBuffer ? BackBuffer->GetUnorderedAccessView() : nullptr; }
-    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final { return BackBuffer ? BackBuffer->GetShaderResourceView() : nullptr; }
-    virtual uint32                   GetNumResources()        const override final { return 1; }
-
-    virtual bool IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const override final { return Format != EFormat::Unknown && ColorSpace != EColorSpace::Unknown; }
-    virtual bool QueryDisplayHDRInfo(FRHIDisplayHDRInfo& OutInfo) const override final { return false; }
-
-    void Resize(uint32 InWidth, uint32 InHeight, EFormat NewFormat)
-    {
-        Desc.Width  = static_cast<uint16>(InWidth  > 0 ? InWidth  : Desc.Width);
-        Desc.Height = static_cast<uint16>(InHeight > 0 ? InHeight : Desc.Height);
-
-        if (NewFormat != EFormat::Unknown)
-        {
-            Desc.ColorFormat = NewFormat;
-        }
-
-        AllocateBackBuffer();
-    }
-
-    void SetHDRMetadata(const FRHIHDRMetadata& Metadata)
-    {
-        Desc.HDRMetadata = Metadata;
-    }
-
-private:
-    void AllocateBackBuffer()
-    {
-        if (BackBuffer)
-        {
-            BackBuffer->UpdateSwapChainTexture(Desc.ColorFormat, Desc.Width, Desc.Height);
-            return;
-        }
-
-        ETextureUsageFlags UsageFlags = ETextureUsageFlags::Presentable;
-        if (Desc.IsRenderTarget())
-        {
-            UsageFlags |= ETextureUsageFlags::RenderTarget;
-        }
-
-        if (Desc.IsUnorderedAccess())
-        {
-            UsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
-        }
-
-        if (Desc.IsShaderResource())
-        {
-            UsageFlags |= ETextureUsageFlags::ShaderResourceTexture;
-        }
-
-        BackBuffer = new FD3D11StubTextureRHI(FRHITextureDesc::CreateTexture2D(Desc.ColorFormat, Desc.Width, Desc.Height, 1, 1, UsageFlags));
-    }
-
-    TSharedRef<FD3D11StubTextureRHI> BackBuffer;
 };
 
 struct FD3D11StubQueryRHI : public FRHIQuery

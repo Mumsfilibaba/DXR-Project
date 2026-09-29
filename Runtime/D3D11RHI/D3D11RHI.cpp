@@ -1,7 +1,11 @@
 #include "Core/Containers/UniquePtr.h"
+#include "Core/Tasks/Tasks.h"
 #include "D3D11RHI/D3D11RHI.h"
+#include "D3D11RHI/D3D11Device.h"
+#include "D3D11RHI/D3D11DeviceDebug.h"
 #include "D3D11RHI/D3D11Loader.h"
 #include "D3D11RHI/D3D11StubResources.h"
+#include "D3D11RHI/D3D11SwapChain.h"
 
 IMPLEMENT_ENGINE_MODULE(FD3D11ModuleRHI, D3D11RHI);
 
@@ -22,6 +26,8 @@ FRHIDevice* FD3D11ModuleRHI::CreateDevice()
 
 FD3D11DeviceRHI::FD3D11DeviceRHI()
     : FRHIDevice()
+    , Adapter(nullptr)
+    , Device(nullptr)
     , CommandContext(nullptr)
     , FrameNumber(0)
 {
@@ -33,7 +39,22 @@ FD3D11DeviceRHI::FD3D11DeviceRHI()
 
 FD3D11DeviceRHI::~FD3D11DeviceRHI()
 {
+    if (CommandContext)
+    {
+        CommandContext->ClearState();
+        CommandContext->Flush();
+    }
+
     SAFE_DELETE(CommandContext);
+
+    const bool bDebugLayerEnabled = Adapter ? Adapter->IsDebugLayerEnabled() : false;
+    SAFE_DELETE(Device);
+    SAFE_DELETE(Adapter);
+
+    if (bDebugLayerEnabled)
+    {
+        D3D11Debug::ReportLiveDXGIObjects();
+    }
 
     D3D11::Release();
 
@@ -45,12 +66,25 @@ FD3D11DeviceRHI::~FD3D11DeviceRHI()
 
 bool FD3D11DeviceRHI::Initialize()
 {
+    // Load Library and Function-Pointers etc.
     if (!D3D11::Initialize())
     {
         return false;
     }
 
-    CommandContext = new FD3D11CommandContext(nullptr);
+    Adapter = new FD3D11Adapter();
+    if (!Adapter->Initialize())
+    {
+        return false;
+    }
+
+    Device = new FD3D11Device(Adapter);
+    if (!Device->Initialize())
+    {
+        return false;
+    }
+
+    CommandContext = new FD3D11CommandContext(Device);
     if (!CommandContext->Initialize())
     {
         return false;
@@ -67,6 +101,7 @@ void FD3D11DeviceRHI::BeginFrame()
 void FD3D11DeviceRHI::EndFrame()
 {
     CommandContext->EndFrame();
+    Device->FlushDebugMessages();
     ++FrameNumber;
 }
 
@@ -87,7 +122,26 @@ FRHISamplerState* FD3D11DeviceRHI::CreateSamplerState(const FRHISamplerStateDesc
 
 FRHISwapChain* FD3D11DeviceRHI::CreateSwapChain(const FRHISwapChainDesc& InSwapChainDesc)
 {
-    return new FD3D11StubSwapChainRHI(InSwapChainDesc);
+    CHECK(InSwapChainDesc.WindowHandle != nullptr);
+
+    if (!Tasks::IsInRHIThread())
+    {
+        FRHISwapChain* NewSwapChain = nullptr;
+        Tasks::LaunchOnRHIThread("D3D11CreateSwapChain", [this, &NewSwapChain, &InSwapChainDesc]()
+        {
+            NewSwapChain = CreateSwapChain(InSwapChainDesc);
+        }).Wait();
+
+        return NewSwapChain;
+    }
+
+    FD3D11SwapChainRHIRef NewSwapChain = new FD3D11SwapChainRHI(Device, CommandContext, InSwapChainDesc);
+    if (!NewSwapChain->Initialize())
+    {
+        return nullptr;
+    }
+
+    return NewSwapChain.ReleaseOwnership();
 }
 
 FRHIQuery* FD3D11DeviceRHI::CreateQuery(EQueryType InQueryType)
@@ -187,20 +241,72 @@ IRHICommandContext* FD3D11DeviceRHI::ObtainCommandContext()
 
 bool FD3D11DeviceRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const
 {
-    OutMemoryInfo              = FRHIVideoMemoryInfo();
+    if (!Adapter)
+    {
+        return false;
+    }
+
+    const DXGI_MEMORY_SEGMENT_GROUP MemoryGroup = MemoryType == EVideoMemoryType::Local ?
+        DXGI_MEMORY_SEGMENT_GROUP_LOCAL :
+        DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL;
+
+    DXGI_QUERY_VIDEO_MEMORY_INFO VideoMemoryInfo;
+    HRESULT hr = Adapter->GetDXGIAdapter3()->QueryVideoMemoryInfo(0, MemoryGroup, &VideoMemoryInfo);
+    if (FAILED(hr))
+    {
+        D3D11_ERROR("[FD3D11DeviceRHI] QueryVideoMemoryInfo failed");
+        return false;
+    }
+
     OutMemoryInfo.MemoryType   = MemoryType;
-    return false;
+    OutMemoryInfo.MemoryUsage  = VideoMemoryInfo.CurrentUsage;
+    OutMemoryInfo.MemoryBudget = VideoMemoryInfo.Budget;
+    return true;
 }
 
 bool FD3D11DeviceRHI::QueryUAVFormatSupport(EFormat Format) const
 {
+    ID3D11Device* D3D11Device = Device->GetD3D11Device();
+
+    D3D11_FEATURE_DATA_D3D11_OPTIONS2 FeatureData = {};
+    if (SUCCEEDED(D3D11Device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS2, &FeatureData, sizeof(FeatureData))))
+    {
+        if (FeatureData.TypedUAVLoadAdditionalFormats)
+        {
+            D3D11_FEATURE_DATA_FORMAT_SUPPORT2 FormatSupport = {};
+            FormatSupport.InFormat = ConvertFormat(Format);
+
+            const HRESULT Result = D3D11Device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT2, &FormatSupport, sizeof(FormatSupport));
+            if (FAILED(Result) || (FormatSupport.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_LOAD) == 0)
+            {
+                return false;
+            }
+        }
+    }
+
     return true;
 }
 
 bool FD3D11DeviceRHI::QuerySupportedSampleCounts(EFormat Format, uint32& OutSampleCounts) const
 {
-    OutSampleCounts = RHI_SAMPLE_COUNT_1 | RHI_SAMPLE_COUNT_2 | RHI_SAMPLE_COUNT_4 | RHI_SAMPLE_COUNT_8;
-    return true;
+    OutSampleCounts = 0;
+
+    const DXGI_FORMAT DxgiFormat = ConvertFormat(Format);
+    if (DxgiFormat == DXGI_FORMAT_UNKNOWN)
+    {
+        return false;
+    }
+
+    for (uint32 SampleCount = 1; SampleCount <= D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT; SampleCount <<= 1)
+    {
+        uint32 Quality = 0;
+        if (Device->QueryMultisampleQuality(DxgiFormat, SampleCount, Quality))
+        {
+            OutSampleCounts |= SampleCount;
+        }
+    }
+
+    return OutSampleCounts != 0;
 }
 
 bool FD3D11DeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode)
@@ -222,17 +328,20 @@ void FD3D11DeviceRHI::EnqueueResourceDeletion(FRHIResource* Resource)
 
 void* FD3D11DeviceRHI::GetRHINativeAdapter()
 {
-    return nullptr;
+    CHECK(Adapter != nullptr);
+    return reinterpret_cast<void*>(Adapter->GetDXGIAdapter());
 }
 
 void* FD3D11DeviceRHI::GetRHINativeDevice()
 {
-    return nullptr;
+    CHECK(Device != nullptr);
+    return reinterpret_cast<void*>(Device->GetD3D11Device());
 }
 
 String FD3D11DeviceRHI::GetAdapterName() const
 {
-    return String("D3D11 Adapter");
+    CHECK(Adapter != nullptr);
+    return Adapter->GetDescription();
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -78,6 +78,8 @@ public:
 
     virtual void* GetRHINativeCommandList() override final;
 
+    ID3D11DeviceContext* GetD3D11Context() const;
+
     // -------------------------------------------------------------------------------------------
     // IRHICommandContext interface that D3D11 can never support
     // -------------------------------------------------------------------------------------------
@@ -106,4 +108,7 @@ public:
     virtual void DispatchRaysIndirect(FRHIShaderBindingTable*, FRHIBuffer*, uint64) override final { }
     virtual void BuildOpacityMicromap(FRHIOpacityMicromap*, const FRHIOpacityMicromapBuildDesc&) override final { }
     virtual void ExecuteIndirectRayTracingAccelerationStructureOperations(const FRHIRayTracingAccelerationStructureOperationDesc*, uint32) override final { }
+
+private:
+    TComPtr<ID3DUserDefinedAnnotation> Annotation;
 };

@@ -1,5 +1,6 @@
 #include "RHI/RHI.h"
 #include "D3D11RHI/D3D11RHI.h"
+#include "D3D11RHI/D3D11Device.h"
 #include "D3D11RHI/D3D11Capabilities.h"
 
 D3D11RHI_API D3D_FEATURE_LEVEL GD3D11FeatureLevel                         = D3D_FEATURE_LEVEL_11_0;
@@ -36,6 +37,16 @@ void DumpD3D11Capabilities()
 
 bool FD3D11DeviceRHI::InitializeDeviceFeatureSupport()
 {
+    // -------------------------------------------------------------------------------------------
+    // D3D11 Specific Features
+    // -------------------------------------------------------------------------------------------
+
+    GD3D11FeatureLevel                         = Device->GetFeatureLevel();
+    GD3D11SupportsFences                       = Device->GetD3D11Device5() != nullptr && Device->GetD3D11Context4() != nullptr;
+    GD3D11SupportsUAVsInAllStages              = GD3D11FeatureLevel >= D3D_FEATURE_LEVEL_11_1;
+    GD3D11SupportsPartialConstantBufferUpdates = Device->GetD3D11Context1() != nullptr;
+    GD3D11MaxUnorderedAccessViews              = GD3D11SupportsUAVsInAllStages ? D3D11_1_UAV_SLOT_COUNT : D3D11_PS_CS_UAV_REGISTER_COUNT;
+
     // -------------------------------------------------------------------------------------------
     // Swap-Chain Defaults
     // -------------------------------------------------------------------------------------------

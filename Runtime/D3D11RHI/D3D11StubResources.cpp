@@ -14,8 +14,6 @@ FD3D11StubTextureRHI::~FD3D11StubTextureRHI() = default;
 
 FD3D11StubSamplerStateRHI::~FD3D11StubSamplerStateRHI() = default;
 
-FD3D11StubSwapChainRHI::~FD3D11StubSwapChainRHI() = default;
-
 FD3D11StubQueryRHI::~FD3D11StubQueryRHI() = default;
 
 FD3D11StubInputLayoutRHI::~FD3D11StubInputLayoutRHI() = default;

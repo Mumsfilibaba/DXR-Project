@@ -3,6 +3,9 @@
 #include "D3D11RHI/D3D11CommandContext.h"
 #include "D3D11RHI/D3D11TypeTraits.h"
 
+class FD3D11Adapter;
+class FD3D11Device;
+
 struct D3D11RHI_API FD3D11ModuleRHI final : public FRHIModule
 {
     virtual FRHIDevice* CreateDevice() override final;
@@ -78,6 +81,16 @@ public:
 
     virtual String   GetAdapterName() const override final;
     virtual ERHIType GetRHIType()     const override final { return ERHIType::D3D11; }
+
+    FD3D11Adapter* GetAdapter() const
+    {
+        return Adapter;
+    }
+
+    FD3D11Device* GetDevice() const
+    {
+        return Device;
+    }
 
     FD3D11CommandContext* GetCommandContext() const
     {
@@ -170,6 +183,8 @@ public:
 private:
     bool InitializeDeviceFeatureSupport();
 
+    FD3D11Adapter*        Adapter;
+    FD3D11Device*         Device;
     FD3D11CommandContext* CommandContext;
     uint64                FrameNumber;
 
