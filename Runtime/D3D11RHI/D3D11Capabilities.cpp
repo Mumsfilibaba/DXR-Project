@@ -61,6 +61,7 @@ bool FD3D11DeviceRHI::InitializeDeviceFeatureSupport()
     RHI::bSupportsTessellation                          = true;
     RHI::MaxPatchControlPoints                          = RHI_MAX_PATCH_CONTROL_POINTS;
     RHI::bSupportRenderTargetArrayIndexFromVertexShader = false;
+    RHI::MaxShaderModel                                 = EShaderModel::SM_5_0;
     RHI::bSupportsBindless                              = false;
 
     // -------------------------------------------------------------------------------------------

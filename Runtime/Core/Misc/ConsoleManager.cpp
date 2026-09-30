@@ -6,6 +6,7 @@
 #include "Core/Misc/CommandLine.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "Core/Templates/TypeTraits/EqualTraits.h"
+#include "Core/Threading/ScopedLock.h"
 
 static FAutoConsoleCommand CCmdClearHistory(
     "ClearHistory",
@@ -1364,6 +1365,8 @@ FConsoleManager::FConsoleManager()
     : HistoryLength(CONSOLE_DEFAULT_HISTORY_LENGTH)
     , History()
     , ConsoleObjects()
+    , QueuedCommands()
+    , QueuedCommandsCS()
 {
 }
 
@@ -1715,6 +1718,28 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const String& 
     }
 }
 
+void FConsoleManager::EnqueueCommand(const String& Command)
+{
+    TScopedLock Lock(QueuedCommandsCS);
+    QueuedCommands.Emplace(Command);
+}
+
+void FConsoleManager::ExecuteQueuedCommands(IOutputDevice& OutputDevice)
+{
+    TArray<String> Commands;
+
+    {
+        TScopedLock Lock(QueuedCommandsCS);
+        Commands = ::Move(QueuedCommands);
+        QueuedCommands.Clear();
+    }
+
+    for (const String& Command : Commands)
+    {
+        ExecuteCommand(OutputDevice, Command);
+    }
+}
+
 static bool ApplyCommandLineOverride(const CHAR* InName, IConsoleVariable* Variable)
 {
     StringView CommandLineValue;
@@ -1764,7 +1789,7 @@ IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObje
     return Result;
 }
 
-void FConsoleManager::LoadConsoleVariablesFromCommandLine()
+void FConsoleManager::LoadFromCommandLine()
 {
     for (const auto& Pair : ConsoleObjects)
     {
@@ -1772,6 +1797,32 @@ void FConsoleManager::LoadConsoleVariablesFromCommandLine()
         {
             ApplyCommandLineOverride(*Pair.First, Variable);
         }
+    }
+
+    StringView Commands;
+    if (!CommandLine::FindOption("ExecuteCommands", Commands))
+    {
+        return;
+    }
+
+    int32 Start = 0;
+    while (Start < Commands.Length())
+    {
+        int32 End = Start;
+        while (End < Commands.Length() && Commands[End] != ';')
+        {
+            ++End;
+        }
+
+        StringView Command(Commands.Data() + Start, End - Start);
+        Command.TrimInline();
+
+        if (!Command.IsEmpty())
+        {
+            EnqueueCommand(String(Command));
+        }
+
+        Start = End + 1;
     }
 }
 

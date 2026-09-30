@@ -26,7 +26,7 @@ SHADER_CONSTANT_BLOCK_END
 // Selection Mask
 // ------------------------------------------------------------------------------------------------
 
-float SelectionMaskPS(float2 /* TexCoord */ : TEXCOORD0, float4 Position : SV_Position) : SV_Target0
+float SelectionMaskPS(float2 TexCoord : TEXCOORD0, float4 Position : SV_Position) : SV_Target0
 {
     const uint2 Pixel = uint2(Position.xy);
 
@@ -56,7 +56,7 @@ float SelectionMaskPS(float2 /* TexCoord */ : TEXCOORD0, float4 Position : SV_Po
 // Dilate (Max)
 // ------------------------------------------------------------------------------------------------
 
-float DilateMaxPS(float2 /* TexCoord */ : TEXCOORD0, float4 Position : SV_Position) : SV_Target0
+float DilateMaxPS(float2 TexCoord : TEXCOORD0, float4 Position : SV_Position) : SV_Target0
 {
     const int2 Pixel = int2(Position.xy);
 
@@ -80,7 +80,7 @@ float DilateMaxPS(float2 /* TexCoord */ : TEXCOORD0, float4 Position : SV_Positi
 // Erode (Min)
 // ------------------------------------------------------------------------------------------------
 
-float ErodeMinPS(float2 /* TexCoord */ : TEXCOORD0, float4 Position : SV_Position) : SV_Target0
+float ErodeMinPS(float2 TexCoord : TEXCOORD0, float4 Position : SV_Position) : SV_Target0
 {
     const int2 Pixel = int2(Position.xy);
 
@@ -104,7 +104,7 @@ float ErodeMinPS(float2 /* TexCoord */ : TEXCOORD0, float4 Position : SV_Positio
 // Selection Ring
 // ------------------------------------------------------------------------------------------------
 
-float SelectionRingPS(float2 /* TexCoord */ : TEXCOORD0, float4 Position : SV_Position) : SV_Target0
+float SelectionRingPS(float2 TexCoord : TEXCOORD0, float4 Position : SV_Position) : SV_Target0
 {
     const float2 UV = (Position.xy + 0.5f) * Constants.InvViewport;
 

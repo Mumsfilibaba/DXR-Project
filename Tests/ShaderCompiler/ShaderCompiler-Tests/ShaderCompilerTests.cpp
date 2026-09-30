@@ -55,6 +55,10 @@ static bool HasExpectedSignature(const TArray<uint8>& ByteCode, EShaderOutputLan
         {
             return ContainerHasPart(ByteCode, MakeFourCC('D', 'X', 'I', 'L'));
         }
+        case EShaderOutputLanguage::DXBC:
+        {
+            return ContainerHasPart(ByteCode, MakeFourCC('S', 'H', 'E', 'X')) && !ContainerHasPart(ByteCode, MakeFourCC('D', 'X', 'I', 'L'));
+        }
         case EShaderOutputLanguage::SPIRV:
         {
             return ReadUInt32(ByteCode, 0) == 0x07230203u;
@@ -76,6 +80,7 @@ bool ShaderCompilerOutputLanguages_Test()
     TEST_BEGIN();
 
     TEST_SECTION("Every RHI maps to the output language it consumes");
+    TEST_EXPECT_EQ(FShaderCompiler::GetOutputLanguageForRHI(ERHIType::D3D11), EShaderOutputLanguage::DXBC);
     TEST_EXPECT_EQ(FShaderCompiler::GetOutputLanguageForRHI(ERHIType::D3D12), EShaderOutputLanguage::DXIL);
     TEST_EXPECT_EQ(FShaderCompiler::GetOutputLanguageForRHI(ERHIType::Null), EShaderOutputLanguage::DXIL);
     TEST_EXPECT_EQ(FShaderCompiler::GetOutputLanguageForRHI(ERHIType::Vulkan), EShaderOutputLanguage::SPIRV);
@@ -100,10 +105,12 @@ bool ShaderCompilerOutputLanguages_Test()
 
 #if PLATFORM_WINDOWS
     TEST_EXPECT(Languages.Contains(EShaderOutputLanguage::DXIL));
+    TEST_EXPECT(Languages.Contains(EShaderOutputLanguage::DXBC));
     TEST_EXPECT(Languages.Contains(EShaderOutputLanguage::SPIRV));
     TEST_EXPECT(!Languages.Contains(EShaderOutputLanguage::MSL));
 #elif PLATFORM_MACOS
     TEST_EXPECT(Languages.Contains(EShaderOutputLanguage::MSL));
+    TEST_EXPECT(!Languages.Contains(EShaderOutputLanguage::DXBC));
 #endif
 
     TEST_END();
@@ -172,6 +179,42 @@ bool ShaderCompilerCompileFromSource_Test()
         TArray<uint8> ByteCode;
         TEST_EXPECT(FShaderCompiler::Get().CompileFromSource(Source, CompileInfo, ByteCode));
         TEST_EXPECT(HasExpectedSignature(ByteCode, OutputLanguage));
+    }
+
+    TEST_END();
+}
+
+bool ShaderCompilerCompileFailure_Test()
+{
+    TEST_BEGIN();
+
+    const String BrokenSource = "float4 Main() : SV_Target { return MissingValue; }\n";
+    const String ValidSource  = "float4 Main() : SV_Target { return float4(1.0, 0.0, 0.0, 1.0); }\n";
+
+    for (EShaderOutputLanguage OutputLanguage : FShaderCompiler::Get().GetSupportedOutputLanguages())
+    {
+        TEST_SECTION(ToString(OutputLanguage));
+
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, TArrayView<FShaderDefine>(), OutputLanguage);
+
+        TArray<uint8> ByteCode;
+        TEST_EXPECT(!FShaderCompiler::Get().CompileFromSource(BrokenSource, CompileInfo, ByteCode));
+        TEST_EXPECT(ByteCode.IsEmpty());
+    }
+
+    if (FShaderCompiler::Get().IsOutputLanguageSupported(EShaderOutputLanguage::DXBC))
+    {
+        TEST_SECTION("DXBC is limited to what Shader Model 5.0 can express");
+
+        TArray<uint8> ByteCode;
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel, TArrayView<FShaderDefine>(), EShaderOutputLanguage::DXBC);
+        TEST_EXPECT(FShaderCompiler::Get().CompileFromSource(ValidSource, CompileInfo, ByteCode));
+
+        CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_6, EShaderStage::Pixel, TArrayView<FShaderDefine>(), EShaderOutputLanguage::DXBC);
+        TEST_EXPECT(!FShaderCompiler::Get().CompileFromSource(ValidSource, CompileInfo, ByteCode));
+
+        CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::RayGen, TArrayView<FShaderDefine>(), EShaderOutputLanguage::DXBC);
+        TEST_EXPECT(!FShaderCompiler::Get().CompileFromSource(ValidSource, CompileInfo, ByteCode));
     }
 
     TEST_END();

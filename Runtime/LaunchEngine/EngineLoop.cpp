@@ -50,7 +50,6 @@ static TAutoConsoleVariable<int32> CVarExitAfterFrames(
     "Requests exit once this many frames have been submitted, which is what makes a headless boot check possible. Zero runs until closed",
     0,
     EConsoleVariableFlags::Default);
-
 struct FDebuggerOutputDevice : public IOutputDevice
 {
     virtual void Log(const String& Message)
@@ -219,7 +218,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         }
     }
 
-    FConsoleManager::Get().LoadConsoleVariablesFromCommandLine();
+    FConsoleManager::Get().LoadFromCommandLine();
 
     {
         TRACE_BOOT_SCOPE("ThreadManager");
@@ -534,6 +533,8 @@ void FEngineLoop::Tick()
     FFrameProfiler::Get().Tick();
 
     ++FrameCounter;
+
+    FConsoleManager::Get().ExecuteQueuedCommands(*FOutputDeviceLogger::Get());
 
     FProfileRun::Tick();
 

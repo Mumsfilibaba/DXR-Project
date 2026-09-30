@@ -3,12 +3,15 @@
 #include "Core/Filesystem/File.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/Debug.h"
 #include "Core/Threading/ScopedLock.h"
 #include "RHI/RHI.h"
 #include "ShaderCompiler/ShaderCompiler.h"
 #include "ShaderCompiler/ShaderCompilerBackend.h"
 #include "ShaderCompiler/ShaderCompilerStats.h"
+#include "ShaderCompiler/ShaderPreprocessor.h"
 #include "ShaderCompiler/DXC/DXCShaderCompiler.h"
+#include "ShaderCompiler/FXC/FXCShaderCompiler.h"
 
 IMPLEMENT_ENGINE_MODULE(IModule, ShaderCompiler);
 
@@ -27,6 +30,11 @@ static TAutoConsoleVariable<bool> CVarMapMin16FloatToFloat(
     "Map the min16float type family to full-precision float on non-HLSL backends (works around DXC's SPIR-V "
     "RelaxedPrecision codegen bug). Disable to keep native min-precision types (also sets MIN16FLOAT_AVAILABLE).",
     true);
+
+static TAutoConsoleVariable<String> CVarDumpPreprocessedDir(
+    "RHI.ShaderCompiler.DumpPreprocessedDir",
+    "When set, every shader is written to this directory after preprocessing and translation, with the defines it was compiled with",
+    "");
 
 static FAutoConsoleCommand CCmdDumpShaderCompileStats(
     "RHI.DumpShaderCompileStats",
@@ -119,6 +127,21 @@ bool FShaderCompiler::InitializeBackends()
     }
 
     Backends.Add(DXCBackend);
+
+#if PLATFORM_WINDOWS
+    // FXC is optional, without it only DXBC (D3D11RHI) becomes unavailable
+    FFXCShaderCompiler* FXCBackend = new FFXCShaderCompiler();
+    if (FXCBackend->Initialize())
+    {
+        Backends.Add(FXCBackend);
+    }
+    else
+    {
+        LOG_WARNING("[FShaderCompiler]: 'd3dcompiler_47' is not available, DXBC output is disabled");
+        delete FXCBackend;
+    }
+#endif
+
     return true;
 }
 
@@ -141,7 +164,7 @@ EShaderOutputLanguage FShaderCompiler::GetOutputLanguageForRHI(ERHIType RHIType)
     {
         case ERHIType::Metal:  return EShaderOutputLanguage::MSL;
         case ERHIType::Vulkan: return EShaderOutputLanguage::SPIRV;
-        case ERHIType::D3D11:
+        case ERHIType::D3D11:  return EShaderOutputLanguage::DXBC;
         case ERHIType::D3D12:
         case ERHIType::Null:
         default:               return EShaderOutputLanguage::DXIL;
@@ -187,12 +210,14 @@ void FShaderCompiler::BuildCompileDefines(const FShaderCompileInfo& CompileInfo,
     OutDefines.Emplace("SHADER_BACKEND_D3D12", "(1)");
     OutDefines.Emplace("SHADER_BACKEND_VULKAN", "(2)");
     OutDefines.Emplace("SHADER_BACKEND_METAL", "(3)");
+    OutDefines.Emplace("SHADER_BACKEND_D3D11", "(4)");
 
     switch (CompileInfo.OutputLanguage)
     {
         case EShaderOutputLanguage::DXIL:  OutDefines.Emplace("SHADER_BACKEND", "SHADER_BACKEND_D3D12");  break;
         case EShaderOutputLanguage::MSL:   OutDefines.Emplace("SHADER_BACKEND", "SHADER_BACKEND_METAL");  break;
         case EShaderOutputLanguage::SPIRV: OutDefines.Emplace("SHADER_BACKEND", "SHADER_BACKEND_VULKAN"); break;
+        case EShaderOutputLanguage::DXBC:  OutDefines.Emplace("SHADER_BACKEND", "SHADER_BACKEND_D3D11");  break;
         default:                           OutDefines.Emplace("SHADER_BACKEND", "(0)");                   break;
     }
 
@@ -278,6 +303,8 @@ uint64 FShaderCompiler::ComputeCompileHash(const String& SourceFile, const FShad
         HashCombine(Hash, Define.Value);
     }
 
+    HashCombine(Hash, FShaderPreprocessor::Version);
+
     if (const FShaderCompilerBackend* Backend = FindBackend(CompileInfo.OutputLanguage))
     {
         HashCombine(Hash, THash<String>::GetHash(String(Backend->GetName())));
@@ -316,9 +343,11 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
         return false;
     }
 
-    // Shaders compiled for another RHI are not limited by the device that is running
+    // Shaders compiled for another RHI are not limited by the device that is running. DXBC is always
+    // SM 5.0 and FXC rejects the requests it cannot lower itself, so only the other languages are checked.
     const bool bTargetsActiveRHI = RHI::IsInitialized() && CompileInfo.OutputLanguage == GetOutputLanguageBasedOnRHI();
-    if (bTargetsActiveRHI && RHI::MaxShaderModel != EShaderModel::Unknown && CompileInfo.ShaderModel > RHI::MaxShaderModel)
+    const bool bCheckShaderModel = bTargetsActiveRHI && CompileInfo.OutputLanguage != EShaderOutputLanguage::DXBC;
+    if (bCheckShaderModel && RHI::MaxShaderModel != EShaderModel::Unknown && CompileInfo.ShaderModel > RHI::MaxShaderModel)
     {
         LOG_ERROR("[FShaderCompiler]: '%s' requests Shader Model %s but the device supports at most %s",
             FilePath.IsEmpty() ? *CompileInfo.EntryPoint : *FilePath, ToString(CompileInfo.ShaderModel), ToString(RHI::MaxShaderModel));
@@ -346,21 +375,21 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
         }
     }
 
-    FShaderCompileRequest Request;
-    Request.CompileInfo     = &CompileInfo;
-    Request.Source          = StringView(ShaderSource);
-    Request.FilePath        = FilePath;
-    Request.IncludeDir      = AssetPath + "/Shaders";
-    Request.Defines         = TArrayView<const FShaderDefine>(Defines);
-    Request.bDebugInfo      = CVarShaderDebug.GetValue();
-    Request.bVerboseLogging = bVerboseLogging;
+    const String IncludeDir = AssetPath + "/Shaders";
 
-    FShaderCompileResult Result;
-    const bool bCompiled = Backend->Compile(Request, Result);
+    // Both compilers get source the engine has preprocessed, so macros and includes behave the same for every backend
+    FShaderPreprocessor Preprocessor(IncludeDir);
+    for (const FShaderDefine& Define : Defines)
+    {
+        Preprocessor.AddDefine(Define.Define, Define.Value);
+    }
+
+    FShaderPreprocessorOutput Preprocessed;
+    const bool bPreprocessed = Preprocessor.Preprocess(FilePath, StringView(ShaderSource), Preprocessed) && Backend->TranslateSource(Preprocessed);
 
     if (OutDependencies)
     {
-        for (const String& Dependency : Result.Dependencies)
+        for (const String& Dependency : Preprocessed.Dependencies)
         {
             if (!OutDependencies->Contains(Dependency))
             {
@@ -369,15 +398,52 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
         }
     }
 
+    if (!bPreprocessed)
+    {
+        LOG_ERROR("[FShaderCompiler]: FAILED to preprocess for %s with error: %s", Backend->GetName(), *Preprocessed.Errors);
+
+        if (Debug::IsDebuggerPresent())
+        {
+            DEBUG_BREAK();
+        }
+
+        return false;
+    }
+
+    const String PreprocessedSource = Preprocessed.Render();
+
+    const String DumpDir = CVarDumpPreprocessedDir.GetValue();
+    if (!DumpDir.IsEmpty())
+    {
+        DumpPreprocessedSource(DumpDir, FilePath, CompileInfo, Defines, PreprocessedSource);
+    }
+
+    FShaderCompileRequest Request;
+    Request.CompileInfo     = &CompileInfo;
+    Request.Source          = StringView(PreprocessedSource);
+    Request.FilePath        = FilePath;
+    Request.IncludeDir      = IncludeDir;
+    Request.bDebugInfo      = CVarShaderDebug.GetValue();
+    Request.bVerboseLogging = bVerboseLogging;
+
+    FShaderCompileResult Result;
+    const bool bCompiled = Backend->Compile(Request, Result);
+
     if (!bCompiled)
     {
         if (!Result.Messages.IsEmpty())
         {
-            LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to compile with error: %s", *Result.Messages);
+            LOG_ERROR("[FShaderCompiler]: %s FAILED to compile with error: %s", Backend->GetName(), *Result.Messages);
         }
         else
         {
-            LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to compile with. Unknown ERROR.");
+            LOG_ERROR("[FShaderCompiler]: %s FAILED to compile with. Unknown ERROR.", Backend->GetName());
+        }
+
+        // Callers handle the failure, so only stop when someone is there to look at the error
+        if (Debug::IsDebuggerPresent())
+        {
+            DEBUG_BREAK();
         }
 
         return false;
@@ -441,6 +507,41 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     }
 
     return true;
+}
+
+void FShaderCompiler::DumpPreprocessedSource(const String& DumpDir, const String& FilePath, const FShaderCompileInfo& CompileInfo, const TArray<FShaderDefine>& Defines, const String& Source)
+{
+    uint64 DefinesHash = 0;
+    for (const FShaderDefine& Define : Defines)
+    {
+        HashCombine(DefinesHash, Define.Define);
+        HashCombine(DefinesHash, Define.Value);
+    }
+
+    const String BaseName = FilePath.IsEmpty() ? String("ShaderSource") : File::ExtractFilenameWithoutExtension(FilePath);
+    const String Filename = String::Printf("%s/%s_%s_%s_%016llx.hlsl", *DumpDir, *BaseName, *CompileInfo.EntryPoint, ToString(CompileInfo.OutputLanguage), DefinesHash);
+
+    String Contents = String::Printf("// Source: %s\n// Entry: %s\n// Stage: %s\n// Model: %s\n", *FilePath, *CompileInfo.EntryPoint, ToString(CompileInfo.ShaderStage), ToString(CompileInfo.ShaderModel));
+    for (const FShaderDefine& Define : Defines)
+    {
+        Contents += String::Printf("// Define: %s=%s\n", *Define.Define, *Define.Value);
+    }
+
+    Contents += Source;
+
+    TScopedLock Lock(DumpCS);
+
+    if (!File::CreateDirectoryTree(DumpDir))
+    {
+        LOG_ERROR("[FShaderCompiler]: Failed to create '%s'", *DumpDir);
+        return;
+    }
+
+    TFileRef<IPlatformFile> Output = FPlatformFile::OpenForWrite(Filename);
+    if (!Output || !File::WriteTextFile(Output.Get(), Contents))
+    {
+        LOG_ERROR("[FShaderCompiler]: Failed to write '%s'", *Filename);
+    }
 }
 
 bool FShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const String& Filename)

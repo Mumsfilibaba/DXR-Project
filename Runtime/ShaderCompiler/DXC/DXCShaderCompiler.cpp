@@ -157,56 +157,6 @@ static void HashWideString(uint64& OutHash, LPCWSTR Text)
     }
 }
 
-class FRecordingIncludeHandler final : public IDxcIncludeHandler
-{
-public:
-    FRecordingIncludeHandler(IDxcIncludeHandler* InInnerHandler, TArray<String>& InRecordedIncludes)
-        : InnerHandler(InInnerHandler)
-        , RecordedIncludes(InRecordedIncludes)
-    {
-    }
-
-    virtual HRESULT LoadSource(LPCWSTR Filename, IDxcBlob** ppIncludeSource) override final
-    {
-        const HRESULT Result = InnerHandler->LoadSource(Filename, ppIncludeSource);
-        if (SUCCEEDED(Result) && Filename)
-        {
-            const String IncludePath = WideToChar(WString(Filename));
-            if (!RecordedIncludes.Contains(IncludePath))
-            {
-                RecordedIncludes.Emplace(IncludePath);
-            }
-        }
-
-        return Result;
-    }
-
-    virtual ULONG AddRef()  override final { return 1; }
-    virtual ULONG Release() override final { return 1; }
-
-    virtual HRESULT QueryInterface(REFIID Riid, LPVOID* ppvObject) override
-    {
-        if (!ppvObject)
-        {
-            return E_INVALIDARG;
-        }
-
-        if (Riid == __uuidof(IUnknown) || Riid == __uuidof(IDxcIncludeHandler))
-        {
-            *ppvObject = reinterpret_cast<LPVOID>(this);
-            AddRef();
-            return S_OK;
-        }
-
-        *ppvObject = nullptr;
-        return E_NOINTERFACE;
-    }
-
-private:
-    IDxcIncludeHandler* InnerHandler;
-    TArray<String>&     RecordedIncludes;
-};
-
 FDXCShaderCompiler::FDXCShaderCompiler()
     : FShaderCompilerBackend()
     , DXCLib(nullptr)
@@ -303,149 +253,39 @@ bool FDXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
         return false;
     }
 
-    TComPtr<IDxcIncludeHandler> DefaultIncludeHandler;
-    hr = Utils->CreateDefaultIncludeHandler(&DefaultIncludeHandler);
-    if (FAILED(hr))
-    {
-        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to create IncludeHandler");
-        return false;
-    }
-
-    FRecordingIncludeHandler IncludeHandler(DefaultIncludeHandler.Get(), OutResult.Dependencies);
-
     const WString WideShaderIncludeDir = CharToWide(Request.IncludeDir);
 
     TArray<LPCWSTR> CompileArgs;
-    BuildFixedCompileArguments(CompileInfo, WideShaderIncludeDir, Request.bDebugInfo, CompileArgs);
+    BuildCompileArguments(CompileInfo, WideShaderIncludeDir, Request.bDebugInfo, CompileArgs);
 
-    TArray<WString>   DefineStorage;
-    TArray<DxcDefine> DxcDefines;
-    DefineStorage.Reserve(Request.Defines.Size() * 2);
+    // Retrieve the shader target
+    const LPCWSTR ShaderStageText = GetShaderStageString(CompileInfo.ShaderStage);
+    const LPCWSTR ShaderModelText = GetShaderModelString(CompileInfo.ShaderModel);
 
-    for (const FShaderDefine& Define : Request.Defines)
-    {
-        const WString& WideDefine = DefineStorage.Emplace(CharToWide(Define.Define));
-        const WString& WideValue  = DefineStorage.Emplace(CharToWide(Define.Value));
-        DxcDefines.Add({ *WideDefine, *WideValue });
-    }
+    constexpr uint32 BufferLength = sizeof("xxx_x_x");
+    WCHAR TargetProfile[BufferLength];
+    CStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
 
-    // Helper for building arguments for compilation and preprocessing
-    const auto BuildArguments = [&](const String& FilePath, const String& EntryPoint)
-    {
-        // Retrieve the shader target
-        const LPCWSTR ShaderStageText = GetShaderStageString(CompileInfo.ShaderStage);
-        const LPCWSTR ShaderModelText = GetShaderModelString(CompileInfo.ShaderModel);
+    const WString WideFilePath   = CharToWide(Request.FilePath);
+    const WString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
 
-        constexpr uint32 BufferLength = sizeof("xxx_x_x");
-        WCHAR TargetProfile[BufferLength];
-        CStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
-
-        // Use the asset-folder as base for the shader-files
-        const WString WideFilePath   = CharToWide(FilePath);
-        const WString WideEntrypoint = CharToWide(EntryPoint);
-
-        // Build the arguments for the preprocessing step
-        TComPtr<IDxcCompilerArgs> CompileArguments;
-        HRESULT Result = Utils->BuildArguments(*WideFilePath, *WideEntrypoint, TargetProfile, CompileArgs.Data(), CompileArgs.Size(), DxcDefines.Data(), DxcDefines.Size(), &CompileArguments);
-        if (FAILED(Result))
-        {
-            return TComPtr<IDxcCompilerArgs>(nullptr);
-        }
-        else
-        {
-            return CompileArguments;
-        }
-    };
-
-    // Retrieve the pre-processing compiler arguments
-    TComPtr<IDxcCompilerArgs> PreProcessorArguments = BuildArguments(Request.FilePath, CompileInfo.EntryPoint);
-    if (!PreProcessorArguments)
-    {
-        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to create pre-process compiler arguments");
-        return false;
-    }
-    else
-    {
-        LPCWSTR PreProcessArgs[] =
-        {
-            L"-P",
-        };
-
-        PreProcessorArguments->AddArguments(PreProcessArgs, 1);
-    }
-
-    // Preprocess shader source
-    DxcBuffer SourceBuffer;
-    SourceBuffer.Ptr      = Request.Source.Data();
-    SourceBuffer.Size     = Request.Source.Size();
-    SourceBuffer.Encoding = DXC_CP_ACP;
-
-    TComPtr<IDxcResult> PreprocessResult;
-    hr = Compiler->Compile(&SourceBuffer, PreProcessorArguments->GetArguments(), static_cast<uint32>(PreProcessorArguments->GetCount()), &IncludeHandler, IID_PPV_ARGS(&PreprocessResult));
+    // The source is already preprocessed, so there are no defines to pass
+    TComPtr<IDxcCompilerArgs> CompileArguments;
+    hr = Utils->BuildArguments(*WideFilePath, *WideEntrypoint, TargetProfile, CompileArgs.Data(), CompileArgs.Size(), nullptr, 0, &CompileArguments);
     if (FAILED(hr))
-    {
-        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to preprocess shader");
-        DEBUG_BREAK();
-        return false;
-    }
-
-    // Check the compilation result
-    HRESULT PreProcessResult;
-    if (FAILED(PreprocessResult->GetStatus(&PreProcessResult)))
-    {
-        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to retrieve pre-process result. Unknown Error.");
-        return false;
-    }
-
-    // If the error encountered an error
-    if (FAILED(PreProcessResult))
-    {
-        // Retrieve errors
-        TComPtr<IDxcBlobUtf8> PrintBlob;
-        PreprocessResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&PrintBlob), nullptr);
-
-        if (PrintBlob && PrintBlob->GetBufferSize() > 0)
-        {
-            LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to pre-process with error: %s", reinterpret_cast<LPCSTR>(PrintBlob->GetBufferPointer()));
-        }
-        else
-        {
-            LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to pre-process with. Unknown ERROR.");
-        }
-
-        return false;
-    }
-
-    TComPtr<IDxcBlob> PreprocessedBlob;
-    hr = PreprocessResult->GetOutput(DXC_OUT_HLSL, IID_PPV_ARGS(&PreprocessedBlob), nullptr);
-    if (FAILED(hr))
-    {
-        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to retrieve pre-processed shader");
-        return false;
-    }
-
-    // Handle language selection
-    const String Source(reinterpret_cast<const char*>(PreprocessedBlob->GetBufferPointer()), static_cast<int32>(PreprocessedBlob->GetBufferSize()));
-    if (CompileInfo.OutputLanguage != EShaderOutputLanguage::DXIL)
-    {
-        BuildSpirvCompileArguments(CompileArgs);
-    }
-
-    // Build the arguments for the compiler
-    TComPtr<IDxcCompilerArgs> CompileArguments = BuildArguments(Request.FilePath, CompileInfo.EntryPoint);
-    if (!CompileArguments)
     {
         LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to create compiler arguments");
         return false;
     }
 
-    // Convert preprocessed source to DxcBuffer
-    SourceBuffer.Ptr  = Source.Data();
-    SourceBuffer.Size = Source.Size();
+    DxcBuffer SourceBuffer;
+    SourceBuffer.Ptr      = Request.Source.Data();
+    SourceBuffer.Size     = Request.Source.Size();
+    SourceBuffer.Encoding = DXC_CP_ACP;
 
     // Compile shader
     TComPtr<IDxcResult> Result;
-    hr = Compiler->Compile(&SourceBuffer, CompileArguments->GetArguments(), CompileArguments->GetCount(), &IncludeHandler, IID_PPV_ARGS(&Result));
+    hr = Compiler->Compile(&SourceBuffer, CompileArguments->GetArguments(), CompileArguments->GetCount(), nullptr, IID_PPV_ARGS(&Result));
     if (FAILED(hr))
     {
         LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to Compile");

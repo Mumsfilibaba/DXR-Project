@@ -22,6 +22,9 @@ enum class EShaderOutputLanguage : uint8
 
     /** SPIR-V for VulkanRHI */
     SPIRV = 3,
+
+    /** Shader Model 5.0 DXBC for D3D11RHI */
+    DXBC = 4,
 };
 
 NODISCARD constexpr const CHAR* ToString(EShaderOutputLanguage OutputLanguage)
@@ -31,6 +34,7 @@ NODISCARD constexpr const CHAR* ToString(EShaderOutputLanguage OutputLanguage)
         case EShaderOutputLanguage::DXIL:  return "DXIL";
         case EShaderOutputLanguage::MSL:   return "MSL";
         case EShaderOutputLanguage::SPIRV: return "SPIRV";
+        case EShaderOutputLanguage::DXBC:  return "DXBC";
         default:                           return "Unknown";
     }
 }
@@ -109,6 +113,7 @@ private:
     void BuildCompileDefines(const FShaderCompileInfo& CompileInfo, TArray<FShaderDefine>& OutDefines) const;
     bool Compile(const String& ShaderSource, const String& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<String>* OutDependencies);
     bool DumpContentToFile(const TArray<uint8>& ByteCode, const String& Filename);
+    void DumpPreprocessedSource(const String& DumpDir, const String& FilePath, const FShaderCompileInfo& CompileInfo, const TArray<FShaderDefine>& Defines, const String& Source);
 
     TArray<FShaderCompilerBackend*> Backends;
     String                          AssetPath;

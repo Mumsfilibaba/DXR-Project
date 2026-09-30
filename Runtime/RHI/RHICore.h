@@ -95,6 +95,7 @@ NODISCARD constexpr uint32 ClampSampleCountToMask(uint32 SampleCountMask, uint32
 enum class EShaderModel : uint8
 {
     Unknown = 0,
+    SM_5_0  = 1, // DXBC for D3D11RHI. SM 5.1 is D3D12-only and intentionally absent, 2 stays unused.
     SM_6_0  = 3,
     SM_6_1  = 4,
     SM_6_2  = 5,
@@ -112,6 +113,7 @@ NODISCARD constexpr const CHAR* ToString(EShaderModel ShaderModel)
 {
     switch (ShaderModel)
     {
+        case EShaderModel::SM_5_0:  return "SM_5_0";
         case EShaderModel::SM_6_0:  return "SM_6_0";
         case EShaderModel::SM_6_1:  return "SM_6_1";
         case EShaderModel::SM_6_2:  return "SM_6_2";

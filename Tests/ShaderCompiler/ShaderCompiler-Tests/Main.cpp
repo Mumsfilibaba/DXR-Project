@@ -10,6 +10,7 @@
 #include "LaunchProgram/ProgramEntry.h"
 
 #include "ShaderCompilerTests.h"
+#include "ShaderPreprocessorTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -23,11 +24,19 @@ static int32 RunShaderCompilerTests()
     TestHarness::Initialize("TestResults_ShaderCompiler.log");
     LOG_INFO("=== ShaderCompiler Tests ===");
 
+    RUN_TEST("PreprocessorMacros", ShaderPreprocessorMacros_Test());
+    RUN_TEST("PreprocessorConditionals", ShaderPreprocessorConditionals_Test());
+    RUN_TEST("PreprocessorIncludes", ShaderPreprocessorIncludes_Test());
+    RUN_TEST("PreprocessorErrors", ShaderPreprocessorErrors_Test());
+    RUN_TEST("PreprocessorRender", ShaderPreprocessorRender_Test());
+    RUN_TEST("FXCShaderTranslator", FXCShaderTranslator_Test());
+
     if (FShaderCompiler::Initialize(Paths::GetAssetDir()))
     {
         RUN_TEST("OutputLanguages", ShaderCompilerOutputLanguages_Test());
         RUN_TEST("CompileFromFile", ShaderCompilerCompileFromFile_Test());
         RUN_TEST("CompileFromSource", ShaderCompilerCompileFromSource_Test());
+        RUN_TEST("CompileFailure", ShaderCompilerCompileFailure_Test());
         RUN_TEST("CompileHash", ShaderCompilerCompileHash_Test());
 
         FShaderCompiler::Destroy();

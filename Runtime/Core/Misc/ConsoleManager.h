@@ -4,6 +4,7 @@
 #include "Core/Containers/StringView.h"
 #include "Core/Containers/String.h"
 #include "Core/Delegates/MulticastDelegate.h"
+#include "Core/Platform/CriticalSection.h"
 #include "Core/Templates/Utility/NonCopyable.h"
 
 #ifndef CONSOLE_DEFAULT_HISTORY_LENGTH
@@ -432,6 +433,18 @@ public:
     void ExecuteCommand(IOutputDevice& OutputDevice, const String& Command);
 
     /**
+     * @brief Queue a command to run on the next ExecuteQueuedCommands, can be called from any thread
+     * @param Command Command to execute by the console
+     */
+    void EnqueueCommand(const String& Command);
+
+    /**
+     * @brief Execute every queued command in the order they were queued. Commands queued while executing wait for the next call.
+     * @param OutputDevice OutputDevice to print any messages to
+     */
+    void ExecuteQueuedCommands(IOutputDevice& OutputDevice);
+
+    /**
      * @brief Retrieve all registered console objects
      * @param OutObjects Array to populate with name/object pairs
      */
@@ -446,10 +459,12 @@ public:
 
     /**
      * @brief Apply every matching '-Name[=Value]' command-line option to the already-registered
-     *        ConsoleVariables. Required because variables in compile-linked modules register
-     *        during static initialization, before the command line has been parsed.
+     *        ConsoleVariables, and queue the commands from '-ExecuteCommands="CommandA;CommandB"'
+     *        so they run once the application executes the queued commands. Required because
+     *        variables in compile-linked modules register during static initialization, before
+     *        the command line has been parsed.
      */
-    void LoadConsoleVariablesFromCommandLine();
+    void LoadFromCommandLine();
 
     /**
      * @brief Retrieve all the history that has been written to the console
@@ -471,6 +486,8 @@ private:
     int32                          HistoryLength;
     TArray<String>                History;
     TMap<String, IConsoleObject*> ConsoleObjects;
+    TArray<String>                QueuedCommands;
+    FCriticalSection              QueuedCommandsCS;
 
     static FConsoleManager* ConsoleManager;
 };

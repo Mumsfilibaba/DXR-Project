@@ -2,6 +2,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Tasks/ParallelFor.h"
 #include "Core/Tasks/Tasks.h"
+#include "Core/Threading/Atomic.h"
 #include "RendererCore/Shaders/ShaderBytecodeCache.h"
 #include "RendererCore/Shaders/ShaderCache.h"
 #include "RendererCore/Shaders/ShaderManifest.h"
@@ -29,6 +30,122 @@ static FAutoConsoleCommand CCmdRecompileShaders(
         if (FShaderCache* Cache = FShaderCache::TryGet())
         {
             Cache->FlushCompiledShaders();
+        }
+    }));
+
+static bool ParseRHIType(StringView Text, ERHIType& OutRHIType)
+{
+    constexpr ERHIType RHITypes[] =
+    {
+        ERHIType::Null,
+        ERHIType::D3D11,
+        ERHIType::D3D12,
+        ERHIType::Vulkan,
+        ERHIType::Metal,
+    };
+
+    const String Name(Text);
+    for (ERHIType RHIType : RHITypes)
+    {
+        if (Name.Equals(ToString(RHIType), EStringCaseType::NoCase))
+        {
+            OutRHIType = RHIType;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static FShaderPermutationDesc CreateTargetPermutationDesc(ERHIType TargetRHI, int32 PermutationID)
+{
+    if (RHI::IsInitialized() && RHI::Device->GetRHIType() == TargetRHI)
+    {
+        return FShaderCache::CreatePermutationDesc(PermutationID);
+    }
+
+    // Without the target's device, assume the features its backend can have. SER depends on the driver, so it stays off.
+    const bool bSupportsModernFeatures = TargetRHI == ERHIType::D3D12 || TargetRHI == ERHIType::Vulkan;
+
+    FShaderPermutationDesc Desc;
+    Desc.PermutationID             = PermutationID;
+    Desc.bSupportsBindless         = bSupportsModernFeatures;
+    Desc.bSupportsViewInstancing   = bSupportsModernFeatures;
+    Desc.bSupportsRayTracing       = bSupportsModernFeatures;
+    Desc.bSupportsInlineRayTracing = bSupportsModernFeatures;
+    return Desc;
+}
+
+static FAutoConsoleCommand CCmdCompileAllShaders(
+    "Shaders.CompileAll",
+    "Compiles every registered shader type and permutation for an RHI (Null, D3D11, D3D12, Vulkan or Metal, defaults to the active one) and logs the failures",
+    FConsoleCommandDelegate::CreateLambda([](StringView Arguments)
+    {
+        StringView TargetName = Arguments;
+        TargetName.TrimInline();
+
+        ERHIType TargetRHI = RHI::IsInitialized() ? RHI::Device->GetRHIType() : ERHIType::Unknown;
+        if (!TargetName.IsEmpty() && !ParseRHIType(TargetName, TargetRHI))
+        {
+            LOG_ERROR("Shaders.CompileAll: Unknown RHI '%s'", *String(TargetName));
+            return;
+        }
+
+        FShaderCompiler* Compiler = FShaderCompiler::TryGet();
+        const EShaderOutputLanguage OutputLanguage = FShaderCompiler::GetOutputLanguageForRHI(TargetRHI);
+        if (!Compiler || !RHI::IsRHISupportedByPlatform(TargetRHI) || !Compiler->IsOutputLanguageSupported(OutputLanguage))
+        {
+            LOG_ERROR("Shaders.CompileAll: %s (%s) cannot be compiled on this platform", ToString(TargetRHI), ToString(OutputLanguage));
+            return;
+        }
+
+        struct FCompileWork
+        {
+            FShaderType*           Type;
+            FShaderPermutationDesc Desc;
+        };
+
+        TArray<FCompileWork> Work;
+        for (FShaderType* Type = FShaderType::GetTypeList(); Type; Type = Type->GetNext())
+        {
+            for (int32 PermutationID = 0; PermutationID < Type->GetPermutationCount(); ++PermutationID)
+            {
+                const FShaderPermutationDesc Desc = CreateTargetPermutationDesc(TargetRHI, PermutationID);
+                if (Type->ShouldCompilePermutation(Desc))
+                {
+                    Work.Add({ Type, Desc });
+                }
+            }
+        }
+
+        LOG_INFO("Shaders.CompileAll: Compiling %d permutations for %s (%s)", Work.Size(), ToString(TargetRHI), ToString(OutputLanguage));
+
+        AtomicInt32 NumFailed(0);
+        Tasks::ParallelFor(Work.Size(), [&](int32 Index)
+        {
+            const FCompileWork& Item = Work[Index];
+
+            FShaderCompilationEnvironment Environment;
+            Item.Type->BuildCompilationEnvironment(Item.Desc, Environment);
+
+            const FShaderCompileInfo CompileInfo(Item.Type->GetEntryPoint(), Environment.ShaderModel, Item.Type->GetStage(), Environment.Defines, OutputLanguage);
+
+            TArray<uint8> ShaderCode;
+            if (!Compiler->CompileFromFile(Item.Type->GetSourceFile(), CompileInfo, ShaderCode))
+            {
+                LOG_ERROR("Shaders.CompileAll: %s permutation %d failed (%s, entry '%s')", Item.Type->GetName(), Item.Desc.PermutationID, Item.Type->GetSourceFile(), Item.Type->GetEntryPoint());
+                NumFailed.Add(1);
+            }
+        });
+
+        const int32 Failed = NumFailed.Load();
+        if (Failed > 0)
+        {
+            LOG_ERROR("Shaders.CompileAll: %d of %d permutations failed for %s (%s)", Failed, Work.Size(), ToString(TargetRHI), ToString(OutputLanguage));
+        }
+        else
+        {
+            LOG_INFO("Shaders.CompileAll: All %d permutations compiled for %s (%s)", Work.Size(), ToString(TargetRHI), ToString(OutputLanguage));
         }
     }));
 
@@ -150,7 +267,9 @@ FShaderPermutationDesc FShaderCache::CreatePermutationDesc(int32 PermutationID)
     FShaderPermutationDesc Desc;
     Desc.PermutationID                      = PermutationID;
     Desc.bSupportsBindless                  = RHI::bSupportsBindless;
+    Desc.bSupportsViewInstancing            = RHI::bSupportsViewInstancing;
     Desc.bSupportsRayTracing                = RHI::bSupportsRayTracing;
+    Desc.bSupportsInlineRayTracing          = RHI::bSupportsInlineRayTracing;
     Desc.bSupportsShaderExecutionReordering = RHI::bSupportsShaderExecutionReordering;
     return Desc;
 }

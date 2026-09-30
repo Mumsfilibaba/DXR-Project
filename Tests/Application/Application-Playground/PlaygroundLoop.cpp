@@ -188,7 +188,7 @@ int32 FPlaygroundLoop::PreInit(const CHAR** Args, int32 NumArgs)
         RHIThreadVariable->SetAsBool(false, EConsoleVariableFlags::SetByCode);
     }
 
-    FConsoleManager::Get().LoadConsoleVariablesFromCommandLine();
+    FConsoleManager::Get().LoadFromCommandLine();
 
     if (!FThreadManager::Initialize())
     {
