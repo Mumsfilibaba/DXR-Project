@@ -6,6 +6,8 @@
 #include "D3D11RHI/D3D11Device.h"
 #include "D3D11RHI/D3D11DeviceDebug.h"
 #include "D3D11RHI/D3D11Loader.h"
+#include "D3D11RHI/D3D11PipelineState.h"
+#include "D3D11RHI/D3D11Shader.h"
 #include "D3D11RHI/D3D11StubResources.h"
 #include "D3D11RHI/D3D11SwapChain.h"
 #include "D3D11RHI/D3D11Texture.h"
@@ -57,6 +59,21 @@ FD3D11DeviceRHI::~FD3D11DeviceRHI()
     {
         TScopedLock Lock(SamplerStateMapCS);
         SamplerStateMap.Clear();
+    }
+
+    {
+        TScopedLock Lock(DepthStencilStateMapCS);
+        DepthStencilStateMap.Clear();
+    }
+
+    {
+        TScopedLock Lock(RasterizerStateMapCS);
+        RasterizerStateMap.Clear();
+    }
+
+    {
+        TScopedLock Lock(BlendStateMapCS);
+        BlendStateMap.Clear();
     }
 
     if (FRHICommandListExecutor::IsInitialized())
@@ -156,22 +173,8 @@ FRHISamplerState* FD3D11DeviceRHI::CreateSamplerState(const FRHISamplerStateDesc
         return Result.ReleaseOwnership();
     }
 
-    D3D11_SAMPLER_DESC Desc = {};
-    Desc.AddressU       = ConvertSamplerMode(InSamplerDesc.AddressU);
-    Desc.AddressV       = ConvertSamplerMode(InSamplerDesc.AddressV);
-    Desc.AddressW       = ConvertSamplerMode(InSamplerDesc.AddressW);
-    Desc.Filter         = ConvertSamplerFilter(InSamplerDesc.Filter);
-    Desc.MaxAnisotropy  = Math::Clamp<UINT>(InSamplerDesc.MaxAnisotropy, 1, D3D11_REQ_MAXANISOTROPY);
-    Desc.MipLODBias     = InSamplerDesc.MipLODBias;
-    Desc.MinLOD         = InSamplerDesc.MinLOD;
-    Desc.MaxLOD         = InSamplerDesc.MaxLOD;
-
-    Desc.ComparisonFunc = InSamplerDesc.IsComparisonSampler() ? ConvertComparisonFunc(InSamplerDesc.ComparisonFunc) : D3D11_COMPARISON_NEVER;
-
-    Memory::Memcpy(Desc.BorderColor, InSamplerDesc.BorderColor.RGBA, sizeof(Desc.BorderColor));
-
     FD3D11SamplerStateRHIRef NewSamplerState = new FD3D11SamplerStateRHI(GetDevice(), InSamplerDesc);
-    if (!NewSamplerState->CreateSampler(Desc))
+    if (!NewSamplerState->Initialize())
     {
         return nullptr;
     }
@@ -944,57 +947,144 @@ FRHIDepthStencilView* FD3D11DeviceRHI::CreateDepthStencilView(FRHIResource* InRe
 
 FRHIComputeShader* FD3D11DeviceRHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
 {
-    return new TD3D11StubShaderRHI<FRHIComputeShader>();
+    FD3D11ComputeShaderRHIRef NewShader = new FD3D11ComputeShaderRHI(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+
+    return NewShader.ReleaseOwnership();
 }
 
 FRHIVertexShader* FD3D11DeviceRHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
-    return new TD3D11StubShaderRHI<FRHIVertexShader>();
+    FD3D11VertexShaderRHIRef NewShader = new FD3D11VertexShaderRHI(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+
+    return NewShader.ReleaseOwnership();
 }
 
 FRHIHullShader* FD3D11DeviceRHI::CreateHullShader(const TArray<uint8>& ShaderCode)
 {
-    return new TD3D11StubShaderRHI<FRHIHullShader>();
+    FD3D11HullShaderRHIRef NewShader = new FD3D11HullShaderRHI(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+
+    return NewShader.ReleaseOwnership();
 }
 
 FRHIDomainShader* FD3D11DeviceRHI::CreateDomainShader(const TArray<uint8>& ShaderCode)
 {
-    return new TD3D11StubShaderRHI<FRHIDomainShader>();
+    FD3D11DomainShaderRHIRef NewShader = new FD3D11DomainShaderRHI(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+
+    return NewShader.ReleaseOwnership();
 }
 
 FRHIGeometryShader* FD3D11DeviceRHI::CreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
-    return new TD3D11StubShaderRHI<FRHIGeometryShader>();
+    FD3D11GeometryShaderRHIRef NewShader = new FD3D11GeometryShaderRHI(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+
+    return NewShader.ReleaseOwnership();
 }
 
 FRHIPixelShader* FD3D11DeviceRHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
-    return new TD3D11StubShaderRHI<FRHIPixelShader>();
+    FD3D11PixelShaderRHIRef NewShader = new FD3D11PixelShaderRHI(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+
+    return NewShader.ReleaseOwnership();
 }
 
 FRHIDepthStencilState* FD3D11DeviceRHI::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
 {
-    return new FD3D11StubDepthStencilStateRHI(InDesc);
+    TScopedLock Lock(DepthStencilStateMapCS);
+
+    if (FD3D11DepthStencilStateRHIRef* ExistingState = DepthStencilStateMap.Find(InDesc))
+    {
+        FD3D11DepthStencilStateRHIRef Result = *ExistingState;
+        return Result.ReleaseOwnership();
+    }
+
+    FD3D11DepthStencilStateRHIRef NewState = new FD3D11DepthStencilStateRHI(GetDevice(), InDesc);
+    if (!NewState->Initialize())
+    {
+        return nullptr;
+    }
+
+    DepthStencilStateMap.Add(InDesc, NewState);
+    return NewState.ReleaseOwnership();
 }
 
 FRHIRasterizerState* FD3D11DeviceRHI::CreateRasterizerState(const FRHIRasterizerStateDesc& InDesc)
 {
-    return new FD3D11StubRasterizerStateRHI(InDesc);
+    TScopedLock Lock(RasterizerStateMapCS);
+
+    if (FD3D11RasterizerStateRHIRef* ExistingState = RasterizerStateMap.Find(InDesc))
+    {
+        FD3D11RasterizerStateRHIRef Result = *ExistingState;
+        return Result.ReleaseOwnership();
+    }
+
+    FD3D11RasterizerStateRHIRef NewState = new FD3D11RasterizerStateRHI(GetDevice(), InDesc);
+    if (!NewState->Initialize())
+    {
+        return nullptr;
+    }
+
+    RasterizerStateMap.Add(InDesc, NewState);
+    return NewState.ReleaseOwnership();
 }
 
 FRHIBlendState* FD3D11DeviceRHI::CreateBlendState(const FRHIBlendStateDesc& InDesc)
 {
-    return new FD3D11StubBlendStateRHI(InDesc);
+    TScopedLock Lock(BlendStateMapCS);
+
+    if (FD3D11BlendStateRHIRef* ExistingState = BlendStateMap.Find(InDesc))
+    {
+        FD3D11BlendStateRHIRef Result = *ExistingState;
+        return Result.ReleaseOwnership();
+    }
+
+    FD3D11BlendStateRHIRef NewState = new FD3D11BlendStateRHI(GetDevice(), InDesc);
+    if (!NewState->Initialize())
+    {
+        return nullptr;
+    }
+
+    BlendStateMap.Add(InDesc, NewState);
+    return NewState.ReleaseOwnership();
 }
 
 FRHIInputLayout* FD3D11DeviceRHI::CreateInputLayout(const TArray<FRHIInputElementDesc>& InInputElements)
 {
-    return new FD3D11StubInputLayoutRHI(InInputElements);
+    return new FD3D11InputLayoutRHI(InInputElements);
 }
 
 FRHIGraphicsPipelineState* FD3D11DeviceRHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc)
 {
-    return new TD3D11StubPipelineStateRHI<FRHIGraphicsPipelineState>();
+    FD3D11GraphicsPipelineStateRHIRef NewPipelineState = new FD3D11GraphicsPipelineStateRHI(GetDevice());
+    if (!NewPipelineState->Initialize(InDesc))
+    {
+        return nullptr;
+    }
+
+    return NewPipelineState.ReleaseOwnership();
 }
 
 FRHIComputePipelineState* FD3D11DeviceRHI::CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)

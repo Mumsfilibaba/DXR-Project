@@ -14,7 +14,7 @@ public:
     virtual void* GetRHINativeSampler() const override final { return SamplerState.Get(); }
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
-    bool CreateSampler(const D3D11_SAMPLER_DESC& InDesc);
+    bool Initialize();
 
     FORCEINLINE ID3D11SamplerState* GetD3D11SamplerState() const
     {

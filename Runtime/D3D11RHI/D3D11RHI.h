@@ -3,6 +3,7 @@
 #include "Core/Containers/Map.h"
 #include "Core/Platform/CriticalSection.h"
 #include "D3D11RHI/D3D11CommandContext.h"
+#include "D3D11RHI/D3D11PipelineState.h"
 #include "D3D11RHI/D3D11SamplerState.h"
 #include "D3D11RHI/D3D11TypeTraits.h"
 
@@ -186,7 +187,10 @@ public:
 private:
     bool InitializeDeviceFeatureSupport();
 
-    typedef TMap<FRHISamplerStateDesc, FD3D11SamplerStateRHIRef> FSamplerStateMap;
+    typedef TMap<FRHISamplerStateDesc, FD3D11SamplerStateRHIRef>           FSamplerStateMap;
+    typedef TMap<FRHIDepthStencilStateDesc, FD3D11DepthStencilStateRHIRef> FDepthStencilStateMap;
+    typedef TMap<FRHIRasterizerStateDesc, FD3D11RasterizerStateRHIRef>     FRasterizerStateMap;
+    typedef TMap<FRHIBlendStateDesc, FD3D11BlendStateRHIRef>               FBlendStateMap;
 
     FD3D11Adapter*        Adapter;
     FD3D11Device*         Device;
@@ -194,6 +198,12 @@ private:
     uint64                FrameNumber;
     FSamplerStateMap      SamplerStateMap;
     FCriticalSection      SamplerStateMapCS;
+    FDepthStencilStateMap DepthStencilStateMap;
+    FCriticalSection      DepthStencilStateMapCS;
+    FRasterizerStateMap   RasterizerStateMap;
+    FCriticalSection      RasterizerStateMapCS;
+    FBlendStateMap        BlendStateMap;
+    FCriticalSection      BlendStateMapCS;
 
     static FD3D11DeviceRHI* D3D11DeviceRHI;
 };

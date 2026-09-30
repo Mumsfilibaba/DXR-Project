@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Threading/ScopedLock.h"
 #include "D3D11RHI/D3D11Device.h"
 #include "D3D11RHI/D3D11Loader.h"
 
@@ -150,11 +151,18 @@ FD3D11Device::FD3D11Device(FD3D11Adapter* InAdapter)
     , D3D11Context4(nullptr)
     , InfoQueue(nullptr)
     , FeatureLevel(D3D_FEATURE_LEVEL_11_0)
+    , SamplerStateMap()
+    , SamplerStateMapCS()
 {
 }
 
 FD3D11Device::~FD3D11Device()
 {
+    {
+        TScopedLock Lock(SamplerStateMapCS);
+        SamplerStateMap.Clear();
+    }
+
     if (D3D11Context)
     {
         D3D11Context->ClearState();
@@ -333,4 +341,48 @@ bool FD3D11Device::QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCoun
     }
 
     return NumQualityLevels != 0;
+}
+
+bool FD3D11Device::FindOrCreateSamplerState(const FRHISamplerStateDesc& SamplerDesc, TComPtr<ID3D11SamplerState>& OutSamplerState)
+{
+    TScopedLock Lock(SamplerStateMapCS);
+
+    if (TComPtr<ID3D11SamplerState>* ExistingSamplerState = SamplerStateMap.Find(SamplerDesc))
+    {
+        OutSamplerState = *ExistingSamplerState;
+        return true;
+    }
+
+    D3D11_SAMPLER_DESC D3DSamplerDesc = {};
+    D3DSamplerDesc.AddressU       = ConvertSamplerMode(SamplerDesc.AddressU);
+    D3DSamplerDesc.AddressV       = ConvertSamplerMode(SamplerDesc.AddressV);
+    D3DSamplerDesc.AddressW       = ConvertSamplerMode(SamplerDesc.AddressW);
+    D3DSamplerDesc.Filter         = ConvertSamplerFilter(SamplerDesc.Filter);
+    D3DSamplerDesc.MaxAnisotropy  = Math::Clamp<UINT>(SamplerDesc.MaxAnisotropy, 1, D3D11_REQ_MAXANISOTROPY);
+    D3DSamplerDesc.MipLODBias     = SamplerDesc.MipLODBias;
+    D3DSamplerDesc.MinLOD         = SamplerDesc.MinLOD;
+    D3DSamplerDesc.MaxLOD         = SamplerDesc.MaxLOD;
+    D3DSamplerDesc.ComparisonFunc = SamplerDesc.IsComparisonSampler() ? ConvertComparisonFunc(SamplerDesc.ComparisonFunc) : D3D11_COMPARISON_NEVER;
+
+    Memory::Memcpy(D3DSamplerDesc.BorderColor, SamplerDesc.BorderColor.RGBA, sizeof(D3DSamplerDesc.BorderColor));
+
+    TComPtr<ID3D11SamplerState> NewSamplerState;
+
+    const HRESULT Result = D3D11Device->CreateSamplerState(&D3DSamplerDesc, &NewSamplerState);
+    if (FAILED(Result))
+    {
+        D3D11_ERROR("[FD3D11Device]: FAILED to create SamplerState (0x%08X)", static_cast<uint32>(Result));
+        return false;
+    }
+
+    D3D11SetDebugName(NewSamplerState.Get(), String::Printf("Sampler %d", SamplerStateMap.Size()));
+
+    SamplerStateMap.Add(SamplerDesc, NewSamplerState);
+    OutSamplerState = NewSamplerState;
+    return true;
+}
+
+bool FD3D11Device::FindOrCreateSamplerState(const FRHIStaticSamplerInfo& StaticSamplerInfo, TComPtr<ID3D11SamplerState>& OutSamplerState)
+{
+    return FindOrCreateSamplerState(StaticSamplerInfo.GetSamplerStateDesc(), OutSamplerState);
 }

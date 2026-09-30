@@ -1,5 +1,7 @@
 #pragma once
+#include "Core/Containers/Map.h"
 #include "Core/Containers/String.h"
+#include "Core/Platform/CriticalSection.h"
 #include "RHI/RHITypes.h"
 #include "D3D11RHI/D3D11Core.h"
 
@@ -67,6 +69,9 @@ public:
 
     void CheckDeviceRemoved(HRESULT Result, const CHAR* Operation) const;
 
+    bool FindOrCreateSamplerState(const FRHISamplerStateDesc& SamplerDesc, TComPtr<ID3D11SamplerState>& OutSamplerState);
+    bool FindOrCreateSamplerState(const FRHIStaticSamplerInfo& StaticSamplerInfo, TComPtr<ID3D11SamplerState>& OutSamplerState);
+
     FORCEINLINE FD3D11Adapter*        GetAdapter()       const { return Adapter; }
     FORCEINLINE ID3D11Device*         GetD3D11Device()   const { return D3D11Device.Get(); }
     FORCEINLINE ID3D11Device1*        GetD3D11Device1()  const { return D3D11Device1.Get(); }
@@ -80,6 +85,8 @@ private:
     bool CreateDevice();
     void SetupDebugMessages();
 
+    typedef TMap<FRHISamplerStateDesc, TComPtr<ID3D11SamplerState>> FSamplerStateMap;
+
     FD3D11Adapter* const          Adapter;
     TComPtr<ID3D11Device>         D3D11Device;
     TComPtr<ID3D11Device1>        D3D11Device1;
@@ -89,4 +96,6 @@ private:
     TComPtr<ID3D11DeviceContext4> D3D11Context4;
     TComPtr<ID3D11InfoQueue>      InfoQueue;
     D3D_FEATURE_LEVEL             FeatureLevel;
+    FSamplerStateMap              SamplerStateMap;
+    FCriticalSection              SamplerStateMapCS;
 };
