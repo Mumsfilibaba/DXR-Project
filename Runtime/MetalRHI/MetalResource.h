@@ -1,8 +1,10 @@
 #pragma once
 #include "Core/Templates/Utility/NonCopyable.h"
 #include "MetalRHI/MetalDeviceChild.h"
+#include "MetalRHI/MetalResidencyManager.h"
 
 class FMetalHeap;
+class FMetalRelocatable;
 class FMetalLinearAllocator;
 class FMetalBufferAllocator;
 class FMetalTextureAllocator;
@@ -39,6 +41,33 @@ public:
 
     void ReleaseResource();
     void Reset();
+
+    void SetOwner(FMetalRelocatable* InOwner)
+    {
+        Owner = InOwner;
+    }
+
+    void SwapPlacement(FMetalResourceStorage& Other);
+
+    void SetDefragPending(bool bPending)
+    {
+        bDefragPending = bPending;
+    }
+
+    FORCEINLINE bool IsDefragPending() const
+    {
+        return bDefragPending;
+    }
+
+    FORCEINLINE FMetalRelocatable* GetOwner() const
+    {
+        return Owner;
+    }
+
+    FORCEINLINE FMetalResidencyEntry* GetResidencyEntry() const
+    {
+        return ResidencyEntry;
+    }
 
     FORCEINLINE bool IsValid() const
     {
@@ -92,6 +121,7 @@ public:
 
 private:
     void ReleaseOwnedResource(bool bStandalone);
+    void TrackStandalone(id<MTLResource> Resource, bool bBindlessReachable);
 
     union FAllocatorPointers
     {
@@ -110,10 +140,14 @@ private:
     id<MTLBuffer>             Buffer;
     id<MTLTexture>            Texture;
     FMetalHeap*               Heap;
+    FMetalRelocatable*        Owner;
+    FMetalResidencyEntry*     ResidencyEntry;
+    FMetalResidencyEntry      StandaloneEntry;
     void*                     MappedBaseAddress;
     uint64                    ResourceOffset;
     uint64                    Size;
     uint32                    HeapIndex;
     EMetalResourceStorageType StorageType;
     EMetalAllocatorType       AllocatorType;
+    bool                      bDefragPending;
 };

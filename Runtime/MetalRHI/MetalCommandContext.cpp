@@ -62,6 +62,12 @@ void FMetalCommandContext::StartContext()
     CHECK(!bIsRecording);
 
     AcquireOwnership();
+
+    if (GetDevice()->HasPendingDefragMoves())
+    {
+        GetDevice()->FinalizeDefragMoves();
+    }
+
     bIsRecording  = true;
     RecordingPool = [NSAutoreleasePool new];
 
@@ -166,11 +172,17 @@ void FMetalCommandContext::QueryTimestamp(FRHIQuery* Query)
 
 void FMetalCommandContext::BeginFrame()
 {
+    GetDevice()->FinalizeDefragMoves();
     FMetalDeviceRHI::Get()->BeginFrame();
 }
 
 void FMetalCommandContext::EndFrame()
 {
+    if (bIsRecording && GetDevice()->RecordDefragMoves(*this) > 0)
+    {
+        GetDevice()->SetDefragWaitValues(Submit(EMetalSubmitFlags::Reopen));
+    }
+
     FMetalDeviceRHI::Get()->EndFrame();
 }
 
@@ -257,6 +269,7 @@ void FMetalCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTar
 
     MTLRenderPassColorAttachmentDescriptor* ColorAttachment = [[MTLRenderPassColorAttachmentDescriptor new] autorelease];
     MetalRTV->ApplyToAttachment(ColorAttachment);
+    Encoders.UpdateResidency(MetalRTV->GetAttachmentResidencyEntry());
 
     FMetalPendingClear Clear;
     Clear.Color   = MTLClearColorMake(ClearColor.X, ClearColor.Y, ClearColor.Z, ClearColor.W);
@@ -276,6 +289,7 @@ void FMetalCommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthSten
 
     MTLRenderPassDepthAttachmentDescriptor* DepthAttachment = [[MTLRenderPassDepthAttachmentDescriptor new] autorelease];
     MetalDSV->ApplyToAttachment(DepthAttachment);
+    Encoders.UpdateResidency(MetalDSV->GetAttachmentResidencyEntry());
 
     FMetalPendingClear Clear;
     Clear.Depth   = Depth;
@@ -543,6 +557,7 @@ void FMetalCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& Bu
     }
 
     Memory::Memcpy(StagingStorage.GetMappedBaseAddress(), SourceData, Size);
+    Encoders.UpdateResidency(MetalDst->GetResidencyEntry());
 
     [Encoders.RequireBlitEncoder() copyFromBuffer:StagingStorage.GetBuffer()
                                      sourceOffset:StagingStorage.GetResourceOffset()
@@ -585,6 +600,7 @@ void FMetalCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegio
     }
 
     Memory::Memcpy(StagingStorage.GetMappedBaseAddress(), SrcData, DataSize);
+    Encoders.UpdateResidency(MetalDst->GetResidencyEntry());
 
     [Encoders.RequireBlitEncoder() copyFromBuffer:StagingStorage.GetBuffer()
                                      sourceOffset:StagingStorage.GetResourceOffset()
@@ -619,6 +635,8 @@ void FMetalCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 
     Encoders.FlushPendingClears(SrcTexture);
     Encoders.FlushPendingClears(DstTexture);
+    Encoders.UpdateResidency(MetalSrc->GetResidencyEntry());
+    Encoders.UpdateResidency(MetalDst->GetResidencyEntry());
 
     MTLRenderPassDescriptor* Descriptor = [MTLRenderPassDescriptor renderPassDescriptor];
 
@@ -692,6 +710,8 @@ void FMetalCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FR
     FMetalBufferRHI* MetalSrc = GetMetalBuffer(Src);
     CHECK(MetalDst != nullptr);
     CHECK(MetalSrc != nullptr);
+    Encoders.UpdateResidency(MetalSrc->GetResidencyEntry());
+    Encoders.UpdateResidency(MetalDst->GetResidencyEntry());
 
     [Encoders.RequireBlitEncoder() copyFromBuffer:MetalSrc->GetMTLBuffer()
                                      sourceOffset:CopyDesc.SrcOffset + MetalSrc->GetMetalBindOffset()
@@ -709,6 +729,8 @@ void FMetalCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
 
     Encoders.FlushPendingClears(MetalSrc->GetMTLTexture());
     Encoders.FlushPendingClears(MetalDst->GetMTLTexture());
+    Encoders.UpdateResidency(MetalSrc->GetResidencyEntry());
+    Encoders.UpdateResidency(MetalDst->GetResidencyEntry());
 
     [Encoders.RequireBlitEncoder() copyFromTexture:MetalSrc->GetMTLTexture() toTexture:MetalDst->GetMTLTexture()];
 }
@@ -728,6 +750,8 @@ void FMetalCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
 
     Encoders.FlushPendingClears(SrcTexture);
     Encoders.FlushPendingClears(DstTexture);
+    Encoders.UpdateResidency(MetalSrc->GetResidencyEntry());
+    Encoders.UpdateResidency(MetalDst->GetResidencyEntry());
 
     id<MTLBlitCommandEncoder> Encoder = Encoders.RequireBlitEncoder();
     for (uint32 ArrayIndex = 0; ArrayIndex < NumArraySlices; ++ArrayIndex)
@@ -784,6 +808,8 @@ void FMetalCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
     const uint64 SlicePitch   = RowPitch * SrcRegion.Height;
 
     Encoders.FlushPendingClears(MetalSrc->GetMTLTexture());
+    Encoders.UpdateResidency(MetalSrc->GetResidencyEntry());
+    Encoders.UpdateResidency(MetalDst->GetResidencyEntry());
 
     [Encoders.RequireBlitEncoder() copyFromTexture:MetalSrc->GetMTLTexture()
                                        sourceSlice:SrcArraySlice
@@ -921,6 +947,7 @@ void FMetalCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, ui
 
     const FMetalIndexBufferCache& IndexBuffer = ContextState.GetIndexBuffer();
     CHECK(IndexBuffer.IndexBuffer != nullptr);
+    Encoders.UpdateResidency(IndexBuffer.IndexBuffer->GetResidencyEntry());
 
     const NSUInteger IndexStride = (IndexBuffer.IndexType == MTLIndexTypeUInt16) ? 2 : 4;
     [Encoder drawIndexedPrimitives:ContextState.GetRenderPipeline()->GetPrimitiveType()
@@ -960,6 +987,7 @@ void FMetalCommandContext::DrawIndirect(FRHIBuffer* ArgumentBuffer, uint64 Argum
 
     FMetalBufferRHI* Arguments = GetMetalBuffer(ArgumentBuffer);
     CHECK(Arguments != nullptr);
+    Encoders.UpdateResidency(Arguments->GetResidencyEntry());
 
     id<MTLRenderCommandEncoder> Encoder = Encoders.GetRenderEncoder();
     ContextState.BindRenderState<EMetalRenderPipelineType::Graphics>(Encoder);
@@ -987,12 +1015,14 @@ void FMetalCommandContext::DrawIndexedIndirect(FRHIBuffer* ArgumentBuffer, uint6
 
     FMetalBufferRHI* Arguments = GetMetalBuffer(ArgumentBuffer);
     CHECK(Arguments != nullptr);
+    Encoders.UpdateResidency(Arguments->GetResidencyEntry());
 
     id<MTLRenderCommandEncoder> Encoder = Encoders.GetRenderEncoder();
     ContextState.BindRenderState<EMetalRenderPipelineType::Graphics>(Encoder);
 
     const FMetalIndexBufferCache& IndexBuffer = ContextState.GetIndexBuffer();
     CHECK(IndexBuffer.IndexBuffer != nullptr);
+    Encoders.UpdateResidency(IndexBuffer.IndexBuffer->GetResidencyEntry());
 
     const MTLPrimitiveType PrimitiveType     = ContextState.GetRenderPipeline()->GetPrimitiveType();
     id<MTLBuffer>          ArgumentMTLBuffer = Arguments->GetMTLBuffer();
@@ -1017,6 +1047,7 @@ void FMetalCommandContext::DispatchIndirect(FRHIBuffer* ArgumentBuffer, uint64 A
 {
     FMetalBufferRHI* Arguments = GetMetalBuffer(ArgumentBuffer);
     CHECK(Arguments != nullptr);
+    Encoders.UpdateResidency(Arguments->GetResidencyEntry());
 
     id<MTLComputeCommandEncoder> Encoder = Encoders.RequireComputeEncoder();
     ContextState.BindComputeState(Encoder);
@@ -1067,6 +1098,7 @@ void FMetalCommandContext::DispatchMeshIndirect(FRHIBuffer* ArgumentBuffer, uint
 
     FMetalBufferRHI* Arguments = GetMetalBuffer(ArgumentBuffer);
     CHECK(Arguments != nullptr);
+    Encoders.UpdateResidency(Arguments->GetResidencyEntry());
 
     id<MTLRenderCommandEncoder> Encoder = Encoders.GetRenderEncoder();
     ContextState.BindRenderState<EMetalRenderPipelineType::Meshlet>(Encoder);
@@ -1207,7 +1239,7 @@ FMetalRenderPassInfo FMetalCommandContext::GetRenderPassInfo(MTLRenderPassDescri
     return Info;
 }
 
-void FMetalCommandContext::FillRenderPassDescriptor(MTLRenderPassDescriptor* Descriptor, const FRHIBeginRenderPassDesc& Desc) const
+void FMetalCommandContext::FillRenderPassDescriptor(MTLRenderPassDescriptor* Descriptor, const FRHIBeginRenderPassDesc& Desc)
 {
     const uint32 NumRenderTargets = Desc.NumRenderTargets;
 
@@ -1227,6 +1259,7 @@ void FMetalCommandContext::FillRenderPassDescriptor(MTLRenderPassDescriptor* Des
 
         MTLRenderPassColorAttachmentDescriptor* ColorAttachment = Descriptor.colorAttachments[Index];
         MetalRTV->ApplyToAttachment(ColorAttachment);
+        Encoders.UpdateResidency(MetalRTV->GetAttachmentResidencyEntry());
         ColorAttachment.loadAction  = MetalRHI::ConvertAttachmentLoadAction(Attachment.LoadAction);
         ColorAttachment.storeAction = MetalRHI::ConvertAttachmentStoreAction(Attachment.StoreAction);
         ColorAttachment.clearColor  = MTLClearColorMake(Attachment.ClearValue.R, Attachment.ClearValue.G, Attachment.ClearValue.B, Attachment.ClearValue.A);
@@ -1243,6 +1276,7 @@ void FMetalCommandContext::FillRenderPassDescriptor(MTLRenderPassDescriptor* Des
 
         MTLRenderPassDepthAttachmentDescriptor* DepthAttachment = Descriptor.depthAttachment;
         MetalDSV->ApplyToAttachment(DepthAttachment);
+        Encoders.UpdateResidency(MetalDSV->GetAttachmentResidencyEntry());
         DepthAttachment.loadAction  = MetalRHI::ConvertAttachmentLoadAction(DepthStencilAttachment.LoadAction);
         DepthAttachment.storeAction = MetalRHI::ConvertAttachmentStoreAction(DepthStencilAttachment.StoreAction);
         DepthAttachment.clearDepth  = DepthStencilAttachment.ClearValue.Depth;

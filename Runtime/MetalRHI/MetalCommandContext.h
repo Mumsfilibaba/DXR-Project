@@ -176,7 +176,8 @@ private:
 
     uint64 Submit(EMetalSubmitFlags Flags);
     void AddPendingQuery(FMetalQueryRHI* Query);
-    void FillRenderPassDescriptor(MTLRenderPassDescriptor* Descriptor, const FRHIBeginRenderPassDesc& Desc) const;
+
+    void FillRenderPassDescriptor(MTLRenderPassDescriptor* Descriptor, const FRHIBeginRenderPassDesc& Desc);
     id<MTLBuffer> CreateStagingBuffer(uint64 Size, FMetalResourceStorage& OutStorage);
 
     FMetalQueue&              Queue;

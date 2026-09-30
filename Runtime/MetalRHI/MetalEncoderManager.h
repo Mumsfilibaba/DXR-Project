@@ -4,6 +4,7 @@
 #include "Core/Templates/Utility/NonCopyable.h"
 #include "Core/Threading/Atomic/AtomicBool.h"
 #include "MetalRHI/MetalDeviceChild.h"
+#include "MetalRHI/MetalResidencyManager.h"
 #include "MetalRHI/MetalStageEncoder.h"
 
 class FMetalQueue;
@@ -104,6 +105,11 @@ public:
     FMetalCommands&            GetCommands() const { CHECK(Commands != nullptr); return *Commands; }
     FMetalEncoderBindingCache& GetBindingCache()   { return BindingCache; }
 
+    FORCEINLINE void UpdateResidency(FMetalResidencyEntry* Entry)
+    {
+        ResidencyList.Insert(Entry);
+    }
+
     template<typename CommandEncoderType>
     void RefreshBindlessResidency(CommandEncoderType InEncoder);
 
@@ -129,6 +135,7 @@ private:
     FMetalEncoderBindingCache  BindingCache;
     TArray<uint32>             ScheduledTimestamps;
     TArray<FMetalPendingClear> PendingClears;
+    FMetalResidencyList        ResidencyList;
     uint64                     WaitedUploadValue;
     uint64                     DeclaredResidencyGeneration;
     uint64                     EncoderSerial;

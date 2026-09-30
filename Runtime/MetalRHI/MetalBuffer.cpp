@@ -13,36 +13,60 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 FMetalBufferRHI::FMetalBufferRHI(FMetalDevice* InDevice, const FRHIBufferDesc& InBufferDesc)
     : FRHIBuffer(InBufferDesc)
     , FMetalDeviceChild(InDevice)
+    , FMetalRelocatable()
     , ResourceStorage(InDevice)
     , BindlessHandle()
-    , RelocationListeners()
-    , RelocationListenersCS()
+    , PinnedEntry(nullptr)
 {
+    ResourceStorage.SetOwner(this);
 }
 
 FMetalBufferRHI::~FMetalBufferRHI()
 {
     {
-        TScopedLock Lock(RelocationListenersCS);
-        for (FMetalView* View : RelocationListeners)
-        {
-            View->OnBufferReleased();
-        }
-
-        RelocationListeners.Clear();
-    }
-
-    if (BindlessHandle.IsValid())
-    {
-        if (FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager())
-        {
-            BindlessManager->Free(BindlessHandle);
-        }
-
-        BindlessHandle = FRHIDescriptorHandle();
+        TScopedLock Lock(GetRelocationLock());
+        NotifyReleased();
+        FreeBindlessHandle();
     }
 
     ResourceStorage.ReleaseResource();
+}
+
+void FMetalBufferRHI::FreeBindlessHandle()
+{
+    if (!BindlessHandle.IsValid())
+    {
+        return;
+    }
+
+    if (FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager())
+    {
+        BindlessManager->Free(BindlessHandle);
+    }
+
+    GetDevice()->GetResidencyManager().Unpin(PinnedEntry);
+    BindlessHandle = FRHIDescriptorHandle();
+    PinnedEntry    = nullptr;
+}
+
+FMetalResourceStorage& FMetalBufferRHI::GetRelocatableStorage()
+{
+    return ResourceStorage;
+}
+
+void FMetalBufferRHI::OnStorageSwapped()
+{
+    if (!BindlessHandle.IsValid())
+    {
+        return;
+    }
+
+    GetDevice()->GetBindlessDescriptorManager()->WriteBuffer(BindlessHandle, GetMTLBuffer(), ResourceStorage.GetResourceOffset(), ResourceStorage.IsPlacedResource(), true);
+
+    FMetalResidencyManager& ResidencyManager = GetDevice()->GetResidencyManager();
+    ResidencyManager.Unpin(PinnedEntry);
+    PinnedEntry = ResourceStorage.GetResidencyEntry();
+    ResidencyManager.Pin(PinnedEntry);
 }
 
 void* FMetalBufferRHI::GetRHINativeResource() const
@@ -78,6 +102,9 @@ FRHIDescriptorHandle FMetalBufferRHI::GetBindlessHandle() const
     }
 
     BindlessManager->WriteBuffer(BindlessHandle, GetMTLBuffer(), ResourceStorage.GetResourceOffset(), ResourceStorage.IsPlacedResource(), true);
+
+    PinnedEntry = ResourceStorage.GetResidencyEntry();
+    GetDevice()->GetResidencyManager().Pin(PinnedEntry);
     return BindlessHandle;
 }
 
@@ -125,6 +152,7 @@ bool FMetalBufferRHI::RelocateTransientStorage(uint64 SizeInBytes, const void* S
     const uint64 Alignment   = MetalRHI::GetMTLBufferAlignment(Desc);
     const uint64 AlignedSize = Math::AlignUp(SizeInBytes, Alignment);
 
+    TScopedLock Lock(GetRelocationLock());
     ResourceStorage.ReleaseResource();
 
     void* Mapped = DynamicConstantsAllocator->Allocate(AlignedSize, Alignment, Queue, ResourceStorage);
@@ -137,37 +165,9 @@ bool FMetalBufferRHI::RelocateTransientStorage(uint64 SizeInBytes, const void* S
 
     Memory::Memcpy(Mapped, SourceData, SizeInBytes);
 
-    if (BindlessHandle.IsValid())
-    {
-        if (FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager())
-        {
-            BindlessManager->Free(BindlessHandle);
-        }
-
-        BindlessHandle = FRHIDescriptorHandle();
-    }
-
-    TScopedLock Lock(RelocationListenersCS);
-    for (FMetalView* View : RelocationListeners)
-    {
-        View->OnBufferRelocated();
-    }
-
+    FreeBindlessHandle();
+    NotifyRelocated(EMetalRelocation::Transient);
     return true;
-}
-
-void FMetalBufferRHI::AddRelocationListener(FMetalView* View)
-{
-    CHECK(View != nullptr);
-
-    TScopedLock Lock(RelocationListenersCS);
-    RelocationListeners.AddUnique(View);
-}
-
-void FMetalBufferRHI::RemoveRelocationListener(FMetalView* View)
-{
-    TScopedLock Lock(RelocationListenersCS);
-    RelocationListeners.Remove(View);
 }
 
 bool FMetalBufferRHI::Initialize(ERHIResourceState InInitialAccess, const void* InInitialData)

@@ -143,6 +143,12 @@ void FMetalCommandContextState::BindRenderState(id<MTLRenderCommandEncoder> Enco
         for (uint32 Stream = 0; Stream < NumVertexStreams; ++Stream)
         {
             FMetalBufferRHI* VertexBuffer = VertexBuffers.VertexBuffers[Stream];
+
+            if (VertexBuffer)
+            {
+                Encoders.UpdateResidency(VertexBuffer->GetResidencyEntry());
+            }
+
             Cache.SetBuffer<EShaderVisibility::Vertex>(Encoder, VertexBuffer ? VertexBuffer->GetMTLBuffer() : nil, VertexBuffer ? VertexBuffer->GetMetalBindOffset() : 0, GetMSLVertexStreamBufferIndex(Stream));
         }
 
@@ -441,7 +447,7 @@ void FMetalCommandContextState::SetShaderConstants(EShaderVisibility::Type Stage
 template<EShaderVisibility::Type Stage>
 void FMetalCommandContextState::FlushStage(typename TMetalStageEncoder<Stage>::EncoderType Encoder, const FMetalStageBindPlan& Plan)
 {
-    FMetalStageResourceTable&     Table    = StageTables[Stage];
+    FMetalStageResourceTable&     Table     = StageTables[Stage];
     FMetalEncoderBindingCache&    Cache    = Encoders.GetBindingCache();
     const FMetalDefaultResources& Defaults = *DefaultResources;
 
@@ -466,6 +472,12 @@ void FMetalCommandContextState::FlushStage(typename TMetalStageEncoder<Stage>::E
     {
         const uint32     Register = MetalRHI::FirstSetBit(Mask);
         FMetalBufferRHI* Buffer   = Table.ConstantBuffers[Register];
+
+        if (Buffer)
+        {
+            Encoders.UpdateResidency(Buffer->GetResidencyEntry());
+        }
+
         Cache.SetBuffer<Stage>(Encoder, Buffer ? Buffer->GetMTLBuffer() : Defaults.NullBuffer, Buffer ? Buffer->GetMetalBindOffset() : 0, Plan.ConstantBufferSlots[Register]);
     }
 
@@ -476,6 +488,11 @@ void FMetalCommandContextState::FlushStage(typename TMetalStageEncoder<Stage>::E
         const uint32                 Register = MetalRHI::FirstSetBit(Mask);
         FMetalShaderResourceViewRHI* View     = Table.ShaderResourceViews[Register];
         const uint8                  Slot     = Plan.ShaderResourceSlots[Register];
+
+        if (View)
+        {
+            Encoders.UpdateResidency(View->GetResidencyEntry());
+        }
 
         if (Plan.ShaderResourceBufferMask & (1u << Register))
         {
@@ -494,6 +511,11 @@ void FMetalCommandContextState::FlushStage(typename TMetalStageEncoder<Stage>::E
         const uint32                  Register = MetalRHI::FirstSetBit(Mask);
         FMetalUnorderedAccessViewRHI* View     = Table.UnorderedAccessViews[Register];
         const uint8                   Slot     = Plan.UnorderedAccessSlots[Register];
+
+        if (View)
+        {
+            Encoders.UpdateResidency(View->GetResidencyEntry());
+        }
 
         if (Plan.UnorderedAccessBufferMask & (1u << Register))
         {

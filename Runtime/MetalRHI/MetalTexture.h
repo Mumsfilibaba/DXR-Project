@@ -2,14 +2,16 @@
 #include "RHI/RHIResources.h"
 #include "MetalRHI/MetalViews.h"
 #include "MetalRHI/MetalDeviceChild.h"
+#include "MetalRHI/MetalRelocatable.h"
 #include "MetalRHI/MetalResource.h"
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FMetalSwapChainRHI;
+class FMetalUploadBatch;
 
 typedef TSharedRef<class FMetalTextureRHI> FMetalTextureRef;
 
-class FMetalTextureRHI : public FRHITexture, public FMetalDeviceChild
+class FMetalTextureRHI : public FRHITexture, public FMetalDeviceChild, public FMetalRelocatable
 {
 public:
     FMetalTextureRHI(FMetalDevice* InDevice, const FRHITextureDesc& InTextureDesc);
@@ -29,7 +31,9 @@ public:
     virtual void GetDebugName(String& OutDebugName) const override final;
     
     bool Initialize(ERHIResourceState InInitialAccess, const IRHITextureData* InInitialData);
-    
+    bool CreateDefaultViews();
+    bool ResizeSwapChainTexture(const FRHITextureDesc& InTextureDesc);
+
     id<MTLTexture> GetMTLTexture() const;
 
     FORCEINLINE bool IsHeapPlaced() const
@@ -37,17 +41,29 @@ public:
         return ResourceStorage.IsPlacedResource();
     }
 
+    FORCEINLINE const FMetalResourceStorage& GetResourceStorage() const
+    {
+        return ResourceStorage;
+    }
+
+    FORCEINLINE FMetalResidencyEntry* GetResidencyEntry() const
+    {
+        return ResourceStorage.GetResidencyEntry();
+    }
+
     void SetSwapChain(FMetalSwapChainRHI* InSwapChain)
     {
         SwapChain = InSwapChain;
     }
 
-    bool ResizeSwapChainTexture(const FRHITextureDesc& InTextureDesc);
+protected:
 
-    bool CreateDefaultViews();
+    // FMetalRelocatable Interface
+    virtual FMetalResourceStorage& GetRelocatableStorage() override final;
+    virtual void OnStorageSwapped() override final;
 
 private:
-    bool UploadInitialData(const IRHITextureData* InInitialData);
+    bool UploadInitialData(FMetalUploadBatch& UploadBatch, const IRHITextureData* InInitialData);
 
     id<MTLTexture>                           Texture;
     FMetalResourceStorage                    ResourceStorage;
@@ -61,6 +77,11 @@ private:
 FORCEINLINE FMetalTextureRHI* GetMetalTexture(FRHITexture* Texture)
 {
     return Texture ? static_cast<FMetalTextureRHI*>(Texture) : nullptr;
+}
+
+namespace MetalRHI
+{
+    void CreatePlacementInitPasses(id<MTLTexture> Texture, TArray<MTLRenderPassDescriptor*>& OutPasses);
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -7,6 +7,7 @@
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalTexture.h"
 #include "Core/Math/Math.h"
+#include "Core/Threading/ScopedLock.h"
 
 struct FMetalSubresourceRange
 {
@@ -143,6 +144,9 @@ static FMetalSubresource ResolveAttachmentSubresource(const ViewDescType& InDesc
 FMetalView::FMetalView(FMetalDevice* InDevice)
     : FMetalDeviceChild(InDevice)
     , SourceBuffer(nullptr)
+    , SourceTexture(nullptr)
+    , ResidencyEntry(nullptr)
+    , PinnedEntry(nullptr)
     , TextureView(nil)
     , BufferView(nil)
     , BufferOffset(0)
@@ -150,7 +154,13 @@ FMetalView::FMetalView(FMetalDevice* InDevice)
     , BufferSize(0)
     , BindlessHandle()
     , BufferTextureFormat(EFormat::Unknown)
+    , TextureViewFormat(MTLPixelFormatInvalid)
+    , TextureViewType(MTLTextureType2D)
+    , TextureViewLevels(NSMakeRange(0, 0))
+    , TextureViewSlices(NSMakeRange(0, 0))
+    , bTextureViewIsParent(false)
     , bBufferTextureWritable(false)
+    , bBindlessWritable(false)
     , bOwnsTextureView(false)
     , bDeclaredResident(false)
 {
@@ -158,10 +168,11 @@ FMetalView::FMetalView(FMetalDevice* InDevice)
 
 FMetalView::~FMetalView()
 {
-    if (SourceBuffer)
+    if (FMetalRelocatable* Source = GetSource())
     {
-        SourceBuffer->RemoveRelocationListener(this);
-        SourceBuffer = nullptr;
+        Source->RemoveRelocationListener(this);
+        SourceBuffer  = nullptr;
+        SourceTexture = nullptr;
     }
 
     FreeBindlessHandle();
@@ -209,7 +220,19 @@ void FMetalView::FreeBindlessHandle()
         BindlessManager->Free(BindlessHandle);
     }
 
+    GetDevice()->GetResidencyManager().Unpin(PinnedEntry);
     BindlessHandle = FRHIDescriptorHandle();
+    PinnedEntry    = nullptr;
+}
+
+FMetalRelocatable* FMetalView::GetSource() const
+{
+    if (SourceBuffer)
+    {
+        return SourceBuffer;
+    }
+
+    return SourceTexture;
 }
 
 FRHIDescriptorHandle FMetalView::EnsureBindlessHandle(EDescriptorType DescriptorType, bool bWritable) const
@@ -226,23 +249,54 @@ FRHIDescriptorHandle FMetalView::EnsureBindlessHandle(EDescriptorType Descriptor
         return FRHIDescriptorHandle();
     }
 
-    BindlessHandle = BindlessManager->Allocate(DescriptorType);
-
-    if (!BindlessHandle.IsValid())
+    auto AllocateHandle = [&]() -> FRHIDescriptorHandle
     {
-        return FRHIDescriptorHandle();
+        if (BindlessHandle.IsValid())
+        {
+            return BindlessHandle;
+        }
+
+        BindlessHandle = BindlessManager->Allocate(DescriptorType);
+
+        if (!BindlessHandle.IsValid())
+        {
+            return FRHIDescriptorHandle();
+        }
+
+        bBindlessWritable = bWritable;
+        WriteBindlessHandle();
+
+        PinnedEntry = ResidencyEntry;
+        GetDevice()->GetResidencyManager().Pin(PinnedEntry);
+        return BindlessHandle;
+    };
+
+    if (FMetalRelocatable* Source = GetSource())
+    {
+        TScopedLock Lock(Source->GetRelocationLock());
+        return AllocateHandle();
+    }
+
+    return AllocateHandle();
+}
+
+void FMetalView::WriteBindlessHandle() const
+{
+    FMetalBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager();
+
+    if (!BindlessHandle.IsValid() || !BindlessManager)
+    {
+        return;
     }
 
     if (TextureView)
     {
-        BindlessManager->WriteTexture(BindlessHandle, TextureView, bWritable, true);
+        BindlessManager->WriteTexture(BindlessHandle, TextureView, bBindlessWritable, true);
     }
     else if (BufferView)
     {
         BindlessManager->WriteBuffer(BindlessHandle, BufferView, BufferOffset, false, true);
     }
-
-    return BindlessHandle;
 }
 
 void FMetalView::DeclareBindlessResidency()
@@ -259,32 +313,58 @@ void FMetalView::DeclareBindlessResidency()
     bDeclaredResident = true;
 }
 
-void FMetalView::OnBufferRelocated()
+void FMetalView::OnResourceRelocated(EMetalRelocation Relocation)
 {
-    CHECK(SourceBuffer != nullptr);
+    const bool bWasResident = bDeclaredResident;
 
-    id<MTLBuffer> NewBuffer = [SourceBuffer->GetMTLBuffer() retain];
-    [BufferView release];
-    BufferView   = NewBuffer;
-    BufferOffset = SourceBuffer->GetMetalBindOffset() + SourceOffset;
-
-    if (bOwnsTextureView)
+    if (SourceBuffer)
     {
-        const bool bWasResident = bDeclaredResident;
-        ReleaseTextureView();
+        id<MTLBuffer> NewBuffer = [SourceBuffer->GetMTLBuffer() retain];
+        [BufferView release];
+        BufferView     = NewBuffer;
+        BufferOffset   = SourceBuffer->GetMetalBindOffset() + SourceOffset;
+        ResidencyEntry = SourceBuffer->GetResourceStorage().GetResidencyEntry();
 
-        if (CreateBufferTexture() && bWasResident)
+        if (bOwnsTextureView)
         {
-            DeclareBindlessResidency();
+            ReleaseTextureView();
+            CreateBufferTexture();
         }
     }
+    else if (SourceTexture)
+    {
+        ReleaseTextureView();
+        CreateTextureView(SourceTexture->GetMTLTexture());
+        ResidencyEntry = SourceTexture->GetResourceStorage().GetResidencyEntry();
+    }
 
-    FreeBindlessHandle();
+    if (bWasResident)
+    {
+        DeclareBindlessResidency();
+    }
+
+    if (Relocation == EMetalRelocation::Transient)
+    {
+        FreeBindlessHandle();
+    }
+    else if (BindlessHandle.IsValid())
+    {
+        WriteBindlessHandle();
+
+        FMetalResidencyManager& ResidencyManager = GetDevice()->GetResidencyManager();
+        ResidencyManager.Unpin(PinnedEntry);
+        PinnedEntry = ResidencyEntry;
+        ResidencyManager.Pin(PinnedEntry);
+    }
 }
 
-void FMetalView::OnBufferReleased()
+void FMetalView::OnResourceReleased()
 {
-    SourceBuffer = nullptr;
+    GetDevice()->GetResidencyManager().Unpin(PinnedEntry);
+    PinnedEntry    = nullptr;
+    ResidencyEntry = nullptr;
+    SourceBuffer   = nullptr;
+    SourceTexture  = nullptr;
 }
 
 bool FMetalView::InitializeTextureView(FRHITexture* InTexture, EFormat InFormat, EViewDimension InViewDimension, 
@@ -297,6 +377,8 @@ bool FMetalView::InitializeTextureView(FRHITexture* InTexture, EFormat InFormat,
         METAL_ERROR("Cannot create a texture view without a texture");
         return false;
     }
+
+    TScopedLock Lock(MetalTexture->GetRelocationLock());
 
     id<MTLTexture> ParentTexture = MetalTexture->GetMTLTexture();
 
@@ -333,16 +415,35 @@ bool FMetalView::InitializeTextureView(FRHITexture* InTexture, EFormat InFormat,
         && InFirstMip == 0 && NumMips == ParentNumMips 
         && InFirstSlice == 0 && NumSlices == ParentNumSlices;
 
-    if (bCoversWholeTexture)
+    TextureViewFormat    = ViewFormat;
+    TextureViewType      = ViewType;
+    TextureViewLevels    = NSMakeRange(InFirstMip, NumMips);
+    TextureViewSlices    = NSMakeRange(InFirstSlice, NumSlices);
+    bTextureViewIsParent = bCoversWholeTexture;
+
+    if (!CreateTextureView(ParentTexture))
+    {
+        return false;
+    }
+
+    SourceTexture  = MetalTexture;
+    ResidencyEntry = MetalTexture->GetResourceStorage().GetResidencyEntry();
+    SourceTexture->AddRelocationListener(this);
+    return true;
+}
+
+bool FMetalView::CreateTextureView(id<MTLTexture> ParentTexture)
+{
+    if (bTextureViewIsParent)
     {
         TextureView = [ParentTexture retain];
         return true;
     }
 
-    TextureView = [ParentTexture newTextureViewWithPixelFormat:ViewFormat
-                                                   textureType:ViewType
-                                                        levels:NSMakeRange(InFirstMip, NumMips)
-                                                        slices:NSMakeRange(InFirstSlice, NumSlices)];
+    TextureView = [ParentTexture newTextureViewWithPixelFormat:TextureViewFormat
+                                                   textureType:TextureViewType
+                                                        levels:TextureViewLevels
+                                                        slices:TextureViewSlices];
 
     if (!TextureView)
     {
@@ -364,6 +465,8 @@ bool FMetalView::InitializeBufferView(FRHIBuffer* InBuffer, uint64 InOffset, uin
         return false;
     }
 
+    TScopedLock Lock(MetalBuffer->GetRelocationLock());
+
     id<MTLBuffer> ParentBuffer = MetalBuffer->GetMTLBuffer();
 
     if (!ParentBuffer)
@@ -378,17 +481,13 @@ bool FMetalView::InitializeBufferView(FRHIBuffer* InBuffer, uint64 InOffset, uin
         return false;
     }
 
-    BufferView   = [ParentBuffer retain];
-    BufferOffset = MetalBuffer->GetMetalBindOffset() + InOffset;
-    SourceOffset = InOffset;
-    BufferSize   = InSize;
-
-    if (MetalBuffer->GetDesc().IsTransient())
-    {
-        SourceBuffer = MetalBuffer;
-        SourceBuffer->AddRelocationListener(this);
-    }
-
+    BufferView     = [ParentBuffer retain];
+    BufferOffset   = MetalBuffer->GetMetalBindOffset() + InOffset;
+    SourceOffset   = InOffset;
+    BufferSize     = InSize;
+    SourceBuffer   = MetalBuffer;
+    ResidencyEntry = MetalBuffer->GetResourceStorage().GetResidencyEntry();
+    SourceBuffer->AddRelocationListener(this);
     return true;
 }
 
@@ -594,6 +693,11 @@ id<MTLTexture> FMetalAttachmentView::GetAttachmentTexture() const
 {
     id<MTLTexture> FormatView = GetMTLTexture();
     return FormatView ? FormatView : (Texture ? Texture->GetMTLTexture() : nil);
+}
+
+FMetalResidencyEntry* FMetalAttachmentView::GetAttachmentResidencyEntry() const
+{
+    return Texture ? Texture->GetResidencyEntry() : nullptr;
 }
 
 void FMetalAttachmentView::ApplyToAttachment(MTLRenderPassAttachmentDescriptor* Attachment) const

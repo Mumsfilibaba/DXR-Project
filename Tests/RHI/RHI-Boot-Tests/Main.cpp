@@ -49,6 +49,7 @@ int main(int Argc, const CHAR* Argv[])
 #if PLATFORM_MACOS
     RUN_TEST("RHIBoot_Vulkan", RHIBoot_Vulkan_Test());
     RUN_TEST("RHIBoot_Metal", RHIBoot_Metal_Test());
+    RUN_TEST("RHIBoot_MetalResidencyFallback", RHIBoot_MetalResidencyFallback_Test());
 #elif PLATFORM_WINDOWS
     RUN_TEST("RHIBoot_D3D12", RHIBoot_D3D12_Test());
     RUN_TEST("RHIBoot_Vulkan", RHIBoot_Vulkan_Test());

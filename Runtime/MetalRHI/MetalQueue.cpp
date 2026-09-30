@@ -363,6 +363,7 @@ uint64 FMetalQueue::SubmitCommands(FMetalCommands* Commands)
         BindlessManager->Flush();
     }
 
+    GetDevice()->GetResidencyManager().PrepareForExecution(Commands->ResidencyList, *this, Value);
     GetDevice()->GetResidencySet().CommitIfDirty();
     [Commands->CommandBuffer commit];
 
@@ -486,6 +487,7 @@ FMetalCommands::FMetalCommands(FMetalDevice* InDevice, FMetalQueue* InQueue)
     , PendingQueries()
     , PendingSignals()
     , PendingWaits()
+    , ResidencyList()
     , Breadcrumbs()
     , bUpdatesEncoderFence(false)
 {
@@ -500,6 +502,7 @@ void FMetalCommands::Reset()
     PendingQueries.Clear();
     PendingSignals.Clear();
     PendingWaits.Clear();
+    ResidencyList.Reset();
     Breadcrumbs.Reset();
     bUpdatesEncoderFence = false;
 }

@@ -15,6 +15,8 @@ public:
     bool CreateStagingBuffer(uint64 Size, FMetalResourceStorage& OutStorage);
     uint64 Submit();
 
+    void InitializePlacement(id<MTLTexture> Texture);
+
     bool IsValid() const
     {
         return BlitEncoder != nil;

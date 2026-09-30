@@ -5,8 +5,13 @@ FMetalHeap::FMetalHeap(FMetalDevice* InDevice, id<MTLHeap> InHeap, uint64 InSize
     : FMetalDeviceChild(InDevice)
     , Heap(InHeap)
     , Size(InSize)
+    , ResidencyEntry()
 {
     CHECK(Heap != nil);
+
+    ResidencyEntry.Allocation  = Heap;
+    ResidencyEntry.SizeInBytes = Size;
+    ResidencyEntry.bIsHeap     = true;
 }
 
 FMetalHeap::~FMetalHeap()

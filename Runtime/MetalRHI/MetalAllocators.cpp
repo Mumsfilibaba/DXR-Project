@@ -1,15 +1,46 @@
 #include "MetalRHI/MetalAllocators.h"
+#include "MetalRHI/MetalCommandContext.h"
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalQueue.h"
+#include "MetalRHI/MetalResidencyManager.h"
 #include "MetalRHI/MetalResidencySet.h"
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalStats.h"
+#include "MetalRHI/MetalTexture.h"
 #include "Core/Math/Math.h"
 #include "Core/Threading/ScopedLock.h"
+
+static constexpr uint64 GMaxHeapAllocationSize = 64ull * 1024ull * 1024ull;
 
 static uint64 GetLastSubmittedValue(FMetalQueue* Queue)
 {
     return Queue ? Queue->GetLastSubmittedValue() : 0;
+}
+
+static MTLTextureDescriptor* CreateDescriptorFromTexture(id<MTLTexture> Texture)
+{
+    MTLTextureDescriptor* Descriptor = [[MTLTextureDescriptor new] autorelease];
+    Descriptor.textureType               = Texture.textureType;
+    Descriptor.pixelFormat               = Texture.pixelFormat;
+    Descriptor.width                     = Texture.width;
+    Descriptor.height                    = Texture.height;
+    Descriptor.depth                     = Texture.depth;
+    Descriptor.mipmapLevelCount          = Texture.mipmapLevelCount;
+    Descriptor.arrayLength               = Texture.arrayLength;
+    Descriptor.sampleCount               = Texture.sampleCount;
+    Descriptor.usage                     = Texture.usage;
+    Descriptor.storageMode               = Texture.storageMode;
+    Descriptor.cpuCacheMode              = Texture.cpuCacheMode;
+    Descriptor.hazardTrackingMode        = MTLHazardTrackingModeUntracked;
+    Descriptor.allowGPUOptimizedContents = Texture.allowGPUOptimizedContents;
+    Descriptor.swizzle                   = Texture.swizzle;
+
+    if (@available(macOS 12.5, *))
+    {
+        Descriptor.compressionType = Texture.compressionType;
+    }
+
+    return Descriptor;
 }
 
 FMetalHeapPool::FMetalHeapPool(FMetalDevice* InDevice)
@@ -25,59 +56,165 @@ FMetalHeapPool::~FMetalHeapPool()
     Destroy();
 }
 
-bool FMetalHeapPool::TryAllocate(uint64 SizeInBytes, uint64 Alignment, uint32& OutHeapIndex, uint64& OutOffset, FMetalHeap*& OutHeap)
+bool FMetalHeapPool::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FMetalResourceStorage* Storage, uint32& OutHeapIndex, uint64& OutOffset, FMetalHeap*& OutHeap)
+{
+    const uint64 ResolvedAlignment = Math::Max(Alignment, 16ull);
+
+    {
+        TScopedLock Lock(PoolCS);
+
+        if (TryAllocateFromBlocks(SizeInBytes, ResolvedAlignment, Storage, OutHeapIndex, OutOffset, OutHeap))
+        {
+            return true;
+        }
+    }
+
+    GetDevice()->GetResidencyManager().EvictIfNeeded();
+
+    TScopedLock Lock(PoolCS);
+
+    if (TryAllocateFromBlocks(SizeInBytes, ResolvedAlignment, Storage, OutHeapIndex, OutOffset, OutHeap))
+    {
+        return true;
+    }
+
+    const uint32 HeapIndex = CreateHeapBlock(Math::Max(SizeInBytes, DefaultHeapSize));
+
+    if (HeapIndex == UINT32_MAX)
+    {
+        return false;
+    }
+
+    FHeapBlock& Block = HeapBlocks[HeapIndex];
+
+    if (!TrySuballocate(Block, SizeInBytes, ResolvedAlignment, OutOffset))
+    {
+        return false;
+    }
+
+    RecordAllocation(Block, OutOffset, SizeInBytes, Storage);
+    OutHeapIndex = HeapIndex;
+    OutHeap      = Block.Heap;
+    return true;
+}
+
+bool FMetalHeapPool::TryAllocateForDefrag(uint64 SizeInBytes, uint64 Alignment, uint32 SourceHeapIndex, FMetalResourceStorage* Storage, uint32& OutHeapIndex, uint64& OutOffset, FMetalHeap*& OutHeap)
 {
     const uint64 ResolvedAlignment = Math::Max(Alignment, 16ull);
 
     TScopedLock Lock(PoolCS);
 
+    if (SourceHeapIndex >= static_cast<uint32>(HeapBlocks.Size()))
+    {
+        return false;
+    }
+
+    const uint64 SourceUsedBytes = HeapBlocks[SourceHeapIndex].UsedBytes;
+
     for (int32 Index = 0; Index < HeapBlocks.Size(); ++Index)
     {
         FHeapBlock& Block = HeapBlocks[Index];
 
-        if (!Block.Heap)
+        if (!Block.Heap || static_cast<uint32>(Index) == SourceHeapIndex || Block.Allocations.IsEmpty() || Block.UsedBytes < SourceUsedBytes)
         {
             continue;
         }
 
-        if (TrySuballocate(Block, static_cast<uint32>(Index), SizeInBytes, ResolvedAlignment, OutOffset))
+        if (TrySuballocate(Block, SizeInBytes, ResolvedAlignment, OutOffset))
         {
+            RecordAllocation(Block, OutOffset, SizeInBytes, Storage);
             OutHeapIndex = static_cast<uint32>(Index);
             OutHeap      = Block.Heap;
             return true;
         }
     }
 
-    FHeapBlock* NewBlock = CreateHeapBlock(Math::Max(SizeInBytes, DefaultHeapSize));
+    return false;
+}
 
-    if (!NewBlock)
-    {
-        return false;
-    }
+void FMetalHeapPool::SelectDefragCandidates(uint32 MaxMoves, uint64 EligibleBeforeFrame, TArray<FMetalDefragCandidate>& OutCandidates)
+{
+    TScopedLock Lock(PoolCS);
 
-    uint32 HeapIndex = UINT32_MAX;
+    int32 SourceIndex = -1;
     for (int32 Index = 0; Index < HeapBlocks.Size(); ++Index)
     {
-        if (&HeapBlocks[Index] == NewBlock)
+        const FHeapBlock& Block = HeapBlocks[Index];
+
+        if (!Block.Heap || Block.Allocations.IsEmpty() || Block.FreeRanges.Size() <= 1)
         {
-            HeapIndex = static_cast<uint32>(Index);
-            break;
+            continue;
+        }
+
+        if (SourceIndex < 0 || Block.UsedBytes < HeapBlocks[SourceIndex].UsedBytes)
+        {
+            SourceIndex = Index;
         }
     }
 
-    if (HeapIndex == UINT32_MAX || !TrySuballocate(*NewBlock, HeapIndex, SizeInBytes, ResolvedAlignment, OutOffset))
+    if (SourceIndex < 0)
     {
-        return false;
+        return;
     }
 
-    OutHeapIndex = HeapIndex;
-    OutHeap      = NewBlock->Heap;
-    return true;
+    for (const FHeapAllocation& Allocation : HeapBlocks[SourceIndex].Allocations)
+    {
+        if (static_cast<uint32>(OutCandidates.Size()) >= MaxMoves)
+        {
+            break;
+        }
+
+        FMetalResourceStorage* Storage = Allocation.Storage;
+
+        if (!Storage || !Storage->GetOwner() || Storage->IsDefragPending() || Allocation.CreatedFrame >= EligibleBeforeFrame)
+        {
+            continue;
+        }
+
+        FMetalDefragCandidate& Candidate = OutCandidates.Emplace();
+        Candidate.Storage   = Storage;
+        Candidate.HeapIndex = static_cast<uint32>(SourceIndex);
+    }
+}
+
+void FMetalHeapPool::RetargetAllocation(uint32 HeapIndex, uint64 Offset, FMetalResourceStorage* NewStorage)
+{
+    TScopedLock Lock(PoolCS);
+
+    if (HeapIndex >= static_cast<uint32>(HeapBlocks.Size()))
+    {
+        return;
+    }
+
+    for (FHeapAllocation& Allocation : HeapBlocks[HeapIndex].Allocations)
+    {
+        if (Allocation.Offset == Offset)
+        {
+            Allocation.Storage = NewStorage;
+            return;
+        }
+    }
+
+    CHECK(false);
 }
 
 void FMetalHeapPool::Deallocate(uint32 HeapIndex, uint64 Offset, uint64 Size)
 {
     TScopedLock Lock(PoolCS);
+
+    if (HeapIndex < static_cast<uint32>(HeapBlocks.Size()))
+    {
+        TArray<FHeapAllocation>& Allocations = HeapBlocks[HeapIndex].Allocations;
+
+        for (int32 Index = 0; Index < Allocations.Size(); ++Index)
+        {
+            if (Allocations[Index].Offset == Offset)
+            {
+                Allocations.RemoveAtSwap(Index);
+                break;
+            }
+        }
+    }
 
     FPendingHeapFree PendingFree;
     PendingFree.HeapIndex         = HeapIndex;
@@ -93,7 +230,14 @@ void FMetalHeapPool::CleanUp()
 {
     TScopedLock Lock(PoolCS);
     RecyclePendingHeapFrees();
-    DropUnusedHeaps();
+    DropUnusedHeaps(MaxUnusedHeapBytes);
+}
+
+void FMetalHeapPool::Trim()
+{
+    TScopedLock Lock(PoolCS);
+    RecyclePendingHeapFrees();
+    DropUnusedHeaps(0);
 }
 
 void FMetalHeapPool::Destroy()
@@ -107,7 +251,7 @@ void FMetalHeapPool::Destroy()
     {
         if (Block.Heap)
         {
-            GetDevice()->GetResidencySet().RemoveHeap(Block.Heap->GetMTLHeap());
+            GetDevice()->GetResidencyManager().EndTracking(Block.Heap->GetResidencyEntry(), true);
             delete Block.Heap;
             Block.Heap = nullptr;
         }
@@ -116,7 +260,7 @@ void FMetalHeapPool::Destroy()
     HeapBlocks.Clear();
 }
 
-FMetalHeapPool::FHeapBlock* FMetalHeapPool::CreateHeapBlock(uint64 MinimumSize)
+uint32 FMetalHeapPool::CreateHeapBlock(uint64 MinimumSize)
 {
     id<MTLDevice> DeviceHandle = GetDevice()->GetMTLDevice();
 
@@ -131,46 +275,100 @@ FMetalHeapPool::FHeapBlock* FMetalHeapPool::CreateHeapBlock(uint64 MinimumSize)
 
     if (!MetalHeap)
     {
-        return nullptr;
+        return UINT32_MAX;
     }
 
     MetalHeap.label = @"MetalDeviceHeap";
-    GetDevice()->GetResidencySet().AddHeap(MetalHeap);
 
     FMetalHeap* Heap = new FMetalHeap(GetDevice(), MetalHeap, HeapDescriptor.size);
     Heap->SetDebugName("MetalDeviceHeap");
+    GetDevice()->GetResidencyManager().BeginTracking(Heap->GetResidencyEntry());
 
+    int32 BlockIndex = 0;
+    while (BlockIndex < HeapBlocks.Size() && HeapBlocks[BlockIndex].Heap)
+    {
+        ++BlockIndex;
+    }
+
+    if (BlockIndex == HeapBlocks.Size())
+    {
+        HeapBlocks.Emplace();
+    }
+
+    FHeapBlock& Block = HeapBlocks[BlockIndex];
+    Block.Heap      = Heap;
+    Block.Size      = HeapDescriptor.size;
+    Block.UsedBytes = 0;
+    Block.bVolatile = false;
+    Block.FreeRanges.Clear();
+    Block.FreeRanges.Add({ 0, Block.Size });
+    Block.Allocations.Clear();
+    return static_cast<uint32>(BlockIndex);
+}
+
+void FMetalHeapPool::ReleaseHeapBlock(FHeapBlock& Block)
+{
+    CHECK(Block.Heap != nullptr && Block.Allocations.IsEmpty());
+
+    GetDevice()->GetResidencyManager().EndTracking(Block.Heap->GetResidencyEntry(), true);
+    Block.Heap->DeferredRelease();
+    delete Block.Heap;
+
+    Block.Heap      = nullptr;
+    Block.UsedBytes = 0;
+    Block.bVolatile = false;
+    Block.FreeRanges.Clear();
+    Block.Allocations.Clear();
+}
+
+bool FMetalHeapPool::ReviveHeapBlock(FHeapBlock& Block)
+{
+    if (!Block.bVolatile)
+    {
+        return true;
+    }
+
+    Block.bVolatile = false;
+
+    if ([Block.Heap->GetMTLHeap() setPurgeableState:MTLPurgeableStateNonVolatile] == MTLPurgeableStateEmpty)
+    {
+        ReleaseHeapBlock(Block);
+        return false;
+    }
+
+    return true;
+}
+
+bool FMetalHeapPool::TryAllocateFromBlocks(uint64 SizeInBytes, uint64 Alignment, FMetalResourceStorage* Storage, uint32& OutHeapIndex, uint64& OutOffset, FMetalHeap*& OutHeap)
+{
     for (int32 Index = 0; Index < HeapBlocks.Size(); ++Index)
     {
-        FHeapBlock& Existing = HeapBlocks[Index];
+        FHeapBlock& Block = HeapBlocks[Index];
 
-        if (Existing.Heap)
+        if (!Block.Heap || Block.Size - Block.UsedBytes < SizeInBytes)
         {
             continue;
         }
 
-        Existing.Heap       = Heap;
-        Existing.Size       = HeapDescriptor.size;
-        Existing.UsedBytes  = 0;
-        Existing.AllocCount = 0;
-        Existing.FreeRanges.Clear();
-        Existing.FreeRanges.Add({ 0, Existing.Size });
-        return &Existing;
+        if (!ReviveHeapBlock(Block))
+        {
+            continue;
+        }
+
+        if (TrySuballocate(Block, SizeInBytes, Alignment, OutOffset))
+        {
+            RecordAllocation(Block, OutOffset, SizeInBytes, Storage);
+            OutHeapIndex = static_cast<uint32>(Index);
+            OutHeap      = Block.Heap;
+            return true;
+        }
     }
 
-    FHeapBlock& Block = HeapBlocks.Emplace();
-    Block.Heap        = Heap;
-    Block.Size        = HeapDescriptor.size;
-    Block.UsedBytes   = 0;
-    Block.AllocCount  = 0;
-    Block.FreeRanges.Add({ 0, Block.Size });
-    return &Block;
+    return false;
 }
 
-bool FMetalHeapPool::TrySuballocate(FHeapBlock& Block, uint32 HeapIndex, uint64 SizeInBytes, uint64 Alignment, uint64& OutOffset)
+bool FMetalHeapPool::TrySuballocate(FHeapBlock& Block, uint64 SizeInBytes, uint64 Alignment, uint64& OutOffset)
 {
-    UNREFERENCED_VARIABLE(HeapIndex);
-
     for (int32 RangeIndex = 0; RangeIndex < Block.FreeRanges.Size(); ++RangeIndex)
     {
         FHeapFreeRange& Range = Block.FreeRanges[RangeIndex];
@@ -203,13 +401,23 @@ bool FMetalHeapPool::TrySuballocate(FHeapBlock& Block, uint32 HeapIndex, uint64 
             Block.FreeRanges.RemoveAt(RangeIndex);
         }
 
-        Block.UsedBytes  += SizeInBytes;
-        Block.AllocCount += 1;
-        OutOffset         = AlignedOffset;
+        Block.UsedBytes += SizeInBytes;
+        OutOffset        = AlignedOffset;
         return true;
     }
 
     return false;
+}
+
+void FMetalHeapPool::RecordAllocation(FHeapBlock& Block, uint64 Offset, uint64 Size, FMetalResourceStorage* Storage)
+{
+    FHeapAllocation& Allocation = Block.Allocations.Emplace();
+    Allocation.Offset       = Offset;
+    Allocation.Size         = Size;
+    Allocation.Storage      = Storage;
+    Allocation.CreatedFrame = GetDevice()->GetFrameCounter();
+
+    GetDevice()->GetResidencyManager().MakeResident(Block.Heap->GetResidencyEntry());
 }
 
 void FMetalHeapPool::ReturnHeapRange(uint32 HeapIndex, uint64 Offset, uint64 Size)
@@ -228,11 +436,6 @@ void FMetalHeapPool::ReturnHeapRange(uint32 HeapIndex, uint64 Offset, uint64 Siz
     else
     {
         Block.UsedBytes = 0;
-    }
-
-    if (Block.AllocCount > 0)
-    {
-        Block.AllocCount -= 1;
     }
 
     int32 InsertIndex = 0;
@@ -294,54 +497,50 @@ void FMetalHeapPool::RecyclePendingHeapFrees()
     }
 }
 
-void FMetalHeapPool::DropUnusedHeaps()
+void FMetalHeapPool::DropUnusedHeaps(uint64 MaxUnusedBytes)
 {
+    const auto HasPendingFree = [this](int32 HeapIndex) -> bool
+    {
+        for (const FPendingHeapFree& PendingFree : PendingHeapFrees)
+        {
+            if (PendingFree.HeapIndex == static_cast<uint32>(HeapIndex))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
     uint64 UnusedBytes = 0;
     for (const FHeapBlock& Block : HeapBlocks)
     {
-        if (Block.Heap && Block.AllocCount == 0)
+        if (Block.Heap && Block.Allocations.IsEmpty())
         {
             UnusedBytes += Block.Size;
         }
     }
 
-    if (UnusedBytes <= MaxUnusedHeapBytes)
-    {
-        return;
-    }
-
-    for (int32 Index = HeapBlocks.Size() - 1; Index >= 0 && UnusedBytes > MaxUnusedHeapBytes; --Index)
+    for (int32 Index = HeapBlocks.Size() - 1; Index >= 0; --Index)
     {
         FHeapBlock& Block = HeapBlocks[Index];
 
-        if (!Block.Heap || Block.AllocCount != 0)
+        if (!Block.Heap || !Block.Allocations.IsEmpty() || HasPendingFree(Index))
         {
             continue;
         }
 
-        bool bHasPending = false;
-        for (const FPendingHeapFree& PendingFree : PendingHeapFrees)
+        if (UnusedBytes > MaxUnusedBytes)
         {
-            if (PendingFree.HeapIndex == static_cast<uint32>(Index))
-            {
-                bHasPending = true;
-                break;
-            }
+            UnusedBytes -= Block.Size;
+            ReleaseHeapBlock(Block);
         }
-
-        if (bHasPending)
+        else if (!Block.bVolatile)
         {
-            continue;
+            GetDevice()->GetResidencyManager().MakeNonResident(Block.Heap->GetResidencyEntry());
+            [Block.Heap->GetMTLHeap() setPurgeableState:MTLPurgeableStateVolatile];
+            Block.bVolatile = true;
         }
-
-        UnusedBytes -= Block.Size;
-        GetDevice()->GetResidencySet().RemoveHeap(Block.Heap->GetMTLHeap());
-        Block.Heap->DeferredRelease();
-        delete Block.Heap;
-        Block.Heap       = nullptr;
-        Block.UsedBytes  = 0;
-        Block.AllocCount = 0;
-        Block.FreeRanges.Clear();
     }
 }
 
@@ -531,27 +730,15 @@ void FMetalLinearAllocator::EndFrame()
 void FMetalLinearAllocator::CleanUp()
 {
     TScopedLock Lock(AllocatorsCS);
+    RecycleRetiredPages();
+    DropUnusedPages(MaxUnusedBytes);
+}
 
-    for (FPage* Page : Pages)
-    {
-        if (!Page || !Page->bPendingRetire || Page->EligibleFromFenceValue == UINT64_MAX)
-        {
-            continue;
-        }
-
-        if (!Page->Queue || Page->Queue->GetCompletedValue() < Page->EligibleFromFenceValue)
-        {
-            continue;
-        }
-
-        Page->Offset                 = 0;
-        Page->UsedBytes              = 0;
-        Page->Queue                  = nullptr;
-        Page->EligibleFromFenceValue = UINT64_MAX;
-        Page->bPendingRetire         = false;
-    }
-
-    DropUnusedPages();
+void FMetalLinearAllocator::Trim()
+{
+    TScopedLock Lock(AllocatorsCS);
+    RecycleRetiredPages();
+    DropUnusedPages(0);
 }
 
 void FMetalLinearAllocator::Destroy()
@@ -661,23 +848,45 @@ void FMetalLinearAllocator::ReleasePage(FPage* Page)
     delete Page;
 }
 
-void FMetalLinearAllocator::DropUnusedPages()
+void FMetalLinearAllocator::RecycleRetiredPages()
+{
+    for (FPage* Page : Pages)
+    {
+        if (!Page || !Page->bPendingRetire || Page->EligibleFromFenceValue == UINT64_MAX)
+        {
+            continue;
+        }
+
+        if (!Page->Queue || Page->Queue->GetCompletedValue() < Page->EligibleFromFenceValue)
+        {
+            continue;
+        }
+
+        Page->Offset                 = 0;
+        Page->UsedBytes              = 0;
+        Page->Queue                  = nullptr;
+        Page->EligibleFromFenceValue = UINT64_MAX;
+        Page->bPendingRetire         = false;
+    }
+}
+
+void FMetalLinearAllocator::DropUnusedPages(uint64 MaxUnusedPageBytes)
 {
     uint64 UnusedBytes = 0;
     for (const FPage* Page : Pages)
     {
         if (Page && !Page->bPendingRetire && Page->UsedBytes == 0)
         {
-            UnusedBytes += Page->bDedicated ? (MaxUnusedBytes + 1) : Page->Size;
+            UnusedBytes += Page->bDedicated ? (MaxUnusedPageBytes + 1) : Page->Size;
         }
     }
 
-    if (UnusedBytes <= MaxUnusedBytes)
+    if (UnusedBytes <= MaxUnusedPageBytes)
     {
         return;
     }
 
-    for (int32 Index = Pages.Size() - 1; Index >= 0 && UnusedBytes > MaxUnusedBytes; --Index)
+    for (int32 Index = Pages.Size() - 1; Index >= 0 && UnusedBytes > MaxUnusedPageBytes; --Index)
     {
         FPage* Page = Pages[Index];
 
@@ -686,7 +895,7 @@ void FMetalLinearAllocator::DropUnusedPages()
             continue;
         }
 
-        UnusedBytes -= Page->Size;
+        UnusedBytes -= Math::Min(UnusedBytes, Page->bDedicated ? (MaxUnusedPageBytes + 1) : Page->Size);
         METAL_INFO("Dropping unused Metal upload page (%llu bytes)", Page->Size);
         ReleasePage(Page);
         Pages.RemoveAt(Index);
@@ -753,6 +962,11 @@ void FMetalUploadHeapAllocator::CleanUp()
 #endif
 }
 
+void FMetalUploadHeapAllocator::Trim()
+{
+    UploadAllocator.Trim();
+}
+
 void FMetalUploadHeapAllocator::Destroy()
 {
     UploadAllocator.Destroy();
@@ -810,7 +1024,7 @@ bool FMetalBufferAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, MT
         uint64      Offset    = 0;
         FMetalHeap* Heap      = nullptr;
 
-        if (SizeAndAlign.size <= 64ull * 1024ull * 1024ull && HeapPool.TryAllocate(SizeAndAlign.size, SizeAndAlign.align, HeapIndex, Offset, Heap))
+        if (SizeAndAlign.size <= GMaxHeapAllocationSize && HeapPool.TryAllocate(SizeAndAlign.size, SizeAndAlign.align, &OutStorage, HeapIndex, Offset, Heap))
         {
             id<MTLBuffer> Buffer = [Heap->GetMTLHeap() newBufferWithLength:SizeInBytes options:Options offset:Offset];
 
@@ -844,6 +1058,68 @@ void FMetalBufferAllocator::Deallocate(FMetalResourceStorage& Storage)
     }
 }
 
+uint32 FMetalBufferAllocator::RecordDefragMoves(FMetalCommandContext& Context, uint32 MaxMoves, uint64 EligibleBeforeFrame, TArray<FMetalDefragMove>& OutMoves)
+{
+    if (MaxMoves == 0)
+    {
+        return 0;
+    }
+
+    TArray<FMetalDefragCandidate> Candidates;
+    HeapPool.SelectDefragCandidates(MaxMoves, EligibleBeforeFrame, Candidates);
+
+    id<MTLDevice> DeviceHandle = GetDevice()->GetMTLDevice();
+    uint32        NumMoves     = 0;
+
+    for (const FMetalDefragCandidate& Candidate : Candidates)
+    {
+        id<MTLBuffer>            OldBuffer    = Candidate.Storage->GetBuffer();
+        const NSUInteger         Length       = OldBuffer.length;
+        const MTLResourceOptions Options      = OldBuffer.resourceOptions;
+        const MTLSizeAndAlign    SizeAndAlign = [DeviceHandle heapBufferSizeAndAlignWithLength:Length options:Options];
+        const uint64             Alignment    = Math::Max<uint64>(SizeAndAlign.align, BUFFER_ALIGNMENT);
+
+        TUniquePtr<FMetalResourceStorage> Target = MakeUniquePtr<FMetalResourceStorage>(GetDevice());
+
+        uint32      HeapIndex = UINT32_MAX;
+        uint64      Offset    = 0;
+        FMetalHeap* Heap      = nullptr;
+
+        if (!HeapPool.TryAllocateForDefrag(Candidate.Storage->GetSize(), Alignment, Candidate.HeapIndex, Target.Get(), HeapIndex, Offset, Heap))
+        {
+            continue;
+        }
+
+        id<MTLBuffer> NewBuffer = [Heap->GetMTLHeap() newBufferWithLength:Length options:Options offset:Offset];
+
+        if (!NewBuffer)
+        {
+            HeapPool.Deallocate(HeapIndex, Offset, Candidate.Storage->GetSize());
+            continue;
+        }
+
+        NewBuffer.label = OldBuffer.label;
+        Target->InitSuballocatedHeap(NewBuffer, Heap, Offset, Candidate.Storage->GetSize(), HeapIndex, this);
+
+        [Context.GetEncoders().RequireBlitEncoder() copyFromBuffer:OldBuffer sourceOffset:0 toBuffer:NewBuffer destinationOffset:0 size:Length];
+
+        STAT_ADD(STAT_Metal_DefragBytesMoved, Candidate.Storage->GetSize());
+        Candidate.Storage->SetDefragPending(true);
+
+        FMetalDefragMove& Move = OutMoves.Emplace();
+        Move.Storage = Candidate.Storage;
+        Move.Target  = ::Move(Target);
+        ++NumMoves;
+    }
+
+    return NumMoves;
+}
+
+void FMetalBufferAllocator::RetargetAllocation(FMetalResourceStorage& Storage)
+{
+    HeapPool.RetargetAllocation(Storage.GetHeapIndex(), Storage.GetResourceOffset(), &Storage);
+}
+
 void FMetalBufferAllocator::CleanUp()
 {
     HeapPool.CleanUp();
@@ -851,6 +1127,11 @@ void FMetalBufferAllocator::CleanUp()
 #if METAL_ENABLE_STATS
     UpdateMemoryStats();
 #endif
+}
+
+void FMetalBufferAllocator::Trim()
+{
+    HeapPool.Trim();
 }
 
 void FMetalBufferAllocator::Destroy()
@@ -901,7 +1182,7 @@ bool FMetalTextureAllocator::TryAllocate(MTLTextureDescriptor* TextureDescriptor
         uint64      Offset    = 0;
         FMetalHeap* Heap      = nullptr;
 
-        if (SizeAndAlign.size > 0 && SizeAndAlign.size <= 64ull * 1024ull * 1024ull && HeapPool.TryAllocate(SizeAndAlign.size, SizeAndAlign.align, HeapIndex, Offset, Heap))
+        if (SizeAndAlign.size > 0 && SizeAndAlign.size <= GMaxHeapAllocationSize && HeapPool.TryAllocate(SizeAndAlign.size, SizeAndAlign.align, &OutStorage, HeapIndex, Offset, Heap))
         {
             id<MTLTexture> Texture = [Heap->GetMTLHeap() newTextureWithDescriptor:TextureDescriptor offset:Offset];
 
@@ -936,6 +1217,82 @@ void FMetalTextureAllocator::Deallocate(FMetalResourceStorage& Storage)
     }
 }
 
+uint32 FMetalTextureAllocator::RecordDefragMoves(FMetalCommandContext& Context, uint32 MaxMoves, uint64 EligibleBeforeFrame, TArray<FMetalDefragMove>& OutMoves)
+{
+    if (MaxMoves == 0)
+    {
+        return 0;
+    }
+
+    TArray<FMetalDefragCandidate> Candidates;
+    HeapPool.SelectDefragCandidates(MaxMoves, EligibleBeforeFrame, Candidates);
+
+    FMetalEncoderManager& Encoders     = Context.GetEncoders();
+    id<MTLDevice>         DeviceHandle = GetDevice()->GetMTLDevice();
+    uint32                NumMoves     = 0;
+
+    for (const FMetalDefragCandidate& Candidate : Candidates)
+    {
+        id<MTLTexture> OldTexture = Candidate.Storage->GetTexture();
+
+        if (OldTexture.sampleCount > 1 || MetalRHI::IsStencilPixelFormat(OldTexture.pixelFormat))
+        {
+            continue;
+        }
+
+        MTLTextureDescriptor* Descriptor   = CreateDescriptorFromTexture(OldTexture);
+        const MTLSizeAndAlign SizeAndAlign = [DeviceHandle heapTextureSizeAndAlignWithDescriptor:Descriptor];
+
+        TUniquePtr<FMetalResourceStorage> Target = MakeUniquePtr<FMetalResourceStorage>(GetDevice());
+
+        uint32      HeapIndex = UINT32_MAX;
+        uint64      Offset    = 0;
+        FMetalHeap* Heap      = nullptr;
+
+        if (SizeAndAlign.size == 0 || !HeapPool.TryAllocateForDefrag(SizeAndAlign.size, SizeAndAlign.align, Candidate.HeapIndex, Target.Get(), HeapIndex, Offset, Heap))
+        {
+            continue;
+        }
+
+        id<MTLTexture> NewTexture = [Heap->GetMTLHeap() newTextureWithDescriptor:Descriptor offset:Offset];
+
+        if (!NewTexture)
+        {
+            HeapPool.Deallocate(HeapIndex, Offset, SizeAndAlign.size);
+            continue;
+        }
+
+        NewTexture.label = OldTexture.label;
+        Target->InitSuballocatedHeap(NewTexture, Heap, Offset, SizeAndAlign.size, HeapIndex, this);
+
+        TArray<MTLRenderPassDescriptor*> InitPasses;
+        MetalRHI::CreatePlacementInitPasses(NewTexture, InitPasses);
+
+        for (MTLRenderPassDescriptor* InitPass : InitPasses)
+        {
+            Encoders.EncodeLoadStorePass(InitPass, "DefragInitialize");
+        }
+
+        Encoders.FlushPendingClears(OldTexture);
+        [Encoders.RequireBlitEncoder() copyFromTexture:OldTexture toTexture:NewTexture];
+
+        STAT_ADD(STAT_Metal_DefragBytesMoved, SizeAndAlign.size);
+        Candidate.Storage->SetDefragPending(true);
+
+        FMetalDefragMove& Move = OutMoves.Emplace();
+        Move.Storage = Candidate.Storage;
+        Move.Target  = ::Move(Target);
+        ++NumMoves;
+    }
+
+    return NumMoves;
+}
+
+void FMetalTextureAllocator::RetargetAllocation(FMetalResourceStorage& Storage)
+{
+    HeapPool.RetargetAllocation(Storage.GetHeapIndex(), Storage.GetResourceOffset(), &Storage);
+}
+
 void FMetalTextureAllocator::CleanUp()
 {
     HeapPool.CleanUp();
@@ -943,6 +1300,11 @@ void FMetalTextureAllocator::CleanUp()
 #if METAL_ENABLE_STATS
     UpdateMemoryStats();
 #endif
+}
+
+void FMetalTextureAllocator::Trim()
+{
+    HeapPool.Trim();
 }
 
 void FMetalTextureAllocator::Destroy()

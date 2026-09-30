@@ -40,6 +40,17 @@ STAT_DEFINE_COUNTER(STAT_Metal_StandaloneBuffers,     "Standalone Buffers",     
 STAT_DEFINE_MEMORY(STAT_Metal_StandaloneTextureBytes, "Standalone Texture Bytes", "Metal Standalone");
 STAT_DEFINE_COUNTER(STAT_Metal_StandaloneTextures,    "Standalone Textures",      "Metal Standalone");
 
+STAT_DEFINE_COUNTER(STAT_Metal_DefragMoves,      "Defrag Moves",       "Metal Defrag");
+STAT_DEFINE_COUNTER(STAT_Metal_DefragCancels,    "Defrag Cancels",     "Metal Defrag");
+STAT_DEFINE_MEMORY(STAT_Metal_DefragBytesMoved,  "Defrag Bytes Moved", "Metal Defrag");
+STAT_DEFINE_COUNTER(STAT_Metal_DefragPending,    "Defrag Pending",     "Metal Defrag");
+
+STAT_DEFINE_MEMORY(STAT_Metal_ResidencyBudget, "Residency Budget", "Metal Residency");
+STAT_DEFINE_MEMORY(STAT_Metal_ResidentBytes,   "Resident Bytes",   "Metal Residency");
+STAT_DEFINE_MEMORY(STAT_Metal_EvictedBytes,    "Evicted Bytes",    "Metal Residency");
+STAT_DEFINE_MEMORY(STAT_Metal_PinnedBytes,     "Pinned Bytes",     "Metal Residency");
+STAT_DEFINE_COUNTER(STAT_Metal_Evictions,      "Evictions",        "Metal Residency");
+
 STAT_DEFINE_COUNTER(STAT_Metal_BindlessResourceSlots,  "Bindless Resource Slots",  "Metal Bindless");
 STAT_DEFINE_COUNTER(STAT_Metal_BindlessSamplerSlots,   "Bindless Sampler Slots",   "Metal Bindless");
 STAT_DEFINE_MEMORY(STAT_Metal_BindlessTableBytes,      "Bindless Table Bytes",     "Metal Bindless");

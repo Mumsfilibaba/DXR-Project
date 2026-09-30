@@ -18,9 +18,13 @@
 
 #if PLATFORM_MACOS
 #include <MetalRHI/MetalBindlessDescriptors.h>
+#include <MetalRHI/MetalBuffer.h>
 #include <MetalRHI/MetalCapabilities.h>
 #include <MetalRHI/MetalCommandContext.h>
+#include <MetalRHI/MetalDevice.h>
 #include <MetalRHI/MetalDeviceDebug.h>
+#include <MetalRHI/MetalResidencyManager.h>
+#include <MetalRHI/MetalStats.h>
 #include <MetalRHI/MetalParallelRenderPass.h>
 #include <MetalRHI/MetalPipelineState.h>
 #include <MetalRHI/MetalQueue.h>
@@ -2410,6 +2414,638 @@ static bool ProbeCapabilityHonesty(ERHIType ExpectedType)
     TEST_END();
 }
 
+#if PLATFORM_MACOS
+static constexpr uint32 GMemoryPatternWords = 16;
+
+static uint32 GetMemoryPatternWord(uint32 ResourceIndex, uint32 Word)
+{
+    return ((ResourceIndex + 1) << 16) | (Word + 1);
+}
+
+static void RunMemoryFrames(uint32 NumFrames)
+{
+    for (uint32 Frame = 0; Frame < NumFrames; ++Frame)
+    {
+        FRHICommandList CommandList;
+        CommandList.BeginFrame();
+        CommandList.EndFrame();
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+        FRHICommandListExecutor::Get().WaitForGPU();
+    }
+}
+
+static void FinalizePendingMoves()
+{
+    FRHICommandList CommandList;
+    CommandList.BeginFrame();
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    FRHICommandListExecutor::Get().WaitForGPU();
+}
+
+static bool WriteMemoryPattern(FRHIBuffer* Buffer, uint32 ResourceIndex)
+{
+    uint32 Pattern[GMemoryPatternWords];
+    for (uint32 Word = 0; Word < GMemoryPatternWords; ++Word)
+    {
+        Pattern[Word] = GetMemoryPatternWord(ResourceIndex, Word);
+    }
+
+    FRHIFenceRef Fence = RHI::CreateFence();
+    FRHICommandList CommandList;
+    CommandList.UpdateBuffer(Buffer, FBufferRegion(0, sizeof(Pattern)), Pattern);
+    CommandList.WriteFence(Fence.Get());
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    FRHICommandListExecutor::Get().WaitForCommands();
+    return Fence->Wait(5ull * 1000ull * 1000ull * 1000ull);
+}
+
+static bool ReadbackMatchesPattern(FRHIBuffer* Buffer, uint32 ResourceIndex)
+{
+    constexpr uint64 PatternSize = GMemoryPatternWords * sizeof(uint32);
+
+    FRHIBufferRef Readback = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(PatternSize));
+    if (!Readback)
+    {
+        return false;
+    }
+
+    FRHIFenceRef Fence = RHI::CreateFence();
+    FRHICommandList CommandList;
+    CommandList.CopyBuffer(Readback.Get(), Buffer, FRHIBufferCopyDesc(0, 0, PatternSize));
+    CommandList.WriteFence(Fence.Get());
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    FRHICommandListExecutor::Get().WaitForCommands();
+    if (!Fence->Wait(5ull * 1000ull * 1000ull * 1000ull))
+    {
+        return false;
+    }
+
+    const uint32* Mapped = static_cast<const uint32*>(Readback->Map());
+    if (!Mapped)
+    {
+        return false;
+    }
+
+    bool bMatches = true;
+    for (uint32 Word = 0; Word < GMemoryPatternWords; ++Word)
+    {
+        bMatches = bMatches && Mapped[Word] == GetMemoryPatternWord(ResourceIndex, Word);
+    }
+
+    Readback->Unmap();
+    return bMatches;
+}
+
+static bool ReadTexturePixel(FRHITexture* Texture, uint32 MipLevel, uint8 (&OutPixel)[4])
+{
+    FRHIBufferRef Readback = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(256));
+    if (!Readback)
+    {
+        return false;
+    }
+
+    FRHIFenceRef Fence = RHI::CreateFence();
+    FRHICommandList CommandList;
+    CommandList.CopyTextureRegionToBuffer(Readback.Get(), 0, Texture, FTextureRegion2D(1, 1), MipLevel);
+    CommandList.WriteFence(Fence.Get());
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    FRHICommandListExecutor::Get().WaitForCommands();
+    if (!Fence->Wait(5ull * 1000ull * 1000ull * 1000ull))
+    {
+        return false;
+    }
+
+    const uint8* Mapped = static_cast<const uint8*>(Readback->Map());
+    if (!Mapped)
+    {
+        return false;
+    }
+
+    Memory::Memcpy(OutPixel, Mapped, sizeof(OutPixel));
+    Readback->Unmap();
+    return true;
+}
+
+static bool DispatchAndReadFirstUint(FRHIComputePipelineState* Pipeline, FRHIComputeShader* Shader, FRHIBuffer* Params, FRHIShaderResourceView* SourceSRV, uint32& OutValue)
+{
+    FRHIBufferRef Output = RHI::CreateBuffer(FRHIBufferDesc(EBufferFlags::Default | EBufferFlags::RWBuffer | EBufferFlags::CopySource, sizeof(uint32), sizeof(uint32)));
+    FRHIBufferRef Readback = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(sizeof(uint32)));
+    FRHIUnorderedAccessViewRef OutputUAV = Output
+        ? RHI::CreateUnorderedAccessView(Output.Get(), FRHIUnorderedAccessViewDesc::CreateBuffer(0, 1, EBufferViewType::Structured))
+        : nullptr;
+
+    if (!Output || !Readback || !OutputUAV)
+    {
+        return false;
+    }
+
+    FRHIFenceRef Fence = RHI::CreateFence();
+    FRHICommandList CommandList;
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Output.Get(), ERHIResourceState::Common, ERHIResourceState::UnorderedAccess));
+    CommandList.SetComputePipelineState(Pipeline);
+
+    if (Params)
+    {
+        CommandList.SetConstantBuffer(Shader, Params, 0);
+    }
+
+    if (SourceSRV)
+    {
+        CommandList.SetShaderResourceView(Shader, SourceSRV, 0);
+    }
+
+    CommandList.SetUnorderedAccessView(Shader, OutputUAV.Get(), 0);
+    CommandList.Dispatch(1, 1, 1);
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Output.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
+    CommandList.CopyBuffer(Readback.Get(), Output.Get(), FRHIBufferCopyDesc(0, 0, sizeof(uint32)));
+    CommandList.WriteFence(Fence.Get());
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    FRHICommandListExecutor::Get().WaitForCommands();
+    if (!Fence->Wait(5ull * 1000ull * 1000ull * 1000ull))
+    {
+        return false;
+    }
+
+    const uint32* Mapped = static_cast<const uint32*>(Readback->Map());
+    if (!Mapped)
+    {
+        return false;
+    }
+
+    OutValue = *Mapped;
+    Readback->Unmap();
+    return true;
+}
+
+static FRHIComputePipelineStateRef CreateMemoryProbePipeline(const CHAR* Source, EShaderModel ShaderModel, FRHIComputeShaderRef& OutShader)
+{
+    TArray<uint8> ByteCode;
+    const FShaderCompileInfo CompileInfo("Main", ShaderModel, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromSource(Source, CompileInfo, ByteCode))
+    {
+        return nullptr;
+    }
+
+    OutShader = RHI::CreateComputeShader(ByteCode);
+    if (!OutShader)
+    {
+        return nullptr;
+    }
+
+    FRHIComputePipelineStateDesc PipelineDesc;
+    PipelineDesc.Shader = OutShader.Get();
+    return RHI::CreateComputePipelineState(PipelineDesc);
+}
+
+static FRHIBufferRef CreateIndexParams(uint32 Index)
+{
+    const uint32 ParamsData[4] = { Index, 0, 0, 0 };
+    return RHI::CreateBuffer(FRHIBufferDesc::CreateConstantBuffer(sizeof(ParamsData)), ERHIResourceState::Common, ParamsData);
+}
+
+struct FMemoryProbeBuffer
+{
+    FRHIBufferRef             Buffer;
+    FRHIShaderResourceViewRef SRV;
+    FRHIDescriptorHandle      BindlessHandle;
+    FMetalHeap*               Heap   = nullptr;
+    uint64                    Offset = 0;
+    uint32                    Index  = 0;
+};
+
+static TArray<FMemoryProbeBuffer> CreateFragmentedHeapBuffers(uint32 NumBuffers, uint64 BufferSize, bool bWithBindless)
+{
+    const FRHIBufferDesc Desc(EBufferFlags::Default | EBufferFlags::ShaderResourceBuffer | EBufferFlags::CopySource | EBufferFlags::CopyDest, sizeof(uint32), BufferSize);
+
+    TArray<FMemoryProbeBuffer> Created;
+    for (uint32 Index = 0; Index < NumBuffers; ++Index)
+    {
+        FMemoryProbeBuffer Entry;
+        Entry.Buffer = RHI::CreateBuffer(Desc);
+        Entry.Index  = Index;
+
+        if (!Entry.Buffer || !WriteMemoryPattern(Entry.Buffer.Get(), Index))
+        {
+            return TArray<FMemoryProbeBuffer>();
+        }
+
+        Entry.Heap = GetMetalBuffer(Entry.Buffer.Get())->GetResourceStorage().GetHeap();
+        Created.Add(Move(Entry));
+    }
+
+    FMetalHeap* FirstHeap = Created[0].Heap;
+    FMetalHeap* LastHeap  = Created.Last().Heap;
+
+    TArray<FMemoryProbeBuffer> Survivors;
+    uint32 NumFreedInFirstHeap = 0;
+    uint32 NumSeenInLastHeap   = 0;
+
+    for (FMemoryProbeBuffer& Entry : Created)
+    {
+        bool bFree = false;
+
+        if (Entry.Heap == LastHeap && LastHeap != FirstHeap)
+        {
+            bFree = (NumSeenInLastHeap++ % 2) == 0;
+        }
+        else if (Entry.Heap == FirstHeap && NumFreedInFirstHeap < 2)
+        {
+            bFree = true;
+            ++NumFreedInFirstHeap;
+        }
+
+        if (!bFree)
+        {
+            Survivors.Add(Move(Entry));
+        }
+    }
+
+    Created.Clear();
+
+    for (FMemoryProbeBuffer& Survivor : Survivors)
+    {
+        const FMetalResourceStorage& Storage = GetMetalBuffer(Survivor.Buffer.Get())->GetResourceStorage();
+        Survivor.Heap   = Storage.GetHeap();
+        Survivor.Offset = Storage.GetResourceOffset();
+
+        if (bWithBindless)
+        {
+            Survivor.SRV = RHI::CreateShaderResourceView(Survivor.Buffer.Get(), FRHIShaderResourceViewDesc::CreateBuffer(0, GMemoryPatternWords));
+            Survivor.BindlessHandle = Survivor.SRV ? Survivor.SRV->GetBindlessHandle() : FRHIDescriptorHandle();
+        }
+    }
+
+    return Survivors;
+}
+
+static bool HasMoved(const FMemoryProbeBuffer& Entry)
+{
+    const FMetalResourceStorage& Storage = GetMetalBuffer(Entry.Buffer.Get())->GetResourceStorage();
+    return Storage.GetHeap() != Entry.Heap || Storage.GetResourceOffset() != Entry.Offset;
+}
+
+static bool ProbeMemoryDefragAndResidency()
+{
+    TEST_BEGIN();
+
+    FMetalDeviceRHI* MetalDeviceRHI = FMetalDeviceRHI::Get();
+    FMetalDevice*    MetalDevice    = MetalDeviceRHI ? MetalDeviceRHI->GetMetalDevice() : nullptr;
+    TEST_EXPECT(MetalDevice != nullptr);
+
+    if (!MetalDevice || !FShaderCompiler::Initialize(Paths::GetAssetDir()))
+    {
+        TEST_EXPECT(false);
+        TEST_END();
+    }
+
+    constexpr uint64 BufferSize   = 4ull * 1024ull * 1024ull;
+    const bool       bBindless    = RHI::bSupportsBindless;
+
+    static const CHAR BindlessBufferSource[] =
+        "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+        "cbuffer Params : register(b0) { uint ResourceIndex; uint Pad0; uint Pad1; uint Pad2; };\n"
+        "[numthreads(1,1,1)]\n"
+        "void Main()\n"
+        "{\n"
+        "    StructuredBuffer<uint> Source = ResourceDescriptorHeap[ResourceIndex];\n"
+        "    OutBuffer[0] = Source[3];\n"
+        "}\n";
+
+    static const CHAR BindlessTextureSource[] =
+        "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+        "cbuffer Params : register(b0) { uint ResourceIndex; uint Pad0; uint Pad1; uint Pad2; };\n"
+        "[numthreads(1,1,1)]\n"
+        "void Main()\n"
+        "{\n"
+        "    Texture2D<float4> Source = ResourceDescriptorHeap[ResourceIndex];\n"
+        "    OutBuffer[0] = (uint)(Source.Load(int3(0, 0, 0)).x * 255.0f + 0.5f);\n"
+        "}\n";
+
+    static const CHAR DirectBufferSource[] =
+        "StructuredBuffer<uint> Source : register(t0);\n"
+        "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+        "[numthreads(1,1,1)]\n"
+        "void Main()\n"
+        "{\n"
+        "    OutBuffer[0] = Source[3];\n"
+        "}\n";
+
+    FRHIComputeShaderRef        BindlessBufferShader;
+    FRHIComputePipelineStateRef BindlessBufferPipeline = bBindless ? CreateMemoryProbePipeline(BindlessBufferSource, EShaderModel::SM_6_6, BindlessBufferShader) : nullptr;
+    FRHIComputeShaderRef        BindlessTextureShader;
+    FRHIComputePipelineStateRef BindlessTexturePipeline = bBindless ? CreateMemoryProbePipeline(BindlessTextureSource, EShaderModel::SM_6_6, BindlessTextureShader) : nullptr;
+    FRHIComputeShaderRef        DirectBufferShader;
+    FRHIComputePipelineStateRef DirectBufferPipeline = CreateMemoryProbePipeline(DirectBufferSource, EShaderModel::SM_6_2, DirectBufferShader);
+    TEST_EXPECT(!bBindless || (BindlessBufferPipeline != nullptr && BindlessTexturePipeline != nullptr));
+    TEST_EXPECT(DirectBufferPipeline != nullptr);
+
+    SetConsoleVariable("MetalRHI.MaxDefragMovesPerFrame", "4");
+    SetConsoleVariable("MetalRHI.DefragEligibilityDelay", "0");
+
+    TEST_SECTION("A defrag move keeps buffer contents, views and bindless slots");
+    {
+        TArray<FMemoryProbeBuffer> Survivors = CreateFragmentedHeapBuffers(24, BufferSize, bBindless);
+        TEST_EXPECT(!Survivors.IsEmpty());
+
+        RunMemoryFrames(8);
+        FinalizePendingMoves();
+        TEST_EXPECT(!MetalDevice->HasPendingDefragMoves());
+
+        uint32 NumMoved = 0;
+        for (const FMemoryProbeBuffer& Survivor : Survivors)
+        {
+            if (HasMoved(Survivor))
+            {
+                ++NumMoved;
+            }
+
+            TEST_EXPECT(ReadbackMatchesPattern(Survivor.Buffer.Get(), Survivor.Index));
+
+            if (bBindless && Survivor.SRV && BindlessBufferPipeline)
+            {
+                TEST_EXPECT(Survivor.SRV->GetBindlessHandle() == Survivor.BindlessHandle);
+
+                FRHIBufferRef Params = CreateIndexParams(Survivor.BindlessHandle.Index);
+                uint32 Value = 0;
+                TEST_EXPECT(Params && DispatchAndReadFirstUint(BindlessBufferPipeline.Get(), BindlessBufferShader.Get(), Params.Get(), nullptr, Value));
+                TEST_EXPECT_EQ(Value, GetMemoryPatternWord(Survivor.Index, 3));
+            }
+        }
+
+        LOG_INFO("[BOOT] Defrag moved %u of %d surviving buffers", NumMoved, Survivors.Size());
+        TEST_EXPECT(NumMoved > 0);
+    }
+
+    TEST_SECTION("A defrag move keeps texture mips, render targets and bindless slots");
+    {
+        constexpr uint32 NumTextures = 24;
+        constexpr uint32 Extent      = 1024;
+        constexpr uint32 NumMips     = 3;
+
+        TArray<uint32> MipPixels[NumMips];
+        for (uint32 Mip = 0; Mip < NumMips; ++Mip)
+        {
+            MipPixels[Mip].Resize((Extent >> Mip) * (Extent >> Mip));
+        }
+
+        struct FProbeTexture
+        {
+            FRHITextureRef       Texture;
+            FRHIDescriptorHandle BindlessHandle;
+            FMetalHeap*          Heap   = nullptr;
+            uint64               Offset = 0;
+            uint32               Index  = 0;
+            uint32               Mips   = 1;
+        };
+
+        const auto GetPixel = [](uint32 Index, uint32 Mip) -> uint32
+        {
+            return 0xFF000000u | ((100u + Mip) << 8) | (10u + Index);
+        };
+
+        TArray<FProbeTexture> Created;
+        for (uint32 Index = 0; Index < NumTextures; ++Index)
+        {
+            FProbeTexture Entry;
+            Entry.Index = Index;
+            Entry.Mips  = (Index % 3 == 0) ? NumMips : 1;
+
+            const void* MipData[NumMips];
+            int64       RowPitches[NumMips];
+            int64       SlicePitches[NumMips];
+            for (uint32 Mip = 0; Mip < Entry.Mips; ++Mip)
+            {
+                MipPixels[Mip].Fill(GetPixel(Index, Mip));
+                MipData[Mip]      = MipPixels[Mip].Data();
+                RowPitches[Mip]   = int64(Extent >> Mip) * 4;
+                SlicePitches[Mip] = RowPitches[Mip] * int64(Extent >> Mip);
+            }
+
+            ETextureUsageFlags Usage = ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopySource;
+            if (Index % 5 == 1)
+            {
+                Usage |= ETextureUsageFlags::RenderTarget;
+            }
+
+            FBootMipChainData InitialData(MipData, RowPitches, SlicePitches, Entry.Mips);
+            Entry.Texture = RHI::CreateTexture(FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Extent, Extent, Entry.Mips, 1, Usage), ERHIResourceState::Common, &InitialData);
+            TEST_EXPECT(Entry.Texture != nullptr);
+
+            if (Entry.Texture)
+            {
+                Entry.Heap = GetMetalTexture(Entry.Texture.Get())->GetResourceStorage().GetHeap();
+                Created.Add(Move(Entry));
+            }
+        }
+
+        TArray<FProbeTexture> Survivors;
+        if (!Created.IsEmpty())
+        {
+            FMetalHeap* FirstHeap = Created[0].Heap;
+            FMetalHeap* LastHeap  = Created.Last().Heap;
+            TEST_EXPECT(FirstHeap != LastHeap);
+
+            uint32 NumFreedInFirstHeap = 0;
+            uint32 NumSeenInLastHeap   = 0;
+            for (FProbeTexture& Entry : Created)
+            {
+                bool bFree = false;
+                if (Entry.Heap == LastHeap && LastHeap != FirstHeap)
+                {
+                    bFree = (NumSeenInLastHeap++ % 2) == 0;
+                }
+                else if (Entry.Heap == FirstHeap && NumFreedInFirstHeap < 3)
+                {
+                    bFree = true;
+                    ++NumFreedInFirstHeap;
+                }
+
+                if (!bFree)
+                {
+                    Survivors.Add(Move(Entry));
+                }
+            }
+
+            Created.Clear();
+        }
+
+        for (FProbeTexture& Survivor : Survivors)
+        {
+            const FMetalResourceStorage& Storage = GetMetalTexture(Survivor.Texture.Get())->GetResourceStorage();
+            Survivor.Heap           = Storage.GetHeap();
+            Survivor.Offset         = Storage.GetResourceOffset();
+            Survivor.BindlessHandle = bBindless ? Survivor.Texture->GetBindlessSRVHandle() : FRHIDescriptorHandle();
+        }
+
+        RunMemoryFrames(9);
+        FinalizePendingMoves();
+        TEST_EXPECT(!MetalDevice->HasPendingDefragMoves());
+
+        uint32 NumMoved = 0;
+        for (const FProbeTexture& Survivor : Survivors)
+        {
+            const FMetalResourceStorage& Storage = GetMetalTexture(Survivor.Texture.Get())->GetResourceStorage();
+            if (Storage.GetHeap() != Survivor.Heap || Storage.GetResourceOffset() != Survivor.Offset)
+            {
+                ++NumMoved;
+            }
+
+            for (uint32 Mip = 0; Mip < Survivor.Mips; ++Mip)
+            {
+                uint8 Pixel[4] = {};
+                TEST_EXPECT(ReadTexturePixel(Survivor.Texture.Get(), Mip, Pixel));
+                TEST_EXPECT_EQ(Pixel[0], static_cast<uint8>(10u + Survivor.Index));
+                TEST_EXPECT_EQ(Pixel[1], static_cast<uint8>(100u + Mip));
+            }
+
+            if (bBindless && BindlessTexturePipeline)
+            {
+                TEST_EXPECT(Survivor.Texture->GetBindlessSRVHandle() == Survivor.BindlessHandle);
+
+                FRHIBufferRef Params = CreateIndexParams(Survivor.BindlessHandle.Index);
+                uint32 Value = 0;
+                TEST_EXPECT(Params && DispatchAndReadFirstUint(BindlessTexturePipeline.Get(), BindlessTextureShader.Get(), Params.Get(), nullptr, Value));
+                TEST_EXPECT_EQ(Value, 10u + Survivor.Index);
+            }
+        }
+
+        LOG_INFO("[BOOT] Defrag moved %u of %d surviving textures", NumMoved, Survivors.Size());
+        TEST_EXPECT(NumMoved > 0);
+    }
+
+    TEST_SECTION("Destroying a resource while its move is pending cancels the move");
+    {
+        TArray<FMemoryProbeBuffer> Survivors = CreateFragmentedHeapBuffers(24, BufferSize, bBindless);
+        TEST_EXPECT(!Survivors.IsEmpty());
+
+        const int64 CancelsBefore = STAT_GET(STAT_Metal_DefragCancels);
+
+        uint32 NumCancelled = 0;
+        for (uint32 Attempt = 0; Attempt < 8 && NumCancelled == 0; ++Attempt)
+        {
+            FRHICommandList CommandList;
+            CommandList.BeginFrame();
+            CommandList.EndFrame();
+            FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+            FRHICommandListExecutor::Get().WaitForCommands();
+
+            for (int32 Index = Survivors.Size() - 1; Index >= 0; --Index)
+            {
+                if (GetMetalBuffer(Survivors[Index].Buffer.Get())->GetResourceStorage().IsDefragPending())
+                {
+                    Survivors.RemoveAt(Index);
+                    ++NumCancelled;
+                }
+            }
+
+            FRHICommandListExecutor::Get().WaitForGPU();
+        }
+
+        TEST_EXPECT(NumCancelled > 0);
+        RunMemoryFrames(2);
+        TEST_EXPECT(!MetalDevice->HasPendingDefragMoves());
+
+#if METAL_ENABLE_STATS
+        TEST_EXPECT(STAT_GET(STAT_Metal_DefragCancels) >= CancelsBefore + static_cast<int64>(NumCancelled));
+#else
+        UNREFERENCED_VARIABLE(CancelsBefore);
+#endif
+
+        for (const FMemoryProbeBuffer& Survivor : Survivors)
+        {
+            TEST_EXPECT(ReadbackMatchesPattern(Survivor.Buffer.Get(), Survivor.Index));
+        }
+    }
+
+    TEST_SECTION("A small residency budget evicts idle allocations and keeps pinned ones");
+    {
+        constexpr uint64 StandaloneSize = 65ull * 1024ull * 1024ull;
+        const FRHIBufferDesc Desc(EBufferFlags::Default | EBufferFlags::ShaderResourceBuffer | EBufferFlags::CopySource | EBufferFlags::CopyDest, sizeof(uint32), StandaloneSize);
+
+        FRHIBufferRef Idle   = RHI::CreateBuffer(Desc);
+        FRHIBufferRef Pinned = RHI::CreateBuffer(Desc);
+        TEST_EXPECT(Idle != nullptr);
+        TEST_EXPECT(Pinned != nullptr);
+
+        if (Idle && Pinned && WriteMemoryPattern(Idle.Get(), 40) && WriteMemoryPattern(Pinned.Get(), 41))
+        {
+            FMetalResidencyEntry* IdleEntry   = GetMetalBuffer(Idle.Get())->GetResidencyEntry();
+            FMetalResidencyEntry* PinnedEntry = GetMetalBuffer(Pinned.Get())->GetResidencyEntry();
+            TEST_EXPECT(IdleEntry != nullptr);
+            TEST_EXPECT(PinnedEntry != nullptr);
+
+            FRHIShaderResourceViewRef IdleSRV   = RHI::CreateShaderResourceView(Idle.Get(), FRHIShaderResourceViewDesc::CreateBuffer(0, GMemoryPatternWords));
+            FRHIShaderResourceViewRef PinnedSRV = RHI::CreateShaderResourceView(Pinned.Get(), FRHIShaderResourceViewDesc::CreateBuffer(0, GMemoryPatternWords));
+            const FRHIDescriptorHandle PinnedHandle = (bBindless && PinnedSRV) ? PinnedSRV->GetBindlessHandle() : FRHIDescriptorHandle();
+
+            SetConsoleVariable("MetalRHI.ResidencyBudgetMB", "1");
+            RunMemoryFrames(5);
+
+            FMetalResidencyManager& ResidencyManager = MetalDevice->GetResidencyManager();
+            TEST_EXPECT(ResidencyManager.GetEvictedBytes() > 0);
+
+            if (IdleEntry && PinnedEntry)
+            {
+                TEST_EXPECT(!IdleEntry->bResident);
+                TEST_EXPECT(!bBindless || PinnedEntry->bResident);
+            }
+
+            uint32 Value = 0;
+            TEST_EXPECT(IdleSRV && DirectBufferPipeline && DispatchAndReadFirstUint(DirectBufferPipeline.Get(), DirectBufferShader.Get(), nullptr, IdleSRV.Get(), Value));
+            TEST_EXPECT_EQ(Value, GetMemoryPatternWord(40, 3));
+            TEST_EXPECT(!IdleEntry || IdleEntry->bResident);
+
+            if (bBindless && PinnedHandle.IsValid() && BindlessBufferPipeline)
+            {
+                FRHIBufferRef Params = CreateIndexParams(PinnedHandle.Index);
+                Value = 0;
+                TEST_EXPECT(Params && DispatchAndReadFirstUint(BindlessBufferPipeline.Get(), BindlessBufferShader.Get(), Params.Get(), nullptr, Value));
+                TEST_EXPECT_EQ(Value, GetMemoryPatternWord(41, 3));
+            }
+
+            SetConsoleVariable("MetalRHI.ResidencyBudgetMB", "0");
+            RunMemoryFrames(1);
+        }
+    }
+
+    TEST_SECTION("Creating and releasing resources across frames with defrag and eviction on");
+    {
+        SetConsoleVariable("MetalRHI.ResidencyBudgetMB", "32");
+
+        for (uint32 Iteration = 0; Iteration < 12; ++Iteration)
+        {
+            TArray<FMemoryProbeBuffer> Buffers = CreateFragmentedHeapBuffers(20, (2ull + (Iteration % 3)) * 1024ull * 1024ull, bBindless);
+            TEST_EXPECT(!Buffers.IsEmpty());
+
+            FRHITextureRef Texture = RHI::CreateTexture(FRHITextureDesc::CreateTexture2D(
+                EFormat::R8G8B8A8_Unorm, 256, 256, 1, 1, ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::RenderTarget));
+            if (Texture && bBindless)
+            {
+                TEST_EXPECT(Texture->GetBindlessSRVHandle().IsValid());
+            }
+
+            RunMemoryFrames(1);
+
+            for (int32 Index = Buffers.Size() - 1; Index >= 0; Index -= 2)
+            {
+                Buffers.RemoveAt(Index);
+            }
+
+            RunMemoryFrames(1);
+        }
+
+        RunMemoryFrames(2);
+        SetConsoleVariable("MetalRHI.ResidencyBudgetMB", "0");
+    }
+
+    SetConsoleVariable("MetalRHI.DefragEligibilityDelay", "1");
+    RunMemoryFrames(1);
+
+    FShaderCompiler::Destroy();
+    TEST_END();
+}
+#endif
+
 static bool BootRHI(ERHIType ExpectedType)
 {
     TEST_BEGIN();
@@ -2458,6 +3094,7 @@ static bool BootRHI(ERHIType ExpectedType)
                 TEST_EXPECT(ProbeParallelRender());
                 TEST_EXPECT(ProbeBindlessDescriptors());
                 TEST_EXPECT(ProbeDefaultResourcesAndClears());
+                TEST_EXPECT(ProbeMemoryDefragAndResidency());
             }
 #endif
             TEST_EXPECT(ProbeCapabilityHonesty(ExpectedType));
@@ -2491,6 +3128,14 @@ bool RHIBoot_Null_Test()
 bool RHIBoot_Metal_Test()
 {
     return BootRHI(ERHIType::Metal);
+}
+
+bool RHIBoot_MetalResidencyFallback_Test()
+{
+    SetConsoleVariable("MetalRHI.ForceResidencyFallback", true);
+    const bool bResult = BootRHI(ERHIType::Metal);
+    SetConsoleVariable("MetalRHI.ForceResidencyFallback", false);
+    return bResult;
 }
 
 bool RHIBoot_Vulkan_Test()

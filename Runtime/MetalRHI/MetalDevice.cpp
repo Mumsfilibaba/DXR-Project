@@ -3,7 +3,10 @@
 #include "MetalRHI/MetalDeviceDebug.h"
 #include "MetalRHI/MetalAllocators.h"
 #include "MetalRHI/MetalBindlessDescriptors.h"
+#include "MetalRHI/MetalCommandContext.h"
 #include "MetalRHI/MetalQueue.h"
+#include "MetalRHI/MetalRelocatable.h"
+#include "MetalRHI/MetalResidencyManager.h"
 #include "MetalRHI/MetalResidencySet.h"
 #include "MetalRHI/MetalStats.h"
 #include "Core/Math/Math.h"
@@ -11,6 +14,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CoreDelegates.h"
 #include "Core/Platform/PlatformTime.h"
+#include "Core/Threading/ScopedLock.h"
 #include <CoreGraphics/CoreGraphics.h>
 
 static TAutoConsoleVariable<bool> CVarEnableMeshShaders(
@@ -42,6 +46,16 @@ static TAutoConsoleVariable<String> CVarDynamicConstantsStorage(
     "MetalRHI.DynamicConstantsStorage",
     "Storage mode of the dynamic constant pages: Auto (Managed on discrete GPUs, Shared otherwise), Shared or Managed",
     "Auto");
+
+static TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame(
+    "MetalRHI.MaxDefragMovesPerFrame",
+    "Most heap-placed resources copied out of the sparsest heap each frame, which the next frame waits for before swapping them in. Zero disables defragmentation",
+    4);
+
+static TAutoConsoleVariable<int32> CVarDefragEligibilityDelay(
+    "MetalRHI.DefragEligibilityDelay",
+    "Frames an allocation has to live before a defrag move may relocate it, so resources created and filled this frame are left alone",
+    1);
 
 static constexpr MTLResourceOptions GNullResourceOptions = MTLResourceStorageModePrivate | MTLResourceHazardTrackingModeUntracked;
 static constexpr NSUInteger         GNullSampleCount     = 4;
@@ -180,6 +194,7 @@ static void EncodeClearPasses(id<MTLCommandBuffer> CommandBuffer, id<MTLTexture>
 
 FMetalDevice::FMetalDevice()
     : ResidencySet(nullptr)
+    , ResidencyManager(nullptr)
     , BindlessDescriptorManager(nullptr)
     , StagingBufferAllocator(nullptr)
     , DynamicConstantsAllocator(nullptr)
@@ -193,6 +208,10 @@ FMetalDevice::FMetalDevice()
     , DepthStencilStates()
     , DepthStencilStatesCS()
     , LatestUploadValue(0)
+    , PendingDefragMoves()
+    , DefragWaitValues()
+    , DefragCS()
+    , bHasPendingDefragMoves(false)
     , FrameCounter(0)
     , LastMemoryLogTime(0)
     , Properties{}
@@ -201,6 +220,7 @@ FMetalDevice::FMetalDevice()
     , bDeviceRemoved(false)
 {
     Queues.Fill(nullptr);
+    DefragWaitValues.Fill(0);
 }
 
 FMetalDevice::~FMetalDevice()
@@ -213,6 +233,9 @@ FMetalDevice::~FMetalDevice()
     }
 
     WaitForGPU();
+
+    bHasPendingDefragMoves.Store(!PendingDefragMoves.IsEmpty());
+    FinalizeDefragMoves();
 
     if (ResidencySet && DefaultResources.Heap)
     {
@@ -266,6 +289,7 @@ FMetalDevice::~FMetalDevice()
     SAFE_DELETE(UploadHeapAllocator);
     SAFE_DELETE(DynamicConstantsAllocator);
     SAFE_DELETE(StagingBufferAllocator);
+    SAFE_DELETE(ResidencyManager);
 
     if (ResidencySet)
     {
@@ -284,12 +308,12 @@ FMetalDevice::~FMetalDevice()
 
 void FMetalDevice::BeginFrame()
 {
-    FrameCounter++;
+    const uint64 Frame = FrameCounter.Increment();
     MetalBeginFrameCapture(Device);
 
-    ForEachQueue([this](FMetalQueue& Queue)
+    ForEachQueue([Frame](FMetalQueue& Queue)
     {
-        Queue.PruneCommandContexts(FrameCounter);
+        Queue.PruneCommandContexts(Frame);
     });
 
     ProcessQueues();
@@ -308,11 +332,156 @@ void FMetalDevice::EndFrame()
     }
 
     ProcessQueues();
+
+    if (ResidencyManager)
+    {
+        ResidencyManager->EndFrame();
+        ResidencyManager->EvictIfNeeded();
+    }
+
     MetalEndFrameCapture();
 
 #if METAL_ENABLE_STATS
     LogMemoryStats();
 #endif
+}
+
+uint32 FMetalDevice::RecordDefragMoves(FMetalCommandContext& Context)
+{
+    const int32 MaxMoves = CVarMaxDefragMovesPerFrame.GetValue();
+
+    if (MaxMoves <= 0 || !BufferAllocator || !TextureAllocator)
+    {
+        return 0;
+    }
+
+    TScopedLock Lock(DefragCS);
+
+    if (!PendingDefragMoves.IsEmpty())
+    {
+        return 0;
+    }
+
+    const uint64 Delay               = static_cast<uint64>(Math::Max(CVarDefragEligibilityDelay.GetValue(), 0));
+    const uint64 NextFrame           = GetFrameCounter() + 1;
+    const uint64 EligibleBeforeFrame = NextFrame > Delay ? NextFrame - Delay : 0;
+
+    // The copies read what earlier encoders wrote, and the encoder fence only orders encoders opened after this point
+    FMetalEncoderManager& Encoders = Context.GetEncoders();
+    Encoders.EndEncoder();
+
+    uint32 NumMoves = TextureAllocator->RecordDefragMoves(Context, static_cast<uint32>(MaxMoves), EligibleBeforeFrame, PendingDefragMoves);
+    NumMoves += BufferAllocator->RecordDefragMoves(Context, static_cast<uint32>(MaxMoves) - NumMoves, EligibleBeforeFrame, PendingDefragMoves);
+
+    if (NumMoves > 0)
+    {
+        Encoders.EndEncoder();
+    }
+
+    STAT_SET(STAT_Metal_DefragPending, NumMoves);
+    return NumMoves;
+}
+
+void FMetalDevice::SetDefragWaitValues(uint64 DirectValue)
+{
+    TScopedLock Lock(DefragCS);
+
+    ForEachQueue([this](FMetalQueue& Queue)
+    {
+        DefragWaitValues[static_cast<uint32>(Queue.GetType())] = Queue.GetLastSubmittedValue();
+    });
+
+    uint64& DirectWaitValue = DefragWaitValues[static_cast<uint32>(EMetalQueueType::Direct)];
+    DirectWaitValue = Math::Max(DirectWaitValue, DirectValue);
+
+    // Raised only now, so a context started before the copies were submitted cannot swap ahead of them
+    bHasPendingDefragMoves.Store(!PendingDefragMoves.IsEmpty());
+}
+
+void FMetalDevice::FinalizeDefragMoves()
+{
+    if (!bHasPendingDefragMoves.Load())
+    {
+        return;
+    }
+
+    // Held across the swaps, so a resource released on another thread either cancels first or releases the swapped placement
+    TScopedLock Lock(DefragCS);
+
+    if (!bHasPendingDefragMoves.Load() || PendingDefragMoves.IsEmpty())
+    {
+        return;
+    }
+
+    ForEachQueue([this](FMetalQueue& Queue)
+    {
+        const uint64 Value = DefragWaitValues[static_cast<uint32>(Queue.GetType())];
+
+        if (Value != 0)
+        {
+            Queue.WaitForValue(Value);
+        }
+    });
+
+    for (FMetalDefragMove& Move : PendingDefragMoves)
+    {
+        if (!Move.bCancelled)
+        {
+            Move.Storage->GetOwner()->Relocate(*Move.Target);
+            STAT_ADD(STAT_Metal_DefragMoves, 1);
+        }
+
+        Move.Target->ReleaseResource();
+    }
+
+    PendingDefragMoves.Clear();
+    DefragWaitValues.Fill(0);
+    bHasPendingDefragMoves.Store(false);
+    STAT_SET(STAT_Metal_DefragPending, 0);
+}
+
+void FMetalDevice::CancelDefragMove(FMetalResourceStorage& Storage)
+{
+    TScopedLock Lock(DefragCS);
+
+    for (FMetalDefragMove& Move : PendingDefragMoves)
+    {
+        if (Move.Storage == &Storage && !Move.bCancelled)
+        {
+            Move.bCancelled = true;
+            Storage.SetDefragPending(false);
+            STAT_ADD(STAT_Metal_DefragCancels, 1);
+            return;
+        }
+    }
+}
+
+void FMetalDevice::TrimAllocatorCaches()
+{
+    if (BufferAllocator)
+    {
+        BufferAllocator->Trim();
+    }
+
+    if (TextureAllocator)
+    {
+        TextureAllocator->Trim();
+    }
+
+    if (StagingBufferAllocator)
+    {
+        StagingBufferAllocator->Trim();
+    }
+
+    if (DynamicConstantsAllocator)
+    {
+        DynamicConstantsAllocator->Trim();
+    }
+
+    if (UploadHeapAllocator)
+    {
+        UploadHeapAllocator->Trim();
+    }
 }
 
 bool FMetalDevice::Initialize()
@@ -332,6 +501,8 @@ bool FMetalDevice::Initialize()
     ResidencySet = new FMetalResidencySet(this);
     ResidencySet->Initialize();
     GMetalFeatures.bResidencySets = !ResidencySet->UsesEncoderFallback();
+
+    ResidencyManager = new FMetalResidencyManager(this);
 
     StagingBufferAllocator    = new FMetalLinearAllocator(this, 2ull * 1024ull * 1024ull, 2ull * 1024ull * 1024ull, MetalRHI::GetMTLResourceOptions(EMetalMemoryClass::Upload), false, EMetalAllocationLifetime::Submission);
     DynamicConstantsAllocator = new FMetalLinearAllocator(this, 4ull * 1024ull * 1024ull, 2ull * 1024ull * 1024ull, GetDynamicConstantsOptions(), true, EMetalAllocationLifetime::Frame);
@@ -964,7 +1135,7 @@ bool FMetalDevice::QueryVideoMemoryInfo(EVideoMemoryType Type, FRHIVideoMemoryIn
 
     if (Type == EVideoMemoryType::Local)
     {
-        OutInfo.MemoryBudget = Device.recommendedMaxWorkingSetSize;
+        OutInfo.MemoryBudget = ResidencyManager ? ResidencyManager->GetBudget() : Device.recommendedMaxWorkingSetSize;
         OutInfo.MemoryUsage  = Device.currentAllocatedSize;
     }
     else
@@ -1069,13 +1240,17 @@ void FMetalDevice::LogMemoryStats()
 
     METAL_INFO("[MemoryStats] Frame=%llu Device=%.1f/%.1f MB CommandBuffersAlive=%lld EncodersOpen=%lld "
         "DynamicConstants=%.1f MB (%lld pages) Staging=%.1f MB (%lld pages) UploadHeap=%.1f MB UploadPages=+%lld/-%lld "
-        "BufferHeaps=%.1f MB (%lld) TextureHeaps=%.1f MB (%lld) StandaloneBuffers=%.1f MB (%lld) StandaloneTextures=%.1f MB (%lld) Bindless=%.1f MB",
-        FrameCounter, ToMB(static_cast<int64>(Device.currentAllocatedSize)), ToMB(static_cast<int64>(Device.recommendedMaxWorkingSetSize)),
+        "BufferHeaps=%.1f MB (%lld) TextureHeaps=%.1f MB (%lld) StandaloneBuffers=%.1f MB (%lld) StandaloneTextures=%.1f MB (%lld) Bindless=%.1f MB "
+        "Budget=%.1f MB Resident=%.1f MB Evicted=%.1f MB Pinned=%.1f MB Evictions=%lld DefragMoves=%lld (%.1f MB) DefragCancels=%lld",
+        FrameCounter.Load(), ToMB(static_cast<int64>(Device.currentAllocatedSize)), ToMB(static_cast<int64>(Device.recommendedMaxWorkingSetSize)),
         STAT_GET(STAT_Metal_CommandBuffersAlive), STAT_GET(STAT_Metal_EncodersOpen),
         ToMB(STAT_GET(STAT_Metal_DynamicConstantsAllocated)), STAT_GET(STAT_Metal_DynamicConstantsPages), ToMB(STAT_GET(STAT_Metal_StagingAllocated)), STAT_GET(STAT_Metal_StagingPages),
         ToMB(STAT_GET(STAT_Metal_UploadHeapAllocated)), STAT_GET(STAT_Metal_UploadPagesCreated), STAT_GET(STAT_Metal_UploadPagesReleased),
         ToMB(STAT_GET(STAT_Metal_BufferHeapAllocated)), STAT_GET(STAT_Metal_BufferHeaps), ToMB(STAT_GET(STAT_Metal_TextureHeapAllocated)), STAT_GET(STAT_Metal_TextureHeaps),
         ToMB(STAT_GET(STAT_Metal_StandaloneBufferBytes)), STAT_GET(STAT_Metal_StandaloneBuffers), ToMB(STAT_GET(STAT_Metal_StandaloneTextureBytes)), STAT_GET(STAT_Metal_StandaloneTextures),
-        ToMB(STAT_GET(STAT_Metal_BindlessTableBytes)));
+        ToMB(STAT_GET(STAT_Metal_BindlessTableBytes)),
+        ToMB(static_cast<int64>(ResidencyManager->GetBudget())), ToMB(static_cast<int64>(ResidencyManager->GetResidentBytes())),
+        ToMB(static_cast<int64>(ResidencyManager->GetEvictedBytes())), ToMB(static_cast<int64>(ResidencyManager->GetPinnedBytes())),
+        STAT_GET(STAT_Metal_Evictions), STAT_GET(STAT_Metal_DefragMoves), ToMB(STAT_GET(STAT_Metal_DefragBytesMoved)), STAT_GET(STAT_Metal_DefragCancels));
 }
 #endif

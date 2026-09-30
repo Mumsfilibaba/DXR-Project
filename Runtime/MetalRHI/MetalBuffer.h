@@ -1,17 +1,15 @@
 #pragma once
-#include "Core/Containers/Array.h"
-#include "Core/Platform/CriticalSection.h"
 #include "RHI/RHIResources.h"
 #include "MetalRHI/MetalDeviceChild.h"
+#include "MetalRHI/MetalRelocatable.h"
 #include "MetalRHI/MetalResource.h"
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FMetalQueue;
-class FMetalView;
 
 typedef TSharedRef<class FMetalBufferRHI> FMetalBufferRef;
 
-class FMetalBufferRHI : public FRHIBuffer, public FMetalDeviceChild
+class FMetalBufferRHI : public FRHIBuffer, public FMetalDeviceChild, public FMetalRelocatable
 {
 public:
     FMetalBufferRHI(FMetalDevice* InDevice, const FRHIBufferDesc& InBufferDesc);
@@ -31,9 +29,6 @@ public:
     bool Initialize(ERHIResourceState InInitialAccess, const void* InInitialData);
     bool RelocateTransientStorage(uint64 SizeInBytes, const void* SourceData, FMetalQueue* Queue);
 
-    void AddRelocationListener(FMetalView* View);
-    void RemoveRelocationListener(FMetalView* View);
-    
     FORCEINLINE id<MTLBuffer> GetMTLBuffer() const
     {
         return ResourceStorage.GetBuffer();
@@ -54,11 +49,23 @@ public:
         return ResourceStorage;
     }
 
+    FORCEINLINE FMetalResidencyEntry* GetResidencyEntry() const
+    {
+        return ResourceStorage.GetResidencyEntry();
+    }
+
+protected:
+
+    // FMetalRelocatable Interface
+    virtual FMetalResourceStorage& GetRelocatableStorage() override final;
+    virtual void OnStorageSwapped() override final;
+
 private:
-    FMetalResourceStorage        ResourceStorage;
-    mutable FRHIDescriptorHandle BindlessHandle;
-    TArray<FMetalView*>          RelocationListeners;
-    FCriticalSection             RelocationListenersCS;
+    void FreeBindlessHandle();
+
+    FMetalResourceStorage         ResourceStorage;
+    mutable FRHIDescriptorHandle  BindlessHandle;
+    mutable FMetalResidencyEntry* PinnedEntry;
 };
 
 inline FMetalBufferRHI* GetMetalBuffer(FRHIBuffer* Buffer)

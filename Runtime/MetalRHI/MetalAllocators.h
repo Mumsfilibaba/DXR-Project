@@ -1,11 +1,13 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/UniquePtr.h"
 #include "Core/Platform/CriticalSection.h"
 #include "MetalRHI/MetalDeviceChild.h"
 #include "MetalRHI/MetalHeap.h"
 #include "MetalRHI/MetalResource.h"
 
 class FMetalQueue;
+class FMetalCommandContext;
 
 #if METAL_ENABLE_STATS
 struct FMetalAllocatorUsage
@@ -17,15 +19,35 @@ struct FMetalAllocatorUsage
 };
 #endif
 
+struct FMetalDefragCandidate
+{
+    FMetalResourceStorage* Storage = nullptr;
+    uint32                 HeapIndex = UINT32_MAX;
+};
+
+struct FMetalDefragMove
+{
+    FMetalResourceStorage*            Storage = nullptr;
+    TUniquePtr<FMetalResourceStorage> Target;
+    bool                              bCancelled = false;
+};
+
 class FMetalHeapPool : public FMetalDeviceChild
 {
 public:
     explicit FMetalHeapPool(FMetalDevice* InDevice);
     ~FMetalHeapPool();
 
-    bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, uint32& OutHeapIndex, uint64& OutOffset, FMetalHeap*& OutHeap);
+    bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, FMetalResourceStorage* Storage, uint32& OutHeapIndex, uint64& OutOffset, FMetalHeap*& OutHeap);
+    bool TryAllocateForDefrag(uint64 SizeInBytes, uint64 Alignment, uint32 SourceHeapIndex, FMetalResourceStorage* Storage, uint32& OutHeapIndex, uint64& OutOffset, FMetalHeap*& OutHeap);
+
+    void SelectDefragCandidates(uint32 MaxMoves, uint64 EligibleBeforeFrame, TArray<FMetalDefragCandidate>& OutCandidates);
+    void RetargetAllocation(uint32 HeapIndex, uint64 Offset, FMetalResourceStorage* NewStorage);
+
     void Deallocate(uint32 HeapIndex, uint64 Offset, uint64 Size);
     void CleanUp();
+    void Trim();
+
     void Destroy();
 
 #if METAL_ENABLE_STATS
@@ -39,13 +61,22 @@ private:
         uint64 Size;
     };
 
+    struct FHeapAllocation
+    {
+        uint64                 Offset;
+        uint64                 Size;
+        FMetalResourceStorage* Storage;
+        uint64                 CreatedFrame;
+    };
+
     struct FHeapBlock
     {
-        FMetalHeap*            Heap;
-        uint64                 Size;
-        uint64                 UsedBytes;
-        uint32                 AllocCount;
-        TArray<FHeapFreeRange> FreeRanges;
+        FMetalHeap*             Heap;
+        uint64                  Size;
+        uint64                  UsedBytes;
+        TArray<FHeapFreeRange>  FreeRanges;
+        TArray<FHeapAllocation> Allocations;
+        bool                    bVolatile;
     };
 
     struct FPendingHeapFree
@@ -58,12 +89,16 @@ private:
         uint64       CopyFenceValue;
     };
 
-    FHeapBlock* CreateHeapBlock(uint64 MinimumSize);
-    bool        TrySuballocate(FHeapBlock& Block, uint32 HeapIndex, uint64 SizeInBytes, uint64 Alignment, uint64& OutOffset);
-    void        ReturnHeapRange(uint32 HeapIndex, uint64 Offset, uint64 Size);
-    void        RecyclePendingHeapFrees();
-    void        DropUnusedHeaps();
-    bool        IsHeapFreeEligible(const FPendingHeapFree& PendingFree) const;
+    uint32 CreateHeapBlock(uint64 MinimumSize);
+    void   ReleaseHeapBlock(FHeapBlock& Block);
+    bool   TryAllocateFromBlocks(uint64 SizeInBytes, uint64 Alignment, FMetalResourceStorage* Storage, uint32& OutHeapIndex, uint64& OutOffset, FMetalHeap*& OutHeap);
+    bool   TrySuballocate(FHeapBlock& Block, uint64 SizeInBytes, uint64 Alignment, uint64& OutOffset);
+    void   RecordAllocation(FHeapBlock& Block, uint64 Offset, uint64 Size, FMetalResourceStorage* Storage);
+    void   ReturnHeapRange(uint32 HeapIndex, uint64 Offset, uint64 Size);
+    void   RecyclePendingHeapFrees();
+    void   DropUnusedHeaps(uint64 MaxUnusedBytes);
+    bool   IsHeapFreeEligible(const FPendingHeapFree& PendingFree) const;
+    bool   ReviveHeapBlock(FHeapBlock& Block);
 
     static constexpr uint64 DefaultHeapSize    = 64ull * 1024ull * 1024ull;
     static constexpr uint64 MaxUnusedHeapBytes = 64ull * 1024ull * 1024ull;
@@ -90,6 +125,7 @@ public:
 
     void  EndFrame();
     void  CleanUp();
+    void  Trim();
     void  Destroy();
 
 #if METAL_ENABLE_STATS
@@ -114,7 +150,8 @@ private:
     FPage* CreatePage(uint64 SizeInBytes, bool bDedicated);
     FPage* FindFreePage(uint64 SizeInBytes, uint64 Alignment, FMetalQueue* Queue);
     void   ReleasePage(FPage* Page);
-    void   DropUnusedPages();
+    void   RecycleRetiredPages();
+    void   DropUnusedPages(uint64 MaxUnusedPageBytes);
 
     static constexpr uint64 MaxUnusedBytes = 32ull * 1024ull * 1024ull;
 
@@ -139,6 +176,7 @@ public:
     void  RetireAllocations(FMetalQueue* Queue, uint64 SubmissionValue);
     void  EndFrame();
     void  CleanUp();
+    void  Trim();
     void  Destroy();
 
 #if METAL_ENABLE_STATS
@@ -157,7 +195,12 @@ public:
 
     bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, MTLResourceOptions Options, bool bBindlessReachable, FMetalResourceStorage& OutStorage);
     void Deallocate(FMetalResourceStorage& Storage);
+
+    uint32 RecordDefragMoves(FMetalCommandContext& Context, uint32 MaxMoves, uint64 EligibleBeforeFrame, TArray<FMetalDefragMove>& OutMoves);
+    void   RetargetAllocation(FMetalResourceStorage& Storage);
+
     void CleanUp();
+    void Trim();
     void Destroy();
 
 #if METAL_ENABLE_STATS
@@ -176,7 +219,12 @@ public:
 
     bool TryAllocate(MTLTextureDescriptor* TextureDescriptor, FMetalResourceStorage& OutStorage);
     void Deallocate(FMetalResourceStorage& Storage);
+
+    uint32 RecordDefragMoves(FMetalCommandContext& Context, uint32 MaxMoves, uint64 EligibleBeforeFrame, TArray<FMetalDefragMove>& OutMoves);
+    void   RetargetAllocation(FMetalResourceStorage& Storage);
+
     void CleanUp();
+    void Trim();
     void Destroy();
 
 #if METAL_ENABLE_STATS

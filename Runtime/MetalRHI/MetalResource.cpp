@@ -4,6 +4,7 @@
 #include "MetalRHI/MetalResidencySet.h"
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalStats.h"
+#include "Core/Templates/Utility/Swap.h"
 
 FMetalResourceStorage::FMetalResourceStorage(FMetalDevice* InDevice)
     : FMetalDeviceChild(InDevice)
@@ -11,12 +12,16 @@ FMetalResourceStorage::FMetalResourceStorage(FMetalDevice* InDevice)
     , Buffer(nil)
     , Texture(nil)
     , Heap(nullptr)
+    , Owner(nullptr)
+    , ResidencyEntry(nullptr)
+    , StandaloneEntry()
     , MappedBaseAddress(nullptr)
     , ResourceOffset(0)
     , Size(0)
     , HeapIndex(UINT32_MAX)
     , StorageType(EMetalResourceStorageType::Unknown)
     , AllocatorType(EMetalAllocatorType::None)
+    , bDefragPending(false)
 {
 }
 
@@ -32,7 +37,7 @@ void FMetalResourceStorage::InitStandalone(id<MTLBuffer> InBuffer, uint64 InSize
     Size        = InSize;
     StorageType = EMetalResourceStorageType::Standalone;
 
-    GetDevice()->GetResidencySet().Add(InBuffer, bBindlessReachable);
+    TrackStandalone(InBuffer, bBindlessReachable);
 
     STAT_ADD(STAT_Metal_StandaloneBufferBytes, [InBuffer allocatedSize]);
     STAT_ADD(STAT_Metal_StandaloneBuffers, 1);
@@ -45,10 +50,27 @@ void FMetalResourceStorage::InitStandalone(id<MTLTexture> InTexture, uint64 InSi
     Size        = InSize;
     StorageType = EMetalResourceStorageType::Standalone;
 
-    GetDevice()->GetResidencySet().Add(InTexture, bBindlessReachable);
+    TrackStandalone(InTexture, bBindlessReachable);
 
     STAT_ADD(STAT_Metal_StandaloneTextureBytes, [InTexture allocatedSize]);
     STAT_ADD(STAT_Metal_StandaloneTextures, 1);
+}
+
+void FMetalResourceStorage::TrackStandalone(id<MTLResource> Resource, bool bBindlessReachable)
+{
+    if (Resource.storageMode != MTLStorageModePrivate)
+    {
+        GetDevice()->GetResidencySet().Add(Resource, bBindlessReachable);
+        return;
+    }
+
+    StandaloneEntry.Allocation         = Resource;
+    StandaloneEntry.SizeInBytes        = [Resource allocatedSize];
+    StandaloneEntry.bIsHeap            = false;
+    StandaloneEntry.bBindlessReachable = bBindlessReachable;
+    ResidencyEntry                     = &StandaloneEntry;
+
+    GetDevice()->GetResidencyManager().BeginTracking(StandaloneEntry);
 }
 
 void FMetalResourceStorage::InitSuballocatedResource(id<MTLBuffer> InBuffer, uint64 InOffset, uint64 InSize, void* InMappedAddress, FMetalLinearAllocator* InLinearAllocator, FMetalUploadHeapAllocator* InUploadAllocator)
@@ -77,6 +99,7 @@ void FMetalResourceStorage::InitSuballocatedHeap(id<MTLBuffer> InBuffer, FMetalH
     Reset();
     Buffer                            = InBuffer;
     Heap                              = InHeap;
+    ResidencyEntry                    = &InHeap->GetResidencyEntry();
     ResourceOffset                    = InOffset;
     Size                              = InSize;
     HeapIndex                         = InHeapIndex;
@@ -90,12 +113,43 @@ void FMetalResourceStorage::InitSuballocatedHeap(id<MTLTexture> InTexture, FMeta
     Reset();
     Texture                            = InTexture;
     Heap                               = InHeap;
+    ResidencyEntry                     = &InHeap->GetResidencyEntry();
     ResourceOffset                     = InOffset;
     Size                               = InSize;
     HeapIndex                          = InHeapIndex;
     StorageType                        = EMetalResourceStorageType::SuballocatedHeap;
     AllocatorType                      = EMetalAllocatorType::TextureAllocator;
     AllocatorPointers.TextureAllocator = InTextureAllocator;
+}
+
+void FMetalResourceStorage::SwapPlacement(FMetalResourceStorage& Other)
+{
+    CHECK(IsPlacedResource() && Other.IsPlacedResource());
+    CHECK(AllocatorType == Other.AllocatorType);
+
+    ::Swap(AllocatorPointers, Other.AllocatorPointers);
+    ::Swap(Buffer, Other.Buffer);
+    ::Swap(Texture, Other.Texture);
+    ::Swap(Heap, Other.Heap);
+    ::Swap(ResidencyEntry, Other.ResidencyEntry);
+    ::Swap(MappedBaseAddress, Other.MappedBaseAddress);
+    ::Swap(ResourceOffset, Other.ResourceOffset);
+    ::Swap(Size, Other.Size);
+    ::Swap(HeapIndex, Other.HeapIndex);
+
+    bDefragPending       = false;
+    Other.bDefragPending = false;
+
+    if (AllocatorType == EMetalAllocatorType::BufferAllocator)
+    {
+        AllocatorPointers.BufferAllocator->RetargetAllocation(*this);
+        Other.AllocatorPointers.BufferAllocator->RetargetAllocation(Other);
+    }
+    else
+    {
+        AllocatorPointers.TextureAllocator->RetargetAllocation(*this);
+        Other.AllocatorPointers.TextureAllocator->RetargetAllocation(Other);
+    }
 }
 
 void FMetalResourceStorage::ReleaseOwnedResource(bool bStandalone)
@@ -136,6 +190,11 @@ void FMetalResourceStorage::ReleaseResource()
 
     if (StorageType == EMetalResourceStorageType::SuballocatedHeap)
     {
+        if (bDefragPending)
+        {
+            GetDevice()->CancelDefragMove(*this);
+        }
+
         ReleaseOwnedResource(false);
 
         if (AllocatorType == EMetalAllocatorType::BufferAllocator && AllocatorPointers.BufferAllocator)
@@ -149,6 +208,11 @@ void FMetalResourceStorage::ReleaseResource()
     }
     else if (StorageType == EMetalResourceStorageType::Standalone)
     {
+        if (ResidencyEntry == &StandaloneEntry)
+        {
+            GetDevice()->GetResidencyManager().EndTracking(StandaloneEntry, false);
+        }
+
         if (Buffer)
         {
             STAT_SUBTRACT(STAT_Metal_StandaloneBufferBytes, [Buffer allocatedSize]);
@@ -169,14 +233,23 @@ void FMetalResourceStorage::ReleaseResource()
 
 void FMetalResourceStorage::Reset()
 {
+    CHECK(!StandaloneEntry.bTracked);
+
     Buffer            = nil;
     Texture           = nil;
     Heap              = nullptr;
+    ResidencyEntry    = nullptr;
     MappedBaseAddress = nullptr;
     ResourceOffset    = 0;
     Size              = 0;
     HeapIndex         = UINT32_MAX;
     StorageType       = EMetalResourceStorageType::Unknown;
     AllocatorType     = EMetalAllocatorType::None;
+    bDefragPending    = false;
     AllocatorPointers.AsVoid = nullptr;
+
+    StandaloneEntry.Allocation    = nil;
+    StandaloneEntry.SizeInBytes   = 0;
+    StandaloneEntry.LastUsedFrame = 0;
+    StandaloneEntry.BindlessPins.Store(0);
 }

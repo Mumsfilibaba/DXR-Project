@@ -4,6 +4,7 @@
 #include "MetalRHI/MetalQueue.h"
 #include "MetalRHI/MetalResource.h"
 #include "MetalRHI/MetalStats.h"
+#include "MetalRHI/MetalTexture.h"
 
 FMetalUploadBatch::FMetalUploadBatch(FMetalDevice* InDevice)
     : Device(InDevice)
@@ -61,6 +62,40 @@ bool FMetalUploadBatch::CreateStagingBuffer(uint64 Size, FMetalResourceStorage& 
     }
 
     return true;
+}
+
+void FMetalUploadBatch::InitializePlacement(id<MTLTexture> Texture)
+{
+    SCOPED_AUTORELEASE_POOL();
+
+    TArray<MTLRenderPassDescriptor*> Passes;
+    MetalRHI::CreatePlacementInitPasses(Texture, Passes);
+
+    if (!BlitEncoder || Passes.IsEmpty())
+    {
+        return;
+    }
+
+    FMetalEncoderFence& Fence = Queue->GetEncoderFence();
+    Fence.Signal(BlitEncoder, EMetalEncoderType::Blit, *Commands);
+
+    [BlitEncoder endEncoding];
+    [BlitEncoder release];
+
+    for (MTLRenderPassDescriptor* Pass : Passes)
+    {
+        id<MTLRenderCommandEncoder> RenderEncoder = [Commands->CommandBuffer renderCommandEncoderWithDescriptor:Pass];
+        RenderEncoder.label = @"InitializePlacement";
+
+        Fence.Wait(RenderEncoder, EMetalEncoderType::Render, *Commands);
+        Fence.Signal(RenderEncoder, EMetalEncoderType::Render, *Commands);
+
+        [RenderEncoder endEncoding];
+    }
+
+    BlitEncoder = [[Commands->CommandBuffer blitCommandEncoder] retain];
+    BlitEncoder.label = @"Upload";
+    Fence.Wait(BlitEncoder, EMetalEncoderType::Blit, *Commands);
 }
 
 uint64 FMetalUploadBatch::Submit()

@@ -9,6 +9,7 @@
 #include "MetalRHI/MetalDeletionQueue.h"
 #include "MetalRHI/MetalEncoderManager.h"
 #include "MetalRHI/MetalRecyclePool.h"
+#include "MetalRHI/MetalResidencyManager.h"
 #include "MetalRHI/MetalResource.h"
 
 class FMetalDevice;
@@ -148,6 +149,7 @@ struct FMetalCommands
     TArray<FMetalQueryRHI*>       PendingQueries;
     TArray<FMetalEventValue>      PendingSignals;
     TArray<FMetalSyncPoint>       PendingWaits;
+    FMetalResidencyList           ResidencyList;
     FMetalBreadcrumbRing          Breadcrumbs;
     bool                          bUpdatesEncoderFence;
 };

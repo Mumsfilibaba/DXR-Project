@@ -2,6 +2,7 @@
 #include "Core/Containers/Map.h"
 #include "Core/Containers/StaticArray.h"
 #include "Core/Threading/Atomic/AtomicBool.h"
+#include "MetalRHI/MetalAllocators.h"
 #include "MetalRHI/MetalCore.h"
 #include "MetalRHI/MetalQueue.h"
 #include "MetalRHI/MetalQuery.h"
@@ -9,7 +10,9 @@
 #include "RHI/RHIPipelineState.h"
 
 class FMetalDevice;
+class FMetalCommandContext;
 class FMetalResidencySet;
+class FMetalResidencyManager;
 class FMetalUploadHeapAllocator;
 class FMetalLinearAllocator;
 class FMetalBufferAllocator;
@@ -75,7 +78,26 @@ public:
 
     id<MTLDepthStencilState> GetDepthStencilState(const FRHIDepthStencilStateDesc& Desc);
 
+    uint32 RecordDefragMoves(FMetalCommandContext& Context);
+    void   SetDefragWaitValues(uint64 DirectValue);
+
+    void FinalizeDefragMoves();
+    void CancelDefragMove(FMetalResourceStorage& Storage);
+
+    bool HasPendingDefragMoves() const
+    {
+        return bHasPendingDefragMoves.Load();
+    }
+
+    void TrimAllocatorCaches();
+
+    uint64 GetFrameCounter() const
+    {
+        return FrameCounter.Load();
+    }
+
     FMetalResidencySet&              GetResidencySet()              const { return *ResidencySet; }
+    FMetalResidencyManager&          GetResidencyManager()          const { return *ResidencyManager; }
     FMetalBindlessDescriptorManager* GetBindlessDescriptorManager() const { return BindlessDescriptorManager; }
     FMetalLinearAllocator*           GetStagingBufferAllocator()    const { return StagingBufferAllocator; }
     FMetalLinearAllocator*           GetDynamicConstantsAllocator() const { return DynamicConstantsAllocator; }
@@ -131,6 +153,7 @@ private:
 #endif
 
     FMetalResidencySet*                                                     ResidencySet;
+    FMetalResidencyManager*                                                 ResidencyManager;
     FMetalBindlessDescriptorManager*                                        BindlessDescriptorManager;
     FMetalLinearAllocator*                                                  StagingBufferAllocator;
     FMetalLinearAllocator*                                                  DynamicConstantsAllocator;
@@ -144,7 +167,11 @@ private:
     TMap<FRHIDepthStencilStateDesc, id<MTLDepthStencilState>>               DepthStencilStates;
     FCriticalSection                                                        DepthStencilStatesCS;
     TAtomicInt<uint64>                                                      LatestUploadValue;
-    uint64                                                                  FrameCounter;
+    TArray<FMetalDefragMove>                                                PendingDefragMoves;
+    TStaticArray<uint64, static_cast<uint32>(EMetalQueueType::Count)>       DefragWaitValues;
+    FCriticalSection                                                        DefragCS;
+    AtomicBool                                                              bHasPendingDefragMoves;
+    TAtomicInt<uint64>                                                      FrameCounter;
     uint64                                                                  LastMemoryLogTime;
     FMetalDeviceProperties                                                  Properties;
     id<MTLDevice>                                                           Device;

@@ -5,7 +5,6 @@
 #include "MetalRHI/MetalShader.h"
 #include "RHI/RHITypes.h"
 
-/** @brief One SPIRV-Cross `spvDescriptor<T>` slot. */
 struct FMetalBindlessDescriptorEntry
 {
     uint64 Resource = 0;

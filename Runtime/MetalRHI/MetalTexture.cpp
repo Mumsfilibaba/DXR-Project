@@ -134,6 +134,7 @@ static FRHIDepthStencilViewDesc CreateDefaultDSVDesc(const FRHITextureDesc& Desc
 FMetalTextureRHI::FMetalTextureRHI(FMetalDevice* InDevice, const FRHITextureDesc& InTextureDesc)
     : FRHITexture(InTextureDesc)
     , FMetalDeviceChild(InDevice)
+    , FMetalRelocatable()
     , Texture(nil)
     , ResourceStorage(InDevice)
     , SwapChain(nullptr)
@@ -142,12 +143,24 @@ FMetalTextureRHI::FMetalTextureRHI(FMetalDevice* InDevice, const FRHITextureDesc
     , RenderTargetView(nullptr)
     , DepthStencilView(nullptr)
 {
+    ResourceStorage.SetOwner(this);
 }
 
 FMetalTextureRHI::~FMetalTextureRHI()
 {
+    NotifyReleased();
     ResourceStorage.ReleaseResource();
     Texture = nil;
+}
+
+FMetalResourceStorage& FMetalTextureRHI::GetRelocatableStorage()
+{
+    return ResourceStorage;
+}
+
+void FMetalTextureRHI::OnStorageSwapped()
+{
+    Texture = ResourceStorage.GetTexture();
 }
 
 void* FMetalTextureRHI::GetRHINativeResource() const
@@ -211,15 +224,32 @@ bool FMetalTextureRHI::Initialize(ERHIResourceState InInitialAccess, const IRHIT
         return false;
     }
 
-    if (InInitialData && !UploadInitialData(InInitialData))
+    const bool bInitializePlacement = ResourceStorage.IsPlacedResource() && (Texture.usage & MTLTextureUsageRenderTarget) != 0;
+
+    if (bInitializePlacement || InInitialData)
     {
-        return false;
+        FMetalUploadBatch UploadBatch(GetDevice());
+
+        if (!UploadBatch.IsValid())
+        {
+            return false;
+        }
+
+        if (bInitializePlacement)
+        {
+            UploadBatch.InitializePlacement(Texture);
+        }
+
+        if (InInitialData && !UploadInitialData(UploadBatch, InInitialData))
+        {
+            return false;
+        }
     }
 
     return CreateDefaultViews();
 }
 
-bool FMetalTextureRHI::UploadInitialData(const IRHITextureData* InInitialData)
+bool FMetalTextureRHI::UploadInitialData(FMetalUploadBatch& UploadBatch, const IRHITextureData* InInitialData)
 {
     SCOPED_AUTORELEASE_POOL();
 
@@ -250,13 +280,6 @@ bool FMetalTextureRHI::UploadInitialData(const IRHITextureData* InInitialData)
     if (StagingSize == 0)
     {
         return true;
-    }
-
-    FMetalUploadBatch UploadBatch(GetDevice());
-
-    if (!UploadBatch.IsValid())
-    {
-        return false;
     }
 
     FMetalResourceStorage StagingStorage(GetDevice());
@@ -308,7 +331,6 @@ bool FMetalTextureRHI::UploadInitialData(const IRHITextureData* InInitialData)
         Depth  = Math::Max(Depth / 2, 1u);
     }
 
-    UploadBatch.Submit();
     return true;
 }
 
@@ -406,4 +428,58 @@ id<MTLTexture> FMetalTextureRHI::GetMTLTexture() const
         return Texture;
     }
 }
+
+void MetalRHI::CreatePlacementInitPasses(id<MTLTexture> Texture, TArray<MTLRenderPassDescriptor*>& OutPasses)
+{
+    if (!Texture || (Texture.usage & MTLTextureUsageRenderTarget) == 0)
+    {
+        return;
+    }
+
+    const MTLPixelFormat Format    = Texture.pixelFormat;
+    const bool           bDepth    = GetTextureComponent(Format) == EMSLTextureComponent::Depth;
+    const bool           bStencil  = IsStencilPixelFormat(Format);
+    const bool           b3D       = Texture.textureType == MTLTextureType3D;
+    const bool           bCube     = Texture.textureType == MTLTextureTypeCube || Texture.textureType == MTLTextureTypeCubeArray;
+    const NSUInteger     NumSlices = Texture.arrayLength * (bCube ? RHI_NUM_CUBE_FACES : 1);
+
+    for (NSUInteger Level = 0; Level < Texture.mipmapLevelCount; ++Level)
+    {
+        const NSUInteger NumLayers = b3D ? Math::Max<NSUInteger>(Texture.depth >> Level, 1) : NumSlices;
+
+        for (NSUInteger Layer = 0; Layer < NumLayers; ++Layer)
+        {
+            MTLRenderPassDescriptor* Descriptor = [MTLRenderPassDescriptor renderPassDescriptor];
+
+            const auto ApplyClear = [&](MTLRenderPassAttachmentDescriptor* Attachment)
+            {
+                Attachment.texture     = Texture;
+                Attachment.level       = Level;
+                Attachment.slice       = b3D ? 0 : Layer;
+                Attachment.depthPlane  = b3D ? Layer : 0;
+                Attachment.loadAction  = MTLLoadActionClear;
+                Attachment.storeAction = MTLStoreActionStore;
+            };
+
+            if (bDepth)
+            {
+                ApplyClear(Descriptor.depthAttachment);
+            }
+
+            if (bStencil)
+            {
+                ApplyClear(Descriptor.stencilAttachment);
+            }
+
+            if (!bDepth && !bStencil)
+            {
+                ApplyClear(Descriptor.colorAttachments[0]);
+                Descriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 0.0);
+            }
+
+            OutPasses.Add(Descriptor);
+        }
+    }
+}
+
 ENABLE_UNREFERENCED_VARIABLE_WARNING

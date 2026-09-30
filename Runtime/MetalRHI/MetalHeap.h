@@ -1,5 +1,6 @@
 #pragma once
 #include "MetalRHI/MetalDeviceChild.h"
+#include "MetalRHI/MetalResidencyManager.h"
 
 class FMetalHeap : public FMetalDeviceChild
 {
@@ -20,7 +21,13 @@ public:
         return Size;
     }
 
+    FORCEINLINE FMetalResidencyEntry& GetResidencyEntry()
+    {
+        return ResidencyEntry;
+    }
+
 private:
-    id<MTLHeap> Heap;
-    uint64      Size;
+    id<MTLHeap>          Heap;
+    uint64               Size;
+    FMetalResidencyEntry ResidencyEntry;
 };

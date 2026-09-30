@@ -95,6 +95,8 @@ FMetalEncoderManager::FMetalEncoderManager(FMetalQueue& InQueue)
     , Fence(InQueue.GetEncoderFence())
     , BindingCache()
     , ScheduledTimestamps()
+    , PendingClears()
+    , ResidencyList()
     , WaitedUploadValue(0)
     , DeclaredResidencyGeneration(0)
     , EncoderSerial(0)
@@ -138,6 +140,9 @@ FMetalCommands* FMetalEncoderManager::EndCommandBuffer()
     }
 
     ScheduledTimestamps.Clear();
+
+    Commands->ResidencyList.Append(ResidencyList);
+    ResidencyList.Reset();
 
     FMetalCommands* Finished = Commands;
     Commands = nullptr;
