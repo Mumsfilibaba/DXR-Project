@@ -88,6 +88,7 @@ UINT FFXCShaderCompiler::BuildCompileFlags(const FShaderCompileInfo& CompileInfo
 void FFXCShaderCompiler::HashCompileSettings(const FShaderCompileInfo& CompileInfo, const String& IncludeDir, bool bDebugInfo, uint64& InOutHash) const
 {
     HashCombine(InOutHash, THash<String>::GetHash(String("d3dcompiler_47")));
+    HashCombine(InOutHash, FFXCShaderTranslator::Version);
     HashCombine(InOutHash, THash<String>::GetHash(IncludeDir));
     HashCombine(InOutHash, static_cast<uint32>(BuildCompileFlags(CompileInfo, bDebugInfo)));
 

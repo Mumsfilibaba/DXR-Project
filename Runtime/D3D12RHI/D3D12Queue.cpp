@@ -81,8 +81,7 @@ bool FD3D12Queue::Initialize()
         }
     }
 
-    const WString WideName = CharToWide(String::Printf("CommandQueue %s", ToString(QueueType)));
-    NewCommandQueue->SetName(*WideName);
+    D3D12SetDebugName(NewCommandQueue.Get(), String::Printf("CommandQueue %s", ToString(QueueType)));
 
     D3D12_INFO("[FD3D12Device]: Created CommandQueue '%s'", ToString(QueueType));
     CommandQueue = NewCommandQueue;

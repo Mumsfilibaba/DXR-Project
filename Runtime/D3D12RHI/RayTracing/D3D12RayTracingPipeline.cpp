@@ -181,8 +181,7 @@ FD3D12RayTracingPipelineStateRHI::~FD3D12RayTracingPipelineStateRHI() = default;
 
 void FD3D12RayTracingPipelineStateRHI::SetDebugName(const String& InName)
 {
-    WString WideName = CharToWide(InName);
-    StateObject->SetName(*WideName);
+    D3D12SetDebugName(StateObject.Get(), InName);
     DebugName = InName;
 }
 

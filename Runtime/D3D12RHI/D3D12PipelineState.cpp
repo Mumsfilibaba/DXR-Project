@@ -232,8 +232,7 @@ void FD3D12EffectiveDescriptorCounts::ComputeEffectiveDescriptorCounts(const FD3
 
 void FD3D12PipelineState::SetDebugName(const String& InName)
 {
-    const WString WideName = CharToWide(InName);
-    PipelineState->SetName(*WideName);
+    D3D12SetDebugName(PipelineState.Get(), InName);
     DebugName = InName;
 }
 

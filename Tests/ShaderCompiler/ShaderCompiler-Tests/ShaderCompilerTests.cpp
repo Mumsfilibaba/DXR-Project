@@ -6,6 +6,47 @@
 
 #include "TestCommon/TestMacros.h"
 
+#if PLATFORM_WINDOWS
+    #include <Core/Containers/ComPtr.h>
+    #include <Core/Containers/Map.h>
+    #include <Core/Platform/PlatformLibrary.h>
+    #include <d3d11shader.h>
+
+typedef HRESULT(WINAPI* PFN_TEST_D3D_REFLECT)(LPCVOID SrcData, SIZE_T SrcDataSize, REFIID Interface, void** Reflector);
+
+static bool ReflectConstantBufferSlots(const TArray<uint8>& ByteCode, TMap<String, uint32>& OutSlots)
+{
+    static void* D3DCompilerLib = FPlatformLibrary::LoadDynamicLib("d3dcompiler_47");
+    static PFN_TEST_D3D_REFLECT D3DReflectFunc = D3DCompilerLib ? FPlatformLibrary::LoadSymbol<PFN_TEST_D3D_REFLECT>("D3DReflect", D3DCompilerLib) : nullptr;
+    if (!D3DReflectFunc)
+    {
+        return false;
+    }
+
+    TComPtr<ID3D11ShaderReflection> Reflection;
+    if (FAILED(D3DReflectFunc(ByteCode.Data(), static_cast<SIZE_T>(ByteCode.Size()), IID_PPV_ARGS(&Reflection))))
+    {
+        return false;
+    }
+
+    D3D11_SHADER_DESC ShaderDesc = {};
+    Reflection->GetDesc(&ShaderDesc);
+
+    for (UINT Index = 0; Index < ShaderDesc.BoundResources; ++Index)
+    {
+        D3D11_SHADER_INPUT_BIND_DESC BindDesc = {};
+        Reflection->GetResourceBindingDesc(Index, &BindDesc);
+
+        if (BindDesc.Type == D3D_SIT_CBUFFER)
+        {
+            OutSlots.Add(String(BindDesc.Name), BindDesc.BindPoint);
+        }
+    }
+
+    return true;
+}
+#endif
+
 static constexpr uint32 MakeFourCC(CHAR A, CHAR B, CHAR C, CHAR D)
 {
     return static_cast<uint32>(A) | (static_cast<uint32>(B) << 8) | (static_cast<uint32>(C) << 16) | (static_cast<uint32>(D) << 24);
@@ -216,6 +257,76 @@ bool ShaderCompilerCompileFailure_Test()
         CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::RayGen, TArrayView<FShaderDefine>(), EShaderOutputLanguage::DXBC);
         TEST_EXPECT(!FShaderCompiler::Get().CompileFromSource(ValidSource, CompileInfo, ByteCode));
     }
+
+    TEST_END();
+}
+
+bool ShaderCompilerDXBCConstantsSlot_Test()
+{
+    TEST_BEGIN();
+
+#if PLATFORM_WINDOWS
+    if (FShaderCompiler::Get().IsOutputLanguageSupported(EShaderOutputLanguage::DXBC))
+    {
+        const auto CompileAndReflect = [](const String& Source, TMap<String, uint32>& OutSlots)
+        {
+            FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, TArrayView<FShaderDefine>(), EShaderOutputLanguage::DXBC);
+
+            TArray<uint8> ByteCode;
+            return FShaderCompiler::Get().CompileFromSource(Source, CompileInfo, ByteCode) && ReflectConstantBufferSlots(ByteCode, OutSlots);
+        };
+
+        const String Declarations =
+            "struct FFirst  { float4 A; };\n"
+            "struct FSecond { float4 B; };\n"
+            "struct FShaderBlockConstants { float4 C; };\n"
+            "ConstantBuffer<FShaderBlockConstants> Constants : register(b0, space1);\n";
+
+        TEST_SECTION("The shader constants take the slot after the constant buffers the shader declares");
+        {
+            const String Source = Declarations +
+                "ConstantBuffer<FFirst>  First  : register(b0);\n"
+                "ConstantBuffer<FSecond> Second : register(b1);\n"
+                "float4 Main() : SV_Target { return First.A + Second.B + Constants.C; }\n";
+
+            TMap<String, uint32> Slots;
+            TEST_EXPECT(CompileAndReflect(Source, Slots));
+            TEST_EXPECT(Slots.Find("First_CB") && *Slots.Find("First_CB") == 0);
+            TEST_EXPECT(Slots.Find("Second_CB") && *Slots.Find("Second_CB") == 1);
+            TEST_EXPECT(Slots.Find("Constants_CB") && *Slots.Find("Constants_CB") == 2);
+        }
+
+        TEST_SECTION("A gap in the declared slots is filled first");
+        {
+            const String Source = Declarations +
+                "ConstantBuffer<FFirst>  First  : register(b0);\n"
+                "ConstantBuffer<FSecond> Second : register(b2);\n"
+                "float4 Main() : SV_Target { return First.A + Second.B + Constants.C; }\n";
+
+            TMap<String, uint32> Slots;
+            TEST_EXPECT(CompileAndReflect(Source, Slots));
+            TEST_EXPECT(Slots.Find("Constants_CB") && *Slots.Find("Constants_CB") == 1);
+        }
+
+        TEST_SECTION("An engine shader never shares a slot with its own constant buffers");
+        {
+            FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, TArrayView<FShaderDefine>(), EShaderOutputLanguage::DXBC);
+
+            TArray<uint8> ByteCode;
+            TMap<String, uint32> Slots;
+            TEST_EXPECT(FShaderCompiler::Get().CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ByteCode));
+            TEST_EXPECT(ReflectConstantBufferSlots(ByteCode, Slots));
+            TEST_EXPECT(Slots.Find("Constants_CB") != nullptr);
+
+            TArray<uint32> UsedSlots;
+            Slots.Foreach([&](const String&, uint32 Slot)
+            {
+                TEST_EXPECT(!UsedSlots.Contains(Slot));
+                UsedSlots.Add(Slot);
+            });
+        }
+    }
+#endif
 
     TEST_END();
 }

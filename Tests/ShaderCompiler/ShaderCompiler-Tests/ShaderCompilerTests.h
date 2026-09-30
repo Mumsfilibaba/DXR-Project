@@ -4,4 +4,5 @@ bool ShaderCompilerOutputLanguages_Test();
 bool ShaderCompilerCompileFromFile_Test();
 bool ShaderCompilerCompileFromSource_Test();
 bool ShaderCompilerCompileFailure_Test();
+bool ShaderCompilerDXBCConstantsSlot_Test();
 bool ShaderCompilerCompileHash_Test();

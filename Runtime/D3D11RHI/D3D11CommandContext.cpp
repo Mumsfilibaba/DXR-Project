@@ -1,7 +1,9 @@
 #include "D3D11RHI/D3D11CommandContext.h"
+#include "D3D11RHI/D3D11Buffer.h"
 #include "D3D11RHI/D3D11Device.h"
 #include "D3D11RHI/D3D11RHI.h"
 #include "D3D11RHI/D3D11SwapChain.h"
+#include "D3D11RHI/D3D11Texture.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -239,14 +241,126 @@ void FD3D11CommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView
 
 void FD3D11CommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)
 {
+    FD3D11BufferRHI* D3D11Buffer = FD3D11DeviceRHI::ResourceCast(Dst);
+    CHECK(D3D11Buffer != nullptr);
+    CHECK(SrcData != nullptr);
+
+    const FRHIBufferDesc& BufferDesc = D3D11Buffer->GetDesc();
+
+    const uint64 Offset = BufferRegion.Offset;
+    const uint64 Size   = BufferRegion.IsWholeResource() ? BufferDesc.Size : BufferRegion.Size;
+    if (Size == 0)
+    {
+        return;
+    }
+
+    if (Offset + Size > BufferDesc.Size)
+    {
+        D3D11_ERROR("[FD3D11CommandContext]: UpdateBuffer writes %llu bytes at offset %llu into a buffer of %llu bytes", Size, Offset, BufferDesc.Size);
+        return;
+    }
+
+    ID3D11DeviceContext* D3D11Context = GetD3D11Context();
+    if (BufferDesc.IsDynamic() || BufferDesc.IsTransient())
+    {
+        D3D11_MAPPED_SUBRESOURCE MappedSubresource = {};
+        const HRESULT Result = D3D11Context->Map(D3D11Buffer->GetD3D11Resource(), 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedSubresource);
+        if (FAILED(Result))
+        {
+            D3D11_ERROR("[FD3D11CommandContext]: FAILED to map buffer for UpdateBuffer (0x%08X)", static_cast<uint32>(Result));
+            return;
+        }
+
+        Memory::Memcpy(static_cast<uint8*>(MappedSubresource.pData) + Offset, SrcData, Size);
+        D3D11Context->Unmap(D3D11Buffer->GetD3D11Resource(), 0);
+        return;
+    }
+
+    if (!BufferDesc.IsConstantBuffer())
+    {
+        const D3D11_BOX Box = { static_cast<UINT>(Offset), 0, 0, static_cast<UINT>(Offset + Size), 1, 1 };
+        D3D11Context->UpdateSubresource(D3D11Buffer->GetD3D11Resource(), 0, &Box, SrcData, 0, 0);
+        return;
+    }
+
+    if ((Offset % D3D11_CONSTANT_BUFFER_ELEMENT_SIZE) != 0)
+    {
+        D3D11_ERROR("[FD3D11CommandContext]: Constant buffer updates must start on a %u byte boundary, got offset %llu", static_cast<uint32>(D3D11_CONSTANT_BUFFER_ELEMENT_SIZE), Offset);
+        return;
+    }
+
+    const uint64 AlignedSize = Math::AlignUp<uint64>(Size, D3D11_CONSTANT_BUFFER_ELEMENT_SIZE);
+    const uint64 ByteWidth   = Math::AlignUp<uint64>(BufferDesc.Size, D3D11_CONSTANT_BUFFER_ELEMENT_SIZE);
+
+    TArray<uint8> PaddedData;
+    const void* UpdateData = SrcData;
+    if (AlignedSize != Size)
+    {
+        PaddedData.Resize(static_cast<int32>(AlignedSize));
+        Memory::Memzero(PaddedData.Data(), PaddedData.Size());
+        Memory::Memcpy(PaddedData.Data(), SrcData, Size);
+        UpdateData = PaddedData.Data();
+    }
+
+    if (Offset == 0 && AlignedSize == ByteWidth)
+    {
+        D3D11Context->UpdateSubresource(D3D11Buffer->GetD3D11Resource(), 0, nullptr, UpdateData, 0, 0);
+        return;
+    }
+
+    D3D11_BUFFER_DESC ScratchDesc = {};
+    ScratchDesc.ByteWidth = static_cast<UINT>(AlignedSize);
+    ScratchDesc.Usage     = D3D11_USAGE_DEFAULT;
+
+    D3D11_SUBRESOURCE_DATA ScratchData = {};
+    ScratchData.pSysMem = UpdateData;
+
+    TComPtr<ID3D11Buffer> ScratchBuffer;
+    const HRESULT Result = GetDevice()->GetD3D11Device()->CreateBuffer(&ScratchDesc, &ScratchData, &ScratchBuffer);
+    if (FAILED(Result))
+    {
+        D3D11_ERROR("[FD3D11CommandContext]: FAILED to create the scratch buffer for a partial constant buffer update (0x%08X)", static_cast<uint32>(Result));
+        return;
+    }
+
+    D3D11Context->CopySubresourceRegion(D3D11Buffer->GetD3D11Resource(), 0, static_cast<UINT>(Offset), 0, 0, ScratchBuffer.Get(), 0, nullptr);
 }
 
 void FD3D11CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch)
 {
+    FD3D11TextureRHI* D3D11Texture = FD3D11DeviceRHI::ResourceCast(Dst);
+    CHECK(D3D11Texture != nullptr);
+    CHECK(SrcData != nullptr);
+
+    const uint32 NumMips = Math::Max<uint32>(D3D11Texture->GetDesc().NumMipLevels, 1);
+
+    D3D11_BOX Box = {};
+    Box.left   = TextureRegion.PositionX;
+    Box.top    = TextureRegion.PositionY;
+    Box.front  = 0;
+    Box.right  = TextureRegion.PositionX + TextureRegion.Width;
+    Box.bottom = TextureRegion.PositionY + TextureRegion.Height;
+    Box.back   = 1;
+
+    const UINT Subresource = D3D11CalcSubresource(MipLevel, 0, NumMips);
+    GetD3D11Context()->UpdateSubresource(D3D11Texture->GetD3D11Resource(), Subresource, &Box, SrcData, SrcRowPitch, 0);
 }
 
 void FD3D11CommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegion3D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch, uint32 SrcDepthPitch)
 {
+    FD3D11TextureRHI* D3D11Texture = FD3D11DeviceRHI::ResourceCast(Dst);
+    CHECK(D3D11Texture != nullptr);
+    CHECK(SrcData != nullptr);
+
+    D3D11_BOX Box = {};
+    Box.left   = TextureRegion.PositionX;
+    Box.top    = TextureRegion.PositionY;
+    Box.front  = TextureRegion.PositionZ;
+    Box.right  = TextureRegion.PositionX + TextureRegion.Width;
+    Box.bottom = TextureRegion.PositionY + TextureRegion.Height;
+    Box.back   = TextureRegion.PositionZ + TextureRegion.Depth;
+
+    GetD3D11Context()->UpdateSubresource(D3D11Texture->GetD3D11Resource(), MipLevel, &Box, SrcData, SrcRowPitch, SrcDepthPitch);
 }
 
 void FD3D11CommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)

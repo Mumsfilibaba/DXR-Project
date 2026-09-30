@@ -25,8 +25,10 @@ public:
     virtual FRHIRenderTargetView*    GetRenderTargetView()    const override final { return RenderTargetView.Get(); }
     virtual FRHIDepthStencilView*    GetDepthStencilView()    const override final { return DepthStencilView.Get(); }
 
-    virtual void SetDebugName(const String& InName)       override final { DebugName = InName; }
-    virtual void GetDebugName(String& OutDebugName) const override final { OutDebugName = DebugName; }
+    virtual void SetDebugName(const String& InName) override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
+
+    bool Initialize(ERHIResourceState InInitialState, const IRHITextureData* InInitialData);
 
     DXGI_FORMAT GetDXGIFormat() const
     {
@@ -34,6 +36,8 @@ public:
     }
 
 private:
+    bool CreateResource(DXGI_FORMAT ResourceFormat, const D3D11_SUBRESOURCE_DATA* InitialData);
+
     bool InitializeSwapChainTexture(const TComPtr<ID3D11Texture2D>& InBackBuffer, EFormat InFormat, uint32 InWidth, uint32 InHeight);
     void ReleaseSwapChainTexture();
 
@@ -41,5 +45,4 @@ private:
     FD3D11UnorderedAccessViewRHIRef UnorderedAccessView;
     FD3D11RenderTargetViewRHIRef    RenderTargetView;
     FD3D11DepthStencilViewRHIRef    DepthStencilView;
-    String                          DebugName;
 };

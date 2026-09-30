@@ -229,8 +229,8 @@ bool FXCShaderTranslator_Test()
     TEST_EXPECT(TranslateToText("ConstantBuffer<FCamera> CameraBuffer : register(b0);") == "cbuffer CameraBuffer_CB : register ( b0 ) { FCamera CameraBuffer ; } ;");
     TEST_EXPECT(TranslateToText("ConstantBuffer<FCamera> CameraBuffer;") == "cbuffer CameraBuffer_CB { FCamera CameraBuffer ; } ;");
 
-    TEST_SECTION("The shader constants in space1 move to the D3D11 constants slot");
-    TEST_EXPECT(TranslateToText("ConstantBuffer<FShaderBlockConstants> Constants : register(b0, space1);") == "cbuffer Constants_CB : register ( b13 ) { FShaderBlockConstants Constants ; } ;");
+    TEST_SECTION("The shader constants in space1 get no register, so FXC picks a free slot");
+    TEST_EXPECT(TranslateToText("ConstantBuffer<FShaderBlockConstants> Constants : register(b0, space1);") == "cbuffer Constants_CB { FShaderBlockConstants Constants ; } ;");
 
     TEST_SECTION("Register spaces and arrays cannot be expressed");
     bool bSucceeded = true;

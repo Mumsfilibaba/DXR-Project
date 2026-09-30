@@ -1,6 +1,9 @@
 #pragma once
 #include "RHI/RHI.h"
+#include "Core/Containers/Map.h"
+#include "Core/Platform/CriticalSection.h"
 #include "D3D11RHI/D3D11CommandContext.h"
+#include "D3D11RHI/D3D11SamplerState.h"
 #include "D3D11RHI/D3D11TypeTraits.h"
 
 class FD3D11Adapter;
@@ -183,10 +186,14 @@ public:
 private:
     bool InitializeDeviceFeatureSupport();
 
+    typedef TMap<FRHISamplerStateDesc, FD3D11SamplerStateRHIRef> FSamplerStateMap;
+
     FD3D11Adapter*        Adapter;
     FD3D11Device*         Device;
     FD3D11CommandContext* CommandContext;
     uint64                FrameNumber;
+    FSamplerStateMap      SamplerStateMap;
+    FCriticalSection      SamplerStateMapCS;
 
     static FD3D11DeviceRHI* D3D11DeviceRHI;
 };

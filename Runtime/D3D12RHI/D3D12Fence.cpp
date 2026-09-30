@@ -118,7 +118,7 @@ uint64 FD3D12Fence::GetCompletedValue() const
 void FD3D12Fence::SetDebugName(const String& Name)
 {
     CHECK(Fence != nullptr);
-    Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), *Name);
+    D3D12SetDebugName(Fence.Get(), Name);
 }
 
 FD3D12FenceRHI::FD3D12FenceRHI(FD3D12Device* InDevice)

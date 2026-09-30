@@ -141,54 +141,12 @@ void FD3D12Resource::UnmapRange(uint32 SubresourceIndex, const D3D12_RANGE* Rang
 
 void FD3D12Resource::SetDebugName(const String& InDebugName)
 {
-    if (Resource)
-    {
-        HRESULT Result = Resource->SetPrivateData(WKPDID_D3DDebugObjectName, InDebugName.Size(), *InDebugName);
-        if (FAILED(Result))
-        {
-            D3D12_ERROR("Failed to set resource name");
-        }
-
-        // Calling SetName as well since NVIDIA Nsight does not recognize the name otherwise
-        WString WideName = CharToWide(InDebugName);
-        
-        Result = Resource->SetName(*WideName);
-        if (FAILED(Result))
-        {
-            D3D12_ERROR("Failed to set resource name");
-        }
-    }
+    D3D12SetDebugName(Resource.Get(), InDebugName);
 }
 
 void FD3D12Resource::GetDebugName(String& OutDebugName) const
 {
-    OutDebugName.Clear();
-
-    if (Resource)
-    {
-        UINT NameLength = 0;
-
-        HRESULT Result = Resource->GetPrivateData(WKPDID_D3DDebugObjectName, &NameLength, nullptr);
-        if (Result == DXGI_ERROR_NOT_FOUND)
-        {
-            return;
-        }
-
-        if (FAILED(Result))
-        {
-            D3D12_ERROR("Failed to get size of resource name");
-            return;
-        }
-
-        OutDebugName.Resize(NameLength);
-
-        Result = Resource->GetPrivateData(WKPDID_D3DDebugObjectName, &NameLength, OutDebugName.Data());
-        if (FAILED(Result))
-        {
-            D3D12_ERROR("Failed to get resource name");
-            OutDebugName.Clear();
-        }
-    }
+    D3D12GetDebugName(Resource.Get(), OutDebugName);
 }
 
 void FD3D12Resource::StartResidencyTracking()

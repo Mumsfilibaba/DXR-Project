@@ -14,21 +14,7 @@ FD3D12Heap::FD3D12Heap(FD3D12Device* InDevice, ID3D12Heap* InHeap)
 
 void FD3D12Heap::SetDebugName(const String& Name)
 {
-    if (Heap)
-    {
-        HRESULT Result = Heap->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Size(), *Name);
-        if (FAILED(Result))
-        {
-            D3D12_ERROR("Failed to set heap name");
-        }
-
-        WString WideName = CharToWide(Name);
-        Result = Heap->SetName(*WideName);
-        if (FAILED(Result))
-        {
-            D3D12_ERROR("Failed to set heap name");
-        }
-    }
+    D3D12SetDebugName(Heap.Get(), Name);
 }
 
 FD3D12Heap::~FD3D12Heap()

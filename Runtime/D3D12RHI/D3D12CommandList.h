@@ -27,8 +27,7 @@ public:
 
     void SetDebugName(const String& Name)
     {
-        WString WideName = CharToWide(Name);
-        Allocator->SetName(*WideName);
+        D3D12SetDebugName(Allocator.Get(), Name);
     }
 
     ED3D12CommandQueueType GetQueueType() const
@@ -95,12 +94,7 @@ public:
     FORCEINLINE void SetDebugName(const String& Name)
     {
         DebugName = Name;
-
-        if (CmdList)
-        {
-            WString WideName = CharToWide(Name);
-            CmdList->SetName(*WideName);
-        }
+        D3D12SetDebugName(CmdList.Get(), Name);
     }
 
     FORCEINLINE const String& GetDebugName() const

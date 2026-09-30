@@ -37,6 +37,7 @@ static int32 RunShaderCompilerTests()
         RUN_TEST("CompileFromFile", ShaderCompilerCompileFromFile_Test());
         RUN_TEST("CompileFromSource", ShaderCompilerCompileFromSource_Test());
         RUN_TEST("CompileFailure", ShaderCompilerCompileFailure_Test());
+        RUN_TEST("DXBCConstantsSlot", ShaderCompilerDXBCConstantsSlot_Test());
         RUN_TEST("CompileHash", ShaderCompilerCompileHash_Test());
 
         FShaderCompiler::Destroy();

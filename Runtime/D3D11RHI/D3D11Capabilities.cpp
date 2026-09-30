@@ -117,7 +117,7 @@ bool FD3D11DeviceRHI::InitializeDeviceFeatureSupport()
     // -------------------------------------------------------------------------------------------
 
     RHI::MaxBufferSize              = uint64(D3D11_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_A_TERM) * 1024ull * 1024ull;
-    RHI::MaxConstantBufferSize      = D3D11_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * 16;
+    RHI::MaxConstantBufferSize      = D3D11_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * D3D11_CONSTANT_BUFFER_ELEMENT_SIZE;
     RHI::MaxStorageBufferSize       = uint64(D3D11_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_A_TERM) * 1024ull * 1024ull;
     RHI::StructuredBufferMinStride  = 4;
     RHI::StructuredBufferMaxStride  = 2048;

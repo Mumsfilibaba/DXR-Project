@@ -73,6 +73,63 @@ static_assert(sizeof(FRHIDrawIndexedIndirectParameters) == sizeof(D3D11_DRAW_IND
         do { } while(false)
 #endif
 
+inline void D3D11SetDebugName(ID3D11DeviceChild* DeviceChild, const String& Name)
+{
+    if (DeviceChild)
+    {
+        DeviceChild->SetPrivateData(WKPDID_D3DDebugObjectName, 0, nullptr);
+        DeviceChild->SetPrivateData(WKPDID_D3DDebugObjectNameW, 0, nullptr);
+
+        if (!Name.IsEmpty())
+        {
+            HRESULT Result = DeviceChild->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(Name.Length()), *Name);
+            if (FAILED(Result))
+            {
+                D3D11_ERROR("Failed to set the debug name '%s'", *Name);
+            }
+
+            const WString WideName = CharToWide(Name);
+
+            Result = DeviceChild->SetPrivateData(WKPDID_D3DDebugObjectNameW, static_cast<UINT>((WideName.Length() + 1) * sizeof(WIDECHAR)), *WideName);
+            if (FAILED(Result))
+            {
+                D3D11_ERROR("Failed to set the wide debug name '%s'", *Name);
+            }
+        }
+    }
+}
+
+inline void D3D11GetDebugName(ID3D11DeviceChild* DeviceChild, String& OutName)
+{
+    OutName.Clear();
+
+    if (DeviceChild)
+    {
+        UINT NameLength = 0;
+
+        HRESULT Result = DeviceChild->GetPrivateData(WKPDID_D3DDebugObjectName, &NameLength, nullptr);
+        if (Result == DXGI_ERROR_NOT_FOUND || NameLength == 0)
+        {
+            return;
+        }
+
+        if (FAILED(Result))
+        {
+            D3D11_ERROR("Failed to get the size of the debug name");
+            return;
+        }
+
+        OutName.Resize(NameLength);
+
+        Result = DeviceChild->GetPrivateData(WKPDID_D3DDebugObjectName, &NameLength, OutName.Data());
+        if (FAILED(Result))
+        {
+            D3D11_ERROR("Failed to get the debug name");
+            OutName.Clear();
+        }
+    }
+}
+
 NODISCARD inline FRHIShaderResourceViewDesc GetDefaultShaderResourceViewDescForTexture(const FRHITextureDesc& TextureDesc)
 {
     const EFormat Format    = TextureDesc.Format;
@@ -225,7 +282,7 @@ NODISCARD constexpr D3D11_USAGE ConvertBufferUsage(EBufferFlags Flags)
     {
         return D3D11_USAGE_STAGING;
     }
-    else if (IsEnumFlagSet(Flags, EBufferFlags::Dynamic))
+    else if (IsEnumFlagSet(Flags, EBufferFlags::Dynamic) || IsEnumFlagSet(Flags, EBufferFlags::Transient))
     {
         return D3D11_USAGE_DYNAMIC;
     }
@@ -943,6 +1000,18 @@ NODISCARD constexpr DXGI_FORMAT D3D11CastRenderTargetFormat(DXGI_FORMAT Format)
         case DXGI_FORMAT_R16_TYPELESS:          return DXGI_FORMAT_R16_FLOAT;
         case DXGI_FORMAT_R8_TYPELESS:           return DXGI_FORMAT_R8_UNORM;
         default:                                return Format;
+    }
+}
+
+NODISCARD constexpr DXGI_FORMAT D3D11CastTypelessDepthFormat(DXGI_FORMAT Format)
+{
+    switch (Format)
+    {
+        case DXGI_FORMAT_D32_FLOAT_S8X24_UINT: return DXGI_FORMAT_R32G8X24_TYPELESS;
+        case DXGI_FORMAT_D32_FLOAT:            return DXGI_FORMAT_R32_TYPELESS;
+        case DXGI_FORMAT_D24_UNORM_S8_UINT:    return DXGI_FORMAT_R24G8_TYPELESS;
+        case DXGI_FORMAT_D16_UNORM:            return DXGI_FORMAT_R16_TYPELESS;
+        default:                               return Format;
     }
 }
 

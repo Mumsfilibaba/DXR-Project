@@ -1,15 +1,24 @@
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Tasks/Tasks.h"
+#include "Core/Threading/ScopedLock.h"
 #include "D3D11RHI/D3D11RHI.h"
+#include "D3D11RHI/D3D11Buffer.h"
 #include "D3D11RHI/D3D11Device.h"
 #include "D3D11RHI/D3D11DeviceDebug.h"
 #include "D3D11RHI/D3D11Loader.h"
 #include "D3D11RHI/D3D11StubResources.h"
 #include "D3D11RHI/D3D11SwapChain.h"
+#include "D3D11RHI/D3D11Texture.h"
 
 IMPLEMENT_ENGINE_MODULE(FD3D11ModuleRHI, D3D11RHI);
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+static bool IsBackBuffer(FRHIResource* InResource)
+{
+    return InResource && InResource->GetResourceType() == ERHIResourceType::Texture &&
+        static_cast<FRHITexture*>(InResource)->GetDesc().IsPresentable();
+}
 
 FD3D11DeviceRHI* FD3D11DeviceRHI::D3D11DeviceRHI = nullptr;
 
@@ -43,6 +52,16 @@ FD3D11DeviceRHI::~FD3D11DeviceRHI()
     {
         CommandContext->ClearState();
         CommandContext->Flush();
+    }
+
+    {
+        TScopedLock Lock(SamplerStateMapCS);
+        SamplerStateMap.Clear();
+    }
+
+    if (FRHICommandListExecutor::IsInitialized())
+    {
+        FRHICommandListExecutor::Get().FlushDeletedResources();
     }
 
     SAFE_DELETE(CommandContext);
@@ -107,17 +126,58 @@ void FD3D11DeviceRHI::EndFrame()
 
 FRHITexture* FD3D11DeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, ERHIResourceState InInitialState, const IRHITextureData* InInitialData)
 {
-    return new FD3D11StubTextureRHI(InTextureDesc);
+    FD3D11TextureRHIRef NewTexture = new FD3D11TextureRHI(GetDevice(), InTextureDesc);
+    if (!NewTexture->Initialize(InInitialState, InInitialData))
+    {
+        return nullptr;
+    }
+
+    return NewTexture.ReleaseOwnership();
 }
 
 FRHIBuffer* FD3D11DeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, ERHIResourceState InInitialState, const void* InInitialData)
 {
-    return new FD3D11StubBufferRHI(InBufferDesc);
+    FD3D11BufferRHIRef NewBuffer = new FD3D11BufferRHI(GetDevice(), InBufferDesc);
+    if (!NewBuffer->Initialize(InInitialState, InInitialData))
+    {
+        return nullptr;
+    }
+
+    return NewBuffer.ReleaseOwnership();
 }
 
 FRHISamplerState* FD3D11DeviceRHI::CreateSamplerState(const FRHISamplerStateDesc& InSamplerDesc)
 {
-    return new FD3D11StubSamplerStateRHI(InSamplerDesc);
+    TScopedLock Lock(SamplerStateMapCS);
+
+    if (FD3D11SamplerStateRHIRef* ExistingSamplerState = SamplerStateMap.Find(InSamplerDesc))
+    {
+        FD3D11SamplerStateRHIRef Result = *ExistingSamplerState;
+        return Result.ReleaseOwnership();
+    }
+
+    D3D11_SAMPLER_DESC Desc = {};
+    Desc.AddressU       = ConvertSamplerMode(InSamplerDesc.AddressU);
+    Desc.AddressV       = ConvertSamplerMode(InSamplerDesc.AddressV);
+    Desc.AddressW       = ConvertSamplerMode(InSamplerDesc.AddressW);
+    Desc.Filter         = ConvertSamplerFilter(InSamplerDesc.Filter);
+    Desc.MaxAnisotropy  = Math::Clamp<UINT>(InSamplerDesc.MaxAnisotropy, 1, D3D11_REQ_MAXANISOTROPY);
+    Desc.MipLODBias     = InSamplerDesc.MipLODBias;
+    Desc.MinLOD         = InSamplerDesc.MinLOD;
+    Desc.MaxLOD         = InSamplerDesc.MaxLOD;
+
+    Desc.ComparisonFunc = InSamplerDesc.IsComparisonSampler() ? ConvertComparisonFunc(InSamplerDesc.ComparisonFunc) : D3D11_COMPARISON_NEVER;
+
+    Memory::Memcpy(Desc.BorderColor, InSamplerDesc.BorderColor.RGBA, sizeof(Desc.BorderColor));
+
+    FD3D11SamplerStateRHIRef NewSamplerState = new FD3D11SamplerStateRHI(GetDevice(), InSamplerDesc);
+    if (!NewSamplerState->CreateSampler(Desc))
+    {
+        return nullptr;
+    }
+
+    SamplerStateMap.Add(InSamplerDesc, NewSamplerState);
+    return NewSamplerState.ReleaseOwnership();
 }
 
 FRHISwapChain* FD3D11DeviceRHI::CreateSwapChain(const FRHISwapChainDesc& InSwapChainDesc)
@@ -156,22 +216,730 @@ FRHIFence* FD3D11DeviceRHI::CreateFence()
 
 FRHIShaderResourceView* FD3D11DeviceRHI::CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc)
 {
-    return new FD3D11StubShaderResourceViewRHI(InResource, InDesc);
+    if (!InResource)
+    {
+        D3D11_ERROR("CreateShaderResourceView requires a non-null resource");
+        return nullptr;
+    }
+
+    if (IsBackBuffer(InResource))
+    {
+        D3D11_ERROR("CreateShaderResourceView: cannot create a view from the back-buffer.");
+        return nullptr;
+    }
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC Desc = {};
+
+    ID3D11Resource* D3D11Resource = nullptr;
+    if (InDesc.IsBufferSRV())
+    {
+        D3D11_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Buffer,
+            "CreateShaderResourceView: buffer view requires an FRHIBuffer resource");
+
+        FD3D11BufferRHI* D3D11Buffer = FD3D11DeviceRHI::ResourceCast(static_cast<FRHIBuffer*>(InResource));
+        CHECK(D3D11Buffer != nullptr);
+
+        D3D11Resource = D3D11Buffer->GetD3D11Resource();
+
+        const auto& BufferDesc = InDesc.Buffer;
+        switch (BufferDesc.Type)
+        {
+            case EBufferViewType::Typed:
+            {
+                // Buffer<T>: A real format-typed buffer view
+                Desc.Format         = D3D11CastShaderResourceFormat(ConvertFormat(BufferDesc.Format));
+                Desc.BufferEx.Flags = 0;
+                break;
+            }
+
+            case EBufferViewType::ByteAddress:
+            {
+                // ByteAddressBuffer: A raw R32-typeless view, addressed in 4-byte units. The buffer needs ALLOW_RAW_VIEWS.
+                Desc.Format         = DXGI_FORMAT_R32_TYPELESS;
+                Desc.BufferEx.Flags = D3D11_BUFFEREX_SRV_FLAG_RAW;
+                break;
+            }
+
+            case EBufferViewType::Structured:
+            {
+                // StructuredBuffer<T>: UNKNOWN format, the stride comes from the buffer, which needs to be created STRUCTURED
+                Desc.Format         = DXGI_FORMAT_UNKNOWN;
+                Desc.BufferEx.Flags = 0;
+                break;
+            }
+
+            default:
+            {
+                D3D11_ERROR("Unsupported EBufferViewType for buffer SRV");
+                return nullptr;
+            }
+        }
+
+        Desc.ViewDimension         = D3D11_SRV_DIMENSION_BUFFEREX;
+        Desc.BufferEx.FirstElement = BufferDesc.FirstElement;
+        Desc.BufferEx.NumElements  = BufferDesc.NumElements;
+    }
+    else if (InDesc.IsTextureSRV())
+    {
+        D3D11_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Texture,
+            "CreateShaderResourceView: texture view requires an FRHITexture resource");
+
+        FD3D11TextureRHI* D3D11Texture = FD3D11DeviceRHI::ResourceCast(static_cast<FRHITexture*>(InResource));
+        CHECK(D3D11Texture != nullptr);
+        CHECK(IsViewDimensionCompatible(D3D11Texture->GetDesc().Dimension, InDesc.ViewDimension));
+
+        D3D11Resource = D3D11Texture->GetD3D11Resource();
+
+        const bool bIsMultisampled = D3D11Texture->GetDesc().IsMultisampled();
+        switch (InDesc.ViewDimension)
+        {
+            case EViewDimension::Texture1D:
+            {
+                const auto& TextureDesc        = InDesc.Texture1D;
+                Desc.Format                    = D3D11CastShaderResourceFormat(ConvertFormat(TextureDesc.Format));
+                Desc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE1D;
+                Desc.Texture1D.MostDetailedMip = TextureDesc.FirstMipLevel;
+                Desc.Texture1D.MipLevels       = TextureDesc.NumMips;
+                break;
+            }
+
+            case EViewDimension::Texture1DArray:
+            {
+                const auto& TextureDesc             = InDesc.Texture1DArray;
+                Desc.Format                         = D3D11CastShaderResourceFormat(ConvertFormat(TextureDesc.Format));
+                Desc.ViewDimension                  = D3D11_SRV_DIMENSION_TEXTURE1DARRAY;
+                Desc.Texture1DArray.MostDetailedMip = TextureDesc.FirstMipLevel;
+                Desc.Texture1DArray.MipLevels       = TextureDesc.NumMips;
+                Desc.Texture1DArray.FirstArraySlice = TextureDesc.FirstArraySlice;
+                Desc.Texture1DArray.ArraySize       = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
+                break;
+            }
+
+            case EViewDimension::Texture2D:
+            {
+                const auto& TextureDesc = InDesc.Texture2D;
+                Desc.Format = D3D11CastShaderResourceFormat(ConvertFormat(TextureDesc.Format));
+
+                if (!bIsMultisampled)
+                {
+                    Desc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
+                    Desc.Texture2D.MostDetailedMip = TextureDesc.FirstMipLevel;
+                    Desc.Texture2D.MipLevels       = TextureDesc.NumMips;
+                }
+                else
+                {
+                    Desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
+                }
+
+                break;
+            }
+
+            case EViewDimension::Texture2DArray:
+            {
+                const auto& TextureDesc = InDesc.Texture2DArray;
+                Desc.Format = D3D11CastShaderResourceFormat(ConvertFormat(TextureDesc.Format));
+
+                if (!bIsMultisampled)
+                {
+                    Desc.ViewDimension                  = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+                    Desc.Texture2DArray.MostDetailedMip = TextureDesc.FirstMipLevel;
+                    Desc.Texture2DArray.MipLevels       = TextureDesc.NumMips;
+                    Desc.Texture2DArray.FirstArraySlice = TextureDesc.FirstArraySlice;
+                    Desc.Texture2DArray.ArraySize       = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
+                }
+                else
+                {
+                    Desc.ViewDimension                    = D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY;
+                    Desc.Texture2DMSArray.FirstArraySlice = TextureDesc.FirstArraySlice;
+                    Desc.Texture2DMSArray.ArraySize       = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
+                }
+
+                break;
+            }
+
+            case EViewDimension::TextureCube:
+            {
+                const auto& TextureDesc          = InDesc.TextureCube;
+                Desc.Format                      = D3D11CastShaderResourceFormat(ConvertFormat(TextureDesc.Format));
+                Desc.ViewDimension               = D3D11_SRV_DIMENSION_TEXTURECUBE;
+                Desc.TextureCube.MostDetailedMip = TextureDesc.FirstMipLevel;
+                Desc.TextureCube.MipLevels       = TextureDesc.NumMips;
+                break;
+            }
+
+            case EViewDimension::TextureCubeArray:
+            {
+                const auto& TextureDesc                = InDesc.TextureCubeArray;
+                Desc.Format                            = D3D11CastShaderResourceFormat(ConvertFormat(TextureDesc.Format));
+                Desc.ViewDimension                     = D3D11_SRV_DIMENSION_TEXTURECUBEARRAY;
+                Desc.TextureCubeArray.MostDetailedMip  = TextureDesc.FirstMipLevel;
+                Desc.TextureCubeArray.MipLevels        = TextureDesc.NumMips;
+                Desc.TextureCubeArray.First2DArrayFace = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, TextureDesc.FirstCube);
+                Desc.TextureCubeArray.NumCubes         = Math::Max<uint16>(TextureDesc.NumCubes, 1u);
+                break;
+            }
+
+            case EViewDimension::Texture3D:
+            {
+                const auto& TextureDesc        = InDesc.Texture3D;
+                Desc.Format                    = D3D11CastShaderResourceFormat(ConvertFormat(TextureDesc.Format));
+                Desc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE3D;
+                Desc.Texture3D.MostDetailedMip = TextureDesc.FirstMipLevel;
+                Desc.Texture3D.MipLevels       = TextureDesc.NumMips;
+                break;
+            }
+
+            default:
+            {
+                D3D11_ERROR("CreateShaderResourceView: unsupported texture ViewDimension");
+                return nullptr;
+            }
+        }
+    }
+    else
+    {
+        D3D11_ERROR("CreateShaderResourceView: D3D11 only has buffer and texture ShaderResourceViews");
+        return nullptr;
+    }
+
+    CHECK(D3D11Resource != nullptr);
+
+    FD3D11ShaderResourceViewRHIRef D3D11View = new FD3D11ShaderResourceViewRHI(GetDevice(), InResource, InDesc);
+    if (!D3D11View->Initialize(D3D11Resource, Desc))
+    {
+        return nullptr;
+    }
+
+    return D3D11View.ReleaseOwnership();
 }
 
 FRHIUnorderedAccessView* FD3D11DeviceRHI::CreateUnorderedAccessView(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc)
 {
-    return new FD3D11StubUnorderedAccessViewRHI(InResource, InDesc);
+    if (!InResource)
+    {
+        D3D11_ERROR("CreateUnorderedAccessView requires a non-null resource");
+        return nullptr;
+    }
+
+    if (IsBackBuffer(InResource))
+    {
+        D3D11_ERROR("CreateUnorderedAccessView: cannot create a view from the back-buffer.");
+        return nullptr;
+    }
+
+    D3D11_UNORDERED_ACCESS_VIEW_DESC Desc = {};
+
+    ID3D11Resource* D3D11Resource = nullptr;
+    if (InDesc.IsBufferUAV())
+    {
+        D3D11_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Buffer,
+            "CreateUnorderedAccessView: buffer view requires an FRHIBuffer resource");
+
+        FD3D11BufferRHI* D3D11Buffer = FD3D11DeviceRHI::ResourceCast(static_cast<FRHIBuffer*>(InResource));
+        CHECK(D3D11Buffer != nullptr);
+
+        D3D11Resource = D3D11Buffer->GetD3D11Resource();
+
+        const auto& BufferDesc = InDesc.Buffer;
+        switch (BufferDesc.Type)
+        {
+            case EBufferViewType::Typed:
+            {
+                // RWBuffer<T>: A real format-typed buffer view
+                Desc.Format       = D3D11CastUnorderedAccessFormat(ConvertFormat(BufferDesc.Format));
+                Desc.Buffer.Flags = 0;
+                break;
+            }
+
+            case EBufferViewType::ByteAddress:
+            {
+                // RWByteAddressBuffer: A raw R32-typeless view, addressed in 4-byte units. The buffer needs ALLOW_RAW_VIEWS.
+                Desc.Format       = DXGI_FORMAT_R32_TYPELESS;
+                Desc.Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
+                break;
+            }
+
+            case EBufferViewType::Structured:
+            {
+                // RWStructuredBuffer<T>: UNKNOWN format, the stride comes from the buffer, which needs to be created STRUCTURED
+                Desc.Format       = DXGI_FORMAT_UNKNOWN;
+                Desc.Buffer.Flags = 0;
+                break;
+            }
+
+            default:
+            {
+                D3D11_ERROR("Unsupported EBufferViewType for buffer UAV");
+                return nullptr;
+            }
+        }
+
+        Desc.ViewDimension       = D3D11_UAV_DIMENSION_BUFFER;
+        Desc.Buffer.FirstElement = BufferDesc.FirstElement;
+        Desc.Buffer.NumElements  = BufferDesc.NumElements;
+    }
+    else if (InDesc.IsTextureUAV())
+    {
+        D3D11_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Texture,
+            "CreateUnorderedAccessView: texture view requires an FRHITexture resource");
+
+        FD3D11TextureRHI* D3D11Texture = FD3D11DeviceRHI::ResourceCast(static_cast<FRHITexture*>(InResource));
+        CHECK(D3D11Texture != nullptr);
+        CHECK(IsViewDimensionCompatible(D3D11Texture->GetDesc().Dimension, InDesc.ViewDimension));
+
+        D3D11Resource = D3D11Texture->GetD3D11Resource();
+
+        switch (InDesc.ViewDimension)
+        {
+            case EViewDimension::Texture1D:
+            {
+                const auto& TextureDesc = InDesc.Texture1D;
+                Desc.Format             = D3D11CastUnorderedAccessFormat(ConvertFormat(TextureDesc.Format));
+                Desc.ViewDimension      = D3D11_UAV_DIMENSION_TEXTURE1D;
+                Desc.Texture1D.MipSlice = TextureDesc.MipLevel;
+                break;
+            }
+
+            case EViewDimension::Texture1DArray:
+            {
+                const auto& TextureDesc             = InDesc.Texture1DArray;
+                Desc.Format                         = D3D11CastUnorderedAccessFormat(ConvertFormat(TextureDesc.Format));
+                Desc.ViewDimension                  = D3D11_UAV_DIMENSION_TEXTURE1DARRAY;
+                Desc.Texture1DArray.MipSlice        = TextureDesc.MipLevel;
+                Desc.Texture1DArray.FirstArraySlice = TextureDesc.FirstArraySlice;
+                Desc.Texture1DArray.ArraySize       = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
+                break;
+            }
+
+            case EViewDimension::Texture2D:
+            {
+                const auto& TextureDesc = InDesc.Texture2D;
+                Desc.Format             = D3D11CastUnorderedAccessFormat(ConvertFormat(TextureDesc.Format));
+                Desc.ViewDimension      = D3D11_UAV_DIMENSION_TEXTURE2D;
+                Desc.Texture2D.MipSlice = TextureDesc.MipLevel;
+                break;
+            }
+
+            case EViewDimension::Texture2DArray:
+            {
+                const auto& TextureDesc             = InDesc.Texture2DArray;
+                Desc.Format                         = D3D11CastUnorderedAccessFormat(ConvertFormat(TextureDesc.Format));
+                Desc.ViewDimension                  = D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
+                Desc.Texture2DArray.MipSlice        = TextureDesc.MipLevel;
+                Desc.Texture2DArray.FirstArraySlice = TextureDesc.FirstArraySlice;
+                Desc.Texture2DArray.ArraySize       = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
+                break;
+            }
+
+            case EViewDimension::TextureCube:
+            {
+                const auto& TextureDesc             = InDesc.TextureCube;
+                Desc.Format                         = D3D11CastUnorderedAccessFormat(ConvertFormat(TextureDesc.Format));
+                Desc.ViewDimension                  = D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
+                Desc.Texture2DArray.MipSlice        = TextureDesc.MipLevel;
+                Desc.Texture2DArray.FirstArraySlice = 0;
+                Desc.Texture2DArray.ArraySize       = RHI_NUM_CUBE_FACES;
+                break;
+            }
+
+            case EViewDimension::TextureCubeArray:
+            {
+                const auto& TextureDesc             = InDesc.TextureCubeArray;
+                Desc.Format                         = D3D11CastUnorderedAccessFormat(ConvertFormat(TextureDesc.Format));
+                Desc.ViewDimension                  = D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
+                Desc.Texture2DArray.MipSlice        = TextureDesc.MipLevel;
+                Desc.Texture2DArray.FirstArraySlice = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, TextureDesc.FirstCube);
+                Desc.Texture2DArray.ArraySize       = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, Math::Max<uint16>(TextureDesc.NumCubes, 1u));
+                break;
+            }
+
+            case EViewDimension::Texture3D:
+            {
+                const auto& TextureDesc    = InDesc.Texture3D;
+                Desc.Format                = D3D11CastUnorderedAccessFormat(ConvertFormat(TextureDesc.Format));
+                Desc.ViewDimension         = D3D11_UAV_DIMENSION_TEXTURE3D;
+                Desc.Texture3D.MipSlice    = TextureDesc.MipLevel;
+                Desc.Texture3D.FirstWSlice = TextureDesc.FirstWSlice;
+                Desc.Texture3D.WSize       = Math::Max<uint16>(TextureDesc.WSize, 1u);
+                break;
+            }
+
+            default:
+            {
+                D3D11_ERROR("CreateUnorderedAccessView: unsupported texture ViewDimension");
+                return nullptr;
+            }
+        }
+    }
+    else
+    {
+        D3D11_ERROR("CreateUnorderedAccessView: D3D11 only has buffer and texture UnorderedAccessViews");
+        return nullptr;
+    }
+
+    CHECK(D3D11Resource != nullptr);
+
+    FD3D11UnorderedAccessViewRHIRef D3D11View = new FD3D11UnorderedAccessViewRHI(GetDevice(), InResource, InDesc);
+    if (!D3D11View->Initialize(D3D11Resource, Desc))
+    {
+        return nullptr;
+    }
+
+    return D3D11View.ReleaseOwnership();
 }
 
 FRHIRenderTargetView* FD3D11DeviceRHI::CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)
 {
-    return new FD3D11StubRenderTargetViewRHI(InResource, InDesc);
+    if (!InResource)
+    {
+        D3D11_WARNING("Cannot create RenderTargetView without a valid resource");
+        return nullptr;
+    }
+
+    if (IsBackBuffer(InResource))
+    {
+        D3D11_ERROR("CreateRenderTargetView: cannot create a view from the back-buffer.");
+        return nullptr;
+    }
+
+    D3D11_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Texture,
+        "CreateRenderTargetView: requires an FRHITexture resource");
+
+    FD3D11TextureRHI* D3D11Texture = FD3D11DeviceRHI::ResourceCast(static_cast<FRHITexture*>(InResource));
+    if (!D3D11Texture || !D3D11Texture->GetD3D11Resource())
+    {
+        D3D11_WARNING("Cannot create RenderTargetView without a valid texture");
+        return nullptr;
+    }
+
+    CHECK(IsViewDimensionCompatible(D3D11Texture->GetDesc().Dimension, InDesc.ViewDimension));
+
+    if (!D3D11Texture->GetDesc().IsRenderTarget())
+    {
+        String DebugName;
+        D3D11Texture->GetDebugName(DebugName);
+        D3D11_ERROR("Texture '%s' does not allow RenderTargetViews", *DebugName);
+        return nullptr;
+    }
+
+    const bool bIsMultisampled = D3D11Texture->GetDesc().IsMultisampled();
+
+    D3D11_RENDER_TARGET_VIEW_DESC RTVDesc = {};
+    switch (InDesc.ViewDimension)
+    {
+        case EViewDimension::Texture1D:
+        {
+            const auto& TextureDesc    = InDesc.Texture1D;
+            RTVDesc.Format             = D3D11CastRenderTargetFormat(ConvertFormat(TextureDesc.Format));
+            RTVDesc.ViewDimension      = D3D11_RTV_DIMENSION_TEXTURE1D;
+            RTVDesc.Texture1D.MipSlice = TextureDesc.MipLevel;
+            break;
+        }
+
+        case EViewDimension::Texture1DArray:
+        {
+            const auto& TextureDesc                = InDesc.Texture1DArray;
+            RTVDesc.Format                         = D3D11CastRenderTargetFormat(ConvertFormat(TextureDesc.Format));
+            RTVDesc.ViewDimension                  = D3D11_RTV_DIMENSION_TEXTURE1DARRAY;
+            RTVDesc.Texture1DArray.MipSlice        = TextureDesc.MipLevel;
+            RTVDesc.Texture1DArray.FirstArraySlice = TextureDesc.FirstArraySlice;
+            RTVDesc.Texture1DArray.ArraySize       = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
+            break;
+        }
+
+        case EViewDimension::Texture2D:
+        {
+            const auto& TextureDesc = InDesc.Texture2D;
+            RTVDesc.Format = D3D11CastRenderTargetFormat(ConvertFormat(TextureDesc.Format));
+
+            if (!bIsMultisampled)
+            {
+                RTVDesc.ViewDimension      = D3D11_RTV_DIMENSION_TEXTURE2D;
+                RTVDesc.Texture2D.MipSlice = TextureDesc.MipLevel;
+            }
+            else
+            {
+                RTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
+            }
+
+            break;
+        }
+
+        case EViewDimension::Texture2DArray:
+        {
+            const auto& TextureDesc = InDesc.Texture2DArray;
+            RTVDesc.Format = D3D11CastRenderTargetFormat(ConvertFormat(TextureDesc.Format));
+
+            if (!bIsMultisampled)
+            {
+                RTVDesc.ViewDimension                  = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+                RTVDesc.Texture2DArray.MipSlice        = TextureDesc.MipLevel;
+                RTVDesc.Texture2DArray.FirstArraySlice = TextureDesc.FirstArraySlice;
+                RTVDesc.Texture2DArray.ArraySize       = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
+            }
+            else
+            {
+                RTVDesc.ViewDimension                    = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
+                RTVDesc.Texture2DMSArray.FirstArraySlice = TextureDesc.FirstArraySlice;
+                RTVDesc.Texture2DMSArray.ArraySize       = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
+            }
+
+            break;
+        }
+
+        case EViewDimension::TextureCube:
+        {
+            const auto& TextureDesc = InDesc.TextureCube;
+            RTVDesc.Format = D3D11CastRenderTargetFormat(ConvertFormat(TextureDesc.Format));
+
+            if (!bIsMultisampled)
+            {
+                RTVDesc.ViewDimension                  = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+                RTVDesc.Texture2DArray.MipSlice        = TextureDesc.MipLevel;
+                RTVDesc.Texture2DArray.FirstArraySlice = 0;
+                RTVDesc.Texture2DArray.ArraySize       = RHI_NUM_CUBE_FACES;
+            }
+            else
+            {
+                RTVDesc.ViewDimension                    = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
+                RTVDesc.Texture2DMSArray.FirstArraySlice = 0;
+                RTVDesc.Texture2DMSArray.ArraySize       = RHI_NUM_CUBE_FACES;
+            }
+
+            break;
+        }
+
+        case EViewDimension::TextureCubeArray:
+        {
+            const auto& TextureDesc = InDesc.TextureCubeArray;
+            RTVDesc.Format = D3D11CastRenderTargetFormat(ConvertFormat(TextureDesc.Format));
+
+            const uint32 FirstLayer = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, TextureDesc.FirstCube);
+            const uint32 NumLayers  = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, Math::Max<uint16>(TextureDesc.NumCubes, 1u));
+
+            if (!bIsMultisampled)
+            {
+                RTVDesc.ViewDimension                  = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+                RTVDesc.Texture2DArray.MipSlice        = TextureDesc.MipLevel;
+                RTVDesc.Texture2DArray.FirstArraySlice = FirstLayer;
+                RTVDesc.Texture2DArray.ArraySize       = NumLayers;
+            }
+            else
+            {
+                RTVDesc.ViewDimension                    = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
+                RTVDesc.Texture2DMSArray.FirstArraySlice = FirstLayer;
+                RTVDesc.Texture2DMSArray.ArraySize       = NumLayers;
+            }
+
+            break;
+        }
+
+        case EViewDimension::Texture3D:
+        {
+            const auto& TextureDesc       = InDesc.Texture3D;
+            RTVDesc.Format                = D3D11CastRenderTargetFormat(ConvertFormat(TextureDesc.Format));
+            RTVDesc.ViewDimension         = D3D11_RTV_DIMENSION_TEXTURE3D;
+            RTVDesc.Texture3D.MipSlice    = TextureDesc.MipLevel;
+            RTVDesc.Texture3D.FirstWSlice = TextureDesc.FirstWSlice;
+            RTVDesc.Texture3D.WSize       = Math::Max<uint16>(TextureDesc.WSize, 1u);
+            break;
+        }
+
+        default:
+        {
+            D3D11_ERROR("CreateRenderTargetView: unsupported ViewDimension");
+            return nullptr;
+        }
+    }
+
+    D3D11_ERROR_COND(RTVDesc.Format != DXGI_FORMAT_UNKNOWN, "Unallowed format for RenderTargetViews");
+
+    FD3D11RenderTargetViewRHIRef D3D11View = new FD3D11RenderTargetViewRHI(GetDevice(), D3D11Texture, InDesc);
+    if (!D3D11View->Initialize(D3D11Texture->GetD3D11Resource(), RTVDesc))
+    {
+        return nullptr;
+    }
+
+    return D3D11View.ReleaseOwnership();
 }
 
 FRHIDepthStencilView* FD3D11DeviceRHI::CreateDepthStencilView(FRHIResource* InResource, const FRHIDepthStencilViewDesc& InDesc)
 {
-    return new FD3D11StubDepthStencilViewRHI(InResource, InDesc);
+    if (!InResource)
+    {
+        D3D11_WARNING("Cannot create DepthStencilView without a valid resource");
+        return nullptr;
+    }
+
+    if (IsBackBuffer(InResource))
+    {
+        D3D11_ERROR("CreateDepthStencilView: cannot create a view from the back-buffer.");
+        return nullptr;
+    }
+
+    D3D11_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Texture,
+        "CreateDepthStencilView: requires an FRHITexture resource");
+
+    FD3D11TextureRHI* D3D11Texture = FD3D11DeviceRHI::ResourceCast(static_cast<FRHITexture*>(InResource));
+    if (!D3D11Texture || !D3D11Texture->GetD3D11Resource())
+    {
+        D3D11_WARNING("Cannot create DepthStencilView without a valid texture");
+        return nullptr;
+    }
+
+    CHECK(IsViewDimensionCompatible(D3D11Texture->GetDesc().Dimension, InDesc.ViewDimension));
+
+    if (!D3D11Texture->GetDesc().IsDepthStencil())
+    {
+        String DebugName;
+        D3D11Texture->GetDebugName(DebugName);
+        D3D11_ERROR("Texture '%s' does not allow DepthStencilViews", *DebugName);
+        return nullptr;
+    }
+
+    const bool bIsMultisampled = D3D11Texture->GetDesc().IsMultisampled();
+
+    D3D11_DEPTH_STENCIL_VIEW_DESC DSVDesc = {};
+    switch (InDesc.ViewDimension)
+    {
+        case EViewDimension::Texture1D:
+        {
+            const auto& TextureDesc    = InDesc.Texture1D;
+            DSVDesc.Format             = D3D11CastDepthStencilFormat(ConvertFormat(TextureDesc.Format));
+            DSVDesc.ViewDimension      = D3D11_DSV_DIMENSION_TEXTURE1D;
+            DSVDesc.Texture1D.MipSlice = TextureDesc.MipLevel;
+            break;
+        }
+
+        case EViewDimension::Texture1DArray:
+        {
+            const auto& TextureDesc                = InDesc.Texture1DArray;
+            DSVDesc.Format                         = D3D11CastDepthStencilFormat(ConvertFormat(TextureDesc.Format));
+            DSVDesc.ViewDimension                  = D3D11_DSV_DIMENSION_TEXTURE1DARRAY;
+            DSVDesc.Texture1DArray.MipSlice        = TextureDesc.MipLevel;
+            DSVDesc.Texture1DArray.FirstArraySlice = TextureDesc.FirstArraySlice;
+            DSVDesc.Texture1DArray.ArraySize       = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
+            break;
+        }
+
+        case EViewDimension::Texture2D:
+        {
+            const auto& TextureDesc = InDesc.Texture2D;
+            DSVDesc.Format = D3D11CastDepthStencilFormat(ConvertFormat(TextureDesc.Format));
+
+            if (!bIsMultisampled)
+            {
+                DSVDesc.ViewDimension      = D3D11_DSV_DIMENSION_TEXTURE2D;
+                DSVDesc.Texture2D.MipSlice = TextureDesc.MipLevel;
+            }
+            else
+            {
+                DSVDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+            }
+
+            break;
+        }
+
+        case EViewDimension::Texture2DArray:
+        {
+            const auto& TextureDesc = InDesc.Texture2DArray;
+            DSVDesc.Format = D3D11CastDepthStencilFormat(ConvertFormat(TextureDesc.Format));
+
+            if (!bIsMultisampled)
+            {
+                DSVDesc.ViewDimension                  = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+                DSVDesc.Texture2DArray.MipSlice        = TextureDesc.MipLevel;
+                DSVDesc.Texture2DArray.FirstArraySlice = TextureDesc.FirstArraySlice;
+                DSVDesc.Texture2DArray.ArraySize       = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
+            }
+            else
+            {
+                DSVDesc.ViewDimension                    = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
+                DSVDesc.Texture2DMSArray.FirstArraySlice = TextureDesc.FirstArraySlice;
+                DSVDesc.Texture2DMSArray.ArraySize       = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
+            }
+
+            break;
+        }
+
+        case EViewDimension::TextureCube:
+        {
+            const auto& TextureDesc = InDesc.TextureCube;
+            DSVDesc.Format = D3D11CastDepthStencilFormat(ConvertFormat(TextureDesc.Format));
+
+            if (!bIsMultisampled)
+            {
+                DSVDesc.ViewDimension                  = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+                DSVDesc.Texture2DArray.MipSlice        = TextureDesc.MipLevel;
+                DSVDesc.Texture2DArray.FirstArraySlice = 0;
+                DSVDesc.Texture2DArray.ArraySize       = RHI_NUM_CUBE_FACES;
+            }
+            else
+            {
+                DSVDesc.ViewDimension                    = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
+                DSVDesc.Texture2DMSArray.FirstArraySlice = 0;
+                DSVDesc.Texture2DMSArray.ArraySize       = RHI_NUM_CUBE_FACES;
+            }
+
+            break;
+        }
+
+        case EViewDimension::TextureCubeArray:
+        {
+            const auto& TextureDesc = InDesc.TextureCubeArray;
+            DSVDesc.Format = D3D11CastDepthStencilFormat(ConvertFormat(TextureDesc.Format));
+
+            const uint32 FirstLayer = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, TextureDesc.FirstCube);
+            const uint32 NumLayers  = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, Math::Max<uint16>(TextureDesc.NumCubes, 1u));
+
+            if (!bIsMultisampled)
+            {
+                DSVDesc.ViewDimension                  = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+                DSVDesc.Texture2DArray.MipSlice        = TextureDesc.MipLevel;
+                DSVDesc.Texture2DArray.FirstArraySlice = FirstLayer;
+                DSVDesc.Texture2DArray.ArraySize       = NumLayers;
+            }
+            else
+            {
+                DSVDesc.ViewDimension                    = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
+                DSVDesc.Texture2DMSArray.FirstArraySlice = FirstLayer;
+                DSVDesc.Texture2DMSArray.ArraySize       = NumLayers;
+            }
+
+            break;
+        }
+
+        default:
+        {
+            D3D11_ERROR("CreateDepthStencilView: unsupported ViewDimension");
+            return nullptr;
+        }
+    }
+
+    if (DSVDesc.Format == DXGI_FORMAT_UNKNOWN)
+    {
+        D3D11_ERROR("Unallowed format for DepthStencilViews");
+        return nullptr;
+    }
+
+    DSVDesc.Flags = 0;
+    if (IsEnumFlagSet(InDesc.Flags, EDepthStencilViewFlags::ReadOnlyDepth))
+    {
+        DSVDesc.Flags |= D3D11_DSV_READ_ONLY_DEPTH;
+    }
+
+    if (IsEnumFlagSet(InDesc.Flags, EDepthStencilViewFlags::ReadOnlyStencil))
+    {
+        DSVDesc.Flags |= D3D11_DSV_READ_ONLY_STENCIL;
+    }
+
+    FD3D11DepthStencilViewRHIRef D3D11View = new FD3D11DepthStencilViewRHI(GetDevice(), D3D11Texture, InDesc);
+    if (!D3D11View->Initialize(D3D11Texture->GetD3D11Resource(), DSVDesc))
+    {
+        return nullptr;
+    }
+
+    return D3D11View.ReleaseOwnership();
 }
 
 FRHIComputeShader* FD3D11DeviceRHI::CreateComputeShader(const TArray<uint8>& ShaderCode)

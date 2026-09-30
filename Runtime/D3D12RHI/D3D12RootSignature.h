@@ -337,8 +337,7 @@ public:
 
     FORCEINLINE void SetDebugName(const String& Name)
     {
-        WString WideName = CharToWide(Name);
-        RootSignature->SetName(*WideName);
+        D3D12SetDebugName(RootSignature.Get(), Name);
     }
 
     FORCEINLINE ID3D12RootSignature*  GetD3D12RootSignature() const

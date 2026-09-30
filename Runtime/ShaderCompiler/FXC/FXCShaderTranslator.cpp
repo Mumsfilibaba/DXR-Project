@@ -277,9 +277,10 @@ static bool TranslateConstantBuffer(FShaderPreprocessorOutput& Source, const TAr
             return TranslationError(Source, Name, String::Printf("'%s' uses register '%s', constant buffers use b registers", *Name.Text, *Register));
         }
 
+        // The shader constants have no slot of their own, so FXC picks one that the shader does not use
         if (Space.Equals(GShaderConstantsSpace))
         {
-            Register = FXC_SHADER_CONSTANTS_REGISTER;
+            Register.Clear();
         }
         else if (!Space.IsEmpty() && !Space.Equals("space0"))
         {
