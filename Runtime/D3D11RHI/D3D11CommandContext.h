@@ -1,5 +1,6 @@
 #pragma once
 #include "RHI/IRHICommandContext.h"
+#include "D3D11RHI/D3D11CommandContextState.h"
 #include "D3D11RHI/D3D11DeviceChild.h"
 
 class FD3D11CommandContext : public IRHICommandContext, public FD3D11DeviceChild
@@ -80,6 +81,11 @@ public:
 
     ID3D11DeviceContext* GetD3D11Context() const;
 
+    FORCEINLINE FD3D11CommandContextState& GetContextState()
+    {
+        return ContextState;
+    }
+
     // -------------------------------------------------------------------------------------------
     // IRHICommandContext interface that D3D11 can never support
     // -------------------------------------------------------------------------------------------
@@ -110,5 +116,6 @@ public:
     virtual void ExecuteIndirectRayTracingAccelerationStructureOperations(const FRHIRayTracingAccelerationStructureOperationDesc*, uint32) override final { }
 
 private:
+    FD3D11CommandContextState          ContextState;
     TComPtr<ID3DUserDefinedAnnotation> Annotation;
 };

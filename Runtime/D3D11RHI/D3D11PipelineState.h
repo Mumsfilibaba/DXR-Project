@@ -113,6 +113,8 @@ public:
 
     bool Initialize(const FRHIGraphicsPipelineStateDesc& Desc);
 
+    FD3D11Shader* GetShader(EShaderVisibility::Type ShaderStage) const;
+
     FORCEINLINE FD3D11VertexShaderRHI*      GetVertexShader()      const { return VertexShader.Get(); }
     FORCEINLINE FD3D11HullShaderRHI*        GetHullShader()        const { return HullShader.Get(); }
     FORCEINLINE FD3D11DomainShaderRHI*      GetDomainShader()      const { return DomainShader.Get(); }

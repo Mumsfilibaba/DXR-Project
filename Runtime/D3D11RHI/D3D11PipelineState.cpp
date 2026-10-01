@@ -224,6 +224,19 @@ void FD3D11GraphicsPipelineStateRHI::GetDebugName(String& OutDebugName) const
     OutDebugName = DebugName;
 }
 
+FD3D11Shader* FD3D11GraphicsPipelineStateRHI::GetShader(EShaderVisibility::Type ShaderStage) const
+{
+    switch (ShaderStage)
+    {
+        case EShaderVisibility::Vertex:   return VertexShader.Get();
+        case EShaderVisibility::Hull:     return HullShader.Get();
+        case EShaderVisibility::Domain:   return DomainShader.Get();
+        case EShaderVisibility::Geometry: return GeometryShader.Get();
+        case EShaderVisibility::Pixel:    return PixelShader.Get();
+        default:                          return nullptr;
+    }
+}
+
 bool FD3D11GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateDesc& Desc)
 {
     if (Desc.StreamOutputDeclaration)

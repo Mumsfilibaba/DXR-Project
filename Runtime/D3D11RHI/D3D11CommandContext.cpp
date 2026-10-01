@@ -17,6 +17,7 @@ static UINT GetDepthStencilClearFlags(ID3D11DepthStencilView* View)
 FD3D11CommandContext::FD3D11CommandContext(FD3D11Device* InDevice)
     : IRHICommandContext()
     , FD3D11DeviceChild(InDevice)
+    , ContextState(InDevice, *this)
     , Annotation(nullptr)
 {
 }
@@ -25,6 +26,11 @@ FD3D11CommandContext::~FD3D11CommandContext() = default;
 
 bool FD3D11CommandContext::Initialize()
 {
+    if (!ContextState.Initialize())
+    {
+        return false;
+    }
+
     GetD3D11Context()->QueryInterface(IID_PPV_ARGS(&Annotation));
     return true;
 }
@@ -95,20 +101,16 @@ void FD3D11CommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     ID3D11DeviceContext*  D3D11Context  = GetD3D11Context();
     ID3D11DeviceContext1* D3D11Context1 = GetDevice()->GetD3D11Context1();
 
-    ID3D11RenderTargetView* RenderTargetViews[D3D11_MAX_RENDER_TARGET_COUNT] = {};
+    FD3D11RenderTargetViewRHI* RenderTargetViews[D3D11_MAX_RENDER_TARGET_COUNT] = {};
 
     const uint32 NumRenderTargets = Math::Min<uint32>(BeginRenderPassDesc.NumRenderTargets, D3D11_MAX_RENDER_TARGET_COUNT);
     for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
     {
         const FRHIRenderTargetAttachment& CurrentAttachment = BeginRenderPassDesc.RenderTargets[Index];
-        if (!CurrentAttachment.View)
-        {
-            continue;
-        }
 
-        ID3D11RenderTargetView* D3D11View = static_cast<ID3D11RenderTargetView*>(CurrentAttachment.View->GetRHINativeHandle());
-        RenderTargetViews[Index] = D3D11View;
+        RenderTargetViews[Index] = FD3D11DeviceRHI::ResourceCast(CurrentAttachment.View.Get());
 
+        ID3D11RenderTargetView* D3D11View = RenderTargetViews[Index] ? RenderTargetViews[Index]->GetD3D11View() : nullptr;
         if (!D3D11View)
         {
             continue;
@@ -126,21 +128,23 @@ void FD3D11CommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
 
     const FRHIDepthStencilAttachment& CurrentDSAttachment = BeginRenderPassDesc.DepthStencilAttachment;
 
-    ID3D11DepthStencilView* DepthStencilView = CurrentDSAttachment.View ? static_cast<ID3D11DepthStencilView*>(CurrentDSAttachment.View->GetRHINativeHandle()) : nullptr;
-    if (DepthStencilView)
+    FD3D11DepthStencilViewRHI* DepthStencilView = FD3D11DeviceRHI::ResourceCast(CurrentDSAttachment.View.Get());
+
+    ID3D11DepthStencilView* D3D11DepthStencilView = DepthStencilView ? DepthStencilView->GetD3D11View() : nullptr;
+    if (D3D11DepthStencilView)
     {
         if (CurrentDSAttachment.LoadAction == EAttachmentLoadAction::Clear)
         {
-            const UINT ClearFlags = GetDepthStencilClearFlags(DepthStencilView);
-            D3D11Context->ClearDepthStencilView(DepthStencilView, ClearFlags, CurrentDSAttachment.ClearValue.Depth, static_cast<UINT8>(CurrentDSAttachment.ClearValue.Stencil));
+            const UINT ClearFlags = GetDepthStencilClearFlags(D3D11DepthStencilView);
+            D3D11Context->ClearDepthStencilView(D3D11DepthStencilView, ClearFlags, CurrentDSAttachment.ClearValue.Depth, static_cast<UINT8>(CurrentDSAttachment.ClearValue.Stencil));
         }
         else if (CurrentDSAttachment.LoadAction == EAttachmentLoadAction::DontCare && D3D11Context1)
         {
-            D3D11Context1->DiscardView(DepthStencilView);
+            D3D11Context1->DiscardView(D3D11DepthStencilView);
         }
     }
 
-    D3D11Context->OMSetRenderTargets(NumRenderTargets, RenderTargetViews, DepthStencilView);
+    ContextState.SetRenderTargets(RenderTargetViews, NumRenderTargets, DepthStencilView);
 }
 
 void FD3D11CommandContext::EndRenderPass()
@@ -157,7 +161,7 @@ void FD3D11CommandContext::SetViewport(const FViewportRegion& ViewportRegion)
     Viewport.MaxDepth = ViewportRegion.MaxDepth;
     Viewport.MinDepth = ViewportRegion.MinDepth;
 
-    GetD3D11Context()->RSSetViewports(1, &Viewport);
+    ContextState.SetViewports(&Viewport, 1);
 }
 
 void FD3D11CommandContext::SetScissorRect(const FScissorRegion& ScissorRegion)
@@ -168,15 +172,17 @@ void FD3D11CommandContext::SetScissorRect(const FScissorRegion& ScissorRegion)
     ScissorRect.top    = LONG(ScissorRegion.PositionY);
     ScissorRect.bottom = LONG(ScissorRegion.PositionY) + LONG(ScissorRegion.Height);
 
-    GetD3D11Context()->RSSetScissorRects(1, &ScissorRect);
+    ContextState.SetScissorRects(&ScissorRect, 1);
 }
 
 void FD3D11CommandContext::SetBlendFactor(const Vector4& Color)
 {
+    ContextState.SetBlendFactor(Color.XYZW);
 }
 
 void FD3D11CommandContext::SetStencilRef(uint32 StencilRef)
 {
+    ContextState.SetStencilRef(StencilRef);
 }
 
 void FD3D11CommandContext::SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias)
@@ -185,10 +191,17 @@ void FD3D11CommandContext::SetDepthBias(float DepthBias, float DepthBiasClamp, f
 
 void FD3D11CommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot)
 {
+    for (int32 Index = 0; Index < InVertexBuffers.Size(); ++Index)
+    {
+        FD3D11BufferRHI* D3DVertexBuffer = FD3D11DeviceRHI::ResourceCast(InVertexBuffers[Index]);
+        ContextState.SetVertexBuffer(D3DVertexBuffer, BufferSlot + Index);
+    }
 }
 
 void FD3D11CommandContext::SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat)
 {
+    FD3D11BufferRHI* D3DIndexBuffer = FD3D11DeviceRHI::ResourceCast(IndexBuffer);
+    ContextState.SetIndexBuffer(D3DIndexBuffer, ConvertIndexFormat(IndexFormat));
 }
 
 void FD3D11CommandContext::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)
@@ -197,6 +210,8 @@ void FD3D11CommandContext::SetStreamOutputTargets(const TArrayView<FRHIBuffer* c
 
 void FD3D11CommandContext::SetGraphicsPipelineState(FRHIGraphicsPipelineState* PipelineState)
 {
+    FD3D11GraphicsPipelineStateRHI* GraphicsPipelineState = FD3D11DeviceRHI::ResourceCast(PipelineState);
+    ContextState.SetGraphicsPipelineState(GraphicsPipelineState);
 }
 
 void FD3D11CommandContext::SetComputePipelineState(FRHIComputePipelineState* PipelineState)
@@ -205,14 +220,34 @@ void FD3D11CommandContext::SetComputePipelineState(FRHIComputePipelineState* Pip
 
 void FD3D11CommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
 {
+    MAYBE_UNUSED FD3D11Shader* D3D11Shader = GetD3D11Shader(Shader);
+    CHECK(D3D11Shader != nullptr);
+
+    ContextState.SetShaderConstants(Shader->GetShaderStage(), reinterpret_cast<const uint32*>(ShaderConstants), NumShaderConstants);
 }
 
 void FD3D11CommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 RegisterIndex)
 {
+    FD3D11Shader* D3D11Shader = GetD3D11Shader(Shader);
+    CHECK(D3D11Shader != nullptr);
+
+    FD3D11ShaderResourceViewRHI* D3D11ShaderResourceView = FD3D11DeviceRHI::ResourceCast(ShaderResourceView);
+
+    CHECK(RegisterIndex < D3D11_MAX_SHADER_RESOURCE_VIEWS);
+    ContextState.SetSRV(D3D11ShaderResourceView, D3D11Shader->GetShaderVisibility(), RegisterIndex);
 }
 
 void FD3D11CommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 RegisterIndex)
 {
+    FD3D11Shader* D3D11Shader = GetD3D11Shader(Shader);
+    CHECK(D3D11Shader != nullptr);
+
+    CHECK(RegisterIndex + InShaderResourceViews.Size() <= D3D11_MAX_SHADER_RESOURCE_VIEWS);
+    for (int32 Index = 0; Index < InShaderResourceViews.Size(); ++Index)
+    {
+        FD3D11ShaderResourceViewRHI* D3D11ShaderResourceView = FD3D11DeviceRHI::ResourceCast(InShaderResourceViews[Index]);
+        ContextState.SetSRV(D3D11ShaderResourceView, D3D11Shader->GetShaderVisibility(), RegisterIndex + Index);
+    }
 }
 
 void FD3D11CommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 RegisterIndex)
@@ -225,18 +260,50 @@ void FD3D11CommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TAr
 
 void FD3D11CommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 RegisterIndex)
 {
+    FD3D11Shader* D3D11Shader = GetD3D11Shader(Shader);
+    CHECK(D3D11Shader != nullptr);
+
+    FD3D11BufferRHI* D3D11Buffer = ConstantBuffer ? FD3D11DeviceRHI::ResourceCast(ConstantBuffer) : nullptr;
+
+    CHECK(RegisterIndex < D3D11_MAX_CONSTANT_BUFFERS);
+    ContextState.SetCBV(D3D11Buffer, D3D11Shader->GetShaderVisibility(), RegisterIndex);
 }
 
 void FD3D11CommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 RegisterIndex)
 {
+    FD3D11Shader* D3D11Shader = GetD3D11Shader(Shader);
+    CHECK(D3D11Shader != nullptr);
+    CHECK(RegisterIndex + InConstantBuffers.Size() <= D3D11_MAX_CONSTANT_BUFFERS);
+
+    for (int32 Index = 0; Index < InConstantBuffers.Size(); ++Index)
+    {
+        FD3D11BufferRHI* D3D11Buffer = InConstantBuffers[Index] ? FD3D11DeviceRHI::ResourceCast(InConstantBuffers[Index]) : nullptr;
+        ContextState.SetCBV(D3D11Buffer, D3D11Shader->GetShaderVisibility(), RegisterIndex + Index);
+    }
 }
 
 void FD3D11CommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 RegisterIndex)
 {
+    FD3D11Shader* D3D11Shader = GetD3D11Shader(Shader);
+    CHECK(D3D11Shader != nullptr);
+
+    FD3D11SamplerStateRHI* D3D11SamplerState = FD3D11DeviceRHI::ResourceCast(SamplerState);
+
+    CHECK(RegisterIndex < D3D11_MAX_SAMPLER_STATES);
+    ContextState.SetSampler(D3D11SamplerState, D3D11Shader->GetShaderVisibility(), RegisterIndex);
 }
 
 void FD3D11CommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 RegisterIndex)
 {
+    FD3D11Shader* D3D11Shader = GetD3D11Shader(Shader);
+    CHECK(D3D11Shader != nullptr);
+    CHECK(RegisterIndex + InSamplerStates.Size() <= D3D11_MAX_SAMPLER_STATES);
+
+    for (int32 Index = 0; Index < InSamplerStates.Size(); ++Index)
+    {
+        FD3D11SamplerStateRHI* D3D11SamplerState = FD3D11DeviceRHI::ResourceCast(InSamplerStates[Index]);
+        ContextState.SetSampler(D3D11SamplerState, D3D11Shader->GetShaderVisibility(), RegisterIndex + Index);
+    }
 }
 
 void FD3D11CommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)
@@ -405,18 +472,26 @@ void FD3D11CommandContext::UnorderedAccessBarrier(TArrayView<const FRHIUnordered
 
 void FD3D11CommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
 {
+    ContextState.BindGraphicsState();
+    GetD3D11Context()->DrawInstanced(VertexCount, 1, StartVertexLocation, 0);
 }
 
 void FD3D11CommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
 {
+    ContextState.BindGraphicsState();
+    GetD3D11Context()->DrawIndexedInstanced(IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0);
 }
 
 void FD3D11CommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
 {
+    ContextState.BindGraphicsState();
+    GetD3D11Context()->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
 void FD3D11CommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
 {
+    ContextState.BindGraphicsState();
+    GetD3D11Context()->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
 }
 
 void FD3D11CommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
@@ -443,6 +518,8 @@ void FD3D11CommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVert
 {
     FD3D11SwapChainRHI* D3D11SwapChain = FD3D11DeviceRHI::ResourceCast(SwapChain);
     D3D11SwapChain->Present(bVerticalSync);
+
+    ContextState.DirtyRenderTargets();
 }
 
 void FD3D11CommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace)
@@ -480,6 +557,7 @@ void FD3D11CommandContext::PopEvent()
 void FD3D11CommandContext::ClearState()
 {
     GetD3D11Context()->ClearState();
+    ContextState.ResetState();
 }
 
 void FD3D11CommandContext::Flush()
