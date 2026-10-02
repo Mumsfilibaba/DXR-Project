@@ -2,17 +2,21 @@
 #include "MetalRHI/MetalCapabilities.h"
 #include "MetalRHI/MetalDeviceDebug.h"
 #include "MetalRHI/MetalAllocators.h"
+#include "MetalRHI/MetalBinaryArchive.h"
 #include "MetalRHI/MetalBindlessDescriptors.h"
 #include "MetalRHI/MetalCommandContext.h"
+#include "MetalRHI/MetalPipelineCache.h"
 #include "MetalRHI/MetalQueue.h"
 #include "MetalRHI/MetalRelocatable.h"
 #include "MetalRHI/MetalResidencyManager.h"
 #include "MetalRHI/MetalResidencySet.h"
+#include "MetalRHI/MetalShaderLibraryCache.h"
 #include "MetalRHI/MetalStats.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CoreDelegates.h"
+#include "Core/Misc/Paths.h"
 #include "Core/Platform/PlatformTime.h"
 #include "Core/Threading/ScopedLock.h"
 #include <CoreGraphics/CoreGraphics.h>
@@ -56,6 +60,16 @@ static TAutoConsoleVariable<int32> CVarDefragEligibilityDelay(
     "MetalRHI.DefragEligibilityDelay",
     "Frames an allocation has to live before a defrag move may relocate it, so resources created and filled this frame are left alone",
     1);
+
+static TAutoConsoleVariable<String> CVarBinaryArchiveMode(
+    "MetalRHI.BinaryArchiveMode",
+    "How the MTLBinaryArchive is used: Ignore, Use (load read-only), Append (load, add and save) or Create (start empty, add and save)",
+    "Append");
+
+static TAutoConsoleVariable<String> CVarBinaryArchiveFileName(
+    "MetalRHI.BinaryArchiveFileName",
+    "File name of the MTLBinaryArchive in the asset directory. A .version sidecar sits beside it",
+    "PipelineCache.metalarchive");
 
 static constexpr MTLResourceOptions GNullResourceOptions = MTLResourceStorageModePrivate | MTLResourceHazardTrackingModeUntracked;
 static constexpr NSUInteger         GNullSampleCount     = 4;
@@ -195,6 +209,9 @@ static void EncodeClearPasses(id<MTLCommandBuffer> CommandBuffer, id<MTLTexture>
 FMetalDevice::FMetalDevice()
     : ResidencySet(nullptr)
     , ResidencyManager(nullptr)
+    , ShaderLibraryCache(nullptr)
+    , PipelineCache(nullptr)
+    , BinaryArchive(nullptr)
     , BindlessDescriptorManager(nullptr)
     , StagingBufferAllocator(nullptr)
     , DynamicConstantsAllocator(nullptr)
@@ -236,6 +253,16 @@ FMetalDevice::~FMetalDevice()
 
     bHasPendingDefragMoves.Store(!PendingDefragMoves.IsEmpty());
     FinalizeDefragMoves();
+
+    if (BinaryArchive)
+    {
+        BinaryArchive->WaitForSave();
+        BinaryArchive->Save();
+    }
+
+    SAFE_DELETE(PipelineCache);
+    SAFE_DELETE(ShaderLibraryCache);
+    SAFE_DELETE(BinaryArchive);
 
     if (ResidencySet && DefaultResources.Heap)
     {
@@ -338,6 +365,10 @@ void FMetalDevice::EndFrame()
         ResidencyManager->EndFrame();
         ResidencyManager->EvictIfNeeded();
     }
+
+    PipelineCache->Prune();
+    ShaderLibraryCache->Prune();
+    BinaryArchive->SaveAsync();
 
     MetalEndFrameCapture();
 
@@ -493,6 +524,11 @@ bool FMetalDevice::Initialize()
 
     QueryDeviceFeatureSupport();
 
+    if (!CreatePipelineCaches())
+    {
+        return false;
+    }
+
     if (!CreateCommandQueues())
     {
         return false;
@@ -564,6 +600,16 @@ bool FMetalDevice::CreateDevice()
 #endif
 
     return true;
+}
+
+bool FMetalDevice::CreatePipelineCaches()
+{
+    ShaderLibraryCache = new FMetalShaderLibraryCache(this);
+    BinaryArchive      = new FMetalBinaryArchive(this);
+    PipelineCache      = new FMetalPipelineCache(this);
+
+    const String ArchivePath = Paths::GetAssetDir() + '/' + CVarBinaryArchiveFileName.GetValue();
+    return BinaryArchive->Initialize(FMetalBinaryArchive::ParseMode(CVarBinaryArchiveMode.GetValue()), ArchivePath);
 }
 
 int32 FMetalDevice::ScoreDevice(id<MTLDevice> CandidateDevice)

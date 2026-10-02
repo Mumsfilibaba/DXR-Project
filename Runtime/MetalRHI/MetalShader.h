@@ -4,6 +4,7 @@
 #include "RHI/MSLShaderBindings.h"
 #include "MetalRHI/MetalDeviceChild.h"
 #include "MetalRHI/MetalDevice.h"
+#include "MetalRHI/MetalShaderLibraryCache.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -17,7 +18,7 @@ public:
 
     id<MTLFunction> GetMTLFunction() const
     {
-        return Function;
+        return CompiledShader ? CompiledShader->Function : nil;
     }
 
     const TArray<FMSLShaderBinding>& GetBindings() const
@@ -32,14 +33,12 @@ public:
     uint16 GetShaderConstantsSize() const { return ShaderConstantsSize; }
 
 protected:
-    id<MTLLibrary>            Library;
-    NSString*                 FunctionName;
-    id<MTLFunction>           Function;
-    TArray<FMSLShaderBinding> Bindings;
-    uint16                    ThreadGroupSizeX;
-    uint16                    ThreadGroupSizeY;
-    uint16                    ThreadGroupSizeZ;
-    uint16                    ShaderConstantsSize;
+    TSharedRef<FMetalCompiledShader> CompiledShader;
+    TArray<FMSLShaderBinding>        Bindings;
+    uint16                           ThreadGroupSizeX;
+    uint16                           ThreadGroupSizeY;
+    uint16                           ThreadGroupSizeZ;
+    uint16                           ShaderConstantsSize;
 };
 
 class FMetalRayTracingShader : public FMetalShader

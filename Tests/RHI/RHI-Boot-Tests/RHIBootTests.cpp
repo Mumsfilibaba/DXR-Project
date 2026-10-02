@@ -5,6 +5,7 @@
 #include <Core/Memory/Memory.h>
 #include <Core/Misc/ConsoleManager.h>
 #include <Core/Misc/Paths.h>
+#include <Core/Platform/PlatformFile.h>
 #include <Core/Platform/PlatformMisc.h>
 #include <RHI/RHI.h>
 #include <RHI/RHICommandList.h>
@@ -17,6 +18,7 @@
 #include <RHI/ShaderCompiler.h>
 
 #if PLATFORM_MACOS
+#include <MetalRHI/MetalBinaryArchive.h>
 #include <MetalRHI/MetalBindlessDescriptors.h>
 #include <MetalRHI/MetalBuffer.h>
 #include <MetalRHI/MetalCapabilities.h>
@@ -29,6 +31,7 @@
 #include <MetalRHI/MetalPipelineState.h>
 #include <MetalRHI/MetalQueue.h>
 #include <MetalRHI/MetalRHI.h>
+#include <MetalRHI/MetalShader.h>
 #include <MetalRHI/MetalTexture.h>
 #include <RHI/MSLShaderBindings.h>
 #endif
@@ -3044,6 +3047,274 @@ static bool ProbeMemoryDefragAndResidency()
     FShaderCompiler::Destroy();
     TEST_END();
 }
+
+static bool ProbePipelinePersistence()
+{
+    TEST_BEGIN();
+
+    FMetalDeviceRHI* MetalDeviceRHI = FMetalDeviceRHI::Get();
+    FMetalDevice*    MetalDevice    = MetalDeviceRHI ? MetalDeviceRHI->GetMetalDevice() : nullptr;
+    TEST_EXPECT(MetalDevice != nullptr);
+    if (!MetalDevice)
+    {
+        TEST_END();
+    }
+
+    if (!FShaderCompiler::Initialize(Paths::GetAssetDir()))
+    {
+        TEST_EXPECT(false);
+        TEST_END();
+    }
+
+    TEST_SECTION("Shaders compiled from the same bytecode share one function");
+
+    const String ComputeSource(
+        "SamplerState LinearSampler : register(s0);\n"
+        "Texture2D<float4> SourceTex : register(t0);\n"
+        "RWTexture2D<float4> DestTex : register(u0);\n"
+        "[numthreads(1, 1, 1)]\n"
+        "void Main(uint3 DispatchThreadID : SV_DispatchThreadID)\n"
+        "{\n"
+        "    DestTex[DispatchThreadID.xy] = SourceTex.SampleLevel(LinearSampler, float2(0.5, 0.5), 0);\n"
+        "}\n");
+
+    TArray<uint8> ComputeByteCode;
+    const FShaderCompileInfo ComputeCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    const bool bComputeCompiled = FShaderCompiler::Get().CompileFromSource(ComputeSource, ComputeCompileInfo, ComputeByteCode);
+    TEST_EXPECT(bComputeCompiled);
+
+    FRHIComputeShaderRef ComputeShader;
+    if (bComputeCompiled)
+    {
+        const int64 LibraryHitsBefore = STAT_GET(STAT_Metal_LibraryCacheHits);
+
+        // RHI::CreateComputeShader dedupes identical bytecode above the backend, so the duplicate goes to the device directly
+        ComputeShader = RHI::CreateComputeShader(ComputeByteCode);
+        FRHIComputeShaderRef DuplicateShader(RHI::Device->CreateComputeShader(ComputeByteCode));
+        TEST_EXPECT(ComputeShader != nullptr);
+        TEST_EXPECT(DuplicateShader != nullptr);
+
+        if (ComputeShader && DuplicateShader)
+        {
+            TEST_EXPECT(ComputeShader.Get() != DuplicateShader.Get());
+            TEST_EXPECT(GetMetalShader(ComputeShader.Get())->GetMTLFunction() != nil);
+            TEST_EXPECT(GetMetalShader(ComputeShader.Get())->GetMTLFunction() == GetMetalShader(DuplicateShader.Get())->GetMTLFunction());
+        }
+
+#if METAL_ENABLE_STATS
+        TEST_EXPECT(STAT_GET(STAT_Metal_LibraryCacheHits) >= LibraryHitsBefore + 1);
+#else
+        (void)LibraryHitsBefore;
+#endif
+    }
+
+    TEST_SECTION("Compute PSOs that differ only in a static sampler share one pipeline");
+
+    if (ComputeShader)
+    {
+        FRHIStaticSamplerInfo LinearSampler;
+        LinearSampler.ShaderRegister   = 0;
+        LinearSampler.ShaderVisibility = EShaderStage::Compute;
+        LinearSampler.Filter           = ESamplerFilter::MinMagMipLinear;
+
+        FRHIStaticSamplerInfo PointSampler = LinearSampler;
+        PointSampler.Filter = ESamplerFilter::MinMagMipPoint;
+
+        FRHIComputePipelineStateDesc LinearDesc;
+        LinearDesc.Shader         = ComputeShader.Get();
+        LinearDesc.StaticSamplers = TArrayView<const FRHIStaticSamplerInfo>(&LinearSampler, 1);
+
+        FRHIComputePipelineStateDesc PointDesc;
+        PointDesc.Shader         = ComputeShader.Get();
+        PointDesc.StaticSamplers = TArrayView<const FRHIStaticSamplerInfo>(&PointSampler, 1);
+
+        FRHIComputePipelineStateRef LinearPipeline = RHI::CreateComputePipelineState(LinearDesc);
+        FRHIComputePipelineStateRef PointPipeline  = RHI::CreateComputePipelineState(PointDesc);
+        TEST_EXPECT(LinearPipeline != nullptr);
+        TEST_EXPECT(PointPipeline != nullptr);
+
+        if (LinearPipeline && PointPipeline)
+        {
+            TEST_EXPECT(LinearPipeline.Get() != PointPipeline.Get());
+            TEST_EXPECT(LinearPipeline->GetRHINativeState() != nullptr);
+            TEST_EXPECT(LinearPipeline->GetRHINativeState() == PointPipeline->GetRHINativeState());
+        }
+    }
+
+    TEST_SECTION("Graphics PSOs that differ only in cull and depth state share one pipeline");
+
+    const String VertexSource(
+        "float4 Main(uint VertexID : SV_VertexID) : SV_Position\n"
+        "{\n"
+        "    float2 Positions[3];\n"
+        "    Positions[0] = float2(-1.0, -1.0);\n"
+        "    Positions[1] = float2( 3.0, -1.0);\n"
+        "    Positions[2] = float2(-1.0,  3.0);\n"
+        "    return float4(Positions[VertexID], 0.0, 1.0);\n"
+        "}\n");
+
+    const String PixelSource(
+        "float4 Main() : SV_Target\n"
+        "{\n"
+        "    return float4(1.0, 0.0, 0.0, 1.0);\n"
+        "}\n");
+
+    TArray<uint8> VertexByteCode;
+    TArray<uint8> PixelByteCode;
+    const FShaderCompileInfo VertexCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
+    const FShaderCompileInfo PixelCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
+    const bool bVertexCompiled = FShaderCompiler::Get().CompileFromSource(VertexSource, VertexCompileInfo, VertexByteCode);
+    const bool bPixelCompiled  = FShaderCompiler::Get().CompileFromSource(PixelSource, PixelCompileInfo, PixelByteCode);
+    TEST_EXPECT(bVertexCompiled);
+    TEST_EXPECT(bPixelCompiled);
+
+    if (bVertexCompiled && bPixelCompiled)
+    {
+        FRHIVertexShaderRef VertexShader = RHI::CreateVertexShader(VertexByteCode);
+        FRHIPixelShaderRef  PixelShader  = RHI::CreatePixelShader(PixelByteCode);
+        TEST_EXPECT(VertexShader != nullptr);
+        TEST_EXPECT(PixelShader != nullptr);
+
+        FRHIRasterizerStateDesc NoCullDesc;
+        NoCullDesc.CullMode = ECullMode::None;
+
+        FRHIRasterizerStateDesc BackCullDesc;
+        BackCullDesc.CullMode = ECullMode::Back;
+
+        FRHIDepthStencilStateDesc NoDepthDesc;
+        NoDepthDesc.bDepthEnable      = false;
+        NoDepthDesc.bDepthWriteEnable = false;
+
+        FRHIDepthStencilStateDesc DepthDesc;
+        DepthDesc.bDepthEnable      = true;
+        DepthDesc.bDepthWriteEnable = true;
+        DepthDesc.DepthFunc         = EComparisonFunc::LessEqual;
+
+        FRHIRasterizerStateRef   NoCullState   = RHI::CreateRasterizerState(NoCullDesc);
+        FRHIRasterizerStateRef   BackCullState = RHI::CreateRasterizerState(BackCullDesc);
+        FRHIDepthStencilStateRef NoDepthState  = RHI::CreateDepthStencilState(NoDepthDesc);
+        FRHIDepthStencilStateRef DepthState    = RHI::CreateDepthStencilState(DepthDesc);
+        FRHIBlendStateRef        BlendState    = RHI::CreateBlendState(FRHIBlendStateDesc());
+
+        FRHIGraphicsPipelineStateDesc FirstDesc;
+        FirstDesc.VertexShader                                   = VertexShader.Get();
+        FirstDesc.PixelShader                                    = PixelShader.Get();
+        FirstDesc.DepthStencilState                              = NoDepthState.Get();
+        FirstDesc.RasterizerState                                = NoCullState.Get();
+        FirstDesc.BlendState                                     = BlendState.Get();
+        FirstDesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+        FirstDesc.RasterizerOutputFormats.NumRenderTargets       = 1;
+        FirstDesc.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
+        FirstDesc.RasterizerOutputFormats.DepthStencilFormat     = EFormat::D32_Float;
+
+        FRHIGraphicsPipelineStateDesc SecondDesc = FirstDesc;
+        SecondDesc.DepthStencilState = DepthState.Get();
+        SecondDesc.RasterizerState   = BackCullState.Get();
+
+        const int64 PSOHitsBefore = STAT_GET(STAT_Metal_PSOCacheHits);
+
+        FRHIGraphicsPipelineStateRef FirstPipeline  = RHI::CreateGraphicsPipelineState(FirstDesc);
+        FRHIGraphicsPipelineStateRef SecondPipeline = RHI::CreateGraphicsPipelineState(SecondDesc);
+        TEST_EXPECT(FirstPipeline != nullptr);
+        TEST_EXPECT(SecondPipeline != nullptr);
+
+        if (FirstPipeline && SecondPipeline)
+        {
+            TEST_EXPECT(FirstPipeline.Get() != SecondPipeline.Get());
+            TEST_EXPECT(FirstPipeline->GetRHINativeState() != nullptr);
+            TEST_EXPECT(FirstPipeline->GetRHINativeState() == SecondPipeline->GetRHINativeState());
+        }
+
+#if METAL_ENABLE_STATS
+        TEST_EXPECT(STAT_GET(STAT_Metal_PSOCacheHits) >= PSOHitsBefore + 1);
+#else
+        (void)PSOHitsBefore;
+#endif
+    }
+
+    const String ArchivePath = Paths::GetAssetDir() + "/RHIBootTests_Probe.metalarchive";
+    const String SidecarPath = ArchivePath + ".version";
+    FPlatformFile::DeleteFile(*ArchivePath);
+    FPlatformFile::DeleteFile(*SidecarPath);
+
+    id<MTLFunction> ComputeFunction = ComputeShader ? GetMetalShader(ComputeShader.Get())->GetMTLFunction() : nil;
+    if (ComputeFunction)
+    {
+        SCOPED_AUTORELEASE_POOL();
+
+        auto MakeDescriptor = [ComputeFunction]()
+        {
+            MTLComputePipelineDescriptor* Descriptor = [[MTLComputePipelineDescriptor new] autorelease];
+            Descriptor.computeFunction = ComputeFunction;
+            return Descriptor;
+        };
+
+        TEST_SECTION("An archive written in Create mode is hit in Use mode");
+
+        {
+            FMetalBinaryArchive CreateArchive(MetalDevice);
+            TEST_EXPECT(CreateArchive.Initialize(EMetalBinaryArchiveMode::Create, ArchivePath));
+            TEST_EXPECT(CreateArchive.CreateComputePipeline(MakeDescriptor()) != nullptr);
+            TEST_EXPECT(CreateArchive.Save());
+        }
+
+        TEST_EXPECT(FPlatformFile::IsFile(*ArchivePath));
+        TEST_EXPECT(FPlatformFile::IsFile(*SidecarPath));
+
+        {
+            FMetalBinaryArchive UseArchive(MetalDevice);
+            TEST_EXPECT(UseArchive.Initialize(EMetalBinaryArchiveMode::Use, ArchivePath));
+            TEST_EXPECT(UseArchive.GetRejectionReason().IsEmpty());
+
+            const int64 ArchiveHitsBefore   = STAT_GET(STAT_Metal_BinaryArchiveHits);
+            const int64 ArchiveMissesBefore = STAT_GET(STAT_Metal_BinaryArchiveMisses);
+            TEST_EXPECT(UseArchive.CreateComputePipeline(MakeDescriptor()) != nullptr);
+
+#if METAL_ENABLE_STATS
+            TEST_EXPECT_EQ(STAT_GET(STAT_Metal_BinaryArchiveHits), ArchiveHitsBefore + 1);
+            TEST_EXPECT_EQ(STAT_GET(STAT_Metal_BinaryArchiveMisses), ArchiveMissesBefore);
+#else
+            (void)ArchiveHitsBefore;
+            (void)ArchiveMissesBefore;
+#endif
+        }
+
+        TEST_SECTION("A sidecar from another OS build is rejected and the pipeline still compiles");
+
+        FMetalBinaryArchiveHeader Header;
+        bool bHeaderRead = false;
+        {
+            TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(SidecarPath);
+            bHeaderRead = File && File->Read(reinterpret_cast<uint8*>(&Header), sizeof(Header)) == static_cast<int32>(sizeof(Header));
+        }
+
+        TEST_EXPECT(bHeaderRead);
+        if (bHeaderRead)
+        {
+            const CHAR TamperedBuild[] = "0TAMPER0";
+            Memory::Memcpy(Header.OSBuild, TamperedBuild, sizeof(TamperedBuild));
+
+            bool bHeaderWritten = false;
+            {
+                TFileRef<IPlatformFile> File = FPlatformFile::OpenForWrite(SidecarPath);
+                bHeaderWritten = File && File->Write(reinterpret_cast<const uint8*>(&Header), sizeof(Header)) == static_cast<int32>(sizeof(Header));
+            }
+
+            TEST_EXPECT(bHeaderWritten);
+
+            FMetalBinaryArchive RejectingArchive(MetalDevice);
+            TEST_EXPECT(RejectingArchive.Initialize(EMetalBinaryArchiveMode::Use, ArchivePath));
+            TEST_EXPECT(RejectingArchive.GetRejectionReason().Find("OS build") != String::InvalidIndex);
+            TEST_EXPECT(RejectingArchive.CreateComputePipeline(MakeDescriptor()) != nullptr);
+        }
+    }
+
+    FPlatformFile::DeleteFile(*ArchivePath);
+    FPlatformFile::DeleteFile(*SidecarPath);
+
+    FShaderCompiler::Destroy();
+    TEST_END();
+}
 #endif
 
 static bool BootRHI(ERHIType ExpectedType)
@@ -3059,6 +3330,7 @@ static bool BootRHI(ERHIType ExpectedType)
     if (ExpectedType == ERHIType::Metal)
     {
         SetConsoleVariable("RHI.EnableDebugLayer", true);
+        SetConsoleVariable("MetalRHI.BinaryArchiveFileName", "RHIBootTests.metalarchive");
 #if PLATFORM_MACOS
         FPlatformMisc::PrepareMetalDebugLayerEnvironment(true);
         MetalResetValidationErrors();
@@ -3095,6 +3367,7 @@ static bool BootRHI(ERHIType ExpectedType)
                 TEST_EXPECT(ProbeBindlessDescriptors());
                 TEST_EXPECT(ProbeDefaultResourcesAndClears());
                 TEST_EXPECT(ProbeMemoryDefragAndResidency());
+                TEST_EXPECT(ProbePipelinePersistence());
             }
 #endif
             TEST_EXPECT(ProbeCapabilityHonesty(ExpectedType));

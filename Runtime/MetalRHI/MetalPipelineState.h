@@ -66,6 +66,8 @@ class FMetalBlendStateRHI : public FRHIBlendState
 public:
     struct FBlendAttachment
     {
+        bool operator==(const FBlendAttachment&) const = default;
+
         MTLColorWriteMask WriteMask;
         BOOL              bBlendingEnabled;
         MTLBlendOperation AlphaBlendOperation;
@@ -175,6 +177,26 @@ struct FMetalRenderStateBlock
     MTLDepthClipMode         DepthClipMode      = MTLDepthClipModeClip;
 };
 
+struct FMetalCachedRenderPipeline : public FRefCounted
+{
+    FMetalCachedRenderPipeline();
+    ~FMetalCachedRenderPipeline();
+
+    id<MTLRenderPipelineState>   PipelineState = nil;
+    MTLRenderPipelineReflection* Reflection    = nil;
+    NSArray<id<MTLFunction>>*    Functions     = nil;
+};
+
+struct FMetalCachedComputePipeline : public FRefCounted
+{
+    FMetalCachedComputePipeline();
+    ~FMetalCachedComputePipeline();
+
+    id<MTLComputePipelineState>   PipelineState = nil;
+    MTLComputePipelineReflection* Reflection    = nil;
+    NSArray<id<MTLFunction>>*     Functions     = nil;
+};
+
 class FMetalRenderPipeline : public FMetalDeviceChild
 {
 public:
@@ -188,14 +210,14 @@ public:
         const FRHIViewInstancingState&     InViewInstancing);
 
     bool CreateStaticSamplers(const TArrayView<const FRHIStaticSamplerInfo>& Infos);
-    void SetPipelineState(id<MTLRenderPipelineState> InPipelineState, MTLRenderPipelineReflection* Reflection);
+    void SetPipelineState(const TSharedRef<FMetalCachedRenderPipeline>& InPipeline);
 
     void Apply(id<MTLRenderCommandEncoder> Encoder, const FMetalRenderPipeline* Previous) const;
 
     FMetalPipelineBindingLayout&              GetBindings()               { return Bindings; }
     const FMetalPipelineBindingLayout&        GetBindings()         const { return Bindings; }
     const TArray<FMetalStaticSamplerBinding>& GetStaticSamplers()   const { return StaticSamplers; }
-    id<MTLRenderPipelineState>                GetMTLPipelineState() const { return PipelineState; }
+    id<MTLRenderPipelineState>                GetMTLPipelineState() const { return Pipeline ? Pipeline->PipelineState : nil; }
     MTLPrimitiveType                          GetPrimitiveType()    const { return PrimitiveType; }
     EMetalRenderPipelineType                  GetType()             const { return Type; }
     const FRHIViewInstancingState&            GetViewInstancing()   const { return ViewInstancing; }
@@ -212,14 +234,14 @@ public:
     }
 
 private:
-    EMetalRenderPipelineType           Type;
-    id<MTLRenderPipelineState>         PipelineState;
-    FMetalRenderStateBlock             RenderState;
-    FMetalPipelineBindingLayout        Bindings;
-    TArray<FMetalStaticSamplerBinding> StaticSamplers;
-    MTLPrimitiveType                   PrimitiveType;
-    FRHIViewInstancingState            ViewInstancing;
-    uint32                             NumVertexStreams;
+    EMetalRenderPipelineType               Type;
+    TSharedRef<FMetalCachedRenderPipeline> Pipeline;
+    FMetalRenderStateBlock                 RenderState;
+    FMetalPipelineBindingLayout            Bindings;
+    TArray<FMetalStaticSamplerBinding>     StaticSamplers;
+    MTLPrimitiveType                       PrimitiveType;
+    FRHIViewInstancingState                ViewInstancing;
+    uint32                                 NumVertexStreams;
 };
 
 class FMetalGraphicsPipelineStateRHI : public FRHIGraphicsPipelineState, public FMetalDeviceChild
@@ -260,16 +282,16 @@ public:
 
     const FMetalPipelineBindingLayout&        GetBindings() const              { return Bindings; }
     const TArray<FMetalStaticSamplerBinding>& GetStaticSamplers() const        { return StaticSamplers; }
-    id<MTLComputePipelineState>               GetMTLPipelineState() const      { return PipelineState; }
+    id<MTLComputePipelineState>               GetMTLPipelineState() const      { return Pipeline ? Pipeline->PipelineState : nil; }
     MTLSize                                   GetThreadsPerThreadgroup() const { return ThreadsPerThreadgroup; }
 
 private:
-    FRHIComputePipelineStateDesc       Desc;
-    id<MTLComputePipelineState>        PipelineState;
-    FMetalPipelineBindingLayout        Bindings;
-    TArray<FMetalStaticSamplerBinding> StaticSamplers;
-    MTLSize                            ThreadsPerThreadgroup;
-    String                             DebugName;
+    FRHIComputePipelineStateDesc            Desc;
+    TSharedRef<FMetalCachedComputePipeline> Pipeline;
+    FMetalPipelineBindingLayout             Bindings;
+    TArray<FMetalStaticSamplerBinding>      StaticSamplers;
+    MTLSize                                 ThreadsPerThreadgroup;
+    String                                  DebugName;
 };
 
 class FMetalMeshletPipelineStateRHI : public FRHIMeshletPipelineState, public FMetalDeviceChild

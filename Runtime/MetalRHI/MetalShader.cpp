@@ -1,28 +1,9 @@
 #include "MetalRHI/MetalShader.h"
 #include "Core/Memory/Memory.h"
 
-static NSString* ResolveMetalFunctionName(id<MTLLibrary> Library)
-{
-    NSArray<NSString*>* FunctionNames = [Library functionNames];
-
-    if (FunctionNames.count == 0)
-    {
-        return nil;
-    }
-
-    if ([FunctionNames containsObject:@"Main"])
-    {
-        return @"Main";
-    }
-
-    return FunctionNames.firstObject;
-}
-
 FMetalShader::FMetalShader(FMetalDevice* InDevice)
     : FMetalDeviceChild(InDevice)
-    , Library(nil)
-    , FunctionName(nil)
-    , Function(nil)
+    , CompiledShader()
     , ThreadGroupSizeX(0)
     , ThreadGroupSizeY(0)
     , ThreadGroupSizeZ(0)
@@ -30,12 +11,7 @@ FMetalShader::FMetalShader(FMetalDevice* InDevice)
 {
 }
 
-FMetalShader::~FMetalShader()
-{
-    [Library release];
-    [FunctionName release];
-    [Function release];
-}
+FMetalShader::~FMetalShader() = default;
 
 bool FMetalShader::Initialize(const TArray<uint8>& InCode)
 {
@@ -61,50 +37,8 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
         }
     }
 
-    @autoreleasepool
-    {
-        // Shader bytecode is not null-terminated, so construct the source with its explicit length.
-        const CHAR* CodeString = reinterpret_cast<const CHAR*>(Source.Data());
-        const int32 CodeLength = Source.Size();
-        
-        const String SourceString(CodeString, CodeLength);
-        
-        NSString* Source = SourceString.GetNSString();
-        CHECK(Source != nil);
-        [Source retain];
-        
-        id<MTLDevice> Device = GetDevice()->GetMTLDevice();
-        CHECK(Device != nil);
-        
-        NSError* Error = nil;
-        Library = [Device newLibraryWithSource:Source options:nil error:&Error];
-
-        if (!Library)
-        {
-            const String ErrorString([Error localizedDescription]);
-            LOG_ERROR("Failed to compile shader. Error: %s", *ErrorString);
-            return false;
-        }
-        
-        FunctionName = [ResolveMetalFunctionName(Library) retain];
-
-        if (!FunctionName)
-        {
-            LOG_ERROR("Compiled Library does not contain an entry-point");
-            return false;
-        }
-
-        Function = [Library newFunctionWithName:FunctionName];
-
-        if (!Function)
-        {
-            const String NameString(FunctionName);
-            LOG_ERROR("Failed to retrieve function '%s' from Library", *NameString);
-            return false;
-        }
-    }
-    
-    return true;
+    CompiledShader = GetDevice()->GetShaderLibraryCache().GetOrCompile(Source);
+    return CompiledShader != nullptr;
 }
 
 FMetalRayTracingShader::FMetalRayTracingShader(FMetalDevice* InDevice)
@@ -121,6 +55,6 @@ bool FMetalRayTracingShader::Initialize(const TArray<uint8>& InCode)
         return false;
     }
 
-    Identifier = String(FunctionName);
+    Identifier = String(CompiledShader->FunctionName);
     return true;
 }

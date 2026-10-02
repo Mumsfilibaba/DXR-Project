@@ -1,4 +1,5 @@
 #include "MetalRHI/MetalPipelineState.h"
+#include "MetalRHI/MetalPipelineCache.h"
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalCapabilities.h"
 #include "MetalRHI/MetalStats.h"
@@ -604,10 +605,40 @@ void* FMetalBlendStateRHI::GetRHINativeState() const
     return nullptr;
 }
 
+FMetalCachedRenderPipeline::FMetalCachedRenderPipeline() = default;
+
+FMetalCachedRenderPipeline::~FMetalCachedRenderPipeline()
+{
+    if (PipelineState)
+    {
+        FMetalDeviceRHI::DeferDeletion(PipelineState);
+        [PipelineState release];
+        PipelineState = nil;
+    }
+
+    [Reflection release];
+    [Functions release];
+}
+
+FMetalCachedComputePipeline::FMetalCachedComputePipeline() = default;
+
+FMetalCachedComputePipeline::~FMetalCachedComputePipeline()
+{
+    if (PipelineState)
+    {
+        FMetalDeviceRHI::DeferDeletion(PipelineState);
+        [PipelineState release];
+        PipelineState = nil;
+    }
+
+    [Reflection release];
+    [Functions release];
+}
+
 FMetalRenderPipeline::FMetalRenderPipeline(FMetalDevice* InDevice, EMetalRenderPipelineType InType)
     : FMetalDeviceChild(InDevice)
     , Type(InType)
-    , PipelineState(nil)
+    , Pipeline()
     , RenderState()
     , Bindings()
     , StaticSamplers()
@@ -617,15 +648,7 @@ FMetalRenderPipeline::FMetalRenderPipeline(FMetalDevice* InDevice, EMetalRenderP
 {
 }
 
-FMetalRenderPipeline::~FMetalRenderPipeline()
-{
-    if (PipelineState)
-    {
-        FMetalDeviceRHI::DeferDeletion(PipelineState);
-        [PipelineState release];
-        PipelineState = nil;
-    }
-}
+FMetalRenderPipeline::~FMetalRenderPipeline() = default;
 
 bool FMetalRenderPipeline::Initialize(const FRHIDepthStencilStateDesc& DepthStencilDesc, const FRHIRasterizerStateDesc& RasterizerDesc, const FRHIGraphicsPipelineFormats& Formats,
     const FRHIViewInstancingState& InViewInstancing)
@@ -687,9 +710,11 @@ bool FMetalRenderPipeline::CreateStaticSamplers(const TArrayView<const FRHIStati
     return CreateStaticSamplerBindings(StaticSamplers, Bindings, Infos);
 }
 
-void FMetalRenderPipeline::SetPipelineState(id<MTLRenderPipelineState> InPipelineState, MTLRenderPipelineReflection* Reflection)
+void FMetalRenderPipeline::SetPipelineState(const TSharedRef<FMetalCachedRenderPipeline>& InPipeline)
 {
-    PipelineState = InPipelineState;
+    Pipeline = InPipeline;
+
+    MTLRenderPipelineReflection* Reflection = Pipeline->Reflection;
 
     if (!Reflection)
     {
@@ -711,7 +736,7 @@ void FMetalRenderPipeline::SetPipelineState(id<MTLRenderPipelineState> InPipelin
 
 void FMetalRenderPipeline::Apply(id<MTLRenderCommandEncoder> Encoder, const FMetalRenderPipeline* Previous) const
 {
-    [Encoder setRenderPipelineState:PipelineState];
+    [Encoder setRenderPipelineState:GetMTLPipelineState()];
 
     const FMetalRenderStateBlock* PreviousState = Previous ? &Previous->RenderState : nullptr;
 
@@ -858,28 +883,23 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
         Descriptor.maxVertexAmplificationCount = Desc.ViewInstancingState.NumArraySlices;
     }
 
-    NSError*                     Error      = nil;
-    MTLRenderPipelineReflection* Reflection = nil;
-    id<MTLRenderPipelineState>   PipelineState = [GetDevice()->GetMTLDevice() newRenderPipelineStateWithDescriptor:Descriptor
-                                                                                                         options:MTLPipelineOptionBindingInfo
-                                                                                                      reflection:&Reflection
-                                                                                                           error:&Error];
+    const FMetalRenderPipelineKey Key = FMetalRenderPipelineKey::Create(Descriptor, InputLayout);
 
-    if (PipelineState == nil)
+    TSharedRef<FMetalCachedRenderPipeline> CachedPipeline = GetDevice()->GetPipelineCache().GetOrCreateRenderPipeline(Key, Descriptor);
+
+    if (!CachedPipeline)
     {
-        const String ErrorString([Error localizedDescription]);
-        METAL_ERROR("Failed to create pipeline state, error %s", *ErrorString);
+        // The archive layer has already logged the Metal error
         return false;
     }
 
-    RenderPipeline.SetPipelineState(PipelineState, Reflection);
+    RenderPipeline.SetPipelineState(CachedPipeline);
 
     if (!RenderPipeline.CreateStaticSamplers(Desc.StaticSamplers))
     {
         return false;
     }
 
-    STAT_ADD(STAT_Metal_PSOCreateCount, 1);
     STAT_ADD(STAT_Metal_NumGraphicsPipelineStates, 1);
     return true;
 }
@@ -903,22 +923,14 @@ FMetalComputePipelineStateRHI::FMetalComputePipelineStateRHI(FMetalDevice* InDev
     : FRHIComputePipelineState()
     , FMetalDeviceChild(InDevice)
     , Desc(InDesc)
-    , PipelineState(nil)
+    , Pipeline()
     , Bindings()
     , StaticSamplers()
     , ThreadsPerThreadgroup(MTLSizeMake(0, 0, 0))
 {
 }
 
-FMetalComputePipelineStateRHI::~FMetalComputePipelineStateRHI()
-{
-    if (PipelineState)
-    {
-        FMetalDeviceRHI::DeferDeletion(PipelineState);
-        [PipelineState release];
-        PipelineState = nil;
-    }
-}
+FMetalComputePipelineStateRHI::~FMetalComputePipelineStateRHI() = default;
 
 bool FMetalComputePipelineStateRHI::Initialize()
 {
@@ -944,17 +956,10 @@ bool FMetalComputePipelineStateRHI::Initialize()
     Descriptor.computeFunction = ComputeShader->GetMTLFunction();
     Descriptor.label           = PipelineDebugLabel(DebugName, @"ComputePSO");
 
-    NSError*                      Error      = nil;
-    MTLComputePipelineReflection* Reflection = nil;
-    PipelineState = [GetDevice()->GetMTLDevice() newComputePipelineStateWithDescriptor:Descriptor
-                                                                               options:MTLPipelineOptionBindingInfo
-                                                                            reflection:&Reflection
-                                                                                 error:&Error];
+    Pipeline = GetDevice()->GetPipelineCache().GetOrCreateComputePipeline(Descriptor.computeFunction, Descriptor);
 
-    if (PipelineState == nil)
+    if (!Pipeline)
     {
-        const String ErrorString([Error localizedDescription]);
-        METAL_ERROR("Failed to create compute pipeline state, error %s", *ErrorString);
         return false;
     }
 
@@ -963,14 +968,13 @@ bool FMetalComputePipelineStateRHI::Initialize()
         return false;
     }
 
-    Bindings.PruneToReflection(EShaderVisibility::Compute, Reflection ? Reflection.bindings : nil);
+    Bindings.PruneToReflection(EShaderVisibility::Compute, Pipeline->Reflection ? Pipeline->Reflection.bindings : nil);
 
     if (!CreateStaticSamplerBindings(StaticSamplers, Bindings, Desc.StaticSamplers))
     {
         return false;
     }
 
-    STAT_ADD(STAT_Metal_PSOCreateCount, 1);
     STAT_ADD(STAT_Metal_NumComputePipelineStates, 1);
     return true;
 }
@@ -987,7 +991,7 @@ void FMetalComputePipelineStateRHI::GetDebugName(String& OutDebugName) const
 
 void* FMetalComputePipelineStateRHI::GetRHINativeState() const
 {
-    return (__bridge void*)PipelineState;
+    return (__bridge void*)GetMTLPipelineState();
 }
 
 FMetalMeshletPipelineStateRHI::FMetalMeshletPipelineStateRHI(FMetalDevice* InDevice, const FRHIMeshletPipelineStateDesc& InDesc)
@@ -1085,28 +1089,22 @@ bool FMetalMeshletPipelineStateRHI::Initialize()
         Descriptor.maxVertexAmplificationCount = Desc.ViewInstancingState.NumArraySlices;
     }
 
-    NSError*                     Error      = nil;
-    MTLRenderPipelineReflection* Reflection = nil;
-    id<MTLRenderPipelineState>   PipelineState = [GetDevice()->GetMTLDevice() newRenderPipelineStateWithMeshDescriptor:Descriptor
-                                                                                                             options:MTLPipelineOptionBindingInfo
-                                                                                                          reflection:&Reflection
-                                                                                                               error:&Error];
+    const FMetalRenderPipelineKey Key = FMetalRenderPipelineKey::Create(Descriptor);
 
-    if (PipelineState == nil)
+    TSharedRef<FMetalCachedRenderPipeline> CachedPipeline = GetDevice()->GetPipelineCache().GetOrCreateMeshRenderPipeline(Key, Descriptor);
+
+    if (!CachedPipeline)
     {
-        const String ErrorString([Error localizedDescription]);
-        METAL_ERROR("Failed to create meshlet pipeline state, error %s", *ErrorString);
         return false;
     }
 
-    RenderPipeline.SetPipelineState(PipelineState, Reflection);
+    RenderPipeline.SetPipelineState(CachedPipeline);
 
     if (!RenderPipeline.CreateStaticSamplers(Desc.StaticSamplers))
     {
         return false;
     }
 
-    STAT_ADD(STAT_Metal_PSOCreateCount, 1);
     STAT_ADD(STAT_Metal_NumMeshletPipelineStates, 1);
     return true;
 }

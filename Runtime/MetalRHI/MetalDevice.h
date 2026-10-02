@@ -13,6 +13,9 @@ class FMetalDevice;
 class FMetalCommandContext;
 class FMetalResidencySet;
 class FMetalResidencyManager;
+class FMetalShaderLibraryCache;
+class FMetalPipelineCache;
+class FMetalBinaryArchive;
 class FMetalUploadHeapAllocator;
 class FMetalLinearAllocator;
 class FMetalBufferAllocator;
@@ -98,6 +101,9 @@ public:
 
     FMetalResidencySet&              GetResidencySet()              const { return *ResidencySet; }
     FMetalResidencyManager&          GetResidencyManager()          const { return *ResidencyManager; }
+    FMetalShaderLibraryCache&        GetShaderLibraryCache()        const { return *ShaderLibraryCache; }
+    FMetalPipelineCache&             GetPipelineCache()             const { return *PipelineCache; }
+    FMetalBinaryArchive&             GetBinaryArchive()             const { return *BinaryArchive; }
     FMetalBindlessDescriptorManager* GetBindlessDescriptorManager() const { return BindlessDescriptorManager; }
     FMetalLinearAllocator*           GetStagingBufferAllocator()    const { return StagingBufferAllocator; }
     FMetalLinearAllocator*           GetDynamicConstantsAllocator() const { return DynamicConstantsAllocator; }
@@ -145,6 +151,7 @@ private:
     bool CreateDevice();
     bool CreateCommandQueues();
     bool CreateDefaultResources();
+    bool CreatePipelineCaches();
     void QueryDeviceFeatureSupport();
 
 #if METAL_ENABLE_STATS
@@ -154,6 +161,9 @@ private:
 
     FMetalResidencySet*                                                     ResidencySet;
     FMetalResidencyManager*                                                 ResidencyManager;
+    FMetalShaderLibraryCache*                                               ShaderLibraryCache;
+    FMetalPipelineCache*                                                    PipelineCache;
+    FMetalBinaryArchive*                                                    BinaryArchive;
     FMetalBindlessDescriptorManager*                                        BindlessDescriptorManager;
     FMetalLinearAllocator*                                                  StagingBufferAllocator;
     FMetalLinearAllocator*                                                  DynamicConstantsAllocator;

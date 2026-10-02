@@ -4,6 +4,14 @@ STAT_DEFINE_COUNTER(STAT_Metal_PSOCreateCount,            "PSOs Created",       
 STAT_DEFINE_COUNTER(STAT_Metal_NumGraphicsPipelineStates, "Graphics PSOs Created", "Metal PSO");
 STAT_DEFINE_COUNTER(STAT_Metal_NumComputePipelineStates,  "Compute PSOs Created",  "Metal PSO");
 STAT_DEFINE_COUNTER(STAT_Metal_NumMeshletPipelineStates,  "Meshlet PSOs Created",  "Metal PSO");
+STAT_DEFINE_COUNTER(STAT_Metal_LibraryCacheHits,          "Library Cache Hits",    "Metal PSO");
+STAT_DEFINE_COUNTER(STAT_Metal_LibraryCacheMisses,        "Library Cache Misses",  "Metal PSO");
+STAT_DEFINE_COUNTER(STAT_Metal_PSOCacheHits,              "PSO Cache Hits",        "Metal PSO");
+STAT_DEFINE_COUNTER(STAT_Metal_PSOCacheMisses,            "PSO Cache Misses",      "Metal PSO");
+STAT_DEFINE_COUNTER(STAT_Metal_BinaryArchiveHits,         "Binary Archive Hits",   "Metal PSO");
+STAT_DEFINE_COUNTER(STAT_Metal_BinaryArchiveMisses,       "Binary Archive Misses", "Metal PSO");
+STAT_DEFINE_COUNTER(STAT_Metal_BinaryArchiveAdds,         "Binary Archive Adds",   "Metal PSO");
+STAT_DEFINE_MEMORY(STAT_Metal_BinaryArchiveSize,          "Binary Archive Size",   "Metal PSO");
 
 STAT_DEFINE_COUNTER(STAT_Metal_CommandBufferCount,   "Command Buffers Submitted", "Metal Commands");
 STAT_DEFINE_COUNTER(STAT_Metal_CommandBuffersAlive, "Command Buffers Alive",     "Metal Commands");
