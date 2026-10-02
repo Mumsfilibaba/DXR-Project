@@ -122,12 +122,16 @@ bool FD3D11DeviceRHI::InitializeDeviceFeatureSupport()
     // Buffer / Memory Limits
     // -------------------------------------------------------------------------------------------
 
-    RHI::MaxBufferSize              = uint64(D3D11_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_A_TERM) * 1024ull * 1024ull;
+    const uint64 DedicatedVideoMemoryInMegabytes = Memory::BytesToMegaBytes<uint64>(Adapter->GetAdapterDesc().DedicatedVideoMemory);
+    const uint64 VideoMemoryResourceSizeLimit    = static_cast<uint64>(DedicatedVideoMemoryInMegabytes * D3D11_RESOURCE_SIZE_VIDEO_MEMORY_SCALE);
+    const uint64 MaxResourceSizeInMegabytes      = Math::Max<uint64>(D3D11_MIN_RESOURCE_SIZE_IN_MEGABYTES, Math::Min<uint64>(VideoMemoryResourceSizeLimit, D3D11_MAX_RESOURCE_SIZE_IN_MEGABYTES));
+
+    RHI::MaxBufferSize              = Memory::MegaBytesToBytes(MaxResourceSizeInMegabytes);
     RHI::MaxConstantBufferSize      = D3D11_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * D3D11_CONSTANT_BUFFER_ELEMENT_SIZE;
-    RHI::MaxStorageBufferSize       = uint64(D3D11_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_A_TERM) * 1024ull * 1024ull;
-    RHI::StructuredBufferMinStride  = 4;
-    RHI::StructuredBufferMaxStride  = 2048;
-    RHI::RawBufferRequiredAlignment = 4;
+    RHI::MaxStorageBufferSize       = Memory::MegaBytesToBytes(MaxResourceSizeInMegabytes);
+    RHI::StructuredBufferMinStride  = D3D11_MIN_STRUCTURED_BUFFER_STRIDE;
+    RHI::StructuredBufferMaxStride  = D3D11_MAX_STRUCTURED_BUFFER_STRIDE;
+    RHI::RawBufferRequiredAlignment = D3D11_RAW_BUFFER_ALIGNMENT;
 
     // -------------------------------------------------------------------------------------------
     // Dynamic State / Query Support

@@ -22,6 +22,11 @@ public:
 
     String GetDescription() const { return WideToChar(WStringView(AdapterDesc.Description)); }
 
+    FORCEINLINE const DXGI_ADAPTER_DESC1& GetAdapterDesc() const
+    {
+        return AdapterDesc;
+    }
+
     FORCEINLINE uint32 GetAdapterIndex() const
     {
         return AdapterIndex;
