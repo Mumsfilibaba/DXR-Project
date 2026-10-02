@@ -129,10 +129,28 @@ public:
         return EffectiveDescriptorCounts[Stage][Type];
     }
 
+    ED3D12NullDescriptorType GetNullShaderResourceViewType(EShaderVisibility::Type Stage, uint32 Slot) const
+    {
+        return NullShaderResourceViewTypes[Stage][Slot];
+    }
+
+    ED3D12NullDescriptorType GetNullUnorderedAccessViewType(EShaderVisibility::Type Stage, uint32 Slot) const
+    {
+        return NullUnorderedAccessViewTypes[Stage][Slot];
+    }
+
+    bool HasSameNullDescriptorTypes(const FD3D12EffectiveDescriptorCounts& Other) const
+    {
+        return Memory::Memcmp(NullShaderResourceViewTypes, Other.NullShaderResourceViewTypes, sizeof(NullShaderResourceViewTypes)) == 0 &&
+            Memory::Memcmp(NullUnorderedAccessViewTypes, Other.NullUnorderedAccessViewTypes, sizeof(NullUnorderedAccessViewTypes)) == 0;
+    }
+
 protected:
     void ComputeEffectiveDescriptorCounts(const FD3D12RootSignature* RootSignature, FD3D12Shader* const* Shaders, uint32 NumShaders);
 
-    uint8 EffectiveDescriptorCounts[EShaderVisibility::Count][EResourceType::Count] = {};
+    uint8                    EffectiveDescriptorCounts[EShaderVisibility::Count][EResourceType::Count] = {};
+    ED3D12NullDescriptorType NullShaderResourceViewTypes[EShaderVisibility::Count][D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT] = {};
+    ED3D12NullDescriptorType NullUnorderedAccessViewTypes[EShaderVisibility::Count][D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT] = {};
 };
 
 class FD3D12PipelineState : public FD3D12DeviceChild, public FD3D12EffectiveDescriptorCounts

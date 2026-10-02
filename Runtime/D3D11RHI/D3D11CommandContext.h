@@ -3,6 +3,8 @@
 #include "D3D11RHI/D3D11CommandContextState.h"
 #include "D3D11RHI/D3D11DeviceChild.h"
 
+class FD3D11TextureRHI;
+
 class FD3D11CommandContext : public IRHICommandContext, public FD3D11DeviceChild
 {
 public:
@@ -116,6 +118,30 @@ public:
     virtual void ExecuteIndirectRayTracingAccelerationStructureOperations(const FRHIRayTracingAccelerationStructureOperationDesc*, uint32) override final { }
 
 private:
+    struct FD3D11ReadbackTexture
+    {
+        TComPtr<ID3D11Resource> Texture;
+        TComPtr<ID3D11Resource> Source;
+        uint32                  Subresource;
+    };
+
+    struct FD3D11PendingReadback
+    {
+        FD3D11BufferRHIRef Destination;
+        uint64             DestinationOffset;
+        uint64             CopySize;
+        D3D11_BOX          Box;
+        uint32             BytesPerPixel;
+        uint32             RowPitch;
+        int32              ReadbackTextureIndex;
+    };
+
+    void  CopyTextureToBuffer(FD3D11BufferRHI* Dst, uint64 DstOffset, FD3D11TextureRHI* Src, uint32 SrcSubresource, const D3D11_BOX& SrcBox);
+    int32 ObtainReadbackTexture(ID3D11Resource* Source, uint32 Subresource);
+    void  ResolvePendingReadbacks();
+
     FD3D11CommandContextState          ContextState;
     TComPtr<ID3DUserDefinedAnnotation> Annotation;
+    TArray<FD3D11ReadbackTexture>      ReadbackTextures;
+    TArray<FD3D11PendingReadback>      PendingReadbacks;
 };

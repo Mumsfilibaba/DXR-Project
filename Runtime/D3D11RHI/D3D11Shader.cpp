@@ -94,10 +94,20 @@ bool FD3D11Shader::GetShaderResourceBindings(ID3D11ShaderReflection* Reflection,
         else if (IsShaderResourceView(ShaderBindDesc.Type))
         {
             NewBindingInfo.AddBinding(ED3D11BindingType::SRV, Register, Count, ShaderBindDesc.Name);
+
+            for (uint32 Slot = Register; Slot < Math::Min<uint32>(Register + Count, D3D11_MAX_SHADER_RESOURCE_VIEWS); ++Slot)
+            {
+                NewBindingInfo.ShaderResourceViewDimensions[Slot] = ShaderBindDesc.Dimension;
+            }
         }
         else if (IsUnorderedAccessView(ShaderBindDesc.Type))
         {
             NewBindingInfo.AddBinding(ED3D11BindingType::UAV, Register, Count, ShaderBindDesc.Name);
+
+            for (uint32 Slot = Register; Slot < Math::Min<uint32>(Register + Count, D3D11_MAX_UNORDERED_ACCESS_VIEWS); ++Slot)
+            {
+                NewBindingInfo.UnorderedAccessViewDeclared[Slot] = true;
+            }
         }
         else
         {

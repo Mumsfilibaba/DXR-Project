@@ -68,6 +68,12 @@ struct FD3D11ShaderBindingInfo
 
     TArray<FResourceBinding> ResourceBindings;
 
+    /** The view dimension the shader declares for each SRV register, D3D_SRV_DIMENSION_UNKNOWN when the register is unused */
+    D3D_SRV_DIMENSION ShaderResourceViewDimensions[D3D11_MAX_SHADER_RESOURCE_VIEWS] = {};
+
+    /** Whether the shader declares each UAV register */
+    bool UnorderedAccessViewDeclared[D3D11_MAX_UNORDERED_ACCESS_VIEWS] = {};
+
     /** The slot FXC gave the Constants_CB cbuffer, or -1 when the shader has no shader constants */
     int32 ShaderConstantsSlot = -1;
 

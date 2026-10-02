@@ -3,8 +3,44 @@
 #include "Core/Templates/TypeTraits.h"
 #include "D3D12RHI/D3D12DescriptorCache.h"
 #include "D3D12RHI/D3D12Descriptors.h"
+#include "D3D12RHI/D3D12PipelineState.h"
 #include "D3D12RHI/D3D12RHI.h"
 #include "D3D12RHI/D3D12CommandContext.h"
+
+static D3D12_SRV_DIMENSION GetShaderResourceViewDimension(ED3D12NullDescriptorType NullDescriptorType)
+{
+    switch (NullDescriptorType)
+    {
+        case ED3D12NullDescriptorType::Texture1D:             return D3D12_SRV_DIMENSION_TEXTURE1D;
+        case ED3D12NullDescriptorType::Texture1DArray:        return D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
+        case ED3D12NullDescriptorType::Texture2DArray:        return D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+        case ED3D12NullDescriptorType::Texture2DMS:           return D3D12_SRV_DIMENSION_TEXTURE2DMS;
+        case ED3D12NullDescriptorType::Texture2DMSArray:      return D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
+        case ED3D12NullDescriptorType::Texture3D:             return D3D12_SRV_DIMENSION_TEXTURE3D;
+        case ED3D12NullDescriptorType::TextureCube:           return D3D12_SRV_DIMENSION_TEXTURECUBE;
+        case ED3D12NullDescriptorType::TextureCubeArray:      return D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
+        case ED3D12NullDescriptorType::TypedBuffer:
+        case ED3D12NullDescriptorType::RawBuffer:
+        case ED3D12NullDescriptorType::StructuredBuffer:      return D3D12_SRV_DIMENSION_BUFFER;
+        case ED3D12NullDescriptorType::AccelerationStructure: return D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+        default:                                              return D3D12_SRV_DIMENSION_TEXTURE2D;
+    }
+}
+
+static D3D12_UAV_DIMENSION GetUnorderedAccessViewDimension(ED3D12NullDescriptorType NullDescriptorType)
+{
+    switch (NullDescriptorType)
+    {
+        case ED3D12NullDescriptorType::Texture1D:        return D3D12_UAV_DIMENSION_TEXTURE1D;
+        case ED3D12NullDescriptorType::Texture1DArray:   return D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
+        case ED3D12NullDescriptorType::Texture2DArray:   return D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+        case ED3D12NullDescriptorType::Texture3D:        return D3D12_UAV_DIMENSION_TEXTURE3D;
+        case ED3D12NullDescriptorType::TypedBuffer:
+        case ED3D12NullDescriptorType::RawBuffer:
+        case ED3D12NullDescriptorType::StructuredBuffer: return D3D12_UAV_DIMENSION_BUFFER;
+        default:                                         return D3D12_UAV_DIMENSION_TEXTURE2D;
+    }
+}
 
 static TAutoConsoleVariable<int32> CVarSamplerDescriptorCacheSize(
     "D3D12RHI.SamplerDescriptorCacheSize",
@@ -326,7 +362,7 @@ void FD3D12DescriptorCache::BindCBVs(FD3D12RootSignature* RootSignature, EShader
     }
 }
 
-void FD3D12DescriptorCache::PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage, uint32 NumSRVs, uint32& DescriptorHandleOffset)
+void FD3D12DescriptorCache::PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12RootSignature* RootSignature, const FD3D12EffectiveDescriptorCounts* PipelineState, EShaderVisibility::Type ShaderStage, uint32 NumSRVs, uint32& DescriptorHandleOffset)
 {
     int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::SRV);
     if (ParameterIndex < 0)
@@ -358,7 +394,15 @@ void FD3D12DescriptorCache::PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD
         const uint16 Register = Mapping.GetRegisterForSlot(static_cast<uint8>(Slot));
         CHECK(Register < D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
 
-        if (FD3D12ShaderResourceViewRHI* ShaderResourceView = SRVCache[Register])
+        const ED3D12NullDescriptorType NullDescriptorType = PipelineState ? PipelineState->GetNullShaderResourceViewType(ShaderStage, Slot) : ED3D12NullDescriptorType::Texture2D;
+
+        FD3D12ShaderResourceViewRHI* ShaderResourceView = SRVCache[Register];
+        if (ShaderResourceView && PipelineState && ShaderResourceView->GetD3D12Desc().ViewDimension != GetShaderResourceViewDimension(NullDescriptorType))
+        {
+            ShaderResourceView = nullptr;
+        }
+
+        if (ShaderResourceView)
         {
             OfflineHandles[Slot] = ShaderResourceView->GetOfflineHandle();
             Context.GetCommandList().UpdateResidency(ShaderResourceView->GetResourceResidencyHandle());
@@ -374,7 +418,7 @@ void FD3D12DescriptorCache::PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD
         }
         else
         {
-            OfflineHandles[Slot] = DefaultDescriptors.DefaultSRV->GetOfflineHandle();
+            OfflineHandles[Slot] = DefaultDescriptors.GetNullShaderResourceView(NullDescriptorType)->GetOfflineHandle();
 
         #if D3D12_ENABLE_DESCRIPTOR_TABLE_VALIDATION
             if (bValidate)
@@ -432,7 +476,7 @@ void FD3D12DescriptorCache::BindSRVs(FD3D12RootSignature* RootSignature, EShader
     }
 }
 
-void FD3D12DescriptorCache::PrepareUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage, uint32 NumUAVs, uint32& DescriptorHandleOffset)
+void FD3D12DescriptorCache::PrepareUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D12RootSignature* RootSignature, const FD3D12EffectiveDescriptorCounts* PipelineState, EShaderVisibility::Type ShaderStage, uint32 NumUAVs, uint32& DescriptorHandleOffset)
 {
     int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::UAV);
     if (ParameterIndex < 0)
@@ -460,14 +504,23 @@ void FD3D12DescriptorCache::PrepareUAVs(FD3D12UnorderedAccessViewCache& Cache, F
         const uint16 Register = Mapping.GetRegisterForSlot(static_cast<uint8>(Slot));
         CHECK(Register < D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
 
-        if (FD3D12UnorderedAccessViewRHI* UnorderedAccessView = UAVCache[Register])
+        const ED3D12NullDescriptorType NullDescriptorType = PipelineState ? PipelineState->GetNullUnorderedAccessViewType(ShaderStage, Slot) : ED3D12NullDescriptorType::Texture2D;
+
+        FD3D12UnorderedAccessViewRHI* UnorderedAccessView = UAVCache[Register];
+        if (UnorderedAccessView && PipelineState && UnorderedAccessView->GetViewType() == ED3D12UnorderedAccessViewType::Standard &&
+            UnorderedAccessView->GetD3D12Desc().ViewDimension != GetUnorderedAccessViewDimension(NullDescriptorType))
+        {
+            UnorderedAccessView = nullptr;
+        }
+
+        if (UnorderedAccessView)
         {
             OfflineHandles[Slot] = UnorderedAccessView->GetOfflineHandle();
             Context.GetCommandList().UpdateResidency(UnorderedAccessView->GetResourceResidencyHandle());
         }
         else
         {
-            OfflineHandles[Slot] = DefaultDescriptors.DefaultUAV->GetOfflineHandle();
+            OfflineHandles[Slot] = DefaultDescriptors.GetNullUnorderedAccessView(NullDescriptorType)->GetOfflineHandle();
         }
     }
 

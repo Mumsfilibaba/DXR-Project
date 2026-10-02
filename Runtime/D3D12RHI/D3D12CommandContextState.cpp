@@ -918,7 +918,7 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
         {
             if (CommonState.ShaderResourceViewCache.IsResourcesDirty(CurrentStage) || GD3D12ForceBinding)
             {
-                CommonState.DescriptorCache.PrepareSRVs(CommonState.ShaderResourceViewCache, RootSignature, CurrentStage, NumSRVs[CurrentStage], DescriptorHandleOffset);
+                CommonState.DescriptorCache.PrepareSRVs(CommonState.ShaderResourceViewCache, RootSignature, PipelineState, CurrentStage, NumSRVs[CurrentStage], DescriptorHandleOffset);
                 CHECK(DescriptorHandleOffset <= StartHandleOffset + NumResourceDescriptors);
             }
         }
@@ -930,7 +930,7 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
         {
             if (CommonState.UnorderedAccessViewCache.IsResourcesDirty(CurrentStage) || GD3D12ForceBinding)
             {
-                CommonState.DescriptorCache.PrepareUAVs(CommonState.UnorderedAccessViewCache, RootSignature, CurrentStage, NumUAVs[CurrentStage], DescriptorHandleOffset);
+                CommonState.DescriptorCache.PrepareUAVs(CommonState.UnorderedAccessViewCache, RootSignature, PipelineState, CurrentStage, NumUAVs[CurrentStage], DescriptorHandleOffset);
                 CHECK(DescriptorHandleOffset <= StartHandleOffset + NumResourceDescriptors);
             }
         }
@@ -1189,6 +1189,10 @@ void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineS
         {
             DirtyAllResources();
         }
+        else
+        {
+            DirtyResourcesForNullDescriptorTypes(CurrentGraphicsPipelineState, InGraphicsPipelineState);
+        }
 
         const D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology = InGraphicsPipelineState ? 
             InGraphicsPipelineState->GetD3D12PrimitiveTopology() : 
@@ -1255,6 +1259,10 @@ void FD3D12CommandContextState::SetComputePipelineState(FD3D12ComputePipelineSta
         {
             DirtyAllResources();
         }
+        else
+        {
+            DirtyResourcesForNullDescriptorTypes(CurrentComputePipelineState, InComputePipelineState);
+        }
 
         ComputeState.PipelineState      = MakeSharedRef<FD3D12ComputePipelineStateRHI>(InComputePipelineState);
         ComputeState.bBindPipelineState = true;
@@ -1275,6 +1283,10 @@ void FD3D12CommandContextState::SetRayTracingPipelineState(FD3D12RayTracingPipel
         if (CurrentRootSignature != RootSignature)
         {
             DirtyAllResources();
+        }
+        else
+        {
+            DirtyResourcesForNullDescriptorTypes(CurrentRayTracingPipelineState, InRayTracingPipelineState);
         }
 
         RayTracingState.PipelineState = MakeSharedRef<FD3D12RayTracingPipelineStateRHI>(InRayTracingPipelineState);
@@ -1297,6 +1309,10 @@ void FD3D12CommandContextState::SetMeshletPipelineState(FD3D12MeshletPipelineSta
         if (CurrentRootSignature != RootSignature)
         {
             DirtyAllResources();
+        }
+        else
+        {
+            DirtyResourcesForNullDescriptorTypes(CurrentMeshletPipelineState, InMeshletPipelineState);
         }
 
         MeshletState.PipelineState      = MakeSharedRef<FD3D12MeshletPipelineStateRHI>(InMeshletPipelineState);
@@ -1704,6 +1720,15 @@ void FD3D12CommandContextState::DirtyShaderConstants(EShaderConstantsPipeline::T
         break;
     default:
         break;
+    }
+}
+
+void FD3D12CommandContextState::DirtyResourcesForNullDescriptorTypes(const FD3D12EffectiveDescriptorCounts* CurrentPipelineState, const FD3D12EffectiveDescriptorCounts* NewPipelineState)
+{
+    if (CurrentPipelineState && NewPipelineState && !NewPipelineState->HasSameNullDescriptorTypes(*CurrentPipelineState))
+    {
+        CommonState.ShaderResourceViewCache.DirtyResourcesAll();
+        CommonState.UnorderedAccessViewCache.DirtyResourcesAll();
     }
 }
 

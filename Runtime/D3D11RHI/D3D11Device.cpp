@@ -240,6 +240,16 @@ void FD3D11Device::SetupDebugMessages()
         return;
     }
 
+    D3D11_MESSAGE_ID DeniedMessages[] =
+    {
+        D3D11_MESSAGE_ID_DEVICE_UNORDEREDACCESSVIEW_RETURN_TYPE_MISMATCH,
+    };
+
+    D3D11_INFO_QUEUE_FILTER Filter = {};
+    Filter.DenyList.NumIDs  = ARRAY_COUNT(DeniedMessages);
+    Filter.DenyList.pIDList = DeniedMessages;
+    InfoQueue->AddStorageFilterEntries(&Filter);
+
     InfoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, CVarBreakOnError.GetValue());
     InfoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, CVarBreakOnError.GetValue());
     InfoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, CVarBreakOnWarning.GetValue());

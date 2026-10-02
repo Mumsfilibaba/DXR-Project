@@ -241,16 +241,35 @@ static uint16 ComputeEffectiveRegister(uint32 OriginalSet, uint32 RawBinding)
 
 static EVulkanNullImageViewType GetNullImageViewType(spvc_compiler Compiler, spvc_type_id TypeId)
 {
-    const spvc_type Type      = spvc_compiler_get_type_handle(Compiler, TypeId);
-    const SpvDim    Dimension = spvc_type_get_image_dimension(Type);
-    const bool      bArrayed  = spvc_type_get_image_arrayed(Type) != SPVC_FALSE;
+    const spvc_type Type          = spvc_compiler_get_type_handle(Compiler, TypeId);
+    const SpvDim    Dimension     = spvc_type_get_image_dimension(Type);
+    const bool      bArrayed      = spvc_type_get_image_arrayed(Type) != SPVC_FALSE;
+    const bool      bMultisampled = spvc_type_get_image_multisampled(Type) != SPVC_FALSE;
 
-    if (Dimension == SpvDimCube)
+    switch (Dimension)
     {
-        return bArrayed ? EVulkanNullImageViewType::TextureCubeArray : EVulkanNullImageViewType::TextureCube;
-    }
+        case SpvDim1D:
+        {
+            return bArrayed ? EVulkanNullImageViewType::Texture1DArray : EVulkanNullImageViewType::Texture1D;
+        }
+        case SpvDim3D:
+        {
+            return EVulkanNullImageViewType::Texture3D;
+        }
+        case SpvDimCube:
+        {
+            return bArrayed ? EVulkanNullImageViewType::TextureCubeArray : EVulkanNullImageViewType::TextureCube;
+        }
+        default:
+        {
+            if (bMultisampled)
+            {
+                return bArrayed ? EVulkanNullImageViewType::Texture2DMSArray : EVulkanNullImageViewType::Texture2DMS;
+            }
 
-    return bArrayed ? EVulkanNullImageViewType::Texture2DArray : EVulkanNullImageViewType::Texture2D;
+            return bArrayed ? EVulkanNullImageViewType::Texture2DArray : EVulkanNullImageViewType::Texture2D;
+        }
+    }
 }
 
 // Buffer<T> and RWBuffer<T> reflect as images. Only the dimension separates them from a texture.

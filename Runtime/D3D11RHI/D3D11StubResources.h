@@ -35,17 +35,4 @@ private:
     String DebugName;
 };
 
-template<typename BasePipelineType>
-class TD3D11StubPipelineStateRHI final : public BasePipelineType
-{
-public:
-    virtual void* GetRHINativeState() const override final { return nullptr; }
-
-    virtual void SetDebugName(const String& InDebugName) override final { DebugName = InDebugName; }
-    virtual void GetDebugName(String& OutDebugName) const override final { OutDebugName = DebugName; }
-
-private:
-    String DebugName;
-};
-
 ENABLE_UNREFERENCED_VARIABLE_WARNING

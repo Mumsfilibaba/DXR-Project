@@ -357,6 +357,24 @@ NODISCARD inline FRHIDepthStencilViewDesc GetDefaultDepthStencilViewDescForTextu
     return FRHIDepthStencilViewDesc{};
 }
 
+enum class ED3D12NullDescriptorType : uint8
+{
+    Texture2D = 0,
+    Texture1D,
+    Texture1DArray,
+    Texture2DArray,
+    Texture2DMS,
+    Texture2DMSArray,
+    Texture3D,
+    TextureCube,
+    TextureCubeArray,
+    TypedBuffer,
+    RawBuffer,
+    StructuredBuffer,
+    AccelerationStructure,
+    Count
+};
+
 enum class ED3D12CommandQueueType : uint8
 {
     Direct  = 0,

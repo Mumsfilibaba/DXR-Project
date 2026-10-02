@@ -1089,7 +1089,13 @@ FRHIGraphicsPipelineState* FD3D11DeviceRHI::CreateGraphicsPipelineState(const FR
 
 FRHIComputePipelineState* FD3D11DeviceRHI::CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)
 {
-    return new TD3D11StubPipelineStateRHI<FRHIComputePipelineState>();
+    FD3D11ComputePipelineStateRHIRef NewPipelineState = new FD3D11ComputePipelineStateRHI(GetDevice());
+    if (!NewPipelineState->Initialize(InDesc))
+    {
+        return nullptr;
+    }
+
+    return NewPipelineState.ReleaseOwnership();
 }
 
 IRHICommandContext* FD3D11DeviceRHI::ObtainCommandContext()

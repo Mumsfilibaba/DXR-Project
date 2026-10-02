@@ -190,6 +190,7 @@ private:
     void InternalSetRootSignature(FD3D12RootSignature* InRootSignature, bool bIsCompute);
 
     void DirtyAllResources();
+    void DirtyResourcesForNullDescriptorTypes(const FD3D12EffectiveDescriptorCounts* CurrentPipelineState, const FD3D12EffectiveDescriptorCounts* NewPipelineState);
 
     void AccumulateSRVReadStates(FD3D12RootSignature* InRootSignature, const uint32* NumSRVs, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
 

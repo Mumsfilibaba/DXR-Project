@@ -194,6 +194,8 @@ FD3D12PipelineState::~FD3D12PipelineState()
 void FD3D12EffectiveDescriptorCounts::ComputeEffectiveDescriptorCounts(const FD3D12RootSignature* RootSignature, FD3D12Shader* const* Shaders, uint32 NumShaders)
 {
     Memory::Memzero(EffectiveDescriptorCounts, sizeof(EffectiveDescriptorCounts));
+    Memory::Memzero(NullShaderResourceViewTypes, sizeof(NullShaderResourceViewTypes));
+    Memory::Memzero(NullUnorderedAccessViewTypes, sizeof(NullUnorderedAccessViewTypes));
 
     if (!RootSignature)
     {
@@ -225,6 +227,15 @@ void FD3D12EffectiveDescriptorCounts::ComputeEffectiveDescriptorCounts(const FD3
             if (Slot >= 0)
             {
                 EffectiveDescriptorCounts[Stage][ResourceType] = Math::Max<uint8>(EffectiveDescriptorCounts[Stage][ResourceType], static_cast<uint8>(Slot) + 1);
+
+                if (ResourceType == EResourceType::SRV && Slot < D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT)
+                {
+                    NullShaderResourceViewTypes[Stage][Slot] = Binding.NullDescriptorType;
+                }
+                else if (ResourceType == EResourceType::UAV && Slot < D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT)
+                {
+                    NullUnorderedAccessViewTypes[Stage][Slot] = Binding.NullDescriptorType;
+                }
             }
         }
     }

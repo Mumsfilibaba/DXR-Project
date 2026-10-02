@@ -317,3 +317,49 @@ bool FD3D11GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
     SampleMask        = Desc.MultiSampleState.SampleMask;
     return true;
 }
+
+FD3D11ComputePipelineStateRHI::FD3D11ComputePipelineStateRHI(FD3D11Device* InDevice)
+    : FRHIComputePipelineState()
+    , FD3D11DeviceChild(InDevice)
+    , Shader(nullptr)
+    , StaticSamplers()
+    , DebugName()
+{
+}
+
+FD3D11ComputePipelineStateRHI::~FD3D11ComputePipelineStateRHI() = default;
+
+void FD3D11ComputePipelineStateRHI::SetDebugName(const String& InName)
+{
+    DebugName = InName;
+}
+
+void FD3D11ComputePipelineStateRHI::GetDebugName(String& OutDebugName) const
+{
+    OutDebugName = DebugName;
+}
+
+bool FD3D11ComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDesc& Desc)
+{
+    Shader = MakeSharedRef<FD3D11ComputeShaderRHI>(FD3D11DeviceRHI::ResourceCast(Desc.Shader));
+    if (!Shader)
+    {
+        D3D11_ERROR_CRITICAL("ComputeShader cannot be nullptr");
+        return false;
+    }
+
+    for (const FRHIStaticSamplerInfo& StaticSamplerInfo : Desc.StaticSamplers)
+    {
+        FD3D11StaticSampler& StaticSampler = StaticSamplers.Emplace();
+        StaticSampler.Visibility = EShaderVisibility::Compute;
+        StaticSampler.Register   = StaticSamplerInfo.ShaderRegister;
+
+        if (!GetDevice()->FindOrCreateSamplerState(StaticSamplerInfo, StaticSampler.Sampler))
+        {
+            D3D11_ERROR("[FD3D11ComputePipelineStateRHI]: Failed to create static sampler for register s%u", StaticSamplerInfo.ShaderRegister);
+            return false;
+        }
+    }
+
+    return true;
+}

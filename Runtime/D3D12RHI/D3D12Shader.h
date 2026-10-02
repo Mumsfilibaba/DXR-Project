@@ -198,14 +198,15 @@ struct FD3D12ShaderBindingInfo
 {   
     struct FResourceBinding
     {
-        ED3D12BindingType BindingType;
-        uint8             BindingIndex;
-        uint16            OriginalBindingIndex;
-        String            DebugName;
-        bool              bIsTexture = false;
+        ED3D12BindingType        BindingType          = ED3D12BindingType::ConstantBuffer;
+        uint8                    BindingIndex         = 0;
+        uint16                   OriginalBindingIndex = 0;
+        String                   DebugName;
+        bool                     bIsTexture           = false;
+        ED3D12NullDescriptorType NullDescriptorType   = ED3D12NullDescriptorType::Texture2D;
     };
     
-    void AddBinding(ED3D12BindingType InType, uint16 InOriginalBindingIndex, const String& InDebugName, bool bInIsTexture = false)
+    void AddBinding(ED3D12BindingType InType, uint16 InOriginalBindingIndex, const String& InDebugName, bool bInIsTexture = false, ED3D12NullDescriptorType InNullDescriptorType = ED3D12NullDescriptorType::Texture2D)
     {
         FResourceBinding& Binding    = ResourceBindings.Emplace();
         Binding.BindingType          = InType;
@@ -213,6 +214,7 @@ struct FD3D12ShaderBindingInfo
         Binding.OriginalBindingIndex = InOriginalBindingIndex;
         Binding.DebugName            = InDebugName;
         Binding.bIsTexture           = bInIsTexture;
+        Binding.NullDescriptorType   = InNullDescriptorType;
     }
 
     TArray<FResourceBinding> ResourceBindings;

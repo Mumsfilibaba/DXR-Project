@@ -49,6 +49,43 @@ static bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindD
     return false;
 }
 
+static ED3D12NullDescriptorType GetNullDescriptorType(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindDesc)
+{
+    switch (ShaderBindDesc.Type)
+    {
+        case D3D_SIT_STRUCTURED:
+        case D3D_SIT_UAV_RWSTRUCTURED:
+        case D3D_SIT_UAV_APPEND_STRUCTURED:
+        case D3D_SIT_UAV_CONSUME_STRUCTURED:
+        case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
+            return ED3D12NullDescriptorType::StructuredBuffer;
+
+        case D3D_SIT_BYTEADDRESS:
+        case D3D_SIT_UAV_RWBYTEADDRESS:
+            return ED3D12NullDescriptorType::RawBuffer;
+
+        case D3D_SIT_RTACCELERATIONSTRUCTURE:
+            return ED3D12NullDescriptorType::AccelerationStructure;
+
+        default:
+            break;
+    }
+
+    switch (ShaderBindDesc.Dimension)
+    {
+        case D3D_SRV_DIMENSION_BUFFER:           return ED3D12NullDescriptorType::TypedBuffer;
+        case D3D_SRV_DIMENSION_TEXTURE1D:        return ED3D12NullDescriptorType::Texture1D;
+        case D3D_SRV_DIMENSION_TEXTURE1DARRAY:   return ED3D12NullDescriptorType::Texture1DArray;
+        case D3D_SRV_DIMENSION_TEXTURE2DARRAY:   return ED3D12NullDescriptorType::Texture2DArray;
+        case D3D_SRV_DIMENSION_TEXTURE2DMS:      return ED3D12NullDescriptorType::Texture2DMS;
+        case D3D_SRV_DIMENSION_TEXTURE2DMSARRAY: return ED3D12NullDescriptorType::Texture2DMSArray;
+        case D3D_SRV_DIMENSION_TEXTURE3D:        return ED3D12NullDescriptorType::Texture3D;
+        case D3D_SRV_DIMENSION_TEXTURECUBE:      return ED3D12NullDescriptorType::TextureCube;
+        case D3D_SRV_DIMENSION_TEXTURECUBEARRAY: return ED3D12NullDescriptorType::TextureCubeArray;
+        default:                                 return ED3D12NullDescriptorType::Texture2D;
+    }
+}
+
 static bool ValidatePushConstantBinding(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindDesc, uint32 SizeInBytes, uint32 ExistingNumPushConstants, uint32& OutNumPushConstants)
 {
     constexpr uint32 BytesPerConstant = sizeof(uint32);
@@ -699,11 +736,11 @@ bool FD3D12Shader::GetShaderResourceBindings(ID3D12ShaderReflection* Reflection,
         }
         else if (IsShaderResourceView(ShaderBindDesc.Type))
         {
-            NewBindingInfo.AddBinding(ED3D12BindingType::SRV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+            NewBindingInfo.AddBinding(ED3D12BindingType::SRV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name, false, GetNullDescriptorType(ShaderBindDesc));
         }
         else if (IsUnorderedAccessView(ShaderBindDesc.Type))
         {
-            NewBindingInfo.AddBinding(ED3D12BindingType::UAV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+            NewBindingInfo.AddBinding(ED3D12BindingType::UAV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name, false, GetNullDescriptorType(ShaderBindDesc));
         }
         else
         {
@@ -785,11 +822,11 @@ bool FD3D12RayTracingShader::GetShaderResourceBindings(ID3D12FunctionReflection*
             if (bIsLocalSpace)
             {
                 const bool bIsTexture = !IsBufferSRV(ShaderBindDesc.Type);
-                NewLocalBindingInfo.AddBinding(ED3D12BindingType::SRV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name, bIsTexture);
+                NewLocalBindingInfo.AddBinding(ED3D12BindingType::SRV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name, bIsTexture, GetNullDescriptorType(ShaderBindDesc));
             }
             else
             {
-                NewBindingInfo.AddBinding(ED3D12BindingType::SRV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+                NewBindingInfo.AddBinding(ED3D12BindingType::SRV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name, false, GetNullDescriptorType(ShaderBindDesc));
             }
         }
         else if (IsUnorderedAccessView(ShaderBindDesc.Type))
@@ -802,11 +839,11 @@ bool FD3D12RayTracingShader::GetShaderResourceBindings(ID3D12FunctionReflection*
                     return false;
                 }
 
-                NewLocalBindingInfo.AddBinding(ED3D12BindingType::UAV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+                NewLocalBindingInfo.AddBinding(ED3D12BindingType::UAV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name, false, GetNullDescriptorType(ShaderBindDesc));
             }
             else
             {
-                NewBindingInfo.AddBinding(ED3D12BindingType::UAV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+                NewBindingInfo.AddBinding(ED3D12BindingType::UAV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name, false, GetNullDescriptorType(ShaderBindDesc));
             }
         }
     }

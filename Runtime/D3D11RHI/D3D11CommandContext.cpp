@@ -14,11 +14,28 @@ static UINT GetDepthStencilClearFlags(ID3D11DepthStencilView* View)
     return D3D11_CLEAR_DEPTH | (IsStencilFormat(ViewDesc.Format) ? D3D11_CLEAR_STENCIL : 0);
 }
 
+static bool BoxesOverlap(const D3D11_BOX& First, const D3D11_BOX& Second)
+{
+    return First.left < Second.right && Second.left < First.right && First.top < Second.bottom && Second.top < First.bottom && First.front < Second.back && Second.front < First.back;
+}
+
+static void ReportGraphicsUnorderedAccessViews()
+{
+    static bool bReported = false;
+    if (!bReported)
+    {
+        D3D11_ERROR("[FD3D11CommandContext]: D3D11RHI does not support UnorderedAccessViews in graphics shaders yet");
+        bReported = true;
+    }
+}
+
 FD3D11CommandContext::FD3D11CommandContext(FD3D11Device* InDevice)
     : IRHICommandContext()
     , FD3D11DeviceChild(InDevice)
     , ContextState(InDevice, *this)
     , Annotation(nullptr)
+    , ReadbackTextures()
+    , PendingReadbacks()
 {
 }
 
@@ -54,6 +71,7 @@ void FD3D11CommandContext::StartContext()
 
 void FD3D11CommandContext::FinishContext()
 {
+    ResolvePendingReadbacks();
 }
 
 void FD3D11CommandContext::BeginQuery(FRHIQuery* Query)
@@ -90,10 +108,18 @@ void FD3D11CommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthSten
 
 void FD3D11CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const Vector4& ClearColor)
 {
+    FD3D11UnorderedAccessViewRHI* D3D11UnorderedAccessView = FD3D11DeviceRHI::ResourceCast(UnorderedAccessView);
+    CHECK(D3D11UnorderedAccessView != nullptr);
+
+    GetD3D11Context()->ClearUnorderedAccessViewFloat(D3D11UnorderedAccessView->GetD3D11View(), ClearColor.XYZW);
 }
 
 void FD3D11CommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView* UnorderedAccessView, const uint32 Values[4])
 {
+    FD3D11UnorderedAccessViewRHI* D3D11UnorderedAccessView = FD3D11DeviceRHI::ResourceCast(UnorderedAccessView);
+    CHECK(D3D11UnorderedAccessView != nullptr);
+
+    GetD3D11Context()->ClearUnorderedAccessViewUint(D3D11UnorderedAccessView->GetD3D11View(), Values);
 }
 
 void FD3D11CommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginRenderPassDesc)
@@ -216,6 +242,8 @@ void FD3D11CommandContext::SetGraphicsPipelineState(FRHIGraphicsPipelineState* P
 
 void FD3D11CommandContext::SetComputePipelineState(FRHIComputePipelineState* PipelineState)
 {
+    FD3D11ComputePipelineStateRHI* ComputePipelineState = FD3D11DeviceRHI::ResourceCast(PipelineState);
+    ContextState.SetComputePipelineState(ComputePipelineState);
 }
 
 void FD3D11CommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
@@ -252,10 +280,38 @@ void FD3D11CommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArr
 
 void FD3D11CommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 RegisterIndex)
 {
+    FD3D11Shader* D3D11Shader = GetD3D11Shader(Shader);
+    CHECK(D3D11Shader != nullptr);
+
+    if (D3D11Shader->GetShaderVisibility() != EShaderVisibility::Compute)
+    {
+        ReportGraphicsUnorderedAccessViews();
+        return;
+    }
+
+    FD3D11UnorderedAccessViewRHI* D3D11UnorderedAccessView = FD3D11DeviceRHI::ResourceCast(UnorderedAccessView);
+
+    CHECK(RegisterIndex < D3D11_MAX_UNORDERED_ACCESS_VIEWS);
+    ContextState.SetUAV(D3D11UnorderedAccessView, RegisterIndex);
 }
 
 void FD3D11CommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 RegisterIndex)
 {
+    FD3D11Shader* D3D11Shader = GetD3D11Shader(Shader);
+    CHECK(D3D11Shader != nullptr);
+
+    if (D3D11Shader->GetShaderVisibility() != EShaderVisibility::Compute)
+    {
+        ReportGraphicsUnorderedAccessViews();
+        return;
+    }
+
+    CHECK(RegisterIndex + InUnorderedAccessViews.Size() <= D3D11_MAX_UNORDERED_ACCESS_VIEWS);
+    for (int32 Index = 0; Index < InUnorderedAccessViews.Size(); ++Index)
+    {
+        FD3D11UnorderedAccessViewRHI* D3D11UnorderedAccessView = FD3D11DeviceRHI::ResourceCast(InUnorderedAccessViews[Index]);
+        ContextState.SetUAV(D3D11UnorderedAccessView, RegisterIndex + Index);
+    }
 }
 
 void FD3D11CommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 RegisterIndex)
@@ -432,34 +488,166 @@ void FD3D11CommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegio
 
 void FD3D11CommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 {
+    CHECK(Dst != nullptr);
+    CHECK(Src != nullptr);
+
+    FD3D11TextureRHI* D3D11Source      = FD3D11DeviceRHI::ResourceCast(Src);
+    FD3D11TextureRHI* D3D11Destination = FD3D11DeviceRHI::ResourceCast(Dst);
+
+    const DXGI_FORMAT DstFormat = D3D11CastShaderResourceFormat(D3D11Destination->GetDXGIFormat());
+    const DXGI_FORMAT SrcFormat = D3D11CastShaderResourceFormat(D3D11Source->GetDXGIFormat());
+
+    if (DstFormat != SrcFormat)
+    {
+        D3D11_ERROR("[FD3D11CommandContext]: Dst and Src must have compatible formats for resolve");
+        return;
+    }
+
+    GetD3D11Context()->ResolveSubresource(D3D11Destination->GetD3D11Resource(), 0, D3D11Source->GetD3D11Resource(), 0, DstFormat);
 }
 
 void FD3D11CommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc)
 {
+    CHECK(Dst != nullptr);
+    CHECK(Src != nullptr);
+
+    FD3D11BufferRHI* D3D11Destination = FD3D11DeviceRHI::ResourceCast(Dst);
+    CHECK(D3D11Destination != nullptr);
+
+    FD3D11BufferRHI* D3D11Source = FD3D11DeviceRHI::ResourceCast(Src);
+    CHECK(D3D11Source != nullptr);
+
+    ResolvePendingReadbacks();
+
+    D3D11_BOX SourceBox = {};
+    SourceBox.left   = static_cast<UINT>(CopyDesc.SrcOffset);
+    SourceBox.right  = static_cast<UINT>(CopyDesc.SrcOffset + CopyDesc.Size);
+    SourceBox.top    = 0;
+    SourceBox.bottom = 1;
+    SourceBox.front  = 0;
+    SourceBox.back   = 1;
+
+    GetD3D11Context()->CopySubresourceRegion(D3D11Destination->GetD3D11Resource(), 0, static_cast<UINT>(CopyDesc.DstOffset), 0, 0, D3D11Source->GetD3D11Resource(), 0, &SourceBox);
 }
 
 void FD3D11CommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
 {
+    CHECK(Dst != nullptr);
+    CHECK(Src != nullptr);
+
+    FD3D11TextureRHI* D3D11Destination = FD3D11DeviceRHI::ResourceCast(Dst);
+    CHECK(D3D11Destination != nullptr);
+
+    FD3D11TextureRHI* D3D11Source = FD3D11DeviceRHI::ResourceCast(Src);
+    CHECK(D3D11Source != nullptr);
+
+    GetD3D11Context()->CopyResource(D3D11Destination->GetD3D11Resource(), D3D11Source->GetD3D11Resource());
 }
 
-void FD3D11CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyDesc)
+void FD3D11CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& InCopyDesc)
 {
+    CHECK(Dst != nullptr);
+    CHECK(Src != nullptr);
+
+    FD3D11TextureRHI* D3D11Destination = FD3D11DeviceRHI::ResourceCast(Dst);
+    CHECK(D3D11Destination != nullptr);
+
+    FD3D11TextureRHI* D3D11Source = FD3D11DeviceRHI::ResourceCast(Src);
+    CHECK(D3D11Source != nullptr);
+
+    const uint32 NumSrcMipLevels = Src->GetDesc().NumMipLevels;
+    const uint32 NumDstMipLevels = Dst->GetDesc().NumMipLevels;
+
+    for (uint32 ArraySlice = 0; ArraySlice < InCopyDesc.NumArraySlices; ArraySlice++)
+    {
+        for (uint32 MipLevel = 0; MipLevel < InCopyDesc.NumMipLevels; MipLevel++)
+        {
+            const UINT SrcSubresource = D3D11CalcSubresource(InCopyDesc.SrcMipSlice + MipLevel, InCopyDesc.SrcArraySlice + ArraySlice, NumSrcMipLevels);
+            const UINT DstSubresource = D3D11CalcSubresource(InCopyDesc.DstMipSlice + MipLevel, InCopyDesc.DstArraySlice + ArraySlice, NumDstMipLevels);
+
+            D3D11_BOX SourceBox;
+            SourceBox.left   = InCopyDesc.SrcPosition.X >> MipLevel;
+            SourceBox.right  = Math::Max((InCopyDesc.SrcPosition.X + InCopyDesc.Size.X) >> MipLevel, 1);
+            SourceBox.top    = InCopyDesc.SrcPosition.Y >> MipLevel;
+            SourceBox.bottom = Math::Max((InCopyDesc.SrcPosition.Y + InCopyDesc.Size.Y) >> MipLevel, 1);
+            SourceBox.front  = InCopyDesc.SrcPosition.Z >> MipLevel;
+            SourceBox.back   = Math::Max((InCopyDesc.SrcPosition.Z + InCopyDesc.Size.Z) >> MipLevel, 1);
+
+            const UINT DestPositionX = InCopyDesc.DstPosition.X >> MipLevel;
+            const UINT DestPositionY = InCopyDesc.DstPosition.Y >> MipLevel;
+            const UINT DestPositionZ = InCopyDesc.DstPosition.Z >> MipLevel;
+
+            GetD3D11Context()->CopySubresourceRegion(D3D11Destination->GetD3D11Resource(), DstSubresource, DestPositionX, DestPositionY, DestPositionZ, D3D11Source->GetD3D11Resource(), SrcSubresource, &SourceBox);
+        }
+    }
 }
 
 void FD3D11CommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion2D& SrcRegion, uint32 SrcMipLevel)
 {
+    CHECK(Dst != nullptr);
+    CHECK(Src != nullptr);
+
+    FD3D11BufferRHI* D3D11Destination = FD3D11DeviceRHI::ResourceCast(Dst);
+    CHECK(D3D11Destination != nullptr);
+
+    FD3D11TextureRHI* D3D11Source = FD3D11DeviceRHI::ResourceCast(Src);
+    CHECK(D3D11Source != nullptr);
+
+    const uint32 SrcLeft = SrcRegion.PositionX >> SrcMipLevel;
+    const uint32 SrcTop  = SrcRegion.PositionY >> SrcMipLevel;
+
+    D3D11_BOX SourceBox = {};
+    SourceBox.left   = SrcLeft;
+    SourceBox.right  = Math::Max((SrcRegion.PositionX + SrcRegion.Width) >> SrcMipLevel, SrcLeft + 1);
+    SourceBox.top    = SrcTop;
+    SourceBox.bottom = Math::Max((SrcRegion.PositionY + SrcRegion.Height) >> SrcMipLevel, SrcTop + 1);
+    SourceBox.front  = 0;
+    SourceBox.back   = 1;
+
+    const UINT SrcSubresource = D3D11CalcSubresource(SrcMipLevel, 0, Src->GetDesc().NumMipLevels);
+    CopyTextureToBuffer(D3D11Destination, DstOffset, D3D11Source, SrcSubresource, SourceBox);
 }
 
 void FD3D11CommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion3D& SrcRegion, uint32 SrcMipLevel, uint32 SrcArraySlice)
 {
+    CHECK(Dst != nullptr);
+    CHECK(Src != nullptr);
+
+    FD3D11BufferRHI* D3D11Destination = FD3D11DeviceRHI::ResourceCast(Dst);
+    CHECK(D3D11Destination != nullptr);
+
+    FD3D11TextureRHI* D3D11Source = FD3D11DeviceRHI::ResourceCast(Src);
+    CHECK(D3D11Source != nullptr);
+
+    D3D11_BOX SourceBox = {};
+    SourceBox.left   = SrcRegion.PositionX;
+    SourceBox.right  = SrcRegion.PositionX + SrcRegion.Width;
+    SourceBox.top    = SrcRegion.PositionY;
+    SourceBox.bottom = SrcRegion.PositionY + Math::Max(SrcRegion.Height, 1u);
+    SourceBox.front  = SrcRegion.PositionZ;
+    SourceBox.back   = SrcRegion.PositionZ + Math::Max(SrcRegion.Depth, 1u);
+
+    const UINT SrcSubresource = D3D11CalcSubresource(SrcMipLevel, SrcArraySlice, Src->GetDesc().NumMipLevels);
+    CopyTextureToBuffer(D3D11Destination, DstOffset, D3D11Source, SrcSubresource, SourceBox);
 }
 
 void FD3D11CommandContext::WriteFence(FRHIFence* Fence)
 {
+    ResolvePendingReadbacks();
 }
 
 void FD3D11CommandContext::DiscardContents(FRHITexture* Texture)
 {
+    FD3D11TextureRHI* D3D11Texture = FD3D11DeviceRHI::ResourceCast(Texture);
+    if (!D3D11Texture)
+    {
+        return;
+    }
+
+    if (ID3D11DeviceContext1* D3D11Context1 = GetDevice()->GetD3D11Context1())
+    {
+        D3D11Context1->DiscardResource(D3D11Texture->GetD3D11Resource());
+    }
 }
 
 void FD3D11CommandContext::TransitionBarrier(TArrayView<const FRHITransitionBarrierDesc> TransitionDescs)
@@ -496,6 +684,8 @@ void FD3D11CommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, ui
 
 void FD3D11CommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
 {
+    ContextState.BindComputeState();
+    GetD3D11Context()->Dispatch(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
 }
 
 void FD3D11CommandContext::DrawIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount)
@@ -556,18 +746,272 @@ void FD3D11CommandContext::PopEvent()
 
 void FD3D11CommandContext::ClearState()
 {
+    ResolvePendingReadbacks();
+
     GetD3D11Context()->ClearState();
     ContextState.ResetState();
 }
 
 void FD3D11CommandContext::Flush()
 {
+    ResolvePendingReadbacks();
     GetD3D11Context()->Flush();
 }
 
 void* FD3D11CommandContext::GetRHINativeCommandList()
 {
     return GetD3D11Context();
+}
+
+void FD3D11CommandContext::CopyTextureToBuffer(FD3D11BufferRHI* Dst, uint64 DstOffset, FD3D11TextureRHI* Src, uint32 SrcSubresource, const D3D11_BOX& SrcBox)
+{
+    const EFormat Format        = Src->GetDesc().Format;
+    const uint32  BytesPerPixel = GetByteStrideFromFormat(Format);
+    if (BytesPerPixel == 0 || IsBlockCompressed(Format))
+    {
+        D3D11_ERROR("[FD3D11CommandContext]: Copying a texture into a buffer requires a non-block-compressed, supported format. SrcFormat=%s", ToString(Format));
+        return;
+    }
+
+    const uint32 RowPitch = Math::AlignUp<uint32>(BytesPerPixel * (SrcBox.right - SrcBox.left), D3D11_READBACK_ROW_PITCH_ALIGNMENT);
+    const uint64 CopySize = uint64(RowPitch) * uint64(SrcBox.bottom - SrcBox.top) * uint64(SrcBox.back - SrcBox.front);
+
+    if (DstOffset + CopySize > Dst->GetDesc().Size)
+    {
+        D3D11_ERROR("[FD3D11CommandContext]: Copying a texture into a buffer writes %llu bytes at offset %llu into a buffer of %llu bytes", CopySize, DstOffset, Dst->GetDesc().Size);
+        return;
+    }
+
+    for (const FD3D11PendingReadback& PendingReadback : PendingReadbacks)
+    {
+        const FD3D11ReadbackTexture& ReadbackTexture = ReadbackTextures[PendingReadback.ReadbackTextureIndex];
+
+        const bool bOverlapsTexture = ReadbackTexture.Source == Src->GetD3D11Resource() && ReadbackTexture.Subresource == SrcSubresource && BoxesOverlap(PendingReadback.Box, SrcBox);
+        const bool bOverlapsBuffer  = PendingReadback.Destination == Dst && DstOffset < PendingReadback.DestinationOffset + PendingReadback.CopySize && PendingReadback.DestinationOffset < DstOffset + CopySize;
+        if (bOverlapsTexture || bOverlapsBuffer)
+        {
+            ResolvePendingReadbacks();
+            break;
+        }
+    }
+
+    const int32 ReadbackTextureIndex = ObtainReadbackTexture(Src->GetD3D11Resource(), SrcSubresource);
+    if (ReadbackTextureIndex < 0)
+    {
+        return;
+    }
+
+    ID3D11Resource* ReadbackTexture = ReadbackTextures[ReadbackTextureIndex].Texture.Get();
+    GetD3D11Context()->CopySubresourceRegion(ReadbackTexture, 0, SrcBox.left, SrcBox.top, SrcBox.front, Src->GetD3D11Resource(), SrcSubresource, &SrcBox);
+
+    FD3D11PendingReadback& PendingReadback = PendingReadbacks.Emplace();
+    PendingReadback.Destination          = MakeSharedRef<FD3D11BufferRHI>(Dst);
+    PendingReadback.DestinationOffset    = DstOffset;
+    PendingReadback.CopySize             = CopySize;
+    PendingReadback.Box                  = SrcBox;
+    PendingReadback.BytesPerPixel        = BytesPerPixel;
+    PendingReadback.RowPitch             = RowPitch;
+    PendingReadback.ReadbackTextureIndex = ReadbackTextureIndex;
+
+    // The CPU only reads readback buffers once the command list has finished, other buffers can be used by the next command
+    if (!Dst->GetDesc().IsReadBack())
+    {
+        ResolvePendingReadbacks();
+    }
+}
+
+void FD3D11CommandContext::ResolvePendingReadbacks()
+{
+    if (PendingReadbacks.IsEmpty())
+    {
+        return;
+    }
+
+    ID3D11DeviceContext* D3D11Context = GetD3D11Context();
+
+    TArray<D3D11_MAPPED_SUBRESOURCE> MappedTextures;
+    MappedTextures.Resize(ReadbackTextures.Size());
+
+    for (int32 Index = 0; Index < ReadbackTextures.Size(); Index++)
+    {
+        const HRESULT Result = D3D11Context->Map(ReadbackTextures[Index].Texture.Get(), 0, D3D11_MAP_READ, 0, &MappedTextures[Index]);
+        if (FAILED(Result))
+        {
+            D3D11_ERROR("[FD3D11CommandContext]: FAILED to map the readback texture (0x%08X)", static_cast<uint32>(Result));
+            MappedTextures[Index].pData = nullptr;
+        }
+    }
+
+    FD3D11BufferRHI* MappedBuffer     = nullptr;
+    uint8*           MappedBufferData = nullptr;
+    TArray<uint8>    ScratchData;
+
+    for (const FD3D11PendingReadback& PendingReadback : PendingReadbacks)
+    {
+        const D3D11_MAPPED_SUBRESOURCE& MappedSource = MappedTextures[PendingReadback.ReadbackTextureIndex];
+        if (!MappedSource.pData)
+        {
+            continue;
+        }
+
+        FD3D11BufferRHI* Destination = PendingReadback.Destination.Get();
+        const bool       bIsReadBack = Destination->GetDesc().IsReadBack();
+
+        uint8* DestinationData = nullptr;
+        if (bIsReadBack)
+        {
+            if (MappedBuffer != Destination)
+            {
+                if (MappedBuffer)
+                {
+                    D3D11Context->Unmap(MappedBuffer->GetD3D11Resource(), 0);
+                    MappedBuffer = nullptr;
+                }
+
+                D3D11_MAPPED_SUBRESOURCE MappedDestination = {};
+                const HRESULT Result = D3D11Context->Map(Destination->GetD3D11Resource(), 0, D3D11_MAP_WRITE, 0, &MappedDestination);
+                if (FAILED(Result))
+                {
+                    D3D11_ERROR("[FD3D11CommandContext]: FAILED to map the destination buffer (0x%08X)", static_cast<uint32>(Result));
+                    continue;
+                }
+
+                MappedBuffer     = Destination;
+                MappedBufferData = static_cast<uint8*>(MappedDestination.pData);
+            }
+
+            DestinationData = MappedBufferData + PendingReadback.DestinationOffset;
+        }
+        else
+        {
+            ScratchData.Resize(static_cast<int32>(PendingReadback.CopySize));
+            DestinationData = ScratchData.Data();
+        }
+
+        const D3D11_BOX& Box     = PendingReadback.Box;
+        const uint32     Height  = Box.bottom - Box.top;
+        const uint32     Depth   = Box.back - Box.front;
+        const uint32     RowSize = PendingReadback.BytesPerPixel * (Box.right - Box.left);
+
+        for (uint32 Slice = 0; Slice < Depth; Slice++)
+        {
+            for (uint32 Row = 0; Row < Height; Row++)
+            {
+                const uint8* SourceRow = static_cast<const uint8*>(MappedSource.pData)
+                    + uint64(Box.front + Slice) * MappedSource.DepthPitch
+                    + uint64(Box.top + Row) * MappedSource.RowPitch
+                    + uint64(Box.left) * PendingReadback.BytesPerPixel;
+
+                uint8* DestinationRow = DestinationData + (uint64(Slice) * Height + Row) * PendingReadback.RowPitch;
+                Memory::Memcpy(DestinationRow, SourceRow, RowSize);
+            }
+        }
+
+        if (!bIsReadBack)
+        {
+            const D3D11_BOX DestinationBox = { static_cast<UINT>(PendingReadback.DestinationOffset), 0, 0, static_cast<UINT>(PendingReadback.DestinationOffset + PendingReadback.CopySize), 1, 1 };
+            D3D11Context->UpdateSubresource(Destination->GetD3D11Resource(), 0, &DestinationBox, ScratchData.Data(), 0, 0);
+        }
+    }
+
+    if (MappedBuffer)
+    {
+        D3D11Context->Unmap(MappedBuffer->GetD3D11Resource(), 0);
+    }
+
+    for (int32 Index = 0; Index < ReadbackTextures.Size(); Index++)
+    {
+        if (MappedTextures[Index].pData)
+        {
+            D3D11Context->Unmap(ReadbackTextures[Index].Texture.Get(), 0);
+        }
+    }
+
+    PendingReadbacks.Clear();
+    ReadbackTextures.Clear();
+}
+
+int32 FD3D11CommandContext::ObtainReadbackTexture(ID3D11Resource* Source, uint32 Subresource)
+{
+    for (int32 Index = 0; Index < ReadbackTextures.Size(); Index++)
+    {
+        if (ReadbackTextures[Index].Source == Source && ReadbackTextures[Index].Subresource == Subresource)
+        {
+            return Index;
+        }
+    }
+
+    D3D11_RESOURCE_DIMENSION Dimension = D3D11_RESOURCE_DIMENSION_UNKNOWN;
+    Source->GetType(&Dimension);
+
+    TComPtr<ID3D11Resource> NewTexture;
+    if (Dimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D)
+    {
+        D3D11_TEXTURE2D_DESC Desc;
+        static_cast<ID3D11Texture2D*>(Source)->GetDesc(&Desc);
+
+        if (Desc.SampleDesc.Count > 1)
+        {
+            D3D11_ERROR("[FD3D11CommandContext]: Multisampled textures must be resolved before they are copied into a buffer");
+            return -1;
+        }
+
+        const uint32 MipLevel = Subresource % Desc.MipLevels;
+        Desc.Width          = Math::Max<UINT>(Desc.Width >> MipLevel, 1);
+        Desc.Height         = Math::Max<UINT>(Desc.Height >> MipLevel, 1);
+        Desc.MipLevels      = 1;
+        Desc.ArraySize      = 1;
+        Desc.Usage          = D3D11_USAGE_STAGING;
+        Desc.BindFlags      = 0;
+        Desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        Desc.MiscFlags      = 0;
+
+        TComPtr<ID3D11Texture2D> NewTexture2D;
+        const HRESULT Result = GetDevice()->GetD3D11Device()->CreateTexture2D(&Desc, nullptr, &NewTexture2D);
+        if (FAILED(Result))
+        {
+            D3D11_ERROR("[FD3D11CommandContext]: FAILED to create the readback texture (0x%08X)", static_cast<uint32>(Result));
+            return -1;
+        }
+
+        NewTexture = NewTexture2D;
+    }
+    else if (Dimension == D3D11_RESOURCE_DIMENSION_TEXTURE3D)
+    {
+        D3D11_TEXTURE3D_DESC Desc;
+        static_cast<ID3D11Texture3D*>(Source)->GetDesc(&Desc);
+
+        const uint32 MipLevel = Subresource % Desc.MipLevels;
+        Desc.Width          = Math::Max<UINT>(Desc.Width >> MipLevel, 1);
+        Desc.Height         = Math::Max<UINT>(Desc.Height >> MipLevel, 1);
+        Desc.Depth          = Math::Max<UINT>(Desc.Depth >> MipLevel, 1);
+        Desc.MipLevels      = 1;
+        Desc.Usage          = D3D11_USAGE_STAGING;
+        Desc.BindFlags      = 0;
+        Desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        Desc.MiscFlags      = 0;
+
+        TComPtr<ID3D11Texture3D> NewTexture3D;
+        const HRESULT Result = GetDevice()->GetD3D11Device()->CreateTexture3D(&Desc, nullptr, &NewTexture3D);
+        if (FAILED(Result))
+        {
+            D3D11_ERROR("[FD3D11CommandContext]: FAILED to create the readback texture (0x%08X)", static_cast<uint32>(Result));
+            return -1;
+        }
+
+        NewTexture = NewTexture3D;
+    }
+    else
+    {
+        D3D11_ERROR("[FD3D11CommandContext]: Only 2D and 3D textures can be copied into a buffer");
+        return -1;
+    }
+
+    FD3D11ReadbackTexture& ReadbackTexture = ReadbackTextures.Emplace();
+    ReadbackTexture.Texture     = NewTexture;
+    ReadbackTexture.Source      = MakeComPtr<ID3D11Resource>(Source);
+    ReadbackTexture.Subresource = Subresource;
+    return ReadbackTextures.Size() - 1;
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

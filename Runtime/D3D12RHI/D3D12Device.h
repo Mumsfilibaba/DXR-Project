@@ -101,11 +101,25 @@ private:
 
 struct FD3D12DefaultDescriptors
 {
+    FD3D12ShaderResourceViewRHI* GetNullShaderResourceView(ED3D12NullDescriptorType Type) const
+    {
+        FD3D12ShaderResourceViewRHI* NullView = NullShaderResourceViews[static_cast<int32>(Type)].Get();
+        return NullView ? NullView : DefaultSRV.Get();
+    }
+
+    FD3D12UnorderedAccessViewRHI* GetNullUnorderedAccessView(ED3D12NullDescriptorType Type) const
+    {
+        FD3D12UnorderedAccessViewRHI* NullView = NullUnorderedAccessViews[static_cast<int32>(Type)].Get();
+        return NullView ? NullView : DefaultUAV.Get();
+    }
+
     FD3D12ConstantBufferViewRef     DefaultCBV;
     FD3D12ShaderResourceViewRHIRef  DefaultSRV;
     FD3D12UnorderedAccessViewRHIRef DefaultUAV;
     FD3D12RenderTargetViewRHIRef    DefaultRTV;
     FD3D12SamplerStateRHIRef        DefaultSampler;
+    FD3D12ShaderResourceViewRHIRef  NullShaderResourceViews[static_cast<int32>(ED3D12NullDescriptorType::Count)];
+    FD3D12UnorderedAccessViewRHIRef NullUnorderedAccessViews[static_cast<int32>(ED3D12NullDescriptorType::Count)];
 };
 
 struct ED3D12CommandSignatureType

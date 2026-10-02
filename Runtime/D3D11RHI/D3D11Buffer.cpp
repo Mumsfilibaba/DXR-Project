@@ -30,7 +30,7 @@ bool FD3D11BufferRHI::Initialize(ERHIResourceState InInitialState, const void* I
 
     if (D3D11Desc.Usage == D3D11_USAGE_STAGING)
     {
-        D3D11Desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        D3D11Desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
     }
     else if (D3D11Desc.Usage == D3D11_USAGE_DYNAMIC)
     {

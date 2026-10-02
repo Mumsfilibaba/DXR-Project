@@ -44,11 +44,28 @@ static void D3D11SetSamplers(ID3D11DeviceContext* D3D11Context, EShaderVisibilit
     }
 }
 
+static bool IsBufferDimension(D3D_SRV_DIMENSION Dimension)
+{
+    return Dimension == D3D_SRV_DIMENSION_BUFFER || Dimension == D3D_SRV_DIMENSION_BUFFEREX;
+}
+
+static bool IsViewDimensionCompatible(D3D_SRV_DIMENSION DeclaredDimension, D3D11_SRV_DIMENSION ViewDimension)
+{
+    const D3D_SRV_DIMENSION Dimension = static_cast<D3D_SRV_DIMENSION>(ViewDimension);
+    if (IsBufferDimension(DeclaredDimension) && IsBufferDimension(Dimension))
+    {
+        return true;
+    }
+
+    return DeclaredDimension != D3D_SRV_DIMENSION_UNKNOWN && DeclaredDimension == Dimension;
+}
+
 FD3D11CommandContextState::FD3D11CommandContextState(FD3D11Device* InDevice, FD3D11CommandContext& InContext)
     : FD3D11DeviceChild(InDevice)
     , Context(InContext)
     , CommonGraphicsState()
     , GraphicsState()
+    , ComputeState()
     , CommonState()
 {
 }
@@ -157,10 +174,35 @@ void FD3D11CommandContextState::BindGraphicsState()
     for (int32 Index = EShaderVisibility::Vertex; Index <= EShaderVisibility::Pixel; Index++)
     {
         const EShaderVisibility::Type ShaderStage = static_cast<EShaderVisibility::Type>(Index);
-        BindConstantBuffers(ShaderStage, PipelineState->GetShader(ShaderStage));
-        BindShaderResourceViews(ShaderStage);
-        BindSamplers(ShaderStage);
+        FD3D11Shader* Shader = PipelineState->GetShader(ShaderStage);
+        BindConstantBuffers(ShaderStage, Shader);
+        BindShaderResourceViews(ShaderStage, Shader);
+        BindSamplers(ShaderStage, PipelineState->GetStaticSamplers());
     }
+}
+
+void FD3D11CommandContextState::BindComputeState()
+{
+    FD3D11ComputePipelineStateRHI* PipelineState = ComputeState.PipelineState.Get();
+    CHECK(PipelineState != nullptr);
+
+    if (ComputeState.bBindPipelineState)
+    {
+        Context.GetD3D11Context()->CSSetShader(PipelineState->GetComputeShader()->GetD3D11Shader(), nullptr, 0);
+        ComputeState.bBindPipelineState = false;
+    }
+
+    if (ComputeState.bBindShaderConstants)
+    {
+        BindShaderConstants(EShaderConstantsPipeline::Compute);
+        ComputeState.bBindShaderConstants = false;
+    }
+
+    FD3D11ComputeShaderRHI* ComputeShader = PipelineState->GetComputeShader();
+    BindUnorderedAccessViews(ComputeShader);
+    BindConstantBuffers(EShaderVisibility::Compute, ComputeShader);
+    BindShaderResourceViews(EShaderVisibility::Compute, ComputeShader);
+    BindSamplers(EShaderVisibility::Compute, PipelineState->GetStaticSamplers());
 }
 
 void FD3D11CommandContextState::ResetState()
@@ -177,6 +219,7 @@ void FD3D11CommandContextState::ResetState()
     CommonGraphicsState.RenderTargetCache.Clear();
     GraphicsState.VertexBufferCache.Clear();
     GraphicsState.IndexBufferCache.Clear();
+    ComputeState.UnorderedAccessViewCache.Clear();
 
     Memory::Memzero(CommonGraphicsState.BlendFactor, sizeof(CommonGraphicsState.BlendFactor));
     CommonGraphicsState.StencilRef = 0;
@@ -197,6 +240,10 @@ void FD3D11CommandContextState::ResetState()
     CommonGraphicsState.bBindDepthStencilState = true;
     CommonGraphicsState.bBindScissorRects      = true;
     CommonGraphicsState.bBindViewports         = true;
+
+    ComputeState.PipelineState        = nullptr;
+    ComputeState.bBindPipelineState   = true;
+    ComputeState.bBindShaderConstants = true;
 }
 
 void FD3D11CommandContextState::DirtyRenderTargets()
@@ -217,6 +264,18 @@ void FD3D11CommandContextState::SetGraphicsPipelineState(FD3D11GraphicsPipelineS
     }
 }
 
+void FD3D11CommandContextState::SetComputePipelineState(FD3D11ComputePipelineStateRHI* InComputePipelineState)
+{
+    if (ComputeState.PipelineState.Get() != InComputePipelineState)
+    {
+        ComputeState.PipelineState                    = MakeSharedRef<FD3D11ComputePipelineStateRHI>(InComputePipelineState);
+        ComputeState.bBindPipelineState               = true;
+        ComputeState.UnorderedAccessViewCache.bDirty = true;
+
+        DirtyAllResources();
+    }
+}
+
 void FD3D11CommandContextState::SetRenderTargets(FD3D11RenderTargetViewRHI* const* RenderTargets, uint32 NumRenderTargets, FD3D11DepthStencilViewRHI* DepthStencil)
 {
     FD3D11RenderTargetCache& RenderTargetCache = CommonGraphicsState.RenderTargetCache;
@@ -224,8 +283,8 @@ void FD3D11CommandContextState::SetRenderTargets(FD3D11RenderTargetViewRHI* cons
     ID3D11DepthStencilView* D3D11DepthStencilView = DepthStencil ? DepthStencil->GetD3D11View() : nullptr;
     if (RenderTargetCache.DepthStencilView != D3D11DepthStencilView)
     {
-        RenderTargetCache.DepthStencilView     = D3D11DepthStencilView;
-        RenderTargetCache.DepthStencilResource = DepthStencil ? DepthStencil->GetResource() : nullptr;
+        RenderTargetCache.DepthStencilView     = MakeComPtr<ID3D11DepthStencilView>(D3D11DepthStencilView);
+        RenderTargetCache.DepthStencilRange    = DepthStencil ? DepthStencil->GetSubresourceRange() : FD3D11SubresourceRange();
         CommonGraphicsState.bBindRenderTargets = true;
     }
 
@@ -243,9 +302,9 @@ void FD3D11CommandContextState::SetRenderTargets(FD3D11RenderTargetViewRHI* cons
         ID3D11RenderTargetView* D3D11RenderTargetView = RenderTargetView ? RenderTargetView->GetD3D11View() : nullptr;
         if (RenderTargetCache.RenderTargetViews[Index] != D3D11RenderTargetView)
         {
-            RenderTargetCache.RenderTargetViews[Index]     = D3D11RenderTargetView;
-            RenderTargetCache.RenderTargetResources[Index] = RenderTargetView ? RenderTargetView->GetResource() : nullptr;
-            CommonGraphicsState.bBindRenderTargets         = true;
+            RenderTargetCache.RenderTargetViews[Index]  = MakeComPtr<ID3D11RenderTargetView>(D3D11RenderTargetView);
+            RenderTargetCache.RenderTargetRanges[Index] = RenderTargetView ? RenderTargetView->GetSubresourceRange() : FD3D11SubresourceRange();
+            CommonGraphicsState.bBindRenderTargets      = true;
         }
     }
 }
@@ -333,10 +392,25 @@ void FD3D11CommandContextState::SetSRV(FD3D11ShaderResourceViewRHI* ShaderResour
     FD3D11ShaderResourceViewCache& SRVCache = CommonState.ShaderResourceViewCache;
     if (SRVCache.ResourceViews[ShaderStage][ResourceIndex] != D3D11View)
     {
-        SRVCache.ResourceViews[ShaderStage][ResourceIndex] = D3D11View;
-        SRVCache.Resources[ShaderStage][ResourceIndex]     = ShaderResourceView ? ShaderResourceView->GetResource() : nullptr;
+        SRVCache.ResourceViews[ShaderStage][ResourceIndex] = MakeComPtr<ID3D11ShaderResourceView>(D3D11View);
+        SRVCache.Ranges[ShaderStage][ResourceIndex]        = ShaderResourceView ? ShaderResourceView->GetSubresourceRange() : FD3D11SubresourceRange();
+        SRVCache.Dimensions[ShaderStage][ResourceIndex]    = ShaderResourceView ? ShaderResourceView->GetViewDimension() : D3D11_SRV_DIMENSION_UNKNOWN;
         SRVCache.NumViews[ShaderStage] = Math::Max<uint8>(SRVCache.NumViews[ShaderStage], static_cast<uint8>(ResourceIndex + 1));
         SRVCache.DirtyResources(ShaderStage);
+    }
+}
+
+void FD3D11CommandContextState::SetUAV(FD3D11UnorderedAccessViewRHI* UnorderedAccessView, uint32 ResourceIndex)
+{
+    ID3D11UnorderedAccessView* D3D11View = UnorderedAccessView ? UnorderedAccessView->GetD3D11View() : nullptr;
+
+    FD3D11UnorderedAccessViewCache& UAVCache = ComputeState.UnorderedAccessViewCache;
+    if (UAVCache.UnorderedAccessViews[ResourceIndex] != D3D11View)
+    {
+        UAVCache.UnorderedAccessViews[ResourceIndex] = MakeComPtr<ID3D11UnorderedAccessView>(D3D11View);
+        UAVCache.Ranges[ResourceIndex]               = UnorderedAccessView ? UnorderedAccessView->GetSubresourceRange() : FD3D11SubresourceRange();
+        UAVCache.NumViews = Math::Max<uint32>(UAVCache.NumViews, ResourceIndex + 1);
+        UAVCache.bDirty   = true;
     }
 }
 
@@ -384,10 +458,62 @@ void FD3D11CommandContextState::SetShaderConstants(EShaderStage ShaderStage, con
 
 void FD3D11CommandContextState::BindRenderTargets()
 {
-    UnbindRenderTargetResources();
+    FD3D11RenderTargetCache& RenderTargetCache = CommonGraphicsState.RenderTargetCache;
+    for (uint32 Index = 0; Index < RenderTargetCache.NumRenderTargets; Index++)
+    {
+        UnbindShaderResourceViews(RenderTargetCache.RenderTargetRanges[Index]);
+        UnbindUnorderedAccessViews(RenderTargetCache.RenderTargetRanges[Index]);
 
-    const FD3D11RenderTargetCache& RenderTargetCache = CommonGraphicsState.RenderTargetCache;
-    Context.GetD3D11Context()->OMSetRenderTargets(RenderTargetCache.NumRenderTargets, RenderTargetCache.RenderTargetViews, RenderTargetCache.DepthStencilView);
+        RenderTargetCache.BoundRenderTargetViews[Index]  = RenderTargetCache.RenderTargetViews[Index].Get();
+        RenderTargetCache.BoundRenderTargetRanges[Index] = RenderTargetCache.RenderTargetRanges[Index];
+    }
+
+    UnbindShaderResourceViews(RenderTargetCache.DepthStencilRange);
+    UnbindUnorderedAccessViews(RenderTargetCache.DepthStencilRange);
+
+    RenderTargetCache.BoundDepthStencilView  = RenderTargetCache.DepthStencilView.Get();
+    RenderTargetCache.BoundDepthStencilRange = RenderTargetCache.DepthStencilRange;
+    RenderTargetCache.NumBoundRenderTargets  = RenderTargetCache.NumRenderTargets;
+
+    Context.GetD3D11Context()->OMSetRenderTargets(RenderTargetCache.NumBoundRenderTargets, RenderTargetCache.BoundRenderTargetViews, RenderTargetCache.BoundDepthStencilView);
+
+    // Shader resources hidden by the previous targets can be bound again
+    for (int32 Index = EShaderVisibility::Vertex; Index <= EShaderVisibility::Pixel; Index++)
+    {
+        CommonState.ShaderResourceViewCache.DirtyResources(static_cast<EShaderVisibility::Type>(Index));
+    }
+}
+
+void FD3D11CommandContextState::BindUnorderedAccessViews(const FD3D11Shader* Shader)
+{
+    FD3D11UnorderedAccessViewCache& UAVCache = ComputeState.UnorderedAccessViewCache;
+    if (!UAVCache.bDirty)
+    {
+        return;
+    }
+
+    const FD3D11ShaderBindingInfo& BindingInfo = Shader->GetBindingInfo();
+
+    const uint32 NumViews = Math::Max(UAVCache.NumViews, UAVCache.NumBoundViews);
+    for (uint32 Index = 0; Index < NumViews; Index++)
+    {
+        ID3D11UnorderedAccessView*   View  = BindingInfo.UnorderedAccessViewDeclared[Index] ? UAVCache.UnorderedAccessViews[Index].Get() : nullptr;
+        const FD3D11SubresourceRange Range = View ? UAVCache.Ranges[Index] : FD3D11SubresourceRange();
+
+        UnbindShaderResourceViews(Range);
+        UnbindRenderTargets(Range);
+
+        UAVCache.BoundViews[Index]  = View;
+        UAVCache.BoundRanges[Index] = Range;
+    }
+
+    UAVCache.NumBoundViews = NumViews;
+    UAVCache.bDirty        = false;
+
+    Context.GetD3D11Context()->CSSetUnorderedAccessViews(0, UAVCache.NumBoundViews, UAVCache.BoundViews, nullptr);
+
+    // Shader resources hidden by the previous UAVs can be bound again
+    CommonState.ShaderResourceViewCache.DirtyResources(EShaderVisibility::Compute);
 }
 
 void FD3D11CommandContextState::BindShaderConstants(EShaderConstantsPipeline::Type Pipeline)
@@ -438,7 +564,7 @@ void FD3D11CommandContextState::BindConstantBuffers(EShaderVisibility::Type Shad
     CBVCache.ClearResourcesDirty(ShaderStage);
 }
 
-void FD3D11CommandContextState::BindShaderResourceViews(EShaderVisibility::Type ShaderStage)
+void FD3D11CommandContextState::BindShaderResourceViews(EShaderVisibility::Type ShaderStage, const FD3D11Shader* Shader)
 {
     FD3D11ShaderResourceViewCache& SRVCache = CommonState.ShaderResourceViewCache;
     if (!SRVCache.IsResourcesDirty(ShaderStage))
@@ -446,11 +572,69 @@ void FD3D11CommandContextState::BindShaderResourceViews(EShaderVisibility::Type 
         return;
     }
 
-    D3D11SetShaderResources(Context.GetD3D11Context(), ShaderStage, 0, SRVCache.NumViews[ShaderStage], SRVCache.ResourceViews[ShaderStage]);
+    const FD3D11RenderTargetCache&        RenderTargetCache = CommonGraphicsState.RenderTargetCache;
+    const FD3D11UnorderedAccessViewCache& UAVCache          = ComputeState.UnorderedAccessViewCache;
+    const bool                            bIsCompute        = ShaderStage == EShaderVisibility::Compute;
+
+    const uint32 NumViews = Math::Max(SRVCache.NumViews[ShaderStage], SRVCache.NumBoundViews[ShaderStage]);
+
+    uint32 FirstChangedView = NumViews;
+    uint32 LastChangedView  = 0;
+    for (uint32 Index = 0; Index < NumViews; Index++)
+    {
+        ID3D11ShaderResourceView*     View  = SRVCache.ResourceViews[ShaderStage][Index].Get();
+        const FD3D11SubresourceRange& Range = SRVCache.Ranges[ShaderStage][Index];
+
+        // Only the registers the shader declares get a view, and only one of the declared dimension
+        if (View && !(Shader && IsViewDimensionCompatible(Shader->GetBindingInfo().ShaderResourceViewDimensions[Index], SRVCache.Dimensions[ShaderStage][Index])))
+        {
+            View = nullptr;
+        }
+
+        // Outputs of the pipeline that is about to run win, outputs left over from the other pipeline yield
+        if (View && RenderTargetCache.IsBound(Range))
+        {
+            if (bIsCompute)
+            {
+                UnbindRenderTargets(Range);
+            }
+            else
+            {
+                View = nullptr;
+            }
+        }
+
+        if (View && UAVCache.IsBound(Range))
+        {
+            if (bIsCompute)
+            {
+                View = nullptr;
+            }
+            else
+            {
+                UnbindUnorderedAccessViews(Range);
+            }
+        }
+
+        if (SRVCache.BoundViews[ShaderStage][Index] != View)
+        {
+            SRVCache.BoundViews[ShaderStage][Index]  = View;
+            SRVCache.BoundRanges[ShaderStage][Index] = View ? Range : FD3D11SubresourceRange();
+            FirstChangedView = Math::Min(FirstChangedView, Index);
+            LastChangedView  = Math::Max(LastChangedView, Index);
+        }
+    }
+
+    if (FirstChangedView < NumViews)
+    {
+        D3D11SetShaderResources(Context.GetD3D11Context(), ShaderStage, FirstChangedView, LastChangedView - FirstChangedView + 1, &SRVCache.BoundViews[ShaderStage][FirstChangedView]);
+    }
+
+    SRVCache.NumBoundViews[ShaderStage] = SRVCache.NumViews[ShaderStage];
     SRVCache.ClearResourcesDirty(ShaderStage);
 }
 
-void FD3D11CommandContextState::BindSamplers(EShaderVisibility::Type ShaderStage)
+void FD3D11CommandContextState::BindSamplers(EShaderVisibility::Type ShaderStage, const TArray<FD3D11StaticSampler>& StaticSamplers)
 {
     FD3D11SamplerStateCache& SamplerCache = CommonState.SamplerStateCache;
     if (!SamplerCache.IsResourcesDirty(ShaderStage))
@@ -463,7 +647,7 @@ void FD3D11CommandContextState::BindSamplers(EShaderVisibility::Type ShaderStage
 
     uint32 NumSamplers = SamplerCache.NumSamplers[ShaderStage];
 
-    for (const FD3D11StaticSampler& StaticSampler : GraphicsState.PipelineState->GetStaticSamplers())
+    for (const FD3D11StaticSampler& StaticSampler : StaticSamplers)
     {
         if (StaticSampler.Visibility == ShaderStage)
         {
@@ -477,51 +661,83 @@ void FD3D11CommandContextState::BindSamplers(EShaderVisibility::Type ShaderStage
     SamplerCache.ClearResourcesDirty(ShaderStage);
 }
 
-void FD3D11CommandContextState::UnbindRenderTargetResources()
+void FD3D11CommandContextState::UnbindRenderTargets(const FD3D11SubresourceRange& Range)
 {
-    const FD3D11RenderTargetCache& RenderTargetCache = CommonGraphicsState.RenderTargetCache;
-
-    FRHIResource* OutputResources[D3D11_MAX_RENDER_TARGET_COUNT + 1] = {};
-
-    uint32 NumOutputResources = 0;
-    for (uint32 Index = 0; Index < RenderTargetCache.NumRenderTargets; Index++)
+    if (!Range.Resource)
     {
-        if (RenderTargetCache.RenderTargetResources[Index])
+        return;
+    }
+
+    FD3D11RenderTargetCache& RenderTargetCache = CommonGraphicsState.RenderTargetCache;
+
+    bool bUnbound = false;
+    for (uint32 Index = 0; Index < RenderTargetCache.NumBoundRenderTargets; Index++)
+    {
+        if (RenderTargetCache.BoundRenderTargetRanges[Index].Overlaps(Range))
         {
-            OutputResources[NumOutputResources++] = RenderTargetCache.RenderTargetResources[Index];
+            RenderTargetCache.BoundRenderTargetViews[Index]  = nullptr;
+            RenderTargetCache.BoundRenderTargetRanges[Index] = FD3D11SubresourceRange();
+            bUnbound = true;
         }
     }
 
-    if (RenderTargetCache.DepthStencilResource)
+    if (RenderTargetCache.BoundDepthStencilRange.Overlaps(Range))
     {
-        OutputResources[NumOutputResources++] = RenderTargetCache.DepthStencilResource;
+        RenderTargetCache.BoundDepthStencilView  = nullptr;
+        RenderTargetCache.BoundDepthStencilRange = FD3D11SubresourceRange();
+        bUnbound = true;
     }
 
-    ID3D11DeviceContext* D3D11Context = Context.GetD3D11Context();
+    if (bUnbound)
+    {
+        Context.GetD3D11Context()->OMSetRenderTargets(RenderTargetCache.NumBoundRenderTargets, RenderTargetCache.BoundRenderTargetViews, RenderTargetCache.BoundDepthStencilView);
+        CommonGraphicsState.bBindRenderTargets = true;
+    }
+}
+
+void FD3D11CommandContextState::UnbindUnorderedAccessViews(const FD3D11SubresourceRange& Range)
+{
+    if (!Range.Resource)
+    {
+        return;
+    }
+
+    FD3D11UnorderedAccessViewCache& UAVCache = ComputeState.UnorderedAccessViewCache;
+    for (uint32 Index = 0; Index < UAVCache.NumBoundViews; Index++)
+    {
+        if (UAVCache.BoundRanges[Index].Overlaps(Range))
+        {
+            ID3D11UnorderedAccessView* NullView = nullptr;
+            Context.GetD3D11Context()->CSSetUnorderedAccessViews(Index, 1, &NullView, nullptr);
+
+            UAVCache.BoundViews[Index]  = nullptr;
+            UAVCache.BoundRanges[Index] = FD3D11SubresourceRange();
+            UAVCache.bDirty = true;
+        }
+    }
+}
+
+void FD3D11CommandContextState::UnbindShaderResourceViews(const FD3D11SubresourceRange& Range)
+{
+    if (!Range.Resource)
+    {
+        return;
+    }
 
     FD3D11ShaderResourceViewCache& SRVCache = CommonState.ShaderResourceViewCache;
     for (int32 StageIndex = 0; StageIndex < EShaderVisibility::Count; StageIndex++)
     {
         const EShaderVisibility::Type ShaderStage = static_cast<EShaderVisibility::Type>(StageIndex);
-        for (uint32 ViewIndex = 0; ViewIndex < SRVCache.NumViews[ShaderStage]; ViewIndex++)
+        for (uint32 Index = 0; Index < SRVCache.NumBoundViews[ShaderStage]; Index++)
         {
-            FRHIResource* Resource = SRVCache.Resources[ShaderStage][ViewIndex];
-            if (!Resource)
+            if (SRVCache.BoundRanges[ShaderStage][Index].Overlaps(Range))
             {
-                continue;
-            }
+                ID3D11ShaderResourceView* NullView = nullptr;
+                D3D11SetShaderResources(Context.GetD3D11Context(), ShaderStage, Index, 1, &NullView);
 
-            for (uint32 OutputIndex = 0; OutputIndex < NumOutputResources; OutputIndex++)
-            {
-                if (Resource == OutputResources[OutputIndex])
-                {
-                    ID3D11ShaderResourceView* NullView = nullptr;
-                    D3D11SetShaderResources(D3D11Context, ShaderStage, ViewIndex, 1, &NullView);
-
-                    SRVCache.ResourceViews[ShaderStage][ViewIndex] = nullptr;
-                    SRVCache.Resources[ShaderStage][ViewIndex]     = nullptr;
-                    break;
-                }
+                SRVCache.BoundViews[ShaderStage][Index]  = nullptr;
+                SRVCache.BoundRanges[ShaderStage][Index] = FD3D11SubresourceRange();
+                SRVCache.DirtyResources(ShaderStage);
             }
         }
     }
@@ -532,6 +748,10 @@ void FD3D11CommandContextState::DirtyShaderConstants(EShaderConstantsPipeline::T
     if (Pipeline == EShaderConstantsPipeline::Graphics)
     {
         GraphicsState.bBindShaderConstants = true;
+    }
+    else
+    {
+        ComputeState.bBindShaderConstants = true;
     }
 }
 

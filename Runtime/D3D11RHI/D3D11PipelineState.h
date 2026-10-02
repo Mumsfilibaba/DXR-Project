@@ -8,6 +8,7 @@ typedef TSharedRef<class FD3D11DepthStencilStateRHI>     FD3D11DepthStencilState
 typedef TSharedRef<class FD3D11RasterizerStateRHI>       FD3D11RasterizerStateRHIRef;
 typedef TSharedRef<class FD3D11BlendStateRHI>            FD3D11BlendStateRHIRef;
 typedef TSharedRef<class FD3D11GraphicsPipelineStateRHI> FD3D11GraphicsPipelineStateRHIRef;
+typedef TSharedRef<class FD3D11ComputePipelineStateRHI>  FD3D11ComputePipelineStateRHIRef;
 
 class FD3D11InputLayoutRHI : public FRHIInputLayout
 {
@@ -146,4 +147,34 @@ private:
     D3D11_PRIMITIVE_TOPOLOGY      PrimitiveTopology;
     uint32                        SampleMask;
     String                        DebugName;
+};
+
+class FD3D11ComputePipelineStateRHI : public FRHIComputePipelineState, public FD3D11DeviceChild
+{
+public:
+    FD3D11ComputePipelineStateRHI(FD3D11Device* InDevice);
+    virtual ~FD3D11ComputePipelineStateRHI();
+
+    // FRHIPipelineState Interface
+    virtual void* GetRHINativeState() const override final { return nullptr; }
+
+    virtual void SetDebugName(const String& InName) override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
+
+    bool Initialize(const FRHIComputePipelineStateDesc& Desc);
+
+    FORCEINLINE FD3D11ComputeShaderRHI* GetComputeShader() const
+    {
+        return Shader.Get();
+    }
+
+    FORCEINLINE const TArray<FD3D11StaticSampler>& GetStaticSamplers() const
+    {
+        return StaticSamplers;
+    }
+
+private:
+    FD3D11ComputeShaderRHIRef   Shader;
+    TArray<FD3D11StaticSampler> StaticSamplers;
+    String                      DebugName;
 };
