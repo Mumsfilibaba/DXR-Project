@@ -18,6 +18,8 @@ struct D3D11RHI_API FD3D11ModuleRHI final : public FRHIModule
 class D3D11RHI_API FD3D11DeviceRHI : public FRHIDevice
 {
 public:
+    static void FlushDeferredDeletions();
+
     static FORCEINLINE FD3D11DeviceRHI* Get()
     {
         CHECK(D3D11DeviceRHI != nullptr);
@@ -204,6 +206,8 @@ private:
     FCriticalSection      RasterizerStateMapCS;
     FBlendStateMap        BlendStateMap;
     FCriticalSection      BlendStateMapCS;
+    TArray<FRHIResource*> DeferredResources;
+    FCriticalSection      DeferredResourcesCS;
 
     static FD3D11DeviceRHI* D3D11DeviceRHI;
 };

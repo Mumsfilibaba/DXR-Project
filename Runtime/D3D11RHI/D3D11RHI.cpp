@@ -1,14 +1,16 @@
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Tasks/Tasks.h"
 #include "Core/Threading/ScopedLock.h"
+#include "RHI/RHIStats.h"
 #include "D3D11RHI/D3D11RHI.h"
 #include "D3D11RHI/D3D11Buffer.h"
 #include "D3D11RHI/D3D11Device.h"
 #include "D3D11RHI/D3D11DeviceDebug.h"
+#include "D3D11RHI/D3D11Fence.h"
 #include "D3D11RHI/D3D11Loader.h"
 #include "D3D11RHI/D3D11PipelineState.h"
+#include "D3D11RHI/D3D11Query.h"
 #include "D3D11RHI/D3D11Shader.h"
-#include "D3D11RHI/D3D11StubResources.h"
 #include "D3D11RHI/D3D11SwapChain.h"
 #include "D3D11RHI/D3D11Texture.h"
 
@@ -48,6 +50,41 @@ FD3D11DeviceRHI::FD3D11DeviceRHI()
     }
 }
 
+void FD3D11DeviceRHI::FlushDeferredDeletions()
+{
+    FD3D11DeviceRHI* DeviceRHI = Get();
+    if (!DeviceRHI)
+    {
+        return;
+    }
+
+    // NOTE: Resources could contain other resources, that now need to be flushed
+    if (FRHICommandListExecutor::IsInitialized())
+    {
+        FRHICommandListExecutor::Get().FlushDeletedResources();
+    }
+
+    while (!DeviceRHI->DeferredResources.IsEmpty())
+    {
+        TArray<FRHIResource*> Resources;
+        {
+            TScopedLock Lock(DeviceRHI->DeferredResourcesCS);
+            Resources = Move(DeviceRHI->DeferredResources);
+        }
+
+        for (FRHIResource* Resource : Resources)
+        {
+            delete Resource;
+        }
+
+        // NOTE: Resources could contain other resources, that now need to be flushed
+        if (FRHICommandListExecutor::IsInitialized())
+        {
+            FRHICommandListExecutor::Get().FlushDeletedResources();
+        }
+    }
+}
+
 FD3D11DeviceRHI::~FD3D11DeviceRHI()
 {
     if (CommandContext)
@@ -76,10 +113,7 @@ FD3D11DeviceRHI::~FD3D11DeviceRHI()
         BlendStateMap.Clear();
     }
 
-    if (FRHICommandListExecutor::IsInitialized())
-    {
-        FRHICommandListExecutor::Get().FlushDeletedResources();
-    }
+    FlushDeferredDeletions();
 
     SAFE_DELETE(CommandContext);
 
@@ -131,14 +165,32 @@ bool FD3D11DeviceRHI::Initialize()
 
 void FD3D11DeviceRHI::BeginFrame()
 {
-    CommandContext->BeginFrame();
+    FrameNumber++;
 }
 
 void FD3D11DeviceRHI::EndFrame()
 {
-    CommandContext->EndFrame();
+    FlushDeferredDeletions();
+
     Device->FlushDebugMessages();
-    ++FrameNumber;
+
+#if D3D11_ENABLE_STATS
+    {
+        FRHIVideoMemoryInfo LocalMemory;
+        if (QueryVideoMemoryInfo(EVideoMemoryType::Local, LocalMemory))
+        {
+            STAT_SET(STAT_RHI_LocalMemoryBudget, LocalMemory.MemoryBudget);
+            STAT_SET(STAT_RHI_LocalMemoryUsage,  LocalMemory.MemoryUsage);
+        }
+
+        FRHIVideoMemoryInfo NonLocalMemory;
+        if (QueryVideoMemoryInfo(EVideoMemoryType::NonLocal, NonLocalMemory))
+        {
+            STAT_SET(STAT_RHI_NonLocalMemoryBudget, NonLocalMemory.MemoryBudget);
+            STAT_SET(STAT_RHI_NonLocalMemoryUsage,  NonLocalMemory.MemoryUsage);
+        }
+    }
+#endif
 }
 
 FRHITexture* FD3D11DeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, ERHIResourceState InInitialState, const IRHITextureData* InInitialData)
@@ -209,12 +261,24 @@ FRHISwapChain* FD3D11DeviceRHI::CreateSwapChain(const FRHISwapChainDesc& InSwapC
 
 FRHIQuery* FD3D11DeviceRHI::CreateQuery(EQueryType InQueryType)
 {
-    return new FD3D11StubQueryRHI(InQueryType);
+    FD3D11QueryRHIRef NewQuery = new FD3D11QueryRHI(GetDevice(), InQueryType);
+    if (!NewQuery->Initialize())
+    {
+        return nullptr;
+    }
+
+    return NewQuery.ReleaseOwnership();
 }
 
 FRHIFence* FD3D11DeviceRHI::CreateFence()
 {
-    return new FD3D11StubFenceRHI();
+    FD3D11FenceRHIRef NewFence = new FD3D11FenceRHI(GetDevice());
+    if (!NewFence->Initialize())
+    {
+        return nullptr;
+    }
+
+    return NewFence.ReleaseOwnership();
 }
 
 FRHIShaderResourceView* FD3D11DeviceRHI::CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc)
@@ -1175,19 +1239,45 @@ bool FD3D11DeviceRHI::QuerySupportedSampleCounts(EFormat Format, uint32& OutSamp
 
 bool FD3D11DeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode)
 {
-    OutResult = 0;
+    FD3D11QueryRHI* D3D11Query = FD3D11DeviceRHI::ResourceCast(Query);
+    if (!D3D11Query)
+    {
+        return false;
+    }
+
+    if (!D3D11Query->ResolveResult(Mode))
+    {
+        return false;
+    }
+
+    OutResult = *D3D11Query->QueryResult;
     return true;
 }
 
 bool FD3D11DeviceRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode)
 {
-    OutResult = {};
+    FD3D11QueryRHI* D3D11Query = FD3D11DeviceRHI::ResourceCast(Query);
+    if (!D3D11Query)
+    {
+        return false;
+    }
+
+    if (!D3D11Query->ResolveResult(Mode))
+    {
+        return false;
+    }
+
+    OutResult = *reinterpret_cast<const FRHIPipelineStatistics*>(D3D11Query->QueryResult);
     return true;
 }
 
 void FD3D11DeviceRHI::EnqueueResourceDeletion(FRHIResource* Resource)
 {
-    delete Resource;
+    if (Resource)
+    {
+        TScopedLock Lock(DeferredResourcesCS);
+        DeferredResources.Add(Resource);
+    }
 }
 
 void* FD3D11DeviceRHI::GetRHINativeAdapter()

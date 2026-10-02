@@ -2,6 +2,7 @@
 #include "RHI/IRHICommandContext.h"
 #include "D3D11RHI/D3D11CommandContextState.h"
 #include "D3D11RHI/D3D11DeviceChild.h"
+#include "D3D11RHI/D3D11Query.h"
 
 class FD3D11TextureRHI;
 
@@ -140,8 +141,11 @@ private:
     int32 ObtainReadbackTexture(ID3D11Resource* Source, uint32 Subresource);
     void  ResolvePendingReadbacks();
 
+    void EndTimestampDisjointQuery();
+
     FD3D11CommandContextState          ContextState;
     TComPtr<ID3DUserDefinedAnnotation> Annotation;
     TArray<FD3D11ReadbackTexture>      ReadbackTextures;
     TArray<FD3D11PendingReadback>      PendingReadbacks;
+    FD3D11QueryRef                     TimestampDisjointQuery;
 };

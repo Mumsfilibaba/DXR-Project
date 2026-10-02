@@ -1,6 +1,7 @@
 #include "D3D11RHI/D3D11CommandContext.h"
 #include "D3D11RHI/D3D11Buffer.h"
 #include "D3D11RHI/D3D11Device.h"
+#include "D3D11RHI/D3D11Fence.h"
 #include "D3D11RHI/D3D11RHI.h"
 #include "D3D11RHI/D3D11SwapChain.h"
 #include "D3D11RHI/D3D11Texture.h"
@@ -36,6 +37,7 @@ FD3D11CommandContext::FD3D11CommandContext(FD3D11Device* InDevice)
     , Annotation(nullptr)
     , ReadbackTextures()
     , PendingReadbacks()
+    , TimestampDisjointQuery(nullptr)
 {
 }
 
@@ -59,10 +61,12 @@ ID3D11DeviceContext* FD3D11CommandContext::GetD3D11Context() const
 
 void FD3D11CommandContext::BeginFrame()
 {
+    FD3D11DeviceRHI::Get()->BeginFrame();
 }
 
 void FD3D11CommandContext::EndFrame()
 {
+    FD3D11DeviceRHI::Get()->EndFrame();
 }
 
 void FD3D11CommandContext::StartContext()
@@ -72,18 +76,53 @@ void FD3D11CommandContext::StartContext()
 void FD3D11CommandContext::FinishContext()
 {
     ResolvePendingReadbacks();
+    EndTimestampDisjointQuery();
 }
 
 void FD3D11CommandContext::BeginQuery(FRHIQuery* Query)
 {
+    FD3D11QueryRHI* D3D11Query = FD3D11DeviceRHI::ResourceCast(Query);
+    CHECK(D3D11Query != nullptr);
+
+    if (D3D11Query->GetType() == EQueryType::Timestamp)
+    {
+        D3D11_ERROR("BeginQuery is not supported for this query type");
+        return;
+    }
+
+    D3D11Query->bResultReady.Store(0);
+    D3D11Query->Query->Begin(GetD3D11Context());
 }
 
 void FD3D11CommandContext::EndQuery(FRHIQuery* Query)
 {
+    FD3D11QueryRHI* D3D11Query = FD3D11DeviceRHI::ResourceCast(Query);
+    CHECK(D3D11Query != nullptr);
+
+    D3D11Query->Query->End(GetD3D11Context());
 }
 
 void FD3D11CommandContext::QueryTimestamp(FRHIQuery* Query)
 {
+    FD3D11QueryRHI* D3D11Query = FD3D11DeviceRHI::ResourceCast(Query);
+    CHECK(D3D11Query != nullptr);
+
+    if (!TimestampDisjointQuery)
+    {
+        FD3D11QueryRef NewDisjointQuery = new FD3D11Query(GetDevice(), D3D11_QUERY_TIMESTAMP_DISJOINT);
+        if (!NewDisjointQuery->Initialize())
+        {
+            return;
+        }
+
+        NewDisjointQuery->SetDebugName("Timestamp Disjoint Query");
+        NewDisjointQuery->Begin(GetD3D11Context());
+        TimestampDisjointQuery = NewDisjointQuery;
+    }
+
+    D3D11Query->bResultReady.Store(0);
+    D3D11Query->DisjointQuery = TimestampDisjointQuery;
+    D3D11Query->Query->End(GetD3D11Context());
 }
 
 void FD3D11CommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const Vector4& ClearColor)
@@ -633,7 +672,14 @@ void FD3D11CommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
 
 void FD3D11CommandContext::WriteFence(FRHIFence* Fence)
 {
+    CHECK(Fence != nullptr);
+
+    FD3D11FenceRHI* D3D11Fence = FD3D11DeviceRHI::ResourceCast(Fence);
+
     ResolvePendingReadbacks();
+    D3D11Fence->Signal();
+
+    GetD3D11Context()->Flush();
 }
 
 void FD3D11CommandContext::DiscardContents(FRHITexture* Texture)
@@ -1012,6 +1058,15 @@ int32 FD3D11CommandContext::ObtainReadbackTexture(ID3D11Resource* Source, uint32
     ReadbackTexture.Source      = MakeComPtr<ID3D11Resource>(Source);
     ReadbackTexture.Subresource = Subresource;
     return ReadbackTextures.Size() - 1;
+}
+
+void FD3D11CommandContext::EndTimestampDisjointQuery()
+{
+    if (TimestampDisjointQuery)
+    {
+        TimestampDisjointQuery->End(GetD3D11Context());
+        TimestampDisjointQuery.Reset();
+    }
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
