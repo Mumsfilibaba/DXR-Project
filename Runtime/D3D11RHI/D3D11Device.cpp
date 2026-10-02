@@ -1,7 +1,12 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Threading/ScopedLock.h"
+#include "D3D11RHI/D3D11Capabilities.h"
 #include "D3D11RHI/D3D11Device.h"
 #include "D3D11RHI/D3D11Loader.h"
+
+#if D3D11_ENABLE_COMPOSITION
+    #include <dcomp.h>
+#endif
 
 static TAutoConsoleVariable<bool> CVarBreakOnError(
     "D3D11RHI.BreakOnError",
@@ -153,6 +158,9 @@ FD3D11Device::FD3D11Device(FD3D11Adapter* InAdapter)
     , FeatureLevel(D3D_FEATURE_LEVEL_11_0)
     , SamplerStateMap()
     , SamplerStateMapCS()
+#if D3D11_ENABLE_COMPOSITION
+    , CompositionDevice(nullptr)
+#endif
 {
 }
 
@@ -396,3 +404,18 @@ bool FD3D11Device::FindOrCreateSamplerState(const FRHIStaticSamplerInfo& StaticS
 {
     return FindOrCreateSamplerState(StaticSamplerInfo.GetSamplerStateDesc(), OutSamplerState);
 }
+
+#if D3D11_ENABLE_COMPOSITION
+IDCompositionDevice* FD3D11Device::GetCompositionDevice()
+{
+    if (!CompositionDevice && GD3D11SupportsComposition)
+    {
+        if (FAILED(D3D11::DCompositionCreateDevice(nullptr, IID_PPV_ARGS(&CompositionDevice))))
+        {
+            D3D11_WARNING("[FD3D11Device]: FAILED to create a DirectComposition device, so transparent surfaces will present opaque");
+        }
+    }
+
+    return CompositionDevice.Get();
+}
+#endif

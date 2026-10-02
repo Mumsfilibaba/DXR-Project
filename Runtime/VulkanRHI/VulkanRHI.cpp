@@ -574,10 +574,10 @@ FRHISamplerState* FVulkanDeviceRHI::CreateSamplerState(const FRHISamplerStateDes
 {
     TScopedLock Lock(SamplerStateMapCS);
 
-    TSharedRef<FVulkanSamplerStateRHI> Result;
+    FVulkanSamplerStateRHIRef Result;
 
     // Check if there already is an existing sampler state with this description
-    if (TSharedRef<FVulkanSamplerStateRHI>* ExistingSamplerState = SamplerStateMap.Find(InSamplerDesc))
+    if (FVulkanSamplerStateRHIRef* ExistingSamplerState = SamplerStateMap.Find(InSamplerDesc))
     {
         Result = *ExistingSamplerState;
     }
@@ -712,7 +712,7 @@ FRHIClusterAccelerationStructure* FVulkanDeviceRHI::CreateClusterAccelerationStr
 #if VK_NV_cluster_acceleration_structure
     if (GVulkanSupportsClustersAndPTLAS)
     {
-        TSharedRef<FVulkanClusterAccelerationStructureRHI> NewCluster = new FVulkanClusterAccelerationStructureRHI(GetDevice(), InDesc);
+        FVulkanClusterAccelerationStructureRHIRef NewCluster = new FVulkanClusterAccelerationStructureRHI(GetDevice(), InDesc);
         if (NewCluster->Initialize())
         {
             return NewCluster.ReleaseOwnership();
@@ -729,7 +729,7 @@ FRHIClusterTemplate* FVulkanDeviceRHI::CreateClusterTemplate(const FRHIClusterTe
 #if VK_NV_cluster_acceleration_structure
     if (GVulkanSupportsClustersAndPTLAS)
     {
-        TSharedRef<FVulkanClusterTemplateRHI> NewTemplate = new FVulkanClusterTemplateRHI(GetDevice(), InDesc);
+        FVulkanClusterTemplateRHIRef NewTemplate = new FVulkanClusterTemplateRHI(GetDevice(), InDesc);
         if (NewTemplate->Initialize())
         {
             return NewTemplate.ReleaseOwnership();
@@ -746,7 +746,7 @@ FRHIPartitionedSceneAccelerationStructure* FVulkanDeviceRHI::CreatePartitionedSc
 #if VK_NV_partitioned_acceleration_structure
     if (GVulkanSupportsClustersAndPTLAS)
     {
-        TSharedRef<FVulkanPartitionedSceneAccelerationStructureRHI> NewScene = new FVulkanPartitionedSceneAccelerationStructureRHI(GetDevice(), InInputs);
+        FVulkanPartitionedSceneAccelerationStructureRHIRef NewScene = new FVulkanPartitionedSceneAccelerationStructureRHI(GetDevice(), InInputs);
         if (NewScene->Initialize())
         {
             return NewScene.ReleaseOwnership();

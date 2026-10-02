@@ -37,9 +37,6 @@ class FD3D12CommandContext;
 struct IDCompositionDevice;
 #endif
 
-typedef TSharedRef<FD3D12Device>  FD3D12DeviceRef;
-typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
-
 class FD3D12Adapter
 {
 public:

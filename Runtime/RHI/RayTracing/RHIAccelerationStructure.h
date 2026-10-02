@@ -12,8 +12,9 @@ class FRHIUnorderedAccessView;
 class FRHIBuffer;
 class FRHISamplerState;
 
-typedef TSharedRef<FRHISceneAccelerationStructure>    FRHISceneAccelerationStructureRef;
-typedef TSharedRef<FRHIGeometryAccelerationStructure> FRHIGeometryAccelerationStructureRef;
+typedef TSharedRef<class FRHIRayTracingAccelerationStructure> FRHIRayTracingAccelerationStructureRef;
+typedef TSharedRef<FRHISceneAccelerationStructure>            FRHISceneAccelerationStructureRef;
+typedef TSharedRef<FRHIGeometryAccelerationStructure>         FRHIGeometryAccelerationStructureRef;
 
 struct FRHIGeometryAccelerationStructureDesc
 {

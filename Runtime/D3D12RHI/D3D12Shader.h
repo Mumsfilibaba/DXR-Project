@@ -9,16 +9,14 @@
 #include "D3D12RHI/D3D12Constants.h"
 #include <d3d12shader.h>
 
-typedef TSharedRef<class FD3D12Shader>                 FD3D12ShaderRef;
-typedef TSharedRef<class FD3D12VertexShaderRHI>        FD3D12VertexShaderRHIRef;
-typedef TSharedRef<class FD3D12HullShaderRHI>          FD3D12HullShaderRHIRef;
-typedef TSharedRef<class FD3D12DomainShaderRHI>        FD3D12DomainShaderRHIRef;
-typedef TSharedRef<class FD3D12GeometryShaderRHI>      FD3D12GeometryShaderRHIRef;
-typedef TSharedRef<class FD3D12PixelShaderRHI>         FD3D12PixelShaderRHIRef;
-typedef TSharedRef<class FD3D12MeshShaderRHI>          FD3D12MeshShaderRHIRef;
-typedef TSharedRef<class FD3D12AmplificationShaderRHI> FD3D12AmplificationShaderRHIRef;
-typedef TSharedRef<class FD3D12ComputeShaderRHI>       FD3D12ComputeShaderRHIRef;
-typedef TSharedRef<class FD3D12RayTracingShader>         FD3D12RayTracingShaderRef;
+typedef TSharedRef<class FD3D12VertexShaderRHI>          FD3D12VertexShaderRHIRef;
+typedef TSharedRef<class FD3D12HullShaderRHI>            FD3D12HullShaderRHIRef;
+typedef TSharedRef<class FD3D12DomainShaderRHI>          FD3D12DomainShaderRHIRef;
+typedef TSharedRef<class FD3D12GeometryShaderRHI>        FD3D12GeometryShaderRHIRef;
+typedef TSharedRef<class FD3D12PixelShaderRHI>           FD3D12PixelShaderRHIRef;
+typedef TSharedRef<class FD3D12MeshShaderRHI>            FD3D12MeshShaderRHIRef;
+typedef TSharedRef<class FD3D12AmplificationShaderRHI>   FD3D12AmplificationShaderRHIRef;
+typedef TSharedRef<class FD3D12ComputeShaderRHI>         FD3D12ComputeShaderRHIRef;
 typedef TSharedRef<class FD3D12RayGenShaderRHI>          FD3D12RayGenShaderRHIRef;
 typedef TSharedRef<class FD3D12RayAnyHitShaderRHI>       FD3D12RayAnyHitShaderRHIRef;
 typedef TSharedRef<class FD3D12RayClosestHitShaderRHI>   FD3D12RayClosestHitShaderRHIRef;

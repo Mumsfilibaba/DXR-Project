@@ -2,6 +2,8 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
 #include "D3D11RHI/D3D11SwapChain.h"
+#include "D3D11RHI/D3D11Capabilities.h"
+#include "D3D11RHI/D3D11Composition.h"
 #include "D3D11RHI/D3D11Device.h"
 #include "D3D11RHI/D3D11CommandContext.h"
 
@@ -83,6 +85,9 @@ FD3D11SwapChainRHI::FD3D11SwapChainRHI(FD3D11Device* InDevice, FD3D11CommandCont
     , FD3D11DeviceChild(InDevice)
     , SwapChain(nullptr)
     , SwapChain4(nullptr)
+#if D3D11_ENABLE_COMPOSITION
+    , Composition(nullptr)
+#endif
     , CommandContext(InCommandContext)
     , BackBuffer(nullptr)
     , Hwnd(reinterpret_cast<HWND>(InSwapChainDesc.WindowHandle))
@@ -98,7 +103,13 @@ FD3D11SwapChainRHI::FD3D11SwapChainRHI(FD3D11Device* InDevice, FD3D11CommandCont
 
 FD3D11SwapChainRHI::~FD3D11SwapChainRHI()
 {
-    if (SwapChain)
+#if D3D11_ENABLE_COMPOSITION
+    const bool bHasFullscreenState = SwapChain.IsValid() && !Composition;
+#else
+    const bool bHasFullscreenState = SwapChain.IsValid();
+#endif
+
+    if (bHasFullscreenState)
     {
         BOOL FullscreenState = FALSE;
         if (SUCCEEDED(SwapChain->GetFullscreenState(&FullscreenState, nullptr)) && FullscreenState)
@@ -106,6 +117,10 @@ FD3D11SwapChainRHI::~FD3D11SwapChainRHI()
             SwapChain->SetFullscreenState(FALSE, nullptr);
         }
     }
+
+#if D3D11_ENABLE_COMPOSITION
+    Composition.Reset();
+#endif
 
     if (SwapChainWaitableObject)
     {
@@ -178,9 +193,15 @@ bool FD3D11SwapChainRHI::Initialize()
 
     const uint32 NumSwapChainBuffers = Math::Clamp<int32>(CVarSwapChainBackBufferCount.GetValue(), 2, 8);
 
-    if (Desc.IsTransparent())
+#if D3D11_ENABLE_COMPOSITION
+    const bool bUseComposition = Desc.IsTransparent() && GD3D11SupportsComposition;
+#else
+    const bool bUseComposition = false;
+#endif
+
+    if (Desc.IsTransparent() && !bUseComposition)
     {
-        D3D11_WARNING("[FD3D11SwapChainRHI]: Transparent swap chains are not supported, falling back to an opaque swap chain");
+        D3D11_WARNING("[FD3D11SwapChainRHI]: DirectComposition unavailable, falling back to an opaque swap chain");
         SetEnumFlag(Desc.Flags, ESwapChainFlags::Transparent, false);
     }
 
@@ -194,7 +215,7 @@ bool FD3D11SwapChainRHI::Initialize()
     SwapChainDesc.SampleDesc.Quality = 0;
     SwapChainDesc.Scaling            = DXGI_SCALING_STRETCH;
     SwapChainDesc.SwapEffect         = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    SwapChainDesc.AlphaMode          = DXGI_ALPHA_MODE_IGNORE;
+    SwapChainDesc.AlphaMode          = bUseComposition ? DXGI_ALPHA_MODE_PREMULTIPLIED : DXGI_ALPHA_MODE_IGNORE;
     SwapChainDesc.Flags              = Flags;
 
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC FullscreenDesc = {};
@@ -208,8 +229,13 @@ bool FD3D11SwapChainRHI::Initialize()
     CHECK(Factory != nullptr);
 
     // D3D11 presents through the device, where D3D12 presents through the direct queue
+    ID3D11Device* D3D11Device = GetDevice()->GetD3D11Device();
+
     TComPtr<IDXGISwapChain1> DXGISwapChain1;
-    HRESULT Result = Factory->CreateSwapChainForHwnd(GetDevice()->GetD3D11Device(), Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &DXGISwapChain1);
+    HRESULT Result = bUseComposition
+        ? Factory->CreateSwapChainForComposition(D3D11Device, &SwapChainDesc, nullptr, &DXGISwapChain1)
+        : Factory->CreateSwapChainForHwnd(D3D11Device, Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &DXGISwapChain1);
+
     if (SUCCEEDED(Result))
     {
         Result = DXGISwapChain1.GetAs<IDXGISwapChain3>(&SwapChain);
@@ -218,6 +244,20 @@ bool FD3D11SwapChainRHI::Initialize()
             D3D11_ERROR_CRITICAL("[FD3D11SwapChainRHI]: FAILED to retrieve IDXGISwapChain3");
             return false;
         }
+
+    #if D3D11_ENABLE_COMPOSITION
+        if (bUseComposition)
+        {
+            FD3D11CompositionRef NewComposition = new FD3D11Composition(GetDevice());
+            if (!NewComposition->Initialize(Hwnd, DXGISwapChain1.Get()))
+            {
+                D3D11_ERROR_CRITICAL("[FD3D11SwapChainRHI]: FAILED to bind the SwapChain to a composition visual");
+                return false;
+            }
+
+            Composition = NewComposition;
+        }
+    #endif
 
         if (FAILED(DXGISwapChain1.GetAs<IDXGISwapChain4>(&SwapChain4)))
         {
@@ -237,9 +277,10 @@ bool FD3D11SwapChainRHI::Initialize()
     }
     else
     {
-        D3D11_ERROR_CRITICAL("[FD3D11SwapChainRHI]: FAILED to create SwapChain (Result=0x%08X, %ux%u, Format=%s, BufferCount=%u, BufferUsage=0x%08X, Flags=0x%08X, Hwnd=%p)",
-            static_cast<uint32>(Result), SwapChainDesc.Width, SwapChainDesc.Height, ToString(ResolvedFormat), SwapChainDesc.BufferCount,
-            static_cast<uint32>(SwapChainDesc.BufferUsage), static_cast<uint32>(SwapChainDesc.Flags), Hwnd);
+        D3D11_ERROR_CRITICAL("[FD3D11SwapChainRHI]: FAILED to create SwapChain (Result=0x%08X, Composition=%s, %ux%u, Format=%s, BufferCount=%u, BufferUsage=0x%08X, Flags=0x%08X, Hwnd=%p)",
+            static_cast<uint32>(Result), bUseComposition ? "Yes" : "No", SwapChainDesc.Width, SwapChainDesc.Height,
+            ToString(ResolvedFormat), SwapChainDesc.BufferCount, static_cast<uint32>(SwapChainDesc.BufferUsage),
+            static_cast<uint32>(SwapChainDesc.Flags), Hwnd);
         return false;
     }
 
@@ -290,8 +331,9 @@ bool FD3D11SwapChainRHI::Initialize()
         return false;
     }
 
-    D3D11_INFO("[FD3D11SwapChainRHI]: Created SwapChain (%s, %s, BufferCount=%u, AllowTearing=%s)",
-        ToString(ResolvedFormat), ToString(ResolvedColorSpace), NumSwapChainBuffers, (Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING) ? "Yes" : "No");
+    D3D11_INFO("[FD3D11SwapChainRHI]: Created SwapChain (%s, %s, BufferCount=%u, AlphaMode=%s, Composition=%s, AllowTearing=%s)",
+        ToString(ResolvedFormat), ToString(ResolvedColorSpace), NumSwapChainBuffers, bUseComposition ? "Premultiplied" : "Ignore",
+        bUseComposition ? "Yes" : "No", (Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING) ? "Yes" : "No");
 
     return true;
 }
@@ -694,6 +736,7 @@ bool FD3D11SwapChainRHI::RetrieveBackBuffer()
         return false;
     }
 
+    D3D11SetDebugName(D3D11BackBuffer.Get(), "BackBuffer");
     return BackBuffer->InitializeSwapChainTexture(D3D11BackBuffer, Desc.ColorFormat, Desc.Width, Desc.Height);
 }
 

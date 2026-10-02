@@ -7,12 +7,9 @@
 #include "D3D12RHI/D3D12Descriptors.h"
 #include "D3D12RHI/D3D12ResourceViews.h"
 #include "D3D12RHI/D3D12CommandContext.h"
+#include "D3D12RHI/D3D12Composition.h"
 
 class FD3D12CommandContext;
-
-#if D3D12_ENABLE_COMPOSITION
-class FD3D12Composition;
-#endif
 
 typedef TSharedRef<class FD3D12SwapChainRHI> FD3D12SwapChainRHIRef;
 
@@ -79,7 +76,7 @@ private:
     TComPtr<IDXGISwapChain3>      SwapChain;
     TComPtr<IDXGISwapChain4>      SwapChain4;
 #if D3D12_ENABLE_COMPOSITION
-    TSharedRef<FD3D12Composition> Composition;
+    FD3D12CompositionRef          Composition;
 #endif
     FD3D12CommandContext*         CommandContext;
     FD3D12TextureRHIRef           BackBuffer;

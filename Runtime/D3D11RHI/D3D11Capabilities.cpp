@@ -2,12 +2,14 @@
 #include "D3D11RHI/D3D11RHI.h"
 #include "D3D11RHI/D3D11Device.h"
 #include "D3D11RHI/D3D11Capabilities.h"
+#include "D3D11RHI/D3D11Loader.h"
 
 D3D11RHI_API D3D_FEATURE_LEVEL GD3D11FeatureLevel                         = D3D_FEATURE_LEVEL_11_0;
 D3D11RHI_API bool              GD3D11SupportsFences                       = false;
 D3D11RHI_API bool              GD3D11SupportsUAVsInAllStages              = false;
 D3D11RHI_API bool              GD3D11SupportsPartialConstantBufferUpdates = false;
 D3D11RHI_API uint32            GD3D11MaxUnorderedAccessViews              = D3D11_PS_CS_UAV_REGISTER_COUNT;
+D3D11RHI_API bool              GD3D11SupportsComposition                  = false;
 
 static const CHAR* ToString(D3D_FEATURE_LEVEL FeatureLevel)
 {
@@ -32,6 +34,7 @@ void DumpD3D11Capabilities()
     D3D11_INFO("UAVs in all stages             : %s", YesNo(GD3D11SupportsUAVsInAllStages));
     D3D11_INFO("Partial constant buffer update : %s", YesNo(GD3D11SupportsPartialConstantBufferUpdates));
     D3D11_INFO("Max UAV slots                  : %u", GD3D11MaxUnorderedAccessViews);
+    D3D11_INFO("DirectComposition              : %s", YesNo(GD3D11SupportsComposition));
     D3D11_INFO("--------------------------------------------------------------------------------------------");
 }
 
@@ -46,12 +49,16 @@ bool FD3D11DeviceRHI::InitializeDeviceFeatureSupport()
     GD3D11SupportsUAVsInAllStages              = GD3D11FeatureLevel >= D3D_FEATURE_LEVEL_11_1;
     GD3D11SupportsPartialConstantBufferUpdates = Device->GetD3D11Context1() != nullptr;
     GD3D11MaxUnorderedAccessViews              = GD3D11SupportsUAVsInAllStages ? D3D11_1_UAV_SLOT_COUNT : D3D11_PS_CS_UAV_REGISTER_COUNT;
+#if D3D11_ENABLE_COMPOSITION
+    GD3D11SupportsComposition                  = D3D11::DCompositionCreateDevice != nullptr;
+#endif
 
     // -------------------------------------------------------------------------------------------
     // Swap-Chain Defaults
     // -------------------------------------------------------------------------------------------
 
-    RHI::DefaultSwapChainFormat = EFormat::R8G8B8A8_Unorm;
+    RHI::DefaultSwapChainFormat        = EFormat::R8G8B8A8_Unorm;
+    RHI::bSupportsTransparentSwapChain = GD3D11SupportsComposition;
 
     // -------------------------------------------------------------------------------------------
     // Shader / Pipeline Features
@@ -76,7 +83,6 @@ bool FD3D11DeviceRHI::InitializeDeviceFeatureSupport()
     RHI::bSupportsInlineRayTracing            = false;
     RHI::bSupportsRayTracingPipelineAdditions = false;
     RHI::bSupportsDispatchRaysIndirect        = false;
-    RHI::bSupportsTransparentSwapChain        = false;
     RHI::ShadingRateTier                      = EShadingRateTier::NotSupported;
     RHI::ShadingRateImageTileSize             = 0;
     RHI::bSupportsVRS                         = false;

@@ -6,6 +6,8 @@
 #include "D3D12RHI/D3D12DeviceChild.h"
 typedef TSharedRef<class FD3D12InputLayoutRHI>             FD3D12InputLayoutRHIRef;
 typedef TSharedRef<class FD3D12DepthStencilStateRHI>       FD3D12DepthStencilStateRHIRef;
+typedef TSharedRef<class FD3D12RasterizerStateRHI>         FD3D12RasterizerStateRHIRef;
+typedef TSharedRef<class FD3D12BlendStateRHI>              FD3D12BlendStateRHIRef;
 typedef TSharedRef<class FD3D12GraphicsPipelineStateRHI>   FD3D12GraphicsPipelineStateRHIRef;
 typedef TSharedRef<class FD3D12ComputePipelineStateRHI>    FD3D12ComputePipelineStateRHIRef;
 typedef TSharedRef<class FD3D12MeshletPipelineStateRHI>    FD3D12MeshletPipelineStateRHIRef;
@@ -375,14 +377,14 @@ public:
     FORCEINLINE FD3D12PixelShaderRHI*    GetPixelShader()    const { return PixelShader.Get(); }
 
 private:
-    D3D12_PRIMITIVE_TOPOLOGY            PrimitiveTopology;
-    ED3D12ShaderFlags                   ShaderFlags;
-    bool                                bDepthBoundsTestEnable;
-    TSharedRef<FD3D12VertexShaderRHI>   VertexShader;
-    TSharedRef<FD3D12HullShaderRHI>     HullShader;
-    TSharedRef<FD3D12DomainShaderRHI>   DomainShader;
-    TSharedRef<FD3D12GeometryShaderRHI> GeometryShader;
-    TSharedRef<FD3D12PixelShaderRHI>    PixelShader;
+    D3D12_PRIMITIVE_TOPOLOGY   PrimitiveTopology;
+    ED3D12ShaderFlags          ShaderFlags;
+    bool                       bDepthBoundsTestEnable;
+    FD3D12VertexShaderRHIRef   VertexShader;
+    FD3D12HullShaderRHIRef     HullShader;
+    FD3D12DomainShaderRHIRef   DomainShader;
+    FD3D12GeometryShaderRHIRef GeometryShader;
+    FD3D12PixelShaderRHIRef    PixelShader;
 };
 
 #if D3D12_ENABLE_PIPELINE_STATE_STREAM
@@ -411,7 +413,7 @@ struct FD3D12ComputePipelineKey
 class FD3D12ComputePipelineStateRHI : public FRHIComputePipelineState, public FD3D12PipelineState
 {
 public:
-    FD3D12ComputePipelineStateRHI(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShaderRHI>& InShader);
+    FD3D12ComputePipelineStateRHI(FD3D12Device* InDevice, const FD3D12ComputeShaderRHIRef& InShader);
     virtual ~FD3D12ComputePipelineStateRHI();
 
     // FRHIPipelineState Interface
@@ -428,7 +430,7 @@ public:
     }
 
 private:
-    TSharedRef<FD3D12ComputeShaderRHI> Shader;
+    FD3D12ComputeShaderRHIRef Shader;
 };
 
 #if D3D12_ENABLE_PIPELINE_STATE_STREAM
@@ -559,11 +561,11 @@ public:
     FORCEINLINE FD3D12PixelShaderRHI*         GetPixelShader()         const { return PixelShader.Get(); }
 
 private:
-    ED3D12ShaderFlags                        ShaderFlags;
-    bool                                     bDepthBoundsTestEnable;
-    TSharedRef<FD3D12AmplificationShaderRHI> AmplificationShader;
-    TSharedRef<FD3D12MeshShaderRHI>          MeshShader;
-    TSharedRef<FD3D12PixelShaderRHI>         PixelShader;
+    ED3D12ShaderFlags               ShaderFlags;
+    bool                            bDepthBoundsTestEnable;
+    FD3D12AmplificationShaderRHIRef AmplificationShader;
+    FD3D12MeshShaderRHIRef          MeshShader;
+    FD3D12PixelShaderRHIRef         PixelShader;
 };
 
 struct FD3D12PipelineDiskHeader

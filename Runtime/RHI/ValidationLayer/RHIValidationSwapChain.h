@@ -3,6 +3,8 @@
 
 class FRHIValidationStateTracker;
 
+typedef TSharedRef<class FRHIValidationSwapChain> FRHIValidationSwapChainRef;
+
 class RHI_API FRHIValidationSwapChain final : public FRHISwapChain
 {
     friend class FRHIValidationCommandContext;

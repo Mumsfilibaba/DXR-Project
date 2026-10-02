@@ -27,8 +27,6 @@ class FVulkanCommandPool;
 class FVulkanCommandContext;
 struct FVulkanCommands;
 
-typedef TSharedRef<class FVulkanQueue> FVulkanQueueRef;
-
 struct FVulkanTimestampIdleState
 {
     uint64 AccumulatedIdleTicks      = 0;

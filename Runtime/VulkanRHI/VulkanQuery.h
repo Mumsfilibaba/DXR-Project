@@ -96,7 +96,7 @@ struct FVulkanQueryRHI : public FRHIQuery, public FVulkanDeviceChild
     virtual ~FVulkanQueryRHI();
 
     FVulkanQuery             CurrentQuery;
-    TSharedRef<FVulkanFence> SyncFence;
+    FVulkanFenceRef          SyncFence;
     uint64*                  QueryResult;
     AtomicInt32              bResultReady;
 };

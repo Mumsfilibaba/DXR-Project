@@ -802,7 +802,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
     }
 }
 
-FD3D12ComputePipelineStateRHI::FD3D12ComputePipelineStateRHI(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShaderRHI>& InShader)
+FD3D12ComputePipelineStateRHI::FD3D12ComputePipelineStateRHI(FD3D12Device* InDevice, const FD3D12ComputeShaderRHIRef& InShader)
     : FRHIComputePipelineState()
     , FD3D12PipelineState(InDevice)
     , Shader(InShader)

@@ -6,6 +6,8 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FRHIBuffer;
 
+typedef TSharedRef<class FRHIPartitionedSceneAccelerationStructure> FRHIPartitionedSceneAccelerationStructureRef;
+
 struct FRHIRayTracingAccelerationStructurePartitionedSceneInputs
 {
     uint32                           MaxInstanceCount  = 0;

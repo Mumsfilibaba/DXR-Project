@@ -4,6 +4,7 @@
 #include "RHI/RHIResources.h"
 
 typedef TSharedRef<class FRHIShader>                FRHIShaderRef;
+typedef TSharedRef<class FRHIGraphicsShader>        FRHIGraphicsShaderRef;
 typedef TSharedRef<class FRHIVertexShader>          FRHIVertexShaderRef;
 typedef TSharedRef<class FRHIHullShader>            FRHIHullShaderRef;
 typedef TSharedRef<class FRHIDomainShader>          FRHIDomainShaderRef;

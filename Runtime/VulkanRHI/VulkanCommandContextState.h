@@ -3,6 +3,7 @@
 #include "VulkanRHI/VulkanQueue.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
 #include "VulkanRHI/VulkanPipelineState.h"
+#include "VulkanRHI/RayTracing/VulkanRayTracingPipeline.h"
 #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     #include "VulkanRHI/VulkanRenderPass.h"
 #endif
@@ -11,8 +12,6 @@ class FVulkanBufferRHI;
 class FVulkanCommandContext;
 class FVulkanDescriptorState;
 class FVulkanResourceView;
-class FVulkanRayTracingPipelineStateRHI;
-typedef TSharedRef<class FVulkanRayTracingPipelineStateRHI> FVulkanRayTracingPipelineStateRHIRef;
 struct FRHIBeginRenderPassDesc;
 
 struct FVulkanVertexBufferCache

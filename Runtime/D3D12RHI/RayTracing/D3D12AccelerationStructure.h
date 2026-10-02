@@ -78,9 +78,9 @@ public:
     }
 
 private:
-    TSharedRef<FD3D12BufferRHI> VertexBuffer;
-    TSharedRef<FD3D12BufferRHI> IndexBuffer;
-    TSharedRef<FD3D12BufferRHI> AABBBuffer;
+    FD3D12BufferRHIRef VertexBuffer;
+    FD3D12BufferRHIRef IndexBuffer;
+    FD3D12BufferRHIRef AABBBuffer;
 };
 
 #if D3D12_ENABLE_OPACITY_MICROMAPS

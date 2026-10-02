@@ -237,7 +237,7 @@ bool FVulkanRayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineS
     // Resolve shader modules now that the layout exists (binding patching needs it).
     for (int32 Index = 0; Index < StageShaders.Size(); ++Index)
     {
-        if (TSharedRef<FVulkanShaderModule> ShaderModule = StageShaders[Index]->GetOrCreateShaderModule(PipelineLayout))
+        if (FVulkanShaderModuleRef ShaderModule = StageShaders[Index]->GetOrCreateShaderModule(PipelineLayout))
         {
             ShaderStages[Index].module = ShaderModule->GetVkShaderModule();
         }

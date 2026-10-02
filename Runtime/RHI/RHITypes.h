@@ -33,8 +33,10 @@ class FRHIDepthStencilView;
 class FRHIFence;
 struct IRHITextureData;
 
+typedef TSharedRef<class FRHIResource>                FRHIResourceRef;
 typedef TSharedRef<class FRHIBuffer>                  FRHIBufferRef;
 typedef TSharedRef<class FRHITexture>                 FRHITextureRef;
+typedef TSharedRef<class FRHIResourceView>            FRHIResourceViewRef;
 typedef TSharedRef<FRHIShaderResourceView>            FRHIShaderResourceViewRef;
 typedef TSharedRef<FRHIUnorderedAccessView>           FRHIUnorderedAccessViewRef;
 typedef TSharedRef<FRHIRenderTargetView>              FRHIRenderTargetViewRef;
@@ -47,6 +49,7 @@ typedef TSharedRef<class FRHIRasterizerState>         FRHIRasterizerStateRef;
 typedef TSharedRef<class FRHIBlendState>              FRHIBlendStateRef;
 typedef TSharedRef<class FRHIDepthStencilState>       FRHIDepthStencilStateRef;
 typedef TSharedRef<class FRHIInputLayout>             FRHIInputLayoutRef;
+typedef TSharedRef<class FRHIPipelineState>           FRHIPipelineStateRef;
 typedef TSharedRef<class FRHIGraphicsPipelineState>   FRHIGraphicsPipelineStateRef;
 typedef TSharedRef<class FRHIComputePipelineState>    FRHIComputePipelineStateRef;
 typedef TSharedRef<class FRHIMeshletPipelineState>    FRHIMeshletPipelineStateRef;

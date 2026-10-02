@@ -3,8 +3,10 @@
 #include "VulkanRHI/VulkanShader.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 
-typedef TSharedRef<class FVulkanInputLayoutRHI>             FVulkanVertexInputLayoutRHIRef;
+typedef TSharedRef<class FVulkanInputLayoutRHI>             FVulkanInputLayoutRHIRef;
 typedef TSharedRef<class FVulkanDepthStencilStateRHI>       FVulkanDepthStencilStateRHIRef;
+typedef TSharedRef<class FVulkanRasterizerStateRHI>         FVulkanRasterizerStateRHIRef;
+typedef TSharedRef<class FVulkanBlendStateRHI>              FVulkanBlendStateRHIRef;
 typedef TSharedRef<class FVulkanGraphicsPipelineStateRHI>   FVulkanGraphicsPipelineStateRHIRef;
 typedef TSharedRef<class FVulkanComputePipelineStateRHI>    FVulkanComputePipelineStateRHIRef;
 typedef TSharedRef<class FVulkanMeshletPipelineStateRHI>    FVulkanMeshletPipelineStateRHIRef;

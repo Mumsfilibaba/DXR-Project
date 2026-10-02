@@ -19,6 +19,9 @@ extern D3D11RHI_API bool GD3D11SupportsPartialConstantBufferUpdates;
 /** 8 on feature level 11_0, 64 on feature level 11_1 */
 extern D3D11RHI_API uint32 GD3D11MaxUnorderedAccessViews;
 
+/** dcomp.dll is available, so transparent swap chains can present through DirectComposition */
+extern D3D11RHI_API bool GD3D11SupportsComposition;
+
 // -------------------------------------------------------------------------------------------
 // D3D11 Capability Logging
 // -------------------------------------------------------------------------------------------

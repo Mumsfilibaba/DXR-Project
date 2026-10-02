@@ -3,10 +3,13 @@
 #include "D3D11RHI/D3D11Core.h"
 #include "D3D11RHI/D3D11Loader.h"
 
-PFN_CREATE_DXGI_FACTORY_2      D3D11::CreateDXGIFactory2     = nullptr;
-PFN_DXGI_GET_DEBUG_INTERFACE_1 D3D11::DXGIGetDebugInterface1 = nullptr;
-PFN_D3D11_CREATE_DEVICE        D3D11::D3D11CreateDevice      = nullptr;
-PFN_D3D_REFLECT                D3D11::D3DReflect             = nullptr;
+PFN_CREATE_DXGI_FACTORY_2      D3D11::CreateDXGIFactory2       = nullptr;
+PFN_DXGI_GET_DEBUG_INTERFACE_1 D3D11::DXGIGetDebugInterface1   = nullptr;
+PFN_D3D11_CREATE_DEVICE        D3D11::D3D11CreateDevice        = nullptr;
+PFN_D3D_REFLECT                D3D11::D3DReflect               = nullptr;
+#if D3D11_ENABLE_COMPOSITION
+PFN_DCOMPOSITION_CREATE_DEVICE D3D11::DCompositionCreateDevice = nullptr;
+#endif
 
 #define D3D11_LOAD_FUNCTION(Function, LibraryHandle) \
 do \
@@ -22,6 +25,9 @@ do \
 void* D3D11::DXGILibrary        = nullptr;
 void* D3D11::D3D11Library       = nullptr;
 void* D3D11::D3DCompilerLibrary = nullptr;
+#if D3D11_ENABLE_COMPOSITION
+void* D3D11::DCompLibrary       = nullptr;
+#endif
 
 bool D3D11::Initialize()
 {
@@ -62,6 +68,22 @@ bool D3D11::Initialize()
     D3D11_LOAD_FUNCTION(DXGIGetDebugInterface1, DXGILibrary);
     D3D11_LOAD_FUNCTION(D3D11CreateDevice, D3D11Library);
     D3D11_LOAD_FUNCTION(D3DReflect, D3DCompilerLibrary);
+
+#if D3D11_ENABLE_COMPOSITION
+    DCompLibrary = FPlatformLibrary::LoadDynamicLib("dcomp");
+    if (DCompLibrary)
+    {
+        D3D11_INFO("Loaded dcomp.dll");
+
+        D3D11::DCompositionCreateDevice = FPlatformLibrary::LoadSymbol<PFN_DCOMPOSITION_CREATE_DEVICE>("DCompositionCreateDevice", DCompLibrary);
+    }
+
+    if (!D3D11::DCompositionCreateDevice)
+    {
+        D3D11_INFO("DirectComposition NOT found, so a transparent swap chain will present opaque");
+    }
+#endif
+
     return true;
 }
 
@@ -85,8 +107,19 @@ void D3D11::Release()
         D3DCompilerLibrary = nullptr;
     }
 
-    D3D11::CreateDXGIFactory2     = nullptr;
-    D3D11::DXGIGetDebugInterface1 = nullptr;
-    D3D11::D3D11CreateDevice      = nullptr;
-    D3D11::D3DReflect             = nullptr;
+#if D3D11_ENABLE_COMPOSITION
+    if (DCompLibrary)
+    {
+        FPlatformLibrary::FreeDynamicLib(DCompLibrary);
+        DCompLibrary = nullptr;
+    }
+#endif
+
+    D3D11::CreateDXGIFactory2       = nullptr;
+    D3D11::DXGIGetDebugInterface1   = nullptr;
+    D3D11::D3D11CreateDevice        = nullptr;
+    D3D11::D3DReflect               = nullptr;
+#if D3D11_ENABLE_COMPOSITION
+    D3D11::DCompositionCreateDevice = nullptr;
+#endif
 }

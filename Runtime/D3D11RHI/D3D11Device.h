@@ -5,6 +5,10 @@
 #include "RHI/RHITypes.h"
 #include "D3D11RHI/D3D11Core.h"
 
+#if D3D11_ENABLE_COMPOSITION
+struct IDCompositionDevice;
+#endif
+
 class FD3D11Adapter
 {
 public:
@@ -72,6 +76,10 @@ public:
     bool FindOrCreateSamplerState(const FRHISamplerStateDesc& SamplerDesc, TComPtr<ID3D11SamplerState>& OutSamplerState);
     bool FindOrCreateSamplerState(const FRHIStaticSamplerInfo& StaticSamplerInfo, TComPtr<ID3D11SamplerState>& OutSamplerState);
 
+#if D3D11_ENABLE_COMPOSITION
+    IDCompositionDevice* GetCompositionDevice();
+#endif
+
     FORCEINLINE FD3D11Adapter*        GetAdapter()       const { return Adapter; }
     FORCEINLINE ID3D11Device*         GetD3D11Device()   const { return D3D11Device.Get(); }
     FORCEINLINE ID3D11Device1*        GetD3D11Device1()  const { return D3D11Device1.Get(); }
@@ -98,4 +106,7 @@ private:
     D3D_FEATURE_LEVEL             FeatureLevel;
     FSamplerStateMap              SamplerStateMap;
     FCriticalSection              SamplerStateMapCS;
+#if D3D11_ENABLE_COMPOSITION
+    TComPtr<IDCompositionDevice>  CompositionDevice;
+#endif
 };

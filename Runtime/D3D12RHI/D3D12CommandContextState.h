@@ -3,10 +3,7 @@
 #include "D3D12RHI/D3D12RootSignature.h"
 #include "D3D12RHI/D3D12DescriptorCache.h"
 #include "D3D12RHI/D3D12PipelineState.h"
-
-class FD3D12RayTracingPipelineStateRHI;
-
-typedef TSharedRef<class FD3D12RayTracingPipelineStateRHI> FD3D12RayTracingPipelineStateRHIRef;
+#include "D3D12RHI/RayTracing/D3D12RayTracingPipeline.h"
 
 struct EShaderConstantsPipeline
 {

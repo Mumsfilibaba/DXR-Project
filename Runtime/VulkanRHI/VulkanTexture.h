@@ -7,7 +7,6 @@
 class FVulkanSwapChainRHI;
 class FVulkanCommandContext;
 
-typedef TSharedRef<FVulkanSwapChainRHI>     FVulkanSwapChainRHIRef;
 typedef TSharedRef<class FVulkanTextureRHI> FVulkanTextureRHIRef;
 
 class FVulkanTextureRHI : public FRHITexture, public FVulkanResource

@@ -339,7 +339,7 @@ bool FVulkanShader::Initialize(const TArray<uint8>& InCode)
     }
 }
 
-TSharedRef<FVulkanShaderModule> FVulkanShader::GetOrCreateShaderModule(FVulkanPipelineLayout* Layout)
+FVulkanShaderModuleRef FVulkanShader::GetOrCreateShaderModule(FVulkanPipelineLayout* Layout)
 {
     CHECK(Layout != nullptr);
     
@@ -369,7 +369,7 @@ TSharedRef<FVulkanShaderModule> FVulkanShader::GetOrCreateShaderModule(FVulkanPi
         TScopedLock Lock(ShaderModulesCS);
 
         // Find the ShaderModule with the matching resolved bindings
-        if (TSharedRef<FVulkanShaderModule>* ShaderModule = ShaderModules.Find(ModuleKey))
+        if (FVulkanShaderModuleRef* ShaderModule = ShaderModules.Find(ModuleKey))
         {
             return *ShaderModule;
         }
@@ -442,14 +442,14 @@ TSharedRef<FVulkanShaderModule> FVulkanShader::GetOrCreateShaderModule(FVulkanPi
     {
         TScopedLock Lock(ShaderModulesCS);
 
-		if (TSharedRef<FVulkanShaderModule>* Existing = ShaderModules.Find(ModuleKey))
+		if (FVulkanShaderModuleRef* Existing = ShaderModules.Find(ModuleKey))
 		{
 		    // Another thread won the race; destroy the newly created VkShaderModule and reuse the existing shared ref.
 			vkDestroyShaderModule(GetDevice()->GetVkDevice(), ShaderModule, nullptr);
 		    return *Existing;
 		}
 
-        TSharedRef<FVulkanShaderModule> NewShaderModule = new FVulkanShaderModule(GetDevice(), ShaderModule);
+        FVulkanShaderModuleRef NewShaderModule = new FVulkanShaderModule(GetDevice(), ShaderModule);
         ShaderModules.Add(ModuleKey, NewShaderModule);
         return NewShaderModule;
     }
