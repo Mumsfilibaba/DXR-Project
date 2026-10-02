@@ -180,6 +180,7 @@ private:
     bool PrepareSamplers(FD3D12RootSignature* InRootSignature, const FD3D12EffectiveDescriptorCounts* InPipelineState, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
 
     void TransitionVertexAndIndexBuffers();
+    bool ResetStreamOutputFilledSizes();
 
     void BindResources(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
     void BindSamplers(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
@@ -262,27 +263,31 @@ private:
     {
         FGraphicsState()
             : PipelineState(nullptr)
+            , StreamOutputFilledSizeBuffer(nullptr)
             , IndexBufferCache()
             , VertexBufferCache()
+            , bResetStreamOutputFilledSizes(false)
         {
-            Memory::Memzero(SOBufferViews, sizeof(SOBufferViews));
-            Memory::Memzero(SOBuffers, sizeof(SOBuffers));
-            NumSOBuffers = 0;
+            Memory::Memzero(StreamOutputBufferViews, sizeof(StreamOutputBufferViews));
+            Memory::Memzero(StreamOutputBuffers, sizeof(StreamOutputBuffers));
+            NumStreamOutputBuffers = 0;
         }
 
         FD3D12GraphicsPipelineStateRHIRef PipelineState;
-        D3D12_STREAM_OUTPUT_BUFFER_VIEW   SOBufferViews[4];
-        FD3D12BufferRHI*                  SOBuffers[4];
-        uint32                            NumSOBuffers;
+        D3D12_STREAM_OUTPUT_BUFFER_VIEW   StreamOutputBufferViews[D3D12_MAX_STREAM_OUTPUT_BUFFER_COUNT];
+        FD3D12BufferRHI*                  StreamOutputBuffers[D3D12_MAX_STREAM_OUTPUT_BUFFER_COUNT];
+        uint32                            NumStreamOutputBuffers;
+        FD3D12ResourceRef                 StreamOutputFilledSizeBuffer;
         FD3D12IndexBufferCache            IndexBufferCache;
         FD3D12VertexBufferCache           VertexBufferCache;
 
-        bool bBindStreamOutputTargets : 1;
-        bool bBindPipelineState       : 1;
-        bool bBindVertexBuffers       : 1;
-        bool bBindIndexBuffer         : 1;
-        bool bBindShaderConstants     : 1;
-        bool bBindPrimitiveTopology   : 1;
+        bool bBindStreamOutputTargets      : 1;
+        bool bResetStreamOutputFilledSizes : 1;
+        bool bBindPipelineState            : 1;
+        bool bBindVertexBuffers            : 1;
+        bool bBindIndexBuffer              : 1;
+        bool bBindShaderConstants          : 1;
+        bool bBindPrimitiveTopology        : 1;
     } GraphicsState;
 
     struct FComputeState

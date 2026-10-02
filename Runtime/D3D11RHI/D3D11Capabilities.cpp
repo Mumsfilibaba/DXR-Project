@@ -8,7 +8,7 @@ D3D11RHI_API D3D_FEATURE_LEVEL GD3D11FeatureLevel                         = D3D_
 D3D11RHI_API bool              GD3D11SupportsFences                       = false;
 D3D11RHI_API bool              GD3D11SupportsUAVsInAllStages              = false;
 D3D11RHI_API bool              GD3D11SupportsPartialConstantBufferUpdates = false;
-D3D11RHI_API uint32            GD3D11MaxUnorderedAccessViews              = D3D11_PS_CS_UAV_REGISTER_COUNT;
+D3D11RHI_API uint32            GD3D11MaxUnorderedAccessViews              = D3D11_MAX_UNORDERED_ACCESS_VIEWS_FL11_0;
 D3D11RHI_API bool              GD3D11SupportsComposition                  = false;
 
 static const CHAR* ToString(D3D_FEATURE_LEVEL FeatureLevel)
@@ -48,7 +48,7 @@ bool FD3D11DeviceRHI::InitializeDeviceFeatureSupport()
     GD3D11SupportsFences                       = Device->GetD3D11Device5() != nullptr && Device->GetD3D11Context4() != nullptr;
     GD3D11SupportsUAVsInAllStages              = GD3D11FeatureLevel >= D3D_FEATURE_LEVEL_11_1;
     GD3D11SupportsPartialConstantBufferUpdates = Device->GetD3D11Context1() != nullptr;
-    GD3D11MaxUnorderedAccessViews              = GD3D11SupportsUAVsInAllStages ? D3D11_1_UAV_SLOT_COUNT : D3D11_PS_CS_UAV_REGISTER_COUNT;
+    GD3D11MaxUnorderedAccessViews              = GD3D11SupportsUAVsInAllStages ? D3D11_MAX_UNORDERED_ACCESS_VIEWS : D3D11_MAX_UNORDERED_ACCESS_VIEWS_FL11_0;
 #if D3D11_ENABLE_COMPOSITION
     GD3D11SupportsComposition                  = D3D11::DCompositionCreateDevice != nullptr;
 #endif
@@ -96,27 +96,27 @@ bool FD3D11DeviceRHI::InitializeDeviceFeatureSupport()
     // Draw Indirect
     // -------------------------------------------------------------------------------------------
 
-    RHI::bSupportsDrawIndirect               = false;
+    RHI::bSupportsDrawIndirect               = true;
     RHI::bSupportsDrawIndirectCount          = false;
-    RHI::bSupportsDispatchIndirect           = false;
+    RHI::bSupportsDispatchIndirect           = true;
     RHI::bSupportsDispatchMeshIndirect       = false;
     RHI::bSupportsDispatchMeshIndirectCount  = false;
-    RHI::MaxDrawIndirectCommandCount         = 0;
+    RHI::MaxDrawIndirectCommandCount         = uint32(~0u);
     RHI::MaxDispatchMeshIndirectCommandCount = 0;
 
     // -------------------------------------------------------------------------------------------
     // Texture / Image Limits (Feature Level 11_0)
     // -------------------------------------------------------------------------------------------
 
-    RHI::MaxTexture1DSize        = D3D11_REQ_TEXTURE1D_U_DIMENSION;
-    RHI::MaxTexture1DArrayLayers = D3D11_REQ_TEXTURE1D_ARRAY_AXIS_DIMENSION;
-    RHI::MaxTexture2DSize        = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-    RHI::MaxTexture2DArrayLayers = D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
-    RHI::MaxTexture3DWidth       = D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
-    RHI::MaxTexture3DHeight      = D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
-    RHI::MaxTexture3DDepth       = D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
-    RHI::MaxCubeTextureSize      = D3D11_REQ_TEXTURECUBE_DIMENSION;
-    RHI::MaxCubeArrayCount       = D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION / RHI_NUM_CUBE_FACES;
+    RHI::MaxTexture1DSize        = D3D11_MAX_TEXTURE1D_SIZE;
+    RHI::MaxTexture1DArrayLayers = D3D11_MAX_TEXTURE1D_ARRAY_SLICES;
+    RHI::MaxTexture2DSize        = D3D11_MAX_TEXTURE2D_SIZE;
+    RHI::MaxTexture2DArrayLayers = D3D11_MAX_TEXTURE2D_ARRAY_SLICES;
+    RHI::MaxTexture3DWidth       = D3D11_MAX_TEXTURE3D_SIZE;
+    RHI::MaxTexture3DHeight      = D3D11_MAX_TEXTURE3D_SIZE;
+    RHI::MaxTexture3DDepth       = D3D11_MAX_TEXTURE3D_SIZE;
+    RHI::MaxCubeTextureSize      = D3D11_MAX_TEXTURECUBE_SIZE;
+    RHI::MaxCubeArrayCount       = D3D11_MAX_TEXTURE2D_ARRAY_SLICES / RHI_NUM_CUBE_FACES;
 
     // -------------------------------------------------------------------------------------------
     // Buffer / Memory Limits
@@ -133,8 +133,8 @@ bool FD3D11DeviceRHI::InitializeDeviceFeatureSupport()
     // Dynamic State / Query Support
     // -------------------------------------------------------------------------------------------
 
-    RHI::bSupportsDynamicDepthBias           = false;
-    RHI::bSupportsStreamOutput               = false;
+    RHI::bSupportsDynamicDepthBias           = true;
+    RHI::bSupportsStreamOutput               = true;
     RHI::bSupportsTimestampQueries           = true;
     RHI::bSupportsPipelineStatisticsQueries  = true;
     RHI::bSupportsGPUTimestampBubblesRemoval = false;

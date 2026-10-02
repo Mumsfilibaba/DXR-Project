@@ -1738,7 +1738,7 @@ bool FD3D12DeviceRHI::QuerySupportedSampleCounts(EFormat Format, uint32& OutSamp
         return false;
     }
 
-    for (uint32 SampleCount = 1; SampleCount <= D3D12_MAX_MULTISAMPLE_SAMPLE_COUNT; SampleCount <<= 1)
+    for (uint32 SampleCount = 1; SampleCount <= D3D12_MAX_RESOURCE_SAMPLE_COUNT; SampleCount <<= 1)
     {
         uint32 Quality = 0;
         if (Device->QueryMultisampleQuality(DxgiFormat, SampleCount, Quality))

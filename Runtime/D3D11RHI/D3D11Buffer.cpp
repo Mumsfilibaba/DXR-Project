@@ -51,7 +51,7 @@ bool FD3D11BufferRHI::Initialize(ERHIResourceState InInitialState, const void* I
 
     if (bHasViews)
     {
-        const bool bStructured = BufferDesc.Stride > 0 && !BufferDesc.IsVertexBuffer() && !BufferDesc.IsIndexBuffer() && !bIsIndirect;
+        const bool bStructured = BufferDesc.Stride > 0 && !BufferDesc.IsVertexBuffer() && !BufferDesc.IsIndexBuffer() && !BufferDesc.IsStreamOutputBuffer() && !bIsIndirect;
         if (bStructured)
         {
             D3D11Desc.MiscFlags          |= D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;

@@ -323,6 +323,11 @@ NODISCARD constexpr UINT ConvertBufferBindFlags(EBufferFlags Flags)
         Result |= D3D11_BIND_UNORDERED_ACCESS;
     }
 
+    if (IsEnumFlagSet(Flags, EBufferFlags::StreamOutputBuffer))
+    {
+        Result |= D3D11_BIND_STREAM_OUTPUT;
+    }
+
     return Result;
 }
 

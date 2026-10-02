@@ -67,6 +67,23 @@ struct FD3D11IndexBufferCache
     DXGI_FORMAT   IndexFormat;
 };
 
+struct FD3D11StreamOutputCache
+{
+    FD3D11StreamOutputCache()
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
+        Memory::Memzero(Buffers, sizeof(Buffers));
+        Memory::Memzero(Offsets, sizeof(Offsets));
+    }
+
+    ID3D11Buffer* Buffers[D3D11_MAX_STREAM_OUTPUT_BUFFER_COUNT];
+    UINT          Offsets[D3D11_MAX_STREAM_OUTPUT_BUFFER_COUNT];
+};
+
 struct FD3D11RenderTargetCache
 {
     FD3D11RenderTargetCache()
@@ -306,8 +323,10 @@ public:
     void SetScissorRects(const D3D11_RECT* ScissorRects, uint32 NumScissorRects);
     void SetBlendFactor(const float BlendFactor[4]);
     void SetStencilRef(uint32 InStencilRef);
+    void SetDepthBias(float InDepthBias, float InDepthBiasClamp, float InSlopeScaledDepthBias);
     void SetVertexBuffer(FD3D11BufferRHI* VertexBuffer, uint32 VertexBufferSlot);
     void SetIndexBuffer(FD3D11BufferRHI* IndexBuffer, DXGI_FORMAT IndexFormat);
+    void SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets);
     void SetSRV(FD3D11ShaderResourceViewRHI* ShaderResourceView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
     void SetUAV(FD3D11UnorderedAccessViewRHI* UnorderedAccessView, uint32 ResourceIndex);
     void SetCBV(FD3D11BufferRHI* Buffer, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
@@ -330,6 +349,8 @@ public:
     }
 
 private:
+    ID3D11RasterizerState* GetRasterizerState(FD3D11GraphicsPipelineStateRHI* PipelineState);
+
     void BindRenderTargets();
     void BindUnorderedAccessViews(const FD3D11Shader* Shader);
     void BindShaderConstants(EShaderConstantsPipeline::Type Pipeline);
@@ -353,23 +374,28 @@ private:
             , NumScissorRects(0)
             , StencilRef(0)
             , RenderTargetCache()
+            , DepthBiasRasterizerState(nullptr)
         {
             Memory::Memzero(BlendFactor, sizeof(BlendFactor));
             Memory::Memzero(Viewports, sizeof(Viewports));
             Memory::Memzero(ScissorRects, sizeof(ScissorRects));
+            Memory::Memzero(DepthBias, sizeof(DepthBias));
         }
 
-        float                   BlendFactor[4];
-        uint32                  StencilRef;
-        D3D11_VIEWPORT          Viewports[D3D11_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32                  NumViewports;
-        D3D11_RECT              ScissorRects[D3D11_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32                  NumScissorRects;
-        FD3D11RenderTargetCache RenderTargetCache;
+        float                       BlendFactor[4];
+        uint32                      StencilRef;
+        D3D11_VIEWPORT              Viewports[D3D11_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32                      NumViewports;
+        D3D11_RECT                  ScissorRects[D3D11_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32                      NumScissorRects;
+        FD3D11RenderTargetCache     RenderTargetCache;
+        float                       DepthBias[3];
+        FD3D11RasterizerStateRHIRef DepthBiasRasterizerState;
 
         bool bBindRenderTargets     : 1;
         bool bBindBlendState        : 1;
         bool bBindDepthStencilState : 1;
+        bool bBindRasterizerState   : 1;
         bool bBindScissorRects      : 1;
         bool bBindViewports         : 1;
     } CommonGraphicsState;
@@ -380,17 +406,20 @@ private:
             : PipelineState(nullptr)
             , IndexBufferCache()
             , VertexBufferCache()
+            , StreamOutputCache()
         {
         }
 
         FD3D11GraphicsPipelineStateRHIRef PipelineState;
         FD3D11IndexBufferCache            IndexBufferCache;
         FD3D11VertexBufferCache           VertexBufferCache;
+        FD3D11StreamOutputCache           StreamOutputCache;
 
-        bool bBindPipelineState   : 1;
-        bool bBindVertexBuffers   : 1;
-        bool bBindIndexBuffer     : 1;
-        bool bBindShaderConstants : 1;
+        bool bBindPipelineState       : 1;
+        bool bBindVertexBuffers       : 1;
+        bool bBindIndexBuffer         : 1;
+        bool bBindStreamOutputTargets : 1;
+        bool bBindShaderConstants     : 1;
     } GraphicsState;
 
     struct FComputeState

@@ -49,6 +49,11 @@ public:
     template<typename T>
     FORCEINLINE TArrayView<T> AllocateArray(const TArrayView<T>& Array) noexcept
     {
+        if (Array.IsEmpty())
+        {
+            return TArrayView<T>();
+        }
+
         void* NewArray = Allocate(Array.Size() * sizeof(T), alignof(T));
         Memory::Memcpy(NewArray, Array.Data(), Array.SizeInBytes());
         return TArrayView<T>(reinterpret_cast<T*>(NewArray), Array.Size());
@@ -239,7 +244,8 @@ public:
     FORCEINLINE void SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> InBuffers, const uint64* InOffsets) noexcept
     {
         TArrayView<FRHIBuffer* const> Buffers = AllocateArray(InBuffers);
-        EmplaceCommand<FRHICommandSetStreamOutputTargets>(Buffers, InOffsets);
+        TArrayView<const uint64>      Offsets = InOffsets ? AllocateArray(TArrayView<const uint64>(InOffsets, InBuffers.Size())) : TArrayView<const uint64>();
+        EmplaceCommand<FRHICommandSetStreamOutputTargets>(Buffers, Offsets.Data());
     }
 
     FORCEINLINE void SetGraphicsPipelineState(FRHIGraphicsPipelineState* PipelineState) noexcept

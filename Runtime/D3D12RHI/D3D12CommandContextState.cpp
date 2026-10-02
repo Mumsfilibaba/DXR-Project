@@ -99,9 +99,9 @@ void FD3D12CommandContextState::TransitionVertexAndIndexBuffers()
 
     Context.TransitionTrackedResourceState(GraphicsState.IndexBufferCache.BufferResource, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
-    for (uint32 i = 0; i < GraphicsState.NumSOBuffers; i++)
+    for (uint32 i = 0; i < GraphicsState.NumStreamOutputBuffers; i++)
     {
-        Context.TransitionTrackedResourceState(GraphicsState.SOBuffers[i], D3D12_RESOURCE_STATE_STREAM_OUT);
+        Context.TransitionTrackedResourceState(GraphicsState.StreamOutputBuffers[i], D3D12_RESOURCE_STATE_STREAM_OUT);
     }
 }
 
@@ -225,17 +225,84 @@ void FD3D12CommandContextState::BindGraphicsState()
 
     if (GraphicsState.bBindStreamOutputTargets)
     {
-        for (uint32 i = 0; i < GraphicsState.NumSOBuffers; i++)
+        if (GraphicsState.bResetStreamOutputFilledSizes)
         {
-            if (FD3D12BufferRHI* Buffer = GraphicsState.SOBuffers[i])
+            if (!ResetStreamOutputFilledSizes())
+            {
+                GraphicsState.NumStreamOutputBuffers = 0;
+                Memory::Memzero(GraphicsState.StreamOutputBufferViews, sizeof(GraphicsState.StreamOutputBufferViews));
+            }
+
+            GraphicsState.bResetStreamOutputFilledSizes = false;
+        }
+
+        for (uint32 i = 0; i < GraphicsState.NumStreamOutputBuffers; i++)
+        {
+            if (FD3D12BufferRHI* Buffer = GraphicsState.StreamOutputBuffers[i])
             {
                 Context.GetCommandList().UpdateResidency(Buffer->GetResource()->GetResidencyHandle());
+                GraphicsState.StreamOutputBufferViews[i].BufferFilledSizeLocation = GraphicsState.StreamOutputFilledSizeBuffer->GetGPUVirtualAddress() + i * sizeof(uint64);
             }
         }
 
-        Context.GetCommandList()->SOSetTargets(0, GraphicsState.NumSOBuffers, GraphicsState.SOBufferViews);
+        if (GraphicsState.NumStreamOutputBuffers > 0)
+        {
+            Context.GetCommandList().UpdateResidency(GraphicsState.StreamOutputFilledSizeBuffer->GetResidencyHandle());
+        }
+
+        Context.GetCommandList()->SOSetTargets(0, D3D12_MAX_STREAM_OUTPUT_BUFFER_COUNT, GraphicsState.StreamOutputBufferViews);
         GraphicsState.bBindStreamOutputTargets = false;
     }
+}
+
+bool FD3D12CommandContextState::ResetStreamOutputFilledSizes()
+{
+    constexpr uint64 FilledSizesBytes = D3D12_MAX_STREAM_OUTPUT_BUFFER_COUNT * sizeof(uint64);
+    if (!GraphicsState.StreamOutputFilledSizeBuffer)
+    {
+        D3D12_RESOURCE_DESC Desc = {};
+        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+        Desc.Format             = DXGI_FORMAT_UNKNOWN;
+        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        Desc.Width              = FilledSizesBytes;
+        Desc.Height             = 1;
+        Desc.DepthOrArraySize   = 1;
+        Desc.MipLevels          = 1;
+        Desc.Alignment          = 0;
+        Desc.SampleDesc.Count   = 1;
+        Desc.SampleDesc.Quality = 0;
+
+        if (!GetDevice()->CreateCommittedResource(Desc, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON, nullptr, GraphicsState.StreamOutputFilledSizeBuffer))
+        {
+            D3D12_ERROR("[FD3D12CommandContextState]: Failed to create the stream output filled size buffer");
+            return false;
+        }
+
+        GraphicsState.StreamOutputFilledSizeBuffer->SetDebugName("StreamOutput FilledSizes");
+    }
+
+    FD3D12ResourceStorage ResourceStorage(GetDevice());
+
+    void* AllocatedBytes = GetDevice()->GetStagingBufferAllocator()->Allocate(FilledSizesBytes, sizeof(uint64), ResourceStorage);
+    if (AllocatedBytes == nullptr || ResourceStorage.GetResource() == nullptr || ResourceStorage.GetMappedBaseAddress() == nullptr)
+    {
+        D3D12_ERROR("[FD3D12CommandContextState]: Failed to allocate the stream output filled size upload");
+        return false;
+    }
+
+    Memory::Memzero(ResourceStorage.GetMappedBaseAddress(), FilledSizesBytes);
+
+    FD3D12Resource* FilledSizeResource = GraphicsState.StreamOutputFilledSizeBuffer.Get();
+    Context.TransitionResourceState(FilledSizeResource, D3D12_RESOURCE_STATE_COPY_DEST);
+    Context.GetBarrierBatcher().FlushBarriers(Context.GetCommandList());
+
+    Context.GetCommandList().UpdateResidency(FilledSizeResource->GetResidencyHandle());
+    Context.GetCommandList()->CopyBufferRegion(FilledSizeResource->GetD3D12Resource(), 0, ResourceStorage.GetResource()->GetD3D12Resource(), ResourceStorage.GetResourceOffset(), FilledSizesBytes);
+
+    Context.TransitionResourceState(FilledSizeResource, D3D12_RESOURCE_STATE_STREAM_OUT);
+    Context.GetBarrierBatcher().FlushBarriers(Context.GetCommandList());
+    return true;
 }
 
 void FD3D12CommandContextState::PrepareComputeState()
@@ -1075,6 +1142,11 @@ void FD3D12CommandContextState::ResetState()
     GraphicsState.VertexBufferCache.Clear();
     GraphicsState.IndexBufferCache.Clear();
 
+    Memory::Memzero(GraphicsState.StreamOutputBufferViews, sizeof(GraphicsState.StreamOutputBufferViews));
+    Memory::Memzero(GraphicsState.StreamOutputBuffers, sizeof(GraphicsState.StreamOutputBuffers));
+    GraphicsState.NumStreamOutputBuffers        = 0;
+    GraphicsState.bResetStreamOutputFilledSizes = false;
+
     Memory::Memzero(CommonGraphicsState.BlendFactor, sizeof(CommonGraphicsState.BlendFactor));
     Memory::Memzero(CommonGraphicsState.Viewports, sizeof(CommonGraphicsState.Viewports));
     CommonGraphicsState.NumViewports = 0;
@@ -1141,7 +1213,7 @@ void FD3D12CommandContextState::BeginCommandList()
     GraphicsState.bBindVertexBuffers          = true;
     GraphicsState.bBindShaderConstants        = true;
     GraphicsState.bBindPrimitiveTopology      = true;
-    GraphicsState.bBindStreamOutputTargets    = (GraphicsState.NumSOBuffers > 0);
+    GraphicsState.bBindStreamOutputTargets    = (GraphicsState.NumStreamOutputBuffers > 0);
     CommonGraphicsState.bBindRenderTargets    = true;
     CommonGraphicsState.bBindBlendFactor      = true;
     CommonGraphicsState.bBindStencilRef       = true;
@@ -1561,26 +1633,26 @@ void FD3D12CommandContextState::FlushDefaultSamplePositions()
 
 void FD3D12CommandContextState::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)
 {
-    GraphicsState.NumSOBuffers = Math::Min(static_cast<uint32>(Buffers.Size()), 4u);
+    Memory::Memzero(GraphicsState.StreamOutputBufferViews, sizeof(GraphicsState.StreamOutputBufferViews));
+    Memory::Memzero(GraphicsState.StreamOutputBuffers, sizeof(GraphicsState.StreamOutputBuffers));
 
-    for (uint32 Index = 0; Index < GraphicsState.NumSOBuffers; ++Index)
+    GraphicsState.NumStreamOutputBuffers = Math::Min<uint32>(static_cast<uint32>(Buffers.Size()), D3D12_MAX_STREAM_OUTPUT_BUFFER_COUNT);
+
+    for (uint32 Index = 0; Index < GraphicsState.NumStreamOutputBuffers; ++Index)
     {
         FD3D12BufferRHI* D3DBuffer = FD3D12DeviceRHI::ResourceCast(Buffers[Index]);
-        GraphicsState.SOBuffers[Index] = D3DBuffer;
+        GraphicsState.StreamOutputBuffers[Index] = D3DBuffer;
 
         if (D3DBuffer)
         {
-            GraphicsState.SOBufferViews[Index].BufferLocation           = D3DBuffer->GetGPUVirtualAddress() + (Offsets ? Offsets[Index] : 0);
-            GraphicsState.SOBufferViews[Index].SizeInBytes              = D3DBuffer->GetDesc().Size;
-            GraphicsState.SOBufferViews[Index].BufferFilledSizeLocation = 0;
-        }
-        else
-        {
-            Memory::Memzero(&GraphicsState.SOBufferViews[Index], sizeof(D3D12_STREAM_OUTPUT_BUFFER_VIEW));
+            const uint64 Offset = Offsets ? Offsets[Index] : 0;
+            GraphicsState.StreamOutputBufferViews[Index].BufferLocation = D3DBuffer->GetGPUVirtualAddress() + Offset;
+            GraphicsState.StreamOutputBufferViews[Index].SizeInBytes    = D3DBuffer->GetDesc().Size - Offset;
         }
     }
 
-    GraphicsState.bBindStreamOutputTargets = true;
+    GraphicsState.bBindStreamOutputTargets      = true;
+    GraphicsState.bResetStreamOutputFilledSizes = GraphicsState.NumStreamOutputBuffers > 0;
 }
 
 void FD3D12CommandContextState::SetVertexBuffer(FD3D12BufferRHI* VertexBuffer, uint32 VertexBufferSlot)

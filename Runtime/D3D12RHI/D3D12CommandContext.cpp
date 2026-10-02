@@ -1630,7 +1630,7 @@ void FD3D12CommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegio
 
     const uint32 SrcNumRows = Math::Min<uint32>(NumRows, D3D12CalculateRegionNumRows(Dst->GetDesc().Format, TextureRegion.Height));
 
-    const uint32 DstSlicePitch = PlacedSubresourceFootprint.Footprint.RowPitch * NumRows;
+    const uint32 DstSlicePitch = PlacedSubresourceFootprint.Footprint.RowPitch * SrcNumRows;
     for (uint32 z = 0; z < TextureRegion.Depth; z++)
     {
         const uint8* SliceSource = Source + z * SrcDepthPitch;

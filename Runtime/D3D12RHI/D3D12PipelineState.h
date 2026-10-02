@@ -304,7 +304,7 @@ struct FD3D12HashableViewInstanceDesc
         : ViewInstanceCount(0)
         , Flags(D3D12_VIEW_INSTANCING_FLAG_NONE)
     {
-        Memory::Memzero(ViewInstanceLocations, sizeof(D3D12_VIEW_INSTANCE_LOCATION) * D3D12_MAX_VIEW_INSTANCE_COUNT);
+        Memory::Memzero(ViewInstanceLocations, sizeof(D3D12_VIEW_INSTANCE_LOCATION) * D3D12_MAX_VIEW_INSTANCES);
     }
 
     uint64 GenerateHash() const
@@ -317,7 +317,7 @@ struct FD3D12HashableViewInstanceDesc
 
     D3D12_VIEW_INSTANCING_FLAGS  Flags;
     uint32                       ViewInstanceCount;
-    D3D12_VIEW_INSTANCE_LOCATION ViewInstanceLocations[D3D12_MAX_VIEW_INSTANCE_COUNT];
+    D3D12_VIEW_INSTANCE_LOCATION ViewInstanceLocations[D3D12_MAX_VIEW_INSTANCES];
 };
 
 struct FD3D12GraphicsPipelineKey

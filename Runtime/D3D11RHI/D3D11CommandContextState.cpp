@@ -1,6 +1,7 @@
 #include "D3D11RHI/D3D11CommandContextState.h"
 #include "D3D11RHI/D3D11CommandContext.h"
 #include "D3D11RHI/D3D11Device.h"
+#include "D3D11RHI/D3D11RHI.h"
 
 static void D3D11SetConstantBuffers(ID3D11DeviceContext* D3D11Context, EShaderVisibility::Type ShaderStage, uint32 NumBuffers, ID3D11Buffer* const* Buffers)
 {
@@ -104,21 +105,25 @@ void FD3D11CommandContextState::BindGraphicsState()
     ID3D11DeviceContext* D3D11Context = Context.GetD3D11Context();
     if (GraphicsState.bBindPipelineState)
     {
-        FD3D11VertexShaderRHI*   VertexShader   = PipelineState->GetVertexShader();
-        FD3D11HullShaderRHI*     HullShader     = PipelineState->GetHullShader();
-        FD3D11DomainShaderRHI*   DomainShader   = PipelineState->GetDomainShader();
-        FD3D11GeometryShaderRHI* GeometryShader = PipelineState->GetGeometryShader();
-        FD3D11PixelShaderRHI*    PixelShader    = PipelineState->GetPixelShader();
+        FD3D11VertexShaderRHI* VertexShader = PipelineState->GetVertexShader();
+        FD3D11HullShaderRHI*   HullShader   = PipelineState->GetHullShader();
+        FD3D11DomainShaderRHI* DomainShader = PipelineState->GetDomainShader();
+        FD3D11PixelShaderRHI*  PixelShader  = PipelineState->GetPixelShader();
 
         D3D11Context->IASetInputLayout(PipelineState->GetInputLayout());
         D3D11Context->IASetPrimitiveTopology(PipelineState->GetPrimitiveTopology());
         D3D11Context->VSSetShader(VertexShader ? VertexShader->GetD3D11Shader() : nullptr, nullptr, 0);
         D3D11Context->HSSetShader(HullShader ? HullShader->GetD3D11Shader() : nullptr, nullptr, 0);
         D3D11Context->DSSetShader(DomainShader ? DomainShader->GetD3D11Shader() : nullptr, nullptr, 0);
-        D3D11Context->GSSetShader(GeometryShader ? GeometryShader->GetD3D11Shader() : nullptr, nullptr, 0);
+        D3D11Context->GSSetShader(PipelineState->GetD3D11GeometryShader(), nullptr, 0);
         D3D11Context->PSSetShader(PixelShader ? PixelShader->GetD3D11Shader() : nullptr, nullptr, 0);
-        D3D11Context->RSSetState(PipelineState->GetRasterizerState()->GetD3D11State());
         GraphicsState.bBindPipelineState = false;
+    }
+
+    if (CommonGraphicsState.bBindRasterizerState)
+    {
+        D3D11Context->RSSetState(GetRasterizerState(PipelineState));
+        CommonGraphicsState.bBindRasterizerState = false;
     }
 
     if (CommonGraphicsState.bBindBlendState)
@@ -163,6 +168,13 @@ void FD3D11CommandContextState::BindGraphicsState()
         const FD3D11IndexBufferCache& IndexBufferCache = GraphicsState.IndexBufferCache;
         D3D11Context->IASetIndexBuffer(IndexBufferCache.IndexBuffer, IndexBufferCache.IndexFormat, 0);
         GraphicsState.bBindIndexBuffer = false;
+    }
+
+    if (GraphicsState.bBindStreamOutputTargets)
+    {
+        const FD3D11StreamOutputCache& StreamOutputCache = GraphicsState.StreamOutputCache;
+        D3D11Context->SOSetTargets(D3D11_MAX_STREAM_OUTPUT_BUFFER_COUNT, StreamOutputCache.Buffers, StreamOutputCache.Offsets);
+        GraphicsState.bBindStreamOutputTargets = false;
     }
 
     if (GraphicsState.bBindShaderConstants)
@@ -219,6 +231,7 @@ void FD3D11CommandContextState::ResetState()
     CommonGraphicsState.RenderTargetCache.Clear();
     GraphicsState.VertexBufferCache.Clear();
     GraphicsState.IndexBufferCache.Clear();
+    GraphicsState.StreamOutputCache.Clear();
     ComputeState.UnorderedAccessViewCache.Clear();
 
     Memory::Memzero(CommonGraphicsState.BlendFactor, sizeof(CommonGraphicsState.BlendFactor));
@@ -230,14 +243,19 @@ void FD3D11CommandContextState::ResetState()
     Memory::Memzero(CommonGraphicsState.ScissorRects, sizeof(CommonGraphicsState.ScissorRects));
     CommonGraphicsState.NumScissorRects = 0;
 
+    Memory::Memzero(CommonGraphicsState.DepthBias, sizeof(CommonGraphicsState.DepthBias));
+    CommonGraphicsState.DepthBiasRasterizerState.Reset();
+
     GraphicsState.PipelineState                = nullptr;
     GraphicsState.bBindPipelineState           = true;
     GraphicsState.bBindVertexBuffers           = true;
     GraphicsState.bBindIndexBuffer             = true;
+    GraphicsState.bBindStreamOutputTargets     = true;
     GraphicsState.bBindShaderConstants         = true;
     CommonGraphicsState.bBindRenderTargets     = true;
     CommonGraphicsState.bBindBlendState        = true;
     CommonGraphicsState.bBindDepthStencilState = true;
+    CommonGraphicsState.bBindRasterizerState   = true;
     CommonGraphicsState.bBindScissorRects      = true;
     CommonGraphicsState.bBindViewports         = true;
 
@@ -259,6 +277,9 @@ void FD3D11CommandContextState::SetGraphicsPipelineState(FD3D11GraphicsPipelineS
         GraphicsState.bBindPipelineState           = true;
         CommonGraphicsState.bBindBlendState        = true;
         CommonGraphicsState.bBindDepthStencilState = true;
+        CommonGraphicsState.bBindRasterizerState   = true;
+
+        Memory::Memzero(CommonGraphicsState.DepthBias, sizeof(CommonGraphicsState.DepthBias));
 
         DirtyAllResources();
     }
@@ -356,6 +377,22 @@ void FD3D11CommandContextState::SetStencilRef(uint32 InStencilRef)
     }
 }
 
+void FD3D11CommandContextState::SetDepthBias(float InDepthBias, float InDepthBiasClamp, float InSlopeScaledDepthBias)
+{
+    const float NewValues[3] =
+    {
+        InDepthBias,
+        InDepthBiasClamp,
+        InSlopeScaledDepthBias
+    };
+
+    if (Memory::Memcmp(CommonGraphicsState.DepthBias, NewValues, sizeof(NewValues)) != 0)
+    {
+        Memory::Memcpy(CommonGraphicsState.DepthBias, NewValues, sizeof(NewValues));
+        CommonGraphicsState.bBindRasterizerState = true;
+    }
+}
+
 void FD3D11CommandContextState::SetVertexBuffer(FD3D11BufferRHI* VertexBuffer, uint32 VertexBufferSlot)
 {
     CHECK(VertexBufferSlot < D3D11_MAX_VERTEX_BUFFER_SLOTS);
@@ -384,6 +421,22 @@ void FD3D11CommandContextState::SetIndexBuffer(FD3D11BufferRHI* IndexBuffer, DXG
         IndexBufferCache.IndexFormat   = IndexFormat;
         GraphicsState.bBindIndexBuffer = true;
     }
+}
+
+void FD3D11CommandContextState::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)
+{
+    FD3D11StreamOutputCache& StreamOutputCache = GraphicsState.StreamOutputCache;
+    StreamOutputCache.Clear();
+
+    const uint32 NumBuffers = Math::Min<uint32>(static_cast<uint32>(Buffers.Size()), D3D11_MAX_STREAM_OUTPUT_BUFFER_COUNT);
+    for (uint32 Index = 0; Index < NumBuffers; ++Index)
+    {
+        FD3D11BufferRHI* D3D11Buffer = FD3D11DeviceRHI::ResourceCast(Buffers[Index]);
+        StreamOutputCache.Buffers[Index] = D3D11Buffer ? D3D11Buffer->GetD3D11Buffer() : nullptr;
+        StreamOutputCache.Offsets[Index] = Offsets ? static_cast<UINT>(Offsets[Index]) : 0;
+    }
+
+    GraphicsState.bBindStreamOutputTargets = true;
 }
 
 void FD3D11CommandContextState::SetSRV(FD3D11ShaderResourceViewRHI* ShaderResourceView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex)
@@ -455,6 +508,39 @@ void FD3D11CommandContextState::SetShaderConstants(EShaderStage ShaderStage, con
 
         DirtyShaderConstants(Pipeline);
     }
+}
+
+ID3D11RasterizerState* FD3D11CommandContextState::GetRasterizerState(FD3D11GraphicsPipelineStateRHI* PipelineState)
+{
+    FD3D11RasterizerStateRHI* RasterizerState = PipelineState->GetRasterizerState();
+
+    const FRHIRasterizerStateDesc& RasterizerDesc = RasterizerState->GetDesc();
+    if (!RasterizerDesc.bEnableDepthBias)
+    {
+        return RasterizerState->GetD3D11State();
+    }
+
+    FRHIRasterizerStateDesc VariantDesc = RasterizerDesc;
+    VariantDesc.DepthBias            = CommonGraphicsState.DepthBias[0];
+    VariantDesc.DepthBiasClamp       = CommonGraphicsState.DepthBias[1];
+    VariantDesc.SlopeScaledDepthBias = CommonGraphicsState.DepthBias[2];
+
+    if (VariantDesc == RasterizerDesc)
+    {
+        return RasterizerState->GetD3D11State();
+    }
+
+    FD3D11RasterizerStateRHI* CurrentVariant = CommonGraphicsState.DepthBiasRasterizerState.Get();
+    if (!CurrentVariant || CurrentVariant->GetDesc() != VariantDesc)
+    {
+        CommonGraphicsState.DepthBiasRasterizerState = static_cast<FD3D11RasterizerStateRHI*>(FD3D11DeviceRHI::Get()->CreateRasterizerState(VariantDesc));
+        if (!CommonGraphicsState.DepthBiasRasterizerState)
+        {
+            return RasterizerState->GetD3D11State();
+        }
+    }
+
+    return CommonGraphicsState.DepthBiasRasterizerState->GetD3D11State();
 }
 
 void FD3D11CommandContextState::BindRenderTargets()

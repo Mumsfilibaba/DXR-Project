@@ -603,7 +603,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
     FD3D12HashableViewInstanceDesc ViewInstanceDesc;
     if (Desc.ViewInstancingState.bEnableViewInstancing)
     {
-        ViewInstanceDesc.ViewInstanceCount = Math::Min<uint32>(Desc.ViewInstancingState.NumArraySlices, D3D12_MAX_VIEW_INSTANCE_COUNT);
+        ViewInstanceDesc.ViewInstanceCount = Math::Min<uint32>(Desc.ViewInstancingState.NumArraySlices, D3D12_MAX_VIEW_INSTANCES);
         for (uint32 Index = 0; Index < ViewInstanceDesc.ViewInstanceCount; Index++)
         {
             ViewInstanceDesc.ViewInstanceLocations[Index].RenderTargetArrayIndex = Desc.ViewInstancingState.StartRenderTargetArrayIndex;
@@ -1253,7 +1253,7 @@ bool FD3D12MeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDes
     FD3D12HashableViewInstanceDesc ViewInstanceDesc;
     if (Desc.ViewInstancingState.bEnableViewInstancing)
     {
-        ViewInstanceDesc.ViewInstanceCount = Math::Min<uint32>(Desc.ViewInstancingState.NumArraySlices, D3D12_MAX_VIEW_INSTANCE_COUNT);
+        ViewInstanceDesc.ViewInstanceCount = Math::Min<uint32>(Desc.ViewInstancingState.NumArraySlices, D3D12_MAX_VIEW_INSTANCES);
         for (uint32 Index = 0; Index < ViewInstanceDesc.ViewInstanceCount; Index++)
         {
             ViewInstanceDesc.ViewInstanceLocations[Index].RenderTargetArrayIndex = Desc.ViewInstancingState.StartRenderTargetArrayIndex;

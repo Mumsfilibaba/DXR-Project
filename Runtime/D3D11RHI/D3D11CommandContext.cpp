@@ -252,6 +252,7 @@ void FD3D11CommandContext::SetStencilRef(uint32 StencilRef)
 
 void FD3D11CommandContext::SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias)
 {
+    ContextState.SetDepthBias(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
 }
 
 void FD3D11CommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot)
@@ -271,6 +272,7 @@ void FD3D11CommandContext::SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat 
 
 void FD3D11CommandContext::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)
 {
+    ContextState.SetStreamOutputTargets(Buffers, Offsets);
 }
 
 void FD3D11CommandContext::SetGraphicsPipelineState(FRHIGraphicsPipelineState* PipelineState)
@@ -736,14 +738,41 @@ void FD3D11CommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint
 
 void FD3D11CommandContext::DrawIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount)
 {
+    FD3D11BufferRHI* Arguments = FD3D11DeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    ContextState.BindGraphicsState();
+
+    ID3D11Buffer* D3D11Arguments = Arguments->GetD3D11Buffer();
+    for (uint32 Index = 0; Index < CommandCount; ++Index)
+    {
+        const uint64 Offset = ArgumentBufferOffset + uint64(Index) * sizeof(FRHIDrawIndirectParameters);
+        GetD3D11Context()->DrawInstancedIndirect(D3D11Arguments, static_cast<UINT>(Offset));
+    }
 }
 
 void FD3D11CommandContext::DrawIndexedIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount)
 {
+    FD3D11BufferRHI* Arguments = FD3D11DeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    ContextState.BindGraphicsState();
+
+    ID3D11Buffer* D3D11Arguments = Arguments->GetD3D11Buffer();
+    for (uint32 Index = 0; Index < CommandCount; ++Index)
+    {
+        const uint64 Offset = ArgumentBufferOffset + uint64(Index) * sizeof(FRHIDrawIndexedIndirectParameters);
+        GetD3D11Context()->DrawIndexedInstancedIndirect(D3D11Arguments, static_cast<UINT>(Offset));
+    }
 }
 
 void FD3D11CommandContext::DispatchIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset)
 {
+    FD3D11BufferRHI* Arguments = FD3D11DeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    ContextState.BindComputeState();
+    GetD3D11Context()->DispatchIndirect(Arguments->GetD3D11Buffer(), static_cast<UINT>(ArgumentBufferOffset));
 }
 
 void FD3D11CommandContext::AcquireNextBackBuffer(FRHISwapChain* SwapChain)

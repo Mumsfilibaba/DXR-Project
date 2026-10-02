@@ -750,15 +750,15 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
     // Texture / image limits (canonical D3D12 defines)
     // -------------------------------------------------------------------------------------------
 
-    RHI::MaxTexture1DSize        = D3D12_REQ_TEXTURE1D_U_DIMENSION;
-    RHI::MaxTexture1DArrayLayers = D3D12_REQ_TEXTURE1D_ARRAY_AXIS_DIMENSION;
-    RHI::MaxTexture2DSize        = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-    RHI::MaxTexture2DArrayLayers = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
-    RHI::MaxTexture3DWidth       = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
-    RHI::MaxTexture3DHeight      = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
-    RHI::MaxTexture3DDepth       = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
-    RHI::MaxCubeTextureSize      = D3D12_REQ_TEXTURECUBE_DIMENSION;
-    RHI::MaxCubeArrayCount       = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION / RHI_NUM_CUBE_FACES;
+    RHI::MaxTexture1DSize        = D3D12_MAX_TEXTURE1D_SIZE;
+    RHI::MaxTexture1DArrayLayers = D3D12_MAX_TEXTURE1D_ARRAY_SLICES;
+    RHI::MaxTexture2DSize        = D3D12_MAX_TEXTURE2D_SIZE;
+    RHI::MaxTexture2DArrayLayers = D3D12_MAX_TEXTURE2D_ARRAY_SLICES;
+    RHI::MaxTexture3DWidth       = D3D12_MAX_TEXTURE3D_SIZE;
+    RHI::MaxTexture3DHeight      = D3D12_MAX_TEXTURE3D_SIZE;
+    RHI::MaxTexture3DDepth       = D3D12_MAX_TEXTURE3D_SIZE;
+    RHI::MaxCubeTextureSize      = D3D12_MAX_TEXTURECUBE_SIZE;
+    RHI::MaxCubeArrayCount       = D3D12_MAX_TEXTURE2D_ARRAY_SLICES / RHI_NUM_CUBE_FACES;
 
     // -------------------------------------------------------------------------------------------
     // Buffer / memory limits
@@ -901,7 +901,7 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
     if (GD3D12ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
     {
         RHI::bSupportsViewInstancing = true;
-        RHI::MaxViewInstanceCount    = D3D12_MAX_VIEW_INSTANCE_COUNT;
+        RHI::MaxViewInstanceCount    = D3D12_MAX_VIEW_INSTANCES;
     }
     else
     {

@@ -133,12 +133,25 @@ public:
         return StaticSamplers;
     }
 
+    FORCEINLINE ID3D11GeometryShader* GetD3D11GeometryShader() const
+    {
+        if (StreamOutputShader)
+        {
+            return StreamOutputShader.Get();
+        }
+
+        return GeometryShader ? GeometryShader->GetD3D11Shader() : nullptr;
+    }
+
 private:
+    bool CreateStreamOutputShader(const FRHIStreamOutputDeclaration& StreamOutputDeclaration);
+
     FD3D11VertexShaderRHIRef      VertexShader;
     FD3D11HullShaderRHIRef        HullShader;
     FD3D11DomainShaderRHIRef      DomainShader;
     FD3D11GeometryShaderRHIRef    GeometryShader;
     FD3D11PixelShaderRHIRef       PixelShader;
+    TComPtr<ID3D11GeometryShader> StreamOutputShader;
     TComPtr<ID3D11InputLayout>    InputLayout;
     FD3D11RasterizerStateRHIRef   RasterizerState;
     FD3D11DepthStencilStateRHIRef DepthStencilState;

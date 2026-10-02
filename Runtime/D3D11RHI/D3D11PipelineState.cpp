@@ -144,7 +144,7 @@ bool FD3D11BlendStateRHI::Initialize()
     D3DBlendDesc.IndependentBlendEnable = Desc.bIndependentBlendEnable;
 
     const D3D11_LOGIC_OP LogicOp = ConvertLogicOp(Desc.LogicOp);
-    for (int32 Index = 0; Index < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++Index)
+    for (int32 Index = 0; Index < D3D11_MAX_RENDER_TARGET_COUNT; ++Index)
     {
         D3D11_RENDER_TARGET_BLEND_DESC1& RenderTarget = D3DBlendDesc.RenderTarget[Index];
         if (Index < Desc.NumRenderTargets)
@@ -201,6 +201,7 @@ FD3D11GraphicsPipelineStateRHI::FD3D11GraphicsPipelineStateRHI(FD3D11Device* InD
     , DomainShader(nullptr)
     , GeometryShader(nullptr)
     , PixelShader(nullptr)
+    , StreamOutputShader(nullptr)
     , InputLayout(nullptr)
     , RasterizerState(nullptr)
     , DepthStencilState(nullptr)
@@ -224,6 +225,53 @@ void FD3D11GraphicsPipelineStateRHI::GetDebugName(String& OutDebugName) const
     OutDebugName = DebugName;
 }
 
+bool FD3D11GraphicsPipelineStateRHI::CreateStreamOutputShader(const FRHIStreamOutputDeclaration& StreamOutputDeclaration)
+{
+    FD3D11Shader* SourceShader = VertexShader.Get();
+    if (GeometryShader)
+    {
+        SourceShader = GeometryShader.Get();
+    }
+    else if (DomainShader)
+    {
+        SourceShader = DomainShader.Get();
+    }
+
+    TArray<D3D11_SO_DECLARATION_ENTRY> StreamOutputEntries;
+    for (const FRHIStreamOutputEntry& Entry : StreamOutputDeclaration.Entries)
+    {
+        D3D11_SO_DECLARATION_ENTRY D3DEntry = {};
+        D3DEntry.Stream         = 0;
+        D3DEntry.SemanticName   = Entry.SemanticName;
+        D3DEntry.SemanticIndex  = Entry.SemanticIndex;
+        D3DEntry.StartComponent = Entry.StartComponent;
+        D3DEntry.ComponentCount = Entry.ComponentCount;
+        D3DEntry.OutputSlot     = Entry.OutputSlot;
+
+        StreamOutputEntries.Emplace(D3DEntry);
+    }
+
+    TArray<UINT> StreamOutputStrides;
+    for (uint32 Stride : StreamOutputDeclaration.BufferStrides)
+    {
+        StreamOutputStrides.Emplace(Stride);
+    }
+
+    const TArray<uint8>& ByteCode = SourceShader->GetByteCode();
+
+    const HRESULT Result = GetDevice()->GetD3D11Device()->CreateGeometryShaderWithStreamOutput(ByteCode.Data(), ByteCode.Size(),
+        StreamOutputEntries.Data(), StreamOutputEntries.Size(), StreamOutputStrides.Data(), StreamOutputStrides.Size(),
+        StreamOutputDeclaration.RasterizedStream, nullptr, &StreamOutputShader);
+
+    if (FAILED(Result))
+    {
+        D3D11_ERROR("[FD3D11GraphicsPipelineStateRHI]: FAILED to create the stream output GeometryShader (0x%08X)", static_cast<uint32>(Result));
+        return false;
+    }
+
+    return true;
+}
+
 FD3D11Shader* FD3D11GraphicsPipelineStateRHI::GetShader(EShaderVisibility::Type ShaderStage) const
 {
     switch (ShaderStage)
@@ -239,12 +287,6 @@ FD3D11Shader* FD3D11GraphicsPipelineStateRHI::GetShader(EShaderVisibility::Type 
 
 bool FD3D11GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateDesc& Desc)
 {
-    if (Desc.StreamOutputDeclaration)
-    {
-        D3D11_ERROR("[FD3D11GraphicsPipelineStateRHI]: D3D11RHI does not support stream output yet");
-        return false;
-    }
-
     if (Desc.ViewInstancingState.bEnableViewInstancing)
     {
         D3D11_ERROR("[FD3D11GraphicsPipelineStateRHI]: D3D11 does not have view instancing");
@@ -262,6 +304,11 @@ bool FD3D11GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
     DomainShader   = MakeSharedRef<FD3D11DomainShaderRHI>(FD3D11DeviceRHI::ResourceCast(Desc.DomainShader));
     GeometryShader = MakeSharedRef<FD3D11GeometryShaderRHI>(FD3D11DeviceRHI::ResourceCast(Desc.GeometryShader));
     PixelShader    = MakeSharedRef<FD3D11PixelShaderRHI>(FD3D11DeviceRHI::ResourceCast(Desc.PixelShader));
+
+    if (Desc.StreamOutputDeclaration && !CreateStreamOutputShader(*Desc.StreamOutputDeclaration))
+    {
+        return false;
+    }
 
     RasterizerState = MakeSharedRef<FD3D11RasterizerStateRHI>(FD3D11DeviceRHI::ResourceCast(Desc.RasterizerState));
     if (!RasterizerState)
