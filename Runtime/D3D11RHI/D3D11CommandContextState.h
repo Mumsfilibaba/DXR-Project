@@ -86,14 +86,17 @@ struct FD3D11RenderTargetCache
 
         DepthStencilView.Reset();
 
-        DepthStencilRange      = FD3D11SubresourceRange();
-        BoundDepthStencilView  = nullptr;
-        BoundDepthStencilRange = FD3D11SubresourceRange();
-        NumRenderTargets       = 0;
-        NumBoundRenderTargets  = 0;
+        DepthStencilRange          = FD3D11SubresourceRange();
+        bDepthStencilReadOnly      = false;
+        BoundDepthStencilView      = nullptr;
+        BoundDepthStencilRange     = FD3D11SubresourceRange();
+        bBoundDepthStencilReadOnly = false;
+        NumRenderTargets           = 0;
+        NumBoundRenderTargets      = 0;
     }
 
-    bool IsBound(const FD3D11SubresourceRange& Range) const
+    // A read-only depth-stencil view can be bound together with shader resource views of the same texture
+    bool IsBoundForWrite(const FD3D11SubresourceRange& Range) const
     {
         for (uint32 Index = 0; Index < NumBoundRenderTargets; Index++)
         {
@@ -103,18 +106,20 @@ struct FD3D11RenderTargetCache
             }
         }
 
-        return BoundDepthStencilRange.Overlaps(Range);
+        return !bBoundDepthStencilReadOnly && BoundDepthStencilRange.Overlaps(Range);
     }
 
     TComPtr<ID3D11RenderTargetView> RenderTargetViews[D3D11_MAX_RENDER_TARGET_COUNT];
     FD3D11SubresourceRange          RenderTargetRanges[D3D11_MAX_RENDER_TARGET_COUNT];
     TComPtr<ID3D11DepthStencilView> DepthStencilView;
     FD3D11SubresourceRange          DepthStencilRange;
+    bool                            bDepthStencilReadOnly;
     uint32                          NumRenderTargets;
     ID3D11RenderTargetView*         BoundRenderTargetViews[D3D11_MAX_RENDER_TARGET_COUNT];
     FD3D11SubresourceRange          BoundRenderTargetRanges[D3D11_MAX_RENDER_TARGET_COUNT];
     ID3D11DepthStencilView*         BoundDepthStencilView;
     FD3D11SubresourceRange          BoundDepthStencilRange;
+    bool                            bBoundDepthStencilReadOnly;
     uint32                          NumBoundRenderTargets;
 };
 

@@ -283,9 +283,10 @@ void FD3D11CommandContextState::SetRenderTargets(FD3D11RenderTargetViewRHI* cons
     ID3D11DepthStencilView* D3D11DepthStencilView = DepthStencil ? DepthStencil->GetD3D11View() : nullptr;
     if (RenderTargetCache.DepthStencilView != D3D11DepthStencilView)
     {
-        RenderTargetCache.DepthStencilView     = MakeComPtr<ID3D11DepthStencilView>(D3D11DepthStencilView);
-        RenderTargetCache.DepthStencilRange    = DepthStencil ? DepthStencil->GetSubresourceRange() : FD3D11SubresourceRange();
-        CommonGraphicsState.bBindRenderTargets = true;
+        RenderTargetCache.DepthStencilView      = MakeComPtr<ID3D11DepthStencilView>(D3D11DepthStencilView);
+        RenderTargetCache.DepthStencilRange     = DepthStencil ? DepthStencil->GetSubresourceRange() : FD3D11SubresourceRange();
+        RenderTargetCache.bDepthStencilReadOnly = DepthStencil ? DepthStencil->IsReadOnly() : false;
+        CommonGraphicsState.bBindRenderTargets  = true;
     }
 
     CHECK(NumRenderTargets <= D3D11_MAX_RENDER_TARGET_COUNT);
@@ -468,11 +469,16 @@ void FD3D11CommandContextState::BindRenderTargets()
         RenderTargetCache.BoundRenderTargetRanges[Index] = RenderTargetCache.RenderTargetRanges[Index];
     }
 
-    UnbindShaderResourceViews(RenderTargetCache.DepthStencilRange);
+    if (!RenderTargetCache.bDepthStencilReadOnly)
+    {
+        UnbindShaderResourceViews(RenderTargetCache.DepthStencilRange);
+    }
+
     UnbindUnorderedAccessViews(RenderTargetCache.DepthStencilRange);
 
-    RenderTargetCache.BoundDepthStencilView  = RenderTargetCache.DepthStencilView.Get();
-    RenderTargetCache.BoundDepthStencilRange = RenderTargetCache.DepthStencilRange;
+    RenderTargetCache.BoundDepthStencilView      = RenderTargetCache.DepthStencilView.Get();
+    RenderTargetCache.BoundDepthStencilRange     = RenderTargetCache.DepthStencilRange;
+    RenderTargetCache.bBoundDepthStencilReadOnly = RenderTargetCache.bDepthStencilReadOnly;
     RenderTargetCache.NumBoundRenderTargets  = RenderTargetCache.NumRenderTargets;
 
     Context.GetD3D11Context()->OMSetRenderTargets(RenderTargetCache.NumBoundRenderTargets, RenderTargetCache.BoundRenderTargetViews, RenderTargetCache.BoundDepthStencilView);
@@ -592,7 +598,7 @@ void FD3D11CommandContextState::BindShaderResourceViews(EShaderVisibility::Type 
         }
 
         // Outputs of the pipeline that is about to run win, outputs left over from the other pipeline yield
-        if (View && RenderTargetCache.IsBound(Range))
+        if (View && RenderTargetCache.IsBoundForWrite(Range))
         {
             if (bIsCompute)
             {
@@ -683,8 +689,9 @@ void FD3D11CommandContextState::UnbindRenderTargets(const FD3D11SubresourceRange
 
     if (RenderTargetCache.BoundDepthStencilRange.Overlaps(Range))
     {
-        RenderTargetCache.BoundDepthStencilView  = nullptr;
-        RenderTargetCache.BoundDepthStencilRange = FD3D11SubresourceRange();
+        RenderTargetCache.BoundDepthStencilView      = nullptr;
+        RenderTargetCache.BoundDepthStencilRange     = FD3D11SubresourceRange();
+        RenderTargetCache.bBoundDepthStencilReadOnly = false;
         bUnbound = true;
     }
 

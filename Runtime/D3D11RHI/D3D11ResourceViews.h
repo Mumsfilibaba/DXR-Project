@@ -166,6 +166,13 @@ public:
 
     NODISCARD FORCEINLINE bool HasStencilFormat() const { return IsStencilFormat(D3D11Desc.Format); }
 
+    NODISCARD FORCEINLINE bool IsReadOnly() const
+    {
+        const bool bDepthReadOnly   = (D3D11Desc.Flags & D3D11_DSV_READ_ONLY_DEPTH) != 0;
+        const bool bStencilReadOnly = (D3D11Desc.Flags & D3D11_DSV_READ_ONLY_STENCIL) != 0;
+        return bDepthReadOnly && (!HasStencilFormat() || bStencilReadOnly);
+    }
+
 private:
     D3D11_DEPTH_STENCIL_VIEW_DESC   D3D11Desc;
     TComPtr<ID3D11DepthStencilView> View;
