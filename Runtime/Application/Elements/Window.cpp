@@ -32,11 +32,13 @@ FWindow::FWindow()
     , bShowOnCreate(true)
     , bHasExternalSurface(false)
     , bLayoutIsStale(false)
+    , bCachedIsMaximized(false)
     , Overlay()
     , MenuHost()
     , Content()
     , PlatformWindow(nullptr)
 {
+    AddElementFlags(EElementFlags::IsWindow);
 }
 
 FWindow::~FWindow()
@@ -58,29 +60,32 @@ void FWindow::Initialize(const FDesc& Desc)
     FVisualElement::SetActivationPolicy(EElementActivationPolicy::AutoFocusOnWindowActivate);
 }
 
-void FWindow::Tick(const FRectangle& AssignedBounds)
+IntVector2 FWindow::PrepareDesiredSize()
 {
-    SetContentRectangle(AssignedBounds);
-
     if (Content)
     {
-        Content->Tick(AssignedBounds);
+        Content->PrepareDesiredSize();
+    }
+
+    return FVisualElement::PrepareDesiredSize();
+}
+
+void FWindow::OnArrange(const FRectangle& AllottedBounds)
+{
+    if (Content)
+    {
+        Content->Arrange(AllottedBounds);
     }
 
     if (Overlay)
     {
-        Overlay->Tick(AssignedBounds);
+        Overlay->Arrange(AllottedBounds);
     }
 
     if (MenuHost)
     {
-        MenuHost->Tick(AssignedBounds);
+        MenuHost->Arrange(AllottedBounds);
     }
-}
-
-bool FWindow::IsWindow() const
-{
-    return true;
 }
 
 bool FWindow::SupportsKeyboardFocus() const
@@ -95,17 +100,7 @@ int32 FWindow::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
     if (Content && Content->IsVisible())
     {
         const FDrawGeometry ContentGeometry(Content->GetContentRectangle(), AllottedGeometry.Scale);
-        MaxLayerId = Content->OnDraw(ContentGeometry, OutCommandList, LayerId + 1);
-    }
-
-    if (Overlay && Overlay->IsVisible())
-    {
-        QueueDeferredPainting(Overlay, FDrawGeometry(Overlay->GetContentRectangle(), AllottedGeometry.Scale));
-    }
-
-    if (MenuHost && MenuHost->IsVisible() && !MenuHost->IsEmpty())
-    {
-        QueueDeferredPainting(MenuHost, FDrawGeometry(MenuHost->GetContentRectangle(), AllottedGeometry.Scale));
+        MaxLayerId = Content->Draw(ContentGeometry, OutCommandList, LayerId + 1);
     }
 
     return MaxLayerId;
@@ -138,12 +133,24 @@ int32 FWindow::PaintDeferred(FDrawCommandList& OutCommandList, int32 LayerId) co
 {
     int32 MaxLayerId = LayerId;
 
+    const float Scale = GetWindowDPIScale();
+
+    if (Overlay && Overlay->IsVisible())
+    {
+        MaxLayerId = Overlay->Draw(FDrawGeometry(Overlay->GetContentRectangle(), Scale), OutCommandList, MaxLayerId + 1);
+    }
+
+    if (MenuHost && MenuHost->IsVisible() && !MenuHost->IsEmpty())
+    {
+        MaxLayerId = MenuHost->Draw(FDrawGeometry(MenuHost->GetContentRectangle(), Scale), OutCommandList, MaxLayerId + 1);
+    }
+
     for (int32 Index = 0; Index < DeferredPaints.Size(); ++Index)
     {
         const FDeferredPaint& Paint = DeferredPaints[Index];
         if (Paint.Element)
         {
-            MaxLayerId = Paint.Element->OnDraw(Paint.Geometry, OutCommandList, MaxLayerId + 1);
+            MaxLayerId = Paint.Element->Draw(Paint.Geometry, OutCommandList, MaxLayerId + 1);
         }
         else if (Paint.OnPaint.IsBound())
         {
@@ -155,50 +162,29 @@ int32 FWindow::PaintDeferred(FDrawCommandList& OutCommandList, int32 LayerId) co
     return MaxLayerId;
 }
 
-void FWindow::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FWindow::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const
 {
-    if (Content)
+    return VisitChildList(Visitor, Order, Content, Overlay, MenuHost);
+}
+
+void FWindow::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+{
+    const bool bIsCoveredByMenu = MenuHost && MenuHost->IsVisible() && MenuHost->CoversPoint(ClientPosition);
+    const bool bIsOverlayModal  = Overlay && Overlay->IsVisible() && Overlay->CapturesAllInput();
+
+    if (Content && !bIsOverlayModal && !bIsCoveredByMenu)
     {
-        OutChildren.Add(Content);
+        Content->HitTest(ClientPosition, OutPath);
     }
 
-    if (Overlay)
+    if (Overlay && !bIsCoveredByMenu)
     {
-        OutChildren.Add(Overlay);
+        Overlay->HitTest(ClientPosition, OutPath);
     }
 
     if (MenuHost)
     {
-        OutChildren.Add(MenuHost);
-    }
-}
-
-void FWindow::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutParentElements)
-{
-    FRectangle WindowBounds = GetContentRectangle();
-    if (WindowBounds.EncapsulatesPoint(ClientPosition))
-    {
-        const EVisibility CurrentVisibility = GetVisibility();
-        if (OutParentElements.AcceptVisbility(CurrentVisibility))
-        {
-            OutParentElements.Add(CurrentVisibility, AsSharedPtr());
-
-            const bool bIsOverlayModal = Overlay && Overlay->IsVisible() && Overlay->CapturesAllInput();
-            if (Content && !bIsOverlayModal)
-            {
-                Content->FindChildrenContainingPoint(ClientPosition, OutParentElements);
-            }
-
-            if (Overlay)
-            {
-                Overlay->FindChildrenContainingPoint(ClientPosition, OutParentElements);
-            }
-
-            if (MenuHost)
-            {
-                MenuHost->FindChildrenContainingPoint(ClientPosition, OutParentElements);
-            }
-        }
+        MenuHost->HitTestHostedChild(ClientPosition, OutPath);
     }
 }
 
@@ -234,6 +220,8 @@ void FWindow::OnWindowDestroyed()
 
 void FWindow::OnWindowFocusChanged(bool)
 {
+    InvalidatePaint();
+
     OnWindowFocusChangedDelegate.ExecuteIfBound();
 }
 
@@ -254,6 +242,11 @@ void FWindow::OnWindowResize(const IntVector2& InSize)
         SetSize(InSize);
 
         bLayoutIsStale = true;
+
+        if (PlatformWindow)
+        {
+            bCachedIsMaximized = PlatformWindow->IsMaximized();
+        }
 
         OnWindowResizedDelegate.ExecuteIfBound(InSize);
     }
@@ -292,7 +285,11 @@ void FWindow::Resize(const IntVector2& InSize)
 
 void FWindow::SetSize(const IntVector2& InSize)
 {
-    CachedSize = InSize;
+    if (CachedSize != InSize)
+    {
+        CachedSize = InSize;
+        InvalidateDesiredSize();
+    }
 }
 
 void FWindow::SetPosition(const IntVector2& InPosition)
@@ -337,6 +334,10 @@ void FWindow::SetOverlay(const TSharedPtr<FVisualElement>& InOverlay)
     {
         Overlay->SetParentElement(AsWeakPtr());
     }
+    else
+    {
+        InvalidateDesiredSize();
+    }
 }
 
 void FWindow::SetContent(const TSharedPtr<FVisualElement>& InContent)
@@ -345,6 +346,10 @@ void FWindow::SetContent(const TSharedPtr<FVisualElement>& InContent)
     if (Content)
     {
         Content->SetParentElement(AsWeakPtr());
+    }
+    else
+    {
+        InvalidateDesiredSize();
     }
 }
 
@@ -361,7 +366,7 @@ TSharedPtr<FMenuHost> FWindow::GetOrCreateMenuHost()
         MenuHost->SetParentElement(AsWeakPtr());
 
         const IntVector2 Size = GetSize();
-        MenuHost->Tick(FRectangle(IntVector2(), Size.X, Size.Y));
+        MenuHost->Arrange(FRectangle(IntVector2(), Size.X, Size.Y));
     }
 
     return MenuHost;
@@ -416,12 +421,12 @@ bool FWindow::IsMinimized() const
 
 bool FWindow::IsMaximized() const
 {
-    if (PlatformWindow)
+    if (PlatformWindow && PlatformWindow->IsValid())
     {
         return PlatformWindow->IsMaximized();
     }
 
-    return false;
+    return bCachedIsMaximized;
 }
 
 float FWindow::GetWindowDPIScale() const

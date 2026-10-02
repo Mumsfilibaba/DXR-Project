@@ -7,6 +7,8 @@
 
 typedef TSharedPtr<struct FMenuLayer> FMenuHandle;
 
+DECLARE_DELEGATE(FOnMenuDismissed);
+
 struct FMenuLayer
 {
     FMenuLayer()
@@ -14,6 +16,7 @@ struct FMenuLayer
         , MenuWindow(nullptr)
         , Content(nullptr)
         , ScreenBounds()
+        , OnDismissed()
         , bIsInline(true)
     {
     }
@@ -29,6 +32,9 @@ struct FMenuLayer
 
     /** @brief Where the menu ended up, in screen coordinates. */
     FRectangle ScreenBounds;
+
+    /** @brief Fired as the stack closes this menu, so the anchor that opened it finds out. */
+    FOnMenuDismissed OnDismissed;
 
     /** @brief Whether the menu is drawn inside its host rather than in a popup window. */
     bool bIsInline;

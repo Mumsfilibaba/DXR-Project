@@ -6,6 +6,7 @@
 
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
+#include "LaunchProgram/ProgramEntry.h"
 
 #include "Array_Test.h"
 #include "SharedPtr_Test.h"
@@ -20,12 +21,16 @@
 #include "BitArray_Test.h"
 #include "Map_Test.h"
 #include "Set_Test.h"
+#include "MultiMap_Test.h"
 #include "UniquePtr_Test.h"
 #include "PriorityQueue_Test.h"
 #include "LinkedList_Test.h"
 #include "StringView_Test.h"
 #include "StaticString_Test.h"
 #include "CRC_Test.h"
+#include "Sort_Test.h"
+#include "UniformGrid2D_Test.h"
+#include "RingBuffer_Test.h"
 
 /**
  *  Check for memory leaks 
@@ -43,17 +48,28 @@
 IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 #endif
 
+struct FDebuggerOutputDevice : public IOutputDevice
+{
+    virtual void Log(const String& Message)
+    {
+        FPlatformMisc::OutputDebugString(Message.Data());
+        FPlatformMisc::OutputDebugString("\n");
+    }
+
+    virtual void Log(ELogSeverity Severity, const String& Message)
+    {
+        Log(Message);
+    }
+};
+
 /**
  * Tests
  */
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-void Tests(int32 Argc, const CHAR* Argv[])
+static void Tests()
 {
-    UNREFERENCED_VARIABLE(Argc);
-    UNREFERENCED_VARIABLE(Argv);
-
 #if RUN_TARRAY_TEST
     RUN_TEST("Array", TArray_Test());
 #endif
@@ -110,6 +126,10 @@ void Tests(int32 Argc, const CHAR* Argv[])
     RUN_TEST("Set", TSet_Test());
 #endif
 
+#if RUN_TMULTIMAP_TEST
+    RUN_TEST("MultiMap", TMultiMap_Test());
+#endif
+
 #if RUN_TUNIQUEPTR_TEST
     RUN_TEST("UniquePtr", TUniquePtr_Test());
 #endif
@@ -133,26 +153,24 @@ void Tests(int32 Argc, const CHAR* Argv[])
 #if RUN_CRC_TEST
     RUN_TEST("CRC32", CRC_Test());
 #endif
+
+#if RUN_SORT_TEST
+    RUN_TEST("Sort", Sort_Test());
+#endif
+
+#if RUN_UNIFORMGRID2D_TEST
+    RUN_TEST("UniformGrid2D", UniformGrid2D_Test());
+#endif
+
+#if RUN_RINGBUFFER_TEST
+    RUN_TEST("RingBuffer", RingBuffer_Test());
+#endif
 }
 
 /**
  * Main
  */
-struct FDebuggerOutputDevice : public IOutputDevice
-{
-    virtual void Log(const String& Message)
-    {
-        FPlatformMisc::OutputDebugString(Message.Data());
-        FPlatformMisc::OutputDebugString("\n");
-    }
-
-    virtual void Log(ELogSeverity Severity, const String& Message)
-    {
-        Log(Message);
-    }
-};
-
-int main(int Argc, const CHAR* Argv[])
+static int32 RunContainerTests()
 {
 #ifdef _WIN32
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -162,7 +180,7 @@ int main(int Argc, const CHAR* Argv[])
     LOG_INFO("=== Container Tests ===");
 
 #if RUN_TESTS
-    Tests(Argc, Argv);
+    Tests();
 #endif
 
     const int32 ExitCode = TestHarness::Report();
@@ -180,3 +198,5 @@ int main(int Argc, const CHAR* Argv[])
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
+
+IMPLEMENT_PROGRAM_MAIN("Core-Containers-Tests", RunContainerTests);

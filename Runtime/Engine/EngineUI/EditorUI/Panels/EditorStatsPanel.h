@@ -35,6 +35,7 @@ private:
     void CollectGroups();
 
     TSharedPtr<FVerticalBox>  Column;
+    TSharedPtr<FTextBlock>    SummaryText;
     TArray<FStatGroupSection> Sections;
     TArray<FStatData*>        ScratchStats;
     TArray<const CHAR*>       ScratchGroups;

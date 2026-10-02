@@ -28,16 +28,13 @@ void FCompoundElement::OnArrange(const FRectangle& AllottedBounds)
 {
     if (Content)
     {
-        Content->Tick(AllottedBounds.Deflate(Padding));
+        Content->Arrange(AllottedBounds.Deflate(Padding));
     }
 }
 
-void FCompoundElement::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FCompoundElement::VisitChildren(FChildVisitor& Visitor, EChildOrder /*Order*/) const
 {
-    if (Content)
-    {
-        OutChildren.Add(Content);
-    }
+    return VisitChild(Visitor, Content);
 }
 
 int32 FCompoundElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -48,19 +45,8 @@ int32 FCompoundElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComma
     }
 
     const FDrawGeometry ContentGeometry(Content->GetContentRectangle(), AllottedGeometry.Scale);
-    return Content->OnDraw(ContentGeometry, OutCommandList, LayerId + 1);
+    return Content->Draw(ContentGeometry, OutCommandList, LayerId + 1);
 }
-
-void FCompoundElement::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
-{
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
-    if (Content)
-    {
-        Content->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-    }
-}
-
 void FCompoundElement::SetContent(const TSharedPtr<FVisualElement>& InContent)
 {
     Content = InContent;
@@ -68,9 +54,12 @@ void FCompoundElement::SetContent(const TSharedPtr<FVisualElement>& InContent)
     {
         Content->SetParentElement(AsWeakPtr());
     }
+
+    InvalidateDesiredSize();
 }
 
 void FCompoundElement::SetPadding(const FMargin& InPadding)
 {
     Padding = InPadding;
+    InvalidateDesiredSize();
 }

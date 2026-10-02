@@ -1,4 +1,5 @@
 #include "Application/Menus/MenuStack.h"
+#include "Application/Menus/PopupPlacement.h"
 #include "Application/Menus/PopupWindow.h"
 #include "Application/Application.h"
 #include "Application/ElementPath.h"
@@ -276,58 +277,23 @@ void FMenuStack::Tick(float DeltaSeconds)
 FRectangle FMenuStack::ResolveBounds(const FRectangle& AnchorBounds, const IntVector2& MenuSize, EMenuPlacement Placement,
     int32 ContentTopInset, const FRectangle& ClampArea) const
 {
-    FRectangle Result = FRectangle(IntVector2(), MenuSize.X, MenuSize.Y);
     switch (Placement)
     {
-        case EMenuPlacement::BelowLeftAligned:
-        {
-            Result.Position = IntVector2(AnchorBounds.Position.X, AnchorBounds.GetBottom());
-
-            if (Result.GetBottom() > ClampArea.GetBottom() && (AnchorBounds.Position.Y - MenuSize.Y) >= ClampArea.Position.Y)
-            {
-                Result.Position.Y = AnchorBounds.Position.Y - MenuSize.Y;
-            }
-
-            if (Result.GetRight() > ClampArea.GetRight())
-            {
-                Result.Position.X = AnchorBounds.GetRight() - MenuSize.X;
-            }
-
-            break;
-        }
         case EMenuPlacement::RightOfTopAligned:
         {
-            Result.Position = IntVector2(AnchorBounds.GetRight(), AnchorBounds.Position.Y - ContentTopInset);
-
-            if (Result.GetRight() > ClampArea.GetRight() && (AnchorBounds.Position.X - MenuSize.X) >= ClampArea.Position.X)
-            {
-                Result.Position.X = AnchorBounds.Position.X - MenuSize.X;
-            }
-
-            break;
+            return FPopupPlacement::Resolve(AnchorBounds, MenuSize, ClampArea, EPopupSide::Right, EPopupFlip::Main, 0, -ContentTopInset);
         }
+
         case EMenuPlacement::AtCursor:
         {
-            Result.Position = AnchorBounds.Position;
+            return FPopupPlacement::Resolve(FRectangle(AnchorBounds.Position, 0, 0), MenuSize, ClampArea, EPopupSide::Below, EPopupFlip::Both);
+        }
 
-            if (Result.GetBottom() > ClampArea.GetBottom() && (AnchorBounds.Position.Y - MenuSize.Y) >= ClampArea.Position.Y)
-            {
-                Result.Position.Y = AnchorBounds.Position.Y - MenuSize.Y;
-            }
-
-            if (Result.GetRight() > ClampArea.GetRight() && (AnchorBounds.Position.X - MenuSize.X) >= ClampArea.Position.X)
-            {
-                Result.Position.X = AnchorBounds.Position.X - MenuSize.X;
-            }
-
-            break;
+        default:
+        {
+            return FPopupPlacement::Resolve(AnchorBounds, MenuSize, ClampArea, EPopupSide::Below, EPopupFlip::Both);
         }
     }
-
-    Result.Position.X = Math::Clamp(Result.Position.X, ClampArea.Position.X, Math::Max(ClampArea.Position.X, ClampArea.GetRight() - MenuSize.X));
-    Result.Position.Y = Math::Clamp(Result.Position.Y, ClampArea.Position.Y, Math::Max(ClampArea.Position.Y, ClampArea.GetBottom() - MenuSize.Y));
-
-    return Result;
 }
 
 int32 FMenuStack::FindMenuIndex(const FMenuHandle& Menu) const
@@ -375,6 +341,8 @@ void FMenuStack::CloseLayer(const FMenuHandle& Menu)
     {
         return;
     }
+
+    Menu->OnDismissed.ExecuteIfBound();
 
     if (Menu->bIsInline)
     {

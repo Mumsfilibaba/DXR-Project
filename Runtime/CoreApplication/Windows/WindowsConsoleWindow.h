@@ -17,6 +17,7 @@ public:
 
     virtual void SetTitle(const String& Title) override final;
     virtual void SetTextColor(EConsoleTextColor Color) override final;
+    virtual void SetOnClosed(const TFunction<void()>& Callback) override final;
 
     // IOutputDevice Interface
     virtual void Log(const String& Message) override final;
@@ -24,9 +25,15 @@ public:
     virtual void Flush() override final;
 
 private:
+    static BOOL WINAPI ConsoleCtrlHandler(DWORD Type);
+
     FWindowsConsoleWindow();
 
-    String           Title;
-    HANDLE           ConsoleHandle;
-    FCriticalSection ConsoleHandleCS;
+    bool NotifyClosed();
+    void Write(const CHAR* Data, uint32 Length);
+
+    String            Title;
+    HANDLE            ConsoleHandle;
+    FCriticalSection  ConsoleHandleCS;
+    TFunction<void()> OnClosed;
 };

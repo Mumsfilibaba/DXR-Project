@@ -7,6 +7,7 @@
 #include "Application/IApplicationRenderer.h"
 #include "Application/InputHandler.h"
 #include "Application/ElementPath.h"
+#include "Application/CursorHitCache.h"
 #include "Application/Elements/Window.h"
 
 /** @brief Event triggered when the monitor configuration changes (e.g., adding or removing displays). */
@@ -507,11 +508,30 @@ public:
     }
 
 private:
+    enum class EHoverUpdate : uint8
+    {
+        /** @brief Only tell tracked elements the cursor left them, which is what a release does. */
+        LeaveOnly,
+
+        /** @brief Only tell elements under the cursor it entered them, which is what the cursor entering the window does. */
+        EnterOnly,
+
+        /** @brief Both, which is what a move does. */
+        LeaveAndEnter,
+    };
+
+    NODISCARD TSharedPtr<FWindow> ResolveCursorWindow() const;
+    FEventResponse                UpdateHoverTracking(const FElementPath& CursorPath, const FCursorEvent& CursorEvent, EHoverUpdate Update);
+    const FElementPath&           ResolveCursorPath(const IntVector2& ScreenPosition);
+    IntVector2                    GetClientOrigin();
+
     void ReleaseAllPressedInput();
     void ResolveMouseDispatchPath(FElementPath& OutPath);
     void UpdateCursor();
-    IntVector2 GetClientOrigin();
     void RecordWindow(const TSharedPtr<FWindow>& InWindow);
+    void ValidateDrawCache(const TSharedPtr<FWindow>& InWindow, const FDrawGeometry& WindowGeometry, const FDrawCommandList& RecordedCommands);
+    void ValidateDrawCacheSubtree(const TSharedPtr<FWindow>& InWindow, const TSharedPtr<FVisualElement>& Element, const FDrawGeometry& Geometry);
+    void ReportDrawCacheDivergence(const TSharedPtr<FWindow>& InWindow, int32 DifferenceIndex, const String& Reason);
 
     TSharedPtr<IPlatformApplication>   PlatformApplication;
     TSet<EKeyboardKeyName::Type>       PressedKeys;
@@ -519,6 +539,7 @@ private:
     TArray<FMonitorInfo>               MonitorInfos;
     FElementPath                       FocusPath;
     FElementPath                       TrackedElements;
+    FCursorHitCache                    HitCache;
     TArray<TSharedPtr<FWindow>>        Windows;
     TSharedPtr<IApplicationRenderer>   Renderer;
     TArray<TSharedPtr<FInputHandler>>  InputHandlers;

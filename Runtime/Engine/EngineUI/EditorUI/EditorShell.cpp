@@ -7,6 +7,7 @@
 #include "Engine/EngineUI/EditorUI/EditorTitleBar.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorViewportPanel.h"
 #include "Engine/EditorEngine.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/IniFile.h"
 #include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Paths.h"
@@ -16,7 +17,6 @@
 #include "Application/Docking/DockWindowManager.h"
 #include "Application/Docking/DockingArea.h"
 #include "Application/Elements/Box.h"
-#include "Application/Elements/Separator.h"
 #include "Application/Elements/Window.h"
 #include "Application/Menus/MenuInputHandler.h"
 
@@ -62,6 +62,7 @@ bool FEditorShell::Initialize()
 
     FDockingArea::FDesc DockDesc;
     DockDesc.Font          = FEditorStyle::GetFonts().Body;
+    DockDesc.TabFont       = FEditorStyle::GetFonts().Tab;
     DockDesc.TabCloseIcon  = FEditorIcons::Close;
     DockDesc.bAllowTearOut = true;
     DockDesc.OnPanelClosed = FOnPanelClosed::CreateRaw(this, &FEditorShell::OnPanelClosed);
@@ -104,7 +105,6 @@ bool FEditorShell::Initialize()
 
     Root->AddSlot(TitleBar->GetElement());
     Root->AddSlot(DockingArea).SetFillCoefficient(1.0f);
-    Root->AddSlot(FSeparator::CreateHorizontal());
     Root->AddSlot(Footer->GetElement());
 
     if (!RestoreLayout())
@@ -159,6 +159,14 @@ bool FEditorShell::RestoreLayout()
 
     DockingArea->RestoreLayout(Windows[0].Root);
 
+    if (Windows[0].bIsMaximized)
+    {
+        if (TSharedPtr<FWindow> EngineWindow = EditorEngine ? EditorEngine->GetEngineWindow() : nullptr)
+        {
+            EngineWindow->Maximize();
+        }
+    }
+
     TArray<FDockWindowLayout> Hosts;
     for (int32 Index = 1; Index < Windows.Size(); ++Index)
     {
@@ -176,9 +184,10 @@ void FEditorShell::SaveLayout()
 
     if (TSharedPtr<FWindow> EngineWindow = EditorEngine ? EditorEngine->GetEngineWindow() : nullptr)
     {
-        MainLayout.Title    = EngineWindow->GetTitle();
-        MainLayout.Position = EngineWindow->GetPosition();
-        MainLayout.Size     = EngineWindow->GetSize();
+        MainLayout.Title        = EngineWindow->GetTitle();
+        MainLayout.Position     = EngineWindow->GetPosition();
+        MainLayout.Size         = EngineWindow->GetSize();
+        MainLayout.bIsMaximized = EngineWindow->IsMaximized();
     }
 
     TArray<FDockWindowLayout> Windows;
@@ -261,6 +270,8 @@ void FEditorShell::Release()
 
 void FEditorShell::Tick(float DeltaTime)
 {
+    TRACE_SCOPE("Editor Shell Tick");
+
     FMenuInputHandler::Tick(DeltaTime);
 
     if (FDockWindowManager::IsInitialized())
@@ -319,7 +330,7 @@ FDockNode FEditorShell::BuildDefaultLayout()
     Upper.ChildFractions = { 0.78f, 0.22f };
 
     FDockNode Root = FDockNode::CreateSplit(EDockSplitOrientation::Vertical,
-        Upper, FDockNode::CreateTabs({ "OutputLog", "ContentBrowser", "GPUProfiler", "FrameProfiler", "RenderGraph" }));
+        Upper, FDockNode::CreateTabs({ "OutputLog", "ContentBrowser", "Profiler", "RenderGraph" }));
     Root.ChildFractions = { 0.72f, 0.28f };
 
     return Root;

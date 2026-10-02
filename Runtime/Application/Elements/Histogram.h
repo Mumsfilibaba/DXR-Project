@@ -3,7 +3,14 @@
 #include "Core/Containers/String.h"
 #include "Application/Elements/VisualElement.h"
 #include "Application/Style/UIStyle.h"
+#include "Application/Text/CachedTextMetrics.h"
 #include "Application/Text/IFontFace.h"
+
+enum class EHistogramDrawMode : uint8
+{
+    Bars,
+    Line,
+};
 
 class APPLICATION_API FHistogram final : public FVisualElement
 {
@@ -36,6 +43,12 @@ public:
         /** @brief The color a bar below the warning threshold is drawn in. */
         FFloatColor BarColor = FUIStyle::GetDefault().Colors.Accent;
 
+        /** @brief Whether samples are rendered as filled columns or as one connected trend line. */
+        EHistogramDrawMode DrawMode = EHistogramDrawMode::Bars;
+
+        /** @brief Width of the trend line when DrawMode is Line. */
+        float LineThickness = 2.0f;
+
         /** @brief The color the strip is drawn in behind the bars. */
         FFloatColor BackgroundColor = FUIStyle::GetDefault().Colors.ControlNormal;
 
@@ -47,6 +60,9 @@ public:
 
         /** @brief The color a bar past the warning threshold is drawn in. */
         FFloatColor WarningColor = FFloatColor(0.85f, 0.35f, 0.25f, 1.0f);
+
+        /** @brief The color the selected bar is drawn in. */
+        FFloatColor SelectedBarColor = FUIStyle::GetDefault().Colors.TextSelectionBackground;
     };
 
 public:
@@ -67,6 +83,8 @@ public:
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
 
     /**
@@ -123,23 +141,50 @@ public:
         return HoveredSample;
     }
 
+    /** @return The bar last clicked or dragged over, oldest first, or InvalidSampleIndex when none is selected. */
+    NODISCARD FORCEINLINE int32 GetSelectedSample() const
+    {
+        return SelectedSample;
+    }
+
+    /** @return True while the button is held after a press on the strip, which walks the selection with the cursor. */
+    NODISCARD FORCEINLINE bool IsScrubbing() const
+    {
+        return bIsScrubbing;
+    }
+
+    /**
+     * @brief Selects a bar, which is what a click on the strip does.
+     *
+     * @param Index The sample to select, oldest first, or InvalidSampleIndex to clear.
+     */
+    void SetSelectedSample(int32 Index);
+
 private:
     NODISCARD float ResolveUpperBound() const;
     NODISCARD int32 ResolveColumnWidth(int32 AvailableWidth) const;
+    NODISCARD int32 ResolveSampleAt(const IntVector2& ClientPosition, bool bClampToStrip) const;
 
-    TSharedPtr<IFontFace> Font;
-    String                Label;
-    TArray<float>         Samples;
-    FFloatColor           BarColor;
-    FFloatColor           BackgroundColor;
-    FFloatColor           WarningColor;
-    float                 MinValue;
-    float                 MaxValue;
-    float                 WarningThreshold;
-    int32                 Capacity;
-    int32                 OldestSample;
-    int32                 NumSamples;
-    int32                 PreferredHeight;
-    int32                 HoveredSample;
-    bool                  bAutoScale;
+    TSharedPtr<IFontFace>      Font;
+    String                     Label;
+    mutable FCachedTextMetrics LabelMetrics;
+    mutable FCachedTextMetrics ValueMetrics;
+    TArray<float>              Samples;
+    FFloatColor                BarColor;
+    FFloatColor                BackgroundColor;
+    FFloatColor                WarningColor;
+    float                      MinValue;
+    float                      MaxValue;
+    float                      WarningThreshold;
+    int32                      Capacity;
+    int32                      OldestSample;
+    int32                      NumSamples;
+    int32                      PreferredHeight;
+    int32                      HoveredSample;
+    int32                      SelectedSample;
+    FFloatColor                SelectedBarColor;
+    EHistogramDrawMode         DrawMode;
+    float                      LineThickness;
+    bool                       bAutoScale;
+    bool                       bIsScrubbing;
 };

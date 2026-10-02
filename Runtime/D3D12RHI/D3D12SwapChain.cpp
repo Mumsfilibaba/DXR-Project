@@ -90,6 +90,8 @@ FD3D12SwapChainRHI::FD3D12SwapChainRHI(FD3D12Device* InDevice, FD3D12CommandCont
     , BackBuffers()
     , Hwnd(reinterpret_cast<HWND>(InSwapChainDesc.WindowHandle))
     , SwapChainWaitableObject(0)
+    , AppliedHDRMetadataType(DXGI_HDR_METADATA_TYPE_NONE)
+    , AppliedHDR10Metadata()
     , CurrentColorSpace(EColorSpace::RGB_Full_G22_None_P709)
     , Flags(0)
     , NumBackBuffers(0)
@@ -336,7 +338,10 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
     }
     else
     {
-        D3D12_ERROR_CRITICAL("[FD3D12SwapChainRHI]: FAILED to create SwapChain");
+        D3D12_ERROR_CRITICAL("[FD3D12SwapChainRHI]: FAILED to create SwapChain (Result=0x%08X, Composition=%s, %ux%u, Format=%s, BufferCount=%u, BufferUsage=0x%08X, Flags=0x%08X, Hwnd=%p)",
+            static_cast<uint32>(Result), bUseComposition ? "Yes" : "No", SwapChainDesc.Width, SwapChainDesc.Height,
+            ToString(ResolvedFormat), SwapChainDesc.BufferCount, static_cast<uint32>(SwapChainDesc.BufferUsage),
+            static_cast<uint32>(SwapChainDesc.Flags), Hwnd);
         return false;
     }
 
@@ -387,7 +392,10 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
         return false;
     }
 
-    D3D12_INFO("[FD3D12SwapChainRHI]: Created SwapChain (%s, %s)", ToString(ResolvedFormat), ToString(ResolvedColorSpace));
+    D3D12_INFO("[FD3D12SwapChainRHI]: Created SwapChain (%s, %s, BufferCount=%u, AlphaMode=%s, Composition=%s, AllowTearing=%s)",
+        ToString(ResolvedFormat), ToString(ResolvedColorSpace), NumSwapChainBuffers, bUseComposition ? "Premultiplied" : "Ignore",
+        bUseComposition ? "Yes" : "No", (Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING) ? "Yes" : "No");
+
     return true;
 }
 
@@ -598,7 +606,18 @@ bool FD3D12SwapChainRHI::ApplyHDRMetadata()
     const bool bIsHDRColorSpace = (CurrentColorSpace == EColorSpace::RGB_Full_G2084_None_P2020);
     if (!Desc.HDRMetadata.bIsValid || !bIsHDRColorSpace)
     {
-        return SUCCEEDED(SwapChain4->SetHDRMetaData(DXGI_HDR_METADATA_TYPE_NONE, 0, nullptr));
+        if (AppliedHDRMetadataType == DXGI_HDR_METADATA_TYPE_NONE)
+        {
+            return true;
+        }
+
+        if (FAILED(SwapChain4->SetHDRMetaData(DXGI_HDR_METADATA_TYPE_NONE, 0, nullptr)))
+        {
+            return false;
+        }
+
+        AppliedHDRMetadataType = DXGI_HDR_METADATA_TYPE_NONE;
+        return true;
     }
 
     const FRHIHDRMetadata& Source = Desc.HDRMetadata;
@@ -617,12 +636,20 @@ bool FD3D12SwapChainRHI::ApplyHDRMetadata()
     HDR10.MaxContentLightLevel      = FRHIHDRMetadata::EncodeNits16(Source.MaxContentLightLevel);
     HDR10.MaxFrameAverageLightLevel = FRHIHDRMetadata::EncodeNits16(Source.MaxFrameAverageLightLevel);
 
+    if (AppliedHDRMetadataType == DXGI_HDR_METADATA_TYPE_HDR10 && Memory::Memcmp(&AppliedHDR10Metadata, &HDR10, sizeof(HDR10)) == 0)
+    {
+        return true;
+    }
+
     const HRESULT Result = SwapChain4->SetHDRMetaData(DXGI_HDR_METADATA_TYPE_HDR10, sizeof(HDR10), &HDR10);
     if (FAILED(Result))
     {
         D3D12_WARNING("[FD3D12SwapChainRHI]: SetHDRMetaData failed (hr=0x%x)", static_cast<uint32>(Result));
         return false;
     }
+
+    AppliedHDRMetadataType = DXGI_HDR_METADATA_TYPE_HDR10;
+    AppliedHDR10Metadata   = HDR10;
 
     D3D12_INFO("[FD3D12SwapChainRHI]: HDR10 metadata set (max=%.1f nits, min=%.4f nits, MaxCLL=%.1f, MaxFALL=%.1f)",
         Source.MaxMasteringLuminance, Source.MinMasteringLuminance, Source.MaxContentLightLevel, Source.MaxFrameAverageLightLevel);
@@ -711,7 +738,7 @@ void FD3D12SwapChainRHI::SwapResources(uint32 Index)
 
 bool FD3D12SwapChainRHI::Present(bool bVerticalSync)
 {
-    TRACE_FUNCTION_SCOPE();
+    TRACE_SCOPE("D3D12 SwapChain Present");
 
     const int32  SyncIntervalOverride = CVarSyncInterval.GetValue();
     const uint32 SyncInterval         = (SyncIntervalOverride >= 0) ? Math::Clamp<uint32>(SyncIntervalOverride, 0, 4) : (bVerticalSync ? 1 : 0);
@@ -722,13 +749,20 @@ bool FD3D12SwapChainRHI::Present(bool bVerticalSync)
         PresentFlags = DXGI_PRESENT_ALLOW_TEARING;
     }
 
-    HRESULT Result = SwapChain->Present(SyncInterval, PresentFlags);
-    D3D12Debug::CheckDeviceRemoved(GetDevice(), Result, "Present");
+    HRESULT Result;
+    {
+        TRACE_SCOPE("D3D12 DXGI Present");
+
+        Result = SwapChain->Present(SyncInterval, PresentFlags);
+        D3D12Debug::CheckDeviceRemoved(GetDevice(), Result, "Present");
+    }
 
     if (SUCCEEDED(Result))
     {
         if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
         {
+            TRACE_SCOPE("D3D12 SwapChain Latency Wait");
+
             const DWORD WaitResult = WaitForSingleObjectEx(SwapChainWaitableObject, INFINITE, TRUE);
             if (WaitResult != WAIT_OBJECT_0)
             {
@@ -736,7 +770,10 @@ bool FD3D12SwapChainRHI::Present(bool bVerticalSync)
             }
         }
 
-        ApplySettingsChanges();
+        {
+            TRACE_SCOPE("D3D12 SwapChain Apply Settings");
+            ApplySettingsChanges();
+        }
         return true;
     }
     else

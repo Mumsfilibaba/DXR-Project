@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Threading/ScopedLock.h"
 #include "RHI/RHIQuery.h"
 #include "D3D12RHI/D3D12Queue.h"
@@ -268,7 +269,10 @@ FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandLists(FD3D12CommandList* const* 
 
 FD3D12FenceSyncPoint FD3D12Queue::SubmitCommands(FD3D12Commands* Commands)
 {
+    TRACE_SCOPE("D3D12 Queue Submit");
+
     CHECK(Commands != nullptr);
+
     if (Commands->IsEmpty())
     {
         return FD3D12FenceSyncPoint();
@@ -338,6 +342,8 @@ FD3D12FenceSyncPoint FD3D12Queue::SubmitCommands(FD3D12Commands* Commands)
             FD3D12Commands* Oldest = nullptr;
             if (PendingSubmissions.Peek(Oldest) && Oldest)
             {
+                TRACE_SCOPE("D3D12 Queue Backpressure Wait");
+
                 Oldest->SyncPoint.Wait();
                 PendingSubmissions.Dequeue();
                 Oldest->PostExecute();
@@ -528,6 +534,7 @@ void FD3D12Commands::Execute()
     for (int32 QueryIdx = 0; QueryIdx < PendingQueries.Size(); QueryIdx++)
     {
         PendingQueries[QueryIdx]->SyncPoint = SyncPoint;
+        SubmittedQueries.Add(MakeSharedRef<FD3D12QueryRHI>(PendingQueries[QueryIdx]));
     }
 
     PendingQueries.Clear();
@@ -555,10 +562,7 @@ void FD3D12Commands::PostExecute()
         }
     }
 
-    uint64 AccumulatedIdleTicks    = 0;
-    uint64 LastCommandListEndTicks = 0;
-    
-    bool bHaveLastCommandListEnd = false;
+    FD3D12TimestampIdleState& IdleState = Queue->GetTimestampIdleState();
     for (int32 i = 0; i < TimestampQueries.Size(); i++)
     {
         const FD3D12Query& Query = TimestampQueries[i];
@@ -566,22 +570,22 @@ void FD3D12Commands::PostExecute()
         const uint64 Ticks = RawTicksArray[i];
         if (Query.Type == ED3D12QueryType::CommandListEnd)
         {
-            LastCommandListEndTicks = Ticks;
-            bHaveLastCommandListEnd = true;
+            IdleState.LastCommandListEndTicks = Ticks;
+            IdleState.bHaveLastCommandListEnd = true;
         }
-        else if (Query.Type == ED3D12QueryType::CommandListBegin && bHaveLastCommandListEnd)
+        else if (Query.Type == ED3D12QueryType::CommandListBegin && IdleState.bHaveLastCommandListEnd)
         {
-            if (Ticks > LastCommandListEndTicks)
+            if (Ticks > IdleState.LastCommandListEndTicks)
             {
-                AccumulatedIdleTicks += Ticks - LastCommandListEndTicks;
+                IdleState.AccumulatedIdleTicks += Ticks - IdleState.LastCommandListEndTicks;
             }
 
-            bHaveLastCommandListEnd = false;
+            IdleState.bHaveLastCommandListEnd = false;
         }
 
         if (Query.Type == ED3D12QueryType::Timestamp && Query.ResultTarget)
         {
-            const uint64 AdjustedTicks = (Ticks > AccumulatedIdleTicks) ? (Ticks - AccumulatedIdleTicks) : 0;
+            const uint64 AdjustedTicks = (Ticks > IdleState.AccumulatedIdleTicks) ? (Ticks - IdleState.AccumulatedIdleTicks) : 0;
             const uint64 Nanoseconds   = (AdjustedTicks * 1000000000ULL) / Frequency;
             *Query.ResultTarget = Nanoseconds;
         }
@@ -661,6 +665,13 @@ void FD3D12Commands::PostExecute()
     }
 
     PipelineStatsQueries.Clear();
+
+    for (const FD3D12QueryRHIRef& Query : SubmittedQueries)
+    {
+        Query->bResultReady.Store(1);
+    }
+
+    SubmittedQueries.Clear();
 
     for (int32 RangeIdx = 0; RangeIdx < QueryRanges.Size(); RangeIdx++)
     {

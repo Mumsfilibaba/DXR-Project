@@ -8,11 +8,17 @@
 #include "Application/Gizmo/Gizmo.h"
 #include "Application/Input/Keys.h"
 #include "Application/Style/UIStyle.h"
+#include "Application/Text/IFontFace.h"
+#include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
+#include "Core/Templates/CString.h"
 
 // The ring that says the world is running, in the amber the editor uses nowhere else
 static const FFloatColor PLAY_BORDER_COLOR = FFloatColor(0.95f, 0.62f, 0.11f, 1.0f);
 
 static constexpr float PLAY_BORDER_THICKNESS = 2.0f;
+
+static constexpr float FPS_BOX_OPACITY = 0.75f;
 
 TSharedPtr<FEditorViewportSurface> FEditorViewportSurface::Create()
 {
@@ -65,12 +71,6 @@ void FEditorViewportSurface::SetLayers(const TSharedPtr<FEditorViewportImage>& I
     }
 }
 
-void FEditorViewportSurface::Tick(const FRectangle& AssignedBounds)
-{
-    SetContentRectangle(AssignedBounds);
-    OnArrange(AssignedBounds);
-}
-
 IntVector2 FEditorViewportSurface::ComputeDesiredSize() const
 {
     return IntVector2(0, 0);
@@ -80,51 +80,36 @@ void FEditorViewportSurface::OnArrange(const FRectangle& AllottedBounds)
 {
     if (Image)
     {
-        Image->Tick(AllottedBounds);
+        Image->Arrange(AllottedBounds);
     }
 
     if (HostViewport)
     {
         HostViewport->SetSize(IntVector2(AllottedBounds.Width, AllottedBounds.Height));
-        HostViewport->Tick(AllottedBounds);
+        HostViewport->Arrange(AllottedBounds);
     }
 
     if (Gizmo)
     {
-        Gizmo->Tick(AllottedBounds);
+        Gizmo->Arrange(AllottedBounds);
     }
 }
 
-void FEditorViewportSurface::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FEditorViewportSurface::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const
 {
-    if (Image)
-    {
-        OutChildren.Add(Image);
-    }
+    return VisitChildList(Visitor, Order, Image, HostViewport, Gizmo);
+}
 
+void FEditorViewportSurface::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+{
     if (HostViewport)
     {
-        OutChildren.Add(HostViewport);
+        HostViewport->HitTest(ClientPosition, OutPath);
     }
 
-    if (Gizmo)
+    if (Gizmo && Gizmo->IsProjected())
     {
-        OutChildren.Add(Gizmo);
-    }
-}
-
-void FEditorViewportSurface::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
-{
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
-    if (HostViewport && HostViewport->GetContentRectangle().EncapsulatesPoint(ClientPosition))
-    {
-        HostViewport->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-    }
-
-    if (Gizmo && Gizmo->IsVisible() && Gizmo->IsProjected() && Gizmo->GetContentRectangle().EncapsulatesPoint(ClientPosition))
-    {
-        Gizmo->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        Gizmo->HitTest(ClientPosition, OutPath);
     }
 }
 
@@ -136,12 +121,12 @@ int32 FEditorViewportSurface::OnDraw(const FDrawGeometry& AllottedGeometry, FDra
 
     if (Image)
     {
-        CurrentLayer = Image->OnDraw(FDrawGeometry(Image->GetContentRectangle(), AllottedGeometry.Scale), OutCommandList, CurrentLayer) + 1;
+        CurrentLayer = Image->Draw(FDrawGeometry(Image->GetContentRectangle(), AllottedGeometry.Scale), OutCommandList, CurrentLayer) + 1;
     }
 
     if (Gizmo && Gizmo->IsVisible() && Gizmo->IsProjected())
     {
-        CurrentLayer = Gizmo->OnDraw(FDrawGeometry(Gizmo->GetContentRectangle(), AllottedGeometry.Scale), OutCommandList, CurrentLayer) + 1;
+        CurrentLayer = Gizmo->Draw(FDrawGeometry(Gizmo->GetContentRectangle(), AllottedGeometry.Scale), OutCommandList, CurrentLayer) + 1;
     }
 
     if (bMarqueeActive)
@@ -158,6 +143,42 @@ int32 FEditorViewportSurface::OnDraw(const FDrawGeometry& AllottedGeometry, FDra
         ++CurrentLayer;
     }
 
+    if (IConsoleVariable* DrawFps = FConsoleManager::Get().FindConsoleVariable("Engine.DrawFps"))
+    {
+        if (DrawFps->GetBool())
+        {
+            RequestContinuousPaint();
+
+            const FUIStyle& Style = FUIStyle::GetDefault();
+
+            const IFontFace* Font = Style.MonospaceFont ? Style.MonospaceFont : Style.NormalFont;
+            if (Font)
+            {
+                CHAR FpsText[16];
+                CString::Snprintf(FpsText, static_cast<int32>(sizeof(FpsText)), "%d", FFrameProfiler::Get().GetFramesPerSecond());
+
+                const String FpsString(FpsText);
+                const int32  TextWidth  = Font->MeasureWidth(StringView(FpsString.Data(), FpsString.Length()));
+                const int32  TextHeight = Font->GetLineHeight();
+                const int32  Padding    = 4;
+                const int32  Margin     = 6;
+
+                FRectangle Box;
+                Box.Width      = TextWidth + (Padding * 2);
+                Box.Height     = TextHeight + (Padding * 2);
+                Box.Position.X = AllottedGeometry.Bounds.GetRight() - Margin - Box.Width;
+                Box.Position.Y = AllottedGeometry.Bounds.Position.Y + Margin;
+
+                FFloatColor BoxFill = Style.Colors.WindowBackground;
+                BoxFill.A           = FPS_BOX_OPACITY;
+
+                OutCommandList.AddBox(CurrentLayer, Box, BoxFill);
+                OutCommandList.AddText(CurrentLayer + 1, Box.Deflate(FMargin(Padding)), FpsString, Font, Style.Colors.Text);
+                CurrentLayer += 2;
+            }
+        }
+    }
+
     if (bShowPlayBorder)
     {
         OutCommandList.AddBoxOutline(CurrentLayer, AllottedGeometry.Bounds, PLAY_BORDER_COLOR, PLAY_BORDER_THICKNESS);
@@ -170,7 +191,13 @@ int32 FEditorViewportSurface::OnDraw(const FDrawGeometry& AllottedGeometry, FDra
 
 void FEditorViewportSurface::SetPlayBorderVisible(bool bInShowPlayBorder)
 {
+    if (bShowPlayBorder == bInShowPlayBorder)
+    {
+        return;
+    }
+
     bShowPlayBorder = bInShowPlayBorder;
+    InvalidatePaint();
 }
 
 bool FEditorViewportSurface::IsGizmoBusy() const

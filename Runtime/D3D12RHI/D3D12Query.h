@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/Queue.h"
 #include "Core/Platform/CriticalSection.h"
+#include "Core/Threading/Atomic/AtomicInt.h"
 #include "RHI/RHIResources.h"
 #include "D3D12RHI/D3D12Resource.h"
 #include "D3D12RHI/D3D12Fence.h"
@@ -97,6 +98,7 @@ struct FD3D12QueryRHI : public FRHIQuery, public FD3D12DeviceChild
     FD3D12Query          CurrentQuery;
     FD3D12FenceSyncPoint SyncPoint;
     uint64*              QueryResult;
+    AtomicInt32          bResultReady;
 };
 
 struct FD3D12QueryRange

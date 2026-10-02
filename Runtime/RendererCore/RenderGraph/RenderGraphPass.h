@@ -229,13 +229,13 @@ public:
     void UseDepthStencilView(FRenderGraphDepthStencilView* View, ERHIResourceState State, bool bIsWrite);
 
     void SetRenderTarget(uint32 Index, FRenderGraphRenderTargetView* View, EAttachmentLoadAction LoadAction = EAttachmentLoadAction::Clear,
-        EAttachmentStoreAction StoreAction = EAttachmentStoreAction::Store, const FFloatColor& ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f));
+        EAttachmentStoreAction StoreAction = EAttachmentStoreAction::Store, const FFloatColor* OverrideClearValue = nullptr);
 
     void SetDepthStencil(FRenderGraphDepthStencilView* View, EAttachmentLoadAction LoadAction = EAttachmentLoadAction::Clear, 
         EAttachmentStoreAction StoreAction = EAttachmentStoreAction::Store, const FDepthStencilValue& ClearValue = FDepthStencilValue(1.0f, 0));
 
     void SetRenderTarget(uint32 Index, FRenderGraphTexture* Texture, EAttachmentLoadAction LoadAction = EAttachmentLoadAction::Clear, 
-        EAttachmentStoreAction StoreAction = EAttachmentStoreAction::Store, const FFloatColor& ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f));
+        EAttachmentStoreAction StoreAction = EAttachmentStoreAction::Store, const FFloatColor* OverrideClearValue = nullptr);
 
     void SetDepthStencil(FRenderGraphTexture* Texture, EAttachmentLoadAction LoadAction = EAttachmentLoadAction::Clear, 
         EAttachmentStoreAction StoreAction = EAttachmentStoreAction::Store, const FDepthStencilValue& ClearValue = FDepthStencilValue(1.0f, 0), bool bReadOnly = false);

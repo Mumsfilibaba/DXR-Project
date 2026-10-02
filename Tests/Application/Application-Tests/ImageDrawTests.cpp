@@ -101,6 +101,39 @@ bool ImageDrawQuad_Test()
     TEST_EXPECT(DrawData.GetVertices()[2].TexCoord == Vector2(0.75f, 1.0f));
     TEST_EXPECT(DrawData.GetVertices()[3].TexCoord == Vector2(0.25f, 1.0f));
 
+    TEST_SECTION("A radius rounds the image itself rather than only whatever is framed around it");
+    FDrawCommandList RoundedList;
+    RoundedList.AddImage(0, Bounds, Region, FFloatColor::White, FCornerRadii(8.0f));
+    DrawData.BuildFromCommandList(RoundedList);
+
+    TEST_EXPECT(DrawData.GetVertices().Size() > 4);
+    TEST_EXPECT(DrawData.GetVertices()[0].TexCoord == Vector2(0.5f, 0.75f));
+
+    TEST_SECTION("Its corners keep sampling inside the region the square image sampled");
+    constexpr float TexCoordTolerance = 0.02f;
+    for (const FUIVertex& Vertex : DrawData.GetVertices())
+    {
+        TEST_EXPECT(Vertex.TexCoord.X >= Region.MinTexCoord.X - TexCoordTolerance);
+        TEST_EXPECT(Vertex.TexCoord.X <= Region.MaxTexCoord.X + TexCoordTolerance);
+        TEST_EXPECT(Vertex.TexCoord.Y >= Region.MinTexCoord.Y - TexCoordTolerance);
+        TEST_EXPECT(Vertex.TexCoord.Y <= Region.MaxTexCoord.Y + TexCoordTolerance);
+    }
+
+    TEST_SECTION("A nine-sliced brush ignores the radius, since the texture draws its own corners");
+    FUIBrush SlicedBrush(MakeTextureKey(0x10));
+    SlicedBrush.Margin = FMargin(4);
+
+    FDrawCommandList SlicedList;
+    SlicedList.AddImage(0, Bounds, SlicedBrush, FFloatColor::White);
+    DrawData.BuildFromCommandList(SlicedList);
+    const int32 SlicedVertexCount = DrawData.GetVertices().Size();
+
+    FDrawCommandList RoundedSlicedList;
+    RoundedSlicedList.AddImage(0, Bounds, SlicedBrush, FFloatColor::White, FCornerRadii(8.0f));
+    DrawData.BuildFromCommandList(RoundedSlicedList);
+
+    TEST_EXPECT_EQ(DrawData.GetVertices().Size(), SlicedVertexCount);
+
     TEST_SECTION("The tint reaches the vertices, so one white icon can be drawn in any color");
     FDrawCommandList TintedList;
     TintedList.AddImage(0, Bounds, FUIBrush(MakeTextureKey(0x10)), FFloatColor(1.0f, 0.0f, 0.0f, 1.0f));
@@ -198,7 +231,7 @@ bool ImageNineSlice_Test()
 
     TEST_SECTION("Every patch stays in one batch, since they all sample the same texture");
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
-    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Texture == MakeTextureKey(0x10));
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetTexture() == MakeTextureKey(0x10));
 
     TEST_END();
 }
@@ -227,8 +260,8 @@ bool ImageBatching_Test()
     DrawData.BuildFromCommandList(DifferentList);
 
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 2);
-    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Texture == MakeTextureKey(0x10));
-    TEST_EXPECT(DrawData.GetBatches()[1].Texture.Texture == MakeTextureKey(0x20));
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetTexture() == MakeTextureKey(0x10));
+    TEST_EXPECT(DrawData.GetBatches()[1].Texture.GetTexture() == MakeTextureKey(0x20));
 
     TEST_SECTION("A texture and a box are separate batches, and going back costs a third");
     FDrawCommandList MixedList;
@@ -239,7 +272,7 @@ bool ImageBatching_Test()
 
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 3);
     TEST_EXPECT(DrawData.GetBatches()[0].Texture.IsEmpty());
-    TEST_EXPECT(DrawData.GetBatches()[1].Texture.Texture == MakeTextureKey(0x10));
+    TEST_EXPECT(DrawData.GetBatches()[1].Texture.GetTexture() == MakeTextureKey(0x10));
     TEST_EXPECT(DrawData.GetBatches()[2].Texture.IsEmpty());
 
     TEST_SECTION("An image over no texture is untextured geometry, so it joins the boxes");
@@ -278,10 +311,10 @@ bool ImageBatching_Test()
     DrawData.BuildFromCommandList(AtlasList);
 
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 2);
-    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Texture == MakeTextureKey(0x10));
-    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Atlas == nullptr);
-    TEST_EXPECT(DrawData.GetBatches()[1].Texture.Atlas == Font->GetAtlas());
-    TEST_EXPECT(DrawData.GetBatches()[1].Texture.Texture == nullptr);
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetTexture() == MakeTextureKey(0x10));
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetAtlas() == nullptr);
+    TEST_EXPECT(DrawData.GetBatches()[1].Texture.GetAtlas() == Font->GetAtlas());
+    TEST_EXPECT(DrawData.GetBatches()[1].Texture.GetTexture() == nullptr);
 
     TEST_END();
 }

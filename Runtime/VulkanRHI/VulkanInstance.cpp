@@ -16,6 +16,11 @@ static TAutoConsoleVariable<bool> CVarVulkanEnableGPUAssistedValidation(
     "VulkanRHI.EnableGPUAssistedValidation",
     "Enable GPU-Assisted Validation to detect shader-level out-of-bounds buffer accesses at runtime. Requires the debug layer.",
     false);
+
+static TAutoConsoleVariable<bool> CVarVulkanEnableSynchronizationValidation(
+    "VulkanRHI.EnableSynchronizationValidation",
+    "Also enable Khronos synchronization validation. Only takes effect together with VulkanRHI.EnableGPUAssistedValidation.",
+    false);
 #endif
 
 FVulkanInstance::FVulkanInstance()
@@ -139,6 +144,32 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
         {
             VULKAN_ERROR_CRITICAL("Instance layer '%s' could not be enabled", LayerName);
             return false;
+        }
+    }
+
+    for (const CHAR* LayerName : EnabledLayerNames)
+    {
+        uint32 LayerExtensionCount = 0;
+        Result = vkEnumerateInstanceExtensionProperties(LayerName, &LayerExtensionCount, nullptr);
+        if (VULKAN_FAILED(Result) || LayerExtensionCount == 0)
+        {
+            continue;
+        }
+
+        TArray<VkExtensionProperties> LayerExtensions(LayerExtensionCount);
+        Result = vkEnumerateInstanceExtensionProperties(LayerName, &LayerExtensionCount, LayerExtensions.Data());
+        if (VULKAN_FAILED(Result))
+        {
+            continue;
+        }
+
+        for (const VkExtensionProperties& LayerExtension : LayerExtensions)
+        {
+            const auto MatchExtension = [&](const VkExtensionProperties& Other) -> bool { return CString::Strcmp(LayerExtension.extensionName, Other.extensionName) == 0; };
+            if (!ExtensionProperties.ContainsWithPredicate(MatchExtension))
+            {
+                ExtensionProperties.Add(LayerExtension);
+            }
         }
     }
 

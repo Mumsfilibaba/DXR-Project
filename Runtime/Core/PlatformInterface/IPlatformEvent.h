@@ -3,7 +3,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct IPlatformEvent
+struct CORE_API IPlatformEvent
 {
 public:
 

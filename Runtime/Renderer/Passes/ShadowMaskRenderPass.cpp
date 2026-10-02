@@ -136,8 +136,6 @@ void FShadowMaskRenderPass::Record(FRHICommandList& CommandList, const FFrameRes
 
     TRACE_SCOPE("Render ShadowMasks");
 
-    GPU_TRACE_SCOPE(CommandList, "DirectionalLight Shadow Mask");
-
     const FDirectionalShadowSettingsHLSL ShadowSettings = CreateShadowSettings(Resources, GetRenderer()->GetFrameCounter().GetFrameIndex());
 
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(ShadowSettingsBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest));
@@ -297,7 +295,7 @@ void FShadowMaskRenderPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder
             const Vector4 MaskClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             PassCommandList.ClearUnorderedAccessViewFloat(PassResources.Get(Context.DirectionalShadowMask)->GetUnorderedAccessView(), MaskClearColor);
 
-            const Vector4 DebugClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            PassCommandList.ClearUnorderedAccessViewFloat(PassResources.Get(Context.CascadeIndexBuffer)->GetUnorderedAccessView(), DebugClearColor);
+            const uint32 DebugClearValues[4] = { 0, 0, 0, 0 };
+            PassCommandList.ClearUnorderedAccessViewUint(PassResources.Get(Context.CascadeIndexBuffer)->GetUnorderedAccessView(), DebugClearValues);
         });
 }

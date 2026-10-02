@@ -114,7 +114,7 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
         return ::SetEnvironmentVariableA(Name, Value) != FALSE;
     }
 
-    static void InstallCrashHandler();
+    static CORE_API void InstallCrashHandler();
 
     static FORCEINLINE int32 GetLastErrorString(String& OutErrorString)
     {

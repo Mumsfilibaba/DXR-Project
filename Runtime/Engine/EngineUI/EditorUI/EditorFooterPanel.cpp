@@ -37,7 +37,7 @@ constexpr int32 CANDIDATE_LIST_PADDING_X = 2;
 constexpr int32 CANDIDATE_LIST_PADDING_Y = 4;
 
 /** @brief The width of the stroke around the candidate list, in pixels. */
-constexpr float CANDIDATE_LIST_BORDER_THICKNESS = 2.0f;
+constexpr float CANDIDATE_LIST_BORDER_THICKNESS = 1.0f;
 
 /** @brief The height of one candidate row, in pixels, which is fixed rather than drawn from the face. */
 constexpr int32 CANDIDATE_ROW_HEIGHT = 20;
@@ -45,15 +45,18 @@ constexpr int32 CANDIDATE_ROW_HEIGHT = 20;
 /** @brief The inset of a candidate row from either edge of the list, in pixels, carried by the rows rather than the list so the scroll bar keeps the list's edge. */
 constexpr int32 CANDIDATE_ROW_INSET = 14;
 
-/** @brief How far the match highlight runs past the glyphs on either side, in pixels. */
-constexpr int32 CANDIDATE_HIGHLIGHT_BLEED = 1;
-
 /** @brief The space between a candidate's name and the rest of its tip, in pixels. */
 constexpr int32 CANDIDATE_TOOLTIP_SPACING = 4;
 
 class FEditorFooterCandidateAnchor final : public FCompoundElement
 {
 public:
+    FEditorFooterCandidateAnchor()
+        : FCompoundElement()
+        , WidthSource(nullptr)
+    {
+        EnableHitTestOverflow();
+    }
 
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override
@@ -78,7 +81,9 @@ public:
         ContentBounds.Position.X = AllottedBounds.Position.X;
         ContentBounds.Position.Y = AllottedBounds.Position.Y - ContentBounds.Height;
 
-        Content->Tick(ContentBounds);
+        Content->Arrange(ContentBounds);
+
+        RequestContinuousArrange();
     }
 
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override
@@ -89,14 +94,6 @@ public:
         }
 
         return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
-    }
-
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override
-    {
-        if (Content && Content->IsVisible() && Content->GetContentRectangle().EncapsulatesPoint(ClientPosition))
-        {
-            Content->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-        }
     }
 
     void SetWidthSource(const TSharedPtr<FVisualElement>& InWidthSource)
@@ -299,6 +296,7 @@ bool FEditorFooterPanel::Initialize()
     CandidateBackgroundDesc.BackgroundColor = FEditorStyle::GetCandidateListColor();
     CandidateBackgroundDesc.BorderColor     = FEditorStyle::GetCandidateListBorderColor();
     CandidateBackgroundDesc.BorderThickness = CANDIDATE_LIST_BORDER_THICKNESS;
+    CandidateBackgroundDesc.CornerRadius    = FCornerRadii(FUIStyle::GetDefault().Metrics.CornerRadius);
     CandidateBackgroundDesc.Padding         = FMargin(CANDIDATE_LIST_PADDING_X, CANDIDATE_LIST_PADDING_Y);
     CandidateBackgroundDesc.Content         = CandidateList;
 
@@ -522,9 +520,12 @@ void FEditorFooterPanel::AddCandidateNameRuns(const TSharedPtr<FHorizontalBox>& 
             AddPlainRun(Name.SubString(0, MatchStart));
         }
 
+        const FUIStyleMetrics& Metrics = FUIStyle::GetDefault().Metrics;
+
         FBorder::FDesc HighlightDesc;
         HighlightDesc.BackgroundColor = FEditorStyle::GetCandidateHighlightColor();
-        HighlightDesc.Padding         = FMargin(CANDIDATE_HIGHLIGHT_BLEED, 0);
+        HighlightDesc.Padding         = Metrics.TextHighlightPadding;
+        HighlightDesc.CornerRadius    = FCornerRadii(Metrics.TextHighlightCornerRadius);
         HighlightDesc.Content         = MakeRun(Name.SubString(MatchStart, MatchLength), FFloatColor::Black);
 
         Row->AddSlot(FBorder::Create(HighlightDesc)).SetVerticalAlignment(EVerticalAlignment::Center);
@@ -582,8 +583,8 @@ void FEditorFooterPanel::OnCandidateRowHovered(int32 RowIndex)
     FRectangle       AnchorBounds = FMenuStack::GetScreenBounds(Row);
     const FRectangle ListBounds   = FMenuStack::GetScreenBounds(CandidateBackground);
 
-    AnchorBounds.Position.X = ListBounds.Position.X;
-    AnchorBounds.Width      = ListBounds.Width;
+    AnchorBounds.Position.X = ListBounds.Position.X - FToolTipService::AnchorGap;
+    AnchorBounds.Width      = ListBounds.Width + (FToolTipService::AnchorGap * 2);
 
     FToolTipService::Get().RequestToolTip(Row, MakeCandidateToolTip(RowIndex), EToolTipPlacement::RightOfAnchor, 0.0f, AnchorBounds);
 }
@@ -693,7 +694,7 @@ void FEditorFooterPanel::Refresh()
 
     const FFrameProfiler& Profiler = FFrameProfiler::Get();
 
-    const float FrameTimeMs = Profiler.GetCPUFrameTime().GetAverage();
+    const float FrameTimeMs = Profiler.GetLatestCpuMilliseconds();
     const float FramesPerSecond = FrameTimeMs > 0.0f ? (1000.0f / FrameTimeMs) : 0.0f;
 
     StatusLabel->SetText(String::Printf("%.1f FPS  %.2f ms", FramesPerSecond, FrameTimeMs));

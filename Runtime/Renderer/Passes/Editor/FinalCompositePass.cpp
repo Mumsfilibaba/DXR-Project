@@ -131,8 +131,6 @@ void FFinalCompositePass::Record(FRHICommandList& CommandList, const FFrameResou
 
     TRACE_SCOPE("Final Composite");
 
-    GPU_TRACE_SCOPE(CommandList, "Final Composite");
-
     const float RenderWidth  = static_cast<float>(FrameResources.CurrentRenderWidth);
     const float RenderHeight = static_cast<float>(FrameResources.CurrentRenderHeight);
 

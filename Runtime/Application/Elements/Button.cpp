@@ -14,10 +14,12 @@ TSharedPtr<FButton> FButton::Create(const FDesc& Desc)
 FButton::FButton()
     : FInteractiveElement()
     , Label(nullptr)
+    , Font(nullptr)
     , CornerRadius()
     , HorizontalContentAlignment(EHorizontalAlignment::Center)
     , VerticalContentAlignment(EVerticalAlignment::Center)
     , MinHeight(0)
+    , MinWidth(0)
     , bHasBorder(false)
     , bIsGhost(false)
     , bIsHighlighted(false)
@@ -29,10 +31,12 @@ FButton::~FButton() = default;
 
 void FButton::Initialize(const FDesc& Desc)
 {
+    Font                       = Desc.Font;
     CornerRadius               = Desc.CornerRadius;
     HorizontalContentAlignment = Desc.HorizontalContentAlignment;
     VerticalContentAlignment   = Desc.VerticalContentAlignment;
     MinHeight                  = Desc.MinHeight;
+    MinWidth                   = Desc.MinWidth;
     bHasBorder                 = Desc.bHasBorder;
     bIsGhost                   = Desc.bIsGhost;
     OnClickedDelegate          = Desc.OnClicked;
@@ -52,12 +56,21 @@ void FButton::Initialize(const FDesc& Desc)
 
     Label = FTextBlock::Create(LabelDesc);
     SetContent(Label);
+
+    ApplyInteractionTextColor(Label.Get());
 }
 
 IntVector2 FButton::ComputeDesiredSize() const
 {
     IntVector2 DesiredSize = FCompoundElement::ComputeDesiredSize();
     DesiredSize.Y          = Math::Max(DesiredSize.Y, MinHeight);
+
+    if (Label)
+    {
+        const int32 Floor = Math::Max(MinWidth, FUIStyle::GetDefault().Metrics.ResolveButtonMinWidth(Font.Get(), GetPadding()));
+        DesiredSize.X     = Math::Max(DesiredSize.X, Floor);
+    }
+
     return DesiredSize;
 }
 
@@ -69,7 +82,7 @@ void FButton::OnArrange(const FRectangle& AllottedBounds)
     }
 
     const FRectangle Available = AllottedBounds.Deflate(GetPadding());
-    Content->Tick(FRectangle::AlignInBounds(Available, Content->GetCachedDesiredSize(), HorizontalContentAlignment, VerticalContentAlignment));
+    Content->Arrange(FLayout::AlignInBounds(Available, Content->GetCachedDesiredSize(), HorizontalContentAlignment, VerticalContentAlignment));
 }
 
 int32 FButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -98,12 +111,14 @@ int32 FButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
         OutCommandList.AddBoxOutline(LayerId, AllottedGeometry.Bounds, Style.Colors.Border, Style.Metrics.BorderThickness, CornerRadius);
     }
 
-    if (Label)
-    {
-        Label->SetColorAndOpacity(Style.GetTextColor(State));
-    }
-
     return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
+}
+
+void FButton::OnInteractionStateChanged()
+{
+    FInteractiveElement::OnInteractionStateChanged();
+
+    ApplyInteractionTextColor(Label.Get());
 }
 
 void FButton::SetOnClicked(const FOnClicked& InOnClicked)
@@ -113,7 +128,13 @@ void FButton::SetOnClicked(const FOnClicked& InOnClicked)
 
 void FButton::SetHighlighted(bool bInIsHighlighted)
 {
+    if (bIsHighlighted == bInIsHighlighted)
+    {
+        return;
+    }
+
     bIsHighlighted = bInIsHighlighted;
+    InvalidatePaint();
 }
 
 void FButton::SetText(const String& InText)

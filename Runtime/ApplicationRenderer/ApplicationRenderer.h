@@ -9,6 +9,7 @@
 #include "RHI/RHIShader.h"
 #include "RHI/RHICommandList.h"
 #include "RendererCore/Interfaces/IGPUProfiler.h"
+#include "ApplicationRenderer/UIGeometryUploader.h"
 
 class FFontAtlas;
 class FWindow;
@@ -20,29 +21,39 @@ struct FWindowDrawState
         , Commands()
         , DrawData()
         , SwapChain(nullptr)
-        , VertexBuffer(nullptr)
-        , IndexBuffer(nullptr)
-        , VertexCapacity(0)
-        , IndexCapacity(0)
-        , Stats()
-        , AccumulatedStats()
+        , VertexStream("ApplicationUI VertexBuffer", EUIGeometryStreamKind::Vertex)
+        , IndexStream("ApplicationUI IndexBuffer", EUIGeometryStreamKind::Index)
+        , ShapeStream("ApplicationUI ShapeInstanceBuffer", EUIGeometryStreamKind::Vertex)
+        , TextGlyphStream("ApplicationUI TextGlyphBuffer", EUIGeometryStreamKind::Vertex)
+        , UploadedReplayFingerprint(0)
         , WalkStartTime(0)
         , TimedFrameCount(0)
+        , bUploadedGeometryFromReplay(false)
+        , Stats()
+        , AccumulatedStats()
     {
+    }
+
+    /** @return The format the index stream was last filled in, which follows its stride. */
+    NODISCARD FORCEINLINE EIndexFormat GetIndexFormat() const
+    {
+        return IndexStream.GetStride() == static_cast<int32>(sizeof(uint16)) ? EIndexFormat::uint16 : EIndexFormat::uint32;
     }
 
     TWeakPtr<FWindow> Window;
     FDrawCommandList  Commands;
     FUIDrawData       DrawData;
     FRHISwapChain*    SwapChain;
-    FRHIBufferRef     VertexBuffer;
-    FRHIBufferRef     IndexBuffer;
-    int32             VertexCapacity;
-    int32             IndexCapacity;
-    FUIPaintStats     Stats;
-    FUIPaintStats     AccumulatedStats;
+    FUIGeometryStream VertexStream;
+    FUIGeometryStream IndexStream;
+    FUIGeometryStream ShapeStream;
+    FUIGeometryStream TextGlyphStream;
+    uint64            UploadedReplayFingerprint;
     uint64            WalkStartTime;
     int32             TimedFrameCount;
+    bool              bUploadedGeometryFromReplay;
+    FUIPaintStats     Stats;
+    FUIPaintStats     AccumulatedStats;
 };
 
 class APPLICATIONRENDERER_API FApplicationRenderer final : public IApplicationRenderer
@@ -133,6 +144,7 @@ private:
     {
         FRHITextureRef Texture;
         uint64         Revision;
+        uint64         LayoutRevision;
     };
 
     struct FWindowSurface
@@ -143,12 +155,6 @@ private:
         EDeferredShowState  DeferredShowState = EDeferredShowState::None;
         bool                bIsPrimary        = false;
         bool                bIsRendered       = false;
-    };
-
-    struct FRetiredBuffer
-    {
-        FRHIBufferRef Buffer;
-        uint64        Frame;
     };
 
     struct FRetiredTexture
@@ -174,7 +180,7 @@ private:
     FRHIShaderResourceView* PrepareBrushTexture(FRHICommandList& InCommandList, FRHITexture* Texture);
     void                    PrepareBatchTextures(FRHICommandList& InCommandList, const FUIDrawData& DrawData);
     void                    RenderWindow(FRHICommandList& InCommandList, const FWindowDrawState& WindowState);
-    void                    RenderDrawData(FRHICommandList& InCommandList, const FWindowDrawState& WindowState, const IntVector2& LogicalSize, float DPIScale);
+    void                    RenderDrawData(FRHICommandList& InCommandList, const FWindowDrawState& WindowState, const IntVector2& GeometrySize, float SupersampleScale);
     FRHIShaderResourceView* GetDefaultShaderResourceView() const;
     FRHIShaderResourceView* GetAtlasShaderResourceView(const FFontAtlas* Atlas) const;
     FRHIShaderResourceView* GetBatchShaderResourceView(const FUITextureHandle& Texture) const;
@@ -187,7 +193,8 @@ private:
     TArray<FWindowDrawState>             WindowStates;
     TArray<FWindowSurface>               WindowSurfaces;
     TWeakPtr<FWindow>                    PrimaryWindow;
-    TArray<FRetiredBuffer>               RetiredBuffers;
+    TArray<FUIRetiredBuffer>             RetiredBuffers;
+    FUIGeometryUploader                  GeometryUploader;
     TArray<FRetiredTexture>              RetiredTextures;
     FRHICommandList                      CommandList;
     FRHICommandList                      ResizeCommandList;
@@ -198,12 +205,22 @@ private:
     FRHIVertexShaderRef                  VShader;
     FRHIPixelShaderRef                   PShader;
     FRHIInputLayoutRef                   InputLayout;
+    FRHIVertexShaderRef                  ShapeVShader;
+    FRHIPixelShaderRef                   ShapePShader;
+    FRHIInputLayoutRef                   ShapeInputLayout;
+    FRHIVertexShaderRef                  TextVShader;
+    FRHIInputLayoutRef                   TextInputLayout;
     FRHIDepthStencilStateRef             DepthStencilState;
     FRHIRasterizerStateRef               RasterizerState;
     FRHIBlendStateRef                    BlendState;
     FRHISamplerStateRef                  LinearSampler;
     FRHIGraphicsPipelineStateRef         PipelineState;
+    FRHIGraphicsPipelineStateRef         ShapePipelineState;
+    FRHIGraphicsPipelineStateRef         TextPipelineState;
     FRHITextureRef                       DefaultTexture;
     TMap<const FFontAtlas*, FAtlasEntry> AtlasTextures;
     EFormat                              PipelineStateFormat;
+    FWindowDrawState*                    ActiveWindowState;
+    TArray<uint16>                       Index16Scratch;
+    TArray<uint8>                        AtlasUploadScratch;
 };

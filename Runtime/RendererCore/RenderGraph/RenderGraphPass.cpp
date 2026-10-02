@@ -349,7 +349,7 @@ void FRenderGraphPassBuilder::WriteBuffer(FRenderGraphBuffer* Buffer, ERHIResour
     }
 }
 
-void FRenderGraphPassBuilder::SetRenderTarget(uint32 Index, FRenderGraphRenderTargetView* View, EAttachmentLoadAction LoadAction, EAttachmentStoreAction StoreAction, const FFloatColor& ClearValue)
+void FRenderGraphPassBuilder::SetRenderTarget(uint32 Index, FRenderGraphRenderTargetView* View, EAttachmentLoadAction LoadAction, EAttachmentStoreAction StoreAction, const FFloatColor* OverrideClearValue)
 {
     if (!View)
     {
@@ -379,7 +379,7 @@ void FRenderGraphPassBuilder::SetRenderTarget(uint32 Index, FRenderGraphRenderTa
     FRenderGraphAttachment Attachment;
     Attachment.Texture          = Texture;
     Attachment.RenderTargetView = View;
-    Attachment.ClearValue       = ClearValue;
+    Attachment.ClearValue       = OverrideClearValue ? *OverrideClearValue : Texture->GetDesc().TextureDesc.ClearValue.ColorValue;
     Attachment.LoadAction       = LoadAction;
     Attachment.StoreAction      = StoreAction;
 
@@ -471,7 +471,7 @@ void FRenderGraphPassBuilder::UseDepthStencilView(FRenderGraphDepthStencilView* 
     Pass.AddTextureAccess(Texture, State, bIsWrite);
 }
 
-void FRenderGraphPassBuilder::SetRenderTarget(uint32 Index, FRenderGraphTexture* Texture, EAttachmentLoadAction LoadAction, EAttachmentStoreAction StoreAction, const FFloatColor& ClearValue)
+void FRenderGraphPassBuilder::SetRenderTarget(uint32 Index, FRenderGraphTexture* Texture, EAttachmentLoadAction LoadAction, EAttachmentStoreAction StoreAction, const FFloatColor* OverrideClearValue)
 {
     if (!Texture)
     {
@@ -479,7 +479,7 @@ void FRenderGraphPassBuilder::SetRenderTarget(uint32 Index, FRenderGraphTexture*
         return;
     }
 
-    SetRenderTarget(Index, Builder.GetOrCreateDefaultRTV(Texture), LoadAction, StoreAction, ClearValue);
+    SetRenderTarget(Index, Builder.GetOrCreateDefaultRTV(Texture), LoadAction, StoreAction, OverrideClearValue);
 }
 
 void FRenderGraphPassBuilder::SetDepthStencil(FRenderGraphTexture* Texture, EAttachmentLoadAction LoadAction, EAttachmentStoreAction StoreAction, const FDepthStencilValue& ClearValue, bool bReadOnly)

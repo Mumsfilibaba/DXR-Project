@@ -134,6 +134,26 @@ public:
     }
 
     /**
+     * @brief Gets the revision the atlas last changed size or moved its glyphs at.
+     *
+     * @return The revision, before which a texture has to be made again whole rather than updated.
+     */
+    NODISCARD FORCEINLINE uint64 GetLayoutRevision() const
+    {
+        return LayoutRevision;
+    }
+
+    /**
+     * @brief Gets what a texture made at the layout revision is missing.
+     *
+     * @return The texels changed since then, empty when nothing was.
+     */
+    NODISCARD FORCEINLINE const FRectangle& GetChangedSinceLayout() const
+    {
+        return ChangedSinceLayout;
+    }
+
+    /**
      * @brief Gets the kerning between two codepoints, which is the correction a pair carries over the sum
      * of their advances.
      *
@@ -155,14 +175,16 @@ private:
     struct FPage;
 
     bool PackAtSize(int32 InWidth, int32 InHeight);
-    bool PackPage(int32 PageIndex) const;
+    bool PackPage(int32 PageIndex, FRectangle& OutPackedRegion) const;
     bool RasterizePage(int32 PageIndex) const;
-    void ExpandCoverage();
+    void ExpandCoverage(const FRectangle& Region) const;
+    void ClearPages() const;
+    void MarkLayoutChanged() const;
     void Reset();
 
     NODISCARD const FGlyph* FindGlyph(int32 Codepoint) const;
 
-    TArray<uint8>                          Pixels;
+    mutable TArray<uint8>                  Pixels;
     TArray<uint8>                          FontData;
     int32                                  PixelHeight;
     int32                                  Width;
@@ -175,5 +197,8 @@ private:
     mutable TMap<int32, TUniquePtr<FPage>> Pages;
     mutable TSet<int32>                    UnpackablePages;
     mutable TUniquePtr<FPackState>         PackState;
+    mutable const FPage*                   FirstPage;
     mutable uint64                         Revision;
+    mutable uint64                         LayoutRevision;
+    mutable FRectangle                     ChangedSinceLayout;
 };

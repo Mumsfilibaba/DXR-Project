@@ -1,5 +1,6 @@
 #include "Application/Menus/ToolTipService.h"
 #include "Application/Menus/MenuStack.h"
+#include "Application/Menus/PopupPlacement.h"
 #include "Application/Menus/PopupWindow.h"
 #include "Application/Application.h"
 #include "Application/Draw/DrawCommandList.h"
@@ -8,19 +9,44 @@
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Math/Math.h"
 
+static TArray<String> SplitTextIntoLines(const String& Text)
+{
+    TArray<String> Lines;
+    if (Text.IsEmpty())
+    {
+        return Lines;
+    }
+
+    const CHAR* const End       = Text.Data() + Text.Length();
+    const CHAR*       LineStart = Text.Data();
+
+    for (const CHAR* Current = LineStart; Current != End; ++Current)
+    {
+        if (*Current == '\n')
+        {
+            Lines.Emplace(LineStart, static_cast<int32>(Current - LineStart));
+            LineStart = Current + 1;
+        }
+    }
+
+    Lines.Emplace(LineStart, static_cast<int32>(End - LineStart));
+    return Lines;
+}
+
 TUniquePtr<FToolTipService> FToolTipService::ToolTipService = nullptr;
 
 TSharedPtr<FToolTip> FToolTip::Create(const String& InText, const TSharedPtr<IFontFace>& InFont)
 {
     TSharedPtr<FToolTip> NewToolTip = MakeSharedPtr<FToolTip>();
-    NewToolTip->Text = InText;
     NewToolTip->Font = InFont;
+    NewToolTip->SetText(InText);
     return NewToolTip;
 }
 
 FToolTip::FToolTip()
     : FCompoundElement()
     , Text()
+    , Lines()
     , Font(nullptr)
     , CornerRadius(FUIStyle::GetDefault().Metrics.CornerRadius)
 {
@@ -36,8 +62,14 @@ IntVector2 FToolTip::ComputeDesiredSize() const
     IntVector2 DesiredSize(Inset.GetTotalHorizontal(), Inset.GetTotalVertical());
     if (Font)
     {
-        DesiredSize.X += Font->MeasureWidth(StringView(Text.Data(), Text.Length()));
-        DesiredSize.Y += Font->GetLineHeight();
+        int32 WidestLine = 0;
+        for (const String& Line : Lines)
+        {
+            WidestLine = Math::Max(WidestLine, Font->MeasureWidth(StringView(Line.Data(), Line.Length())));
+        }
+
+        DesiredSize.X += WidestLine;
+        DesiredSize.Y += Font->GetLineHeight() * Math::Max(Lines.Size(), 1);
     }
 
     return DesiredSize;
@@ -52,9 +84,18 @@ int32 FToolTip::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& 
     OutCommandList.AddBox(LayerId, Bounds, Style.Colors.PanelBackground, Radii);
     OutCommandList.AddBoxOutline(LayerId, Bounds, Style.Colors.Border, 1.0f, Radii);
 
-    if (Font && !Text.IsEmpty())
+    if (Font)
     {
-        OutCommandList.AddText(LayerId + 1, Bounds.Deflate(GetPadding()), Text, Font.Get(), Style.Colors.Text);
+        const FRectangle TextBounds = Bounds.Deflate(GetPadding());
+        const int32      LineHeight = Font->GetLineHeight();
+
+        for (int32 LineIndex = 0; LineIndex < Lines.Size(); ++LineIndex)
+        {
+            const FRectangle LineBounds(IntVector2(TextBounds.Position.X, TextBounds.Position.Y + (LineIndex * LineHeight)),
+                TextBounds.Width, LineHeight);
+
+            OutCommandList.AddText(LayerId + 1, LineBounds, Lines[LineIndex], Font.Get(), Style.Colors.Text);
+        }
     }
 
     return LayerId + 1;
@@ -63,11 +104,20 @@ int32 FToolTip::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& 
 void FToolTip::SetOuterCornerRadius(float InCornerRadius)
 {
     CornerRadius = InCornerRadius;
+    InvalidatePaint();
 }
 
 void FToolTip::SetText(const String& InText)
 {
-    Text = InText;
+    if (Text == InText)
+    {
+        return;
+    }
+
+    Text  = InText;
+    Lines = SplitTextIntoLines(Text);
+
+    InvalidateDesiredSize();
 }
 
 TSharedPtr<FToolTipHost> FToolTipHost::Create(
@@ -146,6 +196,7 @@ FToolTipService::FToolTipService()
     , ClampArea()
     , ToolTipBounds()
     , CursorPosition()
+    , RequestedText()
     , RequestedDelay(DefaultDelay)
     , RemainingSeconds(0.0f)
     , bIsShowing(false)
@@ -169,7 +220,7 @@ void FToolTipService::RequestToolTip(
         return;
     }
 
-    if (Owner != InOwner)
+    if (Owner != InOwner || bIsShowing)
     {
         DismissToolTip();
     }
@@ -180,6 +231,8 @@ void FToolTipService::RequestToolTip(
     AnchorBounds     = InAnchorBounds;
     RequestedDelay   = Math::Max(DelaySeconds, 0.0f);
     RemainingSeconds = RequestedDelay;
+
+    RequestedText.Clear();
 }
 
 void FToolTipService::RequestTextToolTip(
@@ -189,7 +242,13 @@ void FToolTipService::RequestTextToolTip(
     EToolTipPlacement                 InPlacement,
     float                             DelaySeconds)
 {
+    if (Owner == InOwner && RequestedText == Text && Placement == InPlacement)
+    {
+        return;
+    }
+
     RequestToolTip(InOwner, FToolTip::Create(Text, Font), InPlacement, DelaySeconds);
+    RequestedText = Text;
 }
 
 void FToolTipService::CancelToolTip(const TSharedPtr<FVisualElement>& InOwner)
@@ -246,6 +305,7 @@ void FToolTipService::DismissToolTip()
     AnchorBounds     = FRectangle();
     ClampArea        = FRectangle();
     ToolTipBounds    = FRectangle();
+    RequestedText.Clear();
     RemainingSeconds = 0.0f;
     bIsShowing       = false;
 }
@@ -345,45 +405,26 @@ void FToolTipService::MoveToolTip()
 
 FRectangle FToolTipService::ResolveBounds(const IntVector2& ToolTipSize) const
 {
-    FRectangle Bounds(IntVector2(), ToolTipSize.X, ToolTipSize.Y);
-
     const int32 Gap = HasAnchorBoundsOverride() ? 0 : AnchorGap;
 
     switch (Placement)
     {
         case EToolTipPlacement::BelowAnchor:
         {
-            const FRectangle Anchor = ResolveAnchorBounds();
-            Bounds.Position = IntVector2(Anchor.Position.X, Anchor.GetBottom() + Gap);
-            break;
+            return FPopupPlacement::Resolve(ResolveAnchorBounds(), ToolTipSize, ClampArea, EPopupSide::Below, EPopupFlip::None, Gap);
         }
 
         case EToolTipPlacement::RightOfAnchor:
         {
-            const FRectangle Anchor   = ResolveAnchorBounds();
-            const int32      FlippedX = Anchor.Position.X - Gap - ToolTipSize.X;
-
-            Bounds.Position = IntVector2(Anchor.GetRight() + Gap, Anchor.Position.Y);
-
-            if (Bounds.GetRight() > ClampArea.GetRight() && FlippedX >= ClampArea.Position.X)
-            {
-                Bounds.Position.X = FlippedX;
-            }
-
-            break;
+            return FPopupPlacement::Resolve(ResolveAnchorBounds(), ToolTipSize, ClampArea, EPopupSide::Right, EPopupFlip::Main, Gap);
         }
 
         default:
         {
-            Bounds.Position = CursorPosition + IntVector2(CursorOffset, CursorOffset);
-            break;
+            const FRectangle CursorPoint(CursorPosition + IntVector2(CursorOffset, CursorOffset), 0, 0);
+            return FPopupPlacement::Resolve(CursorPoint, ToolTipSize, ClampArea, EPopupSide::Below, EPopupFlip::None);
         }
     }
-
-    Bounds.Position.X = Math::Clamp(Bounds.Position.X, ClampArea.Position.X, Math::Max(ClampArea.Position.X, ClampArea.GetRight() - ToolTipSize.X));
-    Bounds.Position.Y = Math::Clamp(Bounds.Position.Y, ClampArea.Position.Y, Math::Max(ClampArea.Position.Y, ClampArea.GetBottom() - ToolTipSize.Y));
-
-    return Bounds;
 }
 
 FRectangle FToolTipService::ResolveAnchorBounds() const

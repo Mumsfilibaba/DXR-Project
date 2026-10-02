@@ -217,8 +217,6 @@ void FSkyboxRenderPass::Record(FRHICommandList& CommandList, const FFrameResourc
 {
     RHI_EVENT_SCOPE(CommandList, "Skybox");
 
-    GPU_TRACE_SCOPE(CommandList, "Skybox");
-
     TRACE_SCOPE("Render Skybox");
 
     const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
@@ -261,8 +259,7 @@ void FSkyboxRenderPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, co
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             const EAttachmentLoadAction LoadAction = GClearBeforeSkyboxEnabled ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
-            const FFloatColor ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            PassBuilder.SetRenderTarget(0, Context.SceneTargetRenderTargetView, LoadAction, EAttachmentStoreAction::Store, ClearColor);
+            PassBuilder.SetRenderTarget(0, Context.SceneTargetRenderTargetView, LoadAction);
 
             if (Context.GBufferDepthReadOnlyDSV)
             {

@@ -83,12 +83,25 @@ void FComboBoxButton::SetAnchor(FMenuAnchor* InAnchor)
 
 void FComboBoxButton::SetText(const String& InText)
 {
+    if (Label == InText)
+    {
+        return;
+    }
+
     Label = InText;
+    InvalidateDesiredSize();
 }
 
 void FComboBoxButton::SetReservedTextWidth(int32 InTextWidth)
 {
-    ReservedTextWidth = Math::Max(InTextWidth, 0);
+    const int32 NewReservedTextWidth = Math::Max(InTextWidth, 0);
+    if (ReservedTextWidth == NewReservedTextWidth)
+    {
+        return;
+    }
+
+    ReservedTextWidth = NewReservedTextWidth;
+    InvalidateDesiredSize();
 }
 
 void FComboBoxButton::OnClicked()

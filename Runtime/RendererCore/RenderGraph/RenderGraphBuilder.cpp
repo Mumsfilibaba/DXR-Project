@@ -1,8 +1,11 @@
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/OutputDeviceManager.h"
 #include "RendererCore/RenderGraph/RenderGraphBuilder.h"
 #include "RendererCore/RenderGraph/RenderGraphResourcePool.h"
 #include "RendererCore/RenderGraph/RenderGraphViewCache.h"
 #include "RendererCore/RenderGraph/RenderGraphViewValidation.h"
+#include "RendererCore/Interfaces/IRendererModule.h"
+#include "RendererCore/Interfaces/IGPUProfiler.h"
 
 struct FRenderGraphSubresourceSpan
 {
@@ -1167,6 +1170,8 @@ void FRenderGraphBuilder::Compile()
         return;
     }
 
+    TRACE_SCOPE("RenderGraph Compile");
+
     bIsCompiled = true;
     Statistics.NumPasses = Passes.Size();
 
@@ -1316,61 +1321,81 @@ void FRenderGraphBuilder::Execute(FRHICommandList& CommandList)
 
     RHI_EVENT_SCOPE(CommandList, Name);
 
-    for (FRenderGraphPass* Pass : Passes)
     {
-        if (Pass->IsCulled() || !Pass->IsEnabled())
+        TRACE_SCOPE("RenderGraph Record Passes");
+
+        for (FRenderGraphPass* Pass : Passes)
         {
-            continue;
-        }
+            if (Pass->IsCulled() || !Pass->IsEnabled())
+            {
+                continue;
+            }
 
-        RHI_EVENT_SCOPE(CommandList, Pass->GetName());
+            RHI_EVENT_SCOPE(CommandList, Pass->GetName());
 
-        if (!Pass->GetTransitions().IsEmpty())
-        {
-            CommandList.TransitionBarrier(MakeArrayView(Pass->GetTransitions()));
-        }
+            IGPUProfiler* GpuProfiler = nullptr;
+            if (IRendererModule* RendererModule = IRendererModule::Get())
+            {
+                GpuProfiler = &RendererModule->GetGPUProfiler();
+                GpuProfiler->BeginGPUTrace(CommandList, Pass->GetName());
+            }
 
-        if (!Pass->GetUnorderedAccessBarriers().IsEmpty())
-        {
-            CommandList.UnorderedAccessBarrier(MakeArrayView(Pass->GetUnorderedAccessBarriers()));
-        }
+            if (!Pass->GetTransitions().IsEmpty())
+            {
+                CommandList.TransitionBarrier(MakeArrayView(Pass->GetTransitions()));
+            }
 
-        FRHIBeginRenderPassDesc RenderPassDesc;
+            if (!Pass->GetUnorderedAccessBarriers().IsEmpty())
+            {
+                CommandList.UnorderedAccessBarrier(MakeArrayView(Pass->GetUnorderedAccessBarriers()));
+            }
 
-        const bool bIsRaster      = Pass->IsRaster();
-        const bool bHasRenderPass = bIsRaster && (RenderPassDesc = BuildBeginRenderPassDesc(*Pass, ViewCache), HasValidRenderPassAttachments(RenderPassDesc));
+            FRHIBeginRenderPassDesc RenderPassDesc;
 
-        if (bIsRaster && !bHasRenderPass)
-        {
-            LOG_ERROR("Graph '%s' pass '%s' is flagged Raster but has no resolvable attachments; skipping render pass", Name, Pass->GetName());
-        }
+            const bool bIsRaster      = Pass->IsRaster();
+            const bool bHasRenderPass = bIsRaster && (RenderPassDesc = BuildBeginRenderPassDesc(*Pass, ViewCache), HasValidRenderPassAttachments(RenderPassDesc));
 
-        if (bHasRenderPass)
-        {
-            CommandList.BeginRenderPass(RenderPassDesc);
-        }
+            if (bIsRaster && !bHasRenderPass)
+            {
+                LOG_ERROR("Graph '%s' pass '%s' is flagged Raster but has no resolvable attachments; skipping render pass", Name, Pass->GetName());
+            }
 
-        if (FRenderGraphPassExecutor* Executor = Pass->GetExecutor())
-        {
-            FRenderGraphPassResources Resources = FRenderGraphPassResources::Create(*Pass, ViewCache);
-            Executor->Execute(CommandList, Resources);
-        }
+            if (bHasRenderPass)
+            {
+                CommandList.BeginRenderPass(RenderPassDesc);
+            }
 
-        if (bHasRenderPass)
-        {
-            CommandList.EndRenderPass();
+            if (FRenderGraphPassExecutor* Executor = Pass->GetExecutor())
+            {
+                FRenderGraphPassResources Resources = FRenderGraphPassResources::Create(*Pass, ViewCache);
+                Executor->Execute(CommandList, Resources);
+            }
+
+            if (bHasRenderPass)
+            {
+                CommandList.EndRenderPass();
+            }
+
+            if (GpuProfiler)
+            {
+                GpuProfiler->EndGPUTrace(CommandList, Pass->GetName());
+            }
         }
     }
 
-    Statistics.NumViewsCreated   = ViewCache.GetNumViewsCreated();
-    Statistics.NumViewsCacheHits = ViewCache.GetNumViewsCacheHits();
-
-    EmitEpilogueBarriers(CommandList);
-
-    ReleasePooledResources();
-
-    if (FRenderGraphResourcePool::IsInitialized())
     {
-        FRenderGraphResourcePool::Get().Tick();
+        TRACE_SCOPE("RenderGraph Finalize");
+
+        Statistics.NumViewsCreated   = ViewCache.GetNumViewsCreated();
+        Statistics.NumViewsCacheHits = ViewCache.GetNumViewsCacheHits();
+
+        EmitEpilogueBarriers(CommandList);
+
+        ReleasePooledResources();
+
+        if (FRenderGraphResourcePool::IsInitialized())
+        {
+            FRenderGraphResourcePool::Get().Tick();
+        }
     }
 }

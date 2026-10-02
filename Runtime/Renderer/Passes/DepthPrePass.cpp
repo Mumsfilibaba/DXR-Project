@@ -159,8 +159,6 @@ void FDepthPrePass::Record(FRHICommandList& CommandList, const FPassResources& P
 
     TRACE_SCOPE("Depth Pre-Pass");
 
-    GPU_TRACE_SCOPE(CommandList, "Depth Pre-Pass");
-
     const float RenderWidth  = float(PassResources.RenderWidth);
     const float RenderHeight = float(PassResources.RenderHeight);
 

@@ -239,8 +239,6 @@ void FPointLightRenderPass::Record(FRHICommandList& CommandList, const FFrameRes
 
     RHI_EVENT_SCOPE(CommandList, "Render PointLight ShadowMaps");
 
-    GPU_TRACE_SCOPE(CommandList, "PointLight ShadowMaps");
-
     TRACE_SCOPE("Render PointLight ShadowMaps");
 
     const ECubeMapRenderPassType RenderPassType = GetRenderMapRenderPassType();

@@ -28,7 +28,7 @@ void FMenuHost::AddChild(const TSharedPtr<FVisualElement>& InContent, const FRec
     Child.bHitTestable  = bInHitTestable;
 
     InContent->SetParentElement(AsWeakPtr());
-    InContent->Tick(InClientBounds);
+    InContent->Arrange(InClientBounds);
 }
 
 void FMenuHost::SetChildBounds(const TSharedPtr<FVisualElement>& InContent, const FRectangle& InClientBounds)
@@ -37,8 +37,13 @@ void FMenuHost::SetChildBounds(const TSharedPtr<FVisualElement>& InContent, cons
     {
         if (Child.Content == InContent)
         {
-            Child.ClientBounds = InClientBounds;
-            Child.Content->Tick(InClientBounds);
+            if (Child.ClientBounds != InClientBounds)
+            {
+                Child.ClientBounds = InClientBounds;
+                InvalidatePaint();
+            }
+
+            Child.Content->Arrange(InClientBounds);
             return;
         }
     }
@@ -50,7 +55,10 @@ void FMenuHost::RemoveChild(const TSharedPtr<FVisualElement>& InContent)
     {
         if (Children[Index].Content == InContent)
         {
+            Children[Index].Content->SetParentElement(TWeakPtr<FVisualElement>());
             Children.RemoveAt(Index);
+
+            InvalidatePaint();
             return;
         }
     }
@@ -67,20 +75,17 @@ void FMenuHost::OnArrange(const FRectangle&)
     {
         if (Child.Content)
         {
-            Child.Content->Tick(Child.ClientBounds);
+            Child.Content->Arrange(Child.ClientBounds);
         }
     }
 }
 
-void FMenuHost::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FMenuHost::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const
 {
-    for (const FHostedChild& Child : Children)
+    return VisitChildArray(Visitor, Order, Children, [](const FHostedChild& Child) -> const TSharedPtr<FVisualElement>&
     {
-        if (Child.Content)
-        {
-            OutChildren.Add(Child.Content);
-        }
-    }
+        return Child.Content;
+    });
 }
 
 int32 FMenuHost::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -101,7 +106,7 @@ int32 FMenuHost::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         }
 
         const FDrawGeometry ChildGeometry(Child.Content->GetContentRectangle(), AllottedGeometry.Scale);
-        MaxLayerId = Child.Content->OnDraw(ChildGeometry, OutCommandList, MaxLayerId + 1);
+        MaxLayerId = Child.Content->Draw(ChildGeometry, OutCommandList, MaxLayerId + 1);
     }
 
     OutCommandList.PopClip(MaxLayerId);
@@ -109,7 +114,7 @@ int32 FMenuHost::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     return MaxLayerId;
 }
 
-void FMenuHost::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+const FMenuHost::FHostedChild* FMenuHost::FindChildAtPoint(const IntVector2& ClientPosition) const
 {
     for (int32 Index = Children.Size() - 1; Index >= 0; --Index)
     {
@@ -121,9 +126,30 @@ void FMenuHost::FindChildrenContainingPoint(const IntVector2& ClientPosition, FE
 
         if (Child.Content->GetContentRectangle().EncapsulatesPoint(ClientPosition))
         {
-            OutChildElements.Add(GetVisibility(), AsSharedPtr());
-            Child.Content->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-            return;
+            return &Child;
         }
+    }
+
+    return nullptr;
+}
+
+bool FMenuHost::CoversPoint(const IntVector2& ClientPosition) const
+{
+    return FindChildAtPoint(ClientPosition) != nullptr;
+}
+
+void FMenuHost::HitTestHostedChild(const IntVector2& ClientPosition, FElementPath& OutPath)
+{
+    if (FindChildAtPoint(ClientPosition))
+    {
+        HitTest(ClientPosition, OutPath);
+    }
+}
+
+void FMenuHost::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+{
+    if (const FHostedChild* Child = FindChildAtPoint(ClientPosition))
+    {
+        Child->Content->HitTest(ClientPosition, OutPath);
     }
 }

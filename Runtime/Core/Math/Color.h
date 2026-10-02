@@ -182,6 +182,12 @@ public:
         return FColor(IntR, IntG, IntB, IntA);
     }
 
+    /** @return The 8-bit channels packed as R, G, B, A from the lowest byte up. */
+    NODISCARD FORCEINLINE uint32 ToPackedRGBA() const
+    {
+        return ToColor().ToPackedRGBA();
+    }
+
     /**
      * @brief Returns a color with component-wise negation of this color.
      * @return A negated color.

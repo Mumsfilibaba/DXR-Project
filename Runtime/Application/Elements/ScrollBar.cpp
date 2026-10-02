@@ -22,6 +22,9 @@ FScrollBar::FScrollBar()
     , Offset(0)
     , ThumbGrabOffset(0)
     , Opacity(1.0f)
+    , Fade()
+    , bAutoHide(false)
+    , bIsRevealed(false)
     , OnOffsetChangedDelegate()
 {
 }
@@ -36,6 +39,10 @@ void FScrollBar::Initialize(const FDesc& Desc)
     TrackPadding            = Desc.TrackPadding;
     Style                   = Desc.Style;
     OnOffsetChangedDelegate = Desc.OnOffsetChanged;
+    bAutoHide               = Desc.bAutoHide;
+
+    Opacity = bAutoHide ? 0.0f : 1.0f;
+    Fade.Settle(Opacity);
 }
 
 IntVector2 FScrollBar::ComputeDesiredSize() const
@@ -43,12 +50,34 @@ IntVector2 FScrollBar::ComputeDesiredSize() const
     return Orientation == EOrientation::Vertical ? IntVector2(Thickness, 0) : IntVector2(0, Thickness);
 }
 
+void FScrollBar::OnArrange(const FRectangle& AllottedBounds)
+{
+    FInteractiveElement::OnArrange(AllottedBounds);
+
+    if (!bAutoHide)
+    {
+        return;
+    }
+
+    SetOpacity(Fade.Evaluate());
+
+    if (Fade.IsRunning())
+    {
+        RequestContinuousArrange();
+    }
+}
+
 int32 FScrollBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FRectangle Track = ComputeTrackBounds(AllottedGeometry.Bounds);
+    if (Opacity <= 0.0f)
+    {
+        return LayerId;
+    }
 
+    const FRectangle Bounds = AllottedGeometry.Bounds;
     const FCornerRadii TrackRadii(Style.CornerRadius);
-    OutCommandList.AddBox(LayerId, Track, ApplyOpacity(Style.Track), TrackRadii);
+
+    OutCommandList.AddBox(LayerId, Bounds, ApplyOpacity(Style.Track));
 
     if (!IsScrollable())
     {
@@ -66,7 +95,52 @@ int32 FScrollBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
 
 void FScrollBar::SetOpacity(float InOpacity)
 {
-    Opacity = Math::Clamp(InOpacity, 0.0f, 1.0f);
+    const float ClampedOpacity = Math::Clamp(InOpacity, 0.0f, 1.0f);
+    if (Opacity == ClampedOpacity)
+    {
+        return;
+    }
+
+    Opacity = ClampedOpacity;
+    InvalidatePaint();
+}
+
+void FScrollBar::SetRevealed(bool bInIsRevealed)
+{
+    if (bIsRevealed == bInIsRevealed)
+    {
+        return;
+    }
+
+    bIsRevealed = bInIsRevealed;
+    InvalidatePaint();
+    UpdateFadeTarget();
+}
+
+void FScrollBar::OnInteractionStateChanged()
+{
+    FInteractiveElement::OnInteractionStateChanged();
+    UpdateFadeTarget();
+}
+
+void FScrollBar::UpdateFadeTarget()
+{
+    if (!bAutoHide)
+    {
+        return;
+    }
+
+    const float Target = (bIsRevealed || IsPressed()) ? 1.0f : 0.0f;
+    if (Fade.GetTarget() == Target)
+    {
+        return;
+    }
+
+    const float Current  = Fade.Evaluate();
+    const float Duration = Target > Current ? Style.FadeInDuration : Style.FadeOutDuration;
+
+    Fade.Start(Duration * Math::Abs(Target - Current), Current, Target);
+    InvalidateArrange();
 }
 
 FFloatColor FScrollBar::ApplyOpacity(const FFloatColor& Color) const
@@ -105,14 +179,32 @@ FEventResponse FScrollBar::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 
 void FScrollBar::SetScrollState(int32 InContentLength, int32 InViewLength, int32 InOffset)
 {
-    ContentLength = Math::Max(InContentLength, 0);
-    ViewLength    = Math::Max(InViewLength, 0);
+    const int32 NewContentLength = Math::Max(InContentLength, 0);
+    const int32 NewViewLength    = Math::Max(InViewLength, 0);
+
+    if (ContentLength == NewContentLength && ViewLength == NewViewLength)
+    {
+        SetOffset(InOffset);
+        return;
+    }
+
+    ContentLength = NewContentLength;
+    ViewLength    = NewViewLength;
     Offset        = Math::Clamp(InOffset, 0, GetMaxOffset());
+
+    InvalidatePaint();
 }
 
 void FScrollBar::SetOffset(int32 InOffset)
 {
-    Offset = Math::Clamp(InOffset, 0, GetMaxOffset());
+    const int32 NewOffset = Math::Clamp(InOffset, 0, GetMaxOffset());
+    if (Offset == NewOffset)
+    {
+        return;
+    }
+
+    Offset = NewOffset;
+    InvalidatePaint();
 }
 
 int32 FScrollBar::GetMaxOffset() const
@@ -191,6 +283,8 @@ void FScrollBar::ApplyOffset(int32 InOffset)
     }
 
     Offset = NewOffset;
+    InvalidatePaint();
+
     OnOffsetChangedDelegate.ExecuteIfBound(Offset);
 }
 

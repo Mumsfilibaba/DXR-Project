@@ -1,26 +1,94 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/Function.h"
 #include "Core/Containers/SharedPtr.h"
+#include "Core/Containers/UniquePtr.h"
 #include "Application/Events.h"
 #include "Application/Layout/LayoutTypes.h"
 #include "CoreApplication/PlatformInterface/IPlatformCursor.h"
 
 class FElementPath;
 class FDrawCommandList;
+class FScrollBox;
+class FVisualElement;
 struct FDrawGeometry;
+struct FDrawCacheBlock;
 
-/** @brief Enumeration for element visibility states. */
-enum class EVisibility
+enum class EVisibility : uint8
 {
-    None    = 0,      /** @brief No visibility flags set. */
-    Hidden  = BIT(1), /** @brief Element is hidden. */
-    Visible = BIT(2), /** @brief Element is visible. */
+    /** @brief No visibility flags set. */
+    None = 0,
+    
+    /** @brief Element is hidden. */
+    Hidden = BIT(1),
+    
+    /** @brief Element is visible. */
+    Visible = BIT(2), 
 };
 
 ENUM_CLASS_OPERATORS(EVisibility);
 
-/** @brief Policy controlling whether an element should automatically receive focus when its owning window becomes active. */
-enum class EElementActivationPolicy
+enum class EChildVisit : uint8
+{
+    /** @brief Carry on with the next child. */
+    Continue,
+
+    /** @brief Stop, leaving the remaining children unvisited. */
+    Stop,
+};
+
+enum class EChildOrder : uint8
+{
+    /** @brief The order the children are painted in, so the first child visited is the one furthest back. */
+    BackToFront,
+
+    /** @brief The reverse of the paint order, so the first child visited is the one on top, which is the hit-test order. */
+    FrontToBack,
+};
+
+using FChildVisitor = TFunctionRef<EChildVisit(FVisualElement&)>;
+
+enum class EElementFlags : uint16
+{
+    None = 0,
+
+    /** @brief The next PrepareDesiredSize measures the element again. */
+    DesiredSizeDirty = FLAG(0),
+
+    /** @brief The next Arrange runs OnArrange even when the element is given the same bounds as before. */
+    ArrangeDirty = FLAG(1),
+
+    /** @brief The next Draw records the element again instead of replaying what it recorded before. */
+    PaintDirty = FLAG(2),
+
+    /** @brief A capture of the subtree was refused, so the element stops volunteering as a cache root. */
+    DrawCacheBlocked = FLAG(3),
+
+    /** @brief The element takes part in hit testing. Clearing it lets the cursor pass through to what lies below. */
+    HitTestable = FLAG(4),
+
+    /** @brief The element is an FWindow. */
+    IsWindow = FLAG(5),
+
+    /** @brief The element answers mouse input rather than only drawing. */
+    IsInteractive = FLAG(6),
+
+    /** @brief The element is an FScrollBox. */
+    IsScrollBox = FLAG(7),
+
+    /** @brief The window content is focused when its window is activated, which EElementActivationPolicy describes. */
+    AutoFocusOnWindowActivate = FLAG(8),
+
+    /**
+     * @brief The element, or something below it, places children outside its own rectangle, so a hit test outside
+     * the rectangle still has to look below it. Attaching such an element to a parent marks every ancestor too.
+     */
+    HitTestOverflow = FLAG(9),
+};
+
+ENUM_CLASS_OPERATORS(EElementFlags);
+
+enum class EElementActivationPolicy : uint8
 {
     /** @brief When the owning window is activated, focus the window content element. */
     AutoFocusOnWindowActivate,
@@ -29,30 +97,95 @@ enum class EElementActivationPolicy
     DoNotAutoFocusOnWindowActivate,
 };
 
+enum class EDrawCachePolicy : uint8
+{
+    /** @brief Let the heuristic decide, promoting the subtree once it is both large enough and stable. */
+    Auto,
+
+    /**
+     * @brief Never cache, for an element whose look follows something no mutation of the tree announces: a
+     * caret blinking off wall-clock time, a histogram or log view fed every frame from a live source, a
+     * viewport or gizmo that follows the scene camera, a canvas being panned under the cursor. A Never
+     * element also blocks captures by its ancestors, so the cache root settles below it.
+     */
+    Never,
+
+    /** @brief Cache as soon as the subtree is clean, whatever size the heuristic would have asked for. */
+    Always,
+};
+
 class APPLICATION_API FVisualElement : public TSharedFromThis<FVisualElement>
 {
 public:
     FVisualElement();
     virtual ~FVisualElement();
 
-    /** @brief Stores the assigned bounds as the content rectangle and then arranges the children inside it. */
-    virtual void Tick(const FRectangle& AssignedBounds);
+    /**
+     * @brief Stores the assigned bounds as the content rectangle and then arranges the children inside it. The
+     * arrange is skipped when the bounds are the ones the element already has and nothing marked it arrange-dirty
+     * since, which is what lets a clean subtree cost one comparison per frame.
+     *
+     * @param AssignedBounds The rectangle the parent gives the element.
+     */
+    void Arrange(const FRectangle& AssignedBounds);
+
+    /**
+     * @brief Marks this element and every parent above it to be arranged again even if the bounds they are given do
+     * not change, which is what a setter calls when it moves children without changing any desired size: a scroll
+     * offset, a splitter fraction, a pan or zoom. InvalidateDesiredSize does this too.
+     */
+    void InvalidateArrange();
+
+    /**
+     * @brief Called from inside OnArrange by an element mid-animation or following something outside the tree, to
+     * say it has to be arranged again next frame even though nothing mutated it.
+     */
+    void RequestContinuousArrange() const;
+
+    /** @return True when the next Arrange runs OnArrange whatever bounds it is given. */
+    NODISCARD FORCEINLINE bool IsArrangeDirty() const
+    {
+        return HasAnyElementFlags(EElementFlags::ArrangeDirty);
+    }
 
     /**
      * @brief Checks if the element is a window.
      *
      * @return True if the element is an FWindow, false otherwise.
      */
-    virtual bool IsWindow() const;
+    NODISCARD FORCEINLINE bool IsWindow() const
+    {
+        return HasAnyElementFlags(EElementFlags::IsWindow);
+    }
 
     /**
      * @brief Whether the element answers mouse input rather than only drawing.
      *
      * A title bar asks this of its descendants to work out which parts of the caption stay clickable
      * instead of dragging the window.
-     * @return True if the element is an FInteractiveElement, false otherwise.
+     * @return True for an FInteractiveElement or anything else that marked itself interactive.
      */
-    virtual bool IsInteractive() const;
+    NODISCARD FORCEINLINE bool IsInteractive() const
+    {
+        return HasAnyElementFlags(EElementFlags::IsInteractive);
+    }
+
+    /** @return This element as a scroll box, or null when it is not one. */
+    NODISCARD FScrollBox* AsScrollBox();
+
+    /** @return True while the element takes part in hit testing. */
+    NODISCARD FORCEINLINE bool IsHitTestable() const
+    {
+        return HasAnyElementFlags(EElementFlags::HitTestable);
+    }
+
+    /**
+     * @brief Sets whether the element takes part in hit testing. An element that does not is skipped together
+     * with its whole subtree, so the cursor reaches whatever lies below it.
+     *
+     * @param bInHitTestable True to let the cursor find the element.
+     */
+    void SetHitTestable(bool bInHitTestable);
 
     /**
      * @brief Whether this element takes every mouse event in its window while it is up.
@@ -208,14 +341,29 @@ public:
     virtual void OnArrange(const FRectangle& AllottedBounds);
 
     /**
-     * @brief Appends the direct children of this element in front to back order.
+     * @brief Calls a visitor with every direct child of this element, without collecting them anywhere first.
+     *
+     * @param Visitor Called once per child, and able to stop the walk early.
+     * @param Order   The order to walk the children in.
+     * @return Stop when the visitor stopped the walk, Continue when it saw every child.
+     */
+    FORCEINLINE EChildVisit ForEachChild(FChildVisitor Visitor, EChildOrder Order = EChildOrder::BackToFront) const
+    {
+        return VisitChildren(Visitor, Order);
+    }
+
+    /**
+     * @brief Appends the direct children of this element in paint order, back to front.
      *
      * @param OutChildren The array to append to.
      */
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const;
+    void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const;
 
     /**
      * @brief Appends the draw commands for this element and its children.
+     *
+     * A container calls Draw on its children rather than this, so that a clean subtree can be replayed from
+     * what it recorded before.
      *
      * @param AllottedGeometry The rectangle and scale the element was arranged into.
      * @param OutCommandList   The list to append to.
@@ -223,6 +371,18 @@ public:
      * @return The highest layer this element or any descendant drew on.
      */
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const;
+
+    /**
+     * @brief Records the element into the command list, replaying what it recorded before when nothing that
+     * would change the result has moved since, so that the commands appended and the layer returned always
+     * match what OnDraw alone would give.
+     *
+     * @param AllottedGeometry The rectangle and scale the element was arranged into.
+     * @param OutCommandList   The list to append to.
+     * @param LayerId          The layer this element draws on.
+     * @return The highest layer this element or any descendant drew on.
+     */
+    int32 Draw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const;
 
     /**
      * @brief Rounds the outline the element draws around itself, which a popup sets on its content when the
@@ -246,25 +406,104 @@ public:
      *
      * @param OutParentElements The path to populate, from the window down to this element, which ends up last.
      */
-    virtual void FindParentElements(FElementPath& OutParentElements);
+    void FindParentElements(FElementPath& OutParentElements);
 
     /**
-     * @brief Adds all child elements under a specified point to the element path.
+     * @brief Appends this element and the chain of descendants under a point to a path, ordered from this element
+     * down to the one on top. A hidden or non hit-testable element, or one the point falls outside of, adds
+     * nothing and is not descended into, so the cost follows the depth of the tree rather than its size.
      *
      * @param ClientPosition The position to check, in the client space the elements were arranged in.
-     * @param OutChildElements The element path to populate with child elements.
+     * @param OutPath        The path to append to.
+     * @return True when the element took the point and was added to the path.
      */
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements);
+    bool HitTest(const IntVector2& ClientPosition, FElementPath& OutPath);
+
+    /**
+     * @brief A counter that moves whenever anything that could change a hit test result changes: an arranged
+     * rectangle, a visibility or hit-testability flag, a parent, or any state an element repaints for. A path
+     * found at one value stays valid for as long as the counter holds it.
+     *
+     * @return The current value.
+     */
+    NODISCARD static uint64 GetHitTestGeneration();
 
     /**
      * @brief Recomputes and caches the desired size of this element and every descendant. Run this before
-     * Tick, because a container sizes its slots from the cached child sizes.
+     * Arrange, because a container sizes its slots from the cached child sizes.
      *
      * An element whose children are sized from something outside the tree overrides this to read that
      * something first, since by the time ComputeDesiredSize runs the children have already been measured.
      * @return The desired size of this element.
      */
     virtual IntVector2 PrepareDesiredSize();
+
+    /**
+     * @brief Marks the cached desired size of this element and every parent above it as out of date, so that
+     * the next PrepareDesiredSize measures them again.
+     *
+     * Anything that changes what ComputeDesiredSize would return has to call this, including an element whose
+     * size follows an animation or data outside the tree, which calls it for as long as that size keeps moving.
+     * A clean element stops PrepareDesiredSize from walking its children, so a mutation that forgets this stays
+     * wrong until something else dirties the same branch.
+     */
+    void InvalidateDesiredSize();
+
+    /**
+     * @brief Checks whether this element is waiting to be measured again.
+     *
+     * @return True when the next PrepareDesiredSize will recompute the desired size.
+     */
+    NODISCARD bool IsDesiredSizeDirty() const
+    {
+        return HasAnyElementFlags(EElementFlags::DesiredSizeDirty);
+    }
+
+    /**
+     * @brief Marks what this element and every parent above it draw as out of date, so the next Draw records
+     * them again instead of replaying what they recorded before.
+     *
+     * Anything that changes what OnDraw would append has to call this, including changes that leave the
+     * measured size alone: a hover, a selection, a scroll offset, a tint. InvalidateDesiredSize dirties
+     * paint too, since anything that resizes an element also changes what it draws.
+     */
+    void InvalidatePaint();
+
+    /**
+     * @brief Checks whether this element has to be recorded again rather than replayed.
+     *
+     * @return True when the next Draw will walk the element instead of replaying a cached recording.
+     */
+    NODISCARD bool IsPaintDirty() const
+    {
+        return HasAnyElementFlags(EElementFlags::PaintDirty);
+    }
+
+    /**
+     * @brief Called from inside OnDraw by an element mid-animation, to say it has to be drawn again next
+     * frame even though nothing mutated it, which also stops the enclosing subtree from being cached.
+     */
+    void RequestContinuousPaint() const;
+
+    /**
+     * @brief Sets whether this element may keep and replay the commands its subtree records.
+     *
+     * @param InPolicy Never for an element whose look changes without the tree being told, Always to cache
+     * as soon as it is clean, Auto to leave it to the heuristic.
+     */
+    void SetDrawCachePolicy(EDrawCachePolicy InPolicy);
+
+    /** @return Whether this element may keep and replay the commands its subtree records. */
+    NODISCARD EDrawCachePolicy GetDrawCachePolicy() const
+    {
+        return DrawCachePolicy;
+    }
+
+    /** @brief Drops whatever this element has cached, so the next Draw records it again. */
+    void ReleaseDrawCache();
+
+    /** @return True while this element holds a recording it could replay. */
+    NODISCARD bool HasDrawCache() const;
 
     /**
      * @brief The size cached by the last PrepareDesiredSize call.
@@ -344,7 +583,9 @@ public:
      */
     EElementActivationPolicy GetActivationPolicy() const
     {
-        return ActivationPolicy;
+        return HasAnyElementFlags(EElementFlags::AutoFocusOnWindowActivate)
+            ? EElementActivationPolicy::AutoFocusOnWindowActivate
+            : EElementActivationPolicy::DoNotAutoFocusOnWindowActivate;
     }
 
     /**
@@ -354,13 +595,104 @@ public:
      */
     void SetActivationPolicy(EElementActivationPolicy InActivationPolicy)
     {
-        ActivationPolicy = InActivationPolicy;
+        if (InActivationPolicy == EElementActivationPolicy::AutoFocusOnWindowActivate)
+        {
+            SetElementFlags(EElementFlags::AutoFocusOnWindowActivate);
+        }
+        else
+        {
+            ClearElementFlags(EElementFlags::AutoFocusOnWindowActivate);
+        }
+    }
+
+protected:
+
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const;
+    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath);
+
+    FORCEINLINE void AddElementFlags(EElementFlags InFlags)
+    {
+        Flags |= InFlags;
+    }
+
+    void EnableHitTestOverflow();
+
+    template<typename ElementType>
+    NODISCARD static FORCEINLINE EChildVisit VisitChild(FChildVisitor& Visitor, const TSharedPtr<ElementType>& Child)
+    {
+        return Child ? Visitor(*Child) : EChildVisit::Continue;
+    }
+
+    template<typename... ElementTypes>
+    static EChildVisit VisitChildList(FChildVisitor& Visitor, EChildOrder Order, const TSharedPtr<ElementTypes>&... Children)
+    {
+        FVisualElement* const List[] = { static_cast<FVisualElement*>(Children.Get())... };
+
+        constexpr int32 NumChildren = static_cast<int32>(sizeof...(ElementTypes));
+        for (int32 Step = 0; Step < NumChildren; ++Step)
+        {
+            FVisualElement* Child = List[Order == EChildOrder::BackToFront ? Step : (NumChildren - 1 - Step)];
+            if (Child && Visitor(*Child) == EChildVisit::Stop)
+            {
+                return EChildVisit::Stop;
+            }
+        }
+
+        return EChildVisit::Continue;
+    }
+
+    template<typename ArrayType, typename ProjectionType>
+    static EChildVisit VisitChildArray(FChildVisitor& Visitor, EChildOrder Order, const ArrayType& Items, ProjectionType&& Projection)
+    {
+        const int32 NumItems = static_cast<int32>(Items.Size());
+        for (int32 Step = 0; Step < NumItems; ++Step)
+        {
+            const int32 Index = Order == EChildOrder::BackToFront ? Step : (NumItems - 1 - Step);
+            if (VisitChild(Visitor, Projection(Items[Index])) == EChildVisit::Stop)
+            {
+                return EChildVisit::Stop;
+            }
+        }
+
+        return EChildVisit::Continue;
     }
 
 private:
-    EVisibility              Visibility;
-    EElementActivationPolicy ActivationPolicy;
-    FRectangle               ContentRectangle;
-    IntVector2               CachedDesiredSize;
-    TWeakPtr<FVisualElement> ParentElement;
+    NODISCARD FORCEINLINE FVisualElement* GetLiveParent() const
+    {
+        return ParentElement.IsValid() ? ParentElement.Get() : nullptr;
+    }
+
+    NODISCARD FORCEINLINE bool HasAnyElementFlags(EElementFlags InFlags) const
+    {
+        return (Flags & InFlags) != EElementFlags::None;
+    }
+
+    FORCEINLINE void SetElementFlags(EElementFlags InFlags) const
+    {
+        Flags |= InFlags;
+    }
+
+    FORCEINLINE void ClearElementFlags(EElementFlags InFlags) const
+    {
+        Flags &= ~InFlags;
+    }
+
+    NODISCARD bool ShouldUseDrawCache() const;
+    void NoteWalked(int32 CommandCount) const;
+
+    void PropagateHitTestOverflow();
+
+    FRectangle                          ContentRectangle;
+    IntVector2                          CachedDesiredSize;
+    TWeakPtr<FVisualElement>            ParentElement;
+    mutable TUniquePtr<FDrawCacheBlock> DrawCacheBlock;
+    mutable uint16                      LastRecordedCommandCount;
+    mutable EElementFlags               Flags;
+    EVisibility                         Visibility;
+    EDrawCachePolicy                    DrawCachePolicy;
+    mutable uint8                       CleanPaintFrameCount;
+    mutable uint8                       RecentDirtyFrameCount;
 };
+
+static_assert(sizeof(void*) != 8 || sizeof(FVisualElement) == 80, "Every element pays for FVisualElement, so a new member has to fit its padding or be justified");

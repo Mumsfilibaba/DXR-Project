@@ -1,4 +1,5 @@
 #include "ConsoleTests.h"
+#include "UITestUtils.h"
 #include "ConsoleTestVariables.h"
 #include "StubPlatformApplication.h"
 
@@ -58,7 +59,7 @@ static void TypeText(const TSharedPtr<FConsole>& Console, const CHAR* Text)
 static void LayOutAndDraw(const TSharedPtr<FConsole>& Console, FDrawCommandList& OutCommandList)
 {
     Console->PrepareDesiredSize();
-    Console->Tick(FRectangle(IntVector2(0, 0), 1280, 720));
+    Console->Arrange(FRectangle(IntVector2(0, 0), 1280, 720));
 
     OutCommandList.Reset();
     Console->OnDraw(FDrawGeometry(Console->GetContentRectangle(), 1.0f), OutCommandList, 0);
@@ -68,7 +69,7 @@ static int32 FindBoxCommand(const FDrawCommandList& CommandList, const FFloatCol
 {
     for (int32 Index = 0; Index < CommandList.Size(); ++Index)
     {
-        if (CommandList[Index].Type == EDrawCommandType::Box && CommandList[Index].Tint == Tint)
+        if (CommandList[Index].Type == EDrawCommandType::Box && CommandList[Index].HasTint(Tint))
         {
             return Index;
         }
@@ -77,12 +78,12 @@ static int32 FindBoxCommand(const FDrawCommandList& CommandList, const FFloatCol
     return FDrawCommandList::InvalidIndex;
 }
 
-static int32 FindHighestClipPopLayer(const FDrawCommandList& CommandList)
+static int32 FindHighestClippedLayer(const FDrawCommandList& CommandList)
 {
     int32 HighestLayer = -1;
     for (int32 Index = 0; Index < CommandList.Size(); ++Index)
     {
-        if (CommandList[Index].Type == EDrawCommandType::ClipPop)
+        if (CommandList[Index].IsClipped())
         {
             HighestLayer = Math::Max(HighestLayer, CommandList[Index].LayerId);
         }
@@ -103,39 +104,6 @@ static TArray<int32> GetRowCellPositions(const FDrawCommandList& CommandList, in
     }
 
     return Positions;
-}
-
-static int32 FindVertex(const FUIDrawData& DrawData, const Vector2& Position)
-{
-    const TArray<FUIVertex>& Vertices = DrawData.GetVertices();
-    for (int32 Index = 0; Index < Vertices.Size(); ++Index)
-    {
-        if (Vertices[Index].Position == Position)
-        {
-            return Index;
-        }
-    }
-
-    return -1;
-}
-
-static int32 FindBatchDrawingVertex(const FUIDrawData& DrawData, int32 VertexIndex)
-{
-    const TArray<uint32>& Indices = DrawData.GetIndices();
-
-    for (int32 BatchIndex = 0; BatchIndex < DrawData.GetBatches().Size(); ++BatchIndex)
-    {
-        const FUIDrawBatch& Batch = DrawData.GetBatches()[BatchIndex];
-        for (int32 Index = Batch.IndexOffset; Index < Batch.IndexOffset + Batch.IndexCount; ++Index)
-        {
-            if (static_cast<int32>(Indices[Index]) == VertexIndex)
-            {
-                return BatchIndex;
-            }
-        }
-    }
-
-    return -1;
 }
 
 bool ConsoleToggle_Test()
@@ -193,7 +161,7 @@ bool ConsoleLayout_Test()
     Console->GetLogBuffer().Log(ELogSeverity::Info, "A line of log");
 
     Console->PrepareDesiredSize();
-    Console->Tick(FRectangle(IntVector2(0, 0), 1280, 720));
+    Console->Arrange(FRectangle(IntVector2(0, 0), 1280, 720));
 
     TEST_SECTION("The console takes the full width but only the text-area height");
     TEST_EXPECT_EQ(Console->GetContentRectangle().Width, 1280);
@@ -213,7 +181,7 @@ bool ConsoleLayout_Test()
     TSharedPtr<FConsole> SmallConsole = CreateConsole();
     SmallConsole->SetIsOpen(true);
     SmallConsole->PrepareDesiredSize();
-    SmallConsole->Tick(FRectangle(IntVector2(0, 0), 640, 200));
+    SmallConsole->Arrange(FRectangle(IntVector2(0, 0), 640, 200));
 
     TEST_EXPECT_EQ(SmallConsole->GetContentRectangle().Height, 200);
 
@@ -249,9 +217,9 @@ bool ConsoleLogDraw_Test()
     TEST_SECTION("Each line is drawn in the color of its severity");
     if (InfoIndex != FDrawCommandList::InvalidIndex && WarningIndex != FDrawCommandList::InvalidIndex && ErrorIndex != FDrawCommandList::InvalidIndex)
     {
-        TEST_EXPECT(CommandList[InfoIndex].Tint == FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Info));
-        TEST_EXPECT(CommandList[WarningIndex].Tint == FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Warning));
-        TEST_EXPECT(CommandList[ErrorIndex].Tint == FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Error));
+        TEST_EXPECT(CommandList[InfoIndex].HasTint(FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Info)));
+        TEST_EXPECT(CommandList[WarningIndex].HasTint(FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Warning)));
+        TEST_EXPECT(CommandList[ErrorIndex].HasTint(FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Error)));
     }
 
     TEST_SECTION("The lines are stacked in the order they were logged");
@@ -370,7 +338,7 @@ bool ConsoleCandidateHighlight_Test()
 
     for (int32 Index = 0; Index < CommandList.Size(); ++Index)
     {
-        if (CommandList[Index].Type == EDrawCommandType::Box && CommandList[Index].Tint == HighlightColor)
+        if (CommandList[Index].Type == EDrawCommandType::Box && CommandList[Index].HasTint(HighlightColor))
         {
             HighlightIndex = Index;
             NumHighlights++;
@@ -424,7 +392,7 @@ bool ConsoleCandidateHighlight_Test()
     int32 InputFillIndex = FDrawCommandList::InvalidIndex;
     for (int32 Index = 0; Index < CommandList.Size(); ++Index)
     {
-        if (CommandList[Index].Type == EDrawCommandType::Box && CommandList[Index].Tint == InputColor)
+        if (CommandList[Index].Type == EDrawCommandType::Box && CommandList[Index].HasTint(InputColor))
         {
             InputFillIndex = Index;
             break;
@@ -624,7 +592,7 @@ bool ConsoleCursorShape_Test()
     TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
     Console->PrepareDesiredSize();
-    Console->Tick(FRectangle(IntVector2(0, 0), 1280, 720));
+    Console->Arrange(FRectangle(IntVector2(0, 0), 1280, 720));
 
     TEST_SECTION("An element has no opinion on the shape unless it says so");
     ECursor ElementCursor = ECursor::None;
@@ -651,7 +619,7 @@ bool ConsoleCursorShape_Test()
     const IntVector2 RingPoint(TextBounds.Position.X - 5, TextBounds.Position.Y + 2);
 
     FElementPath RingPath;
-    Console->FindChildrenContainingPoint(RingPoint, RingPath);
+    Console->HitTest(RingPoint, RingPath);
 
     TEST_EXPECT(!RingPath.IsEmpty());
     TEST_EXPECT(!RingPath.Contains(Console->GetInput()));
@@ -659,7 +627,7 @@ bool ConsoleCursorShape_Test()
 
     TEST_SECTION("The area above it leaves the arrow, since nothing on that path edits text");
     FElementPath LogPath;
-    Console->FindChildrenContainingPoint(Console->GetScrollBox()->GetContentRectangle().Position, LogPath);
+    Console->HitTest(Console->GetScrollBox()->GetContentRectangle().Position, LogPath);
 
     TEST_EXPECT(!LogPath.IsEmpty());
     TEST_EXPECT(FApplication::ResolveCursor(LogPath) == ECursor::Arrow);
@@ -737,7 +705,7 @@ bool ConsoleInputFieldSurvives_Test()
     TEST_EXPECT(InputBoxBounds.GetBottom() <= Console->GetContentRectangle().GetBottom());
 
     TEST_SECTION("It is drawn above every clip region the rows are drawn inside");
-    TEST_EXPECT(CommandList[InputBoxIndex].LayerId > FindHighestClipPopLayer(CommandList));
+    TEST_EXPECT(CommandList[InputBoxIndex].LayerId > FindHighestClippedLayer(CommandList));
 
     FUIDrawData DrawData;
     DrawData.BuildFromCommandList(CommandList);
@@ -745,31 +713,22 @@ bool ConsoleInputFieldSurvives_Test()
     TEST_SECTION("The whole frame fits the vertex budget, so nothing was truncated away");
     TEST_EXPECT(DrawData.GetVertices().Size() < FUIDrawData::MaxVertexCount);
 
-    const Vector2 FanCenter(
-        static_cast<float>(InputBoxBounds.Position.X + InputBoxBounds.GetRight()) * 0.5f,
-        static_cast<float>(InputBoxBounds.Position.Y + InputBoxBounds.GetBottom()) * 0.5f);
-
-    const int32 CenterVertex = FindVertex(DrawData, FanCenter);
-
     TEST_SECTION("Its geometry survives the translation into triangles");
     TEST_EXPECT(CommandList[InputBoxIndex].CornerRadius.GetLargest() > 0.0f);
-    TEST_EXPECT(CenterVertex >= 0);
+    TEST_EXPECT(!GetShapeVertices(DrawData).IsEmpty());
 
-    if (CenterVertex < 0)
+    bool bFoundUnclippedShape = false;
+    for (const FUIDrawBatch& Batch : DrawData.GetBatches())
     {
-        TEST_END();
+        if (Batch.Kind == EUIDrawBatchKind::Shape && Batch.IndexCount > 0 && !Batch.bIsClipped)
+        {
+            bFoundUnclippedShape = true;
+            break;
+        }
     }
-
-    const int32 BatchIndex = FindBatchDrawingVertex(DrawData, CenterVertex);
 
     TEST_SECTION("And the batch carrying it draws, unclipped");
-    TEST_EXPECT(BatchIndex >= 0);
-
-    if (BatchIndex >= 0)
-    {
-        TEST_EXPECT(DrawData.GetBatches()[BatchIndex].IndexCount > 0);
-        TEST_EXPECT(!DrawData.GetBatches()[BatchIndex].bIsClipped);
-    }
+    TEST_EXPECT(bFoundUnclippedShape);
 
     TEST_SECTION("The text cursor is drawn over the field rather than under the rows");
     int32 TextCursorLayer = -1;
@@ -823,7 +782,7 @@ bool ConsoleModalInput_Test()
     TEST_EXPECT(!Console->CapturesAllInput());
 
     FElementPath ClosedPath;
-    Window->FindChildrenContainingPoint(IntVector2(640, 600), ClosedPath);
+    Window->HitTest(IntVector2(640, 600), ClosedPath);
     TEST_EXPECT(ClosedPath.Contains(Content));
 
     TEST_SECTION("An open console reports that it takes everything");
@@ -833,14 +792,14 @@ bool ConsoleModalInput_Test()
 
     TEST_SECTION("A click below the console never reaches the content underneath it");
     FElementPath BelowConsolePath;
-    Window->FindChildrenContainingPoint(IntVector2(640, 600), BelowConsolePath);
+    Window->HitTest(IntVector2(640, 600), BelowConsolePath);
 
     TEST_EXPECT(!BelowConsolePath.Contains(Content));
     TEST_EXPECT(!BelowConsolePath.IsEmpty());
 
     TEST_SECTION("A click on the console still reaches the console");
     FElementPath OnConsolePath;
-    Window->FindChildrenContainingPoint(IntVector2(640, 40), OnConsolePath);
+    Window->HitTest(IntVector2(640, 40), OnConsolePath);
 
     TEST_EXPECT(OnConsolePath.Contains(Console));
     TEST_EXPECT(!OnConsolePath.Contains(Content));
@@ -850,7 +809,7 @@ bool ConsoleModalInput_Test()
     FApplication::LayoutWindow(Window);
 
     FElementPath ReopenedPath;
-    Window->FindChildrenContainingPoint(IntVector2(640, 600), ReopenedPath);
+    Window->HitTest(IntVector2(640, 600), ReopenedPath);
     TEST_EXPECT(ReopenedPath.Contains(Content));
 
     TEST_END();
@@ -888,7 +847,7 @@ bool ConsoleClickFocus_Test()
 
     TEST_SECTION("Clicking the log leaves it there, since nothing along that path reads a keyboard");
     FElementPath LogPath;
-    Window->FindChildrenContainingPoint(Console->GetScrollBox()->GetContentRectangle().Position, LogPath);
+    Window->HitTest(Console->GetScrollBox()->GetContentRectangle().Position, LogPath);
 
     TEST_EXPECT(!LogPath.IsEmpty());
     TEST_EXPECT(!LogPath.Contains(Input));
@@ -898,7 +857,7 @@ bool ConsoleClickFocus_Test()
 
     TEST_SECTION("So does clicking below the console, where the window is all there is under the cursor");
     FElementPath BelowPath;
-    Window->FindChildrenContainingPoint(IntVector2(640, 600), BelowPath);
+    Window->HitTest(IntVector2(640, 600), BelowPath);
 
     TEST_EXPECT(!BelowPath.Contains(Content));
 
@@ -914,7 +873,7 @@ bool ConsoleClickFocus_Test()
 
     TEST_SECTION("Clicking the field itself keeps it focused");
     FElementPath FieldPath;
-    Window->FindChildrenContainingPoint(Input->GetContentRectangle().Position, FieldPath);
+    Window->HitTest(Input->GetContentRectangle().Position, FieldPath);
 
     TEST_EXPECT(FieldPath.Contains(Input));
 
@@ -1045,7 +1004,7 @@ bool ConsoleTypeAndExecute_Test()
 
     TEST_SECTION("The tree lays out and draws without a device");
     Console->PrepareDesiredSize();
-    Console->Tick(FRectangle(IntVector2(0, 0), 1280, 720));
+    Console->Arrange(FRectangle(IntVector2(0, 0), 1280, 720));
 
     FDrawCommandList CommandList;
     Console->OnDraw(FDrawGeometry(Console->GetContentRectangle(), 1.0f), CommandList, 0);

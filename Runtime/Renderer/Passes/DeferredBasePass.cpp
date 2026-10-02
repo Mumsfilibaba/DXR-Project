@@ -222,8 +222,6 @@ void FDeferredBasePass::Record(FRHICommandList& CommandList, const FPassResource
 
     TRACE_SCOPE("Deferred BasePass");
 
-    GPU_TRACE_SCOPE(CommandList, "Deferred BasePass");
-
     const float RenderWidth  = float(PassResources.RenderWidth);
     const float RenderHeight = float(PassResources.RenderHeight);
 

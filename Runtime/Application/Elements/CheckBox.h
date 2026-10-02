@@ -130,6 +130,7 @@ protected:
 
     // FInteractiveElement Interface
     virtual void OnClicked() override;
+    virtual void OnInteractionStateChanged() override;
 
 private:
     NODISCARD ECheckBoxState GetNextState() const;

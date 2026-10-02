@@ -126,6 +126,7 @@ public:
 
 private:
     void RebuildScrollContent();
+    void AppendNewLogLines();
     void SyncInputFromCommandLine();
 
     EKeyInterceptResult HandleInputKeyDown(const FKeyEvent& KeyEvent);
@@ -155,4 +156,5 @@ private:
     bool                      bIsScrollContentDirty : 1;
     bool                      bIsScrollToEndPending : 1;
     bool                      bIsSyncingInput : 1;
+    bool                      bIsShowingLog : 1;
 };

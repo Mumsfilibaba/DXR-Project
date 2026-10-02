@@ -301,11 +301,11 @@ void FEditorRendererSettingsPanel::RebuildSections()
 
             if (ParentBox)
             {
-                ParentBox->AddSlot(Section);
+                ParentBox->AddSlot(Section).SetPadding(FEditorStyle::GetSectionStackSpacing());
             }
             else
             {
-                Column->AddSlot(Section);
+                Column->AddSlot(Section).SetPadding(FEditorStyle::GetSectionStackSpacing());
             }
 
             SectionBoxes.Emplace(FSectionBox{ Setting.Section, SectionBox });

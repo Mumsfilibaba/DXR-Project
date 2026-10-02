@@ -112,4 +112,6 @@ struct CORE_API FMacPlatformFile final : public IPlatformFileSystem
     {
         return Filepath && Filepath[0] != '/';
     }
+
+    static bool IterateDirectory(const CHAR* Path, TArray<FDirectoryEntry>& OutEntries);
 };

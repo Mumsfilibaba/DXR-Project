@@ -1,13 +1,61 @@
 #include "Application/Draw/UIDrawData.h"
 #include "Application/Draw/DrawCommandList.h"
+#include "Application/Draw/DrawCache.h"
 #include "Application/Text/FontAtlas.h"
 #include "Application/Text/IFontFace.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Math/Math.h"
+#include "Core/Memory/Memory.h"
+#include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
+
+static TAutoConsoleVariable<bool> CVarDrawCacheGeometry(
+    "UI.DrawCache.Geometry",
+    "Splices the tessellated geometry a cached block captured instead of tessellating its commands again",
+    true,
+    EConsoleVariableFlags::Default);
 
 constexpr float DIRECTION_EPSILON = 1.0e-4f;
 
 constexpr uint32 PACKED_ALPHA_MASK = 0xff000000u;
+
 constexpr uint32 PACKED_COLOR_MASK = 0x00ffffffu;
+
+template<typename ElementType>
+static FORCEINLINE void ReserveForAppend(TArray<ElementType>& Array, int32 AppendCount)
+{
+    const int32 RequiredCapacity = Array.Size() + AppendCount;
+    if (RequiredCapacity > Array.Capacity())
+    {
+        Array.Reserve(Math::Max(RequiredCapacity, Array.Capacity() * 2));
+    }
+}
+
+template<typename ElementType>
+static FORCEINLINE void CopyGeometrySlice(const TArray<ElementType>& Source, int32 Base, TArray<ElementType>& Destination)
+{
+    const int32 Count = Source.Size() - Base;
+    Destination.ResizeUninitialized(Math::Max(Count, 0));
+
+    if (Count > 0)
+    {
+        Memory::Memcpy(Destination.Data(), Source.Data() + Base, Count * static_cast<int32>(sizeof(ElementType)));
+    }
+}
+
+template<typename ElementType>
+static FORCEINLINE void AppendGeometrySlice(const TArray<ElementType>& Source, TArray<ElementType>& Destination)
+{
+    if (Source.IsEmpty())
+    {
+        return;
+    }
+
+    const int32 Base = Destination.Size();
+    ReserveForAppend(Destination, Source.Size());
+    Destination.ResizeUninitialized(Base + Source.Size());
+    Memory::Memcpy(Destination.Data() + Base, Source.Data(), Source.Size() * static_cast<int32>(sizeof(ElementType)));
+}
 
 static uint32 PackColorWithAlphaScale(uint32 PackedColor, float Scale)
 {
@@ -20,10 +68,21 @@ static uint32 PackColorWithAlphaScale(uint32 PackedColor, float Scale)
 FUIDrawData::FUIDrawData()
     : Vertices()
     , Indices()
+    , ShapeInstances()
+    , TextGlyphInstances()
     , Batches()
     , ScratchPoints()
     , ScratchOffsets()
+    , SortedCommandIndices()
+    , SortScratchIndices()
+    , TextGeometryCache()
+    , ReplayFingerprint(0)
+    , SourceCommandList(nullptr)
     , ActiveClipRectangle()
+    , TextCommandOrdinal(0)
+    , ActiveClipId(0)
+    , TextCacheOversizedFrames(0)
+    , bFullyReplayedGeometry(true)
     , bHasActiveClip(false)
     , bAntiAliasingEnabled(true)
 {
@@ -35,12 +94,19 @@ void FUIDrawData::Reset()
 {
     Vertices.Clear();
     Indices.Clear();
+    ShapeInstances.Clear();
+    TextGlyphInstances.Clear();
     Batches.Clear();
     ScratchPoints.Clear();
     ScratchOffsets.Clear();
 
-    ActiveClipRectangle = FRectangle();
-    bHasActiveClip      = false;
+    TextCommandOrdinal       = 0;
+    ReplayFingerprint        = 0;
+    bFullyReplayedGeometry   = true;
+    SourceCommandList        = nullptr;
+    ActiveClipId             = 0;
+    ActiveClipRectangle      = FRectangle();
+    bHasActiveClip           = false;
 }
 
 void FUIDrawData::SetAntiAliasingEnabled(bool bEnabled)
@@ -58,113 +124,392 @@ void FUIDrawData::BuildFromCommandList(const FDrawCommandList& CommandList)
         return;
     }
 
-    TArray<int32> SortedIndices;
-    SortedIndices.Reserve(Commands.Size());
+    SourceCommandList = &CommandList;
 
-    for (int32 Index = 0; Index < Commands.Size(); ++Index)
-    {
-        SortedIndices.Add(Index);
-    }
+    ReserveForAppend(Vertices, Commands.Size() * 4);
+    ReserveForAppend(Indices, Commands.Size() * 6);
+    ReserveForAppend(ShapeInstances, Commands.Size());
+    ReserveForAppend(TextGlyphInstances, Commands.Size() * 4);
 
-    SortedIndices.SortWithPredicate([&Commands](int32 First, int32 Second)
     {
-        if (Commands[First].LayerId != Commands[Second].LayerId)
+        TRACE_SCOPE("UI Sort Commands");
+
+        SortedCommandIndices.ResizeUninitialized(Commands.Size());
+        for (int32 Index = 0; Index < Commands.Size(); ++Index)
         {
-            return Commands[First].LayerId < Commands[Second].LayerId;
+            SortedCommandIndices[Index] = Index;
         }
 
-        return First < Second;
-    });
-
-    for (int32 SortedIndex = 0; SortedIndex < SortedIndices.Size(); ++SortedIndex)
-    {
-        const FDrawCommand& Command = Commands[SortedIndices[SortedIndex]];
-
-        ActiveClipRectangle = Command.ClipRectangle;
-        bHasActiveClip      = Command.bIsClipped;
-
-        switch (Command.Type)
+        if (!Algorithm::IsSorted(Commands, [](const FDrawCommand& Left, const FDrawCommand& Right)
         {
-            case EDrawCommandType::Box:
-            case EDrawCommandType::Line:
+            return Left.LayerId < Right.LayerId;
+        }))
+        {
+            Algorithm::IntegerSortBy(SortedCommandIndices, [&](int32 CommandIndex)
             {
-                if (!IsCulledByClip(Command.Bounds))
-                {
-                    AddBox(Command);
-                }
+                return Commands[CommandIndex].LayerId;
+            }, SortScratchIndices);
+        }
+    }
 
-                break;
+    {
+        TRACE_SCOPE("UI Tessellate");
+
+        for (int32 SortedIndex = 0; SortedIndex < SortedCommandIndices.Size(); )
+        {
+            const int32 SpanLength = ProcessDrawCacheSpan(SortedIndex, CommandList);
+            if (SpanLength > 0)
+            {
+                SortedIndex += SpanLength;
+                continue;
             }
 
-            case EDrawCommandType::BoxOutline:
-            {
-                if (!IsCulledByClip(Command.Bounds))
-                {
-                    AddBoxOutline(Command);
-                }
+            TessellateCommand(Commands[SortedCommandIndices[SortedIndex]], CommandList);
+            ++SortedIndex;
+        }
+    }
 
-                break;
+    TrimTextGeometryCache();
+
+    SourceCommandList = nullptr;
+}
+
+void FUIDrawData::TrimTextGeometryCache()
+{
+    constexpr int32 TrimSlack  = 64;
+    constexpr uint8 TrimFrames = 120;
+
+    if (TextGeometryCache.Size() <= (TextCommandOrdinal * 2) + TrimSlack)
+    {
+        TextCacheOversizedFrames = 0;
+        return;
+    }
+
+    if (++TextCacheOversizedFrames < TrimFrames)
+    {
+        return;
+    }
+
+    TextGeometryCache.Resize(TextCommandOrdinal + TrimSlack);
+    TextGeometryCache.Shrink();
+    TextCacheOversizedFrames = 0;
+}
+
+int32 FUIDrawData::ProcessDrawCacheSpan(int32 SortedIndex, const FDrawCommandList& CommandList)
+{
+    if (!CVarDrawCacheGeometry.GetValue() || !CommandList.HasReplayedSpans())
+    {
+        return 0;
+    }
+
+    int32            SpanStart = 0;
+    FDrawCacheBlock* Block     = CommandList.FindReplayedSpanContaining(SortedCommandIndices[SortedIndex], SpanStart);
+    if (!Block || !Block->bGeometryContiguous)
+    {
+        return 0;
+    }
+
+    const int32 SpanLength = Block->GetCommandCount();
+    const int32 SpanEnd    = SpanStart + SpanLength;
+    if (SortedIndex + SpanLength > SortedCommandIndices.Size())
+    {
+        Block->bGeometryContiguous = false;
+        return 0;
+    }
+
+    for (int32 Offset = 0; Offset < SpanLength; ++Offset)
+    {
+        const int32 CommandIndex = SortedCommandIndices[SortedIndex + Offset];
+        if (CommandIndex < SpanStart || CommandIndex >= SpanEnd)
+        {
+            Block->bGeometryContiguous = false;
+            return 0;
+        }
+    }
+
+    const TArray<FDrawCommand>& Commands    = CommandList.GetCommands();
+    const FDrawCommand&         LastCommand = Commands[SortedCommandIndices[SortedIndex + SpanLength - 1]];
+
+    if (Block->bGeometryValid && Block->AreAtlasDependenciesCurrent())
+    {
+        AppendDrawCacheGeometry(*Block);
+
+        ApplyCommandClip(LastCommand, CommandList);
+        TextCommandOrdinal += Block->TextCommandCount;
+        return SpanLength;
+    }
+
+    FDrawCacheGeometryMarker Marker;
+    BeginDrawCacheGeometry(Marker);
+
+    for (int32 Offset = 0; Offset < SpanLength; ++Offset)
+    {
+        TessellateCommand(Commands[SortedCommandIndices[SortedIndex + Offset]], CommandList);
+    }
+
+    CaptureDrawCacheGeometry(Marker, *Block);
+    return SpanLength;
+}
+
+void FUIDrawData::BeginDrawCacheGeometry(FDrawCacheGeometryMarker& OutMarker) const
+{
+    OutMarker.VertexBase        = Vertices.Size();
+    OutMarker.IndexBase         = Indices.Size();
+    OutMarker.ShapeInstanceBase = ShapeInstances.Size();
+    OutMarker.TextInstanceBase  = TextGlyphInstances.Size();
+    OutMarker.BatchBase         = Batches.Size();
+    OutMarker.OpenBatchIndexCount = Batches.IsEmpty() ? 0 : Batches.Last().IndexCount;
+}
+
+void FUIDrawData::CaptureDrawCacheGeometry(const FDrawCacheGeometryMarker& Marker, FDrawCacheBlock& Block) const
+{
+    const int64 PreviousByteSize = Block.GetByteSize();
+
+    CopyGeometrySlice(Vertices, Marker.VertexBase, Block.Vertices);
+    CopyGeometrySlice(ShapeInstances, Marker.ShapeInstanceBase, Block.ShapeInstances);
+    CopyGeometrySlice(TextGlyphInstances, Marker.TextInstanceBase, Block.TextGlyphInstances);
+
+    const int32 IndexCount = Indices.Size() - Marker.IndexBase;
+    Block.Indices.ResizeUninitialized(Math::Max(IndexCount, 0));
+
+    for (int32 Index = 0; Index < IndexCount; ++Index)
+    {
+        Block.Indices[Index] = Indices[Marker.IndexBase + Index] - static_cast<uint32>(Marker.VertexBase);
+    }
+
+    Block.Batches.Clear();
+
+    if (Marker.BatchBase > 0)
+    {
+        const FUIDrawBatch& SharedBatch = Batches[Marker.BatchBase - 1];
+        const int32         SharedCount = SharedBatch.IndexCount - Marker.OpenBatchIndexCount;
+
+        if (SharedCount > 0)
+        {
+            FUIDrawBatch& Leading = Block.Batches.Emplace(SharedBatch);
+            Leading.IndexOffset = 0;
+            Leading.IndexCount  = SharedCount;
+        }
+    }
+
+    for (int32 BatchIndex = Marker.BatchBase; BatchIndex < Batches.Size(); ++BatchIndex)
+    {
+        const FUIDrawBatch& Batch = Batches[BatchIndex];
+        if (Batch.IndexCount <= 0)
+        {
+            continue;
+        }
+
+        FUIDrawBatch& Captured = Block.Batches.Emplace(Batch);
+        Captured.IndexOffset = Batch.IndexOffset - GetStreamBase(Marker, Batch.Kind);
+    }
+
+    Block.bGeometryValid = true;
+    DrawCacheRegistry::NotifySizeChanged(Block.GetByteSize() - PreviousByteSize);
+}
+
+void FUIDrawData::AppendDrawCacheGeometry(const FDrawCacheBlock& Block)
+{
+    const uint64 BlockIdentity[] =
+    {
+        static_cast<uint64>(reinterpret_cast<uintptr_t>(&Block)),
+        static_cast<uint64>(Block.Vertices.Size()),
+        static_cast<uint64>(Block.Indices.Size()),
+        static_cast<uint64>(Block.ShapeInstances.Size()),
+        static_cast<uint64>(Block.TextGlyphInstances.Size()),
+        static_cast<uint64>(Block.Batches.Size()),
+    };
+
+    for (const uint64 Part : BlockIdentity)
+    {
+        ReplayFingerprint = (ReplayFingerprint ^ Part) * 1099511628211ull;
+    }
+
+    const int32 VertexBase        = Vertices.Size();
+    const int32 IndexBase         = Indices.Size();
+    const int32 ShapeInstanceBase = ShapeInstances.Size();
+    const int32 TextInstanceBase  = TextGlyphInstances.Size();
+
+    AppendGeometrySlice(Block.Vertices, Vertices);
+    AppendGeometrySlice(Block.ShapeInstances, ShapeInstances);
+    AppendGeometrySlice(Block.TextGlyphInstances, TextGlyphInstances);
+
+    const int32 IndexCount = Block.Indices.Size();
+    if (IndexCount > 0)
+    {
+        ReserveForAppend(Indices, IndexCount);
+        Indices.ResizeUninitialized(IndexBase + IndexCount);
+
+        for (int32 Index = 0; Index < IndexCount; ++Index)
+        {
+            Indices[IndexBase + Index] = Block.Indices[Index] + static_cast<uint32>(VertexBase);
+        }
+    }
+
+    for (int32 BatchIndex = 0; BatchIndex < Block.Batches.Size(); ++BatchIndex)
+    {
+        const FUIDrawBatch& Source = Block.Batches[BatchIndex];
+
+        int32 StreamBase = IndexBase;
+        if (Source.Kind == EUIDrawBatchKind::Shape)
+        {
+            StreamBase = ShapeInstanceBase * 6;
+        }
+        else if (Source.Kind == EUIDrawBatchKind::Text)
+        {
+            StreamBase = TextInstanceBase;
+        }
+
+        const int32 StreamOffset = StreamBase + Source.IndexOffset;
+
+        if (BatchIndex == 0 && !Batches.IsEmpty())
+        {
+            FUIDrawBatch& OpenBatch = Batches.Last();
+            if (OpenBatch.IndexCount == 0)
+            {
+                OpenBatch             = Source;
+                OpenBatch.IndexOffset = StreamOffset;
+                continue;
             }
 
-            case EDrawCommandType::Text:
-            {
-                if (!IsCulledByClip(Command.Bounds))
-                {
-                    AddText(Command);
-                }
+            const bool bSameTarget = OpenBatch.Kind == Source.Kind && OpenBatch.Texture == Source.Texture
+                && OpenBatch.bIsClipped == Source.bIsClipped && OpenBatch.ScissorRectangle == Source.ScissorRectangle;
 
-                break;
+            if (bSameTarget && (OpenBatch.IndexOffset + OpenBatch.IndexCount) == StreamOffset)
+            {
+                OpenBatch.IndexCount += Source.IndexCount;
+                continue;
+            }
+        }
+
+        FUIDrawBatch& Appended = Batches.Emplace(Source);
+        Appended.IndexOffset = StreamOffset;
+    }
+}
+
+int32 FUIDrawData::GetStreamBase(const FDrawCacheGeometryMarker& Marker, EUIDrawBatchKind Kind)
+{
+    switch (Kind)
+    {
+        case EUIDrawBatchKind::Shape:
+        {
+            return Marker.ShapeInstanceBase * 6;
+        }
+
+        case EUIDrawBatchKind::Text:
+        {
+            return Marker.TextInstanceBase;
+        }
+
+        default:
+        {
+            return Marker.IndexBase;
+        }
+    }
+}
+
+void FUIDrawData::TessellateCommand(const FDrawCommand& Command, const FDrawCommandList& CommandList)
+{
+    bFullyReplayedGeometry = false;
+
+    ApplyCommandClip(Command, CommandList);
+
+    switch (Command.Type)
+    {
+        case EDrawCommandType::Box:
+        case EDrawCommandType::Line:
+        {
+            if (!IsCulledByClip(Command.Bounds))
+            {
+                AddBox(Command);
             }
 
-            case EDrawCommandType::Image:
-            {
-                if (!IsCulledByClip(Command.Bounds))
-                {
-                    AddImage(Command);
-                }
+            break;
+        }
 
-                break;
+        case EDrawCommandType::BoxOutline:
+        {
+            if (!IsCulledByClip(Command.Bounds))
+            {
+                AddBoxOutline(Command);
             }
 
-            case EDrawCommandType::RoundedBottomBar:
-            {
-                if (!IsCulledByClip(Command.Bounds))
-                {
-                    AddRoundedBottomBar(Command);
-                }
+            break;
+        }
 
-                break;
+        case EDrawCommandType::Text:
+        {
+            const int32 CacheIndex = TextCommandOrdinal++;
+            if (!IsCulledByClip(Command.Bounds))
+            {
+                AddText(Command, CacheIndex);
             }
 
-            case EDrawCommandType::Polyline:
-            {
-                const TArrayView<const Vector2> Points = CommandList.GetCommandPoints(Command);
-                if (!IsCulledByClip(ComputePointBounds(Points, Command.Thickness)))
-                {
-                    GetOrOpenBatch(FUITextureHandle());
-                    AddPolyline(Points, Command.Thickness, Command.bIsClosed, Command.Tint.ToColor().ToPackedRGBA());
-                }
+            break;
+        }
 
-                break;
+        case EDrawCommandType::Image:
+        {
+            if (!IsCulledByClip(Command.Bounds))
+            {
+                AddImage(Command);
             }
 
-            case EDrawCommandType::ConvexPolygon:
-            {
-                const TArrayView<const Vector2> Points = CommandList.GetCommandPoints(Command);
-                if (!IsCulledByClip(ComputePointBounds(Points, 0.0f)))
-                {
-                    GetOrOpenBatch(FUITextureHandle());
-                    AddConvexPolygon(Points, Command.Tint.ToColor().ToPackedRGBA());
-                }
+            break;
+        }
 
-                break;
+        case EDrawCommandType::RoundedBottomBar:
+        {
+            if (!IsCulledByClip(Command.Bounds))
+            {
+                AddRoundedBottomBar(Command);
             }
 
-            case EDrawCommandType::ClipPush:
-            case EDrawCommandType::ClipPop:
+            break;
+        }
+
+        case EDrawCommandType::RoundedAccentRing:
+        {
+            if (!IsCulledByClip(Command.Bounds))
             {
-                break;
+                AddRoundedAccentRing(Command);
             }
+
+            break;
+        }
+
+        case EDrawCommandType::CornerWedges:
+        {
+            if (!IsCulledByClip(Command.Bounds))
+            {
+                AddCornerWedges(Command);
+            }
+
+            break;
+        }
+
+        case EDrawCommandType::Polyline:
+        {
+            const TArrayView<const Vector2> Points = CommandList.GetCommandPoints(Command);
+            if (!IsCulledByClip(ComputePointBounds(Points, Command.Thickness)))
+            {
+                GetOrOpenBatch(FUITextureHandle());
+                AddPolyline(Points, Command.Thickness, Command.IsClosed(), Command.PackedColor);
+            }
+
+            break;
+        }
+
+        case EDrawCommandType::ConvexPolygon:
+        {
+            const TArrayView<const Vector2> Points = CommandList.GetCommandPoints(Command);
+            if (!IsCulledByClip(ComputePointBounds(Points, 0.0f)))
+            {
+                GetOrOpenBatch(FUITextureHandle());
+                AddConvexPolygon(Points, Command.PackedColor);
+            }
+
+            break;
         }
     }
 }
@@ -182,6 +527,18 @@ bool FUIDrawData::IsCulledByClip(const FRectangle& Bounds) const
     }
 
     return ActiveClipRectangle.Intersect(Bounds).IsEmpty();
+}
+
+void FUIDrawData::ApplyCommandClip(const FDrawCommand& Command, const FDrawCommandList& CommandList)
+{
+    if (Command.ClipId == ActiveClipId && Command.IsClipped() == bHasActiveClip)
+    {
+        return;
+    }
+
+    ActiveClipId        = Command.ClipId;
+    bHasActiveClip      = Command.IsClipped();
+    ActiveClipRectangle = bHasActiveClip ? CommandList.GetCommandClipRectangle(Command) : FRectangle();
 }
 
 FRectangle FUIDrawData::ComputePointBounds(TArrayView<const Vector2> Points, float Thickness)
@@ -220,16 +577,15 @@ void FUIDrawData::AddBox(const FDrawCommand& Command)
         return;
     }
 
-    GetOrOpenBatch(FUITextureHandle());
-
     const FCornerRadii Radius = Command.CornerRadius.ClampToBounds(Command.Bounds);
     if (!Radius.IsZero())
     {
-        AddRoundedBox(Command.Bounds, Radius, Command.Tint.ToColor().ToPackedRGBA());
+        AddSdfRoundedQuad(Command.Bounds, Radius, Command.PackedColor, 0.0f, ShapeKindFill);
         return;
     }
 
-    AddQuad(Command.Bounds, Vector2(0.0f, 0.0f), Vector2(1.0f, 1.0f), Command.Tint.ToColor().ToPackedRGBA());
+    GetOrOpenBatch(FUITextureHandle());
+    AddQuad(Command.Bounds, Vector2(0.0f, 0.0f), Vector2(1.0f, 1.0f), Command.PackedColor);
 }
 
 void FUIDrawData::AddBoxOutline(const FDrawCommand& Command)
@@ -239,25 +595,26 @@ void FUIDrawData::AddBoxOutline(const FDrawCommand& Command)
         return;
     }
 
-    GetOrOpenBatch(FUITextureHandle());
-
-    const float HalfThickness = Command.Thickness * 0.5f;
-
     if (Command.Thickness >= static_cast<float>(Math::Min(Command.Bounds.Width, Command.Bounds.Height)))
     {
-        AddQuad(Command.Bounds, Vector2(0.0f, 0.0f), Vector2(1.0f, 1.0f), Command.Tint.ToColor().ToPackedRGBA());
+        GetOrOpenBatch(FUITextureHandle());
+        AddQuad(Command.Bounds, Vector2(0.0f, 0.0f), Vector2(1.0f, 1.0f), Command.PackedColor);
         return;
     }
 
     const FCornerRadii Radius = Command.CornerRadius.ClampToBounds(Command.Bounds);
-
-    BuildRoundedBoxOutline(Command.Bounds, Radius, ScratchPoints, HalfThickness);
-    AddPolyline(ScratchPoints, Command.Thickness, true, Command.Tint.ToColor().ToPackedRGBA());
+    AddSdfRoundedQuad(Command.Bounds, Radius, Command.PackedColor, Command.Thickness, ShapeKindStroke);
 }
 
-void FUIDrawData::AddText(const FDrawCommand& Command)
+void FUIDrawData::AddText(const FDrawCommand& Command, int32 CacheIndex)
 {
-    if (!Command.Font || Command.Text.IsEmpty())
+    if (!Command.Font || !SourceCommandList)
+    {
+        return;
+    }
+
+    const StringView Text = SourceCommandList->GetCommandText(Command);
+    if (Text.IsEmpty())
     {
         return;
     }
@@ -268,24 +625,56 @@ void FUIDrawData::AddText(const FDrawCommand& Command)
         return;
     }
 
-    const FShapedRun& ShapedRun = Command.Font->ShapeText(StringView(Command.Text.Data(), Command.Text.Length()));
-    GetOrOpenBatch(FUITextureHandle(Atlas));
+    const uint64 AtlasRevision = Atlas->GetRevision();
 
-    const float  AtlasWidth  = static_cast<float>(Atlas->GetWidth());
-    const float  AtlasHeight = static_cast<float>(Atlas->GetHeight());
-    const uint32 PackedColor = Command.Tint.ToColor().ToPackedRGBA();
+    while (CacheIndex >= TextGeometryCache.Size())
+    {
+        TextGeometryCache.Emplace();
+    }
+
+    FTextGeometryCacheEntry& Cached = TextGeometryCache[CacheIndex];
+    if (Cached.bValid && Cached.Font == Command.Font && Cached.Bounds == Command.Bounds
+        && Cached.AtlasRevision == AtlasRevision && Cached.PackedColor == Command.PackedColor
+        && Cached.Text.Equals(Text.Data(), Text.Length()))
+    {
+        GetOrOpenBatch(FUITextureHandle(Atlas), EUIDrawBatchKind::Text);
+        
+        const int32 InstanceStart = TextGlyphInstances.Size();
+        ReserveForAppend(TextGlyphInstances, Cached.Instances.Size());
+        
+        TextGlyphInstances.ResizeUninitialized(InstanceStart + Cached.Instances.Size());
+        Memory::Memcpy(TextGlyphInstances.Data() + InstanceStart, Cached.Instances.Data(),
+            Cached.Instances.Size() * static_cast<int32>(sizeof(FUITextGlyphInstance)));
+
+        Batches.Last().IndexCount += Cached.Instances.Size();
+        return;
+    }
+
+    const FShapedRun& ShapedRun = Command.Font->ShapeText(Text);
+    GetOrOpenBatch(FUITextureHandle(Atlas), EUIDrawBatchKind::Text);
+
+    const int32  InstanceStart = TextGlyphInstances.Size();
+    const float  AtlasWidth    = static_cast<float>(Atlas->GetWidth());
+    const float  AtlasHeight   = static_cast<float>(Atlas->GetHeight());
+    const uint32 PackedColor   = Command.PackedColor;
 
     const int32 PenX      = Command.Bounds.Position.X;
     const int32 BaselineY = Command.Bounds.Position.Y + Command.Font->GetTextBandOffset(Command.Bounds.Height) + Command.Font->GetAscent();
 
+    const int32 MaxInstanceCount = ShapedRun.Glyphs.Size();
+    ReserveForAppend(TextGlyphInstances, MaxInstanceCount);
+
+    TextGlyphInstances.ResizeUninitialized(InstanceStart + MaxInstanceCount);
+    FUITextGlyphInstance* InstanceOutput = TextGlyphInstances.Data() + InstanceStart;
+    
+    int32 InstanceCount = 0;
     for (const FShapedGlyph& Shaped : ShapedRun.Glyphs)
     {
-        if (!Shaped.Glyph || Shaped.Glyph->AtlasRectangle.IsEmpty())
+        const FGlyph& Glyph = Atlas->GetGlyph(Shaped.Codepoint);
+        if (Glyph.AtlasRectangle.IsEmpty())
         {
             continue;
         }
-
-        const FGlyph& Glyph = *Shaped.Glyph;
 
         const FRectangle GlyphBounds(IntVector2(PenX + Shaped.Offset + Glyph.BearingX, BaselineY + Glyph.BearingY),
             Glyph.AtlasRectangle.Width, Glyph.AtlasRectangle.Height);
@@ -298,24 +687,69 @@ void FUIDrawData::AddText(const FDrawCommand& Command)
             static_cast<float>(Glyph.AtlasRectangle.GetRight()) / AtlasWidth,
             static_cast<float>(Glyph.AtlasRectangle.GetBottom()) / AtlasHeight);
 
-        AddQuad(GlyphBounds, MinTexCoord, MaxTexCoord, PackedColor);
+        FUITextGlyphInstance& Instance = InstanceOutput[InstanceCount++];
+        Instance.Position    = Vector2(static_cast<float>(GlyphBounds.Position.X), static_cast<float>(GlyphBounds.Position.Y));
+        Instance.Size        = Vector2(static_cast<float>(GlyphBounds.Width), static_cast<float>(GlyphBounds.Height));
+        Instance.MinTexCoord = MinTexCoord;
+        Instance.MaxTexCoord = MaxTexCoord;
+        Instance.Color       = PackedColor;
     }
-}
 
-void FUIDrawData::AddImage(const FDrawCommand& Command)
-{
-    if (Command.Bounds.IsEmpty())
+    TextGlyphInstances.ResizeUninitialized(InstanceStart + InstanceCount);
+    Batches.Last().IndexCount += InstanceCount;
+
+    if (InstanceCount <= 0)
     {
         return;
     }
 
-    GetOrOpenBatch(FUITextureHandle(Command.Brush.Texture));
+    if (Atlas->GetRevision() != AtlasRevision)
+    {
+        Cached.bValid = false;
+        return;
+    }
 
-    const uint32   PackedColor = Command.Tint.ToColor().ToPackedRGBA();
-    const FUIBrush Brush       = Command.Brush;
+    Cached.AtlasRevision = Atlas->GetRevision();
+    Cached.Text          = String(Text.Data(), Text.Length());
+    Cached.Font          = Command.Font;
+    Cached.Bounds        = Command.Bounds;
+    Cached.PackedColor   = Command.PackedColor;
+    Cached.bValid        = true;
+
+    ReserveForAppend(Cached.Instances, InstanceCount);
+    Cached.Instances.ResizeUninitialized(InstanceCount);
+
+    Memory::Memcpy(Cached.Instances.Data(), TextGlyphInstances.Data() + InstanceStart,
+        InstanceCount * static_cast<int32>(sizeof(FUITextGlyphInstance)));
+}
+
+void FUIDrawData::AddImage(const FDrawCommand& Command)
+{
+    if (Command.Bounds.IsEmpty() || !SourceCommandList)
+    {
+        return;
+    }
+
+    const FUIBrush* BrushPtr = SourceCommandList->GetCommandBrush(Command);
+    if (!BrushPtr)
+    {
+        return;
+    }
+
+    GetOrOpenBatch(FUITextureHandle(BrushPtr->Texture));
+
+    const uint32   PackedColor = Command.PackedColor;
+    const FUIBrush Brush       = *BrushPtr;
 
     if (!Brush.IsNineSlice())
     {
+        const FCornerRadii Radius = Command.CornerRadius.ClampToBounds(Command.Bounds);
+        if (!Radius.IsZero())
+        {
+            AddRoundedBox(Command.Bounds, Radius, PackedColor, Brush.MinTexCoord, Brush.MaxTexCoord);
+            return;
+        }
+
         AddQuad(Command.Bounds, Brush.MinTexCoord, Brush.MaxTexCoord, PackedColor);
         return;
     }
@@ -424,7 +858,7 @@ void FUIDrawData::AddRoundedBottomBar(const FDrawCommand& Command)
     GetOrOpenBatch(FUITextureHandle());
 
     const uint32 BaseVertex = static_cast<uint32>(Vertices.Size());
-    const float  FadeWidth  = Math::Min(Command.FadeWidth, BarWidth * 0.5f);
+    const float  FadeWidth  = Math::Min(Command.GetFadeWidth(), BarWidth * 0.5f);
     const float  HalfFringe = FringeWidth * 0.5f;
 
     for (int32 ColumnIndex = 0; ColumnIndex <= ColumnCount; ++ColumnIndex)
@@ -451,12 +885,9 @@ void FUIDrawData::AddRoundedBottomBar(const FDrawCommand& Command)
             CosineSlope  = Radius.BottomRight > 0.0f ? (Height / Radius.BottomRight) : 1.0f;
         }
 
-        const float EdgeDistance = Math::Min(X - LeftTip, RightTip - X);
-
-        FFloatColor ColumnTint = Command.Tint;
-        ColumnTint.A *= (FadeWidth > 0.0f) ? Math::Clamp(EdgeDistance / FadeWidth, 0.0f, 1.0f) : 1.0f;
-
-        const uint32 PackedColor   = ColumnTint.ToColor().ToPackedRGBA();
+        const float  EdgeDistance  = Math::Min(X - LeftTip, RightTip - X);
+        const float  AlphaScale    = (FadeWidth > 0.0f) ? Math::Clamp(EdgeDistance / FadeWidth, 0.0f, 1.0f) : 1.0f;
+        const uint32 PackedColor   = PackColorWithAlphaScale(Command.PackedColor, AlphaScale);
         const float  ClampedBottom = Math::Max(ColumnBottom, Top);
 
         if (!bAntiAliasingEnabled)
@@ -498,6 +929,157 @@ void FUIDrawData::AddRoundedBottomBar(const FDrawCommand& Command)
     Batches.Last().IndexCount += ColumnCount * (bAntiAliasingEnabled ? 12 : 6);
 }
 
+void FUIDrawData::AddRoundedAccentRing(const FDrawCommand& Command)
+{
+    if (Command.Bounds.IsEmpty() || Command.Thickness <= 0.0f)
+    {
+        return;
+    }
+
+    const FCornerRadii Radius = Command.CornerRadius.ClampToBounds(Command.Bounds);
+
+    const float Left      = static_cast<float>(Command.Bounds.Position.X);
+    const float Right     = static_cast<float>(Command.Bounds.GetRight());
+    const float Top       = static_cast<float>(Command.Bounds.Position.Y);
+    const float Bottom    = static_cast<float>(Command.Bounds.GetBottom());
+    const float Thickness = Math::Min(Command.Thickness,
+        static_cast<float>(Math::Min(Command.Bounds.Width, Command.Bounds.Height)) * 0.5f);
+
+    const float CornerRadius[4] =
+    {
+        Math::Max(Radius.TopLeft, 0.0f),
+        Math::Max(Radius.TopRight, 0.0f),
+        Math::Max(Radius.BottomRight, 0.0f),
+        Math::Max(Radius.BottomLeft, 0.0f),
+    };
+
+    const Vector2 CornerCenter[4] =
+    {
+        Vector2(Left + CornerRadius[0], Top + CornerRadius[0]),
+        Vector2(Right - CornerRadius[1], Top + CornerRadius[1]),
+        Vector2(Right - CornerRadius[2], Bottom - CornerRadius[2]),
+        Vector2(Left + CornerRadius[3], Bottom - CornerRadius[3]),
+    };
+
+    const Vector2 SquareCorner[4] =
+    {
+        Vector2(Left, Top),
+        Vector2(Right, Top),
+        Vector2(Right, Bottom),
+        Vector2(Left, Bottom),
+    };
+
+    int32 CornerSegments[4];
+    int32 SampleCount = 0;
+
+    for (int32 CornerIndex = 0; CornerIndex < 4; ++CornerIndex)
+    {
+        CornerSegments[CornerIndex] = (CornerRadius[CornerIndex] > 0.0f)
+            ? Math::Clamp(static_cast<int32>(CornerRadius[CornerIndex] * 1.5f), MinCornerSegments, MaxCornerSegments)
+            : 0;
+
+        SampleCount += CornerSegments[CornerIndex] + 1;
+    }
+
+    const int32 RowsPerSample = bAntiAliasingEnabled ? 3 : 2;
+    if (Vertices.Size() + (SampleCount * RowsPerSample) > MaxVertexCount)
+    {
+        return;
+    }
+
+    GetOrOpenBatch(FUITextureHandle());
+
+    const uint32 BaseVertex   = static_cast<uint32>(Vertices.Size());
+    const float  HalfFringe   = FringeWidth * 0.5f;
+    const float  FadeFraction = Math::Clamp(Command.GetFadeFraction(), 0.0f, 1.0f);
+    const float  TrailAlpha   = Math::Clamp(Command.GetTrailAlpha(), 0.0f, 1.0f);
+
+    for (int32 CornerIndex = 0; CornerIndex < 4; ++CornerIndex)
+    {
+        const bool  bIsTopCorner = CornerIndex < 2;
+        const int32 Segments     = CornerSegments[CornerIndex];
+        const float ThisRadius   = CornerRadius[CornerIndex];
+        const float StartAngle   = Math::Constants::PI + (static_cast<float>(CornerIndex) * Math::Constants::HalfPI);
+
+        for (int32 StepIndex = 0; StepIndex <= Segments; ++StepIndex)
+        {
+            const float Sweep = (Segments > 0)
+                ? static_cast<float>(StepIndex) / static_cast<float>(Segments)
+                : 0.0f;
+
+            const float Along = bIsTopCorner
+                ? ((Segments == 0) ? 1.0f : ((CornerIndex == 0) ? Sweep : 1.0f - Sweep))
+                : 0.0f;
+
+            Vector2 Outer;
+            Vector2 Normal;
+            float   Reach = Thickness;
+
+            if (ThisRadius > 0.0f)
+            {
+                const float Angle = StartAngle + (Math::Constants::HalfPI * Sweep);
+
+                Normal = Vector2(Math::Cos(Angle), Math::Sin(Angle));
+                Outer  = Vector2(CornerCenter[CornerIndex].X + (ThisRadius * Normal.X),
+                    CornerCenter[CornerIndex].Y + (ThisRadius * Normal.Y));
+            }
+            else
+            {
+                const float Diagonal = Math::Constants::PI + (static_cast<float>(CornerIndex) * Math::Constants::HalfPI)
+                    + (Math::Constants::HalfPI * 0.5f);
+
+                Normal = Vector2(Math::Cos(Diagonal), Math::Sin(Diagonal));
+                Outer  = SquareCorner[CornerIndex];
+                Reach  = Thickness * Math::Constants::Sqrt2;
+            }
+
+            const float Strength = (FadeFraction > 0.0f)
+                ? Math::Clamp(Along / FadeFraction, 0.0f, 1.0f)
+                : ((Along >= 1.0f) ? 1.0f : 0.0f);
+
+            const uint32 PackedColor = PackColorWithAlphaScale(Command.PackedColor, TrailAlpha + ((1.0f - TrailAlpha) * Strength));
+            const Vector2 Inner(Outer.X - (Normal.X * Reach), Outer.Y - (Normal.Y * Reach));
+
+            if (!bAntiAliasingEnabled)
+            {
+                EmplaceVertex(Inner, PackedColor);
+                EmplaceVertex(Outer, PackedColor);
+                continue;
+            }
+
+            EmplaceVertex(Inner, PackedColor);
+            EmplaceVertex(Vector2(Outer.X - (Normal.X * HalfFringe), Outer.Y - (Normal.Y * HalfFringe)), PackedColor);
+            EmplaceVertex(Vector2(Outer.X + (Normal.X * HalfFringe), Outer.Y + (Normal.Y * HalfFringe)),
+                PackedColor & PACKED_COLOR_MASK);
+        }
+    }
+
+    for (int32 Segment = 0; Segment < SampleCount; ++Segment)
+    {
+        const uint32 LeadingInner = BaseVertex + static_cast<uint32>(Segment * RowsPerSample);
+        const uint32 NextInner    = BaseVertex + static_cast<uint32>(((Segment + 1) % SampleCount) * RowsPerSample);
+
+        Indices.Add(LeadingInner);
+        Indices.Add(NextInner);
+        Indices.Add(NextInner + 1);
+        Indices.Add(LeadingInner);
+        Indices.Add(NextInner + 1);
+        Indices.Add(LeadingInner + 1);
+
+        if (bAntiAliasingEnabled)
+        {
+            Indices.Add(LeadingInner + 1);
+            Indices.Add(NextInner + 1);
+            Indices.Add(NextInner + 2);
+            Indices.Add(LeadingInner + 1);
+            Indices.Add(NextInner + 2);
+            Indices.Add(LeadingInner + 2);
+        }
+    }
+
+    Batches.Last().IndexCount += SampleCount * (bAntiAliasingEnabled ? 12 : 6);
+}
+
 void FUIDrawData::EmplaceVertex(const Vector2& Position, uint32 PackedColor)
 {
     FUIVertex& Vertex = Vertices.Emplace();
@@ -506,16 +1088,21 @@ void FUIDrawData::EmplaceVertex(const Vector2& Position, uint32 PackedColor)
     Vertex.Color      = PackedColor;
 }
 
-void FUIDrawData::EmplaceFillVertex(const Vector2& Position, const FRectangle& Bounds, uint32 PackedColor)
+void FUIDrawData::EmplaceFillVertex(const Vector2& Position, const FRectangle& Bounds, uint32 PackedColor,
+    const Vector2& MinTexCoord, const Vector2& MaxTexCoord)
 {
-    const float MinX = static_cast<float>(Bounds.Position.X);
-    const float MinY = static_cast<float>(Bounds.Position.Y);
-    const float MaxX = static_cast<float>(Bounds.GetRight());
-    const float MaxY = static_cast<float>(Bounds.GetBottom());
+    const float MinX   = static_cast<float>(Bounds.Position.X);
+    const float MinY   = static_cast<float>(Bounds.Position.Y);
+    const float MaxX   = static_cast<float>(Bounds.GetRight());
+    const float MaxY   = static_cast<float>(Bounds.GetBottom());
+    const float AlphaX = (Position.X - MinX) / (MaxX - MinX);
+    const float AlphaY = (Position.Y - MinY) / (MaxY - MinY);
 
     FUIVertex& Vertex = Vertices.Emplace();
     Vertex.Position   = Position;
-    Vertex.TexCoord   = Vector2((Position.X - MinX) / (MaxX - MinX), (Position.Y - MinY) / (MaxY - MinY));
+    Vertex.TexCoord   = Vector2(
+        MinTexCoord.X + (AlphaX * (MaxTexCoord.X - MinTexCoord.X)),
+        MinTexCoord.Y + (AlphaY * (MaxTexCoord.Y - MinTexCoord.Y)));
     Vertex.Color      = PackedColor;
 }
 
@@ -524,7 +1111,7 @@ void FUIDrawData::BuildMiterOffsets(TArrayView<const Vector2> Points, bool bClos
     OutOffsets.Clear();
 
     const int32 PointCount = Points.Size();
-    OutOffsets.Reserve(PointCount);
+    ReserveForAppend(OutOffsets, PointCount);
 
     for (int32 Index = 0; Index < PointCount; ++Index)
     {
@@ -611,9 +1198,24 @@ void FUIDrawData::AddPolyline(TArrayView<const Vector2> Points, float Thickness,
         return;
     }
 
-    const float  HalfThickness = Thickness * 0.5f;
-    const int32  SegmentCount  = bClosed ? PointCount : PointCount - 1;
-    const uint32 BaseVertex    = static_cast<uint32>(Vertices.Size());
+    const float  HalfThickness     = Thickness * 0.5f;
+    const int32  SegmentCount      = bClosed ? PointCount : PointCount - 1;
+    const uint32 BaseVertex        = static_cast<uint32>(Vertices.Size());
+    const int32  VertexCount       = PointCount * RowsPerPoint;
+    const int32  IndicesPerSegment = bAntiAliasingEnabled ? 18 : 6;
+    const int32  IndexCount        = SegmentCount * IndicesPerSegment;
+
+    const int32 VertexStart = Vertices.Size();
+    ReserveForAppend(Vertices, VertexCount);
+
+    Vertices.ResizeUninitialized(VertexStart + VertexCount);
+    FUIVertex* OutVertices = Vertices.Data() + VertexStart;
+
+    const int32 IndexStart = Indices.Size();
+    ReserveForAppend(Indices, IndexCount);
+
+    Indices.ResizeUninitialized(IndexStart + IndexCount);
+    uint32* OutIndices = Indices.Data() + IndexStart;
 
     BuildMiterOffsets(Points, bClosed, ScratchOffsets);
 
@@ -623,17 +1225,18 @@ void FUIDrawData::AddPolyline(TArrayView<const Vector2> Points, float Thickness,
         {
             const Vector2 Offset = ScratchOffsets[Index] * HalfThickness;
 
-            FUIVertex& Outer = Vertices.Emplace();
+            FUIVertex& Outer = OutVertices[Index * 2];
             Outer.Position   = Points[Index] + Offset;
             Outer.TexCoord   = Vector2(0.5f, 0.5f);
             Outer.Color      = PackedColor;
 
-            FUIVertex& Inner = Vertices.Emplace();
+            FUIVertex& Inner = OutVertices[(Index * 2) + 1];
             Inner.Position   = Points[Index] - Offset;
             Inner.TexCoord   = Vector2(0.5f, 0.5f);
             Inner.Color      = PackedColor;
         }
 
+        int32 WriteIndex = 0;
         for (int32 Segment = 0; Segment < SegmentCount; ++Segment)
         {
             const uint32 CurrentOuter = BaseVertex + static_cast<uint32>(Segment * 2);
@@ -641,12 +1244,12 @@ void FUIDrawData::AddPolyline(TArrayView<const Vector2> Points, float Thickness,
             const uint32 NextOuter    = BaseVertex + static_cast<uint32>(((Segment + 1) % PointCount) * 2);
             const uint32 NextInner    = NextOuter + 1;
 
-            Indices.Add(CurrentOuter);
-            Indices.Add(NextOuter);
-            Indices.Add(NextInner);
-            Indices.Add(CurrentOuter);
-            Indices.Add(NextInner);
-            Indices.Add(CurrentInner);
+            OutIndices[WriteIndex++] = CurrentOuter;
+            OutIndices[WriteIndex++] = NextOuter;
+            OutIndices[WriteIndex++] = NextInner;
+            OutIndices[WriteIndex++] = CurrentOuter;
+            OutIndices[WriteIndex++] = NextInner;
+            OutIndices[WriteIndex++] = CurrentInner;
         }
 
         Batches.Last().IndexCount += SegmentCount * 6;
@@ -656,7 +1259,7 @@ void FUIDrawData::AddPolyline(TArrayView<const Vector2> Points, float Thickness,
     const float HalfFringe  = FringeWidth * 0.5f;
     const bool  bIsHairline = Thickness <= FringeWidth;
     const float CoreExtent  = bIsHairline ? 0.0f : (HalfThickness - HalfFringe);
-    const float EdgeExtent  = bIsHairline ? HalfFringe : (HalfThickness + HalfFringe);
+    const float EdgeExtent  = bIsHairline ? FringeWidth : (HalfThickness + HalfFringe);
 
     const uint32 CoreColor  = bIsHairline
         ? PackColorWithAlphaScale(PackedColor, Thickness / FringeWidth)
@@ -666,17 +1269,24 @@ void FUIDrawData::AddPolyline(TArrayView<const Vector2> Points, float Thickness,
 
     for (int32 Index = 0; Index < PointCount; ++Index)
     {
-        const Vector2& Miter = ScratchOffsets[Index];
+        const Vector2& Miter      = ScratchOffsets[Index];
+        const Vector2  CoreOffset = Miter * CoreExtent;
+        const Vector2  EdgeOffset = Miter * EdgeExtent;
 
-        const Vector2 CoreOffset = Miter * CoreExtent;
-        const Vector2 EdgeOffset = Miter * EdgeExtent;
+        FUIVertex* Vertex = OutVertices + (Index * 4);
+        Vertex[0].Position = Points[Index] + EdgeOffset;
+        Vertex[1].Position = Points[Index] + CoreOffset;
+        Vertex[2].Position = Points[Index] - CoreOffset;
+        Vertex[3].Position = Points[Index] - EdgeOffset;
 
-        EmplaceVertex(Points[Index] + EdgeOffset, ClearColor);
-        EmplaceVertex(Points[Index] + CoreOffset, CoreColor);
-        EmplaceVertex(Points[Index] - CoreOffset, CoreColor);
-        EmplaceVertex(Points[Index] - EdgeOffset, ClearColor);
+        for (int32 Row = 0; Row < 4; ++Row)
+        {
+            Vertex[Row].TexCoord = Vector2(0.5f, 0.5f);
+            Vertex[Row].Color = (Row == 0 || Row == 3) ? ClearColor : CoreColor;
+        }
     }
 
+    int32 WriteIndex = 0;
     for (int32 Segment = 0; Segment < SegmentCount; ++Segment)
     {
         const uint32 Current = BaseVertex + static_cast<uint32>(Segment * 4);
@@ -684,12 +1294,12 @@ void FUIDrawData::AddPolyline(TArrayView<const Vector2> Points, float Thickness,
 
         for (uint32 Row = 0; Row < 3; ++Row)
         {
-            Indices.Add(Current + Row);
-            Indices.Add(Next + Row);
-            Indices.Add(Next + Row + 1);
-            Indices.Add(Current + Row);
-            Indices.Add(Next + Row + 1);
-            Indices.Add(Current + Row + 1);
+            OutIndices[WriteIndex++] = Current + Row;
+            OutIndices[WriteIndex++] = Next + Row;
+            OutIndices[WriteIndex++] = Next + Row + 1;
+            OutIndices[WriteIndex++] = Current + Row;
+            OutIndices[WriteIndex++] = Next + Row + 1;
+            OutIndices[WriteIndex++] = Current + Row + 1;
         }
     }
 
@@ -714,19 +1324,34 @@ void FUIDrawData::AddConvexPolygon(TArrayView<const Vector2> Points, uint32 Pack
 
     if (!bAntiAliasingEnabled)
     {
+        const int32 VertexStart = Vertices.Size();
+        ReserveForAppend(Vertices, PointCount);
+
+        Vertices.ResizeUninitialized(VertexStart + PointCount);
+
+        FUIVertex* Dest = Vertices.Data() + VertexStart;
         for (int32 Index = 0; Index < PointCount; ++Index)
         {
-            EmplaceVertex(Points[Index], PackedColor);
+            Dest[Index].Position = Points[Index];
+            Dest[Index].TexCoord = Vector2(0.5f, 0.5f);
+            Dest[Index].Color    = PackedColor;
         }
 
+        const int32 FaceCount  = PointCount - 2;
+        const int32 IndexStart = Indices.Size();
+        ReserveForAppend(Indices, FaceCount * 3);
+
+        Indices.ResizeUninitialized(IndexStart + (FaceCount * 3));
+
+        uint32* IndexDest = Indices.Data() + IndexStart;
         for (int32 Index = 2; Index < PointCount; ++Index)
         {
-            Indices.Add(BaseVertex);
-            Indices.Add(BaseVertex + static_cast<uint32>(Index - 1));
-            Indices.Add(BaseVertex + static_cast<uint32>(Index));
+            *IndexDest++ = BaseVertex;
+            *IndexDest++ = BaseVertex + static_cast<uint32>(Index - 1);
+            *IndexDest++ = BaseVertex + static_cast<uint32>(Index);
         }
 
-        Batches.Last().IndexCount += (PointCount - 2) * 3;
+        Batches.Last().IndexCount += FaceCount * 3;
         return;
     }
 
@@ -777,38 +1402,42 @@ void FUIDrawData::AddQuad(const FRectangle& Bounds, const Vector2& MinTexCoord, 
     }
 
     const uint32 BaseVertex = static_cast<uint32>(Vertices.Size());
+    const int32 VertexStart = Vertices.Size();
+    ReserveForAppend(Vertices, 4);
+
+    Vertices.ResizeUninitialized(VertexStart + 4);
 
     const float MinX = static_cast<float>(Bounds.Position.X);
     const float MinY = static_cast<float>(Bounds.Position.Y);
     const float MaxX = static_cast<float>(Bounds.GetRight());
     const float MaxY = static_cast<float>(Bounds.GetBottom());
+    
+    FUIVertex* Quad = Vertices.Data() + VertexStart;
+    Quad[0].Position = Vector2(MinX, MinY);
+    Quad[0].TexCoord = Vector2(MinTexCoord.X, MinTexCoord.Y);
+    Quad[0].Color    = PackedColor;
+    Quad[1].Position = Vector2(MaxX, MinY);
+    Quad[1].TexCoord = Vector2(MaxTexCoord.X, MinTexCoord.Y);
+    Quad[1].Color    = PackedColor;
+    Quad[2].Position = Vector2(MaxX, MaxY);
+    Quad[2].TexCoord = Vector2(MaxTexCoord.X, MaxTexCoord.Y);
+    Quad[2].Color    = PackedColor;
+    Quad[3].Position = Vector2(MinX, MaxY);
+    Quad[3].TexCoord = Vector2(MinTexCoord.X, MaxTexCoord.Y);
+    Quad[3].Color    = PackedColor;
 
-    FUIVertex& TopLeft = Vertices.Emplace();
-    TopLeft.Position   = Vector2(MinX, MinY);
-    TopLeft.TexCoord   = Vector2(MinTexCoord.X, MinTexCoord.Y);
-    TopLeft.Color      = PackedColor;
+    const int32 IndexStart = Indices.Size();
+    ReserveForAppend(Indices, 6);
 
-    FUIVertex& TopRight = Vertices.Emplace();
-    TopRight.Position   = Vector2(MaxX, MinY);
-    TopRight.TexCoord   = Vector2(MaxTexCoord.X, MinTexCoord.Y);
-    TopRight.Color      = PackedColor;
+    Indices.ResizeUninitialized(IndexStart + 6);
 
-    FUIVertex& BottomRight = Vertices.Emplace();
-    BottomRight.Position   = Vector2(MaxX, MaxY);
-    BottomRight.TexCoord   = Vector2(MaxTexCoord.X, MaxTexCoord.Y);
-    BottomRight.Color      = PackedColor;
-
-    FUIVertex& BottomLeft = Vertices.Emplace();
-    BottomLeft.Position   = Vector2(MinX, MaxY);
-    BottomLeft.TexCoord   = Vector2(MinTexCoord.X, MaxTexCoord.Y);
-    BottomLeft.Color      = PackedColor;
-
-    Indices.Add(BaseVertex + 0);
-    Indices.Add(BaseVertex + 1);
-    Indices.Add(BaseVertex + 2);
-    Indices.Add(BaseVertex + 0);
-    Indices.Add(BaseVertex + 2);
-    Indices.Add(BaseVertex + 3);
+    uint32* QuadIndices = Indices.Data() + IndexStart;
+    QuadIndices[0] = BaseVertex + 0;
+    QuadIndices[1] = BaseVertex + 1;
+    QuadIndices[2] = BaseVertex + 2;
+    QuadIndices[3] = BaseVertex + 0;
+    QuadIndices[4] = BaseVertex + 2;
+    QuadIndices[5] = BaseVertex + 3;
 
     Batches.Last().IndexCount += 6;
 }
@@ -874,7 +1503,8 @@ void FUIDrawData::BuildRoundedBoxOutline(const FRectangle& Bounds, const FCorner
     }
 }
 
-void FUIDrawData::AddRoundedBox(const FRectangle& Bounds, const FCornerRadii& Radius, uint32 PackedColor)
+void FUIDrawData::AddRoundedBox(const FRectangle& Bounds, const FCornerRadii& Radius, uint32 PackedColor,
+    const Vector2& MinTexCoord, const Vector2& MaxTexCoord)
 {
     BuildRoundedBoxOutline(Bounds, Radius, ScratchPoints);
 
@@ -899,14 +1529,14 @@ void FUIDrawData::AddRoundedBox(const FRectangle& Bounds, const FCornerRadii& Ra
 
     FUIVertex& Center = Vertices.Emplace();
     Center.Position   = Vector2((MinX + MaxX) * 0.5f, (MinY + MaxY) * 0.5f);
-    Center.TexCoord   = Vector2(0.5f, 0.5f);
+    Center.TexCoord   = (MinTexCoord + MaxTexCoord) * 0.5f;
     Center.Color      = PackedColor;
 
     if (!bAntiAliasingEnabled)
     {
         for (int32 OutlineIndex = 0; OutlineIndex < OutlineCount; ++OutlineIndex)
         {
-            EmplaceFillVertex(ScratchPoints[OutlineIndex], Bounds, PackedColor);
+            EmplaceFillVertex(ScratchPoints[OutlineIndex], Bounds, PackedColor, MinTexCoord, MaxTexCoord);
         }
 
         for (int32 OutlineIndex = 0; OutlineIndex < OutlineCount; ++OutlineIndex)
@@ -931,8 +1561,8 @@ void FUIDrawData::AddRoundedBox(const FRectangle& Bounds, const FCornerRadii& Ra
         const Vector2& Position = ScratchPoints[OutlineIndex];
         const Vector2  Outward  = ScratchOffsets[OutlineIndex] * (Winding * HalfFringe);
 
-        EmplaceFillVertex(Position - Outward, Bounds, PackedColor);
-        EmplaceFillVertex(Position + Outward, Bounds, ClearColor);
+        EmplaceFillVertex(Position - Outward, Bounds, PackedColor, MinTexCoord, MaxTexCoord);
+        EmplaceFillVertex(Position + Outward, Bounds, ClearColor, MinTexCoord, MaxTexCoord);
     }
 
     for (int32 OutlineIndex = 0; OutlineIndex < OutlineCount; ++OutlineIndex)
@@ -957,15 +1587,108 @@ void FUIDrawData::AddRoundedBox(const FRectangle& Bounds, const FCornerRadii& Ra
     Batches.Last().IndexCount += OutlineCount * 9;
 }
 
-FUIDrawBatch& FUIDrawData::GetOrOpenBatch(const FUITextureHandle& Texture)
+void FUIDrawData::AddSdfRoundedQuad(const FRectangle& Bounds, const FCornerRadii& Radius, uint32 PackedColor, float Thickness, float ShapeKind)
+{
+    const float Pad   = bAntiAliasingEnabled ? (FringeWidth * 0.5f) : 0.0f;
+    const float MinX  = static_cast<float>(Bounds.Position.X);
+    const float MinY  = static_cast<float>(Bounds.Position.Y);
+    const float MaxX  = static_cast<float>(Bounds.GetRight());
+    const float MaxY  = static_cast<float>(Bounds.GetBottom());
+    const float SizeX = MaxX - MinX;
+    const float SizeY = MaxY - MinY;
+
+    if (ShapeInstances.Size() >= (MaxVertexCount / 4))
+    {
+        return;
+    }
+
+    GetOrOpenBatch(FUITextureHandle(), EUIDrawBatchKind::Shape);
+
+    FUIShapeInstance& Instance = ShapeInstances.Emplace();
+    Instance.Position    = Vector2(MinX - Pad, MinY - Pad);
+    Instance.Color       = PackedColor;
+    Instance.DrawSize    = Vector2(SizeX + (Pad * 2.0f), SizeY + (Pad * 2.0f));
+    Instance.LocalOrigin = Vector2(-Pad, -Pad);
+    Instance.RectSize    = Vector2(SizeX, SizeY);
+    Instance.RadiusTL    = Radius.TopLeft;
+    Instance.RadiusTR    = Radius.TopRight;
+    Instance.RadiusBR    = Radius.BottomRight;
+    Instance.RadiusBL    = Radius.BottomLeft;
+    Instance.Thickness   = Thickness;
+    Instance.ShapeKind   = ShapeKind;
+
+    Batches.Last().IndexCount += 6;
+}
+
+void FUIDrawData::AddCornerWedges(const FDrawCommand& Command)
+{
+    const FRectangle&  Bounds = Command.Bounds;
+    const FCornerRadii Radius = Command.CornerRadius.ClampToBounds(Bounds);
+
+    const float Left   = static_cast<float>(Bounds.Position.X);
+    const float Top    = static_cast<float>(Bounds.Position.Y);
+    const float Right  = static_cast<float>(Bounds.GetRight());
+    const float Bottom = static_cast<float>(Bounds.GetBottom());
+
+    struct FWedge
+    {
+        float   Radius;
+        Vector2 SquareMin;
+        Vector2 Center;
+    };
+
+    const FWedge Wedges[4] =
+    {
+        { Radius.TopLeft,     Vector2(Left, Top),                                         Vector2(Left + Radius.TopLeft, Top + Radius.TopLeft)              },
+        { Radius.TopRight,    Vector2(Right - Radius.TopRight, Top),                      Vector2(Right - Radius.TopRight, Top + Radius.TopRight)           },
+        { Radius.BottomRight, Vector2(Right - Radius.BottomRight, Bottom - Radius.BottomRight), Vector2(Right - Radius.BottomRight, Bottom - Radius.BottomRight) },
+        { Radius.BottomLeft,  Vector2(Left, Bottom - Radius.BottomLeft),                  Vector2(Left + Radius.BottomLeft, Bottom - Radius.BottomLeft)     },
+    };
+
+    for (const FWedge& Wedge : Wedges)
+    {
+        if (Wedge.Radius <= 0.0f)
+        {
+            continue;
+        }
+
+        if (ShapeInstances.Size() >= (MaxVertexCount / 4))
+        {
+            return;
+        }
+
+        GetOrOpenBatch(FUITextureHandle(), EUIDrawBatchKind::Shape);
+
+        FUIShapeInstance& Instance = ShapeInstances.Emplace();
+        Instance.Position    = Wedge.SquareMin;
+        Instance.Color       = Command.PackedColor;
+        Instance.DrawSize    = Vector2(Wedge.Radius, Wedge.Radius);
+        Instance.LocalOrigin = Vector2(0.0f, 0.0f);
+        Instance.RectSize    = Vector2(Wedge.Radius, Wedge.Radius);
+        Instance.RadiusTL    = Wedge.Center.X - Wedge.SquareMin.X;
+        Instance.RadiusTR    = Wedge.Center.Y - Wedge.SquareMin.Y;
+        Instance.RadiusBR    = Wedge.Radius;
+        Instance.RadiusBL    = 0.0f;
+        Instance.Thickness   = 0.0f;
+        Instance.ShapeKind   = ShapeKindWedge;
+
+        Batches.Last().IndexCount += 6;
+    }
+}
+
+FUIDrawBatch& FUIDrawData::GetOrOpenBatch(const FUITextureHandle& Texture, EUIDrawBatchKind Kind)
 {
     const bool       bIsClipped       = bHasActiveClip;
     const FRectangle ScissorRectangle = bIsClipped ? ActiveClipRectangle : FRectangle();
+    const int32 StreamIndexOffset = (Kind == EUIDrawBatchKind::Shape)
+        ? ShapeInstances.Size() * 6
+        : ((Kind == EUIDrawBatchKind::Text) ? TextGlyphInstances.Size() : Indices.Size());
 
     if (!Batches.IsEmpty())
     {
         FUIDrawBatch& OpenBatch = Batches.Last();
-        if (OpenBatch.Texture == Texture && OpenBatch.bIsClipped == bIsClipped && OpenBatch.ScissorRectangle == ScissorRectangle)
+        if (OpenBatch.Kind == Kind && OpenBatch.Texture == Texture && OpenBatch.bIsClipped == bIsClipped
+            && OpenBatch.ScissorRectangle == ScissorRectangle)
         {
             return OpenBatch;
         }
@@ -975,6 +1698,8 @@ FUIDrawBatch& FUIDrawData::GetOrOpenBatch(const FUITextureHandle& Texture)
             OpenBatch.Texture          = Texture;
             OpenBatch.ScissorRectangle = ScissorRectangle;
             OpenBatch.bIsClipped       = bIsClipped;
+            OpenBatch.Kind             = Kind;
+            OpenBatch.IndexOffset      = StreamIndexOffset;
             return OpenBatch;
         }
     }
@@ -982,9 +1707,10 @@ FUIDrawBatch& FUIDrawData::GetOrOpenBatch(const FUITextureHandle& Texture)
     FUIDrawBatch& NewBatch = Batches.Emplace();
     NewBatch.ScissorRectangle = ScissorRectangle;
     NewBatch.Texture          = Texture;
-    NewBatch.IndexOffset      = Indices.Size();
+    NewBatch.IndexOffset      = StreamIndexOffset;
     NewBatch.IndexCount       = 0;
     NewBatch.bIsClipped       = bIsClipped;
+    NewBatch.Kind             = Kind;
 
     return NewBatch;
 }

@@ -13,7 +13,7 @@
 
 #define ENABLE_INLINE_ALLOCATOR (1)
 #define ENABLE_SHRINKTOFIT_BENCHMARK (0)
-#define ENABLE_SORT_BENCHMARK (1)
+#define ENABLE_SORT_BENCHMARK (0)
 #define ENABLE_STANDARD_BENCHMARK (1)
 
 // Individual operations within the standard benchmark (apply to both String and Vector3).
@@ -23,7 +23,7 @@
 #define ENABLE_EMPLACE_BENCHMARK   (1)
 
 // Heap-sort comparison within the sort benchmark.
-#define ENABLE_HEAPSORT_BENCHMARK  (1)
+#define ENABLE_HEAPSORT_BENCHMARK  (0)
 
 #if ENABLE_INLINE_ALLOCATOR
 template<typename T>

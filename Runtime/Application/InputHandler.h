@@ -1,8 +1,6 @@
 #pragma once
 #include "Application/Events.h"
 
-DISABLE_UNREFERENCED_VARIABLE_WARNING
-
 struct FInputHandler
 {
     virtual ~FInputHandler() = default;
@@ -12,7 +10,7 @@ struct FInputHandler
      * @param AnalogEvent Data for the controller event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogEvent)
+    virtual bool OnAnalogGamepadChange(const FAnalogGamepadEvent& /*AnalogEvent*/)
     {
         return false;
     }
@@ -22,7 +20,7 @@ struct FInputHandler
      * @param KeyEvent Data for the key event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnKeyDown(const FKeyEvent& KeyEvent)
+    virtual bool OnKeyDown(const FKeyEvent& /*KeyEvent*/)
     {
         return false;
     }
@@ -32,7 +30,7 @@ struct FInputHandler
      * @param KeyEvent Data for the key event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnKeyUp(const FKeyEvent& KeyEvent)
+    virtual bool OnKeyUp(const FKeyEvent& /*KeyEvent*/)
     {
         return false;
     }
@@ -42,7 +40,7 @@ struct FInputHandler
      * @param KeyTypedEvent Data for the key-typed event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnKeyChar(const FKeyEvent& KeyTypedEvent)
+    virtual bool OnKeyChar(const FKeyEvent& /*KeyTypedEvent*/)
     {
         return false;
     }
@@ -52,7 +50,7 @@ struct FInputHandler
      * @param CursorEvent Data for the mouse event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnMouseMove(const FCursorEvent& CursorEvent)
+    virtual bool OnMouseMove(const FCursorEvent& /*CursorEvent*/)
     {
         return false;
     }
@@ -62,7 +60,7 @@ struct FInputHandler
      * @param CursorEvent Data for the mouse event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnMouseButtonDown(const FCursorEvent& CursorEvent)
+    virtual bool OnMouseButtonDown(const FCursorEvent& /*CursorEvent*/)
     {
         return false;
     }
@@ -72,9 +70,20 @@ struct FInputHandler
      * @param CursorEvent Data for the mouse event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnMouseButtonUp(const FCursorEvent& CursorEvent)
+    virtual bool OnMouseButtonUp(const FCursorEvent& /*CursorEvent*/)
     {
         return false;
+    }
+
+    /**
+     * @brief Handle mouse double-click event, if the event-handler consumes the event, return true. A handler that
+     * does not override this sees the double-click as a second button press.
+     * @param CursorEvent Data for the mouse event
+     * @return Returns true if the event was handled and should not be sent to other input-handlers
+     */
+    virtual bool OnMouseDoubleClick(const FCursorEvent& CursorEvent)
+    {
+        return OnMouseButtonDown(CursorEvent);
     }
 
     /**
@@ -82,7 +91,7 @@ struct FInputHandler
      * @param CursorEvent Data for the mouse event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnMouseScrolled(const FCursorEvent& CursorEvent)
+    virtual bool OnMouseScrolled(const FCursorEvent& /*CursorEvent*/)
     {
         return false;
     }
@@ -92,10 +101,8 @@ struct FInputHandler
      * @param CursorEvent Data for the mouse event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
-    virtual bool OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent)
+    virtual bool OnHighPrecisionMouseInput(const FCursorEvent& /*CursorEvent*/)
     {
         return false;
     }
 };
-
-ENABLE_UNREFERENCED_VARIABLE_WARNING

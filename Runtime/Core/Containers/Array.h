@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/Allocators.h"
 #include "Core/Containers/ArrayView.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Templates/Utility.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/ObjectHandling.h"
@@ -884,23 +885,20 @@ public:
     }
 
     /**
-     * @brief Sort the array using the quick-sort algorithm, assumes that the ElementType has the '<' operator
+     * @brief Sort the array, assumes that the ElementType has the '<' operator
      */
     FORCEINLINE void Sort()
     {
-        SortInternal(0, LastIndex(), [](const ElementType& First, const ElementType& Second)
-        {
-            return (First < Second);
-        });
+        Algorithm::Sort(*this);
     }
 
     /**
-     * @brief Sort the array using the quick-sort algorithm with a custom comparator
+     * @brief Sort the array with a custom comparator
      */
     template<typename PredicateType>
     FORCEINLINE void SortWithPredicate(PredicateType&& Predicate)
     {
-        SortInternal(0, LastIndex(), Forward<PredicateType>(Predicate));
+        Algorithm::Sort(*this, Forward<PredicateType>(Predicate));
     }
 
     /**
@@ -1085,21 +1083,7 @@ public:
      */
     void Heapify()
     {
-        if (ArraySize == 0)
-        {
-            return;
-        }
-
-        const SizeType StartIndex = (ArraySize / 2) - 1;
-        for (SizeType Index = StartIndex; Index >= 0; --Index)
-        {
-            Heapify(ArraySize, Index);
-
-            if (Index == 0)
-            {
-                break;
-            }
-        }
+        Algorithm::Heapify(*this);
     }
 
     /**
@@ -1130,8 +1114,7 @@ public:
      */
     FORCEINLINE void HeapPush(const ElementType& Element)
     {
-        Insert(0, Element);
-        Heapify(ArraySize, 0);
+        Algorithm::HeapPush(*this, Element);
     }
 
     /**
@@ -1140,8 +1123,7 @@ public:
      */
     FORCEINLINE void HeapPush(ElementType&& Element)
     {
-        Insert(0, Forward<ElementType>(Element));
-        Heapify(ArraySize, 0);
+        Algorithm::HeapPush(*this, Forward<ElementType>(Element));
     }
 
     /**
@@ -1160,23 +1142,15 @@ public:
     FORCEINLINE void HeapPop()
     {
         CHECK(!IsEmpty());
-        RemoveAt(0);
-        Heapify();
+        Algorithm::HeapPop(*this);
     }
 
     /**
-     * @brief Performs heap sort on the array (assuming the operator> exists for the elements)
+     * @brief Performs heap sort on the array
      */
     void HeapSort()
     {
-        Heapify();
-
-        ElementType* Array = Allocator.GetAllocation();
-        for (SizeType Index = ArraySize - 1; Index > 0; --Index)
-        {
-            ::Swap<ElementType>(Array[0], Array[Index]);
-            Heapify(Index, 0);
-        }
+        Algorithm::HeapSort(*this);
     }
 
 public:
@@ -1469,49 +1443,6 @@ private:
         }
     }
 
-    void Heapify(SizeType InSize, SizeType Index)
-    {
-        SizeType StartIndex = Index;
-        SizeType Largest    = Index;
-
-        ElementType* Array = Allocator.GetAllocation();
-        while (true)
-        {
-            const SizeType Left  = LeftIndex(StartIndex);
-            const SizeType Right = RightIndex(StartIndex);
-
-            if (Left < InSize && Array[Left] > Array[Largest])
-            {
-                Largest = Left;
-            }
-
-            if (Right < InSize && Array[Right] > Array[Largest])
-            {
-                Largest = Right;
-            }
-
-            if (Largest != StartIndex)
-            {
-                ::Swap<ElementType>(Array[StartIndex], Array[Largest]);
-                StartIndex = Largest;
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-
-    NODISCARD static FORCEINLINE SizeType LeftIndex(SizeType Index)
-    {
-        return 2 * Index + 1;
-    }
-
-    NODISCARD static FORCEINLINE SizeType RightIndex(SizeType Index)
-    {
-        return 2 * Index + 2;
-    }
-
     NODISCARD static SizeType CalculateGrowth(SizeType RequiredCapacity, SizeType CurrentCapacity)
     {
         CHECK(RequiredCapacity >= 0);
@@ -1582,57 +1513,6 @@ private:
         }
 
         return InvalidIndex;
-    }
-
-    template<typename PredicateType>
-    SizeType SortPartition(SizeType First, SizeType Last, PredicateType&& Predicate)
-    {
-        ElementType* Array = Allocator.GetAllocation();
-
-        // Select the last element as pivot
-        const SizeType Pivot = Last;
-        SizeType Index = First;
-        for (SizeType Current = First; Current < Last; ++Current)
-        {
-            if (Predicate(Array[Current], Array[Pivot]))
-            {
-                ::Swap(Array[Index], Array[Current]);
-                Index++;
-            }
-        }
-
-        ::Swap(Array[Index], Array[Pivot]);
-        return Index;
-    }
-
-    template<typename PredicateType>
-    void SortInternal(SizeType First, SizeType Last, PredicateType&& Predicate)
-    {
-        if (First >= Last)
-        {
-            return;
-        }
-
-        constexpr SizeType Threshold = 24;
-        if ((Last - First + 1) >= Threshold)
-        {
-            const SizeType Pivot = SortPartition(First, Last, Predicate);
-            SortInternal(First, Pivot - 1, Predicate);
-            SortInternal(Pivot + 1, Last, Predicate);
-        }
-        else
-        {
-            ElementType* Array = Allocator.GetAllocation();
-            for (SizeType Current = First + 1; Current <= Last; ++Current) 
-            {
-                SizeType Index = Current;
-                while (Index > First && Predicate(Array[Index], Array[Index - 1]))
-                {
-                    ::Swap(Array[Index], Array[Index - 1]);
-                    Index--;
-                }
-            }
-        }
     }
 
 private:

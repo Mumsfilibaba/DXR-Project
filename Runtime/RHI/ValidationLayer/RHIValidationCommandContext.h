@@ -130,6 +130,9 @@ private:
     bool ValidateTransitionBarrierDesc(const FRHITransitionBarrierDesc& Desc);
     bool ValidateUnorderedAccessBarrierDesc(const FRHIUnorderedAccessBarrierDesc& Desc);
     bool ValidateNoOpenSplit(const FRHIResource* Resource, const CHAR* Caller) const;
+    void MarkAccelerationStructureWritten(const FRHIRayTracingAccelerationStructure* AccelerationStructure);
+    void ValidateAccelerationStructureBarrier(const FRHIRayTracingAccelerationStructure* AccelerationStructure, const CHAR* Caller);
+    void ValidateSceneAccelerationStructureBarriers(const CHAR* Caller);
     bool ValidateBackBufferRead(const FRHIResource* Resource, const CHAR* Caller);
     bool ValidateBackBufferWrite(const FRHIResource* Resource, const CHAR* Caller);
     bool ValidateBackBufferViewRead(const FRHIResourceView* View, const CHAR* Caller);

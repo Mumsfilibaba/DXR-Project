@@ -512,7 +512,7 @@ private:
     uint64                               DescriptorSetVersion;
     TArray<TArray<FVulkanResourceView*>> BoundResourceViews;
     TArray<TArray<FBoundBuffer>>         BoundBuffers;
-    EVulkanDescriptorDirtyFlags          DirtyFlags = EVulkanDescriptorDirtyFlags::None;
+    EVulkanDescriptorDirtyFlags          DirtyFlags;
     // Flat array of dynamic offsets passed directly to vkCmdBindDescriptorSets,
     // ordered by (set, binding). Indexed via DynamicOffsetBasePerSet + BindingToDynamicIndex.
     TArray<uint32>                       DynamicOffsets;

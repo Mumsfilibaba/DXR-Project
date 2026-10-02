@@ -1,5 +1,6 @@
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
+#include "LaunchProgram/ProgramEntry.h"
 
 bool TestIntPoint2();
 bool TestIntPoint3();
@@ -21,7 +22,7 @@ bool TestFormatStructs();
 
 bool TestCameraBasis();
 
-int main()
+static int32 RunMathTests()
 {
     TestHarness::Initialize("TestResults_Core.log");
     LOG_INFO("=== Math Library Tests ===");
@@ -50,3 +51,5 @@ int main()
     TestHarness::Shutdown();
     return ExitCode;
 }
+
+IMPLEMENT_PROGRAM_MAIN("Core-Math-Tests", RunMathTests);

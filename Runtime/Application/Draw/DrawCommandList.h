@@ -1,12 +1,33 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Containers/ArrayView.h"
+#include "Core/Containers/String.h"
+#include "Core/Containers/StringView.h"
 #include "Application/Draw/DrawTypes.h"
+
+struct FDrawCacheBlock;
 
 class APPLICATION_API FDrawCommandList
 {
 public:
+    struct FDrawCacheMarker
+    {
+        int32 CommandBase;
+        int32 PointBase;
+        int32 TextBase;
+        int32 BrushBase;
+        int32 ClipBase;
+        int32 ClipDepth;
+        int32 BlockCounter;
+    };
+
     static constexpr int32 InvalidIndex = -1;
+
+    /**
+     * @brief The clip id a captured command carries when it was clipped by something outside its own block,
+     * which replay rewrites to whatever clip is open at that point.
+     */
+    static constexpr uint16 InheritedClipId = 0xFFFF;
 
     /** @brief The fewest segments a circle or an arc is tessellated into. */
     static constexpr int32 MinCircleSegments = 6;
@@ -54,7 +75,37 @@ public:
      * @param Font    The face the text was measured with, which may be null.
      * @param Tint    The text color.
      */
-    void AddText(int32 LayerId, const FRectangle& Bounds, const String& InText, const IFontFace* Font, const FFloatColor& Tint);
+    void AddText(int32 LayerId, const FRectangle& Bounds, const StringView& InText, const IFontFace* Font, const FFloatColor& Tint);
+
+    /**
+     * @brief Appends a run of text on one line.
+     *
+     * @param LayerId The layer to draw on.
+     * @param Bounds  The rectangle the text is anchored to at the top-left.
+     * @param InText  The text to draw.
+     * @param Font    The face the text was measured with, which may be null.
+     * @param Tint    The text color.
+     */
+    FORCEINLINE void AddText(int32 LayerId, const FRectangle& Bounds, const String& InText, const IFontFace* Font, const FFloatColor& Tint)
+    {
+        AddText(LayerId, Bounds, StringView(InText), Font, Tint);
+    }
+
+    /**
+     * @brief Appends a run of text on one line.
+     *
+     * A literal converts to both String and StringView, so it needs an overload of its own to call.
+     *
+     * @param LayerId The layer to draw on.
+     * @param Bounds  The rectangle the text is anchored to at the top-left.
+     * @param InText  The null-terminated text to draw.
+     * @param Font    The face the text was measured with, which may be null.
+     * @param Tint    The text color.
+     */
+    FORCEINLINE void AddText(int32 LayerId, const FRectangle& Bounds, const CHAR* InText, const IFontFace* Font, const FFloatColor& Tint)
+    {
+        AddText(LayerId, Bounds, StringView(InText), Font, Tint);
+    }
 
     /**
      * @brief Appends a thin axis-aligned rule.
@@ -95,6 +146,33 @@ public:
      * @param Tint    The fill color.
      */
     void AddConvexPolygon(int32 LayerId, TArrayView<const Vector2> Points, const FFloatColor& Tint);
+
+    /**
+     * @brief Appends the rounded frame of a panel so that it survives whatever the panel's content paints.
+     *
+     * Rounding a panel by filling a rounded rectangle underneath it does not work once the content
+     * paints edge to edge, which a viewport image, a tree row fill or a tab strip all do: the square
+     * content simply covers the rounded corners again. Clipping cannot fix it either, because the clip
+     * stack is a rectangular scissor.
+     *
+     * So the frame is drawn from the outside in, on a layer above the content. Each corner gets a wedge
+     * of backdrop filling the gap between the arc and the square corner, which cuts the content back to
+     * the rounded silhouette, and a single stroke follows around the whole edge.
+     *
+     * @param LayerId      The layer to draw on, which must be above the content being framed.
+     * @param Bounds       The panel rectangle to frame.
+     * @param CornerRadius How far each corner is rounded, in pixels.
+     * @param Thickness    The stroke width in pixels. Zero draws the wedges but no stroke.
+     * @param BorderTint   The stroke color.
+     * @param BackdropTint The color the corner wedges are filled with, which is what shows around the panel.
+     */
+    void AddPanelChrome(
+        int32               LayerId,
+        const FRectangle&   Bounds,
+        const FCornerRadii& CornerRadius,
+        float               Thickness,
+        const FFloatColor&  BorderTint,
+        const FFloatColor&  BackdropTint);
 
     /**
      * @brief Appends a filled triangle. Shorthand for a three-point convex polygon.
@@ -174,12 +252,14 @@ public:
     /**
      * @brief Appends a textured rectangle.
      *
-     * @param LayerId The layer to draw on.
-     * @param Bounds  The rectangle to fill.
-     * @param Brush   The texture and the region of it to sample.
-     * @param Tint    The color the sample is multiplied by.
+     * @param LayerId      The layer to draw on.
+     * @param Bounds       The rectangle to fill.
+     * @param Brush        The texture and the region of it to sample.
+     * @param Tint         The color the sample is multiplied by.
+     * @param CornerRadius How far the rectangle's corners are rounded, which a nine-sliced brush ignores
+     * since its own corners are drawn from the texture.
      */
-    void AddImage(int32 LayerId, const FRectangle& Bounds, const FUIBrush& Brush, const FFloatColor& Tint);
+    void AddImage(int32 LayerId, const FRectangle& Bounds, const FUIBrush& Brush, const FFloatColor& Tint, const FCornerRadii& CornerRadius = FCornerRadii());
 
     /**
      * @brief Appends the bottom band of a rounded rectangle, with either end fading out.
@@ -192,6 +272,30 @@ public:
      * @param FadeWidth    How far in from either edge the alpha runs from nothing to full, in pixels.
      */
     void AddRoundedBottomBar(int32 LayerId, const FRectangle& Bounds, const FCornerRadii& CornerRadius, float Thickness, const FFloatColor& Tint, float FadeWidth);
+
+    /**
+     * @brief Appends a stroke round a rounded rectangle at an even width, held at full strength along the top
+     * and faded back over the top corners to a trail that carries on round the rest, which is how an active
+     * tab wears its accent.
+     *
+     * @param LayerId      The layer to draw on.
+     * @param Bounds       The rounded rectangle the stroke follows.
+     * @param CornerRadius The rectangle's corners, which are the curves the stroke turns.
+     * @param Thickness    How wide the stroke is, measured inward from the rectangle's edge.
+     * @param Tint         The stroke's color where it runs at full strength.
+     * @param FadeFraction How much of each top corner the stroke spends fading back, as a share of that
+     * corner's arc measured from the side edge. Half fades from the middle of the corner.
+     * @param TrailAlpha   What the stroke keeps of that color once the fade is done, as a share of it, which
+     * is what runs round the sides and the bottom. Zero leaves the top rule on its own.
+     */
+    void AddRoundedAccentRing(
+        int32               LayerId, 
+        const FRectangle&   Bounds, 
+        const FCornerRadii& CornerRadius, 
+        float               Thickness,
+        const FFloatColor&  Tint, 
+        float               FadeFraction, 
+        float               TrailAlpha);
 
     /**
      * @brief Opens a clip region, intersected with whatever region is already open.
@@ -224,10 +328,10 @@ public:
      */
     NODISCARD FORCEINLINE const FRectangle& GetCurrentClipRectangle() const
     {
-        return ClipStack.IsEmpty() ? EmptyClipRectangle : ClipStack.Last();
+        return ClipStack.IsEmpty() ? EmptyClipRectangle : ClipRects[ClipStack.Last() - 1];
     }
 
-    /** @return The number of commands the list holds, counting the clip pushes and pops. */
+    /** @return The number of commands the list holds. */
     NODISCARD FORCEINLINE int32 Size() const
     {
         return Commands.Size();
@@ -259,10 +363,35 @@ public:
      */
     NODISCARD TArrayView<const Vector2> GetCommandPoints(const FDrawCommand& Command) const;
 
-    NODISCARD FORCEINLINE const FDrawCommand& operator[](int32 Index) const
-    {
-        return Commands[Index];
-    }
+    /**
+     * @brief The text one command owns, which is empty for anything but a text command that carries characters.
+     *
+     * The characters live in a pool shared by the whole list, so appending to the list or resetting it can move
+     * them and leave the view dangling. Read it before emitting more commands, or copy it.
+     *
+     * @param Command The command to read the range from.
+     * @return A view over the command's characters, which is not null terminated.
+     */
+    NODISCARD StringView GetCommandText(const FDrawCommand& Command) const;
+
+    /**
+     * @brief The brush one command owns, which only an image command has.
+     *
+     * The brushes live in a pool shared by the whole list, so appending to the list or resetting it can move them
+     * and leave the pointer dangling.
+     *
+     * @param Command The command to read the brush from.
+     * @return The command's brush, or null when the command is not an image or carries no brush.
+     */
+    NODISCARD const FUIBrush* GetCommandBrush(const FDrawCommand& Command) const;
+
+    /**
+     * @brief The rectangle one command is clipped to, which is how a batch decides what it may cover.
+     *
+     * @param Command The command to read the clip from.
+     * @return The command's clip rectangle, or an empty rectangle when the command is not clipped.
+     */
+    NODISCARD const FRectangle& GetCommandClipRectangle(const FDrawCommand& Command) const;
 
     /**
      * @brief Counts the commands of one type, so a test can check what an element emitted.
@@ -280,17 +409,158 @@ public:
      */
     NODISCARD int32 FindTextCommand(const StringView& InText) const;
 
+    NODISCARD FORCEINLINE const FDrawCommand& operator[](int32 Index) const
+    {
+        return Commands[Index];
+    }
+
+    /** @return How many clips are open, which a cached block has to find unchanged to be replayable. */
+    NODISCARD FORCEINLINE int32 GetClipDepth() const
+    {
+        return ClipStack.Size();
+    }
+
+    /**
+     * @brief Notes where the list stands, so a subtree about to record can have its range lifted out after.
+     *
+     * @return The marker to hand back to CaptureDrawCache.
+     */
+    NODISCARD FDrawCacheMarker BeginDrawCache() const;
+
+    /** @brief Closes a capture without keeping it, for a subtree that turned out not to be worth caching. */
+    void AbandonDrawCache() const;
+
+    /**
+     * @brief Makes every element record into this list rather than replay into it, without dropping what they
+     * hold, so the same tree can be recorded twice over and the two recordings compared.
+     *
+     * @param bSuppressed True to walk the tree in full.
+     */
+    FORCEINLINE void SetDrawCacheSuppressed(bool bSuppressed)
+    {
+        bDrawCacheSuppressed = bSuppressed;
+    }
+
+    /** @return True while the list refuses both replay and capture. */
+    NODISCARD FORCEINLINE bool IsDrawCacheSuppressed() const
+    {
+        return bDrawCacheSuppressed;
+    }
+
+    /**
+     * @return How many times something recording into this list has refused to be cached, which an element
+     * compares against its marker to tell a capture worth retrying next frame from one that never will be.
+     */
+    NODISCARD FORCEINLINE int32 GetDrawCacheBlockCounter() const
+    {
+        return DrawCacheBlockCounter;
+    }
+
+    /** @return True while some subtree is between BeginDrawCache and CaptureDrawCache, which suppresses nesting. */
+    NODISCARD FORCEINLINE bool IsDrawCacheOpen() const
+    {
+        return OpenDrawCacheCount > 0;
+    }
+
+    /**
+     * @brief Says that whatever is recording now cannot be replayed later, discarding every capture open
+     * around it rather than freezing the moving part into a recording.
+     */
+    void BlockDrawCache();
+
+    /**
+     * @brief Lifts the range one subtree recorded out of the list and into a block it can be replayed from,
+     * rewriting every copied offset to index the block's own pools.
+     *
+     * @param Marker           Where the list stood before the subtree recorded.
+     * @param AllottedGeometry The geometry the subtree was drawn into, which replay has to find unchanged.
+     * @param BaseLayerId      The layer the subtree was asked to draw on.
+     * @param MaxLayerId       The layer the subtree reported back.
+     * @param OutBlock         The block to fill.
+     * @return True when the range was captured, false when something about it made it unfit to replay.
+     */
+    bool CaptureDrawCache(
+        const FDrawCacheMarker& Marker,
+        const FDrawGeometry&    AllottedGeometry,
+        int32                   BaseLayerId,
+        int32                   MaxLayerId,
+        FDrawCacheBlock&        OutBlock) const;
+
+    /**
+     * @brief Appends everything a block recorded, rebasing each offset onto this list's pools.
+     *
+     * @param Block The block to replay, which has already been checked against the reuse guard.
+     * @return The highest layer the block drew on.
+     */
+    int32 AppendDrawCache(FDrawCacheBlock& Block);
+
+    /**
+     * @brief Finds the replayed span a command belongs to, so tessellation can splice in its geometry instead.
+     *
+     * @param CommandIndex Any command, in the order the commands were appended.
+     * @param OutSpanStart Where the span begins, written only when one is found.
+     * @return The block that produced the span holding the command, or null when it was recorded rather than replayed.
+     */
+    NODISCARD FDrawCacheBlock* FindReplayedSpanContaining(int32 CommandIndex, int32& OutSpanStart) const;
+
+    /** @return True when at least one block was replayed into the list. */
+    NODISCARD FORCEINLINE bool HasReplayedSpans() const
+    {
+        return !ReplayedSpans.IsEmpty();
+    }
+
+    /** @return True when every command in the list came from a replayed block. */
+    NODISCARD bool WasFullyReplayed() const;
+
+    /** @return How many of the list's commands came from replayed blocks rather than from walking the tree. */
+    NODISCARD FORCEINLINE int32 GetReplayedCommandCount() const
+    {
+        return ReplayedCommandCount;
+    }
+
+    /**
+     * @brief Finds where two recordings of the same tree stop agreeing, comparing offsets and clip ids
+     * through the pools they index rather than raw.
+     *
+     * @param Left      The recording to check, normally the one with blocks replayed into it.
+     * @param Right     The recording to check it against, normally one taken with every block released.
+     * @param OutIndex  The first command that differs, or the count of the shorter list when only the lengths do.
+     * @param OutReason What differed there.
+     * @return True when a difference was found.
+     */
+    NODISCARD static bool FindFirstDifference(
+        const FDrawCommandList& Left,
+        const FDrawCommandList& Right,
+        int32&                  OutIndex,
+        String&                 OutReason);
+
 private:
+    struct FReplayedSpan
+    {
+        FDrawCacheBlock* Block;
+        int32            CommandIndex;
+    };
+
     NODISCARD static int32 ResolveCircleSegments(float Radius, float AngleSweep, int32 RequestedSegments);
 
     FDrawCommand& EmplaceCommand(EDrawCommandType Type, int32 LayerId);
     void StorePoints(FDrawCommand& Command, TArrayView<const Vector2> InPoints);
+    void StoreText(FDrawCommand& Command, StringView InText);
     void BuildArcPoints(const Vector2& Center, float Radius, float StartAngle, float EndAngle, int32 Segments);
 
-    TArray<FDrawCommand> Commands;
-    TArray<Vector2>      Points;
-    TArray<Vector2>      ScratchPoints;
-    TArray<FRectangle>   ClipStack;
-    FRectangle           EmptyClipRectangle;
-    int32                UnmatchedPopCount;
+    TArray<FDrawCommand>  Commands;
+    TArray<Vector2>       Points;
+    TArray<CHAR>          TextPool;
+    TArray<FUIBrush>      Brushes;
+    TArray<FRectangle>    ClipRects;
+    TArray<Vector2>       ScratchPoints;
+    TArray<uint16>        ClipStack;
+    TArray<FReplayedSpan> ReplayedSpans;
+    FRectangle            EmptyClipRectangle;
+    int32                 UnmatchedPopCount;
+    mutable int32         OpenDrawCacheCount;
+    mutable int32         DrawCacheBlockCounter;
+    mutable int32         MinClipDepthSinceDrawCache;
+    int32                 ReplayedCommandCount;
+    bool                  bDrawCacheSuppressed;
 };

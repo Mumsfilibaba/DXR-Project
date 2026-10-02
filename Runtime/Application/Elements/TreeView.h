@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/Set.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/String.h"
 #include "Core/Delegates/Delegate.h"
@@ -56,6 +57,12 @@ struct APPLICATION_API FTreeItem : public TSharedFromThis<FTreeItem>
     /** @brief True while the children have rows of their own below this one. */
     bool bIsExpanded = false;
 
+    /** @brief Whether the node's own text matched the view's filter, as of the last row rebuild under a filter. */
+    bool bMatchesFilter = false;
+
+    /** @brief Whether the node or anything below it matched the view's filter, as of the last row rebuild under a filter. */
+    bool bPassesFilter = false;
+
     /** @brief The node this one hangs off, which is unset for a root. */
     TWeakPtr<FTreeItem> Parent;
 };
@@ -71,6 +78,9 @@ DECLARE_DELEGATE(FOnTreeItemExpansionChanged, const TSharedPtr<FTreeItem>& /*Ite
 
 /** @brief Called once the cursor has moved far enough with the left button held on a row to mean a drag. */
 DECLARE_DELEGATE(FOnTreeItemDragDetected, const TSharedPtr<FTreeItem>& /*Item*/, const FCursorEvent& /*CursorEvent*/);
+
+/** @brief Builds the context menu for a row; returning null leaves the right-click unhandled. */
+DECLARE_RETURN_DELEGATE(FOnGetTreeItemContextMenu, TSharedPtr<FVisualElement>, const TSharedPtr<FTreeItem>& /*Item*/);
 
 class APPLICATION_API FTreeView final : public FVisualElement
 {
@@ -107,6 +117,21 @@ public:
         /** @brief The caption over the type column, drawn only when TypeColumnWidth is not zero. */
         String TypeColumnHeader;
 
+        /** @brief Explains the label column once the cursor has rested on its caption, a newline starting
+         * a further line. Empty for a column that speaks for itself. */
+        String LabelColumnToolTip;
+
+        /**
+         * @brief Explains the type column, one entry per caption in TypeColumnHeader and in that order,
+         * a newline starting a further line.
+         *
+         * The captions are taken to be whatever the header holds between its runs of two or more spaces,
+         * which is how a header naming several columns of numbers spaces them out, so "Incl ms" stays one
+         * caption. A view with a single entry hangs it off the whole column, and an empty array asks for
+         * no tip at all. An entry left empty leaves its own column without one.
+         */
+        TArray<String> TypeColumnToolTips;
+
         /** @brief How tall the header is, in pixels. */
         int32 HeaderHeight = FUIStyle::GetDefault().Metrics.RowHeight;
 
@@ -122,6 +147,13 @@ public:
         /** @brief True to let a chord click or a shift click put more than one row in the selection. */
         bool bAllowMultiSelect = true;
 
+        /** @brief Whether the filter also reads the type column, which a view of numbers wants off. */
+        bool bFilterMatchesTypeColumn = true;
+
+        /** @brief Whether a completed click anywhere on a row with children opens or closes it, rather
+         * than only a click on the disclosure arrow. */
+        bool bToggleExpansionOnRowClick = true;
+
         /** @brief Fired with the whole selection after it changed. */
         FOnTreeSelectionChanged OnSelectionChanged;
 
@@ -133,6 +165,9 @@ public:
 
         /** @brief Fired once the cursor has moved far enough with the left button held on a row to mean a drag. */
         FOnTreeItemDragDetected OnDragDetected;
+
+        /** @brief Builds the menu shown by a right-click on a row. */
+        FOnGetTreeItemContextMenu OnGetContextMenu;
     };
 
 public:
@@ -160,14 +195,13 @@ public:
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseDoubleClick(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseScroll(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override;
     virtual bool SupportsKeyboardFocus() const override;
@@ -283,6 +317,15 @@ public:
     NODISCARD FRectangle GetItemRowBounds(const TSharedPtr<FTreeItem>& Item) const;
 
     /**
+     * @brief Gets the part of an item's row its hover and selection fills cover, which is the row less the
+     * gutter the scroll bar takes. A host marking a row draws on this so its mark lines up with selection.
+     *
+     * @param Item The item to measure.
+     * @return Its highlight band in client space, or an empty rectangle when the item has no row.
+     */
+    NODISCARD FRectangle GetItemHighlightBounds(const TSharedPtr<FTreeItem>& Item) const;
+
+    /**
      * @brief Gets the part of an item's row its label occupies, which is the row less the indent, the
      * disclosure and the icon.
      *
@@ -291,17 +334,23 @@ public:
      */
     NODISCARD FRectangle GetItemLabelBounds(const TSharedPtr<FTreeItem>& Item) const;
 
+protected:
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
+    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+
 private:
     static constexpr int32 InvalidRowIndex = TArray<TSharedPtr<FTreeItem>>::InvalidIndex;
 
     static void SetSubtreeExpanded(const TArray<TSharedPtr<FTreeItem>>& Items, bool bExpanded);
 
-    NODISCARD bool MatchesFilterText(const TSharedPtr<FTreeItem>& Item) const;
-    NODISCARD bool PassesFilter(const TSharedPtr<FTreeItem>& Item) const;
+    NODISCARD const String* FindHeaderToolTip(const IntVector2& ClientPosition) const;    
+    NODISCARD bool MatchesFilterText(const FTreeItem& Item) const;
+    bool MarkFilterMatches(FTreeItem& Item) const;
     NODISCARD bool IsAncestorOfSelection(const TSharedPtr<FTreeItem>& Item) const;
     NODISCARD int32 GetArrowExtent() const;
     NODISCARD int32 GetHeaderExtent() const;
     NODISCARD FRectangle ComputeRowBounds(const FRectangle& ViewBounds, int32 RowIndex) const;
+    NODISCARD FRectangle ComputeHighlightBounds(const FRectangle& RowBounds) const;
     NODISCARD FRectangle ComputeDisclosureBounds(const FRectangle& RowBounds, int32 Depth) const;
     NODISCARD int32 ComputeRowExtent(const TSharedPtr<FTreeItem>& Item) const;
     NODISCARD int32 ComputeLabelStartX(const FRectangle& RowBounds, const TSharedPtr<FTreeItem>& Item) const;
@@ -309,7 +358,12 @@ private:
     NODISCARD int32 FindRowIndex(const TSharedPtr<FTreeItem>& Item) const;
     NODISCARD int32 GetCurrentRowIndex() const;
     NODISCARD int32 GetMaxScrollOffset() const;
-
+    
+    void MarkRowsDirty();
+    void MarkSelectionChanged();
+    void RebuildSelectionIndex() const;
+    void UpdateHeaderToolTip(const FCursorEvent& CursorEvent);
+    void RebuildTypeColumnToolTipSplits();
     void RebuildVisibleRows() const;
     void AppendVisibleRows(const TArray<TSharedPtr<FTreeItem>>& Items) const;
     void ApplySelectionFromClick(int32 RowIndex, const FModifierKeyState& Modifiers);
@@ -319,9 +373,12 @@ private:
     void ExpandOrMoveToFirstChild();
     void ScrollRowIntoView(int32 RowIndex);
     void OnScrollBarMoved(int32 NewOffset);
+    void UpdateHoveredRow();
 
     TArray<TSharedPtr<FTreeItem>>         RootItems;
     TArray<TSharedPtr<FTreeItem>>         Selection;
+    mutable TSet<const FTreeItem*>        SelectedItems;
+    mutable TSet<const FTreeItem*>        SelectionAncestors;
     mutable TArray<TSharedPtr<FTreeItem>> VisibleRows;
     TSharedPtr<IFontFace>                 Font;
     TSharedPtr<class FScrollBar>          ScrollBar;
@@ -331,7 +388,11 @@ private:
     String                                FilterText;
     String                                LabelColumnHeader;
     String                                TypeColumnHeader;
+    String                                LabelColumnToolTip;
+    TArray<String>                        TypeColumnToolTips;
+    TArray<int32>                         TypeColumnToolTipSplits;
     IntVector2                            PressPosition;
+    IntVector2                            LastCursorPosition;
     int32                                 ArrowSize;
     int32                                 TypeColumnWidth;
     int32                                 HeaderHeight;
@@ -345,10 +406,15 @@ private:
     bool                                  bAlternateRowColors;
     bool                                  bHighlightAncestors;
     bool                                  bAllowMultiSelect;
+    bool                                  bFilterMatchesTypeColumn;
+    bool                                  bToggleExpansionOnRowClick;
+    bool                                  bHasCursorInside;
     mutable bool                          bRowsDirty;
     mutable bool                          bReserveIconColumn;
+    mutable bool                          bSelectionIndexDirty;
     FOnTreeSelectionChanged               OnSelectionChangedDelegate;
     FOnTreeItemActivated                  OnItemActivatedDelegate;
     FOnTreeItemExpansionChanged           OnExpansionChangedDelegate;
     FOnTreeItemDragDetected               OnDragDetectedDelegate;
+    FOnGetTreeItemContextMenu             OnGetContextMenuDelegate;
 };

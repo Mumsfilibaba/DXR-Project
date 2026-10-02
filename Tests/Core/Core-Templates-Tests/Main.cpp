@@ -4,6 +4,7 @@
 
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
+#include "LaunchProgram/ProgramEntry.h"
 
 #include <string>
 #include <type_traits>
@@ -118,7 +119,7 @@ auto Func2(CHAR) -> int(*)()
 
 /* Tests */
 
-int main()
+static int32 RunTemplateTests()
 {
     TestHarness::Initialize("TestResults_Core.log");
     LOG_INFO("=== Template Tests ===");
@@ -498,3 +499,5 @@ int main()
     TestHarness::Shutdown();
     return ExitCode;
 }
+
+IMPLEMENT_PROGRAM_MAIN("Core-Templates-Tests", RunTemplateTests);

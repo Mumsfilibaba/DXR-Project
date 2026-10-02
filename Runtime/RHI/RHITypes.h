@@ -8,6 +8,7 @@
 
 class FRHIBuffer;
 class FRHITexture;
+class FRHIRayTracingAccelerationStructure;
 struct FRHIGeometryAccelerationStructureInstance;
 class FRHIShader;
 class FRHIVertexShader;
@@ -1369,8 +1370,9 @@ ENUM_CLASS_OPERATORS(ERHIBarrierFlags);
 
 enum class ERHIBarrierResourceType : uint8
 {
-    Texture = 0,
-    Buffer  = 1,
+    Texture               = 0,
+    Buffer                = 1,
+    AccelerationStructure = 2,
 };
 
 struct FRHITextureSubresourceRange
@@ -1597,6 +1599,11 @@ public:
         FBufferRegion Range;
     };
 
+    struct FAccelerationStructureBarrier
+    {
+        FRHIRayTracingAccelerationStructure* Resource;
+    };
+
 public:
     FRHIUnorderedAccessBarrierDesc() noexcept { }
 
@@ -1630,14 +1637,24 @@ public:
         return Desc;
     }
 
-    NODISCARD constexpr bool IsTexture() const noexcept { return ResourceType == ERHIBarrierResourceType::Texture; }
-    NODISCARD constexpr bool IsBuffer()  const noexcept { return ResourceType == ERHIBarrierResourceType::Buffer; }
+    NODISCARD static FRHIUnorderedAccessBarrierDesc CreateAccelerationStructure(FRHIRayTracingAccelerationStructure* InAccelerationStructure) noexcept
+    {
+        FRHIUnorderedAccessBarrierDesc Desc;
+        Desc.ResourceType                   = ERHIBarrierResourceType::AccelerationStructure;
+        Desc.AccelerationStructure.Resource = InAccelerationStructure;
+        return Desc;
+    }
+
+    NODISCARD constexpr bool IsTexture()               const noexcept { return ResourceType == ERHIBarrierResourceType::Texture; }
+    NODISCARD constexpr bool IsBuffer()                const noexcept { return ResourceType == ERHIBarrierResourceType::Buffer; }
+    NODISCARD constexpr bool IsAccelerationStructure() const noexcept { return ResourceType == ERHIBarrierResourceType::AccelerationStructure; }
 
     ERHIBarrierResourceType ResourceType;
     union
     {
-        FTextureBarrier Texture;
-        FBufferBarrier  Buffer;
+        FTextureBarrier               Texture;
+        FBufferBarrier                Buffer;
+        FAccelerationStructureBarrier AccelerationStructure;
     };
 };
 

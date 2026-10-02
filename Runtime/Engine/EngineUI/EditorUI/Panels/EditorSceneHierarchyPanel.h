@@ -52,13 +52,13 @@ private:
     NODISCARD TSharedPtr<FMenu> BuildRowContextMenu();
     NODISCARD TSharedPtr<FMenu> BuildMoveToFilterMenu();
     NODISCARD uint64 ComputeWorldRevision() const;
-    NODISCARD TSharedPtr<FTreeItem> CreateItem(const String& Label, FActor* Actor, FActorFilter* Filter);
+    NODISCARD TSharedPtr<FTreeItem> CreateItem(const String& ItemLabel, FActor* Actor, FActorFilter* Filter);
     NODISCARD FActorFilter* GetContextFilter() const;
 
     TSharedPtr<FEditorSceneHierarchyView>      HierarchyView;
     TSharedPtr<FTreeView>                      TreeView;
     TSharedPtr<FSearchBox>                     SearchBox;
-    TArray<TUniquePtr<FHierarchyNode>>         Nodes;
+    TArray<TSharedPtr<FHierarchyNode>>         Nodes;
     TMap<FActor*, TSharedPtr<FTreeItem>>       ItemsByActor;
     TMap<FActorFilter*, TSharedPtr<FTreeItem>> ItemsByFilter;
     FActorFilter*                              SelectedFilter;

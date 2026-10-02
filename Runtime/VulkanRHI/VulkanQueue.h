@@ -29,6 +29,13 @@ struct FVulkanCommands;
 
 typedef TSharedRef<class FVulkanQueue> FVulkanQueueRef;
 
+struct FVulkanTimestampIdleState
+{
+    uint64 AccumulatedIdleTicks      = 0;
+    uint64 LastCommandBufferEndTicks = 0;
+    bool   bHaveLastCommandBufferEnd = false;
+};
+
 class FVulkanQueue : public FVulkanDeviceChild
 {
 public:
@@ -95,6 +102,11 @@ public:
         return QueueFamilyIndex;
     }
 
+    FVulkanTimestampIdleState& GetTimestampIdleState()
+    {
+        return TimestampIdleState;
+    }
+
 private:
     typedef TQueue<FVulkanCommands*, EQueueType::MPSC> FCommandsQueue;
 
@@ -111,6 +123,7 @@ private:
     FCommandsQueue                            PendingSubmissions;
     FCriticalSection                          QueueCS;
     FCriticalSection                          ConsumerCS;
+    FVulkanTimestampIdleState                 TimestampIdleState;
 #if !VULKAN_USE_CPU_QUERY_RESOLVE
     TArray<FVulkanQueryRange>                 PendingQueryRanges;
     TArray<FVulkanQuery>                      PendingTimestampQueries;
@@ -184,6 +197,7 @@ struct FVulkanCommands
     TArray<FVulkanQuery>                              OcclusionQueries;
     TArray<FVulkanQuery>                              PipelineStatsQueries;
     TArray<struct FVulkanQueryRHI*>                   PendingQueries;
+    TArray<FVulkanQueryRHIRef>                        SubmittedQueries;
     TArray<FVulkanDeferredObject>                     DeferredObjects;
     TArray<FVulkanPendingImageBarrier>                PendingImageBarriers;
     TArray<FVulkanPendingBufferBarrier>               PendingBufferBarriers;

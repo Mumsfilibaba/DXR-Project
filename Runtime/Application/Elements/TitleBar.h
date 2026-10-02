@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/String.h"
+#include "Application/Animation/UIAnimation.h"
 #include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/CompoundElement.h"
 #include "Application/Elements/InteractiveElement.h"
@@ -7,6 +8,7 @@
 #include "CoreApplication/PlatformInterface/IPlatformWindow.h"
 
 class FHorizontalBox;
+class FOverlay;
 class FSpacer;
 class FTextBlock;
 class FWindow;
@@ -37,6 +39,9 @@ public:
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
+    virtual bool GetCursor(ECursor& OutCursor) const override;
+    virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
 
     /**
      * @brief Sets the size the button asks for, which follows the window's DPI.
@@ -57,8 +62,13 @@ protected:
     virtual void OnClicked() override;
 
 private:
+    void RestartHoverFade();
+    NODISCARD float GetHoverFillAlpha() const;
+
     ECaptionButtonKind Kind;
     IntVector2         ButtonSize;
+    float              HoverFadeStartAlpha;
+    FUIAnimation       HoverFade;
 };
 
 class APPLICATION_API FTitleBar final : public FCompoundElement
@@ -154,6 +164,19 @@ public:
      */
     void SetTitle(const String& InTitle);
 
+    /**
+     * @brief Places a tab strip (or anything else) in the caption in place of the title text.
+     *
+     * @param InContent The element to host, or null to restore the title.
+     */
+    void SetLeadingContent(const TSharedPtr<FVisualElement>& InContent);
+
+    /** @return What SetLeadingContent last placed, or null when the title is showing. */
+    NODISCARD FORCEINLINE const TSharedPtr<FVisualElement>& GetLeadingContent() const
+    {
+        return LeadingContent;
+    }
+
     /** @return The caption text. */
     NODISCARD FORCEINLINE const String& GetTitle() const
     {
@@ -193,7 +216,7 @@ public:
 private:
     void RefreshMetrics();
     void PublishRegions();
-    void GatherInteractiveRects(const TSharedPtr<FVisualElement>& Element, TArray<FWindowRect>& OutRects) const;
+    void GatherInteractiveRects(const FVisualElement& Element, TArray<FWindowRect>& OutRects) const;
 
     FWindowTitleBarMetrics             Metrics;
     FWindowTitleBarRegions             Regions;
@@ -204,8 +227,12 @@ private:
     TSharedPtr<FHorizontalBox>         Panel;
     TSharedPtr<FSpacer>                LeadingSpacer;
     TSharedPtr<FSpacer>                IconSpacer;
+    TSharedPtr<FOverlay>               LeadingHost;
+    int32                              LeadingHostSlotIndex;
+    int32                              FlexibleSpacerSlotIndex;
     TSharedPtr<FSpacer>                TrailingSpacer;
     TSharedPtr<FTextBlock>             TitleLabel;
+    TSharedPtr<FVisualElement>         LeadingContent;
     TSharedPtr<FHorizontalBox>         CaptionButtonRow;
     TArray<TSharedPtr<FCaptionButton>> CaptionButtons;
 };

@@ -1,40 +1,39 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/Allocators.h"
 #include "Application/Elements/VisualElement.h"
 
 class FElementPath
 {
 public:
+
+    /** @brief How deep a path can go before it spills from the inline storage to the heap. */
+    static constexpr int32 InlineCapacity = 24;
+
+    using FElementArray = TArray<TSharedPtr<FVisualElement>, TInlineArrayAllocator<TSharedPtr<FVisualElement>, InlineCapacity>>;
+
     FElementPath()
         : Filter(EVisibility::Visible)
         , Elements()
     {
     }
 
-    FElementPath(EVisibility InFilter)
+    explicit FElementPath(EVisibility InFilter)
         : Filter(InFilter)
         , Elements()
     {
     }
 
-    FElementPath(const FElementPath& Other)
-        : Filter(Other.Filter)
-        , Elements(Other.Elements)
-    {
-    }
-
-    FElementPath(FElementPath&& Other)
-        : Filter(Other.Filter)
-        , Elements(Move(Other.Elements))
-    {
-        Other.Filter = EVisibility::None;
-    }
+    FElementPath(const FElementPath&) = default;
+    FElementPath(FElementPath&&) = default;
+    FElementPath& operator=(const FElementPath&) = default;
+    FElementPath& operator=(FElementPath&&) = default;
 
     void Add(EVisibility InVisibility, const TSharedPtr<FVisualElement>& InElement)
     {
         CHECK(InElement != nullptr);
 
-        if (AcceptVisbility(InVisibility))
+        if (AcceptsVisibility(InVisibility))
         {
             Elements.Add(InElement);
         }
@@ -44,23 +43,28 @@ public:
     {
         CHECK(InElement != nullptr);
 
-        if (AcceptVisbility(InVisibility))
+        if (AcceptsVisibility(InVisibility))
         {
             Elements.Insert(Position, InElement);
         }
     }
 
-    bool AcceptVisbility(EVisibility Visibility) const
+    NODISCARD FORCEINLINE bool AcceptsVisibility(EVisibility InVisibility) const
     {
-        return (Filter & Visibility) != EVisibility::None;
+        return (Filter & InVisibility) != EVisibility::None;
     }
 
-    FORCEINLINE bool IsEmpty() const
+    FORCEINLINE void Reset()
+    {
+        Elements.Clear();
+    }
+
+    NODISCARD FORCEINLINE bool IsEmpty() const
     {
         return Elements.IsEmpty();
     }
 
-    FORCEINLINE bool Contains(const TSharedPtr<FVisualElement>& InElement) const
+    NODISCARD FORCEINLINE bool Contains(const TSharedPtr<FVisualElement>& InElement) const
     {
         return Elements.Contains(InElement);
     }
@@ -75,65 +79,42 @@ public:
         Elements.RemoveAt(Position);
     }
 
-    FORCEINLINE int32 LastIndex() const
+    NODISCARD FORCEINLINE int32 LastIndex() const
     {
         return Elements.LastIndex();
     }
 
-    FORCEINLINE int32 Size() const
+    NODISCARD FORCEINLINE int32 Size() const
     {
         return Elements.Size();
     }
 
-    EVisibility GetFilter() const
+    NODISCARD FORCEINLINE EVisibility GetFilter() const
     {
         return Filter;
     }
 
-    TArray<TSharedPtr<FVisualElement>>& GetElements()
+    NODISCARD FORCEINLINE FElementArray& GetElements()
     {
         return Elements;
     }
 
-    const TArray<TSharedPtr<FVisualElement>>& GetElements() const
+    NODISCARD FORCEINLINE const FElementArray& GetElements() const
     {
         return Elements;
     }
 
-    FORCEINLINE TSharedPtr<FVisualElement>& operator[](int32 Index)
+    NODISCARD FORCEINLINE TSharedPtr<FVisualElement>& operator[](int32 Index)
     {
         return Elements[Index];
     }
 
-    FORCEINLINE const TSharedPtr<FVisualElement>& operator[](int32 Index) const
+    NODISCARD FORCEINLINE const TSharedPtr<FVisualElement>& operator[](int32 Index) const
     {
         return Elements[Index];
-    }
-
-    FElementPath& operator=(const FElementPath& Other)
-    {
-        if (this != AddressOf(Other))
-        {
-            Filter  = Other.Filter;
-            Elements = Other.Elements;
-        }
-
-        return *this;
-    }
-
-    FElementPath& operator=(FElementPath&& Other)
-    {
-        if (this != AddressOf(Other))
-        {
-            Filter       = Other.Filter;
-            Other.Filter = EVisibility::None;
-            Elements      = Move(Other.Elements);
-        }
-
-        return *this;
     }
 
 private:
-    EVisibility                        Filter;
-    TArray<TSharedPtr<FVisualElement>> Elements;
+    EVisibility   Filter;
+    FElementArray Elements;
 };

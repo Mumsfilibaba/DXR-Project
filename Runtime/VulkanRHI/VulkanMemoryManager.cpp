@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Templates/NumericLimits.h"
 #include "Core/Math/Math.h"
 #include "VulkanRHI/VulkanMemoryManager.h"
@@ -61,6 +62,27 @@ static TAutoConsoleVariable<int32> CVarDefragEligibilityDelay(
     "VulkanRHI.DefragEligibilityDelay",
     "Frames past the one carrying an allocation's initialization work before it may be defragmented",
     1, 1, 16);
+
+static bool VulkanMapDedicatedAllocation(FVulkanDevice* Device, uint32 MemoryTypeIndex, VkDeviceMemory DeviceMemory, FVulkanMemoryLocation& OutLocation)
+{
+    const VkPhysicalDeviceMemoryProperties& MemoryProperties = Device->GetPhysicalDevice()->GetMemoryProperties();
+    if (!(MemoryProperties.memoryTypes[MemoryTypeIndex].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
+    {
+        return true;
+    }
+
+    void* Mapped = nullptr;
+
+    VkResult Result = vkMapMemory(Device->GetVkDevice(), DeviceMemory, 0, VK_WHOLE_SIZE, 0, &Mapped);
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR_CRITICAL("Dedicated vkMapMemory failed with %s", ToString(Result));
+        return false;
+    }
+
+    OutLocation.SetMappedBaseAddress(Mapped);
+    return true;
+}
 
 static constexpr uint64 BUFFER_MIN_BLOCK  = 256ull;
 static constexpr uint64 UPLOAD_ALIGNMENT  = 256ull;
@@ -1156,7 +1178,7 @@ void FVulkanPoolAllocatorPage::CoalesceFreeRanges()
         return;
     }
 
-    FreeRanges.SortWithPredicate([](const FFreeRange& A, const FFreeRange& B)
+    Algorithm::Sort(FreeRanges, [](const FFreeRange& A, const FFreeRange& B)
     {
         return A.Offset < B.Offset;
     });
@@ -1917,6 +1939,11 @@ bool FVulkanBufferAllocator::TryAllocate(VkMemoryPropertyFlags MemoryProperties,
         OutLocation.SetSize(MemoryRequirements.size);
         OutLocation.SetLocationType(EVulkanMemoryLocationType::Dedicated);
 
+        if (!VulkanMapDedicatedAllocation(GetDevice(), static_cast<uint32>(MemoryTypeIndex), DedicatedMemory, OutLocation))
+        {
+            return false;
+        }
+
     #if VULKAN_ENABLE_MEMORY_LOGGING
         if (CVarVulkanLogMemoryAllocations.GetValue())
         {
@@ -2152,7 +2179,8 @@ bool FVulkanBufferAllocator::TryAllocate(VkMemoryPropertyFlags MemoryProperties,
         OutLocation.SetMemoryOffset(0);
         OutLocation.SetSize(MemoryRequirements.size);
         OutLocation.SetLocationType(EVulkanMemoryLocationType::Dedicated);
-        return true;
+
+        return VulkanMapDedicatedAllocation(GetDevice(), static_cast<uint32>(MemoryTypeIndex), DedicatedMemory, OutLocation);
     }
 
     SCOPED_LOCK(PoolsCS);
@@ -3123,8 +3151,8 @@ bool FVulkanUploadHeapAllocator::Initialize(uint32 InMemoryTypeIndex)
     MemoryTypeIndex = InMemoryTypeIndex;
 
     const VkMemoryAllocateFlags AllocateFlags    = 0;
-    const VkBufferUsageFlags    TransferSrcUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     const VkBufferUsageFlags    UniformUsage     = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    const VkBufferUsageFlags    TransferSrcUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
 
     SmallAllocator = new FVulkanMultiBuddyAllocator(GetDevice(), PageSizeBytes, DefaultAlignment, MemoryTypeIndex, AllocateFlags, TransferSrcUsage);
     if (!SmallAllocator->Initialize())

@@ -739,8 +739,7 @@ public:
     typedef const typename TRemoveCV<KeyType>::Type   ConstKeyType;
     typedef const typename TRemoveCV<ValueType>::Type ConstValueType;
     typedef const typename TRemoveCV<MapType>::Type   ConstMapType;
-
-    typedef typename TConditional<TIsConst<MapType>::Value, typename MapType::BaseMapType::const_iterator, typename MapType::BaseMapType::iterator>::Type BaseIteratorType;
+    typedef typename MapType::SizeType                SizeType;
 
     TMapIterator(const TMapIterator&) = default;
     TMapIterator(TMapIterator&&) = default;
@@ -749,137 +748,94 @@ public:
     TMapIterator& operator=(const TMapIterator&) = default;
     TMapIterator& operator=(TMapIterator&&) = default;
 
-    explicit TMapIterator(MapType& InMap, BaseIteratorType InBaseIterator)
+    explicit TMapIterator(MapType& InMap, SizeType InIndex)
         : Map(InMap)
-        , BaseIterator(InBaseIterator)
+        , Index(InIndex)
     {
     }
 
-    /** @return Returns true if the iterator is the end-iterator */
     NODISCARD FORCEINLINE bool IsEnd() const
     {
-        return BaseIterator == Map.Get().BaseMap.end();
+        return Index >= Map.Get().BucketCount() || Index < 0;
     }
 
-    /** @return Returns true if the iterator is valid */
     NODISCARD FORCEINLINE bool IsValid() const
     {
         return true;
     }
 
-    /** @return Returns the key for this iterator */
     NODISCARD FORCEINLINE const KeyType& GetKey() const
     {
-        return BaseIterator->first;
+        return Map.Get().GetElement(Index).First;
     }
 
-    /** @return Returns the value for this iterator */
     NODISCARD FORCEINLINE ValueType& GetValue()
     {
-        return BaseIterator->second;
+        return Map.Get().GetElement(Index).Second;
     }
 
-    /** @return Returns the value for this iterator */
     NODISCARD FORCEINLINE const ValueType& GetValue() const
     {
-        return BaseIterator->second;
+        return Map.Get().GetElement(Index).Second;
     }
 
 public:
-
-    /**
-     * @brief Pre-increment operator
-     * @return Returns an iterator with the next index
-     */
     FORCEINLINE TMapIterator operator++()
     {
-        BaseIterator++;
+        Index = Map.Get().NextOccupied(Index);
         return *this;
     }
 
-    /**
-     * @brief Post-increment operator
-     * @return Returns an iterator with the current index
-     */
     FORCEINLINE TMapIterator operator++(int)
     {
         TMapIterator NewIterator(*this);
-        BaseIterator++;
+        Index = Map.Get().NextOccupied(Index);
         return NewIterator;
     }
 
-    /**
-     * @brief Pre-decrement operator
-     * @return Returns an iterator with the previous index
-     */
     FORCEINLINE TMapIterator operator--()
     {
-        BaseIterator--;
+        Index = Map.Get().PrevOccupied(Index);
         return *this;
     }
 
-    /**
-     * @brief Post-decrement operator
-     * @return Returns an iterator with the current index
-     */
     FORCEINLINE TMapIterator operator--(int)
     {
         TMapIterator NewIterator(*this);
-        BaseIterator--;
+        Index = Map.Get().PrevOccupied(Index);
         return NewIterator;
     }
 
-    /**
-     * @brief Retrieve key and value pair
-     * @return Returns references to the key and values from this iterator
-     */
     NODISCARD FORCEINLINE TPair<ConstKeyType&, ValueType&> operator*()
     {
-        return TPair<ConstKeyType&, ValueType&>{ BaseIterator->first, BaseIterator->second };
+        auto& Pair = Map.Get().GetElement(Index);
+        return TPair<ConstKeyType&, ValueType&>(Pair.First, Pair.Second);
     }
 
-    /**
-     * @brief Retrieve key and value pair
-     * @return Returns references to the key and values from this iterator
-     */
     NODISCARD FORCEINLINE TPair<ConstKeyType&, ConstValueType&> operator*() const
     {
-        return TPair<ConstKeyType&, ConstValueType&>{ BaseIterator->first, BaseIterator->second };
+        const auto& Pair = Map.Get().GetElement(Index);
+        return TPair<ConstKeyType&, ConstValueType&>(Pair.First, Pair.Second);
     }
 
-    /**
-     * @brief Compare this and another instance
-     * @param Other Value to compare with
-     * @return Returns true if the iterators are equal
-     */
     NODISCARD FORCEINLINE bool operator==(const TMapIterator& Other) const
     {
-        return BaseIterator == Other.BaseIterator;
+        return Index == Other.Index && Map.AddressOf() == Other.Map.AddressOf();
     }
 
-    /**
-     * @brief Compare this and another instance
-     * @param Other Value to compare with
-     * @return Returns true if the iterators are not equal
-     */
     NODISCARD FORCEINLINE bool operator!=(const TMapIterator& Other) const
     {
         return !(*this == Other);
     }
 
-    /**
-     * @brief Create a constant iterator from this
-     * @return Returns a new iterator based on the index from this instance
-     */
     NODISCARD FORCEINLINE operator TMapIterator<ConstMapType, ConstKeyType, ConstValueType>() const
     {
-        // The array type must be const here in order to make the dereference work properly
-        return TMapIterator<ConstMapType, ConstKeyType, ConstValueType>(Map, BaseIterator);
+        return TMapIterator<ConstMapType, ConstKeyType, ConstValueType>(Map.Get(), Index);
     }
 
 private:
     TReferenceWrapper<MapType> Map;
-    BaseIteratorType           BaseIterator;
+    SizeType                   Index;
 };
 
 template<typename SetType, typename ElementType>
@@ -888,8 +844,7 @@ class TSetIterator
 public:
     typedef const typename TRemoveCV<ElementType>::Type ConstElementType;
     typedef const typename TRemoveCV<SetType>::Type     ConstSetType;
-
-    typedef typename TConditional<TIsConst<SetType>::Value, typename SetType::BaseSetType::const_iterator, typename SetType::BaseSetType::iterator>::Type BaseIteratorType;
+    typedef typename SetType::SizeType                  SizeType;
 
     TSetIterator(const TSetIterator&) = default;
     TSetIterator(TSetIterator&&) = default;
@@ -898,114 +853,75 @@ public:
     TSetIterator& operator=(const TSetIterator&) = default;
     TSetIterator& operator=(TSetIterator&&) = default;
 
-    explicit TSetIterator(SetType& InSet, BaseIteratorType InBaseIterator)
+    explicit TSetIterator(SetType& InSet, SizeType InIndex)
         : Set(InSet)
-        , BaseIterator(InBaseIterator)
+        , Index(InIndex)
     {
     }
 
-    /** @return Returns true if the iterator is the end-iterator */
     NODISCARD FORCEINLINE bool IsEnd() const
     {
-        return BaseIterator == Set.Get().BaseSet.end();
+        return Index >= Set.Get().BucketCount() || Index < 0;
     }
 
-    /** @return Returns true if the iterator is valid */
     NODISCARD FORCEINLINE bool IsValid() const
     {
         return true;
     }
 
-    /** @return Returns the element for this iterator */
     NODISCARD FORCEINLINE const ElementType& GetElement() const
     {
-        return *BaseIterator;
+        return Set.Get().GetElement(Index);
     }
 
 public:
-
-    /**
-     * @brief Pre-increment operator
-     * @return Returns an iterator with the next index
-     */
     FORCEINLINE TSetIterator operator++()
     {
-        BaseIterator++;
+        Index = Set.Get().NextOccupied(Index);
         return *this;
     }
 
-    /**
-     * @brief Post-increment operator
-     * @return Returns an iterator with the current index
-     */
     FORCEINLINE TSetIterator operator++(int)
     {
         TSetIterator NewIterator(*this);
-        BaseIterator++;
+        Index = Set.Get().NextOccupied(Index);
         return NewIterator;
     }
 
-    /**
-     * @brief Pre-decrement operator
-     * @return Returns an iterator with the previous index
-     */
     FORCEINLINE TSetIterator operator--()
     {
-        BaseIterator--;
+        Index = Set.Get().PrevOccupied(Index);
         return *this;
     }
 
-    /**
-     * @brief Post-decrement operator
-     * @return Returns an iterator with the current index
-     */
     FORCEINLINE TSetIterator operator--(int)
     {
         TSetIterator NewIterator(*this);
-        BaseIterator--;
+        Index = Set.Get().PrevOccupied(Index);
         return NewIterator;
     }
 
-    /**
-     * @brief Retrieve the element
-     * @return Returns a reference to the element from this iterator
-     */
     NODISCARD FORCEINLINE const ElementType& operator*() const
     {
-        return *BaseIterator;
+        return Set.Get().GetElement(Index);
     }
 
-    /**
-     * @brief Compare this and another instance
-     * @param Other Value to compare with
-     * @return Returns true if the iterators are equal
-     */
     NODISCARD FORCEINLINE bool operator==(const TSetIterator& Other) const
     {
-        return BaseIterator == Other.BaseIterator;
+        return Index == Other.Index && Set.AddressOf() == Other.Set.AddressOf();
     }
 
-    /**
-     * @brief Compare this and another instance
-     * @param Other Value to compare with
-     * @return Returns true if the iterators are not equal
-     */
     NODISCARD FORCEINLINE bool operator!=(const TSetIterator& Other) const
     {
         return !(*this == Other);
     }
 
-    /**
-     * @brief Create a constant iterator from this
-     * @return Returns a new iterator based on the index from this instance
-     */
     NODISCARD FORCEINLINE operator TSetIterator<ConstSetType, ConstElementType>() const
     {
-        // The array type must be const here in order to make the dereference work properly
-        return TSetIterator<ConstSetType, ConstElementType>(Set, BaseIterator);
+        return TSetIterator<ConstSetType, ConstElementType>(Set.Get(), Index);
     }
 
 private:
     TReferenceWrapper<SetType> Set;
-    BaseIteratorType           BaseIterator;
+    SizeType                   Index;
 };

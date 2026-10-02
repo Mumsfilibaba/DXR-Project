@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/String.h"
 #include "Core/Delegates/Delegate.h"
+#include "Application/Animation/UIAnimation.h"
 #include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/VisualElement.h"
 #include "Application/Style/UIStyle.h"
@@ -44,8 +45,8 @@ public:
         /** @brief The size the arrow brush is drawn at, in pixels, which is square. */
         int32 ArrowSize = 16;
 
-        /** @brief Whether a closed section draws the rule that separates it from the next one. */
-        bool bDrawBottomBorderWhenClosed = true;
+        /** @brief Unused. Nested panels carry their own outline instead of a closed-state underline. */
+        bool bDrawBottomBorderWhenClosed = false;
 
         /** @brief Fired with the state the section moved to. */
         FOnExpanderStateChanged OnStateChanged;
@@ -66,10 +67,9 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
+    virtual IntVector2 PrepareDesiredSize() override;
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
@@ -117,9 +117,24 @@ public:
         return Label;
     }
 
+protected:
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
+    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+
 private:
     NODISCARD FRectangle GetHeaderBounds(const FRectangle& AllottedBounds) const;
     NODISCARD int32 GetArrowExtent() const;
+    NODISCARD int32 GetSettledHeight() const;
+    NODISCARD int32 GetDisplayedHeight() const;
+    NODISCARD int32 GetContentDesiredHeight() const;
+    NODISCARD float ComputeAnimationAlpha() const;
+
+    NODISCARD float GetAnimationAlpha() const
+    {
+        return AnimationAlpha;
+    }
+
+    NODISCARD bool IsContentShown() const;
 
     TSharedPtr<FVisualElement> Content;
     TSharedPtr<IFontFace>      Font;
@@ -130,6 +145,9 @@ private:
     FUIBrush                   CollapsedArrow;
     int32                      ArrowSize;
     int32                      HeaderHeight;
+    int32                      AnimationStartHeight;
+    FUIAnimation               ExpandAnimation;
+    float                      AnimationAlpha;
     bool                       bIsExpanded;
     bool                       bIsHeaderHovered;
     bool                       bDrawBottomBorderWhenClosed;

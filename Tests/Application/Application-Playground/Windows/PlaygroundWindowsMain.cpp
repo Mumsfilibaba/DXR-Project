@@ -3,7 +3,7 @@
 
 #include "PlaygroundLoop.h"
 
-// The counterpart to Runtime/Launch/Windows/WindowsMain.cpp, calling the playground loop rather than
+// The counterpart to Runtime/LaunchEngine/Windows/WindowsMain.cpp, calling the playground loop rather than
 // EngineMain. The Agility SDK exports are deliberately left out: the playground draws a UI overlay and
 // never asks for a feature that needs them.
 

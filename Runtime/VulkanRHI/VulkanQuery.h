@@ -4,6 +4,7 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Threading/ScopedLock.h"
+#include "Core/Threading/Atomic/AtomicInt.h"
 #include "RHI/RHIResources.h"
 #include "VulkanRHI/VulkanConfiguration.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
@@ -97,6 +98,7 @@ struct FVulkanQueryRHI : public FRHIQuery, public FVulkanDeviceChild
     FVulkanQuery             CurrentQuery;
     TSharedRef<FVulkanFence> SyncFence;
     uint64*                  QueryResult;
+    AtomicInt32              bResultReady;
 };
 
 struct FVulkanQueryRange

@@ -66,6 +66,11 @@ struct FPlatformVectorMathSSE4_1 : public FPlatformVectorMathSSSE3
     {
         return _mm_max_epi32(VectorA, VectorB);
     }
+
+    static FORCEINLINE FInt128 VECTORCALL VectorPackUInt32ToUInt16(FInt128 VectorA, FInt128 VectorB) noexcept
+    {
+        return _mm_packus_epi32(VectorA, VectorB);
+    }
 };
 
 #endif

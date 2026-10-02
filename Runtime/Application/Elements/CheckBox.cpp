@@ -47,6 +47,8 @@ void FCheckBox::Initialize(const FDesc& Desc)
 
         LabelText = FTextBlock::Create(LabelDesc);
         SetContent(LabelText);
+
+        ApplyInteractionTextColor(LabelText.Get());
     }
 }
 
@@ -75,7 +77,7 @@ void FCheckBox::OnArrange(const FRectangle& AllottedBounds)
     LabelBounds.Position.X += BoxSize + LabelSpacing;
     LabelBounds.Width = Math::Max(AllottedBounds.Width - BoxSize - LabelSpacing, 0);
 
-    Content->Tick(FRectangle::AlignInBounds(LabelBounds, Content->GetCachedDesiredSize(), EHorizontalAlignment::Left, EVerticalAlignment::Center));
+    Content->Arrange(FLayout::AlignInBounds(LabelBounds, Content->GetCachedDesiredSize(), EHorizontalAlignment::Left, EVerticalAlignment::Center));
 }
 
 int32 FCheckBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -83,7 +85,7 @@ int32 FCheckBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     const FUIStyle&         Style = FUIStyle::GetDefault();
     const EInteractionState State = GetInteractionState();
 
-    const FRectangle Box = FRectangle::AlignInBounds(AllottedGeometry.Bounds, IntVector2(BoxSize, BoxSize), EHorizontalAlignment::Left, EVerticalAlignment::Center);
+    const FRectangle Box = FLayout::AlignInBounds(AllottedGeometry.Bounds, IntVector2(BoxSize, BoxSize), EHorizontalAlignment::Left, EVerticalAlignment::Center);
 
     const FCornerRadii BoxRadii = FCornerRadii(Math::Min(Style.Metrics.CornerRadius, static_cast<float>(BoxSize) * 0.25f));
 
@@ -127,27 +129,35 @@ int32 FCheckBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         OutCommandList.AddBox(LayerId, Dash, MarkColor);
     }
 
-    if (LabelText)
-    {
-        LabelText->SetColorAndOpacity(Style.GetTextColor(State));
-    }
-
     return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
+}
+
+void FCheckBox::OnInteractionStateChanged()
+{
+    FInteractiveElement::OnInteractionStateChanged();
+
+    ApplyInteractionTextColor(LabelText.Get());
 }
 
 void FCheckBox::SetCheckState(ECheckBoxState InState)
 {
+    if (CheckState == InState)
+    {
+        return;
+    }
+
     CheckState = InState;
+    InvalidatePaint();
 }
 
 FRectangle FCheckBox::GetBoxBounds() const
 {
-    return FRectangle::AlignInBounds(GetContentRectangle(), IntVector2(BoxSize, BoxSize), EHorizontalAlignment::Left, EVerticalAlignment::Center);
+    return FLayout::AlignInBounds(GetContentRectangle(), IntVector2(BoxSize, BoxSize), EHorizontalAlignment::Left, EVerticalAlignment::Center);
 }
 
 void FCheckBox::OnClicked()
 {
-    CheckState = GetNextState();
+    SetCheckState(GetNextState());
     OnStateChangedDelegate.ExecuteIfBound(CheckState);
 }
 

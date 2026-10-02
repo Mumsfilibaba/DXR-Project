@@ -2,8 +2,7 @@
 #include "Engine/EngineUI/EditorUI/EditorPanel.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorAboutPanel.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorContentBrowserPanel.h"
-#include "Engine/EngineUI/EditorUI/Panels/EditorFrameProfilerPanel.h"
-#include "Engine/EngineUI/EditorUI/Panels/EditorGPUProfilerPanel.h"
+#include "Engine/EngineUI/EditorUI/Panels/EditorProfilerPanel.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorOutputLogPanel.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorPropertiesPanel.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorRHIInfoPanel.h"
@@ -95,12 +94,7 @@ bool FEditorPanelRegistry::RegisterAll()
         return false;
     }
 
-    if (!Add(MakeSharedPtr<FEditorGPUProfilerPanel>(EditorEngine)))
-    {
-        return false;
-    }
-
-    if (!Add(MakeSharedPtr<FEditorFrameProfilerPanel>(EditorEngine)))
+    if (!Add(MakeSharedPtr<FEditorProfilerPanel>(EditorEngine)))
     {
         return false;
     }
@@ -206,6 +200,33 @@ void FEditorPanelRegistry::ShowPanel(const String& PanelId)
 
     DockingArea->SetActivePanel(PanelId);
     Panel->SetOpen(true);
+}
+
+void FEditorPanelRegistry::HidePanel(const String& PanelId)
+{
+    TSharedPtr<FEditorPanel> Panel = FindPanel(PanelId);
+    if (!Panel || !DockingArea)
+    {
+        return;
+    }
+
+    if (DockingArea->IsPanelDocked(PanelId))
+    {
+        DockingArea->UndockPanel(PanelId);
+    }
+
+    Panel->SetOpen(false);
+}
+
+void FEditorPanelRegistry::TogglePanel(const String& PanelId)
+{
+    if (IsPanelDocked(PanelId))
+    {
+        HidePanel(PanelId);
+        return;
+    }
+
+    ShowPanel(PanelId);
 }
 
 void FEditorPanelRegistry::OnPanelClosed(const String& PanelId)

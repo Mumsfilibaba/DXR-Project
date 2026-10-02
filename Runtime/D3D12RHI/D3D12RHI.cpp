@@ -397,7 +397,11 @@ FRHISceneAccelerationStructure* FD3D12DeviceRHI::CreateSceneAccelerationStructur
 
     {
         FD3D12ScopedCommandContext BuildContext(*GetDevice()->GetQueue(ED3D12CommandQueueType::Direct));
-        if (!D3D12Scene->Build(*BuildContext, BuildDesc))
+        if (D3D12Scene->Build(*BuildContext, BuildDesc))
+        {
+            BuildContext->AccelerationStructureBarrier(D3D12Scene.Get());
+        }
+        else
         {
             DEBUG_BREAK();
             D3D12Scene.Reset();
@@ -422,7 +426,11 @@ FRHIGeometryAccelerationStructure* FD3D12DeviceRHI::CreateGeometryAccelerationSt
 
     {
         FD3D12ScopedCommandContext BuildContext(*GetDevice()->GetQueue(ED3D12CommandQueueType::Direct));
-        if (!D3D12Geometry->Build(*BuildContext, BuildDesc))
+        if (D3D12Geometry->Build(*BuildContext, BuildDesc))
+        {
+            BuildContext->AccelerationStructureBarrier(D3D12Geometry.Get());
+        }
+        else
         {
             DEBUG_BREAK();
             D3D12Geometry.Reset();
@@ -1742,6 +1750,36 @@ bool FD3D12DeviceRHI::QuerySupportedSampleCounts(EFormat Format, uint32& OutSamp
     return OutSampleCounts != 0;
 }
 
+bool FD3D12DeviceRHI::IsQueryResultResolved(FD3D12QueryRHI* D3D12Query)
+{
+    if (D3D12Query->bResultReady.Load())
+    {
+        return true;
+    }
+
+    const ED3D12CommandQueueType QueueTypes[] =
+    {
+        ED3D12CommandQueueType::Direct,
+        ED3D12CommandQueueType::Compute,
+        ED3D12CommandQueueType::Copy,
+    };
+
+    for (ED3D12CommandQueueType QueueType : QueueTypes)
+    {
+        if (FD3D12Queue* Queue = Device->GetQueue(QueueType))
+        {
+            Queue->ProcessCommandQueue();
+        }
+
+        if (D3D12Query->bResultReady.Load())
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool FD3D12DeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode)
 {
     FD3D12QueryRHI* D3D12Query = FD3D12DeviceRHI::ResourceCast(Query);
@@ -1750,15 +1788,27 @@ bool FD3D12DeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQuery
         return false;
     }
 
+    const FD3D12FenceSyncPoint& SyncPoint = D3D12Query->SyncPoint;
+    if (!SyncPoint.IsValid())
+    {
+        return false;
+    }
+
     if (Mode == EQueryResultMode::Wait)
     {
-        const FD3D12FenceSyncPoint& SyncPoint = D3D12Query->SyncPoint;
-        if (!SyncPoint.IsValid())
+        if (!SyncPoint.Wait())
         {
             return false;
         }
+    }
+    else if (!SyncPoint.IsReached())
+    {
+        return false;
+    }
 
-        SyncPoint.Wait();
+    if (!IsQueryResultResolved(D3D12Query))
+    {
+        return false;
     }
 
     OutResult = *D3D12Query->QueryResult;
@@ -1773,15 +1823,27 @@ bool FD3D12DeviceRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipeline
         return false;
     }
 
+    const FD3D12FenceSyncPoint& SyncPoint = D3D12Query->SyncPoint;
+    if (!SyncPoint.IsValid())
+    {
+        return false;
+    }
+
     if (Mode == EQueryResultMode::Wait)
     {
-        const FD3D12FenceSyncPoint& SyncPoint = D3D12Query->SyncPoint;
-        if (!SyncPoint.IsValid())
+        if (!SyncPoint.Wait())
         {
             return false;
         }
+    }
+    else if (!SyncPoint.IsReached())
+    {
+        return false;
+    }
 
-        SyncPoint.Wait();
+    if (!IsQueryResultResolved(D3D12Query))
+    {
+        return false;
     }
 
     OutResult = *reinterpret_cast<const FRHIPipelineStatistics*>(D3D12Query->QueryResult);

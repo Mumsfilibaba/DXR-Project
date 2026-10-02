@@ -75,6 +75,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
     , DescriptorSetHandles()
     , DescriptorSetBuilders()
     , DescriptorSetVersion(0)
+    , DirtyFlags(EVulkanDescriptorDirtyFlags::ResourcesDirty | EVulkanDescriptorDirtyFlags::DescriptorSetDirty)
     , bDynamicOffsetsDirty(false)
 {
     if (!Layout)
@@ -755,6 +756,11 @@ void FVulkanDescriptorState::BindDescriptorSets(class FVulkanCommandBuffer& Comm
 
     if (DescriptorSetHandles.Size() > 0)
     {
+        for (MAYBE_UNUSED VkDescriptorSet DescriptorSet : DescriptorSetHandles)
+        {
+            CHECK(DescriptorSet != VK_NULL_HANDLE);
+        }
+
         const uint32 RegularFirstSet = bHasBindless ? (VULKAN_BINDLESS_RUNTIME_SET_INDEX + 1) : 0;
         CommandBuffer->BindDescriptorSets(
             BindPoint, 

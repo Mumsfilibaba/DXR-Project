@@ -17,16 +17,20 @@ public:
 
 public:
 
-    // Register a thread this is called from the constructor of the platform thread
+    // Register a thread this is called from the constructor of the platform thread.
     void RegisterThread(IPlatformThread* InThread);
 
-    // Unregister a thread, this is called from the destructor of the platform thread
+    // Unregister a thread, this is called from the destructor of the platform thread.
     void UnregisterThread(IPlatformThread* InThread);
 
-    // Retrieve a ThreadObject from a native ThreadHandle
+    // Retrieve a ThreadObject from a native ThreadHandle.
     IPlatformThread* GetThreadFromHandle(void* ThreadHandle);
 
-    // Check if the thread-handle is for the main-thread
+    // Retrieve a ThreadObject from a native ThreadHandle, for a caller that expects to be handed
+    // handles it does not own, such as the main thread or an OS thread, and treats a miss as normal.
+    IPlatformThread* FindThreadFromHandle(void* ThreadHandle);
+
+    // Check if the thread-handle is for the main-thread.
     bool IsMainThread(void* ThreadHandle) const 
     {
         return MainThreadHandle == ThreadHandle;

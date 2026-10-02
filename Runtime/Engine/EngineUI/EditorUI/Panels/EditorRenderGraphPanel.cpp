@@ -1,5 +1,9 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorRenderGraphPanel.h"
+#include "Engine/EngineUI/EditorUI/Panels/EditorProfilerPanel.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
+#include "Engine/EngineUI/EditorUI/EditorShell.h"
+#include "Engine/EngineUI/EditorUI/EditorPanelRegistry.h"
+#include "Engine/EditorEngine.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/Button.h"
@@ -9,14 +13,13 @@
 #include "Application/Elements/TextBlock.h"
 #include "Application/Graph/GraphCanvas.h"
 #include "Application/Graph/GraphModel.h"
+#include "Application/Menus/Menu.h"
 #include "Application/Style/UIStyle.h"
 #include "Application/Text/IFontFace.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 
-// How far apart the header row holds its controls
 constexpr int32 RENDERGRAPH_HEADER_SPACING = 8;
 
-// The legend box, at the sizes the ImGui window draws it at
 constexpr int32 RENDERGRAPH_LEGEND_WIDTH         = 286;
 constexpr int32 RENDERGRAPH_LEGEND_PADDING       = 8;
 constexpr int32 RENDERGRAPH_LEGEND_SWATCH_WIDTH  = 14;
@@ -32,7 +35,8 @@ constexpr float RENDERGRAPH_LEGEND_SWATCH_RADIUS = 2.0f;
 static FFloatColor MakeGraphColor(int32 Red, int32 Green, int32 Blue, int32 Alpha = 255)
 {
     constexpr float Scale = 1.0f / 255.0f;
-    return FFloatColor(static_cast<float>(Red) * Scale, static_cast<float>(Green) * Scale,
+    return FFloatColor(
+        static_cast<float>(Red) * Scale, static_cast<float>(Green) * Scale,
         static_cast<float>(Blue) * Scale, static_cast<float>(Alpha) * Scale);
 }
 
@@ -47,29 +51,38 @@ static void ResizeToUnassigned(TArray<int32>& Slots, int32 Size)
     }
 }
 
-namespace RenderGraphColors
+struct RenderGraphColors
 {
-    static const FFloatColor NodeTitle   = MakeGraphColor(60, 60, 65);
-    static const FFloatColor NodeBody    = MakeGraphColor(45, 45, 48);
-    static const FFloatColor NodeBorder  = MakeGraphColor(90, 90, 95);
-    static const FFloatColor NodeText    = MakeGraphColor(235, 235, 235);
+    static FFloatColor NodeTitle()    { return FUIStyle::GetDefault().Colors.ControlHovered; }
+    static FFloatColor NodeBody()     { return FUIStyle::GetDefault().Colors.ControlNormal; }
+    static FFloatColor Stroke()       { return MakeGraphColor(72, 72, 72); }
+    static FFloatColor NodeBorder()   { return Stroke(); }
+    static FFloatColor PinSeparator() { return MakeGraphColor(90, 90, 90); }
+    static FFloatColor Grid()         { return MakeGraphColor(58, 58, 58); }
+    static FFloatColor NodeText()     { return FUIStyle::GetDefault().Colors.Text; }
 
-    static const FFloatColor MutedTitle  = MakeGraphColor(42, 42, 46);
-    static const FFloatColor MutedBody   = MakeGraphColor(32, 32, 35);
-    static const FFloatColor MutedBorder = MakeGraphColor(62, 62, 66);
-    static const FFloatColor MutedText   = MakeGraphColor(140, 140, 145);
+    static FFloatColor MutedTitle()   { return FUIStyle::GetDefault().Colors.ControlPressed; }
+    static FFloatColor MutedBody()    { return FUIStyle::GetDefault().Colors.ControlDisabled; }
+    static FFloatColor MutedBorder()  { return Stroke(); }
+    static FFloatColor MutedText()    { return FUIStyle::GetDefault().Colors.TextDisabled; }
 
-    static const FFloatColor InputPin    = MakeGraphColor(100, 180, 255);
-    static const FFloatColor OutputPin   = MakeGraphColor(255, 180, 90);
-    static const FFloatColor PinOutline  = MakeGraphColor(20, 20, 20);
+    static FFloatColor InputPin()     { return MakeGraphColor(100, 180, 255); }
+    static FFloatColor OutputPin()    { return MakeGraphColor(255, 180, 90); }
+    static FFloatColor PinOutline()   { return FUIStyle::GetDefault().Colors.InputFieldFill; }
 
-    static const FFloatColor Background  = MakeGraphColor(28, 28, 28);
-    static const FFloatColor Link        = MakeGraphColor(170, 170, 180, 200);
+    static FFloatColor Background()   { return FUIStyle::GetDefault().Colors.WindowBackground; }
+    static FFloatColor Link()         { return Stroke(); }
 
-    static const FFloatColor LegendFill   = MakeGraphColor(20, 20, 22, 225);
-    static const FFloatColor LegendBorder = MakeGraphColor(90, 90, 95);
-    static const FFloatColor LegendText   = MakeGraphColor(220, 220, 220);
-}
+    static FFloatColor LegendFill()   { return WithAlpha(FUIStyle::GetDefault().Panel.Fill, 225.0f / 255.0f); }
+    static FFloatColor LegendBorder() { return Stroke(); }
+    static FFloatColor LegendText()   { return FUIStyle::GetDefault().Colors.Text; }
+
+private:
+    static FFloatColor WithAlpha(const FFloatColor& Color, float Alpha)
+    {
+        return FFloatColor(Color.R, Color.G, Color.B, Alpha);
+    }
+};
 
 class FRenderGraphLegend final : public FVisualElement
 {
@@ -105,23 +118,23 @@ public:
 
         const FFloatColor Swatches[RENDERGRAPH_LEGEND_ROWS] =
         {
-            RenderGraphColors::InputPin,
-            RenderGraphColors::OutputPin,
-            RenderGraphColors::NodeTitle,
-            RenderGraphColors::MutedTitle,
+            RenderGraphColors::InputPin(),
+            RenderGraphColors::OutputPin(),
+            RenderGraphColors::NodeTitle(),
+            RenderGraphColors::MutedTitle(),
         };
 
         const FFloatColor SwatchOutlines[] =
         {
-            RenderGraphColors::NodeBorder,
-            RenderGraphColors::MutedBorder,
+            RenderGraphColors::NodeBorder(),
+            RenderGraphColors::MutedBorder(),
         };
 
         const FRectangle&  Bounds  = AllottedGeometry.Bounds;
         const FCornerRadii Corners(RENDERGRAPH_LEGEND_CORNER_RADIUS);
 
-        OutCommandList.AddBox(LayerId, Bounds, RenderGraphColors::LegendFill, Corners);
-        OutCommandList.AddBoxOutline(LayerId, Bounds, RenderGraphColors::LegendBorder, 1.0f, Corners);
+        OutCommandList.AddBox(LayerId, Bounds, RenderGraphColors::LegendFill(), Corners);
+        OutCommandList.AddBoxOutline(LayerId, Bounds, RenderGraphColors::LegendBorder(), 1.0f, Corners);
 
         if (!Font)
         {
@@ -154,7 +167,7 @@ public:
             const FRectangle LabelBounds(IntVector2(LabelLeft, CenterY - (LineHeight / 2)),
                 Bounds.GetRight() - LabelLeft - RENDERGRAPH_LEGEND_PADDING, LineHeight);
 
-            OutCommandList.AddText(LayerId + 1, LabelBounds, Labels[Row], Font.Get(), RenderGraphColors::LegendText);
+            OutCommandList.AddText(LayerId + 1, LabelBounds, Labels[Row], Font.Get(), RenderGraphColors::LegendText());
         }
 
         return LayerId + 1;
@@ -178,6 +191,7 @@ FEditorRenderGraphPanel::FEditorRenderGraphPanel(FEditorEngine* InEditorEngine)
     , PositionsByPassName()
     , BuiltPasses()
     , BuiltSignature()
+    , PendingPassName()
     , bIsCapturing(false)
     , bShowCulled(true)
     , bNeedsFitView(false)
@@ -194,20 +208,26 @@ bool FEditorRenderGraphPanel::Initialize()
 
     FGraphCanvas::FDesc CanvasDesc;
     CanvasDesc.Font                        = FEditorStyle::GetFonts().Body;
-    CanvasDesc.BackgroundColor             = RenderGraphColors::Background;
-    CanvasDesc.LinkColor                   = RenderGraphColors::Link;
+    CanvasDesc.BackgroundColor             = RenderGraphColors::Background();
+    CanvasDesc.LinkColor                   = RenderGraphColors::Link();
+    CanvasDesc.GridColor                   = RenderGraphColors::Grid();
+    CanvasDesc.SurroundColor               = FUIStyle::GetDefault().Panel.Fill;
+    CanvasDesc.CornerRadius                = FUIStyle::GetDefault().InnerFrame.CornerRadius;
+    CanvasDesc.FitMinZoom                  = 1.0f;
     CanvasDesc.GridSpacing                 = 32;
     CanvasDesc.bIsViewer                   = true;
-    CanvasDesc.NodeStyle.Body              = RenderGraphColors::NodeBody;
-    CanvasDesc.NodeStyle.Border            = RenderGraphColors::NodeBorder;
-    CanvasDesc.NodeStyle.Text              = RenderGraphColors::NodeText;
-    CanvasDesc.NodeStyle.MutedBody         = RenderGraphColors::MutedBody;
-    CanvasDesc.NodeStyle.MutedBorder       = RenderGraphColors::MutedBorder;
-    CanvasDesc.NodeStyle.MutedText         = RenderGraphColors::MutedText;
-    CanvasDesc.NodeStyle.PinOutline        = RenderGraphColors::PinOutline;
+    CanvasDesc.NodeStyle.Body              = RenderGraphColors::NodeBody();
+    CanvasDesc.NodeStyle.Border            = RenderGraphColors::NodeBorder();
+    CanvasDesc.NodeStyle.Text              = RenderGraphColors::NodeText();
+    CanvasDesc.NodeStyle.MutedBody         = RenderGraphColors::MutedBody();
+    CanvasDesc.NodeStyle.MutedBorder       = RenderGraphColors::MutedBorder();
+    CanvasDesc.NodeStyle.MutedText         = RenderGraphColors::MutedText();
+    CanvasDesc.NodeStyle.PinOutline        = RenderGraphColors::PinOutline();
+    CanvasDesc.NodeStyle.PinSeparator      = RenderGraphColors::PinSeparator();
     CanvasDesc.NodeStyle.CornerRadius      = 6.0f;
     CanvasDesc.NodeStyle.MutedTintOpacity  = 1.0f;
     CanvasDesc.NodeStyle.bStackPinRows     = true;
+    CanvasDesc.OnGetContextMenu            = FOnGetGraphContextMenu::CreateRaw(this, &FEditorRenderGraphPanel::BuildNodeContextMenu);
 
     Canvas = FGraphCanvas::Create(CanvasDesc);
     if (!Canvas)
@@ -232,7 +252,7 @@ bool FEditorRenderGraphPanel::Initialize()
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
     Column->AddSlot(HeaderRow).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
-    Column->AddSlot(CanvasArea).SetFillCoefficient(1.0f);
+    Column->AddSlot(FEditorStyle::MakeInnerFrame(CanvasArea, FMargin(0))).SetFillCoefficient(1.0f);
 
     Content = Column;
     return true;
@@ -304,6 +324,7 @@ void FEditorRenderGraphPanel::Release()
     PositionsByPassName.Clear();
     BuiltPasses.Clear();
     BuiltSignature.Clear();
+    PendingPassName.Clear();
 
     FEditorPanel::Release();
 }
@@ -365,6 +386,8 @@ void FEditorRenderGraphPanel::Tick(float /*DeltaTime*/)
             {
                 RunAutoLayout();
             }
+
+            ApplyPendingPassSelection();
         }
     }
 #endif
@@ -484,7 +507,7 @@ bool FEditorRenderGraphPanel::RebuildModel(const FRenderGraphDebugSnapshot& Snap
 
         FGraphNode Node;
         Node.Title     = BuildNodeTitle(Pass);
-        Node.TitleTint = bIsInactive ? RenderGraphColors::MutedTitle : RenderGraphColors::NodeTitle;
+        Node.TitleTint = bIsInactive ? RenderGraphColors::MutedTitle() : RenderGraphColors::NodeTitle();
         Node.bIsMuted  = bIsInactive;
 
         TArray<int32> AccessPinSlots;
@@ -507,12 +530,12 @@ bool FEditorRenderGraphPanel::RebuildModel(const FRenderGraphDebugSnapshot& Snap
             if (Access.bIsWrite && HasIncomingLink(Snapshot, PassIndex, AccessIndex))
             {
                 LoadPinSlots[AccessIndex] = Node.Pins.Size();
-                Node.Pins.Emplace(EGraphPinDirection::Input, Resource.Name, TypeTag, RenderGraphColors::InputPin);
+                Node.Pins.Emplace(EGraphPinDirection::Input, Resource.Name, TypeTag, RenderGraphColors::InputPin());
             }
 
             AccessPinSlots[AccessIndex] = Node.Pins.Size();
             Node.Pins.Emplace(Access.bIsWrite ? EGraphPinDirection::Output : EGraphPinDirection::Input, Resource.Name, TypeTag,
-                Access.bIsWrite ? RenderGraphColors::OutputPin : RenderGraphColors::InputPin);
+                Access.bIsWrite ? RenderGraphColors::OutputPin() : RenderGraphColors::InputPin());
         }
 
         if (const Vector2* StoredPosition = PositionsByPassName.Find(Pass.Name))
@@ -586,3 +609,101 @@ void FEditorRenderGraphPanel::RefreshStatistics(const FRenderGraphDebugSnapshot&
 }
 
 #endif
+
+TSharedPtr<FVisualElement> FEditorRenderGraphPanel::BuildNodeContextMenu(
+    const Vector2& /*GraphPosition*/, int32 NodeId)
+{
+    String PassName;
+    for (const FBuiltPass& Pass : BuiltPasses)
+    {
+        if (Pass.NodeId == NodeId)
+        {
+            PassName = Pass.Name;
+            break;
+        }
+    }
+
+    if (PassName.IsEmpty())
+    {
+        return nullptr;
+    }
+
+    TSharedPtr<FMenu> Menu = FMenu::Create();
+
+    FMenuItem::FDesc ItemDesc;
+    ItemDesc.Label       = "Show in Profiler";
+    ItemDesc.Font        = FEditorStyle::GetFonts().Body;
+    ItemDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this, PassName]()
+    {
+        ShowPassInProfiler(PassName);
+    });
+
+    Menu->AddItem(FMenuItem::Create(ItemDesc));
+    return Menu;
+}
+
+void FEditorRenderGraphPanel::ShowPassInProfiler(const String& PassName)
+{
+    if (!EditorEngine || !EditorEngine->GetEditorShell() || !EditorEngine->GetEditorShell()->GetRegistry())
+    {
+        return;
+    }
+
+    TSharedPtr<FEditorPanelRegistry> Registry = EditorEngine->GetEditorShell()->GetRegistry();
+    if (TSharedPtr<FEditorPanel> Panel = Registry->FindPanel("Profiler"))
+    {
+        if (FEditorProfilerPanel* Profiler = static_cast<FEditorProfilerPanel*>(Panel.Get()))
+        {
+            Registry->ShowPanel("Profiler");
+            Profiler->SelectGpuScopeByName(PassName);
+        }
+    }
+}
+
+void FEditorRenderGraphPanel::ShowPassByName(const String& PassName)
+{
+    if (!Canvas || !EditorEngine || !EditorEngine->GetEditorShell() || !EditorEngine->GetEditorShell()->GetRegistry())
+    {
+        return;
+    }
+
+    TSharedPtr<FEditorPanelRegistry> Registry = EditorEngine->GetEditorShell()->GetRegistry();
+    Registry->ShowPanel("RenderGraph");
+
+    PendingPassName = PassName;
+    ApplyPendingPassSelection();
+}
+
+void FEditorRenderGraphPanel::ApplyPendingPassSelection()
+{
+    if (!Canvas || PendingPassName.IsEmpty())
+    {
+        return;
+    }
+
+    for (const FBuiltPass& Pass : BuiltPasses)
+    {
+        if (Pass.Name == PendingPassName && Pass.NodeId >= 0)
+        {
+            TArray<int32> SelectedNodes;
+            SelectedNodes.Add(Pass.NodeId);
+
+            Canvas->SetSelectedNodes(SelectedNodes);
+
+            if (const FGraphNode* Node = Model ? Model->FindNode(Pass.NodeId) : nullptr)
+            {
+                const TSharedPtr<FGraphNodeElement> Element  = Canvas->FindNodeElement(Pass.NodeId);
+                const IntVector2                    NodeSize = Element ? Element->GetCachedDesiredSize() : IntVector2(0, 0);
+                const FRectangle&                   Bounds   = Canvas->GetContentRectangle();
+        
+                const float Zoom = Canvas->GetZoom();
+                Canvas->SetPan(Vector2(
+                    (static_cast<float>(Bounds.Width) * 0.5f) - ((Node->Position.X + (static_cast<float>(NodeSize.X) * 0.5f)) * Zoom),
+                    (static_cast<float>(Bounds.Height) * 0.5f) - ((Node->Position.Y + (static_cast<float>(NodeSize.Y) * 0.5f)) * Zoom)));
+            }
+
+            PendingPassName.Clear();
+            return;
+        }
+    }
+}

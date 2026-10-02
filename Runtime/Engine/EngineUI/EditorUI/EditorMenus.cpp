@@ -201,6 +201,7 @@ TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu()
     static const EEditorLightType LightTypes[] =
     {
         EEditorLightType::Point,
+        EEditorLightType::Spot,
         EEditorLightType::Directional,
         EEditorLightType::Sky,
     };
@@ -281,7 +282,7 @@ void FEditorMenus::BuildWindowsMenu(const TSharedPtr<FMenuBar>& Bar)
         Desc.CheckState   = Panel->IsOpen() ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
         Desc.OnActivated  = FOnMenuItemActivated::CreateLambda([this, PanelId]()
         {
-            Registry->ShowPanel(PanelId);
+            Registry->TogglePanel(PanelId);
         });
 
         TSharedPtr<FMenuItem> Item = FMenuItem::Create(Desc);

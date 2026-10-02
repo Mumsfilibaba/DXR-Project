@@ -47,6 +47,17 @@
         } \
     } while (false)
 
+#define TEST_EXPECT_OR_RETURN(Condition) \
+    do \
+    { \
+        if (!(Condition)) \
+        { \
+            LOG_ERROR("[FAIL] %s : '%s' (%s:%d)", _TestSection, #Condition, __FILE__, __LINE__); \
+            _bTestPassed = false; \
+            return; \
+        } \
+    } while (false)
+
 #define TEST_EXPECT_EQ(Lhs, Rhs) \
     do \
     { \

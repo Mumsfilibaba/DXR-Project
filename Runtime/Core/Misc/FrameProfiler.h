@@ -1,20 +1,18 @@
 #pragma once
+#include "Core/Misc/ProfilerTypes.h"
 #include "Core/Time/ElapsedTime.h"
 #include "Core/Threading/Spinlock.h"
-#include "Core/Containers/Map.h"
-#include "Core/Containers/StaticArray.h"
-#include "Core/Templates/NumericLimits.h"
-#include "Core/Platform/PlatformTime.h"
 
 #define ENABLE_PROFILER 1
-#define NUM_PROFILER_SAMPLES 200
 
 #if ENABLE_PROFILER
     #define TRACE_SCOPE(Name) FFrameProfilerScopedTrace STRING_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
     #define TRACE_FUNCTION_SCOPE() TRACE_SCOPE(FUNCTION_SIGNATURE)
+    #define TRACE_EVENT(Name) FFrameProfiler::Get().AddInstantEvent(Name)
 #else
     #define TRACE_SCOPE(Name)
     #define TRACE_FUNCTION_SCOPE()
+    #define TRACE_EVENT(Name)
 #endif
 
 struct FFrameProfilerSample
@@ -24,7 +22,11 @@ struct FFrameProfilerSample
         , ThreadHandle(nullptr)
         , StartTimeStamp(0)
         , EndTimeStamp(0)
+        , Depth(0)
+        , StackDepth(0)
+        , bInstant(false)
     {
+        StackFrames.Fill(0);
     }
 
     FFrameProfilerSample(const CHAR* InName)
@@ -32,88 +34,21 @@ struct FFrameProfilerSample
         , ThreadHandle(nullptr)
         , StartTimeStamp(0)
         , EndTimeStamp(0)
+        , Depth(0)
+        , StackDepth(0)
+        , bInstant(false)
     {
+        StackFrames.Fill(0);
     }
 
     const CHAR* Name;
     void*       ThreadHandle;
     uint64      StartTimeStamp;
     uint64      EndTimeStamp;
-};
-
-struct FFrameProfilerFunctionInfo
-{
-    void AddSample(float NewSample)
-    {
-        Samples[CurrentSample] = NewSample;
-
-        Min         = Math::Min(NewSample, Min);
-        Max         = Math::Max(NewSample, Max);
-        SampleCount = Math::Min<int32>(Samples.Size(), SampleCount + 1);
-
-        CurrentSample++;
-        if (CurrentSample >= int32(Samples.Size()))
-        {
-            CurrentSample = 0;
-        }
-
-        TotalCalls++;
-    }
-
-    float GetAverage() const
-    {
-        if (SampleCount < 1)
-        {
-            return 0.0f;
-        }
-
-        float Average = 0.0f;
-        for (int32 n = 0; n < SampleCount; n++)
-        {
-            Average += Samples[n];
-        }
-
-        return Average / float(SampleCount);
-    }
-
-    void Reset()
-    {
-        Samples.Fill(0.0f);
-
-        SampleCount = 0;
-        CurrentSample = 0;
-        TotalCalls = 0;
-        Max = TNumericLimits<float>::Lowest();
-        Min = TNumericLimits<float>::Max();
-    }
-
-    TStaticArray<float, NUM_PROFILER_SAMPLES> Samples;
-
-    float Max           = TNumericLimits<float>::Lowest();
-    float Min           = TNumericLimits<float>::Max();
-    int32 SampleCount   = 0;
-    int32 CurrentSample = 0;
-    int32 TotalCalls    = 0;
-};
-
-using FFrameProfileFunctionInfoMap = TMap<String, FFrameProfilerFunctionInfo>;
-
-struct FFrameProfilerThreadInfo
-{
-    FFrameProfilerThreadInfo()
-        : ThreadHandle(nullptr)
-        , FunctionInfoMap()
-    {
-    }
-
-    FFrameProfilerThreadInfo(void* InThreadHandle)
-        : ThreadHandle(InThreadHandle)
-        , FunctionInfoMap()
-    {
-    }
-
-    void* ThreadHandle;
-    FFrameProfileFunctionInfoMap FunctionInfoMap;
+    int32       Depth;
+    TStaticArray<uint64, NUM_PROFILER_STACK_FRAMES> StackFrames;
+    int32       StackDepth;
+    bool        bInstant;
 };
 
 class CORE_API FFrameProfiler
@@ -127,49 +62,53 @@ public:
     void Tick();
     void Reset();
     void AddSample(const FFrameProfilerSample& InSample);
-    void GetFunctionInfo(TArray<FFrameProfilerThreadInfo>& OutFunctionThreadInfo);
+    void AddInstantEvent(const CHAR* Name);
+    void SetRetainAllFrames(bool bInRetainAllFrames);
+    void SetCaptureNativeStacks(bool bInCaptureNativeStacks);
+
+    NODISCARD bool IsEnabled() const;
+    NODISCARD bool CapturesNativeStacks() const;
+    NODISCARD bool RetainsAllFrames() const { return StoredFrames.RetainsAll(); }
+    
+    NODISCARD int32 GetLatestFinishedFrameIndex() const;
+    NODISCARD float GetLatestCpuMilliseconds() const;
+    NODISCARD int32 GetStoredFrameCount() const;
+    
+    NODISCARD const FProfilerFrame* GetStoredFrame(int32 OldestIndex) const;
+    NODISCARD const FProfilerFrame* FindFrame(int32 FrameIndex) const;
+    NODISCARD const FProfilerFrame* GetLatestFrame() const;
 
     int32 GetFramesPerSecond() const
     {
         return Fps;
     }
 
-    const FFrameProfilerFunctionInfo& GetCPUFrameTime() const
+    NODISCARD uint64 GetFrequency() const
     {
-        return CPUFrameTime;
+        return Frequency;
     }
 
 private:
     FFrameProfiler();
     ~FFrameProfiler();
 
-    FFrameProfilerFunctionInfo       CPUFrameTime;
-    FElapsedTime                       Clock;
+    FElapsedTime                     Clock;
     int32                            CurrentFps;
     int32                            Fps;
+    int32                            NextFrameIndex;
     bool                             bEnabled;
+    bool                             bCaptureNativeStacks;
     uint64                           Frequency;
     TArray<FFrameProfilerSample>     CurrentSamples;
-    FSpinLock                        CurrentSamplesLock;
-    TArray<FFrameProfilerThreadInfo> FunctionInfoTable;
-    TMap<void*, int32>               ThreadHandleToIndexMap;
+    mutable FSpinLock                CurrentSamplesLock;
+    TProfilerFrameRing<FProfilerFrame> StoredFrames;
 };
 
-struct FFrameProfilerScopedTrace
+struct CORE_API FFrameProfilerScopedTrace
 {
 public:
-    FORCEINLINE FFrameProfilerScopedTrace(const CHAR* InName)
-        : Sample(InName)
-    {
-        Sample.ThreadHandle   = FPlatformThreadMisc::GetCurrentThreadHandle();
-        Sample.StartTimeStamp = FPlatformTime::QueryPerformanceCounter();
-    }
-
-    FORCEINLINE ~FFrameProfilerScopedTrace()
-    {
-        Sample.EndTimeStamp = FPlatformTime::QueryPerformanceCounter();
-        FFrameProfiler::Get().AddSample(Sample);
-    }
+    FFrameProfilerScopedTrace(const CHAR* InName);
+    ~FFrameProfilerScopedTrace();
 
 private:
     FFrameProfilerSample Sample;

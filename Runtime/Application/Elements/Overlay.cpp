@@ -40,20 +40,17 @@ void FOverlay::OnArrange(const FRectangle& AllottedBounds)
     {
         if (Slot.Element)
         {
-            Slot.Element->Tick(FRectangle::AlignInBounds(AllottedBounds.Deflate(Slot.Padding), Slot.Element->GetCachedDesiredSize(), Slot.HorizontalAlignment, Slot.VerticalAlignment));
+            Slot.Element->Arrange(FLayout::AlignInBounds(AllottedBounds.Deflate(Slot.Padding), Slot.Element->GetCachedDesiredSize(), Slot.HorizontalAlignment, Slot.VerticalAlignment));
         }
     }
 }
 
-void FOverlay::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FOverlay::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const
 {
-    for (const FOverlaySlot& Slot : Slots)
+    return VisitChildArray(Visitor, Order, Slots, [](const FOverlaySlot& Slot) -> const TSharedPtr<FVisualElement>&
     {
-        if (Slot.Element)
-        {
-            OutChildren.Add(Slot.Element);
-        }
-    }
+        return Slot.Element;
+    });
 }
 
 int32 FOverlay::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -66,31 +63,19 @@ int32 FOverlay::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& 
             continue;
         }
 
-        const FDrawGeometry ChildGeometry(Slot.Element->GetContentRectangle(), AllottedGeometry.Scale);
-        MaxLayerId = Slot.Element->OnDraw(ChildGeometry, OutCommandList, MaxLayerId + 1);
-    }
+        const FRectangle  ChildBounds = Slot.Element->GetContentRectangle();
+        const FRectangle& ClipBounds  = OutCommandList.GetCurrentClipRectangle();
 
-    return MaxLayerId;
-}
-
-void FOverlay::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
-{
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
-    for (int32 Index = Slots.Size() - 1; Index >= 0; --Index)
-    {
-        const FOverlaySlot& Slot = Slots[Index];
-        if (!Slot.Element || !Slot.Element->IsVisible())
+        if (!ClipBounds.IsEmpty() && ClipBounds.Intersect(ChildBounds).IsEmpty())
         {
             continue;
         }
 
-        if (Slot.Element->GetContentRectangle().EncapsulatesPoint(ClientPosition))
-        {
-            Slot.Element->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-            return;
-        }
+        const FDrawGeometry ChildGeometry(ChildBounds, AllottedGeometry.Scale);
+        MaxLayerId = Slot.Element->Draw(ChildGeometry, OutCommandList, MaxLayerId + 1);
     }
+
+    return MaxLayerId;
 }
 
 FOverlaySlot& FOverlay::AddSlot(const TSharedPtr<FVisualElement>& InElement)
@@ -113,6 +98,7 @@ bool FOverlay::RemoveSlot(const TSharedPtr<FVisualElement>& InElement)
         if (Slots[Index].Element == InElement)
         {
             Slots.RemoveAt(Index);
+            InvalidateDesiredSize();
             return true;
         }
     }
@@ -123,4 +109,5 @@ bool FOverlay::RemoveSlot(const TSharedPtr<FVisualElement>& InElement)
 void FOverlay::ClearSlots()
 {
     Slots.Clear();
+    InvalidateDesiredSize();
 }

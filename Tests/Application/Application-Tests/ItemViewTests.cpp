@@ -1,14 +1,32 @@
 #include "ItemViewTests.h"
+#include "StubPlatformApplication.h"
 
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
 
 #include <Core/Containers/Array.h>
 #include <Core/Containers/SharedPtr.h>
+#include <Application/Draw/DrawCommandList.h>
 #include <Application/Elements/TileView.h>
 #include <Application/Elements/TreeView.h>
 #include <Application/Input/Keys.h>
+#include <Application/Menus/ToolTipService.h>
+#include <Application/Style/UIStyle.h>
 #include <Application/Text/FixedWidthFontFace.h>
+
+class FScopedItemViewTestServices
+{
+public:
+    FScopedItemViewTestServices() = default;
+
+    ~FScopedItemViewTestServices()
+    {
+        FToolTipService::Shutdown();
+    }
+
+    FScopedItemViewTestServices(const FScopedItemViewTestServices&) = delete;
+    FScopedItemViewTestServices& operator=(const FScopedItemViewTestServices&) = delete;
+};
 
 static TSharedPtr<IFontFace> CreateFont()
 {
@@ -18,7 +36,7 @@ static TSharedPtr<IFontFace> CreateFont()
 static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRectangle& Bounds)
 {
     Element->PrepareDesiredSize();
-    Element->Tick(Bounds);
+    Element->Arrange(Bounds);
 }
 
 static FCursorEvent MakeMoveEvent(const IntVector2& ClientPosition)
@@ -67,6 +85,30 @@ static TArray<FTileItem> CreateTileItems(int32 NumItems)
     }
 
     return Items;
+}
+
+static FFloatColor MakeTreeHoverFill(const FUITreeRowStyle& Style)
+{
+    FFloatColor Fill = Style.HoveredFill;
+    Fill.A           = 0.5f;
+    return Fill;
+}
+
+static bool DrawsHoverForItem(const TSharedPtr<FTreeView>& Tree, const TSharedPtr<FTreeItem>& Item, const FFloatColor& HoverFill)
+{
+    FDrawCommandList Commands;
+    Tree->OnDraw(FDrawGeometry(Tree->GetContentRectangle(), 1.0f), Commands, 0);
+
+    const FRectangle Highlight = Tree->GetItemHighlightBounds(Item);
+    for (const FDrawCommand& Command : Commands.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Box && Command.HasTint(HoverFill) && Command.Bounds == Highlight)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool TreeViewModel_Test()
@@ -224,6 +266,47 @@ bool TreeViewSelection_Test()
     TEST_EXPECT_EQ(LastSelection.Size(), 1);
     TEST_EXPECT(LastSelection[0] == Alpha);
 
+    TEST_SECTION("A selected row uses rounded highlight geometry even when it is the top row");
+    FDrawCommandList SelectionCommands;
+    TreeView->OnDraw(FDrawGeometry(TreeView->GetContentRectangle(), 1.0f), SelectionCommands, 0);
+
+    const FFloatColor InactiveSelection = Desc.Style.InactiveSelectedFill;
+    bool              bFoundRoundedSelection = false;
+    for (const FDrawCommand& Command : SelectionCommands.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Box && Command.HasTint(InactiveSelection))
+        {
+            bFoundRoundedSelection = !Command.CornerRadius.IsZero();
+            break;
+        }
+    }
+    TEST_EXPECT(bFoundRoundedSelection);
+
+    TEST_SECTION("A selected row draws its name in the color meant for the selection fill, and its neighbours keep theirs");
+    FFloatColor SelectedLabelTint;
+    FFloatColor RestingLabelTint;
+    for (const FDrawCommand& Command : SelectionCommands.GetCommands())
+    {
+        if (Command.Type != EDrawCommandType::Text)
+        {
+            continue;
+        }
+
+        if (SelectionCommands.GetCommandText(Command) == StringView("Alpha"))
+        {
+            TEST_EXPECT(Command.HasTint(Desc.Style.SelectedLabelText));
+            SelectedLabelTint = Desc.Style.SelectedLabelText;
+        }
+        else if (SelectionCommands.GetCommandText(Command) == StringView("Beta"))
+        {
+            TEST_EXPECT(Command.HasTint(Desc.Style.LabelText));
+            RestingLabelTint = Desc.Style.LabelText;
+        }
+    }
+
+    TEST_EXPECT(SelectedLabelTint == Desc.Style.SelectedLabelText);
+    TEST_EXPECT(RestingLabelTint == Desc.Style.LabelText);
+
     TEST_SECTION("A chord click adds a row without dropping the one already held");
     TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(100, 50), EModifierFlag::Ctrl));
 
@@ -252,12 +335,22 @@ bool TreeViewSelection_Test()
     TEST_EXPECT(!TreeView->IsSelected(Alpha));
     TEST_EXPECT_EQ(ChangeCount, CountBeforePush);
 
+    TEST_SECTION("A shift click after a pushed selection runs from that selection, which carries no anchor");
+    TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(100, 10), EModifierFlag::Shift));
+
+    TEST_EXPECT_EQ(TreeView->GetSelection().Size(), 4);
+    TEST_EXPECT(TreeView->IsSelected(Alpha));
+    TEST_EXPECT(TreeView->IsSelected(Beta));
+    TEST_EXPECT(TreeView->IsSelected(Gamma));
+    TEST_EXPECT(TreeView->IsSelected(Delta));
+
     TEST_SECTION("Emptying the selection from the host reports nothing either");
+    const int32 CountBeforeClear = ChangeCount;
     TreeView->ClearSelection();
 
     TEST_EXPECT(TreeView->GetSelection().IsEmpty());
     TEST_EXPECT(!TreeView->IsSelected(Delta));
-    TEST_EXPECT_EQ(ChangeCount, CountBeforePush);
+    TEST_EXPECT_EQ(ChangeCount, CountBeforeClear);
 
     TEST_SECTION("A single-select view answers a chord click with the row clicked and nothing else");
     FTreeView::FDesc SingleDesc;
@@ -358,6 +451,32 @@ bool TreeViewFiltering_Test()
     TEST_EXPECT_EQ(TreeView->GetVisibleRows().Size(), 2);
     TEST_EXPECT(TreeView->GetVisibleRows()[0] == Assets);
     TEST_EXPECT(TreeView->GetVisibleRows()[1] == Scenes);
+
+    TEST_SECTION("The type column answers the filter as well as the label does");
+    TSharedPtr<FTreeItem> Scope = FTreeItem::Create("SSAO");
+    Scope->TypeLabel            = "3 0.120";
+
+    TSharedPtr<FTreeView> TypeColumnTree = FTreeView::Create(Desc);
+    TypeColumnTree->SetRootItems({ Scope });
+    LayoutElement(TypeColumnTree, FRectangle(IntVector2(0, 0), 200, 200));
+    TypeColumnTree->SetFilterText("0.120");
+
+    TEST_EXPECT_EQ(TypeColumnTree->GetVisibleRows().Size(), 1);
+
+    TEST_SECTION("A view of numbers can keep the filter off the type column, where any digit would answer");
+    FTreeView::FDesc LabelOnlyDesc         = Desc;
+    LabelOnlyDesc.bFilterMatchesTypeColumn = false;
+
+    TSharedPtr<FTreeView> LabelOnlyTree = FTreeView::Create(LabelOnlyDesc);
+    LabelOnlyTree->SetRootItems({ Scope });
+    LayoutElement(LabelOnlyTree, FRectangle(IntVector2(0, 0), 200, 200));
+    LabelOnlyTree->SetFilterText("0.120");
+
+    TEST_EXPECT_EQ(LabelOnlyTree->GetVisibleRows().Size(), 0);
+
+    LabelOnlyTree->SetFilterText("ssao");
+
+    TEST_EXPECT_EQ(LabelOnlyTree->GetVisibleRows().Size(), 1);
 
     TEST_END();
 }
@@ -525,6 +644,43 @@ bool TreeViewScrolling_Test()
     TEST_EXPECT(!ShortView->OnMouseScroll(MakeScrollEvent(-1.0f)).IsEventHandled());
     TEST_EXPECT_EQ(ShortView->GetScrollOffset(), 0);
 
+    TEST_SECTION("A selected fill stops short of the scrollbar so its right corners stay round");
+    FTreeView::FDesc BarDesc;
+    BarDesc.Font           = CreateFont();
+    BarDesc.RowHeight      = RowHeight;
+    BarDesc.bShowScrollBar = true;
+
+    TSharedPtr<FTreeView> BarView = FTreeView::Create(BarDesc);
+    BarView->SetRootItems(CreateLeafRows(NumRows));
+    BarView->SetSelection({ BarView->GetVisibleRows()[0] });
+    LayoutElement(BarView, FRectangle(IntVector2(0, 0), 200, ViewHeight));
+
+    FDrawCommandList HighlightCommands;
+    BarView->OnDraw(FDrawGeometry(BarView->GetContentRectangle(), 1.0f), HighlightCommands, 0);
+
+    const FFloatColor InactiveSelection = BarDesc.Style.InactiveSelectedFill;
+    FRectangle        DrawnHighlight;
+    bool              bFoundInsetHighlight = false;
+    for (const FDrawCommand& Command : HighlightCommands.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Box && Command.HasTint(InactiveSelection))
+        {
+            const int32 Thickness = FUIStyle::GetDefault().Metrics.ScrollBarThickness;
+            TEST_EXPECT(Command.Bounds.GetRight() <= BarView->GetContentRectangle().GetRight() - Thickness);
+            DrawnHighlight       = Command.Bounds;
+            bFoundInsetHighlight = true;
+            break;
+        }
+    }
+    TEST_EXPECT(bFoundInsetHighlight);
+
+    TEST_SECTION("That band is handed out, so a host marking a drop target lands on the selection's shape");
+    const TSharedPtr<FTreeItem>& FirstRow = BarView->GetVisibleRows()[0];
+
+    TEST_EXPECT(BarView->GetItemHighlightBounds(FirstRow) == DrawnHighlight);
+    TEST_EXPECT(BarView->GetItemHighlightBounds(FirstRow).GetRight() < BarView->GetItemRowBounds(FirstRow).GetRight());
+    TEST_EXPECT(BarView->GetItemHighlightBounds(nullptr).IsEmpty());
+
     TEST_END();
 }
 
@@ -605,6 +761,9 @@ bool TreeViewColumnsAndIndent_Test()
     TEST_SECTION("A child indents a full level past the parent it hangs off");
     TEST_EXPECT_EQ(ChildLabelX, FilterLabelX + IndentDesc.IndentPerLevel);
 
+    TEST_SECTION("The disclosure arrow sits inside the row rather than against its left edge");
+    TEST_EXPECT(FilterLabelX >= FUIStyle::GetDefault().TreeRow.ContentInset);
+
     TEST_SECTION("A view where nothing has an icon reserves no column for one");
     TSharedPtr<FTreeItem> PlainParent = FTreeItem::Create("Parent");
     TSharedPtr<FTreeItem> PlainChild  = FTreeItem::Create("Child");
@@ -618,6 +777,192 @@ bool TreeViewColumnsAndIndent_Test()
     TEST_EXPECT(PlainView->GetItemLabelBounds(PlainParent).Position.X < FilterLabelX);
     TEST_EXPECT_EQ(PlainView->GetItemLabelBounds(PlainChild).Position.X,
         PlainView->GetItemLabelBounds(PlainParent).Position.X + IndentDesc.IndentPerLevel);
+
+    TEST_END();
+}
+
+bool TreeViewHeaderToolTips_Test()
+{
+    TEST_BEGIN();
+
+    FScopedStubApplication     Application;
+    FScopedItemViewTestServices Services;
+
+    constexpr int32 HeaderHeight    = 24;
+    constexpr int32 ViewWidth       = 320;
+    constexpr int32 TypeColumnWidth = 120;
+    constexpr int32 TypeColumnX     = ViewWidth - TypeColumnWidth;
+
+    const String CallsToolTip = "How many times the scope was entered";
+    const String InclToolTip  = "Time spent in the scope, its children included";
+
+    FTreeView::FDesc Desc;
+    Desc.Font               = CreateFont();
+    Desc.RowHeight          = 20;
+    Desc.HeaderHeight       = HeaderHeight;
+    Desc.LabelColumnHeader  = "Scope";
+    Desc.TypeColumnHeader   = "Calls   Incl ms";
+    Desc.TypeColumnWidth    = TypeColumnWidth;
+    Desc.LabelColumnToolTip = "The scopes, nested the way they ran";
+    Desc.TypeColumnToolTips = { CallsToolTip, InclToolTip };
+
+    TSharedPtr<FTreeView> TreeView = FTreeView::Create(Desc);
+    TreeView->SetRootItems(CreateLeafRows(4));
+    LayoutElement(TreeView, FRectangle(IntVector2(0, 0), ViewWidth, 100));
+
+    FToolTipService& ToolTips = FToolTipService::Get();
+
+    TEST_SECTION("Resting on a caption asks for the tip explaining that column");
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(10, HeaderHeight / 2)));
+
+    TEST_EXPECT(ToolTips.IsPending());
+    TEST_EXPECT_EQ(ToolTips.GetOwner(), StaticCastSharedPtr<FVisualElement>(TreeView));
+    TEST_EXPECT_EQ(ToolTips.GetRequestedText(), Desc.LabelColumnToolTip);
+
+    TEST_SECTION("Every caption in the type column carries its own tip, rather than one for the lot");
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 10, HeaderHeight / 2)));
+
+    TEST_EXPECT(ToolTips.IsPending());
+    TEST_EXPECT_EQ(ToolTips.GetRequestedText(), CallsToolTip);
+
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 60, HeaderHeight / 2)));
+
+    TEST_EXPECT(ToolTips.IsPending());
+    TEST_EXPECT_EQ(ToolTips.GetRequestedText(), InclToolTip);
+
+    TEST_SECTION("The gap between two captions belongs to the nearer of them");
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 45, HeaderHeight / 2)));
+    TEST_EXPECT_EQ(ToolTips.GetRequestedText(), CallsToolTip);
+
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 55, HeaderHeight / 2)));
+    TEST_EXPECT_EQ(ToolTips.GetRequestedText(), InclToolTip);
+
+    TEST_SECTION("Past the last caption the column still reads as that caption's");
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(ViewWidth - 2, HeaderHeight / 2)));
+    TEST_EXPECT_EQ(ToolTips.GetRequestedText(), InclToolTip);
+
+    TEST_SECTION("A column with one tip hangs it off the whole of it");
+    FTreeView::FDesc SharedDesc = Desc;
+    SharedDesc.TypeColumnToolTips = { CallsToolTip };
+
+    TSharedPtr<FTreeView> SharedView = FTreeView::Create(SharedDesc);
+    SharedView->SetRootItems(CreateLeafRows(4));
+    LayoutElement(SharedView, FRectangle(IntVector2(0, 0), ViewWidth, 100));
+
+    SharedView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 10, HeaderHeight / 2)));
+    TEST_EXPECT_EQ(ToolTips.GetRequestedText(), CallsToolTip);
+
+    SharedView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 100, HeaderHeight / 2)));
+    TEST_EXPECT_EQ(ToolTips.GetRequestedText(), CallsToolTip);
+
+    SharedView->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+
+    TEST_SECTION("Dropping onto the rows takes the tip down, since only the captions explain themselves");
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 10, HeaderHeight / 2)));
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(10, HeaderHeight + 10)));
+
+    TEST_EXPECT(!ToolTips.IsPending());
+
+    TEST_SECTION("Leaving the view takes the tip with it");
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(10, HeaderHeight / 2)));
+    TEST_EXPECT(ToolTips.IsPending());
+
+    TreeView->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    TEST_EXPECT(!ToolTips.IsPending());
+
+    TEST_SECTION("A view whose columns speak for themselves asks for nothing");
+    Desc.LabelColumnToolTip.Clear();
+    Desc.TypeColumnToolTips.Clear();
+
+    TSharedPtr<FTreeView> BareView = FTreeView::Create(Desc);
+    BareView->SetRootItems(CreateLeafRows(4));
+    LayoutElement(BareView, FRectangle(IntVector2(0, 0), ViewWidth, 100));
+
+    BareView->OnMouseMove(MakeMoveEvent(IntVector2(10, HeaderHeight / 2)));
+
+    TEST_EXPECT(!ToolTips.IsPending());
+
+    TEST_END();
+}
+
+bool TreeViewHoverAndRowClick_Test()
+{
+    TEST_BEGIN();
+
+    constexpr int32 RowHeight = 20;
+
+    TSharedPtr<FTreeItem> Assets   = FTreeItem::Create("Assets");
+    TSharedPtr<FTreeItem> Textures = FTreeItem::Create("Textures");
+    TSharedPtr<FTreeItem> Meshes   = FTreeItem::Create("Meshes");
+    Assets->AddChild(Textures);
+    Assets->AddChild(Meshes);
+
+    int32 ExpansionCount = 0;
+    int32 DragCount      = 0;
+
+    FTreeView::FDesc Desc;
+    Desc.Font               = CreateFont();
+    Desc.RowHeight          = RowHeight;
+    Desc.OnExpansionChanged = FOnTreeItemExpansionChanged::CreateLambda([&](const TSharedPtr<FTreeItem>&, bool)
+    {
+        ExpansionCount++;
+    });
+    Desc.OnDragDetected = FOnTreeItemDragDetected::CreateLambda([&](const TSharedPtr<FTreeItem>&, const FCursorEvent&)
+    {
+        DragCount++;
+    });
+
+    TSharedPtr<FTreeView> TreeView = FTreeView::Create(Desc);
+    TreeView->SetRootItems({ Assets, FTreeItem::Create("Scenes") });
+    LayoutElement(TreeView, FRectangle(IntVector2(0, 0), 200, 200));
+
+    const FFloatColor HoverFill = MakeTreeHoverFill(Desc.Style);
+    const IntVector2  FirstRow  = IntVector2(100, RowHeight / 2);
+
+    TEST_SECTION("A hover fill stays after the roots are replaced without a further mouse move");
+    TreeView->OnMouseMove(MakeMoveEvent(FirstRow));
+    TEST_EXPECT(DrawsHoverForItem(TreeView, Assets, HoverFill));
+
+    TreeView->SetRootItems({ Assets, FTreeItem::Create("Scenes") });
+    TEST_EXPECT(DrawsHoverForItem(TreeView, Assets, HoverFill));
+
+    TEST_SECTION("Scrolling under a stationary cursor moves the hover onto the row now under it");
+    const TArray<TSharedPtr<FTreeItem>> Rows = CreateLeafRows(20);
+    TSharedPtr<FTreeView> ScrollView = FTreeView::Create(Desc);
+    ScrollView->SetRootItems(Rows);
+    LayoutElement(ScrollView, FRectangle(IntVector2(0, 0), 200, 100));
+
+    ScrollView->OnMouseMove(MakeMoveEvent(FirstRow));
+    TEST_EXPECT(DrawsHoverForItem(ScrollView, Rows[0], HoverFill));
+
+    ScrollView->OnMouseScroll(MakeScrollEvent(-1.0f));
+    TEST_EXPECT(!DrawsHoverForItem(ScrollView, Rows[0], HoverFill));
+    TEST_EXPECT(DrawsHoverForItem(ScrollView, Rows[FTreeView::RowsPerWheelStep], HoverFill));
+
+    TEST_SECTION("A completed click on an expandable row opens it, not only a click on the arrow");
+    const FRectangle LabelBounds = TreeView->GetItemLabelBounds(Assets);
+    const IntVector2 LabelClick(LabelBounds.Position.X + 8, LabelBounds.Position.Y + (LabelBounds.Height / 2));
+
+    TEST_EXPECT(!Assets->bIsExpanded);
+    TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, LabelClick));
+    TreeView->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, LabelClick));
+    TEST_EXPECT(Assets->bIsExpanded);
+    TEST_EXPECT_EQ(ExpansionCount, 1);
+
+    TEST_SECTION("A press that travels far enough to become a drag does not toggle expansion");
+    const int32 CountBeforeDrag = ExpansionCount;
+    TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, LabelClick));
+    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(LabelClick.X + FTreeView::DragThreshold + 1, LabelClick.Y)));
+    TreeView->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(LabelClick.X + FTreeView::DragThreshold + 1, LabelClick.Y)));
+    TEST_EXPECT_EQ(DragCount, 1);
+    TEST_EXPECT_EQ(ExpansionCount, CountBeforeDrag);
+    TEST_EXPECT(Assets->bIsExpanded);
+
+    TEST_SECTION("A chord click extends the selection without toggling expansion");
+    const int32 CountBeforeChord = ExpansionCount;
+    TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, LabelClick, EModifierFlag::Ctrl));
+    TreeView->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, LabelClick, EModifierFlag::Ctrl));
+    TEST_EXPECT_EQ(ExpansionCount, CountBeforeChord);
 
     TEST_END();
 }

@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Tasks/Tasks.h"
 #include "Renderer/SceneRenderer.h"
 #include "Renderer/RendererModule.h"
@@ -87,7 +88,10 @@ void FRendererModule::FinishPreviousFrame()
         return;
     }
 
-    PendingSceneTask.Wait();
+    {
+        TRACE_SCOPE("Wait Previous SceneRender");
+        PendingSceneTask.Wait();
+    }
 
     PendingSceneTask = FTaskHandle();
     bHasPendingFrame = false;
@@ -104,12 +108,16 @@ void FRendererModule::KickSceneRender(FSceneRenderPacket&& Packet)
 
     bHasPendingFrame = true;
 
-    PendingSceneTask = Tasks::LaunchOnRenderThread("SceneRender",
-        [this, Packet = ::Move(Packet)]()
-        {
-            CHECK_RENDER_THREAD();
-            Renderer->RenderThread_RenderSceneFrame(Packet);
-        });
+    {
+        TRACE_SCOPE("Kick SceneRender");
+
+        PendingSceneTask = Tasks::LaunchOnRenderThread("SceneRender",
+            [this, Packet = ::Move(Packet)]()
+            {
+                CHECK_RENDER_THREAD();
+                Renderer->RenderThread_RenderSceneFrame(Packet);
+            });
+    }
 }
 
 void FRendererModule::RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY, uint64 RequestId)

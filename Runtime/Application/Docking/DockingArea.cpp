@@ -6,6 +6,8 @@
 #include "Application/Docking/Splitter.h"
 #include "Application/Docking/TabStrip.h"
 #include "Application/Draw/DrawCommandList.h"
+#include "Application/Draw/DrawCache.h"
+#include "Application/Elements/Border.h"
 #include "Application/Elements/Box.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
@@ -22,6 +24,16 @@ constexpr float DROP_ZONE_HOVER_OPACITY   = 0.85f;
 constexpr float DROP_ZONE_GHOST_OPACITY   = 0.75f;
 constexpr float DROP_ZONE_LANDING_OPACITY = 0.20f;
 
+static String GetActiveTabId(const FDockNode& Node)
+{
+    if (Node.TabIds.IsEmpty())
+    {
+        return String();
+    }
+
+    return Node.TabIds[Math::Clamp(Node.ActiveTabIndex, 0, Node.TabIds.Size() - 1)];
+}
+
 TSharedPtr<FDockingArea> FDockingArea::Create(const FDesc& Desc)
 {
     TSharedPtr<FDockingArea> NewArea = MakeSharedPtr<FDockingArea>();
@@ -35,9 +47,11 @@ FDockingArea::FDockingArea()
     , PanelsById()
     , Leaves()
     , Font(nullptr)
+    , TabFont(nullptr)
     , bAllowTearOut(true)
     , bIsDropTarget(true)
     , bNeedsRebuild(false)
+    , bSuppressRootTabStrip(false)
     , OnPanelTornOutDelegate()
     , OnPanelClosedDelegate()
 {
@@ -54,12 +68,15 @@ FDockingArea::~FDockingArea()
 void FDockingArea::Initialize(const FDesc& Desc)
 {
     Font                   = Desc.Font;
+    TabFont                = Desc.TabFont ? Desc.TabFont : Desc.Font;
     TabStyle               = Desc.TabStyle;
     TabCloseIcon           = Desc.TabCloseIcon;
     bAllowTearOut          = Desc.bAllowTearOut;
     bIsDropTarget          = Desc.bIsDropTarget;
     OnPanelTornOutDelegate = Desc.OnPanelTornOut;
     OnPanelClosedDelegate  = Desc.OnPanelClosed;
+
+    DrawCacheEpoch::Advance();
 
     if (bIsDropTarget)
     {
@@ -73,13 +90,53 @@ IntVector2 FDockingArea::PrepareDesiredSize()
     return FCompoundElement::PrepareDesiredSize();
 }
 
+const FVisualElement* FDockingArea::FindFocusedFrame() const
+{
+    if (!FApplication::IsInitialized())
+    {
+        return nullptr;
+    }
+
+    const TSharedPtr<FVisualElement> FocusLeaf = FApplication::Get().GetFocusElementLeaf();
+    for (const FVisualElement* Element = FocusLeaf.Get(); Element; Element = Element->GetParentElement().Get())
+    {
+        for (const FLeafGeometry& Leaf : Leaves)
+        {
+            if (Leaf.Frame.Get() == Element)
+            {
+                return Leaf.Frame.Get();
+            }
+        }
+    }
+
+    return nullptr;
+}
+
 int32 FDockingArea::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
     const FUIStyle& Style = FUIStyle::GetDefault();
     OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.WindowBackground);
 
     const int32 NextLayerId = FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId + 1);
-    return DrawDropZones(OutCommandList, NextLayerId) + 1;
+
+    const FVisualElement* FocusedFrame = FindFocusedFrame();
+    for (const FLeafGeometry& Leaf : Leaves)
+    {
+        if (Leaf.Frame)
+        {
+            const bool bIsFocused = (FocusedFrame == Leaf.Frame.Get());
+
+            OutCommandList.AddPanelChrome(
+                NextLayerId,
+                Leaf.Frame->GetContentRectangle(),
+                FCornerRadii(Style.Panel.CornerRadius),
+                Style.Panel.BorderThickness,
+                bIsFocused ? Style.Panel.BorderFocused : Style.Panel.Border,
+                Style.Colors.WindowBackground);
+        }
+    }
+
+    return DrawDropZones(OutCommandList, NextLayerId + 1) + 1;
 }
 
 void FDockingArea::RegisterPanel(const String& PanelId, const String& Label, const TSharedPtr<FVisualElement>& Panel)
@@ -203,6 +260,16 @@ void FDockingArea::GatherDropZones(const IntVector2& ClientPosition, TArray<FDro
 {
     OutZones.Clear();
 
+    if (IsOverLiftedTabStrip(ClientPosition))
+    {
+        FDropZone StripZone;
+        StripZone.Bounds        = GetLiftedTabStripBounds();
+        StripZone.TargetPanelId = GetActiveTabId(Root);
+
+        OutZones.Add(StripZone);
+        return;
+    }
+
     const int32 LeafIndex = FindLeafAt(ClientPosition);
     if (LeafIndex < 0)
     {
@@ -220,13 +287,15 @@ void FDockingArea::GatherDropZones(const IntVector2& ClientPosition, TArray<FDro
     const FLeafGeometry& Leaf = Leaves[LeafIndex];
 
     const FDockNode* Node = Root.FindByPath(Leaf.Path);
-    if (!Node || Node->TabIds.IsEmpty() || !Leaf.Column)
+    if (!Node || Node->TabIds.IsEmpty() || !Leaf.Frame)
     {
         return;
     }
 
-    const String& TargetPanelId = Node->TabIds[Math::Clamp(Node->ActiveTabIndex, 0, Node->TabIds.Size() - 1)];
-    if (Leaf.Strip)
+    const String TargetPanelId = GetActiveTabId(*Node);
+
+    const bool bIsStripLifted = bSuppressRootTabStrip && Leaf.Path.IsEmpty();
+    if (Leaf.Strip && !bIsStripLifted)
     {
         FDropZone StripZone;
         StripZone.Bounds        = Leaf.Strip->GetContentRectangle();
@@ -235,7 +304,7 @@ void FDockingArea::GatherDropZones(const IntVector2& ClientPosition, TArray<FDro
         OutZones.Add(StripZone);
     }
 
-    const FRectangle LeafBounds = Leaf.Column->GetContentRectangle();
+    const FRectangle LeafBounds = Leaf.Frame->GetContentRectangle();
 
     const int32 ChipSize = Math::Min(DROP_ZONE_CHIP_SIZE, (Math::Min(LeafBounds.Width, LeafBounds.Height) - (2 * DROP_ZONE_CHIP_GAP)) / 3);
     if (ChipSize < DROP_ZONE_CHIP_MINIMUM)
@@ -260,6 +329,11 @@ void FDockingArea::GatherDropZones(const IntVector2& ClientPosition, TArray<FDro
     AddChip(IntVector2(Center.X + Reach,            Center.Y - (ChipSize / 2)),   EDockDirection::Right);
     AddChip(IntVector2(Center.X - (ChipSize / 2),   Center.Y - Reach - ChipSize), EDockDirection::Top);
     AddChip(IntVector2(Center.X - (ChipSize / 2),   Center.Y + Reach),            EDockDirection::Bottom);
+
+    if (bIsStripLifted)
+    {
+        AddChip(IntVector2(Center.X - (ChipSize / 2), Center.Y - (ChipSize / 2)), EDockDirection::Center);
+    }
 }
 
 bool FDockingArea::HitTestDropTarget(const IntVector2& ScreenPosition, String& OutTargetPanelId, EDockDirection& OutDirection) const
@@ -279,7 +353,7 @@ bool FDockingArea::HitTestDropTarget(const IntVector2& ScreenPosition, String& O
     }
 
     const IntVector2 ClientPosition = ScreenPosition - Window->GetPosition();
-    if (!GetContentRectangle().EncapsulatesPoint(ClientPosition))
+    if (!GetContentRectangle().EncapsulatesPoint(ClientPosition) && !IsOverLiftedTabStrip(ClientPosition))
     {
         return false;
     }
@@ -325,6 +399,51 @@ TArray<String> FDockingArea::GetDockedPanelIds() const
     TArray<String> PanelIds;
     Root.GatherPanelIds(PanelIds);
     return PanelIds;
+}
+
+TSharedPtr<FTabStrip> FDockingArea::GetRootTabStrip() const
+{
+    if (Root.Kind != EDockNodeKind::Tabs || Leaves.IsEmpty())
+    {
+        return nullptr;
+    }
+
+    return Leaves[0].Strip;
+}
+
+void FDockingArea::SetSuppressRootTabStrip(bool bInSuppress)
+{
+    if (bSuppressRootTabStrip == bInSuppress)
+    {
+        return;
+    }
+
+    bSuppressRootTabStrip = bInSuppress;
+    RequestRebuild();
+}
+
+TSharedPtr<FTabStrip> FDockingArea::FindPanelTabStrip(const String& PanelId) const
+{
+    if (PanelId.IsEmpty())
+    {
+        return Leaves.IsEmpty() ? nullptr : Leaves[0].Strip;
+    }
+
+    const FDockNode* TargetNode = Root.FindTabsNode(PanelId);
+    if (!TargetNode)
+    {
+        return nullptr;
+    }
+
+    for (const FLeafGeometry& Leaf : Leaves)
+    {
+        if (Root.FindByPath(Leaf.Path) == TargetNode)
+        {
+            return Leaf.Strip;
+        }
+    }
+
+    return nullptr;
 }
 
 bool FDockingArea::IsPanelDocked(const String& PanelId) const
@@ -388,7 +507,11 @@ void FDockingArea::FlushPendingRebuild()
         return;
     }
 
-    SetContent(BuildNode(Root, TArray<int32>()));
+    FBorder::FDesc OutsetDesc;
+    OutsetDesc.Padding = FMargin(FUIStyle::GetDefault().Panel.Gap);
+    OutsetDesc.Content = BuildNode(Root, TArray<int32>());
+
+    SetContent(FBorder::Create(OutsetDesc));
 }
 
 TSharedPtr<FVisualElement> FDockingArea::BuildNode(FDockNode& Node, const TArray<int32>& Path)
@@ -396,7 +519,7 @@ TSharedPtr<FVisualElement> FDockingArea::BuildNode(FDockNode& Node, const TArray
     if (Node.Kind == EDockNodeKind::Tabs)
     {
         FTabStrip::FDesc StripDesc;
-        StripDesc.Font           = Font;
+        StripDesc.Font           = TabFont ? TabFont : Font;
         StripDesc.Style          = TabStyle;
         StripDesc.CloseIcon      = TabCloseIcon;
         StripDesc.bAllowTearOut  = bAllowTearOut;
@@ -433,21 +556,35 @@ TSharedPtr<FVisualElement> FDockingArea::BuildNode(FDockNode& Node, const TArray
         TSharedPtr<FVisualElement> Body = ActiveEntry ? ActiveEntry->Panel : nullptr;
 
         TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
-        Column->AddSlot(Strip);
+        if (!(bSuppressRootTabStrip && Path.IsEmpty()))
+        {
+            Column->AddSlot(Strip);
+        }
         Column->AddSlot(Body).SetFillCoefficient(1.0f);
+
+        const FUIStyle& Style = FUIStyle::GetDefault();
+
+        FBorder::FDesc FrameDesc;
+        FrameDesc.BackgroundColor = Style.Panel.Fill;
+        FrameDesc.CornerRadius    = FCornerRadii(Style.Panel.CornerRadius);
+        FrameDesc.Padding         = FMargin(static_cast<int32>(Style.Panel.BorderThickness));
+        FrameDesc.Content         = Column;
+
+        TSharedPtr<FBorder> Frame = FBorder::Create(FrameDesc);
 
         FLeafGeometry Leaf;
         Leaf.Strip  = Strip;
         Leaf.Column = Column;
+        Leaf.Frame  = Frame;
         Leaf.Path   = Path;
 
         Leaves.Add(Leaf);
-        return Column;
+        return Frame;
     }
 
     FSplitter::FDesc SplitterDesc;
     SplitterDesc.Orientation     = Node.Orientation;
-    SplitterDesc.HandleThickness = FDockMetrics::SplitterThickness;
+    SplitterDesc.HandleThickness = FUIStyle::GetDefault().Panel.Gap;
 
     const TArray<int32> SplitterPath = Path;
     SplitterDesc.OnFractionsChanged  = FOnSplitterFractionsChanged::CreateLambda([this, SplitterPath](const TArray<float>& NewFractions)
@@ -472,13 +609,30 @@ int32 FDockingArea::FindLeafAt(const IntVector2& ClientPosition) const
 {
     for (int32 Index = 0; Index < Leaves.Size(); ++Index)
     {
-        if (Leaves[Index].Column && Leaves[Index].Column->GetContentRectangle().EncapsulatesPoint(ClientPosition))
+        if (Leaves[Index].Frame && Leaves[Index].Frame->GetContentRectangle().EncapsulatesPoint(ClientPosition))
         {
             return Index;
         }
     }
 
     return -1;
+}
+
+FRectangle FDockingArea::GetLiftedTabStripBounds() const
+{
+    if (!bSuppressRootTabStrip || Root.Kind != EDockNodeKind::Tabs || Root.TabIds.IsEmpty())
+    {
+        return FRectangle();
+    }
+
+    const TSharedPtr<FTabStrip> Strip = GetRootTabStrip();
+    return Strip ? Strip->GetContentRectangle() : FRectangle();
+}
+
+bool FDockingArea::IsOverLiftedTabStrip(const IntVector2& ClientPosition) const
+{
+    const FRectangle StripBounds = GetLiftedTabStripBounds();
+    return !StripBounds.IsEmpty() && StripBounds.EncapsulatesPoint(ClientPosition);
 }
 
 FRectangle FDockingArea::ComputeDropBounds(const String& TargetPanelId, EDockDirection Direction) const
@@ -488,9 +642,9 @@ FRectangle FDockingArea::ComputeDropBounds(const String& TargetPanelId, EDockDir
     FRectangle LeafBounds = GetContentRectangle();
     for (const FLeafGeometry& Leaf : Leaves)
     {
-        if (Root.FindByPath(Leaf.Path) == TargetNode && Leaf.Column)
+        if (Root.FindByPath(Leaf.Path) == TargetNode && Leaf.Frame)
         {
-            LeafBounds = Leaf.Column->GetContentRectangle();
+            LeafBounds = Leaf.Frame->GetContentRectangle();
             break;
         }
     }
@@ -571,7 +725,7 @@ int32 FDockingArea::DrawDropZones(FDrawCommandList& OutCommandList, int32 LayerI
     }
 
     const IntVector2 ClientPosition = DragState.GetCursorPosition() - Window->GetPosition();
-    if (!GetContentRectangle().EncapsulatesPoint(ClientPosition))
+    if (!GetContentRectangle().EncapsulatesPoint(ClientPosition) && !IsOverLiftedTabStrip(ClientPosition))
     {
         return LayerId;
     }
@@ -597,7 +751,10 @@ int32 FDockingArea::DrawDropZones(FDrawCommandList& OutCommandList, int32 LayerI
     }
 
     TArray<FDropZone> Zones;
-    GatherDropZones(ClientPosition, Zones);
+    if (!IsOverLiftedTabStrip(ClientPosition))
+    {
+        GatherDropZones(ClientPosition, Zones);
+    }
 
     const int32 ChipLayerId = LayerId + 1;
     for (const FDropZone& Zone : Zones)

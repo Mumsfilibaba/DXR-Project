@@ -2,6 +2,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Map.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/ProfilerReport.h"
 #include "Engine/EngineUI/EditorUI/EditorPanel.h"
 
 class FExpander;
@@ -31,7 +32,7 @@ private:
         TMap<String, TSharedPtr<FTextBlock>> Values;
     };
 
-    NODISCARD static String ResolveThreadName(const FFrameProfilerThreadInfo& ThreadInfo, int32 ThreadIndex);
+    NODISCARD static String ResolveThreadName(const FProfilerThreadAggregate& ThreadInfo, int32 ThreadIndex);
     NODISCARD static TSharedPtr<FTextBlock> CreateValueText(const String& Text);
 
     NODISCARD TSharedPtr<FToolBar> BuildToolBar();
@@ -40,13 +41,13 @@ private:
     void ApplyProfilerState();
     void RefreshFrameTime();
     void RefreshThreads();
-    void RebuildThreadRows(FThreadSection& ThreadSection, const FFrameProfilerThreadInfo& ThreadInfo);
+    void RebuildThreadRows(FThreadSection& ThreadSection, const FProfilerThreadAggregate& ThreadInfo);
 
     TSharedPtr<FToolBar>             ToolBar;
     TSharedPtr<FHistogram>           FrameTimeHistogram;
     TSharedPtr<FVerticalBox>         ThreadsColumn;
     TArray<FThreadSection>           ThreadSections;
-    TArray<FFrameProfilerThreadInfo> ThreadInfos;
-    int32                            LastFrameTimeSample;
+    TArray<FProfilerThreadAggregate> ThreadInfos;
+    int32                            LastIngestedFrameIndex;
     bool                             bIsProfilingRequested;
 };

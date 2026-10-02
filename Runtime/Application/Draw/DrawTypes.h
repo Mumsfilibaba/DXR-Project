@@ -1,7 +1,7 @@
 #pragma once
-#include "Core/Containers/String.h"
 #include "Core/Math/Color.h"
 #include "Core/Math/Vector2.h"
+#include "Core/Templates/Utility/EnumOperators.h"
 #include "Application/Layout/LayoutTypes.h"
 
 struct IFontFace;
@@ -33,12 +33,25 @@ enum class EDrawCommandType : uint8
     /** The bottom band of a rounded rectangle, narrowed by its corners and faded out at either end. */
     RoundedBottomBar,
 
-    /** Opens a clip region. A well formed list matches every push with exactly one pop. */
-    ClipPush,
+    /** A stroke round a rounded rectangle, full strength along the top and faded back over the top corners. */
+    RoundedAccentRing,
 
-    /** Closes the region opened by the matching ClipPush. */
-    ClipPop,
+    /** The four regions a rounded rectangle's corners leave uncovered inside its bounds, filled. */
+    CornerWedges,
 };
+
+enum class EDrawCommandFlags : uint8
+{
+    None = 0,
+
+    /** The command is confined to the rectangle its ClipId names. */
+    Clipped = FLAG(1),
+
+    /** A polyline whose last point joins back to its first, so the stroke closes into a ring. */
+    Closed = FLAG(2),
+};
+
+ENUM_CLASS_OPERATORS(EDrawCommandFlags);
 
 struct FCornerRadii
 {
@@ -231,54 +244,60 @@ struct FDrawGeometry
 
 struct FDrawCommand
 {
-    FDrawCommand()
-        : Type(EDrawCommandType::Box)
-        , Bounds()
-        , Tint()
-        , Text()
-        , Font(nullptr)
-        , LayerId(0)
-        , CornerRadius()
-        , ClipRectangle()
-        , bIsClipped(false)
-        , Brush()
-        , PointOffset(0)
-        , PointCount(0)
-        , Thickness(0.0f)
-        , FadeWidth(0.0f)
-        , bIsClosed(false)
+    EDrawCommandType  Type;
+    EDrawCommandFlags Flags;
+    uint16            ClipId;
+    int32             LayerId;
+    FRectangle        Bounds;
+    uint32            PackedColor;
+    int32             PayloadOffset;
+    int32             PayloadCount;
+    float             Thickness;
+    FCornerRadii      CornerRadius;
+
+    union
     {
+        /** @brief RoundedBottomBar: the fade width. RoundedAccentRing: the fade fraction, then the trail alpha. */
+        float Fade[2];
+
+        /** @brief Text only. */
+        const IFontFace* Font;
+    };
+
+    NODISCARD FORCEINLINE float GetFadeWidth() const
+    {
+        return Fade[0];
     }
 
-    EDrawCommandType Type;
-    FRectangle       Bounds;
-    FFloatColor      Tint;
-    String           Text;
-    const IFontFace* Font;
-    int32            LayerId;
-    FCornerRadii     CornerRadius;
+    NODISCARD FORCEINLINE float GetFadeFraction() const
+    {
+        return Fade[0];
+    }
 
-    /** @brief The region in force when the command was recorded, already intersected with its ancestors. */
-    FRectangle ClipRectangle;
+    NODISCARD FORCEINLINE float GetTrailAlpha() const
+    {
+        return Fade[1];
+    }
 
-    /** @brief True when a region was open, since an empty ClipRectangle is the region that draws nothing. */
-    bool bIsClipped;
+    NODISCARD FORCEINLINE bool IsClipped() const
+    {
+        return (Flags & EDrawCommandFlags::Clipped) != EDrawCommandFlags::None;
+    }
 
-    /** @brief What an Image command samples, and unset for every other type. */
-    FUIBrush Brush;
+    NODISCARD FORCEINLINE bool IsClosed() const
+    {
+        return (Flags & EDrawCommandFlags::Closed) != EDrawCommandFlags::None;
+    }
 
-    /** @brief The first point in the owning list's point pool, for a polyline or a convex polygon. */
-    int32 PointOffset;
+    NODISCARD FORCEINLINE bool HasTint(const FFloatColor& Color) const
+    {
+        return PackedColor == Color.ToPackedRGBA();
+    }
 
-    /** @brief How many points the command uses, which is zero for every other type. */
-    int32 PointCount;
-
-    /** @brief The stroke width in pixels, used by BoxOutline and Polyline, and the band height for RoundedBottomBar. */
-    float Thickness;
-
-    /** @brief How far in from either end a RoundedBottomBar runs from no alpha to full, in pixels. */
-    float FadeWidth;
-
-    /** @brief True when a polyline joins its last point back to its first. */
-    bool bIsClosed;
+    NODISCARD FORCEINLINE uint8 PackedAlpha() const
+    {
+        return static_cast<uint8>(PackedColor >> 24);
+    }
 };
+
+static_assert(sizeof(FDrawCommand) == 64, "FDrawCommand is meant to fill exactly one cache line");

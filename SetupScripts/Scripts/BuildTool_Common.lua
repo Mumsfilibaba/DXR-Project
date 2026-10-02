@@ -277,8 +277,9 @@ end
 -- Visual Studio actions (global-style table)
 local gVsActions =
 {
-    vs2022 = true, vs2019 = true, vs2017 = true, vs2015 = true,
-    vs2013 = true, vs2012 = true, vs2010 = true, vs2008 = true, vs2005 = true
+    vs2026 = true, vs2022 = true, vs2019 = true, vs2017 = true,
+    vs2015 = true, vs2013 = true, vs2012 = true, vs2010 = true,
+    vs2008 = true, vs2005 = true
 }
 
 function BuildWithVisualStudio()

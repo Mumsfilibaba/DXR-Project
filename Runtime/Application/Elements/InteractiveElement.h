@@ -2,6 +2,8 @@
 #include "Application/Elements/CompoundElement.h"
 #include "Application/Style/UIStyle.h"
 
+class FTextBlock;
+
 class APPLICATION_API FInteractiveElement : public FCompoundElement
 {
 public:
@@ -17,7 +19,6 @@ public:
     virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override;
     virtual FEventResponse OnFocusLost() override;
     virtual bool SupportsKeyboardFocus() const override;
-    virtual bool IsInteractive() const override;
     virtual bool GetCursor(ECursor& OutCursor) const override;
 
     /**
@@ -68,6 +69,7 @@ protected:
 
     void BeginPress();
     void CancelPress();
+    void ApplyInteractionTextColor(FTextBlock* Label) const;
 
 private:
     void EndPress(const FCursorEvent& CursorEvent);

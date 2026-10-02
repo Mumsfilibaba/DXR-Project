@@ -4,6 +4,7 @@
 #include "Core/Templates/NumericLimits.h"
 #include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/InteractiveElement.h"
+#include "Application/Elements/NumericRange.h"
 #include "Application/Style/UIStyle.h"
 #include "Application/Text/IFontFace.h"
 
@@ -160,13 +161,13 @@ public:
     /** @return The lowest value the field can hold, the bottom of the range the value is clamped to. */
     NODISCARD FORCEINLINE float GetMinValue() const
     {
-        return MinValue;
+        return Range.Min;
     }
 
     /** @return The highest value the field can hold, the top of the range and never below the lowest. */
     NODISCARD FORCEINLINE float GetMaxValue() const
     {
-        return MaxValue;
+        return Range.Max;
     }
 
     /** @return True while typing mode has the text box open, so keystrokes edit rather than scrub. */
@@ -197,30 +198,25 @@ protected:
     // FInteractiveElement Interface
     virtual void OnClicked() override;
     virtual void OnDragged(const FCursorEvent& CursorEvent) override;
+    virtual void OnInteractionStateChanged() override;
 
 private:
-    NODISCARD float SanitizeValue(float InValue) const;
-
     void ApplyValue(float InValue);
+
     void UpdateLabel();
     void HandleTextCommitted(const String& InText);
 
     TSharedPtr<class FTextBlock>    Label;
     TSharedPtr<class FEditableText> Editor;
-    float                           MinValue;
-    float                           MaxValue;
+    TNumericRange<float>            Range;
+    TValueScrubber<float>           Scrubber;
     float                           Value;
     float                           ScrubSpeed;
-    float                           StepSize;
-    float                           ScrubStartValue;
-    IntVector2                      ScrubStartPosition;
-    int32                           Precision;
     String                          Prefix;
     FCornerRadii                    CornerRadius;
     int32                           MinWidth;
     int32                           MinHeight;
     bool                            bIsTyping;
-    bool                            bHasScrubbed;
     FOnSpinBoxValueChanged          OnValueChangedDelegate;
     FOnSpinBoxValueCommitted        OnValueCommittedDelegate;
 };

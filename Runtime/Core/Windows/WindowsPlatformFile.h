@@ -1,6 +1,8 @@
 #pragma once
 #include "Core/Windows/Windows.h"
 #include "Core/PlatformInterface/IPlatformFileSystem.h"
+#include "Core/Platform/CriticalSection.h"
+#include "Core/Threading/ScopedLock.h"
 
 class CORE_API FWindowsFileHandle : public IPlatformFile
 {
@@ -54,10 +56,11 @@ private:
     void CollectWriteResult(FPendingWrite* PendingWrite, bool bWait);
     void ReportWriteFailure(const CHAR* What, uint32 ErrorCode);
 
-    HANDLE                 FileHandle;
-    int64                  WriteOffset;
-    TArray<FPendingWrite*> PendingWrites;
-    bool                   bHasWriteError;
+    HANDLE                   FileHandle;
+    int64                    WriteOffset;
+    TArray<FPendingWrite*>   PendingWrites;
+    mutable FCriticalSection PendingWritesCS;
+    bool                     bHasWriteError;
 };
 
 struct CORE_API FWindowsPlatformFile : public IPlatformFileSystem
@@ -109,4 +112,6 @@ struct CORE_API FWindowsPlatformFile : public IPlatformFileSystem
         const BOOL Result = ::PathIsRelativeA(Filepath);
         return Result == TRUE;
     }
+
+    static bool IterateDirectory(const CHAR* Path, TArray<FDirectoryEntry>& OutEntries);
 };

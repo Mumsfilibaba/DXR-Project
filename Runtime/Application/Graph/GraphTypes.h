@@ -49,6 +49,9 @@ struct FGraphNodeStyle
     /** @brief The stroke around a pin circle, left transparent to draw the circle unstroked. */
     FFloatColor PinOutline = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 
+    /** @brief The rule between stacked input and output pins. */
+    FFloatColor PinSeparator = FUIStyle::GetDefault().Colors.Border;
+
     /** @brief How far the corners are rounded, in graph space, so the radius tracks zoom. */
     float CornerRadius = FUIStyle::GetDefault().Metrics.CornerRadius;
 

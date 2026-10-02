@@ -123,7 +123,7 @@ void FGraphNodeElement::OnArrange(const FRectangle& AllottedBounds)
         Math::Max(AllottedBounds.Width - (Inset * 2), 0),
         ContentBottom - ContentTop);
 
-    Content->Tick(ContentBounds);
+    Content->Arrange(ContentBounds);
 }
 
 int32 FGraphNodeElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -154,7 +154,7 @@ int32 FGraphNodeElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
     const float Thickness = bIsSelected ? UIStyle.Metrics.BorderThickness * 2.0f : UIStyle.Metrics.BorderThickness;
     OutCommandList.AddBoxOutline(LayerId + 1, Bounds, BorderColor, Thickness, Corners);
 
-    DrawPinSeparator(Bounds, OutCommandList, LayerId + 1, BorderColor);
+    DrawPinSeparator(Bounds, OutCommandList, LayerId + 1, Style.PinSeparator);
 
     if (Font)
     {
@@ -229,22 +229,41 @@ void FGraphNodeElement::DrawPinSeparator(const FRectangle& Bounds, FDrawCommandL
 
 void FGraphNodeElement::SetZoom(float InZoom)
 {
+    if (Zoom == InZoom)
+    {
+        return;
+    }
+
     Zoom = InZoom;
+    InvalidateDesiredSize();
 }
 
 void FGraphNodeElement::SetStyle(const FGraphNodeStyle& InStyle)
 {
     Style = InStyle;
+    InvalidateDesiredSize();
 }
 
 void FGraphNodeElement::SetSelected(bool bInIsSelected)
 {
+    if (bIsSelected == bInIsSelected)
+    {
+        return;
+    }
+
     bIsSelected = bInIsSelected;
+    InvalidatePaint();
 }
 
 void FGraphNodeElement::SetHoveredPin(int32 InPinId)
 {
+    if (HoveredPinId == InPinId)
+    {
+        return;
+    }
+
     HoveredPinId = InPinId;
+    InvalidatePaint();
 }
 
 bool FGraphNodeElement::GetPinCenter(int32 PinId, Vector2& OutPosition) const

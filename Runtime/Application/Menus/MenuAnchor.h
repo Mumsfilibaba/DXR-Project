@@ -133,6 +133,8 @@ public:
     NODISCARD FMenuHandle GetMenu() const;
 
 private:
+    void NotifyMenuDismissed();
+    void InvalidateOpenChrome();
     void SyncOpenState() const;
 
     TSharedPtr<FVisualElement> MenuContent;

@@ -13,7 +13,7 @@ struct FShapedGlyph
         : Offset(0)
         , Advance(0)
         , SourceIndex(0)
-        , Glyph(nullptr)
+        , Codepoint(0)
     {
     }
 
@@ -26,9 +26,11 @@ struct FShapedGlyph
     /** @brief The index in the source text this glyph came from. */
     int32 SourceIndex;
 
-    /** @brief The glyph in the atlas, which is null for a face that has none to draw from. */
-    const FGlyph* Glyph;
+    /** @brief The codepoint drawn, which is looked up in the face's atlas when the run is tessellated. */
+    int32 Codepoint;
 };
+
+static_assert(sizeof(FShapedGlyph) == 16, "FShapedGlyph grew; every run in the shaping cache pays for it per glyph");
 
 struct FShapedRun
 {

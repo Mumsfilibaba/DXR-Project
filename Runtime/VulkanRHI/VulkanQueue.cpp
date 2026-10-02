@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Threading/ScopedLock.h"
 #include "RHI/RHIQuery.h"
 #include "VulkanRHI/VulkanQueue.h"
@@ -371,6 +372,8 @@ void FVulkanQueue::RetireDeferredObjects(TArray<FVulkanDeferredObject>&& InObjec
 
 void FVulkanQueue::SubmitCommands(FVulkanCommands* Commands)
 {
+    TRACE_SCOPE("Vulkan Queue Submit");
+
     CHECK(Commands != nullptr);
     if (Commands->IsEmpty())
     {
@@ -438,7 +441,11 @@ void FVulkanQueue::SubmitCommands(FVulkanCommands* Commands)
             FVulkanCommands* Oldest = nullptr;
             if (PendingSubmissions.Peek(Oldest) && Oldest)
             {
-                Oldest->Fence->Wait(UINT64_MAX);
+                {
+                    TRACE_SCOPE("Vulkan Queue Backpressure Wait");
+                    Oldest->Fence->Wait(UINT64_MAX);
+                }
+
                 PendingSubmissions.Dequeue();
                 Oldest->PostExecute();
             }
@@ -582,8 +589,8 @@ void FVulkanCommands::PreExecute()
                     Barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
                     Barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
                     Barrier.image                           = Pending.Texture->GetVkImage();
-                    Barrier.srcAccessMask                   = VK_ACCESS_2_NONE_KHR;
-                    Barrier.dstAccessMask                   = VK_ACCESS_2_NONE_KHR;
+                    Barrier.srcAccessMask                   = GetImageLayoutSyncScope(GlobalLayout).WriteAccess;
+                    Barrier.dstAccessMask                   = GetImageLayoutSyncScope(Pending.DesiredLayout).Access;
                     Barrier.srcStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
                     Barrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
                     Barrier.subresourceRange.aspectMask     = AspectMask;
@@ -612,8 +619,8 @@ void FVulkanCommands::PreExecute()
                         Barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
                         Barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
                         Barrier.image                           = Pending.Texture->GetVkImage();
-                        Barrier.srcAccessMask                   = VK_ACCESS_2_NONE_KHR;
-                        Barrier.dstAccessMask                   = VK_ACCESS_2_NONE_KHR;
+                        Barrier.srcAccessMask                   = GetImageLayoutSyncScope(GlobalLayout).WriteAccess;
+                        Barrier.dstAccessMask                   = GetImageLayoutSyncScope(Pending.DesiredLayout).Access;
                         Barrier.srcStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
                         Barrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
                         Barrier.subresourceRange.aspectMask     = AspectMask;
@@ -641,8 +648,8 @@ void FVulkanCommands::PreExecute()
                 Barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
                 Barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
                 Barrier.image                           = Pending.Texture->GetVkImage();
-                Barrier.srcAccessMask                   = VK_ACCESS_2_NONE_KHR;
-                Barrier.dstAccessMask                   = VK_ACCESS_2_NONE_KHR;
+                Barrier.srcAccessMask                   = GetImageLayoutSyncScope(GlobalLayout).WriteAccess;
+                Barrier.dstAccessMask                   = GetImageLayoutSyncScope(Pending.DesiredLayout).Access;
                 Barrier.srcStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
                 Barrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
                 Barrier.subresourceRange.aspectMask     = AspectMask;
@@ -875,6 +882,7 @@ void FVulkanCommands::Execute()
     for (int32 i = 0; i < PendingQueries.Size(); i++)
     {
         PendingQueries[i]->SyncFence = MakeSharedRef<FVulkanFence>(Fence);
+        SubmittedQueries.Add(MakeSharedRef<FVulkanQueryRHI>(PendingQueries[i]));
     }
     PendingQueries.Clear();
 }
@@ -895,10 +903,7 @@ void FVulkanCommands::PostExecute()
         }
     }
 
-    uint64 AccumulatedIdleTicks      = 0;
-    uint64 LastCommandBufferEndTicks = 0;
-    
-    bool bHaveLastCommandBufferEnd = false;
+    FVulkanTimestampIdleState& IdleState = Queue.GetTimestampIdleState();
     for (int32 i = 0; i < TimestampQueries.Size(); i++)
     {
         const FVulkanQuery& Query = TimestampQueries[i];
@@ -906,22 +911,22 @@ void FVulkanCommands::PostExecute()
 
         if (Query.Type == EVulkanQueryType::CommandListEnd)
         {
-            LastCommandBufferEndTicks = Ticks;
-            bHaveLastCommandBufferEnd = true;
+            IdleState.LastCommandBufferEndTicks = Ticks;
+            IdleState.bHaveLastCommandBufferEnd = true;
         }
-        else if (Query.Type == EVulkanQueryType::CommandListBegin && bHaveLastCommandBufferEnd)
+        else if (Query.Type == EVulkanQueryType::CommandListBegin && IdleState.bHaveLastCommandBufferEnd)
         {
-            if (Ticks > LastCommandBufferEndTicks)
+            if (Ticks > IdleState.LastCommandBufferEndTicks)
             {
-                AccumulatedIdleTicks += Ticks - LastCommandBufferEndTicks;
+                IdleState.AccumulatedIdleTicks += Ticks - IdleState.LastCommandBufferEndTicks;
             }
 
-            bHaveLastCommandBufferEnd = false;
+            IdleState.bHaveLastCommandBufferEnd = false;
         }
 
         if (Query.Type == EVulkanQueryType::Timestamp && Query.ResultTarget)
         {
-            const uint64 AdjustedTicks = (Ticks > AccumulatedIdleTicks) ? (Ticks - AccumulatedIdleTicks) : 0;
+            const uint64 AdjustedTicks = (Ticks > IdleState.AccumulatedIdleTicks) ? (Ticks - IdleState.AccumulatedIdleTicks) : 0;
             *Query.ResultTarget = ToNanoseconds(AdjustedTicks);
         }
     }
@@ -990,6 +995,13 @@ void FVulkanCommands::PostExecute()
     }
 
     PipelineStatsQueries.Clear();
+
+    for (const FVulkanQueryRHIRef& Query : SubmittedQueries)
+    {
+        Query->bResultReady.Store(1);
+    }
+
+    SubmittedQueries.Clear();
 
     for (int32 RangeIdx = 0; RangeIdx < QueryRanges.Size(); RangeIdx++)
     {

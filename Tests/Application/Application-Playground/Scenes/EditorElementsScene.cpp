@@ -47,11 +47,11 @@ static TSharedPtr<FVisualElement> MakeFrame(const TSharedPtr<FVisualElement>& Co
     const FUIStyle& Style = FUIStyle::GetDefault();
 
     FBorder::FDesc Desc;
-    Desc.BackgroundColor = Style.Colors.WindowBackground;
-    Desc.BorderColor     = Style.Colors.Border;
-    Desc.BorderThickness = Style.Metrics.BorderThickness;
-    Desc.CornerRadius    = Style.Metrics.CornerRadius;
-    Desc.Padding         = FMargin(4);
+    Desc.BackgroundColor = Style.InnerFrame.Fill;
+    Desc.BorderColor     = Style.InnerFrame.Border;
+    Desc.BorderThickness = Style.InnerFrame.BorderThickness;
+    Desc.CornerRadius    = Style.InnerFrame.CornerRadius;
+    Desc.Padding         = Style.InnerFrame.Padding;
     Desc.MinHeight       = MinHeight;
     Desc.Content         = Content;
 

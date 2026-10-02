@@ -183,6 +183,7 @@ FDockWindowLayout::FDockWindowLayout()
     : Title()
     , Position()
     , Size()
+    , bIsMaximized(false)
     , Root()
 {
 }
@@ -203,6 +204,7 @@ bool FDockLayoutFile::Save(const String& Filename, const TArray<FDockWindowLayou
         File.SetOrAddString(SectionName.Data(), "Title", Layout.Title);
         File.SetOrAddString(SectionName.Data(), "Position", WritePoint(Layout.Position));
         File.SetOrAddString(SectionName.Data(), "Size", WritePoint(Layout.Size));
+        File.SetOrAddInt(SectionName.Data(), "Maximized", Layout.bIsMaximized ? 1 : 0);
         File.SetOrAddInt(SectionName.Data(), "Root", RootIndex);
     }
 
@@ -266,6 +268,12 @@ bool FDockLayoutFile::Load(const String& Filename, TArray<FDockWindowLayout>& Ou
             if (File.GetString(SectionName.Data(), "Size", Value))
             {
                 Layout.Size = ReadPoint(Value);
+            }
+
+            int32 MaximizedValue = 0;
+            if (File.GetInt(SectionName.Data(), "Maximized", MaximizedValue))
+            {
+                Layout.bIsMaximized = MaximizedValue != 0;
             }
 
             File.GetInt(SectionName.Data(), "Root", RootIndex);

@@ -42,10 +42,10 @@ bool RenderGraphViewSlice_Test()
         {
             PassBuilder.Write(SliceUAV);
         },
-        [&bWriteRan, SliceUAV](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
+        [&](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
         {
             FRHIUnorderedAccessView* UAV = Resources.Get(SliceUAV);
-            TEST_CHECK(UAV != nullptr);
+            TEST_EXPECT_OR_RETURN(UAV != nullptr);
             PassCommandList.ClearUnorderedAccessViewFloat(UAV, Vector4(1.0f, 0.0f, 0.0f, 1.0f));
             bWriteRan = true;
         });
@@ -54,9 +54,9 @@ bool RenderGraphViewSlice_Test()
         {
             PassBuilder.Read(SliceSRV);
         },
-        [&bReadRan, SliceSRV](FRHICommandList&, const FRenderGraphPassResources& Resources)
+        [&](FRHICommandList&, const FRenderGraphPassResources& Resources)
         {
-            TEST_CHECK(Resources.Get(SliceSRV) != nullptr);
+            TEST_EXPECT_OR_RETURN(Resources.Get(SliceSRV) != nullptr);
             bReadRan = true;
         });
 
@@ -127,9 +127,9 @@ bool RenderGraphViewBufferRange_Test()
         {
             PassBuilder.Write(BufferUAV);
         },
-        [BufferUAV](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
+        [&](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
         {
-            TEST_CHECK(Resources.Get(BufferUAV) != nullptr);
+            TEST_EXPECT_OR_RETURN(Resources.Get(BufferUAV) != nullptr);
             const uint32 ClearValues[4] = { 1, 0, 0, 0 };
             PassCommandList.ClearUnorderedAccessViewUint(Resources.Get(BufferUAV), ClearValues);
         });
@@ -138,9 +138,9 @@ bool RenderGraphViewBufferRange_Test()
         {
             PassBuilder.Read(BufferSRV);
         },
-        [BufferSRV](FRHICommandList&, const FRenderGraphPassResources& Resources)
+        [&](FRHICommandList&, const FRenderGraphPassResources& Resources)
         {
-            TEST_CHECK(Resources.Get(BufferSRV) != nullptr);
+            TEST_EXPECT_OR_RETURN(Resources.Get(BufferSRV) != nullptr);
         });
 
     GraphBuilder.Execute(CommandList);
@@ -199,9 +199,9 @@ bool RenderGraphViewTypelessFormat_Test()
         {
             PassBuilder.Write(UintUAV);
         },
-        [&bWriteRan, UintUAV](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
+        [&](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
         {
-            TEST_CHECK(Resources.Get(UintUAV) != nullptr);
+            TEST_EXPECT_OR_RETURN(Resources.Get(UintUAV) != nullptr);
             const uint32 ClearValues[4] = { 42, 0, 0, 0 };
             PassCommandList.ClearUnorderedAccessViewUint(Resources.Get(UintUAV), ClearValues);
             bWriteRan = true;
@@ -211,9 +211,9 @@ bool RenderGraphViewTypelessFormat_Test()
         {
             PassBuilder.Read(FloatSRV);
         },
-        [&bReadRan, FloatSRV](FRHICommandList&, const FRenderGraphPassResources& Resources)
+        [&](FRHICommandList&, const FRenderGraphPassResources& Resources)
         {
-            TEST_CHECK(Resources.Get(FloatSRV) != nullptr);
+            TEST_EXPECT_OR_RETURN(Resources.Get(FloatSRV) != nullptr);
             bReadRan = true;
         });
 
@@ -254,9 +254,9 @@ bool RenderGraphViewHybridUsage_Test()
         {
             PassBuilder.Write(UnorderedAccessView);
         },
-        [UnorderedAccessView](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
+        [&](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
         {
-            TEST_CHECK(Resources.Get(UnorderedAccessView) != nullptr);
+            TEST_EXPECT_OR_RETURN(Resources.Get(UnorderedAccessView) != nullptr);
             PassCommandList.ClearUnorderedAccessViewFloat(Resources.Get(UnorderedAccessView), Vector4(1.0f, 0.0f, 0.0f, 1.0f));
         });
 
@@ -272,9 +272,9 @@ bool RenderGraphViewHybridUsage_Test()
         {
             PassBuilder.Read(ShaderResourceView);
         },
-        [ShaderResourceView](FRHICommandList&, const FRenderGraphPassResources& Resources)
+        [&](FRHICommandList&, const FRenderGraphPassResources& Resources)
         {
-            TEST_CHECK(Resources.Get(ShaderResourceView) != nullptr);
+            TEST_EXPECT_OR_RETURN(Resources.Get(ShaderResourceView) != nullptr);
         });
 
     GraphBuilder.Execute(CommandList);
@@ -325,12 +325,12 @@ bool RenderGraphSubresourceRejoin_Test()
                 PassBuilder.Write(SliceView);
             }
         },
-        [&SliceViews](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
+        [&](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
         {
             for (FRenderGraphUnorderedAccessView* SliceView : SliceViews)
             {
                 FRHIUnorderedAccessView* UnorderedAccessView = Resources.Get(SliceView);
-                TEST_CHECK(UnorderedAccessView != nullptr);
+                TEST_EXPECT_OR_RETURN(UnorderedAccessView != nullptr);
                 PassCommandList.ClearUnorderedAccessViewFloat(UnorderedAccessView, Vector4(1.0f, 1.0f, 1.0f, 1.0f));
             }
         });
@@ -339,9 +339,9 @@ bool RenderGraphSubresourceRejoin_Test()
         {
             PassBuilder.ReadTexture(Atlas, ERHIResourceState::NonPixelShaderResource);
         },
-        [&bReadRan, Atlas](FRHICommandList&, const FRenderGraphPassResources& Resources)
+        [&](FRHICommandList&, const FRenderGraphPassResources& Resources)
         {
-            TEST_CHECK(Resources.Get(Atlas) != nullptr);
+            TEST_EXPECT_OR_RETURN(Resources.Get(Atlas) != nullptr);
             bReadRan = true;
         });
 

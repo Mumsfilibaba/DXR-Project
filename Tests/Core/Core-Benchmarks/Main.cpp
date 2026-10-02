@@ -7,10 +7,13 @@
 #include <Core/Tasks/TaskGraph.h>
 
 #include "TestCommon/TestHarness.h"
+#include "LaunchProgram/ProgramEntry.h"
 
 #include "Array_Benchmark.h"
+#include "Map_Benchmark.h"
 #include "TaskGraph_Benchmark.h"
 #include "MemoryStack_Benchmark.h"
+#include "Sort_Benchmark.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -19,11 +22,8 @@
 IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 #endif
 
-int main(int Argc, const CHAR* Argv[])
+static int32 RunCoreBenchmarks()
 {
-    UNREFERENCED_VARIABLE(Argc);
-    UNREFERENCED_VARIABLE(Argv);
-
     // The harness is used here for its logging and output-device setup only; benchmarks
     // report timings rather than pass/fail, so there is nothing to tally.
     TestHarness::Initialize("BenchmarkResults_Core.log");
@@ -43,12 +43,20 @@ int main(int Argc, const CHAR* Argv[])
     TArray_Benchmark();
 #endif
 
+#if RUN_TMAP_BENCHMARKS
+    TMap_Benchmark();
+#endif
+
 #if RUN_TASKGRAPH_BENCHMARKS
     TaskGraph_Benchmark();
 #endif
 
 #if RUN_MEMORYSTACK_BENCHMARKS
     MemoryStack_Benchmark();
+#endif
+
+#if RUN_SORT_BENCHMARKS
+    Sort_Benchmark();
 #endif
 
     FTaskGraph::Release();
@@ -58,3 +66,5 @@ int main(int Argc, const CHAR* Argv[])
     TestHarness::Shutdown();
     return 0;
 }
+
+IMPLEMENT_PROGRAM_MAIN("Core-Benchmarks", RunCoreBenchmarks);

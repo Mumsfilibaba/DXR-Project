@@ -5,6 +5,7 @@
 #include "Application/Input/Keys.h"
 #include "Application/Menus/MenuStack.h"
 #include "Application/Style/UIStyle.h"
+#include "Core/Math/Geometry2D.h"
 #include "Core/Math/Math.h"
 #include "Core/Templates/NumericLimits.h"
 
@@ -27,6 +28,12 @@ constexpr float GRAPH_GRID_OPACITY = 0.35f;
 // How many of the finest grid lines make up one heavier line
 constexpr int32 GRAPH_GRID_MAJOR_EVERY = 4;
 
+// The edge of one cell of the grids nodes and links are looked up through, in pixels
+constexpr int32 GRAPH_SPATIAL_CELL_SIZE = 64;
+
+// How far outside its rectangle a node is still listed, which covers the grab radius of the pins on its edges
+constexpr int32 GRAPH_NODE_GRID_MARGIN = 16;
+
 TSharedPtr<FGraphCanvas> FGraphCanvas::Create(const FDesc& Desc)
 {
     TSharedPtr<FGraphCanvas> NewCanvas = MakeSharedPtr<FGraphCanvas>();
@@ -39,16 +46,28 @@ FGraphCanvas::FGraphCanvas()
     , Model(nullptr)
     , Font(nullptr)
     , NodeElements()
+    , NodeElementIndexById()
+    , LinkCurves()
+    , LinkPoints()
+    , ScratchItemBounds()
+    , NodeGrid()
+    , LinkGrid()
+    , IndexedRevision(-1)
+    , bIsSpatialIndexDirty(true)
     , SelectedNodeIds()
     , NodeStyle()
     , BackgroundColor(FUIStyle::GetDefault().Colors.WindowBackground)
     , LinkColor(0.0f, 0.0f, 0.0f, 0.0f)
+    , GridColor(0.0f, 0.0f, 0.0f, 0.0f)
+    , SurroundColor(0.0f, 0.0f, 0.0f, 0.0f)
+    , CornerRadius(0.0f)
     , MarqueeBounds()
     , Pan(0.0f, 0.0f)
     , DraggingToPosition(0.0f, 0.0f)
     , DragAnchor(0, 0)
     , LastDragPosition(0, 0)
     , Zoom(1.0f)
+    , FitMinZoom(MinZoom)
     , GridSpacingInGraphSpace(GridSpacing)
     , SelectedLinkId(-1)
     , DraggingFromPinId(-1)
@@ -68,11 +87,17 @@ FGraphCanvas::~FGraphCanvas() = default;
 
 void FGraphCanvas::Initialize(const FDesc& Desc)
 {
+    SetDrawCachePolicy(EDrawCachePolicy::Never);
+
     Font                       = Desc.Font;
     NodeStyle                  = Desc.NodeStyle;
     BackgroundColor            = Desc.BackgroundColor;
     LinkColor                  = Desc.LinkColor;
+    GridColor                  = Desc.GridColor;
+    SurroundColor              = Desc.SurroundColor;
+    CornerRadius               = Math::Max(Desc.CornerRadius, 0.0f);
     GridSpacingInGraphSpace    = Math::Max(Desc.GridSpacing, 1);
+    FitMinZoom                 = Math::Clamp(Desc.FitMinZoom, MinZoom, MaxZoom);
     bShowGrid                  = Desc.bShowGrid;
     bIsViewer                  = Desc.bIsViewer;
     OnGetContextMenuDelegate   = Desc.OnGetContextMenu;
@@ -98,35 +123,46 @@ IntVector2 FGraphCanvas::ComputeDesiredSize() const
 
 void FGraphCanvas::OnArrange(const FRectangle& AllottedBounds)
 {
+    MeasureNodeElements();
+
     for (const TSharedPtr<FGraphNodeElement>& Element : NodeElements)
     {
         const Vector2    TopLeft = GraphToScreen(Element->GetNode().Position);
         const IntVector2 Size    = Element->GetCachedDesiredSize();
 
         Element->SetZoom(Zoom);
-        Element->Tick(FRectangle(
+        Element->Arrange(FRectangle(
             IntVector2(static_cast<int32>(TopLeft.X), static_cast<int32>(TopLeft.Y)),
             static_cast<int32>(static_cast<float>(Size.X) * Zoom),
             static_cast<int32>(static_cast<float>(Size.Y) * Zoom)));
     }
 
+    MarkSpatialIndexDirty();
+
     UNREFERENCED_VARIABLE(AllottedBounds);
 }
 
-void FGraphCanvas::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FGraphCanvas::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const
 {
-    for (const TSharedPtr<FGraphNodeElement>& Element : NodeElements)
+    return VisitChildArray(Visitor, Order, NodeElements, [](const TSharedPtr<FGraphNodeElement>& Element) -> const TSharedPtr<FGraphNodeElement>&
     {
-        OutChildren.Add(Element);
-    }
+        return Element;
+    });
 }
 
 int32 FGraphCanvas::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
+    if (Model && Model->GetRevision() != BuiltRevision)
+    {
+        RequestContinuousArrange();
+    }
+
     const FUIStyle&   Style  = FUIStyle::GetDefault();
     const FRectangle& Bounds = AllottedGeometry.Bounds;
 
-    OutCommandList.AddBox(LayerId, Bounds, BackgroundColor);
+    const FCornerRadii Radii(CornerRadius);
+
+    OutCommandList.AddBox(LayerId, Bounds, BackgroundColor, Radii);
 
     if (bShowGrid)
     {
@@ -147,7 +183,7 @@ int32 FGraphCanvas::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
         }
 
         const FDrawGeometry ChildGeometry(ElementBounds, AllottedGeometry.Scale);
-        MaxLayerId = Element->OnDraw(ChildGeometry, OutCommandList, MaxLayerId + 1);
+        MaxLayerId = Element->Draw(ChildGeometry, OutCommandList, MaxLayerId + 1);
     }
 
     if (DragMode == EGraphDragMode::Marquee && !MarqueeBounds.IsEmpty())
@@ -160,17 +196,14 @@ int32 FGraphCanvas::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
     }
 
     OutCommandList.PopClip(MaxLayerId + 1);
-    return MaxLayerId + 1;
-}
 
-void FGraphCanvas::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
-{
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
-    for (const TSharedPtr<FGraphNodeElement>& Element : NodeElements)
+    if (CornerRadius > 0.0f && SurroundColor.A > 0.0f)
     {
-        Element->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        OutCommandList.AddPanelChrome(MaxLayerId + 1, Bounds, Radii, 0.0f, FFloatColor(0.0f, 0.0f, 0.0f, 0.0f), SurroundColor);
+        return MaxLayerId + 2;
     }
+
+    return MaxLayerId + 1;
 }
 
 FEventResponse FGraphCanvas::OnMouseButtonDown(const FCursorEvent& CursorEvent)
@@ -361,7 +394,7 @@ void FGraphCanvas::FitToNodes()
     const float   WidthZoom  = GraphSize.X > 0.0f ? (static_cast<float>(Bounds.Width) / GraphSize.X) : MaxZoom;
     const float   HeightZoom = GraphSize.Y > 0.0f ? (static_cast<float>(Bounds.Height) / GraphSize.Y) : MaxZoom;
 
-    Zoom = Math::Clamp(Math::Min(WidthZoom, HeightZoom), MinZoom, MaxZoom);
+    Zoom = Math::Clamp(Math::Min(WidthZoom, HeightZoom), FitMinZoom, MaxZoom);
 
     const Vector2 ScaledSize(GraphSize.X * Zoom, GraphSize.Y * Zoom);
     Pan = Vector2(((static_cast<float>(Bounds.Width) - ScaledSize.X) * 0.5f) - (Minimum.X * Zoom),
@@ -381,11 +414,14 @@ void FGraphCanvas::AutoLayout()
 
     const TArray<FGraphNode>& Nodes = Model->GetNodes();
 
-    TArray<Vector2> NodeSizes;
+    TArray<Vector2>    NodeSizes;
+    TMap<int32, int32> NodeIndexById;
     NodeSizes.Reserve(Nodes.Size());
 
     for (const FGraphNode& Node : Nodes)
     {
+        NodeIndexById.Add(Node.NodeId, NodeSizes.Size());
+
         TSharedPtr<FGraphNodeElement> Element = FindNodeElement(Node.NodeId);
 
         const IntVector2 Size = Element 
@@ -401,8 +437,10 @@ void FGraphCanvas::AutoLayout()
         int32 FromNodeId = -1;
         int32 ToNodeId   = -1;
 
-        Model->FindPin(Link.FromPinId, FromNodeId);
-        Model->FindPin(Link.ToPinId, ToNodeId);
+        if (!Model->FindPin(Link.FromPinId, FromNodeId) || !Model->FindPin(Link.ToPinId, ToNodeId))
+        {
+            continue;
+        }
 
         int32 FromIndex = -1;
         int32 ToIndex   = -1;
@@ -420,7 +458,7 @@ void FGraphCanvas::AutoLayout()
     }
 
     TArray<Vector2> Positions;
-    FGraphLayout::LayoutLayered(MakeArrayView(NodeSizes), MakeArrayView(Edges), FGraphLayoutSettings(), Positions);
+    FLayeredGraphLayout::Layout(MakeArrayView(NodeSizes), MakeArrayView(Edges), FGraphLayoutSettings(), Positions);
 
     for (int32 Index = 0; Index < Nodes.Size() && Index < Positions.Size(); ++Index)
     {
@@ -442,16 +480,20 @@ void FGraphCanvas::ZoomAt(const IntVector2& ClientPosition, float ZoomDelta)
     Pan = Vector2(
         Anchor.X - static_cast<float>(Bounds.Position.X) - (GraphAnchor.X * NewZoom),
         Anchor.Y - static_cast<float>(Bounds.Position.Y) - (GraphAnchor.Y * NewZoom));
+
+    MarkViewChanged();
 }
 
 void FGraphCanvas::SetZoom(float InZoom)
 {
     Zoom = Math::Clamp(InZoom, MinZoom, MaxZoom);
+    MarkViewChanged();
 }
 
 void FGraphCanvas::SetPan(const Vector2& InPan)
 {
     Pan = InPan;
+    MarkViewChanged();
 }
 
 Vector2 FGraphCanvas::GraphToScreen(const Vector2& GraphPosition) const
@@ -472,29 +514,42 @@ Vector2 FGraphCanvas::ScreenToGraph(const Vector2& ClientPosition) const
 
 int32 FGraphCanvas::FindNodeAt(const IntVector2& ClientPosition) const
 {
-    for (int32 Index = NodeElements.Size() - 1; Index >= 0; --Index)
-    {
-        if (NodeElements[Index]->GetContentRectangle().EncapsulatesPoint(ClientPosition))
-        {
-            return NodeElements[Index]->GetNodeId();
-        }
-    }
+    RefreshSpatialIndex();
 
-    return -1;
+    int32 TopIndex = -1;
+    NodeGrid.ForEachInCell(ClientPosition, [this, &ClientPosition, &TopIndex](int32 Index)
+    {
+        if (Index > TopIndex && NodeElements[Index]->GetContentRectangle().EncapsulatesPoint(ClientPosition))
+        {
+            TopIndex = Index;
+        }
+    });
+
+    return TopIndex >= 0 ? NodeElements[TopIndex]->GetNodeId() : -1;
 }
 
 int32 FGraphCanvas::FindPinAt(const IntVector2& ClientPosition) const
 {
-    for (int32 Index = NodeElements.Size() - 1; Index >= 0; --Index)
+    RefreshSpatialIndex();
+
+    int32 TopIndex = -1;
+    int32 TopPinId = -1;
+    NodeGrid.ForEachInCell(ClientPosition, [this, &ClientPosition, &TopIndex, &TopPinId](int32 Index)
     {
+        if (Index <= TopIndex)
+        {
+            return;
+        }
+
         const int32 PinId = NodeElements[Index]->FindPinAt(ClientPosition);
         if (PinId >= 0)
         {
-            return PinId;
+            TopIndex = Index;
+            TopPinId = PinId;
         }
-    }
+    });
 
-    return -1;
+    return TopPinId;
 }
 
 int32 FGraphCanvas::FindLinkAt(const IntVector2& ClientPosition) const
@@ -504,20 +559,23 @@ int32 FGraphCanvas::FindLinkAt(const IntVector2& ClientPosition) const
         return -1;
     }
 
+    RefreshSpatialIndex();
+
     const Vector2 Position(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
 
     int32 ClosestLinkId   = -1;
     float ClosestDistance = LinkGrabDistance;
 
-    for (const FGraphLink& Link : Model->GetLinks())
+    LinkGrid.ForEachInCell(ClientPosition, [this, &Position, &ClosestLinkId, &ClosestDistance](int32 CurveIndex)
     {
-        const float Distance = DistanceToLink(Link, Position);
+        const FLinkCurve& Curve    = LinkCurves[CurveIndex];
+        const float       Distance = Geometry2D::DistanceToPolyline(GetLinkPoints(Curve), Position);
         if (Distance <= ClosestDistance)
         {
             ClosestDistance = Distance;
-            ClosestLinkId   = Link.LinkId;
+            ClosestLinkId   = Curve.LinkId;
         }
-    }
+    });
 
     return ClosestLinkId;
 }
@@ -583,15 +641,8 @@ void FGraphCanvas::DeleteSelection()
 
 TSharedPtr<FGraphNodeElement> FGraphCanvas::FindNodeElement(int32 NodeId) const
 {
-    for (const TSharedPtr<FGraphNodeElement>& Element : NodeElements)
-    {
-        if (Element->GetNodeId() == NodeId)
-        {
-            return Element;
-        }
-    }
-
-    return nullptr;
+    const int32* Index = NodeElementIndexById.Find(NodeId);
+    return Index ? NodeElements[*Index] : nullptr;
 }
 
 void FGraphCanvas::OnDragged(const FCursorEvent& CursorEvent)
@@ -611,6 +662,7 @@ void FGraphCanvas::OnDragged(const FCursorEvent& CursorEvent)
         case EGraphDragMode::Pan:
         {
             Pan = Pan + Vector2(static_cast<float>(Delta.X), static_cast<float>(Delta.Y));
+            MarkViewChanged();
             break;
         }
 
@@ -631,6 +683,7 @@ void FGraphCanvas::OnDragged(const FCursorEvent& CursorEvent)
                 }
             }
 
+            MarkViewChanged();
             break;
         }
 
@@ -671,6 +724,8 @@ bool FGraphCanvas::AcceptsPressFromKey(FKey Key) const
 void FGraphCanvas::RebuildElements()
 {
     NodeElements.Clear();
+    NodeElementIndexById.Clear();
+    MarkSpatialIndexDirty();
 
     if (!Model)
     {
@@ -686,6 +741,7 @@ void FGraphCanvas::RebuildElements()
         Element->SetSelected(IsNodeSelected(Node.NodeId));
         Element->SetZoom(Zoom);
 
+        NodeElementIndexById.Add(Node.NodeId, NodeElements.Size());
         NodeElements.Add(Element);
     }
 
@@ -765,8 +821,10 @@ bool FGraphCanvas::GetLinkCurve(const FGraphLink& Link, Vector2& OutStart, Vecto
     int32 FromNodeId = -1;
     int32 ToNodeId   = -1;
 
-    Model->FindPin(Link.FromPinId, FromNodeId);
-    Model->FindPin(Link.ToPinId, ToNodeId);
+    if (!Model->FindPin(Link.FromPinId, FromNodeId) || !Model->FindPin(Link.ToPinId, ToNodeId))
+    {
+        return false;
+    }
 
     TSharedPtr<FGraphNodeElement> FromElement = FindNodeElement(FromNodeId);
     TSharedPtr<FGraphNodeElement> ToElement   = FindNodeElement(ToNodeId);
@@ -787,46 +845,85 @@ bool FGraphCanvas::GetLinkCurve(const FGraphLink& Link, Vector2& OutStart, Vecto
     return true;
 }
 
-float FGraphCanvas::DistanceToLink(const FGraphLink& Link, const Vector2& ClientPosition) const
+void FGraphCanvas::MarkSpatialIndexDirty()
 {
-    Vector2 Start;
-    Vector2 StartControl;
-    Vector2 EndControl;
-    Vector2 End;
+    bIsSpatialIndexDirty = true;
+}
 
-    if (!GetLinkCurve(Link, Start, StartControl, EndControl, End))
+void FGraphCanvas::MarkViewChanged()
+{
+    MarkSpatialIndexDirty();
+    InvalidateArrange();
+    InvalidatePaint();
+}
+
+TArrayView<const Vector2> FGraphCanvas::GetLinkPoints(const FLinkCurve& Curve) const
+{
+    return TArrayView<const Vector2>(LinkPoints.Data() + Curve.FirstPoint, GRAPH_LINK_SEGMENTS + 1);
+}
+
+void FGraphCanvas::RefreshSpatialIndex() const
+{
+    const int32 ModelRevision = Model ? Model->GetRevision() : -1;
+    if (!bIsSpatialIndexDirty && IndexedRevision == ModelRevision)
     {
-        return TNumericLimits<float>::Max();
+        return;
     }
 
-    float   Closest  = TNumericLimits<float>::Max();
-    Vector2 Previous = Start;
+    bIsSpatialIndexDirty = false;
+    IndexedRevision      = ModelRevision;
 
-    for (int32 Step = 1; Step <= GRAPH_LINK_SEGMENTS; ++Step)
+    const FRectangle& Bounds = GetContentRectangle();
+
+    ScratchItemBounds.Reset();
+    ScratchItemBounds.Reserve(NodeElements.Size());
+    for (const TSharedPtr<FGraphNodeElement>& Element : NodeElements)
     {
-        const float T            = static_cast<float>(Step) / static_cast<float>(GRAPH_LINK_SEGMENTS);
-        const float InverseT     = 1.0f - T;
-        const float StartWeight  = InverseT * InverseT * InverseT;
-        const float FirstWeight  = 3.0f * InverseT * InverseT * T;
-        const float SecondWeight = 3.0f * InverseT * T * T;
-        const float EndWeight    = T * T * T;
+        ScratchItemBounds.Add(Element->GetContentRectangle().Inflate(FMargin(GRAPH_NODE_GRID_MARGIN)));
+    }
 
-        const Vector2 Point         = (Start * StartWeight) + (StartControl * FirstWeight) + (EndControl * SecondWeight) + (End * EndWeight);
-        const Vector2 Segment       = Point - Previous;
-        const float   LengthSquared = Segment.DotProduct(Segment);
+    NodeGrid.Build(Bounds, GRAPH_SPATIAL_CELL_SIZE, ScratchItemBounds);
 
-        float Parameter = 0.0f;
-        if (LengthSquared > 0.0f)
+    LinkCurves.Reset();
+    LinkPoints.Reset();
+    ScratchItemBounds.Reset();
+
+    if (Model)
+    {
+        const int32 GrabMargin = static_cast<int32>(Math::Ceil(LinkGrabDistance)) + 1;
+
+        for (const FGraphLink& Link : Model->GetLinks())
         {
-            Parameter = Math::Clamp((ClientPosition - Previous).DotProduct(Segment) / LengthSquared, 0.0f, 1.0f);
-        }
+            FLinkCurve Curve;
+            Curve.LinkId     = Link.LinkId;
+            Curve.FromPinId  = Link.FromPinId;
+            Curve.FirstPoint = LinkPoints.Size();
 
-        const Vector2 Nearest = Previous + (Segment * Parameter);
-        Closest  = Math::Min(Closest, (ClientPosition - Nearest).GetLength());
-        Previous = Point;
+            if (!GetLinkCurve(Link, Curve.Start, Curve.StartControl, Curve.EndControl, Curve.End))
+            {
+                continue;
+            }
+
+            Geometry2D::FlattenCubicBezier(Curve.Start, Curve.StartControl, Curve.EndControl, Curve.End, GRAPH_LINK_SEGMENTS, LinkPoints);
+
+            Vector2 Minimum = Curve.Start;
+            Vector2 Maximum = Curve.Start;
+            for (const Vector2& Point : GetLinkPoints(Curve))
+            {
+                Minimum = Vector2(Math::Min(Minimum.X, Point.X), Math::Min(Minimum.Y, Point.Y));
+                Maximum = Vector2(Math::Max(Maximum.X, Point.X), Math::Max(Maximum.Y, Point.Y));
+            }
+
+            const IntVector2 MinimumCorner(static_cast<int32>(Math::Floor(Minimum.X)), static_cast<int32>(Math::Floor(Minimum.Y)));
+            const IntVector2 MaximumCorner(static_cast<int32>(Math::Ceil(Maximum.X)), static_cast<int32>(Math::Ceil(Maximum.Y)));
+
+            const FRectangle CurveBounds(MinimumCorner, (MaximumCorner.X - MinimumCorner.X) + 1, (MaximumCorner.Y - MinimumCorner.Y) + 1);
+            ScratchItemBounds.Add(CurveBounds.Inflate(FMargin(GrabMargin)));
+            LinkCurves.Add(Curve);
+        }
     }
 
-    return Closest;
+    LinkGrid.Build(Bounds, GRAPH_SPATIAL_CELL_SIZE, ScratchItemBounds);
 }
 
 void FGraphCanvas::DrawGrid(const FRectangle& Bounds, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -837,10 +934,10 @@ void FGraphCanvas::DrawGrid(const FRectangle& Bounds, FDrawCommandList& OutComma
         return;
     }
 
-    FFloatColor MinorColor = FUIStyle::GetDefault().Colors.Border;
+    FFloatColor MinorColor = GridColor.A > 0.0f ? GridColor : FUIStyle::GetDefault().Colors.Border;
     MinorColor.A *= GRAPH_GRID_OPACITY;
 
-    FFloatColor MajorColor = FUIStyle::GetDefault().Colors.Border;
+    FFloatColor MajorColor = GridColor.A > 0.0f ? GridColor : FUIStyle::GetDefault().Colors.Border;
     MajorColor.A *= GRAPH_GRID_OPACITY * 2.0f;
 
     const float MajorSpacing = Spacing * static_cast<float>(GRAPH_GRID_MAJOR_EVERY);
@@ -856,7 +953,8 @@ void FGraphCanvas::DrawGrid(const FRectangle& Bounds, FDrawCommandList& OutComma
         }
 
         const bool bIsMajor = (Index % GRAPH_GRID_MAJOR_EVERY) == 0;
-        OutCommandList.AddLine(LayerId, Vector2(X, static_cast<float>(Bounds.Position.Y)), Vector2(X, static_cast<float>(Bounds.GetBottom())), bIsMajor ? MajorColor : MinorColor, 1.0f);
+        const int32 LineX = Math::RoundToInt(X);
+        OutCommandList.AddLine(LayerId, FRectangle(IntVector2(LineX, Bounds.Position.Y), 1, Bounds.Height), bIsMajor ? MajorColor : MinorColor);
     }
 
     Index = 0;
@@ -868,7 +966,8 @@ void FGraphCanvas::DrawGrid(const FRectangle& Bounds, FDrawCommandList& OutComma
         }
 
         const bool bIsMajor = (Index % GRAPH_GRID_MAJOR_EVERY) == 0;
-        OutCommandList.AddLine(LayerId, Vector2(static_cast<float>(Bounds.Position.X), Y), Vector2(static_cast<float>(Bounds.GetRight()), Y), bIsMajor ? MajorColor : MinorColor, 1.0f);
+        const int32 LineY = Math::RoundToInt(Y);
+        OutCommandList.AddLine(LayerId, FRectangle(IntVector2(Bounds.Position.X, LineY), Bounds.Width, 1), bIsMajor ? MajorColor : MinorColor);
     }
 }
 
@@ -879,31 +978,23 @@ void FGraphCanvas::DrawLinks(FDrawCommandList& OutCommandList, int32 LayerId) co
         return;
     }
 
-    for (const FGraphLink& Link : Model->GetLinks())
+    RefreshSpatialIndex();
+
+    for (const FLinkCurve& Curve : LinkCurves)
     {
-        Vector2 Start;
-        Vector2 StartControl;
-        Vector2 EndControl;
-        Vector2 End;
-
-        if (!GetLinkCurve(Link, Start, StartControl, EndControl, End))
-        {
-            continue;
-        }
-
         int32            FromNodeId = -1;
-        const FGraphPin* FromPin    = Model->FindPin(Link.FromPinId, FromNodeId);
+        const FGraphPin* FromPin    = Model->FindPin(Curve.FromPinId, FromNodeId);
 
-        const bool  bIsHighlighted = Link.LinkId == SelectedLinkId || Link.LinkId == HoveredLinkId;
+        const bool  bIsHighlighted = Curve.LinkId == SelectedLinkId || Curve.LinkId == HoveredLinkId;
         const float Thickness      = bIsHighlighted ? GRAPH_LINK_HIGHLIGHT_THICKNESS : GRAPH_LINK_THICKNESS;
 
         FFloatColor CurveColor = ResolveLinkColor(FromPin);
-        if (Link.LinkId == SelectedLinkId)
+        if (Curve.LinkId == SelectedLinkId)
         {
             CurveColor = FUIStyle::GetDefault().Colors.Accent;
         }
 
-        OutCommandList.AddBezier(LayerId, Start, StartControl, EndControl, End, CurveColor, Thickness);
+        OutCommandList.AddBezier(LayerId, Curve.Start, Curve.StartControl, Curve.EndControl, Curve.End, CurveColor, Thickness);
     }
 
     if (DragMode != EGraphDragMode::Link || DraggingFromPinId < 0)
@@ -950,7 +1041,8 @@ void FGraphCanvas::OpenContextMenu(const FCursorEvent& CursorEvent)
 
     const Vector2 ClientPosition(static_cast<float>(CursorEvent.GetClientPosition().X), static_cast<float>(CursorEvent.GetClientPosition().Y));
 
-    TSharedPtr<FVisualElement> Menu = OnGetContextMenuDelegate.Execute(ScreenToGraph(ClientPosition));
+    TSharedPtr<FVisualElement> Menu = OnGetContextMenuDelegate.Execute(
+        ScreenToGraph(ClientPosition), FindNodeAt(CursorEvent.GetClientPosition()));
     if (!Menu)
     {
         return;

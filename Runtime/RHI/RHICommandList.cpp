@@ -36,11 +36,20 @@ void FRHICommandList::Execute() noexcept
 
     // Then execute all commands on the assigned context
     IRHICommandContext& CommandContextRef = GetCommandContext();
-    CommandContextRef.StartContext();
+    {
+        TRACE_SCOPE("RHI Context Start");
+        CommandContextRef.StartContext();
+    }
 
-    ExecuteWithContext(CommandContextRef);
+    {
+        TRACE_SCOPE("RHI Replay Commands");
+        ExecuteWithContext(CommandContextRef);
+    }
 
-    CommandContextRef.FinishContext();
+    {
+        TRACE_SCOPE("RHI Context Finish");
+        CommandContextRef.FinishContext();
+    }
 }
 
 void FRHICommandList::ExecuteWithContext(IRHICommandContext& InCommandContext) noexcept
@@ -204,7 +213,7 @@ void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
 
         Tasks::LaunchOnRHIThread("RHIExecuteCommandList", [NewCommandList]()
         {
-            TRACE_FUNCTION_SCOPE();
+            TRACE_SCOPE("RHI Execute Command List");
 
             NewCommandList->Execute();
             delete NewCommandList;

@@ -183,8 +183,6 @@ void FFXAAPass::Record(FRHICommandList& CommandList, const FFrameResources& Fram
 
     TRACE_SCOPE("FXAA");
 
-    GPU_TRACE_SCOPE(CommandList, "FXAA");
-
     FFXAASettings Settings;
 
     Settings.Width  = static_cast<float>(FrameResources.CurrentRenderWidth);

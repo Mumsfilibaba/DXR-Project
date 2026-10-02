@@ -25,7 +25,6 @@ public:
     }
 
 private:
-    GPUProfileSamplesMap Samples;
     FDelegateHandle      ImGuiDelegateHandle;
     bool                 bVisible;
 };

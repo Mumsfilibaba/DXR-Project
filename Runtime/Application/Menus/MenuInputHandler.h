@@ -1,23 +1,13 @@
 #pragma once
 #include "Application/InputHandler.h"
+#include "Application/InputService.h"
 
-class APPLICATION_API FMenuInputHandler final : public FInputHandler
+class APPLICATION_API FMenuInputHandler final : public FInputHandler, public TApplicationInputService<FMenuInputHandler>
 {
 public:
 
-    /**
-     * @brief Creates the handler and registers it with the application.
-     *
-     * @return The handler, which is only registered when an application exists to register it with.
-     */
-    static TSharedPtr<FMenuInputHandler> Register();
-
-    /**
-     * @brief Unregisters a handler and closes whatever it was keeping open.
-     *
-     * @param InputHandler The handler to remove.
-     */
-    static void Unregister(const TSharedPtr<FMenuInputHandler>& InputHandler);
+    /** @brief Closes every menu and the tool tip, which nothing routes input to once the handler is gone. */
+    static void OnUnregistered();
 
     /**
      * @brief Advances both services, which is what opens a delayed submenu or a tool tip.
@@ -27,8 +17,8 @@ public:
     static void Tick(float DeltaSeconds);
 
 public:
-    FMenuInputHandler() = default;
-    virtual ~FMenuInputHandler() = default;
+    FMenuInputHandler();
+    virtual ~FMenuInputHandler();
 
     // FInputHandler Interface
     virtual bool OnKeyDown(const FKeyEvent& KeyEvent) override final;

@@ -6,7 +6,7 @@
 
 #include "PlaygroundLoop.h"
 
-// The same shape as Runtime/Launch/Mac/MacMain.cpp: NSApp owns the main thread, and the playground
+// The same shape as Runtime/LaunchEngine/Mac/MacMain.cpp: NSApp owns the main thread, and the playground
 // runs on the app thread beside it. The Launch module is not linked here, because linking it would
 // bring FEngineLoop and the whole engine with it, which is the one thing the playground must not boot.
 

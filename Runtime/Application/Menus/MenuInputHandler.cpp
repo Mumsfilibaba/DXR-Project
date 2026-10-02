@@ -3,24 +3,8 @@
 #include "Application/Menus/ToolTipService.h"
 #include "Application/Application.h"
 
-TSharedPtr<FMenuInputHandler> FMenuInputHandler::Register()
+void FMenuInputHandler::OnUnregistered()
 {
-    TSharedPtr<FMenuInputHandler> InputHandler = MakeSharedPtr<FMenuInputHandler>();
-    if (FApplication::IsInitialized())
-    {
-        FApplication::Get().RegisterInputHandler(InputHandler);
-    }
-
-    return InputHandler;
-}
-
-void FMenuInputHandler::Unregister(const TSharedPtr<FMenuInputHandler>& InputHandler)
-{
-    if (InputHandler && FApplication::IsInitialized())
-    {
-        FApplication::Get().UnregisterInputHandler(InputHandler);
-    }
-
     FMenuStack::Get().DismissAll();
     FToolTipService::Get().DismissToolTip();
 }
@@ -30,6 +14,13 @@ void FMenuInputHandler::Tick(float DeltaSeconds)
     FMenuStack::Get().Tick(DeltaSeconds);
     FToolTipService::Get().Tick(DeltaSeconds);
 }
+
+FMenuInputHandler::FMenuInputHandler()
+    : FInputHandler()
+{
+}
+
+FMenuInputHandler::~FMenuInputHandler() = default;
 
 bool FMenuInputHandler::OnKeyDown(const FKeyEvent& KeyEvent)
 {

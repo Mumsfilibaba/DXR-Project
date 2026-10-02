@@ -213,7 +213,14 @@ void FMenu::ActivateHighlighted()
 
 void FMenu::SetMinDesiredWidth(int32 InMinDesiredWidth)
 {
-    MinDesiredWidth = Math::Max(InMinDesiredWidth, 0);
+    const int32 ClampedWidth = Math::Max(InMinDesiredWidth, 0);
+    if (MinDesiredWidth == ClampedWidth)
+    {
+        return;
+    }
+
+    MinDesiredWidth = ClampedWidth;
+    InvalidateDesiredSize();
 }
 
 void FMenu::SetStyle(const FUIMenuStyle& InStyle)
@@ -234,9 +241,17 @@ void FMenu::SetStyle(const FUIMenuStyle& InStyle)
     {
         Section->SetStyle(Style);
     }
+
+    InvalidatePaint();
 }
 
 void FMenu::SetOuterCornerRadius(float InCornerRadius)
 {
+    if (Style.CornerRadius == InCornerRadius)
+    {
+        return;
+    }
+
     Style.CornerRadius = InCornerRadius;
+    InvalidatePaint();
 }

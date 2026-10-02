@@ -90,22 +90,17 @@ void FSearchBox::OnArrange(const FRectangle& AllottedBounds)
     if (Editor)
     {
         Editor->SetHintColor(Editor->HasKeyboardFocus() ? Style.HintFocused : Style.HintNormal);
-        Editor->Tick(GetEditorRectangle(AllottedBounds));
+        Editor->Arrange(GetEditorRectangle(AllottedBounds));
     }
 }
 
-void FSearchBox::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FSearchBox::VisitChildren(FChildVisitor& Visitor, EChildOrder /*Order*/) const
 {
-    if (Editor)
-    {
-        OutChildren.Add(Editor);
-    }
+    return VisitChild(Visitor, Editor);
 }
 
-void FSearchBox::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+void FSearchBox::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
 {
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
     const FRectangle ClearBounds = GetClearButtonRectangle(GetContentRectangle());
     if (!ClearBounds.IsEmpty() && ClearBounds.EncapsulatesPoint(ClientPosition))
     {
@@ -114,7 +109,7 @@ void FSearchBox::FindChildrenContainingPoint(const IntVector2& ClientPosition, F
 
     if (Editor)
     {
-        Editor->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        Editor->HitTest(ClientPosition, OutPath);
     }
 }
 
@@ -138,7 +133,7 @@ int32 FSearchBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
     if (Editor && Editor->IsVisible())
     {
         const FDrawGeometry EditorGeometry(Editor->GetContentRectangle(), AllottedGeometry.Scale);
-        NextLayerId = Math::Max(NextLayerId, Editor->OnDraw(EditorGeometry, OutCommandList, LayerId));
+        NextLayerId = Math::Max(NextLayerId, Editor->Draw(EditorGeometry, OutCommandList, LayerId));
     }
 
     const FRectangle ClearBounds = GetClearButtonRectangle(AllottedGeometry.Bounds);
@@ -192,14 +187,14 @@ FEventResponse FSearchBox::OnMouseEntered(const FCursorEvent& CursorEvent)
 {
     UNREFERENCED_VARIABLE(CursorEvent);
 
-    bIsHovered = true;
+    SetHoverState(true, bIsClearHovered);
     return FEventResponse::Unhandled();
 }
 
 FEventResponse FSearchBox::OnMouseMove(const FCursorEvent& CursorEvent)
 {
     const FRectangle ClearBounds = GetClearButtonRectangle(GetContentRectangle());
-    bIsClearHovered = !ClearBounds.IsEmpty() && ClearBounds.EncapsulatesPoint(CursorEvent.GetClientPosition());
+    SetHoverState(bIsHovered, !ClearBounds.IsEmpty() && ClearBounds.EncapsulatesPoint(CursorEvent.GetClientPosition()));
 
     return FEventResponse::Unhandled();
 }
@@ -208,9 +203,21 @@ FEventResponse FSearchBox::OnMouseLeft(const FCursorEvent& CursorEvent)
 {
     UNREFERENCED_VARIABLE(CursorEvent);
 
-    bIsHovered      = false;
-    bIsClearHovered = false;
+    SetHoverState(false, false);
     return FEventResponse::Unhandled();
+}
+
+void FSearchBox::SetHoverState(bool bInIsHovered, bool bInIsClearHovered)
+{
+    if (bIsHovered == bInIsHovered && bIsClearHovered == bInIsClearHovered)
+    {
+        return;
+    }
+
+    bIsHovered      = bInIsHovered;
+    bIsClearHovered = bInIsClearHovered;
+
+    InvalidatePaint();
 }
 
 bool FSearchBox::GetCursor(ECursor& OutCursor) const

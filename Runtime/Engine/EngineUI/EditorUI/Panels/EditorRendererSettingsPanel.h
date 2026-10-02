@@ -6,7 +6,7 @@ class FPropertyTable;
 class FScrollBox;
 class FSearchBox;
 class FVerticalBox;
-class IConsoleVariable;
+struct IConsoleVariable;
 
 enum class ERendererSettingKind : uint8
 {

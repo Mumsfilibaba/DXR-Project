@@ -403,7 +403,15 @@ struct IRHICommandContext
 
     /**
      * @brief Add UnorderedAccessBarriers, which should be issued between a write and a read of a resource in UnorderedAccessState.
-     * @param BarrierDescs Resources to issue barriers for, which may mix textures and buffers
+     * 
+     * Acceleration-structures are written by BuildSceneAccelerationStructure, BuildGeometryAccelerationStructure, 
+     * CopyAccelerationStructure (destination), CompactAccelerationStructure and DeserializeAccelerationStructure. After 
+     * any of these, the caller must issue a barrier on the structure before it is accessed again, including from a later 
+     * command-list on the same queue. Accesses are: use as an instance in a scene build, the source of a copy, compaction, 
+     * serialize or post-build-info query, and shader reads (DispatchRays or ray queries in any stage). Structures returned 
+     * by RHI::Create*AccelerationStructure are ready to use without a barrier.
+     * 
+     * @param BarrierDescs Resources to issue barriers for, which may mix textures, buffers and acceleration-structures
      */
     virtual void UnorderedAccessBarrier(TArrayView<const FRHIUnorderedAccessBarrierDesc> BarrierDescs) = 0;
 

@@ -166,7 +166,7 @@ function GetD3D12AgilitySDKRedistFiles()
     return RedistFiles
 end
 
--- Defines for the exports in Runtime/Launch/Windows/WindowsMain.cpp. Exporting D3D12SDKVersion and
+-- Defines for the exports in Runtime/LaunchEngine/Windows/WindowsMain.cpp. Exporting D3D12SDKVersion and
 -- D3D12SDKPath without shipping D3D12Core.dll makes D3D12CreateDevice fail with
 -- D3D12_ERROR_INVALID_REDIST, so the exports are turned off when the SDK is absent.
 function GetD3D12AgilitySDKDefines()

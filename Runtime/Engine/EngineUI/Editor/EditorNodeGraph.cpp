@@ -1,7 +1,9 @@
 #include "Engine/EngineUI/Editor/EditorNodeGraph.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Containers/Map.h"
 #include "Core/Containers/String.h"
 #include "Core/Math/Math.h"
+#include "Application/Graph/GraphLayout.h"
 
 namespace EditorNodeGraphPrivate
 {
@@ -568,430 +570,41 @@ void EditorNodeGraph::LayoutLayered(const FRenderGraphDebugSnapshot& Snapshot, T
     TMap<int32, int32> PassToLocal;
     PassToLocal.Reserve(NumVisible);
 
+    TArray<Vector2> NodeSizes;
+    NodeSizes.Reserve(NumVisible);
+
     for (int32 Local = 0; Local < NumVisible; ++Local)
     {
-        PassToLocal.FindOrAdd(VisiblePassIndices[Local]) = Local;
-        OutPositions[Local] = ImVec2(0.0f, 0.0f);
+        const int32 PassIndex = VisiblePassIndices[Local];
+        PassToLocal.FindOrAdd(PassIndex) = Local;
+
+        const int32 Measured = FindMeasuredIndex(MeasuredNodes, PassIndex);
+        NodeSizes.Add(Measured >= 0 ? Vector2(MeasuredNodes[Measured].Width, MeasuredNodes[Measured].Height) : Vector2(0.0f, 80.0f));
     }
 
-    TArray<TArray<int32>> Successors;
-    Successors.Resize(NumVisible);
-
-    TArray<TArray<int32>> Predecessors;
-    Predecessors.Resize(NumVisible);
-
+    TArray<FGraphLayoutEdge> Edges;
     for (const FRenderGraphDebugLink& LinkEdge : Snapshot.Links)
     {
         const int32* FromLocal = PassToLocal.Find(LinkEdge.FromPass);
         const int32* ToLocal   = PassToLocal.Find(LinkEdge.ToPass);
 
-        if (!FromLocal || !ToLocal || *FromLocal == *ToLocal)
+        if (FromLocal && ToLocal)
         {
-            continue;
-        }
-
-        Successors[*FromLocal].AddUnique(*ToLocal);
-        Predecessors[*ToLocal].AddUnique(*FromLocal);
-    }
-
-    // Longest-path ranks from sources (rank 0) toward sinks.
-    TArray<int32> Rank;
-    Rank.Resize(NumVisible);
-
-    for (int32 Index = 0; Index < NumVisible; ++Index)
-    {
-        Rank[Index] = 0;
-    }
-
-    bool bChanged = true;
-    for (int32 Iter = 0; Iter < NumVisible && bChanged; ++Iter)
-    {
-        bChanged = false;
-        for (int32 Local = 0; Local < NumVisible; ++Local)
-        {
-            for (const int32 Succ : Successors[Local])
-            {
-                const int32 Candidate = Rank[Local] + 1;
-                if (Candidate > Rank[Succ])
-                {
-                    Rank[Succ] = Candidate;
-                    bChanged   = true;
-                }
-            }
+            Edges.Add(FGraphLayoutEdge(*FromLocal, *ToLocal));
         }
     }
 
-    // Orphan sources inherit the previous visible pass's rank so late culled/disabled
-    // passes do not all collapse into column 0 ahead of the live pipeline.
+    FGraphLayoutSettings Settings;
+    Settings.ColumnSpacing              = ColumnGap;
+    Settings.RowSpacing                 = RowGap;
+    Settings.MinColumnWidth             = MinNodeWidthWorld;
+    Settings.bSourcesFollowPreviousNode = true;
+
+    TArray<Vector2> Positions;
+    FLayeredGraphLayout::Layout(MakeArrayView(NodeSizes), MakeArrayView(Edges), Settings, Positions, VisiblePassIndices);
 
     for (int32 Local = 0; Local < NumVisible; ++Local)
     {
-        if (!Predecessors[Local].IsEmpty())
-        {
-            continue;
-        }
-
-        if (Local > 0)
-        {
-            Rank[Local] = Math::Max(Rank[Local], Rank[Local - 1]);
-        }
-    }
-
-    int32 MaxRank = 0;
-    for (int32 Local = 0; Local < NumVisible; ++Local)
-    {
-        MaxRank = Math::Max(MaxRank, Rank[Local]);
-    }
-
-    // Split multi-rank edges through dummy nodes so crossing reduction sees every layer hop.
-    TArray<int32> LongEdgeFrom;
-    TArray<int32> LongEdgeTo;
-
-    for (int32 Local = 0; Local < NumVisible; ++Local)
-    {
-        for (const int32 Succ : Successors[Local])
-        {
-            if (Rank[Succ] - Rank[Local] > 1)
-            {
-                LongEdgeFrom.Add(Local);
-                LongEdgeTo.Add(Succ);
-            }
-        }
-    }
-
-    for (int32 EdgeIndex = 0; EdgeIndex < LongEdgeFrom.Size(); ++EdgeIndex)
-    {
-        const int32 From = LongEdgeFrom[EdgeIndex];
-        const int32 To   = LongEdgeTo[EdgeIndex];
-
-        Successors[From].Remove(To);
-        Predecessors[To].Remove(From);
-
-        int32 Previous = From;
-        for (int32 IntermediateRank = Rank[From] + 1; IntermediateRank < Rank[To]; ++IntermediateRank)
-        {
-            const int32 Dummy = Rank.Size();
-            Rank.Add(IntermediateRank);
-            Successors.Emplace();
-            Predecessors.Emplace();
-
-            Successors[Previous].AddUnique(Dummy);
-            Predecessors[Dummy].AddUnique(Previous);
-            Previous = Dummy;
-        }
-
-        Successors[Previous].AddUnique(To);
-        Predecessors[To].AddUnique(Previous);
-    }
-
-    const int32 NumLayoutNodes = Rank.Size();
-
-    TArray<TArray<int32>> Columns;
-    Columns.Resize(MaxRank + 1);
-
-    for (int32 Local = 0; Local < NumLayoutNodes; ++Local)
-    {
-        Columns[Rank[Local]].Add(Local);
-    }
-
-    auto PassOrderLess = [&](int32 A, int32 B) -> bool
-    {
-        const bool bAReal = A < NumVisible;
-        const bool bBReal = B < NumVisible;
-
-        if (bAReal && bBReal)
-        {
-            return VisiblePassIndices[A] < VisiblePassIndices[B];
-        }
-
-        if (bAReal != bBReal)
-        {
-            return bAReal;
-        }
-
-        return A < B;
-    };
-
-    // Seed each column by builder submission order, not local index.
-    for (int32 Column = 0; Column < Columns.Size(); ++Column)
-    {
-        Columns[Column].SortWithPredicate(PassOrderLess);
-    }
-
-    auto OrderIndexInColumn = [&](int32 Local) -> int32
-    {
-        const TArray<int32>& Order = Columns[Rank[Local]];
-        for (int32 OrderIndex = 0; OrderIndex < Order.Size(); ++OrderIndex)
-        {
-            if (Order[OrderIndex] == Local)
-            {
-                return OrderIndex;
-            }
-        }
-
-        return 0;
-    };
-
-    auto Barycenter = [&](int32 Local, bool bUsePredecessors) -> float
-    {
-        const TArray<int32>& Neighbors = bUsePredecessors ? Predecessors[Local] : Successors[Local];
-        if (Neighbors.IsEmpty())
-        {
-            return static_cast<float>(OrderIndexInColumn(Local));
-        }
-
-        float Sum   = 0.0f;
-        int32 Count = 0;
-
-        for (const int32 Neighbor : Neighbors)
-        {
-            Sum += static_cast<float>(OrderIndexInColumn(Neighbor));
-            ++Count;
-        }
-
-        return (Count > 0) ? (Sum / static_cast<float>(Count)) : static_cast<float>(OrderIndexInColumn(Local));
-    };
-
-    auto CountCrossings = [&](int32 LeftColumn, int32 RightColumn) -> int32
-    {
-        const TArray<int32>& LeftOrder  = Columns[LeftColumn];
-        const TArray<int32>& RightOrder = Columns[RightColumn];
-
-        TArray<int32> LeftPos;
-        LeftPos.Resize(NumLayoutNodes);
-
-        TArray<int32> RightPos;
-        RightPos.Resize(NumLayoutNodes);
-
-        for (int32 Index = 0; Index < LeftOrder.Size(); ++Index)
-        {
-            LeftPos[LeftOrder[Index]] = Index;
-        }
-
-        for (int32 Index = 0; Index < RightOrder.Size(); ++Index)
-        {
-            RightPos[RightOrder[Index]] = Index;
-        }
-
-        TArray<int32> EdgeLeft;
-        TArray<int32> EdgeRight;
-
-        for (const int32 From : LeftOrder)
-        {
-            for (const int32 To : Successors[From])
-            {
-                if (Rank[To] == RightColumn)
-                {
-                    EdgeLeft.Add(LeftPos[From]);
-                    EdgeRight.Add(RightPos[To]);
-                }
-            }
-        }
-
-        int32 Crossings = 0;
-        for (int32 First = 0; First < EdgeLeft.Size(); ++First)
-        {
-            for (int32 Second = First + 1; Second < EdgeLeft.Size(); ++Second)
-            {
-                if ((EdgeLeft[First] - EdgeLeft[Second]) * (EdgeRight[First] - EdgeRight[Second]) < 0)
-                {
-                    ++Crossings;
-                }
-            }
-        }
-        return Crossings;
-    };
-
-    auto Transpose = [&](int32 Column, int32 FixedNeighborColumn, bool bNeighborIsLeft)
-    {
-        TArray<int32>& Order = Columns[Column];
-
-        bool bImproved = true;
-        for (int32 Pass = 0; Pass < 8 && bImproved; ++Pass)
-        {
-            bImproved = false;
-            for (int32 Index = 0; Index + 1 < Order.Size(); ++Index)
-            {
-                const int32 LeftColumn  = bNeighborIsLeft ? FixedNeighborColumn : Column;
-                const int32 RightColumn = bNeighborIsLeft ? Column : FixedNeighborColumn;
-                const int32 Before      = CountCrossings(LeftColumn, RightColumn);
-
-                Order.Swap(Index, Index + 1);
-
-                const int32 After = CountCrossings(LeftColumn, RightColumn);
-                if (After < Before)
-                {
-                    bImproved = true;
-                }
-                else
-                {
-                    Order.Swap(Index, Index + 1);
-                }
-            }
-        }
-    };
-
-    for (int32 Sweep = 0; Sweep < 4; ++Sweep)
-    {
-        for (int32 Column = 1; Column < Columns.Size(); ++Column)
-        {
-            TArray<int32>& Order = Columns[Column];
-            Order.SortWithPredicate([&](int32 A, int32 B)
-            {
-                const float Ba = Barycenter(A, true);
-                const float Bb = Barycenter(B, true);
-
-                if (Ba == Bb)
-                {
-                    return PassOrderLess(A, B);
-                }
-
-                return Ba < Bb;
-            });
-
-            Transpose(Column, Column - 1, true);
-        }
-
-        for (int32 Column = Columns.Size() - 2; Column >= 0; --Column)
-        {
-            TArray<int32>& Order = Columns[Column];
-            Order.SortWithPredicate([&](int32 A, int32 B)
-            {
-                const float Ba = Barycenter(A, false);
-                const float Bb = Barycenter(B, false);
-
-                if (Ba == Bb)
-                {
-                    return PassOrderLess(A, B);
-                }
-
-                return Ba < Bb;
-            });
-
-            Transpose(Column, Column + 1, false);
-        }
-    }
-
-    auto NodeHeight = [&](int32 Local) -> float
-    {
-        if (Local >= NumVisible)
-        {
-            return 0.0f;
-        }
-
-        const int32 PassIndex = VisiblePassIndices[Local];
-        const int32 Measured  = FindMeasuredIndex(MeasuredNodes, PassIndex);
-
-        return (Measured >= 0) ? MeasuredNodes[Measured].Height : 80.0f;
-    };
-
-    TArray<float> ColumnWidths;
-    ColumnWidths.Resize(Columns.Size());
-
-    for (int32 Column = 0; Column < Columns.Size(); ++Column)
-    {
-        float Width = MinNodeWidthWorld;
-        for (const int32 Local : Columns[Column])
-        {
-            if (Local >= NumVisible)
-            {
-                continue;
-            }
-
-            const int32 PassIndex = VisiblePassIndices[Local];
-            const int32 Measured  = FindMeasuredIndex(MeasuredNodes, PassIndex);
-
-            if (Measured >= 0)
-            {
-                Width = Math::Max(Width, MeasuredNodes[Measured].Width);
-            }
-        }
-
-        ColumnWidths[Column] = Width;
-    }
-
-    TArray<float> NodeY;
-    NodeY.Resize(NumLayoutNodes);
-
-    for (int32 Column = 0; Column < Columns.Size(); ++Column)
-    {
-        float CursorY = 0.0f;
-        for (const int32 Local : Columns[Column])
-        {
-            NodeY[Local] = CursorY;
-            CursorY += NodeHeight(Local) + RowGap;
-        }
-    }
-
-    auto NeighborAverageY = [&](int32 Local) -> float
-    {
-        float Sum   = 0.0f;
-        int32 Count = 0;
-
-        for (const int32 Neighbor : Predecessors[Local])
-        {
-            if (Rank[Neighbor] == Rank[Local] - 1)
-            {
-                Sum += NodeY[Neighbor];
-                ++Count;
-            }
-        }
-
-        for (const int32 Neighbor : Successors[Local])
-        {
-            if (Rank[Neighbor] == Rank[Local] + 1)
-            {
-                Sum += NodeY[Neighbor];
-                ++Count;
-            }
-        }
-
-        return (Count > 0) ? (Sum / static_cast<float>(Count)) : NodeY[Local];
-    };
-
-    auto EnforceNonOverlap = [&](TArrayView<const int32> Order)
-    {
-        if (Order.IsEmpty())
-        {
-            return;
-        }
-
-        float MinY = NodeY[Order[0]];
-        for (int32 Index = 1; Index < Order.Size(); ++Index)
-        {
-            const int32 Previous = Order[Index - 1];
-            const int32 Current  = Order[Index];
-            const float FloorY   = NodeY[Previous] + NodeHeight(Previous) + RowGap;
-
-            MinY = Math::Max(NodeY[Current], FloorY);
-            NodeY[Current] = MinY;
-        }
-    };
-
-    for (int32 Sweep = 0; Sweep < 4; ++Sweep)
-    {
-        for (int32 Column = 0; Column < Columns.Size(); ++Column)
-        {
-            for (const int32 Local : Columns[Column])
-            {
-                NodeY[Local] = NeighborAverageY(Local);
-            }
-
-            EnforceNonOverlap(MakeArrayView(Columns[Column]));
-        }
-    }
-
-    float X = 0.0f;
-    for (int32 Column = 0; Column < Columns.Size(); ++Column)
-    {
-        for (const int32 Local : Columns[Column])
-        {
-            if (Local < NumVisible)
-            {
-                OutPositions[Local] = ImVec2(X, NodeY[Local]);
-            }
-        }
-
-        X += ColumnWidths[Column] + ColumnGap;
+        OutPositions[Local] = ImVec2(Positions[Local].X, Positions[Local].Y);
     }
 }

@@ -1,10 +1,12 @@
 #include "DrawTests.h"
+#include "UISnapshot.h"
 
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
 
 #include <Application/Console/ConsoleLogBuffer.h>
 #include <Application/Draw/DrawCommandList.h>
+#include <Application/Draw/UIDrawData.h>
 #include <Application/Text/FixedWidthFontFace.h>
 #include <Application/Elements/Border.h>
 #include <Application/Elements/Box.h>
@@ -22,6 +24,35 @@ static TSharedPtr<FTextBlock> CreateTextBlock(const CHAR* Text, const TSharedPtr
     Desc.Text = Text;
     Desc.Font = Font;
     return FTextBlock::Create(Desc);
+}
+
+static int32 CountCoveredPixels(const FSnapshotImage& Image, const IntVector2& Start, const IntVector2& End)
+{
+    int32 Covered = 0;
+    for (int32 Y = Start.Y; Y <= End.Y; ++Y)
+    {
+        for (int32 X = Start.X; X <= End.X; ++X)
+        {
+            if (Image.GetPixel(X, Y) != 0)
+            {
+                ++Covered;
+            }
+        }
+    }
+
+    return Covered;
+}
+
+static FSnapshotImage RasterizeCommands(const FDrawCommandList& CommandList, int32 Width, int32 Height)
+{
+    FUIDrawData DrawData;
+    DrawData.BuildFromCommandList(CommandList);
+
+    FSnapshotImage Image;
+    Image.Initialize(Width, Height, 0);
+
+    RasterizeDrawData(DrawData, Image);
+    return Image;
 }
 
 bool DrawCommandList_Test()
@@ -52,13 +83,12 @@ bool DrawCommandList_Test()
     TEST_EXPECT_EQ(CommandList[2].LayerId, 2);
 
     TEST_SECTION("A text command keeps its string and face");
-    TEST_EXPECT(CommandList[1].Text.Equals("Hello"));
+    TEST_EXPECT(CommandList.GetCommandText(CommandList[1]).Equals("Hello"));
     TEST_EXPECT(CommandList[1].Font == Font.Get());
 
     TEST_SECTION("Counting by type only counts that type");
     TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::Box), 1);
     TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::Text), 1);
-    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::ClipPush), 0);
 
     TEST_SECTION("Text lookup finds a match and reports a miss");
     TEST_EXPECT_EQ(CommandList.FindTextCommand("Hello"), 1);
@@ -70,6 +100,64 @@ bool DrawCommandList_Test()
 
     TEST_EXPECT(CommandList.IsEmpty());
     TEST_EXPECT(CommandList.IsClipStackBalanced());
+
+    TEST_END();
+}
+
+bool HairlineCoverage_Test()
+{
+    TEST_BEGIN();
+
+    constexpr float Hairline = 1.0f;
+
+    TEST_SECTION("A horizontal hairline on an integer coordinate covers pixels");
+    {
+        FDrawCommandList CommandList;
+        CommandList.AddLine(0, Vector2(4.0f, 8.0f), Vector2(28.0f, 8.0f), FFloatColor::White, Hairline);
+
+        const FSnapshotImage Image = RasterizeCommands(CommandList, 32, 16);
+        TEST_EXPECT(Image.IsValid());
+        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(4, 6), IntVector2(27, 9)) > 0);
+    }
+
+    TEST_SECTION("A vertical hairline on an integer coordinate covers pixels");
+    {
+        FDrawCommandList CommandList;
+        CommandList.AddLine(0, Vector2(8.0f, 4.0f), Vector2(8.0f, 28.0f), FFloatColor::White, Hairline);
+
+        const FSnapshotImage Image = RasterizeCommands(CommandList, 16, 32);
+        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(6, 4), IntVector2(9, 27)) > 0);
+    }
+
+    TEST_SECTION("A closed axis-aligned hairline outline covers pixels on every side");
+    {
+        const Vector2 Corners[] =
+        {
+            Vector2(6.0f, 6.0f),
+            Vector2(26.0f, 6.0f),
+            Vector2(26.0f, 26.0f),
+            Vector2(6.0f, 26.0f),
+        };
+
+        FDrawCommandList CommandList;
+        CommandList.AddPolyline(0, MakeArrayView(Corners, 4), FFloatColor::White, Hairline, true);
+
+        const FSnapshotImage Image = RasterizeCommands(CommandList, 32, 32);
+
+        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(7, 5), IntVector2(25, 7)) > 0);
+        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(7, 25), IntVector2(25, 27)) > 0);
+        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(5, 7), IntVector2(7, 25)) > 0);
+        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(25, 7), IntVector2(27, 25)) > 0);
+    }
+
+    TEST_SECTION("A diagonal hairline still covers pixels");
+    {
+        FDrawCommandList CommandList;
+        CommandList.AddLine(0, Vector2(4.0f, 4.0f), Vector2(28.0f, 28.0f), FFloatColor::White, Hairline);
+
+        const FSnapshotImage Image = RasterizeCommands(CommandList, 32, 32);
+        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(4, 4), IntVector2(27, 27)) > 0);
+    }
 
     TEST_END();
 }
@@ -92,8 +180,12 @@ bool DrawClipNesting_Test()
     TEST_EXPECT_EQ(Nested.Width, 50);
     TEST_EXPECT_EQ(Nested.Height, 50);
 
-    TEST_SECTION("The recorded push carries the intersected region");
-    TEST_EXPECT(CommandList[1].Bounds == Nested);
+    TEST_SECTION("A draw recorded inside the nested region stores that clip");
+    CommandList.AddBox(2, FRectangle(IntVector2(60, 60), 10, 10), FFloatColor::White);
+    TEST_EXPECT_EQ(CommandList.Size(), 1);
+    TEST_EXPECT(CommandList[0].IsClipped());
+    TEST_EXPECT(CommandList.GetCommandClipRectangle(CommandList[0]) == Nested);
+    TEST_EXPECT_EQ(CommandList.Size(), 1);
 
     TEST_SECTION("Popping restores the enclosing region");
     CommandList.PopClip(1);
@@ -104,14 +196,13 @@ bool DrawClipNesting_Test()
 
     CommandList.PopClip(0);
     TEST_EXPECT(CommandList.IsClipStackBalanced());
-    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::ClipPush), 2);
-    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::ClipPop), 2);
+    TEST_EXPECT_EQ(CommandList.Size(), 1);
 
     TEST_SECTION("An extra pop leaves the list unbalanced too");
     CommandList.PopClip(0);
     TEST_EXPECT(!CommandList.IsClipStackBalanced());
 
-    TEST_SECTION("A scroll box wraps its child in exactly one push and one pop");
+    TEST_SECTION("A scroll box clips its children without recording clip commands");
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
     TSharedPtr<FVerticalBox> Content = FVerticalBox::Create();
@@ -123,15 +214,25 @@ bool DrawClipNesting_Test()
     TSharedPtr<FScrollBox> ScrollBox = FScrollBox::Create();
     ScrollBox->SetContent(Content);
     ScrollBox->PrepareDesiredSize();
-    ScrollBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    ScrollBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     FDrawCommandList ScrollCommandList;
     ScrollBox->OnDraw(FDrawGeometry(ScrollBox->GetContentRectangle(), 1.0f), ScrollCommandList, 0);
 
-    TEST_EXPECT_EQ(ScrollCommandList.CountCommandsOfType(EDrawCommandType::ClipPush), 1);
-    TEST_EXPECT_EQ(ScrollCommandList.CountCommandsOfType(EDrawCommandType::ClipPop), 1);
     TEST_EXPECT(ScrollCommandList.IsClipStackBalanced());
-    TEST_EXPECT_EQ(ScrollCommandList.CountCommandsOfType(EDrawCommandType::Text), 10);
+    TEST_EXPECT(ScrollCommandList.CountCommandsOfType(EDrawCommandType::Text) > 0);
+    TEST_EXPECT(ScrollCommandList.CountCommandsOfType(EDrawCommandType::Text) < 10);
+
+    bool bFoundClippedText = false;
+    for (const FDrawCommand& Command : ScrollCommandList.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Text && Command.IsClipped())
+        {
+            bFoundClippedText = true;
+            break;
+        }
+    }
+    TEST_EXPECT(bFoundClippedText);
 
     TEST_END();
 }
@@ -150,7 +251,7 @@ bool BorderDraw_Test()
 
     TSharedPtr<FBorder> Border = FBorder::Create(Desc);
     Border->PrepareDesiredSize();
-    Border->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    Border->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     FDrawCommandList CommandList;
     const int32      MaxLayerId = Border->OnDraw(FDrawGeometry(Border->GetContentRectangle(), 1.0f), CommandList, 0);
@@ -172,13 +273,53 @@ bool BorderDraw_Test()
 
     TSharedPtr<FBorder> Transparent = FBorder::Create(TransparentDesc);
     Transparent->PrepareDesiredSize();
-    Transparent->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    Transparent->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     FDrawCommandList TransparentCommandList;
     Transparent->OnDraw(FDrawGeometry(Transparent->GetContentRectangle(), 1.0f), TransparentCommandList, 0);
 
     TEST_EXPECT_EQ(TransparentCommandList.CountCommandsOfType(EDrawCommandType::Box), 0);
     TEST_EXPECT_EQ(TransparentCommandList.CountCommandsOfType(EDrawCommandType::Text), 1);
+
+    TEST_SECTION("A stroke goes under the child by default, so a child that fills the border hides it");
+    FBorder::FDesc StrokeDesc;
+    StrokeDesc.BorderColor     = FFloatColor(0.8f, 0.1f, 0.1f, 1.0f);
+    StrokeDesc.BorderThickness = 1.0f;
+    StrokeDesc.Content         = CreateTextBlock("Border", Font);
+
+    TSharedPtr<FBorder> UnderBorder = FBorder::Create(StrokeDesc);
+    UnderBorder->PrepareDesiredSize();
+    UnderBorder->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
+
+    FDrawCommandList UnderCommandList;
+    UnderBorder->OnDraw(FDrawGeometry(UnderBorder->GetContentRectangle(), 1.0f), UnderCommandList, 0);
+
+    TEST_EXPECT_EQ(UnderCommandList.CountCommandsOfType(EDrawCommandType::BoxOutline), 1);
+    TEST_EXPECT(UnderCommandList[0].Type == EDrawCommandType::BoxOutline);
+
+    TEST_SECTION("Asked to draw over its child, the same stroke comes after it and no lower than its layer");
+    StrokeDesc.bDrawBorderOverContent = true;
+    StrokeDesc.Content                = CreateTextBlock("Border", Font);
+
+    TSharedPtr<FBorder> OverBorder = FBorder::Create(StrokeDesc);
+    OverBorder->PrepareDesiredSize();
+    OverBorder->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
+
+    FDrawCommandList OverCommandList;
+    const int32      OverMaxLayerId = OverBorder->OnDraw(FDrawGeometry(OverBorder->GetContentRectangle(), 1.0f), OverCommandList, 0);
+
+    TEST_EXPECT_EQ(OverCommandList.CountCommandsOfType(EDrawCommandType::BoxOutline), 1);
+
+    const int32 TextIndex = OverCommandList.FindTextCommand("Border");
+    TEST_EXPECT(TextIndex >= 0);
+
+    const int32          StrokeIndex = OverCommandList.GetCommands().LastIndex();
+    const FDrawCommand&  OverStroke  = OverCommandList[StrokeIndex];
+
+    TEST_EXPECT(OverStroke.Type == EDrawCommandType::BoxOutline);
+    TEST_EXPECT(StrokeIndex > TextIndex);
+    TEST_EXPECT(OverStroke.LayerId >= OverCommandList[TextIndex].LayerId);
+    TEST_EXPECT(OverMaxLayerId > OverStroke.LayerId);
 
     TEST_END();
 }
@@ -226,38 +367,18 @@ bool BoxLayerSequencing_Test()
     RootBox->AddSlot(FBorder::Create(InputDesc)).SetVerticalAlignment(EVerticalAlignment::Bottom);
 
     RootBox->PrepareDesiredSize();
-    RootBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+    RootBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
 
     FDrawCommandList CommandList;
     RootBox->OnDraw(FDrawGeometry(RootBox->GetContentRectangle(), 1.0f), CommandList, 0);
 
-    int32 ClipPushLayerId = -1;
-    int32 ClipPopLayerId  = -1;
-    int32 BoxLayerId      = -1;
+    int32 BoxLayerId = -1;
 
     for (const FDrawCommand& Command : CommandList.GetCommands())
     {
-        switch (Command.Type)
+        if (Command.Type == EDrawCommandType::Box)
         {
-            case EDrawCommandType::ClipPush:
-            {
-                ClipPushLayerId = Command.LayerId;
-                break;
-            }
-            case EDrawCommandType::ClipPop:
-            {
-                ClipPopLayerId = Command.LayerId;
-                break;
-            }
-            case EDrawCommandType::Box:
-            {
-                BoxLayerId = Command.LayerId;
-                break;
-            }
-            default:
-            {
-                break;
-            }
+            BoxLayerId = Command.LayerId;
         }
     }
 
@@ -268,20 +389,20 @@ bool BoxLayerSequencing_Test()
     TEST_EXPECT(CommandList.IsClipStackBalanced());
     TEST_EXPECT(LogIndex != FDrawCommandList::InvalidIndex);
     TEST_EXPECT(InputIndex != FDrawCommandList::InvalidIndex);
-    TEST_EXPECT(ClipPushLayerId >= 0 && ClipPopLayerId >= 0 && BoxLayerId >= 0);
+    TEST_EXPECT(BoxLayerId >= 0);
 
     if (LogIndex == FDrawCommandList::InvalidIndex || InputIndex == FDrawCommandList::InvalidIndex)
     {
         TEST_END();
     }
 
-    TEST_SECTION("The scrolled lines fall inside the region, which is what clips them");
-    TEST_EXPECT(CommandList[LogIndex].LayerId >= ClipPushLayerId);
-    TEST_EXPECT(CommandList[LogIndex].LayerId <= ClipPopLayerId);
+    TEST_SECTION("The scrolled lines carry the clip, which is what clips them");
+    TEST_EXPECT(CommandList[LogIndex].IsClipped());
 
-    TEST_SECTION("The row after it starts above the region, so the layer sort leaves it unclipped");
-    TEST_EXPECT(BoxLayerId > ClipPopLayerId);
-    TEST_EXPECT(CommandList[InputIndex].LayerId > ClipPopLayerId);
+    TEST_SECTION("The row after it is recorded outside the region, so the layer sort leaves it unclipped");
+    TEST_EXPECT(!CommandList[InputIndex].IsClipped());
+    TEST_EXPECT(BoxLayerId > CommandList[LogIndex].LayerId);
+    TEST_EXPECT(CommandList[InputIndex].LayerId > CommandList[LogIndex].LayerId);
 
     TEST_END();
 }

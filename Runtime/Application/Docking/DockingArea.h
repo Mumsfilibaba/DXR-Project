@@ -37,6 +37,9 @@ public:
         /** @brief The face every tab label is drawn with. */
         TSharedPtr<IFontFace> Font = nullptr;
 
+        /** @brief The face docked tab labels use, which falls back to Font when null. */
+        TSharedPtr<IFontFace> TabFont = nullptr;
+
         /** @brief The look of every tab strip the area builds, which defaults to the shared tab style. */
         FUITabStyle TabStyle = FUIStyle::GetDefault().Tab;
 
@@ -150,7 +153,8 @@ public:
      *
      * @param ClientPosition Where the cursor is, in client coordinates.
      * @param OutZones       Filled with the zones, the tab strip first. Empty when the cursor is over no
-     *                       panel, except for an area holding none at all, which offers the whole of itself.
+     *                       panel, except for an area holding none at all, which offers the whole of itself,
+     *                       and for a strip lifted into a host caption, which offers itself alone.
      */
     void GatherDropZones(const IntVector2& ClientPosition, TArray<FDropZone>& OutZones) const;
 
@@ -185,6 +189,38 @@ public:
 
     /** @return Every panel the tree holds, depth first through it and in tab order inside each strip. */
     NODISCARD TArray<String> GetDockedPanelIds() const;
+
+    /**
+     * @brief Finds the strip a docked panel's tab sits in.
+     *
+     * The area already knows which strip belongs to which leaf, so asking it is both cheaper and
+     * steadier than walking the element tree, whose shape is an implementation detail of how a
+     * leaf is framed.
+     *
+     * @param PanelId The panel whose strip is wanted. An empty string returns the first strip there is.
+     * @return The strip, or null when the tree holds no such panel.
+     */
+    NODISCARD TSharedPtr<FTabStrip> FindPanelTabStrip(const String& PanelId) const;
+
+    /**
+     * @brief The root tab strip of an unsplit tree, which a floating host can lift into its caption.
+     *
+     * @return The strip, or null when the root is split or empty.
+     */
+    NODISCARD TSharedPtr<FTabStrip> GetRootTabStrip() const;
+
+    /**
+     * @brief Hides the root tab strip from the body of an unsplit tree so a host can draw it in the caption.
+     *
+     * @param bInSuppress True to omit the root strip from the body.
+     */
+    void SetSuppressRootTabStrip(bool bInSuppress);
+
+    /** @return True when the root strip is omitted from the body. */
+    NODISCARD FORCEINLINE bool IsRootTabStripSuppressed() const
+    {
+        return bSuppressRootTabStrip;
+    }
 
     /**
      * @brief Gets whether a panel sits in the tree.
@@ -233,11 +269,13 @@ private:
         FLeafGeometry()
             : Strip(nullptr)
             , Column(nullptr)
+            , Frame(nullptr)
         {
         }
 
         TSharedPtr<FTabStrip>      Strip;
         TSharedPtr<FVisualElement> Column;
+        TSharedPtr<FVisualElement> Frame;
         TArray<int32>              Path;
     };
 
@@ -252,14 +290,17 @@ private:
         String                     Label;
         TSharedPtr<FVisualElement> Panel;
     };
+    
+    NODISCARD int32 FindLeafAt(const IntVector2& ClientPosition) const;
+    NODISCARD FRectangle GetLiftedTabStripBounds() const;
+    NODISCARD bool IsOverLiftedTabStrip(const IntVector2& ClientPosition) const;
+    NODISCARD FRectangle ComputeDropBounds(const String& TargetPanelId, EDockDirection Direction) const;
+    NODISCARD const FVisualElement* FindFocusedFrame() const;
+    NODISCARD int32 DrawDropZones(FDrawCommandList& OutCommandList, int32 LayerId) const;
 
     TSharedPtr<FVisualElement> BuildNode(FDockNode& Node, const TArray<int32>& Path);
     void RequestRebuild();
 
-    NODISCARD int32 FindLeafAt(const IntVector2& ClientPosition) const;
-    NODISCARD FRectangle ComputeDropBounds(const String& TargetPanelId, EDockDirection Direction) const;
-
-    NODISCARD int32 DrawDropZones(FDrawCommandList& OutCommandList, int32 LayerId) const;
     void DockAgainstNode(FDockNode& TargetNode, const String& PanelId, EDockDirection Direction);
     void OnTabActivated(const String& PanelId);
     void OnTabClosed(const String& PanelId);
@@ -273,11 +314,13 @@ private:
     TMap<String, FPanelEntry> PanelsById;
     TArray<FLeafGeometry>     Leaves;
     TSharedPtr<IFontFace>     Font;
+    TSharedPtr<IFontFace>     TabFont;
     FUITabStyle               TabStyle;
     FUIBrush                  TabCloseIcon;
     bool                      bAllowTearOut;
     bool                      bIsDropTarget;
     bool                      bNeedsRebuild;
+    bool                      bSuppressRootTabStrip;
     FOnPanelTornOut           OnPanelTornOutDelegate;
     FOnPanelClosed            OnPanelClosedDelegate;
 };

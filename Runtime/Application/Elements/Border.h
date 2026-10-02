@@ -18,6 +18,7 @@ public:
             , MinHeight(0)
             , Cursor(ECursor::None)
             , bHasCursor(false)
+            , bDrawBorderOverContent(false)
             , Content(nullptr)
         {
         }
@@ -44,6 +45,10 @@ public:
         int32                      MinHeight;
         ECursor                    Cursor;
         bool                       bHasCursor : 1;
+
+        /** @brief Draws the stroke after the child, so a child that fills the border cannot paint over it. */
+        bool                       bDrawBorderOverContent : 1;
+
         TSharedPtr<FVisualElement> Content;
     };
 
@@ -156,6 +161,20 @@ public:
     /** @brief Drops the opinion again, leaving the shape to whatever else is under the cursor. */
     void ClearCursor();
 
+    /**
+     * @brief Sets whether the stroke is drawn after the child rather than before it.
+     *
+     * @param bInDrawBorderOverContent True to draw the stroke last, which is what a view that fills the
+     * border edge to edge needs so its own fills cannot bury the stroke.
+     */
+    void SetDrawBorderOverContent(bool bInDrawBorderOverContent);
+
+    /** @return True when the stroke is drawn after the child. */
+    NODISCARD FORCEINLINE bool DrawsBorderOverContent() const
+    {
+        return bDrawBorderOverContent;
+    }
+
 private:
     FFloatColor  BackgroundColor;
     FFloatColor  BorderColor;
@@ -165,4 +184,5 @@ private:
     int32        MinHeight;
     ECursor      Cursor;
     bool         bHasCursor;
+    bool         bDrawBorderOverContent;
 };

@@ -265,6 +265,7 @@ private:
     void CloseHost(int32 HostIndex);
     void ClearDropPreview();
     void ReturnPanelRegistrationsToMainArea(const TSharedPtr<FDockingArea>& Area);
+    void SyncHostChrome(FHost& Host);
 
     FDesc                    Desc;
     TArray<FHost>            Hosts;

@@ -1,7 +1,9 @@
 #pragma once
 #include "Core/Delegates/Delegate.h"
 #include "Application/Elements/InteractiveElement.h"
+#include "Application/Elements/NumericRange.h"
 #include "Application/Layout/LayoutTypes.h"
+#include "Application/Text/CachedTextMetrics.h"
 #include "Application/Text/IFontFace.h"
 
 /** @brief Called every time the value moves, which during a drag is every frame the cursor moves. */
@@ -143,13 +145,13 @@ public:
     /** @return The lowest value the handle can reach. */
     NODISCARD FORCEINLINE float GetMinValue() const
     {
-        return MinValue;
+        return Range.Min;
     }
 
     /** @return The highest value the handle can reach, which is never below the lowest. */
     NODISCARD FORCEINLINE float GetMaxValue() const
     {
-        return MaxValue;
+        return Range.Max;
     }
 
     /** @return Zero at the minimum through one at the maximum, and zero for an empty range. */
@@ -186,26 +188,23 @@ protected:
     virtual bool IsPressable() const override { return false; }
 
 private:
-    NODISCARD float SanitizeValue(float InValue) const;
-
     void ApplyValue(float InValue);
 
     void SetValueFromPosition(const IntVector2& ClientPosition);
 
     NODISCARD FRectangle ComputeHandleBounds(const FRectangle& Bounds) const;
     NODISCARD FRectangle ComputeTrackBounds(const FRectangle& Bounds) const;
+    NODISCARD FRectangle ComputeInteractiveBounds(const FRectangle& Bounds) const;
 
-    float                   MinValue;
-    float                   MaxValue;
-    float                   Value;
-    float                   StepSize;
-    EOrientation            Orientation;
-    int32                   HandleSize;
-    int32                   TrackThickness;
-    int32                   MinLength;
-    int32                   Precision;
-    bool                    bShowValueText;
-    TSharedPtr<IFontFace>   Font;
-    FOnSliderValueChanged   OnValueChangedDelegate;
-    FOnSliderValueCommitted OnValueCommittedDelegate;
+    TNumericRange<float>       Range;
+    float                      Value;
+    EOrientation               Orientation;
+    int32                      HandleSize;
+    int32                      TrackThickness;
+    int32                      MinLength;
+    bool                       bShowValueText;
+    TSharedPtr<IFontFace>      Font;
+    mutable FCachedTextMetrics ValueTextMetrics;
+    FOnSliderValueChanged      OnValueChangedDelegate;
+    FOnSliderValueCommitted    OnValueCommittedDelegate;
 };

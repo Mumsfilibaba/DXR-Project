@@ -5,6 +5,7 @@
 #include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/VisualElement.h"
 #include "Application/Style/UIStyle.h"
+#include "Application/Text/CachedTextMetrics.h"
 #include "Application/Text/IFontFace.h"
 
 struct FTileItem
@@ -240,28 +241,32 @@ private:
     NODISCARD FRectangle ComputeLabelBounds(const FRectangle& Tile) const;
 
     void SelectTile(int32 Index, bool bToggle, bool bExtend);
+    void SetTileSelected(int32 Index, bool bSelected);
+    void ClearSelectedTiles();
 
-    TArray<FTileItem>       Items;
-    TArray<int32>           SelectedIndices;
-    TSharedPtr<IFontFace>   Font;
-    String                  FilterText;
-    IntVector2              TileSize;
-    IntVector2              PressPosition;
-    int32                   TileSpacing;
-    int32                   IconSize;
-    int32                   LabelInset;
-    float                   CornerRadius;
-    FFloatColor             IdleFill;
-    FFloatColor             HoveredFill;
-    FFloatColor             SelectedFill;
-    int32                   ScrollOffset;
-    int32                   ContentHeight;
-    int32                   ViewHeight;
-    int32                   HoveredIndex;
-    int32                   AnchorIndex;
-    int32                   PressedIndex;
-    bool                    bAllowMultiSelect;
-    FOnTileSelectionChanged OnSelectionChangedDelegate;
-    FOnTileActivated        OnItemActivatedDelegate;
-    FOnTileDragDetected     OnDragDetectedDelegate;
+    TArray<FTileItem>                  Items;
+    mutable TArray<FCachedTextMetrics> LabelMetrics;
+    TArray<int32>                      SelectedIndices;
+    TArray<uint8>                      SelectedFlags;
+    TSharedPtr<IFontFace>              Font;
+    String                             FilterText;
+    IntVector2                         TileSize;
+    IntVector2                         PressPosition;
+    int32                              TileSpacing;
+    int32                              IconSize;
+    int32                              LabelInset;
+    float                              CornerRadius;
+    FFloatColor                        IdleFill;
+    FFloatColor                        HoveredFill;
+    FFloatColor                        SelectedFill;
+    int32                              ScrollOffset;
+    int32                              ContentHeight;
+    int32                              ViewHeight;
+    int32                              HoveredIndex;
+    int32                              AnchorIndex;
+    int32                              PressedIndex;
+    bool                               bAllowMultiSelect;
+    FOnTileSelectionChanged            OnSelectionChangedDelegate;
+    FOnTileActivated                   OnItemActivatedDelegate;
+    FOnTileDragDetected                OnDragDetectedDelegate;
 };

@@ -20,7 +20,7 @@ public:
 
     bool Initialize();
     void SetBindings(ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings);
-    void Build();
+    void Build(class FVulkanCommandContext& CmdContext);
     void ClearTableRecords();
 
     VkStridedDeviceAddressRegionKHR GetRayGenRegion()   const;

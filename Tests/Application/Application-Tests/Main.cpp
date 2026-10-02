@@ -4,6 +4,7 @@
 
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
+#include "LaunchProgram/ProgramEntry.h"
 
 #include "ApplicationRendererTests.h"
 #include "ConsoleCommandLineTests.h"
@@ -20,7 +21,9 @@
 #include "LayoutTests.h"
 #include "MenuTests.h"
 #include "OutputLogTests.h"
+#include "PanelChromeTests.h"
 #include "PropertyTableTests.h"
+#include "DrawCacheTests.h"
 #include "DrawTests.h"
 #include "StyleTests.h"
 #include "TextLayoutTests.h"
@@ -36,11 +39,8 @@
 IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 #endif
 
-int main(int Argc, const CHAR* Argv[])
+static int32 RunApplicationTests()
 {
-    UNREFERENCED_VARIABLE(Argc);
-    UNREFERENCED_VARIABLE(Argv);
-
     TestHarness::Initialize("TestResults_Application.log");
     LOG_INFO("=== Application Tests ===");
 
@@ -54,10 +54,15 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("ScrollBoxClamping", ScrollBoxClamping_Test());
     RUN_TEST("ScrollBoxScrollIntoView", ScrollBoxScrollIntoView_Test());
     RUN_TEST("ScrollBoxHitTestClipping", ScrollBoxHitTestClipping_Test());
+    RUN_TEST("HitTestPruning", HitTestPruning_Test());
+    RUN_TEST("ArrangeSkip", ArrangeSkip_Test());
+    RUN_TEST("UIAnimation", UIAnimation_Test());
+    RUN_TEST("PopupPlacement", PopupPlacement_Test());
     RUN_TEST("WindowLayoutOrigin", WindowLayoutOrigin_Test());
     RUN_TEST("WindowOverlayMeasure", WindowOverlayMeasure_Test());
 
     RUN_TEST("DrawCommandList", DrawCommandList_Test());
+    RUN_TEST("HairlineCoverage", HairlineCoverage_Test());
     RUN_TEST("DrawClipNesting", DrawClipNesting_Test());
     RUN_TEST("BorderDraw", BorderDraw_Test());
     RUN_TEST("BoxLayerSequencing", BoxLayerSequencing_Test());
@@ -65,6 +70,7 @@ int main(int Argc, const CHAR* Argv[])
 
     RUN_TEST("FontAtlasPacking", FontAtlasPacking_Test());
     RUN_TEST("FontGlyphLookup", FontGlyphLookup_Test());
+    RUN_TEST("FontAtlasIncremental", FontAtlasIncremental_Test());
     RUN_TEST("FontKerning", FontKerning_Test());
     RUN_TEST("FontMeasurement", FontMeasurement_Test());
     RUN_TEST("FontElision", FontElision_Test());
@@ -73,10 +79,26 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("UIDrawDataBatching", UIDrawDataBatching_Test());
     RUN_TEST("UIDrawDataRoundedBox", UIDrawDataRoundedBox_Test());
     RUN_TEST("UIDrawDataRoundedBottomBar", UIDrawDataRoundedBottomBar_Test());
+    RUN_TEST("UIDrawDataRoundedAccentRing", UIDrawDataRoundedAccentRing_Test());
     RUN_TEST("UIDrawDataText", UIDrawDataText_Test());
     RUN_TEST("UIDrawDataClipCulling", UIDrawDataClipCulling_Test());
     RUN_TEST("UIDrawDataSiblingClips", UIDrawDataSiblingClips_Test());
     RUN_TEST("UIDrawDataAntiAliasing", UIDrawDataAntiAliasing_Test());
+    RUN_TEST("UIDrawDataTextCacheTrim", UIDrawDataTextCacheTrim_Test());
+
+    RUN_TEST("DrawCacheEquivalence", DrawCacheEquivalence_Test());
+    RUN_TEST("DrawCacheGuards", DrawCacheGuards_Test());
+    RUN_TEST("DrawCacheNesting", DrawCacheNesting_Test());
+    RUN_TEST("DrawCacheInvalidation", DrawCacheInvalidation_Test());
+    RUN_TEST("DrawCacheAtlasRevision", DrawCacheAtlasRevision_Test());
+    RUN_TEST("DrawCacheGeometry", DrawCacheGeometry_Test());
+    RUN_TEST("DrawCacheMenuHost", DrawCacheMenuHost_Test());
+    RUN_TEST("DrawCacheWindowDeferred", DrawCacheWindowDeferred_Test());
+    RUN_TEST("DrawCacheMenuBar", DrawCacheMenuBar_Test());
+    RUN_TEST("DrawCacheToolTip", DrawCacheToolTip_Test());
+    RUN_TEST("DrawCacheLayerOrder", DrawCacheLayerOrder_Test());
+    RUN_TEST("DrawCacheTranslation", DrawCacheTranslation_Test());
+    RUN_TEST("DrawCommandPayload", DrawCommandPayload_Test());
 
     RUN_TEST("CornerRadiiTypes", CornerRadiiTypes_Test());
     RUN_TEST("VectorDrawCommands", VectorDrawCommands_Test());
@@ -116,14 +138,18 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("SpinBoxControl", SpinBoxControl_Test());
     RUN_TEST("ScrollBarControl", ScrollBarControl_Test());
     RUN_TEST("ScrollBoxScrollBar", ScrollBoxScrollBar_Test());
+    RUN_TEST("ScrollBarAutoHide", ScrollBarAutoHide_Test());
     RUN_TEST("OverlayControl", OverlayControl_Test());
     RUN_TEST("SpacerSeparatorControl", SpacerSeparatorControl_Test());
     RUN_TEST("ExpanderControl", ExpanderControl_Test());
+    RUN_TEST("ExpanderAnimation", ExpanderAnimation_Test());
+    RUN_TEST("IndexedPathMove", IndexedPathMove_Test());
     RUN_TEST("SearchBoxControl", SearchBoxControl_Test());
     RUN_TEST("SearchBoxClearStyle", SearchBoxClearStyle_Test());
     RUN_TEST("NumericEntryControl", NumericEntryControl_Test());
     RUN_TEST("ProgressBarControl", ProgressBarControl_Test());
     RUN_TEST("HistogramControl", HistogramControl_Test());
+    RUN_TEST("ProfilerTimelineControl", ProfilerTimelineControl_Test());
 
     RUN_TEST("TreeViewModel", TreeViewModel_Test());
     RUN_TEST("TreeViewSelection", TreeViewSelection_Test());
@@ -131,11 +157,14 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("TreeViewKeyboard", TreeViewKeyboard_Test());
     RUN_TEST("TreeViewScrolling", TreeViewScrolling_Test());
     RUN_TEST("TreeViewColumnsAndIndent", TreeViewColumnsAndIndent_Test());
+    RUN_TEST("TreeViewHeaderToolTips", TreeViewHeaderToolTips_Test());
+    RUN_TEST("TreeViewHoverAndRowClick", TreeViewHoverAndRowClick_Test());
     RUN_TEST("TileViewLayout", TileViewLayout_Test());
     RUN_TEST("TileViewSelection", TileViewSelection_Test());
     RUN_TEST("TileViewDrag", TileViewDrag_Test());
 
     RUN_TEST("PropertyTableRows", PropertyTableRows_Test());
+    RUN_TEST("PropertyTableRowContext", PropertyTableRowContext_Test());
     RUN_TEST("PropertyTableColumnDrag", PropertyTableColumnDrag_Test());
     RUN_TEST("PropertyTableRevertCursor", PropertyTableRevertCursor_Test());
     RUN_TEST("PropertyTableFixedColumn", PropertyTableFixedColumn_Test());
@@ -150,6 +179,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("MenuItemActivation", MenuItemActivation_Test());
     RUN_TEST("MenuKeyboard", MenuKeyboard_Test());
     RUN_TEST("MenuBarSwitching", MenuBarSwitching_Test());
+    RUN_TEST("MenuBlocksHoverBehindIt", MenuBlocksHoverBehindIt_Test());
     RUN_TEST("MenuBarHighlight", MenuBarHighlight_Test());
     RUN_TEST("MenuBarTallStrip", MenuBarTallStrip_Test());
     RUN_TEST("MenuBarInTitleBar", MenuBarInTitleBar_Test());
@@ -183,6 +213,16 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("DockDropPreview", DockDropPreview_Test());
     RUN_TEST("DockHostNativeDrag", DockHostNativeDrag_Test());
     RUN_TEST("DockLayoutFileMultiWindow", DockLayoutFileMultiWindow_Test());
+    RUN_TEST("DockHostAdaptiveChrome", DockHostAdaptiveChrome_Test());
+    RUN_TEST("DockHostCaptionTabDrop", DockHostCaptionTabDrop_Test());
+    RUN_TEST("DockTabDragIntoExistingHost", DockTabDragIntoExistingHost_Test());
+
+    RUN_TEST("PanelChromeGeometry", PanelChromeGeometry_Test());
+    RUN_TEST("PanelChromeGap", PanelChromeGap_Test());
+    RUN_TEST("SplitterHintThickness", SplitterHintThickness_Test());
+    RUN_TEST("TabStripBlendsIntoPanel", TabStripBlendsIntoPanel_Test());
+    RUN_TEST("PanelChromeFocusStroke", PanelChromeFocusStroke_Test());
+    RUN_TEST("PanelChromeSnapshots", PanelChromeSnapshots_Test());
 
     RUN_TEST("RichTextLayout", RichTextLayout_Test());
     RUN_TEST("RichTextSelection", RichTextSelection_Test());
@@ -256,3 +296,5 @@ int main(int Argc, const CHAR* Argv[])
     TestHarness::Shutdown();
     return ExitCode;
 }
+
+IMPLEMENT_PROGRAM_MAIN("Application-Tests", RunApplicationTests);

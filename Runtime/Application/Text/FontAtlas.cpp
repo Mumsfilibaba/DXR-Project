@@ -1,4 +1,5 @@
 #include "Application/Text/FontAtlas.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/OutputDeviceManager.h"
@@ -70,16 +71,32 @@ FFontAtlas::FFontAtlas()
     , Pages()
     , UnpackablePages()
     , PackState()
+    , FirstPage(nullptr)
     , Revision(0)
+    , LayoutRevision(0)
+    , ChangedSinceLayout()
 {
 }
 
 FFontAtlas::~FFontAtlas() = default;
 
+void FFontAtlas::ClearPages() const
+{
+    Pages.Clear();
+    FirstPage = nullptr;
+}
+
+void FFontAtlas::MarkLayoutChanged() const
+{
+    ++Revision;
+    LayoutRevision     = Revision;
+    ChangedSinceLayout = FRectangle();
+}
+
 void FFontAtlas::Reset()
 {
     PackState.Reset();
-    Pages.Clear();
+    ClearPages();
     UnpackablePages.Clear();
     Pixels.Clear(true);
     Coverage.Clear(true);
@@ -133,7 +150,7 @@ bool FFontAtlas::Build(const TArray<uint8>& InFontData, int32 InPixelHeight)
             const int32 MeasuredCapHeight = -GetGlyph('H').BearingY;
             CapHeight = (MeasuredCapHeight > 0 && MeasuredCapHeight <= Ascent) ? MeasuredCapHeight : Ascent;
 
-            ++Revision;
+            MarkLayoutChanged();
             return true;
         }
     }
@@ -144,7 +161,7 @@ bool FFontAtlas::Build(const TArray<uint8>& InFontData, int32 InPixelHeight)
     return false;
 }
 
-bool FFontAtlas::PackPage(int32 PageIndex) const
+bool FFontAtlas::PackPage(int32 PageIndex, FRectangle& OutPackedRegion) const
 {
     const int32 FirstOfPage = PageIndex * CodepointsPerPage;
     const int32 RangeStart  = Math::Max(FirstOfPage, FirstCodepoint);
@@ -182,6 +199,13 @@ bool FFontAtlas::PackPage(int32 PageIndex) const
         Glyph.BearingX = Math::RoundToInt(PackedGlyph.xoff);
         Glyph.BearingY = Math::RoundToInt(PackedGlyph.yoff);
         Glyph.Advance  = Math::RoundToInt(PackedGlyph.xadvance);
+
+        OutPackedRegion = OutPackedRegion.Union(Glyph.AtlasRectangle);
+    }
+
+    if (PageIndex == 0)
+    {
+        FirstPage = NewPage.Get();
     }
 
     Pages.Add(PageIndex, ::Move(NewPage));
@@ -201,10 +225,10 @@ bool FFontAtlas::PackAtSize(int32 InWidth, int32 InHeight)
         PageIndices.Add(0);
     }
 
-    PageIndices.Sort();
+    Algorithm::Sort(PageIndices);
 
     PackState->Close();
-    Pages.Clear();
+    ClearPages();
 
     const int32 TexelCount = InWidth * InHeight;
 
@@ -221,17 +245,19 @@ bool FFontAtlas::PackAtSize(int32 InWidth, int32 InHeight)
     Width  = InWidth;
     Height = InHeight;
 
+    FRectangle PackedRegion;
     for (int32 PageIndex : PageIndices)
     {
-        if (!PackPage(PageIndex))
+        if (!PackPage(PageIndex, PackedRegion))
         {
             PackState->Close();
-            Pages.Clear();
+            ClearPages();
             return false;
         }
     }
 
-    ExpandCoverage();
+    Pixels.Resize(TexelCount * 4);
+    ExpandCoverage(FRectangle(IntVector2(0, 0), Width, Height));
     return true;
 }
 
@@ -242,10 +268,12 @@ bool FFontAtlas::RasterizePage(int32 PageIndex) const
         return false;
     }
 
-    FFontAtlas* MutableThis = const_cast<FFontAtlas*>(this);
-    if (PackPage(PageIndex))
+    FFontAtlas* MutableThis  = const_cast<FFontAtlas*>(this);
+    FRectangle  PackedRegion;
+    if (PackPage(PageIndex, PackedRegion))
     {
-        MutableThis->ExpandCoverage();
+        ExpandCoverage(PackedRegion);
+        ChangedSinceLayout = ChangedSinceLayout.Union(PackedRegion);
 
         ++Revision;
         return true;
@@ -264,7 +292,7 @@ bool FFontAtlas::RasterizePage(int32 PageIndex) const
     {
         if (MutableThis->PackAtSize(AtlasSize, AtlasSize))
         {
-            ++Revision;
+            MarkLayoutChanged();
             return true;
         }
     }
@@ -280,33 +308,43 @@ bool FFontAtlas::RasterizePage(int32 PageIndex) const
 
     MutableThis->PackAtSize(PackedSize, PackedSize);
 
-    ++Revision;
+    MarkLayoutChanged();
     return false;
 }
 
-void FFontAtlas::ExpandCoverage()
+void FFontAtlas::ExpandCoverage(const FRectangle& Region) const
 {
-    const int32 TexelCount = Width * Height;
-    if (TexelCount <= 0)
+    const FRectangle Clamped = Region.Intersect(FRectangle(IntVector2(0, 0), Width, Height));
+    if (Clamped.IsEmpty() || Pixels.Size() < Width * Height * 4)
     {
         return;
     }
 
-    Pixels.Resize(TexelCount * 4);
-
-    uint8* RESTRICT DstTexel = Pixels.Data();
-    for (int32 Index = 0; Index < TexelCount; ++Index)
+    for (int32 Row = Clamped.Position.Y; Row < Clamped.GetBottom(); ++Row)
     {
-        DstTexel[0] = 255;
-        DstTexel[1] = 255;
-        DstTexel[2] = 255;
-        DstTexel[3] = Coverage[Index];
-        DstTexel += 4;
+        const int32     RowStart = (Row * Width) + Clamped.Position.X;
+        const uint8*    SrcTexel = Coverage.Data() + RowStart;
+        uint8* RESTRICT DstTexel = Pixels.Data() + (RowStart * 4);
+
+        for (int32 Column = 0; Column < Clamped.Width; ++Column)
+        {
+            DstTexel[0] = 255;
+            DstTexel[1] = 255;
+            DstTexel[2] = 255;
+            DstTexel[3] = SrcTexel[Column];
+            DstTexel += 4;
+        }
     }
 }
 
 const FGlyph* FFontAtlas::FindGlyph(int32 Codepoint) const
 {
+    if (static_cast<uint32>(Codepoint) < static_cast<uint32>(CodepointsPerPage) && FirstPage)
+    {
+        const FGlyph& Glyph = FirstPage->Glyphs[Codepoint];
+        return (Glyph.Advance > 0 || !Glyph.AtlasRectangle.IsEmpty()) ? &Glyph : nullptr;
+    }
+
     if (Codepoint < FirstCodepoint || Codepoint >= MaxCodepoint || !PackState || !PackState->bIsPacking)
     {
         return nullptr;

@@ -25,6 +25,7 @@ FLogView::FLogView()
     , PendingLines()
     , Lines()
     , SearchText()
+    , SearchCaseType(EStringCaseType::NoCase)
     , VisibleSeverities(LOG_VIEW_ALL_SEVERITIES)
     , MaxLineCount(DefaultMaxLineCount)
     , bFilterToMatches(false)
@@ -42,6 +43,8 @@ FLogView::~FLogView()
 
 void FLogView::Initialize(const FDesc& Desc)
 {
+    SetDrawCachePolicy(EDrawCachePolicy::Never);
+
     Font                = Desc.Font;
     MaxLineCount        = Math::Max(1, Desc.MaxLineCount);
     bAutoScroll         = Desc.bAutoScroll;
@@ -124,7 +127,7 @@ void FLogView::SetSeverityVisible(ELogSeverity Severity, bool bIsVisible)
     }
 
     VisibleSeverities = Mask;
-    bLayoutIsStale    = true;
+    MarkLayoutStale();
 }
 
 bool FLogView::IsSeverityVisible(ELogSeverity Severity) const
@@ -148,7 +151,19 @@ void FLogView::SetSearchText(const String& InSearchText, bool bInFilterToMatches
 
     SearchText       = InSearchText;
     bFilterToMatches = bInFilterToMatches;
-    bLayoutIsStale   = true;
+    MarkLayoutStale();
+}
+
+void FLogView::SetSearchCaseSensitive(bool bInCaseSensitive)
+{
+    const EStringCaseType NewCaseType = bInCaseSensitive ? EStringCaseType::CaseSensitive : EStringCaseType::NoCase;
+    if (SearchCaseType == NewCaseType)
+    {
+        return;
+    }
+
+    SearchCaseType = NewCaseType;
+    MarkLayoutStale();
 }
 
 void FLogView::SetAutoScroll(bool bInAutoScroll)
@@ -185,7 +200,7 @@ void FLogView::Clear()
     }
 
     Lines.Clear();
-    bLayoutIsStale = true;
+    MarkLayoutStale();
 }
 
 void FLogView::SelectAll()
@@ -213,7 +228,7 @@ void FLogView::SetMaxLineCount(int32 InMaxLineCount)
 
     if (Lines.Size() != NumLinesBefore)
     {
-        bLayoutIsStale = true;
+        MarkLayoutStale();
     }
 }
 
@@ -273,12 +288,18 @@ void FLogView::DrainPendingLines()
     }
 
     TrimToMaxLineCount();
-    bLayoutIsStale = true;
+    MarkLayoutStale();
 
     if (bAutoScroll && bWasAtBottom)
     {
         ScrollToBottom();
     }
+}
+
+void FLogView::MarkLayoutStale()
+{
+    bLayoutIsStale = true;
+    InvalidateDesiredSize();
 }
 
 void FLogView::RebuildLayout()
@@ -291,8 +312,19 @@ void FLogView::RebuildLayout()
     }
 
     TArray<FTextRun> Runs;
-    for (const FLogLine& Line : Lines)
+
+    int32 LastVisibleIndex = -1;
+    for (int32 LineIndex = 0; LineIndex < Lines.Size(); ++LineIndex)
     {
+        if (IsLineVisible(Lines[LineIndex]))
+        {
+            LastVisibleIndex = LineIndex;
+        }
+    }
+
+    for (int32 LineIndex = 0; LineIndex < Lines.Size(); ++LineIndex)
+    {
+        const FLogLine& Line = Lines[LineIndex];
         if (!IsLineVisible(Line))
         {
             continue;
@@ -305,10 +337,13 @@ void FLogView::RebuildLayout()
         }
 
         Runs.Emplace(Line.Message, Font.Get(), Color);
-        Runs.Emplace("\n", Font.Get(), Color);
+        if (LineIndex < LastVisibleIndex)
+        {
+            Runs.Emplace("\n", Font.Get(), Color);
+        }
     }
 
-    TextBlock->SetRunsAndSearchText(Runs, SearchText);
+    TextBlock->SetRunsAndSearchText(Runs, SearchText, SearchCaseType);
 }
 
 bool FLogView::IsLineVisible(const FLogLine& Line) const
@@ -323,7 +358,7 @@ bool FLogView::IsLineVisible(const FLogLine& Line) const
         return true;
     }
 
-    return Line.Message.Contains(SearchText);
+    return Line.Message.Contains(SearchText, SearchCaseType);
 }
 
 void FLogView::TrimToMaxLineCount()

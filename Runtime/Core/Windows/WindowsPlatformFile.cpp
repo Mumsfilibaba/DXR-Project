@@ -1,5 +1,6 @@
 #include "Core/Windows/WindowsPlatformFile.h"
 #include "Core/Windows/WindowsPlatformMisc.h"
+#include "Core/Templates/CString.h"
 #include "Core/Templates/NumericLimits.h"
 
 FWindowsFileHandle::FWindowsFileHandle(HANDLE InFileHandle)
@@ -285,6 +286,8 @@ bool FWindowsAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
     CHECK(Src != nullptr);
     CHECK(BytesToWrite > 0);
 
+    SCOPED_LOCK(PendingWritesCS);
+
     GarbageCollectCompleted();
 
     FPendingWrite* Pending = new FPendingWrite();
@@ -437,18 +440,25 @@ void FWindowsAsyncFileHandle::ReportWriteFailure(const CHAR* What, uint32 ErrorC
 
 void FWindowsAsyncFileHandle::WaitForPendingWrites()
 {
-    for (FPendingWrite* Pending : PendingWrites)
+    TArray<FPendingWrite*> WritesToWaitFor;
+    {
+        SCOPED_LOCK(PendingWritesCS);
+        WritesToWaitFor = Move(PendingWrites);
+        PendingWrites.Clear();
+    }
+
+    for (FPendingWrite* Pending : WritesToWaitFor)
     {
         ::WaitForSingleObject(Pending->CompletionEvent, INFINITE);
         CollectWriteResult(Pending, true);
         FreePendingWrite(Pending);
     }
-
-    PendingWrites.Clear();
 }
 
 bool FWindowsAsyncFileHandle::HasPendingWrites() const
 {
+    SCOPED_LOCK(PendingWritesCS);
+
     const_cast<FWindowsAsyncFileHandle*>(this)->GarbageCollectCompleted();
     return !PendingWrites.IsEmpty();
 }
@@ -538,4 +548,34 @@ String FWindowsPlatformFile::GetCurrentWorkingDirectory()
     {
         return Result;
     }
+}
+
+bool FWindowsPlatformFile::IterateDirectory(const CHAR* Path, TArray<FDirectoryEntry>& OutEntries)
+{
+    OutEntries.Clear();
+
+    WIN32_FIND_DATAA FindData;
+    const String     Search = String::Printf("%s\\*", Path);
+    const HANDLE     Handle = ::FindFirstFileA(*Search, &FindData);
+    if (Handle == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+
+    do
+    {
+        if ((CString::Strcmp(FindData.cFileName, ".") == 0) || (CString::Strcmp(FindData.cFileName, "..") == 0))
+        {
+            continue;
+        }
+
+        FDirectoryEntry Entry;
+        Entry.Name         = FindData.cFileName;
+        Entry.bIsDirectory = (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+        OutEntries.Add(Move(Entry));
+    }
+    while (::FindNextFileA(Handle, &FindData));
+
+    ::FindClose(Handle);
+    return true;
 }

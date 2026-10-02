@@ -424,6 +424,11 @@ public:
         UnorderedAccessBarrier(FRHIUnorderedAccessBarrierDesc::CreateBuffer(Buffer));
     }
 
+    FORCEINLINE void UnorderedAccessBarrier(FRHIRayTracingAccelerationStructure* AccelerationStructure) noexcept
+    {
+        UnorderedAccessBarrier(FRHIUnorderedAccessBarrierDesc::CreateAccelerationStructure(AccelerationStructure));
+    }
+
     FORCEINLINE void Draw(uint32 VertexCount, uint32 StartVertexLocation) noexcept
     {
         EmplaceCommand<FRHICommandDraw>(VertexCount, StartVertexLocation);

@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Math/Vector2.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "D3D12RHI/D3D12Device.h"
@@ -23,6 +24,17 @@ static TAutoConsoleVariable<int32> CVarMaxCommandsPerCommandList(
     "Number of commands allowed before submitting the current CommandList to the GPU",
     10000);
 
+struct FD3D12BarrierSubresourceRange
+{
+    uint32 FirstMip;
+    uint32 NumMips;
+    uint32 FirstArraySlice;
+    uint32 NumArraySlices;
+    uint32 TotalMipLevels;
+    uint32 TotalArraySlices;
+    bool   bWholeResource;
+};
+
 static D3D12_RESOURCE_STATES D3D12ResolveRestingState(const FD3D12Resource* Resource, D3D12_RESOURCE_STATES DesiredState)
 {
     // COMMON/PRESENT is a state in its own right and must never be promoted into the resting state.
@@ -42,17 +54,6 @@ static D3D12_RESOURCE_STATES D3D12ResolveRestingState(const FD3D12Resource* Reso
 
     return DesiredState;
 }
-
-struct FD3D12BarrierSubresourceRange
-{
-    uint32 FirstMip;
-    uint32 NumMips;
-    uint32 FirstArraySlice;
-    uint32 NumArraySlices;
-    uint32 TotalMipLevels;
-    uint32 TotalArraySlices;
-    bool   bWholeResource;
-};
 
 static FD3D12BarrierSubresourceRange D3D12ResolveSubresourceRange(const FD3D12Resource* Resource, const FRHITextureSubresourceRange& Subresources)
 {
@@ -92,30 +93,36 @@ static void D3D12WarnOnDroppedTransition(MAYBE_UNUSED const FD3D12Resource* Reso
 #endif
 }
 
-static D3D12_GPU_VIRTUAL_ADDRESS GetD3D12AccelerationStructureGPUAddress(FRHIRayTracingAccelerationStructure* AccelerationStructure)
+static FD3D12AccelerationStructure* GetD3D12AccelerationStructure(FRHIRayTracingAccelerationStructure* AccelerationStructure)
 {
     if (!AccelerationStructure)
     {
-        return 0;
+        return nullptr;
     }
 
     switch (AccelerationStructure->GetAccelerationStructureType())
     {
         case ERayTracingAccelerationStructureType::Geometry:
         {
-            return static_cast<FD3D12GeometryAccelerationStructureRHI*>(AccelerationStructure)->GetGPUVirtualAddress();
+            return static_cast<FD3D12GeometryAccelerationStructureRHI*>(AccelerationStructure);
         }
 
         case ERayTracingAccelerationStructureType::Scene:
         {
-            return static_cast<FD3D12SceneAccelerationStructureRHI*>(AccelerationStructure)->GetGPUVirtualAddress();
+            return static_cast<FD3D12SceneAccelerationStructureRHI*>(AccelerationStructure);
         }
 
         default:
         {
-            return 0;
+            return nullptr;
         }
     }
+}
+
+static D3D12_GPU_VIRTUAL_ADDRESS GetD3D12AccelerationStructureGPUAddress(FRHIRayTracingAccelerationStructure* AccelerationStructure)
+{
+    FD3D12AccelerationStructure* D3D12AccelerationStructure = GetD3D12AccelerationStructure(AccelerationStructure);
+    return D3D12AccelerationStructure ? D3D12AccelerationStructure->GetGPUVirtualAddress() : 0;
 }
 
 static uint64 GetRayTracingPostBuildInfoStride(EAccelerationStructurePostBuildInfoType InfoType)
@@ -381,10 +388,12 @@ bool FD3D12CommandContext::Initialize()
 
 void FD3D12CommandContext::ObtainCommandList()
 {
-    TRACE_FUNCTION_SCOPE();
+    TRACE_SCOPE("D3D12 Obtain Command List");
 
     if (!CommandAllocator)
     {
+        TRACE_SCOPE("D3D12 Obtain Allocator");
+
         CommandAllocator = Queue.ObtainAllocator();
         if (!CommandAllocator)
         {
@@ -394,22 +403,35 @@ void FD3D12CommandContext::ObtainCommandList()
 
     if (!CommandList)
     {
-        CommandList = Queue.ObtainCommandList(CommandAllocator, nullptr);
-        if (!CommandList)
         {
-            D3D12_ERROR_CRITICAL("Failed to initialize CommandList");
+            TRACE_SCOPE("D3D12 Get Command List");
+
+            CommandList = Queue.ObtainCommandList(CommandAllocator, nullptr);
+            if (!CommandList)
+            {
+                D3D12_ERROR_CRITICAL("Failed to initialize CommandList");
+            }
         }
 
-        CommandList->InsertBeginTimestamp(TimingQueryAllocator);
-        ReopenEventStack();
+        {
+            TRACE_SCOPE("D3D12 Insert Begin Timestamp");
+            CommandList->InsertBeginTimestamp(TimingQueryAllocator);
+        }
 
-        ContextState.BeginCommandList();
+        {
+            TRACE_SCOPE("D3D12 Initialize Command List State");
 
-        FD3D12DeviceRHI::Get()->NotifyCommandListOpened();
+            ReopenEventStack();
+
+            ContextState.BeginCommandList();
+
+            FD3D12DeviceRHI::Get()->NotifyCommandListOpened();
+        }
     }
 
     if (!Commands)
     {
+        TRACE_SCOPE("D3D12 Allocate Command Submission");
         Commands = new FD3D12Commands(GetDevice(), &Queue);
     }
 }
@@ -483,6 +505,16 @@ FD3D12ResourceState& FD3D12CommandContext::RetrievePendingResourceState(FD3D12Re
     return LocalState;
 }
 
+void FD3D12CommandContext::SeedTrackedResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES CreationState)
+{
+    if (!Resource || !Resource->RequiresResourceStateTracking())
+    {
+        return;
+    }
+
+    RetrievePendingResourceState(Resource).SetState(CreationState);
+}
+
 void FD3D12CommandContext::AddPendingBarrier(FD3D12Resource* Resource, D3D12_RESOURCE_STATES DesiredState, uint32 Subresource)
 {
     FD3D12PendingBarrier PendingBarrier;
@@ -495,7 +527,7 @@ void FD3D12CommandContext::AddPendingBarrier(FD3D12Resource* Resource, D3D12_RES
 
 void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolveQueries, FD3D12FenceSyncPoint* OutSyncPoint)
 {
-    TRACE_FUNCTION_SCOPE();
+    TRACE_SCOPE("D3D12 Finish Command List");
 
     ContextState.EndCommandList();
 
@@ -506,18 +538,29 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
     // before the GPU starts executing it. Safe no-op when no writes were enqueued.
     // -------------------------------------------------------------------------------------------
 
-    if (FD3D12BindlessDescriptorHeap* ResourceBindlessHeap = GetDevice()->GetResourceBindlessHeap())
     {
-        ResourceBindlessHeap->Flush();
+        TRACE_SCOPE("D3D12 Flush Bindless Descriptors");
+
+        if (FD3D12BindlessDescriptorHeap* ResourceBindlessHeap = GetDevice()->GetResourceBindlessHeap())
+        {
+            ResourceBindlessHeap->Flush();
+        }
+
+        if (FD3D12BindlessDescriptorHeap* SamplerBindlessHeap = GetDevice()->GetSamplerBindlessHeap())
+        {
+            SamplerBindlessHeap->Flush();
+        }
     }
 
-    if (FD3D12BindlessDescriptorHeap* SamplerBindlessHeap = GetDevice()->GetSamplerBindlessHeap())
     {
-        SamplerBindlessHeap->Flush();
+        TRACE_SCOPE("D3D12 Flush Barriers");
+        BarrierBatcher.FlushBarriers(GetCommandList());
     }
 
-    BarrierBatcher.FlushBarriers(GetCommandList());
-    CommandList->InsertEndTimestamp(TimingQueryAllocator);
+    {
+        TRACE_SCOPE("D3D12 Insert End Timestamp");
+        CommandList->InsertEndTimestamp(TimingQueryAllocator);
+    }
 
     const bool   bHasPendingState = !PendingBarriers.IsEmpty() || !PendingResourceStates.IsEmpty();
     const uint32 RecordedCommands = CommandList->GetNumCommands();
@@ -534,6 +577,8 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
     {
         if (bResolveQueries)
         {
+            TRACE_SCOPE("D3D12 Resolve Queries");
+
             TimingQueryAllocator.Reset(Commands->QueryRanges);
             OcclusionQueryAllocator.Reset(Commands->QueryRanges);
             PipelineStatsQueryAllocator.Reset(Commands->QueryRanges);
@@ -541,7 +586,7 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
             Commands->Flags |= ED3D12CommandsFlags::ResolveQueries;
 
             TArray<FD3D12QueryRange>& AllRanges = Commands->QueryRanges;
-            AllRanges.SortWithPredicate([](const FD3D12QueryRange& FirstRange, const FD3D12QueryRange& SecondRange)
+            Algorithm::Sort(AllRanges, [](const FD3D12QueryRange& FirstRange, const FD3D12QueryRange& SecondRange)
             {
                 if (FirstRange.Heap != SecondRange.Heap)
                 {
@@ -596,12 +641,16 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
             }
         }
 
-        CloseEventStack();
-
-        if (!CommandList->Close())
         {
-            D3D12_ERROR_CRITICAL("Failed to close CommandList");
-            return;
+            TRACE_SCOPE("D3D12 Close Command List");
+
+            CloseEventStack();
+
+            if (!CommandList->Close())
+            {
+                D3D12_ERROR_CRITICAL("Failed to close CommandList");
+                return;
+            }
         }
 
         CHECK(Commands != nullptr);
@@ -895,6 +944,7 @@ void FD3D12CommandContext::BeginQuery(FRHIQuery* Query)
     }
 
     GetCommandList().BeginQuery(D3D12Query->CurrentQuery);
+    D3D12Query->bResultReady.Store(0);
     PendingQueries.Add(D3D12Query);
     
     ActiveQueryCount++;
@@ -929,6 +979,7 @@ void FD3D12CommandContext::QueryTimestamp(FRHIQuery* Query)
     }
 
     GetCommandList().EndQuery(D3D12Query->CurrentQuery);
+    D3D12Query->bResultReady.Store(0);
     PendingQueries.Add(D3D12Query);
 }
 
@@ -1497,9 +1548,16 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
     uint8*       WritePtr = reinterpret_cast<uint8*>(ResourceStorage.GetMappedBaseAddress());
     const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
     
-    for (uint64 y = 0; y < NumRows; y++)
+    const EFormat Format     = Dst->GetDesc().Format;
+    const uint32  SrcNumRows = D3D12RHI::D3D12CalculateRegionNumRows(Format, TextureRegion.Height);
+
+    const uint64 RegionRowBytes = IsBlockCompressed(Format)
+        ? SrcRowPitch
+        : Math::Min<uint64>(SrcRowPitch, static_cast<uint64>(TextureRegion.Width) * GetByteStrideFromFormat(Format));
+
+    for (uint64 y = 0; y < Math::Min<uint64>(NumRows, SrcNumRows); y++)
     {
-        Memory::Memcpy(WritePtr, Source, SrcRowPitch);
+        Memory::Memcpy(WritePtr, Source, RegionRowBytes);
         
         WritePtr += PlacedSubresourceFootprint.Footprint.RowPitch;
         Source   += SrcRowPitch;
@@ -1570,13 +1628,15 @@ void FD3D12CommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegio
     uint8* WritePtr = reinterpret_cast<uint8*>(ResourceStorage.GetMappedBaseAddress());
     const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
 
+    const uint32 SrcNumRows = Math::Min<uint32>(NumRows, D3D12RHI::D3D12CalculateRegionNumRows(Dst->GetDesc().Format, TextureRegion.Height));
+
     const uint32 DstSlicePitch = PlacedSubresourceFootprint.Footprint.RowPitch * NumRows;
     for (uint32 z = 0; z < TextureRegion.Depth; z++)
     {
         const uint8* SliceSource = Source + z * SrcDepthPitch;
         uint8* SliceDest = WritePtr + z * DstSlicePitch;
 
-        for (uint32 y = 0; y < NumRows; y++)
+        for (uint32 y = 0; y < SrcNumRows; y++)
         {
             Memory::Memcpy(SliceDest, SliceSource, SrcRowPitch);
 
@@ -2125,6 +2185,7 @@ void FD3D12CommandContext::ApplyTrackingModeChange(FD3D12TextureRHI* Texture, co
     {
     case ED3D12ResourceStateMode::SingleState:
         Resource->SetDefaultState(AfterState);
+        Resource->GetResourceState().SetState(AfterState);
         break;
 
     case ED3D12ResourceStateMode::MultipleStates:
@@ -2711,14 +2772,33 @@ void FD3D12CommandContext::UnorderedAccessBarrier(TArrayView<const FRHIUnordered
 
             BarrierBatcher.AddUnorderedAccessBarrier(D3D12Texture->GetResource());
         }
-        else
+        else if (Desc.IsBuffer())
         {
             FD3D12BufferRHI* D3D12Buffer = FD3D12DeviceRHI::ResourceCast(Desc.Buffer.Resource);
             CHECK(D3D12Buffer != nullptr);
 
             BarrierBatcher.AddUnorderedAccessBarrier(D3D12Buffer->GetResource());
         }
+        else
+        {
+            CHECK(Desc.IsAccelerationStructure());
+
+            FD3D12AccelerationStructure* D3D12AccelerationStructure = GetD3D12AccelerationStructure(Desc.AccelerationStructure.Resource);
+            CHECK(D3D12AccelerationStructure != nullptr);
+
+            AccelerationStructureBarrier(D3D12AccelerationStructure);
+        }
     }
+}
+
+void FD3D12CommandContext::AccelerationStructureBarrier(FD3D12AccelerationStructure* AccelerationStructure)
+{
+    CHECK(AccelerationStructure != nullptr);
+
+    FD3D12Resource* Resource = AccelerationStructure->GetResource();
+    CHECK(Resource != nullptr);
+
+    BarrierBatcher.AddUnorderedAccessBarrier(Resource);
 }
 
 void FD3D12CommandContext::AliasingBarrier(FD3D12Resource* ResourceAfter, ID3D12Resource* ResourceBefore)
@@ -3135,24 +3215,6 @@ void FD3D12CommandContext::PrepareShaderBindingTableForDispatch(FD3D12ShaderBind
     const uint32 NumLocalTableDescriptors   = ShaderBindingTable->GetNumPendingLocalTableDescriptors();
     const uint32 NumLocalSamplerDescriptors = ShaderBindingTable->GetNumPendingLocalSamplerDescriptors();
 
-    if (NumLocalTableDescriptors > 0)
-    {
-        FD3D12LocalDescriptorHeap& ResourceHeap = ContextState.GetDescriptorCache().GetResourceHeap();
-        if (!ResourceHeap.HasSpace(NumLocalTableDescriptors))
-        {
-            ResourceHeap.Realloc();
-        }
-    }
-
-    if (NumLocalSamplerDescriptors > 0)
-    {
-        FD3D12LocalDescriptorHeap& SamplerHeap = ContextState.GetDescriptorCache().GetSamplerHeap();
-        if (!SamplerHeap.HasSpace(NumLocalSamplerDescriptors))
-        {
-            SamplerHeap.Realloc();
-        }
-    }
-
     ContextState.BindRayTracingState();
 
     if (NumLocalTableDescriptors > 0 || NumLocalSamplerDescriptors > 0)
@@ -3160,7 +3222,39 @@ void FD3D12CommandContext::PrepareShaderBindingTableForDispatch(FD3D12ShaderBind
         FD3D12LocalDescriptorHeap& ResourceHeap = ContextState.GetDescriptorCache().GetResourceHeap();
         FD3D12LocalDescriptorHeap& SamplerHeap  = ContextState.GetDescriptorCache().GetSamplerHeap();
 
-        ShaderBindingTable->ResolveLocalDescriptorTables(*this, ResourceHeap, SamplerHeap);
+        const bool bNeedsResourceSpace = NumLocalTableDescriptors > 0 && !ResourceHeap.HasSpace(NumLocalTableDescriptors);
+        const bool bNeedsSamplerSpace  = NumLocalSamplerDescriptors > 0 && !SamplerHeap.HasSpace(NumLocalSamplerDescriptors);
+
+        if (bNeedsResourceSpace || bNeedsSamplerSpace)
+        {
+            if (bNeedsResourceSpace && !ResourceHeap.Realloc())
+            {
+                SplitCommandListForDescriptorHeapRollover();
+                ResourceHeap.Realloc();
+            }
+
+            if (bNeedsSamplerSpace && !SamplerHeap.Realloc())
+            {
+                SplitCommandListForDescriptorHeapRollover();
+                SamplerHeap.Realloc();
+            }
+
+            ContextState.BindRayTracingState();
+        }
+
+        const bool bHasResourceSpace = NumLocalTableDescriptors == 0 || ResourceHeap.HasSpace(NumLocalTableDescriptors);
+        const bool bHasSamplerSpace  = NumLocalSamplerDescriptors == 0 || SamplerHeap.HasSpace(NumLocalSamplerDescriptors);
+
+        if (bHasResourceSpace && bHasSamplerSpace)
+        {
+            ShaderBindingTable->ResolveLocalDescriptorTables(*this, ResourceHeap, SamplerHeap);
+        }
+        else
+        {
+            D3D12_ERROR("Not enough descriptor space for the local shader records (%u resource, %u sampler). Skipping the local table resolve",
+                NumLocalTableDescriptors, NumLocalSamplerDescriptors);
+        }
+
         BarrierBatcher.FlushBarriers(GetCommandList());
     }
 }
@@ -3388,6 +3482,7 @@ void FD3D12CommandContext::CopyAccelerationStructure(FRHIRayTracingAccelerationS
     const D3D12_GPU_VIRTUAL_ADDRESS SourceAddress                         = GetD3D12AccelerationStructureGPUAddress(Source);
     const D3D12_GPU_VIRTUAL_ADDRESS DestinationAddress                    = GetD3D12AccelerationStructureGPUAddress(Destination);
     const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE D3D12CopyMode = D3D12RHI::ConvertAccelerationStructureCopyMode(CopyMode);
+    CHECK(SourceAddress != 0 && DestinationAddress != 0);
 
     ConditionalSplitCommandList();
     BarrierBatcher.FlushBarriers(GetCommandList());
@@ -3409,28 +3504,7 @@ void FD3D12CommandContext::CompactAccelerationStructure(FRHIRayTracingAccelerati
         return;
     }
 
-    FD3D12AccelerationStructure* D3D12AccelerationStructure = nullptr;
-    switch (AccelerationStructure->GetAccelerationStructureType())
-    {
-        case ERayTracingAccelerationStructureType::Geometry:
-        {
-            D3D12AccelerationStructure = static_cast<FD3D12GeometryAccelerationStructureRHI*>(AccelerationStructure);
-            break;
-        }
-
-        case ERayTracingAccelerationStructureType::Scene:
-        {
-            D3D12AccelerationStructure = static_cast<FD3D12SceneAccelerationStructureRHI*>(AccelerationStructure);
-            break;
-        }
-
-        default:
-        {
-            break;
-        }
-    }
-
-    if (D3D12AccelerationStructure)
+    if (FD3D12AccelerationStructure* D3D12AccelerationStructure = GetD3D12AccelerationStructure(AccelerationStructure))
     {
         ConditionalSplitCommandList();
         D3D12AccelerationStructure->CompactInPlace(*this, CompactedSizeInBytes);
@@ -3452,6 +3526,7 @@ void FD3D12CommandContext::SerializeAccelerationStructure(FRHIRayTracingAccelera
 
     const D3D12_GPU_VIRTUAL_ADDRESS DestinationAddress = D3D12DestinationBuffer->GetGPUVirtualAddress() + DstOffset;
     const D3D12_GPU_VIRTUAL_ADDRESS SourceAddress      = GetD3D12AccelerationStructureGPUAddress(Source);
+    CHECK(SourceAddress != 0);
 
     ConditionalSplitCommandList();
 
@@ -3478,6 +3553,7 @@ void FD3D12CommandContext::DeserializeAccelerationStructure(FRHIRayTracingAccele
 
     const D3D12_GPU_VIRTUAL_ADDRESS DestinationAddress = GetD3D12AccelerationStructureGPUAddress(Destination);
     const D3D12_GPU_VIRTUAL_ADDRESS SourceAddress      = D3D12SourceBuffer->GetGPUVirtualAddress() + SourceOffset;
+    CHECK(DestinationAddress != 0);
 
     ConditionalSplitCommandList();
 

@@ -122,31 +122,20 @@ public:
     TSharedPtr<FMaterial> BaseMaterial;
 
 protected:
-    /**
-     * @brief Creates the render target the scene is drawn into at whatever size GetSceneRenderSize reports,
-     * and hands it to the element that draws it. Called once during Init and again whenever that size
-     * changes, so a caller only has to reach for it when driving the size from somewhere else.
-     *
-     * @return True when a target exists afterwards, including when a zero size left the previous one in place.
-     */
     bool CreateViewportRenderTarget();
 
-    /** @return The size the scene should render at, in pixels, which is zero while nothing has been laid out yet. */
     virtual IntVector2 GetSceneRenderSize() const;
 
-    /**
-     * @brief Points whatever draws the scene at the render target it was just given.
-     *
-     * @param InViewportImage The render target, recreated whenever the render size changes.
-     */
     virtual void SetSceneRenderTarget(const FRHITextureRef& InViewportImage);
 
 private:
-    static constexpr EFormat ViewportImageFormat = EFormat::R8G8B8A8_Unorm;
+    static constexpr EFormat ViewportImageFormat       = EFormat::R8G8B8A8_Unorm;
+    static constexpr float   ViewportResizeSettleDelay = 0.15f;
 
     bool CreateEngineWindow();
     bool CreateEngineViewport();
     bool CreateSceneViewport();
+    void UpdateViewportRenderTarget(float DeltaTime);
 
     void OnEngineWindowClosed();
     void OnEngineWindowMoved(const IntVector2& NewScreenPosition);
@@ -159,6 +148,8 @@ private:
     TSharedPtr<FSceneViewport> SceneViewport;
     FRHITextureRef             ViewportImage;
     IntVector2                 ViewportImageSize;
+    IntVector2                 PendingViewportImageSize;
+    float                      ViewportResizeSettleTime;
 
     static FEngine* Engine;
 };

@@ -8,6 +8,110 @@ local XcodeVectorExtensions =
     ["SSE4.2"] = "sse4.2",
 }
 
+-- Include the script for a module found by the indexer and generate it. Returns the rule, or nil when
+-- the module is missing or the script chose not to register one (unsupported on this platform).
+function IncludeIndexedModule(ModuleName)
+    local ModuleInfo = GetIndexedModuleInfo(ModuleName)
+    if not ModuleInfo or not os.isfile(ModuleInfo.ScriptPath) then
+        LogError("Module '%s' not found in indexed roots. Ensure it lives under 'Runtime' or 'ThirdParty'.", ModuleName)
+        return nil
+    end
+
+    local function GenerateModuleFromIndex(ModuleRule)
+        -- Source path for the rule (affects file globs, natvis, etc.)
+        if type(ModuleRule.SetPath) == "function" then
+            ModuleRule.SetPath(ModuleInfo.ScriptDir)
+        end
+
+        -- Include roots + grouping/output
+        if ModuleInfo.Root == "Runtime" then
+            ModuleRule.AddIncludeDirs({
+                GetRuntimeFolderPath()
+            })
+        elseif ModuleInfo.Root == "ThirdParty" then
+            -- Include the module's actual folder so consumers can do something like '#include <ModuleName/...>'
+            ModuleRule.AddExternalIncludeDirs({
+                CreateOsPath(ModuleInfo.ScriptDir)
+            })
+
+            -- Fix grouping (only if not already set)
+            local RelativePath = CreateOsPath(path.getrelative(GetExternalThirdPartyFolderPath(), ModuleInfo.ScriptDir))
+            if (not ModuleRule.Group) or ModuleRule.Group == "" then
+                ModuleRule.SetGroup("ThirdParty/" .. (RelativePath:gsub("\\", "/")))
+            end
+
+            -- Fix output-path (only if not already set)
+            if (not ModuleRule.OutputPathOverride) or ModuleRule.OutputPathOverride == "" then
+                ModuleRule.OutputPathOverride = JoinPath("ThirdParty", RelativePath)
+            end
+
+            -- Fix project-path (only if not already set)
+            if (not ModuleRule.ProjectFilePathOverride) or ModuleRule.ProjectFilePathOverride == "" then
+                ModuleRule.ProjectFilePathOverride = JoinPath("ThirdParty", RelativePath)
+            end
+        else
+            ModuleRule.AddIncludeDirs({
+                CreateOsPath(path.getdirectory(ModuleInfo.ScriptDir))
+            })
+
+            local RootDir      = ModuleInfo.RootDir or GetEnginePath()
+            local RelativePath = CreateOsPath(path.getrelative(RootDir, ModuleInfo.ScriptDir))
+
+            -- Fix grouping (only if not already set)
+            if (not ModuleRule.Group) or ModuleRule.Group == "" then
+                ModuleRule.SetGroup(ModuleInfo.Root .. "/" .. (RelativePath:gsub("\\", "/")))
+            end
+
+            -- Fix output-path (only if not already set)
+            if (not ModuleRule.OutputPathOverride) or ModuleRule.OutputPathOverride == "" then
+                ModuleRule.OutputPathOverride = JoinPath(ModuleInfo.Root, RelativePath)
+            end
+
+            -- Fix project-path (only if not already set)
+            if (not ModuleRule.ProjectFilePathOverride) or ModuleRule.ProjectFilePathOverride == "" then
+                ModuleRule.ProjectFilePathOverride = JoinPath(ModuleInfo.Root, RelativePath)
+            end
+        end
+
+        ModuleRule.Generate()
+    end
+
+    if IsModuleRule(ModuleName) then
+
+        -- If it was only created (by a multi-module file) but not yet generated, do it now.
+        local ExistingRule = GetModuleRule(ModuleName)
+        if not ExistingRule then
+            LogError("Error: module '%s' reported as included, but GetModuleRule() returned nil.", ModuleName)
+            return nil
+        end
+
+        if not ExistingRule.IsGenerated() then
+            LogInfo("Module '%s' was created earlier but not generated. Generating now...", ModuleName)
+            GenerateModuleFromIndex(ExistingRule)
+        else
+            LogHighlightWarning("Module '%s' is already included in workspace '%s'", ModuleName, GetWorkspaceName())
+        end
+
+        return ExistingRule
+    end
+
+    -- Include the script if it is not included yet
+    LogInfo("Including script '%s' to include module '%s'", CreateOsPath(ModuleInfo.ScriptPath), ModuleName)
+    include(ModuleInfo.ScriptPath)
+
+    -- Some scripts may choose to not register a module for multiple reasons so check if we actually created a module
+    if not IsModuleRule(ModuleName) then
+        LogHighlightWarning("Found '%s' at '%s', but it did not register (it may be unsupported on this platform).", ModuleName, CreateOsPath(ModuleInfo.ScriptPath))
+        return nil
+    end
+
+    local CurrentModule = GetModuleRule(ModuleName)
+    LogInfo("Module '%s' was created in script '%s'. Generating now...", CurrentModule.Name, CreateOsPath(ModuleInfo.ScriptPath))
+
+    GenerateModuleFromIndex(CurrentModule)
+    return CurrentModule
+end
+
 -- Build rules for a project
 function BuildRules(Name)
 
@@ -75,6 +179,10 @@ function BuildRules(Name)
 
         -- Kind (SharedLib, StaticLib, WindowedApp, ConsoleApp, etc.)
         Kind = "SharedLib",
+
+        -- Generated with the kind 'None' to be browsed in the IDE, whether the files are compiled
+        -- somewhere else, as a launch module is, or not compiled at all
+        bIsBrowseOnly = false,
 
         -- Include / link state
         IncludeDirs = {},
@@ -254,6 +362,7 @@ function BuildRules(Name)
             if self.bOptimizeDebugBuild then
                 filter "configurations:*Debug*"
                     optimize("Full")
+                    flags({ "NoRuntimeChecks" })
                 filter {}
             else
                 filter "configurations:*Debug*"
@@ -531,10 +640,13 @@ function BuildRules(Name)
             -- Remove files
             removefiles(self.ExcludeFiles)
 
+            -- A browse-only module asked for the kind 'None', so nothing being linked is expected there
+            local LogIgnoredByKind = self.bIsBrowseOnly and LogInfo or LogWarning
+
             -- macOS frameworks
             if IsPlatformMac() then
                 if self.Kind == "None" then
-                    LogWarning("Ignoring Frameworks due to the kind being set to 'None'")
+                    LogIgnoredByKind("Ignoring Frameworks due to the kind being set to 'None'")
                 else
                     links(self.Frameworks)
                 end
@@ -544,10 +656,7 @@ function BuildRules(Name)
             if self.Kind == "None" then
                 kind(self.Kind)
 
-                LogWarning("Ignoring LinkLibraries due to the kind being set to 'None'")
-                LogWarning("Ignoring LinkModules due to the kind being set to 'None'")
-                LogWarning("Ignoring LinkOptions due to the kind being set to 'None'")
-                LogWarning("Ignoring Module due to the kind being set to 'None'")
+                LogIgnoredByKind("Ignoring LinkLibraries, LinkModules, LinkOptions and Module for '%s' due to the kind being set to 'None'", self.Name)
             else
                 for _, Layout in ipairs(GetGeneratedLayouts()) do
                     local Result       = self.LayoutResults[Layout]
@@ -671,111 +780,18 @@ function BuildRules(Name)
             return
         end
 
-        local function GenerateModuleFromIndex(ModuleRule, ModuleInfo)
-            -- Source path for the rule (affects file globs, natvis, etc.)
-            if type(ModuleRule.SetPath) == "function" then
-                ModuleRule.SetPath(ModuleInfo.ScriptDir)
-            end
-
-            -- Include roots + grouping/output
-            if ModuleInfo.Root == "Runtime" then
-                ModuleRule.AddIncludeDirs({
-                    GetRuntimeFolderPath()
-                })
-            elseif ModuleInfo.Root == "ThirdParty" then
-                -- Include the module's actual folder so consumers can do something like '#include <ModuleName/...>'
-                ModuleRule.AddExternalIncludeDirs({
-                    CreateOsPath(ModuleInfo.ScriptDir)
-                })
-
-                -- Fix grouping (only if not already set)
-                local RelativePath = CreateOsPath(path.getrelative(GetExternalThirdPartyFolderPath(), ModuleInfo.ScriptDir))
-                if (not ModuleRule.Group) or ModuleRule.Group == "" then
-                    ModuleRule.SetGroup("ThirdParty/" .. (RelativePath:gsub("\\", "/")))
-                end
-
-                -- Fix output-path (only if not already set)
-                if (not ModuleRule.OutputPathOverride) or ModuleRule.OutputPathOverride == "" then
-                    ModuleRule.OutputPathOverride = JoinPath("ThirdParty", RelativePath)
-                end
-
-                -- Fix project-path (only if not already set)
-                if (not ModuleRule.ProjectFilePathOverride) or ModuleRule.ProjectFilePathOverride == "" then
-                    ModuleRule.ProjectFilePathOverride = JoinPath("ThirdParty", RelativePath)
-                end
-            else
-                ModuleRule.AddIncludeDirs({
-                    CreateOsPath(path.getdirectory(ModuleInfo.ScriptDir))
-                })
-
-                local RootDir      = ModuleInfo.RootDir or GetEnginePath()
-                local RelativePath = CreateOsPath(path.getrelative(RootDir, ModuleInfo.ScriptDir))
-
-                -- Fix grouping (only if not already set)
-                if (not ModuleRule.Group) or ModuleRule.Group == "" then
-                    ModuleRule.SetGroup(ModuleInfo.Root .. "/" .. (RelativePath:gsub("\\", "/")))
-                end
-
-                -- Fix output-path (only if not already set)
-                if (not ModuleRule.OutputPathOverride) or ModuleRule.OutputPathOverride == "" then
-                    ModuleRule.OutputPathOverride = JoinPath(ModuleInfo.Root, RelativePath)
-                end
-
-                -- Fix project-path (only if not already set)
-                if (not ModuleRule.ProjectFilePathOverride) or ModuleRule.ProjectFilePathOverride == "" then
-                    ModuleRule.ProjectFilePathOverride = JoinPath(ModuleInfo.Root, RelativePath)
-                end
-            end
-
-            ModuleRule.Generate()
-        end
-
         for Index = 1, #self.Modules do
             local CurrentModuleName = self.Modules[Index]
             LogHighlight("Checking module-dependency '%s' for module '%s'", CurrentModuleName, self.Name)
 
-            local ModuleInfo = GetIndexedModuleInfo(CurrentModuleName)
-            if ModuleInfo and os.isfile(ModuleInfo.ScriptPath) then
-                if IsModuleRule(CurrentModuleName) then
-
-                    -- If it was only created (by a multi-module file) but not yet generated, do it now.
-                    local ExistingRule = GetModuleRule(CurrentModuleName)
-                    if not ExistingRule then
-                        LogError("Error: module '%s' reported as included, but GetModuleRule() returned nil.", CurrentModuleName)
-                    else
-                        if not ExistingRule.IsGenerated() then
-                            LogInfo("Module '%s' was created earlier but not generated. Generating now...", CurrentModuleName)
-                            GenerateModuleFromIndex(ExistingRule, ModuleInfo)
-                        else
-                            LogHighlightWarning("Module '%s' is already included in workspace '%s'", CurrentModuleName, GetWorkspaceName())
-                        end
-                    end
-                else
-                
-                    -- Include the script if it is not included yet
-                    LogInfo("Including script '%s' to include module '%s'", CreateOsPath(ModuleInfo.ScriptPath), CurrentModuleName)
-                    include(ModuleInfo.ScriptPath)
-
-                    -- Some scripts may choose to not register a module for multiple reasons so check if we actually created a module
-                    if IsModuleRule(CurrentModuleName) then
-                        local CurrentModule = GetModuleRule(CurrentModuleName)
-                        LogInfo("Module '%s' was created in script '%s'. Generating now...", CurrentModule.Name, CreateOsPath(ModuleInfo.ScriptPath))
-
-                        GenerateModuleFromIndex(CurrentModule, ModuleInfo)
-                    else
-                        LogHighlightWarning("Found '%s' at '%s', but it did not register (it may be unsupported on this platform).", CurrentModuleName, CreateOsPath(ModuleInfo.ScriptPath))
-                    end
-                end
-            else
-                LogError("Module '%s' not found in indexed roots. Ensure it lives under 'Runtime' or 'ThirdParty'.", CurrentModuleName)
-            end
+            IncludeIndexedModule(CurrentModuleName)
         end
 
         -- Add framework extension
         self.AddFrameworkExtension()
 
         local function HasLinkModuleSymbol(ModuleName)
-            if ModuleName == "Launch" then
+            if ModuleName == "LaunchEngine" or ModuleName == "LaunchProgram" then
                 return false
             end
 

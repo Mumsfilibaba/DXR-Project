@@ -53,6 +53,8 @@ public:
      * @param PanelId The panel to show.
      */
     void ShowPanel(const String& PanelId);
+    void HidePanel(const String& PanelId);
+    void TogglePanel(const String& PanelId);
 
     /**
      * @brief Records that a panel left the tree, which is what a closed tab reports.

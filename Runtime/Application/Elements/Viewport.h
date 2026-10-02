@@ -27,7 +27,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual void Tick(const FRectangle& AssignedBounds) override final;
+    virtual void OnArrange(const FRectangle& AllottedBounds) override final;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final;
 
     virtual FEventResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent) override final;
@@ -79,15 +79,15 @@ public:
         return ViewportInterface;
     }
 
-     /**
-     * @brief Sets the relative viewport size. This size will be clamped to the parent element's size during Tick.
+    /**
+     * @brief Sets the relative viewport size. This size will be clamped to the parent element's size during Arrange.
      * 
      * @param InSize The new size.
      */
-    void SetSize(const IntVector2& InSize) { Size = InSize; }
+    void SetSize(const IntVector2& InSize);
     
     /**
-     * @brief Sets the relative viewport position. This size will be clamped to the parent element's size during Tick.
+     * @brief Sets the relative viewport position. This size will be clamped to the parent element's size during Arrange.
      * 
      * @param InPosition The new position.
      */

@@ -5,6 +5,7 @@
 #include "Application/ElementPath.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/Button.h"
+#include "Application/Elements/CheckBox.h"
 #include "Application/Elements/Image.h"
 #include "Application/Elements/LogView.h"
 #include "Application/Elements/SearchBox.h"
@@ -93,7 +94,7 @@ bool FEditorOutputLogPanel::Initialize()
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
     Column->AddSlot(ToolBar).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
-    Column->AddSlot(LogArea).SetFillCoefficient(1.0f);
+    Column->AddSlot(FEditorStyle::MakeInnerFrame(LogArea)).SetFillCoefficient(1.0f);
 
     Content = Column;
     return true;
@@ -105,7 +106,8 @@ TSharedPtr<FToolBar> FEditorOutputLogPanel::BuildToolBar()
     Desc.Font           = FEditorStyle::GetFonts().Body;
     Desc.IconSize       = FEditorStyle::IconSize;
     Desc.ItemSpacing    = LOG_TOOLBAR_GAP;
-    Desc.bHasBackground = true;
+    Desc.Padding        = FMargin(0);
+    Desc.bHasBackground = false;
 
     TSharedPtr<FToolBar> Bar = FToolBar::Create(Desc);
     if (!Bar)
@@ -117,6 +119,12 @@ TSharedPtr<FToolBar> FEditorOutputLogPanel::BuildToolBar()
         FOnSearchTextChanged::CreateRaw(this, &FEditorOutputLogPanel::OnSearchTextChanged)));
 
     Bar->AddWidget(SearchBox, LOG_SEARCH_FILL);
+    MatchCaseItem = Bar->AddToggle(
+        FToolBarItemDesc()
+            .SetIcon(FEditorIcons::MatchCase)
+            .SetToolTipText("Match Case"),
+        ECheckBoxState::Unchecked,
+        FOnCheckStateChanged::CreateRaw(this, &FEditorOutputLogPanel::OnMatchCaseChanged));
     Bar->AddWidget(BuildFilterButton());
     Bar->AddFlexibleSpace();
 
@@ -200,10 +208,10 @@ TSharedPtr<FVisualElement> FEditorOutputLogPanel::BuildFilterMenu()
 
     Menu->AddSection("Verbosity", FEditorStyle::GetFonts().Body);
 
-    const auto AddSeverityToggle = [this, &Menu](const CHAR* Label, ELogSeverity Severity)
+    const auto AddSeverityToggle = [this, &Menu](const CHAR* ItemLabel, ELogSeverity Severity)
     {
         FMenuItem::FDesc ItemDesc;
-        ItemDesc.Label        = Label;
+        ItemDesc.Label        = ItemLabel;
         ItemDesc.Font         = FEditorStyle::GetFonts().Body;
         ItemDesc.bIsCheckable = true;
         ItemDesc.CheckState   = LogView->IsSeverityVisible(Severity) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
@@ -232,6 +240,7 @@ void FEditorOutputLogPanel::Release()
     }
 
     SearchBox.Reset();
+    MatchCaseItem.Reset();
     ToolBar.Reset();
     LogArea.Reset();
     FilterButton.Reset();
@@ -243,6 +252,17 @@ void FEditorOutputLogPanel::Release()
 void FEditorOutputLogPanel::OnSearchTextChanged(const String& SearchText)
 {
     LogView->SetSearchText(SearchText, !SearchText.IsEmpty());
+}
+
+void FEditorOutputLogPanel::OnMatchCaseChanged(ECheckBoxState NewState)
+{
+    const bool bCaseSensitive = NewState == ECheckBoxState::Checked;
+    LogView->SetSearchCaseSensitive(bCaseSensitive);
+
+    if (MatchCaseItem)
+    {
+        MatchCaseItem->SetToolTipText(bCaseSensitive ? "Match Case (on)" : "Match Case");
+    }
 }
 
 void FEditorOutputLogPanel::OnLogContextMenu(const IntVector2& ScreenPosition)
@@ -258,10 +278,10 @@ void FEditorOutputLogPanel::OnLogContextMenu(const IntVector2& ScreenPosition)
         return;
     }
 
-    const auto AddCommand = [&Menu](const CHAR* Label, const TDelegate<void()>& OnActivated)
+    const auto AddCommand = [&Menu](const CHAR* ItemLabel, const TDelegate<void()>& OnActivated)
     {
         FMenuItem::FDesc ItemDesc;
-        ItemDesc.Label       = Label;
+        ItemDesc.Label       = ItemLabel;
         ItemDesc.Font        = FEditorStyle::GetFonts().Body;
         ItemDesc.OnActivated = OnActivated;
 

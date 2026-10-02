@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Misc/IOutputDevice.h"
 #include "Core/Containers/String.h"
+#include "Core/Containers/Function.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -55,6 +56,8 @@ struct COREAPPLICATION_API IPlatformConsoleWindow : public IOutputDevice
      * @param Color An enumerator value representing the desired text color.
      */
     virtual void SetTextColor(EConsoleTextColor Color) = 0;
+
+    virtual void SetOnClosed(const TFunction<void()>& Callback) = 0;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

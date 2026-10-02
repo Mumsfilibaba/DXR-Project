@@ -86,6 +86,8 @@ private:
     TArray<FBackBufferData>       BackBuffers;
     HWND                          Hwnd;
     HANDLE                        SwapChainWaitableObject;
+    DXGI_HDR_METADATA_TYPE        AppliedHDRMetadataType;
+    DXGI_HDR_METADATA_HDR10       AppliedHDR10Metadata;
     EColorSpace                   CurrentColorSpace;
     uint32                        Flags;
     uint32                        NumBackBuffers;

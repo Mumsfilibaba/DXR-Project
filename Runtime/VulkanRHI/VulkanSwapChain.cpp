@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanRHI.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
@@ -380,6 +381,9 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
 		VULKAN_ERROR_CRITICAL("Failed to retrieve the number of images in SwapChain (res=%s count=%u)", ToString(Result), BufferCount);
 		return false;
 	}
+
+	VULKAN_INFO("Created SwapChain (Images=%u, CompositeAlpha=0x%x, Usage=0x%x, PreTransform=0x%x)", BufferCount,
+		static_cast<uint32>(SelectedCompositeAlpha), static_cast<uint32>(FinalUsage), static_cast<uint32>(PreTransform));
 
 	Extent         = CurrentExtent;
 	Format         = SelectedFormat;
@@ -1047,6 +1051,8 @@ bool FVulkanSwapChainRHI::Resize(uint32 InWidth, uint32 InHeight, EFormat NewFor
 
 bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
 {
+    TRACE_SCOPE("Vulkan SwapChain Present");
+
 	// If we don't have a drawable size, don't try to acquire/present
     if (!CanPresent())
     {
@@ -1304,6 +1310,8 @@ VkResult FVulkanSwapChainRHI::AcquireNextBackBuffer(FVulkanCommands* InCommands)
 
 VkResult FVulkanSwapChainRHI::AcquireNextImage()
 {
+    TRACE_SCOPE("Vulkan SwapChain Acquire Image");
+
 	FVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
 
@@ -1325,11 +1333,20 @@ VkResult FVulkanSwapChainRHI::AcquireNextImage()
 
     if (ImageFences[SemaphoreIndex])
     {
-        ImageFences[SemaphoreIndex]->Wait();
+        {
+            TRACE_SCOPE("Vulkan SwapChain Image Fence Wait");
+            ImageFences[SemaphoreIndex]->Wait();
+        }
+
         ImageFences[SemaphoreIndex] = nullptr;
     }
 
-    VkResult Result = SwapChainResource->AcquireNextImage(ImageSemaphore.Get());
+    VkResult Result = VK_SUCCESS;
+    {
+        TRACE_SCOPE("Vulkan Acquire Next Image");
+        Result = SwapChainResource->AcquireNextImage(ImageSemaphore.Get());
+    }
+    
     if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
     {
         VULKAN_ERROR("Failed to aquire SwapChain image");

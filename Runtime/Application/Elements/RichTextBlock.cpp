@@ -1,5 +1,6 @@
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Elements/RichTextBlock.h"
+#include "Application/Elements/ScrollBox.h"
 #include "Application/Input/Keys.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
@@ -17,6 +18,7 @@ FRichTextBlock::FRichTextBlock()
     , Layout()
     , Margin()
     , SearchText()
+    , SearchCaseType(EStringCaseType::CaseSensitive)
     , SearchMatches()
     , SearchRanges()
     , WrapWidth(0)
@@ -52,7 +54,13 @@ IntVector2 FRichTextBlock::ComputeDesiredSize() const
 
 void FRichTextBlock::OnArrange(const FRectangle& AllottedBounds)
 {
+    const IntVector2 PreviousSize = Layout.GetSize();
     RefreshLayout(Math::Max(0, AllottedBounds.Width - Margin.GetTotalHorizontal()));
+
+    if (Layout.GetSize() != PreviousSize)
+    {
+        InvalidateDesiredSize();
+    }
 }
 
 int32 FRichTextBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -60,28 +68,30 @@ int32 FRichTextBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
     const FUIStyle&  Style      = FUIStyle::GetDefault();
     const FRectangle TextBounds = GetTextBounds();
 
-    RefreshLayout(TextBounds.Width);
+    const FMargin&     HighlightPadding = Style.Metrics.TextHighlightPadding;
+    const FCornerRadii HighlightRadii(Style.Metrics.TextHighlightCornerRadius);
 
     TArray<FRectangle> Rectangles;
-    GatherRangeRectangles(SearchRanges, Rectangles);
-
-    for (const FRectangle& Rectangle : Rectangles)
-    {
-        OutCommandList.AddBox(LayerId, Rectangle, Style.Colors.Accent);
-    }
 
     if (HasSelection())
     {
         TArray<FTextRange> SelectionRanges;
         SelectionRanges.Emplace(GetSelectionStart(), GetSelectionEnd());
 
-        Rectangles.Clear();
         GatherRangeRectangles(SelectionRanges, Rectangles);
 
         for (const FRectangle& Rectangle : Rectangles)
         {
-            OutCommandList.AddBox(LayerId + 1, Rectangle, Style.Colors.TextSelectionBackground);
+            OutCommandList.AddBox(LayerId, Rectangle.Inflate(HighlightPadding), Style.Colors.TextSelectionBackground, HighlightRadii);
         }
+    }
+
+    Rectangles.Clear();
+    GatherRangeRectangles(SearchRanges, Rectangles);
+
+    for (const FRectangle& Rectangle : Rectangles)
+    {
+        OutCommandList.AddBox(LayerId + 1, Rectangle.Inflate(HighlightPadding), Style.Colors.SearchTextHighlight, HighlightRadii);
     }
 
     const FDrawGeometry TextGeometry(TextBounds, AllottedGeometry.Scale);
@@ -104,6 +114,7 @@ FEventResponse FRichTextBlock::OnMouseButtonDown(const FCursorEvent& CursorEvent
     const int32 CharacterIndex = FindCharacterIndexAt(CursorEvent.GetClientPosition());
     SelectionAnchor = CharacterIndex;
     SelectionCursor = CharacterIndex;
+    InvalidatePaint();
 
     OnSelectionChangedDelegate.ExecuteIfBound(String());
     return Response;
@@ -129,6 +140,17 @@ FEventResponse FRichTextBlock::OnKeyDown(const FKeyEvent& KeyEvent)
     return FInteractiveElement::OnKeyDown(KeyEvent);
 }
 
+bool FRichTextBlock::GetCursor(ECursor& OutCursor) const
+{
+    if (!bIsSelectable || !IsEnabled() || !IsHovered())
+    {
+        return false;
+    }
+
+    OutCursor = ECursor::TextInput;
+    return true;
+}
+
 void FRichTextBlock::SetRuns(const TArray<FTextRun>& InRuns)
 {
     Layout.Clear();
@@ -139,9 +161,10 @@ void FRichTextBlock::SetRuns(const TArray<FTextRun>& InRuns)
 
     ClearSelection();
     RefreshSearchMatches();
+    InvalidateDesiredSize();
 }
 
-void FRichTextBlock::SetRunsAndSearchText(const TArray<FTextRun>& InRuns, const String& InSearchText)
+void FRichTextBlock::SetRunsAndSearchText(const TArray<FTextRun>& InRuns, const String& InSearchText, EStringCaseType InCaseType)
 {
     Layout.Clear();
     for (const FTextRun& Run : InRuns)
@@ -151,14 +174,17 @@ void FRichTextBlock::SetRunsAndSearchText(const TArray<FTextRun>& InRuns, const 
 
     ClearSelection();
 
-    SearchText = InSearchText;
+    SearchText     = InSearchText;
+    SearchCaseType = InCaseType;
     RefreshSearchMatches();
+    InvalidateDesiredSize();
 }
 
 void FRichTextBlock::AppendRun(const FTextRun& Run)
 {
     Layout.AppendRun(Run);
     RefreshSearchMatches();
+    InvalidateDesiredSize();
 }
 
 void FRichTextBlock::ClearRuns()
@@ -168,6 +194,7 @@ void FRichTextBlock::ClearRuns()
     ClearSelection();
     SearchMatches.Clear();
     SearchRanges.Clear();
+    InvalidateDesiredSize();
 }
 
 void FRichTextBlock::SetSearchText(const String& InSearchText)
@@ -179,6 +206,20 @@ void FRichTextBlock::SetSearchText(const String& InSearchText)
 
     SearchText = InSearchText;
     RefreshSearchMatches();
+
+    InvalidatePaint();
+}
+
+void FRichTextBlock::SetSearchCaseType(EStringCaseType InCaseType)
+{
+    if (SearchCaseType == InCaseType)
+    {
+        return;
+    }
+
+    SearchCaseType = InCaseType;
+    RefreshSearchMatches();
+    InvalidatePaint();
 }
 
 bool FRichTextBlock::HasSelection() const
@@ -221,6 +262,7 @@ void FRichTextBlock::ClearSelection()
 
     SelectionAnchor = 0;
     SelectionCursor = 0;
+    InvalidatePaint();
 
     OnSelectionChangedDelegate.ExecuteIfBound(String());
 }
@@ -229,8 +271,17 @@ void FRichTextBlock::SetSelection(int32 StartIndex, int32 EndIndex)
 {
     const int32 CharacterCount = Layout.GetCharacterCount();
 
-    SelectionAnchor = Math::Clamp(StartIndex, 0, CharacterCount);
-    SelectionCursor = Math::Clamp(EndIndex, 0, CharacterCount);
+    const int32 NewAnchor = Math::Clamp(StartIndex, 0, CharacterCount);
+    const int32 NewCursor = Math::Clamp(EndIndex, 0, CharacterCount);
+
+    if (SelectionAnchor == NewAnchor && SelectionCursor == NewCursor)
+    {
+        return;
+    }
+
+    SelectionAnchor = NewAnchor;
+    SelectionCursor = NewCursor;
+    InvalidatePaint();
 
     OnSelectionChangedDelegate.ExecuteIfBound(GetSelectedText());
 }
@@ -260,6 +311,32 @@ void FRichTextBlock::OnDragged(const FCursorEvent& CursorEvent)
         return;
     }
 
+    FScrollBox* ScrollBox = nullptr;
+    for (FVisualElement* Parent = GetParentElement().Get(); Parent; Parent = Parent->GetParentElement().Get())
+    {
+        ScrollBox = Parent->AsScrollBox();
+        if (ScrollBox)
+        {
+            break;
+        }
+    }
+
+    if (ScrollBox)
+    {
+        const FRectangle ViewBounds = ScrollBox->GetContentRectangle();
+        const int32      CursorY    = CursorEvent.GetClientPosition().Y;
+        const int32      Step       = FScrollBox::DefaultScrollAmountPerWheelStep;
+
+        if (CursorY < ViewBounds.Position.Y)
+        {
+            ScrollBox->SetScrollOffset(ScrollBox->GetScrollOffset() - Step);
+        }
+        else if (CursorY > ViewBounds.GetBottom())
+        {
+            ScrollBox->SetScrollOffset(ScrollBox->GetScrollOffset() + Step);
+        }
+    }
+
     const int32 CharacterIndex = FindCharacterIndexAt(CursorEvent.GetClientPosition());
     if (CharacterIndex == SelectionCursor)
     {
@@ -267,6 +344,8 @@ void FRichTextBlock::OnDragged(const FCursorEvent& CursorEvent)
     }
 
     SelectionCursor = CharacterIndex;
+    InvalidatePaint();
+
     OnSelectionChangedDelegate.ExecuteIfBound(GetSelectedText());
 }
 
@@ -312,7 +391,7 @@ void FRichTextBlock::RefreshSearchMatches()
         return;
     }
 
-    for (int32 Index = Text.Find(SearchText.Data(), 0); Index >= 0 && Index + MatchLength <= TextLength;)
+    for (int32 Index = Text.Find(SearchText.Data(), 0, SearchCaseType); Index >= 0 && Index + MatchLength <= TextLength;)
     {
         SearchMatches.Add(Index);
         SearchRanges.Emplace(Index, Index + MatchLength);
@@ -323,7 +402,7 @@ void FRichTextBlock::RefreshSearchMatches()
             break;
         }
 
-        Index = Text.Find(SearchText.Data(), NextIndex);
+        Index = Text.Find(SearchText.Data(), NextIndex, SearchCaseType);
     }
 }
 

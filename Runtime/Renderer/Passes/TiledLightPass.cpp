@@ -198,6 +198,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         FrameResources.IntegrationLUT.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ShaderResource, ERHIResourceStateTrackingMode::Static));
 
     FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    FRHICommandListExecutor::Get().WaitForCommands();
 
     FDeferredLightPassCS::FPermutation LightPassPermutation;
     LightPassPermutation.Set<FTiledLightDebug>(ETiledLightDebugMode::None);
@@ -280,8 +281,6 @@ void FTiledLightPass::Record(FRHICommandList& CommandList, const FFrameResources
     RHI_EVENT_SCOPE(CommandList, "LightPass");
 
     TRACE_SCOPE("LightPass");
-
-    GPU_TRACE_SCOPE(CommandList, "Light Pass");
 
     const bool bDrawCascades = GCSMDebugCascades;
 

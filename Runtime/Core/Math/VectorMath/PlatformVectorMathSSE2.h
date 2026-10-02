@@ -188,6 +188,30 @@ struct FPlatformVectorMathSSE2 : public FPlatformVectorMathSSE
         // Select A where (A > B), else B.
         return _mm_or_si128(_mm_and_si128(MaskAgtB, VectorA), _mm_andnot_si128(MaskAgtB, VectorB));
     }
+
+    // ---------------------------------------------------------------------------------------------
+    // Unsigned int ops
+    // ---------------------------------------------------------------------------------------------
+
+    static FORCEINLINE FInt128 VECTORCALL VectorLoadUInt(const uint32* Source) noexcept
+    {
+        return _mm_loadu_si128(reinterpret_cast<const __m128i*>(Source));
+    }
+
+    static FORCEINLINE void VECTORCALL VectorStoreUInt16(FInt128 Vector, uint16* Dest) noexcept
+    {
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(Dest), Vector);
+    }
+
+    static FORCEINLINE FInt128 VECTORCALL VectorPackUInt32ToUInt16(FInt128 VectorA, FInt128 VectorB) noexcept
+    {
+        // SSE2 only packs 32-bit lanes with signed saturation, so bias both inputs down by 0x8000 to bring the
+        // unsigned range within signed reach, pack, then lift the bias back off. Lanes outside 16 bits still
+        // clamp to 0 or 0xFFFF the way an unsigned pack does, since the bias keeps their order.
+        const FInt128 Bias    = _mm_set1_epi32(0x8000);
+        const FInt128 Packed  = _mm_packs_epi32(_mm_sub_epi32(VectorA, Bias), _mm_sub_epi32(VectorB, Bias));
+        return _mm_xor_si128(Packed, _mm_set1_epi16(static_cast<int16>(0x8000)));
+    }
 };
 
 #endif

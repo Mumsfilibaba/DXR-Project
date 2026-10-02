@@ -87,6 +87,8 @@ void FMenuBarButton::SetStyle(const FUIMenuBarStyle& InStyle)
 {
     Style = InStyle;
     SetPadding(Style.ItemPadding);
+
+    InvalidatePaint();
 }
 
 void FMenuBarButton::OnClicked()
@@ -202,4 +204,6 @@ void FMenuBar::SetStyle(const FUIMenuBarStyle& InStyle)
     {
         Panel->GetSlot(Index).SetPadding(FMargin(Index > 0 ? Style.ItemSpacing : 0, 0, 0, 0));
     }
+
+    Panel->InvalidateDesiredSize();
 }

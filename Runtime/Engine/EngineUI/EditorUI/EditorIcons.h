@@ -35,4 +35,15 @@ struct ENGINE_API FEditorIcons
     static FUIBrush DownArrow;
     static FUIBrush CollapseArrowDown;
     static FUIBrush CollapseArrowRight;
+    static FUIBrush MatchCase;
+    static FUIBrush Translate;
+    static FUIBrush Rotate;
+    static FUIBrush Scale;
+    static FUIBrush GizmoCenter;
+    static FUIBrush GizmoPivot;
+    static FUIBrush GizmoLocal;
+    static FUIBrush GizmoWorld;
+    static FUIBrush Play;
+    static FUIBrush Pause;
+    static FUIBrush Stop;
 };

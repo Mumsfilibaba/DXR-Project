@@ -26,6 +26,30 @@
   </Type>
 
 
+  <Type Name="TMap&lt;*,*,*&gt;">
+    <DisplayString>{{ Native hash map }}</DisplayString>
+    <Expand>
+      <Item Name="[Size]">NumElements</Item>
+      <Item Name="[Slots]">SlotCount</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="TSet&lt;*,*&gt;">
+    <DisplayString>{{ Native hash set }}</DisplayString>
+    <Expand>
+      <Item Name="[Size]">NumElements</Item>
+      <Item Name="[Slots]">SlotCount</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="TMultiMap&lt;*,*,*&gt;">
+    <DisplayString>{{ Native hash multimap }}</DisplayString>
+    <Expand>
+      <Item Name="[Size]">NumElements</Item>
+      <Item Name="[Slots]">SlotCount</Item>
+    </Expand>
+  </Type>
+
   <Type Name="TArrayView&lt;*&gt;">
     <DisplayString>{{ Size={ViewSize} }}</DisplayString>
     <Expand>

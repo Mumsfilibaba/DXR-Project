@@ -90,7 +90,6 @@ public:
     virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
-    virtual bool IsInteractive() const override;
 
     /**
      * @brief Sets the camera the gizmo projects through, which it re-reads every frame.
@@ -195,7 +194,7 @@ public:
     /** @return True while the pivot projects in front of the camera, and false when nothing is drawn and nothing can be grabbed. */
     NODISCARD FORCEINLINE bool IsProjected() const
     {
-        return bIsProjected;
+        return HasStateBit(StateBit_Projected);
     }
 
     /**
@@ -234,10 +233,39 @@ public:
     NODISCARD Vector3 GetPivot() const;
 
 private:
+    enum EStateBits : uint16
+    {
+        StateBit_Orthographic = 1 << 0,
+        StateBit_Projected    = 1 << 1,
+        StateBit_AxisVisible  = 1 << 2,
+        StateBit_AxisFlipped  = 1 << 5,
+        StateBit_PlaneVisible = 1 << 8,
+    };
+
+    NODISCARD static constexpr uint16 GetAxisBit(EStateBits FirstAxisBit, int32 AxisIndex)
+    {
+        return static_cast<uint16>(FirstAxisBit << AxisIndex);
+    }
+
+    NODISCARD FORCEINLINE bool HasStateBit(uint16 Bit) const
+    {
+        return (StateBits & Bit) != 0;
+    }
+
+    FORCEINLINE void SetStateBit(uint16 Bit, bool bValue)
+    {
+        StateBits = static_cast<uint16>(bValue ? (StateBits | Bit) : (StateBits & ~Bit));
+    }
+
+    NODISCARD FORCEINLINE bool HasAxisBit(EStateBits FirstAxisBit, int32 AxisIndex) const
+    {
+        return HasStateBit(GetAxisBit(FirstAxisBit, AxisIndex));
+    }
+
     void UpdateContext();
     void ComputeAxisVisibility();
 
-    NODISCARD EGizmoHandle HitTest(const IntVector2& ClientPosition) const;
+    NODISCARD EGizmoHandle FindHandleAt(const IntVector2& ClientPosition) const;
     NODISCARD bool GetAxisSegment(int32 AxisIndex, Vector2& OutStart, Vector2& OutEnd) const;
     NODISCARD bool GetPlaneQuad(int32 AxisIndex, Vector2 OutQuad[4]) const;
     NODISCARD bool GetRingPoints(const Vector3& BasisU, const Vector3& BasisV, float Radius, TArray<Vector2>& OutPoints) const;
@@ -264,9 +292,9 @@ private:
     TSharedPtr<IFontFace>    Font;
     EGizmoOperation          Operation;
     EGizmoMode               Mode;
-    FGizmoSnapSettings       Snap;
     EGizmoHandle             HoveredHandle;
     EGizmoHandle             ActiveHandle;
+    FGizmoSnapSettings       Snap;
     Vector3                  Pivot;
     Vector3                  Axes[3];
     Vector3                  CameraRight;
@@ -284,13 +312,9 @@ private:
     float                    DragStartLength;
     float                    DragStartLengthU;
     float                    DragStartLengthV;
-    String                   Readout;
     float                    ScreenFactor;
-    bool                     bIsOrthographic;
-    bool                     bIsProjected;
-    bool                     bAxisVisible[3];
-    bool                     bAxisFlipped[3];
-    bool                     bPlaneVisible[3];
+    uint16                   StateBits;
+    String                   Readout;
     FOnGizmoTransformChanged OnTransformChangedDelegate;
     FOnGizmoDragStarted      OnDragStartedDelegate;
     FOnGizmoDragFinished     OnDragFinishedDelegate;

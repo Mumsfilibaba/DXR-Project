@@ -161,6 +161,9 @@ public:
     void TransitionTrackedResourceState(FD3D12TextureRHI* Texture, D3D12_RESOURCE_STATES AfterState);
 
     void AliasingBarrier(FD3D12Resource* ResourceAfter, ID3D12Resource* ResourceBefore = nullptr);
+    void AccelerationStructureBarrier(class FD3D12AccelerationStructure* AccelerationStructure);
+
+    void SeedTrackedResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES CreationState);
 
 #if D3D12_VALIDATE_CONTEXT_THREAD_OWNERSHIP
     void AcquireOwnership();

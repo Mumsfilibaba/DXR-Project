@@ -37,6 +37,12 @@ public:
         return ResourceStorage.GetGPUVirtualAddress();
     }
 
+    uint32 GetBindSize() const
+    {
+        const uint64 StorageSize = ResourceStorage.GetSize();
+        return static_cast<uint32>(StorageSize ? Math::Min<uint64>(StorageSize, GetDesc().Size) : GetDesc().Size);
+    }
+
 private:
     bool CreateConstantBufferView();
 

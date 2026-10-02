@@ -1876,4 +1876,9 @@ NODISCARD constexpr uint32 D3D12CalculateSubresourceCount(uint32 MipLevels, uint
     return MipLevels * ArraySize * PlaneCount;
 }
 
+NODISCARD constexpr uint32 D3D12CalculateRegionNumRows(EFormat Format, uint32 Height) noexcept
+{
+    return IsBlockCompressed(Format) ? Math::DivideByMultiple<uint32>(Height, 4u) : Height;
+}
+
 }

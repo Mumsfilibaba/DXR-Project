@@ -21,7 +21,7 @@ public:
     {
     }
 
-    FD3D12SamplerStateIdentifier(EGenerate Type)
+    FD3D12SamplerStateIdentifier(EGenerate)
         : Identifier(GenerateIdentifier())
     {
     }

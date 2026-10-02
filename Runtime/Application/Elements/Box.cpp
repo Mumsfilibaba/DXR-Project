@@ -11,15 +11,12 @@ FBox::FBox()
 
 FBox::~FBox() = default;
 
-void FBox::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+EChildVisit FBox::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const
 {
-    for (const FBoxSlot& Slot : Slots)
+    return VisitChildArray(Visitor, Order, Slots, [](const FBoxSlot& Slot) -> const TSharedPtr<FVisualElement>&
     {
-        if (Slot.Element)
-        {
-            OutChildren.Add(Slot.Element);
-        }
-    }
+        return Slot.Element;
+    });
 }
 
 int32 FBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -32,24 +29,19 @@ int32 FBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
             continue;
         }
 
-        const FDrawGeometry ChildGeometry(Slot.Element->GetContentRectangle(), AllottedGeometry.Scale);
-        MaxLayerId = Slot.Element->OnDraw(ChildGeometry, OutCommandList, MaxLayerId + 1);
+        const FRectangle  ChildBounds = Slot.Element->GetContentRectangle();
+        const FRectangle& ClipBounds  = OutCommandList.GetCurrentClipRectangle();
+
+        if (!ClipBounds.IsEmpty() && ClipBounds.Intersect(ChildBounds).IsEmpty())
+        {
+            continue;
+        }
+
+        const FDrawGeometry ChildGeometry(ChildBounds, AllottedGeometry.Scale);
+        MaxLayerId = Slot.Element->Draw(ChildGeometry, OutCommandList, MaxLayerId + 1);
     }
 
     return MaxLayerId;
-}
-
-void FBox::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
-{
-    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
-    for (const FBoxSlot& Slot : Slots)
-    {
-        if (Slot.Element)
-        {
-            Slot.Element->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-        }
-    }
 }
 
 FBoxSlot& FBox::AddSlot(const TSharedPtr<FVisualElement>& InElement)
@@ -68,25 +60,28 @@ FBoxSlot& FBox::AddSlot(const TSharedPtr<FVisualElement>& InElement)
 void FBox::ClearSlots()
 {
     Slots.Clear();
+    InvalidateDesiredSize();
+}
+
+void FBox::RemoveSlotAt(int32 Index)
+{
+    if (Index < 0 || Index >= Slots.Size())
+    {
+        return;
+    }
+
+    if (Slots[Index].Element)
+    {
+        Slots[Index].Element->SetParentElement(TWeakPtr<FVisualElement>());
+    }
+
+    Slots.RemoveAt(Index);
+    InvalidateDesiredSize();
 }
 
 FRectangle FBox::ArrangeInSlot(const FRectangle& SlotBounds, const IntVector2& ChildDesiredSize, const FBoxSlot& Slot)
 {
-    return FRectangle::AlignInBounds(SlotBounds.Deflate(Slot.Padding), ChildDesiredSize, Slot.HorizontalAlignment, Slot.VerticalAlignment);
-}
-
-int32 FBox::CountFillSlots() const
-{
-    int32 Count = 0;
-    for (const FBoxSlot& Slot : Slots)
-    {
-        if (Slot.Element && Slot.IsFillSlot())
-        {
-            Count++;
-        }
-    }
-
-    return Count;
+    return FLayout::AlignInBounds(SlotBounds.Deflate(Slot.Padding), ChildDesiredSize, Slot.HorizontalAlignment, Slot.VerticalAlignment);
 }
 
 TSharedPtr<FVerticalBox> FVerticalBox::Create()
@@ -95,98 +90,11 @@ TSharedPtr<FVerticalBox> FVerticalBox::Create()
 }
 
 FVerticalBox::FVerticalBox()
-    : FBox()
+    : TStackBox<EOrientation::Vertical>()
 {
 }
 
 FVerticalBox::~FVerticalBox() = default;
-
-IntVector2 FVerticalBox::ComputeDesiredSize() const
-{
-    IntVector2 DesiredSize(0, 0);
-    for (const FBoxSlot& Slot : Slots)
-    {
-        if (!Slot.Element)
-        {
-            continue;
-        }
-
-        const IntVector2 ChildSize = Slot.Element->GetCachedDesiredSize();
-        DesiredSize.X  = Math::Max(DesiredSize.X, ChildSize.X + Slot.Padding.GetTotalHorizontal());
-        DesiredSize.Y += ChildSize.Y + Slot.Padding.GetTotalVertical();
-    }
-
-    return DesiredSize;
-}
-
-void FVerticalBox::OnArrange(const FRectangle& AllottedBounds)
-{
-    int32 AutoHeightTotal      = 0;
-    float FillCoefficientTotal = 0.0f;
-
-    for (const FBoxSlot& Slot : Slots)
-    {
-        if (!Slot.Element)
-        {
-            continue;
-        }
-
-        if (Slot.IsFillSlot())
-        {
-            FillCoefficientTotal += Slot.FillCoefficient;
-        }
-        else
-        {
-            AutoHeightTotal += Slot.Element->GetCachedDesiredSize().Y + Slot.Padding.GetTotalVertical();
-        }
-    }
-
-    const int32 RemainingHeight = Math::Max(0, AllottedBounds.Height - AutoHeightTotal);
-    const int32 NumFillSlots    = CountFillSlots();
-
-    int32 CurrentY        = AllottedBounds.Position.Y;
-    int32 DistributedFill = 0;
-    int32 FillSlotsSeen   = 0;
-
-    for (const FBoxSlot& Slot : Slots)
-    {
-        if (!Slot.Element)
-        {
-            continue;
-        }
-
-        int32 SlotHeight = 0;
-        if (Slot.IsFillSlot())
-        {
-            FillSlotsSeen++;
-
-            if (FillSlotsSeen == NumFillSlots)
-            {
-                SlotHeight = RemainingHeight - DistributedFill;
-            }
-            else
-            {
-                SlotHeight = static_cast<int32>((static_cast<float>(RemainingHeight) * Slot.FillCoefficient) / FillCoefficientTotal);
-            }
-
-            DistributedFill += SlotHeight;
-        }
-        else
-        {
-            SlotHeight = Slot.Element->GetCachedDesiredSize().Y + Slot.Padding.GetTotalVertical();
-        }
-
-        FRectangle SlotBounds;
-        SlotBounds.Position.X = AllottedBounds.Position.X;
-        SlotBounds.Position.Y = CurrentY;
-        SlotBounds.Width      = AllottedBounds.Width;
-        SlotBounds.Height     = SlotHeight;
-
-        Slot.Element->Tick(ArrangeInSlot(SlotBounds, Slot.Element->GetCachedDesiredSize(), Slot));
-
-        CurrentY += SlotHeight;
-    }
-}
 
 TSharedPtr<FHorizontalBox> FHorizontalBox::Create()
 {
@@ -194,95 +102,8 @@ TSharedPtr<FHorizontalBox> FHorizontalBox::Create()
 }
 
 FHorizontalBox::FHorizontalBox()
-    : FBox()
+    : TStackBox<EOrientation::Horizontal>()
 {
 }
 
 FHorizontalBox::~FHorizontalBox() = default;
-
-IntVector2 FHorizontalBox::ComputeDesiredSize() const
-{
-    IntVector2 DesiredSize(0, 0);
-    for (const FBoxSlot& Slot : Slots)
-    {
-        if (!Slot.Element)
-        {
-            continue;
-        }
-
-        const IntVector2 ChildSize = Slot.Element->GetCachedDesiredSize();
-        DesiredSize.X += ChildSize.X + Slot.Padding.GetTotalHorizontal();
-        DesiredSize.Y  = Math::Max(DesiredSize.Y, ChildSize.Y + Slot.Padding.GetTotalVertical());
-    }
-
-    return DesiredSize;
-}
-
-void FHorizontalBox::OnArrange(const FRectangle& AllottedBounds)
-{
-    int32 AutoWidthTotal       = 0;
-    float FillCoefficientTotal = 0.0f;
-
-    for (const FBoxSlot& Slot : Slots)
-    {
-        if (!Slot.Element)
-        {
-            continue;
-        }
-
-        if (Slot.IsFillSlot())
-        {
-            FillCoefficientTotal += Slot.FillCoefficient;
-        }
-        else
-        {
-            AutoWidthTotal += Slot.Element->GetCachedDesiredSize().X + Slot.Padding.GetTotalHorizontal();
-        }
-    }
-
-    const int32 RemainingWidth = Math::Max(0, AllottedBounds.Width - AutoWidthTotal);
-    const int32 NumFillSlots   = CountFillSlots();
-
-    int32 CurrentX        = AllottedBounds.Position.X;
-    int32 DistributedFill = 0;
-    int32 FillSlotsSeen   = 0;
-
-    for (const FBoxSlot& Slot : Slots)
-    {
-        if (!Slot.Element)
-        {
-            continue;
-        }
-
-        int32 SlotWidth = 0;
-        if (Slot.IsFillSlot())
-        {
-            FillSlotsSeen++;
-
-            if (FillSlotsSeen == NumFillSlots)
-            {
-                SlotWidth = RemainingWidth - DistributedFill;
-            }
-            else
-            {
-                SlotWidth = static_cast<int32>((static_cast<float>(RemainingWidth) * Slot.FillCoefficient) / FillCoefficientTotal);
-            }
-
-            DistributedFill += SlotWidth;
-        }
-        else
-        {
-            SlotWidth = Slot.Element->GetCachedDesiredSize().X + Slot.Padding.GetTotalHorizontal();
-        }
-
-        FRectangle SlotBounds;
-        SlotBounds.Position.X = CurrentX;
-        SlotBounds.Position.Y = AllottedBounds.Position.Y;
-        SlotBounds.Width      = SlotWidth;
-        SlotBounds.Height     = AllottedBounds.Height;
-
-        Slot.Element->Tick(ArrangeInSlot(SlotBounds, Slot.Element->GetCachedDesiredSize(), Slot));
-
-        CurrentX += SlotWidth;
-    }
-}

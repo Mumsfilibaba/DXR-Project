@@ -152,6 +152,20 @@ public:
     void SetLabel(const String& InLabel);
 
     /**
+     * @brief Sets the icon drawn ahead of the label, empty for a text-only entry.
+     *
+     * @param InIcon The brush to draw.
+     */
+    void SetIcon(const FUIBrush& InIcon);
+
+    /**
+     * @brief Sets the tip shown once the cursor has rested on the entry.
+     *
+     * @param InToolTipText The text to show, which is empty for an entry with no tip.
+     */
+    void SetToolTipText(const String& InToolTipText);
+
+    /**
      * @brief Sets what a click on the entry does.
      *
      * @param InOnClicked The delegate to fire.
@@ -334,7 +348,7 @@ public:
         /** @brief The gap between one entry and the next, in pixels. */
         int32 ItemSpacing;
 
-        /** @brief True to fill the strip with the panel color, which a bar over a panel turns off. */
+        /** @brief True to fill the strip with the docked panel's surface, so it reads flush with the tab strip above it. */
         bool bHasBackground : 1;
     };
 
@@ -382,6 +396,15 @@ public:
      * @return The anchor, so a caller can open or close the menu itself.
      */
     TSharedPtr<FMenuAnchor> AddDropDown(const FToolBarItemDesc& Item, const TSharedPtr<FVisualElement>& MenuContent);
+
+    /**
+     * @brief Appends an entry that rebuilds its menu each time it opens.
+     *
+     * @param Item            What the entry shows.
+     * @param OnGetMenuContent Builds the menu when the entry is opened.
+     * @return The anchor, so a caller can open or close the menu itself.
+     */
+    TSharedPtr<FMenuAnchor> AddDropDown(const FToolBarItemDesc& Item, const FOnGetMenuContent& OnGetMenuContent);
 
     /**
      * @brief Opens a run of entries that are fused into one pill.

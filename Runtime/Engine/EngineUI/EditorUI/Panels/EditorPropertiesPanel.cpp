@@ -39,7 +39,7 @@ static const CHAR* GMaterialTextureSlotNames[EMaterialTextureSlot::Count] =
 };
 
 static const CHAR* GNormalMapAxisLabels[2] = { "-Y (DirectX)", "+Y (OpenGL)" };
-static const CHAR* GDegreeSuffix           = "\xC2\xB0";
+static const CHAR* GDegreeSuffix           = "\xB0";
 
 constexpr float REVERT_EPSILON = 0.00005f;
 
@@ -49,9 +49,6 @@ constexpr int32 PROPERTIES_LABEL_COLUMN_WIDTH = 128;
 constexpr int32 MATERIAL_TEXTURE_PREVIEW_SIZE = 48;
 constexpr int32 MATERIAL_TEXTURE_ZOOM_SIZE    = 256;
 constexpr int32 MATERIAL_TEXTURE_ROW_HEIGHT   = MATERIAL_TEXTURE_PREVIEW_SIZE + 8;
-
-// A row holding nothing but a line of text, which is the body font's 18px plus ImGui's 4px above and below
-constexpr int32 TEXT_ROW_HEIGHT = 26;
 
 constexpr int32 UNIFORM_LOCK_SIZE = 16;
 
@@ -143,8 +140,9 @@ bool FEditorPropertiesPanel::Initialize()
     }
 
     ScrollBox->SetContent(Column);
+    ScrollBox->SetScrollBarGutter(FUIStyle::GetDefault().InnerFrame.Padding.Right);
 
-    Content = ScrollBox;
+    Content = FEditorStyle::MakeInnerFrame(ScrollBox);
 
     RebuildContent();
     return true;
@@ -235,9 +233,9 @@ void FEditorPropertiesPanel::RebuildContent()
     {
         BuildDirectionalLightSection(Column, Component);
     }
-    else if (FLightComponent* Component = Actor->GetComponentOfType<FLightComponent>())
+    else if (FLightComponent* LightComponent = Actor->GetComponentOfType<FLightComponent>())
     {
-        BuildPointLightSection(Column, Component);
+        BuildPointLightSection(Column, LightComponent);
     }
 
     if (FCameraComponent* Component = Actor->GetComponentOfType<FCameraComponent>())
@@ -848,7 +846,7 @@ void FEditorPropertiesPanel::BuildLightProbeSection(const TSharedPtr<FVerticalBo
 
 FPropertyRow& FEditorPropertiesPanel::AddVectorRow(
     const TSharedPtr<FPropertyTable>& Table,
-    const String&                     Label,
+    const String&                     RowLabel,
     const Vector3&                    Value,
     float                             Step,
     const FOnVectorChanged&           OnChanged,
@@ -891,7 +889,7 @@ FPropertyRow& FEditorPropertiesPanel::AddVectorRow(
 
     VectorRows.Emplace(Entry);
 
-    FPropertyRow& NewRow = Table->AddRow(Label, Row);
+    FPropertyRow& NewRow = Table->AddRow(RowLabel, Row);
 
     if (bAllowUniform)
     {
@@ -959,7 +957,7 @@ FPropertyRow& FEditorPropertiesPanel::AddVectorRow(
 
 FPropertyRow& FEditorPropertiesPanel::AddColorRow(
     const TSharedPtr<FPropertyTable>& Table,
-    const String&                     Label,
+    const String&                     RowLabel,
     const FFloatColor&                Value,
     const FFloatColor*                DefaultValue,
     const FOnColorChanged&            OnChanged)
@@ -1042,7 +1040,7 @@ FPropertyRow& FEditorPropertiesPanel::AddColorRow(
 
     ColorRows.Emplace(Entry);
 
-    FPropertyRow& NewRow = Table->AddRow(Label, Row);
+    FPropertyRow& NewRow = Table->AddRow(RowLabel, Row);
 
     if (!DefaultValue)
     {
@@ -1093,7 +1091,7 @@ FPropertyRow& FEditorPropertiesPanel::AddColorRow(
 
 FPropertyRow& FEditorPropertiesPanel::AddFloatRow(
     const TSharedPtr<FPropertyTable>& Table,
-    const String&                     Label,
+    const String&                     RowLabel,
     float                             Value,
     float                             MinValue,
     float                             MaxValue,
@@ -1104,7 +1102,7 @@ FPropertyRow& FEditorPropertiesPanel::AddFloatRow(
 {
     TSharedPtr<TNumericEntry<float>> Field = CreateFloatEditor(Value, MinValue, MaxValue, Step, Precision, OnChanged);
 
-    FPropertyRow& NewRow = Table->AddRow(Label, Field);
+    FPropertyRow& NewRow = Table->AddRow(RowLabel, Field);
     NewRow.ToolTipText   = String::Printf("Default %.4f", DefaultValue);
 
     NewRow.OnRevert = FOnClicked::CreateLambda([Field, DefaultValue, OnChanged]()
@@ -1123,7 +1121,7 @@ FPropertyRow& FEditorPropertiesPanel::AddFloatRow(
 
 FPropertyRow& FEditorPropertiesPanel::AddBoolRow(
     const TSharedPtr<FPropertyTable>& Table,
-    const String&                     Label,
+    const String&                     RowLabel,
     bool                              bValue,
     const TDelegate<void(bool)>&      OnChanged,
     const bool*                       DefaultValue,
@@ -1132,7 +1130,7 @@ FPropertyRow& FEditorPropertiesPanel::AddBoolRow(
     TSharedPtr<FCheckBox> Field = CreateBoolEditor(bValue, OnChanged);
     Field->SetEnabled(bIsEnabled);
 
-    FPropertyRow& NewRow = Table->AddRow(Label, Field);
+    FPropertyRow& NewRow = Table->AddRow(RowLabel, Field);
 
     if (!DefaultValue || !bIsEnabled)
     {
@@ -1157,11 +1155,9 @@ FPropertyRow& FEditorPropertiesPanel::AddBoolRow(
     return NewRow;
 }
 
-FPropertyRow& FEditorPropertiesPanel::AddTextRow(const TSharedPtr<FPropertyTable>& Table, const String& Label, const String& Text)
+FPropertyRow& FEditorPropertiesPanel::AddTextRow(const TSharedPtr<FPropertyTable>& Table, const String& RowLabel, const String& Text)
 {
-    FPropertyRow& NewRow  = Table->AddRow(Label, CreateTextRow(Text));
-    NewRow.HeightOverride = TEXT_ROW_HEIGHT;
-    return NewRow;
+    return Table->AddRow(RowLabel, CreateTextRow(Text));
 }
 
 void FEditorPropertiesPanel::WriteVectorRow(int32 RowIndex, int32 DrivingAxis)
@@ -1253,18 +1249,22 @@ TSharedPtr<FPropertyTable> FEditorPropertiesPanel::CreateTable()
     return FPropertyTable::Create(FEditorStyle::MakePropertyTableDesc(PROPERTIES_LABEL_FRACTION, PROPERTIES_LABEL_COLUMN_WIDTH));
 }
 
-TSharedPtr<FSeparatorText> FEditorPropertiesPanel::CreateSectionLabel(const String& Label)
+TSharedPtr<FSeparatorText> FEditorPropertiesPanel::CreateSectionLabel(const String& SectionLabel)
 {
     FSeparatorText::FDesc Desc;
-    Desc.Text = Label;
-    Desc.Font = FEditorStyle::GetFonts().Body;
+    Desc.Text          = SectionLabel;
+    Desc.Font          = FEditorStyle::GetFonts().Body;
+    Desc.RuleColor     = FUIStyle::GetDefault().Header.Border;
+    Desc.RuleThickness = 2.0f;
 
     return FSeparatorText::Create(Desc);
 }
 
-void FEditorPropertiesPanel::AddSection(const TSharedPtr<FVerticalBox>& InColumn, const String& Label, const TSharedPtr<FPropertyTable>& Table)
+void FEditorPropertiesPanel::AddSection(const TSharedPtr<FVerticalBox>& InColumn, const String& SectionLabel, const TSharedPtr<FPropertyTable>& Table)
 {
-    InColumn->AddSlot(FExpander::Create(FEditorStyle::MakeExpanderDesc(Label, Table, true)));
+    FExpander::FDesc Desc = FEditorStyle::MakeExpanderDesc(SectionLabel, Table, true);
+    Desc.ContentPadding = FMargin(0, 4, 0, 4);
+    InColumn->AddSlot(FExpander::Create(Desc)).SetPadding(FEditorStyle::GetSectionSpacing());
 }
 
 TSharedPtr<TNumericEntry<float>> FEditorPropertiesPanel::CreateFloatEditor(float Value, float Min, float Max, float Step, int32 Precision, const TDelegate<void(float)>& OnChanged)
@@ -1325,7 +1325,8 @@ TSharedPtr<FTextBlock> FEditorPropertiesPanel::CreateTextRow(const String& Text)
     FTextBlock::FDesc Desc;
     Desc.Text     = Text;
     Desc.Font     = FEditorStyle::GetFonts().Body;
-    Desc.Overflow = ETextOverflow::Elide;
+    Desc.Overflow            = ETextOverflow::Elide;
+    Desc.VerticalAlignment   = EVerticalAlignment::Center;
 
     return FTextBlock::Create(Desc);
 }
@@ -1337,6 +1338,7 @@ TSharedPtr<FTextBlock> FEditorPropertiesPanel::CreateDisabledTextRow(const Strin
     Desc.Font            = FEditorStyle::GetFonts().Body;
     Desc.ColorAndOpacity = FEditorStyle::GetStyle().Colors.TextDisabled;
     Desc.Overflow        = ETextOverflow::Elide;
+    Desc.VerticalAlignment = EVerticalAlignment::Center;
 
     return FTextBlock::Create(Desc);
 }

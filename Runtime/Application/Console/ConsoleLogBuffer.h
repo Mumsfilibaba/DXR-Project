@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/RingBuffer.h"
 #include "Core/Containers/String.h"
 #include "Core/Math/Color.h"
 #include "Core/Misc/IOutputDevice.h"
@@ -59,8 +60,20 @@ public:
      * @brief Copies the current lines out under the lock, for the view to render from.
      *
      * @param OutLines The array to fill, which is emptied first.
+     * @return The revision the copy is of, read under the same lock.
      */
-    void GetSnapshot(TArray<FConsoleLogLine>& OutLines) const;
+    uint64 GetSnapshot(TArray<FConsoleLogLine>& OutLines) const;
+
+    /**
+     * @brief Copies out only the lines added since a revision, for a view that already shows the ones before.
+     *
+     * @param SinceRevision  The revision the view last caught up to.
+     * @param OutLines       The array to fill with the new lines, oldest first, which is emptied first.
+     * @param bOutContinuous False when the buffer was cleared since, or dropped lines the view never saw, in which
+     *                       case OutLines holds every line and the view has to start over from it.
+     * @return The revision the view has now caught up to.
+     */
+    uint64 GetLinesSince(uint64 SinceRevision, TArray<FConsoleLogLine>& OutLines, bool& bOutContinuous) const;
 
     /** @return How many lines are currently held, which is never more than the cap. */
     NODISCARD int32 GetNumLines() const;
@@ -68,7 +81,7 @@ public:
     /** @return The line cap, which is how many lines the buffer keeps before dropping the oldest. */
     NODISCARD FORCEINLINE int32 GetMaxLines() const
     {
-        return MaxLines;
+        return Lines.GetCapacity();
     }
 
     /**
@@ -87,11 +100,11 @@ public:
     NODISCARD uint64 GetRevision() const;
 
 private:
-    void TrimToMaxLines();
+    void CopyNewestLines(int32 NumLines, TArray<FConsoleLogLine>& OutLines) const;
 
-    mutable FCriticalSection LinesCS;
-    TArray<FConsoleLogLine>  Lines;
-    int32                    MaxLines;
-    uint64                   Revision;
-    bool                     bIsRegisteredWithLogger : 1;
+    mutable FCriticalSection      LinesCS;
+    TRingBuffer<FConsoleLogLine>  Lines;
+    uint64                        Revision;
+    uint64                        ClearRevision;
+    bool                          bIsRegisteredWithLogger : 1;
 };

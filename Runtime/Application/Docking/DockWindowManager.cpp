@@ -1,6 +1,7 @@
 #include "Application/Application.h"
 #include "Application/Docking/DockDragState.h"
 #include "Application/Docking/DockWindowManager.h"
+#include "Application/Docking/TabStrip.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/Image.h"
 #include "Application/Elements/TitleBar.h"
@@ -93,6 +94,8 @@ void FDockWindowManager::Tick()
 
             Window->SetTitle(Title);
         }
+
+        SyncHostChrome(Hosts[Index]);
     }
 }
 
@@ -156,6 +159,7 @@ TSharedPtr<FDockingArea> FDockWindowManager::SpawnHost(const String& PanelId, co
     Host.TitleBar = TitleBar;
 
     Hosts.Add(Host);
+    SyncHostChrome(Hosts.Last());
 
     FWindow* const WindowPtr = Window.Get();
     Window->SetOnWindowClosed(FOnWindowClosed::CreateLambda([this, WindowPtr]()
@@ -218,7 +222,7 @@ void FDockWindowManager::UpdateDropPreview()
     }
 
     DecoratorArea->PrepareDesiredSize();
-    DecoratorArea->Tick(FRectangle(IntVector2(0, 0), PreviewSize.X, PreviewSize.Y));
+    DecoratorArea->Arrange(FRectangle(IntVector2(0, 0), PreviewSize.X, PreviewSize.Y));
 
     FRHITextureRef Texture = Renderer->RenderElementToTexture(DecoratorArea, PreviewSize, 1.0f);
 
@@ -340,10 +344,11 @@ TArray<FDockWindowLayout> FDockWindowManager::SaveHostLayouts() const
         }
 
         FDockWindowLayout Layout;
-        Layout.Title    = Host.Window->GetTitle();
-        Layout.Position = Host.Window->GetPosition();
-        Layout.Size     = Host.Window->GetSize();
-        Layout.Root     = Host.Area->SaveLayout();
+        Layout.Title        = Host.Window->GetTitle();
+        Layout.Position     = Host.Window->GetPosition();
+        Layout.Size         = Host.Window->GetSize();
+        Layout.bIsMaximized = Host.Window->IsMaximized();
+        Layout.Root         = Host.Area->SaveLayout();
 
         Layouts.Add(Layout);
     }
@@ -397,6 +402,15 @@ void FDockWindowManager::RestoreHostLayouts(const TArray<FDockWindowLayout>& Lay
         if (Area)
         {
             Area->RestoreLayout(Layout.Root);
+
+            if (Layout.bIsMaximized)
+            {
+                const int32 HostIndex = FindHostByArea(Area.Get());
+                if (HostIndex >= 0 && Hosts[HostIndex].Window)
+                {
+                    Hosts[HostIndex].Window->Maximize();
+                }
+            }
         }
     }
 }
@@ -674,6 +688,22 @@ void FDockWindowManager::CloseHost(int32 HostIndex)
             FApplication::Get().DestroyWindow(Host.Window);
         }
     }
+}
+
+void FDockWindowManager::SyncHostChrome(FHost& Host)
+{
+    if (!Host.Area || !Host.TitleBar)
+    {
+        return;
+    }
+
+    Host.Area->FlushPendingRebuild();
+
+    const bool bUnsplit = Host.Area->SaveLayout().Kind == EDockNodeKind::Tabs;
+    Host.Area->SetSuppressRootTabStrip(bUnsplit);
+    Host.Area->FlushPendingRebuild();
+
+    Host.TitleBar->SetLeadingContent(bUnsplit ? StaticCastSharedPtr<FVisualElement>(Host.Area->GetRootTabStrip()) : nullptr);
 }
 
 void FDockWindowManager::ReturnPanelRegistrationsToMainArea(const TSharedPtr<FDockingArea>& Area)

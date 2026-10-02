@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Delegates/Delegate.h"
+#include "Application/Animation/UIAnimation.h"
 #include "Application/Elements/InteractiveElement.h"
 #include "Application/Layout/LayoutTypes.h"
 
@@ -17,6 +18,14 @@ public:
         FMargin                   TrackPadding = FMargin(2);
         FUIScrollBarStyle         Style = FUIStyle::GetDefault().ScrollBar;
         FOnScrollBarOffsetChanged OnOffsetChanged;
+
+        /**
+         * @brief Whether the bar keeps itself out of sight until its view is revealed to it.
+         *
+         * A bar that does starts clear and fades in and out as SetRevealed is told the cursor comes and
+         * goes, so the chrome is only there while it is any use. One that does not stays fully drawn.
+         */
+        bool bAutoHide = false;
     };
 
 public:
@@ -35,6 +44,7 @@ public:
 
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
+    virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
 
@@ -99,6 +109,28 @@ public:
         return Opacity;
     }
 
+    /**
+     * @brief Tells a bar that hides itself whether its view has the cursor, which is what it fades on.
+     *
+     * The fade itself runs from the next arrange on, over the style's two durations. A bar being dragged
+     * stays in sight however far the cursor has wandered off it.
+     *
+     * @param bInIsRevealed True while the cursor is over the view the bar scrolls.
+     */
+    void SetRevealed(bool bInIsRevealed);
+
+    /** @return True when the bar keeps itself out of sight until its view is revealed to it. */
+    NODISCARD FORCEINLINE bool IsAutoHiding() const
+    {
+        return bAutoHide;
+    }
+
+    /** @return True while the cursor was last reported as being over the view the bar scrolls. */
+    NODISCARD FORCEINLINE bool IsRevealed() const
+    {
+        return bIsRevealed;
+    }
+
     /** @return The look the bar draws itself with. */
     NODISCARD FORCEINLINE const FUIScrollBarStyle& GetStyle() const
     {
@@ -109,6 +141,7 @@ protected:
 
     // FInteractiveElement Interface
     virtual void OnDragged(const FCursorEvent& CursorEvent) override;
+    virtual void OnInteractionStateChanged() override;
 
     virtual bool IsPressable() const override { return false; }
 
@@ -120,6 +153,7 @@ private:
 
     void ApplyOffset(int32 InOffset);
     void SetOffsetFromPosition(const IntVector2& ClientPosition);
+    void UpdateFadeTarget();
 
     EOrientation              Orientation;
     int32                     Thickness;
@@ -131,5 +165,9 @@ private:
     int32                     Offset;
     int32                     ThumbGrabOffset;
     float                     Opacity;
+    FUIAnimation              Fade;
+    bool                      bAutoHide;
+    bool                      bIsRevealed;
+
     FOnScrollBarOffsetChanged OnOffsetChangedDelegate;
 };

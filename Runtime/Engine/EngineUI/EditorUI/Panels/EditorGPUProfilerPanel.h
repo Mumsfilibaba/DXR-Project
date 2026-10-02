@@ -38,9 +38,8 @@ private:
     TSharedPtr<FHistogram>               FrameTimeHistogram;
     TSharedPtr<FPropertyTable>           PassTable;
     TSharedPtr<FPropertyTable>           PipelineStatisticsTable;
-    GPUProfileSamplesMap                 Samples;
     TMap<String, TSharedPtr<FTextBlock>> PassValues;
     TArray<TSharedPtr<FTextBlock>>       PipelineStatisticsValues;
-    int32                                LastFrameTimeSample;
+    int32                                LastIngestedCpuFrameIndex;
     bool                                 bIsProfilingRequested;
 };

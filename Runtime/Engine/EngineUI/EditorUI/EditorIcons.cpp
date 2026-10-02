@@ -41,6 +41,17 @@ static const FIconRequest GIconRequests[] =
     { "Editor/Icons/DownArrow.png",          &FEditorIcons::DownArrow          },
     { "Editor/Icons/CollapseArrowDown.png",  &FEditorIcons::CollapseArrowDown  },
     { "Editor/Icons/CollapseArrowRight.png", &FEditorIcons::CollapseArrowRight },
+    { "Editor/Icons/MatchCase.png",          &FEditorIcons::MatchCase          },
+    { "Editor/Icons/Translate.png",          &FEditorIcons::Translate          },
+    { "Editor/Icons/Rotate.png",             &FEditorIcons::Rotate             },
+    { "Editor/Icons/Scale.png",              &FEditorIcons::Scale              },
+    { "Editor/Icons/GizmoCenter.png",        &FEditorIcons::GizmoCenter        },
+    { "Editor/Icons/GizmoPivot.png",         &FEditorIcons::GizmoPivot         },
+    { "Editor/Icons/GizmoLocal.png",         &FEditorIcons::GizmoLocal         },
+    { "Editor/Icons/GizmoWorld.png",         &FEditorIcons::GizmoWorld         },
+    { "Editor/Icons/Play.png",               &FEditorIcons::Play               },
+    { "Editor/Icons/Pause.png",              &FEditorIcons::Pause              },
+    { "Editor/Icons/Stop.png",               &FEditorIcons::Stop               },
 };
 
 static FUIAtlas GIconAtlas;
@@ -113,6 +124,17 @@ FUIBrush FEditorIcons::RightArrow;
 FUIBrush FEditorIcons::DownArrow;
 FUIBrush FEditorIcons::CollapseArrowDown;
 FUIBrush FEditorIcons::CollapseArrowRight;
+FUIBrush FEditorIcons::MatchCase;
+FUIBrush FEditorIcons::Translate;
+FUIBrush FEditorIcons::Rotate;
+FUIBrush FEditorIcons::Scale;
+FUIBrush FEditorIcons::GizmoCenter;
+FUIBrush FEditorIcons::GizmoPivot;
+FUIBrush FEditorIcons::GizmoLocal;
+FUIBrush FEditorIcons::GizmoWorld;
+FUIBrush FEditorIcons::Play;
+FUIBrush FEditorIcons::Pause;
+FUIBrush FEditorIcons::Stop;
 
 bool FEditorIcons::Initialize()
 {

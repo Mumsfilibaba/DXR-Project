@@ -31,10 +31,10 @@ public:
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
     virtual FEventResponse OnMouseScroll(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
 
     /**
      * @brief Requests that the bottom of the content sit flush with the bottom of the view. Deferred to
@@ -92,6 +92,13 @@ public:
     void SetScrollBarVisibility(EScrollBarVisibility InVisibility);
 
     /**
+     * @brief Sets extra space held between the content and a visible bar, so framed views keep their gutter.
+     *
+     * @param InGutter The gap in pixels. Zero leaves the content flush with the bar.
+     */
+    void SetScrollBarGutter(int32 InGutter);
+
+    /**
      * @brief Gets whether the scroll bar is drawn beside the content.
      *
      * @return True when the bar is drawn, which for Auto means there is something to scroll.
@@ -104,6 +111,10 @@ public:
         return ScrollBar;
     }
 
+protected:
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
+    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+
 private:
     NODISCARD FRectangle GetViewBounds(const FRectangle& AllottedBounds) const;
 
@@ -113,5 +124,6 @@ private:
     int32                        ScrollAmountPerWheelStep;
     int32                        ContentHeight;
     int32                        ViewHeight;
+    int32                        ScrollBarGutter;
     bool                         bIsScrollToEndPending : 1;
 };

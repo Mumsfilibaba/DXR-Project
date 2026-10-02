@@ -4,6 +4,7 @@
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
 
+#include <Core/Algorithms/Algorithm.h>
 #include <Core/Containers/SharedPtr.h>
 #include <Application/Draw/DrawCommandList.h>
 #include <Application/Graph/GraphCanvas.h>
@@ -23,7 +24,7 @@ static TSharedPtr<IFontFace> CreateFont()
 static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRectangle& Bounds)
 {
     Element->PrepareDesiredSize();
-    Element->Tick(Bounds);
+    Element->Arrange(Bounds);
 }
 
 static FCursorEvent MakeMoveEvent(const IntVector2& ClientPosition)
@@ -95,17 +96,17 @@ static const FDrawCommand* FindBoxCommand(const FDrawCommandList& CommandList, c
     return nullptr;
 }
 
-static FFloatColor FindOutlineColor(const FDrawCommandList& CommandList, const FRectangle& Bounds)
+static bool FindOutlineHasTint(const FDrawCommandList& CommandList, const FRectangle& Bounds, const FFloatColor& Tint)
 {
     for (const FDrawCommand& Command : CommandList.GetCommands())
     {
-        if (Command.Type == EDrawCommandType::BoxOutline && Command.Bounds == Bounds)
+        if (Command.Type == EDrawCommandType::BoxOutline && Command.Bounds == Bounds && Command.HasTint(Tint))
         {
-            return Command.Tint;
+            return true;
         }
     }
 
-    return FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+    return false;
 }
 
 static int32 CountPolylinesTinted(const FDrawCommandList& CommandList, const FFloatColor& Tint)
@@ -113,7 +114,7 @@ static int32 CountPolylinesTinted(const FDrawCommandList& CommandList, const FFl
     int32 Count = 0;
     for (const FDrawCommand& Command : CommandList.GetCommands())
     {
-        Count += (Command.Type == EDrawCommandType::Polyline && Command.Tint == Tint) ? 1 : 0;
+        Count += (Command.Type == EDrawCommandType::Polyline && Command.HasTint(Tint)) ? 1 : 0;
     }
 
     return Count;
@@ -136,7 +137,10 @@ static IntVector2 GetPinPosition(const TSharedPtr<FGraphCanvas>& Canvas, int32 N
     }
 
     Vector2 Center(0.0f, 0.0f);
-    Element->GetPinCenter(Element->GetNode().Pins[PinIndex].PinId, Center);
+    if (!Element->GetPinCenter(Element->GetNode().Pins[PinIndex].PinId, Center))
+    {
+        return IntVector2(0, 0);
+    }
 
     return IntVector2(static_cast<int32>(Center.X), static_cast<int32>(Center.Y));
 }
@@ -248,12 +252,12 @@ bool GraphLayoutLayered_Test()
     TArray<Vector2> Positions;
 
     TEST_SECTION("An empty graph lays out to nothing at all");
-    FGraphLayout::LayoutLayered(MakeArrayView(NoSizes), MakeArrayView(NoEdges), Settings, Positions);
+    FLayeredGraphLayout::Layout(MakeArrayView(NoSizes), MakeArrayView(NoEdges), Settings, Positions);
     TEST_EXPECT(Positions.IsEmpty());
 
     TEST_SECTION("A lone node sits at the origin");
     TArray<Vector2> OneSize = { Vector2(100.0f, 50.0f) };
-    FGraphLayout::LayoutLayered(MakeArrayView(OneSize), MakeArrayView(NoEdges), Settings, Positions);
+    FLayeredGraphLayout::Layout(MakeArrayView(OneSize), MakeArrayView(NoEdges), Settings, Positions);
 
     TEST_EXPECT_EQ(Positions.Size(), 1);
     TEST_EXPECT_EQ(Positions[0], Vector2(0.0f, 0.0f));
@@ -275,7 +279,7 @@ bool GraphLayoutLayered_Test()
         FGraphLayoutEdge(2, 3),
     };
 
-    FGraphLayout::LayoutLayered(MakeArrayView(Sizes), MakeArrayView(Edges), Settings, Positions);
+    FLayeredGraphLayout::Layout(MakeArrayView(Sizes), MakeArrayView(Edges), Settings, Positions);
 
     TEST_SECTION("Rank puts every node one column right of the furthest thing feeding it");
     TEST_EXPECT_EQ(Positions.Size(), 4);
@@ -293,7 +297,7 @@ bool GraphLayoutLayered_Test()
 
     TEST_SECTION("The layout is a function of its input, so the same graph lays out the same way twice");
     TArray<Vector2> SecondRun;
-    FGraphLayout::LayoutLayered(MakeArrayView(Sizes), MakeArrayView(Edges), Settings, SecondRun);
+    FLayeredGraphLayout::Layout(MakeArrayView(Sizes), MakeArrayView(Edges), Settings, SecondRun);
 
     for (int32 Index = 0; Index < Positions.Size(); ++Index)
     {
@@ -309,7 +313,7 @@ bool GraphLayoutLayered_Test()
     };
 
     TArray<Vector2> ThreeSizes = { Vector2(100.0f, 50.0f), Vector2(100.0f, 50.0f), Vector2(100.0f, 50.0f) };
-    FGraphLayout::LayoutLayered(MakeArrayView(ThreeSizes), MakeArrayView(SkippingEdges), Settings, Positions);
+    FLayeredGraphLayout::Layout(MakeArrayView(ThreeSizes), MakeArrayView(SkippingEdges), Settings, Positions);
 
     TEST_EXPECT_EQ(Positions[0].X, 0.0f);
     TEST_EXPECT_EQ(Positions[1].X, 200.0f);
@@ -319,8 +323,65 @@ bool GraphLayoutLayered_Test()
     TArray<Vector2> WideSizes = { Vector2(300.0f, 50.0f), Vector2(100.0f, 50.0f) };
     TArray<FGraphLayoutEdge> OneEdge = { FGraphLayoutEdge(0, 1) };
 
-    FGraphLayout::LayoutLayered(MakeArrayView(WideSizes), MakeArrayView(OneEdge), Settings, Positions);
+    FLayeredGraphLayout::Layout(MakeArrayView(WideSizes), MakeArrayView(OneEdge), Settings, Positions);
     TEST_EXPECT_EQ(Positions[1].X, 380.0f);
+
+    TEST_SECTION("Counting crossings as inversions agrees with testing every pair, shared ends included");
+    {
+        TArray<FLayerEdge> LayerEdges;
+        uint32 State = 12345u;
+        for (int32 Index = 0; Index < 60; ++Index)
+        {
+            State = (State * 1664525u) + 1013904223u;
+            const int32 Upper = static_cast<int32>((State >> 8) % 9u);
+            State = (State * 1664525u) + 1013904223u;
+            const int32 Lower = static_cast<int32>((State >> 8) % 11u);
+            LayerEdges.Add(FLayerEdge{ Upper, Lower });
+        }
+
+        Algorithm::Sort(LayerEdges, [](const FLayerEdge& A, const FLayerEdge& B)
+        {
+            return A.UpperPosition != B.UpperPosition ? A.UpperPosition < B.UpperPosition : A.LowerPosition < B.LowerPosition;
+        });
+
+        int64 PairwiseCrossings = 0;
+        for (int32 First = 0; First < LayerEdges.Size(); ++First)
+        {
+            for (int32 Second = First + 1; Second < LayerEdges.Size(); ++Second)
+            {
+                const int32 UpperDelta = LayerEdges[First].UpperPosition - LayerEdges[Second].UpperPosition;
+                const int32 LowerDelta = LayerEdges[First].LowerPosition - LayerEdges[Second].LowerPosition;
+                PairwiseCrossings += (UpperDelta * LowerDelta < 0) ? 1 : 0;
+            }
+        }
+
+        TEST_EXPECT_EQ(FLayeredGraphLayout::CountCrossings(MakeArrayView(LayerEdges), 11), PairwiseCrossings);
+    }
+
+    TEST_SECTION("A cycle is cut where it closes, so its nodes still land in distinct, finite columns");
+    TArray<FGraphLayoutEdge> CycleEdges = { FGraphLayoutEdge(0, 1), FGraphLayoutEdge(1, 2), FGraphLayoutEdge(2, 0) };
+    FLayeredGraphLayout::Layout(MakeArrayView(ThreeSizes), MakeArrayView(CycleEdges), Settings, Positions);
+
+    TEST_EXPECT_EQ(Positions[0].X, 0.0f);
+    TEST_EXPECT_EQ(Positions[1].X, 200.0f);
+    TEST_EXPECT_EQ(Positions[2].X, 400.0f);
+
+    TEST_SECTION("Seed keys order a column where nothing else decides it");
+    TArray<int32> ReversedKeys = { 2, 1, 0 };
+    FLayeredGraphLayout::Layout(MakeArrayView(ThreeSizes), MakeArrayView(NoEdges), Settings, Positions, MakeArrayView(ReversedKeys));
+
+    TEST_EXPECT(Positions[2].Y < Positions[1].Y);
+    TEST_EXPECT(Positions[1].Y < Positions[0].Y);
+
+    TEST_SECTION("A source can be told to keep up with the node before it");
+    FGraphLayoutSettings FollowSettings = Settings;
+    FollowSettings.bSourcesFollowPreviousNode = true;
+
+    TArray<FGraphLayoutEdge> ChainThenSource = { FGraphLayoutEdge(0, 1) };
+    FLayeredGraphLayout::Layout(MakeArrayView(ThreeSizes), MakeArrayView(ChainThenSource), FollowSettings, Positions);
+
+    TEST_EXPECT_EQ(Positions[1].X, 200.0f);
+    TEST_EXPECT_EQ(Positions[2].X, 200.0f);
 
     TEST_END();
 }
@@ -438,6 +499,74 @@ bool GraphCanvasView_Test()
     TEST_EXPECT_EQ(Empty->FindNodeAt(IntVector2(10, 10)), -1);
     TEST_EXPECT_EQ(Empty->FindLinkAt(IntVector2(10, 10)), -1);
 
+    TEST_SECTION("A fit floor keeps a large graph from shrinking below a readable zoom");
+    TSharedPtr<FGraphModel> WideModel = MakeSharedPtr<FGraphModel>();
+    WideModel->AddNode(MakeNode("Near", Vector2(0.0f, 0.0f), "Texture"));
+    WideModel->AddNode(MakeNode("Far", Vector2(4000.0f, 0.0f), "Texture"));
+
+    FGraphCanvas::FDesc FlooredDesc;
+    FlooredDesc.Font       = CreateFont();
+    FlooredDesc.Model      = WideModel;
+    FlooredDesc.FitMinZoom = 1.0f;
+
+    TSharedPtr<FGraphCanvas> Floored = FGraphCanvas::Create(FlooredDesc);
+    LayoutElement(Floored, FRectangle(IntVector2(0, 0), 600, 400));
+    Floored->FitToNodes();
+
+    TEST_EXPECT_EQ(Floored->GetZoom(), 1.0f);
+
+    TEST_SECTION("Left square, the canvas fills its bounds to the corner and cuts nothing back out");
+    FDrawCommandList SquareCommands;
+    DrawElement(Floored, SquareCommands);
+
+    TEST_EXPECT_EQ(SquareCommands.GetCommands()[0].Type, EDrawCommandType::Box);
+    TEST_EXPECT_EQ(SquareCommands.GetCommands()[0].CornerRadius.TopLeft, 0.0f);
+
+    TEST_SECTION("Given a radius and what it is laid on, it rounds its fill and cuts the corners back out over the grid");
+    constexpr float CanvasRadius = 6.0f;
+
+    FGraphCanvas::FDesc RoundedDesc;
+    RoundedDesc.Font          = CreateFont();
+    RoundedDesc.Model         = WideModel;
+    RoundedDesc.CornerRadius  = CanvasRadius;
+    RoundedDesc.SurroundColor = FFloatColor::Red;
+
+    TSharedPtr<FGraphCanvas> Rounded = FGraphCanvas::Create(RoundedDesc);
+    LayoutElement(Rounded, FRectangle(IntVector2(0, 0), 600, 400));
+
+    FDrawCommandList RoundedCommands;
+    DrawElement(Rounded, RoundedCommands);
+
+    const FDrawCommand& Fill = RoundedCommands.GetCommands()[0];
+    TEST_EXPECT_EQ(Fill.Type, EDrawCommandType::Box);
+    TEST_EXPECT_EQ(Fill.CornerRadius.TopLeft, CanvasRadius);
+    TEST_EXPECT_EQ(Fill.CornerRadius.BottomRight, CanvasRadius);
+
+    TEST_SECTION("Those wedges are the last thing it draws, so the grid and the links cannot square the card off again");
+    int32 WedgeCount   = 0;
+    int32 TopWedgeLayer = -1;
+
+    for (const FDrawCommand& Command : RoundedCommands.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::CornerWedges && Command.HasTint(FFloatColor::Red))
+        {
+            ++WedgeCount;
+            TopWedgeLayer = Math::Max(TopWedgeLayer, Command.LayerId);
+
+            TEST_EXPECT(Command.CornerRadius == FCornerRadii(CanvasRadius));
+        }
+    }
+
+    TEST_EXPECT_EQ(WedgeCount, 1);
+
+    for (const FDrawCommand& Command : RoundedCommands.GetCommands())
+    {
+        if (Command.Type != EDrawCommandType::CornerWedges)
+        {
+            TEST_EXPECT(Command.LayerId <= TopWedgeLayer);
+        }
+    }
+
     TEST_END();
 }
 
@@ -452,11 +581,18 @@ bool GraphCanvasInteraction_Test()
     const int32 SecondId = Model->AddNode(MakeNode("Sink", Vector2(300.0f, 40.0f), "Texture"));
 
     int32 SelectionChanges = 0;
+    int32 ContextNodeId    = -2;
 
     FGraphCanvas::FDesc Desc;
     Desc.Font               = CreateFont();
     Desc.Model              = Model;
     Desc.OnSelectionChanged = FOnGraphSelectionChanged::CreateLambda([&SelectionChanges]() { SelectionChanges++; });
+    Desc.OnGetContextMenu   = FOnGetGraphContextMenu::CreateLambda(
+        [&ContextNodeId](const Vector2&, int32 NodeId) -> TSharedPtr<FVisualElement>
+    {
+        ContextNodeId = NodeId;
+        return nullptr;
+    });
 
     TSharedPtr<FGraphCanvas> Canvas = FGraphCanvas::Create(Desc);
     LayoutElement(Canvas, FRectangle(IntVector2(0, 0), 600, 400));
@@ -465,6 +601,11 @@ bool GraphCanvasInteraction_Test()
     const IntVector2 SourceTitle(20 + 70, 20 + 12);
     const IntVector2 SinkTitle(300 + 70, 40 + 12);
     const IntVector2 EmptyCanvas(500, 350);
+
+    TEST_SECTION("A node context request identifies the node without activating its normal selection action");
+    Canvas->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, Keys::MouseButtonRight, SourceTitle));
+    TEST_EXPECT_EQ(ContextNodeId, FirstId);
+    TEST_EXPECT(Canvas->GetSelectedNodes().IsEmpty());
 
     TEST_SECTION("Clicking a node selects it and clicking empty canvas drops the selection");
     Canvas->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, Keys::MouseButtonLeft, SourceTitle));
@@ -627,7 +768,7 @@ bool GraphNodeStyle_Test()
     TEST_SECTION("The body takes the style's fill, rounded on all four corners at the unzoomed radius");
     const FDrawCommand* BodyCommand = FindBoxCommand(CommandList, NodeBounds);
     TEST_EXPECT(BodyCommand != nullptr);
-    TEST_EXPECT_EQ(BodyCommand->Tint, Body);
+    TEST_EXPECT(BodyCommand->HasTint(Body));
     TEST_EXPECT_EQ(BodyCommand->CornerRadius.TopLeft, 6.0f);
     TEST_EXPECT_EQ(BodyCommand->CornerRadius.BottomLeft, 6.0f);
 
@@ -642,7 +783,7 @@ bool GraphNodeStyle_Test()
     TEST_EXPECT_EQ(TitleCommand->CornerRadius.BottomRight, 0.0f);
 
     TEST_SECTION("The outline takes the style's border, and every pin is stroked with the outline color");
-    TEST_EXPECT_EQ(FindOutlineColor(CommandList, NodeBounds), Border);
+    TEST_EXPECT(FindOutlineHasTint(CommandList, NodeBounds, Border));
     TEST_EXPECT_EQ(CountPolylinesTinted(CommandList, PinOutline), 3);
 
     TEST_SECTION("A muted node swaps to the second color set rather than fading the first");
@@ -653,8 +794,8 @@ bool GraphNodeStyle_Test()
     const FDrawCommand* MutedBox    = FindBoxCommand(MutedCommands, MutedBounds);
 
     TEST_EXPECT(MutedBox != nullptr);
-    TEST_EXPECT_EQ(MutedBox->Tint, MutedBody);
-    TEST_EXPECT_EQ(FindOutlineColor(MutedCommands, MutedBounds), MutedBorder);
+    TEST_EXPECT(MutedBox->HasTint(MutedBody));
+    TEST_EXPECT(FindOutlineHasTint(MutedCommands, MutedBounds, MutedBorder));
 
     TEST_SECTION("The radius tracks the zoom, so a node twice the size is rounded twice as far");
     Canvas->SetZoom(2.0f);

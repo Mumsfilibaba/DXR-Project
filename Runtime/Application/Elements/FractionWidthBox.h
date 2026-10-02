@@ -59,15 +59,7 @@ public:
         FRectangle ChildBounds = AllottedBounds;
         ChildBounds.Width      = Math::Min(AllottedBounds.Width, Math::Max(MinWidth, Share));
 
-        Child->Tick(ChildBounds);
-    }
-
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override final
-    {
-        if (Child)
-        {
-            OutChildren.Add(Child);
-        }
+        Child->Arrange(ChildBounds);
     }
 
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final
@@ -78,17 +70,13 @@ public:
         }
 
         const FDrawGeometry ChildGeometry(Child->GetContentRectangle(), AllottedGeometry.Scale);
-        return Child->OnDraw(ChildGeometry, OutCommandList, LayerId + 1);
+        return Child->Draw(ChildGeometry, OutCommandList, LayerId + 1);
     }
 
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override final
+protected:
+    virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder /*Order*/) const override final
     {
-        FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
-        if (Child)
-        {
-            Child->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-        }
+        return VisitChild(Visitor, Child);
     }
 
 private:

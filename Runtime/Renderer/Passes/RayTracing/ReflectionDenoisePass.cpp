@@ -240,6 +240,42 @@ bool FReflectionDenoisePass::IsDenoiseEnabled(const FFrameResources& Resources) 
 
 void FReflectionDenoisePass::RecordTemporal(FRHICommandList& CommandList, FFrameResources& Resources, uint32 ReadIndex, uint32 WriteIndex, FRHITexture* Target)
 {
+    const CHAR* MissingResource = nullptr;
+
+    const auto RequireResource = [&MissingResource](const void* Resource, const CHAR* Name)
+    {
+        if (!Resource && !MissingResource)
+        {
+            MissingResource = Name;
+        }
+    };
+
+    RequireResource(TemporalPipeline.Get(), "TemporalPipeline");
+    RequireResource(TemporalShader.Get(), "TemporalShader");
+    RequireResource(Resources.ReflectionTrace.Get(), "ReflectionTrace");
+    RequireResource(Resources.GBuffer[EGBufferIndex::Normal].Get(), "GBuffer.Normal");
+    RequireResource(Resources.GBuffer[EGBufferIndex::Depth].Get(), "GBuffer.Depth");
+    RequireResource(Resources.GBuffer[EGBufferIndex::Velocity].Get(), "GBuffer.Velocity");
+    RequireResource(Resources.ReflectionHistory[ReadIndex].Get(), "ReflectionHistory[Read]");
+    RequireResource(Resources.ReflectionMoments[ReadIndex].Get(), "ReflectionMoments[Read]");
+    RequireResource(Resources.ReflectionHistory[WriteIndex].Get(), "ReflectionHistory[Write]");
+    RequireResource(Resources.ReflectionMoments[WriteIndex].Get(), "ReflectionMoments[Write]");
+    RequireResource(Resources.CameraBuffer.Get(), "CameraBuffer");
+    RequireResource(Target, "Target");
+
+    if (MissingResource)
+    {
+        static bool bLoggedMissingResource = false;
+
+        if (!bLoggedMissingResource)
+        {
+            LOG_WARNING("[ReflectionDenoise]: %s has not been allocated. Skipping the temporal denoise step", MissingResource);
+            bLoggedMissingResource = true;
+        }
+
+        return;
+    }
+
     const uint32 Width  = Resources.ReflectionTrace->GetDesc().Extent.X;
     const uint32 Height = Resources.ReflectionTrace->GetDesc().Extent.Y;
 
@@ -376,8 +412,10 @@ void FReflectionDenoisePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilde
             PassBuilder.WriteTexture(Context.ReflectionMoments[WriteIndex], ERHIResourceState::UnorderedAccess);
             PassBuilder.WriteTexture(TemporalTarget, ERHIResourceState::UnorderedAccess);
         },
-        [this, Context, ReadIndex, WriteIndex, TemporalTarget](FRHICommandList& PassCommandList, const FRenderGraphPassResources& /*PassResources*/)
+        [this, Context, ReadIndex, WriteIndex, TemporalTarget](FRHICommandList& PassCommandList, const FRenderGraphPassResources& PassResources)
         {
+            FPassResources Resolved = Context.CreatePassResources(PassResources);
+            PassResourceSync::SyncToFrameResources(Resolved, *Context.FrameResources);
             RecordTemporal(PassCommandList, *Context.FrameResources, ReadIndex, WriteIndex, TemporalTarget->GetRHITexture());
         });
 
@@ -398,8 +436,10 @@ void FReflectionDenoisePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilde
                 PassBuilder.ReadTexture(Context.GBufferDepth, ERHIResourceState::NonPixelShaderResource);
                 PassBuilder.WriteTexture(Target, ERHIResourceState::UnorderedAccess);
             },
-            [this, Context, Source, Target, Iteration](FRHICommandList& PassCommandList, const FRenderGraphPassResources& /*PassResources*/)
+            [this, Context, Source, Target, Iteration](FRHICommandList& PassCommandList, const FRenderGraphPassResources& PassResources)
             {
+                FPassResources Resolved = Context.CreatePassResources(PassResources);
+                PassResourceSync::SyncToFrameResources(Resolved, *Context.FrameResources);
                 RecordAtrous(PassCommandList, *Context.FrameResources, Source->GetRHITexture(), Target->GetRHITexture(), Iteration);
             });
 
@@ -421,8 +461,10 @@ void FReflectionDenoisePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilde
             PassBuilder.ReadTexture(Context.GBufferDepth, ERHIResourceState::NonPixelShaderResource);
             PassBuilder.WriteTexture(Context.RayTracingOutput, ERHIResourceState::UnorderedAccess);
         },
-        [this, Context, ChainResult](FRHICommandList& PassCommandList, const FRenderGraphPassResources& /*PassResources*/)
+        [this, Context, ChainResult](FRHICommandList& PassCommandList, const FRenderGraphPassResources& PassResources)
         {
+            FPassResources Resolved = Context.CreatePassResources(PassResources);
+            PassResourceSync::SyncToFrameResources(Resolved, *Context.FrameResources);
             RecordUpsample(PassCommandList, *Context.FrameResources, ChainResult->GetRHITexture());
         });
 }

@@ -24,16 +24,28 @@ public:
             return;
         }
 
+        bool bEnableSynchronizationValidation = false;
+        if (IConsoleVariable* Var = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.EnableSynchronizationValidation"))
+        {
+            bEnableSynchronizationValidation = Var->GetBool();
+        }
+
         ValidationFeatures.sType                         = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
-        ValidationFeatures.enabledValidationFeatureCount = ARRAY_COUNT(GPUAVEnables);
+        ValidationFeatures.enabledValidationFeatureCount = bEnableSynchronizationValidation ? ARRAY_COUNT(GPUAVEnables) : ARRAY_COUNT(GPUAVEnables) - 1;
         ValidationFeatures.pEnabledValidationFeatures    = GPUAVEnables;
         AddToStructChain(OutInstanceCreateInfo, ValidationFeatures);
+
+        if (bEnableSynchronizationValidation)
+        {
+            VULKAN_INFO("Synchronization Validation enabled");
+        }
     }
 
-    VkValidationFeatureEnableEXT GPUAVEnables[2] =
+    VkValidationFeatureEnableEXT GPUAVEnables[3] =
     {
         VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
-        VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT
+        VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT,
+        VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
     };
 
     VkValidationFeaturesEXT ValidationFeatures = {};

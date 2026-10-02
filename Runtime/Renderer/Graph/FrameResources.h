@@ -171,6 +171,7 @@ struct RendererTextureFormats
     static constexpr EFormat VelocityFormat         = EFormat::R16G16_Float;
     static constexpr EFormat ObjectIDFormat         = EFormat::R32_Uint;
     static constexpr EFormat ShadowMaskFormat       = EFormat::R32_Float;
+    static constexpr EFormat CascadeIndexFormat     = EFormat::R32_Uint;
     static constexpr EFormat ShadowMapFormat        = EFormat::D32_Float;
     static constexpr EFormat LightProbeFormat       = EFormat::R11G11B10_Float;
 };

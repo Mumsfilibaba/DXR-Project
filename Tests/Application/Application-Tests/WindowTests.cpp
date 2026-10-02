@@ -14,19 +14,16 @@
 #include <Application/Input/Keys.h>
 #include <Application/Text/FixedWidthFontFace.h>
 
-/** @brief An eight by sixteen face, so every measurement in these tests is exact. */
 static TSharedPtr<IFontFace> CreateFont()
 {
     return MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 }
 
-/** @brief The stub behind a window, which is where the metrics are posed and the regions land. */
 static FStubPlatformWindow& GetStubWindow(const TSharedPtr<FWindow>& Window)
 {
     return static_cast<FStubPlatformWindow&>(*Window->GetPlatformWindow());
 }
 
-/** @brief Poses as macOS, which draws its own buttons at the leading edge and leaves the rest to us. */
 static FWindowTitleBarMetrics MakeLeadingInsetMetrics()
 {
     FWindowTitleBarMetrics Metrics;
@@ -35,7 +32,6 @@ static FWindowTitleBarMetrics MakeLeadingInsetMetrics()
     return Metrics;
 }
 
-/** @brief Poses as Windows, which hands its three buttons over and says how wide one would have been. */
 static FWindowTitleBarMetrics MakeTrailingInsetMetrics()
 {
     FWindowTitleBarMetrics Metrics;
@@ -53,7 +49,6 @@ static FTextBlock::FDesc MakeTextDesc(const String& Text, const TSharedPtr<IFont
     return Desc;
 }
 
-/** @brief Presses and releases in the middle of an element, which is one click end to end. */
 static void ClickElement(const TSharedPtr<FVisualElement>& Element)
 {
     const IntVector2 Center = Element->GetContentRectangle().GetCenter();
@@ -65,7 +60,6 @@ static void ClickElement(const TSharedPtr<FVisualElement>& Element)
     Element->OnMouseButtonUp(UpEvent);
 }
 
-/** @brief True when any published rectangle covers a point, which is what the platform asks at hit-test time. */
 static bool IsPointInteractive(const FWindowTitleBarRegions& Regions, const IntVector2& Point)
 {
     for (const FWindowRect& Rect : Regions.InteractiveRects)
@@ -129,9 +123,12 @@ bool TitleBarMetrics_Test()
         TEST_EXPECT_EQ(Button->GetContentRectangle().Height, 32);
     }
 
-    TEST_SECTION("Content clears the trailing inset, because the buttons are pinned inside it");
+    TEST_SECTION("Our buttons fill the trailing inset, so the last of them reaches the window edge");
     const FRectangle CloseBounds = TitleBar->GetCaptionButtons().Last()->GetContentRectangle();
-    TEST_EXPECT_EQ(CloseBounds.GetRight(), 800 - 138);
+    TEST_EXPECT_EQ(CloseBounds.GetRight(), 800);
+
+    const FRectangle MinimizeBounds = TitleBar->GetCaptionButtons().First()->GetContentRectangle();
+    TEST_EXPECT_EQ(MinimizeBounds.Position.X, 800 - 138);
 
     TEST_SECTION("Nothing is inset on a window without a custom title bar");
     TSharedPtr<FWindow>   PlainWindow   = Application.CreateWindow(IntVector2(400, 300));
@@ -157,7 +154,6 @@ bool TitleBarRegions_Test()
 
     GetStubWindow(Window).SetTitleBarMetrics(MakeTrailingInsetMetrics());
 
-    // A row of two buttons with a gap after them, which is the shape a menu bar in a caption has
     TSharedPtr<FHorizontalBox> MenuRow    = MakeSharedPtr<FHorizontalBox>();
     TSharedPtr<FButton>        FileButton = FButton::Create(FButton::FDesc().SetText("File").SetFont(Font));
     TSharedPtr<FButton>        EditButton = FButton::Create(FButton::FDesc().SetText("Edit").SetFont(Font));
@@ -282,8 +278,7 @@ bool FloatingWindow_Test()
 
     const TSharedPtr<IFontFace> Font       = CreateFont();
     TSharedPtr<FWindow>         MainWindow = Application.CreateWindow(IntVector2(1280, 720));
-
-    TSharedPtr<FTextBlock> Body = FTextBlock::Create(MakeTextDesc("Details", Font));
+    TSharedPtr<FTextBlock>      Body       = FTextBlock::Create(MakeTextDesc("Details", Font));
 
     FFloatingWindow::FDesc Desc;
     Desc.SetTitle("Inspector").SetBounds(IntVector2(200, 150), IntVector2(320, 240)).SetContent(Body);

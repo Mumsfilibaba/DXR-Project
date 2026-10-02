@@ -12,6 +12,7 @@
 #include <Application/Menus/Menu.h>
 #include <Application/Menus/PopupWindow.h>
 #include <Application/Style/UIStyle.h>
+#include <RHI/RHITexture.h>
 
 class FStubApplicationRenderer final : public IApplicationRenderer
 {

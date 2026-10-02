@@ -11,6 +11,7 @@ FVulkanQueryRHI::FVulkanQueryRHI(FVulkanDevice* InDevice, EQueryType InQueryType
     , CurrentQuery()
     , SyncFence()
     , QueryResult(static_cast<uint64*>(Memory::Malloc(GetQueryResultElementCount(InQueryType) * sizeof(uint64))))
+    , bResultReady(0)
 {
     Memory::Memzero(QueryResult, GetQueryResultElementCount(InQueryType) * sizeof(uint64));
 }

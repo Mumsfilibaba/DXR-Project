@@ -1,4 +1,5 @@
 #include "Core/CoreTypes.h"
+#include "Core/Algorithms/Algorithm.h"
 #include "Core/Math/Matrix4.h"
 #include "Core/Math/Matrix3.h"
 #include "Core/Math/Plane.h"
@@ -2740,7 +2741,7 @@ void EditorGuizmo::DrawCubes(const float* View, const float* Projection, const f
     }
 
     FacesStorage.ResizeUninitialized(CubeFaceCount);
-    FacesStorage.SortWithPredicate([](const CubeFace& A, const CubeFace& B) { return A.Z > B.Z; });
+    Algorithm::Sort(FacesStorage, [](const CubeFace& A, const CubeFace& B) { return A.Z > B.Z; });
 
     // Draw face with lighter color
     for (int32 IFace = 0; IFace < CubeFaceCount; IFace++)

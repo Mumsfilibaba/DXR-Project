@@ -18,6 +18,7 @@ SearchForBuildFiles()
 SetWorkspaceName("DXR-Engine Tools")
 
 AddTarget("BlueNoiseGen")
+AddTarget("LocCount")
 
 -- Generate the workspace
 GenerateWorkspace()

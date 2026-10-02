@@ -10,6 +10,7 @@
 #include <Application/Draw/DrawCommandList.h>
 #include <Application/Elements/LogView.h>
 #include <Application/Elements/RichTextBlock.h>
+#include <Core/Containers/StringView.h>
 #include <Application/Elements/ScrollBox.h>
 #include <Application/Input/Keys.h>
 #include <Application/Style/UIStyle.h>
@@ -23,7 +24,7 @@ static TSharedPtr<IFontFace> CreateFont()
 static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRectangle& Bounds)
 {
     Element->PrepareDesiredSize();
-    Element->Tick(Bounds);
+    Element->Arrange(Bounds);
 }
 
 static FCursorEvent MakeButtonEvent(EInputEventType Type, const IntVector2& ClientPosition, bool bIsDown)
@@ -286,6 +287,50 @@ bool RichTextSelection_Test()
     DragSelection(Fixed, IntVector2(1, 8), IntVector2(60, 8));
     TEST_EXPECT(!Fixed->HasSelection());
 
+    TEST_SECTION("Text that can be dragged through puts the text cursor under the pointer, so the log reads as selectable");
+    TSharedPtr<FRichTextBlock> Hovered = MakeBlock(Font, { "hover me" });
+    LayoutElement(Hovered, FRectangle(IntVector2(0, 0), 400, 60));
+
+    ECursor Cursor = ECursor::Arrow;
+    TEST_EXPECT(!Hovered->GetCursor(Cursor));
+
+    Hovered->OnMouseEntered(MakeMoveEvent(IntVector2(4 * 8 + 1, 8)));
+
+    TEST_EXPECT(Hovered->GetCursor(Cursor));
+    TEST_EXPECT(Cursor == ECursor::TextInput);
+
+    TEST_SECTION("Leaving it hands the shape back");
+    Hovered->OnMouseLeft(MakeMoveEvent(IntVector2(900, 900)));
+
+    TEST_EXPECT(!Hovered->GetCursor(Cursor));
+
+    TEST_SECTION("Text that cannot be selected keeps the arrow, which is what a tool tip wants");
+    Fixed->OnMouseEntered(MakeMoveEvent(IntVector2(1, 8)));
+
+    TEST_EXPECT(!Fixed->GetCursor(Cursor));
+
+    TEST_SECTION("Dragging past the top of a host scroll box moves the view and grows the selection");
+    FRichTextBlock::FDesc TallDesc;
+    for (int32 Line = 0; Line < 20; ++Line)
+    {
+        TallDesc.Runs.Add(FTextRun("line of log text\n", Font.Get(), FUIStyle::GetDefault().Colors.Text));
+    }
+
+    TSharedPtr<FRichTextBlock> TallBlock = FRichTextBlock::Create(TallDesc);
+    TSharedPtr<FScrollBox>     Host      = FScrollBox::Create();
+    Host->SetContent(TallBlock);
+    LayoutElement(Host, FRectangle(IntVector2(0, 0), 200, 48));
+    Host->SetScrollOffset(FScrollBox::DefaultScrollAmountPerWheelStep * 2);
+
+    const int32 OffsetBefore = Host->GetScrollOffset();
+    TEST_EXPECT(OffsetBefore > 0);
+
+    TallBlock->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(8, 24), true));
+    TallBlock->OnMouseMove(MakeMoveEvent(IntVector2(8, -20)));
+
+    TEST_EXPECT(Host->GetScrollOffset() < OffsetBefore);
+    TEST_EXPECT(TallBlock->HasSelection());
+
     TEST_END();
 }
 
@@ -343,11 +388,61 @@ bool RichTextSearch_Test()
 
     TEST_EXPECT_EQ(CountBoxes(Highlighted) - CountBoxes(Unhighlighted), 2);
 
+    TEST_SECTION("A match is filled in the search color rather than the one a selection takes");
+    Block->SelectAll();
+
+    FDrawCommandList Selected;
+    DrawElement(Block, Selected);
+
+    const FUIStyle& Style = FUIStyle::GetDefault();
+
+    int32 SearchLayer    = -1;
+    int32 SelectionLayer = -1;
+    for (const FDrawCommand& Command : Selected.GetCommands())
+    {
+        if (Command.Type != EDrawCommandType::Box)
+        {
+            continue;
+        }
+
+        if (Command.HasTint(Style.Colors.SearchTextHighlight))
+        {
+            SearchLayer = Command.LayerId;
+        }
+        else if (Command.HasTint(Style.Colors.TextSelectionBackground))
+        {
+            SelectionLayer = Command.LayerId;
+        }
+    }
+
+    TEST_EXPECT(SearchLayer >= 0);
+    TEST_EXPECT(SelectionLayer >= 0);
+
+    TEST_EXPECT(SearchLayer > SelectionLayer);
+
+    Block->ClearSelection();
+
     TEST_SECTION("Replacing the text re-runs the search against it");
     Block->SetRuns({ FTextRun("the the the", Font.Get(), FUIStyle::GetDefault().Colors.Text) });
     LayoutElement(Block, FRectangle(IntVector2(0, 0), 400, 60));
 
     TEST_EXPECT_EQ(Block->GetSearchMatches().Size(), 3);
+
+    TEST_SECTION("A case-sensitive search does not treat Create and create as the same");
+    TSharedPtr<FRichTextBlock> Cased = MakeBlock(Font, { "Create create CREATE" });
+    LayoutElement(Cased, FRectangle(IntVector2(0, 0), 400, 60));
+
+    Cased->SetSearchText("Create");
+    TEST_EXPECT_EQ(Cased->GetSearchMatches().Size(), 1);
+    TEST_EXPECT_EQ(Cased->GetSearchMatches()[0], 0);
+
+    TEST_SECTION("Ignoring case finds every spelling of the same word");
+    Cased->SetSearchCaseType(EStringCaseType::NoCase);
+    TEST_EXPECT_EQ(Cased->GetSearchMatches().Size(), 3);
+
+    TEST_SECTION("Turning case matching back on drops the extra hits");
+    Cased->SetSearchCaseType(EStringCaseType::CaseSensitive);
+    TEST_EXPECT_EQ(Cased->GetSearchMatches().Size(), 1);
 
     TEST_END();
 }
@@ -394,7 +489,7 @@ bool LogViewLogging_Test()
     TEST_SECTION("The text carries the severity prefix and its colour, and the break is a run of its own");
     const TArray<FTextRun>& Runs = LogView->GetTextBlock()->GetLayout().GetSourceRuns();
 
-    TEST_EXPECT_EQ(Runs.Size(), 9);
+    TEST_EXPECT_EQ(Runs.Size(), 8);
     TEST_EXPECT_EQ(Runs[0].Text, String("[Info] "));
     TEST_EXPECT_EQ(Runs[1].Text, String("engine started"));
     TEST_EXPECT_EQ(Runs[2].Text, String("\n"));
@@ -404,7 +499,7 @@ bool LogViewLogging_Test()
     TEST_EXPECT_EQ(Runs[4].Tint, FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Warning));
 
     TEST_SECTION("Which still reads back as one line per message");
-    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetText(), String("[Info] engine started\n[Warning] shader cache cold\n[Info] plain\n"));
+    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetText(), String("[Info] engine started\n[Warning] shader cache cold\n[Info] plain"));
 
     TEST_SECTION("Past the cap the oldest lines are dropped");
     LogView->Log("fourth");
@@ -545,6 +640,36 @@ bool LogViewFiltering_Test()
     TEST_EXPECT_EQ(LogView->GetNumVisibleLines(), 2);
     TEST_EXPECT_EQ(LogView->GetTextBlock()->GetSearchMatches().Size(), 2);
     TEST_EXPECT(!LogView->GetTextBlock()->GetText().Contains("device lost"));
+
+    TEST_SECTION("By default Create and create are the same search");
+    LogView->SetSearchText("", false);
+    LogView->Log(ELogSeverity::Info, "Create actor");
+    LogView->Log(ELogSeverity::Info, "create material");
+    LogView->Flush();
+
+    TEST_EXPECT(!LogView->IsSearchCaseSensitive());
+
+    LogView->SetSearchText("Create", true);
+    LogView->Flush();
+
+    TEST_EXPECT_EQ(LogView->GetNumVisibleLines(), 2);
+    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetSearchMatches().Size(), 2);
+
+    TEST_SECTION("Match Case hides the line that only matches ignoring case");
+    LogView->SetSearchCaseSensitive(true);
+    LogView->Flush();
+
+    TEST_EXPECT(LogView->IsSearchCaseSensitive());
+    TEST_EXPECT_EQ(LogView->GetNumVisibleLines(), 1);
+    TEST_EXPECT_EQ(LogView->GetVisibleMessages()[0], String("Create actor"));
+    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetSearchMatches().Size(), 1);
+
+    TEST_SECTION("Turning Match Case off brings the other spelling back");
+    LogView->SetSearchCaseSensitive(false);
+    LogView->Flush();
+
+    TEST_EXPECT_EQ(LogView->GetNumVisibleLines(), 2);
+    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetSearchMatches().Size(), 2);
 
     TEST_END();
 }
