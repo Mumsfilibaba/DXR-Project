@@ -3168,10 +3168,12 @@ static bool ProbePipelinePersistence()
     TEST_EXPECT(bVertexCompiled);
     TEST_EXPECT(bPixelCompiled);
 
+    FRHIVertexShaderRef VertexShader;
+    FRHIPixelShaderRef  PixelShader;
     if (bVertexCompiled && bPixelCompiled)
     {
-        FRHIVertexShaderRef VertexShader = RHI::CreateVertexShader(VertexByteCode);
-        FRHIPixelShaderRef  PixelShader  = RHI::CreatePixelShader(PixelByteCode);
+        VertexShader = RHI::CreateVertexShader(VertexByteCode);
+        PixelShader  = RHI::CreatePixelShader(PixelByteCode);
         TEST_EXPECT(VertexShader != nullptr);
         TEST_EXPECT(PixelShader != nullptr);
 
@@ -3306,6 +3308,68 @@ static bool ProbePipelinePersistence()
             TEST_EXPECT(RejectingArchive.Initialize(EMetalBinaryArchiveMode::Use, ArchivePath));
             TEST_EXPECT(RejectingArchive.GetRejectionReason().Find("OS build") != String::InvalidIndex);
             TEST_EXPECT(RejectingArchive.CreateComputePipeline(MakeDescriptor()) != nullptr);
+        }
+    }
+
+    id<MTLFunction> VertexFunction = VertexShader ? GetMetalShader(VertexShader.Get())->GetMTLFunction() : nil;
+    id<MTLFunction> PixelFunction  = PixelShader ? GetMetalShader(PixelShader.Get())->GetMTLFunction() : nil;
+    if (VertexFunction && PixelFunction)
+    {
+        SCOPED_AUTORELEASE_POOL();
+
+        TEST_SECTION("Append mode saves repeatedly while new pipelines share functions with the loaded archive");
+
+        FPlatformFile::DeleteFile(*ArchivePath);
+        FPlatformFile::DeleteFile(*SidecarPath);
+
+        auto MakeDescriptor = [VertexFunction, PixelFunction](MTLPixelFormat Format)
+        {
+            MTLRenderPipelineDescriptor* Descriptor = [[MTLRenderPipelineDescriptor new] autorelease];
+            Descriptor.vertexFunction                  = VertexFunction;
+            Descriptor.fragmentFunction                = PixelFunction;
+            Descriptor.colorAttachments[0].pixelFormat = Format;
+            return Descriptor;
+        };
+
+        const MTLPixelFormat Formats[] = { MTLPixelFormatRGBA8Unorm, MTLPixelFormatRGBA16Float, MTLPixelFormatBGRA8Unorm };
+
+        {
+            FMetalBinaryArchive CreateArchive(MetalDevice);
+            TEST_EXPECT(CreateArchive.Initialize(EMetalBinaryArchiveMode::Create, ArchivePath));
+            TEST_EXPECT(CreateArchive.CreateRenderPipeline(MakeDescriptor(Formats[0])) != nullptr);
+            TEST_EXPECT(CreateArchive.Save());
+        }
+
+        {
+            FMetalBinaryArchive AppendArchive(MetalDevice);
+            TEST_EXPECT(AppendArchive.Initialize(EMetalBinaryArchiveMode::Append, ArchivePath));
+            TEST_EXPECT(AppendArchive.GetRejectionReason().IsEmpty());
+            TEST_EXPECT(AppendArchive.CreateRenderPipeline(MakeDescriptor(Formats[0])) != nullptr);
+            TEST_EXPECT(AppendArchive.CreateRenderPipeline(MakeDescriptor(Formats[1])) != nullptr);
+            TEST_EXPECT(AppendArchive.Save());
+            TEST_EXPECT(AppendArchive.CreateRenderPipeline(MakeDescriptor(Formats[2])) != nullptr);
+            TEST_EXPECT(AppendArchive.Save());
+        }
+
+        {
+            FMetalBinaryArchive UseArchive(MetalDevice);
+            TEST_EXPECT(UseArchive.Initialize(EMetalBinaryArchiveMode::Use, ArchivePath));
+            TEST_EXPECT(UseArchive.GetRejectionReason().IsEmpty());
+
+            const int64 ArchiveHitsBefore   = STAT_GET(STAT_Metal_BinaryArchiveHits);
+            const int64 ArchiveMissesBefore = STAT_GET(STAT_Metal_BinaryArchiveMisses);
+            for (MTLPixelFormat Format : Formats)
+            {
+                TEST_EXPECT(UseArchive.CreateRenderPipeline(MakeDescriptor(Format)) != nullptr);
+            }
+
+#if METAL_ENABLE_STATS
+            TEST_EXPECT_EQ(STAT_GET(STAT_Metal_BinaryArchiveHits), ArchiveHitsBefore + 3);
+            TEST_EXPECT_EQ(STAT_GET(STAT_Metal_BinaryArchiveMisses), ArchiveMissesBefore);
+#else
+            (void)ArchiveHitsBefore;
+            (void)ArchiveMissesBefore;
+#endif
         }
     }
 

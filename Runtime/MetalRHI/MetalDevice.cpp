@@ -63,7 +63,7 @@ static TAutoConsoleVariable<int32> CVarDefragEligibilityDelay(
 
 static TAutoConsoleVariable<String> CVarBinaryArchiveMode(
     "MetalRHI.BinaryArchiveMode",
-    "How the MTLBinaryArchive is used: Ignore, Use (load read-only), Append (load, add and save) or Create (start empty, add and save)",
+    "How the MTLBinaryArchive is used: Ignore, Use (load read-only), Append (load, then save every pipeline this session created) or Create (start empty, then save every pipeline this session created)",
     "Append");
 
 static TAutoConsoleVariable<String> CVarBinaryArchiveFileName(

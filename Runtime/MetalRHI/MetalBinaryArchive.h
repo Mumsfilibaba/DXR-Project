@@ -60,8 +60,7 @@ public:
 
 private:
     bool LoadFromFile();
-    bool CreateWritableArchive();
-    void Harvest(bool bHit, id Descriptor);
+    void Harvest(id Descriptor);
     FMetalBinaryArchiveHeader MakeExpectedHeader() const;
 
     FMetalDevice*           Device;
@@ -69,11 +68,10 @@ private:
     String                  FilePath;
     String                  RejectionReason;
     id<MTLBinaryArchive>    LookupArchive;
-    id<MTLBinaryArchive>    WritableArchive;
+    NSMutableSet*           HarvestedDescriptors;
     FCriticalSection        ArchiveCS;
     FTaskHandle             SaveTask;
     bool                    bDirty;
-    bool                    bAddedToLookupArchive;
     AtomicBool              bSaveInFlight;
     uint64                  LastSaveTimestamp;
 };

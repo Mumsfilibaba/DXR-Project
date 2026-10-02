@@ -7,6 +7,7 @@
 
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
+#include "LaunchProgram/ProgramEntry.h"
 
 #include "RHIBootTests.h"
 
@@ -17,15 +18,20 @@
 IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 #endif
 
-int main(int Argc, const CHAR* Argv[])
-{
-    UNREFERENCED_VARIABLE(Argc);
-    UNREFERENCED_VARIABLE(Argv);
-
 #if PLATFORM_MACOS
-    FPlatformMisc::PrepareMetalDebugLayerEnvironment(true);
+struct FMetalDebugLayerArmer
+{
+    FMetalDebugLayerArmer()
+    {
+        FPlatformMisc::PrepareMetalDebugLayerEnvironment(true);
+    }
+};
+
+static FMetalDebugLayerArmer GMetalDebugLayerArmer;
 #endif
 
+static int32 RunRHIBootTests()
+{
     TestHarness::Initialize("TestResults_RHIBoot.log");
     LOG_INFO("=== RHI Boot Tests ===");
 
@@ -62,3 +68,5 @@ int main(int Argc, const CHAR* Argv[])
     TestHarness::Shutdown();
     return ExitCode;
 }
+
+IMPLEMENT_PROGRAM_MAIN("RHI-Boot-Tests", RunRHIBootTests);

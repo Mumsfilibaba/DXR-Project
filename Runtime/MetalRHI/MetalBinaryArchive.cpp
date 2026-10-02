@@ -181,11 +181,10 @@ FMetalBinaryArchive::FMetalBinaryArchive(FMetalDevice* InDevice)
     , FilePath()
     , RejectionReason()
     , LookupArchive(nil)
-    , WritableArchive(nil)
+    , HarvestedDescriptors(nil)
     , ArchiveCS()
     , SaveTask()
     , bDirty(false)
-    , bAddedToLookupArchive(false)
     , bSaveInFlight(false)
     , LastSaveTimestamp(0)
 {
@@ -195,11 +194,7 @@ FMetalBinaryArchive::~FMetalBinaryArchive()
 {
     WaitForSave();
 
-    if (WritableArchive != LookupArchive)
-    {
-        [WritableArchive release];
-    }
-
+    [HarvestedDescriptors release];
     [LookupArchive release];
 }
 
@@ -217,18 +212,12 @@ bool FMetalBinaryArchive::Initialize(EMetalBinaryArchiveMode InMode, const Strin
 
     if (Mode == EMetalBinaryArchiveMode::Use || Mode == EMetalBinaryArchiveMode::Append)
     {
-        if (LoadFromFile() && Mode == EMetalBinaryArchiveMode::Append)
-        {
-            WritableArchive = LookupArchive;
-        }
+        LoadFromFile();
     }
 
-    if ((Mode == EMetalBinaryArchiveMode::Append || Mode == EMetalBinaryArchiveMode::Create) && !WritableArchive)
+    if (Mode == EMetalBinaryArchiveMode::Append || Mode == EMetalBinaryArchiveMode::Create)
     {
-        if (!CreateWritableArchive())
-        {
-            return false;
-        }
+        HarvestedDescriptors = [NSMutableSet new];
     }
 
     METAL_INFO("[FMetalBinaryArchive] Mode %s, file '%s'", GetModeName(Mode), *FilePath);
@@ -277,24 +266,6 @@ bool FMetalBinaryArchive::LoadFromFile()
     return true;
 }
 
-bool FMetalBinaryArchive::CreateWritableArchive()
-{
-    SCOPED_AUTORELEASE_POOL();
-
-    MTLBinaryArchiveDescriptor* Descriptor = [[MTLBinaryArchiveDescriptor new] autorelease];
-
-    NSError* Error = nil;
-    id<MTLBinaryArchive> NewArchive = [Device->GetMTLDevice() newBinaryArchiveWithDescriptor:Descriptor error:&Error];
-    if (!NewArchive)
-    {
-        METAL_ERROR("[FMetalBinaryArchive] Failed to create a writable archive: %s", *GetErrorString(Error));
-        return false;
-    }
-
-    WritableArchive = NewArchive;
-    return true;
-}
-
 TSharedRef<FMetalCachedRenderPipeline> FMetalBinaryArchive::CreateRenderPipeline(MTLRenderPipelineDescriptor* Descriptor)
 {
     SCOPED_AUTORELEASE_POOL();
@@ -333,7 +304,7 @@ TSharedRef<FMetalCachedRenderPipeline> FMetalBinaryArchive::CreateRenderPipeline
     NewPipeline->PipelineState = PipelineState;
     NewPipeline->Reflection    = [Reflection retain];
 
-    Harvest(bHit, Descriptor);
+    Harvest(Descriptor);
 
     STAT_ADD(STAT_Metal_PSOCreateCount, 1);
     return NewPipeline;
@@ -364,6 +335,11 @@ TSharedRef<FMetalCachedRenderPipeline> FMetalBinaryArchive::CreateMeshRenderPipe
     const bool bHit = PipelineState != nil;
     if (!bHit)
     {
+        if (@available(macOS 15.0, *))
+        {
+            Descriptor.binaryArchives = nil;
+        }
+
         NSError* Error = nil;
         PipelineState = [MTLDevice newRenderPipelineStateWithMeshDescriptor:Descriptor
                                                                     options:MTLPipelineOptionBindingInfo
@@ -382,7 +358,7 @@ TSharedRef<FMetalCachedRenderPipeline> FMetalBinaryArchive::CreateMeshRenderPipe
 
     if (@available(macOS 15.0, *))
     {
-        Harvest(bHit, Descriptor);
+        Harvest(Descriptor);
     }
 
     STAT_ADD(STAT_Metal_PSOCreateCount, 1);
@@ -427,7 +403,7 @@ TSharedRef<FMetalCachedComputePipeline> FMetalBinaryArchive::CreateComputePipeli
     NewPipeline->PipelineState = PipelineState;
     NewPipeline->Reflection    = [Reflection retain];
 
-    Harvest(bHit, Descriptor);
+    Harvest(Descriptor);
 
     STAT_ADD(STAT_Metal_PSOCreateCount, 1);
     return NewPipeline;
@@ -453,55 +429,82 @@ static bool AddPipelineFunctions(id<MTLBinaryArchive> Archive, id Descriptor, NS
     return [Archive addRenderPipelineFunctionsWithDescriptor:static_cast<MTLRenderPipelineDescriptor*>(Descriptor) error:OutError];
 }
 
-void FMetalBinaryArchive::Harvest(bool bHit, id Descriptor)
+void FMetalBinaryArchive::Harvest(id Descriptor)
 {
+    if (!HarvestedDescriptors)
+    {
+        return;
+    }
+
+    id DescriptorCopy = [Descriptor copy];
+    [DescriptorCopy setBinaryArchives:nil];
+
     TScopedLock Lock(ArchiveCS);
 
-    if (!WritableArchive || (bHit && WritableArchive == LookupArchive))
+    const NSUInteger NumBefore = [HarvestedDescriptors count];
+    [HarvestedDescriptors addObject:DescriptorCopy];
+    [DescriptorCopy release];
+
+    if ([HarvestedDescriptors count] != NumBefore)
     {
-        return;
+        bDirty = true;
+        STAT_ADD(STAT_Metal_BinaryArchiveAdds, 1);
     }
-
-    NSError* Error = nil;
-    bool bAdded = AddPipelineFunctions(WritableArchive, Descriptor, &Error);
-
-    if (!bAdded && WritableArchive == LookupArchive && !bAddedToLookupArchive)
-    {
-        METAL_WARNING("[FMetalBinaryArchive] Metal refused additions to '%s' (%s). This session's pipelines go into a fresh archive", *FilePath, *GetErrorString(Error));
-
-        if (!CreateWritableArchive())
-        {
-            return;
-        }
-
-        Error  = nil;
-        bAdded = AddPipelineFunctions(WritableArchive, Descriptor, &Error);
-    }
-
-    if (!bAdded)
-    {
-        METAL_WARNING("[FMetalBinaryArchive] Failed to add a pipeline to '%s': %s", *FilePath, *GetErrorString(Error));
-        return;
-    }
-
-    bAddedToLookupArchive |= WritableArchive == LookupArchive;
-    bDirty = true;
-    STAT_ADD(STAT_Metal_BinaryArchiveAdds, 1);
 }
 
 bool FMetalBinaryArchive::Save()
 {
     SCOPED_AUTORELEASE_POOL();
 
-    TScopedLock Lock(ArchiveCS);
-    if (!WritableArchive || !bDirty)
+    NSArray* Descriptors = nil;
+    {
+        TScopedLock Lock(ArchiveCS);
+        if (!HarvestedDescriptors || !bDirty)
+        {
+            return true;
+        }
+
+        Descriptors = [HarvestedDescriptors allObjects];
+        bDirty = false;
+    }
+
+    NSError* Error = nil;
+    id<MTLBinaryArchive> Archive = [[Device->GetMTLDevice() newBinaryArchiveWithDescriptor:[[MTLBinaryArchiveDescriptor new] autorelease] error:&Error] autorelease];
+    if (!Archive)
+    {
+        METAL_WARNING("[FMetalBinaryArchive] Failed to create an archive to save '%s': %s", *FilePath, *GetErrorString(Error));
+        return false;
+    }
+
+    NSMutableSet* RefusedDescriptors = [NSMutableSet set];
+    NSError*      FirstRefusal       = nil;
+    for (id Descriptor in Descriptors)
+    {
+        Error = nil;
+        if (!AddPipelineFunctions(Archive, Descriptor, &Error))
+        {
+            [RefusedDescriptors addObject:Descriptor];
+            FirstRefusal = FirstRefusal ? FirstRefusal : Error;
+        }
+    }
+
+    if ([RefusedDescriptors count] > 0)
+    {
+        METAL_INFO("[FMetalBinaryArchive] Metal refused %u of %u pipelines for '%s' (%s). They compile normally and are no longer saved",
+            static_cast<uint32>([RefusedDescriptors count]), static_cast<uint32>([Descriptors count]), *FilePath, *GetErrorString(FirstRefusal));
+
+        TScopedLock Lock(ArchiveCS);
+        [HarvestedDescriptors minusSet:RefusedDescriptors];
+    }
+
+    if ([RefusedDescriptors count] == [Descriptors count])
     {
         return true;
     }
 
     const String TempPath = FilePath + ".tmp";
-    NSError* Error = nil;
-    if (![WritableArchive serializeToURL:[NSURL fileURLWithPath:TempPath.GetNSString()] error:&Error])
+    Error = nil;
+    if (![Archive serializeToURL:[NSURL fileURLWithPath:TempPath.GetNSString()] error:&Error])
     {
         METAL_WARNING("[FMetalBinaryArchive] Failed to serialize '%s': %s", *TempPath, *GetErrorString(Error));
         return false;
@@ -524,9 +527,8 @@ bool FMetalBinaryArchive::Save()
         return false;
     }
 
-    bDirty = false;
     STAT_SET(STAT_Metal_BinaryArchiveSize, ArchiveSize);
-    METAL_INFO("[FMetalBinaryArchive] Saved '%s' (%lld bytes)", *FilePath, static_cast<long long>(ArchiveSize));
+    METAL_INFO("[FMetalBinaryArchive] Saved %u pipelines to '%s' (%lld bytes)", static_cast<uint32>([Descriptors count] - [RefusedDescriptors count]), *FilePath, static_cast<long long>(ArchiveSize));
     return true;
 }
 
@@ -539,7 +541,7 @@ void FMetalBinaryArchive::SaveAsync()
 
     {
         TScopedLock Lock(ArchiveCS);
-        if (!WritableArchive || !bDirty)
+        if (!HarvestedDescriptors || !bDirty)
         {
             return;
         }

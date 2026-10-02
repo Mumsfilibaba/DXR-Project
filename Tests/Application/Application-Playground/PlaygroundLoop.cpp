@@ -3,7 +3,6 @@
 #include <Core/Containers/UniquePtr.h>
 #include <Core/Math/Vector4.h>
 #include <Core/Memory/MemoryPagePool.h>
-#include <Core/Misc/CommandLine.h>
 #include <Core/Misc/Config.h>
 #include <Core/Misc/ConsoleManager.h>
 #include <Core/Misc/CoreDelegates.h>
@@ -17,7 +16,6 @@
 #include <Core/Tasks/Tasks.h>
 #include <Core/Threading/ThreadManager.h>
 #include <CoreApplication/Platform/PlatformApplicationMisc.h>
-#include <CoreApplication/Platform/PlatformConsoleWindow.h>
 #include <Application/Application.h>
 #include <Application/Console/Console.h>
 #include <Application/Elements/Box.h>
@@ -34,6 +32,7 @@
 #include <RendererCore/Shaders/ShaderBytecodeCache.h>
 #include <RendererCore/Shaders/ShaderCache.h>
 #include <RendererCore/TextureFactory.h>
+#include <LaunchProgram/ProgramEntry.h>
 
 #include "PlaygroundLoop.h"
 #include "PlaygroundShell.h"
@@ -45,8 +44,12 @@ static constexpr int32 GBodyFontHeight      = 15;
 static constexpr int32 GHeadingFontHeight   = 18;
 static constexpr int32 GMonospaceFontHeight = 14;
 
-static TUniquePtr<IPlatformConsoleWindow> GConsoleWindow;
-static TUniquePtr<FFileOutputDevice>      GFileOutputDevice;
+static TUniquePtr<FFileOutputDevice> GFileOutputDevice;
+
+static bool IsPlaygroundExitRequested()
+{
+    return IsEngineExitRequested() || FProgramLoop::IsExitRequested();
+}
 
 struct FConsoleToggleHandler final : public FInputHandler
 {
@@ -92,14 +95,6 @@ struct FConsoleToggleHandler final : public FInputHandler
 
 static void InitializeOutputDevices()
 {
-    GConsoleWindow = TUniquePtr<IPlatformConsoleWindow>(FPlatformConsoleWindow::Create());
-    if (GConsoleWindow)
-    {
-        GConsoleWindow->Show(true);
-        GConsoleWindow->SetTitle("UI Playground Output");
-        FOutputDeviceManager::Get()->RegisterOutputDevice(GConsoleWindow.Get());
-    }
-
     GFileOutputDevice = MakeUniquePtr<FFileOutputDevice>(Paths::GetProjectDir() + "/PlaygroundLog.txt");
     if (GFileOutputDevice && GFileOutputDevice->IsValid())
     {
@@ -115,12 +110,6 @@ static void ReleaseOutputDevices()
     {
         FOutputDeviceManager::Get()->UnregisterOutputDevice(GFileOutputDevice.Get());
         GFileOutputDevice.Reset();
-    }
-
-    if (GConsoleWindow)
-    {
-        FOutputDeviceManager::Get()->UnregisterOutputDevice(GConsoleWindow.Get());
-        GConsoleWindow.Reset();
     }
 }
 
@@ -165,14 +154,9 @@ FPlaygroundLoop::~FPlaygroundLoop()
 {
 }
 
-int32 FPlaygroundLoop::PreInit(const CHAR** Args, int32 NumArgs)
+int32 FPlaygroundLoop::PreInit()
 {
     InitializeOutputDevices();
-
-    if (!CommandLine::Initialize(Args, NumArgs))
-    {
-        LOG_WARNING("[FPlaygroundLoop]: Invalid command line");
-    }
 
     if (!LoadPlaygroundModules())
     {
@@ -365,7 +349,7 @@ void FPlaygroundLoop::Tick()
 
     FApplication::Get().Tick(DeltaTime);
 
-    if (IsEngineExitRequested())
+    if (IsPlaygroundExitRequested())
     {
         return;
     }
@@ -455,12 +439,12 @@ struct FPlaygroundReleaseGuard
     FPlaygroundLoop& Loop;
 };
 
-int32 PlaygroundMain(const CHAR* Args[], int32 NumArgs)
+static int32 RunPlayground()
 {
     FPlaygroundLoop           Loop;
     FPlaygroundReleaseGuard   ReleaseGuard(Loop);
 
-    int32 ErrorCode = Loop.PreInit(Args, NumArgs);
+    int32 ErrorCode = Loop.PreInit();
     if (ErrorCode != 0)
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "FPlaygroundLoop::PreInit failed");
@@ -474,10 +458,12 @@ int32 PlaygroundMain(const CHAR* Args[], int32 NumArgs)
         return ErrorCode;
     }
 
-    while (!IsEngineExitRequested())
+    while (!IsPlaygroundExitRequested())
     {
         Loop.Tick();
     }
 
     return 0;
 }
+
+IMPLEMENT_PROGRAM_MAIN("UI Playground Output", RunPlayground);

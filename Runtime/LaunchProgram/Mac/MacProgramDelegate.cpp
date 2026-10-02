@@ -15,13 +15,8 @@ static int32  GProgramMainResult = 0;
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*) Sender
 {
-    if (!FProgramLoop::IsExitRequested())
-    {
-        FProgramLoop::RequestExit("Application terminate");
-        return NSTerminateLater;
-    }
-
-    return NSTerminateNow;
+    FProgramLoop::RequestExit("Application terminate");
+    return NSTerminateLater;
 }
 
 - (void)runAppThread
@@ -32,7 +27,7 @@ static int32  GProgramMainResult = 0;
 
     FMacThreadManager::Get().MainThreadDispatch(^
     {
-        [NSApp terminate:nil];
+        exit(GProgramMainResult);
     }, NSDefaultRunLoopMode, true);
 }
 
