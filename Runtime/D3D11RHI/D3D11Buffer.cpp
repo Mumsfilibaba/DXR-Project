@@ -1,3 +1,4 @@
+#include "RHI/RHIStats.h"
 #include "D3D11RHI/D3D11Buffer.h"
 #include "D3D11RHI/D3D11Device.h"
 
@@ -8,7 +9,44 @@ FD3D11BufferRHI::FD3D11BufferRHI(FD3D11Device* InDevice, const FRHIBufferDesc& I
 {
 }
 
-FD3D11BufferRHI::~FD3D11BufferRHI() = default;
+FD3D11BufferRHI::~FD3D11BufferRHI()
+{
+#if D3D11_ENABLE_STATS
+    const int64 AllocatedSize = static_cast<int64>(AllocationSize);
+    if (AllocatedSize > 0)
+    {
+        if (Desc.IsVertexBuffer())
+        {
+            STAT_SUBTRACT(STAT_RHI_VertexBufferMemory, AllocatedSize);
+        }
+        else if (Desc.IsIndexBuffer())
+        {
+            STAT_SUBTRACT(STAT_RHI_IndexBufferMemory, AllocatedSize);
+        }
+        else if (Desc.IsConstantBuffer())
+        {
+            STAT_SUBTRACT(STAT_RHI_ConstantBufferMemory, AllocatedSize);
+        }
+        else if (Desc.IsShaderResourceBuffer() || Desc.IsUnorderedAccessBuffer())
+        {
+            STAT_SUBTRACT(STAT_RHI_StructuredBufferMemory, AllocatedSize);
+        }
+        else
+        {
+            STAT_SUBTRACT(STAT_RHI_MiscBufferMemory, AllocatedSize);
+        }
+
+        if (Desc.IsReadBack())
+        {
+            STAT_SUBTRACT(STAT_RHI_ReadbackMemory, AllocatedSize);
+        }
+        if (Desc.IsDynamic() || Desc.IsTransient())
+        {
+            STAT_SUBTRACT(STAT_RHI_UploadMemory, AllocatedSize);
+        }
+    }
+#endif
+}
 
 bool FD3D11BufferRHI::Initialize(ERHIResourceState InInitialState, const void* InInitialData)
 {
@@ -91,6 +129,8 @@ bool FD3D11BufferRHI::Initialize(ERHIResourceState InInitialState, const void* I
 
     Resource     = NewBuffer;
     CurrentState = InInitialState;
+
+    SetAllocation(D3D11Desc.Usage, D3D11Desc.ByteWidth);
     return true;
 }
 

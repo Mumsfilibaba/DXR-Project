@@ -11,8 +11,10 @@ static const CHAR* const GRHIOwnedGroups[] =
 {
     "RHI",
     "RHI Budget",
+    "D3D11 Resources",
     "D3D12 Allocators",
     "Vulkan Allocators",
+    "D3D11 PSO",
     "D3D12 PSO",
     "Vulkan PSO",
 };

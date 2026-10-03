@@ -1,6 +1,7 @@
 #include "D3D11RHI/D3D11PipelineState.h"
 #include "D3D11RHI/D3D11Device.h"
 #include "D3D11RHI/D3D11RHI.h"
+#include "D3D11RHI/D3D11Stats.h"
 
 FD3D11InputLayoutRHI::FD3D11InputLayoutRHI(const TArray<FRHIInputElementDesc>& InInputElements)
     : FRHIInputLayout()
@@ -362,6 +363,8 @@ bool FD3D11GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
 
     PrimitiveTopology = ConvertPrimitiveTopology(Desc.PrimitiveTopology);
     SampleMask        = Desc.MultiSampleState.SampleMask;
+
+    STAT_ADD(STAT_D3D11_NumGraphicsPipelineStates, 1);
     return true;
 }
 
@@ -408,5 +411,6 @@ bool FD3D11ComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
         }
     }
 
+    STAT_ADD(STAT_D3D11_NumComputePipelineStates, 1);
     return true;
 }

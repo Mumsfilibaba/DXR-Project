@@ -66,6 +66,7 @@ void FD3D11CommandContext::BeginFrame()
 
 void FD3D11CommandContext::EndFrame()
 {
+    ContextState.UpdateStateChangeStats();
     FD3D11DeviceRHI::Get()->EndFrame();
 }
 

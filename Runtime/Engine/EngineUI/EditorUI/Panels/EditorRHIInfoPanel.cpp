@@ -13,12 +13,16 @@
 static const CHAR* const GRHIDetailGroups[] =
 {
     "RHI",
+    "D3D11 Resources",
     "D3D12 Allocators",
     "Vulkan Allocators",
+    "D3D11 PSO",
     "D3D12 PSO",
     "Vulkan PSO",
+    "D3D11 State Changes",
     "D3D12 Commands",
     "Vulkan Commands",
+    "D3D11 Queries",
     "D3D12 Queries",
     "Vulkan Queries",
     "D3D12 Residency",

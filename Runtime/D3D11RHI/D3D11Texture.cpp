@@ -1,5 +1,34 @@
+#include "RHI/RHIStats.h"
 #include "D3D11RHI/D3D11Texture.h"
 #include "D3D11RHI/D3D11Device.h"
+#include <climits>
+
+static uint64 CalculateTextureSize(const FRHITextureDesc& Desc, DXGI_FORMAT Format)
+{
+    const uint64 BitsPerPixel = GetBitsPerPixel(Format);
+    const bool   bCompressed  = IsFormatCompressed(Format);
+    const uint32 NumMips      = Math::Max<uint32>(Desc.NumMipLevels, 1);
+    const uint32 NumSlices    = Desc.IsTexture3D() ? 1 : RHIDimensionArrayLayers(Desc.Dimension, Desc.NumArraySlices);
+    const uint32 NumSamples   = Math::Max<uint32>(Desc.NumSamples, 1);
+
+    uint64 Size = 0;
+    for (uint32 Mip = 0; Mip < NumMips; ++Mip)
+    {
+        uint64 Width  = Math::Max<uint32>(static_cast<uint32>(Desc.Extent.X) >> Mip, 1);
+        uint64 Height = Math::Max<uint32>(static_cast<uint32>(Desc.Extent.Y) >> Mip, 1);
+        uint64 Depth  = Desc.IsTexture3D() ? Math::Max<uint32>(static_cast<uint32>(Desc.Extent.Z) >> Mip, 1) : 1;
+
+        if (bCompressed)
+        {
+            Width  = Math::AlignUp<uint64>(Width, D3D11_BLOCK_COMPRESSION_BLOCK_SIZE);
+            Height = Math::AlignUp<uint64>(Height, D3D11_BLOCK_COMPRESSION_BLOCK_SIZE);
+        }
+
+        Size += (Width * Height * Depth * BitsPerPixel) / CHAR_BIT;
+    }
+
+    return Size * NumSlices * NumSamples;
+}
 
 FD3D11TextureRHI::FD3D11TextureRHI(FD3D11Device* InDevice, const FRHITextureDesc& InTextureDesc)
     : FRHITexture(InTextureDesc)
@@ -12,7 +41,23 @@ FD3D11TextureRHI::FD3D11TextureRHI(FD3D11Device* InDevice, const FRHITextureDesc
 {
 }
 
-FD3D11TextureRHI::~FD3D11TextureRHI() = default;
+FD3D11TextureRHI::~FD3D11TextureRHI()
+{
+#if D3D11_ENABLE_STATS
+    const int64 AllocatedSize = static_cast<int64>(AllocationSize);
+    if (AllocatedSize > 0)
+    {
+        if (Desc.IsRenderTarget() || Desc.IsDepthStencil())
+        {
+            STAT_SUBTRACT(STAT_RHI_RenderTargetMemory, AllocatedSize);
+        }
+        else
+        {
+            STAT_SUBTRACT(STAT_RHI_TextureMemory, AllocatedSize);
+        }
+    }
+#endif
+}
 
 bool FD3D11TextureRHI::Initialize(ERHIResourceState InInitialState, const IRHITextureData* InInitialData)
 {
@@ -419,6 +464,7 @@ bool FD3D11TextureRHI::CreateResource(DXGI_FORMAT ResourceFormat, const D3D11_SU
         return false;
     }
 
+    SetAllocation(D3D11_USAGE_DEFAULT, CalculateTextureSize(Desc, ResourceFormat));
     return true;
 }
 

@@ -10,8 +10,10 @@ static bool IsRHIGroup(const CHAR* GroupName)
 {
     return CString::Strcmp(GroupName, "RHI") == 0
         || CString::Strcmp(GroupName, "RHI Budget") == 0
+        || CString::Strcmp(GroupName, "D3D11 Resources") == 0
         || CString::Strcmp(GroupName, "D3D12 Allocators") == 0
         || CString::Strcmp(GroupName, "Vulkan Allocators") == 0
+        || CString::Strcmp(GroupName, "D3D11 PSO") == 0
         || CString::Strcmp(GroupName, "D3D12 PSO") == 0
         || CString::Strcmp(GroupName, "Vulkan PSO") == 0;
 }

@@ -15,7 +15,7 @@
 #    --arch <name>       Build for x86_64, arm64 or universal. Defaults to the
 #                        host architecture. A foreign architecture is built but
 #                        not launched.
-#    --rhi <name>        Force the backend: Metal, Vulkan, D3D12 or Null. Left
+#    --rhi <name>        Force the backend: Metal, Vulkan, D3D12, D3D11 or Null. Left
 #                        alone, the ini files decide.
 #    --build-only        Build and stop, without launching.
 #    --no-pause          Never wait for a keypress before closing.

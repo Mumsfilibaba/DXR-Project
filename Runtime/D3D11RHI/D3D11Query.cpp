@@ -1,6 +1,7 @@
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "D3D11RHI/D3D11Query.h"
 #include "D3D11RHI/D3D11Device.h"
+#include "D3D11RHI/D3D11Stats.h"
 
 static D3D11_QUERY ConvertQueryType(EQueryType QueryType)
 {
@@ -32,7 +33,13 @@ FD3D11Query::FD3D11Query(FD3D11Device* InDevice, D3D11_QUERY InQueryType)
 {
 }
 
-FD3D11Query::~FD3D11Query() = default;
+FD3D11Query::~FD3D11Query()
+{
+    if (Query)
+    {
+        STAT_SUBTRACT(STAT_D3D11_QueryCount, 1);
+    }
+}
 
 bool FD3D11Query::Initialize()
 {
@@ -47,6 +54,7 @@ bool FD3D11Query::Initialize()
         return false;
     }
 
+    STAT_ADD(STAT_D3D11_QueryCount, 1);
     return true;
 }
 

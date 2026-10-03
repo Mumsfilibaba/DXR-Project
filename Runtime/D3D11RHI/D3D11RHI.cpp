@@ -201,6 +201,20 @@ FRHITexture* FD3D11DeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc
         return nullptr;
     }
 
+#if D3D11_ENABLE_STATS
+    {
+        const int64 AllocatedSize = static_cast<int64>(NewTexture->GetAllocationSize());
+        if (InTextureDesc.IsRenderTarget() || InTextureDesc.IsDepthStencil())
+        {
+            STAT_ADD(STAT_RHI_RenderTargetMemory, AllocatedSize);
+        }
+        else
+        {
+            STAT_ADD(STAT_RHI_TextureMemory, AllocatedSize);
+        }
+    }
+#endif
+
     return NewTexture.ReleaseOwnership();
 }
 
@@ -211,6 +225,41 @@ FRHIBuffer* FD3D11DeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, ER
     {
         return nullptr;
     }
+
+#if D3D11_ENABLE_STATS
+    {
+        const int64 AllocatedSize = static_cast<int64>(NewBuffer->GetAllocationSize());
+        if (InBufferDesc.IsVertexBuffer())
+        {
+            STAT_ADD(STAT_RHI_VertexBufferMemory, AllocatedSize);
+        }
+        else if (InBufferDesc.IsIndexBuffer())
+        {
+            STAT_ADD(STAT_RHI_IndexBufferMemory, AllocatedSize);
+        }
+        else if (InBufferDesc.IsConstantBuffer())
+        {
+            STAT_ADD(STAT_RHI_ConstantBufferMemory, AllocatedSize);
+        }
+        else if (InBufferDesc.IsShaderResourceBuffer() || InBufferDesc.IsUnorderedAccessBuffer())
+        {
+            STAT_ADD(STAT_RHI_StructuredBufferMemory, AllocatedSize);
+        }
+        else
+        {
+            STAT_ADD(STAT_RHI_MiscBufferMemory, AllocatedSize);
+        }
+
+        if (InBufferDesc.IsReadBack())
+        {
+            STAT_ADD(STAT_RHI_ReadbackMemory, AllocatedSize);
+        }
+        if (InBufferDesc.IsDynamic() || InBufferDesc.IsTransient())
+        {
+            STAT_ADD(STAT_RHI_UploadMemory, AllocatedSize);
+        }
+    }
+#endif
 
     return NewBuffer.ReleaseOwnership();
 }

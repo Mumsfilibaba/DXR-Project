@@ -29,6 +29,23 @@ FORCEINLINE EShaderConstantsPipeline::Type GetShaderConstantsPipeline(EShaderSta
     }
 }
 
+struct ED3D11StateChange
+{
+    enum Type : int32
+    {
+        Shader = 0,
+        InputAssembler,
+        Rasterizer,
+        OutputMerger,
+        ConstantBuffer,
+        ShaderResource,
+        Sampler,
+        UnorderedAccess,
+        ShaderConstantUpload,
+        Count
+    };
+};
+
 struct FD3D11VertexBufferCache
 {
     FD3D11VertexBufferCache()
@@ -180,10 +197,14 @@ struct FD3D11ConstantBufferCache : public FD3D11ResourceCache
         DirtyResourcesAll();
         Memory::Memzero(ConstantBuffers, sizeof(ConstantBuffers));
         Memory::Memzero(NumBuffers, sizeof(NumBuffers));
+        Memory::Memzero(BoundBuffers, sizeof(BoundBuffers));
+        Memory::Memzero(NumBoundBuffers, sizeof(NumBoundBuffers));
     }
 
     ID3D11Buffer* ConstantBuffers[EShaderVisibility::Count][D3D11_MAX_CONSTANT_BUFFERS];
     uint8         NumBuffers[EShaderVisibility::Count];
+    ID3D11Buffer* BoundBuffers[EShaderVisibility::Count][D3D11_MAX_CONSTANT_BUFFERS];
+    uint8         NumBoundBuffers[EShaderVisibility::Count];
 };
 
 struct FD3D11ShaderResourceViewCache : public FD3D11ResourceCache
@@ -279,10 +300,53 @@ struct FD3D11SamplerStateCache : public FD3D11ResourceCache
         DirtyResourcesAll();
         Memory::Memzero(SamplerStates, sizeof(SamplerStates));
         Memory::Memzero(NumSamplers, sizeof(NumSamplers));
+        Memory::Memzero(BoundSamplerStates, sizeof(BoundSamplerStates));
+        Memory::Memzero(NumBoundSamplers, sizeof(NumBoundSamplers));
     }
 
     ID3D11SamplerState* SamplerStates[EShaderVisibility::Count][D3D11_MAX_SAMPLER_STATES];
     uint8               NumSamplers[EShaderVisibility::Count];
+    ID3D11SamplerState* BoundSamplerStates[EShaderVisibility::Count][D3D11_MAX_SAMPLER_STATES];
+    uint8               NumBoundSamplers[EShaderVisibility::Count];
+};
+
+struct FD3D11BoundGraphicsPipeline
+{
+    FD3D11BoundGraphicsPipeline()
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
+        InputLayout       = nullptr;
+        PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED;
+        VertexShader      = nullptr;
+        HullShader        = nullptr;
+        DomainShader      = nullptr;
+        GeometryShader    = nullptr;
+        PixelShader       = nullptr;
+        RasterizerState   = nullptr;
+        BlendState        = nullptr;
+        SampleMask        = 0;
+        DepthStencilState = nullptr;
+        StencilRef        = 0;
+        Memory::Memzero(BlendFactor, sizeof(BlendFactor));
+    }
+
+    ID3D11InputLayout*       InputLayout;
+    D3D11_PRIMITIVE_TOPOLOGY PrimitiveTopology;
+    ID3D11VertexShader*      VertexShader;
+    ID3D11HullShader*        HullShader;
+    ID3D11DomainShader*      DomainShader;
+    ID3D11GeometryShader*    GeometryShader;
+    ID3D11PixelShader*       PixelShader;
+    ID3D11RasterizerState*   RasterizerState;
+    ID3D11BlendState*        BlendState;
+    float                    BlendFactor[4];
+    uint32                   SampleMask;
+    ID3D11DepthStencilState* DepthStencilState;
+    uint32                   StencilRef;
 };
 
 struct FD3D11ShaderConstantsCache
@@ -315,6 +379,7 @@ public:
     void ResetState();
 
     void DirtyRenderTargets();
+    void UpdateStateChangeStats();
 
     void SetGraphicsPipelineState(FD3D11GraphicsPipelineStateRHI* InGraphicsPipelineState);
     void SetComputePipelineState(FD3D11ComputePipelineStateRHI* InComputePipelineState);
@@ -362,10 +427,15 @@ private:
     void UnbindUnorderedAccessViews(const FD3D11SubresourceRange& Range);
     void UnbindShaderResourceViews(const FD3D11SubresourceRange& Range);
 
+    void InternalSetConstantBuffers(EShaderVisibility::Type ShaderStage, uint32 StartSlot, uint32 NumBuffers, ID3D11Buffer* const* Buffers);
+    void InternalSetShaderResources(EShaderVisibility::Type ShaderStage, uint32 StartSlot, uint32 NumViews, ID3D11ShaderResourceView* const* Views);
+    void InternalSetSamplers(EShaderVisibility::Type ShaderStage, uint32 StartSlot, uint32 NumSamplers, ID3D11SamplerState* const* Samplers);
+
     void DirtyShaderConstants(EShaderConstantsPipeline::Type Pipeline);
     void DirtyAllResources();
 
     FD3D11CommandContext& Context;
+    uint32                StateChanges[ED3D11StateChange::Count];
 
     struct FCommonGraphicsState
     {
@@ -404,6 +474,7 @@ private:
     {
         FGraphicsState()
             : PipelineState(nullptr)
+            , BoundPipeline()
             , IndexBufferCache()
             , VertexBufferCache()
             , StreamOutputCache()
@@ -411,6 +482,7 @@ private:
         }
 
         FD3D11GraphicsPipelineStateRHIRef PipelineState;
+        FD3D11BoundGraphicsPipeline       BoundPipeline;
         FD3D11IndexBufferCache            IndexBufferCache;
         FD3D11VertexBufferCache           VertexBufferCache;
         FD3D11StreamOutputCache           StreamOutputCache;
@@ -426,11 +498,13 @@ private:
     {
         FComputeState()
             : PipelineState(nullptr)
+            , BoundComputeShader(nullptr)
             , UnorderedAccessViewCache()
         {
         }
 
         FD3D11ComputePipelineStateRHIRef PipelineState;
+        ID3D11ComputeShader*             BoundComputeShader;
         FD3D11UnorderedAccessViewCache   UnorderedAccessViewCache;
 
         bool bBindPipelineState   : 1;
