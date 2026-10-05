@@ -6,6 +6,7 @@
 #include "RHI/RHI.h"
 #include "RHI/RHISamplerState.h"
 #include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanDeviceLimits.h"
 #include "VulkanRHI/VulkanFence.h"
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanQueue.h"
@@ -1521,6 +1522,15 @@ void FVulkanDevice::WaitForGPU()
     {
         GraphicsQueue->ProcessCommandQueue();
     }
+}
+
+void FVulkanDevice::RefreshTimestampPeriod()
+{
+#if PLATFORM_MACOS
+    VkPhysicalDeviceProperties Properties;
+    vkGetPhysicalDeviceProperties(PhysicalDevice->GetVkPhysicalDevice(), &Properties);
+    VulkanDeviceLimits::TimestampPeriod = Properties.limits.timestampPeriod;
+#endif
 }
 
 bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)

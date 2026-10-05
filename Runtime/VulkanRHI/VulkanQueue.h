@@ -46,6 +46,9 @@ public:
     void RecycleCommandPool(FVulkanCommandPool* InCommandPool);
     void RetireCommandPoolDeferred(FVulkanCommandPool* InCommandPool);
 
+    FVulkanCommands* ObtainCommands();
+    void RecycleCommands(FVulkanCommands* InCommands);
+
     FVulkanCommandContext* ObtainCommandContext();
     void ReleaseCommandContext(FVulkanCommandContext* InContext);
     void PruneCommandContexts(uint64 CurrentFrame);
@@ -113,6 +116,7 @@ private:
     EVulkanCommandQueueType                   QueueType;
     TVulkanRecyclePool<FVulkanCommandPool>    CommandPoolPool;
     TVulkanRecyclePool<FVulkanCommandContext> CommandContextPool;
+    TVulkanRecyclePool<FVulkanCommands>       CommandsPool;
     TArray<FVulkanCommandPool*>               DeferredCommandPools;
     FCriticalSection                          DeferredCommandPoolsCS;
     TArray<FVulkanDeferredObject>             DeferredObjects;
@@ -139,6 +143,7 @@ struct FVulkanCommands
     FVulkanCommands(FVulkanDevice* InDevice, FVulkanQueue& InQueue);
     ~FVulkanCommands();
 
+    void Reset();
     void AcquireFence();
     void PreExecute();
     void Execute();

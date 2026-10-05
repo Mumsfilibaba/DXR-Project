@@ -307,15 +307,12 @@ void FTiledLightPass::Record(FRHICommandList& CommandList, const FFrameResources
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[EGBufferIndex::Depth]->GetShaderResourceView(), 3);
 
     const bool bUseRayTracingReflections =
-        RHI::bSupportsRayTracing &&
-        GRayTracingEnabled &&
+        RenderSettings::IsRayTracingEnabled() &&
         GReflectionsEnabled &&
         FrameResources.RayTracingOutput;
 
-    if (bUseRayTracingReflections)
-    {
-        CommandList.SetShaderResourceView(LightPassShader, FrameResources.RayTracingOutput->GetShaderResourceView(), 4);
-    }
+    FRHIShaderResourceView* const RayTracingOutputSRV = bUseRayTracingReflections ? FrameResources.RayTracingOutput->GetShaderResourceView() : nullptr;
+    CommandList.SetShaderResourceView(LightPassShader, RayTracingOutputSRV, 4);
 
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 5);
 

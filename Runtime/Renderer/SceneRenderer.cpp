@@ -8,6 +8,7 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Tasks/Tasks.h"
 #include "RHI/RHI.h"
+#include "RHI/RHIPipelineStateCache.h"
 #include "ShaderCompiler/ShaderCompiler.h"
 #include "Engine/Resources/Model.h"
 #include "Renderer/Shaders/MaterialBindless.h"
@@ -18,6 +19,7 @@
 #include "Renderer/Scene/SceneStaticMesh.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/RenderSettings.h"
+#include "RendererCore/Shaders/ShaderCache.h"
 
 bool GEnableSSAO = true;
 static FAutoConsoleVariableRef CVarEnableSSAO(
@@ -168,14 +170,6 @@ static FAutoConsoleVariableRef CVarFrustumCullEnabled(
     "Renderer.Feature.FrustumCulling",
     "Enables Frustum Culling (CPU) for the main scene and for all shadow frustums",
     GFrustumCullEnabled,
-    EConsoleVariableFlags::Default);
-
-bool GRayTracingEnabled = false;
-static FAutoConsoleVariableRef CVarRayTracingEnabled(
-    "Renderer.Feature.RayTracing",
-    "Enables ray-traced reflections. Only takes effect when the hardware reports ray tracing support; otherwise the renderer falls back to "
-    "image-based lighting.",
-    GRayTracingEnabled,
     EConsoleVariableFlags::Default);
 
 bool GCSMTightFrustum = true;
@@ -394,41 +388,85 @@ bool FSceneRenderer::Initialize()
         return false;
     }
 
-    if (!InitializeRenderPasses())
+    return InitializeRenderPasses();
+}
+
+bool FSceneRenderer::InitializeRayTracing()
+{
+    if (!RayTracingSceneBuilder->Initialize())
     {
         return false;
     }
 
-    if (RHI::bSupportsRayTracing)
+    if (!ReflectionDenoisePass->Initialize(Resources))
     {
-        if (!RayTracingSceneBuilder->Initialize())
-        {
-            return false;
-        }
-
-        if (!ReflectionDenoisePass->Initialize(Resources))
-        {
-            return false;
-        }
-
-        if (!RayTracingReflectionsPass->Initialize(Resources))
-        {
-            return false;
-        }
-
-        if (!RayTracingPrimaryDebugPass->Initialize(Resources))
-        {
-            return false;
-        }
-
-        if (!CreateRayTracingResources(Resources.CurrentRenderWidth, Resources.CurrentRenderHeight))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
+        return false;
     }
 
+    if (!RayTracingReflectionsPass->Initialize(Resources))
+    {
+        return false;
+    }
+
+    if (!RayTracingPrimaryDebugPass->Initialize(Resources))
+    {
+        return false;
+    }
+
+    if (!CreateRayTracingResources(Resources.CurrentRenderWidth, Resources.CurrentRenderHeight))
+    {
+        return false;
+    }
+
+    bRayTracingInitialized = true;
     return true;
+}
+
+void FSceneRenderer::ReleaseRayTracing(FScene* Scene)
+{
+    RayTracingSceneBuilder->ReleaseRayTracingResources(Scene);
+    RayTracingSceneBuilder->Release();
+    RayTracingReflectionsPass->Release();
+    ReflectionDenoisePass->Release();
+    RayTracingPrimaryDebugPass->Release();
+
+    Resources.ReleaseRayTracingResources();
+
+    FShaderCache::Get().EvictUnsupportedPermutations();
+    if (FRHIPipelineStateCache* PipelineCache = FRHIPipelineStateCache::TryGet())
+    {
+        PipelineCache->TrimUnreferenced();
+    }
+
+    bRayTracingInitialized = false;
+}
+
+void FSceneRenderer::UpdateRayTracingState(FScene* Scene)
+{
+    const bool bWantsRayTracing = RenderSettings::IsRayTracingEnabled();
+    if (bWantsRayTracing == bRayTracingRequested)
+    {
+        return;
+    }
+
+    bRayTracingRequested = bWantsRayTracing;
+
+    if (!bWantsRayTracing)
+    {
+        FRHICommandListExecutor::Get().WaitForGPU();
+        ReleaseRayTracing(Scene);
+        LOG_INFO("[FSceneRenderer]: Ray tracing disabled, all ray tracing resources released");
+        return;
+    }
+
+    if (!InitializeRayTracing())
+    {
+        LOG_ERROR("[FSceneRenderer]: Failed to initialize ray tracing. It stays disabled until Renderer.Feature.RayTracing is toggled again");
+        ReleaseRayTracing(Scene);
+        return;
+    }
+
+    LOG_INFO("[FSceneRenderer]: Ray tracing enabled");
 }
 
 bool FSceneRenderer::CreateRayTracingResources(uint32 Width, uint32 Height)
@@ -637,7 +675,9 @@ void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& Scene
         ResizeResources(RenderSettings::GetRenderWidth(), RenderSettings::GetRenderHeight());
     }
 
-    if (RHI::bSupportsRayTracing && ReflectionDenoisePass->NeedsReconfigure(Resources))
+    UpdateRayTracingState(Scene);
+
+    if (bRayTracingInitialized && ReflectionDenoisePass->NeedsReconfigure(Resources))
     {
         FRHICommandListExecutor::Get().WaitForGPU();
         CreateRayTracingResources(Resources.CurrentRenderWidth, Resources.CurrentRenderHeight);
@@ -1512,7 +1552,7 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
         }
     #endif
 
-        if (RHI::bSupportsRayTracing && !CreateRayTracingResources(InWidth, InHeight))
+        if (bRayTracingInitialized && !CreateRayTracingResources(InWidth, InHeight))
         {
             DEBUG_BREAK();
             return;

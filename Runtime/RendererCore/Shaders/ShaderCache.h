@@ -77,6 +77,7 @@ public:
 public:
     void PrewarmAsync();
     void FlushCompiledShaders();
+    void EvictUnsupportedPermutations();
 
     template<typename ShaderType>
     NODISCARD typename TShaderStageType<ShaderType::Stage>::FRefType GetShader(const typename ShaderType::FPermutation& Permutation)

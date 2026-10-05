@@ -3,6 +3,7 @@
 #include "Core/Tasks/ParallelFor.h"
 #include "Core/Tasks/Tasks.h"
 #include "Core/Threading/Atomic.h"
+#include "RendererCore/RenderSettings.h"
 #include "RendererCore/Shaders/ShaderBytecodeCache.h"
 #include "RendererCore/Shaders/ShaderCache.h"
 #include "RendererCore/Shaders/ShaderManifest.h"
@@ -262,15 +263,34 @@ void FShaderCache::FlushCompiledShaders()
     }
 }
 
+void FShaderCache::EvictUnsupportedPermutations()
+{
+    TScopedLock Lock(ShadersCS);
+
+    TArray<FShaderCacheKey> UnsupportedKeys;
+    Shaders.Foreach([&UnsupportedKeys](const FShaderCacheKey& Key, const FRHIShaderRef& /* Shader */)
+    {
+        if (!Key.Type->ShouldCompilePermutation(CreatePermutationDesc(Key.PermutationID)))
+        {
+            UnsupportedKeys.Add(Key);
+        }
+    });
+
+    for (const FShaderCacheKey& Key : UnsupportedKeys)
+    {
+        Shaders.Remove(Key);
+    }
+}
+
 FShaderPermutationDesc FShaderCache::CreatePermutationDesc(int32 PermutationID)
 {
     FShaderPermutationDesc Desc;
     Desc.PermutationID                      = PermutationID;
     Desc.bSupportsBindless                  = RHI::bSupportsBindless;
     Desc.bSupportsViewInstancing            = RHI::bSupportsViewInstancing;
-    Desc.bSupportsRayTracing                = RHI::bSupportsRayTracing;
-    Desc.bSupportsInlineRayTracing          = RHI::bSupportsInlineRayTracing;
-    Desc.bSupportsShaderExecutionReordering = RHI::bSupportsShaderExecutionReordering;
+    Desc.bSupportsRayTracing                = RenderSettings::IsRayTracingEnabled();
+    Desc.bSupportsInlineRayTracing          = RenderSettings::IsRayTracingEnabled() && RHI::bSupportsInlineRayTracing;
+    Desc.bSupportsShaderExecutionReordering = RenderSettings::IsRayTracingEnabled() && RHI::bSupportsShaderExecutionReordering;
     return Desc;
 }
 

@@ -182,7 +182,7 @@ public:
     void BindComputeState();
     void BindMeshletState();
     void BindPushConstants(FVulkanPipelineLayout* PipelineLayout, EPushConstantsPipeline::Type Pipeline);
-    void DirtyPushConstants();
+    void DirtyPushConstants(EPushConstantsPipeline::Type Pipeline);
     void DirtyComputeBindings();
     void BindRayTracingState();
 

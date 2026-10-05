@@ -34,6 +34,7 @@ struct FD3D12Commands
     FD3D12Commands(FD3D12Device* InDevice, FD3D12Queue* InQueue);
     ~FD3D12Commands() = default;
 
+    void Reset();
     void PreExecute();
     void Execute();
     void PostExecute();
@@ -83,6 +84,9 @@ public:
 
     FD3D12CommandAllocator* ObtainAllocator();
     void RecycleAllocator(FD3D12CommandAllocator* InAllocator);
+
+    FD3D12Commands* ObtainCommands();
+    void RecycleCommands(FD3D12Commands* InCommands);
 
     FD3D12CommandContext* ObtainCommandContext();
     void ReleaseCommandContext(FD3D12CommandContext* InContext);
@@ -143,6 +147,7 @@ private:
     TD3D12RecyclePool<FD3D12CommandList>      CommandListPool;
     TD3D12RecyclePool<FD3D12CommandAllocator> AllocatorPool;
     TD3D12RecyclePool<FD3D12CommandContext>   CommandContextPool;
+    TD3D12RecyclePool<FD3D12Commands>         CommandsPool;
     TAtomicInt<uint64>                        CurrentFrame;
     FCommandsQueue                            PendingSubmissions;
     FCriticalSection                          SubmissionCS;

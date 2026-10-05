@@ -477,12 +477,34 @@ void FVulkanCommandContextState::BindPushConstants(FVulkanPipelineLayout* Pipeli
     }
 }
 
-void FVulkanCommandContextState::DirtyPushConstants()
+void FVulkanCommandContextState::DirtyPushConstants(EPushConstantsPipeline::Type Pipeline)
 {
-    GraphicsState.bBindPushConstants   = true;
-    ComputeState.bBindPushConstants    = true;
-    MeshletState.bBindPushConstants    = true;
-    RayTracingState.bBindPushConstants = true;
+    switch (Pipeline)
+    {
+        case EPushConstantsPipeline::Graphics:
+        {
+            GraphicsState.bBindPushConstants = true;
+            MeshletState.bBindPushConstants  = true;
+            break;
+        }
+
+        case EPushConstantsPipeline::Compute:
+        {
+            ComputeState.bBindPushConstants = true;
+            break;
+        }
+
+        case EPushConstantsPipeline::RayTracing:
+        {
+            RayTracingState.bBindPushConstants = true;
+            break;
+        }
+
+        default:
+        {
+            break;
+        }
+    }
 }
 
 void FVulkanCommandContextState::DirtyComputeBindings()
@@ -1463,7 +1485,7 @@ void FVulkanCommandContextState::SetPushConstants(EShaderStage ShaderStage, cons
 
         ConstantCache.NumConstants = NumShaderConstants;
 
-        DirtyPushConstants();
+        DirtyPushConstants(Pipeline);
     }
 }
 

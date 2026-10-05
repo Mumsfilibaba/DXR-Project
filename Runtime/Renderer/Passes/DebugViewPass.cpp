@@ -278,25 +278,15 @@ void FDebugViewPass::RecordInternal(FRHICommandList& CommandList, const FSceneRe
         CommandList.SetShaderResourceView(DebugPixelShader.Get(), LitSourceTexture->GetShaderResourceView(), 9);
     }
 
-    if (FrameResources.RayTracingOutput)
+    const auto GetShaderResourceView = [](FRHITexture* Texture) -> FRHIShaderResourceView*
     {
-        CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.RayTracingOutput->GetShaderResourceView(), 10);
-    }
+        return Texture ? Texture->GetShaderResourceView() : nullptr;
+    };
 
-    if (FrameResources.ReflectionTrace)
-    {
-        CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.ReflectionTrace->GetShaderResourceView(), 11);
-    }
-
-    if (FRHITexture* TemporalHistory = FrameResources.ReflectionHistory[FrameResources.ReflectionHistoryIndex].Get())
-    {
-        CommandList.SetShaderResourceView(DebugPixelShader.Get(), TemporalHistory->GetShaderResourceView(), 12);
-    }
-
-    if (FRHITexture* TemporalMoments = FrameResources.ReflectionMoments[FrameResources.ReflectionHistoryIndex].Get())
-    {
-        CommandList.SetShaderResourceView(DebugPixelShader.Get(), TemporalMoments->GetShaderResourceView(), 13);
-    }
+    CommandList.SetShaderResourceView(DebugPixelShader.Get(), GetShaderResourceView(FrameResources.RayTracingOutput.Get()), 10);
+    CommandList.SetShaderResourceView(DebugPixelShader.Get(), GetShaderResourceView(FrameResources.ReflectionTrace.Get()), 11);
+    CommandList.SetShaderResourceView(DebugPixelShader.Get(), GetShaderResourceView(FrameResources.ReflectionHistory[FrameResources.ReflectionHistoryIndex].Get()), 12);
+    CommandList.SetShaderResourceView(DebugPixelShader.Get(), GetShaderResourceView(FrameResources.ReflectionMoments[FrameResources.ReflectionHistoryIndex].Get()), 13);
 
     CommandList.SetConstantBuffer(DebugPixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 

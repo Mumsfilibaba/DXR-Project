@@ -3,6 +3,7 @@
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
 #include "Engine/Resources/Model.h"
+#include "RendererCore/RenderSettings.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/TextureCompressor.h"
 #include "RendererCore/VertexStreamCache.h"
@@ -191,7 +192,7 @@ bool FMesh::EnsureRayTracingResources()
         return true;
     }
 
-    if (!RHI::bSupportsRayTracing)
+    if (!RenderSettings::IsRayTracingEnabled())
     {
         return false;
     }

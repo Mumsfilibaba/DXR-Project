@@ -194,6 +194,16 @@ public:
 
     bool IsEmpty() const;
 
+    FORCEINLINE void ResetIdleCleanUps()
+    {
+        NumIdleCleanUps = 0;
+    }
+
+    FORCEINLINE uint32 IncrementIdleCleanUps()
+    {
+        return ++NumIdleCleanUps;
+    }
+
 #if VULKAN_ENABLE_STATS
     void UpdateMemoryStats(FVulkanAllocatorUsage& OutUsage) const;
 #endif
@@ -234,6 +244,7 @@ private:
     TArray<TArray<uint64>>   FreeOffsets;
     AtomicInt64              TrackedUsedBytes;
     AtomicInt64              TrackedWastedBytes;
+    uint32                   NumIdleCleanUps;
     mutable FCriticalSection AllocatorCS;
 };
 
@@ -292,6 +303,16 @@ public:
         return UsedBytes == 0;
     }
 
+    FORCEINLINE void ResetIdleCleanUps()
+    {
+        NumIdleCleanUps = 0;
+    }
+
+    FORCEINLINE uint32 IncrementIdleCleanUps()
+    {
+        return ++NumIdleCleanUps;
+    }
+
     FORCEINLINE uint64 GetUsedBytes() const
     {
         return UsedBytes;
@@ -332,6 +353,7 @@ private:
     uint8*                                     MappedBaseAddress;
     TArray<FFreeRange>                         FreeRanges;
     TArray<FVulkanPoolAllocatorAllocationData> LiveAllocations;
+    uint32                                     NumIdleCleanUps;
 };
 
 class FVulkanPoolAllocator : public FVulkanDeviceChild

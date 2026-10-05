@@ -337,6 +337,7 @@ public:
     bool CreateGraphicsQueue();
     bool EnsurePresentQueue();
     void WaitForGPU();
+    void RefreshTimestampPeriod();
 
     FVulkanQueue* GetQueue(EVulkanCommandQueueType Type) const;
     FVulkanQueue* GetGraphicsQueue() const { return GraphicsQueue; }

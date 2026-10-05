@@ -1,4 +1,4 @@
-#include "Core/Misc/ConsoleManager.h"
+﻿#include "Core/Misc/ConsoleManager.h"
 #include "Core/Algorithms/Algorithm.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Threading/ScopedLock.h"
@@ -730,7 +730,7 @@ void FVulkanCommandContext::ObtainCommandBuffer()
     {
         TRACE_SCOPE("Vulkan Allocate Command Submission");
 
-        Commands = new FVulkanCommands(GetDevice(), Queue);
+        Commands = Queue.ObtainCommands();
         Commands->AcquireFence();
     }
 }
@@ -804,7 +804,7 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
         FenceManager.RecycleFence(Commands->Fence);
         Commands->Fence = nullptr;
 
-        delete Commands;
+        Queue.RecycleCommands(Commands);
         Commands = nullptr;
         return;
     }
@@ -3285,8 +3285,13 @@ void FVulkanCommandContext::TransitionImageLayout(FVulkanTextureRHI* Texture, Vk
         return;
     }
 
-    FScopedBarrierReason BarrierReason(BarrierBatcher, Texture, AfterLayout);
     FVulkanImageLayoutState& LocalState = RetrievePendingImageState(Texture);
+    if (LocalState.AreAllSubresourcesSameLayout() && LocalState.GetImageLayout() == AfterLayout)
+    {
+        return;
+    }
+
+    FScopedBarrierReason BarrierReason(BarrierBatcher, Texture, AfterLayout);
     const VkImageCreateInfo& CreateInfo = Texture->GetVkImageCreateInfo();
     const VkImageAspectFlags AspectMask = GetImageAspectFlagsFromFormat(CreateInfo.format);
 

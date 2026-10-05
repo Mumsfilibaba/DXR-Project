@@ -183,6 +183,7 @@ struct FFrameResources
 
     bool Initialize();
     void Release();
+    void ReleaseRayTracingResources();
     void BuildLightBuffers(FRHICommandList& CommandList, FScene* Scene);
 
     NODISCARD uint32 GetReflectionChainWidth() const

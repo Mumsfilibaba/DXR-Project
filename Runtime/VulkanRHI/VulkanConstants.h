@@ -21,6 +21,9 @@
 #define VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS (6)
 #define VULKAN_DEFAULT_QUERY_COUNT (65536)
 
+// Number of CleanUpAllocators calls an empty page survives without serving an allocation before its memory is freed
+#define VULKAN_MAX_IDLE_PAGE_CLEANUPS (120)
+
 // AMD RDNA recommends staying below 13 DWORDs of user data in a PipelineLayout.
 // See: https://gpuopen.com/learn/rdna-performance-guide/ (Descriptors section)
 #define VULKAN_RECOMMENDED_MAX_USER_DATA_DWORDS (13)

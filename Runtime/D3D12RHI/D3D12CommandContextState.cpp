@@ -124,8 +124,7 @@ void FD3D12CommandContextState::BindGraphicsState()
     // -----------------------------------------------------------------------------------------------------------
     // D3D12 Spec: when a root signature carries D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED
     // (or its sampler counterpart) the shader-visible heaps must already be bound on the command list before 
-    // SetGraphicsRootSignature is called. SetDescriptorHeaps is idempotent (skips when unchanged), so the 
-    // redundant call at the top of BindResources stays safe.
+    // SetGraphicsRootSignature is called. BindResources relies on every Bind*State call setting them here.
     // -----------------------------------------------------------------------------------------------------------
 
     CommonState.DescriptorCache.SetDescriptorHeaps();
@@ -1009,8 +1008,6 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
 
 void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage)
 {
-    CommonState.DescriptorCache.SetDescriptorHeaps();
-
     for (EShaderVisibility::Type CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility::Type(CurrentStage + 1))
     {
         const bool bDescriptorTableDirty = CommonState.ConstantBufferCache.IsDescriptorTableDirty(CurrentStage) || GD3D12ForceBinding;

@@ -394,14 +394,7 @@ void FFrameResources::Release()
     ReducedDepthBuffer[0].Reset();
     ReducedDepthBuffer[1].Reset();
 
-    RayTracingScene.Reset();
-    RayTracingOutput.Reset();
-    RayTracingShaderBindingTable.Reset();
-    RayTracingBindlessShaderBindingTable.Reset();
-    RayTracingSERShaderBindingTable.Reset();
-    RayTracingHitGroupBindings.Clear();
-    RayTracingGeometryInstances.Clear();
-    RayTracingMeshToHitGroupIndex.Clear();
+    ReleaseRayTracingResources();
 
     DirectionalShadowMask.Reset();
     CascadeIndexBuffer.Reset();
@@ -427,4 +420,42 @@ void FFrameResources::Release()
     CascadeSplitsBufferUAV.Reset();
 
     LightProbeBuffer.Reset();
+}
+
+void FFrameResources::ReleaseRayTracingResources()
+{
+    RayTracingScene.Reset();
+    RayTracingOutput.Reset();
+    RayTracingShaderBindingTable.Reset();
+    RayTracingBindlessShaderBindingTable.Reset();
+    RayTracingSERShaderBindingTable.Reset();
+    RayTracingHitGroupBindings.Clear();
+    RayTracingGeometryInstances.Clear();
+    RayTracingMeshToHitGroupIndex.Clear();
+    RayTracingSceneConstantsBuffer.Reset();
+    RayTracingGeometryTableBuffer.Reset();
+    RayTracingGeometryTableSRV.Reset();
+    RayTracingGeometryTableData.Clear();
+
+    ReflectionTrace.Reset();
+
+    for (FRHITextureRef& Texture : ReflectionHistory)
+    {
+        Texture.Reset();
+    }
+
+    for (FRHITextureRef& Texture : ReflectionMoments)
+    {
+        Texture.Reset();
+    }
+
+    for (FRHITextureRef& Texture : ReflectionDenoised)
+    {
+        Texture.Reset();
+    }
+
+    ReflectionHistoryIndex = 0;
+    bReflectionHalfRes     = false;
+    ReflectionFullWidth    = 0;
+    ReflectionFullHeight   = 0;
 }

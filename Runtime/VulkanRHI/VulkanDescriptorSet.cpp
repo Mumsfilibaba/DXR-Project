@@ -425,7 +425,10 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResource
         ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
     }
 
-    DirtyResources();
+    if (DescriptorSetBuilders[DescriptorSetIndex].IsKeyDirty())
+    {
+        DirtyResources();
+    }
 }
 
 void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAccessView, uint32 DescriptorSetIndex, uint32 BindingIndex)
@@ -483,7 +486,10 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAcce
         ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
     }
 
-    DirtyResources();
+    if (DescriptorSetBuilders[DescriptorSetIndex].IsKeyDirty())
+    {
+        DirtyResources();
+    }
 }
 
 bool FVulkanDescriptorState::IsImageViewTypeCompatible(uint32 DescriptorSetIndex, uint32 BindingIndex, VkImageViewType ImageViewType) const
@@ -526,6 +532,7 @@ void FVulkanDescriptorState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, u
             {
                 DynamicOffsets[FlatIndex] = DynamicOffset;
                 bDynamicOffsetsDirty = true;
+                DirtyDescriptorSet();
             }
         }
         else
@@ -538,7 +545,10 @@ void FVulkanDescriptorState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, u
         ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
     }
 
-    DirtyResources();
+    if (DescriptorSetBuilders[DescriptorSetIndex].IsKeyDirty())
+    {
+        DirtyResources();
+    }
 }
 
 void FVulkanDescriptorState::SetSampler(FVulkanSamplerStateRHI* SamplerState, uint32 DescriptorSetIndex, uint32 BindingIndex)
@@ -555,7 +565,10 @@ void FVulkanDescriptorState::SetSampler(FVulkanSamplerStateRHI* SamplerState, ui
         ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
     }
 
-    DirtyResources();
+    if (DescriptorSetBuilders[DescriptorSetIndex].IsKeyDirty())
+    {
+        DirtyResources();
+    }
 }
 
 void FVulkanDescriptorState::ResolveSampledImageLayouts(FVulkanTextureRHI* ReadOnlyDepthTexture, VkImageLayout ReadOnlyDepthLayout)

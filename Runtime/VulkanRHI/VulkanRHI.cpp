@@ -368,6 +368,8 @@ bool FVulkanDeviceRHI::Initialize()
         return false;
     }
 
+    VulkanDeviceLimits::TimestampPeriod = PhysicalDevice->GetProperties().limits.timestampPeriod;
+
     Device = new FVulkanDevice(GetInstance(), GetPhysicalDevice());
     if (!Device->Initialize(DeviceCreateInfo))
     {
@@ -424,13 +426,6 @@ bool FVulkanDeviceRHI::Initialize()
 
 void FVulkanDeviceRHI::BeginFrame()
 {
-    // Update timestamp period, this is necessary on MoltenVK in order to get correct measurements
-    {
-        VkPhysicalDeviceProperties Properties;
-        vkGetPhysicalDeviceProperties(PhysicalDevice->GetVkPhysicalDevice(), &Properties);
-        VulkanDeviceLimits::TimestampPeriod = Properties.limits.timestampPeriod;
-    }
-
     FVulkanQueue* GraphicsQueue = Device->GetGraphicsQueue();
     GraphicsQueue->ProcessCommandQueue();
 
