@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Threading/Atomic/AtomicInt.h"
 #include "RHI/RHIFence.h"
 #include "MetalRHI/MetalCore.h"
 
@@ -26,6 +27,6 @@ public:
 
 private:
     id<MTLSharedEvent> SharedEvent;
-    uint64             LastSignaledValue;
+    TAtomicInt<uint64> LastSignaledValue;
     String             DebugName;
 };

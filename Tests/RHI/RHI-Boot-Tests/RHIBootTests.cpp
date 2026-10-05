@@ -7,6 +7,7 @@
 #include <Core/Misc/Paths.h>
 #include <Core/Platform/PlatformFile.h>
 #include <Core/Platform/PlatformMisc.h>
+#include <Core/Platform/PlatformThreadMisc.h>
 #include <RHI/RHI.h>
 #include <RHI/RHICommandList.h>
 #include <RHI/RHIIndirect.h>
@@ -482,6 +483,62 @@ static bool ProbeCommandRecording()
 
             TEST_EXPECT(Fence->Wait(5ull * 1000ull * 1000ull * 1000ull));
             TEST_EXPECT(Fence->IsSignaled());
+        }
+    }
+
+    if (RHI::Device->GetRHIType() != ERHIType::Null)
+    {
+        TEST_SECTION("A fence polled before the RHI thread drains reports signaled only after its copy landed");
+
+        FRHIFenceRef Fence = RHI::CreateFence();
+        TEST_EXPECT(Fence != nullptr);
+
+        if (Fence)
+        {
+            TEST_EXPECT(!Fence->IsSignaled());
+            TEST_EXPECT(!Fence->Wait(0));
+        }
+
+        const uint32 SourceValue = 0x5EED1234u;
+        FRHIBufferRef SourceBuffer = RHI::CreateBuffer(
+            FRHIBufferDesc(EBufferFlags::Default | EBufferFlags::CopySource, sizeof(uint32), sizeof(uint32)),
+            ERHIResourceState::Common,
+            &SourceValue);
+        TEST_EXPECT(SourceBuffer != nullptr);
+
+        FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(sizeof(uint32)));
+        TEST_EXPECT(ReadbackBuffer != nullptr);
+
+        if (Fence && SourceBuffer && ReadbackBuffer)
+        {
+            FRHICommandList CommandList;
+            CommandList.CopyBuffer(ReadbackBuffer.Get(), SourceBuffer.Get(), FRHIBufferCopyDesc(0, 0, sizeof(uint32)));
+            CommandList.WriteFence(Fence.Get());
+            FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+
+            bool bSignaled = false;
+            for (uint32 Attempt = 0; Attempt < 5000 && !bSignaled; ++Attempt)
+            {
+                bSignaled = Fence->IsSignaled();
+                if (!bSignaled)
+                {
+                    FPlatformThreadMisc::Sleep(FTimespan::Milliseconds(1));
+                }
+            }
+
+            TEST_EXPECT(bSignaled);
+            if (bSignaled)
+            {
+                const uint32* Mapped = static_cast<const uint32*>(ReadbackBuffer->Map());
+                TEST_EXPECT(Mapped != nullptr);
+                if (Mapped)
+                {
+                    TEST_EXPECT_EQ(*Mapped, SourceValue);
+                    ReadbackBuffer->Unmap();
+                }
+            }
+
+            FRHICommandListExecutor::Get().WaitForCommands();
         }
     }
 

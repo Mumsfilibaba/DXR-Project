@@ -18,34 +18,35 @@ FMetalFenceRHI::~FMetalFenceRHI()
 
 uint64 FMetalFenceRHI::SignalNextValue()
 {
-    ++LastSignaledValue;
-    return LastSignaledValue;
+    return LastSignaledValue.Increment();
 }
 
 bool FMetalFenceRHI::IsSignaled() const
 {
-    if (!SharedEvent)
+    const uint64 TargetValue = LastSignaledValue.Load();
+    if (!SharedEvent || TargetValue == 0)
     {
         return false;
     }
 
-    return SharedEvent.signaledValue >= LastSignaledValue;
+    return SharedEvent.signaledValue >= TargetValue;
 }
 
 bool FMetalFenceRHI::Wait(uint64 TimeoutNs) const
 {
-    if (!SharedEvent)
+    const uint64 TargetValue = LastSignaledValue.Load();
+    if (!SharedEvent || TargetValue == 0)
     {
         return false;
     }
 
-    if (LastSignaledValue == 0 || SharedEvent.signaledValue >= LastSignaledValue)
+    if (SharedEvent.signaledValue >= TargetValue)
     {
         return true;
     }
 
     const uint64 TimeoutMS = (TimeoutNs == UINT64_MAX) ? UINT64_MAX : (TimeoutNs / 1000000ull);
-    return [SharedEvent waitUntilSignaledValue:LastSignaledValue timeoutMS:TimeoutMS];
+    return [SharedEvent waitUntilSignaledValue:TargetValue timeoutMS:TimeoutMS];
 }
 
 void FMetalFenceRHI::SetDebugName(const String& InName)
