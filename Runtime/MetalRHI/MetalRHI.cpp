@@ -142,10 +142,11 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
     RHI::bSupportsViewInstancing = false;
     RHI::MaxViewInstanceCount    = 1;
 
-    RHI::bSupportsRayTracing                                       = false;
+    RHI::bSupportsRayTracing                                       = GMetalFeatures.bRayTracing;
+    RHI::bSupportsRayTracingPipeline                               = false;
     RHI::RayTracingTier                                            = ERayTracingTier::NotSupported;
     RHI::RayTracingMaxRecursionDepth                               = 0;
-    RHI::bSupportsInlineRayTracing                                 = false;
+    RHI::bSupportsInlineRayTracing                                 = GMetalFeatures.bRayTracing;
     RHI::bSupportsOpacityMicromap                                  = false;
     RHI::bSupportsShaderExecutionReordering                        = false;
     RHI::bShaderExecutionReorderingActuallyReorders                = false;
@@ -229,6 +230,7 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
     CHECK(!RHI::bSupportsTimestampQueries || GMetalSupportsCounterSampling);
     CHECK(!RHI::bSupportsViewInstancing || GMetalFeatures.MaxVertexAmplificationCount >= RHI::MaxViewInstanceCount);
     CHECK(!RHI::bSupportsRayTracing || GMetalFeatures.bRayTracing);
+    CHECK(!RHI::bSupportsInlineRayTracing || GMetalFeatures.bRayTracing);
 
     return true;
 }
@@ -323,14 +325,64 @@ FRHISamplerState* FMetalDeviceRHI::CreateSamplerState(const FRHISamplerStateDesc
     return Result.ReleaseOwnership();
 }
 
-FRHISceneAccelerationStructure* FMetalDeviceRHI::CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& Desc)
+FRHISceneAccelerationStructure* FMetalDeviceRHI::CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc)
 {
-    return RHI::bSupportsRayTracing ? new FMetalSceneAccelerationStructureRHI(GetMetalDevice(), Desc) : nullptr;
+    if (!RHI::bSupportsRayTracing)
+    {
+        return nullptr;
+    }
+
+    FRHISceneAccelerationStructureBuildDesc BuildDesc;
+    BuildDesc.Instances    = InSceneDesc.Instances.Data();
+    BuildDesc.NumInstances = InSceneDesc.Instances.Size();
+    BuildDesc.bUpdate      = false;
+
+    FMetalSceneAccelerationStructureRHIRef MetalScene = new FMetalSceneAccelerationStructureRHI(GetMetalDevice(), InSceneDesc);
+
+    {
+        FMetalScopedCommandContext BuildContext(*GetMetalDevice()->GetQueue(EMetalQueueType::Direct));
+        if (!MetalScene->Build(*BuildContext, BuildDesc))
+        {
+            METAL_ERROR("Failed to build the scene acceleration structure");
+            MetalScene.Reset();
+        }
+    }
+
+    return MetalScene.ReleaseOwnership();
 }
 
 FRHIGeometryAccelerationStructure* FMetalDeviceRHI::CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
 {
-    return RHI::bSupportsRayTracing ? new FMetalGeometryAccelerationStructureRHI(InGeometryDesc) : nullptr;
+    if (!RHI::bSupportsRayTracing)
+    {
+        return nullptr;
+    }
+
+    FMetalGeometryAccelerationStructureRHIRef MetalGeometry = new FMetalGeometryAccelerationStructureRHI(GetMetalDevice(), InGeometryDesc);
+
+    if (InGeometryDesc.GeometryType == ERayTracingGeometryType::ProceduralAABBs)
+    {
+        return MetalGeometry.ReleaseOwnership();
+    }
+
+    FRHIGeometryAccelerationStructureBuildDesc BuildDesc;
+    BuildDesc.VertexBuffer = InGeometryDesc.VertexBuffer;
+    BuildDesc.NumVertices  = InGeometryDesc.NumVertices;
+    BuildDesc.IndexBuffer  = InGeometryDesc.IndexBuffer;
+    BuildDesc.NumIndices   = InGeometryDesc.NumIndices;
+    BuildDesc.IndexFormat  = InGeometryDesc.IndexFormat;
+    BuildDesc.bUpdate      = false;
+
+    {
+        FMetalScopedCommandContext BuildContext(*GetMetalDevice()->GetQueue(EMetalQueueType::Direct));
+        if (!MetalGeometry->Build(*BuildContext, BuildDesc))
+        {
+            METAL_ERROR("Failed to build the geometry acceleration structure");
+            MetalGeometry.Reset();
+        }
+    }
+
+    return MetalGeometry.ReleaseOwnership();
 }
 
 FRHIShaderResourceView* FMetalDeviceRHI::CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc)
@@ -480,32 +532,32 @@ FRHIPixelShader* FMetalDeviceRHI::CreatePixelShader(const TArray<uint8>& ShaderC
 
 FRHIRayGenShader* FMetalDeviceRHI::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
-    return RHI::bSupportsRayTracing ? CreateShader<FMetalRayGenShaderRHI>(ShaderCode) : nullptr;
+    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayGenShaderRHI>(ShaderCode) : nullptr;
 }
 
 FRHIRayAnyHitShader* FMetalDeviceRHI::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
-    return RHI::bSupportsRayTracing ? CreateShader<FMetalRayAnyHitShaderRHI>(ShaderCode) : nullptr;
+    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayAnyHitShaderRHI>(ShaderCode) : nullptr;
 }
 
 FRHIRayClosestHitShader* FMetalDeviceRHI::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
-    return RHI::bSupportsRayTracing ? CreateShader<FMetalRayClosestHitShaderRHI>(ShaderCode) : nullptr;
+    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayClosestHitShaderRHI>(ShaderCode) : nullptr;
 }
 
 FRHIRayMissShader* FMetalDeviceRHI::CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
-    return RHI::bSupportsRayTracing ? CreateShader<FMetalRayMissShaderRHI>(ShaderCode) : nullptr;
+    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayMissShaderRHI>(ShaderCode) : nullptr;
 }
 
 FRHIRayIntersectionShader* FMetalDeviceRHI::CreateRayIntersectionShader(const TArray<uint8>& ShaderCode)
 {
-    return RHI::bSupportsRayTracing ? CreateShader<FMetalRayIntersectionShaderRHI>(ShaderCode) : nullptr;
+    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayIntersectionShaderRHI>(ShaderCode) : nullptr;
 }
 
 FRHIRayCallableShader* FMetalDeviceRHI::CreateRayCallableShader(const TArray<uint8>& ShaderCode)
 {
-    return RHI::bSupportsRayTracing ? CreateShader<FMetalRayCallableShaderRHI>(ShaderCode) : nullptr;
+    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayCallableShaderRHI>(ShaderCode) : nullptr;
 }
 
 FRHIDepthStencilState* FMetalDeviceRHI::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
@@ -571,7 +623,7 @@ FRHIMeshletPipelineState* FMetalDeviceRHI::CreateMeshletPipelineState(const FRHI
 
 FRHIRayTracingPipelineState* FMetalDeviceRHI::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& Desc)
 {
-    if (!RHI::bSupportsRayTracing)
+    if (!RHI::bSupportsRayTracingPipeline)
     {
         return nullptr;
     }

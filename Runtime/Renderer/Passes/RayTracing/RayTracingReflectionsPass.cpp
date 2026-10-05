@@ -145,48 +145,51 @@ FRayTracingVariant FRayTracingReflectionsPass::CreateVariant(const FRayTracingPe
 
 bool FRayTracingReflectionsPass::Initialize(FFrameResources& Resources)
 {
-    if (RHI::bSupportsShaderBindingTableDescriptors)
+    if (RHI::bSupportsRayTracingPipeline)
     {
-        FRayTracingPermutation Permutation;
-        Permutation.Set<FBindless>(false);
-        Permutation.Set<FRayTracingSER>(false);
-
-        LocalVariant = CreateVariant(Permutation);
-        if (!LocalVariant)
+        if (RHI::bSupportsShaderBindingTableDescriptors)
         {
-            LOG_WARNING("[RayTracingReflections]: Explicit ray tracing variant unavailable. Only the bindless path will be used");
+            FRayTracingPermutation Permutation;
+            Permutation.Set<FBindless>(false);
+            Permutation.Set<FRayTracingSER>(false);
+
+            LocalVariant = CreateVariant(Permutation);
+            if (!LocalVariant)
+            {
+                LOG_WARNING("[RayTracingReflections]: Explicit ray tracing variant unavailable. Only the bindless path will be used");
+            }
         }
-    }
 
-    {
-        FRayTracingPermutation Permutation;
-        Permutation.Set<FBindless>(true);
-        Permutation.Set<FRayTracingSER>(false);
-
-        BindlessVariant = CreateVariant(Permutation);
-        if (!BindlessVariant)
         {
-            LOG_WARNING("[RayTracingReflections]: Bindless ray tracing variant unavailable. Only the explicit-binding path will be used");
+            FRayTracingPermutation Permutation;
+            Permutation.Set<FBindless>(true);
+            Permutation.Set<FRayTracingSER>(false);
+
+            BindlessVariant = CreateVariant(Permutation);
+            if (!BindlessVariant)
+            {
+                LOG_WARNING("[RayTracingReflections]: Bindless ray tracing variant unavailable. Only the explicit-binding path will be used");
+            }
         }
-    }
 
-    if (!LocalVariant && !BindlessVariant)
-    {
-        LOG_ERROR("[RayTracingReflections]: No usable ray tracing pipeline (neither explicit nor bindless could be created)");
-        DEBUG_BREAK();
-        return false;
-    }
-
-    if (BindlessVariant)
-    {
-        FRayTracingPermutation Permutation;
-        Permutation.Set<FBindless>(true);
-        Permutation.Set<FRayTracingSER>(true);
-
-        SERVariant = CreateVariant(Permutation);
-        if (!SERVariant && RHI::bSupportsShaderExecutionReordering)
+        if (!LocalVariant && !BindlessVariant)
         {
-            LOG_WARNING("[RayTracingReflections]: SER ray tracing variant unavailable. The SER path will be disabled");
+            LOG_ERROR("[RayTracingReflections]: No usable ray tracing pipeline (neither explicit nor bindless could be created)");
+            DEBUG_BREAK();
+            return false;
+        }
+
+        if (BindlessVariant)
+        {
+            FRayTracingPermutation Permutation;
+            Permutation.Set<FBindless>(true);
+            Permutation.Set<FRayTracingSER>(true);
+
+            SERVariant = CreateVariant(Permutation);
+            if (!SERVariant && RHI::bSupportsShaderExecutionReordering)
+            {
+                LOG_WARNING("[RayTracingReflections]: SER ray tracing variant unavailable. The SER path will be disabled");
+            }
         }
     }
 
@@ -283,7 +286,8 @@ bool FRayTracingReflectionsPass::CreateResources(FFrameResources& Resources, uin
 EReflectionPath FRayTracingReflectionsPass::SelectPath() const
 {
     const bool bExplicitAvailable = RHI::bSupportsShaderBindingTableDescriptors && LocalVariant;
-    if (GRayTracingInlineReflections && RHI::bSupportsInlineRayTracing && InlineReflectionsPipeline)
+    const bool bInlineAvailable   = RHI::bSupportsInlineRayTracing && InlineReflectionsPipeline;
+    if (bInlineAvailable && (GRayTracingInlineReflections || !RHI::bSupportsRayTracingPipeline))
     {
         return EReflectionPath::Inline;
     }

@@ -204,10 +204,41 @@ bool FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& Shade
                     return false;
                 }
 
+                if (Plan.ShaderResourceAccelerationStructureMask & Bit)
+                {
+                    METAL_ERROR("Shader stage %u binds SRV register %u as both an acceleration structure and a %s", Stage, Register, bBuffer ? "buffer" : "texture");
+                    return false;
+                }
+
                 bAssigned = AssignMSLSlot(Plan.ShaderResourceSlots[Register], Binding, Stage);
                 Plan.ShaderResourceMask       |= Bit;
                 Plan.ShaderResourceBufferMask |= bBuffer ? Bit : 0;
                 Plan.ShaderResourceNullTypes[Register] = Binding.NullTextureType;
+                break;
+            }
+
+            case EMSLBindingType::AccelerationStructure:
+            {
+                CHECK(Register < MAX_SRVS);
+
+                const bool bRenderStage = Stage == EShaderVisibility::Vertex || Stage == EShaderVisibility::Pixel;
+                if (Stage == EShaderVisibility::Mesh || Stage == EShaderVisibility::Amplification || (bRenderStage && !GMetalFeatures.bRayTracingFromRender))
+                {
+                    METAL_ERROR("Shader stage %u binds an acceleration structure at SRV register %u, which this device cannot bind there", Stage, Register);
+                    return false;
+                }
+
+                if ((Plan.ShaderResourceMask & Bit) && !(Plan.ShaderResourceAccelerationStructureMask & Bit))
+                {
+                    METAL_ERROR("Shader stage %u binds SRV register %u as both an acceleration structure and a %s", Stage, Register,
+                        (Plan.ShaderResourceBufferMask & Bit) ? "buffer" : "texture");
+                    return false;
+                }
+
+                bAssigned = AssignMSLSlot(Plan.ShaderResourceSlots[Register], Binding, Stage);
+                Plan.ShaderResourceMask                      |= Bit;
+                Plan.ShaderResourceBufferMask                |= Bit;
+                Plan.ShaderResourceAccelerationStructureMask |= Bit;
                 break;
             }
 
@@ -368,8 +399,9 @@ void FMetalPipelineBindingLayout::PruneToReflection(EShaderVisibility::Type Stag
         return (Plan.UnorderedAccessBufferMask & (1u << Register)) ? IsBufferUsed(Slot) : IsTextureUsed(Slot);
     });
 
-    Plan.ShaderResourceBufferMask  &= Plan.ShaderResourceMask;
-    Plan.UnorderedAccessBufferMask &= Plan.UnorderedAccessMask;
+    Plan.ShaderResourceBufferMask                &= Plan.ShaderResourceMask;
+    Plan.ShaderResourceAccelerationStructureMask &= Plan.ShaderResourceMask;
+    Plan.UnorderedAccessBufferMask               &= Plan.UnorderedAccessMask;
 
     if (Plan.ShaderConstantsSlot != InvalidSlot && !IsBufferUsed(Plan.ShaderConstantsSlot))
     {
@@ -454,7 +486,12 @@ uint8 FMetalPipelineBindingLayout::GetSlot(EShaderVisibility::Type Stage, EMSLBi
             return (Plan.ConstantBufferMask & Bit) ? Plan.ConstantBufferSlots[RegisterIndex] : InvalidSlot;
 
         case EMSLBindingType::ShaderResourceBuffer:
-            return (Plan.ShaderResourceMask & Plan.ShaderResourceBufferMask & Bit)
+            return (Plan.ShaderResourceMask & Plan.ShaderResourceBufferMask & ~Plan.ShaderResourceAccelerationStructureMask & Bit)
+                ? Plan.ShaderResourceSlots[RegisterIndex]
+                : InvalidSlot;
+
+        case EMSLBindingType::AccelerationStructure:
+            return (Plan.ShaderResourceMask & Plan.ShaderResourceAccelerationStructureMask & Bit)
                 ? Plan.ShaderResourceSlots[RegisterIndex]
                 : InvalidSlot;
 

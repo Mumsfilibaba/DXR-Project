@@ -726,6 +726,7 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
     RHI::MaxViewInstanceCount        = 1;
 
     RHI::bSupportsRayTracing         = false;
+    RHI::bSupportsRayTracingPipeline = false;
     RHI::RayTracingTier              = ERayTracingTier::NotSupported;
     RHI::RayTracingMaxRecursionDepth = 0;
 
@@ -809,6 +810,7 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
     if (GD3D12RayTracingTier >= D3D12_RAYTRACING_TIER_1_0)
     {
         RHI::bSupportsRayTracing                    = true;
+        RHI::bSupportsRayTracingPipeline            = true;
         RHI::RayTracingMaxRecursionDepth            = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
         RHI::bSupportsShaderBindingTableDescriptors = true;
         RHI::bSupportsToolsVisualization            = true;
@@ -878,6 +880,7 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
     else
     {
         RHI::bSupportsRayTracing         = false;
+        RHI::bSupportsRayTracingPipeline = false;
         RHI::RayTracingMaxRecursionDepth = 0;
         RHI::RayTracingTier              = ERayTracingTier::NotSupported;
     }

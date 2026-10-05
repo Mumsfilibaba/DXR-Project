@@ -35,9 +35,11 @@ public:
 
     void InitStandalone(id<MTLBuffer> InBuffer, uint64 InSize, bool bBindlessReachable);
     void InitStandalone(id<MTLTexture> InTexture, uint64 InSize, bool bBindlessReachable);
+    void InitStandalone(id<MTLAccelerationStructure> InAccelerationStructure, uint64 InSize);
     void InitSuballocatedResource(id<MTLBuffer> InBuffer, uint64 InOffset, uint64 InSize, void* InMappedAddress, FMetalLinearAllocator* InLinearAllocator, FMetalUploadHeapAllocator* InUploadAllocator);
     void InitSuballocatedHeap(id<MTLBuffer> InBuffer, FMetalHeap* InHeap, uint64 InOffset, uint64 InSize, uint32 InHeapIndex, FMetalBufferAllocator* InBufferAllocator);
     void InitSuballocatedHeap(id<MTLTexture> InTexture, FMetalHeap* InHeap, uint64 InOffset, uint64 InSize, uint32 InHeapIndex, FMetalTextureAllocator* InTextureAllocator);
+    void InitSuballocatedHeap(id<MTLAccelerationStructure> InAccelerationStructure, FMetalHeap* InHeap, uint64 InOffset, uint64 InSize, uint32 InHeapIndex, FMetalBufferAllocator* InBufferAllocator);
 
     void ReleaseResource();
     void Reset();
@@ -89,6 +91,11 @@ public:
         return Texture;
     }
 
+    FORCEINLINE id<MTLAccelerationStructure> GetAccelerationStructure() const
+    {
+        return AccelerationStructure;
+    }
+
     FORCEINLINE FMetalHeap* GetHeap() const
     {
         return Heap;
@@ -137,17 +144,18 @@ private:
         }
     } AllocatorPointers;
 
-    id<MTLBuffer>             Buffer;
-    id<MTLTexture>            Texture;
-    FMetalHeap*               Heap;
-    FMetalRelocatable*        Owner;
-    FMetalResidencyEntry*     ResidencyEntry;
-    FMetalResidencyEntry      StandaloneEntry;
-    void*                     MappedBaseAddress;
-    uint64                    ResourceOffset;
-    uint64                    Size;
-    uint32                    HeapIndex;
-    EMetalResourceStorageType StorageType;
-    EMetalAllocatorType       AllocatorType;
-    bool                      bDefragPending;
+    id<MTLBuffer>                Buffer;
+    id<MTLTexture>               Texture;
+    id<MTLAccelerationStructure> AccelerationStructure;
+    FMetalHeap*                  Heap;
+    FMetalRelocatable*           Owner;
+    FMetalResidencyEntry*        ResidencyEntry;
+    FMetalResidencyEntry         StandaloneEntry;
+    void*                        MappedBaseAddress;
+    uint64                       ResourceOffset;
+    uint64                       Size;
+    uint32                       HeapIndex;
+    EMetalResourceStorageType    StorageType;
+    EMetalAllocatorType          AllocatorType;
+    bool                         bDefragPending;
 };

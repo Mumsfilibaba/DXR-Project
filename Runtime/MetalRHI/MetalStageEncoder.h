@@ -5,17 +5,17 @@
 template<EShaderVisibility::Type Stage>
 struct TMetalStageEncoder;
 
-#define METAL_DECLARE_STAGE_ENCODER(Stage, EncoderProtocol, Prefix)                                                                                                                                             \
-    template<>                                                                                                                                                                                                  \
-    struct TMetalStageEncoder<Stage>                                                                                                                                                                            \
-    {                                                                                                                                                                                                           \
-        using EncoderType = id<EncoderProtocol>;                                                                                                                                                                \
-                                                                                                                                                                                                                \
-        static FORCEINLINE void SetBufferOffset(EncoderType Encoder, NSUInteger Offset, NSUInteger Slot)                                  { [Encoder set##Prefix##BufferOffset:Offset atIndex:Slot]; }           \
-        static FORCEINLINE void SetBytes(EncoderType Encoder, const void* Bytes, NSUInteger Size, NSUInteger Slot)                        { [Encoder set##Prefix##Bytes:Bytes length:Size atIndex:Slot]; }        \
+#define METAL_DECLARE_STAGE_ENCODER(Stage, EncoderProtocol, Prefix)                                                                                                                                                   \
+    template<>                                                                                                                                                                                                        \
+    struct TMetalStageEncoder<Stage>                                                                                                                                                                                  \
+    {                                                                                                                                                                                                                 \
+        using EncoderType = id<EncoderProtocol>;                                                                                                                                                                      \
+                                                                                                                                                                                                                      \
+        static FORCEINLINE void SetBufferOffset(EncoderType Encoder, NSUInteger Offset, NSUInteger Slot)                                  { [Encoder set##Prefix##BufferOffset:Offset atIndex:Slot]; }                \
+        static FORCEINLINE void SetBytes(EncoderType Encoder, const void* Bytes, NSUInteger Size, NSUInteger Slot)                        { [Encoder set##Prefix##Bytes:Bytes length:Size atIndex:Slot]; }            \
         static FORCEINLINE void SetBuffers(EncoderType Encoder, const id<MTLBuffer>* Buffers, const NSUInteger* Offsets, NSRange Range)   { [Encoder set##Prefix##Buffers:Buffers offsets:Offsets withRange:Range]; } \
-        static FORCEINLINE void SetTextures(EncoderType Encoder, const id<MTLTexture>* Textures, NSRange Range)                           { [Encoder set##Prefix##Textures:Textures withRange:Range]; }          \
-        static FORCEINLINE void SetSamplerStates(EncoderType Encoder, const id<MTLSamplerState>* Samplers, NSRange Range)                 { [Encoder set##Prefix##SamplerStates:Samplers withRange:Range]; }     \
+        static FORCEINLINE void SetTextures(EncoderType Encoder, const id<MTLTexture>* Textures, NSRange Range)                           { [Encoder set##Prefix##Textures:Textures withRange:Range]; }               \
+        static FORCEINLINE void SetSamplerStates(EncoderType Encoder, const id<MTLSamplerState>* Samplers, NSRange Range)                 { [Encoder set##Prefix##SamplerStates:Samplers withRange:Range]; }          \
     };
 
 METAL_DECLARE_STAGE_ENCODER(EShaderVisibility::Vertex,        MTLRenderCommandEncoder,  Vertex)
@@ -25,6 +25,31 @@ METAL_DECLARE_STAGE_ENCODER(EShaderVisibility::Amplification, MTLRenderCommandEn
 METAL_DECLARE_STAGE_ENCODER(EShaderVisibility::Compute,       MTLComputeCommandEncoder, )
 
 #undef METAL_DECLARE_STAGE_ENCODER
+
+// Mesh and object stages have no acceleration structure binding, so the forwarder is a separate trait
+template<EShaderVisibility::Type Stage>
+struct TMetalStageAccelerationStructure
+{
+    static constexpr bool bSupported = false;
+};
+
+#define METAL_DECLARE_STAGE_ACCELERATION_STRUCTURE(Stage, EncoderProtocol, Prefix)                                                    \
+    template<>                                                                                                                        \
+    struct TMetalStageAccelerationStructure<Stage>                                                                                    \
+    {                                                                                                                                 \
+        static constexpr bool bSupported = true;                                                                                      \
+                                                                                                                                      \
+        static FORCEINLINE void Set(id<EncoderProtocol> Encoder, id<MTLAccelerationStructure> AccelerationStructure, NSUInteger Slot) \
+        {                                                                                                                             \
+            [Encoder set##Prefix##AccelerationStructure:AccelerationStructure atBufferIndex:Slot];                                    \
+        }                                                                                                                             \
+    };
+
+METAL_DECLARE_STAGE_ACCELERATION_STRUCTURE(EShaderVisibility::Vertex,  MTLRenderCommandEncoder,  Vertex)
+METAL_DECLARE_STAGE_ACCELERATION_STRUCTURE(EShaderVisibility::Pixel,   MTLRenderCommandEncoder,  Fragment)
+METAL_DECLARE_STAGE_ACCELERATION_STRUCTURE(EShaderVisibility::Compute, MTLComputeCommandEncoder, )
+
+#undef METAL_DECLARE_STAGE_ACCELERATION_STRUCTURE
 
 class FMetalEncoderBindingCache
 {
@@ -85,6 +110,17 @@ public:
         Slots.Buffers[Slot]  = nil;
         Slots.PendingBuffers &= ~(1ull << Slot);
         TMetalStageEncoder<Stage>::SetBytes(Encoder, Bytes, Size, Slot);
+    }
+
+    template<EShaderVisibility::Type Stage>
+    FORCEINLINE void SetAccelerationStructure(typename TMetalStageEncoder<Stage>::EncoderType Encoder, id<MTLAccelerationStructure> AccelerationStructure, uint8 Slot)
+    {
+        CHECK(Slot < MaxBuffers);
+
+        FStageSlots& Slots = Stages[Stage];
+        Slots.Buffers[Slot]  = nil;
+        Slots.PendingBuffers &= ~(1ull << Slot);
+        TMetalStageAccelerationStructure<Stage>::Set(Encoder, AccelerationStructure, Slot);
     }
 
     template<EShaderVisibility::Type Stage>

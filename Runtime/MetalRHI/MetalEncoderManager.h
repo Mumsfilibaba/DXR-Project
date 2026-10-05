@@ -16,6 +16,7 @@ enum class EMetalEncoderType : uint8
     Render,
     Compute,
     Blit,
+    AccelerationStructure,
     Count,
 };
 
@@ -61,12 +62,13 @@ public:
     void            BeginCommandBuffer(FMetalCommands* InCommands);
     FMetalCommands* EndCommandBuffer();
 
-    id<MTLRenderCommandEncoder>         BeginRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR* Label);
-    id<MTLRenderCommandEncoder>         AdoptRenderEncoder(id<MTLRenderCommandEncoder> SubEncoder, const CHAR* Label);
-    id<MTLComputeCommandEncoder>        RequireComputeEncoder();
-    id<MTLBlitCommandEncoder>           RequireBlitEncoder();
-    id<MTLParallelRenderCommandEncoder> BeginParallelRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR* Label);
-    void                                EndParallelRenderEncoder(id<MTLParallelRenderCommandEncoder> ParallelEncoder);
+    id<MTLRenderCommandEncoder>                BeginRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR* Label);
+    id<MTLRenderCommandEncoder>                AdoptRenderEncoder(id<MTLRenderCommandEncoder> SubEncoder, const CHAR* Label);
+    id<MTLComputeCommandEncoder>               RequireComputeEncoder();
+    id<MTLBlitCommandEncoder>                  RequireBlitEncoder();
+    id<MTLAccelerationStructureCommandEncoder> RequireAccelerationStructureEncoder();
+    id<MTLParallelRenderCommandEncoder>        BeginParallelRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR* Label);
+    void                                       EndParallelRenderEncoder(id<MTLParallelRenderCommandEncoder> ParallelEncoder);
 
     void EncodeLoadStorePass(MTLRenderPassDescriptor* Descriptor, const CHAR* Label);
     void EndEncoder();

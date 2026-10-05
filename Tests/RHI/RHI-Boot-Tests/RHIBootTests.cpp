@@ -12,6 +12,7 @@
 #include <RHI/RHIIndirect.h>
 #include <RHI/RHIPipelineState.h>
 #include <RHI/RHIQuery.h>
+#include <RHI/RHIRayTracing.h>
 #include <RHI/RHIResources.h>
 #include <RHI/RHISamplerState.h>
 #include <RHI/RHITexture.h>
@@ -30,6 +31,7 @@
 #include <MetalRHI/MetalParallelRenderPass.h>
 #include <MetalRHI/MetalPipelineState.h>
 #include <MetalRHI/MetalQueue.h>
+#include <MetalRHI/MetalRayTracing.h>
 #include <MetalRHI/MetalRHI.h>
 #include <MetalRHI/MetalShader.h>
 #include <MetalRHI/MetalTexture.h>
@@ -2340,15 +2342,629 @@ static bool ProbeDefaultResourcesAndClears()
 }
 #endif
 
+static constexpr uint32 GProbeNumVertices = 6;
+
+static const float GProbeVertices[GProbeNumVertices * 3] =
+{
+    -1.0f, -1.0f, 0.0f,
+     1.0f, -1.0f, 0.0f,
+     0.0f,  1.0f, 0.0f,
+     2.0f, -1.0f, 0.0f,
+     4.0f, -1.0f, 0.0f,
+     3.0f,  1.0f, 0.0f,
+};
+
+static const uint32 GProbeIndices[GProbeNumVertices] = { 0, 1, 2, 3, 4, 5 };
+
+static constexpr float GProbeRayY         = -0.25f;
+static constexpr float GProbeRayZ         = -5.0f;
+static constexpr float GProbeBarycentricU = 0.3125f;
+static constexpr float GProbeBarycentricV = 0.375f;
+
+static const CHAR GRayQueryProbeSource[] =
+    "RWStructuredBuffer<uint4> OutBuffer : register(u0);\n"
+    "cbuffer Params : register(b0) { float4 RayOrigin; float4 RayDirection; uint4 SceneIndex; };\n"
+    "#if !PROBE_BINDLESS_SCENE\n"
+    "RaytracingAccelerationStructure Scene : register(t0);\n"
+    "#endif\n"
+    "[numthreads(1,1,1)]\n"
+    "void Main()\n"
+    "{\n"
+    "#if PROBE_BINDLESS_SCENE\n"
+    "    RaytracingAccelerationStructure Scene = ResourceDescriptorHeap[SceneIndex.x];\n"
+    "#endif\n"
+    "    RayDesc Ray;\n"
+    "    Ray.Origin    = RayOrigin.xyz;\n"
+    "    Ray.TMin      = 0.0f;\n"
+    "    Ray.Direction = RayDirection.xyz;\n"
+    "    Ray.TMax      = 1000.0f;\n"
+    "    RayQuery<RAY_FLAG_NONE> Query;\n"
+    "    Query.TraceRayInline(Scene, RAY_FLAG_NONE, 0xff, Ray);\n"
+    "    Query.Proceed();\n"
+    "    uint4 Hit          = uint4(0, 0, 0, 0);\n"
+    "    uint4 Barycentrics = uint4(0, 0, 0, 0);\n"
+    "    if (Query.CommittedStatus() == COMMITTED_TRIANGLE_HIT)\n"
+    "    {\n"
+    "        Hit          = uint4(1, Query.CommittedInstanceID(), Query.CommittedPrimitiveIndex(), asuint(Query.CommittedRayT()));\n"
+    "        Barycentrics = uint4(asuint(Query.CommittedTriangleBarycentrics()), 0, 0);\n"
+    "    }\n"
+    "    OutBuffer[0] = Hit;\n"
+    "    OutBuffer[1] = Barycentrics;\n"
+    "}\n";
+
+struct FRayQueryProbeHit
+{
+    uint32 bHit;
+    uint32 InstanceID;
+    uint32 PrimitiveIndex;
+    float  HitT;
+    float  Barycentrics[2];
+    uint32 Padding[2];
+};
+
+struct FRayQueryProbe
+{
+    FRHIComputeShaderRef        Shader;
+    FRHIComputePipelineStateRef Pipeline;
+    FRHIComputeShaderRef        BindlessShader;
+    FRHIComputePipelineStateRef BindlessPipeline;
+};
+
+struct FRayTracingProbeGeometry
+{
+    FRHIBufferRef                        VertexBuffer;
+    FRHIBufferRef                        IndexBuffer;
+    FRHIGeometryAccelerationStructureRef Geometry;
+};
+
+static FRHIComputePipelineStateRef CreateRayQueryPipeline(bool bBindlessScene, FRHIComputeShaderRef& OutShader)
+{
+    FShaderDefine Defines[] = { FShaderDefine("PROBE_BINDLESS_SCENE", bBindlessScene ? "1" : "0") };
+
+    TArray<uint8> ByteCode;
+    const FShaderCompileInfo CompileInfo("Main", bBindlessScene ? EShaderModel::SM_6_6 : EShaderModel::SM_6_5, EShaderStage::Compute, TArrayView<FShaderDefine>(Defines));
+    if (!FShaderCompiler::Get().CompileFromSource(GRayQueryProbeSource, CompileInfo, ByteCode))
+    {
+        return nullptr;
+    }
+
+    OutShader = RHI::CreateComputeShader(ByteCode);
+    if (!OutShader)
+    {
+        return nullptr;
+    }
+
+    FRHIComputePipelineStateDesc PipelineDesc;
+    PipelineDesc.Shader = OutShader.Get();
+    return RHI::CreateComputePipelineState(PipelineDesc);
+}
+
+static bool CreateRayQueryProbe(FRayQueryProbe& OutProbe)
+{
+    OutProbe.Pipeline = CreateRayQueryPipeline(false, OutProbe.Shader);
+    if (RHI::bSupportsBindless)
+    {
+        OutProbe.BindlessPipeline = CreateRayQueryPipeline(true, OutProbe.BindlessShader);
+    }
+
+    return OutProbe.Pipeline && (!RHI::bSupportsBindless || OutProbe.BindlessPipeline);
+}
+
+static bool CreateProbeGeometry(bool bIndexed, EAccelerationStructureBuildFlags Flags, FRayTracingProbeGeometry& OutGeometry)
+{
+    const EBufferFlags BufferFlags = EBufferFlags::Default | EBufferFlags::ShaderResourceBuffer | EBufferFlags::CopyDest;
+
+    OutGeometry.VertexBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateVertexBuffer(sizeof(float) * 3, GProbeNumVertices, BufferFlags), ERHIResourceState::Common, GProbeVertices);
+    if (!OutGeometry.VertexBuffer)
+    {
+        return false;
+    }
+
+    if (bIndexed)
+    {
+        OutGeometry.IndexBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateIndexBuffer(EIndexFormat::uint32, GProbeNumVertices, BufferFlags), ERHIResourceState::Common, GProbeIndices);
+        if (!OutGeometry.IndexBuffer)
+        {
+            return false;
+        }
+    }
+
+    const FRHIGeometryAccelerationStructureDesc GeometryDesc(
+        OutGeometry.VertexBuffer.Get(),
+        GProbeNumVertices,
+        OutGeometry.IndexBuffer.Get(),
+        bIndexed ? GProbeNumVertices : 0,
+        bIndexed ? EIndexFormat::uint32 : EIndexFormat::Unknown,
+        Flags);
+
+    OutGeometry.Geometry = RHI::CreateGeometryAccelerationStructure(GeometryDesc);
+    return OutGeometry.Geometry != nullptr;
+}
+
+static FRHIGeometryAccelerationStructureBuildDesc GetProbeGeometryBuildDesc(const FRayTracingProbeGeometry& Geometry, bool bUpdate)
+{
+    const bool bIndexed = Geometry.IndexBuffer != nullptr;
+    return FRHIGeometryAccelerationStructureBuildDesc(
+        Geometry.VertexBuffer.Get(),
+        GProbeNumVertices,
+        Geometry.IndexBuffer.Get(),
+        bIndexed ? GProbeNumVertices : 0,
+        bIndexed ? EIndexFormat::uint32 : EIndexFormat::Unknown,
+        bUpdate);
+}
+
+static FRHIGeometryAccelerationStructureInstance MakeProbeInstance(FRHIGeometryAccelerationStructure* Geometry, uint32 InstanceIndex, float OffsetX)
+{
+    const Matrix3x4 Transform(
+        1.0f, 0.0f, 0.0f, OffsetX,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f);
+
+    return FRHIGeometryAccelerationStructureInstance(Geometry, InstanceIndex, 0, ERayTracingInstanceFlags::None, 0xFF, Transform);
+}
+
+static bool IsNearlyEqual(float Lhs, float Rhs)
+{
+    return Math::Abs(Lhs - Rhs) < 1.0e-3f;
+}
+
+static bool TraceProbeRay(FRHICommandList& CommandList, const FRayQueryProbe& Probe, FRHISceneAccelerationStructure* Scene, bool bBindlessScene, float OriginX, FRayQueryProbeHit& OutHit)
+{
+    FRHIComputePipelineState* Pipeline = bBindlessScene ? Probe.BindlessPipeline.Get() : Probe.Pipeline.Get();
+    FRHIComputeShader*        Shader   = bBindlessScene ? Probe.BindlessShader.Get() : Probe.Shader.Get();
+    if (!Pipeline || !Shader || !Scene)
+    {
+        return false;
+    }
+
+    const FRHIDescriptorHandle SceneHandle = bBindlessScene ? Scene->GetBindlessHandle() : FRHIDescriptorHandle();
+    if (bBindlessScene && !SceneHandle.IsValid())
+    {
+        return false;
+    }
+
+    struct FParams
+    {
+        float  RayOrigin[4];
+        float  RayDirection[4];
+        uint32 SceneIndex[4];
+    };
+
+    const FParams ParamsData =
+    {
+        { OriginX, GProbeRayY, GProbeRayZ, 0.0f },
+        { 0.0f, 0.0f, 1.0f, 0.0f },
+        { bBindlessScene ? SceneHandle.Index : 0u, 0u, 0u, 0u },
+    };
+
+    FRHIBufferRef Params   = RHI::CreateBuffer(FRHIBufferDesc::CreateConstantBuffer(sizeof(ParamsData)), ERHIResourceState::Common, &ParamsData);
+    FRHIBufferRef Output   = RHI::CreateBuffer(FRHIBufferDesc(EBufferFlags::Default | EBufferFlags::RWBuffer | EBufferFlags::CopySource, sizeof(uint32) * 4, sizeof(FRayQueryProbeHit)));
+    FRHIBufferRef Readback = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(sizeof(FRayQueryProbeHit)));
+    FRHIUnorderedAccessViewRef OutputUAV = Output
+        ? RHI::CreateUnorderedAccessView(Output.Get(), FRHIUnorderedAccessViewDesc::CreateBuffer(0, 2, EBufferViewType::Structured))
+        : nullptr;
+
+    if (!Params || !Output || !Readback || !OutputUAV)
+    {
+        return false;
+    }
+
+    FRHIFenceRef Fence = RHI::CreateFence();
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Output.Get(), ERHIResourceState::Common, ERHIResourceState::UnorderedAccess));
+    CommandList.SetComputePipelineState(Pipeline);
+    CommandList.SetConstantBuffer(Shader, Params.Get(), 0);
+
+    if (!bBindlessScene)
+    {
+        CommandList.SetShaderResourceView(Shader, Scene->GetShaderResourceView(), 0);
+    }
+
+    CommandList.SetUnorderedAccessView(Shader, OutputUAV.Get(), 0);
+    CommandList.Dispatch(1, 1, 1);
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Output.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
+    CommandList.CopyBuffer(Readback.Get(), Output.Get(), FRHIBufferCopyDesc(0, 0, sizeof(FRayQueryProbeHit)));
+    CommandList.WriteFence(Fence.Get());
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    FRHICommandListExecutor::Get().WaitForCommands();
+    if (!Fence->Wait(5ull * 1000ull * 1000ull * 1000ull))
+    {
+        return false;
+    }
+
+    const FRayQueryProbeHit* Mapped = static_cast<const FRayQueryProbeHit*>(Readback->Map());
+    if (!Mapped)
+    {
+        return false;
+    }
+
+    OutHit = *Mapped;
+    Readback->Unmap();
+    return true;
+}
+
+static bool TraceProbeRay(const FRayQueryProbe& Probe, FRHISceneAccelerationStructure* Scene, bool bBindlessScene, float OriginX, FRayQueryProbeHit& OutHit)
+{
+    FRHICommandList CommandList;
+    return TraceProbeRay(CommandList, Probe, Scene, bBindlessScene, OriginX, OutHit);
+}
+
+static bool IsExpectedProbeHit(const FRayQueryProbeHit& Hit, uint32 InstanceID, uint32 PrimitiveIndex, float HitT)
+{
+    const bool bExpected = Hit.bHit == 1 &&
+        Hit.InstanceID == InstanceID &&
+        Hit.PrimitiveIndex == PrimitiveIndex &&
+        IsNearlyEqual(Hit.HitT, HitT) &&
+        IsNearlyEqual(Hit.Barycentrics[0], GProbeBarycentricU) &&
+        IsNearlyEqual(Hit.Barycentrics[1], GProbeBarycentricV);
+
+    if (!bExpected)
+    {
+        LOG_ERROR("[BOOT] Expected instance %u primitive %u at t=%.3f, the ray returned hit=%u instance %u primitive %u at t=%.3f barycentrics (%.4f, %.4f)",
+            InstanceID, PrimitiveIndex, HitT, Hit.bHit, Hit.InstanceID, Hit.PrimitiveIndex, Hit.HitT, Hit.Barycentrics[0], Hit.Barycentrics[1]);
+    }
+
+    return bExpected;
+}
+
+static bool ReadCompactedSize(FRHIRayTracingAccelerationStructure* AccelerationStructure, uint64& OutCompactedSize)
+{
+    FRHIBufferRef Readback = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(sizeof(uint64), sizeof(uint64)), ERHIResourceState::CopyDest, nullptr);
+    if (!Readback)
+    {
+        return false;
+    }
+
+    FRHIRayTracingAccelerationStructure* Sources[] = { AccelerationStructure };
+
+    FRHIFenceRef Fence = RHI::CreateFence();
+    FRHICommandList CommandList;
+    CommandList.WriteAccelerationStructurePostBuildInfo(Readback.Get(), 0, EAccelerationStructurePostBuildInfoType::CompactedSize, Sources, 1);
+    CommandList.WriteFence(Fence.Get());
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    FRHICommandListExecutor::Get().WaitForCommands();
+    if (!Fence->Wait(5ull * 1000ull * 1000ull * 1000ull))
+    {
+        return false;
+    }
+
+    const uint64* Mapped = static_cast<const uint64*>(Readback->Map());
+    if (!Mapped)
+    {
+        return false;
+    }
+
+    OutCompactedSize = *Mapped;
+    Readback->Unmap();
+    return true;
+}
+
+static bool ProbeAccelerationStructures(ERHIType ExpectedType)
+{
+    TEST_BEGIN();
+
+#if !PLATFORM_MACOS
+    UNREFERENCED_VARIABLE(ExpectedType);
+#endif
+
+    if (!RHI::bSupportsRayTracing)
+    {
+        LOG_INFO("[BOOT] Acceleration structure probes skipped, the backend reports no ray tracing");
+        TEST_END();
+    }
+
+    // Tracing needs RayQuery, a backend with only the pipeline still builds and compacts
+    const bool bCanTrace = RHI::bSupportsInlineRayTracing;
+
+    FRayQueryProbe Probe;
+    if (bCanTrace)
+    {
+        const bool bCompilerInitialized = FShaderCompiler::Initialize(Paths::GetAssetDir());
+        TEST_EXPECT(bCompilerInitialized);
+        TEST_EXPECT(bCompilerInitialized && CreateRayQueryProbe(Probe));
+    }
+
+    const bool bTrace         = bCanTrace && Probe.Pipeline;
+    const bool bTraceBindless = bTrace && Probe.BindlessPipeline;
+
+    const EAccelerationStructureBuildFlags GeometryFlags = EAccelerationStructureBuildFlags::AllowUpdate | EAccelerationStructureBuildFlags::AllowCompaction;
+
+    TEST_SECTION("Indexed and non-indexed geometry and a scene over both build at creation and again on a command list");
+    {
+        FRayTracingProbeGeometry Indexed;
+        FRayTracingProbeGeometry NonIndexed;
+        TEST_EXPECT(CreateProbeGeometry(true, GeometryFlags, Indexed));
+        TEST_EXPECT(CreateProbeGeometry(false, GeometryFlags, NonIndexed));
+
+        if (Indexed.Geometry && NonIndexed.Geometry)
+        {
+            const FRHIGeometryAccelerationStructureInstance Instances[] =
+            {
+                MakeProbeInstance(Indexed.Geometry.Get(), 7, 0.0f),
+                MakeProbeInstance(NonIndexed.Geometry.Get(), 9, 100.0f),
+            };
+
+            FRHISceneAccelerationStructureRef Scene = RHI::CreateSceneAccelerationStructure(FRHISceneAccelerationStructureDesc(Instances, EAccelerationStructureBuildFlags::None));
+            TEST_EXPECT(Scene != nullptr);
+            TEST_EXPECT(!Scene || Scene->GetShaderResourceView() != nullptr);
+            TEST_EXPECT(!Scene || !RHI::bSupportsBindless || Scene->GetBindlessHandle().IsValid());
+
+#if PLATFORM_MACOS
+            if (ExpectedType == ERHIType::Metal && Scene)
+            {
+                FRHIRayTracingAccelerationStructure* const AccelerationStructures[] = { Indexed.Geometry.Get(), NonIndexed.Geometry.Get(), Scene.Get() };
+                for (FRHIRayTracingAccelerationStructure* AccelerationStructure : AccelerationStructures)
+                {
+                    FMetalAccelerationStructure* MetalAccelerationStructure = GetMetalAccelerationStructure(AccelerationStructure);
+                    TEST_EXPECT(MetalAccelerationStructure->GetMTLAccelerationStructure() != nil);
+                    TEST_EXPECT((__bridge void*)MetalAccelerationStructure->GetMTLAccelerationStructure() == AccelerationStructure->GetRHINativeResource());
+                    TEST_EXPECT(MetalAccelerationStructure->GetResidencyEntry() != nullptr);
+                }
+            }
+#endif
+
+            if (Scene)
+            {
+                const FRHISceneAccelerationStructureBuildDesc SceneBuildDesc(Instances, ARRAY_COUNT(Instances), false);
+
+                FRHICommandList CommandList;
+                CommandList.BuildGeometryAccelerationStructure(Indexed.Geometry.Get(), GetProbeGeometryBuildDesc(Indexed, false));
+                CommandList.BuildGeometryAccelerationStructure(NonIndexed.Geometry.Get(), GetProbeGeometryBuildDesc(NonIndexed, false));
+                CommandList.UnorderedAccessBarrier(Indexed.Geometry.Get());
+                CommandList.UnorderedAccessBarrier(NonIndexed.Geometry.Get());
+                CommandList.BuildSceneAccelerationStructure(Scene.Get(), SceneBuildDesc);
+                CommandList.UnorderedAccessBarrier(Scene.Get());
+
+                if (bTrace)
+                {
+                    FRayQueryProbeHit Hit = {};
+                    TEST_EXPECT(TraceProbeRay(CommandList, Probe, Scene.Get(), false, 103.0f, Hit));
+                    TEST_EXPECT(IsExpectedProbeHit(Hit, 9, 1, 5.0f));
+                }
+                else
+                {
+                    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+                }
+
+                FRHICommandListExecutor::Get().WaitForGPU();
+            }
+        }
+    }
+
+    TEST_SECTION("A scene traced straight after creation, with no wait between, hits");
+    if (bTrace)
+    {
+        FRayTracingProbeGeometry Geometry;
+        TEST_EXPECT(CreateProbeGeometry(true, EAccelerationStructureBuildFlags::None, Geometry));
+
+        if (Geometry.Geometry)
+        {
+            const FRHIGeometryAccelerationStructureInstance Instances[] = { MakeProbeInstance(Geometry.Geometry.Get(), 3, 0.0f) };
+
+            FRHISceneAccelerationStructureRef Scene = RHI::CreateSceneAccelerationStructure(FRHISceneAccelerationStructureDesc(Instances, EAccelerationStructureBuildFlags::None));
+            TEST_EXPECT(Scene != nullptr);
+
+            FRayQueryProbeHit Hit = {};
+            TEST_EXPECT(Scene && TraceProbeRay(Probe, Scene.Get(), false, 0.0f, Hit));
+            TEST_EXPECT(IsExpectedProbeHit(Hit, 3, 0, 5.0f));
+        }
+    }
+
+    TEST_SECTION("The compacted size reads back nonzero and no larger than the original");
+    {
+        FRayTracingProbeGeometry Geometry;
+        TEST_EXPECT(CreateProbeGeometry(true, EAccelerationStructureBuildFlags::AllowCompaction, Geometry));
+
+        uint64 CompactedSize = 0;
+        TEST_EXPECT(Geometry.Geometry && ReadCompactedSize(Geometry.Geometry.Get(), CompactedSize));
+        TEST_EXPECT(CompactedSize > 0);
+
+#if PLATFORM_MACOS
+        id<MTLAccelerationStructure> Original = nil;
+        if (ExpectedType == ERHIType::Metal && Geometry.Geometry)
+        {
+            Original = GetMetalAccelerationStructure(Geometry.Geometry.Get())->GetMTLAccelerationStructure();
+            TEST_EXPECT(Original != nil);
+            TEST_EXPECT(Original && CompactedSize <= Original.size);
+        }
+#endif
+
+        TEST_SECTION("Compacting in place, then rebuilding the scene over the compacted geometry, still hits");
+        if (Geometry.Geometry && CompactedSize > 0)
+        {
+            const FRHIGeometryAccelerationStructureInstance Instances[] = { MakeProbeInstance(Geometry.Geometry.Get(), 5, 0.0f) };
+
+            FRHISceneAccelerationStructureRef Scene = RHI::CreateSceneAccelerationStructure(FRHISceneAccelerationStructureDesc(Instances, EAccelerationStructureBuildFlags::None));
+            TEST_EXPECT(Scene != nullptr);
+
+            if (Scene)
+            {
+                const FRHISceneAccelerationStructureBuildDesc SceneBuildDesc(Instances, ARRAY_COUNT(Instances), false);
+
+                FRHICommandList CommandList;
+                CommandList.CompactAccelerationStructure(Geometry.Geometry.Get(), CompactedSize);
+                CommandList.UnorderedAccessBarrier(Geometry.Geometry.Get());
+                CommandList.BuildSceneAccelerationStructure(Scene.Get(), SceneBuildDesc);
+                CommandList.UnorderedAccessBarrier(Scene.Get());
+
+                if (bTrace)
+                {
+                    FRayQueryProbeHit Hit = {};
+                    TEST_EXPECT(TraceProbeRay(CommandList, Probe, Scene.Get(), false, 0.0f, Hit));
+                    TEST_EXPECT(IsExpectedProbeHit(Hit, 5, 0, 5.0f));
+
+                    if (bTraceBindless)
+                    {
+                        Hit = {};
+                        TEST_EXPECT(TraceProbeRay(Probe, Scene.Get(), true, 0.0f, Hit));
+                        TEST_EXPECT(IsExpectedProbeHit(Hit, 5, 0, 5.0f));
+                    }
+                }
+                else
+                {
+                    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+                }
+
+                FRHICommandListExecutor::Get().WaitForGPU();
+
+#if PLATFORM_MACOS
+                if (ExpectedType == ERHIType::Metal)
+                {
+                    id<MTLAccelerationStructure> Compacted = GetMetalAccelerationStructure(Geometry.Geometry.Get())->GetMTLAccelerationStructure();
+                    TEST_EXPECT(Compacted != nil);
+                    TEST_EXPECT(Compacted != Original);
+                    TEST_EXPECT(GetMetalAccelerationStructure(Geometry.Geometry.Get())->GetResidencyEntry() != nullptr);
+                }
+#endif
+            }
+        }
+    }
+
+    TEST_SECTION("Moving the vertices and refitting moves the hit");
+    if (bTrace)
+    {
+        FRayTracingProbeGeometry Geometry;
+        TEST_EXPECT(CreateProbeGeometry(true, EAccelerationStructureBuildFlags::AllowUpdate, Geometry));
+
+        if (Geometry.Geometry)
+        {
+            FRHIGeometryAccelerationStructureInstance Instances[] = { MakeProbeInstance(Geometry.Geometry.Get(), 11, 0.0f) };
+
+            FRHISceneAccelerationStructureRef Scene = RHI::CreateSceneAccelerationStructure(FRHISceneAccelerationStructureDesc(Instances, EAccelerationStructureBuildFlags::AllowUpdate));
+            TEST_EXPECT(Scene != nullptr);
+
+            FRayQueryProbeHit Hit = {};
+            TEST_EXPECT(Scene && TraceProbeRay(Probe, Scene.Get(), false, 3.0f, Hit));
+            TEST_EXPECT(IsExpectedProbeHit(Hit, 11, 1, 5.0f));
+
+            float MovedVertices[GProbeNumVertices * 3];
+            for (uint32 Index = 0; Index < ARRAY_COUNT(MovedVertices); ++Index)
+            {
+                MovedVertices[Index] = (Index % 3 == 2) ? GProbeVertices[Index] + 2.0f : GProbeVertices[Index];
+            }
+
+            if (Scene)
+            {
+                const FRHISceneAccelerationStructureBuildDesc SceneBuildDesc(Instances, ARRAY_COUNT(Instances), true);
+
+                FRHICommandList CommandList;
+                CommandList.UpdateBuffer(Geometry.VertexBuffer.Get(), FBufferRegion(0, sizeof(MovedVertices)), MovedVertices);
+                CommandList.BuildGeometryAccelerationStructure(Geometry.Geometry.Get(), GetProbeGeometryBuildDesc(Geometry, true));
+                CommandList.UnorderedAccessBarrier(Geometry.Geometry.Get());
+                CommandList.BuildSceneAccelerationStructure(Scene.Get(), SceneBuildDesc);
+                CommandList.UnorderedAccessBarrier(Scene.Get());
+
+                Hit = {};
+                TEST_EXPECT(TraceProbeRay(CommandList, Probe, Scene.Get(), false, 3.0f, Hit));
+                TEST_EXPECT(IsExpectedProbeHit(Hit, 11, 1, 7.0f));
+
+                Instances[0] = MakeProbeInstance(Geometry.Geometry.Get(), 11, 50.0f);
+                const FRHISceneAccelerationStructureBuildDesc MovedSceneBuildDesc(Instances, ARRAY_COUNT(Instances), true);
+
+                FRHICommandList MoveCommandList;
+                MoveCommandList.BuildSceneAccelerationStructure(Scene.Get(), MovedSceneBuildDesc);
+                MoveCommandList.UnorderedAccessBarrier(Scene.Get());
+
+                Hit = {};
+                TEST_EXPECT(TraceProbeRay(MoveCommandList, Probe, Scene.Get(), false, 53.0f, Hit));
+                TEST_EXPECT(IsExpectedProbeHit(Hit, 11, 1, 7.0f));
+            }
+        }
+    }
+
+    TEST_SECTION("RayQuery reports a miss, and the instance, primitive and barycentrics of a hit, through the discrete and the bindless scene");
+    if (bTrace)
+    {
+        FRayTracingProbeGeometry Geometry;
+        TEST_EXPECT(CreateProbeGeometry(true, EAccelerationStructureBuildFlags::None, Geometry));
+
+        if (Geometry.Geometry)
+        {
+            const FRHIGeometryAccelerationStructureInstance Instances[] =
+            {
+                MakeProbeInstance(Geometry.Geometry.Get(), 21, 0.0f),
+                MakeProbeInstance(Geometry.Geometry.Get(), 22, 100.0f),
+            };
+
+            FRHISceneAccelerationStructureRef Scene = RHI::CreateSceneAccelerationStructure(FRHISceneAccelerationStructureDesc(Instances, EAccelerationStructureBuildFlags::None));
+            TEST_EXPECT(Scene != nullptr);
+
+            for (bool bBindlessScene : { false, true })
+            {
+                if (!Scene || (bBindlessScene && !bTraceBindless))
+                {
+                    continue;
+                }
+
+                FRayQueryProbeHit Hit = {};
+                TEST_EXPECT(TraceProbeRay(Probe, Scene.Get(), bBindlessScene, 0.0f, Hit));
+                TEST_EXPECT(IsExpectedProbeHit(Hit, 21, 0, 5.0f));
+
+                Hit = {};
+                TEST_EXPECT(TraceProbeRay(Probe, Scene.Get(), bBindlessScene, 103.0f, Hit));
+                TEST_EXPECT(IsExpectedProbeHit(Hit, 22, 1, 5.0f));
+
+                Hit = {};
+                Hit.bHit = 1;
+                TEST_EXPECT(TraceProbeRay(Probe, Scene.Get(), bBindlessScene, 50.0f, Hit));
+                TEST_EXPECT_EQ(Hit.bHit, 0u);
+            }
+        }
+    }
+
+    TEST_SECTION("Releasing geometry and scenes while their builds are in flight");
+    {
+        for (uint32 Iteration = 0; Iteration < 8; ++Iteration)
+        {
+            FRayTracingProbeGeometry Geometry;
+            TEST_EXPECT(CreateProbeGeometry(true, EAccelerationStructureBuildFlags::AllowUpdate, Geometry));
+            if (!Geometry.Geometry)
+            {
+                continue;
+            }
+
+            const FRHIGeometryAccelerationStructureInstance Instances[] = { MakeProbeInstance(Geometry.Geometry.Get(), Iteration, 0.0f) };
+
+            FRHISceneAccelerationStructureRef Scene = RHI::CreateSceneAccelerationStructure(FRHISceneAccelerationStructureDesc(Instances, EAccelerationStructureBuildFlags::None));
+            TEST_EXPECT(Scene != nullptr);
+
+            if (Scene)
+            {
+                const FRHISceneAccelerationStructureBuildDesc SceneBuildDesc(Instances, ARRAY_COUNT(Instances), false);
+
+                FRHICommandList CommandList;
+                CommandList.BuildGeometryAccelerationStructure(Geometry.Geometry.Get(), GetProbeGeometryBuildDesc(Geometry, Iteration % 2 == 1));
+                CommandList.UnorderedAccessBarrier(Geometry.Geometry.Get());
+                CommandList.BuildSceneAccelerationStructure(Scene.Get(), SceneBuildDesc);
+                CommandList.UnorderedAccessBarrier(Scene.Get());
+                FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+            }
+        }
+
+        FRHICommandListExecutor::Get().WaitForGPU();
+    }
+
+    if (bCanTrace)
+    {
+        FShaderCompiler::Destroy();
+    }
+
+    TEST_END();
+}
+
 static bool ProbeCapabilityHonesty(ERHIType ExpectedType)
 {
     TEST_BEGIN();
 
+    TEST_SECTION("Acceleration structures are reported exactly when pipeline or inline ray tracing is");
+    TEST_EXPECT(RHI::bSupportsRayTracing == (RHI::bSupportsRayTracingPipeline || RHI::bSupportsInlineRayTracing));
+
     if (ExpectedType == ERHIType::Metal)
     {
-        TEST_SECTION("Metal reports ray tracing as unsupported until those subsystems exist");
-        TEST_EXPECT(RHI::bSupportsRayTracing == false);
-        TEST_EXPECT(RHI::bSupportsInlineRayTracing == false);
+#if PLATFORM_MACOS
+        TEST_SECTION("Metal reports inline ray tracing wherever the device supports ray tracing, and no pipeline until TraceRay is lowered");
+        TEST_EXPECT(RHI::bSupportsInlineRayTracing == GMetalFeatures.bRayTracing);
+        TEST_EXPECT(RHI::bSupportsRayTracingPipeline == false);
+#endif
 
         TEST_SECTION("Metal reports timestamp queries when the device has a timestamp counter set");
         TEST_EXPECT(RHI::bSupportsTimestampQueries);
@@ -3011,6 +3627,105 @@ static bool ProbeMemoryDefragAndResidency()
         }
     }
 
+    FRayQueryProbe RayQueryProbe;
+    const bool bTraceStructures = RHI::bSupportsInlineRayTracing && CreateRayQueryProbe(RayQueryProbe);
+    TEST_EXPECT(!RHI::bSupportsInlineRayTracing || bTraceStructures);
+
+    TEST_SECTION("A defrag pass moves buffers around acceleration structures but never the structures themselves");
+    if (bTraceStructures)
+    {
+        FRayTracingProbeGeometry Geometry;
+        TEST_EXPECT(CreateProbeGeometry(true, EAccelerationStructureBuildFlags::None, Geometry));
+
+        const FRHIGeometryAccelerationStructureInstance Instances[] = { MakeProbeInstance(Geometry.Geometry.Get(), 31, 0.0f) };
+
+        FRHISceneAccelerationStructureRef Scene = Geometry.Geometry
+            ? RHI::CreateSceneAccelerationStructure(FRHISceneAccelerationStructureDesc(Instances, EAccelerationStructureBuildFlags::None))
+            : nullptr;
+        TEST_EXPECT(Scene != nullptr);
+
+        if (Scene)
+        {
+            id<MTLAccelerationStructure> GeometryStructure = GetMetalAccelerationStructure(Geometry.Geometry.Get())->GetMTLAccelerationStructure();
+            id<MTLAccelerationStructure> SceneStructure    = GetMetalAccelerationStructure(Scene.Get())->GetMTLAccelerationStructure();
+            TEST_EXPECT(GeometryStructure.heap != nil);
+            TEST_EXPECT(SceneStructure.heap != nil);
+
+            const uint64 GeometryID = GeometryStructure.gpuResourceID._impl;
+            const uint64 SceneID    = SceneStructure.gpuResourceID._impl;
+
+            TArray<FMemoryProbeBuffer> Survivors = CreateFragmentedHeapBuffers(24, BufferSize, false);
+            TEST_EXPECT(!Survivors.IsEmpty());
+
+            RunMemoryFrames(8);
+            FinalizePendingMoves();
+            TEST_EXPECT(!MetalDevice->HasPendingDefragMoves());
+
+            uint32 NumMoved = 0;
+            for (const FMemoryProbeBuffer& Survivor : Survivors)
+            {
+                NumMoved += HasMoved(Survivor) ? 1 : 0;
+            }
+
+            TEST_EXPECT(NumMoved > 0);
+            TEST_EXPECT(GetMetalAccelerationStructure(Geometry.Geometry.Get())->GetMTLAccelerationStructure() == GeometryStructure);
+            TEST_EXPECT(GetMetalAccelerationStructure(Scene.Get())->GetMTLAccelerationStructure() == SceneStructure);
+            TEST_EXPECT_EQ(GeometryStructure.gpuResourceID._impl, GeometryID);
+            TEST_EXPECT_EQ(SceneStructure.gpuResourceID._impl, SceneID);
+
+            FRayQueryProbeHit Hit = {};
+            TEST_EXPECT(TraceProbeRay(RayQueryProbe, Scene.Get(), bBindless, 0.0f, Hit));
+            TEST_EXPECT(IsExpectedProbeHit(Hit, 31, 0, 5.0f));
+        }
+    }
+
+    TEST_SECTION("A small residency budget evicts filler allocations but no acceleration structure");
+    if (bTraceStructures)
+    {
+        constexpr uint64 StandaloneSize = 65ull * 1024ull * 1024ull;
+        const FRHIBufferDesc FillerDesc(EBufferFlags::Default | EBufferFlags::ShaderResourceBuffer | EBufferFlags::CopySource | EBufferFlags::CopyDest, sizeof(uint32), StandaloneSize);
+
+        FRayTracingProbeGeometry Geometry;
+        TEST_EXPECT(CreateProbeGeometry(true, EAccelerationStructureBuildFlags::None, Geometry));
+
+        const FRHIGeometryAccelerationStructureInstance Instances[] = { MakeProbeInstance(Geometry.Geometry.Get(), 32, 0.0f) };
+
+        FRHISceneAccelerationStructureRef Scene = Geometry.Geometry
+            ? RHI::CreateSceneAccelerationStructure(FRHISceneAccelerationStructureDesc(Instances, EAccelerationStructureBuildFlags::None))
+            : nullptr;
+        FRHIBufferRef Filler = RHI::CreateBuffer(FillerDesc);
+        TEST_EXPECT(Scene != nullptr);
+        TEST_EXPECT(Filler != nullptr);
+
+        if (Scene && Filler && WriteMemoryPattern(Filler.Get(), 42))
+        {
+            FMetalResidencyEntry* FillerEntry   = GetMetalBuffer(Filler.Get())->GetResidencyEntry();
+            FMetalResidencyEntry* GeometryEntry = GetMetalAccelerationStructure(Geometry.Geometry.Get())->GetResidencyEntry();
+            FMetalResidencyEntry* SceneEntry    = GetMetalAccelerationStructure(Scene.Get())->GetResidencyEntry();
+            TEST_EXPECT(FillerEntry != nullptr);
+            TEST_EXPECT(GeometryEntry != nullptr);
+            TEST_EXPECT(SceneEntry != nullptr);
+
+            FMetalResidencyManager& ResidencyManager = MetalDevice->GetResidencyManager();
+            const uint64 EvictedBefore = ResidencyManager.GetEvictedBytes();
+
+            SetConsoleVariable("MetalRHI.ResidencyBudgetMB", "1");
+            RunMemoryFrames(5);
+
+            TEST_EXPECT(ResidencyManager.GetEvictedBytes() > EvictedBefore);
+            TEST_EXPECT(!FillerEntry || !FillerEntry->bResident);
+            TEST_EXPECT(!GeometryEntry || GeometryEntry->bResident);
+            TEST_EXPECT(!SceneEntry || SceneEntry->bResident);
+
+            FRayQueryProbeHit Hit = {};
+            TEST_EXPECT(TraceProbeRay(RayQueryProbe, Scene.Get(), bBindless, 0.0f, Hit));
+            TEST_EXPECT(IsExpectedProbeHit(Hit, 32, 0, 5.0f));
+
+            SetConsoleVariable("MetalRHI.ResidencyBudgetMB", "0");
+            RunMemoryFrames(1);
+        }
+    }
+
     TEST_SECTION("Creating and releasing resources across frames with defrag and eviction on");
     {
         SetConsoleVariable("MetalRHI.ResidencyBudgetMB", "32");
@@ -3434,6 +4149,7 @@ static bool BootRHI(ERHIType ExpectedType)
                 TEST_EXPECT(ProbePipelinePersistence());
             }
 #endif
+            TEST_EXPECT(ProbeAccelerationStructures(ExpectedType));
             TEST_EXPECT(ProbeCapabilityHonesty(ExpectedType));
         }
 

@@ -3,6 +3,7 @@
 #include "Core/Containers/Queue.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/StringView.h"
+#include "Core/Containers/UniquePtr.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Threading/Atomic/AtomicInt.h"
 #include "MetalRHI/MetalDeviceChild.h"
@@ -141,15 +142,20 @@ struct FMetalCommands
     void AddWait(const FMetalSyncPoint& SyncPoint);
     void EncodePendingWaits();
 
-    FMetalQueue*                  Queue;
-    FMetalDevice* const           Device;
-    id<MTLCommandBuffer>          CommandBuffer;
-    uint64                        SubmissionValue;
-    TArray<FMetalDeferredObject>  DeferredObjects;
-    TArray<FMetalQueryRHI*>       PendingQueries;
-    TArray<FMetalEventValue>      PendingSignals;
-    TArray<FMetalSyncPoint>       PendingWaits;
-    FMetalResidencyList           ResidencyList;
-    FMetalBreadcrumbRing          Breadcrumbs;
-    bool                          bUpdatesEncoderFence;
+    void RetireStorage(TUniquePtr<FMetalResourceStorage> Storage, FMetalResidencyEntry* PinnedEntry);
+    void ReleaseRetiredStorage();
+
+    FMetalQueue*                              Queue;
+    FMetalDevice* const                       Device;
+    id<MTLCommandBuffer>                      CommandBuffer;
+    uint64                                    SubmissionValue;
+    TArray<FMetalDeferredObject>              DeferredObjects;
+    TArray<FMetalQueryRHI*>                   PendingQueries;
+    TArray<FMetalEventValue>                  PendingSignals;
+    TArray<FMetalSyncPoint>                   PendingWaits;
+    TArray<TUniquePtr<FMetalResourceStorage>> RetiredStorage;
+    TArray<FMetalResidencyEntry*>             RetiredPins;
+    FMetalResidencyList                       ResidencyList;
+    FMetalBreadcrumbRing                      Breadcrumbs;
+    bool                                      bUpdatesEncoderFence;
 };

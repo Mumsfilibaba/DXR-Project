@@ -13,12 +13,12 @@ STAT_DEFINE_COUNTER(STAT_Metal_BinaryArchiveMisses,       "Binary Archive Misses
 STAT_DEFINE_COUNTER(STAT_Metal_BinaryArchiveAdds,         "Binary Archive Adds",   "Metal PSO");
 STAT_DEFINE_MEMORY(STAT_Metal_BinaryArchiveSize,          "Binary Archive Size",   "Metal PSO");
 
-STAT_DEFINE_COUNTER(STAT_Metal_CommandBufferCount,   "Command Buffers Submitted", "Metal Commands");
+STAT_DEFINE_COUNTER(STAT_Metal_CommandBufferCount,  "Command Buffers Submitted", "Metal Commands");
 STAT_DEFINE_COUNTER(STAT_Metal_CommandBuffersAlive, "Command Buffers Alive",     "Metal Commands");
-STAT_DEFINE_COUNTER(STAT_Metal_EncoderCount,         "Encoders Opened",           "Metal Commands");
-STAT_DEFINE_COUNTER(STAT_Metal_EncodersOpen,         "Encoders Open",             "Metal Commands");
+STAT_DEFINE_COUNTER(STAT_Metal_EncoderCount,        "Encoders Opened",           "Metal Commands");
+STAT_DEFINE_COUNTER(STAT_Metal_EncodersOpen,        "Encoders Open",             "Metal Commands");
 
-STAT_DEFINE_COUNTER(STAT_Metal_CounterSampleBufferCount, "Counter Sample Buffers",  "Metal Queries");
+STAT_DEFINE_COUNTER(STAT_Metal_CounterSampleBufferCount, "Counter Sample Buffers",    "Metal Queries");
 STAT_DEFINE_COUNTER(STAT_Metal_TimestampSlotsInFlight,   "Timestamp Slots In Flight", "Metal Queries");
 STAT_DEFINE_COUNTER(STAT_Metal_OcclusionSlotsInFlight,   "Occlusion Slots In Flight", "Metal Queries");
 
@@ -43,10 +43,12 @@ STAT_DEFINE_MEMORY(STAT_Metal_TextureHeapUsed,       "Texture Heap Used",       
 STAT_DEFINE_MEMORY(STAT_Metal_TextureHeapFragmented, "Texture Heap Fragmented", "Metal Heaps");
 STAT_DEFINE_COUNTER(STAT_Metal_TextureHeaps,         "Texture Heaps",           "Metal Heaps");
 
-STAT_DEFINE_MEMORY(STAT_Metal_StandaloneBufferBytes,  "Standalone Buffer Bytes",  "Metal Standalone");
-STAT_DEFINE_COUNTER(STAT_Metal_StandaloneBuffers,     "Standalone Buffers",       "Metal Standalone");
-STAT_DEFINE_MEMORY(STAT_Metal_StandaloneTextureBytes, "Standalone Texture Bytes", "Metal Standalone");
-STAT_DEFINE_COUNTER(STAT_Metal_StandaloneTextures,    "Standalone Textures",      "Metal Standalone");
+STAT_DEFINE_MEMORY(STAT_Metal_StandaloneBufferBytes,                "Standalone Buffer Bytes",                 "Metal Standalone");
+STAT_DEFINE_COUNTER(STAT_Metal_StandaloneBuffers,                   "Standalone Buffers",                      "Metal Standalone");
+STAT_DEFINE_MEMORY(STAT_Metal_StandaloneTextureBytes,               "Standalone Texture Bytes",                "Metal Standalone");
+STAT_DEFINE_COUNTER(STAT_Metal_StandaloneTextures,                  "Standalone Textures",                     "Metal Standalone");
+STAT_DEFINE_MEMORY(STAT_Metal_StandaloneAccelerationStructureBytes, "Standalone Acceleration Structure Bytes", "Metal Standalone");
+STAT_DEFINE_COUNTER(STAT_Metal_StandaloneAccelerationStructures,    "Standalone Acceleration Structures",      "Metal Standalone");
 
 STAT_DEFINE_COUNTER(STAT_Metal_DefragMoves,      "Defrag Moves",       "Metal Defrag");
 STAT_DEFINE_COUNTER(STAT_Metal_DefragCancels,    "Defrag Cancels",     "Metal Defrag");

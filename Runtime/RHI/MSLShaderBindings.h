@@ -33,7 +33,10 @@ enum class EMSLBindingType : uint8
     /** @brief SM 6.6 SamplerDescriptorHeap, bound as a descriptor table buffer. */
     BindlessSamplerHeap = 9,
 
-    Count = 10,
+    /** @brief RaytracingAccelerationStructure (t#), bound to the MSL buffer table. */
+    AccelerationStructure = 10,
+
+    Count = 11,
 };
 
 enum class EMSLBindingTable : uint8
@@ -126,6 +129,7 @@ inline const CHAR* ToString(EMSLBindingType BindingType)
         "ShaderConstants",
         "BindlessResourceHeap",
         "BindlessSamplerHeap",
+        "AccelerationStructure",
     };
 
     static_assert(ARRAY_COUNT(BindingTypeStrings) == static_cast<int32>(EMSLBindingType::Count), "BindingTypeStrings is out of date");
@@ -193,7 +197,7 @@ struct FMSLShaderHeader
     static constexpr uint32 ExpectedMagic = 0x4D534C42;
 
     /** @brief Layout revision, bumped whenever the header or the binding array changes shape. */
-    static constexpr uint32 ExpectedVersion = 5;
+    static constexpr uint32 ExpectedVersion = 6;
 
     uint32 Magic;
     uint32 Version;

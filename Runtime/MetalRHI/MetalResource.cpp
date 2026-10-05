@@ -11,6 +11,7 @@ FMetalResourceStorage::FMetalResourceStorage(FMetalDevice* InDevice)
     , AllocatorPointers()
     , Buffer(nil)
     , Texture(nil)
+    , AccelerationStructure(nil)
     , Heap(nullptr)
     , Owner(nullptr)
     , ResidencyEntry(nullptr)
@@ -56,6 +57,19 @@ void FMetalResourceStorage::InitStandalone(id<MTLTexture> InTexture, uint64 InSi
     STAT_ADD(STAT_Metal_StandaloneTextures, 1);
 }
 
+void FMetalResourceStorage::InitStandalone(id<MTLAccelerationStructure> InAccelerationStructure, uint64 InSize)
+{
+    Reset();
+    AccelerationStructure = InAccelerationStructure;
+    Size                  = InSize;
+    StorageType           = EMetalResourceStorageType::Standalone;
+
+    TrackStandalone(InAccelerationStructure, true);
+
+    STAT_ADD(STAT_Metal_StandaloneAccelerationStructureBytes, [InAccelerationStructure allocatedSize]);
+    STAT_ADD(STAT_Metal_StandaloneAccelerationStructures, 1);
+}
+
 void FMetalResourceStorage::TrackStandalone(id<MTLResource> Resource, bool bBindlessReachable)
 {
     if (Resource.storageMode != MTLStorageModePrivate)
@@ -76,6 +90,7 @@ void FMetalResourceStorage::TrackStandalone(id<MTLResource> Resource, bool bBind
 void FMetalResourceStorage::InitSuballocatedResource(id<MTLBuffer> InBuffer, uint64 InOffset, uint64 InSize, void* InMappedAddress, FMetalLinearAllocator* InLinearAllocator, FMetalUploadHeapAllocator* InUploadAllocator)
 {
     Reset();
+
     Buffer            = InBuffer;
     ResourceOffset    = InOffset;
     Size              = InSize;
@@ -122,10 +137,25 @@ void FMetalResourceStorage::InitSuballocatedHeap(id<MTLTexture> InTexture, FMeta
     AllocatorPointers.TextureAllocator = InTextureAllocator;
 }
 
+void FMetalResourceStorage::InitSuballocatedHeap(id<MTLAccelerationStructure> InAccelerationStructure, FMetalHeap* InHeap, uint64 InOffset, uint64 InSize, uint32 InHeapIndex, FMetalBufferAllocator* InBufferAllocator)
+{
+    Reset();
+    AccelerationStructure             = InAccelerationStructure;
+    Heap                              = InHeap;
+    ResidencyEntry                    = &InHeap->GetResidencyEntry();
+    ResourceOffset                    = InOffset;
+    Size                              = InSize;
+    HeapIndex                         = InHeapIndex;
+    StorageType                       = EMetalResourceStorageType::SuballocatedHeap;
+    AllocatorType                     = EMetalAllocatorType::BufferAllocator;
+    AllocatorPointers.BufferAllocator = InBufferAllocator;
+}
+
 void FMetalResourceStorage::SwapPlacement(FMetalResourceStorage& Other)
 {
     CHECK(IsPlacedResource() && Other.IsPlacedResource());
     CHECK(AllocatorType == Other.AllocatorType);
+    CHECK(!AccelerationStructure && !Other.AccelerationStructure);
 
     ::Swap(AllocatorPointers, Other.AllocatorPointers);
     ::Swap(Buffer, Other.Buffer);
@@ -179,6 +209,12 @@ void FMetalResourceStorage::ReleaseOwnedResource(bool bStandalone)
         Defer(Texture);
         Texture = nil;
     }
+
+    if (AccelerationStructure)
+    {
+        Defer(AccelerationStructure);
+        AccelerationStructure = nil;
+    }
 }
 
 void FMetalResourceStorage::ReleaseResource()
@@ -225,6 +261,12 @@ void FMetalResourceStorage::ReleaseResource()
             STAT_SUBTRACT(STAT_Metal_StandaloneTextures, 1);
         }
 
+        if (AccelerationStructure)
+        {
+            STAT_SUBTRACT(STAT_Metal_StandaloneAccelerationStructureBytes, [AccelerationStructure allocatedSize]);
+            STAT_SUBTRACT(STAT_Metal_StandaloneAccelerationStructures, 1);
+        }
+
         ReleaseOwnedResource(true);
     }
 
@@ -235,17 +277,18 @@ void FMetalResourceStorage::Reset()
 {
     CHECK(!StandaloneEntry.bTracked);
 
-    Buffer            = nil;
-    Texture           = nil;
-    Heap              = nullptr;
-    ResidencyEntry    = nullptr;
-    MappedBaseAddress = nullptr;
-    ResourceOffset    = 0;
-    Size              = 0;
-    HeapIndex         = UINT32_MAX;
-    StorageType       = EMetalResourceStorageType::Unknown;
-    AllocatorType     = EMetalAllocatorType::None;
-    bDefragPending    = false;
+    Buffer                   = nil;
+    Texture                  = nil;
+    AccelerationStructure    = nil;
+    Heap                     = nullptr;
+    ResidencyEntry           = nullptr;
+    MappedBaseAddress        = nullptr;
+    ResourceOffset           = 0;
+    Size                     = 0;
+    HeapIndex                = UINT32_MAX;
+    StorageType              = EMetalResourceStorageType::Unknown;
+    AllocatorType            = EMetalAllocatorType::None;
+    bDefragPending           = false;
     AllocatorPointers.AsVoid = nullptr;
 
     StandaloneEntry.Allocation    = nil;

@@ -119,6 +119,7 @@ struct FMetalStageBindPlan
     uint16 ConstantBufferMask;
     uint16 ShaderResourceMask;
     uint16 ShaderResourceBufferMask;
+    uint16 ShaderResourceAccelerationStructureMask;
     uint16 UnorderedAccessMask;
     uint16 UnorderedAccessBufferMask;
     uint16 SamplerMask;

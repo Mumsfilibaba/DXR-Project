@@ -1545,9 +1545,9 @@ FRHIPixelShader* FRHIValidationDevice::CreatePixelShader(const TArray<uint8>& Sh
 
 FRHIRayGenShader* FRHIValidationDevice::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
-    if (!RHI::bSupportsRayTracing || ShaderCode.IsEmpty())
+    if (!RHI::bSupportsRayTracingPipeline || ShaderCode.IsEmpty())
     {
-        RHI_VALIDATION_ERROR("CreateRayGenShader requires ray-tracing support and non-empty bytecode.");
+        RHI_VALIDATION_ERROR("CreateRayGenShader requires ray-tracing pipeline support and non-empty bytecode.");
         return nullptr;
     }
 
@@ -1556,9 +1556,9 @@ FRHIRayGenShader* FRHIValidationDevice::CreateRayGenShader(const TArray<uint8>& 
 
 FRHIRayAnyHitShader* FRHIValidationDevice::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
-    if (!RHI::bSupportsRayTracing || ShaderCode.IsEmpty())
+    if (!RHI::bSupportsRayTracingPipeline || ShaderCode.IsEmpty())
     {
-        RHI_VALIDATION_ERROR("CreateRayAnyHitShader requires ray-tracing support and non-empty bytecode.");
+        RHI_VALIDATION_ERROR("CreateRayAnyHitShader requires ray-tracing pipeline support and non-empty bytecode.");
         return nullptr;
     }
 
@@ -1567,9 +1567,9 @@ FRHIRayAnyHitShader* FRHIValidationDevice::CreateRayAnyHitShader(const TArray<ui
 
 FRHIRayClosestHitShader* FRHIValidationDevice::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
-    if (!RHI::bSupportsRayTracing || ShaderCode.IsEmpty())
+    if (!RHI::bSupportsRayTracingPipeline || ShaderCode.IsEmpty())
     {
-        RHI_VALIDATION_ERROR("CreateRayClosestHitShader requires ray-tracing support and non-empty bytecode.");
+        RHI_VALIDATION_ERROR("CreateRayClosestHitShader requires ray-tracing pipeline support and non-empty bytecode.");
         return nullptr;
     }
 
@@ -1578,9 +1578,9 @@ FRHIRayClosestHitShader* FRHIValidationDevice::CreateRayClosestHitShader(const T
 
 FRHIRayMissShader* FRHIValidationDevice::CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
-    if (!RHI::bSupportsRayTracing || ShaderCode.IsEmpty())
+    if (!RHI::bSupportsRayTracingPipeline || ShaderCode.IsEmpty())
     {
-        RHI_VALIDATION_ERROR("CreateRayMissShader requires ray-tracing support and non-empty bytecode.");
+        RHI_VALIDATION_ERROR("CreateRayMissShader requires ray-tracing pipeline support and non-empty bytecode.");
         return nullptr;
     }
 
@@ -1589,9 +1589,9 @@ FRHIRayMissShader* FRHIValidationDevice::CreateRayMissShader(const TArray<uint8>
 
 FRHIRayIntersectionShader* FRHIValidationDevice::CreateRayIntersectionShader(const TArray<uint8>& ShaderCode)
 {
-    if (!RHI::bSupportsRayTracing || ShaderCode.IsEmpty())
+    if (!RHI::bSupportsRayTracingPipeline || ShaderCode.IsEmpty())
     {
-        RHI_VALIDATION_ERROR("CreateRayIntersectionShader requires ray-tracing support and non-empty bytecode.");
+        RHI_VALIDATION_ERROR("CreateRayIntersectionShader requires ray-tracing pipeline support and non-empty bytecode.");
         return nullptr;
     }
 
@@ -1600,9 +1600,9 @@ FRHIRayIntersectionShader* FRHIValidationDevice::CreateRayIntersectionShader(con
 
 FRHIRayCallableShader* FRHIValidationDevice::CreateRayCallableShader(const TArray<uint8>& ShaderCode)
 {
-    if (!RHI::bSupportsRayTracing || ShaderCode.IsEmpty())
+    if (!RHI::bSupportsRayTracingPipeline || ShaderCode.IsEmpty())
     {
-        RHI_VALIDATION_ERROR("CreateRayCallableShader requires ray-tracing support and non-empty bytecode.");
+        RHI_VALIDATION_ERROR("CreateRayCallableShader requires ray-tracing pipeline support and non-empty bytecode.");
         return nullptr;
     }
 
@@ -1768,9 +1768,9 @@ FRHIMeshletPipelineState* FRHIValidationDevice::CreateMeshletPipelineState(const
 
 FRHIRayTracingPipelineState* FRHIValidationDevice::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc)
 {
-    if (!RHI::bSupportsRayTracing)
+    if (!RHI::bSupportsRayTracingPipeline)
     {
-        RHI_VALIDATION_ERROR("CreateRayTracingPipelineState: ray tracing is unsupported.");
+        RHI_VALIDATION_ERROR("CreateRayTracingPipelineState: ray tracing pipelines are unsupported.");
         return nullptr;
     }
 
@@ -1952,9 +1952,9 @@ FRHIOpacityMicromap* FRHIValidationDevice::CreateOpacityMicromap(const FRHIOpaci
 
 FRHIShaderBindingTable* FRHIValidationDevice::CreateShaderBindingTable(const FRHIShaderBindingTableDesc& InDesc)
 {
-    if (!RHI::bSupportsRayTracing)
+    if (!RHI::bSupportsRayTracingPipeline)
     {
-        RHI_VALIDATION_ERROR("CreateShaderBindingTable: ray tracing is unsupported.");
+        RHI_VALIDATION_ERROR("CreateShaderBindingTable: ray tracing pipelines are unsupported.");
         return nullptr;
     }
 

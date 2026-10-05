@@ -1683,9 +1683,9 @@ void FRHIValidationCommandContext::ResetShaderBindingTable(FRHIShaderBindingTabl
 
 void FRHIValidationCommandContext::DispatchRays(FRHIShaderBindingTable* ShaderBindingTable, uint32 Width, uint32 Height, uint32 Depth)
 {
-    if (ContextPhase != ECommandContextPhase::Recording || !RHI::bSupportsRayTracing)
+    if (ContextPhase != ECommandContextPhase::Recording || !RHI::bSupportsRayTracingPipeline)
     {
-        RHI_VALIDATION_ERROR("DispatchRays requires ray-tracing support and a recording context outside a render pass.");
+        RHI_VALIDATION_ERROR("DispatchRays requires ray-tracing pipeline support and a recording context outside a render pass.");
         return;
     }
 
@@ -1734,7 +1734,7 @@ void FRHIValidationCommandContext::DispatchRays(FRHIShaderBindingTable* ShaderBi
 
 void FRHIValidationCommandContext::DispatchRaysIndirect(FRHIShaderBindingTable* ShaderBindingTable, FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset)
 {
-    if (ContextPhase != ECommandContextPhase::Recording || !RHI::bSupportsRayTracing || !RayTracingPipelineState)
+    if (ContextPhase != ECommandContextPhase::Recording || !RHI::bSupportsRayTracingPipeline || !RayTracingPipelineState)
     {
         RHI_VALIDATION_ERROR("DispatchRaysIndirect requires a ray-tracing pipeline and a recording context outside a render pass.");
         return;

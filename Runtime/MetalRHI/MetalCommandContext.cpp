@@ -12,6 +12,7 @@
 #include "MetalRHI/MetalUAVClear.h"
 #include "MetalRHI/MetalQuery.h"
 #include "MetalRHI/MetalCapabilities.h"
+#include "MetalRHI/MetalRayTracing.h"
 #include "RHI/RHIIndirect.h"
 #include "RHI/RHICore.h"
 #include "Core/Math/Math.h"
@@ -840,18 +841,106 @@ void FMetalCommandContext::DiscardContents(class FRHITexture* Texture)
 
 void FMetalCommandContext::BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* RayTracingScene, const FRHISceneAccelerationStructureBuildDesc& BuildDesc)
 {
-    UNREFERENCED_VARIABLE(RayTracingScene);
-    UNREFERENCED_VARIABLE(BuildDesc);
-
-    METAL_ERROR("BuildSceneAccelerationStructure is not implemented");
+    FMetalSceneAccelerationStructureRHI* MetalScene = static_cast<FMetalSceneAccelerationStructureRHI*>(RayTracingScene);
+    if (!MetalScene->Build(*this, BuildDesc))
+    {
+        METAL_ERROR("Failed to build the scene acceleration structure");
+    }
 }
 
 void FMetalCommandContext::BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* RayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc)
 {
-    UNREFERENCED_VARIABLE(RayTracingGeometry);
-    UNREFERENCED_VARIABLE(BuildDesc);
+    FMetalGeometryAccelerationStructureRHI* MetalGeometry = static_cast<FMetalGeometryAccelerationStructureRHI*>(RayTracingGeometry);
+    if (!MetalGeometry->Build(*this, BuildDesc))
+    {
+        METAL_ERROR("Failed to build the geometry acceleration structure");
+    }
+}
 
-    METAL_ERROR("BuildGeometryAccelerationStructure is not implemented");
+void FMetalCommandContext::BuildOpacityMicromap(FRHIOpacityMicromap* /* OpacityMicromap */, const FRHIOpacityMicromapBuildDesc& /* BuildDesc */)
+{
+    METAL_ERROR("Metal has no opacity micromaps");
+}
+
+void FMetalCommandContext::ExecuteIndirectRayTracingAccelerationStructureOperations(const FRHIRayTracingAccelerationStructureOperationDesc* /* Operations */, uint32 /* NumOperations */)
+{
+    METAL_ERROR("Metal has no indirect acceleration structure operations");
+}
+
+void FMetalCommandContext::WriteAccelerationStructurePostBuildInfo(FRHIBuffer* DstBuffer, uint64 DstOffset, EAccelerationStructurePostBuildInfoType InfoType, FRHIRayTracingAccelerationStructure* const* Sources, uint32 NumSources)
+{
+    if (InfoType != EAccelerationStructurePostBuildInfoType::CompactedSize)
+    {
+        METAL_ERROR("Metal only reports the compacted size of an acceleration structure, not %s", ToString(InfoType));
+        return;
+    }
+
+    FMetalBufferRHI* MetalBuffer = GetMetalBuffer(DstBuffer);
+    CHECK(MetalBuffer != nullptr);
+    CHECK(Sources != nullptr && NumSources > 0);
+
+    Encoders.UpdateResidency(MetalBuffer->GetResidencyEntry());
+
+    id<MTLAccelerationStructureCommandEncoder> Encoder = Encoders.RequireAccelerationStructureEncoder();
+    for (uint32 Index = 0; Index < NumSources; ++Index)
+    {
+        FMetalAccelerationStructure* Source = GetMetalAccelerationStructure(Sources[Index]);
+        id<MTLAccelerationStructure> SourceStructure = Source ? Source->GetMTLAccelerationStructure() : nil;
+        if (!SourceStructure)
+        {
+            METAL_ERROR("WriteAccelerationStructurePostBuildInfo source %u has not been built", Index);
+            continue;
+        }
+
+        Encoders.UpdateResidency(Source->GetResidencyEntry());
+
+        [Encoder writeCompactedAccelerationStructureSize:SourceStructure
+                                                toBuffer:MetalBuffer->GetMTLBuffer()
+                                                  offset:MetalBuffer->GetMetalBindOffset() + DstOffset + Index * sizeof(uint64)
+                                            sizeDataType:MTLDataTypeULong];
+    }
+}
+
+void FMetalCommandContext::CopyAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIRayTracingAccelerationStructure* Source, EAccelerationStructureCopyMode CopyMode)
+{
+    if (CopyMode != EAccelerationStructureCopyMode::Clone && CopyMode != EAccelerationStructureCopyMode::Compact)
+    {
+        METAL_ERROR("Metal acceleration structures only clone and compact, not %s", ToString(CopyMode));
+        return;
+    }
+
+    FMetalAccelerationStructure* MetalDestination = GetMetalAccelerationStructure(Destination);
+    FMetalAccelerationStructure* MetalSource      = GetMetalAccelerationStructure(Source);
+    CHECK(MetalDestination != nullptr && MetalSource != nullptr);
+
+    if (!MetalDestination->CopyFrom(*this, *MetalSource, CopyMode == EAccelerationStructureCopyMode::Compact))
+    {
+        METAL_ERROR("Failed to copy the acceleration structure");
+    }
+}
+
+void FMetalCommandContext::CompactAccelerationStructure(FRHIRayTracingAccelerationStructure* AccelerationStructure, uint64 CompactedSizeInBytes)
+{
+    if (!AccelerationStructure || CompactedSizeInBytes == 0)
+    {
+        return;
+    }
+
+    FMetalAccelerationStructure* MetalAccelerationStructure = GetMetalAccelerationStructure(AccelerationStructure);
+    if (!MetalAccelerationStructure->CompactInPlace(*this, CompactedSizeInBytes))
+    {
+        METAL_ERROR("Failed to compact the acceleration structure to %llu bytes", CompactedSizeInBytes);
+    }
+}
+
+void FMetalCommandContext::SerializeAccelerationStructure(FRHIRayTracingAccelerationStructure* /* Source */, FRHIBuffer* /* DstBuffer */, uint64 /* DstOffset */)
+{
+    METAL_ERROR("Metal has no acceleration structure serialization");
+}
+
+void FMetalCommandContext::DeserializeAccelerationStructure(FRHIRayTracingAccelerationStructure* /* Destination */, FRHIBuffer* /* SourceBuffer */, uint64 /* SourceOffset */)
+{
+    METAL_ERROR("Metal has no acceleration structure serialization");
 }
 
 void FMetalCommandContext::TransitionBarrier(TArrayView<const FRHITransitionBarrierDesc> TransitionDescs)

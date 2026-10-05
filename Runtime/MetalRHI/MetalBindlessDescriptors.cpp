@@ -411,6 +411,17 @@ void FMetalBindlessDescriptorManager::WriteSampler(FRHIDescriptorHandle Handle, 
     WriteSlot(SamplerHeap, Handle.Index, Entry, MetalNullEntrySampler, bImmediate);
 }
 
+void FMetalBindlessDescriptorManager::WriteAccelerationStructure(FRHIDescriptorHandle Handle, id<MTLAccelerationStructure> AccelerationStructure, bool bImmediate)
+{
+    if (!Handle.IsValid())
+    {
+        return;
+    }
+
+    const FMetalBindlessDescriptorEntry Entry{ MetalCopyResourceID(AccelerationStructure) };
+    WriteSlot(GetHeap(Handle.Type), Handle.Index, Entry, MetalNullEntryBuffer, bImmediate);
+}
+
 void FMetalBindlessDescriptorManager::Flush()
 {
     TScopedLock Lock(PendingWritesCS);

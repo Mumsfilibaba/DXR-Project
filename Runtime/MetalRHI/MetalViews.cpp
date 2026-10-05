@@ -3,6 +3,7 @@
 #include "MetalRHI/MetalBuffer.h"
 #include "MetalRHI/MetalCapabilities.h"
 #include "MetalRHI/MetalDevice.h"
+#include "MetalRHI/MetalRayTracing.h"
 #include "MetalRHI/MetalResidencySet.h"
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalTexture.h"
@@ -145,6 +146,7 @@ FMetalView::FMetalView(FMetalDevice* InDevice)
     : FMetalDeviceChild(InDevice)
     , SourceBuffer(nullptr)
     , SourceTexture(nullptr)
+    , AccelerationStructureSource(nullptr)
     , ResidencyEntry(nullptr)
     , PinnedEntry(nullptr)
     , TextureView(nil)
@@ -277,6 +279,12 @@ FRHIDescriptorHandle FMetalView::EnsureBindlessHandle(EDescriptorType Descriptor
         return AllocateHandle();
     }
 
+    if (AccelerationStructureSource)
+    {
+        TScopedLock Lock(AccelerationStructureSource->GetBindlessLock());
+        return AllocateHandle();
+    }
+
     return AllocateHandle();
 }
 
@@ -297,6 +305,40 @@ void FMetalView::WriteBindlessHandle() const
     {
         BindlessManager->WriteBuffer(BindlessHandle, BufferView, BufferOffset, false, true);
     }
+    else if (AccelerationStructureSource)
+    {
+        BindlessManager->WriteAccelerationStructure(BindlessHandle, AccelerationStructureSource->GetMTLAccelerationStructure(), true);
+    }
+}
+
+void FMetalView::RefreshBindlessHandle()
+{
+    if (!AccelerationStructureSource)
+    {
+        return;
+    }
+
+    TScopedLock Lock(AccelerationStructureSource->GetBindlessLock());
+    WriteBindlessHandle();
+}
+
+id<MTLAccelerationStructure> FMetalView::GetMTLAccelerationStructure() const
+{
+    return AccelerationStructureSource ? AccelerationStructureSource->GetMTLAccelerationStructure() : nil;
+}
+
+bool FMetalView::InitializeAccelerationStructureView(FMetalSceneAccelerationStructureRHI* InAccelerationStructure)
+{
+    if (!InAccelerationStructure)
+    {
+        METAL_ERROR("Cannot create an acceleration structure view without a scene");
+        return false;
+    }
+
+    // The structure pins its own storage, a pin through the view would outlive a SetStorage that replaced the entry
+    AccelerationStructureSource = InAccelerationStructure;
+    ResidencyEntry              = nullptr;
+    return true;
 }
 
 void FMetalView::DeclareBindlessResidency()
@@ -361,10 +403,11 @@ void FMetalView::OnResourceRelocated(EMetalRelocation Relocation)
 void FMetalView::OnResourceReleased()
 {
     GetDevice()->GetResidencyManager().Unpin(PinnedEntry);
-    PinnedEntry    = nullptr;
-    ResidencyEntry = nullptr;
-    SourceBuffer   = nullptr;
-    SourceTexture  = nullptr;
+    PinnedEntry                 = nullptr;
+    ResidencyEntry              = nullptr;
+    SourceBuffer                = nullptr;
+    SourceTexture               = nullptr;
+    AccelerationStructureSource = nullptr;
 }
 
 bool FMetalView::InitializeTextureView(FRHITexture* InTexture, EFormat InFormat, EViewDimension InViewDimension, 
@@ -567,7 +610,7 @@ bool FMetalShaderResourceViewRHI::Initialize()
 {
     if (Desc.IsAccelerationStructureSRV())
     {
-        return true;
+        return InitializeAccelerationStructureView(static_cast<FMetalSceneAccelerationStructureRHI*>(GetResource()));
     }
 
     if (Desc.IsBufferSRV())

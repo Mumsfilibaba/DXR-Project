@@ -432,13 +432,16 @@ struct RHI
     static RHI_API uint32 MaxViewInstanceCount;
 
     // -------------------------------------------------------------------------------------------
-    // Hardware Ray Tracing
+    // Ray Tracing
     // -------------------------------------------------------------------------------------------
 
-    /** Whether hardware-accelerated ray tracing is supported */
+    /** Whether acceleration structures are supported, which holds whenever pipeline or inline ray tracing is */
     static RHI_API bool bSupportsRayTracing;
 
-    /** Ray tracing tier support (e.g., Tier 1.0, 1.1, etc.) */
+    /** Whether ray tracing pipelines are supported: ray tracing shaders, pipeline states, shader binding tables and DispatchRays */
+    static RHI_API bool bSupportsRayTracingPipeline;
+
+    /** Ray tracing pipeline tier (e.g., Tier 1.0, 1.1, etc.), NotSupported without the pipeline */
     static RHI_API ERayTracingTier RayTracingTier;
 
     /** Maximum recursion depth supported for ray tracing pipelines */

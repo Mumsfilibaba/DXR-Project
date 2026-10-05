@@ -1050,6 +1050,44 @@ bool FMetalBufferAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, MT
     return true;
 }
 
+bool FMetalBufferAllocator::TryAllocateAccelerationStructure(MTLSizeAndAlign SizeAndAlign, FMetalResourceStorage& OutStorage)
+{
+    OutStorage.Reset();
+
+    if (SizeAndAlign.size == 0)
+    {
+        return false;
+    }
+
+    uint32      HeapIndex = UINT32_MAX;
+    uint64      Offset    = 0;
+    FMetalHeap* Heap      = nullptr;
+
+    if (SizeAndAlign.size <= GMaxHeapAllocationSize && HeapPool.TryAllocate(SizeAndAlign.size, SizeAndAlign.align, &OutStorage, HeapIndex, Offset, Heap))
+    {
+        id<MTLAccelerationStructure> AccelerationStructure = [Heap->GetMTLHeap() newAccelerationStructureWithSize:SizeAndAlign.size offset:Offset];
+
+        if (AccelerationStructure)
+        {
+            OutStorage.InitSuballocatedHeap(AccelerationStructure, Heap, Offset, SizeAndAlign.size, HeapIndex, this);
+            return true;
+        }
+
+        HeapPool.Deallocate(HeapIndex, Offset, SizeAndAlign.size);
+    }
+
+    id<MTLAccelerationStructure> AccelerationStructure = [GetDevice()->GetMTLDevice() newAccelerationStructureWithSize:SizeAndAlign.size];
+
+    if (!AccelerationStructure)
+    {
+        METAL_ERROR("Failed to allocate a %llu byte Metal acceleration structure", static_cast<uint64>(SizeAndAlign.size));
+        return false;
+    }
+
+    OutStorage.InitStandalone(AccelerationStructure, SizeAndAlign.size);
+    return true;
+}
+
 void FMetalBufferAllocator::Deallocate(FMetalResourceStorage& Storage)
 {
     if (Storage.GetStorageType() == EMetalResourceStorageType::SuballocatedHeap)

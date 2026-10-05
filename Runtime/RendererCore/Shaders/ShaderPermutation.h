@@ -29,6 +29,7 @@ struct FShaderPermutationDesc
     int32 PermutationID                      = 0;
     bool  bSupportsBindless                  = false;
     bool  bSupportsRayTracing                = false;
+    bool  bSupportsRayTracingPipeline        = false;
     bool  bSupportsShaderExecutionReordering = false;
 };
 

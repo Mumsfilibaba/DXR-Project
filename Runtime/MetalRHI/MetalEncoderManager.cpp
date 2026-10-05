@@ -15,10 +15,10 @@ struct FMetalAbsoluteSubresource
 
 static constexpr bool GQueueSupportsEncoder[static_cast<uint32>(EMetalQueueType::Count)][static_cast<uint32>(EMetalEncoderType::Count)] =
 {
-    // None, Render, Compute, Blit
-    { true, true,  true,  true },
-    { true, false, true,  true },
-    { true, false, false, true },
+    // None, Render, Compute, Blit, AccelerationStructure
+    { true, true,  true,  true, true  },
+    { true, false, true,  true, true  },
+    { true, false, false, true, false },
 };
 
 static void AttachTimestamp(MTLRenderPassDescriptor* Descriptor, id<MTLCounterSampleBuffer> SampleBuffer, uint32 SampleIndex)
@@ -62,6 +62,10 @@ void FMetalEncoderFence::Wait(id<MTLCommandEncoder> Encoder, EMetalEncoderType T
     {
         [static_cast<id<MTLBlitCommandEncoder>>(Encoder) waitForFence:Fence];
     }
+    else if (Type == EMetalEncoderType::AccelerationStructure)
+    {
+        [static_cast<id<MTLAccelerationStructureCommandEncoder>>(Encoder) waitForFence:Fence];
+    }
 }
 
 void FMetalEncoderFence::Signal(id<MTLCommandEncoder> Encoder, EMetalEncoderType Type, FMetalCommands& Commands)
@@ -77,6 +81,10 @@ void FMetalEncoderFence::Signal(id<MTLCommandEncoder> Encoder, EMetalEncoderType
     else if (Type == EMetalEncoderType::Blit)
     {
         [static_cast<id<MTLBlitCommandEncoder>>(Encoder) updateFence:Fence];
+    }
+    else if (Type == EMetalEncoderType::AccelerationStructure)
+    {
+        [static_cast<id<MTLAccelerationStructureCommandEncoder>>(Encoder) updateFence:Fence];
     }
     else
     {
@@ -196,6 +204,8 @@ id<MTLCommandEncoder> FMetalEncoderManager::OpenEncoder(OpenFunctionType&& Open,
 
     Fence.Wait(Encoder, Type, *Commands);
 
+    DeclaredResidencyGeneration = UINT64_MAX;
+
     if constexpr (Type == EMetalEncoderType::Render)
     {
         BindingCache.ResetRenderStages();
@@ -205,6 +215,10 @@ id<MTLCommandEncoder> FMetalEncoderManager::OpenEncoder(OpenFunctionType&& Open,
     {
         BindingCache.ResetComputeStage();
         PrepareBindless(static_cast<id<MTLComputeCommandEncoder>>(Encoder));
+    }
+    else if constexpr (Type == EMetalEncoderType::AccelerationStructure)
+    {
+        RefreshBindlessResidency(static_cast<id<MTLAccelerationStructureCommandEncoder>>(Encoder));
     }
 
     if (Label)
@@ -250,6 +264,7 @@ void FMetalEncoderManager::RefreshBindlessResidency(CommandEncoderType InEncoder
 
 template void FMetalEncoderManager::RefreshBindlessResidency(id<MTLRenderCommandEncoder>);
 template void FMetalEncoderManager::RefreshBindlessResidency(id<MTLComputeCommandEncoder>);
+template void FMetalEncoderManager::RefreshBindlessResidency(id<MTLAccelerationStructureCommandEncoder>);
 
 id<MTLRenderCommandEncoder> FMetalEncoderManager::BeginRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR* Label)
 {
@@ -282,6 +297,8 @@ id<MTLRenderCommandEncoder> FMetalEncoderManager::AdoptRenderEncoder(id<MTLRende
     EncoderType     = EMetalEncoderType::Render;
     bAdoptedEncoder = true;
     EncoderSerial++;
+
+    DeclaredResidencyGeneration = UINT64_MAX;
 
     BindingCache.ResetRenderStages();
     PrepareBindless(SubEncoder);
@@ -344,6 +361,31 @@ id<MTLBlitCommandEncoder> FMetalEncoderManager::RequireBlitEncoder()
         Attachment.endOfEncoderSampleIndex   = MTLCounterDontSample;
         return [Commands->CommandBuffer blitCommandEncoderWithDescriptor:Descriptor];
     }, "Blit"));
+}
+
+id<MTLAccelerationStructureCommandEncoder> FMetalEncoderManager::RequireAccelerationStructureEncoder()
+{
+    if (EncoderType == EMetalEncoderType::AccelerationStructure)
+    {
+        return static_cast<id<MTLAccelerationStructureCommandEncoder>>(Encoder);
+    }
+
+    return static_cast<id<MTLAccelerationStructureCommandEncoder>>(OpenEncoder<EMetalEncoderType::AccelerationStructure>([this]() -> id<MTLCommandEncoder>
+    {
+        const uint32 SampleIndex = TakeScheduledTimestamp();
+
+        if (SampleIndex == MetalInvalidQueryIndex)
+        {
+            return [Commands->CommandBuffer accelerationStructureCommandEncoder];
+        }
+
+        MTLAccelerationStructurePassDescriptor* Descriptor = [MTLAccelerationStructurePassDescriptor accelerationStructurePassDescriptor];
+        MTLAccelerationStructurePassSampleBufferAttachmentDescriptor* Attachment = Descriptor.sampleBufferAttachments[0];
+        Attachment.sampleBuffer              = GetDevice()->GetTimestampQueries().GetSampleBuffer();
+        Attachment.startOfEncoderSampleIndex = SampleIndex;
+        Attachment.endOfEncoderSampleIndex   = MTLCounterDontSample;
+        return [Commands->CommandBuffer accelerationStructureCommandEncoderWithDescriptor:Descriptor];
+    }, "AccelerationStructure"));
 }
 
 id<MTLParallelRenderCommandEncoder> FMetalEncoderManager::BeginParallelRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR* Label)
@@ -432,6 +474,10 @@ void FMetalEncoderManager::MemoryBarrier()
     {
         static constexpr MTLRenderStages Stages = MTLRenderStageVertex | MTLRenderStageFragment;
         [static_cast<id<MTLRenderCommandEncoder>>(Encoder) memoryBarrierWithScope:Scope afterStages:Stages beforeStages:Stages];
+    }
+    else if (EncoderType == EMetalEncoderType::AccelerationStructure)
+    {
+        EndEncoder();
     }
 }
 

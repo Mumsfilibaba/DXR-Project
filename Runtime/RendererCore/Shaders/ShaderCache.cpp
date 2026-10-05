@@ -151,6 +151,7 @@ FShaderPermutationDesc FShaderCache::CreatePermutationDesc(int32 PermutationID)
     Desc.PermutationID                      = PermutationID;
     Desc.bSupportsBindless                  = RHI::bSupportsBindless;
     Desc.bSupportsRayTracing                = RHI::bSupportsRayTracing;
+    Desc.bSupportsRayTracingPipeline        = RHI::bSupportsRayTracingPipeline;
     Desc.bSupportsShaderExecutionReordering = RHI::bSupportsShaderExecutionReordering;
     return Desc;
 }

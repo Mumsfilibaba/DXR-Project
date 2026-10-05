@@ -238,3 +238,4 @@ uint64 FMetalResidencySet::DeclareForEncoder(EncoderType Encoder)
 
 template uint64 FMetalResidencySet::DeclareForEncoder(id<MTLRenderCommandEncoder>);
 template uint64 FMetalResidencySet::DeclareForEncoder(id<MTLComputeCommandEncoder>);
+template uint64 FMetalResidencySet::DeclareForEncoder(id<MTLAccelerationStructureCommandEncoder>);

@@ -15,6 +15,11 @@ struct TRayTracingShaderRules
 {
     static bool ShouldCompilePermutation(const FShaderPermutationDesc& Desc)
     {
+        if (!Desc.bSupportsRayTracingPipeline)
+        {
+            return false;
+        }
+
         const FRayTracingPermutation Permutation = FRayTracingPermutation(Desc.PermutationID);
         if (Permutation.Get<FRayTracingSER>())
         {

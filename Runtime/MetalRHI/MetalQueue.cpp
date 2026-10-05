@@ -487,6 +487,8 @@ FMetalCommands::FMetalCommands(FMetalDevice* InDevice, FMetalQueue* InQueue)
     , PendingQueries()
     , PendingSignals()
     , PendingWaits()
+    , RetiredStorage()
+    , RetiredPins()
     , ResidencyList()
     , Breadcrumbs()
     , bUpdatesEncoderFence(false)
@@ -502,6 +504,7 @@ void FMetalCommands::Reset()
     PendingQueries.Clear();
     PendingSignals.Clear();
     PendingWaits.Clear();
+    ReleaseRetiredStorage();
     ResidencyList.Reset();
     Breadcrumbs.Reset();
     bUpdatesEncoderFence = false;
@@ -552,11 +555,37 @@ void FMetalCommands::EncodePendingWaits()
     PendingWaits.Clear();
 }
 
+void FMetalCommands::RetireStorage(TUniquePtr<FMetalResourceStorage> Storage, FMetalResidencyEntry* PinnedEntry)
+{
+    if (Storage)
+    {
+        RetiredStorage.Add(Move(Storage));
+    }
+
+    if (PinnedEntry)
+    {
+        RetiredPins.Add(PinnedEntry);
+    }
+}
+
+void FMetalCommands::ReleaseRetiredStorage()
+{
+    FMetalResidencyManager& ResidencyManager = Device->GetResidencyManager();
+    for (FMetalResidencyEntry* PinnedEntry : RetiredPins)
+    {
+        ResidencyManager.Unpin(PinnedEntry);
+    }
+
+    RetiredPins.Clear();
+    RetiredStorage.Clear();
+}
+
 void FMetalCommands::PostExecute()
 {
     FMetalQueryRHI::ResolveQueries(PendingQueries);
     FMetalDeferredObject::ProcessItems(DeferredObjects);
     DeferredObjects.Clear();
+    ReleaseRetiredStorage();
 
     if (CommandBuffer)
     {

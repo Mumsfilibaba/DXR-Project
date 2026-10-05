@@ -494,7 +494,15 @@ void FMetalCommandContextState::FlushStage(typename TMetalStageEncoder<Stage>::E
             Encoders.UpdateResidency(View->GetResidencyEntry());
         }
 
-        if (Plan.ShaderResourceBufferMask & (1u << Register))
+        if (Plan.ShaderResourceAccelerationStructureMask & (1u << Register))
+        {
+            if constexpr (TMetalStageAccelerationStructure<Stage>::bSupported)
+            {
+                Encoders.RefreshBindlessResidency(Encoder);
+                Cache.SetAccelerationStructure<Stage>(Encoder, View ? View->GetMTLAccelerationStructure() : nil, Slot);
+            }
+        }
+        else if (Plan.ShaderResourceBufferMask & (1u << Register))
         {
             Cache.SetBuffer<Stage>(Encoder, View ? View->GetMTLBuffer() : Defaults.NullBuffer, View ? View->GetBufferOffset() : 0, Slot);
         }

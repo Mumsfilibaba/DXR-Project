@@ -39,6 +39,7 @@ public:
     void WriteTexture(FRHIDescriptorHandle Handle, id<MTLTexture> Texture, bool bWritable, bool bImmediate);
     void WriteBuffer(FRHIDescriptorHandle Handle, id<MTLBuffer> Buffer, uint64 Offset, bool bHeapPlaced, bool bImmediate);
     void WriteSampler(FRHIDescriptorHandle Handle, id<MTLSamplerState> Sampler, bool bImmediate);
+    void WriteAccelerationStructure(FRHIDescriptorHandle Handle, id<MTLAccelerationStructure> AccelerationStructure, bool bImmediate);
 
     void Flush();
 

@@ -7,6 +7,7 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FMetalTextureRHI;
 class FMetalBufferRHI;
+class FMetalSceneAccelerationStructureRHI;
 struct FMetalResidencyEntry;
 
 class FMetalView : public FMetalDeviceChild
@@ -19,10 +20,15 @@ public:
         uint32 InFirstMip, uint32 InNumMips, uint32 InFirstSlice, uint32 InNumSlices);
     bool InitializeBufferView(FRHIBuffer* InBuffer, uint64 InOffset, uint64 InSize);
     bool InitializeBufferTextureView(EFormat InFormat, bool bWritable);
+    bool InitializeAccelerationStructureView(FMetalSceneAccelerationStructureRHI* InAccelerationStructure);
 
     // Both are called under the source's relocation lock
     void OnResourceRelocated(EMetalRelocation Relocation);
     void OnResourceReleased();
+
+    void RefreshBindlessHandle();
+
+    id<MTLAccelerationStructure> GetMTLAccelerationStructure() const;
 
     FMetalResidencyEntry* GetResidencyEntry() const
     {
@@ -67,26 +73,27 @@ private:
     void WriteBindlessHandle() const;
     void FreeBindlessHandle();
 
-    FMetalBufferRHI*              SourceBuffer;
-    FMetalTextureRHI*             SourceTexture;
-    FMetalResidencyEntry*         ResidencyEntry;
-    mutable FMetalResidencyEntry* PinnedEntry;
-    id<MTLTexture>                TextureView;
-    id<MTLBuffer>                 BufferView;
-    uint64                        BufferOffset;
-    uint64                        SourceOffset;
-    uint64                        BufferSize;
-    mutable FRHIDescriptorHandle  BindlessHandle;
-    EFormat                       BufferTextureFormat;
-    MTLPixelFormat                TextureViewFormat;
-    MTLTextureType                TextureViewType;
-    NSRange                       TextureViewLevels;
-    NSRange                       TextureViewSlices;
-    bool                          bTextureViewIsParent;
-    bool                          bBufferTextureWritable;
-    mutable bool                  bBindlessWritable;
-    bool                          bOwnsTextureView;
-    bool                          bDeclaredResident;
+    FMetalBufferRHI*                     SourceBuffer;
+    FMetalTextureRHI*                    SourceTexture;
+    FMetalSceneAccelerationStructureRHI* AccelerationStructureSource;
+    FMetalResidencyEntry*                ResidencyEntry;
+    mutable FMetalResidencyEntry*        PinnedEntry;
+    id<MTLTexture>                       TextureView;
+    id<MTLBuffer>                        BufferView;
+    uint64                               BufferOffset;
+    uint64                               SourceOffset;
+    uint64                               BufferSize;
+    mutable FRHIDescriptorHandle         BindlessHandle;
+    EFormat                              BufferTextureFormat;
+    MTLPixelFormat                       TextureViewFormat;
+    MTLTextureType                       TextureViewType;
+    NSRange                              TextureViewLevels;
+    NSRange                              TextureViewSlices;
+    bool                                 bTextureViewIsParent;
+    bool                                 bBufferTextureWritable;
+    mutable bool                         bBindlessWritable;
+    bool                                 bOwnsTextureView;
+    bool                                 bDeclaredResident;
 };
 
 class FMetalShaderResourceViewRHI : public FRHIShaderResourceView, public FMetalView

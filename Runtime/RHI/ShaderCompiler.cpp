@@ -415,6 +415,26 @@ static bool IsStorageBufferReadOnly(spvc_compiler Compiler, spvc_variable_id Id,
     return true;
 }
 
+static bool UsesSpirvCapability(spvc_compiler Compiler, SpvCapability Capability)
+{
+    size_t               NumCapabilities = 0;
+    const SpvCapability* Capabilities    = nullptr;
+    if (spvc_compiler_get_declared_capabilities(Compiler, &Capabilities, &NumCapabilities) != SPVC_SUCCESS)
+    {
+        return false;
+    }
+
+    for (size_t Index = 0; Index < NumCapabilities; Index++)
+    {
+        if (Capabilities[Index] == Capability)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static bool GatherMSLResources(spvc_compiler Compiler, spvc_resources Resources, spvc_resource_type ResourceType, TArray<FMSLReflectedResource>& OutResources)
 {
     size_t                         NumReflected = 0;
@@ -500,6 +520,10 @@ static bool GatherMSLResources(spvc_compiler Compiler, spvc_resources Resources,
                 BindingType = bIsReadOnly ? EMSLBindingType::ShaderResourceBuffer : EMSLBindingType::UnorderedAccessBuffer;
                 break;
             }
+
+            case SPVC_RESOURCE_TYPE_ACCELERATION_STRUCTURE:
+                BindingType = EMSLBindingType::AccelerationStructure;
+                break;
 
             default:
                 LOG_ERROR("[FShaderCompiler]: Unhandled resource type %d", static_cast<int32>(ResourceType));
@@ -1187,6 +1211,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
         SPVC_RESOURCE_TYPE_STORAGE_IMAGE,
         SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS,
         SPVC_RESOURCE_TYPE_PUSH_CONSTANT,
+        SPVC_RESOURCE_TYPE_ACCELERATION_STRUCTURE,
     };
 
     TArray<FMSLReflectedResource> ReflectedResources;
@@ -1212,7 +1237,8 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
         }
     }
 
-    if (bUsesBindlessHeaps)
+    // intersection_query needs MSL 2.4; 3.0 keeps one version for every ray tracing shader
+    if (bUsesBindlessHeaps || UsesSpirvCapability(CompilerMSL, SpvCapabilityRayQueryKHR))
     {
         MSLVersion = SPVC_MAKE_MSL_VERSION(3, 0, 0);
     }

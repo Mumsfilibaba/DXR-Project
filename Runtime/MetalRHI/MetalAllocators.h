@@ -194,6 +194,7 @@ public:
     ~FMetalBufferAllocator();
 
     bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, MTLResourceOptions Options, bool bBindlessReachable, FMetalResourceStorage& OutStorage);
+    bool TryAllocateAccelerationStructure(MTLSizeAndAlign SizeAndAlign, FMetalResourceStorage& OutStorage);
     void Deallocate(FMetalResourceStorage& Storage);
 
     uint32 RecordDefragMoves(FMetalCommandContext& Context, uint32 MaxMoves, uint64 EligibleBeforeFrame, TArray<FMetalDefragMove>& OutMoves);
