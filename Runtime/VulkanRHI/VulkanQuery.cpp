@@ -74,6 +74,7 @@ FVulkanQueryPool::FVulkanQueryPool(FVulkanDevice* InDevice, VkQueryType InQueryT
     , QueryType(InQueryType)
     , NumQueries(InNumQueries)
     , QueryPool(VK_NULL_HANDLE)
+    , NumQueriesToReset(0)
 #if !VULKAN_USE_CPU_QUERY_RESOLVE
     , ReadbackLocation(InDevice)
     , ReadbackData(nullptr)
@@ -162,7 +163,11 @@ bool FVulkanQueryPool::Initialize()
 
 void FVulkanQueryPool::ResetPool()
 {
-    vkResetQueryPool(GetDevice()->GetVkDevice(), QueryPool, 0, NumQueries);
+    if (NumQueriesToReset > 0)
+    {
+        vkResetQueryPool(GetDevice()->GetVkDevice(), QueryPool, 0, NumQueriesToReset);
+        NumQueriesToReset = 0;
+    }
 }
 
 void FVulkanQueryPool::SetDebugName(const String& InName)
@@ -203,6 +208,7 @@ bool FVulkanQueryAllocator::Allocate(FVulkanQuery& OutQuery, uint64* ResultTarge
     FVulkanQueryRange& Range = Ranges.Last();
     OutQuery = FVulkanQuery(Range.Pool, Range.StartIndex + Range.Count, ResultTarget, InType);
     Range.Count++;
+    Range.Pool->ExtendResetRange(Range.StartIndex + Range.Count);
     return true;
 }
 

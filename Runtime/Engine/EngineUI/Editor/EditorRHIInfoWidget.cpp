@@ -180,6 +180,10 @@ void FEditorRHIInfoWidget::DrawAllocatorDetails()
             (CString::Strcmp(GroupName, "D3D11 State Changes") == 0) ||
             (CString::Strcmp(GroupName, "D3D12 Commands") == 0) ||
             (CString::Strcmp(GroupName, "Vulkan Commands") == 0) ||
+            (CString::Strcmp(GroupName, "D3D12 Submissions / Frame") == 0) ||
+            (CString::Strcmp(GroupName, "Vulkan Submissions / Frame") == 0) ||
+            (CString::Strcmp(GroupName, "D3D12 Ray Tracing / Frame") == 0) ||
+            (CString::Strcmp(GroupName, "Vulkan Ray Tracing / Frame") == 0) ||
             (CString::Strcmp(GroupName, "D3D11 Queries") == 0) ||
             (CString::Strcmp(GroupName, "D3D12 Queries") == 0) ||
             (CString::Strcmp(GroupName, "Vulkan Queries") == 0) ||

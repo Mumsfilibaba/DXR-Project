@@ -5,6 +5,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Containers/ArrayView.h"
 #include "Core/Containers/SharedRef.h"
+#include "Core/Stats/Stats.h"
 #include "RHI/RHITypes.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIRayTracing.h"
@@ -79,6 +80,10 @@ DECLARE_RHICOMMAND(FRHICommandEndFrame)
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
         CommandContext.EndFrame();
+
+    #if STATS_ENABLED
+        FStatRegistry::Get().UpdateFrameStats();
+    #endif
     }
 };
 

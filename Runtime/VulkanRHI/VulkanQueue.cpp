@@ -358,6 +358,8 @@ bool FVulkanQueue::SubmitSemaphoresOnly(VkSemaphore WaitSemaphore, VkPipelineSta
         Result = vkQueueSubmit(Queue, 1, &SubmitInfo, VK_NULL_HANDLE);
     }
 
+    STAT_ADD_FRAME(STAT_Vulkan_SemaphoreOnlySubmits, 1);
+
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR_CRITICAL("vkQueueSubmit failed with %s", ToString(Result));
@@ -396,6 +398,8 @@ void FVulkanQueue::SubmitCommands(FVulkanCommands* Commands)
     {
         return;
     }
+
+    STAT_ADD_FRAME(STAT_Vulkan_Submits, 1);
 
     {
         TScopedLock Lock(QueueCS);
@@ -932,7 +936,7 @@ void FVulkanCommands::Execute()
 
 void FVulkanCommands::PostExecute()
 {
-    TArray<uint64> RawTicksArray;
+    TInlineArray<uint64, VULKAN_INLINE_TIMESTAMP_QUERIES> RawTicksArray;
     RawTicksArray.Resize(TimestampQueries.Size());
 
     for (int32 i = 0; i < TimestampQueries.Size(); i++)

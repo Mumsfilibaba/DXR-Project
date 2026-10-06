@@ -137,6 +137,14 @@ public:
     void ResetPool();
     void SetDebugName(const String& InName);
 
+    void ExtendResetRange(int32 EndQueryIndex)
+    {
+        if (EndQueryIndex > NumQueriesToReset)
+        {
+            NumQueriesToReset = EndQueryIndex;
+        }
+    }
+
     VkQueryPool GetVkQueryPool() const
     {
         return QueryPool;
@@ -184,6 +192,7 @@ public:
 
 private:
     VkQueryPool           QueryPool;
+    int32                 NumQueriesToReset;
 #if VULKAN_STORE_DEBUG_NAMES
     String                DebugName;
 #endif

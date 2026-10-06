@@ -694,6 +694,7 @@ void FD3D12Device::EndFrame(FD3D12CommandContext* InCommandContext)
         return;
     }
 
+    STAT_ADD_FRAME(STAT_D3D12_SplitsOther, 1);
     InCommandContext->SplitCommandList(true, false);
 
     const uint64 CompletionFenceValue = FrameFence->Signal(DirectQueue->GetD3D12CommandQueue());

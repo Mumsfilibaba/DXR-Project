@@ -234,6 +234,7 @@ FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandList(FD3D12CommandList* InComman
 
     ID3D12CommandList* CommandList = InCommandList->GetCommandList();
     CommandQueue->ExecuteCommandLists(1, &CommandList);
+    STAT_ADD_FRAME(STAT_D3D12_Submits, 1);
 
     const uint64 FenceValue = SubmissionFence->Signal(CommandQueue.Get());
     if (bWaitForCompletion)
@@ -266,6 +267,7 @@ FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandLists(FD3D12CommandList* const* 
     }
 
     CommandQueue->ExecuteCommandLists(D3DCommandLists.Size(), D3DCommandLists.Data());
+    STAT_ADD_FRAME(STAT_D3D12_Submits, 1);
 
 #if D3D12_ENABLE_DEVICE_LOST_CHECK
     if (GetDevice()->GetD3D12Device()->GetDeviceRemovedReason() != S_OK)

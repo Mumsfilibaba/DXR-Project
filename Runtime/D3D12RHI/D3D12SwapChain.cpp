@@ -427,6 +427,7 @@ bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 I
     {
         if (InCommandContext->IsRecording())
         {
+            STAT_ADD_FRAME(STAT_D3D12_SplitsOther, 1);
             InCommandContext->SplitCommandListAndResetState(false, true);
         }
         else
@@ -788,6 +789,7 @@ void FD3D12SwapChainRHI::ApplySettingsChanges()
     if (DesiredBackBufferCount != NumBackBuffers)
     {
         // Wait for all GPU work to complete before releasing backbuffer resources
+        STAT_ADD_FRAME(STAT_D3D12_SplitsOther, 1);
         CommandContext->SplitCommandListAndResetState(false, true);
 
         ReleaseBackBufferResources();

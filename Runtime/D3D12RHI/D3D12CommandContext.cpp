@@ -577,6 +577,8 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
 
     if (!HasPendingWork())
     {
+        STAT_ADD_FRAME(STAT_D3D12_EmptyCommandListsSkipped, 1);
+
         if (OutSyncPoint)
         {
             *OutSyncPoint = FD3D12FenceSyncPoint();
@@ -712,6 +714,8 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
     }
     else
     {
+        STAT_ADD_FRAME(STAT_D3D12_EmptyCommandListsSkipped, 1);
+
         PendingBarriers.Clear();
         PendingResourceStates.Clear();
 
@@ -760,6 +764,8 @@ void FD3D12CommandContext::SplitCommandListAndResetState(bool bFlushAllocator, b
 
 void FD3D12CommandContext::SplitCommandListForDescriptorHeapRollover()
 {
+    STAT_ADD_FRAME(STAT_D3D12_SplitsDescriptorHeapRollover, 1);
+
 #if D3D12_ENABLE_DESCRIPTOR_HEAP_ROLLOVER_LOGGING
     D3D12_WARNING("[DescriptorRollover] Splitting command list for descriptor-heap rollover (RecordedCommands=%u)",
         CommandList ? CommandList->GetNumCommands() : 0u);
@@ -2009,6 +2015,7 @@ void FD3D12CommandContext::WriteFence(FRHIFence* Fence)
 
     FD3D12FenceRHI* D3D12Fence = FD3D12DeviceRHI::ResourceCast(Fence);
 
+    STAT_ADD_FRAME(STAT_D3D12_SplitsFence, 1);
     SplitCommandList(true, false);
     D3D12Fence->Signal(Queue.GetD3D12CommandQueue());
 }
@@ -2901,6 +2908,7 @@ void FD3D12CommandContext::ConditionalSplitCommandList()
 
     if (NumCommands >= MaxCommands)
     {
+        STAT_ADD_FRAME(STAT_D3D12_SplitsCommandLimit, 1);
         SplitCommandList(true, false);
     }
 }
@@ -3506,6 +3514,15 @@ void FD3D12CommandContext::CopyAccelerationStructure(FRHIRayTracingAccelerationS
     BarrierBatcher.FlushBarriers(GetCommandList());
 
     CommandList->GetGraphicsCommandList4()->CopyRaytracingAccelerationStructure(DestinationAddress, SourceAddress, D3D12CopyMode);
+
+    if (D3D12CopyMode == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_COMPACT)
+    {
+        STAT_ADD_FRAME(STAT_D3D12_AccelerationStructureCompactions, 1);
+    }
+    else
+    {
+        STAT_ADD_FRAME(STAT_D3D12_AccelerationStructureCopies, 1);
+    }
 #else
     UNREFERENCED_VARIABLE(Destination);
     UNREFERENCED_VARIABLE(Source);
@@ -3553,6 +3570,7 @@ void FD3D12CommandContext::SerializeAccelerationStructure(FRHIRayTracingAccelera
     BarrierBatcher.FlushBarriers(GetCommandList());
 
     CommandList->GetGraphicsCommandList4()->CopyRaytracingAccelerationStructure(DestinationAddress, SourceAddress, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_SERIALIZE);
+    STAT_ADD_FRAME(STAT_D3D12_AccelerationStructureSerializations, 1);
 #else
     UNREFERENCED_VARIABLE(Source);
     UNREFERENCED_VARIABLE(DstBuffer);
@@ -3580,6 +3598,7 @@ void FD3D12CommandContext::DeserializeAccelerationStructure(FRHIRayTracingAccele
     BarrierBatcher.FlushBarriers(GetCommandList());
 
     CommandList->GetGraphicsCommandList4()->CopyRaytracingAccelerationStructure(DestinationAddress, SourceAddress, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_DESERIALIZE);
+    STAT_ADD_FRAME(STAT_D3D12_AccelerationStructureDeserializations, 1);
 #else
     UNREFERENCED_VARIABLE(Destination);
     UNREFERENCED_VARIABLE(SourceBuffer);
