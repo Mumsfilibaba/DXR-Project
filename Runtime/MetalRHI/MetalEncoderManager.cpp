@@ -104,10 +104,14 @@ FMetalEncoderManager::FMetalEncoderManager(FMetalQueue& InQueue)
     , BindingCache()
     , ScheduledTimestamps()
     , PendingClears()
+    , PendingDiscards()
     , ResidencyList()
     , WaitedUploadValue(0)
     , DeclaredResidencyGeneration(0)
     , EncoderSerial(0)
+    , ActiveStatisticsQuery(nullptr)
+    , OpenStatisticPair(MetalInvalidQueryIndex)
+    , OpenUtilizationPair(MetalInvalidQueryIndex)
     , bAdoptedEncoder(false)
 {
 }
@@ -223,8 +227,15 @@ id<MTLCommandEncoder> FMetalEncoderManager::OpenEncoder(OpenFunctionType&& Open,
 
     if (Label)
     {
-        Encoder.label = [NSString stringWithUTF8String:Label];
+        Encoder.label = MakeEncoderLabel(Label);
     }
+
+#if !METAL_ASSUME_APPLE_GPU
+    if constexpr (Type == EMetalEncoderType::Render || Type == EMetalEncoderType::Compute)
+    {
+        BeginCounterPairs();
+    }
+#endif
 
     STAT_ADD(STAT_Metal_EncoderCount, 1);
     STAT_ADD(STAT_Metal_EncodersOpen, 1);
@@ -269,6 +280,7 @@ template void FMetalEncoderManager::RefreshBindlessResidency(id<MTLAccelerationS
 id<MTLRenderCommandEncoder> FMetalEncoderManager::BeginRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR* Label)
 {
     ResolvePendingClears(Descriptor);
+    ResolvePendingDiscards(Descriptor);
     return OpenRenderEncoder(Descriptor, Label);
 }
 
@@ -305,7 +317,7 @@ id<MTLRenderCommandEncoder> FMetalEncoderManager::AdoptRenderEncoder(id<MTLRende
 
     if (Label)
     {
-        Encoder.label = [NSString stringWithUTF8String:Label];
+        Encoder.label = MakeEncoderLabel(Label);
     }
 
     STAT_ADD(STAT_Metal_EncoderCount, 1);
@@ -329,7 +341,7 @@ id<MTLComputeCommandEncoder> FMetalEncoderManager::RequireComputeEncoder()
             return [Commands->CommandBuffer computeCommandEncoder];
         }
 
-        MTLComputePassDescriptor* Descriptor = [MTLComputePassDescriptor computePassDescriptor];
+        MTLComputePassDescriptor*                       Descriptor = [MTLComputePassDescriptor computePassDescriptor];
         MTLComputePassSampleBufferAttachmentDescriptor* Attachment = Descriptor.sampleBufferAttachments[0];
         Attachment.sampleBuffer              = GetDevice()->GetTimestampQueries().GetSampleBuffer();
         Attachment.startOfEncoderSampleIndex = SampleIndex;
@@ -354,7 +366,7 @@ id<MTLBlitCommandEncoder> FMetalEncoderManager::RequireBlitEncoder()
             return [Commands->CommandBuffer blitCommandEncoder];
         }
 
-        MTLBlitPassDescriptor* Descriptor = [MTLBlitPassDescriptor blitPassDescriptor];
+        MTLBlitPassDescriptor*                       Descriptor = [MTLBlitPassDescriptor blitPassDescriptor];
         MTLBlitPassSampleBufferAttachmentDescriptor* Attachment = Descriptor.sampleBufferAttachments[0];
         Attachment.sampleBuffer              = GetDevice()->GetTimestampQueries().GetSampleBuffer();
         Attachment.startOfEncoderSampleIndex = SampleIndex;
@@ -379,7 +391,7 @@ id<MTLAccelerationStructureCommandEncoder> FMetalEncoderManager::RequireAccelera
             return [Commands->CommandBuffer accelerationStructureCommandEncoder];
         }
 
-        MTLAccelerationStructurePassDescriptor* Descriptor = [MTLAccelerationStructurePassDescriptor accelerationStructurePassDescriptor];
+        MTLAccelerationStructurePassDescriptor*                       Descriptor = [MTLAccelerationStructurePassDescriptor accelerationStructurePassDescriptor];
         MTLAccelerationStructurePassSampleBufferAttachmentDescriptor* Attachment = Descriptor.sampleBufferAttachments[0];
         Attachment.sampleBuffer              = GetDevice()->GetTimestampQueries().GetSampleBuffer();
         Attachment.startOfEncoderSampleIndex = SampleIndex;
@@ -393,6 +405,7 @@ id<MTLParallelRenderCommandEncoder> FMetalEncoderManager::BeginParallelRenderEnc
     CHECK(Queue.GetType() == EMetalQueueType::Direct);
 
     ResolvePendingClears(Descriptor);
+    ResolvePendingDiscards(Descriptor);
     PrepareToOpen();
 
     const uint32 SampleIndex = TakeScheduledTimestamp();
@@ -412,7 +425,7 @@ id<MTLParallelRenderCommandEncoder> FMetalEncoderManager::BeginParallelRenderEnc
 
     if (Label)
     {
-        ParallelEncoder.label = [NSString stringWithUTF8String:Label];
+        ParallelEncoder.label = MakeEncoderLabel(Label);
     }
 
     id<MTLRenderCommandEncoder> HeadEncoder = [ParallelEncoder renderCommandEncoder];
@@ -420,6 +433,7 @@ id<MTLParallelRenderCommandEncoder> FMetalEncoderManager::BeginParallelRenderEnc
     [HeadEncoder endEncoding];
 
     STAT_ADD(STAT_Metal_EncoderCount, 1);
+    STAT_ADD(STAT_Metal_EncodersOpen, 1);
     return ParallelEncoder;
 }
 
@@ -432,6 +446,7 @@ void FMetalEncoderManager::EndParallelRenderEncoder(id<MTLParallelRenderCommandE
     [TailEncoder endEncoding];
 
     [ParallelEncoder endEncoding];
+    STAT_SUBTRACT(STAT_Metal_EncodersOpen, 1);
 }
 
 void FMetalEncoderManager::EncodeLoadStorePass(MTLRenderPassDescriptor* Descriptor, const CHAR* Label)
@@ -446,6 +461,10 @@ void FMetalEncoderManager::EndEncoder()
     {
         return;
     }
+
+#if !METAL_ASSUME_APPLE_GPU
+    EndCounterPairs();
+#endif
 
     if (!bAdoptedEncoder)
     {
@@ -523,14 +542,107 @@ void FMetalEncoderManager::AddPendingClear(MTLRenderPassAttachmentDescriptor* At
     Added.RootSlice   = Subresource.Slice;
 }
 
+void FMetalEncoderManager::AddPendingDiscard(id<MTLTexture> Texture)
+{
+    CHECK(Texture != nil);
+
+    id<MTLTexture> RootTexture = GetAbsoluteSubresource(Texture, 0, 0).RootTexture;
+
+    for (int32 Index = 0; Index < PendingClears.Size();)
+    {
+        if (PendingClears[Index].RootTexture == RootTexture)
+        {
+            PendingClears.RemoveAt(Index);
+            continue;
+        }
+
+        ++Index;
+    }
+
+    if (PendingDiscards.Find(RootTexture) == -1)
+    {
+        PendingDiscards.Add(RootTexture);
+    }
+}
+
+void FMetalEncoderManager::ResolvePendingDiscards(MTLRenderPassDescriptor* Descriptor)
+{
+    if (PendingDiscards.IsEmpty())
+    {
+        return;
+    }
+
+    MTLRenderPassAttachmentDescriptor* Attachments[RHI_MAX_RENDER_TARGETS + 2];
+    uint32 NumAttachments = 0;
+
+    for (uint32 Slot = 0; Slot < RHI_MAX_RENDER_TARGETS; ++Slot)
+    {
+        if (Descriptor.colorAttachments[Slot].texture)
+        {
+            Attachments[NumAttachments++] = Descriptor.colorAttachments[Slot];
+        }
+    }
+
+    if (Descriptor.depthAttachment.texture)
+    {
+        Attachments[NumAttachments++] = Descriptor.depthAttachment;
+    }
+
+    if (Descriptor.stencilAttachment.texture)
+    {
+        Attachments[NumAttachments++] = Descriptor.stencilAttachment;
+    }
+
+    id<MTLTexture> Consumed[RHI_MAX_RENDER_TARGETS + 2];
+    uint32 NumConsumed = 0;
+
+    for (uint32 Index = 0; Index < NumAttachments; ++Index)
+    {
+        MTLRenderPassAttachmentDescriptor* Attachment  = Attachments[Index];
+        id<MTLTexture>                     RootTexture = GetAbsoluteSubresource(Attachment.texture, Attachment.level, Attachment.slice).RootTexture;
+
+        if (PendingDiscards.Find(RootTexture) == -1)
+        {
+            continue;
+        }
+
+        if (Attachment.loadAction == MTLLoadActionLoad)
+        {
+            Attachment.loadAction = MTLLoadActionDontCare;
+        }
+
+        Consumed[NumConsumed++] = RootTexture;
+    }
+
+    for (uint32 Index = 0; Index < NumConsumed; ++Index)
+    {
+        const int32 Found = PendingDiscards.Find(Consumed[Index]);
+        if (Found != -1)
+        {
+            PendingDiscards.RemoveAt(Found);
+        }
+    }
+}
+
 void FMetalEncoderManager::FlushPendingClears(id<MTLTexture> Texture)
 {
+    id<MTLTexture> RootTexture = Texture ? GetAbsoluteSubresource(Texture, 0, 0).RootTexture : nil;
+    for (int32 Index = 0; Index < PendingDiscards.Size();)
+    {
+        if (!RootTexture || PendingDiscards[Index] == RootTexture)
+        {
+            PendingDiscards.RemoveAt(Index);
+            continue;
+        }
+
+        ++Index;
+    }
+
     if (PendingClears.IsEmpty())
     {
         return;
     }
 
-    id<MTLTexture> RootTexture = Texture ? GetAbsoluteSubresource(Texture, 0, 0).RootTexture : nil;
     for (int32 Index = 0; Index < PendingClears.Size();)
     {
         if (RootTexture && PendingClears[Index].RootTexture != RootTexture)
@@ -696,10 +808,8 @@ void FMetalEncoderManager::ScheduleTimestamp(uint32 SampleIndex)
 }
 
 #if !METAL_ASSUME_APPLE_GPU
-void FMetalEncoderManager::SampleCounters(uint32 SampleIndex)
+void FMetalEncoderManager::SampleCounters(id<MTLCounterSampleBuffer> SampleBuffer, uint32 SampleIndex)
 {
-    id<MTLCounterSampleBuffer> SampleBuffer = GetDevice()->GetTimestampQueries().GetSampleBuffer();
-
     if (EncoderType == EMetalEncoderType::Render && GMetalFeatures.bDrawBoundaryTimestamps)
     {
         [static_cast<id<MTLRenderCommandEncoder>>(Encoder) sampleCountersInBuffer:SampleBuffer atSampleIndex:SampleIndex withBarrier:YES];
@@ -729,13 +839,104 @@ void FMetalEncoderManager::SampleCounters(uint32 SampleIndex)
         [RequireComputeEncoder() sampleCountersInBuffer:SampleBuffer atSampleIndex:SampleIndex withBarrier:YES];
     }
 }
+
+void FMetalEncoderManager::SetActiveStatisticsQuery(FMetalQueryRHI* Query)
+{
+    if (Query == ActiveStatisticsQuery)
+    {
+        return;
+    }
+
+    if (OpenStatisticPair != MetalInvalidQueryIndex)
+    {
+        SampleInOpenEncoder(GetDevice()->GetStatisticQueries().GetSampleBuffer(), OpenStatisticPair * 2 + 1);
+        OpenStatisticPair = MetalInvalidQueryIndex;
+    }
+
+    ActiveStatisticsQuery = Query;
+
+    if (ActiveStatisticsQuery && Encoder && !bAdoptedEncoder)
+    {
+        BeginStatisticPair();
+    }
+}
+
+bool FMetalEncoderManager::CanSampleInOpenEncoder() const
+{
+    return (EncoderType == EMetalEncoderType::Render && GMetalFeatures.bDrawBoundaryTimestamps)
+        || (EncoderType == EMetalEncoderType::Compute && GMetalFeatures.bDispatchBoundaryTimestamps);
+}
+
+void FMetalEncoderManager::SampleInOpenEncoder(id<MTLCounterSampleBuffer> SampleBuffer, uint32 SampleIndex)
+{
+    if (EncoderType == EMetalEncoderType::Render)
+    {
+        [static_cast<id<MTLRenderCommandEncoder>>(Encoder) sampleCountersInBuffer:SampleBuffer atSampleIndex:SampleIndex withBarrier:YES];
+    }
+    else if (EncoderType == EMetalEncoderType::Compute)
+    {
+        [static_cast<id<MTLComputeCommandEncoder>>(Encoder) sampleCountersInBuffer:SampleBuffer atSampleIndex:SampleIndex withBarrier:YES];
+    }
+}
+
+void FMetalEncoderManager::BeginStatisticPair()
+{
+    if (OpenStatisticPair != MetalInvalidQueryIndex || !CanSampleInOpenEncoder())
+    {
+        return;
+    }
+
+    FMetalStatisticQueries& Statistics = GetDevice()->GetStatisticQueries();
+    const uint32            Pair       = Statistics.BeginPair(*ActiveStatisticsQuery);
+
+    if (Pair != MetalInvalidQueryIndex)
+    {
+        SampleInOpenEncoder(Statistics.GetSampleBuffer(), Pair * 2);
+        OpenStatisticPair = Pair;
+    }
+}
+
+void FMetalEncoderManager::BeginCounterPairs()
+{
+    if (ActiveStatisticsQuery)
+    {
+        BeginStatisticPair();
+    }
+
+    FMetalStageUtilizationQueries& Utilization = GetDevice()->GetStageUtilizationQueries();
+    if (Utilization.IsAvailable() && OpenUtilizationPair == MetalInvalidQueryIndex && CanSampleInOpenEncoder())
+    {
+        const uint32 Pair = Utilization.BeginPair();
+
+        if (Pair != MetalInvalidQueryIndex)
+        {
+            SampleInOpenEncoder(Utilization.GetSampleBuffer(), Pair * 2);
+            OpenUtilizationPair = Pair;
+        }
+    }
+}
+
+void FMetalEncoderManager::EndCounterPairs()
+{
+    if (OpenStatisticPair != MetalInvalidQueryIndex)
+    {
+        SampleInOpenEncoder(GetDevice()->GetStatisticQueries().GetSampleBuffer(), OpenStatisticPair * 2 + 1);
+        OpenStatisticPair = MetalInvalidQueryIndex;
+    }
+
+    if (OpenUtilizationPair != MetalInvalidQueryIndex)
+    {
+        SampleInOpenEncoder(GetDevice()->GetStageUtilizationQueries().GetSampleBuffer(), OpenUtilizationPair * 2 + 1);
+        OpenUtilizationPair = MetalInvalidQueryIndex;
+    }
+}
 #endif
 
 void FMetalEncoderManager::EncodeTimestampPass(uint32 StartIndex, uint32 EndIndex)
 {
     CHECK(Encoder == nil);
 
-    MTLBlitPassDescriptor* Descriptor = [MTLBlitPassDescriptor blitPassDescriptor];
+    MTLBlitPassDescriptor*                       Descriptor = [MTLBlitPassDescriptor blitPassDescriptor];
     MTLBlitPassSampleBufferAttachmentDescriptor* Attachment = Descriptor.sampleBufferAttachments[0];
     Attachment.sampleBuffer              = GetDevice()->GetTimestampQueries().GetSampleBuffer();
     Attachment.startOfEncoderSampleIndex = StartIndex;
@@ -743,6 +944,16 @@ void FMetalEncoderManager::EncodeTimestampPass(uint32 StartIndex, uint32 EndInde
 
     id<MTLBlitCommandEncoder> TimestampEncoder = [Commands->CommandBuffer blitCommandEncoderWithDescriptor:Descriptor];
     [TimestampEncoder endEncoding];
+}
+
+NSString* FMetalEncoderManager::MakeEncoderLabel(const CHAR* Label) const
+{
+    if (ScopePath.IsEmpty())
+    {
+        return [NSString stringWithUTF8String:Label];
+    }
+
+    return String::Printf("%s | %s", *ScopePath, Label).GetNSString();
 }
 
 uint32 FMetalEncoderManager::TakeScheduledTimestamp()

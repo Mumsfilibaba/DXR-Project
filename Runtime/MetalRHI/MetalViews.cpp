@@ -574,7 +574,7 @@ bool FMetalView::CreateBufferTexture()
     }
 
     const NSUInteger NumElements = static_cast<NSUInteger>(BufferSize / Stride);
-    MTLTextureUsage Usage = MTLTextureUsageShaderRead;
+    MTLTextureUsage  Usage       = MTLTextureUsageShaderRead;
 
     if (bWritable)
     {

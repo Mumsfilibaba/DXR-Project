@@ -64,9 +64,11 @@ protected:
 
 private:
     bool UploadInitialData(FMetalUploadBatch& UploadBatch, const IRHITextureData* InInitialData);
+    void UpdateMemoryStats();
 
     id<MTLTexture>                           Texture;
     FMetalResourceStorage                    ResourceStorage;
+    int64                                    TrackedMemory;
     FMetalSwapChainRHI*                      SwapChain;
     TSharedRef<FMetalShaderResourceViewRHI>  ShaderResourceView;
     TSharedRef<FMetalUnorderedAccessViewRHI> UnorderedAccessView;

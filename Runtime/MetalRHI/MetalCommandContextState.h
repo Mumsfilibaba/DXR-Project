@@ -72,7 +72,8 @@ enum class EMetalDynamicState : uint8
     BlendFactor  = FLAG(2),
     StencilRef   = FLAG(3),
     DepthBias    = FLAG(4),
-    All          = Viewports | ScissorRects | BlendFactor | StencilRef | DepthBias,
+    DepthBounds  = FLAG(5),
+    All          = Viewports | ScissorRects | BlendFactor | StencilRef | DepthBias | DepthBounds,
 };
 ENUM_CLASS_OPERATORS(EMetalDynamicState);
 
@@ -101,6 +102,7 @@ public:
     void SetBlendFactor(const float InBlendFactor[4]);
     void SetStencilRef(uint32 InStencilRef);
     void SetDepthBias(float InDepthBias, float InDepthBiasClamp, float InSlopeScaledDepthBias);
+    void SetDepthBounds(float InMinDepth, float InMaxDepth);
     void SetVertexBuffer(FMetalBufferRHI* VertexBuffer, uint32 Slot);
     void SetIndexBuffer(FMetalBufferRHI* InIndexBuffer, MTLIndexType IndexType);
     void SetSamplePositions(const FRHISamplePositionsDesc& InSamplePositions);
@@ -112,11 +114,11 @@ public:
     void SetSampler(FMetalSamplerStateRHI* Sampler, EShaderVisibility::Type Stage, uint32 Register);
     void SetShaderConstants(EShaderVisibility::Type Stage, const uint32* Constants, uint32 NumConstants);
 
-    const FMetalRenderPipeline*    GetRenderPipeline() const      { return RenderPipeline; }
+    const FMetalRenderPipeline*    GetRenderPipeline()      const { return RenderPipeline; }
     FRHIPipelineState*             GetRenderPipelineState() const { return RenderPipelineOwner.Get(); }
-    FMetalComputePipelineStateRHI* GetComputePipeline() const { return ComputePipeline.Get(); }
-    const FMetalIndexBufferCache&  GetIndexBuffer() const     { return IndexBuffer; }
-    const FRHISamplePositionsDesc& GetSamplePositions() const { return SamplePositions; }
+    FMetalComputePipelineStateRHI* GetComputePipeline()     const { return ComputePipeline.Get(); }
+    const FMetalIndexBufferCache&  GetIndexBuffer()         const { return IndexBuffer; }
+    const FRHISamplePositionsDesc& GetSamplePositions()     const { return SamplePositions; }
 
 private:
     template<EShaderVisibility::Type Stage>
@@ -144,6 +146,7 @@ private:
     MTLScissorRect                ScissorRects[MAX_VIEWPORTS];
     float                         BlendFactor[4];
     float                         DepthBias[3];
+    float                         DepthBounds[2];
     uint32                        StencilRef;
     uint8                         NumViewports;
     uint8                         NumScissorRects;

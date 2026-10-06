@@ -28,6 +28,9 @@ METALRHI_API uint32                  GMetalMaxTexture2DSize                    =
 METALRHI_API uint32                  GMetalMaxTexture3DSize                    = 0;
 METALRHI_API bool                    GMetalSupportsCounterSampling             = false;
 METALRHI_API bool                    GMetalSupportsTimestampQueries            = false;
+METALRHI_API bool                    GMetalSupportsStatisticQueries            = false;
+METALRHI_API bool                    GMetalSupportsDepthBoundsTest             = false;
+METALRHI_API bool                    GMetalSupportsSamplerLODBias              = false;
 METALRHI_API bool                    GMetalSupportsBCTextureCompression        = false;
 METALRHI_API bool                    GMetalSupportsBindless                    = false;
 METALRHI_API bool                    GMetalSupportsProgrammableSamplePositions = false;
@@ -92,6 +95,9 @@ void DumpMetalCapabilities()
     LOG_INFO("[MetalRHI]   Timestamp AtDrawBoundary               : %s", YesNo(GMetalFeatures.bDrawBoundaryTimestamps));
     LOG_INFO("[MetalRHI]   Timestamp AtDispatchBoundary           : %s", YesNo(GMetalFeatures.bDispatchBoundaryTimestamps));
     LOG_INFO("[MetalRHI]   Timestamp AtBlitBoundary               : %s", YesNo(GMetalFeatures.bBlitBoundaryTimestamps));
+    LOG_INFO("[MetalRHI]   Statistic Queries                      : %s", YesNo(GMetalSupportsStatisticQueries));
+    LOG_INFO("[MetalRHI]   Depth Bounds Test                      : %s", YesNo(GMetalSupportsDepthBoundsTest));
+    LOG_INFO("[MetalRHI]   Sampler LOD Bias                       : %s", YesNo(GMetalSupportsSamplerLODBias));
     LOG_INFO("[MetalRHI]   BC Texture Compression                 : %s", YesNo(GMetalSupportsBCTextureCompression));
     LOG_INFO("[MetalRHI]   Depth24 Stencil8                       : %s", YesNo(GMetalFeatures.bDepth24Stencil8));
     LOG_INFO("[MetalRHI]   Bindless Descriptors                   : %s", YesNo(GMetalSupportsBindless));

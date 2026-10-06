@@ -8,7 +8,15 @@
 #include "MetalRHI/MetalStats.h"
 #include "MetalRHI/MetalTexture.h"
 #include "Core/Math/Math.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Threading/ScopedLock.h"
+
+#if METAL_ENABLE_MEMORY_LOGGING
+static TAutoConsoleVariable<bool> CVarMetalLogMemoryAllocations(
+    "MetalRHI.LogMemoryAllocations",
+    "Log every buffer and texture allocation with where it was placed, and every new heap and upload page",
+    false);
+#endif
 
 static constexpr uint64 GMaxHeapAllocationSize = 64ull * 1024ull * 1024ull;
 
@@ -280,6 +288,13 @@ uint32 FMetalHeapPool::CreateHeapBlock(uint64 MinimumSize)
 
     MetalHeap.label = @"MetalDeviceHeap";
 
+#if METAL_ENABLE_MEMORY_LOGGING
+    if (CVarMetalLogMemoryAllocations.GetValue())
+    {
+        METAL_INFO("[HeapPool] New heap Size=%llu (MinimumSize=%llu)", static_cast<uint64>(HeapDescriptor.size), MinimumSize);
+    }
+#endif
+
     FMetalHeap* Heap = new FMetalHeap(GetDevice(), MetalHeap, HeapDescriptor.size);
     Heap->SetDebugName("MetalDeviceHeap");
     GetDevice()->GetResidencyManager().BeginTracking(Heap->GetResidencyEntry());
@@ -371,9 +386,9 @@ bool FMetalHeapPool::TrySuballocate(FHeapBlock& Block, uint64 SizeInBytes, uint6
 {
     for (int32 RangeIndex = 0; RangeIndex < Block.FreeRanges.Size(); ++RangeIndex)
     {
-        FHeapFreeRange& Range = Block.FreeRanges[RangeIndex];
-        const uint64 AlignedOffset = Math::AlignUp(Range.Offset, Alignment);
-        const uint64 Padding       = AlignedOffset - Range.Offset;
+        FHeapFreeRange& Range         = Block.FreeRanges[RangeIndex];
+        const uint64    AlignedOffset = Math::AlignUp(Range.Offset, Alignment);
+        const uint64    Padding       = AlignedOffset - Range.Offset;
 
         if (Padding + SizeInBytes > Range.Size)
         {
@@ -768,6 +783,14 @@ FMetalLinearAllocator::FPage* FMetalLinearAllocator::CreatePage(uint64 SizeInByt
 
     Buffer.label = bDedicated ? @"MetalUploadDedicated" : @"MetalUploadPage";
     GetDevice()->GetResidencySet().Add(Buffer, bBindlessReachable);
+    GetDevice()->TrackCPUVisibleBytes(Buffer.storageMode, static_cast<int64>(PageSize));
+
+#if METAL_ENABLE_MEMORY_LOGGING
+    if (CVarMetalLogMemoryAllocations.GetValue())
+    {
+        METAL_INFO("[LinearAllocator] New %s Size=%llu", bDedicated ? "dedicated allocation" : "page", PageSize);
+    }
+#endif
 
     FPage* Page = new FPage();
     Page->Buffer                   = Buffer;
@@ -839,6 +862,7 @@ void FMetalLinearAllocator::ReleasePage(FPage* Page)
 
     if (Page->Buffer)
     {
+        GetDevice()->TrackCPUVisibleBytes(Page->Buffer.storageMode, -static_cast<int64>(Page->Size));
         GetDevice()->GetResidencySet().Remove(Page->Buffer);
         [Page->Buffer release];
         Page->Buffer = nil;
@@ -1004,9 +1028,9 @@ bool FMetalBufferAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, MT
         return false;
     }
 
-    const uint64 ResolvedAlignment = Math::Max(Alignment, static_cast<uint64>(BUFFER_ALIGNMENT));
-    const MTLStorageMode StorageMode = MTLStorageMode((Options & MTLResourceStorageModeMask) >> MTLResourceStorageModeShift);
-    id<MTLDevice> DeviceHandle = GetDevice()->GetMTLDevice();
+    const uint64         ResolvedAlignment = Math::Max(Alignment, static_cast<uint64>(BUFFER_ALIGNMENT));
+    const MTLStorageMode StorageMode       = MTLStorageMode((Options & MTLResourceStorageModeMask) >> MTLResourceStorageModeShift);
+    id<MTLDevice>        DeviceHandle      = GetDevice()->GetMTLDevice();
 
     if (StorageMode == MTLStorageModePrivate)
     {
@@ -1031,6 +1055,14 @@ bool FMetalBufferAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, MT
             if (Buffer)
             {
                 OutStorage.InitSuballocatedHeap(Buffer, Heap, Offset, SizeAndAlign.size, HeapIndex, this);
+
+            #if METAL_ENABLE_MEMORY_LOGGING
+                if (CVarMetalLogMemoryAllocations.GetValue())
+                {
+                    METAL_INFO("[BufferAllocator] Size=%llu Alignment=%llu -> Heap %u Offset=%llu", SizeInBytes, static_cast<uint64>(SizeAndAlign.align), HeapIndex, Offset);
+                }
+            #endif
+
                 return true;
             }
 
@@ -1047,6 +1079,14 @@ bool FMetalBufferAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, MT
     }
 
     OutStorage.InitStandalone(Buffer, SizeInBytes, bBindlessReachable);
+
+#if METAL_ENABLE_MEMORY_LOGGING
+    if (CVarMetalLogMemoryAllocations.GetValue())
+    {
+        METAL_INFO("[BufferAllocator] Size=%llu StorageMode=%lu -> Standalone", SizeInBytes, static_cast<unsigned long>(StorageMode));
+    }
+#endif
+
     return true;
 }
 
@@ -1216,9 +1256,9 @@ bool FMetalTextureAllocator::TryAllocate(MTLTextureDescriptor* TextureDescriptor
     if (TextureDescriptor.storageMode == MTLStorageModePrivate)
     {
         const MTLSizeAndAlign SizeAndAlign = [DeviceHandle heapTextureSizeAndAlignWithDescriptor:TextureDescriptor];
-        uint32      HeapIndex = UINT32_MAX;
-        uint64      Offset    = 0;
-        FMetalHeap* Heap      = nullptr;
+        uint32                HeapIndex    = UINT32_MAX;
+        uint64                Offset       = 0;
+        FMetalHeap*           Heap         = nullptr;
 
         if (SizeAndAlign.size > 0 && SizeAndAlign.size <= GMaxHeapAllocationSize && HeapPool.TryAllocate(SizeAndAlign.size, SizeAndAlign.align, &OutStorage, HeapIndex, Offset, Heap))
         {
@@ -1227,6 +1267,16 @@ bool FMetalTextureAllocator::TryAllocate(MTLTextureDescriptor* TextureDescriptor
             if (Texture)
             {
                 OutStorage.InitSuballocatedHeap(Texture, Heap, Offset, SizeAndAlign.size, HeapIndex, this);
+
+            #if METAL_ENABLE_MEMORY_LOGGING
+                if (CVarMetalLogMemoryAllocations.GetValue())
+                {
+                    METAL_INFO("[TextureAllocator] %lux%lux%lu Format=%lu Size=%llu -> Heap %u Offset=%llu",
+                        static_cast<unsigned long>(TextureDescriptor.width), static_cast<unsigned long>(TextureDescriptor.height), static_cast<unsigned long>(TextureDescriptor.depth),
+                        static_cast<unsigned long>(TextureDescriptor.pixelFormat), static_cast<uint64>(SizeAndAlign.size), HeapIndex, Offset);
+                }
+            #endif
+
                 return true;
             }
 
@@ -1244,6 +1294,16 @@ bool FMetalTextureAllocator::TryAllocate(MTLTextureDescriptor* TextureDescriptor
 
     const bool bBindlessReachable = (TextureDescriptor.usage & (MTLTextureUsageShaderRead | MTLTextureUsageShaderWrite)) != 0;
     OutStorage.InitStandalone(Texture, 0, bBindlessReachable);
+
+#if METAL_ENABLE_MEMORY_LOGGING
+    if (CVarMetalLogMemoryAllocations.GetValue())
+    {
+        METAL_INFO("[TextureAllocator] %lux%lux%lu Format=%lu Size=%llu -> Standalone",
+            static_cast<unsigned long>(TextureDescriptor.width), static_cast<unsigned long>(TextureDescriptor.height), static_cast<unsigned long>(TextureDescriptor.depth),
+            static_cast<unsigned long>(TextureDescriptor.pixelFormat), static_cast<uint64>(Texture.allocatedSize));
+    }
+#endif
+
     return true;
 }
 

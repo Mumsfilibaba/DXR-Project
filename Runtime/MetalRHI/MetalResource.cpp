@@ -72,6 +72,8 @@ void FMetalResourceStorage::InitStandalone(id<MTLAccelerationStructure> InAccele
 
 void FMetalResourceStorage::TrackStandalone(id<MTLResource> Resource, bool bBindlessReachable)
 {
+    GetDevice()->TrackCPUVisibleBytes(Resource.storageMode, static_cast<int64>(Resource.allocatedSize));
+
     if (Resource.storageMode != MTLStorageModePrivate)
     {
         GetDevice()->GetResidencySet().Add(Resource, bBindlessReachable);
@@ -247,6 +249,11 @@ void FMetalResourceStorage::ReleaseResource()
         if (ResidencyEntry == &StandaloneEntry)
         {
             GetDevice()->GetResidencyManager().EndTracking(StandaloneEntry, false);
+        }
+
+        if (id<MTLResource> Resource = Buffer ? id<MTLResource>(Buffer) : (Texture ? id<MTLResource>(Texture) : id<MTLResource>(AccelerationStructure)))
+        {
+            GetDevice()->TrackCPUVisibleBytes(Resource.storageMode, -static_cast<int64>(Resource.allocatedSize));
         }
 
         if (Buffer)

@@ -34,7 +34,7 @@ struct FMacPlatformMisc final : public IPlatformMisc
     static EAssertDialogResult ShowAssertDialog(const CHAR* Title, const CHAR* Message);
 
     static void InstallCrashHandler();
-    static void PrepareMetalDebugLayerEnvironment(bool bEnableDebugLayer);
+    static void PrepareMetalDebugLayerEnvironment(bool bEnableDebugLayer, bool bEnableShaderValidation = false);
 
     static FORCEINLINE void MemoryBarrier() 
     {

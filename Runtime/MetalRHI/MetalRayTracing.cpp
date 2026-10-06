@@ -69,6 +69,7 @@ FMetalAccelerationStructure::FMetalAccelerationStructure(FMetalDevice* InDevice)
     , Storage()
     , PinnedEntry(nullptr)
     , DebugName()
+    , TrackedMemory(0)
 {
 }
 
@@ -76,6 +77,15 @@ FMetalAccelerationStructure::~FMetalAccelerationStructure()
 {
     GetDevice()->GetResidencyManager().Unpin(PinnedEntry);
     PinnedEntry = nullptr;
+
+    STAT_SUBTRACT(STAT_RHI_AccelerationStructureMemory, TrackedMemory);
+}
+
+void FMetalAccelerationStructure::UpdateMemoryStat()
+{
+    const int64 NewSize = Storage ? static_cast<int64>(Storage->GetSize()) : 0;
+    STAT_ADD(STAT_RHI_AccelerationStructureMemory, NewSize - TrackedMemory);
+    TrackedMemory = NewSize;
 }
 
 bool FMetalAccelerationStructure::CompactInPlace(FMetalCommandContext& Context, uint64 CompactedSizeInBytes)
@@ -155,8 +165,8 @@ bool FMetalAccelerationStructure::EncodeBuild(FMetalCommandContext& Context, MTL
 {
     CHECK(Storage != nullptr);
 
-    const MTLAccelerationStructureSizes Sizes = [GetDevice()->GetMTLDevice() accelerationStructureSizesWithDescriptor:Descriptor];
-    const uint64 ScratchSize = Math::Max<uint64>(bRefit ? Sizes.refitScratchBufferSize : Sizes.buildScratchBufferSize, 1);
+    const MTLAccelerationStructureSizes Sizes       = [GetDevice()->GetMTLDevice() accelerationStructureSizesWithDescriptor:Descriptor];
+    const uint64                        ScratchSize = Math::Max<uint64>(bRefit ? Sizes.refitScratchBufferSize : Sizes.buildScratchBufferSize, 1);
 
     TUniquePtr<FMetalResourceStorage> Scratch = MakeUniquePtr<FMetalResourceStorage>(GetDevice());
     if (!GetDevice()->GetBufferAllocator()->TryAllocate(ScratchSize, 0, MTLResourceStorageModePrivate, false, *Scratch))
@@ -208,6 +218,7 @@ void FMetalAccelerationStructure::SetStorage(FMetalCommandContext& Context, TUni
     Context.GetEncoders().GetCommands().RetireStorage(Move(Storage), PinnedEntry);
     Storage     = Move(NewStorage);
     PinnedEntry = NewEntry;
+    UpdateMemoryStat();
 
     if (!DebugName.IsEmpty())
     {
@@ -430,8 +441,8 @@ bool FMetalSceneAccelerationStructureRHI::Build(FMetalCommandContext& Context, c
         {
             const FRHIGeometryAccelerationStructureInstance& Instance = BuildDesc.Instances[Index];
 
-            FMetalGeometryAccelerationStructureRHI* MetalGeometry = static_cast<FMetalGeometryAccelerationStructureRHI*>(Instance.Geometry);
-            id<MTLAccelerationStructure> GeometryStructure = MetalGeometry ? MetalGeometry->GetMTLAccelerationStructure() : nil;
+            FMetalGeometryAccelerationStructureRHI* MetalGeometry     = static_cast<FMetalGeometryAccelerationStructureRHI*>(Instance.Geometry);
+            id<MTLAccelerationStructure>            GeometryStructure = MetalGeometry ? MetalGeometry->GetMTLAccelerationStructure() : nil;
             if (!GeometryStructure)
             {
                 METAL_WARNING("TLAS build skipping instance %u with null geometry (no BLAS)", Index);

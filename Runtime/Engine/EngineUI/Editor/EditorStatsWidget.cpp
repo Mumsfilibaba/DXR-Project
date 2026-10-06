@@ -13,7 +13,8 @@ static bool IsRHIGroup(const CHAR* GroupName)
         || CString::Strcmp(GroupName, "D3D12 Allocators") == 0
         || CString::Strcmp(GroupName, "Vulkan Allocators") == 0
         || CString::Strcmp(GroupName, "D3D12 PSO") == 0
-        || CString::Strcmp(GroupName, "Vulkan PSO") == 0;
+        || CString::Strcmp(GroupName, "Vulkan PSO") == 0
+        || CString::Strncmp(GroupName, "Metal ", 6) == 0;
 }
 
 FEditorStatsWidget::FEditorStatsWidget()

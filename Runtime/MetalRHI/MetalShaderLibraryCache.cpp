@@ -137,7 +137,7 @@ TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Compile(TArrayView<co
     id<MTLDevice> MTLDevice = Device->GetMTLDevice();
     CHECK(MTLDevice != nil);
 
-    NSError* Error = nil;
+    NSError*       Error   = nil;
     id<MTLLibrary> Library = [MTLDevice newLibraryWithSource:SourceText options:nil error:&Error];
 
     if (!Library)

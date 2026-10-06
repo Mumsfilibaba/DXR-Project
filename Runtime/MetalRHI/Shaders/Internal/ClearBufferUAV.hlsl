@@ -6,6 +6,10 @@
     #define CLEAR_ELEMENT_SINT 0
 #endif
 
+#ifndef CLEAR_ELEMENT_RAW
+    #define CLEAR_ELEMENT_RAW 0
+#endif
+
 #define NUM_THREADS (64)
 
 [[vk::push_constant]]
@@ -15,7 +19,9 @@ struct FShaderBlockConstants
     uint  NumElements;
 } Constants;
 
-#if CLEAR_ELEMENT_UINT
+#if CLEAR_ELEMENT_RAW
+    RWByteAddressBuffer OutputBuffer : register(u0);
+#elif CLEAR_ELEMENT_UINT
     [[vk::image_format("unknown")]] RWBuffer<uint4> OutputBuffer : register(u0);
     #define CLEAR_ELEMENT_VALUE (Constants.ClearValue)
 #elif CLEAR_ELEMENT_SINT
@@ -31,6 +37,10 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 {
     if (DispatchThreadID.x < Constants.NumElements)
     {
+    #if CLEAR_ELEMENT_RAW
+        OutputBuffer.Store(DispatchThreadID.x * 4, Constants.ClearValue.x);
+    #else
         OutputBuffer[DispatchThreadID.x] = CLEAR_ELEMENT_VALUE;
+    #endif
     }
 }

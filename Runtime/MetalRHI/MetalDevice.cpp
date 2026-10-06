@@ -221,6 +221,8 @@ FMetalDevice::FMetalDevice()
     , Queues()
     , TimestampQueries(this)
     , OcclusionQueries(this)
+    , StatisticQueries(this)
+    , StageUtilizationQueries(this)
     , DefaultResources{}
     , DepthStencilStates()
     , DepthStencilStatesCS()
@@ -230,6 +232,8 @@ FMetalDevice::FMetalDevice()
     , DefragCS()
     , bHasPendingDefragMoves(false)
     , FrameCounter(0)
+    , SharedBytes(0)
+    , ManagedBytes(0)
     , LastMemoryLogTime(0)
     , Properties{}
     , Device(nil)
@@ -574,6 +578,19 @@ bool FMetalDevice::Initialize()
         METAL_INFO("Timestamp samples are quantized to encoder boundaries");
     }
 
+    GMetalSupportsStatisticQueries = GMetalSupportsCounterSampling && StatisticQueries.Initialize();
+
+    if (!GMetalSupportsStatisticQueries)
+    {
+        StatisticQueries.Release();
+        METAL_INFO("Pipeline statistics queries are unavailable on this Metal device");
+    }
+
+    if (GMetalSupportsCounterSampling && StageUtilizationQueries.Initialize())
+    {
+        METAL_INFO("Stage utilization stats sample every render and compute encoder");
+    }
+
     if (!OcclusionQueries.Initialize())
     {
         METAL_ERROR("Failed to initialize occlusion queries");
@@ -649,7 +666,7 @@ id<MTLDevice> FMetalDevice::SelectDevice()
 {
     SCOPED_AUTORELEASE_POOL();
 
-    id<NSObject> Observer = nil;
+    id<NSObject>            Observer         = nil;
     NSArray<id<MTLDevice>>* AvailableDevices = MTLCopyAllDevicesWithObserver(&Observer, ^(id<MTLDevice> NotifiedDevice, MTLDeviceNotificationName Notification)
     {
         const bool bRemoval = [Notification isEqualToString:MTLDeviceRemovalRequestedNotification] || [Notification isEqualToString:MTLDeviceWasRemovedNotification];
@@ -897,7 +914,7 @@ bool FMetalDevice::CreateDefaultResources()
     };
 
     const MTLSizeAndAlign BufferSizeAndAlign = [Device heapBufferSizeAndAlignWithLength:FMetalDefaultResources::NullBufferSize options:GNullResourceOptions];
-    NSUInteger HeapSize = BufferSizeAndAlign.size;
+    NSUInteger            HeapSize           = BufferSizeAndAlign.size;
     for (const FNullTextureDesc& Desc : HeapTextures)
     {
         const MTLSizeAndAlign SizeAndAlign = [Device heapTextureSizeAndAlignWithDescriptor:Desc.Descriptor];
@@ -1057,6 +1074,14 @@ void FMetalDevice::QueryDeviceFeatureSupport()
     GMetalFeatures.bRayTracingFromRender       = Device.supportsRaytracingFromRender;
     GMetalFeatures.bHardwareRayTracing         = [Device supportsFamily:MTLGPUFamilyApple9];
 
+#if METAL_SDK_HAS_MACOS_26
+    if (@available(macOS 26.0, *))
+    {
+        GMetalSupportsDepthBoundsTest = true;
+        GMetalSupportsSamplerLODBias  = true;
+    }
+#endif
+
     GMetalFeatures.MaxVertexAmplificationCount = 1;
     for (uint8 Count = 8; Count > 1; --Count)
     {
@@ -1179,10 +1204,19 @@ bool FMetalDevice::QueryVideoMemoryInfo(EVideoMemoryType Type, FRHIVideoMemoryIn
 
     OutInfo.MemoryType = Type;
 
+    const uint64 Allocated = Device.currentAllocatedSize;
+    const uint64 Shared    = Math::Min<uint64>(static_cast<uint64>(Math::Max<int64>(SharedBytes.Load(), 0)), Allocated);
+    const uint64 Managed   = static_cast<uint64>(Math::Max<int64>(ManagedBytes.Load(), 0));
+
     if (Type == EVideoMemoryType::Local)
     {
         OutInfo.MemoryBudget = ResidencyManager ? ResidencyManager->GetBudget() : Device.recommendedMaxWorkingSetSize;
-        OutInfo.MemoryUsage  = Device.currentAllocatedSize;
+        OutInfo.MemoryUsage  = Device.hasUnifiedMemory ? Allocated : Allocated - Shared;
+    }
+    else if (!Device.hasUnifiedMemory)
+    {
+        OutInfo.MemoryBudget = [NSProcessInfo processInfo].physicalMemory / 2;
+        OutInfo.MemoryUsage  = Shared + Managed;
     }
     else
     {
@@ -1191,6 +1225,18 @@ bool FMetalDevice::QueryVideoMemoryInfo(EVideoMemoryType Type, FRHIVideoMemoryIn
     }
 
     return true;
+}
+
+void FMetalDevice::TrackCPUVisibleBytes(MTLStorageMode StorageMode, int64 Delta)
+{
+    if (StorageMode == MTLStorageModeShared)
+    {
+        SharedBytes.Add(Delta);
+    }
+    else if (StorageMode == MTLStorageModeManaged)
+    {
+        ManagedBytes.Add(Delta);
+    }
 }
 
 void FMetalDevice::WaitForGPU()

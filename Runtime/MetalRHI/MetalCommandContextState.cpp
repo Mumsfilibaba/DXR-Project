@@ -72,6 +72,8 @@ void FMetalCommandContextState::ResetState()
     Memory::Memzero(ScissorRects, sizeof(ScissorRects));
     Memory::Memzero(BlendFactor, sizeof(BlendFactor));
     Memory::Memzero(DepthBias, sizeof(DepthBias));
+    DepthBounds[0] = 0.0f;
+    DepthBounds[1] = 1.0f;
 
     StencilRef        = 0;
     NumViewports      = 0;
@@ -125,6 +127,11 @@ void FMetalCommandContextState::BindRenderState(id<MTLRenderCommandEncoder> Enco
 
     if (RenderPipeline != AppliedRenderPipeline)
     {
+        if (!AppliedRenderPipeline || AppliedRenderPipeline->IsDepthBoundsTestEnabled() != RenderPipeline->IsDepthBoundsTestEnabled())
+        {
+            DirtyDynamicState |= EMetalDynamicState::DepthBounds;
+        }
+
         RenderPipeline->Apply(Encoder, AppliedRenderPipeline);
         AppliedRenderPipeline = RenderPipeline;
     }
@@ -138,8 +145,8 @@ void FMetalCommandContextState::BindRenderState(id<MTLRenderCommandEncoder> Enco
 
     if constexpr (Type == EMetalRenderPipelineType::Graphics)
     {
-        FMetalEncoderBindingCache& Cache = Encoders.GetBindingCache();
-        const uint32 NumVertexStreams = RenderPipeline->GetNumVertexStreams();
+        FMetalEncoderBindingCache& Cache            = Encoders.GetBindingCache();
+        const uint32               NumVertexStreams = RenderPipeline->GetNumVertexStreams();
         for (uint32 Stream = 0; Stream < NumVertexStreams; ++Stream)
         {
             FMetalBufferRHI* VertexBuffer = VertexBuffers.VertexBuffers[Stream];
@@ -297,6 +304,13 @@ void FMetalCommandContextState::SetDepthBias(float InDepthBias, float InDepthBia
     DirtyDynamicState |= EMetalDynamicState::DepthBias;
 }
 
+void FMetalCommandContextState::SetDepthBounds(float InMinDepth, float InMaxDepth)
+{
+    DepthBounds[0]     = InMinDepth;
+    DepthBounds[1]     = InMaxDepth;
+    DirtyDynamicState |= EMetalDynamicState::DepthBounds;
+}
+
 void FMetalCommandContextState::SetVertexBuffer(FMetalBufferRHI* VertexBuffer, uint32 Slot)
 {
     if (Slot >= MSL_MAX_VERTEX_STREAMS)
@@ -447,7 +461,7 @@ void FMetalCommandContextState::SetShaderConstants(EShaderVisibility::Type Stage
 template<EShaderVisibility::Type Stage>
 void FMetalCommandContextState::FlushStage(typename TMetalStageEncoder<Stage>::EncoderType Encoder, const FMetalStageBindPlan& Plan)
 {
-    FMetalStageResourceTable&     Table     = StageTables[Stage];
+    FMetalStageResourceTable&     Table    = StageTables[Stage];
     FMetalEncoderBindingCache&    Cache    = Encoders.GetBindingCache();
     const FMetalDefaultResources& Defaults = *DefaultResources;
 
@@ -609,6 +623,17 @@ void FMetalCommandContextState::FlushDynamicState(id<MTLRenderCommandEncoder> En
     {
         [Encoder setDepthBias:DepthBias[0] slopeScale:DepthBias[2] clamp:DepthBias[1]];
     }
+
+#if METAL_SDK_HAS_MACOS_26
+    if (IsEnumFlagSet(DirtyDynamicState, EMetalDynamicState::DepthBounds) && GMetalSupportsDepthBoundsTest)
+    {
+        if (@available(macOS 26.0, *))
+        {
+            const bool bEnabled = RenderPipeline && RenderPipeline->IsDepthBoundsTestEnabled();
+            [Encoder setDepthTestMinBound:(bEnabled ? DepthBounds[0] : 0.0f) maxBound:(bEnabled ? DepthBounds[1] : 1.0f)];
+        }
+    }
+#endif
 
     DirtyDynamicState = EMetalDynamicState::None;
 }

@@ -68,8 +68,8 @@ static bool ApplyColorAttachments(PipelineDescriptorType* Descriptor, FMetalBlen
             continue;
         }
 
-        const uint32 BlendIndex = BlendState->GetDesc().bIndependentBlendEnable ? Index : 0;
-        const FMetalBlendStateRHI::FBlendAttachment& Blend = BlendState->GetColorAttachment(BlendIndex);
+        const uint32                                 BlendIndex = BlendState->GetDesc().bIndependentBlendEnable ? Index : 0;
+        const FMetalBlendStateRHI::FBlendAttachment& Blend      = BlendState->GetColorAttachment(BlendIndex);
         Attachment.blendingEnabled             = Blend.bBlendingEnabled;
         Attachment.sourceRGBBlendFactor        = Blend.SourceColorBlendFactor;
         Attachment.destinationRGBBlendFactor   = Blend.DestinationColorBlendFactor;
@@ -419,8 +419,8 @@ bool FMetalPipelineBindingLayout::ConflictsWithVertexInputs(const FMetalInputLay
 
     const FMetalStageBindPlan& Plan = Stages[EShaderVisibility::Vertex];
 
-    uint64 ReservedSlots = 0;
-    const uint32 NumElements = InputLayout->GetNumInputElementDescs();
+    uint64       ReservedSlots = 0;
+    const uint32 NumElements   = InputLayout->GetNumInputElementDescs();
     for (uint32 ElementIndex = 0; ElementIndex < NumElements; ++ElementIndex)
     {
         if (const FRHIInputElementDesc* Element = InputLayout->GetInputElementDesc(ElementIndex))
@@ -478,7 +478,7 @@ bool FMetalPipelineBindingLayout::ConflictsWithVertexInputs(const FMetalInputLay
 uint8 FMetalPipelineBindingLayout::GetSlot(EShaderVisibility::Type Stage, EMSLBindingType BindingType, uint32 RegisterIndex) const
 {
     const FMetalStageBindPlan& Plan = Stages[Stage];
-    const uint32 Bit = RegisterIndex < 16 ? (1u << RegisterIndex) : 0;
+    const uint32               Bit  = RegisterIndex < 16 ? (1u << RegisterIndex) : 0;
 
     switch (BindingType)
     {
@@ -624,6 +624,7 @@ FMetalBlendStateRHI::FMetalBlendStateRHI(const FRHIBlendStateDesc& InDesc)
         const FRenderTargetBlendInfo& RenderTarget = InDesc.bIndependentBlendEnable
             ? InDesc.RenderTargets[Index]
             : InDesc.RenderTargets[0];
+
         ColorAttachments[Index].bBlendingEnabled            = RenderTarget.bBlendEnable ? YES : NO;
         ColorAttachments[Index].SourceColorBlendFactor      = MetalRHI::ConvertBlend(RenderTarget.SrcBlend);
         ColorAttachments[Index].DestinationColorBlendFactor = MetalRHI::ConvertBlend(RenderTarget.DstBlend);
@@ -690,9 +691,9 @@ FMetalRenderPipeline::~FMetalRenderPipeline() = default;
 bool FMetalRenderPipeline::Initialize(const FRHIDepthStencilStateDesc& DepthStencilDesc, const FRHIRasterizerStateDesc& RasterizerDesc, const FRHIGraphicsPipelineFormats& Formats,
     const FRHIViewInstancingState& InViewInstancing)
 {
-    if (DepthStencilDesc.bDepthBoundsTestEnable)
+    if (DepthStencilDesc.bDepthBoundsTestEnable && !GMetalSupportsDepthBoundsTest)
     {
-        METAL_ERROR("Metal does not support depth bounds tests");
+        METAL_ERROR("Depth bounds tests require macOS 26");
         return false;
     }
 
@@ -726,12 +727,13 @@ bool FMetalRenderPipeline::Initialize(const FRHIDepthStencilStateDesc& DepthSten
         }
     }
 
-    RenderState.DepthStencilState  = GetDevice()->GetDepthStencilState(bHasDepthStencil ? DepthStencilDesc : GetDisabledDepthStencilDesc());
-    RenderState.FrontFacingWinding = RasterizerDesc.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise;
-    RenderState.CullMode           = MetalRHI::ConvertCullMode(RasterizerDesc.CullMode);
-    RenderState.FillMode           = MetalRHI::ConvertFillMode(RasterizerDesc.FillMode);
-    RenderState.DepthClipMode      = RasterizerDesc.bDepthClipEnable ? MTLDepthClipModeClip : MTLDepthClipModeClamp;
-    ViewInstancing                 = InViewInstancing;
+    RenderState.DepthStencilState      = GetDevice()->GetDepthStencilState(bHasDepthStencil ? DepthStencilDesc : GetDisabledDepthStencilDesc());
+    RenderState.FrontFacingWinding     = RasterizerDesc.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise;
+    RenderState.CullMode               = MetalRHI::ConvertCullMode(RasterizerDesc.CullMode);
+    RenderState.FillMode               = MetalRHI::ConvertFillMode(RasterizerDesc.FillMode);
+    RenderState.DepthClipMode          = RasterizerDesc.bDepthClipEnable ? MTLDepthClipModeClip : MTLDepthClipModeClamp;
+    RenderState.bDepthBoundsTestEnable = DepthStencilDesc.bDepthBoundsTestEnable && bHasDepthStencil;
+    ViewInstancing                     = InViewInstancing;
 
     if (!RenderState.DepthStencilState)
     {
@@ -920,13 +922,10 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
         Descriptor.maxVertexAmplificationCount = Desc.ViewInstancingState.NumArraySlices;
     }
 
-    const FMetalRenderPipelineKey Key = FMetalRenderPipelineKey::Create(Descriptor, InputLayout);
-
+    const FMetalRenderPipelineKey          Key            = FMetalRenderPipelineKey::Create(Descriptor, InputLayout);
     TSharedRef<FMetalCachedRenderPipeline> CachedPipeline = GetDevice()->GetPipelineCache().GetOrCreateRenderPipeline(Key, Descriptor);
-
     if (!CachedPipeline)
     {
-        // The archive layer has already logged the Metal error
         return false;
     }
 
@@ -1126,10 +1125,8 @@ bool FMetalMeshletPipelineStateRHI::Initialize()
         Descriptor.maxVertexAmplificationCount = Desc.ViewInstancingState.NumArraySlices;
     }
 
-    const FMetalRenderPipelineKey Key = FMetalRenderPipelineKey::Create(Descriptor);
-
+    const FMetalRenderPipelineKey          Key            = FMetalRenderPipelineKey::Create(Descriptor);
     TSharedRef<FMetalCachedRenderPipeline> CachedPipeline = GetDevice()->GetPipelineCache().GetOrCreateMeshRenderPipeline(Key, Descriptor);
-
     if (!CachedPipeline)
     {
         return false;

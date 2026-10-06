@@ -29,6 +29,7 @@ FMetalUploadBatch::FMetalUploadBatch(FMetalDevice* InDevice)
 
     if (BlitEncoder)
     {
+        STAT_ADD(STAT_Metal_EncoderCount, 1);
         STAT_ADD(STAT_Metal_EncodersOpen, 1);
 
         BlitEncoder.label = @"Upload";

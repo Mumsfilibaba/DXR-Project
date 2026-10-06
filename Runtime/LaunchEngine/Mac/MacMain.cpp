@@ -64,12 +64,12 @@ static int32  GEngineMainResult = 0;
 
 @end
 
-// Resolves RHI.EnableDebugLayer the way the console variable would later, with the command line
+// Resolves a boolean console variable the way it would resolve later, with the command line
 // outranking the config layers, because the variable itself does not exist yet at this point.
-static bool IsDebugLayerEnabledAtLaunch()
+static bool IsBoolEnabledAtLaunch(const CHAR* Section, const CHAR* Name)
 {
     StringView CommandLineValue;
-    if (CommandLine::FindOption("RHI.EnableDebugLayer", CommandLineValue))
+    if (CommandLine::FindOption(Name, CommandLineValue))
     {
         if (CommandLineValue.IsEmpty())
         {
@@ -84,7 +84,7 @@ static bool IsDebugLayerEnabledAtLaunch()
     }
 
     bool bFromConfig = false;
-    return GConfig->GetBool("RHI", "RHI.EnableDebugLayer", bFromConfig) ? bFromConfig : false;
+    return GConfig->GetBool(Section, Name, bFromConfig) ? bFromConfig : false;
 }
 
 int main(int NumArgs, const CHAR** Args)
@@ -94,7 +94,9 @@ int main(int NumArgs, const CHAR** Args)
     // argv[0] is a path, and a dash anywhere in it would be read as an option.
     CommandLine::Initialize(Args + 1, NumArgs - 1);
     FConfig::Initialize();
-    FPlatformMisc::PrepareMetalDebugLayerEnvironment(IsDebugLayerEnabledAtLaunch());
+    FPlatformMisc::PrepareMetalDebugLayerEnvironment(
+        IsBoolEnabledAtLaunch("RHI", "RHI.EnableDebugLayer"),
+        IsBoolEnabledAtLaunch("MetalRHI", "MetalRHI.EnableShaderValidation"));
 
     // The first argument is always the path to the application, so start processing from index 1
     for (int32 Index = 1; Index < NumArgs; Index++)

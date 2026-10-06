@@ -21,13 +21,13 @@ struct FMetalAllocatorUsage
 
 struct FMetalDefragCandidate
 {
-    FMetalResourceStorage* Storage = nullptr;
+    FMetalResourceStorage* Storage   = nullptr;
     uint32                 HeapIndex = UINT32_MAX;
 };
 
 struct FMetalDefragMove
 {
-    FMetalResourceStorage*            Storage = nullptr;
+    FMetalResourceStorage*            Storage    = nullptr;
     TUniquePtr<FMetalResourceStorage> Target;
     bool                              bCancelled = false;
 };

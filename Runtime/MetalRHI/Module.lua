@@ -36,6 +36,7 @@ if IsPlatformMac() then
             { Name = 'Float', Defines = { 'CLEAR_ELEMENT_UINT=0', 'CLEAR_ELEMENT_SINT=0' } },
             { Name = 'Uint',  Defines = { 'CLEAR_ELEMENT_UINT=1', 'CLEAR_ELEMENT_SINT=0' } },
             { Name = 'Sint',  Defines = { 'CLEAR_ELEMENT_UINT=0', 'CLEAR_ELEMENT_SINT=1' } },
+            { Name = 'Raw',   Defines = { 'CLEAR_ELEMENT_RAW=1' } },
         },
     })
 

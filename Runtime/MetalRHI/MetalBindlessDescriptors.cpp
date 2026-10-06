@@ -37,7 +37,7 @@ static uint64 MetalCopyResourceID(id Object)
     }
 
     const MTLResourceID ResourceID = [Object gpuResourceID];
-    uint64 Value = 0;
+    uint64              Value      = 0;
     static_assert(sizeof(MTLResourceID) <= sizeof(uint64), "MTLResourceID must fit in one bindless slot");
     Memory::Memcpy(&Value, &ResourceID, sizeof(MTLResourceID));
     return Value;
@@ -124,6 +124,7 @@ bool FMetalBindlessDescriptorManager::CreateTable(FHeap& Heap, uint32 Capacity, 
     }
 
     Buffer.label = [NSString stringWithUTF8String:DebugName];
+    GetDevice()->TrackCPUVisibleBytes(Buffer.storageMode, static_cast<int64>(Buffer.allocatedSize));
 
     Heap.Buffer     = Buffer;
     Heap.Mapped     = static_cast<FMetalBindlessDescriptorEntry*>([Buffer contents]);
@@ -151,6 +152,7 @@ void FMetalBindlessDescriptorManager::DestroyTable(FHeap& Heap)
 {
     if (Heap.Buffer)
     {
+        GetDevice()->TrackCPUVisibleBytes(Heap.Buffer.storageMode, -static_cast<int64>(Heap.Buffer.allocatedSize));
         [Heap.Buffer release];
         Heap.Buffer = nil;
     }
@@ -189,6 +191,7 @@ bool FMetalBindlessDescriptorManager::GrowTable(FHeap& Heap)
     }
 
     NewBuffer.label = Heap.bSampler ? @"MetalBindlessSamplerHeap" : @"MetalBindlessResourceHeap";
+    GetDevice()->TrackCPUVisibleBytes(NewBuffer.storageMode, static_cast<int64>(NewBuffer.allocatedSize));
 
     TScopedLock Lock(PendingWritesCS);
 
@@ -199,6 +202,7 @@ bool FMetalBindlessDescriptorManager::GrowTable(FHeap& Heap)
 
     if (Heap.Buffer)
     {
+        GetDevice()->TrackCPUVisibleBytes(Heap.Buffer.storageMode, -static_cast<int64>(Heap.Buffer.allocatedSize));
         FMetalDeviceRHI::DeferDeletion(static_cast<id<MTLResource>>(Heap.Buffer));
         [Heap.Buffer release];
     }
@@ -283,7 +287,7 @@ FRHIDescriptorHandle FMetalBindlessDescriptorManager::Allocate(EDescriptorType I
         return FRHIDescriptorHandle();
     }
 
-    FHeap& Heap = GetHeap(InType);
+    FHeap&       Heap      = GetHeap(InType);
     const uint32 SlotIndex = AllocateSlot(Heap);
 
     if (SlotIndex == FRHIDescriptorHandle::InvalidHandle)
@@ -312,7 +316,7 @@ void FMetalBindlessDescriptorManager::RecycleSlot(FRHIDescriptorHandle Handle)
         return;
     }
 
-    FHeap& Heap = GetHeap(Handle.Type);
+    FHeap&       Heap      = GetHeap(Handle.Type);
     const uint32 SlotIndex = Handle.Index;
     CHECK(SlotIndex < Heap.Capacity);
 

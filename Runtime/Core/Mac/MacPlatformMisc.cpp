@@ -463,7 +463,7 @@ void FMacPlatformMisc::InstallCrashHandler()
     NSSetUncaughtExceptionHandler(&HandleUncaughtObjectiveCException);
 }
 
-void FMacPlatformMisc::PrepareMetalDebugLayerEnvironment(bool bEnableDebugLayer)
+void FMacPlatformMisc::PrepareMetalDebugLayerEnvironment(bool bEnableDebugLayer, bool bEnableShaderValidation)
 {
     String Existing;
     if (bEnableDebugLayer)
@@ -471,6 +471,14 @@ void FMacPlatformMisc::PrepareMetalDebugLayerEnvironment(bool bEnableDebugLayer)
         if (!GetEnvironmentVariable("MTL_DEBUG_LAYER", Existing) || Existing.IsEmpty())
         {
             SetEnvironmentVariable("MTL_DEBUG_LAYER", "1");
+        }
+    }
+
+    if (bEnableShaderValidation)
+    {
+        if (!GetEnvironmentVariable("MTL_SHADER_VALIDATION", Existing) || Existing.IsEmpty())
+        {
+            SetEnvironmentVariable("MTL_SHADER_VALIDATION", "1");
         }
     }
 

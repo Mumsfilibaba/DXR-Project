@@ -9,20 +9,47 @@
 #include "RHI/RHI.h"
 #include "RHI/RHIDevice.h"
 #include "RHI/RHIStats.h"
+#include "Core/Templates/CString.h"
 
 static const CHAR* const GRHIDetailGroups[] =
 {
     "RHI",
     "D3D12 Allocators",
     "Vulkan Allocators",
+    "Metal Allocators",
+    "Metal Heaps",
+    "Metal Standalone",
+    "Metal Defrag",
     "D3D12 PSO",
     "Vulkan PSO",
+    "Metal PSO",
     "D3D12 Commands",
     "Vulkan Commands",
+    "Metal Commands",
     "D3D12 Queries",
     "Vulkan Queries",
+    "Metal Queries",
+    "Metal GPU",
     "D3D12 Residency",
+    "Metal Residency",
+    "Metal Bindless",
 };
+
+static bool IsInactiveBackendGroup(const CHAR* GroupName)
+{
+    const ERHIType ActiveType = RHI::Device ? RHI::Device->GetRHIType() : ERHIType::Unknown;
+
+    for (const ERHIType Type : { ERHIType::D3D12, ERHIType::Vulkan, ERHIType::Metal })
+    {
+        const CHAR* Prefix = ToString(Type);
+        if (Type != ActiveType && CString::Strncmp(GroupName, Prefix, CString::Strlen(Prefix)) == 0)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 constexpr double BYTES_PER_MEGABYTE = 1024.0 * 1024.0;
 
@@ -238,6 +265,11 @@ void FEditorRHIInfoPanel::CollectDetailGroups()
 
     for (const CHAR* GroupName : GRHIDetailGroups)
     {
+        if (IsInactiveBackendGroup(GroupName))
+        {
+            continue;
+        }
+
         QueryStatsByGroup(GroupName, ScratchStats);
 
         if (ScratchStats.Size() > 0)

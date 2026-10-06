@@ -14,18 +14,11 @@ typedef TSharedRef<class FMetalGeometryAccelerationStructureRHI> FMetalGeometryA
 class FMetalAccelerationStructure : public FMetalDeviceChild, public FNonCopyable
 {
 public:
-    id<MTLAccelerationStructure> GetMTLAccelerationStructure() const
-    {
-        return Storage ? Storage->GetAccelerationStructure() : nil;
-    }
-
-    FMetalResidencyEntry* GetResidencyEntry() const
-    {
-        return Storage ? Storage->GetResidencyEntry() : nullptr;
-    }
-
     bool CompactInPlace(FMetalCommandContext& Context, uint64 CompactedSizeInBytes);
     bool CopyFrom(FMetalCommandContext& Context, const FMetalAccelerationStructure& Source, bool bCompact);
+
+    FORCEINLINE id<MTLAccelerationStructure> GetMTLAccelerationStructure() const { return Storage ? Storage->GetAccelerationStructure() : nil; }
+    FORCEINLINE FMetalResidencyEntry*        GetResidencyEntry()           const { return Storage ? Storage->GetResidencyEntry() : nullptr; }
 
 protected:
     explicit FMetalAccelerationStructure(FMetalDevice* InDevice);
@@ -34,25 +27,22 @@ protected:
     bool ReserveStorage(FMetalCommandContext& Context, MTLSizeAndAlign SizeAndAlign);
     bool EncodeBuild(FMetalCommandContext& Context, MTLAccelerationStructureDescriptor* Descriptor, bool bRefit);
 
-    virtual void OnStorageReplaced()
-    {
-    }
-
     void SetLabel(const String& InName);
 
-    const String& GetLabel() const
-    {
-        return DebugName;
-    }
+    virtual void OnStorageReplaced() { }
+
+    FORCEINLINE const String& GetLabel() const { return DebugName; }
 
 private:
     TUniquePtr<FMetalResourceStorage> AllocateStorage(FMetalCommandContext& Context, MTLSizeAndAlign SizeAndAlign);
     void SetStorage(FMetalCommandContext& Context, TUniquePtr<FMetalResourceStorage> NewStorage);
     bool EncodeCopy(FMetalCommandContext& Context, id<MTLAccelerationStructure> Source, FMetalResidencyEntry* SourceEntry, MTLSizeAndAlign SizeAndAlign, bool bCompact);
+    void UpdateMemoryStat();
 
     TUniquePtr<FMetalResourceStorage> Storage;
     FMetalResidencyEntry*             PinnedEntry;
     String                            DebugName;
+    int64                             TrackedMemory;
 };
 
 class FMetalGeometryAccelerationStructureRHI : public FRHIGeometryAccelerationStructure, public FMetalAccelerationStructure
@@ -90,10 +80,7 @@ public:
 
     bool Build(FMetalCommandContext& Context, const FRHISceneAccelerationStructureBuildDesc& BuildDesc);
 
-    FCriticalSection& GetBindlessLock()
-    {
-        return BindlessCS;
-    }
+    FORCEINLINE FCriticalSection& GetBindlessLock() { return BindlessCS; }
 
 protected:
     virtual void OnStorageReplaced() override final;

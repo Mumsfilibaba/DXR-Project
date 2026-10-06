@@ -16,6 +16,13 @@ static TAutoConsoleVariable<int32> CVarResidencyBudgetMB(
     "Residency budget in megabytes, or the device's recommendedMaxWorkingSetSize when zero",
     0);
 
+#if METAL_ENABLE_RESIDENCY_LOGGING
+static TAutoConsoleVariable<bool> CVarLogResidencyEvents(
+    "MetalRHI.LogResidencyEvents",
+    "Log residency events: evictions, restores of evicted entries, and a summary when the budget forces evictions",
+    false);
+#endif
+
 static bool IsEntryIdle(const FMetalResidencyEntry& Entry, const uint64 (&CompletedValues)[FMetalResidencyEntry::NumQueues])
 {
     for (uint32 Index = 0; Index < FMetalResidencyEntry::NumQueues; ++Index)
@@ -182,6 +189,7 @@ void FMetalResidencyManager::EvictIfNeeded()
 
     TScopedLock Lock(EntriesCS);
 
+    uint32 NumEvicted = 0;
     while (ResidentBytes.Load() > Budget)
     {
         FMetalResidencyEntry* Victim = nullptr;
@@ -202,7 +210,17 @@ void FMetalResidencyManager::EvictIfNeeded()
         }
 
         Evict(*Victim);
+        ++NumEvicted;
     }
+
+#if METAL_ENABLE_RESIDENCY_LOGGING
+    if (NumEvicted > 0 && CVarLogResidencyEvents.GetValue())
+    {
+        METAL_INFO("[ResidencyManager] EvictIfNeeded: evicted %u entries (Resident=%llu Budget=%llu)", NumEvicted, static_cast<uint64>(ResidentBytes.Load()), Budget);
+    }
+#else
+    UNREFERENCED_VARIABLE(NumEvicted);
+#endif
 }
 
 uint64 FMetalResidencyManager::GetBudget() const
@@ -265,6 +283,13 @@ void FMetalResidencyManager::Restore(FMetalResidencyEntry& Entry)
         EvictedBytes.Subtract(Entry.SizeInBytes);
         STAT_SUBTRACT(STAT_Metal_EvictedBytes, Entry.SizeInBytes);
         AddToResidencySet(Entry);
+
+    #if METAL_ENABLE_RESIDENCY_LOGGING
+        if (CVarLogResidencyEvents.GetValue())
+        {
+            METAL_INFO("[ResidencyManager] Restore: %s Size=%llu bytes", Entry.bIsHeap ? "heap" : "resource", Entry.SizeInBytes);
+        }
+    #endif
     }
 }
 
@@ -306,4 +331,12 @@ void FMetalResidencyManager::Evict(FMetalResidencyEntry& Entry)
     STAT_SUBTRACT(STAT_Metal_ResidentBytes, Entry.SizeInBytes);
     STAT_ADD(STAT_Metal_EvictedBytes, Entry.SizeInBytes);
     STAT_ADD(STAT_Metal_Evictions, 1);
+
+#if METAL_ENABLE_RESIDENCY_LOGGING
+    if (CVarLogResidencyEvents.GetValue())
+    {
+        METAL_INFO("[ResidencyManager] Evict: %s Size=%llu bytes (Resident=%llu Budget=%llu)",
+            Entry.bIsHeap ? "heap" : "resource", Entry.SizeInBytes, static_cast<uint64>(ResidentBytes.Load()), GetBudget());
+    }
+#endif
 }

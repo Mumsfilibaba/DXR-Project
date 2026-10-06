@@ -169,9 +169,9 @@ bool FMetalSwapChainRHI::QueryDisplayHDRInfo(FRHIDisplayHDRInfo& OutInfo) const
         return false;
     }
 
-    NSColorSpace* ScreenColorSpace = Screen.colorSpace;
-    CGColorSpaceRef CGSpace = ScreenColorSpace ? ScreenColorSpace.CGColorSpace : nullptr;
-    const CFStringRef ColorSpaceName = CGSpace ? CGColorSpaceGetName(CGSpace) : nullptr;
+    NSColorSpace*     ScreenColorSpace = Screen.colorSpace;
+    CGColorSpaceRef   CGSpace          = ScreenColorSpace ? ScreenColorSpace.CGColorSpace : nullptr;
+    const CFStringRef ColorSpaceName   = CGSpace ? CGColorSpaceGetName(CGSpace) : nullptr;
 
     OutInfo.ColorSpace = EColorSpace::RGB_Full_G10_None_P709;
 
@@ -311,8 +311,8 @@ bool FMetalSwapChainRHI::Initialize()
 
 bool FMetalSwapChainRHI::RefreshBackBuffer()
 {
-    const ETextureUsageFlags Flags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
-    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat, Desc.Width, Desc.Height, 1, 1, Flags);
+    const ETextureUsageFlags Flags          = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
+    FRHITextureDesc          BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat, Desc.Width, Desc.Height, 1, 1, Flags);
 
     if (BackBuffer)
     {
@@ -341,7 +341,7 @@ bool FMetalSwapChainRHI::ApplyLayerColorSpace()
     FMacThreadManager::Get().MainThreadDispatch(^
     {
         CFStringRef ColorSpaceName = kCGColorSpaceSRGB;
-        BOOL bWantsEDR = NO;
+        BOOL        bWantsEDR      = NO;
         switch (Desc.ColorSpace)
         {
             case EColorSpace::RGB_Full_G10_None_P709:

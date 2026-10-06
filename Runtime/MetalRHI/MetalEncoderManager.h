@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/String.h"
 #include "Core/Templates/Utility/EnumOperators.h"
 #include "Core/Templates/Utility/NonCopyable.h"
 #include "Core/Threading/Atomic/AtomicBool.h"
@@ -9,6 +10,7 @@
 
 class FMetalQueue;
 struct FMetalCommands;
+struct FMetalQueryRHI;
 
 enum class EMetalEncoderType : uint8
 {
@@ -75,45 +77,48 @@ public:
     void MemoryBarrier();
 
     void AddPendingClear(MTLRenderPassAttachmentDescriptor* Attachment, const FMetalPendingClear& Clear);
+    void AddPendingDiscard(id<MTLTexture> Texture);
     void FlushPendingClears(id<MTLTexture> Texture);
 
-    bool HasPendingClears() const { return !PendingClears.IsEmpty(); }
-
     void ScheduleTimestamp(uint32 SampleIndex);
+
 #if !METAL_ASSUME_APPLE_GPU
-    void SampleCounters(uint32 SampleIndex);
+    void SampleCounters(id<MTLCounterSampleBuffer> SampleBuffer, uint32 SampleIndex);
+    void SetActiveStatisticsQuery(FMetalQueryRHI* Query);
 #endif
 
-    EMetalEncoderType GetEncoderType() const { return EncoderType; }
+    template<typename CommandEncoderType>
+    void RefreshBindlessResidency(CommandEncoderType InEncoder);
 
-    id<MTLRenderCommandEncoder> GetRenderEncoder() const
+    FORCEINLINE bool HasCommands()      const { return Commands != nullptr; }
+    FORCEINLINE bool HasPendingClears() const { return !PendingClears.IsEmpty() || !PendingDiscards.IsEmpty(); }
+
+    FORCEINLINE FMetalCommands&            GetCommands()              const { CHECK(Commands != nullptr); return *Commands; }
+    FORCEINLINE FMetalEncoderBindingCache& GetBindingCache()                { return BindingCache; }
+    FORCEINLINE EMetalEncoderType          GetEncoderType()           const { return EncoderType; }
+    FORCEINLINE uint64                     GetEncoderSerial()         const { return EncoderSerial; }
+    FORCEINLINE FMetalQueryRHI*            GetActiveStatisticsQuery() const { return ActiveStatisticsQuery; }
+
+    FORCEINLINE id<MTLRenderCommandEncoder> GetRenderEncoder() const
     {
         return EncoderType == EMetalEncoderType::Render
             ? static_cast<id<MTLRenderCommandEncoder>>(Encoder)
             : nil;
     }
 
-    id<MTLComputeCommandEncoder> GetComputeEncoder() const
+    FORCEINLINE id<MTLComputeCommandEncoder> GetComputeEncoder() const
     {
         return EncoderType == EMetalEncoderType::Compute
             ? static_cast<id<MTLComputeCommandEncoder>>(Encoder)
             : nil;
     }
 
-    uint64 GetEncoderSerial() const { return EncoderSerial; }
-
-    bool HasCommands() const { return Commands != nullptr; }
-
-    FMetalCommands&            GetCommands() const { CHECK(Commands != nullptr); return *Commands; }
-    FMetalEncoderBindingCache& GetBindingCache()   { return BindingCache; }
+    FORCEINLINE void SetScopePath(const String& InScopePath) { ScopePath = InScopePath; }
 
     FORCEINLINE void UpdateResidency(FMetalResidencyEntry* Entry)
     {
         ResidencyList.Insert(Entry);
     }
-
-    template<typename CommandEncoderType>
-    void RefreshBindlessResidency(CommandEncoderType InEncoder);
 
 private:
     template<EMetalEncoderType Type, typename OpenFunctionType>
@@ -122,12 +127,21 @@ private:
     void WaitForPublishedUploads();
     id<MTLRenderCommandEncoder> OpenRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR* Label);
     void ResolvePendingClears(MTLRenderPassDescriptor* Descriptor);
+    void ResolvePendingDiscards(MTLRenderPassDescriptor* Descriptor);
     void EncodePendingClear(const FMetalPendingClear& Clear);
 
     template<typename CommandEncoderType>
     void PrepareBindless(CommandEncoderType InEncoder);
     void EncodeTimestampPass(uint32 StartIndex, uint32 EndIndex);
     uint32 TakeScheduledTimestamp();
+    NSString* MakeEncoderLabel(const CHAR* Label) const;
+#if !METAL_ASSUME_APPLE_GPU
+    bool CanSampleInOpenEncoder() const;
+    void SampleInOpenEncoder(id<MTLCounterSampleBuffer> SampleBuffer, uint32 SampleIndex);
+    void BeginStatisticPair();
+    void BeginCounterPairs();
+    void EndCounterPairs();
+#endif
 
     FMetalQueue&               Queue;
     FMetalCommands*            Commands;
@@ -137,9 +151,14 @@ private:
     FMetalEncoderBindingCache  BindingCache;
     TArray<uint32>             ScheduledTimestamps;
     TArray<FMetalPendingClear> PendingClears;
+    TArray<id<MTLTexture>>     PendingDiscards;
+    String                     ScopePath;
     FMetalResidencyList        ResidencyList;
     uint64                     WaitedUploadValue;
     uint64                     DeclaredResidencyGeneration;
     uint64                     EncoderSerial;
+    FMetalQueryRHI*            ActiveStatisticsQuery;
+    uint32                     OpenStatisticPair;
+    uint32                     OpenUtilizationPair;
     bool                       bAdoptedEncoder;
 };

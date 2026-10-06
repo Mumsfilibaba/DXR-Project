@@ -152,6 +152,8 @@ private:
     template<typename MetalShaderType>
     MetalShaderType* CreateShader(const TArray<uint8>& ShaderCode);
 
+    bool WaitForQuery(FMetalQueryRHI& MetalQuery, EQueryResultMode Mode);
+
     FMetalDevice*                Device;
     FMetalCommandContext*        CommandContext;
     FMetalUAVClearPipelines      UAVClearPipelines;

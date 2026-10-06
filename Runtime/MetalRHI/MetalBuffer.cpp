@@ -7,8 +7,44 @@
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalViews.h"
 #include "Core/Threading/ScopedLock.h"
+#include "RHI/RHIStats.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+#if METAL_ENABLE_STATS
+static void AddBufferMemoryStats(const FRHIBufferDesc& Desc, int64 Delta)
+{
+    if (Desc.IsVertexBuffer())
+    {
+        STAT_ADD(STAT_RHI_VertexBufferMemory, Delta);
+    }
+    else if (Desc.IsIndexBuffer())
+    {
+        STAT_ADD(STAT_RHI_IndexBufferMemory, Delta);
+    }
+    else if (Desc.IsConstantBuffer())
+    {
+        STAT_ADD(STAT_RHI_ConstantBufferMemory, Delta);
+    }
+    else if (Desc.IsShaderResourceBuffer() || Desc.IsUnorderedAccessBuffer())
+    {
+        STAT_ADD(STAT_RHI_StructuredBufferMemory, Delta);
+    }
+    else
+    {
+        STAT_ADD(STAT_RHI_MiscBufferMemory, Delta);
+    }
+
+    if (Desc.IsReadBack())
+    {
+        STAT_ADD(STAT_RHI_ReadbackMemory, Delta);
+    }
+    if (Desc.IsDynamic() || Desc.IsTransient())
+    {
+        STAT_ADD(STAT_RHI_UploadMemory, Delta);
+    }
+}
+#endif
 
 FMetalBufferRHI::FMetalBufferRHI(FMetalDevice* InDevice, const FRHIBufferDesc& InBufferDesc)
     : FRHIBuffer(InBufferDesc)
@@ -17,6 +53,7 @@ FMetalBufferRHI::FMetalBufferRHI(FMetalDevice* InDevice, const FRHIBufferDesc& I
     , ResourceStorage(InDevice)
     , BindlessHandle()
     , PinnedEntry(nullptr)
+    , TrackedMemory(0)
 {
     ResourceStorage.SetOwner(this);
 }
@@ -30,6 +67,19 @@ FMetalBufferRHI::~FMetalBufferRHI()
     }
 
     ResourceStorage.ReleaseResource();
+
+#if METAL_ENABLE_STATS
+    AddBufferMemoryStats(Desc, -TrackedMemory);
+#endif
+}
+
+void FMetalBufferRHI::UpdateMemoryStats()
+{
+#if METAL_ENABLE_STATS
+    const int64 NewSize = static_cast<int64>(ResourceStorage.GetSize());
+    AddBufferMemoryStats(Desc, NewSize - TrackedMemory);
+    TrackedMemory = NewSize;
+#endif
 }
 
 void FMetalBufferRHI::FreeBindlessHandle()
@@ -165,6 +215,7 @@ bool FMetalBufferRHI::RelocateTransientStorage(uint64 SizeInBytes, const void* S
 
     Memory::Memcpy(Mapped, SourceData, SizeInBytes);
 
+    UpdateMemoryStats();
     FreeBindlessHandle();
     NotifyRelocated(EMetalRelocation::Transient);
     return true;
@@ -177,8 +228,8 @@ bool FMetalBufferRHI::Initialize(ERHIResourceState InInitialAccess, const void* 
     const uint64            AlignedSize = Math::AlignUp(Desc.Size, MetalRHI::GetMTLBufferAlignment(Desc));
     const EMetalMemoryClass MemoryClass = MetalRHI::GetMetalMemoryClass(Desc);
 
-    const bool bFillInPlace = InInitialData && MemoryClass == EMetalMemoryClass::GPUOnly && MetalRHI::HasUnifiedMemory();
-    const MTLResourceOptions Options = MetalRHI::GetMTLResourceOptions(bFillInPlace ? EMetalMemoryClass::Upload : MemoryClass);
+    const bool               bFillInPlace = InInitialData && MemoryClass == EMetalMemoryClass::GPUOnly && MetalRHI::HasUnifiedMemory();
+    const MTLResourceOptions Options      = MetalRHI::GetMTLResourceOptions(bFillInPlace ? EMetalMemoryClass::Upload : MemoryClass);
 
     bool bAllocated = false;
 
@@ -206,6 +257,8 @@ bool FMetalBufferRHI::Initialize(ERHIResourceState InInitialAccess, const void* 
         METAL_ERROR("Failed to allocate a %llu byte buffer", AlignedSize);
         return false;
     }
+
+    UpdateMemoryStats();
 
     if (!InInitialData)
     {

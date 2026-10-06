@@ -78,6 +78,7 @@ public:
     void PublishUploadValue(uint64 Value);
 
     bool QueryVideoMemoryInfo(EVideoMemoryType Type, FRHIVideoMemoryInfo& OutInfo) const;
+    void TrackCPUVisibleBytes(MTLStorageMode StorageMode, int64 Delta);
 
     id<MTLDepthStencilState> GetDepthStencilState(const FRHIDepthStencilStateDesc& Desc);
 
@@ -87,33 +88,32 @@ public:
     void FinalizeDefragMoves();
     void CancelDefragMove(FMetalResourceStorage& Storage);
 
-    bool HasPendingDefragMoves() const
-    {
-        return bHasPendingDefragMoves.Load();
-    }
-
     void TrimAllocatorCaches();
 
-    uint64 GetFrameCounter() const
-    {
-        return FrameCounter.Load();
-    }
+    FORCEINLINE bool HasPendingDefragMoves() const { return bHasPendingDefragMoves.Load(); }
 
-    FMetalResidencySet&              GetResidencySet()              const { return *ResidencySet; }
-    FMetalResidencyManager&          GetResidencyManager()          const { return *ResidencyManager; }
-    FMetalShaderLibraryCache&        GetShaderLibraryCache()        const { return *ShaderLibraryCache; }
-    FMetalPipelineCache&             GetPipelineCache()             const { return *PipelineCache; }
-    FMetalBinaryArchive&             GetBinaryArchive()             const { return *BinaryArchive; }
-    FMetalBindlessDescriptorManager* GetBindlessDescriptorManager() const { return BindlessDescriptorManager; }
-    FMetalLinearAllocator*           GetStagingBufferAllocator()    const { return StagingBufferAllocator; }
-    FMetalLinearAllocator*           GetDynamicConstantsAllocator() const { return DynamicConstantsAllocator; }
-    FMetalBufferAllocator*           GetBufferAllocator()           const { return BufferAllocator; }
-    FMetalTextureAllocator*          GetTextureAllocator()          const { return TextureAllocator; }
-    FMetalUploadHeapAllocator*       GetUploadHeapAllocator()       const { return UploadHeapAllocator; }
-    FMetalTimestampQueries&          GetTimestampQueries()                { return TimestampQueries; }
-    FMetalOcclusionQueries&          GetOcclusionQueries()                { return OcclusionQueries; }
-    const FMetalDefaultResources&    GetDefaultResources()          const { return DefaultResources; }
-    const FMetalDeviceProperties&    GetProperties()                const { return Properties; }
+    FORCEINLINE id<MTLDevice>                    GetMTLDevice()                 const { return Device; }
+    FORCEINLINE uint64                           GetFrameCounter()              const { return FrameCounter.Load(); }
+    FORCEINLINE uint64                           GetLatestUploadValue()         const { return LatestUploadValue.Load(); }
+    FORCEINLINE FMetalResidencySet&              GetResidencySet()              const { return *ResidencySet; }
+    FORCEINLINE FMetalResidencyManager&          GetResidencyManager()          const { return *ResidencyManager; }
+    FORCEINLINE FMetalShaderLibraryCache&        GetShaderLibraryCache()        const { return *ShaderLibraryCache; }
+    FORCEINLINE FMetalPipelineCache&             GetPipelineCache()             const { return *PipelineCache; }
+    FORCEINLINE FMetalBinaryArchive&             GetBinaryArchive()             const { return *BinaryArchive; }
+    FORCEINLINE FMetalBindlessDescriptorManager* GetBindlessDescriptorManager() const { return BindlessDescriptorManager; }
+    FORCEINLINE FMetalLinearAllocator*           GetStagingBufferAllocator()    const { return StagingBufferAllocator; }
+    FORCEINLINE FMetalLinearAllocator*           GetDynamicConstantsAllocator() const { return DynamicConstantsAllocator; }
+    FORCEINLINE FMetalBufferAllocator*           GetBufferAllocator()           const { return BufferAllocator; }
+    FORCEINLINE FMetalTextureAllocator*          GetTextureAllocator()          const { return TextureAllocator; }
+    FORCEINLINE FMetalUploadHeapAllocator*       GetUploadHeapAllocator()       const { return UploadHeapAllocator; }
+    FORCEINLINE FMetalTimestampQueries&          GetTimestampQueries()                { return TimestampQueries; }
+    FORCEINLINE FMetalOcclusionQueries&          GetOcclusionQueries()                { return OcclusionQueries; }
+    FORCEINLINE FMetalStatisticQueries&          GetStatisticQueries()                { return StatisticQueries; }
+    FORCEINLINE FMetalStageUtilizationQueries&   GetStageUtilizationQueries()         { return StageUtilizationQueries; }
+    FORCEINLINE const FMetalDefaultResources&    GetDefaultResources()          const { return DefaultResources; }
+    FORCEINLINE const FMetalDeviceProperties&    GetProperties()                const { return Properties; }
+
+    FORCEINLINE FMetalQueue* GetQueue(EMetalQueueType QueueType) const { return Queues[static_cast<uint32>(QueueType)]; }
 
     template<typename FunctionType>
     FORCEINLINE void ForEachQueue(FunctionType&& Function) const
@@ -125,21 +125,6 @@ public:
                 Function(*Queue);
             }
         }
-    }
-
-    FMetalQueue* GetQueue(EMetalQueueType QueueType) const
-    {
-        return Queues[static_cast<uint32>(QueueType)];
-    }
-
-    uint64 GetLatestUploadValue() const
-    {
-        return LatestUploadValue.Load();
-    }
-
-    FORCEINLINE id<MTLDevice> GetMTLDevice() const
-    {
-        return Device;
     }
 
 private:
@@ -173,6 +158,8 @@ private:
     TStaticArray<FMetalQueue*, static_cast<uint32>(EMetalQueueType::Count)> Queues;
     FMetalTimestampQueries                                                  TimestampQueries;
     FMetalOcclusionQueries                                                  OcclusionQueries;
+    FMetalStatisticQueries                                                  StatisticQueries;
+    FMetalStageUtilizationQueries                                           StageUtilizationQueries;
     FMetalDefaultResources                                                  DefaultResources;
     TMap<FRHIDepthStencilStateDesc, id<MTLDepthStencilState>>               DepthStencilStates;
     FCriticalSection                                                        DepthStencilStatesCS;
@@ -182,6 +169,8 @@ private:
     FCriticalSection                                                        DefragCS;
     AtomicBool                                                              bHasPendingDefragMoves;
     TAtomicInt<uint64>                                                      FrameCounter;
+    TAtomicInt<int64>                                                       SharedBytes;
+    TAtomicInt<int64>                                                       ManagedBytes;
     uint64                                                                  LastMemoryLogTime;
     FMetalDeviceProperties                                                  Properties;
     id<MTLDevice>                                                           Device;

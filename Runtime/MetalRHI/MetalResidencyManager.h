@@ -11,15 +11,15 @@ struct FMetalResidencyEntry
 {
     static constexpr uint32 NumQueues = 3;
 
-    id                Allocation = nil;
-    uint64            SizeInBytes = 0;
-    uint64            LastUsedFrame = 0;
+    id                Allocation                = nil;
+    uint64            SizeInBytes               = 0;
+    uint64            LastUsedFrame             = 0;
     uint64            LastUsedValues[NumQueues] = {};
     TAtomicInt<int32> BindlessPins;
-    bool              bIsHeap = false;
-    bool              bBindlessReachable = false;
-    bool              bResident = false;
-    bool              bTracked = false;
+    bool              bIsHeap                   = false;
+    bool              bBindlessReachable        = false;
+    bool              bResident                 = false;
+    bool              bTracked                  = false;
 };
 
 class FMetalResidencyList

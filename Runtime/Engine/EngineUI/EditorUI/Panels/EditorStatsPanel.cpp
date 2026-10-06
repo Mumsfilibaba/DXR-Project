@@ -13,8 +13,18 @@ static const CHAR* const GRHIOwnedGroups[] =
     "RHI Budget",
     "D3D12 Allocators",
     "Vulkan Allocators",
+    "Metal Allocators",
+    "Metal Heaps",
+    "Metal Standalone",
+    "Metal Defrag",
     "D3D12 PSO",
     "Vulkan PSO",
+    "Metal PSO",
+    "Metal Commands",
+    "Metal Queries",
+    "Metal GPU",
+    "Metal Residency",
+    "Metal Bindless",
 };
 
 constexpr double BYTES_PER_MEGABYTE = 1024.0 * 1024.0;

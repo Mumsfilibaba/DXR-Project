@@ -11,6 +11,7 @@
 #include "MetalRHI/MetalTexture.h"
 #include "Core/Containers/String.h"
 #include "Core/Math/Math.h"
+#include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
@@ -37,8 +38,20 @@ static TAutoConsoleVariable<bool> CVarRetainedReferences(
 
 static TAutoConsoleVariable<bool> CVarEncoderExecutionStatus(
     "MetalRHI.EncoderExecutionStatus",
-    "When enabled alongside the Metal debug layer, a failed command buffer reports which of its encoders completed, faulted or never ran. On an AMD GPU this makes indirect mesh draws time out",
+    "When enabled, a failed command buffer reports which of its encoders completed, faulted or never ran, each named by the scope path it opened under. On an AMD GPU this makes indirect mesh draws time out",
     false);
+
+static TAutoConsoleVariable<String> CVarFaultReportFilePath(
+    "MetalRHI.FaultReportFilePath",
+    "File a failed command buffer's report is also written to, or empty to only log it",
+    "MetalFaultReport.txt");
+
+#if METAL_ENABLE_DEBUG_LAYER
+static FAutoConsoleCommand CCmdForceGPUHang(
+    "MetalRHI.ForceGPUHang",
+    "Submits a kernel that never returns on the Direct queue, so the macOS GPU watchdog kills it, to verify the fault report",
+    FConsoleCommandDelegate::CreateStatic(&MetalForceGPUHang));
+#endif
 
 static void ReportFunctionLogs(id<MTLCommandBuffer> CommandBuffer)
 {
@@ -102,11 +115,30 @@ static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer, const F
 
     const String Label(CommandBuffer.label ? CommandBuffer.label : @"<unnamed>");
 
+    TFileRef<IPlatformFile> File;
+    const String FaultReportFilePath = CVarFaultReportFilePath.GetValue();
+    if (!FaultReportFilePath.IsEmpty())
+    {
+        File = FPlatformFile::OpenForWrite(FaultReportFilePath);
+    }
+
+    const auto WriteLine = [&File](const String& Line)
+    {
+        LOG_ERROR("%s", *Line);
+
+        if (File)
+        {
+            String Out = Line;
+            Out += '\n';
+            File->Write(reinterpret_cast<const uint8*>(*Out), static_cast<uint32>(Out.Size()));
+        }
+    };
+
     NSError* Error = CommandBuffer.error;
 
     if (!Error)
     {
-        LOG_ERROR("[MetalRHI] Command buffer '%s' failed without reporting an error", *Label);
+        WriteLine(String::Printf("[MetalRHI] Command buffer '%s' failed without reporting an error", *Label));
         return;
     }
 
@@ -114,33 +146,54 @@ static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer, const F
 
     if ([Error.domain isEqualToString:MTLCommandBufferErrorDomain])
     {
-        LOG_ERROR("[MetalRHI] Command buffer '%s' failed with %s: %s", *Label, ToString(MTLCommandBufferError(Error.code)), *Description);
+        WriteLine(String::Printf("[MetalRHI] Command buffer '%s' failed with %s: %s", *Label, ToString(MTLCommandBufferError(Error.code)), *Description));
     }
     else
     {
         const String Domain(Error.domain);
-        LOG_ERROR("[MetalRHI] Command buffer '%s' failed with %s(%ld): %s", *Label, *Domain, long(Error.code), *Description);
+        WriteLine(String::Printf("[MetalRHI] Command buffer '%s' failed with %s(%ld): %s", *Label, *Domain, long(Error.code), *Description));
     }
 
     NSArray<id<MTLCommandBufferEncoderInfo>>* EncoderInfos = Error.userInfo[MTLCommandBufferEncoderInfoErrorKey];
+
+    NSString* LastCompleted = nil;
+    NSString* FirstFaulted  = nil;
+    for (id<MTLCommandBufferEncoderInfo> EncoderInfo in EncoderInfos)
+    {
+        if (EncoderInfo.errorState == MTLCommandEncoderErrorStateCompleted)
+        {
+            LastCompleted = EncoderInfo.label;
+        }
+        else if (!FirstFaulted && EncoderInfo.errorState == MTLCommandEncoderErrorStateFaulted)
+        {
+            FirstFaulted = EncoderInfo.label;
+        }
+    }
+
+    if (EncoderInfos.count > 0)
+    {
+        WriteLine(String::Printf("[MetalRHI]   Last completed: '%s', faulted: '%s'",
+            *String(LastCompleted ? LastCompleted : @"<none>"), *String(FirstFaulted ? FirstFaulted : @"<unknown>")));
+    }
+
     for (id<MTLCommandBufferEncoderInfo> EncoderInfo in EncoderInfos)
     {
         const String EncoderLabel(EncoderInfo.label ? EncoderInfo.label : @"<unnamed>");
-        LOG_ERROR("[MetalRHI]   Encoder '%s': %s", *EncoderLabel, ToString(EncoderInfo.errorState));
+        WriteLine(String::Printf("[MetalRHI]   Encoder '%s': %s", *EncoderLabel, ToString(EncoderInfo.errorState)));
 
         for (NSString* Signpost in EncoderInfo.debugSignposts)
         {
             const String SignpostLabel(Signpost);
-            LOG_ERROR("[MetalRHI]     %s", *SignpostLabel);
+            WriteLine(String::Printf("[MetalRHI]     %s", *SignpostLabel));
         }
     }
 
     if (Breadcrumbs.Count > 0)
     {
-        LOG_ERROR("[MetalRHI]   Breadcrumbs:");
-        Breadcrumbs.ForEach([](const CHAR* Name)
+        WriteLine("[MetalRHI]   Breadcrumbs:");
+        Breadcrumbs.ForEach([&WriteLine](const CHAR* Name)
         {
-            LOG_ERROR("[MetalRHI]     %s", Name);
+            WriteLine(String::Printf("[MetalRHI]     %s", Name));
         });
     }
 }
@@ -228,14 +281,9 @@ bool FMetalQueue::Initialize()
 
     CommandBufferDescriptor = [MTLCommandBufferDescriptor new];
     CommandBufferDescriptor.retainedReferences = CVarRetainedReferences.GetValue() ? YES : NO;
-#if METAL_ENABLE_DEBUG_LAYER
-    const bool bEncoderExecutionStatus = MetalIsDebugLayerRequested() && CVarEncoderExecutionStatus.GetValue();
-    CommandBufferDescriptor.errorOptions = bEncoderExecutionStatus
+    CommandBufferDescriptor.errorOptions = CVarEncoderExecutionStatus.GetValue()
         ? MTLCommandBufferErrorOptionEncoderExecutionStatus
         : MTLCommandBufferErrorOptionNone;
-#else
-    CommandBufferDescriptor.errorOptions = MTLCommandBufferErrorOptionNone;
-#endif
     return true;
 }
 
@@ -341,12 +389,20 @@ uint64 FMetalQueue::SubmitCommands(FMetalCommands* Commands)
     [Commands->CommandBuffer setLabel:[NSString stringWithFormat:@"MetalQueue-%llu", Value]];
 #endif
 
+    NSMutableArray<id<MTLSharedEvent>>* SignaledEvents = [[NSMutableArray alloc] initWithCapacity:Commands->PendingSignals.Size()];
+    for (const FMetalEventValue& Signal : Commands->PendingSignals)
+    {
+        [SignaledEvents addObject:Signal.Event];
+    }
+
     const FMetalBreadcrumbRing Breadcrumbs = Commands->Breadcrumbs;
     [Commands->CommandBuffer addCompletedHandler:^(id<MTLCommandBuffer> CompletedBuffer)
     {
         ReportCommandBufferError(CompletedBuffer, Breadcrumbs);
         ReportFunctionLogs(CompletedBuffer);
+        (void)SignaledEvents;
     }];
+    [SignaledEvents release];
 
     Commands->EncodePendingWaits();
     Commands->Device->GetTimestampQueries().EncodeResolve(Commands->CommandBuffer, Commands->PendingQueries);

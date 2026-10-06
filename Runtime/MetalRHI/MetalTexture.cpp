@@ -6,8 +6,23 @@
 #include "MetalRHI/MetalUploadBatch.h"
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalSwapChain.h"
+#include "RHI/RHIStats.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+#if METAL_ENABLE_STATS
+static void AddTextureMemoryStats(const FRHITextureDesc& Desc, int64 Delta)
+{
+    if (Desc.IsRenderTarget() || Desc.IsDepthStencil())
+    {
+        STAT_ADD(STAT_RHI_RenderTargetMemory, Delta);
+    }
+    else
+    {
+        STAT_ADD(STAT_RHI_TextureMemory, Delta);
+    }
+}
+#endif
 
 static MTLTextureDescriptor* CreateTextureDescriptor(const FRHITextureDesc& Desc)
 {
@@ -86,6 +101,12 @@ static FRHIUnorderedAccessViewDesc CreateDefaultUAVDesc(const FRHITextureDesc& D
         case ETextureDimension::Texture2DArray: return FRHIUnorderedAccessViewDesc::CreateTexture2DArray(Format, 0, 0, NumSlices);
         case ETextureDimension::Texture3D:      return FRHIUnorderedAccessViewDesc::CreateTexture3D(Format, 0, 0, static_cast<uint16>(Math::Max(Desc.Extent.Z, 1)));
 
+        case ETextureDimension::TextureCube:
+        case ETextureDimension::TextureCubeArray:
+        {
+            return FRHIUnorderedAccessViewDesc::CreateTexture2DArray(Format, 0, 0, static_cast<uint16>(RHIDimensionArrayLayers(Desc.Dimension, NumSlices)));
+        }
+
         default:
         {
             CHECK(false);
@@ -137,6 +158,7 @@ FMetalTextureRHI::FMetalTextureRHI(FMetalDevice* InDevice, const FRHITextureDesc
     , FMetalRelocatable()
     , Texture(nil)
     , ResourceStorage(InDevice)
+    , TrackedMemory(0)
     , SwapChain(nullptr)
     , ShaderResourceView(nullptr)
     , UnorderedAccessView(nullptr)
@@ -151,6 +173,20 @@ FMetalTextureRHI::~FMetalTextureRHI()
     NotifyReleased();
     ResourceStorage.ReleaseResource();
     Texture = nil;
+
+#if METAL_ENABLE_STATS
+    AddTextureMemoryStats(Desc, -TrackedMemory);
+#endif
+}
+
+void FMetalTextureRHI::UpdateMemoryStats()
+{
+#if METAL_ENABLE_STATS
+    const uint64 StorageSize = ResourceStorage.GetSize();
+    const int64  NewSize     = static_cast<int64>(StorageSize > 0 ? StorageSize : (Texture ? [Texture allocatedSize] : 0));
+    AddTextureMemoryStats(Desc, NewSize - TrackedMemory);
+    TrackedMemory = NewSize;
+#endif
 }
 
 FMetalResourceStorage& FMetalTextureRHI::GetRelocatableStorage()
@@ -223,6 +259,8 @@ bool FMetalTextureRHI::Initialize(ERHIResourceState InInitialAccess, const IRHIT
         METAL_ERROR("Failed to create a %s texture", ToString(Desc.Dimension));
         return false;
     }
+
+    UpdateMemoryStats();
 
     const bool bInitializePlacement = ResourceStorage.IsPlacedResource() && (Texture.usage & MTLTextureUsageRenderTarget) != 0;
 
@@ -346,7 +384,7 @@ bool FMetalTextureRHI::CreateDefaultViews()
         }
     }
 
-    if (Desc.IsUnorderedAccessTexture() && !Desc.IsNoDefaultUAV() && !IsTextureCube(Desc.Dimension))
+    if (Desc.IsUnorderedAccessTexture() && !Desc.IsNoDefaultUAV())
     {
         UnorderedAccessView = new FMetalUnorderedAccessViewRHI(GetDevice(), this, CreateDefaultUAVDesc(Desc));
 

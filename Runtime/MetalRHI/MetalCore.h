@@ -262,6 +262,19 @@ constexpr MTLSamplerAddressMode ConvertSamplerMode(ESamplerMode SamplerMode)
     }
 }
 
+// Metal offers only three fixed border colours, so the requested colour snaps to the nearest one
+inline MTLSamplerBorderColor ConvertBorderColor(const FFloatColor& Color)
+{
+    if (Color.A < 0.5f)
+    {
+        return MTLSamplerBorderColorTransparentBlack;
+    }
+
+    return (Color.R + Color.G + Color.B) * (1.0f / 3.0f) < 0.5f
+        ? MTLSamplerBorderColorOpaqueBlack
+        : MTLSamplerBorderColorOpaqueWhite;
+}
+
 constexpr bool IsAnisotropySampler(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)

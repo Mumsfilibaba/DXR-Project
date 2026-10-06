@@ -171,11 +171,12 @@ struct FMetalRenderStateBlock
 {
     bool operator==(const FMetalRenderStateBlock&) const = default;
 
-    id<MTLDepthStencilState> DepthStencilState  = nil;
-    MTLWinding               FrontFacingWinding = MTLWindingClockwise;
-    MTLCullMode              CullMode           = MTLCullModeNone;
-    MTLTriangleFillMode      FillMode           = MTLTriangleFillModeFill;
-    MTLDepthClipMode         DepthClipMode      = MTLDepthClipModeClip;
+    id<MTLDepthStencilState> DepthStencilState      = nil;
+    MTLWinding               FrontFacingWinding     = MTLWindingClockwise;
+    MTLCullMode              CullMode               = MTLCullModeNone;
+    MTLTriangleFillMode      FillMode               = MTLTriangleFillModeFill;
+    MTLDepthClipMode         DepthClipMode          = MTLDepthClipModeClip;
+    bool                     bDepthBoundsTestEnable = false;
 };
 
 struct FMetalCachedRenderPipeline : public FRefCounted
@@ -214,6 +215,8 @@ public:
     void SetPipelineState(const TSharedRef<FMetalCachedRenderPipeline>& InPipeline);
 
     void Apply(id<MTLRenderCommandEncoder> Encoder, const FMetalRenderPipeline* Previous) const;
+
+    bool IsDepthBoundsTestEnabled() const { return RenderState.bDepthBoundsTestEnable; }
 
     FMetalPipelineBindingLayout&              GetBindings()               { return Bindings; }
     const FMetalPipelineBindingLayout&        GetBindings()         const { return Bindings; }
@@ -281,9 +284,9 @@ public:
 
     bool Initialize();
 
-    const FMetalPipelineBindingLayout&        GetBindings() const              { return Bindings; }
-    const TArray<FMetalStaticSamplerBinding>& GetStaticSamplers() const        { return StaticSamplers; }
-    id<MTLComputePipelineState>               GetMTLPipelineState() const      { return Pipeline ? Pipeline->PipelineState : nil; }
+    const FMetalPipelineBindingLayout&        GetBindings()              const { return Bindings; }
+    const TArray<FMetalStaticSamplerBinding>& GetStaticSamplers()        const { return StaticSamplers; }
+    id<MTLComputePipelineState>               GetMTLPipelineState()      const { return Pipeline ? Pipeline->PipelineState : nil; }
     MTLSize                                   GetThreadsPerThreadgroup() const { return ThreadsPerThreadgroup; }
 
 private:
@@ -309,8 +312,8 @@ public:
 
     bool Initialize();
 
-    const FMetalRenderPipeline& GetRenderPipeline() const        { return RenderPipeline; }
-    MTLSize                     GetMeshThreadgroupSize() const   { return MeshThreadgroupSize; }
+    const FMetalRenderPipeline& GetRenderPipeline()        const { return RenderPipeline; }
+    MTLSize                     GetMeshThreadgroupSize()   const { return MeshThreadgroupSize; }
     MTLSize                     GetObjectThreadgroupSize() const { return ObjectThreadgroupSize; }
 
 private:

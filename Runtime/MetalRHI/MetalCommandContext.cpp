@@ -121,6 +121,7 @@ uint64 FMetalCommandContext::Submit(EMetalSubmitFlags Flags)
     else
     {
         DebugGroups.Clear();
+        UpdateScopePath();
     }
 
     if (IsEnumFlagSet(Flags, EMetalSubmitFlags::Wait))
@@ -164,7 +165,7 @@ void FMetalCommandContext::QueryTimestamp(FRHIQuery* Query)
     }
     else
     {
-        Encoders.SampleCounters(MetalQuery->SampleIndex);
+        Encoders.SampleCounters(Timestamps.GetSampleBuffer(), MetalQuery->SampleIndex);
     }
 #endif
 
@@ -224,7 +225,26 @@ void FMetalCommandContext::BeginQuery(FRHIQuery* Query)
 
     if (Type == EQueryType::PipelineStatistics)
     {
-        METAL_ERROR("Pipeline statistics queries are not supported by the Metal backend");
+    #if METAL_ASSUME_APPLE_GPU
+        METAL_ERROR("Pipeline statistics queries are not supported on Apple GPUs");
+    #else
+        FMetalStatisticQueries& Statistics = GetDevice()->GetStatisticQueries();
+
+        if (!Statistics.IsAvailable())
+        {
+            METAL_ERROR("Pipeline statistics queries are unavailable on this Metal device");
+            return;
+        }
+
+        if (Encoders.GetActiveStatisticsQuery())
+        {
+            METAL_ERROR("BeginQuery for pipeline statistics cannot nest");
+            return;
+        }
+
+        Statistics.Begin(*MetalQuery);
+        Encoders.SetActiveStatisticsQuery(MetalQuery);
+    #endif
         return;
     }
 
@@ -236,9 +256,24 @@ void FMetalCommandContext::EndQuery(FRHIQuery* Query)
     FMetalQueryRHI* MetalQuery = FMetalDeviceRHI::ResourceCast(Query);
     CHECK(MetalQuery != nullptr);
 
+#if !METAL_ASSUME_APPLE_GPU
+    if (MetalQuery->GetType() == EQueryType::PipelineStatistics)
+    {
+        if (MetalQuery != Encoders.GetActiveStatisticsQuery())
+        {
+            METAL_ERROR("EndQuery does not match the active pipeline statistics query");
+            return;
+        }
+
+        Encoders.SetActiveStatisticsQuery(nullptr);
+        AddPendingQuery(MetalQuery);
+        return;
+    }
+#endif
+
     if (MetalQuery->GetType() != EQueryType::Occlusion)
     {
-        METAL_ERROR("EndQuery is only valid for occlusion queries");
+        METAL_ERROR("EndQuery is only valid for pipeline statistics and occlusion queries");
         return;
     }
 
@@ -378,10 +413,13 @@ void FMetalCommandContext::SetDepthBias(float DepthBias, float DepthBiasClamp, f
 
 void FMetalCommandContext::SetDepthBounds(float MinDepth, float MaxDepth)
 {
-    UNREFERENCED_VARIABLE(MinDepth);
-    UNREFERENCED_VARIABLE(MaxDepth);
+    if (!GMetalSupportsDepthBoundsTest)
+    {
+        METAL_ERROR("SetDepthBounds: depth bounds tests require macOS 26");
+        return;
+    }
 
-    METAL_ERROR("SetDepthBounds: depth bounds tests are not supported by the Metal backend");
+    ContextState.SetDepthBounds(MinDepth, MaxDepth);
 }
 
 void FMetalCommandContext::SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc)
@@ -587,11 +625,11 @@ void FMetalCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegio
 
     Encoders.FlushPendingClears(DstTexture);
 
-    const FRHITextureDesc& DstDesc = MetalDst->GetDesc();
-    const bool   bIsTexture1D = DstDesc.IsTexture1D() || DstDesc.IsTexture1DArray();
-    const bool   bIsTexture3D = DstDesc.IsTexture3D();
-    const uint32 Depth        = Math::Max(TextureRegion.Depth, 1u);
-    const uint64 DataSize     = uint64(SrcDepthPitch) * Depth;
+    const FRHITextureDesc& DstDesc      = MetalDst->GetDesc();
+    const bool             bIsTexture1D = DstDesc.IsTexture1D() || DstDesc.IsTexture1DArray();
+    const bool             bIsTexture3D = DstDesc.IsTexture3D();
+    const uint32           Depth        = Math::Max(TextureRegion.Depth, 1u);
+    const uint64           DataSize     = uint64(SrcDepthPitch) * Depth;
 
     FMetalResourceStorage StagingStorage(GetDevice());
 
@@ -801,12 +839,12 @@ void FMetalCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
     CHECK(MetalDst != nullptr);
     CHECK(MetalSrc != nullptr);
 
-    const FRHITextureDesc& SrcDesc = MetalSrc->GetDesc();
-    const bool   bIsTexture3D = SrcDesc.IsTexture3D();
-    const uint32 Depth        = Math::Max(SrcRegion.Depth, 1u);
-    const uint64 PixelStride  = GetByteStrideFromFormat(SrcDesc.Format);
-    const uint64 RowPitch     = Math::AlignUp(uint64(SrcRegion.Width) * PixelStride, 256ull);
-    const uint64 SlicePitch   = RowPitch * SrcRegion.Height;
+    const FRHITextureDesc& SrcDesc      = MetalSrc->GetDesc();
+    const bool             bIsTexture3D = SrcDesc.IsTexture3D();
+    const uint32           Depth        = Math::Max(SrcRegion.Depth, 1u);
+    const uint64           PixelStride  = GetByteStrideFromFormat(SrcDesc.Format);
+    const uint64           RowPitch     = Math::AlignUp(uint64(SrcRegion.Width) * PixelStride, 256ull);
+    const uint64           SlicePitch   = RowPitch * SrcRegion.Height;
 
     Encoders.FlushPendingClears(MetalSrc->GetMTLTexture());
     Encoders.UpdateResidency(MetalSrc->GetResidencyEntry());
@@ -835,8 +873,12 @@ void FMetalCommandContext::WriteFence(FRHIFence* Fence)
 
 void FMetalCommandContext::DiscardContents(class FRHITexture* Texture)
 {
-    // Metal has no DiscardResource. DontCare store at the end of a render pass is the equivalent.
-    UNREFERENCED_VARIABLE(Texture);
+    FMetalTextureRHI* MetalTexture = GetMetalTexture(Texture);
+
+    if (id<MTLTexture> Handle = MetalTexture ? MetalTexture->GetMTLTexture() : nil)
+    {
+        Encoders.AddPendingDiscard(Handle);
+    }
 }
 
 void FMetalCommandContext::BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* RayTracingScene, const FRHISceneAccelerationStructureBuildDesc& BuildDesc)
@@ -884,7 +926,7 @@ void FMetalCommandContext::WriteAccelerationStructurePostBuildInfo(FRHIBuffer* D
     id<MTLAccelerationStructureCommandEncoder> Encoder = Encoders.RequireAccelerationStructureEncoder();
     for (uint32 Index = 0; Index < NumSources; ++Index)
     {
-        FMetalAccelerationStructure* Source = GetMetalAccelerationStructure(Sources[Index]);
+        FMetalAccelerationStructure* Source          = GetMetalAccelerationStructure(Sources[Index]);
         id<MTLAccelerationStructure> SourceStructure = Source ? Source->GetMTLAccelerationStructure() : nil;
         if (!SourceStructure)
         {
@@ -1266,6 +1308,7 @@ void FMetalCommandContext::PushEvent(const StringView& Name)
     [Encoders.GetCommands().CommandBuffer pushDebugGroup:GroupName.GetNSString()];
     Encoders.GetCommands().Breadcrumbs.Push(Name);
     DebugGroups.Add(GroupName);
+    UpdateScopePath();
 }
 
 void FMetalCommandContext::PopEvent()
@@ -1277,6 +1320,23 @@ void FMetalCommandContext::PopEvent()
 
     [Encoders.GetCommands().CommandBuffer popDebugGroup];
     DebugGroups.Pop();
+    UpdateScopePath();
+}
+
+void FMetalCommandContext::UpdateScopePath()
+{
+    String ScopePath;
+    for (const String& GroupName : DebugGroups)
+    {
+        if (!ScopePath.IsEmpty())
+        {
+            ScopePath += '/';
+        }
+
+        ScopePath += GroupName;
+    }
+
+    Encoders.SetScopePath(ScopePath);
 }
 
 void FMetalCommandContext::BeginParallelChild(FMetalCommands& ParentCommands, id<MTLRenderCommandEncoder> SubEncoder)

@@ -262,6 +262,7 @@ bool FMetalBinaryArchive::LoadFromFile()
         return false;
     }
 
+    STAT_SET(STAT_Metal_BinaryArchiveSize, GetFileSize(FilePath));
     METAL_INFO("[FMetalBinaryArchive] Loaded '%s'", *FilePath);
     return true;
 }
@@ -468,7 +469,7 @@ bool FMetalBinaryArchive::Save()
         bDirty = false;
     }
 
-    NSError* Error = nil;
+    NSError*             Error   = nil;
     id<MTLBinaryArchive> Archive = [[Device->GetMTLDevice() newBinaryArchiveWithDescriptor:[[MTLBinaryArchiveDescriptor new] autorelease] error:&Error] autorelease];
     if (!Archive)
     {

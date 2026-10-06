@@ -44,87 +44,26 @@ public:
     void ReleaseResource();
     void Reset();
 
-    void SetOwner(FMetalRelocatable* InOwner)
-    {
-        Owner = InOwner;
-    }
-
     void SwapPlacement(FMetalResourceStorage& Other);
 
-    void SetDefragPending(bool bPending)
-    {
-        bDefragPending = bPending;
-    }
+    FORCEINLINE bool IsValid()          const { return StorageType != EMetalResourceStorageType::Unknown; }
+    FORCEINLINE bool IsPlacedResource() const { return StorageType == EMetalResourceStorageType::SuballocatedHeap; }
+    FORCEINLINE bool IsDefragPending()  const { return bDefragPending; }
 
-    FORCEINLINE bool IsDefragPending() const
-    {
-        return bDefragPending;
-    }
+    FORCEINLINE id<MTLBuffer>                GetBuffer()                const { return Buffer; }
+    FORCEINLINE id<MTLTexture>               GetTexture()               const { return Texture; }
+    FORCEINLINE id<MTLAccelerationStructure> GetAccelerationStructure() const { return AccelerationStructure; }
+    FORCEINLINE FMetalHeap*                  GetHeap()                  const { return Heap; }
+    FORCEINLINE uint32                       GetHeapIndex()             const { return HeapIndex; }
+    FORCEINLINE uint64                       GetResourceOffset()        const { return ResourceOffset; }
+    FORCEINLINE uint64                       GetSize()                  const { return Size; }
+    FORCEINLINE void*                        GetMappedBaseAddress()     const { return MappedBaseAddress; }
+    FORCEINLINE FMetalRelocatable*           GetOwner()                 const { return Owner; }
+    FORCEINLINE FMetalResidencyEntry*        GetResidencyEntry()        const { return ResidencyEntry; }
+    FORCEINLINE EMetalResourceStorageType    GetStorageType()           const { return StorageType; }
 
-    FORCEINLINE FMetalRelocatable* GetOwner() const
-    {
-        return Owner;
-    }
-
-    FORCEINLINE FMetalResidencyEntry* GetResidencyEntry() const
-    {
-        return ResidencyEntry;
-    }
-
-    FORCEINLINE bool IsValid() const
-    {
-        return StorageType != EMetalResourceStorageType::Unknown;
-    }
-
-    FORCEINLINE bool IsPlacedResource() const
-    {
-        return StorageType == EMetalResourceStorageType::SuballocatedHeap;
-    }
-
-    FORCEINLINE id<MTLBuffer> GetBuffer() const
-    {
-        return Buffer;
-    }
-
-    FORCEINLINE id<MTLTexture> GetTexture() const
-    {
-        return Texture;
-    }
-
-    FORCEINLINE id<MTLAccelerationStructure> GetAccelerationStructure() const
-    {
-        return AccelerationStructure;
-    }
-
-    FORCEINLINE FMetalHeap* GetHeap() const
-    {
-        return Heap;
-    }
-
-    FORCEINLINE uint64 GetResourceOffset() const
-    {
-        return ResourceOffset;
-    }
-
-    FORCEINLINE uint64 GetSize() const
-    {
-        return Size;
-    }
-
-    FORCEINLINE void* GetMappedBaseAddress() const
-    {
-        return MappedBaseAddress;
-    }
-
-    FORCEINLINE EMetalResourceStorageType GetStorageType() const
-    {
-        return StorageType;
-    }
-
-    FORCEINLINE uint32 GetHeapIndex() const
-    {
-        return HeapIndex;
-    }
+    FORCEINLINE void SetOwner(FMetalRelocatable* InOwner) { Owner = InOwner; }
+    FORCEINLINE void SetDefragPending(bool bPending)      { bDefragPending = bPending; }
 
 private:
     void ReleaseOwnedResource(bool bStandalone);

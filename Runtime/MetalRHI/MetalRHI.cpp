@@ -214,11 +214,11 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
     RHI::AccelerationStructureBufferAlignment = 256;
 
     RHI::bSupportsDynamicDepthBias = true;
-    RHI::bSupportsDepthBoundsTest  = false;
+    RHI::bSupportsDepthBoundsTest  = GMetalSupportsDepthBoundsTest;
     RHI::bSupportsStreamOutput     = false;
 
     RHI::bSupportsTimestampQueries           = GMetalSupportsTimestampQueries;
-    RHI::bSupportsPipelineStatisticsQueries  = false;
+    RHI::bSupportsPipelineStatisticsQueries  = GMetalSupportsStatisticQueries;
     RHI::bSupportsGPUTimestampBubblesRemoval = false;
 
     RHI::DefaultSwapChainFormat = EFormat::B8G8R8A8_Unorm;
@@ -708,7 +708,20 @@ bool FMetalDeviceRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVide
 bool FMetalDeviceRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode)
 {
     OutResult = FRHIPipelineStatistics();
-    return false;
+
+    FMetalQueryRHI* MetalQuery = ResourceCast(Query);
+    if (!MetalQuery || !MetalQuery->QueryResult || MetalQuery->GetType() != EQueryType::PipelineStatistics)
+    {
+        return false;
+    }
+
+    if (!WaitForQuery(*MetalQuery, Mode))
+    {
+        return false;
+    }
+
+    OutResult = *reinterpret_cast<const FRHIPipelineStatistics*>(MetalQuery->QueryResult);
+    return true;
 }
 
 void FMetalDeviceRHI::BeginFrame()
@@ -725,6 +738,8 @@ void FMetalDeviceRHI::EndFrame()
     Device->EndFrame();
 
 #if METAL_ENABLE_STATS
+    Device->GetStageUtilizationQueries().EndFrame(*Device->GetQueue(EMetalQueueType::Direct));
+
     FRHIVideoMemoryInfo LocalMemory;
 
     if (QueryVideoMemoryInfo(EVideoMemoryType::Local, LocalMemory))
@@ -769,24 +784,35 @@ bool FMetalDeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQuery
         return false;
     }
 
-    if (!MetalQuery->bResolved)
+    if (!WaitForQuery(*MetalQuery, Mode))
     {
-        FMetalQueue* Queue = MetalQuery->SubmittedQueue ? MetalQuery->SubmittedQueue : Device->GetQueue(EMetalQueueType::Direct);
+        return false;
+    }
+
+    OutResult = *MetalQuery->QueryResult;
+    return true;
+}
+
+bool FMetalDeviceRHI::WaitForQuery(FMetalQueryRHI& MetalQuery, EQueryResultMode Mode)
+{
+    if (!MetalQuery.bResolved)
+    {
+        FMetalQueue* Queue = MetalQuery.SubmittedQueue ? MetalQuery.SubmittedQueue : Device->GetQueue(EMetalQueueType::Direct);
 
         if (Mode == EQueryResultMode::Wait)
         {
-            if (MetalQuery->SubmissionValue != 0)
+            if (MetalQuery.SubmissionValue != 0)
             {
-                Queue->WaitForValue(MetalQuery->SubmissionValue);
+                Queue->WaitForValue(MetalQuery.SubmissionValue);
             }
             else
             {
                 Queue->WaitForCompletion();
             }
 
-            if (!MetalQuery->bResolved)
+            if (!MetalQuery.bResolved)
             {
-                MetalQuery->Resolve();
+                MetalQuery.Resolve();
             }
         }
         else
@@ -795,13 +821,7 @@ bool FMetalDeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQuery
         }
     }
 
-    if (!MetalQuery->bResolved)
-    {
-        return false;
-    }
-
-    OutResult = *MetalQuery->QueryResult;
-    return true;
+    return MetalQuery.bResolved;
 }
 
 void FMetalDeviceRHI::EnqueueResourceDeletion(FRHIResource* Resource)

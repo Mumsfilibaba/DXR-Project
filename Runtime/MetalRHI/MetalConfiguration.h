@@ -1,6 +1,13 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Stats/Stats.h"
+#include <Availability.h>
+
+#if defined(__MAC_26_0)
+    #define METAL_SDK_HAS_MACOS_26 (1)
+#else
+    #define METAL_SDK_HAS_MACOS_26 (0)
+#endif
 
 #ifndef METAL_ENABLE_LOGGING
     #define METAL_ENABLE_LOGGING (!RELEASE_BUILD)
@@ -8,6 +15,14 @@
 
 #ifndef METAL_ENABLE_DEBUG_LAYER
     #define METAL_ENABLE_DEBUG_LAYER (!RELEASE_BUILD)
+#endif
+
+#ifndef METAL_ENABLE_MEMORY_LOGGING
+    #define METAL_ENABLE_MEMORY_LOGGING (!RELEASE_BUILD)
+#endif
+
+#ifndef METAL_ENABLE_RESIDENCY_LOGGING
+    #define METAL_ENABLE_RESIDENCY_LOGGING (!RELEASE_BUILD)
 #endif
 
 #ifndef METAL_ENABLE_STATS

@@ -62,10 +62,12 @@ protected:
 
 private:
     void FreeBindlessHandle();
+    void UpdateMemoryStats();
 
     FMetalResourceStorage         ResourceStorage;
     mutable FRHIDescriptorHandle  BindlessHandle;
     mutable FMetalResidencyEntry* PinnedEntry;
+    int64                         TrackedMemory;
 };
 
 inline FMetalBufferRHI* GetMetalBuffer(FRHIBuffer* Buffer)

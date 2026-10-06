@@ -22,6 +22,13 @@ STAT_DEFINE_COUNTER(STAT_Metal_CounterSampleBufferCount, "Counter Sample Buffers
 STAT_DEFINE_COUNTER(STAT_Metal_TimestampSlotsInFlight,   "Timestamp Slots In Flight", "Metal Queries");
 STAT_DEFINE_COUNTER(STAT_Metal_OcclusionSlotsInFlight,   "Occlusion Slots In Flight", "Metal Queries");
 
+STAT_DEFINE_COUNTER(STAT_Metal_GPUTotalCycles,            "Total Cycles",             "Metal GPU");
+STAT_DEFINE_COUNTER(STAT_Metal_GPUVertexCycles,           "Vertex Cycles",            "Metal GPU");
+STAT_DEFINE_COUNTER(STAT_Metal_GPUTessellationCycles,     "Tessellation Cycles",      "Metal GPU");
+STAT_DEFINE_COUNTER(STAT_Metal_GPUPostTessellationCycles, "Post-Tessellation Cycles", "Metal GPU");
+STAT_DEFINE_COUNTER(STAT_Metal_GPUFragmentCycles,         "Fragment Cycles",          "Metal GPU");
+STAT_DEFINE_COUNTER(STAT_Metal_GPURenderTargetCycles,     "Render Target Cycles",     "Metal GPU");
+
 STAT_DEFINE_MEMORY(STAT_Metal_UploadHeapAllocated,       "Upload Heap Allocated",       "Metal Allocators");
 STAT_DEFINE_MEMORY(STAT_Metal_UploadHeapUsed,            "Upload Heap Used",            "Metal Allocators");
 STAT_DEFINE_MEMORY(STAT_Metal_UploadHeapFragmented,      "Upload Heap Fragmented",      "Metal Allocators");

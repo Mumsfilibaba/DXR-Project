@@ -1,5 +1,8 @@
 #include "MetalRHI/MetalDeviceDebug.h"
 #include "MetalRHI/MetalCore.h"
+#include "MetalRHI/MetalDevice.h"
+#include "MetalRHI/MetalQueue.h"
+#include "MetalRHI/MetalRHI.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "Core/Platform/PlatformThread.h"
@@ -27,6 +30,16 @@ static TAutoConsoleVariable<bool> CVarCaptureValidationOutput(
 static TAutoConsoleVariable<bool> CVarBreakOnValidationError(
     "MetalRHI.BreakOnValidationError",
     "Enables breakpoints when the Metal debug layer reports an error",
+    false);
+
+static TAutoConsoleVariable<bool> CVarBreakOnValidationWarning(
+    "MetalRHI.BreakOnValidationWarning",
+    "Enables breakpoints when the Metal debug layer reports a warning",
+    false);
+
+static TAutoConsoleVariable<bool> CVarEnableShaderValidation(
+    "MetalRHI.EnableShaderValidation",
+    "Arms Metal shader validation (MTL_SHADER_VALIDATION), which reports out-of-bounds and other invalid shader accesses with the shader and source line. Takes effect at launch",
     false);
 #endif
 
@@ -118,6 +131,11 @@ static void ReportValidationLine(const CHAR* RawText)
     else
     {
         METAL_WARNING("[Metal Validation] %s", Text);
+
+        if (CVarBreakOnValidationWarning.GetValue())
+        {
+            DEBUG_BREAK();
+        }
     }
 }
 
@@ -335,6 +353,15 @@ bool MetalIsDebugLayerRequested()
 
 void MetalEnableDebugLayer()
 {
+    if (IsEnvFlagEnabled("MTL_SHADER_VALIDATION"))
+    {
+        METAL_INFO("Metal shader validation enabled");
+    }
+    else if (CVarEnableShaderValidation.GetValue())
+    {
+        METAL_WARNING("MetalRHI.EnableShaderValidation was set after launch and takes effect on the next launch");
+    }
+
     if (!MetalIsDebugLayerRequested())
     {
         return;
@@ -357,6 +384,67 @@ void MetalStartValidationCapture()
 void MetalStopValidationCapture()
 {
     GStderrCapture.Restore();
+}
+
+void MetalForceGPUHang(StringView)
+{
+    SCOPED_AUTORELEASE_POOL();
+
+    FMetalDevice* Device = FMetalDeviceRHI::Get() ? FMetalDeviceRHI::Get()->GetMetalDevice() : nullptr;
+    FMetalQueue*  Queue  = Device ? Device->GetQueue(EMetalQueueType::Direct) : nullptr;
+    if (!Queue)
+    {
+        METAL_ERROR("ForceGPUHang: no Metal device");
+        return;
+    }
+
+    static const CHAR* HangSource =
+        "#include <metal_stdlib>\n"
+        "using namespace metal;\n"
+        "kernel void ForceGPUHang(device atomic_uint* Flag [[buffer(0)]])\n"
+        "{\n"
+        "    while (atomic_load_explicit(Flag, memory_order_relaxed) == 0u) {}\n"
+        "}\n";
+
+    id<MTLDevice> DeviceHandle = Device->GetMTLDevice();
+    NSError*      Error        = nil;
+
+    id<MTLLibrary>              Library  = [[DeviceHandle newLibraryWithSource:[NSString stringWithUTF8String:HangSource] options:nil error:&Error] autorelease];
+    id<MTLFunction>             Function = [[Library newFunctionWithName:@"ForceGPUHang"] autorelease];
+    id<MTLComputePipelineState> Pipeline = Function ? [[DeviceHandle newComputePipelineStateWithFunction:Function error:&Error] autorelease] : nil;
+    id<MTLBuffer>               Flag     = [[DeviceHandle newBufferWithLength:sizeof(uint32) options:MTLResourceStorageModeShared] autorelease];
+
+    if (!Pipeline || !Flag)
+    {
+        METAL_ERROR("ForceGPUHang: failed to build the hang kernel: %s", *String(Error ? [Error localizedDescription] : @"unknown error"));
+        return;
+    }
+
+    Memory::Memzero(Flag.contents, sizeof(uint32));
+
+    FMetalCommands* Commands = Queue->ObtainCommands();
+    if (!Commands || !Commands->CommandBuffer)
+    {
+        METAL_ERROR("ForceGPUHang: failed to obtain a command buffer");
+        return;
+    }
+
+    Commands->CommandBuffer.label = @"ForceGPUHang";
+    Commands->Breadcrumbs.Push("ForceGPUHang");
+
+    id<MTLComputeCommandEncoder> Encoder = [Commands->CommandBuffer computeCommandEncoder];
+    Encoder.label = @"ForceGPUHang";
+    [Encoder setComputePipelineState:Pipeline];
+    [Encoder setBuffer:Flag offset:0 atIndex:0];
+    [Encoder useResource:Flag usage:MTLResourceUsageRead];
+    [Encoder dispatchThreadgroups:MTLSizeMake(1, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
+    [Encoder endEncoding];
+
+    Commands->DeferredObjects.Emplace(static_cast<id<NSObject>>(Pipeline));
+    Commands->DeferredObjects.Emplace(static_cast<id<NSObject>>(Flag));
+
+    METAL_WARNING("ForceGPUHang: submitting a kernel that never returns");
+    Queue->SubmitCommands(Commands);
 }
 
 #endif

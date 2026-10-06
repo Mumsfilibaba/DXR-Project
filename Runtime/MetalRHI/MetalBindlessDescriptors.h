@@ -25,11 +25,6 @@ public:
 
     bool Initialize();
 
-    NODISCARD bool IsEnabled() const
-    {
-        return bEnabled;
-    }
-
     NODISCARD FRHIDescriptorHandle Allocate(EDescriptorType InType);
 
     void Free(FRHIDescriptorHandle Handle);
@@ -43,8 +38,10 @@ public:
 
     void Flush();
 
-    id<MTLBuffer> GetResourceHeapBuffer() const { return ResourceHeap.Buffer; }
-    id<MTLBuffer> GetSamplerHeapBuffer() const  { return SamplerHeap.Buffer; }
+    NODISCARD FORCEINLINE bool IsEnabled() const { return bEnabled; }
+
+    FORCEINLINE id<MTLBuffer> GetResourceHeapBuffer() const { return ResourceHeap.Buffer; }
+    FORCEINLINE id<MTLBuffer> GetSamplerHeapBuffer()  const { return SamplerHeap.Buffer; }
 
 private:
     struct FSlotState
