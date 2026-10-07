@@ -1,4 +1,34 @@
 #include "Engine/Assets/MeshFactory.h"
+#include "Core/Containers/Map.h"
+
+static void RemoveUnusedVertices(FMeshData& MeshData)
+{
+    constexpr uint32 InvalidIndex = ~uint32(0);
+
+    TArray<uint32> Remap;
+    Remap.Resize(MeshData.Vertices.Size());
+
+    for (uint32& RemappedIndex : Remap)
+    {
+        RemappedIndex = InvalidIndex;
+    }
+
+    TArray<FSourceVertex> UsedVertices;
+    UsedVertices.Reserve(MeshData.Vertices.Size());
+
+    for (uint32& Index : MeshData.Indices)
+    {
+        if (Remap[Index] == InvalidIndex)
+        {
+            Remap[Index] = static_cast<uint32>(UsedVertices.Size());
+            UsedVertices.Add(MeshData.Vertices[Index]);
+        }
+
+        Index = Remap[Index];
+    }
+
+    MeshData.Vertices = Move(UsedVertices);
+}
 
 FMeshData MeshFactory::CreateCube(float Width, float Height, float Depth) noexcept
 {
@@ -28,10 +58,10 @@ FMeshData MeshFactory::CreateCube(float Width, float Height, float Depth) noexce
         { Vector3(HalfWidth, -HalfHeight,  HalfDepth), Vector3(1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(1.0f, 1.0f) },
 
         // LEFT FACE
-        { Vector3(-HalfWidth,  HalfHeight, -HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(0.0f, 0.0f) },
-        { Vector3(-HalfWidth,  HalfHeight,  HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(1.0f, 0.0f) },
-        { Vector3(-HalfWidth, -HalfHeight, -HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(0.0f, 1.0f) },
-        { Vector3(-HalfWidth, -HalfHeight,  HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(1.0f, 1.0f) },
+        { Vector3(-HalfWidth,  HalfHeight,  HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, -1.0f), Vector2(0.0f, 0.0f) },
+        { Vector3(-HalfWidth,  HalfHeight, -HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, -1.0f), Vector2(1.0f, 0.0f) },
+        { Vector3(-HalfWidth, -HalfHeight,  HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, -1.0f), Vector2(0.0f, 1.0f) },
+        { Vector3(-HalfWidth, -HalfHeight, -HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, -1.0f), Vector2(1.0f, 1.0f) },
 
         // TOP FACE
         { Vector3(-HalfWidth,  HalfHeight,  HalfDepth), Vector3(0.0f,  1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(0.0f, 0.0f) },
@@ -61,8 +91,8 @@ FMeshData MeshFactory::CreateCube(float Width, float Height, float Depth) noexce
         9, 11, 10,
 
         // Left Face
-        14, 13, 12,
-        14, 15, 13,
+        12, 13, 14,
+        13, 15, 14,
 
         // Top Face
         16, 17, 18,
@@ -74,6 +104,9 @@ FMeshData MeshFactory::CreateCube(float Width, float Height, float Depth) noexce
     };
 
     CubeData.CalculateTangents();
+
+    CubeData.Vertices.Shrink();
+    CubeData.Indices.Shrink();
     return CubeData;
 }
 
@@ -102,16 +135,19 @@ FMeshData MeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
         {
             int32 v = ((1 + Height) * x) + y;
             PlaneData.Vertices[v].Position = Vector3(0.5f - (QuadSize.X * x), 0.5f - (QuadSize.Y * y), 0.0f);
+
             // TODO: Fix vertices so normal is positive
             PlaneData.Vertices[v].Normal   = Vector3(0.0f, 0.0f, -1.0f);
             PlaneData.Vertices[v].Tangent  = Vector3(1.0f, 0.0f, 0.0f);
-            PlaneData.Vertices[v].TexCoord = Vector2(0.0f + (UvQuadSize.X * x), 0.0f + (UvQuadSize.Y * y));
+
+            // The plane faces -Z, so U increases along +X and V along -Y to keep the texture non-mirrored
+            PlaneData.Vertices[v].TexCoord = Vector2(1.0f - (UvQuadSize.X * x), 0.0f + (UvQuadSize.Y * y));
         }
     }
 
-    for (uint8 x = 0; x < Width; x++)
+    for (uint32 x = 0; x < Width; x++)
     {
-        for (uint8 y = 0; y < Height; y++)
+        for (uint32 y = 0; y < Height; y++)
         {
             int32 quad = (Height * x) + y;
             PlaneData.Indices[(quad * 6) + 0] = (x * (1 + Height)) + y + 1;
@@ -123,10 +159,10 @@ FMeshData MeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
         }
     }
 
+    PlaneData.CalculateTangents();
+
     PlaneData.Vertices.Shrink();
     PlaneData.Indices.Shrink();
-
-    PlaneData.CalculateTangents();
     return PlaneData;
 }
 
@@ -183,22 +219,106 @@ FMeshData MeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
 
     for (uint32 i = 0; i < static_cast<uint32>(SphereData.Vertices.Size()); i++)
     {
-        // Calculate the new position, normal and tangent
-        Vector3 Position = SphereData.Vertices[i].Position;
-        Position.Normalize();
+        // Calculate the new position and normal
+        Vector3 Direction = SphereData.Vertices[i].Position;
+        Direction.Normalize();
 
-        SphereData.Vertices[i].Normal   = Position;
-        SphereData.Vertices[i].Position = Position * Radius;
+        SphereData.Vertices[i].Normal   = Direction;
+        SphereData.Vertices[i].Position = Direction * Radius;
 
-        // Calculate UVs
-        SphereData.Vertices[i].TexCoord.Y = (Math::Asin(SphereData.Vertices[i].Position.Y) / Math::Constants::PI) + 0.5f;
-        SphereData.Vertices[i].TexCoord.X = (Math::Atan2(SphereData.Vertices[i].Position.Z, SphereData.Vertices[i].Position.X) + Math::Constants::PI) / (2.0f * Math::Constants::PI);
+        // Calculate UVs from the unit direction (equirectangular), V = 0 at the top and U in the range [0, 1)
+        float U = (Math::Atan2(Direction.Z, Direction.X) + Math::Constants::PI) / (2.0f * Math::Constants::PI);
+        if (U >= 1.0f)
+        {
+            U -= 1.0f;
+        }
+
+        SphereData.Vertices[i].TexCoord.X = U;
+        SphereData.Vertices[i].TexCoord.Y = 0.5f - (Math::Asin(Math::Clamp(Direction.Y, -1.0f, 1.0f)) / Math::Constants::PI);
     }
 
-    SphereData.Indices.Shrink();
-    SphereData.Vertices.Shrink();
+    // Triangles crossing the texture seam would interpolate across the whole texture, so these get a
+    // duplicated vertex with U shifted by one on the side of the seam where U wrapped around to zero
+    const auto IsPoleVertex = [&SphereData](uint32 VertexIndex)
+    {
+        return Math::Abs(SphereData.Vertices[VertexIndex].Normal.Y) >= 0.99999f;
+    };
+
+    TMap<uint32, uint32> SeamVertices;
+    for (int32 i = 0; i < SphereData.Indices.Size(); i += 3)
+    {
+        float MinU = 1.0f;
+        float MaxU = 0.0f;
+        for (int32 Corner = 0; Corner < 3; Corner++)
+        {
+            const uint32 VertexIndex = SphereData.Indices[i + Corner];
+            if (!IsPoleVertex(VertexIndex))
+            {
+                MinU = Math::Min(MinU, SphereData.Vertices[VertexIndex].TexCoord.X);
+                MaxU = Math::Max(MaxU, SphereData.Vertices[VertexIndex].TexCoord.X);
+            }
+        }
+
+        if (MaxU - MinU <= 0.5f)
+        {
+            continue;
+        }
+
+        for (int32 Corner = 0; Corner < 3; Corner++)
+        {
+            const uint32 VertexIndex = SphereData.Indices[i + Corner];
+            if (IsPoleVertex(VertexIndex) || SphereData.Vertices[VertexIndex].TexCoord.X >= 0.5f)
+            {
+                continue;
+            }
+
+            if (uint32* ExistingVertex = SeamVertices.Find(VertexIndex))
+            {
+                SphereData.Indices[i + Corner] = *ExistingVertex;
+                continue;
+            }
+
+            FSourceVertex SeamVertex = SphereData.Vertices[VertexIndex];
+            SeamVertex.TexCoord.X += 1.0f;
+
+            const uint32 SeamIndex = static_cast<uint32>(SphereData.Vertices.Size());
+            SphereData.Vertices.Add(SeamVertex);
+
+            SeamVertices[VertexIndex]       = SeamIndex;
+            SphereData.Indices[i + Corner] = SeamIndex;
+        }
+    }
+
+    // U is undefined at the poles, so every triangle touching a pole gets its own pole vertex with U centered
+    // between the triangle's other two vertices, otherwise the texture is sheared around the poles
+    for (int32 i = 0; i < SphereData.Indices.Size(); i += 3)
+    {
+        for (int32 Corner = 0; Corner < 3; Corner++)
+        {
+            const uint32 VertexIndex = SphereData.Indices[i + Corner];
+            if (!IsPoleVertex(VertexIndex))
+            {
+                continue;
+            }
+
+            const float U1 = SphereData.Vertices[SphereData.Indices[i + (Corner + 1) % 3]].TexCoord.X;
+            const float U2 = SphereData.Vertices[SphereData.Indices[i + (Corner + 2) % 3]].TexCoord.X;
+
+            FSourceVertex PoleVertex = SphereData.Vertices[VertexIndex];
+            PoleVertex.TexCoord.X = (U1 + U2) * 0.5f;
+
+            SphereData.Indices[i + Corner] = static_cast<uint32>(SphereData.Vertices.Size());
+            SphereData.Vertices.Add(PoleVertex);
+        }
+    }
 
     SphereData.CalculateTangents();
+
+    // Remove the original pole vertices, and any vertex orphaned by the tangent seam splitting, which are no longer referenced by any triangle
+    RemoveUnusedVertices(SphereData);
+
+    SphereData.Vertices.Shrink();
+    SphereData.Indices.Shrink();
     return SphereData;
 }
 
@@ -212,8 +332,9 @@ FMeshData MeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noex
 
     FMeshData MeshData;
 
-    // Number of vertices: (Sides + 1) for the base (including center) + Sides for the side vertices
-    const uint32 NumVertices = Sides + 1 + Sides + 1;
+    // Vertices: base center + Sides for the base cap, (Sides + 1) for the side ring (the extra vertex wraps around
+    // the texture seam) and Sides apex vertices (one per side so that each gets the normal and U of its side)
+    const uint32 NumVertices = (Sides + 1) + (Sides + 1) + Sides;
     MeshData.Vertices.Resize(NumVertices);
 
     // Number of indices: (Sides * 3) for the base cap + (Sides * 3) for the sides
@@ -222,43 +343,50 @@ FMeshData MeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noex
 
     // Angle between each side segment
     const float Angle = (2.0f * Math::Constants::PI) / static_cast<float>(Sides);
-    
+
+    // The normal of the slanted side is perpendicular to the slant line, i.e. (Height * Cos, Radius, Height * Sin)
+    const auto CalculateSideNormal = [Radius, Height](float SideAngle)
+    {
+        return Vector3(Height * Math::Cos(SideAngle), Radius, Height * Math::Sin(SideAngle)).GetNormalized();
+    };
+
     // Create the center vertex for the base cap
     MeshData.Vertices[0].Position = Vector3(0.0f, 0.0f, 0.0f);
     MeshData.Vertices[0].Normal   = Vector3(0.0f, -1.0f, 0.0f);
     MeshData.Vertices[0].TexCoord = Vector2(0.5f, 0.5f); // Center UV coordinates
 
-    // Create vertices for the base cap and sides
-    const uint32 Offset = Sides + 1;
+    // Create vertices for the base cap
     for (uint32 i = 0; i < Sides; ++i)
     {
-        // Calculate the position of the current vertex on the base circle
-        const float x = Radius * Math::Cos(Angle * i);
-        const float z = Radius * Math::Sin(Angle * i);
-        const Vector3 BasePosition(x, 0.0f, z);
+        const float CosAngle = Math::Cos(Angle * i);
+        const float SinAngle = Math::Sin(Angle * i);
 
-        // Base vertex
-        MeshData.Vertices[i + 1].Position = BasePosition;
+        MeshData.Vertices[i + 1].Position = Vector3(Radius * CosAngle, 0.0f, Radius * SinAngle);
         MeshData.Vertices[i + 1].Normal   = Vector3(0.0f, -1.0f, 0.0f); // Pointing downwards
-        MeshData.Vertices[i + 1].TexCoord = Vector2((x / Radius + 1.0f) * 0.5f, (z / Radius + 1.0f) * 0.5f);
-
-        // Side vertex
-        MeshData.Vertices[Offset + i].Position = BasePosition;
-        
-        Vector3 Normal(x, Radius / Height, z);
-        if (Normal.GetLengthSquared() > 0.0f) // Ensure normalization is safe
-        {
-            Normal.Normalize();
-        }
-        
-        MeshData.Vertices[Offset + i].Normal   = Normal;
-        MeshData.Vertices[Offset + i].TexCoord = Vector2(static_cast<float>(i) / static_cast<float>(Sides), 1.0f);
+        MeshData.Vertices[i + 1].TexCoord = Vector2((CosAngle + 1.0f) * 0.5f, (SinAngle + 1.0f) * 0.5f);
     }
 
-    // Apex vertex
-    MeshData.Vertices[NumVertices - 1].Position = Vector3(0.0f, Height, 0.0f);
-    MeshData.Vertices[NumVertices - 1].Normal   = Vector3(0.0f, 1.0f, 0.0f); // Pointing upwards
-    MeshData.Vertices[NumVertices - 1].TexCoord = Vector2(0.5f, 0.0f);
+    // Create vertices for the side ring
+    const uint32 SideOffset = Sides + 1;
+    for (uint32 i = 0; i <= Sides; ++i) // <= to wrap around
+    {
+        const float SideAngle = (i % Sides) * Angle;
+
+        MeshData.Vertices[SideOffset + i].Position = Vector3(Radius * Math::Cos(SideAngle), 0.0f, Radius * Math::Sin(SideAngle));
+        MeshData.Vertices[SideOffset + i].Normal   = CalculateSideNormal(SideAngle);
+        MeshData.Vertices[SideOffset + i].TexCoord = Vector2(static_cast<float>(i) / static_cast<float>(Sides), 1.0f);
+    }
+
+    // Create the apex vertices, the normal at the apex is undefined so use the normal at the center of the side
+    const uint32 ApexOffset = SideOffset + Sides + 1;
+    for (uint32 i = 0; i < Sides; ++i)
+    {
+        const float CenterAngle = (static_cast<float>(i) + 0.5f) * Angle;
+
+        MeshData.Vertices[ApexOffset + i].Position = Vector3(0.0f, Height, 0.0f);
+        MeshData.Vertices[ApexOffset + i].Normal   = CalculateSideNormal(CenterAngle);
+        MeshData.Vertices[ApexOffset + i].TexCoord = Vector2((static_cast<float>(i) + 0.5f) / static_cast<float>(Sides), 0.0f);
+    }
 
     // Create indices for the base cap
     uint32 Index = 0;
@@ -272,13 +400,16 @@ FMeshData MeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noex
     // Create indices for the sides
     for (uint32 i = 0; i < Sides; ++i)
     {
-        MeshData.Indices[Index++] = Offset + i;
-        MeshData.Indices[Index++] = NumVertices - 1;
-        MeshData.Indices[Index++] = Offset + ((i + 1) % Sides);
+        MeshData.Indices[Index++] = SideOffset + i;
+        MeshData.Indices[Index++] = ApexOffset + i;
+        MeshData.Indices[Index++] = SideOffset + i + 1;
     }
 
     // Calculate tangents for proper lighting and normal mapping
     MeshData.CalculateTangents();
+
+    MeshData.Vertices.Shrink();
+    MeshData.Indices.Shrink();
     return MeshData;
 }
 
@@ -290,9 +421,11 @@ FMeshData MeshFactory::CreateTorus(float RingRadius, float TubeRadius, uint32 Ri
         return FMeshData();
     }
 
-    // Number of vertices and indices
-    const uint32 NumVertices = RingSegments * TubeSegments;
-    const uint32 NumIndices  = RingSegments * TubeSegments * 6;
+    // Number of vertices and indices, both the ring and the tube get an extra vertex to wrap around the texture seams
+    const uint32 NumRingVertices = RingSegments + 1;
+    const uint32 NumTubeVertices = TubeSegments + 1;
+    const uint32 NumVertices     = NumRingVertices * NumTubeVertices;
+    const uint32 NumIndices      = RingSegments * TubeSegments * 6;
 
     FMeshData MeshData;
     MeshData.Vertices.Resize(NumVertices);
@@ -304,46 +437,46 @@ FMeshData MeshFactory::CreateTorus(float RingRadius, float TubeRadius, uint32 Ri
 
     // Create vertices
     uint32 VertexIndex = 0;
-    for (uint32 i = 0; i < RingSegments; ++i)
+    for (uint32 i = 0; i < NumRingVertices; ++i)
     {
-        const float RingAngle = i * RingStep;
-        const Vector3 RingCenter = Vector3(RingRadius * Math::Cos(RingAngle), 0.0f, RingRadius * Math::Sin(RingAngle));
-        for (uint32 j = 0; j < TubeSegments; ++j)
+        const float RingAngle = (i % RingSegments) * RingStep;
+        const float CosRing   = Math::Cos(RingAngle);
+        const float SinRing   = Math::Sin(RingAngle);
+        for (uint32 j = 0; j < NumTubeVertices; ++j)
         {
-            const float TubeAngle = j * TubeStep;
+            const float TubeAngle = (j % TubeSegments) * TubeStep;
             const float CosTube   = Math::Cos(TubeAngle);
             const float SinTube   = Math::Sin(TubeAngle);
 
-            // Position of the vertex
-            Vector3 Position = RingCenter + Vector3(TubeRadius * CosTube * Math::Cos(RingAngle), TubeRadius * SinTube, TubeRadius * CosTube * Math::Sin(RingAngle));
-            MeshData.Vertices[VertexIndex].Position = Position;
-
-            // Normal vector
-            Vector3 Normal = Vector3(CosTube * Math::Cos(RingAngle), SinTube, CosTube * Math::Sin(RingAngle));
-            Normal.Normalize();
-            
+            // Normal vector, pointing away from the center of the tube
+            const Vector3 Normal = Vector3(CosTube * CosRing, SinTube, CosTube * SinRing);
             MeshData.Vertices[VertexIndex].Normal = Normal;
 
-            // Texture coordinates
+            // Position of the vertex
+            const Vector3 RingCenter = Vector3(RingRadius * CosRing, 0.0f, RingRadius * SinRing);
+            MeshData.Vertices[VertexIndex].Position = RingCenter + Normal * TubeRadius;
+
+            // Texture coordinates, the tube angle goes upwards on the outside of the torus, so V is flipped
+            // in order to point down along the surface (otherwise the texture would be mirrored)
             const float u = static_cast<float>(i) / static_cast<float>(RingSegments);
-            const float v = static_cast<float>(j) / static_cast<float>(TubeSegments);
+            const float v = 1.0f - static_cast<float>(j) / static_cast<float>(TubeSegments);
             MeshData.Vertices[VertexIndex].TexCoord = Vector2(u, v);
 
             ++VertexIndex;
         }
     }
 
-    // Create indices with inverted winding order
+    // Create indices
     uint32 Index = 0;
     for (uint32 i = 0; i < RingSegments; ++i)
     {
         for (uint32 j = 0; j < TubeSegments; ++j)
         {
             // Calculate the indices for the four corners of this quad
-            uint32 Current  = i * TubeSegments + j;
-            uint32 NextRing = ((i + 1) % RingSegments) * TubeSegments + j;
-            uint32 NextTube = i * TubeSegments + (j + 1) % TubeSegments;
-            uint32 Diagonal = ((i + 1) % RingSegments) * TubeSegments + (j + 1) % TubeSegments;
+            const uint32 Current  = i * NumTubeVertices + j;
+            const uint32 NextRing = (i + 1) * NumTubeVertices + j;
+            const uint32 NextTube = Current + 1;
+            const uint32 Diagonal = NextRing + 1;
 
             // First triangle
             MeshData.Indices[Index++] = Current;
@@ -359,6 +492,9 @@ FMeshData MeshFactory::CreateTorus(float RingRadius, float TubeRadius, uint32 Ri
 
     // Calculate tangents for proper lighting and normal mapping
     MeshData.CalculateTangents();
+
+    MeshData.Vertices.Shrink();
+    MeshData.Indices.Shrink();
     return MeshData;
 }
 
@@ -499,8 +635,8 @@ FMeshData MeshFactory::CreateTeapot(uint32 Tessellation) noexcept
         dB[3] = 3 * t * t;
     };
 
-    // Function to evaluate a point and normal on a Bezier patch
-    const auto EvaluateBezierPatch = [&](const float ControlPoints[16][3], float u, float v, FSourceVertex& Vertex)
+    // Evaluates the position and the partial derivatives of a Bezier patch
+    const auto EvaluateBezierPatch = [&](const float ControlPoints[16][3], float u, float v, Vector3& OutPosition, Vector3& OutTangentU, Vector3& OutTangentV)
     {
         float Bu[4];
         float Bv[4];
@@ -530,24 +666,42 @@ FMeshData MeshFactory::CreateTeapot(uint32 Tessellation) noexcept
             }
         }
 
-        // Invert Y-axis for position
-        Vertex.Position[0] = Position[0];
-        Vertex.Position[1] = Position[1];
-        Vertex.Position[2] = Position[2];
+        // The control points are Z-up, convert to Y-up (a rotation around the X-axis, which keeps the handedness)
+        OutPosition = Vector3(Position[0], Position[2], -Position[1]);
+        OutTangentU = Vector3(TangentU[0], TangentU[2], -TangentU[1]);
+        OutTangentV = Vector3(TangentV[0], TangentV[2], -TangentV[1]);
+    };
 
-        Vector3 Normal(
-            TangentU[1] * TangentV[2] - TangentU[2] * TangentV[1],
-            TangentU[2] * TangentV[0] - TangentU[0] * TangentV[2],
-            TangentU[0] * TangentV[1] - TangentU[1] * TangentV[0]);
-        
-        Normal.Normalize();
+    // Function to evaluate a vertex on a Bezier patch
+    const auto EvaluateBezierVertex = [&](const float ControlPoints[16][3], float u, float v, FSourceVertex& Vertex)
+    {
+        Vector3 Position;
+        Vector3 TangentU;
+        Vector3 TangentV;
+        EvaluateBezierPatch(ControlPoints, u, v, Position, TangentU, TangentV);
 
-        // Invert normal
-        Vertex.Normal = -Normal;
+        // Some patches (the lid knob and the bottom center) collapse an entire row of control points into a single
+        // point, where the derivative becomes zero. Use the limit of the normal by evaluating it just inside the patch.
+        // NOTE: Test the derivatives and not the normal, the collapsed derivative is only zero up to rounding errors
+        // and the cross product of that noise with the other derivative can still be long enough to pass a threshold.
+        constexpr float CollapsedDerivativeThreshold = 1.0e-8f;
+        if (TangentU.GetLengthSquared() < CollapsedDerivativeThreshold || TangentV.GetLengthSquared() < CollapsedDerivativeThreshold)
+        {
+            constexpr float Offset = 1.0e-3f;
 
-        // Set texture coordinates
-        Vertex.TexCoord[0] = u;
-        Vertex.TexCoord[1] = v;
+            Vector3 OffsetPosition;
+            EvaluateBezierPatch(ControlPoints, u + (0.5f - u) * Offset, v + (0.5f - v) * Offset, OffsetPosition, TangentU, TangentV);
+        }
+
+        // The patches are oriented so that the cross product of the derivatives points inwards
+        const Vector3 Normal = TangentV.CrossProduct(TangentU);
+
+        Vertex.Position = Position;
+        Vertex.Normal   = Normal.GetNormalized();
+
+        // U runs around the teapot and V runs from the top towards the bottom
+        Vertex.TexCoord[0] = v;
+        Vertex.TexCoord[1] = u;
     };
 
     FMeshData MeshData;
@@ -555,6 +709,20 @@ FMeshData MeshFactory::CreateTeapot(uint32 Tessellation) noexcept
     {
         Tessellation = 1;
     }
+
+    // Adds a triangle unless it is degenerate, which happens at the collapsed rows of the patches
+    const auto AddTriangle = [&MeshData](uint32 Index0, uint32 Index1, uint32 Index2)
+    {
+        const Vector3& Position0 = MeshData.Vertices[Index0].Position;
+        const Vector3& Position1 = MeshData.Vertices[Index1].Position;
+        const Vector3& Position2 = MeshData.Vertices[Index2].Position;
+        if ((Position1 - Position0).CrossProduct(Position2 - Position0).GetLengthSquared() > 1.0e-14f)
+        {
+            MeshData.Indices.Add(Index0);
+            MeshData.Indices.Add(Index1);
+            MeshData.Indices.Add(Index2);
+        }
+    };
 
     for (uint32 PatchIndex = 0; PatchIndex < NumPatches; ++PatchIndex)
     {
@@ -576,7 +744,7 @@ FMeshData MeshFactory::CreateTeapot(uint32 Tessellation) noexcept
                 const float s = static_cast<float>(v) / static_cast<float>(Tessellation);
 
                 FSourceVertex Vertex;
-                EvaluateBezierPatch(PatchControlPoints, t, s, Vertex);
+                EvaluateBezierVertex(PatchControlPoints, t, s, Vertex);
                 MeshData.Vertices.Add(Vertex);
             }
         }
@@ -590,19 +758,20 @@ FMeshData MeshFactory::CreateTeapot(uint32 Tessellation) noexcept
                 const uint32 Index2 = StartVertex + (u * (Tessellation + 1)) + v + 1;
                 const uint32 Index3 = StartVertex + ((u + 1) * (Tessellation + 1)) + v + 1;
 
-                MeshData.Indices.Add(Index0);
-                MeshData.Indices.Add(Index2);
-                MeshData.Indices.Add(Index1);
-
-                MeshData.Indices.Add(Index1);
-                MeshData.Indices.Add(Index2);
-                MeshData.Indices.Add(Index3);
+                AddTriangle(Index0, Index2, Index1);
+                AddTriangle(Index1, Index2, Index3);
             }
         }
     }
 
     // Calculate tangents for proper lighting and normal mapping
     MeshData.CalculateTangents();
+
+    // The collapsed rows, and the tangent seam splitting, can leave some vertices unreferenced
+    RemoveUnusedVertices(MeshData);
+
+    MeshData.Vertices.Shrink();
+    MeshData.Indices.Shrink();
     return MeshData;
 }
 
@@ -671,9 +840,9 @@ FMeshData MeshFactory::CreatePyramid(float Width, float Depth, float Height) noe
     s0v0.Normal   = Normal0;
     s0v1.Normal   = Normal0;
     s0v4.Normal   = Normal0;
-    s0v0.TexCoord = Vector2(0.0f, 0.0f);
-    s0v1.TexCoord = Vector2(1.0f, 0.0f);
-    s0v4.TexCoord = Vector2(0.5f, 1.0f);
+    s0v0.TexCoord = Vector2(0.0f, 1.0f);
+    s0v1.TexCoord = Vector2(1.0f, 1.0f);
+    s0v4.TexCoord = Vector2(0.5f, 0.0f);
 
     const uint32 Side0Index = static_cast<uint32>(MeshData.Vertices.Size());
     MeshData.Vertices.Add(s0v0);
@@ -691,9 +860,9 @@ FMeshData MeshFactory::CreatePyramid(float Width, float Depth, float Height) noe
     s1v0.Normal   = Normal1;
     s1v1.Normal   = Normal1;
     s1v4.Normal   = Normal1;
-    s1v0.TexCoord = Vector2(0.0f, 0.0f);
-    s1v1.TexCoord = Vector2(1.0f, 0.0f);
-    s1v4.TexCoord = Vector2(0.5f, 1.0f);
+    s1v0.TexCoord = Vector2(0.0f, 1.0f);
+    s1v1.TexCoord = Vector2(1.0f, 1.0f);
+    s1v4.TexCoord = Vector2(0.5f, 0.0f);
 
     const uint32 Side1Index = static_cast<uint32>(MeshData.Vertices.Size());
     MeshData.Vertices.Add(s1v0);
@@ -711,9 +880,9 @@ FMeshData MeshFactory::CreatePyramid(float Width, float Depth, float Height) noe
     s2v0.Normal   = Normal2;
     s2v1.Normal   = Normal2;
     s2v4.Normal   = Normal2;
-    s2v0.TexCoord = Vector2(0.0f, 0.0f);
-    s2v1.TexCoord = Vector2(1.0f, 0.0f);
-    s2v4.TexCoord = Vector2(0.5f, 1.0f);
+    s2v0.TexCoord = Vector2(0.0f, 1.0f);
+    s2v1.TexCoord = Vector2(1.0f, 1.0f);
+    s2v4.TexCoord = Vector2(0.5f, 0.0f);
 
     const uint32 Side2Index = static_cast<uint32>(MeshData.Vertices.Size());
     MeshData.Vertices.Add(s2v0);
@@ -731,9 +900,9 @@ FMeshData MeshFactory::CreatePyramid(float Width, float Depth, float Height) noe
     s3v0.Normal   = Normal3;
     s3v1.Normal   = Normal3;
     s3v4.Normal   = Normal3;
-    s3v0.TexCoord = Vector2(0.0f, 0.0f);
-    s3v1.TexCoord = Vector2(1.0f, 0.0f);
-    s3v4.TexCoord = Vector2(0.5f, 1.0f);
+    s3v0.TexCoord = Vector2(0.0f, 1.0f);
+    s3v1.TexCoord = Vector2(1.0f, 1.0f);
+    s3v4.TexCoord = Vector2(0.5f, 0.0f);
 
     const uint32 Side3Index = static_cast<uint32>(MeshData.Vertices.Size());
     MeshData.Vertices.Add(s3v0);
@@ -745,6 +914,9 @@ FMeshData MeshFactory::CreatePyramid(float Width, float Depth, float Height) noe
     MeshData.Indices.Add(Side3Index + 1);
 
     MeshData.CalculateTangents();
+
+    MeshData.Vertices.Shrink();
+    MeshData.Indices.Shrink();
     return MeshData;
 }
 
@@ -781,7 +953,7 @@ FMeshData MeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height) 
         FSourceVertex Vertex;
         Vertex.Position = Vector3(X, HalfHeight, Z);
         Vertex.Normal   = Vector3(0.0f, 1.0f, 0.0f);
-        Vertex.TexCoord = Vector2((cosf(Angle) + 1.0f) * 0.5f, (sinf(Angle) + 1.0f) * 0.5f); // Map to [0,1]
+        Vertex.TexCoord = Vector2((cosf(Angle) + 1.0f) * 0.5f, (1.0f - sinf(Angle)) * 0.5f); // Map to [0,1], V flipped since the cap is seen from above
         MeshData.Vertices.Add(Vertex);
     }
 
@@ -877,5 +1049,142 @@ FMeshData MeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height) 
     }
 
     MeshData.CalculateTangents();
+
+    MeshData.Vertices.Shrink();
+    MeshData.Indices.Shrink();
+    return MeshData;
+}
+
+FMeshData MeshFactory::CreateCapsule(uint32 Sides, uint32 Rings, float Radius, float Height) noexcept
+{
+    if (Radius <= 0.0f)
+    {
+        // A capsule must have a radius
+        return FMeshData();
+    }
+
+    // Validate the number of sides and rings
+    if (Sides < 3)
+    {
+        // A capsule must have at least 3 sides
+        Sides = 3;
+    }
+
+    if (Rings < 1)
+    {
+        // Each hemisphere must have at least 1 ring
+        Rings = 1;
+    }
+
+    // Height is the total height of the capsule (including the hemispheres), the cylindrical section is what remains
+    const float CylinderHeight     = Math::Max(Height - 2.0f * Radius, 0.0f);
+    const float HalfCylinderHeight = CylinderHeight * 0.5f;
+
+    // Each hemisphere has (Rings + 1) rings from pole to equator, the two equator rings bound the cylindrical section
+    const uint32 NumRings   = (Rings + 1) * 2;
+    const float  DeltaAngle = 2.0f * Math::Constants::PI / static_cast<float>(Sides);
+    const float  DeltaPhi   = Math::Constants::HalfPI / static_cast<float>(Rings);
+
+    // V is distributed by arc length along the profile so that the texture is not stretched along the cylinder
+    const float HemisphereLength = Math::Constants::HalfPI * Radius;
+    const float ProfileLength    = 2.0f * HemisphereLength + CylinderHeight;
+
+    FMeshData MeshData;
+
+    // The pole rings have one vertex per side (with the U-coordinate centered on the side), the
+    // other rings have an extra vertex to wrap around the texture seam
+    TArray<uint32> RingStartIndices;
+    RingStartIndices.Resize(NumRings);
+
+    for (uint32 Ring = 0; Ring < NumRings; ++Ring)
+    {
+        // Without a cylindrical section both equator rings would be identical, so the bottom hemisphere shares the top one
+        if (Ring == Rings + 1 && CylinderHeight <= 0.0f)
+        {
+            RingStartIndices[Ring] = RingStartIndices[Rings];
+            continue;
+        }
+
+        RingStartIndices[Ring] = static_cast<uint32>(MeshData.Vertices.Size());
+
+        const bool  bIsTopHemisphere = Ring <= Rings;
+        const bool  bIsPole          = Ring == 0 || Ring == NumRings - 1;
+        const float CenterY          = bIsTopHemisphere ? HalfCylinderHeight : -HalfCylinderHeight;
+
+        // Polar angle measured from the top pole, both equator rings are at HalfPI
+        const float Phi    = static_cast<float>(bIsTopHemisphere ? Ring : Ring - 1) * DeltaPhi;
+        const float SinPhi = bIsPole ? 0.0f : Math::Sin(Phi);
+        const float CosPhi = bIsPole ? (bIsTopHemisphere ? 1.0f : -1.0f) : Math::Cos(Phi);
+
+        const float ArcLength = Phi * Radius + (bIsTopHemisphere ? 0.0f : CylinderHeight);
+        const float V         = ArcLength / ProfileLength;
+
+        const uint32 NumColumns = bIsPole ? Sides : Sides + 1;
+        for (uint32 Column = 0; Column < NumColumns; ++Column)
+        {
+            const float Angle    = static_cast<float>(Column % Sides) * DeltaAngle;
+            const float CosTheta = Math::Cos(Angle);
+            const float SinTheta = Math::Sin(Angle);
+
+            const Vector3 Normal(SinPhi * CosTheta, CosPhi, SinPhi * SinTheta);
+
+            FSourceVertex Vertex;
+            Vertex.Position = Vector3(Radius * Normal.X, CenterY + Radius * Normal.Y, Radius * Normal.Z);
+            Vertex.Normal   = Normal;
+            Vertex.TexCoord = Vector2((static_cast<float>(Column) + (bIsPole ? 0.5f : 0.0f)) / static_cast<float>(Sides), V);
+            MeshData.Vertices.Add(Vertex);
+        }
+    }
+
+    // Generate indices for each band between two consecutive rings
+    for (uint32 Ring = 0; Ring < NumRings - 1; ++Ring)
+    {
+        // Skip the cylindrical section when the hemispheres touch, it would only consist of degenerate triangles
+        if (Ring == Rings && CylinderHeight <= 0.0f)
+        {
+            continue;
+        }
+
+        const uint32 TopStartIndex    = RingStartIndices[Ring];
+        const uint32 BottomStartIndex = RingStartIndices[Ring + 1];
+
+        for (uint32 i = 0; i < Sides; ++i)
+        {
+            const uint32 TopCurr    = TopStartIndex + i;
+            const uint32 TopNext    = TopCurr + 1;
+            const uint32 BottomCurr = BottomStartIndex + i;
+            const uint32 BottomNext = BottomCurr + 1;
+
+            if (Ring == 0)
+            {
+                // Top pole, a single triangle per side
+                MeshData.Indices.Add(BottomCurr);
+                MeshData.Indices.Add(TopCurr);
+                MeshData.Indices.Add(BottomNext);
+            }
+            else if (Ring == NumRings - 2)
+            {
+                // Bottom pole, a single triangle per side
+                MeshData.Indices.Add(TopCurr);
+                MeshData.Indices.Add(TopNext);
+                MeshData.Indices.Add(BottomCurr);
+            }
+            else
+            {
+                MeshData.Indices.Add(TopCurr);
+                MeshData.Indices.Add(TopNext);
+                MeshData.Indices.Add(BottomCurr);
+
+                MeshData.Indices.Add(BottomCurr);
+                MeshData.Indices.Add(TopNext);
+                MeshData.Indices.Add(BottomNext);
+            }
+        }
+    }
+
+    MeshData.CalculateTangents();
+
+    MeshData.Vertices.Shrink();
+    MeshData.Indices.Shrink();
     return MeshData;
 }

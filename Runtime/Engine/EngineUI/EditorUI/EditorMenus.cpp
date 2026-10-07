@@ -119,7 +119,12 @@ void FEditorMenus::BuildEditMenu(const TSharedPtr<FMenuBar>& Bar)
 
     Menu->AddSection("Create", Font);
 
-    if (TSharedPtr<FMenu> PlaceActorMenu = BuildPlaceActorMenu())
+    const FGetPlaceActorLocation GetLocation = FGetPlaceActorLocation::CreateLambda([this]()
+    {
+        return GetPlaceActorLocation();
+    });
+
+    if (TSharedPtr<FMenu> PlaceActorMenu = BuildPlaceActorMenu(EditorEngine, GetLocation))
     {
         FMenuItem::FDesc PlaceDesc;
         PlaceDesc.Label   = "Place Actor";
@@ -169,7 +174,7 @@ void FEditorMenus::BuildEditMenu(const TSharedPtr<FMenuBar>& Bar)
     Bar->AddMenu("Edit", Font, Menu);
 }
 
-TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu()
+TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu(FEditorEngine* InEditorEngine, const FGetPlaceActorLocation& GetLocation)
 {
     const TSharedPtr<IFontFace>& Font = FEditorStyle::GetFonts().Body;
 
@@ -178,6 +183,14 @@ TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu()
     {
         return nullptr;
     }
+
+    const auto SelectPlacedActor = [InEditorEngine](FActor* Actor)
+    {
+        if (Actor)
+        {
+            InEditorEngine->SetSelectedActor(Actor);
+        }
+    };
 
     Menu->AddSection("Primitives", Font);
 
@@ -188,9 +201,9 @@ TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu()
         FMenuItem::FDesc Desc;
         Desc.Label       = EditorActorFactory::GetPrimitiveName(Type);
         Desc.Font        = Font;
-        Desc.OnActivated = FOnMenuItemActivated::CreateLambda([this, Type]()
+        Desc.OnActivated = FOnMenuItemActivated::CreateLambda([InEditorEngine, GetLocation, SelectPlacedActor, Type]()
         {
-            OnActorPlaced(EditorActorFactory::SpawnPrimitive(EditorEngine->GetWorld(), Type, GetPlaceActorLocation()));
+            SelectPlacedActor(EditorActorFactory::SpawnPrimitive(InEditorEngine->GetWorld(), Type, GetLocation.Execute()));
         });
 
         Menu->AddItem(FMenuItem::Create(Desc));
@@ -211,12 +224,12 @@ TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu()
         FMenuItem::FDesc Desc;
         Desc.Label       = EditorActorFactory::GetLightName(Type);
         Desc.Font        = Font;
-        Desc.OnActivated = FOnMenuItemActivated::CreateLambda([this, Type]()
+        Desc.OnActivated = FOnMenuItemActivated::CreateLambda([InEditorEngine, GetLocation, SelectPlacedActor, Type]()
         {
-            FWorld* World = EditorEngine->GetWorld();
+            FWorld* World = InEditorEngine->GetWorld();
             if (EditorActorFactory::CanSpawnLight(World, Type))
             {
-                OnActorPlaced(EditorActorFactory::SpawnLight(World, Type, GetPlaceActorLocation()));
+                SelectPlacedActor(EditorActorFactory::SpawnLight(World, Type, GetLocation.Execute()));
             }
         });
 
@@ -228,9 +241,9 @@ TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu()
     FMenuItem::FDesc CameraDesc;
     CameraDesc.Label       = "Camera";
     CameraDesc.Font        = Font;
-    CameraDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this]()
+    CameraDesc.OnActivated = FOnMenuItemActivated::CreateLambda([InEditorEngine, GetLocation, SelectPlacedActor]()
     {
-        OnActorPlaced(EditorActorFactory::SpawnCamera(EditorEngine->GetWorld(), GetPlaceActorLocation()));
+        SelectPlacedActor(EditorActorFactory::SpawnCamera(InEditorEngine->GetWorld(), GetLocation.Execute()));
     });
 
     Menu->AddItem(FMenuItem::Create(CameraDesc));
@@ -251,14 +264,6 @@ Vector3 FEditorMenus::GetPlaceActorLocation() const
     }
 
     return Vector3(0.0f, 0.0f, 0.0f);
-}
-
-void FEditorMenus::OnActorPlaced(FActor* Actor)
-{
-    if (Actor)
-    {
-        EditorEngine->SetSelectedActor(Actor);
-    }
 }
 
 void FEditorMenus::BuildWindowsMenu(const TSharedPtr<FMenuBar>& Bar)

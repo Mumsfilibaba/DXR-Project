@@ -2046,6 +2046,7 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
 
         OutStorage.SetResource(PlacedResource.Get());
         OutStorage.SetGPUVirtualAddress(PlacedResource->GetGPUVirtualAddress());
+        OutStorage.SetSize(AllocationDesc.Width);
     }
 
     return true;
@@ -2375,6 +2376,7 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
 
         OutStorage.SetResource(PlacedResource.Get());
         OutStorage.SetGPUVirtualAddress(PlacedResource->GetGPUVirtualAddress());
+        OutStorage.SetSize(AllocationDesc.Width);
     }
     else if (OutStorage.GetStorageType() == ED3D12ResourceStorageType::Standalone)
     {

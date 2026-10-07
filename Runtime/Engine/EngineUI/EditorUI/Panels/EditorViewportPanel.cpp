@@ -2,6 +2,7 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorViewportImage.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorViewportSurface.h"
 #include "Engine/EngineUI/EditorUI/EditorIcons.h"
+#include "Engine/EngineUI/EditorUI/EditorMenus.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
 #include "Engine/EngineUI/Editor/EditorActorFactory.h"
 #include "Engine/EngineUI/Editor/EditorCameraController.h"
@@ -82,14 +83,6 @@ static_assert(DEBUG_VIEW_ENTRIES[FIRST_SHADOW_DEBUG_VIEW].View == FSceneRenderVi
     "The CSM group no longer starts where FIRST_SHADOW_DEBUG_VIEW says it does");
 static_assert(DEBUG_VIEW_ENTRIES[FIRST_RAY_TRACING_DEBUG_VIEW].View == FSceneRenderView::EDebugView::RayTracingReflectionsRaw,
     "The ray-tracing group no longer starts where FIRST_RAY_TRACING_DEBUG_VIEW says it does");
-
-constexpr EEditorLightType PLACEABLE_LIGHT_TYPES[] =
-{
-    EEditorLightType::Point,
-    EEditorLightType::Spot,
-    EEditorLightType::Directional,
-    EEditorLightType::Sky,
-};
 
 // How far ahead of the camera a spawn lands when the cursor ray misses the ground plane.
 constexpr float PLACEMENT_DEFAULT_DISTANCE = 10.0f;
@@ -1188,7 +1181,10 @@ TSharedPtr<FMenu> FEditorViewportPanel::BuildContextMenu()
     FMenuItem::FDesc PlaceDesc;
     PlaceDesc.Label   = "Place Actor";
     PlaceDesc.Font    = Font;
-    PlaceDesc.SubMenu = BuildPlaceActorMenu();
+    PlaceDesc.SubMenu = FEditorMenus::BuildPlaceActorMenu(EditorEngine, FGetPlaceActorLocation::CreateLambda([this]()
+    {
+        return ContextMenuLocation;
+    }));
 
     Menu->AddItem(FMenuItem::Create(PlaceDesc));
 
@@ -1225,91 +1221,6 @@ TSharedPtr<FMenu> FEditorViewportPanel::BuildContextMenu()
     Menu->AddItem(FMenuItem::Create(DeleteDesc));
 
     return Menu;
-}
-
-TSharedPtr<FMenu> FEditorViewportPanel::BuildPlaceActorMenu()
-{
-    const TSharedPtr<IFontFace>& Font = FEditorStyle::GetFonts().Body;
-
-    FWorld* World = EditorEngine->GetWorld();
-
-    TSharedPtr<FMenu> Menu = FMenu::Create();
-    if (!Menu)
-    {
-        return nullptr;
-    }
-
-    TSharedPtr<FMenu> MeshMenu = FMenu::Create();
-    for (int32 Index = 0; Index < static_cast<int32>(EEditorPrimitiveType::Count); ++Index)
-    {
-        const EEditorPrimitiveType Type = static_cast<EEditorPrimitiveType>(Index);
-
-        FMenuItem::FDesc PrimitiveDesc;
-        PrimitiveDesc.Label       = EditorActorFactory::GetPrimitiveName(Type);
-        PrimitiveDesc.Font        = Font;
-        PrimitiveDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this, World, Type]()
-        {
-            SelectSpawnedActor(EditorActorFactory::SpawnPrimitive(World, Type, ContextMenuLocation));
-        });
-
-        MeshMenu->AddItem(FMenuItem::Create(PrimitiveDesc));
-    }
-
-    FMenuItem::FDesc MeshDesc;
-    MeshDesc.Label   = "Mesh";
-    MeshDesc.Font    = Font;
-    MeshDesc.SubMenu = MeshMenu;
-
-    Menu->AddItem(FMenuItem::Create(MeshDesc));
-
-    TSharedPtr<FMenu> LightMenu = FMenu::Create();
-    for (const EEditorLightType Type : PLACEABLE_LIGHT_TYPES)
-    {
-        if (!EditorActorFactory::CanSpawnLight(World, Type))
-        {
-            continue;
-        }
-
-        FMenuItem::FDesc LightItemDesc;
-        LightItemDesc.Label       = EditorActorFactory::GetLightName(Type);
-        LightItemDesc.Font        = Font;
-        LightItemDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this, World, Type]()
-        {
-            SelectSpawnedActor(EditorActorFactory::SpawnLight(World, Type, ContextMenuLocation));
-        });
-
-        LightMenu->AddItem(FMenuItem::Create(LightItemDesc));
-    }
-
-    if (!LightMenu->GetItems().IsEmpty())
-    {
-        FMenuItem::FDesc LightDesc;
-        LightDesc.Label   = "Light";
-        LightDesc.Font    = Font;
-        LightDesc.SubMenu = LightMenu;
-
-        Menu->AddItem(FMenuItem::Create(LightDesc));
-    }
-
-    FMenuItem::FDesc CameraDesc;
-    CameraDesc.Label       = "Camera";
-    CameraDesc.Font        = Font;
-    CameraDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this, World]()
-    {
-        SelectSpawnedActor(EditorActorFactory::SpawnCamera(World, ContextMenuLocation));
-    });
-
-    Menu->AddItem(FMenuItem::Create(CameraDesc));
-
-    return Menu;
-}
-
-void FEditorViewportPanel::SelectSpawnedActor(FActor* SpawnedActor)
-{
-    if (SpawnedActor)
-    {
-        EditorEngine->SetSelectedActor(SpawnedActor);
-    }
 }
 
 bool FEditorViewportPanel::ComputeFallbackPlacement(const Vector2& Ndc, Vector3& OutLocation) const

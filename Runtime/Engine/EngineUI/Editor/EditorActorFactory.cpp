@@ -30,6 +30,7 @@ static const FPrimitiveRecipe GPrimitiveRecipes[NumPrimitiveTypes] =
     { "Sphere",   Vector3(0.0f, 0.0f, 0.0f) },
     { "Plane",    Vector3(Math::Constants::HalfPI, 0.0f, 0.0f) },
     { "Cylinder", Vector3(0.0f, 0.0f, 0.0f) },
+    { "Capsule",  Vector3(0.0f, 0.0f, 0.0f) },
     { "Cone",     Vector3(0.0f, 0.0f, 0.0f) },
     { "Torus",    Vector3(0.0f, 0.0f, 0.0f) },
     { "Pyramid",  Vector3(0.0f, 0.0f, 0.0f) },
@@ -54,6 +55,7 @@ static FMeshData CreatePrimitiveMeshData(EEditorPrimitiveType Type)
         case EEditorPrimitiveType::Sphere:   return MeshFactory::CreateSphere(3);
         case EEditorPrimitiveType::Plane:    return MeshFactory::CreatePlane(10, 10);
         case EEditorPrimitiveType::Cylinder: return MeshFactory::CreateCylinder();
+        case EEditorPrimitiveType::Capsule:  return MeshFactory::CreateCapsule();
         case EEditorPrimitiveType::Cone:     return MeshFactory::CreateCone();
         case EEditorPrimitiveType::Torus:    return MeshFactory::CreateTorus();
         case EEditorPrimitiveType::Pyramid:  return MeshFactory::CreatePyramid();

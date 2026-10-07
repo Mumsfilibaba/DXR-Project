@@ -135,7 +135,6 @@ private:
     void UpdateGizmoCamera();
     void RefreshToolBarState();
     void ShowContextMenu();
-    void SelectSpawnedActor(FActor* SpawnedActor);
 
     NODISCARD bool ComputeFallbackPlacement(const Vector2& Ndc, Vector3& OutLocation) const;
     NODISCARD EGizmoOperation ResolveGizmoOperation(const TArray<FActor*>& Selection) const;
@@ -148,7 +147,6 @@ private:
     NODISCARD TSharedPtr<FVisualElement> BuildCameraMenu();
     NODISCARD TSharedPtr<FVisualElement> BuildViewOptionsMenu();
     NODISCARD TSharedPtr<FMenu> BuildContextMenu();
-    NODISCARD TSharedPtr<FMenu> BuildPlaceActorMenu();
 
     TUniquePtr<FEditorCameraController> CameraController;
     TSharedPtr<FEditorViewportSurface>  Surface;

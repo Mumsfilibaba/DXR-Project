@@ -12,6 +12,7 @@ enum class EEditorPrimitiveType : uint8
     Sphere,
     Plane,
     Cylinder,
+    Capsule,
     Cone,
     Torus,
     Pyramid,
