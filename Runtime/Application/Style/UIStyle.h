@@ -381,34 +381,40 @@ struct FUITabStyle
     /** @brief The fill of a resting tab, which is clear so the strip shows straight through it. */
     FFloatColor Fill = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-    /** @brief The fill of a tab the cursor is over, which stays under the active tab's so that one still leads. */
-    FFloatColor FillHovered = FFloatColor(37.0f / 255.0f, 37.0f / 255.0f, 37.0f / 255.0f, 1.0f);
+    /** @brief The fill of a tab the cursor is over, a step lighter than the strip so it stands out from it. */
+    FFloatColor FillHovered = FFloatColor(45.0f / 255.0f, 45.0f / 255.0f, 45.0f / 255.0f, 1.0f);
 
     /**
      * @brief The fill of the active tab.
      *
-     * No rule is drawn over it, so this is the whole of what marks the active tab out and has to stand
-     * clear of the panel the strip is laid on.
+     * Matches the body of the panel under the strip, so that with no bottom inset the active tab and the content
+     * it shows read as one surface rising out of the strip, the flares at its bottom corners carrying it smoothly
+     * into the strip.
      */
-    FFloatColor FillActive = FFloatColor(52.0f / 255.0f, 52.0f / 255.0f, 52.0f / 255.0f, 1.0f);
+    FFloatColor FillActive = FFloatColor(0.12f, 0.12f, 0.12f, 1.0f);
 
     /**
-     * @brief The fill of the strip behind the tabs, which shows wherever the tabs run out.
+     * @brief The fill of the strip behind the tabs, which has to differ from FillActive for the active tab to stand out.
      *
-     * Transparent by default so a strip at the top of a docked panel lets the panel's own rounded
-     * fill through instead of squaring off its top corners.
+     * Clear by default so the strip shows whatever it is laid on, which for a docked panel is the window backdrop.
      */
     FFloatColor StripFill = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+    /** @brief The color of the label on every tab but the active one. */
+    FFloatColor LabelColor = FFloatColor(157.0f / 255.0f, 157.0f / 255.0f, 157.0f / 255.0f, 1.0f);
+
+    /** @brief The color of the active tab's label. */
+    FFloatColor LabelColorActive = FFloatColor(1.0f, 1.0f, 1.0f, 1.0f);
 
     /**
      * @brief The rule along the top of the active tab, which is off by default.
      *
-     * Setting ActiveStripThickness strokes this round the pill, bright on the top edge and fading over the
+     * Setting ActiveStripThickness strokes this round the tab, bright on the top edge and fading over the
      * corners to ActiveStripTrailAlpha for the rest of it.
      */
     FFloatColor ActiveStrip = FFloatColor(0.0f, 122.0f / 255.0f, 204.0f / 255.0f, 1.0f);
 
-    /** @brief The rule on a tab's trailing edge, which is off by default while the pills carry the separation. */
+    /** @brief The rule on a tab's trailing edge, which is off by default since the tabs touch and their fills part them. */
     FFloatColor Separator = FFloatColor(43.0f / 255.0f, 43.0f / 255.0f, 43.0f / 255.0f, 1.0f);
 
     /** @brief The fill behind the close cross while the cursor is on the cross itself. */
@@ -418,7 +424,7 @@ struct FUITabStyle
     int32 ActiveStripThickness = 0;
 
     /**
-     * @brief How much of each of the pill's top corners that rule spends fading back, as a share of the arc.
+     * @brief How much of each of the tab's top corners that rule spends fading back, as a share of the arc.
      *
      * Half runs the accent at full strength until the middle of the corner and has it down to its trail by
      * the side edge.
@@ -428,61 +434,85 @@ struct FUITabStyle
     /**
      * @brief What the accent keeps of its color once round the corner, as a share of it.
      *
-     * The remainder rings the rest of the pill, so the active tab reads as a bright rule on top over a faint
+     * The remainder rings the rest of the tab, so the active tab reads as a bright rule on top over a faint
      * border rather than as a rule that stops dead. Zero leaves the rule on its own.
      */
     float ActiveStripTrailAlpha = 0.28f;
 
-    /** @brief The gap either side of a tab, in pixels, which is what parts one pill from the next. */
-    int32 Spacing = 4;
+    /** @brief The gap between two tabs, in pixels, which is zero so they touch. */
+    int32 Spacing = 0;
 
     /** @brief How far a tab is inset from the top of the strip, in pixels. */
     int32 TopInset = 4;
 
-    /** @brief How far a tab is inset from the bottom of the strip, in pixels. */
-    int32 BottomInset = 4;
+    /** @brief How far a tab is inset from the bottom of the strip, in pixels, which is zero so the active tab meets the body below. */
+    int32 BottomInset = 0;
 
-    /** @brief How far a tab's corners are rounded, in pixels, which is what makes it read as a pill. */
-    float CornerRadius = 5.0f;
+    /** @brief How far a tab's two top corners are rounded, in pixels. */
+    float CornerRadius = 6.0f;
 
-    /** @brief How far the close button's corners are rounded, matching the tab's own. */
+    /**
+     * @brief How far the flares at a filled tab's bottom corners reach out to either side, in pixels.
+     *
+     * They curve the tab out into the strip instead of meeting it at a right angle. Zero leaves the bottom corners square.
+     */
+    float FlareRadius = 6.0f;
+
+    /** @brief How far the close button's corners are rounded, in pixels. */
     float CloseCornerRadius = 5.0f;
 
-    /** @brief The height of the strip, in pixels, which the pill fills bar its two insets. */
-    int32 StripHeight = 40;
+    /**
+     * @brief How far the strip's own top corners are rounded, in pixels.
+     *
+     * Set to the inner radius of whatever the strip is laid in, so that filling the strip does not square off
+     * the top of a rounded panel.
+     */
+    float StripCornerRadius = 0.0f;
+
+    /** @brief The height of the strip, in pixels, which a tab fills bar its two insets. */
+    int32 StripHeight = 44;
 
     /** @brief The width a tab is held out to even when its label is shorter than that, in pixels. */
-    int32 MinWidth = 140;
+    int32 MinWidth = 110;
 
-    /** @brief The space either side of a tab's label, in pixels. */
-    int32 HorizontalPadding = 12;
+    /** @brief The space between a tab's leading edge and its label, and its trailing edge when it cannot be closed, in pixels. */
+    int32 HorizontalPadding = 15;
+
+    /** @brief Where the label sits in the room left of the close button. Fill is treated as Left. */
+    EHorizontalAlignment LabelAlignment = EHorizontalAlignment::Left;
 
     /** @brief How far the label is nudged off the tab's centre line, in pixels, negative being up. */
     int32 LabelOffsetY = 0;
 
     /** @brief The gap between a tab's label and its close button, in pixels. */
-    int32 LabelCloseGap = 6;
+    int32 LabelCloseGap = 11;
 
-    /** @brief The side of the square the close button fills, in pixels, which stays inside the pill. */
-    int32 CloseSize = 22;
+    /** @brief The side of the square the close button fills, in pixels, which is what lights up under the cursor. */
+    int32 CloseSize = 26;
 
     /** @brief How far the close button is held off the tab's trailing edge, in pixels. */
-    int32 CloseInset = 4;
+    int32 CloseInset = 9;
 
-    /** @brief The side of the glyph centred in that square, in pixels. */
+    /** @brief The side of the icon centred in that square, in pixels, when the strip is given a close icon. */
     int32 CloseIconSize = 16;
 
-    /** @brief The width of the rule between two tabs, which is off while the pills carry the separation. */
+    /** @brief The side of the cross drawn in that square when the strip has no close icon, in pixels. */
+    float CloseGlyphSize = 13.0f;
+
+    /** @brief How thick the strokes of that cross are, in pixels. */
+    float CloseGlyphThickness = 1.5f;
+
+    /** @brief The width of the rule between two tabs, which is off while the tab fills carry the separation. */
     int32 SeparatorThickness = 0;
 
     /** @brief How thick the scroll bar under the tabs is, in pixels. */
     int32 ScrollBarThickness = 3;
 
     /**
-     * @brief How much clear space is kept between a pill and that bar, in pixels.
+     * @brief How much clear space is kept between a tab and that bar, in pixels.
      *
      * The bottom inset covers what it can of the bar and this gap, and a strip that overflows takes the
-     * rest off its pills. A strip everything fits in keeps them at full height, since it shows no bar.
+     * rest off its tabs. A strip everything fits in keeps them at full height, since it shows no bar.
      */
     int32 ScrollBarGap = 4;
 

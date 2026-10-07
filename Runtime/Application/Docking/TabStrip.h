@@ -267,6 +267,13 @@ public:
     /** @return The panel whose tab is active, or an empty string when the strip has no tabs. */
     NODISCARD const String& GetActivePanelId() const;
 
+    /**
+     * @brief Finds the part of the active tab that shows, which is what the frame around the strip outlines.
+     *
+     * @return The active tab's rectangle cut to the strip, or an empty one when there is no active tab or it is scrolled out of view.
+     */
+    NODISCARD FRectangle GetActiveTabRectangle() const;
+
     /** @return How far the strip has been scrolled from its leading edge, in pixels. */
     NODISCARD FORCEINLINE int32 GetScrollOffset() const
     {

@@ -63,7 +63,6 @@ bool FEditorShell::Initialize()
     FDockingArea::FDesc DockDesc;
     DockDesc.Font          = FEditorStyle::GetFonts().Body;
     DockDesc.TabFont       = FEditorStyle::GetFonts().Tab;
-    DockDesc.TabCloseIcon  = FEditorIcons::Close;
     DockDesc.bAllowTearOut = true;
     DockDesc.OnPanelClosed = FOnPanelClosed::CreateRaw(this, &FEditorShell::OnPanelClosed);
 

@@ -488,6 +488,16 @@ void FUIDrawData::TessellateCommand(const FDrawCommand& Command, const FDrawComm
             break;
         }
 
+        case EDrawCommandType::Wedge:
+        {
+            if (!IsCulledByClip(Command.Bounds))
+            {
+                AddWedge(Command);
+            }
+
+            break;
+        }
+
         case EDrawCommandType::Polyline:
         {
             const TArrayView<const Vector2> Points = CommandList.GetCommandPoints(Command);
@@ -1652,28 +1662,64 @@ void FUIDrawData::AddCornerWedges(const FDrawCommand& Command)
             continue;
         }
 
-        if (ShapeInstances.Size() >= (MaxVertexCount / 4))
+        if (!AddWedgeInstance(Wedge.SquareMin, Wedge.Center, Wedge.Radius, Command.PackedColor))
         {
             return;
         }
-
-        GetOrOpenBatch(FUITextureHandle(), EUIDrawBatchKind::Shape);
-
-        FUIShapeInstance& Instance = ShapeInstances.Emplace();
-        Instance.Position    = Wedge.SquareMin;
-        Instance.Color       = Command.PackedColor;
-        Instance.DrawSize    = Vector2(Wedge.Radius, Wedge.Radius);
-        Instance.LocalOrigin = Vector2(0.0f, 0.0f);
-        Instance.RectSize    = Vector2(Wedge.Radius, Wedge.Radius);
-        Instance.RadiusTL    = Wedge.Center.X - Wedge.SquareMin.X;
-        Instance.RadiusTR    = Wedge.Center.Y - Wedge.SquareMin.Y;
-        Instance.RadiusBR    = Wedge.Radius;
-        Instance.RadiusBL    = 0.0f;
-        Instance.Thickness   = 0.0f;
-        Instance.ShapeKind   = ShapeKindWedge;
-
-        Batches.Last().IndexCount += 6;
     }
+}
+
+void FUIDrawData::AddWedge(const FDrawCommand& Command)
+{
+    const FRectangle&   Bounds = Command.Bounds;
+    const FCornerRadii& Radius = Command.CornerRadius;
+
+    const float Left   = static_cast<float>(Bounds.Position.X);
+    const float Top    = static_cast<float>(Bounds.Position.Y);
+    const float Right  = static_cast<float>(Bounds.GetRight());
+    const float Bottom = static_cast<float>(Bounds.GetBottom());
+
+    Vector2 Center(Left, Top);
+    if (Radius.TopRight > 0.0f)
+    {
+        Center = Vector2(Right, Top);
+    }
+    else if (Radius.BottomRight > 0.0f)
+    {
+        Center = Vector2(Right, Bottom);
+    }
+    else if (Radius.BottomLeft > 0.0f)
+    {
+        Center = Vector2(Left, Bottom);
+    }
+
+    AddWedgeInstance(Vector2(Left, Top), Center, static_cast<float>(Bounds.Width), Command.PackedColor);
+}
+
+bool FUIDrawData::AddWedgeInstance(const Vector2& SquareMin, const Vector2& Center, float Radius, uint32 PackedColor)
+{
+    if (ShapeInstances.Size() >= (MaxVertexCount / 4))
+    {
+        return false;
+    }
+
+    GetOrOpenBatch(FUITextureHandle(), EUIDrawBatchKind::Shape);
+
+    FUIShapeInstance& Instance = ShapeInstances.Emplace();
+    Instance.Position    = SquareMin;
+    Instance.Color       = PackedColor;
+    Instance.DrawSize    = Vector2(Radius, Radius);
+    Instance.LocalOrigin = Vector2(0.0f, 0.0f);
+    Instance.RectSize    = Vector2(Radius, Radius);
+    Instance.RadiusTL    = Center.X - SquareMin.X;
+    Instance.RadiusTR    = Center.Y - SquareMin.Y;
+    Instance.RadiusBR    = Radius;
+    Instance.RadiusBL    = 0.0f;
+    Instance.Thickness   = 0.0f;
+    Instance.ShapeKind   = ShapeKindWedge;
+
+    Batches.Last().IndexCount += 6;
+    return true;
 }
 
 FUIDrawBatch& FUIDrawData::GetOrOpenBatch(const FUITextureHandle& Texture, EUIDrawBatchKind Kind)

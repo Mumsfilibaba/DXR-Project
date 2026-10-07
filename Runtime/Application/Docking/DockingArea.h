@@ -10,6 +10,7 @@
 
 class FSplitter;
 class FTabStrip;
+struct FPanelOutline;
 
 /** @brief Called when a tab was dragged clear of every docking area, which is what floats a panel. */
 DECLARE_DELEGATE(FOnPanelTornOut, const String& /*PanelId*/, const IntVector2& /*ScreenPosition*/);
@@ -296,6 +297,7 @@ private:
     NODISCARD bool IsOverLiftedTabStrip(const IntVector2& ClientPosition) const;
     NODISCARD FRectangle ComputeDropBounds(const String& TargetPanelId, EDockDirection Direction) const;
     NODISCARD const FVisualElement* FindFocusedFrame() const;
+    NODISCARD FPanelOutline ComputeLeafOutline(const FLeafGeometry& Leaf) const;
     NODISCARD int32 DrawDropZones(FDrawCommandList& OutCommandList, int32 LayerId) const;
 
     TSharedPtr<FVisualElement> BuildNode(FDockNode& Node, const TArray<int32>& Path);

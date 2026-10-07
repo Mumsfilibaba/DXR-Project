@@ -145,6 +145,34 @@ public:
         const FFloatColor&  BackdropTint);
 
     /**
+     * @brief Appends a square with a quarter circle cut out of it, the circle centred on one of its corners.
+     *
+     * What is left is the concave fillet between two edges meeting at a right angle, which is what lets a shape
+     * curve out into what is around it instead of meeting it at a hard corner. It is anti-aliased the same way a
+     * rounded box is, so the curve matches the rounded corners drawn next to it.
+     *
+     * @param LayerId      The layer to draw on.
+     * @param SquareBounds The square the wedge is cut from, whose width is the radius of the circle.
+     * @param CircleCorner The corner of the square the circle is centred on, the filled part being opposite it.
+     * @param Tint         The fill color.
+     */
+    void AddWedge(int32 LayerId, const FRectangle& SquareBounds, ERectangleCorner CircleCorner, const FFloatColor& Tint);
+
+    /**
+     * @brief Appends the silhouette of a tab: rounded across the top, flaring out into what it sits on at the bottom.
+     *
+     * The flares are drawn outside the bounds, one either side of the bottom edge, so a tab resting on a body of
+     * the same color reads as one shape with it, and they need the space either side to show in.
+     *
+     * @param LayerId     The layer to draw on.
+     * @param Bounds      The tab itself, the flares extending past it to the left and right.
+     * @param TopRadius   How far the two top corners are rounded, in pixels.
+     * @param FlareRadius How far the flares reach out either side of the bottom edge, in pixels. Zero draws none.
+     * @param Tint        The fill color.
+     */
+    void AddTabShape(int32 LayerId, const FRectangle& Bounds, float TopRadius, float FlareRadius, const FFloatColor& Tint);
+
+    /**
      * @brief Appends a filled triangle. Shorthand for a three-point convex polygon.
      *
      * @param LayerId The layer to draw on.

@@ -24,6 +24,203 @@ constexpr float DROP_ZONE_HOVER_OPACITY   = 0.85f;
 constexpr float DROP_ZONE_GHOST_OPACITY   = 0.75f;
 constexpr float DROP_ZONE_LANDING_OPACITY = 0.20f;
 
+constexpr int32 PANEL_OUTLINE_ARC_SEGMENTS = 8;
+
+struct FPanelOutline
+{
+    /** @brief The body of the panel, which starts on the strip's bottom row so the outline runs along that row. */
+    FRectangle BodyBounds;
+
+    /** @brief How far each corner of the body is rounded, a top corner being square where the active tab sits flush with it. */
+    FCornerRadii BodyRadii;
+
+    /** @brief The part of the active tab that shows, or empty when the panel shows no strip or no active tab. */
+    FRectangle TabBounds;
+
+    /** @brief The panel's border thickness in whole pixels, which is how far the outline sits outside the tab. */
+    int32 Border = 0;
+
+    /** @brief How far the tab's flares reach out from its bottom corners, zero on a side where the tab is flush with the body. */
+    int32 FlareLeft  = 0;
+    int32 FlareRight = 0;
+};
+
+static FPanelOutline ComputePanelOutline(const FRectangle& FrameBounds, const FTabStrip* Strip, const FUITabStyle& TabStyle, const FUIPanelChromeStyle& PanelStyle)
+{
+    FPanelOutline Outline;
+    Outline.BodyBounds = FrameBounds;
+    Outline.BodyRadii  = FCornerRadii(PanelStyle.CornerRadius);
+    Outline.Border     = Math::Max(Math::RoundToInt(PanelStyle.BorderThickness), 0);
+
+    if (!Strip)
+    {
+        return Outline;
+    }
+
+    const FRectangle StripBounds = Strip->GetContentRectangle();
+    if (StripBounds.IsEmpty())
+    {
+        return Outline;
+    }
+
+    const int32 BodyTop = Math::Clamp(StripBounds.GetBottom() - Outline.Border, FrameBounds.Position.Y, FrameBounds.GetBottom());
+    Outline.BodyBounds = FRectangle(IntVector2(FrameBounds.Position.X, BodyTop), FrameBounds.Width, FrameBounds.GetBottom() - BodyTop);
+
+    const FRectangle TabBounds = Strip->GetActiveTabRectangle();
+    if (TabBounds.IsEmpty())
+    {
+        return Outline;
+    }
+
+    const int32 Flare      = Math::Max(Math::RoundToInt(TabStyle.FlareRadius), 0);
+    const int32 CornerRoom = Math::RoundToInt(PanelStyle.CornerRadius);
+    const int32 BodyLeft   = Outline.BodyBounds.Position.X;
+    const int32 BodyRight  = Outline.BodyBounds.GetRight();
+
+    Outline.TabBounds = TabBounds;
+
+    if (TabBounds.Position.X - Outline.Border - Flare < BodyLeft + CornerRoom)
+    {
+        Outline.BodyRadii.TopLeft = 0.0f;
+    }
+    else
+    {
+        Outline.FlareLeft = Flare;
+    }
+
+    if (TabBounds.GetRight() + Outline.Border + Flare > BodyRight - CornerRoom)
+    {
+        Outline.BodyRadii.TopRight = 0.0f;
+    }
+    else
+    {
+        Outline.FlareRight = Flare;
+    }
+
+    return Outline;
+}
+
+static void AppendOutlinePoint(TArray<Vector2>& OutPoints, const Vector2& Point)
+{
+    if (OutPoints.IsEmpty() || (OutPoints.Last() - Point).GetLengthSquared() > 1.0e-4f)
+    {
+        OutPoints.Add(Point);
+    }
+}
+
+static void AppendOutlineArc(TArray<Vector2>& OutPoints, const Vector2& Center, float Radius, float StartAngle, float EndAngle)
+{
+    if (Radius <= 0.0f)
+    {
+        AppendOutlinePoint(OutPoints, Center);
+        return;
+    }
+
+    for (int32 Index = 0; Index <= PANEL_OUTLINE_ARC_SEGMENTS; ++Index)
+    {
+        const float Angle = StartAngle + (EndAngle - StartAngle) * (static_cast<float>(Index) / static_cast<float>(PANEL_OUTLINE_ARC_SEGMENTS));
+        AppendOutlinePoint(OutPoints, Center + Vector2(Math::Cos(Angle), Math::Sin(Angle)) * Radius);
+    }
+}
+
+static void BuildPanelOutline(const FPanelOutline& Outline, float TabCornerRadius, float Thickness, TArray<Vector2>& OutPoints)
+{
+    OutPoints.Clear();
+
+    constexpr float QuarterTurn = Math::Constants::HalfPI;
+
+    const float HalfThickness = Thickness * 0.5f;
+    const float Border        = static_cast<float>(Outline.Border);
+
+    const FRectangle&   Body   = Outline.BodyBounds;
+    const FCornerRadii& Radius = Outline.BodyRadii;
+
+    const float Left   = static_cast<float>(Body.Position.X);
+    const float Top    = static_cast<float>(Body.Position.Y);
+    const float Right  = static_cast<float>(Body.GetRight());
+    const float Bottom = static_cast<float>(Body.GetBottom());
+
+    const float InnerLeft   = Left + HalfThickness;
+    const float InnerTop    = Top + HalfThickness;
+    const float InnerRight  = Right - HalfThickness;
+    const float InnerBottom = Bottom - HalfThickness;
+
+    if (Radius.TopLeft > 0.0f)
+    {
+        AppendOutlineArc(OutPoints, Vector2(Left + Radius.TopLeft, Top + Radius.TopLeft), Radius.TopLeft - HalfThickness, 2.0f * QuarterTurn, 3.0f * QuarterTurn);
+    }
+    else
+    {
+        AppendOutlinePoint(OutPoints, Vector2(InnerLeft, InnerTop));
+    }
+
+    const FRectangle& Tab = Outline.TabBounds;
+    if (!Tab.IsEmpty())
+    {
+        const float TabLeft     = static_cast<float>(Tab.Position.X);
+        const float TabTop      = static_cast<float>(Tab.Position.Y);
+        const float TabRight    = static_cast<float>(Tab.GetRight());
+        const float StripBottom = Top + Border;
+
+        if (Outline.FlareLeft > 0)
+        {
+            const float Flare = static_cast<float>(Outline.FlareLeft);
+            AppendOutlineArc(OutPoints, Vector2(TabLeft - Flare, StripBottom - Flare), Flare - Border + HalfThickness, QuarterTurn, 0.0f);
+        }
+        else
+        {
+            AppendOutlinePoint(OutPoints, Vector2(TabLeft - Border + HalfThickness, InnerTop));
+        }
+
+        const float CornerRadius  = Math::Max(TabCornerRadius, 0.0f);
+        const float OutlineRadius = CornerRadius + Border - HalfThickness;
+        AppendOutlineArc(OutPoints, Vector2(TabLeft + CornerRadius, TabTop + CornerRadius), OutlineRadius, 2.0f * QuarterTurn, 3.0f * QuarterTurn);
+        AppendOutlineArc(OutPoints, Vector2(TabRight - CornerRadius, TabTop + CornerRadius), OutlineRadius, 3.0f * QuarterTurn, 4.0f * QuarterTurn);
+
+        if (Outline.FlareRight > 0)
+        {
+            const float Flare = static_cast<float>(Outline.FlareRight);
+            AppendOutlineArc(OutPoints, Vector2(TabRight + Flare, StripBottom - Flare), Flare - Border + HalfThickness, 2.0f * QuarterTurn, QuarterTurn);
+        }
+        else
+        {
+            AppendOutlinePoint(OutPoints, Vector2(TabRight + Border - HalfThickness, InnerTop));
+        }
+    }
+
+    if (Radius.TopRight > 0.0f)
+    {
+        AppendOutlineArc(OutPoints, Vector2(Right - Radius.TopRight, Top + Radius.TopRight), Radius.TopRight - HalfThickness, 3.0f * QuarterTurn, 4.0f * QuarterTurn);
+    }
+    else
+    {
+        AppendOutlinePoint(OutPoints, Vector2(InnerRight, InnerTop));
+    }
+
+    if (Radius.BottomRight > 0.0f)
+    {
+        AppendOutlineArc(OutPoints, Vector2(Right - Radius.BottomRight, Bottom - Radius.BottomRight), Radius.BottomRight - HalfThickness, 0.0f, QuarterTurn);
+    }
+    else
+    {
+        AppendOutlinePoint(OutPoints, Vector2(InnerRight, InnerBottom));
+    }
+
+    if (Radius.BottomLeft > 0.0f)
+    {
+        AppendOutlineArc(OutPoints, Vector2(Left + Radius.BottomLeft, Bottom - Radius.BottomLeft), Radius.BottomLeft - HalfThickness, QuarterTurn, 2.0f * QuarterTurn);
+    }
+    else
+    {
+        AppendOutlinePoint(OutPoints, Vector2(InnerLeft, InnerBottom));
+    }
+
+    if (OutPoints.Size() > 1 && (OutPoints.Last() - OutPoints[0]).GetLengthSquared() <= 1.0e-4f)
+    {
+        OutPoints.Pop();
+    }
+}
+
 static String GetActiveTabId(const FDockNode& Node)
 {
     if (Node.TabIds.IsEmpty())
@@ -32,6 +229,14 @@ static String GetActiveTabId(const FDockNode& Node)
     }
 
     return Node.TabIds[Math::Clamp(Node.ActiveTabIndex, 0, Node.TabIds.Size() - 1)];
+}
+
+FPanelOutline FDockingArea::ComputeLeafOutline(const FLeafGeometry& Leaf) const
+{
+    const bool       bShowsStrip = Leaf.Strip && !(bSuppressRootTabStrip && Leaf.Path.IsEmpty());
+    const FTabStrip* Strip       = bShowsStrip ? Leaf.Strip.Get() : nullptr;
+
+    return ComputePanelOutline(Leaf.Frame->GetContentRectangle(), Strip, TabStyle, FUIStyle::GetDefault().Panel);
 }
 
 TSharedPtr<FDockingArea> FDockingArea::Create(const FDesc& Desc)
@@ -117,22 +322,36 @@ int32 FDockingArea::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
     const FUIStyle& Style = FUIStyle::GetDefault();
     OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.WindowBackground);
 
-    const int32 NextLayerId = FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId + 1);
-
-    const FVisualElement* FocusedFrame = FindFocusedFrame();
     for (const FLeafGeometry& Leaf : Leaves)
     {
         if (Leaf.Frame)
         {
-            const bool bIsFocused = (FocusedFrame == Leaf.Frame.Get());
+            const FPanelOutline Outline = ComputeLeafOutline(Leaf);
+            OutCommandList.AddBox(LayerId, Outline.BodyBounds, Style.Panel.Fill, Outline.BodyRadii);
+        }
+    }
 
-            OutCommandList.AddPanelChrome(
-                NextLayerId,
-                Leaf.Frame->GetContentRectangle(),
-                FCornerRadii(Style.Panel.CornerRadius),
-                Style.Panel.BorderThickness,
-                bIsFocused ? Style.Panel.BorderFocused : Style.Panel.Border,
-                Style.Colors.WindowBackground);
+    const int32 NextLayerId = FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId + 1);
+
+    TArray<Vector2> OutlinePoints;
+
+    const FVisualElement* FocusedFrame = FindFocusedFrame();
+    for (const FLeafGeometry& Leaf : Leaves)
+    {
+        if (!Leaf.Frame)
+        {
+            continue;
+        }
+
+        const bool          bIsFocused = (FocusedFrame == Leaf.Frame.Get());
+        const FPanelOutline Outline    = ComputeLeafOutline(Leaf);
+
+        OutCommandList.AddPanelChrome(NextLayerId, Outline.BodyBounds, Outline.BodyRadii, 0.0f, FFloatColor(0.0f, 0.0f, 0.0f, 0.0f), Style.Colors.WindowBackground);
+
+        if (Style.Panel.BorderThickness > 0.0f)
+        {
+            BuildPanelOutline(Outline, TabStyle.CornerRadius, Style.Panel.BorderThickness, OutlinePoints);
+            OutCommandList.AddPolyline(NextLayerId, OutlinePoints, bIsFocused ? Style.Panel.BorderFocused : Style.Panel.Border, Style.Panel.BorderThickness, true);
         }
     }
 
@@ -565,7 +784,7 @@ TSharedPtr<FVisualElement> FDockingArea::BuildNode(FDockNode& Node, const TArray
         const FUIStyle& Style = FUIStyle::GetDefault();
 
         FBorder::FDesc FrameDesc;
-        FrameDesc.BackgroundColor = Style.Panel.Fill;
+        FrameDesc.BackgroundColor = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
         FrameDesc.CornerRadius    = FCornerRadii(Style.Panel.CornerRadius);
         FrameDesc.Padding         = FMargin(static_cast<int32>(Style.Panel.BorderThickness));
         FrameDesc.Content         = Column;

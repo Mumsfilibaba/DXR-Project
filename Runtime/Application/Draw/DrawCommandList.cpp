@@ -177,6 +177,51 @@ void FDrawCommandList::AddPanelChrome(
     AddBoxOutline(LayerId, Bounds, BorderTint, Thickness, Clamped);
 }
 
+void FDrawCommandList::AddWedge(int32 LayerId, const FRectangle& SquareBounds, ERectangleCorner CircleCorner, const FFloatColor& Tint)
+{
+    const int32 Size = Math::Min(SquareBounds.Width, SquareBounds.Height);
+    if (Size <= 0)
+    {
+        return;
+    }
+
+    const float  Radius = static_cast<float>(Size);
+    FCornerRadii CornerRadius(0.0f);
+
+    switch (CircleCorner)
+    {
+        case ERectangleCorner::TopLeft:     CornerRadius.TopLeft     = Radius; break;
+        case ERectangleCorner::TopRight:    CornerRadius.TopRight    = Radius; break;
+        case ERectangleCorner::BottomRight: CornerRadius.BottomRight = Radius; break;
+        case ERectangleCorner::BottomLeft:  CornerRadius.BottomLeft  = Radius; break;
+    }
+
+    FDrawCommand& Command = EmplaceCommand(EDrawCommandType::Wedge, LayerId);
+    Command.Bounds       = FRectangle(SquareBounds.Position, Size, Size);
+    Command.PackedColor  = Tint.ToPackedRGBA();
+    Command.CornerRadius = CornerRadius;
+}
+
+void FDrawCommandList::AddTabShape(int32 LayerId, const FRectangle& Bounds, float TopRadius, float FlareRadius, const FFloatColor& Tint)
+{
+    if (Bounds.IsEmpty())
+    {
+        return;
+    }
+
+    AddBox(LayerId, Bounds, Tint, FCornerRadii::Top(TopRadius));
+
+    const int32 Flare = Math::Min(Math::RoundToInt(FlareRadius), Bounds.Height);
+    if (Flare <= 0)
+    {
+        return;
+    }
+
+    const int32 FlareTop = Bounds.GetBottom() - Flare;
+    AddWedge(LayerId, FRectangle(IntVector2(Bounds.Position.X - Flare, FlareTop), Flare, Flare), ERectangleCorner::TopLeft, Tint);
+    AddWedge(LayerId, FRectangle(IntVector2(Bounds.GetRight(), FlareTop), Flare, Flare), ERectangleCorner::TopRight, Tint);
+}
+
 void FDrawCommandList::AddTriangle(int32 LayerId, const Vector2& A, const Vector2& B, const Vector2& C, const FFloatColor& Tint)
 {
     const Vector2 Corners[3] = { A, B, C };
