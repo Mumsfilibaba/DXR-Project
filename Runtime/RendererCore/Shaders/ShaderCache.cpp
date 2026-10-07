@@ -34,6 +34,13 @@ static FAutoConsoleCommand CCmdRecompileShaders(
         }
     }));
 
+static void CompileAllShaders(StringView Arguments);
+
+static FAutoConsoleCommand CCmdCompileAllShaders(
+    "Shaders.CompileAll",
+    "Compiles every registered shader type and permutation for an RHI (Null, D3D11, D3D12, Vulkan or Metal, defaults to the active one) and logs the failures",
+    FConsoleCommandDelegate::CreateStatic(&CompileAllShaders));
+
 static bool ParseRHIType(StringView Text, ERHIType& OutRHIType)
 {
     constexpr ERHIType RHITypes[] =
@@ -77,78 +84,75 @@ static FShaderPermutationDesc CreateTargetPermutationDesc(ERHIType TargetRHI, in
     return Desc;
 }
 
-static FAutoConsoleCommand CCmdCompileAllShaders(
-    "Shaders.CompileAll",
-    "Compiles every registered shader type and permutation for an RHI (Null, D3D11, D3D12, Vulkan or Metal, defaults to the active one) and logs the failures",
-    FConsoleCommandDelegate::CreateLambda([](StringView Arguments)
+static void CompileAllShaders(StringView Arguments)
+{
+    StringView TargetName = Arguments;
+    TargetName.TrimInline();
+
+    ERHIType TargetRHI = RHI::IsInitialized() ? RHI::Device->GetRHIType() : ERHIType::Unknown;
+    if (!TargetName.IsEmpty() && !ParseRHIType(TargetName, TargetRHI))
     {
-        StringView TargetName = Arguments;
-        TargetName.TrimInline();
+        LOG_ERROR("Shaders.CompileAll: Unknown RHI '%s'", *String(TargetName));
+        return;
+    }
 
-        ERHIType TargetRHI = RHI::IsInitialized() ? RHI::Device->GetRHIType() : ERHIType::Unknown;
-        if (!TargetName.IsEmpty() && !ParseRHIType(TargetName, TargetRHI))
-        {
-            LOG_ERROR("Shaders.CompileAll: Unknown RHI '%s'", *String(TargetName));
-            return;
-        }
+    FShaderCompiler* Compiler = FShaderCompiler::TryGet();
+    const EShaderOutputLanguage OutputLanguage = FShaderCompiler::GetOutputLanguageForRHI(TargetRHI);
+    if (!Compiler || !RHI::IsRHISupportedByPlatform(TargetRHI) || !Compiler->IsOutputLanguageSupported(OutputLanguage))
+    {
+        LOG_ERROR("Shaders.CompileAll: %s (%s) cannot be compiled on this platform", ToString(TargetRHI), ToString(OutputLanguage));
+        return;
+    }
 
-        FShaderCompiler* Compiler = FShaderCompiler::TryGet();
-        const EShaderOutputLanguage OutputLanguage = FShaderCompiler::GetOutputLanguageForRHI(TargetRHI);
-        if (!Compiler || !RHI::IsRHISupportedByPlatform(TargetRHI) || !Compiler->IsOutputLanguageSupported(OutputLanguage))
-        {
-            LOG_ERROR("Shaders.CompileAll: %s (%s) cannot be compiled on this platform", ToString(TargetRHI), ToString(OutputLanguage));
-            return;
-        }
+    struct FCompileWork
+    {
+        FShaderType*           Type;
+        FShaderPermutationDesc Desc;
+    };
 
-        struct FCompileWork
+    TArray<FCompileWork> Work;
+    for (FShaderType* Type = FShaderType::GetTypeList(); Type; Type = Type->GetNext())
+    {
+        for (int32 PermutationID = 0; PermutationID < Type->GetPermutationCount(); ++PermutationID)
         {
-            FShaderType*           Type;
-            FShaderPermutationDesc Desc;
-        };
-
-        TArray<FCompileWork> Work;
-        for (FShaderType* Type = FShaderType::GetTypeList(); Type; Type = Type->GetNext())
-        {
-            for (int32 PermutationID = 0; PermutationID < Type->GetPermutationCount(); ++PermutationID)
+            const FShaderPermutationDesc Desc = CreateTargetPermutationDesc(TargetRHI, PermutationID);
+            if (Type->ShouldCompilePermutation(Desc))
             {
-                const FShaderPermutationDesc Desc = CreateTargetPermutationDesc(TargetRHI, PermutationID);
-                if (Type->ShouldCompilePermutation(Desc))
-                {
-                    Work.Add({ Type, Desc });
-                }
+                Work.Add({ Type, Desc });
             }
         }
+    }
 
-        LOG_INFO("Shaders.CompileAll: Compiling %d permutations for %s (%s)", Work.Size(), ToString(TargetRHI), ToString(OutputLanguage));
+    LOG_INFO("Shaders.CompileAll: Compiling %d permutations for %s (%s)", Work.Size(), ToString(TargetRHI), ToString(OutputLanguage));
 
-        AtomicInt32 NumFailed(0);
-        Tasks::ParallelFor(Work.Size(), [&](int32 Index)
+    AtomicInt32 NumFailed(0);
+    Tasks::ParallelFor(Work.Size(), [&](int32 Index)
+    {
+        const FCompileWork& Item = Work[Index];
+
+        FShaderCompilationEnvironment Environment;
+        Item.Type->BuildCompilationEnvironment(Item.Desc, Environment);
+
+        const FShaderCompileInfo CompileInfo(Item.Type->GetEntryPoint(), Environment.ShaderModel, Item.Type->GetStage(), Environment.Defines, OutputLanguage);
+
+        TArray<uint8> ShaderCode;
+        if (!Compiler->CompileFromFile(Item.Type->GetSourceFile(), CompileInfo, ShaderCode))
         {
-            const FCompileWork& Item = Work[Index];
-
-            FShaderCompilationEnvironment Environment;
-            Item.Type->BuildCompilationEnvironment(Item.Desc, Environment);
-
-            const FShaderCompileInfo CompileInfo(Item.Type->GetEntryPoint(), Environment.ShaderModel, Item.Type->GetStage(), Environment.Defines, OutputLanguage);
-
-            TArray<uint8> ShaderCode;
-            if (!Compiler->CompileFromFile(Item.Type->GetSourceFile(), CompileInfo, ShaderCode))
-            {
-                LOG_ERROR("Shaders.CompileAll: %s permutation %d failed (%s, entry '%s')", Item.Type->GetName(), Item.Desc.PermutationID, Item.Type->GetSourceFile(), Item.Type->GetEntryPoint());
-                NumFailed.Add(1);
-            }
-        });
-
-        const int32 Failed = NumFailed.Load();
-        if (Failed > 0)
-        {
-            LOG_ERROR("Shaders.CompileAll: %d of %d permutations failed for %s (%s)", Failed, Work.Size(), ToString(TargetRHI), ToString(OutputLanguage));
+            LOG_ERROR("Shaders.CompileAll: %s permutation %d failed (%s, entry '%s')", Item.Type->GetName(), Item.Desc.PermutationID, Item.Type->GetSourceFile(), Item.Type->GetEntryPoint());
+            NumFailed.Add(1);
         }
-        else
-        {
-            LOG_INFO("Shaders.CompileAll: All %d permutations compiled for %s (%s)", Work.Size(), ToString(TargetRHI), ToString(OutputLanguage));
-        }
-    }));
+    });
+
+    const int32 Failed = NumFailed.Load();
+    if (Failed > 0)
+    {
+        LOG_ERROR("Shaders.CompileAll: %d of %d permutations failed for %s (%s)", Failed, Work.Size(), ToString(TargetRHI), ToString(OutputLanguage));
+    }
+    else
+    {
+        LOG_INFO("Shaders.CompileAll: All %d permutations compiled for %s (%s)", Work.Size(), ToString(TargetRHI), ToString(OutputLanguage));
+    }
+}
 
 FShaderCache::FShaderCache()
     : Shaders()
@@ -319,7 +323,7 @@ FRHIShaderRef FShaderCache::GetOrCompile(FShaderType& Type, int32 PermutationID)
     FShaderCompilationEnvironment Environment;
     Type.BuildCompilationEnvironment(Desc, Environment);
 
-    const FShaderCompileInfo CompileInfo(Type.GetEntryPoint(), Environment.ShaderModel, Type.GetStage(), Environment.Defines);
+    const FShaderCompileInfo CompileInfo = FShaderCompileInfo(Type.GetEntryPoint(), Environment.ShaderModel, Type.GetStage(), Environment.Defines);
     const uint64             CompileHash = FShaderCompiler::Get().ComputeCompileHash(Type.GetSourceFile(), CompileInfo);
 
     TArray<uint8> ShaderCode;

@@ -617,6 +617,12 @@ protected:
 
     void EnableHitTestOverflow();
 
+    /** @return True when this element, or an element below it, can be hit outside its content rectangle. */
+    NODISCARD FORCEINLINE bool HasHitTestOverflow() const
+    {
+        return HasAnyElementFlags(EElementFlags::HitTestOverflow);
+    }
+
     template<typename ElementType>
     NODISCARD static FORCEINLINE EChildVisit VisitChild(FChildVisitor& Visitor, const TSharedPtr<ElementType>& Child)
     {
