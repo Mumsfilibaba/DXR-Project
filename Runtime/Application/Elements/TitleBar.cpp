@@ -18,6 +18,12 @@ constexpr float CAPTION_GLYPH_EXTENT = 5.0f;
 
 constexpr float CAPTION_GLYPH_THICKNESS = 1.0f;
 
+constexpr int32 CAPTION_MAXIMIZE_SIZE = 10;
+constexpr int32 CAPTION_RESTORE_SIZE  = 8;
+constexpr int32 CAPTION_RESTORE_SHIFT = 2;
+
+constexpr float CAPTION_GLYPH_CORNER_RADIUS = 1.5f;
+
 // The gap between the window icon and the title, and the side the icon is drawn at
 constexpr int32 TITLE_ICON_SIZE   = 16;
 constexpr int32 TITLE_ICON_MARGIN = 8;
@@ -51,6 +57,7 @@ FCaptionButton::FCaptionButton()
     , ButtonSize(CAPTION_BUTTON_WIDTH, CAPTION_BUTTON_HEIGHT)
     , HoverFadeStartAlpha(0.0f)
     , HoverFade()
+    , bIsWindowMaximized(false)
 {
     HoverFade.Start(CAPTION_HOVER_FADE_SECONDS, 0.0f, 1.0f);
 }
@@ -139,21 +146,42 @@ int32 FCaptionButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
     {
         case ECaptionButtonKind::Minimize:
         {
-            OutCommandList.AddLine(LayerId + 1, Vector2(CenterX - Extent, CenterY), Vector2(CenterX + Extent, CenterY), GlyphColor, CAPTION_GLYPH_THICKNESS);
+            const FRectangle Dash(IntVector2(Bounds.Position.X + (Bounds.Width - CAPTION_MAXIMIZE_SIZE) / 2, Bounds.Position.Y + Bounds.Height / 2),
+                CAPTION_MAXIMIZE_SIZE, static_cast<int32>(CAPTION_GLYPH_THICKNESS));
+
+            OutCommandList.AddBox(LayerId + 1, Dash, GlyphColor);
             break;
         }
 
         case ECaptionButtonKind::Maximize:
         {
-            const Vector2 Corners[] =
-            {
-                Vector2(CenterX - Extent, CenterY - Extent),
-                Vector2(CenterX + Extent, CenterY - Extent),
-                Vector2(CenterX + Extent, CenterY + Extent),
-                Vector2(CenterX - Extent, CenterY + Extent),
-            };
+            const int32 GlyphLeft = Bounds.Position.X + (Bounds.Width - CAPTION_MAXIMIZE_SIZE) / 2;
+            const int32 GlyphTop  = Bounds.Position.Y + (Bounds.Height - CAPTION_MAXIMIZE_SIZE) / 2;
 
-            OutCommandList.AddPolyline(LayerId + 1, MakeArrayView(Corners, 4), GlyphColor, CAPTION_GLYPH_THICKNESS, true);
+            const FCornerRadii GlyphRadii(CAPTION_GLYPH_CORNER_RADIUS);
+
+            if (!bIsWindowMaximized)
+            {
+                const FRectangle Square(IntVector2(GlyphLeft, GlyphTop), CAPTION_MAXIMIZE_SIZE, CAPTION_MAXIMIZE_SIZE);
+                OutCommandList.AddBoxOutline(LayerId + 1, Square, GlyphColor, CAPTION_GLYPH_THICKNESS, GlyphRadii);
+                break;
+            }
+
+            const FRectangle FrontSquare(IntVector2(GlyphLeft, GlyphTop + CAPTION_RESTORE_SHIFT), CAPTION_RESTORE_SIZE, CAPTION_RESTORE_SIZE);
+            const FRectangle BackSquare(IntVector2(GlyphLeft + CAPTION_RESTORE_SHIFT, GlyphTop), CAPTION_RESTORE_SIZE, CAPTION_RESTORE_SIZE);
+
+            OutCommandList.AddBoxOutline(LayerId + 1, FrontSquare, GlyphColor, CAPTION_GLYPH_THICKNESS, GlyphRadii);
+
+            const FRectangle AboveFront(IntVector2(BackSquare.Position.X, BackSquare.Position.Y), BackSquare.Width, FrontSquare.Position.Y - BackSquare.Position.Y);
+            const FRectangle RightOfFront(IntVector2(FrontSquare.GetRight(), BackSquare.Position.Y), BackSquare.GetRight() - FrontSquare.GetRight(), BackSquare.Height);
+
+            for (const FRectangle& Visible : { AboveFront, RightOfFront })
+            {
+                OutCommandList.PushClip(LayerId + 1, Visible);
+                OutCommandList.AddBoxOutline(LayerId + 1, BackSquare, GlyphColor, CAPTION_GLYPH_THICKNESS, GlyphRadii);
+                OutCommandList.PopClip(LayerId + 1);
+            }
+
             break;
         }
 
@@ -172,6 +200,15 @@ bool FCaptionButton::GetCursor(ECursor& OutCursor) const
 {
     OutCursor = ECursor::Arrow;
     return true;
+}
+
+void FCaptionButton::SetWindowMaximized(bool bInIsWindowMaximized)
+{
+    if (bIsWindowMaximized != bInIsWindowMaximized)
+    {
+        bIsWindowMaximized = bInIsWindowMaximized;
+        InvalidatePaint();
+    }
 }
 
 void FCaptionButton::SetButtonSize(const IntVector2& InSize)
@@ -324,6 +361,17 @@ void FTitleBar::OnArrange(const FRectangle& AllottedBounds)
 {
     FCompoundElement::OnArrange(AllottedBounds);
     PublishRegions();
+
+    if (bShowCaptionButtons)
+    {
+        const TSharedPtr<FWindow> Window     = FApplication::Get().FindWindow(AsSharedPtr());
+        const bool                bMaximized = Window && Window->IsMaximized();
+
+        for (const TSharedPtr<FCaptionButton>& Button : CaptionButtons)
+        {
+            Button->SetWindowMaximized(bMaximized);
+        }
+    }
 }
 
 int32 FTitleBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const

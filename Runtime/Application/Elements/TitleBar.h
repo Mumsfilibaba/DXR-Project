@@ -56,6 +56,13 @@ public:
         return Kind;
     }
 
+    /**
+     * @brief Tells the button whether its window is maximized, which a maximize button shows by drawing the restore glyph.
+     *
+     * @param bInIsWindowMaximized True while the window is maximized.
+     */
+    void SetWindowMaximized(bool bInIsWindowMaximized);
+
 protected:
 
     // FInteractiveElement Interface
@@ -69,6 +76,7 @@ private:
     IntVector2         ButtonSize;
     float              HoverFadeStartAlpha;
     FUIAnimation       HoverFade;
+    bool               bIsWindowMaximized;
 };
 
 class APPLICATION_API FTitleBar final : public FCompoundElement
