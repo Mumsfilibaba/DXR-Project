@@ -200,6 +200,12 @@ public:
      */
     void SetMinWidth(int32 InMinWidth);
 
+    /**
+     * @return True for a dropdown whose menu is open, a toggle in any state but Unchecked, and a plain button
+     * SetHighlighted has lit.
+     */
+    NODISCARD bool IsHighlighted() const;
+
     /** @return The four radii of the entry's fill, in pixels. */
     NODISCARD FORCEINLINE const FCornerRadii& GetCornerRadius() const
     {
@@ -241,12 +247,6 @@ public:
     {
         return ToolTipText;
     }
-
-    /**
-     * @return True for a dropdown whose menu is open, a toggle in any state but Unchecked, and a plain button
-     * SetHighlighted has lit.
-     */
-    NODISCARD bool IsHighlighted() const;
 
 protected:
 
@@ -456,18 +456,6 @@ public:
      */
     void OnButtonHovered(FMenuAnchor* HoveredAnchor);
 
-    /** @return The bar's entries, in the order they were added, rules and custom elements included. */
-    NODISCARD FORCEINLINE const TArray<FToolBarEntry>& GetItems() const
-    {
-        return Items;
-    }
-
-    /** @return How many entries the bar holds, rules and custom elements included. */
-    NODISCARD FORCEINLINE int32 GetNumItems() const
-    {
-        return Items.Size();
-    }
-
     /**
      * @brief The entry at an index, or null when that index holds a rule or a custom element.
      *
@@ -483,6 +471,18 @@ public:
      * @return The entry, or null when the bar has none by that name.
      */
     NODISCARD TSharedPtr<FToolBarButton> FindButton(const String& InLabel) const;
+
+    /** @return The bar's entries, in the order they were added, rules and custom elements included. */
+    NODISCARD FORCEINLINE const TArray<FToolBarEntry>& GetItems() const
+    {
+        return Items;
+    }
+
+    /** @return How many entries the bar holds, rules and custom elements included. */
+    NODISCARD FORCEINLINE int32 GetNumItems() const
+    {
+        return Items.Size();
+    }
 
     /** @return The anchors the dropdowns are wrapped in, in the order they were added. */
     NODISCARD FORCEINLINE const TArray<TSharedPtr<FMenuAnchor>>& GetAnchors() const

@@ -16,40 +16,15 @@ public:
     {
     }
 
-    bool IsKeyboardKey() const
-    {
-        return Key >= EKeyName::KeyBoardFirst && Key <= EKeyName::KeyBoardLast;
-    }
+    bool IsKeyboardKey()   const { return Key >= EKeyName::KeyBoardFirst && Key <= EKeyName::KeyBoardLast; }
+    bool IsMouseButton()   const { return Key >= EKeyName::MouseButtonFirst && Key <= EKeyName::MouseButtonLast; }
+    bool IsGamepadButton() const { return Key >= EKeyName::GamepadFirst && Key <= EKeyName::GamepadLast; }
 
-    bool IsMouseButton() const
-    {
-        return Key >= EKeyName::MouseButtonFirst && Key <= EKeyName::MouseButtonLast;
-    }
+    const CHAR*    ToString()   const { return KeyString; }
+    EKeyName::Type GetKeyName() const { return Key; }
 
-    bool IsGamepadButton() const
-    {
-        return Key >= EKeyName::GamepadFirst && Key <= EKeyName::GamepadLast;
-    }
-
-    const CHAR* ToString() const
-    {
-        return KeyString;
-    }
-
-    bool operator==(const FKey& Other) const
-    {
-        return Key == Other.Key;
-    }
-
-    bool operator!=(const FKey& Other) const
-    {
-        return Key != Other.Key;
-    }
-
-    EKeyName::Type GetKeyName() const
-    {
-        return Key;
-    }
+    bool operator==(const FKey& Other) const { return Key == Other.Key; }
+    bool operator!=(const FKey& Other) const { return Key != Other.Key; }
 
 private:
     EKeyName::Type Key;

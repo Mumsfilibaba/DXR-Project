@@ -43,12 +43,6 @@ public:
      */
     void SetText(const String& InText);
 
-    /** @return The text this element draws. */
-    NODISCARD FORCEINLINE const String& GetText() const
-    {
-        return Text;
-    }
-
     /**
      * @brief Sets the color the text is drawn in.
      *
@@ -69,6 +63,12 @@ public:
      * @param InMargin The new margin.
      */
     void SetMargin(const FMargin& InMargin);
+
+    /** @return The text this element draws. */
+    NODISCARD FORCEINLINE const String& GetText() const
+    {
+        return Text;
+    }
 
 private:
     String                     Text;

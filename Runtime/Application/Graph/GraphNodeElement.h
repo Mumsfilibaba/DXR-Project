@@ -53,12 +53,6 @@ public:
      */
     void SetStyle(const FGraphNodeStyle& InStyle);
 
-    /** @return What the node is drawn with, which is the canvas' style until one is pushed in. */
-    NODISCARD FORCEINLINE const FGraphNodeStyle& GetStyle() const
-    {
-        return Style;
-    }
-
     /**
      * @brief Marks the node as one of the selected ones, which draws it with an accent border.
      *
@@ -89,6 +83,12 @@ public:
      * @return The pin id, or -1 when the point is not on a pin.
      */
     NODISCARD int32 FindPinAt(const IntVector2& ClientPosition) const;
+
+    /** @return What the node is drawn with, which is the canvas' style until one is pushed in. */
+    NODISCARD FORCEINLINE const FGraphNodeStyle& GetStyle() const
+    {
+        return Style;
+    }
 
     /** @return The id the model handed out for the node this element stands for. */
     NODISCARD FORCEINLINE int32 GetNodeId() const

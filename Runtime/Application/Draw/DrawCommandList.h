@@ -78,36 +78,6 @@ public:
     void AddText(int32 LayerId, const FRectangle& Bounds, const StringView& InText, const IFontFace* Font, const FFloatColor& Tint);
 
     /**
-     * @brief Appends a run of text on one line.
-     *
-     * @param LayerId The layer to draw on.
-     * @param Bounds  The rectangle the text is anchored to at the top-left.
-     * @param InText  The text to draw.
-     * @param Font    The face the text was measured with, which may be null.
-     * @param Tint    The text color.
-     */
-    FORCEINLINE void AddText(int32 LayerId, const FRectangle& Bounds, const String& InText, const IFontFace* Font, const FFloatColor& Tint)
-    {
-        AddText(LayerId, Bounds, StringView(InText), Font, Tint);
-    }
-
-    /**
-     * @brief Appends a run of text on one line.
-     *
-     * A literal converts to both String and StringView, so it needs an overload of its own to call.
-     *
-     * @param LayerId The layer to draw on.
-     * @param Bounds  The rectangle the text is anchored to at the top-left.
-     * @param InText  The null-terminated text to draw.
-     * @param Font    The face the text was measured with, which may be null.
-     * @param Tint    The text color.
-     */
-    FORCEINLINE void AddText(int32 LayerId, const FRectangle& Bounds, const CHAR* InText, const IFontFace* Font, const FFloatColor& Tint)
-    {
-        AddText(LayerId, Bounds, StringView(InText), Font, Tint);
-    }
-
-    /**
      * @brief Appends a thin axis-aligned rule.
      *
      * @param LayerId The layer to draw on.
@@ -315,46 +285,6 @@ public:
     /** @brief Drops every command and the clip state, so the list can be filled again. */
     void Reset();
 
-    /** @return True when no clip region is still open and no pop arrived without a push. */
-    NODISCARD FORCEINLINE bool IsClipStackBalanced() const
-    {
-        return ClipStack.IsEmpty() && UnmatchedPopCount == 0;
-    }
-
-    /**
-     * @brief Gets the innermost clip region, which is already intersected with the ones enclosing it.
-     *
-     * @return The region on top of the clip stack, or an empty rectangle when none is open.
-     */
-    NODISCARD FORCEINLINE const FRectangle& GetCurrentClipRectangle() const
-    {
-        return ClipStack.IsEmpty() ? EmptyClipRectangle : ClipRects[ClipStack.Last() - 1];
-    }
-
-    /** @return The number of commands the list holds. */
-    NODISCARD FORCEINLINE int32 Size() const
-    {
-        return Commands.Size();
-    }
-
-    /** @return True when nothing has been appended since the list was created or reset. */
-    NODISCARD FORCEINLINE bool IsEmpty() const
-    {
-        return Commands.IsEmpty();
-    }
-
-    /** @return The commands appended so far, in emission order rather than layer order. */
-    NODISCARD FORCEINLINE const TArray<FDrawCommand>& GetCommands() const
-    {
-        return Commands;
-    }
-
-    /** @return The point pool every polyline or polygon command indexes into by offset and count. */
-    NODISCARD FORCEINLINE const TArray<Vector2>& GetPoints() const
-    {
-        return Points;
-    }
-
     /**
      * @brief The points one command owns, which is empty for a command that carries none.
      *
@@ -409,17 +339,6 @@ public:
      */
     NODISCARD int32 FindTextCommand(const StringView& InText) const;
 
-    NODISCARD FORCEINLINE const FDrawCommand& operator[](int32 Index) const
-    {
-        return Commands[Index];
-    }
-
-    /** @return How many clips are open, which a cached block has to find unchanged to be replayable. */
-    NODISCARD FORCEINLINE int32 GetClipDepth() const
-    {
-        return ClipStack.Size();
-    }
-
     /**
      * @brief Notes where the list stands, so a subtree about to record can have its range lifted out after.
      *
@@ -429,38 +348,6 @@ public:
 
     /** @brief Closes a capture without keeping it, for a subtree that turned out not to be worth caching. */
     void AbandonDrawCache() const;
-
-    /**
-     * @brief Makes every element record into this list rather than replay into it, without dropping what they
-     * hold, so the same tree can be recorded twice over and the two recordings compared.
-     *
-     * @param bSuppressed True to walk the tree in full.
-     */
-    FORCEINLINE void SetDrawCacheSuppressed(bool bSuppressed)
-    {
-        bDrawCacheSuppressed = bSuppressed;
-    }
-
-    /** @return True while the list refuses both replay and capture. */
-    NODISCARD FORCEINLINE bool IsDrawCacheSuppressed() const
-    {
-        return bDrawCacheSuppressed;
-    }
-
-    /**
-     * @return How many times something recording into this list has refused to be cached, which an element
-     * compares against its marker to tell a capture worth retrying next frame from one that never will be.
-     */
-    NODISCARD FORCEINLINE int32 GetDrawCacheBlockCounter() const
-    {
-        return DrawCacheBlockCounter;
-    }
-
-    /** @return True while some subtree is between BeginDrawCache and CaptureDrawCache, which suppresses nesting. */
-    NODISCARD FORCEINLINE bool IsDrawCacheOpen() const
-    {
-        return OpenDrawCacheCount > 0;
-    }
 
     /**
      * @brief Says that whatever is recording now cannot be replayed later, discarding every capture open
@@ -503,20 +390,8 @@ public:
      */
     NODISCARD FDrawCacheBlock* FindReplayedSpanContaining(int32 CommandIndex, int32& OutSpanStart) const;
 
-    /** @return True when at least one block was replayed into the list. */
-    NODISCARD FORCEINLINE bool HasReplayedSpans() const
-    {
-        return !ReplayedSpans.IsEmpty();
-    }
-
     /** @return True when every command in the list came from a replayed block. */
     NODISCARD bool WasFullyReplayed() const;
-
-    /** @return How many of the list's commands came from replayed blocks rather than from walking the tree. */
-    NODISCARD FORCEINLINE int32 GetReplayedCommandCount() const
-    {
-        return ReplayedCommandCount;
-    }
 
     /**
      * @brief Finds where two recordings of the same tree stop agreeing, comparing offsets and clip ids
@@ -533,6 +408,131 @@ public:
         const FDrawCommandList& Right,
         int32&                  OutIndex,
         String&                 OutReason);
+
+    /**
+     * @brief Appends a run of text on one line.
+     *
+     * @param LayerId The layer to draw on.
+     * @param Bounds  The rectangle the text is anchored to at the top-left.
+     * @param InText  The text to draw.
+     * @param Font    The face the text was measured with, which may be null.
+     * @param Tint    The text color.
+     */
+    FORCEINLINE void AddText(int32 LayerId, const FRectangle& Bounds, const String& InText, const IFontFace* Font, const FFloatColor& Tint)
+    {
+        AddText(LayerId, Bounds, StringView(InText), Font, Tint);
+    }
+
+    /**
+     * @brief Appends a run of text on one line.
+     *
+     * A literal converts to both String and StringView, so it needs an overload of its own to call.
+     *
+     * @param LayerId The layer to draw on.
+     * @param Bounds  The rectangle the text is anchored to at the top-left.
+     * @param InText  The null-terminated text to draw.
+     * @param Font    The face the text was measured with, which may be null.
+     * @param Tint    The text color.
+     */
+    FORCEINLINE void AddText(int32 LayerId, const FRectangle& Bounds, const CHAR* InText, const IFontFace* Font, const FFloatColor& Tint)
+    {
+        AddText(LayerId, Bounds, StringView(InText), Font, Tint);
+    }
+
+    /** @return True when no clip region is still open and no pop arrived without a push. */
+    NODISCARD FORCEINLINE bool IsClipStackBalanced() const
+    {
+        return ClipStack.IsEmpty() && UnmatchedPopCount == 0;
+    }
+
+    /**
+     * @brief Gets the innermost clip region, which is already intersected with the ones enclosing it.
+     *
+     * @return The region on top of the clip stack, or an empty rectangle when none is open.
+     */
+    NODISCARD FORCEINLINE const FRectangle& GetCurrentClipRectangle() const
+    {
+        return ClipStack.IsEmpty() ? EmptyClipRectangle : ClipRects[ClipStack.Last() - 1];
+    }
+
+    /** @return The number of commands the list holds. */
+    NODISCARD FORCEINLINE int32 Size() const
+    {
+        return Commands.Size();
+    }
+
+    /** @return True when nothing has been appended since the list was created or reset. */
+    NODISCARD FORCEINLINE bool IsEmpty() const
+    {
+        return Commands.IsEmpty();
+    }
+
+    /** @return The commands appended so far, in emission order rather than layer order. */
+    NODISCARD FORCEINLINE const TArray<FDrawCommand>& GetCommands() const
+    {
+        return Commands;
+    }
+
+    /** @return The point pool every polyline or polygon command indexes into by offset and count. */
+    NODISCARD FORCEINLINE const TArray<Vector2>& GetPoints() const
+    {
+        return Points;
+    }
+
+    NODISCARD FORCEINLINE const FDrawCommand& operator[](int32 Index) const
+    {
+        return Commands[Index];
+    }
+
+    /** @return How many clips are open, which a cached block has to find unchanged to be replayable. */
+    NODISCARD FORCEINLINE int32 GetClipDepth() const
+    {
+        return ClipStack.Size();
+    }
+
+    /**
+     * @brief Makes every element record into this list rather than replay into it, without dropping what they
+     * hold, so the same tree can be recorded twice over and the two recordings compared.
+     *
+     * @param bSuppressed True to walk the tree in full.
+     */
+    FORCEINLINE void SetDrawCacheSuppressed(bool bSuppressed)
+    {
+        bDrawCacheSuppressed = bSuppressed;
+    }
+
+    /** @return True while the list refuses both replay and capture. */
+    NODISCARD FORCEINLINE bool IsDrawCacheSuppressed() const
+    {
+        return bDrawCacheSuppressed;
+    }
+
+    /**
+     * @return How many times something recording into this list has refused to be cached, which an element
+     * compares against its marker to tell a capture worth retrying next frame from one that never will be.
+     */
+    NODISCARD FORCEINLINE int32 GetDrawCacheBlockCounter() const
+    {
+        return DrawCacheBlockCounter;
+    }
+
+    /** @return True while some subtree is between BeginDrawCache and CaptureDrawCache, which suppresses nesting. */
+    NODISCARD FORCEINLINE bool IsDrawCacheOpen() const
+    {
+        return OpenDrawCacheCount > 0;
+    }
+
+    /** @return True when at least one block was replayed into the list. */
+    NODISCARD FORCEINLINE bool HasReplayedSpans() const
+    {
+        return !ReplayedSpans.IsEmpty();
+    }
+
+    /** @return How many of the list's commands came from replayed blocks rather than from walking the tree. */
+    NODISCARD FORCEINLINE int32 GetReplayedCommandCount() const
+    {
+        return ReplayedCommandCount;
+    }
 
 private:
     struct FReplayedSpan

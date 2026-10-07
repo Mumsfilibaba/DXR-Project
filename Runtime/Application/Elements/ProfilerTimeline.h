@@ -114,6 +114,9 @@ public:
     /** @brief Puts the view back over the whole capture and hands it back to whatever fills the lanes. */
     void ResetView();
 
+    /** @return True while zoom leaves some of the capture outside the viewport. */
+    NODISCARD bool IsHorizontalScrollBarVisible() const;
+
     /** @return The lane the selection is on, or InvalidIndex while nothing is selected. */
     NODISCARD FORCEINLINE int32 GetSelectedLane() const
     {
@@ -161,9 +164,6 @@ public:
     {
         return HorizontalScrollBar;
     }
-
-    /** @return True while zoom leaves some of the capture outside the viewport. */
-    NODISCARD bool IsHorizontalScrollBarVisible() const;
 
 protected:
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;

@@ -97,12 +97,6 @@ public:
     /** @brief Drops every sample, leaving the strip empty. */
     void Clear();
 
-    /** @return How many samples are held, which never passes the capacity. */
-    NODISCARD FORCEINLINE int32 GetNumSamples() const
-    {
-        return NumSamples;
-    }
-
     /**
      * @brief Gets one of the samples held, oldest first.
      *
@@ -135,6 +129,19 @@ public:
      */
     void SetAutoScale(bool bInAutoScale);
 
+    /**
+     * @brief Selects a bar, which is what a click on the strip does.
+     *
+     * @param Index The sample to select, oldest first, or InvalidSampleIndex to clear.
+     */
+    void SetSelectedSample(int32 Index);
+
+    /** @return How many samples are held, which never passes the capacity. */
+    NODISCARD FORCEINLINE int32 GetNumSamples() const
+    {
+        return NumSamples;
+    }
+
     /** @return The bar under the cursor, oldest first, or InvalidSampleIndex when the cursor is over none. */
     NODISCARD FORCEINLINE int32 GetHoveredSample() const
     {
@@ -152,13 +159,6 @@ public:
     {
         return bIsScrubbing;
     }
-
-    /**
-     * @brief Selects a bar, which is what a click on the strip does.
-     *
-     * @param Index The sample to select, oldest first, or InvalidSampleIndex to clear.
-     */
-    void SetSelectedSample(int32 Index);
 
 private:
     NODISCARD float ResolveUpperBound() const;

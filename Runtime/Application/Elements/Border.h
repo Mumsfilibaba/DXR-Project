@@ -79,24 +79,12 @@ public:
      */
     void SetBackgroundColor(const FFloatColor& InBackgroundColor);
 
-    /** @return The fill color drawn behind the child, whose zero alpha means nothing is drawn. */
-    NODISCARD FORCEINLINE const FFloatColor& GetBackgroundColor() const
-    {
-        return BackgroundColor;
-    }
-
     /**
      * @brief Sets the stroke drawn inward from the edge, which needs a thickness to show.
      *
      * @param InBorderColor The stroke color. A zero alpha draws nothing.
      */
     void SetBorderColor(const FFloatColor& InBorderColor);
-
-    /** @return The stroke color drawn inward from the edge, whose zero alpha means nothing is drawn. */
-    NODISCARD FORCEINLINE const FFloatColor& GetBorderColor() const
-    {
-        return BorderColor;
-    }
 
     /**
      * @brief Sets how far the fill is rounded at each corner.
@@ -105,24 +93,12 @@ public:
      */
     void SetCornerRadius(const FCornerRadii& InCornerRadius);
 
-    /** @return The corner radii of the fill in pixels, clamped when drawn to half the shorter side. */
-    NODISCARD FORCEINLINE const FCornerRadii& GetCornerRadius() const
-    {
-        return CornerRadius;
-    }
-
     /**
      * @brief Sets how wide the stroke is.
      *
      * @param InBorderThickness The width in pixels. Zero draws no stroke.
      */
     void SetBorderThickness(float InBorderThickness);
-
-    /** @return The width of the stroke in pixels, where zero draws no stroke. */
-    NODISCARD FORCEINLINE float GetBorderThickness() const
-    {
-        return BorderThickness;
-    }
 
     /**
      * @brief Sets the least width the border is measured at, which is how a border is held to a fixed size
@@ -132,24 +108,12 @@ public:
      */
     void SetMinWidth(int32 InMinWidth);
 
-    /** @return The least width in pixels the border measures at, zero leaving it as wide as its content. */
-    NODISCARD FORCEINLINE int32 GetMinWidth() const
-    {
-        return MinWidth;
-    }
-
     /**
      * @brief Sets the least height the border is measured at.
      *
      * @param InMinHeight The minimum height in pixels. Zero leaves the border as tall as its content.
      */
     void SetMinHeight(int32 InMinHeight);
-
-    /** @return The least height in pixels the border measures at, zero leaving it as tall as its content. */
-    NODISCARD FORCEINLINE int32 GetMinHeight() const
-    {
-        return MinHeight;
-    }
 
     /**
      * @brief Sets the shape the cursor takes over the border, its padding included.
@@ -168,6 +132,42 @@ public:
      * border edge to edge needs so its own fills cannot bury the stroke.
      */
     void SetDrawBorderOverContent(bool bInDrawBorderOverContent);
+
+    /** @return The fill color drawn behind the child, whose zero alpha means nothing is drawn. */
+    NODISCARD FORCEINLINE const FFloatColor& GetBackgroundColor() const
+    {
+        return BackgroundColor;
+    }
+
+    /** @return The stroke color drawn inward from the edge, whose zero alpha means nothing is drawn. */
+    NODISCARD FORCEINLINE const FFloatColor& GetBorderColor() const
+    {
+        return BorderColor;
+    }
+
+    /** @return The corner radii of the fill in pixels, clamped when drawn to half the shorter side. */
+    NODISCARD FORCEINLINE const FCornerRadii& GetCornerRadius() const
+    {
+        return CornerRadius;
+    }
+
+    /** @return The width of the stroke in pixels, where zero draws no stroke. */
+    NODISCARD FORCEINLINE float GetBorderThickness() const
+    {
+        return BorderThickness;
+    }
+
+    /** @return The least width in pixels the border measures at, zero leaving it as wide as its content. */
+    NODISCARD FORCEINLINE int32 GetMinWidth() const
+    {
+        return MinWidth;
+    }
+
+    /** @return The least height in pixels the border measures at, zero leaving it as tall as its content. */
+    NODISCARD FORCEINLINE int32 GetMinHeight() const
+    {
+        return MinHeight;
+    }
 
     /** @return True when the stroke is drawn after the child. */
     NODISCARD FORCEINLINE bool DrawsBorderOverContent() const

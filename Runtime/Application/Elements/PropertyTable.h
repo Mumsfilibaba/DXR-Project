@@ -157,12 +157,6 @@ public:
     /** @brief Drops every row, so the table can be refilled. */
     void ClearRows();
 
-    /** @return How many rows the table holds, headings counted. */
-    NODISCARD FORCEINLINE int32 GetNumRows() const
-    {
-        return Rows.Size();
-    }
-
     /**
      * @brief One row of the table.
      *
@@ -177,18 +171,6 @@ public:
      * @param InFraction The share of the width the label column takes, clamped into the allowed range.
      */
     void SetLabelColumnFraction(float InFraction);
-
-    /** @return The share of the width the label column takes, between the two clamps. */
-    NODISCARD FORCEINLINE float GetLabelColumnFraction() const
-    {
-        return LabelColumnFraction;
-    }
-
-    /** @return How wide the label column is held, in pixels, or zero while it follows the fraction instead. */
-    NODISCARD FORCEINLINE int32 GetLabelColumnWidth() const
-    {
-        return LabelColumnWidth;
-    }
 
     /**
      * @brief The rectangle one row occupies.
@@ -214,6 +196,24 @@ public:
      * @return The row's index, or InvalidRowIndex when the point is outside the rows.
      */
     NODISCARD int32 FindRowAtPoint(const IntVector2& ClientPosition) const;
+
+    /** @return How many rows the table holds, headings counted. */
+    NODISCARD FORCEINLINE int32 GetNumRows() const
+    {
+        return Rows.Size();
+    }
+
+    /** @return The share of the width the label column takes, between the two clamps. */
+    NODISCARD FORCEINLINE float GetLabelColumnFraction() const
+    {
+        return LabelColumnFraction;
+    }
+
+    /** @return How wide the label column is held, in pixels, or zero while it follows the fraction instead. */
+    NODISCARD FORCEINLINE int32 GetLabelColumnWidth() const
+    {
+        return LabelColumnWidth;
+    }
 
     /**
      * @brief Sets what a right-click on a row does.

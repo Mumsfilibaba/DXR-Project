@@ -264,40 +264,14 @@ struct FDrawCommand
         const IFontFace* Font;
     };
 
-    NODISCARD FORCEINLINE float GetFadeWidth() const
-    {
-        return Fade[0];
-    }
+    NODISCARD FORCEINLINE bool IsClipped()                       const { return (Flags & EDrawCommandFlags::Clipped) != EDrawCommandFlags::None; }
+    NODISCARD FORCEINLINE bool IsClosed()                        const { return (Flags & EDrawCommandFlags::Closed) != EDrawCommandFlags::None; }
+    NODISCARD FORCEINLINE bool HasTint(const FFloatColor& Color) const { return PackedColor == Color.ToPackedRGBA(); }
 
-    NODISCARD FORCEINLINE float GetFadeFraction() const
-    {
-        return Fade[0];
-    }
-
-    NODISCARD FORCEINLINE float GetTrailAlpha() const
-    {
-        return Fade[1];
-    }
-
-    NODISCARD FORCEINLINE bool IsClipped() const
-    {
-        return (Flags & EDrawCommandFlags::Clipped) != EDrawCommandFlags::None;
-    }
-
-    NODISCARD FORCEINLINE bool IsClosed() const
-    {
-        return (Flags & EDrawCommandFlags::Closed) != EDrawCommandFlags::None;
-    }
-
-    NODISCARD FORCEINLINE bool HasTint(const FFloatColor& Color) const
-    {
-        return PackedColor == Color.ToPackedRGBA();
-    }
-
-    NODISCARD FORCEINLINE uint8 PackedAlpha() const
-    {
-        return static_cast<uint8>(PackedColor >> 24);
-    }
+    NODISCARD FORCEINLINE float GetFadeWidth()    const { return Fade[0]; }
+    NODISCARD FORCEINLINE float GetFadeFraction() const { return Fade[0]; }
+    NODISCARD FORCEINLINE float GetTrailAlpha()   const { return Fade[1]; }
+    NODISCARD FORCEINLINE uint8 PackedAlpha()     const { return static_cast<uint8>(PackedColor >> 24); }
 };
 
 static_assert(sizeof(FDrawCommand) == 64, "FDrawCommand is meant to fill exactly one cache line");

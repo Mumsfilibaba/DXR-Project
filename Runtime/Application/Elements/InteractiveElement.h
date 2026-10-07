@@ -28,6 +28,13 @@ public:
      */
     void SetEnabled(bool bInIsEnabled);
 
+    /**
+     * @brief Gets the state the element is in, which is what a subclass draws from.
+     *
+     * @return Disabled, Pressed, Hovered or Normal, resolved in that order.
+     */
+    NODISCARD EInteractionState GetInteractionState() const;
+
     /** @return True while the element responds to input. */
     NODISCARD FORCEINLINE bool IsEnabled() const
     {
@@ -50,13 +57,6 @@ public:
     {
         return bIsPressed;
     }
-
-    /**
-     * @brief Gets the state the element is in, which is what a subclass draws from.
-     *
-     * @return Disabled, Pressed, Hovered or Normal, resolved in that order.
-     */
-    NODISCARD EInteractionState GetInteractionState() const;
 
 protected:
 

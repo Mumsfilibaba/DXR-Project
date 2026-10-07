@@ -56,12 +56,6 @@ public:
      */
     void SetScrollOffset(int32 InScrollOffset);
 
-    /** @return How far the content is scrolled, as an offset from its top in pixels. */
-    NODISCARD FORCEINLINE int32 GetScrollOffset() const
-    {
-        return ScrollOffset;
-    }
-
     /**
      * @brief Gets the far end of the scrollable range, measured on the last arrange.
      *
@@ -104,6 +98,12 @@ public:
      * @return True when the bar is drawn, which for Auto means there is something to scroll.
      */
     NODISCARD bool IsScrollBarVisible() const;
+
+    /** @return How far the content is scrolled, as an offset from its top in pixels. */
+    NODISCARD FORCEINLINE int32 GetScrollOffset() const
+    {
+        return ScrollOffset;
+    }
 
     /** @return The scroll bar the box hosts, which a caller can style but does not own. */
     NODISCARD FORCEINLINE const TSharedPtr<class FScrollBar>& GetScrollBar() const

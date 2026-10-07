@@ -67,22 +67,6 @@ public:
      */
     void SetReadOnly(bool bInIsReadOnly);
 
-    /** @return True while the model refuses edits, dropping every mutation and leaving the graph as it is. */
-    NODISCARD FORCEINLINE bool IsReadOnly() const
-    {
-        return bIsReadOnly;
-    }
-
-    NODISCARD FORCEINLINE const TArray<FGraphNode>& GetNodes() const
-    {
-        return Nodes;
-    }
-
-    NODISCARD FORCEINLINE const TArray<FGraphLink>& GetLinks() const
-    {
-        return Links;
-    }
-
     /**
      * @brief The node with an id, or null when there is none.
      *
@@ -115,6 +99,22 @@ public:
      * @return How many links have the pin at either end.
      */
     NODISCARD int32 CountLinksOnPin(int32 PinId) const;
+
+    /** @return True while the model refuses edits, dropping every mutation and leaving the graph as it is. */
+    NODISCARD FORCEINLINE bool IsReadOnly() const
+    {
+        return bIsReadOnly;
+    }
+
+    NODISCARD FORCEINLINE const TArray<FGraphNode>& GetNodes() const
+    {
+        return Nodes;
+    }
+
+    NODISCARD FORCEINLINE const TArray<FGraphLink>& GetLinks() const
+    {
+        return Links;
+    }
 
     /**
      * @brief Counts every edit made, so an observer can tell it is looking at a stale build.

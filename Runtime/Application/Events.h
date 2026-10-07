@@ -165,52 +165,19 @@ public:
     {
     }
 
-    FKey GetKey() const
-    {
-        return Key;
-    }
+    bool IsDown() const { return bIsDown; }
 
-    /** @return Where the cursor was, in the screen space the platform delivers the event in. */
-    NODISCARD const IntVector2& GetScreenPosition() const
-    {
-        return ScreenPosition;
-    }
+    FKey        GetKey()         const { return Key; }
+    EScrollAxis GetScrollAxis()  const { return ScrollAxis; }
+    float       GetScrollDelta() const { return ScrollDelta; }
 
-    /**
-     * @brief Gets where the cursor was, in the space the elements were arranged in.
-     *
-     * @return The screen position less the origin of the client area of the window under the cursor.
-     */
-    NODISCARD IntVector2 GetClientPosition() const
-    {
-        return ScreenPosition - ClientOrigin;
-    }
+    NODISCARD const IntVector2& GetScreenPosition() const { return ScreenPosition; }
+    NODISCARD IntVector2        GetClientPosition() const { return ScreenPosition - ClientOrigin; }
 
-    /**
-     * @brief Gets the raw delta a high-precision event carries, which is a movement rather than a
-     * position. Only a HighPrecisionMouse event holds one, so asking any other kind fails a check.
-     *
-     * @return The movement the device reported, which is a relative delta and not a screen coordinate.
-     */
     NODISCARD const IntVector2& GetHighPrecisionDelta() const
     {
         CHECK(GetEventType() == EInputEventType::HighPrecisionMouse);
         return ScreenPosition;
-    }
-
-    EScrollAxis GetScrollAxis() const
-    {
-        return ScrollAxis;
-    }
-
-    bool IsDown() const
-    {
-        return bIsDown;
-    }
-
-    float GetScrollDelta() const
-    {
-        return ScrollDelta;
     }
 
 private:
@@ -265,30 +232,12 @@ public:
     {
     }
 
-    FKey GetKey() const
-    {
-        return Key;
-    }
+    bool IsRepeat() const { return bIsRepeat; }
+    bool IsDown()   const { return bIsDown; }
 
-    CHAR GetAnsiChar() const
-    {
-        return static_cast<CHAR>(Character);
-    }
-
-    uint32 GetGamepadIndex() const
-    {
-        return GamepadIndex;
-    }
-
-    bool IsRepeat() const
-    {
-        return bIsRepeat;
-    }
-
-    bool IsDown() const
-    {
-        return bIsDown;
-    }
+    FKey   GetKey()          const { return Key; }
+    CHAR   GetAnsiChar()     const { return static_cast<CHAR>(Character); }
+    uint32 GetGamepadIndex() const { return GamepadIndex; }
 
 private:
     FKey   Key;
@@ -317,20 +266,9 @@ public:
     {
     }
 
-    EAnalogSourceName::Type GetAnalogSource() const
-    {
-        return AnalogSource;
-    }
-
-    uint32 GetControllerIndex() const
-    {
-        return GamepadIndex;
-    }
-
-    float GetAnalogValue() const
-    {
-        return AnalogValue;
-    }
+    EAnalogSourceName::Type GetAnalogSource()    const { return AnalogSource; }
+    uint32                  GetControllerIndex() const { return GamepadIndex; }
+    float                   GetAnalogValue()     const { return AnalogValue; }
 
 private:
     EAnalogSourceName::Type AnalogSource;

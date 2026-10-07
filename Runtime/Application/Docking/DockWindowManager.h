@@ -124,24 +124,6 @@ public:
     /** @brief Takes the decorator down, which every exit from a drag does. */
     void DestroyDecorator();
 
-    /** @return The window the drag is dragging, or null when no tear-out is in flight. */
-    NODISCARD FORCEINLINE TSharedPtr<FWindow> GetDecoratorWindow() const
-    {
-        return DecoratorWindow;
-    }
-
-    /** @return The area inside the decorator, or null when no tear-out is in flight. */
-    NODISCARD FORCEINLINE TSharedPtr<FDockingArea> GetDecoratorArea() const
-    {
-        return DecoratorArea;
-    }
-
-    /** @return The picture the decorator is drawing under Docking.DecoratorSnapshot, null when it is live. */
-    NODISCARD FORCEINLINE FRHITexture* GetDecoratorSnapshot() const
-    {
-        return DecoratorSnapshot.Get();
-    }
-
     /**
      * @return The panel in flight drawn at the size the drop it is aimed at would give it, which the target
      * area covers that rectangle with. Null when nothing is aimed at or nothing has been rendered for the
@@ -199,12 +181,6 @@ public:
      */
     bool FocusPanelInHost(const String& PanelId);
 
-    /** @return The number of host windows open, which does not count the main window. */
-    NODISCARD FORCEINLINE int32 GetNumHosts() const
-    {
-        return Hosts.Size();
-    }
-
     /**
      * @brief Gets a host's window, so a caller can focus it or read where it sits.
      *
@@ -220,6 +196,30 @@ public:
      * @return The area, or null when the index is out of range.
      */
     NODISCARD TSharedPtr<FDockingArea> GetHostArea(int32 HostIndex) const;
+
+    /** @return The window the drag is dragging, or null when no tear-out is in flight. */
+    NODISCARD FORCEINLINE TSharedPtr<FWindow> GetDecoratorWindow() const
+    {
+        return DecoratorWindow;
+    }
+
+    /** @return The area inside the decorator, or null when no tear-out is in flight. */
+    NODISCARD FORCEINLINE TSharedPtr<FDockingArea> GetDecoratorArea() const
+    {
+        return DecoratorArea;
+    }
+
+    /** @return The picture the decorator is drawing under Docking.DecoratorSnapshot, null when it is live. */
+    NODISCARD FORCEINLINE FRHITexture* GetDecoratorSnapshot() const
+    {
+        return DecoratorSnapshot.Get();
+    }
+
+    /** @return The number of host windows open, which does not count the main window. */
+    NODISCARD FORCEINLINE int32 GetNumHosts() const
+    {
+        return Hosts.Size();
+    }
 
 private:
 

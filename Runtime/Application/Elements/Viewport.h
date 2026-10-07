@@ -46,10 +46,24 @@ public:
     virtual FEventResponse OnFocusGained() override final;
     virtual bool SupportsKeyboardFocus() const override final;
 
-    void SetViewportInterface(const TSharedPtr<IViewport>& InViewportInterface)
-    {
-        ViewportInterface = InViewportInterface;
-    }
+    /**
+     * @brief Sets the relative viewport size. This size will be clamped to the parent element's size during Arrange.
+     *
+     * @param InSize The new size.
+     */
+    void SetSize(const IntVector2& InSize);
+
+    /**
+     * @brief Sets the relative viewport position. This size will be clamped to the parent element's size during Arrange.
+     *
+     * @param InPosition The new position.
+     */
+    void SetPosition(const IntVector2& InPosition, EViewportPositionSpace InSpace = EViewportPositionSpace::Parent);
+
+    TSharedPtr<IViewport>       GetViewportInterface()       { return ViewportInterface; }
+    TSharedPtr<const IViewport> GetViewportInterface() const { return ViewportInterface; }
+
+    void SetViewportInterface(const TSharedPtr<IViewport>& InViewportInterface) { ViewportInterface = InViewportInterface; }
 
     /**
      * @brief Points the viewport at the texture the scene is rendered into, which it then draws across its
@@ -68,30 +82,6 @@ public:
     {
         return SceneBrush;
     }
-
-    TSharedPtr<IViewport> GetViewportInterface()
-    {
-        return ViewportInterface;
-    }
-
-    TSharedPtr<const IViewport> GetViewportInterface() const
-    {
-        return ViewportInterface;
-    }
-
-    /**
-     * @brief Sets the relative viewport size. This size will be clamped to the parent element's size during Arrange.
-     * 
-     * @param InSize The new size.
-     */
-    void SetSize(const IntVector2& InSize);
-    
-    /**
-     * @brief Sets the relative viewport position. This size will be clamped to the parent element's size during Arrange.
-     * 
-     * @param InPosition The new position.
-     */
-    void SetPosition(const IntVector2& InPosition, EViewportPositionSpace InSpace = EViewportPositionSpace::Parent);
 
     /**
      * @brief Gets the current viewport size.

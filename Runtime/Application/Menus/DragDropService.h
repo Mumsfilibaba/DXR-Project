@@ -131,30 +131,6 @@ public:
      */
     void SetPreview(EDragDropPreviewState InState, const String& InStatusText);
 
-    /** @return True while a drag is in flight. */
-    NODISCARD FORCEINLINE bool IsDragging() const
-    {
-        return Payload.IsValid();
-    }
-
-    /** @return What is being dragged, which names no type when no drag is in flight. */
-    NODISCARD FORCEINLINE const FDragDropPayload& GetPayload() const
-    {
-        return Payload;
-    }
-
-    /** @return Where the cursor last was, in screen coordinates. */
-    NODISCARD FORCEINLINE const IntVector2& GetScreenPosition() const
-    {
-        return ScreenPosition;
-    }
-
-    /** @return True when the cursor is over a target that would take the payload. */
-    NODISCARD FORCEINLINE bool HasTarget() const
-    {
-        return TargetIndex != InvalidTargetIndex;
-    }
-
     /**
      * @brief Registers an element as a possible drop target, replacing its earlier registration. Held
      * weakly, so an element that goes without unregistering is skipped rather than followed.
@@ -181,6 +157,30 @@ public:
      *                       drag's screen position to land the ghost in that window's own coordinates.
      */
     void DrawDragVisual(FDrawCommandList& OutCommandList, int32 LayerId, const IntVector2& ClientOrigin = IntVector2(0, 0)) const;
+
+    /** @return True while a drag is in flight. */
+    NODISCARD FORCEINLINE bool IsDragging() const
+    {
+        return Payload.IsValid();
+    }
+
+    /** @return What is being dragged, which names no type when no drag is in flight. */
+    NODISCARD FORCEINLINE const FDragDropPayload& GetPayload() const
+    {
+        return Payload;
+    }
+
+    /** @return Where the cursor last was, in screen coordinates. */
+    NODISCARD FORCEINLINE const IntVector2& GetScreenPosition() const
+    {
+        return ScreenPosition;
+    }
+
+    /** @return True when the cursor is over a target that would take the payload. */
+    NODISCARD FORCEINLINE bool HasTarget() const
+    {
+        return TargetIndex != InvalidTargetIndex;
+    }
 
 private:
     struct FTarget

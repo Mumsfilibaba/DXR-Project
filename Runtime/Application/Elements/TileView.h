@@ -118,12 +118,6 @@ public:
      */
     void SetItems(const TArray<FTileItem>& InItems);
 
-    /** @return The items shown, in layout order. */
-    NODISCARD FORCEINLINE const TArray<FTileItem>& GetItems() const
-    {
-        return Items;
-    }
-
     /**
      * @brief Sets the run of a label to draw highlighted, which the host keeps in step with whatever
      * it filtered the tiles by.
@@ -131,12 +125,6 @@ public:
      * @param InFilter The text to match, compared without regard to case. An empty filter highlights nothing.
      */
     void SetFilterText(const String& InFilter);
-
-    /** @return The run of a label drawn highlighted, which is empty when nothing is highlighted. */
-    NODISCARD FORCEINLINE const String& GetFilterText() const
-    {
-        return FilterText;
-    }
 
     /** @brief Drops the selection, firing the selection delegate when there was one to drop. */
     void ClearSelection();
@@ -147,12 +135,6 @@ public:
      * @param Index The tile to select, ignored when it is not one of the items shown.
      */
     void SetSelection(int32 Index);
-
-    /** @return The selected indices, which is empty when nothing is selected. */
-    NODISCARD FORCEINLINE const TArray<int32>& GetSelection() const
-    {
-        return SelectedIndices;
-    }
 
     /**
      * @brief Whether a tile is one of the selected ones.
@@ -169,24 +151,12 @@ public:
      */
     void SetTileSize(const IntVector2& InTileSize);
 
-    /** @return How large one tile is, in pixels, icon and label together. */
-    NODISCARD FORCEINLINE const IntVector2& GetTileSize() const
-    {
-        return TileSize;
-    }
-
     /**
      * @brief Scrolls to an absolute offset, clamped into the scrollable range.
      *
      * @param InScrollOffset The offset from the top of the grid, in pixels.
      */
     void SetScrollOffset(int32 InScrollOffset);
-
-    /** @return How far the grid is scrolled, as an offset from its top in pixels. */
-    NODISCARD FORCEINLINE int32 GetScrollOffset() const
-    {
-        return ScrollOffset;
-    }
 
     /**
      * @brief Gets the far end of the scrollable range, measured on the last arrange.
@@ -202,12 +172,6 @@ public:
      * @param Index The tile to bring into view, ignored when it is not a tile.
      */
     void ScrollToTile(int32 Index);
-
-    /** @return The tile under the cursor, or InvalidTileIndex when the cursor is over none. */
-    NODISCARD FORCEINLINE int32 GetHoveredTile() const
-    {
-        return HoveredIndex;
-    }
 
     /**
      * @brief Where a tile sits, which a rename field placed over its label and a drop highlight both need.
@@ -232,6 +196,42 @@ public:
      * @return The tile under the point, or InvalidTileIndex when the point is over none.
      */
     NODISCARD int32 FindTileAt(const IntVector2& ClientPosition) const;
+
+    /** @return The items shown, in layout order. */
+    NODISCARD FORCEINLINE const TArray<FTileItem>& GetItems() const
+    {
+        return Items;
+    }
+
+    /** @return The run of a label drawn highlighted, which is empty when nothing is highlighted. */
+    NODISCARD FORCEINLINE const String& GetFilterText() const
+    {
+        return FilterText;
+    }
+
+    /** @return The selected indices, which is empty when nothing is selected. */
+    NODISCARD FORCEINLINE const TArray<int32>& GetSelection() const
+    {
+        return SelectedIndices;
+    }
+
+    /** @return How large one tile is, in pixels, icon and label together. */
+    NODISCARD FORCEINLINE const IntVector2& GetTileSize() const
+    {
+        return TileSize;
+    }
+
+    /** @return How far the grid is scrolled, as an offset from its top in pixels. */
+    NODISCARD FORCEINLINE int32 GetScrollOffset() const
+    {
+        return ScrollOffset;
+    }
+
+    /** @return The tile under the cursor, or InvalidTileIndex when the cursor is over none. */
+    NODISCARD FORCEINLINE int32 GetHoveredTile() const
+    {
+        return HoveredIndex;
+    }
 
 private:
     NODISCARD int32 ResolveNumColumns(int32 AvailableWidth) const;

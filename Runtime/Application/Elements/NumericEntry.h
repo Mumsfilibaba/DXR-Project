@@ -236,6 +236,22 @@ public:
      */
     void SetValue(T InValue);
 
+    /**
+     * @brief The coloured tag at the left.
+     *
+     * @param Bounds The rectangle the field was arranged into.
+     * @return The tag, which is empty while the label is hidden.
+     */
+    NODISCARD FRectangle GetLabelRectangle(const FRectangle& Bounds) const;
+
+    /**
+     * @brief The space the value is drawn and edited in, which is what is left beside the tag.
+     *
+     * @param Bounds The rectangle the field was arranged into.
+     * @return The rectangle handed to the line of text.
+     */
+    NODISCARD FRectangle GetEditorRectangle(const FRectangle& Bounds) const;
+
     /** @return The value the field holds, already clamped to the range. */
     NODISCARD FORCEINLINE T GetValue() const
     {
@@ -259,22 +275,6 @@ public:
     {
         return Scrubber.IsPressed();
     }
-
-    /**
-     * @brief The coloured tag at the left.
-     *
-     * @param Bounds The rectangle the field was arranged into.
-     * @return The tag, which is empty while the label is hidden.
-     */
-    NODISCARD FRectangle GetLabelRectangle(const FRectangle& Bounds) const;
-
-    /**
-     * @brief The space the value is drawn and edited in, which is what is left beside the tag.
-     *
-     * @param Bounds The rectangle the field was arranged into.
-     * @return The rectangle handed to the line of text.
-     */
-    NODISCARD FRectangle GetEditorRectangle(const FRectangle& Bounds) const;
 
 protected:
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
