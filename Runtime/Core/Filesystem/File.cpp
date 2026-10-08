@@ -83,12 +83,12 @@ bool File::WriteTextFile(IPlatformFile* InFile, const CHAR* Text, uint32 Size)
 
 String File::ExtractFilepath(const String& Filepath)
 {
-    int32 LastSlash = Filepath.FindLastChar('/');
+    const int32 LastSlash = Filepath.FindLastChar('/');
     if (LastSlash == String::InvalidIndex)
     {
-        LastSlash = Filepath.Length();
+        return String();
     }
-    
+
     return String(*Filepath, LastSlash);
 }
 
@@ -116,24 +116,15 @@ String File::ExtractFilename(const String& Filepath)
     
 String File::ExtractFilenameWithoutExtension(const String& Filepath)
 {
-    int32 LastSlash = Filepath.FindLastChar('/');
-    if (LastSlash == String::InvalidIndex)
+    const String Filename = ExtractFilename(Filepath);
+    const int32  Dot      = Filename.FindLastChar('.');
+
+    if ((Dot == String::InvalidIndex) || (Dot == 0))
     {
-        LastSlash = 0;
+        return Filename;
     }
-    else
-    {
-        LastSlash++;
-    }
-    
-    int32 ExtensionPos = Filepath.FindLastChar('.');
-    if (ExtensionPos == String::InvalidIndex)
-    {
-        ExtensionPos = CString::Strlen(*Filepath + LastSlash);
-    }
-    
-    int32 NewLength = ExtensionPos - LastSlash;
-    return String(*Filepath + LastSlash, NewLength);
+
+    return String(*Filename, Dot);
 }
 
 bool File::CreateDirectoryTree(const String& Path)

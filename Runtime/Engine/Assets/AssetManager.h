@@ -66,14 +66,12 @@ private:
     // Meshes
     TArray<TSharedPtr<IModelImporter>>   ModelImporters;
     FCriticalSection                     ModelImportersCS;
-    TMap<String, int32>                  ModelsMap;
-    TArray<TSharedRef<FModel>>           Models;
+    TMap<String, TSharedRef<FModel>>     Models;
     FCriticalSection                     ModelsCS;
     // Textures
     TArray<TSharedPtr<ITextureImporter>> TextureImporters;
     FCriticalSection                     TextureImportersCS;
-    TMap<String, int32>                  TextureMap;
-    TArray<TSharedRef<FTexture>>         Textures;
+    TMap<String, TSharedRef<FTexture>>   Textures;
     FCriticalSection                     TexturesCS;
 
     static FAssetManager* AssetManager;

@@ -121,6 +121,12 @@ bool TString_Test()
         TEST_EXPECT(Str.StartsWith("file", EStringCaseType::NoCase));
         TEST_EXPECT(Str.EndsWith(".txt"));
         TEST_EXPECT(!Str.EndsWith(".png"));
+
+        TEST_EXPECT(Str.StartsWith("FileName.txt"));
+        TEST_EXPECT(Str.EndsWith("FileName.txt"));
+        TEST_EXPECT(String("/").EndsWith("/"));
+        TEST_EXPECT(!Str.EndsWith("AFileName.txt"));
+        TEST_EXPECT(!Str.StartsWith("FileName.txtA"));
     }
 
     TEST_SECTION("Insert / Remove / Replace / ReplaceAll");

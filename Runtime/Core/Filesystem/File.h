@@ -24,7 +24,7 @@ public:
         return WriteTextFile(InFile, Text.Data(), Text.SizeInBytes());
     }
 
-    // Returns the Path to the file (Excluding the filename)
+    // Returns the Path to the file (Excluding the filename), or an empty string when the path has no directory component
     static String ExtractFilepath(const String& Filepath);
 
     // Returns the directory containing the file, or an empty string when the path has no directory component

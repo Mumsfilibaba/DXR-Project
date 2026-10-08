@@ -1135,7 +1135,7 @@ public:
         }
 
         const SizeType CurrentLength = Length();
-        if (InLength > 0 && CurrentLength > InLength)
+        if (InLength > 0 && CurrentLength >= InLength)
         {
             const CharType* StringData = CharData.Data() + (CurrentLength - InLength);
             if (SearchType == EStringCaseType::CaseSensitive)

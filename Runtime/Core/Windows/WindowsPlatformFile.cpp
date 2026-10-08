@@ -403,8 +403,8 @@ const CHAR* FWindowsPlatformFile::GetExecutablePath()
 
 String FWindowsPlatformFile::GetCurrentWorkingDirectory()
 {
-    int32 Length = ::GetCurrentDirectoryA(0, nullptr);
-    if (!Length)
+    const int32 RequiredSize = ::GetCurrentDirectoryA(0, nullptr);
+    if (!RequiredSize)
     {
         String Error;
         const int32 ErrorCode = FWindowsPlatformMisc::GetLastErrorString(Error);
@@ -413,10 +413,10 @@ String FWindowsPlatformFile::GetCurrentWorkingDirectory()
     }
 
     String Result;
-    Result.Resize(Length);
+    Result.Resize(RequiredSize - 1);
 
-    Length = ::GetCurrentDirectoryA(Result.Size(), Result.Data());
-    if (!Length)
+    const int32 Length = ::GetCurrentDirectoryA(RequiredSize, Result.Data());
+    if (!Length || Length >= RequiredSize)
     {
         String Error;
 
@@ -426,6 +426,7 @@ String FWindowsPlatformFile::GetCurrentWorkingDirectory()
     }
     else
     {
+        Result.Resize(Length);
         return Result;
     }
 }

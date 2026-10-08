@@ -126,8 +126,14 @@ TSharedRef<FTexture> FTextureImporterDDS::ImportFromFile(const StringView& FileN
         return nullptr;
     }
 
-    // TODO: Support other types
-    CHECK(File.GetTextureDimension() == tinyddsloader::DDSFile::TextureDimension::Texture2D);
+    // TODO: Support other types. The array size counts the faces of a cubemap, so it covers both cubemaps and arrays.
+    const bool bIsTexture2D = File.GetTextureDimension() == tinyddsloader::DDSFile::TextureDimension::Texture2D;
+    if (!bIsTexture2D || File.IsCubemap() || File.GetArraySize() > 1)
+    {
+        LOG_ERROR("[FTextureImporterDDS]: The image '%s' is not a single 2D texture. Cubemaps, arrays and volumes are not "
+            "supported", *FileName);
+        return nullptr;
+    }
 
     const EFormat Format = ConvertFormat(File.GetFormat());
     if (IsBlockCompressed(Format) && (!IsBlockCompressedAligned(File.GetWidth()) || !IsBlockCompressedAligned(File.GetHeight())))

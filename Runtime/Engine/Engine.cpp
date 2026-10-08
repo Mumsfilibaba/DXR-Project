@@ -497,8 +497,8 @@ void FEngine::Release()
     {
         GameModule->Release();
 
-        const CHAR* GameModuleName = *Paths::GetProjectModuleName();
-        FModuleManager::Get().UnloadModule(GameModuleName);
+        const String GameModuleName = Paths::GetProjectModuleName();
+        FModuleManager::Get().UnloadModule(*GameModuleName);
         GameModule = nullptr;
     }
 

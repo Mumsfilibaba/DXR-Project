@@ -167,12 +167,10 @@ FAssetManager::FAssetManager()
     , ModelSerializer(nullptr)
     , ModelImporters()
     , ModelImportersCS()
-    , ModelsMap()
     , Models()
     , ModelsCS()
     , TextureImporters()
     , TextureImportersCS()
-    , TextureMap()
     , Textures()
     , TexturesCS()
 {
@@ -240,10 +238,9 @@ TSharedRef<FTexture> FAssetManager::LoadTexture(const String& Filename, bool bGe
     String FinalPath = Filename;
     FinalPath.ReplaceAll('\\', '/');
     
-    if (int32* TextureID = TextureMap.Find(FinalPath))
+    if (TSharedRef<FTexture>* ExistingTexture = Textures.Find(FinalPath))
     {
-        const int32 TextureIndex = *TextureID;
-        return Textures[TextureIndex];
+        return *ExistingTexture;
     }
 
     TSharedRef<FTexture> NewTexture;
@@ -289,9 +286,7 @@ TSharedRef<FTexture> FAssetManager::LoadTexture(const String& Filename, bool bGe
     NewTexture->ReleaseData();
 
     // Insert the new texture
-    const int32 Index = Textures.Size();
-    Textures.Emplace(NewTexture);
-    TextureMap.Add(FinalPath, Index);
+    Textures.Add(FinalPath, NewTexture);
     return NewTexture;
 }
 
@@ -303,10 +298,9 @@ TSharedRef<FModel> FAssetManager::LoadModel(const String& Filename, EMeshImportF
     String FinalPath = Filename;
     FinalPath.ReplaceAll('\\', '/');
 
-    if (int32* MeshID = ModelsMap.Find(FinalPath))
+    if (TSharedRef<FModel>* ExistingModel = Models.Find(FinalPath))
     {
-        const int32 MeshIndex = *MeshID;
-        return Models[MeshIndex];
+        return *ExistingModel;
     }
 
     // Insert the a new model into the AssetManager
@@ -318,9 +312,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const String& Filename, EMeshImportF
             return TSharedRef<FModel>(nullptr);
         }
 
-        const int32 Index = Models.Size();
-        Models.Emplace(NewModel);
-        ModelsMap.Add(Filename, Index);
+        Models.Add(Filename, NewModel);
         return NewModel;
     };
 
@@ -396,18 +388,28 @@ TSharedRef<FModel> FAssetManager::LoadModel(const String& Filename, EMeshImportF
 void FAssetManager::UnloadModel(const TSharedRef<FModel>& InModel)
 {
     SCOPED_LOCK(ModelsCS);
-        
-    Models.Remove(InModel);
-    // TODO: Remove mesh from map
+
+    String ModelPath;
+    bool   bFound = false;
+    Models.Foreach([&](const String& Path, const TSharedRef<FModel>& Model)
+    {
+        if (Model == InModel)
+        {
+            ModelPath = Path;
+            bFound    = true;
+        }
+    });
+
+    if (bFound)
+    {
+        Models.Remove(ModelPath);
+    }
 }
 
 void FAssetManager::UnloadTexture(const FTextureRef& Texture)
 {
     SCOPED_LOCK(TexturesCS);
-    
-    const String& Filename = Texture->GetFilename();
-    TextureMap.Remove(Filename);
-    Textures.Remove(Texture);
+    Textures.Remove(Texture->GetFilename());
 }
 
 void FAssetManager::RegisterTextureImporter(const TSharedPtr<ITextureImporter>& InImporter)
