@@ -3,6 +3,146 @@
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Memory/Memory.h"
 
+#if PLATFORM_WINDOWS
+    static constexpr EStringCaseType PATH_CASE_TYPE = EStringCaseType::NoCase;
+#else
+    static constexpr EStringCaseType PATH_CASE_TYPE = EStringCaseType::CaseSensitive;
+#endif
+
+struct FPathParts
+{
+    /**
+     * @brief "/", or empty for a relative path. On Windows also "C:/", "//" for a UNC path, or "C:" for a path relative
+     * to the current directory of a drive.
+     */
+    String Root;
+
+    /** @brief The directory and file names after the root, with "." removed and ".." resolved where possible */
+    TArray<String> Segments;
+};
+
+static bool IsSeparator(CHAR Char)
+{
+    return (Char == '/') || (Char == '\\');
+}
+
+#if PLATFORM_WINDOWS
+static bool IsDriveLetter(CHAR Char)
+{
+    return ((Char >= 'A') && (Char <= 'Z')) || ((Char >= 'a') && (Char <= 'z'));
+}
+#endif
+
+static int32 FindLastSeparator(const String& Path)
+{
+    for (int32 Index = Path.Length() - 1; Index >= 0; --Index)
+    {
+        if (IsSeparator(Path[Index]))
+        {
+            return Index;
+        }
+    }
+
+    return String::InvalidIndex;
+}
+
+static int32 ParseRoot(const String& Path, String& OutRoot)
+{
+    const int32 Length = Path.Length();
+
+#if PLATFORM_WINDOWS
+    if ((Length >= 2) && IsSeparator(Path[0]) && IsSeparator(Path[1]))
+    {
+        OutRoot = "//";
+        return 2;
+    }
+
+    if ((Length >= 2) && (Path[1] == ':') && IsDriveLetter(Path[0]))
+    {
+        OutRoot = String(*Path, 2);
+
+        if ((Length >= 3) && IsSeparator(Path[2]))
+        {
+            OutRoot.Append('/');
+            return 3;
+        }
+
+        return 2;
+    }
+#endif
+
+    if ((Length >= 1) && IsSeparator(Path[0]))
+    {
+        OutRoot = "/";
+        return 1;
+    }
+
+    OutRoot.Clear();
+    return 0;
+}
+
+static FPathParts SplitPath(const String& Path)
+{
+    FPathParts Parts;
+
+    const int32 Length = Path.Length();
+    const int32 Start  = ParseRoot(Path, Parts.Root);
+
+    // Nothing is above an absolute root, while a relative path is allowed to climb above where it starts
+    const bool bIsAbsolute = Parts.Root.EndsWith("/");
+
+    String Segment;
+    for (int32 Index = Start; Index <= Length; ++Index)
+    {
+        if ((Index < Length) && !IsSeparator(Path[Index]))
+        {
+            Segment.Append(Path[Index]);
+            continue;
+        }
+
+        if (Segment.Equals(".."))
+        {
+            if (!Parts.Segments.IsEmpty() && !Parts.Segments.Last().Equals(".."))
+            {
+                Parts.Segments.Pop();
+            }
+            else if (!bIsAbsolute)
+            {
+                Parts.Segments.Add(Segment);
+            }
+        }
+        else if (!Segment.IsEmpty() && !Segment.Equals("."))
+        {
+            Parts.Segments.Add(Segment);
+        }
+
+        Segment.Clear();
+    }
+
+    return Parts;
+}
+
+static String JoinPath(const FPathParts& Parts)
+{
+    if (Parts.Segments.IsEmpty())
+    {
+        return Parts.Root.IsEmpty() ? String(".") : Parts.Root;
+    }
+
+    String Result = Parts.Root;
+    for (int32 Index = 0; Index < Parts.Segments.Size(); ++Index)
+    {
+        if (Index > 0)
+        {
+            Result.Append('/');
+        }
+
+        Result.Append(Parts.Segments[Index]);
+    }
+
+    return Result;
+}
+
 bool File::ReadFile(IPlatformFile* InFile, FByteInputStream& OutData)
 {
     CHECK(InFile != nullptr);
@@ -81,37 +221,16 @@ bool File::WriteTextFile(IPlatformFile* InFile, const CHAR* Text, uint32 Size)
     }
 }
 
-String File::ExtractFilepath(const String& Filepath)
-{
-    const int32 LastSlash = Filepath.FindLastChar('/');
-    if (LastSlash == String::InvalidIndex)
-    {
-        return String();
-    }
-
-    return String(*Filepath, LastSlash);
-}
-
 String File::GetDirectoryOf(const String& Filepath)
 {
-    const int32 LastSlash = Filepath.FindLastChar('/');
-    return (LastSlash == String::InvalidIndex) ? String() : String(*Filepath, LastSlash);
+    const int32 LastSeparator = FindLastSeparator(Filepath);
+    return (LastSeparator == String::InvalidIndex) ? String() : String(*Filepath, LastSeparator);
 }
 
 String File::ExtractFilename(const String& Filepath)
 {
-    int32 LastSlash = Filepath.FindLastChar('/');
-    if (LastSlash == String::InvalidIndex)
-    {
-        LastSlash = 0;
-    }
-    else
-    {
-        LastSlash++;
-    }
-    
-    int32 NewLength = Filepath.Length() - LastSlash;
-    return String(*Filepath + LastSlash, NewLength);
+    const int32 Start = FindLastSeparator(Filepath) + 1;
+    return String(*Filepath + Start, Filepath.Length() - Start);
 }
     
 String File::ExtractFilenameWithoutExtension(const String& Filepath)
@@ -251,6 +370,83 @@ bool File::IterateDirectoryTree(const String& Directory, TFunction<bool(const St
         }
 
         if (Entry.bIsDirectory && !IterateDirectoryTree(Child, Visitor))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+String File::NormalizePath(const String& Path)
+{
+    if (Path.IsEmpty())
+    {
+        return String();
+    }
+
+    return JoinPath(SplitPath(Path));
+}
+
+String File::MakeAbsolute(const String& Path)
+{
+    const FPathParts Parts = SplitPath(Path);
+    if (Parts.Root.EndsWith("/"))
+    {
+        return JoinPath(Parts);
+    }
+
+    return NormalizePath(CombinePath(FPlatformFile::GetCurrentWorkingDirectory(), Path));
+}
+
+String File::MakeRelative(const String& Path, const String& BaseDirectory)
+{
+    const FPathParts PathParts = SplitPath(MakeAbsolute(Path));
+    const FPathParts BaseParts = SplitPath(MakeAbsolute(BaseDirectory));
+
+    if (!PathParts.Root.Equals(BaseParts.Root, PATH_CASE_TYPE))
+    {
+        return JoinPath(PathParts);
+    }
+
+    int32 NumShared = 0;
+    while ((NumShared < PathParts.Segments.Size()) && (NumShared < BaseParts.Segments.Size()))
+    {
+        if (!PathParts.Segments[NumShared].Equals(BaseParts.Segments[NumShared], PATH_CASE_TYPE))
+        {
+            break;
+        }
+
+        ++NumShared;
+    }
+
+    FPathParts Relative;
+    for (int32 Index = NumShared; Index < BaseParts.Segments.Size(); ++Index)
+    {
+        Relative.Segments.Add(String(".."));
+    }
+
+    for (int32 Index = NumShared; Index < PathParts.Segments.Size(); ++Index)
+    {
+        Relative.Segments.Add(PathParts.Segments[Index]);
+    }
+
+    return JoinPath(Relative);
+}
+
+bool File::IsUnderDirectory(const String& Path, const String& Directory)
+{
+    const FPathParts PathParts      = SplitPath(MakeAbsolute(Path));
+    const FPathParts DirectoryParts = SplitPath(MakeAbsolute(Directory));
+
+    if (!PathParts.Root.Equals(DirectoryParts.Root, PATH_CASE_TYPE) || (PathParts.Segments.Size() < DirectoryParts.Segments.Size()))
+    {
+        return false;
+    }
+
+    for (int32 Index = 0; Index < DirectoryParts.Segments.Size(); ++Index)
+    {
+        if (!PathParts.Segments[Index].Equals(DirectoryParts.Segments[Index], PATH_CASE_TYPE))
         {
             return false;
         }

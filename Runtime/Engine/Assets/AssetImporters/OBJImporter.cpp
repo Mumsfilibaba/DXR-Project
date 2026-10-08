@@ -19,7 +19,7 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
 
     // Extract just the name of the file
     const String Filename            = String(InFilename);
-    const String MTLFiledir          = File::ExtractFilepath(Filename);
+    const String MTLFiledir          = File::GetDirectoryOf(Filename);
     const String FilenameWithoutPath = File::ExtractFilenameWithoutExtension(Filename);
     
     // Load the OBJ file

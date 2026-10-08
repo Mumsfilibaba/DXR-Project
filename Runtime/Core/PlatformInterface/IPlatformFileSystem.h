@@ -154,9 +154,6 @@ struct FFileInfo
 
 struct CORE_API IPlatformFileSystem
 {
-    /** @brief Unimplemented: declared here, but never defined and never overridden by a platform */
-    static void ObtainRelativePath(const String& Path);
-
     /**
      * @brief Open an existing file for reading, leaving it open to other readers
      * @param Filename Path of the file to open

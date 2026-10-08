@@ -110,7 +110,7 @@ bool FPngWriter::WriteToFile(const String& Filename, const FImageView& Image)
         return false;
     }
 
-    const String Directory = File::ExtractFilepath(Filename);
+    const String Directory = File::GetDirectoryOf(Filename);
     if (!Directory.IsEmpty() && !File::CreateDirectoryTree(Directory))
     {
         LOG_ERROR("[FPngWriter]: Failed to create '%s' to write '%s' into", *Directory, *Filename);

@@ -41,7 +41,7 @@ bool Json::SaveToFile(const String& Filename, const FJsonValue& Value, EJsonWrit
 {
     const String Text = Json::ToString(Value, Flags);
 
-    const String Directory = File::ExtractFilepath(Filename);
+    const String Directory = File::GetDirectoryOf(Filename);
     if (!Directory.IsEmpty() && !File::CreateDirectoryTree(Directory))
     {
         return false;

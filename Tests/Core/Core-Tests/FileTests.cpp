@@ -53,12 +53,19 @@ bool File_Test()
         TEST_EXPECT(static_cast<int32>(CString::Strlen(*Appended)) == Appended.Length());
     }
 
-    TEST_SECTION("ExtractFilepath returns the directory part only");
+    TEST_SECTION("GetDirectoryOf and ExtractFilename split on either separator");
     {
-        TEST_EXPECT(File::ExtractFilepath("Dir/Sub/File.txt").Equals("Dir/Sub"));
-        TEST_EXPECT(File::ExtractFilepath("Dir/File").Equals("Dir"));
-        TEST_EXPECT(File::ExtractFilepath("File.txt").IsEmpty());
-        TEST_EXPECT(File::ExtractFilepath("").IsEmpty());
+        TEST_EXPECT(File::GetDirectoryOf("Dir/Sub/File.txt").Equals("Dir/Sub"));
+        TEST_EXPECT(File::GetDirectoryOf("Dir/File").Equals("Dir"));
+        TEST_EXPECT(File::GetDirectoryOf("Dir\\Sub\\File.txt").Equals("Dir\\Sub"));
+        TEST_EXPECT(File::GetDirectoryOf("File.txt").IsEmpty());
+        TEST_EXPECT(File::GetDirectoryOf("").IsEmpty());
+
+        TEST_EXPECT(File::ExtractFilename("Dir/Sub/File.txt").Equals("File.txt"));
+        TEST_EXPECT(File::ExtractFilename("Dir\\Sub\\File.txt").Equals("File.txt"));
+        TEST_EXPECT(File::ExtractFilename("Dir/Mixed\\File.txt").Equals("File.txt"));
+        TEST_EXPECT(File::ExtractFilename("File.txt").Equals("File.txt"));
+        TEST_EXPECT(File::ExtractFilename("Dir/").IsEmpty());
     }
 
     TEST_SECTION("ExtractFilenameWithoutExtension only looks at the filename");
@@ -198,6 +205,100 @@ bool File_Test()
 
     TEST_EXPECT(File::DeleteDirectoryTree(Root));
     TEST_EXPECT(!FPlatformFile::IsDirectory(*Root));
+
+    TEST_SECTION("NormalizePath cleans up separators, '.' and '..'");
+    {
+        TEST_EXPECT(File::NormalizePath("/Engine/./Saved/../Content//A.png").Equals("/Engine/Content/A.png"));
+        TEST_EXPECT(File::NormalizePath("/usr//local/./bin/").Equals("/usr/local/bin"));
+        TEST_EXPECT(File::NormalizePath("A/B/../../C").Equals("C"));
+        TEST_EXPECT(File::NormalizePath("A/..").Equals("."));
+        TEST_EXPECT(File::NormalizePath("../../A").Equals("../../A"));
+        TEST_EXPECT(File::NormalizePath("A/../../B").Equals("../B"));
+        TEST_EXPECT(File::NormalizePath("/..").Equals("/"));
+        TEST_EXPECT(File::NormalizePath("/").Equals("/"));
+        TEST_EXPECT(File::NormalizePath("").IsEmpty());
+    }
+
+    TEST_SECTION("A backslash is a separator in an engine path on every platform");
+    {
+        TEST_EXPECT(File::NormalizePath("textures_pbr\\Thorn_diffuse.tga").Equals("textures_pbr/Thorn_diffuse.tga"));
+        TEST_EXPECT(File::NormalizePath("\\Engine\\Content\\").Equals("/Engine/Content"));
+        TEST_EXPECT(File::NormalizePath("A\\B/C\\..\\D").Equals("A/B/D"));
+    }
+
+    TEST_SECTION("MakeAbsolute resolves against the working directory");
+    {
+        const String WorkingDirectory = File::NormalizePath(FPlatformFile::GetCurrentWorkingDirectory());
+        TEST_EXPECT(File::MakeAbsolute("A/B.txt").Equals(WorkingDirectory + "/A/B.txt"));
+        TEST_EXPECT(File::MakeAbsolute(".").Equals(WorkingDirectory));
+        TEST_EXPECT(File::MakeAbsolute("/Engine/../Game").Equals("/Game"));
+    }
+
+    TEST_SECTION("MakeRelative walks up and down from the base directory");
+    {
+        TEST_EXPECT(File::MakeRelative("/Engine/Content/A.png", "/Engine/Saved").Equals("../Content/A.png"));
+        TEST_EXPECT(File::MakeRelative("/Engine/Content/A.png", "/Engine").Equals("Content/A.png"));
+        TEST_EXPECT(File::MakeRelative("/Engine", "/Engine/Content/Deep").Equals("../.."));
+        TEST_EXPECT(File::MakeRelative("/Engine", "/Engine/").Equals("."));
+        TEST_EXPECT(File::MakeRelative("\\Engine\\Content", "/Engine").Equals("Content"));
+        TEST_EXPECT(File::MakeRelative("/EngineData/File.txt", "/Engine").Equals("../EngineData/File.txt"));
+    }
+
+    TEST_SECTION("IsUnderDirectory compares whole directory names");
+    {
+        TEST_EXPECT(File::IsUnderDirectory("/Engine/Content/A.png", "/Engine"));
+        TEST_EXPECT(File::IsUnderDirectory("/Engine/Content/A.png", "/Engine/Content/"));
+        TEST_EXPECT(File::IsUnderDirectory("/Engine", "/Engine"));
+        TEST_EXPECT(File::IsUnderDirectory("/Engine/Content/../Saved/B.txt", "/Engine"));
+        TEST_EXPECT(!File::IsUnderDirectory("/EngineData/A.png", "/Engine"));
+        TEST_EXPECT(!File::IsUnderDirectory("/Engine/../Game/A.png", "/Engine"));
+        TEST_EXPECT(!File::IsUnderDirectory("/Engine", "/Engine/Content"));
+    }
+
+#if PLATFORM_WINDOWS
+    TEST_SECTION("Windows drive letters and UNC roots are roots");
+    {
+        TEST_EXPECT(File::NormalizePath("C:\\Engine\\Content\\").Equals("C:/Engine/Content"));
+        TEST_EXPECT(File::NormalizePath("C:/..").Equals("C:/"));
+        TEST_EXPECT(File::NormalizePath("\\\\Server\\Share\\Dir").Equals("//Server/Share/Dir"));
+        TEST_EXPECT(File::MakeAbsolute("C:\\Engine\\..\\Game").Equals("C:/Game"));
+        TEST_EXPECT(File::MakeAbsolute("//Server/Share/Dir").Equals("//Server/Share/Dir"));
+        TEST_EXPECT(File::MakeRelative("C:/Engine/Content/A.png", "C:/Engine/Saved").Equals("../Content/A.png"));
+        TEST_EXPECT(File::IsUnderDirectory("C:/Engine/Content/A.png", "C:/Engine"));
+    }
+
+    TEST_SECTION("Paths on different Windows drives have nothing in common");
+    {
+        TEST_EXPECT(File::MakeRelative("D:/Other/File.txt", "C:/Engine").Equals("D:/Other/File.txt"));
+        TEST_EXPECT(!File::IsUnderDirectory("D:/Engine/A.png", "C:/Engine"));
+        TEST_EXPECT(!File::IsUnderDirectory("//Server/Share/A.png", "C:/Engine"));
+    }
+
+    TEST_SECTION("Windows paths compare without regard to case");
+    {
+        TEST_EXPECT(File::IsUnderDirectory("c:/engine/content/a.png", "C:/Engine"));
+        TEST_EXPECT(File::MakeRelative("c:/engine/Content", "C:/Engine").Equals("Content"));
+    }
+#else
+    TEST_SECTION("Outside Windows a leading '//' is the same root as '/'");
+    {
+        TEST_EXPECT(File::NormalizePath("//usr/bin").Equals("/usr/bin"));
+        TEST_EXPECT(File::IsUnderDirectory("//usr/bin", "/usr"));
+    }
+
+    TEST_SECTION("Outside Windows 'C:' is an ordinary name");
+    {
+        const String WorkingDirectory = File::NormalizePath(FPlatformFile::GetCurrentWorkingDirectory());
+        TEST_EXPECT(File::NormalizePath("C:/Engine/..").Equals("C:"));
+        TEST_EXPECT(File::MakeAbsolute("C:/Engine").Equals(WorkingDirectory + "/C:/Engine"));
+    }
+
+    TEST_SECTION("Outside Windows paths compare with regard to case");
+    {
+        TEST_EXPECT(!File::IsUnderDirectory("/engine/content/a.png", "/Engine"));
+        TEST_EXPECT(File::MakeRelative("/engine/Content", "/Engine").Equals("../engine/Content"));
+    }
+#endif
 
     TEST_END();
 }
