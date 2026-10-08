@@ -14,7 +14,6 @@ PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           D3D12::D3D12SerializeVers
 PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12::D3D12CreateVersionedRootSignatureDeserializer = nullptr;
 PFN_PIXBeginEventOnCommandList                         D3D12::PIXBeginEventOnCommandList                    = nullptr;
 PFN_PIXEndEventOnCommandList                           D3D12::PIXEndEventOnCommandList                      = nullptr;
-DxcCreateInstanceProc                                  D3D12::DxcCreateInstance                             = nullptr;
 #if D3D12_ENABLE_COMPOSITION
 PFN_DCOMPOSITION_CREATE_DEVICE                         D3D12::DCompositionCreateDevice                      = nullptr;
 #endif
@@ -33,7 +32,6 @@ do \
 void* D3D12::DXGILibrary  = nullptr;
 void* D3D12::D3D12Library = nullptr;
 void* D3D12::PIXLibrary   = nullptr;
-void* D3D12::DXCLibrary   = nullptr;
 #if D3D12_ENABLE_COMPOSITION
 void* D3D12::DCompLibrary = nullptr;
 #endif
@@ -62,13 +60,6 @@ bool D3D12::Initialize(bool bEnablePIX)
         D3D12_INFO("Loaded d3d12.dll");
     }
 
-	DXCLibrary = FPlatformLibrary::LoadDynamicLib("dxcompiler");
-	if (!DXCLibrary)
-	{
-		FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load dxcompiler.dll");
-		return false;
-	}
-
     D3D12_LOAD_FUNCTION(CreateDXGIFactory2, DXGILibrary);
     D3D12_LOAD_FUNCTION(DXGIGetDebugInterface1, DXGILibrary);
 
@@ -78,8 +69,6 @@ bool D3D12::Initialize(bool bEnablePIX)
     D3D12_LOAD_FUNCTION(D3D12SerializeVersionedRootSignature, D3D12Library);
     D3D12_LOAD_FUNCTION(D3D12CreateRootSignatureDeserializer, D3D12Library);
     D3D12_LOAD_FUNCTION(D3D12CreateVersionedRootSignatureDeserializer, D3D12Library);
-
-    D3D12_LOAD_FUNCTION(DxcCreateInstance, DXCLibrary);
 
 #if D3D12_ENABLE_COMPOSITION
     DCompLibrary = FPlatformLibrary::LoadDynamicLib("dcomp");
@@ -135,12 +124,6 @@ void D3D12::Release()
         PIXLibrary = nullptr;
     }
 
-    if (DXCLibrary)
-	{
-		FPlatformLibrary::FreeDynamicLib(DXCLibrary);
-        DXCLibrary = nullptr;
-	}
-
 #if D3D12_ENABLE_COMPOSITION
     if (DCompLibrary)
     {
@@ -159,7 +142,6 @@ void D3D12::Release()
     D3D12::D3D12CreateVersionedRootSignatureDeserializer = nullptr;
     D3D12::PIXBeginEventOnCommandList                    = nullptr;
     D3D12::PIXEndEventOnCommandList                      = nullptr;
-    D3D12::DxcCreateInstance                             = nullptr;
 #if D3D12_ENABLE_COMPOSITION
     D3D12::DCompositionCreateDevice                      = nullptr;
 #endif

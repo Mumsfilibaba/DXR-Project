@@ -1311,192 +1311,98 @@ FRHIDepthStencilView* FD3D12DeviceRHI::CreateDepthStencilView(FRHIResource* InRe
     return D3D12View.ReleaseOwnership();
 }
 
-FRHIComputeShader* FD3D12DeviceRHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
+template<typename ShaderType>
+ShaderType* FD3D12DeviceRHI::CreateD3D12Shader(EShaderStage Stage, const TArray<uint8>& ShaderCode)
 {
-    FD3D12ComputeShaderRHIRef NewShader = new FD3D12ComputeShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
+    FShaderCodeView CodeView;
+    if (!FShaderCodeReader::Read(ShaderCode, CodeView) || CodeView.GetStage() != Stage || CodeView.GetOutputLanguage() != EShaderOutputLanguage::DXIL)
+    {
+        D3D12_ERROR("[FD3D12DeviceRHI]: The shader code is not a valid DXIL %s shader", ToString(Stage));
+        return nullptr;
+    }
+
+    TSharedRef<ShaderType> NewShader = new ShaderType(GetDevice());
+    if (!NewShader->Initialize(CodeView))
     {
         return nullptr;
     }
-    else
+
+    if constexpr (TIsBaseOf<FRHIVertexShader, ShaderType>::Value)
     {
-        return NewShader.ReleaseOwnership();
+        NewShader->SetVertexInputs(CodeView.GetVertexInputs());
     }
+
+    return NewShader.ReleaseOwnership();
+}
+
+FRHIComputeShader* FD3D12DeviceRHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
+{
+    return CreateD3D12Shader<FD3D12ComputeShaderRHI>(EShaderStage::Compute, ShaderCode);
 }
 
 FRHIVertexShader* FD3D12DeviceRHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D12VertexShaderRHIRef NewShader = new FD3D12VertexShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateD3D12Shader<FD3D12VertexShaderRHI>(EShaderStage::Vertex, ShaderCode);
 }
 
 FRHIHullShader* FD3D12DeviceRHI::CreateHullShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D12HullShaderRHIRef NewShader = new FD3D12HullShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateD3D12Shader<FD3D12HullShaderRHI>(EShaderStage::Hull, ShaderCode);
 }
 
 FRHIDomainShader* FD3D12DeviceRHI::CreateDomainShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D12DomainShaderRHIRef NewShader = new FD3D12DomainShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateD3D12Shader<FD3D12DomainShaderRHI>(EShaderStage::Domain, ShaderCode);
 }
 
 FRHIGeometryShader* FD3D12DeviceRHI::CreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D12GeometryShaderRHIRef NewShader = new FD3D12GeometryShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateD3D12Shader<FD3D12GeometryShaderRHI>(EShaderStage::Geometry, ShaderCode);
 }
 
 FRHIMeshShader* FD3D12DeviceRHI::CreateMeshShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D12MeshShaderRHIRef NewShader = new FD3D12MeshShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateD3D12Shader<FD3D12MeshShaderRHI>(EShaderStage::Mesh, ShaderCode);
 }
 
 FRHIAmplificationShader* FD3D12DeviceRHI::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D12AmplificationShaderRHIRef NewShader = new FD3D12AmplificationShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateD3D12Shader<FD3D12AmplificationShaderRHI>(EShaderStage::Amplification, ShaderCode);
 }
 
 FRHIPixelShader* FD3D12DeviceRHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D12PixelShaderRHIRef NewShader = new FD3D12PixelShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateD3D12Shader<FD3D12PixelShaderRHI>(EShaderStage::Pixel, ShaderCode);
 }
 
 FRHIRayGenShader* FD3D12DeviceRHI::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D12RayGenShaderRHIRef NewShader = new FD3D12RayGenShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        D3D12_ERROR_CRITICAL("[FD3D12DeviceRHI]: Failed to retrieve Shader Identifier");
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateD3D12Shader<FD3D12RayGenShaderRHI>(EShaderStage::RayGen, ShaderCode);
 }
 
 FRHIRayAnyHitShader* FD3D12DeviceRHI::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D12RayAnyHitShaderRHIRef NewShader = new FD3D12RayAnyHitShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        D3D12_ERROR_CRITICAL("[FD3D12DeviceRHI]: Failed to retrieve Shader Identifier");
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateD3D12Shader<FD3D12RayAnyHitShaderRHI>(EShaderStage::RayAnyHit, ShaderCode);
 }
 
 FRHIRayClosestHitShader* FD3D12DeviceRHI::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D12RayClosestHitShaderRHIRef NewShader = new FD3D12RayClosestHitShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        D3D12_ERROR_CRITICAL("[FD3D12DeviceRHI]: Failed to retrieve Shader Identifier");
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateD3D12Shader<FD3D12RayClosestHitShaderRHI>(EShaderStage::RayClosestHit, ShaderCode);
 }
 
 FRHIRayMissShader* FD3D12DeviceRHI::CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D12RayMissShaderRHIRef NewShader = new FD3D12RayMissShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        D3D12_ERROR_CRITICAL("[FD3D12DeviceRHI]: Failed to retrieve Shader Identifier");
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateD3D12Shader<FD3D12RayMissShaderRHI>(EShaderStage::RayMiss, ShaderCode);
 }
 
 FRHIRayIntersectionShader* FD3D12DeviceRHI::CreateRayIntersectionShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D12RayIntersectionShaderRHIRef NewShader = new FD3D12RayIntersectionShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        D3D12_ERROR_CRITICAL("[FD3D12DeviceRHI]: Failed to retrieve Shader Identifier");
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateD3D12Shader<FD3D12RayIntersectionShaderRHI>(EShaderStage::RayIntersection, ShaderCode);
 }
 
 FRHIRayCallableShader* FD3D12DeviceRHI::CreateRayCallableShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D12RayCallableShaderRHIRef NewShader = new FD3D12RayCallableShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        D3D12_ERROR_CRITICAL("[FD3D12DeviceRHI]: Failed to retrieve Shader Identifier");
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateD3D12Shader<FD3D12RayCallableShaderRHI>(EShaderStage::RayCallable, ShaderCode);
 }
 
 FRHIDepthStencilState* FD3D12DeviceRHI::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)

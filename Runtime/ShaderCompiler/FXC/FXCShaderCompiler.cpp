@@ -29,6 +29,8 @@ FFXCShaderCompiler::FFXCShaderCompiler()
     : FShaderCompilerBackend()
     , D3DCompilerLib(nullptr)
     , D3DCompileFunc(nullptr)
+    , D3DReflectFunc(nullptr)
+    , D3DStripShaderFunc(nullptr)
 {
 }
 
@@ -40,7 +42,9 @@ FFXCShaderCompiler::~FFXCShaderCompiler()
         D3DCompilerLib = nullptr;
     }
 
-    D3DCompileFunc = nullptr;
+    D3DCompileFunc     = nullptr;
+    D3DReflectFunc     = nullptr;
+    D3DStripShaderFunc = nullptr;
 }
 
 bool FFXCShaderCompiler::Initialize()
@@ -58,6 +62,20 @@ bool FFXCShaderCompiler::Initialize()
         return false;
     }
 
+    D3DReflectFunc = FPlatformLibrary::LoadSymbol<PFN_FXC_D3D_REFLECT>("D3DReflect", D3DCompilerLib);
+    if (!D3DReflectFunc)
+    {
+        LOG_ERROR("[FShaderCompiler]: Failed to load 'D3DReflect'");
+        return false;
+    }
+
+    D3DStripShaderFunc = FPlatformLibrary::LoadSymbol<PFN_FXC_D3D_STRIP_SHADER>("D3DStripShader", D3DCompilerLib);
+    if (!D3DStripShaderFunc)
+    {
+        LOG_ERROR("[FShaderCompiler]: Failed to load 'D3DStripShader'");
+        return false;
+    }
+
     LOG_INFO("[FShaderCompiler]: Loaded 'd3dcompiler_47'");
     return true;
 }
@@ -67,12 +85,12 @@ bool FFXCShaderCompiler::SupportsOutputLanguage(EShaderOutputLanguage OutputLang
     return OutputLanguage == EShaderOutputLanguage::DXBC;
 }
 
-UINT FFXCShaderCompiler::BuildCompileFlags(const FShaderCompileInfo& CompileInfo, bool bDebugInfo)
+UINT FFXCShaderCompiler::BuildCompileFlags(const FShaderCompileInfo& CompileInfo)
 {
     UINT Flags = D3DCOMPILE_ENABLE_STRICTNESS;
     Flags |= CompileInfo.bOptimize ? D3DCOMPILE_OPTIMIZATION_LEVEL3 : D3DCOMPILE_SKIP_OPTIMIZATION;
 
-    if (bDebugInfo)
+    if (CompileInfo.bDebugInfo)
     {
         Flags |= D3DCOMPILE_DEBUG;
     }
@@ -85,12 +103,12 @@ UINT FFXCShaderCompiler::BuildCompileFlags(const FShaderCompileInfo& CompileInfo
     return Flags;
 }
 
-void FFXCShaderCompiler::HashCompileSettings(const FShaderCompileInfo& CompileInfo, const String& IncludeDir, bool bDebugInfo, uint64& InOutHash) const
+void FFXCShaderCompiler::HashCompileSettings(const FShaderCompileInfo& CompileInfo, const String& IncludeDir, uint64& InOutHash) const
 {
     HashCombine(InOutHash, THash<String>::GetHash(String("d3dcompiler_47")));
     HashCombine(InOutHash, FFXCShaderTranslator::Version);
     HashCombine(InOutHash, THash<String>::GetHash(IncludeDir));
-    HashCombine(InOutHash, static_cast<uint32>(BuildCompileFlags(CompileInfo, bDebugInfo)));
+    HashCombine(InOutHash, static_cast<uint32>(BuildCompileFlags(CompileInfo)));
 
     if (const CHAR* Profile = GetFXCProfile(CompileInfo.ShaderStage))
     {
@@ -133,7 +151,7 @@ bool FFXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
         nullptr,
         *CompileInfo.EntryPoint,
         Profile,
-        BuildCompileFlags(CompileInfo, Request.bDebugInfo),
+        BuildCompileFlags(CompileInfo),
         0,
         &CodeBlob,
         &ErrorBlob);
@@ -156,9 +174,30 @@ bool FFXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
         return false;
     }
 
-    const int32 BlobSize = static_cast<int32>(CodeBlob->GetBufferSize());
+    if (!FDXBCShaderReflector::Reflect(D3DReflectFunc, CodeBlob->GetBufferPointer(), CodeBlob->GetBufferSize(), CompileInfo, OutResult.Reflection, OutResult.Messages))
+    {
+        return false;
+    }
+
+    TComPtr<ID3DBlob> OutputBlob = CodeBlob;
+    if (!CompileInfo.bDebugInfo)
+    {
+        // The signatures stay, D3D11 creates input layouts from the vertex shader bytecode
+        constexpr UINT StripFlags = D3DCOMPILER_STRIP_REFLECTION_DATA | D3DCOMPILER_STRIP_DEBUG_INFO | D3DCOMPILER_STRIP_TEST_BLOBS | D3DCOMPILER_STRIP_PRIVATE_DATA;
+
+        TComPtr<ID3DBlob> StrippedBlob;
+        if (FAILED(D3DStripShaderFunc(CodeBlob->GetBufferPointer(), CodeBlob->GetBufferSize(), StripFlags, &StrippedBlob)) || !StrippedBlob)
+        {
+            OutResult.Messages += "D3DStripShader failed\n";
+            return false;
+        }
+
+        OutputBlob = StrippedBlob;
+    }
+
+    const int32 BlobSize = static_cast<int32>(OutputBlob->GetBufferSize());
     OutResult.ByteCode.Resize(BlobSize);
-    Memory::Memcpy(OutResult.ByteCode.Data(), CodeBlob->GetBufferPointer(), BlobSize);
+    Memory::Memcpy(OutResult.ByteCode.Data(), OutputBlob->GetBufferPointer(), BlobSize);
     return true;
 }
 

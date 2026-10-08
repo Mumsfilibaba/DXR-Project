@@ -8,4 +8,5 @@ RhiModule.bUsePrecompiledHeaders = true
 RhiModule.AddModules({
     "Core",
     "CoreApplication",
+    "ShaderCore",
 })

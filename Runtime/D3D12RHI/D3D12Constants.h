@@ -1,12 +1,13 @@
 #pragma once
 #include "D3D12RHI/D3D12Configuration.h"
+#include "ShaderCore/ShaderBindingConventions.h"
 
 #define D3D12_MAX_ROOT_PARAMETERS (64)
 #define D3D12_MAX_SHADER_PARAMETERS (16)
 #define D3D12_MAX_HIT_GROUPS (512)
 #define D3D12_MAX_DESCRIPTOR_RANGES (64)
 #define D3D12_MAX_DESCRIPTOR_RANGE_SIZE (256)
-#define D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT (32)
+#define D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT (ShaderBindings::MaxShaderConstants)
 #define D3D12_MAX_ROOT_PARAMETER_COST (64)
 #define D3D12_MAX_VERTEX_BUFFER_SLOTS (D3D12_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT)                           // 32
 #define D3D12_MAX_RENDER_TARGET_COUNT (D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT)                              // 8
@@ -55,7 +56,7 @@
 // 2      | Ray Tracing Local
 // ------------------------------------------------------------------------------------------------
 
-#define D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS (1)
-#define D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL (2)
+#define D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS (ShaderBindings::ShaderConstantsSpace)
+#define D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL (ShaderBindings::RayTracingLocalSpace)
 
 static constexpr UINT D3D12_DEFAULT_MULTISAMPLE_QUALITY = 0;

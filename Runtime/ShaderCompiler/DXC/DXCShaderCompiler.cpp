@@ -1,8 +1,16 @@
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "ShaderCore/ShaderBindingConventions.h"
 #include "ShaderCompiler/DXC/DXCShaderCompiler.h"
+#include "ShaderCompiler/DXC/MSLShaderConverter.h"
+#include "ShaderCompiler/Reflection/DXILShaderReflector.h"
+#include "ShaderCompiler/Reflection/SpirvShaderReflector.h"
+#include "ShaderCompiler/Spirv/SpirvTransforms.h"
 
-#include <spirv_cross_c.h>
+static_assert(ShaderBindings::SpirvHeapMarkerSet == 31,      "Update the -fvk-bind-*-heap arguments");
+static_assert(ShaderBindings::SpirvHeapResourceBinding == 0, "Update the -fvk-bind-resource-heap argument");
+static_assert(ShaderBindings::SpirvHeapSamplerBinding == 1,  "Update the -fvk-bind-sampler-heap argument");
+static_assert(ShaderBindings::SpirvHeapCounterBinding == 16, "Update the -fvk-bind-counter-heap argument");
 
 enum class EDXCPart : uint32
 {
@@ -94,7 +102,7 @@ static LPCWSTR GetShaderModelString(EShaderModel Model)
     }
 }
 
-static void BuildFixedCompileArguments(const FShaderCompileInfo& CompileInfo, const WString& IncludeDir, bool bDebugInfo, TArray<LPCWSTR>& OutArgs)
+static void BuildFixedCompileArguments(const FShaderCompileInfo& CompileInfo, const WString& IncludeDir, TArray<LPCWSTR>& OutArgs)
 {
     OutArgs.Emplace(L"-HV 2021"); // Use HLSL 2021
     OutArgs.Emplace(L"-WX");      // Warnings as errors
@@ -102,10 +110,16 @@ static void BuildFixedCompileArguments(const FShaderCompileInfo& CompileInfo, co
     OutArgs.Emplace(L"-I");
     OutArgs.Emplace(*IncludeDir);
 
-    if (bDebugInfo)
+    if (CompileInfo.bDebugInfo)
     {
         OutArgs.Emplace(L"-Zi");
         OutArgs.Emplace(L"-Qembed_debug");
+    }
+    else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::DXIL)
+    {
+        OutArgs.Emplace(L"-Qstrip_debug");
+        OutArgs.Emplace(L"-Qstrip_reflect");
+        OutArgs.Emplace(L"-Qstrip_priv");
     }
 
     // Optimization level 3
@@ -117,14 +131,20 @@ static void BuildFixedCompileArguments(const FShaderCompileInfo& CompileInfo, co
     }
 }
 
-static void BuildSpirvCompileArguments(TArray<LPCWSTR>& OutArgs)
+static void BuildSpirvCompileArguments(const FShaderCompileInfo& CompileInfo, TArray<LPCWSTR>& OutArgs)
 {
     OutArgs.Emplace(L"-spirv");
     OutArgs.Emplace(L"-fspv-target-env=vulkan1.2");
     OutArgs.Emplace(L"-fspv-reduce-load-size");
     OutArgs.Emplace(L"-fvk-use-dx-layout");
 
-    // Set must match VULKAN_BINDLESS_HEAP_MARKER_SET in VulkanConstants.h.
+    // Emits HlslSemanticGOOGLE, which FSpirvShaderReflector::ReflectVertexInputs reads and FSpirvTransforms strips again
+    if (CompileInfo.ShaderStage == EShaderStage::Vertex)
+    {
+        OutArgs.Emplace(L"-fspv-reflect");
+    }
+
+    // Set must match ShaderBindings::SpirvHeapMarkerSet, see the static_asserts above.
     OutArgs.Emplace(L"-fvk-bind-resource-heap");
     OutArgs.Emplace(L"0");
     OutArgs.Emplace(L"31");
@@ -133,19 +153,19 @@ static void BuildSpirvCompileArguments(TArray<LPCWSTR>& OutArgs)
     OutArgs.Emplace(L"1");
     OutArgs.Emplace(L"31");
 
-    // Binding must match VULKAN_BINDLESS_COUNTER_MARKER_BINDIN. The heap has no counter descriptors, so this only exists to be rejected.
+    // Binding must match ShaderBindings::SpirvHeapCounterBinding. The heap has no counter descriptors, so this only exists to be rejected.
     OutArgs.Emplace(L"-fvk-bind-counter-heap");
     OutArgs.Emplace(L"16");
     OutArgs.Emplace(L"31");
 }
 
-static void BuildCompileArguments(const FShaderCompileInfo& CompileInfo, const WString& IncludeDir, bool bDebugInfo, TArray<LPCWSTR>& OutArgs)
+static void BuildCompileArguments(const FShaderCompileInfo& CompileInfo, const WString& IncludeDir, TArray<LPCWSTR>& OutArgs)
 {
-    BuildFixedCompileArguments(CompileInfo, IncludeDir, bDebugInfo, OutArgs);
+    BuildFixedCompileArguments(CompileInfo, IncludeDir, OutArgs);
 
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::DXIL)
     {
-        BuildSpirvCompileArguments(OutArgs);
+        BuildSpirvCompileArguments(CompileInfo, OutArgs);
     }
 }
 
@@ -217,7 +237,7 @@ bool FDXCShaderCompiler::SupportsOutputLanguage(EShaderOutputLanguage OutputLang
     return OutputLanguage == EShaderOutputLanguage::DXIL || OutputLanguage == EShaderOutputLanguage::SPIRV || OutputLanguage == EShaderOutputLanguage::MSL;
 }
 
-void FDXCShaderCompiler::HashCompileSettings(const FShaderCompileInfo& CompileInfo, const String& IncludeDir, bool bDebugInfo, uint64& InOutHash) const
+void FDXCShaderCompiler::HashCompileSettings(const FShaderCompileInfo& CompileInfo, const String& IncludeDir, uint64& InOutHash) const
 {
     HashCombine(InOutHash, VersionMajor);
     HashCombine(InOutHash, VersionMinor);
@@ -225,7 +245,7 @@ void FDXCShaderCompiler::HashCompileSettings(const FShaderCompileInfo& CompileIn
     const WString WideIncludeDir = CharToWide(IncludeDir);
 
     TArray<LPCWSTR> CompileArgs;
-    BuildCompileArguments(CompileInfo, WideIncludeDir, bDebugInfo, CompileArgs);
+    BuildCompileArguments(CompileInfo, WideIncludeDir, CompileArgs);
 
     for (LPCWSTR Argument : CompileArgs)
     {
@@ -256,7 +276,7 @@ bool FDXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
     const WString WideShaderIncludeDir = CharToWide(Request.IncludeDir);
 
     TArray<LPCWSTR> CompileArgs;
-    BuildCompileArguments(CompileInfo, WideShaderIncludeDir, Request.bDebugInfo, CompileArgs);
+    BuildCompileArguments(CompileInfo, WideShaderIncludeDir, CompileArgs);
 
     // Retrieve the shader target
     const LPCWSTR ShaderStageText = GetShaderStageString(CompileInfo.ShaderStage);
@@ -325,114 +345,80 @@ bool FDXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
     }
 
     const uint32 BlobSize = static_cast<uint32>(CompiledBlob->GetBufferSize());
-    OutResult.ByteCode.Resize(BlobSize);
 
-    Memory::Memcpy(OutResult.ByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
-
-    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
+    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::DXIL)
     {
-        if (Request.bVerboseLogging)
+    #if PLATFORM_WINDOWS
+        TComPtr<IDxcBlob> ReflectionBlob;
+        if (FAILED(Result->GetOutput(DXC_OUT_REFLECTION, IID_PPV_ARGS(&ReflectionBlob), nullptr)) || !ReflectionBlob)
         {
-            LOG_INFO("[FShaderCompiler]: Compiled Size (Before any transformations): %u Bytes", BlobSize);
+            ReflectionBlob = CompiledBlob;
         }
 
-        if (!ConvertSpirvToMetalShader(OutResult.ByteCode, CompileInfo.EntryPoint))
+        if (!FDXILShaderReflector::Reflect(Utils.Get(), CompiledBlob.Get(), ReflectionBlob.Get(), CompileInfo, OutResult.Reflection, OutResult.Messages))
         {
-            DEBUG_BREAK();
             return false;
         }
+
+        OutResult.ByteCode.Resize(static_cast<int32>(BlobSize));
+        Memory::Memcpy(OutResult.ByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
+        return true;
+    #else
+        OutResult.Messages += "DXIL can only be reflected on Windows\n";
+        return false;
+    #endif
     }
 
-    return true;
-}
+    if (Request.bVerboseLogging && CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
+    {
+        LOG_INFO("[FShaderCompiler]: Compiled Size (Before any transformations): %u Bytes", BlobSize);
+    }
 
-bool FDXCShaderCompiler::ConvertSpirvToMetalShader(TArray<uint8>& InOutByteCode, const String& EntryPoint)
-{
-    if (InOutByteCode.IsEmpty() || EntryPoint.IsEmpty())
+    TArray<uint32> Spirv(reinterpret_cast<const uint32*>(CompiledBlob->GetBufferPointer()), static_cast<int32>(BlobSize / sizeof(uint32)));
+
+    // The semantics only exist as HlslSemanticGOOGLE decorations, which PrepareForVulkan strips
+    if (CompileInfo.ShaderStage == EShaderStage::Vertex && !FSpirvShaderReflector::ReflectVertexInputs(Spirv, OutResult.Reflection, OutResult.Messages))
     {
         return false;
     }
 
-    spvc_context Context = nullptr;
-    spvc_result Result = spvc_context_create(&Context);
-    if (Result != SPVC_SUCCESS)
+    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
     {
-        LOG_ERROR("[FShaderCompiler]: Failed to create SpvcContext");
-        DEBUG_BREAK();
+        TArray<uint32> PreparedSpirv;
+        String         PrepareError;
+        if (!FSpirvTransforms::PrepareForVulkan(Spirv, PreparedSpirv, &PrepareError))
+        {
+            OutResult.Messages += PrepareError;
+            return false;
+        }
+
+        Spirv = ::Move(PreparedSpirv);
+    }
+
+    // Before reflection, so the word offsets match the words that ship
+    if (!CompileInfo.bDebugInfo)
+    {
+        TArray<uint32> StrippedSpirv;
+        if (!FSpirvTransforms::StripDebugInstructions(Spirv, StrippedSpirv))
+        {
+            OutResult.Messages += "Failed to strip the SPIR-V debug instructions\n";
+            return false;
+        }
+
+        Spirv = ::Move(StrippedSpirv);
+    }
+
+    // MSL slots only exist once SPIRV-Cross has emitted the source, so MSL reflects inside the conversion instead
+    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
+    {
+        return FMSLShaderConverter::Convert(Spirv, CompileInfo, OutResult.Reflection, OutResult.ByteCode, OutResult.Messages);
+    }
+
+    if (!FSpirvShaderReflector::Reflect(Spirv, CompileInfo, OutResult.Reflection, OutResult.Messages))
+    {
         return false;
     }
 
-    spvc_context_set_error_callback(Context, [](void*, const CHAR* Error)
-    {
-        LOG_ERROR("[SPIRV-Cross Error] %s", Error);
-    }, nullptr);
-
-    // The code size needs to be aligned to the element-size
-    constexpr uint32 ElementSize = sizeof(unsigned int) / sizeof(uint8);
-    CHECK(InOutByteCode.Size() % ElementSize == 0);
-    const uint32 WordCount = InOutByteCode.Size() / ElementSize;
-
-    spvc_parsed_ir ParsedCode = nullptr;
-    Result = spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(InOutByteCode.Data()), WordCount, &ParsedCode);
-    if (Result != SPVC_SUCCESS)
-    {
-        LOG_ERROR("[FShaderCompiler]: Failed to parse Spirv");
-        DEBUG_BREAK();
-        return false;
-    }
-
-    spvc_compiler CompilerMSL = nullptr;
-    Result = spvc_context_create_compiler(Context, SPVC_BACKEND_MSL, ParsedCode, SPVC_CAPTURE_MODE_TAKE_OWNERSHIP, &CompilerMSL);
-    if (Result != SPVC_SUCCESS)
-    {
-        LOG_ERROR("[FShaderCompiler]: Failed to create MSL compiler");
-        DEBUG_BREAK();
-        return false;
-    }
-
-    spvc_compiler_options CompilerOptions = nullptr;
-    Result = spvc_compiler_create_compiler_options(CompilerMSL, &CompilerOptions);
-    if (Result != SPVC_SUCCESS)
-    {
-        LOG_ERROR("[FShaderCompiler]: Failed to create MSL compiler options");
-        DEBUG_BREAK();
-        return false;
-    }
-
-    Result = spvc_compiler_options_set_uint(CompilerOptions, SPVC_COMPILER_OPTION_MSL_VERSION, SPVC_MAKE_MSL_VERSION(2, 3, 0));
-    if (Result != SPVC_SUCCESS)
-    {
-        LOG_ERROR("[FShaderCompiler]: Failed to set the MSL version");
-        DEBUG_BREAK();
-        return false;
-    }
-
-    Result = spvc_compiler_install_compiler_options(CompilerMSL, CompilerOptions);
-    if (Result != SPVC_SUCCESS)
-    {
-        LOG_ERROR("[FShaderCompiler]: Failed to install MSL compiler options");
-        DEBUG_BREAK();
-        return false;
-    }
-
-    const CHAR* MSLSource = nullptr;
-    Result = spvc_compiler_compile(CompilerMSL, &MSLSource);
-    if (Result != SPVC_SUCCESS)
-    {
-        LOG_ERROR("[FShaderCompiler]: Failed to create MSL");
-        DEBUG_BREAK();
-        return false;
-    }
-
-    // Create a new array
-    const uint32 SourceLength = CString::Strlen(MSLSource);
-    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(MSLSource), (SourceLength + 1) * sizeof(uint8));
-    NewShader[SourceLength] = 0;
-
-    // Now we can destroy the context
-    spvc_context_destroy(Context);
-
-    // Output the code
-    InOutByteCode = ::Move(NewShader);
+    OutResult.ByteCode = TArray<uint8>(reinterpret_cast<const uint8*>(Spirv.Data()), Spirv.SizeInBytes());
     return true;
 }

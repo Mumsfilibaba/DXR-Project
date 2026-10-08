@@ -1,5 +1,6 @@
 #pragma once
 #include "VulkanRHI/VulkanConfiguration.h"
+#include "ShaderCore/ShaderBindingConventions.h"
 
 #define VULKAN_MAX_NUM_PUSH_CONSTANTS (32)
 
@@ -30,11 +31,11 @@
 // See: https://gpuopen.com/learn/rdna-performance-guide/ (Descriptors section)
 #define VULKAN_RECOMMENDED_MAX_USER_DATA_DWORDS (13)
 
-#define VULKAN_BINDLESS_RESOURCE_BINDING (0)
-#define VULKAN_BINDLESS_SAMPLER_BINDING (1)
-#define VULKAN_BINDLESS_HEAP_MARKER_SET (31)
+#define VULKAN_BINDLESS_RESOURCE_BINDING (ShaderBindings::SpirvHeapResourceBinding)
+#define VULKAN_BINDLESS_SAMPLER_BINDING (ShaderBindings::SpirvHeapSamplerBinding)
+#define VULKAN_BINDLESS_HEAP_MARKER_SET (ShaderBindings::SpirvHeapMarkerSet)
 #define VULKAN_BINDLESS_RUNTIME_SET_INDEX (0)
-#define VULKAN_BINDLESS_COUNTER_MARKER_BINDING (16)
+#define VULKAN_BINDLESS_COUNTER_MARKER_BINDING (ShaderBindings::SpirvHeapCounterBinding)
 
 // Split heap only; the mutable heap holds every resource type in VULKAN_BINDLESS_RESOURCE_BINDING.
 #define VULKAN_BINDLESS_SPLIT_BINDING_SAMPLED_IMAGE (VULKAN_BINDLESS_RESOURCE_BINDING)
@@ -47,8 +48,8 @@
 #define VULKAN_BINDLESS_SPLIT_BINDING_ACCEL_STRUCT (7)
 #define VULKAN_BINDLESS_SPLIT_NUM_RESOURCE_BINDINGS (7)
 
-#define VULKAN_SHADER_CONSTANTS_SET (1)             // HLSL space1 (32-bit constants -> push constants)
-#define VULKAN_RAY_TRACING_LOCAL_SET (2)            // HLSL space2 -> Vulkan set 2 (DXC maps spaceN -> setN)
+#define VULKAN_SHADER_CONSTANTS_SET (ShaderBindings::ShaderConstantsSpace)  // HLSL space1 (32-bit constants -> push constants)
+#define VULKAN_RAY_TRACING_LOCAL_SET (ShaderBindings::RayTracingLocalSpace) // HLSL space2 -> Vulkan set 2 (DXC maps spaceN -> setN)
 #define VULKAN_RAY_TRACING_LOCAL_REGISTER_BASE (32) // local registers occupy [32..63], global stay [0..31]
 
 #define VULKAN_VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"

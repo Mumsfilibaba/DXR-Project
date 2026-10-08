@@ -988,69 +988,53 @@ FRHIDepthStencilView* FVulkanDeviceRHI::CreateDepthStencilView(FRHIResource* InR
     return NewDepthStencilView.ReleaseOwnership();
 }
 
-FRHIComputeShader* FVulkanDeviceRHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
+template<typename ShaderType>
+ShaderType* FVulkanDeviceRHI::CreateVulkanShader(EShaderStage Stage, const TArray<uint8>& ShaderCode)
 {
-    FVulkanComputeShaderRHIRef NewShader = new FVulkanComputeShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
+    FShaderCodeView CodeView;
+    if (!FShaderCodeReader::Read(ShaderCode, CodeView) || CodeView.GetStage() != Stage || CodeView.GetOutputLanguage() != EShaderOutputLanguage::SPIRV)
+    {
+        VULKAN_ERROR("The shader code is not a valid SPIR-V %s shader", ToString(Stage));
+        return nullptr;
+    }
+
+    TSharedRef<ShaderType> NewShader = new ShaderType(GetDevice());
+    if (!NewShader->Initialize(CodeView))
     {
         return nullptr;
     }
-    else
+
+    if constexpr (TIsBaseOf<FRHIVertexShader, ShaderType>::Value)
     {
-        return NewShader.ReleaseOwnership();
+        NewShader->SetVertexInputs(CodeView.GetVertexInputs());
     }
+
+    return NewShader.ReleaseOwnership();
+}
+
+FRHIComputeShader* FVulkanDeviceRHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
+{
+    return CreateVulkanShader<FVulkanComputeShaderRHI>(EShaderStage::Compute, ShaderCode);
 }
 
 FRHIVertexShader* FVulkanDeviceRHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
-    FVulkanVertexShaderRHIRef NewShader = new FVulkanVertexShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateVulkanShader<FVulkanVertexShaderRHI>(EShaderStage::Vertex, ShaderCode);
 }
 
 FRHIHullShader* FVulkanDeviceRHI::CreateHullShader(const TArray<uint8>& ShaderCode)
 {
-    FVulkanHullShaderRHIRef NewShader = new FVulkanHullShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateVulkanShader<FVulkanHullShaderRHI>(EShaderStage::Hull, ShaderCode);
 }
 
 FRHIDomainShader* FVulkanDeviceRHI::CreateDomainShader(const TArray<uint8>& ShaderCode)
 {
-    FVulkanDomainShaderRHIRef NewShader = new FVulkanDomainShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateVulkanShader<FVulkanDomainShaderRHI>(EShaderStage::Domain, ShaderCode);
 }
 
 FRHIGeometryShader* FVulkanDeviceRHI::CreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
-    FVulkanGeometryShaderRHIRef NewShader = new FVulkanGeometryShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateVulkanShader<FVulkanGeometryShaderRHI>(EShaderStage::Geometry, ShaderCode);
 }
 
 FRHIMeshShader* FVulkanDeviceRHI::CreateMeshShader(const TArray<uint8>& ShaderCode)
@@ -1060,15 +1044,7 @@ FRHIMeshShader* FVulkanDeviceRHI::CreateMeshShader(const TArray<uint8>& ShaderCo
         return nullptr;
     }
 
-    FVulkanMeshShaderRHIRef NewShader = new FVulkanMeshShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateVulkanShader<FVulkanMeshShaderRHI>(EShaderStage::Mesh, ShaderCode);
 }
 
 FRHIAmplificationShader* FVulkanDeviceRHI::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
@@ -1079,106 +1055,42 @@ FRHIAmplificationShader* FVulkanDeviceRHI::CreateAmplificationShader(const TArra
         return nullptr;
     }
 
-    FVulkanAmplificationShaderRHIRef NewShader = new FVulkanAmplificationShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateVulkanShader<FVulkanAmplificationShaderRHI>(EShaderStage::Amplification, ShaderCode);
 }
 
 FRHIPixelShader* FVulkanDeviceRHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
-    FVulkanPixelShaderRHIRef NewShader = new FVulkanPixelShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateVulkanShader<FVulkanPixelShaderRHI>(EShaderStage::Pixel, ShaderCode);
 }
 
 FRHIRayGenShader* FVulkanDeviceRHI::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
-    FVulkanRayGenShaderRHIRef NewShader = new FVulkanRayGenShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateVulkanShader<FVulkanRayGenShaderRHI>(EShaderStage::RayGen, ShaderCode);
 }
 
 FRHIRayAnyHitShader* FVulkanDeviceRHI::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
-    FVulkanRayAnyHitShaderRHIRef NewShader = new FVulkanRayAnyHitShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateVulkanShader<FVulkanRayAnyHitShaderRHI>(EShaderStage::RayAnyHit, ShaderCode);
 }
 
 FRHIRayClosestHitShader* FVulkanDeviceRHI::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
-    FVulkanRayClosestHitShaderRHIRef NewShader = new FVulkanRayClosestHitShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateVulkanShader<FVulkanRayClosestHitShaderRHI>(EShaderStage::RayClosestHit, ShaderCode);
 }
 
 FRHIRayMissShader* FVulkanDeviceRHI::CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
-    FVulkanRayMissShaderRHIRef NewShader = new FVulkanRayMissShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateVulkanShader<FVulkanRayMissShaderRHI>(EShaderStage::RayMiss, ShaderCode);
 }
 
 FRHIRayIntersectionShader* FVulkanDeviceRHI::CreateRayIntersectionShader(const TArray<uint8>& ShaderCode)
 {
-    FVulkanRayIntersectionShaderRHIRef NewShader = new FVulkanRayIntersectionShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateVulkanShader<FVulkanRayIntersectionShaderRHI>(EShaderStage::RayIntersection, ShaderCode);
 }
 
 FRHIRayCallableShader* FVulkanDeviceRHI::CreateRayCallableShader(const TArray<uint8>& ShaderCode)
 {
-    FVulkanRayCallableShaderRHIRef NewShader = new FVulkanRayCallableShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShader.ReleaseOwnership();
-    }
+    return CreateVulkanShader<FVulkanRayCallableShaderRHI>(EShaderStage::RayCallable, ShaderCode);
 }
 
 FRHIDepthStencilState* FVulkanDeviceRHI::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)

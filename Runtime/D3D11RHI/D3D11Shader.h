@@ -2,7 +2,7 @@
 #include "RHI/RHIShader.h"
 #include "RHI/RHIResources.h"
 #include "D3D11RHI/D3D11DeviceChild.h"
-#include <d3d11shader.h>
+#include "ShaderCore/ShaderCode.h"
 
 typedef TSharedRef<class FD3D11VertexShaderRHI>   FD3D11VertexShaderRHIRef;
 typedef TSharedRef<class FD3D11HullShaderRHI>     FD3D11HullShaderRHIRef;
@@ -54,31 +54,49 @@ struct FD3D11ShaderBindingInfo
         ED3D11BindingType BindingType;
         uint16            Register;
         uint16            Count;
+    #if D3D11_ENABLE_BINDING_DEBUG_NAMES
         String            DebugName;
+    #endif
     };
 
-    void AddBinding(ED3D11BindingType InType, uint16 InRegister, uint16 InCount, const String& InDebugName)
+    static_assert(D3D11_MAX_UNORDERED_ACCESS_VIEWS <= 64, "UnorderedAccessViewMask needs more bits");
+
+    void AddBinding(ED3D11BindingType InType, uint16 InRegister, uint16 InCount, const CHAR* InDebugName)
     {
         FResourceBinding& Binding = ResourceBindings.Emplace();
         Binding.BindingType = InType;
         Binding.Register    = InRegister;
         Binding.Count       = InCount;
+    #if D3D11_ENABLE_BINDING_DEBUG_NAMES
         Binding.DebugName   = InDebugName;
+    #else
+        UNREFERENCED_VARIABLE(InDebugName);
+    #endif
+    }
+
+    NODISCARD D3D_SRV_DIMENSION GetShaderResourceViewDimension(uint32 Slot) const
+    {
+        return static_cast<D3D_SRV_DIMENSION>(ShaderResourceViewDimensions[Slot]);
+    }
+
+    NODISCARD bool IsUnorderedAccessViewDeclared(uint32 Slot) const
+    {
+        return (UnorderedAccessViewMask & (uint64(1) << Slot)) != 0;
     }
 
     TArray<FResourceBinding> ResourceBindings;
 
-    /** The view dimension the shader declares for each SRV register, D3D_SRV_DIMENSION_UNKNOWN when the register is unused */
-    D3D_SRV_DIMENSION ShaderResourceViewDimensions[D3D11_MAX_SHADER_RESOURCE_VIEWS] = {};
+    /** D3D_SRV_DIMENSION of each SRV register, D3D_SRV_DIMENSION_UNKNOWN when unused. Every value fits in a byte. */
+    uint8  ShaderResourceViewDimensions[D3D11_MAX_SHADER_RESOURCE_VIEWS] = {};
 
-    /** Whether the shader declares each UAV register */
-    bool UnorderedAccessViewDeclared[D3D11_MAX_UNORDERED_ACCESS_VIEWS] = {};
+    /** One bit per UAV register the shader declares */
+    uint64 UnorderedAccessViewMask = 0;
 
     /** The slot FXC gave the Constants_CB cbuffer, or -1 when the shader has no shader constants */
-    int32 ShaderConstantsSlot = -1;
+    int32  ShaderConstantsSlot = -1;
 
     /** Size of the shader constants in 32-bit values */
-    uint32 NumShaderConstants = 0;
+    uint32 NumShaderConstants  = 0;
 };
 
 class FD3D11Shader : public FD3D11DeviceChild
@@ -87,7 +105,7 @@ public:
     FD3D11Shader(FD3D11Device* InDevice, EShaderVisibility::Type InShaderVisibility);
     virtual ~FD3D11Shader();
 
-    virtual bool Initialize(const TArray<uint8>& InCode);
+    virtual bool Initialize(const FShaderCodeView& InCode);
 
     FORCEINLINE const TArray<uint8>& GetByteCode() const
     {
@@ -105,8 +123,6 @@ public:
     }
 
 protected:
-    bool GetShaderResourceBindings(ID3D11ShaderReflection* Reflection, uint32 NumBoundResources);
-
     TArray<uint8>           ByteCode;
     EShaderVisibility::Type ShaderVisibility;
     FD3D11ShaderBindingInfo BindingInfo;
@@ -119,7 +135,7 @@ public:
     virtual ~FD3D11VertexShaderRHI();
 
     // FD3D11Shader Interface
-    virtual bool Initialize(const TArray<uint8>& InCode) override final;
+    virtual bool Initialize(const FShaderCodeView& InCode) override final;
 
     // FRHIShader Interface
     virtual void* GetRHINativeHandle()  override final { return Shader.Get(); }
@@ -141,7 +157,7 @@ public:
     virtual ~FD3D11HullShaderRHI();
 
     // FD3D11Shader Interface
-    virtual bool Initialize(const TArray<uint8>& InCode) override final;
+    virtual bool Initialize(const FShaderCodeView& InCode) override final;
 
     // FRHIShader Interface
     virtual void* GetRHINativeHandle()  override final { return Shader.Get(); }
@@ -163,7 +179,7 @@ public:
     virtual ~FD3D11DomainShaderRHI();
 
     // FD3D11Shader Interface
-    virtual bool Initialize(const TArray<uint8>& InCode) override final;
+    virtual bool Initialize(const FShaderCodeView& InCode) override final;
 
     // FRHIShader Interface
     virtual void* GetRHINativeHandle()  override final { return Shader.Get(); }
@@ -185,7 +201,7 @@ public:
     virtual ~FD3D11GeometryShaderRHI();
 
     // FD3D11Shader Interface
-    virtual bool Initialize(const TArray<uint8>& InCode) override final;
+    virtual bool Initialize(const FShaderCodeView& InCode) override final;
 
     // FRHIShader Interface
     virtual void* GetRHINativeHandle()  override final { return Shader.Get(); }
@@ -207,7 +223,7 @@ public:
     virtual ~FD3D11PixelShaderRHI();
 
     // FD3D11Shader Interface
-    virtual bool Initialize(const TArray<uint8>& InCode) override final;
+    virtual bool Initialize(const FShaderCodeView& InCode) override final;
 
     // FRHIShader Interface
     virtual void* GetRHINativeHandle()  override final { return Shader.Get(); }
@@ -229,7 +245,7 @@ public:
     virtual ~FD3D11ComputeShaderRHI();
 
     // FD3D11Shader Interface
-    virtual bool Initialize(const TArray<uint8>& InCode) override final;
+    virtual bool Initialize(const FShaderCodeView& InCode) override final;
 
     // FRHIShader Interface
     virtual void* GetRHINativeHandle()  override final { return Shader.Get(); }

@@ -6,38 +6,7 @@
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Threading/Atomic.h"
 #include "Core/Time/Timespan.h"
-#include "RHI/RHIShader.h"
-
-enum class ERHIType : uint32;
-
-enum class EShaderOutputLanguage : uint8
-{
-    Unknown = 0,
-
-    /** DXIL for D3D12RHI and NullRHI */
-    DXIL = 1,
-
-    /** Metal Shading Language for MetalRHI */
-    MSL = 2,
-
-    /** SPIR-V for VulkanRHI */
-    SPIRV = 3,
-
-    /** Shader Model 5.0 DXBC for D3D11RHI */
-    DXBC = 4,
-};
-
-NODISCARD constexpr const CHAR* ToString(EShaderOutputLanguage OutputLanguage)
-{
-    switch (OutputLanguage)
-    {
-        case EShaderOutputLanguage::DXIL:  return "DXIL";
-        case EShaderOutputLanguage::MSL:   return "MSL";
-        case EShaderOutputLanguage::SPIRV: return "SPIRV";
-        case EShaderOutputLanguage::DXBC:  return "DXBC";
-        default:                           return "Unknown";
-    }
-}
+#include "ShaderCore/ShaderTypes.h"
 
 struct FShaderDefine
 {
@@ -63,8 +32,9 @@ class FShaderCompilerBackend;
 class SHADERCOMPILER_API FShaderCompiler
 {
 public:
-    static EShaderOutputLanguage GetOutputLanguageForRHI(ERHIType RHIType);
-    static EShaderOutputLanguage GetOutputLanguageBasedOnRHI();
+
+    /** @return RHI.ShaderCompiler.Debug, always false in RELEASE_BUILD */
+    NODISCARD static bool IsDebugInfoEnabled();
 
     static bool Initialize(const String& InAssetPath);
     static void Destroy();
@@ -81,6 +51,8 @@ public:
     }
 
 public:
+
+    /** OutByteCode receives an FShaderCode container, see ShaderCore/ShaderCode.h */
     bool CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<String>* OutDependencies = nullptr);
     bool CompileFromSource(const String& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<String>* OutDependencies = nullptr);
 
@@ -89,7 +61,7 @@ public:
     /** @return Returns true if one of the compiler backends can produce the output language */
     NODISCARD bool IsOutputLanguageSupported(EShaderOutputLanguage OutputLanguage) const;
 
-    /** @return Returns the output languages of every RHI that the current platform supports, and that a backend can produce */
+    /** @return Returns the output languages the current platform has an RHI for, and that a backend can produce */
     NODISCARD TArray<EShaderOutputLanguage> GetSupportedOutputLanguages() const;
 
     void LogCompileStats() const;
@@ -131,6 +103,7 @@ struct FShaderCompileInfo
         , ShaderStage(EShaderStage::Unknown)
         , OutputLanguage(EShaderOutputLanguage::Unknown)
         , bOptimize(true)
+        , bDebugInfo(FShaderCompiler::IsDebugInfoEnabled())
         , Defines()
         , EntryPoint()
     {
@@ -140,12 +113,13 @@ struct FShaderCompileInfo
         const String&                    InEntryPoint,
         EShaderModel                     InShaderModel,
         EShaderStage                     InShaderStage,
-        const TArrayView<FShaderDefine>& InDefines        = TArrayView<FShaderDefine>(),
-        EShaderOutputLanguage            InOutputLanguage = FShaderCompiler::GetOutputLanguageBasedOnRHI())
+        EShaderOutputLanguage            InOutputLanguage,
+        const TArrayView<FShaderDefine>& InDefines = TArrayView<FShaderDefine>())
         : ShaderModel(InShaderModel)
         , ShaderStage(InShaderStage)
         , OutputLanguage(InOutputLanguage)
         , bOptimize(true)
+        , bDebugInfo(FShaderCompiler::IsDebugInfoEnabled())
         , Defines(InDefines)
         , EntryPoint(InEntryPoint)
     {
@@ -155,6 +129,7 @@ struct FShaderCompileInfo
     EShaderStage              ShaderStage;
     EShaderOutputLanguage     OutputLanguage;
     bool                      bOptimize;
+    bool                      bDebugInfo;
     TArrayView<FShaderDefine> Defines;
     String                    EntryPoint;
 };

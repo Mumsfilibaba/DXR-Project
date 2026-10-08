@@ -1,6 +1,7 @@
 #pragma once
 #include "ShaderCompiler/ShaderCompiler.h"
 #include "ShaderCompiler/ShaderPreprocessor.h"
+#include "ShaderCore/ShaderReflection.h"
 
 struct FShaderCompileRequest
 {
@@ -15,14 +16,15 @@ struct FShaderCompileRequest
     /** <Assets>/Shaders, where every shader include was resolved from */
     String                    IncludeDir;
 
-    bool                      bDebugInfo      = false;
     bool                      bVerboseLogging = false;
 };
 
 struct FShaderCompileResult
 {
-    TArray<uint8> ByteCode;
-    String        Messages;
+    /** Native code: a DXIL or DXBC container, SPIR-V words or MSL source */
+    TArray<uint8>     ByteCode;
+    FShaderReflection Reflection;
+    String            Messages;
 };
 
 class FShaderCompilerBackend
@@ -36,7 +38,7 @@ public:
     NODISCARD virtual bool SupportsOutputLanguage(EShaderOutputLanguage OutputLanguage) const = 0;
 
     /** Adds the compiler identity (version) and every flag that changes the output */
-    virtual void HashCompileSettings(const FShaderCompileInfo& CompileInfo, const String& IncludeDir, bool bDebugInfo, uint64& InOutHash) const = 0;
+    virtual void HashCompileSettings(const FShaderCompileInfo& CompileInfo, const String& IncludeDir, uint64& InOutHash) const = 0;
 
     /** @brief Rewrites the preprocessed source into what the compiler accepts. Errors are added to InOutSource.Errors. */
     virtual bool TranslateSource(FShaderPreprocessorOutput& /* InOutSource */) const

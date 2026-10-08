@@ -153,6 +153,9 @@ public:
 private:
     bool InitializeDeviceFeatureSupport();
 
+    template<typename ShaderType>
+    ShaderType* CreateD3D12Shader(EShaderStage Stage, const TArray<uint8>& ShaderCode);
+
     template<typename... ArgTypes>
     void DeferDeletionInternal(ArgTypes&&... Args)
     {

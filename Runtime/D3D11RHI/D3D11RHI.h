@@ -189,6 +189,9 @@ public:
 private:
     bool InitializeDeviceFeatureSupport();
 
+    template<typename ShaderType>
+    ShaderType* CreateD3D11Shader(EShaderStage Stage, const TArray<uint8>& ShaderCode);
+
     typedef TMap<FRHISamplerStateDesc, FD3D11SamplerStateRHIRef>           FSamplerStateMap;
     typedef TMap<FRHIDepthStencilStateDesc, FD3D11DepthStencilStateRHIRef> FDepthStencilStateMap;
     typedef TMap<FRHIRasterizerStateDesc, FD3D11RasterizerStateRHIRef>     FRasterizerStateMap;

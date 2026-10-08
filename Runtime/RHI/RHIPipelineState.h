@@ -471,7 +471,7 @@ struct FRHIInputElementDesc
     /** @brief Offset within the vertex-structure that this element is a part of */
     uint32 ByteOffset = 0;
 
-    /** @brief Index of the element in the shader that this element matching */
+    /** @brief Unused: every RHI locates elements by Semantic and SemanticIndex. Kept until the initializer lists are updated. */
     uint32 ShaderElementIndex = 0;
 
     /** @brief How often this element should be updated */

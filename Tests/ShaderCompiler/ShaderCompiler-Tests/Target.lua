@@ -8,6 +8,7 @@ ShaderCompilerTests.Kind       = "ConsoleApp"
 ShaderCompilerTests.AddModules({
     "Core",
     "RHI",
+    "ShaderCore",
     "ShaderCompiler",
     "TestCommon",
 })
