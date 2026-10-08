@@ -74,9 +74,11 @@ struct CORE_API FWindowsPlatformFile : public IPlatformFileSystem
 
     static FORCEINLINE bool IsFile(const CHAR* Path)
     {
-        const BOOL Result = ::PathFileExistsA(Path);
-        return Result == TRUE;
+        const DWORD Attributes = ::GetFileAttributesA(Path);
+        return (Attributes != INVALID_FILE_ATTRIBUTES) && ((Attributes & FILE_ATTRIBUTE_DIRECTORY) == 0);
     }
+
+    static FFileInfo GetFileInfo(const CHAR* Path);
 
     static FORCEINLINE bool CreateDirectory(const CHAR* Path)
     {
@@ -100,6 +102,17 @@ struct CORE_API FWindowsPlatformFile : public IPlatformFileSystem
     {
         // MOVEFILE_REPLACE_EXISTING is what makes this usable when swapping a file.
         return ::MoveFileExA(FromFilename, ToFilename, MOVEFILE_REPLACE_EXISTING) != FALSE;
+    }
+
+    static FORCEINLINE bool CopyFile(const CHAR* FromFilename, const CHAR* ToFilename, bool bReplaceExisting = false)
+    {
+        return ::CopyFileA(FromFilename, ToFilename, bReplaceExisting ? FALSE : TRUE) != FALSE;
+    }
+
+    static FORCEINLINE bool MoveDirectory(const CHAR* FromPath, const CHAR* ToPath)
+    {
+        // MOVEFILE_REPLACE_EXISTING does not work for directories, so an existing ToPath makes this fail
+        return ::MoveFileExA(FromPath, ToPath, 0) != FALSE;
     }
 
     static FORCEINLINE bool IsPathRelative(const CHAR* Filepath)

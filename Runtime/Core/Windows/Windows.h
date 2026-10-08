@@ -54,6 +54,7 @@
 #undef RemoveDirectory
 #undef DeleteFile
 #undef MoveFile
+#undef CopyFile
 
 #undef InterlockedAdd
 #undef InterlockedAnd

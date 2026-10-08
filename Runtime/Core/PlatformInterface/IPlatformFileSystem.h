@@ -135,6 +135,21 @@ struct FDirectoryEntry
 {
     String Name;
     bool   bIsDirectory = false;
+
+    /** @brief The entry is a symbolic link (or a Windows junction) rather than the file or directory it points at */
+    bool bIsSymbolicLink = false;
+};
+
+struct FFileInfo
+{
+    /** @brief Size in bytes, zero for a directory */
+    int64 Size = 0;
+
+    /** @brief Time of the last write, in seconds since the Unix epoch (UTC) */
+    int64 ModifiedTime = 0;
+
+    bool bExists      = false;
+    bool bIsDirectory = false;
 };
 
 struct CORE_API IPlatformFileSystem
@@ -192,13 +207,16 @@ struct CORE_API IPlatformFileSystem
         return false;
     }
 
-    /**
-     * @brief Check that a path exists
-     * @return Returns true if Path exists, which both platforms also answer for a directory
-     */
+    /** @return Returns true if Path names an existing file, and false for a directory */
     static FORCEINLINE bool IsFile(const CHAR* Path)
     {
         return false;
+    }
+
+    /** @return Returns the size, last write time and kind of Path, with bExists set to false when nothing is there */
+    static FORCEINLINE FFileInfo GetFileInfo(const CHAR* Path)
+    {
+        return FFileInfo();
     }
 
     /** @brief Create a directory, returning true if it was created or already existed */
@@ -221,6 +239,18 @@ struct CORE_API IPlatformFileSystem
 
     /** @brief Move a file, replacing ToFilename if it exists, returning true on success */
     static FORCEINLINE bool MoveFile(const CHAR* FromFilename, const CHAR* ToFilename)
+    {
+        return false;
+    }
+
+    /** @brief Copy a file, failing if ToFilename exists unless bReplaceExisting is set, returning true on success */
+    static FORCEINLINE bool CopyFile(const CHAR* FromFilename, const CHAR* ToFilename, bool bReplaceExisting = false)
+    {
+        return false;
+    }
+
+    /** @brief Move or rename a directory with everything in it, failing if ToPath already exists, returning true on success */
+    static FORCEINLINE bool MoveDirectory(const CHAR* FromPath, const CHAR* ToPath)
     {
         return false;
     }

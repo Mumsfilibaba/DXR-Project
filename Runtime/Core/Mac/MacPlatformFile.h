@@ -78,8 +78,10 @@ struct CORE_API FMacPlatformFile final : public IPlatformFileSystem
     static FORCEINLINE bool IsFile(const CHAR* Path)
     {
         struct stat FileStat;
-        return ::stat(Path, &FileStat) == 0;
+        return (::stat(Path, &FileStat) == 0) && !S_ISDIR(FileStat.st_mode);
     }
+
+    static FFileInfo GetFileInfo(const CHAR* Path);
 
     static FORCEINLINE bool CreateDirectory(const CHAR* Path)
     {
@@ -103,6 +105,19 @@ struct CORE_API FMacPlatformFile final : public IPlatformFileSystem
     {
         // Rename replaces an existing destination.
         return ::rename(FromFilename, ToFilename) == 0;
+    }
+
+    static bool CopyFile(const CHAR* FromFilename, const CHAR* ToFilename, bool bReplaceExisting = false);
+
+    static FORCEINLINE bool MoveDirectory(const CHAR* FromPath, const CHAR* ToPath)
+    {
+        struct stat PathStat;
+        if (::stat(ToPath, &PathStat) == 0)
+        {
+            return false;
+        }
+
+        return ::rename(FromPath, ToPath) == 0;
     }
 
     static FORCEINLINE bool IsPathRelative(const CHAR* Filepath)

@@ -157,6 +157,40 @@ bool File::CreateDirectoryTree(const String& Path)
     return true;
 }
 
+bool File::DeleteDirectoryTree(const String& Directory)
+{
+    TArray<FDirectoryEntry> Entries;
+    if (!FPlatformFile::IterateDirectory(*Directory, Entries))
+    {
+        return !FPlatformFile::IsDirectory(*Directory);
+    }
+
+    for (const FDirectoryEntry& Entry : Entries)
+    {
+        const String Child = CombinePath(Directory, Entry.Name);
+        if (Entry.bIsSymbolicLink)
+        {
+            if (!FPlatformFile::DeleteFile(*Child) && !FPlatformFile::RemoveDirectory(*Child))
+            {
+                return false;
+            }
+        }
+        else if (Entry.bIsDirectory)
+        {
+            if (!DeleteDirectoryTree(Child))
+            {
+                return false;
+            }
+        }
+        else if (!FPlatformFile::DeleteFile(*Child))
+        {
+            return false;
+        }
+    }
+
+    return FPlatformFile::RemoveDirectory(*Directory);
+}
+
 String File::ExtractExtension(const String& Filepath)
 {
     const String Filename = ExtractFilename(Filepath);

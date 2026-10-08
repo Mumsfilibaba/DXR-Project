@@ -3,6 +3,18 @@
 #include "Core/Templates/CString.h"
 #include "Core/Templates/NumericLimits.h"
 
+// FILETIME counts 100-nanosecond intervals since 1601-01-01, which is this many intervals before the Unix epoch
+static constexpr int64 FILETIME_TICKS_PER_SECOND = 10000000;
+static constexpr int64 FILETIME_UNIX_EPOCH       = 116444736000000000;
+
+static int64 FileTimeToUnixTime(const FILETIME& InFileTime)
+{
+    ULARGE_INTEGER Ticks;
+    Ticks.LowPart  = InFileTime.dwLowDateTime;
+    Ticks.HighPart = InFileTime.dwHighDateTime;
+    return (static_cast<int64>(Ticks.QuadPart) - FILETIME_UNIX_EPOCH) / FILETIME_TICKS_PER_SECOND;
+}
+
 FWindowsFileHandle::FWindowsFileHandle(HANDLE InFileHandle)
     : IPlatformFile()
     , FileHandle(InFileHandle)
@@ -431,6 +443,31 @@ String FWindowsPlatformFile::GetCurrentWorkingDirectory()
     }
 }
 
+FFileInfo FWindowsPlatformFile::GetFileInfo(const CHAR* Path)
+{
+    FFileInfo Info;
+
+    WIN32_FILE_ATTRIBUTE_DATA Data;
+    if (!::GetFileAttributesExA(Path, GetFileExInfoStandard, &Data))
+    {
+        return Info;
+    }
+
+    Info.bExists      = true;
+    Info.bIsDirectory = (Data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+    Info.ModifiedTime = FileTimeToUnixTime(Data.ftLastWriteTime);
+
+    if (!Info.bIsDirectory)
+    {
+        ULARGE_INTEGER FileSize;
+        FileSize.LowPart  = Data.nFileSizeLow;
+        FileSize.HighPart = Data.nFileSizeHigh;
+        Info.Size         = static_cast<int64>(FileSize.QuadPart);
+    }
+
+    return Info;
+}
+
 bool FWindowsPlatformFile::IterateDirectory(const CHAR* Path, TArray<FDirectoryEntry>& OutEntries)
 {
     OutEntries.Clear();
@@ -450,9 +487,13 @@ bool FWindowsPlatformFile::IterateDirectory(const CHAR* Path, TArray<FDirectoryE
             continue;
         }
 
+        const bool bIsReparsePoint = (FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
+        const bool bIsLinkTag      = (FindData.dwReserved0 == IO_REPARSE_TAG_SYMLINK) || (FindData.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT);
+
         FDirectoryEntry Entry;
-        Entry.Name         = FindData.cFileName;
-        Entry.bIsDirectory = (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+        Entry.Name            = FindData.cFileName;
+        Entry.bIsDirectory    = (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+        Entry.bIsSymbolicLink = bIsReparsePoint && bIsLinkTag;
         OutEntries.Add(Move(Entry));
     }
     while (::FindNextFileA(Handle, &FindData));

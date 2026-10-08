@@ -52,6 +52,10 @@ public:
     // Recursively creates every directory in Path that does not already exist. Returns true if the full directory tree exists afterwards.
     static bool CreateDirectoryTree(const String& Path);
 
+    // Deletes Directory and everything in it. Symbolic links are removed without touching what they point at. Returns true if
+    // Directory is gone afterwards.
+    static bool DeleteDirectoryTree(const String& Directory);
+
 private:
     static bool WriteTextFile(IPlatformFile* InFile, const CHAR* Text, uint32 Size);
 };

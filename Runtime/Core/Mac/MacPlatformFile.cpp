@@ -13,6 +13,7 @@
 #include <sys/uio.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <copyfile.h>
 
 FMacFileHandle::FMacFileHandle(int32 InFileHandle, bool bInReadOnly)
     : IPlatformFile()
@@ -468,6 +469,34 @@ const CHAR* FMacPlatformFile::GetExecutablePath()
     return StaticExecutablePath;
 }
 
+bool FMacPlatformFile::CopyFile(const CHAR* FromFilename, const CHAR* ToFilename, bool bReplaceExisting)
+{
+    const copyfile_flags_t Flags = COPYFILE_ALL | (bReplaceExisting ? 0 : COPYFILE_EXCL);
+    return ::copyfile(FromFilename, ToFilename, nullptr, Flags) == 0;
+}
+
+FFileInfo FMacPlatformFile::GetFileInfo(const CHAR* Path)
+{
+    FFileInfo Info;
+
+    struct stat PathStat;
+    if (::stat(Path, &PathStat) != 0)
+    {
+        return Info;
+    }
+
+    Info.bExists      = true;
+    Info.bIsDirectory = S_ISDIR(PathStat.st_mode);
+    Info.ModifiedTime = static_cast<int64>(PathStat.st_mtimespec.tv_sec);
+
+    if (!Info.bIsDirectory)
+    {
+        Info.Size = static_cast<int64>(PathStat.st_size);
+    }
+
+    return Info;
+}
+
 bool FMacPlatformFile::IterateDirectory(const CHAR* Path, TArray<FDirectoryEntry>& OutEntries)
 {
     OutEntries.Clear();
@@ -490,6 +519,9 @@ bool FMacPlatformFile::IterateDirectory(const CHAR* Path, TArray<FDirectoryEntry
 
         const String ChildPath = String::Printf("%s/%s", Path, DirEntry->d_name);
         Child.bIsDirectory     = IsDirectory(*ChildPath);
+
+        struct stat LinkStat;
+        Child.bIsSymbolicLink = (::lstat(*ChildPath, &LinkStat) == 0) && S_ISLNK(LinkStat.st_mode);
         OutEntries.Add(Move(Child));
     }
 
