@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/Array.h"
-#include "RHI/RHICore.h"
+#include "ShaderCore/ShaderBindingConventions.h"
+#include "ShaderCore/ShaderReflection.h"
 
 enum class EMSLBindingType : uint8
 {
@@ -61,11 +62,11 @@ static constexpr uint8 MSL_MAX_TEXTURE_SLOTS = 31;
 static constexpr uint8 MSL_MAX_SAMPLER_SLOTS = 16;
 
 /** @brief DXC `-fvk-bind-*-heap` marker set, shared with the Vulkan cook. */
-static constexpr uint32 MSL_BINDLESS_HEAP_MARKER_SET = 31;
+static constexpr uint32 MSL_BINDLESS_HEAP_MARKER_SET = ShaderBindings::SpirvHeapMarkerSet;
 
-static constexpr uint32 MSL_BINDLESS_RESOURCE_BINDING = 0;
-static constexpr uint32 MSL_BINDLESS_SAMPLER_BINDING  = 1;
-static constexpr uint32 MSL_BINDLESS_COUNTER_BINDING  = 16;
+static constexpr uint32 MSL_BINDLESS_RESOURCE_BINDING = ShaderBindings::SpirvHeapResourceBinding;
+static constexpr uint32 MSL_BINDLESS_SAMPLER_BINDING  = ShaderBindings::SpirvHeapSamplerBinding;
+static constexpr uint32 MSL_BINDLESS_COUNTER_BINDING  = ShaderBindings::SpirvHeapCounterBinding;
 
 /** @brief Fixed MSL buffer index for the resource descriptor table. */
 static constexpr uint8 MSL_BINDLESS_RESOURCE_HEAP_BUFFER_INDEX = 29;
@@ -136,7 +137,6 @@ inline const CHAR* ToString(EMSLBindingType BindingType)
     return BindingTypeStrings[static_cast<int32>(BindingType)];
 }
 
-/** @brief Texture type a texture binding declares, the dimension half of FMSLShaderBinding::NullTextureType. */
 enum class EMSLTextureDimension : uint8
 {
     Texture1D        = 0,
@@ -151,7 +151,6 @@ enum class EMSLTextureDimension : uint8
     Count            = 9,
 };
 
-/** @brief Component type a texture binding declares. Depth is a depth texture, which only accepts a depth pixel format. */
 enum class EMSLTextureComponent : uint8
 {
     Float = 0,
@@ -189,74 +188,33 @@ struct FMSLShaderBinding
     uint8 NullTextureType;
 };
 
-static_assert(sizeof(FMSLShaderBinding) == 4, "FMSLShaderBinding is serialized verbatim and must not carry padding");
+static_assert(sizeof(FMSLShaderBinding) == 4, "FMSLShaderBinding must not carry padding");
 
-struct FMSLShaderHeader
+NODISCARD constexpr EMSLBindingType GetMSLBindingType(const FShaderResourceBinding& Binding)
 {
-    /** @brief Value Magic must hold for a blob to be an MSL blob rather than raw source. */
-    static constexpr uint32 ExpectedMagic = 0x4D534C42;
-
-    /** @brief Layout revision, bumped whenever the header or the binding array changes shape. */
-    static constexpr uint32 ExpectedVersion = 6;
-
-    uint32 Magic;
-    uint32 Version;
-    uint32 NumBindings;
-    uint32 SourceSize;
-    uint16 ThreadGroupSizeX;
-    uint16 ThreadGroupSizeY;
-    uint16 ThreadGroupSizeZ;
-    uint16 ShaderConstantsSize;
-
-    /** @brief MSL buffer index of ResourceDescriptorHeap, or UINT8_MAX. */
-    uint8 ResourceHeapSlot;
-
-    /** @brief MSL buffer index of SamplerDescriptorHeap, or UINT8_MAX. */
-    uint8 SamplerHeapSlot;
-
-    uint16 Padding0;
-};
-
-static_assert(sizeof(FMSLShaderHeader) == 28, "FMSLShaderHeader is serialized verbatim and must not carry padding");
-
-inline bool ParseMSLShaderByteCode(const TArray<uint8>& ByteCode, TArray<FMSLShaderBinding>& OutBindings, TArrayView<const uint8>& OutSource)
-{
-    OutBindings.Clear();
-
-    if (ByteCode.Size() < static_cast<int32>(sizeof(FMSLShaderHeader)))
+    if (Binding.Space == EShaderBindingSpace::ShaderConstants)
     {
-        OutSource = TArrayView<const uint8>(ByteCode.Data(), ByteCode.Size());
-        return true;
+        return EMSLBindingType::ShaderConstants;
     }
 
-    FMSLShaderHeader Header;
-    Memory::Memcpy(&Header, ByteCode.Data(), sizeof(FMSLShaderHeader));
-
-    if (Header.Magic != FMSLShaderHeader::ExpectedMagic)
+    if (Binding.Space == EShaderBindingSpace::BindlessHeap)
     {
-        OutSource = TArrayView<const uint8>(ByteCode.Data(), ByteCode.Size());
-        return true;
+        return Binding.Type == EShaderResourceType::Sampler ? EMSLBindingType::BindlessSamplerHeap : EMSLBindingType::BindlessResourceHeap;
     }
 
-    if (Header.Version != FMSLShaderHeader::ExpectedVersion)
+    switch (Binding.Type)
     {
-        return false;
+        case EShaderResourceType::ConstantBuffer:        return EMSLBindingType::ConstantBuffer;
+        case EShaderResourceType::Sampler:               return EMSLBindingType::Sampler;
+        case EShaderResourceType::Texture:
+        case EShaderResourceType::TypedBuffer:           return EMSLBindingType::ShaderResourceTexture;
+        case EShaderResourceType::StructuredBuffer:
+        case EShaderResourceType::ByteAddressBuffer:     return EMSLBindingType::ShaderResourceBuffer;
+        case EShaderResourceType::AccelerationStructure: return EMSLBindingType::AccelerationStructure;
+        case EShaderResourceType::RWTexture:
+        case EShaderResourceType::RWTypedBuffer:         return EMSLBindingType::UnorderedAccessTexture;
+        case EShaderResourceType::RWStructuredBuffer:
+        case EShaderResourceType::RWByteAddressBuffer:   return EMSLBindingType::UnorderedAccessBuffer;
+        default:                                         return EMSLBindingType::Unknown;
     }
-
-    const uint64 BindingsSize = uint64(Header.NumBindings) * sizeof(FMSLShaderBinding);
-    const uint64 ExpectedSize = sizeof(FMSLShaderHeader) + BindingsSize + Header.SourceSize;
-
-    if (ExpectedSize > uint64(ByteCode.Size()))
-    {
-        return false;
-    }
-
-    OutBindings.Resize(static_cast<int32>(Header.NumBindings));
-    if (Header.NumBindings > 0)
-    {
-        Memory::Memcpy(OutBindings.Data(), ByteCode.Data() + sizeof(FMSLShaderHeader), BindingsSize);
-    }
-
-    OutSource = TArrayView<const uint8>(ByteCode.Data() + sizeof(FMSLShaderHeader) + BindingsSize, static_cast<int32>(Header.SourceSize));
-    return true;
 }

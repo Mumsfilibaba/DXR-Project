@@ -16,6 +16,3 @@
 #include "RHI/RHITypes.h"
 #include "RHI/RHIValidation.h"
 #include "RHI/RHISwapChain.h"
-// TODO: Move to it's own module
-#include "RHI/ShaderCompiler.h"
-#include "RHI/ShaderCompilerInclude.h"

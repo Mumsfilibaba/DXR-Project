@@ -83,24 +83,6 @@ public:
      */
     void SetSearchCaseType(EStringCaseType InCaseType);
 
-    /** @return The string the block highlights every occurrence of, or empty when there is no search. */
-    NODISCARD FORCEINLINE const String& GetSearchText() const
-    {
-        return SearchText;
-    }
-
-    /** @return Whether matches must use the same case as the search string. */
-    NODISCARD FORCEINLINE EStringCaseType GetSearchCaseType() const
-    {
-        return SearchCaseType;
-    }
-
-    /** @return The start of each search match in the concatenated text, in order and never overlapping. */
-    NODISCARD FORCEINLINE const TArray<int32>& GetSearchMatches() const
-    {
-        return SearchMatches;
-    }
-
     /** @return True when the anchor and the cursor sit apart, rather than a caret resting somewhere. */
     NODISCARD bool HasSelection() const;
 
@@ -134,6 +116,32 @@ public:
     NODISCARD String GetText() const;
 
     /**
+     * @brief The character under a point.
+     *
+     * @param ClientPosition The point, in the space the block was arranged in.
+     * @return The index into the concatenated text.
+     */
+    NODISCARD int32 FindCharacterIndexAt(const IntVector2& ClientPosition) const;
+
+    /** @return The string the block highlights every occurrence of, or empty when there is no search. */
+    NODISCARD FORCEINLINE const String& GetSearchText() const
+    {
+        return SearchText;
+    }
+
+    /** @return Whether matches must use the same case as the search string. */
+    NODISCARD FORCEINLINE EStringCaseType GetSearchCaseType() const
+    {
+        return SearchCaseType;
+    }
+
+    /** @return The start of each search match in the concatenated text, in order and never overlapping. */
+    NODISCARD FORCEINLINE const TArray<int32>& GetSearchMatches() const
+    {
+        return SearchMatches;
+    }
+
+    /**
      * @brief Gets the laid-out text, for a caller that needs its lines or its measurements.
      *
      * @return The layout, wrapped to the width of the last measure, arrange or draw.
@@ -142,14 +150,6 @@ public:
     {
         return Layout;
     }
-
-    /**
-     * @brief The character under a point.
-     *
-     * @param ClientPosition The point, in the space the block was arranged in.
-     * @return The index into the concatenated text.
-     */
-    NODISCARD int32 FindCharacterIndexAt(const IntVector2& ClientPosition) const;
 
 protected:
 

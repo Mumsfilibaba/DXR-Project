@@ -56,7 +56,7 @@ void FRayTracingPrimaryDebugPass::Release()
 
 bool FRayTracingPrimaryDebugPass::IsEnabled(const FSceneRenderView& SceneRenderView) const
 {
-    return RHI::bSupportsRayTracing && GRayTracingEnabled && PrimaryRayDebugPipeline
+    return RenderSettings::IsRayTracingEnabled() && PrimaryRayDebugPipeline
         && SceneRenderView.DebugView == FSceneRenderView::EDebugView::RayTracingPrimaryID;
 }
 

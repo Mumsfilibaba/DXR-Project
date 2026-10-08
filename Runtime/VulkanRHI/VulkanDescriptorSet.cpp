@@ -378,6 +378,12 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResource
             case FVulkanResourceView::EType::ExternalImageView:
             {
                 const FVulkanResourceView::FImageView& ImageViewInfo = ShaderResourceView->GetImageViewInfo();
+                if (!IsImageViewTypeCompatible(DescriptorSetIndex, BindingIndex, ImageViewInfo.ImageViewType))
+                {
+                    ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
+                    break;
+                }
+
                 DSBuilder.WriteSampledImage(BindingIndex, ImageViewInfo.ImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
                 BoundResourceViews[DescriptorSetIndex][BindingIndex] = ShaderResourceView;
                 break; 
@@ -419,7 +425,10 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResource
         ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
     }
 
-    DirtyResources();
+    if (DescriptorSetBuilders[DescriptorSetIndex].IsKeyDirty())
+    {
+        DirtyResources();
+    }
 }
 
 void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAccessView, uint32 DescriptorSetIndex, uint32 BindingIndex)
@@ -438,6 +447,12 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAcce
             case FVulkanResourceView::EType::ExternalImageView:
             {
                 const FVulkanResourceView::FImageView& ImageViewInfo = UnorderedAccessView->GetImageViewInfo();
+                if (!IsImageViewTypeCompatible(DescriptorSetIndex, BindingIndex, ImageViewInfo.ImageViewType))
+                {
+                    ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
+                    break;
+                }
+
                 DSBuilder.WriteStorageImage(BindingIndex, ImageViewInfo.ImageView, VK_IMAGE_LAYOUT_GENERAL);
                 BoundResourceViews[DescriptorSetIndex][BindingIndex] = UnorderedAccessView;
                 break;
@@ -471,7 +486,16 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAcce
         ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
     }
 
-    DirtyResources();
+    if (DescriptorSetBuilders[DescriptorSetIndex].IsKeyDirty())
+    {
+        DirtyResources();
+    }
+}
+
+bool FVulkanDescriptorState::IsImageViewTypeCompatible(uint32 DescriptorSetIndex, uint32 BindingIndex, VkImageViewType ImageViewType) const
+{
+    const EVulkanNullImageViewType DeclaredViewType = DescriptorSetWrites[DescriptorSetIndex].NullViewTypes[BindingIndex];
+    return GetVkImageViewType(DeclaredViewType) == ImageViewType;
 }
 
 void FVulkanDescriptorState::SetBoundBuffer(FRHIResource* Resource, ERHIResourceState Access, uint32 DescriptorSetIndex, uint32 BindingIndex)
@@ -508,6 +532,7 @@ void FVulkanDescriptorState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, u
             {
                 DynamicOffsets[FlatIndex] = DynamicOffset;
                 bDynamicOffsetsDirty = true;
+                DirtyDescriptorSet();
             }
         }
         else
@@ -520,7 +545,10 @@ void FVulkanDescriptorState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, u
         ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
     }
 
-    DirtyResources();
+    if (DescriptorSetBuilders[DescriptorSetIndex].IsKeyDirty())
+    {
+        DirtyResources();
+    }
 }
 
 void FVulkanDescriptorState::SetSampler(FVulkanSamplerStateRHI* SamplerState, uint32 DescriptorSetIndex, uint32 BindingIndex)
@@ -537,7 +565,10 @@ void FVulkanDescriptorState::SetSampler(FVulkanSamplerStateRHI* SamplerState, ui
         ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
     }
 
-    DirtyResources();
+    if (DescriptorSetBuilders[DescriptorSetIndex].IsKeyDirty())
+    {
+        DirtyResources();
+    }
 }
 
 void FVulkanDescriptorState::ResolveSampledImageLayouts(FVulkanTextureRHI* ReadOnlyDepthTexture, VkImageLayout ReadOnlyDepthLayout)
@@ -809,6 +840,7 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
                     bDynamicOffsetsDirty = true;
                 }
             }
+
             break;
         }
 

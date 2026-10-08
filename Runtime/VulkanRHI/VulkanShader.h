@@ -4,17 +4,17 @@
 #include "RHI/RHIShader.h"
 #include "RHI/RHIResources.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
+#include "ShaderCore/ShaderCode.h"
 
-typedef TSharedRef<class FVulkanShader>                 FVulkanShaderRef;
-typedef TSharedRef<class FVulkanVertexShaderRHI>        FVulkanVertexShaderRHIRef;
-typedef TSharedRef<class FVulkanHullShaderRHI>          FVulkanHullShaderRHIRef;
-typedef TSharedRef<class FVulkanDomainShaderRHI>        FVulkanDomainShaderRHIRef;
-typedef TSharedRef<class FVulkanGeometryShaderRHI>      FVulkanGeometryShaderRHIRef;
-typedef TSharedRef<class FVulkanPixelShaderRHI>         FVulkanPixelShaderRHIRef;
-typedef TSharedRef<class FVulkanMeshShaderRHI>          FVulkanMeshShaderRHIRef;
-typedef TSharedRef<class FVulkanAmplificationShaderRHI> FVulkanAmplificationShaderRHIRef;
-typedef TSharedRef<class FVulkanComputeShaderRHI>       FVulkanComputeShaderRHIRef;
-typedef TSharedRef<class FVulkanRayTracingShader>         FVulkanRayTracingShaderRef;
+typedef TSharedRef<class FVulkanShaderModule>             FVulkanShaderModuleRef;
+typedef TSharedRef<class FVulkanVertexShaderRHI>          FVulkanVertexShaderRHIRef;
+typedef TSharedRef<class FVulkanHullShaderRHI>            FVulkanHullShaderRHIRef;
+typedef TSharedRef<class FVulkanDomainShaderRHI>          FVulkanDomainShaderRHIRef;
+typedef TSharedRef<class FVulkanGeometryShaderRHI>        FVulkanGeometryShaderRHIRef;
+typedef TSharedRef<class FVulkanPixelShaderRHI>           FVulkanPixelShaderRHIRef;
+typedef TSharedRef<class FVulkanMeshShaderRHI>            FVulkanMeshShaderRHIRef;
+typedef TSharedRef<class FVulkanAmplificationShaderRHI>   FVulkanAmplificationShaderRHIRef;
+typedef TSharedRef<class FVulkanComputeShaderRHI>         FVulkanComputeShaderRHIRef;
 typedef TSharedRef<class FVulkanRayGenShaderRHI>          FVulkanRayGenShaderRHIRef;
 typedef TSharedRef<class FVulkanRayAnyHitShaderRHI>       FVulkanRayAnyHitShaderRHIRef;
 typedef TSharedRef<class FVulkanRayClosestHitShaderRHI>   FVulkanRayClosestHitShaderRHIRef;
@@ -153,8 +153,8 @@ struct FVulkanShaderInfo
 {
     struct FBindingOffsets
     {
-        uint32                   DescriptorSetOffset = UINT32_MAX;
-        uint32                   BindingOffset       = UINT32_MAX;
+        uint16                   DescriptorSetOffset = UINT16_MAX;
+        uint16                   BindingOffset       = UINT16_MAX;
         EVulkanBindingType::Type HeapBindingType     = EVulkanBindingType::Count;
     };
     
@@ -210,14 +210,13 @@ public:
     FVulkanShader(FVulkanDevice* InDevice, EShaderVisibility::Type InShaderVisibility);
     ~FVulkanShader();
 
-    bool Initialize(const TArray<uint8>& InCode);
+    bool Initialize(const FShaderCodeView& InCode);
 
-    TSharedRef<FVulkanShaderModule> GetOrCreateShaderModule(class FVulkanPipelineLayout* Layout);
+    /** @brief Builds the container for shaders the build compiles into headers, which never pass through ShaderCompiler */
+    static bool CreateInternalShaderCode(EShaderStage Stage, TArrayView<const uint8> Spirv, FShaderReflection Reflection, TArray<uint8>& OutShaderCode);
+
+    FVulkanShaderModuleRef GetOrCreateShaderModule(class FVulkanPipelineLayout* Layout);
     bool PatchShaderBindings(FSpirvArray& OutSpirv, class FVulkanPipelineLayout* Layout, uint32 DescriptorSetIndex);
-    bool StripGoogleSpirvRequirements(const FSpirvArray& InWords, FSpirvArray& OutWords);
-    bool ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, String* OutErrorMessage = nullptr);
-    bool ForceUnknownStorageImageFormats(const FSpirvArray& InWords, FSpirvArray& OutWords, bool& bOutRewroteFormats);
-    bool MergeDuplicateTypeDeclarations(const FSpirvArray& InWords, FSpirvArray& OutWords);
 
     EShaderVisibility::Type GetShaderVisibility() const
     {
@@ -235,14 +234,14 @@ public:
     }
 
 protected:
-    bool InitializeShaderLayout();
+    bool BuildShaderInfo(const FShaderCodeView& InCode);
     
-    FSpirvArray                                   SpirvCode;
-    FVulkanShaderInfo                             ShaderInfo;
-    EShaderVisibility::Type                       ShaderVisibility;
-    String                                        EntryPointName;
-    TMap<uint64, TSharedRef<FVulkanShaderModule>> ShaderModules;
-    FCriticalSection                              ShaderModulesCS;
+    FSpirvArray                          SpirvCode;
+    FVulkanShaderInfo                    ShaderInfo;
+    EShaderVisibility::Type              ShaderVisibility;
+    String                               EntryPointName;
+    TMap<uint64, FVulkanShaderModuleRef> ShaderModules;
+    FCriticalSection                     ShaderModulesCS;
 };
 
 class FVulkanVertexShaderRHI : public FRHIVertexShader, public FVulkanShader
@@ -326,9 +325,6 @@ public:
 
 class FVulkanRayTracingShader : public FVulkanShader
 {
-public:
-    static bool GetRayTracingShaderReflection(class FVulkanRayTracingShader* Shader);
-    
 public:
     FVulkanRayTracingShader(FVulkanDevice* InDevice);
     virtual ~FVulkanRayTracingShader();

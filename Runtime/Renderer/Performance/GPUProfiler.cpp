@@ -400,7 +400,7 @@ void FGPUProfiler::BeginGPUFrame()
 
     OpenPipelineStatsQuery  = nullptr;
     PipelineStatsScopeIndex = -1;
-    bFrameOpen              = true;
+    bFrameOpen = PendingCpuFrameIndex[WriteIndex] >= 0;
 }
 
 void FGPUProfiler::EndGPUFrame()

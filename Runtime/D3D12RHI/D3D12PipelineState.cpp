@@ -194,6 +194,8 @@ FD3D12PipelineState::~FD3D12PipelineState()
 void FD3D12EffectiveDescriptorCounts::ComputeEffectiveDescriptorCounts(const FD3D12RootSignature* RootSignature, FD3D12Shader* const* Shaders, uint32 NumShaders)
 {
     Memory::Memzero(EffectiveDescriptorCounts, sizeof(EffectiveDescriptorCounts));
+    Memory::Memzero(NullShaderResourceViewTypes, sizeof(NullShaderResourceViewTypes));
+    Memory::Memzero(NullUnorderedAccessViewTypes, sizeof(NullUnorderedAccessViewTypes));
 
     if (!RootSignature)
     {
@@ -225,6 +227,15 @@ void FD3D12EffectiveDescriptorCounts::ComputeEffectiveDescriptorCounts(const FD3
             if (Slot >= 0)
             {
                 EffectiveDescriptorCounts[Stage][ResourceType] = Math::Max<uint8>(EffectiveDescriptorCounts[Stage][ResourceType], static_cast<uint8>(Slot) + 1);
+
+                if (ResourceType == EResourceType::SRV && Slot < D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT)
+                {
+                    NullShaderResourceViewTypes[Stage][Slot] = Binding.NullDescriptorType;
+                }
+                else if (ResourceType == EResourceType::UAV && Slot < D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT)
+                {
+                    NullUnorderedAccessViewTypes[Stage][Slot] = Binding.NullDescriptorType;
+                }
             }
         }
     }
@@ -232,8 +243,7 @@ void FD3D12EffectiveDescriptorCounts::ComputeEffectiveDescriptorCounts(const FD3
 
 void FD3D12PipelineState::SetDebugName(const String& InName)
 {
-    const WString WideName = CharToWide(InName);
-    PipelineState->SetName(*WideName);
+    D3D12SetDebugName(PipelineState.Get(), InName);
     DebugName = InName;
 }
 
@@ -593,7 +603,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
     FD3D12HashableViewInstanceDesc ViewInstanceDesc;
     if (Desc.ViewInstancingState.bEnableViewInstancing)
     {
-        ViewInstanceDesc.ViewInstanceCount = Math::Min<uint32>(Desc.ViewInstancingState.NumArraySlices, D3D12_MAX_VIEW_INSTANCE_COUNT);
+        ViewInstanceDesc.ViewInstanceCount = Math::Min<uint32>(Desc.ViewInstancingState.NumArraySlices, D3D12_MAX_VIEW_INSTANCES);
         for (uint32 Index = 0; Index < ViewInstanceDesc.ViewInstanceCount; Index++)
         {
             ViewInstanceDesc.ViewInstanceLocations[Index].RenderTargetArrayIndex = Desc.ViewInstancingState.StartRenderTargetArrayIndex;
@@ -792,7 +802,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
     }
 }
 
-FD3D12ComputePipelineStateRHI::FD3D12ComputePipelineStateRHI(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShaderRHI>& InShader)
+FD3D12ComputePipelineStateRHI::FD3D12ComputePipelineStateRHI(FD3D12Device* InDevice, const FD3D12ComputeShaderRHIRef& InShader)
     : FRHIComputePipelineState()
     , FD3D12PipelineState(InDevice)
     , Shader(InShader)
@@ -1243,7 +1253,7 @@ bool FD3D12MeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDes
     FD3D12HashableViewInstanceDesc ViewInstanceDesc;
     if (Desc.ViewInstancingState.bEnableViewInstancing)
     {
-        ViewInstanceDesc.ViewInstanceCount = Math::Min<uint32>(Desc.ViewInstancingState.NumArraySlices, D3D12_MAX_VIEW_INSTANCE_COUNT);
+        ViewInstanceDesc.ViewInstanceCount = Math::Min<uint32>(Desc.ViewInstancingState.NumArraySlices, D3D12_MAX_VIEW_INSTANCES);
         for (uint32 Index = 0; Index < ViewInstanceDesc.ViewInstanceCount; Index++)
         {
             ViewInstanceDesc.ViewInstanceLocations[Index].RenderTargetArrayIndex = Desc.ViewInstancingState.StartRenderTargetArrayIndex;

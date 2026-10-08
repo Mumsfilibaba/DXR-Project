@@ -195,7 +195,7 @@ bool ConsoleManagerCommandLine_Test()
             "-Test.Deferred.Bool=true -Test.Deferred.Int=42 "
             "-Test.Deferred.Float=0.25 -Test.Deferred.String=Vulkan");
 
-        FConsoleManager::Get().LoadConsoleVariablesFromCommandLine();
+        FConsoleManager::Get().LoadFromCommandLine();
 
         TEST_EXPECT_EQ(CVarBool.GetValue(), true);
         TEST_EXPECT_EQ(CVarInt.GetValue(), 42);
@@ -213,7 +213,7 @@ bool ConsoleManagerCommandLine_Test()
         TAutoConsoleVariable<int32> CVarClamped("Test.Deferred.Clamped", "", 0, 0, 16);
 
         InitializeFromLine("-Test.Deferred.Switch -Test.Deferred.Clamped=1000");
-        FConsoleManager::Get().LoadConsoleVariablesFromCommandLine();
+        FConsoleManager::Get().LoadFromCommandLine();
 
         TEST_EXPECT_EQ(CVarSwitch.GetValue(), true);
         TEST_EXPECT_EQ(CVarClamped.GetValue(), 16);
@@ -226,7 +226,7 @@ bool ConsoleManagerCommandLine_Test()
         TAutoConsoleVariable<String> CVarUntouched("Test.Deferred.Untouched", "", "Default");
 
         InitializeFromLine("-Test.Deferred.SomethingElse=Value");
-        FConsoleManager::Get().LoadConsoleVariablesFromCommandLine();
+        FConsoleManager::Get().LoadFromCommandLine();
 
         TEST_EXPECT(CVarUntouched.GetValue().Equals("Default"));
         TEST_EXPECT(GetSetByFlag(CVarUntouched.operator->()) != EConsoleVariableFlags::SetByCommandLine);

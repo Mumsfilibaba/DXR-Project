@@ -467,6 +467,7 @@ FVulkanBuddyAllocator::FVulkanBuddyAllocator(FVulkanDevice* InDevice, uint64 InB
     , BaseDeviceAddress(0)
     , MappedBaseAddress(nullptr)
     , FreeOffsets()
+    , NumIdleCleanUps(0)
     , AllocatorCS()
 {
 }
@@ -832,7 +833,18 @@ void FVulkanMultiBuddyAllocator::CleanUp()
     for (int32 Index = Allocators.Size() - 1; Index >= 0; --Index)
     {
         FVulkanBuddyAllocator* Allocator = Allocators[Index];
-        if (Allocator && Allocator->IsEmpty())
+        if (!Allocator)
+        {
+            continue;
+        }
+
+        if (!Allocator->IsEmpty())
+        {
+            Allocator->ResetIdleCleanUps();
+            continue;
+        }
+
+        if (Allocator->IncrementIdleCleanUps() > VULKAN_MAX_IDLE_PAGE_CLEANUPS)
         {
             delete Allocator;
             Allocators.RemoveAtSwap(Index);
@@ -863,6 +875,7 @@ bool FVulkanMultiBuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignmen
     {
         if (Allocator && Allocator->TryAllocate(SizeInBytes, Alignment, OutLocation))
         {
+            Allocator->ResetIdleCleanUps();
             return true;
         }
     }
@@ -889,6 +902,8 @@ FVulkanPoolAllocatorPage::FVulkanPoolAllocatorPage(FVulkanDevice* InDevice, uint
     , BaseDeviceAddress(0)
     , MappedBaseAddress(nullptr)
     , FreeRanges()
+    , LiveAllocations()
+    , NumIdleCleanUps(0)
 {
 }
 
@@ -1245,7 +1260,18 @@ void FVulkanPoolAllocator::CleanUp()
     for (int32 Index = Pages.Size() - 1; Index >= 0; --Index)
     {
         FVulkanPoolAllocatorPage* Page = Pages[Index];
-        if (Page && Page->IsEmpty())
+        if (!Page)
+        {
+            continue;
+        }
+
+        if (!Page->IsEmpty())
+        {
+            Page->ResetIdleCleanUps();
+            continue;
+        }
+
+        if (Page->IncrementIdleCleanUps() > VULKAN_MAX_IDLE_PAGE_CLEANUPS)
         {
         #if VULKAN_ENABLE_STATS
             TrackedAllocatedBytes.Subtract(static_cast<int64>(Page->GetPageSize()));
@@ -1339,6 +1365,7 @@ bool FVulkanPoolAllocator::TryAllocate(uint64 SizeInBytes, uint64 InAlignment, F
             TrackedUsedBytes.Add(static_cast<int64>(SizeAligned));
         #endif
 
+            Page->ResetIdleCleanUps();
             OutLocation.SetPoolAllocator(this);
             return true;
         }

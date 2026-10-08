@@ -490,6 +490,12 @@ FD3D12Device::~FD3D12Device()
     DefaultDescriptors.DefaultSampler.Reset();
     DefaultDescriptors.DefaultRTV.Reset();
 
+    for (int32 Index = 0; Index < static_cast<int32>(ED3D12NullDescriptorType::Count); Index++)
+    {
+        DefaultDescriptors.NullShaderResourceViews[Index].Reset();
+        DefaultDescriptors.NullUnorderedAccessViews[Index].Reset();
+    }
+
     // Destroy QueryHeapManagers
     SAFE_DELETE(TimingQueryHeapManager);
     SAFE_DELETE(OcclusionQueryHeapManager);
@@ -688,6 +694,7 @@ void FD3D12Device::EndFrame(FD3D12CommandContext* InCommandContext)
         return;
     }
 
+    STAT_ADD_FRAME(STAT_D3D12_SplitsOther, 1);
     InCommandContext->SplitCommandList(true, false);
 
     const uint64 CompletionFenceValue = FrameFence->Signal(DirectQueue->GetD3D12CommandQueue());
@@ -1213,6 +1220,176 @@ bool FD3D12Device::CreateCommandQueues()
     return true;
 }
 
+static bool GetNullShaderResourceViewDesc(ED3D12NullDescriptorType Type, D3D12_SHADER_RESOURCE_VIEW_DESC& OutDesc)
+{
+    OutDesc = {};
+    OutDesc.Format                  = DXGI_FORMAT_R8G8B8A8_UNORM;
+    OutDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+    switch (Type)
+    {
+        case ED3D12NullDescriptorType::Texture1D:
+        {
+            OutDesc.ViewDimension       = D3D12_SRV_DIMENSION_TEXTURE1D;
+            OutDesc.Texture1D.MipLevels = 1;
+            return true;
+        }
+        case ED3D12NullDescriptorType::Texture1DArray:
+        {
+            OutDesc.ViewDimension            = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
+            OutDesc.Texture1DArray.MipLevels = 1;
+            OutDesc.Texture1DArray.ArraySize = 1;
+            return true;
+        }
+        case ED3D12NullDescriptorType::Texture2D:
+        {
+            OutDesc.ViewDimension       = D3D12_SRV_DIMENSION_TEXTURE2D;
+            OutDesc.Texture2D.MipLevels = 1;
+            return true;
+        }
+        case ED3D12NullDescriptorType::Texture2DArray:
+        {
+            OutDesc.ViewDimension            = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+            OutDesc.Texture2DArray.MipLevels = 1;
+            OutDesc.Texture2DArray.ArraySize = 1;
+            return true;
+        }
+        case ED3D12NullDescriptorType::Texture2DMS:
+        {
+            OutDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
+            return true;
+        }
+        case ED3D12NullDescriptorType::Texture2DMSArray:
+        {
+            OutDesc.ViewDimension              = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
+            OutDesc.Texture2DMSArray.ArraySize = 1;
+            return true;
+        }
+        case ED3D12NullDescriptorType::Texture3D:
+        {
+            OutDesc.ViewDimension       = D3D12_SRV_DIMENSION_TEXTURE3D;
+            OutDesc.Texture3D.MipLevels = 1;
+            return true;
+        }
+        case ED3D12NullDescriptorType::TextureCube:
+        {
+            OutDesc.ViewDimension         = D3D12_SRV_DIMENSION_TEXTURECUBE;
+            OutDesc.TextureCube.MipLevels = 1;
+            return true;
+        }
+        case ED3D12NullDescriptorType::TextureCubeArray:
+        {
+            OutDesc.ViewDimension              = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
+            OutDesc.TextureCubeArray.MipLevels = 1;
+            OutDesc.TextureCubeArray.NumCubes  = 1;
+            return true;
+        }
+        case ED3D12NullDescriptorType::TypedBuffer:
+        {
+            OutDesc.ViewDimension      = D3D12_SRV_DIMENSION_BUFFER;
+            OutDesc.Format             = DXGI_FORMAT_R32_UINT;
+            OutDesc.Buffer.NumElements = 1;
+            return true;
+        }
+        case ED3D12NullDescriptorType::RawBuffer:
+        {
+            OutDesc.ViewDimension      = D3D12_SRV_DIMENSION_BUFFER;
+            OutDesc.Format             = DXGI_FORMAT_R32_TYPELESS;
+            OutDesc.Buffer.NumElements = 1;
+            OutDesc.Buffer.Flags       = D3D12_BUFFER_SRV_FLAG_RAW;
+            return true;
+        }
+        case ED3D12NullDescriptorType::StructuredBuffer:
+        {
+            OutDesc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
+            OutDesc.Format                     = DXGI_FORMAT_UNKNOWN;
+            OutDesc.Buffer.NumElements         = 1;
+            OutDesc.Buffer.StructureByteStride = sizeof(uint32);
+            return true;
+        }
+        case ED3D12NullDescriptorType::AccelerationStructure:
+        {
+            if (GD3D12RayTracingTier < D3D12_RAYTRACING_TIER_1_0)
+            {
+                return false;
+            }
+
+            OutDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+            OutDesc.Format        = DXGI_FORMAT_UNKNOWN;
+            return true;
+        }
+        default:
+        {
+            return false;
+        }
+    }
+}
+
+static bool GetNullUnorderedAccessViewDesc(ED3D12NullDescriptorType Type, D3D12_UNORDERED_ACCESS_VIEW_DESC& OutDesc)
+{
+    OutDesc = {};
+    OutDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+    switch (Type)
+    {
+        case ED3D12NullDescriptorType::Texture1D:
+        {
+            OutDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1D;
+            return true;
+        }
+        case ED3D12NullDescriptorType::Texture1DArray:
+        {
+            OutDesc.ViewDimension            = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
+            OutDesc.Texture1DArray.ArraySize = 1;
+            return true;
+        }
+        case ED3D12NullDescriptorType::Texture2D:
+        {
+            OutDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+            return true;
+        }
+        case ED3D12NullDescriptorType::Texture2DArray:
+        {
+            OutDesc.ViewDimension            = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+            OutDesc.Texture2DArray.ArraySize = 1;
+            return true;
+        }
+        case ED3D12NullDescriptorType::Texture3D:
+        {
+            OutDesc.ViewDimension   = D3D12_UAV_DIMENSION_TEXTURE3D;
+            OutDesc.Texture3D.WSize = 1;
+            return true;
+        }
+        case ED3D12NullDescriptorType::TypedBuffer:
+        {
+            OutDesc.ViewDimension      = D3D12_UAV_DIMENSION_BUFFER;
+            OutDesc.Format             = DXGI_FORMAT_R32_UINT;
+            OutDesc.Buffer.NumElements = 1;
+            return true;
+        }
+        case ED3D12NullDescriptorType::RawBuffer:
+        {
+            OutDesc.ViewDimension      = D3D12_UAV_DIMENSION_BUFFER;
+            OutDesc.Format             = DXGI_FORMAT_R32_TYPELESS;
+            OutDesc.Buffer.NumElements = 1;
+            OutDesc.Buffer.Flags       = D3D12_BUFFER_UAV_FLAG_RAW;
+            return true;
+        }
+        case ED3D12NullDescriptorType::StructuredBuffer:
+        {
+            OutDesc.ViewDimension              = D3D12_UAV_DIMENSION_BUFFER;
+            OutDesc.Format                     = DXGI_FORMAT_UNKNOWN;
+            OutDesc.Buffer.NumElements         = 1;
+            OutDesc.Buffer.StructureByteStride = sizeof(uint32);
+            return true;
+        }
+        default:
+        {
+            return false;
+        }
+    }
+}
+
 bool FD3D12Device::CreateDefaultResources()
 {
     D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc = {};
@@ -1250,6 +1427,35 @@ bool FD3D12Device::CreateDefaultResources()
     if (!DefaultDescriptors.DefaultSRV->Initialize(nullptr, SRVDesc))
     {
         return false;
+    }
+
+    for (int32 Index = 0; Index < static_cast<int32>(ED3D12NullDescriptorType::Count); Index++)
+    {
+        const ED3D12NullDescriptorType NullDescriptorType = static_cast<ED3D12NullDescriptorType>(Index);
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC NullSRVDesc;
+        if (GetNullShaderResourceViewDesc(NullDescriptorType, NullSRVDesc))
+        {
+            FD3D12ShaderResourceViewRHIRef NullSRV = new FD3D12ShaderResourceViewRHI(this, GetResourceOfflineDescriptorHeap(), nullptr, FRHIShaderResourceViewDesc());
+            if (!NullSRV->Initialize(nullptr, NullSRVDesc))
+            {
+                return false;
+            }
+
+            DefaultDescriptors.NullShaderResourceViews[Index] = NullSRV;
+        }
+
+        D3D12_UNORDERED_ACCESS_VIEW_DESC NullUAVDesc;
+        if (GetNullUnorderedAccessViewDesc(NullDescriptorType, NullUAVDesc))
+        {
+            FD3D12UnorderedAccessViewRHIRef NullUAV = new FD3D12UnorderedAccessViewRHI(this, GetResourceOfflineDescriptorHeap(), nullptr, FRHIUnorderedAccessViewDesc());
+            if (!NullUAV->Initialize(nullptr, nullptr, NullUAVDesc))
+            {
+                return false;
+            }
+
+            DefaultDescriptors.NullUnorderedAccessViews[Index] = NullUAV;
+        }
     }
 
     D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = {};

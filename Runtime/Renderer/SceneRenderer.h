@@ -187,6 +187,9 @@ private:
     bool InitShadingImage();
 #endif
 
+    bool InitializeRayTracing();
+    void ReleaseRayTracing(FScene* Scene);
+    void UpdateRayTracingState(FScene* Scene);
     bool CreateRayTracingResources(uint32 Width, uint32 Height);
 
     void RenderThread_PrepareCameraData(const FSceneRenderView& SceneRenderView, FScene* Scene);
@@ -235,7 +238,8 @@ private:
     FRayTracingReflectionsPass*      RayTracingReflectionsPass;
     FReflectionDenoisePass*          ReflectionDenoisePass;
     FRayTracingPrimaryDebugPass*     RayTracingPrimaryDebugPass;
-    bool                             bRayTracingWasActive = false; // tracks the RT active->inactive edge for BLAS teardown
+    bool                             bRayTracingRequested   = false; // Renderer.Feature.RayTracing as last seen by UpdateRayTracingState
+    bool                             bRayTracingInitialized = false; // The ray tracing passes and resources exist
     FRHIQueryRef                     TimestampQueries;
     FRHICommandList                  CommandList;
 #if SUPPORT_VARIABLE_RATE_SHADING

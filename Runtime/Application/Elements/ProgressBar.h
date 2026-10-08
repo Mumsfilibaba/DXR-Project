@@ -60,24 +60,12 @@ public:
      */
     void SetPercent(float InPercent);
 
-    /** @return How full the bar is, from empty at zero through full at one. */
-    NODISCARD FORCEINLINE float GetPercent() const
-    {
-        return Percent;
-    }
-
     /**
      * @brief Sets the text written over the track.
      *
      * @param InText The text to write, which is drawn only when the bar has a font.
      */
     void SetOverlayText(const String& InText);
-
-    /** @return The text written over the track, which is empty when there is none. */
-    NODISCARD FORCEINLINE const String& GetOverlayText() const
-    {
-        return OverlayText;
-    }
 
     /**
      * @brief Sets the color the filled part of the track is drawn in, which is how a bar warns about
@@ -86,6 +74,18 @@ public:
      * @param InColor The color to fill with.
      */
     void SetFillColor(const FFloatColor& InColor);
+
+    /** @return How full the bar is, from empty at zero through full at one. */
+    NODISCARD FORCEINLINE float GetPercent() const
+    {
+        return Percent;
+    }
+
+    /** @return The text written over the track, which is empty when there is none. */
+    NODISCARD FORCEINLINE const String& GetOverlayText() const
+    {
+        return OverlayText;
+    }
 
 private:
     String                OverlayText;

@@ -35,8 +35,17 @@ public:
         return NumVertexStreams;
     }
 
+    /**
+     * @brief Builds a vertex descriptor that places each element at the attribute index of the shader input with its semantic
+     *
+     * @param ShaderInputs Reflected inputs of the vertex shader, matched by semantic hash and semantic index
+     * @return An autoreleased descriptor, or nil when the layout has no element for one of the inputs
+     */
+    MTLVertexDescriptor* CreateResolvedVertexDescriptor(const TArray<FShaderVertexInput>& ShaderInputs) const;
+
 private:
     TArray<FRHIInputElementDesc> InputElements;
+    TArray<uint32>               SemanticHashes;
     MTLVertexDescriptor*         VertexDescriptor;
     uint32                       NumVertexStreams;
 };

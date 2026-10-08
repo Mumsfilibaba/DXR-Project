@@ -474,20 +474,37 @@ FRHIUnorderedAccessView* FMetalDeviceRHI::CreateSamplerFeedbackUnorderedAccessVi
 }
 
 template<typename MetalShaderType>
-MetalShaderType* FMetalDeviceRHI::CreateShader(const TArray<uint8>& ShaderCode)
+MetalShaderType* FMetalDeviceRHI::CreateShader(EShaderStage Stage, const TArray<uint8>& ShaderCode)
 {
+    FShaderCodeView CodeView;
+    if (!FShaderCodeReader::Read(ShaderCode, CodeView) || CodeView.GetStage() != Stage || CodeView.GetOutputLanguage() != EShaderOutputLanguage::MSL)
+    {
+        METAL_ERROR("The shader code is not a valid MSL %s shader", ToString(Stage));
+        return nullptr;
+    }
+
     TSharedRef<MetalShaderType> NewShader = new MetalShaderType(GetMetalDevice());
-    return NewShader->Initialize(ShaderCode) ? NewShader.ReleaseOwnership() : nullptr;
+    if (!NewShader->Initialize(CodeView))
+    {
+        return nullptr;
+    }
+
+    if constexpr (TIsBaseOf<FRHIVertexShader, MetalShaderType>::Value)
+    {
+        NewShader->SetVertexInputs(CodeView.GetVertexInputs());
+    }
+
+    return NewShader.ReleaseOwnership();
 }
 
 FRHIComputeShader* FMetalDeviceRHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
 {
-    return CreateShader<FMetalComputeShaderRHI>(ShaderCode);
+    return CreateShader<FMetalComputeShaderRHI>(EShaderStage::Compute, ShaderCode);
 }
 
 FRHIVertexShader* FMetalDeviceRHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
-    return CreateShader<FMetalVertexShaderRHI>(ShaderCode);
+    return CreateShader<FMetalVertexShaderRHI>(EShaderStage::Vertex, ShaderCode);
 }
 
 FRHIHullShader* FMetalDeviceRHI::CreateHullShader(const TArray<uint8>& ShaderCode)
@@ -512,7 +529,7 @@ FRHIMeshShader* FMetalDeviceRHI::CreateMeshShader(const TArray<uint8>& ShaderCod
         return nullptr;
     }
 
-    return CreateShader<FMetalMeshShaderRHI>(ShaderCode);
+    return CreateShader<FMetalMeshShaderRHI>(EShaderStage::Mesh, ShaderCode);
 }
 
 FRHIAmplificationShader* FMetalDeviceRHI::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
@@ -522,42 +539,42 @@ FRHIAmplificationShader* FMetalDeviceRHI::CreateAmplificationShader(const TArray
         return nullptr;
     }
 
-    return CreateShader<FMetalAmplificationShaderRHI>(ShaderCode);
+    return CreateShader<FMetalAmplificationShaderRHI>(EShaderStage::Amplification, ShaderCode);
 }
 
 FRHIPixelShader* FMetalDeviceRHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
-    return CreateShader<FMetalPixelShaderRHI>(ShaderCode);
+    return CreateShader<FMetalPixelShaderRHI>(EShaderStage::Pixel, ShaderCode);
 }
 
 FRHIRayGenShader* FMetalDeviceRHI::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
-    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayGenShaderRHI>(ShaderCode) : nullptr;
+    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayGenShaderRHI>(EShaderStage::RayGen, ShaderCode) : nullptr;
 }
 
 FRHIRayAnyHitShader* FMetalDeviceRHI::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
-    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayAnyHitShaderRHI>(ShaderCode) : nullptr;
+    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayAnyHitShaderRHI>(EShaderStage::RayAnyHit, ShaderCode) : nullptr;
 }
 
 FRHIRayClosestHitShader* FMetalDeviceRHI::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
-    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayClosestHitShaderRHI>(ShaderCode) : nullptr;
+    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayClosestHitShaderRHI>(EShaderStage::RayClosestHit, ShaderCode) : nullptr;
 }
 
 FRHIRayMissShader* FMetalDeviceRHI::CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
-    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayMissShaderRHI>(ShaderCode) : nullptr;
+    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayMissShaderRHI>(EShaderStage::RayMiss, ShaderCode) : nullptr;
 }
 
 FRHIRayIntersectionShader* FMetalDeviceRHI::CreateRayIntersectionShader(const TArray<uint8>& ShaderCode)
 {
-    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayIntersectionShaderRHI>(ShaderCode) : nullptr;
+    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayIntersectionShaderRHI>(EShaderStage::RayIntersection, ShaderCode) : nullptr;
 }
 
 FRHIRayCallableShader* FMetalDeviceRHI::CreateRayCallableShader(const TArray<uint8>& ShaderCode)
 {
-    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayCallableShaderRHI>(ShaderCode) : nullptr;
+    return RHI::bSupportsRayTracingPipeline ? CreateShader<FMetalRayCallableShaderRHI>(EShaderStage::RayCallable, ShaderCode) : nullptr;
 }
 
 FRHIDepthStencilState* FMetalDeviceRHI::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)

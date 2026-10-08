@@ -7,7 +7,7 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Threading/ScopedLock.h"
-#include "RHI/MSLShaderBindings.h"
+#include "ShaderCore/MSLShaderBindings.h"
 #include <string.h>
 
 static TAutoConsoleVariable<bool> CVarEnableBindless(

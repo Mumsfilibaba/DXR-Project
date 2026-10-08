@@ -7,6 +7,8 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FRHIBuffer;
 
+typedef TSharedRef<class FRHIOpacityMicromap> FRHIOpacityMicromapRef;
+
 enum class EOpacityMicromapSpecialIndex : int8
 {
     FullyTransparent        = -1,

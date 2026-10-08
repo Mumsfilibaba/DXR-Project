@@ -2,6 +2,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Platform/PlatformEvent.h"
+#include "Core/Threading/Atomic.h"
 #include "Core/Threading/Runnable.h"
 #include "D3D12RHI/D3D12Core.h"
 
@@ -16,6 +17,7 @@ struct IPlatformThread;
 class FD3D12ResidencyHandle
 {
     friend class FD3D12ResidencyManager;
+    friend class FD3D12ResidencySet;
 
 public:
     FD3D12ResidencyHandle() = default;
@@ -53,6 +55,7 @@ private:
     uint64          SizeBytes           = 0;
     uint64          LastUsedFrame       = 0;
     uint64          LastUsedFenceValue  = 0;
+    int64           LastResidencySetId  = 0;
     bool            bIsResident         = true;
     bool            bIsTracked          = false;
 };
@@ -60,16 +63,24 @@ private:
 class FD3D12ResidencySet
 {
 public:
+    FD3D12ResidencySet()
+        : Handles()
+        , SetId(NextSetId.Increment())
+    {
+    }
+
     void Reset()
     {
         Handles.Clear();
+        SetId = NextSetId.Increment();
     }
 
     FORCEINLINE void Insert(FD3D12ResidencyHandle* Handle)
     {
-        if (Handle && Handle->IsInitialized())
+        if (Handle && Handle->IsInitialized() && Handle->LastResidencySetId != SetId)
         {
-            Handles.AddUnique(Handle);
+            Handle->LastResidencySetId = SetId;
+            Handles.Add(Handle);
         }
     }
 
@@ -84,7 +95,10 @@ public:
     }
 
 private:
+    static AtomicInt64 NextSetId;
+
     TArray<FD3D12ResidencyHandle*> Handles;
+    int64                          SetId;
 };
 
 class FD3D12PagingWorker : public FRunnable

@@ -6,7 +6,6 @@
 #include "MetalRHI/MetalPipelineState.h"
 
 class FMetalDevice;
-class FMetalInputLayoutRHI;
 
 struct FMetalVertexAttributeKey
 {
@@ -23,7 +22,7 @@ struct FMetalVertexAttributeKey
 
 struct FMetalRenderPipelineKey
 {
-    static FMetalRenderPipelineKey Create(MTLRenderPipelineDescriptor* Descriptor, const FMetalInputLayoutRHI* InputLayout);
+    static FMetalRenderPipelineKey Create(MTLRenderPipelineDescriptor* Descriptor);
     static FMetalRenderPipelineKey Create(MTLMeshRenderPipelineDescriptor* Descriptor);
 
     bool operator==(const FMetalRenderPipelineKey& Other) const;

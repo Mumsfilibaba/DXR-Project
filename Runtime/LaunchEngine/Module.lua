@@ -22,6 +22,7 @@ LaunchEngineModule.AddModules({
     "Application",
     "ApplicationRenderer",
     "RHI",
+    "ShaderCompiler",
     "Renderer",
     "RendererCore",
     "Engine",

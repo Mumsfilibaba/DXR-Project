@@ -1,7 +1,8 @@
 #pragma once
 #include "RHI/RHIResources.h"
 #include "RHI/RHIShader.h"
-#include "RHI/MSLShaderBindings.h"
+#include "ShaderCore/MSLShaderBindings.h"
+#include "ShaderCore/ShaderCode.h"
 #include "MetalRHI/MetalDeviceChild.h"
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalShaderLibraryCache.h"
@@ -14,7 +15,7 @@ public:
     explicit FMetalShader(FMetalDevice* InDevice);
     ~FMetalShader();
     
-    bool Initialize(const TArray<uint8>& InCode);
+    bool Initialize(const FShaderCodeView& InCode);
 
     id<MTLFunction> GetMTLFunction() const
     {
@@ -47,7 +48,7 @@ public:
     explicit FMetalRayTracingShader(FMetalDevice* InDevice);
     virtual ~FMetalRayTracingShader();
 
-    bool Initialize(const TArray<uint8>& InCode);
+    bool Initialize(const FShaderCodeView& InCode);
 
     const String& GetIdentifier() const
     {

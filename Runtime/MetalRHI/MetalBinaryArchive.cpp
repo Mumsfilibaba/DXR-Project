@@ -7,6 +7,7 @@
 #include "Core/Platform/PlatformTime.h"
 #include "Core/Tasks/Tasks.h"
 #include "Core/Threading/ScopedLock.h"
+#include "ShaderCore/ShaderCode.h"
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 
@@ -16,7 +17,7 @@ static TAutoConsoleVariable<int32> CVarBinaryArchiveSaveInterval(
     30);
 
 // Bump whenever the pipeline descriptors change in a way an archive on disk cannot detect, which discards every archive
-static constexpr uint32 GMetalPipelineFormatVersion = 1;
+static constexpr uint32 GMetalPipelineFormatVersion = 2;
 
 static int64 GetFileSize(const String& Path)
 {
@@ -584,7 +585,7 @@ FMetalBinaryArchiveHeader FMetalBinaryArchive::MakeExpectedHeader() const
     const FMetalDeviceProperties& Properties = Device->GetProperties();
     Header.Magic                 = FMetalBinaryArchiveHeader::ExpectedMagic;
     Header.Version               = FMetalBinaryArchiveHeader::ExpectedVersion;
-    Header.ShaderFormatVersion   = FMSLShaderHeader::ExpectedVersion;
+    Header.ShaderFormatVersion   = FShaderCodeHeader::CurrentVersion;
     Header.PipelineFormatVersion = GMetalPipelineFormatVersion;
     Header.RegistryID            = Properties.RegistryID;
     Header.HighestFamily         = static_cast<int64>(Properties.HighestSupportedFamily);

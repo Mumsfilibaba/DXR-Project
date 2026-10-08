@@ -160,6 +160,7 @@ bool FRayTracingReflectionsPass::Initialize(FFrameResources& Resources)
             }
         }
 
+        if (RHI::bSupportsBindless)
         {
             FRayTracingPermutation Permutation;
             Permutation.Set<FBindless>(true);
@@ -174,9 +175,7 @@ bool FRayTracingReflectionsPass::Initialize(FFrameResources& Resources)
 
         if (!LocalVariant && !BindlessVariant)
         {
-            LOG_ERROR("[RayTracingReflections]: No usable ray tracing pipeline (neither explicit nor bindless could be created)");
-            DEBUG_BREAK();
-            return false;
+            LOG_WARNING("[RayTracingReflections]: No usable ray tracing pipeline (neither explicit nor bindless could be created). Ray traced reflections are disabled");
         }
 
         if (BindlessVariant)
@@ -205,7 +204,7 @@ bool FRayTracingReflectionsPass::Initialize(FFrameResources& Resources)
         Resources.RayTracingSceneConstantsBuffer->SetDebugName("RayTracing Scene Constants");
     }
 
-    if (RHI::bSupportsInlineRayTracing)
+    if (RHI::bSupportsInlineRayTracing && RHI::bSupportsBindless)
     {
         InlineReflectionsShader = FShaderCache::Get().GetShader<FInlineReflectionsCS>();
         if (InlineReflectionsShader)
@@ -242,6 +241,10 @@ void FRayTracingReflectionsPass::Release()
 
     InlineReflectionsPipeline.Reset();
     InlineReflectionsShader.Reset();
+
+    CurrentSERHitGroupCapacity      = 0;
+    CurrentHitGroupCapacity         = 0;
+    CurrentBindlessHitGroupCapacity = 0;
 
     ReflectionNoiseTexture.Reset();
     ReflectionNoiseSize = 0;
@@ -357,7 +360,7 @@ bool FRayTracingReflectionsPass::NeedsBindlessData() const
 
 bool FRayTracingReflectionsPass::IsTraceEnabled() const
 {
-    if (!RHI::bSupportsRayTracing || !GRayTracingEnabled || !GReflectionsEnabled)
+    if (!RenderSettings::IsRayTracingEnabled() || !GReflectionsEnabled)
     {
         return false;
     }

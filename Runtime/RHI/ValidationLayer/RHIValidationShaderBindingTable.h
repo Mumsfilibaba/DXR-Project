@@ -3,6 +3,8 @@
 
 class FRHIValidationCommandContext;
 
+typedef TSharedRef<class FRHIValidationShaderBindingTable> FRHIValidationShaderBindingTableRef;
+
 class RHI_API FRHIValidationShaderBindingTable final : public FRHIShaderBindingTable
 {
 public:

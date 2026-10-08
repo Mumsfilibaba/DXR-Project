@@ -7,4 +7,6 @@ local RendererCoreModule = ModuleBuildRules("RendererCore")
 RendererCoreModule.AddModules({
     "Core",
     "RHI",
+    "ShaderCore",
+    "ShaderCompiler",
 })

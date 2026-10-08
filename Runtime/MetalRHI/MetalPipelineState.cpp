@@ -3,7 +3,7 @@
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalCapabilities.h"
 #include "MetalRHI/MetalStats.h"
-#include "RHI/MSLShaderBindings.h"
+#include "ShaderCore/MSLShaderBindings.h"
 #include "RHI/RHISamplerState.h"
 #include "RHI/RHI.h"
 #include "Core/Memory/Memory.h"
@@ -530,13 +530,17 @@ uint8 FMetalPipelineBindingLayout::GetSlot(EShaderVisibility::Type Stage, EMSLBi
 FMetalInputLayoutRHI::FMetalInputLayoutRHI(const TArray<FRHIInputElementDesc>& InInputElements)
     : FRHIInputLayout()
     , InputElements(InInputElements)
+    , SemanticHashes()
     , VertexDescriptor(nullptr)
     , NumVertexStreams(0)
 {
     VertexDescriptor = [[MTLVertexDescriptor vertexDescriptor] retain];
+    SemanticHashes.Reserve(InputElements.Size());
+
     for (int32 Index = 0; Index < InputElements.Size(); ++Index)
     {
         const FRHIInputElementDesc& Element = InputElements[Index];
+        SemanticHashes.Add(HashShaderSemantic(StringView(Element.Semantic)));
 
         if (Element.InputSlot >= MSL_MAX_VERTEX_STREAMS)
         {
@@ -568,6 +572,49 @@ FMetalInputLayoutRHI::~FMetalInputLayoutRHI()
         [VertexDescriptor release];
         VertexDescriptor = nil;
     }
+}
+
+MTLVertexDescriptor* FMetalInputLayoutRHI::CreateResolvedVertexDescriptor(const TArray<FShaderVertexInput>& ShaderInputs) const
+{
+    MTLVertexDescriptor* ResolvedDescriptor = [MTLVertexDescriptor vertexDescriptor];
+
+    for (const FShaderVertexInput& ShaderInput : ShaderInputs)
+    {
+        int32 ElementIndex = -1;
+        for (int32 Index = 0; Index < InputElements.Size(); ++Index)
+        {
+            if (SemanticHashes[Index] == ShaderInput.SemanticHash && InputElements[Index].SemanticIndex == ShaderInput.SemanticIndex)
+            {
+                ElementIndex = Index;
+                break;
+            }
+        }
+
+        if (ElementIndex < 0)
+        {
+            METAL_ERROR("The input layout has no element for the vertex shader input at location %u (semantic index %u)", static_cast<uint32>(ShaderInput.Location), static_cast<uint32>(ShaderInput.SemanticIndex));
+            return nil;
+        }
+
+        const FRHIInputElementDesc& Element = InputElements[ElementIndex];
+        if (Element.InputSlot >= MSL_MAX_VERTEX_STREAMS)
+        {
+            continue;
+        }
+
+        const uint8 StreamBufferIndex = GetMSLVertexStreamBufferIndex(Element.InputSlot);
+        ResolvedDescriptor.attributes[ShaderInput.Location].format      = MetalRHI::ConvertVertexFormat(Element.Format);
+        ResolvedDescriptor.attributes[ShaderInput.Location].offset      = Element.ByteOffset;
+        ResolvedDescriptor.attributes[ShaderInput.Location].bufferIndex = StreamBufferIndex;
+
+        ResolvedDescriptor.layouts[StreamBufferIndex].stride       = Element.VertexStride;
+        ResolvedDescriptor.layouts[StreamBufferIndex].stepFunction = MetalRHI::ConvertVertexInputClass(Element.InputClass);
+        ResolvedDescriptor.layouts[StreamBufferIndex].stepRate     = Element.InputClass == EVertexInputClass::Vertex
+            ? 1
+            : Element.InstanceStepRate;
+    }
+
+    return ResolvedDescriptor;
 }
 
 const FRHIInputElementDesc* FMetalInputLayoutRHI::GetInputElementDesc(uint32 Index) const
@@ -915,6 +962,17 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
     Descriptor.rasterSampleCount      = Math::Max(Desc.MultiSampleState.SampleCount, 1u);
     Descriptor.inputPrimitiveTopology = MetalRHI::ConvertPrimitiveTopologyClass(Desc.PrimitiveTopology);
     Descriptor.vertexDescriptor       = InputLayout ? InputLayout->GetMTLVertexDescriptor() : nil;
+
+    // Reflected vertex inputs place each element at its shader location; without them the element index is the attribute index
+    if (InputLayout && Desc.VertexShader && !Desc.VertexShader->GetVertexInputs().IsEmpty())
+    {
+        Descriptor.vertexDescriptor = InputLayout->CreateResolvedVertexDescriptor(Desc.VertexShader->GetVertexInputs());
+        if (!Descriptor.vertexDescriptor)
+        {
+            return false;
+        }
+    }
+
     Descriptor.label                  = PipelineDebugLabel(DebugName, @"GraphicsPSO");
 
     if (Desc.ViewInstancingState.bEnableViewInstancing)
@@ -922,7 +980,7 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
         Descriptor.maxVertexAmplificationCount = Desc.ViewInstancingState.NumArraySlices;
     }
 
-    const FMetalRenderPipelineKey          Key            = FMetalRenderPipelineKey::Create(Descriptor, InputLayout);
+    const FMetalRenderPipelineKey          Key            = FMetalRenderPipelineKey::Create(Descriptor);
     TSharedRef<FMetalCachedRenderPipeline> CachedPipeline = GetDevice()->GetPipelineCache().GetOrCreateRenderPipeline(Key, Descriptor);
     if (!CachedPipeline)
     {

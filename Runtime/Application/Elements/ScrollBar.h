@@ -64,12 +64,6 @@ public:
      */
     void SetOffset(int32 InOffset);
 
-    /** @return How far the view has been scrolled, from the start of the content, in pixels. */
-    NODISCARD FORCEINLINE int32 GetOffset() const
-    {
-        return Offset;
-    }
-
     /** @return The content length less the view length, or zero when everything already fits. */
     NODISCARD int32 GetMaxOffset() const;
 
@@ -82,12 +76,6 @@ public:
 
     /** @return True when the content is longer than the view. The bar draws only its track when it is not. */
     NODISCARD bool IsScrollable() const;
-
-    /** @return The axis the thumb travels along, which decides which of the two extents the thickness is. */
-    NODISCARD FORCEINLINE EOrientation GetOrientation() const
-    {
-        return Orientation;
-    }
 
     /**
      * @brief Gets the rectangle the thumb occupies, which is what a drag grabs.
@@ -103,12 +91,6 @@ public:
      */
     void SetOpacity(float InOpacity);
 
-    /** @return The multiplier applied to the alpha of the track and the thumb. */
-    NODISCARD FORCEINLINE float GetOpacity() const
-    {
-        return Opacity;
-    }
-
     /**
      * @brief Tells a bar that hides itself whether its view has the cursor, which is what it fades on.
      *
@@ -118,6 +100,24 @@ public:
      * @param bInIsRevealed True while the cursor is over the view the bar scrolls.
      */
     void SetRevealed(bool bInIsRevealed);
+
+    /** @return How far the view has been scrolled, from the start of the content, in pixels. */
+    NODISCARD FORCEINLINE int32 GetOffset() const
+    {
+        return Offset;
+    }
+
+    /** @return The axis the thumb travels along, which decides which of the two extents the thickness is. */
+    NODISCARD FORCEINLINE EOrientation GetOrientation() const
+    {
+        return Orientation;
+    }
+
+    /** @return The multiplier applied to the alpha of the track and the thumb. */
+    NODISCARD FORCEINLINE float GetOpacity() const
+    {
+        return Opacity;
+    }
 
     /** @return True when the bar keeps itself out of sight until its view is revealed to it. */
     NODISCARD FORCEINLINE bool IsAutoHiding() const

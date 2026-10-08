@@ -6,6 +6,8 @@
 #include "D3D12RHI/D3D12DeviceChild.h"
 typedef TSharedRef<class FD3D12InputLayoutRHI>             FD3D12InputLayoutRHIRef;
 typedef TSharedRef<class FD3D12DepthStencilStateRHI>       FD3D12DepthStencilStateRHIRef;
+typedef TSharedRef<class FD3D12RasterizerStateRHI>         FD3D12RasterizerStateRHIRef;
+typedef TSharedRef<class FD3D12BlendStateRHI>              FD3D12BlendStateRHIRef;
 typedef TSharedRef<class FD3D12GraphicsPipelineStateRHI>   FD3D12GraphicsPipelineStateRHIRef;
 typedef TSharedRef<class FD3D12ComputePipelineStateRHI>    FD3D12ComputePipelineStateRHIRef;
 typedef TSharedRef<class FD3D12MeshletPipelineStateRHI>    FD3D12MeshletPipelineStateRHIRef;
@@ -129,10 +131,28 @@ public:
         return EffectiveDescriptorCounts[Stage][Type];
     }
 
+    ED3D12NullDescriptorType GetNullShaderResourceViewType(EShaderVisibility::Type Stage, uint32 Slot) const
+    {
+        return NullShaderResourceViewTypes[Stage][Slot];
+    }
+
+    ED3D12NullDescriptorType GetNullUnorderedAccessViewType(EShaderVisibility::Type Stage, uint32 Slot) const
+    {
+        return NullUnorderedAccessViewTypes[Stage][Slot];
+    }
+
+    bool HasSameNullDescriptorTypes(const FD3D12EffectiveDescriptorCounts& Other) const
+    {
+        return Memory::Memcmp(NullShaderResourceViewTypes, Other.NullShaderResourceViewTypes, sizeof(NullShaderResourceViewTypes)) == 0 &&
+            Memory::Memcmp(NullUnorderedAccessViewTypes, Other.NullUnorderedAccessViewTypes, sizeof(NullUnorderedAccessViewTypes)) == 0;
+    }
+
 protected:
     void ComputeEffectiveDescriptorCounts(const FD3D12RootSignature* RootSignature, FD3D12Shader* const* Shaders, uint32 NumShaders);
 
-    uint8 EffectiveDescriptorCounts[EShaderVisibility::Count][EResourceType::Count] = {};
+    uint8                    EffectiveDescriptorCounts[EShaderVisibility::Count][EResourceType::Count] = {};
+    ED3D12NullDescriptorType NullShaderResourceViewTypes[EShaderVisibility::Count][D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT] = {};
+    ED3D12NullDescriptorType NullUnorderedAccessViewTypes[EShaderVisibility::Count][D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT] = {};
 };
 
 class FD3D12PipelineState : public FD3D12DeviceChild, public FD3D12EffectiveDescriptorCounts
@@ -284,7 +304,7 @@ struct FD3D12HashableViewInstanceDesc
         : ViewInstanceCount(0)
         , Flags(D3D12_VIEW_INSTANCING_FLAG_NONE)
     {
-        Memory::Memzero(ViewInstanceLocations, sizeof(D3D12_VIEW_INSTANCE_LOCATION) * D3D12_MAX_VIEW_INSTANCE_COUNT);
+        Memory::Memzero(ViewInstanceLocations, sizeof(D3D12_VIEW_INSTANCE_LOCATION) * D3D12_MAX_VIEW_INSTANCES);
     }
 
     uint64 GenerateHash() const
@@ -297,7 +317,7 @@ struct FD3D12HashableViewInstanceDesc
 
     D3D12_VIEW_INSTANCING_FLAGS  Flags;
     uint32                       ViewInstanceCount;
-    D3D12_VIEW_INSTANCE_LOCATION ViewInstanceLocations[D3D12_MAX_VIEW_INSTANCE_COUNT];
+    D3D12_VIEW_INSTANCE_LOCATION ViewInstanceLocations[D3D12_MAX_VIEW_INSTANCES];
 };
 
 struct FD3D12GraphicsPipelineKey
@@ -357,14 +377,14 @@ public:
     FORCEINLINE FD3D12PixelShaderRHI*    GetPixelShader()    const { return PixelShader.Get(); }
 
 private:
-    D3D12_PRIMITIVE_TOPOLOGY            PrimitiveTopology;
-    ED3D12ShaderFlags                   ShaderFlags;
-    bool                                bDepthBoundsTestEnable;
-    TSharedRef<FD3D12VertexShaderRHI>   VertexShader;
-    TSharedRef<FD3D12HullShaderRHI>     HullShader;
-    TSharedRef<FD3D12DomainShaderRHI>   DomainShader;
-    TSharedRef<FD3D12GeometryShaderRHI> GeometryShader;
-    TSharedRef<FD3D12PixelShaderRHI>    PixelShader;
+    D3D12_PRIMITIVE_TOPOLOGY   PrimitiveTopology;
+    ED3D12ShaderFlags          ShaderFlags;
+    bool                       bDepthBoundsTestEnable;
+    FD3D12VertexShaderRHIRef   VertexShader;
+    FD3D12HullShaderRHIRef     HullShader;
+    FD3D12DomainShaderRHIRef   DomainShader;
+    FD3D12GeometryShaderRHIRef GeometryShader;
+    FD3D12PixelShaderRHIRef    PixelShader;
 };
 
 #if D3D12_ENABLE_PIPELINE_STATE_STREAM
@@ -393,7 +413,7 @@ struct FD3D12ComputePipelineKey
 class FD3D12ComputePipelineStateRHI : public FRHIComputePipelineState, public FD3D12PipelineState
 {
 public:
-    FD3D12ComputePipelineStateRHI(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShaderRHI>& InShader);
+    FD3D12ComputePipelineStateRHI(FD3D12Device* InDevice, const FD3D12ComputeShaderRHIRef& InShader);
     virtual ~FD3D12ComputePipelineStateRHI();
 
     // FRHIPipelineState Interface
@@ -410,7 +430,7 @@ public:
     }
 
 private:
-    TSharedRef<FD3D12ComputeShaderRHI> Shader;
+    FD3D12ComputeShaderRHIRef Shader;
 };
 
 #if D3D12_ENABLE_PIPELINE_STATE_STREAM
@@ -541,11 +561,11 @@ public:
     FORCEINLINE FD3D12PixelShaderRHI*         GetPixelShader()         const { return PixelShader.Get(); }
 
 private:
-    ED3D12ShaderFlags                        ShaderFlags;
-    bool                                     bDepthBoundsTestEnable;
-    TSharedRef<FD3D12AmplificationShaderRHI> AmplificationShader;
-    TSharedRef<FD3D12MeshShaderRHI>          MeshShader;
-    TSharedRef<FD3D12PixelShaderRHI>         PixelShader;
+    ED3D12ShaderFlags               ShaderFlags;
+    bool                            bDepthBoundsTestEnable;
+    FD3D12AmplificationShaderRHIRef AmplificationShader;
+    FD3D12MeshShaderRHIRef          MeshShader;
+    FD3D12PixelShaderRHIRef         PixelShader;
 };
 
 struct FD3D12PipelineDiskHeader

@@ -12,7 +12,8 @@
 class FVulkanQueue;
 struct FVulkanCommands;
 
-typedef TSharedRef<class FVulkanFence> FVulkanFenceRef;
+typedef TSharedRef<class FVulkanFence>    FVulkanFenceRef;
+typedef TSharedRef<class FVulkanFenceRHI> FVulkanFenceRHIRef;
 
 class FVulkanFence : public FVulkanDeviceChild, public FRefCountedBase
 {

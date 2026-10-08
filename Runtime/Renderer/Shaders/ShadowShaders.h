@@ -153,6 +153,11 @@ struct FCascadeShadowRules
             return false;
         }
 
+        if (Permutation.Get<FCascadePassKind>() == ECascadeRenderPassType::ViewInstancingSinglePass && !Desc.bSupportsViewInstancing)
+        {
+            return false;
+        }
+
         if (Permutation.Get<FBindless>() && !Desc.bSupportsBindless)
         {
             return false;

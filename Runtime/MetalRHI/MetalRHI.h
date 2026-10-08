@@ -150,7 +150,7 @@ private:
     typedef TMap<FRHISamplerStateDesc, TSharedRef<FMetalSamplerStateRHI>> FSamplerStateMap;
 
     template<typename MetalShaderType>
-    MetalShaderType* CreateShader(const TArray<uint8>& ShaderCode);
+    MetalShaderType* CreateShader(EShaderStage Stage, const TArray<uint8>& ShaderCode);
 
     bool WaitForQuery(FMetalQueryRHI& MetalQuery, EQueryResultMode Mode);
 

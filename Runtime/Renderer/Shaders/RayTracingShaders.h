@@ -64,6 +64,11 @@ class FInlineReflectionsCS
     DECLARE_SHADER_TYPE(FInlineReflectionsCS, EShaderStage::Compute);
 
     using FPermutation = TShaderPermutation<>;
+
+    static bool ShouldCompilePermutation(const FShaderPermutationDesc& Desc)
+    {
+        return Desc.bSupportsInlineRayTracing;
+    }
 };
 
 class FPrimaryRayDebugCS
@@ -71,6 +76,11 @@ class FPrimaryRayDebugCS
     DECLARE_SHADER_TYPE(FPrimaryRayDebugCS, EShaderStage::Compute);
 
     using FPermutation = TShaderPermutation<>;
+
+    static bool ShouldCompilePermutation(const FShaderPermutationDesc& Desc)
+    {
+        return Desc.bSupportsInlineRayTracing;
+    }
 };
 
 class FReflectionTemporalCS

@@ -6,6 +6,7 @@
 #include "RHI/RHI.h"
 #include "RHI/RHISamplerState.h"
 #include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanDeviceLimits.h"
 #include "VulkanRHI/VulkanFence.h"
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanQueue.h"
@@ -140,22 +141,136 @@ static bool CreateNullBuffer(FVulkanDevice& Device, VkBufferUsageFlags Usage, co
     return true;
 }
 
-static bool CreateNullImageViews(FVulkanDevice& Device, VkImage Image, VkImageView OutViews[static_cast<uint32>(EVulkanNullImageViewType::Count)])
+static VkSampleCountFlagBits GetNullImageSampleCount(FVulkanDevice& Device)
 {
+    const VkSampleCountFlags SampleCounts = Device.GetPhysicalDevice()->GetProperties().limits.sampledImageColorSampleCounts;
+    if (SampleCounts & VK_SAMPLE_COUNT_4_BIT)
+    {
+        return VK_SAMPLE_COUNT_4_BIT;
+    }
+    else if (SampleCounts & VK_SAMPLE_COUNT_2_BIT)
+    {
+        return VK_SAMPLE_COUNT_2_BIT;
+    }
+
+    return VK_SAMPLE_COUNT_1_BIT;
+}
+
+static bool CreateNullImage(FVulkanDevice& Device, const VkImageCreateInfo& ImageCreateInfo, const String& DebugName, FVulkanNullImage& OutImage)
+{
+    VkResult Result = vkCreateImage(Device.GetVkDevice(), &ImageCreateInfo, nullptr, &OutImage.Image);
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to create '%s'", *DebugName);
+        return false;
+    }
+
+    VulkanSetObjectName(Device.GetVkDevice(), *DebugName, OutImage.Image, VK_OBJECT_TYPE_IMAGE);
+
+    {
+        FVulkanMemoryLocation TempLocation(&Device);
+        OutImage.Location.Swap(TempLocation);
+    }
+
+    FVulkanMemoryManager& MemoryManager = Device.GetMemoryManager();
+    if (!MemoryManager.AllocateImageMemory(OutImage.Image, ImageCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, OutImage.Location))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to allocate ImageMemory for '%s'", *DebugName);
+        return false;
+    }
+
+    Result = vkBindImageMemory(Device.GetVkDevice(), OutImage.Image, OutImage.Location.GetMemory(), OutImage.Location.GetMemoryOffset());
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to bind memory for '%s'", *DebugName);
+        return false;
+    }
+
+    return true;
+}
+
+static bool CreateNullImages(FVulkanDevice& Device, VkImageUsageFlags Usage, const CHAR* DebugPrefix, FVulkanNullImage OutImages[static_cast<uint32>(EVulkanNullImageType::Count)], VkImageView OutViews[static_cast<uint32>(EVulkanNullImageViewType::Count)])
+{
+    struct FNullImageDesc
+    {
+        EVulkanNullImageType ImageType;
+        VkImageType          VkType;
+        VkExtent3D           Extent;
+        uint32               ArrayLayers;
+        VkImageCreateFlags   Flags;
+        bool                 bMultisampled;
+        const CHAR*          DebugName;
+    };
+
+    constexpr uint32 Size = VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT;
+    const FNullImageDesc NullImageDescs[] =
+    {
+        { EVulkanNullImageType::Image2D,   VK_IMAGE_TYPE_2D, { Size, Size, 1 },    VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, false, "Image2D"   },
+        { EVulkanNullImageType::Image1D,   VK_IMAGE_TYPE_1D, { Size, 1, 1 },       VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, 0,                                   false, "Image1D"   },
+        { EVulkanNullImageType::Image3D,   VK_IMAGE_TYPE_3D, { Size, Size, Size }, 1,                                 0,                                   false, "Image3D"   },
+        { EVulkanNullImageType::Image2DMS, VK_IMAGE_TYPE_2D, { Size, Size, 1 },    VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, 0,                                   true,  "Image2DMS" },
+    };
+
+    static_assert(ARRAY_COUNT(NullImageDescs) == static_cast<uint32>(EVulkanNullImageType::Count), "NullImageDescs is out of date");
+
+    const bool bIsStorage = (Usage & VK_IMAGE_USAGE_STORAGE_BIT) != 0;
+    for (const FNullImageDesc& ImageDesc : NullImageDescs)
+    {
+        VkSampleCountFlagBits Samples = VK_SAMPLE_COUNT_1_BIT;
+        if (ImageDesc.bMultisampled)
+        {
+            // Multisampled storage images need shaderStorageImageMultisample, those views fall back to the single sampled image
+            Samples = bIsStorage ? VK_SAMPLE_COUNT_1_BIT : GetNullImageSampleCount(Device);
+            if (Samples == VK_SAMPLE_COUNT_1_BIT)
+            {
+                continue;
+            }
+        }
+
+        VkImageCreateInfo ImageCreateInfo = {};
+        ImageCreateInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        ImageCreateInfo.flags                 = ImageDesc.Flags;
+        ImageCreateInfo.imageType             = ImageDesc.VkType;
+        ImageCreateInfo.usage                 = Usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        ImageCreateInfo.format                = VK_FORMAT_R8G8B8A8_UNORM;
+        ImageCreateInfo.extent                = ImageDesc.Extent;
+        ImageCreateInfo.mipLevels             = 1;
+        ImageCreateInfo.pQueueFamilyIndices   = nullptr;
+        ImageCreateInfo.queueFamilyIndexCount = 0;
+        ImageCreateInfo.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
+        ImageCreateInfo.samples               = Samples;
+        ImageCreateInfo.tiling                = VK_IMAGE_TILING_OPTIMAL;
+        ImageCreateInfo.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
+        ImageCreateInfo.arrayLayers           = ImageDesc.ArrayLayers;
+
+        const String DebugName = String::Printf("%s%s", DebugPrefix, ImageDesc.DebugName);
+        if (!CreateNullImage(Device, ImageCreateInfo, DebugName, OutImages[static_cast<uint32>(ImageDesc.ImageType)]))
+        {
+            return false;
+        }
+    }
+
     struct FNullViewDesc
     {
         EVulkanNullImageViewType ViewType;
-        VkImageViewType          VkViewType;
+        EVulkanNullImageType     ImageType;
         uint32                   LayerCount;
+        EVulkanNullImageViewType FallbackViewType;
         const CHAR*              DebugName;
     };
 
+    // A view whose image or view type is unavailable reuses its fallback, which is always listed earlier
     const FNullViewDesc NullViewDescs[] =
     {
-        { EVulkanNullImageViewType::Texture2D,        VK_IMAGE_VIEW_TYPE_2D,         1,                                 "NullImageView2D"        },
-        { EVulkanNullImageViewType::Texture2DArray,   VK_IMAGE_VIEW_TYPE_2D_ARRAY,   VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, "NullImageView2DArray"   },
-        { EVulkanNullImageViewType::TextureCube,      VK_IMAGE_VIEW_TYPE_CUBE,       VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, "NullImageViewCube"      },
-        { EVulkanNullImageViewType::TextureCubeArray, VK_IMAGE_VIEW_TYPE_CUBE_ARRAY, VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, "NullImageViewCubeArray" },
+        { EVulkanNullImageViewType::Texture2D,        EVulkanNullImageType::Image2D,   1,                                 EVulkanNullImageViewType::Texture2D,      "ImageView2D"        },
+        { EVulkanNullImageViewType::Texture2DArray,   EVulkanNullImageType::Image2D,   VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, EVulkanNullImageViewType::Texture2D,      "ImageView2DArray"   },
+        { EVulkanNullImageViewType::TextureCube,      EVulkanNullImageType::Image2D,   VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, EVulkanNullImageViewType::Texture2D,      "ImageViewCube"      },
+        { EVulkanNullImageViewType::TextureCubeArray, EVulkanNullImageType::Image2D,   VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, EVulkanNullImageViewType::TextureCube,    "ImageViewCubeArray" },
+        { EVulkanNullImageViewType::Texture1D,        EVulkanNullImageType::Image1D,   1,                                 EVulkanNullImageViewType::Texture2D,      "ImageView1D"        },
+        { EVulkanNullImageViewType::Texture1DArray,   EVulkanNullImageType::Image1D,   VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, EVulkanNullImageViewType::Texture2DArray, "ImageView1DArray"   },
+        { EVulkanNullImageViewType::Texture3D,        EVulkanNullImageType::Image3D,   1,                                 EVulkanNullImageViewType::Texture2D,      "ImageView3D"        },
+        { EVulkanNullImageViewType::Texture2DMS,      EVulkanNullImageType::Image2DMS, 1,                                 EVulkanNullImageViewType::Texture2D,      "ImageView2DMS"      },
+        { EVulkanNullImageViewType::Texture2DMSArray, EVulkanNullImageType::Image2DMS, VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, EVulkanNullImageViewType::Texture2DArray, "ImageView2DMSArray" },
     };
 
     static_assert(ARRAY_COUNT(NullViewDescs) == static_cast<uint32>(EVulkanNullImageViewType::Count), "NullViewDescs is out of date");
@@ -164,7 +279,6 @@ static bool CreateNullImageViews(FVulkanDevice& Device, VkImage Image, VkImageVi
     ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     ImageViewCreateInfo.flags                           = 0;
     ImageViewCreateInfo.format                          = VK_FORMAT_R8G8B8A8_UNORM;
-    ImageViewCreateInfo.image                           = Image;
     ImageViewCreateInfo.components.r                    = VK_COMPONENT_SWIZZLE_R;
     ImageViewCreateInfo.components.g                    = VK_COMPONENT_SWIZZLE_G;
     ImageViewCreateInfo.components.b                    = VK_COMPONENT_SWIZZLE_B;
@@ -176,83 +290,33 @@ static bool CreateNullImageViews(FVulkanDevice& Device, VkImage Image, VkImageVi
 
     for (const FNullViewDesc& ViewDesc : NullViewDescs)
     {
-        const uint32 ViewIndex = static_cast<uint32>(ViewDesc.ViewType);
-        if (ViewDesc.VkViewType == VK_IMAGE_VIEW_TYPE_CUBE_ARRAY && !GVulkanSupportsImageCubeArray)
+        const uint32           ViewIndex = static_cast<uint32>(ViewDesc.ViewType);
+        const FVulkanNullImage& NullImage = OutImages[static_cast<uint32>(ViewDesc.ImageType)];
+
+        const bool bIsUnsupportedCubeArray = ViewDesc.ViewType == EVulkanNullImageViewType::TextureCubeArray && !GVulkanSupportsImageCubeArray;
+        if (!VULKAN_CHECK_HANDLE(NullImage.Image) || bIsUnsupportedCubeArray)
         {
-            OutViews[ViewIndex] = OutViews[static_cast<uint32>(EVulkanNullImageViewType::TextureCube)];
+            OutViews[ViewIndex] = OutViews[static_cast<uint32>(ViewDesc.FallbackViewType)];
             continue;
         }
 
-        ImageViewCreateInfo.viewType                    = ViewDesc.VkViewType;
+        ImageViewCreateInfo.image                       = NullImage.Image;
+        ImageViewCreateInfo.viewType                    = GetVkImageViewType(ViewDesc.ViewType);
         ImageViewCreateInfo.subresourceRange.layerCount = ViewDesc.LayerCount;
+
+        const String DebugName = String::Printf("%s%s", DebugPrefix, ViewDesc.DebugName);
 
         VkResult Result = vkCreateImageView(Device.GetVkDevice(), &ImageViewCreateInfo, nullptr, &OutViews[ViewIndex]);
         if (VULKAN_FAILED(Result))
         {
-            VULKAN_ERROR_CRITICAL("vkCreateImageView failed for '%s'", ViewDesc.DebugName);
+            VULKAN_ERROR_CRITICAL("vkCreateImageView failed for '%s'", *DebugName);
             return false;
         }
 
-        VulkanSetObjectName(Device.GetVkDevice(), ViewDesc.DebugName, OutViews[ViewIndex], VK_OBJECT_TYPE_IMAGE_VIEW);
+        VulkanSetObjectName(Device.GetVkDevice(), *DebugName, OutViews[ViewIndex], VK_OBJECT_TYPE_IMAGE_VIEW);
     }
 
     return true;
-}
-
-static bool CreateNullImage(FVulkanDevice& Device, VkImageUsageFlags Usage, const CHAR* DebugName, VkImage& OutImage, FVulkanMemoryLocation& OutLocation, VkImageView OutViews[static_cast<uint32>(EVulkanNullImageViewType::Count)])
-{
-    constexpr VkExtent3D NullExtent =
-    {
-        VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT,
-        VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT,
-        1
-    };
-
-    VkImageCreateInfo ImageCreateInfo = {};
-    ImageCreateInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ImageCreateInfo.flags                 = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-    ImageCreateInfo.imageType             = VK_IMAGE_TYPE_2D;
-    ImageCreateInfo.usage                 = Usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    ImageCreateInfo.format                = VK_FORMAT_R8G8B8A8_UNORM;
-    ImageCreateInfo.extent                = NullExtent;
-    ImageCreateInfo.mipLevels             = 1;
-    ImageCreateInfo.pQueueFamilyIndices   = nullptr;
-    ImageCreateInfo.queueFamilyIndexCount = 0;
-    ImageCreateInfo.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
-    ImageCreateInfo.samples               = VK_SAMPLE_COUNT_1_BIT;
-    ImageCreateInfo.tiling                = VK_IMAGE_TILING_OPTIMAL;
-    ImageCreateInfo.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageCreateInfo.arrayLayers           = VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS;
-
-    VkResult Result = vkCreateImage(Device.GetVkDevice(), &ImageCreateInfo, nullptr, &OutImage);
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR_CRITICAL("Failed to create image");
-        return false;
-    }
-
-    VulkanSetObjectName(Device.GetVkDevice(), DebugName, OutImage, VK_OBJECT_TYPE_IMAGE);
-
-    {
-        FVulkanMemoryLocation TempLocation(&Device);
-        OutLocation.Swap(TempLocation);
-    }
-
-    FVulkanMemoryManager& MemoryManager = Device.GetMemoryManager();
-    if (!MemoryManager.AllocateImageMemory(OutImage, ImageCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, OutLocation))
-    {
-        VULKAN_ERROR_CRITICAL("Failed to allocate ImageMemory");
-        return false;
-    }
-
-    Result = vkBindImageMemory(Device.GetVkDevice(), OutImage, OutLocation.GetMemory(), OutLocation.GetMemoryOffset());
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR_CRITICAL("Failed to bind NullImage memory");
-        return false;
-    }
-
-    return CreateNullImageViews(Device, OutImage, OutViews);
 }
 
 FVulkanCoreFeatures::FVulkanCoreFeatures()
@@ -1131,8 +1195,13 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
         return true;
     }
 
-    const auto InitializeNullImageContent = [&](VkBuffer SrcBuffer, VkImage DstImage, VkImageLayout FinalLayout, VkAccessFlags2 FinalAccess)
+    const auto InitializeNullImageContent = [&](VkImage DstImage, VkImageLayout FinalLayout, VkAccessFlags2 FinalAccess)
     {
+        if (!VULKAN_CHECK_HANDLE(DstImage))
+        {
+            return;
+        }
+
         VkImageMemoryBarrier2KHR ImageBarrier = {};
         ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR;
         ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -1151,34 +1220,10 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
         ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
         CommandContext.GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
-
-        VkBufferMemoryBarrier2KHR BufferBarrier = {};
-        BufferBarrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR;
-        BufferBarrier.srcStageMask        = VK_PIPELINE_STAGE_2_CLEAR_BIT_KHR;
-        BufferBarrier.srcAccessMask       = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
-        BufferBarrier.dstStageMask        = VK_PIPELINE_STAGE_2_COPY_BIT_KHR;
-        BufferBarrier.dstAccessMask       = VK_ACCESS_2_TRANSFER_READ_BIT_KHR;
-        BufferBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        BufferBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        BufferBarrier.buffer              = SrcBuffer;
-        BufferBarrier.offset              = 0;
-        BufferBarrier.size                = VK_WHOLE_SIZE;
-
-        CommandContext.GetBarrierBatcher().AddBufferMemoryBarrier(0, BufferBarrier);
-
-        VkBufferImageCopy BufferImageCopy = {};
-        BufferImageCopy.bufferOffset                    = 0;
-        BufferImageCopy.bufferRowLength                 = 0;
-        BufferImageCopy.bufferImageHeight               = 0;
-        BufferImageCopy.imageSubresource.aspectMask     = ImageBarrier.subresourceRange.aspectMask;
-        BufferImageCopy.imageSubresource.mipLevel       = 0;
-        BufferImageCopy.imageSubresource.baseArrayLayer = 0;
-        BufferImageCopy.imageSubresource.layerCount     = VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS;
-        BufferImageCopy.imageOffset                     = { 0, 0, 0 };
-        BufferImageCopy.imageExtent                     = { VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, 1 };
-
         CommandContext.GetBarrierBatcher().FlushBarriers(CommandContext.GetCommandBuffer());
-        CommandContext.GetCommandBuffer()->CopyBufferToImage(SrcBuffer, DstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
+
+        VkClearColorValue ClearColor = {};
+        CommandContext.GetCommandBuffer()->ClearColorImage(DstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &ClearColor, 1, &ImageBarrier.subresourceRange);
 
         ImageBarrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         ImageBarrier.newLayout     = FinalLayout;
@@ -1190,11 +1235,15 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
         CommandContext.GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
     };
 
-    InitializeNullImageContent(DefaultResources.NullReadBuffer, DefaultResources.NullReadImage, 
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_2_SHADER_READ_BIT_KHR);
+    for (const FVulkanNullImage& NullImage : DefaultResources.NullReadImages)
+    {
+        InitializeNullImageContent(NullImage.Image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_2_SHADER_READ_BIT_KHR);
+    }
 
-    InitializeNullImageContent(DefaultResources.NullWriteBuffer, DefaultResources.NullWriteImage, 
-        VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_2_MEMORY_READ_BIT_KHR | VK_ACCESS_2_MEMORY_WRITE_BIT_KHR);
+    for (const FVulkanNullImage& NullImage : DefaultResources.NullWriteImages)
+    {
+        InitializeNullImageContent(NullImage.Image, VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_2_MEMORY_READ_BIT_KHR | VK_ACCESS_2_MEMORY_WRITE_BIT_KHR);
+    }
 
     CommandContext.FinishCommandBuffer(true);
     return true;
@@ -1475,6 +1524,15 @@ void FVulkanDevice::WaitForGPU()
     }
 }
 
+void FVulkanDevice::RefreshTimestampPeriod()
+{
+#if PLATFORM_MACOS
+    VkPhysicalDeviceProperties Properties;
+    vkGetPhysicalDeviceProperties(PhysicalDevice->GetVkPhysicalDevice(), &Properties);
+    VulkanDeviceLimits::TimestampPeriod = Properties.limits.timestampPeriod;
+#endif
+}
+
 bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
 {
     if (!GVulkanSupportsNullDescriptors)
@@ -1483,8 +1541,8 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
                 "NullReadBuffer", "NullReadBufferView", NullReadBuffer, NullReadBufferView, NullReadBufferLocation) || 
             !CreateNullBuffer(Device, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT,
                 "NullWriteBuffer", "NullWriteBufferView", NullWriteBuffer, NullWriteBufferView, NullWriteBufferLocation) || 
-            !CreateNullImage(Device, VK_IMAGE_USAGE_SAMPLED_BIT, "NullReadImage", NullReadImage, NullReadImageLocation, NullReadImageViews) || 
-            !CreateNullImage(Device, VK_IMAGE_USAGE_STORAGE_BIT, "NullWriteImage", NullWriteImage, NullWriteImageLocation, NullWriteImageViews))
+            !CreateNullImages(Device, VK_IMAGE_USAGE_SAMPLED_BIT, "NullRead", NullReadImages, NullReadImageViews) || 
+            !CreateNullImages(Device, VK_IMAGE_USAGE_STORAGE_BIT, "NullWrite", NullWriteImages, NullWriteImageViews))
         {
             return false;
         }
@@ -1557,9 +1615,10 @@ void FVulkanDefaultResources::Release(FVulkanDevice& Device)
 
     auto ReleaseImageViews = [&](VkImageView Views[static_cast<uint32>(EVulkanNullImageViewType::Count)])
         {
+            // Fallback views reuse the handle of an earlier view, so handles are only cleared once every view is destroyed
             for (uint32 ViewIndex = 0; ViewIndex < static_cast<uint32>(EVulkanNullImageViewType::Count); ViewIndex++)
             {
-                VkImageView& NullImageView = Views[ViewIndex];
+                const VkImageView NullImageView = Views[ViewIndex];
                 if (!VULKAN_CHECK_HANDLE(NullImageView))
                 {
                     continue;
@@ -1575,27 +1634,33 @@ void FVulkanDefaultResources::Release(FVulkanDevice& Device)
                 {
                     vkDestroyImageView(VulkanDevice, NullImageView, nullptr);
                 }
+            }
 
-                NullImageView = VK_NULL_HANDLE;
+            for (uint32 ViewIndex = 0; ViewIndex < static_cast<uint32>(EVulkanNullImageViewType::Count); ViewIndex++)
+            {
+                Views[ViewIndex] = VK_NULL_HANDLE;
             }
         };
 
     ReleaseImageViews(NullReadImageViews);
     ReleaseImageViews(NullWriteImageViews);
 
-    if (VULKAN_CHECK_HANDLE(NullReadImage))
-    {
-        vkDestroyImage(VulkanDevice, NullReadImage, nullptr);
-        NullReadImage = VK_NULL_HANDLE;
-        NullReadImageLocation.ReleaseMemory();
-    }
+    auto ReleaseImages = [&](FVulkanNullImage Images[static_cast<uint32>(EVulkanNullImageType::Count)])
+        {
+            for (uint32 ImageIndex = 0; ImageIndex < static_cast<uint32>(EVulkanNullImageType::Count); ImageIndex++)
+            {
+                FVulkanNullImage& NullImage = Images[ImageIndex];
+                if (VULKAN_CHECK_HANDLE(NullImage.Image))
+                {
+                    vkDestroyImage(VulkanDevice, NullImage.Image, nullptr);
+                    NullImage.Image = VK_NULL_HANDLE;
+                    NullImage.Location.ReleaseMemory();
+                }
+            }
+        };
 
-    if (VULKAN_CHECK_HANDLE(NullWriteImage))
-    {
-        vkDestroyImage(VulkanDevice, NullWriteImage, nullptr);
-        NullWriteImage = VK_NULL_HANDLE;
-        NullWriteImageLocation.ReleaseMemory();
-    }
+    ReleaseImages(NullReadImages);
+    ReleaseImages(NullWriteImages);
 
     NullSampler = VK_NULL_HANDLE;
 }
@@ -1647,10 +1712,26 @@ FVulkanComputePipelineStateRHI* FVulkanBufferClearPipelines::GetOrCreatePipeline
         }
     }
 
-    TArray<uint8> ShaderCode(EmbeddedCode, static_cast<int32>(EmbeddedSize));
+    // Must match Shaders/Internal/ClearBufferUAV.hlsl
+    FShaderReflection Reflection;
+    Reflection.EntryPoint               = "Main";
+    Reflection.Info.ShaderConstantsSize = sizeof(uint32) * 5;
 
+    FShaderResourceBinding& OutputBuffer = Reflection.Bindings.Emplace();
+    OutputBuffer.Type      = EShaderResourceType::RWTypedBuffer;
+    OutputBuffer.Dimension = EShaderResourceDimension::Buffer;
+    OutputBuffer.Register  = 0;
+
+    TArray<uint8> ShaderCode;
+    if (!FVulkanShader::CreateInternalShaderCode(EShaderStage::Compute, TArrayView<const uint8>(EmbeddedCode, static_cast<int32>(EmbeddedSize)), Reflection, ShaderCode))
+    {
+        VULKAN_ERROR("Failed to create the internal buffer-clear shader code");
+        return nullptr;
+    }
+
+    FShaderCodeView            CodeView;
     FVulkanComputeShaderRHIRef ClearShader = new FVulkanComputeShaderRHI(&Device);
-    if (!ClearShader->Initialize(ShaderCode))
+    if (!FShaderCodeReader::Read(ShaderCode, CodeView) || !ClearShader->Initialize(CodeView))
     {
         VULKAN_ERROR("Failed to create the internal buffer-clear shader");
         return nullptr;

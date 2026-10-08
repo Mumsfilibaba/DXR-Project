@@ -6,6 +6,11 @@
 
 #include <vulkan/vulkan_beta.h>
 
+static TAutoConsoleVariable<bool> CVarVulkanDisableNullDescriptors(
+    "VulkanRHI.DisableNullDescriptors",
+    "Do not enable the nullDescriptor feature, so unbound descriptors use the fallback null buffers and images",
+    false);
+
 // ---- Complex instance extension classes ----
 
 #if VK_EXT_validation_features
@@ -412,7 +417,7 @@ public:
 
     virtual void ProcessQueriedFeatures() override final
     {
-        if (AvailableFeatures.nullDescriptor)
+        if (AvailableFeatures.nullDescriptor && !CVarVulkanDisableNullDescriptors.GetValue())
         {
             GVulkanSupportsNullDescriptors = true;
         }
@@ -445,7 +450,7 @@ public:
             EnableFeatures.robustBufferAccess2 = VK_TRUE;
         }
         
-        if (AvailableFeatures.nullDescriptor)
+        if (GVulkanSupportsNullDescriptors)
         {
             EnableFeatures.nullDescriptor = VK_TRUE;
         }

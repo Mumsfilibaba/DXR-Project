@@ -11,7 +11,6 @@ public:
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
-    virtual int32 GetContentTopInset() const override { return Padding.Top; }
 
     /**
      * @brief Sets the single child of this element and makes it the child's parent.
@@ -20,18 +19,21 @@ public:
      */
     void SetContent(const TSharedPtr<FVisualElement>& InContent);
 
-    /** @return The single child of this element, which is null when none has been set. */
-    NODISCARD FORCEINLINE const TSharedPtr<FVisualElement>& GetContent() const
-    {
-        return Content;
-    }
-
     /**
      * @brief Sets the space between this element's bounds and its child.
      *
      * @param InPadding The padding to apply.
      */
     void SetPadding(const FMargin& InPadding);
+
+    // FVisualElement Interface
+    virtual int32 GetContentTopInset() const override { return Padding.Top; }
+
+    /** @return The single child of this element, which is null when none has been set. */
+    NODISCARD FORCEINLINE const TSharedPtr<FVisualElement>& GetContent() const
+    {
+        return Content;
+    }
 
     /** @return The space between this element's bounds and its child, in pixels on each side. */
     NODISCARD FORCEINLINE const FMargin& GetPadding() const

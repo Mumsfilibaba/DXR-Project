@@ -1,4 +1,4 @@
-#include "Core/Misc/ConsoleManager.h"
+﻿#include "Core/Misc/ConsoleManager.h"
 #include "Core/Algorithms/Algorithm.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Threading/ScopedLock.h"
@@ -608,6 +608,7 @@ FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQue
     , Queue(InQueue)
     , CommandPool(nullptr)
     , CommandBuffer(nullptr)
+    , NumCommandsAtOpen(0)
     , Commands(nullptr)
     , TimestampQueryAllocator(InDevice, VK_QUERY_TYPE_TIMESTAMP)
     , OcclusionQueryAllocator(InDevice, VK_QUERY_TYPE_OCCLUSION)
@@ -713,6 +714,8 @@ void FVulkanCommandContext::ObtainCommandBuffer()
                 TRACE_SCOPE("Vulkan Insert Begin Timestamp");
                 CommandBuffer->InsertBeginTimestamp(TimestampQueryAllocator);
             }
+
+            NumCommandsAtOpen = CommandBuffer->GetNumCommands();
         }
 
         {
@@ -730,7 +733,7 @@ void FVulkanCommandContext::ObtainCommandBuffer()
     {
         TRACE_SCOPE("Vulkan Allocate Command Submission");
 
-        Commands = new FVulkanCommands(GetDevice(), Queue);
+        Commands = Queue.ObtainCommands();
         Commands->AcquireFence();
     }
 }
@@ -772,8 +775,24 @@ bool FVulkanCommandContext::HasPendingWork() const
         return false;
     }
 
-    if (CommandBuffer->GetNumCommands() > 0 || BarrierBatcher.HasPendingBarriers()
+    if (CommandBuffer->GetNumCommands() != NumCommandsAtOpen || BarrierBatcher.HasPendingBarriers()
         || (Commands && Commands->HasPendingSemaphores()))
+    {
+        return true;
+    }
+
+    return !PendingImageBarriers.IsEmpty() || !PendingBufferBarriers.IsEmpty()
+        || !PendingImageStates.IsEmpty()   || !PendingBufferStates.IsEmpty();
+}
+
+bool FVulkanCommandContext::HasPendingGPUWork() const
+{
+    if (!CommandBuffer)
+    {
+        return false;
+    }
+
+    if (CommandBuffer->GetNumWorkCommands() > 0 || BarrierBatcher.HasPendingBarriers())
     {
         return true;
     }
@@ -790,10 +809,10 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
 
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
-    CommandBuffer->InsertEndTimestamp(TimestampQueryAllocator);
-
     if (!HasPendingWork())
     {
+        STAT_ADD_FRAME(STAT_Vulkan_EmptyCommandBuffersRecycled, 1);
+
         CommandBuffer->End();
         CommandPool->RecycleBuffer(CommandBuffer);
         CommandBuffer = nullptr;
@@ -804,10 +823,12 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
         FenceManager.RecycleFence(Commands->Fence);
         Commands->Fence = nullptr;
 
-        delete Commands;
+        Queue.RecycleCommands(Commands);
         Commands = nullptr;
         return;
     }
+
+    CommandBuffer->InsertEndTimestamp(TimestampQueryAllocator);
 
     CloseEventStack();
 
@@ -954,6 +975,8 @@ void FVulkanCommandContext::ConditionalSplitCommandBuffer()
     
     if (NumCommands >= MaxCommands)
     {
+        STAT_ADD_FRAME(STAT_Vulkan_SplitsCommandLimit, 1);
+
         const bool bWasInsideRenderPass = IsInsideRenderPass();
         if (bWasInsideRenderPass)
         {
@@ -2248,6 +2271,7 @@ void FVulkanCommandContext::WriteFence(FRHIFence* Fence)
 
     if (CommandBuffer && CommandBuffer->GetNumCommands() > 0)
     {
+        STAT_ADD_FRAME(STAT_Vulkan_SplitsFence, 1);
         VulkanFence->EnqueueSignal(GetCommands());
         FinishCommandBuffer(true, true);
         ObtainCommandBuffer();
@@ -2374,6 +2398,15 @@ void FVulkanCommandContext::CopyAccelerationStructure(FRHIRayTracingAcceleration
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
     GetCommandBuffer()->CopyAccelerationStructure(&CopyInfo);
+
+    if (VulkanCopyMode == VK_COPY_ACCELERATION_STRUCTURE_MODE_COMPACT_KHR)
+    {
+        STAT_ADD_FRAME(STAT_Vulkan_AccelerationStructureCompactions, 1);
+    }
+    else
+    {
+        STAT_ADD_FRAME(STAT_Vulkan_AccelerationStructureCopies, 1);
+    }
 #else
     UNREFERENCED_VARIABLE(Destination);
     UNREFERENCED_VARIABLE(Source);
@@ -2428,6 +2461,7 @@ void FVulkanCommandContext::SerializeAccelerationStructure(FRHIRayTracingAcceler
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
     GetCommandBuffer()->CopyAccelerationStructureToMemory(&CopyInfo);
+    STAT_ADD_FRAME(STAT_Vulkan_AccelerationStructureSerializations, 1);
 #else
     UNREFERENCED_VARIABLE(DstBuffer);
     UNREFERENCED_VARIABLE(DstOffset);
@@ -2457,6 +2491,7 @@ void FVulkanCommandContext::DeserializeAccelerationStructure(FRHIRayTracingAccel
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
     GetCommandBuffer()->CopyMemoryToAccelerationStructure(&CopyInfo);
+    STAT_ADD_FRAME(STAT_Vulkan_AccelerationStructureDeserializations, 1);
 #else
     UNREFERENCED_VARIABLE(Destination);
     UNREFERENCED_VARIABLE(SourceBuffer);
@@ -2773,6 +2808,7 @@ void FVulkanCommandContext::ExecuteIndirectRayTracingAccelerationStructureOperat
             CommandsInfo.srcInfosArray.size          = uint64(Operation.ArgumentCount) * Operation.ArgumentStride;
 
             GetCommandBuffer()->BuildClusterAccelerationStructureIndirect(&CommandsInfo);
+            STAT_ADD_FRAME(STAT_Vulkan_ClusterOperations, 1);
         }
     }
 #else
@@ -3285,8 +3321,13 @@ void FVulkanCommandContext::TransitionImageLayout(FVulkanTextureRHI* Texture, Vk
         return;
     }
 
-    FScopedBarrierReason BarrierReason(BarrierBatcher, Texture, AfterLayout);
     FVulkanImageLayoutState& LocalState = RetrievePendingImageState(Texture);
+    if (LocalState.AreAllSubresourcesSameLayout() && LocalState.GetImageLayout() == AfterLayout)
+    {
+        return;
+    }
+
+    FScopedBarrierReason BarrierReason(BarrierBatcher, Texture, AfterLayout);
     const VkImageCreateInfo& CreateInfo = Texture->GetVkImageCreateInfo();
     const VkImageAspectFlags AspectMask = VulkanRHI::GetImageAspectFlagsFromFormat(CreateInfo.format);
 
@@ -3806,8 +3847,9 @@ void FVulkanCommandContext::AcquireNextBackBuffer(FRHISwapChain* InSwapChain)
 
     CHECK(!IsInsideRenderPass());
 
-    if (HasPendingWork())
+    if (HasPendingGPUWork() && ActiveQueryCount == 0)
     {
+        STAT_ADD_FRAME(STAT_Vulkan_SplitsSwapChainAcquire, 1);
         SplitCommandBuffer(false, false);
     }
 
@@ -3908,7 +3950,7 @@ void FVulkanCommandContext::PushEvent(const StringView& Name)
         DebugUtilsLabel.color[2]   = 0.0f;
         DebugUtilsLabel.color[3]   = 1.0f;
         
-        GetCommandBuffer()->BeginDebugUtilsLabel(&DebugUtilsLabel);
+        GetCommandBuffer().Annotate()->BeginDebugUtilsLabel(&DebugUtilsLabel);
     }
 #endif
 
@@ -3937,7 +3979,7 @@ void FVulkanCommandContext::PopEvent()
 #if VK_EXT_debug_utils
     if (GVulkanSupportsDebugUtils)
     {
-        GetCommandBuffer()->EndDebugUtilsLabel();
+        GetCommandBuffer().Annotate()->EndDebugUtilsLabel();
     }
 #endif
 }
@@ -3949,7 +3991,7 @@ void FVulkanCommandContext::CloseEventStack()
     {
         for (int32 i = EventStack.Size() - 1; i >= 0; --i)
         {
-            GetCommandBuffer()->EndDebugUtilsLabel();
+            GetCommandBuffer().Annotate()->EndDebugUtilsLabel();
         }
     }
 #endif
@@ -3970,7 +4012,7 @@ void FVulkanCommandContext::ReopenEventStack()
             DebugUtilsLabel.color[2]   = 0.0f;
             DebugUtilsLabel.color[3]   = 1.0f;
 
-            GetCommandBuffer()->BeginDebugUtilsLabel(&DebugUtilsLabel);
+            GetCommandBuffer().Annotate()->BeginDebugUtilsLabel(&DebugUtilsLabel);
         }
     }
 #endif

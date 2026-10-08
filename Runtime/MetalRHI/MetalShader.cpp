@@ -1,5 +1,4 @@
 #include "MetalRHI/MetalShader.h"
-#include "Core/Memory/Memory.h"
 
 FMetalShader::FMetalShader(FMetalDevice* InDevice)
     : FMetalDeviceChild(InDevice)
@@ -13,31 +12,40 @@ FMetalShader::FMetalShader(FMetalDevice* InDevice)
 
 FMetalShader::~FMetalShader() = default;
 
-bool FMetalShader::Initialize(const TArray<uint8>& InCode)
+bool FMetalShader::Initialize(const FShaderCodeView& InCode)
 {
-    TArrayView<const uint8> Source;
+    const TArrayView<const FShaderResourceBinding> ShaderBindings = InCode.GetBindings();
+    const TArrayView<const FMSLBindingSlot>        MSLSlots       = InCode.GetMSLSlots();
 
-    if (!ParseMSLShaderByteCode(InCode, Bindings, Source))
+    if (MSLSlots.Size() != ShaderBindings.Size())
     {
-        LOG_ERROR("Shader bytecode is not a valid MSL blob");
+        LOG_ERROR("Shader code has %d bindings but %d MSL slots", ShaderBindings.Size(), MSLSlots.Size());
         return false;
     }
 
-    if (InCode.Size() >= static_cast<int32>(sizeof(FMSLShaderHeader)))
+    Bindings.Reset(ShaderBindings.Size());
+    for (int32 Index = 0; Index < ShaderBindings.Size(); Index++)
     {
-        FMSLShaderHeader Header;
-        Memory::Memcpy(&Header, InCode.Data(), sizeof(FMSLShaderHeader));
+        FMSLShaderBinding& Binding = Bindings[Index];
+        Binding.BindingType     = GetMSLBindingType(ShaderBindings[Index]);
+        Binding.RegisterIndex   = ShaderBindings[Index].Register;
+        Binding.SlotIndex       = MSLSlots[Index].Slot;
+        Binding.NullTextureType = MSLSlots[Index].NullTextureType;
 
-        if (Header.Magic == FMSLShaderHeader::ExpectedMagic && Header.Version == FMSLShaderHeader::ExpectedVersion)
+        if (Binding.BindingType == EMSLBindingType::Unknown)
         {
-            ThreadGroupSizeX    = Header.ThreadGroupSizeX;
-            ThreadGroupSizeY    = Header.ThreadGroupSizeY;
-            ThreadGroupSizeZ    = Header.ThreadGroupSizeZ;
-            ShaderConstantsSize = Header.ShaderConstantsSize;
+            LOG_ERROR("Shader binding %d has resource type %s, which has no MSL binding", Index, ToString(ShaderBindings[Index].Type));
+            return false;
         }
     }
 
-    CompiledShader = GetDevice()->GetShaderLibraryCache().GetOrCompile(Source);
+    const FMSLShaderInfo& MSLInfo = InCode.GetMSLInfo();
+    ThreadGroupSizeX    = MSLInfo.ThreadGroupSize[0];
+    ThreadGroupSizeY    = MSLInfo.ThreadGroupSize[1];
+    ThreadGroupSizeZ    = MSLInfo.ThreadGroupSize[2];
+    ShaderConstantsSize = InCode.GetInfo().ShaderConstantsSize;
+
+    CompiledShader = GetDevice()->GetShaderLibraryCache().GetOrCompile(InCode.GetNativeCode(), InCode.GetEntryPoint());
     return CompiledShader != nullptr;
 }
 
@@ -48,7 +56,7 @@ FMetalRayTracingShader::FMetalRayTracingShader(FMetalDevice* InDevice)
 
 FMetalRayTracingShader::~FMetalRayTracingShader() = default;
 
-bool FMetalRayTracingShader::Initialize(const TArray<uint8>& InCode)
+bool FMetalRayTracingShader::Initialize(const FShaderCodeView& InCode)
 {
     if (!FMetalShader::Initialize(InCode))
     {

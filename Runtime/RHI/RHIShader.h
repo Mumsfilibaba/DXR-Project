@@ -1,9 +1,13 @@
 #pragma once
 #include "Core/Math/IntVector3.h"
 #include "Core/Containers/String.h"
+#include "Core/Containers/ArrayView.h"
 #include "RHI/RHIResources.h"
+#include "ShaderCore/ShaderTypes.h"
+#include "ShaderCore/ShaderReflection.h"
 
 typedef TSharedRef<class FRHIShader>                FRHIShaderRef;
+typedef TSharedRef<class FRHIGraphicsShader>        FRHIGraphicsShaderRef;
 typedef TSharedRef<class FRHIVertexShader>          FRHIVertexShaderRef;
 typedef TSharedRef<class FRHIHullShader>            FRHIHullShaderRef;
 typedef TSharedRef<class FRHIDomainShader>          FRHIDomainShaderRef;
@@ -19,68 +23,6 @@ typedef TSharedRef<class FRHIRayClosestHitShader>   FRHIRayClosestHitShaderRef;
 typedef TSharedRef<class FRHIRayAnyHitShader>       FRHIRayAnyHitShaderRef;
 typedef TSharedRef<class FRHIRayIntersectionShader> FRHIRayIntersectionShaderRef;
 typedef TSharedRef<class FRHIRayCallableShader>     FRHIRayCallableShaderRef;
-
-enum class EShaderStage : uint8
-{
-    Unknown = 0,
-    
-    // Graphics
-    Vertex        = 1,
-    Hull          = 2,
-    Domain        = 3,
-    Geometry      = 4,
-    Mesh          = 5,
-    Amplification = 6,
-    Pixel         = 7,
-
-    // Compute
-    Compute = 8,
-    
-    // RayTracing
-    RayGen          = 9,
-    RayAnyHit       = 10,
-    RayClosestHit   = 11,
-    RayMiss         = 12,
-    RayIntersection = 13,
-    RayCallable     = 14,
-};
-
-NODISCARD constexpr const CHAR* ToString(EShaderStage ShaderStage)
-{
-    switch(ShaderStage)
-    {
-        case EShaderStage::Vertex:          return "Vertex";
-        case EShaderStage::Hull:            return "Hull";
-        case EShaderStage::Domain:          return "Domain";
-        case EShaderStage::Geometry:        return "Geometry";
-        case EShaderStage::Mesh:            return "Mesh";
-        case EShaderStage::Amplification:   return "Amplification";
-        case EShaderStage::Pixel:           return "Pixel";
-        case EShaderStage::Compute:         return "Compute";
-        case EShaderStage::RayGen:          return "RayGen";
-        case EShaderStage::RayAnyHit:       return "RayAnyHit";
-        case EShaderStage::RayClosestHit:   return "RayClosestHit";
-        case EShaderStage::RayMiss:         return "RayMiss";
-        case EShaderStage::RayIntersection: return "RayIntersection";
-        case EShaderStage::RayCallable:     return "RayCallable";
-        default:                            return "Unknown";
-    }
-}
-
-NODISCARD constexpr bool IsShaderStageGraphics(EShaderStage ShaderStage)
-{
-    return ShaderStage >= EShaderStage::Vertex && ShaderStage < EShaderStage::Compute ? true : false;
-}
-
-NODISCARD constexpr bool IsShaderStageCompute(EShaderStage ShaderStage)
-{
-    return ShaderStage >= EShaderStage::Compute ? true : false;
-}
-
-NODISCARD constexpr bool IsShaderStageRayTracing(EShaderStage ShaderStage)
-{
-    return ShaderStage >= EShaderStage::RayGen ? true : false;
-}
 
 class FRHIShader : public FRHIResource
 {
@@ -135,10 +77,27 @@ class FRHIVertexShader : public FRHIGraphicsShader
 protected:
     FRHIVertexShader()
         : FRHIGraphicsShader(EShaderStage::Vertex)
+        , VertexInputs()
     {
     }
 
     virtual ~FRHIVertexShader() = default;
+
+public:
+
+    /** Sorted by Location, empty for shaders that only read system values */
+    const TArray<FShaderVertexInput>& GetVertexInputs() const
+    {
+        return VertexInputs;
+    }
+
+    void SetVertexInputs(TArrayView<const FShaderVertexInput> InVertexInputs)
+    {
+        VertexInputs = TArray<FShaderVertexInput>(InVertexInputs.Data(), InVertexInputs.Size());
+    }
+
+private:
+    TArray<FShaderVertexInput> VertexInputs;
 };
 
 class FRHIHullShader : public FRHIGraphicsShader

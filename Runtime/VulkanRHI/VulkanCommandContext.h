@@ -299,7 +299,8 @@ public:
     }
 
 private:
-    bool HasPendingWork() const;
+    bool HasPendingWork()    const;
+    bool HasPendingGPUWork() const;
 
     void ConditionalSplitCommandBuffer();
     void ForceFlushCommandPool();
@@ -313,6 +314,7 @@ private:
     FVulkanQueue&                                     Queue;
     FVulkanCommandPool*                               CommandPool;
     FVulkanCommandBuffer*                             CommandBuffer;
+    uint32                                            NumCommandsAtOpen;
     FVulkanCommands*                                  Commands;
     FVulkanQueryAllocator                             TimestampQueryAllocator;
     FVulkanQueryAllocator                             OcclusionQueryAllocator;

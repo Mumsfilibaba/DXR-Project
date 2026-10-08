@@ -168,25 +168,14 @@ void FSceneRenderer::BuildAndExecuteSceneGraph(const FSceneRenderView& SceneRend
         Context.ReducedDepthBuffer0   = GraphBuilder.CreateTexture(CreateReducedDepthDesc(RenderWidth, RenderHeight), "ReducedDepth0");
         Context.ReducedDepthBuffer1   = GraphBuilder.CreateTexture(CreateReducedDepthDesc(RenderWidth, RenderHeight), "ReducedDepth1");
 
-        const bool bIsRayTracingActive   = RHI::bSupportsRayTracing && GRayTracingEnabled;
+        const bool bIsRayTracingActive   = bRayTracingInitialized && RenderSettings::IsRayTracingEnabled();
         const bool bNeedsPrimaryRayDebug = bIsRayTracingActive && RayTracingPrimaryDebugPass->IsEnabled(SceneRenderView);
 
         if (bIsRayTracingActive)
         {
-            if (!bRayTracingWasActive)
-            {
-                ReflectionDenoisePass->InvalidateHistory();
-            }
-
             RayTracingSceneBuilder->BuildSceneAccelerationData(CommandList, FrameResourcesRef, Scene,
                 RayTracingReflectionsPass->NeedsBindlessData() || bNeedsPrimaryRayDebug);
         }
-        else if (bRayTracingWasActive)
-        {
-            RayTracingSceneBuilder->ReleaseRayTracingResources(Scene);
-        }
-
-        bRayTracingWasActive = bIsRayTracingActive;
 
     #if EDITOR_BUILD
         if (bEditorOverlays)

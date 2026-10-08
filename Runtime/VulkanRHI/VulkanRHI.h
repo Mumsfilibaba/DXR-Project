@@ -9,6 +9,7 @@
 #include "VulkanRHI/VulkanQueue.h"
 #include "VulkanRHI/VulkanDeletionQueue.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
+#include "VulkanRHI/VulkanSamplerState.h"
 #include "VulkanRHI/VulkanTypeTraits.h"
 
 struct VULKANRHI_API FVulkanModuleRHI final : public FRHIModule
@@ -179,6 +180,9 @@ public:
 
 private:
 
+    template<typename ShaderType>
+    ShaderType* CreateVulkanShader(EShaderStage Stage, const TArray<uint8>& ShaderCode);
+
     template<typename... ArgTypes>
     void DeferDeletionInternal(ArgTypes&&... Args)
     {
@@ -186,7 +190,7 @@ private:
         DeferredObjects.Emplace(Forward<ArgTypes>(Args)...);
     }
 
-    typedef TMap<FRHISamplerStateDesc, TSharedRef<FVulkanSamplerStateRHI>> FSamplerStateMap;
+    typedef TMap<FRHISamplerStateDesc, FVulkanSamplerStateRHIRef> FSamplerStateMap;
 
     FVulkanInstance               Instance;
 #if VK_EXT_debug_utils

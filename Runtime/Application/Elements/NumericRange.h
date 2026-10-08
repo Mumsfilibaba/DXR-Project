@@ -64,6 +64,11 @@ public:
     {
     }
 
+    NODISCARD FORCEINLINE bool IsPressed()   const { return bIsPressed; }
+    NODISCARD FORCEINLINE bool HasScrubbed() const { return bHasScrubbed; }
+
+    NODISCARD FORCEINLINE T GetStartValue() const { return StartValue; }
+
     /** @brief Starts tracking a press at a position, over a value. */
     void Begin(const IntVector2& Position, T Value)
     {
@@ -101,21 +106,6 @@ public:
     bool End()
     {
         bIsPressed = false;
-        return bHasScrubbed;
-    }
-
-    NODISCARD FORCEINLINE T GetStartValue() const
-    {
-        return StartValue;
-    }
-
-    NODISCARD FORCEINLINE bool IsPressed() const
-    {
-        return bIsPressed;
-    }
-
-    NODISCARD FORCEINLINE bool HasScrubbed() const
-    {
         return bHasScrubbed;
     }
 

@@ -136,6 +136,26 @@ public:
      */
     void SetRange(float InMinValue, float InMaxValue);
 
+    /** @return Zero at the minimum through one at the maximum, and zero for an empty range. */
+    NODISCARD float GetNormalizedValue() const;
+
+    /**
+     * @brief Gets the rectangle the handle occupies, which is what a drag grabs.
+     *
+     * @return The handle rectangle, in the space the slider was arranged in.
+     */
+    NODISCARD FRectangle GetHandleBounds() const;
+
+    /**
+     * @brief Gets the span the handle's centre travels over.
+     *
+     * @return The slider's rectangle inset by half a handle at each end along the axis it runs down.
+     */
+    NODISCARD FRectangle GetTrackBounds() const;
+
+    /** @return The value as written over the track, in fixed point to the precision asked for. */
+    NODISCARD String GetFormattedValue() const;
+
     /** @return The value the handle sits at, already clamped to the range and snapped to the step. */
     NODISCARD FORCEINLINE float GetValue() const
     {
@@ -154,31 +174,11 @@ public:
         return Range.Max;
     }
 
-    /** @return Zero at the minimum through one at the maximum, and zero for an empty range. */
-    NODISCARD float GetNormalizedValue() const;
-
     /** @return The axis the handle travels along, where a vertical slider carries its maximum at the top. */
     NODISCARD FORCEINLINE EOrientation GetOrientation() const
     {
         return Orientation;
     }
-
-    /**
-     * @brief Gets the rectangle the handle occupies, which is what a drag grabs.
-     *
-     * @return The handle rectangle, in the space the slider was arranged in.
-     */
-    NODISCARD FRectangle GetHandleBounds() const;
-
-    /**
-     * @brief Gets the span the handle's centre travels over.
-     *
-     * @return The slider's rectangle inset by half a handle at each end along the axis it runs down.
-     */
-    NODISCARD FRectangle GetTrackBounds() const;
-
-    /** @return The value as written over the track, in fixed point to the precision asked for. */
-    NODISCARD String GetFormattedValue() const;
 
 protected:
 

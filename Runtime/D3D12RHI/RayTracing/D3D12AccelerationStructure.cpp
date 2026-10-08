@@ -88,6 +88,7 @@ bool FD3D12AccelerationStructure::CompactInPlace(FD3D12CommandContext& CmdContex
         CompactedStorage.GetGPUVirtualAddress(),
         ResultResourceStorage.GetGPUVirtualAddress(),
         D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_COMPACT);
+    STAT_ADD_FRAME(STAT_D3D12_AccelerationStructureCompactions, 1);
 
     ResultResourceStorage.Swap(CompactedStorage);
     UpdateAccelerationStructureMemoryStat();
@@ -227,6 +228,7 @@ bool FD3D12OpacityMicromapRHI::Build(FD3D12CommandContext& CmdContext, const FRH
 
     CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandList());
     CmdContext.GetCommandList().GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&BuildAS, 0, nullptr);
+    STAT_ADD_FRAME(STAT_D3D12_OpacityMicromapBuilds, 1);
 
     CmdContext.GetBarrierBatcher().AddUnorderedAccessBarrier(ResultResourceStorage.GetResource());
     return true;
@@ -452,6 +454,15 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
 #if D3D12_USE_ID3D12COMMANDLIST_4
     CommandList.GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
     STAT_ADD(STAT_RHI_AccelerationStructureBuilds, 1);
+
+    if ((AccelerationStructureDesc.Inputs.Flags & D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE) != 0)
+    {
+        STAT_ADD_FRAME(STAT_D3D12_BLASUpdates, 1);
+    }
+    else
+    {
+        STAT_ADD_FRAME(STAT_D3D12_BLASBuilds, 1);
+    }
 #endif
 
     return true;
@@ -713,6 +724,15 @@ bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext
 #if D3D12_USE_ID3D12COMMANDLIST_4
     CommandList.GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
     STAT_ADD(STAT_RHI_AccelerationStructureBuilds, 1);
+
+    if ((AccelerationStructureDesc.Inputs.Flags & D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE) != 0)
+    {
+        STAT_ADD_FRAME(STAT_D3D12_TLASUpdates, 1);
+    }
+    else
+    {
+        STAT_ADD_FRAME(STAT_D3D12_TLASBuilds, 1);
+    }
 #endif
 
     Instances.Reset(BuildDesc.Instances, BuildDesc.NumInstances);

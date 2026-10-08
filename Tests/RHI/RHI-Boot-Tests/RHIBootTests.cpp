@@ -18,7 +18,8 @@
 #include <RHI/RHISamplerState.h>
 #include <RHI/RHIStats.h>
 #include <RHI/RHITexture.h>
-#include <RHI/ShaderCompiler.h>
+#include <ShaderCompiler/ShaderCompiler.h>
+#include <ShaderCore/ShaderCode.h>
 
 #if PLATFORM_MACOS
 #include <MetalRHI/MetalBinaryArchive.h>
@@ -37,7 +38,7 @@
 #include <MetalRHI/MetalRHI.h>
 #include <MetalRHI/MetalShader.h>
 #include <MetalRHI/MetalTexture.h>
-#include <RHI/MSLShaderBindings.h>
+#include <ShaderCore/MSLShaderBindings.h>
 #endif
 
 static void SetConsoleVariable(const CHAR* VariableName, bool bValue)
@@ -359,7 +360,7 @@ static bool ProbeShaders()
     }
 
     TArray<uint8> ByteCode;
-    const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
     const bool bCompiled = FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/CascadeMatrixGen.hlsl", CompileInfo, ByteCode);
     TEST_EXPECT(bCompiled);
 
@@ -385,10 +386,10 @@ static bool ProbeShaders()
 #if PLATFORM_MACOS
     if (bCompiled && RHI::Device->GetRHIType() == ERHIType::Metal)
     {
-        TEST_SECTION("The compute blob carries a non-zero threadgroup size");
-        FMSLShaderHeader Header;
-        Memory::Memcpy(&Header, ByteCode.Data(), sizeof(FMSLShaderHeader));
-        TEST_EXPECT(Header.ThreadGroupSizeX != 0);
+        TEST_SECTION("The compute container carries a non-zero threadgroup size");
+        FShaderCodeView CodeView;
+        TEST_EXPECT(FShaderCodeReader::Read(ByteCode, CodeView));
+        TEST_EXPECT(CodeView.GetMSLInfo().ThreadGroupSize[0] != 0);
     }
 #endif
 
@@ -408,7 +409,7 @@ static bool ProbeShaders()
             "}\n");
 
         TArray<uint8> SamplerByteCode;
-        const FShaderCompileInfo SamplerCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+        const FShaderCompileInfo SamplerCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
         const bool bSamplerCompiled = FShaderCompiler::Get().CompileFromSource(SamplerSource, SamplerCompileInfo, SamplerByteCode);
         TEST_EXPECT(bSamplerCompiled);
 
@@ -648,7 +649,7 @@ static bool ProbeCommandRecording()
                     "}\n");
 
                 TArray<uint8> SamplerByteCode;
-                const FShaderCompileInfo SamplerCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+                const FShaderCompileInfo SamplerCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
                 const bool bSamplerCompiled = FShaderCompiler::Get().CompileFromSource(SamplerSource, SamplerCompileInfo, SamplerByteCode);
                 TEST_EXPECT(bSamplerCompiled);
 
@@ -719,7 +720,7 @@ static bool ProbeCommandRecording()
                     "}\n");
 
                 TArray<uint8> ConstantsByteCode;
-                const FShaderCompileInfo ConstantsCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+                const FShaderCompileInfo ConstantsCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
                 const bool bConstantsCompiled = FShaderCompiler::Get().CompileFromSource(ConstantsSource, ConstantsCompileInfo, ConstantsByteCode);
                 TEST_EXPECT(bConstantsCompiled);
 
@@ -813,7 +814,7 @@ static bool ProbeCommandRecording()
                     "}\n");
 
                 TArray<uint8> ViewsByteCode;
-                const FShaderCompileInfo ViewsCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+                const FShaderCompileInfo ViewsCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
                 const bool bViewsCompiled = FShaderCompiler::Get().CompileFromSource(ViewsSource, ViewsCompileInfo, ViewsByteCode);
                 TEST_EXPECT(bViewsCompiled);
 
@@ -921,8 +922,8 @@ static bool ProbeCommandRecording()
 
                 TArray<uint8> VertexByteCode;
                 TArray<uint8> PixelByteCode;
-                const FShaderCompileInfo VertexCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
-                const FShaderCompileInfo PixelCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
+                const FShaderCompileInfo VertexCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
+                const FShaderCompileInfo PixelCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
                 const bool bVertexCompiled = FShaderCompiler::Get().CompileFromSource(VertexSource, VertexCompileInfo, VertexByteCode);
                 const bool bPixelCompiled  = FShaderCompiler::Get().CompileFromSource(PixelSource, PixelCompileInfo, PixelByteCode);
                 TEST_EXPECT(bVertexCompiled);
@@ -1072,9 +1073,9 @@ static bool ProbeIndirectCommands()
     TArray<uint8> VertexByteCode;
     TArray<uint8> PixelByteCode;
     TArray<uint8> ComputeByteCode;
-    const FShaderCompileInfo VertexCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
-    const FShaderCompileInfo PixelCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
-    const FShaderCompileInfo ComputeCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    const FShaderCompileInfo VertexCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
+    const FShaderCompileInfo PixelCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
+    const FShaderCompileInfo ComputeCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
     const bool bVertexCompiled  = FShaderCompiler::Get().CompileFromSource(VertexSource, VertexCompileInfo, VertexByteCode);
     const bool bPixelCompiled   = FShaderCompiler::Get().CompileFromSource(PixelSource, PixelCompileInfo, PixelByteCode);
     const bool bComputeCompiled = FShaderCompiler::Get().CompileFromSource(ComputeSource, ComputeCompileInfo, ComputeByteCode);
@@ -1418,8 +1419,8 @@ static bool ProbeDispatchMesh()
 
     TArray<uint8> MeshByteCode;
     TArray<uint8> PixelByteCode;
-    const FShaderCompileInfo MeshCompileInfo("Main", EShaderModel::SM_6_5, EShaderStage::Mesh);
-    const FShaderCompileInfo PixelCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
+    const FShaderCompileInfo MeshCompileInfo("Main", EShaderModel::SM_6_5, EShaderStage::Mesh, RHI::GetShaderOutputLanguage());
+    const FShaderCompileInfo PixelCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
     const bool bMeshCompiled  = FShaderCompiler::Get().CompileFromSource(MeshSource, MeshCompileInfo, MeshByteCode);
     const bool bPixelCompiled = FShaderCompiler::Get().CompileFromSource(PixelSource, PixelCompileInfo, PixelByteCode);
     TEST_EXPECT(bMeshCompiled);
@@ -1821,7 +1822,7 @@ static bool ProbeBindlessDescriptors()
 
     auto CompileBindless = [](const CHAR* Source, TArray<uint8>& OutByteCode) -> bool
     {
-        const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_6, EShaderStage::Compute);
+        const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_6, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
         return FShaderCompiler::Get().CompileFromSource(Source, CompileInfo, OutByteCode);
     };
 
@@ -2123,7 +2124,7 @@ static bool ProbeDefaultResourcesAndClears()
     auto CreateComputePipeline = [](const CHAR* Source, FRHIComputeShaderRef& OutShader) -> FRHIComputePipelineState*
     {
         TArray<uint8> ByteCode;
-        const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+        const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
         if (!FShaderCompiler::Get().CompileFromSource(Source, CompileInfo, ByteCode))
         {
             return nullptr;
@@ -2479,7 +2480,7 @@ static FRHIComputePipelineStateRef CreateRayQueryPipeline(bool bBindlessScene, F
     FShaderDefine Defines[] = { FShaderDefine("PROBE_BINDLESS_SCENE", bBindlessScene ? "1" : "0") };
 
     TArray<uint8> ByteCode;
-    const FShaderCompileInfo CompileInfo("Main", bBindlessScene ? EShaderModel::SM_6_6 : EShaderModel::SM_6_5, EShaderStage::Compute, TArrayView<FShaderDefine>(Defines));
+    const FShaderCompileInfo CompileInfo("Main", bBindlessScene ? EShaderModel::SM_6_6 : EShaderModel::SM_6_5, EShaderStage::Compute, RHI::GetShaderOutputLanguage(), TArrayView<FShaderDefine>(Defines));
     if (!FShaderCompiler::Get().CompileFromSource(GRayQueryProbeSource, CompileInfo, ByteCode))
     {
         return nullptr;
@@ -3255,7 +3256,7 @@ static bool DispatchAndReadFirstUint(FRHIComputePipelineState* Pipeline, FRHICom
 static FRHIComputePipelineStateRef CreateMemoryProbePipeline(const CHAR* Source, EShaderModel ShaderModel, FRHIComputeShaderRef& OutShader)
 {
     TArray<uint8> ByteCode;
-    const FShaderCompileInfo CompileInfo("Main", ShaderModel, EShaderStage::Compute);
+    const FShaderCompileInfo CompileInfo("Main", ShaderModel, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
     if (!FShaderCompiler::Get().CompileFromSource(Source, CompileInfo, ByteCode))
     {
         return nullptr;
@@ -3850,7 +3851,7 @@ static bool ProbePipelinePersistence()
         "}\n");
 
     TArray<uint8> ComputeByteCode;
-    const FShaderCompileInfo ComputeCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    const FShaderCompileInfo ComputeCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
     const bool bComputeCompiled = FShaderCompiler::Get().CompileFromSource(ComputeSource, ComputeCompileInfo, ComputeByteCode);
     TEST_EXPECT(bComputeCompiled);
 
@@ -3931,8 +3932,8 @@ static bool ProbePipelinePersistence()
 
     TArray<uint8> VertexByteCode;
     TArray<uint8> PixelByteCode;
-    const FShaderCompileInfo VertexCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
-    const FShaderCompileInfo PixelCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
+    const FShaderCompileInfo VertexCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
+    const FShaderCompileInfo PixelCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
     const bool bVertexCompiled = FShaderCompiler::Get().CompileFromSource(VertexSource, VertexCompileInfo, VertexByteCode);
     const bool bPixelCompiled  = FShaderCompiler::Get().CompileFromSource(PixelSource, PixelCompileInfo, PixelByteCode);
     TEST_EXPECT(bVertexCompiled);
@@ -4218,7 +4219,7 @@ static bool BootReadPixel(FRHITexture* Texture, ERHIResourceState State, uint32 
 
 static bool BootCompileShader(const CHAR* Source, EShaderStage Stage, TArray<uint8>& OutByteCode)
 {
-    const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, Stage);
+    const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, Stage, RHI::GetShaderOutputLanguage());
     return FShaderCompiler::Get().CompileFromSource(String(Source), CompileInfo, OutByteCode);
 }
 

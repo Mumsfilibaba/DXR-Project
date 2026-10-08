@@ -6,6 +6,9 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FRHIBuffer;
 
+typedef TSharedRef<class FRHIClusterAccelerationStructure> FRHIClusterAccelerationStructureRef;
+typedef TSharedRef<class FRHIClusterTemplate>              FRHIClusterTemplateRef;
+
 struct FRHIRayTracingAccelerationStructureClusterLimits
 {
     uint32 MaxTrianglesPerCluster = 0;

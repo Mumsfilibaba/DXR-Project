@@ -265,8 +265,9 @@ REM   %1 = backend name
 :RunBackend
 set "BACKEND=%~1"
 
-REM  Mirrors BuildCompileDefines and BuildSpirvCompileArguments in
-REM  Runtime\RHI\ShaderCompiler.cpp. MIN16FLOAT_AVAILABLE follows
+REM  Mirrors BuildCompileDefines in Runtime\ShaderCompiler\ShaderCompiler.cpp and
+REM  BuildSpirvCompileArguments in Runtime\ShaderCompiler\DXC\DXCShaderCompiler.cpp.
+REM  MIN16FLOAT_AVAILABLE follows
 REM  RHI.ShaderCompiler.MapMin16FloatToFloat, which defaults to true, so the
 REM  SPIR-V backends map the min16float family onto float.
 set "BACKEND_ARGS=-D SHADER_BACKEND_D3D12=(1) -D SHADER_BACKEND_VULKAN=(2) -D SHADER_BACKEND_METAL=(3)"

@@ -80,12 +80,6 @@ public:
     /** @brief Replaces the text and puts the text cursor at the end without firing OnTextChanged. */
     void SetTextSilently(const String& InText);
 
-    /** @return The text currently being edited. */
-    NODISCARD FORCEINLINE const String& GetText() const
-    {
-        return Text;
-    }
-
     /** @brief Empties the text and fires OnTextChanged. */
     void ClearText();
 
@@ -132,12 +126,6 @@ public:
      * @param InTextCursorPosition The new text cursor index.
      */
     void SetTextCursorPosition(int32 InTextCursorPosition);
-
-    /** @return Where the text cursor sits, as an index in [0, Length]. */
-    NODISCARD FORCEINLINE int32 GetTextCursorPosition() const
-    {
-        return TextCursorPosition;
-    }
 
     /**
      * @brief Moves the text cursor one character left, stopping at the start.
@@ -252,6 +240,28 @@ public:
      */
     void SetHintColor(const FFloatColor& InHintColor);
 
+    /**
+     * @brief Whether the text cursor is on that far into a blink. Pure, so the phase can be checked
+     * without a clock. The cursor is drawn for the first two thirds of every period, which is the on
+     * and off time ImGui blinks a caret with.
+     *
+     * @param ElapsedSeconds The time since the phase was last reset.
+     * @return True when the cursor is drawn.
+     */
+    NODISCARD bool IsTextCursorVisibleAt(double ElapsedSeconds) const;
+
+    /** @return The text currently being edited. */
+    NODISCARD FORCEINLINE const String& GetText() const
+    {
+        return Text;
+    }
+
+    /** @return Where the text cursor sits, as an index in [0, Length]. */
+    NODISCARD FORCEINLINE int32 GetTextCursorPosition() const
+    {
+        return TextCursorPosition;
+    }
+
     /** @return The delegate, which fires whenever the text changes for any reason other than a silent set. */
     NODISCARD FORCEINLINE FOnTextChangedDelegate& GetOnTextChanged()
     {
@@ -283,16 +293,6 @@ public:
     {
         return bHasKeyboardFocus;
     }
-
-    /**
-     * @brief Whether the text cursor is on that far into a blink. Pure, so the phase can be checked
-     * without a clock. The cursor is drawn for the first two thirds of every period, which is the on
-     * and off time ImGui blinks a caret with.
-     *
-     * @param ElapsedSeconds The time since the phase was last reset.
-     * @return True when the cursor is drawn.
-     */
-    NODISCARD bool IsTextCursorVisibleAt(double ElapsedSeconds) const;
 
     /** @return How long one text cursor blink lasts, in seconds, where zero leaves the cursor solid. */
     NODISCARD FORCEINLINE float GetTextCursorBlinkPeriod() const

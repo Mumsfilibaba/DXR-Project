@@ -196,7 +196,7 @@ struct FRHIAccelerationStructureSerializationHeader
 
     // Bump VERSION whenever the on-disk layout changes so stale caches are rejected up front.
     static constexpr uint32 MAGIC             = 0x53415452u;
-    static constexpr uint32 VERSION           = 1u;
+    static constexpr uint32 VERSION           = 2u;
     static constexpr uint32 MAGIC_AND_VERSION = MAGIC ^ (VERSION << 24);
 
     uint32                               MagicAndVersion           = 0;

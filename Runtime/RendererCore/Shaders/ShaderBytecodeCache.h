@@ -4,9 +4,12 @@
 #include "Core/Containers/String.h"
 #include "Core/Platform/CriticalSection.h"
 
+struct FShaderCompileInfo;
+
 struct FShaderBytecodeEntry
 {
-    TArray<uint8>  ByteCode;
+    /** An FShaderCode container: header, reflection and native code */
+    TArray<uint8>  ShaderCode;
     TArray<String> Dependencies;
     uint64         DependencyHash = 0;
 };
@@ -27,12 +30,21 @@ public:
         return BytecodeCache;
     }
 
-public:
-    NODISCARD bool Find(uint64 CompileHash, TArray<uint8>& OutByteCode);
+    /** @brief Returns the cached container for CompileInfo, or compiles and caches it. Without a cache (tests, Playground) it only compiles. */
+    static bool CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutShaderCode);
 
-    void Add(uint64 CompileHash, const TArray<uint8>& ByteCode, const TArray<String>& Dependencies);
+public:
+    NODISCARD bool Find(uint64 CompileHash, TArray<uint8>& OutShaderCode);
+
+    /** @brief Ignores anything that is not a valid FShaderCode container */
+    void Add(uint64 CompileHash, const TArray<uint8>& ShaderCode, const TArray<String>& Dependencies);
 
     NODISCARD int32 GetNumEntries();
+
+    void LogStats();
+
+    /** Public so Shaders.CompileAll can write a baked cache without waiting for shutdown */
+    bool Save();
 
 private:
     NODISCARD static String GetFilePath();
@@ -45,7 +57,6 @@ private:
     NODISCARD bool TryComputeDependencyHash(const TArray<String>& Dependencies, uint64& OutHash);
 
     bool Load();
-    bool Save();
 
     TMap<uint64, FShaderBytecodeEntry> Entries;
     FCriticalSection                   EntriesCS;

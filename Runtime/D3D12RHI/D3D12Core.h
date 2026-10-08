@@ -130,6 +130,63 @@ static_assert(sizeof(FRHIDispatchMeshIndirectParameters) == sizeof(D3D12_DISPATC
     #define D3D12_LOG_TRANSITION_MISMATCH(InResource, InContext, InD3D12BeforeState, InD3D12AfterState, InCurrentState) ((void)0)
 #endif
 
+inline void D3D12SetDebugName(ID3D12Object* Object, const String& Name)
+{
+    if (Object)
+    {
+        Object->SetPrivateData(WKPDID_D3DDebugObjectName, 0, nullptr);
+        Object->SetPrivateData(WKPDID_D3DDebugObjectNameW, 0, nullptr);
+
+        if (!Name.IsEmpty())
+        {
+            HRESULT Result = Object->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(Name.Length()), *Name);
+            if (FAILED(Result))
+            {
+                D3D12_ERROR("Failed to set the debug name '%s'", *Name);
+            }
+
+            const WString WideName = CharToWide(Name);
+
+            Result = Object->SetPrivateData(WKPDID_D3DDebugObjectNameW, static_cast<UINT>((WideName.Length() + 1) * sizeof(WIDECHAR)), *WideName);
+            if (FAILED(Result))
+            {
+                D3D12_ERROR("Failed to set the wide debug name '%s'", *Name);
+            }
+        }
+    }
+}
+
+inline void D3D12GetDebugName(ID3D12Object* Object, String& OutName)
+{
+    OutName.Clear();
+
+    if (Object)
+    {
+        UINT NameLength = 0;
+
+        HRESULT Result = Object->GetPrivateData(WKPDID_D3DDebugObjectName, &NameLength, nullptr);
+        if (Result == DXGI_ERROR_NOT_FOUND || NameLength == 0)
+        {
+            return;
+        }
+
+        if (FAILED(Result))
+        {
+            D3D12_ERROR("Failed to get the size of the debug name");
+            return;
+        }
+
+        OutName.Resize(NameLength);
+
+        Result = Object->GetPrivateData(WKPDID_D3DDebugObjectName, &NameLength, OutName.Data());
+        if (FAILED(Result))
+        {
+            D3D12_ERROR("Failed to get the debug name");
+            OutName.Clear();
+        }
+    }
+}
+
 namespace D3D12RHI
 {
 
@@ -304,6 +361,24 @@ NODISCARD inline FRHIDepthStencilViewDesc GetDefaultDepthStencilViewDescForTextu
 }
 
 }
+
+enum class ED3D12NullDescriptorType : uint8
+{
+    Texture2D = 0,
+    Texture1D,
+    Texture1DArray,
+    Texture2DArray,
+    Texture2DMS,
+    Texture2DMSArray,
+    Texture3D,
+    TextureCube,
+    TextureCubeArray,
+    TypedBuffer,
+    RawBuffer,
+    StructuredBuffer,
+    AccelerationStructure,
+    Count
+};
 
 enum class ED3D12CommandQueueType : uint8
 {

@@ -53,6 +53,7 @@ void FRayTracingSceneBuilder::Release()
     SerializationRequested.Clear();
     ASCache.SetBackend(nullptr);
     ASCacheBackend.Reset();
+    GeometryTableCapacity = 0;
 }
 
 void FRayTracingSceneBuilder::ReleaseRayTracingResources(FScene* Scene)

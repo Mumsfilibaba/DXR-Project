@@ -12,6 +12,7 @@ if IsPlatformWindows() then
         "Core",
         "CoreApplication",
         "RHI",
+        "ShaderCore",
     })
 
     -- The Agility SDK is optional, without it we build against the Windows SDK headers

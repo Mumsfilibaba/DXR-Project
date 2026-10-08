@@ -119,18 +119,18 @@ public:
      */
     void SetAnchorInset(const FMargin& InAnchorInset);
 
-    /** @return How far the anchor's bounds are deflated before the menu is placed against them. */
-    NODISCARD FORCEINLINE const FMargin& GetAnchorInset() const
-    {
-        return AnchorInset;
-    }
-
     /**
      * @brief Gets the menu this anchor opened, noticing first that the stack may have closed it.
      *
      * @return The menu, or null while it is closed.
      */
     NODISCARD FMenuHandle GetMenu() const;
+
+    /** @return How far the anchor's bounds are deflated before the menu is placed against them. */
+    NODISCARD FORCEINLINE const FMargin& GetAnchorInset() const
+    {
+        return AnchorInset;
+    }
 
 private:
     void NotifyMenuDismissed();

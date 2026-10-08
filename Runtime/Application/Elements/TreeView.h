@@ -213,12 +213,6 @@ public:
      */
     void SetRootItems(const TArray<TSharedPtr<FTreeItem>>& InRoots);
 
-    /** @return The nodes shown at depth zero, in the order their rows appear. */
-    NODISCARD FORCEINLINE const TArray<TSharedPtr<FTreeItem>>& GetRootItems() const
-    {
-        return RootItems;
-    }
-
     /**
      * @brief Marks the flattened row list dirty, which is what a host calls after editing the model
      * behind the view's back.
@@ -242,12 +236,6 @@ public:
 
     /** @brief Empties the selection without firing the delegate. */
     void ClearSelection();
-
-    /** @return The selected items, in the order they were added rather than in row order. */
-    NODISCARD FORCEINLINE const TArray<TSharedPtr<FTreeItem>>& GetSelection() const
-    {
-        return Selection;
-    }
 
     /**
      * @brief Gets whether an item is in the selection.
@@ -281,24 +269,12 @@ public:
      */
     void SetFilterText(const String& InFilter);
 
-    /** @return The text a row's label has to contain to survive, which is empty when nothing is filtered. */
-    NODISCARD FORCEINLINE const String& GetFilterText() const
-    {
-        return FilterText;
-    }
-
     /**
      * @brief Scrolls the least amount that brings an item's row fully into view.
      *
      * @param Item The item to reveal, which does nothing when it has no row.
      */
     void ScrollToItem(const TSharedPtr<FTreeItem>& Item);
-
-    /** @return How far the rows are scrolled, as an offset from the top of the first one in pixels. */
-    NODISCARD FORCEINLINE int32 GetScrollOffset() const
-    {
-        return ScrollOffset;
-    }
 
     /**
      * @brief Gets the item whose row covers a point.
@@ -333,6 +309,30 @@ public:
      * @return The label band in client space at full row height, or an empty rectangle when the item has no row.
      */
     NODISCARD FRectangle GetItemLabelBounds(const TSharedPtr<FTreeItem>& Item) const;
+
+    /** @return The nodes shown at depth zero, in the order their rows appear. */
+    NODISCARD FORCEINLINE const TArray<TSharedPtr<FTreeItem>>& GetRootItems() const
+    {
+        return RootItems;
+    }
+
+    /** @return The selected items, in the order they were added rather than in row order. */
+    NODISCARD FORCEINLINE const TArray<TSharedPtr<FTreeItem>>& GetSelection() const
+    {
+        return Selection;
+    }
+
+    /** @return The text a row's label has to contain to survive, which is empty when nothing is filtered. */
+    NODISCARD FORCEINLINE const String& GetFilterText() const
+    {
+        return FilterText;
+    }
+
+    /** @return How far the rows are scrolled, as an offset from the top of the first one in pixels. */
+    NODISCARD FORCEINLINE int32 GetScrollOffset() const
+    {
+        return ScrollOffset;
+    }
 
 protected:
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;

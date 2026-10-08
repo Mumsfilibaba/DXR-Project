@@ -78,12 +78,6 @@ public:
     /** @return How many lines are currently held, which is never more than the cap. */
     NODISCARD int32 GetNumLines() const;
 
-    /** @return The line cap, which is how many lines the buffer keeps before dropping the oldest. */
-    NODISCARD FORCEINLINE int32 GetMaxLines() const
-    {
-        return Lines.GetCapacity();
-    }
-
     /**
      * @brief Sets the line cap, trimming immediately when it shrinks.
      *
@@ -98,6 +92,12 @@ public:
      * @return The revision, bumped by every line added and every clear.
      */
     NODISCARD uint64 GetRevision() const;
+
+    /** @return The line cap, which is how many lines the buffer keeps before dropping the oldest. */
+    NODISCARD FORCEINLINE int32 GetMaxLines() const
+    {
+        return Lines.GetCapacity();
+    }
 
 private:
     void CopyNewestLines(int32 NumLines, TArray<FConsoleLogLine>& OutLines) const;

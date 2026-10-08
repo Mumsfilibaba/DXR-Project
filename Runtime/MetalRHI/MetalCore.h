@@ -5,7 +5,7 @@
 #include "Core/Misc/Debug.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIShader.h"
-#include "RHI/MSLShaderBindings.h"
+#include "ShaderCore/MSLShaderBindings.h"
 #include "MetalRHI/MetalConfiguration.h"
 #include "MetalRHI/MetalCapabilities.h"
 #include <Metal/Metal.h>

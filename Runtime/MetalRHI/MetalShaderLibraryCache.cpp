@@ -3,10 +3,17 @@
 #include "MetalRHI/MetalStats.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/CRC.h"
+#include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
 
-static NSString* ResolveMetalFunctionName(id<MTLLibrary> Library)
+// Containers name their entry point; the fallback covers source compiled without one
+static NSString* ResolveMetalFunctionName(id<MTLLibrary> Library, const CHAR* EntryPoint)
 {
+    if (EntryPoint && EntryPoint[0] != '\0')
+    {
+        return [NSString stringWithUTF8String:EntryPoint];
+    }
+
     NSArray<NSString*>* FunctionNames = [Library functionNames];
 
     if (FunctionNames.count == 0)
@@ -22,10 +29,11 @@ static NSString* ResolveMetalFunctionName(id<MTLLibrary> Library)
     return FunctionNames.firstObject;
 }
 
-static uint64 HashSource(TArrayView<const uint8> Source)
+static uint64 HashSource(TArrayView<const uint8> Source, const CHAR* EntryPoint)
 {
     uint64 Hash = static_cast<uint64>(Source.Size());
     HashCombine(Hash, CRC32::Generate(Source.Data(), Source.Size()));
+    HashCombine(Hash, CRC32::Generate(EntryPoint, CString::Strlen(EntryPoint)));
     return Hash;
 }
 
@@ -47,26 +55,31 @@ FMetalShaderLibraryCache::FMetalShaderLibraryCache(FMetalDevice* InDevice)
 
 FMetalShaderLibraryCache::~FMetalShaderLibraryCache() = default;
 
-TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::GetOrCompile(TArrayView<const uint8> Source)
+TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::GetOrCompile(TArrayView<const uint8> Source, const CHAR* EntryPoint)
 {
-    const uint64 Hash = HashSource(Source);
+    if (!EntryPoint)
+    {
+        EntryPoint = "";
+    }
+
+    const uint64 Hash = HashSource(Source, EntryPoint);
     {
         TScopedLock Lock(EntriesCS);
-        if (TSharedRef<FMetalCompiledShader> Existing = Find(Hash, Source))
+        if (TSharedRef<FMetalCompiledShader> Existing = Find(Hash, Source, EntryPoint))
         {
             STAT_ADD(STAT_Metal_LibraryCacheHits, 1);
             return Existing;
         }
     }
 
-    TSharedRef<FMetalCompiledShader> NewShader = Compile(Source);
+    TSharedRef<FMetalCompiledShader> NewShader = Compile(Source, EntryPoint);
     if (!NewShader)
     {
         return nullptr;
     }
 
     TScopedLock Lock(EntriesCS);
-    if (TSharedRef<FMetalCompiledShader> Existing = Find(Hash, Source))
+    if (TSharedRef<FMetalCompiledShader> Existing = Find(Hash, Source, EntryPoint))
     {
         return Existing;
     }
@@ -74,8 +87,9 @@ TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::GetOrCompile(TArrayVi
     STAT_ADD(STAT_Metal_LibraryCacheMisses, 1);
 
     FEntry& NewEntry = Entries.FindOrAdd(Hash).Emplace();
-    NewEntry.Source = TArray<uint8>(Source.Data(), Source.Size());
-    NewEntry.Shader = NewShader;
+    NewEntry.Source     = TArray<uint8>(Source.Data(), Source.Size());
+    NewEntry.EntryPoint = EntryPoint;
+    NewEntry.Shader     = NewShader;
     return NewShader;
 }
 
@@ -106,7 +120,7 @@ void FMetalShaderLibraryCache::Prune()
     }
 }
 
-TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Find(uint64 Hash, TArrayView<const uint8> Source) const
+TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Find(uint64 Hash, TArrayView<const uint8> Source, const CHAR* EntryPoint) const
 {
     const TArray<FEntry>* Bucket = Entries.Find(Hash);
     if (!Bucket)
@@ -116,7 +130,7 @@ TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Find(uint64 Hash, TAr
 
     for (const FEntry& Entry : *Bucket)
     {
-        if (Entry.Source.Size() == Source.Size() && Memory::Memcmp(Entry.Source.Data(), Source.Data(), Source.Size()) == 0)
+        if (Entry.Source.Size() == Source.Size() && Entry.EntryPoint == EntryPoint && Memory::Memcmp(Entry.Source.Data(), Source.Data(), Source.Size()) == 0)
         {
             return Entry.Shader;
         }
@@ -125,7 +139,7 @@ TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Find(uint64 Hash, TAr
     return nullptr;
 }
 
-TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Compile(TArrayView<const uint8> Source) const
+TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Compile(TArrayView<const uint8> Source, const CHAR* EntryPoint) const
 {
     SCOPED_AUTORELEASE_POOL();
 
@@ -149,7 +163,7 @@ TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Compile(TArrayView<co
 
     TSharedRef<FMetalCompiledShader> NewShader = new FMetalCompiledShader();
     NewShader->Library      = Library;
-    NewShader->FunctionName = [ResolveMetalFunctionName(Library) retain];
+    NewShader->FunctionName = [ResolveMetalFunctionName(Library, EntryPoint) retain];
 
     if (!NewShader->FunctionName)
     {

@@ -11,6 +11,7 @@ if IsPlatformMac() then
         "Core",
         "CoreApplication",
         "RHI",
+        "ShaderCore",
     })
 
     MetalRHI.AddFrameworks({

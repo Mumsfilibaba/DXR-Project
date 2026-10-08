@@ -87,12 +87,6 @@ public:
     /** @return True when any anchor in the bar has its drop-down open. */
     NODISCARD bool IsAnyMenuOpen() const;
 
-    /** @return The anchors the buttons are held by, in the order they were added. */
-    NODISCARD FORCEINLINE const TArray<TSharedPtr<FMenuAnchor>>& GetAnchors() const
-    {
-        return Anchors;
-    }
-
     /**
      * @brief Switches to a hovered button's menu, which only happens while a sibling is already open.
      *
@@ -107,6 +101,12 @@ public:
      * @param InStyle The look to draw with.
      */
     void SetStyle(const FUIMenuBarStyle& InStyle);
+
+    /** @return The anchors the buttons are held by, in the order they were added. */
+    NODISCARD FORCEINLINE const TArray<TSharedPtr<FMenuAnchor>>& GetAnchors() const
+    {
+        return Anchors;
+    }
 
     /** @return The look the strip and its entries draw themselves with. */
     NODISCARD FORCEINLINE const FUIMenuBarStyle& GetStyle() const

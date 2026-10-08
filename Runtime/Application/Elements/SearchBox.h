@@ -79,18 +79,6 @@ public:
     /** @return True while the field holds no search text, which is when the clear button is hidden. */
     NODISCARD bool IsEmpty() const;
 
-    /** @return The line the text is typed into, which a caller can focus but does not own. */
-    NODISCARD FORCEINLINE const TSharedPtr<class FEditableText>& GetEditor() const
-    {
-        return Editor;
-    }
-
-    /** @return The delegate, which fires whenever the search text changes. */
-    NODISCARD FORCEINLINE FOnSearchTextChanged& GetOnTextChanged()
-    {
-        return OnTextChangedDelegate;
-    }
-
     /**
      * @brief The square the magnifier is drawn in, which is held at the leading edge whether or not the
      * field has text in it.
@@ -107,6 +95,18 @@ public:
      * @return The square, which is empty while the field holds no text.
      */
     NODISCARD FRectangle GetClearButtonRectangle(const FRectangle& Bounds) const;
+
+    /** @return The line the text is typed into, which a caller can focus but does not own. */
+    NODISCARD FORCEINLINE const TSharedPtr<class FEditableText>& GetEditor() const
+    {
+        return Editor;
+    }
+
+    /** @return The delegate, which fires whenever the search text changes. */
+    NODISCARD FORCEINLINE FOnSearchTextChanged& GetOnTextChanged()
+    {
+        return OnTextChangedDelegate;
+    }
 
 protected:
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;

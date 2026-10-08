@@ -26,6 +26,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Math/Math.h"
 #include "RHI/RHI.h"
+#include "ShaderCore/ShaderCode.h"
 
 struct FMetalUAVClearKernel
 {
@@ -71,60 +72,80 @@ static constexpr EMSLTextureDimension GMetalUAVClearDimensions[] =
 
 static_assert(ARRAY_COUNT(GMetalUAVClearDimensions) == static_cast<int32>(EMetalUAVClearTarget::Count), "Every clear target needs a texture dimension");
 
-static void WriteClearShaderByteCode(const FMetalUAVClearKernel& Kernel, const FMSLShaderBinding* Bindings, uint32 NumBindings, bool bBuffer, TArray<uint8>& OutByteCode)
+static constexpr EShaderResourceDimension GMetalUAVClearResourceDimensions[] =
 {
-    FMSLShaderHeader Header;
-    Header.Magic               = FMSLShaderHeader::ExpectedMagic;
-    Header.Version             = FMSLShaderHeader::ExpectedVersion;
-    Header.NumBindings         = NumBindings;
-    Header.SourceSize          = Kernel.Size;
-    Header.ThreadGroupSizeX    = static_cast<uint16>(bBuffer ? BufferClearThreadCount : TextureClearThreadCountX);
-    Header.ThreadGroupSizeY    = static_cast<uint16>(bBuffer ? 1 : TextureClearThreadCountY);
-    Header.ThreadGroupSizeZ    = 1;
-    Header.ShaderConstantsSize = static_cast<uint16>((bBuffer ? 5u : 4u) * sizeof(uint32));
-    Header.ResourceHeapSlot    = UINT8_MAX;
-    Header.SamplerHeapSlot     = UINT8_MAX;
-    Header.Padding0            = 0;
+    EShaderResourceDimension::Buffer,
+    EShaderResourceDimension::Texture1D,
+    EShaderResourceDimension::Texture1DArray,
+    EShaderResourceDimension::Texture2D,
+    EShaderResourceDimension::Texture2DArray,
+    EShaderResourceDimension::Texture3D,
+};
 
-    const int32 HeaderSize   = static_cast<int32>(sizeof(FMSLShaderHeader));
-    const int32 BindingsSize = static_cast<int32>(NumBindings * sizeof(FMSLShaderBinding));
+static_assert(ARRAY_COUNT(GMetalUAVClearResourceDimensions) == static_cast<int32>(EMetalUAVClearTarget::Count), "Every clear target needs a resource dimension");
 
-    OutByteCode.Resize(HeaderSize + BindingsSize + static_cast<int32>(Kernel.Size));
+// The generated kernels are compiled at build time, so the reflection the shader compiler would produce is written out by hand
+static bool WriteClearShaderCode(const FMetalUAVClearKernel& Kernel, const FShaderResourceBinding& OutputBinding, const FMSLBindingSlot& OutputSlot, bool bBuffer, TArray<uint8>& OutShaderCode)
+{
+    FShaderReflection Reflection;
+    Reflection.Info.ShaderConstantsSize = static_cast<uint8>((bBuffer ? 5u : 4u) * sizeof(uint32));
+    Reflection.EntryPoint               = "Main";
 
-    uint8* ByteCode = OutByteCode.Data();
-    Memory::Memcpy(ByteCode, &Header, HeaderSize);
-    Memory::Memcpy(ByteCode + HeaderSize, Bindings, BindingsSize);
-    Memory::Memcpy(ByteCode + HeaderSize + BindingsSize, Kernel.Code, Kernel.Size);
+    Reflection.MSLInfo.ThreadGroupSize[0] = static_cast<uint16>(bBuffer ? BufferClearThreadCount : TextureClearThreadCountX);
+    Reflection.MSLInfo.ThreadGroupSize[1] = static_cast<uint16>(bBuffer ? 1 : TextureClearThreadCountY);
+    Reflection.MSLInfo.ThreadGroupSize[2] = 1;
+
+    FShaderResourceBinding ConstantsBinding;
+    ConstantsBinding.Type  = EShaderResourceType::ConstantBuffer;
+    ConstantsBinding.Space = EShaderBindingSpace::ShaderConstants;
+
+    Reflection.Bindings.Add(ConstantsBinding);
+    Reflection.MSLSlots.Add(FMSLBindingSlot());
+    Reflection.Bindings.Add(OutputBinding);
+    Reflection.MSLSlots.Add(OutputSlot);
+
+    String Error;
+    if (!FShaderCodeWriter::Write(EShaderOutputLanguage::MSL, EShaderStage::Compute, EShaderCodeFlags::None, Reflection, TArrayView<const uint8>(Kernel.Code, static_cast<int32>(Kernel.Size)), OutShaderCode, &Error))
+    {
+        METAL_ERROR("Failed to write a UAV clear shader container: %s", *Error);
+        return false;
+    }
+
+    return true;
 }
 
-static void BuildClearShaderByteCode(EMetalUAVClearTarget Target, EMSLTextureComponent Component, TArray<uint8>& OutByteCode)
+static bool BuildClearShaderCode(EMetalUAVClearTarget Target, EMSLTextureComponent Component, TArray<uint8>& OutShaderCode)
 {
-    const FMSLShaderBinding ClearBindings[] =
-    {
-        { EMSLBindingType::ShaderConstants,        0, 0, 0 },
-        { EMSLBindingType::UnorderedAccessTexture, 0, 0, MakeMSLNullTextureType(GMetalUAVClearDimensions[static_cast<int32>(Target)], Component) },
-    };
+    const bool bBuffer = Target == EMetalUAVClearTarget::Buffer;
+
+    FShaderResourceBinding OutputBinding;
+    OutputBinding.Type      = bBuffer ? EShaderResourceType::RWTypedBuffer : EShaderResourceType::RWTexture;
+    OutputBinding.Dimension = GMetalUAVClearResourceDimensions[static_cast<int32>(Target)];
+
+    FMSLBindingSlot OutputSlot;
+    OutputSlot.NullTextureType = MakeMSLNullTextureType(GMetalUAVClearDimensions[static_cast<int32>(Target)], Component);
 
     const FMetalUAVClearKernel& Kernel = GMetalUAVClearKernels[static_cast<int32>(Target) * 3 + static_cast<int32>(Component)];
-    WriteClearShaderByteCode(Kernel, ClearBindings, ARRAY_COUNT(ClearBindings), Target == EMetalUAVClearTarget::Buffer, OutByteCode);
+    return WriteClearShaderCode(Kernel, OutputBinding, OutputSlot, bBuffer, OutShaderCode);
 }
 
-static void BuildRawClearShaderByteCode(TArray<uint8>& OutByteCode)
+static bool BuildRawClearShaderCode(TArray<uint8>& OutShaderCode)
 {
+    FShaderResourceBinding OutputBinding;
+    OutputBinding.Type      = EShaderResourceType::RWByteAddressBuffer;
+    OutputBinding.Dimension = EShaderResourceDimension::Buffer;
+
     // spirv-cross places the constants at buffer 0 and the RWByteAddressBuffer at buffer 1
-    const FMSLShaderBinding ClearBindings[] =
-    {
-        { EMSLBindingType::ShaderConstants,       0, 0, 0 },
-        { EMSLBindingType::UnorderedAccessBuffer, 0, 1, 0 },
-    };
+    FMSLBindingSlot OutputSlot;
+    OutputSlot.Slot = 1;
 
     const FMetalUAVClearKernel Kernel = { GMetalClearBufferUAV_Raw, sizeof(GMetalClearBufferUAV_Raw) };
-    WriteClearShaderByteCode(Kernel, ClearBindings, ARRAY_COUNT(ClearBindings), true, OutByteCode);
+    return WriteClearShaderCode(Kernel, OutputBinding, OutputSlot, true, OutShaderCode);
 }
 
-static FRHIComputePipelineStateRef CreateClearPipeline(const TArray<uint8>& ByteCode, FRHIComputeShaderRef& OutShader)
+static FRHIComputePipelineStateRef CreateClearPipeline(const TArray<uint8>& ShaderCode, FRHIComputeShaderRef& OutShader)
 {
-    OutShader = RHI::CreateComputeShader(ByteCode);
+    OutShader = RHI::CreateComputeShader(ShaderCode);
 
     if (!OutShader)
     {
@@ -168,9 +189,11 @@ FMetalComputePipelineStateRHI* FMetalUAVClearPipelines::GetOrCreate(EMetalUAVCle
 
     if (!Pipelines[Index])
     {
-        TArray<uint8> ByteCode;
-        BuildClearShaderByteCode(Target, Component, ByteCode);
-        Pipelines[Index] = CreateClearPipeline(ByteCode, Shaders[Index]);
+        TArray<uint8> ShaderCode;
+        if (BuildClearShaderCode(Target, Component, ShaderCode))
+        {
+            Pipelines[Index] = CreateClearPipeline(ShaderCode, Shaders[Index]);
+        }
     }
 
     return static_cast<FMetalComputePipelineStateRHI*>(Pipelines[Index].Get());
@@ -180,9 +203,11 @@ FMetalComputePipelineStateRHI* FMetalUAVClearPipelines::GetOrCreateRaw()
 {
     if (!RawPipeline)
     {
-        TArray<uint8> ByteCode;
-        BuildRawClearShaderByteCode(ByteCode);
-        RawPipeline = CreateClearPipeline(ByteCode, RawShader);
+        TArray<uint8> ShaderCode;
+        if (BuildRawClearShaderCode(ShaderCode))
+        {
+            RawPipeline = CreateClearPipeline(ShaderCode, RawShader);
+        }
     }
 
     return static_cast<FMetalComputePipelineStateRHI*>(RawPipeline.Get());

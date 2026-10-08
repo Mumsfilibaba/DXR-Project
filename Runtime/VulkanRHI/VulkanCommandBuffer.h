@@ -459,6 +459,18 @@ public:
         return &CommandBuffer;
     }
 
+    FCommandBuffer* Annotate()
+    {
+        NumCommands++;
+        NumAnnotationCommands++;
+        return &CommandBuffer;
+    }
+
+    uint32 GetNumWorkCommands() const
+    {
+        return NumCommands - NumAnnotationCommands;
+    }
+
 #if VULKAN_VALIDATE_IMAGE_LAYOUTS
     void AddImageLayoutForValidation(VkImage Image, VkImageLayout EntryLayout, VkImageLayout ResultLayout, bool bWholeImage, const CHAR* RecordingSite);
 
@@ -473,6 +485,7 @@ private:
     FCommandBuffer       CommandBuffer;
     VkCommandBufferLevel Level;
     uint32               NumCommands;
+    uint32               NumAnnotationCommands;
     bool                 bIsRecording;
     FVulkanQuery         BeginTimestamp;
     FVulkanQuery         EndTimestamp;

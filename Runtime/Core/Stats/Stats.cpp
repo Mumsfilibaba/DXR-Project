@@ -44,6 +44,19 @@ void FStatRegistry::GetStatsByGroup(const CHAR* GroupName, TArray<FStatData*>& O
     }
 }
 
+void FStatRegistry::UpdateFrameStats()
+{
+    TScopedLock Lock(StatsCS);
+
+    for (FStatData* Stat : Stats)
+    {
+        if (Stat->Type == EStatType::FrameCounter)
+        {
+            Stat->Value.Store(Stat->FrameValue.Exchange(0));
+        }
+    }
+}
+
 void FStatRegistry::GetGroups(TArray<const CHAR*>& OutGroups) const
 {
     for (FStatData* Stat : Stats)

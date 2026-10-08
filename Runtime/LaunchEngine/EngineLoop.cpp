@@ -25,7 +25,7 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Platform/PlatformConsoleWindow.h"
 #include "RHI/RHI.h"
-#include "RHI/ShaderCompiler.h"
+#include "ShaderCompiler/ShaderCompiler.h"
 #include "Engine/Engine.h"
 #include "Engine/Performance/ProfileRun.h"
 #include "RendererCore/RenderGraph/RenderGraphResourcePool.h"
@@ -51,7 +51,6 @@ static TAutoConsoleVariable<int32> CVarExitAfterFrames(
     "Requests exit once this many frames have been submitted, which is what makes a headless boot check possible. Zero runs until closed",
     0,
     EConsoleVariableFlags::Default);
-
 struct FDebuggerOutputDevice : public IOutputDevice
 {
     virtual void Log(const String& Message)
@@ -222,7 +221,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
     }
 
     GConfig->LoadConsoleVariables();
-    FConsoleManager::Get().LoadConsoleVariablesFromCommandLine();
+    FConsoleManager::Get().LoadFromCommandLine();
 
     {
         TRACE_BOOT_SCOPE("ThreadManager");
@@ -553,6 +552,8 @@ void FEngineLoop::Tick()
     {
         LOG_INFO("[BOOT] First frame submitted");
     }
+
+    FConsoleManager::Get().ExecuteQueuedCommands(*FOutputDeviceManager::Get());
 
     FProfileRun::Tick();
 

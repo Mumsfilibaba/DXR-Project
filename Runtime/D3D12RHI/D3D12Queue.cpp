@@ -46,6 +46,7 @@ FD3D12Queue::~FD3D12Queue()
     ProcessCommandQueue();
 
     CommandContextPool.DestroyAll();
+    CommandsPool.DestroyAll();
     CommandListPool.DestroyAll();
     AllocatorPool.DestroyAll();
 }
@@ -81,8 +82,7 @@ bool FD3D12Queue::Initialize()
         }
     }
 
-    const WString WideName = CharToWide(String::Printf("CommandQueue %s", ToString(QueueType)));
-    NewCommandQueue->SetName(*WideName);
+    D3D12SetDebugName(NewCommandQueue.Get(), String::Printf("CommandQueue %s", ToString(QueueType)));
 
     D3D12_INFO("[FD3D12Device]: Created CommandQueue '%s'", ToString(QueueType));
     CommandQueue = NewCommandQueue;
@@ -156,6 +156,22 @@ void FD3D12Queue::RecycleAllocator(FD3D12CommandAllocator* InAllocator)
     AllocatorPool.Release(InAllocator);
 }
 
+FD3D12Commands* FD3D12Queue::ObtainCommands()
+{
+    return CommandsPool.Acquire([this](int32 /* Index */) -> FD3D12Commands*
+    {
+        return new FD3D12Commands(GetDevice(), this);
+    });
+}
+
+void FD3D12Queue::RecycleCommands(FD3D12Commands* InCommands)
+{
+    CHECK(InCommands != nullptr);
+
+    InCommands->Reset();
+    CommandsPool.Release(InCommands);
+}
+
 FD3D12CommandContext* FD3D12Queue::ObtainCommandContext()
 {
     FD3D12CommandContext* CommandContext = CommandContextPool.Acquire([this](int32) -> FD3D12CommandContext*
@@ -218,6 +234,7 @@ FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandList(FD3D12CommandList* InComman
 
     ID3D12CommandList* CommandList = InCommandList->GetCommandList();
     CommandQueue->ExecuteCommandLists(1, &CommandList);
+    STAT_ADD_FRAME(STAT_D3D12_Submits, 1);
 
     const uint64 FenceValue = SubmissionFence->Signal(CommandQueue.Get());
     if (bWaitForCompletion)
@@ -241,7 +258,7 @@ FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandLists(FD3D12CommandList* const* 
         return FD3D12FenceSyncPoint(SubmissionFence.Get(), FenceValue);
     }
 
-    TArray<ID3D12CommandList*> D3DCommandLists;
+    TArray<ID3D12CommandList*, TInlineArrayAllocator<ID3D12CommandList*, D3D12_INLINE_SUBMITTED_COMMAND_LISTS>> D3DCommandLists;
     D3DCommandLists.Reserve(NumCommandLists);
 
     for (uint32 Index = 0; Index < NumCommandLists; Index++)
@@ -250,6 +267,7 @@ FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandLists(FD3D12CommandList* const* 
     }
 
     CommandQueue->ExecuteCommandLists(D3DCommandLists.Size(), D3DCommandLists.Data());
+    STAT_ADD_FRAME(STAT_D3D12_Submits, 1);
 
 #if D3D12_ENABLE_DEVICE_LOST_CHECK
     if (GetDevice()->GetD3D12Device()->GetDeviceRemovedReason() != S_OK)
@@ -406,6 +424,24 @@ FD3D12Commands::FD3D12Commands(FD3D12Device* InDevice, FD3D12Queue* InQueue)
     , PendingQueries()
     , DeferredObjects()
 {
+}
+
+void FD3D12Commands::Reset()
+{
+    Flags     = ED3D12CommandsFlags::None;
+    SyncPoint = FD3D12FenceSyncPoint();
+
+    CommandAllocators.Clear();
+    CommandLists.Clear();
+    QueryRanges.Clear();
+    TimestampQueries.Clear();
+    OcclusionQueries.Clear();
+    PipelineStatsQueries.Clear();
+    PendingQueries.Clear();
+    SubmittedQueries.Clear();
+    DeferredObjects.Clear();
+    PendingBarriers.Clear();
+    PendingResourceStates.Clear();
 }
 
 void FD3D12Commands::PreExecute()
@@ -701,5 +737,5 @@ void FD3D12Commands::PostExecute()
     PendingBarriers.Clear();
     PendingResourceStates.Clear();
 
-    delete this;
+    Queue->RecycleCommands(this);
 }

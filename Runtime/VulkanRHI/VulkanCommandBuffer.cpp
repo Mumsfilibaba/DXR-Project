@@ -9,6 +9,7 @@ FVulkanCommandBuffer::FVulkanCommandBuffer(FVulkanDevice* InDevice, FVulkanComma
     , CommandBuffer()
     , Level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
     , NumCommands(0)
+    , NumAnnotationCommands(0)
     , bIsRecording(false)
 {
     CHECK(OwnerPool != nullptr);
@@ -109,8 +110,9 @@ bool FVulkanCommandBuffer::End()
         return false;
     }
 
-    NumCommands  = 0;
-    bIsRecording = false;
+    NumCommands           = 0;
+    NumAnnotationCommands = 0;
+    bIsRecording          = false;
     return true;
 }
 
@@ -171,7 +173,7 @@ void FVulkanCommandBuffer::EndQuery(const FVulkanQuery& Query, VkPipelineStageFl
 
     if (Pool->QueryType == VK_QUERY_TYPE_TIMESTAMP)
     {
-        (*this)->WriteTimestamp(TimestampStage, Pool->GetVkQueryPool(), Query.QueryIndex);
+        Annotate()->WriteTimestamp(TimestampStage, Pool->GetVkQueryPool(), Query.QueryIndex);
         TimestampQueries.Add(Query);
     }
     else

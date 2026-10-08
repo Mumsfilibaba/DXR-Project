@@ -12,7 +12,8 @@
 #include "Application/Elements/Window.h"
 #include "RHI/RHI.h"
 #include "RHI/RHIResources.h"
-#include "RHI/ShaderCompiler.h"
+#include "ShaderCompiler/ShaderCompiler.h"
+#include "RendererCore/Shaders/ShaderBytecodeCache.h"
 #include "RendererCore/TextureFactory.h"
 #include <imgui.h>
 
@@ -101,8 +102,8 @@ bool FImGuiRenderer::InitializeRHI()
 
     TArray<uint8> ShaderCode;
 
-    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/ImGui.hlsl", CompileInfo, ShaderCode))
+    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
+    if (!FShaderBytecodeCache::CompileFromFile("Shaders/ImGui.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
         return false;
@@ -115,8 +116,8 @@ bool FImGuiRenderer::InitializeRHI()
         return false;
     }
     
-    CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/ImGui.hlsl", CompileInfo, ShaderCode))
+    CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
+    if (!FShaderBytecodeCache::CompileFromFile("Shaders/ImGui.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
         return false;
@@ -425,7 +426,7 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
         const FRHIBufferDesc VertexBufferDesc = FRHIBufferDesc::CreateVertexBuffer(sizeof(ImDrawVert), NewVertexCount,
             EBufferFlags::Default | EBufferFlags::CopyDest);
 
-        TSharedRef<FRHIBuffer> NewVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::GenericRead, nullptr);
+        FRHIBufferRef NewVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::GenericRead, nullptr);
         if (NewVertexBuffer)
         {
             NewVertexBuffer->SetDebugName("ImGui VertexBuffer");
@@ -445,7 +446,7 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
         const FRHIBufferDesc IndexBufferDesc = FRHIBufferDesc::CreateIndexBuffer(sizeof(ImDrawIdx), NewIndexCount,
             EBufferFlags::Default | EBufferFlags::CopyDest);
 
-        TSharedRef<FRHIBuffer> NewIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::GenericRead, nullptr);
+        FRHIBufferRef NewIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::GenericRead, nullptr);
         if (NewIndexBuffer)
         {
             NewIndexBuffer->SetDebugName("ImGui IndexBuffer");

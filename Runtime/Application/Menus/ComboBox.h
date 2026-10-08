@@ -135,12 +135,6 @@ public:
      */
     void SetSelectedIndex(int32 Index);
 
-    /** @return The index of the chosen option, or -1 when nothing is selected. */
-    NODISCARD FORCEINLINE int32 GetSelectedIndex() const
-    {
-        return SelectedIndex;
-    }
-
     /** @return The closed button's text: the selected option, or the placeholder when none is selected. */
     NODISCARD const String& GetSelectedText() const;
 
@@ -151,12 +145,6 @@ public:
      */
     void SetOptions(const TArray<String>& InOptions);
 
-    /** @return The options the drop-down offers, in the order they are listed. */
-    NODISCARD FORCEINLINE const TArray<String>& GetOptions() const
-    {
-        return Options;
-    }
-
     /** @brief Opens the drop-down, as a click on the button does. */
     void OpenMenu();
 
@@ -165,6 +153,18 @@ public:
 
     /** @return True while the drop-down is open and its options are showing. */
     NODISCARD bool IsMenuOpen() const;
+
+    /** @return The index of the chosen option, or -1 when nothing is selected. */
+    NODISCARD FORCEINLINE int32 GetSelectedIndex() const
+    {
+        return SelectedIndex;
+    }
+
+    /** @return The options the drop-down offers, in the order they are listed. */
+    NODISCARD FORCEINLINE const TArray<String>& GetOptions() const
+    {
+        return Options;
+    }
 
 private:
     NODISCARD TSharedPtr<FVisualElement> BuildMenu();

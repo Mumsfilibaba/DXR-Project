@@ -3,7 +3,7 @@
 #include "Core/Containers/String.h"
 #include "Core/Templates/TypeTraits.h"
 #include "RHI/RHICore.h"
-#include "RHI/ShaderCompiler.h"
+#include "ShaderCompiler/ShaderCompiler.h"
 
 struct FShaderCompilationEnvironment
 {
@@ -28,8 +28,10 @@ struct FShaderPermutationDesc
 {
     int32 PermutationID                      = 0;
     bool  bSupportsBindless                  = false;
+    bool  bSupportsViewInstancing            = false;
     bool  bSupportsRayTracing                = false;
     bool  bSupportsRayTracingPipeline        = false;
+    bool  bSupportsInlineRayTracing          = false;
     bool  bSupportsShaderExecutionReordering = false;
 };
 

@@ -154,7 +154,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
         GetResource()->SetDefaultState(D3D12DefaultState);
     }
 
-    if (!Desc.IsNoDefaultSRV())
+    if (Desc.IsShaderResourceTexture() && !Desc.IsNoDefaultSRV())
     {
         D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc = {};
         ViewDesc.Format                  = D3D12RHI::D3D12CastShaderResourceFormat(ResourceDesc.Format);

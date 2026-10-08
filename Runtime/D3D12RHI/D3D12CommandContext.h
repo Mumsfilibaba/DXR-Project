@@ -225,8 +225,9 @@ public:
     }
 
 private:
+    bool HasPendingWork() const;
     void ConditionalSplitCommandList();
-    void PrepareShaderBindingTableForDispatch(FD3D12ShaderBindingTable* ShaderBindingTable);
+    bool PrepareShaderBindingTableForDispatch(FD3D12ShaderBindingTable* ShaderBindingTable);
     void CloseEventStack();
     void ReopenEventStack();
 
@@ -245,6 +246,7 @@ private:
     NODISCARD D3D12_RESOURCE_STATES GetTrackedResourceState(const FD3D12Resource* Resource) const;
 
     FD3D12CommandList*                         CommandList;
+    uint32                                     NumCommandsAtOpen;
     FD3D12CommandAllocator*                    CommandAllocator;
     FD3D12Commands*                            Commands;
     FD3D12CommandContextState                  ContextState;

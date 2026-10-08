@@ -27,8 +27,6 @@ class FVulkanCommandPool;
 class FVulkanCommandContext;
 struct FVulkanCommands;
 
-typedef TSharedRef<class FVulkanQueue> FVulkanQueueRef;
-
 struct FVulkanTimestampIdleState
 {
     uint64 AccumulatedIdleTicks      = 0;
@@ -47,6 +45,9 @@ public:
     FVulkanCommandPool* ObtainCommandPool();
     void RecycleCommandPool(FVulkanCommandPool* InCommandPool);
     void RetireCommandPoolDeferred(FVulkanCommandPool* InCommandPool);
+
+    FVulkanCommands* ObtainCommands();
+    void RecycleCommands(FVulkanCommands* InCommands);
 
     FVulkanCommandContext* ObtainCommandContext();
     void ReleaseCommandContext(FVulkanCommandContext* InContext);
@@ -115,6 +116,7 @@ private:
     EVulkanCommandQueueType                   QueueType;
     TVulkanRecyclePool<FVulkanCommandPool>    CommandPoolPool;
     TVulkanRecyclePool<FVulkanCommandContext> CommandContextPool;
+    TVulkanRecyclePool<FVulkanCommands>       CommandsPool;
     TArray<FVulkanCommandPool*>               DeferredCommandPools;
     FCriticalSection                          DeferredCommandPoolsCS;
     TArray<FVulkanDeferredObject>             DeferredObjects;
@@ -141,6 +143,7 @@ struct FVulkanCommands
     FVulkanCommands(FVulkanDevice* InDevice, FVulkanQueue& InQueue);
     ~FVulkanCommands();
 
+    void Reset();
     void AcquireFence();
     void PreExecute();
     void Execute();

@@ -398,34 +398,6 @@ void FD3D12ShaderBindingTable::RemovePendingTablesInRange(uint64 BeginByteOffset
     }
 }
 
-uint32 FD3D12ShaderBindingTable::GetNumPendingLocalTableDescriptors() const
-{
-    uint32 Total = 0;
-    for (const FD3D12PendingLocalTable& Pending : PendingLocalTables)
-    {
-        if (IsResourceDescriptorHeap(Pending.DescriptorType))
-        {
-            Total += Pending.NumDescriptors;
-        }
-    }
-
-    return Total;
-}
-
-uint32 FD3D12ShaderBindingTable::GetNumPendingLocalSamplerDescriptors() const
-{
-    uint32 Total = 0;
-    for (const FD3D12PendingLocalTable& Pending : PendingLocalTables)
-    {
-        if (IsSamplerDescriptorHeap(Pending.DescriptorType))
-        {
-            Total += Pending.NumDescriptors;
-        }
-    }
-
-    return Total;
-}
-
 void FD3D12ShaderBindingTable::ClearTableRecords()
 {
     Memory::Memzero(CpuShadow.Data(), CpuShadow.SizeInBytes());
@@ -456,11 +428,11 @@ void FD3D12ShaderBindingTable::Build(FD3D12CommandContext& CmdContext)
     UploadCpuShadow(CmdContext);
 }
 
-void FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext& CmdContext, FD3D12LocalDescriptorHeap& ResourceHeap, FD3D12LocalDescriptorHeap& SamplerHeap)
+bool FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext& CmdContext, FD3D12LocalDescriptorHeap& ResourceHeap, FD3D12LocalDescriptorHeap& SamplerHeap)
 {
     if (PendingLocalTables.IsEmpty())
     {
-        return;
+        return true;
     }
 
     ID3D12Device* D3DDevice = GetDevice()->GetD3D12Device();
@@ -474,7 +446,7 @@ void FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext
         uint32                         NumDescriptors;
         ED3D12LocalTableDescriptorType DescriptorType;
         SIZE_T                         SourceHandles[FD3D12PendingLocalTable::MaxDescriptors];
-        uint32                         BaseHandle;
+        D3D12_GPU_DESCRIPTOR_HANDLE    TableGpuHandle;
     };
 
     TArray<FResolvedTable> ResolvedTables;
@@ -532,7 +504,7 @@ void FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext
             SourceHandles[SlotIndex] = Src.ptr;
         }
 
-        uint32 BaseHandle = 0;
+        D3D12_GPU_DESCRIPTOR_HANDLE TableGpuHandle = {};
         
         bool bFoundInCache = false;
         for (const FResolvedTable& Resolved : ResolvedTables)
@@ -544,15 +516,20 @@ void FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext
 
             if (Memory::Memcmp(Resolved.SourceHandles, SourceHandles, sizeof(SIZE_T) * Pending.NumDescriptors) == 0)
             {
-                BaseHandle    = Resolved.BaseHandle;
-                bFoundInCache = true;
+                TableGpuHandle = Resolved.TableGpuHandle;
+                bFoundInCache  = true;
                 break;
             }
         }
 
         if (!bFoundInCache)
         {
-            BaseHandle = TargetHeap.AllocateHandles(Pending.NumDescriptors);
+            if (!TargetHeap.HasSpace(Pending.NumDescriptors) && !TargetHeap.Realloc())
+            {
+                return false;
+            }
+
+            const uint32 BaseHandle = TargetHeap.AllocateHandles(Pending.NumDescriptors);
             for (uint32 SlotIndex = 0; SlotIndex < Pending.NumDescriptors; ++SlotIndex)
             {
                 const D3D12_CPU_DESCRIPTOR_HANDLE Src = { SourceHandles[SlotIndex] };
@@ -560,16 +537,17 @@ void FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext
                 D3DDevice->CopyDescriptorsSimple(1, Dst, Src, HeapType);
             }
 
+            TableGpuHandle = TargetHeap.GetGPUHandle(int32(BaseHandle));
+
             FResolvedTable Resolved;
             Resolved.NumDescriptors = Pending.NumDescriptors;
             Resolved.DescriptorType = Pending.DescriptorType;
-            Resolved.BaseHandle     = BaseHandle;
+            Resolved.TableGpuHandle = TableGpuHandle;
             
             Memory::Memcpy(Resolved.SourceHandles, SourceHandles, sizeof(SourceHandles));
             ResolvedTables.Emplace(Resolved);
         }
 
-        const D3D12_GPU_DESCRIPTOR_HANDLE TableGpuHandle = TargetHeap.GetGPUHandle(int32(BaseHandle));
         if (Pending.RecordByteOffset + RecordStride <= uint64(CpuShadow.SizeInBytes()))
         {
             D3D12_GPU_VIRTUAL_ADDRESS* RootDescriptors = reinterpret_cast<D3D12_GPU_VIRTUAL_ADDRESS*>(CpuShadow.Data() + Pending.RecordByteOffset + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
@@ -581,6 +559,7 @@ void FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext
     }
 
     UploadCpuShadow(CmdContext);
+    return true;
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS_RANGE FD3D12ShaderBindingTable::GetRayGenRecord() const

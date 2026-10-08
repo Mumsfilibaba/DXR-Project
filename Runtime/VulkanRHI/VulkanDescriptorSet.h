@@ -492,6 +492,9 @@ private:
     // Resets a particular bind point with null-descriptors to ensure that there is a valid resource bound
     void ResetDescriptorBinding(uint32 DescriptorSetIndex, uint32 BindingIndex);
 
+    // Whether a bound image view has the view type the shader declares at this binding
+    bool IsImageViewTypeCompatible(uint32 DescriptorSetIndex, uint32 BindingIndex, VkImageViewType ImageViewType) const;
+
     // Remembers the buffer behind a buffer-view descriptor so that it can be transitioned before the next draw
     void SetBoundBuffer(class FRHIResource* Resource, ERHIResourceState Access, uint32 DescriptorSetIndex, uint32 BindingIndex);
 

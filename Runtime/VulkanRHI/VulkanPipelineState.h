@@ -3,8 +3,10 @@
 #include "VulkanRHI/VulkanShader.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 
-typedef TSharedRef<class FVulkanInputLayoutRHI>             FVulkanVertexInputLayoutRHIRef;
+typedef TSharedRef<class FVulkanInputLayoutRHI>             FVulkanInputLayoutRHIRef;
 typedef TSharedRef<class FVulkanDepthStencilStateRHI>       FVulkanDepthStencilStateRHIRef;
+typedef TSharedRef<class FVulkanRasterizerStateRHI>         FVulkanRasterizerStateRHIRef;
+typedef TSharedRef<class FVulkanBlendStateRHI>              FVulkanBlendStateRHIRef;
 typedef TSharedRef<class FVulkanGraphicsPipelineStateRHI>   FVulkanGraphicsPipelineStateRHIRef;
 typedef TSharedRef<class FVulkanComputePipelineStateRHI>    FVulkanComputePipelineStateRHIRef;
 typedef TSharedRef<class FVulkanMeshletPipelineStateRHI>    FVulkanMeshletPipelineStateRHIRef;
@@ -26,8 +28,11 @@ public:
         return CreateInfo;
     }
 
+    bool ResolveAttributes(const TArray<FShaderVertexInput>& ShaderInputs, TArray<VkVertexInputAttributeDescription>& OutAttributes) const;
+
 private:
     TArray<FRHIInputElementDesc>              InputElements;
+    TArray<uint32>                            SemanticHashes;
     TArray<VkVertexInputBindingDescription>   VertexInputBindingDescriptions;
     TArray<VkVertexInputAttributeDescription> VertexInputAttributeDescriptions;
     VkPipelineVertexInputStateCreateInfo      CreateInfo;

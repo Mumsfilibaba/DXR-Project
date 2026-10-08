@@ -360,6 +360,7 @@ FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, FD3D12Queue& 
     : IRHICommandContext()
     , FD3D12DeviceChild(InDevice)
     , CommandList(nullptr)
+    , NumCommandsAtOpen(0)
     , CommandAllocator(nullptr)
     , Commands(nullptr)
     , ContextState(InDevice, *this)
@@ -427,12 +428,14 @@ void FD3D12CommandContext::ObtainCommandList()
 
             FD3D12DeviceRHI::Get()->NotifyCommandListOpened();
         }
+
+        NumCommandsAtOpen = CommandList->GetNumCommands();
     }
 
     if (!Commands)
     {
         TRACE_SCOPE("D3D12 Allocate Command Submission");
-        Commands = new FD3D12Commands(GetDevice(), &Queue);
+        Commands = Queue.ObtainCommands();
     }
 }
 
@@ -486,7 +489,7 @@ void FD3D12CommandContext::RetireTransientObjects()
 
     if (Commands)
     {
-        delete Commands;
+        Queue.RecycleCommands(Commands);
         Commands = nullptr;
     }
 }
@@ -525,6 +528,21 @@ void FD3D12CommandContext::AddPendingBarrier(FD3D12Resource* Resource, D3D12_RES
     PendingBarriers.Add(PendingBarrier);
 }
 
+bool FD3D12CommandContext::HasPendingWork() const
+{
+    if (!CommandList)
+    {
+        return false;
+    }
+
+    if (CommandList->GetNumCommands() != NumCommandsAtOpen)
+    {
+        return true;
+    }
+
+    return !PendingBarriers.IsEmpty() || !PendingResourceStates.IsEmpty() || !PendingQueries.IsEmpty();
+}
+
 void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolveQueries, FD3D12FenceSyncPoint* OutSyncPoint)
 {
     TRACE_SCOPE("D3D12 Finish Command List");
@@ -555,6 +573,18 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
     {
         TRACE_SCOPE("D3D12 Flush Barriers");
         BarrierBatcher.FlushBarriers(GetCommandList());
+    }
+
+    if (!HasPendingWork())
+    {
+        STAT_ADD_FRAME(STAT_D3D12_EmptyCommandListsSkipped, 1);
+
+        if (OutSyncPoint)
+        {
+            *OutSyncPoint = FD3D12FenceSyncPoint();
+        }
+
+        return;
     }
 
     {
@@ -684,6 +714,8 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
     }
     else
     {
+        STAT_ADD_FRAME(STAT_D3D12_EmptyCommandListsSkipped, 1);
+
         PendingBarriers.Clear();
         PendingResourceStates.Clear();
 
@@ -732,6 +764,8 @@ void FD3D12CommandContext::SplitCommandListAndResetState(bool bFlushAllocator, b
 
 void FD3D12CommandContext::SplitCommandListForDescriptorHeapRollover()
 {
+    STAT_ADD_FRAME(STAT_D3D12_SplitsDescriptorHeapRollover, 1);
+
 #if D3D12_ENABLE_DESCRIPTOR_HEAP_ROLLOVER_LOGGING
     D3D12_WARNING("[DescriptorRollover] Splitting command list for descriptor-heap rollover (RecordedCommands=%u)",
         CommandList ? CommandList->GetNumCommands() : 0u);
@@ -1630,7 +1664,7 @@ void FD3D12CommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegio
 
     const uint32 SrcNumRows = Math::Min<uint32>(NumRows, D3D12RHI::D3D12CalculateRegionNumRows(Dst->GetDesc().Format, TextureRegion.Height));
 
-    const uint32 DstSlicePitch = PlacedSubresourceFootprint.Footprint.RowPitch * NumRows;
+    const uint32 DstSlicePitch = PlacedSubresourceFootprint.Footprint.RowPitch * SrcNumRows;
     for (uint32 z = 0; z < TextureRegion.Depth; z++)
     {
         const uint8* SliceSource = Source + z * SrcDepthPitch;
@@ -1981,6 +2015,7 @@ void FD3D12CommandContext::WriteFence(FRHIFence* Fence)
 
     FD3D12FenceRHI* D3D12Fence = FD3D12DeviceRHI::ResourceCast(Fence);
 
+    STAT_ADD_FRAME(STAT_D3D12_SplitsFence, 1);
     SplitCommandList(true, false);
     D3D12Fence->Signal(Queue.GetD3D12CommandQueue());
 }
@@ -2387,7 +2422,15 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D
     AfterState = D3D12ResolveRestingState(Resource, AfterState);
 
     FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
-    
+    if (LocalState.IsSingleState())
+    {
+        const D3D12_RESOURCE_STATES CurrentState = LocalState.GetState();
+        if (CurrentState != D3D12_RESOURCE_STATE_TO_BE_DETERMINED && D3D12IsReadStateSatisfied(CurrentState, AfterState))
+        {
+            return;
+        }
+    }
+
     const D3D12_RESOURCE_DESC& ResourceDesc = Resource->GetDesc();
 
     const uint32 MipLevels   = ResourceDesc.MipLevels;
@@ -2865,6 +2908,7 @@ void FD3D12CommandContext::ConditionalSplitCommandList()
 
     if (NumCommands >= MaxCommands)
     {
+        STAT_ADD_FRAME(STAT_D3D12_SplitsCommandLimit, 1);
         SplitCommandList(true, false);
     }
 }
@@ -3201,62 +3245,37 @@ void FD3D12CommandContext::SetRayTracingPipelineState(FRHIRayTracingPipelineStat
     ContextState.SetRayTracingPipelineState(D3D12PipelineState);
 }
 
-void FD3D12CommandContext::PrepareShaderBindingTableForDispatch(FD3D12ShaderBindingTable* ShaderBindingTable)
+bool FD3D12CommandContext::PrepareShaderBindingTableForDispatch(FD3D12ShaderBindingTable* ShaderBindingTable)
 {
     CHECK(ShaderBindingTable != nullptr);
 
     BarrierBatcher.FlushBarriers(GetCommandList());
+    ContextState.BindRayTracingState();
+
+    FD3D12LocalDescriptorHeap& ResourceHeap = ContextState.GetDescriptorCache().GetResourceHeap();
+    FD3D12LocalDescriptorHeap& SamplerHeap  = ContextState.GetDescriptorCache().GetSamplerHeap();
+
+    if (!ShaderBindingTable->ResolveLocalDescriptorTables(*this, ResourceHeap, SamplerHeap))
+    {
+        SplitCommandListForDescriptorHeapRollover();
+        ResourceHeap.Realloc();
+        SamplerHeap.Realloc();
+        ContextState.BindRayTracingState();
+
+        if (!ShaderBindingTable->ResolveLocalDescriptorTables(*this, ResourceHeap, SamplerHeap))
+        {
+            D3D12_ERROR("Not enough descriptor space for the local shader records. Skipping the DispatchRays");
+            return false;
+        }
+    }
 
     if (FD3D12Resource* TableResource = ShaderBindingTable->GetResource())
     {
         GetCommandList().UpdateResidency(TableResource->GetResidencyHandle());
     }
 
-    const uint32 NumLocalTableDescriptors   = ShaderBindingTable->GetNumPendingLocalTableDescriptors();
-    const uint32 NumLocalSamplerDescriptors = ShaderBindingTable->GetNumPendingLocalSamplerDescriptors();
-
-    ContextState.BindRayTracingState();
-
-    if (NumLocalTableDescriptors > 0 || NumLocalSamplerDescriptors > 0)
-    {
-        FD3D12LocalDescriptorHeap& ResourceHeap = ContextState.GetDescriptorCache().GetResourceHeap();
-        FD3D12LocalDescriptorHeap& SamplerHeap  = ContextState.GetDescriptorCache().GetSamplerHeap();
-
-        const bool bNeedsResourceSpace = NumLocalTableDescriptors > 0 && !ResourceHeap.HasSpace(NumLocalTableDescriptors);
-        const bool bNeedsSamplerSpace  = NumLocalSamplerDescriptors > 0 && !SamplerHeap.HasSpace(NumLocalSamplerDescriptors);
-
-        if (bNeedsResourceSpace || bNeedsSamplerSpace)
-        {
-            if (bNeedsResourceSpace && !ResourceHeap.Realloc())
-            {
-                SplitCommandListForDescriptorHeapRollover();
-                ResourceHeap.Realloc();
-            }
-
-            if (bNeedsSamplerSpace && !SamplerHeap.Realloc())
-            {
-                SplitCommandListForDescriptorHeapRollover();
-                SamplerHeap.Realloc();
-            }
-
-            ContextState.BindRayTracingState();
-        }
-
-        const bool bHasResourceSpace = NumLocalTableDescriptors == 0 || ResourceHeap.HasSpace(NumLocalTableDescriptors);
-        const bool bHasSamplerSpace  = NumLocalSamplerDescriptors == 0 || SamplerHeap.HasSpace(NumLocalSamplerDescriptors);
-
-        if (bHasResourceSpace && bHasSamplerSpace)
-        {
-            ShaderBindingTable->ResolveLocalDescriptorTables(*this, ResourceHeap, SamplerHeap);
-        }
-        else
-        {
-            D3D12_ERROR("Not enough descriptor space for the local shader records (%u resource, %u sampler). Skipping the local table resolve",
-                NumLocalTableDescriptors, NumLocalSamplerDescriptors);
-        }
-
-        BarrierBatcher.FlushBarriers(GetCommandList());
-    }
+    BarrierBatcher.FlushBarriers(GetCommandList());
+    return true;
 }
 
 void FD3D12CommandContext::DispatchRays(FRHIShaderBindingTable* ShaderBindingTable, uint32 Width, uint32 Height, uint32 Depth)
@@ -3275,7 +3294,11 @@ void FD3D12CommandContext::DispatchRays(FRHIShaderBindingTable* ShaderBindingTab
     }
 
     ConditionalSplitCommandList();
-    PrepareShaderBindingTableForDispatch(D3D12ShaderBindingTable);
+    if (!PrepareShaderBindingTableForDispatch(D3D12ShaderBindingTable))
+    {
+        return;
+    }
+
     CommandList->GetGraphicsCommandList4()->SetPipelineState1(D3D12PipelineState->GetD3D12StateObject());
 
     D3D12_DISPATCH_RAYS_DESC RayDispatchDesc = {};
@@ -3343,7 +3366,10 @@ void FD3D12CommandContext::DispatchRaysIndirect(FRHIShaderBindingTable* ShaderBi
     }
 
     ConditionalSplitCommandList();
-    PrepareShaderBindingTableForDispatch(D3D12ShaderBindingTable);
+    if (!PrepareShaderBindingTableForDispatch(D3D12ShaderBindingTable))
+    {
+        return;
+    }
 
     FD3D12Resource* ArgumentResource = D3D12ArgumentBuffer->GetResource();
     CHECK(ArgumentResource != nullptr);
@@ -3488,6 +3514,15 @@ void FD3D12CommandContext::CopyAccelerationStructure(FRHIRayTracingAccelerationS
     BarrierBatcher.FlushBarriers(GetCommandList());
 
     CommandList->GetGraphicsCommandList4()->CopyRaytracingAccelerationStructure(DestinationAddress, SourceAddress, D3D12CopyMode);
+
+    if (D3D12CopyMode == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_COMPACT)
+    {
+        STAT_ADD_FRAME(STAT_D3D12_AccelerationStructureCompactions, 1);
+    }
+    else
+    {
+        STAT_ADD_FRAME(STAT_D3D12_AccelerationStructureCopies, 1);
+    }
 #else
     UNREFERENCED_VARIABLE(Destination);
     UNREFERENCED_VARIABLE(Source);
@@ -3535,6 +3570,7 @@ void FD3D12CommandContext::SerializeAccelerationStructure(FRHIRayTracingAccelera
     BarrierBatcher.FlushBarriers(GetCommandList());
 
     CommandList->GetGraphicsCommandList4()->CopyRaytracingAccelerationStructure(DestinationAddress, SourceAddress, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_SERIALIZE);
+    STAT_ADD_FRAME(STAT_D3D12_AccelerationStructureSerializations, 1);
 #else
     UNREFERENCED_VARIABLE(Source);
     UNREFERENCED_VARIABLE(DstBuffer);
@@ -3562,6 +3598,7 @@ void FD3D12CommandContext::DeserializeAccelerationStructure(FRHIRayTracingAccele
     BarrierBatcher.FlushBarriers(GetCommandList());
 
     CommandList->GetGraphicsCommandList4()->CopyRaytracingAccelerationStructure(DestinationAddress, SourceAddress, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_DESERIALIZE);
+    STAT_ADD_FRAME(STAT_D3D12_AccelerationStructureDeserializations, 1);
 #else
     UNREFERENCED_VARIABLE(Destination);
     UNREFERENCED_VARIABLE(SourceBuffer);

@@ -70,11 +70,8 @@ public:
     bool Initialize();
     void SetBindings(ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings);
     void Build(FD3D12CommandContext& CmdContext);
-    void ResolveLocalDescriptorTables(FD3D12CommandContext& CmdContext, FD3D12LocalDescriptorHeap& ResourceHeap, FD3D12LocalDescriptorHeap& SamplerHeap);
+    bool ResolveLocalDescriptorTables(FD3D12CommandContext& CmdContext, FD3D12LocalDescriptorHeap& ResourceHeap, FD3D12LocalDescriptorHeap& SamplerHeap);
     void ClearTableRecords();
-    
-    uint32 GetNumPendingLocalTableDescriptors() const;
-    uint32 GetNumPendingLocalSamplerDescriptors() const;
 
     D3D12_GPU_VIRTUAL_ADDRESS_RANGE            GetRayGenRecord()  const;
     D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetMissTable()     const;

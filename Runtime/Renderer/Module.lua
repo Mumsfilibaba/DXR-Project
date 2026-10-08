@@ -9,6 +9,7 @@ RendererModule.AddModules({
     "Core",
     "CoreApplication",
     "RHI",
+    "ShaderCompiler",
     "Engine",
     "RendererCore",
 })

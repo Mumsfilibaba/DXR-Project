@@ -1,5 +1,4 @@
 #pragma once
-#include "RHI/ShaderCompilerInclude.h"
 #include "D3D12RHI/D3D12Constants.h"
 #if DXGI_1_6
     #include <dxgi1_6.h>
@@ -30,7 +29,6 @@ struct D3D12
     static PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12CreateVersionedRootSignatureDeserializer;
     static PFN_PIXBeginEventOnCommandList                         PIXBeginEventOnCommandList;
     static PFN_PIXEndEventOnCommandList                           PIXEndEventOnCommandList;
-    static DxcCreateInstanceProc                                  DxcCreateInstance;
 #if D3D12_ENABLE_COMPOSITION
     static PFN_DCOMPOSITION_CREATE_DEVICE                         DCompositionCreateDevice;
 #endif
@@ -39,7 +37,6 @@ private:
     static void* DXGILibrary;
     static void* D3D12Library;
     static void* PIXLibrary;
-    static void* DXCLibrary;
 #if D3D12_ENABLE_COMPOSITION
     static void* DCompLibrary;
 #endif

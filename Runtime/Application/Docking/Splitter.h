@@ -72,12 +72,6 @@ public:
      */
     void SetFractions(const TArray<float>& InFractions);
 
-    /** @return One share per child, in the order they were added, summing to one. */
-    NODISCARD FORCEINLINE const TArray<float>& GetFractions() const
-    {
-        return Fractions;
-    }
-
     /**
      * @brief The handle between two children.
      *
@@ -93,6 +87,12 @@ public:
      * @return The handle index, or -1 when the point is on none of them.
      */
     NODISCARD int32 GetHandleIndexAt(const IntVector2& ClientPosition) const;
+
+    /** @return One share per child, in the order they were added, summing to one. */
+    NODISCARD FORCEINLINE const TArray<float>& GetFractions() const
+    {
+        return Fractions;
+    }
 
     /** @return Horizontal when the children sit side by side, Vertical when they stack. */
     NODISCARD FORCEINLINE EDockSplitOrientation GetOrientation() const

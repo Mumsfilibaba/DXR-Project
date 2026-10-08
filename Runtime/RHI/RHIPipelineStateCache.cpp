@@ -466,6 +466,42 @@ void FRHIPipelineStateCache::FlushPipelineStates()
     RayTracingPipelines.Clear();
 }
 
+template<typename CacheMapType>
+static uint32 RemoveUnreferencedEntries(CacheMapType& Map)
+{
+    uint32 NumRemoved = 0;
+    Map.Foreach([&NumRemoved](const uint64& /* Hash */, auto& Bucket)
+    {
+        const int32 NumEntries = Bucket.Size();
+        Bucket.RemoveAllSwap([](const auto& Entry)
+        {
+            return Entry.Second->GetRefCount() == 1;
+        });
+
+        NumRemoved += static_cast<uint32>(NumEntries - Bucket.Size());
+    });
+
+    return NumRemoved;
+}
+
+void FRHIPipelineStateCache::TrimUnreferenced()
+{
+    TScopedLock Lock(CacheCS);
+
+    uint32 NumRemoved = 0;
+    NumRemoved += RemoveUnreferencedEntries(GraphicsPipelines);
+    NumRemoved += RemoveUnreferencedEntries(ComputePipelines);
+    NumRemoved += RemoveUnreferencedEntries(MeshletPipelines);
+
+    for (uint32 NumRemovedRayTracing = RemoveUnreferencedEntries(RayTracingPipelines); NumRemovedRayTracing > 0; NumRemovedRayTracing = RemoveUnreferencedEntries(RayTracingPipelines))
+    {
+        NumRemoved += NumRemovedRayTracing;
+    }
+
+    NumRemoved += RemoveUnreferencedEntries(Shaders);
+    LOG_INFO("[RHIPipelineStateCache] Trimmed %u unreferenced pipelines and shaders", NumRemoved);
+}
+
 void FRHIPipelineStateCache::LogStats() const
 {
     LOG_INFO("[RHIPipelineStateCache] Kind                 Requests   Created");

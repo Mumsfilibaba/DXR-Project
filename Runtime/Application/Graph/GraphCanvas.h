@@ -146,12 +146,6 @@ public:
      */
     void SetModel(const TSharedPtr<FGraphModel>& InModel);
 
-    /** @return The model the canvas is showing, which is null until one is set. */
-    NODISCARD FORCEINLINE const TSharedPtr<FGraphModel>& GetModel() const
-    {
-        return Model;
-    }
-
     /** @brief Pans and zooms so every node fits, which is the Reset View action. */
     void FitToNodes();
 
@@ -241,6 +235,20 @@ public:
     /** @brief Removes every selected node and the selected link from the model. */
     void DeleteSelection();
 
+    /**
+     * @brief The element built for a node, which is what a test or a host reaches a node body through.
+     *
+     * @param NodeId The node to look for.
+     * @return The element, or null.
+     */
+    NODISCARD TSharedPtr<FGraphNodeElement> FindNodeElement(int32 NodeId) const;
+
+    /** @return The model the canvas is showing, which is null until one is set. */
+    NODISCARD FORCEINLINE const TSharedPtr<FGraphModel>& GetModel() const
+    {
+        return Model;
+    }
+
     /** @return The selected node ids, which is empty while a link is selected or nothing is. */
     NODISCARD FORCEINLINE const TArray<int32>& GetSelectedNodes() const
     {
@@ -312,14 +320,6 @@ public:
     {
         return HoveredLinkId;
     }
-
-    /**
-     * @brief The element built for a node, which is what a test or a host reaches a node body through.
-     *
-     * @param NodeId The node to look for.
-     * @return The element, or null.
-     */
-    NODISCARD TSharedPtr<FGraphNodeElement> FindNodeElement(int32 NodeId) const;
 
 protected:
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;

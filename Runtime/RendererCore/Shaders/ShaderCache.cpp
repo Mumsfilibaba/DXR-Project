@@ -2,12 +2,14 @@
 #include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Tasks/ParallelFor.h"
 #include "Core/Tasks/Tasks.h"
+#include "Core/Threading/Atomic.h"
+#include "RendererCore/RenderSettings.h"
 #include "RendererCore/Shaders/ShaderBytecodeCache.h"
 #include "RendererCore/Shaders/ShaderCache.h"
 #include "RendererCore/Shaders/ShaderManifest.h"
 #include "RHI/RHI.h"
 #include "RHI/RHIPipelineStateCache.h"
-#include "RHI/ShaderCompiler.h"
+#include "ShaderCompiler/ShaderCompiler.h"
 
 FShaderCache* FShaderCache::ShaderCache = nullptr;
 
@@ -31,6 +33,134 @@ static FAutoConsoleCommand CCmdRecompileShaders(
             Cache->FlushCompiledShaders();
         }
     }));
+
+static void CompileAllShaders(StringView Arguments);
+
+static FAutoConsoleCommand CCmdCompileAllShaders(
+    "Shaders.CompileAll",
+    "Compiles every registered shader type and permutation for an RHI (Null, D3D11, D3D12, Vulkan or Metal, defaults to the active one) and logs the failures",
+    FConsoleCommandDelegate::CreateStatic(&CompileAllShaders));
+
+static bool ParseRHIType(StringView Text, ERHIType& OutRHIType)
+{
+    constexpr ERHIType RHITypes[] =
+    {
+        ERHIType::Null,
+        ERHIType::D3D11,
+        ERHIType::D3D12,
+        ERHIType::Vulkan,
+        ERHIType::Metal,
+    };
+
+    const String Name(Text);
+    for (ERHIType RHIType : RHITypes)
+    {
+        if (Name.Equals(ToString(RHIType), EStringCaseType::NoCase))
+        {
+            OutRHIType = RHIType;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static FShaderPermutationDesc CreateTargetPermutationDesc(ERHIType TargetRHI, int32 PermutationID)
+{
+    if (RHI::IsInitialized() && RHI::Device->GetRHIType() == TargetRHI)
+    {
+        return FShaderCache::CreatePermutationDesc(PermutationID);
+    }
+
+    // Without the target's device, assume the features its backend can have. SER depends on the driver, so it stays off.
+    // Metal has bindless and inline ray tracing, but neither view instancing nor a ray tracing pipeline.
+    const bool bSupportsModernFeatures = TargetRHI == ERHIType::D3D12 || TargetRHI == ERHIType::Vulkan;
+    const bool bIsMetal                = TargetRHI == ERHIType::Metal;
+
+    FShaderPermutationDesc Desc;
+    Desc.PermutationID               = PermutationID;
+    Desc.bSupportsBindless           = bSupportsModernFeatures || bIsMetal;
+    Desc.bSupportsViewInstancing     = bSupportsModernFeatures;
+    Desc.bSupportsRayTracing         = bSupportsModernFeatures || bIsMetal;
+    Desc.bSupportsRayTracingPipeline = bSupportsModernFeatures;
+    Desc.bSupportsInlineRayTracing   = bSupportsModernFeatures || bIsMetal;
+    return Desc;
+}
+
+static void CompileAllShaders(StringView Arguments)
+{
+    StringView TargetName = Arguments;
+    TargetName.TrimInline();
+
+    ERHIType TargetRHI = RHI::IsInitialized() ? RHI::Device->GetRHIType() : ERHIType::Unknown;
+    if (!TargetName.IsEmpty() && !ParseRHIType(TargetName, TargetRHI))
+    {
+        LOG_ERROR("Shaders.CompileAll: Unknown RHI '%s'", *String(TargetName));
+        return;
+    }
+
+    FShaderCompiler* Compiler = FShaderCompiler::TryGet();
+    const EShaderOutputLanguage OutputLanguage = RHI::GetShaderOutputLanguage(TargetRHI);
+    if (!Compiler || !RHI::IsRHISupportedByPlatform(TargetRHI) || !Compiler->IsOutputLanguageSupported(OutputLanguage))
+    {
+        LOG_ERROR("Shaders.CompileAll: %s (%s) cannot be compiled on this platform", ToString(TargetRHI), ToString(OutputLanguage));
+        return;
+    }
+
+    struct FCompileWork
+    {
+        FShaderType*           Type;
+        FShaderPermutationDesc Desc;
+    };
+
+    TArray<FCompileWork> Work;
+    for (FShaderType* Type = FShaderType::GetTypeList(); Type; Type = Type->GetNext())
+    {
+        for (int32 PermutationID = 0; PermutationID < Type->GetPermutationCount(); ++PermutationID)
+        {
+            const FShaderPermutationDesc Desc = CreateTargetPermutationDesc(TargetRHI, PermutationID);
+            if (Type->ShouldCompilePermutation(Desc))
+            {
+                Work.Add({ Type, Desc });
+            }
+        }
+    }
+
+    LOG_INFO("Shaders.CompileAll: Compiling %d permutations for %s (%s)", Work.Size(), ToString(TargetRHI), ToString(OutputLanguage));
+
+    AtomicInt32 NumFailed(0);
+    Tasks::ParallelFor(Work.Size(), [&](int32 Index)
+    {
+        const FCompileWork& Item = Work[Index];
+
+        FShaderCompilationEnvironment Environment;
+        Item.Type->BuildCompilationEnvironment(Item.Desc, Environment);
+
+        const FShaderCompileInfo CompileInfo(Item.Type->GetEntryPoint(), Environment.ShaderModel, Item.Type->GetStage(), OutputLanguage, Environment.Defines);
+
+        TArray<uint8> ShaderCode;
+        if (!FShaderBytecodeCache::CompileFromFile(Item.Type->GetSourceFile(), CompileInfo, ShaderCode))
+        {
+            LOG_ERROR("Shaders.CompileAll: %s permutation %d failed (%s, entry '%s')", Item.Type->GetName(), Item.Desc.PermutationID, Item.Type->GetSourceFile(), Item.Type->GetEntryPoint());
+            NumFailed.Add(1);
+        }
+    });
+
+    if (FShaderBytecodeCache* BytecodeCache = FShaderBytecodeCache::TryGet())
+    {
+        BytecodeCache->Save();
+    }
+
+    const int32 Failed = NumFailed.Load();
+    if (Failed > 0)
+    {
+        LOG_ERROR("Shaders.CompileAll: %d of %d permutations failed for %s (%s)", Failed, Work.Size(), ToString(TargetRHI), ToString(OutputLanguage));
+    }
+    else
+    {
+        LOG_INFO("Shaders.CompileAll: All %d permutations compiled for %s (%s)", Work.Size(), ToString(TargetRHI), ToString(OutputLanguage));
+    }
+}
 
 FShaderCache::FShaderCache()
     : Shaders()
@@ -145,14 +275,35 @@ void FShaderCache::FlushCompiledShaders()
     }
 }
 
+void FShaderCache::EvictUnsupportedPermutations()
+{
+    TScopedLock Lock(ShadersCS);
+
+    TArray<FShaderCacheKey> UnsupportedKeys;
+    Shaders.Foreach([&UnsupportedKeys](const FShaderCacheKey& Key, const FRHIShaderRef& /* Shader */)
+    {
+        if (!Key.Type->ShouldCompilePermutation(CreatePermutationDesc(Key.PermutationID)))
+        {
+            UnsupportedKeys.Add(Key);
+        }
+    });
+
+    for (const FShaderCacheKey& Key : UnsupportedKeys)
+    {
+        Shaders.Remove(Key);
+    }
+}
+
 FShaderPermutationDesc FShaderCache::CreatePermutationDesc(int32 PermutationID)
 {
     FShaderPermutationDesc Desc;
     Desc.PermutationID                      = PermutationID;
     Desc.bSupportsBindless                  = RHI::bSupportsBindless;
-    Desc.bSupportsRayTracing                = RHI::bSupportsRayTracing;
-    Desc.bSupportsRayTracingPipeline        = RHI::bSupportsRayTracingPipeline;
-    Desc.bSupportsShaderExecutionReordering = RHI::bSupportsShaderExecutionReordering;
+    Desc.bSupportsViewInstancing            = RHI::bSupportsViewInstancing;
+    Desc.bSupportsRayTracing                = RenderSettings::IsRayTracingEnabled();
+    Desc.bSupportsRayTracingPipeline        = RenderSettings::IsRayTracingEnabled() && RHI::bSupportsRayTracingPipeline;
+    Desc.bSupportsInlineRayTracing          = RenderSettings::IsRayTracingEnabled() && RHI::bSupportsInlineRayTracing;
+    Desc.bSupportsShaderExecutionReordering = RenderSettings::IsRayTracingEnabled() && RHI::bSupportsShaderExecutionReordering;
     return Desc;
 }
 
@@ -181,20 +332,20 @@ FRHIShaderRef FShaderCache::GetOrCompile(FShaderType& Type, int32 PermutationID)
     FShaderCompilationEnvironment Environment;
     Type.BuildCompilationEnvironment(Desc, Environment);
 
-    const FShaderCompileInfo CompileInfo(Type.GetEntryPoint(), Environment.ShaderModel, Type.GetStage(), Environment.Defines);
-    const uint64             CompileHash = FShaderCompiler::Get().ComputeCompileHash(Type.GetSourceFile(), CompileInfo);
+    const EShaderOutputLanguage OutputLanguage = RHI::GetShaderOutputLanguage();
+    const FShaderCompileInfo    CompileInfo    = FShaderCompileInfo(Type.GetEntryPoint(), Environment.ShaderModel, Type.GetStage(), OutputLanguage, Environment.Defines);
+
+    // DXBC is always SM 5.0 and FXC rejects the requests it cannot lower itself
+    if (OutputLanguage != EShaderOutputLanguage::DXBC && RHI::MaxShaderModel != EShaderModel::Unknown && Environment.ShaderModel > RHI::MaxShaderModel)
+    {
+        LOG_ERROR("'%s' requests Shader Model %s but the device supports at most %s", Type.GetSourceFile(), ToString(Environment.ShaderModel), ToString(RHI::MaxShaderModel));
+    }
 
     TArray<uint8> ShaderCode;
-    if (!FShaderBytecodeCache::Get().Find(CompileHash, ShaderCode))
+    if (!FShaderBytecodeCache::CompileFromFile(Type.GetSourceFile(), CompileInfo, ShaderCode))
     {
-        TArray<String> Dependencies;
-        if (!FShaderCompiler::Get().CompileFromFile(Type.GetSourceFile(), CompileInfo, ShaderCode, &Dependencies))
-        {
-            LOG_ERROR("Failed to compile %s permutation %d (%s, entry '%s')", Type.GetName(), PermutationID, Type.GetSourceFile(), Type.GetEntryPoint());
-            return FRHIShaderRef();
-        }
-
-        FShaderBytecodeCache::Get().Add(CompileHash, ShaderCode, Dependencies);
+        LOG_ERROR("Failed to compile %s permutation %d (%s, entry '%s')", Type.GetName(), PermutationID, Type.GetSourceFile(), Type.GetEntryPoint());
+        return FRHIShaderRef();
     }
 
     FRHIShaderRef Shader = RHI::CreateShader(Type.GetStage(), ShaderCode);

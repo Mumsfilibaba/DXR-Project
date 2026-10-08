@@ -96,7 +96,7 @@ struct FVulkanQueryRHI : public FRHIQuery, public FVulkanDeviceChild
     virtual ~FVulkanQueryRHI();
 
     FVulkanQuery             CurrentQuery;
-    TSharedRef<FVulkanFence> SyncFence;
+    FVulkanFenceRef          SyncFence;
     uint64*                  QueryResult;
     AtomicInt32              bResultReady;
 };
@@ -136,6 +136,14 @@ public:
     bool Initialize();
     void ResetPool();
     void SetDebugName(const String& InName);
+
+    void ExtendResetRange(int32 EndQueryIndex)
+    {
+        if (EndQueryIndex > NumQueriesToReset)
+        {
+            NumQueriesToReset = EndQueryIndex;
+        }
+    }
 
     VkQueryPool GetVkQueryPool() const
     {
@@ -184,6 +192,7 @@ public:
 
 private:
     VkQueryPool           QueryPool;
+    int32                 NumQueriesToReset;
 #if VULKAN_STORE_DEBUG_NAMES
     String                DebugName;
 #endif

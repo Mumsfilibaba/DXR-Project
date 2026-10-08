@@ -8,6 +8,7 @@ enum class EStatType : uint8
 {
     Memory,
     Counter,
+    FrameCounter,
 };
 
 struct FStatData
@@ -16,6 +17,7 @@ struct FStatData
     const CHAR* GroupName;
     EStatType   Type;
     AtomicInt64 Value;
+    AtomicInt64 FrameValue;
 };
 
 class CORE_API FStatRegistry
@@ -29,6 +31,8 @@ public:
     const TArray<FStatData*>& GetAllStats() const;
     void GetStatsByGroup(const CHAR* GroupName, TArray<FStatData*>& OutStats) const;
     void GetGroups(TArray<const CHAR*>& OutGroups) const;
+
+    void UpdateFrameStats();
 
 private:
     FStatRegistry();
@@ -73,12 +77,18 @@ struct CORE_API FStatAutoRegistration
         extern ApiMacro FStatData StatId
 
     #define STAT_DEFINE_MEMORY(StatId, DisplayName, GroupName) \
-        FStatData StatId = { DisplayName, GroupName, EStatType::Memory, {} }; \
+        FStatData StatId = { DisplayName, GroupName, EStatType::Memory, {}, {} }; \
         static FStatAutoRegistration StatId##_AutoReg(&StatId)
 
     #define STAT_DEFINE_COUNTER(StatId, DisplayName, GroupName) \
-        FStatData StatId = { DisplayName, GroupName, EStatType::Counter, {} }; \
+        FStatData StatId = { DisplayName, GroupName, EStatType::Counter, {}, {} }; \
         static FStatAutoRegistration StatId##_AutoReg(&StatId)
+
+    #define STAT_DEFINE_FRAME_COUNTER(StatId, DisplayName, GroupName) \
+        FStatData StatId = { DisplayName, GroupName, EStatType::FrameCounter, {}, {} }; \
+        static FStatAutoRegistration StatId##_AutoReg(&StatId)
+
+    #define STAT_ADD_FRAME(StatId, Amount) (StatId).FrameValue.Add(static_cast<int64>(Amount))
 
     #define STAT_ADD(StatId, Amount)      (StatId).Value.Add(static_cast<int64>(Amount))
     #define STAT_SUBTRACT(StatId, Amount) (StatId).Value.Subtract(static_cast<int64>(Amount))
@@ -88,6 +98,9 @@ struct CORE_API FStatAutoRegistration
     #define STAT_DECLARE_EXTERN(ApiMacro, StatId)
     #define STAT_DEFINE_MEMORY(StatId, DisplayName, GroupName)
     #define STAT_DEFINE_COUNTER(StatId, DisplayName, GroupName)
+    #define STAT_DEFINE_FRAME_COUNTER(StatId, DisplayName, GroupName)
+
+    #define STAT_ADD_FRAME(StatId, Amount) ((void)0)
     
     #define STAT_ADD(StatId, Amount)      ((void)0)
     #define STAT_SUBTRACT(StatId, Amount) ((void)0)

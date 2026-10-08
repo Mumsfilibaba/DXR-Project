@@ -244,6 +244,15 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
 
     STAT_ADD(STAT_RHI_AccelerationStructureBuilds, 1);
 
+    if (AccelerationStructureBuildGeometryInfo.mode == VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR)
+    {
+        STAT_ADD_FRAME(STAT_Vulkan_BLASUpdates, 1);
+    }
+    else
+    {
+        STAT_ADD_FRAME(STAT_Vulkan_BLASBuilds, 1);
+    }
+
     VkAccelerationStructureDeviceAddressInfoKHR AccelerationDeviceAddressInfo = {};
     AccelerationDeviceAddressInfo.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
     AccelerationDeviceAddressInfo.accelerationStructure = AccelerationStructure;
@@ -303,6 +312,7 @@ bool FVulkanGeometryAccelerationStructureRHI::CompactInPlace(FVulkanCommandConte
     CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandBuffer());
 
     CmdContext.GetCommandBuffer()->CopyAccelerationStructure(&CopyInfo);
+    STAT_ADD_FRAME(STAT_Vulkan_AccelerationStructureCompactions, 1);
 
     VkAccelerationStructureDeviceAddressInfoKHR AddressInfo = {};
     AddressInfo.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
@@ -584,6 +594,15 @@ bool FVulkanSceneAccelerationStructureRHI::Build(FVulkanCommandContext& CmdConte
 
     STAT_ADD(STAT_RHI_AccelerationStructureBuilds, 1);
 
+    if (BuildMode == VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR)
+    {
+        STAT_ADD_FRAME(STAT_Vulkan_TLASUpdates, 1);
+    }
+    else
+    {
+        STAT_ADD_FRAME(STAT_Vulkan_TLASBuilds, 1);
+    }
+
     VkAccelerationStructureDeviceAddressInfoKHR AddressInfo = {};
     AddressInfo.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
     AddressInfo.accelerationStructure = AccelerationStructure;
@@ -769,6 +788,7 @@ bool FVulkanOpacityMicromap::Build(FVulkanCommandContext& CmdContext, const FRHI
     CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandBuffer());
 
     CmdContext.GetCommandBuffer()->BuildMicromaps(1, &BuildInfo);
+    STAT_ADD_FRAME(STAT_Vulkan_OpacityMicromapBuilds, 1);
 
     // Opacity micromaps cannot be named by FRHIUnorderedAccessBarrierDesc, so the build orders itself before later geometry builds.
     VkMemoryBarrier2KHR MicromapBarrier = {};

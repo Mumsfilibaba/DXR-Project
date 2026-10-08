@@ -954,6 +954,7 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
         return false;
     }
 
+    STAT_ADD_FRAME(STAT_Vulkan_SplitsOther, 1);
     CommandContext->SplitCommandBuffer(false, false);
 
 	// Reset indices. AcquireNextImage callers will populate BackBufferIndex.
@@ -1021,6 +1022,7 @@ bool FVulkanSwapChainRHI::Resize(uint32 InWidth, uint32 InHeight, EFormat NewFor
     CHECK(!CommandContext->IsInsideRenderPass());
     CHECK(CommandContext->IsRecording());
 
+    STAT_ADD_FRAME(STAT_Vulkan_SplitsOther, 1);
     CommandContext->SplitCommandBuffer(false, true);
 
     PendingAcquireSemaphore.Reset();
@@ -1102,6 +1104,7 @@ bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
 
     if (bNeedsRecreation)
     {
+        STAT_ADD_FRAME(STAT_Vulkan_SplitsOther, 1);
         CommandContext->SplitCommandBuffer(false, true);
 
         PendingAcquireSemaphore.Reset();

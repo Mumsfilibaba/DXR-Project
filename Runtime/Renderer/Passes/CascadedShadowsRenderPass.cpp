@@ -325,11 +325,6 @@ void FCascadedShadowsRenderPass::RecordInternal(FRHICommandList& CommandList, co
 
         CommandList.BeginRenderPass(RenderPassDesc);
 
-        if (RHI::bSupportsDynamicDepthBias)
-        {
-            CommandList.SetDepthBias(1.0f, 0.05f, 1.0f);
-        }
-
         const float CascadeSize = static_cast<float>(Resources.CascadeSize);
         FViewportRegion ViewportRegion(CascadeSize, CascadeSize, 0.0f, 0.0f, 0.0f, 1.0f);
         CommandList.SetViewport(ViewportRegion);
@@ -351,6 +346,11 @@ void FCascadedShadowsRenderPass::RecordInternal(FRHICommandList& CommandList, co
             CHECK(PipelineState != nullptr);
 
             CommandList.SetGraphicsPipelineState(PipelineState);
+
+            if (RHI::bSupportsDynamicDepthBias)
+            {
+                CommandList.SetDepthBias(1.0f, 0.05f, 1.0f);
+            }
 
             // If we are using geometry-shaders bind the necessary buffer to the geometry-shader otherwise to the vertex-shader
             if constexpr (RenderPassType == ECascadeRenderPassType::GeometryShaderSinglePass)
@@ -437,11 +437,6 @@ void FCascadedShadowsRenderPass::RecordInternal(FRHICommandList& CommandList, co
 
             CommandList.BeginRenderPass(RenderPassDesc);
 
-            if (RHI::bSupportsDynamicDepthBias)
-            {
-                CommandList.SetDepthBias(1.0f, 0.05f, 1.0f);
-            }
-
             const float CascadeSize = static_cast<float>(Resources.CascadeSize);
             FViewportRegion ViewportRegion(CascadeSize, CascadeSize, 0.0f, 0.0f, 0.0f, 1.0f);
             CommandList.SetViewport(ViewportRegion);
@@ -463,6 +458,11 @@ void FCascadedShadowsRenderPass::RecordInternal(FRHICommandList& CommandList, co
                 FRHIGraphicsPipelineState* PipelineState = Instance->PipelineState.Get();
                 CHECK(PipelineState != nullptr);
                 CommandList.SetGraphicsPipelineState(PipelineState);
+
+                if (RHI::bSupportsDynamicDepthBias)
+                {
+                    CommandList.SetDepthBias(1.0f, 0.05f, 1.0f);
+                }
 
                 // Bind pixel-shader resources if there are any
                 if (Instance->PixelShader)

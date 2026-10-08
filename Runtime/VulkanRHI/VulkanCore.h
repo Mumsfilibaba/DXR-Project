@@ -61,8 +61,28 @@ enum class EVulkanNullImageViewType : uint8
     Texture2DArray   = 1,
     TextureCube      = 2,
     TextureCubeArray = 3,
-    Count            = 4,
+    Texture1D        = 4,
+    Texture1DArray   = 5,
+    Texture3D        = 6,
+    Texture2DMS      = 7,
+    Texture2DMSArray = 8,
+    Count            = 9,
 };
+
+NODISCARD constexpr VkImageViewType GetVkImageViewType(EVulkanNullImageViewType ViewType)
+{
+    switch (ViewType)
+    {
+        case EVulkanNullImageViewType::Texture2DArray:   return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+        case EVulkanNullImageViewType::TextureCube:      return VK_IMAGE_VIEW_TYPE_CUBE;
+        case EVulkanNullImageViewType::TextureCubeArray: return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+        case EVulkanNullImageViewType::Texture1D:        return VK_IMAGE_VIEW_TYPE_1D;
+        case EVulkanNullImageViewType::Texture1DArray:   return VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+        case EVulkanNullImageViewType::Texture3D:        return VK_IMAGE_VIEW_TYPE_3D;
+        case EVulkanNullImageViewType::Texture2DMSArray: return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+        default:                                         return VK_IMAGE_VIEW_TYPE_2D;
+    }
+}
 
 #if VULKAN_ENABLE_LOGGING
     #define VULKAN_ERROR_CRITICAL(...) \

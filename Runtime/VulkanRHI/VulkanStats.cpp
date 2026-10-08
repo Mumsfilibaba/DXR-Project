@@ -35,5 +35,26 @@ STAT_DEFINE_COUNTER(STAT_Vulkan_NumMeshletPipelineStates,      "Meshlet PSOs Cre
 STAT_DEFINE_COUNTER(STAT_Vulkan_CommandBufferCount, "Command Buffers", "Vulkan Commands");
 STAT_DEFINE_COUNTER(STAT_Vulkan_CommandPoolCount,   "Command Pools",   "Vulkan Commands");
 
+// Submission Stats (per frame)
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_Submits,                     "Submits",        "Vulkan Submissions / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_SemaphoreOnlySubmits,        "Semaphore Only", "Vulkan Submissions / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_SplitsCommandLimit,          "Limit Splits",   "Vulkan Submissions / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_SplitsSwapChainAcquire,      "Acquire Splits", "Vulkan Submissions / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_SplitsFence,                 "Fence Splits",   "Vulkan Submissions / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_SplitsOther,                 "Other Splits",   "Vulkan Submissions / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_EmptyCommandBuffersRecycled, "Recycled Empty", "Vulkan Submissions / Frame");
+
+// Ray Tracing Stats (per frame)
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_BLASBuilds,                            "BLAS Builds",      "Vulkan Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_BLASUpdates,                           "BLAS Updates",     "Vulkan Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_TLASBuilds,                            "TLAS Builds",      "Vulkan Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_TLASUpdates,                           "TLAS Updates",     "Vulkan Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_AccelerationStructureCompactions,      "Compactions",      "Vulkan Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_AccelerationStructureCopies,           "Copies",           "Vulkan Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_AccelerationStructureSerializations,   "Serializations",   "Vulkan Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_AccelerationStructureDeserializations, "Deserializations", "Vulkan Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_OpacityMicromapBuilds,                 "OMM Builds",       "Vulkan Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_Vulkan_ClusterOperations,                     "Cluster Ops",      "Vulkan Ray Tracing / Frame");
+
 // Query Stats
 STAT_DEFINE_COUNTER(STAT_Vulkan_QueryPoolCount, "Query Pools", "Vulkan Queries");

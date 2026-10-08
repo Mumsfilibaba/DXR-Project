@@ -4,6 +4,7 @@
 #include "RHI/ValidationLayer/RHIValidationInternal.h"
 #include "RHI/ValidationLayer/RHIValidationShaderBindingTable.h"
 #include "RHI/ValidationLayer/RHIValidationSwapChain.h"
+#include "ShaderCore/ShaderCode.h"
 
 using namespace RHIValidationInternal;
 
@@ -1437,11 +1438,42 @@ FRHIDepthStencilView* FRHIValidationDevice::CreateDepthStencilView(FRHIResource*
     return TrackLiveResource(Device->CreateDepthStencilView(InResource, InDesc));
 }
 
+static bool ValidateShaderCode(const CHAR* FunctionName, ERHIType RHIType, EShaderStage ExpectedStage, const TArray<uint8>& ShaderCode)
+{
+    FShaderCodeHeader Header;
+    String            Error;
+    if (!FShaderCodeReader::ReadHeader(ShaderCode, Header, &Error))
+    {
+        RHI_VALIDATION_ERROR("%s: The shader code is not a valid container (%s).", FunctionName, *Error);
+        return false;
+    }
+
+    if (Header.Stage != ExpectedStage)
+    {
+        RHI_VALIDATION_ERROR("%s: The shader code is a %s shader, expected %s.", FunctionName, ToString(Header.Stage), ToString(ExpectedStage));
+        return false;
+    }
+
+    const EShaderOutputLanguage ExpectedLanguage = RHI::GetShaderOutputLanguage(RHIType);
+    if (Header.OutputLanguage != ExpectedLanguage)
+    {
+        RHI_VALIDATION_ERROR("%s: The shader code is %s, this RHI needs %s.", FunctionName, ToString(Header.OutputLanguage), ToString(ExpectedLanguage));
+        return false;
+    }
+
+    return true;
+}
+
 FRHIComputeShader* FRHIValidationDevice::CreateComputeShader(const TArray<uint8>& ShaderCode)
 {
     if (ShaderCode.IsEmpty())
     {
         RHI_VALIDATION_ERROR("CreateComputeShader: shader bytecode cannot be empty.");
+        return nullptr;
+    }
+
+    if (!ValidateShaderCode("CreateComputeShader", Device->GetRHIType(), EShaderStage::Compute, ShaderCode))
+    {
         return nullptr;
     }
 
@@ -1453,6 +1485,11 @@ FRHIVertexShader* FRHIValidationDevice::CreateVertexShader(const TArray<uint8>& 
     if (ShaderCode.IsEmpty())
     {
         RHI_VALIDATION_ERROR("CreateVertexShader: shader bytecode cannot be empty.");
+        return nullptr;
+    }
+
+    if (!ValidateShaderCode("CreateVertexShader", Device->GetRHIType(), EShaderStage::Vertex, ShaderCode))
+    {
         return nullptr;
     }
 
@@ -1473,6 +1510,11 @@ FRHIHullShader* FRHIValidationDevice::CreateHullShader(const TArray<uint8>& Shad
         return nullptr;
     }
 
+    if (!ValidateShaderCode("CreateHullShader", Device->GetRHIType(), EShaderStage::Hull, ShaderCode))
+    {
+        return nullptr;
+    }
+
     return TrackLiveResource(Device->CreateHullShader(ShaderCode));
 }
 
@@ -1487,6 +1529,11 @@ FRHIDomainShader* FRHIValidationDevice::CreateDomainShader(const TArray<uint8>& 
     if (ShaderCode.IsEmpty())
     {
         RHI_VALIDATION_ERROR("CreateDomainShader: shader bytecode cannot be empty.");
+        return nullptr;
+    }
+
+    if (!ValidateShaderCode("CreateDomainShader", Device->GetRHIType(), EShaderStage::Domain, ShaderCode))
+    {
         return nullptr;
     }
 
@@ -1507,6 +1554,11 @@ FRHIGeometryShader* FRHIValidationDevice::CreateGeometryShader(const TArray<uint
         return nullptr;
     }
 
+    if (!ValidateShaderCode("CreateGeometryShader", Device->GetRHIType(), EShaderStage::Geometry, ShaderCode))
+    {
+        return nullptr;
+    }
+
     return TrackLiveResource(Device->CreateGeometryShader(ShaderCode));
 }
 
@@ -1515,6 +1567,11 @@ FRHIMeshShader* FRHIValidationDevice::CreateMeshShader(const TArray<uint8>& Shad
     if (ShaderCode.IsEmpty())
     {
         RHI_VALIDATION_ERROR("CreateMeshShader: shader bytecode cannot be empty.");
+        return nullptr;
+    }
+
+    if (!ValidateShaderCode("CreateMeshShader", Device->GetRHIType(), EShaderStage::Mesh, ShaderCode))
+    {
         return nullptr;
     }
 
@@ -1529,6 +1586,11 @@ FRHIAmplificationShader* FRHIValidationDevice::CreateAmplificationShader(const T
         return nullptr;
     }
 
+    if (!ValidateShaderCode("CreateAmplificationShader", Device->GetRHIType(), EShaderStage::Amplification, ShaderCode))
+    {
+        return nullptr;
+    }
+
     return TrackLiveResource(Device->CreateAmplificationShader(ShaderCode));
 }
 
@@ -1537,6 +1599,11 @@ FRHIPixelShader* FRHIValidationDevice::CreatePixelShader(const TArray<uint8>& Sh
     if (ShaderCode.IsEmpty())
     {
         RHI_VALIDATION_ERROR("CreatePixelShader: shader bytecode cannot be empty.");
+        return nullptr;
+    }
+
+    if (!ValidateShaderCode("CreatePixelShader", Device->GetRHIType(), EShaderStage::Pixel, ShaderCode))
+    {
         return nullptr;
     }
 
@@ -1551,6 +1618,11 @@ FRHIRayGenShader* FRHIValidationDevice::CreateRayGenShader(const TArray<uint8>& 
         return nullptr;
     }
 
+    if (!ValidateShaderCode("CreateRayGenShader", Device->GetRHIType(), EShaderStage::RayGen, ShaderCode))
+    {
+        return nullptr;
+    }
+
     return TrackLiveResource(Device->CreateRayGenShader(ShaderCode));
 }
 
@@ -1559,6 +1631,11 @@ FRHIRayAnyHitShader* FRHIValidationDevice::CreateRayAnyHitShader(const TArray<ui
     if (!RHI::bSupportsRayTracingPipeline || ShaderCode.IsEmpty())
     {
         RHI_VALIDATION_ERROR("CreateRayAnyHitShader requires ray-tracing pipeline support and non-empty bytecode.");
+        return nullptr;
+    }
+
+    if (!ValidateShaderCode("CreateRayAnyHitShader", Device->GetRHIType(), EShaderStage::RayAnyHit, ShaderCode))
+    {
         return nullptr;
     }
 
@@ -1573,6 +1650,11 @@ FRHIRayClosestHitShader* FRHIValidationDevice::CreateRayClosestHitShader(const T
         return nullptr;
     }
 
+    if (!ValidateShaderCode("CreateRayClosestHitShader", Device->GetRHIType(), EShaderStage::RayClosestHit, ShaderCode))
+    {
+        return nullptr;
+    }
+
     return TrackLiveResource(Device->CreateRayClosestHitShader(ShaderCode));
 }
 
@@ -1581,6 +1663,11 @@ FRHIRayMissShader* FRHIValidationDevice::CreateRayMissShader(const TArray<uint8>
     if (!RHI::bSupportsRayTracingPipeline || ShaderCode.IsEmpty())
     {
         RHI_VALIDATION_ERROR("CreateRayMissShader requires ray-tracing pipeline support and non-empty bytecode.");
+        return nullptr;
+    }
+
+    if (!ValidateShaderCode("CreateRayMissShader", Device->GetRHIType(), EShaderStage::RayMiss, ShaderCode))
+    {
         return nullptr;
     }
 
@@ -1595,6 +1682,11 @@ FRHIRayIntersectionShader* FRHIValidationDevice::CreateRayIntersectionShader(con
         return nullptr;
     }
 
+    if (!ValidateShaderCode("CreateRayIntersectionShader", Device->GetRHIType(), EShaderStage::RayIntersection, ShaderCode))
+    {
+        return nullptr;
+    }
+
     return TrackLiveResource(Device->CreateRayIntersectionShader(ShaderCode));
 }
 
@@ -1603,6 +1695,11 @@ FRHIRayCallableShader* FRHIValidationDevice::CreateRayCallableShader(const TArra
     if (!RHI::bSupportsRayTracingPipeline || ShaderCode.IsEmpty())
     {
         RHI_VALIDATION_ERROR("CreateRayCallableShader requires ray-tracing pipeline support and non-empty bytecode.");
+        return nullptr;
+    }
+
+    if (!ValidateShaderCode("CreateRayCallableShader", Device->GetRHIType(), EShaderStage::RayCallable, ShaderCode))
+    {
         return nullptr;
     }
 
@@ -1635,6 +1732,27 @@ FRHIGraphicsPipelineState* FRHIValidationDevice::CreateGraphicsPipelineState(con
     {
         RHI_VALIDATION_ERROR("CreateGraphicsPipelineState: VertexShader is required.");
         return nullptr;
+    }
+
+    // Release containers only carry the semantic hash, so the messages report the location
+    if (InDesc.InputLayout)
+    {
+        for (const FShaderVertexInput& ShaderInput : InDesc.VertexShader->GetVertexInputs())
+        {
+            bool bFound = false;
+            for (uint32 Index = 0; Index < InDesc.InputLayout->GetNumInputElementDescs() && !bFound; ++Index)
+            {
+                const FRHIInputElementDesc* Element = InDesc.InputLayout->GetInputElementDesc(Index);
+                bFound = Element && HashShaderSemantic(StringView(Element->Semantic)) == ShaderInput.SemanticHash && Element->SemanticIndex == ShaderInput.SemanticIndex;
+            }
+
+            if (!bFound)
+            {
+                RHI_VALIDATION_ERROR("CreateGraphicsPipelineState: the vertex shader reads location %u (semantic index %u), but the input layout has no element for it.",
+                    static_cast<uint32>(ShaderInput.Location), static_cast<uint32>(ShaderInput.SemanticIndex));
+                return nullptr;
+            }
+        }
     }
 
     if ((InDesc.HullShader == nullptr) != (InDesc.DomainShader == nullptr))

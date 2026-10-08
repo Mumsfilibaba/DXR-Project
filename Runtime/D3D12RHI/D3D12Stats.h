@@ -68,6 +68,31 @@ STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_CommandListCount);
 STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_CommandAllocatorCount);
 
 // -------------------------------------------------------------------------------------------
+// D3D12 Submission Stats (per frame)
+// -------------------------------------------------------------------------------------------
+
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_Submits);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_SplitsCommandLimit);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_SplitsDescriptorHeapRollover);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_SplitsFence);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_SplitsOther);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_EmptyCommandListsSkipped);
+
+// -------------------------------------------------------------------------------------------
+// D3D12 Ray Tracing Stats (per frame)
+// -------------------------------------------------------------------------------------------
+
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_BLASBuilds);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_BLASUpdates);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_TLASBuilds);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_TLASUpdates);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_AccelerationStructureCompactions);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_AccelerationStructureCopies);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_AccelerationStructureSerializations);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_AccelerationStructureDeserializations);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_OpacityMicromapBuilds);
+
+// -------------------------------------------------------------------------------------------
 // D3D12 Query Stats
 // -------------------------------------------------------------------------------------------
 

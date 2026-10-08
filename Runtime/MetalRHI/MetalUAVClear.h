@@ -1,7 +1,7 @@
 #pragma once
 #include "RHI/RHIPipelineState.h"
 #include "RHI/RHIShader.h"
-#include "RHI/MSLShaderBindings.h"
+#include "ShaderCore/MSLShaderBindings.h"
 
 class FMetalUnorderedAccessViewRHI;
 class FMetalCommandContext;

@@ -10,6 +10,7 @@
 #include "D3D12RHI/D3D12SamplerState.h"
 
 class FD3D12CommandContext;
+class FD3D12EffectiveDescriptorCounts;
 
 struct FD3D12VertexBufferCache
 {
@@ -443,8 +444,8 @@ public:
     void SetIndexBuffer(FD3D12IndexBufferCache& IndexBuffer);
 
     void PrepareCBVs(FD3D12ConstantBufferCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage, uint32 NumCBVs, uint32& DescriptorHandleOffset);
-    void PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage, uint32 NumSRVs, uint32& DescriptorHandleOffset);
-    void PrepareUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage, uint32 NumUAVs, uint32& DescriptorHandleOffset);
+    void PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12RootSignature* RootSignature, const FD3D12EffectiveDescriptorCounts* PipelineState, EShaderVisibility::Type ShaderStage, uint32 NumSRVs, uint32& DescriptorHandleOffset);
+    void PrepareUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D12RootSignature* RootSignature, const FD3D12EffectiveDescriptorCounts* PipelineState, EShaderVisibility::Type ShaderStage, uint32 NumUAVs, uint32& DescriptorHandleOffset);
     void PrepareSamplers(FD3D12SamplerStateCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage, uint32 NumSamplers, uint32& DescriptorHandleOffset);
 
     void BindCBVs(FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage);

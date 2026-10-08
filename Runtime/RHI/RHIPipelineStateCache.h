@@ -59,6 +59,7 @@ public:
     NODISCARD FRHIRayTracingPipelineState* GetOrCreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& Desc);
 
     void FlushPipelineStates();
+    void TrimUnreferenced();
 
     NODISCARD const FStats& GetStats() const
     {

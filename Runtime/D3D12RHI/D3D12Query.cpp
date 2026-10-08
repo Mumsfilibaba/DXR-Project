@@ -131,21 +131,7 @@ bool FD3D12QueryHeap::Initialize()
 
 void FD3D12QueryHeap::SetDebugName(const String& InName)
 {
-    if (QueryHeap)
-    {
-        HRESULT Result = QueryHeap->SetPrivateData(WKPDID_D3DDebugObjectName, InName.Size(), *InName);
-        if (FAILED(Result))
-        {
-            D3D12_ERROR("Failed to set queryheap name");
-        }
-
-        WString WideName = CharToWide(InName);
-        Result = QueryHeap->SetName(*WideName);
-        if (FAILED(Result))
-        {
-            D3D12_ERROR("Failed to set queryheap name");
-        }
-    }
+    D3D12SetDebugName(QueryHeap.Get(), InName);
 
     if (ReadbackResource.IsValid())
     {

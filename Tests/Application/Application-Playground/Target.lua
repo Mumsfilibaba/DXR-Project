@@ -7,6 +7,7 @@ local PlaygroundModules =
     "Application",
     "ApplicationRenderer",
     "RHI",
+    "ShaderCompiler",
     "RendererCore",
     "NullRHI",
     "VulkanRHI",
@@ -16,6 +17,7 @@ if IsPlatformMac() then
     table.insert(PlaygroundModules, "MetalRHI")
 elseif IsPlatformWindows() then
     table.insert(PlaygroundModules, "D3D12RHI")
+    table.insert(PlaygroundModules, "D3D11RHI")
 end
 
 -- Application Playground

@@ -195,6 +195,13 @@ public:
     /** @return True while a tip has been asked for and is waiting out its delay, so it is not up yet. */
     NODISCARD bool IsPending() const;
 
+    /**
+     * @brief Advances the delay, showing whatever has waited long enough.
+     *
+     * @param DeltaSeconds Time since the last call.
+     */
+    void Tick(float DeltaSeconds);
+
     /** @return The element the shown or pending tip describes, or null when there is neither. */
     NODISCARD FORCEINLINE const TSharedPtr<FVisualElement>& GetOwner() const
     {
@@ -218,13 +225,6 @@ public:
     {
         return ToolTipBounds;
     }
-
-    /**
-     * @brief Advances the delay, showing whatever has waited long enough.
-     *
-     * @param DeltaSeconds Time since the last call.
-     */
-    void Tick(float DeltaSeconds);
 
 private:
     void ShowToolTip();

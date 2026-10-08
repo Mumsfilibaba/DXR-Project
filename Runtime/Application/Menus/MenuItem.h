@@ -118,12 +118,6 @@ public:
      */
     void SetCheckState(ECheckBoxState InCheckState);
 
-    /** @return The state the check mark shows, which is only drawn on an item that was made checkable. */
-    NODISCARD FORCEINLINE ECheckBoxState GetCheckState() const
-    {
-        return CheckState;
-    }
-
     /**
      * @brief Marks the row as the one keyboard navigation has landed on, which draws like a hover.
      *
@@ -131,24 +125,12 @@ public:
      */
     void SetHighlighted(bool bInIsHighlighted);
 
-    /** @return True while keyboard navigation has landed on the row, which draws it highlighted. */
-    NODISCARD FORCEINLINE bool IsHighlighted() const
-    {
-        return bIsHighlighted;
-    }
-
     /**
      * @brief Replaces the whole look of the row, which the menu holding it does as it takes the row in.
      *
      * @param InStyle The look to draw with.
      */
     void SetStyle(const FUIMenuStyle& InStyle);
-
-    /** @return The look the row draws itself with. */
-    NODISCARD FORCEINLINE const FUIMenuStyle& GetStyle() const
-    {
-        return Style;
-    }
 
     /**
      * @brief Replaces the fill drawn behind a hovered or highlighted row, leaving the rest of the look alone.
@@ -168,6 +150,27 @@ public:
      */
     void SetOnActivated(const FOnMenuItemActivated& InOnActivated);
 
+    /** @brief Opens the submenu at once, skipping the hover delay, which is what a click does. */
+    void OpenSubMenu();
+
+    /** @return The state the check mark shows, which is only drawn on an item that was made checkable. */
+    NODISCARD FORCEINLINE ECheckBoxState GetCheckState() const
+    {
+        return CheckState;
+    }
+
+    /** @return True while keyboard navigation has landed on the row, which draws it highlighted. */
+    NODISCARD FORCEINLINE bool IsHighlighted() const
+    {
+        return bIsHighlighted;
+    }
+
+    /** @return The look the row draws itself with. */
+    NODISCARD FORCEINLINE const FUIMenuStyle& GetStyle() const
+    {
+        return Style;
+    }
+
     /** @return The text the row is named by. */
     NODISCARD FORCEINLINE const String& GetLabel() const
     {
@@ -185,9 +188,6 @@ public:
     {
         return SubMenu;
     }
-
-    /** @brief Opens the submenu at once, skipping the hover delay, which is what a click does. */
-    void OpenSubMenu();
 
 protected:
 

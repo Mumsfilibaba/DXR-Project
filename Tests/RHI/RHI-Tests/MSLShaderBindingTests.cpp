@@ -1,9 +1,10 @@
 #include "MSLShaderBindingTests.h"
 
-#include <Core/Memory/Memory.h>
 #include <Core/Misc/Paths.h>
-#include <RHI/MSLShaderBindings.h>
-#include <RHI/ShaderCompiler.h>
+#include <Core/Templates/CString.h>
+#include <ShaderCompiler/ShaderCompiler.h>
+#include <ShaderCore/MSLShaderBindings.h>
+#include <ShaderCore/ShaderCode.h>
 
 #include "TestCommon/TestMacros.h"
 
@@ -24,6 +25,35 @@ static uint8 FindSlot(const TArray<FMSLShaderBinding>& Bindings, EMSLBindingType
     return InvalidSlot;
 }
 
+// Rebuilds the binding table MetalRHI derives from the container, so the checks below read the same slots the backend binds
+static bool ReadMSLShaderCode(const TArray<uint8>& ShaderCode, FShaderCodeView& OutCodeView, TArray<FMSLShaderBinding>& OutBindings)
+{
+    OutBindings.Clear();
+
+    if (!FShaderCodeReader::Read(ShaderCode, OutCodeView) || OutCodeView.GetOutputLanguage() != EShaderOutputLanguage::MSL)
+    {
+        return false;
+    }
+
+    const TArrayView<const FShaderResourceBinding> ShaderBindings = OutCodeView.GetBindings();
+    const TArrayView<const FMSLBindingSlot>        MSLSlots       = OutCodeView.GetMSLSlots();
+    if (MSLSlots.Size() != ShaderBindings.Size())
+    {
+        return false;
+    }
+
+    for (int32 Index = 0; Index < ShaderBindings.Size(); Index++)
+    {
+        FMSLShaderBinding& Binding = OutBindings.Emplace();
+        Binding.BindingType     = GetMSLBindingType(ShaderBindings[Index]);
+        Binding.RegisterIndex   = ShaderBindings[Index].Register;
+        Binding.SlotIndex       = MSLSlots[Index].Slot;
+        Binding.NullTextureType = MSLSlots[Index].NullTextureType;
+    }
+
+    return true;
+}
+
 bool MSLShaderBinding_Test()
 {
     TEST_BEGIN();
@@ -37,17 +67,19 @@ bool MSLShaderBinding_Test()
 
     TArray<uint8>             ByteCode;
     TArray<FMSLShaderBinding> Bindings;
-    TArrayView<const uint8>   Source;
+    FShaderCodeView           CodeView;
 
     TEST_SECTION("A shader with colliding HLSL registers compiles to MSL");
-    const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, TArrayView<FShaderDefine>(), EShaderOutputLanguage::MSL);
+    const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, EShaderOutputLanguage::MSL);
     const bool bCompiled = FShaderCompiler::Get().CompileFromFile(CollidingShaderFile, CompileInfo, ByteCode);
     TEST_EXPECT(bCompiled);
 
     if (bCompiled)
     {
-        TEST_SECTION("The blob splits into a binding table and MSL source");
-        TEST_EXPECT(ParseMSLShaderByteCode(ByteCode, Bindings, Source));
+        TEST_SECTION("The container splits into a binding table and MSL source");
+        TEST_EXPECT(ReadMSLShaderCode(ByteCode, CodeView, Bindings));
+
+        const TArrayView<const uint8> Source = CodeView.GetNativeCode();
         TEST_EXPECT(Source.Size() > 0);
         TEST_EXPECT(Bindings.Size() > 0);
 
@@ -97,15 +129,18 @@ bool MSLShaderBinding_Test()
             TEST_EXPECT(Binding.SlotIndex < GetMSLMaxSlotCount(Binding.BindingType));
         }
 
-        TEST_SECTION("A compute shader blob carries a non-zero threadgroup size");
-        FMSLShaderHeader Header;
-        Memory::Memcpy(&Header, ByteCode.Data(), sizeof(FMSLShaderHeader));
-        TEST_EXPECT_EQ(Header.Version, FMSLShaderHeader::ExpectedVersion);
-        TEST_EXPECT(Header.ThreadGroupSizeX != 0);
-        TEST_EXPECT_EQ(Header.ThreadGroupSizeY, static_cast<uint16>(1));
-        TEST_EXPECT_EQ(Header.ThreadGroupSizeZ, static_cast<uint16>(1));
-        TEST_EXPECT_EQ(Header.ResourceHeapSlot, UINT8_MAX);
-        TEST_EXPECT_EQ(Header.SamplerHeapSlot, UINT8_MAX);
+        TEST_SECTION("A compute shader container carries a non-zero threadgroup size");
+        const FMSLShaderInfo& MSLInfo = CodeView.GetMSLInfo();
+        TEST_EXPECT(MSLInfo.ThreadGroupSize[0] != 0);
+        TEST_EXPECT_EQ(MSLInfo.ThreadGroupSize[1], static_cast<uint16>(1));
+        TEST_EXPECT_EQ(MSLInfo.ThreadGroupSize[2], static_cast<uint16>(1));
+
+        TEST_SECTION("A shader without descriptor heaps has no heap bindings");
+        TEST_EXPECT(FindSlot(Bindings, EMSLBindingType::BindlessResourceHeap, 0) == InvalidSlot);
+        TEST_EXPECT(FindSlot(Bindings, EMSLBindingType::BindlessSamplerHeap, 0) == InvalidSlot);
+
+        TEST_SECTION("The container names the entry point");
+        TEST_EXPECT(CString::Strlen(CodeView.GetEntryPoint()) > 0);
     }
 
     TEST_SECTION("A bindless compute shader pins heap tables at MSL buffers 29 and 30");
@@ -124,21 +159,17 @@ bool MSLShaderBinding_Test()
 
         TArray<uint8>             BindlessByteCode;
         TArray<FMSLShaderBinding> BindlessBindings;
-        TArrayView<const uint8>   BindlessSourceView;
+        FShaderCodeView           BindlessCodeView;
 
-        const FShaderCompileInfo BindlessInfo("Main", EShaderModel::SM_6_6, EShaderStage::Compute, TArrayView<FShaderDefine>(), EShaderOutputLanguage::MSL);
+        const FShaderCompileInfo BindlessInfo("Main", EShaderModel::SM_6_6, EShaderStage::Compute, EShaderOutputLanguage::MSL);
         const bool bBindlessCompiled = FShaderCompiler::Get().CompileFromSource(BindlessSource, BindlessInfo, BindlessByteCode);
         TEST_EXPECT(bBindlessCompiled);
 
         if (bBindlessCompiled)
         {
-            TEST_EXPECT(ParseMSLShaderByteCode(BindlessByteCode, BindlessBindings, BindlessSourceView));
+            TEST_EXPECT(ReadMSLShaderCode(BindlessByteCode, BindlessCodeView, BindlessBindings));
 
-            FMSLShaderHeader BindlessHeader;
-            Memory::Memcpy(&BindlessHeader, BindlessByteCode.Data(), sizeof(FMSLShaderHeader));
-            TEST_EXPECT_EQ(BindlessHeader.Version, FMSLShaderHeader::ExpectedVersion);
-            TEST_EXPECT_EQ(BindlessHeader.ResourceHeapSlot, MSL_BINDLESS_RESOURCE_HEAP_BUFFER_INDEX);
-            TEST_EXPECT_EQ(BindlessHeader.SamplerHeapSlot, MSL_BINDLESS_SAMPLER_HEAP_BUFFER_INDEX);
+            const TArrayView<const uint8> BindlessSourceView = BindlessCodeView.GetNativeCode();
 
             TEST_EXPECT(FindSlot(BindlessBindings, EMSLBindingType::BindlessResourceHeap, 0) == MSL_BINDLESS_RESOURCE_HEAP_BUFFER_INDEX);
             TEST_EXPECT(FindSlot(BindlessBindings, EMSLBindingType::BindlessSamplerHeap, 0) == MSL_BINDLESS_SAMPLER_HEAP_BUFFER_INDEX);

@@ -10,6 +10,8 @@ RHIBootTests.AddModules({
     "CoreApplication",
     "RHI",
     "NullRHI",
+    "ShaderCore",
+    "ShaderCompiler",
     "TestCommon",
 })
 

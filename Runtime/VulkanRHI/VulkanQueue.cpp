@@ -77,6 +77,7 @@ FVulkanQueue::~FVulkanQueue()
     ProcessCommandQueue();
 
     CommandContextPool.DestroyAll();
+    CommandsPool.DestroyAll();
     CommandPoolPool.DestroyAll();
 
     Queue = VK_NULL_HANDLE;
@@ -120,6 +121,22 @@ FVulkanCommandPool* FVulkanQueue::ObtainCommandPool()
 void FVulkanQueue::RecycleCommandPool(FVulkanCommandPool* InCommandPool)
 {
     CommandPoolPool.Release(InCommandPool);
+}
+
+FVulkanCommands* FVulkanQueue::ObtainCommands()
+{
+    return CommandsPool.Acquire([this](int32 /* Index */) -> FVulkanCommands*
+    {
+        return new FVulkanCommands(GetDevice(), *this);
+    });
+}
+
+void FVulkanQueue::RecycleCommands(FVulkanCommands* InCommands)
+{
+    CHECK(InCommands != nullptr);
+
+    InCommands->Reset();
+    CommandsPool.Release(InCommands);
 }
 
 void FVulkanQueue::RetireCommandPoolDeferred(FVulkanCommandPool* InCommandPool)
@@ -341,6 +358,8 @@ bool FVulkanQueue::SubmitSemaphoresOnly(VkSemaphore WaitSemaphore, VkPipelineSta
         Result = vkQueueSubmit(Queue, 1, &SubmitInfo, VK_NULL_HANDLE);
     }
 
+    STAT_ADD_FRAME(STAT_Vulkan_SemaphoreOnlySubmits, 1);
+
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR_CRITICAL("vkQueueSubmit failed with %s", ToString(Result));
@@ -379,6 +398,8 @@ void FVulkanQueue::SubmitCommands(FVulkanCommands* Commands)
     {
         return;
     }
+
+    STAT_ADD_FRAME(STAT_Vulkan_Submits, 1);
 
     {
         TScopedLock Lock(QueueCS);
@@ -534,6 +555,32 @@ FVulkanCommands::FVulkanCommands(FVulkanDevice* InDevice, FVulkanQueue& InQueue)
 FVulkanCommands::~FVulkanCommands()
 {
     CHECK(Fence == nullptr);
+}
+
+void FVulkanCommands::Reset()
+{
+    CHECK(Fence == nullptr);
+
+    Flags = EVulkanCommandsFlags::None;
+
+    CommandPools.Clear();
+    CommandBuffers.Clear();
+    WaitSemaphores.Clear();
+    WaitStages.Clear();
+    WaitSemaphoreValues.Clear();
+    SignalSemaphores.Clear();
+    SignalSemaphoreValues.Clear();
+    QueryRanges.Clear();
+    TimestampQueries.Clear();
+    OcclusionQueries.Clear();
+    PipelineStatsQueries.Clear();
+    PendingQueries.Clear();
+    SubmittedQueries.Clear();
+    DeferredObjects.Clear();
+    PendingImageBarriers.Clear();
+    PendingBufferBarriers.Clear();
+    PendingImageStates.Clear();
+    PendingBufferStates.Clear();
 }
 
 void FVulkanCommands::AcquireFence()
@@ -889,7 +936,7 @@ void FVulkanCommands::Execute()
 
 void FVulkanCommands::PostExecute()
 {
-    TArray<uint64> RawTicksArray;
+    TInlineArray<uint64, VULKAN_INLINE_TIMESTAMP_QUERIES> RawTicksArray;
     RawTicksArray.Resize(TimestampQueries.Size());
 
     for (int32 i = 0; i < TimestampQueries.Size(); i++)
@@ -904,6 +951,7 @@ void FVulkanCommands::PostExecute()
     }
 
     FVulkanTimestampIdleState& IdleState = Queue.GetTimestampIdleState();
+    bool bTimestampPeriodRefreshed = false;
     for (int32 i = 0; i < TimestampQueries.Size(); i++)
     {
         const FVulkanQuery& Query = TimestampQueries[i];
@@ -926,6 +974,12 @@ void FVulkanCommands::PostExecute()
 
         if (Query.Type == EVulkanQueryType::Timestamp && Query.ResultTarget)
         {
+            if (!bTimestampPeriodRefreshed)
+            {
+                Device->RefreshTimestampPeriod();
+                bTimestampPeriodRefreshed = true;
+            }
+
             const uint64 AdjustedTicks = (Ticks > IdleState.AccumulatedIdleTicks) ? (Ticks - IdleState.AccumulatedIdleTicks) : 0;
             *Query.ResultTarget = ToNanoseconds(AdjustedTicks);
         }
@@ -1038,5 +1092,5 @@ void FVulkanCommands::PostExecute()
     PendingImageStates.Clear();
     PendingBufferStates.Clear();
 
-    delete this;
+    Queue.RecycleCommands(this);
 }

@@ -107,6 +107,13 @@ public:
      */
     void SetCheckState(ECheckBoxState InState);
 
+    /**
+     * @brief Gets where the box itself is drawn, which is what a hit test against the mark needs.
+     *
+     * @return The square the box occupies, left-aligned and centered in the row, excluding the label.
+     */
+    NODISCARD FRectangle GetBoxBounds() const;
+
     /** @return The state the box is in, which is Undetermined only on a tri-state box. */
     NODISCARD FORCEINLINE ECheckBoxState GetCheckState() const
     {
@@ -118,13 +125,6 @@ public:
     {
         return CheckState == ECheckBoxState::Checked;
     }
-
-    /**
-     * @brief Gets where the box itself is drawn, which is what a hit test against the mark needs.
-     *
-     * @return The square the box occupies, left-aligned and centered in the row, excluding the label.
-     */
-    NODISCARD FRectangle GetBoxBounds() const;
 
 protected:
 

@@ -85,12 +85,6 @@ public:
      */
     void SetContent(const TSharedPtr<FVisualElement>& InContent);
 
-    /** @return The element shown below the header, which is null when none has been set. */
-    NODISCARD FORCEINLINE const TSharedPtr<FVisualElement>& GetContent() const
-    {
-        return Content;
-    }
-
     /**
      * @brief Opens or closes the section, firing the delegate only when that moved it.
      *
@@ -98,18 +92,24 @@ public:
      */
     void SetExpanded(bool bInIsExpanded);
 
-    /** @return True while the content is shown below the header. */
-    NODISCARD FORCEINLINE bool IsExpanded() const
-    {
-        return bIsExpanded;
-    }
-
     /**
      * @brief Replaces the text the header shows.
      *
      * @param InLabel The new text.
      */
     void SetLabel(const String& InLabel);
+
+    /** @return The element shown below the header, which is null when none has been set. */
+    NODISCARD FORCEINLINE const TSharedPtr<FVisualElement>& GetContent() const
+    {
+        return Content;
+    }
+
+    /** @return True while the content is shown below the header. */
+    NODISCARD FORCEINLINE bool IsExpanded() const
+    {
+        return bIsExpanded;
+    }
 
     /** @return The text the header shows. */
     NODISCARD FORCEINLINE const String& GetLabel() const
@@ -128,13 +128,12 @@ private:
     NODISCARD int32 GetDisplayedHeight() const;
     NODISCARD int32 GetContentDesiredHeight() const;
     NODISCARD float ComputeAnimationAlpha() const;
+    NODISCARD bool IsContentShown() const;
 
     NODISCARD float GetAnimationAlpha() const
     {
         return AnimationAlpha;
     }
-
-    NODISCARD bool IsContentShown() const;
 
     TSharedPtr<FVisualElement> Content;
     TSharedPtr<IFontFace>      Font;

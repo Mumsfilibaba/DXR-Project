@@ -4,6 +4,9 @@
 #include "MetalRHI/MetalStats.h"
 #include "Core/Threading/ScopedLock.h"
 
+// Metal exposes 31 vertex attributes on every supported GPU family
+static constexpr uint32 GMetalMaxVertexAttributes = 31;
+
 static const void* GetFunctionIdentity(id<MTLFunction> Function)
 {
     return (__bridge const void*)Function;
@@ -50,7 +53,7 @@ static void FillAttachmentState(FMetalRenderPipelineKey& Key, DescriptorType* De
     Key.bAlphaToCoverage            = Descriptor.alphaToCoverageEnabled == YES;
 }
 
-FMetalRenderPipelineKey FMetalRenderPipelineKey::Create(MTLRenderPipelineDescriptor* Descriptor, const FMetalInputLayoutRHI* InputLayout)
+FMetalRenderPipelineKey FMetalRenderPipelineKey::Create(MTLRenderPipelineDescriptor* Descriptor)
 {
     FMetalRenderPipelineKey Key{};
     Key.Type                 = EMetalRenderPipelineType::Graphics;
@@ -61,11 +64,9 @@ FMetalRenderPipelineKey FMetalRenderPipelineKey::Create(MTLRenderPipelineDescrip
 
     FillAttachmentState(Key, Descriptor);
 
-    if (InputLayout)
+    if (MTLVertexDescriptor* VertexDescriptor = Descriptor.vertexDescriptor)
     {
-        MTLVertexDescriptor* VertexDescriptor = InputLayout->GetMTLVertexDescriptor();
-
-        for (uint32 Index = 0; Index < InputLayout->GetNumInputElementDescs(); ++Index)
+        for (uint32 Index = 0; Index < GMetalMaxVertexAttributes; ++Index)
         {
             MTLVertexAttributeDescriptor* Attribute = VertexDescriptor.attributes[Index];
             if (Attribute.format == MTLVertexFormatInvalid)

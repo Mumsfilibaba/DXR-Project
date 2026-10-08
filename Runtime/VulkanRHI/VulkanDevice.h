@@ -77,6 +77,27 @@ struct FVulkanQueueFamilyIndices
     uint32 PresentQueueIndex  = uint32(~0);
 };
 
+enum class EVulkanNullImageType : uint8
+{
+    Image2D = 0,
+    Image1D,
+    Image3D,
+    Image2DMS,
+    Count
+};
+
+struct FVulkanNullImage
+{
+	FVulkanNullImage()
+		: Image(VK_NULL_HANDLE)
+		, Location(nullptr)
+	{
+	}
+
+	VkImage               Image;
+	FVulkanMemoryLocation Location;
+};
+
 struct FVulkanDefaultResources
 {
 	FVulkanDefaultResources()
@@ -86,12 +107,10 @@ struct FVulkanDefaultResources
 		, NullWriteBuffer(VK_NULL_HANDLE)
 		, NullWriteBufferView(VK_NULL_HANDLE)
 		, NullWriteBufferLocation(nullptr)
-		, NullReadImage(VK_NULL_HANDLE)
+		, NullReadImages()
 		, NullReadImageViews()
-		, NullReadImageLocation(nullptr)
-		, NullWriteImage(VK_NULL_HANDLE)
+		, NullWriteImages()
 		, NullWriteImageViews()
-		, NullWriteImageLocation(nullptr)
 		, NullSampler(VK_NULL_HANDLE)
 	{
 	}
@@ -102,9 +121,17 @@ struct FVulkanDefaultResources
 		CHECK(NullReadBufferView == VK_NULL_HANDLE);
 		CHECK(NullWriteBuffer == VK_NULL_HANDLE);
 		CHECK(NullWriteBufferView == VK_NULL_HANDLE);
-		CHECK(NullReadImage == VK_NULL_HANDLE);
-		CHECK(NullWriteImage == VK_NULL_HANDLE);
 		CHECK(NullSampler == VK_NULL_HANDLE);
+
+		for (const FVulkanNullImage& NullImage : NullReadImages)
+		{
+			CHECK(NullImage.Image == VK_NULL_HANDLE);
+		}
+
+		for (const FVulkanNullImage& NullImage : NullWriteImages)
+		{
+			CHECK(NullImage.Image == VK_NULL_HANDLE);
+		}
 
 		for (VkImageView NullImageView : NullReadImageViews)
 		{
@@ -153,12 +180,10 @@ struct FVulkanDefaultResources
 	VkBuffer              NullWriteBuffer;
 	VkBufferView          NullWriteBufferView;
 	FVulkanMemoryLocation NullWriteBufferLocation;
-	VkImage               NullReadImage;
+	FVulkanNullImage      NullReadImages[static_cast<uint32>(EVulkanNullImageType::Count)];
 	VkImageView           NullReadImageViews[static_cast<uint32>(EVulkanNullImageViewType::Count)];
-	FVulkanMemoryLocation NullReadImageLocation;
-	VkImage               NullWriteImage;
+	FVulkanNullImage      NullWriteImages[static_cast<uint32>(EVulkanNullImageType::Count)];
 	VkImageView           NullWriteImageViews[static_cast<uint32>(EVulkanNullImageViewType::Count)];
-	FVulkanMemoryLocation NullWriteImageLocation;
 	VkSampler             NullSampler;
 };
 
@@ -312,6 +337,7 @@ public:
     bool CreateGraphicsQueue();
     bool EnsurePresentQueue();
     void WaitForGPU();
+    void RefreshTimestampPeriod();
 
     FVulkanQueue* GetQueue(EVulkanCommandQueueType Type) const;
     FVulkanQueue* GetGraphicsQueue() const { return GraphicsQueue; }

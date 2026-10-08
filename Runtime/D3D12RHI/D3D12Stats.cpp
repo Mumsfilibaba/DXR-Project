@@ -50,5 +50,22 @@ STAT_DEFINE_MEMORY(STAT_D3D12_PSOCacheSize,                   "Cache Serialized 
 STAT_DEFINE_COUNTER(STAT_D3D12_CommandListCount,      "Command Lists",      "D3D12 Commands");
 STAT_DEFINE_COUNTER(STAT_D3D12_CommandAllocatorCount, "Command Allocators", "D3D12 Commands");
 
+STAT_DEFINE_FRAME_COUNTER(STAT_D3D12_Submits,                      "Submits",       "D3D12 Submissions / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_D3D12_SplitsCommandLimit,           "Limit Splits",  "D3D12 Submissions / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_D3D12_SplitsDescriptorHeapRollover, "Heap Splits",   "D3D12 Submissions / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_D3D12_SplitsFence,                  "Fence Splits",  "D3D12 Submissions / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_D3D12_SplitsOther,                  "Other Splits",  "D3D12 Submissions / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_D3D12_EmptyCommandListsSkipped,     "Skipped Empty", "D3D12 Submissions / Frame");
+
+STAT_DEFINE_FRAME_COUNTER(STAT_D3D12_BLASBuilds,                            "BLAS Builds",      "D3D12 Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_D3D12_BLASUpdates,                           "BLAS Updates",     "D3D12 Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_D3D12_TLASBuilds,                            "TLAS Builds",      "D3D12 Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_D3D12_TLASUpdates,                           "TLAS Updates",     "D3D12 Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_D3D12_AccelerationStructureCompactions,      "Compactions",      "D3D12 Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_D3D12_AccelerationStructureCopies,           "Copies",           "D3D12 Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_D3D12_AccelerationStructureSerializations,   "Serializations",   "D3D12 Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_D3D12_AccelerationStructureDeserializations, "Deserializations", "D3D12 Ray Tracing / Frame");
+STAT_DEFINE_FRAME_COUNTER(STAT_D3D12_OpacityMicromapBuilds,                 "OMM Builds",       "D3D12 Ray Tracing / Frame");
+
 // Query Stats
 STAT_DEFINE_COUNTER(STAT_D3D12_QueryHeapCount, "Query Heaps", "D3D12 Queries");

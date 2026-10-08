@@ -152,6 +152,12 @@ Core-Math-Tests-SSSE3 Core-Math-Tests-SSE4_1 Core-Math-Tests-SSE4_2"
             RendererCore)
                 TARGETS="RendererCore-Tests"
                 ;;
+            ShaderCore)
+                TARGETS="ShaderCore-Tests"
+                ;;
+            ShaderCompiler)
+                TARGETS="ShaderCompiler-Tests"
+                ;;
             Application)
                 TARGETS="Application-Tests"
                 ;;
