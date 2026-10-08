@@ -25,6 +25,8 @@ public:
     virtual const FRHIInputElementDesc* GetInputElementDesc(uint32 Index) const override final;
     virtual uint32 GetNumInputElementDescs() const override final;
 
+    MTLVertexDescriptor* CreateResolvedVertexDescriptor(const TArray<FShaderVertexInput>& ShaderInputs) const;
+
     MTLVertexDescriptor* GetMTLVertexDescriptor() const
     {
         return VertexDescriptor;
@@ -34,14 +36,6 @@ public:
     {
         return NumVertexStreams;
     }
-
-    /**
-     * @brief Builds a vertex descriptor that places each element at the attribute index of the shader input with its semantic
-     *
-     * @param ShaderInputs Reflected inputs of the vertex shader, matched by semantic hash and semantic index
-     * @return An autoreleased descriptor, or nil when the layout has no element for one of the inputs
-     */
-    MTLVertexDescriptor* CreateResolvedVertexDescriptor(const TArray<FShaderVertexInput>& ShaderInputs) const;
 
 private:
     TArray<FRHIInputElementDesc> InputElements;

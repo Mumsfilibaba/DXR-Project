@@ -26,13 +26,6 @@ public:
     explicit FMetalShaderLibraryCache(FMetalDevice* InDevice);
     ~FMetalShaderLibraryCache();
 
-    /**
-     * @brief Returns the shader for Source and EntryPoint, compiling the library on a miss
-     *
-     * @param Source MSL source, not null-terminated
-     * @param EntryPoint Function to look up in the library, or empty to take "Main" or else the first function
-     * @return The cached or newly compiled shader, or nullptr when the source fails to compile or lacks the function
-     */
     TSharedRef<FMetalCompiledShader> GetOrCompile(TArrayView<const uint8> Source, const CHAR* EntryPoint);
     void Prune();
 

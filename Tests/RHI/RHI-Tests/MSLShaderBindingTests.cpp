@@ -25,7 +25,6 @@ static uint8 FindSlot(const TArray<FMSLShaderBinding>& Bindings, EMSLBindingType
     return InvalidSlot;
 }
 
-// Rebuilds the binding table MetalRHI derives from the container, so the checks below read the same slots the backend binds
 static bool ReadMSLShaderCode(const TArray<uint8>& ShaderCode, FShaderCodeView& OutCodeView, TArray<FMSLShaderBinding>& OutBindings)
 {
     OutBindings.Clear();
