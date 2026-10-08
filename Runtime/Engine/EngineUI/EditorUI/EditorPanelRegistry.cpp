@@ -195,7 +195,7 @@ void FEditorPanelRegistry::ShowPanel(const String& PanelId)
 
     if (!DockingArea->IsPanelDocked(PanelId))
     {
-        DockingArea->DockPanel(PanelId, String(), EDockDirection::Center);
+        DockingArea->DockPanel(PanelId, DockingArea->GetMiddlePanelId(), EDockDirection::Center);
     }
 
     DockingArea->SetActivePanel(PanelId);

@@ -2,11 +2,13 @@
 #include "Core/Containers/Map.h"
 #include "Core/Containers/String.h"
 #include "Core/Delegates/Delegate.h"
+#include "Application/Animation/UIAnimation.h"
 #include "Application/Docking/DockNode.h"
 #include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/CompoundElement.h"
 #include "Application/Style/UIStyle.h"
 #include "Application/Text/IFontFace.h"
+#include "RHI/RHIResources.h"
 
 class FSplitter;
 class FTabStrip;
@@ -28,6 +30,12 @@ struct FDropZone
 
     /** @brief Which side of that panel it takes, or Center to join it as a tab. */
     EDockDirection Direction = EDockDirection::Center;
+
+    /** @brief True for the zone over a tab strip, which takes a drop without drawing a chip since the strip shows the tab. */
+    bool bIsTabStrip = false;
+
+    /** @brief The strip a tab strip zone is over, which decides where along it the dropped tab goes. */
+    const FTabStrip* Strip = nullptr;
 };
 
 class APPLICATION_API FDockingArea final : public FCompoundElement
@@ -127,8 +135,9 @@ public:
      * @param PanelId       The panel to place.
      * @param TargetPanelId The panel to place it against. An empty string targets the root.
      * @param Direction     Which side of the target, or Center to add it as a tab.
+     * @param TabIndex      Where among the target's tabs a Center dock puts it, where anything outside them puts it after all of them.
      */
-    void DockPanel(const String& PanelId, const String& TargetPanelId, EDockDirection Direction);
+    void DockPanel(const String& PanelId, const String& TargetPanelId, EDockDirection Direction, int32 TabIndex = -1);
 
     /**
      * @brief Removes a panel from the tree, collapsing whatever that empties.
@@ -156,9 +165,10 @@ public:
      * @param ScreenPosition  Where the cursor is, in screen coordinates.
      * @param OutTargetPanelId The panel the drop would be placed against.
      * @param OutDirection     Which side of it, or Center to drop it in as a tab.
+     * @param OutTabIndex      Where among the target's tabs a drop onto a tab strip goes, or -1 to go after all of them.
      * @return True when the point is inside a zone of this area.
      */
-    NODISCARD bool HitTestDropTarget(const IntVector2& ScreenPosition, String& OutTargetPanelId, EDockDirection& OutDirection) const;
+    NODISCARD bool HitTestDropTarget(const IntVector2& ScreenPosition, String& OutTargetPanelId, EDockDirection& OutDirection, int32& OutTabIndex) const;
 
     /**
      * @brief Gets where a drop resolved against this area would put the panel, which is what the drag
@@ -170,6 +180,47 @@ public:
      * @return True when the area is in a window and the rectangle is not empty.
      */
     NODISCARD bool GetDropPreviewBounds(const String& TargetPanelId, EDockDirection Direction, FRectangle& OutBounds) const;
+
+    /**
+     * @brief Tells whether a drop would add the panel as a tab to a strip that is already there.
+     *
+     * @param TargetPanelId The panel the drop would land against, empty when it would target the root.
+     * @param Direction     Which side of that panel it would land on.
+     * @return True when the drop joins an existing strip, which then shows the panel's tab.
+     */
+    NODISCARD bool DoesDropJoinTabStrip(const String& TargetPanelId, EDockDirection Direction) const;
+
+    /** @return True when the area is in the window the drag's cursor is over, which is the only window that takes a drop. */
+    NODISCARD bool IsInCursorWindow() const;
+
+    /**
+     * @brief Brings the drop preview up to date with the current drag: the landing area and the drop zones it animates
+     * between, and the dragged panel shown as the active tab on the strip a drop would join.
+     */
+    void UpdateDropPreview();
+
+    /**
+     * @brief Settles the landing preview into the panel a drop just docked, fading it out as it goes.
+     *
+     * @param PanelId The panel that was dropped.
+     */
+    void SettleDrop(const String& PanelId);
+
+    /**
+     * @brief Finds where a docked panel's body is on screen.
+     *
+     * @param PanelId The panel to look for.
+     * @return The body of the panel in screen coordinates, or an empty rectangle when the area does not hold it.
+     */
+    NODISCARD FRectangle GetPanelScreenBounds(const String& PanelId) const;
+
+    /**
+     * @brief Shrinks a picture of a panel that was just torn out of the area into the window the drag carries it in.
+     *
+     * @param FromScreenBounds Where the panel was, in screen coordinates.
+     * @param Picture          The panel drawn at that size.
+     */
+    void BeginTearOut(const FRectangle& FromScreenBounds, const FRHITextureRef& Picture);
 
     /**
      * @brief Shows the tab whose panel this is, opening whichever strip holds it.
@@ -214,6 +265,14 @@ public:
      * @return True when a strip in the tree holds a tab for it.
      */
     NODISCARD bool IsPanelDocked(const String& PanelId) const;
+
+    /**
+     * @brief Gets a panel in the tab group that is most in view, rated by how close it is to the middle of the area and then
+     * by how much of the area it covers.
+     *
+     * @return The panel that group shows, or an empty string when the tree holds no panels.
+     */
+    NODISCARD String GetMiddlePanelId() const;
 
     /**
      * @brief Gets whether a panel's content is on screen, which a docked panel behind another tab is not.
@@ -298,12 +357,20 @@ private:
     NODISCARD FRectangle ComputeDropBounds(const String& TargetPanelId, EDockDirection Direction) const;
     NODISCARD const FVisualElement* FindFocusedFrame() const;
     NODISCARD FPanelOutline ComputeLeafOutline(const FLeafGeometry& Leaf) const;
+    NODISCARD bool IsShowingStrip(const FLeafGeometry& Leaf) const;
+    void UpdateDropTabPreviews();
     NODISCARD int32 DrawDropZones(FDrawCommandList& OutCommandList, int32 LayerId) const;
+    NODISCARD FRectangle GetDisplayedLandingBounds() const;
+    NODISCARD FRectangle GetDisplayedTearOutBounds() const;
+    NODISCARD FRectangle GetDecoratorClientBounds() const;
+    NODISCARD bool GetWindowPosition(IntVector2& OutPosition) const;
+    NODISCARD bool GetDragClientPosition(IntVector2& OutClientPosition) const;
+    void RetireTearOutPicture();
 
     TSharedPtr<FVisualElement> BuildNode(FDockNode& Node, const TArray<int32>& Path);
     void RequestRebuild();
 
-    void DockAgainstNode(FDockNode& TargetNode, const String& PanelId, EDockDirection Direction);
+    void DockAgainstNode(FDockNode& TargetNode, const String& PanelId, EDockDirection Direction, int32 TabIndex);
     void OnTabActivated(const String& PanelId);
     void OnTabClosed(const String& PanelId);
     void OnTabReordered(const TArray<int32>& Path, const String& PanelId, int32 NewIndex);
@@ -323,6 +390,23 @@ private:
     bool                      bIsDropTarget;
     bool                      bNeedsRebuild;
     bool                      bSuppressRootTabStrip;
+    FRectangle                LandingFrom;
+    FRectangle                LandingTo;
+    FUIAnimation              LandingMove;
+    FUIAnimation              LandingFade;
+    String                    SettlingPanelId;
+    bool                      bHasLanding;
+    bool                      bLandingTracksDecorator;
+    bool                      bLandingOvershoots;
+    FRectangle                TearOutFrom;
+    FRHITextureRef            TearOutPicture;
+    FUIAnimation              TearOutMove;
+    String                    ChipsTargetPanelId;
+    FUIAnimation              ChipsFade;
+    FUIAnimation              ChipHoverFade;
+    int32                     HoveredChipIndex;
+    int32                     PreviousHoveredChipIndex;
+    bool                      bHasChips;
     FOnPanelTornOut           OnPanelTornOutDelegate;
     FOnPanelClosed            OnPanelClosedDelegate;
 };

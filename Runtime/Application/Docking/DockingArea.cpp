@@ -9,6 +9,7 @@
 #include "Application/Draw/DrawCache.h"
 #include "Application/Elements/Border.h"
 #include "Application/Elements/Box.h"
+#include "Application/IApplicationRenderer.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
 
@@ -17,12 +18,36 @@ constexpr int32 DROP_ZONE_CHIP_SIZE    = 96;
 constexpr int32 DROP_ZONE_CHIP_GAP     = 8;
 constexpr int32 DROP_ZONE_CHIP_MINIMUM = 12;
 
-constexpr float DROP_ZONE_CHIP_GRAY       = 0.10f;
-constexpr float DROP_ZONE_CHIP_OPACITY    = 0.55f;
-constexpr float DROP_ZONE_HOVER_GRAY      = 0.22f;
-constexpr float DROP_ZONE_HOVER_OPACITY   = 0.85f;
-constexpr float DROP_ZONE_GHOST_OPACITY   = 0.75f;
-constexpr float DROP_ZONE_LANDING_OPACITY = 0.20f;
+// The drop zones are tinted with the selection blue, see DrawDropZones, at these opacities
+constexpr float DROP_ZONE_CHIP_OPACITY          = 0.20f;
+constexpr float DROP_ZONE_HOVER_OPACITY         = 0.40f;
+constexpr float DROP_ZONE_CHIP_OUTLINE_OPACITY  = 0.50f;
+constexpr float DROP_ZONE_HOVER_OUTLINE_OPACITY = 0.80f;
+constexpr float DROP_ZONE_GHOST_OPACITY         = 0.75f;
+constexpr float DROP_ZONE_LANDING_OPACITY       = 0.20f;
+
+// How far the corners of a drop zone chip are rounded, the landing preview using the panel's own radius
+constexpr float DROP_ZONE_CHIP_CORNER_RADIUS = 6.0f;
+
+// How long the drop preview takes to animate, in seconds
+constexpr float DROP_LANDING_FADE_SECONDS = 0.12f;
+constexpr float DROP_LANDING_MOVE_SECONDS = 0.15f;
+constexpr float DROP_SETTLE_SECONDS       = 0.30f;
+constexpr float DROP_CHIPS_FADE_SECONDS   = 0.12f;
+constexpr float DROP_CHIP_HOVER_SECONDS   = 0.10f;
+constexpr float DROP_TEAR_OUT_SECONDS     = 0.20f;
+
+// How far a landing preview swings past a new target before settling on it
+constexpr float DROP_LANDING_OVERSHOOT = 1.2f;
+
+static FRectangle LerpRectangle(const FRectangle& From, const FRectangle& To, float Alpha)
+{
+    const int32 Left   = Math::RoundToInt(Math::Lerp(static_cast<float>(From.Position.X), static_cast<float>(To.Position.X), Alpha));
+    const int32 Top    = Math::RoundToInt(Math::Lerp(static_cast<float>(From.Position.Y), static_cast<float>(To.Position.Y), Alpha));
+    const int32 Right  = Math::RoundToInt(Math::Lerp(static_cast<float>(From.GetRight()), static_cast<float>(To.GetRight()), Alpha));
+    const int32 Bottom = Math::RoundToInt(Math::Lerp(static_cast<float>(From.GetBottom()), static_cast<float>(To.GetBottom()), Alpha));
+    return FRectangle(IntVector2(Left, Top), Math::Max(Right - Left, 0), Math::Max(Bottom - Top, 0));
+}
 
 constexpr int32 PANEL_OUTLINE_ARC_SEGMENTS = 8;
 
@@ -63,7 +88,7 @@ static FPanelOutline ComputePanelOutline(const FRectangle& FrameBounds, const FT
         return Outline;
     }
 
-    const int32 BodyTop = Math::Clamp(StripBounds.GetBottom() - Outline.Border, FrameBounds.Position.Y, FrameBounds.GetBottom());
+    const int32 BodyTop = Math::Clamp(StripBounds.GetBottom() - Outline.Border, StripBounds.Position.Y, FrameBounds.GetBottom());
     Outline.BodyBounds = FRectangle(IntVector2(FrameBounds.Position.X, BodyTop), FrameBounds.Width, FrameBounds.GetBottom() - BodyTop);
 
     const FRectangle TabBounds = Strip->GetActiveTabRectangle();
@@ -231,10 +256,301 @@ static String GetActiveTabId(const FDockNode& Node)
     return Node.TabIds[Math::Clamp(Node.ActiveTabIndex, 0, Node.TabIds.Size() - 1)];
 }
 
+bool FDockingArea::IsShowingStrip(const FLeafGeometry& Leaf) const
+{
+    return Leaf.Strip && !(bSuppressRootTabStrip && Leaf.Path.IsEmpty());
+}
+
+bool FDockingArea::GetWindowPosition(IntVector2& OutPosition) const
+{
+    if (!FApplication::IsInitialized())
+    {
+        return false;
+    }
+
+    const TSharedPtr<FWindow> Window = FApplication::Get().FindWindow(const_cast<FDockingArea*>(this)->AsSharedPtr());
+    if (!Window)
+    {
+        return false;
+    }
+
+    OutPosition = Window->GetPosition();
+    return true;
+}
+
+bool FDockingArea::GetDragClientPosition(IntVector2& OutClientPosition) const
+{
+    IntVector2 WindowPosition;
+    if (!GetWindowPosition(WindowPosition))
+    {
+        return false;
+    }
+
+    OutClientPosition = FDockDragState::Get().GetCursorPosition() - WindowPosition;
+    return true;
+}
+
+FRectangle FDockingArea::GetDecoratorClientBounds() const
+{
+    IntVector2 WindowPosition;
+    if (!FDockWindowManager::IsInitialized() || !GetWindowPosition(WindowPosition))
+    {
+        return FRectangle();
+    }
+
+    FRectangle Bounds = FDockWindowManager::Get().GetDecoratorScreenBounds();
+    if (!Bounds.IsEmpty())
+    {
+        Bounds.Position -= WindowPosition;
+    }
+
+    return Bounds;
+}
+
+FRectangle FDockingArea::GetPanelScreenBounds(const String& PanelId) const
+{
+    IntVector2 WindowPosition;
+    if (!Root.FindTabsNode(PanelId) || !GetWindowPosition(WindowPosition))
+    {
+        return FRectangle();
+    }
+
+    FRectangle Bounds = ComputeDropBounds(PanelId, EDockDirection::Center);
+    if (!Bounds.IsEmpty())
+    {
+        Bounds.Position += WindowPosition;
+    }
+
+    return Bounds;
+}
+
+void FDockingArea::BeginTearOut(const FRectangle& FromScreenBounds, const FRHITextureRef& Picture)
+{
+    IntVector2 WindowPosition;
+    if (FromScreenBounds.IsEmpty() || !Picture || !GetWindowPosition(WindowPosition))
+    {
+        return;
+    }
+
+    RetireTearOutPicture();
+
+    TearOutFrom          = FromScreenBounds;
+    TearOutFrom.Position -= WindowPosition;
+    TearOutPicture       = Picture;
+
+    TearOutMove.Start(DROP_TEAR_OUT_SECONDS, 0.0f, 1.0f);
+    InvalidatePaint();
+}
+
+FRectangle FDockingArea::GetDisplayedTearOutBounds() const
+{
+    const FRectangle Decorator = GetDecoratorClientBounds();
+    return LerpRectangle(TearOutFrom, Decorator.IsEmpty() ? TearOutFrom : Decorator, TearOutMove.EvaluateEaseOut());
+}
+
+void FDockingArea::RetireTearOutPicture()
+{
+    if (TearOutPicture && FApplication::IsInitialized())
+    {
+        if (TSharedPtr<IApplicationRenderer> Renderer = FApplication::Get().GetRenderer())
+        {
+            Renderer->RetireTexture(TearOutPicture);
+        }
+    }
+
+    TearOutPicture = nullptr;
+}
+
+FRectangle FDockingArea::GetDisplayedLandingBounds() const
+{
+    FRectangle Destination = LandingTo;
+    if (!SettlingPanelId.IsEmpty())
+    {
+        const FRectangle DroppedBounds = ComputeDropBounds(SettlingPanelId, EDockDirection::Center);
+        if (!DroppedBounds.IsEmpty())
+        {
+            Destination = DroppedBounds;
+        }
+    }
+
+    if (bLandingTracksDecorator)
+    {
+        const FRectangle Decorator = GetDecoratorClientBounds();
+        if (!Decorator.IsEmpty())
+        {
+            Destination = Decorator;
+        }
+    }
+
+    const float Alpha = bLandingOvershoots ? LandingMove.EvaluateEaseOutBack(DROP_LANDING_OVERSHOOT) : LandingMove.EvaluateEaseOut();
+    return LerpRectangle(LandingFrom, Destination, Alpha);
+}
+
+void FDockingArea::SettleDrop(const String& PanelId)
+{
+    if (!bHasLanding && LandingFade.EvaluateEaseOut() <= 0.0f)
+    {
+        return;
+    }
+
+    LandingFrom             = GetDisplayedLandingBounds();
+    LandingTo               = LandingFrom;
+    SettlingPanelId         = PanelId;
+    bHasLanding             = false;
+    bLandingTracksDecorator = false;
+    bLandingOvershoots      = false;
+
+    LandingMove.Start(DROP_SETTLE_SECONDS, 0.0f, 1.0f);
+    LandingFade.Start(DROP_SETTLE_SECONDS, LandingFade.Evaluate(), 0.0f);
+    InvalidatePaint();
+}
+
+void FDockingArea::UpdateDropPreview()
+{
+    const FDockDragState& DragState = FDockDragState::Get();
+
+    const bool bIsTarget = bIsDropTarget && DragState.IsDragging() && DragState.GetTargetArea() == this;
+    if (bIsTarget)
+    {
+        const FRectangle Landing = ComputeDropBounds(DragState.GetTargetPanelId(), DragState.GetTargetDirection());
+        if (!bHasLanding)
+        {
+            const FRectangle Decorator = GetDecoratorClientBounds();
+            if (LandingFade.Evaluate() > 0.0f)
+            {
+                LandingFrom = GetDisplayedLandingBounds();
+            }
+            else
+            {
+                LandingFrom = Decorator.IsEmpty() ? Landing : Decorator;
+            }
+
+            LandingTo = Landing;
+            LandingMove.Start(DROP_LANDING_MOVE_SECONDS, 0.0f, 1.0f);
+            LandingFade.Start(DROP_LANDING_FADE_SECONDS, LandingFade.Evaluate(), 1.0f);
+
+            SettlingPanelId.Clear();
+            bHasLanding             = true;
+            bLandingTracksDecorator = false;
+            bLandingOvershoots      = true;
+        }
+        else if (!(Landing == LandingTo))
+        {
+            LandingFrom = GetDisplayedLandingBounds();
+            LandingTo   = Landing;
+            LandingMove.Start(DROP_LANDING_MOVE_SECONDS, 0.0f, 1.0f);
+
+            bLandingOvershoots = true;
+        }
+    }
+    else if (bHasLanding)
+    {
+        LandingFrom = GetDisplayedLandingBounds();
+        LandingTo   = LandingFrom;
+
+        if (DragState.IsDragging() && !GetDecoratorClientBounds().IsEmpty())
+        {
+            LandingMove.Start(DROP_LANDING_MOVE_SECONDS, 0.0f, 1.0f);
+            bLandingTracksDecorator = true;
+        }
+        else
+        {
+            LandingMove.Settle(1.0f);
+            bLandingTracksDecorator = false;
+        }
+
+        LandingFade.Start(DROP_LANDING_MOVE_SECONDS, LandingFade.Evaluate(), 0.0f);
+
+        bHasLanding        = false;
+        bLandingOvershoots = false;
+    }
+
+    if (!TearOutMove.IsRunning())
+    {
+        RetireTearOutPicture();
+    }
+
+    TArray<FDropZone> Zones;
+
+    IntVector2 ClientPosition;
+    if (bIsDropTarget && DragState.IsDragging() && IsInCursorWindow() && GetDragClientPosition(ClientPosition)
+        && GetContentRectangle().EncapsulatesPoint(ClientPosition) && !IsOverLiftedTabStrip(ClientPosition))
+    {
+        GatherDropZones(ClientPosition, Zones);
+    }
+
+    if (Zones.IsEmpty())
+    {
+        bHasChips = false;
+    }
+    else
+    {
+        if (!bHasChips || Zones[0].TargetPanelId != ChipsTargetPanelId)
+        {
+            ChipsTargetPanelId       = Zones[0].TargetPanelId;
+            HoveredChipIndex         = -1;
+            PreviousHoveredChipIndex = -1;
+
+            ChipsFade.Start(DROP_CHIPS_FADE_SECONDS, 0.0f, 1.0f);
+            ChipHoverFade.Settle(1.0f);
+            bHasChips = true;
+        }
+
+        int32 HoveredIndex = -1;
+        for (int32 Index = 0; Index < Zones.Size(); ++Index)
+        {
+            if (Zones[Index].Bounds.EncapsulatesPoint(ClientPosition))
+            {
+                HoveredIndex = Index;
+                break;
+            }
+        }
+
+        if (HoveredIndex != HoveredChipIndex)
+        {
+            PreviousHoveredChipIndex = HoveredChipIndex;
+            HoveredChipIndex         = HoveredIndex;
+            ChipHoverFade.Start(DROP_CHIP_HOVER_SECONDS, 0.0f, 1.0f);
+        }
+    }
+
+    UpdateDropTabPreviews();
+}
+
+void FDockingArea::UpdateDropTabPreviews()
+{
+    const FDockDragState& DragState = FDockDragState::Get();
+
+    const FDockNode* TargetNode = nullptr;
+    if (DragState.IsDragging() && DragState.GetTargetArea() == this && DragState.GetTargetDirection() == EDockDirection::Center)
+    {
+        TargetNode = DragState.GetTargetPanelId().IsEmpty() ? &Root : Root.FindTabsNode(DragState.GetTargetPanelId());
+    }
+
+    const String Label = DragState.GetDraggedPanel().Label;
+
+    for (const FLeafGeometry& Leaf : Leaves)
+    {
+        if (!Leaf.Strip)
+        {
+            continue;
+        }
+
+        if (TargetNode && TargetNode->Kind == EDockNodeKind::Tabs && Root.FindByPath(Leaf.Path) == TargetNode)
+        {
+            Leaf.Strip->SetPreviewTab(Label, DragState.GetTargetTabIndex());
+        }
+        else
+        {
+            Leaf.Strip->ClearPreviewTab();
+        }
+    }
+}
+
 FPanelOutline FDockingArea::ComputeLeafOutline(const FLeafGeometry& Leaf) const
 {
-    const bool       bShowsStrip = Leaf.Strip && !(bSuppressRootTabStrip && Leaf.Path.IsEmpty());
-    const FTabStrip* Strip       = bShowsStrip ? Leaf.Strip.Get() : nullptr;
+    // A strip lifted into the title bar still frames the panel, as long as it has been placed there
+    const FTabStrip* Strip = (Leaf.Strip && Leaf.Strip->GetParentElement().IsValid()) ? Leaf.Strip.Get() : nullptr;
 
     return ComputePanelOutline(Leaf.Frame->GetContentRectangle(), Strip, TabStyle, FUIStyle::GetDefault().Panel);
 }
@@ -257,6 +573,23 @@ FDockingArea::FDockingArea()
     , bIsDropTarget(true)
     , bNeedsRebuild(false)
     , bSuppressRootTabStrip(false)
+    , LandingFrom()
+    , LandingTo()
+    , LandingMove()
+    , LandingFade()
+    , SettlingPanelId()
+    , bHasLanding(false)
+    , bLandingTracksDecorator(false)
+    , bLandingOvershoots(false)
+    , TearOutFrom()
+    , TearOutPicture(nullptr)
+    , TearOutMove()
+    , ChipsTargetPanelId()
+    , ChipsFade()
+    , ChipHoverFade()
+    , HoveredChipIndex(-1)
+    , PreviousHoveredChipIndex(-1)
+    , bHasChips(false)
     , OnPanelTornOutDelegate()
     , OnPanelClosedDelegate()
 {
@@ -264,6 +597,8 @@ FDockingArea::FDockingArea()
 
 FDockingArea::~FDockingArea()
 {
+    RetireTearOutPicture();
+
     if (FDockDragState::IsInitialized())
     {
         FDockDragState::Get().UnregisterArea(this);
@@ -420,7 +755,7 @@ bool FDockingArea::RestoreLayoutFromFile(const String& Filename)
     return true;
 }
 
-void FDockingArea::DockPanel(const String& PanelId, const String& TargetPanelId, EDockDirection Direction)
+void FDockingArea::DockPanel(const String& PanelId, const String& TargetPanelId, EDockDirection Direction, int32 TabIndex)
 {
     if (PanelId.IsEmpty() || !PanelsById.Contains(PanelId))
     {
@@ -442,7 +777,7 @@ void FDockingArea::DockPanel(const String& PanelId, const String& TargetPanelId,
         TargetNode = &Root;
     }
 
-    DockAgainstNode(*TargetNode, PanelId, Direction);
+    DockAgainstNode(*TargetNode, PanelId, Direction, TabIndex);
 
     Root.CollapseDegenerateNodes();
     RequestRebuild();
@@ -484,6 +819,8 @@ void FDockingArea::GatherDropZones(const IntVector2& ClientPosition, TArray<FDro
         FDropZone StripZone;
         StripZone.Bounds        = GetLiftedTabStripBounds();
         StripZone.TargetPanelId = GetActiveTabId(Root);
+        StripZone.bIsTabStrip   = true;
+        StripZone.Strip         = GetRootTabStrip().Get();
 
         OutZones.Add(StripZone);
         return;
@@ -519,6 +856,8 @@ void FDockingArea::GatherDropZones(const IntVector2& ClientPosition, TArray<FDro
         FDropZone StripZone;
         StripZone.Bounds        = Leaf.Strip->GetContentRectangle();
         StripZone.TargetPanelId = TargetPanelId;
+        StripZone.bIsTabStrip   = true;
+        StripZone.Strip         = Leaf.Strip.Get();
 
         OutZones.Add(StripZone);
     }
@@ -555,10 +894,11 @@ void FDockingArea::GatherDropZones(const IntVector2& ClientPosition, TArray<FDro
     }
 }
 
-bool FDockingArea::HitTestDropTarget(const IntVector2& ScreenPosition, String& OutTargetPanelId, EDockDirection& OutDirection) const
+bool FDockingArea::HitTestDropTarget(const IntVector2& ScreenPosition, String& OutTargetPanelId, EDockDirection& OutDirection, int32& OutTabIndex) const
 {
     OutTargetPanelId.Clear();
     OutDirection = EDockDirection::Center;
+    OutTabIndex  = -1;
 
     if (!FApplication::IsInitialized())
     {
@@ -586,6 +926,7 @@ bool FDockingArea::HitTestDropTarget(const IntVector2& ScreenPosition, String& O
         {
             OutTargetPanelId = Zone.TargetPanelId;
             OutDirection     = Zone.Direction;
+            OutTabIndex      = (Zone.bIsTabStrip && Zone.Strip) ? Zone.Strip->FindDropIndex(ClientPosition.X) : -1;
             return true;
         }
     }
@@ -670,6 +1011,19 @@ bool FDockingArea::IsPanelDocked(const String& PanelId) const
     return Root.FindTabsNode(PanelId) != nullptr;
 }
 
+String FDockingArea::GetMiddlePanelId() const
+{
+    const FRectangle& Bounds = GetContentRectangle();
+
+    const FDockNode* MiddleNode = Root.FindMostCentralTabsNode(static_cast<float>(Bounds.Width), static_cast<float>(Bounds.Height));
+    if (!MiddleNode || MiddleNode->TabIds.IsEmpty())
+    {
+        return String();
+    }
+
+    return MiddleNode->TabIds[Math::Clamp(MiddleNode->ActiveTabIndex, 0, MiddleNode->TabIds.Size() - 1)];
+}
+
 bool FDockingArea::IsPanelVisible(const String& PanelId) const
 {
     const FDockNode* Node = Root.FindTabsNode(PanelId);
@@ -708,6 +1062,8 @@ bool FDockingArea::GetPanelRegistration(const String& PanelId, String& OutLabel,
 void FDockingArea::RequestRebuild()
 {
     bNeedsRebuild = true;
+
+    InvalidateDesiredSize();
 }
 
 void FDockingArea::FlushPendingRebuild()
@@ -726,8 +1082,10 @@ void FDockingArea::FlushPendingRebuild()
         return;
     }
 
+    const int32 Gap = FUIStyle::GetDefault().Panel.Gap;
+
     FBorder::FDesc OutsetDesc;
-    OutsetDesc.Padding = FMargin(FUIStyle::GetDefault().Panel.Gap);
+    OutsetDesc.Padding = bSuppressRootTabStrip ? FMargin(Gap, 0, Gap, Gap) : FMargin(Gap);
     OutsetDesc.Content = BuildNode(Root, TArray<int32>());
 
     SetContent(FBorder::Create(OutsetDesc));
@@ -864,6 +1222,13 @@ FRectangle FDockingArea::ComputeDropBounds(const String& TargetPanelId, EDockDir
         if (Root.FindByPath(Leaf.Path) == TargetNode && Leaf.Frame)
         {
             LeafBounds = Leaf.Frame->GetContentRectangle();
+
+            if (Direction == EDockDirection::Center && IsShowingStrip(Leaf))
+            {
+                const int32 BodyTop = Math::Clamp(Leaf.Strip->GetContentRectangle().GetBottom(), LeafBounds.Position.Y, LeafBounds.GetBottom());
+                LeafBounds = FRectangle(IntVector2(LeafBounds.Position.X, BodyTop), LeafBounds.Width, LeafBounds.GetBottom() - BodyTop);
+            }
+
             break;
         }
     }
@@ -902,6 +1267,36 @@ FRectangle FDockingArea::ComputeDropBounds(const String& TargetPanelId, EDockDir
     return DropBounds;
 }
 
+bool FDockingArea::IsInCursorWindow() const
+{
+    const FWindow* CursorWindow = FDockDragState::Get().GetCursorWindow();
+    if (!CursorWindow || !FApplication::IsInitialized())
+    {
+        return false;
+    }
+
+    return FApplication::Get().FindWindow(const_cast<FDockingArea*>(this)->AsSharedPtr()).Get() == CursorWindow;
+}
+
+bool FDockingArea::DoesDropJoinTabStrip(const String& TargetPanelId, EDockDirection Direction) const
+{
+    if (Direction != EDockDirection::Center)
+    {
+        return false;
+    }
+
+    const FDockNode* TargetNode = TargetPanelId.IsEmpty() ? &Root : Root.FindTabsNode(TargetPanelId);
+    for (const FLeafGeometry& Leaf : Leaves)
+    {
+        if (Root.FindByPath(Leaf.Path) == TargetNode)
+        {
+            return Leaf.Strip != nullptr;
+        }
+    }
+
+    return false;
+}
+
 bool FDockingArea::GetDropPreviewBounds(const String& TargetPanelId, EDockDirection Direction, FRectangle& OutBounds) const
 {
     OutBounds = FRectangle();
@@ -932,69 +1327,114 @@ bool FDockingArea::GetDropPreviewBounds(const String& TargetPanelId, EDockDirect
 int32 FDockingArea::DrawDropZones(FDrawCommandList& OutCommandList, int32 LayerId) const
 {
     const FDockDragState& DragState = FDockDragState::Get();
-    if (!bIsDropTarget || !DragState.IsDragging() || !FApplication::IsInitialized())
+    if (!bIsDropTarget)
     {
         return LayerId;
     }
 
-    TSharedPtr<FWindow> Window = FApplication::Get().FindWindow(const_cast<FDockingArea*>(this)->AsSharedPtr());
-    if (!Window)
+    if (LandingMove.IsRunning() || LandingFade.IsRunning() || ChipsFade.IsRunning() || ChipHoverFade.IsRunning() || TearOutMove.IsRunning())
     {
-        return LayerId;
-    }
-
-    const IntVector2 ClientPosition = DragState.GetCursorPosition() - Window->GetPosition();
-    if (!GetContentRectangle().EncapsulatesPoint(ClientPosition) && !IsOverLiftedTabStrip(ClientPosition))
-    {
-        return LayerId;
+        RequestContinuousPaint();
     }
 
     const FUIStyle& Style = FUIStyle::GetDefault();
-    if (DragState.GetTargetArea() == this)
-    {
-        const FRectangle LandingBounds = ComputeDropBounds(DragState.GetTargetPanelId(), DragState.GetTargetDirection());
-        if (!LandingBounds.IsEmpty())
-        {
-            FRHITexture* const Ghost = FDockWindowManager::IsInitialized() ? FDockWindowManager::Get().GetDropPreviewTexture() : nullptr;
-            if (Ghost)
-            {
-                OutCommandList.AddImage(LayerId, LandingBounds, FUIBrush(Ghost), FFloatColor(1.0f, 1.0f, 1.0f, DROP_ZONE_GHOST_OPACITY));
-            }
-            else
-            {
-                OutCommandList.AddBox(LayerId, LandingBounds, FFloatColor(DROP_ZONE_HOVER_GRAY, DROP_ZONE_HOVER_GRAY, DROP_ZONE_HOVER_GRAY, DROP_ZONE_LANDING_OPACITY));
-            }
 
-            OutCommandList.AddBoxOutline(LayerId, LandingBounds, Style.Colors.Accent, Style.Metrics.BorderThickness);
+    if (TearOutPicture && TearOutMove.IsRunning())
+    {
+        const FRectangle TearOutBounds = GetDisplayedTearOutBounds();
+        if (!TearOutBounds.IsEmpty())
+        {
+            const float Opacity = Math::Lerp(1.0f, FDockWindowManager::DecoratorOpacity, TearOutMove.EvaluateEaseOut());
+            OutCommandList.AddImage(LayerId, TearOutBounds, FUIBrush(TearOutPicture.Get()), FFloatColor(1.0f, 1.0f, 1.0f, Opacity), FCornerRadii(Style.Panel.CornerRadius));
         }
     }
 
-    TArray<FDropZone> Zones;
-    if (!IsOverLiftedTabStrip(ClientPosition))
+    const auto SelectionTint = [&Style](float Opacity)
     {
-        GatherDropZones(ClientPosition, Zones);
+        FFloatColor Tint = Style.TreeRow.SelectedFill;
+        Tint.A *= Opacity;
+        return Tint;
+    };
+
+    const float LandingOpacity = LandingFade.EvaluateEaseOut();
+    if (LandingOpacity > 0.0f)
+    {
+        const FRectangle LandingBounds = GetDisplayedLandingBounds();
+        if (!LandingBounds.IsEmpty())
+        {
+            const FCornerRadii LandingRadii(Style.Panel.CornerRadius);
+
+            const bool         bShowsGhost = bHasLanding && DragState.IsDragging() && DragState.GetTargetArea() == this && FDockWindowManager::IsInitialized();
+            FRHITexture* const Ghost       = bShowsGhost ? FDockWindowManager::Get().GetDropPreviewTexture() : nullptr;
+            if (Ghost)
+            {
+                OutCommandList.AddImage(LayerId, LandingBounds, FUIBrush(Ghost), FFloatColor(1.0f, 1.0f, 1.0f, DROP_ZONE_GHOST_OPACITY * LandingOpacity), LandingRadii);
+            }
+            else
+            {
+                OutCommandList.AddBox(LayerId, LandingBounds, SelectionTint(DROP_ZONE_LANDING_OPACITY * LandingOpacity), LandingRadii);
+            }
+
+            OutCommandList.AddBoxOutline(LayerId, LandingBounds, SelectionTint(LandingOpacity), Style.Metrics.BorderThickness, LandingRadii);
+        }
     }
 
     const int32 ChipLayerId = LayerId + 1;
-    for (const FDropZone& Zone : Zones)
-    {
-        const bool  bIsHovered = Zone.Bounds.EncapsulatesPoint(ClientPosition);
-        const float Gray       = bIsHovered ? DROP_ZONE_HOVER_GRAY : DROP_ZONE_CHIP_GRAY;
-        const float Opacity    = bIsHovered ? DROP_ZONE_HOVER_OPACITY : DROP_ZONE_CHIP_OPACITY;
 
-        OutCommandList.AddBox(ChipLayerId, Zone.Bounds, FFloatColor(Gray, Gray, Gray, Opacity));
-        OutCommandList.AddBoxOutline(ChipLayerId, Zone.Bounds, Style.Colors.Border, Style.Metrics.BorderThickness);
+    IntVector2 ClientPosition;
+    if (!DragState.IsDragging() || !IsInCursorWindow() || !GetDragClientPosition(ClientPosition))
+    {
+        return ChipLayerId;
+    }
+
+    if (!GetContentRectangle().EncapsulatesPoint(ClientPosition) || IsOverLiftedTabStrip(ClientPosition))
+    {
+        return ChipLayerId;
+    }
+
+    TArray<FDropZone> Zones;
+    GatherDropZones(ClientPosition, Zones);
+
+    const FCornerRadii ChipRadii(DROP_ZONE_CHIP_CORNER_RADIUS);
+
+    const float ChipsOpacity = ChipsFade.EvaluateEaseOut();
+    const float HoverBlend   = ChipHoverFade.EvaluateEaseOut();
+
+    for (int32 Index = 0; Index < Zones.Size(); ++Index)
+    {
+        if (Zones[Index].bIsTabStrip)
+        {
+            continue;
+        }
+
+        float Hover = 0.0f;
+        if (Index == HoveredChipIndex)
+        {
+            Hover = HoverBlend;
+        }
+        else if (Index == PreviousHoveredChipIndex)
+        {
+            Hover = 1.0f - HoverBlend;
+        }
+
+        const float FillOpacity    = Math::Lerp(DROP_ZONE_CHIP_OPACITY, DROP_ZONE_HOVER_OPACITY, Hover) * ChipsOpacity;
+        const float OutlineOpacity = Math::Lerp(DROP_ZONE_CHIP_OUTLINE_OPACITY, DROP_ZONE_HOVER_OUTLINE_OPACITY, Hover) * ChipsOpacity;
+
+        OutCommandList.AddBox(ChipLayerId, Zones[Index].Bounds, SelectionTint(FillOpacity), ChipRadii);
+        OutCommandList.AddBoxOutline(ChipLayerId, Zones[Index].Bounds, SelectionTint(OutlineOpacity), Style.Metrics.BorderThickness, ChipRadii);
     }
 
     return ChipLayerId;
 }
 
-void FDockingArea::DockAgainstNode(FDockNode& TargetNode, const String& PanelId, EDockDirection Direction)
+void FDockingArea::DockAgainstNode(FDockNode& TargetNode, const String& PanelId, EDockDirection Direction, int32 TabIndex)
 {
     if (Direction == EDockDirection::Center && TargetNode.Kind == EDockNodeKind::Tabs)
     {
-        TargetNode.TabIds.Add(PanelId);
-        TargetNode.ActiveTabIndex = TargetNode.TabIds.Size() - 1;
+        const int32 InsertIndex = (TabIndex >= 0 && TabIndex <= TargetNode.TabIds.Size()) ? TabIndex : TargetNode.TabIds.Size();
+
+        TargetNode.TabIds.Insert(InsertIndex, PanelId);
+        TargetNode.ActiveTabIndex = InsertIndex;
         return;
     }
 

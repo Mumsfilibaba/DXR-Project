@@ -37,6 +37,17 @@ struct APPLICATION_API FUIAnimation
     /** @return The value at the current UI time, which is the target once the move is done. */
     NODISCARD float Evaluate() const;
 
+    /** @return The value at the current UI time eased out, so the move starts quickly and slows down as it settles. */
+    NODISCARD float EvaluateEaseOut() const;
+
+    /**
+     * @brief Evaluates the move eased out past its target, so it overshoots a little before settling back on it.
+     *
+     * @param Overshoot How far past the target the move swings, where 1.70158 is the classic ease-out-back and zero is a plain cubic ease-out.
+     * @return The value at the current UI time, which can lie beyond the target while the move swings back.
+     */
+    NODISCARD float EvaluateEaseOutBack(float Overshoot = 1.70158f) const;
+
     /** @return True while the move has not reached its target. */
     NODISCARD bool IsRunning() const;
 

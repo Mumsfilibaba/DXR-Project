@@ -1,5 +1,7 @@
+#include "Application/Application.h"
 #include "Application/Docking/DockDragState.h"
 #include "Application/Docking/DockingArea.h"
+#include "Application/Elements/Window.h"
 #include "Core/Containers/UniquePtr.h"
 
 TUniquePtr<FDockDragState> FDockDragState::DockDragState = nullptr;
@@ -33,10 +35,13 @@ FDockDragState::FDockDragState()
     , DraggedPanelLabel()
     , DraggedPanelContent(nullptr)
     , SourceArea(nullptr)
+    , SourceScreenBounds()
     , TargetArea(nullptr)
     , TargetPanelId()
     , TargetDirection(EDockDirection::Center)
+    , TargetTabIndex(-1)
     , CursorPosition()
+    , CursorWindow(nullptr)
     , RegisteredAreas()
     , OnDragBeganDelegate()
     , OnDropOutsideDelegate()
@@ -57,10 +62,13 @@ void FDockDragState::BeginDrag(const String& PanelId, FDockingArea* InSourceArea
     DraggedPanelLabel   = PanelId;
     DraggedPanelContent = nullptr;
     SourceArea          = InSourceArea;
+    SourceScreenBounds  = FRectangle();
     CursorPosition      = ScreenPosition;
 
     if (InSourceArea)
     {
+        SourceScreenBounds = InSourceArea->GetPanelScreenBounds(PanelId);
+
         String                     Label;
         TSharedPtr<FVisualElement> Panel;
 
@@ -84,6 +92,7 @@ void FDockDragState::InvalidateDropZones() const
     {
         if (Area)
         {
+            Area->UpdateDropPreview();
             Area->InvalidatePaint();
         }
     }
@@ -93,10 +102,11 @@ void FDockDragState::UpdateDrag(const IntVector2& ScreenPosition)
 {
     CursorPosition = ScreenPosition;
 
-    InvalidateDropZones();
+    CursorWindow = FApplication::IsInitialized() ? FApplication::Get().FindWindowUnderCursor().Get() : nullptr;
 
     if (!IsDragging())
     {
+        InvalidateDropZones();
         return;
     }
 
@@ -105,18 +115,27 @@ void FDockDragState::UpdateDrag(const IntVector2& ScreenPosition)
     for (int32 Index = RegisteredAreas.Size() - 1; Index >= 0; --Index)
     {
         FDockingArea* const Area = RegisteredAreas[Index];
+        if (!Area->IsInCursorWindow())
+        {
+            continue;
+        }
 
         String PanelId;
         
         EDockDirection Direction = EDockDirection::Center;
-        if (Area->HitTestDropTarget(ScreenPosition, PanelId, Direction))
+        int32          TabIndex  = -1;
+
+        if (Area->HitTestDropTarget(ScreenPosition, PanelId, Direction, TabIndex))
         {
             TargetArea      = Area;
             TargetPanelId   = PanelId;
             TargetDirection = Direction;
-            return;
+            TargetTabIndex  = TabIndex;
+            break;
         }
     }
+
+    InvalidateDropZones();
 }
 
 void FDockDragState::EndDrag()
@@ -130,13 +149,14 @@ void FDockDragState::EndDrag()
     FDockingArea* const  Area         = TargetArea;
     const String         TargetId     = TargetPanelId;
     const EDockDirection Direction    = TargetDirection;
+    const int32          TabIndex     = TargetTabIndex;
     const IntVector2     DropPosition = CursorPosition;
 
     DraggedPanelId.Clear();
     DraggedPanelLabel.Clear();
+    
     DraggedPanelContent = nullptr;
-
-    SourceArea = nullptr;
+    SourceArea          = nullptr;
 
     ClearTarget();
     InvalidateDropZones();
@@ -144,7 +164,8 @@ void FDockDragState::EndDrag()
     if (Area)
     {
         Area->RegisterPanel(Panel.PanelId, Panel.Label, Panel.Content);
-        Area->DockPanel(Panel.PanelId, TargetId, Direction);
+        Area->DockPanel(Panel.PanelId, TargetId, Direction, TabIndex);
+        Area->SettleDrop(Panel.PanelId);
     }
     else
     {
@@ -165,9 +186,9 @@ void FDockDragState::CancelDrag()
 
     DraggedPanelId.Clear();
     DraggedPanelLabel.Clear();
-    DraggedPanelContent = nullptr;
 
-    SourceArea = nullptr;
+    DraggedPanelContent = nullptr;
+    SourceArea          = nullptr;
 
     ClearTarget();
     InvalidateDropZones();
@@ -181,10 +202,11 @@ void FDockDragState::CancelDrag()
 FDockDragPanel FDockDragState::GetDraggedPanel() const
 {
     FDockDragPanel Panel;
-    Panel.PanelId    = DraggedPanelId;
-    Panel.Label      = DraggedPanelLabel;
-    Panel.Content    = DraggedPanelContent;
-    Panel.SourceArea = SourceArea;
+    Panel.PanelId            = DraggedPanelId;
+    Panel.Label              = DraggedPanelLabel;
+    Panel.Content            = DraggedPanelContent;
+    Panel.SourceArea         = SourceArea;
+    Panel.SourceScreenBounds = SourceScreenBounds;
 
     return Panel;
 }
@@ -231,6 +253,7 @@ void FDockDragState::ClearTarget()
 {
     TargetArea      = nullptr;
     TargetDirection = EDockDirection::Center;
+    TargetTabIndex  = -1;
 
     TargetPanelId.Clear();
 }

@@ -16,6 +16,10 @@ static TAutoConsoleVariable<bool> CVarDecoratorSnapshot(
     false,
     EConsoleVariableFlags::Default);
 
+constexpr float DECORATOR_FADE_OUT_SECONDS = 0.08f;
+constexpr float DECORATOR_FADE_IN_SECONDS  = 0.15f;
+constexpr float DECORATOR_TEAR_OUT_SECONDS = 0.20f;
+
 TUniquePtr<FDockWindowManager> FDockWindowManager::DockWindowManager = nullptr;
 
 FDockWindowManager& FDockWindowManager::Get()
@@ -47,7 +51,13 @@ FDockWindowManager::FDockWindowManager()
     , Hosts()
     , DecoratorWindow(nullptr)
     , DecoratorArea(nullptr)
+    , DecoratorTitleBar(nullptr)
     , DecoratorGrabOffset()
+    , DecoratorFade()
+    , DecoratorTearOut()
+    , DecoratorAppliedOpacity(-1.0f)
+    , bDecoratorShown(false)
+    , bDecoratorAwaitsTearOut(false)
     , DropPreviews()
 {
 }
@@ -73,6 +83,8 @@ void FDockWindowManager::Initialize(const FDesc& InDesc)
 
 void FDockWindowManager::Tick()
 {
+    UpdateDecoratorOpacity();
+
     for (int32 Index = Hosts.Size() - 1; Index >= 0; --Index)
     {
         const TSharedPtr<FWindow>      Window = Hosts[Index].Window;
@@ -93,6 +105,11 @@ void FDockWindowManager::Tick()
             }
 
             Window->SetTitle(Title);
+        }
+
+        if (const TSharedPtr<FTitleBar>& TitleBar = Hosts[Index].TitleBar)
+        {
+            TitleBar->SyncWindowMetrics();
         }
 
         SyncHostChrome(Hosts[Index]);
@@ -193,6 +210,53 @@ void FDockWindowManager::MoveDecorator(const IntVector2& ScreenPosition)
     DecoratorWindow->MoveTo(ScreenPosition - DecoratorGrabOffset);
 }
 
+FRectangle FDockWindowManager::GetDecoratorScreenBounds() const
+{
+    if (!DecoratorWindow)
+    {
+        return FRectangle();
+    }
+
+    const IntVector2 Size = DecoratorWindow->GetSize();
+    return FRectangle(DecoratorWindow->GetPosition(), Size.X, Size.Y);
+}
+
+void FDockWindowManager::UpdateDecoratorOpacity()
+{
+    if (!DecoratorWindow)
+    {
+        return;
+    }
+
+    const bool bShouldShow = !DecoratorTearOut.IsRunning() && FDockDragState::Get().GetTargetArea() == nullptr;
+    if (bShouldShow != bDecoratorShown)
+    {
+        if (bShouldShow && bDecoratorAwaitsTearOut)
+        {
+            DecoratorFade.Settle(1.0f);
+        }
+        else
+        {
+            const float Duration = bShouldShow ? DECORATOR_FADE_IN_SECONDS : DECORATOR_FADE_OUT_SECONDS;
+            DecoratorFade.Start(Duration, DecoratorFade.Evaluate(), bShouldShow ? 1.0f : 0.0f);
+        }
+
+        bDecoratorShown = bShouldShow;
+    }
+
+    if (!DecoratorTearOut.IsRunning())
+    {
+        bDecoratorAwaitsTearOut = false;
+    }
+
+    const float Opacity = DecoratorOpacity * DecoratorFade.EvaluateEaseOut();
+    if (Opacity != DecoratorAppliedOpacity)
+    {
+        DecoratorWindow->SetOpacity(Opacity);
+        DecoratorAppliedOpacity = Opacity;
+    }
+}
+
 void FDockWindowManager::UpdateDropPreview()
 {
     const FDockDragState& DragState = FDockDragState::Get();
@@ -221,10 +285,21 @@ void FDockWindowManager::UpdateDropPreview()
         return;
     }
 
+    const bool bHideStrip = Target->DoesDropJoinTabStrip(DragState.GetTargetPanelId(), DragState.GetTargetDirection());
+    if (DecoratorTitleBar)
+    {
+        DecoratorTitleBar->SetLeadingContent(nullptr);
+    }
+
+    DecoratorArea->SetSuppressRootTabStrip(bHideStrip);
+    DecoratorArea->FlushPendingRebuild();
+
     DecoratorArea->PrepareDesiredSize();
     DecoratorArea->Arrange(FRectangle(IntVector2(0, 0), PreviewSize.X, PreviewSize.Y));
 
     FRHITextureRef Texture = Renderer->RenderElementToTexture(DecoratorArea, PreviewSize, 1.0f);
+
+    LiftRootTabStrip(DecoratorArea, DecoratorTitleBar, true);
 
     FApplication::LayoutWindow(DecoratorWindow);
 
@@ -314,8 +389,9 @@ void FDockWindowManager::DestroyDecorator()
     const TSharedPtr<FWindow>      Window = DecoratorWindow;
     const TSharedPtr<FDockingArea> Area   = DecoratorArea;
 
-    DecoratorWindow = nullptr;
-    DecoratorArea   = nullptr;
+    DecoratorWindow   = nullptr;
+    DecoratorArea     = nullptr;
+    DecoratorTitleBar = nullptr;
 
     if (Area)
     {
@@ -575,15 +651,62 @@ void FDockWindowManager::OnDragBegan(const FDockDragPanel& Panel, const IntVecto
     Area->RegisterPanel(Panel.PanelId, Panel.Label, Panel.Content);
     Area->DockPanel(Panel.PanelId, String(), EDockDirection::Center);
 
-    Window->SetContent(Area);
-    Window->SetOpacity(DecoratorOpacity);
+    FTitleBar::FDesc TitleBarDesc;
+    TitleBarDesc.Title = WindowDesc.Title;
+    TitleBarDesc.Font  = AreaDesc.Font;
 
-    DecoratorWindow = Window;
-    DecoratorArea   = Area;
+    TSharedPtr<FTitleBar> TitleBar = FTitleBar::Create(TitleBarDesc);
+    if (!TitleBar)
+    {
+        return;
+    }
+
+    TSharedPtr<FVerticalBox> Root = FVerticalBox::Create();
+    Root->AddSlot(TitleBar);
+    Root->AddSlot(Area).SetFillCoefficient(1.0f);
+
+    Window->SetContent(Root);
+
+    DecoratorWindow   = Window;
+    DecoratorArea     = Area;
+    DecoratorTitleBar = TitleBar;
 
     FApplication::Get().CreateWindow(Window);
 
     FApplication::LayoutWindow(Window);
+
+    DecoratorFade.Settle(0.0f);
+    DecoratorTearOut.Settle(0.0f);
+
+    DecoratorAppliedOpacity = -1.0f;
+    bDecoratorShown         = false;
+    bDecoratorAwaitsTearOut = false;
+
+    TSharedPtr<IApplicationRenderer> Renderer = FApplication::Get().GetRenderer();
+    if (Panel.SourceArea && !Panel.SourceScreenBounds.IsEmpty() && Renderer)
+    {
+        const IntVector2 SourceSize(Panel.SourceScreenBounds.Width, Panel.SourceScreenBounds.Height);
+
+        Area->SetSuppressRootTabStrip(true);
+        Area->FlushPendingRebuild();
+
+        Area->PrepareDesiredSize();
+        Area->Arrange(FRectangle(IntVector2(0, 0), SourceSize.X, SourceSize.Y));
+
+        FRHITextureRef Picture = Renderer->RenderElementToTexture(Area, SourceSize, 1.0f);
+
+        if (Picture)
+        {
+            Panel.SourceArea->BeginTearOut(Panel.SourceScreenBounds, Picture);
+            DecoratorTearOut.Start(DECORATOR_TEAR_OUT_SECONDS, 0.0f, 1.0f);
+            bDecoratorAwaitsTearOut = true;
+        }
+    }
+
+    LiftRootTabStrip(Area, TitleBar, true);
+    FApplication::LayoutWindow(Window);
+
+    UpdateDecoratorOpacity();
 
     if (CVarDecoratorSnapshot.GetValue())
     {
@@ -605,7 +728,13 @@ void FDockWindowManager::SnapshotDecorator()
     }
 
     const IntVector2 Size = DecoratorWindow->GetSize();
-    FRHITextureRef Snapshot = Renderer->RenderElementToTexture(DecoratorArea, Size, DecoratorWindow->GetWindowDPIScale());
+    const TSharedPtr<FVisualElement> Content = DecoratorWindow->GetContent();
+    if (!Content)
+    {
+        return;
+    }
+
+    FRHITextureRef Snapshot = Renderer->RenderElementToTexture(Content, Size, DecoratorWindow->GetWindowDPIScale());
     if (!Snapshot)
     {
         return;
@@ -690,6 +819,25 @@ void FDockWindowManager::CloseHost(int32 HostIndex)
     }
 }
 
+void FDockWindowManager::LiftRootTabStrip(const TSharedPtr<FDockingArea>& Area, const TSharedPtr<FTitleBar>& TitleBar, bool bLift)
+{
+    if (!Area || !TitleBar)
+    {
+        return;
+    }
+
+    Area->SetSuppressRootTabStrip(bLift);
+    Area->FlushPendingRebuild();
+
+    TitleBar->SetLeadingContent(bLift ? StaticCastSharedPtr<FVisualElement>(Area->GetRootTabStrip()) : nullptr);
+
+    const FUIPanelChromeStyle& PanelStyle = FUIStyle::GetDefault().Panel;
+    const int32                EdgeInset  = PanelStyle.Gap + Math::RoundToInt(PanelStyle.BorderThickness);
+
+    TitleBar->SetLeadingInsetOverride(bLift ? EdgeInset : -1);
+    TitleBar->SetLeadingContentTopPadding(bLift ? EdgeInset - FUIStyle::GetDefault().Tab.TopInset : 0);
+}
+
 void FDockWindowManager::SyncHostChrome(FHost& Host)
 {
     if (!Host.Area || !Host.TitleBar)
@@ -700,10 +848,7 @@ void FDockWindowManager::SyncHostChrome(FHost& Host)
     Host.Area->FlushPendingRebuild();
 
     const bool bUnsplit = Host.Area->SaveLayout().Kind == EDockNodeKind::Tabs;
-    Host.Area->SetSuppressRootTabStrip(bUnsplit);
-    Host.Area->FlushPendingRebuild();
-
-    Host.TitleBar->SetLeadingContent(bUnsplit ? StaticCastSharedPtr<FVisualElement>(Host.Area->GetRootTabStrip()) : nullptr);
+    LiftRootTabStrip(Host.Area, Host.TitleBar, bUnsplit);
 }
 
 void FDockWindowManager::ReturnPanelRegistrationsToMainArea(const TSharedPtr<FDockingArea>& Area)

@@ -282,6 +282,8 @@ FTitleBar::FTitleBar()
     , TrailingSpacer(nullptr)
     , TitleLabel(nullptr)
     , LeadingContent(nullptr)
+    , LeadingInsetOverride(-1)
+    , LeadingContentTopPadding(0)
     , CaptionButtonRow(nullptr)
     , CaptionButtons()
 {
@@ -402,6 +404,34 @@ void FTitleBar::SetTitle(const String& InTitle)
     }
 }
 
+void FTitleBar::SetLeadingInsetOverride(int32 InLeadingInset)
+{
+    const int32 NewOverride = Math::Max(InLeadingInset, -1);
+    if (LeadingInsetOverride != NewOverride)
+    {
+        LeadingInsetOverride = NewOverride;
+        InvalidateDesiredSize();
+    }
+}
+
+void FTitleBar::SetLeadingContentTopPadding(int32 InTopPadding)
+{
+    const int32 NewPadding = Math::Max(InTopPadding, 0);
+    if (LeadingContentTopPadding == NewPadding)
+    {
+        return;
+    }
+
+    LeadingContentTopPadding = NewPadding;
+
+    const TSharedPtr<FVisualElement> PlacedContent = LeadingContent;
+    if (PlacedContent)
+    {
+        SetLeadingContent(nullptr);
+        SetLeadingContent(PlacedContent);
+    }
+}
+
 void FTitleBar::SetLeadingContent(const TSharedPtr<FVisualElement>& InContent)
 {
     if (LeadingContent == InContent)
@@ -414,7 +444,9 @@ void FTitleBar::SetLeadingContent(const TSharedPtr<FVisualElement>& InContent)
         LeadingHost->ClearSlots();
         if (InContent)
         {
-            LeadingHost->AddSlot(InContent).SetVerticalAlignment(EVerticalAlignment::Fill);
+            LeadingHost->AddSlot(InContent)
+                .SetVerticalAlignment(EVerticalAlignment::Bottom)
+                .SetPadding(FMargin(0, LeadingContentTopPadding, 0, 0));
         }
     }
 
@@ -435,6 +467,25 @@ void FTitleBar::SetLeadingContent(const TSharedPtr<FVisualElement>& InContent)
     }
 }
 
+void FTitleBar::SyncWindowMetrics()
+{
+    TSharedPtr<FWindow> Window = OwningWindow.IsValid() ? TSharedPtr<FWindow>(OwningWindow) : FApplication::Get().FindWindow(AsSharedPtr());
+    if (!Window)
+    {
+        return;
+    }
+
+    const FWindowTitleBarMetrics Current = Window->GetTitleBarMetrics();
+
+    const bool bChanged = Current.Height != Metrics.Height || Current.LeadingInset != Metrics.LeadingInset
+        || Current.TrailingInset != Metrics.TrailingInset || Current.CaptionButtonWidth != Metrics.CaptionButtonWidth;
+
+    if (bChanged)
+    {
+        InvalidateDesiredSize();
+    }
+}
+
 void FTitleBar::RefreshMetrics()
 {
     TSharedPtr<FWindow> Window = OwningWindow.IsValid() ? TSharedPtr<FWindow>(OwningWindow) : nullptr;
@@ -448,7 +499,8 @@ void FTitleBar::RefreshMetrics()
 
     if (LeadingSpacer)
     {
-        const int32 LeadingInset = Math::Max(Math::CeilToInt(Metrics.LeadingInset), FUIStyle::GetDefault().Metrics.TitleBarLeadingInset);
+        const int32 StyleInset   = LeadingInsetOverride >= 0 ? LeadingInsetOverride : FUIStyle::GetDefault().Metrics.TitleBarLeadingInset;
+        const int32 LeadingInset = Math::Max(Math::CeilToInt(Metrics.LeadingInset), StyleInset);
         LeadingSpacer->SetSize(IntVector2(LeadingInset, 0));
     }
 

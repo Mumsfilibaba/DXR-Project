@@ -112,6 +112,9 @@ public:
      */
     void MoveDecorator(const IntVector2& ScreenPosition);
 
+    /** @return Where the dragged window is on screen, or an empty rectangle while nothing is dragged. */
+    NODISCARD FRectangle GetDecoratorScreenBounds() const;
+
     /**
      * @brief Renders the panel in flight at the size the drop it is aimed at would give it, so the area
      * under the cursor can show it where it would land rather than a rectangle standing in for it. Every
@@ -253,6 +256,7 @@ private:
     NODISCARD static String ResolveHostTitle(const TSharedPtr<FDockingArea>& Area);
 
     static void ReleaseTextureDeferred(FRHITextureRef& Texture);
+    static void LiftRootTabStrip(const TSharedPtr<FDockingArea>& Area, const TSharedPtr<FTitleBar>& TitleBar, bool bLift);
 
     NODISCARD int32 FindHostByArea(const FDockingArea* Area) const;
     NODISCARD int32 FindHostByWindow(const FWindow* Window) const;
@@ -266,13 +270,20 @@ private:
     void ClearDropPreview();
     void ReturnPanelRegistrationsToMainArea(const TSharedPtr<FDockingArea>& Area);
     void SyncHostChrome(FHost& Host);
+    void UpdateDecoratorOpacity();
 
     FDesc                    Desc;
     TArray<FHost>            Hosts;
     TSharedPtr<FWindow>      DecoratorWindow;
     TSharedPtr<FDockingArea> DecoratorArea;
+    TSharedPtr<FTitleBar>    DecoratorTitleBar;
     FRHITextureRef           DecoratorSnapshot;
     IntVector2               DecoratorGrabOffset;
+    FUIAnimation             DecoratorFade;
+    FUIAnimation             DecoratorTearOut;
+    float                    DecoratorAppliedOpacity;
+    bool                     bDecoratorShown;
+    bool                     bDecoratorAwaitsTearOut;
     TArray<FDropPreview>     DropPreviews;
 
     static TUniquePtr<FDockWindowManager> DockWindowManager;

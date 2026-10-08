@@ -8,6 +8,7 @@
 class FDockingArea;
 class FDrawCommandList;
 class FVisualElement;
+class FWindow;
 
 struct FDockDragPanel
 {
@@ -22,6 +23,9 @@ struct FDockDragPanel
 
     /** @brief The area it was torn out of, which is null once that area has gone. */
     FDockingArea* SourceArea = nullptr;
+
+    /** @brief Where the panel's body was on screen when it was torn out, empty when it was not showing. */
+    FRectangle SourceScreenBounds;
 };
 
 /** @brief Called at tear-out, which is what puts the panel on screen as something to drag. */
@@ -161,6 +165,17 @@ public:
         return CursorPosition;
     }
 
+    /**
+     * @brief The window the cursor is over, which is the only one whose areas take a drop. A window that lies under the cursor
+     * but behind another one would show its drop preview out of sight.
+     *
+     * @return The window, which is only good for comparing against, or null when the cursor is over none of the application's windows.
+     */
+    NODISCARD FORCEINLINE const FWindow* GetCursorWindow() const
+    {
+        return CursorWindow;
+    }
+
     /** @return The area the drag would drop into, or null when the cursor is over none of them. */
     NODISCARD FORCEINLINE FDockingArea* GetTargetArea() const
     {
@@ -179,6 +194,12 @@ public:
         return TargetDirection;
     }
 
+    /** @return Where among the target's tabs a drop onto a tab strip would go, or -1 when it would go after all of them. */
+    NODISCARD FORCEINLINE int32 GetTargetTabIndex() const
+    {
+        return TargetTabIndex;
+    }
+
     /** @return True when the cursor is somewhere a drop would actually land. */
     NODISCARD FORCEINLINE bool HasTarget() const
     {
@@ -193,10 +214,13 @@ private:
     String                     DraggedPanelLabel;
     TSharedPtr<FVisualElement> DraggedPanelContent;
     FDockingArea*              SourceArea;
+    FRectangle                 SourceScreenBounds;
     FDockingArea*              TargetArea;
     String                     TargetPanelId;
     EDockDirection             TargetDirection;
+    int32                      TargetTabIndex;
     IntVector2                 CursorPosition;
+    const FWindow*             CursorWindow;
     TArray<FDockingArea*>      RegisteredAreas;
     FOnDockDragBegan           OnDragBeganDelegate;
     FOnDockDropOutside         OnDropOutsideDelegate;

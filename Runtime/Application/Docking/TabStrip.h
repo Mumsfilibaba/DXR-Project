@@ -73,6 +73,36 @@ public:
     void SetCloseIcon(const FUIBrush& InCloseIcon);
 
     /**
+     * @brief Sets how opaque the whole tab is drawn, which lets a tab fade in.
+     *
+     * @param InOpacity From zero for invisible to one for fully opaque.
+     */
+    void SetOpacity(float InOpacity);
+
+    /**
+     * @brief Moves the tab to its place along the strip, sliding it there from where it was. The first place a tab is given
+     * is taken at once, so a tab that has just been added does not slide in from the strip's leading edge.
+     *
+     * @param InSlotOffset Where the tab's leading edge belongs, in pixels from the strip's unscrolled leading edge.
+     */
+    void SetSlotOffset(int32 InSlotOffset);
+
+    /** @return Where the tab's leading edge is drawn this frame, in pixels from the strip's unscrolled leading edge. */
+    NODISCARD int32 GetDisplayedSlotOffset() const;
+
+    /** @return Where the tab's leading edge belongs, in pixels from the strip's unscrolled leading edge. */
+    NODISCARD FORCEINLINE int32 GetSlotOffset() const
+    {
+        return SlotOffset;
+    }
+
+    /** @return True while the tab is still sliding to its place. */
+    NODISCARD FORCEINLINE bool IsSliding() const
+    {
+        return SlotMove.IsRunning();
+    }
+
+    /**
      * @brief Gets where the close cross sits, in the space the tab was arranged in.
      *
      * @return The rectangle, which is empty for a tab that cannot be closed.
@@ -121,6 +151,10 @@ private:
     bool                       bIsClosable;
     bool                       bIsActive;
     bool                       bIsCloseHovered;
+    bool                       bHasSlot;
+    float                      Opacity;
+    int32                      SlotOffset;
+    FUIAnimation               SlotMove;
 };
 
 class APPLICATION_API FTabStrip final : public FVisualElement
@@ -268,11 +302,40 @@ public:
     NODISCARD const String& GetActivePanelId() const;
 
     /**
+     * @brief Shows a tab for a panel that is about to be dropped onto the strip, as the active tab where the drop would put it.
+     *
+     * The tab is drawn exactly like the one the drop would add, but takes no input and adds nothing to the strip's tabs,
+     * so the strip goes back to how it was by clearing it. Moving it to another place keeps the tab that is already showing.
+     *
+     * @param Label       The text the tab shows.
+     * @param InsertIndex Which of the strip's tabs it goes in front of, where anything outside the tabs puts it after all of them.
+     */
+    void SetPreviewTab(const String& Label, int32 InsertIndex);
+
+    /** @brief Removes the tab shown by SetPreviewTab, making the strip's own active tab active again. */
+    void ClearPreviewTab();
+
+    /** @return True while the strip shows a preview tab. */
+    NODISCARD FORCEINLINE bool HasPreviewTab() const
+    {
+        return PreviewTab.IsValid();
+    }
+
+    /**
      * @brief Finds the part of the active tab that shows, which is what the frame around the strip outlines.
      *
      * @return The active tab's rectangle cut to the strip, or an empty one when there is no active tab or it is scrolled out of view.
      */
     NODISCARD FRectangle GetActiveTabRectangle() const;
+
+    /**
+     * @brief Finds where a tab dropped at a point along the strip would go, which is in front of the first tab whose middle
+     * lies past it. The tabs are measured where they sit without a preview tab, so showing one there does not move the answer.
+     *
+     * @param PositionX Where along the strip, in the client coordinates of the window the strip is in.
+     * @return The index the dropped tab would take, which is the number of tabs when it goes after all of them.
+     */
+    NODISCARD int32 FindDropIndex(int32 PositionX) const;
 
     /** @return How far the strip has been scrolled from its leading edge, in pixels. */
     NODISCARD FORCEINLINE int32 GetScrollOffset() const
@@ -334,12 +397,16 @@ private:
     FUITabStyle                  Style;
     FUIBrush                     CloseIcon;
     TArray<TSharedPtr<FTab>>     Tabs;
+    TSharedPtr<FTab>             PreviewTab;
+    FUIAnimation                 PreviewTabFade;
+    int32                        PreviewTabIndex;
     TSharedPtr<class FScrollBar> ScrollBar;
     String                       ActivePanelId;
     String                       DraggedPanelId;
     String                       DetachedPanelId;
     IntVector2                   DragOrigin;
     int32                        ScrollOffset;
+    int32                        ScrollOffsetBeforePreview;
     int32                        ScrollAmountPerWheelStep;
     int32                        ContentWidth;
     int32                        ViewWidth;

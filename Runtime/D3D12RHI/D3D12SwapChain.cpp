@@ -435,6 +435,8 @@ bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 I
             InCommandContext->ClearState();
         }
 
+        InCommandContext->GetQueue().WaitForCompletion();
+
         ReleaseBackBufferResources();
 
         const DXGI_FORMAT ResizeDXGIFormat = bFormatChanged ? ConvertFormat(EffectiveFormat) : DXGI_FORMAT_UNKNOWN;
@@ -791,6 +793,8 @@ void FD3D12SwapChainRHI::ApplySettingsChanges()
         // Wait for all GPU work to complete before releasing backbuffer resources
         STAT_ADD_FRAME(STAT_D3D12_SplitsOther, 1);
         CommandContext->SplitCommandListAndResetState(false, true);
+
+        CommandContext->GetQueue().WaitForCompletion();
 
         ReleaseBackBufferResources();
 
