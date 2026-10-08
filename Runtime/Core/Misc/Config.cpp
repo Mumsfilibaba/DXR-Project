@@ -1,5 +1,5 @@
 #include "Core/Misc/Config.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/BuildInfo.h"
 #include "Core/Misc/Paths.h"
@@ -16,21 +16,13 @@ FConfig::~FConfig() = default;
 
 bool FConfig::Initialize()
 {
-    CHECK(GConfig == nullptr);
+    if (GConfig)
+    {
+        return true;
+    }
 
     GConfig = new FConfig();
-
-    const String ConfigDir = Paths::GetEngineDir();
-    GConfig->AddLayer(EConfigFile::Engine, String::Printf("%s/Engine.ini", *ConfigDir));
-    GConfig->AddLayer(EConfigFile::Game, String::Printf("%s/Game.ini", *ConfigDir));
-
-#if EDITOR_BUILD
-    GConfig->AddLayer(EConfigFile::Editor, String::Printf("%s/Editor.ini", *ConfigDir));
-#endif
-
-    GConfig->AddLayer(EConfigFile::Platform, String::Printf("%s/%s.ini", *ConfigDir, BuildInfo::GetPlatformName()));
-
-    GConfig->LoadConsoleVariables();
+    GConfig->AddDefaultLayers();
     return true;
 }
 
@@ -181,4 +173,17 @@ FIniFile* FConfig::AddLayer(EConfigFile::Type ConfigFile, const String& Filename
     }
 
     return File;
+}
+
+void FConfig::AddDefaultLayers()
+{
+    const String ConfigDir = Paths::GetEngineDir();
+    AddLayer(EConfigFile::Engine, String::Printf("%s/Engine.ini", *ConfigDir));
+    AddLayer(EConfigFile::Game, String::Printf("%s/Game.ini", *ConfigDir));
+
+#if EDITOR_BUILD
+    AddLayer(EConfigFile::Editor, String::Printf("%s/Editor.ini", *ConfigDir));
+#endif
+
+    AddLayer(EConfigFile::Platform, String::Printf("%s/%s.ini", *ConfigDir, BuildInfo::GetPlatformName()));
 }

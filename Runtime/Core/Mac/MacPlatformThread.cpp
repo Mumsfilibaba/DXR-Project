@@ -1,6 +1,6 @@
 #include "Core/Mac/MacPlatformThread.h"
 #include "Core/Mac/MacPlatformThreadMisc.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformTLS.h"
 #include "Core/Threading/ThreadManager.h"
 

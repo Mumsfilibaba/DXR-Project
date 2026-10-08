@@ -107,7 +107,7 @@ void RHIValidationInternal::LogCallStack(const CHAR* Filename, int32 Line)
     }
 
     // The break that follows can stop the process before the file device, which writes asynchronously, has the stack
-    FOutputDeviceLogger::Get()->Flush();
+    FOutputDeviceManager::Get()->Flush();
 }
 
 int32 RHIValidation::GetErrorCount()

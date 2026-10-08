@@ -514,6 +514,7 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     RHI::MaxViewInstanceCount        = 1;
 
     RHI::bSupportsRayTracing         = false;
+    RHI::bSupportsRayTracingPipeline = false;
     RHI::RayTracingTier              = ERayTracingTier::NotSupported;
     RHI::RayTracingMaxRecursionDepth = 0;
 
@@ -705,6 +706,7 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
         GVulkanSupportsIndirectAccelerationStructureOperations = false;
 
         RHI::bSupportsRayTracing         = true;
+        RHI::bSupportsRayTracingPipeline = true;
         RHI::RayTracingTier              = bHasRayQuery ? ERayTracingTier::Tier1_1 : ERayTracingTier::Tier1;
     #if VK_KHR_ray_tracing_pipeline
         RHI::RayTracingMaxRecursionDepth = GetPhysicalDevice()->GetRayTracingPipelineProperties().maxRayRecursionDepth;
@@ -774,6 +776,7 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     {
         GVulkanSupportsIndirectRayDispatch = false;
         RHI::bSupportsRayTracing           = false;
+        RHI::bSupportsRayTracingPipeline   = false;
         RHI::RayTracingTier                = ERayTracingTier::NotSupported;
         RHI::RayTracingMaxRecursionDepth   = 0;
         RHI::bSupportsInlineRayTracing     = false;

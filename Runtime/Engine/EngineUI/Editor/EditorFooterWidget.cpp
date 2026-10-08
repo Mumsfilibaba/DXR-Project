@@ -1,5 +1,5 @@
 #include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Templates/CString.h"
 #include "Application/Application.h"
 #include "Engine/Engine.h"

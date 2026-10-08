@@ -1,4 +1,4 @@
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Threading/ScopedLock.h"
 #include "CoreApplication/Windows/WindowsConsoleWindow.h"
 
@@ -21,7 +21,7 @@ BOOL WINAPI FWindowsConsoleWindow::ConsoleCtrlHandler(DWORD Type)
         Console->NotifyClosed();
     }
 
-    FOutputDeviceLogger::Get()->Flush();
+    FOutputDeviceManager::Get()->Flush();
 
     ::TerminateProcess(::GetCurrentProcess(), 0);
     return TRUE;

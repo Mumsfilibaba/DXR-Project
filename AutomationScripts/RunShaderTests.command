@@ -167,7 +167,8 @@ esac
 #    pointkind  POINTLIGHT_PASS_KIND over multi, single and geometry
 #    cascadekind CASCADE_PASS_KIND over multi, single, geometry and view-instanced
 #    gsonly     restrict the pass kind to the geometry-shader variant
-#    raytracing skip the entry on backends that report no ray tracing support
+#    raytracing skip the entry on backends that report no ray tracing pipeline
+#    rayquery   skip the entry on backends that report no inline ray tracing
 #    once       compile a single permutation, with none of the material defines
 #    cubemap    ENABLE_CUBE_MAP, for the BC6H variant that reads a cube face
 #    encodeonly BC7_ENCODE_ONLY, for the BC7 pass that packs blocks into a texture
@@ -188,7 +189,8 @@ CascadeShadowVS|Shadows/CascadedShadows.hlsl|Cascade_VSMain|vs|material bindless
 CascadeShadowGS|Shadows/CascadedShadows.hlsl|Cascade_GSMain|gs|material bindless depthattr cascadekind gsonly
 CascadeShadowPS|Shadows/CascadedShadows.hlsl|Cascade_PSMain|ps|material bindless depthattr cascadekind
 ClosestHit|ClosestHit.hlsl|ClosestHit|lib|bindless raytracing
-InlineReflections|InlineReflections.hlsl|Main|cs|alwaysbindless raytracing
+InlineReflections|InlineReflections.hlsl|Main|cs|alwaysbindless rayquery
+PrimaryRayDebug|PrimaryRayDebug.hlsl|Main|cs|alwaysbindless rayquery
 BlockCompressBC1|BlockCompression/BlockCompressionBC1.hlsl|Main|cs|once
 BlockCompressBC2|BlockCompression/BlockCompressionBC2.hlsl|Main|cs|once
 BlockCompressBC3|BlockCompression/BlockCompressionBC3.hlsl|Main|cs|once
@@ -252,9 +254,29 @@ compile_one() {
     RESULT=$?
 
     if [ $RESULT -eq 0 ] && [ -n "$MSL_CHECK" ]; then
+        # Bindless permutations need MSL 3.0 for resource-ID table indexing, and RayQuery
+        # shaders need it for intersection_query, matching ConvertSpirvToMetalShader.
+        # Discrete shaders stay on MSL 2.3.
+        MSL_CHECK_VERSION="$MSL_VERSION"
+        if has_axis alwaysbindless "$AXES" || has_axis rayquery "$AXES"; then
+            MSL_CHECK_VERSION="30000"
+        fi
+        for DEFINE in "$@"; do
+            if [ "$DEFINE" = "ENABLE_BINDLESS=(1)" ]; then
+                MSL_CHECK_VERSION="30000"
+            fi
+        done
+
         # FShaderCompiler::ConvertSpirvToMetalShader runs this same translation at
         # load time, so a shader that stops here never reaches a Metal device.
-        OUTPUT=$( "$SPIRV_CROSS" --msl --msl-version "$MSL_VERSION" "$SPIRV_TEMP" --output "$MSL_TEMP" 2>&1 )
+        SPIRV_CROSS_ARGS=(--msl --msl-version "$MSL_CHECK_VERSION")
+        if [ "$MSL_CHECK_VERSION" = "30000" ]; then
+            # Same codegen gate as ConvertSpirvToMetalShader: unsized heaps emit
+            # `device const void* [[buffer(n)]]` only when the MSL tier is 2.
+            SPIRV_CROSS_ARGS+=(--msl-argument-buffer-tier 1)
+        fi
+
+        OUTPUT=$( "$SPIRV_CROSS" "${SPIRV_CROSS_ARGS[@]}" "$SPIRV_TEMP" --output "$MSL_TEMP" 2>&1 )
         RESULT=$?
     fi
 
@@ -288,9 +310,12 @@ sweep_entry() {
     fi
 
     # Mirrors ShouldCompilePermutation, which culls anything the device cannot support
-    # before it ever reaches a compiler. Metal reports neither bindless nor ray tracing,
-    # so sweeping those here would report failures the engine never asks for.
+    # before it ever reaches a compiler.
     if has_axis raytracing "$AXES" && [ "$BACKEND_SUPPORTS_RAYTRACING" -eq 0 ]; then
+        return
+    fi
+
+    if has_axis rayquery "$AXES" && [ "$BACKEND_SUPPORTS_RAYQUERY" -eq 0 ]; then
         return
     fi
 
@@ -514,14 +539,16 @@ for BACKEND in $BACKENDS; do
         MSL_CHECK="1"
     fi
 
-    # Mirrors RHI::bSupportsBindless and RHI::bSupportsRayTracing. MetalRHI sets neither,
-    # so both keep the false they are given in RHICore.cpp.
+    # Mirrors RHI::bSupportsBindless, RHI::bSupportsRayTracingPipeline and
+    # RHI::bSupportsInlineRayTracing. TraceRay on Metal is Phase 22 of MetalRHI_Roadmap.md.
     if [ "$BACKEND" = "metal" ]; then
-        BACKEND_SUPPORTS_BINDLESS=0
+        BACKEND_SUPPORTS_BINDLESS=1
         BACKEND_SUPPORTS_RAYTRACING=0
+        BACKEND_SUPPORTS_RAYQUERY=1
     else
         BACKEND_SUPPORTS_BINDLESS=1
         BACKEND_SUPPORTS_RAYTRACING=1
+        BACKEND_SUPPORTS_RAYQUERY=1
     fi
 
     case "$BACKEND" in

@@ -68,10 +68,11 @@ RHI_API bool   RHI::bSupportsViewInstancing = false;
 RHI_API uint32 RHI::MaxViewInstanceCount    = 1;
 
 // -------------------------------------------------------------------------------------------
-// Hardware Ray Tracing
+// Ray Tracing
 // -------------------------------------------------------------------------------------------
 
 RHI_API bool            RHI::bSupportsRayTracing         = false;
+RHI_API bool            RHI::bSupportsRayTracingPipeline = false;
 RHI_API ERayTracingTier RHI::RayTracingTier              = ERayTracingTier::NotSupported;
 RHI_API uint32          RHI::RayTracingMaxRecursionDepth = 0;
 
@@ -206,7 +207,8 @@ RHI_API void RHI::DumpRayTracingCapabilities()
     };
 
     LOG_INFO("[RHI] -------------------------------- Ray Tracing Capabilities ---------------------------------");
-    LOG_INFO("[RHI]   Hardware Ray Tracing                  : %s", YesNo(RHI::bSupportsRayTracing));
+    LOG_INFO("[RHI]   Acceleration Structures               : %s", YesNo(RHI::bSupportsRayTracing));
+    LOG_INFO("[RHI]   Ray Tracing Pipeline (TraceRay)       : %s", YesNo(RHI::bSupportsRayTracingPipeline));
     LOG_INFO("[RHI]   Tier                                  : %s", ToString(RHI::RayTracingTier));
     LOG_INFO("[RHI]   Max Recursion Depth                   : %u", RHI::RayTracingMaxRecursionDepth);
     LOG_INFO("[RHI]   Inline Ray Tracing (RayQuery)         : %s", YesNo(RHI::bSupportsInlineRayTracing));

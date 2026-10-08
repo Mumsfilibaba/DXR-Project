@@ -25,6 +25,7 @@ public:
     
 private:
     id<MTLSamplerState> SamplerState;
+    mutable FRHIDescriptorHandle BindlessHandle;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

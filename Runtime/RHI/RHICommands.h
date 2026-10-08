@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Memory/Memory.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Debug.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/ArrayView.h"
@@ -1008,7 +1008,7 @@ DECLARE_RHICOMMAND(FRHICommandBuildGeometryAccelerationStructure)
         CHECK(RayTracingGeometry != nullptr);
         CHECK(!BuildDesc.bUpdate || (BuildDesc.bUpdate && IsEnumFlagSet(RayTracingGeometry->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate)));
         CHECK(BuildDesc.VertexBuffer && BuildDesc.VertexBuffer->GetDesc().IsVertexBuffer());
-        CHECK(BuildDesc.IndexBuffer  && BuildDesc.IndexBuffer->GetDesc().IsIndexBuffer());
+        CHECK(BuildDesc.NumIndices == 0 || (BuildDesc.IndexBuffer && BuildDesc.IndexBuffer->GetDesc().IsIndexBuffer()));
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)

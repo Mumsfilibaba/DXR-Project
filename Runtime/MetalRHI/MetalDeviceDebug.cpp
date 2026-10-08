@@ -1,0 +1,519 @@
+#include "MetalRHI/MetalDeviceDebug.h"
+#include "MetalRHI/MetalCore.h"
+#include "MetalRHI/MetalDevice.h"
+#include "MetalRHI/MetalQueue.h"
+#include "MetalRHI/MetalRHI.h"
+#include "Core/Misc/ConsoleManager.h"
+#include "Core/Platform/PlatformMisc.h"
+#include "Core/Platform/PlatformThread.h"
+#include "Core/Templates/CString.h"
+#include "Core/Threading/Atomic/AtomicBool.h"
+#include "Core/Threading/Atomic/AtomicInt.h"
+#include "Core/Threading/Runnable.h"
+#if METAL_ENABLE_DEBUG_LAYER
+    #include <cerrno>
+    #include <cstdio>
+    #include <unistd.h>
+#endif
+
+static TAutoConsoleVariable<bool> CVarCaptureNextFrame(
+    "MetalRHI.CaptureNextFrame",
+    "Captures the next BeginFrame/EndFrame pair with MTLCaptureManager",
+    false);
+
+#if METAL_ENABLE_DEBUG_LAYER
+static TAutoConsoleVariable<bool> CVarCaptureValidationOutput(
+    "MetalRHI.CaptureValidationOutput",
+    "Redirects the Metal debug layer's stderr output into the engine log",
+    true);
+
+static TAutoConsoleVariable<bool> CVarBreakOnValidationError(
+    "MetalRHI.BreakOnValidationError",
+    "Enables breakpoints when the Metal debug layer reports an error",
+    false);
+
+static TAutoConsoleVariable<bool> CVarBreakOnValidationWarning(
+    "MetalRHI.BreakOnValidationWarning",
+    "Enables breakpoints when the Metal debug layer reports a warning",
+    false);
+
+static TAutoConsoleVariable<bool> CVarEnableShaderValidation(
+    "MetalRHI.EnableShaderValidation",
+    "Arms Metal shader validation (MTL_SHADER_VALIDATION), which reports out-of-bounds and other invalid shader accesses with the shader and source line. Takes effect at launch",
+    false);
+#endif
+
+static AtomicInt32 GValidationErrorCount;
+static bool        GCaptureActive = false;
+
+#if METAL_ENABLE_DEBUG_LAYER
+
+static bool IsEnvFlagEnabled(const CHAR* Name)
+{
+    String Value;
+
+    if (!FPlatformMisc::GetEnvironmentVariable(Name, Value) || Value.IsEmpty() || Value[0] == '0')
+    {
+        return false;
+    }
+
+    return CString::Stricmp(*Value, "false") != 0 && CString::Stricmp(*Value, "off") != 0;
+}
+
+static bool IsMetalValidationLine(const CHAR* Text)
+{
+    if (!Text || Text[0] == '\0')
+    {
+        return false;
+    }
+
+    return CString::Strstr(Text, "[MetalRHI]") == nullptr;
+}
+
+static const CHAR* SkipNSLogPrefix(const CHAR* Text)
+{
+    if (Text[0] < '0' || Text[0] > '9')
+    {
+        return Text;
+    }
+
+    const CHAR* Separator = CString::Strstr(Text, "] ");
+    const CHAR* Bracket   = CString::Strchr(Text, '[');
+
+    if (!Separator || !Bracket || Bracket > Separator)
+    {
+        return Text;
+    }
+
+    return Separator + 2;
+}
+
+static String GLastReportedLine;
+static int32  GRepeatedLineCount = 0;
+
+static void FlushRepeatedLine()
+{
+    if (GRepeatedLineCount > 0)
+    {
+        METAL_WARNING("[Metal Validation] previous line repeated %d more times", GRepeatedLineCount);
+        GRepeatedLineCount = 0;
+    }
+}
+
+static void ReportValidationLine(const CHAR* RawText)
+{
+    const CHAR* Text = SkipNSLogPrefix(RawText);
+
+    if (!GLastReportedLine.IsEmpty() && CString::Strcmp(*GLastReportedLine, Text) == 0)
+    {
+        GRepeatedLineCount++;
+        return;
+    }
+
+    FlushRepeatedLine();
+    GLastReportedLine = Text;
+
+    const bool bIsError = CString::Stristr(Text, "failed assertion") != nullptr
+        || CString::Stristr(Text, "error")      != nullptr
+        || CString::Stristr(Text, "page fault") != nullptr
+        || CString::Stristr(Text, "faulted")    != nullptr;
+
+    if (bIsError)
+    {
+        METAL_ERROR("[Metal Validation] %s", Text);
+        GValidationErrorCount.Add(1);
+
+        if (CVarBreakOnValidationError.GetValue())
+        {
+            DEBUG_BREAK();
+        }
+    }
+    else
+    {
+        METAL_WARNING("[Metal Validation] %s", Text);
+
+        if (CVarBreakOnValidationWarning.GetValue())
+        {
+            DEBUG_BREAK();
+        }
+    }
+}
+
+class FMetalStderrCapture : public FRunnable
+{
+public:
+    FMetalStderrCapture()
+        : Thread(nullptr)
+        , OriginalStderr(-1)
+        , PipeRead(-1)
+        , bStop(false)
+        , bInstalled(false)
+    {
+    }
+
+    bool Install()
+    {
+        if (bInstalled)
+        {
+            return true;
+        }
+
+        fflush(stderr);
+        setvbuf(stderr, nullptr, _IONBF, 0);
+
+        OriginalStderr = dup(STDERR_FILENO);
+
+        if (OriginalStderr < 0)
+        {
+            METAL_ERROR("Failed to duplicate stderr for Metal validation capture");
+            return false;
+        }
+
+        int PipeFds[2] = { -1, -1 };
+
+        if (pipe(PipeFds) != 0)
+        {
+            METAL_ERROR("Failed to create a pipe for Metal validation capture");
+
+            close(OriginalStderr);
+            OriginalStderr = -1;
+
+            return false;
+        }
+
+        PipeRead = PipeFds[0];
+
+        if (dup2(PipeFds[1], STDERR_FILENO) < 0)
+        {
+            METAL_ERROR("Failed to redirect stderr for Metal validation capture");
+
+            close(PipeFds[0]);
+            close(PipeFds[1]);
+            close(OriginalStderr);
+
+            PipeRead       = -1;
+            OriginalStderr = -1;
+
+            return false;
+        }
+
+        close(PipeFds[1]);
+
+        bStop.Store(false);
+        GLastReportedLine.Clear();
+
+        GRepeatedLineCount = 0;
+
+        Thread = FPlatformThread::Create(this, "MetalValidationLog");
+
+        if (!Thread || !Thread->Start())
+        {
+            METAL_ERROR("Failed to start the Metal validation capture thread");
+            Restore();
+            return false;
+        }
+
+        bInstalled = true;
+        METAL_INFO("Capturing Metal validation messages from stderr");
+        return true;
+    }
+
+    void Restore()
+    {
+        if (OriginalStderr >= 0)
+        {
+            dup2(OriginalStderr, STDERR_FILENO);
+        }
+
+        bStop.Store(true);
+
+        if (Thread)
+        {
+            Thread->WaitForCompletion();
+            delete Thread;
+            Thread = nullptr;
+        }
+
+        if (PipeRead >= 0)
+        {
+            close(PipeRead);
+            PipeRead = -1;
+        }
+
+        if (OriginalStderr >= 0)
+        {
+            close(OriginalStderr);
+            OriginalStderr = -1;
+        }
+
+        bInstalled = false;
+    }
+
+    virtual int32 Run() override
+    {
+        constexpr int32 MaxValidationLineLength = 4096;
+
+        CHAR   Chunk[512];
+        String Line;
+
+        while (!bStop.Load())
+        {
+            const ssize_t BytesRead = read(PipeRead, Chunk, sizeof(Chunk));
+
+            if (BytesRead < 0)
+            {
+                if (errno == EINTR)
+                {
+                    continue;
+                }
+
+                break;
+            }
+
+            if (BytesRead == 0)
+            {
+                break;
+            }
+
+            if (OriginalStderr >= 0)
+            {
+                ssize_t Written = 0;
+                while (Written < BytesRead)
+                {
+                    const ssize_t Result = write(OriginalStderr, Chunk + Written, static_cast<size_t>(BytesRead - Written));
+
+                    if (Result < 0)
+                    {
+                        if (errno == EINTR)
+                        {
+                            continue;
+                        }
+
+                        break;
+                    }
+
+                    Written += Result;
+                }
+            }
+
+            for (ssize_t Index = 0; Index < BytesRead; ++Index)
+            {
+                const CHAR Character = Chunk[Index];
+
+                if (Character == '\n' || Character == '\r')
+                {
+                    if (!Line.IsEmpty())
+                    {
+                        if (IsMetalValidationLine(*Line))
+                        {
+                            ReportValidationLine(*Line);
+                        }
+
+                        Line.Clear();
+                    }
+                }
+                else if (Line.Size() < MaxValidationLineLength)
+                {
+                    Line += Character;
+                }
+            }
+        }
+
+        if (!Line.IsEmpty() && IsMetalValidationLine(*Line))
+        {
+            ReportValidationLine(*Line);
+        }
+
+        FlushRepeatedLine();
+        return 0;
+    }
+
+private:
+    IPlatformThread* Thread;
+    int              OriginalStderr;
+    int              PipeRead;
+    AtomicBool       bStop;
+    bool             bInstalled;
+};
+
+static FMetalStderrCapture GStderrCapture;
+
+bool MetalIsDebugLayerRequested()
+{
+    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
+    {
+        if (CVarEnableDebugLayer->GetBool())
+        {
+            return true;
+        }
+    }
+
+    return IsEnvFlagEnabled("MTL_DEBUG_LAYER") || IsEnvFlagEnabled("METAL_DEVICE_WRAPPER_TYPE");
+}
+
+void MetalEnableDebugLayer()
+{
+    if (IsEnvFlagEnabled("MTL_SHADER_VALIDATION"))
+    {
+        METAL_INFO("Metal shader validation enabled");
+    }
+    else if (CVarEnableShaderValidation.GetValue())
+    {
+        METAL_WARNING("MetalRHI.EnableShaderValidation was set after launch and takes effect on the next launch");
+    }
+
+    if (!MetalIsDebugLayerRequested())
+    {
+        return;
+    }
+
+    FPlatformMisc::PrepareMetalDebugLayerEnvironment(true);
+    METAL_INFO("Metal debug layer enabled");
+}
+
+void MetalStartValidationCapture()
+{
+    if (!MetalIsDebugLayerRequested() || !CVarCaptureValidationOutput.GetValue())
+    {
+        return;
+    }
+
+    GStderrCapture.Install();
+}
+
+void MetalStopValidationCapture()
+{
+    GStderrCapture.Restore();
+}
+
+void MetalForceGPUHang(StringView)
+{
+    SCOPED_AUTORELEASE_POOL();
+
+    FMetalDevice* Device = FMetalDeviceRHI::Get() ? FMetalDeviceRHI::Get()->GetMetalDevice() : nullptr;
+    FMetalQueue*  Queue  = Device ? Device->GetQueue(EMetalQueueType::Direct) : nullptr;
+    if (!Queue)
+    {
+        METAL_ERROR("ForceGPUHang: no Metal device");
+        return;
+    }
+
+    static const CHAR* HangSource =
+        "#include <metal_stdlib>\n"
+        "using namespace metal;\n"
+        "kernel void ForceGPUHang(device atomic_uint* Flag [[buffer(0)]])\n"
+        "{\n"
+        "    while (atomic_load_explicit(Flag, memory_order_relaxed) == 0u) {}\n"
+        "}\n";
+
+    id<MTLDevice> DeviceHandle = Device->GetMTLDevice();
+    NSError*      Error        = nil;
+
+    id<MTLLibrary>              Library  = [[DeviceHandle newLibraryWithSource:[NSString stringWithUTF8String:HangSource] options:nil error:&Error] autorelease];
+    id<MTLFunction>             Function = [[Library newFunctionWithName:@"ForceGPUHang"] autorelease];
+    id<MTLComputePipelineState> Pipeline = Function ? [[DeviceHandle newComputePipelineStateWithFunction:Function error:&Error] autorelease] : nil;
+    id<MTLBuffer>               Flag     = [[DeviceHandle newBufferWithLength:sizeof(uint32) options:MTLResourceStorageModeShared] autorelease];
+
+    if (!Pipeline || !Flag)
+    {
+        METAL_ERROR("ForceGPUHang: failed to build the hang kernel: %s", *String(Error ? [Error localizedDescription] : @"unknown error"));
+        return;
+    }
+
+    Memory::Memzero(Flag.contents, sizeof(uint32));
+
+    FMetalCommands* Commands = Queue->ObtainCommands();
+    if (!Commands || !Commands->CommandBuffer)
+    {
+        METAL_ERROR("ForceGPUHang: failed to obtain a command buffer");
+        return;
+    }
+
+    Commands->CommandBuffer.label = @"ForceGPUHang";
+    Commands->Breadcrumbs.Push("ForceGPUHang");
+
+    id<MTLComputeCommandEncoder> Encoder = [Commands->CommandBuffer computeCommandEncoder];
+    Encoder.label = @"ForceGPUHang";
+    [Encoder setComputePipelineState:Pipeline];
+    [Encoder setBuffer:Flag offset:0 atIndex:0];
+    [Encoder useResource:Flag usage:MTLResourceUsageRead];
+    [Encoder dispatchThreadgroups:MTLSizeMake(1, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
+    [Encoder endEncoding];
+
+    Commands->DeferredObjects.Emplace(static_cast<id<NSObject>>(Pipeline));
+    Commands->DeferredObjects.Emplace(static_cast<id<NSObject>>(Flag));
+
+    METAL_WARNING("ForceGPUHang: submitting a kernel that never returns");
+    Queue->SubmitCommands(Commands);
+}
+
+#endif
+
+void MetalResetValidationErrors()
+{
+    GValidationErrorCount.Store(0);
+}
+
+bool MetalHasValidationErrors()
+{
+    return GValidationErrorCount.Load() != 0;
+}
+
+void MetalBeginFrameCapture(id<MTLDevice> Device)
+{
+    if (!Device || GCaptureActive || !CVarCaptureNextFrame.GetValue())
+    {
+        return;
+    }
+
+    CVarCaptureNextFrame.SetVariable(false);
+
+    MTLCaptureManager* Manager = [MTLCaptureManager sharedCaptureManager];
+
+    if (!Manager)
+    {
+        return;
+    }
+
+    MTLCaptureDescriptor* Descriptor = [[MTLCaptureDescriptor new] autorelease];
+    Descriptor.captureObject = Device;
+
+    if ([Manager supportsDestination:MTLCaptureDestinationDeveloperTools])
+    {
+        Descriptor.destination = MTLCaptureDestinationDeveloperTools;
+    }
+    else if ([Manager supportsDestination:MTLCaptureDestinationGPUTraceDocument])
+    {
+        Descriptor.destination = MTLCaptureDestinationGPUTraceDocument;
+        Descriptor.outputURL   = [NSURL fileURLWithPath:@"/tmp/DXR-MetalCapture.gputrace"];
+    }
+    else
+    {
+        METAL_WARNING("MTLCaptureManager has no supported capture destination");
+        return;
+    }
+
+    NSError* Error = nil;
+
+    if (![Manager startCaptureWithDescriptor:Descriptor error:&Error])
+    {
+        const String ErrorString(Error ? [Error localizedDescription] : @"unknown error");
+        METAL_ERROR("Failed to start a Metal GPU capture: %s", *ErrorString);
+        return;
+    }
+
+    GCaptureActive = true;
+    METAL_INFO("Metal GPU capture started");
+}
+
+void MetalEndFrameCapture()
+{
+    if (!GCaptureActive)
+    {
+        return;
+    }
+
+    [[MTLCaptureManager sharedCaptureManager] stopCapture];
+    GCaptureActive = false;
+    METAL_INFO("Metal GPU capture stopped");
+}

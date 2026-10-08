@@ -1,60 +1,39 @@
 #pragma once
 #include "Core/Containers/SharedRef.h"
+#include "Core/Containers/Array.h"
+#include "Core/Platform/PlatformTLS.h"
+#include "Core/Templates/Utility/EnumOperators.h"
+#include "Core/Templates/Utility/NonCopyable.h"
+#include "Core/Threading/Atomic/AtomicInt.h"
 #include "RHI/IRHICommandContext.h"
+#include "RHI/RHIPipelineState.h"
 #include "MetalRHI/MetalCommandContextState.h"
+#include "MetalRHI/MetalConfiguration.h"
+#include "MetalRHI/MetalEncoderManager.h"
+#include "MetalRHI/MetalQueue.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FMetalDevice;
+class FMetalResourceStorage;
+struct FMetalCommands;
+struct FMetalQueryRHI;
 
-class FMetalCopyCommandContext final
+enum class EMetalSubmitFlags : uint8
 {
-public:
-    FMetalCopyCommandContext()
-        : CopyEncoder(nil)
-    {
-    }
-    
-    void StartEncoder(id<MTLCommandBuffer> CommandBuffer)
-    {
-        if (!CopyEncoder)
-        {
-            CopyEncoder = [CommandBuffer blitCommandEncoder];
-        }
-    }
-    
-    void FinishEncoder()
-    {
-        if (CopyEncoder)
-        {
-            [CopyEncoder endEncoding];
-            [CopyEncoder release];
-        }
-    }
-    
-    void FinishEncoderUnsafe()
-    {
-        CHECK(CopyEncoder != nil);
-        [CopyEncoder endEncoding];
-        [CopyEncoder release];
-    }
-    
-    id<MTLBlitCommandEncoder> GetMTLCopyEncoder() const 
-    {
-        return CopyEncoder;
-    };
-    
-private:
-    id<MTLBlitCommandEncoder> CopyEncoder;
+    None   = 0,
+    Reopen = (1 << 0),
+    Wait   = (1 << 1),
 };
+ENUM_CLASS_OPERATORS(EMetalSubmitFlags);
 
 class FMetalCommandContext final : public FMetalDeviceChild, public IRHICommandContext
 {
-public:
-    FMetalCommandContext(FMetalDevice* InDevice);
-    ~FMetalCommandContext();
+    friend class FMetalParallelRenderPass;
 
-    bool Initialize();
+public:
+    FMetalCommandContext(FMetalDevice* InDevice, FMetalQueue& InQueue);
+    ~FMetalCommandContext();
 
     // IRHICommandContext Interface
     virtual void BeginFrame() override final;
@@ -116,12 +95,12 @@ public:
     virtual void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) override final;
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final;
     virtual void DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) override final;
-    virtual void DrawIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) override final { }
+    virtual void DrawIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) override final;
     virtual void DrawIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount) override final { }
-    virtual void DrawIndexedIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) override final { }
+    virtual void DrawIndexedIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) override final;
     virtual void DrawIndexedIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount) override final { }
-    virtual void DispatchIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset) override final { }
-    virtual void DispatchMeshIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) override final { }
+    virtual void DispatchIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset) override final;
+    virtual void DispatchMeshIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) override final;
     virtual void DispatchMeshIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount) override final { }
     virtual void SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings) override final { }
     virtual void BuildShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable) override final { }
@@ -129,13 +108,13 @@ public:
     virtual void SetRayTracingPipelineState(FRHIRayTracingPipelineState* PipelineState) override final { }
     virtual void DispatchRays(FRHIShaderBindingTable* ShaderBindingTable, uint32 Width, uint32 Height, uint32 Depth) override final { }
     virtual void DispatchRaysIndirect(FRHIShaderBindingTable* ShaderBindingTable, FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset) override final { }
-    virtual void BuildOpacityMicromap(FRHIOpacityMicromap* OpacityMicromap, const FRHIOpacityMicromapBuildDesc& BuildDesc) override final { }
-    virtual void ExecuteIndirectRayTracingAccelerationStructureOperations(const FRHIRayTracingAccelerationStructureOperationDesc* Operations, uint32 NumOperations) override final { }
-    virtual void WriteAccelerationStructurePostBuildInfo(FRHIBuffer* DstBuffer, uint64 DstOffset, EAccelerationStructurePostBuildInfoType InfoType, FRHIRayTracingAccelerationStructure* const* Sources, uint32 NumSources) override final { }
-    virtual void CopyAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIRayTracingAccelerationStructure* Source, EAccelerationStructureCopyMode CopyMode) override final { }
-    virtual void CompactAccelerationStructure(FRHIRayTracingAccelerationStructure* AccelerationStructure, uint64 CompactedSizeInBytes) override final { }
-    virtual void SerializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Source, FRHIBuffer* DstBuffer, uint64 DstOffset) override final { }
-    virtual void DeserializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIBuffer* SourceBuffer, uint64 SourceOffset) override final { }
+    virtual void BuildOpacityMicromap(FRHIOpacityMicromap* OpacityMicromap, const FRHIOpacityMicromapBuildDesc& BuildDesc) override final;
+    virtual void ExecuteIndirectRayTracingAccelerationStructureOperations(const FRHIRayTracingAccelerationStructureOperationDesc* Operations, uint32 NumOperations) override final;
+    virtual void WriteAccelerationStructurePostBuildInfo(FRHIBuffer* DstBuffer, uint64 DstOffset, EAccelerationStructurePostBuildInfoType InfoType, FRHIRayTracingAccelerationStructure* const* Sources, uint32 NumSources) override final;
+    virtual void CopyAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIRayTracingAccelerationStructure* Source, EAccelerationStructureCopyMode CopyMode) override final;
+    virtual void CompactAccelerationStructure(FRHIRayTracingAccelerationStructure* AccelerationStructure, uint64 CompactedSizeInBytes) override final;
+    virtual void SerializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Source, FRHIBuffer* DstBuffer, uint64 DstOffset) override final;
+    virtual void DeserializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIBuffer* SourceBuffer, uint64 SourceOffset) override final;
     virtual void AcquireNextBackBuffer(FRHISwapChain* SwapChain) override final;
     virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) override final;
     virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace) override final;
@@ -145,39 +124,123 @@ public:
     virtual void Flush()      override final;
 
     virtual void PushEvent(const StringView& Name) override final;
-    virtual void PopEvent()                         override final;
+    virtual void PopEvent()                        override final;
 
     virtual void* GetRHINativeCommandList() override final;
 
-    FORCEINLINE FMetalCommandContextState& GetContextState()
+    void BeginParallelChild(FMetalCommands& ParentCommands, id<MTLRenderCommandEncoder> SubEncoder);
+    void EndParallelChild();
+
+#if METAL_VALIDATE_CONTEXT_THREAD_OWNERSHIP
+    void AcquireOwnership();
+    void ReleaseOwnership();
+    void VerifyOwnerThread() const;
+#else
+    FORCEINLINE void AcquireOwnership()        { }
+    FORCEINLINE void ReleaseOwnership()        { }
+    FORCEINLINE void VerifyOwnerThread() const { }
+#endif
+
+    FMetalEncoderManager& GetEncoders()
+    {
+        return Encoders;
+    }
+
+    FMetalCommandContextState& GetContextState()
     {
         return ContextState;
     }
 
-    FORCEINLINE id<MTLCommandBuffer> GetCommandBuffer() const
+    FMetalQueue& GetQueue() const
     {
-        return CommandBuffer;
+        return Queue;
     }
 
-    FORCEINLINE id<MTLRenderCommandEncoder> GetGraphicsEncoder() const
+    bool IsRecording() const
     {
-        return GraphicsEncoder;
+        return bIsRecording;
     }
 
-    FORCEINLINE id<MTLComputeCommandEncoder> GetComputeEncoder() const
+    void SetLastUsedFrame(uint64 InFrame)
     {
-        return ComputeEncoder;
+        LastUsedFrame = InFrame;
+    }
+
+    uint64 GetLastUsedFrame() const
+    {
+        return LastUsedFrame;
     }
 
 private:
-    void PrepareForDraw();
-    void PrepareForDispatch();
+    static FMetalRenderPassInfo GetRenderPassInfo(MTLRenderPassDescriptor* Descriptor, uint32 NumRenderTargets);
 
-    id<MTLCommandBuffer>         CommandBuffer;
-    id<MTLRenderCommandEncoder>  GraphicsEncoder;
-    id<MTLComputeCommandEncoder> ComputeEncoder;
-    FMetalCopyCommandContext     CopyContext;
-    FMetalCommandContextState    ContextState;
+    uint64 Submit(EMetalSubmitFlags Flags);
+    void AddPendingQuery(FMetalQueryRHI* Query);
+    void UpdateScopePath();
+
+    void FillRenderPassDescriptor(MTLRenderPassDescriptor* Descriptor, const FRHIBeginRenderPassDesc& Desc);
+    id<MTLBuffer> CreateStagingBuffer(uint64 Size, FMetalResourceStorage& OutStorage);
+
+    FMetalQueue&              Queue;
+    FMetalEncoderManager      Encoders;
+    FMetalCommandContextState ContextState;
+    NSAutoreleasePool*        RecordingPool;
+    FMetalQueryRHI*           ActiveOcclusionQuery;
+    uint64                    LastUsedFrame;
+    bool                      bIsRecording;
+    TArray<String>            DebugGroups;
+#if METAL_VALIDATE_CONTEXT_THREAD_OWNERSHIP
+    TAtomicInt<uint32>        OwnerThreadID;
+#endif
+};
+
+class FMetalBorrowedCommandContext : FNonCopyable
+{
+public:
+    explicit FMetalBorrowedCommandContext(FMetalQueue& InQueue)
+        : Queue(InQueue)
+        , Context(InQueue.ObtainCommandContext())
+    {
+    }
+
+    ~FMetalBorrowedCommandContext()
+    {
+        Queue.ReleaseCommandContext(Context);
+    }
+
+    FORCEINLINE FMetalCommandContext* Get() const
+    {
+        return Context;
+    }
+
+    FORCEINLINE FMetalCommandContext& operator*() const
+    {
+        return *Context;
+    }
+
+    FORCEINLINE FMetalCommandContext* operator->() const
+    {
+        return Context;
+    }
+
+protected:
+    FMetalQueue&          Queue;
+    FMetalCommandContext* Context;
+};
+
+class FMetalScopedCommandContext : public FMetalBorrowedCommandContext
+{
+public:
+    explicit FMetalScopedCommandContext(FMetalQueue& InQueue)
+        : FMetalBorrowedCommandContext(InQueue)
+    {
+        Context->StartContext();
+    }
+
+    ~FMetalScopedCommandContext()
+    {
+        Context->FinishContext();
+    }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

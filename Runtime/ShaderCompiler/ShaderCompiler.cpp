@@ -1,7 +1,7 @@
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Platform/PlatformTime.h"
 #include "Core/Filesystem/File.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/Debug.h"
 #include "Core/Modules/ModuleManager.h"

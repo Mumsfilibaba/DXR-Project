@@ -1,5 +1,5 @@
 #include "Core/Platform/PlatformLibrary.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "ShaderCore/ShaderBindingConventions.h"
 #include "ShaderCompiler/DXC/DXCShaderCompiler.h"
 #include "ShaderCompiler/DXC/MSLShaderConverter.h"

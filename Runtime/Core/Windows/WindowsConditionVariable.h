@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Windows/WindowsCriticalSection.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/PlatformInterface/IPlatformConditionVariable.h"
 #include "Core/Platform/PlatformMisc.h"

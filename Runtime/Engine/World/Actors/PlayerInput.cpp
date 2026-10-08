@@ -1,4 +1,4 @@
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Containers/Pair.h"
 #include "CoreApplication/PlatformInterface/AnalogDeadzones.h"
 #include "Application/Application.h"

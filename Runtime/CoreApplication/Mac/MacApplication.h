@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Mac/Mac.h"
 #include "Core/Math/Vector2.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Containers/Array.h"
 #include "Core/Platform/CriticalSection.h"
 #include "CoreApplication/Mac/MacCursor.h"

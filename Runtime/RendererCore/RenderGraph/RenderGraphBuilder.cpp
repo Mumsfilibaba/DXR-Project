@@ -1,5 +1,5 @@
 #include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "RendererCore/RenderGraph/RenderGraphBuilder.h"
 #include "RendererCore/RenderGraph/RenderGraphResourcePool.h"
 #include "RendererCore/RenderGraph/RenderGraphViewCache.h"

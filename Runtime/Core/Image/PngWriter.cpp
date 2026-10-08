@@ -1,6 +1,6 @@
 #include "Core/Image/PngWriter.h"
 #include "Core/Misc/CRC.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Filesystem/File.h"
 #include "Core/Math/Math.h"
 #include "Core/Platform/PlatformFile.h"

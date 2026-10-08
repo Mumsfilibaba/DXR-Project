@@ -1,4 +1,4 @@
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "RHI/RHITypes.h"
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"
 #include "Engine/Resources/Texture.h"

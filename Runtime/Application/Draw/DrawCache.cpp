@@ -3,7 +3,7 @@
 #include "Core/Algorithms/Algorithm.h"
 #include "Core/Math/Math.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 
 static TAutoConsoleVariable<int32> CVarDrawCacheBudgetKB(
     "UI.DrawCache.BudgetKB",

@@ -6,7 +6,6 @@
 
 #include "TestCommon/TestMacros.h"
 
-// The tokens separated by single spaces, which makes the expected output independent of the original spacing
 static String JoinTokens(const FShaderPreprocessorOutput& Output)
 {
     String Result;

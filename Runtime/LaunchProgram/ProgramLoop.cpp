@@ -1,7 +1,7 @@
 #include "LaunchProgram/ProgramLoop.h"
 #include "LaunchProgram/ProgramEntry.h"
 #include "Core/Containers/UniquePtr.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Modules/ModuleManager.h"
 #include "CoreApplication/Platform/PlatformConsoleWindow.h"
 
@@ -50,7 +50,8 @@ int32 FProgramLoop::Run(const CHAR* ConsoleTitle, const TFunction<int32()>& Body
         FProgramLoop::RequestExit(nullptr);
     });
     
-    FOutputDeviceLogger::Get()->RegisterOutputDevice(Console.Get());
+    FOutputDeviceManager::Get()->RegisterOutputDevice(Console.Get());
+    FOutputDeviceManager::Get()->FlushPendingLines();
 
     int32 Result = 0;
     if (Body)
@@ -59,7 +60,7 @@ int32 FProgramLoop::Run(const CHAR* ConsoleTitle, const TFunction<int32()>& Body
         Result = BodyCopy();
     }
 
-    FOutputDeviceLogger::Get()->UnregisterOutputDevice(Console.Get());
+    FOutputDeviceManager::Get()->UnregisterOutputDevice(Console.Get());
     Console->Show(false);
     return Result;
 }

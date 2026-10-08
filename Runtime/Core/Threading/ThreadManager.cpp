@@ -1,7 +1,7 @@
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 
 FThreadManager::FThreadManager()
     : MainThreadHandle(nullptr)

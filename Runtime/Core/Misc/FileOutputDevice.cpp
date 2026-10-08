@@ -12,8 +12,11 @@ static const CHAR* SeverityToString(ELogSeverity Severity)
     }
 }
 
+static constexpr int32 MaxPendingLines = 4096;
+
 FFileOutputDevice::FFileOutputDevice(const String& FilePath)
     : FileHandle(FPlatformFile::OpenForAsyncWrite(FilePath, true))
+    , bIsInsideHandle(false)
 {
 }
 
@@ -47,6 +50,7 @@ void FFileOutputDevice::QueueWrite(const String& Line)
     {
         TScopedLock Lock(PendingLinesCS);
         PendingLines.Emplace(Line);
+        DropOverflowingLines();
     }
 
     FlushAsync();
@@ -54,7 +58,39 @@ void FFileOutputDevice::QueueWrite(const String& Line)
 
 void FFileOutputDevice::FlushAsync()
 {
-    TArray<String> LinesToFlush;
+    TScopedLock Lock(FileCS);
+    if (bIsInsideHandle)
+    {
+        return;
+    }
+
+    bIsInsideHandle = true;
+    SubmitPendingLines();
+    bIsInsideHandle = false;
+}
+
+void FFileOutputDevice::FlushBlocking()
+{
+    TScopedLock Lock(FileCS);
+    if (bIsInsideHandle)
+    {
+        return;
+    }
+
+    bIsInsideHandle = true;
+    SubmitPendingLines();
+
+    if (FileHandle.IsValid())
+    {
+        FileHandle->WaitForPendingWrites();
+    }
+
+    bIsInsideHandle = false;
+}
+
+void FFileOutputDevice::SubmitPendingLines()
+{
+    TArray<String> LinesToWrite;
     {
         TScopedLock Lock(PendingLinesCS);
         if (PendingLines.IsEmpty())
@@ -62,38 +98,58 @@ void FFileOutputDevice::FlushAsync()
             return;
         }
 
-        LinesToFlush = Move(PendingLines);
+        LinesToWrite = Move(PendingLines);
         PendingLines.Clear();
     }
 
-    if (FileHandle.IsValid())
+    const bool bWritten = WriteLines(LinesToWrite);
+
+    if (!bWritten)
     {
-        uint32 TotalSize = 0;
-        for (const String& Line : LinesToFlush)
-        {
-            TotalSize += Line.SizeInBytes();
-        }
-
-        TArray<uint8> Buffer;
-        Buffer.Resize(TotalSize);
-
-        uint32 Offset = 0;
-        for (const String& Line : LinesToFlush)
-        {
-            Memory::Memcpy(Buffer.Data() + Offset, *Line, Line.SizeInBytes());
-            Offset += Line.SizeInBytes();
-        }
-
-        FileHandle->WriteAsync(Buffer.Data(), TotalSize);
+        TScopedLock Lock(PendingLinesCS);
+        LinesToWrite.Append(PendingLines);
+        PendingLines = Move(LinesToWrite);
+        DropOverflowingLines();
     }
 }
 
-void FFileOutputDevice::FlushBlocking()
+bool FFileOutputDevice::WriteLines(const TArray<String>& Lines)
 {
-    FlushAsync();
-
-    if (FileHandle.IsValid())
+    if (!FileHandle.IsValid() || FileHandle->HasWriteError())
     {
-        FileHandle->WaitForPendingWrites();
+        return true;
     }
+
+    uint32 TotalSize = 0;
+    for (const String& Line : Lines)
+    {
+        TotalSize += Line.SizeInBytes();
+    }
+
+    if (TotalSize == 0)
+    {
+        return true;
+    }
+
+    TArray<uint8> Buffer;
+    Buffer.Resize(TotalSize);
+
+    uint32 Offset = 0;
+    for (const String& Line : Lines)
+    {
+        Memory::Memcpy(Buffer.Data() + Offset, *Line, Line.SizeInBytes());
+        Offset += Line.SizeInBytes();
+    }
+
+    return FileHandle->WriteAsync(Buffer.Data(), TotalSize);
+}
+
+void FFileOutputDevice::DropOverflowingLines()
+{
+    if (PendingLines.Size() <= MaxPendingLines)
+    {
+        return;
+    }
+
+    PendingLines.RemoveAt(0, PendingLines.Size() - MaxPendingLines);
 }

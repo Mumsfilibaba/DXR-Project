@@ -1,4 +1,4 @@
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "CoreApplication/PlatformInterface/IPlatformWindow.h"
 #include "Application/Application.h"
 #include "Application/Draw/DrawCommandList.h"

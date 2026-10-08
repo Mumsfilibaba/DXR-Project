@@ -139,7 +139,7 @@ static FVulkanBarrierSubresourceRange VulkanResolveSubresourceRange(const VkImag
 
 static VkImageAspectFlags VulkanResolveAspectMask(VkFormat Format, const FRHITextureSubresourceRange& Subresources)
 {
-    const VkImageAspectFlags FullAspectMask = GetImageAspectFlagsFromFormat(Format);
+    const VkImageAspectFlags FullAspectMask = VulkanRHI::GetImageAspectFlagsFromFormat(Format);
     if (Subresources.NumPlaneSlices == RHI_ALL_PLANE_SLICES)
     {
         return FullAspectMask;
@@ -1659,7 +1659,7 @@ void FVulkanCommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const>
 void FVulkanCommandContext::SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat)
 {
     FVulkanBufferRHI* VulkanIndexBuffer = FVulkanDeviceRHI::ResourceCast(IndexBuffer);
-    ContextState.SetIndexBuffer(VulkanIndexBuffer, ConvertIndexFormat(IndexFormat));
+    ContextState.SetIndexBuffer(VulkanIndexBuffer, VulkanRHI::ConvertIndexFormat(IndexFormat));
 }
 
 void FVulkanCommandContext::SetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState)
@@ -1866,7 +1866,7 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
     ConditionalSplitCommandBuffer();
 
     const VkFormat Format       = VulkanTexture->GetVkFormat();
-    const uint64   RequiredSize = VkCalculateTextureUploadSize(Format, TextureRegion.Width, TextureRegion.Height);
+    const uint64   RequiredSize = VulkanRHI::VkCalculateTextureUploadSize(Format, TextureRegion.Width, TextureRegion.Height);
     const uint64   Alignment    = GetDevice()->GetPhysicalDevice()->GetProperties().limits.optimalBufferCopyOffsetAlignment;
 
     FVulkanMemoryLocation UploadLocation(GetDevice());
@@ -1880,8 +1880,8 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
     const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
     CHECK(Source != nullptr);
     
-    const uint32 RowPitch = VkCalculateTextureRowPitch(Format, TextureRegion.Width);
-    const uint32 NumRows  = VkCalculateTextureNumRows(Format, TextureRegion.Height);
+    const uint32 RowPitch = VulkanRHI::VkCalculateTextureRowPitch(Format, TextureRegion.Width);
+    const uint32 NumRows  = VulkanRHI::VkCalculateTextureNumRows(Format, TextureRegion.Height);
 
     for (uint64 y = 0; y < NumRows; y++)
     {
@@ -1894,7 +1894,7 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
     BufferImageCopy.bufferOffset                    = UploadLocation.GetBufferOffset();
     BufferImageCopy.bufferRowLength                 = 0;
     BufferImageCopy.bufferImageHeight               = 0;
-    BufferImageCopy.imageSubresource.aspectMask     = GetImageAspectFlagsFromFormat(Format);
+    BufferImageCopy.imageSubresource.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(Format);
     BufferImageCopy.imageSubresource.mipLevel       = MipLevel;
     BufferImageCopy.imageSubresource.baseArrayLayer = 0;
     BufferImageCopy.imageSubresource.layerCount     = 1;
@@ -1920,8 +1920,8 @@ void FVulkanCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegi
     ConditionalSplitCommandBuffer();
 
     const VkFormat Format       = VulkanTexture->GetVkFormat();
-    const uint32   RowPitch     = VkCalculateTextureRowPitch(Format, TextureRegion.Width);
-    const uint32   NumRows      = VkCalculateTextureNumRows(Format, TextureRegion.Height);
+    const uint32   RowPitch     = VulkanRHI::VkCalculateTextureRowPitch(Format, TextureRegion.Width);
+    const uint32   NumRows      = VulkanRHI::VkCalculateTextureNumRows(Format, TextureRegion.Height);
     const uint64   SliceSize    = static_cast<uint64>(RowPitch) * NumRows;
     const uint64   RequiredSize = SliceSize * TextureRegion.Depth;
     const uint64   Alignment    = GetDevice()->GetPhysicalDevice()->GetProperties().limits.optimalBufferCopyOffsetAlignment;
@@ -1952,7 +1952,7 @@ void FVulkanCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegi
     BufferImageCopy.bufferOffset                    = UploadLocation.GetBufferOffset();
     BufferImageCopy.bufferRowLength                 = 0;
     BufferImageCopy.bufferImageHeight               = 0;
-    BufferImageCopy.imageSubresource.aspectMask     = GetImageAspectFlagsFromFormat(Format);
+    BufferImageCopy.imageSubresource.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(Format);
     BufferImageCopy.imageSubresource.mipLevel       = MipLevel;
     BufferImageCopy.imageSubresource.baseArrayLayer = 0;
     BufferImageCopy.imageSubresource.layerCount     = 1;
@@ -1985,11 +1985,11 @@ void FVulkanCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
     ConditionalSplitCommandBuffer();
 
     VkImageResolve ImageResolve = {};
-    ImageResolve.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
+    ImageResolve.srcSubresource.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
     ImageResolve.srcSubresource.mipLevel       = 0;
     ImageResolve.srcSubresource.baseArrayLayer = 0;
     ImageResolve.srcSubresource.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-    ImageResolve.dstSubresource.aspectMask     = GetImageAspectFlagsFromFormat(DstVulkanTexture->GetVkFormat());
+    ImageResolve.dstSubresource.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(DstVulkanTexture->GetVkFormat());
     ImageResolve.dstSubresource.mipLevel       = 0;
     ImageResolve.dstSubresource.baseArrayLayer = 0;
     ImageResolve.dstSubresource.layerCount     = VK_REMAINING_ARRAY_LAYERS;
@@ -2069,10 +2069,10 @@ void FVulkanCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
         ImageCopy.extent.width                  = Math::Max<uint32>(TextureDesc.Extent.X >> MipLevel, 1u);
         ImageCopy.extent.height                 = Math::Max<uint32>(TextureDesc.Extent.Y >> MipLevel, 1u);
         ImageCopy.extent.depth                  = Math::Max<uint32>(TextureDesc.Extent.Z >> MipLevel, 1u);
-        ImageCopy.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
+        ImageCopy.srcSubresource.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
         ImageCopy.srcSubresource.mipLevel       = MipLevel;
         ImageCopy.srcSubresource.baseArrayLayer = 0;
-        ImageCopy.dstSubresource.aspectMask     = GetImageAspectFlagsFromFormat(DstVulkanTexture->GetVkFormat());
+        ImageCopy.dstSubresource.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(DstVulkanTexture->GetVkFormat());
         ImageCopy.dstSubresource.mipLevel       = MipLevel;
         ImageCopy.dstSubresource.baseArrayLayer = 0;
 
@@ -2137,7 +2137,7 @@ void FVulkanCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src
             Memory::Memzero(&CopyInfo, sizeof(CopyInfo));
             
             // Describe the source subresource
-            CopyInfo.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
+            CopyInfo.srcSubresource.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
             CopyInfo.srcSubresource.mipLevel       = CopyDesc.SrcMipSlice + MipLevel;
             CopyInfo.srcOffset.x                   = CopyDesc.SrcPosition.X >> MipLevel;
             CopyInfo.srcOffset.y                   = CopyDesc.SrcPosition.Y >> MipLevel;
@@ -2146,7 +2146,7 @@ void FVulkanCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src
             CopyInfo.srcSubresource.layerCount     = 1;
             
             // Describe the destination subresource
-            CopyInfo.dstSubresource.aspectMask     = GetImageAspectFlagsFromFormat(DstVulkanTexture->GetVkFormat());
+            CopyInfo.dstSubresource.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(DstVulkanTexture->GetVkFormat());
             CopyInfo.dstSubresource.mipLevel       = CopyDesc.DstMipSlice + MipLevel;
             CopyInfo.dstOffset.x                   = CopyDesc.DstPosition.X >> MipLevel;
             CopyInfo.dstOffset.y                   = CopyDesc.DstPosition.Y >> MipLevel;
@@ -2194,7 +2194,7 @@ void FVulkanCommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Ds
     Copy.bufferOffset                    = DstVulkanBuffer->GetBindOffset() + DstOffset;
     Copy.bufferRowLength                 = 0;
     Copy.bufferImageHeight               = 0;
-    Copy.imageSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
+    Copy.imageSubresource.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
     Copy.imageSubresource.mipLevel       = SrcMipLevel;
     Copy.imageSubresource.baseArrayLayer = 0;
     Copy.imageSubresource.layerCount     = 1;
@@ -2240,7 +2240,7 @@ void FVulkanCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint
     Copy.bufferOffset                    = DstVulkanBuffer->GetBindOffset() + DstOffset;
     Copy.bufferRowLength                 = 0;
     Copy.bufferImageHeight               = 0;
-    Copy.imageSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
+    Copy.imageSubresource.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
     Copy.imageSubresource.mipLevel       = SrcMipLevel;
     Copy.imageSubresource.baseArrayLayer = SrcArraySlice;
     Copy.imageSubresource.layerCount     = 1;
@@ -2314,7 +2314,7 @@ void FVulkanCommandContext::DiscardContents(FRHITexture* Resource)
     ImageBarrier.dstAccessMask                   = VK_ACCESS_2_MEMORY_WRITE_BIT_KHR | VK_ACCESS_2_MEMORY_READ_BIT_KHR;
     ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT_KHR;
     ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
-    ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(CreateInfo.format);
+    ImageBarrier.subresourceRange.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(CreateInfo.format);
     ImageBarrier.subresourceRange.baseArrayLayer = 0;
     ImageBarrier.subresourceRange.baseMipLevel   = 0;
     ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
@@ -2768,7 +2768,7 @@ void FVulkanCommandContext::ExecuteIndirectRayTracingAccelerationStructureOperat
             VkClusterAccelerationStructureInputInfoNV InputInfo = {};
             InputInfo.sType                         = VK_STRUCTURE_TYPE_CLUSTER_ACCELERATION_STRUCTURE_INPUT_INFO_NV;
             InputInfo.maxAccelerationStructureCount = Operation.ArgumentCount;
-            InputInfo.flags                         = ConvertAccelerationStructureBuildFlags(EAccelerationStructureBuildFlags::None);
+            InputInfo.flags                         = VulkanRHI::ConvertAccelerationStructureBuildFlags(EAccelerationStructureBuildFlags::None);
 
             switch (Operation.OperationType)
             {
@@ -3170,7 +3170,7 @@ void FVulkanCommandContext::TransitionImageLayout(FVulkanTextureRHI* Texture, Vk
     FScopedBarrierReason BarrierReason(BarrierBatcher, Texture, AfterLayout);
     FVulkanImageLayoutState& LocalState = RetrievePendingImageState(Texture);
     const VkImageCreateInfo& CreateInfo = Texture->GetVkImageCreateInfo();
-    const VkImageAspectFlags AspectMask = GetImageAspectFlagsFromFormat(CreateInfo.format);
+    const VkImageAspectFlags AspectMask = VulkanRHI::GetImageAspectFlagsFromFormat(CreateInfo.format);
 
     if (LocalState.AreAllSubresourcesSameLayout())
     {
@@ -3243,7 +3243,7 @@ void FVulkanCommandContext::TransitionImageLayout(FVulkanTextureRHI* Texture, Vk
     FScopedBarrierReason BarrierReason(BarrierBatcher, Texture, AfterLayout);
     FVulkanImageLayoutState& LocalState = RetrievePendingImageState(Texture);
     const VkImageCreateInfo& CreateInfo = Texture->GetVkImageCreateInfo();
-    const VkImageAspectFlags AspectMask = GetImageAspectFlagsFromFormat(CreateInfo.format);
+    const VkImageAspectFlags AspectMask = VulkanRHI::GetImageAspectFlagsFromFormat(CreateInfo.format);
 
     if (LocalState.AreAllSubresourcesSameLayout())
     {
@@ -3329,7 +3329,7 @@ void FVulkanCommandContext::TransitionImageLayout(FVulkanTextureRHI* Texture, Vk
 
     FScopedBarrierReason BarrierReason(BarrierBatcher, Texture, AfterLayout);
     const VkImageCreateInfo& CreateInfo = Texture->GetVkImageCreateInfo();
-    const VkImageAspectFlags AspectMask = GetImageAspectFlagsFromFormat(CreateInfo.format);
+    const VkImageAspectFlags AspectMask = VulkanRHI::GetImageAspectFlagsFromFormat(CreateInfo.format);
 
     for (uint32 ArraySlice = FirstArraySlice; ArraySlice < FirstArraySlice + NumArraySlices; ArraySlice++)
     {

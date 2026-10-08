@@ -9,7 +9,7 @@
 #include <Core/Memory/Malloc.h>
 #include <Core/Memory/Memory.h>
 #include <Core/Misc/CommandLine.h>
-#include <Core/Misc/OutputDeviceLogger.h>
+#include <Core/Misc/OutputDeviceManager.h>
 #include <Core/Platform/PlatformFile.h>
 #include <Core/Tasks/TaskGraph.h>
 #include <Core/Templates/CString.h>

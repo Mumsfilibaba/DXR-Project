@@ -1,7 +1,7 @@
 #include "Application/Draw/UIAtlas.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
 
