@@ -199,12 +199,6 @@ public:
      */
     void SetScrollOffset(int32 InScrollOffset);
 
-    /** @return How far the strip has been scrolled from its leading edge, in pixels. */
-    NODISCARD FORCEINLINE int32 GetScrollOffset() const
-    {
-        return ScrollOffset;
-    }
-
     /** @return The content width less the view width, or zero while every tab already fits. */
     NODISCARD int32 GetMaxScrollOffset() const;
 
@@ -214,12 +208,6 @@ public:
      * @param PanelId The panel whose tab to reveal. An unknown id is ignored.
      */
     void ScrollTabIntoView(const String& PanelId);
-
-    /** @return The bar drawn under the tabs, which only shows itself while they overflow. */
-    NODISCARD FORCEINLINE const TSharedPtr<class FScrollBar>& GetScrollBar() const
-    {
-        return ScrollBar;
-    }
 
     /**
      * @brief Appends a tab at the far end.
@@ -276,14 +264,26 @@ public:
      */
     void OnTabReleased(FTab* Tab, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
 
+    /** @return The panel whose tab is active, or an empty string when the strip has no tabs. */
+    NODISCARD const String& GetActivePanelId() const;
+
+    /** @return How far the strip has been scrolled from its leading edge, in pixels. */
+    NODISCARD FORCEINLINE int32 GetScrollOffset() const
+    {
+        return ScrollOffset;
+    }
+
+    /** @return The bar drawn under the tabs, which only shows itself while they overflow. */
+    NODISCARD FORCEINLINE const TSharedPtr<class FScrollBar>& GetScrollBar() const
+    {
+        return ScrollBar;
+    }
+
     /** @return The tabs the strip holds, in the order they are laid out along the strip. */
     NODISCARD FORCEINLINE const TArray<TSharedPtr<FTab>>& GetTabs() const
     {
         return Tabs;
     }
-
-    /** @return The panel whose tab is active, or an empty string when the strip has no tabs. */
-    NODISCARD const String& GetActivePanelId() const;
 
     /**
      * @brief Gets the panel being dragged along the strip.

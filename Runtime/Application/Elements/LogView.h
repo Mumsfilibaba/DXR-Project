@@ -112,36 +112,12 @@ public:
      */
     void SetSearchCaseSensitive(bool bInCaseSensitive);
 
-    /** @return The string the lines are searched for, which is empty when there is no search. */
-    NODISCARD FORCEINLINE const String& GetSearchText() const
-    {
-        return SearchText;
-    }
-
-    /** @return True when "Create" and "create" are treated as different searches. */
-    NODISCARD FORCEINLINE bool IsSearchCaseSensitive() const
-    {
-        return SearchCaseType == EStringCaseType::CaseSensitive;
-    }
-
-    /** @return True when non-matching lines are hidden rather than only left unhighlighted. */
-    NODISCARD FORCEINLINE bool IsFilteringToMatches() const
-    {
-        return bFilterToMatches;
-    }
-
     /**
      * @brief Follows the tail as lines arrive, until the reader scrolls away from it.
      *
      * @param bInAutoScroll True to follow the tail.
      */
     void SetAutoScroll(bool bInAutoScroll);
-
-    /** @return True while autoscroll is on, so the view follows the tail as lines arrive. */
-    NODISCARD FORCEINLINE bool IsAutoScrollEnabled() const
-    {
-        return bAutoScroll;
-    }
 
     /**
      * @brief Gets whether the last line is showing, which is what re-arms autoscroll after a manual scroll.
@@ -169,12 +145,6 @@ public:
      */
     void SetMaxLineCount(int32 InMaxLineCount);
 
-    /** @return The line cap, which is how many lines are kept before the oldest are dropped. */
-    NODISCARD FORCEINLINE int32 GetMaxLineCount() const
-    {
-        return MaxLineCount;
-    }
-
     /** @return Every line held, oldest first, whether or not the filter shows it. */
     NODISCARD TArray<FLogLine> GetLines() const;
 
@@ -186,6 +156,36 @@ public:
 
     /** @return How many lines are held, whether or not the filter shows them. */
     NODISCARD int32 GetNumLines() const;
+
+    /** @return The string the lines are searched for, which is empty when there is no search. */
+    NODISCARD FORCEINLINE const String& GetSearchText() const
+    {
+        return SearchText;
+    }
+
+    /** @return True when "Create" and "create" are treated as different searches. */
+    NODISCARD FORCEINLINE bool IsSearchCaseSensitive() const
+    {
+        return SearchCaseType == EStringCaseType::CaseSensitive;
+    }
+
+    /** @return True when non-matching lines are hidden rather than only left unhighlighted. */
+    NODISCARD FORCEINLINE bool IsFilteringToMatches() const
+    {
+        return bFilterToMatches;
+    }
+
+    /** @return True while autoscroll is on, so the view follows the tail as lines arrive. */
+    NODISCARD FORCEINLINE bool IsAutoScrollEnabled() const
+    {
+        return bAutoScroll;
+    }
+
+    /** @return The line cap, which is how many lines are kept before the oldest are dropped. */
+    NODISCARD FORCEINLINE int32 GetMaxLineCount() const
+    {
+        return MaxLineCount;
+    }
 
     /** @return The block the lines are drawn by, which is what a selection or a search reads back from. */
     NODISCARD FORCEINLINE const TSharedPtr<FRichTextBlock>& GetTextBlock() const

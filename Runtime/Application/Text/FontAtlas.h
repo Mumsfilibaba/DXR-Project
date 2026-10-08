@@ -77,6 +77,23 @@ public:
     NODISCARD const FGlyph& GetGlyph(int32 Codepoint) const;
 
     /**
+     * @brief Gets the kerning between two codepoints, which is the correction a pair carries over the sum
+     * of their advances.
+     *
+     * @param Codepoint     The codepoint on the left.
+     * @param NextCodepoint The codepoint on the right.
+     * @return The correction in pixels, negative where the pair tucks together and zero where the face
+     * has no kern table or no entry for the pair.
+     */
+    NODISCARD int32 GetKerning(int32 Codepoint, int32 NextCodepoint) const;
+
+    NODISCARD FORCEINLINE int32 GetWidth()      const { return Width; }
+    NODISCARD FORCEINLINE int32 GetHeight()     const { return Height; }
+    NODISCARD FORCEINLINE int32 GetLineHeight() const { return LineHeight; }
+    NODISCARD FORCEINLINE int32 GetAscent()     const { return Ascent; }
+    NODISCARD FORCEINLINE int32 GetDescent()    const { return Descent; }
+
+    /**
      * @brief Gets the rasterized pixels, in the RGBA8 layout FTextureFactory expects.
      *
      * @return The pixels, white with the glyph coverage in alpha, in tightly packed rows of GetWidth()
@@ -85,31 +102,6 @@ public:
     NODISCARD FORCEINLINE const uint8* GetPixels() const
     {
         return Pixels.Data();
-    }
-
-    NODISCARD FORCEINLINE int32 GetWidth() const
-    {
-        return Width;
-    }
-
-    NODISCARD FORCEINLINE int32 GetHeight() const
-    {
-        return Height;
-    }
-
-    NODISCARD FORCEINLINE int32 GetLineHeight() const
-    {
-        return LineHeight;
-    }
-
-    NODISCARD FORCEINLINE int32 GetAscent() const
-    {
-        return Ascent;
-    }
-
-    NODISCARD FORCEINLINE int32 GetDescent() const
-    {
-        return Descent;
     }
 
     /**
@@ -152,17 +144,6 @@ public:
     {
         return ChangedSinceLayout;
     }
-
-    /**
-     * @brief Gets the kerning between two codepoints, which is the correction a pair carries over the sum
-     * of their advances.
-     *
-     * @param Codepoint     The codepoint on the left.
-     * @param NextCodepoint The codepoint on the right.
-     * @return The correction in pixels, negative where the pair tucks together and zero where the face
-     * has no kern table or no entry for the pair.
-     */
-    NODISCARD int32 GetKerning(int32 Codepoint, int32 NextCodepoint) const;
 
     /** @return True when a Build succeeded and there are pixels to upload, so the atlas can be drawn from. */
     NODISCARD FORCEINLINE bool IsValid() const

@@ -58,24 +58,12 @@ public:
      */
     void SetText(const String& InText);
 
-    /** @return The line as it currently reads. */
-    NODISCARD FORCEINLINE const String& GetText() const
-    {
-        return Text;
-    }
-
     /**
      * @brief Moves the text cursor, clamped into the line.
      *
      * @param InTextCursorPosition The new text cursor index.
      */
     void SetTextCursorPosition(int32 InTextCursorPosition);
-
-    /** @return Where the text cursor sits, as an index in [0, Length]. */
-    NODISCARD FORCEINLINE int32 GetTextCursorPosition() const
-    {
-        return TextCursorPosition;
-    }
 
     /**
      * @brief Finds the word the text cursor sits at the end of, scanning back to a separator.
@@ -95,35 +83,12 @@ public:
     void InvalidateCandidates();
 
     /**
-     * @brief Gets the candidates the last refresh found.
-     *
-     * @return The console objects whose names start with the word at the text cursor, ignoring case,
-     * each paired with its name, and empty when nothing matched.
-     */
-    NODISCARD FORCEINLINE const TArray<TPair<IConsoleObject*, String>>& GetCandidates() const
-    {
-        return Candidates;
-    }
-
-    /** @return The candidate the arrow keys picked, as an index, or InvalidIndex when none is selected. */
-    NODISCARD FORCEINLINE int32 GetSelectedCandidateIndex() const
-    {
-        return SelectedCandidateIndex;
-    }
-
-    /**
      * @brief Picks a candidate directly, as the mouse does when it moves across the list.
      *
      * @param Index The candidate to select, or InvalidIndex to select nothing. An index outside the
      * candidate list selects nothing rather than clamping, so a stale index cannot pick a neighbour.
      */
     void SetSelectedCandidateIndex(int32 Index);
-
-    /** @return True when anything matched the word at the text cursor, so the candidate list is not empty. */
-    NODISCARD FORCEINLINE bool HasCandidates() const
-    {
-        return !Candidates.IsEmpty();
-    }
 
     /**
      * @brief Reports whether the selection moved since the last call, and clears the flag.
@@ -159,6 +124,41 @@ public:
 
     /** @brief Drops the candidate list and the history walk, as toggling the console does. */
     void Reset();
+
+    /** @return The line as it currently reads. */
+    NODISCARD FORCEINLINE const String& GetText() const
+    {
+        return Text;
+    }
+
+    /** @return Where the text cursor sits, as an index in [0, Length]. */
+    NODISCARD FORCEINLINE int32 GetTextCursorPosition() const
+    {
+        return TextCursorPosition;
+    }
+
+    /**
+     * @brief Gets the candidates the last refresh found.
+     *
+     * @return The console objects whose names start with the word at the text cursor, ignoring case,
+     * each paired with its name, and empty when nothing matched.
+     */
+    NODISCARD FORCEINLINE const TArray<TPair<IConsoleObject*, String>>& GetCandidates() const
+    {
+        return Candidates;
+    }
+
+    /** @return The candidate the arrow keys picked, as an index, or InvalidIndex when none is selected. */
+    NODISCARD FORCEINLINE int32 GetSelectedCandidateIndex() const
+    {
+        return SelectedCandidateIndex;
+    }
+
+    /** @return True when anything matched the word at the text cursor, so the candidate list is not empty. */
+    NODISCARD FORCEINLINE bool HasCandidates() const
+    {
+        return !Candidates.IsEmpty();
+    }
 
     /** @return The index into the command history being shown, or InvalidIndex when not walking. */
     NODISCARD FORCEINLINE int32 GetHistoryIndex() const

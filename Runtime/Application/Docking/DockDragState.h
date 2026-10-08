@@ -128,6 +128,9 @@ public:
      */
     void SetOnDragEnded(const FOnDockDragEnded& InOnDragEnded);
 
+    /** @return The panel in flight, whose id is empty when no drag is in flight. */
+    NODISCARD FDockDragPanel GetDraggedPanel() const;
+
     /** @return The panel being dragged, or an empty string when no drag is in flight. */
     NODISCARD FORCEINLINE const String& GetDraggedPanelId() const
     {
@@ -145,9 +148,6 @@ public:
     {
         return SourceArea;
     }
-
-    /** @return The panel in flight, whose id is empty when no drag is in flight. */
-    NODISCARD FDockDragPanel GetDraggedPanel() const;
 
     /** @return True while a panel torn out of an area is in flight. */
     NODISCARD FORCEINLINE bool IsDragging() const

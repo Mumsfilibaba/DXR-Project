@@ -105,16 +105,6 @@ public:
     void RestoreLayout(const FDockNode& RootNode);
 
     /**
-     * @brief Gets the tree as it stands, which is what a save writes out.
-     *
-     * @return The root node, holding the whole tree.
-     */
-    NODISCARD FORCEINLINE const FDockNode& SaveLayout() const
-    {
-        return Root;
-    }
-
-    /**
      * @brief Writes the tree to a standalone ini file, flattened to one section per node.
      *
      * @param Filename Where to write it.
@@ -216,12 +206,6 @@ public:
      */
     void SetSuppressRootTabStrip(bool bInSuppress);
 
-    /** @return True when the root strip is omitted from the body. */
-    NODISCARD FORCEINLINE bool IsRootTabStripSuppressed() const
-    {
-        return bSuppressRootTabStrip;
-    }
-
     /**
      * @brief Gets whether a panel sits in the tree.
      *
@@ -262,6 +246,22 @@ public:
      * The measure pass calls this; anything that has to see the new elements sooner can call it too.
      */
     void FlushPendingRebuild();
+
+    /**
+     * @brief Gets the tree as it stands, which is what a save writes out.
+     *
+     * @return The root node, holding the whole tree.
+     */
+    NODISCARD FORCEINLINE const FDockNode& SaveLayout() const
+    {
+        return Root;
+    }
+
+    /** @return True when the root strip is omitted from the body. */
+    NODISCARD FORCEINLINE bool IsRootTabStripSuppressed() const
+    {
+        return bSuppressRootTabStrip;
+    }
 
 private:
     struct FLeafGeometry

@@ -152,6 +152,23 @@ public:
      */
     void SetValue(float InValue);
 
+    /** @brief Swaps the label for a text box seeded with the current value and takes focus. */
+    void BeginTyping();
+
+    /**
+     * @brief Leaves typing mode and puts the label back.
+     *
+     * @param bCommit True to parse what was typed and fire the commit delegate, false to discard it.
+     */
+    void EndTyping(bool bCommit);
+
+    /**
+     * @brief Formats the value at the configured precision, which is what typing mode is seeded with.
+     *
+     * @return The formatted value, without the prefix the label puts in front of it.
+     */
+    NODISCARD String GetFormattedValue() const;
+
     /** @return The value the field holds, already clamped to the range and snapped to the step. */
     NODISCARD FORCEINLINE float GetValue() const
     {
@@ -175,23 +192,6 @@ public:
     {
         return bIsTyping;
     }
-
-    /** @brief Swaps the label for a text box seeded with the current value and takes focus. */
-    void BeginTyping();
-
-    /**
-     * @brief Leaves typing mode and puts the label back.
-     *
-     * @param bCommit True to parse what was typed and fire the commit delegate, false to discard it.
-     */
-    void EndTyping(bool bCommit);
-
-    /**
-     * @brief Formats the value at the configured precision, which is what typing mode is seeded with.
-     *
-     * @return The formatted value, without the prefix the label puts in front of it.
-     */
-    NODISCARD String GetFormattedValue() const;
 
 protected:
 

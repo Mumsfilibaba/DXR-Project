@@ -107,23 +107,12 @@ public:
      */
     void SetTransform(const Matrix4& InTransform);
 
-    /** @return The transform being edited, which a drag in progress has already written into. */
-    NODISCARD FORCEINLINE const Matrix4& GetTransform() const
-    {
-        return Transform;
-    }
-
     /**
      * @brief Sets which handles the gizmo shows. Ignored while a drag is in progress.
      *
      * @param InOperation The operation to show.
      */
     void SetOperation(EGizmoOperation InOperation);
-
-    NODISCARD FORCEINLINE EGizmoOperation GetOperation() const
-    {
-        return Operation;
-    }
 
     /**
      * @brief Sets whether the handles align to the world axes or to the transform. Ignored mid-drag.
@@ -132,11 +121,6 @@ public:
      */
     void SetMode(EGizmoMode InMode);
 
-    NODISCARD FORCEINLINE EGizmoMode GetMode() const
-    {
-        return Mode;
-    }
-
     /**
      * @brief Sets the increments a drag quantises to, each ignored when zero.
      *
@@ -144,9 +128,49 @@ public:
      */
     void SetSnap(const FGizmoSnapSettings& InSnap);
 
-    NODISCARD FORCEINLINE const FGizmoSnapSettings& GetSnap() const
+    /**
+     * @brief Whether an axis is drawn at all, which it is not when it points at the camera.
+     *
+     * @param AxisIndex Zero for X, one for Y, two for Z.
+     * @return True while the axis is worth showing.
+     */
+    NODISCARD bool IsAxisVisible(int32 AxisIndex) const;
+
+    /**
+     * @brief Whether an axis is drawn the other way, which it is when that end faces the camera.
+     *
+     * @param AxisIndex Zero for X, one for Y, two for Z.
+     * @return True while the axis is flipped.
+     */
+    NODISCARD bool IsAxisFlipped(int32 AxisIndex) const;
+
+    /**
+     * @brief Whether a plane handle is drawn at all, which it is not when the plane is edge-on.
+     *
+     * @param AxisIndex The axis the plane is normal to.
+     * @return True while the handle is worth showing.
+     */
+    NODISCARD bool IsPlaneVisible(int32 AxisIndex) const;
+
+    /**
+     * @brief The direction an axis is drawn along, in world space, flipping included.
+     *
+     * @param AxisIndex Zero for X, one for Y, two for Z.
+     * @return The unit direction.
+     */
+    NODISCARD Vector3 GetAxisDirection(int32 AxisIndex) const;
+
+    /** @return Where the gizmo sits in world space, the translation of the transform being edited. */
+    NODISCARD Vector3 GetPivot() const;
+
+    NODISCARD FORCEINLINE EGizmoOperation           GetOperation() const { return Operation; }
+    NODISCARD FORCEINLINE EGizmoMode                GetMode()      const { return Mode; }
+    NODISCARD FORCEINLINE const FGizmoSnapSettings& GetSnap()      const { return Snap; }
+
+    /** @return The transform being edited, which a drag in progress has already written into. */
+    NODISCARD FORCEINLINE const Matrix4& GetTransform() const
     {
-        return Snap;
+        return Transform;
     }
 
     /**
@@ -197,41 +221,6 @@ public:
         return HasStateBit(StateBit_Projected);
     }
 
-    /**
-     * @brief Whether an axis is drawn at all, which it is not when it points at the camera.
-     *
-     * @param AxisIndex Zero for X, one for Y, two for Z.
-     * @return True while the axis is worth showing.
-     */
-    NODISCARD bool IsAxisVisible(int32 AxisIndex) const;
-
-    /**
-     * @brief Whether an axis is drawn the other way, which it is when that end faces the camera.
-     *
-     * @param AxisIndex Zero for X, one for Y, two for Z.
-     * @return True while the axis is flipped.
-     */
-    NODISCARD bool IsAxisFlipped(int32 AxisIndex) const;
-
-    /**
-     * @brief Whether a plane handle is drawn at all, which it is not when the plane is edge-on.
-     *
-     * @param AxisIndex The axis the plane is normal to.
-     * @return True while the handle is worth showing.
-     */
-    NODISCARD bool IsPlaneVisible(int32 AxisIndex) const;
-
-    /**
-     * @brief The direction an axis is drawn along, in world space, flipping included.
-     *
-     * @param AxisIndex Zero for X, one for Y, two for Z.
-     * @return The unit direction.
-     */
-    NODISCARD Vector3 GetAxisDirection(int32 AxisIndex) const;
-
-    /** @return Where the gizmo sits in world space, the translation of the transform being edited. */
-    NODISCARD Vector3 GetPivot() const;
-
 private:
     enum EStateBits : uint16
     {
@@ -245,21 +234,6 @@ private:
     NODISCARD static constexpr uint16 GetAxisBit(EStateBits FirstAxisBit, int32 AxisIndex)
     {
         return static_cast<uint16>(FirstAxisBit << AxisIndex);
-    }
-
-    NODISCARD FORCEINLINE bool HasStateBit(uint16 Bit) const
-    {
-        return (StateBits & Bit) != 0;
-    }
-
-    FORCEINLINE void SetStateBit(uint16 Bit, bool bValue)
-    {
-        StateBits = static_cast<uint16>(bValue ? (StateBits | Bit) : (StateBits & ~Bit));
-    }
-
-    NODISCARD FORCEINLINE bool HasAxisBit(EStateBits FirstAxisBit, int32 AxisIndex) const
-    {
-        return HasStateBit(GetAxisBit(FirstAxisBit, AxisIndex));
     }
 
     void UpdateContext();
@@ -283,6 +257,11 @@ private:
     void DrawScale(FDrawCommandList& OutCommandList, int32 LayerId) const;
     void DrawCenterHandle(FDrawCommandList& OutCommandList, int32 LayerId, EGizmoHandle Handle, bool bDrawAsSphere) const;
     void DrawReadout(FDrawCommandList& OutCommandList, int32 LayerId) const;
+
+    NODISCARD FORCEINLINE bool HasStateBit(uint16 Bit)                              const { return (StateBits & Bit) != 0; }
+    NODISCARD FORCEINLINE bool HasAxisBit(EStateBits FirstAxisBit, int32 AxisIndex) const { return HasStateBit(GetAxisBit(FirstAxisBit, AxisIndex)); }
+
+    FORCEINLINE void SetStateBit(uint16 Bit, bool bValue) { StateBits = static_cast<uint16>(bValue ? (StateBits | Bit) : (StateBits & ~Bit)); }
 
     Matrix4                  ViewMatrix;
     Matrix4                  ProjectionMatrix;

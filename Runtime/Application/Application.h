@@ -173,40 +173,8 @@ public:
      */
     void SetOnWindowLiveResize(const FOnWindowLiveResize& InOnWindowLiveResize);
 
-    /** @return The event raised on both edges of an OS-driven window drag or resize. */
-    NODISCARD FORCEINLINE FOnWindowInteractionEvent& GetOnWindowInteractionEvent()
-    {
-        return OnWindowInteractionEvent;
-    }
-
-    /**
-     * @return The event raised once a window's tree is drawn and before the deferred paints are drained,
-     * which is where a subscriber calls FWindow::QueueDeferredPainting to paint over that window.
-     */
-    NODISCARD FORCEINLINE FOnWindowPaintingEvent& GetOnWindowPaintingEvent()
-    {
-        return OnWindowPaintingEvent;
-    }
-
     /** @return The window the OS is running a modal drag or resize loop for, or null when there is none. */
     NODISCARD TSharedPtr<FWindow> GetInteractingWindow();
-
-    /**
-     * @brief Gets what the OS is currently doing to a window, which only means anything while
-     * GetInteractingWindow reports one.
-     *
-     * @return The kind of the interaction in progress.
-     */
-    NODISCARD FORCEINLINE EWindowInteraction GetWindowInteraction() const
-    {
-        return WindowInteraction;
-    }
-
-    /** @return The renderer the windows record into, or null when none is registered. */
-    NODISCARD FORCEINLINE TSharedPtr<IApplicationRenderer> GetRenderer() const
-    {
-        return Renderer;
-    }
 
     /** @brief Drives the platform message pump, distributing events to the rest of the system. */
     void ProcessEvents();
@@ -223,16 +191,6 @@ public:
      * @return True if a gamepad is connected, otherwise false.
      */
     bool IsGamePadConnected() const;
-
-    /**
-     * @brief Retrieves the primary input device interface (e.g., for gamepads).
-     * 
-     * @return A pointer to the current IPlatformInputDevice instance, or nullptr if none.
-     */
-    FORCEINLINE IPlatformInputDevice* GetInputDevice() const
-    {
-        return PlatformApplication->GetInputDevice();
-    }
 
     /**
      * @brief Registers an input handler, which is offered every event before the elements are.
@@ -322,17 +280,6 @@ public:
     bool IsCursorVisible() const;
 
     /**
-     * @brief Checks if the application is currently tracking a mouse drag, which lasts from the first
-     * button press until the last release, or for as long as an element holds the capture.
-     *
-     * @return True if a mouse drag operation is in progress, otherwise false.
-     */
-    FORCEINLINE bool IsTrackingCursor() const
-    {
-        return bIsTrackingCursor;
-    }
-
-    /**
      * @brief Assigns persistent mouse capture to an element and binds platform capture to its window.
      *
      * @param Element The element that should receive mouse events while capture is held.
@@ -347,36 +294,6 @@ public:
      *               regardless of which element holds it. Non-null is ignored if it is not the captor.
      */
     void ReleaseMouseCapture(const TSharedPtr<FVisualElement>& Element = nullptr);
-
-    /**
-     * @brief Checks whether an element currently holds persistent mouse capture.
-     *
-     * @return True if MouseCaptor is valid.
-     */
-    FORCEINLINE bool HasMouseCapture() const
-    {
-        return MouseCaptor.IsValid();
-    }
-
-    /**
-     * @brief Returns the element that currently holds persistent mouse capture.
-     *
-     * @return The capturing element, or nullptr if none.
-     */
-    FORCEINLINE TSharedPtr<FVisualElement> GetMouseCaptor() const
-    {
-        return MouseCaptor.IsValid() ? TSharedPtr<FVisualElement>(MouseCaptor) : nullptr;
-    }
-
-    /**
-     * @brief Retrieves the cursor interface being used by the platform application.
-     * 
-     * @return A shared pointer to the IPlatformCursor interface, or nullptr if unsupported.
-     */
-    FORCEINLINE TSharedPtr<IPlatformCursor> GetCursor() const
-    {
-        return PlatformApplication->GetCursor();
-    }
 
     /**
      * @brief Sets focus to the specified element and all of its parents up to the top-level window.
@@ -439,12 +356,6 @@ public:
      */
     TSharedPtr<FWindow> FindWindowUnderCursor() const;
 
-    /** @return Every window registered and not yet destroyed, menu popups and floating windows included. */
-    NODISCARD FORCEINLINE const TArray<TSharedPtr<FWindow>>& GetWindows() const
-    {
-        return Windows;
-    }
-
     /**
      * @brief Retrieves a path of elements currently under the mouse cursor.
      * 
@@ -471,6 +382,102 @@ public:
     void GetDisplayInfo(TArray<FMonitorInfo>& OutMonitorInfo);
 
     /**
+     * @brief Overrides the existing platform application with a new IPlatformApplication instance.
+     *
+     * @param InPlatformApplication The new platform application to set.
+     */
+    void OverridePlatformApplication(const TSharedPtr<IPlatformApplication>& InPlatformApplication);
+
+    /** @return The event raised on both edges of an OS-driven window drag or resize. */
+    NODISCARD FORCEINLINE FOnWindowInteractionEvent& GetOnWindowInteractionEvent()
+    {
+        return OnWindowInteractionEvent;
+    }
+
+    /**
+     * @return The event raised once a window's tree is drawn and before the deferred paints are drained,
+     * which is where a subscriber calls FWindow::QueueDeferredPainting to paint over that window.
+     */
+    NODISCARD FORCEINLINE FOnWindowPaintingEvent& GetOnWindowPaintingEvent()
+    {
+        return OnWindowPaintingEvent;
+    }
+
+    /**
+     * @brief Gets what the OS is currently doing to a window, which only means anything while
+     * GetInteractingWindow reports one.
+     *
+     * @return The kind of the interaction in progress.
+     */
+    NODISCARD FORCEINLINE EWindowInteraction GetWindowInteraction() const
+    {
+        return WindowInteraction;
+    }
+
+    /** @return The renderer the windows record into, or null when none is registered. */
+    NODISCARD FORCEINLINE TSharedPtr<IApplicationRenderer> GetRenderer() const
+    {
+        return Renderer;
+    }
+
+    /**
+     * @brief Retrieves the primary input device interface (e.g., for gamepads).
+     * 
+     * @return A pointer to the current IPlatformInputDevice instance, or nullptr if none.
+     */
+    FORCEINLINE IPlatformInputDevice* GetInputDevice() const
+    {
+        return PlatformApplication->GetInputDevice();
+    }
+
+    /**
+     * @brief Checks if the application is currently tracking a mouse drag, which lasts from the first
+     * button press until the last release, or for as long as an element holds the capture.
+     *
+     * @return True if a mouse drag operation is in progress, otherwise false.
+     */
+    FORCEINLINE bool IsTrackingCursor() const
+    {
+        return bIsTrackingCursor;
+    }
+
+    /**
+     * @brief Checks whether an element currently holds persistent mouse capture.
+     *
+     * @return True if MouseCaptor is valid.
+     */
+    FORCEINLINE bool HasMouseCapture() const
+    {
+        return MouseCaptor.IsValid();
+    }
+
+    /**
+     * @brief Returns the element that currently holds persistent mouse capture.
+     *
+     * @return The capturing element, or nullptr if none.
+     */
+    FORCEINLINE TSharedPtr<FVisualElement> GetMouseCaptor() const
+    {
+        return MouseCaptor.IsValid() ? TSharedPtr<FVisualElement>(MouseCaptor) : nullptr;
+    }
+
+    /**
+     * @brief Retrieves the cursor interface being used by the platform application.
+     * 
+     * @return A shared pointer to the IPlatformCursor interface, or nullptr if unsupported.
+     */
+    FORCEINLINE TSharedPtr<IPlatformCursor> GetCursor() const
+    {
+        return PlatformApplication->GetCursor();
+    }
+
+    /** @return Every window registered and not yet destroyed, menu popups and floating windows included. */
+    NODISCARD FORCEINLINE const TArray<TSharedPtr<FWindow>>& GetWindows() const
+    {
+        return Windows;
+    }
+
+    /**
      * @brief Accessor for the monitor configuration changed event.
      * 
      * @return A reference to the event triggered when monitors are added/removed or their configuration changes.
@@ -489,13 +496,6 @@ public:
     {
         return bIsApplicationActive;
     }
-
-    /**
-     * @brief Overrides the existing platform application with a new IPlatformApplication instance.
-     *
-     * @param InPlatformApplication The new platform application to set.
-     */
-    void OverridePlatformApplication(const TSharedPtr<IPlatformApplication>& InPlatformApplication);
 
     /**
      * @brief Retrieves the current platform application interface.

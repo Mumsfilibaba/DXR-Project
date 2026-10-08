@@ -147,12 +147,6 @@ public:
      */
     NODISCARD int32 GetOwningMenuDepth(const TSharedPtr<FVisualElement>& Element) const;
 
-    /** @return The open menus, outermost first. */
-    NODISCARD FORCEINLINE const TArray<FMenuHandle>& GetOpenMenus() const
-    {
-        return OpenMenus;
-    }
-
     /**
      * @brief Arranges for a submenu to open once the cursor has rested on its item. Replaces whatever was
      * scheduled before, so moving down a column of items only ever has one submenu pending, which is the
@@ -195,6 +189,12 @@ public:
      * @param DeltaSeconds Time since the last call.
      */
     void Tick(float DeltaSeconds);
+
+    /** @return The open menus, outermost first. */
+    NODISCARD FORCEINLINE const TArray<FMenuHandle>& GetOpenMenus() const
+    {
+        return OpenMenus;
+    }
 
 private:
     struct FPendingSubMenu

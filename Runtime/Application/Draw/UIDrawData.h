@@ -188,40 +188,18 @@ public:
      */
     void SetAntiAliasingEnabled(bool bEnabled);
 
+    NODISCARD FORCEINLINE bool IsEmpty() const { return Batches.IsEmpty(); }
+
+    NODISCARD FORCEINLINE const TArray<FUIVertex>&            GetVertices()           const { return Vertices; }
+    NODISCARD FORCEINLINE const TArray<uint32>&               GetIndices()            const { return Indices; }
+    NODISCARD FORCEINLINE const TArray<FUIShapeInstance>&     GetShapeInstances()     const { return ShapeInstances; }
+    NODISCARD FORCEINLINE const TArray<FUITextGlyphInstance>& GetTextGlyphInstances() const { return TextGlyphInstances; }
+    NODISCARD FORCEINLINE const TArray<FUIDrawBatch>&         GetBatches()            const { return Batches; }
+
     /** @return True while curved geometry is emitted with a soft edge. */
     NODISCARD FORCEINLINE bool IsAntiAliasingEnabled() const
     {
         return bAntiAliasingEnabled;
-    }
-
-    NODISCARD FORCEINLINE const TArray<FUIVertex>& GetVertices() const
-    {
-        return Vertices;
-    }
-
-    NODISCARD FORCEINLINE const TArray<uint32>& GetIndices() const
-    {
-        return Indices;
-    }
-
-    NODISCARD FORCEINLINE const TArray<FUIShapeInstance>& GetShapeInstances() const
-    {
-        return ShapeInstances;
-    }
-
-    NODISCARD FORCEINLINE const TArray<FUITextGlyphInstance>& GetTextGlyphInstances() const
-    {
-        return TextGlyphInstances;
-    }
-
-    NODISCARD FORCEINLINE const TArray<FUIDrawBatch>& GetBatches() const
-    {
-        return Batches;
-    }
-
-    NODISCARD FORCEINLINE bool IsEmpty() const
-    {
-        return Batches.IsEmpty();
     }
 
     /**
