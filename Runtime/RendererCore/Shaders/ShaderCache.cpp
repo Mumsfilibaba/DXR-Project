@@ -97,7 +97,7 @@ static void CompileAllShaders(StringView Arguments)
     }
 
     FShaderCompiler* Compiler = FShaderCompiler::TryGet();
-    const EShaderOutputLanguage OutputLanguage = FShaderCompiler::GetOutputLanguageForRHI(TargetRHI);
+    const EShaderOutputLanguage OutputLanguage = RHI::GetShaderOutputLanguage(TargetRHI);
     if (!Compiler || !RHI::IsRHISupportedByPlatform(TargetRHI) || !Compiler->IsOutputLanguageSupported(OutputLanguage))
     {
         LOG_ERROR("Shaders.CompileAll: %s (%s) cannot be compiled on this platform", ToString(TargetRHI), ToString(OutputLanguage));
@@ -133,15 +133,20 @@ static void CompileAllShaders(StringView Arguments)
         FShaderCompilationEnvironment Environment;
         Item.Type->BuildCompilationEnvironment(Item.Desc, Environment);
 
-        const FShaderCompileInfo CompileInfo(Item.Type->GetEntryPoint(), Environment.ShaderModel, Item.Type->GetStage(), Environment.Defines, OutputLanguage);
+        const FShaderCompileInfo CompileInfo(Item.Type->GetEntryPoint(), Environment.ShaderModel, Item.Type->GetStage(), OutputLanguage, Environment.Defines);
 
         TArray<uint8> ShaderCode;
-        if (!Compiler->CompileFromFile(Item.Type->GetSourceFile(), CompileInfo, ShaderCode))
+        if (!FShaderBytecodeCache::CompileFromFile(Item.Type->GetSourceFile(), CompileInfo, ShaderCode))
         {
             LOG_ERROR("Shaders.CompileAll: %s permutation %d failed (%s, entry '%s')", Item.Type->GetName(), Item.Desc.PermutationID, Item.Type->GetSourceFile(), Item.Type->GetEntryPoint());
             NumFailed.Add(1);
         }
     });
+
+    if (FShaderBytecodeCache* BytecodeCache = FShaderBytecodeCache::TryGet())
+    {
+        BytecodeCache->Save();
+    }
 
     const int32 Failed = NumFailed.Load();
     if (Failed > 0)
@@ -323,20 +328,20 @@ FRHIShaderRef FShaderCache::GetOrCompile(FShaderType& Type, int32 PermutationID)
     FShaderCompilationEnvironment Environment;
     Type.BuildCompilationEnvironment(Desc, Environment);
 
-    const FShaderCompileInfo CompileInfo = FShaderCompileInfo(Type.GetEntryPoint(), Environment.ShaderModel, Type.GetStage(), Environment.Defines);
-    const uint64             CompileHash = FShaderCompiler::Get().ComputeCompileHash(Type.GetSourceFile(), CompileInfo);
+    const EShaderOutputLanguage OutputLanguage = RHI::GetShaderOutputLanguage();
+    const FShaderCompileInfo    CompileInfo    = FShaderCompileInfo(Type.GetEntryPoint(), Environment.ShaderModel, Type.GetStage(), OutputLanguage, Environment.Defines);
+
+    // DXBC is always SM 5.0 and FXC rejects the requests it cannot lower itself
+    if (OutputLanguage != EShaderOutputLanguage::DXBC && RHI::MaxShaderModel != EShaderModel::Unknown && Environment.ShaderModel > RHI::MaxShaderModel)
+    {
+        LOG_ERROR("'%s' requests Shader Model %s but the device supports at most %s", Type.GetSourceFile(), ToString(Environment.ShaderModel), ToString(RHI::MaxShaderModel));
+    }
 
     TArray<uint8> ShaderCode;
-    if (!FShaderBytecodeCache::Get().Find(CompileHash, ShaderCode))
+    if (!FShaderBytecodeCache::CompileFromFile(Type.GetSourceFile(), CompileInfo, ShaderCode))
     {
-        TArray<String> Dependencies;
-        if (!FShaderCompiler::Get().CompileFromFile(Type.GetSourceFile(), CompileInfo, ShaderCode, &Dependencies))
-        {
-            LOG_ERROR("Failed to compile %s permutation %d (%s, entry '%s')", Type.GetName(), PermutationID, Type.GetSourceFile(), Type.GetEntryPoint());
-            return FRHIShaderRef();
-        }
-
-        FShaderBytecodeCache::Get().Add(CompileHash, ShaderCode, Dependencies);
+        LOG_ERROR("Failed to compile %s permutation %d (%s, entry '%s')", Type.GetName(), PermutationID, Type.GetSourceFile(), Type.GetEntryPoint());
+        return FRHIShaderRef();
     }
 
     FRHIShaderRef Shader = RHI::CreateShader(Type.GetStage(), ShaderCode);

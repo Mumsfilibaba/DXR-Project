@@ -840,6 +840,7 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
                     bDynamicOffsetsDirty = true;
                 }
             }
+
             break;
         }
 

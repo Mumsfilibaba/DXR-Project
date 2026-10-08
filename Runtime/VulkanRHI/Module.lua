@@ -123,7 +123,7 @@ VulkanRHI.AddModules({
     'Core',
     'CoreApplication',
     'RHI',
-    "SPIRV-Cross",
+    'ShaderCore',
 })
 
 if IsPlatformMac() then

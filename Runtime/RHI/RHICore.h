@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Templates/Bits.h"
+#include "ShaderCore/ShaderTypes.h"
 
 enum class EFormat : uint8;
 
@@ -90,44 +91,6 @@ NODISCARD constexpr uint32 ClampSampleCountToMask(uint32 SampleCountMask, uint32
     // Keep only the counts that are no greater than the desired one, then take the highest of those.
     const uint32 Candidates = Desired >= RHI_MAX_SAMPLE_COUNT ? RHI_ALL_SAMPLE_COUNTS : ((Desired << 1) - 1);
     return GetMaxSampleCount(SampleCountMask & Candidates);
-}
-
-enum class EShaderModel : uint8
-{
-    Unknown = 0,
-    SM_5_0  = 1, // DXBC for D3D11RHI. SM 5.1 is D3D12-only and intentionally absent, 2 stays unused.
-    SM_6_0  = 3,
-    SM_6_1  = 4,
-    SM_6_2  = 5,
-    SM_6_3  = 6,
-    SM_6_4  = 7,
-    SM_6_5  = 8,
-    SM_6_6  = 9,
-    SM_6_7  = 10,
-    SM_6_8  = 11,
-    SM_6_9  = 12,
-    SM_6_10 = 13,
-};
-
-NODISCARD constexpr const CHAR* ToString(EShaderModel ShaderModel)
-{
-    switch (ShaderModel)
-    {
-        case EShaderModel::SM_5_0:  return "SM_5_0";
-        case EShaderModel::SM_6_0:  return "SM_6_0";
-        case EShaderModel::SM_6_1:  return "SM_6_1";
-        case EShaderModel::SM_6_2:  return "SM_6_2";
-        case EShaderModel::SM_6_3:  return "SM_6_3";
-        case EShaderModel::SM_6_4:  return "SM_6_4";
-        case EShaderModel::SM_6_5:  return "SM_6_5";
-        case EShaderModel::SM_6_6:  return "SM_6_6";
-        case EShaderModel::SM_6_7:  return "SM_6_7";
-        case EShaderModel::SM_6_8:  return "SM_6_8";
-        case EShaderModel::SM_6_9:  return "SM_6_9";
-        case EShaderModel::SM_6_10: return "SM_6_10";
-
-        default: return "Unknown";
-    }
 }
 
 enum class ERayTracingTier : uint8

@@ -679,7 +679,7 @@ void FD3D11CommandContextState::BindUnorderedAccessViews(const FD3D11Shader* Sha
     const uint32 NumViews = Math::Max(UAVCache.NumViews, UAVCache.NumBoundViews);
     for (uint32 Index = 0; Index < NumViews; Index++)
     {
-        ID3D11UnorderedAccessView*   View  = BindingInfo.UnorderedAccessViewDeclared[Index] ? UAVCache.UnorderedAccessViews[Index].Get() : nullptr;
+        ID3D11UnorderedAccessView*   View  = BindingInfo.IsUnorderedAccessViewDeclared(Index) ? UAVCache.UnorderedAccessViews[Index].Get() : nullptr;
         const FD3D11SubresourceRange Range = View ? UAVCache.Ranges[Index] : FD3D11SubresourceRange();
 
         UnbindShaderResourceViews(Range);
@@ -781,7 +781,7 @@ void FD3D11CommandContextState::BindShaderResourceViews(EShaderVisibility::Type 
         const FD3D11SubresourceRange& Range = SRVCache.Ranges[ShaderStage][Index];
 
         // Only the registers the shader declares get a view, and only one of the declared dimension
-        if (View && !(Shader && IsViewDimensionCompatible(Shader->GetBindingInfo().ShaderResourceViewDimensions[Index], SRVCache.Dimensions[ShaderStage][Index])))
+        if (View && !(Shader && IsViewDimensionCompatible(Shader->GetBindingInfo().GetShaderResourceViewDimension(Index), SRVCache.Dimensions[ShaderStage][Index])))
         {
             View = nullptr;
         }

@@ -1058,70 +1058,58 @@ FRHIDepthStencilView* FD3D11DeviceRHI::CreateDepthStencilView(FRHIResource* InRe
     return D3D11View.ReleaseOwnership();
 }
 
-FRHIComputeShader* FD3D11DeviceRHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
+template<typename ShaderType>
+ShaderType* FD3D11DeviceRHI::CreateD3D11Shader(EShaderStage Stage, const TArray<uint8>& ShaderCode)
 {
-    FD3D11ComputeShaderRHIRef NewShader = new FD3D11ComputeShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
+    FShaderCodeView CodeView;
+    if (!FShaderCodeReader::Read(ShaderCode, CodeView) || CodeView.GetStage() != Stage || CodeView.GetOutputLanguage() != EShaderOutputLanguage::DXBC)
+    {
+        D3D11_ERROR("[FD3D11DeviceRHI]: The shader code is not a valid DXBC %s shader", ToString(Stage));
+        return nullptr;
+    }
+
+    TSharedRef<ShaderType> NewShader = new ShaderType(GetDevice());
+    if (!NewShader->Initialize(CodeView))
     {
         return nullptr;
     }
 
+    if constexpr (TIsBaseOf<FRHIVertexShader, ShaderType>::Value)
+    {
+        NewShader->SetVertexInputs(CodeView.GetVertexInputs());
+    }
+
     return NewShader.ReleaseOwnership();
+}
+
+FRHIComputeShader* FD3D11DeviceRHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
+{
+    return CreateD3D11Shader<FD3D11ComputeShaderRHI>(EShaderStage::Compute, ShaderCode);
 }
 
 FRHIVertexShader* FD3D11DeviceRHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D11VertexShaderRHIRef NewShader = new FD3D11VertexShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-
-    return NewShader.ReleaseOwnership();
+    return CreateD3D11Shader<FD3D11VertexShaderRHI>(EShaderStage::Vertex, ShaderCode);
 }
 
 FRHIHullShader* FD3D11DeviceRHI::CreateHullShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D11HullShaderRHIRef NewShader = new FD3D11HullShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-
-    return NewShader.ReleaseOwnership();
+    return CreateD3D11Shader<FD3D11HullShaderRHI>(EShaderStage::Hull, ShaderCode);
 }
 
 FRHIDomainShader* FD3D11DeviceRHI::CreateDomainShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D11DomainShaderRHIRef NewShader = new FD3D11DomainShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-
-    return NewShader.ReleaseOwnership();
+    return CreateD3D11Shader<FD3D11DomainShaderRHI>(EShaderStage::Domain, ShaderCode);
 }
 
 FRHIGeometryShader* FD3D11DeviceRHI::CreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D11GeometryShaderRHIRef NewShader = new FD3D11GeometryShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-
-    return NewShader.ReleaseOwnership();
+    return CreateD3D11Shader<FD3D11GeometryShaderRHI>(EShaderStage::Geometry, ShaderCode);
 }
 
 FRHIPixelShader* FD3D11DeviceRHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
-    FD3D11PixelShaderRHIRef NewShader = new FD3D11PixelShaderRHI(GetDevice());
-    if (!NewShader->Initialize(ShaderCode))
-    {
-        return nullptr;
-    }
-
-    return NewShader.ReleaseOwnership();
+    return CreateD3D11Shader<FD3D11PixelShaderRHI>(EShaderStage::Pixel, ShaderCode);
 }
 
 FRHIDepthStencilState* FD3D11DeviceRHI::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)

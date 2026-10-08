@@ -212,99 +212,99 @@ struct FRHIDevice
 
     /**
      * @brief Creates a new compute shader.
-     * @param ShaderCode Shader bytecode used to create the shader.
-     * @return The newly created shader.
+     * @param ShaderCode A shader code container written by FShaderCodeWriter (ShaderCore/ShaderCode.h).
+     * @return The newly created shader, nullptr when the container is invalid or holds another stage or output language.
      */
     virtual FRHIComputeShader* CreateComputeShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief Creates a new vertex shader.
-     * @param ShaderCode Shader bytecode used to create the shader.
-     * @return The newly created shader.
+     * @param ShaderCode A shader code container written by FShaderCodeWriter (ShaderCore/ShaderCode.h).
+     * @return The newly created shader, nullptr when the container is invalid or holds another stage or output language.
      */
     virtual FRHIVertexShader* CreateVertexShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief Creates a new hull shader.
-     * @param ShaderCode Shader bytecode used to create the shader.
-     * @return The newly created shader.
+     * @param ShaderCode A shader code container written by FShaderCodeWriter (ShaderCore/ShaderCode.h).
+     * @return The newly created shader, nullptr when the container is invalid or holds another stage or output language.
      */
     virtual FRHIHullShader* CreateHullShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief Creates a new domain shader.
-     * @param ShaderCode Shader bytecode used to create the shader.
-     * @return The newly created shader.
+     * @param ShaderCode A shader code container written by FShaderCodeWriter (ShaderCore/ShaderCode.h).
+     * @return The newly created shader, nullptr when the container is invalid or holds another stage or output language.
      */
     virtual FRHIDomainShader* CreateDomainShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief Creates a new geometry shader.
-     * @param ShaderCode Shader bytecode used to create the shader.
-     * @return The newly created shader.
+     * @param ShaderCode A shader code container written by FShaderCodeWriter (ShaderCore/ShaderCode.h).
+     * @return The newly created shader, nullptr when the container is invalid or holds another stage or output language.
      */
     virtual FRHIGeometryShader* CreateGeometryShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief Creates a new mesh shader.
-     * @param ShaderCode Shader bytecode used to create the shader.
-     * @return The newly created shader.
+     * @param ShaderCode A shader code container written by FShaderCodeWriter (ShaderCore/ShaderCode.h).
+     * @return The newly created shader, nullptr when the container is invalid or holds another stage or output language.
      */
     virtual FRHIMeshShader* CreateMeshShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief Creates a new amplification shader.
-     * @param ShaderCode Shader bytecode used to create the shader.
-     * @return The newly created shader.
+     * @param ShaderCode A shader code container written by FShaderCodeWriter (ShaderCore/ShaderCode.h).
+     * @return The newly created shader, nullptr when the container is invalid or holds another stage or output language.
      */
     virtual FRHIAmplificationShader* CreateAmplificationShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief Creates a new pixel shader.
-     * @param ShaderCode Shader bytecode used to create the shader.
-     * @return The newly created shader.
+     * @param ShaderCode A shader code container written by FShaderCodeWriter (ShaderCore/ShaderCode.h).
+     * @return The newly created shader, nullptr when the container is invalid or holds another stage or output language.
      */
     virtual FRHIPixelShader* CreatePixelShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief Creates a new ray generation shader.
-     * @param ShaderCode Shader bytecode used to create the shader.
-     * @return The newly created shader.
+     * @param ShaderCode A shader code container written by FShaderCodeWriter (ShaderCore/ShaderCode.h).
+     * @return The newly created shader, nullptr when the container is invalid or holds another stage or output language.
      */
     virtual FRHIRayGenShader* CreateRayGenShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief Creates a new ray any-hit shader.
-     * @param ShaderCode Shader bytecode used to create the shader.
-     * @return The newly created shader.
+     * @param ShaderCode A shader code container written by FShaderCodeWriter (ShaderCore/ShaderCode.h).
+     * @return The newly created shader, nullptr when the container is invalid or holds another stage or output language.
      */
     virtual FRHIRayAnyHitShader* CreateRayAnyHitShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief Creates a new ray closest-hit shader.
-     * @param ShaderCode Shader bytecode used to create the shader.
-     * @return The newly created shader.
+     * @param ShaderCode A shader code container written by FShaderCodeWriter (ShaderCore/ShaderCode.h).
+     * @return The newly created shader, nullptr when the container is invalid or holds another stage or output language.
      */
     virtual FRHIRayClosestHitShader* CreateRayClosestHitShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief Creates a new ray miss shader.
-     * @param ShaderCode Shader bytecode used to create the shader.
-     * @return The newly created shader.
+     * @param ShaderCode A shader code container written by FShaderCodeWriter (ShaderCore/ShaderCode.h).
+     * @return The newly created shader, nullptr when the container is invalid or holds another stage or output language.
      */
     virtual FRHIRayMissShader* CreateRayMissShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief Creates a new ray intersection shader, used by procedural (AABB) hit groups.
-     * @param ShaderCode Shader bytecode used to create the shader.
-     * @return The newly created shader.
+     * @param ShaderCode A shader code container written by FShaderCodeWriter (ShaderCore/ShaderCode.h).
+     * @return The newly created shader, nullptr when the container is invalid or holds another stage or output language.
      */
     virtual FRHIRayIntersectionShader* CreateRayIntersectionShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief Creates a new ray callable shader, invoked through CallShader from other ray-tracing stages.
-     * @param ShaderCode Shader bytecode used to create the shader.
-     * @return The newly created shader.
+     * @param ShaderCode A shader code container written by FShaderCodeWriter (ShaderCore/ShaderCode.h).
+     * @return The newly created shader, nullptr when the container is invalid or holds another stage or output language.
      */
     virtual FRHIRayCallableShader* CreateRayCallableShader(const TArray<uint8>& ShaderCode) = 0;
 

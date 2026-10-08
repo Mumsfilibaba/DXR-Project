@@ -28,8 +28,11 @@ public:
         return CreateInfo;
     }
 
+    bool ResolveAttributes(const TArray<FShaderVertexInput>& ShaderInputs, TArray<VkVertexInputAttributeDescription>& OutAttributes) const;
+
 private:
     TArray<FRHIInputElementDesc>              InputElements;
+    TArray<uint32>                            SemanticHashes;
     TArray<VkVertexInputBindingDescription>   VertexInputBindingDescriptions;
     TArray<VkVertexInputAttributeDescription> VertexInputAttributeDescriptions;
     VkPipelineVertexInputStateCreateInfo      CreateInfo;

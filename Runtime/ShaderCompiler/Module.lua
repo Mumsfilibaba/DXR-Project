@@ -12,7 +12,7 @@ ShaderCompilerModule.AddExternalIncludeDirs({
 ShaderCompilerModule.AddModules({
     "Core",
     "CoreApplication",
-    "RHI",
+    "ShaderCore",
     "SPIRV-Cross",
 })
 

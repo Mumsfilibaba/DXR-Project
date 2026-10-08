@@ -11,5 +11,6 @@ if IsPlatformWindows() then
         "Core",
         "CoreApplication",
         "RHI",
+        "ShaderCore",
     })
 end

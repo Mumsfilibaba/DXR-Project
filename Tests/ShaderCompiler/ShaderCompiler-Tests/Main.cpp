@@ -39,6 +39,10 @@ static int32 RunShaderCompilerTests()
         RUN_TEST("CompileFailure", ShaderCompilerCompileFailure_Test());
         RUN_TEST("DXBCConstantsSlot", ShaderCompilerDXBCConstantsSlot_Test());
         RUN_TEST("CompileHash", ShaderCompilerCompileHash_Test());
+        RUN_TEST("ReleaseOutput", ShaderCompilerReleaseOutput_Test());
+        RUN_TEST("VertexInputs", ShaderCompilerVertexInputs_Test());
+        RUN_TEST("RayTracing", ShaderCompilerRayTracing_Test());
+        RUN_TEST("MSL", ShaderCompilerMSL_Test());
 
         FShaderCompiler::Destroy();
     }

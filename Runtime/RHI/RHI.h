@@ -38,6 +38,12 @@ struct RHI
     /** @return Returns true if the RHI type can be created on the current platform */
     static RHI_API bool IsRHISupportedByPlatform(ERHIType RHIType);
 
+    /** @return The shader output language the RHI type consumes */
+    static RHI_API EShaderOutputLanguage GetShaderOutputLanguage(ERHIType RHIType);
+
+    /** @return The output language of the active RHI, DXIL when no RHI is initialized */
+    static RHI_API EShaderOutputLanguage GetShaderOutputLanguage();
+
     // -------------------------------------------------------------------------------------------
     // Create functions (Forward to RHI::Device)
     // -------------------------------------------------------------------------------------------

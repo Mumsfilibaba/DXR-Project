@@ -4,21 +4,26 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/Debug.h"
+#include "Core/Modules/ModuleManager.h"
 #include "Core/Threading/ScopedLock.h"
-#include "RHI/RHI.h"
 #include "ShaderCompiler/ShaderCompiler.h"
 #include "ShaderCompiler/ShaderCompilerBackend.h"
 #include "ShaderCompiler/ShaderCompilerStats.h"
 #include "ShaderCompiler/ShaderPreprocessor.h"
 #include "ShaderCompiler/DXC/DXCShaderCompiler.h"
 #include "ShaderCompiler/FXC/FXCShaderCompiler.h"
+#include "ShaderCompiler/Spirv/SpirvTransforms.h"
+#include "ShaderCore/ShaderCode.h"
 
 IMPLEMENT_ENGINE_MODULE(IModule, ShaderCompiler);
 
+/** Hashed into ComputeCompileHash, bump when a reflector's output changes */
+static constexpr uint32 GShaderReflectionVersion = 1;
+
 static TAutoConsoleVariable<bool> CVarShaderDebug(
     "RHI.ShaderCompiler.Debug",
-    "Enable debug information in the Shaders",
-    true);
+    "Compile shaders with debug information, embedded reflection and binding names, for PIX and RenderDoc. Ignored in release builds.",
+    false);
 
 static TAutoConsoleVariable<bool> CVarVerboseLogging(
     "RHI.ShaderCompiler.VerboseLogging",
@@ -73,6 +78,15 @@ private:
 };
 
 FShaderCompiler* FShaderCompiler::ShaderCompiler = nullptr;
+
+bool FShaderCompiler::IsDebugInfoEnabled()
+{
+#if RELEASE_BUILD
+    return false;
+#else
+    return CVarShaderDebug.GetValue();
+#endif
+}
 
 FShaderCompiler::FShaderCompiler(const String& InAssetPath)
     : Backends()
@@ -158,24 +172,6 @@ FShaderCompilerBackend* FShaderCompiler::FindBackend(EShaderOutputLanguage Outpu
     return nullptr;
 }
 
-EShaderOutputLanguage FShaderCompiler::GetOutputLanguageForRHI(ERHIType RHIType)
-{
-    switch (RHIType)
-    {
-        case ERHIType::Metal:  return EShaderOutputLanguage::MSL;
-        case ERHIType::Vulkan: return EShaderOutputLanguage::SPIRV;
-        case ERHIType::D3D11:  return EShaderOutputLanguage::DXBC;
-        case ERHIType::D3D12:
-        case ERHIType::Null:
-        default:               return EShaderOutputLanguage::DXIL;
-    }
-}
-
-EShaderOutputLanguage FShaderCompiler::GetOutputLanguageBasedOnRHI()
-{
-    return RHI::IsInitialized() ? GetOutputLanguageForRHI(RHI::Device->GetRHIType()) : EShaderOutputLanguage::DXIL;
-}
-
 bool FShaderCompiler::IsOutputLanguageSupported(EShaderOutputLanguage OutputLanguage) const
 {
     return FindBackend(OutputLanguage) != nullptr;
@@ -183,19 +179,18 @@ bool FShaderCompiler::IsOutputLanguageSupported(EShaderOutputLanguage OutputLang
 
 TArray<EShaderOutputLanguage> FShaderCompiler::GetSupportedOutputLanguages() const
 {
-    constexpr ERHIType RHITypes[] =
+    constexpr EShaderOutputLanguage OutputLanguages[] =
     {
-        ERHIType::D3D11,
-        ERHIType::D3D12,
-        ERHIType::Vulkan,
-        ERHIType::Metal,
+        EShaderOutputLanguage::DXBC,
+        EShaderOutputLanguage::DXIL,
+        EShaderOutputLanguage::SPIRV,
+        EShaderOutputLanguage::MSL,
     };
 
     TArray<EShaderOutputLanguage> Result;
-    for (ERHIType RHIType : RHITypes)
+    for (EShaderOutputLanguage OutputLanguage : OutputLanguages)
     {
-        const EShaderOutputLanguage OutputLanguage = GetOutputLanguageForRHI(RHIType);
-        if (RHI::IsRHISupportedByPlatform(RHIType) && IsOutputLanguageSupported(OutputLanguage) && !Result.Contains(OutputLanguage))
+        if (IsShaderOutputLanguageSupportedByPlatform(OutputLanguage) && IsOutputLanguageSupported(OutputLanguage))
         {
             Result.Add(OutputLanguage);
         }
@@ -304,11 +299,15 @@ uint64 FShaderCompiler::ComputeCompileHash(const String& SourceFile, const FShad
     }
 
     HashCombine(Hash, FShaderPreprocessor::Version);
+    HashCombine(Hash, CompileInfo.bDebugInfo);
+    HashCombine(Hash, FShaderCodeHeader::CurrentVersion);
+    HashCombine(Hash, FSpirvTransforms::Version);
+    HashCombine(Hash, GShaderReflectionVersion);
 
     if (const FShaderCompilerBackend* Backend = FindBackend(CompileInfo.OutputLanguage))
     {
         HashCombine(Hash, THash<String>::GetHash(String(Backend->GetName())));
-        Backend->HashCompileSettings(CompileInfo, AssetPath + "/Shaders", CVarShaderDebug.GetValue(), Hash);
+        Backend->HashCompileSettings(CompileInfo, AssetPath + "/Shaders", Hash);
     }
 
     return Hash;
@@ -341,16 +340,6 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     {
         LOG_ERROR("[FShaderCompiler]: No compiler backend can produce %s", ToString(CompileInfo.OutputLanguage));
         return false;
-    }
-
-    // Shaders compiled for another RHI are not limited by the device that is running. DXBC is always
-    // SM 5.0 and FXC rejects the requests it cannot lower itself, so only the other languages are checked.
-    const bool bTargetsActiveRHI = RHI::IsInitialized() && CompileInfo.OutputLanguage == GetOutputLanguageBasedOnRHI();
-    const bool bCheckShaderModel = bTargetsActiveRHI && CompileInfo.OutputLanguage != EShaderOutputLanguage::DXBC;
-    if (bCheckShaderModel && RHI::MaxShaderModel != EShaderModel::Unknown && CompileInfo.ShaderModel > RHI::MaxShaderModel)
-    {
-        LOG_ERROR("[FShaderCompiler]: '%s' requests Shader Model %s but the device supports at most %s",
-            FilePath.IsEmpty() ? *CompileInfo.EntryPoint : *FilePath, ToString(CompileInfo.ShaderModel), ToString(RHI::MaxShaderModel));
     }
 
     TArray<FShaderDefine> Defines;
@@ -423,7 +412,6 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     Request.Source          = StringView(PreprocessedSource);
     Request.FilePath        = FilePath;
     Request.IncludeDir      = IncludeDir;
-    Request.bDebugInfo      = CVarShaderDebug.GetValue();
     Request.bVerboseLogging = bVerboseLogging;
 
     FShaderCompileResult Result;
@@ -462,7 +450,7 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     }
 
     // Dump the metal file to disk
-    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL && !FilePath.IsEmpty())
+    if (CompileInfo.bDebugInfo && CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL && !FilePath.IsEmpty())
     {
         if (!DumpContentToFile(Result.ByteCode, FilePath + "_" + ToString(CompileInfo.ShaderStage) + ".metal"))
         {
@@ -471,7 +459,14 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
         }
     }
 
-    OutByteCode = ::Move(Result.ByteCode);
+    const EShaderCodeFlags CodeFlags = CompileInfo.bDebugInfo ? EShaderCodeFlags::DebugInfo : EShaderCodeFlags::None;
+
+    String WriteError;
+    if (!FShaderCodeWriter::Write(CompileInfo.OutputLanguage, CompileInfo.ShaderStage, CodeFlags, Result.Reflection, Result.ByteCode, OutByteCode, &WriteError))
+    {
+        LOG_ERROR("[FShaderCompiler]: Failed to write the shader code container for '%s': %s", FilePath.IsEmpty() ? *CompileInfo.EntryPoint : *FilePath, *WriteError);
+        return false;
+    }
 
     if (bVerboseLogging)
     {

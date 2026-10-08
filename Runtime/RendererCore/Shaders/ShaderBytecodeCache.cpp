@@ -7,6 +7,8 @@
 #include "Core/Misc/Paths.h"
 #include "Core/Platform/PlatformFile.h"
 #include "RendererCore/Shaders/ShaderBytecodeCache.h"
+#include "ShaderCompiler/ShaderCompiler.h"
+#include "ShaderCore/ShaderCode.h"
 
 static TAutoConsoleVariable<bool> CVarEnableBytecodeCache(
     "Renderer.ShaderCache.EnableBytecodeCache",
@@ -25,12 +27,12 @@ static FAutoConsoleCommand CCmdDumpShaderBytecodeCacheStats(
     {
         if (FShaderBytecodeCache* Cache = FShaderBytecodeCache::TryGet())
         {
-            LOG_INFO("[FShaderBytecodeCache]: Holding %d compiled shaders", Cache->GetNumEntries());
+            Cache->LogStats();
         }
     }));
 
 static const CHAR*      GShaderBytecodeMagic        = "DXRSHBIN";
-static constexpr uint32 GShaderBytecodeVersion      = 1;
+static constexpr uint32 GShaderBytecodeVersion      = 2;
 static constexpr uint32 GMaxShaderBytecodeCacheSize = 256 * 1024 * 1024; // MSL is stored as text and every permutation carries its own blob, so this is generous rather than tight.
 
 struct FShaderBytecodeHeader
@@ -186,7 +188,33 @@ bool FShaderBytecodeCache::TryComputeDependencyHash(const TArray<String>& Depend
     return true;
 }
 
-bool FShaderBytecodeCache::Find(uint64 CompileHash, TArray<uint8>& OutByteCode)
+bool FShaderBytecodeCache::CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutShaderCode)
+{
+    FShaderCompiler& Compiler = FShaderCompiler::Get();
+
+    FShaderBytecodeCache* Cache = TryGet();
+    if (!Cache)
+    {
+        return Compiler.CompileFromFile(Filename, CompileInfo, OutShaderCode);
+    }
+
+    const uint64 CompileHash = Compiler.ComputeCompileHash(Filename, CompileInfo);
+    if (Cache->Find(CompileHash, OutShaderCode))
+    {
+        return true;
+    }
+
+    TArray<String> Dependencies;
+    if (!Compiler.CompileFromFile(Filename, CompileInfo, OutShaderCode, &Dependencies))
+    {
+        return false;
+    }
+
+    Cache->Add(CompileHash, OutShaderCode, Dependencies);
+    return true;
+}
+
+bool FShaderBytecodeCache::Find(uint64 CompileHash, TArray<uint8>& OutShaderCode)
 {
     if (!CVarEnableBytecodeCache.GetValue())
     {
@@ -197,22 +225,23 @@ bool FShaderBytecodeCache::Find(uint64 CompileHash, TArray<uint8>& OutByteCode)
 
     if (const FShaderBytecodeEntry* Existing = Entries.Find(CompileHash))
     {
-        OutByteCode = Existing->ByteCode;
+        OutShaderCode = Existing->ShaderCode;
         return true;
     }
 
     return false;
 }
 
-void FShaderBytecodeCache::Add(uint64 CompileHash, const TArray<uint8>& ByteCode, const TArray<String>& Dependencies)
+void FShaderBytecodeCache::Add(uint64 CompileHash, const TArray<uint8>& ShaderCode, const TArray<String>& Dependencies)
 {
-    if (ByteCode.IsEmpty() || Dependencies.IsEmpty())
+    FShaderCodeHeader Header;
+    if (Dependencies.IsEmpty() || !FShaderCodeReader::ReadHeader(ShaderCode, Header))
     {
         return;
     }
 
     FShaderBytecodeEntry NewEntry;
-    NewEntry.ByteCode = ByteCode;
+    NewEntry.ShaderCode = ShaderCode;
 
     NewEntry.Dependencies.Reserve(Dependencies.Size());
     for (const String& Dependency : Dependencies)
@@ -242,6 +271,29 @@ int32 FShaderBytecodeCache::GetNumEntries()
 {
     TScopedLock Lock(EntriesCS);
     return Entries.Size();
+}
+
+void FShaderBytecodeCache::LogStats()
+{
+    TScopedLock Lock(EntriesCS);
+
+    int32  NumDebugInfo   = 0;
+    uint64 NumHeaderBytes = 0;
+    uint64 NumCodeBytes   = 0;
+
+    Entries.Foreach([&](const uint64&, const FShaderBytecodeEntry& Entry)
+    {
+        FShaderCodeHeader Header;
+        if (FShaderCodeReader::ReadHeader(Entry.ShaderCode, Header))
+        {
+            NumDebugInfo   += IsEnumFlagSet(Header.Flags, EShaderCodeFlags::DebugInfo) ? 1 : 0;
+            NumHeaderBytes += Header.CodeOffset;
+            NumCodeBytes   += Entry.ShaderCode.Size() - Header.CodeOffset;
+        }
+    });
+
+    LOG_INFO("[FShaderBytecodeCache]: Holding %d compiled shaders, %d with debug info. %llu bytes of native code, %llu bytes of headers and reflection",
+        Entries.Size(), NumDebugInfo, NumCodeBytes, NumHeaderBytes);
 }
 
 bool FShaderBytecodeCache::Load()
@@ -307,7 +359,8 @@ bool FShaderBytecodeCache::Load()
         return false;
     }
 
-    int32 NumStale = 0;
+    int32 NumStale   = 0;
+    int32 NumInvalid = 0;
     for (uint32 Index = 0; Index < Header.NumEntries; ++Index)
     {
         uint64 CompileHash     = 0;
@@ -345,20 +398,27 @@ bool FShaderBytecodeCache::Load()
             NewEntry.Dependencies.Emplace(::Move(Dependency));
         }
 
-        uint32 ByteCodeSize = 0;
-        if (!bReadEntry || !CanRead(Stream, sizeof(ByteCodeSize)))
+        uint32 ShaderCodeSize = 0;
+        if (!bReadEntry || !CanRead(Stream, sizeof(ShaderCodeSize)))
         {
             break;
         }
 
-        Stream.Read(ByteCodeSize);
-        if (ByteCodeSize == 0 || !CanRead(Stream, ByteCodeSize))
+        Stream.Read(ShaderCodeSize);
+        if (ShaderCodeSize == 0 || !CanRead(Stream, ShaderCodeSize))
         {
             break;
         }
 
-        NewEntry.ByteCode.Resize(static_cast<int32>(ByteCodeSize));
-        Stream.Read(NewEntry.ByteCode.Data(), NewEntry.ByteCode.Size());
+        NewEntry.ShaderCode.Resize(static_cast<int32>(ShaderCodeSize));
+        Stream.Read(NewEntry.ShaderCode.Data(), NewEntry.ShaderCode.Size());
+
+        FShaderCodeView CodeView;
+        if (!FShaderCodeReader::Read(NewEntry.ShaderCode, CodeView))
+        {
+            NumInvalid++;
+            continue;
+        }
 
         // An entry whose sources moved on is dropped on its own, so editing one include costs only the shaders that read it.
         uint64 CurrentDependencyHash = 0;
@@ -372,9 +432,9 @@ bool FShaderBytecodeCache::Load()
     }
 
     // The stale entries are gone from memory, so the file is rewritten without them even if this run compiles nothing.
-    bDirty = (NumStale > 0);
+    bDirty = (NumStale + NumInvalid) > 0;
 
-    LOG_INFO("[FShaderBytecodeCache]: Loaded %d compiled shaders from '%s' (%d stale)", Entries.Size(), *FilePath, NumStale);
+    LOG_INFO("[FShaderBytecodeCache]: Loaded %d compiled shaders from '%s' (%d stale, %d invalid)", Entries.Size(), *FilePath, NumStale, NumInvalid);
     return true;
 }
 
@@ -392,7 +452,7 @@ bool FShaderBytecodeCache::Save()
     uint32 NumEntries = 0;
     Entries.Foreach([&Payload, &NumEntries](const uint64& CompileHash, const FShaderBytecodeEntry& Entry)
     {
-        if (Entry.ByteCode.IsEmpty() || Entry.Dependencies.IsEmpty())
+        if (Entry.ShaderCode.IsEmpty() || Entry.Dependencies.IsEmpty())
         {
             return;
         }
@@ -406,8 +466,8 @@ bool FShaderBytecodeCache::Save()
             WriteString(Payload, Dependency);
         }
 
-        Payload.Add(static_cast<uint32>(Entry.ByteCode.Size()));
-        Payload.Add(Entry.ByteCode.Data(), Entry.ByteCode.Size());
+        Payload.Add(static_cast<uint32>(Entry.ShaderCode.Size()));
+        Payload.Add(Entry.ShaderCode.Data(), Entry.ShaderCode.Size());
 
         NumEntries++;
     });

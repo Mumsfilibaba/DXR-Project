@@ -99,6 +99,12 @@ FVulkanInputLayoutRHI::FVulkanInputLayoutRHI(const TArray<FRHIInputElementDesc>&
         Attribute.offset   = InInputElements[Index].ByteOffset;
     }
 
+    SemanticHashes.Reserve(NumElements);
+    for (const FRHIInputElementDesc& Element : InInputElements)
+    {
+        SemanticHashes.Add(HashShaderSemantic(StringView(Element.Semantic)));
+    }
+
     // VertexInputStateCreateInfo
     Memory::Memzero(&CreateInfo);
     CreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -123,6 +129,41 @@ FVulkanInputLayoutRHI::~FVulkanInputLayoutRHI()
 void* FVulkanInputLayoutRHI::GetRHINativeState() const
 {
     return nullptr;
+}
+
+bool FVulkanInputLayoutRHI::ResolveAttributes(const TArray<FShaderVertexInput>& ShaderInputs, TArray<VkVertexInputAttributeDescription>& OutAttributes) const
+{
+    OutAttributes.Clear();
+    OutAttributes.Reserve(ShaderInputs.Size());
+
+    for (const FShaderVertexInput& ShaderInput : ShaderInputs)
+    {
+        int32 ElementIndex = -1;
+        for (int32 Index = 0; Index < InputElements.Size(); ++Index)
+        {
+            if (SemanticHashes[Index] == ShaderInput.SemanticHash && InputElements[Index].SemanticIndex == ShaderInput.SemanticIndex)
+            {
+                ElementIndex = Index;
+                break;
+            }
+        }
+
+        if (ElementIndex < 0)
+        {
+            VULKAN_ERROR("The input layout has no element for the vertex shader input at location %u (semantic index %u)", static_cast<uint32>(ShaderInput.Location), static_cast<uint32>(ShaderInput.SemanticIndex));
+            return false;
+        }
+
+        const FRHIInputElementDesc& Element = InputElements[ElementIndex];
+
+        VkVertexInputAttributeDescription& Attribute = OutAttributes.Emplace();
+        Attribute.location = ShaderInput.Location;
+        Attribute.binding  = Element.InputSlot;
+        Attribute.format   = ConvertFormat(Element.Format);
+        Attribute.offset   = Element.ByteOffset;
+    }
+
+    return true;
 }
 
 const FRHIInputElementDesc* FVulkanInputLayoutRHI::GetInputElementDesc(uint32 Index) const
@@ -477,10 +518,23 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     }
     
     // VertexInputStateCreateInfo
-    VkPipelineVertexInputStateCreateInfo VertexInputStateCreateInfo;
+    VkPipelineVertexInputStateCreateInfo      VertexInputStateCreateInfo;
+    TArray<VkVertexInputAttributeDescription> ResolvedAttributes;
+
     if (FVulkanInputLayoutRHI* InputLayout = FVulkanDeviceRHI::ResourceCast(InDesc.InputLayout))
     {
         VertexInputStateCreateInfo = InputLayout->GetVkCreateInfo();
+
+        if (InDesc.VertexShader && !InDesc.VertexShader->GetVertexInputs().IsEmpty())
+        {
+            if (!InputLayout->ResolveAttributes(InDesc.VertexShader->GetVertexInputs(), ResolvedAttributes))
+            {
+                return false;
+            }
+
+            VertexInputStateCreateInfo.vertexAttributeDescriptionCount = ResolvedAttributes.Size();
+            VertexInputStateCreateInfo.pVertexAttributeDescriptions    = ResolvedAttributes.Data();
+        }
     }
     else
     {

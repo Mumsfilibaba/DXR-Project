@@ -1,6 +1,7 @@
 #pragma once
 #include "RHI/RHICore.h"
 #include "D3D11RHI/D3D11Configuration.h"
+#include "ShaderCore/ShaderBindingConventions.h"
 
 #define D3D11_MAX_VERTEX_BUFFER_SLOTS            (D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT)                // 32
 #define D3D11_MAX_RENDER_TARGET_COUNT            (D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT)                   // 8
@@ -38,5 +39,5 @@
 // named Constants_CB, which FXC places in a slot the shader does not use; reflection reports it.
 // ------------------------------------------------------------------------------------------------
 
-#define D3D11_SHADER_CONSTANTS_CBUFFER_NAME    "Constants_CB"
+#define D3D11_SHADER_CONSTANTS_CBUFFER_NAME    (ShaderBindings::ShaderConstantsBufferName)
 #define D3D11_MAX_32BIT_SHADER_CONSTANTS_COUNT (RHI_MAX_SHADER_CONSTANTS) // 32 dwords = 128 bytes

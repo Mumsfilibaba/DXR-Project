@@ -180,6 +180,9 @@ public:
 
 private:
 
+    template<typename ShaderType>
+    ShaderType* CreateVulkanShader(EShaderStage Stage, const TArray<uint8>& ShaderCode);
+
     template<typename... ArgTypes>
     void DeferDeletionInternal(ArgTypes&&... Args)
     {

@@ -101,6 +101,33 @@ bool RHI::IsRHISupportedByPlatform(ERHIType RHIType)
     }
 }
 
+EShaderOutputLanguage RHI::GetShaderOutputLanguage(ERHIType RHIType)
+{
+    switch (RHIType)
+    {
+        case ERHIType::Metal:
+            return EShaderOutputLanguage::MSL;
+        
+        case ERHIType::Vulkan:
+            return EShaderOutputLanguage::SPIRV;
+        
+        case ERHIType::D3D11:
+            return EShaderOutputLanguage::DXBC;
+        
+        case ERHIType::D3D12:
+        case ERHIType::Null:
+        default:
+            return EShaderOutputLanguage::DXIL;
+    }
+}
+
+EShaderOutputLanguage RHI::GetShaderOutputLanguage()
+{
+    return RHI::IsInitialized() 
+        ? GetShaderOutputLanguage(RHI::Device->GetRHIType()) 
+        : EShaderOutputLanguage::DXIL;
+}
+
 static ERHIType GetRHIType()
 {
     ERHIType RHIType = GetRHITypeFromConfig();

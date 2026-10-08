@@ -20,6 +20,7 @@
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIResources.h"
 #include "ShaderCompiler/ShaderCompiler.h"
+#include "RendererCore/Shaders/ShaderBytecodeCache.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/TextureResourceData.h"
 
@@ -196,8 +197,8 @@ bool FApplicationRenderer::InitializeRHI()
 {
     TArray<uint8> ShaderCode;
 
-    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
+    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
+    if (!FShaderBytecodeCache::CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
     {
         LOG_ERROR("[FApplicationRenderer]: Failed to compile the vertex shader");
         return false;
@@ -209,8 +210,8 @@ bool FApplicationRenderer::InitializeRHI()
         return false;
     }
 
-    CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
+    CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
+    if (!FShaderBytecodeCache::CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
     {
         LOG_ERROR("[FApplicationRenderer]: Failed to compile the pixel shader");
         return false;
@@ -235,8 +236,8 @@ bool FApplicationRenderer::InitializeRHI()
         return false;
     }
 
-    CompileInfo = FShaderCompileInfo("VSText", EShaderModel::SM_6_2, EShaderStage::Vertex);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
+    CompileInfo = FShaderCompileInfo("VSText", EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
+    if (!FShaderBytecodeCache::CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
     {
         LOG_ERROR("[FApplicationRenderer]: Failed to compile the text vertex shader");
         return false;
@@ -263,8 +264,8 @@ bool FApplicationRenderer::InitializeRHI()
         return false;
     }
 
-    CompileInfo = FShaderCompileInfo("VSShape", EShaderModel::SM_6_2, EShaderStage::Vertex);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
+    CompileInfo = FShaderCompileInfo("VSShape", EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
+    if (!FShaderBytecodeCache::CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
     {
         LOG_ERROR("[FApplicationRenderer]: Failed to compile the shape vertex shader");
         return false;
@@ -276,8 +277,8 @@ bool FApplicationRenderer::InitializeRHI()
         return false;
     }
 
-    CompileInfo = FShaderCompileInfo("PSShape", EShaderModel::SM_6_2, EShaderStage::Pixel);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
+    CompileInfo = FShaderCompileInfo("PSShape", EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
+    if (!FShaderBytecodeCache::CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
     {
         LOG_ERROR("[FApplicationRenderer]: Failed to compile the shape pixel shader");
         return false;

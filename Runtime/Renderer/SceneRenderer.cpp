@@ -19,6 +19,7 @@
 #include "Renderer/Scene/SceneStaticMesh.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/RenderSettings.h"
+#include "RendererCore/Shaders/ShaderBytecodeCache.h"
 #include "RendererCore/Shaders/ShaderCache.h"
 
 bool GEnableSSAO = true;
@@ -1630,8 +1631,8 @@ bool FSceneRenderer::InitShadingImage()
 
     TArray<uint8> ShaderCode;
 
-    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadingImage.hlsl", CompileInfo, ShaderCode))
+    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
+    if (!FShaderBytecodeCache::CompileFromFile("Shaders/ShadingImage.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
         return false;
