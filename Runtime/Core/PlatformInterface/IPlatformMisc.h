@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/String.h"
+#include "Core/Misc/Guid.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -48,6 +49,12 @@ struct IPlatformMisc
      */
     static FORCEINLINE void InstallCrashHandler()
     {
+    }
+
+    /** @return Returns a new random (version 4) GUID from the platform's generator */
+    NODISCARD static FORCEINLINE FGuid CreateGuid()
+    {
+        return FGuid();
     }
 };
 

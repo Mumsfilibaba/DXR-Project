@@ -3,9 +3,11 @@
 #include "Core/Misc/CrashReporter.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformAtomic.h"
+#include "Core/Misc/Guid.h"
 
 #include <eh.h>
 #include <intrin.h>
+#include <objbase.h>
 #include <stdlib.h>
 
 // Not in winnt.h, which only carries the codes the SEH macros name
@@ -29,6 +31,11 @@ static const CHAR*         GOverriddenName    = nullptr;
 
 // Claimed by whichever thread crashes first, so a fault raised while reporting cannot report again
 static volatile int32 GIsReporting = 0;
+
+static uint32 ReadBigEndian32(const uint8* Bytes)
+{
+    return (static_cast<uint32>(Bytes[0]) << 24) | (static_cast<uint32>(Bytes[1]) << 16) | (static_cast<uint32>(Bytes[2]) << 8) | Bytes[3];
+}
 
 static const CHAR* GetExceptionName(uint32 ExceptionCode)
 {
@@ -270,4 +277,14 @@ void FWindowsPlatformMisc::InstallCrashHandler()
     ::_set_purecall_handler(HandlePureCall);
     ::_set_invalid_parameter_handler(HandleInvalidParameter);
     ::set_terminate(&HandleTerminate);
+}
+
+FGuid FWindowsPlatformMisc::CreateGuid()
+{
+    GUID Guid;
+    const HRESULT Result = ::CoCreateGuid(&Guid);
+    CHECK(SUCCEEDED(Result));
+
+    const uint32 B = (static_cast<uint32>(Guid.Data2) << 16) | Guid.Data3;
+    return FGuid(Guid.Data1, B, ReadBigEndian32(Guid.Data4), ReadBigEndian32(Guid.Data4 + 4));
 }

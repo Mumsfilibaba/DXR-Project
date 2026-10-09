@@ -3,7 +3,9 @@
 #include "Core/Misc/CrashReporter.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformAtomic.h"
+#include "Core/Misc/Guid.h"
 
+#include <uuid/uuid.h>
 #include <mach/exc.h>
 #include <mach/mach.h>
 #include <pthread.h>
@@ -77,6 +79,11 @@ static mach_port_t            GPreviousPorts[EXC_TYPES_COUNT]     = {};
 static exception_behavior_t   GPreviousBehaviors[EXC_TYPES_COUNT] = {};
 static thread_state_flavor_t  GPreviousFlavors[EXC_TYPES_COUNT]   = {};
 static mach_msg_type_number_t GPreviousPortCount                  = 0;
+
+static uint32 ReadBigEndian32(const uint8* Bytes)
+{
+    return (static_cast<uint32>(Bytes[0]) << 24) | (static_cast<uint32>(Bytes[1]) << 16) | (static_cast<uint32>(Bytes[2]) << 8) | Bytes[3];
+}
 
 static const CHAR* GetMachExceptionName(exception_type_t ExceptionType)
 {
@@ -461,4 +468,11 @@ void FMacPlatformMisc::InstallCrashHandler()
     }
 
     NSSetUncaughtExceptionHandler(&HandleUncaughtObjectiveCException);
+}
+
+FGuid FMacPlatformMisc::CreateGuid()
+{
+    uuid_t Bytes;
+    ::uuid_generate_random(Bytes);
+    return FGuid(ReadBigEndian32(Bytes), ReadBigEndian32(Bytes + 4), ReadBigEndian32(Bytes + 8), ReadBigEndian32(Bytes + 12));
 }

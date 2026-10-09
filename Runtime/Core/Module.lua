@@ -12,6 +12,7 @@ if IsPlatformMac() then
 elseif IsPlatformWindows() then
     CoreModule.AddLinkLibraries({
         "Dbghelp.lib",
+        "Ole32.lib",
         "shlwapi.lib",
         "User32.lib",
     })

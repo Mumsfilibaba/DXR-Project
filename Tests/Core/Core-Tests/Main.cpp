@@ -24,6 +24,7 @@
 #include "PlatformEventPoolTests.h"
 #include "ProfilerTests.h"
 #include "FileTests.h"
+#include "GuidTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -62,6 +63,7 @@ static int32 RunCoreTests()
     RUN_TEST("Profiler", Profiler_Test());
     RUN_TEST("ProfilerGPUTraceSentinel", ProfilerGPUTraceSentinel_Test());
     RUN_TEST("File", File_Test());
+    RUN_TEST("Guid", Guid_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();

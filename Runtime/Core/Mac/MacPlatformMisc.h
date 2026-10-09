@@ -29,6 +29,8 @@ struct FMacPlatformMisc final : public IPlatformMisc
 
     static void InstallCrashHandler();
 
+    NODISCARD static FGuid CreateGuid();
+
     static FORCEINLINE void MemoryBarrier() 
     {
         __sync_synchronize();

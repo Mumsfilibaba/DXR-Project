@@ -71,6 +71,8 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
 
     static CORE_API void InstallCrashHandler();
 
+    NODISCARD static CORE_API FGuid CreateGuid();
+
     static FORCEINLINE int32 GetLastErrorString(String& OutErrorString)
     {
         const int32 LastError = ::GetLastError();
