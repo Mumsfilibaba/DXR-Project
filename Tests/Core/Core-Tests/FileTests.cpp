@@ -5,6 +5,7 @@
 #include <Core/Image/ImageView.h>
 #include <Core/Image/PngWriter.h>
 #include <Core/Json/Json.h>
+#include <Core/Misc/Paths.h>
 #include <Core/Platform/PlatformFile.h>
 #include <Core/Platform/PlatformProcess.h>
 #include <Core/Templates/CString.h>
@@ -20,6 +21,39 @@ static bool WriteText(const String& Filename, const CHAR* Text)
     }
 
     return File::WriteTextFile(FileHandle.Get(), String(Text));
+}
+
+static bool CreateDirectoryLink(const String& Link, const String& Target)
+{
+    FProcessDesc Desc;
+#if PLATFORM_WINDOWS
+    String WindowsLink   = Link;
+    String WindowsTarget = Target;
+    WindowsLink.ReplaceAll('/', '\\');
+    WindowsTarget.ReplaceAll('/', '\\');
+
+    Desc.Executable = "cmd.exe";
+    Desc.Arguments.Add(String("/c"));
+    Desc.Arguments.Add(String("mklink"));
+    Desc.Arguments.Add(String("/J"));
+    Desc.Arguments.Add(WindowsLink);
+    Desc.Arguments.Add(WindowsTarget);
+#else
+    Desc.Executable = "/bin/ln";
+    Desc.Arguments.Add(String("-s"));
+    Desc.Arguments.Add(Target);
+    Desc.Arguments.Add(Link);
+#endif
+    Desc.bCaptureOutput = true;
+
+    TUniquePtr<IPlatformProcessHandle> Process = FPlatformProcess::LaunchProcess(Desc);
+    if (!Process || !Process->Wait(30 * 1000))
+    {
+        return false;
+    }
+
+    int32 ExitCode = -1;
+    return Process->GetExitCode(ExitCode) && (ExitCode == 0);
 }
 
 static String ReadText(const String& Filename)
@@ -213,38 +247,7 @@ bool File_Test()
         TEST_EXPECT(File::CreateDirectoryTree(Tree));
         TEST_EXPECT(WriteText(Target + "/Kept.txt", "Kept"));
 
-        FProcessDesc Desc;
-#if PLATFORM_WINDOWS
-        String WindowsLink   = Link;
-        String WindowsTarget = Target;
-        WindowsLink.ReplaceAll('/', '\\');
-        WindowsTarget.ReplaceAll('/', '\\');
-
-        Desc.Executable = "cmd.exe";
-        Desc.Arguments.Add(String("/c"));
-        Desc.Arguments.Add(String("mklink"));
-        Desc.Arguments.Add(String("/J"));
-        Desc.Arguments.Add(WindowsLink);
-        Desc.Arguments.Add(WindowsTarget);
-#else
-        Desc.Executable = "/bin/ln";
-        Desc.Arguments.Add(String("-s"));
-        Desc.Arguments.Add(Target);
-        Desc.Arguments.Add(Link);
-#endif
-        Desc.bCaptureOutput = true;
-
-        TUniquePtr<IPlatformProcessHandle> Process = FPlatformProcess::LaunchProcess(Desc);
-        TEST_EXPECT(Process != nullptr);
-
-        int32 ExitCode = -1;
-        if (Process)
-        {
-            TEST_EXPECT(Process->Wait(30 * 1000));
-            TEST_EXPECT(Process->GetExitCode(ExitCode));
-        }
-
-        TEST_EXPECT(ExitCode == 0);
+        TEST_EXPECT(CreateDirectoryLink(Link, Target));
         TEST_EXPECT(FPlatformFile::IsDirectory(*Link));
 
         TArray<FDirectoryEntry> Entries;
@@ -254,6 +257,80 @@ bool File_Test()
         TEST_EXPECT(File::DeleteDirectoryTree(Tree));
         TEST_EXPECT(!FPlatformFile::GetFileInfo(*Tree).bExists);
         TEST_EXPECT(ReadText(Target + "/Kept.txt").Equals("Kept"));
+    }
+
+    TEST_SECTION("CopyDirectoryTree copies nested directories, files and empty directories");
+    {
+        const String Source      = Root + "/CopyTreeSource";
+        const String Destination = Root + "/CopyTreeDestination";
+        TEST_EXPECT(File::CreateDirectoryTree(Source + "/A/B"));
+        TEST_EXPECT(File::CreateDirectoryTree(Source + "/Empty"));
+        TEST_EXPECT(WriteText(Source + "/Top.txt", "1"));
+        TEST_EXPECT(WriteText(Source + "/A/B/Deep.txt", "2"));
+
+        TEST_EXPECT(File::CopyDirectoryTree(Source, Destination));
+        TEST_EXPECT(ReadText(Destination + "/Top.txt").Equals("1"));
+        TEST_EXPECT(ReadText(Destination + "/A/B/Deep.txt").Equals("2"));
+        TEST_EXPECT(FPlatformFile::IsDirectory(*(Destination + "/Empty")));
+        TEST_EXPECT(ReadText(Source + "/Top.txt").Equals("1"));
+    }
+
+    TEST_SECTION("CopyDirectoryTree refuses to overwrite unless asked to");
+    {
+        const String Source      = Root + "/CopyTreeSource";
+        const String Destination = Root + "/CopyTreeDestination";
+        TEST_EXPECT(WriteText(Source + "/Top.txt", "New"));
+
+        TEST_EXPECT(!File::CopyDirectoryTree(Source, Destination));
+        TEST_EXPECT(ReadText(Destination + "/Top.txt").Equals("1"));
+
+        TEST_EXPECT(File::CopyDirectoryTree(Source, Destination, true));
+        TEST_EXPECT(ReadText(Destination + "/Top.txt").Equals("New"));
+    }
+
+    TEST_SECTION("CopyDirectoryTree skips what the filter rejects");
+    {
+        const String Source      = Root + "/CopyTreeSource";
+        const String Destination = Root + "/CopyTreeFiltered";
+
+        const bool bCopied = File::CopyDirectoryTree(Source, Destination, false, [](const String& Path, bool bIsDirectory)
+        {
+            return !File::ExtractFilename(Path).Equals("Top.txt") && !(bIsDirectory && File::ExtractFilename(Path).Equals("A"));
+        });
+
+        TEST_EXPECT(bCopied);
+        TEST_EXPECT(!FPlatformFile::GetFileInfo(*(Destination + "/Top.txt")).bExists);
+        TEST_EXPECT(!FPlatformFile::GetFileInfo(*(Destination + "/A")).bExists);
+        TEST_EXPECT(FPlatformFile::IsDirectory(*(Destination + "/Empty")));
+    }
+
+    TEST_SECTION("CopyDirectoryTree refuses to copy a directory into itself");
+    {
+        const String Source = Root + "/CopyTreeSource";
+        TEST_EXPECT(!File::CopyDirectoryTree(Source, Source + "/Inside"));
+        TEST_EXPECT(!File::CopyDirectoryTree(Source, Source));
+        TEST_EXPECT(!FPlatformFile::GetFileInfo(*(Source + "/Inside")).bExists);
+    }
+
+    TEST_SECTION("CopyDirectoryTree skips a link to a directory");
+    {
+        const String Target      = File::MakeAbsolute(Root + "/CopyLinkTarget");
+        const String Source      = File::MakeAbsolute(Root + "/CopyTreeWithLink");
+        const String Destination = File::MakeAbsolute(Root + "/CopyTreeWithLinkCopy");
+        TEST_EXPECT(File::CreateDirectoryTree(Target));
+        TEST_EXPECT(File::CreateDirectoryTree(Source));
+        TEST_EXPECT(WriteText(Target + "/Linked.txt", "Linked"));
+        TEST_EXPECT(WriteText(Source + "/Own.txt", "Own"));
+        TEST_EXPECT(CreateDirectoryLink(Source + "/Link", Target));
+
+        TEST_EXPECT(File::CopyDirectoryTree(Source, Destination));
+        TEST_EXPECT(ReadText(Destination + "/Own.txt").Equals("Own"));
+        TEST_EXPECT(!FPlatformFile::GetFileInfo(*(Destination + "/Link")).bExists);
+    }
+
+    TEST_SECTION("CopyDirectoryTree fails for a directory that does not exist");
+    {
+        TEST_EXPECT(!File::CopyDirectoryTree(Root + "/Missing", Root + "/MissingCopy"));
     }
 
     TEST_EXPECT(File::DeleteDirectoryTree(Root));
@@ -306,6 +383,15 @@ bool File_Test()
         TEST_EXPECT(!File::IsUnderDirectory("/EngineData/A.png", "/Engine"));
         TEST_EXPECT(!File::IsUnderDirectory("/Engine/../Game/A.png", "/Engine"));
         TEST_EXPECT(!File::IsUnderDirectory("/Engine", "/Engine/Content"));
+    }
+
+    TEST_SECTION("The user settings directory exists and the engine's lives inside it");
+    {
+        const String Directory = FPlatformFile::GetUserSettingsDirectory();
+        TEST_EXPECT(!Directory.IsEmpty());
+        TEST_EXPECT(!Directory.Contains('\\'));
+        TEST_EXPECT(FPlatformFile::IsDirectory(*Directory));
+        TEST_EXPECT(File::IsUnderDirectory(Paths::GetUserSettingsDir(), Directory));
     }
 
 #if PLATFORM_WINDOWS

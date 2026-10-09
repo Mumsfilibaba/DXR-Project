@@ -61,6 +61,7 @@ struct CORE_API FMacPlatformFile final : public IPlatformFileSystem
     static IPlatformAsyncFile* OpenForAsyncWrite(const String& Filename, bool bTruncate = true);
     static String GetCurrentWorkingDirectory();
     static const CHAR* GetExecutablePath();
+    static String GetUserSettingsDirectory();
 
     static FORCEINLINE bool IsDirectory(const CHAR* Path)
     {

@@ -198,6 +198,15 @@ struct CORE_API IPlatformFileSystem
         return "";
     }
 
+    /**
+     * @return Returns the per-user directory applications keep their settings in, using '/' separators, or an empty
+     * string if it could not be found. This is %LOCALAPPDATA% on Windows and ~/Library/Application Support on macOS.
+     */
+    static FORCEINLINE String GetUserSettingsDirectory()
+    {
+        return String();
+    }
+
     /** @return Returns true if Path names an existing directory */
     static FORCEINLINE bool IsDirectory(const CHAR* Path)
     {

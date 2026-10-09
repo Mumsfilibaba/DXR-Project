@@ -13,6 +13,7 @@ elseif IsPlatformWindows() then
     CoreModule.AddLinkLibraries({
         "Dbghelp.lib",
         "Ole32.lib",
+        "Shell32.lib",
         "shlwapi.lib",
         "User32.lib",
     })

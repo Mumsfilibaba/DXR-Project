@@ -3,6 +3,9 @@
 #include "Core/Templates/CString.h"
 #include "Core/Templates/NumericLimits.h"
 
+#include <objbase.h>
+#include <shlobj.h>
+
 // FILETIME counts 100-nanosecond intervals since 1601-01-01, which is this many intervals before the Unix epoch
 static constexpr int64 FILETIME_TICKS_PER_SECOND = 10000000;
 static constexpr int64 FILETIME_UNIX_EPOCH       = 116444736000000000;
@@ -441,6 +444,23 @@ String FWindowsPlatformFile::GetCurrentWorkingDirectory()
         Result.Resize(Length);
         return Result;
     }
+}
+
+String FWindowsPlatformFile::GetUserSettingsDirectory()
+{
+    PWSTR WidePath = nullptr;
+    if (FAILED(::SHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_DEFAULT, nullptr, &WidePath)))
+    {
+        ::CoTaskMemFree(WidePath);
+        LOG_ERROR("GetUserSettingsDirectory failed to find the local application data directory");
+        return String();
+    }
+
+    String Path = WideToChar(WStringView(WidePath));
+    ::CoTaskMemFree(WidePath);
+
+    Path.ReplaceAll('\\', '/');
+    return Path;
 }
 
 FFileInfo FWindowsPlatformFile::GetFileInfo(const CHAR* Path)

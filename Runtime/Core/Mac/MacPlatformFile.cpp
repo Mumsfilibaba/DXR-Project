@@ -475,6 +475,20 @@ bool FMacPlatformFile::CopyFile(const CHAR* FromFilename, const CHAR* ToFilename
     return ::copyfile(FromFilename, ToFilename, nullptr, Flags) == 0;
 }
 
+String FMacPlatformFile::GetUserSettingsDirectory()
+{
+    SCOPED_AUTORELEASE_POOL();
+
+    NSArray<NSString*>* Directories = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
+    if ([Directories count] == 0)
+    {
+        LOG_ERROR("GetUserSettingsDirectory failed to find the Application Support directory");
+        return String();
+    }
+
+    return String([[Directories firstObject] UTF8String]);
+}
+
 FFileInfo FMacPlatformFile::GetFileInfo(const CHAR* Path)
 {
     FFileInfo Info;

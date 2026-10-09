@@ -112,6 +112,21 @@ public:
      */
     static bool DeleteDirectoryTree(const String& Directory);
 
+    /**
+     * @brief Copy Directory and everything in it to Destination, creating Destination if needed. Links to directories are
+     * skipped rather than followed, and a link to a file is copied as the file it points at.
+     * @param bReplaceExisting Overwrite files that already exist in Destination instead of failing
+     * @param Filter Called with each source path before it is copied. Return false to skip a file, or a directory and
+     * everything in it. May be empty.
+     * @return Returns false if Destination is inside Directory, a directory cannot be listed or created, or a file cannot be
+     * copied. Files copied before a failure are left in place.
+     */
+    static bool CopyDirectoryTree(
+        const String&                                          Directory,
+        const String&                                          Destination,
+        bool                                                   bReplaceExisting = false,
+        TFunction<bool(const String& Path, bool bIsDirectory)> Filter           = nullptr);
+
 private:
     static bool WriteTextFile(IPlatformFile* InFile, const CHAR* Text, uint32 Size);
 };

@@ -2,6 +2,7 @@
 #include "Core/PlatformInterface/IPlatformFileSystem.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Memory/Memory.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 
 #if PLATFORM_WINDOWS
     static constexpr EStringCaseType PATH_CASE_TYPE = EStringCaseType::NoCase;
@@ -120,6 +121,48 @@ static FPathParts SplitPath(const String& Path)
     }
 
     return Parts;
+}
+
+static bool CopyDirectoryContents(
+    const String&                                           Directory,
+    const String&                                           Destination,
+    bool                                                    bReplaceExisting,
+    TFunction<bool(const String& Path, bool bIsDirectory)>& Filter)
+{
+    TArray<FDirectoryEntry> Entries;
+    if (!FPlatformFile::IterateDirectory(*Directory, Entries) || !File::CreateDirectoryTree(Destination))
+    {
+        return false;
+    }
+
+    for (const FDirectoryEntry& Entry : Entries)
+    {
+        if (Entry.bIsDirectory && Entry.bIsSymbolicLink)
+        {
+            continue;
+        }
+
+        const String Source = File::CombinePath(Directory, Entry.Name);
+        if (Filter.IsValid() && !Filter(Source, Entry.bIsDirectory))
+        {
+            continue;
+        }
+
+        const String Target = File::CombinePath(Destination, Entry.Name);
+        if (Entry.bIsDirectory)
+        {
+            if (!CopyDirectoryContents(Source, Target, bReplaceExisting, Filter))
+            {
+                return false;
+            }
+        }
+        else if (!FPlatformFile::CopyFile(*Source, *Target, bReplaceExisting))
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 static String JoinPath(const FPathParts& Parts)
@@ -308,6 +351,21 @@ bool File::DeleteDirectoryTree(const String& Directory)
     }
 
     return FPlatformFile::RemoveDirectory(*Directory);
+}
+
+bool File::CopyDirectoryTree(
+    const String&                                          Directory,
+    const String&                                          Destination,
+    bool                                                   bReplaceExisting,
+    TFunction<bool(const String& Path, bool bIsDirectory)> Filter)
+{
+    if (IsUnderDirectory(Destination, Directory))
+    {
+        LOG_ERROR("[File]: Cannot copy '%s' into '%s', which is inside it", *Directory, *Destination);
+        return false;
+    }
+
+    return CopyDirectoryContents(Directory, Destination, bReplaceExisting, Filter);
 }
 
 String File::ExtractExtension(const String& Filepath)

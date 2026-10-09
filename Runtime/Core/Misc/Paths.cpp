@@ -1,4 +1,5 @@
 #include "Core/Misc/Paths.h"
+#include "Core/Platform/PlatformFile.h"
 
 String Paths::GetEngineDir()
 {
@@ -23,4 +24,10 @@ String Paths::GetProjectName()
 String Paths::GetProjectModuleName()
 {
     return String(PROJECT_NAME);
+}
+
+String Paths::GetUserSettingsDir()
+{
+    const String BaseDirectory = FPlatformFile::GetUserSettingsDirectory();
+    return BaseDirectory.IsEmpty() ? String() : BaseDirectory + String("/DXR-Engine");
 }
