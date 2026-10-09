@@ -6,6 +6,7 @@
 #include <Core/Image/PngWriter.h>
 #include <Core/Json/Json.h>
 #include <Core/Platform/PlatformFile.h>
+#include <Core/Platform/PlatformProcess.h>
 #include <Core/Templates/CString.h>
 
 #include "TestCommon/TestMacros.h"
@@ -201,6 +202,58 @@ bool File_Test()
         TEST_EXPECT(!FPlatformFile::GetFileInfo(*Tree).bExists);
 
         TEST_EXPECT(File::DeleteDirectoryTree(Tree));
+    }
+
+    TEST_SECTION("DeleteDirectoryTree removes a link to a directory without touching its target");
+    {
+        const String Target = File::MakeAbsolute(Root + "/LinkTarget");
+        const String Tree   = File::MakeAbsolute(Root + "/TreeWithLink");
+        const String Link   = Tree + "/Link";
+        TEST_EXPECT(File::CreateDirectoryTree(Target));
+        TEST_EXPECT(File::CreateDirectoryTree(Tree));
+        TEST_EXPECT(WriteText(Target + "/Kept.txt", "Kept"));
+
+        FProcessDesc Desc;
+#if PLATFORM_WINDOWS
+        String WindowsLink   = Link;
+        String WindowsTarget = Target;
+        WindowsLink.ReplaceAll('/', '\\');
+        WindowsTarget.ReplaceAll('/', '\\');
+
+        Desc.Executable = "cmd.exe";
+        Desc.Arguments.Add(String("/c"));
+        Desc.Arguments.Add(String("mklink"));
+        Desc.Arguments.Add(String("/J"));
+        Desc.Arguments.Add(WindowsLink);
+        Desc.Arguments.Add(WindowsTarget);
+#else
+        Desc.Executable = "/bin/ln";
+        Desc.Arguments.Add(String("-s"));
+        Desc.Arguments.Add(Target);
+        Desc.Arguments.Add(Link);
+#endif
+        Desc.bCaptureOutput = true;
+
+        TUniquePtr<IPlatformProcessHandle> Process = FPlatformProcess::LaunchProcess(Desc);
+        TEST_EXPECT(Process != nullptr);
+
+        int32 ExitCode = -1;
+        if (Process)
+        {
+            TEST_EXPECT(Process->Wait(30 * 1000));
+            TEST_EXPECT(Process->GetExitCode(ExitCode));
+        }
+
+        TEST_EXPECT(ExitCode == 0);
+        TEST_EXPECT(FPlatformFile::IsDirectory(*Link));
+
+        TArray<FDirectoryEntry> Entries;
+        TEST_EXPECT(FPlatformFile::IterateDirectory(*Tree, Entries));
+        TEST_EXPECT((Entries.Size() == 1) && Entries[0].bIsSymbolicLink);
+
+        TEST_EXPECT(File::DeleteDirectoryTree(Tree));
+        TEST_EXPECT(!FPlatformFile::GetFileInfo(*Tree).bExists);
+        TEST_EXPECT(ReadText(Target + "/Kept.txt").Equals("Kept"));
     }
 
     TEST_EXPECT(File::DeleteDirectoryTree(Root));
