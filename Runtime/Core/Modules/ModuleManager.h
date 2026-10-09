@@ -36,6 +36,20 @@
     IMPLEMENT_NEW_AND_DELETE_OPERATORS()
 #endif
 
+/**
+ * Macro for implementing the launch module that is compiled into the executable. A monolithic build has no module
+ * image that replaces operator new and delete, so the executable owns the one set every new-expression goes through.
+ */
+
+#if MONOLITHIC_BUILD
+#define IMPLEMENT_LAUNCH_MODULE(ModuleClassType, ModuleName) \
+    IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName) \
+    IMPLEMENT_NEW_AND_DELETE_OPERATORS()
+#else
+#define IMPLEMENT_LAUNCH_MODULE(ModuleClassType, ModuleName) \
+    IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName)
+#endif
+
 struct IModule;
 
 typedef IModule* (*PFNLoadEngineModule)();

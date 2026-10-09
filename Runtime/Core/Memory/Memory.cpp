@@ -1,7 +1,9 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Memory/MemoryStats.h"
 #include "Core/Memory/Malloc.h"
+#include "Core/Platform/PlatformMisc.h"
 #include "Core/Platform/PlatformStackTrace.h"
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
@@ -88,6 +90,21 @@ void Memory::Free(void* Block) noexcept
     }
 
     GMalloc->Free(Block);
+}
+
+void Memory::OnOutOfMemory(uint64 Size) noexcept
+{
+    // The heap has just failed, so the message is formatted on the stack and nothing here may allocate.
+    CHAR Message[128];
+    ::snprintf(Message, sizeof(Message), "Fatal: Out of memory, failed to allocate %llu bytes", static_cast<unsigned long long>(Size));
+    FPlatformMisc::OutputDebugString(Message);
+
+    if (FPlatformMisc::IsDebuggerPresent())
+    {
+        DEBUG_BREAK();
+    }
+
+    ::abort();
 }
 
 void* Memory::Memset(void* Dst, uint8 Value, uint64 Size) noexcept

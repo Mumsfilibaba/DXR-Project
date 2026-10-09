@@ -14,13 +14,6 @@
 #include "RenderGraphTests.h"
 #include "SwapChainAcquireTests.h"
 
-#define ENABLE_CUSTOM_MEMORY (1)
-
-#if ENABLE_CUSTOM_MEMORY
-#include <Core/Memory/NewOperators.h>
-IMPLEMENT_NEW_AND_DELETE_OPERATORS();
-#endif
-
 static void SetConsoleVariable(const CHAR* VariableName, bool bValue)
 {
     if (IConsoleVariable* Variable = FConsoleManager::Get().FindConsoleVariable(VariableName))

@@ -15,13 +15,6 @@
 #include "MemoryStack_Benchmark.h"
 #include "Sort_Benchmark.h"
 
-#define ENABLE_CUSTOM_MEMORY (1)
-
-#if ENABLE_CUSTOM_MEMORY
-#include <Core/Memory/NewOperators.h>
-IMPLEMENT_NEW_AND_DELETE_OPERATORS();
-#endif
-
 static int32 RunCoreBenchmarks()
 {
     // The harness is used here for its logging and output-device setup only; benchmarks

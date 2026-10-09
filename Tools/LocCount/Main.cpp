@@ -11,9 +11,6 @@
 #include <Core/Platform/PlatformFile.h>
 #include <Core/Templates/CString.h>
 
-#include <Core/Memory/NewOperators.h>
-IMPLEMENT_NEW_AND_DELETE_OPERATORS();
-
 struct FLocTotals
 {
     int32 Files    = 0;

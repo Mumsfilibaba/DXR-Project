@@ -5,7 +5,7 @@
 #include "Core/Modules/ModuleManager.h"
 #include "CoreApplication/Platform/PlatformConsoleWindow.h"
 
-IMPLEMENT_ENGINE_MODULE(IModule, LaunchProgram);
+IMPLEMENT_LAUNCH_MODULE(IModule, LaunchProgram);
 
 const CHAR*        GProgramTitle = "Program";
 TFunction<int32()> GProgramBody;

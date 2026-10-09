@@ -41,13 +41,6 @@
 #include <crtdbg.h>
 #endif
 
-#define ENABLE_CUSTOM_MEMORY (1)
-
-#if ENABLE_CUSTOM_MEMORY
-#include <Core/Memory/NewOperators.h>
-IMPLEMENT_NEW_AND_DELETE_OPERATORS();
-#endif
-
 struct FDebuggerOutputDevice : public IOutputDevice
 {
     virtual void Log(const String& Message)

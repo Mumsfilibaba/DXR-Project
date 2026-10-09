@@ -296,6 +296,12 @@
     #define NODISCARD
 #endif
 
+#if __has_cpp_attribute(noreturn)
+    #define NORETURN [[noreturn]]
+#else
+    #define NORETURN
+#endif
+
 #if (__cplusplus >= 201703L) && __has_cpp_attribute(maybe_unused)
     #define MAYBE_UNUSED [[maybe_unused]]
 #else

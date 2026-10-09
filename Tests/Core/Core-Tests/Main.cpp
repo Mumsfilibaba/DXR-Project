@@ -22,16 +22,10 @@
 #include "PlatformTimeTests.h"
 #include "PlatformMiscTests.h"
 #include "MemoryStackTests.h"
+#include "NewOperatorsTests.h"
 #include "PlatformEventPoolTests.h"
 #include "FileOutputDeviceTests.h"
 #include "ProfilerTests.h"
-
-#define ENABLE_CUSTOM_MEMORY (1)
-
-#if ENABLE_CUSTOM_MEMORY
-#include <Core/Memory/NewOperators.h>
-IMPLEMENT_NEW_AND_DELETE_OPERATORS();
-#endif
 
 static int32 RunCoreTests()
 {
@@ -60,6 +54,7 @@ static int32 RunCoreTests()
     RUN_TEST("PlatformTime", PlatformTime_Test());
     RUN_TEST("PlatformMisc", PlatformMisc_Test());
     RUN_TEST("MemoryStack", MemoryStack_Test());
+    RUN_TEST("NewOperators", NewOperators_Test());
     RUN_TEST("PlatformEventPool", PlatformEventPool_Test());
     RUN_TEST("FileOutputDevice", FileOutputDevice_Test());
     RUN_TEST("Profiler", Profiler_Test());

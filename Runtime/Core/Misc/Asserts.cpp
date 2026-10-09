@@ -66,7 +66,7 @@ static uint64 CreateSiteKey(const CHAR* Filename, int32 Line)
 }
 
 /** Terminates the process without letting the platform put another dialog in the way */
-[[noreturn]] static void TerminateOnAssert()
+NORETURN static void TerminateOnAssert()
 {
 #if PLATFORM_WINDOWS
     // Neither the CRT abort message nor Windows Error Reporting may appear: an unattended run has to exit, not block.

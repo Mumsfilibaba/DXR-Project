@@ -35,7 +35,7 @@
 #include "RendererCore/VertexStreamCache.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
-IMPLEMENT_ENGINE_MODULE(IModule, LaunchEngine);
+IMPLEMENT_LAUNCH_MODULE(IModule, LaunchEngine);
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

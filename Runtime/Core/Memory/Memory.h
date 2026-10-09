@@ -46,6 +46,14 @@ struct CORE_API Memory
     }
 
     /**
+     * @brief Reports an allocation that could not be satisfied and terminates the process. It is reached from the
+     * throwing forms of operator new, which may not return null and cannot throw since exceptions are disabled.
+     *
+     * @param Size The number of bytes that failed to allocate
+     */
+    NORETURN static void OnOutOfMemory(uint64 Size) noexcept;
+
+    /**
      * @brief Allocate memory and zero it
      * @param Size The number of bytes to allocate
      * @return Returns the newly allocated memory
