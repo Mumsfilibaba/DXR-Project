@@ -13,7 +13,8 @@ if IsPlatformMac() then
         "AppKit",
         "IOKit",
         "GameController",
+        "UniformTypeIdentifiers",
     })
 elseif IsPlatformWindows() then
-    CoreApplicationModule.AddLinkLibraries({ "Shcore.lib", "Dwmapi.lib" })
+    CoreApplicationModule.AddLinkLibraries({ "Shcore.lib", "Dwmapi.lib", "Ole32.lib", "Shell32.lib" })
 end
