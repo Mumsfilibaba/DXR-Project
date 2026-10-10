@@ -22,27 +22,29 @@ class CORE_API File
 {
 public:
     /**
-     * @brief Read the whole file into a new buffer that OutData takes ownership of. The file is expected to be at its start.
-     * @return Returns false if nothing could be read, which includes an empty file
+     * @brief Read the rest of the file, from its current position, into a new buffer that OutData takes ownership of
+     * @return Returns false if fewer bytes than the rest of the file could be read. An empty file gives an empty stream.
      */
     static bool ReadFile(IPlatformFile* InFile, FByteInputStream& OutData);
 
     /**
-     * @brief Read the whole file into OutData, which is resized to the file size. The file is expected to be at its start.
-     * @return Returns false and empties OutData if nothing could be read, which includes an empty file
+     * @brief Read the rest of the file, from its current position, into OutData
+     * @return Returns false and empties OutData if fewer bytes than the rest of the file could be read. An empty file gives
+     * an empty array.
      */
     static bool ReadFile(IPlatformFile* InFile, TArray<uint8>& OutData);
 
     /**
-     * @brief Read the whole file into OutText followed by a null-terminator, so OutText.Data() is a C string. The file is
-     * expected to be at its start.
-     * @return Returns false and empties OutText if nothing could be read, which includes an empty file
+     * @brief Read the rest of the file, from its current position, into OutText followed by a null-terminator, so
+     * OutText.Data() is a C string
+     * @return Returns false and empties OutText if fewer bytes than the rest of the file could be read. An empty file gives
+     * just the null-terminator.
      */
     static bool ReadTextFile(IPlatformFile* InFile, TArray<CHAR>& OutText);
 
     /**
      * @brief Write every element of Text at the file's current position, including a null-terminator if the array holds one
-     * @return Returns false if nothing could be written
+     * @return Returns false if not every byte could be written. Writing an empty array succeeds.
      */
     static FORCEINLINE bool WriteTextFile(IPlatformFile* InFile, const TArray<CHAR>& Text)
     {
@@ -51,7 +53,7 @@ public:
 
     /**
      * @brief Write the characters of Text at the file's current position, without a null-terminator
-     * @return Returns false if nothing could be written
+     * @return Returns false if not every byte could be written. Writing an empty string succeeds.
      */
     static FORCEINLINE bool WriteTextFile(IPlatformFile* InFile, const String& Text)
     {

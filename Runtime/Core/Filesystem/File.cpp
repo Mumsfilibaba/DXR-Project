@@ -22,6 +22,13 @@ struct FPathParts
     TArray<String> Segments;
 };
 
+static int32 GetRemainingBytes(IPlatformFile* InFile)
+{
+    const int64 NumBytes = InFile->Size() - InFile->Tell();
+    CHECK((NumBytes >= 0) && (NumBytes < TNumericLimits<int32>::Max()));
+    return static_cast<int32>(NumBytes);
+}
+
 static bool IsSeparator(CHAR Char)
 {
     return (Char == '/') || (Char == '\\');
@@ -190,78 +197,67 @@ bool File::ReadFile(IPlatformFile* InFile, FByteInputStream& OutData)
 {
     CHECK(InFile != nullptr);
 
-    const int64 FileSize = InFile->Size();
-    CHECK(FileSize < TNumericLimits<int32>::Max());
-
-    uint8* Stream = reinterpret_cast<uint8*>(Memory::Malloc(static_cast<uint64>(FileSize)));
-    const int32 ReadBytes = InFile->Read(Stream, static_cast<uint32>(FileSize));
-    if (ReadBytes <= 0)
+    const int32 NumBytes = GetRemainingBytes(InFile);
+    if (NumBytes == 0)
     {
-        return false;
-    }
-    else
-    {
-        OutData = FByteInputStream(Stream, static_cast<int32>(FileSize));
+        OutData = FByteInputStream();
         return true;
     }
+
+    uint8* Stream = reinterpret_cast<uint8*>(Memory::Malloc(static_cast<uint64>(NumBytes)));
+    if (InFile->Read(Stream, static_cast<uint32>(NumBytes)) != NumBytes)
+    {
+        Memory::Free(Stream);
+        return false;
+    }
+
+    OutData = FByteInputStream(Stream, NumBytes);
+    return true;
 }
 
 bool File::ReadFile(IPlatformFile* InFile, TArray<uint8>& OutData)
 {
     CHECK(InFile != nullptr);
 
-    const int64 FileSize = InFile->Size();
-    CHECK(FileSize < TNumericLimits<int32>::Max());
-    OutData.Resize(static_cast<int32>(FileSize));
+    const int32 NumBytes = GetRemainingBytes(InFile);
+    OutData.Resize(NumBytes);
 
-    const int32 ReadBytes = InFile->Read(reinterpret_cast<uint8*>(OutData.Data()), static_cast<uint32>(FileSize));
-    if (ReadBytes <= 0)
+    if ((NumBytes > 0) && (InFile->Read(OutData.Data(), static_cast<uint32>(NumBytes)) != NumBytes))
     {
         OutData.Clear(true);
         return false;
     }
-    else
-    {
-        return true;
-    }
+
+    return true;
 }
 
 bool File::ReadTextFile(IPlatformFile* InFile, TArray<CHAR>& OutText)
 {
     CHECK(InFile != nullptr);
 
-    const int64 FileSize = InFile->Size();
-    CHECK(FileSize < TNumericLimits<int32>::Max());
+    const int32 NumBytes = GetRemainingBytes(InFile);
+    OutText.Resize(NumBytes + 1);
 
-    // Get the filesize and add an extra character for the null-terminator
-    OutText.Resize(static_cast<int32>(FileSize) + 1);
-
-    const int32 ReadBytes = InFile->Read(reinterpret_cast<uint8*>(OutText.Data()), static_cast<uint32>(FileSize));
-    if (ReadBytes <= 0)
+    if ((NumBytes > 0) && (InFile->Read(reinterpret_cast<uint8*>(OutText.Data()), static_cast<uint32>(NumBytes)) != NumBytes))
     {
         OutText.Clear(true);
         return false;
     }
-    else
-    {
-        OutText[ReadBytes] = 0;
-        return true;
-    }
+
+    OutText[NumBytes] = 0;
+    return true;
 }
 
 bool File::WriteTextFile(IPlatformFile* InFile, const CHAR* Text, uint32 Size)
 {
     CHECK(InFile != nullptr);
 
-    const int32 WrittenBytes = InFile->Write(reinterpret_cast<const uint8*>(Text), Size);
-    if (WrittenBytes <= 0)
-    {
-        return false;
-    }
-    else
+    if (Size == 0)
     {
         return true;
     }
+
+    return InFile->Write(reinterpret_cast<const uint8*>(Text), Size) == static_cast<int32>(Size);
 }
 
 String File::GetDirectoryOf(const String& Filepath)

@@ -31,29 +31,34 @@ FWindowsFileHandle::~FWindowsFileHandle() = default;
 
 bool FWindowsFileHandle::SeekFromStart(int64 InOffset)
 {
-    CHECK(IsValid());
-
-    LARGE_INTEGER Offset;
-    Offset.QuadPart = InOffset;
-    return SetFilePointerEx(FileHandle, Offset, nullptr, FILE_BEGIN) != INVALID_SET_FILE_POINTER;
+    return Seek(InOffset, FILE_BEGIN);
 }
 
 bool FWindowsFileHandle::SeekFromCurrent(int64 InOffset)
 {
-    CHECK(IsValid());
-
-    LARGE_INTEGER Offset;
-    Offset.QuadPart = InOffset;
-    return SetFilePointerEx(FileHandle, Offset, nullptr, FILE_CURRENT) != INVALID_SET_FILE_POINTER;
+    return Seek(InOffset, FILE_CURRENT);
 }
 
 bool FWindowsFileHandle::SeekFromEnd(int64 InOffset)
+{
+    return Seek(InOffset, FILE_END);
+}
+
+bool FWindowsFileHandle::Seek(int64 InOffset, DWORD MoveMethod)
 {
     CHECK(IsValid());
 
     LARGE_INTEGER Offset;
     Offset.QuadPart = InOffset;
-    return SetFilePointerEx(FileHandle, Offset, nullptr, FILE_END) != INVALID_SET_FILE_POINTER;
+
+    LARGE_INTEGER NewPosition;
+    if (!::SetFilePointerEx(FileHandle, Offset, &NewPosition, MoveMethod))
+    {
+        return false;
+    }
+
+    FilePointer = static_cast<int64>(NewPosition.QuadPart);
+    return true;
 }
 
 int64 FWindowsFileHandle::Size() const

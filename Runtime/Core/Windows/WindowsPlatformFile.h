@@ -22,6 +22,7 @@ public:
     virtual void Close() override final;
 
 private:
+    bool Seek(int64 InOffset, DWORD MoveMethod);
     void UpdateFileSize();
 
     HANDLE FileHandle;

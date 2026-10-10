@@ -97,8 +97,7 @@ int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
             }
             else
             {
-                // The file descriptor was invalid
-                return static_cast<int32>(BytesRead);
+                return (BytesRead > 0) ? static_cast<int32>(BytesRead) : -1;
             }
         }
     }

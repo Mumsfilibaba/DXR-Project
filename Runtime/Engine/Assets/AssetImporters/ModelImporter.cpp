@@ -29,6 +29,11 @@ bool FModelImporter::ImportFromFile(const StringView& InFilename, EMeshImportFla
         }
     }
 
+    if (InputStream.Size() < static_cast<int32>(sizeof(ModelFormat::FFileHeader)))
+    {
+        return false;
+    }
+
     // 1) Read file-header
     ModelFormat::FFileHeader FileHeader;
     InputStream.Read(FileHeader);

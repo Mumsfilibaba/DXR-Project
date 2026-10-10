@@ -22,7 +22,7 @@ TSharedPtr<FTrueTypeFontFace> FTrueTypeFontFace::CreateFromFile(const String& Fi
             return nullptr;
         }
 
-        if (!File::ReadFile(FileHandle.Get(), FontData))
+        if (!File::ReadFile(FileHandle.Get(), FontData) || FontData.IsEmpty())
         {
             LOG_ERROR("[FTrueTypeFontFace]: Failed to read '%s'", *Filename);
             return nullptr;

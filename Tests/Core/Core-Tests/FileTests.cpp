@@ -23,6 +23,69 @@ static bool WriteText(const String& Filename, const CHAR* Text)
     return File::WriteTextFile(FileHandle.Get(), String(Text));
 }
 
+struct FFakeFile : public IPlatformFile
+{
+    FFakeFile(int64 InSize, int32 InReadResult, int32 InWriteResult)
+        : FakeSize(InSize)
+        , ReadResult(InReadResult)
+        , WriteResult(InWriteResult)
+    {
+    }
+
+    virtual bool SeekFromStart(int64) override final
+    {
+        return true;
+    }
+
+    virtual bool SeekFromCurrent(int64) override final
+    {
+        return true;
+    }
+
+    virtual bool SeekFromEnd(int64) override final
+    {
+        return true;
+    }
+
+    virtual int64 Size() const override final
+    {
+        return FakeSize;
+    }
+
+    virtual int64 Tell() const override final
+    {
+        return 0;
+    }
+
+    virtual int32 Read(uint8*, uint32) override final
+    {
+        return ReadResult;
+    }
+
+    virtual int32 Write(const uint8*, uint32) override final
+    {
+        return WriteResult;
+    }
+
+    virtual bool Truncate(int64) override final
+    {
+        return true;
+    }
+
+    virtual bool IsValid() const override final
+    {
+        return true;
+    }
+
+    virtual void Close() override final
+    {
+    }
+
+    int64 FakeSize;
+    int32 ReadResult;
+    int32 WriteResult;
+};
+
 static bool CreateDirectoryLink(const String& Link, const String& Target)
 {
     FProcessDesc Desc;
@@ -151,9 +214,97 @@ bool File_Test()
         TEST_EXPECT(FPlatformFile::DeleteFile(*Filename));
     }
 
+    TEST_SECTION("A short or failed read fails and leaves the output empty");
+    {
+        for (const int32 ReadResult : { 4, 0, -1 })
+        {
+            FFakeFile Fake(10, ReadResult, 0);
+
+            TArray<uint8> Bytes = { 1, 2, 3 };
+            TEST_EXPECT(!File::ReadFile(&Fake, Bytes));
+            TEST_EXPECT(Bytes.IsEmpty());
+
+            TArray<CHAR> Text = { 'A' };
+            TEST_EXPECT(!File::ReadTextFile(&Fake, Text));
+            TEST_EXPECT(Text.IsEmpty());
+
+            FByteInputStream Stream;
+            TEST_EXPECT(!File::ReadFile(&Fake, Stream));
+            TEST_EXPECT(Stream.Size() == 0);
+        }
+    }
+
+    TEST_SECTION("A partial or failed write fails");
+    {
+        for (const int32 WriteResult : { 3, 0, -1 })
+        {
+            FFakeFile Fake(0, 0, WriteResult);
+            TEST_EXPECT(!File::WriteTextFile(&Fake, String("0123456789")));
+        }
+
+        FFakeFile Complete(0, 0, 10);
+        TEST_EXPECT(File::WriteTextFile(&Complete, String("0123456789")));
+    }
+
     const String Root("FileTests.Scratch");
     File::DeleteDirectoryTree(Root);
     TEST_EXPECT(File::CreateDirectoryTree(Root));
+
+    TEST_SECTION("An empty file reads as empty and an empty string writes");
+    {
+        const String Filename = Root + "/Empty.txt";
+        TEST_EXPECT(WriteText(Filename, ""));
+        TEST_EXPECT(FPlatformFile::GetFileInfo(*Filename).Size == 0);
+
+        TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Filename);
+        TEST_EXPECT(FileHandle.IsValid());
+
+        if (FileHandle)
+        {
+            TArray<uint8> Bytes = { 1, 2, 3 };
+            TEST_EXPECT(File::ReadFile(FileHandle.Get(), Bytes));
+            TEST_EXPECT(Bytes.IsEmpty());
+
+            TArray<CHAR> Text;
+            TEST_EXPECT(File::ReadTextFile(FileHandle.Get(), Text));
+            TEST_EXPECT((Text.Size() == 1) && (Text[0] == 0));
+
+            FByteInputStream Stream;
+            TEST_EXPECT(File::ReadFile(FileHandle.Get(), Stream));
+            TEST_EXPECT(Stream.Size() == 0);
+        }
+    }
+
+    TEST_SECTION("Reads start at the file's current position");
+    {
+        const String Filename = Root + "/Position.txt";
+        TEST_EXPECT(WriteText(Filename, "0123456789"));
+
+        TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Filename);
+        TEST_EXPECT(FileHandle.IsValid());
+
+        if (FileHandle)
+        {
+            TEST_EXPECT(FileHandle->SeekFromStart(4));
+            TEST_EXPECT(FileHandle->Tell() == 4);
+
+            TEST_EXPECT(FileHandle->SeekFromCurrent(-2));
+            TEST_EXPECT(FileHandle->Tell() == 2);
+
+            TEST_EXPECT(FileHandle->SeekFromEnd(-3));
+            TEST_EXPECT(FileHandle->Tell() == 7);
+
+            TEST_EXPECT(!FileHandle->SeekFromStart(-1));
+            TEST_EXPECT(FileHandle->Tell() == 7);
+
+            TEST_EXPECT(FileHandle->SeekFromStart(4));
+
+            TArray<CHAR> Text;
+            TEST_EXPECT(File::ReadTextFile(FileHandle.Get(), Text));
+            TEST_EXPECT(String(Text.Data()).Equals("456789"));
+            TEST_EXPECT(FileHandle->Tell() == 10);
+        }
+    }
 
     TEST_SECTION("IsFile is false for a directory");
     {

@@ -30,7 +30,7 @@ bool Json::LoadFromFile(const String& Filename, FJsonValue& OutValue, FJsonError
     TArray<CHAR> Text;
     if (!File::ReadTextFile(SourceFile.Get(), Text))
     {
-        return ReportFailure("the file is empty or could not be read");
+        return ReportFailure("the file could not be read");
     }
 
     const int32 TextLength = CString::Strlen(Text.Data());
