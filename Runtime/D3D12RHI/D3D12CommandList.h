@@ -45,9 +45,9 @@ class FD3D12CommandList : public FD3D12DeviceChild, FNonCopyable
     friend struct FD3D12Commands;
 
     template<typename CommandListInterfaceType>
-    struct CommandList
+    struct FCommandList
     {
-        CommandList(FD3D12CommandList* InCommandListParent, CommandListInterfaceType* InCommandListInterface)
+        FCommandList(FD3D12CommandList* InCommandListParent, CommandListInterfaceType* InCommandListInterface)
             : CommandListParent(InCommandListParent)
             , CommandListInterface(InCommandListInterface)
         {    
@@ -102,83 +102,83 @@ public:
         return DebugName;
     }
 
-    FORCEINLINE CommandList<ID3D12GraphicsCommandList> operator->()
+    FORCEINLINE FCommandList<ID3D12GraphicsCommandList> operator->()
     {
-        return CommandList(this, CmdList.Get());
+        return FCommandList(this, CmdList.Get());
     }
 
-    FORCEINLINE CommandList<ID3D12GraphicsCommandList> GetGraphicsCommandList()
+    FORCEINLINE FCommandList<ID3D12GraphicsCommandList> GetGraphicsCommandList()
     {
-        return CommandList(this, CmdList.Get());
+        return FCommandList(this, CmdList.Get());
     }
 
 #if D3D12_USE_ID3D12COMMANDLIST_1
-    FORCEINLINE CommandList<ID3D12GraphicsCommandList1> GetGraphicsCommandList1()
+    FORCEINLINE FCommandList<ID3D12GraphicsCommandList1> GetGraphicsCommandList1()
     {
-        return CommandList(this, CmdList1.Get());
+        return FCommandList(this, CmdList1.Get());
     }
 #endif
 
 #if D3D12_USE_ID3D12COMMANDLIST_2
-    FORCEINLINE CommandList<ID3D12GraphicsCommandList2> GetGraphicsCommandList2()
+    FORCEINLINE FCommandList<ID3D12GraphicsCommandList2> GetGraphicsCommandList2()
     {
-        return CommandList(this, CmdList2.Get());
+        return FCommandList(this, CmdList2.Get());
     }
 #endif
 
 #if D3D12_USE_ID3D12COMMANDLIST_3
-    FORCEINLINE CommandList<ID3D12GraphicsCommandList3> GetGraphicsCommandList3()
+    FORCEINLINE FCommandList<ID3D12GraphicsCommandList3> GetGraphicsCommandList3()
     {
-        return CommandList(this, CmdList3.Get());
+        return FCommandList(this, CmdList3.Get());
     }
 #endif
 
 #if D3D12_USE_ID3D12COMMANDLIST_4
-    FORCEINLINE CommandList<ID3D12GraphicsCommandList4> GetGraphicsCommandList4()
+    FORCEINLINE FCommandList<ID3D12GraphicsCommandList4> GetGraphicsCommandList4()
     {
-        return CommandList(this, CmdList4.Get());
+        return FCommandList(this, CmdList4.Get());
     }
 #endif
 
 #if D3D12_USE_ID3D12COMMANDLIST_5
-    FORCEINLINE CommandList<ID3D12GraphicsCommandList5> GetGraphicsCommandList5()
+    FORCEINLINE FCommandList<ID3D12GraphicsCommandList5> GetGraphicsCommandList5()
     {
-        return CommandList(this, CmdList5.Get());
+        return FCommandList(this, CmdList5.Get());
     }
 #endif
 
 #if D3D12_USE_ID3D12COMMANDLIST_6
-    FORCEINLINE CommandList<ID3D12GraphicsCommandList6> GetGraphicsCommandList6()
+    FORCEINLINE FCommandList<ID3D12GraphicsCommandList6> GetGraphicsCommandList6()
     {
-        return CommandList(this, CmdList6.Get());
+        return FCommandList(this, CmdList6.Get());
     }
 #endif
 
 #if D3D12_USE_ID3D12COMMANDLIST_7
-    FORCEINLINE CommandList<ID3D12GraphicsCommandList7> GetGraphicsCommandList7()
+    FORCEINLINE FCommandList<ID3D12GraphicsCommandList7> GetGraphicsCommandList7()
     {
-        return CommandList(this, CmdList7.Get());
+        return FCommandList(this, CmdList7.Get());
     }
 #endif
 
 #if D3D12_USE_ID3D12COMMANDLIST_8
-    FORCEINLINE CommandList<ID3D12GraphicsCommandList8> GetGraphicsCommandList8()
+    FORCEINLINE FCommandList<ID3D12GraphicsCommandList8> GetGraphicsCommandList8()
     {
-        return CommandList(this, CmdList8.Get());
+        return FCommandList(this, CmdList8.Get());
     }
 #endif
 
 #if D3D12_USE_ID3D12COMMANDLIST_9
-    FORCEINLINE CommandList<ID3D12GraphicsCommandList9> GetGraphicsCommandList9()
+    FORCEINLINE FCommandList<ID3D12GraphicsCommandList9> GetGraphicsCommandList9()
     {
-        return CommandList(this, CmdList9.Get());
+        return FCommandList(this, CmdList9.Get());
     }
 #endif
 
 #if D3D12_USE_ID3D12COMMANDLIST_10
-    FORCEINLINE CommandList<ID3D12GraphicsCommandList10> GetGraphicsCommandList10()
+    FORCEINLINE FCommandList<ID3D12GraphicsCommandList10> GetGraphicsCommandList10()
     {
-        return CommandList(this, CmdList10.Get());
+        return FCommandList(this, CmdList10.Get());
     }
 #endif
 
