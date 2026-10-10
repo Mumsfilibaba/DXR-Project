@@ -1,6 +1,6 @@
 #include "Core/Windows/WindowsPlatformSocket.h"
 #include "Core/Memory/Memory.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 
 #include <winsock2.h>
 #include <ws2tcpip.h>

@@ -4,7 +4,7 @@
 #include "Core/Json/JsonReader.h"
 #include "Core/Misc/BuildInfo.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Paths.h"
 #include "Core/Misc/RemoteConsoleProtocol.h"
 #include "Core/Platform/PlatformThread.h"
@@ -140,7 +140,7 @@ bool                  FRemoteConsoleServer::bSettingsChanged = false;
 
 bool FRemoteConsoleServer::Initialize()
 {
-    FOutputDeviceLogger::Get()->RegisterOutputDevice(&GRemoteConsoleLogDevice);
+    FOutputDeviceManager::Get()->RegisterOutputDevice(&GRemoteConsoleLogDevice);
 
     bIsInitialized   = true;
     bSettingsChanged = false;
@@ -150,7 +150,7 @@ bool FRemoteConsoleServer::Initialize()
 void FRemoteConsoleServer::Release()
 {
     StopInstance();
-    FOutputDeviceLogger::Get()->UnregisterOutputDevice(&GRemoteConsoleLogDevice);
+    FOutputDeviceManager::Get()->UnregisterOutputDevice(&GRemoteConsoleLogDevice);
     bIsInitialized = false;
 }
 
@@ -752,7 +752,7 @@ void FRemoteConsoleServer::HandleExec(const FRemoteConsoleRequest& Request)
     }
 
     GRemoteConsoleLogDevice.BeginCapture();
-    const bool bSucceeded = FConsoleManager::Get().ExecuteCommand(*FOutputDeviceLogger::Get(), Command);
+    const bool bSucceeded = FConsoleManager::Get().ExecuteCommand(*FOutputDeviceManager::Get(), Command);
     FJsonValue Output = GRemoteConsoleLogDevice.EndCapture();
 
     FJsonValue Result = MakeResult(Request, bSucceeded);

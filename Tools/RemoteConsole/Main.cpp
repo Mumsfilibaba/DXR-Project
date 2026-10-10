@@ -4,7 +4,7 @@
 #include <Core/Containers/Optional.h>
 #include <Core/Containers/UniquePtr.h>
 #include <Core/Json/JsonReader.h>
-#include <Core/Misc/OutputDeviceLogger.h>
+#include <Core/Misc/OutputDeviceManager.h>
 #include <Core/Misc/RemoteConsoleProtocol.h>
 #include <Core/Network/NetworkSocket.h>
 #include <Core/Platform/CriticalSection.h>
@@ -55,7 +55,7 @@ static void Print(ELogSeverity Severity, const String& Message)
     }
     else
     {
-        FOutputDeviceLogger::Get()->Log(Severity, Message);
+        FOutputDeviceManager::Get()->Log(Severity, Message);
     }
 }
 
@@ -67,7 +67,7 @@ static void Print(const String& Message)
     }
     else
     {
-        FOutputDeviceLogger::Get()->Log(Message);
+        FOutputDeviceManager::Get()->Log(Message);
     }
 }
 

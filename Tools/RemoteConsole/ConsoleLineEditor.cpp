@@ -1,6 +1,6 @@
 #include "ConsoleLineEditor.h"
 #include <Core/Math/Math.h>
-#include <Core/Misc/OutputDeviceLogger.h>
+#include <Core/Misc/OutputDeviceManager.h>
 #include <Core/Misc/RemoteConsoleProtocol.h>
 #include <Core/Platform/PlatformThread.h>
 #include <Core/Templates/CString.h>
@@ -310,7 +310,7 @@ void FConsoleLineEditor::Print(ELogSeverity Severity, const String& Message)
 {
     TScopedLock Lock(EditorCS);
     EraseInputLine();
-    FOutputDeviceLogger::Get()->Log(Severity, Message);
+    FOutputDeviceManager::Get()->Log(Severity, Message);
     RedrawInputLine();
 }
 
@@ -318,7 +318,7 @@ void FConsoleLineEditor::Print(const String& Message)
 {
     TScopedLock Lock(EditorCS);
     EraseInputLine();
-    FOutputDeviceLogger::Get()->Log(Message);
+    FOutputDeviceManager::Get()->Log(Message);
     RedrawInputLine();
 }
 
@@ -734,12 +734,12 @@ void FConsoleLineEditor::Complete()
     const int32 NumListed = Math::Min(Matches.Size(), GMaxListedCandidates);
     for (int32 Index = 0; Index < NumListed; ++Index)
     {
-        FOutputDeviceLogger::Get()->Log(String::Printf("  %-*s %s", GCandidateNameColumnWidth, *Matches[Index]->Name, *Matches[Index]->Kind));
+        FOutputDeviceManager::Get()->Log(String::Printf("  %-*s %s", GCandidateNameColumnWidth, *Matches[Index]->Name, *Matches[Index]->Kind));
     }
 
     if (Matches.Size() > NumListed)
     {
-        FOutputDeviceLogger::Get()->Log(String::Printf("  ... and %d more, keep typing to narrow it down", Matches.Size() - NumListed));
+        FOutputDeviceManager::Get()->Log(String::Printf("  ... and %d more, keep typing to narrow it down", Matches.Size() - NumListed));
     }
 }
 
