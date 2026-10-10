@@ -51,7 +51,10 @@ void FEditorGPUProfilerWidget::DrawGPUData()
         return;
 
     FProfilerGpuFrame Latest;
-    Profiler->GetLatestFrame(Latest);
+    if (!Profiler->GetLatestFrame(Latest))
+    {
+        return;
+    }
 
     const ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
 

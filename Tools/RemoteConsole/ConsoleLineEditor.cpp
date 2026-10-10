@@ -24,13 +24,14 @@ static constexpr int32 GMinTerminalWidth         = 20;
 static constexpr int32 GMinVisibleInputLength    = 8;
 static constexpr int32 GInputChunkSize           = 1024;
 static constexpr CHAR GControlD                  = 0x04;
-static constexpr CHAR GControlZ                  = 0x1A;
 static constexpr CHAR GBackspaceCharacter        = 0x08;
 static constexpr CHAR GEscapeCharacter           = 0x1B;
 static constexpr CHAR GDeleteCharacter           = 0x7F;
 static constexpr CHAR GFirstPrintable            = 0x20;
 
-#if !PLATFORM_WINDOWS
+#if PLATFORM_WINDOWS
+static constexpr CHAR GControlZ = 0x1A;
+#else
 static constexpr int32 GSignalExitCodeBase                = 128;
 static constexpr int32 GEscapeSequenceTimeoutMilliseconds = 30;
 static constexpr int32 GWaitForever                       = -1;
@@ -63,10 +64,10 @@ static const FCompletionCandidate GMetaCommands[] =
 
 #if PLATFORM_WINDOWS
 
-static HANDLE GInputHandle       = nullptr;
-static HANDLE GOutputHandle      = nullptr;
-static DWORD  GOriginalInputMode = 0;
-static bool   GHasOriginalMode   = false;
+static CONST_INIT HANDLE GInputHandle       = nullptr;
+static CONST_INIT HANDLE GOutputHandle      = nullptr;
+static CONST_INIT DWORD  GOriginalInputMode = 0;
+static CONST_INIT bool   GHasOriginalMode   = false;
 
 static void RestoreConsoleMode()
 {
@@ -140,7 +141,7 @@ static int32 ReadInputBytes(CHAR* Buffer, int32 Size)
 #else
 
 static termios GOriginalTermios;
-static bool    GHasOriginalMode = false;
+static CONST_INIT bool GHasOriginalMode = false;
 
 static void RestoreConsoleMode()
 {

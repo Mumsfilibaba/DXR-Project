@@ -165,7 +165,7 @@ public:
      * @param ScreenPosition  Where the cursor is, in screen coordinates.
      * @param OutTargetPanelId The panel the drop would be placed against.
      * @param OutDirection     Which side of it, or Center to drop it in as a tab.
-     * @param OutTabIndex      Where among the target's tabs a drop onto a tab strip goes, or -1 to go after all of them.
+     * @param OutTabIndex      Where among the target's tabs a drop onto a tab strip goes, the tab count to go after all of them, or -1 when the zone is not a tab strip.
      * @return True when the point is inside a zone of this area.
      */
     NODISCARD bool HitTestDropTarget(const IntVector2& ScreenPosition, String& OutTargetPanelId, EDockDirection& OutDirection, int32& OutTabIndex) const;

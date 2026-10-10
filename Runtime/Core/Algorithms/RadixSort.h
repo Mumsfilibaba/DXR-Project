@@ -110,7 +110,6 @@ namespace AlgorithmIntegerSortDetail
     template<typename ElementType, typename KeyFnType>
     void RadixSort(ElementType* Data, int32 Count, KeyFnType&& KeyFn, ElementType* Scratch)
     {
-        using KeyType     = decltype(KeyFn(Data[0]));
         using UnsignedKey = decltype(AlgorithmPrivate::ToUnsignedSortKey(KeyFn(Data[0])));
 
         AlgorithmPrivate::TScratchArray<ElementType> LocalScratch;

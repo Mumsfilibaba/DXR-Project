@@ -477,7 +477,10 @@ end
 function GetShaderCompilerToolBuildCommand()
     local ProjectPath = GetToolsProjectPath("ShaderCompilerTool")
     if BuildWithXcode() then
-        return ('xcodebuild -project "%s" -configuration Development -quiet build'):format(ProjectPath)
+        -- Every module that embeds shaders runs this, and Xcode builds those modules in parallel. Two builds of the same
+        -- project fail on its shared build database, so lockf makes them take turns and the later one finds the tool built.
+        local LockPath = JoinPath(path.getdirectory(ProjectPath), "ShaderCompilerTool.lock")
+        return ('/usr/bin/lockf -k "%s" xcodebuild -project "%s" -configuration Development -quiet build'):format(LockPath, ProjectPath)
     end
 
     -- Its own process, so it builds the tool's project references even when Visual Studio runs the event

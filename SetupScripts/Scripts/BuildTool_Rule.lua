@@ -395,8 +395,8 @@ function BuildRules(Name)
                 -- Only compile warnings are promoted. Linker diagnostics such as LNK4098 are not
                 -- actionable from here and would fail the build for reasons unrelated to the code.
                 if IsFatalWarnings() then
-                    flags({
-                        "FatalCompileWarnings"
+                    fatalwarnings({
+                        "All"
                     })
                 end
             end

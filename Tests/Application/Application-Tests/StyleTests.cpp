@@ -33,17 +33,17 @@ bool StyleDefaults_Test()
     TEST_EXPECT(Style.ScrollBar.GrabActive.R > Style.ScrollBar.Grab.R);
     TEST_EXPECT(Style.ScrollBar.CornerRadius > 0.0f);
 
-    TEST_SECTION("A dock tab paints nothing at rest, and with no rule over the active one its fill has to carry it");
+    TEST_SECTION("A dock tab paints nothing at rest, and the active one takes the panel's fill so tab and body read as one surface");
     TEST_EXPECT_EQ(Style.Tab.Fill.A, 0.0f);
     TEST_EXPECT(Style.Tab.FillHovered.R > Style.Tab.StripFill.R);
-    TEST_EXPECT(Style.Tab.FillActive.R > Style.Panel.Fill.R);
-    TEST_EXPECT(Style.Tab.FillActive.R > Style.Tab.FillHovered.R);
+    TEST_EXPECT(Style.Tab.FillActive == Style.Panel.Fill);
+    TEST_EXPECT(Style.Tab.FillActive != Style.Tab.StripFill);
 
-    TEST_SECTION("A tab is held inside the strip and rounded, so a hover or active fill reads as a pill");
+    TEST_SECTION("Tabs touch and run down to the bottom of the strip, so the active one meets the panel below it");
     TEST_EXPECT(Style.Tab.CornerRadius > 0.0f);
-    TEST_EXPECT(Style.Tab.Spacing > 0);
+    TEST_EXPECT_EQ(Style.Tab.Spacing, 0);
     TEST_EXPECT(Style.Tab.TopInset > 0);
-    TEST_EXPECT(Style.Tab.BottomInset > 0);
+    TEST_EXPECT_EQ(Style.Tab.BottomInset, 0);
     TEST_EXPECT_EQ(Style.Tab.SeparatorThickness, 0);
 
     TEST_SECTION("Every tab opens at the same width at least, wide enough that the floor is the label's room rather than the chrome's");

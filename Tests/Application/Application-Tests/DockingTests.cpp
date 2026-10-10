@@ -1505,9 +1505,10 @@ bool DockingAreaHitTest_Test()
 
     String         TargetPanelId;
     EDockDirection Direction = EDockDirection::Center;
+    int32          TabIndex  = 0;
 
     TEST_SECTION("A point outside the window is over nothing");
-    TEST_EXPECT(!Fixture.Area->HitTestDropTarget(IntVector2(0, 0), TargetPanelId, Direction));
+    TEST_EXPECT(!Fixture.Area->HitTestDropTarget(IntVector2(0, 0), TargetPanelId, Direction, TabIndex));
 
     TEST_SECTION("A leaf offers its strip and one chip a side, and nothing in the middle of the panel");
     TArray<FDropZone> Zones;
@@ -1522,29 +1523,29 @@ bool DockingAreaHitTest_Test()
     }
 
     TEST_SECTION("The middle of a panel is in none of them, so a drop there lands nowhere");
-    TEST_EXPECT(!Fixture.Area->HitTestDropTarget(IntVector2(100 + 200, 50 + 300), TargetPanelId, Direction));
+    TEST_EXPECT(!Fixture.Area->HitTestDropTarget(IntVector2(100 + 200, 50 + 300), TargetPanelId, Direction, TabIndex));
 
     TEST_SECTION("Each chip is the side it stands for, over the panel it was gathered from");
     const EDockDirection Directions[] = { EDockDirection::Left, EDockDirection::Right, EDockDirection::Top, EDockDirection::Bottom };
     for (EDockDirection Expected : Directions)
     {
-        TEST_EXPECT(Fixture.Area->HitTestDropTarget(Fixture.GetDropZoneCenter(IntVector2(200, 300), Expected), TargetPanelId, Direction));
+        TEST_EXPECT(Fixture.Area->HitTestDropTarget(Fixture.GetDropZoneCenter(IntVector2(200, 300), Expected), TargetPanelId, Direction, TabIndex));
         TEST_EXPECT_EQ(TargetPanelId, String("Outliner"));
         TEST_EXPECT_EQ(Direction, Expected);
     }
 
     TEST_SECTION("The tab strip is the one Center target, and it is the whole strip rather than a chip");
-    TEST_EXPECT(Fixture.Area->HitTestDropTarget(IntVector2(100 + 200, 50 + 10), TargetPanelId, Direction));
+    TEST_EXPECT(Fixture.Area->HitTestDropTarget(IntVector2(100 + 200, 50 + 10), TargetPanelId, Direction, TabIndex));
     TEST_EXPECT_EQ(TargetPanelId, String("Outliner"));
     TEST_EXPECT_EQ(Direction, EDockDirection::Center);
 
     TEST_SECTION("The other panel has zones of its own, naming it rather than its neighbour");
-    TEST_EXPECT(Fixture.Area->HitTestDropTarget(Fixture.GetDropZoneCenter(IntVector2(600, 300), EDockDirection::Right), TargetPanelId, Direction));
+    TEST_EXPECT(Fixture.Area->HitTestDropTarget(Fixture.GetDropZoneCenter(IntVector2(600, 300), EDockDirection::Right), TargetPanelId, Direction, TabIndex));
     TEST_EXPECT_EQ(TargetPanelId, String("Details"));
     TEST_EXPECT_EQ(Direction, EDockDirection::Right);
 
     TEST_SECTION("Dropping where the hit test points lands the panel there");
-    TEST_EXPECT(Fixture.Area->HitTestDropTarget(Fixture.GetDropZoneCenter(IntVector2(200, 300), EDockDirection::Right), TargetPanelId, Direction));
+    TEST_EXPECT(Fixture.Area->HitTestDropTarget(Fixture.GetDropZoneCenter(IntVector2(200, 300), EDockDirection::Right), TargetPanelId, Direction, TabIndex));
     Fixture.Area->DockPanel("Content", TargetPanelId, Direction);
 
     const FDockNode& Tree = Fixture.Area->SaveLayout();
@@ -1557,7 +1558,7 @@ bool DockingAreaHitTest_Test()
     Fixture.Area->UndockPanel("Content");
     Fixture.Layout();
 
-    TEST_EXPECT(Fixture.Area->HitTestDropTarget(IntVector2(100 + 200, 50 + 300), TargetPanelId, Direction));
+    TEST_EXPECT(Fixture.Area->HitTestDropTarget(IntVector2(100 + 200, 50 + 300), TargetPanelId, Direction, TabIndex));
     TEST_EXPECT(TargetPanelId.IsEmpty());
     TEST_EXPECT_EQ(Direction, EDockDirection::Center);
 
@@ -2653,9 +2654,11 @@ bool DockHostCaptionTabDrop_Test()
 
     String         TargetPanelId;
     EDockDirection TargetDirection = EDockDirection::Left;
-    TEST_EXPECT(HostArea->HitTestDropTarget(OverCaptionStripScreen, TargetPanelId, TargetDirection));
+    int32          TargetTabIndex  = 0;
+    TEST_EXPECT(HostArea->HitTestDropTarget(OverCaptionStripScreen, TargetPanelId, TargetDirection, TargetTabIndex));
     TEST_EXPECT_EQ(TargetPanelId, String("Details"));
     TEST_EXPECT_EQ(TargetDirection, EDockDirection::Center);
+    TEST_EXPECT_EQ(TargetTabIndex, CaptionTabElements.Size());
 
     TEST_SECTION("The host takes the drop rather than the window it floats over");
     DragState.BeginDrag("Content", Fixture.Area.Get(), OverCaptionStripScreen);
@@ -2679,8 +2682,11 @@ bool DockHostCaptionTabDrop_Test()
 
     const TArray<String> CaptionTabs = GetTabOrder(HostArea->GetRootTabStrip());
     TEST_EXPECT_EQ(CaptionTabs.Size(), 2);
-    TEST_EXPECT_EQ(CaptionTabs[0], String("Details"));
-    TEST_EXPECT_EQ(CaptionTabs[1], String("Content"));
+    if (CaptionTabs.Size() == 2)
+    {
+        TEST_EXPECT_EQ(CaptionTabs[0], String("Details"));
+        TEST_EXPECT_EQ(CaptionTabs[1], String("Content"));
+    }
 
     FDockWindowManager::Shutdown();
     FDockDragState::Shutdown();
