@@ -36,7 +36,7 @@ METALRHI_API bool                    GMetalSupportsBindless                    =
 METALRHI_API bool                    GMetalSupportsProgrammableSamplePositions = false;
 METALRHI_API bool                    GMetalSupportsStencilResolve              = false;
 
-static const CHAR* GetGPUFamilyName(MTLGPUFamily Family)
+static const CHAR_T* GetGPUFamilyName(MTLGPUFamily Family)
 {
     switch (Family)
     {
@@ -57,7 +57,7 @@ static const CHAR* GetGPUFamilyName(MTLGPUFamily Family)
     }
 }
 
-static const CHAR* GetRayTracingSupportName()
+static const CHAR_T* GetRayTracingSupportName()
 {
     if (!GMetalFeatures.bRayTracing)
     {
@@ -74,7 +74,7 @@ static const CHAR* GetRayTracingSupportName()
 
 void DumpMetalCapabilities()
 {
-    const auto YesNo = [](bool bValue) -> const CHAR*
+    const auto YesNo = [](bool bValue) -> const CHAR_T*
     {
         return bValue ? "Yes" : "No";
     };

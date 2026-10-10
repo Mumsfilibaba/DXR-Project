@@ -57,7 +57,7 @@ static auto LoadMaterialTexture(const String& Path, const ofbx::Material* Materi
     const ofbx::Texture* MaterialTexture = Material->getTexture(Type);
     if (MaterialTexture)
     {
-        CHAR StringBuffer[256];
+        CHAR_T StringBuffer[256];
         MaterialTexture->getRelativeFileName().toString(StringBuffer);
 
         // Make sure that correct slashes are used
@@ -95,7 +95,7 @@ bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
     ofbx::IScene* FBXScene = ofbx::load(FileContent.Data(), FileSize, static_cast<ofbx::u64>(ofbx::LoadFlags::NONE));
     if (!FBXScene)
     {
-        const CHAR* ErrorString = ofbx::getError();
+        const CHAR_T* ErrorString = ofbx::getError();
         LOG_ERROR("[FFBXImporter]: Failed to load content '%s', error '%s'", *Filename, ErrorString);
         return false;
     }

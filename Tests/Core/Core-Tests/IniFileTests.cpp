@@ -12,17 +12,17 @@
 // The platform file layer exposes no delete, so the temp-file section cleans up through the CRT
 #include <cstdio>
 
-static FIniFile ParseIni(const CHAR* InText)
+static FIniFile ParseIni(const CHAR_T* InText)
 {
     // The parser walks the buffer in place, so the null-terminator has to be copied along
-    TArray<CHAR> Text(InText, CString::Strlen(InText) + 1);
+    TArray<CHAR_T> Text(InText, CString::Strlen(InText) + 1);
 
     FIniFile IniFile;
     IniFile.ParseFromText(Text);
     return IniFile;
 }
 
-static bool WriteTextFile(const String& Path, const CHAR* Text)
+static bool WriteTextFile(const String& Path, const CHAR_T* Text)
 {
     TFileRef<IPlatformFile> File = FPlatformFile::OpenForWrite(Path);
     if (!File)

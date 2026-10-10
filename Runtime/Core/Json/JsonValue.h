@@ -32,7 +32,7 @@ public:
     explicit FJsonValue(uint64 Value);
     explicit FJsonValue(float Value);
     explicit FJsonValue(double Value);
-    explicit FJsonValue(const CHAR* Value);
+    explicit FJsonValue(const CHAR_T* Value);
     explicit FJsonValue(const String& Value);
     explicit FJsonValue(const StringView& Value);
 
@@ -62,21 +62,21 @@ public:
     NODISCARD bool   GetBoolOr(bool bDefault) const;
     NODISCARD int64  GetInt64Or(int64 Default) const;
     NODISCARD double GetDoubleOr(double Default) const;
-    NODISCARD String GetStringOr(const CHAR* Default) const;
+    NODISCARD String GetStringOr(const CHAR_T* Default) const;
 
-    NODISCARD FJsonValue*       Find(const CHAR* Name);
-    NODISCARD const FJsonValue* Find(const CHAR* Name) const;
+    NODISCARD FJsonValue*       Find(const CHAR_T* Name);
+    NODISCARD const FJsonValue* Find(const CHAR_T* Name) const;
 
     // Returns the named member, adding a null one when it does not exist yet
-    NODISCARD FJsonValue& FindOrAdd(const CHAR* Name);
+    NODISCARD FJsonValue& FindOrAdd(const CHAR_T* Name);
 
     // Array access. Calling these on a non-array is a programming error.
     FJsonValue& Add(FJsonValue&& InValue);
 
     // Adds or replaces a member, preserving the position of an existing one
-    FJsonValue& AddMember(const CHAR* Name, FJsonValue&& InValue);
+    FJsonValue& AddMember(const CHAR_T* Name, FJsonValue&& InValue);
 
-    bool RemoveMember(const CHAR* Name);
+    bool RemoveMember(const CHAR_T* Name);
 
     // Compares type and contents, with object members having to match in order
     NODISCARD bool Equals(const FJsonValue& Other) const;
@@ -114,7 +114,7 @@ struct FJsonMember
 {
     FJsonMember() = default;
 
-    FJsonMember(const CHAR* InName, FJsonValue&& InValue)
+    FJsonMember(const CHAR_T* InName, FJsonValue&& InValue)
         : Name(InName)
         , Value(Move(InValue))
     {

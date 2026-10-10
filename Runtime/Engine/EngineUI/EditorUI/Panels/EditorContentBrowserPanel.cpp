@@ -27,9 +27,9 @@
 #include "Application/Menus/ToolTipService.h"
 #include "Application/Elements/IndexedPathMove.h"
 
-static const CHAR* GItemDragDropPayloadId   = "CB_MOVE_ITEM";
-static const CHAR* GFolderDragDropPayloadId = "CB_MOVE_FOLDER";
-static const CHAR* GNewFolderName           = "New folder";
+static const CHAR_T* GItemDragDropPayloadId   = "CB_MOVE_ITEM";
+static const CHAR_T* GFolderDragDropPayloadId = "CB_MOVE_FOLDER";
+static const CHAR_T* GNewFolderName           = "New folder";
 
 constexpr float DROP_INDICATOR_THICKNESS = 2.0f;
 constexpr int32 FOLDER_PANEL_WIDTH = 220;
@@ -964,7 +964,7 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildBreadcrumbBar()
 
 void FEditorContentBrowserPanel::BuildPlaceholderTree()
 {
-    static const CHAR* const CategoryNames[] =
+    static const CHAR_T* const CategoryNames[] =
     {
         "MyOtherContent",
         "Materials",
@@ -973,13 +973,13 @@ void FEditorContentBrowserPanel::BuildPlaceholderTree()
         "Scenes",
     };
 
-    static const CHAR* const EvenSubFolders[] = { "Meshes", "Materials", "Textures" };
-    static const CHAR* const EvenAssets[]     = { "Car.asset", "Door.asset", "Wood.asset", "Stone.asset", "Gold.asset" };
+    static const CHAR_T* const EvenSubFolders[] = { "Meshes", "Materials", "Textures" };
+    static const CHAR_T* const EvenAssets[]     = { "Car.asset", "Door.asset", "Wood.asset", "Stone.asset", "Gold.asset" };
 
-    static const CHAR* const OddSubFolders[] = { "Animations", "Shaders", "Icons" };
-    static const CHAR* const OddAssets[]     = { "Bus.asset", "Train.asset", "Metal.asset", "Lava.asset", "Silver.asset", "WalkAnimation.asset", "JumpAnimation.asset" };
+    static const CHAR_T* const OddSubFolders[] = { "Animations", "Shaders", "Icons" };
+    static const CHAR_T* const OddAssets[]     = { "Bus.asset", "Train.asset", "Metal.asset", "Lava.asset", "Silver.asset", "WalkAnimation.asset", "JumpAnimation.asset" };
 
-    static const CHAR* const LeafAssets[] =
+    static const CHAR_T* const LeafAssets[] =
     {
         "WalkAnimation.asset",
         "JumpAnimation.asset",
@@ -988,7 +988,7 @@ void FEditorContentBrowserPanel::BuildPlaceholderTree()
         "SpaceshipModel.asset",
     };
 
-    const auto CreateEntry = [](const CHAR* Name, bool bIsFolder)
+    const auto CreateEntry = [](const CHAR_T* Name, bool bIsFolder)
     {
         FEntry Entry;
         Entry.Name      = Name;
@@ -998,8 +998,8 @@ void FEditorContentBrowserPanel::BuildPlaceholderTree()
 
     Roots.Clear();
 
-    static const CHAR* const RootNames[] = { "Content", "MoreContent" };
-    for (const CHAR* RootName : RootNames)
+    static const CHAR_T* const RootNames[] = { "Content", "MoreContent" };
+    for (const CHAR_T* RootName : RootNames)
     {
         FEntry Root = CreateEntry(RootName, true);
 
@@ -1007,16 +1007,16 @@ void FEditorContentBrowserPanel::BuildPlaceholderTree()
         {
             FEntry Category = CreateEntry(CategoryNames[CategoryIndex], true);
 
-            const bool         bIsEven        = (CategoryIndex % 2) == 0;
-            const CHAR* const* SubFolderNames = bIsEven ? EvenSubFolders : OddSubFolders;
-            const int32        NumSubFolders  = int32(bIsEven ? ARRAY_COUNT(EvenSubFolders) : ARRAY_COUNT(OddSubFolders));
+            const bool           bIsEven        = (CategoryIndex % 2) == 0;
+            const CHAR_T* const* SubFolderNames = bIsEven ? EvenSubFolders : OddSubFolders;
+            const int32          NumSubFolders  = int32(bIsEven ? ARRAY_COUNT(EvenSubFolders) : ARRAY_COUNT(OddSubFolders));
 
             for (int32 SubIndex = 0; SubIndex < NumSubFolders; ++SubIndex)
             {
                 FEntry SubFolder = CreateEntry(SubFolderNames[SubIndex], true);
                 if ((SubIndex % 2) == 0)
                 {
-                    for (const CHAR* AssetName : LeafAssets)
+                    for (const CHAR_T* AssetName : LeafAssets)
                     {
                         SubFolder.Children.Emplace(CreateEntry(AssetName, false));
                     }
@@ -1025,8 +1025,8 @@ void FEditorContentBrowserPanel::BuildPlaceholderTree()
                 Category.Children.Emplace(Move(SubFolder));
             }
 
-            const CHAR* const* AssetNames = bIsEven ? EvenAssets : OddAssets;
-            const int32        NumAssets   = int32(bIsEven ? ARRAY_COUNT(EvenAssets) : ARRAY_COUNT(OddAssets));
+            const CHAR_T* const* AssetNames = bIsEven ? EvenAssets : OddAssets;
+            const int32          NumAssets   = int32(bIsEven ? ARRAY_COUNT(EvenAssets) : ARRAY_COUNT(OddAssets));
 
             for (int32 AssetIndex = 0; AssetIndex < NumAssets; ++AssetIndex)
             {
@@ -1159,7 +1159,7 @@ void FEditorContentBrowserPanel::RefreshTiles()
 
     if (EmptyStateText)
     {
-        const CHAR* Message = !Folder ? "No folder selected" : (Folder->Children.IsEmpty() ? "Folder is empty" : "No results");
+        const CHAR_T* Message = !Folder ? "No folder selected" : (Folder->Children.IsEmpty() ? "Folder is empty" : "No results");
 
         EmptyStateText->SetText(Message);
         EmptyStateText->SetVisibility(Items.IsEmpty() ? EVisibility::Visible : EVisibility::Hidden);

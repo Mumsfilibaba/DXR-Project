@@ -7,7 +7,7 @@
 #include <Application/Console/ConsoleCommandLine.h>
 #include <Application/Console/ConsoleLogBuffer.h>
 
-static bool AreAllCandidatesPrefixed(const FConsoleCommandLine& CommandLine, const CHAR* Prefix)
+static bool AreAllCandidatesPrefixed(const FConsoleCommandLine& CommandLine, const CHAR_T* Prefix)
 {
     const int32 PrefixLength = StringView(Prefix).Length();
     for (const TPair<IConsoleObject*, String>& Candidate : CommandLine.GetCandidates())
@@ -44,8 +44,8 @@ bool ConsoleWordRange_Test()
     TEST_EXPECT_EQ(Range.Length, 7);
 
     TEST_SECTION("Each separator ends the word");
-    const CHAR Separators[] = { ' ', '\t', ',', ';' };
-    for (const CHAR Separator : Separators)
+    const CHAR_T Separators[] = { ' ', '\t', ',', ';' };
+    for (const CHAR_T Separator : Separators)
     {
         String Text("First");
         Text.Insert(Separator, Text.Length());

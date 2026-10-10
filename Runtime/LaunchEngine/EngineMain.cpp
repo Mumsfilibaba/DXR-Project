@@ -10,7 +10,7 @@
 // EngineLoop
 FEngineLoop GEngineLoop;
 
-FORCEINLINE int32 EnginePreInit(const CHAR** Args, int32 NumArgs)
+FORCEINLINE int32 EnginePreInit(const CHAR_T** Args, int32 NumArgs)
 {
     int32 ErrorCode = GEngineLoop.PreInit(Args, NumArgs);
     return ErrorCode;
@@ -32,7 +32,7 @@ FORCEINLINE void EngineRelease()
     GEngineLoop.Release();
 }
 
-int32 EngineMain(const CHAR* Args[], int32 NumArgs)
+int32 EngineMain(const CHAR_T* Args[], int32 NumArgs)
 {
     // Make sure that the engine is released if the main function exits early
     struct FEngineReleaseGuard

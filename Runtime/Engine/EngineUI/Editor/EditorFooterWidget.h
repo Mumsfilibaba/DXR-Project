@@ -45,7 +45,7 @@ private:
 private:
     TArray<TPair<IConsoleObject*, String>> Candidates;
     String                                 CandidateFilter;
-    TStaticArray<CHAR, 256>                TextBuffer;
+    TStaticArray<CHAR_T, 256>              TextBuffer;
     TSharedPtr<IOutputDevice>              OutputDevice;
     TSharedPtr<FConsoleInputHandler>       InputHandler;
     int32                                  SelectedCandidateIndex;

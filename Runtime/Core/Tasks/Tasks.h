@@ -24,25 +24,25 @@ struct CORE_API Tasks : public FNonConstructible
      * @return Returns a handle to the task's completion.
      */
     template<typename LambdaType>
-    static FTaskHandle Launch(const CHAR* DebugName, LambdaType&& Body, ENamedThread::Type Thread = ENamedThread::AnyThread, ETaskPriority::Type Priority = ETaskPriority::Normal, TArrayView<const FTaskHandle> Prerequisites = {})
+    static FTaskHandle Launch(const CHAR_T* DebugName, LambdaType&& Body, ENamedThread::Type Thread = ENamedThread::AnyThread, ETaskPriority::Type Priority = ETaskPriority::Normal, TArrayView<const FTaskHandle> Prerequisites = {})
     {
         return LaunchImpl(DebugName, TFunction<void()>(Forward<LambdaType>(Body)), Thread, Priority, Prerequisites);
     }
 
     template<typename LambdaType>
-    static FTaskHandle LaunchOnMainThread(const CHAR* DebugName, LambdaType&& Body, TArrayView<const FTaskHandle> Prerequisites = {})
+    static FTaskHandle LaunchOnMainThread(const CHAR_T* DebugName, LambdaType&& Body, TArrayView<const FTaskHandle> Prerequisites = {})
     {
         return Launch(DebugName, Forward<LambdaType>(Body), ENamedThread::MainThread, ETaskPriority::Normal, Prerequisites);
     }
 
     template<typename LambdaType>
-    static FTaskHandle LaunchOnRenderThread(const CHAR* DebugName, LambdaType&& Body, TArrayView<const FTaskHandle> Prerequisites = {})
+    static FTaskHandle LaunchOnRenderThread(const CHAR_T* DebugName, LambdaType&& Body, TArrayView<const FTaskHandle> Prerequisites = {})
     {
         return Launch(DebugName, Forward<LambdaType>(Body), ENamedThread::RenderThread, ETaskPriority::Normal, Prerequisites);
     }
 
     template<typename LambdaType>
-    static FTaskHandle LaunchOnRHIThread(const CHAR* DebugName, LambdaType&& Body, TArrayView<const FTaskHandle> Prerequisites = {})
+    static FTaskHandle LaunchOnRHIThread(const CHAR_T* DebugName, LambdaType&& Body, TArrayView<const FTaskHandle> Prerequisites = {})
     {
         return Launch(DebugName, Forward<LambdaType>(Body), ENamedThread::RHIThread, ETaskPriority::Normal, Prerequisites);
     }
@@ -91,5 +91,5 @@ struct CORE_API Tasks : public FNonConstructible
     static void ParallelForRange(int32 Count, FuncType&& BodyRange, int32 MinPerJob = 1, ETaskPriority::Type Priority = ETaskPriority::Normal);
 
 private:
-    static FTaskHandle LaunchImpl(const CHAR* DebugName, TFunction<void()>&& Body, ENamedThread::Type Thread, ETaskPriority::Type Priority, TArrayView<const FTaskHandle> Prerequisites);
+    static FTaskHandle LaunchImpl(const CHAR_T* DebugName, TFunction<void()>&& Body, ENamedThread::Type Thread, ETaskPriority::Type Priority, TArrayView<const FTaskHandle> Prerequisites);
 };

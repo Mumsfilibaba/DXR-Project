@@ -27,7 +27,7 @@ NODISCARD inline int32 ToExitCode(EShaderCompilerExitCode ExitCode)
 struct FRHITarget
 {
     ERHIType              Type;
-    const CHAR*           Name;           // ToString(Type), the name -rhi and -remote take
+    const CHAR_T*         Name;           // ToString(Type), the name -rhi and -remote take
     EShaderOutputLanguage OutputLanguage; // RHI::GetShaderOutputLanguage(Type)
 };
 

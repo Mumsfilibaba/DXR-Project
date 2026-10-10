@@ -8,7 +8,7 @@ FShaderType* FShaderType::GetTypeList()
     return GShaderTypeList;
 }
 
-FShaderType* FShaderType::FindByName(const CHAR* InName)
+FShaderType* FShaderType::FindByName(const CHAR_T* InName)
 {
     for (FShaderType* Type = GShaderTypeList; Type; Type = Type->Next)
     {
@@ -21,7 +21,7 @@ FShaderType* FShaderType::FindByName(const CHAR* InName)
     return nullptr;
 }
 
-FShaderType::FShaderType(const CHAR* InName, const CHAR* InSourceFile, const CHAR* InEntryPoint, EShaderStage InStage, EShaderModel InMinShaderModel,
+FShaderType::FShaderType(const CHAR_T* InName, const CHAR_T* InSourceFile, const CHAR_T* InEntryPoint, EShaderStage InStage, EShaderModel InMinShaderModel,
     int32 InPermutationCount, FBuildEnvFunc InBuildEnvironment, FShouldCompileFunc InShouldCompile, FModifyEnvFunc InModifyEnvironment)
     : Name(InName)
     , SourceFile(InSourceFile)

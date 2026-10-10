@@ -74,7 +74,7 @@ template<typename ShaderType>
 static bool AcquireComputePipeline(FRHIComputeShaderRef& OutShader, FRHIComputePipelineStateRef& OutPSO,
     TArrayView<const FRHIStaticSamplerInfo> StaticSamplers = TArrayView<const FRHIStaticSamplerInfo>())
 {
-    const CHAR* ShaderName = ShaderType::GetStaticType().GetName();
+    const CHAR_T* ShaderName = ShaderType::GetStaticType().GetName();
 
     OutShader = FShaderCache::Get().GetShader<ShaderType>();
     if (!OutShader)

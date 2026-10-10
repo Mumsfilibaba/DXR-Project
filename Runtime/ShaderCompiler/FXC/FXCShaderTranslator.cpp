@@ -1,9 +1,9 @@
 #include "ShaderCompiler/FXC/FXCShaderTranslator.h"
 
 // Matches D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS in Constants.hlsli
-static const CHAR* const GShaderConstantsSpace = "space1";
+static const CHAR_T* const GShaderConstantsSpace = "space1";
 
-static FShaderToken MakeToken(const FShaderToken& Location, const CHAR* Text, EShaderTokenType Type, bool bLeadingSpace)
+static FShaderToken MakeToken(const FShaderToken& Location, const CHAR_T* Text, EShaderTokenType Type, bool bLeadingSpace)
 {
     FShaderToken Token;
     Token.Text          = Text;
@@ -40,7 +40,7 @@ static bool IsHexFloat(const FShaderToken& Token)
     return false;
 }
 
-static int32 GetHexDigit(CHAR Char)
+static int32 GetHexDigit(CHAR_T Char)
 {
     if (Char >= '0' && Char <= '9')
     {
@@ -70,7 +70,7 @@ static bool ConvertHexFloat(const String& Text, String& OutText)
     int32 Index = 2;
     for (; Index < Text.Length(); ++Index)
     {
-        const CHAR Char = Text[Index];
+        const CHAR_T Char = Text[Index];
         if (Char == '.')
         {
             if (bFraction)
@@ -133,7 +133,7 @@ static bool ConvertHexFloat(const String& Text, String& OutText)
     const String Suffix = Text.SubString(Index, Text.Length() - Index);
     for (int32 SuffixIndex = 0; SuffixIndex < Suffix.Length(); ++SuffixIndex)
     {
-        const CHAR Char = Suffix[SuffixIndex];
+        const CHAR_T Char = Suffix[SuffixIndex];
         if (Char != 'f' && Char != 'F' && Char != 'h' && Char != 'H' && Char != 'l' && Char != 'L')
         {
             return false;

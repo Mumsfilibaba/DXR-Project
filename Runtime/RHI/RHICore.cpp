@@ -201,7 +201,7 @@ RHI_API bool RHI::ShouldUseDisplayLuminance()
 
 RHI_API void RHI::DumpRayTracingCapabilities()
 {
-    const auto YesNo = [](bool bValue) -> const CHAR*
+    const auto YesNo = [](bool bValue) -> const CHAR_T*
     {
         return bValue ? "Yes" : "No";
     };

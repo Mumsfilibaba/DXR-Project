@@ -5,41 +5,41 @@
 
 struct CORE_API FMacPlatformLibrary final : public IPlatformLibrary
 {
-    static void* LoadDynamicLib(const CHAR* LibraryName);
-    static void* GetLoadedHandle(const CHAR* LibraryName);
+    static void* LoadDynamicLib(const CHAR_T* LibraryName);
+    static void* GetLoadedHandle(const CHAR_T* LibraryName);
 
     static FORCEINLINE void FreeDynamicLib(void* LibraryHandle)
     {
         ::dlclose(LibraryHandle);
     }
 
-    static FORCEINLINE void* LoadSymbol(const CHAR* SymbolName, void* LibraryHandle)
+    static FORCEINLINE void* LoadSymbol(const CHAR_T* SymbolName, void* LibraryHandle)
     { 
         return ::dlsym(LibraryHandle, SymbolName);
     }
 
     template<typename SymbolType>
-    static FORCEINLINE SymbolType LoadSymbol(const CHAR* SymbolName, void* LibraryHandle)
+    static FORCEINLINE SymbolType LoadSymbol(const CHAR_T* SymbolName, void* LibraryHandle)
     { 
         return reinterpret_cast<SymbolType>(LoadSymbol(SymbolName, LibraryHandle));
     }
 
-    static FORCEINLINE const CHAR* GetDynamicLibPrefix()
+    static FORCEINLINE const CHAR_T* GetDynamicLibPrefix()
     {
         return "lib";
     }
 
-    static FORCEINLINE const CHAR* GetDynamicLibExtension()
+    static FORCEINLINE const CHAR_T* GetDynamicLibExtension()
     {
         return ".dylib";
     }
 
-    static FORCEINLINE String GetRealName(const CHAR* LibraryName) 
+    static FORCEINLINE String GetRealName(const CHAR_T* LibraryName) 
     {
         return String("lib") + LibraryName + GetDynamicLibExtension();
     }
 
-    static FORCEINLINE bool IsLibraryLoaded(const CHAR* LibraryName)
+    static FORCEINLINE bool IsLibraryLoaded(const CHAR_T* LibraryName)
     { 
         return GetLoadedHandle(LibraryName) != nullptr;
     }

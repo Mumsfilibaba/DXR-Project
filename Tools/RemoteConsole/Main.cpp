@@ -19,20 +19,20 @@
 #include <Core/Memory/NewOperators.h>
 IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 
-static constexpr uint32      GConnectAttemptMilliseconds     = 2000;
-static constexpr uint32      GRetryDelayMilliseconds         = 250;
-static constexpr uint32      GInteractivePollMilliseconds    = 30;
-static constexpr uint32      GInteractiveAttemptMilliseconds = 1000;
-static constexpr uint32      GReconnectDelayMilliseconds     = 500;
-static constexpr uint32      GRejectedRetryMilliseconds      = 3000;
-static constexpr int32       GReceiveChunkSize               = 64 * 1024;
-static constexpr uint32      GDefaultTimeoutMilliseconds     = 30000;
-static constexpr uint64      GMillisecondsPerSecond          = 1000;
-static constexpr uint32      GMaxTimeoutMilliseconds         = static_cast<uint32>(TNumericLimits<int32>::Max());
-static constexpr uint32      GMaxWaitSeconds                 = 24 * 60 * 60;
-static constexpr const CHAR* GListCommand                    = ":list";
-static constexpr const CHAR* GGetCommand                     = ":get";
-static FConsoleLineEditor*   GLineEditor                     = nullptr;
+static constexpr uint32        GConnectAttemptMilliseconds     = 2000;
+static constexpr uint32        GRetryDelayMilliseconds         = 250;
+static constexpr uint32        GInteractivePollMilliseconds    = 30;
+static constexpr uint32        GInteractiveAttemptMilliseconds = 1000;
+static constexpr uint32        GReconnectDelayMilliseconds     = 500;
+static constexpr uint32        GRejectedRetryMilliseconds      = 3000;
+static constexpr int32         GReceiveChunkSize               = 64 * 1024;
+static constexpr uint32        GDefaultTimeoutMilliseconds     = 30000;
+static constexpr uint64        GMillisecondsPerSecond          = 1000;
+static constexpr uint32        GMaxTimeoutMilliseconds         = static_cast<uint32>(TNumericLimits<int32>::Max());
+static constexpr uint32        GMaxWaitSeconds                 = 24 * 60 * 60;
+static constexpr const CHAR_T* GListCommand                    = ":list";
+static constexpr const CHAR_T* GGetCommand                     = ":get";
+static FConsoleLineEditor*     GLineEditor                     = nullptr;
 
 enum class ERemoteConsoleExitCode : int32
 {
@@ -113,7 +113,7 @@ public:
     EConnectResult Connect(const String& Host, uint16 Port, uint32 WaitSeconds, uint32 AttemptMilliseconds, uint32 TimeoutMilliseconds);
 
     /** @return The id the response will carry, or -1 when the send failed */
-    int64 SendRequest(const CHAR* Type, FJsonValue&& Payload);
+    int64 SendRequest(const CHAR_T* Type, FJsonValue&& Payload);
 
     /** @brief Pumps the socket until the result with RequestId arrives. Log events received meanwhile are printed. */
     bool WaitForResult(int64 RequestId, uint32 TimeoutMilliseconds, FJsonValue& OutResult, String& OutLine);
@@ -222,7 +222,7 @@ EConnectResult FRemoteConsoleConnection::Connect(const String& Host, uint16 Port
     return EConnectResult::Connected;
 }
 
-int64 FRemoteConsoleConnection::SendRequest(const CHAR* Type, FJsonValue&& Payload)
+int64 FRemoteConsoleConnection::SendRequest(const CHAR_T* Type, FJsonValue&& Payload)
 {
     const int64 RequestId = NextRequestId++;
 
@@ -335,7 +335,7 @@ void FRemoteConsoleConnection::Receive(uint32 TimeoutMilliseconds)
         return;
     }
 
-    TArray<CHAR> Chunk;
+    TArray<CHAR_T> Chunk;
     Chunk.Resize(GReceiveChunkSize);
 
     int32 BytesRead = 0;
@@ -440,8 +440,8 @@ static bool IsOptionArgument(const String& Argument)
 
 static bool OptionTakesValue(const String& Name)
 {
-    static const CHAR* ValueOptions[] = { "host", "port", "timeout", "wait", "exec", "list", "get" };
-    for (const CHAR* ValueOption : ValueOptions)
+    static const CHAR_T* ValueOptions[] = { "host", "port", "timeout", "wait", "exec", "list", "get" };
+    for (const CHAR_T* ValueOption : ValueOptions)
     {
         if (Name.Equals(ValueOption, EStringCaseType::NoCase))
         {
@@ -579,7 +579,7 @@ static void PrintUsage()
 }
 
 /** @return True when Line is Command, alone or followed by a space, with whatever follows trimmed into OutArgument. */
-static bool ParseCommandArgument(const String& Line, const CHAR* Command, String& OutArgument)
+static bool ParseCommandArgument(const String& Line, const CHAR_T* Command, String& OutArgument)
 {
     const int32 CommandLength = CString::Strlen(Command);
     if (!Line.StartsWith(Command, CommandLength, EStringCaseType::NoCase))
@@ -700,7 +700,7 @@ enum class ERequestOutcome
 
 typedef TFunction<void(const FJsonValue&)> FPrintResult;
 
-static ERequestOutcome RunRequest(FRemoteConsoleConnection& Connection, const FRemoteConsoleOptions& Options, const CHAR* Type, FJsonValue&& Payload, FPrintResult PrintResult)
+static ERequestOutcome RunRequest(FRemoteConsoleConnection& Connection, const FRemoteConsoleOptions& Options, const CHAR_T* Type, FJsonValue&& Payload, FPrintResult PrintResult)
 {
     const int64 RequestId = Connection.SendRequest(Type, ::Move(Payload));
     if (RequestId < 0)
@@ -809,7 +809,7 @@ static int32 RunOneShot(FRemoteConsoleConnection& Connection, const FRemoteConso
 
 static String DescribeEngine(const FJsonValue& Hello)
 {
-    auto Field = [&Hello](const CHAR* Name) -> String
+    auto Field = [&Hello](const CHAR_T* Name) -> String
     {
         const FJsonValue* Value = Hello.Find(Name);
         return Value ? Value->GetStringOr("") : String();

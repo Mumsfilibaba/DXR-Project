@@ -15,7 +15,7 @@ enum class ESwapChainUsageFlags : uint8
 
 ENUM_CLASS_OPERATORS(ESwapChainUsageFlags);
 
-NODISCARD constexpr const CHAR* ToString(ESwapChainUsageFlags Usage)
+NODISCARD constexpr const CHAR_T* ToString(ESwapChainUsageFlags Usage)
 {
     switch (Usage)
     {
@@ -36,7 +36,7 @@ enum class ESwapChainFlags : uint8
 
 ENUM_CLASS_OPERATORS(ESwapChainFlags);
 
-NODISCARD constexpr const CHAR* ToString(ESwapChainFlags Flags)
+NODISCARD constexpr const CHAR_T* ToString(ESwapChainFlags Flags)
 {
     switch (Flags)
     {

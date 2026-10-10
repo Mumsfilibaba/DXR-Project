@@ -23,7 +23,7 @@ enum class EAssertAction : uint8
 
 struct CORE_API Assert
 {
-    static EAssertAction OnFailed(const CHAR* Expression, const CHAR* Filename, int32 Line, const CHAR* Format, ...);
+    static EAssertAction OnFailed(const CHAR_T* Expression, const CHAR_T* Filename, int32 Line, const CHAR_T* Format, ...);
 };
 
 #if ENABLE_ASSERTS

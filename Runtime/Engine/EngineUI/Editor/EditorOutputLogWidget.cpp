@@ -257,7 +257,7 @@ void FEditorOutputLogWidget::DrawFilterBar()
     {
         ImGui::PushFont(EditorFonts::SegoeUI_22);
 
-        const CHAR* Label = "Filter";
+        const CHAR_T* Label = "Filter";
 
         const ImVec2 TextSize     = ImGui::CalcTextSize(Label);
         const float  ButtonHeight = SearchBarHeight;
@@ -396,14 +396,14 @@ void FEditorOutputLogWidget::AppendMessageLine(const FLogMessage& Message)
         return;
     }
 
-    const CHAR* Line = *Message.Message;
+    const CHAR_T* Line = *Message.Message;
     if (!Line)
     {
         return;
     }
 
-    const CHAR* Search = SearchFilterBuffer.Data();
-    const CHAR* Match  = (Search[0] != 0) ? CString::Stristr(Line, Search) : nullptr;
+    const CHAR_T* Search = SearchFilterBuffer.Data();
+    const CHAR_T* Match  = (Search[0] != 0) ? CString::Stristr(Line, Search) : nullptr;
 
     if (Search[0] != 0 && !Match)
     {

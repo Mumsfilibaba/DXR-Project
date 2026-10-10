@@ -227,7 +227,7 @@ bool FImGuiPlugin::Load()
         return GImGuiPlugin->OnGetPlatformWindowMinimized(Viewport);
     };
 
-    PlatformState.Platform_SetWindowTitle = [](ImGuiViewport* Viewport, const CHAR* Title)
+    PlatformState.Platform_SetWindowTitle = [](ImGuiViewport* Viewport, const CHAR_T* Title)
     {
         CHECK(GImGuiPlugin != nullptr);
         GImGuiPlugin->OnSetPlatformWindowTitle(Viewport, Title);
@@ -913,7 +913,7 @@ bool FImGuiPlugin::OnGetPlatformWindowMinimized(ImGuiViewport* Viewport)
     return ViewportData->Window->IsMinimized();
 }
 
-void FImGuiPlugin::OnSetPlatformWindowTitle(ImGuiViewport* Viewport, const CHAR* Title)
+void FImGuiPlugin::OnSetPlatformWindowTitle(ImGuiViewport* Viewport, const CHAR_T* Title)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);

@@ -307,7 +307,7 @@ void FD3D11Device::FlushDebugMessages()
     InfoQueue->ClearStoredMessages();
 }
 
-void FD3D11Device::CheckDeviceRemoved(HRESULT Result, const CHAR* Operation) const
+void FD3D11Device::CheckDeviceRemoved(HRESULT Result, const CHAR_T* Operation) const
 {
     if (Result == DXGI_ERROR_DEVICE_REMOVED || Result == DXGI_ERROR_DEVICE_RESET)
     {

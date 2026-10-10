@@ -11,6 +11,6 @@ class FMacConsoleWindow;
 
 - (instancetype)init:(FMacConsoleWindow*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag;
 
-+ (NSString*)convertStringWithArgs:(const CHAR*)Format Args : (va_list)Args;
++ (NSString*)convertStringWithArgs:(const CHAR_T*)Format Args : (va_list)Args;
 
 @end

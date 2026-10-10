@@ -36,7 +36,7 @@
     #define RESTRICT __restrict__
 #endif
 
-// Function signature as a const CHAR* string
+// Function signature as a const CHAR_T* string
 #ifndef FUNCTION_SIGNATURE
     #define FUNCTION_SIGNATURE __PRETTY_FUNCTION__
 #endif

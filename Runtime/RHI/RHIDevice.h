@@ -24,7 +24,7 @@ enum class ERHIType : uint32
     Metal  = 5,
 };
 
-NODISCARD constexpr const CHAR* ToString(ERHIType RenderLayerApi)
+NODISCARD constexpr const CHAR_T* ToString(ERHIType RenderLayerApi)
 {
     switch (RenderLayerApi)
     {

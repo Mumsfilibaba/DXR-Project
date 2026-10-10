@@ -12,9 +12,9 @@ static constexpr int32 GDoubleMaxPrecision = 17;
 static constexpr int32 GMinFixedExponent = -5;
 static constexpr int32 GMaxFixedExponent = 16;
 
-static FORCEINLINE bool RoundTrips(const CHAR* Text, double Value, bool bAsFloat)
+static FORCEINLINE bool RoundTrips(const CHAR_T* Text, double Value, bool bAsFloat)
 {
-    CHAR* ParseEnd = nullptr;
+    CHAR_T* ParseEnd = nullptr;
     if (bAsFloat)
     {
         return CString::Strtof(Text, &ParseEnd) == static_cast<float>(Value);
@@ -26,10 +26,10 @@ static FORCEINLINE bool RoundTrips(const CHAR* Text, double Value, bool bAsFloat
 // Rewrites a %g exponent as a lowercase 'e' with no '+' and no padding, and returns it. Runtimes have
 // historically disagreed on how wide to pad an exponent, and output that shifts with the toolchain
 // would show up as noise in every diff.
-static int32 NormalizeExponent(CHAR* Buffer)
+static int32 NormalizeExponent(CHAR_T* Buffer)
 {
-    CHAR* Exponent = nullptr;
-    for (CHAR* Current = Buffer; *Current != '\0'; ++Current)
+    CHAR_T* Exponent = nullptr;
+    for (CHAR_T* Current = Buffer; *Current != '\0'; ++Current)
     {
         if ((*Current == 'e') || (*Current == 'E'))
         {
@@ -43,8 +43,8 @@ static int32 NormalizeExponent(CHAR* Buffer)
         return 0;
     }
 
-    const CHAR* Digits    = Exponent + 1;
-    bool        bNegative = false;
+    const CHAR_T* Digits    = Exponent + 1;
+    bool          bNegative = false;
 
     if ((*Digits == '+') || (*Digits == '-'))
     {
@@ -58,13 +58,13 @@ static int32 NormalizeExponent(CHAR* Buffer)
     }
 
     int32 Magnitude = 0;
-    for (const CHAR* Current = Digits; *Current != '\0'; ++Current)
+    for (const CHAR_T* Current = Digits; *Current != '\0'; ++Current)
     {
         Magnitude = (Magnitude * 10) + (*Current - '0');
     }
 
-    CHAR* Write = Exponent;
-    *Write++    = 'e';
+    CHAR_T* Write = Exponent;
+    *Write++      = 'e';
     
     if (bNegative)
     {
@@ -80,7 +80,7 @@ static int32 NormalizeExponent(CHAR* Buffer)
     return bNegative ? -Magnitude : Magnitude;
 }
 
-static void FormatDouble(double Value, CHAR* Buffer, int32 BufferSize)
+static void FormatDouble(double Value, CHAR_T* Buffer, int32 BufferSize)
 {
     // A value that came from a float, or happens to land exactly on one, prints at float
     // precision so engine data does not turn 0.1f into 0.10000000149011612 in the file.
@@ -113,7 +113,7 @@ static void FormatDouble(double Value, CHAR* Buffer, int32 BufferSize)
         return;
     }
 
-    CHAR FixedBuffer[GNumberBufferSize];
+    CHAR_T FixedBuffer[GNumberBufferSize];
     const int32 Decimals = Math::Max(0, Precision - 1 - Exponent);
     CString::Snprintf(FixedBuffer, GNumberBufferSize, "%.*f", Decimals, Value);
 
@@ -324,10 +324,10 @@ void FJsonWriter::WriteEscapedString(const String& Value, String& Output)
 {
     Output.Append('"');
 
-    const CHAR* Characters = Value.Data();
+    const CHAR_T* Characters = Value.Data();
     for (int32 Index = 0; Index < Value.Length(); ++Index)
     {
-        const CHAR Character = Characters[Index];
+        const CHAR_T Character = Characters[Index];
         switch (Character)
         {
             case '\"': Output.Append("\\\""); continue;
@@ -343,7 +343,7 @@ void FJsonWriter::WriteEscapedString(const String& Value, String& Output)
         const uint8 Unsigned = static_cast<uint8>(Character);
         if (Unsigned < 0x20)
         {
-            CHAR Buffer[8];
+            CHAR_T Buffer[8];
             CString::Snprintf(Buffer, sizeof(Buffer), "\\u%04x", static_cast<uint32>(Unsigned));
             Output.Append(Buffer);
         }
@@ -358,7 +358,7 @@ void FJsonWriter::WriteEscapedString(const String& Value, String& Output)
 
 void FJsonWriter::WriteInt64(int64 Value, String& Output)
 {
-    CHAR Buffer[GNumberBufferSize];
+    CHAR_T Buffer[GNumberBufferSize];
     CString::Snprintf(Buffer, GNumberBufferSize, "%lld", Value);
     Output.Append(Buffer);
 }
@@ -371,7 +371,7 @@ void FJsonWriter::WriteDouble(double Value, String& Output)
         return;
     }
 
-    CHAR Buffer[GNumberBufferSize];
+    CHAR_T Buffer[GNumberBufferSize];
     FormatDouble(Value, Buffer, GNumberBufferSize);
     Output.Append(Buffer);
 }

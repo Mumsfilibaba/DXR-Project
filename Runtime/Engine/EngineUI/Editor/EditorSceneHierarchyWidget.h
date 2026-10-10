@@ -95,10 +95,10 @@ private:
     TSet<FActor*>              LiveActors;
     TSet<FActor*>              MatchingActors;
     TMap<FActorFilter*, int32> FilterIndices;
-    TStaticArray<CHAR, 256>    CachedQuery;
-    TStaticArray<CHAR, 256>    ActorSearchFilterBuffer;
-    TStaticArray<CHAR, 256>    RenameBuffer;
-    TStaticArray<CHAR, 256>    RenameBufferOriginal;
+    TStaticArray<CHAR_T, 256>  CachedQuery;
+    TStaticArray<CHAR_T, 256>  ActorSearchFilterBuffer;
+    TStaticArray<CHAR_T, 256>  RenameBuffer;
+    TStaticArray<CHAR_T, 256>  RenameBufferOriginal;
     bool                       bVisible;
     bool                       bRequestRenameFocus     : 1;
     bool                       bSelectionActiveInTable : 1;

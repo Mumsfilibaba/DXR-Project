@@ -27,7 +27,7 @@ static TAutoConsoleVariable<bool> CVarDrawBreadcrumbs(
     "Records a breadcrumb and inserts a debug signpost for every draw and dispatch",
     false);
 
-static void InsertDrawBreadcrumb(FMetalEncoderManager& Encoders, id<MTLCommandEncoder> Encoder, const CHAR* Name)
+static void InsertDrawBreadcrumb(FMetalEncoderManager& Encoders, id<MTLCommandEncoder> Encoder, const CHAR_T* Name)
 {
     if (CVarDrawBreadcrumbs.GetValue())
     {

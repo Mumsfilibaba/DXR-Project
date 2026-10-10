@@ -14,26 +14,26 @@ struct CORE_API RemoteConsoleProtocol
     static constexpr int32  MaxSendBufferSize = 4 * 1024 * 1024; // A client that stops reading is dropped past this
 
     // Requests sent by the client
-    static constexpr const CHAR* TypeExec         = "exec";
-    static constexpr const CHAR* TypeList         = "list";
-    static constexpr const CHAR* TypeGet          = "get";
-    static constexpr const CHAR* TypeSubscribeLog = "subscribe_log";
-    static constexpr const CHAR* TypePing         = "ping";
+    static constexpr const CHAR_T* TypeExec         = "exec";
+    static constexpr const CHAR_T* TypeList         = "list";
+    static constexpr const CHAR_T* TypeGet          = "get";
+    static constexpr const CHAR_T* TypeSubscribeLog = "subscribe_log";
+    static constexpr const CHAR_T* TypePing         = "ping";
 
     // Messages sent by the server
-    static constexpr const CHAR* TypeHello    = "hello";
-    static constexpr const CHAR* TypeResult   = "result";
-    static constexpr const CHAR* TypeLog      = "log";
-    static constexpr const CHAR* TypeRejected = "rejected";
+    static constexpr const CHAR_T* TypeHello    = "hello";
+    static constexpr const CHAR_T* TypeResult   = "result";
+    static constexpr const CHAR_T* TypeLog      = "log";
+    static constexpr const CHAR_T* TypeRejected = "rejected";
 
     // The address the server binds to while remote connections are off, and where the tool looks by default
-    static constexpr const CHAR* LoopbackAddress = "127.0.0.1";
+    static constexpr const CHAR_T* LoopbackAddress = "127.0.0.1";
 
     // Console objects with this prefix configure the server itself, so remote clients may not touch them
-    static constexpr const CHAR* SettingsPrefix = "RemoteConsole.";
+    static constexpr const CHAR_T* SettingsPrefix = "RemoteConsole.";
 
-    static const CHAR* SeverityToString(ELogSeverity Severity);
-    static bool        SeverityFromString(const String& Text, ELogSeverity& OutSeverity);
+    static const CHAR_T* SeverityToString(ELogSeverity Severity);
+    static bool          SeverityFromString(const String& Text, ELogSeverity& OutSeverity);
 
     /**
      * @brief Moves every complete '\n'-terminated line from the front of Buffer into OutLines, stripping any '\r'.

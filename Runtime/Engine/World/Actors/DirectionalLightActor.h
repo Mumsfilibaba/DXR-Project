@@ -14,7 +14,7 @@ public:
     using FActor::Initialize;
     void Initialize(const Vector3& InRotation);
 
-    virtual const CHAR* GetTypeLabel() const override
+    virtual const CHAR_T* GetTypeLabel() const override
     {
         return "DirectionalLight";
     }

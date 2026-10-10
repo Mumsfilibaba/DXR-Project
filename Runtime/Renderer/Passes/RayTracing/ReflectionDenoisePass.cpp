@@ -71,7 +71,7 @@ static FAutoConsoleVariableRef CVarReflectionAtrousPhiColor(
     GReflectionAtrousPhiColor);
 
 // One literal per iteration, because the graph stores a pass name as a raw pointer
-static const CHAR* ATROUS_PASS_NAMES[FReflectionDenoisePass::MaxAtrousIterations] =
+static const CHAR_T* ATROUS_PASS_NAMES[FReflectionDenoisePass::MaxAtrousIterations] =
 {
     "ReflectionAtrous0",
     "ReflectionAtrous1",
@@ -123,7 +123,7 @@ FReflectionDenoisePass::~FReflectionDenoisePass()
 
 bool FReflectionDenoisePass::Initialize(FFrameResources& /*Resources*/)
 {
-    const auto CreateComputePipeline = [](FRHIComputeShaderRef& OutShader, const CHAR* DebugName) -> FRHIComputePipelineStateRef
+    const auto CreateComputePipeline = [](FRHIComputeShaderRef& OutShader, const CHAR_T* DebugName) -> FRHIComputePipelineStateRef
     {
         if (!OutShader)
         {
@@ -193,7 +193,7 @@ bool FReflectionDenoisePass::CreateResources(FFrameResources& Resources, uint32 
     const uint32 ChainWidth  = Resources.GetReflectionChainWidth();
     const uint32 ChainHeight = Resources.GetReflectionChainHeight();
 
-    const auto CreateTarget = [&](EFormat Format, const CHAR* Name) -> FRHITextureRef
+    const auto CreateTarget = [&](EFormat Format, const CHAR_T* Name) -> FRHITextureRef
     {
         FRHITextureDesc Desc = FRHITextureDesc::CreateTexture2D(Format, ChainWidth, ChainHeight, 1, 1,
             ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture,
@@ -207,9 +207,9 @@ bool FReflectionDenoisePass::CreateResources(FFrameResources& Resources, uint32 
         return Texture;
     };
 
-    const CHAR* HistoryNames[2]  = { "Reflection History 0",  "Reflection History 1"  };
-    const CHAR* MomentsNames[2]  = { "Reflection Moments 0",  "Reflection Moments 1"  };
-    const CHAR* DenoisedNames[2] = { "Reflection Denoised 0", "Reflection Denoised 1" };
+    const CHAR_T* HistoryNames[2]  = { "Reflection History 0",  "Reflection History 1"  };
+    const CHAR_T* MomentsNames[2]  = { "Reflection Moments 0",  "Reflection Moments 1"  };
+    const CHAR_T* DenoisedNames[2] = { "Reflection Denoised 0", "Reflection Denoised 1" };
 
     for (int32 Index = 0; Index < 2; ++Index)
     {
@@ -240,9 +240,9 @@ bool FReflectionDenoisePass::IsDenoiseEnabled(const FFrameResources& Resources) 
 
 void FReflectionDenoisePass::RecordTemporal(FRHICommandList& CommandList, FFrameResources& Resources, uint32 ReadIndex, uint32 WriteIndex, FRHITexture* Target)
 {
-    const CHAR* MissingResource = nullptr;
+    const CHAR_T* MissingResource = nullptr;
 
-    const auto RequireResource = [&MissingResource](const void* Resource, const CHAR* Name)
+    const auto RequireResource = [&MissingResource](const void* Resource, const CHAR_T* Name)
     {
         if (!Resource && !MissingResource)
         {

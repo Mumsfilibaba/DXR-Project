@@ -32,7 +32,7 @@ enum class ERHIResourceType : uint8
     DepthStencilView,
 };
 
-NODISCARD constexpr const CHAR* ToString(ERHIResourceType Type)
+NODISCARD constexpr const CHAR_T* ToString(ERHIResourceType Type)
 {
     switch (Type)
     {

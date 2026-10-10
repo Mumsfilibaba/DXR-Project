@@ -8,7 +8,7 @@ class FTestConsoleOutputDevice final : public IOutputDevice
 {
 public:
     /** @brief Open an additional log file that mirrors all console output (append mode). */
-    void OpenLogFile(const CHAR* FilePath);
+    void OpenLogFile(const CHAR_T* FilePath);
 
     /** @brief Close the log file if one is open. */
     void CloseLogFile();
@@ -18,7 +18,7 @@ public:
     virtual void Flush() override;
 
 private:
-    void Write(const CHAR* Text);
+    void Write(const CHAR_T* Text);
 
     IPlatformFile* LogFile = nullptr;
 };

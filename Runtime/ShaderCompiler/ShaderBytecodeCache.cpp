@@ -33,13 +33,13 @@ static FAutoConsoleCommand CCmdDumpShaderBytecodeCacheStats(
         }
     }));
 
-static const CHAR*      GShaderBytecodeMagic        = "DXRSHBIN";
+static const CHAR_T*    GShaderBytecodeMagic        = "DXRSHBIN";
 static constexpr uint32 GShaderBytecodeVersion      = 3;
 static constexpr uint32 GMaxShaderBytecodeCacheSize = 256 * 1024 * 1024; // MSL is stored as text and every permutation carries its own blob, so this is generous rather than tight.
 
 struct FShaderBytecodeHeader
 {
-    CHAR   Magic[8]; // Always "DXRSHBIN"
+    CHAR_T Magic[8]; // Always "DXRSHBIN"
     uint32 Version;
     uint32 DataCRC;  // CRC of everything after this header
     uint32 DataSize; // Size of everything after this header
@@ -65,7 +65,7 @@ static bool ReadString(FByteInputStream& Stream, String& OutString)
         return false;
     }
 
-    TArray<CHAR> Characters;
+    TArray<CHAR_T> Characters;
     Characters.Resize(static_cast<int32>(Length));
     Stream.Read(Characters.Data(), Characters.Size());
 

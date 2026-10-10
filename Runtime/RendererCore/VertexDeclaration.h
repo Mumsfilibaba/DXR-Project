@@ -49,7 +49,7 @@ struct FVertexAttributeInfo
     EVertexElement        Element       = EVertexElement::Position;
     EVertexAttributeFlags Attribute     = EVertexAttributeFlags::None;
     EFormat               Format        = EFormat::Unknown;
-    const CHAR*           Semantic      = nullptr;
+    const CHAR_T*         Semantic      = nullptr;
     uint32                SemanticIndex = 0;
     uint8                 StreamIndex   = 0;
     uint8                 ByteOffset    = 0;

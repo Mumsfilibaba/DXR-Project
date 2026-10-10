@@ -225,8 +225,8 @@ public:
 private:
     void StartLine();
     void FinishLine();
-    void AppendPiece(const FTextRun& Style, const CHAR* Characters, int32 Count, int32 SourceOffset);
-    void WrapSegment(const FTextRun& Style, const CHAR* Characters, int32 Count, int32 SourceOffset, int32 WrapWidth);
+    void AppendPiece(const FTextRun& Style, const CHAR_T* Characters, int32 Count, int32 SourceOffset);
+    void WrapSegment(const FTextRun& Style, const CHAR_T* Characters, int32 Count, int32 SourceOffset, int32 WrapWidth);
 
     NODISCARD static int32 MeasureRun(const FTextRun& Run);
 

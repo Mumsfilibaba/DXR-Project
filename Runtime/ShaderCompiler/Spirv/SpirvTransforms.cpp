@@ -52,15 +52,15 @@ struct SpirvOps
     static constexpr uint32 ImageSampledStorage    = 2;
 };
 
-static bool SpvReadLiteralString(const uint32* Inst, uint16 InstWords, uint16 StartWord, CHAR* OutBuf, uint32 BufSize)
+static bool SpvReadLiteralString(const uint32* Inst, uint16 InstWords, uint16 StartWord, CHAR_T* OutBuf, uint32 BufSize)
 {
     if (StartWord >= InstWords || BufSize == 0)
     {
         return false;
     }
 
-    const CHAR*  Src      = reinterpret_cast<const CHAR*>(&Inst[StartWord]);
-    const uint32 MaxBytes = (InstWords - StartWord) * sizeof(uint32);
+    const CHAR_T* Src      = reinterpret_cast<const CHAR_T*>(&Inst[StartWord]);
+    const uint32  MaxBytes = (InstWords - StartWord) * sizeof(uint32);
     
     uint32 i = 0;
     for (; i < MaxBytes && i < (BufSize - 1); ++i)
@@ -231,7 +231,7 @@ static bool SpvTypeDeclarationsMatch(const uint32* Existing, const TArray<uint32
     return true;
 }
 
-static bool IsOneOfGoogleExtensions(const CHAR* Name)
+static bool IsOneOfGoogleExtensions(const CHAR_T* Name)
 {
     return (CString::Strcmp(Name, "SPV_GOOGLE_decorate_string") == 0) || (CString::Strcmp(Name, "SPV_GOOGLE_hlsl_functionality1") == 0) || 
         (CString::Strcmp(Name, "SPV_GOOGLE_user_type") == 0);
@@ -374,7 +374,7 @@ bool FSpirvTransforms::StripGoogleSpirvRequirements(const TArray<uint32>& InWord
         bool bSkip = false;
         if (OpCode == SpirvOps::OpExtension)
         {
-            CHAR ExtName[256] = {};
+            CHAR_T ExtName[256] = {};
             if (SpvReadLiteralString(Inst, InstWords, 1, ExtName, sizeof(ExtName)))
             {
                 if (IsOneOfGoogleExtensions(ExtName))
@@ -451,7 +451,7 @@ bool FSpirvTransforms::ValidateNoGoogleSpirvRequirements(const TArray<uint32>& W
         const uint32* Inst = &Data[Read];
         if (OpCode == SpirvOps::OpExtension)
         {
-            CHAR ExtName[256] = {};
+            CHAR_T ExtName[256] = {};
             if (SpvReadLiteralString(Inst, InstWords, 1, ExtName, sizeof(ExtName)))
             {
                 if (IsOneOfGoogleExtensions(ExtName))

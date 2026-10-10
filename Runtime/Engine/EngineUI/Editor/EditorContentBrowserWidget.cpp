@@ -87,7 +87,7 @@ static void DrawScrollShadows(const FContentBrowserScrollShadowState& State)
     State.DrawList->PopClipRect();
 }
 
-static void SplitNameAndExtension(const CHAR* InName, TStaticArray<CHAR, 256>& OutBase, TStaticArray<CHAR, 64>& OutExtension)
+static void SplitNameAndExtension(const CHAR_T* InName, TStaticArray<CHAR_T, 256>& OutBase, TStaticArray<CHAR_T, 64>& OutExtension)
 {
     OutBase.Fill(0);
     OutExtension.Fill(0);
@@ -435,10 +435,10 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
     // Outer container
     // -----------------------------------------------------------------------------------------
 
-    TStaticArray<CHAR, 256> TrimmedQueryBuffer{};
+    TStaticArray<CHAR_T, 256> TrimmedQueryBuffer{};
 
-    const CHAR* TrimmedQuery        = EditorHelpers::GetTrimmedQuery(FolderSearchBuffer.Data(), TrimmedQueryBuffer.Data(), static_cast<int32>(TrimmedQueryBuffer.Size()));
-    const bool  bFolderSearchActive = TrimmedQuery && *TrimmedQuery != 0;
+    const CHAR_T* TrimmedQuery        = EditorHelpers::GetTrimmedQuery(FolderSearchBuffer.Data(), TrimmedQueryBuffer.Data(), static_cast<int32>(TrimmedQueryBuffer.Size()));
+    const bool    bFolderSearchActive = TrimmedQuery && *TrimmedQuery != 0;
 
     RebuildFolderMatches(TrimmedQuery);
 
@@ -826,8 +826,8 @@ void FEditorContentBrowserWidget::DrawItemTooltip(const FFileInfo& InItem)
     const ImVec4 TextWhite     = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
     const ImVec4 TextGrey      = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
 
-    const bool  bIsFolder = InItem.bIsFolder;
-    const CHAR* ItemName  = InItem.Name.IsEmpty() ? "" : *InItem.Name;
+    const bool    bIsFolder = InItem.bIsFolder;
+    const CHAR_T* ItemName  = InItem.Name.IsEmpty() ? "" : *InItem.Name;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
@@ -875,10 +875,10 @@ void FEditorContentBrowserWidget::DrawItemTooltip(const FFileInfo& InItem)
 
     ImGui::Separator();
 
-    TStaticArray<CHAR, 512> FolderPathBuffer{};
+    TStaticArray<CHAR_T, 512> FolderPathBuffer{};
     BuildFolderPathString(SelectedFolderPath, FolderPathBuffer.Data(), static_cast<int32>(FolderPathBuffer.Size()));
 
-    TStaticArray<CHAR, 768> FullPathBuffer{};
+    TStaticArray<CHAR_T, 768> FullPathBuffer{};
     if (FolderPathBuffer[0] != 0)
     {
         CString::Snprintf(FullPathBuffer.Data(), static_cast<int32>(FullPathBuffer.Size()), "%s/%s", FolderPathBuffer.Data(), ItemName);
@@ -932,15 +932,15 @@ void FEditorContentBrowserWidget::DrawContentGrid()
     // Helper Lambdas
     // -----------------------------------------------------------------------------------------
 
-    const auto DrawLabelWithSearchHighlight = [&](ImDrawList* InDrawList, const ImVec2& InLabelMin, const ImVec2& InLabelMax, const CHAR* InText, const CHAR* InFilterText, ImU32 InBaseTextU32)
+    const auto DrawLabelWithSearchHighlight = [&](ImDrawList* InDrawList, const ImVec2& InLabelMin, const ImVec2& InLabelMax, const CHAR_T* InText, const CHAR_T* InFilterText, ImU32 InBaseTextU32)
     {
         if (!InDrawList)
         {
             return;
         }
 
-        const CHAR* Text       = InText ? InText : "";
-        const CHAR* FilterText = (InFilterText && *InFilterText != 0) ? InFilterText : nullptr;
+        const CHAR_T* Text       = InText ? InText : "";
+        const CHAR_T* FilterText = (InFilterText && *InFilterText != 0) ? InFilterText : nullptr;
 
         const ImVec2 FullSize       = ImGui::CalcTextSize(Text);
         const float  AvailableWidth = Math::Max(1.0f, InLabelMax.x - InLabelMin.x);
@@ -987,9 +987,9 @@ void FEditorContentBrowserWidget::DrawContentGrid()
         
         const ImGuiIO& IO = ImGui::GetIO();
         
-        TStaticArray<CHAR, 256> AssetQueryBuffer{};
+        TStaticArray<CHAR_T, 256> AssetQueryBuffer{};
         
-        const CHAR* AssetQuery = EditorHelpers::GetTrimmedQuery(AssetSearchBuffer.Data(), AssetQueryBuffer.Data(), static_cast<int32>(AssetQueryBuffer.Size()));
+        const CHAR_T* AssetQuery = EditorHelpers::GetTrimmedQuery(AssetSearchBuffer.Data(), AssetQueryBuffer.Data(), static_cast<int32>(AssetQueryBuffer.Size()));
         if (RenamingItemIndex >= 0 && !ArePathsEqual(RenamingItemParentPath, SelectedFolderPath))
         {
             CommitItemRename();
@@ -1265,7 +1265,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                 }
                 else
                 {
-                    const CHAR* FilterText = (AssetQuery && *AssetQuery != 0) ? AssetQuery : nullptr;
+                    const CHAR_T* FilterText = (AssetQuery && *AssetQuery != 0) ? AssetQuery : nullptr;
 
                     ImGui::PushStyleColor(ImGuiCol_Text, NameTextColor);
                 
@@ -1313,7 +1313,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                     bDragPreviewIsFolder      = PrimaryItem.bIsFolder;
                     DragPreviewSelectionCount = Math::Max(1, SelectedItemIndices.Size());
 
-                    const CHAR* PrimaryName = PrimaryItem.Name.IsEmpty() ? "" : *PrimaryItem.Name;
+                    const CHAR_T* PrimaryName = PrimaryItem.Name.IsEmpty() ? "" : *PrimaryItem.Name;
                     CString::Strncpy(DragPreviewSourceName.Data(), PrimaryName, static_cast<int32>(DragPreviewSourceName.Size()));
 
                     ImGui::EndDragDropSource();
@@ -1334,7 +1334,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                             TArray<TArray<int32>> SourceFolderPaths;
                             BuildDragSourceSelection(*Data, SourceParentPath, SourceParentFolder, SourceIndices, SourceFolderPaths);
 
-                            const CHAR* TargetName = Item.Name.IsEmpty() ? "" : *Item.Name;
+                            const CHAR_T* TargetName = Item.Name.IsEmpty() ? "" : *Item.Name;
 
                             TArray<int32> TargetPath = SelectedFolderPath;
                             TargetPath.Add(i);
@@ -1347,7 +1347,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                         TArray<int32> TargetPath = SelectedFolderPath;
                         TargetPath.Add(i);
 
-                        const CHAR* TargetName = Item.Name.IsEmpty() ? "" : *Item.Name;
+                        const CHAR_T* TargetName = Item.Name.IsEmpty() ? "" : *Item.Name;
 
                         TArray<TArray<int32>> DragPaths = GetFilteredFolderSelectionPaths();
                         AppendFolderPayloadPath(ActivePayload, DragPaths);
@@ -1381,7 +1381,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                                 BuildDragSourceSelection(*Data, SourceParentPath, SourceParentFolder, SourceIndices, SourceFolderPaths);
 
                                 const bool bSameFolder = ArePathsEqual(SourceParentPath, SelectedFolderPath);
-                                const CHAR* TargetName = Item.Name.IsEmpty() ? "" : *Item.Name;
+                                const CHAR_T* TargetName = Item.Name.IsEmpty() ? "" : *Item.Name;
 
                                 TArray<int32> TargetPath = SelectedFolderPath;
                                 TargetPath.Add(i);
@@ -1416,7 +1416,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                             TArray<int32> TargetPath = SelectedFolderPath;
                             TargetPath.Add(i);
 
-                            const CHAR* TargetName = Item.Name.IsEmpty() ? "" : *Item.Name;
+                            const CHAR_T* TargetName = Item.Name.IsEmpty() ? "" : *Item.Name;
 
                             TArray<TArray<int32>> DragPaths = GetFilteredFolderSelectionPaths();
                             AppendFolderPayloadPath(Payload, DragPaths);
@@ -1452,7 +1452,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
         const ImGuiPayload* ActivePayload = ImGui::GetDragDropPayload();
         if (ActivePayload && ActivePayload->IsDataType("CB_MOVE_FOLDER"))
         {
-            const CHAR* TargetName = "Root";
+            const CHAR_T* TargetName = "Root";
             if (SelectedFolderPath.Size() > 0)
             {
                 if (FFileInfo* TargetFolder = GetFolderFromPath(SelectedFolderPath))
@@ -1555,7 +1555,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 
                 const FFileInfo* PrimaryFolder = GetFolderFromPath(PrimaryPath);
                 
-                const CHAR* PrimaryName = (PrimaryFolder && !PrimaryFolder->Name.IsEmpty()) ? *PrimaryFolder->Name : "";
+                const CHAR_T* PrimaryName = (PrimaryFolder && !PrimaryFolder->Name.IsEmpty()) ? *PrimaryFolder->Name : "";
                 if (PrimaryName[0] != 0)
                 {
                     bDragPreviewActive        = true;
@@ -1639,7 +1639,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                 const ImVec2 IconMin = ImGui::GetItemRectMin();
                 const ImVec2 IconMax = ImGui::GetItemRectMax();
 
-                TStaticArray<CHAR, 16> CountBuffer{};
+                TStaticArray<CHAR_T, 16> CountBuffer{};
                 CString::Snprintf(CountBuffer.Data(), static_cast<int32>(CountBuffer.Size()), "+%d", DragPreviewSelectionCount);
 
                 const ImVec2 TextSize = ImGui::CalcTextSize(CountBuffer.Data());
@@ -1677,8 +1677,8 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 
                 ImGui::BeginGroup();
                 {
-                    TStaticArray<CHAR, 256> Line1{};
-                    TStaticArray<CHAR, 256> Line2{};
+                    TStaticArray<CHAR_T, 256> Line1{};
+                    TStaticArray<CHAR_T, 256> Line2{};
 
                     int32 LineCount = 0;
                     if (bHasFolderHoverTarget)
@@ -1688,7 +1688,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 
                         if (bIsMultiSelection)
                         {
-                            const CHAR* ItemLabel = (OtherSelectionCount == 1) ? "item" : "items";
+                            const CHAR_T* ItemLabel = (OtherSelectionCount == 1) ? "item" : "items";
                             if (bStatusForbidden)
                             {
                                 CString::Snprintf(Line1.Data(), static_cast<int32>(Line1.Size()), "Cannot move %s and %d %s to %s", DragPreviewSourceName.Data(), OtherSelectionCount, ItemLabel, DragPreviewTargetName.Data());
@@ -1714,8 +1714,8 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 
                         if (bStatusPartial)
                         {
-                            const CHAR* ItemLabel = (IllegalMoveCount == 1) ? "item" : "items";
-                            const CHAR* Pronoun   = (IllegalMoveCount == 1) ? "it" : "they";
+                            const CHAR_T* ItemLabel = (IllegalMoveCount == 1) ? "item" : "items";
+                            const CHAR_T* Pronoun   = (IllegalMoveCount == 1) ? "it" : "they";
 
                             CString::Snprintf(Line2.Data(), static_cast<int32>(Line2.Size()), "%d %s will be ignored since %s cannot be moved", IllegalMoveCount, ItemLabel, Pronoun);
                             LineCount = 2;
@@ -1806,7 +1806,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
     }
 }
 
-void FEditorContentBrowserWidget::DrawCenteredMessage(const CHAR* InText, const ImVec4& InColor)
+void FEditorContentBrowserWidget::DrawCenteredMessage(const CHAR_T* InText, const ImVec4& InColor)
 {
     if (!InText || InText[0] == 0)
     {
@@ -1893,7 +1893,7 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
     // Helper Lambdas
     // -----------------------------------------------------------------------------------------
 
-    const auto DrawNavButton = [&](const CHAR* InId, float X, const FEditorIcon& InIcon, bool bEnabled) -> bool
+    const auto DrawNavButton = [&](const CHAR_T* InId, float X, const FEditorIcon& InIcon, bool bEnabled) -> bool
     {
         const ImVec2 ButtonMin = ImVec2(X, ControlY);
         const ImVec2 ButtonMax = ImVec2(X + NavButtonWidth, ControlY + NavButtonHeight);
@@ -1977,16 +1977,16 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
         }
         else
         {
-            const CHAR*  Seperator     = ">";
-            const ImVec2 SeperatorSize = ImGui::CalcTextSize(Seperator);
-            const ImVec2 SeperatorPos  = ImVec2(CursorX, CenterY - SeperatorSize.y * 0.5f);
+            const CHAR_T* Seperator     = ">";
+            const ImVec2  SeperatorSize = ImGui::CalcTextSize(Seperator);
+            const ImVec2  SeperatorPos  = ImVec2(CursorX, CenterY - SeperatorSize.y * 0.5f);
 
             DrawList->AddText(SeperatorPos, SeperatorColor, Seperator);
             CursorX += SeperatorSize.x + SeperatorGapAfter;
         }
     };
 
-    const auto DrawCrumbButton = [&](const CHAR* InLabel, const TArray<int32>& InTargetPath, int32 InId)
+    const auto DrawCrumbButton = [&](const CHAR_T* InLabel, const TArray<int32>& InTargetPath, int32 InId)
     {
         if (!InLabel || InLabel[0] == 0)
         {
@@ -2056,8 +2056,8 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
 
             PrefixPath.Add(SelectedFolderPath[Depth]);
 
-            FFileInfo*  Folder = GetFolderFromPath(PrefixPath);
-            const CHAR* Label  = Folder ? (Folder->Name.IsEmpty() ? "" : *Folder->Name) : "<Invalid>";
+            FFileInfo*    Folder = GetFolderFromPath(PrefixPath);
+            const CHAR_T* Label  = Folder ? (Folder->Name.IsEmpty() ? "" : *Folder->Name) : "<Invalid>";
 
             DrawCrumbButton(Label, PrefixPath, 1100 + Depth);
         }
@@ -2104,7 +2104,7 @@ void FEditorContentBrowserWidget::DrawContentHeaderArea(const ImVec4& InBackGrou
 }
 
 void FEditorContentBrowserWidget::DrawFolderTreeRecursive(FFileInfo& InFolder, TArray<int32>& InPath, int32 InDepth, ImGuiStorage* InStorage, const ImVec4& InNameTextColor,
-    const ImU32 InFolderActiveColor, const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, const CHAR* InFolderSearchQuery)
+    const ImU32 InFolderActiveColor, const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, const CHAR_T* InFolderSearchQuery)
 {
     const bool bFolderSearchActive = (InFolderSearchQuery && *InFolderSearchQuery != 0);
 
@@ -2141,7 +2141,7 @@ void FEditorContentBrowserWidget::DrawFolderTreeRecursive(FFileInfo& InFolder, T
 }
 
 bool FEditorContentBrowserWidget::DrawFolderRow(FFileInfo& InFolder, const TArray<int32>& InPath, int32 InDepth, ImGuiStorage* InStorage, const ImVec4& InNameTextColor,
-    const ImU32 InFolderActiveColor, const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, const CHAR* InFolderSearchQuery)
+    const ImU32 InFolderActiveColor, const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, const CHAR_T* InFolderSearchQuery)
 {
     const auto IsFolderPathSelected = [&](const TArray<int32>& Path) -> bool
     {
@@ -2504,8 +2504,8 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FFileInfo& InFolder, const TArra
     }
     else
     {
-        const CHAR* NameText   = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
-        const CHAR* FilterText = (InFolderSearchQuery && *InFolderSearchQuery != 0) ? InFolderSearchQuery : nullptr;
+        const CHAR_T* NameText   = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
+        const CHAR_T* FilterText = (InFolderSearchQuery && *InFolderSearchQuery != 0) ? InFolderSearchQuery : nullptr;
 
         const ImU32  BaseTextU32 = ImGui::GetColorU32(InNameTextColor);
         const float  NameTextX   = X + ImGui::GetStyle().FramePadding.x;
@@ -2544,7 +2544,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FFileInfo& InFolder, const TArra
         }
 
         const FFileInfo* PrimaryFolder = GetFolderFromPath(PrimaryPath);
-        const CHAR* PrimaryName = (PrimaryFolder && !PrimaryFolder->Name.IsEmpty()) ? *PrimaryFolder->Name : (InFolder.Name.IsEmpty() ? "" : *InFolder.Name);
+        const CHAR_T* PrimaryName = (PrimaryFolder && !PrimaryFolder->Name.IsEmpty()) ? *PrimaryFolder->Name : (InFolder.Name.IsEmpty() ? "" : *InFolder.Name);
 
         FCBFolderDndPayload Payload = {};
         Payload.Depth = Math::Min(InPath.Size(), static_cast<int32>(Payload.Indices.Size()));
@@ -2582,13 +2582,13 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FFileInfo& InFolder, const TArra
                     TArray<TArray<int32>> SourceFolderPaths;
                     BuildDragSourceSelection(*Data, SourceParentPath, SourceParentFolder, SourceIndices, SourceFolderPaths);
 
-                    const CHAR* TargetName = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
+                    const CHAR_T* TargetName = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
                     SetDragPreviewTarget(TargetName, InPath, SourceFolderPaths, SourceParentFolder, &SourceIndices, &SourceParentPath);
                 }
             }
             else if (ActivePayload->IsDataType("CB_MOVE_FOLDER"))
             {
-                const CHAR* TargetName = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
+                const CHAR_T* TargetName = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
 
                 TArray<TArray<int32>> DragPaths = GetFilteredFolderSelectionPaths();
                 AppendFolderPayloadPath(ActivePayload, DragPaths);
@@ -2615,7 +2615,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FFileInfo& InFolder, const TArra
                 TArray<TArray<int32>> SourceFolderPaths;
                 BuildDragSourceSelection(*Data, SourceParentPath, SourceParentFolder, SourceIndices, SourceFolderPaths);
 
-                const CHAR* TargetName = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
+                const CHAR_T* TargetName = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
                 SetDragPreviewTarget(TargetName, InPath, SourceFolderPaths, SourceParentFolder, &SourceIndices, &SourceParentPath);
 
                 if (Payload->IsDelivery() && bDragPreviewHasAnyLegalMove)
@@ -2630,7 +2630,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FFileInfo& InFolder, const TArra
 
         if (const ImGuiPayload* Payload = ImGui::AcceptDragDropPayload("CB_MOVE_FOLDER", DragDropFlags))
         {
-            const CHAR* TargetName = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
+            const CHAR_T* TargetName = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
 
             TArray<TArray<int32>> DragPaths = GetFilteredFolderSelectionPaths();
             AppendFolderPayloadPath(Payload, DragPaths);
@@ -2659,7 +2659,7 @@ void FEditorContentBrowserWidget::BeginFolderRename(const TArray<int32>& InPath,
     FolderRenameBuffer.Fill(0);
     FolderRenameBufferOriginal.Fill(0);
 
-    const CHAR* NameText = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
+    const CHAR_T* NameText = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
     if (NameText[0] != 0)
     {
         CString::Strncpy(FolderRenameBuffer.Data(), NameText, FolderRenameBuffer.Size());
@@ -2703,7 +2703,7 @@ void FEditorContentBrowserWidget::BeginItemRename(const TArray<int32>& InParentP
     ItemRenameBufferOriginal.Fill(0);
     ItemRenameExtension.Fill(0);
 
-    const CHAR* NameText = InItem.Name.IsEmpty() ? "" : *InItem.Name;
+    const CHAR_T* NameText = InItem.Name.IsEmpty() ? "" : *InItem.Name;
     if (InItem.bIsFolder)
     {
         if (NameText[0] != 0)
@@ -2740,7 +2740,7 @@ void FEditorContentBrowserWidget::CommitItemRename()
         }
         else
         {
-            TStaticArray<CHAR, 320> NewName{};
+            TStaticArray<CHAR_T, 320> NewName{};
             CString::Snprintf(NewName.Data(), static_cast<int32>(NewName.Size()), "%s%s", ItemRenameBuffer.Data(), ItemRenameExtension.Data());
             Item.Name = String(NewName.Data());
         }
@@ -2896,7 +2896,7 @@ bool FEditorContentBrowserWidget::MoveItemsToFolder(const TArray<int32>& InSourc
     }
 
     constexpr int32 PathBufferSize = 512;
-    CHAR SourceParentPathBuffer[PathBufferSize];
+    CHAR_T SourceParentPathBuffer[PathBufferSize];
     SourceParentPathBuffer[0] = 0;
 
     BuildFolderPathString(InSourceParentPath, SourceParentPathBuffer, PathBufferSize);
@@ -3155,7 +3155,7 @@ void FEditorContentBrowserWidget::ReportFailedMove(const String& InFullPath)
     FailedMoveErrorContext.bVisible   = true;
 }
 
-bool FEditorContentBrowserWidget::MatchesSearch(const CHAR* InName, const CHAR* InQuery) const
+bool FEditorContentBrowserWidget::MatchesSearch(const CHAR_T* InName, const CHAR_T* InQuery) const
 {
     if (!InName)
     {
@@ -3170,12 +3170,12 @@ bool FEditorContentBrowserWidget::MatchesSearch(const CHAR* InName, const CHAR* 
     return CString::Stristr(InName, InQuery) != nullptr;
 }
 
-bool FEditorContentBrowserWidget::FolderTreeMatches(const FFileInfo& InFolder, const CHAR* InQuery) const
+bool FEditorContentBrowserWidget::FolderTreeMatches(const FFileInfo& InFolder, const CHAR_T* InQuery) const
 {
     return !InQuery || *InQuery == 0 || MatchingFolders.Contains(&InFolder);
 }
 
-void FEditorContentBrowserWidget::RebuildFolderMatches(const CHAR* InQuery)
+void FEditorContentBrowserWidget::RebuildFolderMatches(const CHAR_T* InQuery)
 {
     MatchingFolders.Clear();
 
@@ -3193,7 +3193,7 @@ void FEditorContentBrowserWidget::RebuildFolderMatches(const CHAR* InQuery)
     }
 }
 
-bool FEditorContentBrowserWidget::RebuildFolderMatchesRecursive(const FFileInfo& InFolder, const CHAR* InQuery)
+bool FEditorContentBrowserWidget::RebuildFolderMatchesRecursive(const FFileInfo& InFolder, const CHAR_T* InQuery)
 {
     bool bMatches = MatchesSearch(InFolder.Name.IsEmpty() ? "" : *InFolder.Name, InQuery);
 
@@ -3292,7 +3292,7 @@ const FEditorContentBrowserWidget::FFileInfo* FEditorContentBrowserWidget::GetFo
     return Current;
 }
 
-void FEditorContentBrowserWidget::BuildFolderPathString(const TArray<int32>& InPath, CHAR* OutBuffer, int32 OutBufferSize) const
+void FEditorContentBrowserWidget::BuildFolderPathString(const TArray<int32>& InPath, CHAR_T* OutBuffer, int32 OutBufferSize) const
 {
     if (!OutBuffer || OutBufferSize <= 0)
     {
@@ -3315,7 +3315,7 @@ void FEditorContentBrowserWidget::BuildFolderPathString(const TArray<int32>& InP
 
     const FFileInfo* Current = &RootFolders[RootIndex];
 
-    const CHAR* RootName = Current->Name.IsEmpty() ? "" : *Current->Name;
+    const CHAR_T* RootName = Current->Name.IsEmpty() ? "" : *Current->Name;
     Offset += CString::Snprintf(OutBuffer + Offset, OutBufferSize - Offset, "%s", RootName);
 
     for (int32 Depth = 1; Depth < InPath.Size(); ++Depth)
@@ -3328,7 +3328,7 @@ void FEditorContentBrowserWidget::BuildFolderPathString(const TArray<int32>& InP
 
         Current = &Current->FolderContents[ChildIndex];
 
-        const CHAR* ChildName = Current->Name.IsEmpty() ? "" : *Current->Name;
+        const CHAR_T* ChildName = Current->Name.IsEmpty() ? "" : *Current->Name;
         Offset += CString::Snprintf(OutBuffer + Offset, OutBufferSize - Offset, "/%s", ChildName);
     }
 }
@@ -3831,10 +3831,10 @@ void FEditorContentBrowserWidget::UpdateDragPreviewNameConflicts(const TArray<TA
     }
 }
 
-void FEditorContentBrowserWidget::SetDragPreviewTarget(const CHAR* TargetName, const TArray<int32>& TargetPath, const TArray<TArray<int32>>& SourceFolderPaths,
+void FEditorContentBrowserWidget::SetDragPreviewTarget(const CHAR_T* TargetName, const TArray<int32>& TargetPath, const TArray<TArray<int32>>& SourceFolderPaths,
     const FFileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>* SourceParentPath)
 {
-    const CHAR* NameText = (TargetName && TargetName[0]) ? TargetName : "";
+    const CHAR_T* NameText = (TargetName && TargetName[0]) ? TargetName : "";
     CString::Strncpy(DragPreviewTargetName.Data(), NameText, static_cast<int32>(DragPreviewTargetName.Size()));
     UpdateDragPreviewNameConflicts(SourceFolderPaths, SourceParentFolder, SourceIndices, SourceParentPath, TargetPath);
 }
@@ -4073,7 +4073,7 @@ void FEditorContentBrowserWidget::PasteInCurrentFolder()
             String BaseName = SourceItem.Name;
             int32 Suffix = 0;
 
-            TStaticArray<CHAR, 256> Buffer{};
+            TStaticArray<CHAR_T, 256> Buffer{};
             while (FindChildFolderIndexByName(*TargetFolder, BaseName) >= 0 || (!SourceItem.bIsFolder && FindChildFileIndexByName(*TargetFolder, BaseName) >= 0))
             {
                 ++Suffix;
@@ -4085,7 +4085,7 @@ void FEditorContentBrowserWidget::PasteInCurrentFolder()
                 else
                 {
                     int32 Dot = -1;
-                    const CHAR* NameStr = *SourceItem.Name;
+                    const CHAR_T* NameStr = *SourceItem.Name;
                     const int32 Len = static_cast<int32>(CString::Strlen(NameStr));
 
                     for (int32 i = Len - 1; i > 0; --i)
@@ -4143,7 +4143,7 @@ void FEditorContentBrowserWidget::PasteInCurrentFolder()
             {
                 ++Suffix;
 
-                TStaticArray<CHAR, 256> Buffer{};
+                TStaticArray<CHAR_T, 256> Buffer{};
                 CString::Snprintf(Buffer.Data(), static_cast<int32>(Buffer.Size()), "%s (%d)", *SourceFolder->Name, Suffix);
                 BaseName = Buffer.Data();
             }

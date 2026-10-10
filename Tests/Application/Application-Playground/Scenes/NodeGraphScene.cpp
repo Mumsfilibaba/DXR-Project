@@ -44,12 +44,12 @@ static FFloatColor GetTypeTint(const String& TypeTag)
     return FFloatColor(0.85f, 0.62f, 0.35f, 1.0f);
 }
 
-static FGraphPin MakePin(EGraphPinDirection Direction, const CHAR* Name, const CHAR* TypeTag)
+static FGraphPin MakePin(EGraphPinDirection Direction, const CHAR_T* Name, const CHAR_T* TypeTag)
 {
     return FGraphPin(Direction, Name, TypeTag, GetTypeTint(TypeTag));
 }
 
-static FGraphNode MakeNode(const CHAR* Title, const Vector2& Position, const FFloatColor& TitleTint)
+static FGraphNode MakeNode(const CHAR_T* Title, const Vector2& Position, const FFloatColor& TitleTint)
 {
     FGraphNode Node;
     Node.Title     = Title;
@@ -157,7 +157,7 @@ static void RefreshShaderReadout()
     GShaderReadout->SetText(Description);
 }
 
-static void AddNodeAt(const CHAR* Title, const CHAR* TypeTag, const Vector2& GraphPosition)
+static void AddNodeAt(const CHAR_T* Title, const CHAR_T* TypeTag, const Vector2& GraphPosition)
 {
     FGraphNode Node = MakeNode(Title, GraphPosition, FUIStyle::GetDefault().Colors.ControlNormal);
     Node.Pins.Add(MakePin(EGraphPinDirection::Input, "A", TypeTag));
@@ -172,8 +172,8 @@ static TSharedPtr<FVisualElement> MakeContextMenu(const FPlaygroundFonts& Fonts,
 {
     struct FEntry
     {
-        const CHAR* Title;
-        const CHAR* TypeTag;
+        const CHAR_T* Title;
+        const CHAR_T* TypeTag;
     };
 
     const FEntry Entries[] =
@@ -316,10 +316,10 @@ static TSharedPtr<FVisualElement> MakeRenderGraphView(const FPlaygroundFonts& Fo
 
     struct FPass
     {
-        const CHAR* Title;
-        const CHAR* Input;
-        const CHAR* Output;
-        bool        bIsCulled;
+        const CHAR_T* Title;
+        const CHAR_T* Input;
+        const CHAR_T* Output;
+        bool          bIsCulled;
     };
 
     const FPass Passes[] =

@@ -23,7 +23,7 @@ static constexpr uint32 GFinalFlushMilliseconds   = 250;
 static constexpr int32  GReceiveChunkSize         = 4096;
 static constexpr int32  GListenBacklog            = 8;
 
-static constexpr const CHAR* GDefaultBindAddress = "::";
+static constexpr const CHAR_T* GDefaultBindAddress = "::";
 
 static constexpr int32 GDefaultMaxClients = 8;
 static constexpr int32 GMinMaxClients     = 1;
@@ -74,7 +74,7 @@ static TAutoConsoleVariable<int32> CVarRemoteConsoleMaxClients(
     GMinMaxClients, GMaxMaxClients,
     EConsoleVariableFlags::Default);
 
-static const CHAR* GetVariableTypeName(const IConsoleVariable& Variable)
+static const CHAR_T* GetVariableTypeName(const IConsoleVariable& Variable)
 {
     if (Variable.IsVariableInt())
     {
@@ -500,7 +500,7 @@ void FRemoteConsoleServer::AcceptClients(FNetworkSocket* ListenSocket, TArray<St
 
         if (!bAllowRemoteConnections && !PeerAddress.IsLoopback())
         {
-            const CHAR* Reason = "Remote connections are disabled (RemoteConsole.AllowRemoteConnections is false)";
+            const CHAR_T* Reason = "Remote connections are disabled (RemoteConsole.AllowRemoteConnections is false)";
             RejectClient(&Socket, Reason);
             OutLogMessages.Add(String::Printf("[RemoteConsole] Rejected %s, %s", *PeerText, Reason));
             continue;
@@ -509,7 +509,7 @@ void FRemoteConsoleServer::AcceptClients(FNetworkSocket* ListenSocket, TArray<St
         TScopedLock Lock(ClientsCS);
         if (Clients.Size() >= CVarRemoteConsoleMaxClients.GetValue())
         {
-            const CHAR* Reason = "Too many clients are connected (RemoteConsole.MaxClients)";
+            const CHAR_T* Reason = "Too many clients are connected (RemoteConsole.MaxClients)";
             RejectClient(&Socket, Reason);
             OutLogMessages.Add(String::Printf("[RemoteConsole] Rejected %s, %s", *PeerText, Reason));
             continue;
@@ -522,7 +522,7 @@ void FRemoteConsoleServer::AcceptClients(FNetworkSocket* ListenSocket, TArray<St
     }
 }
 
-void FRemoteConsoleServer::RejectClient(FNetworkSocket* Socket, const CHAR* Reason)
+void FRemoteConsoleServer::RejectClient(FNetworkSocket* Socket, const CHAR_T* Reason)
 {
     CHECK(Socket != nullptr);
 
@@ -538,7 +538,7 @@ void FRemoteConsoleServer::RejectClient(FNetworkSocket* Socket, const CHAR* Reas
 
 void FRemoteConsoleServer::ReceiveFromClient(FRemoteConsoleClient& Client, TArray<FRemoteConsoleRequest>& OutRequests)
 {
-    CHAR Chunk[GReceiveChunkSize];
+    CHAR_T Chunk[GReceiveChunkSize];
 
     while (!Client.bPendingClose)
     {

@@ -37,19 +37,19 @@ public:
 
     /**
      * @brief Read the rest of the file, from its current position, into OutText followed by a null-terminator, so
-     * OutText.Data() is a C string. The file holds UTF-8, converted to CHAR. A UTF-8 byte-order mark at the start of the
+     * OutText.Data() is a C string. The file holds UTF-8, converted to CHAR_T. A UTF-8 byte-order mark at the start of the
      * file is skipped.
      * @return Returns false and empties OutText if fewer bytes than the rest of the file could be read. An empty file gives
      * just the null-terminator.
      */
-    static bool ReadTextFile(IPlatformFile* InFile, TArray<CHAR>& OutText);
+    static bool ReadTextFile(IPlatformFile* InFile, TArray<CHAR_T>& OutText);
 
     /**
      * @brief Write every element of Text at the file's current position as UTF-8, including a null-terminator if the array
      * holds one
      * @return Returns false if not every byte could be written. Writing an empty array succeeds.
      */
-    static FORCEINLINE bool WriteTextFile(IPlatformFile* InFile, const TArray<CHAR>& Text)
+    static FORCEINLINE bool WriteTextFile(IPlatformFile* InFile, const TArray<CHAR_T>& Text)
     {
         return WriteTextFile(InFile, Text.Data(), Text.Size());
     }
@@ -133,5 +133,5 @@ public:
         TFunction<bool(const String& Path, bool bIsDirectory)> Filter           = nullptr);
 
 private:
-    static bool WriteTextFile(IPlatformFile* InFile, const CHAR* Text, int32 Length);
+    static bool WriteTextFile(IPlatformFile* InFile, const CHAR_T* Text, int32 Length);
 };

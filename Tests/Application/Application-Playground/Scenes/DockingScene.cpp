@@ -17,7 +17,7 @@
 constexpr int32 DOCKING_AREA_HEIGHT = 420;
 
 // Where the scene keeps the layout it saves, next to the playground's working directory
-constexpr const CHAR* DOCKING_LAYOUT_FILE = "PlaygroundLayout.ini";
+constexpr const CHAR_T* DOCKING_LAYOUT_FILE = "PlaygroundLayout.ini";
 
 static TSharedPtr<FDockingArea> GDockingArea;
 static TSharedPtr<FTextBlock>   GLayoutReadout;

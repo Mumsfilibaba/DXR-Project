@@ -1,7 +1,7 @@
 #include "Core/Misc/FileOutputDevice.h"
 #include "Core/Platform/PlatformFile.h"
 
-static const CHAR* SeverityToString(ELogSeverity Severity)
+static const CHAR_T* SeverityToString(ELogSeverity Severity)
 {
     switch (Severity)
     {

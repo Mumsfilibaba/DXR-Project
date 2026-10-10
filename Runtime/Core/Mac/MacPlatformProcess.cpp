@@ -47,7 +47,7 @@ bool FMacPlatformProcessHandle::ReadOutput(String& OutText)
     const bool bHasExitedBeforeRead = !IsRunning();
     if (OutputPipe >= 0)
     {
-        CHAR Buffer[4096];
+        CHAR_T Buffer[4096];
         while (true)
         {
             const ssize_t NumRead = ::read(OutputPipe, Buffer, sizeof(Buffer));
@@ -108,11 +108,11 @@ void FMacPlatformProcessHandle::Kill()
 
 TUniquePtr<IPlatformProcessHandle> FMacPlatformProcess::LaunchProcess(const FProcessDesc& Desc)
 {
-    TArray<CHAR*> Arguments;
-    Arguments.Add(const_cast<CHAR*>(*Desc.Executable));
+    TArray<CHAR_T*> Arguments;
+    Arguments.Add(const_cast<CHAR_T*>(*Desc.Executable));
     for (const String& Argument : Desc.Arguments)
     {
-        Arguments.Add(const_cast<CHAR*>(*Argument));
+        Arguments.Add(const_cast<CHAR_T*>(*Argument));
     }
 
     Arguments.Add(nullptr);

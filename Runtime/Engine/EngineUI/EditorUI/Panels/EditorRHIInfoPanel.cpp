@@ -11,7 +11,7 @@
 #include "RHI/RHIStats.h"
 #include "Core/Templates/CString.h"
 
-static const CHAR* const GRHIDetailGroups[] =
+static const CHAR_T* const GRHIDetailGroups[] =
 {
     "RHI",
     "D3D11 Resources",
@@ -43,13 +43,13 @@ static const CHAR* const GRHIDetailGroups[] =
     "Metal Bindless",
 };
 
-static bool IsInactiveBackendGroup(const CHAR* GroupName)
+static bool IsInactiveBackendGroup(const CHAR_T* GroupName)
 {
     const ERHIType ActiveType = RHI::Device ? RHI::Device->GetRHIType() : ERHIType::Unknown;
 
     for (const ERHIType Type : { ERHIType::D3D12, ERHIType::Vulkan, ERHIType::Metal })
     {
-        const CHAR* Prefix = ToString(Type);
+        const CHAR_T* Prefix = ToString(Type);
         if (Type != ActiveType && CString::Strncmp(GroupName, Prefix, CString::Strlen(Prefix)) == 0)
         {
             return true;
@@ -61,7 +61,7 @@ static bool IsInactiveBackendGroup(const CHAR* GroupName)
 
 constexpr double BYTES_PER_MEGABYTE = 1024.0 * 1024.0;
 
-static void QueryStatsByGroup(const CHAR* GroupName, TArray<FStatData*>& OutStats)
+static void QueryStatsByGroup(const CHAR_T* GroupName, TArray<FStatData*>& OutStats)
 {
     OutStats.Clear();
     FStatRegistry::Get().GetStatsByGroup(GroupName, OutStats);
@@ -271,7 +271,7 @@ void FEditorRHIInfoPanel::CollectDetailGroups()
 {
     ScratchGroups.Clear();
 
-    for (const CHAR* GroupName : GRHIDetailGroups)
+    for (const CHAR_T* GroupName : GRHIDetailGroups)
     {
         if (IsInactiveBackendGroup(GroupName))
         {
@@ -295,7 +295,7 @@ void FEditorRHIInfoPanel::RebuildDetailSections()
     DetailSections.Clear();
     DetailSections.Reserve(ScratchGroups.Size());
 
-    for (const CHAR* GroupName : ScratchGroups)
+    for (const CHAR_T* GroupName : ScratchGroups)
     {
         FStatGroupSection GroupSection;
         GroupSection.GroupName = GroupName;

@@ -264,7 +264,7 @@ public:
     ~FVulkanPipelineLayout();
 
     bool Initialize(const FVulkanPipelineLayoutInfo& LayoutInfo);
-    void SetDebugName(const CHAR* InName);
+    void SetDebugName(const CHAR_T* InName);
 
     bool GetDescriptorBinding(EShaderVisibility::Type ShaderStage, EResourceType::Type ResourceType, int32 ResourceIndex, uint32& OutDescriptorSetIndex, uint32& OutBinding);
     bool GetDescriptorSetIndex(EShaderVisibility::Type ShaderStage, uint32& OutDescriptorSetIndex);
@@ -316,7 +316,7 @@ public:
     }
 
 #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
-    const CHAR* GetBindingDebugName(int32 SetIndex, int32 BindingIndex) const
+    const CHAR_T* GetBindingDebugName(int32 SetIndex, int32 BindingIndex) const
     {
         if (SetIndex < SetLayoutRemappings.Size() && BindingIndex < SetLayoutRemappings[SetIndex].DebugNames.Size())
         {

@@ -17,7 +17,7 @@ public:
     void SetResourceState(const FRHIResource* Resource, ERHIResourceState NewState);
 
     bool ApplyTransition(const FRHITransitionBarrierDesc& Desc);
-    bool ValidateState(const FRHIResource* Resource, ERHIResourceState AcceptedStates, const CHAR* Caller) const;
+    bool ValidateState(const FRHIResource* Resource, ERHIResourceState AcceptedStates, const CHAR_T* Caller) const;
 
     void MarkAccelerationStructureWritten(const FRHIResource* AccelerationStructure, bool bIsScene);
     void ClearAccelerationStructureWrite(const FRHIResource* AccelerationStructure);

@@ -29,7 +29,7 @@ FJsonArchive FJsonArchive::Loader(const FJsonValue& Root)
     return FJsonArchive(nullptr, &Root);
 }
 
-const CHAR* FJsonArchive::GetTypeName(EJsonType Type)
+const CHAR_T* FJsonArchive::GetTypeName(EJsonType Type)
 {
     switch (Type)
     {
@@ -75,7 +75,7 @@ FJsonValue* FJsonArchive::GetObjectForSave() const
     return Container;
 }
 
-const FJsonValue* FJsonArchive::FindForLoad(const CHAR* Name) const
+const FJsonValue* FJsonArchive::FindForLoad(const CHAR_T* Name) const
 {
     const FJsonValue* Container = CurrentScope().LoadValue;
     if ((Container == nullptr) || !Container->IsObject())
@@ -86,7 +86,7 @@ const FJsonValue* FJsonArchive::FindForLoad(const CHAR* Name) const
     return Container->Find(Name);
 }
 
-void FJsonArchive::PushNamedScope(const CHAR* Name, EJsonType ContainerType)
+void FJsonArchive::PushNamedScope(const CHAR_T* Name, EJsonType ContainerType)
 {
     PathSegments.Emplace(Name);
 
@@ -173,9 +173,9 @@ String FJsonArchive::GetPath() const
     return Path;
 }
 
-void FJsonArchive::AddError(const CHAR* Format, ...)
+void FJsonArchive::AddError(const CHAR_T* Format, ...)
 {
-    CHAR Message[GMaxErrorMessageLength];
+    CHAR_T Message[GMaxErrorMessageLength];
     Message[0] = 0;
 
     va_list ArgList;
@@ -194,7 +194,7 @@ void FJsonArchive::AddError(const CHAR* Format, ...)
     }
 }
 
-void FJsonArchive::AddTypeError(const FJsonValue& Found, const CHAR* Expected)
+void FJsonArchive::AddTypeError(const FJsonValue& Found, const CHAR_T* Expected)
 {
     AddError("expected %s, found %s", Expected, GetTypeName(Found.GetType()));
 }
@@ -211,7 +211,7 @@ void FJsonArchive::AppendErrors(const FJsonArchive& Nested)
         }
         else
         {
-            const CHAR* Separator = NestedError.StartsWith("[") ? "" : ".";
+            const CHAR_T* Separator = NestedError.StartsWith("[") ? "" : ".";
             Errors.Add(String::Printf("%s%s%s", Path.Data(), Separator, NestedError.Data()));
         }
     }
@@ -234,7 +234,7 @@ String FJsonArchive::GetErrorString() const
 }
 
 
-FJsonArchive::FObjectScope::FObjectScope(FJsonArchive& InArchive, const CHAR* Name)
+FJsonArchive::FObjectScope::FObjectScope(FJsonArchive& InArchive, const CHAR_T* Name)
     : Archive(InArchive)
 {
     Archive.PushNamedScope(Name, EJsonType::Object);
@@ -257,7 +257,7 @@ bool FJsonArchive::FObjectScope::IsValid() const
     return Archive.IsSaving() ? (Scope.SaveValue != nullptr) : (Scope.LoadValue != nullptr);
 }
 
-FJsonArchive::FArrayScope::FArrayScope(FJsonArchive& InArchive, const CHAR* Name)
+FJsonArchive::FArrayScope::FArrayScope(FJsonArchive& InArchive, const CHAR_T* Name)
     : Archive(InArchive)
 {
     Archive.PushNamedScope(Name, EJsonType::Array);

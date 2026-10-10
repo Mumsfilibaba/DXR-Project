@@ -117,7 +117,7 @@
 #pragma warning(error : 4458) // variable hides class member
 #pragma warning(error : 4554) // check operator precedence for possible error; use parentheses to clarify precedence
 #pragma warning(error : 4715) // not all paths return a value
-#pragma warning(error : 4840) // using string in variadic template (When it should be const CHAR)
+#pragma warning(error : 4840) // using string in variadic template (When it should be const CHAR_T)
 
 #else
     #error "MSVC Compiler-file included in non-MSVC compiler"

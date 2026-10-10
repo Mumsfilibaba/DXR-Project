@@ -28,7 +28,7 @@ static HANDLE GReportCompleteEvent  = nullptr;
 // Published by the faulting thread and read by the dump thread, which the events order
 static EXCEPTION_POINTERS* GExceptionPointers = nullptr;
 static HANDLE              GFaultingThread    = nullptr;
-static const CHAR*         GOverriddenName    = nullptr;
+static const CHAR_T*       GOverriddenName    = nullptr;
 
 // Claimed by whichever thread crashes first, so a fault raised while reporting cannot report again
 static volatile int32 GIsReporting = 0;
@@ -38,7 +38,7 @@ static uint32 ReadBigEndian32(const uint8* Bytes)
     return (static_cast<uint32>(Bytes[0]) << 24) | (static_cast<uint32>(Bytes[1]) << 16) | (static_cast<uint32>(Bytes[2]) << 8) | Bytes[3];
 }
 
-static const CHAR* GetExceptionName(uint32 ExceptionCode)
+static const CHAR_T* GetExceptionName(uint32 ExceptionCode)
 {
     switch (ExceptionCode)
     {
@@ -136,7 +136,7 @@ static DWORD WINAPI CrashReportThreadEntry(LPVOID)
     PWSTR  Description = nullptr;
     if (SUCCEEDED(::GetThreadDescription(GFaultingThread, &Description)))
     {
-        ThreadName = StringCast<CHAR>(Description).ToString();
+        ThreadName = StringCast<CHAR_T>(Description).ToString();
         ::LocalFree(Description);
     }
 
@@ -154,7 +154,7 @@ static DWORD WINAPI CrashReportThreadEntry(LPVOID)
     return 0;
 }
 
-static void RequestCrashReport(EXCEPTION_POINTERS* ExceptionPointers, const CHAR* OverriddenName)
+static void RequestCrashReport(EXCEPTION_POINTERS* ExceptionPointers, const CHAR_T* OverriddenName)
 {
     if (!GReportRequestedEvent || !GReportCompleteEvent)
     {
@@ -175,7 +175,7 @@ static void RequestCrashReport(EXCEPTION_POINTERS* ExceptionPointers, const CHAR
     ::WaitForSingleObject(GReportCompleteEvent, REPORT_TIMEOUT_MILLISECONDS);
 }
 
-static void ReportWithoutException(const CHAR* Reason)
+static void ReportWithoutException(const CHAR_T* Reason)
 {
     static CONTEXT            SyntheticContext;
     static EXCEPTION_RECORD   SyntheticRecord;

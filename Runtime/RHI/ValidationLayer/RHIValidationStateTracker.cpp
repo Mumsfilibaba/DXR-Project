@@ -167,7 +167,7 @@ bool FRHIValidationStateTracker::ApplyTransition(const FRHITransitionBarrierDesc
     return true;
 }
 
-bool FRHIValidationStateTracker::ValidateState(const FRHIResource* Resource, ERHIResourceState AcceptedStates, const CHAR* Caller) const
+bool FRHIValidationStateTracker::ValidateState(const FRHIResource* Resource, ERHIResourceState AcceptedStates, const CHAR_T* Caller) const
 {
     if (!RHIValidationInternal::ShouldValidateResourceStates() || !Resource)
     {

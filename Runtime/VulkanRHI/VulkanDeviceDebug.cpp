@@ -23,12 +23,12 @@ static bool VulkanIsMessageSuppressed(const VkDebugUtilsMessengerCallbackDataEXT
     }
 
     // Nothing is suppressed at the moment. The null entry keeps the list valid where a zero-length array is not
-    static const CHAR* SuppressedMessageIds[] =
+    static const CHAR_T* SuppressedMessageIds[] =
     {
         nullptr,
     };
 
-    for (const CHAR* SuppressedId : SuppressedMessageIds)
+    for (const CHAR_T* SuppressedId : SuppressedMessageIds)
     {
         if (SuppressedId && CString::Strcmp(CallbackData->pMessageIdName, SuppressedId) == 0)
         {
@@ -46,12 +46,12 @@ static bool VulkanIsMessageSilenced(const VkDebugUtilsMessengerCallbackDataEXT* 
         return false;
     }
 
-    static const CHAR* SilencedMessageText[] =
+    static const CHAR_T* SilencedMessageText[] =
     {
         "Blending is enabled for attachment with format",
     };
 
-    for (const CHAR* SilencedText : SilencedMessageText)
+    for (const CHAR_T* SilencedText : SilencedMessageText)
     {
         if (CString::Strstr(CallbackData->pMessage, SilencedText) != nullptr)
         {
@@ -277,7 +277,7 @@ void FVulkanCrashMarkers::WriteMarkerInternal(FVulkanCommandBuffer& CmdBuf, cons
         return;
     }
 
-    const uint32 Hash = CRC32::Generate(Name.Data(), static_cast<uint64>(Name.Length()) * sizeof(CHAR));
+    const uint32 Hash = CRC32::Generate(Name.Data(), static_cast<uint64>(Name.Length()) * sizeof(CHAR_T));
     if (!HashToIndex.Contains(Hash))
     {
         HashToIndex.Add(Hash, static_cast<uint32>(StringPool.Size()));
@@ -492,7 +492,7 @@ bool VulkanCheckDeviceLost(VkResult Result)
                             {
                                 const VkDeviceFaultAddressInfoEXT& Addr = AddressInfos[i];
 
-                                const CHAR* TypeStr = "UNKNOWN";
+                                const CHAR_T* TypeStr = "UNKNOWN";
                                 switch (Addr.addressType)
                                 {
                                     case VK_DEVICE_FAULT_ADDRESS_TYPE_NONE_EXT:                         TypeStr = "NONE";                    break;

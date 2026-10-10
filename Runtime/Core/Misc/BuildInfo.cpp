@@ -17,17 +17,17 @@
 #define BUILDINFO_STRINGIFY_IMPL(Value) #Value
 #define BUILDINFO_STRINGIFY(Value)      BUILDINFO_STRINGIFY_IMPL(Value)
 
-const CHAR* BuildInfo::GetEngineName()
+const CHAR_T* BuildInfo::GetEngineName()
 {
     return ENGINE_NAME;
 }
 
-const CHAR* BuildInfo::GetVersionString()
+const CHAR_T* BuildInfo::GetVersionString()
 {
     return ENGINE_VERSION_STRING;
 }
 
-const CHAR* BuildInfo::GetConfigurationName()
+const CHAR_T* BuildInfo::GetConfigurationName()
 {
 #if DEBUG_BUILD
     #if EDITOR_BUILD
@@ -52,7 +52,7 @@ const CHAR* BuildInfo::GetConfigurationName()
 #endif
 }
 
-const CHAR* BuildInfo::GetLinkageName()
+const CHAR_T* BuildInfo::GetLinkageName()
 {
 #if MONOLITHIC_BUILD
     return "Monolithic";
@@ -61,7 +61,7 @@ const CHAR* BuildInfo::GetLinkageName()
 #endif
 }
 
-const CHAR* BuildInfo::GetPlatformName()
+const CHAR_T* BuildInfo::GetPlatformName()
 {
 #if PLATFORM_WINDOWS
     return "Windows";
@@ -72,7 +72,7 @@ const CHAR* BuildInfo::GetPlatformName()
 #endif
 }
 
-const CHAR* BuildInfo::GetArchitectureName()
+const CHAR_T* BuildInfo::GetArchitectureName()
 {
 #if PLATFORM_ARCHITECTURE_X86_64
     return "x86_64";
@@ -83,7 +83,7 @@ const CHAR* BuildInfo::GetArchitectureName()
 #endif
 }
 
-const CHAR* BuildInfo::GetCompilerName()
+const CHAR_T* BuildInfo::GetCompilerName()
 {
 #if PLATFORM_COMPILER_MSVC
     return "MSVC " BUILDINFO_STRINGIFY(_MSC_FULL_VER);
@@ -96,22 +96,22 @@ const CHAR* BuildInfo::GetCompilerName()
 #endif
 }
 
-const CHAR* BuildInfo::GetCompileTimestamp()
+const CHAR_T* BuildInfo::GetCompileTimestamp()
 {
     return __DATE__ " " __TIME__;
 }
 
-const CHAR* BuildInfo::GetBranch()
+const CHAR_T* BuildInfo::GetBranch()
 {
     return BUILD_BRANCH;
 }
 
-const CHAR* BuildInfo::GetCommit()
+const CHAR_T* BuildInfo::GetCommit()
 {
     return BUILD_COMMIT;
 }
 
-const CHAR* BuildInfo::GetCommitDate()
+const CHAR_T* BuildInfo::GetCommitDate()
 {
     return BUILD_COMMIT_DATE;
 }

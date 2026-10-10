@@ -9,7 +9,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-extern int32 EngineMain(const CHAR* Args[], int32 NumArgs);
+extern int32 EngineMain(const CHAR_T* Args[], int32 NumArgs);
 
 static String GMacCommandLine;
 static int32  GEngineMainResult = 0;
@@ -64,7 +64,7 @@ static int32  GEngineMainResult = 0;
 
 @end
 
-static bool IsBoolEnabledAtLaunch(const CHAR* Section, const CHAR* Name)
+static bool IsBoolEnabledAtLaunch(const CHAR_T* Section, const CHAR_T* Name)
 {
     StringView CommandLineValue;
     if (CommandLine::FindOption(Name, CommandLineValue))
@@ -85,7 +85,7 @@ static bool IsBoolEnabledAtLaunch(const CHAR* Section, const CHAR* Name)
     return GConfig->GetBool(Section, Name, bFromConfig) ? bFromConfig : false;
 }
 
-int main(int NumArgs, const CHAR** Args)
+int main(int NumArgs, const CHAR_T** Args)
 {
     CommandLine::Initialize(Args + 1, NumArgs - 1);
     FConfig::Initialize();

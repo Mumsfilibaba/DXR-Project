@@ -9,8 +9,8 @@
 #include <ShaderCore/MSLShaderBindings.h>
 #include <ShaderCore/ShaderCode.h>
 
-static constexpr const CHAR* GStampPrefix  = "// Stamp:    0x";
-static constexpr int32       GBytesPerLine = 12;
+static constexpr const CHAR_T* GStampPrefix  = "// Stamp:    0x";
+static constexpr int32         GBytesPerLine = 12;
 
 static String MakeEngineRelative(const String& Path)
 {
@@ -51,12 +51,12 @@ uint64 ShaderHeader::ComputeStamp(const FShaderCompileJob& Job, const TArray<FSh
     return Stamp;
 }
 
-static bool ParseHex(const CHAR* Text, uint64& OutValue)
+static bool ParseHex(const CHAR_T* Text, uint64& OutValue)
 {
     uint64 Value     = 0;
     int32  NumDigits = 0;
 
-    for (const CHAR* Character = Text; *Character; ++Character)
+    for (const CHAR_T* Character = Text; *Character; ++Character)
     {
         uint64 Digit = 0;
         if (*Character >= '0' && *Character <= '9')
@@ -92,7 +92,7 @@ bool ShaderHeader::ReadStamp(const String& HeaderPath, uint64& OutStamp)
         return false;
     }
 
-    TArray<CHAR> Text;
+    TArray<CHAR_T> Text;
     if (!File::ReadTextFile(FileHandle.Get(), Text))
     {
         return false;
@@ -109,7 +109,7 @@ bool ShaderHeader::ReadStamp(const String& HeaderPath, uint64& OutStamp)
     return ParseHex(Contents.Data() + StampStart + String(GStampPrefix).Length(), OutStamp);
 }
 
-static const CHAR* GetDimensionName(EShaderResourceDimension Dimension)
+static const CHAR_T* GetDimensionName(EShaderResourceDimension Dimension)
 {
     switch (Dimension)
     {
@@ -128,7 +128,7 @@ static const CHAR* GetDimensionName(EShaderResourceDimension Dimension)
     }
 }
 
-static const CHAR* GetSpaceName(EShaderBindingSpace Space)
+static const CHAR_T* GetSpaceName(EShaderBindingSpace Space)
 {
     switch (Space)
     {
@@ -147,7 +147,7 @@ static String GetRegisterName(const FShaderResourceBinding& Binding)
         return "constants";
     }
 
-    const CHAR* Prefix = "t";
+    const CHAR_T* Prefix = "t";
     switch (GetShaderResourceClass(Binding.Type))
     {
         case EShaderResourceClass::ConstantBuffer: Prefix = "b"; break;
@@ -161,8 +161,8 @@ static String GetRegisterName(const FShaderResourceBinding& Binding)
 
 static String GetNullTextureName(uint8 NullTextureType)
 {
-    static constexpr const CHAR* DimensionNames[] = { "Texture1D", "Texture1DArray", "Texture2D", "Texture2DArray", "TextureCube", "TextureCubeArray", "Texture3D", "Texture2DMS", "TextureBuffer" };
-    static constexpr const CHAR* ComponentNames[] = { "Float", "Int", "Uint", "Depth" };
+    static constexpr const CHAR_T* DimensionNames[] = { "Texture1D", "Texture1DArray", "Texture2D", "Texture2DArray", "TextureCube", "TextureCubeArray", "Texture3D", "Texture2DMS", "TextureBuffer" };
+    static constexpr const CHAR_T* ComponentNames[] = { "Float", "Int", "Uint", "Depth" };
     static_assert(ARRAY_COUNT(DimensionNames) == static_cast<int32>(EMSLTextureDimension::Count) && ARRAY_COUNT(ComponentNames) == static_cast<int32>(EMSLTextureComponent::Count), "The null texture names are out of date");
 
     const uint32 Dimension = NullTextureType % static_cast<uint32>(EMSLTextureDimension::Count);

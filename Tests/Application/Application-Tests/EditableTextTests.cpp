@@ -34,12 +34,12 @@ static FKeyEvent CreateKeyDownEvent(FKey Key, EModifierFlag Modifiers)
     return FKeyEvent(EInputEventType::KeyDown, Key, FModifierKeyState(Modifiers), false, true);
 }
 
-static FKeyEvent CreateCharEvent(CHAR Character)
+static FKeyEvent CreateCharEvent(CHAR_T Character)
 {
     return FKeyEvent(EInputEventType::KeyChar, Keys::Unknown, FModifierKeyState(), static_cast<uint32>(Character), false, true);
 }
 
-static FKeyEvent CreateCharEvent(CHAR Character, EModifierFlag Modifiers)
+static FKeyEvent CreateCharEvent(CHAR_T Character, EModifierFlag Modifiers)
 {
     return FKeyEvent(EInputEventType::KeyChar, Keys::Unknown, FModifierKeyState(Modifiers), static_cast<uint32>(Character), false, true);
 }
@@ -55,7 +55,7 @@ static FCursorEvent CreateMouseMoveEvent(const IntVector2& ClientPosition)
     return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, IntVector2(0, 0), FModifierKeyState());
 }
 
-static TSharedPtr<FEditableText> CreateEditableText(const CHAR* Text, const TSharedPtr<IFontFace>& Font)
+static TSharedPtr<FEditableText> CreateEditableText(const CHAR_T* Text, const TSharedPtr<IFontFace>& Font)
 {
     FEditableText::FDesc Desc;
     Desc.Text     = Text;
@@ -186,7 +186,7 @@ bool EditableTextCursor_Test()
 
     TEST_EXPECT(!Typed->OnKeyChar(CreateCharEvent('\t')).IsEventHandled());
     TEST_EXPECT(!Typed->OnKeyChar(CreateCharEvent('\n')).IsEventHandled());
-    TEST_EXPECT(!Typed->OnKeyChar(CreateCharEvent(static_cast<CHAR>(0x7F))).IsEventHandled());
+    TEST_EXPECT(!Typed->OnKeyChar(CreateCharEvent(static_cast<CHAR_T>(0x7F))).IsEventHandled());
     TEST_EXPECT(Typed->GetText().Equals("A"));
 
     TEST_SECTION("Backspace and delete arrive as key events");
@@ -545,7 +545,7 @@ bool EditableTextCommandChord_Test()
     TSharedPtr<FEditableText> Control = CreateEditableText("Hello", Font);
 
     Control->OnKeyDown(CreateKeyDownEvent(Keys::A, GCommandModifier));
-    Control->OnKeyChar(CreateCharEvent(static_cast<CHAR>(0x01), GCommandModifier));
+    Control->OnKeyChar(CreateCharEvent(static_cast<CHAR_T>(0x01), GCommandModifier));
 
     TEST_EXPECT(Control->GetText().Equals("Hello"));
     TEST_EXPECT(Control->GetSelectedText().Equals("Hello"));

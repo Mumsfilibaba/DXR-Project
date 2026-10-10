@@ -133,7 +133,7 @@ struct FD3D12ShaderBindingInfo
 #endif
     };
     
-    void AddBinding(ED3D12BindingType InType, uint16 InOriginalBindingIndex, const CHAR* InDebugName, bool bInIsTexture = false, ED3D12NullDescriptorType InNullDescriptorType = ED3D12NullDescriptorType::Texture2D)
+    void AddBinding(ED3D12BindingType InType, uint16 InOriginalBindingIndex, const CHAR_T* InDebugName, bool bInIsTexture = false, ED3D12NullDescriptorType InNullDescriptorType = ED3D12NullDescriptorType::Texture2D)
     {
         FResourceBinding& Binding    = ResourceBindings.Emplace();
         Binding.BindingType          = InType;
@@ -183,7 +183,7 @@ public:
 
 protected:
     static void BuildBindingInfo(const FShaderCodeView& InCode, EShaderBindingSpace Space, FD3D12ShaderBindingInfo& OutBindingInfo);
-    static bool ValidateRequiresFlags(ED3D12ShaderFlags InFlags, const CHAR* InShaderName);
+    static bool ValidateRequiresFlags(ED3D12ShaderFlags InFlags, const CHAR_T* InShaderName);
 
     FD3D12ShaderBytecode    ByteCode;
     FD3D12ShaderHash        ByteCodeHash;

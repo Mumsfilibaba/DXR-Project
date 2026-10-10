@@ -15,14 +15,13 @@ struct IPlatformTypes
     typedef unsigned char byte;
 
     typedef char ANSICHAR;
+    typedef ANSICHAR CHAR;
     typedef char8_t UTF8CHAR;
     typedef wchar_t WIDECHAR;
 
 #if WIDE_CHAR_BUILD
-    typedef WIDECHAR CHAR;
     typedef WIDECHAR CHAR_T;
 #else
-    typedef ANSICHAR CHAR;
     typedef ANSICHAR CHAR_T;
 #endif
 

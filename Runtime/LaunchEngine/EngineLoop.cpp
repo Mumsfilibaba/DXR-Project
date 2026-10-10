@@ -185,7 +185,7 @@ bool FEngineLoop::LoadCoreModules()
     return true;
 }
 
-int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
+int32 FEngineLoop::PreInit(const CHAR_T** Args, int32 NumArgs)
 {
     const bool bIsCommandLineValid = CommandLine::Initialize(Args, NumArgs);
     if (!Paths::Initialize())

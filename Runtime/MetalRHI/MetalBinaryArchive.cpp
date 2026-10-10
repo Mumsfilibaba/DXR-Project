@@ -30,7 +30,7 @@ static String GetErrorString(NSError* Error)
     return Error ? String([Error localizedDescription]) : String("unknown error");
 }
 
-static void CopyToFixedString(CHAR* Dest, uint32 DestSize, const String& Source)
+static void CopyToFixedString(CHAR_T* Dest, uint32 DestSize, const String& Source)
 {
     const uint32 Length = Math::Min<uint32>(static_cast<uint32>(Source.Length()), DestSize - 1);
     Memory::Memcpy(Dest, *Source, Length);
@@ -164,7 +164,7 @@ EMetalBinaryArchiveMode FMetalBinaryArchive::ParseMode(const String& ModeName)
     return EMetalBinaryArchiveMode::Append;
 }
 
-const CHAR* FMetalBinaryArchive::GetModeName(EMetalBinaryArchiveMode Mode)
+const CHAR_T* FMetalBinaryArchive::GetModeName(EMetalBinaryArchiveMode Mode)
 {
     switch (Mode)
     {

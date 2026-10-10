@@ -24,7 +24,7 @@ class FDebugAABBVS : public TDebugShaderEnvironment<FDebugAABBVS>
 {
     DECLARE_SHADER_TYPE(FDebugAABBVS, EShaderStage::Vertex);
 
-    static constexpr const CHAR* DebugDefine = "AABB_DEBUG";
+    static constexpr const CHAR_T* DebugDefine = "AABB_DEBUG";
 
     using FPermutation = TShaderPermutation<>;
 };
@@ -35,7 +35,7 @@ class FDebugAABBPS : public TDebugShaderEnvironment<FDebugAABBPS>
 {
     DECLARE_SHADER_TYPE(FDebugAABBPS, EShaderStage::Pixel);
 
-    static constexpr const CHAR* DebugDefine = "AABB_DEBUG";
+    static constexpr const CHAR_T* DebugDefine = "AABB_DEBUG";
 
     using FPermutation = TShaderPermutation<>;
 };
@@ -46,7 +46,7 @@ class FDebugLightVS : public TDebugShaderEnvironment<FDebugLightVS>
 {
     DECLARE_SHADER_TYPE(FDebugLightVS, EShaderStage::Vertex);
 
-    static constexpr const CHAR* DebugDefine = "POINTLIGHT_DEBUG";
+    static constexpr const CHAR_T* DebugDefine = "POINTLIGHT_DEBUG";
 
     using FPermutation = TShaderPermutation<>;
 };
@@ -57,7 +57,7 @@ class FDebugLightPS : public TDebugShaderEnvironment<FDebugLightPS>
 {
     DECLARE_SHADER_TYPE(FDebugLightPS, EShaderStage::Pixel);
 
-    static constexpr const CHAR* DebugDefine = "POINTLIGHT_DEBUG";
+    static constexpr const CHAR_T* DebugDefine = "POINTLIGHT_DEBUG";
 
     using FPermutation = TShaderPermutation<>;
 };
@@ -68,7 +68,7 @@ class FDebugAABBSolidVS : public TDebugShaderEnvironment<FDebugAABBSolidVS>
 {
     DECLARE_SHADER_TYPE(FDebugAABBSolidVS, EShaderStage::Vertex);
 
-    static constexpr const CHAR* DebugDefine = "AABB_SOLID_DEBUG";
+    static constexpr const CHAR_T* DebugDefine = "AABB_SOLID_DEBUG";
 
     using FPermutation = TShaderPermutation<>;
 };
@@ -79,7 +79,7 @@ class FDebugAABBSolidPS : public TDebugShaderEnvironment<FDebugAABBSolidPS>
 {
     DECLARE_SHADER_TYPE(FDebugAABBSolidPS, EShaderStage::Pixel);
 
-    static constexpr const CHAR* DebugDefine = "AABB_SOLID_DEBUG";
+    static constexpr const CHAR_T* DebugDefine = "AABB_SOLID_DEBUG";
 
     using FPermutation = TShaderPermutation<>;
 };
@@ -90,7 +90,7 @@ class FDebugProbeVS : public TDebugShaderEnvironment<FDebugProbeVS>
 {
     DECLARE_SHADER_TYPE(FDebugProbeVS, EShaderStage::Vertex);
 
-    static constexpr const CHAR* DebugDefine = "LIGHTPROBE_DEBUG";
+    static constexpr const CHAR_T* DebugDefine = "LIGHTPROBE_DEBUG";
 
     using FPermutation = TShaderPermutation<>;
 };
@@ -101,7 +101,7 @@ class FDebugProbePS : public TDebugShaderEnvironment<FDebugProbePS>
 {
     DECLARE_SHADER_TYPE(FDebugProbePS, EShaderStage::Pixel);
 
-    static constexpr const CHAR* DebugDefine = "LIGHTPROBE_DEBUG";
+    static constexpr const CHAR_T* DebugDefine = "LIGHTPROBE_DEBUG";
 
     using FPermutation = TShaderPermutation<>;
 };

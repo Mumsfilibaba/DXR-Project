@@ -117,7 +117,7 @@ bool FVulkanCommandBuffer::End()
 }
 
 #if VULKAN_VALIDATE_IMAGE_LAYOUTS
-void FVulkanCommandBuffer::AddImageLayoutForValidation(VkImage Image, VkImageLayout EntryLayout, VkImageLayout ResultLayout, bool bWholeImage, const CHAR* RecordingSite)
+void FVulkanCommandBuffer::AddImageLayoutForValidation(VkImage Image, VkImageLayout EntryLayout, VkImageLayout ResultLayout, bool bWholeImage, const CHAR_T* RecordingSite)
 {
     if (!VULKAN_CHECK_HANDLE(Image))
     {

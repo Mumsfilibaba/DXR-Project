@@ -3,7 +3,7 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 
-FGraphTask::FGraphTask(const CHAR* InDebugName, TFunction<void()>&& InBody, ENamedThread::Type InLane, ETaskPriority::Type InPriority)
+FGraphTask::FGraphTask(const CHAR_T* InDebugName, TFunction<void()>&& InBody, ENamedThread::Type InLane, ETaskPriority::Type InPriority)
     : RemainingPrerequisites(0)
     , DebugName(InDebugName)
     , Body(::Move(InBody))

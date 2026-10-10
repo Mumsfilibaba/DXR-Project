@@ -108,7 +108,7 @@ public:
 
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final
     {
-        static const CHAR* const Labels[RENDERGRAPH_LEGEND_ROWS] =
+        static const CHAR_T* const Labels[RENDERGRAPH_LEGEND_ROWS] =
         {
             "Resource read (input)",
             "Resource write (output)",

@@ -45,7 +45,7 @@ public:
      * @param Character The character to test.
      * @return True when the character separates words.
      */
-    NODISCARD static bool IsWordSeparator(CHAR Character);
+    NODISCARD static bool IsWordSeparator(CHAR_T Character);
 
 public:
     FConsoleCommandLine();

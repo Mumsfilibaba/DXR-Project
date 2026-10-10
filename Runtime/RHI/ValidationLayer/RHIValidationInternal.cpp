@@ -53,7 +53,7 @@ static FCriticalSection& GetCallStackCriticalSection()
     return CallStackCriticalSection;
 }
 
-void RHIValidationInternal::LogCallStack(const CHAR* Filename, int32 Line)
+void RHIValidationInternal::LogCallStack(const CHAR_T* Filename, int32 Line)
 {
     if (!CVarEnableValidationCallstack.GetValue())
     {
@@ -141,7 +141,7 @@ String RHIValidationInternal::GetResourceIdentity(const FRHIResource* Resource)
         default: break;
     }
 
-    const CHAR* ResourceType = ToString(Resource->GetResourceType());
+    const CHAR_T* ResourceType = ToString(Resource->GetResourceType());
     if (DebugName.IsEmpty())
     {
         return String::Printf("%s <unnamed> (%p)", ResourceType, reinterpret_cast<const void*>(Resource));
@@ -165,7 +165,7 @@ bool RHIValidationInternal::IsDepthStencilFormat(EFormat Format)
     return Format == EFormat::D16_Unorm || Format == EFormat::D24_Unorm_S8_Uint || Format == EFormat::D32_Float;
 }
 
-bool RHIValidationInternal::ValidateBufferRange(const CHAR* Caller, const FRHIBufferDesc& BufferDesc, uint64 Offset, uint64 Size)
+bool RHIValidationInternal::ValidateBufferRange(const CHAR_T* Caller, const FRHIBufferDesc& BufferDesc, uint64 Offset, uint64 Size)
 {
     if (!RHIValidationHelpers::IsRangeValid(BufferDesc.Size, Offset, Size))
     {
@@ -176,7 +176,7 @@ bool RHIValidationInternal::ValidateBufferRange(const CHAR* Caller, const FRHIBu
     return true;
 }
 
-bool RHIValidationInternal::ValidateIndirectCountBuffer(const CHAR* Operation, FRHIBuffer* CountBuffer, uint64 CountBufferOffset)
+bool RHIValidationInternal::ValidateIndirectCountBuffer(const CHAR_T* Operation, FRHIBuffer* CountBuffer, uint64 CountBufferOffset)
 {
     if (!CountBuffer || !CountBuffer->GetDesc().IsIndirectArguments())
     {
@@ -194,7 +194,7 @@ bool RHIValidationInternal::ValidateIndirectCountBuffer(const CHAR* Operation, F
     return true;
 }
 
-bool RHIValidationInternal::ValidateBufferView(const CHAR* Caller, const FRHIBufferDesc& BufferDesc, EBufferViewType ViewType, uint32 FirstElement, uint32 NumElements, EFormat Format)
+bool RHIValidationInternal::ValidateBufferView(const CHAR_T* Caller, const FRHIBufferDesc& BufferDesc, EBufferViewType ViewType, uint32 FirstElement, uint32 NumElements, EFormat Format)
 {
     if (ViewType == EBufferViewType::Unknown)
     {
@@ -257,7 +257,7 @@ bool RHIValidationInternal::ValidateBufferView(const CHAR* Caller, const FRHIBuf
     return ValidateBufferRange(Caller, BufferDesc, ByteOffset, ByteSize);
 }
 
-bool RHIValidationInternal::ValidateTextureMip(const CHAR* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, IntVector3& OutExtent)
+bool RHIValidationInternal::ValidateTextureMip(const CHAR_T* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, IntVector3& OutExtent)
 {
     if (MipLevel >= TextureDesc.NumMipLevels)
     {
@@ -271,7 +271,7 @@ bool RHIValidationInternal::ValidateTextureMip(const CHAR* Caller, const FRHITex
     return true;
 }
 
-bool RHIValidationInternal::ValidateTextureRegion2D(const CHAR* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, const FTextureRegion2D& Region)
+bool RHIValidationInternal::ValidateTextureRegion2D(const CHAR_T* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, const FTextureRegion2D& Region)
 {
     IntVector3 MipExtent;
     if (!ValidateTextureMip(Caller, TextureDesc, MipLevel, MipExtent))
@@ -295,7 +295,7 @@ bool RHIValidationInternal::ValidateTextureRegion2D(const CHAR* Caller, const FR
     return true;
 }
 
-bool RHIValidationInternal::ValidateTextureRegion3D(const CHAR* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, const FTextureRegion3D& Region)
+bool RHIValidationInternal::ValidateTextureRegion3D(const CHAR_T* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, const FTextureRegion3D& Region)
 {
     IntVector3 MipExtent;
     if (!ValidateTextureMip(Caller, TextureDesc, MipLevel, MipExtent))
@@ -320,7 +320,7 @@ bool RHIValidationInternal::ValidateTextureRegion3D(const CHAR* Caller, const FR
     return true;
 }
 
-bool RHIValidationInternal::ValidateTextureSlicesAndMips(const CHAR* Caller, const FRHITextureDesc& TextureDesc, uint32 BaseLayer, uint32 LayerCount,
+bool RHIValidationInternal::ValidateTextureSlicesAndMips(const CHAR_T* Caller, const FRHITextureDesc& TextureDesc, uint32 BaseLayer, uint32 LayerCount,
     uint32 FirstMip, uint32 NumMips, EFormat ViewFormat, EViewDimension ViewDimension)
 {
     if (ViewFormat == EFormat::Unknown)

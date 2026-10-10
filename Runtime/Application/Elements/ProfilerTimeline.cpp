@@ -27,7 +27,7 @@ static FFloatColor FromBytes(int32 R, int32 G, int32 B, int32 A = 255)
         static_cast<float>(B) * Scale, static_cast<float>(A) * Scale);
 }
 
-static uint32 HashScopeName(const CHAR* Name)
+static uint32 HashScopeName(const CHAR_T* Name)
 {
     uint32 Hash = 2166136261u;
     if (!Name)
@@ -44,7 +44,7 @@ static uint32 HashScopeName(const CHAR* Name)
     return Hash;
 }
 
-static FFloatColor GetBarFill(const CHAR* Name, bool bIsGpu, int32 Depth)
+static FFloatColor GetBarFill(const CHAR_T* Name, bool bIsGpu, int32 Depth)
 {
     const float Hue          = static_cast<float>(HashScopeName(Name) % 360u) / 60.0f;
     const float Saturation   = bIsGpu ? 0.68f : 0.58f;

@@ -7,16 +7,16 @@ class FRHICommandList;
 
 struct FGPUProfilerInterval
 {
-    const CHAR* Name = nullptr;
-    uint64      StartNanoseconds = 0;
-    uint64      EndNanoseconds = 0;
-    uint64      InclusiveNanoseconds = 0;
-    uint64      ExclusiveNanoseconds = 0;
-    int32       ParentIndex = -1;
-    int32       Depth = 0;
-    bool        bInstant = false;
+    const CHAR_T* Name = nullptr;
+    uint64        StartNanoseconds = 0;
+    uint64        EndNanoseconds = 0;
+    uint64        InclusiveNanoseconds = 0;
+    uint64        ExclusiveNanoseconds = 0;
+    int32         ParentIndex = -1;
+    int32         Depth = 0;
+    bool          bInstant = false;
     FRHIPipelineStatistics PipelineStats;
-    bool        bHasPipelineStats = false;
+    bool          bHasPipelineStats = false;
 };
 
 struct FProfilerGpuFrame
@@ -39,8 +39,8 @@ struct IGPUProfiler
     virtual void EndGPUFrame() = 0;
     virtual void MarkGPUFrameBegin(FRHICommandList& CommandList) = 0;
     virtual void MarkGPUFrameEnd(FRHICommandList& CommandList) = 0;
-    virtual void BeginGPUTrace(FRHICommandList& CommandList, const CHAR* Name) = 0;
-    virtual void EndGPUTrace(FRHICommandList& CommandList, const CHAR* Name) = 0;
+    virtual void BeginGPUTrace(FRHICommandList& CommandList, const CHAR_T* Name) = 0;
+    virtual void EndGPUTrace(FRHICommandList& CommandList, const CHAR_T* Name) = 0;
 
     virtual void SetRetainAllFrames(bool bInRetainAllFrames) = 0;
     virtual void EnablePipelineStatistics()  = 0;

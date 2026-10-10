@@ -90,18 +90,18 @@ struct CORE_API FProfilerReport
      * @param Text The raw scope name.
      * @return Text with quotes and backslashes escaped.
      */
-    static String EscapeChromeString(const CHAR* Text);
+    static String EscapeChromeString(const CHAR_T* Text);
 
     /**
      * @brief Appends a complete (ph=X) Chrome trace event.
      */
-    static void AppendChromeCompleteEvent(String& Out, const CHAR* Name, const CHAR* Category,
+    static void AppendChromeCompleteEvent(String& Out, const CHAR_T* Name, const CHAR_T* Category,
         double TimestampUs, double DurationUs, int32 Pid, int64 Tid);
 
     /**
      * @brief Appends an instant (ph=i) Chrome trace event.
      */
-    static void AppendChromeInstantEvent(String& Out, const CHAR* Name, const CHAR* Category,
+    static void AppendChromeInstantEvent(String& Out, const CHAR_T* Name, const CHAR_T* Category,
         double TimestampUs, int32 Pid, int64 Tid);
 
     /**

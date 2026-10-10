@@ -65,7 +65,7 @@ bool RemoteShaderCompilerProtocol::TryDecodeFrame(TArray<uint8>& InOutBuffer, FF
     Frame.Type      = FrameHeader.Type;
     Frame.RequestId = FrameHeader.RequestId;
 
-    const CHAR* HeaderText = reinterpret_cast<const CHAR*>(InOutBuffer.Data() + FrameHeaderSize);
+    const CHAR_T* HeaderText = reinterpret_cast<const CHAR_T*>(InOutBuffer.Data() + FrameHeaderSize);
     if (FrameHeader.HeaderSize > 0)
     {
         if (!Json::Parse(StringView(HeaderText, static_cast<int32>(FrameHeader.HeaderSize)), Frame.Header) || !Frame.Header.IsObject())
@@ -201,7 +201,7 @@ bool RemoteShaderCompilerProtocol::IdentityFromJson(const FJsonValue& Value, FSh
     return true;
 }
 
-const CHAR* RemoteShaderCompilerProtocol::GetPlatformName()
+const CHAR_T* RemoteShaderCompilerProtocol::GetPlatformName()
 {
 #if PLATFORM_WINDOWS
     return "Windows";

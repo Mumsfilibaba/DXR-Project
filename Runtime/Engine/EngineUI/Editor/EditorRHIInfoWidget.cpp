@@ -165,10 +165,10 @@ void FEditorRHIInfoWidget::DrawResourceMemory()
 void FEditorRHIInfoWidget::DrawAllocatorDetails()
 {
     const FStatRegistry& Registry = FStatRegistry::Get();
-    TArray<const CHAR*> Groups;
+    TArray<const CHAR_T*> Groups;
     Registry.GetGroups(Groups);
 
-    for (const CHAR* GroupName : Groups)
+    for (const CHAR_T* GroupName : Groups)
     {
         const bool bIsRHIDetailGroup =
             (CString::Strcmp(GroupName, "D3D11 Resources") == 0) ||

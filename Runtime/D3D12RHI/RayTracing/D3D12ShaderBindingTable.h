@@ -40,7 +40,7 @@ constexpr bool IsResourceDescriptorHeap(ED3D12LocalTableDescriptorType Descripto
 
 struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) FD3D12ShaderBindingTableEntry
 {
-    CHAR                      ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES] = {};
+    CHAR_T                    ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES] = {};
     D3D12_GPU_VIRTUAL_ADDRESS RootDescriptors[D3D12_MAX_LOCAL_RECORD_ENTRIES]         = {};
 };
 

@@ -891,7 +891,7 @@ void FDrawCommandList::StoreText(FDrawCommand& Command, StringView InText)
 
     const int32 Start = TextPool.Size();
     TextPool.AppendUninitialized(InText.Length());
-    Memory::Memcpy(TextPool.Data() + Start, InText.Data(), static_cast<uint32>(InText.Length()) * sizeof(CHAR));
+    Memory::Memcpy(TextPool.Data() + Start, InText.Data(), static_cast<uint32>(InText.Length()) * sizeof(CHAR_T));
 }
 
 void FDrawCommandList::BuildArcPoints(const Vector2& Center, float Radius, float StartAngle, float EndAngle, int32 Segments)

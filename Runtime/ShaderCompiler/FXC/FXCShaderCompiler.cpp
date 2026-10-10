@@ -11,7 +11,7 @@ static TAutoConsoleVariable<bool> CVarFXCWarningsAsErrors(
     "Treat FXC warnings as errors. FXC warns about implicit truncations that DXC accepts.",
     false);
 
-static const CHAR* GetFXCProfile(EShaderStage Stage)
+static const CHAR_T* GetFXCProfile(EShaderStage Stage)
 {
     switch (Stage)
     {
@@ -125,7 +125,7 @@ bool FFXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
 {
     const FShaderCompileInfo& CompileInfo = *Request.CompileInfo;
 
-    const CHAR* Profile = GetFXCProfile(CompileInfo.ShaderStage);
+    const CHAR_T* Profile = GetFXCProfile(CompileInfo.ShaderStage);
     if (!Profile)
     {
         OutResult.Messages = String::Printf("Stage %s cannot be compiled to DXBC", ToString(CompileInfo.ShaderStage));
@@ -158,7 +158,7 @@ bool FFXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
 
     if (ErrorBlob && ErrorBlob->GetBufferSize() > 0)
     {
-        const CHAR* Messages = reinterpret_cast<const CHAR*>(ErrorBlob->GetBufferPointer());
+        const CHAR_T* Messages = reinterpret_cast<const CHAR_T*>(ErrorBlob->GetBufferPointer());
 
         int32 Length = static_cast<int32>(ErrorBlob->GetBufferSize());
         while (Length > 0 && Messages[Length - 1] == '\0')

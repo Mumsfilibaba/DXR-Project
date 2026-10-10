@@ -85,7 +85,7 @@ static uint32 ReadBigEndian32(const uint8* Bytes)
     return (static_cast<uint32>(Bytes[0]) << 24) | (static_cast<uint32>(Bytes[1]) << 16) | (static_cast<uint32>(Bytes[2]) << 8) | Bytes[3];
 }
 
-static const CHAR* GetMachExceptionName(exception_type_t ExceptionType)
+static const CHAR_T* GetMachExceptionName(exception_type_t ExceptionType)
 {
     switch (ExceptionType)
     {
@@ -112,7 +112,7 @@ static const CHAR* GetMachExceptionName(exception_type_t ExceptionType)
     }
 }
 
-static const CHAR* GetSignalName(int32 Signal)
+static const CHAR_T* GetSignalName(int32 Signal)
 {
     switch (Signal)
     {
@@ -139,14 +139,14 @@ static const CHAR* GetSignalName(int32 Signal)
     }
 }
 
-static void ReportCrash(const CHAR* ExceptionName, uint64 ExceptionCode, uint64 FaultAddress, thread_t Thread)
+static void ReportCrash(const CHAR_T* ExceptionName, uint64 ExceptionCode, uint64 FaultAddress, thread_t Thread)
 {
     if (FPlatformAtomic::InterlockedCompareExchange(&GIsReporting, 1, 0) != 0)
     {
         return;
     }
 
-    CHAR ThreadName[MAX_THREAD_NAME_LENGTH] = {};
+    CHAR_T ThreadName[MAX_THREAD_NAME_LENGTH] = {};
     if (pthread_t PosixThread = ::pthread_from_mach_thread_np(Thread))
     {
         ::pthread_getname_np(PosixThread, ThreadName, sizeof(ThreadName));
@@ -312,8 +312,8 @@ static void CrashSignalHandler(int32 Signal, siginfo_t* SignalInfo, void*)
 
 static void HandleUncaughtObjectiveCException(NSException* Exception)
 {
-    const CHAR* Name   = Exception.name   ? [Exception.name UTF8String]   : "Unknown";
-    const CHAR* Reason = Exception.reason ? [Exception.reason UTF8String] : "None";
+    const CHAR_T* Name   = Exception.name   ? [Exception.name UTF8String]   : "Unknown";
+    const CHAR_T* Reason = Exception.reason ? [Exception.reason UTF8String] : "None";
 
     LOG_ERROR("Uncaught Objective-C exception: %s - %s", Name, Reason);
     FOutputDeviceManager::Get()->Flush();
@@ -337,7 +337,7 @@ bool FMacPlatformMisc::IsDebuggerPresent()
     return (Info.kp_proc.p_flag & P_TRACED) != 0;
 }
 
-EAssertDialogResult FMacPlatformMisc::ShowAssertDialog(const CHAR* Title, const CHAR* Message)
+EAssertDialogResult FMacPlatformMisc::ShowAssertDialog(const CHAR_T* Title, const CHAR_T* Message)
 {
     CFStringRef TitleRef   = CFStringCreateWithCString(nullptr, Title,   kCFStringEncodingUTF8);
     CFStringRef MessageRef = CFStringCreateWithCString(nullptr, Message, kCFStringEncodingUTF8);

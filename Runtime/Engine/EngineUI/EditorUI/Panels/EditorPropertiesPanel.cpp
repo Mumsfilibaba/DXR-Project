@@ -27,7 +27,7 @@
 #include "Application/Menus/MenuAnchor.h"
 #include "Application/Style/UIStyle.h"
 
-static const CHAR* GMaterialTextureSlotNames[EMaterialTextureSlot::Count] =
+static const CHAR_T* GMaterialTextureSlotNames[EMaterialTextureSlot::Count] =
 {
     "Base Color",
     "Normal",
@@ -38,8 +38,8 @@ static const CHAR* GMaterialTextureSlotNames[EMaterialTextureSlot::Count] =
     "Mask D",
 };
 
-static const CHAR* GNormalMapAxisLabels[2] = { "-Y (DirectX)", "+Y (OpenGL)" };
-static const CHAR* GDegreeSuffix           = "\xB0";
+static const CHAR_T* GNormalMapAxisLabels[2] = { "-Y (DirectX)", "+Y (OpenGL)" };
+static const CHAR_T* GDegreeSuffix           = "\xB0";
 
 constexpr float REVERT_EPSILON = 0.00005f;
 
@@ -615,7 +615,7 @@ void FEditorPropertiesPanel::BuildDirectionalLightSection(const TSharedPtr<FVert
     AddSection(InColumn, "Cascades", CascadeTable);
 }
 
-void FEditorPropertiesPanel::AddLightSettingRows(const TSharedPtr<FPropertyTable>& Table, FLightComponent* Component, const CHAR* IntensityLabel)
+void FEditorPropertiesPanel::AddLightSettingRows(const TSharedPtr<FPropertyTable>& Table, FLightComponent* Component, const CHAR_T* IntensityLabel)
 {
     const Vector3     Color        = Component->GetColor();
     const FFloatColor ColorDefault = FFloatColor::White;

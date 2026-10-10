@@ -59,7 +59,7 @@ static TSet<uint64>& GetSuppressedSites()
 }
 
 /** The __FILE__ literal for a given call site always has the same address, so the pointer identifies the file without hashing its contents. */
-static uint64 CreateSiteKey(const CHAR* Filename, int32 Line)
+static uint64 CreateSiteKey(const CHAR_T* Filename, int32 Line)
 {
     const uint64 FileKey = static_cast<uint64>(reinterpret_cast<uintptr_t>(Filename));
     return (FileKey * 1099511628211ull) ^ static_cast<uint64>(Line);
@@ -75,7 +75,7 @@ static uint64 CreateSiteKey(const CHAR* Filename, int32 Line)
     ::abort();
 }
 
-EAssertAction Assert::OnFailed(const CHAR* Expression, const CHAR* Filename, int32 Line, const CHAR* Format, ...)
+EAssertAction Assert::OnFailed(const CHAR_T* Expression, const CHAR_T* Filename, int32 Line, const CHAR_T* Format, ...)
 {
     // An assert raised while reporting an assert cannot be reported. Fail hard instead of recursing.
     if (IsHandlingAssertOnThisThread())
@@ -86,7 +86,7 @@ EAssertAction Assert::OnFailed(const CHAR* Expression, const CHAR* Filename, int
 
     SetHandlingAssertOnThisThread(true);
 
-    CHAR Context[MaxAssertMessageLength];
+    CHAR_T Context[MaxAssertMessageLength];
     Context[0] = 0;
 
     if (Format)

@@ -150,17 +150,17 @@ void FWindowsConsoleWindow::SetTextColor(EConsoleTextColor Color)
     }
 }
 
-void FWindowsConsoleWindow::Write(const CHAR* Data, uint32 Length)
+void FWindowsConsoleWindow::Write(const CHAR_T* Data, uint32 Length)
 {
     DWORD ConsoleMode = 0;
     if (::GetConsoleMode(ConsoleHandle, &ConsoleMode))
     {
-        const TStringConversion<WIDECHAR, CHAR> WideData = StringCast<WIDECHAR>(Data, static_cast<int32>(Length));
+        const TStringConversion<WIDECHAR, CHAR_T> WideData = StringCast<WIDECHAR>(Data, static_cast<int32>(Length));
         ::WriteConsoleW(ConsoleHandle, WideData.Get(), static_cast<DWORD>(WideData.Length()), nullptr, nullptr);
     }
     else
     {
-        const TStringConversion<ANSICHAR, CHAR> Utf8Data = StringCast<ANSICHAR>(Data, static_cast<int32>(Length));
+        const TStringConversion<ANSICHAR, CHAR_T> Utf8Data = StringCast<ANSICHAR>(Data, static_cast<int32>(Length));
         ::WriteFile(ConsoleHandle, Utf8Data.Get(), static_cast<DWORD>(Utf8Data.Length()), nullptr, nullptr);
     }
 }

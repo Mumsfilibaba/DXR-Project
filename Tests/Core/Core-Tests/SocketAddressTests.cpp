@@ -11,12 +11,12 @@ static constexpr uint16 GTestPort = 9370;
 static constexpr uint32 GLoopbackIPv4 = 0x7F000001;
 static constexpr uint32 GPrivateIPv4  = 0x0A000001;
 
-static bool Parse(const CHAR* Text, FSocketAddress& OutAddress)
+static bool Parse(const CHAR_T* Text, FSocketAddress& OutAddress)
 {
     return FPlatformSocket::ParseAddress(Text, GTestPort, OutAddress);
 }
 
-static bool ParsesAsLoopback(const CHAR* Text)
+static bool ParsesAsLoopback(const CHAR_T* Text)
 {
     FSocketAddress Address;
     return Parse(Text, Address) && Address.IsLoopback();

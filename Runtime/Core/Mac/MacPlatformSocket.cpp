@@ -156,7 +156,7 @@ bool FMacPlatformSocket::ParseAddress(const String& Text, uint16 Port, FSocketAd
 
 String FMacPlatformSocket::AddressToString(const FSocketAddress& Address)
 {
-    CHAR Buffer[INET6_ADDRSTRLEN] = {};
+    CHAR_T Buffer[INET6_ADDRSTRLEN] = {};
     if (Address.IsIPv4())
     {
         in_addr IPv4;

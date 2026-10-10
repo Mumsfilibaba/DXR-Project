@@ -112,7 +112,7 @@ void Func(int32 Num)
     LOG_INFO("%d", Num);
 }
 
-auto Func2(CHAR) -> int(*)()
+auto Func2(CHAR_T) -> int(*)()
 {
     return nullptr;
 }
@@ -125,8 +125,8 @@ static int32 RunTemplateTests()
     LOG_INFO("=== Template Tests ===");
 
     /* Is Same */
-    static_assert(TIsSame<int, int>::Value  == true);
-    static_assert(TIsSame<int, CHAR>::Value == false);
+    static_assert(TIsSame<int, int>::Value    == true);
+    static_assert(TIsSame<int, CHAR_T>::Value == false);
 
     /* Is Array */
     static_assert(TIsArray<int>::Value    == false);
@@ -298,7 +298,7 @@ static int32 RunTemplateTests()
     static_assert(TIsInteger<float>::Value        == false);
     static_assert(TIsInteger<double>::Value       == false);
     static_assert(TIsInteger<long double>::Value  == false);
-    static_assert(TIsInteger<CHAR>::Value         == true);
+    static_assert(TIsInteger<CHAR_T>::Value       == true);
     static_assert(TIsInteger<int>::Value          == true);
     static_assert(TIsInteger<const int>::Value    == true);
     static_assert(TIsInteger<unsigned int>::Value == true);
@@ -312,7 +312,7 @@ static int32 RunTemplateTests()
     static_assert(TIsFloatingPoint<double>::Value       == true);
     static_assert(TIsFloatingPoint<const double>::Value == true);
     static_assert(TIsFloatingPoint<long double>::Value  == true);
-    static_assert(TIsFloatingPoint<CHAR>::Value         == false);
+    static_assert(TIsFloatingPoint<CHAR_T>::Value       == false);
     static_assert(TIsFloatingPoint<int>::Value          == false);
     static_assert(TIsFloatingPoint<const int>::Value    == false);
     static_assert(TIsFloatingPoint<long long>::Value    == false);
@@ -414,12 +414,12 @@ static int32 RunTemplateTests()
     /* Is Invokable */
     static_assert(TIsInvokable<int()>::Value                            == true);
     static_assert(TIsInvokable<int(), int>::Value                       == false);
-    static_assert(TIsInvokableReturn<int(), int>::Value                      == true);
-    static_assert(TIsInvokableReturn<int(), int*>::Value                     == false);
-    static_assert(TIsInvokableReturn<void(int), void, int>::Value            == true);
-    static_assert(TIsInvokableReturn<void(int), void, void>::Value           == false);
-    static_assert(TIsInvokableReturn<decltype(Func2), int(*)(), CHAR>::Value == true);
-    static_assert(TIsInvokableReturn<decltype(Func2), int(*)(), void>::Value == false);
+    static_assert(TIsInvokableReturn<int(), int>::Value                        == true);
+    static_assert(TIsInvokableReturn<int(), int*>::Value                       == false);
+    static_assert(TIsInvokableReturn<void(int), void, int>::Value              == true);
+    static_assert(TIsInvokableReturn<void(int), void, void>::Value             == false);
+    static_assert(TIsInvokableReturn<decltype(Func2), int(*)(), CHAR_T>::Value == true);
+    static_assert(TIsInvokableReturn<decltype(Func2), int(*)(), void>::Value   == false);
 
     /* Is Member-pointer */
     static_assert(TIsMemberPointer<int FClass::*>::Value == true);

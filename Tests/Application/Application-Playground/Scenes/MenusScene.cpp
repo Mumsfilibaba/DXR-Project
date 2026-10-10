@@ -217,8 +217,8 @@ static TSharedPtr<FVisualElement> MakeComboBoxRow(const FPlaygroundFonts& Fonts)
 
     struct FSample
     {
-        const CHAR* Label;
-        int32       InitialIndex;
+        const CHAR_T* Label;
+        int32         InitialIndex;
     };
 
     const FSample Samples[] =

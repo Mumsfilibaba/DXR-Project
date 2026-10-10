@@ -64,15 +64,15 @@ public:
     void            BeginCommandBuffer(FMetalCommands* InCommands);
     FMetalCommands* EndCommandBuffer();
 
-    id<MTLRenderCommandEncoder>                BeginRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR* Label);
-    id<MTLRenderCommandEncoder>                AdoptRenderEncoder(id<MTLRenderCommandEncoder> SubEncoder, const CHAR* Label);
+    id<MTLRenderCommandEncoder>                BeginRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR_T* Label);
+    id<MTLRenderCommandEncoder>                AdoptRenderEncoder(id<MTLRenderCommandEncoder> SubEncoder, const CHAR_T* Label);
     id<MTLComputeCommandEncoder>               RequireComputeEncoder();
     id<MTLBlitCommandEncoder>                  RequireBlitEncoder();
     id<MTLAccelerationStructureCommandEncoder> RequireAccelerationStructureEncoder();
-    id<MTLParallelRenderCommandEncoder>        BeginParallelRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR* Label);
+    id<MTLParallelRenderCommandEncoder>        BeginParallelRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR_T* Label);
     void                                       EndParallelRenderEncoder(id<MTLParallelRenderCommandEncoder> ParallelEncoder);
 
-    void EncodeLoadStorePass(MTLRenderPassDescriptor* Descriptor, const CHAR* Label);
+    void EncodeLoadStorePass(MTLRenderPassDescriptor* Descriptor, const CHAR_T* Label);
     void EndEncoder();
     void MemoryBarrier();
 
@@ -122,10 +122,10 @@ public:
 
 private:
     template<EMetalEncoderType Type, typename OpenFunctionType>
-    id<MTLCommandEncoder> OpenEncoder(OpenFunctionType&& Open, const CHAR* Label);
+    id<MTLCommandEncoder> OpenEncoder(OpenFunctionType&& Open, const CHAR_T* Label);
     void PrepareToOpen();
     void WaitForPublishedUploads();
-    id<MTLRenderCommandEncoder> OpenRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR* Label);
+    id<MTLRenderCommandEncoder> OpenRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR_T* Label);
     void ResolvePendingClears(MTLRenderPassDescriptor* Descriptor);
     void ResolvePendingDiscards(MTLRenderPassDescriptor* Descriptor);
     void EncodePendingClear(const FMetalPendingClear& Clear);
@@ -134,7 +134,7 @@ private:
     void PrepareBindless(CommandEncoderType InEncoder);
     void EncodeTimestampPass(uint32 StartIndex, uint32 EndIndex);
     uint32 TakeScheduledTimestamp();
-    NSString* MakeEncoderLabel(const CHAR* Label) const;
+    NSString* MakeEncoderLabel(const CHAR_T* Label) const;
 #if !METAL_ASSUME_APPLE_GPU
     bool CanSampleInOpenEncoder() const;
     void SampleInOpenEncoder(id<MTLCounterSampleBuffer> SampleBuffer, uint32 SampleIndex);

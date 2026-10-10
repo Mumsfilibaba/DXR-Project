@@ -126,17 +126,17 @@ private:
 
     NODISCARD static FOpenSplitKey CreateSplitKey(const FRHITransitionBarrierDesc& Desc);
 
-    bool ValidateRecordingPhase(const CHAR* Caller) const;
+    bool ValidateRecordingPhase(const CHAR_T* Caller) const;
     bool ValidateTransitionBarrierDesc(const FRHITransitionBarrierDesc& Desc);
     bool ValidateUnorderedAccessBarrierDesc(const FRHIUnorderedAccessBarrierDesc& Desc);
-    bool ValidateNoOpenSplit(const FRHIResource* Resource, const CHAR* Caller) const;
+    bool ValidateNoOpenSplit(const FRHIResource* Resource, const CHAR_T* Caller) const;
     void MarkAccelerationStructureWritten(const FRHIRayTracingAccelerationStructure* AccelerationStructure);
-    void ValidateAccelerationStructureBarrier(const FRHIRayTracingAccelerationStructure* AccelerationStructure, const CHAR* Caller);
-    void ValidateSceneAccelerationStructureBarriers(const CHAR* Caller);
-    bool ValidateBackBufferRead(const FRHIResource* Resource, const CHAR* Caller);
-    bool ValidateBackBufferWrite(const FRHIResource* Resource, const CHAR* Caller);
-    bool ValidateBackBufferViewRead(const FRHIResourceView* View, const CHAR* Caller);
-    bool ValidateBackBufferViewWrite(const FRHIResourceView* View, const CHAR* Caller);
+    void ValidateAccelerationStructureBarrier(const FRHIRayTracingAccelerationStructure* AccelerationStructure, const CHAR_T* Caller);
+    void ValidateSceneAccelerationStructureBarriers(const CHAR_T* Caller);
+    bool ValidateBackBufferRead(const FRHIResource* Resource, const CHAR_T* Caller);
+    bool ValidateBackBufferWrite(const FRHIResource* Resource, const CHAR_T* Caller);
+    bool ValidateBackBufferViewRead(const FRHIResourceView* View, const CHAR_T* Caller);
+    bool ValidateBackBufferViewWrite(const FRHIResourceView* View, const CHAR_T* Caller);
 
     NODISCARD FRHIValidationSwapChain* FindSwapChain(const FRHIResource* Resource) const;
     NODISCARD int32 FindOpenSplit(const FOpenSplitKey& Key) const;

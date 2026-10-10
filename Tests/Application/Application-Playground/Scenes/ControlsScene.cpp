@@ -32,7 +32,7 @@ static TSharedPtr<FVisualElement> MakeButtonRow(const FPlaygroundFonts& Fonts)
     TSharedPtr<int32>          ClickCount = MakeSharedPtr<int32>(0);
     TSharedPtr<FHorizontalBox> Row        = FHorizontalBox::Create();
 
-    const CHAR* Labels[] = { "Save", "Cancel", "Bordered", "Disabled" };
+    const CHAR_T* Labels[] = { "Save", "Cancel", "Bordered", "Disabled" };
     for (int32 Index = 0; Index < static_cast<int32>(ARRAY_COUNT(Labels)); ++Index)
     {
         FButton::FDesc Desc;
@@ -72,7 +72,7 @@ static TSharedPtr<FVisualElement> MakeCheckBoxRow(const FPlaygroundFonts& Fonts)
 
     struct FSample
     {
-        const CHAR*    Label;
+        const CHAR_T*  Label;
         ECheckBoxState Initial;
         bool           bIsTriState;
         bool           bIsEnabled;
@@ -94,7 +94,7 @@ static TSharedPtr<FVisualElement> MakeCheckBoxRow(const FPlaygroundFonts& Fonts)
         Desc.bIsTriState    = Sample.bIsTriState;
         Desc.OnStateChanged = FOnCheckStateChanged::CreateLambda([Readout, Label = String(Sample.Label)](ECheckBoxState NewState)
         {
-            const CHAR* StateName = NewState == ECheckBoxState::Checked ? "checked" : (NewState == ECheckBoxState::Unchecked ? "unchecked" : "undetermined");
+            const CHAR_T* StateName = NewState == ECheckBoxState::Checked ? "checked" : (NewState == ECheckBoxState::Unchecked ? "unchecked" : "undetermined");
             Readout->SetText(String::Printf("%s is now %s", Label.Data(), StateName));
         });
 
@@ -116,12 +116,12 @@ static TSharedPtr<FVisualElement> MakeSliderRow(const FPlaygroundFonts& Fonts)
 
     struct FSample
     {
-        const CHAR* Label;
-        float       Min;
-        float       Max;
-        float       Value;
-        float       Step;
-        bool        bShowValueText;
+        const CHAR_T* Label;
+        float         Min;
+        float         Max;
+        float         Value;
+        float         Step;
+        bool          bShowValueText;
     };
 
     const FSample Samples[] =
@@ -185,7 +185,7 @@ static TSharedPtr<FVisualElement> MakeSpinBoxRow(const FPlaygroundFonts& Fonts)
     TSharedPtr<FTextBlock>     Readout = MakeReadout(Fonts, "drag across a field, or click one to type");
     TSharedPtr<FHorizontalBox> Row     = FHorizontalBox::Create();
 
-    const CHAR* Axes[] = { "X: ", "Y: ", "Z: " };
+    const CHAR_T* Axes[] = { "X: ", "Y: ", "Z: " };
     for (int32 Index = 0; Index < static_cast<int32>(ARRAY_COUNT(Axes)); ++Index)
     {
         FSpinBox::FDesc Desc;

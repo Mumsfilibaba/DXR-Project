@@ -11,7 +11,7 @@ D3D11RHI_API bool              GD3D11SupportsPartialConstantBufferUpdates = fals
 D3D11RHI_API uint32            GD3D11MaxUnorderedAccessViews              = D3D11_MAX_UNORDERED_ACCESS_VIEWS_FL11_0;
 D3D11RHI_API bool              GD3D11SupportsComposition                  = false;
 
-static const CHAR* ToString(D3D_FEATURE_LEVEL FeatureLevel)
+static const CHAR_T* ToString(D3D_FEATURE_LEVEL FeatureLevel)
 {
     switch (FeatureLevel)
     {
@@ -23,7 +23,7 @@ static const CHAR* ToString(D3D_FEATURE_LEVEL FeatureLevel)
 
 void DumpD3D11Capabilities()
 {
-    const auto YesNo = [](bool bBoolean) -> const CHAR*
+    const auto YesNo = [](bool bBoolean) -> const CHAR_T*
     {
         return bBoolean ? "Yes" : "No";
     };

@@ -55,7 +55,7 @@ static void AppendIntervalTree(String& Out, const TArray<FProfilerInterval>& Int
 
         AppendIndent(Out, Depth);
 
-        const CHAR* Name = Interval.Name ? Interval.Name : "<unnamed>";
+        const CHAR_T* Name = Interval.Name ? Interval.Name : "<unnamed>";
         if (Interval.bInstant)
         {
             Out.Append(String::Printf("%s  event\n", Name));
@@ -147,7 +147,7 @@ static void AppendChromeComma(String& Out)
     }
 }
 
-static void AppendChromeMetadata(String& Out, const CHAR* Name, int32 Pid, int64 Tid)
+static void AppendChromeMetadata(String& Out, const CHAR_T* Name, int32 Pid, int64 Tid)
 {
     AppendChromeComma(Out);
     Out.Append(String::Printf("{\"name\":\"thread_name\",\"ph\":\"M\",\"pid\":%d,\"tid\":%lld,\"args\":{\"name\":\"%s\"}}",
@@ -168,7 +168,7 @@ static void AppendFrameChromeEvents(String& Out, const FProfilerFrame& Frame, ui
             const uint64 StartDelta  = Interval.StartTimeStamp >= BaseStamp ? (Interval.StartTimeStamp - BaseStamp) : 0;
             const double TimestampUs = Time::ToMicroseconds(static_cast<double>(ProfilerTicksToNanoseconds(StartDelta, Frequency)));
 
-            const CHAR* Name = Interval.Name ? Interval.Name : "<unnamed>";
+            const CHAR_T* Name = Interval.Name ? Interval.Name : "<unnamed>";
             if (Interval.bInstant || Interval.InclusiveNanoseconds == 0)
             {
                 FProfilerReport::AppendChromeInstantEvent(Out, Name, "cpu", TimestampUs, Pid, Tid);
@@ -505,7 +505,7 @@ String FProfilerReport::BuildCpuAndBootText()
     return Text;
 }
 
-String FProfilerReport::EscapeChromeString(const CHAR* Text)
+String FProfilerReport::EscapeChromeString(const CHAR_T* Text)
 {
     String Out;
     if (!Text)
@@ -513,7 +513,7 @@ String FProfilerReport::EscapeChromeString(const CHAR* Text)
         return Out;
     }
 
-    for (const CHAR* Cursor = Text; *Cursor; ++Cursor)
+    for (const CHAR_T* Cursor = Text; *Cursor; ++Cursor)
     {
         if (*Cursor == '"' || *Cursor == '\\')
         {
@@ -532,7 +532,7 @@ String FProfilerReport::EscapeChromeString(const CHAR* Text)
     return Out;
 }
 
-void FProfilerReport::AppendChromeCompleteEvent(String& Out, const CHAR* Name, const CHAR* Category,
+void FProfilerReport::AppendChromeCompleteEvent(String& Out, const CHAR_T* Name, const CHAR_T* Category,
     double TimestampUs, double DurationUs, int32 Pid, int64 Tid)
 {
     AppendChromeComma(Out);
@@ -540,7 +540,7 @@ void FProfilerReport::AppendChromeCompleteEvent(String& Out, const CHAR* Name, c
         *EscapeChromeString(Name), Category ? Category : "cpu", TimestampUs, DurationUs, Pid, static_cast<long long>(Tid)));
 }
 
-void FProfilerReport::AppendChromeInstantEvent(String& Out, const CHAR* Name, const CHAR* Category,
+void FProfilerReport::AppendChromeInstantEvent(String& Out, const CHAR_T* Name, const CHAR_T* Category,
     double TimestampUs, int32 Pid, int64 Tid)
 {
     AppendChromeComma(Out);

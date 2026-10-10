@@ -26,7 +26,7 @@ static bool WaitUntilReadable(IPlatformSocket* Socket, uint32 TimeoutMillisecond
 
 static String ReceiveText(IPlatformSocket* Socket)
 {
-    CHAR Buffer[GReceiveBufferSize];
+    CHAR_T Buffer[GReceiveBufferSize];
     int32 BytesRead = 0;
     if (!WaitUntilReadable(Socket, GWaitMilliseconds) || (Socket->Recv(Buffer, sizeof(Buffer), BytesRead) != ESocketResult::Success))
     {
@@ -36,7 +36,7 @@ static String ReceiveText(IPlatformSocket* Socket)
     return String(Buffer, BytesRead);
 }
 
-static bool SendText(IPlatformSocket* Socket, const CHAR* Text)
+static bool SendText(IPlatformSocket* Socket, const CHAR_T* Text)
 {
     const int32 Length = CString::Strlen(Text);
     int32 BytesSent = 0;
@@ -146,7 +146,7 @@ bool PlatformSocket_Test()
 
     TEST_SECTION("A non-blocking receive with nothing pending would block");
     {
-        CHAR Buffer[GSmallBufferSize];
+        CHAR_T Buffer[GSmallBufferSize];
         int32 BytesRead = 0;
         TEST_EXPECT_EQ(Server->Recv(Buffer, sizeof(Buffer), BytesRead), ESocketResult::WouldBlock);
         TEST_EXPECT_EQ(BytesRead, 0);
@@ -157,7 +157,7 @@ bool PlatformSocket_Test()
     TEST_EXPECT(!Client->IsValid());
     TEST_EXPECT(WaitUntilReadable(Server.Get(), GWaitMilliseconds));
     {
-        CHAR Buffer[GSmallBufferSize];
+        CHAR_T Buffer[GSmallBufferSize];
         int32 BytesRead = 0;
         TEST_EXPECT_EQ(Server->Recv(Buffer, sizeof(Buffer), BytesRead), ESocketResult::Closed);
     }
@@ -273,7 +273,7 @@ bool PlatformSocket_Test()
         TEST_EXPECT_EQ(BytesSent, 5);
 
         TEST_CHECK(WaitUntilReadable(Receiver.Get(), GWaitMilliseconds));
-        CHAR Buffer[GSmallBufferSize];
+        CHAR_T Buffer[GSmallBufferSize];
         int32 BytesRead = 0;
         FSocketAddress From;
         TEST_EXPECT_EQ(Receiver->RecvFrom(Buffer, sizeof(Buffer), BytesRead, From), ESocketResult::Success);
@@ -297,7 +297,7 @@ bool PlatformSocket_Test()
             TEST_EXPECT_EQ(Sender->SendTo("four", 4, FSocketAddress::LoopbackIPv4(ReceiverPort), BytesSent), ESocketResult::Success);
 
             TEST_CHECK(WaitUntilReadable(Receiver.Get(), GWaitMilliseconds));
-            CHAR Buffer[GSmallBufferSize];
+            CHAR_T Buffer[GSmallBufferSize];
             int32 BytesRead = 0;
             FSocketAddress From;
             TEST_EXPECT_EQ(Receiver->RecvFrom(Buffer, sizeof(Buffer), BytesRead, From), ESocketResult::Success);
@@ -327,17 +327,17 @@ bool PlatformSocket_Test()
         TUniquePtr<IPlatformSocket> Sender(FPlatformSocket::Create(ESocketType::UDP, ESocketFamily::IPv4));
         TEST_CHECK(Sender.IsValid());
 
-        CHAR Large[GLargeDatagramSize];
+        CHAR_T Large[GLargeDatagramSize];
         for (int32 Index = 0; Index < GLargeDatagramSize; ++Index)
         {
-            Large[Index] = static_cast<CHAR>('a' + (Index % 26));
+            Large[Index] = static_cast<CHAR_T>('a' + (Index % 26));
         }
 
         int32 BytesSent = 0;
         TEST_EXPECT_EQ(Sender->SendTo(Large, GLargeDatagramSize, ReceiverAddress, BytesSent), ESocketResult::Success);
         TEST_CHECK(WaitUntilReadable(Receiver.Get(), GWaitMilliseconds));
 
-        CHAR Small[GTruncatedReadSize];
+        CHAR_T Small[GTruncatedReadSize];
         int32 BytesRead = 0;
         FSocketAddress From;
         TEST_EXPECT_EQ(Receiver->RecvFrom(Small, GTruncatedReadSize, BytesRead, From), ESocketResult::Success);

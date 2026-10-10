@@ -52,7 +52,7 @@ static TAutoConsoleVariable<int32> CVarVulkanNumBindlessSamplerDescriptors(
     2048);
 
 #if VULKAN_VALIDATE_NO_NULL_DESCRIPTORS
-static const CHAR* GetDescriptorTypeName(VkDescriptorType Type)
+static const CHAR_T* GetDescriptorTypeName(VkDescriptorType Type)
 {
     switch (Type)
     {
@@ -657,9 +657,9 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
             const uint16 OriginalBinding = (BindIdx < RemappingInfo.RemappingInfo.Size()) ? RemappingInfo.RemappingInfo[BindIdx].OriginalBindingIndex : 0;
 
         #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
-            const CHAR* BindingName = Layout->GetBindingDebugName(Index, BindIdx);
+            const CHAR_T* BindingName = Layout->GetBindingDebugName(Index, BindIdx);
         #else
-            const CHAR* BindingName = "";
+            const CHAR_T* BindingName = "";
         #endif
 
             if (WriteInfo.pBufferInfo)

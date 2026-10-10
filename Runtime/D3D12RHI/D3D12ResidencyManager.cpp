@@ -54,7 +54,7 @@ FD3D12PagingWorker::~FD3D12PagingWorker()
     }
 }
 
-bool FD3D12PagingWorker::Initialize(const CHAR* InThreadName)
+bool FD3D12PagingWorker::Initialize(const CHAR_T* InThreadName)
 {
     WakeEvent = FPlatformEvent::Create(false);
     if (!WakeEvent)

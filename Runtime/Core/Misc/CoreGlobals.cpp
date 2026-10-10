@@ -6,7 +6,7 @@
 
 bool GIsEngineExitRequested = false;
 
-void RequestEngineExit(const CHAR* ExitReason)
+void RequestEngineExit(const CHAR_T* ExitReason)
 {
     LOG_INFO("Engine Exit is requested. Reason '%s'", ExitReason);
     GIsEngineExitRequested = true;

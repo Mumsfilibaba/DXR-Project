@@ -62,12 +62,12 @@ inline constexpr float EditorDefaultWindowMaxHeight      = 960.0f;
 
 struct FSubMenuState
 {
-    FPopupAnchor Anchor;
-    const CHAR*  Label        = nullptr;
-    const CHAR*  PopupId      = nullptr;
-    float        LabelIndentX = MenuLabelIndentX;
-    float        MinWidth     = MenuDefaultMinWidth;
-    bool         bRowHovered  = false;
+    FPopupAnchor  Anchor;
+    const CHAR_T* Label        = nullptr;
+    const CHAR_T* PopupId      = nullptr;
+    float         LabelIndentX = MenuLabelIndentX;
+    float         MinWidth     = MenuDefaultMinWidth;
+    bool          bRowHovered  = false;
 };
 
 struct FRichTextSpan
@@ -104,13 +104,13 @@ struct FRichTextViewContext
         bSelecting    = false;
     }
 
-    const CHAR* GetSpanText(const FRichTextSpan& InSpan) const
+    const CHAR_T* GetSpanText(const FRichTextSpan& InSpan) const
     {
         return TextArena.Data() + InSpan.TextOffset;
     }
 
     TArray<FRichTextLine>   Lines;
-    TArray<CHAR>            TextArena;
+    TArray<CHAR_T>          TextArena;
     FRichTextSelectionPoint SelStart;
     FRichTextSelectionPoint SelEnd;
     ImFont*                 MeasuredFont        = nullptr;
@@ -228,7 +228,7 @@ struct ENGINE_API EditorHelpers
         return ImGui::GetColorU32(BrighterColor);
     }
 
-    static const CHAR* GetTrimmedQuery(const CHAR* InText, CHAR* OutBuf, int32 OutBufSize);
+    static const CHAR_T* GetTrimmedQuery(const CHAR_T* InText, CHAR_T* OutBuf, int32 OutBufSize);
     static void FormatBytes(int64 Bytes, char* OutBuffer, int32 BufferSize);
 };
 
@@ -242,35 +242,35 @@ struct ENGINE_API EditorWidgets
     // Inputs
     // -----------------------------------------------------------------------------------------
 
-    static bool DrawFloat3Control(const CHAR* Label, Vector3& OutValue, float Speed, const Vector3* InRevertValue, EVector3ControlType InType);
-    static bool DrawFloatProperty(const CHAR* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const CHAR* Format, bool bUseSlider, const float* InRevertValue, bool bEnabled = true);
-    static bool DrawIntProperty(const CHAR* Label, int32& InOutValue, float Speed, int32 MinValue, int32 MaxValue, const CHAR* Format, bool bUseSlider, const int32* InRevertValue, bool bEnabled = true);
-    static bool DrawCheckbox(const CHAR* Label, bool& InOutValue, bool bEnabled = true);
-    static bool DrawCheckboxProperty(const CHAR* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled = true);
-    static bool DrawComboProperty(const CHAR* Label, int32& InOutValue, const CHAR* const* Items, int32 ItemCount, const int32* InRevertValue, bool bEnabled = true);
-    static bool DrawTextProperty(const CHAR* Label, const CHAR* ValueText);
-    static void DrawReadOnlyFloat3Property(const CHAR* Label, const Vector3& Value);
+    static bool DrawFloat3Control(const CHAR_T* Label, Vector3& OutValue, float Speed, const Vector3* InRevertValue, EVector3ControlType InType);
+    static bool DrawFloatProperty(const CHAR_T* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const CHAR_T* Format, bool bUseSlider, const float* InRevertValue, bool bEnabled = true);
+    static bool DrawIntProperty(const CHAR_T* Label, int32& InOutValue, float Speed, int32 MinValue, int32 MaxValue, const CHAR_T* Format, bool bUseSlider, const int32* InRevertValue, bool bEnabled = true);
+    static bool DrawCheckbox(const CHAR_T* Label, bool& InOutValue, bool bEnabled = true);
+    static bool DrawCheckboxProperty(const CHAR_T* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled = true);
+    static bool DrawComboProperty(const CHAR_T* Label, int32& InOutValue, const CHAR_T* const* Items, int32 ItemCount, const int32* InRevertValue, bool bEnabled = true);
+    static bool DrawTextProperty(const CHAR_T* Label, const CHAR_T* ValueText);
+    static void DrawReadOnlyFloat3Property(const CHAR_T* Label, const Vector3& Value);
 
-    static void DrawTextureProperty(const CHAR* Label, ImTextureID Texture, float PreviewSize = 48.0f);
+    static void DrawTextureProperty(const CHAR_T* Label, ImTextureID Texture, float PreviewSize = 48.0f);
 
-    static bool DrawColor3Property(const CHAR* Label, float* InOutColor, const float* InRevertColor, bool bEnabled, ImGuiColorEditFlags Flags);
+    static bool DrawColor3Property(const CHAR_T* Label, float* InOutColor, const float* InRevertColor, bool bEnabled, ImGuiColorEditFlags Flags);
  
-    static FORCEINLINE bool DrawColor3Property(const CHAR* Label, FFloatColor& InOutColor, const FFloatColor& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
+    static FORCEINLINE bool DrawColor3Property(const CHAR_T* Label, FFloatColor& InOutColor, const FFloatColor& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
     {
         return DrawColor3Property(Label, InOutColor.RGBA, InRevertColor.RGBA, bEnabled, Flags);
     }
 
-    static FORCEINLINE bool DrawColor3Property(const CHAR* Label, Vector3& InOutColor, const Vector3& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
+    static FORCEINLINE bool DrawColor3Property(const CHAR_T* Label, Vector3& InOutColor, const Vector3& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
     {
         return DrawColor3Property(Label, InOutColor.XYZ, InRevertColor.XYZ, bEnabled, Flags);
     }
 
-    static FORCEINLINE bool DrawColorEdit3(const CHAR* Label, Vector3& OutColor, ImGuiColorEditFlags Flags = 0)
+    static FORCEINLINE bool DrawColorEdit3(const CHAR_T* Label, Vector3& OutColor, ImGuiColorEditFlags Flags = 0)
     {
         return ImGui::ColorEdit3(Label, OutColor.XYZ, Flags);
     }
 
-    static FORCEINLINE bool DrawColorEdit3(const CHAR* Label, FFloatColor& OutColor, ImGuiColorEditFlags Flags = 0)
+    static FORCEINLINE bool DrawColorEdit3(const CHAR_T* Label, FFloatColor& OutColor, ImGuiColorEditFlags Flags = 0)
     {
         return ImGui::ColorEdit3(Label, OutColor.RGBA, Flags);
     }
@@ -279,8 +279,8 @@ struct ENGINE_API EditorWidgets
     // Search
     // -----------------------------------------------------------------------------------------
 
-    static bool DrawSearchField(const CHAR* InId, const CHAR* InHint, CHAR* InOutBuffer, int32 InBufferSize, float InWidth = -1.0f, bool bDrawBorder = true);
-    static void DrawTextWithSearchHighlight(ImDrawList* DrawList, const ImVec2& TextPos, const CHAR* Text, const CHAR* FilterText, ImU32 BaseTextU32, float HighlightPadX = 1.0f, float HighlightPadY = 1.0f, const ImVec2* ClampMin = nullptr, const ImVec2* ClampMax = nullptr);
+    static bool DrawSearchField(const CHAR_T* InId, const CHAR_T* InHint, CHAR_T* InOutBuffer, int32 InBufferSize, float InWidth = -1.0f, bool bDrawBorder = true);
+    static void DrawTextWithSearchHighlight(ImDrawList* DrawList, const ImVec2& TextPos, const CHAR_T* Text, const CHAR_T* FilterText, ImU32 BaseTextU32, float HighlightPadX = 1.0f, float HighlightPadY = 1.0f, const ImVec2* ClampMin = nullptr, const ImVec2* ClampMax = nullptr);
 
     // -----------------------------------------------------------------------------------------
     // Popup
@@ -288,26 +288,26 @@ struct ENGINE_API EditorWidgets
 
     static ImRect GetPopupExtentRect(const ImVec2& RefPos);
 
-    static bool SetNextPopupPos(const CHAR* WindowId, const FPopupAnchor& Anchor, EPopupPlacement Placement, const ImVec2& FixedSize = ImVec2(0.0f, 0.0f));
-    static bool SetNextBeginPopupPos(const CHAR* PopupId, const FPopupAnchor& Anchor, EPopupPlacement Placement, const ImVec2& FixedSize = ImVec2(0.0f, 0.0f));
+    static bool SetNextPopupPos(const CHAR_T* WindowId, const FPopupAnchor& Anchor, EPopupPlacement Placement, const ImVec2& FixedSize = ImVec2(0.0f, 0.0f));
+    static bool SetNextBeginPopupPos(const CHAR_T* PopupId, const FPopupAnchor& Anchor, EPopupPlacement Placement, const ImVec2& FixedSize = ImVec2(0.0f, 0.0f));
 
-    static bool BeginMenuPopup(const CHAR* PopupId, const FPopupAnchor& Anchor, float MinWidth = 180.0f, EPopupPlacement Placement = EPopupPlacement::BelowAnchor);
-    static bool BeginPopupContextWindow(const CHAR* PopupId, ImGuiPopupFlags Flags = ImGuiPopupFlags_MouseButtonRight);
-    static bool BeginPopupContextItem(const CHAR* PopupId);
-    static bool BeginPopupContext(const CHAR* PopupId);
+    static bool BeginMenuPopup(const CHAR_T* PopupId, const FPopupAnchor& Anchor, float MinWidth = 180.0f, EPopupPlacement Placement = EPopupPlacement::BelowAnchor);
+    static bool BeginPopupContextWindow(const CHAR_T* PopupId, ImGuiPopupFlags Flags = ImGuiPopupFlags_MouseButtonRight);
+    static bool BeginPopupContextItem(const CHAR_T* PopupId);
+    static bool BeginPopupContext(const CHAR_T* PopupId);
 
-    static bool BeginSubMenu(FSubMenuState& InOutState, const CHAR* PopupId, const CHAR* Label, bool bEnabled = true);
+    static bool BeginSubMenu(FSubMenuState& InOutState, const CHAR_T* PopupId, const CHAR_T* Label, bool bEnabled = true);
     static void EndSubMenu(FSubMenuState& InOutState);
 
-    static bool MenuSubMenuRow(const CHAR* Label, FPopupAnchor& OutAnchor, bool& bOutHovered, bool bForceActive, float LabelIndentX = MenuLabelIndentX);
-    static void MenuSubMenuOverlay(const CHAR* Label, const FPopupAnchor& Anchor, float LabelIndentX = MenuLabelIndentX);
+    static bool MenuSubMenuRow(const CHAR_T* Label, FPopupAnchor& OutAnchor, bool& bOutHovered, bool bForceActive, float LabelIndentX = MenuLabelIndentX);
+    static void MenuSubMenuOverlay(const CHAR_T* Label, const FPopupAnchor& Anchor, float LabelIndentX = MenuLabelIndentX);
 
     static void MenuSeparator(float Thickness = 1.0f, float PaddingY = 4.0f);
-    static void MenuLabeledSeparator(const CHAR* Label, float Thickness = 1.0f, float PaddingY = 4.0f);
-    static bool MenuItem(const CHAR* Label, const CHAR* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);
-    static bool MenuSliderFloat(const CHAR* Label, float& InOutValue, float MinValue, float MaxValue, const CHAR* Format, float ValueWidth = 96.0f, bool bEnabled = true);
-    static bool MenuDragFloat(const CHAR* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const CHAR* Format, float ValueWidth = 96.0f, bool bEnabled = true);
-    static void MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, FPopupAnchor& OutAnchor, bool bDrawBorder = false);
+    static void MenuLabeledSeparator(const CHAR_T* Label, float Thickness = 1.0f, float PaddingY = 4.0f);
+    static bool MenuItem(const CHAR_T* Label, const CHAR_T* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);
+    static bool MenuSliderFloat(const CHAR_T* Label, float& InOutValue, float MinValue, float MaxValue, const CHAR_T* Format, float ValueWidth = 96.0f, bool bEnabled = true);
+    static bool MenuDragFloat(const CHAR_T* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const CHAR_T* Format, float ValueWidth = 96.0f, bool bEnabled = true);
+    static void MenuButton(const CHAR_T* Label, const CHAR_T* PopupId, bool bAnyPopupOpen, float ButtonHeight, FPopupAnchor& OutAnchor, bool bDrawBorder = false);
     
     static void EndMenuPopup();
     static void EndPopupContext();
@@ -316,9 +316,9 @@ struct ENGINE_API EditorWidgets
     // Property Table
     // -----------------------------------------------------------------------------------------
 
-    static bool BeginPropertyTable(const CHAR* TableId, float LabelColumnWidth = 200.0f, float RevertColumnWidth = 20.0f, const FPropertyTableStyle& Style = FPropertyTableStyle());
+    static bool BeginPropertyTable(const CHAR_T* TableId, float LabelColumnWidth = 200.0f, float RevertColumnWidth = 20.0f, const FPropertyTableStyle& Style = FPropertyTableStyle());
     static void EndPropertyTable();
-    static void PropertyRowLabel(const CHAR* Label);
+    static void PropertyRowLabel(const CHAR_T* Label);
     static void PropertyTableBeginValueCell(float ContentHeight = -1.0f);
     static void PropertySeparatorRow(float PaddingY = 4.0f);
 
@@ -326,13 +326,13 @@ struct ENGINE_API EditorWidgets
     // Rich Text View
     // -----------------------------------------------------------------------------------------
 
-    static bool BeginRichTextView(const CHAR* InId, const ImVec2& InSize, FRichTextViewContext& InOutContext, ImGuiWindowFlags InFlags = 0, bool bWithContextMenu = true);
+    static bool BeginRichTextView(const CHAR_T* InId, const ImVec2& InSize, FRichTextViewContext& InOutContext, ImGuiWindowFlags InFlags = 0, bool bWithContextMenu = true);
     static void RichTextSelectAll(FRichTextViewContext& InOutContext);
     static void RichTextNewLine(FRichTextViewContext& InOutContext);
-    static void RichTextAddText(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor);
-    static void RichTextAddText(FRichTextViewContext& InOutContext, const CHAR* InText, int32 InLength, ImU32 InTextColor);
-    static void RichTextAddTextBg(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor);
-    static void RichTextAddTextBg(FRichTextViewContext& InOutContext, const CHAR* InText, int32 InLength, ImU32 InTextColor, ImU32 InBackgroundColor);
+    static void RichTextAddText(FRichTextViewContext& InOutContext, const CHAR_T* InText, ImU32 InTextColor);
+    static void RichTextAddText(FRichTextViewContext& InOutContext, const CHAR_T* InText, int32 InLength, ImU32 InTextColor);
+    static void RichTextAddTextBg(FRichTextViewContext& InOutContext, const CHAR_T* InText, ImU32 InTextColor, ImU32 InBackgroundColor);
+    static void RichTextAddTextBg(FRichTextViewContext& InOutContext, const CHAR_T* InText, int32 InLength, ImU32 InTextColor, ImU32 InBackgroundColor);
     static void EndRichTextView(FRichTextViewContext& InOutContext);
 
     static String GetSelectedRichText(const FRichTextViewContext& InContext);
@@ -342,12 +342,12 @@ struct ENGINE_API EditorWidgets
     // Buttons
     // -----------------------------------------------------------------------------------------
 
-    static ImVec2 GetButtonSize(const CHAR* Label, const ImVec2& Size);
+    static ImVec2 GetButtonSize(const CHAR_T* Label, const ImVec2& Size);
 
-    static bool DrawButton(const CHAR* Label, const ImVec2& Size = ImVec2(0.0f, 0.0f), bool bSelected = false, ImDrawFlags Corners = ImDrawFlags_RoundCornersAll);
-    static bool DrawDropdownButton(const CHAR* InId, const CHAR* Label, const ImVec2& Size, bool bPopupOpen, FPopupAnchor& OutAnchor, bool& bOutHovered);
-    static bool DrawDialogButton(const CHAR* Label, const ImVec2& Size);
-    static bool DrawButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f);
+    static bool DrawButton(const CHAR_T* Label, const ImVec2& Size = ImVec2(0.0f, 0.0f), bool bSelected = false, ImDrawFlags Corners = ImDrawFlags_RoundCornersAll);
+    static bool DrawDropdownButton(const CHAR_T* InId, const CHAR_T* Label, const ImVec2& Size, bool bPopupOpen, FPopupAnchor& OutAnchor, bool& bOutHovered);
+    static bool DrawDialogButton(const CHAR_T* Label, const ImVec2& Size);
+    static bool DrawButtonCenteredOnLine(const CHAR_T* Label, float Alignment = 0.5f);
 
     // -----------------------------------------------------------------------------------------
     // Editor window
@@ -355,7 +355,7 @@ struct ENGINE_API EditorWidgets
 
     static ImVec2 GetDefaultEditorWindowSize();
     static ImVec2 ScaleEditorWindowSize(const ImVec2& LogicalSize);
-    static bool BeginEditorWindow(const CHAR* Title, bool* pbVisible, ImGuiWindowFlags ExtraFlags = 0);
+    static bool BeginEditorWindow(const CHAR_T* Title, bool* pbVisible, ImGuiWindowFlags ExtraFlags = 0);
     static void EndEditorWindow();
 
     // -----------------------------------------------------------------------------------------

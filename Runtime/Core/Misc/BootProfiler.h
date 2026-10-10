@@ -24,7 +24,7 @@ public:
     void Finish();
     void Reset();
     void AddSample(const FFrameProfilerSample& InSample);
-    void AddInstantEvent(const CHAR* Name);
+    void AddInstantEvent(const CHAR_T* Name);
     void SetCaptureNativeStacks(bool bInCaptureNativeStacks);
 
     NODISCARD bool IsEnabled() const
@@ -64,7 +64,7 @@ private:
 struct CORE_API FBootProfilerScopedTrace
 {
 public:
-    FBootProfilerScopedTrace(const CHAR* InName);
+    FBootProfilerScopedTrace(const CHAR_T* InName);
     ~FBootProfilerScopedTrace();
 
 private:

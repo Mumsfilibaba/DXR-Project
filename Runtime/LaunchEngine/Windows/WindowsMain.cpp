@@ -2,7 +2,7 @@
 #include "Core/Windows/Windows.h"
 #include "Core/Containers/StringConversion.h"
 
-extern int32 EngineMain(const CHAR* Args[], int32 NumArgs);
+extern int32 EngineMain(const CHAR_T* Args[], int32 NumArgs);
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -31,8 +31,8 @@ int WINAPI wWinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPWSTR CommandLi
 {
     InitCRunTime();
 
-    const String CommandLineText  = StringCast<CHAR>(CommandLine).ToString();
-    const CHAR*  LocalCommandLine = *CommandLineText;
+    const String  CommandLineText  = StringCast<CHAR_T>(CommandLine).ToString();
+    const CHAR_T* LocalCommandLine = *CommandLineText;
     return EngineMain(&LocalCommandLine, 1);
 }
 

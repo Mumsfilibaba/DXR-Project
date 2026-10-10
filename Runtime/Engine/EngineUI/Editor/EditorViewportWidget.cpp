@@ -29,7 +29,7 @@ static TAutoConsoleVariable<bool> CVarDrawFps(
 constexpr float SPEED_OVERLAY_HOLD_TIME = 0.9f;
 constexpr float SPEED_OVERLAY_FADE_TIME = 0.35f;
 
-constexpr const CHAR* VIEWPORT_CONTEXT_MENU_ID = "ViewportContextMenu";
+constexpr const CHAR_T* VIEWPORT_CONTEXT_MENU_ID = "ViewportContextMenu";
 
 FEditorViewportWidget::FEditorViewportWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)
@@ -207,7 +207,7 @@ void FEditorViewportWidget::DrawViewportWindow()
             {
                 struct FDebugItem
                 {
-                    const CHAR* Label;
+                    const CHAR_T* Label;
                     FSceneRenderView::EDebugView View;
                 };
 
@@ -240,7 +240,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                     { "Geometry Debug",              FSceneRenderView::EDebugView::RayTracingPrimaryID },
                 };
 
-                const auto FindDebugLabel = [&](FSceneRenderView::EDebugView InView) -> const CHAR*
+                const auto FindDebugLabel = [&](FSceneRenderView::EDebugView InView) -> const CHAR_T*
                 {
                     for (const FDebugItem& Item : BaseViewItems)
                     {
@@ -271,7 +271,7 @@ void FEditorViewportWidget::DrawViewportWindow()
 
                 const float LabelGapFromCircle = 16.0f;
 
-                const auto DrawRadioMenuItem = [&](const CHAR* Label, bool bSelected, bool bEnabled, bool bCloseOnSelect, bool* OutHovered) -> bool
+                const auto DrawRadioMenuItem = [&](const CHAR_T* Label, bool bSelected, bool bEnabled, bool bCloseOnSelect, bool* OutHovered) -> bool
                 {
                     const float PaddingY    = 4.0f;
                     const float RowHeight   = ImGui::GetFontSize() + PaddingY * 2.0f;
@@ -353,8 +353,8 @@ void FEditorViewportWidget::DrawViewportWindow()
                     return bPressed && bEnabled;
                 };
 
-                const CHAR* CurrentLabel = FindDebugLabel(DebugView);
-                TStaticArray<CHAR, 128> MenuLabel{};
+                const CHAR_T* CurrentLabel = FindDebugLabel(DebugView);
+                TStaticArray<CHAR_T, 128> MenuLabel{};
 
                 const float ArrowIconSize  = EditorStyleVars::ButtonArrowSize;
                 const float TextArrowGap   = EditorStyleVars::ButtonContentGap;
@@ -391,7 +391,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                 const float ButtonWidth        = Math::Min(DesiredButtonWidth, MaxButtonWidth);
                 const float MaxTextWidth       = Math::Max(0.0f, ButtonWidth - (PaddingX * 2.0f + TextArrowGap + ArrowIconSize));
 
-                const auto BuildClampedLabel = [&](const CHAR* InLabel, float MaxWidth, TStaticArray<CHAR, 128>& OutBuffer) -> const CHAR*
+                const auto BuildClampedLabel = [&](const CHAR_T* InLabel, float MaxWidth, TStaticArray<CHAR_T, 128>& OutBuffer) -> const CHAR_T*
                 {
                     if (!InLabel)
                     {
@@ -405,13 +405,13 @@ void FEditorViewportWidget::DrawViewportWindow()
                         return OutBuffer.Data();
                     }
 
-                    const CHAR* Ellipsis = "...";
+                    const CHAR_T* Ellipsis = "...";
 
                     const float EllipsisW = ImGui::CalcTextSize(Ellipsis).x;
                     const float Budget    = Math::Max(0.0f, MaxWidth - EllipsisW);
 
-                    const CHAR* LabelEnd  = InLabel + CString::Strlen(InLabel);
-                    const CHAR* Remaining = nullptr;
+                    const CHAR_T* LabelEnd  = InLabel + CString::Strlen(InLabel);
+                    const CHAR_T* Remaining = nullptr;
 
                     ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), Budget, 0.0f, InLabel, LabelEnd, &Remaining);
 
@@ -435,7 +435,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                     return OutBuffer.Data();
                 };
 
-                const CHAR* MenuLabelText = BuildClampedLabel(CurrentLabel, MaxTextWidth, MenuLabel);
+                const CHAR_T* MenuLabelText = BuildClampedLabel(CurrentLabel, MaxTextWidth, MenuLabel);
 
                 const ImVec2 ChildPos               = ImGui::GetWindowPos();
                 const ImVec2 ContentMin             = ImGui::GetWindowContentRegionMin();
@@ -467,11 +467,11 @@ void FEditorViewportWidget::DrawViewportWindow()
 
                 ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + ContentMin.x + LeftPadding, ChildPos.y + CursorY));
 
-                const CHAR* CameraMenuPopupId     = "##ViewportCameraMenu";
-                const CHAR* ViewMenuPopupId       = "##ViewportViewModeMenu";
-                const CHAR* ShadowMenuPopupId     = "##ViewportShadowMenu";
-                const CHAR* RayTracingMenuPopupId = "##ViewportRayTracingMenu";
-                const CHAR* SecondaryMenuPopupId  = "##ViewportSecondaryMenu";
+                const CHAR_T* CameraMenuPopupId     = "##ViewportCameraMenu";
+                const CHAR_T* ViewMenuPopupId       = "##ViewportViewModeMenu";
+                const CHAR_T* ShadowMenuPopupId     = "##ViewportShadowMenu";
+                const CHAR_T* RayTracingMenuPopupId = "##ViewportRayTracingMenu";
+                const CHAR_T* SecondaryMenuPopupId  = "##ViewportSecondaryMenu";
 
                 const ImGuiPopupFlags PopupQueryFlags = ImGuiPopupFlags_AnyPopupLevel;
 
@@ -531,7 +531,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                     ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + TransportCursorX, ChildPos.y + CursorY));
 
                     // A triple hash keeps the identifier stable while the label flips between Play and Stop
-                    const CHAR* PlayLabel = bIsPlaying ? "Stop###PlayToggle" : "Play###PlayToggle";
+                    const CHAR_T* PlayLabel = bIsPlaying ? "Stop###PlayToggle" : "Play###PlayToggle";
                     if (EditorWidgets::DrawButton(PlayLabel, ImVec2(PlayButtonWidth, ButtonHeight), bIsPlaying, ImDrawFlags_RoundCornersLeft) && EditorEngine)
                     {
                         TogglePlay();
@@ -802,7 +802,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                         const float ChannelButtonWidth = Math::Max(Math::Floor(ChannelRowWidth * 0.25f), 1.0f);
                         const float ChannelHeight      = ImGui::GetFrameHeight();
 
-                        const auto DrawChannelToggle = [&](const CHAR* Label, FSceneRenderView::EDebugViewChannel Channel, ImDrawFlags Corners)
+                        const auto DrawChannelToggle = [&](const CHAR_T* Label, FSceneRenderView::EDebugViewChannel Channel, ImDrawFlags Corners)
                         {
                             const bool bSelected = IsEnumFlagSet(DebugViewChannelMask, Channel);
                             if (EditorWidgets::DrawButton(Label, ImVec2(ChannelButtonWidth, ChannelHeight), bSelected, Corners))

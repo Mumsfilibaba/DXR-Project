@@ -57,7 +57,7 @@ struct FIniValue
 struct CORE_API FIniSection
 {
     FIniSection();
-    FIniSection(const CHAR* InName);
+    FIniSection(const CHAR_T* InName);
     ~FIniSection();
 
     /** @brief Restores all values in the section */
@@ -89,13 +89,13 @@ struct CORE_API FIniFile
     bool LoadFromFile(const String& InFilename);
 
     /** @brief Parses ini-formatted text in place, resolves include lines, and flattens included values on dump or write-back */
-    void ParseFromText(TArray<CHAR>& InText);
+    void ParseFromText(TArray<CHAR_T>& InText);
 
     /** @return Looks up a value from any section and returns nullptr if not found */
-    FIniValue* FindValue(const CHAR* Name);
+    FIniValue* FindValue(const CHAR_T* Name);
 
     /** @return Looks up a value from the section with 'SectionName' and returns nullptr if not found */
-    FIniValue* FindValue(const CHAR* SectionName, const CHAR* Name);
+    FIniValue* FindValue(const CHAR_T* SectionName, const CHAR_T* Name);
 
     /**
      * @brief Looks up a section, adding an empty one when it is not already there.
@@ -103,19 +103,19 @@ struct CORE_API FIniFile
      * @param SectionName The section to look for.
      * @return The section, whose Name always matches 'SectionName'.
      */
-    FIniSection& FindOrAddSection(const CHAR* SectionName);
+    FIniSection& FindOrAddSection(const CHAR_T* SectionName);
 
      /** @brief Set a string from the Engine config */
-    bool SetString(const CHAR* SectionName, const CHAR* Name, const String& NewValue);
+    bool SetString(const CHAR_T* SectionName, const CHAR_T* Name, const String& NewValue);
 
      /** @brief Set a int from the Engine config */
-    bool SetInt(const CHAR* SectionName, const CHAR* Name, int32 NewValue);
+    bool SetInt(const CHAR_T* SectionName, const CHAR_T* Name, int32 NewValue);
 
      /** @brief Set a float from the Engine config */
-    bool SetFloat(const CHAR* SectionName, const CHAR* Name, float NewValue);
+    bool SetFloat(const CHAR_T* SectionName, const CHAR_T* Name, float NewValue);
 
      /** @brief Set a boolean from the Engine config */
-    bool SetBool(const CHAR* SectionName, const CHAR* Name, bool bNewValue);
+    bool SetBool(const CHAR_T* SectionName, const CHAR_T* Name, bool bNewValue);
 
     /**
      * @brief Sets a string, creating the section and the key when either is missing.
@@ -127,7 +127,7 @@ struct CORE_API FIniFile
      * @param Name        The key to write.
      * @param NewValue    The value to store.
      */
-    void SetOrAddString(const CHAR* SectionName, const CHAR* Name, const String& NewValue);
+    void SetOrAddString(const CHAR_T* SectionName, const CHAR_T* Name, const String& NewValue);
 
     /**
      * @brief Sets an int, creating the section and the key when either is missing.
@@ -136,7 +136,7 @@ struct CORE_API FIniFile
      * @param Name        The key to write.
      * @param NewValue    The value to store.
      */
-    void SetOrAddInt(const CHAR* SectionName, const CHAR* Name, int32 NewValue);
+    void SetOrAddInt(const CHAR_T* SectionName, const CHAR_T* Name, int32 NewValue);
 
     /**
      * @brief Sets a float, creating the section and the key when either is missing.
@@ -145,7 +145,7 @@ struct CORE_API FIniFile
      * @param Name        The key to write.
      * @param NewValue    The value to store.
      */
-    void SetOrAddFloat(const CHAR* SectionName, const CHAR* Name, float NewValue);
+    void SetOrAddFloat(const CHAR_T* SectionName, const CHAR_T* Name, float NewValue);
 
     /**
      * @brief Sets a boolean, creating the section and the key when either is missing.
@@ -154,19 +154,19 @@ struct CORE_API FIniFile
      * @param Name        The key to write.
      * @param bNewValue   The value to store.
      */
-    void SetOrAddBool(const CHAR* SectionName, const CHAR* Name, bool bNewValue);
+    void SetOrAddBool(const CHAR_T* SectionName, const CHAR_T* Name, bool bNewValue);
 
      /** @brief Retrieve a string from the Engine config */
-    bool GetString(const CHAR* SectionName, const CHAR* Name, String& OutValue);
+    bool GetString(const CHAR_T* SectionName, const CHAR_T* Name, String& OutValue);
 
      /** @brief Retrieve a int from the Engine config */
-    bool GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutValue);
+    bool GetInt(const CHAR_T* SectionName, const CHAR_T* Name, int32& OutValue);
 
      /** @brief Retrieve a float from the Engine config */
-    bool GetFloat(const CHAR* SectionName, const CHAR* Name, float& OutValue);
+    bool GetFloat(const CHAR_T* SectionName, const CHAR_T* Name, float& OutValue);
 
      /** @brief Retrieve a boolean from the Engine config */
-    bool GetBool(const CHAR* SectionName, const CHAR* Name, bool& bOutValue);
+    bool GetBool(const CHAR_T* SectionName, const CHAR_T* Name, bool& bOutValue);
 
 	/** @brief Saves the content to the file. Included values are written inline, not as include lines. */
 	bool WriteToFile();

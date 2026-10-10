@@ -24,12 +24,12 @@ struct FGPUProfileScopeQueries
 
 struct FGPUPendingScope
 {
-    const CHAR*  Name        = nullptr;
-    int32        ParentIndex = -1;
-    int32        Depth       = 0;
-    FRHIQueryRef BeginQuery;
-    FRHIQueryRef EndQuery;
-    bool         bOwnsPipelineStats = false;
+    const CHAR_T* Name        = nullptr;
+    int32         ParentIndex = -1;
+    int32         Depth       = 0;
+    FRHIQueryRef  BeginQuery;
+    FRHIQueryRef  EndQuery;
+    bool          bOwnsPipelineStats = false;
 };
 
 class FGPUProfiler : public IGPUProfiler
@@ -51,8 +51,8 @@ public:
     virtual void EndGPUFrame() override final;
     virtual void MarkGPUFrameBegin(FRHICommandList& CmdList) override final;
     virtual void MarkGPUFrameEnd(FRHICommandList& CmdList) override final;
-    virtual void BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name) override final;
-    virtual void EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name) override final;
+    virtual void BeginGPUTrace(FRHICommandList& CmdList, const CHAR_T* Name) override final;
+    virtual void EndGPUTrace(FRHICommandList& CmdList, const CHAR_T* Name) override final;
 
     virtual void SetRetainAllFrames(bool bInRetainAllFrames) override final;
     virtual void EnablePipelineStatistics()    override final;
@@ -95,7 +95,7 @@ private:
 struct FGPUScopedTrace
 {
 public:
-    FORCEINLINE FGPUScopedTrace(FRHICommandList& InCommandList, const CHAR* InName)
+    FORCEINLINE FGPUScopedTrace(FRHICommandList& InCommandList, const CHAR_T* InName)
         : CommandList(InCommandList)
         , Name(InName)
     {
@@ -109,5 +109,5 @@ public:
 
 private:
     FRHICommandList& CommandList;
-    const CHAR*      Name;
+    const CHAR_T*    Name;
 };

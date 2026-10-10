@@ -206,7 +206,7 @@ public:
     }
 
 private:
-    NODISCARD static const CHAR* GetSeverityPrefix(ELogSeverity Severity);
+    NODISCARD static const CHAR_T* GetSeverityPrefix(ELogSeverity Severity);
     NODISCARD static uint8 GetSeverityBit(ELogSeverity Severity);
 
     void DrainPendingLines();

@@ -187,7 +187,7 @@ double FEditableText::GetSecondsSinceTextCursorBlinkReset() const
 
 FEventResponse FEditableText::OnKeyChar(const FKeyEvent& KeyEvent)
 {
-    const CHAR Character = KeyEvent.GetAnsiChar();
+    const CHAR_T Character = KeyEvent.GetAnsiChar();
 
     // Control characters arrive as key-down events instead, so they are dropped here
     if (Character < ' ' || Character == 0x7F)
@@ -485,7 +485,7 @@ void FEditableText::ClearText()
     NotifyTextChanged();
 }
 
-void FEditableText::InsertCharacter(CHAR Character)
+void FEditableText::InsertCharacter(CHAR_T Character)
 {
     if (HasSelection())
     {
@@ -607,7 +607,7 @@ void FEditableText::MoveTextCursorWordRight(bool bExtendSelection)
     MoveTextCursor(FindWordBoundaryRight(TextCursorPosition), bExtendSelection);
 }
 
-bool FEditableText::IsWordSeparator(CHAR Character)
+bool FEditableText::IsWordSeparator(CHAR_T Character)
 {
     return Character == ' ' || Character == '\t' || Character == ',' || Character == ';';
 }

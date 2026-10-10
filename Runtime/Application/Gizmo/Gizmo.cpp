@@ -700,7 +700,7 @@ void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
     }
 
     const int32 AxisIndex = GetHandleAxis(ActiveHandle);
-    const CHAR* AxisNames[3] = { "X", "Y", "Z" };
+    const CHAR_T* AxisNames[3] = { "X", "Y", "Z" };
 
     if (IsTranslateHandle(ActiveHandle))
     {

@@ -13,17 +13,17 @@ static constexpr uint32 GHighSurrogateLast  = 0xDBFF;
 static constexpr uint32 GLowSurrogateFirst  = 0xDC00;
 static constexpr uint32 GLowSurrogateLast   = 0xDFFF;
 
-static FORCEINLINE bool IsDigit(CHAR Character)
+static FORCEINLINE bool IsDigit(CHAR_T Character)
 {
     return (Character >= '0') && (Character <= '9');
 }
 
-static FORCEINLINE bool IsHexDigit(CHAR Character)
+static FORCEINLINE bool IsHexDigit(CHAR_T Character)
 {
     return IsDigit(Character) || ((Character >= 'a') && (Character <= 'f')) || ((Character >= 'A') && (Character <= 'F'));
 }
 
-static FORCEINLINE uint32 HexDigitValue(CHAR Character)
+static FORCEINLINE uint32 HexDigitValue(CHAR_T Character)
 {
     if (IsDigit(Character))
     {
@@ -56,25 +56,25 @@ bool FJsonReader::IsAtEnd() const
     return Current >= End;
 }
 
-CHAR FJsonReader::Peek() const
+CHAR_T FJsonReader::Peek() const
 {
     return IsAtEnd() ? '\0' : *Current;
 }
 
-CHAR FJsonReader::PeekAt(int32 Lookahead) const
+CHAR_T FJsonReader::PeekAt(int32 Lookahead) const
 {
-    const CHAR* Position = Current + Lookahead;
+    const CHAR_T* Position = Current + Lookahead;
     return (Position >= End) ? '\0' : *Position;
 }
 
-CHAR FJsonReader::Advance()
+CHAR_T FJsonReader::Advance()
 {
     if (IsAtEnd())
     {
         return '\0';
     }
 
-    const CHAR Character = *Current++;
+    const CHAR_T Character = *Current++;
     if (Character == '\n')
     {
         ++Line;
@@ -84,7 +84,7 @@ CHAR FJsonReader::Advance()
     return Character;
 }
 
-bool FJsonReader::Fail(const CHAR* Format, ...)
+bool FJsonReader::Fail(const CHAR_T* Format, ...)
 {
     // Only the first failure is worth reporting. Everything after it is a consequence of 
     // the parser being lost, and would just bury the position that actually matters.
@@ -93,7 +93,7 @@ bool FJsonReader::Fail(const CHAR* Format, ...)
         return false;
     }
 
-    CHAR Message[GMaxErrorMessageLength];
+    CHAR_T Message[GMaxErrorMessageLength];
     Message[0] = 0;
 
     va_list ArgList;
@@ -112,7 +112,7 @@ bool FJsonReader::Fail(const CHAR* Format, ...)
     return false;
 }
 
-bool FJsonReader::Expect(CHAR Expected)
+bool FJsonReader::Expect(CHAR_T Expected)
 {
     if (Peek() != Expected)
     {
@@ -135,7 +135,7 @@ bool FJsonReader::SkipComment()
         return false;
     }
 
-    const CHAR Kind = PeekAt(1);
+    const CHAR_T Kind = PeekAt(1);
     if (Kind == '/')
     {
         while (!IsAtEnd() && (Peek() != '\n'))
@@ -174,7 +174,7 @@ void FJsonReader::SkipWhitespaceAndComments()
 {
     while (!IsAtEnd())
     {
-        const CHAR Character = Peek();
+        const CHAR_T Character = Peek();
         if ((Character == ' ') || (Character == '\t') || (Character == '\n') || (Character == '\r'))
         {
             Advance();
@@ -252,7 +252,7 @@ bool FJsonReader::Parse(const StringView& Text, FJsonValue& OutValue, FJsonError
     return true;
 }
 
-bool FJsonReader::ParseKeyword(const CHAR* Keyword, FJsonValue&& Result, FJsonValue& OutValue)
+bool FJsonReader::ParseKeyword(const CHAR_T* Keyword, FJsonValue&& Result, FJsonValue& OutValue)
 {
     const int32 KeywordLength = CString::Strlen(Keyword);
     if (((End - Current) < KeywordLength) || (CString::Strncmp(Current, Keyword, KeywordLength) != 0))
@@ -287,7 +287,7 @@ bool FJsonReader::ParseValue(FJsonValue& OutValue, int32 Depth)
         return Fail("expected a value but reached the end of the document");
     }
 
-    const CHAR Character = Peek();
+    const CHAR_T Character = Peek();
     switch (Character)
     {
         case '{':
@@ -531,7 +531,7 @@ bool FJsonReader::ParseHexQuad(uint32& OutCodePoint)
     uint32 CodePoint = 0;
     for (int32 Index = 0; Index < 4; ++Index)
     {
-        const CHAR Character = Peek();
+        const CHAR_T Character = Peek();
         if (!IsHexDigit(Character))
         {
             if (IsAtEnd())
@@ -554,31 +554,31 @@ void FJsonReader::AppendUtf8(uint32 CodePoint, String& OutString)
 {
     if (CodePoint <= 0x7F)
     {
-        OutString.Append(static_cast<CHAR>(CodePoint));
+        OutString.Append(static_cast<CHAR_T>(CodePoint));
     }
     else if (CodePoint <= 0x7FF)
     {
-        OutString.Append(static_cast<CHAR>(0xC0 | (CodePoint >> 6)));
-        OutString.Append(static_cast<CHAR>(0x80 | (CodePoint & 0x3F)));
+        OutString.Append(static_cast<CHAR_T>(0xC0 | (CodePoint >> 6)));
+        OutString.Append(static_cast<CHAR_T>(0x80 | (CodePoint & 0x3F)));
     }
     else if (CodePoint <= 0xFFFF)
     {
-        OutString.Append(static_cast<CHAR>(0xE0 | (CodePoint >> 12)));
-        OutString.Append(static_cast<CHAR>(0x80 | ((CodePoint >> 6) & 0x3F)));
-        OutString.Append(static_cast<CHAR>(0x80 | (CodePoint & 0x3F)));
+        OutString.Append(static_cast<CHAR_T>(0xE0 | (CodePoint >> 12)));
+        OutString.Append(static_cast<CHAR_T>(0x80 | ((CodePoint >> 6) & 0x3F)));
+        OutString.Append(static_cast<CHAR_T>(0x80 | (CodePoint & 0x3F)));
     }
     else
     {
-        OutString.Append(static_cast<CHAR>(0xF0 | (CodePoint >> 18)));
-        OutString.Append(static_cast<CHAR>(0x80 | ((CodePoint >> 12) & 0x3F)));
-        OutString.Append(static_cast<CHAR>(0x80 | ((CodePoint >> 6) & 0x3F)));
-        OutString.Append(static_cast<CHAR>(0x80 | (CodePoint & 0x3F)));
+        OutString.Append(static_cast<CHAR_T>(0xF0 | (CodePoint >> 18)));
+        OutString.Append(static_cast<CHAR_T>(0x80 | ((CodePoint >> 12) & 0x3F)));
+        OutString.Append(static_cast<CHAR_T>(0x80 | ((CodePoint >> 6) & 0x3F)));
+        OutString.Append(static_cast<CHAR_T>(0x80 | (CodePoint & 0x3F)));
     }
 }
 
 bool FJsonReader::ParseEscape(String& OutString)
 {
-    const CHAR Escaped = Advance();
+    const CHAR_T Escaped = Advance();
     switch (Escaped)
     {
         case '"':  OutString.Append('\"'); return true;
@@ -656,7 +656,7 @@ bool FJsonReader::ParseString(String& OutString)
             return Fail("unterminated string");
         }
 
-        const CHAR Character = Peek();
+        const CHAR_T Character = Peek();
         if (Character == '"')
         {
             Advance();
@@ -686,7 +686,7 @@ bool FJsonReader::ParseString(String& OutString)
 
 bool FJsonReader::ParseNumber(FJsonValue& OutValue)
 {
-    const CHAR* NumberStart = Current;
+    const CHAR_T* NumberStart = Current;
 
     if (Peek() == '-')
     {
@@ -764,7 +764,7 @@ bool FJsonReader::ParseNumber(FJsonValue& OutValue)
         return Fail("the number has more digits than can be represented");
     }
 
-    CHAR Buffer[GMaxNumberLength];
+    CHAR_T Buffer[GMaxNumberLength];
     for (int32 Index = 0; Index < NumberLength; ++Index)
     {
         Buffer[Index] = NumberStart[Index];
@@ -772,11 +772,11 @@ bool FJsonReader::ParseNumber(FJsonValue& OutValue)
 
     Buffer[NumberLength] = '\0';
 
-    CHAR* ParseEnd = nullptr;
+    CHAR_T* ParseEnd = nullptr;
     if (!bIsReal)
     {
         const int64 Integer = CString::Strtoi64(Buffer, &ParseEnd, 10);
-        CHAR Printed[GMaxNumberLength];
+        CHAR_T Printed[GMaxNumberLength];
         CString::Snprintf(Printed, GMaxNumberLength, "%lld", Integer);
 
         // "-0" is the one integer whose canonical form differs from how it may be written

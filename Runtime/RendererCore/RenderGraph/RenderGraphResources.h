@@ -144,7 +144,7 @@ class RENDERERCORE_API FRenderGraphTexture
     friend class FRenderGraphPassBuilder;
 
 public:
-    FRenderGraphTexture(const FRenderGraphTextureDesc& InDesc, const CHAR* InName, FRHITexture* InExternalTexture)
+    FRenderGraphTexture(const FRenderGraphTextureDesc& InDesc, const CHAR_T* InName, FRHITexture* InExternalTexture)
         : Desc(InDesc)
         , Name(InName)
         , Texture(InExternalTexture)
@@ -158,7 +158,7 @@ public:
         return Desc;
     }
 
-    NODISCARD const CHAR* GetName() const
+    NODISCARD const CHAR_T* GetName() const
     {
         return Name;
     }
@@ -175,7 +175,7 @@ public:
 
 private:
     FRenderGraphTextureDesc   Desc;
-    const CHAR*               Name;
+    const CHAR_T*             Name;
     FRHITexture*              Texture;
     bool                      bIsExternal;
     FRenderGraphResourceState State;
@@ -187,7 +187,7 @@ class RENDERERCORE_API FRenderGraphBuffer
     friend class FRenderGraphPassBuilder;
 
 public:
-    FRenderGraphBuffer(const FRenderGraphBufferDesc& InDesc, const CHAR* InName, FRHIBuffer* InExternalBuffer)
+    FRenderGraphBuffer(const FRenderGraphBufferDesc& InDesc, const CHAR_T* InName, FRHIBuffer* InExternalBuffer)
         : Desc(InDesc)
         , Name(InName)
         , Buffer(InExternalBuffer)
@@ -201,7 +201,7 @@ public:
         return Desc;
     }
 
-    NODISCARD const CHAR* GetName() const
+    NODISCARD const CHAR_T* GetName() const
     {
         return Name;
     }
@@ -218,7 +218,7 @@ public:
 
 private:
     FRenderGraphBufferDesc    Desc;
-    const CHAR*               Name;
+    const CHAR_T*             Name;
     FRHIBuffer*               Buffer;
     bool                      bIsExternal;
     FRenderGraphResourceState State;

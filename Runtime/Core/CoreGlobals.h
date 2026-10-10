@@ -14,7 +14,7 @@ FORCEINLINE bool IsEngineExitRequested()
     return GIsEngineExitRequested;
 }
 
-extern "C" CORE_API void RequestEngineExit(const CHAR* ExitReason);
+extern "C" CORE_API void RequestEngineExit(const CHAR_T* ExitReason);
 
 /** True when no user is present to answer a dialog: automated tests, CI, -unattended */
 extern CORE_API bool GIsUnattended;

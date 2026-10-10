@@ -60,7 +60,7 @@ void FConfig::SetFile(EConfigFile::Type ConfigFile, FIniFile* File)
     LayerFiles[ConfigFile] = File;
 }
 
-FIniValue* FConfig::FindValue(const CHAR* SectionName, const CHAR* Name)
+FIniValue* FConfig::FindValue(const CHAR_T* SectionName, const CHAR_T* Name)
 {
     for (int32 Index = EConfigFile::Count - 1; Index >= 0; --Index)
     {
@@ -76,7 +76,7 @@ FIniValue* FConfig::FindValue(const CHAR* SectionName, const CHAR* Name)
     return nullptr;
 }
 
-bool FConfig::GetString(const CHAR* SectionName, const CHAR* Name, String& OutValue)
+bool FConfig::GetString(const CHAR_T* SectionName, const CHAR_T* Name, String& OutValue)
 {
     if (FIniValue* Value = FindValue(SectionName, Name))
     {
@@ -89,7 +89,7 @@ bool FConfig::GetString(const CHAR* SectionName, const CHAR* Name, String& OutVa
     }
 }
 
-bool FConfig::GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutValue)
+bool FConfig::GetInt(const CHAR_T* SectionName, const CHAR_T* Name, int32& OutValue)
 {
     if (FIniValue* Value = FindValue(SectionName, Name))
     {
@@ -101,7 +101,7 @@ bool FConfig::GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutValue)
     }
 }
 
-bool FConfig::GetFloat(const CHAR* SectionName, const CHAR* Name, float& OutValue)
+bool FConfig::GetFloat(const CHAR_T* SectionName, const CHAR_T* Name, float& OutValue)
 {
     if (FIniValue* Value = FindValue(SectionName, Name))
     {
@@ -113,7 +113,7 @@ bool FConfig::GetFloat(const CHAR* SectionName, const CHAR* Name, float& OutValu
     }
 }
 
-bool FConfig::GetBool(const CHAR* SectionName, const CHAR* Name, bool& bOutValue)
+bool FConfig::GetBool(const CHAR_T* SectionName, const CHAR_T* Name, bool& bOutValue)
 {
     if (FIniValue* Value = FindValue(SectionName, Name))
     {

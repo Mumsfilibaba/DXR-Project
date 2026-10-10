@@ -26,7 +26,7 @@ public:
 
     static void GlobalRegisterClass(
         FGlobalObjectClassInfo& OutClassInfo,
-        const CHAR* ClassName,
+        const CHAR_T* ClassName,
         uint64 Size,
         uint64 Alignment,
         FObjectClass::StaticClassFunctionType SuperStaticClassFunc,
@@ -34,7 +34,7 @@ public:
         FObjectClass::StaticDefaultConstructorType DefaultConstructorFunc);
 
 public:
-    FObjectClass(const CHAR* InName, uint64 InSize, uint64 InAlignment, StaticClassFunctionType InStaticClassFunc, StaticDefaultConstructorType InDefaultConstructorFunc);
+    FObjectClass(const CHAR_T* InName, uint64 InSize, uint64 InAlignment, StaticClassFunctionType InStaticClassFunc, StaticDefaultConstructorType InDefaultConstructorFunc);
     ~FObjectClass();
 
     bool IsSubClassOf(const FObjectClass* Class) const;
@@ -45,7 +45,7 @@ public:
         return IsSubClassOf(T::GetStaticClass());
     }
 
-    const CHAR* GetName() const
+    const CHAR_T* GetName() const
     {
         return Name;
     }
@@ -68,7 +68,7 @@ public:
 
 private:
     FObjectClass*                SuperClass;
-    const CHAR*                  Name;
+    const CHAR_T*                Name;
     uint64                       Size;
     uint64                       Alignment;
     StaticClassFunctionType      StaticClassFunc;

@@ -14,7 +14,7 @@ static uint64 MakeEntryKey(const String& RHIName, const FShaderCompileJob& Job)
     uint64 Key = Job.GetKey();
     for (int32 Index = 0; Index < RHIName.Length(); ++Index)
     {
-        const CHAR Character = RHIName[Index];
+        const CHAR_T Character = RHIName[Index];
         HashCombine(Key, static_cast<uint32>((Character >= 'A' && Character <= 'Z') ? Character - 'A' + 'a' : Character));
     }
 

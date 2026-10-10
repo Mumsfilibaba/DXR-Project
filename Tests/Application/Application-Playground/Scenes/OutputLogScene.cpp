@@ -46,8 +46,8 @@ static void LogNextSample()
 {
     struct FSample
     {
-        ELogSeverity Severity;
-        const CHAR*  Message;
+        ELogSeverity  Severity;
+        const CHAR_T* Message;
     };
 
     static const FSample Samples[] =

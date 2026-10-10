@@ -229,7 +229,7 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
 
             if (GRayTracingASCache && ASCache.HasBackend() && !SerializationRequested.Contains(Geometry))
             {
-                CHAR KeyBuffer[32] = {};
+                CHAR_T KeyBuffer[32] = {};
                 CString::Snprintf(KeyBuffer, int32(sizeof(KeyBuffer)), "blas_%llx", static_cast<unsigned long long>(reinterpret_cast<uintptr_t>(Geometry)));
 
                 SerializationHelper.RequestSerialize(CommandList, Geometry, String(KeyBuffer));

@@ -8,7 +8,7 @@
 
 using namespace RHIValidationInternal;
 
-static bool ValidateAttachmentSampleCount(const CHAR* Caller, FRHIDevice* Device, const CHAR* Attachment, EFormat Format, uint32 SampleCount)
+static bool ValidateAttachmentSampleCount(const CHAR_T* Caller, FRHIDevice* Device, const CHAR_T* Attachment, EFormat Format, uint32 SampleCount)
 {
     uint32 SupportedSampleCounts = 0;
     if (!Device->QuerySupportedSampleCounts(Format, SupportedSampleCounts))
@@ -27,7 +27,7 @@ static bool ValidateAttachmentSampleCount(const CHAR* Caller, FRHIDevice* Device
     return true;
 }
 
-static bool ValidateOutputFormatsSampleCount(const CHAR* Caller, FRHIDevice* Device, const FRHIGraphicsPipelineFormats& OutputFormats, uint32 SampleCount)
+static bool ValidateOutputFormatsSampleCount(const CHAR_T* Caller, FRHIDevice* Device, const FRHIGraphicsPipelineFormats& OutputFormats, uint32 SampleCount)
 {
     for (uint32 Index = 0; Index < OutputFormats.NumRenderTargets; ++Index)
     {
@@ -1438,7 +1438,7 @@ FRHIDepthStencilView* FRHIValidationDevice::CreateDepthStencilView(FRHIResource*
     return TrackLiveResource(Device->CreateDepthStencilView(InResource, InDesc));
 }
 
-static bool ValidateShaderCode(const CHAR* FunctionName, ERHIType RHIType, EShaderStage ExpectedStage, const TArray<uint8>& ShaderCode)
+static bool ValidateShaderCode(const CHAR_T* FunctionName, ERHIType RHIType, EShaderStage ExpectedStage, const TArray<uint8>& ShaderCode)
 {
     FShaderCodeHeader Header;
     String            Error;

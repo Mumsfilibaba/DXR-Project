@@ -12,7 +12,7 @@
 #include "TestCommon/TestMacros.h"
 
 // The corpus that the round-trip and determinism checks run over
-static const CHAR* GDocuments[] =
+static const CHAR_T* GDocuments[] =
 {
     "null",
     "true",
@@ -78,7 +78,7 @@ static bool RoundTripsFloat(float Value)
     return true;
 }
 
-static bool WritesAs(const FJsonValue& Value, const CHAR* Expected, EJsonWriteFlags Flags = EJsonWriteFlags::Compact)
+static bool WritesAs(const FJsonValue& Value, const CHAR_T* Expected, EJsonWriteFlags Flags = EJsonWriteFlags::Compact)
 {
     const String Text = WriteValue(Value, Flags);
     if (!Text.Equals(Expected))
@@ -96,7 +96,7 @@ bool JsonWriter_Test()
 
     TEST_SECTION("Parse, write and parse again produces an equal document");
     {
-        for (const CHAR* Document : GDocuments)
+        for (const CHAR_T* Document : GDocuments)
         {
             FJsonValue First;
             if (!Json::Parse(StringView(Document), First))
@@ -115,7 +115,7 @@ bool JsonWriter_Test()
 
     TEST_SECTION("Writing the same document twice is byte-identical");
     {
-        for (const CHAR* Document : GDocuments)
+        for (const CHAR_T* Document : GDocuments)
         {
             FJsonValue Value;
             if (!Json::Parse(StringView(Document), Value))
@@ -234,7 +234,7 @@ bool JsonWriter_Test()
 
     TEST_SECTION("Escapes survive a round trip");
     {
-        const CHAR* Awkward = "quote \" backslash \\ newline \n tab \t slash / unicode \xE2\x82\xAC";
+        const CHAR_T* Awkward = "quote \" backslash \\ newline \n tab \t slash / unicode \xE2\x82\xAC";
 
         FJsonValue Parsed;
         TEST_EXPECT(Json::Parse(StringView(WriteValue(FJsonValue(Awkward))), Parsed));

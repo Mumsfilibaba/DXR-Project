@@ -27,10 +27,10 @@
 #include "ScenePanel.h"
 
 /** @brief The type id the chips in the drag and drop panel carry, which one of its targets insists on. */
-static const CHAR* AssetPayloadId = "PLAYGROUND_ASSET";
+static const CHAR_T* AssetPayloadId = "PLAYGROUND_ASSET";
 
 /** @brief The type id the second chip carries, which the asset-only target turns away. */
-static const CHAR* ActorPayloadId = "PLAYGROUND_ACTOR";
+static const CHAR_T* ActorPayloadId = "PLAYGROUND_ACTOR";
 
 static TSharedPtr<FTextBlock> MakeReadout(const FPlaygroundFonts& Fonts, const String& InText)
 {
@@ -206,7 +206,7 @@ private:
     bool                  bHasBegunDrag;
 };
 
-static TSharedPtr<FTreeItem> MakeBranch(const String& Label, const CHAR* const* ChildLabels, int32 NumChildren)
+static TSharedPtr<FTreeItem> MakeBranch(const String& Label, const CHAR_T* const* ChildLabels, int32 NumChildren)
 {
     TSharedPtr<FTreeItem> Branch = FTreeItem::Create(Label);
     for (int32 Index = 0; Index < NumChildren; ++Index)
@@ -221,9 +221,9 @@ static TSharedPtr<FVisualElement> MakeTreeViewRow(const FPlaygroundFonts& Fonts)
 {
     TSharedPtr<FTextBlock> Readout = MakeReadout(Fonts, "nothing selected yet");
 
-    const CHAR* LightNames[]    = { "Directional Light", "Point Light 01", "Point Light 02", "Spot Light" };
-    const CHAR* GeometryNames[] = { "Sponza", "Street Light", "Floor Plane", "Sky Sphere" };
-    const CHAR* CameraNames[]   = { "Main Camera", "Cutscene Camera" };
+    const CHAR_T* LightNames[]    = { "Directional Light", "Point Light 01", "Point Light 02", "Spot Light" };
+    const CHAR_T* GeometryNames[] = { "Sponza", "Street Light", "Floor Plane", "Sky Sphere" };
+    const CHAR_T* CameraNames[]   = { "Main Camera", "Cutscene Camera" };
 
     TArray<TSharedPtr<FTreeItem>> Roots;
 
@@ -278,7 +278,7 @@ static TSharedPtr<FVisualElement> MakeTileViewRow(const FPlaygroundFonts& Fonts)
 {
     TSharedPtr<FTextBlock> Readout = MakeReadout(Fonts, "click a tile, double click to open it");
 
-    const CHAR* AssetNames[] =
+    const CHAR_T* AssetNames[] =
     {
         "Brick_Albedo", "Brick_Normal", "Brick_Roughness", "Sponza.obj",
         "Street_Light.obj", "Sky_Cubemap", "Water_Caustics", "Terrain_Height",
@@ -286,7 +286,7 @@ static TSharedPtr<FVisualElement> MakeTileViewRow(const FPlaygroundFonts& Fonts)
     };
 
     TArray<FTileItem> Items;
-    for (const CHAR* AssetName : AssetNames)
+    for (const CHAR_T* AssetName : AssetNames)
     {
         FTileItem Item;
         Item.Label = AssetName;
@@ -338,9 +338,9 @@ static TSharedPtr<FVisualElement> MakeExpanderRow(const FPlaygroundFonts& Fonts)
 
     struct FSample
     {
-        const CHAR* Label;
-        const CHAR* Body;
-        bool        bStartsOpen;
+        const CHAR_T* Label;
+        const CHAR_T* Body;
+        bool          bStartsOpen;
     };
 
     const FSample Samples[] =
@@ -380,7 +380,7 @@ static TSharedPtr<FVisualElement> MakeVectorRow(const FPlaygroundFonts& Fonts, c
 {
     struct FAxis
     {
-        const CHAR* Label;
+        const CHAR_T* Label;
         FFloatColor Color;
     };
 
@@ -471,9 +471,9 @@ static TSharedPtr<FVisualElement> MakeProgressBarRow(const FPlaygroundFonts& Fon
 
     struct FSample
     {
-        const CHAR* Label;
-        float       Percent;
-        FFloatColor FillColor;
+        const CHAR_T* Label;
+        float         Percent;
+        FFloatColor   FillColor;
     };
 
     const FSample Samples[] =

@@ -1,7 +1,7 @@
 #include "Core/Memory/Memory.h"
 #include "ShaderCore/ShaderCode.h"
 
-static bool SetError(String* OutError, const CHAR* Message)
+static bool SetError(String* OutError, const CHAR_T* Message)
 {
     if (OutError)
     {
@@ -274,7 +274,7 @@ bool FShaderCodeReader::Read(const TArray<uint8>& ShaderCode, FShaderCodeView& O
     }
 
     // Strings: the entry point, then one name per binding in DebugInfo containers
-    auto ReadString = [&](const CHAR*& OutString) -> bool
+    auto ReadString = [&](const CHAR_T*& OutString) -> bool
     {
         const uint32 Start = Offset;
         while (Offset < ReflectionEnd && Bytes[Offset] != 0)
@@ -287,7 +287,7 @@ bool FShaderCodeReader::Read(const TArray<uint8>& ShaderCode, FShaderCodeView& O
             return false;
         }
 
-        OutString = reinterpret_cast<const CHAR*>(Bytes + Start);
+        OutString = reinterpret_cast<const CHAR_T*>(Bytes + Start);
         ++Offset;
         return true;
     };
@@ -302,7 +302,7 @@ bool FShaderCodeReader::Read(const TArray<uint8>& ShaderCode, FShaderCodeView& O
         View.BindingNames.Reserve(static_cast<int32>(NumBindings));
         for (uint32 Index = 0; Index < NumBindings; ++Index)
         {
-            const CHAR* Name = nullptr;
+            const CHAR_T* Name = nullptr;
             if (!ReadString(Name))
             {
                 return SetError(OutError, "A binding name is missing or not null-terminated inside the reflection block");

@@ -3149,7 +3149,7 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
 #if D3D12_ENABLE_MEMORY_LOGGING
     if (CVarD3D12LogMemoryAllocations.GetValue())
     {
-        static const CHAR* PoolClassNames[] = 
+        static const CHAR_T* PoolClassNames[] = 
         { 
             "SmallReadOnly", 
             "ReadOnly", 

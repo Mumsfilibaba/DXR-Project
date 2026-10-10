@@ -97,7 +97,7 @@ FJsonValue FShaderCompileJob::ToJson() const
     return Object;
 }
 
-static bool ReadStringMember(const FJsonValue& Object, const CHAR* Name, String& OutValue, String& OutError)
+static bool ReadStringMember(const FJsonValue& Object, const CHAR_T* Name, String& OutValue, String& OutError)
 {
     const FJsonValue* Member = Object.Find(Name);
     if (!Member || !Member->TryGetString(OutValue))

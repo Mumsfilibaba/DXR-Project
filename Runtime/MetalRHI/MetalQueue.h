@@ -56,7 +56,7 @@ struct FMetalBreadcrumbRing
         }
     }
 
-    CHAR   Entries[NumEntries][EntryLength];
+    CHAR_T Entries[NumEntries][EntryLength];
     uint32 Head  = 0;
     uint32 Count = 0;
 };

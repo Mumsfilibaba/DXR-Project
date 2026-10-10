@@ -12,8 +12,8 @@
 #include "ImGuiPlugin/ImGuiExtensions.h"
 
 // Payload identifiers used when dragging a row onto another row in the outliner
-static const CHAR* ActorDragDropPayloadId  = "SCENE_HIERARCHY_ACTOR";
-static const CHAR* FilterDragDropPayloadId = "SCENE_HIERARCHY_FILTER";
+static const CHAR_T* ActorDragDropPayloadId  = "SCENE_HIERARCHY_ACTOR";
+static const CHAR_T* FilterDragDropPayloadId = "SCENE_HIERARCHY_FILTER";
 
 // Shared by the actor and filter rows
 static const ImVec4 RowHoverBg          = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
@@ -30,7 +30,7 @@ static const ImU32  RenameBorderNormal  = IM_COL32(51, 51, 51, 255);
 static const ImU32  RenameBorderHovered = IM_COL32(74, 74, 74, 255);
 static const ImU32  RenameBorderActive  = IM_COL32(9, 92, 176, 255);
 
-static const CHAR* GetActorTypeLabel(FActor* Actor)
+static const CHAR_T* GetActorTypeLabel(FActor* Actor)
 {
     return Actor ? Actor->GetTypeLabel() : "Actor";
 }
@@ -41,7 +41,7 @@ static float GetHierarchyRowHeight()
     return Math::Max(DefaultRowHeight, ImGui::GetFontSize());
 }
 
-static bool DoesActorMatchQuery(FActor* Actor, const CHAR* Query)
+static bool DoesActorMatchQuery(FActor* Actor, const CHAR_T* Query)
 {
     const String& Name = Actor->GetName();
     if (!Name.IsEmpty() && CString::Stristr(*Name, Query))
@@ -546,7 +546,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         EditorWidgets::MenuLabeledSeparator("Common");
 
         {
-            TStaticArray<CHAR, 64> DeleteLabel;
+            TStaticArray<CHAR_T, 64> DeleteLabel;
             if (SelectedActorCount > 1)
             {
                 CString::Snprintf(DeleteLabel.Data(), static_cast<int32>(DeleteLabel.Size()), "Delete %d Actors", SelectedActorCount);
@@ -747,9 +747,9 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
         return;
     }
 
-    const CHAR* Type           = GetActorTypeLabel(Actor);
-    const bool  bSelected      = EditorEngine->IsActorSelected(Actor);
-    const bool  bSoleSelection = bSelected && EditorEngine->GetSelectedActors().Size() == 1;
+    const CHAR_T* Type           = GetActorTypeLabel(Actor);
+    const bool    bSelected      = EditorEngine->IsActorSelected(Actor);
+    const bool    bSoleSelection = bSelected && EditorEngine->GetSelectedActors().Size() == 1;
 
     const auto BeginActorRename = [this](FActor* InActor)
     {
@@ -1085,11 +1085,11 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
     {
         ImGui::PushStyleColor(ImGuiCol_Text, ActorNameTextColor);
 
-        const CHAR* SearchText  = CachedQuery.Data();
-        const ImU32 BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
+        const CHAR_T* SearchText  = CachedQuery.Data();
+        const ImU32   BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
 
         const String& Name = Actor->GetName();
-        const CHAR* NameText = Name.IsEmpty() ? "Actor" : *Name;
+        const CHAR_T* NameText = Name.IsEmpty() ? "Actor" : *Name;
         EditorWidgets::DrawTextWithSearchHighlight(ImGui::GetWindowDrawList(), ImVec2(LabelStartX, NameTextY), NameText, SearchText, BaseTextU32, 1.0f, 1.0f, &RowMin, &RowMax);
 
         ImGui::PopStyleColor();
@@ -1113,9 +1113,9 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
 
 void FEditorSceneHierarchyWidget::RebuildSearchMatches(const TArray<FActor*>& Actors)
 {
-    TStaticArray<CHAR, 256> QueryBuffer{};
+    TStaticArray<CHAR_T, 256> QueryBuffer{};
 
-    const CHAR* Query = EditorHelpers::GetTrimmedQuery(ActorSearchFilterBuffer.Data(), QueryBuffer.Data(), static_cast<int32>(QueryBuffer.Size()));
+    const CHAR_T* Query = EditorHelpers::GetTrimmedQuery(ActorSearchFilterBuffer.Data(), QueryBuffer.Data(), static_cast<int32>(QueryBuffer.Size()));
     if (Query)
     {
         CString::Strncpy(CachedQuery.Data(), Query, CachedQuery.Size());
@@ -1370,7 +1370,7 @@ void FEditorSceneHierarchyWidget::DrawFilterRow(FActorFilter* Filter, float Inde
         bIsRenamingThis = false;
     }
 
-    const CHAR* Label = *Filter->GetName();
+    const CHAR_T* Label = *Filter->GetName();
 
     ImGuiStyle& Style = ImGui::GetStyle();
 
@@ -1592,8 +1592,8 @@ void FEditorSceneHierarchyWidget::DrawFilterRow(FActorFilter* Filter, float Inde
         ImGui::PushStyleColor(ImGuiCol_Text, RowNameTextColor);
 
         {
-            const CHAR* SearchText  = CachedQuery.Data();
-            const ImU32 BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
+            const CHAR_T* SearchText  = CachedQuery.Data();
+            const ImU32   BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
 
             EditorWidgets::DrawTextWithSearchHighlight(DrawList, ImVec2(X, TextY), Label, SearchText, BaseTextU32, 1.0f, 1.0f, &RowMin, &RowMax);
         }

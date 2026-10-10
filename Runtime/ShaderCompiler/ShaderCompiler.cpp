@@ -313,7 +313,7 @@ bool FShaderCompiler::CompileFromFile(const String& Filename, const FShaderCompi
     const String FilePath = ResolveSourcePath(Filename);
 
     // Store the ShaderFile in this array
-    TArray<CHAR> Text;
+    TArray<CHAR_T> Text;
 
     {
         // Open the file
@@ -419,7 +419,7 @@ public:
         return FDiskShaderSourceProvider::Get().FileExists(Path);
     }
 
-    virtual bool ReadFile(const String& Path, TArray<CHAR>& OutText) const override final
+    virtual bool ReadFile(const String& Path, TArray<CHAR_T>& OutText) const override final
     {
         if (!FDiskShaderSourceProvider::Get().ReadFile(Path, OutText))
         {
@@ -435,8 +435,8 @@ public:
         return true;
     }
 
-    mutable TArray<String>             Order;
-    mutable TMap<String, TArray<CHAR>> Files;
+    mutable TArray<String>               Order;
+    mutable TMap<String, TArray<CHAR_T>> Files;
 };
 
 static String ReplaceAll(const String& Text, const String& From, const String& To)
@@ -649,7 +649,7 @@ bool FShaderCompiler::CollectSources(const FShaderSourceRoots& Roots, const FSha
 
     FRecordingSourceProvider Recorder;
 
-    TArray<CHAR> RootText;
+    TArray<CHAR_T> RootText;
     if (!Recorder.ReadFile(FilePath, RootText))
     {
         OutErrors = String::Printf("Failed to open '%s'", *FilePath);
@@ -686,7 +686,7 @@ bool FShaderCompiler::CollectSources(const FShaderSourceRoots& Roots, const FSha
             return false;
         }
 
-        const TArray<CHAR>& Text = *Recorder.Files.Find(Path);
+        const TArray<CHAR_T>& Text = *Recorder.Files.Find(Path);
 
         // File::ReadTextFile appends a terminator, which the receiving provider adds back
         int32 TextLength = Text.Size();
@@ -726,7 +726,7 @@ bool FShaderCompiler::CompileJob(FShaderCompileJob& Job, const String& SourceRoo
 {
     const String FilePath = SourceRoot + '/' + Job.SourceFile;
 
-    TArray<CHAR> Text;
+    TArray<CHAR_T> Text;
     if (!Sources.ReadFile(FilePath, Text))
     {
         OutMessages = String::Printf("'%s' was not sent with the request", *Job.SourceFile);

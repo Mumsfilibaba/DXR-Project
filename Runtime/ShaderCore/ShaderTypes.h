@@ -26,7 +26,7 @@ enum class EShaderStage : uint8
     RayCallable     = 14,
 };
 
-NODISCARD constexpr const CHAR* ToString(EShaderStage ShaderStage)
+NODISCARD constexpr const CHAR_T* ToString(EShaderStage ShaderStage)
 {
     switch(ShaderStage)
     {
@@ -80,7 +80,7 @@ enum class EShaderModel : uint8
     SM_6_10 = 13,
 };
 
-NODISCARD constexpr const CHAR* ToString(EShaderModel ShaderModel)
+NODISCARD constexpr const CHAR_T* ToString(EShaderModel ShaderModel)
 {
     switch (ShaderModel)
     {
@@ -118,7 +118,7 @@ enum class EShaderOutputLanguage : uint8
     DXBC = 4,
 };
 
-NODISCARD constexpr const CHAR* ToString(EShaderOutputLanguage OutputLanguage)
+NODISCARD constexpr const CHAR_T* ToString(EShaderOutputLanguage OutputLanguage)
 {
     switch (OutputLanguage)
     {

@@ -178,7 +178,7 @@ struct EKeyName
     };
 };
 
-constexpr const CHAR* ToString(EKeyName::Type KeyName)
+constexpr const CHAR_T* ToString(EKeyName::Type KeyName)
 {
     switch (KeyName)
     {

@@ -58,7 +58,7 @@ static FAutoConsoleCommand CCmdForceDeviceRemoved(
 // DRED enum to string helpers
 // -------------------------------------------------------------------------------------------
 
-static const CHAR* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
+static const CHAR_T* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
 {
     switch (BreadCrumbOp)
     {
@@ -109,7 +109,7 @@ static const CHAR* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
     }
 }
 
-static const CHAR* ToString(D3D12_DRED_ALLOCATION_TYPE AllocationType)
+static const CHAR_T* ToString(D3D12_DRED_ALLOCATION_TYPE AllocationType)
 {
     switch (AllocationType)
     {
@@ -143,7 +143,7 @@ static const CHAR* ToString(D3D12_DRED_ALLOCATION_TYPE AllocationType)
     }
 }
 
-static const CHAR* GetDeviceRemovedDumpFilePath()
+static const CHAR_T* GetDeviceRemovedDumpFilePath()
 {
     return *CVarDeviceRemovedDumpFilePath.GetValue();
 }
@@ -217,7 +217,7 @@ static void D3D12RHIWriteDeviceRemovedDump(ID3D12Device* D3DDevice, HRESULT Reas
 
         for (uint32 i = 0; i < CurrentNode->BreadcrumbCount; i++)
         {
-            const CHAR* Marker = "";
+            const CHAR_T* Marker = "";
             if (i + 1 == LastCompleted)
             {
                 Marker = "  <-- LAST COMPLETED";
@@ -244,7 +244,7 @@ static void D3D12RHIWriteDeviceRemovedDump(ID3D12Device* D3DDevice, HRESULT Reas
         CurrentNode = CurrentNode->pNext;
     }
 
-    const auto WriteAllocationNodes = [&WriteLine](const D3D12_DRED_ALLOCATION_NODE1* Node, const CHAR* ListName)
+    const auto WriteAllocationNodes = [&WriteLine](const D3D12_DRED_ALLOCATION_NODE1* Node, const CHAR_T* ListName)
     {
         if (!Node)
         {

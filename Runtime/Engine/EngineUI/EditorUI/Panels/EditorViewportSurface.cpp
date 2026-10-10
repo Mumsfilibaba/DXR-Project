@@ -154,7 +154,7 @@ int32 FEditorViewportSurface::OnDraw(const FDrawGeometry& AllottedGeometry, FDra
             const IFontFace* Font = Style.MonospaceFont ? Style.MonospaceFont : Style.NormalFont;
             if (Font)
             {
-                CHAR FpsText[16];
+                CHAR_T FpsText[16];
                 CString::Snprintf(FpsText, static_cast<int32>(sizeof(FpsText)), "%d", FFrameProfiler::Get().GetFramesPerSecond());
 
                 const String FpsString(FpsText);

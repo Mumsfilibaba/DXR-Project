@@ -4,7 +4,7 @@
 #include <Core/Platform/PlatformMisc.h>
 #include <Core/Templates/CString.h>
 
-void FTestConsoleOutputDevice::OpenLogFile(const CHAR* FilePath)
+void FTestConsoleOutputDevice::OpenLogFile(const CHAR_T* FilePath)
 {
     if (!LogFile)
     {
@@ -25,9 +25,9 @@ void FTestConsoleOutputDevice::CloseLogFile()
     }
 }
 
-void FTestConsoleOutputDevice::Write(const CHAR* Text)
+void FTestConsoleOutputDevice::Write(const CHAR_T* Text)
 {
-    const uint32 Length = static_cast<uint32>(TCString<CHAR>::Strlen(Text));
+    const uint32 Length = static_cast<uint32>(TCString<CHAR_T>::Strlen(Text));
 
     FPlatformMisc::WriteToStdOutput(Text, Length);
 
@@ -45,7 +45,7 @@ void FTestConsoleOutputDevice::Log(const String& Message)
 
 void FTestConsoleOutputDevice::Log(ELogSeverity Severity, const String& Message)
 {
-    const CHAR* Prefix = "";
+    const CHAR_T* Prefix = "";
     switch (Severity)
     {
         case ELogSeverity::Warning: Prefix = "[WARNING] "; break;

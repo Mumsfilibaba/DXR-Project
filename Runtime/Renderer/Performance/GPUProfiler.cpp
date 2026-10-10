@@ -445,7 +445,7 @@ void FGPUProfiler::MarkGPUFrameEnd(FRHICommandList& CmdList)
     bFrameEndRecorded[WriteIndex] = true;
 }
 
-void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
+void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const CHAR_T* Name)
 {
     TScopedLock Lock(StateLock);
 
@@ -516,7 +516,7 @@ void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
     }
 }
 
-void FGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const CHAR* /* Name */)
+void FGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const CHAR_T* /* Name */)
 {
     TScopedLock Lock(StateLock);
 

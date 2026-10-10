@@ -236,7 +236,7 @@ SomeStruct Desc = { 0 };
 Good:
 
 ```cpp
-const TStringConversion<WIDECHAR, CHAR> WideName = StringCast<WIDECHAR>(Name);
+const TStringConversion<WIDECHAR, CHAR_T> WideName = StringCast<WIDECHAR>(Name);
 
 for (const FDirectoryEntry& Entry : Entries)
 {

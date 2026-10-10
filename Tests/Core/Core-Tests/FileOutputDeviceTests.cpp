@@ -9,7 +9,7 @@
 
 #include <cstdio>
 
-static bool ReadClosedFile(const String& Path, TArray<CHAR>& OutText)
+static bool ReadClosedFile(const String& Path, TArray<CHAR_T>& OutText)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Path);
     if (!FileHandle)
@@ -20,10 +20,10 @@ static bool ReadClosedFile(const String& Path, TArray<CHAR>& OutText)
     return File::ReadTextFile(FileHandle.Get(), OutText);
 }
 
-static int32 CountOccurrences(const CHAR* Text, const CHAR* Substring)
+static int32 CountOccurrences(const CHAR_T* Text, const CHAR_T* Substring)
 {
     int32 NumFound = 0;
-    for (const CHAR* Found = CString::Strstr(Text, Substring); Found != nullptr; Found = CString::Strstr(Found + 1, Substring))
+    for (const CHAR_T* Found = CString::Strstr(Text, Substring); Found != nullptr; Found = CString::Strstr(Found + 1, Substring))
     {
         NumFound++;
     }
@@ -57,7 +57,7 @@ bool FileOutputDevice_Test()
             });
         }
 
-        TArray<CHAR> Text;
+        TArray<CHAR_T> Text;
         TEST_EXPECT(ReadClosedFile(TempPath, Text));
 
         int32 NumWrong = 0;
@@ -99,7 +99,7 @@ bool FileOutputDevice_Test()
             });
         }
 
-        TArray<CHAR> Text;
+        TArray<CHAR_T> Text;
         TEST_EXPECT(ReadClosedFile(TempPath, Text));
 
         int32 NumWrong = 0;
@@ -152,7 +152,7 @@ bool FileOutputDevice_Test()
             }
         }
 
-        TArray<CHAR> Text;
+        TArray<CHAR_T> Text;
         TEST_EXPECT(ReadClosedFile(TempPath, Text));
 
         int32 NumWrong = 0;

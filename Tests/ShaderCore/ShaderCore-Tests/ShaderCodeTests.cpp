@@ -203,8 +203,8 @@ bool ShaderCodeDebugInfo_Test()
     FShaderReflection Reflection = CreateSixBindings();
     Reflection.EntryPoint = "ClosestHit";
 
-    const CHAR* const Names[] = { "PerFrame", "LinearSampler", "Skybox", "Materials", "Output", "Scene" };
-    for (const CHAR* Name : Names)
+    const CHAR_T* const Names[] = { "PerFrame", "LinearSampler", "Skybox", "Materials", "Output", "Scene" };
+    for (const CHAR_T* Name : Names)
     {
         Reflection.BindingNames.Add(Name);
     }

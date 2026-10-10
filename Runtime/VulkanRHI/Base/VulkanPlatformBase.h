@@ -14,24 +14,24 @@ struct VulkanPlatformBase
     static FORCEINLINE void RetrieveDeviceExtensions(TArray<TUniquePtr<FVulkanDeviceExtension>>& OutDeviceExtensions)       { }
     static FORCEINLINE void RetrieveInstanceExtensions(TArray<TUniquePtr<FVulkanInstanceExtension>>& OutInstanceExtensions) { }
 
-    static FORCEINLINE TArray<const CHAR*> GetRequiredInstanceLayers()
+    static FORCEINLINE TArray<const CHAR_T*> GetRequiredInstanceLayers()
     {
-        return TArray<const CHAR*>();
+        return TArray<const CHAR_T*>();
     }
 
-    static FORCEINLINE TArray<const CHAR*> GetOptionalInstanceLayers()
+    static FORCEINLINE TArray<const CHAR_T*> GetOptionalInstanceLayers()
     {
-        return TArray<const CHAR*>();
+        return TArray<const CHAR_T*>();
     }
 
-    static FORCEINLINE TArray<const CHAR*> GetRequiredDeviceLayers()
+    static FORCEINLINE TArray<const CHAR_T*> GetRequiredDeviceLayers()
     {
-        return TArray<const CHAR*>();
+        return TArray<const CHAR_T*>();
     }
 
-    static FORCEINLINE TArray<const CHAR*> GetOptionalDeviceLayers()
+    static FORCEINLINE TArray<const CHAR_T*> GetOptionalDeviceLayers()
     {
-        return TArray<const CHAR*>();
+        return TArray<const CHAR_T*>();
     }
 
     static FORCEINLINE void* LoadVulkanLibrary() { return nullptr; }

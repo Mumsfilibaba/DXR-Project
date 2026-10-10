@@ -64,7 +64,7 @@ enum class ETextureDimension : uint8
     Texture3D        = 7,
 };
 
-NODISCARD constexpr const CHAR* ToString(ETextureDimension TextureDimension)
+NODISCARD constexpr const CHAR_T* ToString(ETextureDimension TextureDimension)
 {
 	switch (TextureDimension)
 	{

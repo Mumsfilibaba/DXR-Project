@@ -3,7 +3,7 @@
 #include "Core/Tasks/TaskWorker.h"
 #include "Core/Threading/ThreadManager.h"
 
-FTaskHandle Tasks::LaunchImpl(const CHAR* DebugName, TFunction<void()>&& Body, ENamedThread::Type Thread, ETaskPriority::Type Priority, TArrayView<const FTaskHandle> Prerequisites)
+FTaskHandle Tasks::LaunchImpl(const CHAR_T* DebugName, TFunction<void()>&& Body, ENamedThread::Type Thread, ETaskPriority::Type Priority, TArrayView<const FTaskHandle> Prerequisites)
 {
     return FTaskGraph::Get().LaunchInternal(DebugName, ::Move(Body), Thread, Priority, Prerequisites);
 }

@@ -29,19 +29,19 @@ static void FillRandom(TArray<int32>& Values, uint32 Count, uint32 Seed)
     }
 }
 
-static void MakeDistribution(TArray<int32>& Values, const CHAR* Name)
+static void MakeDistribution(TArray<int32>& Values, const CHAR_T* Name)
 {
     const int32 Count = Values.Size();
-    if (TCString<CHAR>::Strcmp(Name, "sorted") == 0)
+    if (TCString<CHAR_T>::Strcmp(Name, "sorted") == 0)
     {
         Algorithm::Sort(Values);
     }
-    else if (TCString<CHAR>::Strcmp(Name, "reverse") == 0)
+    else if (TCString<CHAR_T>::Strcmp(Name, "reverse") == 0)
     {
         Algorithm::Sort(Values);
         Values.Reverse();
     }
-    else if (TCString<CHAR>::Strcmp(Name, "nearly") == 0)
+    else if (TCString<CHAR_T>::Strcmp(Name, "nearly") == 0)
     {
         Algorithm::Sort(Values);
         const int32 Swaps = Math::Max(1, Count / 100);
@@ -52,21 +52,21 @@ static void MakeDistribution(TArray<int32>& Values, const CHAR* Name)
             ::Swap(Values[A], Values[B]);
         }
     }
-    else if (TCString<CHAR>::Strcmp(Name, "few-unique") == 0)
+    else if (TCString<CHAR_T>::Strcmp(Name, "few-unique") == 0)
     {
         for (int32 Index = 0; Index < Count; ++Index)
         {
             Values[Index] = Values[Index] % 4;
         }
     }
-    else if (TCString<CHAR>::Strcmp(Name, "equal") == 0)
+    else if (TCString<CHAR_T>::Strcmp(Name, "equal") == 0)
     {
         for (int32 Index = 0; Index < Count; ++Index)
         {
             Values[Index] = 1;
         }
     }
-    else if (TCString<CHAR>::Strcmp(Name, "organ-pipe") == 0)
+    else if (TCString<CHAR_T>::Strcmp(Name, "organ-pipe") == 0)
     {
         Algorithm::Sort(Values);
         TArray<int32> Pipe;
@@ -88,7 +88,7 @@ static void MakeDistribution(TArray<int32>& Values, const CHAR* Name)
 }
 
 template<typename SortFnType>
-static void TimeSort(const CHAR* Label, const TArray<int32>& Source, uint32 Trials, SortFnType&& SortFn)
+static void TimeSort(const CHAR_T* Label, const TArray<int32>& Source, uint32 Trials, SortFnType&& SortFn)
 {
     FClock Clock;
     for (uint32 Trial = 0; Trial < Trials; ++Trial)
@@ -109,7 +109,7 @@ void Sort_Benchmark()
     const uint32 LargeTrials = Benchmark::ScaleCount(20, 2);
 
     const int32 Sizes[] = { 32, 256, 4096, 65536, 1000000 };
-    const CHAR* Distributions[] = { "random", "sorted", "reverse", "nearly", "few-unique", "equal", "organ-pipe" };
+    const CHAR_T* Distributions[] = { "random", "sorted", "reverse", "nearly", "few-unique", "equal", "organ-pipe" };
 
     for (int32 Size : Sizes)
     {
@@ -117,11 +117,11 @@ void Sort_Benchmark()
         TArray<int32> Base;
         FillRandom(Base, static_cast<uint32>(Size), 0xC0FFEEu);
 
-        for (const CHAR* Distribution : Distributions)
+        for (const CHAR_T* Distribution : Distributions)
         {
-            if (Size >= 1000000 && TCString<CHAR>::Strcmp(Distribution, "random") != 0
-                && TCString<CHAR>::Strcmp(Distribution, "sorted") != 0
-                && TCString<CHAR>::Strcmp(Distribution, "reverse") != 0)
+            if (Size >= 1000000 && TCString<CHAR_T>::Strcmp(Distribution, "random") != 0
+                && TCString<CHAR_T>::Strcmp(Distribution, "sorted") != 0
+                && TCString<CHAR_T>::Strcmp(Distribution, "reverse") != 0)
             {
                 continue;
             }

@@ -9,7 +9,7 @@
 class VULKANRHI_API FVulkanExtension
 {
 public:
-    FVulkanExtension(const CHAR* InExtensionName, bool bInRequired, bool bInShouldEnable)
+    FVulkanExtension(const CHAR_T* InExtensionName, bool bInRequired, bool bInShouldEnable)
         : ExtensionName(InExtensionName)
         , bRequired(bInRequired)
         , bEnabled(false)
@@ -19,7 +19,7 @@ public:
 
     virtual ~FVulkanExtension() = default;
 
-    FORCEINLINE const CHAR* GetExtensionName() const
+    FORCEINLINE const CHAR_T* GetExtensionName() const
     {
         return ExtensionName;
     }
@@ -45,7 +45,7 @@ public:
     }
 
 private:
-    const CHAR* ExtensionName;
+    const CHAR_T* ExtensionName;
 
     bool bRequired : 1;
     bool bEnabled : 1;
@@ -58,7 +58,7 @@ public:
     static void RegisterExtensions(TArray<TUniquePtr<FVulkanInstanceExtension>>& OutExtensions);
 
 public:
-    FVulkanInstanceExtension(const CHAR* InName, bool bInRequired, bool bInShouldEnable)
+    FVulkanInstanceExtension(const CHAR_T* InName, bool bInRequired, bool bInShouldEnable)
         : FVulkanExtension(InName, bInRequired, bInShouldEnable)
     {
     }
@@ -73,7 +73,7 @@ public:
     static void RegisterExtensions(TArray<TUniquePtr<FVulkanDeviceExtension>>& OutExtensions);
     
 public:
-    FVulkanDeviceExtension(const CHAR* InName, bool bInRequired, bool bInShouldEnable)
+    FVulkanDeviceExtension(const CHAR_T* InName, bool bInRequired, bool bInShouldEnable)
         : FVulkanExtension(InName, bInRequired, bInShouldEnable)
     {
     }

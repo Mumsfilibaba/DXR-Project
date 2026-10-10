@@ -6,13 +6,13 @@
 
 struct FWindowsPlatformLibrary final : public IPlatformLibrary
 {
-    static FORCEINLINE void* LoadDynamicLib(const CHAR* LibraryName)
+    static FORCEINLINE void* LoadDynamicLib(const CHAR_T* LibraryName)
     {
         const String RealName = GetRealName(LibraryName);
         return reinterpret_cast<void*>(::LoadLibraryW(StringCast<WIDECHAR>(RealName).Get()));
     }
 
-    static FORCEINLINE void* GetLoadedHandle(const CHAR* LibraryName)
+    static FORCEINLINE void* GetLoadedHandle(const CHAR_T* LibraryName)
     {
         const String RealName = GetRealName(LibraryName);
         return reinterpret_cast<void*>(::GetModuleHandleW(StringCast<WIDECHAR>(RealName).Get()));
@@ -23,28 +23,28 @@ struct FWindowsPlatformLibrary final : public IPlatformLibrary
         ::FreeLibrary(reinterpret_cast<HMODULE>(LibraryHandle));
     }
 
-    static FORCEINLINE void* LoadSymbol(const CHAR* SymbolName, void* LibraryHandle)
+    static FORCEINLINE void* LoadSymbol(const CHAR_T* SymbolName, void* LibraryHandle)
     {
         return ::GetProcAddress(reinterpret_cast<HMODULE>(LibraryHandle), StringCast<ANSICHAR>(SymbolName).Get());
     }
 
     template<typename SymbolType>
-    static FORCEINLINE SymbolType LoadSymbol(const CHAR* SymbolName, void* LibraryHandle)
+    static FORCEINLINE SymbolType LoadSymbol(const CHAR_T* SymbolName, void* LibraryHandle)
     {
         return reinterpret_cast<SymbolType>(LoadSymbol(SymbolName, LibraryHandle));
     }
 
-    static FORCEINLINE const CHAR* GetDynamicLibExtension()
+    static FORCEINLINE const CHAR_T* GetDynamicLibExtension()
     {
         return ".dll";
     }
 
-    static FORCEINLINE String GetRealName(const CHAR* LibraryName)
+    static FORCEINLINE String GetRealName(const CHAR_T* LibraryName)
     {
         return String(LibraryName) + GetDynamicLibExtension();
     }
 
-    static FORCEINLINE bool IsLibraryLoaded(const CHAR* LibraryName)
+    static FORCEINLINE bool IsLibraryLoaded(const CHAR_T* LibraryName)
     {
         return GetLoadedHandle(LibraryName) != nullptr;
     }

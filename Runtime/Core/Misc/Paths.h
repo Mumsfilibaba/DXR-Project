@@ -19,7 +19,7 @@ enum class EEngineDirSource : uint8
 struct CORE_API Paths
 {
     /** @brief The file at the root of an engine folder that marks it as one and names the engine */
-    static constexpr const CHAR* EngineIdentityFilename = "dxrengine.json";
+    static constexpr const CHAR_T* EngineIdentityFilename = "dxrengine.json";
 
     /**
      * @brief Resolve the engine directory from -engine=, the executable's location and the compile-time fallback. Called
@@ -47,7 +47,7 @@ struct CORE_API Paths
     static EEngineDirSource GetEngineDirSource();
 
     /** @return Returns where the engine directory was found as text for the log, such as "found above the executable" */
-    static const CHAR* GetEngineDirSourceName();
+    static const CHAR_T* GetEngineDirSourceName();
 
     /**
      * @return Returns the engine directory, resolving it first if Initialize has not run. Falls back to ENGINE_LOCATION

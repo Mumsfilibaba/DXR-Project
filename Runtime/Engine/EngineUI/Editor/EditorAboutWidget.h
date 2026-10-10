@@ -27,7 +27,7 @@ private:
     void DrawBuildInfo();
     void DrawGraphicsInfo();
     void DrawContextMenu();
-    void DrawProperty(const CHAR* Label, const CHAR* ValueText);
+    void DrawProperty(const CHAR_T* Label, const CHAR_T* ValueText);
 
     FDelegateHandle ImGuiDelegateHandle;
     bool            bVisible;

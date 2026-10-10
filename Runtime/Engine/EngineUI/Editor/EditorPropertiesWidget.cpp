@@ -79,7 +79,7 @@ ImTextureID FEditorPropertiesWidget::GetTexturePreview(EMaterialTextureSlot::Typ
     return Preview.ShaderResourceView ? reinterpret_cast<ImTextureID>(&Preview) : nullptr;
 }
 
-const TArray<const CHAR*>& FEditorPropertiesWidget::GetMaterialLabels(const FStaticMeshComponent* MeshComponent, int32 NumMaterials)
+const TArray<const CHAR_T*>& FEditorPropertiesWidget::GetMaterialLabels(const FStaticMeshComponent* MeshComponent, int32 NumMaterials)
 {
     if (MaterialLabelOwner == MeshComponent && MaterialLabelCount == NumMaterials)
     {
@@ -125,10 +125,10 @@ void FEditorPropertiesWidget::DrawWindowContents()
         return;
     }
 
-    const auto DrawLabelWithSeperator = [](const CHAR* InLabel)
+    const auto DrawLabelWithSeperator = [](const CHAR_T* InLabel)
     {
         static constexpr int32 LabelLength = 256;
-        TStaticArray<CHAR, LabelLength> Label{};
+        TStaticArray<CHAR_T, LabelLength> Label{};
         CString::Snprintf(Label.Data(), static_cast<int32>(Label.Size()), "%s", InLabel);
 
         ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextBorderSize, 4.0f);
@@ -137,7 +137,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
         ImGui::PopStyleVar(2);
     };
 
-    const auto DrawCollapsingHeader = [](const CHAR* Label, ImGuiTreeNodeFlags Flags, const bool bDrawBottomBorder)
+    const auto DrawCollapsingHeader = [](const CHAR_T* Label, ImGuiTreeNodeFlags Flags, const bool bDrawBottomBorder)
     {
         ImGuiStyle& Style = ImGui::GetStyle();
 
@@ -232,7 +232,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
         FActor*    ParentActor = SelectedActor->GetParentActor();
         const bool bIsAttached = ParentActor != nullptr;
 
-        const CHAR* TransformLabel = bIsAttached ? "Transform (Relative)" : "Transform";
+        const CHAR_T* TransformLabel = bIsAttached ? "Transform (Relative)" : "Transform";
         if (DrawCollapsingHeader(TransformLabel, ImGuiTreeNodeFlags_DefaultOpen, bIsAttached || bHasComponentProperties))
         {
             if (EditorWidgets::BeginPropertyTable("##ActorTransformTable", LabelColumnWidth, RevertColumnWidth))
@@ -343,7 +343,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     {
                         if (NumMaterials > 1)
                         {
-                            const TArray<const CHAR*>& ComboLabels = GetMaterialLabels(MeshComponent, NumMaterials);
+                            const TArray<const CHAR_T*>& ComboLabels = GetMaterialLabels(MeshComponent, NumMaterials);
 
                             const int32 SelectedMaterialIndex0 = 0;
                             EditorWidgets::DrawComboProperty("Material", SelectedMaterialIndex, ComboLabels.Data(), ComboLabels.Size(), &SelectedMaterialIndex0);
@@ -434,7 +434,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 {
                     if (EditorWidgets::BeginPropertyTable("##MeshComponentTexturesTable", LabelColumnWidth, RevertColumnWidth))
                     {
-                        static const CHAR* SlotNames[] =
+                        static const CHAR_T* SlotNames[] =
                         {
                             "Base Color",
                             "Normal",
@@ -478,7 +478,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
                         if (IsMaterialFlagSet(EMaterialFlags::EnableNormalMapping) && bHasNormalTexture)
                         {
-                            static const CHAR* const NormalMapAxisItems[] =
+                            static const CHAR_T* const NormalMapAxisItems[] =
                             {
                                 "-Y (DirectX)",
                                 "+Y (OpenGL)"
@@ -868,7 +868,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
             if (EditorWidgets::BeginPropertyTable("##CameraProjectionTable", LabelColumnWidth, RevertColumnWidth))
             {
                 {
-                    TStaticArray<CHAR, 64> ViewportText{};
+                    TStaticArray<CHAR_T, 64> ViewportText{};
                     CString::Snprintf(ViewportText.Data(), static_cast<int32>(ViewportText.Size()), "%.1f x %.1f", SelectedCamera->GetWidth(), SelectedCamera->GetHeight());
                     EditorWidgets::DrawTextProperty("Viewport size", ViewportText.Data());
                 }

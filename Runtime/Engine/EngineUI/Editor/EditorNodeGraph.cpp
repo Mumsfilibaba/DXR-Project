@@ -11,7 +11,7 @@ namespace EditorNodeGraphPrivate
     {
         ImVec2                    Pos    = ImVec2(0.0f, 0.0f);
         EditorNodeGraph::EPinKind Kind   = EditorNodeGraph::EPinKind::Input;
-        const CHAR*               Label  = nullptr;
+        const CHAR_T*             Label  = nullptr;
         bool                      bValid = false;
     };
 
@@ -19,7 +19,7 @@ namespace EditorNodeGraphPrivate
     {
         int32                     PinId = 0;
         EditorNodeGraph::EPinKind Kind  = EditorNodeGraph::EPinKind::Input;
-        const CHAR*               Label = nullptr;
+        const CHAR_T*             Label = nullptr;
     };
 
     struct FNodeState
@@ -204,7 +204,7 @@ ImU32 EditorNodeGraph::GetPinColor(EPinKind Kind)
     return (Kind == EPinKind::Input) ? IM_COL32(100, 180, 255, 255) : IM_COL32(255, 180, 90, 255);
 }
 
-void EditorNodeGraph::BeginCanvas(const CHAR* Id, const ImVec2& Size, EStyleFlags StyleFlags)
+void EditorNodeGraph::BeginCanvas(const CHAR_T* Id, const ImVec2& Size, EStyleFlags StyleFlags)
 {
     using namespace EditorNodeGraphPrivate;
 
@@ -351,7 +351,7 @@ bool EditorNodeGraph::BeginNode(int32 NodeId, ImVec2* InOutPos, ENodeStyle Style
     return true;
 }
 
-void EditorNodeGraph::NodeTitle(const CHAR* Title)
+void EditorNodeGraph::NodeTitle(const CHAR_T* Title)
 {
     using namespace EditorNodeGraphPrivate;
 
@@ -497,7 +497,7 @@ void EditorNodeGraph::EndNode()
     GCanvas.CurrentNode = FNodeState();
 }
 
-void EditorNodeGraph::Pin(int32 PinId, EPinKind Kind, const CHAR* Label)
+void EditorNodeGraph::Pin(int32 PinId, EPinKind Kind, const CHAR_T* Label)
 {
     using namespace EditorNodeGraphPrivate;
 

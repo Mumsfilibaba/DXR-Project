@@ -103,7 +103,7 @@ enum class ERayTracingTier : uint8
     Tier2_0 = 4,
 };
 
-NODISCARD constexpr const CHAR* ToString(ERayTracingTier RayTracingTier)
+NODISCARD constexpr const CHAR_T* ToString(ERayTracingTier RayTracingTier)
 {
     switch (RayTracingTier)
     {
@@ -125,7 +125,7 @@ enum class EShadingRateTier : uint8
     Tier2 = 2,
 };
 
-NODISCARD constexpr const CHAR* ToString(EShadingRateTier ShadingRateTier)
+NODISCARD constexpr const CHAR_T* ToString(EShadingRateTier ShadingRateTier)
 {
     switch (ShadingRateTier)
     {
@@ -145,7 +145,7 @@ enum class ESamplerFeedbackTier : uint8
     Tier1_0 = 2,
 };
 
-NODISCARD constexpr const CHAR* ToString(ESamplerFeedbackTier SamplerFeedbackTier)
+NODISCARD constexpr const CHAR_T* ToString(ESamplerFeedbackTier SamplerFeedbackTier)
 {
     switch (SamplerFeedbackTier)
     {
@@ -168,7 +168,7 @@ enum class ESamplePositionsTier : uint8
     Tier2 = 2,
 };
 
-NODISCARD constexpr const CHAR* ToString(ESamplePositionsTier SamplePositionsTier)
+NODISCARD constexpr const CHAR_T* ToString(ESamplePositionsTier SamplePositionsTier)
 {
     switch (SamplePositionsTier)
     {

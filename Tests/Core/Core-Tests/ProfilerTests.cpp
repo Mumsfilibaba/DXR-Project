@@ -20,7 +20,7 @@ static void BusyWait()
     UNREFERENCED_VARIABLE(Accumulator);
 }
 
-static const FProfilerInterval* FindIntervalByName(const TArray<FProfilerInterval>& Intervals, const CHAR* Name)
+static const FProfilerInterval* FindIntervalByName(const TArray<FProfilerInterval>& Intervals, const CHAR_T* Name)
 {
     for (const FProfilerInterval& Interval : Intervals)
     {

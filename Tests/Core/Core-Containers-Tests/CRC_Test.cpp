@@ -6,9 +6,9 @@
 #include <Core/Misc/CRC.h>
 #include <Core/Templates/CString.h>
 
-static uint32 CRCOf(const CHAR* Text)
+static uint32 CRCOf(const CHAR_T* Text)
 {
-    return CRC32::Generate(Text, static_cast<uint64>(TCString<CHAR>::Strlen(Text)));
+    return CRC32::Generate(Text, static_cast<uint64>(TCString<CHAR_T>::Strlen(Text)));
 }
 
 bool CRC_Test()

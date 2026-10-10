@@ -369,17 +369,17 @@ void FSceneRenderer::BuildAndExecuteSceneGraph(const FSceneRenderView& SceneRend
                 ERHIResourceState::UnorderedAccess, ERHIResourceState::UnorderedAccess);
         }
 
-        const CHAR* ReflectionHistoryNames[2] =
+        const CHAR_T* ReflectionHistoryNames[2] =
         {
             "ReflectionHistory0", "ReflectionHistory1"
         };
 
-        const CHAR* ReflectionMomentsNames[2] =
+        const CHAR_T* ReflectionMomentsNames[2] =
         {
             "ReflectionMoments0", "ReflectionMoments1"
         };
 
-        const CHAR* ReflectionDenoisedNames[2] =
+        const CHAR_T* ReflectionDenoisedNames[2] =
         {
             "ReflectionDenoised0", "ReflectionDenoised1"
         };

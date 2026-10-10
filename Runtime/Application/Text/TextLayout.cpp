@@ -103,8 +103,8 @@ void FTextLayout::WrapToWidth(int32 WrapWidth)
 
     for (const FTextRun& SourceRun : SourceRuns)
     {
-        const CHAR* Characters = SourceRun.Text.Data();
-        const int32 Length     = SourceRun.Text.Length();
+        const CHAR_T* Characters = SourceRun.Text.Data();
+        const int32   Length     = SourceRun.Text.Length();
 
         int32 Position = 0;
         while (Position <= Length)
@@ -195,7 +195,7 @@ void FTextLayout::FinishLine()
     Line.Baseline = Baseline;
 }
 
-void FTextLayout::AppendPiece(const FTextRun& Style, const CHAR* Characters, int32 Count, int32 SourceOffset)
+void FTextLayout::AppendPiece(const FTextRun& Style, const CHAR_T* Characters, int32 Count, int32 SourceOffset)
 {
     if (Count <= 0)
     {
@@ -214,7 +214,7 @@ void FTextLayout::AppendPiece(const FTextRun& Style, const CHAR* Characters, int
     Lines.Last().RunCount++;
 }
 
-void FTextLayout::WrapSegment(const FTextRun& Style, const CHAR* Characters, int32 Count, int32 SourceOffset, int32 WrapWidth)
+void FTextLayout::WrapSegment(const FTextRun& Style, const CHAR_T* Characters, int32 Count, int32 SourceOffset, int32 WrapWidth)
 {
     if (Count <= 0)
     {

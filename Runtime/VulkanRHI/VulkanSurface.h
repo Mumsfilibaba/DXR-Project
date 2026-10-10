@@ -20,7 +20,7 @@ enum class ESurfaceStatus : uint8
     Error,
 };
 
-constexpr const CHAR* ToString(ESurfaceStatus Status)
+constexpr const CHAR_T* ToString(ESurfaceStatus Status)
 {
     switch (Status)
     {

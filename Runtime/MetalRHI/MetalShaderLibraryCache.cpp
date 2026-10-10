@@ -6,7 +6,7 @@
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
 
-static NSString* ResolveMetalFunctionName(id<MTLLibrary> Library, const CHAR* EntryPoint)
+static NSString* ResolveMetalFunctionName(id<MTLLibrary> Library, const CHAR_T* EntryPoint)
 {
     if (EntryPoint && EntryPoint[0] != '\0')
     {
@@ -28,7 +28,7 @@ static NSString* ResolveMetalFunctionName(id<MTLLibrary> Library, const CHAR* En
     return FunctionNames.firstObject;
 }
 
-static uint64 HashSource(TArrayView<const uint8> Source, const CHAR* EntryPoint)
+static uint64 HashSource(TArrayView<const uint8> Source, const CHAR_T* EntryPoint)
 {
     uint64 Hash = static_cast<uint64>(Source.Size());
     HashCombine(Hash, CRC32::Generate(Source.Data(), Source.Size()));
@@ -54,7 +54,7 @@ FMetalShaderLibraryCache::FMetalShaderLibraryCache(FMetalDevice* InDevice)
 
 FMetalShaderLibraryCache::~FMetalShaderLibraryCache() = default;
 
-TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::GetOrCompile(TArrayView<const uint8> Source, const CHAR* EntryPoint)
+TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::GetOrCompile(TArrayView<const uint8> Source, const CHAR_T* EntryPoint)
 {
     if (!EntryPoint)
     {
@@ -119,7 +119,7 @@ void FMetalShaderLibraryCache::Prune()
     }
 }
 
-TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Find(uint64 Hash, TArrayView<const uint8> Source, const CHAR* EntryPoint) const
+TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Find(uint64 Hash, TArrayView<const uint8> Source, const CHAR_T* EntryPoint) const
 {
     const TArray<FEntry>* Bucket = Entries.Find(Hash);
     if (!Bucket)
@@ -138,11 +138,11 @@ TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Find(uint64 Hash, TAr
     return nullptr;
 }
 
-TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Compile(TArrayView<const uint8> Source, const CHAR* EntryPoint) const
+TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Compile(TArrayView<const uint8> Source, const CHAR_T* EntryPoint) const
 {
     SCOPED_AUTORELEASE_POOL();
 
-    const String SourceString(reinterpret_cast<const CHAR*>(Source.Data()), Source.Size());
+    const String SourceString(reinterpret_cast<const CHAR_T*>(Source.Data()), Source.Size());
 
     NSString* SourceText = SourceString.GetNSString();
     CHECK(SourceText != nil);

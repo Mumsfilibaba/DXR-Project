@@ -570,7 +570,7 @@ private:
 
 struct FD3D12PipelineDiskHeader
 {
-    CHAR   Magic[8]; // Always "D3D12PSO"
+    CHAR_T Magic[8]; // Always "D3D12PSO"
     uint64 DataCRC;
     uint64 DataSize;
 };

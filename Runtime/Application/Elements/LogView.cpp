@@ -384,7 +384,7 @@ void FLogView::TrimToMaxLineCount()
     }
 }
 
-const CHAR* FLogView::GetSeverityPrefix(ELogSeverity Severity)
+const CHAR_T* FLogView::GetSeverityPrefix(ELogSeverity Severity)
 {
     switch (Severity)
     {

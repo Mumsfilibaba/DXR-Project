@@ -9,7 +9,7 @@
 
 struct FMacPlatformMisc final : public IPlatformMisc
 {
-    static FORCEINLINE void OutputDebugString(const CHAR* Message)
+    static FORCEINLINE void OutputDebugString(const CHAR_T* Message)
     {
         if (Message && Message[0] != '\0')
         {
@@ -19,7 +19,7 @@ struct FMacPlatformMisc final : public IPlatformMisc
         WriteToStdOutput("\n", 1);
     }
 
-    static FORCEINLINE void WriteToStdOutput(const CHAR* Text, uint32 Length)
+    static FORCEINLINE void WriteToStdOutput(const CHAR_T* Text, uint32 Length)
     {
         if (Length == 0)
         {
@@ -31,7 +31,7 @@ struct FMacPlatformMisc final : public IPlatformMisc
 
     static bool IsDebuggerPresent();
 
-    static EAssertDialogResult ShowAssertDialog(const CHAR* Title, const CHAR* Message);
+    static EAssertDialogResult ShowAssertDialog(const CHAR_T* Title, const CHAR_T* Message);
 
     static void InstallCrashHandler();
     static void PrepareMetalDebugLayerEnvironment(bool bEnableDebugLayer, bool bEnableShaderValidation = false);
@@ -43,7 +43,7 @@ struct FMacPlatformMisc final : public IPlatformMisc
         __sync_synchronize();
     }
 
-    static FORCEINLINE bool GetEnvironmentVariable(const CHAR* Name, String& OutValue)
+    static FORCEINLINE bool GetEnvironmentVariable(const CHAR_T* Name, String& OutValue)
     {
         OutValue.Clear();
 
@@ -52,7 +52,7 @@ struct FMacPlatformMisc final : public IPlatformMisc
             return false;
         }
 
-        const CHAR* Value = ::getenv(Name);
+        const CHAR_T* Value = ::getenv(Name);
         if (!Value)
         {
             return false;
@@ -62,7 +62,7 @@ struct FMacPlatformMisc final : public IPlatformMisc
         return true;
     }
 
-    static FORCEINLINE bool SetEnvironmentVariable(const CHAR* Name, const CHAR* Value)
+    static FORCEINLINE bool SetEnvironmentVariable(const CHAR_T* Name, const CHAR_T* Value)
     {
         if (!Name || Name[0] == '\0')
         {
@@ -82,7 +82,7 @@ struct FMacPlatformMisc final : public IPlatformMisc
         const int32 LastError = errno;
 
         // The XSI strerror_r, which macOS provides, returns an int rather than the GNU variant's pointer
-        CHAR MessageBuffer[256] = {};
+        CHAR_T MessageBuffer[256] = {};
         if (::strerror_r(LastError, MessageBuffer, sizeof(MessageBuffer)) != 0)
         {
             MessageBuffer[0] = 0;

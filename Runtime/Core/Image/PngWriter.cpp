@@ -457,7 +457,7 @@ void FPngWriter::AppendBigEndian32(TArray<uint8>& Out, uint32 Value)
     Out.Add(static_cast<uint8>((Value >> 0)  & 0xFF));
 }
 
-void FPngWriter::AppendChunk(TArray<uint8>& Out, const CHAR* Type, const TArray<uint8>& Payload)
+void FPngWriter::AppendChunk(TArray<uint8>& Out, const CHAR_T* Type, const TArray<uint8>& Payload)
 {
     AppendBigEndian32(Out, static_cast<uint32>(Payload.Size()));
 

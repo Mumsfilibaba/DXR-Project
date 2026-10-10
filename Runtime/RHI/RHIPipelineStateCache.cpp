@@ -17,7 +17,7 @@ static FAutoConsoleCommand CCmdDumpPipelineCacheStats(
         }
     }));
 
-static const CHAR* GetPipelineCacheKindName(EPipelineCacheKind::Type Kind)
+static const CHAR_T* GetPipelineCacheKindName(EPipelineCacheKind::Type Kind)
 {
     switch (Kind)
     {
@@ -643,7 +643,7 @@ FRHIShader* FRHIPipelineStateCache::GetOrCreateShader(EShaderStage Stage, const 
 
 FRHIGraphicsPipelineState* FRHIPipelineStateCache::GetOrCreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& Desc)
 {
-    // Stream output entries name their semantics with a borrowed const CHAR*, which a stored key cannot
+    // Stream output entries name their semantics with a borrowed const CHAR_T*, which a stored key cannot
     // own, so those descs bypass the cache entirely. No renderer pass sets one today.
     if (Desc.StreamOutputDeclaration)
     {

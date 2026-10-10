@@ -82,9 +82,9 @@ private:
 
     struct FKeyPress
     {
-        EKey  Key         = EKey::None;
-        CHAR  Character   = 0;
-        int32 RepeatCount = 1;
+        EKey   Key         = EKey::None;
+        CHAR_T Character   = 0;
+        int32  RepeatCount = 1;
     };
 
     void RunInteractive();

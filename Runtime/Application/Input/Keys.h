@@ -20,7 +20,7 @@ public:
     bool IsMouseButton()   const { return Key >= EKeyName::MouseButtonFirst && Key <= EKeyName::MouseButtonLast; }
     bool IsGamepadButton() const { return Key >= EKeyName::GamepadFirst && Key <= EKeyName::GamepadLast; }
 
-    const CHAR*    ToString()   const { return KeyString; }
+    const CHAR_T*  ToString()   const { return KeyString; }
     EKeyName::Type GetKeyName() const { return Key; }
 
     bool operator==(const FKey& Other) const { return Key == Other.Key; }
@@ -28,7 +28,7 @@ public:
 
 private:
     EKeyName::Type Key;
-    const CHAR*    KeyString;
+    const CHAR_T*  KeyString;
 };
 
 struct Keys

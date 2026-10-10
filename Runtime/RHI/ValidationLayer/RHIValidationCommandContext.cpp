@@ -24,7 +24,7 @@ FRHIValidationCommandContext::~FRHIValidationCommandContext()
 {
 }
 
-bool FRHIValidationCommandContext::ValidateRecordingPhase(const CHAR* Caller) const
+bool FRHIValidationCommandContext::ValidateRecordingPhase(const CHAR_T* Caller) const
 {
     if (ContextPhase == ECommandContextPhase::Finished)
     {
@@ -50,7 +50,7 @@ FRHIValidationSwapChain* FRHIValidationCommandContext::FindSwapChain(const FRHIR
     return Device->FindSwapChainForBackBuffer(Resource);
 }
 
-bool FRHIValidationCommandContext::ValidateBackBufferRead(const FRHIResource* Resource, const CHAR* Caller)
+bool FRHIValidationCommandContext::ValidateBackBufferRead(const FRHIResource* Resource, const CHAR_T* Caller)
 {
     FRHIValidationSwapChain* SwapChain = FindSwapChain(Resource);
     if (!SwapChain)
@@ -75,7 +75,7 @@ bool FRHIValidationCommandContext::ValidateBackBufferRead(const FRHIResource* Re
     return true;
 }
 
-bool FRHIValidationCommandContext::ValidateBackBufferWrite(const FRHIResource* Resource, const CHAR* Caller)
+bool FRHIValidationCommandContext::ValidateBackBufferWrite(const FRHIResource* Resource, const CHAR_T* Caller)
 {
     FRHIValidationSwapChain* SwapChain = FindSwapChain(Resource);
     if (!SwapChain)
@@ -94,12 +94,12 @@ bool FRHIValidationCommandContext::ValidateBackBufferWrite(const FRHIResource* R
     return true;
 }
 
-bool FRHIValidationCommandContext::ValidateBackBufferViewRead(const FRHIResourceView* View, const CHAR* Caller)
+bool FRHIValidationCommandContext::ValidateBackBufferViewRead(const FRHIResourceView* View, const CHAR_T* Caller)
 {
     return !View || ValidateBackBufferRead(View->GetResource(), Caller);
 }
 
-bool FRHIValidationCommandContext::ValidateBackBufferViewWrite(const FRHIResourceView* View, const CHAR* Caller)
+bool FRHIValidationCommandContext::ValidateBackBufferViewWrite(const FRHIResourceView* View, const CHAR_T* Caller)
 {
     return !View || ValidateBackBufferWrite(View->GetResource(), Caller);
 }
@@ -2096,7 +2096,7 @@ int32 FRHIValidationCommandContext::FindOpenSplit(const FOpenSplitKey& Key) cons
     return -1;
 }
 
-bool FRHIValidationCommandContext::ValidateNoOpenSplit(const FRHIResource* Resource, const CHAR* Caller) const
+bool FRHIValidationCommandContext::ValidateNoOpenSplit(const FRHIResource* Resource, const CHAR_T* Caller) const
 {
     for (const FOpenSplit& Split : OpenSplits)
     {
@@ -2120,7 +2120,7 @@ void FRHIValidationCommandContext::MarkAccelerationStructureWritten(const FRHIRa
     }
 }
 
-void FRHIValidationCommandContext::ValidateAccelerationStructureBarrier(const FRHIRayTracingAccelerationStructure* AccelerationStructure, const CHAR* Caller)
+void FRHIValidationCommandContext::ValidateAccelerationStructureBarrier(const FRHIRayTracingAccelerationStructure* AccelerationStructure, const CHAR_T* Caller)
 {
     if (ShouldValidateResourceStates() && StateTracker->ConsumeAccelerationStructureWrite(AccelerationStructure))
     {
@@ -2129,7 +2129,7 @@ void FRHIValidationCommandContext::ValidateAccelerationStructureBarrier(const FR
     }
 }
 
-void FRHIValidationCommandContext::ValidateSceneAccelerationStructureBarriers(const CHAR* Caller)
+void FRHIValidationCommandContext::ValidateSceneAccelerationStructureBarriers(const CHAR_T* Caller)
 {
     if (!ShouldValidateResourceStates())
     {

@@ -12,7 +12,7 @@ struct CORE_API IPlatformThread
 public:
 
     /** @brief Creates a new thread. Each platform hides this with its own */
-    static IPlatformThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true)
+    static IPlatformThread* Create(FRunnable* Runnable, const CHAR_T* ThreadName, bool bSuspended = true)
     {
         return nullptr;
     }

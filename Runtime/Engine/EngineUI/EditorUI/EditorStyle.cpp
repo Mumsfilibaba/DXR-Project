@@ -38,7 +38,7 @@ static FFloatColor FromBytes(int32 R, int32 G, int32 B, int32 A = 255)
     return FFloatColor(R / 255.0f, G / 255.0f, B / 255.0f, A / 255.0f);
 }
 
-static TSharedPtr<IFontFace> LoadFace(const CHAR* Filename, int32 PixelHeight)
+static TSharedPtr<IFontFace> LoadFace(const CHAR_T* Filename, int32 PixelHeight)
 {
     const String Path = Paths::GetAssetDir() + "/Editor/Fonts/" + Filename;
 

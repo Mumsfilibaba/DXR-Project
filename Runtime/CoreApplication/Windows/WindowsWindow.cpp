@@ -128,7 +128,7 @@ bool FWindowsWindow::Initialize(const FPlatformWindowDesc& InDesc)
         ParentWindow = reinterpret_cast<HWND>(InDesc.ParentWindow->GetPlatformHandle());
     }
 
-    const TStringConversion<WIDECHAR, CHAR> Title = StringCast<WIDECHAR>(InDesc.Title);
+    const TStringConversion<WIDECHAR, CHAR_T> Title = StringCast<WIDECHAR>(InDesc.Title);
 
     HINSTANCE Instance = Application->GetInstance();
     Window = ::CreateWindowExW(NewStyle.StyleEx, FWindowsWindow::GetClassName(), Title.Get(), NewStyle.Style, PositionX, PositionY, RealWidth, RealHeight, ParentWindow, nullptr, Instance, nullptr);
@@ -372,7 +372,7 @@ void FWindowsWindow::GetTitle(String& OutTitle) const
     WideTitle.Resize(Size);
 
     const int32 Length = ::GetWindowTextW(Window, WideTitle.Data(), Size + 1);
-    OutTitle = StringCast<CHAR>(WideTitle.Data(), Length).ToString();
+    OutTitle = StringCast<CHAR_T>(WideTitle.Data(), Length).ToString();
 }
 
 void FWindowsWindow::SetWindowPos(int32 x, int32 y)

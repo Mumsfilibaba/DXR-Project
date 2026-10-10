@@ -15,8 +15,8 @@ namespace ModelFormat
 {
     struct FFileHeader
     {
-        CHAR   Magic[7];     // Always "DXRMESH"
-        CHAR   Padding[1];   // Should me zero
+        CHAR_T Magic[7];     // Always "DXRMESH"
+        CHAR_T Padding[1];   // Should me zero
         uint64 DataCRC;      // CRC of the data (Everything excluding the FFileHeader)
         uint64 DataSize;     // Total DataSize
         uint32 VersionMajor; // Major version of the file
@@ -48,18 +48,18 @@ namespace ModelFormat
 
     struct FMeshInfo
     {
-        CHAR  Name[MODEL_FORMAT_MAX_NAME_LENGTH]; // Name of the mesh
+        CHAR_T Name[MODEL_FORMAT_MAX_NAME_LENGTH]; // Name of the mesh
         
-        int32 FirstSubMesh;                       // First SubMesh in the SubMeshArray
-        int32 NumSubMeshes;                       // Number of SubMeshes for this Mesh
+        int32  FirstSubMesh;                       // First SubMesh in the SubMeshArray
+        int32  NumSubMeshes;                       // Number of SubMeshes for this Mesh
         
-        int32 FirstVertex;                        // First Vertex in each stream
-        int32 NumVertices;                        // Number of Vertices for this Mesh
+        int32  FirstVertex;                        // First Vertex in each stream
+        int32  NumVertices;                        // Number of Vertices for this Mesh
         
-        int32 FirstIndex;                         // First Index in the IndexArray
-        int32 NumIndices;                         // Number of Indicies for this Mesh
+        int32  FirstIndex;                         // First Index in the IndexArray
+        int32  NumIndices;                         // Number of Indicies for this Mesh
 
-        int32 AttributeFlags;                     // EVertexAttributeFlags this mesh's streams were packed for
+        int32  AttributeFlags;                     // EVertexAttributeFlags this mesh's streams were packed for
     };
 
     struct FSubMeshInfo
@@ -75,7 +75,7 @@ namespace ModelFormat
 
     struct FTextureInfo
     {
-        CHAR Filepath[MODEL_FORMAT_MAX_NAME_LENGTH];
+        CHAR_T Filepath[MODEL_FORMAT_MAX_NAME_LENGTH];
     };
 
     struct FMaterialInfo

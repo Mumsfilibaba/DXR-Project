@@ -21,7 +21,7 @@ enum class EStencilOp : uint8
     Decr    = 8,
 };
 
-NODISCARD constexpr const CHAR* ToString(EStencilOp StencilOp)
+NODISCARD constexpr const CHAR_T* ToString(EStencilOp StencilOp)
 {
     switch (StencilOp)
     {
@@ -126,7 +126,7 @@ enum class ECullMode : uint8
     Back  = 3,
 };
 
-NODISCARD constexpr const CHAR* ToString(ECullMode CullMode)
+NODISCARD constexpr const CHAR_T* ToString(ECullMode CullMode)
 {
     switch (CullMode)
     {
@@ -144,7 +144,7 @@ enum class EFillMode : uint8
     Solid     = 2,
 };
 
-NODISCARD constexpr const CHAR* ToString(EFillMode FillMode)
+NODISCARD constexpr const CHAR_T* ToString(EFillMode FillMode)
 {
     switch (FillMode)
     {
@@ -239,7 +239,7 @@ enum class EBlendType : uint8
     InvSrc1Alpha   = 17,
 };
 
-NODISCARD constexpr const CHAR* ToString(EBlendType  Blend)
+NODISCARD constexpr const CHAR_T* ToString(EBlendType  Blend)
 {
     switch (Blend)
     {
@@ -274,7 +274,7 @@ enum class EBlendOp : uint8
     Max         = 5,
 };
 
-NODISCARD constexpr const CHAR* ToString(EBlendOp BlendOp)
+NODISCARD constexpr const CHAR_T* ToString(EBlendOp BlendOp)
 {
     switch (BlendOp)
     {
@@ -308,7 +308,7 @@ enum class ELogicOp : uint8
     OrInverted   = 15,
 };
 
-NODISCARD constexpr const CHAR* ToString(ELogicOp LogicOp)
+NODISCARD constexpr const CHAR_T* ToString(ELogicOp LogicOp)
 {
     switch (LogicOp)
     {
@@ -440,7 +440,7 @@ enum class EVertexInputClass : uint8
     Instance = 1,
 };
 
-NODISCARD constexpr const CHAR* ToString(EVertexInputClass BlendOp)
+NODISCARD constexpr const CHAR_T* ToString(EVertexInputClass BlendOp)
 {
     switch (BlendOp)
     {
@@ -551,11 +551,11 @@ struct FRHIMultiSampleState
 
 struct FRHIStreamOutputEntry
 {
-    const CHAR* SemanticName   = nullptr;
-    uint32      SemanticIndex  = 0;
-    uint8       StartComponent = 0;
-    uint8       ComponentCount = 0;
-    uint8       OutputSlot     = 0;
+    const CHAR_T* SemanticName   = nullptr;
+    uint32        SemanticIndex  = 0;
+    uint8         StartComponent = 0;
+    uint8         ComponentCount = 0;
+    uint8         OutputSlot     = 0;
 };
 
 struct FRHIStreamOutputDeclaration

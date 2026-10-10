@@ -22,7 +22,7 @@ public:
 private:
     struct FStatGroupSection
     {
-        const CHAR*                    GroupName;
+        const CHAR_T*                  GroupName;
         TSharedPtr<FExpander>          Section;
         TSharedPtr<FPropertyTable>     Table;
         TArray<TSharedPtr<FTextBlock>> Values;
@@ -38,5 +38,5 @@ private:
     TSharedPtr<FTextBlock>    SummaryText;
     TArray<FStatGroupSection> Sections;
     TArray<FStatData*>        ScratchStats;
-    TArray<const CHAR*>       ScratchGroups;
+    TArray<const CHAR_T*>     ScratchGroups;
 };

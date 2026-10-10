@@ -10,7 +10,7 @@ struct IPlatformLibrary
      * @param LibraryName Name of the library to load without extension or prefixes
      * @return A native handle to a dynamic library
      */
-    static FORCEINLINE void* LoadDynamicLib(const CHAR* LibraryName)
+    static FORCEINLINE void* LoadDynamicLib(const CHAR_T* LibraryName)
     {
         return nullptr;
     }
@@ -20,7 +20,7 @@ struct IPlatformLibrary
      * @param LibraryName Name of the library to load without extension or prefixes
      * @return A native handle to a dynamic library
      */
-    static FORCEINLINE void* GetLoadedHandle(const CHAR* LibraryName)
+    static FORCEINLINE void* GetLoadedHandle(const CHAR_T* LibraryName)
     {
         return nullptr;
     }
@@ -39,7 +39,7 @@ struct IPlatformLibrary
      * @param LibraryHandle Handle to the library to load from
      * @return Returns a pointer to the symbol in the dynamic library
      */
-    static FORCEINLINE void* LoadSymbol(const CHAR* SymbolName, void* LibraryHandle)
+    static FORCEINLINE void* LoadSymbol(const CHAR_T* SymbolName, void* LibraryHandle)
     {
         return nullptr;
     }
@@ -51,7 +51,7 @@ struct IPlatformLibrary
      * @return Returns a pointer to the symbol in the dynamic library
      */
     template<typename SymbolType>
-    static FORCEINLINE SymbolType LoadSymbol(const CHAR* SymbolName, void* LibraryHandle)
+    static FORCEINLINE SymbolType LoadSymbol(const CHAR_T* SymbolName, void* LibraryHandle)
     {
         return reinterpret_cast<SymbolType>(LoadSymbol(SymbolName, LibraryHandle));
     }
@@ -60,7 +60,7 @@ struct IPlatformLibrary
      * @brief Retrieve the extension that dynamic libraries use on the platform 
      * @return Returns the extension that is used on the platform for dynamic libraries
      */
-    static FORCEINLINE const CHAR* GetDynamicLibExtension()
+    static FORCEINLINE const CHAR_T* GetDynamicLibExtension()
     {
         return "";
     }
@@ -69,7 +69,7 @@ struct IPlatformLibrary
      * @brief Retrieve the full name for the library including prefixes and extension 
      * @param LibraryName Name of the library without extension or prefixes
      */
-    static FORCEINLINE String GetRealName(const CHAR* LibraryName)
+    static FORCEINLINE String GetRealName(const CHAR_T* LibraryName)
     {
         return "";
     }
@@ -79,7 +79,7 @@ struct IPlatformLibrary
      * @param LibraryName Name of the library without extension or prefixes
      * @return Returns true if the library is loaded into the application
      */
-    static FORCEINLINE bool IsLibraryLoaded(const CHAR* LibraryName)
+    static FORCEINLINE bool IsLibraryLoaded(const CHAR_T* LibraryName)
     {
         return false;
     }

@@ -5,7 +5,7 @@
 
 #include "TestCommon/TestMacros.h"
 
-static constexpr CHAR GTestEnvName[] = "DXR_PLATFORM_MISC_ENV_TEST";
+static constexpr CHAR_T GTestEnvName[] = "DXR_PLATFORM_MISC_ENV_TEST";
 
 static void RestoreEnvironmentVariable(const String& PreviousValue, bool bHadPrevious)
 {

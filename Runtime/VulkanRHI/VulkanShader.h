@@ -39,7 +39,7 @@ struct EShaderVisibility
     };
 };
 
-inline const CHAR* ToString(EShaderVisibility::Type ShaderVisibility)
+inline const CHAR_T* ToString(EShaderVisibility::Type ShaderVisibility)
 {
     CHECK(ShaderVisibility < EShaderVisibility::Count);
     
@@ -79,7 +79,7 @@ struct EVulkanBindingType
     };
 };
 
-inline const CHAR* ToString(EVulkanBindingType::Type Binding)
+inline const CHAR_T* ToString(EVulkanBindingType::Type Binding)
 {
     static constexpr const char* const BindingTypeStrings[]
     {

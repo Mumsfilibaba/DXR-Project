@@ -101,7 +101,7 @@ EEngineDirSource Paths::GetEngineDirSource()
     return GEngineDirSource;
 }
 
-const CHAR* Paths::GetEngineDirSourceName()
+const CHAR_T* Paths::GetEngineDirSourceName()
 {
     switch (GetEngineDirSource())
     {

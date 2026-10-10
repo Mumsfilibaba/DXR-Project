@@ -12,7 +12,7 @@ struct FVulkanImageLayoutValidationEntry
 {
     VkImageLayout ExpectedEntryLayout = VK_IMAGE_LAYOUT_UNDEFINED; // The layout the buffer assumes the image is already in when the buffer starts executing.
     VkImageLayout FinalLayout         = VK_IMAGE_LAYOUT_UNDEFINED; // The layout the buffer leaves the image in.
-    const CHAR*   RecordingSite       = nullptr;
+    const CHAR_T* RecordingSite       = nullptr;
     bool          bWholeImage         = true;                      // Cleared as soon as anything touches a strict subset of the subresources, since a single layout per image can no longer describe the state.
 };
 #endif
@@ -472,7 +472,7 @@ public:
     }
 
 #if VULKAN_VALIDATE_IMAGE_LAYOUTS
-    void AddImageLayoutForValidation(VkImage Image, VkImageLayout EntryLayout, VkImageLayout ResultLayout, bool bWholeImage, const CHAR* RecordingSite);
+    void AddImageLayoutForValidation(VkImage Image, VkImageLayout EntryLayout, VkImageLayout ResultLayout, bool bWholeImage, const CHAR_T* RecordingSite);
 
     TMap<VkImage, FVulkanImageLayoutValidationEntry>& GetImageLayoutValidationEntries()
     {

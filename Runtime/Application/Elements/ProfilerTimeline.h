@@ -16,7 +16,7 @@ DECLARE_RETURN_DELEGATE(FOnGetProfilerBarContextMenu, TSharedPtr<FVisualElement>
 struct FProfilerTimelineBar
 {
     /** @brief The scope's name, which the host owns and which outlives the widget. */
-    const CHAR* Name = nullptr;
+    const CHAR_T* Name = nullptr;
 
     /** @brief When the scope opened, relative to whatever zero the host handed the lane set. */
     uint64 StartNanoseconds = 0;

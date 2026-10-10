@@ -236,7 +236,7 @@ public:
     bool IsDown()   const { return bIsDown; }
 
     FKey   GetKey()          const { return Key; }
-    CHAR   GetAnsiChar()     const { return static_cast<CHAR>(Character); }
+    CHAR_T GetAnsiChar()     const { return static_cast<CHAR_T>(Character); }
     uint32 GetGamepadIndex() const { return GamepadIndex; }
 
 private:

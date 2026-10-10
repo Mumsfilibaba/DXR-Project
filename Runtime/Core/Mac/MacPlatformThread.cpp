@@ -4,7 +4,7 @@
 #include "Core/Platform/PlatformTLS.h"
 #include "Core/Threading/ThreadManager.h"
 
-IPlatformThread* FMacPlatformThread::Create(FRunnable* InRunnable, const CHAR* ThreadName, bool bSuspended)
+IPlatformThread* FMacPlatformThread::Create(FRunnable* InRunnable, const CHAR_T* ThreadName, bool bSuspended)
 {
     FMacPlatformThread* NewThread = new FMacPlatformThread(InRunnable, ThreadName);
     if (!bSuspended && !NewThread->Start())
@@ -16,7 +16,7 @@ IPlatformThread* FMacPlatformThread::Create(FRunnable* InRunnable, const CHAR* T
     return NewThread;
 }
 
-FMacPlatformThread::FMacPlatformThread(FRunnable* InRunnable, const CHAR* ThreadName)
+FMacPlatformThread::FMacPlatformThread(FRunnable* InRunnable, const CHAR_T* ThreadName)
     : Name(ThreadName)
     , Runnable(InRunnable)
     , Thread()
@@ -103,7 +103,7 @@ void* FMacPlatformThread::ThreadRoutine(void* ThreadParameter)
         // Thread-name can only be set from the running thread
         if (!CurrentThread->Name.IsEmpty())
         {
-            const CHAR* ThreadName = *CurrentThread->Name;
+            const CHAR_T* ThreadName = *CurrentThread->Name;
             ::pthread_setname_np(ThreadName);
         }
 

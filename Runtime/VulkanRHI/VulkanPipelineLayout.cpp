@@ -443,7 +443,7 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutIn
     return true;
 }
 
-void FVulkanPipelineLayout::SetDebugName(const CHAR* InName)
+void FVulkanPipelineLayout::SetDebugName(const CHAR_T* InName)
 {
     if (InName)
     {
@@ -560,7 +560,7 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
 
             const FVulkanDescriptorRemappingInfo::FRemappingInfo& RemappingInfo = StageMappingInfo.RemappingInfo[BindingIndex];
 
-            const auto CheckSlotCollision = [&](uint8 Slot, const CHAR* BucketName)
+            const auto CheckSlotCollision = [&](uint8 Slot, const CHAR_T* BucketName)
             {
                 UNREFERENCED_VARIABLE(BucketName);
                 if (Slot != UINT8_MAX && Slot != static_cast<uint8>(BindingIndex))

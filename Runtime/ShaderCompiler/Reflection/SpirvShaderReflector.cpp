@@ -45,7 +45,7 @@ static spvc_compiler CreateReflectionCompiler(const FScopedSpvcContext& Context,
     }
 
     // The context lives in the caller, which outlives every spvc_* call made with OutErrors still in scope
-    spvc_context_set_error_callback(Context.Get(), [](void* UserData, const CHAR* Error)
+    spvc_context_set_error_callback(Context.Get(), [](void* UserData, const CHAR_T* Error)
     {
         *static_cast<String*>(UserData) += String::Printf("SPIRV-Cross: %s\n", Error);
     }, &OutErrors);
@@ -139,9 +139,9 @@ static bool AddResources(spvc_compiler Compiler, spvc_resources Resources, spvc_
     {
         const spvc_reflected_resource& Resource = Reflected[Index];
 
-        const uint32 Set        = spvc_compiler_get_decoration(Compiler, Resource.id, SpvDecorationDescriptorSet);
-        const uint32 RawBinding = spvc_compiler_get_decoration(Compiler, Resource.id, SpvDecorationBinding);
-        const CHAR*  Name       = spvc_compiler_get_name(Compiler, Resource.id);
+        const uint32  Set        = spvc_compiler_get_decoration(Compiler, Resource.id, SpvDecorationDescriptorSet);
+        const uint32  RawBinding = spvc_compiler_get_decoration(Compiler, Resource.id, SpvDecorationBinding);
+        const CHAR_T* Name       = spvc_compiler_get_name(Compiler, Resource.id);
 
         uint32 BindingOffset = UINT32_MAX;
         uint32 SetOffset     = UINT32_MAX;
@@ -365,7 +365,7 @@ bool FSpirvShaderReflector::Reflect(const TArray<uint32>& Spirv, const FShaderCo
     return ReflectPushConstants(Compiler, Resources, OutReflection, OutErrors);
 }
 
-static bool SplitSemantic(const CHAR* Semantic, String& OutName, uint32& OutIndex)
+static bool SplitSemantic(const CHAR_T* Semantic, String& OutName, uint32& OutIndex)
 {
     const int32 Length = static_cast<int32>(CString::Strlen(Semantic));
 
@@ -431,7 +431,7 @@ bool FSpirvShaderReflector::ReflectVertexInputs(const TArray<uint32>& Untransfor
             continue;
         }
 
-        const CHAR* Semantic = spvc_compiler_get_decoration_string(Compiler, Id, SpvDecorationUserSemantic);
+        const CHAR_T* Semantic = spvc_compiler_get_decoration_string(Compiler, Id, SpvDecorationUserSemantic);
         if (!Semantic || Semantic[0] == '\0')
         {
             OutErrors += String::Printf("Vertex input '%s' has no HLSL semantic, the vertex shader must be compiled with -fspv-reflect\n", spvc_compiler_get_name(Compiler, Id));

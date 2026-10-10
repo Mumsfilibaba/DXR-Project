@@ -56,7 +56,7 @@ private:
     void FreePendingWrite(FPendingWrite* PendingWrite);
     bool WriteBlockingAtOffset(const uint8* Src, uint32 BytesToWrite, int64 Offset);
     void CollectWriteResult(FPendingWrite* PendingWrite, bool bWait);
-    void ReportWriteFailure(const CHAR* What, uint32 ErrorCode);
+    void ReportWriteFailure(const CHAR_T* What, uint32 ErrorCode);
 
     HANDLE                   FileHandle;
     int64                    WriteOffset;
@@ -71,63 +71,63 @@ struct CORE_API FWindowsPlatformFile : public IPlatformFileSystem
     static IPlatformFile* OpenForWrite(const String& Filename, bool bTruncate = true);
     static IPlatformAsyncFile* OpenForAsyncWrite(const String& Filename, bool bTruncate = true);
     static String GetCurrentWorkingDirectory();
-    static const CHAR* GetExecutablePath();
+    static const CHAR_T* GetExecutablePath();
     static String GetUserSettingsDirectory();
 
-    static FORCEINLINE bool IsDirectory(const CHAR* Path)
+    static FORCEINLINE bool IsDirectory(const CHAR_T* Path)
     {
         const BOOL Result = ::PathIsDirectoryW(StringCast<WIDECHAR>(Path).Get());
         return Result == static_cast<BOOL>(FILE_ATTRIBUTE_DIRECTORY);
     }
 
-    static FORCEINLINE bool IsFile(const CHAR* Path)
+    static FORCEINLINE bool IsFile(const CHAR_T* Path)
     {
         const DWORD Attributes = ::GetFileAttributesW(StringCast<WIDECHAR>(Path).Get());
         return (Attributes != INVALID_FILE_ATTRIBUTES) && ((Attributes & FILE_ATTRIBUTE_DIRECTORY) == 0);
     }
 
-    static FFileInfo GetFileInfo(const CHAR* Path);
+    static FFileInfo GetFileInfo(const CHAR_T* Path);
 
-    static FORCEINLINE bool CreateDirectory(const CHAR* Path)
+    static FORCEINLINE bool CreateDirectory(const CHAR_T* Path)
     {
         // Success if the directory was created now or already existed.
         return ::CreateDirectoryW(StringCast<WIDECHAR>(Path).Get(), nullptr) || (::GetLastError() == ERROR_ALREADY_EXISTS);
     }
 
-    static FORCEINLINE bool RemoveDirectory(const CHAR* Path)
+    static FORCEINLINE bool RemoveDirectory(const CHAR_T* Path)
     {
         // Success if the directory is gone now or was never there.
         return ::RemoveDirectoryW(StringCast<WIDECHAR>(Path).Get()) || (::GetLastError() == ERROR_FILE_NOT_FOUND) || (::GetLastError() == ERROR_PATH_NOT_FOUND);
     }
 
-    static FORCEINLINE bool DeleteFile(const CHAR* Path)
+    static FORCEINLINE bool DeleteFile(const CHAR_T* Path)
     {
         // Success if the file is gone now or was never there.
         return ::DeleteFileW(StringCast<WIDECHAR>(Path).Get()) || (::GetLastError() == ERROR_FILE_NOT_FOUND) || (::GetLastError() == ERROR_PATH_NOT_FOUND);
     }
 
-    static FORCEINLINE bool MoveFile(const CHAR* FromFilename, const CHAR* ToFilename)
+    static FORCEINLINE bool MoveFile(const CHAR_T* FromFilename, const CHAR_T* ToFilename)
     {
         // MOVEFILE_REPLACE_EXISTING is what makes this usable when swapping a file.
         return ::MoveFileExW(StringCast<WIDECHAR>(FromFilename).Get(), StringCast<WIDECHAR>(ToFilename).Get(), MOVEFILE_REPLACE_EXISTING) != FALSE;
     }
 
-    static FORCEINLINE bool CopyFile(const CHAR* FromFilename, const CHAR* ToFilename, bool bReplaceExisting = false)
+    static FORCEINLINE bool CopyFile(const CHAR_T* FromFilename, const CHAR_T* ToFilename, bool bReplaceExisting = false)
     {
         return ::CopyFileW(StringCast<WIDECHAR>(FromFilename).Get(), StringCast<WIDECHAR>(ToFilename).Get(), bReplaceExisting ? FALSE : TRUE) != FALSE;
     }
 
-    static FORCEINLINE bool MoveDirectory(const CHAR* FromPath, const CHAR* ToPath)
+    static FORCEINLINE bool MoveDirectory(const CHAR_T* FromPath, const CHAR_T* ToPath)
     {
         // MOVEFILE_REPLACE_EXISTING does not work for directories, so an existing ToPath makes this fail
         return ::MoveFileExW(StringCast<WIDECHAR>(FromPath).Get(), StringCast<WIDECHAR>(ToPath).Get(), 0) != FALSE;
     }
 
-    static FORCEINLINE bool IsPathRelative(const CHAR* Filepath)
+    static FORCEINLINE bool IsPathRelative(const CHAR_T* Filepath)
     {
         const BOOL Result = ::PathIsRelativeW(StringCast<WIDECHAR>(Filepath).Get());
         return Result == TRUE;
     }
 
-    static bool IterateDirectory(const CHAR* Path, TArray<FDirectoryEntry>& OutEntries);
+    static bool IterateDirectory(const CHAR_T* Path, TArray<FDirectoryEntry>& OutEntries);
 };

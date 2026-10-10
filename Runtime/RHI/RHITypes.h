@@ -150,7 +150,7 @@ enum class EFormat : uint8
     SamplerFeedbackMipRegionUsedOpaque = 190,
 };
 
-NODISCARD constexpr const CHAR* ToString(EFormat Format)
+NODISCARD constexpr const CHAR_T* ToString(EFormat Format)
 {
     switch (Format)
     {
@@ -401,7 +401,7 @@ enum class EColorSpace : uint8
     RGB_Full_G22_None_P2020   = 4,
 };
 
-NODISCARD constexpr const CHAR* ToString(EColorSpace ColorSpace)
+NODISCARD constexpr const CHAR_T* ToString(EColorSpace ColorSpace)
 {
     switch (ColorSpace)
     {
@@ -496,7 +496,7 @@ enum class EIndexFormat : uint8
     uint32  = 2,
 };
 
-NODISCARD constexpr const CHAR* ToString(EIndexFormat IndexFormat)
+NODISCARD constexpr const CHAR_T* ToString(EIndexFormat IndexFormat)
 {
     switch (IndexFormat)
     {
@@ -562,7 +562,7 @@ enum class EComparisonFunc : uint8
     Always       = 8,
 };
 
-NODISCARD constexpr const CHAR* ToString(EComparisonFunc ComparisonFunc)
+NODISCARD constexpr const CHAR_T* ToString(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
@@ -608,7 +608,7 @@ enum class ERHIResourceState : uint32
 
 ENUM_CLASS_OPERATORS(ERHIResourceState);
 
-NODISCARD constexpr const CHAR* ToString(ERHIResourceState ResourceState)
+NODISCARD constexpr const CHAR_T* ToString(ERHIResourceState ResourceState)
 {
     switch (ResourceState)
     {
@@ -712,7 +712,7 @@ enum class EPrimitiveTopology : uint8
 static_assert(UnderlyingTypeValue(EPrimitiveTopology::PatchList_32) - UnderlyingTypeValue(EPrimitiveTopology::PatchList_1) == (RHI_MAX_PATCH_CONTROL_POINTS - 1),
     "PatchList enumerators must be contiguous and cover exactly RHI_MAX_PATCH_CONTROL_POINTS counts");
 
-NODISCARD constexpr const CHAR* ToString(EPrimitiveTopology ResourceState)
+NODISCARD constexpr const CHAR_T* ToString(EPrimitiveTopology ResourceState)
 {
     switch (ResourceState)
     {
@@ -825,7 +825,7 @@ enum class EShadingRate : uint8
     VRS_4x4 = 0xa,
 };
 
-NODISCARD constexpr const CHAR* ToString(EShadingRate ShadingRate)
+NODISCARD constexpr const CHAR_T* ToString(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
@@ -850,7 +850,7 @@ enum class EDescriptorType : uint32
     Sampler         = 4,
 };
 
-NODISCARD constexpr const CHAR* ToString(EDescriptorType DescriptorType)
+NODISCARD constexpr const CHAR_T* ToString(EDescriptorType DescriptorType)
 {
     switch (DescriptorType)
     {
@@ -1243,7 +1243,7 @@ enum class ERayTracingGeometryType : uint8
     ProceduralAABBs = 1,
 };
 
-NODISCARD constexpr const CHAR* ToString(ERayTracingGeometryType Type)
+NODISCARD constexpr const CHAR_T* ToString(ERayTracingGeometryType Type)
 {
     switch (Type)
     {
@@ -1340,7 +1340,7 @@ enum class ERHIResourceStateTrackingMode : uint8
     Manual = 3,
 };
 
-NODISCARD constexpr const CHAR* ToString(ERHIResourceStateTrackingMode TrackingMode)
+NODISCARD constexpr const CHAR_T* ToString(ERHIResourceStateTrackingMode TrackingMode)
 {
     switch (TrackingMode)
     {

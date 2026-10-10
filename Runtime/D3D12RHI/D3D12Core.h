@@ -146,7 +146,7 @@ inline void D3D12SetDebugName(ID3D12Object* Object, const String& Name)
                 D3D12_ERROR("Failed to set the debug name '%s'", *Name);
             }
 
-            const TStringConversion<WIDECHAR, CHAR> WideName = StringCast<WIDECHAR>(Name);
+            const TStringConversion<WIDECHAR, CHAR_T> WideName = StringCast<WIDECHAR>(Name);
 
             Result = Object->SetPrivateData(WKPDID_D3DDebugObjectNameW, static_cast<UINT>((WideName.Length() + 1) * sizeof(WIDECHAR)), WideName.Get());
             if (FAILED(Result))
@@ -390,7 +390,7 @@ enum class ED3D12CommandQueueType : uint8
     Count
 };
 
-NODISCARD constexpr const CHAR* ToString(ED3D12CommandQueueType QueueType)
+NODISCARD constexpr const CHAR_T* ToString(ED3D12CommandQueueType QueueType)
 {
     switch (QueueType)
     {
@@ -419,7 +419,7 @@ NODISCARD constexpr D3D12_COMMAND_LIST_TYPE ToCommandListType(ED3D12CommandQueue
 
 }
 
-NODISCARD constexpr const CHAR* ToString(D3D12_COMMAND_LIST_TYPE CommandListType)
+NODISCARD constexpr const CHAR_T* ToString(D3D12_COMMAND_LIST_TYPE CommandListType)
 {
     switch (CommandListType)
     {
@@ -640,7 +640,7 @@ NODISCARD constexpr DXGI_FORMAT ConvertFormat(EFormat Format)
 
 }
 
-constexpr const CHAR* ToString(DXGI_FORMAT Format)
+constexpr const CHAR_T* ToString(DXGI_FORMAT Format)
 {
     switch (Format)
     {
@@ -834,7 +834,7 @@ NODISCARD constexpr EColorSpace ConvertColorSpace(DXGI_COLOR_SPACE_TYPE ColorSpa
 
 }
 
-constexpr const CHAR* ToString(DXGI_COLOR_SPACE_TYPE ColorSpace)
+constexpr const CHAR_T* ToString(DXGI_COLOR_SPACE_TYPE ColorSpace)
 {
     switch (ColorSpace)
     {
@@ -1902,7 +1902,7 @@ struct FD3D12_GPU_DESCRIPTOR_HANDLE : public D3D12_GPU_DESCRIPTOR_HANDLE
     }
 };
 
-NODISCARD constexpr const CHAR* ToString(D3D12_RESOURCE_DIMENSION Dimension)
+NODISCARD constexpr const CHAR_T* ToString(D3D12_RESOURCE_DIMENSION Dimension)
 {
     switch(Dimension)
     {
@@ -1915,7 +1915,7 @@ NODISCARD constexpr const CHAR* ToString(D3D12_RESOURCE_DIMENSION Dimension)
     }
 }
 
-NODISCARD constexpr const CHAR* ToString(D3D12_RESOURCE_STATES ResourceState)
+NODISCARD constexpr const CHAR_T* ToString(D3D12_RESOURCE_STATES ResourceState)
 {
 	switch (ResourceState)
 	{

@@ -116,9 +116,9 @@ inline uint8 GetMSLMaxSlotCount(EMSLBindingType BindingType)
     }
 }
 
-inline const CHAR* ToString(EMSLBindingType BindingType)
+inline const CHAR_T* ToString(EMSLBindingType BindingType)
 {
-    static constexpr const CHAR* const BindingTypeStrings[] =
+    static constexpr const CHAR_T* const BindingTypeStrings[] =
     {
         "Unknown",
         "ConstantBuffer",

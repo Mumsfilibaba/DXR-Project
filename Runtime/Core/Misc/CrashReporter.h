@@ -5,7 +5,7 @@
 struct FCrashContext
 {
     /** @brief The fault as the platform spells it, "EXC_BAD_ACCESS" or "EXCEPTION_ACCESS_VIOLATION". */
-    const CHAR* ExceptionName = nullptr;
+    const CHAR_T* ExceptionName = nullptr;
 
     /** @brief The platform's numeric code for the fault, a Mach exception code or a Windows exception code. */
     uint64 ExceptionCode = 0;
@@ -14,7 +14,7 @@ struct FCrashContext
     uint64 FaultAddress = 0;
 
     /** @brief Name of the thread that faulted, null or empty when the OS carries none for it. */
-    const CHAR* ThreadName = nullptr;
+    const CHAR_T* ThreadName = nullptr;
 
     /** @brief Identifies the faulting thread so the reporting thread can walk its stack. */
     FThreadStackContext ThreadStack;

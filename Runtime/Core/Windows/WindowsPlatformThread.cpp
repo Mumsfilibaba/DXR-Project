@@ -4,13 +4,13 @@
 #include "Core/Platform/PlatformTLS.h"
 #include "Core/Threading/ThreadManager.h"
 
-IPlatformThread* FWindowsPlatformThread::Create(FRunnable* Runnable, const CHAR* InThreadName, bool bSuspended)
+IPlatformThread* FWindowsPlatformThread::Create(FRunnable* Runnable, const CHAR_T* InThreadName, bool bSuspended)
 {
     FWindowsPlatformThread* NewThread = new FWindowsPlatformThread(Runnable, InThreadName, bSuspended);
     return NewThread;
 }
 
-FWindowsPlatformThread::FWindowsPlatformThread(FRunnable* InRunnable, const CHAR* InThreadName, bool bSuspended)
+FWindowsPlatformThread::FWindowsPlatformThread(FRunnable* InRunnable, const CHAR_T* InThreadName, bool bSuspended)
     : Name(InThreadName)
     , Runnable(InRunnable)
     , Thread(0)

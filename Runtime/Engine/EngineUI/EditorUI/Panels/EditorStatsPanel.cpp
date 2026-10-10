@@ -7,7 +7,7 @@
 #include "Application/Elements/TextBlock.h"
 #include "Core/Templates/CString.h"
 
-static const CHAR* const GRHIOwnedGroups[] =
+static const CHAR_T* const GRHIOwnedGroups[] =
 {
     "RHI",
     "RHI Budget",
@@ -31,15 +31,15 @@ static const CHAR* const GRHIOwnedGroups[] =
 
 constexpr double BYTES_PER_MEGABYTE = 1024.0 * 1024.0;
 
-static void QueryStatsByGroup(const CHAR* GroupName, TArray<FStatData*>& OutStats)
+static void QueryStatsByGroup(const CHAR_T* GroupName, TArray<FStatData*>& OutStats)
 {
     OutStats.Clear();
     FStatRegistry::Get().GetStatsByGroup(GroupName, OutStats);
 }
 
-static bool IsRHIOwnedGroup(const CHAR* GroupName)
+static bool IsRHIOwnedGroup(const CHAR_T* GroupName)
 {
-    for (const CHAR* OwnedGroup : GRHIOwnedGroups)
+    for (const CHAR_T* OwnedGroup : GRHIOwnedGroups)
     {
         if (CString::Strcmp(GroupName, OwnedGroup) == 0)
         {
@@ -168,7 +168,7 @@ void FEditorStatsPanel::RebuildSections()
     Sections.Clear();
     Sections.Reserve(ScratchGroups.Size());
 
-    for (const CHAR* GroupName : ScratchGroups)
+    for (const CHAR_T* GroupName : ScratchGroups)
     {
         FStatGroupSection GroupSection;
         GroupSection.GroupName = GroupName;

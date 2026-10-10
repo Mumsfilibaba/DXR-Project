@@ -14,22 +14,22 @@
 #include "Application/Menus/ComboBox.h"
 #include "ShaderCompiler/ShaderCompiler.h"
 
-static const CHAR* const GCascadeResolutions[]      = { "512", "1024", "2048", "4096" };
-static const int32       GCascadeResolutionValues[] = { 512, 1024, 2048, 4096 };
+static const CHAR_T* const GCascadeResolutions[]      = { "512", "1024", "2048", "4096" };
+static const int32         GCascadeResolutionValues[] = { 512, 1024, 2048, 4096 };
 
-static const CHAR* const GPointResolutions[]      = { "128", "256", "512", "1024" };
-static const int32       GPointResolutionValues[] = { 128, 256, 512, 1024 };
+static const CHAR_T* const GPointResolutions[]      = { "128", "256", "512", "1024" };
+static const int32         GPointResolutionValues[] = { 128, 256, 512, 1024 };
 
-static const CHAR* const GSampleCounts[]      = { "16", "32", "64", "128" };
-static const int32       GSampleCountValues[] = { 16, 32, 64, 128 };
+static const CHAR_T* const GSampleCounts[]      = { "16", "32", "64", "128" };
+static const int32         GSampleCountValues[] = { 16, 32, 64, 128 };
 
-static const CHAR* const GFilterModes[]        = { "PCF", "PCSS" };
-static const CHAR* const GFilterFunctions[]    = { "Grid", "Poisson Disk", "Vogel Disk" };
-static const CHAR* const GReflectionSamplers[] = { "White noise", "Halton", "Blue noise" };
-static const CHAR* const GTonemappers[]        = { "Default", "ACES", "Reinhard", "Uncharted 2" };
+static const CHAR_T* const GFilterModes[]        = { "PCF", "PCSS" };
+static const CHAR_T* const GFilterFunctions[]    = { "Grid", "Poisson Disk", "Vogel Disk" };
+static const CHAR_T* const GReflectionSamplers[] = { "White noise", "Halton", "Blue noise" };
+static const CHAR_T* const GTonemappers[]        = { "Default", "ACES", "Reinhard", "Uncharted 2" };
 
-static const CHAR* const GRayTracingSection     = "Ray Tracing";
-static const CHAR* const GShaderCompilerSection = "Shader Compiler";
+static const CHAR_T* const GRayTracingSection     = "Ray Tracing";
+static const CHAR_T* const GShaderCompilerSection = "Shader Compiler";
 
 static String DescribeShaderCompilerStatus()
 {
@@ -186,7 +186,7 @@ static const FRendererSubsection GRendererSubsections[] =
 
 constexpr float RENDERER_SETTINGS_LABEL_FRACTION = 0.62f;
 
-static const CHAR* FindParentSection(const CHAR* Section)
+static const CHAR_T* FindParentSection(const CHAR_T* Section)
 {
     for (const FRendererSubsection& Subsection : GRendererSubsections)
     {
@@ -271,14 +271,14 @@ void FEditorRendererSettingsPanel::RebuildSections()
 
     struct FSectionBox
     {
-        const CHAR*              Name;
+        const CHAR_T*            Name;
         TSharedPtr<FVerticalBox> Box;
     };
 
     const bool bStartExpanded = !FilterText.IsEmpty();
     TArray<FSectionBox> SectionBoxes;
 
-    const CHAR*                CurrentSection = nullptr;
+    const CHAR_T*              CurrentSection = nullptr;
     TSharedPtr<FPropertyTable> CurrentTable   = nullptr;
 
     for (const FRendererSetting& Setting : GRendererSettings)
@@ -311,7 +311,7 @@ void FEditorRendererSettingsPanel::RebuildSections()
             TSharedPtr<FExpander> Section = FExpander::Create(FEditorStyle::MakeExpanderDesc(Setting.Section, SectionBox, bStartExpanded));
 
             // A subsection is content of the section above it, so it indents and collapses with it
-            const CHAR*              ParentName = FindParentSection(Setting.Section);
+            const CHAR_T*            ParentName = FindParentSection(Setting.Section);
             TSharedPtr<FVerticalBox> ParentBox  = nullptr;
 
             for (const FSectionBox& Candidate : SectionBoxes)

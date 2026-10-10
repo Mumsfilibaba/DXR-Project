@@ -87,7 +87,7 @@ public:
     void OnSetPlatformWindowFocus(ImGuiViewport* Viewport);
     bool OnGetPlatformWindowFocus(ImGuiViewport* Viewport);
     bool OnGetPlatformWindowMinimized(ImGuiViewport* Viewport);
-    void OnSetPlatformWindowTitle(ImGuiViewport* Viewport, const CHAR* Title);
+    void OnSetPlatformWindowTitle(ImGuiViewport* Viewport, const CHAR_T* Title);
     void OnSetPlatformWindowAlpha(ImGuiViewport* Viewport, float Alpha);
     float OnGetPlatformWindowDpiScale(ImGuiViewport* Viewport);
     void OnPlatformChangedViewport(ImGuiViewport* Viewport);

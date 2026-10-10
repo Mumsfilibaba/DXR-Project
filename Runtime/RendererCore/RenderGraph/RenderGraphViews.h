@@ -25,7 +25,7 @@ public:
         return Desc;
     }
 
-    NODISCARD const CHAR* GetName() const
+    NODISCARD const CHAR_T* GetName() const
     {
         return Name;
     }
@@ -48,7 +48,7 @@ private:
     friend class FRenderGraphBuilder;
 
     FRenderGraphTexture* Parent       = nullptr;
-    const CHAR*          Name         = nullptr;
+    const CHAR_T*        Name         = nullptr;
     RHIViewType*         ExternalView = nullptr;
     DescType             Desc;
 };
@@ -77,7 +77,7 @@ public:
         return Desc;
     }
 
-    NODISCARD const CHAR* GetName() const
+    NODISCARD const CHAR_T* GetName() const
     {
         return Name;
     }
@@ -106,7 +106,7 @@ private:
     } Parent;
 
     ERenderGraphParentKind ParentKind   = ERenderGraphParentKind::Texture;
-    const CHAR*            Name         = nullptr;
+    const CHAR_T*          Name         = nullptr;
     RHIViewType*           ExternalView = nullptr;
     DescType               Desc;
 };

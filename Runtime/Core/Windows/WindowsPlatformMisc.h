@@ -6,14 +6,14 @@
 
 struct FWindowsPlatformMisc final : public IPlatformMisc
 {
-    static FORCEINLINE void OutputDebugString(const CHAR* Message)
+    static FORCEINLINE void OutputDebugString(const CHAR_T* Message)
     {
         ::OutputDebugStringW(StringCast<WIDECHAR>(Message).Get());
         // Add a new line here since that makes this function consistent with OutputDebugString on other platforms
         ::OutputDebugStringW(L"\n");
     }
 
-    static FORCEINLINE void WriteToStdOutput(const CHAR* Text, uint32 Length)
+    static FORCEINLINE void WriteToStdOutput(const CHAR_T* Text, uint32 Length)
     {
         if (Length == 0)
         {
@@ -26,12 +26,12 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
             DWORD Written = 0;
             if (::GetFileType(Handle) == FILE_TYPE_CHAR)
             {
-                const TStringConversion<WIDECHAR, CHAR> WideText = StringCast<WIDECHAR>(Text, static_cast<int32>(Length));
+                const TStringConversion<WIDECHAR, CHAR_T> WideText = StringCast<WIDECHAR>(Text, static_cast<int32>(Length));
                 ::WriteConsoleW(Handle, WideText.Get(), static_cast<DWORD>(WideText.Length()), &Written, nullptr);
             }
             else
             {
-                const TStringConversion<ANSICHAR, CHAR> Utf8Text = StringCast<ANSICHAR>(Text, static_cast<int32>(Length));
+                const TStringConversion<ANSICHAR, CHAR_T> Utf8Text = StringCast<ANSICHAR>(Text, static_cast<int32>(Length));
                 ::WriteFile(Handle, Utf8Text.Get(), static_cast<DWORD>(Utf8Text.Length()), &Written, nullptr);
             }
         }
@@ -42,7 +42,7 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
         return ::IsDebuggerPresent();
     }
 
-    static FORCEINLINE EAssertDialogResult ShowAssertDialog(const CHAR* Title, const CHAR* Message)
+    static FORCEINLINE EAssertDialogResult ShowAssertDialog(const CHAR_T* Title, const CHAR_T* Message)
     {
         // Matches the CRT assert dialog: Retry drops into the debugger, and is the 
         // default button so that hitting Enter does not terminate the process.
@@ -71,7 +71,7 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
     #endif
     }
 
-    static FORCEINLINE bool GetEnvironmentVariable(const CHAR* Name, String& OutValue)
+    static FORCEINLINE bool GetEnvironmentVariable(const CHAR_T* Name, String& OutValue)
     {
         OutValue.Clear();
 
@@ -80,7 +80,7 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
             return false;
         }
 
-        const TStringConversion<WIDECHAR, CHAR> WideName = StringCast<WIDECHAR>(Name);
+        const TStringConversion<WIDECHAR, CHAR_T> WideName = StringCast<WIDECHAR>(Name);
 
         DWORD RequiredSize = ::GetEnvironmentVariableW(WideName.Get(), nullptr, 0);
         while (RequiredSize > 0)
@@ -93,7 +93,7 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
             const DWORD Copied = ::GetEnvironmentVariableW(WideName.Get(), WideValue.Data(), RequiredSize);
             if (Copied == Length)
             {
-                OutValue = StringCast<CHAR>(WideValue).ToString();
+                OutValue = StringCast<CHAR_T>(WideValue).ToString();
                 return true;
             }
 
@@ -109,7 +109,7 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
         return false;
     }
 
-    static FORCEINLINE bool SetEnvironmentVariable(const CHAR* Name, const CHAR* Value)
+    static FORCEINLINE bool SetEnvironmentVariable(const CHAR_T* Name, const CHAR_T* Value)
     {
         if (!Name || Name[0] == '\0')
         {
@@ -131,7 +131,7 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
         LPWSTR MessageBuffer = nullptr;
 
         const uint32 MessageLength = ::FormatMessageW(Flags, nullptr, LastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&MessageBuffer), 0, nullptr);
-        OutErrorString = StringCast<CHAR>(MessageBuffer, static_cast<int32>(MessageLength)).ToString();
+        OutErrorString = StringCast<CHAR_T>(MessageBuffer, static_cast<int32>(MessageLength)).ToString();
         ::LocalFree(MessageBuffer);
         return LastError;
     }

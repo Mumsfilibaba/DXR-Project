@@ -43,9 +43,9 @@ typedef FPlatformTypes::UPTR_INT UPTR_INT;
 static_assert(sizeof(UPTR_INT) == sizeof(void*), "The size of UPTR_INT has to be equal to the size of uint64");
 
 typedef FPlatformTypes::ANSICHAR ANSICHAR;
+typedef FPlatformTypes::CHAR CHAR;
 typedef FPlatformTypes::UTF8CHAR UTF8CHAR;
 typedef FPlatformTypes::WIDECHAR WIDECHAR;
-typedef FPlatformTypes::CHAR CHAR;
 typedef FPlatformTypes::CHAR_T CHAR_T;
 
 typedef FPlatformTypes::SIZE_T SIZE_T;

@@ -241,7 +241,7 @@ void FFrameProfiler::AddSample(const FFrameProfilerSample& InSample)
     }
 }
 
-void FFrameProfiler::AddInstantEvent(const CHAR* Name)
+void FFrameProfiler::AddInstantEvent(const CHAR_T* Name)
 {
     if (!IsEnabled())
     {
@@ -263,7 +263,7 @@ void FFrameProfiler::AddInstantEvent(const CHAR* Name)
     AddSample(Sample);
 }
 
-FFrameProfilerScopedTrace::FFrameProfilerScopedTrace(const CHAR* InName)
+FFrameProfilerScopedTrace::FFrameProfilerScopedTrace(const CHAR_T* InName)
     : Sample(InName)
 {
     Sample.ThreadHandle   = FPlatformThreadMisc::GetCurrentThreadHandle();

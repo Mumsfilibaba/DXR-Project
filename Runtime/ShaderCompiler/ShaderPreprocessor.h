@@ -20,7 +20,7 @@ enum class EShaderTokenType : uint8
 
 struct FShaderToken
 {
-    NODISCARD bool Is(const CHAR* InText) const
+    NODISCARD bool Is(const CHAR_T* InText) const
     {
         return Text.Equals(InText);
     }
@@ -62,7 +62,7 @@ public:
     virtual ~IShaderSourceProvider() = default;
 
     NODISCARD virtual bool FileExists(const String& Path) const = 0;
-    virtual bool ReadFile(const String& Path, TArray<CHAR>& OutText) const = 0;
+    virtual bool ReadFile(const String& Path, TArray<CHAR_T>& OutText) const = 0;
 };
 
 class SHADERCOMPILER_API FDiskShaderSourceProvider final : public IShaderSourceProvider
@@ -71,7 +71,7 @@ public:
     NODISCARD static const FDiskShaderSourceProvider& Get();
 
     NODISCARD virtual bool FileExists(const String& Path) const override final;
-    virtual bool ReadFile(const String& Path, TArray<CHAR>& OutText) const override final;
+    virtual bool ReadFile(const String& Path, TArray<CHAR_T>& OutText) const override final;
 };
 
 class SHADERCOMPILER_API FShaderPreprocessor

@@ -35,7 +35,7 @@ constexpr ImU32 CAPTION_CLOSE_PRESSED   = IM_COL32(196, 43, 28, 230);
 constexpr float CAPTION_GLYPH_SIZE = 10.0f;
 
 // Segoe Fluent Icons: E921 ChromeMinimize, E922 ChromeMaximize, E923 ChromeRestore, E8BB ChromeClose.
-static const CHAR* GetCaptionGlyph(ECaptionButton Button)
+static const CHAR_T* GetCaptionGlyph(ECaptionButton Button)
 {
     switch (Button)
     {
@@ -89,7 +89,7 @@ static void DrawCaptionGlyphShape(ImDrawList* DrawList, ECaptionButton Button, c
     }
 }
 
-static bool DrawCaptionButton(const CHAR* Id, ECaptionButton Button, const ImVec2& Size, bool bWindowActive)
+static bool DrawCaptionButton(const CHAR_T* Id, ECaptionButton Button, const ImVec2& Size, bool bWindowActive)
 {
     const ImVec2 Min = ImGui::GetCursorScreenPos();
     const ImVec2 Max = ImVec2(Min.x + Size.x, Min.y + Size.y);
@@ -139,8 +139,8 @@ static bool DrawCaptionButton(const CHAR* Id, ECaptionButton Button, const ImVec
 
     if (ImFont* IconFont = EditorFonts::SystemIcons)
     {
-        const CHAR*  Glyph     = GetCaptionGlyph(Button);
-        const ImVec2 GlyphSpan = IconFont->CalcTextSizeA(IconFont->FontSize, FLT_MAX, 0.0f, Glyph);
+        const CHAR_T* Glyph     = GetCaptionGlyph(Button);
+        const ImVec2  GlyphSpan = IconFont->CalcTextSizeA(IconFont->FontSize, FLT_MAX, 0.0f, Glyph);
 
         DrawList->AddText(IconFont, IconFont->FontSize, ImVec2(ImFloor(Center.x - GlyphSpan.x * 0.5f), ImFloor(Center.y - GlyphSpan.y * 0.5f)), GlyphColor, Glyph);
     }
@@ -336,10 +336,10 @@ void FEditorTitleBarWidget::DrawCaptionButtons(const FWindowTitleBarMetrics& Met
 
 void FEditorTitleBarWidget::DrawMenuButtons()
 {
-    const CHAR* PopupFile    = "##ToolbarPopup_File";
-    const CHAR* PopupEdit    = "##ToolbarPopup_Edit";
-    const CHAR* PopupWindows = "##ToolbarPopup_Windows";
-    const CHAR* PopupHelp    = "##ToolbarPopup_Help";
+    const CHAR_T* PopupFile    = "##ToolbarPopup_File";
+    const CHAR_T* PopupEdit    = "##ToolbarPopup_Edit";
+    const CHAR_T* PopupWindows = "##ToolbarPopup_Windows";
+    const CHAR_T* PopupHelp    = "##ToolbarPopup_Help";
 
     const bool bAnyPopupOpen =
         ImGui::IsPopupOpen(PopupFile, ImGuiPopupFlags_None) ||

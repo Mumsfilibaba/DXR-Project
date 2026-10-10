@@ -86,7 +86,7 @@ bool FWindowsPlatformProcessHandle::ReadOutput(String& OutText)
                 break;
             }
 
-            OutText.Append(StringCast<CHAR>(Buffer, static_cast<int32>(NumRead)).ToString());
+            OutText.Append(StringCast<CHAR_T>(Buffer, static_cast<int32>(NumRead)).ToString());
         }
     }
 

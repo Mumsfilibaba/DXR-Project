@@ -24,32 +24,32 @@ static constexpr int32 GDefaultTerminalWidth     = 80;
 static constexpr int32 GMinTerminalWidth         = 20;
 static constexpr int32 GMinVisibleInputLength    = 8;
 static constexpr int32 GInputChunkSize           = 1024;
-static constexpr CHAR GControlD                  = 0x04;
-static constexpr CHAR GControlZ                  = 0x1A;
-static constexpr CHAR GBackspaceCharacter        = 0x08;
-static constexpr CHAR GEscapeCharacter           = 0x1B;
-static constexpr CHAR GDeleteCharacter           = 0x7F;
-static constexpr CHAR GFirstPrintable            = 0x20;
+static constexpr CHAR_T GControlD                = 0x04;
+static constexpr CHAR_T GControlZ                = 0x1A;
+static constexpr CHAR_T GBackspaceCharacter      = 0x08;
+static constexpr CHAR_T GEscapeCharacter         = 0x1B;
+static constexpr CHAR_T GDeleteCharacter         = 0x7F;
+static constexpr CHAR_T GFirstPrintable          = 0x20;
 
 #if !PLATFORM_WINDOWS
-static constexpr int32 GSignalExitCodeBase                = 128;
-static constexpr int32 GEscapeSequenceTimeoutMilliseconds = 30;
-static constexpr int32 GWaitForever                       = -1;
-static constexpr CHAR  GControlSequenceIntroducer         = '[';
-static constexpr CHAR  GSingleShiftIntroducer             = 'O';
-static constexpr CHAR  GCursorUpCode                      = 'A';
-static constexpr CHAR  GCursorDownCode                    = 'B';
-static constexpr CHAR  GCursorRightCode                   = 'C';
-static constexpr CHAR  GCursorLeftCode                    = 'D';
-static constexpr CHAR  GCursorHomeCode                    = 'H';
-static constexpr CHAR  GCursorEndCode                     = 'F';
-static constexpr CHAR  GEditSequenceTerminator            = '~';
-static constexpr CHAR  GEditDeleteCode                    = '3';
-static constexpr CHAR  GEditHomeCode                      = '1';
-static constexpr CHAR  GEditHomeCodeAlt                   = '7';
-static constexpr CHAR  GEditEndCode                       = '4';
-static constexpr CHAR  GEditEndCodeAlt                    = '8';
-static constexpr CHAR  GEraseLineSequence[]               = "\r\x1b[K";
+static constexpr int32  GSignalExitCodeBase                = 128;
+static constexpr int32  GEscapeSequenceTimeoutMilliseconds = 30;
+static constexpr int32  GWaitForever                       = -1;
+static constexpr CHAR_T GControlSequenceIntroducer         = '[';
+static constexpr CHAR_T GSingleShiftIntroducer             = 'O';
+static constexpr CHAR_T GCursorUpCode                      = 'A';
+static constexpr CHAR_T GCursorDownCode                    = 'B';
+static constexpr CHAR_T GCursorRightCode                   = 'C';
+static constexpr CHAR_T GCursorLeftCode                    = 'D';
+static constexpr CHAR_T GCursorHomeCode                    = 'H';
+static constexpr CHAR_T GCursorEndCode                     = 'F';
+static constexpr CHAR_T GEditSequenceTerminator            = '~';
+static constexpr CHAR_T GEditDeleteCode                    = '3';
+static constexpr CHAR_T GEditHomeCode                      = '1';
+static constexpr CHAR_T GEditHomeCodeAlt                   = '7';
+static constexpr CHAR_T GEditEndCode                       = '4';
+static constexpr CHAR_T GEditEndCodeAlt                    = '8';
+static constexpr CHAR_T GEraseLineSequence[]               = "\r\x1b[K";
 
 #endif
 
@@ -108,11 +108,11 @@ static bool EnterCharacterMode()
     return ::SetConsoleMode(GInputHandle, Mode) != 0;
 }
 
-static void WriteRaw(const CHAR* Data, int32 Length)
+static void WriteRaw(const CHAR_T* Data, int32 Length)
 {
     if (Length > 0)
     {
-        const TStringConversion<WIDECHAR, CHAR> WideData = StringCast<WIDECHAR>(Data, Length);
+        const TStringConversion<WIDECHAR, CHAR_T> WideData = StringCast<WIDECHAR>(Data, Length);
         ::WriteConsoleW(GOutputHandle, WideData.Get(), static_cast<DWORD>(WideData.Length()), nullptr, nullptr);
     }
 }
@@ -128,7 +128,7 @@ static int32 GetTerminalWidth()
     return GDefaultTerminalWidth;
 }
 
-static int32 ReadInputBytes(CHAR* Buffer, int32 Size)
+static int32 ReadInputBytes(CHAR_T* Buffer, int32 Size)
 {
     DWORD BytesRead = 0;
     if (!::ReadFile(::GetStdHandle(STD_INPUT_HANDLE), Buffer, static_cast<DWORD>(Size), &BytesRead, nullptr))
@@ -183,7 +183,7 @@ static bool EnterCharacterMode()
     return ::tcsetattr(STDIN_FILENO, TCSANOW, &Raw) == 0;
 }
 
-static void WriteRaw(const CHAR* Data, int32 Length)
+static void WriteRaw(const CHAR_T* Data, int32 Length)
 {
     while (Length > 0)
     {
@@ -209,12 +209,12 @@ static int32 GetTerminalWidth()
     return GDefaultTerminalWidth;
 }
 
-static int32 ReadInputBytes(CHAR* Buffer, int32 Size)
+static int32 ReadInputBytes(CHAR_T* Buffer, int32 Size)
 {
     return static_cast<int32>(::read(STDIN_FILENO, Buffer, static_cast<size_t>(Size)));
 }
 
-static bool ReadByte(CHAR& OutByte, int32 TimeoutMilliseconds)
+static bool ReadByte(CHAR_T& OutByte, int32 TimeoutMilliseconds)
 {
     if (TimeoutMilliseconds >= 0)
     {
@@ -397,7 +397,7 @@ void FConsoleLineEditor::RunInteractive()
                     break;
                 }
 
-                const CHAR Character = static_cast<CHAR>(WideCharacter);
+                const CHAR_T Character = static_cast<CHAR_T>(WideCharacter);
                 if ((Character == GControlD) || (Character == GControlZ))
                 {
                     KeyPress.Key = EKey::EndOfInput;
@@ -412,7 +412,7 @@ void FConsoleLineEditor::RunInteractive()
             }
         }
 #else
-        CHAR Byte = 0;
+        CHAR_T Byte = 0;
         if (!ReadByte(Byte, GWaitForever))
         {
             return;
@@ -428,8 +428,8 @@ void FConsoleLineEditor::RunInteractive()
             case GControlD: KeyPress.Key = EKey::EndOfInput; break;
             case GEscapeCharacter:
             {
-                CHAR Introducer = 0;
-                CHAR Code       = 0;
+                CHAR_T Introducer = 0;
+                CHAR_T Code       = 0;
 
                 if (!ReadByte(Introducer, GEscapeSequenceTimeoutMilliseconds) || ((Introducer != GControlSequenceIntroducer) && (Introducer != GSingleShiftIntroducer)) || !ReadByte(Code, GEscapeSequenceTimeoutMilliseconds))
                 {
@@ -447,7 +447,7 @@ void FConsoleLineEditor::RunInteractive()
                     case GCursorEndCode:   KeyPress.Key = EKey::End;   break;
                     default:
                     {
-                        CHAR Terminator = 0;
+                        CHAR_T Terminator = 0;
                         while (ReadByte(Terminator, GEscapeSequenceTimeoutMilliseconds) && (Terminator != GEditSequenceTerminator))
                         {
                         }
@@ -505,7 +505,7 @@ void FConsoleLineEditor::RunInteractive()
 
 void FConsoleLineEditor::RunLineMode()
 {
-    CHAR   Chunk[GInputChunkSize];
+    CHAR_T Chunk[GInputChunkSize];
     String Pending;
 
     for (;;)
@@ -705,7 +705,7 @@ void FConsoleLineEditor::Complete()
     for (const FCompletionCandidate* Match : Matches)
     {
         int32 Length = 0;
-        while ((Length < CommonLength) && (Length < Match->Name.Length()) && (TCharTraits<CHAR>::ToLower(Match->Name[Length]) == TCharTraits<CHAR>::ToLower(First[Length])))
+        while ((Length < CommonLength) && (Length < Match->Name.Length()) && (TCharTraits<CHAR_T>::ToLower(Match->Name[Length]) == TCharTraits<CHAR_T>::ToLower(First[Length])))
         {
             ++Length;
         }

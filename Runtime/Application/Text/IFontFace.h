@@ -50,7 +50,7 @@ struct FShapedRun
 struct IFontFace
 {
     /** @brief The dots that stand in for the characters an elided string drops. */
-    static constexpr const CHAR* Ellipsis = "..";
+    static constexpr const CHAR_T* Ellipsis = "..";
 
     virtual ~IFontFace() = default;
 

@@ -33,7 +33,7 @@ const TArray<FStatData*>& FStatRegistry::GetAllStats() const
     return Stats;
 }
 
-void FStatRegistry::GetStatsByGroup(const CHAR* GroupName, TArray<FStatData*>& OutStats) const
+void FStatRegistry::GetStatsByGroup(const CHAR_T* GroupName, TArray<FStatData*>& OutStats) const
 {
     for (FStatData* Stat : Stats)
     {
@@ -57,12 +57,12 @@ void FStatRegistry::UpdateFrameStats()
     }
 }
 
-void FStatRegistry::GetGroups(TArray<const CHAR*>& OutGroups) const
+void FStatRegistry::GetGroups(TArray<const CHAR_T*>& OutGroups) const
 {
     for (FStatData* Stat : Stats)
     {
         bool bFound = false;
-        for (const CHAR* Existing : OutGroups)
+        for (const CHAR_T* Existing : OutGroups)
         {
             if (CString::Strcmp(Existing, Stat->GroupName) == 0)
             {

@@ -54,7 +54,7 @@ static TAutoConsoleVariable<int32> CVarValidateDescriptorTables(
     "Diagnostic aid for tracking stale/mismatched descriptor-table binds (e.g. a Texture2D landing in a StructuredBuffer slot).",
     0);
 
-static const CHAR* GetSRVDimensionString(D3D12_SRV_DIMENSION Dimension)
+static const CHAR_T* GetSRVDimensionString(D3D12_SRV_DIMENSION Dimension)
 {
     switch (Dimension)
     {

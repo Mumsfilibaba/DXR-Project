@@ -7,7 +7,7 @@
 
 #include "TestCommon/TestMacros.h"
 
-static bool ParseOk(const CHAR* Text, FJsonValue& OutValue, EJsonParseFlags Flags = EJsonParseFlags::None)
+static bool ParseOk(const CHAR_T* Text, FJsonValue& OutValue, EJsonParseFlags Flags = EJsonParseFlags::None)
 {
     FJsonError Error;
     if (Json::Parse(StringView(Text), OutValue, &Error, Flags))
@@ -19,13 +19,13 @@ static bool ParseOk(const CHAR* Text, FJsonValue& OutValue, EJsonParseFlags Flag
     return false;
 }
 
-static bool ParseFails(const CHAR* Text, EJsonParseFlags Flags = EJsonParseFlags::None)
+static bool ParseFails(const CHAR_T* Text, EJsonParseFlags Flags = EJsonParseFlags::None)
 {
     FJsonValue Value;
     return !Json::Parse(StringView(Text), Value, nullptr, Flags);
 }
 
-static bool FailsAt(const CHAR* Text, int32 ExpectedLine, int32 ExpectedColumn, EJsonParseFlags Flags = EJsonParseFlags::None)
+static bool FailsAt(const CHAR_T* Text, int32 ExpectedLine, int32 ExpectedColumn, EJsonParseFlags Flags = EJsonParseFlags::None)
 {
     FJsonValue Value;
     FJsonError Error;
@@ -45,7 +45,7 @@ static bool FailsAt(const CHAR* Text, int32 ExpectedLine, int32 ExpectedColumn, 
     return true;
 }
 
-static bool ParsesToString(const CHAR* Text, const CHAR* Expected)
+static bool ParsesToString(const CHAR_T* Text, const CHAR_T* Expected)
 {
     FJsonValue Value;
     if (!ParseOk(Text, Value))
@@ -252,8 +252,8 @@ bool JsonParser_Test()
 
     TEST_SECTION("Comments are rejected by default and accepted with the flag");
     {
-        const CHAR* WithLineComment  = "{\n    // a note\n    \"a\": 1\n}";
-        const CHAR* WithBlockComment = "{ /* a note */ \"a\": 1 }";
+        const CHAR_T* WithLineComment  = "{\n    // a note\n    \"a\": 1\n}";
+        const CHAR_T* WithBlockComment = "{ /* a note */ \"a\": 1 }";
 
         TEST_EXPECT(ParseFails(WithLineComment));
         TEST_EXPECT(ParseFails(WithBlockComment));
@@ -316,7 +316,7 @@ bool JsonParser_Test()
 
     TEST_SECTION("A view without a null terminator stops where it is told to");
     {
-        const CHAR* Backing = "[1,2,3]garbage";
+        const CHAR_T* Backing = "[1,2,3]garbage";
 
         FJsonValue Value;
         TEST_EXPECT(Json::Parse(StringView(Backing, 7), Value));

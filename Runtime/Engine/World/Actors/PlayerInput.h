@@ -135,7 +135,7 @@ public:
     FKeyState  GetKeyState(FKey Key) const;
     IntVector2 GetCursorPosition() const;
     FAxisState GetAnalogState(EAnalogSourceName::Type AnalogSource) const;
-    float      GetAxisValue(const CHAR* AxisName) const;
+    float      GetAxisValue(const CHAR_T* AxisName) const;
 
     template<typename StringType>
     FORCEINLINE float GetAxisValue(const StringType& AxisName) const requires(TIsTStringType<StringType>::Value)

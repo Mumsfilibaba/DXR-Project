@@ -29,7 +29,7 @@ static FAutoConsoleCommand CCmdDumpCVars(
         StringView KeyView = Args;
         KeyView.TrimInline();
         
-        const CHAR* Key = KeyView.IsEmpty() ? nullptr : *KeyView;
+        const CHAR_T* Key = KeyView.IsEmpty() ? nullptr : *KeyView;
         ConsoleManager.DumpConsoleVariableValues(OutputDevice, Key);
     }));
 
@@ -72,7 +72,7 @@ typedef TBoundedConsoleVariableRef<float> FConsoleVariableFloatRef;
 class FConsoleCommand  : public IConsoleCommand
 {
 public:
-    FConsoleCommand(const FConsoleCommandDelegate& Delegate, const CHAR* InHelpString)
+    FConsoleCommand(const FConsoleCommandDelegate& Delegate, const CHAR_T* InHelpString)
         : ExecuteDelegate(Delegate)
         , HelpString(InHelpString)
     {
@@ -85,7 +85,7 @@ public:
         return this;
     }
  
-    virtual const CHAR* GetHelpString() const override final
+    virtual const CHAR_T* GetHelpString() const override final
     {
         return HelpString;
     }
@@ -97,14 +97,14 @@ public:
 
 private:
     FConsoleCommandDelegate ExecuteDelegate;
-    const CHAR*             HelpString;
+    const CHAR_T*           HelpString;
 };
 
 
 class FConsoleVariableBase  : public IConsoleVariable
 {
 public:
-    FConsoleVariableBase(EConsoleVariableFlags InFlags, const CHAR* InHelpString)
+    FConsoleVariableBase(EConsoleVariableFlags InFlags, const CHAR_T* InHelpString)
         : IConsoleVariable()
         , Flags((InFlags & ~EConsoleVariableFlags::SetByMask) | EConsoleVariableFlags::SetByConstructor)
         , ChangedDelegate()
@@ -119,7 +119,7 @@ public:
         return this;
     }
     
-    virtual const CHAR* GetHelpString() const override final
+    virtual const CHAR_T* GetHelpString() const override final
     {
         return HelpString;
     }
@@ -183,7 +183,7 @@ protected:
 
     EConsoleVariableFlags    Flags;
     FConsoleVariableDelegate ChangedDelegate;
-    const CHAR*              HelpString;
+    const CHAR_T*            HelpString;
 };
 
 
@@ -194,7 +194,7 @@ protected:
     using FConsoleVariableBase::OnChanged;
 
 public:
-    explicit TConsoleVariable(const T& InDefaultValue, EConsoleVariableFlags InFlags, const CHAR* InHelpString)
+    explicit TConsoleVariable(const T& InDefaultValue, EConsoleVariableFlags InFlags, const CHAR_T* InHelpString)
         : FConsoleVariableBase(InFlags, InHelpString)
         , Data(InDefaultValue)
     {
@@ -523,7 +523,7 @@ template<typename T>
 class TBoundedConsoleVariable : public TConsoleVariable<T>
 {
 public:
-    explicit TBoundedConsoleVariable(const T& InDefaultValue, EConsoleVariableFlags InFlags, const CHAR* InHelpString)
+    explicit TBoundedConsoleVariable(const T& InDefaultValue, EConsoleVariableFlags InFlags, const CHAR_T* InHelpString)
         : TConsoleVariable<T>(InDefaultValue, InFlags, InHelpString)
         , MinValue(T{})
         , MaxValue(T{})
@@ -786,7 +786,7 @@ protected:
     using FConsoleVariableBase::OnChanged;
 
 public:
-    explicit TConsoleVariableRef(T& InRef, EConsoleVariableFlags InFlags, const CHAR* InHelpString)
+    explicit TConsoleVariableRef(T& InRef, EConsoleVariableFlags InFlags, const CHAR_T* InHelpString)
         : FConsoleVariableBase(InFlags, InHelpString)
         , DataPtr(&InRef)
     {
@@ -1091,7 +1091,7 @@ template<typename T>
 class TBoundedConsoleVariableRef : public TConsoleVariableRef<T>
 {
 public:
-    explicit TBoundedConsoleVariableRef(T& InRef, EConsoleVariableFlags InFlags, const CHAR* InHelpString)
+    explicit TBoundedConsoleVariableRef(T& InRef, EConsoleVariableFlags InFlags, const CHAR_T* InHelpString)
         : TConsoleVariableRef<T>(InRef, InFlags, InHelpString)
         , MinValue(T{})
         , MaxValue(T{})
@@ -1380,7 +1380,7 @@ FConsoleManager::~FConsoleManager()
     ConsoleObjects.Clear();
 }
 
-IConsoleCommand* FConsoleManager::RegisterCommand(const CHAR* InName, const CHAR* HelpString, const FConsoleCommandDelegate& CommandDelegate)
+IConsoleCommand* FConsoleManager::RegisterCommand(const CHAR_T* InName, const CHAR_T* HelpString, const FConsoleCommandDelegate& CommandDelegate)
 {
     if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleCommand(CommandDelegate, HelpString)))
     {
@@ -1390,7 +1390,7 @@ IConsoleCommand* FConsoleManager::RegisterCommand(const CHAR* InName, const CHAR
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, const CHAR* DefaultValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR_T* InName, const CHAR_T* HelpString, const CHAR_T* DefaultValue, EConsoleVariableFlags Flags)
 {
     if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableString(DefaultValue, Flags, HelpString)))
     {
@@ -1400,7 +1400,7 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CH
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, int32 DefaultValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR_T* InName, const CHAR_T* HelpString, int32 DefaultValue, EConsoleVariableFlags Flags)
 {
     if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableInt32(DefaultValue, Flags, HelpString)))
     {
@@ -1410,7 +1410,7 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CH
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, int32 DefaultValue, int32 MinValue, int32 MaxValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR_T* InName, const CHAR_T* HelpString, int32 DefaultValue, int32 MinValue, int32 MaxValue, EConsoleVariableFlags Flags)
 {
     IConsoleVariable* NewVariable = RegisterVariable(InName, HelpString, DefaultValue, Flags);
     if (NewVariable)
@@ -1422,7 +1422,7 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CH
     return NewVariable;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, float DefaultValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR_T* InName, const CHAR_T* HelpString, float DefaultValue, EConsoleVariableFlags Flags)
 {
     if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableFloat(DefaultValue, Flags, HelpString)))
     {
@@ -1432,7 +1432,7 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CH
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, float DefaultValue, float MinValue, float MaxValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR_T* InName, const CHAR_T* HelpString, float DefaultValue, float MinValue, float MaxValue, EConsoleVariableFlags Flags)
 {
     IConsoleVariable* NewVariable = RegisterVariable(InName, HelpString, DefaultValue, Flags);
     if (NewVariable)
@@ -1444,7 +1444,7 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CH
     return NewVariable;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, bool bDefaultValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR_T* InName, const CHAR_T* HelpString, bool bDefaultValue, EConsoleVariableFlags Flags)
 {
     if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableBool(bDefaultValue, Flags, HelpString)))
     {
@@ -1454,7 +1454,7 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CH
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, int32& RefValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR_T* InName, const CHAR_T* HelpString, int32& RefValue, EConsoleVariableFlags Flags)
 {
     if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableInt32Ref(RefValue, Flags, HelpString)))
     {
@@ -1464,7 +1464,7 @@ IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, int32& RefValue, int32 MinValue, int32 MaxValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR_T* InName, const CHAR_T* HelpString, int32& RefValue, int32 MinValue, int32 MaxValue, EConsoleVariableFlags Flags)
 {
     IConsoleVariable* NewVariable = RegisterVariableRef(InName, HelpString, RefValue, Flags);
     if (NewVariable)
@@ -1476,7 +1476,7 @@ IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const
     return NewVariable;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, float& RefValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR_T* InName, const CHAR_T* HelpString, float& RefValue, EConsoleVariableFlags Flags)
 {
     if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableFloatRef(RefValue, Flags, HelpString)))
     {
@@ -1486,7 +1486,7 @@ IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, float& RefValue, float MinValue, float MaxValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR_T* InName, const CHAR_T* HelpString, float& RefValue, float MinValue, float MaxValue, EConsoleVariableFlags Flags)
 {
     IConsoleVariable* NewVariable = RegisterVariableRef(InName, HelpString, RefValue, Flags);
     if (NewVariable)
@@ -1498,7 +1498,7 @@ IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const
     return NewVariable;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, bool& RefValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR_T* InName, const CHAR_T* HelpString, bool& RefValue, EConsoleVariableFlags Flags)
 {
     if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableBoolRef(RefValue, Flags, HelpString)))
     {
@@ -1508,7 +1508,7 @@ IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, String& RefValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR_T* InName, const CHAR_T* HelpString, String& RefValue, EConsoleVariableFlags Flags)
 {
     if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableStringRef(RefValue, Flags, HelpString)))
     {
@@ -1529,7 +1529,7 @@ void FConsoleManager::UnregisterObject(IConsoleObject* ConsoleObject)
     }
 }
 
-bool FConsoleManager::IsConsoleObject(const CHAR* InName) const
+bool FConsoleManager::IsConsoleObject(const CHAR_T* InName) const
 {
     return FindConsoleObject(InName) != nullptr;
 }
@@ -1547,7 +1547,7 @@ String FConsoleManager::FindConsoleObjectName(IConsoleObject* ConsoleObject)
     return String();
 }
 
-IConsoleCommand* FConsoleManager::FindConsoleCommand(const CHAR* Name) const
+IConsoleCommand* FConsoleManager::FindConsoleCommand(const CHAR_T* Name) const
 {
     if (IConsoleObject* Object = FindConsoleObject(Name))
     {
@@ -1557,7 +1557,7 @@ IConsoleCommand* FConsoleManager::FindConsoleCommand(const CHAR* Name) const
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::FindConsoleVariable(const CHAR* Name) const
+IConsoleVariable* FConsoleManager::FindConsoleVariable(const CHAR_T* Name) const
 {
     if (IConsoleObject* Object = FindConsoleObject(Name))
     {
@@ -1567,7 +1567,7 @@ IConsoleVariable* FConsoleManager::FindConsoleVariable(const CHAR* Name) const
     return nullptr;
 }
 
-IConsoleObject* FConsoleManager::FindConsoleObject(const CHAR* InName) const
+IConsoleObject* FConsoleManager::FindConsoleObject(const CHAR_T* InName) const
 {
     const String Name(InName);
     if (IConsoleObject* const* Object = ConsoleObjects.Find(Name))
@@ -1592,8 +1592,8 @@ void FConsoleManager::FindCandidates(const StringView& CandidateName, TArray<TPa
         int32 Length = CandidateName.Length();
         if (Length <= Object.First.Length())
         {
-            const CHAR* Command = *Object.First;
-            const CHAR* WordIt  = *CandidateName;
+            const CHAR_T* Command = *Object.First;
+            const CHAR_T* WordIt  = *CandidateName;
 
             int32 CharDiff = -1;
             while (Length > 0 && (CharDiff = (toupper(*WordIt) - toupper(*Command))) == 0)
@@ -1740,7 +1740,7 @@ void FConsoleManager::ExecuteQueuedCommands(IOutputDevice& OutputDevice)
     }
 }
 
-static bool ApplyCommandLineOverride(const CHAR* InName, IConsoleVariable* Variable)
+static bool ApplyCommandLineOverride(const CHAR_T* InName, IConsoleVariable* Variable)
 {
     StringView CommandLineValue;
     if (!CommandLine::FindOption(InName, CommandLineValue))
@@ -1762,7 +1762,7 @@ static bool ApplyCommandLineOverride(const CHAR* InName, IConsoleVariable* Varia
     return true;
 }
 
-IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObject* Object)
+IConsoleObject* FConsoleManager::RegisterObject(const CHAR_T* InName, IConsoleObject* Object)
 {
     const String Name(InName);
     if (IConsoleObject** ExistingObject = ConsoleObjects.Find(Name))
@@ -1837,7 +1837,7 @@ void FConsoleManager::GetConsoleObjects(TArray<TPair<String, IConsoleObject*>>& 
     }
 }
 
-void FConsoleManager::DumpConsoleVariableValues(IOutputDevice& OutputDevice, const CHAR* Key)
+void FConsoleManager::DumpConsoleVariableValues(IOutputDevice& OutputDevice, const CHAR_T* Key)
 {
     const bool bHasKey = Key && (*Key != '\0');
 
@@ -1877,7 +1877,7 @@ void FConsoleManager::DumpConsoleVariableValues(IOutputDevice& OutputDevice, con
     {
         IConsoleVariable* Variable = Pair.Second;
         String ValueString;
-        const CHAR* TypeString = "unknown";
+        const CHAR_T* TypeString = "unknown";
 
         if (Variable->IsVariableInt())
         {
@@ -1901,7 +1901,7 @@ void FConsoleManager::DumpConsoleVariableValues(IOutputDevice& OutputDevice, con
         }
 
         const EConsoleVariableFlags SetByFlags = Variable->GetFlags() & EConsoleVariableFlags::SetByMask;
-        const CHAR* SetByString = SetByFlagToString(SetByFlags);
+        const CHAR_T* SetByString = SetByFlagToString(SetByFlags);
 
         OutputDevice.Log(String::Printf("%s = %s [type:%s setby:%s]", *Pair.First, *ValueString, TypeString, SetByString));
     }

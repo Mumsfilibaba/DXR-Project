@@ -7,7 +7,7 @@
 
 #include "TestCommon/TestMacros.h"
 
-static bool WriteText(const String& Filename, const CHAR* Text)
+static bool WriteText(const String& Filename, const CHAR_T* Text)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(Filename);
     if (!FileHandle)
@@ -26,7 +26,7 @@ static String ReadText(const String& Filename)
         return String();
     }
 
-    TArray<CHAR> Text;
+    TArray<CHAR_T> Text;
     if (!File::ReadTextFile(FileHandle.Get(), Text))
     {
         return String();
@@ -50,7 +50,7 @@ static FProjectDescriptor CreateDescriptor()
     return Descriptor;
 }
 
-static bool FailsToLoad(const String& Filename, const CHAR* Text)
+static bool FailsToLoad(const String& Filename, const CHAR_T* Text)
 {
     if (!WriteText(Filename, Text))
     {

@@ -7,8 +7,8 @@
 
 struct FIconRequest
 {
-    const CHAR* RelativePath;
-    FUIBrush*   Brush;
+    const CHAR_T* RelativePath;
+    FUIBrush*     Brush;
 };
 
 struct FIconImage
@@ -56,7 +56,7 @@ static const FIconRequest GIconRequests[] =
 
 static FUIAtlas GIconAtlas;
 
-static bool LoadIconImage(const CHAR* RelativePath, FIconImage& OutImage)
+static bool LoadIconImage(const CHAR_T* RelativePath, FIconImage& OutImage)
 {
     String FullPath = Paths::GetAssetDir();
     if (!FullPath.EndsWith("/"))

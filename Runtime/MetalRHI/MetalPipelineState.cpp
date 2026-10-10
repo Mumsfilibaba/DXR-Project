@@ -429,7 +429,7 @@ bool FMetalPipelineBindingLayout::ConflictsWithVertexInputs(const FMetalInputLay
         }
     }
 
-    auto CheckSlot = [ReservedSlots](uint8 Slot, const CHAR* What, uint32 RegisterIndex) -> bool
+    auto CheckSlot = [ReservedSlots](uint8 Slot, const CHAR_T* What, uint32 RegisterIndex) -> bool
     {
         if (Slot != InvalidSlot && Slot < 64 && (ReservedSlots & (uint64(1) << Slot)))
         {

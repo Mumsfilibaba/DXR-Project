@@ -63,7 +63,7 @@ struct FApplicationUIConstants
 
 struct FScopedApplicationGPUTrace
 {
-    FScopedApplicationGPUTrace(IGPUProfiler* InProfiler, FRHICommandList& InCommandList, const CHAR* InName)
+    FScopedApplicationGPUTrace(IGPUProfiler* InProfiler, FRHICommandList& InCommandList, const CHAR_T* InName)
         : Profiler(InProfiler)
         , CommandList(InCommandList)
         , Name(InName)
@@ -84,7 +84,7 @@ struct FScopedApplicationGPUTrace
 
     IGPUProfiler*    Profiler;
     FRHICommandList& CommandList;
-    const CHAR*      Name;
+    const CHAR_T*    Name;
 };
 
 static constexpr int32   GPaintTimingFrames = 120;
@@ -121,7 +121,7 @@ static String DescribeRectangle(const FRectangle& Rectangle)
     return String::Printf("(%d, %d, %d x %d)", Rectangle.Position.X, Rectangle.Position.Y, Rectangle.Width, Rectangle.Height);
 }
 
-static const CHAR* DescribeBatchTexture(const FUITextureHandle& Texture)
+static const CHAR_T* DescribeBatchTexture(const FUITextureHandle& Texture)
 {
     if (Texture.GetAtlas())
     {

@@ -14,12 +14,12 @@ enum class EAssertDialogResult
 struct IPlatformMisc
 {
     /** @brief Write a message to the platform's debugger output, terminated by a newline */
-    static FORCEINLINE void OutputDebugString(const CHAR* Message)
+    static FORCEINLINE void OutputDebugString(const CHAR_T* Message)
     {
     }
 
     /** @brief Write Length characters of Text to standard output */
-    static FORCEINLINE void WriteToStdOutput(const CHAR* Text, uint32 Length)
+    static FORCEINLINE void WriteToStdOutput(const CHAR_T* Text, uint32 Length)
     {
     }
 
@@ -41,7 +41,7 @@ struct IPlatformMisc
      * @param OutValue Receives the value, and is cleared when the variable is not set
      * @return True when the variable is set, including when it is set to an empty value
      */
-    static FORCEINLINE bool GetEnvironmentVariable(const CHAR* Name, String& OutValue)
+    static FORCEINLINE bool GetEnvironmentVariable(const CHAR_T* Name, String& OutValue)
     {
         OutValue.Clear();
         return false;
@@ -57,13 +57,13 @@ struct IPlatformMisc
      * @param Value Value to store, or nullptr to remove the variable
      * @return True when the variable was stored or removed
      */
-    static FORCEINLINE bool SetEnvironmentVariable(const CHAR* Name, const CHAR* Value)
+    static FORCEINLINE bool SetEnvironmentVariable(const CHAR_T* Name, const CHAR_T* Value)
     {
         return false;
     }
 
     /** @return Returns how the user chose to respond to a failed assert */
-    static FORCEINLINE EAssertDialogResult ShowAssertDialog(const CHAR* Title, const CHAR* Message)
+    static FORCEINLINE EAssertDialogResult ShowAssertDialog(const CHAR_T* Title, const CHAR_T* Message)
     {
         return EAssertDialogResult::Abort;
     }

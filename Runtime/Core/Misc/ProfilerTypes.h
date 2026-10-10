@@ -26,7 +26,7 @@ struct FProfilerInterval
         StackFrames.Fill(0);
     }
 
-    const CHAR*                                     Name;
+    const CHAR_T*                                   Name;
     void*                                           ThreadHandle;
     uint64                                          StartTimeStamp;
     uint64                                          EndTimeStamp;

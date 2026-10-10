@@ -15,7 +15,7 @@ struct FShaderCompilationEnvironment
         }
     }
 
-    void SetDefine(const CHAR* Define, const CHAR* Value)
+    void SetDefine(const CHAR_T* Define, const CHAR_T* Value)
     {
         Defines.Emplace(Define, Value);
     }
@@ -114,22 +114,22 @@ public:
 
 #define SHADER_PERMUTATION_BOOL(InDefineName) \
     public FShaderPermutationBool             \
-    { public: static constexpr const CHAR* DefineName = InDefineName; }
+    { public: static constexpr const CHAR_T* DefineName = InDefineName; }
 
 #define SHADER_PERMUTATION_INT(InDefineName, InCount)  \
     public TShaderPermutationInt<int32, InCount>       \
-    { public: static constexpr const CHAR* DefineName = InDefineName; }
+    { public: static constexpr const CHAR_T* DefineName = InDefineName; }
 
 #define SHADER_PERMUTATION_RANGE_INT(InDefineName, InFirstValue, InCount)  \
     public TShaderPermutationInt<int32, InCount, InFirstValue>             \
-    { public: static constexpr const CHAR* DefineName = InDefineName; }
+    { public: static constexpr const CHAR_T* DefineName = InDefineName; }
 
 #define SHADER_PERMUTATION_ENUM(InDefineName, InEnumType)  \
     public TShaderPermutationEnum<InEnumType>               \
-    { public: static constexpr const CHAR* DefineName = InDefineName; }
+    { public: static constexpr const CHAR_T* DefineName = InDefineName; }
 
 #define SHADER_PERMUTATION_DEFINE(InDefineName) \
-    public: static constexpr const CHAR* DefineName = InDefineName
+    public: static constexpr const CHAR_T* DefineName = InDefineName
 
 template<typename... DimensionTypes>
 class TShaderPermutation;

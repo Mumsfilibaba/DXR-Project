@@ -322,7 +322,7 @@ static EAttachmentLoadAction FindAttachmentLoadAction(const FRenderGraphPass& Pa
     return EAttachmentLoadAction::DontCare;
 }
 
-FRenderGraphBuilder::FRenderGraphBuilder(const CHAR* InName)
+FRenderGraphBuilder::FRenderGraphBuilder(const CHAR_T* InName)
     : Name(InName ? InName : "RenderGraph")
     , Memory()
     , Passes()
@@ -379,7 +379,7 @@ FRenderGraphBuilder::~FRenderGraphBuilder()
 }
 
 template<typename ViewType, typename DescType>
-ViewType* FRenderGraphBuilder::AllocateTextureView(FRenderGraphTexture* Texture, const DescType& Desc, const CHAR* InName)
+ViewType* FRenderGraphBuilder::AllocateTextureView(FRenderGraphTexture* Texture, const DescType& Desc, const CHAR_T* InName)
 {
     void*     ViewMemory = Memory.Allocate(sizeof(ViewType), alignof(ViewType));
     ViewType* View       = new(ViewMemory) ViewType();
@@ -391,7 +391,7 @@ ViewType* FRenderGraphBuilder::AllocateTextureView(FRenderGraphTexture* Texture,
 }
 
 template<typename ViewType, typename DescType>
-ViewType* FRenderGraphBuilder::AllocateShaderAccessTextureView(FRenderGraphTexture* Texture, const DescType& Desc, const CHAR* InName)
+ViewType* FRenderGraphBuilder::AllocateShaderAccessTextureView(FRenderGraphTexture* Texture, const DescType& Desc, const CHAR_T* InName)
 {
     void*     ViewMemory = Memory.Allocate(sizeof(ViewType), alignof(ViewType));
     ViewType* View       = new(ViewMemory) ViewType();
@@ -404,7 +404,7 @@ ViewType* FRenderGraphBuilder::AllocateShaderAccessTextureView(FRenderGraphTextu
 }
 
 template<typename ViewType, typename DescType>
-ViewType* FRenderGraphBuilder::AllocateBufferView(FRenderGraphBuffer* Buffer, const DescType& Desc, const CHAR* InName)
+ViewType* FRenderGraphBuilder::AllocateBufferView(FRenderGraphBuffer* Buffer, const DescType& Desc, const CHAR_T* InName)
 {
     void*     ViewMemory = Memory.Allocate(sizeof(ViewType), alignof(ViewType));
     ViewType* View       = new(ViewMemory) ViewType();
@@ -416,7 +416,7 @@ ViewType* FRenderGraphBuilder::AllocateBufferView(FRenderGraphBuffer* Buffer, co
     return View;
 }
 
-FRenderGraphTexture* FRenderGraphBuilder::CreateTexture(const FRenderGraphTextureDesc& Desc, const CHAR* InName)
+FRenderGraphTexture* FRenderGraphBuilder::CreateTexture(const FRenderGraphTextureDesc& Desc, const CHAR_T* InName)
 {
     void* TextureMemory = Memory.Allocate(sizeof(FRenderGraphTexture), alignof(FRenderGraphTexture));
 
@@ -425,7 +425,7 @@ FRenderGraphTexture* FRenderGraphBuilder::CreateTexture(const FRenderGraphTextur
     return Texture;
 }
 
-FRenderGraphBuffer* FRenderGraphBuilder::CreateBuffer(const FRenderGraphBufferDesc& Desc, const CHAR* InName)
+FRenderGraphBuffer* FRenderGraphBuilder::CreateBuffer(const FRenderGraphBufferDesc& Desc, const CHAR_T* InName)
 {
     void* BufferMemory = Memory.Allocate(sizeof(FRenderGraphBuffer), alignof(FRenderGraphBuffer));
 
@@ -434,7 +434,7 @@ FRenderGraphBuffer* FRenderGraphBuilder::CreateBuffer(const FRenderGraphBufferDe
     return Buffer;
 }
 
-FRenderGraphTexture* FRenderGraphBuilder::RegisterExternalTexture(FRHITexture* Texture, const CHAR* InName, ERHIResourceState InitialState, ERHIResourceState FinalState)
+FRenderGraphTexture* FRenderGraphBuilder::RegisterExternalTexture(FRHITexture* Texture, const CHAR_T* InName, ERHIResourceState InitialState, ERHIResourceState FinalState)
 {
     if (!Texture)
     {
@@ -463,7 +463,7 @@ FRenderGraphTexture* FRenderGraphBuilder::RegisterExternalTexture(FRHITexture* T
     return GraphTexture;
 }
 
-FRenderGraphBuffer* FRenderGraphBuilder::RegisterExternalBuffer(FRHIBuffer* Buffer, const CHAR* InName, ERHIResourceState InitialState, ERHIResourceState FinalState)
+FRenderGraphBuffer* FRenderGraphBuilder::RegisterExternalBuffer(FRHIBuffer* Buffer, const CHAR_T* InName, ERHIResourceState InitialState, ERHIResourceState FinalState)
 {
     if (!Buffer)
     {
@@ -481,7 +481,7 @@ FRenderGraphBuffer* FRenderGraphBuilder::RegisterExternalBuffer(FRHIBuffer* Buff
     return GraphBuffer;
 }
 
-bool FRenderGraphBuilder::ValidateExternalViewRegistration(FRenderGraphTexture* Texture, const void* View, const CHAR* ViewKind, const CHAR* InName)
+bool FRenderGraphBuilder::ValidateExternalViewRegistration(FRenderGraphTexture* Texture, const void* View, const CHAR_T* ViewKind, const CHAR_T* InName)
 {
     if (!Texture)
     {
@@ -500,7 +500,7 @@ bool FRenderGraphBuilder::ValidateExternalViewRegistration(FRenderGraphTexture* 
     return true;
 }
 
-bool FRenderGraphBuilder::ValidateViewCreation(FRenderGraphTexture* Texture, const CHAR* ViewKind, const CHAR* InName)
+bool FRenderGraphBuilder::ValidateViewCreation(FRenderGraphTexture* Texture, const CHAR_T* ViewKind, const CHAR_T* InName)
 {
     if (!Texture)
     {
@@ -520,7 +520,7 @@ bool FRenderGraphBuilder::ValidateViewCreation(FRenderGraphTexture* Texture, con
     return true;
 }
 
-FRenderGraphShaderResourceView* FRenderGraphBuilder::RegisterExternalSRV(FRenderGraphTexture* Texture, FRHIShaderResourceView* ShaderResourceView, const CHAR* InName)
+FRenderGraphShaderResourceView* FRenderGraphBuilder::RegisterExternalSRV(FRenderGraphTexture* Texture, FRHIShaderResourceView* ShaderResourceView, const CHAR_T* InName)
 {
     if (!ValidateExternalViewRegistration(Texture, ShaderResourceView, "SRV", InName))
     {
@@ -536,7 +536,7 @@ FRenderGraphShaderResourceView* FRenderGraphBuilder::RegisterExternalSRV(FRender
     return View;
 }
 
-FRenderGraphUnorderedAccessView* FRenderGraphBuilder::RegisterExternalUAV(FRenderGraphTexture* Texture, FRHIUnorderedAccessView* UnorderedAccessView, const CHAR* InName)
+FRenderGraphUnorderedAccessView* FRenderGraphBuilder::RegisterExternalUAV(FRenderGraphTexture* Texture, FRHIUnorderedAccessView* UnorderedAccessView, const CHAR_T* InName)
 {
     if (!ValidateExternalViewRegistration(Texture, UnorderedAccessView, "UAV", InName))
     {
@@ -552,7 +552,7 @@ FRenderGraphUnorderedAccessView* FRenderGraphBuilder::RegisterExternalUAV(FRende
     return View;
 }
 
-FRenderGraphRenderTargetView* FRenderGraphBuilder::RegisterExternalRTV(FRenderGraphTexture* Texture, FRHIRenderTargetView* RenderTargetView, const CHAR* InName)
+FRenderGraphRenderTargetView* FRenderGraphBuilder::RegisterExternalRTV(FRenderGraphTexture* Texture, FRHIRenderTargetView* RenderTargetView, const CHAR_T* InName)
 {
     if (!ValidateExternalViewRegistration(Texture, RenderTargetView, "RTV", InName))
     {
@@ -568,7 +568,7 @@ FRenderGraphRenderTargetView* FRenderGraphBuilder::RegisterExternalRTV(FRenderGr
     return View;
 }
 
-FRenderGraphDepthStencilView* FRenderGraphBuilder::RegisterExternalDSV(FRenderGraphTexture* Texture, FRHIDepthStencilView* DepthStencilView, const CHAR* InName)
+FRenderGraphDepthStencilView* FRenderGraphBuilder::RegisterExternalDSV(FRenderGraphTexture* Texture, FRHIDepthStencilView* DepthStencilView, const CHAR_T* InName)
 {
     if (!ValidateExternalViewRegistration(Texture, DepthStencilView, "DSV", InName))
     {
@@ -584,7 +584,7 @@ FRenderGraphDepthStencilView* FRenderGraphBuilder::RegisterExternalDSV(FRenderGr
     return View;
 }
 
-FRenderGraphShaderResourceView* FRenderGraphBuilder::CreateSRV(FRenderGraphTexture* Texture, const FRHIShaderResourceViewDesc& Desc, const CHAR* InName)
+FRenderGraphShaderResourceView* FRenderGraphBuilder::CreateSRV(FRenderGraphTexture* Texture, const FRHIShaderResourceViewDesc& Desc, const CHAR_T* InName)
 {
     if (!ValidateViewCreation(Texture, "SRV", InName))
     {
@@ -598,7 +598,7 @@ FRenderGraphShaderResourceView* FRenderGraphBuilder::CreateSRV(FRenderGraphTextu
     return View;
 }
 
-FRenderGraphUnorderedAccessView* FRenderGraphBuilder::CreateUAV(FRenderGraphTexture* Texture, const FRHIUnorderedAccessViewDesc& Desc, const CHAR* InName)
+FRenderGraphUnorderedAccessView* FRenderGraphBuilder::CreateUAV(FRenderGraphTexture* Texture, const FRHIUnorderedAccessViewDesc& Desc, const CHAR_T* InName)
 {
     if (!ValidateViewCreation(Texture, "UAV", InName))
     {
@@ -612,7 +612,7 @@ FRenderGraphUnorderedAccessView* FRenderGraphBuilder::CreateUAV(FRenderGraphText
     return View;
 }
 
-FRenderGraphRenderTargetView* FRenderGraphBuilder::CreateRTV(FRenderGraphTexture* Texture, const FRHIRenderTargetViewDesc& Desc, const CHAR* InName)
+FRenderGraphRenderTargetView* FRenderGraphBuilder::CreateRTV(FRenderGraphTexture* Texture, const FRHIRenderTargetViewDesc& Desc, const CHAR_T* InName)
 {
     if (!ValidateViewCreation(Texture, "RTV", InName))
     {
@@ -626,7 +626,7 @@ FRenderGraphRenderTargetView* FRenderGraphBuilder::CreateRTV(FRenderGraphTexture
     return View;
 }
 
-FRenderGraphDepthStencilView* FRenderGraphBuilder::CreateDSV(FRenderGraphTexture* Texture, const FRHIDepthStencilViewDesc& Desc, const CHAR* InName)
+FRenderGraphDepthStencilView* FRenderGraphBuilder::CreateDSV(FRenderGraphTexture* Texture, const FRHIDepthStencilViewDesc& Desc, const CHAR_T* InName)
 {
     if (!ValidateViewCreation(Texture, "DSV", InName))
     {
@@ -640,7 +640,7 @@ FRenderGraphDepthStencilView* FRenderGraphBuilder::CreateDSV(FRenderGraphTexture
     return View;
 }
 
-FRenderGraphShaderResourceView* FRenderGraphBuilder::CreateSRV(FRenderGraphBuffer* Buffer, const FRHIShaderResourceViewDesc& Desc, const CHAR* InName)
+FRenderGraphShaderResourceView* FRenderGraphBuilder::CreateSRV(FRenderGraphBuffer* Buffer, const FRHIShaderResourceViewDesc& Desc, const CHAR_T* InName)
 {
     if (!Buffer)
     {
@@ -656,7 +656,7 @@ FRenderGraphShaderResourceView* FRenderGraphBuilder::CreateSRV(FRenderGraphBuffe
     return View;
 }
 
-FRenderGraphUnorderedAccessView* FRenderGraphBuilder::CreateUAV(FRenderGraphBuffer* Buffer, const FRHIUnorderedAccessViewDesc& Desc, const CHAR* InName)
+FRenderGraphUnorderedAccessView* FRenderGraphBuilder::CreateUAV(FRenderGraphBuffer* Buffer, const FRHIUnorderedAccessViewDesc& Desc, const CHAR_T* InName)
 {
     if (!Buffer)
     {
@@ -672,22 +672,22 @@ FRenderGraphUnorderedAccessView* FRenderGraphBuilder::CreateUAV(FRenderGraphBuff
     return View;
 }
 
-FRenderGraphShaderResourceView* FRenderGraphBuilder::CreateSRV(FRenderGraphTexture* Texture, const CHAR* InName)
+FRenderGraphShaderResourceView* FRenderGraphBuilder::CreateSRV(FRenderGraphTexture* Texture, const CHAR_T* InName)
 {
     return CreateSRV(Texture, RenderGraphDefaultViewDescs::ShaderResourceForTexture(Texture->GetDesc().TextureDesc), InName);
 }
 
-FRenderGraphUnorderedAccessView* FRenderGraphBuilder::CreateUAV(FRenderGraphTexture* Texture, const CHAR* InName)
+FRenderGraphUnorderedAccessView* FRenderGraphBuilder::CreateUAV(FRenderGraphTexture* Texture, const CHAR_T* InName)
 {
     return CreateUAV(Texture, RenderGraphDefaultViewDescs::UnorderedAccessForTexture(Texture->GetDesc().TextureDesc), InName);
 }
 
-FRenderGraphRenderTargetView* FRenderGraphBuilder::CreateRTV(FRenderGraphTexture* Texture, const CHAR* InName)
+FRenderGraphRenderTargetView* FRenderGraphBuilder::CreateRTV(FRenderGraphTexture* Texture, const CHAR_T* InName)
 {
     return CreateRTV(Texture, RenderGraphDefaultViewDescs::RenderTargetForTexture(Texture->GetDesc().TextureDesc), InName);
 }
 
-FRenderGraphDepthStencilView* FRenderGraphBuilder::CreateDSV(FRenderGraphTexture* Texture, const CHAR* InName)
+FRenderGraphDepthStencilView* FRenderGraphBuilder::CreateDSV(FRenderGraphTexture* Texture, const CHAR_T* InName)
 {
     return CreateDSV(Texture, RenderGraphDefaultViewDescs::DepthStencilForTexture(Texture->GetDesc().TextureDesc), InName);
 }
@@ -785,7 +785,7 @@ FRenderGraphUnorderedAccessView* FRenderGraphBuilder::GetOrCreateDefaultUAV(FRen
     return View;
 }
 
-FRenderGraphPass* FRenderGraphBuilder::AllocatePass(const CHAR* InName, ERenderGraphPassFlags InFlags, bool bEnabled)
+FRenderGraphPass* FRenderGraphBuilder::AllocatePass(const CHAR_T* InName, ERenderGraphPassFlags InFlags, bool bEnabled)
 {
     if (bIsCompiled)
     {

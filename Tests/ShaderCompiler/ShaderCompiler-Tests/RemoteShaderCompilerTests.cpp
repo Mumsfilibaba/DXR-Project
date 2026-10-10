@@ -39,7 +39,7 @@ static String GetClearTextureSource()
     return Paths::GetEngineDir() + "/Runtime/MetalRHI/Shaders/Internal/ClearTextureUAV.hlsl";
 }
 
-static bool WriteTestFile(const String& FilePath, const CHAR* Text)
+static bool WriteTestFile(const String& FilePath, const CHAR_T* Text)
 {
     if (!File::CreateDirectoryTree(File::GetDirectoryOf(FilePath)))
     {
@@ -50,10 +50,10 @@ static bool WriteTestFile(const String& FilePath, const CHAR* Text)
     return FileHandle && File::WriteTextFile(FileHandle.Get(), String(Text));
 }
 
-static TArray<uint8> ToBytes(const CHAR* Text)
+static TArray<uint8> ToBytes(const CHAR_T* Text)
 {
     TArray<uint8> Bytes;
-    for (const CHAR* Character = Text; *Character; ++Character)
+    for (const CHAR_T* Character = Text; *Character; ++Character)
     {
         Bytes.Add(static_cast<uint8>(*Character));
     }
@@ -69,7 +69,7 @@ static uint64 GetTestMilliseconds()
 class FMemorySourceProvider final : public IShaderSourceProvider
 {
 public:
-    void AddFile(const String& Path, const TArray<CHAR>& Text)
+    void AddFile(const String& Path, const TArray<CHAR_T>& Text)
     {
         Files.Add(Path, Text);
     }
@@ -79,9 +79,9 @@ public:
         return Files.Contains(Path);
     }
 
-    virtual bool ReadFile(const String& Path, TArray<CHAR>& OutText) const override final
+    virtual bool ReadFile(const String& Path, TArray<CHAR_T>& OutText) const override final
     {
-        const TArray<CHAR>* Text = Files.Find(Path);
+        const TArray<CHAR_T>* Text = Files.Find(Path);
         if (!Text)
         {
             return false;
@@ -91,7 +91,7 @@ public:
         return true;
     }
 
-    TMap<String, TArray<CHAR>> Files;
+    TMap<String, TArray<CHAR_T>> Files;
 };
 
 static TSharedPtr<FRemoteRequestSources> MakeRequestSources(const TArray<FShaderSourceFile>& Files)
@@ -263,7 +263,7 @@ bool ShaderPreprocessorMemoryProvider_Test()
     FMemorySourceProvider Memory;
     for (const FShaderSourceFile& Source : Sources)
     {
-        TArray<CHAR> Text;
+        TArray<CHAR_T> Text;
         TEST_EXPECT(FDiskShaderSourceProvider::Get().ReadFile(Source.LocalPath, Text));
         Memory.AddFile(Source.LocalPath, Text);
     }
@@ -278,7 +278,7 @@ bool ShaderPreprocessorMemoryProvider_Test()
     TEST_EXPECT(bFoundAssetInclude);
 
     const String RootPath = GetClearBufferSource();
-    TArray<CHAR> RootText;
+    TArray<CHAR_T> RootText;
     TEST_EXPECT(FDiskShaderSourceProvider::Get().ReadFile(RootPath, RootText));
 
     FShaderPreprocessor DiskPreprocessor(AssetDir + "/Shaders");
@@ -828,7 +828,7 @@ bool InternalClearBufferUAVReflection_Test()
 {
     TEST_BEGIN();
 
-    const CHAR* const Permutations[][2] =
+    const CHAR_T* const Permutations[][2] =
     {
         { "CLEAR_ELEMENT_UINT", "0" },
         { "CLEAR_ELEMENT_UINT", "1" },
@@ -873,8 +873,8 @@ bool InternalClearUAVMSLReflection_Test()
 
     struct FComponentCase
     {
-        const CHAR*          Uint;
-        const CHAR*          Sint;
+        const CHAR_T*        Uint;
+        const CHAR_T*        Sint;
         EMSLTextureComponent Component;
     };
 
@@ -944,7 +944,7 @@ bool InternalClearUAVMSLReflection_Test()
 
     struct FDimensionCase
     {
-        const CHAR*              Value;
+        const CHAR_T*            Value;
         EMSLTextureDimension     MSLDimension;
         EShaderResourceDimension Dimension;
     };
@@ -991,7 +991,7 @@ bool InternalClearUAVMSLReflection_Test()
     TEST_END();
 }
 
-static constexpr const CHAR* GIncludeTestShader =
+static constexpr const CHAR_T* GIncludeTestShader =
     "#include \"CoreDefines.hlsli\"\n"
     "#include \"Common.hlsli\"\n"
     "#include \"OnlySecond.hlsli\"\n"

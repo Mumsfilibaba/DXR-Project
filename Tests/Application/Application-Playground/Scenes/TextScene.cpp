@@ -12,7 +12,7 @@
 #include "PlaygroundScene.h"
 #include "ScenePanel.h"
 
-static const CHAR* GWrapSample =
+static const CHAR_T* GWrapSample =
     "FTextLayout breaks a run wherever the wrap width says it must, preferring the space between two "
     "words and falling back to a mid-word cut only when one word is wider than the line it is on. "
     "Resize the window and this paragraph reflows: the runs are re-split every frame against the width "
@@ -24,7 +24,7 @@ static TSharedPtr<FVisualElement> MakeTextBlockRow(const FPlaygroundFonts& Fonts
 
     struct FSample
     {
-        const CHAR*        Text;
+        const CHAR_T*      Text;
         const FFloatColor& Color;
     };
 
@@ -66,7 +66,7 @@ static TSharedPtr<FVisualElement> MakeEditableTextRow(const FPlaygroundFonts& Fo
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
 
-    const CHAR* Initial[] =
+    const CHAR_T* Initial[] =
     {
         "Click to place the caret, drag to select",
         "",

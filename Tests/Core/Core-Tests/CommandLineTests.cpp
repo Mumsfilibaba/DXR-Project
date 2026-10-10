@@ -9,14 +9,14 @@
 
 // Windows passes the whole command line as a single unsplit argument 
 // (NumArgs == 1), which is the shape most of these cases exercise.
-static bool InitializeFromLine(const CHAR* Line)
+static bool InitializeFromLine(const CHAR_T* Line)
 {
-    const CHAR* Args[] = { Line };
+    const CHAR_T* Args[] = { Line };
     return CommandLine::Initialize(Args, 1);
 }
 
 // Real CVar names taken from across the engine, covering every name shape currently in use.
-static const CHAR* GNameCorpus[] =
+static const CHAR_T* GNameCorpus[] =
 {
     "RHI.Type",
     "RHI.EnableDebugLayer",
@@ -188,7 +188,7 @@ bool CommandLine_Test()
 
     TEST_SECTION("Argv-style arguments");
     {
-        const CHAR* Args[] = { "-RHI.Type=Vulkan", "-RHI.EnableDebugLayer=true" };
+        const CHAR_T* Args[] = { "-RHI.Type=Vulkan", "-RHI.EnableDebugLayer=true" };
         TEST_EXPECT(CommandLine::Initialize(Args, 2));
 
         StringView Value;
@@ -224,14 +224,14 @@ bool CommandLine_Test()
 
     TEST_SECTION("A null argument is rejected");
     {
-        const CHAR* Args[] = { nullptr };
+        const CHAR_T* Args[] = { nullptr };
         TEST_EXPECT(!CommandLine::Initialize(Args, 1));
         TEST_EXPECT(!CommandLine::Initialize(nullptr, 1));
     }
 
     TEST_SECTION("Every CVar name shape round-trips");
     {
-        for (const CHAR* Name : GNameCorpus)
+        for (const CHAR_T* Name : GNameCorpus)
         {
             const String Line = String::Printf("-%s=ProbeValue", Name);
             InitializeFromLine(*Line);
@@ -249,8 +249,8 @@ bool CommandLine_Test()
 
     TEST_SECTION("Generated names over the legal character set");
     {
-        const CHAR* Alphabet = "abzABZ019._";
-        for (const CHAR* Char = Alphabet; *Char != '\0'; ++Char)
+        const CHAR_T* Alphabet = "abzABZ019._";
+        for (const CHAR_T* Char = Alphabet; *Char != '\0'; ++Char)
         {
             const String Name = String::Printf("Prefix%cSuffix", *Char);
             const String Line = String::Printf("-%s=ProbeValue", *Name);

@@ -34,7 +34,7 @@ static FKeyEvent CreateKeyDownEvent(FKey Key)
     return FKeyEvent(EInputEventType::KeyDown, Key, FModifierKeyState(), false, true);
 }
 
-static FKeyEvent CreateCharEvent(CHAR Character)
+static FKeyEvent CreateCharEvent(CHAR_T Character)
 {
     return FKeyEvent(EInputEventType::KeyChar, Keys::Unknown, FModifierKeyState(), static_cast<uint32>(Character), false, true);
 }
@@ -47,7 +47,7 @@ static TSharedPtr<FConsole> CreateConsole()
     return FConsole::Create(Desc);
 }
 
-static void TypeText(const TSharedPtr<FConsole>& Console, const CHAR* Text)
+static void TypeText(const TSharedPtr<FConsole>& Console, const CHAR_T* Text)
 {
     TSharedPtr<FEditableText> Input = Console->GetInput();
     for (int32 Index = 0; Text[Index] != 0; ++Index)
@@ -429,7 +429,7 @@ bool ConsoleCandidateColumns_Test()
     FDrawCommandList CommandList;
     LayOutAndDraw(Console, CommandList);
 
-    static const CHAR* RowNames[] =
+    static const CHAR_T* RowNames[] =
     {
         "Test.Console.Int",
         "Test.Console.Float",
@@ -438,7 +438,7 @@ bool ConsoleCandidateColumns_Test()
     };
 
     TArray<TArray<int32>> Rows;
-    for (const CHAR* RowName : RowNames)
+    for (const CHAR_T* RowName : RowNames)
     {
         const int32 NameIndex = CommandList.FindTextCommand(RowName);
         if (NameIndex != FDrawCommandList::InvalidIndex)
@@ -679,7 +679,7 @@ bool ConsoleInputFieldSurvives_Test()
     }
 
     TEST_SECTION("One typed character brings up a candidate list longer than the console");
-    const CHAR FirstCharacter[2] = { GConsoleCrowdPrefix[0], 0 };
+    const CHAR_T FirstCharacter[2] = { GConsoleCrowdPrefix[0], 0 };
     TypeText(Console, FirstCharacter);
     TEST_EXPECT(Console->GetCommandLine().GetCandidates().Size() >= GNumConsoleCrowdVariables);
 
@@ -745,7 +745,7 @@ bool ConsoleInputFieldSurvives_Test()
     TEST_SECTION("Every further character keeps the field on screen");
     for (int32 Index = 1; GConsoleCrowdPrefix[Index] != 0; ++Index)
     {
-        const CHAR NextCharacter[2] = { GConsoleCrowdPrefix[Index], 0 };
+        const CHAR_T NextCharacter[2] = { GConsoleCrowdPrefix[Index], 0 };
         TypeText(Console, NextCharacter);
 
         LayOutAndDraw(Console, CommandList);

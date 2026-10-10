@@ -7,13 +7,13 @@ FInputName::FInputName()
 {
 }
 
-FInputName::FInputName(const CHAR* InName)
+FInputName::FInputName(const CHAR_T* InName)
     : Name(InName)
     , Hash(HashInputName(InName, static_cast<uint32>(CString::Strlen(InName))))
 {
 }
 
-uint32 FInputName::HashInputName(const CHAR* Data, uint32 Length)
+uint32 FInputName::HashInputName(const CHAR_T* Data, uint32 Length)
 {
     // FNV-1a 32-bit
     constexpr uint32 OffsetBasis = 2166136261u;

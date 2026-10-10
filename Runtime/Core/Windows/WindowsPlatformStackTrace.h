@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Windows/Windows.h"
 #include "Core/PlatformInterface/IPlatformStackTrace.h"
+#include "Core/Containers/StringConversion.h"
 
 struct CORE_API FWindowsPlatformStackTrace final : public IPlatformStackTrace
 {
@@ -23,8 +24,8 @@ struct CORE_API FWindowsPlatformStackTrace final : public IPlatformStackTrace
 
     static FORCEINLINE String GetExecutableFilename()
     {
-        CHAR ModulePathName[FStackTraceEntry::MaxNameLength + 1];
+        ANSICHAR ModulePathName[FStackTraceEntry::MaxNameLength + 1];
         ::GetModuleFileNameA(::GetModuleHandleA(nullptr), ModulePathName, FStackTraceEntry::MaxNameLength);
-        return String(ModulePathName);
+        return StringCast<CHAR_T>(ModulePathName).ToString();
     }
 };

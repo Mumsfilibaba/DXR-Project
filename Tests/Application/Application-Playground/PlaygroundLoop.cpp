@@ -115,7 +115,7 @@ static void ReleaseOutputDevices()
 
 static bool LoadPlaygroundModules()
 {
-    const CHAR* ModuleNames[] =
+    const CHAR_T* ModuleNames[] =
     {
         "Core",
         "CoreApplication",
@@ -125,7 +125,7 @@ static bool LoadPlaygroundModules()
         "ApplicationRenderer",
     };
 
-    for (const CHAR* ModuleName : ModuleNames)
+    for (const CHAR_T* ModuleName : ModuleNames)
     {
         if (!FModuleManager::Get().LoadModule(ModuleName))
         {

@@ -52,8 +52,8 @@ struct FVulkanDeviceCreateInfo
     FVulkanCoreFeatures RequiredFeatures;
     FVulkanCoreFeatures OptionalFeatures;
 
-    TArray<const CHAR*> RequiredLayerNames;
-    TArray<const CHAR*> OptionalLayerNames;
+    TArray<const CHAR_T*> RequiredLayerNames;
+    TArray<const CHAR_T*> OptionalLayerNames;
     TArray<TUniquePtr<FVulkanDeviceExtension>> Extensions;
 };
 

@@ -12,7 +12,7 @@ class CORE_API FGraphTask
     friend class FTaskGraph; // mutates RemainingPrerequisites during launch/prerequisite resolution
 
 public:
-    FGraphTask(const CHAR* InDebugName, TFunction<void()>&& InBody, ENamedThread::Type InLane, ETaskPriority::Type InPriority);
+    FGraphTask(const CHAR_T* InDebugName, TFunction<void()>&& InBody, ENamedThread::Type InLane, ETaskPriority::Type InPriority);
     ~FGraphTask();
 
     /** @brief Runs the task body, triggers the completion event and destroys the task. */
@@ -36,7 +36,7 @@ public:
 
 private:
     AtomicInt32            RemainingPrerequisites;
-    const CHAR*            DebugName;
+    const CHAR_T*          DebugName;
     TFunction<void()>      Body;
     ENamedThread::Type     Lane;
     ETaskPriority::Type    Priority;

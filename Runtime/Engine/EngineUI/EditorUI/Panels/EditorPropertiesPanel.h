@@ -77,7 +77,7 @@ private:
     void AddMaterialTextureRows(const TSharedPtr<FPropertyTable>& Table, FMaterial* Material);
     void AddMaterialFlagRows(const TSharedPtr<FPropertyTable>& Table, FMaterial* Material);
     void AddParallaxRows(const TSharedPtr<FPropertyTable>& Table, FMaterial* Material);
-    void AddLightSettingRows(const TSharedPtr<FPropertyTable>& Table, FLightComponent* Component, const CHAR* IntensityLabel);
+    void AddLightSettingRows(const TSharedPtr<FPropertyTable>& Table, FLightComponent* Component, const CHAR_T* IntensityLabel);
     void AddShadowRows(const TSharedPtr<FPropertyTable>& Table, FLightComponent* Component);
     void AddLightDirectionRows(const TSharedPtr<FPropertyTable>& Table, FDirectionalLightComponent* Component);
     void AddCascadeRows(const TSharedPtr<FPropertyTable>& Table, FDirectionalLightComponent* Component);

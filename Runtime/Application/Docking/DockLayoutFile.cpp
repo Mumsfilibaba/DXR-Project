@@ -3,16 +3,16 @@
 #include "Core/Templates/CString.h"
 
 // The section every saved layout starts with, and the prefixes the node and window sections are named by
-constexpr const CHAR* LAYOUT_SECTION       = "Layout";
-constexpr const CHAR* LAYOUT_NODE_PREFIX   = "Node";
-constexpr const CHAR* LAYOUT_WINDOW_PREFIX = "Window";
+constexpr const CHAR_T* LAYOUT_SECTION       = "Layout";
+constexpr const CHAR_T* LAYOUT_NODE_PREFIX   = "Node";
+constexpr const CHAR_T* LAYOUT_WINDOW_PREFIX = "Window";
 
 static void SplitList(const String& Value, TArray<String>& OutTokens)
 {
     String Token;
     for (int32 Index = 0; Index < Value.Length(); ++Index)
     {
-        const CHAR Character = Value[Index];
+        const CHAR_T Character = Value[Index];
         if (Character == ',')
         {
             if (!Token.IsEmpty())

@@ -30,21 +30,21 @@ static bool ReflectConstantBufferSlots(const TArray<uint8>& ShaderCode, TMap<Str
     return true;
 }
 
-static bool CompileFile(const CHAR* Filename, const CHAR* EntryPoint, EShaderModel ShaderModel, EShaderStage Stage, EShaderOutputLanguage OutputLanguage, bool bDebugInfo, TArray<uint8>& OutShaderCode, const TArrayView<FShaderDefine>& Defines = TArrayView<FShaderDefine>())
+static bool CompileFile(const CHAR_T* Filename, const CHAR_T* EntryPoint, EShaderModel ShaderModel, EShaderStage Stage, EShaderOutputLanguage OutputLanguage, bool bDebugInfo, TArray<uint8>& OutShaderCode, const TArrayView<FShaderDefine>& Defines = TArrayView<FShaderDefine>())
 {
     FShaderCompileInfo CompileInfo(EntryPoint, ShaderModel, Stage, OutputLanguage, Defines);
     CompileInfo.bDebugInfo = bDebugInfo;
     return FShaderCompiler::Get().CompileFromFile(Filename, CompileInfo, OutShaderCode);
 }
 
-static bool CompileSource(const String& Source, const CHAR* EntryPoint, EShaderModel ShaderModel, EShaderStage Stage, EShaderOutputLanguage OutputLanguage, bool bDebugInfo, TArray<uint8>& OutShaderCode)
+static bool CompileSource(const String& Source, const CHAR_T* EntryPoint, EShaderModel ShaderModel, EShaderStage Stage, EShaderOutputLanguage OutputLanguage, bool bDebugInfo, TArray<uint8>& OutShaderCode)
 {
     FShaderCompileInfo CompileInfo(EntryPoint, ShaderModel, Stage, OutputLanguage);
     CompileInfo.bDebugInfo = bDebugInfo;
     return FShaderCompiler::Get().CompileFromSource(Source, CompileInfo, OutShaderCode);
 }
 
-static constexpr uint32 MakeFourCC(CHAR A, CHAR B, CHAR C, CHAR D)
+static constexpr uint32 MakeFourCC(CHAR_T A, CHAR_T B, CHAR_T C, CHAR_T D)
 {
     return static_cast<uint32>(A) | (static_cast<uint32>(B) << 8) | (static_cast<uint32>(C) << 16) | (static_cast<uint32>(D) << 24);
 }
@@ -106,7 +106,7 @@ static bool ReadPartUInt64(TArrayView<const uint8> ByteCode, uint32 PartFourCC, 
 
 static String GetMSLSource(TArrayView<const uint8> NativeCode)
 {
-    return String(reinterpret_cast<const CHAR*>(NativeCode.Data()), NativeCode.Size());
+    return String(reinterpret_cast<const CHAR_T*>(NativeCode.Data()), NativeCode.Size());
 }
 
 static bool HasExpectedSignature(const TArray<uint8>& ShaderCode, EShaderOutputLanguage OutputLanguage)
@@ -175,8 +175,8 @@ static FSpirvScan ScanSpirv(TArrayView<const uint8> NativeCode)
 
     const auto ReadString = [&](uint32 FirstWord, uint32 EndWord)
     {
-        const CHAR*  Characters = reinterpret_cast<const CHAR*>(Words + FirstWord);
-        const uint32 MaxLength  = (EndWord - FirstWord) * static_cast<uint32>(sizeof(uint32));
+        const CHAR_T* Characters = reinterpret_cast<const CHAR_T*>(Words + FirstWord);
+        const uint32  MaxLength  = (EndWord - FirstWord) * static_cast<uint32>(sizeof(uint32));
 
         uint32 Length = 0;
         while (Length < MaxLength && Characters[Length] != '\0')
@@ -242,13 +242,13 @@ static FSpirvScan ScanSpirv(TArrayView<const uint8> NativeCode)
 
 struct FVertexInputExpectation
 {
-    const CHAR*          Semantic;
+    const CHAR_T*        Semantic;
     uint8                SemanticIndex;
     EShaderComponentType ComponentType;
     uint8                NumComponents;
 };
 
-static const FShaderVertexInput* FindVertexInput(TArrayView<const FShaderVertexInput> VertexInputs, const CHAR* Semantic, uint8 SemanticIndex)
+static const FShaderVertexInput* FindVertexInput(TArrayView<const FShaderVertexInput> VertexInputs, const CHAR_T* Semantic, uint8 SemanticIndex)
 {
     const uint32 SemanticHash = HashShaderSemantic(Semantic);
     for (const FShaderVertexInput& VertexInput : VertexInputs)
@@ -309,9 +309,9 @@ bool ShaderCompilerCompileFromFile_Test()
 
     struct FShaderFileCase
     {
-        const CHAR*  Filename;
-        const CHAR*  EntryPoint;
-        EShaderStage Stage;
+        const CHAR_T* Filename;
+        const CHAR_T* EntryPoint;
+        EShaderStage  Stage;
     };
 
     const FShaderFileCase Cases[] =
@@ -541,9 +541,9 @@ bool ShaderCompilerReleaseOutput_Test()
 
     struct FShaderFileCase
     {
-        const CHAR*  Filename;
-        const CHAR*  EntryPoint;
-        EShaderStage Stage;
+        const CHAR_T* Filename;
+        const CHAR_T* EntryPoint;
+        EShaderStage  Stage;
     };
 
     const FShaderFileCase Cases[] =
@@ -660,13 +660,13 @@ bool ShaderCompilerVertexInputs_Test()
         { "COLOR",    0, EShaderComponentType::Float32, 4 },
     };
 
-    const CHAR* const Filenames[] = { "Shaders/UserInterface.hlsl", "Shaders/ImGui.hlsl" };
+    const CHAR_T* const Filenames[] = { "Shaders/UserInterface.hlsl", "Shaders/ImGui.hlsl" };
 
     const TArray<EShaderOutputLanguage> SupportedLanguages = FShaderCompiler::Get().GetSupportedOutputLanguages();
 
     const EShaderOutputLanguage Languages[] = { EShaderOutputLanguage::DXIL, EShaderOutputLanguage::DXBC, EShaderOutputLanguage::SPIRV, EShaderOutputLanguage::MSL };
 
-    for (const CHAR* Filename : Filenames)
+    for (const CHAR_T* Filename : Filenames)
     {
         TArray<uint8> FirstLocations;
         for (EShaderOutputLanguage OutputLanguage : Languages)
@@ -704,7 +704,7 @@ bool ShaderCompilerVertexInputs_Test()
             {
                 TEST_SECTION("The MSL declares an attribute at every reflected location");
                 const TArrayView<const uint8> NativeCode = CodeView.GetNativeCode();
-                const String Source(reinterpret_cast<const CHAR*>(NativeCode.Data()), NativeCode.Size());
+                const String Source(reinterpret_cast<const CHAR_T*>(NativeCode.Data()), NativeCode.Size());
                 for (uint8 Location : Locations)
                 {
                     TEST_EXPECT(Source.Contains(String::Printf("[[attribute(%u)]]", static_cast<uint32>(Location))));
@@ -759,9 +759,9 @@ bool ShaderCompilerRayTracing_Test()
 
     struct FRayTracingCase
     {
-        const CHAR*  Filename;
-        const CHAR*  EntryPoint;
-        EShaderStage Stage;
+        const CHAR_T* Filename;
+        const CHAR_T* EntryPoint;
+        EShaderStage  Stage;
     };
 
     const FRayTracingCase Cases[] =
@@ -932,9 +932,9 @@ bool ShaderCompilerMSL_Test()
 
     struct FShaderFileCase
     {
-        const CHAR*  Filename;
-        const CHAR*  EntryPoint;
-        EShaderStage Stage;
+        const CHAR_T* Filename;
+        const CHAR_T* EntryPoint;
+        EShaderStage  Stage;
     };
 
     const FShaderFileCase Cases[] =

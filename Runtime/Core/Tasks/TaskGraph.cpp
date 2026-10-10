@@ -264,7 +264,7 @@ void FTaskGraph::Shutdown()
     FTaskWorker::FreeTLSSlot();
 }
 
-FTaskHandle FTaskGraph::LaunchInternal(const CHAR* DebugName, TFunction<void()>&& Body, ENamedThread::Type Lane, ETaskPriority::Type Priority, TArrayView<const FTaskHandle> Prerequisites)
+FTaskHandle FTaskGraph::LaunchInternal(const CHAR_T* DebugName, TFunction<void()>&& Body, ENamedThread::Type Lane, ETaskPriority::Type Priority, TArrayView<const FTaskHandle> Prerequisites)
 {
     FGraphTask* Task = new FGraphTask(DebugName, ::Move(Body), Lane, Priority);
 

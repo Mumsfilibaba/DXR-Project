@@ -85,7 +85,7 @@ static PFN_CSSourceInfoGetSymbol                        CSSourceInfoGetSymbol   
 static PFN_CSSourceInfoGetSymbolOwner                   CSSourceInfoGetSymbolOwner                   = nullptr;
 
 /** CoreSymbolication returns null for anything it has no information about */
-static void CopySymbolString(CHAR (&OutBuffer)[FStackTraceEntry::MaxNameLength], const CHAR* Value)
+static void CopySymbolString(CHAR_T (&OutBuffer)[FStackTraceEntry::MaxNameLength], const CHAR_T* Value)
 {
     if (Value)
     {

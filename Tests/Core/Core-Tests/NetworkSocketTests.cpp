@@ -20,7 +20,7 @@ static bool WaitUntilReadable(FNetworkSocket& Socket)
 
 static String ReceiveText(FNetworkSocket& Socket)
 {
-    CHAR Buffer[GReceiveBufferSize];
+    CHAR_T Buffer[GReceiveBufferSize];
     int32 BytesRead = 0;
     if (!WaitUntilReadable(Socket) || (Socket.Recv(Buffer, sizeof(Buffer), BytesRead) != ESocketResult::Success))
     {
@@ -32,7 +32,7 @@ static String ReceiveText(FNetworkSocket& Socket)
 
 static String ReceiveDatagram(FNetworkSocket& Socket)
 {
-    CHAR Buffer[GReceiveBufferSize];
+    CHAR_T Buffer[GReceiveBufferSize];
     int32 BytesRead = 0;
     FSocketAddress From;
     if (!WaitUntilReadable(Socket) || (Socket.RecvFrom(Buffer, sizeof(Buffer), BytesRead, From) != ESocketResult::Success))
@@ -43,14 +43,14 @@ static String ReceiveDatagram(FNetworkSocket& Socket)
     return String(Buffer, BytesRead);
 }
 
-static bool SendText(FNetworkSocket& Socket, const CHAR* Text)
+static bool SendText(FNetworkSocket& Socket, const CHAR_T* Text)
 {
     const int32 Length = CString::Strlen(Text);
     int32 BytesSent = 0;
     return (Socket.Send(Text, Length, BytesSent) == ESocketResult::Success) && (BytesSent == Length);
 }
 
-static bool SendDatagram(FNetworkSocket& Socket, const CHAR* Text, const FSocketAddress& Address)
+static bool SendDatagram(FNetworkSocket& Socket, const CHAR_T* Text, const FSocketAddress& Address)
 {
     const int32 Length = CString::Strlen(Text);
     int32 BytesSent = 0;
@@ -163,7 +163,7 @@ bool NetworkSocket_Test()
         TEST_CHECK(NonBlockingClient.SetNonBlocking(true));
         TEST_CHECK(NonBlockingClient.Connect(FSocketAddress::LoopbackIPv4(Port), GWaitMilliseconds));
 
-        CHAR Buffer[GReceiveBufferSize];
+        CHAR_T Buffer[GReceiveBufferSize];
         int32 BytesRead = 0;
         TEST_EXPECT_EQ(NonBlockingClient.Recv(Buffer, sizeof(Buffer), BytesRead), ESocketResult::WouldBlock);
     }
@@ -212,7 +212,7 @@ bool NetworkSocket_Test()
     TEST_SECTION("RecvFrom before any platform socket exists is an Error");
     {
         FNetworkSocket Unbound(ESocketType::UDP);
-        CHAR Buffer[GReceiveBufferSize];
+        CHAR_T Buffer[GReceiveBufferSize];
         int32 BytesRead = 0;
         FSocketAddress From;
         TEST_EXPECT_EQ(Unbound.RecvFrom(Buffer, sizeof(Buffer), BytesRead, From), ESocketResult::Error);

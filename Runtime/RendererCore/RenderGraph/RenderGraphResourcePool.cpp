@@ -34,7 +34,7 @@ void FRenderGraphResourcePool::Release()
     }
 }
 
-FRHITexture* FRenderGraphResourcePool::AcquireTexture(const FRenderGraphTextureDesc& InDesc, const CHAR* Name, ERHIResourceState& OutCurrentState)
+FRHITexture* FRenderGraphResourcePool::AcquireTexture(const FRenderGraphTextureDesc& InDesc, const CHAR_T* Name, ERHIResourceState& OutCurrentState)
 {
     FRenderGraphTextureDesc Desc  = InDesc;
     Desc.TextureDesc.TrackingMode = ERHIResourceStateTrackingMode::Manual;
@@ -72,7 +72,7 @@ FRHITexture* FRenderGraphResourcePool::AcquireTexture(const FRenderGraphTextureD
     return Pooled.Texture.Get();
 }
 
-FRHIBuffer* FRenderGraphResourcePool::AcquireBuffer(const FRenderGraphBufferDesc& InDesc, const CHAR* Name, ERHIResourceState& OutCurrentState)
+FRHIBuffer* FRenderGraphResourcePool::AcquireBuffer(const FRenderGraphBufferDesc& InDesc, const CHAR_T* Name, ERHIResourceState& OutCurrentState)
 {
     FRenderGraphBufferDesc Desc  = InDesc;
     Desc.BufferDesc.TrackingMode = ERHIResourceStateTrackingMode::Manual;

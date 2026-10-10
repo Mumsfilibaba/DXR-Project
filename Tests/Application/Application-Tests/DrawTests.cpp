@@ -18,7 +18,7 @@ static TSharedPtr<IFontFace> CreateTestFont()
     return MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 }
 
-static TSharedPtr<FTextBlock> CreateTextBlock(const CHAR* Text, const TSharedPtr<IFontFace>& Font)
+static TSharedPtr<FTextBlock> CreateTextBlock(const CHAR_T* Text, const TSharedPtr<IFontFace>& Font)
 {
     FTextBlock::FDesc Desc;
     Desc.Text = Text;

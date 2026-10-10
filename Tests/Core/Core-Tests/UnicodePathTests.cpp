@@ -15,7 +15,7 @@
 
 static constexpr int32 PROCESS_TIMEOUT_MILLISECONDS = 30 * 1000;
 
-static bool WriteText(const String& Filename, const CHAR* Text)
+static bool WriteText(const String& Filename, const CHAR_T* Text)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(Filename);
     return FileHandle && File::WriteTextFile(FileHandle.Get(), String(Text));
@@ -29,13 +29,13 @@ static String ReadText(const String& Filename)
         return String();
     }
 
-    TArray<CHAR> Text;
+    TArray<CHAR_T> Text;
     return File::ReadTextFile(FileHandle.Get(), Text) ? String(Text.Data()) : String();
 }
 
 static bool ContainsReplacementCharacter(const String& Text)
 {
-    const TStringConversion<WIDECHAR, CHAR> WideText = StringCast<WIDECHAR>(Text);
+    const TStringConversion<WIDECHAR, CHAR_T> WideText = StringCast<WIDECHAR>(Text);
     for (int32 Index = 0; Index < WideText.Length(); ++Index)
     {
         if (static_cast<uint32>(WideText.Get()[Index]) == FStringConversion::ReplacementCharacter)
@@ -92,7 +92,7 @@ bool UnicodePath_Test()
 
         {
             TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(BomFile);
-            TArray<CHAR> Text;
+            TArray<CHAR_T> Text;
             TEST_EXPECT(FileHandle && FileHandle->SeekFromStart(3) && File::ReadTextFile(FileHandle.Get(), Text));
             TEST_EXPECT(String(Text.Data()).Equals(TEXT("aå")));
         }

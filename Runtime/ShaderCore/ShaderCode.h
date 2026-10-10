@@ -90,13 +90,13 @@ public:
     }
 
     /** Null-terminated, empty when the RHI does not need an entry point */
-    NODISCARD const CHAR* GetEntryPoint() const
+    NODISCARD const CHAR_T* GetEntryPoint() const
     {
         return EntryPoint;
     }
 
     /** Null-terminated, empty when the container was compiled without debug info */
-    NODISCARD const CHAR* GetBindingName(int32 BindingIndex) const
+    NODISCARD const CHAR_T* GetBindingName(int32 BindingIndex) const
     {
         return BindingNames.IsEmpty() ? "" : BindingNames[BindingIndex];
     }
@@ -116,10 +116,10 @@ private:
     TArrayView<const FSpirvBindingOffsets>   SpirvOffsets;
     FMSLShaderInfo                           MSLInfo;
     TArrayView<const FMSLBindingSlot>        MSLSlots;
-    const CHAR*                              EntryPoint = "";
+    const CHAR_T*                            EntryPoint = "";
 
     /** Only allocated for DebugInfo containers */
-    TArray<const CHAR*>                      BindingNames;
+    TArray<const CHAR_T*>                      BindingNames;
 
     TArrayView<const uint8>                  NativeCode;
 };

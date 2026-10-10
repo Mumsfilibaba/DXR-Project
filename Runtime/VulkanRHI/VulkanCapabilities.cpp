@@ -214,7 +214,7 @@ static EShaderModel DeriveEquivalentShaderModel(const FVulkanCoreFeatures& Featu
 
 VULKANRHI_API void DumpVulkanRayTracingCapabilities()
 {
-    const auto YesNo = [](bool bValue) -> const CHAR*
+    const auto YesNo = [](bool bValue) -> const CHAR_T*
     {
         return bValue ? "Yes" : "No";
     };
@@ -234,7 +234,7 @@ VULKANRHI_API void DumpVulkanRayTracingCapabilities()
 
 VULKANRHI_API void DumpVulkanCapabilities()
 {
-    const auto YesNo = [](bool bValue) -> const CHAR*
+    const auto YesNo = [](bool bValue) -> const CHAR_T*
     {
         return bValue ? "Yes" : "No";
     };

@@ -40,7 +40,7 @@ public:
      * @brief Launches a task on the given lane with optional prerequisites.
      * @return Returns a handle to the task's completion event.
      */
-    FTaskHandle LaunchInternal(const CHAR* DebugName, TFunction<void()>&& Body, ENamedThread::Type Lane, ETaskPriority::Type Priority, TArrayView<const FTaskHandle> Prerequisites);
+    FTaskHandle LaunchInternal(const CHAR_T* DebugName, TFunction<void()>&& Body, ENamedThread::Type Lane, ETaskPriority::Type Priority, TArrayView<const FTaskHandle> Prerequisites);
 
     /** @brief Called for every subsequent released by a completing prerequisite. */
     void OnPrerequisiteComplete(FGraphTask* Task);

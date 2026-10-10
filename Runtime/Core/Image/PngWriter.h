@@ -34,7 +34,7 @@ public:
 
 private:
     static void AppendBigEndian32(TArray<uint8>& Out, uint32 Value);
-    static void AppendChunk(TArray<uint8>& Out, const CHAR* Type, const TArray<uint8>& Payload);
+    static void AppendChunk(TArray<uint8>& Out, const CHAR_T* Type, const TArray<uint8>& Payload);
 
     NODISCARD static uint32 ComputeAdler32(const TArray<uint8>& Data);
 

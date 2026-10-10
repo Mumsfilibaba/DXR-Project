@@ -19,7 +19,7 @@ enum class EUIGeometryStreamKind : uint8
 class FUIGeometryStream
 {
 public:
-    FUIGeometryStream(const CHAR* InDebugName, EUIGeometryStreamKind InKind)
+    FUIGeometryStream(const CHAR_T* InDebugName, EUIGeometryStreamKind InKind)
         : Buffer(nullptr)
         , DebugName(InDebugName)
         , Stride(0)
@@ -72,7 +72,7 @@ public:
 
 private:
     FRHIBufferRef         Buffer;
-    const CHAR*           DebugName;
+    const CHAR_T*         DebugName;
     int32                 Stride;
     int32                 Capacity;
     EUIGeometryStreamKind Kind;

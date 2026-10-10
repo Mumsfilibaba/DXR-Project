@@ -41,7 +41,7 @@ bool FWindowsPlatformSystemClipboard::GetText(String& OutText)
         return false;
     }
 
-    OutText = StringCast<CHAR>(WideText).ToString();
+    OutText = StringCast<CHAR_T>(WideText).ToString();
 
     ::GlobalUnlock(DataHandle);
     ::CloseClipboard();
@@ -57,7 +57,7 @@ bool FWindowsPlatformSystemClipboard::SetText(const String& InText)
 
     ::EmptyClipboard();
 
-    const TStringConversion<WIDECHAR, CHAR> WideText = StringCast<WIDECHAR>(InText);
+    const TStringConversion<WIDECHAR, CHAR_T> WideText = StringCast<WIDECHAR>(InText);
 
     const SIZE_T ByteCount = (WideText.Length() + 1) * sizeof(WIDECHAR);
 

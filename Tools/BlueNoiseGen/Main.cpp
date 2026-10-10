@@ -49,7 +49,7 @@ static void PrintUsage()
     LOG_INFO("  BlueNoiseGen --type=stbn_vec2 --size=128 --depth=64 --atlas --out=Assets/Textures/Noise/STBN_Vec2_128x128x64_RG.dds");
 }
 
-static bool GetIntOption(const CHAR* Name, int64& OutValue)
+static bool GetIntOption(const CHAR_T* Name, int64& OutValue)
 {
     StringView Value;
     if (!CommandLine::FindOption(Name, Value) || (Value.Size() == 0))
@@ -62,7 +62,7 @@ static bool GetIntOption(const CHAR* Name, int64& OutValue)
     return true;
 }
 
-static bool GetStringOption(const CHAR* Name, String& OutValue)
+static bool GetStringOption(const CHAR_T* Name, String& OutValue)
 {
     StringView Value;
     if (!CommandLine::FindOption(Name, Value) || (Value.Size() == 0))
@@ -425,7 +425,7 @@ static int32 BlueNoiseGenMain()
     FBlueNoiseCallbacks Callbacks;
 
     float LastReported = -1.0f;
-    Callbacks.Progress = [&LastReported](float Fraction, const CHAR* Phase)
+    Callbacks.Progress = [&LastReported](float Fraction, const CHAR_T* Phase)
     {
         if ((Fraction - LastReported) < 0.01f)
         {

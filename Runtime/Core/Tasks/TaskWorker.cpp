@@ -35,7 +35,7 @@ FTaskWorker::~FTaskWorker()
     }
 }
 
-bool FTaskWorker::Initialize(const CHAR* InThreadName)
+bool FTaskWorker::Initialize(const CHAR_T* InThreadName)
 {
     WakeEvent = FPlatformEvent::Create(false);
     if (!WakeEvent)

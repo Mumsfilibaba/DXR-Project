@@ -20,8 +20,8 @@ constexpr int32 NumPrimitiveTypes = static_cast<int32>(EEditorPrimitiveType::Cou
 
 struct FPrimitiveRecipe
 {
-    const CHAR* Name;
-    Vector3     Rotation;
+    const CHAR_T* Name;
+    Vector3       Rotation;
 };
 
 static const FPrimitiveRecipe GPrimitiveRecipes[NumPrimitiveTypes] =
@@ -301,7 +301,7 @@ FActor* EditorActorFactory::DrawPlaceActorMenu(FWorld* World, const Vector3& Loc
     return SpawnedActor;
 }
 
-String EditorActorFactory::CreateUniqueActorName(FWorld* World, const CHAR* BaseName)
+String EditorActorFactory::CreateUniqueActorName(FWorld* World, const CHAR_T* BaseName)
 {
     String Name = BaseName;
     if (!World)
@@ -323,7 +323,7 @@ String EditorActorFactory::CreateUniqueActorName(FWorld* World, const CHAR* Base
     };
 
     int32 Suffix = 0;
-    TStaticArray<CHAR, 128> Buffer{};
+    TStaticArray<CHAR_T, 128> Buffer{};
 
     while (IsNameTaken(Name))
     {
@@ -343,13 +343,13 @@ void EditorActorFactory::ReleaseCachedMeshes()
     }
 }
 
-const CHAR* EditorActorFactory::GetPrimitiveName(EEditorPrimitiveType Type)
+const CHAR_T* EditorActorFactory::GetPrimitiveName(EEditorPrimitiveType Type)
 {
     const int32 Index = static_cast<int32>(Type);
     return (Index >= 0 && Index < NumPrimitiveTypes) ? GPrimitiveRecipes[Index].Name : "Actor";
 }
 
-const CHAR* EditorActorFactory::GetLightName(EEditorLightType Type)
+const CHAR_T* EditorActorFactory::GetLightName(EEditorLightType Type)
 {
     switch (Type)
     {

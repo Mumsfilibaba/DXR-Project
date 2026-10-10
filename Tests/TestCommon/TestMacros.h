@@ -33,7 +33,7 @@
         return false; \
     } while (false)
 
-#define TEST_BEGIN()       bool _bTestPassed = true; const CHAR* _TestSection = ""
+#define TEST_BEGIN()       bool _bTestPassed = true; const CHAR_T* _TestSection = ""
 #define TEST_SECTION(Name) _TestSection = (Name)
 #define TEST_END()         return _bTestPassed
 

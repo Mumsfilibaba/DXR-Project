@@ -462,10 +462,10 @@ public:
     }
 
     /**
-     * @brief Returns the position of the first occurrence of CHAR
+     * @brief Returns the position of the first occurrence of CHAR_T
      * @param Char Character to search for
      * @param Position Position to start search at
-     * @return Returns the position of the first occurrence of the CHAR
+     * @return Returns the position of the first occurrence of the CHAR_T
      */
     NODISCARD FORCEINLINE SizeType FindChar(CharType Char, SizeType Position = InvalidIndex) const
     {
@@ -493,10 +493,10 @@ public:
     }
 
     /**
-     * @brief Returns the position of the first CHAR that passes the predicate
+     * @brief Returns the position of the first CHAR_T that passes the predicate
      * @param Predicate Predicate that specifies valid chars
      * @param Position Position to start search at
-     * @return Returns the position of the first occurrence of the CHAR
+     * @return Returns the position of the first occurrence of the CHAR_T
      */
     template<typename PredicateType>
     NODISCARD FORCEINLINE SizeType FindCharWithPredicate(PredicateType&& Predicate, SizeType Position = InvalidIndex) const
@@ -635,10 +635,10 @@ public:
     }
 
     /**
-     * @brief Returns the position of the first occurrence of CHAR. Searches the string in reverse.
+     * @brief Returns the position of the first occurrence of CHAR_T. Searches the string in reverse.
      * @param Char Character to search for
      * @param Position Position to start search at
-     * @return Returns the position of the first occurrence of the CHAR
+     * @return Returns the position of the first occurrence of the CHAR_T
      */
     NODISCARD FORCEINLINE SizeType FindLastChar(CharType Char, SizeType Position = InvalidIndex) const
     {
@@ -667,10 +667,10 @@ public:
     }
 
     /**
-     * @brief Returns the position of the first CHAR that passes the predicate
+     * @brief Returns the position of the first CHAR_T that passes the predicate
      * @param Predicate Predicate that specifies valid chars
      * @param Position Position to start search at
-     * @return Returns the position of the first occurrence of the CHAR
+     * @return Returns the position of the first occurrence of the CHAR_T
      */
     template<typename PredicateType>
     NODISCARD FORCEINLINE SizeType FindLastCharWithPredicate(PredicateType&& Predicate, SizeType Position = InvalidIndex) const
@@ -1040,7 +1040,7 @@ private:
     const CharType* ViewEnd{ nullptr };
 };
 
-using StringView     = TStringView<CHAR>;
+using StringView     = TStringView<CHAR_T>;
 using WStringView    = TStringView<WIDECHAR>;
 using AnsiStringView = TStringView<ANSICHAR>;
 using U8StringView   = TStringView<UTF8CHAR>;

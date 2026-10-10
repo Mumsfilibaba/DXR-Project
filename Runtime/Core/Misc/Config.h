@@ -42,19 +42,19 @@ public:
     void SetFile(EConfigFile::Type ConfigFile, FIniFile* File);
 
     /** @return Looks up a value in the highest layer that has it, and returns nullptr if no layer does */
-    FIniValue* FindValue(const CHAR* SectionName, const CHAR* Name);
+    FIniValue* FindValue(const CHAR_T* SectionName, const CHAR_T* Name);
 
     /** @brief Retrieve a string from the highest layer that has it */
-    bool GetString(const CHAR* SectionName, const CHAR* Name, String& OutValue);
+    bool GetString(const CHAR_T* SectionName, const CHAR_T* Name, String& OutValue);
 
     /** @brief Retrieve a int from the highest layer that has it */
-    bool GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutValue);
+    bool GetInt(const CHAR_T* SectionName, const CHAR_T* Name, int32& OutValue);
 
     /** @brief Retrieve a float from the highest layer that has it */
-    bool GetFloat(const CHAR* SectionName, const CHAR* Name, float& OutValue);
+    bool GetFloat(const CHAR_T* SectionName, const CHAR_T* Name, float& OutValue);
 
     /** @brief Retrieve a boolean from the highest layer that has it */
-    bool GetBool(const CHAR* SectionName, const CHAR* Name, bool& bOutValue);
+    bool GetBool(const CHAR_T* SectionName, const CHAR_T* Name, bool& bOutValue);
 
     /** @brief Applies every layer to the console variables, lowest layer first so that the highest one wins */
     void LoadConsoleVariables();

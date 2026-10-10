@@ -12,15 +12,18 @@
 
 #include "TestCommon/TestMacros.h"
 
-static_assert(TIsSame<TDecay<decltype(TEXT("Text"))>::Type, const CHAR*>::Value);
-static_assert(TIsSame<decltype(TEXT('A')), CHAR>::Value);
-static_assert(TIsSame<TDecay<decltype(TEXT(__FILE__))>::Type, const CHAR*>::Value);
-static_assert(TIsSame<CHAR, CHAR_T>::Value);
+static_assert(TIsSame<TDecay<decltype(TEXT("Text"))>::Type, const CHAR_T*>::Value);
+static_assert(TIsSame<decltype(TEXT('A')), CHAR_T>::Value);
+static_assert(TIsSame<TDecay<decltype(TEXT(__FILE__))>::Type, const CHAR_T*>::Value);
+
+// CHAR stays a plain char in both builds, the same type the Windows SDK's CHAR names, so the two never clash
+static_assert(TIsSame<CHAR, ANSICHAR>::Value);
+static_assert(TIsSame<CHAR, char>::Value);
 
 #if WIDE_CHAR_BUILD
-static_assert(TIsSame<CHAR, wchar_t>::Value);
+static_assert(TIsSame<CHAR_T, wchar_t>::Value);
 #else
-static_assert(TIsSame<CHAR, char>::Value);
+static_assert(TIsSame<CHAR_T, char>::Value);
 #endif
 
 bool CharType_Test()
@@ -30,13 +33,13 @@ bool CharType_Test()
 #if WIDE_CHAR_BUILD
     TEST_SECTION("A wide build stores code units of wchar_t");
     {
-        const CHAR* Text = TEXT("ÁÅäö");
+        const CHAR_T* Text = TEXT("ÁÅäö");
         TEST_EXPECT(Text[0] == 0xC1 && Text[1] == 0xC5 && Text[2] == 0xE4 && Text[3] == 0xF6 && Text[4] == 0);
     }
 #else
     TEST_SECTION("A narrow build stores UTF-8, whatever the system code page is");
     {
-        const CHAR*    Text     = TEXT("ÁÅäö 日本語");
+        const CHAR_T*  Text     = TEXT("ÁÅäö 日本語");
         const char8_t* Expected = u8"ÁÅäö 日本語";
 
         int32 Index = 0;

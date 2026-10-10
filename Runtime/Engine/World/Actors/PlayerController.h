@@ -15,7 +15,7 @@ public:
     virtual void SetupInputComponent();
     virtual void Tick(float DeltaTime) override;
 
-    virtual const CHAR* GetTypeLabel() const override
+    virtual const CHAR_T* GetTypeLabel() const override
     {
         return "PlayerController";
     }

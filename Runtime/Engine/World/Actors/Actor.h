@@ -324,7 +324,7 @@ public:
      *
      * @return Returns the type-label of the actor
      */
-    virtual const CHAR* GetTypeLabel() const
+    virtual const CHAR_T* GetTypeLabel() const
     {
         return "Actor";
     }

@@ -245,23 +245,23 @@ bool TString_Test()
 
         TEST_EXPECT_EQ(Str.Size(), 12);
         TEST_EXPECT_EQ(Str.Capacity(), 13);
-        TEST_EXPECT(TCString<CHAR>::Strcmp(Str.Data(), "") == 0);
+        TEST_EXPECT(TCString<CHAR_T>::Strcmp(Str.Data(), "") == 0);
     }
 
     TEST_SECTION("FindCharWithPredicate / FindLastCharWithPredicate");
     {
         String Str = "0123MeSearch89Me89";
-        TEST_EXPECT_EQ(Str.FindCharWithPredicate([](CHAR Ch)
+        TEST_EXPECT_EQ(Str.FindCharWithPredicate([](CHAR_T Ch)
         {
             return (Ch == 'e') || (Ch == 'c');
         }), 5);
         
-        TEST_EXPECT_EQ(Str.FindCharWithPredicate([](CHAR Ch)
+        TEST_EXPECT_EQ(Str.FindCharWithPredicate([](CHAR_T Ch)
         {
             return (Ch == 'M') || (Ch == 'c');
         }), 4);
         
-        TEST_EXPECT_EQ(Str.FindLastCharWithPredicate([](CHAR Ch)
+        TEST_EXPECT_EQ(Str.FindLastCharWithPredicate([](CHAR_T Ch)
         {
             return (Ch == 'h') || (Ch == 'M') || (Ch == 'c');
         }), 14);
@@ -273,10 +273,10 @@ bool TString_Test()
     TEST_SECTION("CopyToBuffer");
     {
         String Str = "compare";
-        CHAR Buffer[6];
+        CHAR_T Buffer[6];
         Buffer[5] = 0;
         Str.CopyToBuffer(Buffer, 6, 2);
-        TEST_EXPECT(TCString<CHAR>::Strcmp(Buffer, "mpare") == 0);
+        TEST_EXPECT(TCString<CHAR_T>::Strcmp(Buffer, "mpare") == 0);
     }
 
     TEST_SECTION("Insert(string) / Replace(string) / Replace(char)");
@@ -317,7 +317,7 @@ bool TString_Test()
         WString Wide   = StringCast<WIDECHAR>(Narrow).ToString();
         TEST_EXPECT(TCString<WIDECHAR>::Strcmp(Wide.Data(), L"Round Trip 123") == 0);
 
-        String Back = StringCast<CHAR>(Wide).ToString();
+        String Back = StringCast<CHAR_T>(Wide).ToString();
         TEST_EXPECT(Back.Equals("Round Trip 123"));
     }
 
@@ -334,7 +334,7 @@ bool TString_Test()
             WString Wide;
             for (int32 Index = 0; Index < Length; ++Index)
             {
-                Narrow.Append(static_cast<CHAR>('a' + Index % 26));
+                Narrow.Append(static_cast<CHAR_T>('a' + Index % 26));
                 Wide.Append(static_cast<WIDECHAR>(L'a' + Index % 26));
             }
 
@@ -432,7 +432,7 @@ bool TString_Test()
             // Grow the buffer with a random mix of append/insert across the boundary sizes.
             for (int32 Step = 0; Step < TargetSize; ++Step)
             {
-                const CHAR Ch = static_cast<CHAR>('a' + static_cast<int32>(Random.RandInt(0, 25)));
+                const CHAR_T Ch = static_cast<CHAR_T>('a' + static_cast<int32>(Random.RandInt(0, 25)));
                 if (!Str.IsEmpty() && Random.RandBool())
                 {
                     const int32 At = static_cast<int32>(Random.RandInt(0, Str.Length() - 1));
@@ -446,7 +446,7 @@ bool TString_Test()
                 }
             }
 
-            bool bMatches = (Str.Length() == static_cast<int32>(Oracle.size())) && (TCString<CHAR>::Strcmp(Str.Data(), Oracle.c_str()) == 0);
+            bool bMatches = (Str.Length() == static_cast<int32>(Oracle.size())) && (TCString<CHAR_T>::Strcmp(Str.Data(), Oracle.c_str()) == 0);
             if (!bMatches)
             {
                 LOG_ERROR("[STRESS FAIL] String grow seed=%u size=%d", Seed, TargetSize);

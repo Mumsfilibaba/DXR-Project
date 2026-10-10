@@ -72,7 +72,7 @@ static void RefreshReadout(const FPlaygroundFonts& Fonts, const TSharedPtr<FText
 static TSharedPtr<FMenuBar> MakeCaptionMenuBar(const FPlaygroundFonts& Fonts)
 {
     TSharedPtr<FMenu> ViewMenu = FMenu::Create();
-    for (const CHAR* Label : { "Wireframe", "Normals", "Overdraw" })
+    for (const CHAR_T* Label : { "Wireframe", "Normals", "Overdraw" })
     {
         FMenuItem::FDesc ItemDesc;
         ItemDesc.SetLabel(Label).SetFont(Fonts.Body);
@@ -82,7 +82,7 @@ static TSharedPtr<FMenuBar> MakeCaptionMenuBar(const FPlaygroundFonts& Fonts)
     }
 
     TSharedPtr<FMenu> PanelMenu = FMenu::Create();
-    for (const CHAR* Label : { "Details", "Materials", "Statistics" })
+    for (const CHAR_T* Label : { "Details", "Materials", "Statistics" })
     {
         FMenuItem::FDesc ItemDesc;
         ItemDesc.SetLabel(Label).SetFont(Fonts.Body);

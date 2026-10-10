@@ -36,7 +36,7 @@ static void DrawCanvasLegend()
     DrawList->AddRectFilled(BoxMin, BoxMax, IM_COL32(20, 20, 22, 225), 5.0f);
     DrawList->AddRect(BoxMin, BoxMax, IM_COL32(90, 90, 95, 255), 5.0f);
 
-    const CHAR* Labels[] =
+    const CHAR_T* Labels[] =
     {
         "Resource read (input)",
         "Resource write (output)",

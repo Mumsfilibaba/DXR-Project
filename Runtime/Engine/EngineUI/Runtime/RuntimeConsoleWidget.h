@@ -58,7 +58,7 @@ private:
     FCriticalSection                       MessagesCS;
     int32                                  SelectedCandidateIndex = InvalidIndex;
     int32                                  HistoryIndex           = InvalidIndex;
-    TStaticArray<CHAR, 256>                TextBuffer;
+    TStaticArray<CHAR_T, 256>              TextBuffer;
     bool                                   bUpdateCursorPosition : 1;
     bool                                   bIsActive : 1;
     bool                                   bCandidateSelectionChanged : 1;

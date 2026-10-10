@@ -91,14 +91,14 @@ struct ENGINE_API EditorActorFactory
      * @param BaseName Name to use as-is when it is free, and as the stem of "BaseName (N)" when it is not
      * @return Returns the unique name
      */
-    static String CreateUniqueActorName(FWorld* World, const CHAR* BaseName);
+    static String CreateUniqueActorName(FWorld* World, const CHAR_T* BaseName);
 
     /** @brief Drop the cached primitive meshes, which must happen before the RHI is torn down. */
     static void ReleaseCachedMeshes();
 
     /** @brief Display name of a primitive, also used as the base name of the spawned actor. */
-    static const CHAR* GetPrimitiveName(EEditorPrimitiveType Type);
+    static const CHAR_T* GetPrimitiveName(EEditorPrimitiveType Type);
 
     /** @brief Display name of a light type, also used as the base name of the spawned actor. */
-    static const CHAR* GetLightName(EEditorLightType Type);
+    static const CHAR_T* GetLightName(EEditorLightType Type);
 };

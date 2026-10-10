@@ -13,11 +13,11 @@ enum class EStatType : uint8
 
 struct FStatData
 {
-    const CHAR* StatName;
-    const CHAR* GroupName;
-    EStatType   Type;
-    AtomicInt64 Value;
-    AtomicInt64 FrameValue;
+    const CHAR_T* StatName;
+    const CHAR_T* GroupName;
+    EStatType     Type;
+    AtomicInt64   Value;
+    AtomicInt64   FrameValue;
 };
 
 class CORE_API FStatRegistry
@@ -29,8 +29,8 @@ public:
     void UnregisterStat(FStatData* Stat);
 
     const TArray<FStatData*>& GetAllStats() const;
-    void GetStatsByGroup(const CHAR* GroupName, TArray<FStatData*>& OutStats) const;
-    void GetGroups(TArray<const CHAR*>& OutGroups) const;
+    void GetStatsByGroup(const CHAR_T* GroupName, TArray<FStatData*>& OutStats) const;
+    void GetGroups(TArray<const CHAR_T*>& OutGroups) const;
 
     void UpdateFrameStats();
 

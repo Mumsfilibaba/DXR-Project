@@ -9,10 +9,10 @@
 #include "TestCommon/TestMacros.h"
 
 // Every layer is built in memory, so none of this depends on the files at the repository root
-static FIniFile ParseIni(const CHAR* InText)
+static FIniFile ParseIni(const CHAR_T* InText)
 {
     // The parser walks the buffer in place, so the null-terminator has to be copied along
-    TArray<CHAR> Text(InText, CString::Strlen(InText) + 1);
+    TArray<CHAR_T> Text(InText, CString::Strlen(InText) + 1);
 
     FIniFile IniFile;
     IniFile.ParseFromText(Text);

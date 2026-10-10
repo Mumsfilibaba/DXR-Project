@@ -31,15 +31,15 @@ struct FMetalBinaryArchiveHeader
     int32  OSMajor;
     int32  OSMinor;
     int32  OSPatch;
-    CHAR   OSBuild[32];
-    CHAR   DeviceName[128];
+    CHAR_T OSBuild[32];
+    CHAR_T DeviceName[128];
 };
 
 class FMetalBinaryArchive
 {
 public:
     static EMetalBinaryArchiveMode ParseMode(const String& ModeName);
-    static const CHAR* GetModeName(EMetalBinaryArchiveMode Mode);
+    static const CHAR_T* GetModeName(EMetalBinaryArchiveMode Mode);
 
     explicit FMetalBinaryArchive(FMetalDevice* InDevice);
     ~FMetalBinaryArchive();

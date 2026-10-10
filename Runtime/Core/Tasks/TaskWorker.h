@@ -33,7 +33,7 @@ public:
     virtual void Stop() override final;
 
     /** @brief Creates the wake event and OS thread for this worker. */
-    bool Initialize(const CHAR* InThreadName);
+    bool Initialize(const CHAR_T* InThreadName);
 
     /** @brief Signals the worker's wake event so it leaves its idle wait. */
     void Wake();

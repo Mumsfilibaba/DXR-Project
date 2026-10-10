@@ -177,7 +177,7 @@ bool FWindowsPlatformSocket::ParseAddress(const String& Text, uint16 Port, FSock
 
 String FWindowsPlatformSocket::AddressToString(const FSocketAddress& Address)
 {
-    CHAR Buffer[INET6_ADDRSTRLEN] = {};
+    CHAR_T Buffer[INET6_ADDRSTRLEN] = {};
     if (Address.IsIPv4())
     {
         in_addr IPv4;

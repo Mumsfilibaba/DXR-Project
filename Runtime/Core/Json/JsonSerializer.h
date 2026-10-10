@@ -34,8 +34,8 @@ struct TJsonEnumNames
                                                                               \
         struct FEntry                                                         \
         {                                                                     \
-            EnumType    Value;                                                \
-            const CHAR* Name;                                                 \
+            EnumType      Value;                                              \
+            const CHAR_T* Name;                                               \
         };                                                                    \
                                                                               \
         static const FEntry* GetEntries(int32& OutNumEntries)                 \
@@ -288,14 +288,14 @@ struct TJsonSerializer<StringView>
 };
 
 template<>
-struct TJsonSerializer<const CHAR*>
+struct TJsonSerializer<const CHAR_T*>
 {
-    static void Save(FJsonValue& OutValue, const CHAR* const& InValue)
+    static void Save(FJsonValue& OutValue, const CHAR_T* const& InValue)
     {
         OutValue = FJsonValue(InValue);
     }
 
-    static bool Load(const FJsonValue&, const CHAR*&, FJsonArchive& Archive)
+    static bool Load(const FJsonValue&, const CHAR_T*&, FJsonArchive& Archive)
     {
         Archive.AddError("a raw string pointer can be written but not read back into");
         return false;

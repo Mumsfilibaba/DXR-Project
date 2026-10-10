@@ -12,7 +12,7 @@ public:
     ~FEngineLoop();
 
     /* Initialize engine systems needed by other systems */
-    int32 PreInit(const CHAR** Args, int32 NumArgs);
+    int32 PreInit(const CHAR_T** Args, int32 NumArgs);
 
     /* Initialize engine systems */
     int32 Init();

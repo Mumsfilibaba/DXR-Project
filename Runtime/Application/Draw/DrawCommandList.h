@@ -462,7 +462,7 @@ public:
      * @param Font    The face the text was measured with, which may be null.
      * @param Tint    The text color.
      */
-    FORCEINLINE void AddText(int32 LayerId, const FRectangle& Bounds, const CHAR* InText, const IFontFace* Font, const FFloatColor& Tint)
+    FORCEINLINE void AddText(int32 LayerId, const FRectangle& Bounds, const CHAR_T* InText, const IFontFace* Font, const FFloatColor& Tint)
     {
         AddText(LayerId, Bounds, StringView(InText), Font, Tint);
     }
@@ -578,7 +578,7 @@ private:
 
     TArray<FDrawCommand>  Commands;
     TArray<Vector2>       Points;
-    TArray<CHAR>          TextPool;
+    TArray<CHAR_T>        TextPool;
     TArray<FUIBrush>      Brushes;
     TArray<FRectangle>    ClipRects;
     TArray<Vector2>       ScratchPoints;

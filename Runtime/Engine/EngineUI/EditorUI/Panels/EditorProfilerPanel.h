@@ -67,7 +67,7 @@ private:
 
     struct FCallTreeNode
     {
-        const CHAR*           Name = nullptr;
+        const CHAR_T*         Name = nullptr;
         int32                 ParentNode = -1;
         int32                 Calls = 0;
         uint64                InclusiveNanoseconds = 0;
@@ -118,7 +118,7 @@ private:
     NODISCARD TSharedPtr<FTreeItem> BuildCallTree(
         int32                        LaneIndex,
         const String&                LaneLabel,
-        const TArray<const CHAR*>&   Names,
+        const TArray<const CHAR_T*>& Names,
         const TArray<int32>&         Parents,
         const TArray<uint64>&        Inclusive,
         const TArray<uint64>&        Exclusive,

@@ -601,7 +601,7 @@ struct FUIStyleMetrics
      * Held as a word rather than as a pixel count because the room it takes is a property of the face
      * it is drawn with: a count picked against one UI font is wrong the moment that font changes size.
      */
-    const CHAR* ButtonMinLabel = "Reset";
+    const CHAR_T* ButtonMinLabel = "Reset";
 
     /**
      * @brief Works out how narrow a labelled button may be, which is the room ButtonMinLabel takes at

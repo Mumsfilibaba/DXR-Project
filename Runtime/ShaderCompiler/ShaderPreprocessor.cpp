@@ -5,39 +5,39 @@
 static constexpr int32 MaxIncludeDepth = 64;
 
 // Longest first, so the lexer can take the first match
-static const CHAR* const GMultiCharPunctuators[] =
+static const CHAR_T* const GMultiCharPunctuators[] =
 {
     "<<=", ">>=", "...",
     "##", "<<", ">>", "<=", ">=", "==", "!=", "&&", "||", "++", "--",
     "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "->", "::",
 };
 
-static bool IsIdentifierStart(CHAR Char)
+static bool IsIdentifierStart(CHAR_T Char)
 {
     return (Char >= 'a' && Char <= 'z') || (Char >= 'A' && Char <= 'Z') || Char == '_';
 }
 
-static bool IsDigit(CHAR Char)
+static bool IsDigit(CHAR_T Char)
 {
     return Char >= '0' && Char <= '9';
 }
 
-static bool IsIdentifierChar(CHAR Char)
+static bool IsIdentifierChar(CHAR_T Char)
 {
     return IsIdentifierStart(Char) || IsDigit(Char);
 }
 
-static bool IsHorizontalSpace(CHAR Char)
+static bool IsHorizontalSpace(CHAR_T Char)
 {
     return Char == ' ' || Char == '\t' || Char == '\v' || Char == '\f';
 }
 
-static bool IsPunctuator(CHAR Char)
+static bool IsPunctuator(CHAR_T Char)
 {
     return (Char >= '!' && Char <= '/') || (Char >= ':' && Char <= '@') || (Char >= '[' && Char <= '^') || (Char >= '{' && Char <= '~');
 }
 
-static FShaderToken MakeToken(const FShaderToken& Location, const CHAR* Text, EShaderTokenType Type, bool bLeadingSpace)
+static FShaderToken MakeToken(const FShaderToken& Location, const CHAR_T* Text, EShaderTokenType Type, bool bLeadingSpace)
 {
     FShaderToken Token;
     Token.Text          = Text;
@@ -79,13 +79,13 @@ static bool NeedsSeparator(const FShaderToken& Previous, const FShaderToken& Cur
         return false;
     }
 
-    const CHAR Pair[3] = { Previous.Text[Previous.Text.Length() - 1], Current.Text[0], '\0' };
+    const CHAR_T Pair[3] = { Previous.Text[Previous.Text.Length() - 1], Current.Text[0], '\0' };
     if (CString::Strcmp(Pair, "//") == 0 || CString::Strcmp(Pair, "/*") == 0 || CString::Strcmp(Pair, "..") == 0)
     {
         return true;
     }
 
-    for (const CHAR* Punctuator : GMultiCharPunctuators)
+    for (const CHAR_T* Punctuator : GMultiCharPunctuators)
     {
         if (Punctuator[0] == Pair[0] && Punctuator[1] == Pair[1])
         {
@@ -127,7 +127,7 @@ public:
     }
 
 private:
-    bool Accept(const CHAR* Text)
+    bool Accept(const CHAR_T* Text)
     {
         if (Position < Tokens.Size() && Tokens[Position].Is(Text))
         {
@@ -169,7 +169,7 @@ private:
 
     static int32 GetPrecedence(const String& Operator)
     {
-        static const CHAR* const Levels[][4] =
+        static const CHAR_T* const Levels[][4] =
         {
             { "||" },
             { "&&" },
@@ -185,7 +185,7 @@ private:
 
         for (int32 Level = 0; Level < static_cast<int32>(ARRAY_COUNT(Levels)); ++Level)
         {
-            for (const CHAR* Candidate : Levels[Level])
+            for (const CHAR_T* Candidate : Levels[Level])
             {
                 if (Candidate && Operator.Equals(Candidate))
                 {
@@ -395,7 +395,7 @@ private:
         uint64 Value = 0;
         for (; Index < End; ++Index)
         {
-            const CHAR Char = Text[Index];
+            const CHAR_T Char = Text[Index];
 
             uint64 Digit = 16;
             if (IsDigit(Char))
@@ -518,14 +518,14 @@ String FShaderPreprocessorOutput::GenerateSource(const String& BaseDirectory) co
 
 void FShaderPreprocessor::Tokenize(StringView Source, int32 FileIndex, TArray<FShaderToken>& OutTokens)
 {
-    // Remove the line continuations up front, remembering where they were so the line numbers stay right
-    TArray<CHAR>  Text;
-    TArray<int32> Continuations;
+    // Remove the  line continuations up front, remembering where they were so the line numbers stay right
+    TArray<CHAR_T> Text;
+    TArray<int32>  Continuations;
     Text.Reserve(Source.Size());
 
     for (int32 Index = 0; Index < Source.Size(); ++Index)
     {
-        const CHAR Char = Source.Data()[Index];
+        const CHAR_T Char = Source.Data()[Index];
         if (Char == '\0')
         {
             break;
@@ -553,8 +553,8 @@ void FShaderPreprocessor::Tokenize(StringView Source, int32 FileIndex, TArray<FS
         Text.Add(Char);
     }
 
-    const int32 Length = Text.Size();
-    const CHAR* Chars  = Text.Data();
+    const int32   Length = Text.Size();
+    const CHAR_T* Chars  = Text.Data();
 
     int32 Line              = 1;
     int32 ContinuationIndex = 0;
@@ -570,7 +570,7 @@ void FShaderPreprocessor::Tokenize(StringView Source, int32 FileIndex, TArray<FS
             ++Line;
         }
 
-        const CHAR Char = Chars[Index];
+        const CHAR_T Char = Chars[Index];
         if (Char == '\n')
         {
             ++Line;
@@ -635,8 +635,8 @@ void FShaderPreprocessor::Tokenize(StringView Source, int32 FileIndex, TArray<FS
 
             while (Index < Length)
             {
-                const CHAR Current = Chars[Index];
-                const CHAR Last    = Chars[Index - 1];
+                const CHAR_T Current = Chars[Index];
+                const CHAR_T Last    = Chars[Index - 1];
                 if (IsIdentifierChar(Current) || Current == '.')
                 {
                     ++Index;
@@ -671,7 +671,7 @@ void FShaderPreprocessor::Tokenize(StringView Source, int32 FileIndex, TArray<FS
             Type = EShaderTokenType::Punctuator;
 
             int32 MatchLength = 1;
-            for (const CHAR* Punctuator : GMultiCharPunctuators)
+            for (const CHAR_T* Punctuator : GMultiCharPunctuators)
             {
                 const int32 PunctuatorLength = CString::Strlen(Punctuator);
                 if (Index + PunctuatorLength <= Length && CString::Strncmp(Chars + Index, Punctuator, PunctuatorLength) == 0)
@@ -1138,7 +1138,7 @@ bool FShaderPreprocessor::HandleInclude(TArrayView<const FShaderToken> Tokens, c
         return true;
     }
 
-    TArray<CHAR> Text;
+    TArray<CHAR_T> Text;
     if (!SourceProvider->ReadFile(ResolvedPath, Text))
     {
         return Error(Location, String::Printf("Failed to read the include '%s'", *ResolvedPath));
@@ -1527,7 +1527,7 @@ bool FDiskShaderSourceProvider::FileExists(const String& Path) const
     return FPlatformFile::IsFile(*Path);
 }
 
-bool FDiskShaderSourceProvider::ReadFile(const String& Path, TArray<CHAR>& OutText) const
+bool FDiskShaderSourceProvider::ReadFile(const String& Path, TArray<CHAR_T>& OutText) const
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Path);
     return FileHandle && File::ReadTextFile(FileHandle.Get(), OutText);

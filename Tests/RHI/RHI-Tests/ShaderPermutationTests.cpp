@@ -37,7 +37,7 @@ public:
 using FInnerPermutation = TShaderPermutation<FTestBoolA, FTestBoolB>;
 using FOuterPermutation = TShaderPermutation<FInnerPermutation, FTestCount, FTestRaisesModel>;
 
-static const FShaderDefine* FindDefine(const FShaderCompilationEnvironment& Environment, const CHAR* Name)
+static const FShaderDefine* FindDefine(const FShaderCompilationEnvironment& Environment, const CHAR_T* Name)
 {
     for (const FShaderDefine& Define : Environment.Defines)
     {

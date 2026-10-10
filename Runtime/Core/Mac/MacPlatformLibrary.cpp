@@ -10,11 +10,11 @@
 // Enables logging to the NSLog
 #define ENABLE_DYLIB_ERROR_LOGGING (0)
 
-static const CHAR* BuildExecutableRelativeDir(CHAR* OutBuffer, uint32 BufferSize, const CHAR* Suffix)
+static const CHAR_T* BuildExecutableRelativeDir(CHAR_T* OutBuffer, uint32 BufferSize, const CHAR_T* Suffix)
 {
-    const CHAR* ExecutablePath = FMacPlatformFile::GetExecutablePath();
+    const CHAR_T* ExecutablePath = FMacPlatformFile::GetExecutablePath();
     
-    const CHAR* LastSeparator = CString::Strrchr(ExecutablePath, '/');
+    const CHAR_T* LastSeparator = CString::Strrchr(ExecutablePath, '/');
     if (!LastSeparator)
     {
         return "";
@@ -31,9 +31,9 @@ static const CHAR* BuildExecutableRelativeDir(CHAR* OutBuffer, uint32 BufferSize
     return OutBuffer;
 }
 
-static const CHAR* GetExecutableDir()
+static const CHAR_T* GetExecutableDir()
 {
-    static CHAR StaticExecutableDir[MAXPATHLEN] = { 0 };
+    static CHAR_T StaticExecutableDir[MAXPATHLEN] = { 0 };
     
     if (!StaticExecutableDir[0])
     {
@@ -43,9 +43,9 @@ static const CHAR* GetExecutableDir()
     return StaticExecutableDir;
 }
 
-static const CHAR* GetBundleFrameworksDir()
+static const CHAR_T* GetBundleFrameworksDir()
 {
-    static CHAR StaticFrameworksDir[MAXPATHLEN] = { 0 };
+    static CHAR_T StaticFrameworksDir[MAXPATHLEN] = { 0 };
     
     if (!StaticFrameworksDir[0])
     {
@@ -61,11 +61,11 @@ static const CHAR* GetBundleFrameworksDir()
     #define DEFAULT_DYLIB_MODE RTLD_NOW
 #endif
 
-static void* SafeLoadDynamicLib(const CHAR* LibraryName, int32 Mode = DEFAULT_DYLIB_MODE)
+static void* SafeLoadDynamicLib(const CHAR_T* LibraryName, int32 Mode = DEFAULT_DYLIB_MODE)
 {
     // Try and avoid dynamic memory allocation inside of this function
-    const CHAR* Prefix    = FMacPlatformLibrary::GetDynamicLibPrefix();
-    const CHAR* Extension = FMacPlatformLibrary::GetDynamicLibExtension();
+    const CHAR_T* Prefix    = FMacPlatformLibrary::GetDynamicLibPrefix();
+    const CHAR_T* Extension = FMacPlatformLibrary::GetDynamicLibExtension();
     
     // Concat the realname
     constexpr uint32 MaxNameLength = 256;
@@ -75,7 +75,7 @@ static void* SafeLoadDynamicLib(const CHAR* LibraryName, int32 Mode = DEFAULT_DY
         return nullptr;
     }
     
-    CHAR RealName[MaxNameLength];
+    CHAR_T RealName[MaxNameLength];
     Memory::Memzero(RealName, sizeof(RealName));
     
     CString::Strcat(RealName, Prefix);
@@ -93,14 +93,14 @@ static void* SafeLoadDynamicLib(const CHAR* LibraryName, int32 Mode = DEFAULT_DY
     
 #if ENABLE_DYLIB_ERROR_LOGGING
     // If we did not find the library, lets check why
-    const CHAR* Error = ::dlerror();
+    const CHAR_T* Error = ::dlerror();
     if (Error)
     {
         FMacPlatformMisc::OutputDebugString(Error);
     }
 #endif
     
-    const CHAR* Paths[] =
+    const CHAR_T* Paths[] =
     {
         "@rpath/",                // Resolved through the LC_RPATH of this image
         GetBundleFrameworksDir(),
@@ -109,8 +109,8 @@ static void* SafeLoadDynamicLib(const CHAR* LibraryName, int32 Mode = DEFAULT_DY
     };
     
     constexpr uint32 MaxFullPathLength = MaxNameLength + MAXPATHLEN;
-    CHAR FullPath[MaxFullPathLength];
-    for (const CHAR* Path : Paths)
+    CHAR_T FullPath[MaxFullPathLength];
+    for (const CHAR_T* Path : Paths)
     {
         const uint32 FullPathLength = FullLength + CString::Strlen(Path);
         if (FullPathLength >= MaxFullPathLength)
@@ -133,7 +133,7 @@ static void* SafeLoadDynamicLib(const CHAR* LibraryName, int32 Mode = DEFAULT_DY
         
     #if ENABLE_DYLIB_ERROR_LOGGING
         // If we did not find the library, lets check why
-        const CHAR* Error = ::dlerror();
+        const CHAR_T* Error = ::dlerror();
         if (Error)
         {
             FMacPlatformMisc::OutputDebugString(Error);
@@ -145,7 +145,7 @@ static void* SafeLoadDynamicLib(const CHAR* LibraryName, int32 Mode = DEFAULT_DY
     return nullptr;
 }
 
-void* FMacPlatformLibrary::LoadDynamicLib(const CHAR* LibraryName)
+void* FMacPlatformLibrary::LoadDynamicLib(const CHAR_T* LibraryName)
 {
     void* Handle = SafeLoadDynamicLib(LibraryName);
     if (Handle)
@@ -156,7 +156,7 @@ void* FMacPlatformLibrary::LoadDynamicLib(const CHAR* LibraryName)
     return nullptr;
 }
 
-void* FMacPlatformLibrary::GetLoadedHandle(const CHAR* LibraryName)
+void* FMacPlatformLibrary::GetLoadedHandle(const CHAR_T* LibraryName)
 { 
     // RTLD_NOLOAD returns a handle only if the library is already loaded, for parity with windows
     return SafeLoadDynamicLib(LibraryName, RTLD_LAZY | RTLD_NOLOAD);

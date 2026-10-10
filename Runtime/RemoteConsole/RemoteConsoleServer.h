@@ -110,7 +110,7 @@ private:
 
     // Network thread
     void AcceptClients(FNetworkSocket* ListenSocket, TArray<String>& OutLogMessages);
-    void RejectClient(FNetworkSocket* Socket, const CHAR* Reason);
+    void RejectClient(FNetworkSocket* Socket, const CHAR_T* Reason);
     void ReceiveFromClient(FRemoteConsoleClient& Client, TArray<FRemoteConsoleRequest>& OutRequests);
     void FlushClient(FRemoteConsoleClient& Client);
     void FlushAllClients(uint32 TimeoutMilliseconds);

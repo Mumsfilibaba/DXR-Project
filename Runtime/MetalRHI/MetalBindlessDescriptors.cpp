@@ -110,7 +110,7 @@ bool FMetalBindlessDescriptorManager::Initialize()
     return true;
 }
 
-bool FMetalBindlessDescriptorManager::CreateTable(FHeap& Heap, uint32 Capacity, const CHAR* DebugName)
+bool FMetalBindlessDescriptorManager::CreateTable(FHeap& Heap, uint32 Capacity, const CHAR_T* DebugName)
 {
     DestroyTable(Heap);
 

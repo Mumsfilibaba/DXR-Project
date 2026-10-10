@@ -30,13 +30,13 @@ static int32 GetRemainingBytes(IPlatformFile* InFile)
     return static_cast<int32>(NumBytes);
 }
 
-static bool IsSeparator(CHAR Char)
+static bool IsSeparator(CHAR_T Char)
 {
     return (Char == '/') || (Char == '\\');
 }
 
 #if PLATFORM_WINDOWS
-static bool IsDriveLetter(CHAR Char)
+static bool IsDriveLetter(CHAR_T Char)
 {
     return ((Char >= 'A') && (Char <= 'Z')) || ((Char >= 'a') && (Char <= 'z'));
 }
@@ -256,7 +256,7 @@ static bool ReadUtf8TextFile(IPlatformFile* InFile, TArray<ANSICHAR>& OutText)
     return true;
 }
 
-bool File::ReadTextFile(IPlatformFile* InFile, TArray<CHAR>& OutText)
+bool File::ReadTextFile(IPlatformFile* InFile, TArray<CHAR_T>& OutText)
 {
     CHECK(InFile != nullptr);
 
@@ -268,15 +268,15 @@ bool File::ReadTextFile(IPlatformFile* InFile, TArray<CHAR>& OutText)
         return false;
     }
 
-    const TStringConversion<CHAR, ANSICHAR> Text = StringCast<CHAR>(Utf8Text.Data(), Utf8Text.Size() - 1);
-    OutText.Reset(TArray<CHAR>(Text.Get(), Text.Length() + 1));
+    const TStringConversion<CHAR_T, ANSICHAR> Text = StringCast<CHAR_T>(Utf8Text.Data(), Utf8Text.Size() - 1);
+    OutText.Reset(TArray<CHAR_T>(Text.Get(), Text.Length() + 1));
     return true;
 #else
     return ReadUtf8TextFile(InFile, OutText);
 #endif
 }
 
-bool File::WriteTextFile(IPlatformFile* InFile, const CHAR* Text, int32 Length)
+bool File::WriteTextFile(IPlatformFile* InFile, const CHAR_T* Text, int32 Length)
 {
     CHECK(InFile != nullptr);
 
@@ -286,7 +286,7 @@ bool File::WriteTextFile(IPlatformFile* InFile, const CHAR* Text, int32 Length)
     }
 
 #if WIDE_CHAR_BUILD
-    const TStringConversion<ANSICHAR, CHAR> Utf8Text = StringCast<ANSICHAR>(Text, Length);
+    const TStringConversion<ANSICHAR, CHAR_T> Utf8Text = StringCast<ANSICHAR>(Text, Length);
     const ANSICHAR* Bytes    = Utf8Text.Get();
     const int32     NumBytes = Utf8Text.Length();
 #else
@@ -326,7 +326,7 @@ bool File::CreateDirectoryTree(const String& Path)
 {
     // Walk the path and create each intermediate directory in turn (like 'mkdir -p').
     String Prefix;
-    for (const CHAR* It = *Path; ; ++It)
+    for (const CHAR_T* It = *Path; ; ++It)
     {
         if (*It == '/' || *It == '\\' || *It == '\0')
         {

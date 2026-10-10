@@ -12,14 +12,14 @@ bool PrimitiveTopology_Test()
     TEST_BEGIN();
 
     TEST_SECTION("ToString covers every enumerator");
-    TEST_EXPECT(TCString<CHAR>::Strcmp(ToString(EPrimitiveTopology::Undefined), "Undefined") == 0);
-    TEST_EXPECT(TCString<CHAR>::Strcmp(ToString(EPrimitiveTopology::TriangleList), "TriangleList") == 0);
-    TEST_EXPECT(TCString<CHAR>::Strcmp(ToString(EPrimitiveTopology::TriangleListAdjacency), "TriangleListAdjacency") == 0);
-    TEST_EXPECT(TCString<CHAR>::Strcmp(ToString(EPrimitiveTopology::PatchList_1), "PatchList_1") == 0);
-    TEST_EXPECT(TCString<CHAR>::Strcmp(ToString(EPrimitiveTopology::PatchList_32), "PatchList_32") == 0);
+    TEST_EXPECT(TCString<CHAR_T>::Strcmp(ToString(EPrimitiveTopology::Undefined), "Undefined") == 0);
+    TEST_EXPECT(TCString<CHAR_T>::Strcmp(ToString(EPrimitiveTopology::TriangleList), "TriangleList") == 0);
+    TEST_EXPECT(TCString<CHAR_T>::Strcmp(ToString(EPrimitiveTopology::TriangleListAdjacency), "TriangleListAdjacency") == 0);
+    TEST_EXPECT(TCString<CHAR_T>::Strcmp(ToString(EPrimitiveTopology::PatchList_1), "PatchList_1") == 0);
+    TEST_EXPECT(TCString<CHAR_T>::Strcmp(ToString(EPrimitiveTopology::PatchList_32), "PatchList_32") == 0);
     for (uint8 Value = 0; Value <= UnderlyingTypeValue(EPrimitiveTopology::PatchList_32); ++Value)
     {
-        TEST_EXPECT(TCString<CHAR>::Strcmp(ToString(EPrimitiveTopology(Value)), "Unknown") != 0);
+        TEST_EXPECT(TCString<CHAR_T>::Strcmp(ToString(EPrimitiveTopology(Value)), "Unknown") != 0);
     }
 
     TEST_SECTION("Topology classification");

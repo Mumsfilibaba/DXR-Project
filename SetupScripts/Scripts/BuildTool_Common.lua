@@ -21,7 +21,7 @@ newoption
 newoption
 {
     trigger = "widechar",
-    description = "Use wchar_t for the engine's CHAR and TEXT() instead of UTF-8 in a char"
+    description = "Use wchar_t for the engine's CHAR_T and TEXT() instead of UTF-8 in a char"
 }
 
 newoption
@@ -265,14 +265,19 @@ function IsFatalWarnings()
     return _OPTIONS["fatalwarnings"] ~= nil
 end
 
--- Suffix that keeps a generation from colliding with the solution and binaries of a normal one
+-- Suffix that keeps a generation from colliding with the solution and binaries of a normal one. A --widechar generation
+-- always gets "Wide" on the end, so its binaries never mix with narrow ones.
 local function GetBuildSuffix()
     local Suffix = _OPTIONS["buildsuffix"]
-    if type(Suffix) ~= "string" or Suffix == "" then
-        return nil
+    if type(Suffix) ~= "string" then
+        Suffix = ""
     end
 
-    return Suffix
+    if _OPTIONS["widechar"] then
+        Suffix = Suffix .. "Wide"
+    end
+
+    return (Suffix ~= "") and Suffix or nil
 end
 
 -- Check the action being used
@@ -455,9 +460,11 @@ function GetOutputConfigPath()
 end
 
 -- Suffix of the tools workspace that belongs to this generation, the one the Generate_Tools scripts use: "Tools"
--- for a normal generation and "<Name>Tools" for --buildsuffix=<Name>, with a trailing "Tests" or "Tools" dropped
+-- for a normal generation and "<Name>Tools" for --buildsuffix=<Name>, with a trailing "Tests" or "Tools" dropped. The
+-- tools only run during the build, so a wide generation uses the same narrow tools as a normal one.
 function GetToolsBuildSuffix()
     local Base = GetBuildSuffix() or ""
+    Base = (Base:gsub("Wide$", ""))
     Base = (Base:gsub("Tests$", ""))
     Base = (Base:gsub("Tools$", ""))
     return Base .. "Tools"

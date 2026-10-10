@@ -44,7 +44,7 @@ static constexpr float LIVE_REFRESH_INTERVAL             = 0.125f;
 
 struct FPipelineStatisticsCounter
 {
-    const CHAR*                      Label;
+    const CHAR_T*                    Label;
     uint64 FRHIPipelineStatistics::* Member;
 };
 
@@ -72,7 +72,7 @@ static IGPUProfiler* GetGPUProfiler()
     return RendererModule ? &RendererModule->GetGPUProfiler() : nullptr;
 }
 
-static bool AreScopeNamesEqual(const CHAR* Lhs, const CHAR* Rhs)
+static bool AreScopeNamesEqual(const CHAR_T* Lhs, const CHAR_T* Rhs)
 {
     if (Lhs == Rhs)
     {
@@ -82,7 +82,7 @@ static bool AreScopeNamesEqual(const CHAR* Lhs, const CHAR* Rhs)
     return Lhs && Rhs && CString::Strcmp(Lhs, Rhs) == 0;
 }
 
-static bool NameContainsIgnoreCase(const CHAR* Name, const String& Query)
+static bool NameContainsIgnoreCase(const CHAR_T* Name, const String& Query)
 {
     if (Query.IsEmpty())
     {
@@ -157,7 +157,7 @@ static String BuildChromeGpuEvents()
         {
             const double TimestampUs = FrameStartUs + Time::ToMicroseconds(static_cast<double>(Interval.StartNanoseconds));
 
-            const CHAR* Name = Interval.Name ? Interval.Name : "<unnamed>";
+            const CHAR_T* Name = Interval.Name ? Interval.Name : "<unnamed>";
             if (Interval.bInstant || Interval.InclusiveNanoseconds == 0)
             {
                 FProfilerReport::AppendChromeInstantEvent(Events, Name, "gpu", TimestampUs, 1, 0);
@@ -794,8 +794,8 @@ void FEditorProfilerPanel::RefreshHeader()
 
     const float GpuMs = bHasShownGpuFrame ? ShownGpuMilliseconds : 0.0f;
 
-    const CHAR* Bound = GpuMs <= 0.0f ? "no GPU timings" : (CpuMs >= GpuMs ? "CPU-bound" : "GPU-bound");
-    const CHAR* Which = Mode == EProfilerMode::Boot ? "boot session" : (bIsFrozen ? "frozen" : (bFollowLatestFrame ? "live" : "pinned"));
+    const CHAR_T* Bound = GpuMs <= 0.0f ? "no GPU timings" : (CpuMs >= GpuMs ? "CPU-bound" : "GPU-bound");
+    const CHAR_T* Which = Mode == EProfilerMode::Boot ? "boot session" : (bIsFrozen ? "frozen" : (bFollowLatestFrame ? "live" : "pinned"));
 
     SummaryText->SetText(String::Printf("%d FPS   CPU %.2f ms   GPU %.2f ms   %s   boot %.0f ms   frame %d (%s)%s%s",
         Cpu.GetFramesPerSecond(), CpuMs, GpuMs, Bound, FBootProfiler::Get().GetSession().CpuMilliseconds,
@@ -1178,13 +1178,13 @@ void FEditorProfilerPanel::FillTimeline()
 }
 
 TSharedPtr<FTreeItem> FEditorProfilerPanel::BuildCallTree(
-    int32                      LaneIndex,
-    const String&              LaneLabel,
-    const TArray<const CHAR*>& Names,
-    const TArray<int32>&       Parents,
-    const TArray<uint64>&      Inclusive,
-    const TArray<uint64>&      Exclusive,
-    bool                       bIsGpu)
+    int32                        LaneIndex,
+    const String&                LaneLabel,
+    const TArray<const CHAR_T*>& Names,
+    const TArray<int32>&         Parents,
+    const TArray<uint64>&        Inclusive,
+    const TArray<uint64>&        Exclusive,
+    bool                         bIsGpu)
 {
     TSharedPtr<FTreeItem> LaneItem = FTreeItem::Create(LaneLabel);
     LaneItem->bIsExpanded = true;
@@ -1293,10 +1293,10 @@ void FEditorProfilerPanel::RebuildHierarchy()
     HierarchyRefs.Clear();
     LaneIntervalItems.Clear();
 
-    TArray<const CHAR*> Names;
-    TArray<int32>       Parents;
-    TArray<uint64>      Inclusive;
-    TArray<uint64>      Exclusive;
+    TArray<const CHAR_T*> Names;
+    TArray<int32>         Parents;
+    TArray<uint64>        Inclusive;
+    TArray<uint64>        Exclusive;
 
     for (int32 ThreadIndex = 0; ThreadIndex < ShownFrame.Threads.Size(); ++ThreadIndex)
     {
@@ -1623,9 +1623,9 @@ void FEditorProfilerPanel::RebuildCallers()
         return;
     }
 
-    TArray<const CHAR*> Names;
-    TArray<int32>       Parents;
-    TArray<uint64>      Inclusive;
+    TArray<const CHAR_T*> Names;
+    TArray<int32>         Parents;
+    TArray<uint64>        Inclusive;
 
     if (Selection.bIsGpu)
     {
@@ -1775,7 +1775,7 @@ void FEditorProfilerPanel::RefreshPipelineStatistics()
     {
         const FGPUProfilerInterval& Interval = GpuIntervals[Selection.IntervalIndex];
     
-        const CHAR* Name = Interval.Name ? Interval.Name : "<unnamed>";
+        const CHAR_T* Name = Interval.Name ? Interval.Name : "<unnamed>";
         if (Interval.bHasPipelineStats)
         {
             PipelineStatisticsContext->SetText(

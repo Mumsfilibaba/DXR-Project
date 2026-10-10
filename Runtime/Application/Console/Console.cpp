@@ -35,7 +35,7 @@ static FConsoleCandidateText GetCandidateText(const TPair<IConsoleObject*, Strin
     FConsoleCandidateText RowText;
     RowText.Name = Candidate.Second;
 
-    const CHAR* TypeText = "";
+    const CHAR_T* TypeText = "";
 
     if (IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable())
     {
@@ -73,10 +73,10 @@ static FConsoleCandidateText GetCandidateText(const TPair<IConsoleObject*, Strin
 
 static int32 GetTypeColumnWidth(const TSharedPtr<IFontFace>& Font)
 {
-    static const CHAR* TypeTexts[] = { "[Bool]", "[Int]", "[Float]", "[String]", "[Command]" };
+    static const CHAR_T* TypeTexts[] = { "[Bool]", "[Int]", "[Float]", "[String]", "[Command]" };
 
     int32 Width = 0;
-    for (const CHAR* TypeText : TypeTexts)
+    for (const CHAR_T* TypeText : TypeTexts)
     {
         Width = Math::Max(Width, MeasureTextWidth(Font, String(TypeText)));
     }

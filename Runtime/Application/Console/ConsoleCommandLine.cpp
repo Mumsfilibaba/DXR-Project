@@ -1,7 +1,7 @@
 #include "Application/Console/ConsoleCommandLine.h"
 #include "Core/Math/Math.h"
 
-bool FConsoleCommandLine::IsWordSeparator(CHAR Character)
+bool FConsoleCommandLine::IsWordSeparator(CHAR_T Character)
 {
     return Character == ' ' || Character == '\t' || Character == ',' || Character == ';';
 }

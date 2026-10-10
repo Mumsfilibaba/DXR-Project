@@ -44,7 +44,7 @@ static bool ShouldSkipDirectory(const String& Name)
 
 static bool IsCountedExtension(const String& Extension)
 {
-    static const CHAR* CountedExtensions[] =
+    static const CHAR_T* CountedExtensions[] =
     {
         ".h",
         ".hpp",
@@ -57,7 +57,7 @@ static bool IsCountedExtension(const String& Extension)
         ".bat",
     };
 
-    for (const CHAR* Counted : CountedExtensions)
+    for (const CHAR_T* Counted : CountedExtensions)
     {
         if (Extension.Compare(Counted, EStringCaseType::NoCase) == 0)
         {
@@ -133,7 +133,7 @@ static TArray<FLocEntry> SortedByTotal(TMap<String, FLocTotals>& Buckets)
     return Entries;
 }
 
-static void PrintRow(const CHAR* Name, const FLocTotals& Totals)
+static void PrintRow(const CHAR_T* Name, const FLocTotals& Totals)
 {
     const float Share = (GTotals.Total > 0) ? ((100.0f * Totals.Total) / GTotals.Total) : 0.0f;
     LOG_INFO("[LocCount]   %-40s %6d %9d %9d %9d %6.1f%%",
@@ -180,7 +180,7 @@ static int32 LocCountMain()
 
     LOG_INFO("[LocCount] Scanning '%s'", *Root);
 
-    static const CHAR* Folders[] =
+    static const CHAR_T* Folders[] =
     {
         "Runtime",
         "Tools",
@@ -189,7 +189,7 @@ static int32 LocCountMain()
         "SetupScripts",
     };
 
-    for (const CHAR* Folder : Folders)
+    for (const CHAR_T* Folder : Folders)
     {
         if (FProgramLoop::IsExitRequested())
         {
@@ -222,7 +222,7 @@ static int32 LocCountMain()
             }
 
             TFileRef<IPlatformFile> SourceFile = FPlatformFile::OpenForRead(Path);
-            TArray<CHAR>            Text;
+            TArray<CHAR_T>          Text;
             if (!SourceFile.IsValid() || !File::ReadTextFile(SourceFile.Get(), Text))
             {
                 LOG_WARNING("[LocCount] Failed to read '%s'", *Path);

@@ -35,7 +35,7 @@
     }
 }
 
-+ (NSString*) convertStringWithArgs:(const CHAR*) Format Args:(va_list)Args
++ (NSString*) convertStringWithArgs:(const CHAR_T*) Format Args:(va_list)Args
 {
     SCOPED_AUTORELEASE_POOL();
     

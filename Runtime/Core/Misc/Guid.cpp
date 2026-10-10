@@ -1,7 +1,7 @@
 #include "Core/Misc/Guid.h"
 #include "Core/Platform/PlatformMisc.h"
 
-static int32 HexDigitValue(CHAR Char)
+static int32 HexDigitValue(CHAR_T Char)
 {
     if ((Char >= '0') && (Char <= '9'))
     {

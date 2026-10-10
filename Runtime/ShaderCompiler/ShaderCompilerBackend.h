@@ -42,7 +42,7 @@ public:
 
     virtual bool Initialize() = 0;
 
-    NODISCARD virtual const CHAR* GetName() const = 0;
+    NODISCARD virtual const CHAR_T* GetName() const = 0;
     NODISCARD virtual bool SupportsOutputLanguage(EShaderOutputLanguage OutputLanguage) const = 0;
 
     /** Must not depend on paths or anything else that differs between machines */

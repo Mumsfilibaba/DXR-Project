@@ -120,7 +120,7 @@ struct TRenderGraphPassExecutor final : public FRenderGraphPassExecutor
 class RENDERERCORE_API FRenderGraphPass
 {
 public:
-    FRenderGraphPass(const CHAR* InName, ERenderGraphPassFlags InFlags, bool bInEnabled);
+    FRenderGraphPass(const CHAR_T* InName, ERenderGraphPassFlags InFlags, bool bInEnabled);
     ~FRenderGraphPass();
 
     void AddTextureAccess(FRenderGraphTexture* Resource, ERHIResourceState State, bool bIsWrite);
@@ -129,7 +129,7 @@ public:
     void BindRenderTarget(uint32 Index, FRenderGraphAttachment Attachment);
     void BindDepthStencil(FRenderGraphDepthAttachment Attachment);
 
-    NODISCARD const CHAR* GetName() const
+    NODISCARD const CHAR_T* GetName() const
     {
         return Name;
     }
@@ -193,7 +193,7 @@ public:
     }
 
 private:
-    const CHAR*                                                  Name;
+    const CHAR_T*                                                Name;
     ERenderGraphPassFlags                                        Flags;
     FRenderGraphPassExecutor*                                    Executor;
     TArray<FRenderGraphTextureAccess>                            TextureAccesses;

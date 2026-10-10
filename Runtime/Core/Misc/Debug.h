@@ -13,7 +13,7 @@ struct Debug
      * @param InFormat Format to print to the attached debugger, followed by arguments for the string
      */
     template<typename... ArgTypes>
-    static FORCEINLINE void OutputDebugFormat(const CHAR* InFormat, ArgTypes&&... Args)
+    static FORCEINLINE void OutputDebugFormat(const CHAR_T* InFormat, ArgTypes&&... Args)
     {
         const String FormattedMessage = String::Printf(InFormat, Forward<ArgTypes>(Args)...);
         OutputDebugString(FormattedMessage);

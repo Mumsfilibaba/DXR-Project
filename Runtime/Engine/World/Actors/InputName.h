@@ -19,7 +19,7 @@ public:
     {
     }
 
-    FInputName(const CHAR* InName);
+    FInputName(const CHAR_T* InName);
 
     uint32 GetHash() const
     {
@@ -35,7 +35,7 @@ public:
     bool operator!=(const FInputName& Other) const;
 
 private:
-    static uint32 HashInputName(const CHAR* Data, uint32 Length);
+    static uint32 HashInputName(const CHAR_T* Data, uint32 Length);
 
     template<typename StringType>
     FORCEINLINE static uint32 HashInputName(const StringType& InName) requires(TIsTStringType<StringType>::Value)

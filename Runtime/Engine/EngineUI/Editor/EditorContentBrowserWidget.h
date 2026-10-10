@@ -62,13 +62,13 @@ private:
     void DrawContentPanel();
     void DrawItemTooltip(const FFileInfo& InItem);
     void DrawContentGrid();
-    void DrawCenteredMessage(const CHAR* InText, const ImVec4& InMutedTextColor);
+    void DrawCenteredMessage(const CHAR_T* InText, const ImVec4& InMutedTextColor);
     void DrawContentHeaderBar();
     void DrawContentHeaderArea(const ImVec4& InBackGround, float InSidePadding, float InSearchRowHeight);
     void DrawFolderTreeRecursive(FFileInfo& InFolder, TArray<int32>& InPath, int32 InDepth, ImGuiStorage* InStorage, const ImVec4& InNameTextColor, const ImU32 InFolderActiveColor,
-        const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, const CHAR* InFolderSearchQuery);
+        const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, const CHAR_T* InFolderSearchQuery);
     bool DrawFolderRow(FFileInfo& InFolder, const TArray<int32>& InPath, int32 InDepth, ImGuiStorage* InStorage, const ImVec4& InNameTextColor, const ImU32 InFolderActiveColor, 
-        const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, const CHAR* InFolderSearchQuery);
+        const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, const CHAR_T* InFolderSearchQuery);
 
     void BeginFolderRename(const TArray<int32>& InPath, const FFileInfo& InFolder);
     void CommitFolderRename();
@@ -88,16 +88,16 @@ private:
     bool MoveItemsToFolder(const TArray<int32>& InSourceParentPath, const TArray<int32>& InSourceIndices, const TArray<int32>& InTargetFolderPath);
     void ReportFailedMove(const String& InFullPath);
 
-    bool MatchesSearch(const CHAR* InName, const CHAR* InQuery) const;
-    bool FolderTreeMatches(const FFileInfo& InFolder, const CHAR* InQuery) const;
-    void RebuildFolderMatches(const CHAR* InQuery);
-    bool RebuildFolderMatchesRecursive(const FFileInfo& InFolder, const CHAR* InQuery);
+    bool MatchesSearch(const CHAR_T* InName, const CHAR_T* InQuery) const;
+    bool FolderTreeMatches(const FFileInfo& InFolder, const CHAR_T* InQuery) const;
+    void RebuildFolderMatches(const CHAR_T* InQuery);
+    bool RebuildFolderMatchesRecursive(const FFileInfo& InFolder, const CHAR_T* InQuery);
     bool IsPathPrefixOfSelected(const TArray<int32>& InPath) const;
     bool HasChildFolders(const FFileInfo& InFolder) const;
 
     FFileInfo* GetFolderFromPath(const TArray<int32>& InPath);
     const FFileInfo* GetFolderFromPath(const TArray<int32>& InPath) const;
-    void BuildFolderPathString(const TArray<int32>& InPath, CHAR* OutBuffer, int32 OutBufferSize) const;
+    void BuildFolderPathString(const TArray<int32>& InPath, CHAR_T* OutBuffer, int32 OutBufferSize) const;
     void NavigateToFolderPath(const TArray<int32>& InNewPath, bool bAddToHistory);
     void NavigateBack();
     void NavigateForward();
@@ -117,7 +117,7 @@ private:
     int32 FindChildFolderIndexByName(const FFileInfo& ParentFolder, const String& FolderName) const;
     int32 FindChildFileIndexByName(const FFileInfo& ParentFolder, const String& FileName) const;
     void UpdateDragPreviewNameConflicts(const TArray<TArray<int32>>& SourceFolderPaths, const FFileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>* SourceParentPath, const TArray<int32>& TargetPath);
-    void SetDragPreviewTarget(const CHAR* TargetName, const TArray<int32>& TargetPath, const TArray<TArray<int32>>& SourceFolderPaths, const FFileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>* SourceParentPath);
+    void SetDragPreviewTarget(const CHAR_T* TargetName, const TArray<int32>& TargetPath, const TArray<TArray<int32>>& SourceFolderPaths, const FFileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>* SourceParentPath);
     bool MergeFolderContents(FFileInfo& TargetFolder, FFileInfo& SourceFolder, const String& SourceFolderPath);
 
     void AddNewFolderInCurrentPath();
@@ -130,8 +130,8 @@ private:
 
 private:
     FDelegateHandle            ImGuiDelegateHandle;
-    TStaticArray<CHAR, 256>    FolderSearchBuffer;
-    TStaticArray<CHAR, 256>    AssetSearchBuffer;
+    TStaticArray<CHAR_T, 256>  FolderSearchBuffer;
+    TStaticArray<CHAR_T, 256>  AssetSearchBuffer;
     TArray<int32>              SelectedItemIndices;
     int32                      LastSelectedItemIndex;
     bool                       bSelectionActiveInBrowser;
@@ -157,17 +157,17 @@ private:
     int32                      DragPreviewSelectionCount;
     bool                       bDragPreviewHasAnyLegalMove;
     int32                      DragPreviewIllegalMoveCount;
-    TStaticArray<CHAR, 256>    DragPreviewSourceName;
-    TStaticArray<CHAR, 256>    DragPreviewTargetName;
+    TStaticArray<CHAR_T, 256>  DragPreviewSourceName;
+    TStaticArray<CHAR_T, 256>  DragPreviewTargetName;
     TArray<int32>              RenamingFolderPath;
-    TStaticArray<CHAR, 256>    FolderRenameBuffer;
-    TStaticArray<CHAR, 256>    FolderRenameBufferOriginal;
+    TStaticArray<CHAR_T, 256>  FolderRenameBuffer;
+    TStaticArray<CHAR_T, 256>  FolderRenameBufferOriginal;
     bool                       bRequestFolderRenameFocus;
     TArray<int32>              RenamingItemParentPath;
     int32                      RenamingItemIndex;
-    TStaticArray<CHAR, 256>    ItemRenameBuffer;
-    TStaticArray<CHAR, 256>    ItemRenameBufferOriginal;
-    TStaticArray<CHAR, 64>     ItemRenameExtension;
+    TStaticArray<CHAR_T, 256>  ItemRenameBuffer;
+    TStaticArray<CHAR_T, 256>  ItemRenameBufferOriginal;
+    TStaticArray<CHAR_T, 64>   ItemRenameExtension;
     bool                       bRequestItemRenameFocus;
 
     // Folder navigation path (indices into RootFolders/FolderContents).

@@ -56,7 +56,7 @@ FJsonValue::FJsonValue(uint64 Value)
 FJsonValue::FJsonValue(float Value)  : FJsonValue() { SetReal(static_cast<double>(Value)); }
 FJsonValue::FJsonValue(double Value) : FJsonValue() { SetReal(Value); }
 
-FJsonValue::FJsonValue(const CHAR* Value)
+FJsonValue::FJsonValue(const CHAR_T* Value)
     : FJsonValue()
 {
     Type        = EJsonType::String;
@@ -177,19 +177,19 @@ double FJsonValue::GetDoubleOr(double Default) const
     return TryGetDouble(Result) ? Result : Default;
 }
 
-String FJsonValue::GetStringOr(const CHAR* Default) const
+String FJsonValue::GetStringOr(const CHAR_T* Default) const
 {
     String Result;
     return TryGetString(Result) ? Result : String(Default ? Default : "");
 }
 
-FJsonValue* FJsonValue::Find(const CHAR* Name)
+FJsonValue* FJsonValue::Find(const CHAR_T* Name)
 {
     const FJsonValue* Result = const_cast<const FJsonValue*>(this)->Find(Name);
     return const_cast<FJsonValue*>(Result);
 }
 
-const FJsonValue* FJsonValue::Find(const CHAR* Name) const
+const FJsonValue* FJsonValue::Find(const CHAR_T* Name) const
 {
     if ((Type != EJsonType::Object) || (Name == nullptr))
     {
@@ -207,7 +207,7 @@ const FJsonValue* FJsonValue::Find(const CHAR* Name) const
     return nullptr;
 }
 
-FJsonValue& FJsonValue::FindOrAdd(const CHAR* Name)
+FJsonValue& FJsonValue::FindOrAdd(const CHAR_T* Name)
 {
     CHECK(Type == EJsonType::Object);
 
@@ -219,7 +219,7 @@ FJsonValue& FJsonValue::FindOrAdd(const CHAR* Name)
     return Members.Emplace(Name, FJsonValue()).Value;
 }
 
-FJsonValue& FJsonValue::AddMember(const CHAR* Name, FJsonValue&& InValue)
+FJsonValue& FJsonValue::AddMember(const CHAR_T* Name, FJsonValue&& InValue)
 {
     CHECK(Type == EJsonType::Object);
 
@@ -232,7 +232,7 @@ FJsonValue& FJsonValue::AddMember(const CHAR* Name, FJsonValue&& InValue)
     return Members.Emplace(Name, Move(InValue)).Value;
 }
 
-bool FJsonValue::RemoveMember(const CHAR* Name)
+bool FJsonValue::RemoveMember(const CHAR_T* Name)
 {
     if ((Type != EJsonType::Object) || (Name == nullptr))
     {

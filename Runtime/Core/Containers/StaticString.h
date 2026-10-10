@@ -1573,7 +1573,7 @@ private:
 };
 
 template<int32 NUM_CHARS = STANDARD_STATIC_STRING_LENGTH>
-using StaticString = TStaticString<CHAR, NUM_CHARS>;
+using StaticString = TStaticString<CHAR_T, NUM_CHARS>;
 
 template<int32 NUM_CHARS = STANDARD_STATIC_STRING_LENGTH>
 using WStaticString = TStaticString<WIDECHAR, NUM_CHARS>;

@@ -47,7 +47,7 @@ public:
      * @param Character The character to test.
      * @return True when the character separates words.
      */
-    NODISCARD static bool IsWordSeparator(CHAR Character);
+    NODISCARD static bool IsWordSeparator(CHAR_T Character);
 
 public:
     FEditableText();
@@ -88,7 +88,7 @@ public:
      *
      * @param Character The character to insert.
      */
-    void InsertCharacter(CHAR Character);
+    void InsertCharacter(CHAR_T Character);
 
     /**
      * @brief Inserts text at the text cursor, which ends up after the inserted text.

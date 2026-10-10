@@ -21,8 +21,8 @@
 #include "Application/Menus/MenuItem.h"
 #include "Application/Menus/MenuStack.h"
 
-static const CHAR* GActorDragDropPayloadId = "SCENE_HIERARCHY_ACTOR";
-static const CHAR* GFilterTypeLabel = "Filter";
+static const CHAR_T* GActorDragDropPayloadId = "SCENE_HIERARCHY_ACTOR";
+static const CHAR_T* GFilterTypeLabel = "Filter";
 
 constexpr float DROP_INDICATOR_THICKNESS = 2.0f;
 

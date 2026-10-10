@@ -49,7 +49,7 @@ constexpr int32 VIEW_BUTTON_LABEL_OVERHEAD = 36;
 
 struct FDebugViewEntry
 {
-    const CHAR*                  Label;
+    const CHAR_T*                Label;
     FSceneRenderView::EDebugView View;
 };
 
@@ -103,7 +103,7 @@ static int32 FindDebugViewIndex(FSceneRenderView::EDebugView InDebugView)
     return -1;
 }
 
-static const CHAR* FindDebugViewLabel(FSceneRenderView::EDebugView InDebugView)
+static const CHAR_T* FindDebugViewLabel(FSceneRenderView::EDebugView InDebugView)
 {
     const int32 Index = FindDebugViewIndex(InDebugView);
     return DEBUG_VIEW_ENTRIES[Index >= 0 ? Index : 0].Label;
@@ -652,7 +652,7 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildCameraMenu()
     TArray<TSharedPtr<FBorder>> CaptionColumns;
     int32                       CaptionColumnWidth = 0;
 
-    const auto AddSliderRow = [&Menu, &Font, &CaptionColumns, &CaptionColumnWidth](const CHAR* RowLabel,
+    const auto AddSliderRow = [&Menu, &Font, &CaptionColumns, &CaptionColumnWidth](const CHAR_T* RowLabel,
         float MinValue, float MaxValue, float Value, int32 Precision, const FOnSliderValueChanged& OnValueChanged)
     {
         FTextBlock::FDesc CaptionDesc;
@@ -868,7 +868,7 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildViewOptionsMenu()
 
     struct FChannelEntry
     {
-        const CHAR*                         Label;
+        const CHAR_T*                       Label;
         FSceneRenderView::EDebugViewChannel Channel;
     };
 

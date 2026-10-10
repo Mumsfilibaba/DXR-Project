@@ -20,7 +20,7 @@ public:
     bool IsDebugLayerEnabled() const { return bEnableDebugLayer; }
     bool IsTearingSupported()  const { return bAllowTearing; }
 
-    String GetDescription() const { return StringCast<CHAR>(AdapterDesc.Description).ToString(); }
+    String GetDescription() const { return StringCast<CHAR_T>(AdapterDesc.Description).ToString(); }
 
     FORCEINLINE const DXGI_ADAPTER_DESC1& GetAdapterDesc() const
     {
@@ -76,7 +76,7 @@ public:
 
     void FlushDebugMessages();
 
-    void CheckDeviceRemoved(HRESULT Result, const CHAR* Operation) const;
+    void CheckDeviceRemoved(HRESULT Result, const CHAR_T* Operation) const;
 
     bool FindOrCreateSamplerState(const FRHISamplerStateDesc& SamplerDesc, TComPtr<ID3D11SamplerState>& OutSamplerState);
     bool FindOrCreateSamplerState(const FRHIStaticSamplerInfo& StaticSamplerInfo, TComPtr<ID3D11SamplerState>& OutSamplerState);

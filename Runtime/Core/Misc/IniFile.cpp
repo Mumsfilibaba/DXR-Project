@@ -16,9 +16,9 @@ struct FIniParseContext
 
 constexpr int32 INI_MAX_INCLUDE_DEPTH = 8;
 
-static void ParseIniText(FIniFile& OutFile, TArray<CHAR>& InText, FIniParseContext& Context);
+static void ParseIniText(FIniFile& OutFile, TArray<CHAR_T>& InText, FIniParseContext& Context);
 
-static bool ReadIniFile(const String& Filename, TArray<CHAR>& OutText)
+static bool ReadIniFile(const String& Filename, TArray<CHAR_T>& OutText)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Filename);
     if (!FileHandle)
@@ -29,7 +29,7 @@ static bool ReadIniFile(const String& Filename, TArray<CHAR>& OutText)
     return File::ReadTextFile(FileHandle.Get(), OutText);
 }
 
-static CHAR* ParseIncludeDirective(CHAR* Line)
+static CHAR_T* ParseIncludeDirective(CHAR_T* Line)
 {
     constexpr SIZE_T DirectiveLength = 7; // 'include'
     if (CString::Strnicmp(Line, "include", DirectiveLength) != 0)
@@ -38,7 +38,7 @@ static CHAR* ParseIncludeDirective(CHAR* Line)
     }
 
     // The keyword has to be a word of its own, so 'includes' is still an ordinary key.
-    CHAR* PathStart = Line + DirectiveLength;
+    CHAR_T* PathStart = Line + DirectiveLength;
     if (*PathStart != ' ' && *PathStart != '\"')
     {
         return nullptr;
@@ -50,12 +50,12 @@ static CHAR* ParseIncludeDirective(CHAR* Line)
     if (*PathStart == '\"')
     {
         ++PathStart;
-        if (CHAR* ClosingQuote = CString::Strchr(PathStart, '\"'))
+        if (CHAR_T* ClosingQuote = CString::Strchr(PathStart, '\"'))
         {
             *ClosingQuote = '\0';
         }
     }
-    else if (CHAR* TrailingSpace = CString::Strchr(PathStart, ' '))
+    else if (CHAR_T* TrailingSpace = CString::Strchr(PathStart, ' '))
     {
         *TrailingSpace = '\0';
     }
@@ -63,7 +63,7 @@ static CHAR* ParseIncludeDirective(CHAR* Line)
     return (*PathStart != '\0') ? PathStart : nullptr;
 }
 
-static void ParseIniInclude(FIniFile& OutFile, const CHAR* IncludePath, FIniParseContext& Context)
+static void ParseIniInclude(FIniFile& OutFile, const CHAR_T* IncludePath, FIniParseContext& Context)
 {
     const String RelativePath(IncludePath);
 
@@ -85,7 +85,7 @@ static void ParseIniInclude(FIniFile& OutFile, const CHAR* IncludePath, FIniPars
         return;
     }
 
-    TArray<CHAR> FileContents;
+    TArray<CHAR_T> FileContents;
     if (!ReadIniFile(ResolvedPath, FileContents))
     {
         LOG_WARNING("Failed to open included ini file '%s'", *ResolvedPath);
@@ -102,13 +102,13 @@ static void ParseIniInclude(FIniFile& OutFile, const CHAR* IncludePath, FIniPars
     Context.BaseDirectory = PreviousDirectory;
 }
 
-static void ParseIniText(FIniFile& OutFile, TArray<CHAR>& InText, FIniParseContext& Context)
+static void ParseIniText(FIniFile& OutFile, TArray<CHAR_T>& InText, FIniParseContext& Context)
 {
     InText.Remove('\r');
 
     FIniSection* CurrentSection = nullptr;
 
-    CHAR* Start = InText.Data();
+    CHAR_T* Start = InText.Data();
     while (Start && *Start)
     {
         // Skip newline chars
@@ -117,7 +117,7 @@ static void ParseIniText(FIniFile& OutFile, TArray<CHAR>& InText, FIniParseConte
             ++Start;
         }
 
-        CHAR* LineStart = Start;
+        CHAR_T* LineStart = Start;
         Parse::ParseLine(&Start);
 
         // End string at the end of line
@@ -132,9 +132,9 @@ static void ParseIniText(FIniFile& OutFile, TArray<CHAR>& InText, FIniParseConte
         // This is a section
         if (*LineStart == '[')
         {
-            if (CHAR* SectionEnd = CString::Strchr(++LineStart, ']'))
+            if (CHAR_T* SectionEnd = CString::Strchr(++LineStart, ']'))
             {
-                CHAR* SectionStart = LineStart;
+                CHAR_T* SectionStart = LineStart;
                 *SectionEnd = '\0';
                 
                 FIniSection& Section = OutFile.FindOrAddSection(SectionStart);
@@ -143,25 +143,25 @@ static void ParseIniText(FIniFile& OutFile, TArray<CHAR>& InText, FIniParseConte
         }
         else if (*LineStart != ';') // Check if this is a comment line
         {
-            if (CHAR* EqualSign = CString::Strchr(LineStart, '='))
+            if (CHAR_T* EqualSign = CString::Strchr(LineStart, '='))
             {
                 *EqualSign = '\0';
 
-                CHAR* KeyEnd = EqualSign - 1;
+                CHAR_T* KeyEnd = EqualSign - 1;
                 while (*KeyEnd == ' ')
                 {
                     *(KeyEnd--) = '\0';
                 }
 
                 // The parsed key
-                CHAR* Key = LineStart;
+                CHAR_T* Key = LineStart;
                 LineStart = EqualSign + 1;
 
                 Parse::ParseWhiteSpace(&LineStart);
 
                 // Find the end of the value, the line is already null-terminated so the
                 // value ends at the line terminator unless something closes it earlier.
-                CHAR* Value = LineStart;
+                CHAR_T* Value = LineStart;
 
                 // Special case for string-values, these end at the closing quote and keep inner spaces.
                 if (*Value == '\"')
@@ -169,12 +169,12 @@ static void ParseIniText(FIniFile& OutFile, TArray<CHAR>& InText, FIniParseConte
                     Value++;
 
                     // An unterminated quote simply runs to the end of the line
-                    if (CHAR* ClosingQuote = CString::Strchr(Value, '\"'))
+                    if (CHAR_T* ClosingQuote = CString::Strchr(Value, '\"'))
                     {
                         *ClosingQuote = '\0';
                     }
                 }
-                else if (CHAR* TrailingSpace = CString::Strchr(Value, ' '))
+                else if (CHAR_T* TrailingSpace = CString::Strchr(Value, ' '))
                 {
                     // Unquoted values end at the first space
                     *TrailingSpace = '\0';
@@ -197,7 +197,7 @@ static void ParseIniText(FIniFile& OutFile, TArray<CHAR>& InText, FIniParseConte
                     CurrentSection->Values.Add(Key, FIniValue(Value));
                 }
             }
-            else if (CHAR* IncludePath = ParseIncludeDirective(LineStart))
+            else if (CHAR_T* IncludePath = ParseIncludeDirective(LineStart))
             {
                 // The included file parses into this same file, starting at the global section,
                 // so it can neither see nor change the section this line sits in.
@@ -221,7 +221,7 @@ FIniSection::FIniSection()
 {
 }
 
-FIniSection::FIniSection(const CHAR* InName)
+FIniSection::FIniSection(const CHAR_T* InName)
     : Name(InName)
     , Values()
 {
@@ -254,7 +254,7 @@ void FIniSection::DumpToString(String& OutString)
     }
 }
 
-bool FIniFile::SetString(const CHAR* SectionName, const CHAR* Name, const String& NewValue)
+bool FIniFile::SetString(const CHAR_T* SectionName, const CHAR_T* Name, const String& NewValue)
 {
     if (FIniValue* Value = FindValue(SectionName, Name))
     {
@@ -268,29 +268,29 @@ bool FIniFile::SetString(const CHAR* SectionName, const CHAR* Name, const String
     }
 }
 
-bool FIniFile::SetInt(const CHAR* SectionName, const CHAR* Name, int32 NewValue)
+bool FIniFile::SetInt(const CHAR_T* SectionName, const CHAR_T* Name, int32 NewValue)
 {
     return SetString(SectionName, Name, TTypeToString<int32>::ToString(NewValue));
 }
 
-bool FIniFile::SetFloat(const CHAR* SectionName, const CHAR* Name, float NewValue)
+bool FIniFile::SetFloat(const CHAR_T* SectionName, const CHAR_T* Name, float NewValue)
 {
     return SetString(SectionName, Name, TTypeToString<float>::ToString(NewValue));
 }
 
-bool FIniFile::SetBool(const CHAR* SectionName, const CHAR* Name, bool bNewValue)
+bool FIniFile::SetBool(const CHAR_T* SectionName, const CHAR_T* Name, bool bNewValue)
 {
     return SetString(SectionName, Name, TTypeToString<bool>::ToString(bNewValue));
 }
 
-FIniSection& FIniFile::FindOrAddSection(const CHAR* SectionName)
+FIniSection& FIniFile::FindOrAddSection(const CHAR_T* SectionName)
 {
     FIniSection& Section = Sections.FindOrAdd(SectionName);
     Section.Name = SectionName;
     return Section;
 }
 
-void FIniFile::SetOrAddString(const CHAR* SectionName, const CHAR* Name, const String& NewValue)
+void FIniFile::SetOrAddString(const CHAR_T* SectionName, const CHAR_T* Name, const String& NewValue)
 {
     FIniSection& Section = FindOrAddSection(SectionName);
     if (FIniValue* Value = Section.Values.Find(Name))
@@ -303,22 +303,22 @@ void FIniFile::SetOrAddString(const CHAR* SectionName, const CHAR* Name, const S
     }
 }
 
-void FIniFile::SetOrAddInt(const CHAR* SectionName, const CHAR* Name, int32 NewValue)
+void FIniFile::SetOrAddInt(const CHAR_T* SectionName, const CHAR_T* Name, int32 NewValue)
 {
     SetOrAddString(SectionName, Name, TTypeToString<int32>::ToString(NewValue));
 }
 
-void FIniFile::SetOrAddFloat(const CHAR* SectionName, const CHAR* Name, float NewValue)
+void FIniFile::SetOrAddFloat(const CHAR_T* SectionName, const CHAR_T* Name, float NewValue)
 {
     SetOrAddString(SectionName, Name, TTypeToString<float>::ToString(NewValue));
 }
 
-void FIniFile::SetOrAddBool(const CHAR* SectionName, const CHAR* Name, bool bNewValue)
+void FIniFile::SetOrAddBool(const CHAR_T* SectionName, const CHAR_T* Name, bool bNewValue)
 {
     SetOrAddString(SectionName, Name, TTypeToString<bool>::ToString(bNewValue));
 }
 
-bool FIniFile::GetString(const CHAR* SectionName, const CHAR* Name, String& OutValue)
+bool FIniFile::GetString(const CHAR_T* SectionName, const CHAR_T* Name, String& OutValue)
 {
     if (FIniValue* Value = FindValue(SectionName, Name))
     {
@@ -331,7 +331,7 @@ bool FIniFile::GetString(const CHAR* SectionName, const CHAR* Name, String& OutV
     }
 }
 
-bool FIniFile::GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutValue)
+bool FIniFile::GetInt(const CHAR_T* SectionName, const CHAR_T* Name, int32& OutValue)
 {
     if (FIniValue* Value = FindValue(SectionName, Name))
     {
@@ -343,7 +343,7 @@ bool FIniFile::GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutValue
     }
 }
 
-bool FIniFile::GetFloat(const CHAR* SectionName, const CHAR* Name, float& OutValue)
+bool FIniFile::GetFloat(const CHAR_T* SectionName, const CHAR_T* Name, float& OutValue)
 {
     if (FIniValue* Value = FindValue(SectionName, Name))
     {
@@ -355,7 +355,7 @@ bool FIniFile::GetFloat(const CHAR* SectionName, const CHAR* Name, float& OutVal
     }
 }
 
-bool FIniFile::GetBool(const CHAR* SectionName, const CHAR* Name, bool& bOutValue)
+bool FIniFile::GetBool(const CHAR_T* SectionName, const CHAR_T* Name, bool& bOutValue)
 {
     if (FIniValue* Value = FindValue(SectionName, Name))
     {
@@ -370,7 +370,7 @@ bool FIniFile::GetBool(const CHAR* SectionName, const CHAR* Name, bool& bOutValu
 // NOTE: Why this warning is a thing is a mystery to me
 DISABLE_UNREACHABLE_CODE_WARNING
 
-FIniValue* FIniFile::FindValue(const CHAR* Key)
+FIniValue* FIniFile::FindValue(const CHAR_T* Key)
 {
     for (auto CurrentSection : Sections)
     {
@@ -385,7 +385,7 @@ FIniValue* FIniFile::FindValue(const CHAR* Key)
 
 ENABLE_UNREACHABLE_CODE_WARNING
 
-FIniValue* FIniFile::FindValue(const CHAR* SectionName, const CHAR* Name)
+FIniValue* FIniFile::FindValue(const CHAR_T* SectionName, const CHAR_T* Name)
 {
     const bool bIsGlobal = !SectionName || CString::Strcmp(SectionName, "") == 0;
     if (bIsGlobal)
@@ -443,7 +443,7 @@ void FIniFile::DumpToString(String& OutString)
 
 bool FIniFile::LoadFromFile(const String& InFilename)
 {
-    TArray<CHAR> FileContents;
+    TArray<CHAR_T> FileContents;
     if (!ReadIniFile(InFilename, FileContents))
     {
         return false;
@@ -459,7 +459,7 @@ bool FIniFile::LoadFromFile(const String& InFilename)
     return true;
 }
 
-void FIniFile::ParseFromText(TArray<CHAR>& InText)
+void FIniFile::ParseFromText(TArray<CHAR_T>& InText)
 {
     // Text with no file behind it resolves its includes against the working directory
     FIniParseContext Context;

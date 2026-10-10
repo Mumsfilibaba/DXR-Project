@@ -1,7 +1,7 @@
 #include "ShaderCore/ShaderBindingConventions.h"
 #include "ShaderCompiler/Reflection/ShaderReflectionUtils.h"
 
-bool FShaderReflectionUtils::AddBinding(const CHAR* Name, EShaderResourceType Type, EShaderResourceDimension Dimension, EShaderBindingSpace Space, uint32 Register, uint32 Count, bool bKeepName, FShaderReflection& OutReflection, String& OutErrors)
+bool FShaderReflectionUtils::AddBinding(const CHAR_T* Name, EShaderResourceType Type, EShaderResourceDimension Dimension, EShaderBindingSpace Space, uint32 Register, uint32 Count, bool bKeepName, FShaderReflection& OutReflection, String& OutErrors)
 {
     const uint32 BindingCount = Count == 0 ? 1 : Count;
     if (Register > 0xFF || BindingCount > 0xFF)
@@ -31,7 +31,7 @@ bool FShaderReflectionUtils::AddBinding(const CHAR* Name, EShaderResourceType Ty
     return true;
 }
 
-bool FShaderReflectionUtils::SetShaderConstantsSize(const CHAR* Name, uint32 SizeInBytes, FShaderReflection& OutReflection, String& OutErrors)
+bool FShaderReflectionUtils::SetShaderConstantsSize(const CHAR_T* Name, uint32 SizeInBytes, FShaderReflection& OutReflection, String& OutErrors)
 {
     constexpr uint32 MaxSizeInBytes = ShaderBindings::MaxShaderConstants * sizeof(uint32);
 

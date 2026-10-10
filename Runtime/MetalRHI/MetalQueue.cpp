@@ -75,7 +75,7 @@ static void ReportFunctionLogs(id<MTLCommandBuffer> CommandBuffer)
     }
 }
 
-static const CHAR* ToString(MTLCommandBufferError ErrorCode)
+static const CHAR_T* ToString(MTLCommandBufferError ErrorCode)
 {
     switch (ErrorCode)
     {
@@ -94,7 +94,7 @@ static const CHAR* ToString(MTLCommandBufferError ErrorCode)
     }
 }
 
-static const CHAR* ToString(MTLCommandEncoderErrorState ErrorState)
+static const CHAR_T* ToString(MTLCommandEncoderErrorState ErrorState)
 {
     switch (ErrorState)
     {
@@ -191,7 +191,7 @@ static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer, const F
     if (Breadcrumbs.Count > 0)
     {
         WriteLine("[MetalRHI]   Breadcrumbs:");
-        Breadcrumbs.ForEach([&WriteLine](const CHAR* Name)
+        Breadcrumbs.ForEach([&WriteLine](const CHAR_T* Name)
         {
             WriteLine(String::Printf("[MetalRHI]     %s", Name));
         });

@@ -83,7 +83,7 @@ static String GetQueuePropertiesAsString(const VkQueueFamilyProperties& Properti
     return PropertyString;
 }
 
-static bool CreateNullBuffer(FVulkanDevice& Device, VkBufferUsageFlags Usage, const CHAR* BufferDebugName, const CHAR* BufferViewDebugName, VkBuffer& OutBuffer, VkBufferView& OutBufferView, FVulkanMemoryLocation& OutLocation)
+static bool CreateNullBuffer(FVulkanDevice& Device, VkBufferUsageFlags Usage, const CHAR_T* BufferDebugName, const CHAR_T* BufferViewDebugName, VkBuffer& OutBuffer, VkBufferView& OutBufferView, FVulkanMemoryLocation& OutLocation)
 {
     VkBufferCreateInfo BufferCreateInfo = {};
     BufferCreateInfo.sType                 = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -189,7 +189,7 @@ static bool CreateNullImage(FVulkanDevice& Device, const VkImageCreateInfo& Imag
     return true;
 }
 
-static bool CreateNullImages(FVulkanDevice& Device, VkImageUsageFlags Usage, const CHAR* DebugPrefix, FVulkanNullImage OutImages[static_cast<uint32>(EVulkanNullImageType::Count)], VkImageView OutViews[static_cast<uint32>(EVulkanNullImageViewType::Count)])
+static bool CreateNullImages(FVulkanDevice& Device, VkImageUsageFlags Usage, const CHAR_T* DebugPrefix, FVulkanNullImage OutImages[static_cast<uint32>(EVulkanNullImageType::Count)], VkImageView OutViews[static_cast<uint32>(EVulkanNullImageViewType::Count)])
 {
     struct FNullImageDesc
     {
@@ -199,7 +199,7 @@ static bool CreateNullImages(FVulkanDevice& Device, VkImageUsageFlags Usage, con
         uint32               ArrayLayers;
         VkImageCreateFlags   Flags;
         bool                 bMultisampled;
-        const CHAR*          DebugName;
+        const CHAR_T*        DebugName;
     };
 
     constexpr uint32 Size = VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT;
@@ -256,7 +256,7 @@ static bool CreateNullImages(FVulkanDevice& Device, VkImageUsageFlags Usage, con
         EVulkanNullImageType     ImageType;
         uint32                   LayerCount;
         EVulkanNullImageViewType FallbackViewType;
-        const CHAR*              DebugName;
+        const CHAR_T*            DebugName;
     };
 
     // A view whose image or view type is unavailable reuses its fallback, which is always listed earlier
@@ -876,7 +876,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
         return false;
     }
 
-    TArray<const CHAR*> EnabledExtensionNames;
+    TArray<const CHAR_T*> EnabledExtensionNames;
     for (const TUniquePtr<FVulkanDeviceExtension>& Extension : InDeviceCreateInfo.Extensions)
     {
         Extension->SetEnabled(false);
@@ -909,7 +909,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
         if (VerboseVulkan->GetBool() && !EnabledExtensionNames.IsEmpty())
         {
             VULKAN_INFO("Enabled Device Extensions:");
-            for (const CHAR* ExtensionName : EnabledExtensionNames)
+            for (const CHAR_T* ExtensionName : EnabledExtensionNames)
             {
                 LOG_INFO("    %s", ExtensionName);
             }
@@ -1029,7 +1029,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
     // Resolve device layers
     // -------------------------------------------------------------------------------------------
 
-    TArray<const CHAR*> EnabledDeviceLayerNames;
+    TArray<const CHAR_T*> EnabledDeviceLayerNames;
     if (!InDeviceCreateInfo.RequiredLayerNames.IsEmpty() || !InDeviceCreateInfo.OptionalLayerNames.IsEmpty())
     {
         uint32 DeviceLayerCount = 0;
@@ -1038,7 +1038,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
         TArray<VkLayerProperties> AvailableDeviceLayers(DeviceLayerCount);
         vkEnumerateDeviceLayerProperties(PhysicalDevice->GetVkPhysicalDevice(), &DeviceLayerCount, AvailableDeviceLayers.Data());
 
-        for (const CHAR* RequiredLayer : InDeviceCreateInfo.RequiredLayerNames)
+        for (const CHAR_T* RequiredLayer : InDeviceCreateInfo.RequiredLayerNames)
         {
             bool bFound = false;
             for (const VkLayerProperties& LayerProp : AvailableDeviceLayers)
@@ -1059,7 +1059,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
             }
         }
 
-        for (const CHAR* OptionalLayer : InDeviceCreateInfo.OptionalLayerNames)
+        for (const CHAR_T* OptionalLayer : InDeviceCreateInfo.OptionalLayerNames)
         {
             for (const VkLayerProperties& LayerProp : AvailableDeviceLayers)
             {

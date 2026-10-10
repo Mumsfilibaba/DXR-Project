@@ -23,7 +23,7 @@ bool StringView_Suite()
         TEST_EXPECT_EQ(View[11], 'd');
         TEST_EXPECT_EQ(View.LastIndex(), 11);
 
-        const CHAR* LongString = "This is a long string";
+        const CHAR_T* LongString = "This is a long string";
         StringView Slice = StringView(LongString, 4, 5);
         TEST_EXPECT(Slice.Equals("is a"));
 
@@ -65,21 +65,21 @@ bool StringView_Suite()
         TEST_EXPECT_EQ(Upper.Compare(Lower, EStringCaseType::NoCase), 0);
 
         StringView View("This is a long string");
-        CHAR Buffer[6] = { };
+        CHAR_T Buffer[6] = { };
         View.CopyToBuffer(Buffer, 5, 3);
-        TEST_EXPECT(TCString<CHAR>::Strcmp(Buffer, "s is ") == 0);
+        TEST_EXPECT(TCString<CHAR_T>::Strcmp(Buffer, "s is ") == 0);
     }
 
     TEST_SECTION("FindCharWithPredicate / FindLast / comparison operators");
     {
         StringView Search = "0123MeSearch89Me89";
         
-        TEST_EXPECT_EQ(Search.FindCharWithPredicate([](CHAR Ch)
+        TEST_EXPECT_EQ(Search.FindCharWithPredicate([](CHAR_T Ch)
         {
             return (Ch == 'e') || (Ch == 'c');
         }), 5);
         
-        TEST_EXPECT_EQ(Search.FindLastCharWithPredicate([](CHAR Ch)
+        TEST_EXPECT_EQ(Search.FindLastCharWithPredicate([](CHAR_T Ch)
         {
             return (Ch == 'h') || (Ch == 'M') || (Ch == 'c');
         }), 14);

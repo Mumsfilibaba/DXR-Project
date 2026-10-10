@@ -213,7 +213,7 @@ TSharedPtr<FVisualElement> FEditorOutputLogPanel::BuildFilterMenu()
 
     Menu->AddSection("Verbosity", FEditorStyle::GetFonts().Body);
 
-    const auto AddSeverityToggle = [this, &Menu](const CHAR* ItemLabel, ELogSeverity Severity)
+    const auto AddSeverityToggle = [this, &Menu](const CHAR_T* ItemLabel, ELogSeverity Severity)
     {
         FMenuItem::FDesc ItemDesc;
         ItemDesc.Label        = ItemLabel;
@@ -283,7 +283,7 @@ void FEditorOutputLogPanel::OnLogContextMenu(const IntVector2& ScreenPosition)
         return;
     }
 
-    const auto AddCommand = [&Menu](const CHAR* ItemLabel, const TDelegate<void()>& OnActivated)
+    const auto AddCommand = [&Menu](const CHAR_T* ItemLabel, const TDelegate<void()>& OnActivated)
     {
         FMenuItem::FDesc ItemDesc;
         ItemDesc.Label       = ItemLabel;

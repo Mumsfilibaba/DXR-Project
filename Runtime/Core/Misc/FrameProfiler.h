@@ -29,7 +29,7 @@ struct FFrameProfilerSample
         StackFrames.Fill(0);
     }
 
-    FFrameProfilerSample(const CHAR* InName)
+    FFrameProfilerSample(const CHAR_T* InName)
         : Name(InName)
         , ThreadHandle(nullptr)
         , StartTimeStamp(0)
@@ -41,14 +41,14 @@ struct FFrameProfilerSample
         StackFrames.Fill(0);
     }
 
-    const CHAR* Name;
-    void*       ThreadHandle;
-    uint64      StartTimeStamp;
-    uint64      EndTimeStamp;
-    int32       Depth;
+    const CHAR_T* Name;
+    void*         ThreadHandle;
+    uint64        StartTimeStamp;
+    uint64        EndTimeStamp;
+    int32         Depth;
     TStaticArray<uint64, NUM_PROFILER_STACK_FRAMES> StackFrames;
-    int32       StackDepth;
-    bool        bInstant;
+    int32         StackDepth;
+    bool          bInstant;
 };
 
 class CORE_API FFrameProfiler
@@ -62,7 +62,7 @@ public:
     void Tick();
     void Reset();
     void AddSample(const FFrameProfilerSample& InSample);
-    void AddInstantEvent(const CHAR* Name);
+    void AddInstantEvent(const CHAR_T* Name);
     void SetRetainAllFrames(bool bInRetainAllFrames);
     void SetCaptureNativeStacks(bool bInCaptureNativeStacks);
 
@@ -107,7 +107,7 @@ private:
 struct CORE_API FFrameProfilerScopedTrace
 {
 public:
-    FFrameProfilerScopedTrace(const CHAR* InName);
+    FFrameProfilerScopedTrace(const CHAR_T* InName);
     ~FFrameProfilerScopedTrace();
 
 private:

@@ -393,7 +393,7 @@ private:
     TArray<FExtremum> SliceMax;
 };
 
-static FORCEINLINE void ReportProgress(FBlueNoiseCallbacks& Callbacks, float Fraction, const CHAR* Phase)
+static FORCEINLINE void ReportProgress(FBlueNoiseCallbacks& Callbacks, float Fraction, const CHAR_T* Phase)
 {
     if (Callbacks.Progress)
     {

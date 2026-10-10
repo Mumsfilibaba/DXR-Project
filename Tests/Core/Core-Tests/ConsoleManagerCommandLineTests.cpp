@@ -7,9 +7,9 @@
 
 #include "TestCommon/TestMacros.h"
 
-static bool InitializeFromLine(const CHAR* Line)
+static bool InitializeFromLine(const CHAR_T* Line)
 {
-    const CHAR* Args[] = { Line };
+    const CHAR_T* Args[] = { Line };
     return CommandLine::Initialize(Args, 1);
 }
 

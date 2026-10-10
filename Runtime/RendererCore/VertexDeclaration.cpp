@@ -8,7 +8,7 @@ struct FVertexElementTemplate
     EVertexElement        Element;
     EVertexAttributeFlags Attribute;
     EFormat               Format;
-    const CHAR*           Semantic;
+    const CHAR_T*         Semantic;
     uint32                SemanticIndex;
     uint8                 StreamIndex;
 };

@@ -118,7 +118,7 @@ bool FMesh::Initialize(const FMeshData& MeshData, bool bCreateRayTracingResource
 
 bool FMesh::CreateVertexStreams(const FMeshData& MeshData)
 {
-    static const CHAR* StreamDebugNames[VERTEX_MAX_STREAMS] =
+    static const CHAR_T* StreamDebugNames[VERTEX_MAX_STREAMS] =
     {
         "PositionStream",
         "AttributeStream",

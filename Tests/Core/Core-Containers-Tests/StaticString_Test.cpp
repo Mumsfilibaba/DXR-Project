@@ -112,7 +112,7 @@ bool StaticString_Suite()
         TEST_EXPECT(Search.StartsWith("0123ME", EStringCaseType::NoCase));
         TEST_EXPECT(Search.EndsWith("ME89", EStringCaseType::NoCase));
         
-        TEST_EXPECT_EQ(Search.FindCharWithPredicate([](CHAR Ch)
+        TEST_EXPECT_EQ(Search.FindCharWithPredicate([](CHAR_T Ch)
         {
             return (Ch == 'e') || (Ch == 'c');
         }), 5);
@@ -129,12 +129,12 @@ bool StaticString_Suite()
         TEST_EXPECT_EQ(Upper.Compare(Lower, EStringCaseType::NoCase), 0);
 
         Lower.Resize(7);
-        TEST_EXPECT(TCString<CHAR>::Strcmp(Lower.Data(), "compare") == 0);
+        TEST_EXPECT(TCString<CHAR_T>::Strcmp(Lower.Data(), "compare") == 0);
 
-        CHAR Buffer[6];
+        CHAR_T Buffer[6];
         Buffer[5] = 0;
         Lower.CopyToBuffer(Buffer, 6, 2);
-        TEST_EXPECT(TCString<CHAR>::Strcmp(Buffer, "mpare") == 0);
+        TEST_EXPECT(TCString<CHAR_T>::Strcmp(Buffer, "mpare") == 0);
     }
 
     TEST_SECTION("Insert / Replace / operator+ / comparison operators");
@@ -177,7 +177,7 @@ bool StaticString_Suite()
         WStaticString<64> ToWide = StringCast<WIDECHAR>(Narrow).Get();
         TEST_EXPECT(TCString<WIDECHAR>::Strcmp(ToWide.Data(), L"Round Trip") == 0);
 
-        StaticString<64> Back = StringCast<CHAR>(ToWide).Get();
+        StaticString<64> Back = StringCast<CHAR_T>(ToWide).Get();
         TEST_EXPECT(Back.Equals("Round Trip"));
     }
 

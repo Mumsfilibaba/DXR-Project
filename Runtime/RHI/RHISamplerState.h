@@ -13,7 +13,7 @@ enum class ESamplerMode : uint8
     MirrorOnce = 5,
 };
 
-NODISCARD constexpr const CHAR* ToString(ESamplerMode SamplerMode)
+NODISCARD constexpr const CHAR_T* ToString(ESamplerMode SamplerMode)
 {
     switch (SamplerMode)
     {
@@ -50,7 +50,7 @@ enum class ESamplerFilter : uint8
     Comparison_Anisotropic                  = 18,
 };
 
-NODISCARD constexpr const CHAR* ToString(ESamplerFilter SamplerFilter)
+NODISCARD constexpr const CHAR_T* ToString(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
     {

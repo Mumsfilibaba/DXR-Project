@@ -89,7 +89,7 @@ inline void D3D11SetDebugName(ID3D11DeviceChild* DeviceChild, const String& Name
                 D3D11_ERROR("Failed to set the debug name '%s'", *Name);
             }
 
-            const TStringConversion<WIDECHAR, CHAR> WideName = StringCast<WIDECHAR>(Name);
+            const TStringConversion<WIDECHAR, CHAR_T> WideName = StringCast<WIDECHAR>(Name);
 
             Result = DeviceChild->SetPrivateData(WKPDID_D3DDebugObjectNameW, static_cast<UINT>((WideName.Length() + 1) * sizeof(WIDECHAR)), WideName.Get());
             if (FAILED(Result))

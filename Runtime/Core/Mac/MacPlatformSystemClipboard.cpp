@@ -44,7 +44,7 @@ bool FMacPlatformSystemClipboard::GetText(String& OutText)
             return false;
         }
 
-        const CHAR* Utf8 = [Str UTF8String];
+        const CHAR_T* Utf8 = [Str UTF8String];
         if (!Utf8)
         {
             return false;
@@ -79,7 +79,7 @@ bool FMacPlatformSystemClipboard::SetText(const String& InText)
 
         [Pasteboard clearContents];
 
-        const CHAR* Utf8 = *Text;
+        const CHAR_T* Utf8 = *Text;
         if (!Utf8)
         {
             return false;

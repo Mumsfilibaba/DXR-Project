@@ -20,7 +20,7 @@ enum class EBufferViewType : uint8
     Typed,
 };
 
-NODISCARD constexpr const CHAR* ToString(EBufferViewType ViewType)
+NODISCARD constexpr const CHAR_T* ToString(EBufferViewType ViewType)
 {
     switch (ViewType)
     {
@@ -42,7 +42,7 @@ enum class EAttachmentLoadAction : uint8
     Clear,
 };
 
-NODISCARD constexpr const CHAR* ToString(EAttachmentLoadAction LoadAction)
+NODISCARD constexpr const CHAR_T* ToString(EAttachmentLoadAction LoadAction)
 {
     switch (LoadAction)
     {
@@ -62,7 +62,7 @@ enum class EAttachmentStoreAction : uint8
     Store,
 };
 
-NODISCARD constexpr const CHAR* ToString(EAttachmentStoreAction StoreAction)
+NODISCARD constexpr const CHAR_T* ToString(EAttachmentStoreAction StoreAction)
 {
     switch (StoreAction)
     {
@@ -98,7 +98,7 @@ enum class EDepthStencilViewFlags : uint8
 
 ENUM_CLASS_OPERATORS(EDepthStencilViewFlags);
 
-NODISCARD constexpr const CHAR* ToString(EViewDimension Dimension)
+NODISCARD constexpr const CHAR_T* ToString(EViewDimension Dimension)
 {
     switch (Dimension)
     {

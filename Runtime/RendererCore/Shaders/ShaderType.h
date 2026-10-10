@@ -24,14 +24,14 @@ class RENDERERCORE_API FShaderType
 {
 public:
     NODISCARD static FShaderType* GetTypeList();
-    NODISCARD static FShaderType* FindByName(const CHAR* InName);
+    NODISCARD static FShaderType* FindByName(const CHAR_T* InName);
 
 public:
     using FModifyEnvFunc     = void (*)(const FShaderPermutationDesc&, FShaderCompilationEnvironment&);
     using FBuildEnvFunc      = void (*)(int32 PermutationID, FShaderCompilationEnvironment&);
     using FShouldCompileFunc = bool (*)(const FShaderPermutationDesc&);
 
-    FShaderType(const CHAR* InName, const CHAR* InSourceFile, const CHAR* InEntryPoint, EShaderStage InStage, EShaderModel InMinShaderModel,
+    FShaderType(const CHAR_T* InName, const CHAR_T* InSourceFile, const CHAR_T* InEntryPoint, EShaderStage InStage, EShaderModel InMinShaderModel,
         int32 InPermutationCount, FBuildEnvFunc InBuildEnvironment, FShouldCompileFunc InShouldCompile, FModifyEnvFunc InModifyEnvironment);
     ~FShaderType();
 
@@ -40,18 +40,18 @@ public:
     NODISCARD bool   ShouldCompilePermutation(const FShaderPermutationDesc& Desc) const;
     NODISCARD uint64 GetPermutationSpaceSignature() const;
 
-    NODISCARD FShaderType* GetNext() const             { return Next; }
-    NODISCARD const CHAR*  GetName() const             { return Name; }
-    NODISCARD const CHAR*  GetSourceFile() const       { return SourceFile; }
-    NODISCARD const CHAR*  GetEntryPoint() const       { return EntryPoint; }
-    NODISCARD EShaderStage GetStage() const            { return Stage; }
-    NODISCARD EShaderModel GetMinShaderModel() const   { return MinShaderModel; }
-    NODISCARD int32        GetPermutationCount() const { return PermutationCount; }
+    NODISCARD FShaderType*  GetNext() const             { return Next; }
+    NODISCARD const CHAR_T* GetName() const             { return Name; }
+    NODISCARD const CHAR_T* GetSourceFile() const       { return SourceFile; }
+    NODISCARD const CHAR_T* GetEntryPoint() const       { return EntryPoint; }
+    NODISCARD EShaderStage  GetStage() const            { return Stage; }
+    NODISCARD EShaderModel  GetMinShaderModel() const   { return MinShaderModel; }
+    NODISCARD int32         GetPermutationCount() const { return PermutationCount; }
 
 private:
-    const CHAR*        Name;
-    const CHAR*        SourceFile;
-    const CHAR*        EntryPoint;
+    const CHAR_T*      Name;
+    const CHAR_T*      SourceFile;
+    const CHAR_T*      EntryPoint;
     EShaderStage       Stage;
     EShaderModel       MinShaderModel;
     int32              PermutationCount;

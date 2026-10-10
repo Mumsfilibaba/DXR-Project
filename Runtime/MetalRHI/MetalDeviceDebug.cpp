@@ -48,7 +48,7 @@ static bool        GCaptureActive = false;
 
 #if METAL_ENABLE_DEBUG_LAYER
 
-static bool IsEnvFlagEnabled(const CHAR* Name)
+static bool IsEnvFlagEnabled(const CHAR_T* Name)
 {
     String Value;
 
@@ -60,7 +60,7 @@ static bool IsEnvFlagEnabled(const CHAR* Name)
     return CString::Stricmp(*Value, "false") != 0 && CString::Stricmp(*Value, "off") != 0;
 }
 
-static bool IsMetalValidationLine(const CHAR* Text)
+static bool IsMetalValidationLine(const CHAR_T* Text)
 {
     if (!Text || Text[0] == '\0')
     {
@@ -70,15 +70,15 @@ static bool IsMetalValidationLine(const CHAR* Text)
     return CString::Strstr(Text, "[MetalRHI]") == nullptr;
 }
 
-static const CHAR* SkipNSLogPrefix(const CHAR* Text)
+static const CHAR_T* SkipNSLogPrefix(const CHAR_T* Text)
 {
     if (Text[0] < '0' || Text[0] > '9')
     {
         return Text;
     }
 
-    const CHAR* Separator = CString::Strstr(Text, "] ");
-    const CHAR* Bracket   = CString::Strchr(Text, '[');
+    const CHAR_T* Separator = CString::Strstr(Text, "] ");
+    const CHAR_T* Bracket   = CString::Strchr(Text, '[');
 
     if (!Separator || !Bracket || Bracket > Separator)
     {
@@ -100,9 +100,9 @@ static void FlushRepeatedLine()
     }
 }
 
-static void ReportValidationLine(const CHAR* RawText)
+static void ReportValidationLine(const CHAR_T* RawText)
 {
-    const CHAR* Text = SkipNSLogPrefix(RawText);
+    const CHAR_T* Text = SkipNSLogPrefix(RawText);
 
     if (!GLastReportedLine.IsEmpty() && CString::Strcmp(*GLastReportedLine, Text) == 0)
     {
@@ -253,7 +253,7 @@ public:
     {
         constexpr int32 MaxValidationLineLength = 4096;
 
-        CHAR   Chunk[512];
+        CHAR_T Chunk[512];
         String Line;
 
         while (!bStop.Load())
@@ -298,7 +298,7 @@ public:
 
             for (ssize_t Index = 0; Index < BytesRead; ++Index)
             {
-                const CHAR Character = Chunk[Index];
+                const CHAR_T Character = Chunk[Index];
 
                 if (Character == '\n' || Character == '\r')
                 {
@@ -398,7 +398,7 @@ void MetalForceGPUHang(StringView)
         return;
     }
 
-    static const CHAR* HangSource =
+    static const CHAR_T* HangSource =
         "#include <metal_stdlib>\n"
         "using namespace metal;\n"
         "kernel void ForceGPUHang(device atomic_uint* Flag [[buffer(0)]])\n"

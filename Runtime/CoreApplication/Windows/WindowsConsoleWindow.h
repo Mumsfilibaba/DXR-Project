@@ -30,7 +30,7 @@ private:
     FWindowsConsoleWindow();
 
     bool NotifyClosed();
-    void Write(const CHAR* Data, uint32 Length);
+    void Write(const CHAR_T* Data, uint32 Length);
 
     String            Title;
     HANDLE            ConsoleHandle;

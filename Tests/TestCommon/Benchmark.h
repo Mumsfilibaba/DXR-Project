@@ -86,7 +86,7 @@ struct Benchmark
     }
 
     // Logs "<Label> :<ns>ns" and, when Iterations > 0, an extra per-op line.
-    static void Report(const CHAR* Label, int64 TotalNs, uint32 Iterations = 0)
+    static void Report(const CHAR_T* Label, int64 TotalNs, uint32 Iterations = 0)
     {
         LOG_INFO("%-27s:%lldns", Label, static_cast<long long>(TotalNs));
         if (Iterations > 0)

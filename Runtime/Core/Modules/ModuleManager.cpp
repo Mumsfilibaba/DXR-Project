@@ -35,7 +35,7 @@ void FModuleManager::Shutdown()
 }
 
 
-IModule* FModuleManager::LoadModule(const CHAR* ModuleName)
+IModule* FModuleManager::LoadModule(const CHAR_T* ModuleName)
 {
     CHECK(ModuleName != nullptr);
 
@@ -114,7 +114,7 @@ IModule* FModuleManager::LoadModule(const CHAR* ModuleName)
     }
 }
 
-IModule* FModuleManager::GetModule(const CHAR* ModuleName)
+IModule* FModuleManager::GetModule(const CHAR_T* ModuleName)
 {
     SCOPED_LOCK(ModulesCS);
 
@@ -135,7 +135,7 @@ IModule* FModuleManager::GetModule(const CHAR* ModuleName)
     }
 }
 
-IModule* FModuleManager::GetModuleInternal(const CHAR* ModuleName)
+IModule* FModuleManager::GetModuleInternal(const CHAR_T* ModuleName)
 {
     const int32 Index = GetModuleIndexUnlocked(ModuleName);
     if (Index >= 0)
@@ -157,7 +157,7 @@ IModule* FModuleManager::GetModuleInternal(const CHAR* ModuleName)
     }
 }
 
-PlatformModule FModuleManager::GetModuleHandle(const CHAR* ModuleName)
+PlatformModule FModuleManager::GetModuleHandle(const CHAR_T* ModuleName)
 {
     SCOPED_LOCK(ModulesCS);
 
@@ -172,7 +172,7 @@ PlatformModule FModuleManager::GetModuleHandle(const CHAR* ModuleName)
     }
 }
 
-void FModuleManager::RegisterStaticModule(const CHAR* ModuleName, FInitializeStaticModuleDelegate InitDelegate)
+void FModuleManager::RegisterStaticModule(const CHAR_T* ModuleName, FInitializeStaticModuleDelegate InitDelegate)
 {
     SCOPED_LOCK(StaticModuleDelegatesCS);
 
@@ -187,13 +187,13 @@ void FModuleManager::RegisterStaticModule(const CHAR* ModuleName, FInitializeSta
     }
 }
 
-bool FModuleManager::IsModuleLoaded(const CHAR* ModuleName)
+bool FModuleManager::IsModuleLoaded(const CHAR_T* ModuleName)
 {
     const int32 Index = GetModuleIndexUnlocked(ModuleName);
     return Index >= 0;
 }
 
-void FModuleManager::UnloadModule(const CHAR* ModuleName)
+void FModuleManager::UnloadModule(const CHAR_T* ModuleName)
 {
     SCOPED_LOCK(ModulesCS);
 
@@ -240,7 +240,7 @@ void FModuleManager::ReleaseAllModules()
     Modules.Clear();
 }
 
-FModuleManager::FInitializeStaticModuleDelegate* FModuleManager::GetStaticModuleDelegate(const CHAR* ModuleName)
+FModuleManager::FInitializeStaticModuleDelegate* FModuleManager::GetStaticModuleDelegate(const CHAR_T* ModuleName)
 {
     SCOPED_LOCK(StaticModuleDelegatesCS);
 
@@ -260,7 +260,7 @@ FModuleManager::FInitializeStaticModuleDelegate* FModuleManager::GetStaticModule
     }
 }
 
-int32 FModuleManager::GetModuleIndexUnlocked(const CHAR* ModuleName)
+int32 FModuleManager::GetModuleIndexUnlocked(const CHAR_T* ModuleName)
 {
     const int32 Index = Modules.FindWithPredicate([=](const FModuleData& Element)
     {

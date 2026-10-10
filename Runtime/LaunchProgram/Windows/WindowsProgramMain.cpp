@@ -54,10 +54,10 @@ int wmain(int NumArgs, WIDECHAR** Args)
 
     for (int32 Index = 1; Index < NumArgs; ++Index)
     {
-        GProgramArgs.Emplace(StringCast<CHAR>(Args[Index]).ToString());
+        GProgramArgs.Emplace(StringCast<CHAR_T>(Args[Index]).ToString());
     }
 
-    TArray<const CHAR*> ArgumentPointers;
+    TArray<const CHAR_T*> ArgumentPointers;
     for (const String& Argument : GProgramArgs)
     {
         ArgumentPointers.Add(*Argument);
@@ -71,8 +71,8 @@ int WINAPI wWinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPWSTR CmdLine, 
 {
     InitCRunTime();
 
-    const String CommandLineText  = StringCast<CHAR>(CmdLine).ToString();
-    const CHAR*  LocalCommandLine = *CommandLineText;
+    const String  CommandLineText  = StringCast<CHAR_T>(CmdLine).ToString();
+    const CHAR_T* LocalCommandLine = *CommandLineText;
 
     CommandLine::Initialize(&LocalCommandLine, 1);
     return RunProgram();

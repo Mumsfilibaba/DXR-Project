@@ -7,7 +7,7 @@
 #if D3D12_ENABLE_DESCRIPTOR_HEAP_ROLLOVER_LOGGING
 static void LogDescriptorHeapRollover(const String& PSOName, bool bCommandListSplit, uint32 NumResourceDescriptors)
 {
-    const CHAR* PSONameStr = PSOName.Length() > 0 ? PSOName.Data() : "<unnamed>";
+    const CHAR_T* PSONameStr = PSOName.Length() > 0 ? PSOName.Data() : "<unnamed>";
     D3D12_INFO("[DescriptorHeapRollover] %s (PSO: '%s', RequestedDescriptors: %u)",
         bCommandListSplit ? "CommandList split" : "Realloc-only rollover", PSONameStr, NumResourceDescriptors);
 }
@@ -327,7 +327,7 @@ void FD3D12CommandContextState::BindComputeState()
         String PSODebugName;
         ComputeState.PipelineState->GetDebugName(PSODebugName);
         
-        const CHAR* PSONameStr = PSODebugName.Length() > 0 ? PSODebugName.Data() : "<unnamed>";
+        const CHAR_T* PSONameStr = PSODebugName.Length() > 0 ? PSODebugName.Data() : "<unnamed>";
         D3D12_INFO("[PSO-BIND] Compute dispatch PSO=%p ('%s')", reinterpret_cast<void*>(ComputeState.PipelineState.Get()), PSONameStr);
     }
 #endif

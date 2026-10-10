@@ -178,16 +178,16 @@ void FD3D12Shader::BuildBindingInfo(const FShaderCodeView& InCode, EShaderBindin
     OutBindingInfo = ::Move(NewBindingInfo);
 }
 
-bool FD3D12Shader::ValidateRequiresFlags(ED3D12ShaderFlags InFlags, const CHAR* InShaderName)
+bool FD3D12Shader::ValidateRequiresFlags(ED3D12ShaderFlags InFlags, const CHAR_T* InShaderName)
 {
     // Logs each missing capability and returns false if any required feature is missing.
     // Per-flag check is intentional so we surface every problem in a single shader-load.
     bool bAllSatisfied = true;
 
     // Release graphics and compute shaders carry no entry point
-    MAYBE_UNUSED const CHAR* SafeName = (InShaderName != nullptr && InShaderName[0] != '\0') ? InShaderName : "<unnamed>";
+    MAYBE_UNUSED const CHAR_T* SafeName = (InShaderName != nullptr && InShaderName[0] != '\0') ? InShaderName : "<unnamed>";
 
-    auto ReportMissing = [&](const CHAR* InFeature)
+    auto ReportMissing = [&](const CHAR_T* InFeature)
     {
         UNREFERENCED_VARIABLE(InFeature);
         D3D12_ERROR("[FD3D12Shader] Shader '%s' requires '%s' which the current device does not support", SafeName, InFeature);

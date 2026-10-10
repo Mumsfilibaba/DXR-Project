@@ -22,7 +22,7 @@ FRenderGraphPassResources::FRenderGraphPassResources(const FRenderGraphPass& InP
 
 FRenderGraphPassResources::~FRenderGraphPassResources() = default;
 
-FRenderGraphPass::FRenderGraphPass(const CHAR* InName, ERenderGraphPassFlags InFlags, bool bInEnabled)
+FRenderGraphPass::FRenderGraphPass(const CHAR_T* InName, ERenderGraphPassFlags InFlags, bool bInEnabled)
     : Name(InName ? InName : "RenderGraphPass")
     , Flags(InFlags)
     , Executor(nullptr)

@@ -124,10 +124,10 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
     }
 
     // Verify Layers
-    TArray<const CHAR*> EnabledLayerNames;
+    TArray<const CHAR_T*> EnabledLayerNames;
     for (const VkLayerProperties& LayerProperty : LayerProperties)
     {
-        const auto MatchLayer = [=](const CHAR* Other) -> bool { return CString::Strcmp(LayerProperty.layerName, Other) == 0; };
+        const auto MatchLayer = [=](const CHAR_T* Other) -> bool { return CString::Strcmp(LayerProperty.layerName, Other) == 0; };
 
         if (CreateInfo.RequiredLayerNames.ContainsWithPredicate(MatchLayer) || CreateInfo.OptionalLayerNames.ContainsWithPredicate(MatchLayer))
         {
@@ -136,9 +136,9 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
         }
     }
 
-    for (const CHAR* LayerName : CreateInfo.RequiredLayerNames)
+    for (const CHAR_T* LayerName : CreateInfo.RequiredLayerNames)
     {
-        const auto MatchLayer = [=](const CHAR* Other) -> bool { return CString::Strcmp(LayerName, Other) == 0; };
+        const auto MatchLayer = [=](const CHAR_T* Other) -> bool { return CString::Strcmp(LayerName, Other) == 0; };
 
         if (!EnabledLayerNames.ContainsWithPredicate(MatchLayer))
         {
@@ -147,7 +147,7 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
         }
     }
 
-    for (const CHAR* LayerName : EnabledLayerNames)
+    for (const CHAR_T* LayerName : EnabledLayerNames)
     {
         uint32 LayerExtensionCount = 0;
         Result = vkEnumerateInstanceExtensionProperties(LayerName, &LayerExtensionCount, nullptr);
@@ -174,7 +174,7 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
     }
 
     // Resolve instance extensions
-    TArray<const CHAR*> EnabledExtensionNames;
+    TArray<const CHAR_T*> EnabledExtensionNames;
     for (const TUniquePtr<FVulkanInstanceExtension>& Extension : CreateInfo.Extensions)
     {
         Extension->SetEnabled(false);
@@ -208,7 +208,7 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
         {
             VULKAN_INFO("Enabled Instance Layers:");
 
-            for (const CHAR* LayerName : EnabledLayerNames)
+            for (const CHAR_T* LayerName : EnabledLayerNames)
             {
                 LOG_INFO("    %s", LayerName);
             }
@@ -218,7 +218,7 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
         {
             VULKAN_INFO("Enabled Instance Extensions:");
 
-            for (const CHAR* ExtensionName : EnabledExtensionNames)
+            for (const CHAR_T* ExtensionName : EnabledExtensionNames)
             {
                 LOG_INFO("    %s", ExtensionName);
             }

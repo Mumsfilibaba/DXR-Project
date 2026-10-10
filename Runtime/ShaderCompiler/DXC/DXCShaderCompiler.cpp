@@ -276,8 +276,8 @@ bool FDXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
     WCHAR TargetProfile[BufferLength];
     CStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
 
-    const TStringConversion<WIDECHAR, CHAR> WideSourceName = StringCast<WIDECHAR>(Request.SourceName);
-    const TStringConversion<WIDECHAR, CHAR> WideEntrypoint = StringCast<WIDECHAR>(CompileInfo.EntryPoint);
+    const TStringConversion<WIDECHAR, CHAR_T> WideSourceName = StringCast<WIDECHAR>(Request.SourceName);
+    const TStringConversion<WIDECHAR, CHAR_T> WideEntrypoint = StringCast<WIDECHAR>(CompileInfo.EntryPoint);
 
     // The source is already preprocessed, so there are no defines to pass
     TComPtr<IDxcCompilerArgs> CompileArguments;

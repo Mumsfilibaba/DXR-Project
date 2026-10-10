@@ -439,7 +439,7 @@ BOOL FWindowsApplication::EnumerateMonitors(HMONITOR Monitor, HDC /*DeviceContex
     CHECK(DpiX == DpiY);
 
     FMonitorInfo NewMonitorInfo;
-    NewMonitorInfo.DeviceName     = StringCast<CHAR>(MonitorInfo.szDevice).ToString();
+    NewMonitorInfo.DeviceName     = StringCast<CHAR_T>(MonitorInfo.szDevice).ToString();
     NewMonitorInfo.MainPosition   = IntVector2(MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.top);
     NewMonitorInfo.MainSize       = IntVector2(MonitorInfo.rcMonitor.right  - MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top);
     NewMonitorInfo.WorkPosition   = IntVector2(MonitorInfo.rcWork.left, MonitorInfo.rcWork.top);

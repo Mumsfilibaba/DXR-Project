@@ -17,10 +17,10 @@ static TArray<String> SplitTextIntoLines(const String& Text)
         return Lines;
     }
 
-    const CHAR* const End       = Text.Data() + Text.Length();
-    const CHAR*       LineStart = Text.Data();
+    const CHAR_T* const End       = Text.Data() + Text.Length();
+    const CHAR_T*       LineStart = Text.Data();
 
-    for (const CHAR* Current = LineStart; Current != End; ++Current)
+    for (const CHAR_T* Current = LineStart; Current != End; ++Current)
     {
         if (*Current == '\n')
         {

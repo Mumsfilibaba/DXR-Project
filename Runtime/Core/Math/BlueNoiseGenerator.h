@@ -12,7 +12,7 @@ enum class EBlueNoiseAlgorithm
     VectorSwap,
 };
 
-using FBlueNoiseProgressCallback   = TFunction<void(float /*Fraction*/, const CHAR* /*Phase*/)>;
+using FBlueNoiseProgressCallback   = TFunction<void(float /*Fraction*/, const CHAR_T* /*Phase*/)>;
 using FBlueNoiseCheckpointCallback = TFunction<void(const TArray<float>& /*Values*/, int64 /*Iteration*/)>;
 
 struct FBlueNoiseCallbacks

@@ -150,7 +150,7 @@ void FWindowsPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, F
     HANDLE ProcessHandle = ::GetCurrentProcess();
 
     // Initialize symbol.
-    CHAR SymbolBuffer[sizeof(SYMBOL_INFO) + FStackTraceEntry::MaxNameLength];
+    ANSICHAR SymbolBuffer[sizeof(SYMBOL_INFO) + FStackTraceEntry::MaxNameLength];
     Memory::Memzero(SymbolBuffer, sizeof(SymbolBuffer));
 
     SYMBOL_INFO* Symbol = reinterpret_cast<SYMBOL_INFO*>(SymbolBuffer);

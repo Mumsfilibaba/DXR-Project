@@ -61,7 +61,7 @@ struct FD3D11ShaderBindingInfo
 
     static_assert(D3D11_MAX_UNORDERED_ACCESS_VIEWS <= 64, "UnorderedAccessViewMask needs more bits");
 
-    void AddBinding(ED3D11BindingType InType, uint16 InRegister, uint16 InCount, const CHAR* InDebugName)
+    void AddBinding(ED3D11BindingType InType, uint16 InRegister, uint16 InCount, const CHAR_T* InDebugName)
     {
         FResourceBinding& Binding = ResourceBindings.Emplace();
         Binding.BindingType = InType;

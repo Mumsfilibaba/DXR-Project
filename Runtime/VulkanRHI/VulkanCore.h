@@ -1422,7 +1422,7 @@ NODISCARD inline bool IsFormatInCompatibilityClass(VkFormat ImageFormat, VkForma
 
 }
 
-constexpr const CHAR* ToString(VkImageLayout Layout)
+constexpr const CHAR_T* ToString(VkImageLayout Layout)
 {
     switch (Layout)
     {
@@ -1449,7 +1449,7 @@ constexpr const CHAR* ToString(VkImageLayout Layout)
     }
 }
 
-constexpr const CHAR* ToString(VkFormat Format)
+constexpr const CHAR_T* ToString(VkFormat Format)
 {
     switch (Format)
     {
@@ -1686,7 +1686,7 @@ constexpr const CHAR* ToString(VkFormat Format)
     }
 }
 
-constexpr const CHAR* ToString(VkColorSpaceKHR ColorSpace)
+constexpr const CHAR_T* ToString(VkColorSpaceKHR ColorSpace)
 {
     switch (ColorSpace)
     {
@@ -1712,7 +1712,7 @@ constexpr const CHAR* ToString(VkColorSpaceKHR ColorSpace)
     }
 }
 
-constexpr const CHAR* ToString(VkPresentModeKHR PresentMode)
+constexpr const CHAR_T* ToString(VkPresentModeKHR PresentMode)
 {
     switch (PresentMode)
     {
@@ -1728,7 +1728,7 @@ constexpr const CHAR* ToString(VkPresentModeKHR PresentMode)
     }
 }
 
-constexpr const CHAR* ToString(VkResult Result)
+constexpr const CHAR_T* ToString(VkResult Result)
 {
     switch (Result)
     {
@@ -1776,7 +1776,7 @@ constexpr const CHAR* ToString(VkResult Result)
     }
 }
 
-constexpr const CHAR* GetVkErrorString(VkResult Result)
+constexpr const CHAR_T* GetVkErrorString(VkResult Result)
 {
     switch (Result)
     {
@@ -1861,7 +1861,7 @@ constexpr const CHAR* GetVkErrorString(VkResult Result)
     }
 }
 
-constexpr const CHAR* ToString(VkDescriptorType DescriptorType)
+constexpr const CHAR_T* ToString(VkDescriptorType DescriptorType)
 {
     switch (DescriptorType)
     {

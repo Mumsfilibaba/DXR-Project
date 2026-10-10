@@ -40,7 +40,7 @@ bool FRemoteRequestSources::FileExists(const String& Path) const
     return Files.Contains(RemoteShaderCompilerProtocol::CollapsePath(Path));
 }
 
-bool FRemoteRequestSources::ReadFile(const String& Path, TArray<CHAR>& OutText) const
+bool FRemoteRequestSources::ReadFile(const String& Path, TArray<CHAR_T>& OutText) const
 {
     const TSharedPtr<TArray<uint8>>* Contents = Files.Find(RemoteShaderCompilerProtocol::CollapsePath(Path));
     if (!Contents || !*Contents)
@@ -386,7 +386,7 @@ void FRemoteShaderCompilerServer::AcceptConnections(FNetworkSocket& ListenSocket
 
         if (!Settings.bAllowRemoteConnections && !PeerAddress.IsLoopback())
         {
-            const CHAR* Reason = "Remote connections are disabled (start the server with -allowremote)";
+            const CHAR_T* Reason = "Remote connections are disabled (start the server with -allowremote)";
             Reject(Socket, Reason);
             OutLogMessages.Add(String::Printf("[RemoteShaderCompiler] Rejected %s, %s", *PeerText, Reason));
             continue;
@@ -395,7 +395,7 @@ void FRemoteShaderCompilerServer::AcceptConnections(FNetworkSocket& ListenSocket
         TScopedLock Lock(ConnectionsCS);
         if (Connections.Size() >= Settings.MaxClients)
         {
-            const CHAR* Reason = "Too many clients are connected";
+            const CHAR_T* Reason = "Too many clients are connected";
             Reject(Socket, Reason);
             OutLogMessages.Add(String::Printf("[RemoteShaderCompiler] Rejected %s, %s", *PeerText, Reason));
             continue;
@@ -410,7 +410,7 @@ void FRemoteShaderCompilerServer::AcceptConnections(FNetworkSocket& ListenSocket
     }
 }
 
-void FRemoteShaderCompilerServer::Reject(FNetworkSocket& Socket, const CHAR* Reason)
+void FRemoteShaderCompilerServer::Reject(FNetworkSocket& Socket, const CHAR_T* Reason)
 {
     RemoteShaderCompilerProtocol::FFrame Frame;
     Frame.Type   = RemoteShaderCompilerProtocol::EMessageType::Rejected;
@@ -433,7 +433,7 @@ RemoteShaderCompilerProtocol::FFrame FRemoteShaderCompilerServer::BuildHello()
     for (EShaderOutputLanguage OutputLanguage : GServedLanguages)
     {
         FShaderCompilerIdentity Identity;
-        const CHAR*             Route = nullptr;
+        const CHAR_T*           Route = nullptr;
 
         if (Compiler.CanCompileLocally(OutputLanguage))
         {
@@ -677,7 +677,7 @@ void FRemoteShaderCompilerServer::RunCompile(TSharedPtr<FConnection> Connection,
     TArray<uint8>  ShaderCode;
     TArray<String> Dependencies;
     String         Messages;
-    const CHAR*    Status = RemoteShaderCompilerProtocol::StatusFailed;
+    const CHAR_T*  Status = RemoteShaderCompilerProtocol::StatusFailed;
     String         Route;
 
     if (!bForward)
@@ -723,7 +723,7 @@ void FRemoteShaderCompilerServer::RunCompile(TSharedPtr<FConnection> Connection,
     LOG_INFO("[RemoteShaderCompiler] %s %s %s %s, %s in %llu ms", *Connection->PeerAddress, *JobName, ToString(Job.OutputLanguage), Status, *Route, Elapsed);
 }
 
-void FRemoteShaderCompilerServer::QueueResult(FConnection& Connection, uint32 RequestId, const CHAR* Status, const String& Messages, const TArray<String>& Dependencies, const TArray<uint8>& ShaderCode)
+void FRemoteShaderCompilerServer::QueueResult(FConnection& Connection, uint32 RequestId, const CHAR_T* Status, const String& Messages, const TArray<String>& Dependencies, const TArray<uint8>& ShaderCode)
 {
     FJsonValue DependencyArray = FJsonValue::MakeArray();
     for (const String& Dependency : Dependencies)

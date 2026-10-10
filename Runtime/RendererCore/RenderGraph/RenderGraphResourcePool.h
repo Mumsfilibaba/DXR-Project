@@ -20,8 +20,8 @@ public:
     }
 
 public:
-    FRHIBuffer*  AcquireBuffer(const FRenderGraphBufferDesc& InDesc, const CHAR* Name, ERHIResourceState& OutCurrentState);
-    FRHITexture* AcquireTexture(const FRenderGraphTextureDesc& InDesc, const CHAR* Name, ERHIResourceState& OutCurrentState);
+    FRHIBuffer*  AcquireBuffer(const FRenderGraphBufferDesc& InDesc, const CHAR_T* Name, ERHIResourceState& OutCurrentState);
+    FRHITexture* AcquireTexture(const FRenderGraphTextureDesc& InDesc, const CHAR_T* Name, ERHIResourceState& OutCurrentState);
 
     void ReleaseBuffer(FRHIBuffer* Buffer, ERHIResourceState CurrentState);
     void ReleaseTexture(FRHITexture* Texture, ERHIResourceState CurrentState);

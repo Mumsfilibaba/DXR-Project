@@ -22,7 +22,7 @@ static String JoinTokens(const FShaderPreprocessorOutput& Output)
     return Result;
 }
 
-static bool Preprocess(const CHAR* Source, FShaderPreprocessorOutput& OutOutput, const CHAR* DefineName = nullptr, const CHAR* DefineValue = nullptr)
+static bool Preprocess(const CHAR_T* Source, FShaderPreprocessorOutput& OutOutput, const CHAR_T* DefineName = nullptr, const CHAR_T* DefineValue = nullptr)
 {
     FShaderPreprocessor Preprocessor(Paths::GetAssetDir() + "/Shaders");
     if (DefineName)
@@ -33,7 +33,7 @@ static bool Preprocess(const CHAR* Source, FShaderPreprocessorOutput& OutOutput,
     return Preprocessor.Preprocess(String(), StringView(Source), OutOutput);
 }
 
-static String PreprocessToText(const CHAR* Source, const CHAR* DefineName = nullptr, const CHAR* DefineValue = nullptr)
+static String PreprocessToText(const CHAR_T* Source, const CHAR_T* DefineName = nullptr, const CHAR_T* DefineValue = nullptr)
 {
     FShaderPreprocessorOutput Output;
     if (!Preprocess(Source, Output, DefineName, DefineValue))
@@ -44,7 +44,7 @@ static String PreprocessToText(const CHAR* Source, const CHAR* DefineName = null
     return JoinTokens(Output);
 }
 
-static String TranslateToText(const CHAR* Source, bool* bOutSucceeded = nullptr)
+static String TranslateToText(const CHAR_T* Source, bool* bOutSucceeded = nullptr)
 {
     FShaderPreprocessorOutput Output;
     const bool bSucceeded = Preprocess(Source, Output) && FFXCShaderTranslator::Translate(Output);
@@ -169,8 +169,8 @@ bool ShaderPreprocessorErrors_Test()
 
     struct FErrorCase
     {
-        const CHAR* Source;
-        const CHAR* ExpectedMessage;
+        const CHAR_T* Source;
+        const CHAR_T* ExpectedMessage;
     };
 
     const FErrorCase Cases[] =

@@ -395,7 +395,7 @@ private:
 
 static TSharedPtr<FGizmoViewport> GViewport;
 
-static const CHAR* GetHandleName(EGizmoHandle Handle)
+static const CHAR_T* GetHandleName(EGizmoHandle Handle)
 {
     switch (Handle)
     {
@@ -536,8 +536,8 @@ static TSharedPtr<FVisualElement> MakeGizmoControls(const FPlaygroundFonts& Font
 
     struct FOperationEntry
     {
-        const CHAR*     Label;
-        const CHAR*     ToolTipText;
+        const CHAR_T*   Label;
+        const CHAR_T*   ToolTipText;
         EGizmoOperation Operation;
     };
 
@@ -567,9 +567,9 @@ static TSharedPtr<FVisualElement> MakeGizmoControls(const FPlaygroundFonts& Font
 
     struct FModeEntry
     {
-        const CHAR* Label;
-        const CHAR* ToolTipText;
-        EGizmoMode  Mode;
+        const CHAR_T* Label;
+        const CHAR_T* ToolTipText;
+        EGizmoMode    Mode;
     };
 
     const FModeEntry Modes[] =

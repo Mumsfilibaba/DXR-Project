@@ -21,31 +21,31 @@ struct FRenderGraphStatistics
 class RENDERERCORE_API FRenderGraphBuilder : FNonCopyable
 {
 public:
-    explicit FRenderGraphBuilder(const CHAR* InName);
+    explicit FRenderGraphBuilder(const CHAR_T* InName);
     ~FRenderGraphBuilder();
 
-    NODISCARD FRenderGraphBuffer*              CreateBuffer(const FRenderGraphBufferDesc& Desc, const CHAR* Name);
-    NODISCARD FRenderGraphTexture*             CreateTexture(const FRenderGraphTextureDesc& Desc, const CHAR* Name);
-    NODISCARD FRenderGraphBuffer*              RegisterExternalBuffer(FRHIBuffer* Buffer, const CHAR* Name, ERHIResourceState InitialState, ERHIResourceState FinalState);
-    NODISCARD FRenderGraphTexture*             RegisterExternalTexture(FRHITexture* Texture, const CHAR* Name, ERHIResourceState InitialState, ERHIResourceState FinalState);
+    NODISCARD FRenderGraphBuffer*              CreateBuffer(const FRenderGraphBufferDesc& Desc, const CHAR_T* Name);
+    NODISCARD FRenderGraphTexture*             CreateTexture(const FRenderGraphTextureDesc& Desc, const CHAR_T* Name);
+    NODISCARD FRenderGraphBuffer*              RegisterExternalBuffer(FRHIBuffer* Buffer, const CHAR_T* Name, ERHIResourceState InitialState, ERHIResourceState FinalState);
+    NODISCARD FRenderGraphTexture*             RegisterExternalTexture(FRHITexture* Texture, const CHAR_T* Name, ERHIResourceState InitialState, ERHIResourceState FinalState);
 
-    NODISCARD FRenderGraphShaderResourceView*  RegisterExternalSRV(FRenderGraphTexture* Texture, FRHIShaderResourceView* View, const CHAR* Name);
-    NODISCARD FRenderGraphUnorderedAccessView* RegisterExternalUAV(FRenderGraphTexture* Texture, FRHIUnorderedAccessView* View, const CHAR* Name);
-    NODISCARD FRenderGraphRenderTargetView*    RegisterExternalRTV(FRenderGraphTexture* Texture, FRHIRenderTargetView* View, const CHAR* Name);
-    NODISCARD FRenderGraphDepthStencilView*    RegisterExternalDSV(FRenderGraphTexture* Texture, FRHIDepthStencilView* View, const CHAR* Name);
+    NODISCARD FRenderGraphShaderResourceView*  RegisterExternalSRV(FRenderGraphTexture* Texture, FRHIShaderResourceView* View, const CHAR_T* Name);
+    NODISCARD FRenderGraphUnorderedAccessView* RegisterExternalUAV(FRenderGraphTexture* Texture, FRHIUnorderedAccessView* View, const CHAR_T* Name);
+    NODISCARD FRenderGraphRenderTargetView*    RegisterExternalRTV(FRenderGraphTexture* Texture, FRHIRenderTargetView* View, const CHAR_T* Name);
+    NODISCARD FRenderGraphDepthStencilView*    RegisterExternalDSV(FRenderGraphTexture* Texture, FRHIDepthStencilView* View, const CHAR_T* Name);
 
-    NODISCARD FRenderGraphShaderResourceView*  CreateSRV(FRenderGraphTexture* Texture, const FRHIShaderResourceViewDesc& Desc, const CHAR* Name);
-    NODISCARD FRenderGraphUnorderedAccessView* CreateUAV(FRenderGraphTexture* Texture, const FRHIUnorderedAccessViewDesc& Desc, const CHAR* Name);
-    NODISCARD FRenderGraphRenderTargetView*    CreateRTV(FRenderGraphTexture* Texture, const FRHIRenderTargetViewDesc& Desc, const CHAR* Name);
-    NODISCARD FRenderGraphDepthStencilView*    CreateDSV(FRenderGraphTexture* Texture, const FRHIDepthStencilViewDesc& Desc, const CHAR* Name);
+    NODISCARD FRenderGraphShaderResourceView*  CreateSRV(FRenderGraphTexture* Texture, const FRHIShaderResourceViewDesc& Desc, const CHAR_T* Name);
+    NODISCARD FRenderGraphUnorderedAccessView* CreateUAV(FRenderGraphTexture* Texture, const FRHIUnorderedAccessViewDesc& Desc, const CHAR_T* Name);
+    NODISCARD FRenderGraphRenderTargetView*    CreateRTV(FRenderGraphTexture* Texture, const FRHIRenderTargetViewDesc& Desc, const CHAR_T* Name);
+    NODISCARD FRenderGraphDepthStencilView*    CreateDSV(FRenderGraphTexture* Texture, const FRHIDepthStencilViewDesc& Desc, const CHAR_T* Name);
 
-    NODISCARD FRenderGraphShaderResourceView*  CreateSRV(FRenderGraphBuffer* Buffer, const FRHIShaderResourceViewDesc& Desc, const CHAR* Name);
-    NODISCARD FRenderGraphUnorderedAccessView* CreateUAV(FRenderGraphBuffer* Buffer, const FRHIUnorderedAccessViewDesc& Desc, const CHAR* Name);
+    NODISCARD FRenderGraphShaderResourceView*  CreateSRV(FRenderGraphBuffer* Buffer, const FRHIShaderResourceViewDesc& Desc, const CHAR_T* Name);
+    NODISCARD FRenderGraphUnorderedAccessView* CreateUAV(FRenderGraphBuffer* Buffer, const FRHIUnorderedAccessViewDesc& Desc, const CHAR_T* Name);
 
-    NODISCARD FRenderGraphShaderResourceView*  CreateSRV(FRenderGraphTexture* Texture, const CHAR* Name);
-    NODISCARD FRenderGraphUnorderedAccessView* CreateUAV(FRenderGraphTexture* Texture, const CHAR* Name);
-    NODISCARD FRenderGraphRenderTargetView*    CreateRTV(FRenderGraphTexture* Texture, const CHAR* Name);
-    NODISCARD FRenderGraphDepthStencilView*    CreateDSV(FRenderGraphTexture* Texture, const CHAR* Name);
+    NODISCARD FRenderGraphShaderResourceView*  CreateSRV(FRenderGraphTexture* Texture, const CHAR_T* Name);
+    NODISCARD FRenderGraphUnorderedAccessView* CreateUAV(FRenderGraphTexture* Texture, const CHAR_T* Name);
+    NODISCARD FRenderGraphRenderTargetView*    CreateRTV(FRenderGraphTexture* Texture, const CHAR_T* Name);
+    NODISCARD FRenderGraphDepthStencilView*    CreateDSV(FRenderGraphTexture* Texture, const CHAR_T* Name);
 
     NODISCARD FRenderGraphShaderResourceView*  GetOrCreateDefaultSRV(FRenderGraphTexture* Texture);
     NODISCARD FRenderGraphUnorderedAccessView* GetOrCreateDefaultUAV(FRenderGraphTexture* Texture);
@@ -58,13 +58,13 @@ public:
     void Execute(FRHICommandList& CommandList);
 
     template<typename SetupLambdaType, typename ExecuteLambdaType>
-    void AddPass(const CHAR* Name, ERenderGraphPassFlags Flags, SetupLambdaType&& SetupLambda, ExecuteLambdaType&& ExecuteLambda)
+    void AddPass(const CHAR_T* Name, ERenderGraphPassFlags Flags, SetupLambdaType&& SetupLambda, ExecuteLambdaType&& ExecuteLambda)
     {
         AddPass(Name, Flags, true, Forward<SetupLambdaType>(SetupLambda), Forward<ExecuteLambdaType>(ExecuteLambda));
     }
 
     template<typename SetupLambdaType, typename ExecuteLambdaType>
-    void AddPass(const CHAR* Name, ERenderGraphPassFlags Flags, bool bEnabled, SetupLambdaType&& SetupLambda, ExecuteLambdaType&& ExecuteLambda)
+    void AddPass(const CHAR_T* Name, ERenderGraphPassFlags Flags, bool bEnabled, SetupLambdaType&& SetupLambda, ExecuteLambdaType&& ExecuteLambda)
     {
         FRenderGraphPass* Pass = AllocatePass(Name, Flags, bEnabled);
         if (!Pass)
@@ -86,7 +86,7 @@ public:
         return Statistics;
     }
 
-    NODISCARD const CHAR* GetName() const
+    NODISCARD const CHAR_T* GetName() const
     {
         return Name;
     }
@@ -123,10 +123,10 @@ private:
     NODISCARD static bool IsAccessPlannedThroughView(const FRenderGraphPass& Pass, FRenderGraphTexture* Texture, ERHIResourceState State, bool bIsWrite);
     NODISCARD static bool IsAccessPlannedThroughView(const FRenderGraphPass& Pass, FRenderGraphBuffer* Buffer, ERHIResourceState State, bool bIsWrite);
 
-    NODISCARD FRenderGraphPass* AllocatePass(const CHAR* InName, ERenderGraphPassFlags InFlags, bool bEnabled = true);
+    NODISCARD FRenderGraphPass* AllocatePass(const CHAR_T* InName, ERenderGraphPassFlags InFlags, bool bEnabled = true);
 
-    NODISCARD bool ValidateExternalViewRegistration(FRenderGraphTexture* Texture, const void* View, const CHAR* ViewKind, const CHAR* Name);
-    NODISCARD bool ValidateViewCreation(FRenderGraphTexture* Texture, const CHAR* ViewKind, const CHAR* Name);
+    NODISCARD bool ValidateExternalViewRegistration(FRenderGraphTexture* Texture, const void* View, const CHAR_T* ViewKind, const CHAR_T* Name);
+    NODISCARD bool ValidateViewCreation(FRenderGraphTexture* Texture, const CHAR_T* ViewKind, const CHAR_T* Name);
 
     void CullPasses();
     void ResolveLifetimes();
@@ -148,15 +148,15 @@ private:
     NODISCARD FRHIBeginRenderPassDesc BuildBeginRenderPassDesc(const FRenderGraphPass& Pass, FRenderGraphViewCache& ViewCache) const;
 
     template<typename ViewType, typename DescType>
-    NODISCARD ViewType* AllocateTextureView(FRenderGraphTexture* Texture, const DescType& Desc, const CHAR* Name);
+    NODISCARD ViewType* AllocateTextureView(FRenderGraphTexture* Texture, const DescType& Desc, const CHAR_T* Name);
 
     template<typename ViewType, typename DescType>
-    NODISCARD ViewType* AllocateShaderAccessTextureView(FRenderGraphTexture* Texture, const DescType& Desc, const CHAR* Name);
+    NODISCARD ViewType* AllocateShaderAccessTextureView(FRenderGraphTexture* Texture, const DescType& Desc, const CHAR_T* Name);
 
     template<typename ViewType, typename DescType>
-    NODISCARD ViewType* AllocateBufferView(FRenderGraphBuffer* Buffer, const DescType& Desc, const CHAR* Name);
+    NODISCARD ViewType* AllocateBufferView(FRenderGraphBuffer* Buffer, const DescType& Desc, const CHAR_T* Name);
 
-    const CHAR*                              Name;
+    const CHAR_T*                            Name;
     FMemoryStack                             Memory;
     TArray<FRenderGraphPass*>                Passes;
     TArray<FRenderGraphTexture*>             Textures;

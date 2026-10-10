@@ -31,7 +31,7 @@ public:
     // ones when loading, so the same loop body works either way.
     struct FObjectScope : public FNonCopyable
     {
-        FObjectScope(FJsonArchive& InArchive, const CHAR* Name);
+        FObjectScope(FJsonArchive& InArchive, const CHAR_T* Name);
         explicit FObjectScope(FJsonArchive& InArchive);
         ~FObjectScope();
 
@@ -44,7 +44,7 @@ public:
 
     struct FArrayScope : public FNonCopyable
     {
-        FArrayScope(FJsonArchive& InArchive, const CHAR* Name);
+        FArrayScope(FJsonArchive& InArchive, const CHAR_T* Name);
         ~FArrayScope();
 
         // False when loading a document where this array is absent.
@@ -82,22 +82,22 @@ public:
     void SetVersion(int32 InVersion);
 
     template<typename T>
-    FJsonArchive& Field(const CHAR* Name, T& Value);
+    FJsonArchive& Field(const CHAR_T* Name, T& Value);
 
     // Serializes a field that is left out of the output while it still equals Default, 
     // which is also what it falls back to when the document has no such member.
     template<typename T>
-    FJsonArchive& Field(const CHAR* Name, T& Value, const T& Default);
+    FJsonArchive& Field(const CHAR_T* Name, T& Value, const T& Default);
 
     // Serializes a field, reporting whether the document actually carried one. Always true on save.
     template<typename T>
-    NODISCARD bool OptionalField(const CHAR* Name, T& Value);
+    NODISCARD bool OptionalField(const CHAR_T* Name, T& Value);
 
     // Records a failure against the field currently being serialized
-    void AddError(const CHAR* Format, ...);
+    void AddError(const CHAR_T* Format, ...);
 
     // Records that the document held the wrong type for the field being serialized
-    void AddTypeError(const FJsonValue& Found, const CHAR* Expected);
+    void AddTypeError(const FJsonValue& Found, const CHAR_T* Expected);
 
     // Adopts the errors of a nested archive, rewriting their paths as relative to this one. A type
     // that serializes itself runs on its own archive rooted at its own value, so its errors arrive
@@ -111,7 +111,7 @@ public:
     NODISCARD String GetPath() const;
 
     // The name JSON uses for a type, for error messages
-    NODISCARD static const CHAR* GetTypeName(EJsonType Type);
+    NODISCARD static const CHAR_T* GetTypeName(EJsonType Type);
 
     NODISCARD bool HasErrors() const
     {
@@ -136,12 +136,12 @@ private:
     NODISCARD FScope&       CurrentScope()       { return Scopes.Last(); }
     NODISCARD const FScope& CurrentScope() const { return Scopes.Last(); }
 
-    void PushNamedScope(const CHAR* Name, EJsonType ContainerType);
+    void PushNamedScope(const CHAR_T* Name, EJsonType ContainerType);
     void PushElementScope(EJsonType ContainerType);
     void PopScope();
 
     // Null when the member is absent or the enclosing scope is unreachable
-    NODISCARD const FJsonValue* FindForLoad(const CHAR* Name) const;
+    NODISCARD const FJsonValue* FindForLoad(const CHAR_T* Name) const;
     NODISCARD FJsonValue*       GetObjectForSave() const;
 
     bool              bIsSaving;
@@ -153,7 +153,7 @@ private:
 };
 
 template<typename T>
-FJsonArchive& FJsonArchive::Field(const CHAR* Name, T& Value)
+FJsonArchive& FJsonArchive::Field(const CHAR_T* Name, T& Value)
 {
     PathSegments.Emplace(Name);
 
@@ -179,7 +179,7 @@ FJsonArchive& FJsonArchive::Field(const CHAR* Name, T& Value)
 }
 
 template<typename T>
-FJsonArchive& FJsonArchive::Field(const CHAR* Name, T& Value, const T& Default)
+FJsonArchive& FJsonArchive::Field(const CHAR_T* Name, T& Value, const T& Default)
 {
     PathSegments.Emplace(Name);
 
@@ -212,7 +212,7 @@ FJsonArchive& FJsonArchive::Field(const CHAR* Name, T& Value, const T& Default)
 }
 
 template<typename T>
-bool FJsonArchive::OptionalField(const CHAR* Name, T& Value)
+bool FJsonArchive::OptionalField(const CHAR_T* Name, T& Value)
 {
     PathSegments.Emplace(Name);
 

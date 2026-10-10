@@ -105,15 +105,15 @@ bool TStringConversion_Test()
         TEST_EXPECT(Buffer[0] == 0xE6 && Buffer[1] == 0x97 && Buffer[2] == 0xA5 && Buffer[3] == 0);
     }
 
-    TEST_SECTION("StringCast between CHAR and WIDECHAR");
+    TEST_SECTION("StringCast between CHAR_T and WIDECHAR");
     {
         const String Text = TEXT("Åäö 日本語 😀");
 
-        const TStringConversion<WIDECHAR, CHAR> Wide = StringCast<WIDECHAR>(Text);
+        const TStringConversion<WIDECHAR, CHAR_T> Wide = StringCast<WIDECHAR>(Text);
         TEST_EXPECT(TCString<WIDECHAR>::Strcmp(Wide.Get(), L"Åäö 日本語 😀") == 0);
         TEST_EXPECT_EQ(Wide.Length(), TCString<WIDECHAR>::Strlen(L"Åäö 日本語 😀"));
 
-        const String Back = StringCast<CHAR>(Wide.Get()).ToString();
+        const String Back = StringCast<CHAR_T>(Wide.Get()).ToString();
         TEST_EXPECT(Back.Equals(Text));
 
         const TStringConversion<UTF8CHAR, WIDECHAR> FromWide = StringCast<UTF8CHAR>(L"Åäö 日本語 😀");

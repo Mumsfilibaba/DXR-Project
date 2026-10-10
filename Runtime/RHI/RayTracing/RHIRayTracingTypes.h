@@ -66,7 +66,7 @@ enum class ERayTracingShaderRecordKind : uint8
     HitGroup      = 3,
 };
 
-NODISCARD constexpr const CHAR* ToString(ERayTracingShaderRecordKind Kind)
+NODISCARD constexpr const CHAR_T* ToString(ERayTracingShaderRecordKind Kind)
 {
     switch (Kind)
     {
@@ -90,7 +90,7 @@ enum class ERayTracingAccelerationStructureType : uint8
     PartitionedScene = 3,
 };
 
-NODISCARD constexpr const CHAR* ToString(ERayTracingAccelerationStructureType Type)
+NODISCARD constexpr const CHAR_T* ToString(ERayTracingAccelerationStructureType Type)
 {
     switch (Type)
     {
@@ -114,7 +114,7 @@ enum class EAccelerationStructurePostBuildInfoType : uint8
     ToolsVisualization = 3,
 };
 
-NODISCARD constexpr const CHAR* ToString(EAccelerationStructurePostBuildInfoType Type)
+NODISCARD constexpr const CHAR_T* ToString(EAccelerationStructurePostBuildInfoType Type)
 {
     switch (Type)
     {
@@ -135,7 +135,7 @@ enum class EAccelerationStructureCopyMode : uint8
     ToolsVisualizationDecode = 4,
 };
 
-NODISCARD constexpr const CHAR* ToString(EAccelerationStructureCopyMode Mode)
+NODISCARD constexpr const CHAR_T* ToString(EAccelerationStructureCopyMode Mode)
 {
     switch (Mode)
     {

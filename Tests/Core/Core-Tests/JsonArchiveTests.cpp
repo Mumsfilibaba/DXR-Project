@@ -146,7 +146,7 @@ struct FTestInventory
     TStaticArray<int32, 2> Pair;
 };
 
-static String LoadInventoryError(const CHAR* Text)
+static String LoadInventoryError(const CHAR_T* Text)
 {
     FJsonValue Document;
     if (!Json::Parse(StringView(Text), Document))

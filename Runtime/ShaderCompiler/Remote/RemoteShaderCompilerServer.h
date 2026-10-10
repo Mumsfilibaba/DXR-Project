@@ -43,7 +43,7 @@ class FRemoteRequestSources final : public IShaderSourceProvider
 {
 public:
     NODISCARD virtual bool FileExists(const String& Path) const override final;
-    virtual bool ReadFile(const String& Path, TArray<CHAR>& OutText) const override final;
+    virtual bool ReadFile(const String& Path, TArray<CHAR_T>& OutText) const override final;
 
     /** Keyed by the collapsed path below the server's source root */
     TMap<String, TSharedPtr<TArray<uint8>>> Files;
@@ -57,7 +57,7 @@ class SHADERCOMPILER_API FRemoteShaderCompilerServer final : public FRunnable
 public:
 
     /** Stands in for the asset directory on the server, nothing below it exists on disk */
-    static constexpr const CHAR* SourceRoot = "/RemoteShaderCompiler/Assets";
+    static constexpr const CHAR_T* SourceRoot = "/RemoteShaderCompiler/Assets";
 
 public:
     explicit FRemoteShaderCompilerServer(const FRemoteShaderCompilerServerSettings& InSettings);
@@ -120,14 +120,14 @@ private:
 
     bool ListenOn(const FSocketAddress& Address);
     void AcceptConnections(FNetworkSocket& ListenSocket, TArray<String>& OutLogMessages);
-    void Reject(FNetworkSocket& Socket, const CHAR* Reason);
+    void Reject(FNetworkSocket& Socket, const CHAR_T* Reason);
     void ReceiveFrom(const TSharedPtr<FConnection>& Connection);
     void HandleCompileRequest(const TSharedPtr<FConnection>& Connection, RemoteShaderCompilerProtocol::FFrame&& Frame);
     bool IngestFiles(FConnection& Connection, const RemoteShaderCompilerProtocol::FFrame& Frame, bool bKeepSourceFiles, FRemoteRequestSources& OutSources, String& OutError);
     void FlushConnection(FConnection& Connection);
     void RetryForwarders();
     void RunCompile(TSharedPtr<FConnection> Connection, uint32 RequestId, FShaderCompileJob Job, TSharedPtr<FRemoteRequestSources> Sources, int32 Hops, bool bForward);
-    void QueueResult(FConnection& Connection, uint32 RequestId, const CHAR* Status, const String& Messages, const TArray<String>& Dependencies, const TArray<uint8>& ShaderCode);
+    void QueueResult(FConnection& Connection, uint32 RequestId, const CHAR_T* Status, const String& Messages, const TArray<String>& Dependencies, const TArray<uint8>& ShaderCode);
 
     NODISCARD FRemoteShaderCompilerClient* FindForwarder(EShaderOutputLanguage OutputLanguage);
     NODISCARD RemoteShaderCompilerProtocol::FFrame BuildHello();

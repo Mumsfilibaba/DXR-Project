@@ -13,7 +13,7 @@ static constexpr float RendererSettingsLabelColumnWidth  = 310.0f;
 static constexpr float RendererSettingsRevertColumnWidth = 28.0f;
 
 template<typename ValueType>
-static const ValueType* TryGetDefaultPtr(const TMap<String, ValueType>& Defaults, const CHAR* CVarName, ValueType& OutValue)
+static const ValueType* TryGetDefaultPtr(const TMap<String, ValueType>& Defaults, const CHAR_T* CVarName, ValueType& OutValue)
 {
     if (const ValueType* Found = Defaults.Find(String(CVarName)))
     {
@@ -70,7 +70,7 @@ void FEditorRendererSettingsWidget::Draw()
     ImGui::PopStyleVar(2);
 }
 
-IConsoleVariable* FEditorRendererSettingsWidget::GetCachedConsoleVariable(const CHAR* InName)
+IConsoleVariable* FEditorRendererSettingsWidget::GetCachedConsoleVariable(const CHAR_T* InName)
 {
     if (IConsoleVariable** Cached = CVarCache.Find(InName))
     {
@@ -97,7 +97,7 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
 
     auto& Console = FConsoleManager::Get();
 
-    const auto CaptureBool = [&](const CHAR* Name)
+    const auto CaptureBool = [&](const CHAR_T* Name)
     {
         if (IConsoleVariable* CVar = Console.FindConsoleVariable(Name))
         {
@@ -105,7 +105,7 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
         }
     };
 
-    const auto CaptureInt = [&](const CHAR* Name)
+    const auto CaptureInt = [&](const CHAR_T* Name)
     {
         if (IConsoleVariable* CVar = Console.FindConsoleVariable(Name))
         {
@@ -113,7 +113,7 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
         }
     };
 
-    const auto CaptureFloat = [&](const CHAR* Name)
+    const auto CaptureFloat = [&](const CHAR_T* Name)
     {
         if (IConsoleVariable* CVar = Console.FindConsoleVariable(Name))
         {
@@ -214,10 +214,10 @@ void FEditorRendererSettingsWidget::DrawWindow()
 {
     CaptureDefaultsIfNeeded();
 
-    const auto DrawLabelWithSeperator = [](const CHAR* InLabel)
+    const auto DrawLabelWithSeperator = [](const CHAR_T* InLabel)
     {
         static constexpr int32 LabelLength = 256;
-        TStaticArray<CHAR, LabelLength> Label{};
+        TStaticArray<CHAR_T, LabelLength> Label{};
         CString::Snprintf(Label.Data(), static_cast<int32>(Label.Size()), "%s", InLabel);
 
         ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextBorderSize, 4.0f);
@@ -226,7 +226,7 @@ void FEditorRendererSettingsWidget::DrawWindow()
         ImGui::PopStyleVar(2);
     };
 
-    const auto DrawCollapsingHeader = [](const CHAR* Label, ImGuiTreeNodeFlags Flags, const bool bDrawBottomBorder, const bool bFullWidthBorder = true)
+    const auto DrawCollapsingHeader = [](const CHAR_T* Label, ImGuiTreeNodeFlags Flags, const bool bDrawBottomBorder, const bool bFullWidthBorder = true)
     {
         ImGuiStyle& Style = ImGui::GetStyle();
 
@@ -501,8 +501,8 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
 
     if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.CascadeSize"))
     {
-        static const CHAR* CascadeResItems[]  = { "512", "1024", "2048", "4096" };
-        static const int32 CascadeResValues[] = { 512, 1024, 2048, 4096 };
+        static const CHAR_T* CascadeResItems[]  = { "512", "1024", "2048", "4096" };
+        static const int32   CascadeResValues[] = { 512, 1024, 2048, 4096 };
 
         static constexpr int32 CascadeResCount = 4;
 
@@ -625,7 +625,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
 
     if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.FilterMode"))
     {
-        static const CHAR* const FilterModeItems[] = { "PCF", "PCSS" };
+        static const CHAR_T* const FilterModeItems[] = { "PCF", "PCSS" };
         constexpr int32 FilterModeCount = static_cast<int32>(ARRAY_COUNT(FilterModeItems));
 
         int32 Value  = Math::Clamp<int32>(CVar->GetInt(), 0, FilterModeCount - 1);
@@ -641,7 +641,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
     int32 CurrentFilterFunction = 0;
     if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.FilterFunction"))
     {
-        static const CHAR* const FilterFuncItems[] = { "Grid", "Poisson Disk", "Vogel Disk" };
+        static const CHAR_T* const FilterFuncItems[] = { "Grid", "Poisson Disk", "Vogel Disk" };
         constexpr int32 FilterFuncCount = static_cast<int32>(ARRAY_COUNT(FilterFuncItems));
 
         int32 Value  = Math::Clamp<int32>(CVar->GetInt(), 0, FilterFuncCount - 1);
@@ -671,7 +671,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         int32 Value  = Math::Clamp<int32>(CVar->GetInt(), 1, 2048);
         int32 Value0 = 0;
 
-        const CHAR* FilterSizeLabel = bIsGridFunction ? "Grid size" : "Filter radius";
+        const CHAR_T* FilterSizeLabel = bIsGridFunction ? "Grid size" : "Filter radius";
         const int32* RevertPtr = TryGetDefaultPtr(IntDefaults, "Renderer.CSM.FilterSize", Value0);
         if (EditorWidgets::DrawIntProperty(FilterSizeLabel, Value, 1.0f, 1, 2048, "%d", true, RevertPtr))
         {
@@ -710,7 +710,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
             }
             else
             {
-                static const CHAR* SampleCountItems[] = { "16", "32", "64", "128" };
+                static const CHAR_T* SampleCountItems[] = { "16", "32", "64", "128" };
                 static const int32 SampleCountValues[] = { 16, 32, 64, 128 };
                 static constexpr int32 SampleCountCount = 4;
 
@@ -785,8 +785,8 @@ void FEditorRendererSettingsWidget::DrawPointLightShadowSettings()
 
     if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.Shadows.PointLightShadowMapSize"))
     {
-        static const CHAR* PointResItems[]  = { "128", "256", "512", "1024" };
-        static const int32 PointResValues[] = { 128, 256, 512, 1024 };
+        static const CHAR_T* PointResItems[]  = { "128", "256", "512", "1024" };
+        static const int32   PointResValues[] = { 128, 256, 512, 1024 };
 
         static constexpr int32 PointResCount = 4;
 
@@ -949,7 +949,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingSettings()
         return;
     }
 
-    const CHAR* HardwareSupport = RHI::bSupportsRayTracingPipeline
+    const CHAR_T* HardwareSupport = RHI::bSupportsRayTracingPipeline
         ? (RHI::bSupportsInlineRayTracing ? "Pipeline and inline" : "Pipeline only")
         : (RHI::bSupportsRayTracing ? "Inline only" : "Unsupported");
 
@@ -1126,7 +1126,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
     if (IConsoleVariable* CVarSampler = GetCachedConsoleVariable("Renderer.RayTracing.Reflections.Sampler"))
     {
         // Order matches REFLECTION_SAMPLER_* in Shaders/Reflections/ReflectionSampling.hlsli.
-        static const CHAR* const Items[] =
+        static const CHAR_T* const Items[] =
         {
             "White noise", "Halton", "Blue noise"
         };
@@ -1436,7 +1436,7 @@ void FEditorRendererSettingsWidget::DrawTonemappingSettings()
 
     if (IConsoleVariable* CVarTonemappingFunction = GetCachedConsoleVariable("Renderer.Tonemapping.Function"))
     {
-        static const CHAR* const Items[] =
+        static const CHAR_T* const Items[] =
         {
             "Default", "ACES", "Reinhard", "Uncharted 2"
         };

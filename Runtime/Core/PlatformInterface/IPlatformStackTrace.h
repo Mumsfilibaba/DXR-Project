@@ -13,13 +13,13 @@ struct FStackTraceEntry
     inline static constexpr uint32 MaxNameLength = 512;
 
     /** @brief The resolved symbol, empty when the address belongs to none the platform could name. */
-    CHAR   FunctionName[MaxNameLength];
+    CHAR_T   FunctionName[MaxNameLength];
 
     /** @brief The source file, empty without the debug information that carries line numbers. */
-    CHAR   Filename[MaxNameLength];
+    CHAR_T   Filename[MaxNameLength];
 
     /** @brief The binary the address lies in, which resolves even where no debug information is present. */
-    CHAR   ModuleName[MaxNameLength];
+    CHAR_T   ModuleName[MaxNameLength];
 
     /** @brief The line in Filename, zero when there is no line information for the address. */
     uint32 Line;

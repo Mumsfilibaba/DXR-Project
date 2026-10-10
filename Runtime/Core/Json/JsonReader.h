@@ -22,7 +22,7 @@ private:
     bool ParseArray(FJsonValue& OutValue, int32 Depth);
     bool ParseString(String& OutString);
     bool ParseNumber(FJsonValue& OutValue);
-    bool ParseKeyword(const CHAR* Keyword, FJsonValue&& Result, FJsonValue& OutValue);
+    bool ParseKeyword(const CHAR_T* Keyword, FJsonValue&& Result, FJsonValue& OutValue);
 
     // Reads the four hex digits of a \uXXXX escape
     bool ParseHexQuad(uint32& OutCodePoint);
@@ -34,19 +34,19 @@ private:
     bool SkipComment();
 
     NODISCARD bool IsAtEnd() const;
-    NODISCARD CHAR Peek() const;
-    NODISCARD CHAR PeekAt(int32 Lookahead) const;
+    NODISCARD CHAR_T Peek() const;
+    NODISCARD CHAR_T PeekAt(int32 Lookahead) const;
 
     // Consumes one character, keeping the line and column counters in step
-    CHAR Advance();
+    CHAR_T Advance();
 
     // Consumes Expected and reports an error naming it when the next character differs
-    bool Expect(CHAR Expected);
-    bool Fail(const CHAR* Format, ...);
+    bool Expect(CHAR_T Expected);
+    bool Fail(const CHAR_T* Format, ...);
 
-    const CHAR* Start;
-    const CHAR* Current;
-    const CHAR* End;
+    const CHAR_T* Start;
+    const CHAR_T* Current;
+    const CHAR_T* End;
 
     int32 Line;
     int32 LineStartOffset;

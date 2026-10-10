@@ -425,7 +425,7 @@ void FWindowsAsyncFileHandle::CollectWriteResult(FPendingWrite* PendingWrite, bo
     }
 }
 
-void FWindowsAsyncFileHandle::ReportWriteFailure(const CHAR* What, uint32 ErrorCode)
+void FWindowsAsyncFileHandle::ReportWriteFailure(const CHAR_T* What, uint32 ErrorCode)
 {
     if (bHasWriteError)
     {
@@ -516,7 +516,7 @@ void FWindowsAsyncFileHandle::FreePendingWrite(FPendingWrite* PendingWrite)
     delete PendingWrite;
 }
 
-const CHAR* FWindowsPlatformFile::GetExecutablePath()
+const CHAR_T* FWindowsPlatformFile::GetExecutablePath()
 {
     static String StaticExecutablePath;
 
@@ -537,7 +537,7 @@ const CHAR* FWindowsPlatformFile::GetExecutablePath()
             WidePath.Resize(WidePath.Size() * 2);
         }
 
-        StaticExecutablePath = StringCast<CHAR>(WidePath.Data(), static_cast<int32>(Length)).ToString();
+        StaticExecutablePath = StringCast<CHAR_T>(WidePath.Data(), static_cast<int32>(Length)).ToString();
         StaticExecutablePath.ReplaceAll('\\', '/');
     }
 
@@ -569,7 +569,7 @@ String FWindowsPlatformFile::GetCurrentWorkingDirectory()
     }
     else
     {
-        String Result = StringCast<CHAR>(WideResult.Data(), Length).ToString();
+        String Result = StringCast<CHAR_T>(WideResult.Data(), Length).ToString();
         Result.ReplaceAll('\\', '/');
         return Result;
     }
@@ -585,14 +585,14 @@ String FWindowsPlatformFile::GetUserSettingsDirectory()
         return String();
     }
 
-    String Path = StringCast<CHAR>(WidePath).ToString();
+    String Path = StringCast<CHAR_T>(WidePath).ToString();
     ::CoTaskMemFree(WidePath);
 
     Path.ReplaceAll('\\', '/');
     return Path;
 }
 
-FFileInfo FWindowsPlatformFile::GetFileInfo(const CHAR* Path)
+FFileInfo FWindowsPlatformFile::GetFileInfo(const CHAR_T* Path)
 {
     FFileInfo Info;
 
@@ -617,7 +617,7 @@ FFileInfo FWindowsPlatformFile::GetFileInfo(const CHAR* Path)
     return Info;
 }
 
-bool FWindowsPlatformFile::IterateDirectory(const CHAR* Path, TArray<FDirectoryEntry>& OutEntries)
+bool FWindowsPlatformFile::IterateDirectory(const CHAR_T* Path, TArray<FDirectoryEntry>& OutEntries)
 {
     OutEntries.Clear();
 
@@ -640,7 +640,7 @@ bool FWindowsPlatformFile::IterateDirectory(const CHAR* Path, TArray<FDirectoryE
         const bool bIsLinkTag      = (FindData.dwReserved0 == IO_REPARSE_TAG_SYMLINK) || (FindData.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT);
 
         FDirectoryEntry Entry;
-        Entry.Name            = StringCast<CHAR>(FindData.cFileName).ToString();
+        Entry.Name            = StringCast<CHAR_T>(FindData.cFileName).ToString();
         Entry.bIsDirectory    = (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
         Entry.bIsSymbolicLink = bIsReparsePoint && bIsLinkTag;
         OutEntries.Add(Move(Entry));

@@ -244,8 +244,8 @@ bool FDXILShaderReflector::ReadFeatureInfo(IDxcUtils* Utils, IDxcBlob* ShaderObj
 // while D3D12 expects the unmangled name to be used as export-name.
 String FDXILShaderReflector::DemangleFunctionName(const String& MangledName)
 {
-    constexpr const CHAR* ManglingPrefix = "\x1?";
-    constexpr int32       PrefixLength   = 2;
+    constexpr const CHAR_T* ManglingPrefix = "\x1?";
+    constexpr int32         PrefixLength   = 2;
 
     if (!MangledName.StartsWith(ManglingPrefix))
     {

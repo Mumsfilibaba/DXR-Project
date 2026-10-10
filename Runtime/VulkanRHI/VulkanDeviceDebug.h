@@ -17,7 +17,7 @@ class FVulkanQueue;
 
 extern VULKANRHI_API bool GVulkanSupportsDebugUtils;
 
-inline VkResult VulkanSetObjectName(VkDevice Device, const CHAR* Name, uint64 ObjectHandle, VkObjectType ObjectType)
+inline VkResult VulkanSetObjectName(VkDevice Device, const CHAR_T* Name, uint64 ObjectHandle, VkObjectType ObjectType)
 {
 #if VULKAN_ENABLE_DEBUG_NAMES && VK_EXT_debug_utils
     if (!GVulkanSupportsDebugUtils)
@@ -39,7 +39,7 @@ inline VkResult VulkanSetObjectName(VkDevice Device, const CHAR* Name, uint64 Ob
 }
 
 template<typename HandleType>
-FORCEINLINE VkResult VulkanSetObjectName(VkDevice Device, const CHAR* Name, HandleType ObjectHandle, VkObjectType ObjectType)
+FORCEINLINE VkResult VulkanSetObjectName(VkDevice Device, const CHAR_T* Name, HandleType ObjectHandle, VkObjectType ObjectType)
 {
     return VulkanSetObjectName(Device, Name, reinterpret_cast<uint64>(ObjectHandle), ObjectType);
 }

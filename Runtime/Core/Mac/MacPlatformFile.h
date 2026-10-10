@@ -49,7 +49,7 @@ private:
     void GarbageCollectCompleted();
     void FreePendingWrite(FPendingWrite* PendingWrite);
     bool WriteBlockingAtOffset(const uint8* Src, uint32 BytesToWrite, int64 Offset);
-    void ReportWriteFailure(const CHAR* What, int32 ErrorCode);
+    void ReportWriteFailure(const CHAR_T* What, int32 ErrorCode);
 
     int32                  FileDescriptor;
     int64                  WriteOffset;
@@ -63,10 +63,10 @@ struct CORE_API FMacPlatformFile final : public IPlatformFileSystem
     static IPlatformFile* OpenForWrite(const String& Filename, bool bTruncate = true);
     static IPlatformAsyncFile* OpenForAsyncWrite(const String& Filename, bool bTruncate = true);
     static String GetCurrentWorkingDirectory();
-    static const CHAR* GetExecutablePath();
+    static const CHAR_T* GetExecutablePath();
     static String GetUserSettingsDirectory();
 
-    static FORCEINLINE bool IsDirectory(const CHAR* Path)
+    static FORCEINLINE bool IsDirectory(const CHAR_T* Path)
     {
         struct stat PathStat;
         if (::stat(Path, &PathStat) == 0) 
@@ -79,41 +79,41 @@ struct CORE_API FMacPlatformFile final : public IPlatformFileSystem
         }
     }
 
-    static FORCEINLINE bool IsFile(const CHAR* Path)
+    static FORCEINLINE bool IsFile(const CHAR_T* Path)
     {
         struct stat FileStat;
         return (::stat(Path, &FileStat) == 0) && !S_ISDIR(FileStat.st_mode);
     }
 
-    static FFileInfo GetFileInfo(const CHAR* Path);
+    static FFileInfo GetFileInfo(const CHAR_T* Path);
 
-    static FORCEINLINE bool CreateDirectory(const CHAR* Path)
+    static FORCEINLINE bool CreateDirectory(const CHAR_T* Path)
     {
         // Success if the directory was created now or already existed.
         return (::mkdir(Path, 0755) == 0) || (errno == EEXIST);
     }
 
-    static FORCEINLINE bool RemoveDirectory(const CHAR* Path)
+    static FORCEINLINE bool RemoveDirectory(const CHAR_T* Path)
     {
         // Success if the directory is gone now or was never there.
         return (::rmdir(Path) == 0) || (errno == ENOENT);
     }
 
-    static FORCEINLINE bool DeleteFile(const CHAR* Path)
+    static FORCEINLINE bool DeleteFile(const CHAR_T* Path)
     {
         // Success if the file is gone now or was never there.
         return (::unlink(Path) == 0) || (errno == ENOENT);
     }
 
-    static FORCEINLINE bool MoveFile(const CHAR* FromFilename, const CHAR* ToFilename)
+    static FORCEINLINE bool MoveFile(const CHAR_T* FromFilename, const CHAR_T* ToFilename)
     {
         // Rename replaces an existing destination.
         return ::rename(FromFilename, ToFilename) == 0;
     }
 
-    static bool CopyFile(const CHAR* FromFilename, const CHAR* ToFilename, bool bReplaceExisting = false);
+    static bool CopyFile(const CHAR_T* FromFilename, const CHAR_T* ToFilename, bool bReplaceExisting = false);
 
-    static FORCEINLINE bool MoveDirectory(const CHAR* FromPath, const CHAR* ToPath)
+    static FORCEINLINE bool MoveDirectory(const CHAR_T* FromPath, const CHAR_T* ToPath)
     {
         struct stat PathStat;
         if (::stat(ToPath, &PathStat) == 0)
@@ -124,10 +124,10 @@ struct CORE_API FMacPlatformFile final : public IPlatformFileSystem
         return ::rename(FromPath, ToPath) == 0;
     }
 
-    static FORCEINLINE bool IsPathRelative(const CHAR* Filepath)
+    static FORCEINLINE bool IsPathRelative(const CHAR_T* Filepath)
     {
         return Filepath && Filepath[0] != '/';
     }
 
-    static bool IterateDirectory(const CHAR* Path, TArray<FDirectoryEntry>& OutEntries);
+    static bool IterateDirectory(const CHAR_T* Path, TArray<FDirectoryEntry>& OutEntries);
 };

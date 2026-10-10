@@ -384,7 +384,7 @@ bool EnsureSnapshotDirectory(const String& Directory)
     String Partial;
     for (int32 Index = 0; Index < Directory.Length(); ++Index)
     {
-        const CHAR Character = Directory[Index];
+        const CHAR_T Character = Directory[Index];
         Partial.Append(Character);
 
         if (Character == '/' || Character == '\\')

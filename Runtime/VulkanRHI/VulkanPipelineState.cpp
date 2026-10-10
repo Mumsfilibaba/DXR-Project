@@ -22,7 +22,7 @@ static TAutoConsoleVariable<int32> CVarPipelineCacheSaveInterval(
     "Minimum interval in seconds between automatic pipeline cache saves",
     30);
 
-static bool ResolveEffectiveSampleCount(const FRHIMultiSampleState& MultiSampleState, const FRHIRasterizerStateDesc& RasterizerDesc, const FRHIGraphicsPipelineFormats& OutputFormats, const CHAR* DebugContext, uint32& OutSampleCount)
+static bool ResolveEffectiveSampleCount(const FRHIMultiSampleState& MultiSampleState, const FRHIRasterizerStateDesc& RasterizerDesc, const FRHIGraphicsPipelineFormats& OutputFormats, const CHAR_T* DebugContext, uint32& OutSampleCount)
 {
     OutSampleCount = 0;
 

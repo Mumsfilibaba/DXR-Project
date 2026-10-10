@@ -166,7 +166,7 @@ void FBootProfiler::Finish()
     Session.CpuMilliseconds = Time::ToMilliseconds(static_cast<float>(Inclusive));
 }
 
-FBootProfilerScopedTrace::FBootProfilerScopedTrace(const CHAR* InName)
+FBootProfilerScopedTrace::FBootProfilerScopedTrace(const CHAR_T* InName)
     : Sample(InName)
 {
     Sample.ThreadHandle   = FPlatformThreadMisc::GetCurrentThreadHandle();
@@ -190,7 +190,7 @@ FBootProfilerScopedTrace::~FBootProfilerScopedTrace()
     Profiler.AddSample(Sample);
 }
 
-void FBootProfiler::AddInstantEvent(const CHAR* Name)
+void FBootProfiler::AddInstantEvent(const CHAR_T* Name)
 {
     if (!bEnabled || bFinished)
     {

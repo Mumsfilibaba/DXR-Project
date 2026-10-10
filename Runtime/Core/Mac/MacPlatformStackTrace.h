@@ -19,7 +19,7 @@ struct CORE_API FMacPlatformStackTrace final : public IPlatformStackTrace
 
     static FORCEINLINE String GetExecutableFilename()
     {
-        CHAR   PathBuffer[PATH_MAX] = {};
+        CHAR_T PathBuffer[PATH_MAX] = {};
         uint32 BufferSize           = sizeof(PathBuffer);
 
         if (::_NSGetExecutablePath(PathBuffer, &BufferSize) != 0)

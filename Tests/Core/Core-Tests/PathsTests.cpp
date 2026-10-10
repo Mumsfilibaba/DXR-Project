@@ -8,7 +8,7 @@
 
 #include "TestCommon/TestMacros.h"
 
-static bool WriteText(const String& Filename, const CHAR* Text)
+static bool WriteText(const String& Filename, const CHAR_T* Text)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(Filename);
     if (!FileHandle)

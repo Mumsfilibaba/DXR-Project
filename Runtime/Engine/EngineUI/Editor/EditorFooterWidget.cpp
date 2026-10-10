@@ -343,9 +343,9 @@ void FEditorFooterWidget::Draw()
                 ImGui::PushStyleColor(ImGuiCol_Border, TooltipBorder);
                 ImGui::PushStyleColor(ImGuiCol_Separator, TooltipBorder);
 
-                const float TooltipOffsetX  = (10.0f * Scale) + (bHasVerticalScrollbar ? Style.ScrollbarSize : 0.0f);
-                const float TooltipMaxWidth = 420.0f * Scale;
-                const CHAR* TooltipId       = "##ConsoleCandidateTooltip";
+                const float   TooltipOffsetX  = (10.0f * Scale) + (bHasVerticalScrollbar ? Style.ScrollbarSize : 0.0f);
+                const float   TooltipMaxWidth = 420.0f * Scale;
+                const CHAR_T* TooltipId       = "##ConsoleCandidateTooltip";
 
                 FPopupAnchor TooltipAnchor;
                 TooltipAnchor.Min = ImVec2(InItemRect.Min.x - TooltipOffsetX, InItemRect.Min.y);
@@ -376,7 +376,7 @@ void FEditorFooterWidget::Draw()
 
                 if (IConsoleVariable* Var = Candidate.First->AsVariable())
                 {
-                    const CHAR* TypeText = "Variable";
+                    const CHAR_T* TypeText = "Variable";
                     if (Var->IsVariableBool())
                     {
                         TypeText = "Bool";
@@ -407,7 +407,7 @@ void FEditorFooterWidget::Draw()
                     ImGui::TextUnformatted("Type: Command");
                 }
 
-                const CHAR* HelpString = Candidate.First->GetHelpString();
+                const CHAR_T* HelpString = Candidate.First->GetHelpString();
                 if (HelpString && HelpString[0] != 0)
                 {
                     ImGui::PushStyleColor(ImGuiCol_Text, TooltipTextWhite);
@@ -449,8 +449,8 @@ void FEditorFooterWidget::Draw()
                 const ImVec2 TextStart   = ImVec2(ItemRect.Min.x + 6.0f * Scale, ItemRect.Min.y + (RowHeight - ImGui::GetTextLineHeight()) * 0.5f);
                 const ImU32  BaseTextU32 = ImGui::GetColorU32(bIsActiveIndex ? TextSelectedColor : TextNormalColor);
 
-                const CHAR* NameText   = *Candidate.Second;
-                const CHAR* FilterText = CandidateFilter.IsEmpty() ? nullptr : *CandidateFilter;
+                const CHAR_T* NameText   = *Candidate.Second;
+                const CHAR_T* FilterText = CandidateFilter.IsEmpty() ? nullptr : *CandidateFilter;
 
                 int32 MatchStart = -1;
                 int32 MatchLen   = 0;
@@ -530,9 +530,9 @@ void FEditorFooterWidget::DrawRunStateLabel()
         return;
     }
 
-    const bool  bPaused    = FEngine::Get()->IsPaused();
-    const CHAR* LabelText  = bPaused ? "PAUSED" : "PLAYING";
-    const ImU32 LabelColor = bPaused ? IM_COL32(214, 154, 32, 255) : IM_COL32(46, 168, 76, 255);
+    const bool    bPaused    = FEngine::Get()->IsPaused();
+    const CHAR_T* LabelText  = bPaused ? "PAUSED" : "PLAYING";
+    const ImU32   LabelColor = bPaused ? IM_COL32(214, 154, 32, 255) : IM_COL32(46, 168, 76, 255);
 
     const ImVec2 LabelSize    = ImGui::CalcTextSize(LabelText);
     const ImVec2 ContentStart = ImGui::GetWindowPos();
@@ -550,7 +550,7 @@ void FEditorFooterWidget::ApplyCandidateToBuffer(int32 CandidateIndex)
         return;
     }
 
-    const CHAR* Buffer = TextBuffer.Data();
+    const CHAR_T* Buffer = TextBuffer.Data();
     const int32 BufferLength = CString::Strlen(Buffer);
 
     int32 CursorPos = LastCursorPosition;
@@ -563,12 +563,12 @@ void FEditorFooterWidget::ApplyCandidateToBuffer(int32 CandidateIndex)
         CursorPos = BufferLength;
     }
 
-    const CHAR* WordEnd   = Buffer + CursorPos;
-    const CHAR* WordStart = WordEnd;
+    const CHAR_T* WordEnd   = Buffer + CursorPos;
+    const CHAR_T* WordStart = WordEnd;
 
     while (WordStart > Buffer)
     {
-        const CHAR CurrentChar = WordStart[-1];
+        const CHAR_T CurrentChar = WordStart[-1];
         if (CurrentChar == ' ' || CurrentChar == '\t' || CurrentChar == ',' || CurrentChar == ';')
         {
             break;
@@ -633,12 +633,12 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
         // This callback is called whenever we edit the text in the InputText field
         case ImGuiInputTextFlags_CallbackEdit:
         {
-            const CHAR* WordEnd   = CallbackData->Buf + CallbackData->CursorPos;
-            const CHAR* WordStart = WordEnd;
+            const CHAR_T* WordEnd   = CallbackData->Buf + CallbackData->CursorPos;
+            const CHAR_T* WordStart = WordEnd;
 
             while (WordStart > CallbackData->Buf)
             {
-                const CHAR CurrentChar = WordStart[-1];
+                const CHAR_T CurrentChar = WordStart[-1];
                 if (CurrentChar == ' ' || CurrentChar == '\t' || CurrentChar == ',' || CurrentChar == ';')
                 {
                     break;
@@ -671,14 +671,14 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
         // This callback is called when we press TAB when the console InputText field has keyboard- focus
         case ImGuiInputTextFlags_CallbackCompletion:
         {
-            const CHAR* WordEnd   = CallbackData->Buf + CallbackData->CursorPos;
-            const CHAR* WordStart = WordEnd;
+            const CHAR_T* WordEnd   = CallbackData->Buf + CallbackData->CursorPos;
+            const CHAR_T* WordStart = WordEnd;
 
             if (CallbackData->BufTextLen > 0)
             {
                 while (WordStart > CallbackData->Buf)
                 {
-                    const CHAR CurrentChar = WordStart[-1];
+                    const CHAR_T CurrentChar = WordStart[-1];
                     if (CurrentChar == ' ' || CurrentChar == '\t' || CurrentChar == ',' || CurrentChar == ';')
                     {
                         break;
@@ -776,7 +776,7 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
                 if (PrevHistoryIndex != HistoryIndex)
                 {
                     // If the history-index is invalid, then we clear the input-text field
-                    const CHAR* HistoryStr = (HistoryIndex >= 0) ? *History[HistoryIndex] : "";
+                    const CHAR_T* HistoryStr = (HistoryIndex >= 0) ? *History[HistoryIndex] : "";
                     CallbackData->DeleteChars(0, CallbackData->BufTextLen);
                     CallbackData->InsertChars(0, HistoryStr);
                 }

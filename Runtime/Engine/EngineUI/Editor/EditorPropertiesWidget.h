@@ -29,7 +29,7 @@ public:
 
 private:
     ImTextureID GetTexturePreview(EMaterialTextureSlot::Type Slot, const FRHITextureRef& Texture);
-    const TArray<const CHAR*>& GetMaterialLabels(const FStaticMeshComponent* MeshComponent, int32 NumMaterials);
+    const TArray<const CHAR_T*>& GetMaterialLabels(const FStaticMeshComponent* MeshComponent, int32 NumMaterials);
 
     FEditorEngine*              EditorEngine;
     FDelegateHandle             ImGuiDelegateHandle;
@@ -38,7 +38,7 @@ private:
     int32                       SelectedMaterialIndex;
     FImGuiTexture               MaterialTexturePreviews[EMaterialTextureSlot::Count];
     TArray<String>              MaterialLabels;
-    TArray<const CHAR*>         MaterialLabelText;
+    TArray<const CHAR_T*>       MaterialLabelText;
     const FStaticMeshComponent* MaterialLabelOwner;
     int32                       MaterialLabelCount;
 };

@@ -738,10 +738,10 @@ public:
     }
 
     /**
-     * @brief Returns the position of the first occurrence of CHAR
+     * @brief Returns the position of the first occurrence of CHAR_T
      * @param Char Character to search for
      * @param Position Position to start search at
-     * @return Returns the position of the first occurrence of the CHAR
+     * @return Returns the position of the first occurrence of the CHAR_T
      */
     NODISCARD FORCEINLINE SizeType FindChar(CharType Char, SizeType Position = InvalidIndex) const
     {
@@ -769,10 +769,10 @@ public:
     }
 
     /**
-     * @brief Returns the position of the first CHAR that passes the predicate
+     * @brief Returns the position of the first CHAR_T that passes the predicate
      * @param Predicate Predicate that specifies valid chars
      * @param Position Position to start search at
-     * @return Returns the position of the first occurrence of the CHAR
+     * @return Returns the position of the first occurrence of the CHAR_T
      */
     template<typename PredicateType>
     NODISCARD FORCEINLINE SizeType FindCharWithPredicate(PredicateType&& Predicate, SizeType Position = InvalidIndex) const
@@ -912,10 +912,10 @@ public:
     }
 
     /**
-     * @brief Returns the position of the first occurrence of CHAR. Searches the string in reverse.
+     * @brief Returns the position of the first occurrence of CHAR_T. Searches the string in reverse.
      * @param Char Character to search for
      * @param Position Position to start search at
-     * @return Returns the position of the first occurrence of the CHAR
+     * @return Returns the position of the first occurrence of the CHAR_T
      */
     NODISCARD FORCEINLINE SizeType FindLastChar(CharType Char, SizeType Position = InvalidIndex) const
     {
@@ -944,10 +944,10 @@ public:
     }
 
     /**
-     * @brief Returns the position of the first CHAR that passes the predicate
+     * @brief Returns the position of the first CHAR_T that passes the predicate
      * @param Predicate Predicate that specifies valid chars
      * @param Position Position to start search at
-     * @return Returns the position of the first occurrence of the CHAR
+     * @return Returns the position of the first occurrence of the CHAR_T
      */
     template<typename PredicateType>
     NODISCARD FORCEINLINE SizeType FindLastCharWithPredicate(PredicateType&& Predicate, SizeType Position = InvalidIndex) const
@@ -1829,7 +1829,7 @@ private:
     StorageType CharData;
 };
 
-using String     = TString<CHAR>;
+using String     = TString<CHAR_T>;
 using WString    = TString<WIDECHAR>;
 using AnsiString = TString<ANSICHAR>;
 using U8String   = TString<UTF8CHAR>;
@@ -1859,7 +1859,7 @@ struct THash<String>
 {
     static uint64 GetHash(const String& InString)
     {
-        const CHAR* Key = *InString;
+        const CHAR_T* Key = *InString;
 
         int32  Index  = 0;
         uint64 Result = 0;
@@ -1952,8 +1952,8 @@ FORCEINLINE bool TTypeFromString<String>::FromString(const String& InString, Str
 template<>
 FORCEINLINE bool TTypeFromString<int32>::FromString(const String& InString, int32& OutElement)
 {
-    CHAR* End;
-    const CHAR* Start = *InString;
+    CHAR_T* End;
+    const CHAR_T* Start = *InString;
     OutElement = CString::Strtoi(Start, &End, 10);
     if (End != Start)
     {
@@ -1966,8 +1966,8 @@ FORCEINLINE bool TTypeFromString<int32>::FromString(const String& InString, int3
 template<>
 FORCEINLINE bool TTypeFromString<int64>::FromString(const String& InString, int64& OutElement)
 {
-    CHAR* End;
-    const CHAR* Start = *InString;
+    CHAR_T* End;
+    const CHAR_T* Start = *InString;
     OutElement = CString::Strtoi64(Start, &End, 10);
     if (End != Start)
     {
@@ -1980,8 +1980,8 @@ FORCEINLINE bool TTypeFromString<int64>::FromString(const String& InString, int6
 template<>
 FORCEINLINE bool TTypeFromString<uint32>::FromString(const String& InString, uint32& OutElement)
 {
-    CHAR* End;
-    const CHAR* Start = *InString;
+    CHAR_T* End;
+    const CHAR_T* Start = *InString;
     OutElement = CString::Strtoui(Start, &End, 10);
     if (End != Start)
     {
@@ -1994,8 +1994,8 @@ FORCEINLINE bool TTypeFromString<uint32>::FromString(const String& InString, uin
 template<>
 FORCEINLINE bool TTypeFromString<uint64>::FromString(const String& InString, uint64& OutElement)
 {
-    CHAR* End;
-    const CHAR* Start = *InString;
+    CHAR_T* End;
+    const CHAR_T* Start = *InString;
     OutElement = CString::Strtoui64(Start, &End, 10);
     if (End != Start)
     {
@@ -2008,8 +2008,8 @@ FORCEINLINE bool TTypeFromString<uint64>::FromString(const String& InString, uin
 template<>
 FORCEINLINE bool TTypeFromString<float>::FromString(const String& InString, float& OutElement)
 {
-    CHAR* End;
-    const CHAR* Start = *InString;
+    CHAR_T* End;
+    const CHAR_T* Start = *InString;
     OutElement = CString::Strtof(Start, &End);
     if (End != Start)
     {
@@ -2022,8 +2022,8 @@ FORCEINLINE bool TTypeFromString<float>::FromString(const String& InString, floa
 template<>
 FORCEINLINE bool TTypeFromString<double>::FromString(const String& InString, double& OutElement)
 {
-    CHAR* End;
-    const CHAR* Start = *InString;
+    CHAR_T* End;
+    const CHAR_T* Start = *InString;
     OutElement = CString::Strtod(Start, &End);
     if (End != Start)
     {
@@ -2036,7 +2036,7 @@ FORCEINLINE bool TTypeFromString<double>::FromString(const String& InString, dou
 template<>
 FORCEINLINE bool TTypeFromString<bool>::FromString(const String& InString, bool& OutElement)
 {
-    const CHAR* Start = *InString;
+    const CHAR_T* Start = *InString;
     if (CString::Stricmp(Start, "true") == 0)
     {
         OutElement = true;
@@ -2048,7 +2048,7 @@ FORCEINLINE bool TTypeFromString<bool>::FromString(const String& InString, bool&
         return true;
     }
 
-    CHAR* End;
+    CHAR_T* End;
     OutElement = static_cast<bool>(CString::Strtoi(Start, &End, 10));
     if (End != Start)
     {
@@ -2189,8 +2189,8 @@ struct TTryParseType
 template<>
 FORCEINLINE bool TTryParseType<int32>::TryParse(const String& InString)
 {
-    CHAR* End;
-    const CHAR* Start = *InString;
+    CHAR_T* End;
+    const CHAR_T* Start = *InString;
     CString::Strtoi(Start, &End, 10);
     return (End != Start);
 }
@@ -2198,8 +2198,8 @@ FORCEINLINE bool TTryParseType<int32>::TryParse(const String& InString)
 template<>
 FORCEINLINE bool TTryParseType<uint32>::TryParse(const String& InString)
 {
-    CHAR* End;
-    const CHAR* Start = *InString;
+    CHAR_T* End;
+    const CHAR_T* Start = *InString;
     CString::Strtoui(Start, &End, 10);
     return (End != Start);
 }
@@ -2207,8 +2207,8 @@ FORCEINLINE bool TTryParseType<uint32>::TryParse(const String& InString)
 template<>
 FORCEINLINE bool TTryParseType<int64>::TryParse(const String& InString)
 {
-    CHAR* End;
-    const CHAR* Start = *InString;
+    CHAR_T* End;
+    const CHAR_T* Start = *InString;
     CString::Strtoi64(Start, &End, 10);
     return (End != Start);
 }
@@ -2216,8 +2216,8 @@ FORCEINLINE bool TTryParseType<int64>::TryParse(const String& InString)
 template<>
 FORCEINLINE bool TTryParseType<uint64>::TryParse(const String& InString)
 {
-    CHAR* End;
-    const CHAR* Start = *InString;
+    CHAR_T* End;
+    const CHAR_T* Start = *InString;
     CString::Strtoui64(Start, &End, 10);
     return (End != Start);
 }
@@ -2225,8 +2225,8 @@ FORCEINLINE bool TTryParseType<uint64>::TryParse(const String& InString)
 template<>
 FORCEINLINE bool TTryParseType<float>::TryParse(const String& InString)
 {
-    CHAR* End;
-    const CHAR* Start = *InString;
+    CHAR_T* End;
+    const CHAR_T* Start = *InString;
     CString::Strtof(Start, &End);
     return (End != Start);
 }
@@ -2234,8 +2234,8 @@ FORCEINLINE bool TTryParseType<float>::TryParse(const String& InString)
 template<>
 FORCEINLINE bool TTryParseType<double>::TryParse(const String& InString)
 {
-    CHAR* End;
-    const CHAR* Start = *InString;
+    CHAR_T* End;
+    const CHAR_T* Start = *InString;
     CString::Strtof(Start, &End);
     return (End != Start);
 }
@@ -2243,7 +2243,7 @@ FORCEINLINE bool TTryParseType<double>::TryParse(const String& InString)
 template<>
 FORCEINLINE bool TTryParseType<bool>::TryParse(const String& InString)
 {
-    const CHAR* Start = *InString;
+    const CHAR_T* Start = *InString;
     if (CString::Stricmp(Start, "true") == 0)
     {
         return true;
@@ -2253,7 +2253,7 @@ FORCEINLINE bool TTryParseType<bool>::TryParse(const String& InString)
         return true;
     }
 
-    CHAR* End;
+    CHAR_T* End;
     CString::Strtoi64(Start, &End, 10);
     return (End != Start);
 }

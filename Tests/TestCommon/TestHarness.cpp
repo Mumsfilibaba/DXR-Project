@@ -8,7 +8,7 @@ FTestConsoleOutputDevice TestHarness::ConsoleDevice;
 int32 TestHarness::NumPassed = 0;
 int32 TestHarness::NumFailed = 0;
 
-void TestHarness::Initialize(const CHAR* LogFileName)
+void TestHarness::Initialize(const CHAR_T* LogFileName)
 {
     // No one is watching a test run, so a failed assert has to fail the run rather than block on a dialog
     GIsUnattended = true;

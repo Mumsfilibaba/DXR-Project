@@ -18,7 +18,7 @@ enum class EQueryResultMode : uint8
     Wait,
 };
 
-NODISCARD constexpr const CHAR* ToString(EQueryType QueryType)
+NODISCARD constexpr const CHAR_T* ToString(EQueryType QueryType)
 {
     switch (QueryType)
     {

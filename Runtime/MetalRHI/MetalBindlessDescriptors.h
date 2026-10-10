@@ -74,7 +74,7 @@ private:
         bool                           bSampler = false;
     };
 
-    bool CreateTable(FHeap& Heap, uint32 Capacity, const CHAR* DebugName);
+    bool CreateTable(FHeap& Heap, uint32 Capacity, const CHAR_T* DebugName);
     void DestroyTable(FHeap& Heap);
     bool GrowTable(FHeap& Heap);
     void FillNullEntries(FHeap& Heap, uint32 FirstSlot, uint32 NumSlots);

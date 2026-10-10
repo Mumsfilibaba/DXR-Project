@@ -6,7 +6,7 @@
 #include "RendererCore/RenderGraph/RenderGraphViewValidation.h"
 
 static bool ValidateTextureViewDesc(FRenderGraphBuilder& Builder, FRenderGraphTexture* Parent, EFormat ViewFormat, 
-    EViewDimension ViewDimension, uint32 BaseLayer, uint32 LayerCount, uint32 FirstMip, uint32 NumMips, const CHAR* ViewName)
+    EViewDimension ViewDimension, uint32 BaseLayer, uint32 LayerCount, uint32 FirstMip, uint32 NumMips, const CHAR_T* ViewName)
 {
     if (!Parent)
     {
@@ -26,7 +26,7 @@ static bool ValidateTextureViewDesc(FRenderGraphBuilder& Builder, FRenderGraphTe
 }
 
 static bool ValidateBufferViewDesc(FRenderGraphBuilder& Builder, FRenderGraphBuffer* Parent, EBufferViewType ViewType, 
-    uint32 FirstElement, uint32 NumElements, EFormat Format, const CHAR* ViewName)
+    uint32 FirstElement, uint32 NumElements, EFormat Format, const CHAR_T* ViewName)
 {
     if (!Parent)
     {

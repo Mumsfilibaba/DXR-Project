@@ -7,13 +7,13 @@
 
 IMPLEMENT_ENGINE_MODULE(IModule, LaunchProgram);
 
-const CHAR*        GProgramTitle = "Program";
+const CHAR_T*      GProgramTitle = "Program";
 TFunction<int32()> GProgramBody;
 TArray<String>     GProgramArgs;
 
 bool FProgramLoop::bExitRequested = false;
 
-void FProgramLoop::RequestExit(const CHAR* ExitReason)
+void FProgramLoop::RequestExit(const CHAR_T* ExitReason)
 {
     if (bExitRequested)
     {
@@ -32,7 +32,7 @@ bool FProgramLoop::IsExitRequested()
     return bExitRequested;
 }
 
-int32 FProgramLoop::Run(const CHAR* ConsoleTitle, const TFunction<int32()>& Body)
+int32 FProgramLoop::Run(const CHAR_T* ConsoleTitle, const TFunction<int32()>& Body)
 {
     bExitRequested = false;
 
@@ -43,7 +43,7 @@ int32 FProgramLoop::Run(const CHAR* ConsoleTitle, const TFunction<int32()>& Body
         return 1;
     }
 
-    const CHAR* Title = (ConsoleTitle && (*ConsoleTitle != '\0')) ? ConsoleTitle : "Program";
+    const CHAR_T* Title = (ConsoleTitle && (*ConsoleTitle != '\0')) ? ConsoleTitle : "Program";
     Console->SetTitle(Title);
     Console->Show(true);
     Console->SetOnClosed([]()

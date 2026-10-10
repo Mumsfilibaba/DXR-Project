@@ -69,7 +69,7 @@ void FAssetRegistry::LoadRegistryFile()
         return;
     }
 
-    TArray<CHAR> FileContents;
+    TArray<CHAR_T> FileContents;
     {
         TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(RegistryFilename);
         if (!FileHandle)
@@ -84,14 +84,14 @@ void FAssetRegistry::LoadRegistryFile()
         }
     }
 
-    CHAR* Start = FileContents.Data();
+    CHAR_T* Start = FileContents.Data();
     while (Start && (*Start != '\0'))
     {
         // Skip newline chars
         while (*Start == '\n')
             ++Start;
 
-        CHAR* LineStart = Start;
+        CHAR_T* LineStart = Start;
         Parse::ParseLine(&Start);
 
         // End string at the end of line
@@ -103,23 +103,23 @@ void FAssetRegistry::LoadRegistryFile()
         // Skip any spaces at the beginning of the line
         Parse::ParseWhiteSpace(&LineStart);
         
-        if (CHAR* EqualSign = CString::Strchr(LineStart, '='))
+        if (CHAR_T* EqualSign = CString::Strchr(LineStart, '='))
         {
             *EqualSign = '\0';
 
-            CHAR* KeyEnd = EqualSign - 1;
+            CHAR_T* KeyEnd = EqualSign - 1;
             while (*KeyEnd == ' ')
                 *(KeyEnd--) = '\0';
 
             // The parsed key
-            CHAR* Key = LineStart;
+            CHAR_T* Key = LineStart;
             LineStart = EqualSign + 1;
             
             Parse::ParseWhiteSpace(&LineStart);
 
             // Find the end of the value
-            CHAR* Value    = LineStart;
-            CHAR* ValueEnd = CString::Strchr(LineStart, ' ');
+            CHAR_T* Value    = LineStart;
+            CHAR_T* ValueEnd = CString::Strchr(LineStart, ' ');
 
             // Use line-end as backup
             if (!ValueEnd)

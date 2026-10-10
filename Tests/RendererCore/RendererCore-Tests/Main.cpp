@@ -21,7 +21,7 @@
 IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 #endif
 
-static void SetConsoleVariable(const CHAR* VariableName, bool bValue)
+static void SetConsoleVariable(const CHAR_T* VariableName, bool bValue)
 {
     if (IConsoleVariable* Variable = FConsoleManager::Get().FindConsoleVariable(VariableName))
     {
@@ -33,7 +33,7 @@ static void SetConsoleVariable(const CHAR* VariableName, bool bValue)
     }
 }
 
-static void SetConsoleVariable(const CHAR* VariableName, const CHAR* Value)
+static void SetConsoleVariable(const CHAR_T* VariableName, const CHAR_T* Value)
 {
     if (IConsoleVariable* Variable = FConsoleManager::Get().FindConsoleVariable(VariableName))
     {

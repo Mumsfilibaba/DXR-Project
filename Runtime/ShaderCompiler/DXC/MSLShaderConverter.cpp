@@ -317,7 +317,7 @@ static uint8 GetMSLNullTextureType(spvc_compiler Compiler, const FMSLReflectedRe
     return MakeMSLNullTextureType(Dimension, Component);
 }
 
-static const CHAR* GetMSLTableName(EMSLBindingType BindingType)
+static const CHAR_T* GetMSLTableName(EMSLBindingType BindingType)
 {
     switch (GetMSLBindingTable(BindingType))
     {
@@ -349,7 +349,7 @@ bool FMSLShaderConverter::Convert(const TArray<uint32>& Spirv, const FShaderComp
     } ContextGuard{ Context };
 
     // The spvc_* calls only report SPVC_ERROR_*, the reason SPIRV-Cross gives comes through this callback
-    spvc_context_set_error_callback(Context, [](void* UserData, const CHAR* Error)
+    spvc_context_set_error_callback(Context, [](void* UserData, const CHAR_T* Error)
     {
         *static_cast<String*>(UserData) += String::Printf("SPIRV-Cross: %s\n", Error);
     }, &OutErrors);
@@ -528,7 +528,7 @@ bool FMSLShaderConverter::Convert(const TArray<uint32>& Spirv, const FShaderComp
         }
     }
 
-    const CHAR* MSLSource = nullptr;
+    const CHAR_T* MSLSource = nullptr;
     if (spvc_compiler_compile(CompilerMSL, &MSLSource) != SPVC_SUCCESS || !MSLSource)
     {
         OutErrors += "Failed to create the MSL\n";
@@ -575,7 +575,7 @@ bool FMSLShaderConverter::Convert(const TArray<uint32>& Spirv, const FShaderComp
             }
         }
 
-        const CHAR* Name = spvc_compiler_get_name(CompilerMSL, ReflectedResource.Id);
+        const CHAR_T* Name = spvc_compiler_get_name(CompilerMSL, ReflectedResource.Id);
         if (!FShaderReflectionUtils::AddBinding(Name, ReflectedResource.Type, ReflectedResource.Dimension, ReflectedResource.Space, ReflectedResource.RegisterIndex, 1, CompileInfo.bDebugInfo, OutReflection, OutErrors))
         {
             return false;
@@ -621,7 +621,7 @@ bool FMSLShaderConverter::Convert(const TArray<uint32>& Spirv, const FShaderComp
     }
 
     // The entry point lives in OpEntryPoint, so stripping OpName never changes the name Metal looks up
-    const CHAR* CleansedEntryPoint = spvc_compiler_get_cleansed_entry_point_name(CompilerMSL, *CompileInfo.EntryPoint, ExecutionModel);
+    const CHAR_T* CleansedEntryPoint = spvc_compiler_get_cleansed_entry_point_name(CompilerMSL, *CompileInfo.EntryPoint, ExecutionModel);
     OutReflection.EntryPoint = CleansedEntryPoint && CleansedEntryPoint[0] != '\0' ? String(CleansedEntryPoint) : CompileInfo.EntryPoint;
 
     const int32 SourceLength = static_cast<int32>(CString::Strlen(MSLSource));

@@ -108,7 +108,7 @@ public:
     ~FD3D12PagingWorker();
 
     // Creates the wake/completion events and the OS thread for this worker.
-    bool Initialize(const CHAR* InThreadName);
+    bool Initialize(const CHAR_T* InThreadName);
 
     void RequestMakeResident(TArray<ID3D12Pageable*>&& Pageables);
     bool WaitForCompletion();

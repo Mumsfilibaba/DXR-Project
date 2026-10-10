@@ -29,7 +29,7 @@ private:
 
     void CaptureDefaultsIfNeeded();
 
-    IConsoleVariable* GetCachedConsoleVariable(const CHAR* InName);
+    IConsoleVariable* GetCachedConsoleVariable(const CHAR_T* InName);
 
     void DrawDeferredRenderingSettings();
     void DrawShadowSettings();
@@ -46,11 +46,11 @@ private:
     void DrawDebugSettings();
     void DrawTonemappingSettings();
 
-    FDelegateHandle                      ImGuiDelegateHandle;
-    TMap<String, bool>                   BoolDefaults;
-    TMap<String, int32>                  IntDefaults;
-    TMap<String, float>                  FloatDefaults;
-    TMap<const CHAR*, IConsoleVariable*> CVarCache;
-    bool                                 bVisible;
-    bool                                 bDefaultsCaptured;
+    FDelegateHandle                        ImGuiDelegateHandle;
+    TMap<String, bool>                     BoolDefaults;
+    TMap<String, int32>                    IntDefaults;
+    TMap<String, float>                    FloatDefaults;
+    TMap<const CHAR_T*, IConsoleVariable*> CVarCache;
+    bool                                   bVisible;
+    bool                                   bDefaultsCaptured;
 };

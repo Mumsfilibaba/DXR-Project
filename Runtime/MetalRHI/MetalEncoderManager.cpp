@@ -188,7 +188,7 @@ void FMetalEncoderManager::WaitForPublishedUploads()
 }
 
 template<EMetalEncoderType Type, typename OpenFunctionType>
-id<MTLCommandEncoder> FMetalEncoderManager::OpenEncoder(OpenFunctionType&& Open, const CHAR* Label)
+id<MTLCommandEncoder> FMetalEncoderManager::OpenEncoder(OpenFunctionType&& Open, const CHAR_T* Label)
 {
     CHECK(GQueueSupportsEncoder[static_cast<uint32>(Queue.GetType())][static_cast<uint32>(Type)]);
 
@@ -277,14 +277,14 @@ template void FMetalEncoderManager::RefreshBindlessResidency(id<MTLRenderCommand
 template void FMetalEncoderManager::RefreshBindlessResidency(id<MTLComputeCommandEncoder>);
 template void FMetalEncoderManager::RefreshBindlessResidency(id<MTLAccelerationStructureCommandEncoder>);
 
-id<MTLRenderCommandEncoder> FMetalEncoderManager::BeginRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR* Label)
+id<MTLRenderCommandEncoder> FMetalEncoderManager::BeginRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR_T* Label)
 {
     ResolvePendingClears(Descriptor);
     ResolvePendingDiscards(Descriptor);
     return OpenRenderEncoder(Descriptor, Label);
 }
 
-id<MTLRenderCommandEncoder> FMetalEncoderManager::OpenRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR* Label)
+id<MTLRenderCommandEncoder> FMetalEncoderManager::OpenRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR_T* Label)
 {
     return static_cast<id<MTLRenderCommandEncoder>>(OpenEncoder<EMetalEncoderType::Render>([this, Descriptor]() -> id<MTLCommandEncoder>
     {
@@ -299,7 +299,7 @@ id<MTLRenderCommandEncoder> FMetalEncoderManager::OpenRenderEncoder(MTLRenderPas
     }, Label));
 }
 
-id<MTLRenderCommandEncoder> FMetalEncoderManager::AdoptRenderEncoder(id<MTLRenderCommandEncoder> SubEncoder, const CHAR* Label)
+id<MTLRenderCommandEncoder> FMetalEncoderManager::AdoptRenderEncoder(id<MTLRenderCommandEncoder> SubEncoder, const CHAR_T* Label)
 {
     CHECK(Commands != nullptr);
     CHECK(Encoder == nil);
@@ -400,7 +400,7 @@ id<MTLAccelerationStructureCommandEncoder> FMetalEncoderManager::RequireAccelera
     }, "AccelerationStructure"));
 }
 
-id<MTLParallelRenderCommandEncoder> FMetalEncoderManager::BeginParallelRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR* Label)
+id<MTLParallelRenderCommandEncoder> FMetalEncoderManager::BeginParallelRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR_T* Label)
 {
     CHECK(Queue.GetType() == EMetalQueueType::Direct);
 
@@ -449,7 +449,7 @@ void FMetalEncoderManager::EndParallelRenderEncoder(id<MTLParallelRenderCommandE
     STAT_SUBTRACT(STAT_Metal_EncodersOpen, 1);
 }
 
-void FMetalEncoderManager::EncodeLoadStorePass(MTLRenderPassDescriptor* Descriptor, const CHAR* Label)
+void FMetalEncoderManager::EncodeLoadStorePass(MTLRenderPassDescriptor* Descriptor, const CHAR_T* Label)
 {
     BeginRenderEncoder(Descriptor, Label);
     EndEncoder();
@@ -946,7 +946,7 @@ void FMetalEncoderManager::EncodeTimestampPass(uint32 StartIndex, uint32 EndInde
     [TimestampEncoder endEncoding];
 }
 
-NSString* FMetalEncoderManager::MakeEncoderLabel(const CHAR* Label) const
+NSString* FMetalEncoderManager::MakeEncoderLabel(const CHAR_T* Label) const
 {
     if (ScopePath.IsEmpty())
     {

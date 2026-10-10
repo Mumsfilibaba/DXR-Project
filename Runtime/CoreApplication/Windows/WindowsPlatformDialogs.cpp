@@ -74,7 +74,7 @@ static String ShellItemToPath(IShellItem* Item)
         return String();
     }
 
-    String Path = StringCast<CHAR>(WidePath).ToString();
+    String Path = StringCast<CHAR_T>(WidePath).ToString();
     ::CoTaskMemFree(WidePath);
 
     Path.ReplaceAll('\\', '/');

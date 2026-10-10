@@ -203,7 +203,7 @@ struct CORE_API IPlatformFileSystem
     }
 
     /** @return Returns the full path of the running executable using '/' separators */
-    static FORCEINLINE const CHAR* GetExecutablePath()
+    static FORCEINLINE const CHAR_T* GetExecutablePath()
     {
         return "";
     }
@@ -218,61 +218,61 @@ struct CORE_API IPlatformFileSystem
     }
 
     /** @return Returns true if Path names an existing directory */
-    static FORCEINLINE bool IsDirectory(const CHAR* Path)
+    static FORCEINLINE bool IsDirectory(const CHAR_T* Path)
     {
         return false;
     }
 
     /** @return Returns true if Path names an existing file, and false for a directory */
-    static FORCEINLINE bool IsFile(const CHAR* Path)
+    static FORCEINLINE bool IsFile(const CHAR_T* Path)
     {
         return false;
     }
 
     /** @return Returns the size, last write time and kind of Path, with bExists set to false when nothing is there */
-    static FORCEINLINE FFileInfo GetFileInfo(const CHAR* Path)
+    static FORCEINLINE FFileInfo GetFileInfo(const CHAR_T* Path)
     {
         return FFileInfo();
     }
 
     /** @brief Create a directory, returning true if it was created or already existed */
-    static FORCEINLINE bool CreateDirectory(const CHAR* Path)
+    static FORCEINLINE bool CreateDirectory(const CHAR_T* Path)
     {
         return false;
     }
 
     /** @brief Remove a directory, returning true if it was removed or was never there */
-    static FORCEINLINE bool RemoveDirectory(const CHAR* Path)
+    static FORCEINLINE bool RemoveDirectory(const CHAR_T* Path)
     {
         return false;
     }
 
     /** @brief Delete a file, returning true if it was deleted or was never there */
-    static FORCEINLINE bool DeleteFile(const CHAR* Path)
+    static FORCEINLINE bool DeleteFile(const CHAR_T* Path)
     {
         return false;
     }
 
     /** @brief Move a file, replacing ToFilename if it exists, returning true on success */
-    static FORCEINLINE bool MoveFile(const CHAR* FromFilename, const CHAR* ToFilename)
+    static FORCEINLINE bool MoveFile(const CHAR_T* FromFilename, const CHAR_T* ToFilename)
     {
         return false;
     }
 
     /** @brief Copy a file, failing if ToFilename exists unless bReplaceExisting is set, returning true on success */
-    static FORCEINLINE bool CopyFile(const CHAR* FromFilename, const CHAR* ToFilename, bool bReplaceExisting = false)
+    static FORCEINLINE bool CopyFile(const CHAR_T* FromFilename, const CHAR_T* ToFilename, bool bReplaceExisting = false)
     {
         return false;
     }
 
     /** @brief Move or rename a directory with everything in it, failing if ToPath already exists, returning true on success */
-    static FORCEINLINE bool MoveDirectory(const CHAR* FromPath, const CHAR* ToPath)
+    static FORCEINLINE bool MoveDirectory(const CHAR_T* FromPath, const CHAR_T* ToPath)
     {
         return false;
     }
 
     /** @return Returns true if Path is relative rather than absolute */
-    static FORCEINLINE bool IsPathRelative(const CHAR* Path)
+    static FORCEINLINE bool IsPathRelative(const CHAR_T* Path)
     {
         return false;
     }
@@ -281,7 +281,7 @@ struct CORE_API IPlatformFileSystem
      * @brief Fill OutEntries with the immediate children of Path (not recursive)
      * @return Returns false if Path cannot be opened as a directory
      */
-    static FORCEINLINE bool IterateDirectory(const CHAR* Path, TArray<FDirectoryEntry>& OutEntries)
+    static FORCEINLINE bool IterateDirectory(const CHAR_T* Path, TArray<FDirectoryEntry>& OutEntries)
     {
         return false;
     }

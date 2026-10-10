@@ -56,8 +56,8 @@ static TSharedPtr<FVisualElement> MakeMainToolBarRow(const FPlaygroundFonts& Fon
 
     TSharedPtr<FToolBar> ToolBar = FToolBar::Create(Desc);
 
-    const CHAR* Actions[] = { "New", "Open", "Save" };
-    for (const CHAR* Action : Actions)
+    const CHAR_T* Actions[] = { "New", "Open", "Save" };
+    for (const CHAR_T* Action : Actions)
     {
         ToolBar->AddButton(
             FToolBarItemDesc().SetLabel(Action).SetToolTipText(String::Printf("%s the scene", Action)),
@@ -69,8 +69,8 @@ static TSharedPtr<FVisualElement> MakeMainToolBarRow(const FPlaygroundFonts& Fon
 
     ToolBar->AddSeparator();
 
-    const CHAR* Toggles[] = { "Grid", "Wireframe", "Stats" };
-    for (const CHAR* Toggle : Toggles)
+    const CHAR_T* Toggles[] = { "Grid", "Wireframe", "Stats" };
+    for (const CHAR_T* Toggle : Toggles)
     {
         ToolBar->AddToggle(
             FToolBarItemDesc().SetLabel(Toggle).SetToolTipText(String::Printf("Show %s in the viewport", Toggle)),
@@ -105,7 +105,7 @@ static TSharedPtr<FVisualElement> MakeMainToolBarRow(const FPlaygroundFonts& Fon
     ComboDesc.SelectedIndex      = 0;
     ComboDesc.OnSelectionChanged = FOnComboSelectionChanged::CreateLambda([Readout](int32 SelectedIndex)
     {
-        const CHAR* Views[] = { "Perspective", "Top", "Front", "Side" };
+        const CHAR_T* Views[] = { "Perspective", "Top", "Front", "Side" };
         Readout->SetText(String::Printf("camera is now %s", Views[Math::Clamp(SelectedIndex, 0, 3)]));
     });
 
@@ -129,8 +129,8 @@ static TSharedPtr<FVisualElement> MakeVerticalToolBarRow(const FPlaygroundFonts&
     TSharedPtr<FToolBar> ToolBar = FToolBar::Create(Desc);
     TSharedPtr<TArray<TSharedPtr<FToolBarButton>>> Tools = MakeSharedPtr<TArray<TSharedPtr<FToolBarButton>>>();
 
-    const CHAR* ToolNames[] = { "Select", "Move", "Rotate", "Scale" };
-    for (const CHAR* ToolName : ToolNames)
+    const CHAR_T* ToolNames[] = { "Select", "Move", "Rotate", "Scale" };
+    for (const CHAR_T* ToolName : ToolNames)
     {
         TSharedPtr<FToolBarButton> Tool = ToolBar->AddToggle(
             FToolBarItemDesc().SetLabel(ToolName).SetToolTipText(String::Printf("The %s tool", ToolName)),

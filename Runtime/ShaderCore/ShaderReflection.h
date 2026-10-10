@@ -26,7 +26,7 @@ enum class EShaderResourceType : uint8
     Count
 };
 
-NODISCARD constexpr const CHAR* ToString(EShaderResourceType Type)
+NODISCARD constexpr const CHAR_T* ToString(EShaderResourceType Type)
 {
     switch (Type)
     {

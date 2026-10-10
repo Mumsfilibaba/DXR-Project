@@ -155,7 +155,7 @@ void FEditorGPUProfilerWidget::DrawGPUData()
     }
 }
 
-static void FormatWithSeparators(CHAR* Buffer, int32 BufferSize, uint64 Value)
+static void FormatWithSeparators(CHAR_T* Buffer, int32 BufferSize, uint64 Value)
 {
     if (Value == 0 || Value == TNumericLimits<uint64>::Max())
     {
@@ -163,7 +163,7 @@ static void FormatWithSeparators(CHAR* Buffer, int32 BufferSize, uint64 Value)
         return;
     }
 
-    CHAR Raw[32];
+    CHAR_T Raw[32];
     snprintf(Raw, sizeof(Raw), "%llu", Value);
 
     const int32 RawLen        = static_cast<int32>(strlen(Raw));
@@ -267,8 +267,8 @@ void FEditorGPUProfilerWidget::DrawPipelineStatistics()
         ImGui::TableSetupColumn("Max",      ImGuiTableColumnFlags_WidthFixed, 120.0f);
         ImGui::TableHeadersRow();
 
-        CHAR Buf[48];
-        auto Row = [&Buf](const CHAR* Label, uint64 Current, uint64 MinVal, uint64 MaxVal)
+        CHAR_T Buf[48];
+        auto Row = [&Buf](const CHAR_T* Label, uint64 Current, uint64 MinVal, uint64 MaxVal)
         {
             ImGui::TableNextRow();
 

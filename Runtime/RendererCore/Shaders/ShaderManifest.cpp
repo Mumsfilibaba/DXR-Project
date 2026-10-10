@@ -14,13 +14,13 @@ static TAutoConsoleVariable<String> CVarManifestFileName(
     "FileName for the file recording which shader permutations to pre-warm",
     "Shaders.shadermanifest");
     
-static const CHAR*      GShaderManifestMagic   = "DXRSHMAN";
+static const CHAR_T*    GShaderManifestMagic   = "DXRSHMAN";
 static constexpr uint32 GShaderManifestVersion = 1;
 static constexpr uint32 GMaxShaderManifestSize = 16 * 1024 * 1024; // A manifest is a few kilobytes of names and integers, so anything near this is a corrupt header rather than a big project.
 
 struct FShaderManifestHeader
 {
-    CHAR   Magic[8]; // Always "DXRSHMAN"
+    CHAR_T Magic[8]; // Always "DXRSHMAN"
     uint32 Version;
     uint32 DataCRC;  // CRC of everything after this header
     uint32 DataSize; // Size of everything after this header
@@ -117,7 +117,7 @@ bool FShaderManifest::Load()
             break;
         }
 
-        TArray<CHAR> NameBuffer;
+        TArray<CHAR_T> NameBuffer;
         NameBuffer.Resize(static_cast<int32>(NameLength));
         Stream.Read(NameBuffer.Data(), NameBuffer.Size());
 
@@ -171,10 +171,10 @@ bool FShaderManifest::Save() const
             continue;
         }
 
-        const CHAR*  TypeName        = Entry.Type->GetName();
-        const uint32 NameLength      = static_cast<uint32>(CString::Strlen(TypeName));
-        const uint64 SpaceSignature  = Entry.Type->GetPermutationSpaceSignature();
-        const uint32 NumPermutations = static_cast<uint32>(Entry.PermutationIDs.Size());
+        const CHAR_T* TypeName        = Entry.Type->GetName();
+        const uint32  NameLength      = static_cast<uint32>(CString::Strlen(TypeName));
+        const uint64  SpaceSignature  = Entry.Type->GetPermutationSpaceSignature();
+        const uint32  NumPermutations = static_cast<uint32>(Entry.PermutationIDs.Size());
 
         Payload.Add(NameLength);
         Payload.Add(TypeName, static_cast<int32>(NameLength));

@@ -10,7 +10,7 @@ bool Json::Parse(const StringView& Text, FJsonValue& OutValue, FJsonError* OutEr
 
 bool Json::LoadFromFile(const String& Filename, FJsonValue& OutValue, FJsonError* OutError, EJsonParseFlags Flags)
 {
-    const auto ReportFailure = [OutError](const CHAR* Message)
+    const auto ReportFailure = [OutError](const CHAR_T* Message)
     {
         if (OutError)
         {
@@ -27,7 +27,7 @@ bool Json::LoadFromFile(const String& Filename, FJsonValue& OutValue, FJsonError
         return ReportFailure("the file could not be opened for reading");
     }
 
-    TArray<CHAR> Text;
+    TArray<CHAR_T> Text;
     if (!File::ReadTextFile(SourceFile.Get(), Text))
     {
         return ReportFailure("the file could not be read");

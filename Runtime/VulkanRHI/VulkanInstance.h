@@ -6,8 +6,8 @@
 
 struct FVulkanInstanceCreateInfo
 {
-    TArray<const CHAR*>                          RequiredLayerNames;
-    TArray<const CHAR*>                          OptionalLayerNames;
+    TArray<const CHAR_T*>                        RequiredLayerNames;
+    TArray<const CHAR_T*>                        OptionalLayerNames;
     TArray<TUniquePtr<FVulkanInstanceExtension>> Extensions;
 };
 

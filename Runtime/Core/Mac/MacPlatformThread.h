@@ -6,7 +6,7 @@
 class FMacPlatformThread final : public IPlatformThread
 {
 public:
-    static IPlatformThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
+    static IPlatformThread* Create(FRunnable* Runnable, const CHAR_T* ThreadName, bool bSuspended = true);
 
 public:
     virtual ~FMacPlatformThread();
@@ -33,7 +33,7 @@ public:
 private:
     static void* ThreadRoutine(void* ThreadParameter);
 
-    FMacPlatformThread(FRunnable* InRunnable, const CHAR* ThreadName);
+    FMacPlatformThread(FRunnable* InRunnable, const CHAR_T* ThreadName);
 
     String     Name;
     FRunnable* Runnable;

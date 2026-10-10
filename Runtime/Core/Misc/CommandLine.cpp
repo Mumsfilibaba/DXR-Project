@@ -3,10 +3,10 @@
 #include "Core/Misc/Parse.h"
 #include "Core/Templates/CString.h"
 
-CHAR CommandLine::CommandLineBuffer[CommandLine::MaxCommandLineLength]   = { 0 };
-CHAR CommandLine::OriginalCommandLine[CommandLine::MaxCommandLineLength] = { 0 };
+CHAR_T CommandLine::CommandLineBuffer[CommandLine::MaxCommandLineLength]   = { 0 };
+CHAR_T CommandLine::OriginalCommandLine[CommandLine::MaxCommandLineLength] = { 0 };
 
-static void AppendChecked(CHAR*& It, CHAR* End, const CHAR* Source, UPTR_INT Length)
+static void AppendChecked(CHAR_T*& It, CHAR_T* End, const CHAR_T* Source, UPTR_INT Length)
 {
     const UPTR_INT Available = static_cast<UPTR_INT>(End - It);
     const UPTR_INT ToCopy    = (Length < Available) ? Length : Available;
@@ -14,7 +14,7 @@ static void AppendChecked(CHAR*& It, CHAR* End, const CHAR* Source, UPTR_INT Len
     It += ToCopy;
 }
 
-static const CHAR* FindOptionToken(const CHAR* Buffer, const CHAR* Name)
+static const CHAR_T* FindOptionToken(const CHAR_T* Buffer, const CHAR_T* Name)
 {
     const int32 NameLength = CString::Strlen(Name);
     if (NameLength <= 0)
@@ -22,9 +22,9 @@ static const CHAR* FindOptionToken(const CHAR* Buffer, const CHAR* Name)
         return nullptr;
     }
 
-    for (const CHAR* Match = CString::Stristr(Buffer, Name); Match; Match = CString::Stristr(Match + 1, Name))
+    for (const CHAR_T* Match = CString::Stristr(Buffer, Name); Match; Match = CString::Stristr(Match + 1, Name))
     {
-        const CHAR* Dash = Match - 1;
+        const CHAR_T* Dash = Match - 1;
         if ((Match == Buffer) || (*Dash != '-'))
         {
             continue;
@@ -35,7 +35,7 @@ static const CHAR* FindOptionToken(const CHAR* Buffer, const CHAR* Name)
             continue;
         }
 
-        const CHAR Terminator = *(Match + NameLength);
+        const CHAR_T Terminator = *(Match + NameLength);
         if ((Terminator == '=') || (Terminator == ' ') || (Terminator == '\0'))
         {
             return Match;
@@ -45,17 +45,17 @@ static const CHAR* FindOptionToken(const CHAR* Buffer, const CHAR* Name)
     return nullptr;
 }
 
-bool CommandLine::Initialize(const CHAR** Args, int32 NumArgs)
+bool CommandLine::Initialize(const CHAR_T** Args, int32 NumArgs)
 {
     if (!Args)
     {
         return false;
     }
 
-    CHAR* CommandLineIt          = CommandLineBuffer;
-    CHAR* CommandLineEnd         = CommandLineBuffer + MaxCommandLineLength - 1;
-    CHAR* OriginalCommandLineIt  = OriginalCommandLine;
-    CHAR* OriginalCommandLineEnd = OriginalCommandLine + MaxCommandLineLength - 1;
+    CHAR_T* CommandLineIt          = CommandLineBuffer;
+    CHAR_T* CommandLineEnd         = CommandLineBuffer + MaxCommandLineLength - 1;
+    CHAR_T* OriginalCommandLineIt  = OriginalCommandLine;
+    CHAR_T* OriginalCommandLineEnd = OriginalCommandLine + MaxCommandLineLength - 1;
 
     // Terminate up front so a repeated Initialize cannot leave a stale tail behind
     *CommandLineIt         = '\0';
@@ -63,7 +63,7 @@ bool CommandLine::Initialize(const CHAR** Args, int32 NumArgs)
 
     for (int32 Index = 0; Index < NumArgs; ++Index)
     {
-        const CHAR* CurrentArg = Args[Index];
+        const CHAR_T* CurrentArg = Args[Index];
         if (!CurrentArg)
         {
             return false;
@@ -78,20 +78,20 @@ bool CommandLine::Initialize(const CHAR** Args, int32 NumArgs)
 
         while (CurrentArg && *CurrentArg && (CommandLineIt < CommandLineEnd))
         {
-            const CHAR* Option = CString::Strchr(CurrentArg, '-');
+            const CHAR_T* Option = CString::Strchr(CurrentArg, '-');
             if (!Option)
             {
                 // No further options in this argument
                 break;
             }
 
-            const CHAR* Iterator = Option + 1;
+            const CHAR_T* Iterator = Option + 1;
             Parse::ParseOptionName(&Iterator);
 
             AppendChecked(CommandLineIt, CommandLineEnd, Option, static_cast<UPTR_INT>(Iterator - Option));
 
             // Where the scan resumes; the '=' branch moves this past the value
-            const CHAR* NextArg = Iterator;
+            const CHAR_T* NextArg = Iterator;
 
             Parse::ParseWhiteSpace(&Iterator);
 
@@ -103,7 +103,7 @@ bool CommandLine::Initialize(const CHAR** Args, int32 NumArgs)
                 Parse::ParseWhiteSpace(&Iterator);
 
                 // Special case for string-values
-                const CHAR* ValueEnd = nullptr;
+                const CHAR_T* ValueEnd = nullptr;
                 if (*Iterator == '\"')
                 {
                     ValueEnd = CString::Strchr(Iterator + 1, '\"');
@@ -146,14 +146,14 @@ bool CommandLine::Initialize(const CHAR** Args, int32 NumArgs)
     return true;
 }
 
-bool CommandLine::FindOption(const CHAR* Value)
+bool CommandLine::FindOption(const CHAR_T* Value)
 {
     return FindOptionToken(CommandLineBuffer, Value) != nullptr;
 }
 
-bool CommandLine::FindOption(const CHAR* Value, StringView& OutValue)
+bool CommandLine::FindOption(const CHAR_T* Value, StringView& OutValue)
 {
-    const CHAR* Result = FindOptionToken(CommandLineBuffer, Value);
+    const CHAR_T* Result = FindOptionToken(CommandLineBuffer, Value);
     if (!Result)
     {
         return false;
@@ -170,7 +170,7 @@ bool CommandLine::FindOption(const CHAR* Value, StringView& OutValue)
 
     ++Result;
 
-    const CHAR* StringEnd = Result;
+    const CHAR_T* StringEnd = Result;
     if (*Result == '\"')
     {
         ++Result;

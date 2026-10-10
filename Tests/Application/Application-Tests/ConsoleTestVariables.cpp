@@ -37,19 +37,19 @@ void RegisterConsoleCrowdVariables()
     Names.Reserve(GNumConsoleCrowdVariables);
     HelpStrings.Reserve(GNumConsoleCrowdVariables);
 
-    static const CHAR* Subsystems[] = { "Renderer", "Scene", "Texture", "Shadow", "Bindless" };
-    static const CHAR* Settings[]   = { "Enable", "MaxCount", "Bias", "Quality", "DebugName", "Threshold", "Scale", "Timeout" };
+    static const CHAR_T* Subsystems[] = { "Renderer", "Scene", "Texture", "Shadow", "Bindless" };
+    static const CHAR_T* Settings[]   = { "Enable", "MaxCount", "Bias", "Quality", "DebugName", "Threshold", "Scale", "Timeout" };
 
     for (int32 Index = 0; Index < GNumConsoleCrowdVariables; ++Index)
     {
-        const CHAR* Subsystem = Subsystems[Index % static_cast<int32>(ARRAY_COUNT(Subsystems))];
-        const CHAR* Setting   = Settings[Index % static_cast<int32>(ARRAY_COUNT(Settings))];
+        const CHAR_T* Subsystem = Subsystems[Index % static_cast<int32>(ARRAY_COUNT(Subsystems))];
+        const CHAR_T* Setting   = Settings[Index % static_cast<int32>(ARRAY_COUNT(Settings))];
 
         Names.Emplace(String::Printf("%s.%s.%s%d", GConsoleCrowdPrefix, Subsystem, Setting, Index));
         HelpStrings.Emplace(String::Printf("Controls the %s %s of the %s subsystem", Setting, "behavior", Subsystem));
 
-        const CHAR* Name = *Names.Last();
-        const CHAR* Help = *HelpStrings.Last();
+        const CHAR_T* Name = *Names.Last();
+        const CHAR_T* Help = *HelpStrings.Last();
 
         switch (Index % 4)
         {

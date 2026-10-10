@@ -28,22 +28,22 @@ enum class ERendererSettingKind : uint8
 struct FRendererSubsection
 {
     /** @brief The name of the nested section, which matches the Section of the settings it holds. */
-    const CHAR* Section;
+    const CHAR_T* Section;
 
     /** @brief The name of the section it hangs inside. */
-    const CHAR* ParentSection;
+    const CHAR_T* ParentSection;
 };
 
 struct FRendererSetting
 {
-    const CHAR*          Section;
-    const CHAR*          Label;
-    const CHAR*          CVarName;
+    const CHAR_T*        Section;
+    const CHAR_T*        Label;
+    const CHAR_T*        CVarName;
     ERendererSettingKind Kind;
     float                MinValue;
     float                MaxValue;
     float                Step;
-    const CHAR* const*   Options;
+    const CHAR_T* const* Options;
     const int32*         OptionValues;
     int32                NumOptions;
 

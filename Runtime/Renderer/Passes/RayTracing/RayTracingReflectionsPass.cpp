@@ -438,7 +438,7 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
     FRHITexture*       DiffuseCube  = nullptr;
     FRHITexture*       SpecularCube = nullptr;
 
-    const CHAR* MissingResource = nullptr;
+    const CHAR_T* MissingResource = nullptr;
     if (!TraceTarget)
     {
         MissingResource = bDenoise ? "ReflectionTrace" : "RayTracingOutput";

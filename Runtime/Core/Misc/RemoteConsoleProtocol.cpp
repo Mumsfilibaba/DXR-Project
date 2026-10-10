@@ -1,7 +1,7 @@
 #include "Core/Misc/RemoteConsoleProtocol.h"
 #include "Core/Json/JsonWriter.h"
 
-const CHAR* RemoteConsoleProtocol::SeverityToString(ELogSeverity Severity)
+const CHAR_T* RemoteConsoleProtocol::SeverityToString(ELogSeverity Severity)
 {
     switch (Severity)
     {
@@ -34,8 +34,8 @@ bool RemoteConsoleProtocol::SeverityFromString(const String& Text, ELogSeverity&
 
 bool RemoteConsoleProtocol::ExtractLines(String& Buffer, TArray<String>& OutLines)
 {
-    const CHAR* Data   = Buffer.Data();
-    const int32 Length = Buffer.Length();
+    const CHAR_T* Data   = Buffer.Data();
+    const int32   Length = Buffer.Length();
 
     int32 LineStart = 0;
     for (int32 Index = 0; Index < Length; ++Index)

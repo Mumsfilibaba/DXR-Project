@@ -6,7 +6,7 @@
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Engine/EngineUI/Editor/EditorStatsWidget.h"
 
-static bool IsRHIGroup(const CHAR* GroupName)
+static bool IsRHIGroup(const CHAR_T* GroupName)
 {
     return CString::Strcmp(GroupName, "RHI") == 0
         || CString::Strcmp(GroupName, "RHI Budget") == 0
@@ -50,12 +50,12 @@ void FEditorStatsWidget::Draw()
     if (EditorWidgets::BeginEditorWindow("Engine Stats", &bVisible))
     {
         const FStatRegistry& Registry = FStatRegistry::Get();
-        TArray<const CHAR*> Groups;
+        TArray<const CHAR_T*> Groups;
         Registry.GetGroups(Groups);
 
         const ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp;
 
-        for (const CHAR* GroupName : Groups)
+        for (const CHAR_T* GroupName : Groups)
         {
             if (IsRHIGroup(GroupName))
             {

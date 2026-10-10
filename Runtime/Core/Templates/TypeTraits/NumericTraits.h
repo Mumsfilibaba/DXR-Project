@@ -12,7 +12,7 @@ template<>
 struct TIsInteger<bool> : TTrueType { };
 
 template<>
-struct TIsInteger<CHAR> : TTrueType { };
+struct TIsInteger<CHAR_T> : TTrueType { };
 
 template<>
 struct TIsInteger<WIDECHAR> : TTrueType { };

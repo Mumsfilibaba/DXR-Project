@@ -10,19 +10,19 @@
 static constexpr float AboutLabelColumnWidth  = 160.0f;
 static constexpr float AboutRevertColumnWidth = 28.0f;
 
-static const CHAR* GetDirtySuffix()
+static const CHAR_T* GetDirtySuffix()
 {
     return BuildInfo::IsWorkingTreeDirty() ? " (modified)" : "";
 }
 
-static void CopyRowToClipboard(const CHAR* Label, const CHAR* ValueText)
+static void CopyRowToClipboard(const CHAR_T* Label, const CHAR_T* ValueText)
 {
     String Text;
     Text.AppendPrintf("%s: %s", Label, ValueText ? ValueText : "");
     ImGui::SetClipboardText(*Text);
 }
 
-static void DrawSectionHeader(const CHAR* Label)
+static void DrawSectionHeader(const CHAR_T* Label)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextBorderSize, 4.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextAlign, ImVec2(0.1f, 0.5f));
@@ -89,7 +89,7 @@ void FEditorAboutWidget::Draw()
 
 void FEditorAboutWidget::DrawTitle()
 {
-    TStaticArray<CHAR, 128> TitleText{};
+    TStaticArray<CHAR_T, 128> TitleText{};
     CString::Snprintf(TitleText.Data(), static_cast<int32>(TitleText.Size()), "%s %s", BuildInfo::GetEngineName(), BuildInfo::GetVersionString());
 
     ImFont* TitleFont = EditorFonts::SegoeUI_22 ? EditorFonts::SegoeUI_22 : EditorFonts::DefaultFont;
@@ -113,7 +113,7 @@ void FEditorAboutWidget::DrawSourceInfo()
     {
         DrawProperty("Branch", BuildInfo::GetBranch());
 
-        TStaticArray<CHAR, 64> CommitText{};
+        TStaticArray<CHAR_T, 64> CommitText{};
         CString::Snprintf(CommitText.Data(), static_cast<int32>(CommitText.Size()), "%s%s", BuildInfo::GetCommit(), GetDirtySuffix());
         DrawProperty("Commit", CommitText.Data());
 
@@ -129,11 +129,11 @@ void FEditorAboutWidget::DrawBuildInfo()
 
     if (EditorWidgets::BeginPropertyTable("##AboutBuildTable", AboutLabelColumnWidth, AboutRevertColumnWidth))
     {
-        TStaticArray<CHAR, 64> ConfigurationText{};
+        TStaticArray<CHAR_T, 64> ConfigurationText{};
         CString::Snprintf(ConfigurationText.Data(), static_cast<int32>(ConfigurationText.Size()), "%s (%s)", BuildInfo::GetConfigurationName(), BuildInfo::GetLinkageName());
         DrawProperty("Configuration", ConfigurationText.Data());
 
-        TStaticArray<CHAR, 64> PlatformText{};
+        TStaticArray<CHAR_T, 64> PlatformText{};
         CString::Snprintf(PlatformText.Data(), static_cast<int32>(PlatformText.Size()), "%s %s", BuildInfo::GetPlatformName(), BuildInfo::GetArchitectureName());
         DrawProperty("Platform", PlatformText.Data());
 
@@ -182,7 +182,7 @@ void FEditorAboutWidget::DrawContextMenu()
     }
 }
 
-void FEditorAboutWidget::DrawProperty(const CHAR* Label, const CHAR* ValueText)
+void FEditorAboutWidget::DrawProperty(const CHAR_T* Label, const CHAR_T* ValueText)
 {
     if (!EditorWidgets::DrawTextProperty(Label, ValueText))
     {

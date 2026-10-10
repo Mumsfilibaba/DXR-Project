@@ -26,7 +26,7 @@ public:
     explicit FMetalShaderLibraryCache(FMetalDevice* InDevice);
     ~FMetalShaderLibraryCache();
 
-    TSharedRef<FMetalCompiledShader> GetOrCompile(TArrayView<const uint8> Source, const CHAR* EntryPoint);
+    TSharedRef<FMetalCompiledShader> GetOrCompile(TArrayView<const uint8> Source, const CHAR_T* EntryPoint);
     void Prune();
 
 private:
@@ -37,8 +37,8 @@ private:
         TSharedRef<FMetalCompiledShader> Shader;
     };
 
-    TSharedRef<FMetalCompiledShader> Find(uint64 Hash, TArrayView<const uint8> Source, const CHAR* EntryPoint) const;
-    TSharedRef<FMetalCompiledShader> Compile(TArrayView<const uint8> Source, const CHAR* EntryPoint) const;
+    TSharedRef<FMetalCompiledShader> Find(uint64 Hash, TArrayView<const uint8> Source, const CHAR_T* EntryPoint) const;
+    TSharedRef<FMetalCompiledShader> Compile(TArrayView<const uint8> Source, const CHAR_T* EntryPoint) const;
 
     FMetalDevice*                Device;
     TMap<uint64, TArray<FEntry>> Entries;

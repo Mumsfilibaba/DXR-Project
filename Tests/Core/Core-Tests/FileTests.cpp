@@ -12,7 +12,7 @@
 
 #include "TestCommon/TestMacros.h"
 
-static bool WriteText(const String& Filename, const CHAR* Text)
+static bool WriteText(const String& Filename, const CHAR_T* Text)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(Filename);
     if (!FileHandle)
@@ -127,7 +127,7 @@ static String ReadText(const String& Filename)
         return String();
     }
 
-    TArray<CHAR> Text;
+    TArray<CHAR_T> Text;
     if (!File::ReadTextFile(FileHandle.Get(), Text))
     {
         return String();
@@ -224,7 +224,7 @@ bool File_Test()
             TEST_EXPECT(!File::ReadFile(&Fake, Bytes));
             TEST_EXPECT(Bytes.IsEmpty());
 
-            TArray<CHAR> Text = { 'A' };
+            TArray<CHAR_T> Text = { 'A' };
             TEST_EXPECT(!File::ReadTextFile(&Fake, Text));
             TEST_EXPECT(Text.IsEmpty());
 
@@ -265,7 +265,7 @@ bool File_Test()
             TEST_EXPECT(File::ReadFile(FileHandle.Get(), Bytes));
             TEST_EXPECT(Bytes.IsEmpty());
 
-            TArray<CHAR> Text;
+            TArray<CHAR_T> Text;
             TEST_EXPECT(File::ReadTextFile(FileHandle.Get(), Text));
             TEST_EXPECT((Text.Size() == 1) && (Text[0] == 0));
 
@@ -299,7 +299,7 @@ bool File_Test()
 
             TEST_EXPECT(FileHandle->SeekFromStart(4));
 
-            TArray<CHAR> Text;
+            TArray<CHAR_T> Text;
             TEST_EXPECT(File::ReadTextFile(FileHandle.Get(), Text));
             TEST_EXPECT(String(Text.Data()).Equals("456789"));
             TEST_EXPECT(FileHandle->Tell() == 10);

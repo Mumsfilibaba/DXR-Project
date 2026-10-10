@@ -16,7 +16,7 @@ public:
     // FShaderCompilerBackend Interface
     virtual bool Initialize() override final;
 
-    virtual const CHAR* GetName() const override final { return "FXC"; }
+    virtual const CHAR_T* GetName() const override final { return "FXC"; }
     virtual bool SupportsOutputLanguage(EShaderOutputLanguage OutputLanguage) const override final;
     virtual FShaderCompilerIdentity GetIdentity() const override final;
     virtual bool TranslateSource(FShaderPreprocessorOutput& InOutSource) const override final;

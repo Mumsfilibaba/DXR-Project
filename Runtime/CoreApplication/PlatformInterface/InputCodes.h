@@ -145,7 +145,7 @@ struct EKeyboardKeyName
     };
 };
 
-constexpr const CHAR* ToString(EKeyboardKeyName::Type key)
+constexpr const CHAR_T* ToString(EKeyboardKeyName::Type key)
 {
     switch (key)
     {
@@ -290,7 +290,7 @@ struct EMouseButtonName
     };
 };
 
-constexpr const CHAR* ToString(EMouseButtonName::Type Button)
+constexpr const CHAR_T* ToString(EMouseButtonName::Type Button)
 {
     switch (Button)
     {
@@ -309,7 +309,7 @@ enum class EScrollAxis : uint8
     Vertical,
 };
 
-constexpr const CHAR* ToString(EScrollAxis ScrollAxis)
+constexpr const CHAR_T* ToString(EScrollAxis ScrollAxis)
 {
     switch (ScrollAxis)
     {
@@ -345,7 +345,7 @@ struct EGamepadButtonName
     };
 };
 
-constexpr const CHAR* ToString(EGamepadButtonName::Type Button)
+constexpr const CHAR_T* ToString(EGamepadButtonName::Type Button)
 {
     switch (Button)
     {
@@ -385,7 +385,7 @@ struct EAnalogSourceName
     };
 };
 
-constexpr const CHAR* ToString(EAnalogSourceName::Type AnalogSourceName)
+constexpr const CHAR_T* ToString(EAnalogSourceName::Type AnalogSourceName)
 {
     switch (AnalogSourceName)
     {

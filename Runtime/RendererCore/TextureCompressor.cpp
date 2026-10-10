@@ -131,7 +131,7 @@ static bool AcquireComputePipeline(FRHIComputeShaderRef& OutShader, FRHIComputeP
     TArrayView<const FRHIStaticSamplerInfo> StaticSamplers = TArrayView<const FRHIStaticSamplerInfo>(),
     const typename ShaderType::FPermutation& Permutation = typename ShaderType::FPermutation())
 {
-    const CHAR* ShaderName = ShaderType::GetStaticType().GetName();
+    const CHAR_T* ShaderName = ShaderType::GetStaticType().GetName();
 
     OutShader = FShaderCache::Get().GetShader<ShaderType>(Permutation);
     if (!OutShader)

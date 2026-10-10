@@ -15,7 +15,7 @@
 
 struct FPipelineStatisticsCounter
 {
-    const CHAR*                      Label;
+    const CHAR_T*                    Label;
     uint64 FRHIPipelineStatistics::* Member;
 };
 

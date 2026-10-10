@@ -217,7 +217,7 @@ static TSharedPtr<FMenu> MakeLongMenu(const TSharedPtr<IFontFace>& Font)
 
     for (int32 Index = 0; Index < 30; ++Index)
     {
-        CHAR Label[32];
+        CHAR_T Label[32];
         CString::Snprintf(Label, static_cast<int32>(sizeof(Label)), "Recent %d", Index);
 
         Labels.Add(String(Label));
@@ -228,11 +228,11 @@ static TSharedPtr<FMenu> MakeLongMenu(const TSharedPtr<IFontFace>& Font)
 
 static TSharedPtr<FBorder> MakePanel(const TSharedPtr<IFontFace>& Font)
 {
-    static const CHAR* RowLabels[] = { "Alpha", "Bravo", "Charlie", "Delta" };
+    static const CHAR_T* RowLabels[] = { "Alpha", "Bravo", "Charlie", "Delta" };
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
 
-    for (const CHAR* Label : RowLabels)
+    for (const CHAR_T* Label : RowLabels)
     {
         FTextBlock::FDesc TextDesc;
         TextDesc.Text = Label;
@@ -257,7 +257,7 @@ static TSharedPtr<FBorder> MakeBigPanel(const TSharedPtr<IFontFace>& Font)
 
     for (int32 Index = 0; Index < 40; ++Index)
     {
-        CHAR Label[32];
+        CHAR_T Label[32];
         CString::Snprintf(Label, static_cast<int32>(sizeof(Label)), "Row %d", Index);
 
         FTextBlock::FDesc TextDesc;
@@ -909,7 +909,7 @@ bool DrawCacheMenuBar_Test()
 
     for (int32 Index = 0; Index < 60; ++Index)
     {
-        CHAR Label[32];
+        CHAR_T Label[32];
         CString::Snprintf(Label, static_cast<int32>(sizeof(Label)), "Filler %d", Index);
 
         MenuBar->AddMenu(Label, Font, CreateMenu(Font, { "One", "Two" }));

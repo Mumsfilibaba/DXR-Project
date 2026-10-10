@@ -83,7 +83,7 @@ static String BuildFullProfileReport()
                 Text.Append("  ");
             }
 
-            const CHAR* Name = Interval.Name ? Interval.Name : "<unnamed>";
+            const CHAR_T* Name = Interval.Name ? Interval.Name : "<unnamed>";
             Text.Append(String::Printf("%s  inclusive=%.3fms  exclusive=%.3fms\n", Name,
                 Time::ToMilliseconds(static_cast<double>(Interval.InclusiveNanoseconds)),
                 Time::ToMilliseconds(static_cast<double>(Interval.ExclusiveNanoseconds))));
@@ -120,7 +120,7 @@ static String BuildChromeGpuEvents(IGPUProfiler& Gpu)
         for (const FGPUProfilerInterval& Interval : GpuFrame.Intervals)
         {
             const double TimestampUs = FrameStartUs + Time::ToMicroseconds(static_cast<double>(Interval.StartNanoseconds));
-            const CHAR* Name = Interval.Name ? Interval.Name : "<unnamed>";
+            const CHAR_T* Name = Interval.Name ? Interval.Name : "<unnamed>";
 
             if (Interval.bInstant || Interval.InclusiveNanoseconds == 0)
             {

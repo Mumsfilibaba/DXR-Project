@@ -6,7 +6,7 @@
 class CORE_API FWindowsPlatformThread final : public IPlatformThread
 {
 public:
-    static IPlatformThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
+    static IPlatformThread* Create(FRunnable* Runnable, const CHAR_T* ThreadName, bool bSuspended = true);
 
 public:
     virtual ~FWindowsPlatformThread();
@@ -31,7 +31,7 @@ public:
 private:
     static DWORD WINAPI ThreadRoutine(LPVOID ThreadParameter);
 
-    FWindowsPlatformThread(FRunnable* InRunnable, const CHAR* InThreadName, bool bSuspended);
+    FWindowsPlatformThread(FRunnable* InRunnable, const CHAR_T* InThreadName, bool bSuspended);
 
     String     Name;
     FRunnable* Runnable;

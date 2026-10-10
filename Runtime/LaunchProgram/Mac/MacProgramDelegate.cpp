@@ -21,7 +21,7 @@ static int32  GProgramMainResult = 0;
 
 - (void)runAppThread
 {
-    const CHAR* CommandLine = *GMacCommandLine;
+    const CHAR_T* CommandLine = *GMacCommandLine;
     CommandLine::Initialize(&CommandLine, 1);
     GProgramMainResult = FProgramLoop::Run(GProgramTitle, GProgramBody);
 
@@ -47,7 +47,7 @@ static int32  GProgramMainResult = 0;
 
 @end
 
-int main(int NumArgs, const CHAR** Args)
+int main(int NumArgs, const CHAR_T** Args)
 {
     for (int32 Index = 1; Index < NumArgs; Index++)
     {

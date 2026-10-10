@@ -19,13 +19,13 @@ static bool ReadText(const String& Filename, std::string& OutText)
         return false;
     }
 
-    TArray<CHAR> Text;
+    TArray<CHAR_T> Text;
     if (!File::ReadTextFile(FileHandle.Get(), Text))
     {
         return false;
     }
 
-    const TStringConversion<ANSICHAR, CHAR> Utf8Text = StringCast<ANSICHAR>(Text.Data(), Text.Size() - 1);
+    const TStringConversion<ANSICHAR, CHAR_T> Utf8Text = StringCast<ANSICHAR>(Text.Data(), Text.Size() - 1);
     OutText.assign(Utf8Text.Get(), static_cast<size_t>(Utf8Text.Length()));
     return true;
 }
@@ -40,7 +40,7 @@ public:
 
     virtual bool operator()(const std::string& MaterialFile, std::vector<tinyobj::material_t>* Materials, std::map<std::string, int>* MaterialMap, std::string* Warning, std::string* Error) override final
     {
-        const String Filename = File::CombinePath(Directory, StringCast<CHAR>(MaterialFile.c_str(), static_cast<int32>(MaterialFile.size())).ToString());
+        const String Filename = File::CombinePath(Directory, StringCast<CHAR_T>(MaterialFile.c_str(), static_cast<int32>(MaterialFile.size())).ToString());
 
         std::string Text;
         if (!ReadText(Filename, Text))

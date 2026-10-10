@@ -126,7 +126,7 @@ D3D12RHI_API D3D12_COMMAND_LIST_SUPPORT_FLAGS GD3D12WriteBufferImmediateSupportF
 
 D3D12RHI_API void DumpD3D12RayTracingCapabilities()
 {
-    const auto YesNo = [](bool bValue) -> const CHAR*
+    const auto YesNo = [](bool bValue) -> const CHAR_T*
     {
         return bValue ? "Yes" : "No";
     };
@@ -146,7 +146,7 @@ D3D12RHI_API void DumpD3D12RayTracingCapabilities()
 
 D3D12RHI_API void DumpD3D12Capabilities()
 {
-    const auto YesNo = [](bool bValue) -> const CHAR*
+    const auto YesNo = [](bool bValue) -> const CHAR_T*
     {
         return bValue ? "Yes" : "No";
     };
@@ -590,7 +590,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
         {
             GD3D12RootSignatureVersion = RootSignature.HighestVersion;
 
-            const CHAR* VersionString = "1.0";
+            const CHAR_T* VersionString = "1.0";
             if (GD3D12RootSignatureVersion == D3D_ROOT_SIGNATURE_VERSION_1_1)
             {
                 VersionString = "1.1";

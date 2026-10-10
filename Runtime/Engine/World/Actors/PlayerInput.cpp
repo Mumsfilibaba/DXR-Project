@@ -86,7 +86,7 @@ float FPlayerInput::GetAxisValueByHash(uint32 Hash) const
     return 0.0f;
 }
 
-float FPlayerInput::GetAxisValue(const CHAR* AxisName) const
+float FPlayerInput::GetAxisValue(const CHAR_T* AxisName) const
 {
     return GetAxisValueByHash(FInputName(AxisName).GetHash());
 }

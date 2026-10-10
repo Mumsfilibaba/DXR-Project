@@ -40,16 +40,16 @@ struct ENGINE_API EditorNodeGraph
         float Height    = 0.0f;
     };
 
-    static void BeginCanvas(const CHAR* Id, const ImVec2& Size, EStyleFlags StyleFlags = EStyleFlags::NodesAboveLinks);
+    static void BeginCanvas(const CHAR_T* Id, const ImVec2& Size, EStyleFlags StyleFlags = EStyleFlags::NodesAboveLinks);
     static void EndCanvas();
     static void RequestResetView();
     static void RequestFitView(const ImVec2& WorldMin, const ImVec2& WorldMax);
 
     static bool BeginNode(int32 NodeId, ImVec2* InOutPos, ENodeStyle Style = ENodeStyle::Normal);
-    static void NodeTitle(const CHAR* Title);
+    static void NodeTitle(const CHAR_T* Title);
     static void EndNode();
 
-    static void Pin(int32 PinId, EPinKind Kind, const CHAR* Label);
+    static void Pin(int32 PinId, EPinKind Kind, const CHAR_T* Label);
     static void Link(int32 FromOutputPinId, int32 ToInputPinId);
 
     static FNodeColors GetNodeColors(ENodeStyle Style);

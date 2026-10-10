@@ -2,7 +2,7 @@
 
 void FObjectClass::GlobalRegisterClass(
     FGlobalObjectClassInfo& OutClassInfo,
-    const CHAR* ClassName,
+    const CHAR_T* ClassName,
     uint64 Size,
     uint64 Alignment,
     FObjectClass::StaticClassFunctionType SuperStaticClassFunc,
@@ -31,7 +31,7 @@ void FObjectClass::GlobalRegisterClass(
     }
 }
 
-FObjectClass::FObjectClass(const CHAR* InName, uint64 InSize, uint64 InAlignment, StaticClassFunctionType InStaticClassFunc, StaticDefaultConstructorType InDefaultConstructorFunc)
+FObjectClass::FObjectClass(const CHAR_T* InName, uint64 InSize, uint64 InAlignment, StaticClassFunctionType InStaticClassFunc, StaticDefaultConstructorType InDefaultConstructorFunc)
     : SuperClass(nullptr)
     , Name(InName)
     , Size(InSize)

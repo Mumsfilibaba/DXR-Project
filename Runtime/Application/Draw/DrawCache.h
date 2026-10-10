@@ -85,7 +85,7 @@ struct APPLICATION_API FDrawCacheBlock : public FNonCopyable
     TArray<Vector2> Points;
 
     /** @brief The characters the text commands index, packed end to end without terminators. */
-    TArray<CHAR> TextPool;
+    TArray<CHAR_T> TextPool;
 
     /** @brief The brushes the image commands index, each holding a raw texture pointer the epoch guards. */
     TArray<FUIBrush> Brushes;

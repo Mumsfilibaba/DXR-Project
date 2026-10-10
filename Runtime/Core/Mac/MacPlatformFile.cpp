@@ -264,7 +264,7 @@ bool FMacAsyncFileHandle::WriteBlockingAtOffset(const uint8* Src, uint32 BytesTo
     return true;
 }
 
-void FMacAsyncFileHandle::ReportWriteFailure(const CHAR* What, int32 ErrorCode)
+void FMacAsyncFileHandle::ReportWriteFailure(const CHAR_T* What, int32 ErrorCode)
 {
     if (bHasWriteError)
     {
@@ -486,8 +486,8 @@ IPlatformFile* FMacPlatformFile::OpenForWrite(const String& Filename, bool bTrun
 
 String FMacPlatformFile::GetCurrentWorkingDirectory()
 {
-    CHAR Buffer[MAXPATHLEN] = { 0 };
-    CHAR* CurrentDirectory = ::getcwd(Buffer, sizeof(Buffer));
+    CHAR_T Buffer[MAXPATHLEN] = { 0 };
+    CHAR_T* CurrentDirectory = ::getcwd(Buffer, sizeof(Buffer));
     if (!CurrentDirectory)
     {
         String ErrorString;
@@ -501,9 +501,9 @@ String FMacPlatformFile::GetCurrentWorkingDirectory()
     }
 }
 
-const CHAR* FMacPlatformFile::GetExecutablePath()
+const CHAR_T* FMacPlatformFile::GetExecutablePath()
 {
-    static CHAR StaticExecutablePath[MAXPATHLEN] = { 0 };
+    static CHAR_T StaticExecutablePath[MAXPATHLEN] = { 0 };
 
     if (!StaticExecutablePath[0])
     {
@@ -511,7 +511,7 @@ const CHAR* FMacPlatformFile::GetExecutablePath()
         
         NSString* ExecutablePathNS = [[NSBundle mainBundle] executablePath];
 
-        if (const CHAR* ExecutablePath = [ExecutablePathNS UTF8String])
+        if (const CHAR_T* ExecutablePath = [ExecutablePathNS UTF8String])
         {
             FPlatformString::Strncpy(StaticExecutablePath, ExecutablePath, MAXPATHLEN);
             StaticExecutablePath[MAXPATHLEN - 1] = 0;
@@ -521,7 +521,7 @@ const CHAR* FMacPlatformFile::GetExecutablePath()
     return StaticExecutablePath;
 }
 
-bool FMacPlatformFile::CopyFile(const CHAR* FromFilename, const CHAR* ToFilename, bool bReplaceExisting)
+bool FMacPlatformFile::CopyFile(const CHAR_T* FromFilename, const CHAR_T* ToFilename, bool bReplaceExisting)
 {
     const copyfile_flags_t Flags = COPYFILE_ALL | (bReplaceExisting ? 0 : COPYFILE_EXCL);
     return ::copyfile(FromFilename, ToFilename, nullptr, Flags) == 0;
@@ -541,7 +541,7 @@ String FMacPlatformFile::GetUserSettingsDirectory()
     return String([[Directories firstObject] UTF8String]);
 }
 
-FFileInfo FMacPlatformFile::GetFileInfo(const CHAR* Path)
+FFileInfo FMacPlatformFile::GetFileInfo(const CHAR_T* Path)
 {
     FFileInfo Info;
 
@@ -563,7 +563,7 @@ FFileInfo FMacPlatformFile::GetFileInfo(const CHAR* Path)
     return Info;
 }
 
-bool FMacPlatformFile::IterateDirectory(const CHAR* Path, TArray<FDirectoryEntry>& OutEntries)
+bool FMacPlatformFile::IterateDirectory(const CHAR_T* Path, TArray<FDirectoryEntry>& OutEntries)
 {
     OutEntries.Clear();
 

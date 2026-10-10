@@ -41,7 +41,7 @@
 #include <ShaderCore/MSLShaderBindings.h>
 #endif
 
-static void SetConsoleVariable(const CHAR* VariableName, bool bValue)
+static void SetConsoleVariable(const CHAR_T* VariableName, bool bValue)
 {
     if (IConsoleVariable* Variable = FConsoleManager::Get().FindConsoleVariable(VariableName))
     {
@@ -53,7 +53,7 @@ static void SetConsoleVariable(const CHAR* VariableName, bool bValue)
     }
 }
 
-static void SetConsoleVariable(const CHAR* VariableName, const CHAR* Value)
+static void SetConsoleVariable(const CHAR_T* VariableName, const CHAR_T* Value)
 {
     if (IConsoleVariable* Variable = FConsoleManager::Get().FindConsoleVariable(VariableName))
     {
@@ -1820,7 +1820,7 @@ static bool ProbeBindlessDescriptors()
         TEST_END();
     }
 
-    auto CompileBindless = [](const CHAR* Source, TArray<uint8>& OutByteCode) -> bool
+    auto CompileBindless = [](const CHAR_T* Source, TArray<uint8>& OutByteCode) -> bool
     {
         const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_6, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
         return FShaderCompiler::Get().CompileFromSource(Source, CompileInfo, OutByteCode);
@@ -1877,7 +1877,7 @@ static bool ProbeBindlessDescriptors()
 
     TEST_SECTION("Bindless SRV texture and sampler round-trip");
     {
-        static const CHAR Source[] =
+        static const CHAR_T Source[] =
             "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
             "cbuffer Params : register(b0) { uint ResourceIndex; uint SamplerIndex; uint Pad0; uint Pad1; };\n"
             "[numthreads(1,1,1)]\n"
@@ -1956,7 +1956,7 @@ static bool ProbeBindlessDescriptors()
 
     TEST_SECTION("Bindless UAV structured buffer round-trip");
     {
-        static const CHAR Source[] =
+        static const CHAR_T Source[] =
             "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
             "cbuffer Params : register(b0) { uint ResourceIndex; uint Pad0; uint Pad1; uint Pad2; };\n"
             "[numthreads(1,1,1)]\n"
@@ -1988,7 +1988,7 @@ static bool ProbeBindlessDescriptors()
 
     TEST_SECTION("Bindless CBV round-trip");
     {
-        static const CHAR Source[] =
+        static const CHAR_T Source[] =
             "struct FData { uint Value; uint Pad0; uint Pad1; uint Pad2; };\n"
             "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
             "cbuffer Params : register(b0) { uint ResourceIndex; uint PadA; uint PadB; uint PadC; };\n"
@@ -2054,7 +2054,7 @@ static bool ProbeBindlessDescriptors()
 
     TEST_SECTION("A recycled bindless slot reads zeros");
     {
-        static const CHAR Source[] =
+        static const CHAR_T Source[] =
             "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
             "cbuffer Params : register(b0) { uint ResourceIndex; uint Pad0; uint Pad1; uint Pad2; };\n"
             "[numthreads(1,1,1)]\n"
@@ -2121,7 +2121,7 @@ static bool ProbeDefaultResourcesAndClears()
         TEST_END();
     }
 
-    auto CreateComputePipeline = [](const CHAR* Source, FRHIComputeShaderRef& OutShader) -> FRHIComputePipelineState*
+    auto CreateComputePipeline = [](const CHAR_T* Source, FRHIComputeShaderRef& OutShader) -> FRHIComputePipelineState*
     {
         TArray<uint8> ByteCode;
         const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
@@ -2193,7 +2193,7 @@ static bool ProbeDefaultResourcesAndClears()
 
     TEST_SECTION("Unbound SRV, UAV and constant buffer registers read zeros");
     {
-        static const CHAR Source[] =
+        static const CHAR_T Source[] =
             "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
             "RWBuffer<uint> NullRWBuffer : register(u1);\n"
             "Texture2D<float4> NullTexture : register(t0);\n"
@@ -2221,7 +2221,7 @@ static bool ProbeDefaultResourcesAndClears()
 
     TEST_SECTION("An anisotropic sampler filters linearly between mips");
     {
-        static const CHAR Source[] =
+        static const CHAR_T Source[] =
             "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
             "Texture2D<float4> MipTexture : register(t0);\n"
             "SamplerState AnisotropicSampler : register(s0);\n"
@@ -2274,7 +2274,7 @@ static bool ProbeDefaultResourcesAndClears()
 
     TEST_SECTION("A UAV clear of a 2D array texture covers every slice");
     {
-        static const CHAR Source[] =
+        static const CHAR_T Source[] =
             "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
             "Texture2DArray<uint> ClearedTexture : register(t0);\n"
             "[numthreads(1, 1, 1)]\n"
@@ -2419,7 +2419,7 @@ static constexpr float GProbeRayZ         = -5.0f;
 static constexpr float GProbeBarycentricU = 0.3125f;
 static constexpr float GProbeBarycentricV = 0.375f;
 
-static const CHAR GRayQueryProbeSource[] =
+static const CHAR_T GRayQueryProbeSource[] =
     "RWStructuredBuffer<uint4> OutBuffer : register(u0);\n"
     "cbuffer Params : register(b0) { float4 RayOrigin; float4 RayDirection; uint4 SceneIndex; };\n"
     "#if !PROBE_BINDLESS_SCENE\n"
@@ -3253,7 +3253,7 @@ static bool DispatchAndReadFirstUint(FRHIComputePipelineState* Pipeline, FRHICom
     return true;
 }
 
-static FRHIComputePipelineStateRef CreateMemoryProbePipeline(const CHAR* Source, EShaderModel ShaderModel, FRHIComputeShaderRef& OutShader)
+static FRHIComputePipelineStateRef CreateMemoryProbePipeline(const CHAR_T* Source, EShaderModel ShaderModel, FRHIComputeShaderRef& OutShader)
 {
     TArray<uint8> ByteCode;
     const FShaderCompileInfo CompileInfo("Main", ShaderModel, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
@@ -3377,7 +3377,7 @@ static bool ProbeMemoryDefragAndResidency()
     constexpr uint64 BufferSize   = 4ull * 1024ull * 1024ull;
     const bool       bBindless    = RHI::bSupportsBindless;
 
-    static const CHAR BindlessBufferSource[] =
+    static const CHAR_T BindlessBufferSource[] =
         "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
         "cbuffer Params : register(b0) { uint ResourceIndex; uint Pad0; uint Pad1; uint Pad2; };\n"
         "[numthreads(1,1,1)]\n"
@@ -3387,7 +3387,7 @@ static bool ProbeMemoryDefragAndResidency()
         "    OutBuffer[0] = Source[3];\n"
         "}\n";
 
-    static const CHAR BindlessTextureSource[] =
+    static const CHAR_T BindlessTextureSource[] =
         "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
         "cbuffer Params : register(b0) { uint ResourceIndex; uint Pad0; uint Pad1; uint Pad2; };\n"
         "[numthreads(1,1,1)]\n"
@@ -3397,7 +3397,7 @@ static bool ProbeMemoryDefragAndResidency()
         "    OutBuffer[0] = (uint)(Source.Load(int3(0, 0, 0)).x * 255.0f + 0.5f);\n"
         "}\n";
 
-    static const CHAR DirectBufferSource[] =
+    static const CHAR_T DirectBufferSource[] =
         "StructuredBuffer<uint> Source : register(t0);\n"
         "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
         "[numthreads(1,1,1)]\n"
@@ -4064,7 +4064,7 @@ static bool ProbePipelinePersistence()
         TEST_EXPECT(bHeaderRead);
         if (bHeaderRead)
         {
-            const CHAR TamperedBuild[] = "0TAMPER0";
+            const CHAR_T TamperedBuild[] = "0TAMPER0";
             Memory::Memcpy(Header.OSBuild, TamperedBuild, sizeof(TamperedBuild));
 
             bool bHeaderWritten = false;
@@ -4217,7 +4217,7 @@ static bool BootReadPixel(FRHITexture* Texture, ERHIResourceState State, uint32 
     return true;
 }
 
-static bool BootCompileShader(const CHAR* Source, EShaderStage Stage, TArray<uint8>& OutByteCode)
+static bool BootCompileShader(const CHAR_T* Source, EShaderStage Stage, TArray<uint8>& OutByteCode)
 {
     const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, Stage, RHI::GetShaderOutputLanguage());
     return FShaderCompiler::Get().CompileFromSource(String(Source), CompileInfo, OutByteCode);
@@ -4356,7 +4356,7 @@ static bool ProbeMetalParityGaps()
         TEST_END();
     }
 
-    const CHAR* FullscreenVertexSource =
+    const CHAR_T* FullscreenVertexSource =
         "float4 Main(uint VertexID : SV_VertexID) : SV_Position\n"
         "{\n"
         "    float2 Positions[3];\n"

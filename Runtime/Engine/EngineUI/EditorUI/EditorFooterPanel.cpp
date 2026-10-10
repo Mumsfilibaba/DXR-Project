@@ -175,7 +175,7 @@ private:
     TSharedPtr<FVerticalBox> Rows;
 };
 
-static const CHAR* GetConsoleVariableTypeName(IConsoleVariable* Variable)
+static const CHAR_T* GetConsoleVariableTypeName(IConsoleVariable* Variable)
 {
     if (Variable->IsVariableBool())
     {
@@ -641,7 +641,7 @@ TSharedPtr<FVisualElement> FEditorFooterPanel::MakeCandidateToolTip(int32 Candid
         DetailRuns.Add(FTextRun("Type: Command", Font.Get(), DetailColor));
     }
 
-    const CHAR* HelpString = Candidate.First->GetHelpString();
+    const CHAR_T* HelpString = Candidate.First->GetHelpString();
     if (HelpString && HelpString[0] != 0)
     {
         const String HelpText = DetailRuns.IsEmpty() ? String(HelpString) : String("\n") + HelpString;
