@@ -1,3 +1,5 @@
+#include "CoreDefines.hlsli"
+
 #ifndef CLEAR_ELEMENT_UINT
     #define CLEAR_ELEMENT_UINT 0
 #endif
@@ -6,29 +8,27 @@
     #define CLEAR_ELEMENT_SINT 0
 #endif
 
-#ifndef CLEAR_ELEMENT_RAW
-    #define CLEAR_ELEMENT_RAW 0
+#ifndef CLEAR_ELEMENT_UNTYPED
+    #define CLEAR_ELEMENT_UNTYPED 0
 #endif
 
 #define NUM_THREADS (64)
 
-[[vk::push_constant]]
-struct FShaderBlockConstants
-{
+SHADER_CONSTANT_BLOCK_BEGIN
     uint4 ClearValue;
     uint  NumElements;
-} Constants;
+SHADER_CONSTANT_BLOCK_END
 
-#if CLEAR_ELEMENT_RAW
+#if CLEAR_ELEMENT_UNTYPED
     RWByteAddressBuffer OutputBuffer : register(u0);
 #elif CLEAR_ELEMENT_UINT
-    [[vk::image_format("unknown")]] RWBuffer<uint4> OutputBuffer : register(u0);
+    TEXTURE_FORMAT_UNKNOWN RWBuffer<uint4> OutputBuffer : register(u0);
     #define CLEAR_ELEMENT_VALUE (Constants.ClearValue)
 #elif CLEAR_ELEMENT_SINT
-    [[vk::image_format("unknown")]] RWBuffer<int4> OutputBuffer : register(u0);
+    TEXTURE_FORMAT_UNKNOWN RWBuffer<int4> OutputBuffer : register(u0);
     #define CLEAR_ELEMENT_VALUE (asint(Constants.ClearValue))
 #else
-    [[vk::image_format("unknown")]] RWBuffer<float4> OutputBuffer : register(u0);
+    TEXTURE_FORMAT_UNKNOWN RWBuffer<float4> OutputBuffer : register(u0);
     #define CLEAR_ELEMENT_VALUE (asfloat(Constants.ClearValue))
 #endif
 
@@ -37,7 +37,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 {
     if (DispatchThreadID.x < Constants.NumElements)
     {
-    #if CLEAR_ELEMENT_RAW
+    #if CLEAR_ELEMENT_UNTYPED
         OutputBuffer.Store(DispatchThreadID.x * 4, Constants.ClearValue.x);
     #else
         OutputBuffer[DispatchThreadID.x] = CLEAR_ELEMENT_VALUE;

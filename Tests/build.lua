@@ -13,7 +13,6 @@ end
 
 AddTargetSearchRoot(_MAIN_SCRIPT_DIR)
 AddModuleSearchRoot(_MAIN_SCRIPT_DIR)
-
 SearchForBuildFiles()
 
 SetWorkspaceName("DXR-Engine Tests")
@@ -46,3 +45,6 @@ AddTarget("Application-Playground")
 
 -- Generate the workspace
 GenerateWorkspace()
+
+-- The RHI modules build and run the ShaderCompiler tool from it in a pre-build command
+GenerateToolsWorkspace()

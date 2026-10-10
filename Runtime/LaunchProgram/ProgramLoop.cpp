@@ -9,6 +9,7 @@ IMPLEMENT_LAUNCH_MODULE(IModule, LaunchProgram);
 
 const CHAR*        GProgramTitle = "Program";
 TFunction<int32()> GProgramBody;
+TArray<String>     GProgramArgs;
 
 bool FProgramLoop::bExitRequested = false;
 

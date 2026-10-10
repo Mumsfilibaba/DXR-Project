@@ -14,6 +14,7 @@ elseif IsPlatformWindows() then
         "Dbghelp.lib",
         "shlwapi.lib",
         "User32.lib",
+        "Ws2_32.lib",
     })
 end
 

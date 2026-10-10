@@ -19,7 +19,7 @@
 #include "Renderer/Scene/SceneStaticMesh.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/RenderSettings.h"
-#include "RendererCore/Shaders/ShaderBytecodeCache.h"
+#include "ShaderCompiler/ShaderBytecodeCache.h"
 #include "RendererCore/Shaders/ShaderCache.h"
 
 bool GEnableSSAO = true;

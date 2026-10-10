@@ -52,6 +52,24 @@ struct SHADERCOMPILER_API FShaderPreprocessorOutput
     String               Errors;
 };
 
+class SHADERCOMPILER_API IShaderSourceProvider
+{
+public:
+    virtual ~IShaderSourceProvider() = default;
+
+    NODISCARD virtual bool FileExists(const String& Path) const = 0;
+    virtual bool ReadFile(const String& Path, TArray<CHAR>& OutText) const = 0;
+};
+
+class SHADERCOMPILER_API FDiskShaderSourceProvider final : public IShaderSourceProvider
+{
+public:
+    NODISCARD static const FDiskShaderSourceProvider& Get();
+
+    NODISCARD virtual bool FileExists(const String& Path) const override final;
+    virtual bool ReadFile(const String& Path, TArray<CHAR>& OutText) const override final;
+};
+
 class SHADERCOMPILER_API FShaderPreprocessor
 {
     struct FMacro
@@ -86,8 +104,15 @@ public:
     /** @brief Splits source text into preprocessing tokens. Line continuations are removed and comments become whitespace. */
     static void Tokenize(StringView Source, int32 FileIndex, TArray<FShaderToken>& OutTokens);
 
-    FShaderPreprocessor(const String& InIncludeDir);
+    /**
+     * @param InIncludeDir Searched last, after the including file's folder and every AddIncludeDir directory
+     * @param InSourceProvider Null reads from disk. Must outlive the preprocessor.
+     */
+    FShaderPreprocessor(const String& InIncludeDir, const IShaderSourceProvider* InSourceProvider = nullptr);
     ~FShaderPreprocessor();
+
+    /** @brief Searched in the order added, before the directory given to the constructor */
+    void AddIncludeDir(const String& Directory);
 
     /** @brief Defines a macro the same way '#define Name Value' would */
     void AddDefine(const String& Name, const String& Value);
@@ -112,9 +137,11 @@ private:
     NODISCARD bool IsActive() const;
     bool Error(const FShaderToken& Location, const String& Message);
 
-    String                     IncludeDir;
-    TMap<String, FMacro>       Macros;
-    TSet<String>               OnceFiles;
-    TArray<FConditional>       Conditionals;
-    FShaderPreprocessorOutput* Output;
+    String                       IncludeDir;
+    TArray<String>               AdditionalIncludeDirs;
+    const IShaderSourceProvider* SourceProvider;
+    TMap<String, FMacro>         Macros;
+    TSet<String>                 OnceFiles;
+    TArray<FConditional>         Conditionals;
+    FShaderPreprocessorOutput*   Output;
 };

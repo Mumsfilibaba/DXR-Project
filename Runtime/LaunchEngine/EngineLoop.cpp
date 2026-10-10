@@ -26,10 +26,11 @@
 #include "CoreApplication/Platform/PlatformConsoleWindow.h"
 #include "RHI/RHI.h"
 #include "ShaderCompiler/ShaderCompiler.h"
+#include "RemoteConsole/RemoteConsoleServer.h"
 #include "Engine/Engine.h"
 #include "Engine/Performance/ProfileRun.h"
 #include "RendererCore/RenderGraph/RenderGraphResourcePool.h"
-#include "RendererCore/Shaders/ShaderBytecodeCache.h"
+#include "ShaderCompiler/ShaderBytecodeCache.h"
 #include "RendererCore/Shaders/ShaderCache.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/VertexStreamCache.h"
@@ -230,6 +231,15 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         {
             FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ThreadManager");
             return -1;
+        }
+    }
+
+    {
+        TRACE_BOOT_SCOPE("RemoteConsole");
+
+        if (!FRemoteConsoleServer::Initialize())
+        {
+            LOG_WARNING("Failed to start the RemoteConsole server, continuing without it");
         }
     }
 
@@ -555,6 +565,11 @@ void FEngineLoop::Tick()
 
     FConsoleManager::Get().ExecuteQueuedCommands(*FOutputDeviceManager::Get());
 
+    {
+        TRACE_SCOPE("RemoteConsole Tick");
+        FRemoteConsoleServer::Tick();
+    }
+
     FProfileRun::Tick();
 
     const int32 ExitAfterFrames = CVarExitAfterFrames.GetValue();
@@ -568,6 +583,8 @@ void FEngineLoop::Tick()
 void FEngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
+
+    FRemoteConsoleServer::Release();
 
     FApplication::Get().SetOnWindowLiveResize(FOnWindowLiveResize());
 

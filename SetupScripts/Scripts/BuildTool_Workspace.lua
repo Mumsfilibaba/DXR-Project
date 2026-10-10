@@ -332,6 +332,39 @@ local function ComputeStartProjectName()
     gStartProjectName = FirstTarget
 end
 
+-- Generates the tools workspace beside this one, so build commands can build a tool such as ShaderCompiler from it.
+-- A second premake run, since the tools workspace is always monolithic and the layout is chosen per run.
+function GenerateToolsWorkspace()
+    if not BuildWithVisualStudio() and not BuildWithXcode() then
+        return
+    end
+
+    local Arguments =
+    {
+        ('"%s"'):format(_PREMAKE_COMMAND),
+        _ACTION,
+        ('--file="%s"'):format(JoinPath(GetEnginePath(), "Tools/build.lua")),
+        "--monolithic",
+        "--buildsuffix=" .. GetToolsBuildSuffix(),
+    }
+
+    for _, OptionName in ipairs({ "platform", "architecture" }) do
+        if _OPTIONS[OptionName] then
+            table.insert(Arguments, ('--%s="%s"'):format(OptionName, _OPTIONS[OptionName]))
+        end
+    end
+
+    local Command = table.concat(Arguments, " ")
+    LogHighlight("--- Generating the tools workspace: %s ---", Command)
+
+    -- cmd strips the outer quotes of a command that starts with one, so the whole line is quoted once more
+    local bSucceeded = os.execute(IsPlatformWindows() and ('"' .. Command .. '"') or Command)
+    if not bSucceeded then
+        LogError("Failed to generate the tools workspace")
+        error("Failed to generate the tools workspace", 0)
+    end
+end
+
 -- Generate workspace
 function GenerateWorkspace()
 

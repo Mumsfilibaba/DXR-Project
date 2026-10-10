@@ -5,7 +5,7 @@
 #include "MetalRHI/MetalRHI.h"
 #include "MetalRHI/MetalViews.h"
 #include "MetalRHI/Generated/ClearBufferUAV_Float.h"
-#include "MetalRHI/Generated/ClearBufferUAV_Raw.h"
+#include "MetalRHI/Generated/ClearBufferUAV_Untyped.h"
 #include "MetalRHI/Generated/ClearBufferUAV_Sint.h"
 #include "MetalRHI/Generated/ClearBufferUAV_Uint.h"
 #include "MetalRHI/Generated/ClearTextureUAV_Texture1D_Float.h"
@@ -60,91 +60,19 @@ static const FMetalUAVClearKernel GMetalUAVClearKernels[] =
     { GMetalClearTextureUAV_Texture3D_Uint,         sizeof(GMetalClearTextureUAV_Texture3D_Uint) },
 };
 
-static constexpr EMSLTextureDimension GMetalUAVClearDimensions[] =
+static_assert(ARRAY_COUNT(GMetalUAVClearKernels) == static_cast<int32>(EMetalUAVClearTarget::Count) * 3, "Every clear target needs a kernel per component");
+
+static FRHIComputePipelineStateRef CreateClearPipeline(const FMetalUAVClearKernel& Kernel, FRHIComputeShaderRef& OutShader)
 {
-    EMSLTextureDimension::TextureBuffer,
-    EMSLTextureDimension::Texture1D,
-    EMSLTextureDimension::Texture1DArray,
-    EMSLTextureDimension::Texture2D,
-    EMSLTextureDimension::Texture2DArray,
-    EMSLTextureDimension::Texture3D,
-};
-
-static_assert(ARRAY_COUNT(GMetalUAVClearDimensions) == static_cast<int32>(EMetalUAVClearTarget::Count), "Every clear target needs a texture dimension");
-
-static constexpr EShaderResourceDimension GMetalUAVClearResourceDimensions[] =
-{
-    EShaderResourceDimension::Buffer,
-    EShaderResourceDimension::Texture1D,
-    EShaderResourceDimension::Texture1DArray,
-    EShaderResourceDimension::Texture2D,
-    EShaderResourceDimension::Texture2DArray,
-    EShaderResourceDimension::Texture3D,
-};
-
-static_assert(ARRAY_COUNT(GMetalUAVClearResourceDimensions) == static_cast<int32>(EMetalUAVClearTarget::Count), "Every clear target needs a resource dimension");
-
-// The generated kernels are compiled at build time, so the reflection the shader compiler would produce is written out by hand
-static bool WriteClearShaderCode(const FMetalUAVClearKernel& Kernel, const FShaderResourceBinding& OutputBinding, const FMSLBindingSlot& OutputSlot, bool bBuffer, TArray<uint8>& OutShaderCode)
-{
-    FShaderReflection Reflection;
-    Reflection.Info.ShaderConstantsSize = static_cast<uint8>((bBuffer ? 5u : 4u) * sizeof(uint32));
-    Reflection.EntryPoint               = "Main";
-
-    Reflection.MSLInfo.ThreadGroupSize[0] = static_cast<uint16>(bBuffer ? BufferClearThreadCount : TextureClearThreadCountX);
-    Reflection.MSLInfo.ThreadGroupSize[1] = static_cast<uint16>(bBuffer ? 1 : TextureClearThreadCountY);
-    Reflection.MSLInfo.ThreadGroupSize[2] = 1;
-
-    FShaderResourceBinding ConstantsBinding;
-    ConstantsBinding.Type  = EShaderResourceType::ConstantBuffer;
-    ConstantsBinding.Space = EShaderBindingSpace::ShaderConstants;
-
-    Reflection.Bindings.Add(ConstantsBinding);
-    Reflection.MSLSlots.Add(FMSLBindingSlot());
-    Reflection.Bindings.Add(OutputBinding);
-    Reflection.MSLSlots.Add(OutputSlot);
-
-    String Error;
-    if (!FShaderCodeWriter::Write(EShaderOutputLanguage::MSL, EShaderStage::Compute, EShaderCodeFlags::None, Reflection, TArrayView<const uint8>(Kernel.Code, static_cast<int32>(Kernel.Size)), OutShaderCode, &Error))
+    TArray<uint8>   ShaderCode;
+    FShaderCodeView CodeView;
+    String          ReadError;
+    if (!FShaderCodeReader::ReadEmbedded(TArrayView<const uint8>(Kernel.Code, static_cast<int32>(Kernel.Size)), ShaderCode, CodeView, &ReadError))
     {
-        METAL_ERROR("Failed to write a UAV clear shader container: %s", *Error);
-        return false;
+        METAL_ERROR("A UAV clear shader header is invalid, building MetalRHI regenerates it: %s", *ReadError);
+        return nullptr;
     }
 
-    return true;
-}
-
-static bool BuildClearShaderCode(EMetalUAVClearTarget Target, EMSLTextureComponent Component, TArray<uint8>& OutShaderCode)
-{
-    const bool bBuffer = Target == EMetalUAVClearTarget::Buffer;
-
-    FShaderResourceBinding OutputBinding;
-    OutputBinding.Type      = bBuffer ? EShaderResourceType::RWTypedBuffer : EShaderResourceType::RWTexture;
-    OutputBinding.Dimension = GMetalUAVClearResourceDimensions[static_cast<int32>(Target)];
-
-    FMSLBindingSlot OutputSlot;
-    OutputSlot.NullTextureType = MakeMSLNullTextureType(GMetalUAVClearDimensions[static_cast<int32>(Target)], Component);
-
-    const FMetalUAVClearKernel& Kernel = GMetalUAVClearKernels[static_cast<int32>(Target) * 3 + static_cast<int32>(Component)];
-    return WriteClearShaderCode(Kernel, OutputBinding, OutputSlot, bBuffer, OutShaderCode);
-}
-
-static bool BuildRawClearShaderCode(TArray<uint8>& OutShaderCode)
-{
-    FShaderResourceBinding OutputBinding;
-    OutputBinding.Type      = EShaderResourceType::RWByteAddressBuffer;
-    OutputBinding.Dimension = EShaderResourceDimension::Buffer;
-
-    // spirv-cross places the constants at buffer 0 and the RWByteAddressBuffer at buffer 1
-    FMSLBindingSlot OutputSlot;
-    OutputSlot.Slot = 1;
-
-    const FMetalUAVClearKernel Kernel = { GMetalClearBufferUAV_Raw, sizeof(GMetalClearBufferUAV_Raw) };
-    return WriteClearShaderCode(Kernel, OutputBinding, OutputSlot, true, OutShaderCode);
-}
-
-static FRHIComputePipelineStateRef CreateClearPipeline(const TArray<uint8>& ShaderCode, FRHIComputeShaderRef& OutShader)
-{
     OutShader = RHI::CreateComputeShader(ShaderCode);
 
     if (!OutShader)
@@ -174,8 +102,8 @@ void FMetalUAVClearPipelines::Release()
         Shaders[Index]   = nullptr;
     }
 
-    RawPipeline = nullptr;
-    RawShader   = nullptr;
+    UntypedPipeline = nullptr;
+    UntypedShader   = nullptr;
 }
 
 FMetalComputePipelineStateRHI* FMetalUAVClearPipelines::GetOrCreate(EMetalUAVClearTarget Target, EMSLTextureComponent Component)
@@ -189,31 +117,23 @@ FMetalComputePipelineStateRHI* FMetalUAVClearPipelines::GetOrCreate(EMetalUAVCle
 
     if (!Pipelines[Index])
     {
-        TArray<uint8> ShaderCode;
-        if (BuildClearShaderCode(Target, Component, ShaderCode))
-        {
-            Pipelines[Index] = CreateClearPipeline(ShaderCode, Shaders[Index]);
-        }
+        Pipelines[Index] = CreateClearPipeline(GMetalUAVClearKernels[Index], Shaders[Index]);
     }
 
     return static_cast<FMetalComputePipelineStateRHI*>(Pipelines[Index].Get());
 }
 
-FMetalComputePipelineStateRHI* FMetalUAVClearPipelines::GetOrCreateRaw()
+FMetalComputePipelineStateRHI* FMetalUAVClearPipelines::GetOrCreateUntyped()
 {
-    if (!RawPipeline)
+    if (!UntypedPipeline)
     {
-        TArray<uint8> ShaderCode;
-        if (BuildRawClearShaderCode(ShaderCode))
-        {
-            RawPipeline = CreateClearPipeline(ShaderCode, RawShader);
-        }
+        UntypedPipeline = CreateClearPipeline({ GMetalClearBufferUAV_Untyped, sizeof(GMetalClearBufferUAV_Untyped) }, UntypedShader);
     }
 
-    return static_cast<FMetalComputePipelineStateRHI*>(RawPipeline.Get());
+    return static_cast<FMetalComputePipelineStateRHI*>(UntypedPipeline.Get());
 }
 
-static void ClearRawBuffer(FMetalCommandContext& Context, FMetalUnorderedAccessViewRHI* View, uint32 Value)
+static void ClearUntypedBuffer(FMetalCommandContext& Context, FMetalUnorderedAccessViewRHI* View, uint32 Value)
 {
     id<MTLBuffer> Buffer = View->GetMTLBuffer();
 
@@ -239,7 +159,7 @@ static void ClearRawBuffer(FMetalCommandContext& Context, FMetalUnorderedAccessV
         return;
     }
 
-    FMetalComputePipelineStateRHI* Pipeline = FMetalDeviceRHI::Get()->GetUAVClearPipelines().GetOrCreateRaw();
+    FMetalComputePipelineStateRHI* Pipeline = FMetalDeviceRHI::Get()->GetUAVClearPipelines().GetOrCreateUntyped();
     if (!Pipeline)
     {
         return;
@@ -273,7 +193,7 @@ void MetalUAVClear::Clear(FMetalCommandContext& Context, FMetalUnorderedAccessVi
 
     if (!Texture)
     {
-        ClearRawBuffer(Context, View, Values[0]);
+        ClearUntypedBuffer(Context, View, Values[0]);
         return;
     }
 

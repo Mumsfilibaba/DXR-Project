@@ -23,7 +23,7 @@ class FMetalUAVClearPipelines
 public:
     void Release();
     FMetalComputePipelineStateRHI* GetOrCreate(EMetalUAVClearTarget Target, EMSLTextureComponent Component);
-    FMetalComputePipelineStateRHI* GetOrCreateRaw();
+    FMetalComputePipelineStateRHI* GetOrCreateUntyped();
 
 private:
     static constexpr int32 NumComponents = 3;
@@ -31,8 +31,8 @@ private:
 
     FRHIComputeShaderRef        Shaders[NumPipelines];
     FRHIComputePipelineStateRef Pipelines[NumPipelines];
-    FRHIComputeShaderRef        RawShader;
-    FRHIComputePipelineStateRef RawPipeline;
+    FRHIComputeShaderRef        UntypedShader;
+    FRHIComputePipelineStateRef UntypedPipeline;
 };
 
 struct MetalUAVClear

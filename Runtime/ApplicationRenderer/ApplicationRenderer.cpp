@@ -20,7 +20,7 @@
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIResources.h"
 #include "ShaderCompiler/ShaderCompiler.h"
-#include "RendererCore/Shaders/ShaderBytecodeCache.h"
+#include "ShaderCompiler/ShaderBytecodeCache.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/TextureResourceData.h"
 

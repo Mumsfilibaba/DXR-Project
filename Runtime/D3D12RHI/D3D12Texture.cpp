@@ -773,7 +773,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
             const EFormat DepthStencilFormat = Desc.ClearValue.Format != EFormat::Unknown ? Desc.ClearValue.Format : Desc.Format;
 
             D3D12_CLEAR_FLAGS ClearFlags = D3D12_CLEAR_FLAG_DEPTH;
-            if (D3D12RHI::IsStencilFormat(DepthStencilFormat))
+            if (::IsStencilFormat(DepthStencilFormat))
             {
                 ClearFlags |= D3D12_CLEAR_FLAG_STENCIL;
             }

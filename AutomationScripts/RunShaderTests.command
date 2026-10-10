@@ -115,7 +115,7 @@ pause_if_needed() {
     fi
 }
 
-# --- Bundled compiler first, then PATH, mirroring ResolveDxcExecutable ------
+# --- The dxc in ThirdParty/DXC/bin first, then the one on PATH --------------
 if [ -z "$DXC" ]; then
     if [ -x "${ROOT}/ThirdParty/DXC/bin/dxc" ]; then
         DXC="${ROOT}/ThirdParty/DXC/bin/dxc"

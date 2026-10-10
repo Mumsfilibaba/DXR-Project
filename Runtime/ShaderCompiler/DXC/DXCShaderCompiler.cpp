@@ -169,13 +169,8 @@ static void BuildCompileArguments(const FShaderCompileInfo& CompileInfo, const W
     }
 }
 
-static void HashWideString(uint64& OutHash, LPCWSTR Text)
-{
-    for (LPCWSTR Character = Text; Character && *Character; ++Character)
-    {
-        HashCombine(OutHash, static_cast<uint32>(*Character));
-    }
-}
+// The arguments are a function of FShaderCompileInfo, which the compile hash already covers. Bump this when BuildCompileArguments changes.
+static constexpr uint32 GDXCSettingsVersion = 1;
 
 FDXCShaderCompiler::FDXCShaderCompiler()
     : FShaderCompilerBackend()
@@ -237,20 +232,14 @@ bool FDXCShaderCompiler::SupportsOutputLanguage(EShaderOutputLanguage OutputLang
     return OutputLanguage == EShaderOutputLanguage::DXIL || OutputLanguage == EShaderOutputLanguage::SPIRV || OutputLanguage == EShaderOutputLanguage::MSL;
 }
 
-void FDXCShaderCompiler::HashCompileSettings(const FShaderCompileInfo& CompileInfo, const String& IncludeDir, uint64& InOutHash) const
+FShaderCompilerIdentity FDXCShaderCompiler::GetIdentity() const
 {
-    HashCombine(InOutHash, VersionMajor);
-    HashCombine(InOutHash, VersionMinor);
-
-    const WString WideIncludeDir = CharToWide(IncludeDir);
-
-    TArray<LPCWSTR> CompileArgs;
-    BuildCompileArguments(CompileInfo, WideIncludeDir, CompileArgs);
-
-    for (LPCWSTR Argument : CompileArgs)
-    {
-        HashWideString(InOutHash, Argument);
-    }
+    FShaderCompilerIdentity Identity;
+    Identity.Name            = GetName();
+    Identity.VersionMajor    = VersionMajor;
+    Identity.VersionMinor    = VersionMinor;
+    Identity.SettingsVersion = GDXCSettingsVersion;
+    return Identity;
 }
 
 bool FDXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCompileResult& OutResult)

@@ -14,6 +14,7 @@
 #include "Application/Input/Keys.h"
 #include "Application/Menus/MenuStack.h"
 #include "Application/Menus/ToolTipService.h"
+#include "RemoteConsole/RemoteConsoleServer.h"
 
 /** @brief The space between either end of the footer strip and what it holds, in pixels. */
 constexpr int32 FOOTER_INSET = 16;
@@ -697,5 +698,13 @@ void FEditorFooterPanel::Refresh()
     const float FrameTimeMs = Profiler.GetLatestCpuMilliseconds();
     const float FramesPerSecond = FrameTimeMs > 0.0f ? (1000.0f / FrameTimeMs) : 0.0f;
 
-    StatusLabel->SetText(String::Printf("%.1f FPS  %.2f ms", FramesPerSecond, FrameTimeMs));
+    const int32 NumRemoteConsoles = FRemoteConsoleServer::GetNumConnectedClients();
+    if (NumRemoteConsoles > 0)
+    {
+        StatusLabel->SetText(String::Printf("Remote console: %d connected    %.1f FPS  %.2f ms", NumRemoteConsoles, FramesPerSecond, FrameTimeMs));
+    }
+    else
+    {
+        StatusLabel->SetText(String::Printf("%.1f FPS  %.2f ms", FramesPerSecond, FrameTimeMs));
+    }
 }

@@ -697,8 +697,10 @@ void FShaderPreprocessor::Tokenize(StringView Source, int32 FileIndex, TArray<FS
 // Preprocessor
 // ------------------------------------------------------------------------------------------------
 
-FShaderPreprocessor::FShaderPreprocessor(const String& InIncludeDir)
+FShaderPreprocessor::FShaderPreprocessor(const String& InIncludeDir, const IShaderSourceProvider* InSourceProvider)
     : IncludeDir(InIncludeDir)
+    , AdditionalIncludeDirs()
+    , SourceProvider(InSourceProvider ? InSourceProvider : &FDiskShaderSourceProvider::Get())
     , Macros()
     , OnceFiles()
     , Conditionals()
@@ -707,6 +709,11 @@ FShaderPreprocessor::FShaderPreprocessor(const String& InIncludeDir)
 }
 
 FShaderPreprocessor::~FShaderPreprocessor() = default;
+
+void FShaderPreprocessor::AddIncludeDir(const String& Directory)
+{
+    AdditionalIncludeDirs.Add(Directory);
+}
 
 void FShaderPreprocessor::AddDefine(const String& Name, const String& Value)
 {
@@ -1078,13 +1085,22 @@ bool FShaderPreprocessor::HandleInclude(TArrayView<const FShaderToken> Tokens, c
         return Error(Location, String::Printf("Includes are nested more than %d levels deep", MaxIncludeDepth));
     }
 
-    // Resolve relative to the including file first, then the shared shader directory
+    // Resolve relative to the including file first, then the added include directories, then the shared shader directory
     String ResolvedPath;
     const String IncludingDirectory = File::GetDirectoryOf(FilePath);
     if (!bSystemInclude && !IncludingDirectory.IsEmpty())
     {
         const String Candidate = File::CombinePath(IncludingDirectory, IncludeName);
-        if (FPlatformFile::IsFile(*Candidate))
+        if (SourceProvider->FileExists(Candidate))
+        {
+            ResolvedPath = Candidate;
+        }
+    }
+
+    for (int32 Index = 0; Index < AdditionalIncludeDirs.Size() && ResolvedPath.IsEmpty(); ++Index)
+    {
+        const String Candidate = File::CombinePath(AdditionalIncludeDirs[Index], IncludeName);
+        if (SourceProvider->FileExists(Candidate))
         {
             ResolvedPath = Candidate;
         }
@@ -1093,7 +1109,7 @@ bool FShaderPreprocessor::HandleInclude(TArrayView<const FShaderToken> Tokens, c
     if (ResolvedPath.IsEmpty())
     {
         const String Candidate = File::CombinePath(IncludeDir, IncludeName);
-        if (FPlatformFile::IsFile(*Candidate))
+        if (SourceProvider->FileExists(Candidate))
         {
             ResolvedPath = Candidate;
         }
@@ -1115,12 +1131,9 @@ bool FShaderPreprocessor::HandleInclude(TArrayView<const FShaderToken> Tokens, c
     }
 
     TArray<CHAR> Text;
+    if (!SourceProvider->ReadFile(ResolvedPath, Text))
     {
-        TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(ResolvedPath);
-        if (!FileHandle || !File::ReadTextFile(FileHandle.Get(), Text))
-        {
-            return Error(Location, String::Printf("Failed to read the include '%s'", *ResolvedPath));
-        }
+        return Error(Location, String::Printf("Failed to read the include '%s'", *ResolvedPath));
     }
 
     return ProcessFile(ResolvedPath, StringView(Text.Data(), Text.Size()), IncludeDepth + 1);
@@ -1493,4 +1506,21 @@ bool FShaderPreprocessor::Substitute(const FMacro& Macro, const TArray<TArray<FS
     }
 
     return true;
+}
+
+const FDiskShaderSourceProvider& FDiskShaderSourceProvider::Get()
+{
+    static FDiskShaderSourceProvider Instance;
+    return Instance;
+}
+
+bool FDiskShaderSourceProvider::FileExists(const String& Path) const
+{
+    return FPlatformFile::IsFile(*Path);
+}
+
+bool FDiskShaderSourceProvider::ReadFile(const String& Path, TArray<CHAR>& OutText) const
+{
+    TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Path);
+    return FileHandle && File::ReadTextFile(FileHandle.Get(), OutText);
 }
