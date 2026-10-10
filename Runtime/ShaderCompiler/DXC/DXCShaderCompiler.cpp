@@ -287,12 +287,12 @@ bool FDXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
     WCHAR TargetProfile[BufferLength];
     CStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
 
-    const TStringConversion<WIDECHAR, CHAR> WideFilePath   = StringCast<WIDECHAR>(Request.FilePath);
+    const TStringConversion<WIDECHAR, CHAR> WideSourceName = StringCast<WIDECHAR>(Request.SourceName);
     const TStringConversion<WIDECHAR, CHAR> WideEntrypoint = StringCast<WIDECHAR>(CompileInfo.EntryPoint);
 
     // The source is already preprocessed, so there are no defines to pass
     TComPtr<IDxcCompilerArgs> CompileArguments;
-    hr = Utils->BuildArguments(WideFilePath.Get(), WideEntrypoint.Get(), TargetProfile, CompileArgs.Data(), CompileArgs.Size(), nullptr, 0, &CompileArguments);
+    hr = Utils->BuildArguments(WideSourceName.Get(), WideEntrypoint.Get(), TargetProfile, CompileArgs.Data(), CompileArgs.Size(), nullptr, 0, &CompileArguments);
     if (FAILED(hr))
     {
         LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to create compiler arguments");
@@ -302,11 +302,21 @@ bool FDXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
     DxcBuffer SourceBuffer;
     SourceBuffer.Ptr      = Request.Source.Data();
     SourceBuffer.Size     = Request.Source.Size();
-    SourceBuffer.Encoding = DXC_CP_ACP;
+    SourceBuffer.Encoding = DXC_CP_UTF8;
+
+    // For the debug info, DXC reads the files the #line markers name, other than the source itself, through this. Without
+    // it, DXC cannot open a path with non-ASCII characters in it.
+    TComPtr<IDxcIncludeHandler> IncludeHandler;
+    hr = Utils->CreateDefaultIncludeHandler(&IncludeHandler);
+    if (FAILED(hr))
+    {
+        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to create the include handler");
+        return false;
+    }
 
     // Compile shader
     TComPtr<IDxcResult> Result;
-    hr = Compiler->Compile(&SourceBuffer, CompileArguments->GetArguments(), CompileArguments->GetCount(), nullptr, IID_PPV_ARGS(&Result));
+    hr = Compiler->Compile(&SourceBuffer, CompileArguments->GetArguments(), CompileArguments->GetCount(), IncludeHandler.Get(), IID_PPV_ARGS(&Result));
     if (FAILED(hr))
     {
         LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to Compile");

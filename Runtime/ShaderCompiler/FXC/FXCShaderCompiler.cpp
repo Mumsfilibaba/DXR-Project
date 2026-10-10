@@ -146,7 +146,7 @@ bool FFXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
     const HRESULT Result = D3DCompileFunc(
         Request.Source.Data(),
         static_cast<SIZE_T>(Request.Source.Size()),
-        Request.FilePath.IsEmpty() ? nullptr : *Request.FilePath,
+        Request.SourceName.IsEmpty() ? nullptr : *Request.SourceName,
         nullptr,
         nullptr,
         *CompileInfo.EntryPoint,

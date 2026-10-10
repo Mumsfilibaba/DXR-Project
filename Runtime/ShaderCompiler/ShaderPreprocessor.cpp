@@ -431,8 +431,16 @@ private:
 // Output
 // ------------------------------------------------------------------------------------------------
 
-String FShaderPreprocessorOutput::Render() const
+String FShaderPreprocessorOutput::GenerateSource(const String& BaseDirectory) const
 {
+    TArray<String> FileNames;
+    FileNames.Reserve(Files.Size());
+    for (const String& FilePath : Files)
+    {
+        const bool bIsUnderBase = !BaseDirectory.IsEmpty() && File::IsUnderDirectory(FilePath, BaseDirectory);
+        FileNames.Add(bIsUnderBase ? File::MakeRelative(FilePath, BaseDirectory) : FilePath);
+    }
+
     // A gap this small is cheaper to bridge with empty lines than with a #line marker
     constexpr int32 MaxLineGap = 8;
 
@@ -453,7 +461,7 @@ String FShaderPreprocessorOutput::Render() const
                 Result += '\n';
             }
 
-            const String& FileName = (Token.FileIndex >= 0 && Token.FileIndex < Files.Size()) ? Files[Token.FileIndex] : String();
+            const String& FileName = (Token.FileIndex >= 0 && Token.FileIndex < FileNames.Size()) ? FileNames[Token.FileIndex] : String();
             Result += String::Printf("#line %d \"%s\"\n", Token.Line, *FileName);
 
             CurrentFile = Token.FileIndex;

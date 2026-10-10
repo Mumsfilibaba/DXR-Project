@@ -39,8 +39,12 @@ struct FShaderToken
 
 struct SHADERCOMPILER_API FShaderPreprocessorOutput
 {
-    /** @return Returns the tokens as source text, with #line markers that map every line back to the file it came from */
-    NODISCARD String Render() const;
+    /**
+     * @return Returns the tokens as source text, with #line markers that map every line back to the file it came from
+     * @param BaseDirectory When set, files under it are named relative to it in the #line markers, so the text holds no
+     * absolute machine paths. Files outside it keep their full path.
+     */
+    NODISCARD String GenerateSource(const String& BaseDirectory = String()) const;
 
     TArray<FShaderToken> Tokens;
 
@@ -81,7 +85,7 @@ class SHADERCOMPILER_API FShaderPreprocessor
 
 public:
     /** Changes whenever the output for the same input changes, so compiled shaders can be invalidated */
-    static constexpr uint32 Version = 1;
+    static constexpr uint32 Version = 2;
 
     /** @brief Splits source text into preprocessing tokens. Line continuations are removed and comments become whitespace. */
     static void Tokenize(StringView Source, int32 FileIndex, TArray<FShaderToken>& OutTokens);

@@ -28,7 +28,7 @@ static int32 RunShaderCompilerTests()
     RUN_TEST("PreprocessorConditionals", ShaderPreprocessorConditionals_Test());
     RUN_TEST("PreprocessorIncludes", ShaderPreprocessorIncludes_Test());
     RUN_TEST("PreprocessorErrors", ShaderPreprocessorErrors_Test());
-    RUN_TEST("PreprocessorRender", ShaderPreprocessorRender_Test());
+    RUN_TEST("PreprocessorGenerateSource", ShaderPreprocessorGenerateSource_Test());
     RUN_TEST("FXCShaderTranslator", FXCShaderTranslator_Test());
 
     if (FShaderCompiler::Initialize(Paths::GetAssetDir()))

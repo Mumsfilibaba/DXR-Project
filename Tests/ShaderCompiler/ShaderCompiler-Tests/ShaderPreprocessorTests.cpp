@@ -198,25 +198,33 @@ bool ShaderPreprocessorErrors_Test()
     TEST_END();
 }
 
-bool ShaderPreprocessorRender_Test()
+bool ShaderPreprocessorGenerateSource_Test()
 {
     TEST_BEGIN();
 
     FShaderPreprocessorOutput Output;
     TEST_EXPECT(Preprocess("#define X 1\nfloat a = X;\n\n\nfloat b;\n#pragma warning(disable : 3078)\nfloat c;", Output));
 
-    const String Rendered = Output.Render();
+    const String Generated = Output.GenerateSource();
 
     TEST_SECTION("Every line keeps its line number");
-    TEST_EXPECT(Rendered.StartsWith("#line 2 \"ShaderSource\"\nfloat a = 1;\n\n\nfloat b;\n"));
+    TEST_EXPECT(Generated.StartsWith("#line 2 \"ShaderSource\"\nfloat a = 1;\n\n\nfloat b;\n"));
 
     TEST_SECTION("Pragmas are passed through for the compiler");
-    TEST_EXPECT(Rendered.Contains("\n#pragma warning(disable : 3078)\nfloat c;"));
+    TEST_EXPECT(Generated.Contains("\n#pragma warning(disable : 3078)\nfloat c;"));
 
     TEST_SECTION("Tokens that were apart stay apart");
     FShaderPreprocessorOutput Adjacent;
     TEST_EXPECT(Preprocess("#define NEG -\nint a = -NEG 1;", Adjacent));
-    TEST_EXPECT(Adjacent.Render().Contains("- - 1"));
+    TEST_EXPECT(Adjacent.GenerateSource().Contains("- - 1"));
+
+    TEST_SECTION("Files under the base directory are named relative to it, so no machine path reaches the compiler");
+    FShaderPreprocessorOutput Named;
+    TEST_EXPECT(Preprocess("float a;", Named));
+    Named.Files[0] = "C:/Motor åäö 日本/Assets/Shaders/Lighting/Sun.hlsl";
+    TEST_EXPECT(Named.GenerateSource("C:/Motor åäö 日本/Assets/Shaders").StartsWith("#line 1 \"Lighting/Sun.hlsl\"\n"));
+    TEST_EXPECT(Named.GenerateSource("C:/Elsewhere").StartsWith("#line 1 \"C:/Motor åäö 日本/Assets/Shaders/Lighting/Sun.hlsl\"\n"));
+    TEST_EXPECT(Named.GenerateSource().StartsWith("#line 1 \"C:/Motor åäö 日本/Assets/Shaders/Lighting/Sun.hlsl\"\n"));
 
     TEST_END();
 }

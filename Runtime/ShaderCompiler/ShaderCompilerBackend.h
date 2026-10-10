@@ -13,6 +13,13 @@ struct FShaderCompileRequest
     /** Empty when compiling from source */
     String                    FilePath;
 
+    /**
+     * The name the compiler knows the source by, which the #line markers in it use too. Relative to IncludeDir for shaders
+     * inside it, so compilers never see the engine folder's path. That keeps shader debug info free of machine paths, and
+     * DXC fails to match a source name with non-ASCII characters in it against its #line markers.
+     */
+    String                    SourceName;
+
     /** <Assets>/Shaders, where every shader include was resolved from */
     String                    IncludeDir;
 

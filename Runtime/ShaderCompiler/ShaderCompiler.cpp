@@ -399,7 +399,8 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
         return false;
     }
 
-    const String PreprocessedSource = Preprocessed.Render();
+    const String PreprocessedSource = Preprocessed.GenerateSource(IncludeDir);
+    const String SourceName         = File::IsUnderDirectory(FilePath, IncludeDir) ? File::MakeRelative(FilePath, IncludeDir) : FilePath;
 
     const String DumpDir = CVarDumpPreprocessedDir.GetValue();
     if (!DumpDir.IsEmpty())
@@ -411,6 +412,7 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     Request.CompileInfo     = &CompileInfo;
     Request.Source          = StringView(PreprocessedSource);
     Request.FilePath        = FilePath;
+    Request.SourceName      = SourceName;
     Request.IncludeDir      = IncludeDir;
     Request.bVerboseLogging = bVerboseLogging;
 
