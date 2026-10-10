@@ -170,8 +170,8 @@ private:
 
     TArray<FShaderCompilerBackend*>      Backends;
     FString                              AssetPath;
-    AtomicInt64                          NumCompiles;
-    AtomicInt64                          TotalCompileTimeNS;
+    FAtomicInt64                         NumCompiles;
+    FAtomicInt64                         TotalCompileTimeNS;
     FCriticalSection                     DumpCS;
     mutable FRemoteShaderCompilerClient* RemoteClient;
     mutable FCriticalSection             RemoteClientCS;

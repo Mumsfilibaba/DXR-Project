@@ -174,8 +174,8 @@ public:
     }
 
 private:
-    AtomicInt64                  Top;
-    AtomicInt64                  Bottom;
+    FAtomicInt64                 Top;
+    FAtomicInt64                 Bottom;
     TAtomicPointer<FRingBuffer*> Buffer;
     TArray<FRingBuffer*>         RetiredBuffers;
 };

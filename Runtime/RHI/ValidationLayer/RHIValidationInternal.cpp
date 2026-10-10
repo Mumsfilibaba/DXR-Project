@@ -24,7 +24,7 @@ static TAutoConsoleVariable<bool> CVarEnableValidationCallstack(
 
 static constexpr int32 ValidationCallStackDepth = 24;
 
-static AtomicInt32 GValidationErrorCount(0);
+static FAtomicInt32 GValidationErrorCount(0);
 
 bool RHIValidationInternal::ShouldBreakOnValidationError()
 {

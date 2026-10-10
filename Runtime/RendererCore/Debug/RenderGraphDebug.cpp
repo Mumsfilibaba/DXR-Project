@@ -23,7 +23,7 @@ static bool WriteLoadsPreviousContents(const FRenderGraphPass& Pass, const FRend
     return true;
 }
 
-AtomicBool                RenderGraphDebug::bCaptureEnabled(false);
+FAtomicBool               RenderGraphDebug::bCaptureEnabled(false);
 FSpinLock                 RenderGraphDebug::SnapshotLock;
 FRenderGraphDebugSnapshot RenderGraphDebug::LatestSnapshot;
 bool                      RenderGraphDebug::bHasSnapshot = false;

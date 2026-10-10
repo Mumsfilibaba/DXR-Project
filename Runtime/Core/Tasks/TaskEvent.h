@@ -38,7 +38,7 @@ public:
     }
 
 private:
-    AtomicBool          bComplete;
+    FAtomicBool         bComplete;
     FCriticalSection    SubsequentsCS;
     TArray<FGraphTask*> Subsequents;
     IPlatformEvent*     CompletionEvent;

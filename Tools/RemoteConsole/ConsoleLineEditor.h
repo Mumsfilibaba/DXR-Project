@@ -106,8 +106,8 @@ private:
     TArray<FCompletionCandidate> Candidates;
     FString                      LastListedBuffer;
     TArray<FString>              SubmittedLines;
-    AtomicBool                   bFinished;
-    AtomicBool                   bCompletionRefreshRequested;
+    FAtomicBool                  bFinished;
+    FAtomicBool                  bCompletionRefreshRequested;
     bool                         bIsInteractive;
     bool                         bIsRawModeActive;
 };

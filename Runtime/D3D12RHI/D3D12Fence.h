@@ -38,7 +38,7 @@ private:
     HANDLE               Event;
     mutable uint64       LastCompletedValue;
     uint64               CurrentValue;
-    AtomicUInt64         LastSignaledValue;
+    FAtomicUInt64        LastSignaledValue;
 };
 
 class FD3D12FenceSyncPoint
@@ -108,6 +108,6 @@ public:
 
 private:
     FD3D12FenceRef Fence;
-    AtomicBool     bHasPendingSignal;
+    FAtomicBool    bHasPendingSignal;
     FString        DebugName;
 };

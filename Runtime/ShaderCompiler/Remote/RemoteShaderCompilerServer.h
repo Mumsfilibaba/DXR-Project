@@ -114,7 +114,7 @@ private:
     {
         FRemoteForwardTarget                    Target;
         TUniquePtr<FRemoteShaderCompilerClient> Client;
-        AtomicBool                              bConnecting;
+        FAtomicBool                             bConnecting;
         uint64                                  NextRetryMilliseconds = 0;
     };
 
@@ -136,10 +136,10 @@ private:
     TArray<FNetworkSocket>              ListenSockets;
     TArray<FSocketAddress>              ListenAddresses;
     IPlatformThread*                    Thread;
-    AtomicBool                          bStopRequested;
+    FAtomicBool                         bStopRequested;
     TArray<TSharedPtr<FConnection>>     Connections;
     mutable FCriticalSection            ConnectionsCS;
     uint32                              NextConnectionId;
     TArray<TUniquePtr<FForwarder>>      Forwarders;
-    AtomicInt32                         NumTasksInFlight;
+    FAtomicInt32                        NumTasksInFlight;
 };

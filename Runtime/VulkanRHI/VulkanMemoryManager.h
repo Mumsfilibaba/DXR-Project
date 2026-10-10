@@ -242,8 +242,8 @@ private:
     VkDeviceAddress          BaseDeviceAddress;
     uint8*                   MappedBaseAddress;
     TArray<TArray<uint64>>   FreeOffsets;
-    AtomicInt64              TrackedUsedBytes;
-    AtomicInt64              TrackedWastedBytes;
+    FAtomicInt64             TrackedUsedBytes;
+    FAtomicInt64             TrackedWastedBytes;
     uint32                   NumIdleCleanUps;
     mutable FCriticalSection AllocatorCS;
 };
@@ -406,8 +406,8 @@ private:
     VkMemoryAllocateFlags             AllocateFlags;
     VkBufferUsageFlags                BufferUsageFlags;
     uint64                            FragmentedBytes;
-    AtomicInt64                       TrackedAllocatedBytes;
-    AtomicInt64                       TrackedUsedBytes;
+    FAtomicInt64                      TrackedAllocatedBytes;
+    FAtomicInt64                      TrackedUsedBytes;
     TArray<FVulkanPoolAllocatorPage*> Pages;
     mutable FCriticalSection          PagesCS;
 };
@@ -785,5 +785,5 @@ private:
     FVulkanLinearAllocator     StagingBufferAllocator;
     uint32                     UploadMemoryTypeIndex;
     uint32                     MaxAllocationCount;
-    AtomicInt64                ActiveAllocationCount;
+    FAtomicInt64               ActiveAllocationCount;
 };

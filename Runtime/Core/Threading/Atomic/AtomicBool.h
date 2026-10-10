@@ -3,7 +3,7 @@
 #include "Core/Platform/PlatformAtomic.h"
 #include "Core/Threading/Atomic/AtomicMemoryOrder.h"
 
-class AtomicBool
+class FAtomicBool
 {
     typedef int8 IntegerType;
 
@@ -11,7 +11,7 @@ public:
     typedef bool Type;
 
     /** @brief Default constructor initializes to false */
-    FORCEINLINE AtomicBool() noexcept
+    FORCEINLINE FAtomicBool() noexcept
         : Value(false)
     {
     }
@@ -20,7 +20,7 @@ public:
      * @brief Copy-constructor
      * @param Other Instance to copy
      */
-    FORCEINLINE AtomicBool(const AtomicBool& Other) noexcept
+    FORCEINLINE FAtomicBool(const FAtomicBool& Other) noexcept
     {
         bool bValue = Other.Load();
         Store(bValue);
@@ -30,7 +30,7 @@ public:
      * @brief Construct with an initial value
      * @param InValue Initial value
      */
-    FORCEINLINE AtomicBool(bool bInValue) noexcept
+    FORCEINLINE FAtomicBool(bool bInValue) noexcept
         : Value(static_cast<IntegerType>(bInValue))
     {
     }
@@ -146,7 +146,7 @@ public:
      * @param RHS Instance to copy
      * @return Returns a reference to this instance
      */
-    FORCEINLINE AtomicBool& operator=(const AtomicBool& RHS) noexcept
+    FORCEINLINE FAtomicBool& operator=(const FAtomicBool& RHS) noexcept
     {
         const bool bValue = RHS.Load();
         Store(bValue);

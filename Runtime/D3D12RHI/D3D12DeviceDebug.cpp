@@ -302,7 +302,7 @@ void D3D12Debug::DeviceRemovedHandler(FD3D12Device* Device, const char* Source)
         return;
     }
 
-    static AtomicBool Handled;
+    static FAtomicBool Handled;
     if (Handled.Exchange(true))
     {
         return;

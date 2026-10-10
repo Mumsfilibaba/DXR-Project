@@ -167,7 +167,7 @@ private:
     TArray<FMetalDefragMove>                                                PendingDefragMoves;
     TStaticArray<uint64, static_cast<uint32>(EMetalQueueType::Count)>       DefragWaitValues;
     FCriticalSection                                                        DefragCS;
-    AtomicBool                                                              bHasPendingDefragMoves;
+    FAtomicBool                                                             bHasPendingDefragMoves;
     TAtomicInt<uint64>                                                      FrameCounter;
     TAtomicInt<int64>                                                       SharedBytes;
     TAtomicInt<int64>                                                       ManagedBytes;
@@ -175,5 +175,5 @@ private:
     FMetalDeviceProperties                                                  Properties;
     id<MTLDevice>                                                           Device;
     id<NSObject>                                                            DeviceObserver;
-    AtomicBool                                                              bDeviceRemoved;
+    FAtomicBool                                                             bDeviceRemoved;
 };

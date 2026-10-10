@@ -66,7 +66,7 @@ struct RENDERERCORE_API RenderGraphDebug
     static bool CopyLatest(FRenderGraphDebugSnapshot& Out);
 
 private:
-    static AtomicBool                bCaptureEnabled;
+    static FAtomicBool               bCaptureEnabled;
     static FSpinLock                 SnapshotLock;
     static FRenderGraphDebugSnapshot LatestSnapshot;
     static bool                      bHasSnapshot;

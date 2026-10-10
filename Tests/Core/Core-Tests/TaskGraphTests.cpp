@@ -28,7 +28,7 @@
 
 static bool Test_LaunchAndWait()
 {
-    AtomicInt32 Ran(0);
+    FAtomicInt32 Ran(0);
 
     FTaskHandle Handle = Tasks::Launch("LaunchAndWait", [&Ran]()
     {
@@ -48,10 +48,10 @@ static bool Test_LaunchAndWait()
 
 static bool Test_PrerequisiteChain()
 {
-    AtomicInt32 Order(0);
-    AtomicInt32 OrderA(-1);
-    AtomicInt32 OrderB(-1);
-    AtomicInt32 OrderC(-1);
+    FAtomicInt32 Order(0);
+    FAtomicInt32 OrderA(-1);
+    FAtomicInt32 OrderB(-1);
+    FAtomicInt32 OrderC(-1);
 
     FTaskHandle TaskA = Tasks::Launch("A", [&]()
     {
@@ -123,8 +123,8 @@ static bool Test_ParallelFor()
 {
     constexpr int32 Count = 10000;
 
-    AtomicInt32 NumInvocations(0);
-    AtomicInt64 IndexSum(0);
+    FAtomicInt32 NumInvocations(0);
+    FAtomicInt64 IndexSum(0);
 
     Tasks::ParallelFor(Count, [&](int32 Index)
     {
@@ -146,7 +146,7 @@ static bool Test_ParallelFor()
 
 static bool Test_MainThreadPumpNoDeadlock()
 {
-    AtomicInt32 MainTaskRan(0);
+    FAtomicInt32 MainTaskRan(0);
 
     FTaskHandle WorkerHandle = Tasks::Launch("Worker", [&]()
     {
@@ -196,7 +196,7 @@ static bool Test_WorkStealingStress()
 
     for (int32 Attempt = 0; Attempt < MaxAttempts; ++Attempt)
     {
-        AtomicInt32 Completed(0);
+        FAtomicInt32 Completed(0);
 
         FTaskHandle Root = Tasks::Launch("StressRoot", [&]()
         {

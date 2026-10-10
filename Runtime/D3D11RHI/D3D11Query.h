@@ -31,7 +31,7 @@ public:
 private:
     TComPtr<ID3D11Query> Query;
     D3D11_QUERY          QueryType;
-    AtomicInt32          bIsIssued;
+    FAtomicInt32         bIsIssued;
 };
 
 struct FD3D11QueryRHI : public FRHIQuery, public FD3D11DeviceChild
@@ -45,5 +45,5 @@ struct FD3D11QueryRHI : public FRHIQuery, public FD3D11DeviceChild
     FD3D11QueryRef Query;
     FD3D11QueryRef DisjointQuery;
     uint64*        QueryResult;
-    AtomicInt32    bResultReady;
+    FAtomicInt32   bResultReady;
 };

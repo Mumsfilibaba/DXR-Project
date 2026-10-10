@@ -90,7 +90,7 @@ static FAutoConsoleCommand CCmdDumpShaderCompileStats(
 class FScopedCompileTimer
 {
 public:
-    FScopedCompileTimer(AtomicInt64& InNumCompiles, AtomicInt64& InTotalTimeNS)
+    FScopedCompileTimer(FAtomicInt64& InNumCompiles, FAtomicInt64& InTotalTimeNS)
         : NumCompiles(InNumCompiles)
         , TotalTimeNS(InTotalTimeNS)
         , StartTime(FPlatformTime::QueryPerformanceCounter())
@@ -107,9 +107,9 @@ public:
     }
 
 private:
-    AtomicInt64& NumCompiles;
-    AtomicInt64& TotalTimeNS;
-    uint64       StartTime;
+    FAtomicInt64& NumCompiles;
+    FAtomicInt64& TotalTimeNS;
+    uint64        StartTime;
 };
 
 FShaderCompiler* FShaderCompiler::ShaderCompiler = nullptr;

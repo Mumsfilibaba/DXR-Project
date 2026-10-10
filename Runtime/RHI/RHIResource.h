@@ -88,6 +88,6 @@ public:
 
 private:
     ERHIResourceType            ResourceType;
-    mutable AtomicInt32         StrongReferences;
+    mutable FAtomicInt32        StrongReferences;
     mutable TAtomicEnum<EState> State;
 };

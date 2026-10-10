@@ -383,5 +383,5 @@ private:
 private:
     TAtomicPointer<FNode*> Head;
     TAtomicPointer<FNode*> Tail;
-    AtomicInt32            NumElements;
+    FAtomicInt32           NumElements;
 };

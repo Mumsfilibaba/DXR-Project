@@ -62,13 +62,13 @@ static constexpr uint32 GBarrierStatsReportFrames = 240;
 
 struct FVulkanBarrierStatsData
 {
-    AtomicInt32 NumPipelineBarriers;
-    AtomicInt32 NumMemoryBarriers;
-    AtomicInt32 NumBufferBarriers;
-    AtomicInt32 NumImageBarriers;
-    AtomicInt32 NumAllCommandsBarriers;
-    AtomicInt32 NumSameLayoutImageBarriers;
-    AtomicInt32 NumRenderPassPauses;
+    FAtomicInt32 NumPipelineBarriers;
+    FAtomicInt32 NumMemoryBarriers;
+    FAtomicInt32 NumBufferBarriers;
+    FAtomicInt32 NumImageBarriers;
+    FAtomicInt32 NumAllCommandsBarriers;
+    FAtomicInt32 NumSameLayoutImageBarriers;
+    FAtomicInt32 NumRenderPassPauses;
 
     FCriticalSection     PauseReasonsCS;
     TMap<FString, int32> PauseReasons;
@@ -309,7 +309,7 @@ void FVulkanBarrierStats::EndFrame()
     }
 
     const float InvFrames = 1.0f / static_cast<float>(GBarrierStats.NumFrames);
-    const auto PerFrame = [InvFrames](AtomicInt32& Counter)
+    const auto PerFrame = [InvFrames](FAtomicInt32& Counter)
     {
         return static_cast<float>(Counter.Exchange(0)) * InvFrames;
     };

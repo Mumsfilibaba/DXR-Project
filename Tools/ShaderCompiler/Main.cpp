@@ -25,10 +25,10 @@ static constexpr uint32 GServerPollMilliseconds = 100;
 
 struct FRHIStats
 {
-    AtomicInt32 NumCompiled;
-    AtomicInt32 NumCached;
-    AtomicInt32 NumFailed;
-    AtomicInt32 NumSkipped;
+    FAtomicInt32 NumCompiled;
+    FAtomicInt32 NumCached;
+    FAtomicInt32 NumFailed;
+    FAtomicInt32 NumSkipped;
 };
 
 static void CompileEntry(const FShaderJobFileEntry& Entry, const FRouteEntry& Route, bool bForce, FRHIStats& Stats)

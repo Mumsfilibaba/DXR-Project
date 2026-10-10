@@ -16,8 +16,8 @@ struct FStatData
     const CHAR_T* StatName;
     const CHAR_T* GroupName;
     EStatType     Type;
-    AtomicInt64   Value;
-    AtomicInt64   FrameValue;
+    FAtomicInt64  Value;
+    FAtomicInt64  FrameValue;
 };
 
 class CORE_API FStatRegistry

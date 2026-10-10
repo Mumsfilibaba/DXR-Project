@@ -52,7 +52,7 @@ struct FMetalEncoderFence
     void Signal(id<MTLCommandEncoder> Encoder, EMetalEncoderType Type, FMetalCommands& Commands);
 
     id<MTLFence> Fence = nil;
-    AtomicBool   bUpdateCommitted;
+    FAtomicBool  bUpdateCommitted;
 };
 
 class FMetalEncoderManager : public FMetalDeviceChild, public FNonCopyAndNonMovable

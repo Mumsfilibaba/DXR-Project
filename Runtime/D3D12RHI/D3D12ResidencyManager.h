@@ -95,7 +95,7 @@ public:
     }
 
 private:
-    static AtomicInt64 NextSetId;
+    static FAtomicInt64 NextSetId;
 
     TArray<FD3D12ResidencyHandle*> Handles;
     int64                          SetId;

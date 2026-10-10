@@ -85,5 +85,5 @@ private:
     GCController*            ConnectedGamepads[NUM_MAX_GAMEPADS];
     FGCGamepadState          GamepadStates[NUM_MAX_GAMEPADS];
     mutable FCriticalSection GamepadsCS;
-    AtomicBool               bIsDeviceConnected;
+    FAtomicBool              bIsDeviceConnected;
 };

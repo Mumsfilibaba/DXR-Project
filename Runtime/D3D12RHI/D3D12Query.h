@@ -98,7 +98,7 @@ struct FD3D12QueryRHI : public FRHIQuery, public FD3D12DeviceChild
     FD3D12Query          CurrentQuery;
     FD3D12FenceSyncPoint SyncPoint;
     uint64*              QueryResult;
-    AtomicInt32          bResultReady;
+    FAtomicInt32         bResultReady;
 };
 
 struct FD3D12QueryRange

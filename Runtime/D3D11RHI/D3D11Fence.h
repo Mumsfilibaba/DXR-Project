@@ -29,6 +29,6 @@ private:
     TComPtr<ID3D11Fence> Fence;
     FD3D11QueryRef       EventQuery;
     HANDLE               Event;
-    AtomicUInt64         SignaledValue;
-    AtomicBool           bHasPendingSignal;
+    FAtomicUInt64        SignaledValue;
+    FAtomicBool          bHasPendingSignal;
 };

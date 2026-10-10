@@ -177,7 +177,7 @@ bool PlatformEventPool_Test()
 
         constexpr int32 NumIterations = 256;
 
-        AtomicInt32 NumDuplicate(0);
+        FAtomicInt32 NumDuplicate(0);
         TSet<IPlatformEvent*> LiveEvents;
         FCriticalSection      LiveEventsCS;
 

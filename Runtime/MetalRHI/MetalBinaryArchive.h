@@ -72,6 +72,6 @@ private:
     FCriticalSection        ArchiveCS;
     FTaskHandle             SaveTask;
     bool                    bDirty;
-    AtomicBool              bSaveInFlight;
+    FAtomicBool             bSaveInFlight;
     uint64                  LastSaveTimestamp;
 };

@@ -25,7 +25,7 @@ class FHazardPointerDomain
     {
         TAtomicPointer<void*>    Hazards[HAZARD_POINTERS_PER_THREAD];
         TAtomicPointer<FRecord*> NextRecord;
-        AtomicBool               bInUse;
+        FAtomicBool              bInUse;
         TArray<FRetiredPointer>  Retired;
     };
 

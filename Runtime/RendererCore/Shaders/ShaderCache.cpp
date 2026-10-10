@@ -149,7 +149,7 @@ static void CompileAllShaders(FStringView Arguments)
 
     LOG_INFO("Shaders.CompileAll: Compiling %d permutations for %s (%s)", Work.Size(), ToString(TargetRHI), ToString(OutputLanguage));
 
-    AtomicInt32 NumFailed(0);
+    FAtomicInt32 NumFailed(0);
     Tasks::ParallelFor(Work.Size(), [&](int32 Index)
     {
         const FCompileWork& Item = Work[Index];

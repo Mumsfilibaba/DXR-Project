@@ -161,6 +161,6 @@ private:
     using ArrayAllocator = TInlineArrayAllocator<ElementArray, NumPriorities + 1>;
 
     TArray<ElementArray, ArrayAllocator> PriorityQueues;
-    AtomicInt32                          NumElements;
+    FAtomicInt32                         NumElements;
     int32                                LowestPopulatedPriorityIndex;
 };

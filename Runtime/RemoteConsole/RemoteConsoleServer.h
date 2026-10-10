@@ -131,12 +131,12 @@ private:
     TArray<FNetworkSocket>                   ListenSockets;
     TArray<FSocketAddress>                   ListenAddresses;
     IPlatformThread*                         Thread;
-    AtomicBool                               bStopRequested;
+    FAtomicBool                              bStopRequested;
     FString                                  HelloLine;
     TArray<TUniquePtr<FRemoteConsoleClient>> Clients;
     FCriticalSection                         ClientsCS;
     uint32                                   NextClientId;
-    AtomicInt32                              NumConnectedClients;
+    FAtomicInt32                             NumConnectedClients;
     TArray<FRemoteConsoleRequest>            PendingRequests;
     FCriticalSection                         PendingRequestsCS;
     const bool                               bAllowRemoteConnections;

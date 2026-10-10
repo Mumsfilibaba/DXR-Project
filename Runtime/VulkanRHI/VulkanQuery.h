@@ -98,7 +98,7 @@ struct FVulkanQueryRHI : public FRHIQuery, public FVulkanDeviceChild
     FVulkanQuery             CurrentQuery;
     FVulkanFenceRef          SyncFence;
     uint64*                  QueryResult;
-    AtomicInt32              bResultReady;
+    FAtomicInt32             bResultReady;
 };
 
 struct FVulkanQueryRange

@@ -49,13 +49,13 @@ public:
     }
 
 private:
-    AtomicBool         bIsIdle;
+    FAtomicBool        bIsIdle;
     FTaskGraph*        Graph;
     ENamedThread::Type Lane;
     int32              WorkerIndex;
     IPlatformEvent*    WakeEvent;
     IPlatformThread*   Thread;
-    AtomicBool         bIsRunning;
+    FAtomicBool        bIsRunning;
 
     static uint32 CurrentWorkerTLSSlot;
 };

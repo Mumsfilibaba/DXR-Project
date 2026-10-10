@@ -77,7 +77,7 @@ private:
     VkSemaphore    TimelineSemaphore;
     mutable uint64 LastCompletedValue;
     uint64         CurrentValue;
-    AtomicUInt64   LastSignaledValue;
+    FAtomicUInt64  LastSignaledValue;
 #if VULKAN_STORE_DEBUG_NAMES
     FString         DebugName;
 #endif
@@ -115,7 +115,7 @@ private:
     VkSemaphore TimelineSemaphore;
     uint64      NextValue;
     uint64      TargetValue;
-    AtomicBool  bHasPendingSignal;
+    FAtomicBool bHasPendingSignal;
 #if VULKAN_STORE_DEBUG_NAMES
     FString      DebugName;
 #endif

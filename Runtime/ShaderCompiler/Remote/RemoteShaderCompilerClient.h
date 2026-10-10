@@ -100,8 +100,8 @@ private:
     uint16                          Port;
     FNetworkSocket                  Socket;
     IPlatformThread*                Thread;
-    AtomicBool                      bStopRequested;
-    AtomicBool                      bConnected;
+    FAtomicBool                     bStopRequested;
+    FAtomicBool                     bConnected;
     FString                         PeerPlatform;
     FString                         LastError;
     TArray<FRemoteLanguageInfo>     Languages;

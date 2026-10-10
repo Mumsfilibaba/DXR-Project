@@ -35,7 +35,7 @@ public:
     }
 
 private:
-    AtomicInt32            RemainingPrerequisites;
+    FAtomicInt32           RemainingPrerequisites;
     const CHAR_T*          DebugName;
     TFunction<void()>      Body;
     ENamedThread::Type     Lane;

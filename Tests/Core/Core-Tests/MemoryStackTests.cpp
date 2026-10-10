@@ -173,7 +173,7 @@ bool MemoryStack_Test()
         constexpr int32 NumIterations = 256;
         constexpr int32 NumBytes      = 1024;
 
-        AtomicInt32 NumCorrupted(0);
+        FAtomicInt32 NumCorrupted(0);
         Tasks::ParallelFor(NumIterations, [&NumCorrupted](int32 Index)
         {
             FMemoryStack Stack;

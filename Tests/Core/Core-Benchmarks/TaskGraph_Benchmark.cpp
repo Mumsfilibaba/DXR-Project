@@ -18,7 +18,7 @@ void TaskGraph_Benchmark()
 {
     constexpr int32 NumTasks = 200000;
 
-    AtomicInt32 Completed(0);
+    FAtomicInt32 Completed(0);
 
     const uint64 Frequency = FPlatformTime::QueryPerformanceFrequency();
     const uint64 Start     = FPlatformTime::QueryPerformanceCounter();

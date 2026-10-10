@@ -50,7 +50,7 @@ struct FTestRefCounted : public IRefCounted
     }
 
     int32 Tag = 7;
-    mutable AtomicInt32 Refs = 1;
+    mutable FAtomicInt32 Refs = 1;
 };
 
 struct FTestRefCountedDerived : public FTestRefCounted

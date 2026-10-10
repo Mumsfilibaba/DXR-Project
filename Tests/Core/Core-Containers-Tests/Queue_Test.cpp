@@ -50,7 +50,7 @@ namespace SPSCTest
 namespace MPSCTest
 {
     static TQueue<FString, EQueueType::MPSC>* GQueue = nullptr;
-    static AtomicInt32                        GActiveProducers(0);
+    static FAtomicInt32                       GActiveProducers(0);
 
     constexpr int64 NumItemsPerProducer = 500;
     constexpr int64 ProducerOffset      = 1000;
@@ -171,7 +171,7 @@ namespace SPMCTest
     static TQueue<FString, EQueueType::SPMC>* GQueue = nullptr;
 
     // Atomic so the consumers are guaranteed to observe the producer's write
-    static AtomicInt32 GIsRunning(1);
+    static FAtomicInt32 GIsRunning(1);
 
     struct FProducerThread : public FRunnable
     {
