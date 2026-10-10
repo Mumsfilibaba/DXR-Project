@@ -6,7 +6,6 @@
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
 
-// Containers name their entry point; the fallback covers source compiled without one
 static NSString* ResolveMetalFunctionName(id<MTLLibrary> Library, const CHAR* EntryPoint)
 {
     if (EntryPoint && EntryPoint[0] != '\0')

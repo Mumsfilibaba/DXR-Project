@@ -89,7 +89,6 @@ int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
         }
         else if (Read == -1)
         {
-            // EINVAL on a large request means the size itself was refused, so it is worth retrying
             if ((MaxReadSize > 1024) && (errno == EINVAL))
             {
                 MaxReadSize /= 2;
@@ -213,14 +212,12 @@ bool FMacAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
     int32 Result = ::aio_write(&Pending->ControlBlock);
     if (Result != 0 && errno == EAGAIN)
     {
-        // kern.aioprocmax caps the in-flight writes at sixteen per process, so any burst fills the queue.
         WaitForPendingWrites();
         Result = ::aio_write(&Pending->ControlBlock);
     }
 
     if (Result != 0)
     {
-        // A caller cannot tell a refused write from one that has merely not landed, so stall rather than lose the bytes.
         const bool bWritten = WriteBlockingAtOffset(Pending->Buffer, BytesToWrite, WriteOffset);
         FreePendingWrite(Pending);
 
@@ -274,9 +271,6 @@ void FMacAsyncFileHandle::ReportWriteFailure(const CHAR* What, int32 ErrorCode)
         return;
     }
 
-    // Reporting goes through the log, so the line comes back to this handle. Raising the flag first
-    // means the flush that eventually carries it finds a handle that has already failed and drops the
-    // batch, rather than driving another write into the same failure.
     bHasWriteError = true;
     LOG_ERROR("[FMacAsyncFileHandle] %s: %s", What, strerror(ErrorCode));
 }

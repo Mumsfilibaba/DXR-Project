@@ -295,7 +295,7 @@ bool ShaderPreprocessorMemoryProvider_Test()
     TEST_EXPECT(MemoryPreprocessor.Preprocess(RootPath, RootView, MemoryOutput));
 
     TEST_SECTION("The output and the dependencies are the same");
-    TEST_EXPECT(DiskOutput.Render() == MemoryOutput.Render());
+    TEST_EXPECT(DiskOutput.GenerateSource() == MemoryOutput.GenerateSource());
     TEST_EXPECT(DiskOutput.Dependencies == MemoryOutput.Dependencies);
 
     TEST_SECTION("A file the provider does not have is an error");
@@ -847,7 +847,6 @@ bool InternalClearBufferUAVReflection_Test()
         TEST_EXPECT(FShaderCompiler::Get().CompileFromFile(GetClearBufferSource(), CompileInfo, ShaderCode));
         TEST_EXPECT(FShaderCodeReader::Read(ShaderCode, CodeView));
 
-        // What FVulkanBufferClearPipelines used to write by hand
         TEST_EXPECT_EQ(CodeView.GetInfo().ShaderConstantsSize, static_cast<uint8>(sizeof(uint32) * 5));
         TEST_EXPECT_EQ(CodeView.GetBindings().Size(), 1);
         TEST_EXPECT(String(CodeView.GetEntryPoint()) == "Main");
@@ -934,7 +933,6 @@ bool InternalClearUAVMSLReflection_Test()
 
         ExpectConstants(CodeView, static_cast<uint8>(sizeof(uint32) * 5));
 
-        // SPIR-V lowers RWByteAddressBuffer and RWStructuredBuffer alike, and MetalRHI binds both as a UAV buffer
         bool bFoundOutput = false;
         for (const FShaderResourceBinding& Binding : CodeView.GetBindings())
         {

@@ -320,7 +320,6 @@ bool FWindowsAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
     Pending->CompletionEvent = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
     if (Pending->CompletionEvent == nullptr)
     {
-        // With no event there is nothing to track the write with, so it goes down synchronously.
         const bool bWritten = WriteBlockingAtOffset(Pending->Buffer, BytesToWrite, WriteOffset);
 
         Memory::Free(Pending->Buffer);
@@ -344,8 +343,6 @@ bool FWindowsAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
 
     if (!Result && Error == ERROR_NOT_ENOUGH_QUOTA)
     {
-        // An overlapped write locks its buffer into memory against a per-process quota, so a burst
-        // exhausts it. Collecting the writes that have already landed releases their pages again.
         WaitForPendingWrites();
 
         Memory::Memzero(&Pending->Overlapped, sizeof(OVERLAPPED));
@@ -359,7 +356,6 @@ bool FWindowsAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
 
     if (!Result && Error != ERROR_IO_PENDING)
     {
-        // A caller cannot tell a refused write from one that has merely not landed, so stall rather than lose the bytes.
         const bool bWritten = WriteBlockingAtOffset(Pending->Buffer, BytesToWrite, WriteOffset);
         FreePendingWrite(Pending);
 
@@ -379,8 +375,6 @@ bool FWindowsAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
 
 bool FWindowsAsyncFileHandle::WriteBlockingAtOffset(const uint8* Src, uint32 BytesToWrite, int64 Offset)
 {
-    // This write carries no event of its own, so GetOverlappedResult waits on the file handle, which
-    // any outstanding write would also signal. Draining first leaves nothing else to wake it.
     WaitForPendingWrites();
 
     uint32 TotalWritten = 0;
@@ -403,7 +397,6 @@ bool FWindowsAsyncFileHandle::WriteBlockingAtOffset(const uint8* Src, uint32 Byt
             }
         }
 
-        // The handle is overlapped, so the result is collected here even when the write completed at once
         DWORD Written = 0;
         if (!::GetOverlappedResult(FileHandle, &Overlapped, &Written, TRUE))
         {
@@ -413,7 +406,6 @@ bool FWindowsAsyncFileHandle::WriteBlockingAtOffset(const uint8* Src, uint32 Byt
 
         if (Written == 0)
         {
-            // A zero return for a non-empty request would leave the loop turning without progress.
             ReportWriteFailure("Blocking write accepted no bytes", ERROR_WRITE_FAULT);
             return false;
         }
@@ -440,9 +432,6 @@ void FWindowsAsyncFileHandle::ReportWriteFailure(const CHAR* What, uint32 ErrorC
         return;
     }
 
-    // Reporting goes through the log, so the line comes back to this handle. Raising the flag first
-    // means the flush that eventually carries it finds a handle that has already failed and drops the
-    // batch, rather than driving another write into the same failure.
     bHasWriteError = true;
 
     ::SetLastError(static_cast<DWORD>(ErrorCode));

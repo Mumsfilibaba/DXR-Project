@@ -936,7 +936,6 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
     }
 
     FMetalInputLayoutRHI* InputLayout = static_cast<FMetalInputLayoutRHI*>(Desc.InputLayout);
-
     if (Bindings.ConflictsWithVertexInputs(InputLayout))
     {
         return false;
@@ -962,8 +961,8 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
     Descriptor.rasterSampleCount      = Math::Max(Desc.MultiSampleState.SampleCount, 1u);
     Descriptor.inputPrimitiveTopology = MetalRHI::ConvertPrimitiveTopologyClass(Desc.PrimitiveTopology);
     Descriptor.vertexDescriptor       = InputLayout ? InputLayout->GetMTLVertexDescriptor() : nil;
+    Descriptor.label                  = PipelineDebugLabel(DebugName, @"GraphicsPSO");
 
-    // Reflected vertex inputs place each element at its shader location; without them the element index is the attribute index
     if (InputLayout && Desc.VertexShader && !Desc.VertexShader->GetVertexInputs().IsEmpty())
     {
         Descriptor.vertexDescriptor = InputLayout->CreateResolvedVertexDescriptor(Desc.VertexShader->GetVertexInputs());
@@ -972,8 +971,6 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
             return false;
         }
     }
-
-    Descriptor.label                  = PipelineDebugLabel(DebugName, @"GraphicsPSO");
 
     if (Desc.ViewInstancingState.bEnableViewInstancing)
     {

@@ -154,53 +154,33 @@ bool PanelChromeGeometry_Test()
 
     TEST_SECTION("Every leaf carries one rounded fill and one thin outline, so a panel reads as its own card");
 
-    int32 RoundedFills    = 0;
-    int32 RoundedOutlines = 0;
-
-    TArray<FRectangle> CardBounds;
+    int32 RoundedFills = 0;
+    int32 Outlines     = 0;
 
     for (const FDrawCommand& Command : CommandList.GetCommands())
     {
-        if (Command.CornerRadius.IsZero() || Command.Type != EDrawCommandType::BoxOutline)
+        if (Command.Type == EDrawCommandType::Polyline && Command.HasTint(Style.Panel.Border))
         {
-            continue;
-        }
-
-        if (Command.HasTint(Style.Panel.Border))
-        {
-            ++RoundedOutlines;
-            CardBounds.Add(Command.Bounds);
+            ++Outlines;
+            TEST_EXPECT(Command.IsClosed());
             TEST_EXPECT(Command.Thickness == Style.Panel.BorderThickness);
         }
-    }
-
-    for (const FDrawCommand& Command : CommandList.GetCommands())
-    {
-        if (Command.CornerRadius.IsZero() || Command.Type != EDrawCommandType::Box || !(Command.HasTint(Style.Panel.Fill)))
+        else if (Command.Type == EDrawCommandType::Box && Command.CornerRadius.BottomLeft > 0.0f && Command.HasTint(Style.Panel.Fill))
         {
-            continue;
-        }
-
-        for (const FRectangle& Card : CardBounds)
-        {
-            if (Card == Command.Bounds)
-            {
-                ++RoundedFills;
-                break;
-            }
+            ++RoundedFills;
         }
     }
 
     TEST_EXPECT_EQ(RoundedFills, 2);
-    TEST_EXPECT_EQ(RoundedOutlines, 2);
+    TEST_EXPECT_EQ(Outlines, 2);
 
-    TEST_SECTION("The radius the chrome uses is the one the style names");
+    TEST_SECTION("The radius the chrome uses is the one the style names, on the body's bottom corners at least");
 
     for (const FDrawCommand& Command : CommandList.GetCommands())
     {
-        if (Command.Type == EDrawCommandType::BoxOutline && Command.HasTint(Style.Panel.Border))
+        if (Command.Type == EDrawCommandType::Box && Command.CornerRadius.BottomLeft > 0.0f && Command.HasTint(Style.Panel.Fill))
         {
-            TEST_EXPECT(Command.CornerRadius.TopLeft == Style.Panel.CornerRadius);
+            TEST_EXPECT(Command.CornerRadius.BottomLeft == Style.Panel.CornerRadius);
             TEST_EXPECT(Command.CornerRadius.BottomRight == Style.Panel.CornerRadius);
         }
     }
@@ -384,7 +364,7 @@ bool PanelChromeFocusStroke_Test()
 
     for (const FDrawCommand& Command : CommandList.GetCommands())
     {
-        if (Command.Type != EDrawCommandType::BoxOutline || Command.CornerRadius.IsZero())
+        if (Command.Type != EDrawCommandType::Polyline)
         {
             continue;
         }

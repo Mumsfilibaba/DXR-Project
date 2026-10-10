@@ -335,7 +335,6 @@ bool FMetalView::InitializeAccelerationStructureView(FMetalSceneAccelerationStru
         return false;
     }
 
-    // The structure pins its own storage, a pin through the view would outlive a SetStorage that replaced the entry
     AccelerationStructureSource = InAccelerationStructure;
     ResidencyEntry              = nullptr;
     return true;

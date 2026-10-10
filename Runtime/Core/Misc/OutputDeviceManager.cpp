@@ -1,7 +1,5 @@
 #include "Core/Misc/OutputDeviceManager.h"
 
-// Sized for the run-up to the first output device rather than a session, so a run that never
-// registers one does not grow the backlog without bound.
 static constexpr int32 MaxPendingLines = 1024;
 
 FOutputDeviceManager::FOutputDeviceManager()
@@ -82,7 +80,6 @@ void FOutputDeviceManager::FlushPendingLines()
         TScopedLock Lock(OutputDevicesCS);
         if (OutputDevices.IsEmpty())
         {
-            // Taking the backlog now would throw it away, so it stays queued for a later flush.
             return;
         }
 

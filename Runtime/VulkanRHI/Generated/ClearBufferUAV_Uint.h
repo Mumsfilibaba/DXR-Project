@@ -7,7 +7,7 @@
 //   Shader constants: 20 bytes
 //   Bindings:
 //     u0         RWTypedBuffer         Buffer           global
-// Stamp:    0x9b490f98597c36d6
+// Stamp:    0x457a0233426836ce
 #pragma once
 #include "Core/Core.h"
 

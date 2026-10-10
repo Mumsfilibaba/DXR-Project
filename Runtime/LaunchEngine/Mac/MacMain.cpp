@@ -64,8 +64,6 @@ static int32  GEngineMainResult = 0;
 
 @end
 
-// Resolves a boolean console variable the way it would resolve later, with the command line
-// outranking the config layers, because the variable itself does not exist yet at this point.
 static bool IsBoolEnabledAtLaunch(const CHAR* Section, const CHAR* Name)
 {
     StringView CommandLineValue;
@@ -89,9 +87,6 @@ static bool IsBoolEnabledAtLaunch(const CHAR* Section, const CHAR* Name)
 
 int main(int NumArgs, const CHAR** Args)
 {
-    // AppKit creates the first MTLDevice below, which is where Metal latches its debug layer, so the
-    // layer has to be armed here rather than anywhere the console variable would already exist.
-    // argv[0] is a path, and a dash anywhere in it would be read as an option.
     CommandLine::Initialize(Args + 1, NumArgs - 1);
     FConfig::Initialize();
     FPlatformMisc::PrepareMetalDebugLayerEnvironment(
@@ -104,8 +99,6 @@ int main(int NumArgs, const CHAR** Args)
         GMacCommandLine += " ";
         String CurrentArg(Args[Index]);
         
-        // An argument carrying a space has to reach the command line quoted, and a key=value pair
-        // takes the quotes around the value alone so that the key still parses.
         if (CurrentArg.Contains(' '))
         {
             if (CurrentArg.Contains('='))
@@ -130,7 +123,6 @@ int main(int NumArgs, const CHAR** Args)
     [NSApp activateIgnoringOtherApps:YES];
     [NSApp setPresentationOptions:NSApplicationPresentationDefault];
 
-    // Regular gets the dock icon and the menu bar, which a bare executable does not have by default
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     [NSApp run];
     

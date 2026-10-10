@@ -20,7 +20,6 @@ public:
     FMetalRelocatable();
     virtual ~FMetalRelocatable();
 
-    // The caller holds the relocation lock
     void AddRelocationListener(FMetalView* View);
     void RemoveRelocationListener(FMetalView* View);
 
@@ -36,7 +35,6 @@ protected:
     virtual FMetalResourceStorage& GetRelocatableStorage() = 0;
     virtual void OnStorageSwapped() = 0;
 
-    // The owner calls this first in its destructor
     void NotifyReleased();
 
 private:

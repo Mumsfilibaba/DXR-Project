@@ -26,7 +26,6 @@ METAL_DECLARE_STAGE_ENCODER(EShaderVisibility::Compute,       MTLComputeCommandE
 
 #undef METAL_DECLARE_STAGE_ENCODER
 
-// Mesh and object stages have no acceleration structure binding, so the forwarder is a separate trait
 template<EShaderVisibility::Type Stage>
 struct TMetalStageAccelerationStructure
 {

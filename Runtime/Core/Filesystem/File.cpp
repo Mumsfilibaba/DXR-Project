@@ -3,7 +3,7 @@
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Containers/StringConversion.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 
 #if PLATFORM_WINDOWS
     static constexpr EStringCaseType PATH_CASE_TYPE = EStringCaseType::NoCase;

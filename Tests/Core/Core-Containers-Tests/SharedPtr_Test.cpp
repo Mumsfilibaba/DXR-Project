@@ -165,6 +165,11 @@ bool TSharedPtr_Test()
 
         TEST_EXPECT(Weak.IsExpired());
         TEST_EXPECT(!Weak.IsValid());
+
+        const TSharedPtr<int32> Promoted = Weak.ToSharedPtr();
+        TEST_EXPECT(!Promoted);
+        TEST_EXPECT(Promoted.Get() == nullptr);
+        TEST_EXPECT(!TSharedPtr<int32>(Weak));
     }
 
     TEST_SECTION("TSharedFromThis AsSharedPtr/AsWeakPtr");

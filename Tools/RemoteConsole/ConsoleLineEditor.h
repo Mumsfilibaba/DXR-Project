@@ -89,8 +89,6 @@ private:
 
     void RunInteractive();
     void RunLineMode();
-
-    // Everything below runs with EditorCS held
     void HandleKey(const FKeyPress& KeyPress);
     void SubmitLine();
     void Complete();

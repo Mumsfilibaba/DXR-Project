@@ -672,9 +672,13 @@ public:
      */
     template<typename OtherObjectType>
     FORCEINLINE explicit TSharedPtr(const TWeakPtr<OtherObjectType, ThreadAccess>& Other) requires(TIsPointerConvertible<typename TRemoveExtent<OtherObjectType>::Type, ObjectType>::Value)
-        : Object(Other.Object)
+        : Object(nullptr)
         , ReferenceHandler(Other.ReferenceHandler)
     {
+        if (ReferenceHandler.GetStrongReferenceCount() > 0)
+        {
+            Object = Other.Object;
+        }
     }
 
     /**

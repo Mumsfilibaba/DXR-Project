@@ -1,5 +1,5 @@
 #include "Core/Mac/MacPlatformProcess.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>

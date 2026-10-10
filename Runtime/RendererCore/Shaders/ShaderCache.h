@@ -85,7 +85,6 @@ public:
     void EvictUnsupportedPermutations();
 
 #if EDITOR_BUILD
-    /** @brief Merges every permutation used this run, resolved for D3D11, D3D12, Vulkan and Metal, into the job file */
     void SaveJobFile();
 #endif
 

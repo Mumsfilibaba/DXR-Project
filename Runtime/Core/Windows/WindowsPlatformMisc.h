@@ -80,16 +80,20 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
             return false;
         }
 
-        // A null buffer reports the size needed including the terminator, so an existing but empty value gives 1
-        DWORD RequiredSize = ::GetEnvironmentVariableA(Name, nullptr, 0);
+        const TStringConversion<WIDECHAR, CHAR> WideName = StringCast<WIDECHAR>(Name);
+
+        DWORD RequiredSize = ::GetEnvironmentVariableW(WideName.Get(), nullptr, 0);
         while (RequiredSize > 0)
         {
             const DWORD Length = RequiredSize - 1;
-            OutValue.Resize(static_cast<int32>(Length));
 
-            const DWORD Copied = ::GetEnvironmentVariableA(Name, OutValue.Data(), RequiredSize);
+            WString WideValue;
+            WideValue.Resize(static_cast<int32>(Length));
+
+            const DWORD Copied = ::GetEnvironmentVariableW(WideName.Get(), WideValue.Data(), RequiredSize);
             if (Copied == Length)
             {
+                OutValue = StringCast<CHAR>(WideValue).ToString();
                 return true;
             }
 
@@ -112,8 +116,7 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
             return false;
         }
 
-        // A null value is how the Win32 API removes a variable, which matches unsetenv on macOS
-        return ::SetEnvironmentVariableA(Name, Value) != FALSE;
+        return ::SetEnvironmentVariableW(StringCast<WIDECHAR>(Name).Get(), Value ? StringCast<WIDECHAR>(Value).Get() : nullptr) != FALSE;
     }
 
     static CORE_API void InstallCrashHandler();

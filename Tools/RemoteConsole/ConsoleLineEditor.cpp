@@ -4,6 +4,7 @@
 #include <Core/Misc/RemoteConsoleProtocol.h>
 #include <Core/Platform/PlatformThread.h>
 #include <Core/Templates/CString.h>
+#include <Core/Containers/StringConversion.h>
 #include <Core/Threading/ScopedLock.h>
 
 #if PLATFORM_WINDOWS
@@ -111,7 +112,8 @@ static void WriteRaw(const CHAR* Data, int32 Length)
 {
     if (Length > 0)
     {
-        ::WriteConsoleA(GOutputHandle, Data, static_cast<DWORD>(Length), nullptr, nullptr);
+        const TStringConversion<WIDECHAR, CHAR> WideData = StringCast<WIDECHAR>(Data, Length);
+        ::WriteConsoleW(GOutputHandle, WideData.Get(), static_cast<DWORD>(WideData.Length()), nullptr, nullptr);
     }
 }
 
@@ -361,7 +363,7 @@ void FConsoleLineEditor::RunInteractive()
         INPUT_RECORD Record;
         DWORD        NumRead = 0;
 
-        if (!::ReadConsoleInputA(GInputHandle, &Record, 1, &NumRead))
+        if (!::ReadConsoleInputW(GInputHandle, &Record, 1, &NumRead))
         {
             return;
         }
@@ -389,7 +391,13 @@ void FConsoleLineEditor::RunInteractive()
             case VK_ESCAPE: KeyPress.Key = EKey::Escape;    break;
             default:
             {
-                const CHAR Character = KeyEvent.uChar.AsciiChar;
+                const WIDECHAR WideCharacter = KeyEvent.uChar.UnicodeChar;
+                if (WideCharacter >= 0x80)
+                {
+                    break;
+                }
+
+                const CHAR Character = static_cast<CHAR>(WideCharacter);
                 if ((Character == GControlD) || (Character == GControlZ))
                 {
                     KeyPress.Key = EKey::EndOfInput;

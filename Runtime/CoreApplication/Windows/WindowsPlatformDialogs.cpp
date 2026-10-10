@@ -2,7 +2,7 @@
 #include "Core/Windows/Windows.h"
 #include "Core/Containers/ComPtr.h"
 #include "Core/Containers/StringConversion.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 
 #include <objbase.h>
 #include <shobjidl.h>

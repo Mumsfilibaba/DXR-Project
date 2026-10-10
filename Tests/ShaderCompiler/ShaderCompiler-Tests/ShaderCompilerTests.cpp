@@ -662,7 +662,6 @@ bool ShaderCompilerVertexInputs_Test()
 
     const CHAR* const Filenames[] = { "Shaders/UserInterface.hlsl", "Shaders/ImGui.hlsl" };
 
-    // DXC compiles DXIL everywhere, but only Windows can reflect it, so the platform filter decides
     const TArray<EShaderOutputLanguage> SupportedLanguages = FShaderCompiler::Get().GetSupportedOutputLanguages();
 
     const EShaderOutputLanguage Languages[] = { EShaderOutputLanguage::DXIL, EShaderOutputLanguage::DXBC, EShaderOutputLanguage::SPIRV, EShaderOutputLanguage::MSL };
@@ -701,7 +700,6 @@ bool ShaderCompilerVertexInputs_Test()
                 }
             }
 
-            // MetalRHI places each attribute at the reflected location, so the MSL has to declare the same index
             if (OutputLanguage == EShaderOutputLanguage::MSL)
             {
                 TEST_SECTION("The MSL declares an attribute at every reflected location");
@@ -787,7 +785,6 @@ bool ShaderCompilerRayTracing_Test()
         { true,  true,  EShaderModel::SM_6_9 },
     };
 
-    // DXC compiles DXIL everywhere, but only Windows can reflect it, so the platform filter decides
     const TArray<EShaderOutputLanguage> SupportedLanguages = FShaderCompiler::Get().GetSupportedOutputLanguages();
 
     const EShaderOutputLanguage Languages[] = { EShaderOutputLanguage::DXIL, EShaderOutputLanguage::SPIRV };

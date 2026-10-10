@@ -2,7 +2,7 @@
 #include "Core/Windows/WindowsPlatformMisc.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Containers/StringConversion.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 
 static constexpr DWORD OUTPUT_PIPE_SIZE = 64 * 1024;
 

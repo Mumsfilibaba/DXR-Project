@@ -33,17 +33,18 @@ bool StyleDefaults_Test()
     TEST_EXPECT(Style.ScrollBar.GrabActive.R > Style.ScrollBar.Grab.R);
     TEST_EXPECT(Style.ScrollBar.CornerRadius > 0.0f);
 
-    TEST_SECTION("A dock tab paints nothing at rest, and with no rule over the active one its fill has to carry it");
+    TEST_SECTION("A dock tab paints nothing at rest, and the active one takes the panel's fill so tab and body read as one surface");
     TEST_EXPECT_EQ(Style.Tab.Fill.A, 0.0f);
     TEST_EXPECT(Style.Tab.FillHovered.R > Style.Tab.StripFill.R);
-    TEST_EXPECT(Style.Tab.FillActive.R > Style.Panel.Fill.R);
-    TEST_EXPECT(Style.Tab.FillActive.R > Style.Tab.FillHovered.R);
+    TEST_EXPECT(Style.Tab.FillActive.R == Style.Panel.Fill.R && Style.Tab.FillActive.G == Style.Panel.Fill.G && Style.Tab.FillActive.B == Style.Panel.Fill.B);
+    TEST_EXPECT(Style.Tab.FillActive.A != Style.Tab.StripFill.A || Style.Tab.FillActive.R != Style.Tab.StripFill.R);
 
-    TEST_SECTION("A tab is held inside the strip and rounded, so a hover or active fill reads as a pill");
+    TEST_SECTION("Tabs touch and stand on the strip's bottom edge, rounded on top and flared out into the strip below");
     TEST_EXPECT(Style.Tab.CornerRadius > 0.0f);
-    TEST_EXPECT(Style.Tab.Spacing > 0);
+    TEST_EXPECT(Style.Tab.FlareRadius > 0.0f);
+    TEST_EXPECT_EQ(Style.Tab.Spacing, 0);
     TEST_EXPECT(Style.Tab.TopInset > 0);
-    TEST_EXPECT(Style.Tab.BottomInset > 0);
+    TEST_EXPECT_EQ(Style.Tab.BottomInset, 0);
     TEST_EXPECT_EQ(Style.Tab.SeparatorThickness, 0);
 
     TEST_SECTION("Every tab opens at the same width at least, wide enough that the floor is the label's room rather than the chrome's");
@@ -58,10 +59,9 @@ bool StyleDefaults_Test()
     TEST_SECTION("The label sits on the tab's centre line");
     TEST_EXPECT_EQ(Style.Tab.LabelOffsetY, 0);
 
-    TEST_SECTION("It sits nearer the tab's edge than the label does, at the same remove a menu row's highlight keeps");
+    TEST_SECTION("It sits nearer the tab's edge than the label does");
     TEST_EXPECT(Style.Tab.CloseInset > 0);
     TEST_EXPECT(Style.Tab.CloseInset < Style.Tab.HorizontalPadding);
-    TEST_EXPECT_EQ(Style.Tab.CloseInset, Style.Menu.ItemHighlightInset);
 
     TEST_SECTION("No rule is drawn over the active pill, though the tokens a style would stroke one with are still to hand");
     TEST_EXPECT_EQ(Style.Tab.ActiveStripThickness, 0);
