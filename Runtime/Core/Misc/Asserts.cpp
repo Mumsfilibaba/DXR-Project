@@ -7,8 +7,8 @@
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "Core/Platform/PlatformStackTrace.h"
-#include "Core/Platform/PlatformTLS.h"
 #include "Core/Threading/ScopedLock.h"
+#include "Core/Threading/ThreadLocal.h"
 
 #include <cstdarg>
 #include <cstdio>
@@ -22,26 +22,16 @@ static FCriticalSection& GetAssertCriticalSection()
     return AssertCriticalSection;
 }
 
-static uint32 GetAssertHandlingTLSSlot()
-{
-    static const uint32 AssertHandlingTLSSlot = FPlatformTLS::AllocTLSSlot();
-    return AssertHandlingTLSSlot;
-}
+static CONST_INIT FThreadLocalSlot GAssertHandlingSlot;
 
 static bool IsHandlingAssertOnThisThread()
 {
-    const uint32 SlotIndex = GetAssertHandlingTLSSlot();
-    return (SlotIndex != CORE_INVALID_TLS_INDEX) && (FPlatformTLS::GetTLSValue(SlotIndex) != nullptr);
+    return GAssertHandlingSlot.GetValue() != nullptr;
 }
 
 static void SetHandlingAssertOnThisThread(bool bIsHandling)
 {
-    // Checked rather than asserted: FPlatformTLS asserts on a bad slot, which would recurse in here
-    const uint32 SlotIndex = GetAssertHandlingTLSSlot();
-    if (SlotIndex != CORE_INVALID_TLS_INDEX)
-    {
-        FPlatformTLS::SetTLSValue(SlotIndex, bIsHandling ? reinterpret_cast<void*>(uintptr_t(1)) : nullptr);
-    }
+    GAssertHandlingSlot.SetValue(bIsHandling ? reinterpret_cast<void*>(uintptr_t(1)) : nullptr);
 }
 
 /** Sites that have been reported at least once, so repeats can skip the stack trace */

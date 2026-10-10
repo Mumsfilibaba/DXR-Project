@@ -102,7 +102,7 @@ DWORD WINAPI FWindowsPlatformThread::ThreadRoutine(LPVOID ThreadParameter)
     if (CurrentThread)
     {
         // Ensure that this thread can be retrieved
-        FPlatformTLS::SetTLSValue(IPlatformThread::TLSSlot, CurrentThread);
+        IPlatformThread::TLSSlot.SetValue(CurrentThread);
 
         if (!CurrentThread->Name.IsEmpty())
         {
@@ -120,7 +120,7 @@ DWORD WINAPI FWindowsPlatformThread::ThreadRoutine(LPVOID ThreadParameter)
             Runnable->Destroy();
         }
         
-        FPlatformTLS::SetTLSValue(IPlatformThread::TLSSlot, nullptr);
+        IPlatformThread::TLSSlot.SetValue(nullptr);
     }
 
     return Result;

@@ -10,10 +10,10 @@ struct FMacPlatformTLS final : public IPlatformTLS
         return static_cast<uint32>(::pthread_mach_thread_np(::pthread_self()));
     }
 
-    static FORCEINLINE uint32 AllocTLSSlot()
+    static FORCEINLINE uint32 AllocTLSSlot(TLSDestructorFunc Destructor = nullptr)
     {
         pthread_key_t Slot = 0;
-        if (::pthread_key_create(&Slot, nullptr) != 0)
+        if (::pthread_key_create(&Slot, Destructor) != 0)
         {
             // NOTE: Same as FWindowsPlatformTLS
             Slot = TNumericLimits<uint32>::Max();

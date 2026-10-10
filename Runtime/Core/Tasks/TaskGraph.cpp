@@ -5,6 +5,7 @@
 #include "Core/Tasks/TaskGraphStats.h"
 #include "Core/Containers/WorkStealingDeque.h"
 #include "Core/Threading/ScopedLock.h"
+#include "Core/Threading/ThreadLocal.h"
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceManager.h"
@@ -427,7 +428,8 @@ FGraphTask* FTaskGraph::TryStealAnyThread(FTaskWorker* Worker)
     const int32 Attempts = 2 * NumSlots;
 
     // Default-seeds from the perf counter, so each worker thread gets a distinct sequence.
-    static thread_local FRandom Random;
+    static CONST_INIT TThreadLocal<FRandom> ThreadRandom;
+    FRandom& Random = *ThreadRandom;
 
     for (int32 Attempt = 0; Attempt < Attempts; ++Attempt)
     {

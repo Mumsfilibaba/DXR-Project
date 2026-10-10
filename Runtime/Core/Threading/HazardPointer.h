@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Threading/Atomic.h"
+#include "Core/Threading/ThreadLocal.h"
 
 // Slots a single thread can protect at once. Two is enough for a linked queue: the node it is
 // inspecting and the node it is about to claim.
@@ -57,9 +58,9 @@ public:
 
     /**
      * @return Returns the process-wide domain. Deliberately never destroyed. A thread returns 
-     * its record from a thread_local destructor, and the order of that against static destruction
-     * is not something the standard pins down, so a domain that went away at exit could be
-     * written to after it was gone. The records that leak are one per thread that ever used a 
+     * its record from its TThreadLocal destructor when it exits, which nothing orders against
+     * static destruction, so a domain that went away at exit could be written to after it was
+     * gone. The records that leak are one per thread that ever used a 
      * lock-free container, and Collect frees everything the containers themselves retired.
      */
     static FHazardPointerDomain& Get()
@@ -107,8 +108,8 @@ private:
      */
     static FRecord* GetThreadRecord()
     {
-        static thread_local FRecordOwner Owner;
-        return Owner.Record;
+        static CONST_INIT TThreadLocal<FRecordOwner> Owner;
+        return Owner->Record;
     }
 
     /** @return Returns a record for the calling thread, reusing one left by an exited thread */

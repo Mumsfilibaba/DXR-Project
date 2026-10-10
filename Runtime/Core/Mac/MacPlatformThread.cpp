@@ -98,7 +98,7 @@ void* FMacPlatformThread::ThreadRoutine(void* ThreadParameter)
     if (CurrentThread)
     {
         // Ensure that this thread can be retrieved
-        FPlatformTLS::SetTLSValue(IPlatformThread::TLSSlot, CurrentThread);
+        IPlatformThread::TLSSlot.SetValue(CurrentThread);
 
         // Thread-name can only be set from the running thread
         if (!CurrentThread->Name.IsEmpty())
@@ -117,7 +117,7 @@ void* FMacPlatformThread::ThreadRoutine(void* ThreadParameter)
             Runnable->Destroy();
         }
 
-        FPlatformTLS::SetTLSValue(IPlatformThread::TLSSlot, nullptr);
+        IPlatformThread::TLSSlot.SetValue(nullptr);
     }
 
     ::pthread_exit(nullptr);

@@ -12,6 +12,9 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
+/** @brief Receives a thread's value in a TLS slot when that thread exits */
+using TLSDestructorFunc = void (*)(void* Value);
+
 struct IPlatformTLS
 {
     /** @return Returns the current thread ID */
@@ -20,8 +23,14 @@ struct IPlatformTLS
         return TNumericLimits<uint32>::Min();
     }
 
-    /** @return Allocates and returns a new TLS slot */
-    static FORCEINLINE uint32 AllocTLSSlot()
+    /**
+     * @brief Allocates a new TLS slot
+     *
+     * @param Destructor Called with a thread's value when that thread exits, unless the value is nullptr. It is not
+     * called for the main thread when the process exits.
+     * @return Returns the new slot, or CORE_INVALID_TLS_INDEX when no slot is available
+     */
+    static FORCEINLINE uint32 AllocTLSSlot(TLSDestructorFunc Destructor = nullptr)
     {
         return TNumericLimits<uint32>::Max();
     }

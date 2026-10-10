@@ -2,39 +2,23 @@
 #include "Core/Misc/BootProfiler.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/OutputDeviceManager.h"
-#include "Core/Platform/PlatformTLS.h"
+#include "Core/Threading/ThreadLocal.h"
 #include "Core/PlatformInterface/IPlatformStackTrace.h"
 #include "Core/PlatformInterface/IPlatformThreadMisc.h"
 #include "Core/Math/Math.h"
 #include "Core/Containers/Map.h"
 #include "Core/Time/Time.h"
 
-static uint32 GetOpenDepthTLSSlot()
-{
-    static const uint32 Slot = FPlatformTLS::AllocTLSSlot();
-    return Slot;
-}
+static CONST_INIT FThreadLocalSlot GOpenDepthSlot;
 
 static int32 GetOpenDepth()
 {
-    const uint32 Slot = GetOpenDepthTLSSlot();
-    if (Slot == CORE_INVALID_TLS_INDEX)
-    {
-        return 0;
-    }
-
-    return static_cast<int32>(reinterpret_cast<uintptr_t>(FPlatformTLS::GetTLSValue(Slot)));
+    return static_cast<int32>(reinterpret_cast<uintptr_t>(GOpenDepthSlot.GetValue()));
 }
 
 static void SetOpenDepth(int32 Depth)
 {
-    const uint32 Slot = GetOpenDepthTLSSlot();
-    if (Slot == CORE_INVALID_TLS_INDEX)
-    {
-        return;
-    }
-
-    FPlatformTLS::SetTLSValue(Slot, reinterpret_cast<void*>(static_cast<uintptr_t>(Math::Max(Depth, 0))));
+    GOpenDepthSlot.SetValue(reinterpret_cast<void*>(static_cast<uintptr_t>(Math::Max(Depth, 0))));
 }
 
 FBootProfiler& FBootProfiler::Get()

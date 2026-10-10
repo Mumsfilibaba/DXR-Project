@@ -4,6 +4,7 @@
 #include "Core/Containers/String.h"
 #include "Core/Containers/Function.h"
 #include "Core/Threading/Runnable.h"
+#include "Core/Threading/ThreadLocal.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -49,9 +50,7 @@ public:
     virtual FRunnable* GetRunnable() const = 0;
 
 protected:
-    static uint32 AllocTLSSlot();
-
-    static uint32 TLSSlot;
+    static FThreadLocalSlot TLSSlot;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

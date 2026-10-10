@@ -9,23 +9,23 @@ struct FWindowsPlatformTLS final : public IPlatformTLS
         return ::GetCurrentThreadId();
     }
 
-    static FORCEINLINE uint32 AllocTLSSlot()
+    static FORCEINLINE uint32 AllocTLSSlot(TLSDestructorFunc Destructor = nullptr)
     {
-        return ::TlsAlloc();
+        return ::FlsAlloc(reinterpret_cast<PFLS_CALLBACK_FUNCTION>(Destructor));
     }
 
     static FORCEINLINE void SetTLSValue(uint32 SlotIndex, void* Value)
     {
-        ::TlsSetValue(SlotIndex, Value);
+        ::FlsSetValue(SlotIndex, Value);
     }
 
     static FORCEINLINE void* GetTLSValue(uint32 SlotIndex)
     {
-        return ::TlsGetValue(SlotIndex);
+        return ::FlsGetValue(SlotIndex);
     }
 
     static FORCEINLINE void FreeTLSSlot(uint32 SlotIndex)
     {
-        ::TlsFree(SlotIndex);
+        ::FlsFree(SlotIndex);
     }
 };
