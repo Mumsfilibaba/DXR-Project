@@ -141,8 +141,8 @@ function BuildRules(Name)
         -- Location for the build, this overrides the default behavior
         OutputPathOverride = "",
 
-        -- File name of the built binary without extension, Name when empty. Lets a program take the name of a
-        -- module it links, the program database keeps Name so it does not overwrite the module's.
+        -- File name of the built binary without extension, Name when empty. A program that takes the name of a module
+        -- it links needs its own OutputPathOverride, cleaning it would otherwise delete the module's <Name>.pdb.
         OutputName = "",
 
         -- Should use precompiled headers (PreCompiled.h / PreCompiled.cpp)
@@ -495,7 +495,6 @@ function BuildRules(Name)
             if self.GetOutputName() ~= self.Name then
                 LogInfo("Target name '%s'", self.GetOutputName())
                 targetname(self.GetOutputName())
-                symbolspath(JoinPath(FullTargetFolderPath, self.Name .. ".pdb"))
             end
 
             local FullIntermediateFolderPath = self.GetObjectFilesFolderPath()

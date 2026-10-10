@@ -464,7 +464,7 @@ local function GetToolsProjectPath(ProjectName)
 end
 
 function GetShaderCompilerToolPath()
-    local Folder = JoinPath(JoinPath(GetBuildFolderPath(), "bin"), "Development-%{cfg.system}-%{cfg.platform}-Monolithic-" .. GetToolsBuildSuffix())
+    local Folder = JoinPath(JoinPath(JoinPath(GetBuildFolderPath(), "bin"), "Development-%{cfg.system}-%{cfg.platform}-Monolithic-" .. GetToolsBuildSuffix()), "ShaderCompiler")
     if IsPlatformMac() then
         return JoinPath(Folder, "ShaderCompiler.app/Contents/MacOS/ShaderCompiler")
     end
