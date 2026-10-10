@@ -132,6 +132,34 @@ static FTestActor MakeActor()
     return Actor;
 }
 
+struct FTestInventory
+{
+    void Serialize(FJsonArchive& Archive)
+    {
+        Archive.Field("Lights", Lights);
+        Archive.Field("Counts", Counts);
+        Archive.Field("Pair", Pair);
+    }
+
+    TArray<FTestLight>     Lights;
+    TMap<String, int32>    Counts;
+    TStaticArray<int32, 2> Pair;
+};
+
+static String LoadInventoryError(const CHAR* Text)
+{
+    FJsonValue Document;
+    if (!Json::Parse(StringView(Text), Document))
+    {
+        return String();
+    }
+
+    FTestInventory Inventory;
+    FJsonArchive Loader = FJsonArchive::Loader(Document);
+    Inventory.Serialize(Loader);
+    return (Loader.GetErrors().Size() == 1) ? Loader.GetErrors()[0] : String();
+}
+
 template<typename T>
 static bool SaveThenLoad(const T& Source, T& OutLoaded)
 {
@@ -540,6 +568,21 @@ bool JsonArchive_Test()
         FJsonError Error;
         TEST_EXPECT(!Json::LoadFromFile(String("ThisPathDoesNotExist/Nope.json"), Value, &Error));
         TEST_EXPECT(!Error.Message.IsEmpty());
+    }
+
+    TEST_SECTION("Errors inside a serialized array, static array or map name the element");
+    {
+        TEST_EXPECT(LoadInventoryError("{ \"Lights\": [ {}, { \"Intensity\": true } ] }")
+            .Equals("Lights[1].Intensity: expected a number, found a bool"));
+
+        TEST_EXPECT(LoadInventoryError("{ \"Lights\": [ {}, {}, 5 ] }")
+            .Equals("Lights[2]: expected an object, found a number"));
+
+        TEST_EXPECT(LoadInventoryError("{ \"Counts\": { \"Apples\": 1, \"Pears\": \"many\" } }")
+            .Equals("Counts.Pears: expected a number, found a string"));
+
+        TEST_EXPECT(LoadInventoryError("{ \"Pair\": [ 1, \"two\" ] }")
+            .Equals("Pair[1]: expected a number, found a string"));
     }
 
     TEST_END();

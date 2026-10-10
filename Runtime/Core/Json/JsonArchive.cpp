@@ -280,3 +280,14 @@ int32 FJsonArchive::FArrayScope::Num() const
     const FJsonValue* Array = Archive.IsSaving() ? Scope.SaveValue : Scope.LoadValue;
     return Array ? Array->Num() : 0;
 }
+
+FJsonArchive::FPathScope::FPathScope(FJsonArchive& InArchive, const String& Segment)
+    : Archive(InArchive)
+{
+    Archive.PathSegments.Add(Segment);
+}
+
+FJsonArchive::FPathScope::~FPathScope()
+{
+    Archive.PathSegments.Pop();
+}

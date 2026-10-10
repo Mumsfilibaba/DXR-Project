@@ -158,7 +158,7 @@ bool ProjectDescriptor_Test()
         FProjectDescriptor Descriptor;
         String Error;
         TEST_EXPECT(!Descriptor.LoadFromFile(Filename, Error));
-        TEST_EXPECT(Error.Find("Modules.Name") != String::InvalidIndex);
+        TEST_EXPECT(Error.Find("Modules[0].Name") != String::InvalidIndex);
     }
 
     TEST_EXPECT(File::DeleteDirectoryTree(Root));

@@ -329,6 +329,7 @@ struct TJsonSerializer<TArray<T, AllocatorType>>
         OutValue.Reset(InValue.Num());
         for (int32 Index = 0; Index < InValue.Num(); ++Index)
         {
+            FJsonArchive::FPathScope ElementScope(Archive, String::Printf("[%d]", Index));
             TJsonSerializer<T>::Load(InValue[Index], OutValue[Index], Archive);
         }
 
@@ -368,6 +369,7 @@ struct TJsonSerializer<TStaticArray<T, NUM_ELEMENTS>>
 
         for (int32 Index = 0; Index < NUM_ELEMENTS; ++Index)
         {
+            FJsonArchive::FPathScope ElementScope(Archive, String::Printf("[%d]", Index));
             TJsonSerializer<T>::Load(InValue[Index], OutValue[Index], Archive);
         }
 
@@ -450,6 +452,8 @@ struct TJsonSerializer<TMap<String, T>>
         OutValue.Clear();
         for (int32 Index = 0; Index < InValue.NumMembers(); ++Index)
         {
+            FJsonArchive::FPathScope EntryScope(Archive, InValue.GetMemberName(Index));
+
             T Loaded{};
             if (TJsonSerializer<T>::Load(InValue.GetMemberValue(Index), Loaded, Archive))
             {

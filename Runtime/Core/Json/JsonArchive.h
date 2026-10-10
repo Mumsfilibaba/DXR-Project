@@ -57,6 +57,15 @@ public:
         FJsonArchive& Archive;
     };
 
+    struct FPathScope : public FNonCopyable
+    {
+        FPathScope(FJsonArchive& InArchive, const String& Segment);
+        ~FPathScope();
+
+    private:
+        FJsonArchive& Archive;
+    };
+
 public:
     NODISCARD static FJsonArchive Saver(FJsonValue& Root);
     NODISCARD static FJsonArchive Loader(const FJsonValue& Root);
