@@ -19,7 +19,7 @@ enum class EEngineDirSource : uint8
 struct CORE_API Paths
 {
     /** @brief The file at the root of an engine folder that marks it as one and names the engine */
-    static constexpr const CHAR_T* EngineIdentityFilename = "dxrengine.json";
+    static constexpr const CHAR_T* EngineIdentityFilename = TEXT("dxrengine.json");
 
     /**
      * @brief Resolve the engine directory from -engine=, the executable's location and the compile-time fallback. Called

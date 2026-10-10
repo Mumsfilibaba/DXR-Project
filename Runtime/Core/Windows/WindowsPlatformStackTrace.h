@@ -24,8 +24,8 @@ struct CORE_API FWindowsPlatformStackTrace final : public IPlatformStackTrace
 
     static FORCEINLINE FString GetExecutableFilename()
     {
-        ANSICHAR ModulePathName[FStackTraceEntry::MaxNameLength + 1];
-        ::GetModuleFileNameA(::GetModuleHandleA(nullptr), ModulePathName, FStackTraceEntry::MaxNameLength);
+        WIDECHAR ModulePathName[FStackTraceEntry::MaxNameLength + 1] = {};
+        ::GetModuleFileNameW(::GetModuleHandleW(nullptr), ModulePathName, FStackTraceEntry::MaxNameLength);
         return StringCast<CHAR_T>(ModulePathName).ToString();
     }
 };

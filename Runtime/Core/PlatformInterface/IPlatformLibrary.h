@@ -62,7 +62,7 @@ struct IPlatformLibrary
      */
     static FORCEINLINE const CHAR_T* GetDynamicLibExtension()
     {
-        return "";
+        return TEXT("");
     }
 
     /**
@@ -71,7 +71,7 @@ struct IPlatformLibrary
      */
     static FORCEINLINE FString GetRealName(const CHAR_T* LibraryName)
     {
-        return "";
+        return TEXT("");
     }
 
     /**

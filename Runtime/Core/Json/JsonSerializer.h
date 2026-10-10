@@ -42,7 +42,7 @@ struct TJsonEnumNames
         {                                                                     \
             static const FEntry Entries[] = {
 
-#define JSON_ENUM_NAME(EnumType, Enumerator) { EnumType::Enumerator, #Enumerator },
+#define JSON_ENUM_NAME(EnumType, Enumerator) { EnumType::Enumerator, TEXT(#Enumerator) },
 
 #define JSON_ENUM_NAMES_END()                                                         \
             };                                                                        \
@@ -118,7 +118,7 @@ struct TJsonSerializer
                         }
                     }
 
-                    Archive.AddError("'%s' is not one of the values this field accepts", Name.Data());
+                    Archive.AddError(TEXT("'%s' is not one of the values this field accepts"), Name.Data());
                     return false;
                 }
             }
@@ -126,7 +126,7 @@ struct TJsonSerializer
             int64 Raw = 0;
             if (!InValue.TryGetInt64(Raw))
             {
-                Archive.AddTypeError(InValue, TJsonEnumNames<T>::bHasNames ? "a string" : "a number");
+                Archive.AddTypeError(InValue, TJsonEnumNames<T>::bHasNames ? TEXT("a string") : TEXT("a number"));
                 return false;
             }
 
@@ -137,7 +137,7 @@ struct TJsonSerializer
         {
             if (!InValue.IsObject())
             {
-                Archive.AddTypeError(InValue, "an object");
+                Archive.AddTypeError(InValue, TEXT("an object"));
                 return false;
             }
 
@@ -170,7 +170,7 @@ struct TJsonSerializer<bool>
     {
         if (!InValue.TryGetBool(OutValue))
         {
-            Archive.AddTypeError(InValue, "a bool");
+            Archive.AddTypeError(InValue, TEXT("a bool"));
             return false;
         }
 
@@ -191,7 +191,7 @@ struct TJsonIntegerSerializer
         int64 Raw = 0;
         if (!InValue.TryGetInt64(Raw))
         {
-            Archive.AddTypeError(InValue, "a number");
+            Archive.AddTypeError(InValue, TEXT("a number"));
             return false;
         }
 
@@ -199,7 +199,7 @@ struct TJsonIntegerSerializer
         {
             if (Raw < 0)
             {
-                Archive.AddError("%lld is negative and this field is unsigned", Raw);
+                Archive.AddError(TEXT("%lld is negative and this field is unsigned"), Raw);
                 return false;
             }
         }
@@ -207,7 +207,7 @@ struct TJsonIntegerSerializer
         {
             if ((Raw < static_cast<int64>(TNumericLimits<T>::Min())) || (Raw > static_cast<int64>(TNumericLimits<T>::Max())))
             {
-                Archive.AddError("%lld does not fit in this field", Raw);
+                Archive.AddError(TEXT("%lld does not fit in this field"), Raw);
                 return false;
             }
         }
@@ -239,7 +239,7 @@ struct TJsonRealSerializer
         double Raw = 0.0;
         if (!InValue.TryGetDouble(Raw))
         {
-            Archive.AddTypeError(InValue, "a number");
+            Archive.AddTypeError(InValue, TEXT("a number"));
             return false;
         }
 
@@ -263,7 +263,7 @@ struct TJsonSerializer<FString>
     {
         if (!InValue.TryGetString(OutValue))
         {
-            Archive.AddTypeError(InValue, "a string");
+            Archive.AddTypeError(InValue, TEXT("a string"));
             return false;
         }
 
@@ -282,7 +282,7 @@ struct TJsonSerializer<FStringView>
     static bool Load(const FJsonValue&, FStringView&, FJsonArchive& Archive)
     {
         // A view owns nothing, so there is nowhere to put the characters
-        Archive.AddError("a string view can be written but not read back into");
+        Archive.AddError(TEXT("a string view can be written but not read back into"));
         return false;
     }
 };
@@ -297,7 +297,7 @@ struct TJsonSerializer<const CHAR_T*>
 
     static bool Load(const FJsonValue&, const CHAR_T*&, FJsonArchive& Archive)
     {
-        Archive.AddError("a raw string pointer can be written but not read back into");
+        Archive.AddError(TEXT("a raw string pointer can be written but not read back into"));
         return false;
     }
 };
@@ -322,14 +322,14 @@ struct TJsonSerializer<TArray<T, AllocatorType>>
     {
         if (!InValue.IsArray())
         {
-            Archive.AddTypeError(InValue, "an array");
+            Archive.AddTypeError(InValue, TEXT("an array"));
             return false;
         }
 
         OutValue.Reset(InValue.Num());
         for (int32 Index = 0; Index < InValue.Num(); ++Index)
         {
-            FJsonArchive::FPathScope ElementScope(Archive, FString::Printf("[%d]", Index));
+            FJsonArchive::FPathScope ElementScope(Archive, FString::Printf(TEXT("[%d]"), Index));
             TJsonSerializer<T>::Load(InValue[Index], OutValue[Index], Archive);
         }
 
@@ -357,19 +357,19 @@ struct TJsonSerializer<TStaticArray<T, NUM_ELEMENTS>>
     {
         if (!InValue.IsArray())
         {
-            Archive.AddTypeError(InValue, "an array");
+            Archive.AddTypeError(InValue, TEXT("an array"));
             return false;
         }
 
         if (InValue.Num() != NUM_ELEMENTS)
         {
-            Archive.AddError("expected %d elements, found %d", NUM_ELEMENTS, InValue.Num());
+            Archive.AddError(TEXT("expected %d elements, found %d"), NUM_ELEMENTS, InValue.Num());
             return false;
         }
 
         for (int32 Index = 0; Index < NUM_ELEMENTS; ++Index)
         {
-            FJsonArchive::FPathScope ElementScope(Archive, FString::Printf("[%d]", Index));
+            FJsonArchive::FPathScope ElementScope(Archive, FString::Printf(TEXT("[%d]"), Index));
             TJsonSerializer<T>::Load(InValue[Index], OutValue[Index], Archive);
         }
 
@@ -445,7 +445,7 @@ struct TJsonSerializer<TMap<FString, T>>
     {
         if (!InValue.IsObject())
         {
-            Archive.AddTypeError(InValue, "an object");
+            Archive.AddTypeError(InValue, TEXT("an object"));
             return false;
         }
 

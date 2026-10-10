@@ -7,7 +7,7 @@
 
 #if ENABLE_PROFILER
     #define TRACE_SCOPE(Name) FFrameProfilerScopedTrace STRING_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
-    #define TRACE_FUNCTION_SCOPE() TRACE_SCOPE(FUNCTION_SIGNATURE)
+    #define TRACE_FUNCTION_SCOPE() TRACE_SCOPE(TEXT(FUNCTION_SIGNATURE))
     #define TRACE_EVENT(Name) FFrameProfiler::Get().AddInstantEvent(Name)
 #else
     #define TRACE_SCOPE(Name)

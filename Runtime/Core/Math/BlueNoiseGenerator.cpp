@@ -461,7 +461,7 @@ TArray<float> FBlueNoiseGenerator::GenerateVoidAndCluster(const FBlueNoiseParams
         State.SetSample(Index, true);
     }
 
-    ReportProgress(Callbacks, 0.0f, "Prototype");
+    ReportProgress(Callbacks, 0.0f, TEXT("Prototype"));
 
     const int32 MaxRelaxIterations = NumInitial * 4;
     for (int32 Iteration = 0; Iteration < MaxRelaxIterations; ++Iteration)
@@ -495,7 +495,7 @@ TArray<float> FBlueNoiseGenerator::GenerateVoidAndCluster(const FBlueNoiseParams
     // is the most isolated, so it takes rank 0.
     // ---------------------------------------------------------------------------------------------
 
-    ReportProgress(Callbacks, 0.0f, "Phase1");
+    ReportProgress(Callbacks, 0.0f, TEXT("Phase1"));
 
     for (int32 CurrentRank = NumInitial - 1; CurrentRank >= 0; --CurrentRank)
     {
@@ -510,7 +510,7 @@ TArray<float> FBlueNoiseGenerator::GenerateVoidAndCluster(const FBlueNoiseParams
 
         if (((CurrentRank & 0x3ff) == 0))
         {
-            ReportProgress(Callbacks, 1.0f - (static_cast<float>(CurrentRank) / static_cast<float>(NumInitial)), "Phase1");
+            ReportProgress(Callbacks, 1.0f - (static_cast<float>(CurrentRank) / static_cast<float>(NumInitial)), TEXT("Phase1"));
         }
     }
 
@@ -520,7 +520,7 @@ TArray<float> FBlueNoiseGenerator::GenerateVoidAndCluster(const FBlueNoiseParams
 
     State.SetPattern(Prototype);
 
-    ReportProgress(Callbacks, 0.0f, "Phase2");
+    ReportProgress(Callbacks, 0.0f, TEXT("Phase2"));
 
     for (int32 CurrentRank = NumInitial; CurrentRank < Count; ++CurrentRank)
     {
@@ -535,7 +535,7 @@ TArray<float> FBlueNoiseGenerator::GenerateVoidAndCluster(const FBlueNoiseParams
 
         if (((CurrentRank & 0x3ff) == 0))
         {
-            ReportProgress(Callbacks, static_cast<float>(CurrentRank - NumInitial) / static_cast<float>(Count - NumInitial), "Phase2");
+            ReportProgress(Callbacks, static_cast<float>(CurrentRank - NumInitial) / static_cast<float>(Count - NumInitial), TEXT("Phase2"));
         }
     }
 
@@ -552,7 +552,7 @@ TArray<float> FBlueNoiseGenerator::GenerateVoidAndCluster(const FBlueNoiseParams
         Result[Index] = static_cast<float>(Math::Max(Rank[Index], 0)) * InvCount;
     }
 
-    ReportProgress(Callbacks, 1.0f, "Done");
+    ReportProgress(Callbacks, 1.0f, TEXT("Done"));
     return Result;
 }
 
@@ -723,7 +723,7 @@ TArray<float> FBlueNoiseGenerator::GenerateVectorBlueNoise(const FBlueNoiseParam
     const int64 StartIteration = Math::Clamp<int64>(Params.StartIteration, 0, NumIterations);
     float       Temperature    = StartTemperature * Math::Pow(TemperatureDecay, static_cast<float>(StartIteration));
 
-    ReportProgress(Callbacks, static_cast<float>(StartIteration) / static_cast<float>(NumIterations), "Anneal");
+    ReportProgress(Callbacks, static_cast<float>(StartIteration) / static_cast<float>(NumIterations), TEXT("Anneal"));
 
     const int32 BatchSize = Math::Clamp(PixelCount / 256, 1, 4096);
 
@@ -806,7 +806,7 @@ TArray<float> FBlueNoiseGenerator::GenerateVectorBlueNoise(const FBlueNoiseParam
 
         ++BatchIndex;
 
-        ReportProgress(Callbacks, static_cast<float>(Iteration) / static_cast<float>(NumIterations), "Anneal");
+        ReportProgress(Callbacks, static_cast<float>(Iteration) / static_cast<float>(NumIterations), TEXT("Anneal"));
 
         if (Callbacks.Checkpoint && (Params.CheckpointInterval > 0) && ((Iteration - StartIteration) >= Params.CheckpointInterval))
         {
@@ -817,7 +817,7 @@ TArray<float> FBlueNoiseGenerator::GenerateVectorBlueNoise(const FBlueNoiseParam
         }
     }
 
-    ReportProgress(Callbacks, 1.0f, "Done");
+    ReportProgress(Callbacks, 1.0f, TEXT("Done"));
     return Values;
 }
 

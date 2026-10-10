@@ -1855,11 +1855,11 @@ struct TIsContiguousContainer<TString<CharType>>
 
 // Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
 template<>
-struct THash<FString>
+struct THash<FAnsiString>
 {
-    static uint64 GetHash(const FString& InString)
+    static uint64 GetHash(const FAnsiString& InString)
     {
-        const CHAR_T* Key = *InString;
+        const ANSICHAR* Key = *InString;
 
         int32  Index  = 0;
         uint64 Result = 0;
@@ -1918,7 +1918,7 @@ struct TTypeToString
 template<>
 NODISCARD FORCEINLINE FString TTypeToString<bool>::ToString(bool bElement)
 {
-    return FString(bElement ? "true" : "false");
+    return FString(bElement ? TEXT("true") : TEXT("false"));
 }
 
 template<typename T>
@@ -2037,12 +2037,12 @@ template<>
 FORCEINLINE bool TTypeFromString<bool>::FromString(const FString& InString, bool& OutElement)
 {
     const CHAR_T* Start = *InString;
-    if (CString::Stricmp(Start, "true") == 0)
+    if (CString::Stricmp(Start, TEXT("true")) == 0)
     {
         OutElement = true;
         return true;
     }
-    else if (CString::Stricmp(Start, "false") == 0)
+    else if (CString::Stricmp(Start, TEXT("false")) == 0)
     {
         OutElement = false;
         return true;
@@ -2244,11 +2244,11 @@ template<>
 FORCEINLINE bool TTryParseType<bool>::TryParse(const FString& InString)
 {
     const CHAR_T* Start = *InString;
-    if (CString::Stricmp(Start, "true") == 0)
+    if (CString::Stricmp(Start, TEXT("true")) == 0)
     {
         return true;
     }
-    else if (CString::Stricmp(Start, "false") == 0)
+    else if (CString::Stricmp(Start, TEXT("false")) == 0)
     {
         return true;
     }

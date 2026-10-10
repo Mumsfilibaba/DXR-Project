@@ -178,12 +178,12 @@ FIniFile* FConfig::AddLayer(EConfigFile::Type ConfigFile, const FString& Filenam
 void FConfig::AddDefaultLayers()
 {
     const FString ConfigDir = Paths::GetEngineDir();
-    AddLayer(EConfigFile::Engine, FString::Printf("%s/Engine.ini", *ConfigDir));
-    AddLayer(EConfigFile::Game, FString::Printf("%s/Game.ini", *ConfigDir));
+    AddLayer(EConfigFile::Engine, FString::Printf(TEXT("%s/Engine.ini"), *ConfigDir));
+    AddLayer(EConfigFile::Game, FString::Printf(TEXT("%s/Game.ini"), *ConfigDir));
 
 #if EDITOR_BUILD
-    AddLayer(EConfigFile::Editor, FString::Printf("%s/Editor.ini", *ConfigDir));
+    AddLayer(EConfigFile::Editor, FString::Printf(TEXT("%s/Editor.ini"), *ConfigDir));
 #endif
 
-    AddLayer(EConfigFile::Platform, FString::Printf("%s/%s.ini", *ConfigDir, BuildInfo::GetPlatformName()));
+    AddLayer(EConfigFile::Platform, FString::Printf(TEXT("%s/%s.ini"), *ConfigDir, BuildInfo::GetPlatformName()));
 }

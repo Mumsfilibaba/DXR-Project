@@ -5,7 +5,7 @@
 
 #if ENABLE_BOOT_PROFILER
     #define TRACE_BOOT_SCOPE(Name) FBootProfilerScopedTrace STRING_CONCAT(BootScopedTrace_Line_, __LINE__)(Name)
-    #define TRACE_BOOT_FUNCTION_SCOPE() TRACE_BOOT_SCOPE(FUNCTION_SIGNATURE)
+    #define TRACE_BOOT_FUNCTION_SCOPE() TRACE_BOOT_SCOPE(TEXT(FUNCTION_SIGNATURE))
     #define TRACE_BOOT_EVENT(Name) FBootProfiler::Get().AddInstantEvent(Name)
 #else
     #define TRACE_BOOT_SCOPE(Name)

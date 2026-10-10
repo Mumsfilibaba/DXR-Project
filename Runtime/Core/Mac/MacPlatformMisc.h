@@ -16,7 +16,7 @@ struct FMacPlatformMisc final : public IPlatformMisc
             WriteToStdOutput(Message, static_cast<uint32>(strlen(Message)));
         }
 
-        WriteToStdOutput("\n", 1);
+        WriteToStdOutput(TEXT("\n"), 1);
     }
 
     static FORCEINLINE void WriteToStdOutput(const CHAR_T* Text, uint32 Length)

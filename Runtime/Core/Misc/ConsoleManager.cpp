@@ -9,21 +9,21 @@
 #include "Core/Threading/ScopedLock.h"
 
 static FAutoConsoleCommand CCmdClearHistory(
-    "ClearHistory",
-    "Clears the history of the Console",
+    TEXT("ClearHistory"),
+    TEXT("Clears the history of the Console"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         FConsoleManager::Get().ClearHistory();
     }));
 
 static FAutoConsoleCommand CCmdDumpCVars(
-    "Console.DumpCVars",
-    "Dumps all console variables (optionally filtered by key) to DumpConsoleVariableValues.txt in the current working directory",
+    TEXT("Console.DumpCVars"),
+    TEXT("Dumps all console variables (optionally filtered by key) to DumpConsoleVariableValues.txt in the current working directory"),
     FConsoleCommandDelegate::CreateLambda([](FStringView Args)
     {
         FConsoleManager& ConsoleManager = FConsoleManager::Get();
 
-        const FString FilePath = FPlatformFile::GetCurrentWorkingDirectory() + "/DumpConsoleVariableValues.txt";
+        const FString FilePath = FPlatformFile::GetCurrentWorkingDirectory() + TEXT("/DumpConsoleVariableValues.txt");
         FFileOutputDevice OutputDevice(FilePath);
 
         FStringView KeyView = Args;
@@ -34,9 +34,9 @@ static FAutoConsoleCommand CCmdDumpCVars(
     }));
 
 static TAutoConsoleVariable<FString> CVarEcho(
-    "Echo", 
-    "Prints the entered text to the console",
-    "",
+    TEXT("Echo"), 
+    TEXT("Prints the entered text to the console"),
+    TEXT(""),
     FConsoleVariableDelegate::CreateLambda([](IConsoleVariable* InVariable) -> void
     {
         if (InVariable->IsVariableString())
@@ -1627,7 +1627,7 @@ bool FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
         IConsoleCommand* CommandObject = FindConsoleCommand(*Command);
         if (!CommandObject)
         {
-            OutputDevice.Log(ELogSeverity::Error, "'" + Command + "' is not a registered command");
+            OutputDevice.Log(ELogSeverity::Error, TEXT("'") + Command + TEXT("' is not a registered command"));
             return false;
         }
 
@@ -1650,7 +1650,7 @@ bool FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
     IConsoleVariable* VariableObject = FindConsoleVariable(*CommandName);
     if (!VariableObject)
     {
-        OutputDevice.Log(ELogSeverity::Error, "'" + Command + "' is not a registered command or variable");
+        OutputDevice.Log(ELogSeverity::Error, TEXT("'") + Command + TEXT("' is not a registered command or variable"));
         return false;
     }
 
@@ -1712,7 +1712,7 @@ bool FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
 
     if (!bHandled)
     {
-        OutputDevice.Log(ELogSeverity::Error, "'" + Value + "' Is an invalid value for '" + CommandName + "'");
+        OutputDevice.Log(ELogSeverity::Error, TEXT("'") + Value + TEXT("' Is an invalid value for '") + CommandName + TEXT("'"));
     }
 
     return bHandled;
@@ -1778,7 +1778,7 @@ IConsoleObject* FConsoleManager::RegisterObject(const CHAR_T* InName, IConsoleOb
         if (!ApplyCommandLineOverride(InName, Variable) && GConfig)
         {
             FString Value;
-            if (GConfig->GetString("", InName, Value))
+            if (GConfig->GetString(TEXT(""), InName, Value))
             {
                 Variable->SetString(Value, EConsoleVariableFlags::SetByConfigFile);
             }
@@ -1800,7 +1800,7 @@ void FConsoleManager::LoadFromCommandLine()
     }
 
     FStringView Commands;
-    if (!CommandLine::FindOption("ExecuteCommands", Commands))
+    if (!CommandLine::FindOption(TEXT("ExecuteCommands"), Commands))
     {
         return;
     }
@@ -1869,40 +1869,40 @@ void FConsoleManager::DumpConsoleVariableValues(IOutputDevice& OutputDevice, con
         return A.First < B.First;
     });
 
-    OutputDevice.Log("CVar Dump");
-    OutputDevice.Log(FString::Printf("Count: %d", ConsoleVariables.Size()));
-    OutputDevice.Log("----------------------------------------");
+    OutputDevice.Log(TEXT("CVar Dump"));
+    OutputDevice.Log(FString::Printf(TEXT("Count: %d"), ConsoleVariables.Size()));
+    OutputDevice.Log(TEXT("----------------------------------------"));
 
     for (const TPair<FString, IConsoleVariable*>& Pair : ConsoleVariables)
     {
         IConsoleVariable* Variable = Pair.Second;
         FString ValueString;
-        const CHAR_T* TypeString = "unknown";
+        const CHAR_T* TypeString = TEXT("unknown");
 
         if (Variable->IsVariableInt())
         {
-            ValueString = FString::Printf("%d", Variable->GetInt());
-            TypeString = "int";
+            ValueString = FString::Printf(TEXT("%d"), Variable->GetInt());
+            TypeString = TEXT("int");
         }
         else if (Variable->IsVariableFloat())
         {
-            ValueString = FString::Printf("%.6f", Variable->GetFloat());
-            TypeString = "float";
+            ValueString = FString::Printf(TEXT("%.6f"), Variable->GetFloat());
+            TypeString = TEXT("float");
         }
         else if (Variable->IsVariableBool())
         {
-            ValueString = Variable->GetBool() ? "true" : "false";
-            TypeString = "bool";
+            ValueString = Variable->GetBool() ? TEXT("true") : TEXT("false");
+            TypeString = TEXT("bool");
         }
         else if (Variable->IsVariableString())
         {
             ValueString = Variable->GetString();
-            TypeString = "string";
+            TypeString = TEXT("string");
         }
 
         const EConsoleVariableFlags SetByFlags = Variable->GetFlags() & EConsoleVariableFlags::SetByMask;
         const CHAR_T* SetByString = SetByFlagToString(SetByFlags);
 
-        OutputDevice.Log(FString::Printf("%s = %s [type:%s setby:%s]", *Pair.First, *ValueString, TypeString, SetByString));
+        OutputDevice.Log(FString::Printf(TEXT("%s = %s [type:%s setby:%s]"), *Pair.First, *ValueString, TypeString, SetByString));
     }
 }

@@ -1,14 +1,15 @@
 #include "Core/Misc/FileOutputDevice.h"
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Containers/StringConversion.h"
 
 static const CHAR_T* SeverityToString(ELogSeverity Severity)
 {
     switch (Severity)
     {
-        case ELogSeverity::Error:   return "[Error]   ";
-        case ELogSeverity::Warning: return "[Warning] ";
-        case ELogSeverity::Info:    return "[Info]    ";
-        default:                    return "";
+        case ELogSeverity::Error:   return TEXT("[Error]   ");
+        case ELogSeverity::Warning: return TEXT("[Warning] ");
+        case ELogSeverity::Info:    return TEXT("[Info]    ");
+        default:                    return TEXT("");
     }
 }
 
@@ -27,12 +28,12 @@ FFileOutputDevice::~FFileOutputDevice()
 
 void FFileOutputDevice::Log(const FString& Message)
 {
-    QueueWrite(Message + "\n");
+    QueueWrite(Message + TEXT("\n"));
 }
 
 void FFileOutputDevice::Log(ELogSeverity Severity, const FString& Message)
 {
-    QueueWrite(FString(SeverityToString(Severity)) + Message + "\n");
+    QueueWrite(FString(SeverityToString(Severity)) + Message + TEXT("\n"));
 
     if (Severity >= ELogSeverity::Warning)
     {
@@ -120,28 +121,20 @@ bool FFileOutputDevice::WriteLines(const TArray<FString>& Lines)
         return true;
     }
 
-    uint32 TotalSize = 0;
+    // The log file is UTF-8 whatever CHAR_T is
+    TArray<uint8> Buffer;
     for (const FString& Line : Lines)
     {
-        TotalSize += Line.SizeInBytes();
+        const TStringConversion<ANSICHAR, CHAR_T> Utf8Line = StringCast<ANSICHAR>(Line);
+        Buffer.Append(reinterpret_cast<const uint8*>(Utf8Line.Get()), Utf8Line.Length());
     }
 
-    if (TotalSize == 0)
+    if (Buffer.IsEmpty())
     {
         return true;
     }
 
-    TArray<uint8> Buffer;
-    Buffer.Resize(TotalSize);
-
-    uint32 Offset = 0;
-    for (const FString& Line : Lines)
-    {
-        Memory::Memcpy(Buffer.Data() + Offset, *Line, Line.SizeInBytes());
-        Offset += Line.SizeInBytes();
-    }
-
-    return FileHandle->WriteAsync(Buffer.Data(), TotalSize);
+    return FileHandle->WriteAsync(Buffer.Data(), static_cast<uint32>(Buffer.Size()));
 }
 
 void FFileOutputDevice::DropOverflowingLines()

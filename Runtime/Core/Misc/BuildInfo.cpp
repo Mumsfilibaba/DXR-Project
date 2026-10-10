@@ -19,101 +19,101 @@
 
 const CHAR_T* BuildInfo::GetEngineName()
 {
-    return ENGINE_NAME;
+    return TEXT(ENGINE_NAME);
 }
 
 const CHAR_T* BuildInfo::GetVersionString()
 {
-    return ENGINE_VERSION_STRING;
+    return TEXT(ENGINE_VERSION_STRING);
 }
 
 const CHAR_T* BuildInfo::GetConfigurationName()
 {
 #if DEBUG_BUILD
     #if EDITOR_BUILD
-        return "Debug Editor";
+        return TEXT("Debug Editor");
     #else
-        return "Debug";
+        return TEXT("Debug");
     #endif
 #elif DEVELOPMENT_BUILD
     #if EDITOR_BUILD
-        return "Development Editor";
+        return TEXT("Development Editor");
     #else
-        return "Development";
+        return TEXT("Development");
     #endif
 #elif RELEASE_BUILD
     #if EDITOR_BUILD
-        return "Release Editor";
+        return TEXT("Release Editor");
     #else
-        return "Release";
+        return TEXT("Release");
     #endif
 #else
-    return "Unknown";
+    return TEXT("Unknown");
 #endif
 }
 
 const CHAR_T* BuildInfo::GetLinkageName()
 {
 #if MONOLITHIC_BUILD
-    return "Monolithic";
+    return TEXT("Monolithic");
 #else
-    return "Modular";
+    return TEXT("Modular");
 #endif
 }
 
 const CHAR_T* BuildInfo::GetPlatformName()
 {
 #if PLATFORM_WINDOWS
-    return "Windows";
+    return TEXT("Windows");
 #elif PLATFORM_MACOS
-    return "macOS";
+    return TEXT("macOS");
 #else
-    return "Unknown";
+    return TEXT("Unknown");
 #endif
 }
 
 const CHAR_T* BuildInfo::GetArchitectureName()
 {
 #if PLATFORM_ARCHITECTURE_X86_64
-    return "x86_64";
+    return TEXT("x86_64");
 #elif PLATFORM_ARCHITECTURE_ARM64
-    return "arm64";
+    return TEXT("arm64");
 #else
-    return "Unknown";
+    return TEXT("Unknown");
 #endif
 }
 
 const CHAR_T* BuildInfo::GetCompilerName()
 {
 #if PLATFORM_COMPILER_MSVC
-    return "MSVC " BUILDINFO_STRINGIFY(_MSC_FULL_VER);
+    return TEXT("MSVC " BUILDINFO_STRINGIFY(_MSC_FULL_VER));
 #elif PLATFORM_COMPILER_CLANG
-    return "Clang " __clang_version__;
+    return TEXT("Clang " __clang_version__);
 #elif PLATFORM_COMPILER_GCC
-    return "GCC " __VERSION__;
+    return TEXT("GCC " __VERSION__);
 #else
-    return "Unknown";
+    return TEXT("Unknown");
 #endif
 }
 
 const CHAR_T* BuildInfo::GetCompileTimestamp()
 {
-    return __DATE__ " " __TIME__;
+    return TEXT(__DATE__ " " __TIME__);
 }
 
 const CHAR_T* BuildInfo::GetBranch()
 {
-    return BUILD_BRANCH;
+    return TEXT(BUILD_BRANCH);
 }
 
 const CHAR_T* BuildInfo::GetCommit()
 {
-    return BUILD_COMMIT;
+    return TEXT(BUILD_COMMIT);
 }
 
 const CHAR_T* BuildInfo::GetCommitDate()
 {
-    return BUILD_COMMIT_DATE;
+    return TEXT(BUILD_COMMIT_DATE);
 }
 
 bool BuildInfo::IsWorkingTreeDirty()

@@ -71,7 +71,7 @@ bool CommandLine::Initialize(const CHAR_T** Args, int32 NumArgs)
 
         if (Index > 0)
         {
-            AppendChecked(OriginalCommandLineIt, OriginalCommandLineEnd, " ", 1);
+            AppendChecked(OriginalCommandLineIt, OriginalCommandLineEnd, TEXT(" "), 1);
         }
 
         AppendChecked(OriginalCommandLineIt, OriginalCommandLineEnd, CurrentArg, CString::Strlen(CurrentArg));
@@ -97,7 +97,7 @@ bool CommandLine::Initialize(const CHAR_T** Args, int32 NumArgs)
 
             if (*Iterator == '=')
             {
-                AppendChecked(CommandLineIt, CommandLineEnd, "=", 1);
+                AppendChecked(CommandLineIt, CommandLineEnd, TEXT("="), 1);
 
                 ++Iterator;
                 Parse::ParseWhiteSpace(&Iterator);
@@ -128,7 +128,7 @@ bool CommandLine::Initialize(const CHAR_T** Args, int32 NumArgs)
                 NextArg = ValueEnd;
             }
 
-            AppendChecked(CommandLineIt, CommandLineEnd, " ", 1);
+            AppendChecked(CommandLineIt, CommandLineEnd, TEXT(" "), 1);
 
             // Resume after the value, so a '-' inside it cannot start a phantom option
             CurrentArg = NextArg;

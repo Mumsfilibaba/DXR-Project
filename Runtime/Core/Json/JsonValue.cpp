@@ -7,7 +7,7 @@ FString FJsonError::ToString() const
         return Message;
     }
 
-    return FString::Printf("line %d, column %d: %s", Line, Column, Message.Data());
+    return FString::Printf(TEXT("line %d, column %d: %s"), Line, Column, Message.Data());
 }
 
 
@@ -180,7 +180,7 @@ double FJsonValue::GetDoubleOr(double Default) const
 FString FJsonValue::GetStringOr(const CHAR_T* Default) const
 {
     FString Result;
-    return TryGetString(Result) ? Result : FString(Default ? Default : "");
+    return TryGetString(Result) ? Result : FString(Default ? Default : TEXT(""));
 }
 
 FJsonValue* FJsonValue::Find(const CHAR_T* Name)

@@ -64,5 +64,5 @@ bool FGuid::Parse(const FString& Text, FGuid& OutGuid)
 
 FString FGuid::ToString() const
 {
-    return FString::Printf("%08x%08x%08x%08x", A, B, C, D);
+    return FString::Printf(TEXT("%08x%08x%08x%08x"), A, B, C, D);
 }

@@ -32,19 +32,19 @@ struct CORE_API Assert
         { \
             if (!(Condition)) \
             { \
-                if (Assert::OnFailed(#Condition, __FILE__, __LINE__, nullptr) == EAssertAction::Break) \
+                if (Assert::OnFailed(TEXT(#Condition), TEXT(__FILE__), __LINE__, nullptr) == EAssertAction::Break) \
                 { \
                     DEBUG_BREAK(); \
                 } \
             } \
         } while (false)
 
-    #define CHECKF(Condition, ...) \
+    #define CHECKF(Condition, Format, ...) \
         do \
         { \
             if (!(Condition)) \
             { \
-                if (Assert::OnFailed(#Condition, __FILE__, __LINE__, __VA_ARGS__) == EAssertAction::Break) \
+                if (Assert::OnFailed(TEXT(#Condition), TEXT(__FILE__), __LINE__, TEXT("" Format) __VA_OPT__(,) __VA_ARGS__) == EAssertAction::Break) \
                 { \
                     DEBUG_BREAK(); \
                 } \
@@ -53,7 +53,7 @@ struct CORE_API Assert
 
     #define VERIFY(Condition) CHECK(Condition)
 #else
-    #define CHECK(Condition)         ((void)sizeof(!(Condition)))
-    #define CHECKF(Condition, ...)   ((void)sizeof(!(Condition)))
-    #define VERIFY(Condition)        ((void)(Condition))
+    #define CHECK(Condition)               ((void)sizeof(!(Condition)))
+    #define CHECKF(Condition, Format, ...) ((void)sizeof(!(Condition)))
+    #define VERIFY(Condition)              ((void)(Condition))
 #endif

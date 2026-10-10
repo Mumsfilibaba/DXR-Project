@@ -25,7 +25,7 @@ struct CORE_API FProjectDescriptor
 {
     static constexpr int32 CurrentVersion = 1;
 
-    static constexpr const CHAR_T* FileExtension = ".dxrproject";
+    static constexpr const CHAR_T* FileExtension = TEXT(".dxrproject");
 
     /**
      * @brief Load the descriptor from Filename, replacing everything this one holds. Nothing is replaced if loading fails.

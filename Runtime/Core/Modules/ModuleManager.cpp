@@ -2,8 +2,8 @@
 #include "Core/Modules/ModuleManager.h"
 
 static TAutoConsoleVariable<bool> CVarModuleManagerBreakOnError(
-    "Core.ModuleManagerBreakOnError",
-    "Breaks when trying to retrieve a module that is not loaded",
+    TEXT("Core.ModuleManagerBreakOnError"),
+    TEXT("Breaks when trying to retrieve a module that is not loaded"),
     true);
 
 // This needs to be initialized with static variable behavior since we don't
@@ -76,7 +76,7 @@ IModule* FModuleManager::LoadModule(const CHAR_T* ModuleName)
             return nullptr;
         }
 
-        PFNLoadEngineModule LoadEngineModule = FPlatformLibrary::LoadSymbol<PFNLoadEngineModule>("LoadEngineModule", Module);
+        PFNLoadEngineModule LoadEngineModule = FPlatformLibrary::LoadSymbol<PFNLoadEngineModule>(TEXT("LoadEngineModule"), Module);
         if (!LoadEngineModule)
         {
             FPlatformLibrary::FreeDynamicLib(Module);

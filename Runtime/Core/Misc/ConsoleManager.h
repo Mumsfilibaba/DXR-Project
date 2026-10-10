@@ -39,12 +39,12 @@ constexpr const CHAR_T* SetByFlagToString(EConsoleVariableFlags Flag)
 {
     switch (Flag)
     {
-        case EConsoleVariableFlags::SetByConstructor: return "Constructor";
-        case EConsoleVariableFlags::SetByConfigFile:  return "ConfigFile";
-        case EConsoleVariableFlags::SetByCommandLine: return "CommandLine";
-        case EConsoleVariableFlags::SetByConsole:     return "Console";
-        case EConsoleVariableFlags::SetByCode:        return "Code";
-        default:                                      return "Unknown";
+        case EConsoleVariableFlags::SetByConstructor: return TEXT("Constructor");
+        case EConsoleVariableFlags::SetByConfigFile:  return TEXT("ConfigFile");
+        case EConsoleVariableFlags::SetByCommandLine: return TEXT("CommandLine");
+        case EConsoleVariableFlags::SetByConsole:     return TEXT("Console");
+        case EConsoleVariableFlags::SetByCode:        return TEXT("Code");
+        default:                                      return TEXT("Unknown");
     }
 }
 

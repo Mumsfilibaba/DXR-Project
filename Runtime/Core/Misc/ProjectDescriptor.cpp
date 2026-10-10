@@ -10,8 +10,8 @@ JSON_ENUM_NAMES_END()
 
 void FProjectModuleDescriptor::Serialize(FJsonArchive& Archive)
 {
-    Archive.Field("Name", Name);
-    Archive.Field("Type", Type, EProjectModuleType::Game);
+    Archive.Field(TEXT("Name"), Name);
+    Archive.Field(TEXT("Type"), Type, EProjectModuleType::Game);
 }
 
 bool FProjectDescriptor::LoadFromFile(const FString& Filename, FString& OutError)
@@ -21,7 +21,7 @@ bool FProjectDescriptor::LoadFromFile(const FString& Filename, FString& OutError
 
     if (!Json::LoadFromFile(Filename, Document, &ParseError))
     {
-        OutError = FString::Printf("'%s': %s", *Filename, *ParseError.ToString());
+        OutError = FString::Printf(TEXT("'%s': %s"), *Filename, *ParseError.ToString());
         return false;
     }
 
@@ -30,13 +30,13 @@ bool FProjectDescriptor::LoadFromFile(const FString& Filename, FString& OutError
     const int32 Version = Loader.GetVersion();
     if (Version < 1)
     {
-        OutError = FString::Printf("'%s' has no Version", *Filename);
+        OutError = FString::Printf(TEXT("'%s' has no Version"), *Filename);
         return false;
     }
 
     if (Version > CurrentVersion)
     {
-        OutError = FString::Printf("'%s' is version %d, but this engine reads up to version %d", *Filename, Version, CurrentVersion);
+        OutError = FString::Printf(TEXT("'%s' is version %d, but this engine reads up to version %d"), *Filename, Version, CurrentVersion);
         return false;
     }
 
@@ -45,13 +45,13 @@ bool FProjectDescriptor::LoadFromFile(const FString& Filename, FString& OutError
 
     if (Loader.HasErrors())
     {
-        OutError = FString::Printf("'%s': %s", *Filename, *Loader.GetErrorString());
+        OutError = FString::Printf(TEXT("'%s': %s"), *Filename, *Loader.GetErrorString());
         return false;
     }
 
     if (Loaded.Name.IsEmpty())
     {
-        OutError = FString::Printf("'%s' has no Name", *Filename);
+        OutError = FString::Printf(TEXT("'%s' has no Name"), *Filename);
         return false;
     }
 
@@ -73,8 +73,8 @@ void FProjectDescriptor::Serialize(FJsonArchive& Archive)
         Archive.SetVersion(CurrentVersion);
     }
 
-    Archive.Field("Name", Name);
-    Archive.Field("EngineAssociation", EngineAssociation, FString());
-    Archive.Field("EnginePath", EnginePath, FString());
-    Archive.Field("Modules", Modules);
+    Archive.Field(TEXT("Name"), Name);
+    Archive.Field(TEXT("EngineAssociation"), EngineAssociation, FString());
+    Archive.Field(TEXT("EnginePath"), EnginePath, FString());
+    Archive.Field(TEXT("Modules"), Modules);
 }

@@ -14,23 +14,23 @@ struct CORE_API RemoteConsoleProtocol
     static constexpr int32  MaxSendBufferSize = 4 * 1024 * 1024; // A client that stops reading is dropped past this
 
     // Requests sent by the client
-    static constexpr const CHAR_T* TypeExec         = "exec";
-    static constexpr const CHAR_T* TypeList         = "list";
-    static constexpr const CHAR_T* TypeGet          = "get";
-    static constexpr const CHAR_T* TypeSubscribeLog = "subscribe_log";
-    static constexpr const CHAR_T* TypePing         = "ping";
+    static constexpr const CHAR_T* TypeExec         = TEXT("exec");
+    static constexpr const CHAR_T* TypeList         = TEXT("list");
+    static constexpr const CHAR_T* TypeGet          = TEXT("get");
+    static constexpr const CHAR_T* TypeSubscribeLog = TEXT("subscribe_log");
+    static constexpr const CHAR_T* TypePing         = TEXT("ping");
 
     // Messages sent by the server
-    static constexpr const CHAR_T* TypeHello    = "hello";
-    static constexpr const CHAR_T* TypeResult   = "result";
-    static constexpr const CHAR_T* TypeLog      = "log";
-    static constexpr const CHAR_T* TypeRejected = "rejected";
+    static constexpr const CHAR_T* TypeHello    = TEXT("hello");
+    static constexpr const CHAR_T* TypeResult   = TEXT("result");
+    static constexpr const CHAR_T* TypeLog      = TEXT("log");
+    static constexpr const CHAR_T* TypeRejected = TEXT("rejected");
 
     // The address the server binds to while remote connections are off, and where the tool looks by default
-    static constexpr const CHAR_T* LoopbackAddress = "127.0.0.1";
+    static constexpr const CHAR_T* LoopbackAddress = TEXT("127.0.0.1");
 
     // Console objects with this prefix configure the server itself, so remote clients may not touch them
-    static constexpr const CHAR_T* SettingsPrefix = "RemoteConsole.";
+    static constexpr const CHAR_T* SettingsPrefix = TEXT("RemoteConsole.");
 
     static const CHAR_T* SeverityToString(ELogSeverity Severity);
     static bool          SeverityFromString(const FString& Text, ELogSeverity& OutSeverity);

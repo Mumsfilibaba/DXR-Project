@@ -31,7 +31,7 @@ void Tasks::ParallelForRange(int32 Count, FuncType&& BodyRange, int32 MinPerJob,
         const int32 ChunkSize = BaseChunkSize + (ChunkIndex < Remainder ? 1 : 0);
         const int32 End       = Begin + ChunkSize;
 
-        Handles.Add(Tasks::Launch("ParallelFor",
+        Handles.Add(Tasks::Launch(TEXT("ParallelFor"),
             [&BodyRange, Begin, End]()
             {
                 BodyRange(Begin, End);

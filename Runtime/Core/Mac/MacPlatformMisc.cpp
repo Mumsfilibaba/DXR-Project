@@ -90,25 +90,25 @@ static const CHAR_T* GetMachExceptionName(exception_type_t ExceptionType)
     switch (ExceptionType)
     {
         case EXC_BAD_ACCESS:
-            return "EXC_BAD_ACCESS";
+            return TEXT("EXC_BAD_ACCESS");
 
         case EXC_BAD_INSTRUCTION:
-            return "EXC_BAD_INSTRUCTION";
+            return TEXT("EXC_BAD_INSTRUCTION");
 
         case EXC_ARITHMETIC:
-            return "EXC_ARITHMETIC";
+            return TEXT("EXC_ARITHMETIC");
 
         case EXC_BREAKPOINT:
-            return "EXC_BREAKPOINT";
+            return TEXT("EXC_BREAKPOINT");
 
         case EXC_CRASH:
-            return "EXC_CRASH";
+            return TEXT("EXC_CRASH");
 
         case EXC_GUARD:
-            return "EXC_GUARD";
+            return TEXT("EXC_GUARD");
 
         default:
-            return "EXC_UNKNOWN";
+            return TEXT("EXC_UNKNOWN");
     }
 }
 
@@ -117,25 +117,25 @@ static const CHAR_T* GetSignalName(int32 Signal)
     switch (Signal)
     {
         case SIGABRT:
-            return "SIGABRT";
+            return TEXT("SIGABRT");
 
         case SIGSEGV:
-            return "SIGSEGV";
+            return TEXT("SIGSEGV");
 
         case SIGBUS:
-            return "SIGBUS";
+            return TEXT("SIGBUS");
 
         case SIGILL:
-            return "SIGILL";
+            return TEXT("SIGILL");
 
         case SIGFPE:
-            return "SIGFPE";
+            return TEXT("SIGFPE");
 
         case SIGSYS:
-            return "SIGSYS";
+            return TEXT("SIGSYS");
 
         default:
-            return "SIGNAL";
+            return TEXT("SIGNAL");
     }
 }
 
@@ -482,27 +482,27 @@ void FMacPlatformMisc::PrepareMetalDebugLayerEnvironment(bool bEnableDebugLayer,
     FString Existing;
     if (bEnableDebugLayer)
     {
-        if (!GetEnvironmentVariable("MTL_DEBUG_LAYER", Existing) || Existing.IsEmpty())
+        if (!GetEnvironmentVariable(TEXT("MTL_DEBUG_LAYER"), Existing) || Existing.IsEmpty())
         {
-            SetEnvironmentVariable("MTL_DEBUG_LAYER", "1");
+            SetEnvironmentVariable(TEXT("MTL_DEBUG_LAYER"), TEXT("1"));
         }
     }
 
     if (bEnableShaderValidation)
     {
-        if (!GetEnvironmentVariable("MTL_SHADER_VALIDATION", Existing) || Existing.IsEmpty())
+        if (!GetEnvironmentVariable(TEXT("MTL_SHADER_VALIDATION"), Existing) || Existing.IsEmpty())
         {
-            SetEnvironmentVariable("MTL_SHADER_VALIDATION", "1");
+            SetEnvironmentVariable(TEXT("MTL_SHADER_VALIDATION"), TEXT("1"));
         }
     }
 
-    if (!GetEnvironmentVariable("MTL_DEBUG_LAYER_ERROR_MODE", Existing) || Existing.IsEmpty())
+    if (!GetEnvironmentVariable(TEXT("MTL_DEBUG_LAYER_ERROR_MODE"), Existing) || Existing.IsEmpty())
     {
-        SetEnvironmentVariable("MTL_DEBUG_LAYER_ERROR_MODE", "nslog");
+        SetEnvironmentVariable(TEXT("MTL_DEBUG_LAYER_ERROR_MODE"), TEXT("nslog"));
     }
 
-    if (!GetEnvironmentVariable("MTL_DEBUG_LAYER_WARNING_MODE", Existing) || Existing.IsEmpty())
+    if (!GetEnvironmentVariable(TEXT("MTL_DEBUG_LAYER_WARNING_MODE"), Existing) || Existing.IsEmpty())
     {
-        SetEnvironmentVariable("MTL_DEBUG_LAYER_WARNING_MODE", "nslog");
+        SetEnvironmentVariable(TEXT("MTL_DEBUG_LAYER_WARNING_MODE"), TEXT("nslog"));
     }
 }

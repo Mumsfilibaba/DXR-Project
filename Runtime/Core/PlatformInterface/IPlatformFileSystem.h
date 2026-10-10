@@ -205,7 +205,7 @@ struct CORE_API IPlatformFileSystem
     /** @return Returns the full path of the running executable using '/' separators */
     static FORCEINLINE const CHAR_T* GetExecutablePath()
     {
-        return "";
+        return TEXT("");
     }
 
     /**

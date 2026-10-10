@@ -26,17 +26,17 @@ struct CORE_API FMacPlatformLibrary final : public IPlatformLibrary
 
     static FORCEINLINE const CHAR_T* GetDynamicLibPrefix()
     {
-        return "lib";
+        return TEXT("lib");
     }
 
     static FORCEINLINE const CHAR_T* GetDynamicLibExtension()
     {
-        return ".dylib";
+        return TEXT(".dylib");
     }
 
     static FORCEINLINE FString GetRealName(const CHAR_T* LibraryName) 
     {
-        return FString("lib") + LibraryName + GetDynamicLibExtension();
+        return FString(TEXT("lib")) + LibraryName + GetDynamicLibExtension();
     }
 
     static FORCEINLINE bool IsLibraryLoaded(const CHAR_T* LibraryName)

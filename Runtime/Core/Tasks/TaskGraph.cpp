@@ -14,18 +14,18 @@
 #include "Core/Math/Random.h"
 
 static TAutoConsoleVariable<int32> CVarNumWorkerThreads(
-    "TaskGraph.NumWorkerThreads",
-    "Number of anonymous worker threads in the task graph. -1 selects (NumProcessors - 2), clamped to a minimum of 2.",
+    TEXT("TaskGraph.NumWorkerThreads"),
+    TEXT("Number of anonymous worker threads in the task graph. -1 selects (NumProcessors - 2), clamped to a minimum of 2."),
     -1);
 
 static TAutoConsoleVariable<bool> CVarEnableRenderThread(
-    "TaskGraph.EnableRenderThread",
-    "When false, tasks launched on the render thread run inline on the calling thread.",
+    TEXT("TaskGraph.EnableRenderThread"),
+    TEXT("When false, tasks launched on the render thread run inline on the calling thread."),
     true);
 
 static TAutoConsoleVariable<bool> CVarEnableRHIThread(
-    "TaskGraph.EnableRHIThread",
-    "When false, tasks launched on the RHI thread run inline on the calling thread.",
+    TEXT("TaskGraph.EnableRHIThread"),
+    TEXT("When false, tasks launched on the RHI thread run inline on the calling thread."),
     true);
 
 static constexpr int32 MIN_ANYTHREAD_WORKERS = 2;
@@ -147,7 +147,7 @@ bool FTaskGraph::Startup()
     // Anonymous worker pool (AnyThread lane). Worker index == AnyThread slot index.
     for (int32 Index = 0; Index < NumAnyThreadWorkers; ++Index)
     {
-        const FString ThreadName = FString::Printf("TaskWorker[%d]", Index);
+        const FString ThreadName = FString::Printf(TEXT("TaskWorker[%d]"), Index);
 
         FTaskWorker* Worker = new FTaskWorker(this, ENamedThread::AnyThread, Index);
         if (!Worker->Initialize(*ThreadName))
@@ -165,7 +165,7 @@ bool FTaskGraph::Startup()
     if (bRenderThreadEnabled)
     {
         FTaskWorker* Worker = new FTaskWorker(this, ENamedThread::RenderThread, 0);
-        if (!Worker->Initialize("RenderThread"))
+        if (!Worker->Initialize(TEXT("RenderThread")))
         {
             LOG_ERROR("[FTaskGraph] Failed to create render-thread worker");
             delete Worker;
@@ -183,7 +183,7 @@ bool FTaskGraph::Startup()
     if (bRHIThreadEnabled)
     {
         FTaskWorker* Worker = new FTaskWorker(this, ENamedThread::RHIThread, 0);
-        if (!Worker->Initialize("RHIThread"))
+        if (!Worker->Initialize(TEXT("RHIThread")))
         {
             LOG_ERROR("[FTaskGraph] Failed to create RHI-thread worker");
             delete Worker;
@@ -200,7 +200,7 @@ bool FTaskGraph::Startup()
     STAT_SET(STAT_TaskGraph_TotalWorkers, Workers.Size());
 
     LOG_INFO("[FTaskGraph] Initialized with %d anonymous workers (render thread %s, RHI thread %s)", 
-        NumAnyThreadWorkers, bRenderThreadEnabled ? "enabled" : "disabled", bRHIThreadEnabled ? "enabled" : "disabled");
+        NumAnyThreadWorkers, bRenderThreadEnabled ? TEXT("enabled") : TEXT("disabled"), bRHIThreadEnabled ? TEXT("enabled") : TEXT("disabled"));
     return true;
 }
 

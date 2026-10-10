@@ -33,15 +33,15 @@ const CHAR_T* FJsonArchive::GetTypeName(EJsonType Type)
 {
     switch (Type)
     {
-        case EJsonType::Null:   return "null";
-        case EJsonType::Bool:   return "a bool";
-        case EJsonType::Number: return "a number";
-        case EJsonType::String: return "a string";
-        case EJsonType::Array:  return "an array";
-        case EJsonType::Object: return "an object";
+        case EJsonType::Null:   return TEXT("null");
+        case EJsonType::Bool:   return TEXT("a bool");
+        case EJsonType::Number: return TEXT("a number");
+        case EJsonType::String: return TEXT("a string");
+        case EJsonType::Array:  return TEXT("an array");
+        case EJsonType::Object: return TEXT("an object");
     }
 
-    return "an unknown type";
+    return TEXT("an unknown type");
 }
 
 int32 FJsonArchive::GetVersion() const
@@ -52,7 +52,7 @@ int32 FJsonArchive::GetVersion() const
         return 0;
     }
 
-    const FJsonValue* Version = Root->Find("Version");
+    const FJsonValue* Version = Root->Find(TEXT("Version"));
     return Version ? static_cast<int32>(Version->GetInt64Or(0)) : 0;
 }
 
@@ -60,7 +60,7 @@ void FJsonArchive::SetVersion(int32 InVersion)
 {
     if (bIsSaving && SaveRoot)
     {
-        SaveRoot->AddMember("Version", FJsonValue(InVersion));
+        SaveRoot->AddMember(TEXT("Version"), FJsonValue(InVersion));
     }
 }
 
@@ -107,7 +107,7 @@ void FJsonArchive::PushNamedScope(const CHAR_T* Name, EJsonType ContainerType)
         }
         else
         {
-            AddTypeError(*Found, (ContainerType == EJsonType::Array) ? "an array" : "an object");
+            AddTypeError(*Found, (ContainerType == EJsonType::Array) ? TEXT("an array") : TEXT("an object"));
         }
     }
 
@@ -145,7 +145,7 @@ void FJsonArchive::PushElementScope(EJsonType ContainerType)
 
     ++Enclosing.ElementCursor;
 
-    PathSegments.Emplace(FString::Printf("[%d]", ElementIndex));
+    PathSegments.Emplace(FString::Printf(TEXT("[%d]"), ElementIndex));
     Scopes.Add(Move(NewScope));
 }
 
@@ -162,7 +162,7 @@ FString FJsonArchive::GetPath() const
     for (int32 Index = 0; Index < PathSegments.Size(); ++Index)
     {
         const FString& Segment = PathSegments[Index];
-        if (!Path.IsEmpty() && !Segment.StartsWith("["))
+        if (!Path.IsEmpty() && !Segment.StartsWith(TEXT("[")))
         {
             Path.Append('.');
         }
@@ -180,7 +180,7 @@ void FJsonArchive::AddError(const CHAR_T* Format, ...)
 
     va_list ArgList;
     va_start(ArgList, Format);
-    vsnprintf(Message, sizeof(Message), Format, ArgList);
+    CString::Vsnprintf(Message, GMaxErrorMessageLength, Format, ArgList);
     va_end(ArgList);
 
     const FString Path = GetPath();
@@ -190,13 +190,13 @@ void FJsonArchive::AddError(const CHAR_T* Format, ...)
     }
     else
     {
-        Errors.Add(FString::Printf("%s: %s", Path.Data(), Message));
+        Errors.Add(FString::Printf(TEXT("%s: %s"), Path.Data(), Message));
     }
 }
 
 void FJsonArchive::AddTypeError(const FJsonValue& Found, const CHAR_T* Expected)
 {
-    AddError("expected %s, found %s", Expected, GetTypeName(Found.GetType()));
+    AddError(TEXT("expected %s, found %s"), Expected, GetTypeName(Found.GetType()));
 }
 
 void FJsonArchive::AppendErrors(const FJsonArchive& Nested)
@@ -211,8 +211,8 @@ void FJsonArchive::AppendErrors(const FJsonArchive& Nested)
         }
         else
         {
-            const CHAR_T* Separator = NestedError.StartsWith("[") ? "" : ".";
-            Errors.Add(FString::Printf("%s%s%s", Path.Data(), Separator, NestedError.Data()));
+            const CHAR_T* Separator = NestedError.StartsWith(TEXT("[")) ? TEXT("") : TEXT(".");
+            Errors.Add(FString::Printf(TEXT("%s%s%s"), Path.Data(), Separator, NestedError.Data()));
         }
     }
 }

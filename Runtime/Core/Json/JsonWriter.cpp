@@ -90,7 +90,7 @@ static void FormatDouble(double Value, CHAR_T* Buffer, int32 BufferSize)
     int32 Precision = MaxPrecision;
     for (int32 Attempt = 1; Attempt < MaxPrecision; ++Attempt)
     {
-        CString::Snprintf(Buffer, BufferSize, "%.*g", Attempt, Value);
+        CString::Snprintf(Buffer, BufferSize, TEXT("%.*g"), Attempt, Value);
         if (RoundTrips(Buffer, Value, bFloatExact))
         {
             Precision = Attempt;
@@ -98,7 +98,7 @@ static void FormatDouble(double Value, CHAR_T* Buffer, int32 BufferSize)
         }
     }
 
-    CString::Snprintf(Buffer, BufferSize, "%.*g", Precision, Value);
+    CString::Snprintf(Buffer, BufferSize, TEXT("%.*g"), Precision, Value);
 
     const int32 Exponent = NormalizeExponent(Buffer);
     if (Exponent == 0)
@@ -115,7 +115,7 @@ static void FormatDouble(double Value, CHAR_T* Buffer, int32 BufferSize)
 
     CHAR_T FixedBuffer[GNumberBufferSize];
     const int32 Decimals = Math::Max(0, Precision - 1 - Exponent);
-    CString::Snprintf(FixedBuffer, GNumberBufferSize, "%.*f", Decimals, Value);
+    CString::Snprintf(FixedBuffer, GNumberBufferSize, TEXT("%.*f"), Decimals, Value);
 
     if (RoundTrips(FixedBuffer, Value, bFloatExact))
     {
@@ -175,13 +175,13 @@ void FJsonWriter::WriteValue(const FJsonValue& Value, FString& Output, int32 Dep
     {
         case EJsonType::Null:
         {
-            Output.Append("null");
+            Output.Append(TEXT("null"));
             break;
         }
 
         case EJsonType::Bool:
         {
-            Output.Append(Value.GetBoolOr(false) ? "true" : "false");
+            Output.Append(Value.GetBoolOr(false) ? TEXT("true") : TEXT("false"));
             break;
         }
 
@@ -201,7 +201,7 @@ void FJsonWriter::WriteValue(const FJsonValue& Value, FString& Output, int32 Dep
 
         case EJsonType::String:
         {
-            WriteEscapedString(Value.GetStringOr(""), Output);
+            WriteEscapedString(Value.GetStringOr(TEXT("")), Output);
             break;
         }
 
@@ -248,7 +248,7 @@ void FJsonWriter::WriteArray(const FJsonValue& Value, FString& Output, int32 Dep
     const int32 NumElements = Value.Num();
     if (NumElements == 0)
     {
-        Output.Append("[]");
+        Output.Append(TEXT("[]"));
         return;
     }
 
@@ -289,7 +289,7 @@ void FJsonWriter::WriteObject(const FJsonValue& Value, FString& Output, int32 De
     const int32 NumMembers = Value.NumMembers();
     if (NumMembers == 0)
     {
-        Output.Append("{}");
+        Output.Append(TEXT("{}"));
         return;
     }
 
@@ -330,13 +330,13 @@ void FJsonWriter::WriteEscapedString(const FString& Value, FString& Output)
         const CHAR_T Character = Characters[Index];
         switch (Character)
         {
-            case '\"': Output.Append("\\\""); continue;
-            case '\\': Output.Append("\\\\"); continue;
-            case '\b': Output.Append("\\b");  continue;
-            case '\f': Output.Append("\\f");  continue;
-            case '\n': Output.Append("\\n");  continue;
-            case '\r': Output.Append("\\r");  continue;
-            case '\t': Output.Append("\\t");  continue;
+            case '\"': Output.Append(TEXT("\\\"")); continue;
+            case '\\': Output.Append(TEXT("\\\\")); continue;
+            case '\b': Output.Append(TEXT("\\b"));  continue;
+            case '\f': Output.Append(TEXT("\\f"));  continue;
+            case '\n': Output.Append(TEXT("\\n"));  continue;
+            case '\r': Output.Append(TEXT("\\r"));  continue;
+            case '\t': Output.Append(TEXT("\\t"));  continue;
             default: break;
         }
 
@@ -344,7 +344,7 @@ void FJsonWriter::WriteEscapedString(const FString& Value, FString& Output)
         if (Unsigned < 0x20)
         {
             CHAR_T Buffer[8];
-            CString::Snprintf(Buffer, sizeof(Buffer), "\\u%04x", static_cast<uint32>(Unsigned));
+            CString::Snprintf(Buffer, ARRAY_COUNT(Buffer), TEXT("\\u%04x"), static_cast<uint32>(Unsigned));
             Output.Append(Buffer);
         }
         else
@@ -359,7 +359,7 @@ void FJsonWriter::WriteEscapedString(const FString& Value, FString& Output)
 void FJsonWriter::WriteInt64(int64 Value, FString& Output)
 {
     CHAR_T Buffer[GNumberBufferSize];
-    CString::Snprintf(Buffer, GNumberBufferSize, "%lld", Value);
+    CString::Snprintf(Buffer, GNumberBufferSize, TEXT("%lld"), Value);
     Output.Append(Buffer);
 }
 
@@ -367,7 +367,7 @@ void FJsonWriter::WriteDouble(double Value, FString& Output)
 {
     if (Math::IsNaN(Value) || Math::IsInfinity(Value))
     {
-        Output.Append("null");
+        Output.Append(TEXT("null"));
         return;
     }
 

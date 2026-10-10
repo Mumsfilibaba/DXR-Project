@@ -15,13 +15,13 @@ struct TJsonSerializer<FGuid>
         FString Text;
         if (!InValue.TryGetString(Text))
         {
-            Archive.AddTypeError(InValue, "a GUID string");
+            Archive.AddTypeError(InValue, TEXT("a GUID string"));
             return false;
         }
 
         if (!FGuid::Parse(Text, OutValue))
         {
-            Archive.AddError("'%s' is not a GUID", *Text);
+            Archive.AddError(TEXT("'%s' is not a GUID"), *Text);
             return false;
         }
 

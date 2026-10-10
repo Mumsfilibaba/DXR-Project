@@ -1,5 +1,6 @@
 #include "Core/Windows/WindowsPlatformSocket.h"
 #include "Core/Memory/Memory.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Misc/OutputDeviceManager.h"
 
 #include <winsock2.h>
@@ -135,7 +136,7 @@ bool FWindowsPlatformSocket::Resolve(const FString& Host, uint16 Port, TArray<FS
     Hints.ai_socktype = SOCK_STREAM;
 
     addrinfo* AddressList = nullptr;
-    if ((::getaddrinfo(*Host, nullptr, &Hints, &AddressList) != 0) || !AddressList)
+    if ((::getaddrinfo(StringCast<ANSICHAR>(Host).Get(), nullptr, &Hints, &AddressList) != 0) || !AddressList)
     {
         return false;
     }
@@ -158,15 +159,17 @@ bool FWindowsPlatformSocket::Resolve(const FString& Host, uint16 Port, TArray<FS
 
 bool FWindowsPlatformSocket::ParseAddress(const FString& Text, uint16 Port, FSocketAddress& OutAddress)
 {
+    const TStringConversion<ANSICHAR, CHAR_T> AnsiText = StringCast<ANSICHAR>(Text);
+
     in_addr IPv4;
-    if (::inet_pton(AF_INET, *Text, &IPv4) == 1)
+    if (::inet_pton(AF_INET, AnsiText.Get(), &IPv4) == 1)
     {
         OutAddress = FSocketAddress::MakeIPv4(::ntohl(IPv4.s_addr), Port);
         return true;
     }
 
     uint8 IPv6Bytes[FSocketAddress::NumBytes];
-    if (::inet_pton(AF_INET6, *Text, IPv6Bytes) == 1)
+    if (::inet_pton(AF_INET6, AnsiText.Get(), IPv6Bytes) == 1)
     {
         OutAddress = FSocketAddress::MakeIPv6(IPv6Bytes, Port);
         return true;
@@ -177,7 +180,7 @@ bool FWindowsPlatformSocket::ParseAddress(const FString& Text, uint16 Port, FSoc
 
 FString FWindowsPlatformSocket::AddressToString(const FSocketAddress& Address)
 {
-    CHAR_T Buffer[INET6_ADDRSTRLEN] = {};
+    ANSICHAR Buffer[INET6_ADDRSTRLEN] = {};
     if (Address.IsIPv4())
     {
         in_addr IPv4;
@@ -189,7 +192,7 @@ FString FWindowsPlatformSocket::AddressToString(const FSocketAddress& Address)
         ::inet_ntop(AF_INET6, Address.GetBytes(), Buffer, sizeof(Buffer));
     }
 
-    return FString(Buffer);
+    return StringCast<CHAR_T>(Buffer).ToString();
 }
 
 int32 FWindowsPlatformSocket::WaitForRead(IPlatformSocket* const* Sockets, int32 NumSockets, bool* OutReadable, uint32 TimeoutMilliseconds)

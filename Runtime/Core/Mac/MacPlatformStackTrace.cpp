@@ -12,10 +12,10 @@
 #define LOAD_FUNCTION(Function, LibraryHandle) \
     do \
     { \
-        Function = FPlatformLibrary::LoadSymbol<decltype(Function)>(#Function, LibraryHandle); \
+        Function = FPlatformLibrary::LoadSymbol<decltype(Function)>(TEXT(#Function), LibraryHandle); \
         if (!Function) \
         { \
-            LOG_ERROR("Failed to load '%s'", #Function); \
+            LOG_ERROR("Failed to load '%s'", TEXT(#Function)); \
             return false;  \
         } \
     } while(false)

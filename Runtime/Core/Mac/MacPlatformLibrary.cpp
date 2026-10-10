@@ -17,16 +17,16 @@ static const CHAR_T* BuildExecutableRelativeDir(CHAR_T* OutBuffer, uint32 Buffer
     const CHAR_T* LastSeparator = CString::Strrchr(ExecutablePath, '/');
     if (!LastSeparator)
     {
-        return "";
+        return TEXT("");
     }
     
     const uint32 DirLength = static_cast<uint32>(LastSeparator - ExecutablePath) + 1;
     if (DirLength + CString::Strlen(Suffix) >= BufferSize)
     {
-        return "";
+        return TEXT("");
     }
     
-    Memory::Memcpy(OutBuffer, ExecutablePath, DirLength);
+    Memory::Memcpy(OutBuffer, ExecutablePath, DirLength * sizeof(CHAR_T));
     CString::Strcat(OutBuffer, Suffix);
     return OutBuffer;
 }
@@ -37,7 +37,7 @@ static const CHAR_T* GetExecutableDir()
     
     if (!StaticExecutableDir[0])
     {
-        return BuildExecutableRelativeDir(StaticExecutableDir, sizeof(StaticExecutableDir), "");
+        return BuildExecutableRelativeDir(StaticExecutableDir, sizeof(StaticExecutableDir), TEXT(""));
     }
     
     return StaticExecutableDir;
@@ -49,7 +49,7 @@ static const CHAR_T* GetBundleFrameworksDir()
     
     if (!StaticFrameworksDir[0])
     {
-        return BuildExecutableRelativeDir(StaticFrameworksDir, sizeof(StaticFrameworksDir), "../Frameworks/");
+        return BuildExecutableRelativeDir(StaticFrameworksDir, sizeof(StaticFrameworksDir), TEXT("../Frameworks/"));
     }
     
     return StaticFrameworksDir;
@@ -102,10 +102,10 @@ static void* SafeLoadDynamicLib(const CHAR_T* LibraryName, int32 Mode = DEFAULT_
     
     const CHAR_T* Paths[] =
     {
-        "@rpath/",                // Resolved through the LC_RPATH of this image
+        TEXT("@rpath/"),                // Resolved through the LC_RPATH of this image
         GetBundleFrameworksDir(),
         GetExecutableDir(),
-        "/usr/local/lib/",        // SDK-installed libraries such as the Vulkan loader
+        TEXT("/usr/local/lib/"),        // SDK-installed libraries such as the Vulkan loader
     };
     
     constexpr uint32 MaxFullPathLength = MaxNameLength + MAXPATHLEN;

@@ -85,6 +85,11 @@ public:
         return FPlatformString::Snprintf(Buffer, BufferSize, Format, Forward<ArgTypes>(Args)...);
     }
 
+    static FORCEINLINE int32 Vsnprintf(CharType* Buffer, SIZE_T BufferSize, const CharType* Format, va_list ArgList) noexcept
+    {
+        return FPlatformString::Vsnprintf(Buffer, BufferSize, Format, ArgList);
+    }
+
     static FORCEINLINE CharType* Strstr(const CharType* String, const CharType* Substring) noexcept
     {
         return FPlatformString::Strstr(String, Substring);
@@ -262,7 +267,7 @@ typedef TCString<WIDECHAR> CStringWide;
 template<> \
 NODISCARD FORCEINLINE decltype(auto) TFormatSpecifier<Type>::GetStringSpecifier() \
 { \
-    return Specifier; \
+    return TEXT(Specifier); \
 } \
 template<> \
 NODISCARD FORCEINLINE decltype(auto) TFormatSpecifierWide<Type>::GetStringSpecifier() \
@@ -275,7 +280,7 @@ struct TFormatSpecifier
 {
     NODISCARD static FORCEINLINE decltype(auto) GetStringSpecifier() 
     { 
-        return ""; 
+        return TEXT(""); 
     }
 };
 

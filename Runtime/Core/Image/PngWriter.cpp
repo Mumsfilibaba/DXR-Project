@@ -95,9 +95,9 @@ bool FPngWriter::Encode(const FImageView& Image, TArray<uint8>& OutBytes)
     Header.Add(0); // Adaptive filtering, which is the per-row choice made above
     Header.Add(0); // Not interlaced
 
-    AppendChunk(OutBytes, "IHDR", Header);
-    AppendChunk(OutBytes, "IDAT", Compressed);
-    AppendChunk(OutBytes, "IEND", TArray<uint8>());
+    AppendChunk(OutBytes, TEXT("IHDR"), Header);
+    AppendChunk(OutBytes, TEXT("IDAT"), Compressed);
+    AppendChunk(OutBytes, TEXT("IEND"), TArray<uint8>());
 
     return true;
 }

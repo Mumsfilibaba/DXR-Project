@@ -5,25 +5,25 @@ const CHAR_T* RemoteConsoleProtocol::SeverityToString(ELogSeverity Severity)
 {
     switch (Severity)
     {
-        case ELogSeverity::Warning: return "warning";
-        case ELogSeverity::Error:   return "error";
-        default:                    return "info";
+        case ELogSeverity::Warning: return TEXT("warning");
+        case ELogSeverity::Error:   return TEXT("error");
+        default:                    return TEXT("info");
     }
 }
 
 bool RemoteConsoleProtocol::SeverityFromString(const FString& Text, ELogSeverity& OutSeverity)
 {
-    if (Text.Equals("info", EStringCaseType::NoCase))
+    if (Text.Equals(TEXT("info"), EStringCaseType::NoCase))
     {
         OutSeverity = ELogSeverity::Info;
         return true;
     }
-    else if (Text.Equals("warning", EStringCaseType::NoCase))
+    else if (Text.Equals(TEXT("warning"), EStringCaseType::NoCase))
     {
         OutSeverity = ELogSeverity::Warning;
         return true;
     }
-    else if (Text.Equals("error", EStringCaseType::NoCase))
+    else if (Text.Equals(TEXT("error"), EStringCaseType::NoCase))
     {
         OutSeverity = ELogSeverity::Error;
         return true;

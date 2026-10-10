@@ -98,7 +98,7 @@ bool FJsonReader::Fail(const CHAR_T* Format, ...)
 
     va_list ArgList;
     va_start(ArgList, Format);
-    vsnprintf(Message, sizeof(Message), Format, ArgList);
+    CString::Vsnprintf(Message, GMaxErrorMessageLength, Format, ArgList);
     va_end(ArgList);
 
     const int32 Offset = static_cast<int32>(Current - Start);
@@ -118,10 +118,10 @@ bool FJsonReader::Expect(CHAR_T Expected)
     {
         if (IsAtEnd())
         {
-            return Fail("expected '%c' but reached the end of the document", Expected);
+            return Fail(TEXT("expected '%c' but reached the end of the document"), Expected);
         }
 
-        return Fail("expected '%c' but found '%c'", Expected, Peek());
+        return Fail(TEXT("expected '%c' but found '%c'"), Expected, Peek());
     }
 
     Advance();
@@ -163,7 +163,7 @@ bool FJsonReader::SkipComment()
             Advance();
         }
 
-        Fail("unterminated block comment");
+        Fail(TEXT("unterminated block comment"));
         return true;
     }
 
@@ -226,14 +226,14 @@ bool FJsonReader::Parse(const FStringView& Text, FJsonValue& OutValue, FJsonErro
     {
         if (IsAtEnd())
         {
-            Fail("the document is empty");
+            Fail(TEXT("the document is empty"));
         }
         else if (ParseValue(Parsed, 0))
         {
             SkipWhitespaceAndComments();
             if (!bHasError && !IsAtEnd())
             {
-                Fail("unexpected '%c' after the document value", Peek());
+                Fail(TEXT("unexpected '%c' after the document value"), Peek());
             }
         }
     }
@@ -257,7 +257,7 @@ bool FJsonReader::ParseKeyword(const CHAR_T* Keyword, FJsonValue&& Result, FJson
     const int32 KeywordLength = CString::Strlen(Keyword);
     if (((End - Current) < KeywordLength) || (CString::Strncmp(Current, Keyword, KeywordLength) != 0))
     {
-        return Fail("expected '%s'", Keyword);
+        return Fail(TEXT("expected '%s'"), Keyword);
     }
 
     for (int32 Index = 0; Index < KeywordLength; ++Index)
@@ -273,7 +273,7 @@ bool FJsonReader::ParseValue(FJsonValue& OutValue, int32 Depth)
 {
     if (Depth > MaxDepth)
     {
-        return Fail("nesting is deeper than the limit of %d", MaxDepth);
+        return Fail(TEXT("nesting is deeper than the limit of %d"), MaxDepth);
     }
 
     SkipWhitespaceAndComments();
@@ -284,7 +284,7 @@ bool FJsonReader::ParseValue(FJsonValue& OutValue, int32 Depth)
 
     if (IsAtEnd())
     {
-        return Fail("expected a value but reached the end of the document");
+        return Fail(TEXT("expected a value but reached the end of the document"));
     }
 
     const CHAR_T Character = Peek();
@@ -314,17 +314,17 @@ bool FJsonReader::ParseValue(FJsonValue& OutValue, int32 Depth)
 
         case 't':
         {
-            return ParseKeyword("true", FJsonValue(true), OutValue);
+            return ParseKeyword(TEXT("true"), FJsonValue(true), OutValue);
         }
 
         case 'f':
         {
-            return ParseKeyword("false", FJsonValue(false), OutValue);
+            return ParseKeyword(TEXT("false"), FJsonValue(false), OutValue);
         }
 
         case 'n':
         {
-            return ParseKeyword("null", FJsonValue(), OutValue);
+            return ParseKeyword(TEXT("null"), FJsonValue(), OutValue);
         }
 
         default:
@@ -334,7 +334,7 @@ bool FJsonReader::ParseValue(FJsonValue& OutValue, int32 Depth)
                 return ParseNumber(OutValue);
             }
 
-            return Fail("unexpected '%c' where a value was expected", Character);
+            return Fail(TEXT("unexpected '%c' where a value was expected"), Character);
         }
     }
 }
@@ -373,10 +373,10 @@ bool FJsonReader::ParseObject(FJsonValue& OutValue, int32 Depth)
         {
             if (IsAtEnd())
             {
-                return Fail("expected a member name but reached the end of the document");
+                return Fail(TEXT("expected a member name but reached the end of the document"));
             }
 
-            return Fail("expected a member name in quotes but found '%c'", Peek());
+            return Fail(TEXT("expected a member name in quotes but found '%c'"), Peek());
         }
 
         FString Name;
@@ -419,7 +419,7 @@ bool FJsonReader::ParseObject(FJsonValue& OutValue, int32 Depth)
             {
                 if (!IsEnumFlagSet(Flags, EJsonParseFlags::AllowTrailingCommas))
                 {
-                    return Fail("trailing comma before '}'");
+                    return Fail(TEXT("trailing comma before '}'"));
                 }
 
                 Advance();
@@ -437,10 +437,10 @@ bool FJsonReader::ParseObject(FJsonValue& OutValue, int32 Depth)
 
         if (IsAtEnd())
         {
-            return Fail("expected ',' or '}' but reached the end of the document");
+            return Fail(TEXT("expected ',' or '}' but reached the end of the document"));
         }
 
-        return Fail("expected ',' or '}' but found '%c'", Peek());
+        return Fail(TEXT("expected ',' or '}' but found '%c'"), Peek());
     }
 
     OutValue = Move(Object);
@@ -498,7 +498,7 @@ bool FJsonReader::ParseArray(FJsonValue& OutValue, int32 Depth)
             {
                 if (!IsEnumFlagSet(Flags, EJsonParseFlags::AllowTrailingCommas))
                 {
-                    return Fail("trailing comma before ']'");
+                    return Fail(TEXT("trailing comma before ']'"));
                 }
 
                 Advance();
@@ -516,10 +516,10 @@ bool FJsonReader::ParseArray(FJsonValue& OutValue, int32 Depth)
 
         if (IsAtEnd())
         {
-            return Fail("expected ',' or ']' but reached the end of the document");
+            return Fail(TEXT("expected ',' or ']' but reached the end of the document"));
         }
 
-        return Fail("expected ',' or ']' but found '%c'", Peek());
+        return Fail(TEXT("expected ',' or ']' but found '%c'"), Peek());
     }
 
     OutValue = Move(Array);
@@ -536,10 +536,10 @@ bool FJsonReader::ParseHexQuad(uint32& OutCodePoint)
         {
             if (IsAtEnd())
             {
-                return Fail("incomplete '\\u' escape at the end of the document");
+                return Fail(TEXT("incomplete '\\u' escape at the end of the document"));
             }
 
-            return Fail("'\\u' needs four hex digits but found '%c'", Character);
+            return Fail(TEXT("'\\u' needs four hex digits but found '%c'"), Character);
         }
 
         CodePoint = (CodePoint << 4) | HexDigitValue(Character);
@@ -594,10 +594,10 @@ bool FJsonReader::ParseEscape(FString& OutString)
         {
             if (Escaped == '\0')
             {
-                return Fail("incomplete escape at the end of the document");
+                return Fail(TEXT("incomplete escape at the end of the document"));
             }
 
-            return Fail("unknown escape '\\%c'", Escaped);
+            return Fail(TEXT("unknown escape '\\%c'"), Escaped);
         }
     }
 
@@ -609,14 +609,14 @@ bool FJsonReader::ParseEscape(FString& OutString)
 
     if ((CodePoint >= GLowSurrogateFirst) && (CodePoint <= GLowSurrogateLast))
     {
-        return Fail("'\\u%04X' is a trailing surrogate with no leading surrogate before it", CodePoint);
+        return Fail(TEXT("'\\u%04X' is a trailing surrogate with no leading surrogate before it"), CodePoint);
     }
 
     if ((CodePoint >= GHighSurrogateFirst) && (CodePoint <= GHighSurrogateLast))
     {
         if ((Peek() != '\\') || (PeekAt(1) != 'u'))
         {
-            return Fail("'\\u%04X' is a leading surrogate and must be followed by a '\\u' escape", CodePoint);
+            return Fail(TEXT("'\\u%04X' is a leading surrogate and must be followed by a '\\u' escape"), CodePoint);
         }
 
         Advance();
@@ -630,7 +630,7 @@ bool FJsonReader::ParseEscape(FString& OutString)
 
         if ((LowSurrogate < GLowSurrogateFirst) || (LowSurrogate > GLowSurrogateLast))
         {
-            return Fail("'\\u%04X' does not pair with the leading surrogate before it", LowSurrogate);
+            return Fail(TEXT("'\\u%04X' does not pair with the leading surrogate before it"), LowSurrogate);
         }
 
         CodePoint = 0x10000 + ((CodePoint - GHighSurrogateFirst) << 10) + (LowSurrogate - GLowSurrogateFirst);
@@ -653,7 +653,7 @@ bool FJsonReader::ParseString(FString& OutString)
     {
         if (IsAtEnd())
         {
-            return Fail("unterminated string");
+            return Fail(TEXT("unterminated string"));
         }
 
         const CHAR_T Character = Peek();
@@ -676,7 +676,7 @@ bool FJsonReader::ParseString(FString& OutString)
 
         if (static_cast<uint8>(Character) < 0x20)
         {
-            return Fail("control character 0x%02X must be escaped inside a string", static_cast<uint32>(static_cast<uint8>(Character)));
+            return Fail(TEXT("control character 0x%02X must be escaped inside a string"), static_cast<uint32>(static_cast<uint8>(Character)));
         }
 
         OutString.Append(Character);
@@ -697,10 +697,10 @@ bool FJsonReader::ParseNumber(FJsonValue& OutValue)
     {
         if (IsAtEnd())
         {
-            return Fail("expected a digit but reached the end of the document");
+            return Fail(TEXT("expected a digit but reached the end of the document"));
         }
 
-        return Fail("expected a digit after '-' but found '%c'", Peek());
+        return Fail(TEXT("expected a digit after '-' but found '%c'"), Peek());
     }
 
     if (Peek() == '0')
@@ -708,7 +708,7 @@ bool FJsonReader::ParseNumber(FJsonValue& OutValue)
         Advance();
         if (IsDigit(Peek()))
         {
-            return Fail("numbers may not have a leading zero");
+            return Fail(TEXT("numbers may not have a leading zero"));
         }
     }
     else
@@ -726,7 +726,7 @@ bool FJsonReader::ParseNumber(FJsonValue& OutValue)
         Advance();
         if (!IsDigit(Peek()))
         {
-            return Fail("expected a digit after the decimal point");
+            return Fail(TEXT("expected a digit after the decimal point"));
         }
 
         while (IsDigit(Peek()))
@@ -747,7 +747,7 @@ bool FJsonReader::ParseNumber(FJsonValue& OutValue)
 
         if (!IsDigit(Peek()))
         {
-            return Fail("expected a digit in the exponent");
+            return Fail(TEXT("expected a digit in the exponent"));
         }
 
         while (IsDigit(Peek()))
@@ -761,7 +761,7 @@ bool FJsonReader::ParseNumber(FJsonValue& OutValue)
     const int32 NumberLength = static_cast<int32>(Current - NumberStart);
     if (NumberLength >= GMaxNumberLength)
     {
-        return Fail("the number has more digits than can be represented");
+        return Fail(TEXT("the number has more digits than can be represented"));
     }
 
     CHAR_T Buffer[GMaxNumberLength];
@@ -777,7 +777,7 @@ bool FJsonReader::ParseNumber(FJsonValue& OutValue)
     {
         const int64 Integer = CString::Strtoi64(Buffer, &ParseEnd, 10);
         CHAR_T Printed[GMaxNumberLength];
-        CString::Snprintf(Printed, GMaxNumberLength, "%lld", Integer);
+        CString::Snprintf(Printed, GMaxNumberLength, TEXT("%lld"), Integer);
 
         // "-0" is the one integer whose canonical form differs from how it may be written
         const bool bNegativeZero = (Integer == 0) && (Buffer[0] == '-');

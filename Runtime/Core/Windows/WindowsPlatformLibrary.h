@@ -36,7 +36,7 @@ struct FWindowsPlatformLibrary final : public IPlatformLibrary
 
     static FORCEINLINE const CHAR_T* GetDynamicLibExtension()
     {
-        return ".dll";
+        return TEXT(".dll");
     }
 
     static FORCEINLINE FString GetRealName(const CHAR_T* LibraryName)

@@ -30,7 +30,7 @@ bool Paths::Initialize()
     FString     EngineOption;
     FStringView EngineOptionValue;
 
-    if (CommandLine::FindOption("engine", EngineOptionValue))
+    if (CommandLine::FindOption(TEXT("engine"), EngineOptionValue))
     {
         if (EngineOptionValue.IsEmpty())
         {
@@ -46,7 +46,7 @@ bool Paths::Initialize()
 
     const FString ExecutableDir = File::GetDirectoryOf(FPlatformFile::GetExecutablePath());
 
-    GEngineDir           = FindEngineDir(EngineOption, ExecutableDir, FString(ENGINE_LOCATION), &GEngineDirSource);
+    GEngineDir           = FindEngineDir(EngineOption, ExecutableDir, FString(TEXT(ENGINE_LOCATION)), &GEngineDirSource);
     GIsEngineDirResolved = true;
 
     return !GEngineDir.IsEmpty();
@@ -105,10 +105,10 @@ const CHAR_T* Paths::GetEngineDirSourceName()
 {
     switch (GetEngineDirSource())
     {
-        case EEngineDirSource::CommandLine:         return "-engine=";
-        case EEngineDirSource::ExecutableLocation:  return "found above the executable";
-        case EEngineDirSource::CompileTimeFallback: return "compile-time fallback";
-        default:                                    return "not found";
+        case EEngineDirSource::CommandLine:         return TEXT("-engine=");
+        case EEngineDirSource::ExecutableLocation:  return TEXT("found above the executable");
+        case EEngineDirSource::CompileTimeFallback: return TEXT("compile-time fallback");
+        default:                                    return TEXT("not found");
     }
 }
 
@@ -119,31 +119,31 @@ FString Paths::GetEngineDir()
         Initialize();
     }
 
-    return GEngineDir.IsEmpty() ? File::NormalizePath(FString(ENGINE_LOCATION)) : GEngineDir;
+    return GEngineDir.IsEmpty() ? File::NormalizePath(FString(TEXT(ENGINE_LOCATION))) : GEngineDir;
 }
 
 FString Paths::GetAssetDir()
 {
-    return Paths::GetEngineDir() + FString("/Assets");
+    return Paths::GetEngineDir() + FString(TEXT("/Assets"));
 }
 
 FString Paths::GetProjectDir()
 {
-    return FString(PROJECT_LOCATION);
+    return FString(TEXT(PROJECT_LOCATION));
 }
 
 FString Paths::GetProjectName()
 {
-    return FString(PROJECT_NAME);
+    return FString(TEXT(PROJECT_NAME));
 }
 
 FString Paths::GetProjectModuleName()
 {
-    return FString(PROJECT_NAME);
+    return FString(TEXT(PROJECT_NAME));
 }
 
 FString Paths::GetUserSettingsDir()
 {
     const FString BaseDirectory = FPlatformFile::GetUserSettingsDirectory();
-    return BaseDirectory.IsEmpty() ? FString() : BaseDirectory + FString("/DXR-Engine");
+    return BaseDirectory.IsEmpty() ? FString() : BaseDirectory + FString(TEXT("/DXR-Engine"));
 }

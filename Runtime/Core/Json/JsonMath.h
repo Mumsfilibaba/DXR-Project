@@ -28,13 +28,13 @@ struct TJsonComponentArray
     {
         if (!InValue.IsArray())
         {
-            Archive.AddTypeError(InValue, "an array");
+            Archive.AddTypeError(InValue, TEXT("an array"));
             return false;
         }
 
         if (InValue.Num() != NUM_COMPONENTS)
         {
-            Archive.AddError("expected %d components, found %d", NUM_COMPONENTS, InValue.Num());
+            Archive.AddError(TEXT("expected %d components, found %d"), NUM_COMPONENTS, InValue.Num());
             return false;
         }
 
@@ -43,7 +43,7 @@ struct TJsonComponentArray
             double Component = 0.0;
             if (!InValue[Index].TryGetDouble(Component))
             {
-                Archive.AddError("component %d is %s rather than a number", Index, FJsonArchive::GetTypeName(InValue[Index].GetType()));
+                Archive.AddError(TEXT("component %d is %s rather than a number"), Index, FJsonArchive::GetTypeName(InValue[Index].GetType()));
                 return false;
             }
 
@@ -169,13 +169,13 @@ struct TJsonSerializer<FColor>
     {
         if (!InValue.IsArray())
         {
-            Archive.AddTypeError(InValue, "an array");
+            Archive.AddTypeError(InValue, TEXT("an array"));
             return false;
         }
 
         if (InValue.Num() != 4)
         {
-            Archive.AddError("expected 4 channels, found %d", InValue.Num());
+            Archive.AddError(TEXT("expected 4 channels, found %d"), InValue.Num());
             return false;
         }
 
@@ -185,13 +185,13 @@ struct TJsonSerializer<FColor>
             int64 Channel = 0;
             if (!InValue[Index].TryGetInt64(Channel))
             {
-                Archive.AddError("channel %d is %s rather than a number", Index, FJsonArchive::GetTypeName(InValue[Index].GetType()));
+                Archive.AddError(TEXT("channel %d is %s rather than a number"), Index, FJsonArchive::GetTypeName(InValue[Index].GetType()));
                 return false;
             }
 
             if ((Channel < 0) || (Channel > 255))
             {
-                Archive.AddError("channel %d is %lld, which is outside 0 to 255", Index, Channel);
+                Archive.AddError(TEXT("channel %d is %lld, which is outside 0 to 255"), Index, Channel);
                 return false;
             }
 

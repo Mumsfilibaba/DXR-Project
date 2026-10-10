@@ -248,13 +248,13 @@ bool FMacAsyncFileHandle::WriteBlockingAtOffset(const uint8* Src, uint32 BytesTo
                 continue;
             }
 
-            ReportWriteFailure("Blocking write failed", errno);
+            ReportWriteFailure(TEXT("Blocking write failed"), errno);
             return false;
         }
 
         if (Written == 0)
         {
-            ReportWriteFailure("Blocking write accepted no bytes", EIO);
+            ReportWriteFailure(TEXT("Blocking write accepted no bytes"), EIO);
             return false;
         }
 
@@ -297,7 +297,7 @@ void FMacAsyncFileHandle::WaitForPendingWrites()
                 const ssize_t Written = ::aio_return(&PendingWrites[i]->ControlBlock);
                 if (Error != 0 || Written < 0)
                 {
-                    ReportWriteFailure("Async write failed", Error);
+                    ReportWriteFailure(TEXT("Async write failed"), Error);
                 }
 
                 FreePendingWrite(PendingWrites[i]);
@@ -347,7 +347,7 @@ void FMacAsyncFileHandle::GarbageCollectCompleted()
             const ssize_t Written = ::aio_return(&PendingWrites[i]->ControlBlock);
             if (Error != 0 || Written < 0)
             {
-                ReportWriteFailure("Async write failed", Error);
+                ReportWriteFailure(TEXT("Async write failed"), Error);
             }
 
             FreePendingWrite(PendingWrites[i]);
@@ -583,7 +583,7 @@ bool FMacPlatformFile::IterateDirectory(const CHAR_T* Path, TArray<FDirectoryEnt
         FDirectoryEntry Child;
         Child.Name = DirEntry->d_name;
 
-        const FString ChildPath = FString::Printf("%s/%s", Path, DirEntry->d_name);
+        const FString ChildPath = FString::Printf(TEXT("%s/%s"), Path, DirEntry->d_name);
         Child.bIsDirectory      = IsDirectory(*ChildPath);
 
         struct stat LinkStat;

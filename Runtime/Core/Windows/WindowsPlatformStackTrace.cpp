@@ -2,10 +2,25 @@
 #include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Threading/ScopedLock.h"
+#include "Core/Math/Math.h"
 #include <dbghelp.h>
 
 static FCriticalSection GSymbolsCS;
 static int32            GSymbolsRefCount = 0;
+
+static void CopyEntryName(CHAR_T* Dest, const WIDECHAR* Source)
+{
+    const int32 SourceLength = static_cast<int32>(CStringWide::Strlen(Source));
+
+#if WIDE_CHAR_BUILD
+    const int32 Length = Math::Min(SourceLength, static_cast<int32>(FStackTraceEntry::MaxNameLength) - 1);
+    CStringWide::Strncpy(Dest, Source, Length);
+#else
+    const int32 Length = FStringConversion::Convert(reinterpret_cast<UTF8CHAR*>(Dest), FStackTraceEntry::MaxNameLength - 1, reinterpret_cast<const char16_t*>(Source), SourceLength);
+#endif
+
+    Dest[Length] = 0;
+}
 
 bool FWindowsPlatformStackTrace::InitializeSymbols()
 {
@@ -29,7 +44,9 @@ bool FWindowsPlatformStackTrace::InitializeSymbols()
         // Get handle for the current process handle
         HANDLE CurrentProcess = ::GetCurrentProcess();
 
-        const int32 Result = ::SymInitialize(CurrentProcess, SymbolPath.IsEmpty() ? nullptr : *SymbolPath, TRUE);
+        const TStringConversion<WIDECHAR, CHAR_T> WideSymbolPath = StringCast<WIDECHAR>(SymbolPath);
+
+        const int32 Result = ::SymInitializeW(CurrentProcess, SymbolPath.IsEmpty() ? nullptr : WideSymbolPath.Get(), TRUE);
         if (!Result)
         {
             LOG_ERROR("Failed to initialize Symbols");
@@ -150,25 +167,26 @@ void FWindowsPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, F
     HANDLE ProcessHandle = ::GetCurrentProcess();
 
     // Initialize symbol.
-    ANSICHAR SymbolBuffer[sizeof(SYMBOL_INFO) + FStackTraceEntry::MaxNameLength];
+    alignas(SYMBOL_INFOW) uint8 SymbolBuffer[sizeof(SYMBOL_INFOW) + FStackTraceEntry::MaxNameLength * sizeof(WIDECHAR)];
     Memory::Memzero(SymbolBuffer, sizeof(SymbolBuffer));
 
-    SYMBOL_INFO* Symbol = reinterpret_cast<SYMBOL_INFO*>(SymbolBuffer);
-    Symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+    SYMBOL_INFOW* Symbol = reinterpret_cast<SYMBOL_INFOW*>(SymbolBuffer);
+    Symbol->SizeOfStruct = sizeof(SYMBOL_INFOW);
     Symbol->MaxNameLen   = FStackTraceEntry::MaxNameLength;
 
-    if (::SymFromAddr(ProcessHandle, Address, nullptr, Symbol))
+    if (::SymFromAddrW(ProcessHandle, Address, nullptr, Symbol))
     {
         int32 Offset = 0;
 
         // NOTE: Allowed characters in the Ascii-table
-        while (Symbol->Name[Offset] < ' ' || Symbol->Name[Offset] > 127)
+        while ((Symbol->Name[Offset] != 0) && ((Symbol->Name[Offset] < ' ') || (Symbol->Name[Offset] > 127)))
         {
             Offset++;
         }
 
-        CString::Strncpy(OutStackTraceEntry.FunctionName, Symbol->Name + Offset, FStackTraceEntry::MaxNameLength);
-        CString::Strncat(OutStackTraceEntry.FunctionName + Offset, "()", FStackTraceEntry::MaxNameLength - Offset);
+        CopyEntryName(OutStackTraceEntry.FunctionName, Symbol->Name + Offset);
+        const int32 NameLength = static_cast<int32>(CString::Strlen(OutStackTraceEntry.FunctionName));
+        CString::Strncat(OutStackTraceEntry.FunctionName, TEXT("()"), FStackTraceEntry::MaxNameLength - NameLength - 1);
     }
     else
     {
@@ -176,15 +194,15 @@ void FWindowsPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, F
         LastError = ::GetLastError();
     }
 
-    IMAGEHLP_LINE64	ImageHelpLine;
+    IMAGEHLP_LINEW64 ImageHelpLine;
     Memory::Memzero(&ImageHelpLine);
 
     ImageHelpLine.SizeOfStruct = sizeof(ImageHelpLine);
 
     DWORD SymbolDisplacement;
-    if (::SymGetLineFromAddr64(ProcessHandle, Address, &SymbolDisplacement, &ImageHelpLine))
+    if (::SymGetLineFromAddrW64(ProcessHandle, Address, &SymbolDisplacement, &ImageHelpLine))
     {
-        CString::Strncpy(OutStackTraceEntry.Filename, ImageHelpLine.FileName, FStackTraceEntry::MaxNameLength);
+        CopyEntryName(OutStackTraceEntry.Filename, ImageHelpLine.FileName);
         OutStackTraceEntry.Line = ImageHelpLine.LineNumber;
     }
     else
@@ -192,13 +210,13 @@ void FWindowsPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, F
         LastError = ::GetLastError();
     }
 
-    IMAGEHLP_MODULE64 ImageHelpModule;
+    IMAGEHLP_MODULEW64 ImageHelpModule;
     Memory::Memzero(&ImageHelpModule);
 
     ImageHelpModule.SizeOfStruct = sizeof(ImageHelpModule);
-    if (::SymGetModuleInfo64(ProcessHandle, Address, &ImageHelpModule))
+    if (::SymGetModuleInfoW64(ProcessHandle, Address, &ImageHelpModule))
     {
-        CString::Strncpy(OutStackTraceEntry.ModuleName, ImageHelpModule.ImageName, FStackTraceEntry::MaxNameLength);
+        CopyEntryName(OutStackTraceEntry.ModuleName, ImageHelpModule.ImageName);
     }
     else
     {

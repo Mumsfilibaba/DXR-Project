@@ -55,7 +55,7 @@ struct CORE_API Tasks : public FNonConstructible
     template<typename LambdaType>
     static FTaskHandle Async(LambdaType&& Lambda, ETaskPriority::Type Priority = ETaskPriority::Normal)
     {
-        return Launch("Async", Forward<LambdaType>(Lambda), ENamedThread::AnyThread, Priority);
+        return Launch(TEXT("Async"), Forward<LambdaType>(Lambda), ENamedThread::AnyThread, Priority);
     }
 
     /** @brief Blocks until all of the given tasks have completed. */

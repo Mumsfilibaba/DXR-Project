@@ -62,7 +62,7 @@ static int32 ParseRoot(const FString& Path, FString& OutRoot)
 #if PLATFORM_WINDOWS
     if ((Length >= 2) && IsSeparator(Path[0]) && IsSeparator(Path[1]))
     {
-        OutRoot = "//";
+        OutRoot = TEXT("//");
         return 2;
     }
 
@@ -82,7 +82,7 @@ static int32 ParseRoot(const FString& Path, FString& OutRoot)
 
     if ((Length >= 1) && IsSeparator(Path[0]))
     {
-        OutRoot = "/";
+        OutRoot = TEXT("/");
         return 1;
     }
 
@@ -98,7 +98,7 @@ static FPathParts SplitPath(const FString& Path)
     const int32 Start  = ParseRoot(Path, Parts.Root);
 
     // Nothing is above an absolute root, while a relative path is allowed to climb above where it starts
-    const bool bIsAbsolute = Parts.Root.EndsWith("/");
+    const bool bIsAbsolute = Parts.Root.EndsWith(TEXT("/"));
 
     FString Segment;
     for (int32 Index = Start; Index <= Length; ++Index)
@@ -109,9 +109,9 @@ static FPathParts SplitPath(const FString& Path)
             continue;
         }
 
-        if (Segment.Equals(".."))
+        if (Segment.Equals(TEXT("..")))
         {
-            if (!Parts.Segments.IsEmpty() && !Parts.Segments.Last().Equals(".."))
+            if (!Parts.Segments.IsEmpty() && !Parts.Segments.Last().Equals(TEXT("..")))
             {
                 Parts.Segments.Pop();
             }
@@ -120,7 +120,7 @@ static FPathParts SplitPath(const FString& Path)
                 Parts.Segments.Add(Segment);
             }
         }
-        else if (!Segment.IsEmpty() && !Segment.Equals("."))
+        else if (!Segment.IsEmpty() && !Segment.Equals(TEXT(".")))
         {
             Parts.Segments.Add(Segment);
         }
@@ -177,7 +177,7 @@ static FString JoinPath(const FPathParts& Parts)
 {
     if (Parts.Segments.IsEmpty())
     {
-        return Parts.Root.IsEmpty() ? FString(".") : Parts.Root;
+        return Parts.Root.IsEmpty() ? FString(TEXT(".")) : Parts.Root;
     }
 
     FString Result = Parts.Root;
@@ -433,7 +433,7 @@ FString File::CombinePath(const FString& Left, const FString& Right)
     }
     if (!bLeftSlash && !bRightSlash)
     {
-        return Left + "/" + Right;
+        return Left + TEXT("/") + Right;
     }
 
     return Left + Right;
@@ -482,7 +482,7 @@ FString File::NormalizePath(const FString& Path)
 FString File::MakeAbsolute(const FString& Path)
 {
     const FPathParts Parts = SplitPath(Path);
-    if (Parts.Root.EndsWith("/"))
+    if (Parts.Root.EndsWith(TEXT("/")))
     {
         return JoinPath(Parts);
     }
@@ -514,7 +514,7 @@ FString File::MakeRelative(const FString& Path, const FString& BaseDirectory)
     FPathParts Relative;
     for (int32 Index = NumShared; Index < BaseParts.Segments.Size(); ++Index)
     {
-        Relative.Segments.Add(FString(".."));
+        Relative.Segments.Add(FString(TEXT("..")));
     }
 
     for (int32 Index = NumShared; Index < PathParts.Segments.Size(); ++Index)

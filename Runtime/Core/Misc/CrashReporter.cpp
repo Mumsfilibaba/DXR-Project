@@ -5,11 +5,11 @@
 
 void CrashReporter::Report(const FCrashContext& Context)
 {
-    const CHAR_T* ExceptionName = Context.ExceptionName ? Context.ExceptionName : "Unknown";
-    const CHAR_T* ThreadName    = (Context.ThreadName && Context.ThreadName[0]) ? Context.ThreadName : "Unnamed";
+    const CHAR_T* ExceptionName = Context.ExceptionName ? Context.ExceptionName : TEXT("Unknown");
+    const CHAR_T* ThreadName    = (Context.ThreadName && Context.ThreadName[0]) ? Context.ThreadName : TEXT("Unnamed");
 
-    FString Record = FString::Printf("Fatal error: %s (code 0x%llX) on thread '%s'", ExceptionName, Context.ExceptionCode, ThreadName);
-    Record.AppendPrintf("\n    Faulting address: 0x%016llX", Context.FaultAddress);
+    FString Record = FString::Printf(TEXT("Fatal error: %s (code 0x%llX) on thread '%s'"), ExceptionName, Context.ExceptionCode, ThreadName);
+    Record.AppendPrintf(TEXT("\n    Faulting address: 0x%016llX"), Context.FaultAddress);
 
     const TArray<FStackTraceEntry> Stack = FPlatformStackTrace::GetThreadStack(Context.ThreadStack, MAX_STACK_DEPTH);
     for (int32 Index = 0; Index < Stack.Size(); Index++)
@@ -17,17 +17,17 @@ void CrashReporter::Report(const FCrashContext& Context)
         const FStackTraceEntry& Entry = Stack[Index];
         if (Entry.Filename[0])
         {
-            Record.AppendPrintf("\n    [%2d] %s (%s:%u)", Index, Entry.FunctionName, Entry.Filename, Entry.Line);
+            Record.AppendPrintf(TEXT("\n    [%2d] %s (%s:%u)"), Index, Entry.FunctionName, Entry.Filename, Entry.Line);
         }
         else
         {
-            Record.AppendPrintf("\n    [%2d] %s [%s]", Index, Entry.FunctionName, Entry.ModuleName);
+            Record.AppendPrintf(TEXT("\n    [%2d] %s [%s]"), Index, Entry.FunctionName, Entry.ModuleName);
         }
     }
 
     if (Stack.IsEmpty())
     {
-        Record.Append("\n    No call-stack could be walked for the faulting thread");
+        Record.Append(TEXT("\n    No call-stack could be walked for the faulting thread"));
     }
 
     LOG_ERROR("%s", *Record);

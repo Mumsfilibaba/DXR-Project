@@ -5,8 +5,8 @@
 #include "Core/Threading/ScopedLock.h"
 
 static TAutoConsoleVariable<bool> CVarEnablePlatformEventPooling(
-    "Threading.EnablePlatformEventPooling",
-    "Recycle platform events through the event pool instead of destroying them on release",
+    TEXT("Threading.EnablePlatformEventPooling"),
+    TEXT("Recycle platform events through the event pool instead of destroying them on release"),
     true);
 
 FPlatformEventPool::FPlatformEventPool()

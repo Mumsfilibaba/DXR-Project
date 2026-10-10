@@ -24,13 +24,13 @@ bool Json::LoadFromFile(const FString& Filename, FJsonValue& OutValue, FJsonErro
     TFileRef<IPlatformFile> SourceFile = FPlatformFile::OpenForRead(Filename);
     if (!SourceFile.IsValid())
     {
-        return ReportFailure("the file could not be opened for reading");
+        return ReportFailure(TEXT("the file could not be opened for reading"));
     }
 
     TArray<CHAR_T> Text;
     if (!File::ReadTextFile(SourceFile.Get(), Text))
     {
-        return ReportFailure("the file could not be read");
+        return ReportFailure(TEXT("the file could not be read"));
     }
 
     const int32 TextLength = CString::Strlen(Text.Data());
@@ -47,7 +47,7 @@ bool Json::SaveToFile(const FString& Filename, const FJsonValue& Value, EJsonWri
         return false;
     }
 
-    const FString TempFilename = Filename + ".tmp";
+    const FString TempFilename = Filename + TEXT(".tmp");
 
     {
         TFileRef<IPlatformFile> TempFile = FPlatformFile::OpenForWrite(TempFilename);

@@ -6,6 +6,7 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 struct FMacPlatformString final : public IPlatformString
 {
     using IPlatformString::Snprintf;
+    using IPlatformString::Vsnprintf;
 
     template<typename... ArgTypes>
     static FORCEINLINE int32 Snprintf(WIDECHAR* Buffer, SIZE_T BufferSize, const WIDECHAR* Format, ArgTypes&&... Args) noexcept
@@ -20,6 +21,21 @@ struct FMacPlatformString final : public IPlatformString
 
         DISABLE_FORMAT_SECURITY_WARNING
         return static_cast<int32>(::swprintf(Buffer, BufferSize, StandardFormat, Forward<ArgTypes>(Args)...));
+        ENABLE_FORMAT_SECURITY_WARNING
+    }
+
+    static FORCEINLINE int32 Vsnprintf(WIDECHAR* Buffer, SIZE_T BufferSize, const WIDECHAR* Format, va_list ArgList) noexcept
+    {
+        static constexpr int32 MaxFormatLength = 1024;
+
+        WIDECHAR StandardFormat[MaxFormatLength];
+        if (!ConvertWideFormatToStandard(StandardFormat, MaxFormatLength, Format))
+        {
+            return -1;
+        }
+
+        DISABLE_FORMAT_SECURITY_WARNING
+        return static_cast<int32>(::vswprintf(Buffer, BufferSize, StandardFormat, ArgList));
         ENABLE_FORMAT_SECURITY_WARNING
     }
 

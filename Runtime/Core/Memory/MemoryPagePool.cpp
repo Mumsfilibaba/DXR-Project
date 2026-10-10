@@ -6,8 +6,8 @@
 #include "Core/Threading/ScopedLock.h"
 
 static TAutoConsoleVariable<bool> CVarEnableStackPagePooling(
-    "Memory.EnableStackPagePooling",
-    "Recycle FMemoryStack pages through the page pool instead of returning them to the allocator",
+    TEXT("Memory.EnableStackPagePooling"),
+    TEXT("Recycle FMemoryStack pages through the page pool instead of returning them to the allocator"),
     true);
 
 FMemoryPagePool::FMemoryPagePool()

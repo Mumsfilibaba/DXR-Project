@@ -32,7 +32,7 @@ static bool ReadIniFile(const FString& Filename, TArray<CHAR_T>& OutText)
 static CHAR_T* ParseIncludeDirective(CHAR_T* Line)
 {
     constexpr SIZE_T DirectiveLength = 7; // 'include'
-    if (CString::Strnicmp(Line, "include", DirectiveLength) != 0)
+    if (CString::Strnicmp(Line, TEXT("include"), DirectiveLength) != 0)
     {
         return nullptr;
     }
@@ -71,7 +71,7 @@ static void ParseIniInclude(FIniFile& OutFile, const CHAR_T* IncludePath, FIniPa
         || (RelativePath.Length() > 1 && RelativePath[1] == ':');
 
     const FString ResolvedPath = (bIsAbsolute || Context.BaseDirectory.IsEmpty())
-        ? RelativePath : FString::Printf("%s/%s", *Context.BaseDirectory, *RelativePath);
+        ? RelativePath : FString::Printf(TEXT("%s/%s"), *Context.BaseDirectory, *RelativePath);
 
     if (Context.IncludeStack.Contains(ResolvedPath))
     {
@@ -183,7 +183,7 @@ static void ParseIniText(FIniFile& OutFile, TArray<CHAR_T>& InText, FIniParseCon
                 // If there are no section, use the global one
                 if (!CurrentSection)
                 {
-                    FIniSection& Section = OutFile.FindOrAddSection("");
+                    FIniSection& Section = OutFile.FindOrAddSection(TEXT(""));
                     CurrentSection = &Section;
                 }
 
@@ -245,11 +245,11 @@ void FIniSection::DumpToString(FString& OutString)
         const FString& Value = ValuePair.Second.CurrentValue;
         if (Value.Contains(' '))
         {
-            OutString.AppendPrintf("%s=\"%s\"\n", *ValuePair.First, *Value);
+            OutString.AppendPrintf(TEXT("%s=\"%s\"\n"), *ValuePair.First, *Value);
         }
         else
         {
-            OutString.AppendPrintf("%s=%s\n", *ValuePair.First, *Value);
+            OutString.AppendPrintf(TEXT("%s=%s\n"), *ValuePair.First, *Value);
         }
     }
 }
@@ -387,7 +387,7 @@ ENABLE_UNREACHABLE_CODE_WARNING
 
 FIniValue* FIniFile::FindValue(const CHAR_T* SectionName, const CHAR_T* Name)
 {
-    const bool bIsGlobal = !SectionName || CString::Strcmp(SectionName, "") == 0;
+    const bool bIsGlobal = !SectionName || CString::Strcmp(SectionName, TEXT("")) == 0;
     if (bIsGlobal)
     {
         return FindValue(Name);
@@ -422,7 +422,7 @@ void FIniFile::DumpToString(FString& OutString)
 {
     // The global section has no header of its own, so it has to be written before any '[Section]'
     // line, otherwise it would be read back as part of whichever section precedes it.
-    if (FIniSection* GlobalSection = Sections.Find(""))
+    if (FIniSection* GlobalSection = Sections.Find(TEXT("")))
     {
         GlobalSection->DumpToString(OutString);
         OutString += '\n';
@@ -435,7 +435,7 @@ void FIniFile::DumpToString(FString& OutString)
             continue;
         }
 
-        OutString.AppendPrintf("[%s]\n", *CurrentSection.First);
+        OutString.AppendPrintf(TEXT("[%s]\n"), *CurrentSection.First);
         CurrentSection.Second.DumpToString(OutString);
         OutString += '\n';
     }

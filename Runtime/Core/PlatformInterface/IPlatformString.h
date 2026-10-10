@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 #include <cctype>
+#include <cstdarg>
 #include <cwchar>
 #include <cwctype>
 #include <cstring>
@@ -120,6 +121,13 @@ struct IPlatformString
         // The format string is a literal at the call site, it cannot be one here.
         DISABLE_FORMAT_SECURITY_WARNING
         return static_cast<int32>(::snprintf(Buffer, BufferSize, Format, Forward<ArgTypes>(Args)...));
+        ENABLE_FORMAT_SECURITY_WARNING
+    }
+
+    static FORCEINLINE int32 Vsnprintf(ANSICHAR* Buffer, SIZE_T BufferSize, const ANSICHAR* Format, va_list ArgList) noexcept
+    {
+        DISABLE_FORMAT_SECURITY_WARNING
+        return static_cast<int32>(::vsnprintf(Buffer, BufferSize, Format, ArgList));
         ENABLE_FORMAT_SECURITY_WARNING
     }
 
@@ -340,6 +348,11 @@ struct IPlatformString
         return static_cast<int32>(::swprintf(Buffer, BufferSize, Format, Forward<ArgTypes>(Args)...));
     }
 
+    static FORCEINLINE int32 Vsnprintf(WIDECHAR* Buffer, SIZE_T BufferSize, const WIDECHAR* Format, va_list ArgList) noexcept
+    {
+        return static_cast<int32>(::vswprintf(Buffer, BufferSize, Format, ArgList));
+    }
+
     NODISCARD static FORCEINLINE WIDECHAR* Strstr(const WIDECHAR* String, const WIDECHAR* Find) noexcept
     {
         return const_cast<WIDECHAR*>(static_cast<const WIDECHAR*>(::wcsstr(String, Find)));
@@ -552,6 +565,11 @@ struct IPlatformString
     static FORCEINLINE int32 Snprintf(UTF8CHAR* Buffer, SIZE_T BufferSize, const UTF8CHAR* Format, ArgTypes&&... Args) noexcept
     {
         return Snprintf(AsAnsi(Buffer), BufferSize, AsAnsi(Format), Forward<ArgTypes>(Args)...);
+    }
+
+    static FORCEINLINE int32 Vsnprintf(UTF8CHAR* Buffer, SIZE_T BufferSize, const UTF8CHAR* Format, va_list ArgList) noexcept
+    {
+        return Vsnprintf(AsAnsi(Buffer), BufferSize, AsAnsi(Format), ArgList);
     }
 
     NODISCARD static FORCEINLINE UTF8CHAR* Strstr(const UTF8CHAR* String, const UTF8CHAR* Find) noexcept

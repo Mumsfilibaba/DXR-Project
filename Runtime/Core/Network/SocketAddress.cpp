@@ -63,10 +63,10 @@ FString FSocketAddress::FormatHostAndPort(const FString& Host, uint16 Port)
 {
     if (Host.Contains(':'))
     {
-        return FString::Printf("[%s]:%u", *Host, static_cast<uint32>(Port));
+        return FString::Printf(TEXT("[%s]:%u"), *Host, static_cast<uint32>(Port));
     }
 
-    return FString::Printf("%s:%u", *Host, static_cast<uint32>(Port));
+    return FString::Printf(TEXT("%s:%u"), *Host, static_cast<uint32>(Port));
 }
 
 bool FSocketAddress::IsIPv4() const

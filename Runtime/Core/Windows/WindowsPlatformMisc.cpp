@@ -43,46 +43,46 @@ static const CHAR_T* GetExceptionName(uint32 ExceptionCode)
     switch (ExceptionCode)
     {
         case EXCEPTION_ACCESS_VIOLATION:
-            return "EXCEPTION_ACCESS_VIOLATION";
+            return TEXT("EXCEPTION_ACCESS_VIOLATION");
 
         case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-            return "EXCEPTION_ARRAY_BOUNDS_EXCEEDED";
+            return TEXT("EXCEPTION_ARRAY_BOUNDS_EXCEEDED");
 
         case EXCEPTION_DATATYPE_MISALIGNMENT:
-            return "EXCEPTION_DATATYPE_MISALIGNMENT";
+            return TEXT("EXCEPTION_DATATYPE_MISALIGNMENT");
 
         case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-            return "EXCEPTION_FLT_DIVIDE_BY_ZERO";
+            return TEXT("EXCEPTION_FLT_DIVIDE_BY_ZERO");
 
         case EXCEPTION_ILLEGAL_INSTRUCTION:
-            return "EXCEPTION_ILLEGAL_INSTRUCTION";
+            return TEXT("EXCEPTION_ILLEGAL_INSTRUCTION");
 
         case EXCEPTION_IN_PAGE_ERROR:
-            return "EXCEPTION_IN_PAGE_ERROR";
+            return TEXT("EXCEPTION_IN_PAGE_ERROR");
 
         case EXCEPTION_INT_DIVIDE_BY_ZERO:
-            return "EXCEPTION_INT_DIVIDE_BY_ZERO";
+            return TEXT("EXCEPTION_INT_DIVIDE_BY_ZERO");
 
         case EXCEPTION_INVALID_DISPOSITION:
-            return "EXCEPTION_INVALID_DISPOSITION";
+            return TEXT("EXCEPTION_INVALID_DISPOSITION");
 
         case EXCEPTION_NONCONTINUABLE_EXCEPTION:
-            return "EXCEPTION_NONCONTINUABLE_EXCEPTION";
+            return TEXT("EXCEPTION_NONCONTINUABLE_EXCEPTION");
 
         case EXCEPTION_PRIV_INSTRUCTION:
-            return "EXCEPTION_PRIV_INSTRUCTION";
+            return TEXT("EXCEPTION_PRIV_INSTRUCTION");
 
         case EXCEPTION_STACK_OVERFLOW:
-            return "EXCEPTION_STACK_OVERFLOW";
+            return TEXT("EXCEPTION_STACK_OVERFLOW");
 
         case EXCEPTION_CODE_HEAP_CORRUPTION:
-            return "STATUS_HEAP_CORRUPTION";
+            return TEXT("STATUS_HEAP_CORRUPTION");
 
         case EXCEPTION_CODE_STACK_BUFFER_OVERRUN:
-            return "STATUS_STACK_BUFFER_OVERRUN";
+            return TEXT("STATUS_STACK_BUFFER_OVERRUN");
 
         default:
-            return "EXCEPTION_UNKNOWN";
+            return TEXT("EXCEPTION_UNKNOWN");
     }
 }
 
@@ -217,19 +217,19 @@ static LONG WINAPI HandleUnhandledException(EXCEPTION_POINTERS* ExceptionPointer
 
 static void HandlePureCall()
 {
-    ReportWithoutException("Pure virtual function call");
+    ReportWithoutException(TEXT("Pure virtual function call"));
     ::abort();
 }
 
 static void HandleInvalidParameter(const WIDECHAR*, const WIDECHAR*, const WIDECHAR*, unsigned int, uintptr_t)
 {
-    ReportWithoutException("Invalid parameter passed to a CRT function");
+    ReportWithoutException(TEXT("Invalid parameter passed to a CRT function"));
     ::abort();
 }
 
 static void HandleTerminate()
 {
-    ReportWithoutException("std::terminate was called");
+    ReportWithoutException(TEXT("std::terminate was called"));
     ::abort();
 }
 

@@ -202,7 +202,7 @@ IPlatformFile* FWindowsPlatformFile::OpenForRead(const FString& Filename)
         FString ErrorString;
         FWindowsPlatformMisc::GetLastErrorString(ErrorString);
         
-        int32 Position = ErrorString.FindLast("\r\n");
+        int32 Position = ErrorString.FindLast(TEXT("\r\n"));
         if (Position != FString::InvalidIndex)
         {
             ErrorString.Remove(Position, 2);
@@ -240,7 +240,7 @@ IPlatformFile* FWindowsPlatformFile::OpenForWrite(const FString& Filename, bool 
         FString ErrorString;
         FWindowsPlatformMisc::GetLastErrorString(ErrorString);
 
-        int32 Position = ErrorString.FindLast("\r\n");
+        int32 Position = ErrorString.FindLast(TEXT("\r\n"));
         if (Position != FString::InvalidIndex)
         {
             ErrorString.Remove(Position, 2);
@@ -276,7 +276,7 @@ IPlatformAsyncFile* FWindowsPlatformFile::OpenForAsyncWrite(const FString& Filen
         FString ErrorString;
         FWindowsPlatformMisc::GetLastErrorString(ErrorString);
 
-        int32 Position = ErrorString.FindLast("\r\n");
+        int32 Position = ErrorString.FindLast(TEXT("\r\n"));
         if (Position != FString::InvalidIndex)
         {
             ErrorString.Remove(Position, 2);
@@ -392,7 +392,7 @@ bool FWindowsAsyncFileHandle::WriteBlockingAtOffset(const uint8* Src, uint32 Byt
             const DWORD Error = ::GetLastError();
             if (Error != ERROR_IO_PENDING)
             {
-                ReportWriteFailure("Blocking write failed", Error);
+                ReportWriteFailure(TEXT("Blocking write failed"), Error);
                 return false;
             }
         }
@@ -400,13 +400,13 @@ bool FWindowsAsyncFileHandle::WriteBlockingAtOffset(const uint8* Src, uint32 Byt
         DWORD Written = 0;
         if (!::GetOverlappedResult(FileHandle, &Overlapped, &Written, TRUE))
         {
-            ReportWriteFailure("Blocking write failed to complete", ::GetLastError());
+            ReportWriteFailure(TEXT("Blocking write failed to complete"), ::GetLastError());
             return false;
         }
 
         if (Written == 0)
         {
-            ReportWriteFailure("Blocking write accepted no bytes", ERROR_WRITE_FAULT);
+            ReportWriteFailure(TEXT("Blocking write accepted no bytes"), ERROR_WRITE_FAULT);
             return false;
         }
 
@@ -421,7 +421,7 @@ void FWindowsAsyncFileHandle::CollectWriteResult(FPendingWrite* PendingWrite, bo
     DWORD Written = 0;
     if (!::GetOverlappedResult(FileHandle, &PendingWrite->Overlapped, &Written, bWait ? TRUE : FALSE))
     {
-        ReportWriteFailure("Async write failed", ::GetLastError());
+        ReportWriteFailure(TEXT("Async write failed"), ::GetLastError());
     }
 }
 
@@ -439,7 +439,7 @@ void FWindowsAsyncFileHandle::ReportWriteFailure(const CHAR_T* What, uint32 Erro
     FString ErrorString;
     FWindowsPlatformMisc::GetLastErrorString(ErrorString);
 
-    const int32 Position = ErrorString.FindLast("\r\n");
+    const int32 Position = ErrorString.FindLast(TEXT("\r\n"));
     if (Position != FString::InvalidIndex)
     {
         ErrorString.Remove(Position, 2);

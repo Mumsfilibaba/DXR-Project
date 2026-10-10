@@ -93,7 +93,7 @@ EAssertAction Assert::OnFailed(const CHAR_T* Expression, const CHAR_T* Filename,
     {
         va_list ArgList;
         va_start(ArgList, Format);
-        vsnprintf(Context, sizeof(Context), Format, ArgList);
+        CString::Vsnprintf(Context, MaxAssertMessageLength, Format, ArgList);
         va_end(ArgList);
     }
 
@@ -109,10 +109,10 @@ EAssertAction Assert::OnFailed(const CHAR_T* Expression, const CHAR_T* Filename,
         GetReportedSites().Add(SiteKey);
     }
 
-    FString Record = FString::Printf("Assertion failed: %s\n    at %s(%d)", Expression, Filename, Line);
+    FString Record = FString::Printf(TEXT("Assertion failed: %s\n    at %s(%d)"), Expression, Filename, Line);
     if (Context[0])
     {
-        Record.AppendPrintf("\n    %s", Context);
+        Record.AppendPrintf(TEXT("\n    %s"), Context);
     }
 
     // Logged before the dialog goes up so the log has the record even if the user kills the process
@@ -146,9 +146,9 @@ EAssertAction Assert::OnFailed(const CHAR_T* Expression, const CHAR_T* Filename,
         return EAssertAction::Continue;
     }
 
-    Record.AppendPrintf("\n\nAbort ends the process, Debug breaks into the debugger, Ignore continues and silences this assertion for the rest of the session.");
+    Record.AppendPrintf(TEXT("\n\nAbort ends the process, Debug breaks into the debugger, Ignore continues and silences this assertion for the rest of the session."));
 
-    switch (FPlatformMisc::ShowAssertDialog("Assertion Failed", *Record))
+    switch (FPlatformMisc::ShowAssertDialog(TEXT("Assertion Failed"), *Record))
     {
         case EAssertDialogResult::Debug:
         {
