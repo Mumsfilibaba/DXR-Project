@@ -1,0 +1,48 @@
+#pragma once
+#include "Core/PlatformInterface/IPlatformMemory.h"
+#include <cstdlib>
+#include <cstring>
+#include <malloc/malloc.h>
+
+struct FMacPlatformMemory final : public IPlatformMemory
+{
+    static FORCEINLINE void* Malloc(uint64 Size, uint32 Alignment)
+    {
+        if (Alignment <= STANDARD_ALIGNMENT)
+        {
+            return ::malloc(Size);
+        }
+
+        void* Result = nullptr;
+        return ::posix_memalign(&Result, Alignment, Size) == 0 ? Result : nullptr;
+    }
+
+    static FORCEINLINE void* Realloc(void* Block, uint64 Size, uint32 Alignment)
+    {
+        if (Alignment <= STANDARD_ALIGNMENT)
+        {
+            return ::realloc(Block, Size);
+        }
+
+        if (!Size)
+        {
+            ::free(Block);
+            return nullptr;
+        }
+
+        void* Result = Malloc(Size, Alignment);
+        if (Result)
+        {
+            const uint64 OldSize = static_cast<uint64>(::malloc_size(Block));
+            ::memcpy(Result, Block, OldSize < Size ? OldSize : Size);
+            ::free(Block);
+        }
+
+        return Result;
+    }
+
+    static FORCEINLINE void Free(void* Block)
+    {
+        ::free(Block);
+    }
+};

@@ -43,19 +43,23 @@ struct CORE_API FMalloc : public FUseStandardMalloc
     virtual ~FMalloc() = default;
 
     /**
-     * @brief Allocates memory  
+     * @brief Allocates memory
+     *
      * @param InSize Number of bytes to allocate
-     * @return Returns a pointer with allocated memory
+     * @param InAlignment Alignment of the block, a power of two of at least STANDARD_ALIGNMENT
+     * @return Returns a pointer with allocated memory, or nullptr when InSize is zero or the allocation failed
      */
-    virtual void* Malloc(uint64 InSize) = 0;
+    virtual void* Malloc(uint64 InSize, uint32 InAlignment) = 0;
 
     /**
-     * @brief Allocates memory, from an existing block and copies over the old content to the new  
-     * @param Block The old block to reallocate
+     * @brief Allocates memory, from an existing block and copies over the old content to the new
+     *
+     * @param Block The old block to reallocate, or nullptr to allocate a new block
      * @param InSize Number of bytes to allocate
-     * @return Returns a pointer with allocated memory
+     * @param InAlignment Alignment of the block, which must match the alignment Block was allocated with
+     * @return Returns a pointer with allocated memory, or nullptr when the allocation failed and Block is left untouched
      */
-    virtual void* Realloc(void* Block, uint64 InSize) = 0;
+    virtual void* Realloc(void* Block, uint64 InSize, uint32 InAlignment) = 0;
 
     /**
      * @brief Frees a block of memory  
@@ -72,8 +76,8 @@ struct CORE_API FMalloc : public FUseStandardMalloc
 
 struct CORE_API FMallocANSI : public FMalloc
 {
-    virtual void* Malloc(uint64 InSize) override final;
-    virtual void* Realloc(void* InBlock, uint64 InSize) override final;
+    virtual void* Malloc(uint64 InSize, uint32 InAlignment) override final;
+    virtual void* Realloc(void* InBlock, uint64 InSize, uint32 InAlignment) override final;
     virtual void Free(void* InBlock) override final;
 };
 
@@ -88,8 +92,8 @@ public:
     FMallocLeakTracker(FMalloc* InBaseMalloc);
     ~FMallocLeakTracker();
 
-    virtual void* Malloc(uint64 InSize) override final;
-    virtual void* Realloc(void* InBlock, uint64 InSize) override final;
+    virtual void* Malloc(uint64 InSize, uint32 InAlignment) override final;
+    virtual void* Realloc(void* InBlock, uint64 InSize, uint32 InAlignment) override final;
     virtual void Free(void* InBlock) override final;
     virtual void DumpAllocations(IOutputDevice* OutputDevice) override final;
 
@@ -131,8 +135,8 @@ public:
     FMallocStackTraceTracker(FMalloc* InBaseMalloc);
     ~FMallocStackTraceTracker();
 
-    virtual void* Malloc(uint64 InSize) override final;
-    virtual void* Realloc(void* InBlock, uint64 InSize) override final;
+    virtual void* Malloc(uint64 InSize, uint32 InAlignment) override final;
+    virtual void* Realloc(void* InBlock, uint64 InSize, uint32 InAlignment) override final;
     virtual void Free(void* InBlock) override final;
     virtual void DumpAllocations(IOutputDevice* OutputDevice) override final;
 

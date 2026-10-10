@@ -17,18 +17,22 @@ struct CORE_API Memory
 
     /**
      * @brief Allocate memory
+     *
      * @param Size The number of bytes to allocate
-     * @return Returns the newly allocated memory
+     * @param Alignment The alignment of the block, a power of two. Anything below STANDARD_ALIGNMENT is raised to it.
+     * @return Returns the newly allocated memory, or nullptr when Size is zero or the allocation failed
      */
-    static void* Malloc(uint64 Size) noexcept;
+    static void* Malloc(uint64 Size, uint32 Alignment = STANDARD_ALIGNMENT) noexcept;
 
     /**
-     * @brief Reallocate memory
-     * @param Block Block to the memory to reallocate
+     * @brief Reallocate memory, keeping the contents up to the smaller of the old and new size
+     *
+     * @param Block Block to the memory to reallocate, or nullptr to allocate a new block
      * @param Size The number of bytes to reallocate
-     * @return Returns the newly allocated memory
+     * @param Alignment The alignment of the block, which must match the alignment Block was allocated with
+     * @return Returns the newly allocated memory, or nullptr when the allocation failed and Block is left untouched
      */
-    static void* Realloc(void* Block, uint64 Size) noexcept;
+    static void* Realloc(void* Block, uint64 Size, uint32 Alignment = STANDARD_ALIGNMENT) noexcept;
 
     /**
      * @brief Free memory
@@ -55,12 +59,14 @@ struct CORE_API Memory
 
     /**
      * @brief Allocate memory and zero it
+     *
      * @param Size The number of bytes to allocate
+     * @param Alignment The alignment of the block, a power of two. Anything below STANDARD_ALIGNMENT is raised to it.
      * @return Returns the newly allocated memory
      */
-    static FORCEINLINE void* MallocZeroed(uint64 Size) noexcept
+    static FORCEINLINE void* MallocZeroed(uint64 Size, uint32 Alignment = STANDARD_ALIGNMENT) noexcept
     {
-        void* NewMemory = Malloc(Size);
+        void* NewMemory = Malloc(Size, Alignment);
         Memzero(NewMemory, Size);
         return NewMemory;
     }

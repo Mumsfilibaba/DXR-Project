@@ -1,32 +1,33 @@
 #include "Malloc.h"
+#include "Core/Platform/PlatformMemory.h"
 #include "Core/Platform/PlatformStackTrace.h"
 #include "Core/Threading/ScopedLock.h"
 
-void* FMallocANSI::Malloc(uint64 InSize)
+void* FMallocANSI::Malloc(uint64 InSize, uint32 InAlignment)
 {
-    if (InSize)
+    if (!InSize)
     {
-        return ::malloc(InSize);
+        return nullptr;
     }
 
-    return nullptr;
+    return FPlatformMemory::Malloc(InSize, InAlignment);
 }
 
-void* FMallocANSI::Realloc(void* Block, uint64 InSize)
+void* FMallocANSI::Realloc(void* Block, uint64 InSize, uint32 InAlignment)
 {
-    if (Block)
+    if (!Block)
     {
-        return ::realloc(Block, InSize);
+        return Malloc(InSize, InAlignment);
     }
 
-    return Malloc(InSize);
+    return FPlatformMemory::Realloc(Block, InSize, InAlignment);
 }
 
 void FMallocANSI::Free(void* Block)
 {
     if (Block)
     {
-        ::free(Block);
+        FPlatformMemory::Free(Block);
     }
 }
 
@@ -43,9 +44,9 @@ FMallocLeakTracker::~FMallocLeakTracker()
     BaseMalloc = nullptr;
 }
 
-void* FMallocLeakTracker::Malloc(uint64 InSize)
+void* FMallocLeakTracker::Malloc(uint64 InSize, uint32 InAlignment)
 {
-    void* Block = BaseMalloc->Malloc(InSize);
+    void* Block = BaseMalloc->Malloc(InSize, InAlignment);
     if (bTrackingEnabled)
     {
         TrackAllocationMalloc(Block, InSize);
@@ -54,16 +55,16 @@ void* FMallocLeakTracker::Malloc(uint64 InSize)
     return Block;
 }
 
-void* FMallocLeakTracker::Realloc(void* InBlock, uint64 InSize)
+void* FMallocLeakTracker::Realloc(void* InBlock, uint64 InSize, uint32 InAlignment)
 {
     if (InBlock == nullptr)
     {
-        return Malloc(InSize);
+        return Malloc(InSize, InAlignment);
     }
 
     TrackAllocationFree(InBlock);
 
-    void* Block = BaseMalloc->Realloc(InBlock, InSize);
+    void* Block = BaseMalloc->Realloc(InBlock, InSize, InAlignment);
     if (!Block)
     {
         return nullptr;
@@ -171,9 +172,9 @@ FMallocStackTraceTracker::~FMallocStackTraceTracker()
     }
 }
 
-void* FMallocStackTraceTracker::Malloc(uint64 InSize)
+void* FMallocStackTraceTracker::Malloc(uint64 InSize, uint32 InAlignment)
 {
-    void* Block = BaseMalloc->Malloc(InSize);
+    void* Block = BaseMalloc->Malloc(InSize, InAlignment);
     if (bTrackingEnabled.Load())
     {
         TrackAllocationMalloc(Block, InSize);
@@ -182,16 +183,16 @@ void* FMallocStackTraceTracker::Malloc(uint64 InSize)
     return Block;
 }
 
-void* FMallocStackTraceTracker::Realloc(void* InBlock, uint64 InSize)
+void* FMallocStackTraceTracker::Realloc(void* InBlock, uint64 InSize, uint32 InAlignment)
 {
     if (InBlock == nullptr)
     {
-        return Malloc(InSize);
+        return Malloc(InSize, InAlignment);
     }
 
     TrackAllocationFree(InBlock);
 
-    void* Block = BaseMalloc->Realloc(InBlock, InSize);
+    void* Block = BaseMalloc->Realloc(InBlock, InSize, InAlignment);
     if (!Block)
     {
         return nullptr;

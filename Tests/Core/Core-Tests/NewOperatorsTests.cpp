@@ -11,6 +11,8 @@ static thread_local volatile int32 GNumMallocs  = 0;
 static thread_local volatile int32 GNumReallocs = 0;
 static thread_local volatile int32 GNumFrees    = 0;
 
+static thread_local volatile uint32 GLastAlignment = 0;
+
 static void* volatile GSink = nullptr;
 
 struct FCountingMalloc : public FMalloc
@@ -20,16 +22,18 @@ struct FCountingMalloc : public FMalloc
     {
     }
 
-    virtual void* Malloc(uint64 InSize) override final
+    virtual void* Malloc(uint64 InSize, uint32 InAlignment) override final
     {
         GNumMallocs = GNumMallocs + 1;
-        return BaseMalloc->Malloc(InSize);
+        GLastAlignment = InAlignment;
+        return BaseMalloc->Malloc(InSize, InAlignment);
     }
 
-    virtual void* Realloc(void* InBlock, uint64 InSize) override final
+    virtual void* Realloc(void* InBlock, uint64 InSize, uint32 InAlignment) override final
     {
         GNumReallocs = GNumReallocs + 1;
-        return BaseMalloc->Realloc(InBlock, InSize);
+        GLastAlignment = InAlignment;
+        return BaseMalloc->Realloc(InBlock, InSize, InAlignment);
     }
 
     virtual void Free(void* InBlock) override final
@@ -41,6 +45,16 @@ struct FCountingMalloc : public FMalloc
     FMalloc* BaseMalloc;
 };
 
+struct alignas(64) FOverAligned
+{
+    uint8 Bytes[64];
+};
+
+static bool IsAligned(const void* Pointer, uint64 Alignment)
+{
+    return (reinterpret_cast<UPTR_INT>(Pointer) & (Alignment - 1)) == 0;
+}
+
 struct FScopedCountingMalloc
 {
     FScopedCountingMalloc()
@@ -50,6 +64,7 @@ struct FScopedCountingMalloc
         GNumMallocs  = 0;
         GNumReallocs = 0;
         GNumFrees    = 0;
+        GLastAlignment = 0;
         GMalloc = &CountingMalloc;
     }
 
@@ -129,6 +144,53 @@ bool NewOperators_Test()
         TEST_EXPECT(NothrowFirst != NothrowSecond);
         ::operator delete[](NothrowFirst);
         ::operator delete[](NothrowSecond);
+    }
+
+    TEST_SECTION("An over-aligned new-expression passes its alignment to GMalloc");
+    {
+        FScopedCountingMalloc CountingScope;
+
+        FOverAligned* Value = new FOverAligned();
+        GSink = Value;
+        TEST_EXPECT_EQ(GNumMallocs, 1);
+        TEST_EXPECT_EQ(GLastAlignment, 64u);
+        TEST_EXPECT(IsAligned(Value, 64));
+
+        delete Value;
+        TEST_EXPECT_EQ(GNumFrees, 1);
+
+        FOverAligned* Values = new FOverAligned[3];
+        GSink = Values;
+        TEST_EXPECT_EQ(GNumMallocs, 2);
+        TEST_EXPECT(IsAligned(Values, 64));
+        TEST_EXPECT(IsAligned(&Values[2], 64));
+
+        delete[] Values;
+        TEST_EXPECT_EQ(GNumFrees, 2);
+    }
+
+    TEST_SECTION("The aligned nothrow and sized forms route through GMalloc");
+    {
+        FScopedCountingMalloc CountingScope;
+
+        FOverAligned* Value = new (std::nothrow) FOverAligned();
+        GSink = Value;
+        TEST_EXPECT(Value != nullptr);
+        TEST_EXPECT_EQ(GNumMallocs, 1);
+        TEST_EXPECT(IsAligned(Value, 64));
+
+        ::operator delete(Value, sizeof(FOverAligned), std::align_val_t(alignof(FOverAligned)));
+        TEST_EXPECT_EQ(GNumFrees, 1);
+
+        void* PageAligned = ::operator new[](100, std::align_val_t(4096), std::nothrow);
+        GSink = PageAligned;
+        TEST_EXPECT(PageAligned != nullptr);
+        TEST_EXPECT_EQ(GNumMallocs, 2);
+        TEST_EXPECT_EQ(GLastAlignment, 4096u);
+        TEST_EXPECT(IsAligned(PageAligned, 4096));
+
+        ::operator delete[](PageAligned, std::align_val_t(4096), std::nothrow);
+        TEST_EXPECT_EQ(GNumFrees, 2);
     }
 
     GSink = nullptr;

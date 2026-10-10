@@ -24,7 +24,7 @@ FObject::FObject(const FObjectInitializer& ObjectInitializer)
 
 FObject* NewObject(FObjectClass* Class)
 {
-    void* Memory = Memory::Malloc(Class->GetSize());
+    void* Memory = Memory::Malloc(Class->GetSize(), static_cast<uint32>(Class->GetAlignment()));
     if (!Memory)
     {
         return nullptr;

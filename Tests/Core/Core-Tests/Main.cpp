@@ -23,6 +23,7 @@
 #include "PlatformMiscTests.h"
 #include "MemoryStackTests.h"
 #include "NewOperatorsTests.h"
+#include "MemoryAlignmentTests.h"
 #include "PlatformEventPoolTests.h"
 #include "FileOutputDeviceTests.h"
 #include "ProfilerTests.h"
@@ -55,6 +56,7 @@ static int32 RunCoreTests()
     RUN_TEST("PlatformMisc", PlatformMisc_Test());
     RUN_TEST("MemoryStack", MemoryStack_Test());
     RUN_TEST("NewOperators", NewOperators_Test());
+    RUN_TEST("MemoryAlignment", MemoryAlignment_Test());
     RUN_TEST("PlatformEventPool", PlatformEventPool_Test());
     RUN_TEST("FileOutputDevice", FileOutputDevice_Test());
     RUN_TEST("Profiler", Profiler_Test());

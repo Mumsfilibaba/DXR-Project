@@ -42,7 +42,13 @@ static void CreateMalloc()
     CHECK(GMalloc != nullptr);
 }
 
-void* Memory::Malloc(uint64 Size) noexcept
+static FORCEINLINE uint32 NormalizeAlignment(uint32 Alignment)
+{
+    CHECK((Alignment & (Alignment - 1)) == 0);
+    return Alignment > STANDARD_ALIGNMENT ? Alignment : static_cast<uint32>(STANDARD_ALIGNMENT);
+}
+
+void* Memory::Malloc(uint64 Size, uint32 Alignment) noexcept
 {
     if (!GMalloc)
     {
@@ -50,7 +56,7 @@ void* Memory::Malloc(uint64 Size) noexcept
         CHECK(GMalloc != nullptr);
     }
 
-    void* Result = GMalloc->Malloc(Size);
+    void* Result = GMalloc->Malloc(Size, NormalizeAlignment(Alignment));
     if (Result)
     {
         STAT_ADD(STAT_Memory_AllocationCount, 1);
@@ -59,7 +65,7 @@ void* Memory::Malloc(uint64 Size) noexcept
     return Result;
 }
 
-void* Memory::Realloc(void* Block, uint64 Size) noexcept
+void* Memory::Realloc(void* Block, uint64 Size, uint32 Alignment) noexcept
 {
     if (!GMalloc)
     {
@@ -67,7 +73,7 @@ void* Memory::Realloc(void* Block, uint64 Size) noexcept
         CHECK(GMalloc != nullptr);
     }
 
-    void* Result = GMalloc->Realloc(Block, Size);
+    void* Result = GMalloc->Realloc(Block, Size, NormalizeAlignment(Alignment));
     if (!Block && Result)
     {
         STAT_ADD(STAT_Memory_AllocationCount, 1);

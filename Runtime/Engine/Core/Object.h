@@ -124,7 +124,7 @@ template<typename T>
 T* NewObject()
 {
     // TODO: We might want to allocate via a allocator
-    void* Memory = Memory::Malloc(sizeof(T));
+    void* Memory = Memory::Malloc(sizeof(T), static_cast<uint32>(alignof(T)));
     if (!Memory)
     {
         return nullptr;
