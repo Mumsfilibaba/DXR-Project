@@ -114,7 +114,7 @@ public:
 
         if (Font)
         {
-            const String Caption = String::Printf("yaw %.0f  pitch %.0f  distance %.1f", YawDegrees, PitchDegrees, Distance);
+            const FString Caption = FString::Printf("yaw %.0f  pitch %.0f  distance %.1f", YawDegrees, PitchDegrees, Distance);
 
             FRectangle CaptionBounds = Bounds.Deflate(FMargin(10, 10, 10, 10));
             CaptionBounds.Height     = Font->GetLineHeight();
@@ -444,7 +444,7 @@ static void RefreshGizmoReadout()
 
     const EGizmoHandle Handle = GGizmo->IsDragging() ? GGizmo->GetActiveHandle() : GGizmo->GetHoveredHandle();
 
-    GGizmoReadout->SetText(String::Printf(
+    GGizmoReadout->SetText(FString::Printf(
         "position  %7.2f %7.2f %7.2f\n"
         "scale     %7.2f %7.2f %7.2f\n"
         "%-9s %s",

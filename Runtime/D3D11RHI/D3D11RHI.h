@@ -85,7 +85,7 @@ public:
     virtual void* GetRHINativeAdapter() override final;
     virtual void* GetRHINativeDevice()  override final;
 
-    virtual String   GetAdapterName() const override final;
+    virtual FString  GetAdapterName() const override final;
     virtual ERHIType GetRHIType()     const override final { return ERHIType::D3D11; }
 
     FD3D11Adapter* GetAdapter() const
@@ -166,7 +166,7 @@ public:
         return nullptr;
     }
 
-    virtual FRHIRayTracingShaderIdentifier GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState*, const String&) override final
+    virtual FRHIRayTracingShaderIdentifier GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState*, const FString&) override final
     {
         return FRHIRayTracingShaderIdentifier();
     }

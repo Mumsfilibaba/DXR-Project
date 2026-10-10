@@ -67,12 +67,12 @@ FEditorOutputLogWidget::~FEditorOutputLogWidget()
     }
 }
 
-void FEditorOutputLogWidget::Log(const String& Message)
+void FEditorOutputLogWidget::Log(const FString& Message)
 {
     Log(ELogSeverity::Info, Message);
 }
 
-void FEditorOutputLogWidget::Log(ELogSeverity Severity, const String& Message)
+void FEditorOutputLogWidget::Log(ELogSeverity Severity, const FString& Message)
 {
     SCOPED_LOCK(MessagesCS);
 
@@ -496,7 +496,7 @@ void FEditorOutputLogWidget::DrawLogListRichText()
 
             if (EditorWidgets::MenuItem("Copy", EDITOR_SHORTCUT_MOD "+C", false, RichTextCtx.bHasSelection))
             {
-                const String Selected = EditorWidgets::GetSelectedRichText(RichTextCtx);
+                const FString Selected = EditorWidgets::GetSelectedRichText(RichTextCtx);
                 if (!Selected.IsEmpty())
                 {
                     ImGui::SetClipboardText(*Selected);
@@ -505,7 +505,7 @@ void FEditorOutputLogWidget::DrawLogListRichText()
 
             if (EditorWidgets::MenuItem("Copy All", nullptr, false, !RichTextCtx.Lines.IsEmpty()))
             {
-                const String All = EditorWidgets::GetAllRichText(RichTextCtx);
+                const FString All = EditorWidgets::GetAllRichText(RichTextCtx);
                 if (!All.IsEmpty())
                 {
                     ImGui::SetClipboardText(*All);

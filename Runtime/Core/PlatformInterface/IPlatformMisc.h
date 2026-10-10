@@ -41,7 +41,7 @@ struct IPlatformMisc
      * @param OutValue Receives the value, and is cleared when the variable is not set
      * @return True when the variable is set, including when it is set to an empty value
      */
-    static FORCEINLINE bool GetEnvironmentVariable(const CHAR_T* Name, String& OutValue)
+    static FORCEINLINE bool GetEnvironmentVariable(const CHAR_T* Name, FString& OutValue)
     {
         OutValue.Clear();
         return false;

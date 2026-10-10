@@ -13,8 +13,8 @@ public:
     ~FVulkanSemaphore();
 
     bool Initialize();
-    bool SetDebugName(const String& Name);
-    void GetDebugName(String& OutDebugName) const;
+    bool SetDebugName(const FString& Name);
+    void GetDebugName(FString& OutDebugName) const;
 
     FORCEINLINE VkSemaphore GetVkSemaphore() const
     {
@@ -24,6 +24,6 @@ public:
 private:
     VkSemaphore Semaphore;
 #if VULKAN_STORE_DEBUG_NAMES
-    String      DebugName;
+    FString      DebugName;
 #endif
 };

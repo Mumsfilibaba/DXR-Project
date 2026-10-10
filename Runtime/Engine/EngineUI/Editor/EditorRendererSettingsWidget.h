@@ -47,9 +47,9 @@ private:
     void DrawTonemappingSettings();
 
     FDelegateHandle                        ImGuiDelegateHandle;
-    TMap<String, bool>                     BoolDefaults;
-    TMap<String, int32>                    IntDefaults;
-    TMap<String, float>                    FloatDefaults;
+    TMap<FString, bool>                    BoolDefaults;
+    TMap<FString, int32>                   IntDefaults;
+    TMap<FString, float>                   FloatDefaults;
     TMap<const CHAR_T*, IConsoleVariable*> CVarCache;
     bool                                   bVisible;
     bool                                   bDefaultsCaptured;

@@ -31,17 +31,17 @@ static const CHAR_T* GDocuments[] =
     "[{\"nested\": {\"deeper\": {\"deepest\": [1, 2, 3]}}}]",
 };
 
-static String WriteValue(const FJsonValue& Value, EJsonWriteFlags Flags = EJsonWriteFlags::Pretty)
+static FString WriteValue(const FJsonValue& Value, EJsonWriteFlags Flags = EJsonWriteFlags::Pretty)
 {
     return Json::ToString(Value, Flags);
 }
 
 static bool RoundTripsDouble(double Value)
 {
-    const String Text = WriteValue(FJsonValue(Value), EJsonWriteFlags::Compact);
+    const FString Text = WriteValue(FJsonValue(Value), EJsonWriteFlags::Compact);
 
     FJsonValue Parsed;
-    if (!Json::Parse(StringView(Text), Parsed))
+    if (!Json::Parse(FStringView(Text), Parsed))
     {
         LOG_ERROR("[FAIL] '%s' did not parse back", Text.Data());
         return false;
@@ -59,10 +59,10 @@ static bool RoundTripsDouble(double Value)
 
 static bool RoundTripsFloat(float Value)
 {
-    const String Text = WriteValue(FJsonValue(Value), EJsonWriteFlags::Compact);
+    const FString Text = WriteValue(FJsonValue(Value), EJsonWriteFlags::Compact);
 
     FJsonValue Parsed;
-    if (!Json::Parse(StringView(Text), Parsed))
+    if (!Json::Parse(FStringView(Text), Parsed))
     {
         LOG_ERROR("[FAIL] '%s' did not parse back", Text.Data());
         return false;
@@ -80,7 +80,7 @@ static bool RoundTripsFloat(float Value)
 
 static bool WritesAs(const FJsonValue& Value, const CHAR_T* Expected, EJsonWriteFlags Flags = EJsonWriteFlags::Compact)
 {
-    const String Text = WriteValue(Value, Flags);
+    const FString Text = WriteValue(Value, Flags);
     if (!Text.Equals(Expected))
     {
         LOG_ERROR("[FAIL] expected '%s' but wrote '%s'", Expected, Text.Data());
@@ -99,7 +99,7 @@ bool JsonWriter_Test()
         for (const CHAR_T* Document : GDocuments)
         {
             FJsonValue First;
-            if (!Json::Parse(StringView(Document), First))
+            if (!Json::Parse(FStringView(Document), First))
             {
                 LOG_ERROR("[FAIL] the corpus entry '%s' did not parse", Document);
                 _bTestPassed = false;
@@ -107,8 +107,8 @@ bool JsonWriter_Test()
             }
 
             FJsonValue Second;
-            const String Text = WriteValue(First);
-            TEST_EXPECT(Json::Parse(StringView(Text), Second));
+            const FString Text = WriteValue(First);
+            TEST_EXPECT(Json::Parse(FStringView(Text), Second));
             TEST_EXPECT(First.Equals(Second));
         }
     }
@@ -118,7 +118,7 @@ bool JsonWriter_Test()
         for (const CHAR_T* Document : GDocuments)
         {
             FJsonValue Value;
-            if (!Json::Parse(StringView(Document), Value))
+            if (!Json::Parse(FStringView(Document), Value))
             {
                 continue;
             }
@@ -130,9 +130,9 @@ bool JsonWriter_Test()
     TEST_SECTION("Output never contains a carriage return");
     {
         FJsonValue Value;
-        TEST_EXPECT(Json::Parse(StringView("{\"a\":[1,2],\"b\":{\"c\":3}}"), Value));
+        TEST_EXPECT(Json::Parse(FStringView("{\"a\":[1,2],\"b\":{\"c\":3}}"), Value));
 
-        const String Text = WriteValue(Value);
+        const FString Text = WriteValue(Value);
         TEST_EXPECT(!Text.Contains('\r'));
         TEST_EXPECT(Text.Contains('\n'));
     }
@@ -189,7 +189,7 @@ bool JsonWriter_Test()
         TEST_EXPECT(WritesAs(FJsonValue(static_cast<int64>(1000000000000LL)), "1000000000000"));
 
         FJsonValue Parsed;
-        TEST_EXPECT(Json::Parse(StringView("9007199254740993"), Parsed));
+        TEST_EXPECT(Json::Parse(FStringView("9007199254740993"), Parsed));
         TEST_EXPECT(Parsed.GetInt64Or(0) == 9007199254740993LL);
     }
 
@@ -237,9 +237,9 @@ bool JsonWriter_Test()
         const CHAR_T* Awkward = "quote \" backslash \\ newline \n tab \t slash / unicode \xE2\x82\xAC";
 
         FJsonValue Parsed;
-        TEST_EXPECT(Json::Parse(StringView(WriteValue(FJsonValue(Awkward))), Parsed));
+        TEST_EXPECT(Json::Parse(FStringView(WriteValue(FJsonValue(Awkward))), Parsed));
 
-        String Result;
+        FString Result;
         TEST_EXPECT(Parsed.TryGetString(Result) && Result.Equals(Awkward));
     }
 
@@ -268,7 +268,7 @@ bool JsonWriter_Test()
     TEST_SECTION("Compact output has no whitespace at all");
     {
         FJsonValue Value;
-        TEST_EXPECT(Json::Parse(StringView("{ \"a\" : [ 1 , 2 ] , \"b\" : { \"c\" : 3 } }"), Value));
+        TEST_EXPECT(Json::Parse(FStringView("{ \"a\" : [ 1 , 2 ] , \"b\" : { \"c\" : 3 } }"), Value));
         TEST_EXPECT(WritesAs(Value, "{\"a\":[1,2],\"b\":{\"c\":3}}"));
     }
 
@@ -283,13 +283,13 @@ bool JsonWriter_Test()
 
     TEST_SECTION("A map writes its keys in alphabetical order every time");
     {
-        typedef TMap<String, int32> FLookup;
+        typedef TMap<FString, int32> FLookup;
 
         FLookup Map;
-        Map.Add(String("Zebra"), 1);
-        Map.Add(String("apple"), 2);
-        Map.Add(String("Mango"), 3);
-        Map.Add(String("Banana"), 4);
+        Map.Add(FString("Zebra"), 1);
+        Map.Add(FString("apple"), 2);
+        Map.Add(FString("Mango"), 3);
+        Map.Add(FString("Banana"), 4);
 
         FJsonValue Written;
         TJsonSerializer<FLookup>::Save(Written, Map);
@@ -313,7 +313,7 @@ bool JsonWriter_Test()
         Root.AddMember("Mango", FJsonValue(3));
 
         FJsonValue Parsed;
-        TEST_EXPECT(Json::Parse(StringView(WriteValue(Root)), Parsed));
+        TEST_EXPECT(Json::Parse(FStringView(WriteValue(Root)), Parsed));
         TEST_EXPECT(Parsed.GetMemberName(0).Equals("Zebra"));
         TEST_EXPECT(Parsed.GetMemberName(1).Equals("Apple"));
         TEST_EXPECT(Parsed.GetMemberName(2).Equals("Mango"));

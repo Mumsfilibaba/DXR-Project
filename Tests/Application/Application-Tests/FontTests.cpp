@@ -229,7 +229,7 @@ bool FontKerning_Test()
     TEST_EXPECT_EQ(Atlas.GetKerning('n', 'n'), 0);
 
     TEST_SECTION("The correction lands on the left glyph of the pair, so it moves the right one along");
-    const FShapedRun& Shaped = Font->ShapeText(StringView("AV"));
+    const FShapedRun& Shaped = Font->ShapeText(FStringView("AV"));
     TEST_EXPECT_EQ(Shaped.Glyphs.Size(), 2);
     TEST_EXPECT_EQ(Shaped.Glyphs[1].Offset, Shaped.Glyphs[0].Advance);
     TEST_EXPECT_EQ(Shaped.Glyphs[0].Advance, Atlas.GetGlyph('A').Advance + Kerning);
@@ -238,16 +238,16 @@ bool FontKerning_Test()
     TEST_EXPECT_EQ(Shaped.Glyphs[1].Advance, Atlas.GetGlyph('V').Advance);
 
     TEST_SECTION("Measuring, hit testing and the caret all read the one shaping");
-    const int32 KernedWidth = Font->MeasureWidth(StringView("AV"));
+    const int32 KernedWidth = Font->MeasureWidth(FStringView("AV"));
     TEST_EXPECT_EQ(KernedWidth, Atlas.GetGlyph('A').Advance + Atlas.GetGlyph('V').Advance + Kerning);
 
     int32 CaretOffset  = 0;
     int32 CaretAdvance = 0;
-    Font->GetCharacterPlacement(StringView("AV"), 1, CaretOffset, CaretAdvance);
+    Font->GetCharacterPlacement(FStringView("AV"), 1, CaretOffset, CaretAdvance);
     TEST_EXPECT_EQ(CaretOffset, Atlas.GetGlyph('A').Advance + Kerning);
 
     TEST_SECTION("The caret past the last character sits at the end of the run");
-    Font->GetCharacterPlacement(StringView("AV"), 2, CaretOffset, CaretAdvance);
+    Font->GetCharacterPlacement(FStringView("AV"), 2, CaretOffset, CaretAdvance);
     TEST_EXPECT_EQ(CaretOffset, KernedWidth);
     TEST_EXPECT_EQ(CaretAdvance, 0);
 
@@ -266,7 +266,7 @@ bool FontMeasurement_Test()
     }
 
     TEST_SECTION("An empty string measures to nothing");
-    TEST_EXPECT_EQ(Font->MeasureWidth(StringView("")), 0);
+    TEST_EXPECT_EQ(Font->MeasureWidth(FStringView("")), 0);
 
     TEST_SECTION("A string measures as the sum of the advances its shaping produced");
     int32 AdvanceA = 0;
@@ -274,7 +274,7 @@ bool FontMeasurement_Test()
     int32 OffsetB  = 0;
     int32 WidthAB  = 0;
     {
-        const FShapedRun& ShapedAB = Font->ShapeText(StringView("AB"));
+        const FShapedRun& ShapedAB = Font->ShapeText(FStringView("AB"));
         TEST_EXPECT_EQ(ShapedAB.Glyphs.Size(), 2);
         TEST_EXPECT_EQ(ShapedAB.Glyphs[0].Offset, 0);
 
@@ -286,17 +286,17 @@ bool FontMeasurement_Test()
 
     TEST_EXPECT_EQ(OffsetB, AdvanceA);
     TEST_EXPECT_EQ(WidthAB, AdvanceA + AdvanceB);
-    TEST_EXPECT_EQ(Font->MeasureWidth(StringView("AB")), WidthAB);
+    TEST_EXPECT_EQ(Font->MeasureWidth(FStringView("AB")), WidthAB);
 
     TEST_SECTION("A longer string is wider than a prefix of it");
-    TEST_EXPECT(Font->MeasureWidth(StringView("Hello, World")) > Font->MeasureWidth(StringView("Hello")));
+    TEST_EXPECT(Font->MeasureWidth(FStringView("Hello, World")) > Font->MeasureWidth(FStringView("Hello")));
 
     TEST_SECTION("An offset before the text lands on the first character");
-    TEST_EXPECT_EQ(Font->FindCharacterIndexAtOffset(StringView("Hello"), -10), 0);
-    TEST_EXPECT_EQ(Font->FindCharacterIndexAtOffset(StringView("Hello"), 0), 0);
+    TEST_EXPECT_EQ(Font->FindCharacterIndexAtOffset(FStringView("Hello"), -10), 0);
+    TEST_EXPECT_EQ(Font->FindCharacterIndexAtOffset(FStringView("Hello"), 0), 0);
 
     TEST_SECTION("An offset past the text lands after the last character");
-    const StringView Text("Hello");
+    const FStringView Text("Hello");
     TEST_EXPECT_EQ(Font->FindCharacterIndexAtOffset(Text, Font->MeasureWidth(Text) + 100), Text.Length());
 
     TEST_SECTION("The left half of a character resolves to that character");
@@ -320,24 +320,24 @@ bool FontElision_Test()
         TEST_END();
     }
 
-    const StringView Text("Ambient occlusion");
+    const FStringView Text("Ambient occlusion");
 
     const int32 FullWidth     = Font->MeasureWidth(Text);
-    const int32 EllipsisWidth = Font->MeasureWidth(StringView(IFontFace::Ellipsis));
+    const int32 EllipsisWidth = Font->MeasureWidth(FStringView(IFontFace::Ellipsis));
 
     TEST_SECTION("Text that already fits comes back untouched, whatever room is left over");
-    TEST_EXPECT_EQ(Font->ElideText(Text, FullWidth), String("Ambient occlusion"));
-    TEST_EXPECT_EQ(Font->ElideText(Text, FullWidth + 100), String("Ambient occlusion"));
+    TEST_EXPECT_EQ(Font->ElideText(Text, FullWidth), FString("Ambient occlusion"));
+    TEST_EXPECT_EQ(Font->ElideText(Text, FullWidth + 100), FString("Ambient occlusion"));
 
     TEST_SECTION("Text that does not fit is cut down and ends in the ellipsis");
-    const int32  Budget = FullWidth / 2;
-    const String Elided = Font->ElideText(Text, Budget);
+    const int32   Budget = FullWidth / 2;
+    const FString Elided = Font->ElideText(Text, Budget);
 
     TEST_EXPECT(Elided.Length() < Text.Length());
     TEST_EXPECT(Elided.EndsWith(IFontFace::Ellipsis));
 
     TEST_SECTION("What comes back stays inside the width it was given");
-    TEST_EXPECT(Font->MeasureWidth(StringView(Elided.Data(), Elided.Length())) <= Budget);
+    TEST_EXPECT(Font->MeasureWidth(FStringView(Elided.Data(), Elided.Length())) <= Budget);
 
     TEST_SECTION("A width that cannot hold even the ellipsis comes back empty rather than overrunning");
     TEST_EXPECT(Font->ElideText(Text, EllipsisWidth).IsEmpty());

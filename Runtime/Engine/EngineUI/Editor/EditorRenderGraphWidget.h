@@ -33,7 +33,7 @@ private:
     bool TryRequestFitViewToNodes();
 
     FRenderGraphDebugSnapshot Snapshot;
-    TMap<String, ImVec2>      PositionsByPassKey;
+    TMap<FString, ImVec2>     PositionsByPassKey;
     TArray<ImVec2>            NodePositions;
     FDelegateHandle           ImGuiDelegateHandle;
     bool                      bVisible;

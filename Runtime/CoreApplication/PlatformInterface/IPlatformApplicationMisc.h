@@ -11,7 +11,7 @@ struct IPlatformApplicationMisc
      * @param Title Caption shown in the title of the dialog
      * @param Message Body text shown in the dialog
      */
-    static FORCEINLINE void MessageBox(const String& Title, const String& Message)
+    static FORCEINLINE void MessageBox(const FString& Title, const FString& Message)
     {
     }
 

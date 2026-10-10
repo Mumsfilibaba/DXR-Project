@@ -51,7 +51,7 @@ static void DragCanvas(const TSharedPtr<FGraphCanvas>& Canvas, const IntVector2&
 }
 
 /** @brief A node with two inputs and one output, which is enough shape for every canvas test. */
-static FGraphNode MakeNode(const String& Title, const Vector2& Position, const String& TypeTag)
+static FGraphNode MakeNode(const FString& Title, const Vector2& Position, const FString& TypeTag)
 {
     const FUIStyle& Style = FUIStyle::GetDefault();
 

@@ -97,18 +97,18 @@ const TArray<const CHAR_T*>& FEditorPropertiesWidget::GetMaterialLabels(const FS
         TSharedPtr<FMaterial> Entry = MeshComponent->GetMaterial(Index);
         if (Entry && !Entry->GetName().IsEmpty())
         {
-            MaterialLabels.Emplace(String::Printf("%d: %s", Index, *Entry->GetName()));
+            MaterialLabels.Emplace(FString::Printf("%d: %s", Index, *Entry->GetName()));
         }
         else
         {
-            MaterialLabels.Emplace(String::Printf("%d: <unnamed>", Index));
+            MaterialLabels.Emplace(FString::Printf("%d: <unnamed>", Index));
         }
     }
 
     MaterialLabelText.Clear();
     MaterialLabelText.Reserve(NumMaterials);
 
-    for (const String& Label : MaterialLabels)
+    for (const FString& Label : MaterialLabels)
     {
         MaterialLabelText.Add(*Label);
     }
@@ -223,7 +223,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
     {
         ImGui::PushID(SelectedActor);
 
-        const String& ActorName = SelectedActor->GetName();
+        const FString& ActorName = SelectedActor->GetName();
         DrawLabelWithSeperator(ActorName.IsEmpty() ? "Actor" : *ActorName);
 
         const bool bHasMeshComponent       = MeshComponent != nullptr;
@@ -296,7 +296,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
                     EditorWidgets::PropertyTableBeginValueCell();
 
-                    const String& ParentName = ParentActor->GetName();
+                    const FString& ParentName = ParentActor->GetName();
 
                     ImGui::AlignTextToFramePadding();
                     ImGui::TextUnformatted(ParentName.IsEmpty() ? "Actor" : *ParentName);

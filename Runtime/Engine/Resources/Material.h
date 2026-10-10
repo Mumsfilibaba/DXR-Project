@@ -220,7 +220,7 @@ public:
     void EnableDoubleSided(bool bIsDoubleSided);
     void EnableParallaxClipping(bool bEnableParallaxClipping);
 
-    void SetName(const String& InName);
+    void SetName(const FString& InName);
 
     bool HasAlphaMask()         const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::EnableAlpha) && IsRouteFed(EMaterialScalar::Opacity) && !IsTranslucent(); }
     bool HasHeightMap()         const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::EnableHeight) && GetTexture(EMaterialTextureSlot::Height).IsValid(); }
@@ -278,7 +278,7 @@ public:
         return MaterialInfo;
     }
     
-    const String& GetName() const
+    const FString& GetName() const
     {
         return Name;
     }
@@ -331,7 +331,7 @@ public:
 
 private:
     FRHITextureRef      Textures[EMaterialTextureSlot::Count];
-    String              Name;
+    FString             Name;
     FMaterialInfo       MaterialInfo;
     int32               BufferIndex = 0;
     FRHISamplerStateRef Sampler;

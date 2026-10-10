@@ -8,8 +8,8 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-static String GMacCommandLine;
-static int32  GProgramMainResult = 0;
+static FString GMacCommandLine;
+static int32   GProgramMainResult = 0;
 
 @implementation FMacProgramDelegate
 
@@ -54,20 +54,20 @@ int main(int NumArgs, const CHAR_T** Args)
         GProgramArgs.Emplace(Args[Index]);
 
         GMacCommandLine += " ";
-        String CurrentArg(Args[Index]);
+        FString CurrentArg(Args[Index]);
 
         if (CurrentArg.Contains(' '))
         {
             if (CurrentArg.Contains('='))
             {
-                String Argument;
-                String ArgumentValue;
+                FString Argument;
+                FString ArgumentValue;
                 CurrentArg.Split('=', Argument, ArgumentValue);
-                CurrentArg = String::Printf("%s=\"%s\"", *Argument, *ArgumentValue);
+                CurrentArg = FString::Printf("%s=\"%s\"", *Argument, *ArgumentValue);
             }
             else
             {
-                CurrentArg = String::Printf("\"%s\"", *CurrentArg);
+                CurrentArg = FString::Printf("\"%s\"", *CurrentArg);
             }
         }
 

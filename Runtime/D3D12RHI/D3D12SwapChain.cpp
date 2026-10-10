@@ -936,7 +936,7 @@ bool FD3D12SwapChainRHI::RetrieveBackBuffers()
 
         BackBufferResource->SetResourceStateMode(ED3D12ResourceStateMode::ManualState);
         BackBufferResource->DisableDeferredRelease();
-        BackBufferResource->SetDebugName(String::Printf("BackBuffer[%u]", Index));
+        BackBufferResource->SetDebugName(FString::Printf("BackBuffer[%u]", Index));
 
         BackBuffers[Index].Resource = BackBufferResource;
     }

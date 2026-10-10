@@ -66,7 +66,7 @@ static FRHIComputePipelineStateRef CreateClearPipeline(const FMetalUAVClearKerne
 {
     TArray<uint8>   ShaderCode;
     FShaderCodeView CodeView;
-    String          ReadError;
+    FString         ReadError;
     if (!FShaderCodeReader::ReadEmbedded(TArrayView<const uint8>(Kernel.Code, static_cast<int32>(Kernel.Size)), ShaderCode, CodeView, &ReadError))
     {
         METAL_ERROR("A UAV clear shader header is invalid, building MetalRHI regenerates it: %s", *ReadError);

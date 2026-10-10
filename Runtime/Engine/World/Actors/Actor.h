@@ -251,7 +251,7 @@ public:
      *
      * @param InName Name of the actor
      */
-    void SetName(const String& InName);
+    void SetName(const FString& InName);
 
     /**
      * @brief Check if the actor has a component of the component-class
@@ -314,7 +314,7 @@ public:
      *
      * @return Returns the name of the actor
      */
-    const String& GetName() const
+    const FString& GetName() const
     {
         return Name;
     }
@@ -474,7 +474,7 @@ private:
     void ClearAttachments();
     void InvalidateWorldTransformCache() const;
 
-    String                   Name;
+    FString                  Name;
     FWorld*                  World;
 #if EDITOR_BUILD
     FActorFilter*            Filter;

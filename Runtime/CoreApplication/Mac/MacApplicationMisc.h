@@ -6,7 +6,7 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct COREAPPLICATION_API FMacApplicationMisc final : public IPlatformApplicationMisc
 {
-    static void MessageBox(const String& Title, const String& Message);
+    static void MessageBox(const FString& Title, const FString& Message);
     static void PumpMessages(bool bUntilEmpty);
 
     static FORCEINLINE bool DoesPlatformDrawCustomTitleBarCaptionButtons()

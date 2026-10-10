@@ -8,7 +8,7 @@
 
 #include "TestCommon/TestMacros.h"
 
-static bool WriteText(const String& Filename, const CHAR_T* Text)
+static bool WriteText(const FString& Filename, const CHAR_T* Text)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(Filename);
     if (!FileHandle)
@@ -16,7 +16,7 @@ static bool WriteText(const String& Filename, const CHAR_T* Text)
         return false;
     }
 
-    return File::WriteTextFile(FileHandle.Get(), String(Text));
+    return File::WriteTextFile(FileHandle.Get(), FString(Text));
 }
 
 bool Paths_Test()
@@ -25,8 +25,8 @@ bool Paths_Test()
 
     TEST_SECTION("The engine directory of the running tests is the engine folder they were built in");
     {
-        const String EngineDir     = Paths::GetEngineDir();
-        const String ExecutableDir = File::GetDirectoryOf(FPlatformFile::GetExecutablePath());
+        const FString EngineDir     = Paths::GetEngineDir();
+        const FString ExecutableDir = File::GetDirectoryOf(FPlatformFile::GetExecutablePath());
         TEST_EXPECT(FPlatformFile::IsFile(*File::CombinePath(EngineDir, Paths::EngineIdentityFilename)));
         TEST_EXPECT(File::IsUnderDirectory(ExecutableDir, EngineDir));
         TEST_EXPECT(Paths::GetAssetDir().Equals(EngineDir + "/Assets"));
@@ -38,10 +38,10 @@ bool Paths_Test()
     }
 
     // Outside the engine folder, so walking up never reaches the real engine
-    const String Root   = Paths::GetUserSettingsDir() + "/Tests/PathsTests.Scratch";
-    const String Engine = Root + "/Engine";
-    const String Inside = Engine + "/Build/bin/Debug";
-    const String Other  = Root + "/Other/bin";
+    const FString Root   = Paths::GetUserSettingsDir() + "/Tests/PathsTests.Scratch";
+    const FString Engine = Root + "/Engine";
+    const FString Inside = Engine + "/Build/bin/Debug";
+    const FString Other  = Root + "/Other/bin";
 
     File::DeleteDirectoryTree(Root);
     TEST_EXPECT(File::CreateDirectoryTree(Inside));

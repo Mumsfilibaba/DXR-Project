@@ -31,7 +31,7 @@ static TAutoConsoleVariable<bool> CVarForceMetal2Features(
     "Masks the device down to a Metal 2 feature set (no Metal 3, Tier 1 argument buffers, no mesh shaders, no vertex amplification) to exercise the non-bindless paths",
     false);
 
-static TAutoConsoleVariable<String> CVarPreferredDeviceName(
+static TAutoConsoleVariable<FString> CVarPreferredDeviceName(
     "MetalRHI.PreferredDeviceName",
     "Selects the Metal device whose name contains this text, ignoring the device scoring when it matches",
     "");
@@ -46,7 +46,7 @@ static TAutoConsoleVariable<float> CVarLogMemoryStatsInterval(
     "Logs a summary of Metal memory usage every this many seconds, or never when zero",
     0.0f);
 
-static TAutoConsoleVariable<String> CVarDynamicConstantsStorage(
+static TAutoConsoleVariable<FString> CVarDynamicConstantsStorage(
     "MetalRHI.DynamicConstantsStorage",
     "Storage mode of the dynamic constant pages: Auto (Managed on discrete GPUs, Shared otherwise), Shared or Managed",
     "Auto");
@@ -61,12 +61,12 @@ static TAutoConsoleVariable<int32> CVarDefragEligibilityDelay(
     "Frames an allocation has to live before a defrag move may relocate it, so resources created and filled this frame are left alone",
     1);
 
-static TAutoConsoleVariable<String> CVarBinaryArchiveMode(
+static TAutoConsoleVariable<FString> CVarBinaryArchiveMode(
     "MetalRHI.BinaryArchiveMode",
     "How the MTLBinaryArchive is used: Ignore, Use (load read-only), Append (load, then save every pipeline this session created) or Create (start empty, then save every pipeline this session created)",
     "Append");
 
-static TAutoConsoleVariable<String> CVarBinaryArchiveFileName(
+static TAutoConsoleVariable<FString> CVarBinaryArchiveFileName(
     "MetalRHI.BinaryArchiveFileName",
     "File name of the MTLBinaryArchive in the asset directory. A .version sidecar sits beside it",
     "PipelineCache.metalarchive");
@@ -76,7 +76,7 @@ static constexpr NSUInteger         GNullSampleCount     = 4;
 
 static MTLResourceOptions GetDynamicConstantsOptions()
 {
-    const String Storage = CVarDynamicConstantsStorage.GetValue();
+    const FString Storage = CVarDynamicConstantsStorage.GetValue();
 
     if (Storage.Equals("Shared", EStringCaseType::NoCase))
     {
@@ -625,7 +625,7 @@ bool FMetalDevice::CreatePipelineCaches()
     BinaryArchive      = new FMetalBinaryArchive(this);
     PipelineCache      = new FMetalPipelineCache(this);
 
-    const String ArchivePath = Paths::GetAssetDir() + '/' + CVarBinaryArchiveFileName.GetValue();
+    const FString ArchivePath = Paths::GetAssetDir() + '/' + CVarBinaryArchiveFileName.GetValue();
     return BinaryArchive->Initialize(FMetalBinaryArchive::ParseMode(CVarBinaryArchiveMode.GetValue()), ArchivePath);
 }
 
@@ -682,7 +682,7 @@ id<MTLDevice> FMetalDevice::SelectDevice()
 
     DeviceObserver = [Observer retain];
 
-    const String PreferredName = CVarPreferredDeviceName.GetValue();
+    const FString PreferredName = CVarPreferredDeviceName.GetValue();
 
     id<MTLDevice> SelectedDevice = nil;
     id<MTLDevice> PreferredMatch = nil;
@@ -690,8 +690,8 @@ id<MTLDevice> FMetalDevice::SelectDevice()
 
     for (id<MTLDevice> CandidateDevice in AvailableDevices)
     {
-        const String Name(CandidateDevice.name);
-        const int32  Score = ScoreDevice(CandidateDevice);
+        const FString Name(CandidateDevice.name);
+        const int32   Score = ScoreDevice(CandidateDevice);
 
         METAL_INFO("Metal device candidate '%s' (score=%d, %llu MB, low-power=%s, removable=%s, headless=%s)",
             *Name,
@@ -729,7 +729,7 @@ id<MTLDevice> FMetalDevice::SelectDevice()
 
     if (DisplayDevice)
     {
-        const String DisplayName(DisplayDevice.name);
+        const FString DisplayName(DisplayDevice.name);
         METAL_INFO("The main display is driven by '%s'", *DisplayName);
 
         if (CVarPreferDisplayDevice.GetValue() && !PreferredMatch)
@@ -738,7 +738,7 @@ id<MTLDevice> FMetalDevice::SelectDevice()
         }
         else if (SelectedDevice && SelectedDevice.registryID != DisplayDevice.registryID)
         {
-            const String SelectedName(SelectedDevice.name);
+            const FString SelectedName(SelectedDevice.name);
             METAL_WARNING("Rendering on '%s' while '%s' drives the main display, so every presented frame is copied between the GPUs. "
                 "Set MetalRHI.PreferDisplayDevice to render on the display GPU", *SelectedName, *DisplayName);
         }
@@ -799,7 +799,7 @@ void FMetalDevice::ReadDeviceProperties()
         }
     }
 
-    const String DeviceClass([[Device class] description]);
+    const FString DeviceClass([[Device class] description]);
     METAL_INFO("Selected Device=%s (%s)", *Properties.Name, *DeviceClass);
 
     if (DeviceClass.Contains("Capture"))

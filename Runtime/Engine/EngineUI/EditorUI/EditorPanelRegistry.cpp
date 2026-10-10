@@ -136,7 +136,7 @@ void FEditorPanelRegistry::Release()
     DockingArea.Reset();
 }
 
-bool FEditorPanelRegistry::IsPanelDocked(const String& PanelId) const
+bool FEditorPanelRegistry::IsPanelDocked(const FString& PanelId) const
 {
     if (DockingArea && DockingArea->IsPanelDocked(PanelId))
     {
@@ -146,7 +146,7 @@ bool FEditorPanelRegistry::IsPanelDocked(const String& PanelId) const
     return FDockWindowManager::IsInitialized() && FDockWindowManager::Get().IsPanelDockedAnywhere(PanelId);
 }
 
-bool FEditorPanelRegistry::IsPanelVisible(const String& PanelId) const
+bool FEditorPanelRegistry::IsPanelVisible(const FString& PanelId) const
 {
     if (DockingArea && DockingArea->IsPanelVisible(PanelId))
     {
@@ -179,7 +179,7 @@ void FEditorPanelRegistry::OnActorRemoved(FActor* Actor)
     }
 }
 
-void FEditorPanelRegistry::ShowPanel(const String& PanelId)
+void FEditorPanelRegistry::ShowPanel(const FString& PanelId)
 {
     TSharedPtr<FEditorPanel> Panel = FindPanel(PanelId);
     if (!Panel || !DockingArea)
@@ -202,7 +202,7 @@ void FEditorPanelRegistry::ShowPanel(const String& PanelId)
     Panel->SetOpen(true);
 }
 
-void FEditorPanelRegistry::HidePanel(const String& PanelId)
+void FEditorPanelRegistry::HidePanel(const FString& PanelId)
 {
     TSharedPtr<FEditorPanel> Panel = FindPanel(PanelId);
     if (!Panel || !DockingArea)
@@ -218,7 +218,7 @@ void FEditorPanelRegistry::HidePanel(const String& PanelId)
     Panel->SetOpen(false);
 }
 
-void FEditorPanelRegistry::TogglePanel(const String& PanelId)
+void FEditorPanelRegistry::TogglePanel(const FString& PanelId)
 {
     if (IsPanelDocked(PanelId))
     {
@@ -229,7 +229,7 @@ void FEditorPanelRegistry::TogglePanel(const String& PanelId)
     ShowPanel(PanelId);
 }
 
-void FEditorPanelRegistry::OnPanelClosed(const String& PanelId)
+void FEditorPanelRegistry::OnPanelClosed(const FString& PanelId)
 {
     if (TSharedPtr<FEditorPanel> Panel = FindPanel(PanelId))
     {
@@ -237,7 +237,7 @@ void FEditorPanelRegistry::OnPanelClosed(const String& PanelId)
     }
 }
 
-TSharedPtr<FEditorPanel> FEditorPanelRegistry::FindPanel(const String& PanelId) const
+TSharedPtr<FEditorPanel> FEditorPanelRegistry::FindPanel(const FString& PanelId) const
 {
     for (const TSharedPtr<FEditorPanel>& Panel : Panels)
     {

@@ -35,8 +35,8 @@ bool Guid_Test()
         TMap<FGuid, int32> Seen;
         for (int32 Index = 0; Index < 1000; ++Index)
         {
-            const FGuid  Guid = FGuid::Create();
-            const String Text = Guid.ToString();
+            const FGuid   Guid = FGuid::Create();
+            const FString Text = Guid.ToString();
             TEST_EXPECT(Guid.IsValid());
 
             TEST_EXPECT(Text[12] == '4');
@@ -127,7 +127,7 @@ bool Guid_Test()
     TEST_SECTION("Loading a malformed GUID reports an error");
     {
         FJsonValue Document;
-        TEST_EXPECT(Json::Parse(StringView("{\"Guid\": \"not-a-guid\"}"), Document));
+        TEST_EXPECT(Json::Parse(FStringView("{\"Guid\": \"not-a-guid\"}"), Document));
 
         FTestAssetReference Loaded;
         FJsonArchive Loader = FJsonArchive::Loader(Document);

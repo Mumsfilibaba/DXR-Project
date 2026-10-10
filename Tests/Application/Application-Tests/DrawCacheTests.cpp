@@ -130,16 +130,16 @@ static void Record(const TSharedPtr<FVisualElement>& Element, FDrawCommandList& 
 
 static bool RecordingsAgree(const FDrawCommandList& Left, const FDrawCommandList& Right)
 {
-    int32  Index = 0;
-    String Reason;
+    int32   Index = 0;
+    FString Reason;
 
     return !FDrawCommandList::FindFirstDifference(Left, Right, Index, Reason);
 }
 
 static bool RecordingsMatch(const FDrawCommandList& Left, const FDrawCommandList& Right)
 {
-    int32  Index = 0;
-    String Reason;
+    int32   Index = 0;
+    FString Reason;
 
     if (!FDrawCommandList::FindFirstDifference(Left, Right, Index, Reason))
     {
@@ -179,10 +179,10 @@ static bool RecordingReplays(const TSharedPtr<FVisualElement>& Element)
     return CommandList.WasFullyReplayed();
 }
 
-static TSharedPtr<FMenu> CreateMenu(const TSharedPtr<IFontFace>& Font, const TArray<String>& Labels)
+static TSharedPtr<FMenu> CreateMenu(const TSharedPtr<IFontFace>& Font, const TArray<FString>& Labels)
 {
     TSharedPtr<FMenu> Menu = FMenu::Create();
-    for (const String& Label : Labels)
+    for (const FString& Label : Labels)
     {
         FMenuItem::FDesc Desc;
         Desc.SetLabel(Label).SetFont(Font);
@@ -210,7 +210,7 @@ static void SettleWindowDrawCache(const TSharedPtr<FWindow>& Window, int32 Frame
 
 static TSharedPtr<FMenu> MakeLongMenu(const TSharedPtr<IFontFace>& Font)
 {
-    TArray<String> Labels;
+    TArray<FString> Labels;
     Labels.Add("New");
     Labels.Add("Open");
     Labels.Add("Save");
@@ -220,7 +220,7 @@ static TSharedPtr<FMenu> MakeLongMenu(const TSharedPtr<IFontFace>& Font)
         CHAR_T Label[32];
         CString::Snprintf(Label, static_cast<int32>(sizeof(Label)), "Recent %d", Index);
 
-        Labels.Add(String(Label));
+        Labels.Add(FString(Label));
     }
 
     return CreateMenu(Font, Labels);

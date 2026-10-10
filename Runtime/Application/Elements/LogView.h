@@ -18,13 +18,13 @@ struct FLogLine
     {
     }
 
-    FLogLine(const String& InMessage, ELogSeverity InSeverity)
+    FLogLine(const FString& InMessage, ELogSeverity InSeverity)
         : Message(InMessage)
         , Severity(InSeverity)
     {
     }
 
-    String       Message;
+    FString      Message;
     ELogSeverity Severity;
 };
 
@@ -63,8 +63,8 @@ public:
     virtual IntVector2 PrepareDesiredSize() override;
 
     // IOutputDevice Interface
-    virtual void Log(const String& Message) override;
-    virtual void Log(ELogSeverity Severity, const String& Message) override;
+    virtual void Log(const FString& Message) override;
+    virtual void Log(ELogSeverity Severity, const FString& Message) override;
     virtual void Flush() override;
 
     /**
@@ -109,7 +109,7 @@ public:
      * @param InSearchText      The text to look for. An empty string clears the search.
      * @param bInFilterToMatches True to hide non-matching lines rather than only highlighting.
      */
-    void SetSearchText(const String& InSearchText, bool bInFilterToMatches);
+    void SetSearchText(const FString& InSearchText, bool bInFilterToMatches);
 
     /**
      * @brief Sets whether the search must use the same case as the filter string.
@@ -155,7 +155,7 @@ public:
     NODISCARD TArray<FLogLine> GetLines() const;
 
     /** @return The messages the filters currently admit, in the order they were logged. */
-    NODISCARD TArray<String> GetVisibleMessages() const;
+    NODISCARD TArray<FString> GetVisibleMessages() const;
 
     /** @return How many lines the filters currently admit. */
     NODISCARD int32 GetNumVisibleLines() const;
@@ -164,7 +164,7 @@ public:
     NODISCARD int32 GetNumLines() const;
 
     /** @return The string the lines are searched for, which is empty when there is no search. */
-    NODISCARD FORCEINLINE const String& GetSearchText() const
+    NODISCARD FORCEINLINE const FString& GetSearchText() const
     {
         return SearchText;
     }
@@ -222,7 +222,7 @@ private:
     mutable FCriticalSection   PendingLinesCS;
     TArray<FLogLine>           PendingLines;
     TArray<FLogLine>           Lines;
-    String                     SearchText;
+    FString                    SearchText;
     EStringCaseType            SearchCaseType;
     uint8                      VisibleSeverities;
     int32                      MaxLineCount;

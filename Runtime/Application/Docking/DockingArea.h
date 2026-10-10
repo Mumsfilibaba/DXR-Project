@@ -15,10 +15,10 @@ class FTabStrip;
 struct FPanelOutline;
 
 /** @brief Called when a tab was dragged clear of every docking area, which is what floats a panel. */
-DECLARE_DELEGATE(FOnPanelTornOut, const String& /*PanelId*/, const IntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnPanelTornOut, const FString& /*PanelId*/, const IntVector2& /*ScreenPosition*/);
 
 /** @brief Called when a panel's tab was closed. */
-DECLARE_DELEGATE(FOnPanelClosed, const String& /*PanelId*/);
+DECLARE_DELEGATE(FOnPanelClosed, const FString& /*PanelId*/);
 
 struct FDropZone
 {
@@ -26,7 +26,7 @@ struct FDropZone
     FRectangle Bounds;
 
     /** @brief The panel a drop here lands against, empty when the area holds none to land against. */
-    String TargetPanelId;
+    FString TargetPanelId;
 
     /** @brief Which side of that panel it takes, or Center to join it as a tab. */
     EDockDirection Direction = EDockDirection::Center;
@@ -97,14 +97,14 @@ public:
      * @param Label   The text its tab shows.
      * @param Panel   The content shown when its tab is active.
      */
-    void RegisterPanel(const String& PanelId, const String& Label, const TSharedPtr<FVisualElement>& Panel);
+    void RegisterPanel(const FString& PanelId, const FString& Label, const TSharedPtr<FVisualElement>& Panel);
 
     /**
      * @brief Forgets a panel, removing it from the tree if it was in it.
      *
      * @param PanelId The panel to forget.
      */
-    void UnregisterPanel(const String& PanelId);
+    void UnregisterPanel(const FString& PanelId);
 
     /**
      * @brief Rebuilds the tree from a saved description, dropping ids with no registered panel.
@@ -119,7 +119,7 @@ public:
      * @param Filename Where to write it.
      * @return True when the file was written.
      */
-    bool SaveLayoutToFile(const String& Filename) const;
+    bool SaveLayoutToFile(const FString& Filename) const;
 
     /**
      * @brief Reads a tree back and applies it, leaving the layout alone when the file cannot be read.
@@ -127,7 +127,7 @@ public:
      * @param Filename The file to read.
      * @return True when a layout was applied.
      */
-    bool RestoreLayoutFromFile(const String& Filename);
+    bool RestoreLayoutFromFile(const FString& Filename);
 
     /**
      * @brief Docks a panel beside or into an existing one, which is also what a drop performs.
@@ -137,14 +137,14 @@ public:
      * @param Direction     Which side of the target, or Center to add it as a tab.
      * @param TabIndex      Where among the target's tabs a Center dock puts it, where anything outside them puts it after all of them.
      */
-    void DockPanel(const String& PanelId, const String& TargetPanelId, EDockDirection Direction, int32 TabIndex = -1);
+    void DockPanel(const FString& PanelId, const FString& TargetPanelId, EDockDirection Direction, int32 TabIndex = -1);
 
     /**
      * @brief Removes a panel from the tree, collapsing whatever that empties.
      *
      * @param PanelId The panel to remove.
      */
-    void UndockPanel(const String& PanelId);
+    void UndockPanel(const FString& PanelId);
 
     /**
      * @brief Gathers the zones a drop can land in for where the cursor is, which is the tab strip of the
@@ -168,7 +168,7 @@ public:
      * @param OutTabIndex      Where among the target's tabs a drop onto a tab strip goes, or -1 to go after all of them.
      * @return True when the point is inside a zone of this area.
      */
-    NODISCARD bool HitTestDropTarget(const IntVector2& ScreenPosition, String& OutTargetPanelId, EDockDirection& OutDirection, int32& OutTabIndex) const;
+    NODISCARD bool HitTestDropTarget(const IntVector2& ScreenPosition, FString& OutTargetPanelId, EDockDirection& OutDirection, int32& OutTabIndex) const;
 
     /**
      * @brief Gets where a drop resolved against this area would put the panel, which is what the drag
@@ -179,7 +179,7 @@ public:
      * @param OutBounds     Set to the rectangle, in screen coordinates.
      * @return True when the area is in a window and the rectangle is not empty.
      */
-    NODISCARD bool GetDropPreviewBounds(const String& TargetPanelId, EDockDirection Direction, FRectangle& OutBounds) const;
+    NODISCARD bool GetDropPreviewBounds(const FString& TargetPanelId, EDockDirection Direction, FRectangle& OutBounds) const;
 
     /**
      * @brief Tells whether a drop would add the panel as a tab to a strip that is already there.
@@ -188,7 +188,7 @@ public:
      * @param Direction     Which side of that panel it would land on.
      * @return True when the drop joins an existing strip, which then shows the panel's tab.
      */
-    NODISCARD bool DoesDropJoinTabStrip(const String& TargetPanelId, EDockDirection Direction) const;
+    NODISCARD bool DoesDropJoinTabStrip(const FString& TargetPanelId, EDockDirection Direction) const;
 
     /** @return True when the area is in the window the drag's cursor is over, which is the only window that takes a drop. */
     NODISCARD bool IsInCursorWindow() const;
@@ -204,7 +204,7 @@ public:
      *
      * @param PanelId The panel that was dropped.
      */
-    void SettleDrop(const String& PanelId);
+    void SettleDrop(const FString& PanelId);
 
     /**
      * @brief Finds where a docked panel's body is on screen.
@@ -212,7 +212,7 @@ public:
      * @param PanelId The panel to look for.
      * @return The body of the panel in screen coordinates, or an empty rectangle when the area does not hold it.
      */
-    NODISCARD FRectangle GetPanelScreenBounds(const String& PanelId) const;
+    NODISCARD FRectangle GetPanelScreenBounds(const FString& PanelId) const;
 
     /**
      * @brief Shrinks a picture of a panel that was just torn out of the area into the window the drag carries it in.
@@ -227,10 +227,10 @@ public:
      *
      * @param PanelId The panel to show.
      */
-    void SetActivePanel(const String& PanelId);
+    void SetActivePanel(const FString& PanelId);
 
     /** @return Every panel the tree holds, depth first through it and in tab order inside each strip. */
-    NODISCARD TArray<String> GetDockedPanelIds() const;
+    NODISCARD TArray<FString> GetDockedPanelIds() const;
 
     /**
      * @brief Finds the strip a docked panel's tab sits in.
@@ -242,7 +242,7 @@ public:
      * @param PanelId The panel whose strip is wanted. An empty string returns the first strip there is.
      * @return The strip, or null when the tree holds no such panel.
      */
-    NODISCARD TSharedPtr<FTabStrip> FindPanelTabStrip(const String& PanelId) const;
+    NODISCARD TSharedPtr<FTabStrip> FindPanelTabStrip(const FString& PanelId) const;
 
     /**
      * @brief The root tab strip of an unsplit tree, which a floating host can lift into its caption.
@@ -264,7 +264,7 @@ public:
      * @param PanelId The panel to look for.
      * @return True when a strip in the tree holds a tab for it.
      */
-    NODISCARD bool IsPanelDocked(const String& PanelId) const;
+    NODISCARD bool IsPanelDocked(const FString& PanelId) const;
 
     /**
      * @brief Gets a panel in the tab group that is most in view, rated by how close it is to the middle of the area and then
@@ -272,7 +272,7 @@ public:
      *
      * @return The panel that group shows, or an empty string when the tree holds no panels.
      */
-    NODISCARD String GetMiddlePanelId() const;
+    NODISCARD FString GetMiddlePanelId() const;
 
     /**
      * @brief Gets whether a panel's content is on screen, which a docked panel behind another tab is not.
@@ -280,14 +280,14 @@ public:
      * @param PanelId The panel to look for.
      * @return True when the tree holds it and it is the front tab of its strip.
      */
-    NODISCARD bool IsPanelVisible(const String& PanelId) const;
+    NODISCARD bool IsPanelVisible(const FString& PanelId) const;
 
     /**
      * @brief Gets every id the area knows about, whether or not the tree holds it.
      *
      * @return The registered ids, in no order the caller should rely on.
      */
-    NODISCARD TArray<String> GetRegisteredPanelIds() const;
+    NODISCARD TArray<FString> GetRegisteredPanelIds() const;
 
     /**
      * @brief Reads back what a panel was registered with, which is what moving it to another area needs.
@@ -297,7 +297,7 @@ public:
      * @param OutPanel Its content.
      * @return True when the area knows the id.
      */
-    NODISCARD bool GetPanelRegistration(const String& PanelId, String& OutLabel, TSharedPtr<FVisualElement>& OutPanel) const;
+    NODISCARD bool GetPanelRegistration(const FString& PanelId, FString& OutLabel, TSharedPtr<FVisualElement>& OutPanel) const;
 
     /**
      * @brief Builds the elements the tree currently describes, if a change is waiting to be applied.
@@ -347,14 +347,14 @@ private:
         {
         }
 
-        String                     Label;
+        FString                    Label;
         TSharedPtr<FVisualElement> Panel;
     };
     
     NODISCARD int32 FindLeafAt(const IntVector2& ClientPosition) const;
     NODISCARD FRectangle GetLiftedTabStripBounds() const;
     NODISCARD bool IsOverLiftedTabStrip(const IntVector2& ClientPosition) const;
-    NODISCARD FRectangle ComputeDropBounds(const String& TargetPanelId, EDockDirection Direction) const;
+    NODISCARD FRectangle ComputeDropBounds(const FString& TargetPanelId, EDockDirection Direction) const;
     NODISCARD const FVisualElement* FindFocusedFrame() const;
     NODISCARD FPanelOutline ComputeLeafOutline(const FLeafGeometry& Leaf) const;
     NODISCARD bool IsShowingStrip(const FLeafGeometry& Leaf) const;
@@ -370,43 +370,43 @@ private:
     TSharedPtr<FVisualElement> BuildNode(FDockNode& Node, const TArray<int32>& Path);
     void RequestRebuild();
 
-    void DockAgainstNode(FDockNode& TargetNode, const String& PanelId, EDockDirection Direction, int32 TabIndex);
-    void OnTabActivated(const String& PanelId);
-    void OnTabClosed(const String& PanelId);
-    void OnTabReordered(const TArray<int32>& Path, const String& PanelId, int32 NewIndex);
-    void OnTabDetached(const String& PanelId, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
-    void OnTabDragMoved(const String& PanelId, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
-    void OnTabDragFinished(const String& PanelId, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
+    void DockAgainstNode(FDockNode& TargetNode, const FString& PanelId, EDockDirection Direction, int32 TabIndex);
+    void OnTabActivated(const FString& PanelId);
+    void OnTabClosed(const FString& PanelId);
+    void OnTabReordered(const TArray<int32>& Path, const FString& PanelId, int32 NewIndex);
+    void OnTabDetached(const FString& PanelId, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
+    void OnTabDragMoved(const FString& PanelId, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
+    void OnTabDragFinished(const FString& PanelId, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
     void OnSplitterFractionsChanged(const TArray<int32>& Path, const TArray<float>& Fractions);
 
-    FDockNode                 Root;
-    TMap<String, FPanelEntry> PanelsById;
-    TArray<FLeafGeometry>     Leaves;
-    TSharedPtr<IFontFace>     Font;
-    TSharedPtr<IFontFace>     TabFont;
-    FUITabStyle               TabStyle;
-    FUIBrush                  TabCloseIcon;
-    bool                      bAllowTearOut;
-    bool                      bIsDropTarget;
-    bool                      bNeedsRebuild;
-    bool                      bSuppressRootTabStrip;
-    FRectangle                LandingFrom;
-    FRectangle                LandingTo;
-    FUIAnimation              LandingMove;
-    FUIAnimation              LandingFade;
-    String                    SettlingPanelId;
-    bool                      bHasLanding;
-    bool                      bLandingTracksDecorator;
-    bool                      bLandingOvershoots;
-    FRectangle                TearOutFrom;
-    FRHITextureRef            TearOutPicture;
-    FUIAnimation              TearOutMove;
-    String                    ChipsTargetPanelId;
-    FUIAnimation              ChipsFade;
-    FUIAnimation              ChipHoverFade;
-    int32                     HoveredChipIndex;
-    int32                     PreviousHoveredChipIndex;
-    bool                      bHasChips;
-    FOnPanelTornOut           OnPanelTornOutDelegate;
-    FOnPanelClosed            OnPanelClosedDelegate;
+    FDockNode                  Root;
+    TMap<FString, FPanelEntry> PanelsById;
+    TArray<FLeafGeometry>      Leaves;
+    TSharedPtr<IFontFace>      Font;
+    TSharedPtr<IFontFace>      TabFont;
+    FUITabStyle                TabStyle;
+    FUIBrush                   TabCloseIcon;
+    bool                       bAllowTearOut;
+    bool                       bIsDropTarget;
+    bool                       bNeedsRebuild;
+    bool                       bSuppressRootTabStrip;
+    FRectangle                 LandingFrom;
+    FRectangle                 LandingTo;
+    FUIAnimation               LandingMove;
+    FUIAnimation               LandingFade;
+    FString                    SettlingPanelId;
+    bool                       bHasLanding;
+    bool                       bLandingTracksDecorator;
+    bool                       bLandingOvershoots;
+    FRectangle                 TearOutFrom;
+    FRHITextureRef             TearOutPicture;
+    FUIAnimation               TearOutMove;
+    FString                    ChipsTargetPanelId;
+    FUIAnimation               ChipsFade;
+    FUIAnimation               ChipHoverFade;
+    int32                      HoveredChipIndex;
+    int32                      PreviousHoveredChipIndex;
+    bool                       bHasChips;
+    FOnPanelTornOut            OnPanelTornOutDelegate;
+    FOnPanelClosed             OnPanelClosedDelegate;
 };

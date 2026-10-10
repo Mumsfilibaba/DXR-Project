@@ -78,7 +78,7 @@ void* FVulkanGeometryAccelerationStructureRHI::GetRHINativeResource() const
     return reinterpret_cast<void*>(AccelerationStructure);
 }
 
-void FVulkanGeometryAccelerationStructureRHI::SetDebugName(const String& InName)
+void FVulkanGeometryAccelerationStructureRHI::SetDebugName(const FString& InName)
 {
     if (VULKAN_CHECK_HANDLE(AccelerationStructure))
     {
@@ -90,7 +90,7 @@ void FVulkanGeometryAccelerationStructureRHI::SetDebugName(const String& InName)
 #endif
 }
 
-void FVulkanGeometryAccelerationStructureRHI::GetDebugName(String& OutDebugName) const
+void FVulkanGeometryAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
 {
 #if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;
@@ -383,7 +383,7 @@ FRHIDescriptorHandle FVulkanSceneAccelerationStructureRHI::GetBindlessHandle() c
     return View ? View->GetBindlessHandle() : FRHIDescriptorHandle();
 }
 
-void FVulkanSceneAccelerationStructureRHI::SetDebugName(const String& InName)
+void FVulkanSceneAccelerationStructureRHI::SetDebugName(const FString& InName)
 {
     if (VULKAN_CHECK_HANDLE(AccelerationStructure))
     {
@@ -395,7 +395,7 @@ void FVulkanSceneAccelerationStructureRHI::SetDebugName(const String& InName)
 #endif
 }
 
-void FVulkanSceneAccelerationStructureRHI::GetDebugName(String& OutDebugName) const
+void FVulkanSceneAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
 {
 #if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;
@@ -825,7 +825,7 @@ void* FVulkanClusterAccelerationStructureRHI::GetRHINativeResource() const
     return reinterpret_cast<void*>(ResultLocation.GetBackingBuffer());
 }
 
-void FVulkanClusterAccelerationStructureRHI::SetDebugName(const String& InName)
+void FVulkanClusterAccelerationStructureRHI::SetDebugName(const FString& InName)
 {
 #if VULKAN_STORE_DEBUG_NAMES
     DebugName = InName;
@@ -834,7 +834,7 @@ void FVulkanClusterAccelerationStructureRHI::SetDebugName(const String& InName)
 #endif
 }
 
-void FVulkanClusterAccelerationStructureRHI::GetDebugName(String& OutDebugName) const
+void FVulkanClusterAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
 {
 #if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;
@@ -989,7 +989,7 @@ FRHIDescriptorHandle FVulkanPartitionedSceneAccelerationStructureRHI::GetBindles
     return View ? View->GetBindlessHandle() : FRHIDescriptorHandle();
 }
 
-void FVulkanPartitionedSceneAccelerationStructureRHI::SetDebugName(const String& InName)
+void FVulkanPartitionedSceneAccelerationStructureRHI::SetDebugName(const FString& InName)
 {
 #if VULKAN_STORE_DEBUG_NAMES
     DebugName = InName;
@@ -998,7 +998,7 @@ void FVulkanPartitionedSceneAccelerationStructureRHI::SetDebugName(const String&
 #endif
 }
 
-void FVulkanPartitionedSceneAccelerationStructureRHI::GetDebugName(String& OutDebugName) const
+void FVulkanPartitionedSceneAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
 {
 #if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;

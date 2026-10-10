@@ -5,7 +5,7 @@
 #include "Core/Math/Math.h"
 
 void DrawTextWithSearchHighlight(FDrawCommandList& OutCommandList, int32 LayerId, const FRectangle& LabelBounds,
-    const String& Label, int32 MatchOffset, int32 MatchLength, const IFontFace* Font, const FFloatColor& TextColor)
+    const FString& Label, int32 MatchOffset, int32 MatchLength, const IFontFace* Font, const FFloatColor& TextColor)
 {
     if (!Font)
     {
@@ -14,10 +14,10 @@ void DrawTextWithSearchHighlight(FDrawCommandList& OutCommandList, int32 LayerId
 
     const FUIStyle&        Style    = FUIStyle::GetDefault();
     const FUITreeRowStyle& RowStyle = Style.TreeRow;
-    const StringView       LabelView(Label.Data(), Label.Length());
+    const FStringView      LabelView(Label.Data(), Label.Length());
 
-    const int32 MatchLeft  = Font->MeasureWidth(StringView(LabelView.Data(), MatchOffset));
-    const int32 MatchWidth = Font->MeasureWidth(StringView(LabelView.Data() + MatchOffset, MatchLength));
+    const int32 MatchLeft  = Font->MeasureWidth(FStringView(LabelView.Data(), MatchOffset));
+    const int32 MatchWidth = Font->MeasureWidth(FStringView(LabelView.Data() + MatchOffset, MatchLength));
 
     const FRectangle MatchBounds(IntVector2(LabelBounds.Position.X + MatchLeft, LabelBounds.Position.Y), MatchWidth, LabelBounds.Height);
     const FRectangle HighlightBounds = MatchBounds.Inflate(Style.Metrics.TextHighlightPadding);
@@ -203,7 +203,7 @@ void FTextLayout::AppendPiece(const FTextRun& Style, const CHAR_T* Characters, i
     }
 
     FTextRun& Run = Runs.Emplace();
-    Run.Text           = String(Characters, Count);
+    Run.Text           = FString(Characters, Count);
     Run.Font           = Style.Font;
     Run.Tint           = Style.Tint;
     Run.BackgroundTint = Style.BackgroundTint;
@@ -240,7 +240,7 @@ void FTextLayout::WrapSegment(const FTextRun& Style, const CHAR_T* Characters, i
         }
 
         const int32 Remaining      = Count - PieceStart;
-        const int32 RemainingWidth = Style.Font->MeasureWidth(StringView(Characters + PieceStart, Remaining));
+        const int32 RemainingWidth = Style.Font->MeasureWidth(FStringView(Characters + PieceStart, Remaining));
 
         if (RemainingWidth <= Available)
         {
@@ -248,10 +248,10 @@ void FTextLayout::WrapSegment(const FTextRun& Style, const CHAR_T* Characters, i
             return;
         }
 
-        int32 FitCount = Style.Font->FindCharacterIndexAtOffset(StringView(Characters + PieceStart, Remaining), Available);
+        int32 FitCount = Style.Font->FindCharacterIndexAtOffset(FStringView(Characters + PieceStart, Remaining), Available);
         FitCount       = Math::Clamp(FitCount, 0, Remaining);
 
-        while (FitCount > 0 && Style.Font->MeasureWidth(StringView(Characters + PieceStart, FitCount)) > Available)
+        while (FitCount > 0 && Style.Font->MeasureWidth(FStringView(Characters + PieceStart, FitCount)) > Available)
         {
             FitCount--;
         }
@@ -295,7 +295,7 @@ int32 FTextLayout::MeasureRun(const FTextRun& Run)
         return 0;
     }
 
-    return Run.Font->MeasureWidth(StringView(Run.Text.Data(), Run.Text.Length()));
+    return Run.Font->MeasureWidth(FStringView(Run.Text.Data(), Run.Text.Length()));
 }
 
 int32 FTextLayout::FindCharacterIndexAt(const IntVector2& LocalPosition) const
@@ -346,7 +346,7 @@ int32 FTextLayout::FindCharacterIndexAt(const IntVector2& LocalPosition) const
             }
 
             const int32 OffsetInRun = Run.Font->FindCharacterIndexAtOffset(
-                StringView(Run.Text.Data(), Run.Text.Length()), LocalPosition.X - RunLeft);
+                FStringView(Run.Text.Data(), Run.Text.Length()), LocalPosition.X - RunLeft);
 
             return RunSourceOffsets[RunIndex] + Math::Clamp(OffsetInRun, 0, Run.Text.Length());
         }
@@ -384,7 +384,7 @@ FRectangle FTextLayout::GetCharacterBounds(int32 CharacterIndex) const
 
                 if (Run.Font)
                 {
-                    Run.Font->GetCharacterPlacement(StringView(Run.Text.Data(), RunLength), OffsetInRun, PrefixWidth, Advance);
+                    Run.Font->GetCharacterPlacement(FStringView(Run.Text.Data(), RunLength), OffsetInRun, PrefixWidth, Advance);
                 }
 
                 return FRectangle(IntVector2(RunLeft + PrefixWidth, LineTop), Advance, Line.Height);
@@ -444,7 +444,7 @@ void FTextLayout::GatherRangeRectangles(const TArray<FTextRange>& Ranges, TArray
                 if (CharacterIndex <= RunStart + RunLength)
                 {
                     const int32 OffsetInRun = Math::Clamp(CharacterIndex - RunStart, 0, RunLength);
-                    return RunLeft + (Run.Font ? Run.Font->MeasureWidth(StringView(Run.Text.Data(), OffsetInRun)) : 0);
+                    return RunLeft + (Run.Font ? Run.Font->MeasureWidth(FStringView(Run.Text.Data(), OffsetInRun)) : 0);
                 }
 
                 RunLeft += MeasureRun(Run);
@@ -516,7 +516,7 @@ bool FTextLayout::GetLineCharacterRange(int32 LineIndex, int32& OutStart, int32&
     return true;
 }
 
-const String& FTextLayout::GetText() const
+const FString& FTextLayout::GetText() const
 {
     if (bIsTextCacheValid)
     {

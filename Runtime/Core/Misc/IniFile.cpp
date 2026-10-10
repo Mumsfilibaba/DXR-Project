@@ -8,17 +8,17 @@
 struct FIniParseContext
 {
     /** Directory the file being parsed lives in, empty for text that came from nowhere */
-    String BaseDirectory;
+    FString BaseDirectory;
 
     /** The files currently open, so a file that includes itself is caught before it recurses */
-    TArray<String> IncludeStack;
+    TArray<FString> IncludeStack;
 };
 
 constexpr int32 INI_MAX_INCLUDE_DEPTH = 8;
 
 static void ParseIniText(FIniFile& OutFile, TArray<CHAR_T>& InText, FIniParseContext& Context);
 
-static bool ReadIniFile(const String& Filename, TArray<CHAR_T>& OutText)
+static bool ReadIniFile(const FString& Filename, TArray<CHAR_T>& OutText)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Filename);
     if (!FileHandle)
@@ -65,13 +65,13 @@ static CHAR_T* ParseIncludeDirective(CHAR_T* Line)
 
 static void ParseIniInclude(FIniFile& OutFile, const CHAR_T* IncludePath, FIniParseContext& Context)
 {
-    const String RelativePath(IncludePath);
+    const FString RelativePath(IncludePath);
 
     const bool bIsAbsolute = (RelativePath.Length() > 0 && RelativePath[0] == '/')
         || (RelativePath.Length() > 1 && RelativePath[1] == ':');
 
-    const String ResolvedPath = (bIsAbsolute || Context.BaseDirectory.IsEmpty())
-        ? RelativePath : String::Printf("%s/%s", *Context.BaseDirectory, *RelativePath);
+    const FString ResolvedPath = (bIsAbsolute || Context.BaseDirectory.IsEmpty())
+        ? RelativePath : FString::Printf("%s/%s", *Context.BaseDirectory, *RelativePath);
 
     if (Context.IncludeStack.Contains(ResolvedPath))
     {
@@ -92,7 +92,7 @@ static void ParseIniInclude(FIniFile& OutFile, const CHAR_T* IncludePath, FIniPa
         return;
     }
 
-    const String PreviousDirectory = Context.BaseDirectory;
+    const FString PreviousDirectory = Context.BaseDirectory;
     Context.BaseDirectory = File::GetDirectoryOf(ResolvedPath);
     Context.IncludeStack.Add(ResolvedPath);
 
@@ -237,12 +237,12 @@ void FIniSection::Restore()
     }
 }
 
-void FIniSection::DumpToString(String& OutString)
+void FIniSection::DumpToString(FString& OutString)
 {
     for (auto ValuePair : Values)
     {
         // Values containing spaces have to be quoted, the parser otherwise stops at the first space
-        const String& Value = ValuePair.Second.CurrentValue;
+        const FString& Value = ValuePair.Second.CurrentValue;
         if (Value.Contains(' '))
         {
             OutString.AppendPrintf("%s=\"%s\"\n", *ValuePair.First, *Value);
@@ -254,7 +254,7 @@ void FIniSection::DumpToString(String& OutString)
     }
 }
 
-bool FIniFile::SetString(const CHAR_T* SectionName, const CHAR_T* Name, const String& NewValue)
+bool FIniFile::SetString(const CHAR_T* SectionName, const CHAR_T* Name, const FString& NewValue)
 {
     if (FIniValue* Value = FindValue(SectionName, Name))
     {
@@ -290,7 +290,7 @@ FIniSection& FIniFile::FindOrAddSection(const CHAR_T* SectionName)
     return Section;
 }
 
-void FIniFile::SetOrAddString(const CHAR_T* SectionName, const CHAR_T* Name, const String& NewValue)
+void FIniFile::SetOrAddString(const CHAR_T* SectionName, const CHAR_T* Name, const FString& NewValue)
 {
     FIniSection& Section = FindOrAddSection(SectionName);
     if (FIniValue* Value = Section.Values.Find(Name))
@@ -318,7 +318,7 @@ void FIniFile::SetOrAddBool(const CHAR_T* SectionName, const CHAR_T* Name, bool 
     SetOrAddString(SectionName, Name, TTypeToString<bool>::ToString(bNewValue));
 }
 
-bool FIniFile::GetString(const CHAR_T* SectionName, const CHAR_T* Name, String& OutValue)
+bool FIniFile::GetString(const CHAR_T* SectionName, const CHAR_T* Name, FString& OutValue)
 {
     if (FIniValue* Value = FindValue(SectionName, Name))
     {
@@ -402,7 +402,7 @@ FIniValue* FIniFile::FindValue(const CHAR_T* SectionName, const CHAR_T* Name)
 
 bool FIniFile::WriteToFile()
 {
-    String ConfigString;
+    FString ConfigString;
     DumpToString(ConfigString);
 
     {
@@ -418,7 +418,7 @@ bool FIniFile::WriteToFile()
     return true;
 }
 
-void FIniFile::DumpToString(String& OutString)
+void FIniFile::DumpToString(FString& OutString)
 {
     // The global section has no header of its own, so it has to be written before any '[Section]'
     // line, otherwise it would be read back as part of whichever section precedes it.
@@ -441,7 +441,7 @@ void FIniFile::DumpToString(String& OutString)
     }
 }
 
-bool FIniFile::LoadFromFile(const String& InFilename)
+bool FIniFile::LoadFromFile(const FString& InFilename)
 {
     TArray<CHAR_T> FileContents;
     if (!ReadIniFile(InFilename, FileContents))

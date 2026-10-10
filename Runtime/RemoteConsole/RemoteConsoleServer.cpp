@@ -51,7 +51,7 @@ static TAutoConsoleVariable<bool> CVarRemoteConsoleAllowRemoteConnections(
     FConsoleVariableDelegate::CreateStatic(&OnRemoteConsoleSettingChanged),
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<String> CVarRemoteConsoleBindAddress(
+static TAutoConsoleVariable<FString> CVarRemoteConsoleBindAddress(
     "RemoteConsole.BindAddress",
     "IPv4 or IPv6 address to bind to when RemoteConsole.AllowRemoteConnections is true. "
     ":: listens on every interface for both IPv4 and IPv6, 0.0.0.0 on every interface for IPv4 only",
@@ -100,12 +100,12 @@ FRemoteConsoleLogDevice::FRemoteConsoleLogDevice()
 
 FRemoteConsoleLogDevice::~FRemoteConsoleLogDevice() = default;
 
-void FRemoteConsoleLogDevice::Log(const String& Message)
+void FRemoteConsoleLogDevice::Log(const FString& Message)
 {
     Log(ELogSeverity::Info, Message);
 }
 
-void FRemoteConsoleLogDevice::Log(ELogSeverity Severity, const String& Message)
+void FRemoteConsoleLogDevice::Log(ELogSeverity Severity, const FString& Message)
 {
     if (bIsCapturing && FThreadManager::IsMainThread())
     {
@@ -183,7 +183,7 @@ int32 FRemoteConsoleServer::GetNumConnectedClients()
     return Instance ? Instance->NumConnectedClients.Load() : 0;
 }
 
-void FRemoteConsoleServer::BroadcastLog(ELogSeverity Severity, const String& Message)
+void FRemoteConsoleServer::BroadcastLog(ELogSeverity Severity, const FString& Message)
 {
     TScopedLock Lock(InstanceCS);
     if (!Instance)
@@ -191,7 +191,7 @@ void FRemoteConsoleServer::BroadcastLog(ELogSeverity Severity, const String& Mes
         return;
     }
 
-    String Line;
+    FString Line;
 
     TScopedLock ClientsLock(Instance->ClientsCS);
     for (const TUniquePtr<FRemoteConsoleClient>& Client : Instance->Clients)
@@ -239,7 +239,7 @@ bool FRemoteConsoleServer::StartFromSettings()
     bool bListening = false;
     if (bAllowRemote)
     {
-        const String   BindAddressText = CVarRemoteConsoleBindAddress.GetValue();
+        const FString  BindAddressText = CVarRemoteConsoleBindAddress.GetValue();
         FSocketAddress BindAddress;
         if (!FNetworkSocket::ParseAddress(BindAddressText, Port, BindAddress))
         {
@@ -356,9 +356,9 @@ bool FRemoteConsoleServer::ListenOn(const FSocketAddress& Address)
     return true;
 }
 
-String FRemoteConsoleServer::DescribeListeners() const
+FString FRemoteConsoleServer::DescribeListeners() const
 {
-    String Description;
+    FString Description;
     for (const FSocketAddress& Address : ListenAddresses)
     {
         if (!Description.IsEmpty())
@@ -382,7 +382,7 @@ int32 FRemoteConsoleServer::Run()
     TArray<FNetworkSocket*>       WaitSockets;
     TArray<bool>                  Readable;
     TArray<FRemoteConsoleRequest> NewRequests;
-    TArray<String>                LogMessages;
+    TArray<FString>               LogMessages;
 
     while (!bStopRequested.Load())
     {
@@ -445,11 +445,11 @@ int32 FRemoteConsoleServer::Run()
                     const int32 NumRemaining = Clients.Size() - 1;
                     if (Client.CloseReason.IsEmpty())
                     {
-                        LogMessages.Add(String::Printf("[RemoteConsole] Remote console at %s disconnected (%d still connected)", *Client.PeerAddress, NumRemaining));
+                        LogMessages.Add(FString::Printf("[RemoteConsole] Remote console at %s disconnected (%d still connected)", *Client.PeerAddress, NumRemaining));
                     }
                     else
                     {
-                        LogMessages.Add(String::Printf("[RemoteConsole] Dropped the remote console at %s because %s (%d still connected)", *Client.PeerAddress, *Client.CloseReason, NumRemaining));
+                        LogMessages.Add(FString::Printf("[RemoteConsole] Dropped the remote console at %s because %s (%d still connected)", *Client.PeerAddress, *Client.CloseReason, NumRemaining));
                     }
 
                     Clients.RemoveAt(Index);
@@ -470,7 +470,7 @@ int32 FRemoteConsoleServer::Run()
             NewRequests.Clear();
         }
 
-        for (const String& Message : LogMessages)
+        for (const FString& Message : LogMessages)
         {
             LOG_INFO("%s", *Message);
         }
@@ -487,7 +487,7 @@ void FRemoteConsoleServer::Stop()
     bStopRequested.Store(true);
 }
 
-void FRemoteConsoleServer::AcceptClients(FNetworkSocket* ListenSocket, TArray<String>& OutLogMessages)
+void FRemoteConsoleServer::AcceptClients(FNetworkSocket* ListenSocket, TArray<FString>& OutLogMessages)
 {
     CHECK(ListenSocket != nullptr);
 
@@ -496,13 +496,13 @@ void FRemoteConsoleServer::AcceptClients(FNetworkSocket* ListenSocket, TArray<St
     {
         FSocketAddress PeerAddress;
         Socket.GetPeerAddress(PeerAddress);
-        const String PeerText = PeerAddress.ToString();
+        const FString PeerText = PeerAddress.ToString();
 
         if (!bAllowRemoteConnections && !PeerAddress.IsLoopback())
         {
             const CHAR_T* Reason = "Remote connections are disabled (RemoteConsole.AllowRemoteConnections is false)";
             RejectClient(&Socket, Reason);
-            OutLogMessages.Add(String::Printf("[RemoteConsole] Rejected %s, %s", *PeerText, Reason));
+            OutLogMessages.Add(FString::Printf("[RemoteConsole] Rejected %s, %s", *PeerText, Reason));
             continue;
         }
 
@@ -511,14 +511,14 @@ void FRemoteConsoleServer::AcceptClients(FNetworkSocket* ListenSocket, TArray<St
         {
             const CHAR_T* Reason = "Too many clients are connected (RemoteConsole.MaxClients)";
             RejectClient(&Socket, Reason);
-            OutLogMessages.Add(String::Printf("[RemoteConsole] Rejected %s, %s", *PeerText, Reason));
+            OutLogMessages.Add(FString::Printf("[RemoteConsole] Rejected %s, %s", *PeerText, Reason));
             continue;
         }
 
         Clients.Add(MakeUniquePtr<FRemoteConsoleClient>(NextClientId++, ::Move(Socket), PeerText, HelloLine));
         NumConnectedClients.Store(Clients.Size());
 
-        OutLogMessages.Add(String::Printf("[RemoteConsole] Remote console connected from %s (%d connected)", *PeerText, Clients.Size()));
+        OutLogMessages.Add(FString::Printf("[RemoteConsole] Remote console connected from %s (%d connected)", *PeerText, Clients.Size()));
     }
 }
 
@@ -530,7 +530,7 @@ void FRemoteConsoleServer::RejectClient(FNetworkSocket* Socket, const CHAR_T* Re
     Message.AddMember("type", FJsonValue(RemoteConsoleProtocol::TypeRejected));
     Message.AddMember("reason", FJsonValue(Reason));
 
-    const String Line = RemoteConsoleProtocol::ToLine(Message);
+    const FString Line = RemoteConsoleProtocol::ToLine(Message);
     int32 BytesSent = 0;
     Socket->Send(Line.Data(), Line.Length(), BytesSent);
     Socket->Close();
@@ -557,7 +557,7 @@ void FRemoteConsoleServer::ReceiveFromClient(FRemoteConsoleClient& Client, TArra
         Client.ReceiveBuffer.Append(Chunk, BytesRead);
     }
 
-    TArray<String> Lines;
+    TArray<FString> Lines;
     if (!RemoteConsoleProtocol::ExtractLines(Client.ReceiveBuffer, Lines))
     {
         Client.bPendingClose = true;
@@ -565,7 +565,7 @@ void FRemoteConsoleServer::ReceiveFromClient(FRemoteConsoleClient& Client, TArra
         return;
     }
 
-    for (const String& Line : Lines)
+    for (const FString& Line : Lines)
     {
         FRemoteConsoleRequest Request;
         if (ParseLine(Client, Line, Request))
@@ -625,9 +625,9 @@ void FRemoteConsoleServer::FlushAllClients(uint32 TimeoutMilliseconds)
     }
 }
 
-bool FRemoteConsoleServer::ParseLine(FRemoteConsoleClient& Client, const String& Line, FRemoteConsoleRequest& OutRequest)
+bool FRemoteConsoleServer::ParseLine(FRemoteConsoleClient& Client, const FString& Line, FRemoteConsoleRequest& OutRequest)
 {
-    String Trimmed = Line;
+    FString Trimmed = Line;
     Trimmed.TrimInline();
     if (Trimmed.IsEmpty())
     {
@@ -653,9 +653,9 @@ bool FRemoteConsoleServer::ParseLine(FRemoteConsoleClient& Client, const String&
     FJsonReader Reader;
     FJsonError  ParseError;
     FJsonValue  Request;
-    if (!Reader.Parse(StringView(Trimmed.Data(), Trimmed.Length()), Request, &ParseError))
+    if (!Reader.Parse(FStringView(Trimmed.Data(), Trimmed.Length()), Request, &ParseError))
     {
-        Error.AddMember("error", FJsonValue(String::Printf("Malformed JSON, %s", *ParseError.ToString())));
+        Error.AddMember("error", FJsonValue(FString::Printf("Malformed JSON, %s", *ParseError.ToString())));
         Client.SendBuffer.Append(RemoteConsoleProtocol::ToLine(Error));
         return false;
     }
@@ -666,7 +666,7 @@ bool FRemoteConsoleServer::ParseLine(FRemoteConsoleClient& Client, const String&
         Error.AddMember("id", FJsonValue(*Id));
     }
 
-    String Type;
+    FString Type;
     const FJsonValue* TypeValue = Request.IsObject() ? Request.Find("type") : nullptr;
     if (!TypeValue || !TypeValue->TryGetString(Type) || Type.IsEmpty())
     {
@@ -719,13 +719,13 @@ void FRemoteConsoleServer::HandleRequest(const FRemoteConsoleRequest& Request)
     }
     else
     {
-        SendError(Request, String::Printf("Unknown request type '%s'", *Request.Type));
+        SendError(Request, FString::Printf("Unknown request type '%s'", *Request.Type));
     }
 }
 
 void FRemoteConsoleServer::HandleExec(const FRemoteConsoleRequest& Request)
 {
-    String Command;
+    FString Command;
     const FJsonValue* CommandValue = Request.Payload.Find("command");
     if (!CommandValue || !CommandValue->TryGetString(Command))
     {
@@ -757,7 +757,7 @@ void FRemoteConsoleServer::HandleExec(const FRemoteConsoleRequest& Request)
 
 void FRemoteConsoleServer::HandleList(const FRemoteConsoleRequest& Request)
 {
-    String Filter;
+    FString Filter;
     const FJsonValue* FilterValue = Request.Payload.Find("filter");
     if (FilterValue && !FilterValue->IsNull() && !FilterValue->TryGetString(Filter))
     {
@@ -765,16 +765,16 @@ void FRemoteConsoleServer::HandleList(const FRemoteConsoleRequest& Request)
         return;
     }
 
-    TArray<TPair<String, IConsoleObject*>> ConsoleObjects;
+    TArray<TPair<FString, IConsoleObject*>> ConsoleObjects;
     FConsoleManager::Get().GetConsoleObjects(ConsoleObjects);
 
-    Algorithm::Sort(ConsoleObjects, [](const TPair<String, IConsoleObject*>& First, const TPair<String, IConsoleObject*>& Second) -> bool
+    Algorithm::Sort(ConsoleObjects, [](const TPair<FString, IConsoleObject*>& First, const TPair<FString, IConsoleObject*>& Second) -> bool
     {
         return First.First.Compare(Second.First, EStringCaseType::NoCase) < 0;
     });
 
     FJsonValue Objects = FJsonValue::MakeArray();
-    for (const TPair<String, IConsoleObject*>& Pair : ConsoleObjects)
+    for (const TPair<FString, IConsoleObject*>& Pair : ConsoleObjects)
     {
         if (!Pair.Second || (!Filter.IsEmpty() && !Pair.First.Contains(*Filter, EStringCaseType::NoCase)))
         {
@@ -806,7 +806,7 @@ void FRemoteConsoleServer::HandleList(const FRemoteConsoleRequest& Request)
 
 void FRemoteConsoleServer::HandleGet(const FRemoteConsoleRequest& Request)
 {
-    String Name;
+    FString Name;
     const FJsonValue* NameValue = Request.Payload.Find("name");
     if (!NameValue || !NameValue->TryGetString(Name) || Name.IsEmpty())
     {
@@ -819,11 +819,11 @@ void FRemoteConsoleServer::HandleGet(const FRemoteConsoleRequest& Request)
     {
         if (FConsoleManager::Get().FindConsoleCommand(*Name))
         {
-            SendError(Request, String::Printf("'%s' is a command, not a variable", *Name));
+            SendError(Request, FString::Printf("'%s' is a command, not a variable", *Name));
         }
         else
         {
-            SendError(Request, String::Printf("'%s' is not a registered variable", *Name));
+            SendError(Request, FString::Printf("'%s' is not a registered variable", *Name));
         }
 
         return;
@@ -873,7 +873,7 @@ FJsonValue FRemoteConsoleServer::MakeResult(const FRemoteConsoleRequest& Request
     return Result;
 }
 
-void FRemoteConsoleServer::SendError(const FRemoteConsoleRequest& Request, const String& Error)
+void FRemoteConsoleServer::SendError(const FRemoteConsoleRequest& Request, const FString& Error)
 {
     FJsonValue Result = MakeResult(Request, false);
     Result.AddMember("error", FJsonValue(Error));
@@ -888,7 +888,7 @@ void FRemoteConsoleServer::SendResult(const FRemoteConsoleRequest& Request, cons
         return;
     }
 
-    String Text;
+    FString Text;
     if (const FJsonValue* Output = Result.Find("output"))
     {
         for (int32 Index = 0; Index < Output->Num(); ++Index)
@@ -909,13 +909,13 @@ void FRemoteConsoleServer::SendResult(const FRemoteConsoleRequest& Request, cons
     else
     {
         const FJsonValue* Error = Result.Find("error");
-        Text.Append(Error ? String::Printf("ERROR %s\n", *Error->GetStringOr("")) : String("ERROR\n"));
+        Text.Append(Error ? FString::Printf("ERROR %s\n", *Error->GetStringOr("")) : FString("ERROR\n"));
     }
 
     SendToClient(Request.ClientId, Text);
 }
 
-void FRemoteConsoleServer::SendToClient(uint32 ClientId, const String& Line)
+void FRemoteConsoleServer::SendToClient(uint32 ClientId, const FString& Line)
 {
     TScopedLock Lock(ClientsCS);
     for (const TUniquePtr<FRemoteConsoleClient>& Client : Clients)

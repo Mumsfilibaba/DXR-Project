@@ -7,7 +7,7 @@
 
 static constexpr CHAR_T GTestEnvName[] = "DXR_PLATFORM_MISC_ENV_TEST";
 
-static void RestoreEnvironmentVariable(const String& PreviousValue, bool bHadPrevious)
+static void RestoreEnvironmentVariable(const FString& PreviousValue, bool bHadPrevious)
 {
     if (bHadPrevious)
     {
@@ -23,14 +23,14 @@ bool PlatformMisc_Test()
 {
     TEST_BEGIN();
 
-    String PreviousValue;
+    FString PreviousValue;
     const bool bHadPrevious = FPlatformMisc::GetEnvironmentVariable(GTestEnvName, PreviousValue);
 
     TEST_SECTION("Missing variable");
     {
         FPlatformMisc::SetEnvironmentVariable(GTestEnvName, nullptr);
 
-        String Value;
+        FString Value;
         TEST_EXPECT(!FPlatformMisc::GetEnvironmentVariable(GTestEnvName, Value));
         TEST_EXPECT(Value.IsEmpty());
     }
@@ -39,7 +39,7 @@ bool PlatformMisc_Test()
     {
         TEST_EXPECT(FPlatformMisc::SetEnvironmentVariable(GTestEnvName, "MetalRHI"));
 
-        String Value;
+        FString Value;
         TEST_EXPECT(FPlatformMisc::GetEnvironmentVariable(GTestEnvName, Value));
         TEST_EXPECT_EQ(Value, "MetalRHI");
     }
@@ -48,7 +48,7 @@ bool PlatformMisc_Test()
     {
         TEST_EXPECT(FPlatformMisc::SetEnvironmentVariable(GTestEnvName, "VulkanRHI"));
 
-        String Value;
+        FString Value;
         TEST_EXPECT(FPlatformMisc::GetEnvironmentVariable(GTestEnvName, Value));
         TEST_EXPECT_EQ(Value, "VulkanRHI");
     }
@@ -57,7 +57,7 @@ bool PlatformMisc_Test()
     {
         TEST_EXPECT(FPlatformMisc::SetEnvironmentVariable(GTestEnvName, ""));
 
-        String Value;
+        FString Value;
         TEST_EXPECT(FPlatformMisc::GetEnvironmentVariable(GTestEnvName, Value));
         TEST_EXPECT(Value.IsEmpty());
     }
@@ -67,14 +67,14 @@ bool PlatformMisc_Test()
         TEST_EXPECT(FPlatformMisc::SetEnvironmentVariable(GTestEnvName, "Keep"));
         TEST_EXPECT(FPlatformMisc::SetEnvironmentVariable(GTestEnvName, nullptr));
 
-        String Value;
+        FString Value;
         TEST_EXPECT(!FPlatformMisc::GetEnvironmentVariable(GTestEnvName, Value));
         TEST_EXPECT(Value.IsEmpty());
     }
 
     TEST_SECTION("Empty name is rejected");
     {
-        String Value;
+        FString Value;
         TEST_EXPECT(!FPlatformMisc::GetEnvironmentVariable("", Value));
         TEST_EXPECT(!FPlatformMisc::SetEnvironmentVariable("", "Value"));
         TEST_EXPECT(!FPlatformMisc::GetEnvironmentVariable(nullptr, Value));

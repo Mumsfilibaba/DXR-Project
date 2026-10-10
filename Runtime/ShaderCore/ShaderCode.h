@@ -130,20 +130,20 @@ struct SHADERCORE_API FShaderCodeWriter
     static constexpr uint32 CodeAlignment = 4;
 
     /** @brief Fails when the reflection breaks the limits of the packed types or its arrays do not match Bindings */
-    static bool Write(EShaderOutputLanguage OutputLanguage, EShaderStage Stage, EShaderCodeFlags Flags, const FShaderReflection& Reflection, TArrayView<const uint8> NativeCode, TArray<uint8>& OutShaderCode, String* OutError = nullptr);
+    static bool Write(EShaderOutputLanguage OutputLanguage, EShaderStage Stage, EShaderCodeFlags Flags, const FShaderReflection& Reflection, TArrayView<const uint8> NativeCode, TArray<uint8>& OutShaderCode, FString* OutError = nullptr);
 };
 
 struct SHADERCORE_API FShaderCodeReader
 {
     /** @brief Rejects a wrong magic, other versions, and a CodeOffset that is unaligned or outside ShaderCode */
-    NODISCARD static bool ReadHeader(const TArray<uint8>& ShaderCode, FShaderCodeHeader& OutHeader, String* OutError = nullptr);
+    NODISCARD static bool ReadHeader(const TArray<uint8>& ShaderCode, FShaderCodeHeader& OutHeader, FString* OutError = nullptr);
 
     /** @brief ReadHeader, then checks every enum value, array range and string inside the reflection block */
-    NODISCARD static bool Read(const TArray<uint8>& ShaderCode, FShaderCodeView& OutView, String* OutError = nullptr);
+    NODISCARD static bool Read(const TArray<uint8>& ShaderCode, FShaderCodeView& OutView, FString* OutError = nullptr);
 
     /**
      * @brief Copies a container that a generated header embeds into OutShaderCode, then reads it. The copy gives SPIR-V
      *        the alignment that a static byte array does not guarantee. The view points into OutShaderCode, which has to outlive it.
      */
-    NODISCARD static bool ReadEmbedded(TArrayView<const uint8> EmbeddedCode, TArray<uint8>& OutShaderCode, FShaderCodeView& OutView, String* OutError = nullptr);
+    NODISCARD static bool ReadEmbedded(TArrayView<const uint8> EmbeddedCode, TArray<uint8>& OutShaderCode, FShaderCodeView& OutView, FString* OutError = nullptr);
 };

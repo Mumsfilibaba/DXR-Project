@@ -1040,10 +1040,10 @@ private:
     const CharType* ViewEnd{ nullptr };
 };
 
-using StringView     = TStringView<CHAR_T>;
-using WStringView    = TStringView<WIDECHAR>;
-using AnsiStringView = TStringView<ANSICHAR>;
-using U8StringView   = TStringView<UTF8CHAR>;
+using FStringView     = TStringView<CHAR_T>;
+using FWideStringView = TStringView<WIDECHAR>;
+using FAnsiStringView = TStringView<ANSICHAR>;
+using FU8StringView   = TStringView<UTF8CHAR>;
 
 template<typename CharType>
 NODISCARD inline bool operator==(const TStringView<CharType>& LHS, const CharType* RHS)

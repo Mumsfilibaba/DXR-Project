@@ -9,7 +9,7 @@ public:
     ~FMetalHeap();
 
     void DeferredRelease();
-    void SetDebugName(const String& Name);
+    void SetDebugName(const FString& Name);
 
     FORCEINLINE id<MTLHeap> GetMTLHeap() const
     {

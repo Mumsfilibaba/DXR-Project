@@ -131,17 +131,17 @@ struct FRichTextViewContext
 
 struct FErrorWindowContext
 {
-    TArray<String> Entries;
-    String         Title;
-    String         HeaderText;
-    bool           bVisible = false;
+    TArray<FString> Entries;
+    FString         Title;
+    FString         HeaderText;
+    bool            bVisible = false;
 };
 
 struct FConfirmDialogContext
 {
-    String Title;
-    String Message;
-    bool   bVisible = false;
+    FString Title;
+    FString Message;
+    bool    bVisible = false;
 };
 
 // -----------------------------------------------------------------------------------------
@@ -335,8 +335,8 @@ struct ENGINE_API EditorWidgets
     static void RichTextAddTextBg(FRichTextViewContext& InOutContext, const CHAR_T* InText, int32 InLength, ImU32 InTextColor, ImU32 InBackgroundColor);
     static void EndRichTextView(FRichTextViewContext& InOutContext);
 
-    static String GetSelectedRichText(const FRichTextViewContext& InContext);
-    static String GetAllRichText(const FRichTextViewContext& InContext);
+    static FString GetSelectedRichText(const FRichTextViewContext& InContext);
+    static FString GetAllRichText(const FRichTextViewContext& InContext);
 
     // -----------------------------------------------------------------------------------------
     // Buttons

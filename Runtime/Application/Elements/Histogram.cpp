@@ -172,13 +172,13 @@ int32 FHistogram::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
     {
         const FRectangle TextBounds = Bounds.Deflate(FMargin(HISTOGRAM_TEXT_PADDING));
 
-        String Value;
+        FString Value;
 
         int32 ValueWidth = 0;
         if (HoveredSample != InvalidSampleIndex)
         {
-            Value      = String::Printf("%.2f", GetSample(HoveredSample));
-            ValueWidth = ValueMetrics.GetWidth(Font.Get(), StringView(Value.Data(), Value.Length()));
+            Value      = FString::Printf("%.2f", GetSample(HoveredSample));
+            ValueWidth = ValueMetrics.GetWidth(Font.Get(), FStringView(Value.Data(), Value.Length()));
         }
 
         if (!Value.IsEmpty() && ValueWidth <= TextBounds.Width)
@@ -193,7 +193,7 @@ int32 FHistogram::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
         if (!Label.IsEmpty())
         {
             const int32  LabelWidth = ValueWidth > 0 ? (TextBounds.Width - ValueWidth - HISTOGRAM_TEXT_PADDING) : TextBounds.Width;
-            const String& Elided    = LabelMetrics.GetElided(Font.Get(), StringView(Label.Data(), Label.Length()), LabelWidth);
+            const FString& Elided   = LabelMetrics.GetElided(Font.Get(), FStringView(Label.Data(), Label.Length()), LabelWidth);
 
             if (!Elided.IsEmpty())
             {

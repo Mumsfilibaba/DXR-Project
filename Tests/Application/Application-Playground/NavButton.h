@@ -19,7 +19,7 @@ public:
         {
         }
 
-        String                Label;
+        FString               Label;
         TSharedPtr<IFontFace> Font;
         int32                 Index;
     };

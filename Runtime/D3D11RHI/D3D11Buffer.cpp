@@ -163,12 +163,12 @@ void FD3D11BufferRHI::Unmap(uint64 /* Offset */, uint64 /* Size */)
     GetDevice()->GetD3D11Context()->Unmap(Resource.Get(), 0);
 }
 
-void FD3D11BufferRHI::SetDebugName(const String& InName)
+void FD3D11BufferRHI::SetDebugName(const FString& InName)
 {
     D3D11SetDebugName(Resource.Get(), InName);
 }
 
-void FD3D11BufferRHI::GetDebugName(String& OutDebugName) const
+void FD3D11BufferRHI::GetDebugName(FString& OutDebugName) const
 {
     D3D11GetDebugName(Resource.Get(), OutDebugName);
 }

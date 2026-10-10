@@ -108,7 +108,7 @@ void FWindowsConsoleWindow::Show(bool bShow)
     }
 }
 
-void FWindowsConsoleWindow::SetTitle(const String& InTitle)
+void FWindowsConsoleWindow::SetTitle(const FString& InTitle)
 {
     TScopedLock Lock(ConsoleHandleCS);
 
@@ -165,7 +165,7 @@ void FWindowsConsoleWindow::Write(const CHAR_T* Data, uint32 Length)
     }
 }
 
-void FWindowsConsoleWindow::Log(const String& Message)
+void FWindowsConsoleWindow::Log(const FString& Message)
 {
     TScopedLock Lock(ConsoleHandleCS);
 
@@ -176,7 +176,7 @@ void FWindowsConsoleWindow::Log(const String& Message)
     }
 }
 
-void FWindowsConsoleWindow::Log(ELogSeverity Severity, const String& Message)
+void FWindowsConsoleWindow::Log(ELogSeverity Severity, const FString& Message)
 {
     TScopedLock Lock(ConsoleHandleCS);
 

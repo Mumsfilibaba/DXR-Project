@@ -76,7 +76,7 @@ struct FGraphPin
     {
     }
 
-    FGraphPin(EGraphPinDirection InDirection, const String& InName, const String& InTypeTag, const FFloatColor& InTint)
+    FGraphPin(EGraphPinDirection InDirection, const FString& InName, const FString& InTypeTag, const FFloatColor& InTint)
         : PinId(-1)
         , Direction(InDirection)
         , Name(InName)
@@ -92,10 +92,10 @@ struct FGraphPin
     EGraphPinDirection Direction;
 
     /** @brief The text drawn beside the pin. */
-    String Name;
+    FString Name;
 
     /** @brief Gates which pins may connect. A render graph tags by resource kind, a shader graph by value type. */
-    String TypeTag;
+    FString TypeTag;
 
     /** @brief The color of the pin and of every link leaving it, usually derived from TypeTag. */
     FFloatColor Tint;
@@ -121,7 +121,7 @@ struct FGraphNode
     Vector2 Position;
 
     /** @brief The text the title bar shows. */
-    String Title;
+    FString Title;
 
     /** @brief The color of the title bar, which is how a graph groups nodes by kind. */
     FFloatColor TitleTint;

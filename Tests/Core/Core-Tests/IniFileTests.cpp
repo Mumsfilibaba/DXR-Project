@@ -22,7 +22,7 @@ static FIniFile ParseIni(const CHAR_T* InText)
     return IniFile;
 }
 
-static bool WriteTextFile(const String& Path, const CHAR_T* Text)
+static bool WriteTextFile(const FString& Path, const CHAR_T* Text)
 {
     TFileRef<IPlatformFile> File = FPlatformFile::OpenForWrite(Path);
     if (!File)
@@ -30,7 +30,7 @@ static bool WriteTextFile(const String& Path, const CHAR_T* Text)
         return false;
     }
 
-    return File::WriteTextFile(File.Get(), String(Text));
+    return File::WriteTextFile(File.Get(), FString(Text));
 }
 
 bool IniFile_Test()
@@ -48,7 +48,7 @@ bool IniFile_Test()
 
         TEST_EXPECT_EQ(Ini.Sections.Size(), 2);
 
-        String Value;
+        FString Value;
         TEST_EXPECT(Ini.GetString("Renderer", "Width", Value));
         TEST_EXPECT(Value == "1280");
         TEST_EXPECT(Ini.GetString("Audio", "Volume", Value));
@@ -73,7 +73,7 @@ bool IniFile_Test()
 
         TEST_EXPECT_EQ(Ini.Sections.Size(), 2);
 
-        String Value;
+        FString Value;
         TEST_EXPECT(Ini.GetString("Renderer", "Width", Value));
         TEST_EXPECT(Value == "1280");
         TEST_EXPECT(Ini.GetString("Renderer", "Height", Value));
@@ -89,7 +89,7 @@ bool IniFile_Test()
 
         TEST_EXPECT(Ini.Sections.Contains(""));
 
-        String Value;
+        FString Value;
         TEST_EXPECT(Ini.GetString("", "GlobalKey", Value));
         TEST_EXPECT(Value == "7");
     }
@@ -101,7 +101,7 @@ bool IniFile_Test()
             "Width = 1280\n");
 
         // This is the path FConsoleManager::RegisterObject relies on
-        String Value;
+        FString Value;
         TEST_EXPECT(Ini.GetString("", "Width", Value));
         TEST_EXPECT(Value == "1280");
 
@@ -119,7 +119,7 @@ bool IniFile_Test()
             "Spaced   =   2\n"
             "; Commented = 3\n");
 
-        String Value;
+        FString Value;
         TEST_EXPECT(Ini.GetString("Renderer", "Indented", Value));
         TEST_EXPECT(Value == "1");
         TEST_EXPECT(Ini.GetString("Renderer", "Spaced", Value));
@@ -136,7 +136,7 @@ bool IniFile_Test()
             "Title = \"Main Window\"\n"
             "Trailing = \"Value \"\n");
 
-        String Value;
+        FString Value;
         TEST_EXPECT(Ini.GetString("Window", "Title", Value));
         TEST_EXPECT(Value == "Main Window");
         TEST_EXPECT(Ini.GetString("Window", "Trailing", Value));
@@ -149,7 +149,7 @@ bool IniFile_Test()
             "[Renderer]\n"
             "Key = 5 ignored\n");
 
-        String Value;
+        FString Value;
         TEST_EXPECT(Ini.GetString("Renderer", "Key", Value));
         TEST_EXPECT(Value == "5");
     }
@@ -226,20 +226,20 @@ bool IniFile_Test()
         TEST_EXPECT(Ini.GetBool("Values", "BoolValue", bValue));
         TEST_EXPECT_EQ(bValue, true);
 
-        TEST_EXPECT(Ini.SetString("Values", "StringValue", String("Changed")));
-        String Value;
+        TEST_EXPECT(Ini.SetString("Values", "StringValue", FString("Changed")));
+        FString Value;
         TEST_EXPECT(Ini.GetString("Values", "StringValue", Value));
         TEST_EXPECT(Value == "Changed");
 
         // Setting a key that was never in the file fails rather than creating it
-        TEST_EXPECT(!Ini.SetString("Values", "NotPresent", String("Value")));
+        TEST_EXPECT(!Ini.SetString("Values", "NotPresent", FString("Value")));
     }
 
     TEST_SECTION("The set-or-add setters author a file that starts out empty");
     {
         FIniFile Ini;
 
-        Ini.SetOrAddString("Layout", "Kind", String("Split"));
+        Ini.SetOrAddString("Layout", "Kind", FString("Split"));
         Ini.SetOrAddInt("Layout", "NumNodes", 3);
         Ini.SetOrAddFloat("Layout", "Fraction", 0.25f);
         Ini.SetOrAddBool("Layout", "Collapsed", true);
@@ -251,7 +251,7 @@ bool IniFile_Test()
         TEST_EXPECT(Section != nullptr);
         TEST_EXPECT(Section->Name == "Layout");
 
-        String Value;
+        FString Value;
         TEST_EXPECT(Ini.GetString("Layout", "Kind", Value));
         TEST_EXPECT(Value == "Split");
 
@@ -274,12 +274,12 @@ bool IniFile_Test()
             "[Values]\n"
             "StringValue = Original\n");
 
-        Ini.SetOrAddString("Values", "StringValue", String("Changed"));
+        Ini.SetOrAddString("Values", "StringValue", FString("Changed"));
 
         TEST_EXPECT_EQ(Ini.Sections.Size(), 1);
         TEST_EXPECT_EQ(Ini.Sections.Find("Values")->Values.Size(), 1);
 
-        String Value;
+        FString Value;
         TEST_EXPECT(Ini.GetString("Values", "StringValue", Value));
         TEST_EXPECT(Value == "Changed");
 
@@ -293,9 +293,9 @@ bool IniFile_Test()
     {
         FIniFile Ini;
         Ini.SetOrAddInt("Layout", "Version", 1);
-        Ini.SetOrAddString("Node0", "Kind", String("Tabs"));
+        Ini.SetOrAddString("Node0", "Kind", FString("Tabs"));
 
-        String Dumped;
+        FString Dumped;
         Ini.DumpToString(Dumped);
 
         FIniFile Reparsed = ParseIni(*Dumped);
@@ -313,10 +313,10 @@ bool IniFile_Test()
 
         if (Section)
         {
-            String Value;
+            FString Value;
 
             // An edit is visible immediately but can be rolled back to what the file held
-            TEST_EXPECT(Ini.SetString("Values", "Key", String("Changed")));
+            TEST_EXPECT(Ini.SetString("Values", "Key", FString("Changed")));
             TEST_EXPECT(Ini.GetString("Values", "Key", Value));
             TEST_EXPECT(Value == "Changed");
 
@@ -325,7 +325,7 @@ bool IniFile_Test()
             TEST_EXPECT(Value == "Original");
 
             // Once saved, the edit becomes the value a restore falls back to
-            TEST_EXPECT(Ini.SetString("Values", "Key", String("Kept")));
+            TEST_EXPECT(Ini.SetString("Values", "Key", FString("Kept")));
             if (FIniValue* IniValue = Ini.FindValue("Values", "Key"))
             {
                 IniValue->SaveCurrent();
@@ -345,7 +345,7 @@ bool IniFile_Test()
             "Width = 1280\n"
             "Name = \"Main Window\"\n");
 
-        String Dumped;
+        FString Dumped;
         Original.DumpToString(Dumped);
 
         FIniFile Reparsed = ParseIni(*Dumped);
@@ -362,7 +362,7 @@ bool IniFile_Test()
             "Key = 1\n");
 
         // The malformed lines are ignored or clamped to the line, parsing continues
-        String Value;
+        FString Value;
         TEST_EXPECT(Ini.GetString("Valid", "Key", Value));
         TEST_EXPECT(Value == "1");
         TEST_EXPECT(Ini.GetString("", "Unterminated", Value));
@@ -376,7 +376,7 @@ bool IniFile_Test()
     TEST_SECTION("File round-trip");
     {
         // Relative, so it lands in the working directory next to TestResults_Core.log
-        const String TempPath("IniFileTests.tmp.ini");
+        const FString TempPath("IniFileTests.tmp.ini");
 
         FIniFile Written = ParseIni(
             "[Renderer]\n"
@@ -400,8 +400,8 @@ bool IniFile_Test()
 
     TEST_SECTION("Include directive");
     {
-        const String ChildPath("IniFileTests.child.ini");
-        const String ParentPath("IniFileTests.parent.ini");
+        const FString ChildPath("IniFileTests.child.ini");
+        const FString ParentPath("IniFileTests.parent.ini");
 
         TEST_EXPECT(WriteTextFile(ChildPath,
             "[Audio]\n"
@@ -418,7 +418,7 @@ bool IniFile_Test()
         FIniFile Parent;
         TEST_EXPECT(Parent.LoadFromFile(ParentPath));
 
-        String Value;
+        FString Value;
         TEST_EXPECT(Parent.GetString("Audio", "Volume", Value));
         TEST_EXPECT(Value == "0.5");
         TEST_EXPECT(Parent.GetString("Renderer", "Width", Value));
@@ -433,8 +433,8 @@ bool IniFile_Test()
 
     TEST_SECTION("Include override order");
     {
-        const String ChildPath("IniFileTests.override.child.ini");
-        const String ParentPath("IniFileTests.override.parent.ini");
+        const FString ChildPath("IniFileTests.override.child.ini");
+        const FString ParentPath("IniFileTests.override.parent.ini");
 
         TEST_EXPECT(WriteTextFile(ChildPath,
             "[Values]\n"
@@ -449,7 +449,7 @@ bool IniFile_Test()
         FIniFile Parent;
         TEST_EXPECT(Parent.LoadFromFile(ParentPath));
 
-        String Value;
+        FString Value;
         TEST_EXPECT(Parent.GetString("Values", "Key", Value));
         TEST_EXPECT(Value == "FromParentAfter");
 
@@ -459,8 +459,8 @@ bool IniFile_Test()
 
     TEST_SECTION("Included file starts in the global section");
     {
-        const String ChildPath("IniFileTests.global.child.ini");
-        const String ParentPath("IniFileTests.global.parent.ini");
+        const FString ChildPath("IniFileTests.global.child.ini");
+        const FString ParentPath("IniFileTests.global.parent.ini");
 
         TEST_EXPECT(WriteTextFile(ChildPath,
             "GlobalKey = FromChild\n"));
@@ -473,7 +473,7 @@ bool IniFile_Test()
         FIniFile Parent;
         TEST_EXPECT(Parent.LoadFromFile(ParentPath));
 
-        String Value;
+        FString Value;
         TEST_EXPECT(Parent.GetString("", "GlobalKey", Value));
         TEST_EXPECT(Value == "FromChild");
         TEST_EXPECT(Parent.GetString("Renderer", "Width", Value));
@@ -485,7 +485,7 @@ bool IniFile_Test()
 
     TEST_SECTION("A file including itself is refused");
     {
-        const String SelfPath("IniFileTests.self.ini");
+        const FString SelfPath("IniFileTests.self.ini");
 
         TEST_EXPECT(WriteTextFile(SelfPath,
             "include \"IniFileTests.self.ini\"\n"
@@ -495,7 +495,7 @@ bool IniFile_Test()
         FIniFile Self;
         TEST_EXPECT(Self.LoadFromFile(SelfPath));
 
-        String Value;
+        FString Value;
         TEST_EXPECT(Self.GetString("Valid", "Key", Value));
         TEST_EXPECT(Value == "1");
 
@@ -504,7 +504,7 @@ bool IniFile_Test()
 
     TEST_SECTION("A missing include warns and parsing continues");
     {
-        const String ParentPath("IniFileTests.missing.parent.ini");
+        const FString ParentPath("IniFileTests.missing.parent.ini");
 
         TEST_EXPECT(WriteTextFile(ParentPath,
             "include \"IniFileTests.missing.does-not-exist.ini\"\n"
@@ -514,7 +514,7 @@ bool IniFile_Test()
         FIniFile Parent;
         TEST_EXPECT(Parent.LoadFromFile(ParentPath));
 
-        String Value;
+        FString Value;
         TEST_EXPECT(Parent.GetString("Valid", "Key", Value));
         TEST_EXPECT(Value == "1");
 
@@ -523,9 +523,9 @@ bool IniFile_Test()
 
     TEST_SECTION("Nested includes reach the deepest file");
     {
-        const String NestedCPath("IniFileTests.c.ini");
-        const String NestedBPath("IniFileTests.b.ini");
-        const String NestedAPath("IniFileTests.a.ini");
+        const FString NestedCPath("IniFileTests.c.ini");
+        const FString NestedBPath("IniFileTests.b.ini");
+        const FString NestedAPath("IniFileTests.a.ini");
 
         TEST_EXPECT(WriteTextFile(NestedCPath,
             "[Values]\n"
@@ -540,7 +540,7 @@ bool IniFile_Test()
         FIniFile Root;
         TEST_EXPECT(Root.LoadFromFile(NestedAPath));
 
-        String Value;
+        FString Value;
         TEST_EXPECT(Root.GetString("Values", "Key", Value));
         TEST_EXPECT(Value == "FromC");
 
@@ -555,7 +555,7 @@ bool IniFile_Test()
             "[Values]\n"
             "include = 1\n");
 
-        String Value;
+        FString Value;
         TEST_EXPECT(Ini.GetString("Values", "include", Value));
         TEST_EXPECT(Value == "1");
     }

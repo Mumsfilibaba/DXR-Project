@@ -113,7 +113,7 @@ public:
             : nil;
     }
 
-    FORCEINLINE void SetScopePath(const String& InScopePath) { ScopePath = InScopePath; }
+    FORCEINLINE void SetScopePath(const FString& InScopePath) { ScopePath = InScopePath; }
 
     FORCEINLINE void UpdateResidency(FMetalResidencyEntry* Entry)
     {
@@ -152,7 +152,7 @@ private:
     TArray<uint32>             ScheduledTimestamps;
     TArray<FMetalPendingClear> PendingClears;
     TArray<id<MTLTexture>>     PendingDiscards;
-    String                     ScopePath;
+    FString                    ScopePath;
     FMetalResidencyList        ResidencyList;
     uint64                     WaitedUploadValue;
     uint64                     DeclaredResidencyGeneration;

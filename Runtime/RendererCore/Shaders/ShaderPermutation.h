@@ -52,9 +52,9 @@ public:
         return ValueID != 0;
     }
 
-    NODISCARD static String ToDefineValue(Type Value)
+    NODISCARD static FString ToDefineValue(Type Value)
     {
-        return Value ? String("(1)") : String("(0)");
+        return Value ? FString("(1)") : FString("(0)");
     }
 };
 
@@ -79,9 +79,9 @@ public:
         return static_cast<Type>(ValueID + FirstValue);
     }
 
-    NODISCARD static String ToDefineValue(Type Value)
+    NODISCARD static FString ToDefineValue(Type Value)
     {
-        return String::Printf("%d", static_cast<int32>(Value));
+        return FString::Printf("%d", static_cast<int32>(Value));
     }
 };
 
@@ -106,9 +106,9 @@ public:
         return static_cast<Type>(ValueID);
     }
 
-    NODISCARD static String ToDefineValue(Type Value)
+    NODISCARD static FString ToDefineValue(Type Value)
     {
-        return String::Printf("%d", static_cast<int32>(Value));
+        return FString::Printf("%d", static_cast<int32>(Value));
     }
 };
 

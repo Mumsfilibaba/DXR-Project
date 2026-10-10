@@ -172,7 +172,7 @@ void* FMetalBufferRHI::Map(uint64 Offset, uint64 Size)
 
     if (!Desc.IsDynamic() && !Desc.IsReadBack() && !Desc.IsTransient())
     {
-        String DebugNameStr;
+        FString DebugNameStr;
         GetDebugName(DebugNameStr);
         METAL_ERROR("Attempting to map a non-mappable buffer. Name='%s'", *DebugNameStr);
         return nullptr;
@@ -298,7 +298,7 @@ bool FMetalBufferRHI::Initialize(ERHIResourceState InInitialAccess, const void* 
     return true;
 }
 
-void FMetalBufferRHI::SetDebugName(const String& InName)
+void FMetalBufferRHI::SetDebugName(const FString& InName)
 {
     @autoreleasepool
     {
@@ -311,7 +311,7 @@ void FMetalBufferRHI::SetDebugName(const String& InName)
     }
 }
 
-void FMetalBufferRHI::GetDebugName(String& OutDebugName) const
+void FMetalBufferRHI::GetDebugName(FString& OutDebugName) const
 {
     OutDebugName.Clear();
 
@@ -321,7 +321,7 @@ void FMetalBufferRHI::GetDebugName(String& OutDebugName) const
 
         if (BufferHandle)
         {
-            OutDebugName = String(BufferHandle.label);
+            OutDebugName = FString(BufferHandle.label);
         }
     }
 }

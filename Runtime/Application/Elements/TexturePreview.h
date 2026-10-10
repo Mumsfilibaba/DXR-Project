@@ -17,7 +17,7 @@ public:
         TSharedPtr<IFontFace> Font = nullptr;
 
         /** @brief Drawn dimmed in place of the image while the brush holds no texture. */
-        String EmptyText = "None";
+        FString EmptyText = "None";
 
         /** @brief The edge of the square the image is drawn in, in pixels. */
         int32 PreviewSize = 48;
@@ -64,7 +64,7 @@ private:
 
     FUIBrush              Brush;
     TSharedPtr<IFontFace> Font;
-    String                EmptyText;
+    FString               EmptyText;
     int32                 PreviewSize;
     int32                 ZoomSize;
 };

@@ -394,7 +394,7 @@ int32 FTitleBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId + 2);
 }
 
-void FTitleBar::SetTitle(const String& InTitle)
+void FTitleBar::SetTitle(const FString& InTitle)
 {
     Title = InTitle;
 

@@ -25,9 +25,9 @@ static TAutoConsoleVariable<bool> CVarLogGamepadEvents(
     "Logs every analog change the platform delivers, which arrive for as long as a stick is off centre",
     false);
 
-static String DescribeModifiers(const FModifierKeyState& Modifiers)
+static FString DescribeModifiers(const FModifierKeyState& Modifiers)
 {
-    String Description;
+    FString Description;
     if (Modifiers.IsCtrlDown())
     {
         Description += "Ctrl ";
@@ -45,7 +45,7 @@ static String DescribeModifiers(const FModifierKeyState& Modifiers)
         Description += "Super ";
     }
 
-    return Description.IsEmpty() ? String("none") : Description;
+    return Description.IsEmpty() ? FString("none") : Description;
 }
 
 bool FInputLogger::IsEnabled()

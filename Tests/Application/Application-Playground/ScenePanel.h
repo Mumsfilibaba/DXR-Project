@@ -16,8 +16,8 @@ public:
         {
         }
 
-        String                     Title;
-        String                     Description;
+        FString                    Title;
+        FString                    Description;
         FPlaygroundFonts           Fonts;
         TSharedPtr<FVisualElement> Content;
     };
@@ -40,5 +40,5 @@ public:
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
 };
 
-NODISCARD TSharedPtr<FVisualElement> MakeSceneColumn(const String& Title, const FPlaygroundFonts& Fonts,
+NODISCARD TSharedPtr<FVisualElement> MakeSceneColumn(const FString& Title, const FPlaygroundFonts& Fonts,
     const TArray<TSharedPtr<FVisualElement>>& Panels);

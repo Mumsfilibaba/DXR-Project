@@ -11,12 +11,12 @@
 
 class FTabStrip;
 
-DECLARE_DELEGATE(FOnTabActivated, const String& /*PanelId*/);
-DECLARE_DELEGATE(FOnTabClosed, const String& /*PanelId*/);
-DECLARE_DELEGATE(FOnTabReordered, const String& /*PanelId*/, int32 /*NewIndex*/);
-DECLARE_DELEGATE(FOnTabDragDetached, const String& /*PanelId*/, const IntVector2& /*ClientPosition*/, const IntVector2& /*ScreenPosition*/);
-DECLARE_DELEGATE(FOnTabDragMoved, const String& /*PanelId*/, const IntVector2& /*ClientPosition*/, const IntVector2& /*ScreenPosition*/);
-DECLARE_DELEGATE(FOnTabDragFinished, const String& /*PanelId*/, const IntVector2& /*ClientPosition*/, const IntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnTabActivated, const FString& /*PanelId*/);
+DECLARE_DELEGATE(FOnTabClosed, const FString& /*PanelId*/);
+DECLARE_DELEGATE(FOnTabReordered, const FString& /*PanelId*/, int32 /*NewIndex*/);
+DECLARE_DELEGATE(FOnTabDragDetached, const FString& /*PanelId*/, const IntVector2& /*ClientPosition*/, const IntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnTabDragMoved, const FString& /*PanelId*/, const IntVector2& /*ClientPosition*/, const IntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnTabDragFinished, const FString& /*PanelId*/, const IntVector2& /*ClientPosition*/, const IntVector2& /*ScreenPosition*/);
 
 class APPLICATION_API FTab final : public FInteractiveElement
 {
@@ -30,7 +30,7 @@ public:
      * @param InFont       The face the label is drawn with.
      * @param bInIsClosable Whether it draws a cross that closes the panel.
      */
-    static TSharedPtr<FTab> Create(const String& InPanelId, const String& InLabel, const TSharedPtr<IFontFace>& InFont, bool bInIsClosable);
+    static TSharedPtr<FTab> Create(const FString& InPanelId, const FString& InLabel, const TSharedPtr<IFontFace>& InFont, bool bInIsClosable);
 
 public:
     FTab();
@@ -110,13 +110,13 @@ public:
     NODISCARD FRectangle GetCloseButtonRectangle() const;
 
     /** @return The panel the tab stands for, which is how the strip and the area refer to it. */
-    NODISCARD FORCEINLINE const String& GetPanelId() const
+    NODISCARD FORCEINLINE const FString& GetPanelId() const
     {
         return PanelId;
     }
 
     /** @return The text the tab shows. */
-    NODISCARD FORCEINLINE const String& GetLabel() const
+    NODISCARD FORCEINLINE const FString& GetLabel() const
     {
         return Label;
     }
@@ -141,8 +141,8 @@ protected:
 private:
     void SetCloseHovered(bool bInIsCloseHovered);
 
-    String                     PanelId;
-    String                     Label;
+    FString                    PanelId;
+    FString                    Label;
     TSharedPtr<IFontFace>      Font;
     mutable FCachedTextMetrics LabelMetrics;
     FUITabStyle                Style;
@@ -241,7 +241,7 @@ public:
      *
      * @param PanelId The panel whose tab to reveal. An unknown id is ignored.
      */
-    void ScrollTabIntoView(const String& PanelId);
+    void ScrollTabIntoView(const FString& PanelId);
 
     /**
      * @brief Appends a tab at the far end.
@@ -250,21 +250,21 @@ public:
      * @param Label       The text it shows.
      * @param bIsClosable Whether it draws a cross that closes the panel.
      */
-    void AddTab(const String& PanelId, const String& Label, bool bIsClosable);
+    void AddTab(const FString& PanelId, const FString& Label, bool bIsClosable);
 
     /**
      * @brief Removes a tab, moving the active one when it was the one removed.
      *
      * @param PanelId The panel whose tab to remove.
      */
-    void RemoveTab(const String& PanelId);
+    void RemoveTab(const FString& PanelId);
 
     /**
      * @brief Shows a panel's tab as the active one.
      *
      * @param PanelId The panel to show. An unknown id is ignored.
      */
-    void SetActiveTab(const String& PanelId);
+    void SetActiveTab(const FString& PanelId);
 
     /** @brief Drops every tab, so the strip can be refilled. */
     void ClearTabs();
@@ -299,7 +299,7 @@ public:
     void OnTabReleased(FTab* Tab, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
 
     /** @return The panel whose tab is active, or an empty string when the strip has no tabs. */
-    NODISCARD const String& GetActivePanelId() const;
+    NODISCARD const FString& GetActivePanelId() const;
 
     /**
      * @brief Shows a tab for a panel that is about to be dropped onto the strip, as the active tab where the drop would put it.
@@ -310,7 +310,7 @@ public:
      * @param Label       The text the tab shows.
      * @param InsertIndex Which of the strip's tabs it goes in front of, where anything outside the tabs puts it after all of them.
      */
-    void SetPreviewTab(const String& Label, int32 InsertIndex);
+    void SetPreviewTab(const FString& Label, int32 InsertIndex);
 
     /** @brief Removes the tab shown by SetPreviewTab, making the strip's own active tab active again. */
     void ClearPreviewTab();
@@ -360,7 +360,7 @@ public:
      *
      * @return The panel id, which is empty when no tab is held and once a held tab has been torn out.
      */
-    NODISCARD FORCEINLINE const String& GetDraggedPanelId() const
+    NODISCARD FORCEINLINE const FString& GetDraggedPanelId() const
     {
         return DraggedPanelId;
     }
@@ -370,7 +370,7 @@ public:
      *
      * @return The panel id, which is empty until a drag tears one out and stays set until it is let go.
      */
-    NODISCARD FORCEINLINE const String& GetDetachedPanelId() const
+    NODISCARD FORCEINLINE const FString& GetDetachedPanelId() const
     {
         return DetachedPanelId;
     }
@@ -401,9 +401,9 @@ private:
     FUIAnimation                 PreviewTabFade;
     int32                        PreviewTabIndex;
     TSharedPtr<class FScrollBar> ScrollBar;
-    String                       ActivePanelId;
-    String                       DraggedPanelId;
-    String                       DetachedPanelId;
+    FString                      ActivePanelId;
+    FString                      DraggedPanelId;
+    FString                      DetachedPanelId;
     IntVector2                   DragOrigin;
     int32                        ScrollOffset;
     int32                        ScrollOffsetBeforePreview;

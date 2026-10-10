@@ -16,7 +16,7 @@
 #include "PlaygroundScene.h"
 #include "ScenePanel.h"
 
-static TSharedPtr<FTextBlock> MakeReadout(const FPlaygroundFonts& Fonts, const String& InText)
+static TSharedPtr<FTextBlock> MakeReadout(const FPlaygroundFonts& Fonts, const FString& InText)
 {
     FTextBlock::FDesc Desc;
     Desc.Text            = InText;
@@ -38,10 +38,10 @@ static TSharedPtr<FVisualElement> MakeButtonRow(const FPlaygroundFonts& Fonts)
         FButton::FDesc Desc;
         Desc.SetText(Labels[Index]).SetFont(Fonts.Body);
         Desc.bHasBorder = (Index == 2);
-        Desc.OnClicked  = FOnClicked::CreateLambda([Readout, ClickCount, Label = String(Labels[Index])]()
+        Desc.OnClicked  = FOnClicked::CreateLambda([Readout, ClickCount, Label = FString(Labels[Index])]()
         {
             (*ClickCount)++;
-            Readout->SetText(String::Printf("%s clicked, %d in total", Label.Data(), *ClickCount));
+            Readout->SetText(FString::Printf("%s clicked, %d in total", Label.Data(), *ClickCount));
         });
 
         TSharedPtr<FButton> Button = FButton::Create(Desc);
@@ -92,10 +92,10 @@ static TSharedPtr<FVisualElement> MakeCheckBoxRow(const FPlaygroundFonts& Fonts)
         Desc.SetText(Sample.Label).SetFont(Fonts.Body);
         Desc.InitialState   = Sample.Initial;
         Desc.bIsTriState    = Sample.bIsTriState;
-        Desc.OnStateChanged = FOnCheckStateChanged::CreateLambda([Readout, Label = String(Sample.Label)](ECheckBoxState NewState)
+        Desc.OnStateChanged = FOnCheckStateChanged::CreateLambda([Readout, Label = FString(Sample.Label)](ECheckBoxState NewState)
         {
             const CHAR_T* StateName = NewState == ECheckBoxState::Checked ? "checked" : (NewState == ECheckBoxState::Unchecked ? "unchecked" : "undetermined");
-            Readout->SetText(String::Printf("%s is now %s", Label.Data(), StateName));
+            Readout->SetText(FString::Printf("%s is now %s", Label.Data(), StateName));
         });
 
         TSharedPtr<FCheckBox> CheckBox = FCheckBox::Create(Desc);
@@ -144,13 +144,13 @@ static TSharedPtr<FVisualElement> MakeSliderRow(const FPlaygroundFonts& Fonts)
         SliderDesc.bShowValueText = Sample.bShowValueText;
         SliderDesc.Font           = Fonts.Monospace;
         SliderDesc.Precision      = Sample.Step >= 1.0f ? 0 : 2;
-        SliderDesc.OnValueChanged = FOnSliderValueChanged::CreateLambda([Readout, Label = String(Sample.Label)](float NewValue)
+        SliderDesc.OnValueChanged = FOnSliderValueChanged::CreateLambda([Readout, Label = FString(Sample.Label)](float NewValue)
         {
-            Readout->SetText(String::Printf("%s dragging: %.3f", Label.Data(), NewValue));
+            Readout->SetText(FString::Printf("%s dragging: %.3f", Label.Data(), NewValue));
         });
-        SliderDesc.OnValueCommitted = FOnSliderValueCommitted::CreateLambda([Readout, Label = String(Sample.Label)](float FinalValue)
+        SliderDesc.OnValueCommitted = FOnSliderValueCommitted::CreateLambda([Readout, Label = FString(Sample.Label)](float FinalValue)
         {
-            Readout->SetText(String::Printf("%s committed: %.3f", Label.Data(), FinalValue));
+            Readout->SetText(FString::Printf("%s committed: %.3f", Label.Data(), FinalValue));
         });
 
         TSharedPtr<FHorizontalBox> Row = FHorizontalBox::Create();
@@ -193,13 +193,13 @@ static TSharedPtr<FVisualElement> MakeSpinBoxRow(const FPlaygroundFonts& Fonts)
         Desc.Prefix         = Axes[Index];
         Desc.Precision      = 2;
         Desc.ScrubSpeed     = 0.25f;
-        Desc.OnValueChanged = FOnSpinBoxValueChanged::CreateLambda([Readout, Axis = String(Axes[Index])](float NewValue)
+        Desc.OnValueChanged = FOnSpinBoxValueChanged::CreateLambda([Readout, Axis = FString(Axes[Index])](float NewValue)
         {
-            Readout->SetText(String::Printf("%sscrubbing to %.2f", Axis.Data(), NewValue));
+            Readout->SetText(FString::Printf("%sscrubbing to %.2f", Axis.Data(), NewValue));
         });
-        Desc.OnValueCommitted = FOnSpinBoxValueCommitted::CreateLambda([Readout, Axis = String(Axes[Index])](float FinalValue)
+        Desc.OnValueCommitted = FOnSpinBoxValueCommitted::CreateLambda([Readout, Axis = FString(Axes[Index])](float FinalValue)
         {
-            Readout->SetText(String::Printf("%scommitted %.2f", Axis.Data(), FinalValue));
+            Readout->SetText(FString::Printf("%scommitted %.2f", Axis.Data(), FinalValue));
         });
 
         Row->AddSlot(FSpinBox::Create(Desc)).SetFillCoefficient(1.0f).SetPadding(FMargin(0, 0, 8, 0));
@@ -228,7 +228,7 @@ static TSharedPtr<FVisualElement> MakeScrollBarRow(const FPlaygroundFonts& Fonts
     for (int32 Index = 0; Index < 40; ++Index)
     {
         FTextBlock::FDesc LineDesc;
-        LineDesc.Text            = String::Printf("Row %02d, scroll with the wheel or drag the bar on the right", Index);
+        LineDesc.Text            = FString::Printf("Row %02d, scroll with the wheel or drag the bar on the right", Index);
         LineDesc.Font            = Fonts.Monospace;
         LineDesc.ColorAndOpacity = (Index % 5) == 0 ? Style.Colors.Accent : Style.Colors.Text;
 

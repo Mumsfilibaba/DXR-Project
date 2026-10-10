@@ -16,7 +16,7 @@
 #define ENABLE_SORT_BENCHMARK (0)
 #define ENABLE_STANDARD_BENCHMARK (1)
 
-// Individual operations within the standard benchmark (apply to both String and Vector3).
+// Individual operations within the standard benchmark (apply to both FString and Vector3).
 #define ENABLE_INSERT_BENCHMARK    (1)
 #define ENABLE_EMPLACEAT_BENCHMARK (1)
 #define ENABLE_ADD_BENCHMARK       (1)
@@ -48,7 +48,7 @@ void TArray_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                std::vector<String> Strings0;
+                std::vector<FString> Strings0;
 
                 FScopedClock ScopedClock(Clock);
 
@@ -79,7 +79,7 @@ void TArray_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                TArray<String, TArrayAllocator<String>> Strings1;
+                TArray<FString, TArrayAllocator<FString>> Strings1;
 
                 FScopedClock ScopedClock(Clock);
 
@@ -117,7 +117,7 @@ void TArray_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                std::vector<String> Strings0;
+                std::vector<FString> Strings0;
 
                 FScopedClock ScopedClock(Clock);
 
@@ -148,7 +148,7 @@ void TArray_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                TArray<String, TArrayAllocator<String>> Strings1;
+                TArray<FString, TArrayAllocator<FString>> Strings1;
 
                 FScopedClock ScopedClock(Clock);
 
@@ -186,7 +186,7 @@ void TArray_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                std::vector<String> Strings0;
+                std::vector<FString> Strings0;
 
                 FScopedClock ScopedClock(Clock);
 
@@ -217,7 +217,7 @@ void TArray_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                TArray<String, TArrayAllocator<String>> Strings1;
+                TArray<FString, TArrayAllocator<FString>> Strings1;
 
                 FScopedClock ScopedClock(Clock);
 
@@ -255,7 +255,7 @@ void TArray_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                std::vector<String> Strings0;
+                std::vector<FString> Strings0;
 
                 FScopedClock ScopedClock(Clock);
 
@@ -286,7 +286,7 @@ void TArray_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                TArray<String, TArrayAllocator<String>> Strings1;
+                TArray<FString, TArrayAllocator<FString>> Strings1;
 
                 FScopedClock ScopedClock(Clock);
 

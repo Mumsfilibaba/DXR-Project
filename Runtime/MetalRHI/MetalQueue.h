@@ -38,7 +38,7 @@ struct FMetalBreadcrumbRing
     static constexpr uint32 NumEntries  = 64;
     static constexpr uint32 EntryLength = 48;
 
-    void Push(const StringView& Name);
+    void Push(const FStringView& Name);
 
     void Reset()
     {

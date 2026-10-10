@@ -165,7 +165,7 @@ void FToolBarButton::SetCheckState(ECheckBoxState InState)
     InvalidatePaint();
 }
 
-void FToolBarButton::SetLabel(const String& InLabel)
+void FToolBarButton::SetLabel(const FString& InLabel)
 {
     if (Label != InLabel)
     {
@@ -180,7 +180,7 @@ void FToolBarButton::SetIcon(const FUIBrush& InIcon)
     InvalidateDesiredSize();
 }
 
-void FToolBarButton::SetToolTipText(const String& InToolTipText)
+void FToolBarButton::SetToolTipText(const FString& InToolTipText)
 {
     ToolTipText = InToolTipText;
 }
@@ -277,7 +277,7 @@ int32 FToolBarButton::ComputeContentWidth() const
 
     if (Font && !Label.IsEmpty())
     {
-        ContentWidth += (Icon.IsValid() ? TOOLBAR_ICON_SPACING : 0) + Font->MeasureWidth(StringView(Label.Data(), Label.Length()));
+        ContentWidth += (Icon.IsValid() ? TOOLBAR_ICON_SPACING : 0) + Font->MeasureWidth(FStringView(Label.Data(), Label.Length()));
     }
 
     if (ItemType == EToolBarItemType::DropDown)
@@ -551,7 +551,7 @@ TSharedPtr<FToolBarButton> FToolBar::GetButton(int32 Index) const
     return Items[Index].Button;
 }
 
-TSharedPtr<FToolBarButton> FToolBar::FindButton(const String& InLabel) const
+TSharedPtr<FToolBarButton> FToolBar::FindButton(const FString& InLabel) const
 {
     for (const FToolBarEntry& Item : Items)
     {

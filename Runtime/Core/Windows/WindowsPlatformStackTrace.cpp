@@ -24,7 +24,7 @@ bool FWindowsPlatformStackTrace::InitializeSymbols()
         ::SymSetOptions(SymOptions | SymOptionFlags);
 
         // TODO: Assumed to be the same as the executable path
-        const String SymbolPath = GetSymbolPath();
+        const FString SymbolPath = GetSymbolPath();
 
         // Get handle for the current process handle
         HANDLE CurrentProcess = ::GetCurrentProcess();

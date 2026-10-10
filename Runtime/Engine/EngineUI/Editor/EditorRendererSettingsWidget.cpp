@@ -13,9 +13,9 @@ static constexpr float RendererSettingsLabelColumnWidth  = 310.0f;
 static constexpr float RendererSettingsRevertColumnWidth = 28.0f;
 
 template<typename ValueType>
-static const ValueType* TryGetDefaultPtr(const TMap<String, ValueType>& Defaults, const CHAR_T* CVarName, ValueType& OutValue)
+static const ValueType* TryGetDefaultPtr(const TMap<FString, ValueType>& Defaults, const CHAR_T* CVarName, ValueType& OutValue)
 {
-    if (const ValueType* Found = Defaults.Find(String(CVarName)))
+    if (const ValueType* Found = Defaults.Find(FString(CVarName)))
     {
         OutValue = *Found;
         return &OutValue;
@@ -101,7 +101,7 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
     {
         if (IConsoleVariable* CVar = Console.FindConsoleVariable(Name))
         {
-            BoolDefaults.Add(String(Name), CVar->GetBool());
+            BoolDefaults.Add(FString(Name), CVar->GetBool());
         }
     };
 
@@ -109,7 +109,7 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
     {
         if (IConsoleVariable* CVar = Console.FindConsoleVariable(Name))
         {
-            IntDefaults.Add(String(Name), CVar->GetInt());
+            IntDefaults.Add(FString(Name), CVar->GetInt());
         }
     };
 
@@ -117,7 +117,7 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
     {
         if (IConsoleVariable* CVar = Console.FindConsoleVariable(Name))
         {
-            FloatDefaults.Add(String(Name), CVar->GetFloat());
+            FloatDefaults.Add(FString(Name), CVar->GetFloat());
         }
     };
 

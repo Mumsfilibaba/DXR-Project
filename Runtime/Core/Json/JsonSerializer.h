@@ -103,7 +103,7 @@ struct TJsonSerializer
 
             if constexpr (TJsonEnumNames<T>::bHasNames)
             {
-                String Name;
+                FString Name;
                 if (InValue.TryGetString(Name))
                 {
                     int32 NumEntries = 0;
@@ -252,14 +252,14 @@ template<> struct TJsonSerializer<float>  : public TJsonRealSerializer<float>  {
 template<> struct TJsonSerializer<double> : public TJsonRealSerializer<double> { };
 
 template<>
-struct TJsonSerializer<String>
+struct TJsonSerializer<FString>
 {
-    static void Save(FJsonValue& OutValue, const String& InValue)
+    static void Save(FJsonValue& OutValue, const FString& InValue)
     {
         OutValue = FJsonValue(InValue);
     }
 
-    static bool Load(const FJsonValue& InValue, String& OutValue, FJsonArchive& Archive)
+    static bool Load(const FJsonValue& InValue, FString& OutValue, FJsonArchive& Archive)
     {
         if (!InValue.TryGetString(OutValue))
         {
@@ -272,14 +272,14 @@ struct TJsonSerializer<String>
 };
 
 template<>
-struct TJsonSerializer<StringView>
+struct TJsonSerializer<FStringView>
 {
-    static void Save(FJsonValue& OutValue, const StringView& InValue)
+    static void Save(FJsonValue& OutValue, const FStringView& InValue)
     {
         OutValue = FJsonValue(InValue);
     }
 
-    static bool Load(const FJsonValue&, StringView&, FJsonArchive& Archive)
+    static bool Load(const FJsonValue&, FStringView&, FJsonArchive& Archive)
     {
         // A view owns nothing, so there is nowhere to put the characters
         Archive.AddError("a string view can be written but not read back into");
@@ -329,7 +329,7 @@ struct TJsonSerializer<TArray<T, AllocatorType>>
         OutValue.Reset(InValue.Num());
         for (int32 Index = 0; Index < InValue.Num(); ++Index)
         {
-            FJsonArchive::FPathScope ElementScope(Archive, String::Printf("[%d]", Index));
+            FJsonArchive::FPathScope ElementScope(Archive, FString::Printf("[%d]", Index));
             TJsonSerializer<T>::Load(InValue[Index], OutValue[Index], Archive);
         }
 
@@ -369,7 +369,7 @@ struct TJsonSerializer<TStaticArray<T, NUM_ELEMENTS>>
 
         for (int32 Index = 0; Index < NUM_ELEMENTS; ++Index)
         {
-            FJsonArchive::FPathScope ElementScope(Archive, String::Printf("[%d]", Index));
+            FJsonArchive::FPathScope ElementScope(Archive, FString::Printf("[%d]", Index));
             TJsonSerializer<T>::Load(InValue[Index], OutValue[Index], Archive);
         }
 
@@ -423,14 +423,14 @@ struct TJsonOmitEmpty<TOptional<T>>
 // Writes a map as a JSON object with its keys in alphabetical order. TMap iteration order is
 // unspecified (hash table), so sorting is what makes two saves of the same data produce the same bytes.
 template<typename T>
-struct TJsonSerializer<TMap<String, T>>
+struct TJsonSerializer<TMap<FString, T>>
 {
-    typedef TMap<String, T> MapType;
+    typedef TMap<FString, T> MapType;
 
     static void Save(FJsonValue& OutValue, const MapType& InValue)
     {
-        TArray<String> Keys = InValue.GetKeys();
-        Algorithm::Sort(Keys, [](const String& LHS, const String& RHS) { return LHS.Compare(RHS) < 0; });
+        TArray<FString> Keys = InValue.GetKeys();
+        Algorithm::Sort(Keys, [](const FString& LHS, const FString& RHS) { return LHS.Compare(RHS) < 0; });
 
         OutValue = FJsonValue::MakeObject();
         for (int32 Index = 0; Index < Keys.Size(); ++Index)

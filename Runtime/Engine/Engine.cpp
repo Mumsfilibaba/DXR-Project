@@ -25,7 +25,7 @@
 static FAutoConsoleCommand CCmdExit(
     "Engine.Exit",
     "Exits the engine",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         if (FEngine::IsInitialized())
         {
@@ -38,7 +38,7 @@ static FAutoConsoleCommand CCmdExit(
 static FAutoConsoleCommand CCmdToggleFullscreen(
     "Engine.ToggleFullscreen",
     "Toggles fullscreen on the main Viewport",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         DEBUG_BREAK();
     }));
@@ -355,7 +355,7 @@ bool FEngine::Init()
     }
 
     // Load Game-Module
-    const String GameModuleName = Paths::GetProjectModuleName();
+    const FString GameModuleName = Paths::GetProjectModuleName();
     GameModule = FModuleManager::Get().LoadModule<FGameModule>(*GameModuleName);
 
     if (!GameModule)
@@ -499,7 +499,7 @@ void FEngine::Release()
     {
         GameModule->Release();
 
-        const String GameModuleName = Paths::GetProjectModuleName();
+        const FString GameModuleName = Paths::GetProjectModuleName();
         FModuleManager::Get().UnloadModule(*GameModuleName);
         GameModule = nullptr;
     }

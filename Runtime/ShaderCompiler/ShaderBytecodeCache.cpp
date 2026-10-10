@@ -17,7 +17,7 @@ static TAutoConsoleVariable<bool> CVarEnableBytecodeCache(
     "Reuse shader bytecode compiled by earlier runs instead of invoking the shader compiler",
     true);
 
-static TAutoConsoleVariable<String> CVarBytecodeFileName(
+static TAutoConsoleVariable<FString> CVarBytecodeFileName(
     "Renderer.ShaderCache.BytecodeFileName",
     "FileName for the file storing compiled shader bytecode",
     "Shaders.shaderbytecode");
@@ -25,7 +25,7 @@ static TAutoConsoleVariable<String> CVarBytecodeFileName(
 static FAutoConsoleCommand CCmdDumpShaderBytecodeCacheStats(
     "Renderer.DumpShaderBytecodeCacheStats",
     "Logs how many compiled shaders the bytecode cache is holding",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         if (FShaderBytecodeCache* Cache = FShaderBytecodeCache::TryGet())
         {
@@ -51,7 +51,7 @@ static bool CanRead(const FByteInputStream& Stream, uint64 NumBytes)
     return static_cast<uint64>(Stream.Size() - Stream.ReadOffset()) >= NumBytes;
 }
 
-static bool ReadString(FByteInputStream& Stream, String& OutString)
+static bool ReadString(FByteInputStream& Stream, FString& OutString)
 {
     uint32 Length = 0;
     if (!CanRead(Stream, sizeof(Length)))
@@ -69,11 +69,11 @@ static bool ReadString(FByteInputStream& Stream, String& OutString)
     Characters.Resize(static_cast<int32>(Length));
     Stream.Read(Characters.Data(), Characters.Size());
 
-    OutString = String(Characters.Data(), Characters.Size());
+    OutString = FString(Characters.Data(), Characters.Size());
     return true;
 }
 
-static void WriteString(FByteOutputStream& Stream, const String& Value)
+static void WriteString(FByteOutputStream& Stream, const FString& Value)
 {
     const uint32 Length = static_cast<uint32>(Value.Size());
 
@@ -82,7 +82,7 @@ static void WriteString(FByteOutputStream& Stream, const String& Value)
 }
 
 FShaderBytecodeCache* FShaderBytecodeCache::BytecodeCache = nullptr;
-String                FShaderBytecodeCache::FilePathOverride;
+FString               FShaderBytecodeCache::FilePathOverride;
 
 FShaderBytecodeCache::FShaderBytecodeCache()
     : Entries()
@@ -120,13 +120,13 @@ void FShaderBytecodeCache::Release()
     }
 }
 
-void FShaderBytecodeCache::SetFilePathOverride(const String& InFilePath)
+void FShaderBytecodeCache::SetFilePathOverride(const FString& InFilePath)
 {
     CHECK(BytecodeCache == nullptr);
     FilePathOverride = InFilePath;
 }
 
-String FShaderBytecodeCache::GetFilePath()
+FString FShaderBytecodeCache::GetFilePath()
 {
     if (!FilePathOverride.IsEmpty())
     {
@@ -136,18 +136,18 @@ String FShaderBytecodeCache::GetFilePath()
     return Paths::GetAssetDir() + '/' + CVarBytecodeFileName.GetValue();
 }
 
-String FShaderBytecodeCache::CreateAssetRelativePath(const String& Path)
+FString FShaderBytecodeCache::CreateAssetRelativePath(const FString& Path)
 {
-    const String AssetDir = Paths::GetAssetDir() + '/';
+    const FString AssetDir = Paths::GetAssetDir() + '/';
     if (Path.StartsWith(AssetDir))
     {
-        return String(Path.Data() + AssetDir.Size(), Path.Size() - AssetDir.Size());
+        return FString(Path.Data() + AssetDir.Size(), Path.Size() - AssetDir.Size());
     }
 
     return Path;
 }
 
-bool FShaderBytecodeCache::TryGetFileHash(const String& RelativePath, uint64& OutHash)
+bool FShaderBytecodeCache::TryGetFileHash(const FString& RelativePath, uint64& OutHash)
 {
     TScopedLock Lock(FileHashesCS);
 
@@ -161,7 +161,7 @@ bool FShaderBytecodeCache::TryGetFileHash(const String& RelativePath, uint64& Ou
     uint64 FileHash = 0;
 
     // Anything the pre-processor reached outside the asset directory was stored as it came, and is opened the same way.
-    const String FilePath = FPlatformFile::IsPathRelative(*RelativePath) ? (Paths::GetAssetDir() + '/' + RelativePath) : RelativePath;
+    const FString FilePath = FPlatformFile::IsPathRelative(*RelativePath) ? (Paths::GetAssetDir() + '/' + RelativePath) : RelativePath;
 
     TFileRef<IPlatformFile> SourceFile = FPlatformFile::OpenForRead(FilePath);
     if (SourceFile)
@@ -184,10 +184,10 @@ bool FShaderBytecodeCache::TryGetFileHash(const String& RelativePath, uint64& Ou
     return FileHash != 0;
 }
 
-bool FShaderBytecodeCache::TryComputeDependencyHash(const TArray<String>& Dependencies, uint64& OutHash)
+bool FShaderBytecodeCache::TryComputeDependencyHash(const TArray<FString>& Dependencies, uint64& OutHash)
 {
     uint64 DependencyHash = 0;
-    for (const String& Dependency : Dependencies)
+    for (const FString& Dependency : Dependencies)
     {
         uint64 FileHash = 0;
         if (!TryGetFileHash(Dependency, FileHash))
@@ -202,7 +202,7 @@ bool FShaderBytecodeCache::TryComputeDependencyHash(const TArray<String>& Depend
     return true;
 }
 
-bool FShaderBytecodeCache::CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutShaderCode, EShaderJobRecording Recording)
+bool FShaderBytecodeCache::CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutShaderCode, EShaderJobRecording Recording)
 {
     FShaderCompiler& Compiler = FShaderCompiler::Get();
 
@@ -227,7 +227,7 @@ bool FShaderBytecodeCache::CompileFromFile(const String& Filename, const FShader
         return true;
     }
 
-    TArray<String> Dependencies;
+    TArray<FString> Dependencies;
     if (!Compiler.CompileFromFile(Filename, CompileInfo, OutShaderCode, &Dependencies))
     {
         return false;
@@ -255,7 +255,7 @@ bool FShaderBytecodeCache::Find(uint64 CompileHash, TArray<uint8>& OutShaderCode
     return false;
 }
 
-void FShaderBytecodeCache::Add(uint64 CompileHash, const TArray<uint8>& ShaderCode, const TArray<String>& Dependencies)
+void FShaderBytecodeCache::Add(uint64 CompileHash, const TArray<uint8>& ShaderCode, const TArray<FString>& Dependencies)
 {
     FShaderCodeHeader Header;
     if (Dependencies.IsEmpty() || !FShaderCodeReader::ReadHeader(ShaderCode, Header))
@@ -267,7 +267,7 @@ void FShaderBytecodeCache::Add(uint64 CompileHash, const TArray<uint8>& ShaderCo
     NewEntry.ShaderCode = ShaderCode;
 
     NewEntry.Dependencies.Reserve(Dependencies.Size());
-    for (const String& Dependency : Dependencies)
+    for (const FString& Dependency : Dependencies)
     {
         NewEntry.Dependencies.Emplace(CreateAssetRelativePath(Dependency));
     }
@@ -296,7 +296,7 @@ bool FShaderBytecodeCache::Contains(uint64 CompileHash)
     return Entries.Contains(CompileHash);
 }
 
-void FShaderBytecodeCache::RecordJob(const String& Filename, const FShaderCompileInfo& CompileInfo)
+void FShaderBytecodeCache::RecordJob(const FString& Filename, const FShaderCompileInfo& CompileInfo)
 {
     FShaderCompileJob Job = FShaderCompileJob::FromCompileInfo(Filename, CompileInfo);
     Job.Name = File::ExtractFilenameWithoutExtension(Filename) + ':' + CompileInfo.EntryPoint;
@@ -349,7 +349,7 @@ void FShaderBytecodeCache::LogStats()
 
 bool FShaderBytecodeCache::Load()
 {
-    const String FilePath = GetFilePath();
+    const FString FilePath = GetFilePath();
     if (!FPlatformFile::IsFile(*FilePath))
     {
         LOG_INFO("[FShaderBytecodeCache]: No cache found at '%s' (expected on first run)", *FilePath);
@@ -439,7 +439,7 @@ bool FShaderBytecodeCache::Load()
         bool bReadEntry = true;
         for (uint32 DependencyIndex = 0; DependencyIndex < NumDependencies; ++DependencyIndex)
         {
-            String Dependency;
+            FString Dependency;
             if (!ReadString(Stream, Dependency))
             {
                 bReadEntry = false;
@@ -512,7 +512,7 @@ bool FShaderBytecodeCache::Save()
         Payload.Add(Entry.DependencyHash);
         Payload.Add(static_cast<uint32>(Entry.Dependencies.Size()));
 
-        for (const String& Dependency : Entry.Dependencies)
+        for (const FString& Dependency : Entry.Dependencies)
         {
             WriteString(Payload, Dependency);
         }
@@ -536,7 +536,7 @@ bool FShaderBytecodeCache::Save()
     Header.DataSize   = static_cast<uint32>(Payload.Size());
     Header.NumEntries = NumEntries;
 
-    const String FilePath = GetFilePath();
+    const FString FilePath = GetFilePath();
 
     TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForWrite(FilePath);
     if (!CacheFile)

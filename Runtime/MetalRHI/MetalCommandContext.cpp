@@ -31,7 +31,7 @@ static void InsertDrawBreadcrumb(FMetalEncoderManager& Encoders, id<MTLCommandEn
 {
     if (CVarDrawBreadcrumbs.GetValue())
     {
-        Encoders.GetCommands().Breadcrumbs.Push(StringView(Name));
+        Encoders.GetCommands().Breadcrumbs.Push(FStringView(Name));
         [Encoder insertDebugSignpost:[NSString stringWithUTF8String:Name]];
     }
 }
@@ -113,7 +113,7 @@ uint64 FMetalCommandContext::Submit(EMetalSubmitFlags Flags)
         Encoders.BeginCommandBuffer(Queue.ObtainCommands());
         ContextState.BeginCommandBuffer();
 
-        for (const String& GroupName : DebugGroups)
+        for (const FString& GroupName : DebugGroups)
         {
             [Encoders.GetCommands().CommandBuffer pushDebugGroup:GroupName.GetNSString()];
         }
@@ -1297,14 +1297,14 @@ void FMetalCommandContext::Flush()
     FMetalDeviceRHI::Get()->FlushDeferredDeletions();
 }
 
-void FMetalCommandContext::PushEvent(const StringView& Name)
+void FMetalCommandContext::PushEvent(const FStringView& Name)
 {
     if (!Encoders.HasCommands())
     {
         return;
     }
 
-    const String GroupName(Name);
+    const FString GroupName(Name);
     [Encoders.GetCommands().CommandBuffer pushDebugGroup:GroupName.GetNSString()];
     Encoders.GetCommands().Breadcrumbs.Push(Name);
     DebugGroups.Add(GroupName);
@@ -1325,8 +1325,8 @@ void FMetalCommandContext::PopEvent()
 
 void FMetalCommandContext::UpdateScopePath()
 {
-    String ScopePath;
-    for (const String& GroupName : DebugGroups)
+    FString ScopePath;
+    for (const FString& GroupName : DebugGroups)
     {
         if (!ScopePath.IsEmpty())
         {

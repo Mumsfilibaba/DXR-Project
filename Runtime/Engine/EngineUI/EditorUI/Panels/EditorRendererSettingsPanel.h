@@ -72,7 +72,7 @@ private:
 
     void RebuildSections();
     void RefreshValues();
-    void OnSearchTextChanged(const String& SearchText);
+    void OnSearchTextChanged(const FString& SearchText);
 
     NODISCARD TSharedPtr<FVisualElement> BuildEditor(const FRendererSetting& Setting, IConsoleVariable* Variable);
     NODISCARD bool PassesFilter(const FRendererSetting& Setting) const;
@@ -82,5 +82,5 @@ private:
     TSharedPtr<FSearchBox>   SearchBox;
     TSharedPtr<FTextBlock>   ShaderCompilerStatus;
     TArray<FSettingRow>      Rows;
-    String                   FilterText;
+    FString                  FilterText;
 };

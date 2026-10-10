@@ -9,15 +9,15 @@
 
 static bool AreAllCandidatesPrefixed(const FConsoleCommandLine& CommandLine, const CHAR_T* Prefix)
 {
-    const int32 PrefixLength = StringView(Prefix).Length();
-    for (const TPair<IConsoleObject*, String>& Candidate : CommandLine.GetCandidates())
+    const int32 PrefixLength = FStringView(Prefix).Length();
+    for (const TPair<IConsoleObject*, FString>& Candidate : CommandLine.GetCandidates())
     {
         if (Candidate.Second.Length() < PrefixLength)
         {
             return false;
         }
 
-        if (!StringView(Candidate.Second.Data(), PrefixLength).Equals(Prefix))
+        if (!FStringView(Candidate.Second.Data(), PrefixLength).Equals(Prefix))
         {
             return false;
         }
@@ -47,7 +47,7 @@ bool ConsoleWordRange_Test()
     const CHAR_T Separators[] = { ' ', '\t', ',', ';' };
     for (const CHAR_T Separator : Separators)
     {
-        String Text("First");
+        FString Text("First");
         Text.Insert(Separator, Text.Length());
         Text.Insert("Second", Text.Length());
 
@@ -248,7 +248,7 @@ bool ConsoleCandidateDirectSelection_Test()
     TEST_SECTION("Tab completes whatever the mouse picked");
     CommandLine.SetSelectedCandidateIndex(0);
 
-    const String FirstCandidateName = CommandLine.GetCandidates()[0].Second;
+    const FString FirstCandidateName = CommandLine.GetCandidates()[0].Second;
 
     TEST_EXPECT(CommandLine.AcceptCompletion());
     TEST_EXPECT_EQ(CommandLine.GetText(), FirstCandidateName);
@@ -424,7 +424,7 @@ bool ConsoleSubmit_Test()
     }
 
     TEST_SECTION("The executed line went into the history");
-    const TArray<String>& History = FConsoleManager::Get().GetHistory();
+    const TArray<FString>& History = FConsoleManager::Get().GetHistory();
     TEST_EXPECT(!History.IsEmpty());
     TEST_EXPECT(History.Last().Equals("Test.Console.Int 7"));
 
@@ -455,7 +455,7 @@ bool ConsoleLogBufferRing_Test()
     TEST_EXPECT(Lines[1].Message.Equals("Warning line"));
 
     TEST_SECTION("A line with no severity is treated as info");
-    LogBuffer.Log(String("Plain line"));
+    LogBuffer.Log(FString("Plain line"));
     LogBuffer.GetSnapshot(Lines);
     TEST_EXPECT(Lines.Last().Severity == ELogSeverity::Info);
 
@@ -468,7 +468,7 @@ bool ConsoleLogBufferRing_Test()
     FConsoleLogBuffer RingBuffer;
     for (int32 Index = 0; Index < FConsoleLogBuffer::DefaultMaxLines + 10; ++Index)
     {
-        RingBuffer.Log(ELogSeverity::Info, String::Printf("Line %d", Index));
+        RingBuffer.Log(ELogSeverity::Info, FString::Printf("Line %d", Index));
     }
 
     TEST_EXPECT_EQ(RingBuffer.GetNumLines(), FConsoleLogBuffer::DefaultMaxLines);
@@ -517,7 +517,7 @@ bool ConsoleLogBufferRing_Test()
     TEST_SECTION("More new lines than the buffer holds means the view has to start over");
     for (int32 Index = 0; Index < 6; ++Index)
     {
-        RingBuffer.Log(ELogSeverity::Info, String::Printf("Flood %d", Index));
+        RingBuffer.Log(ELogSeverity::Info, FString::Printf("Flood %d", Index));
     }
 
     RingBuffer.GetLinesSince(NextRevision, Lines, bIsContinuous);

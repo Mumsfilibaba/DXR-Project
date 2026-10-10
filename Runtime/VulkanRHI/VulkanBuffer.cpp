@@ -292,7 +292,7 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHIR
     return true;
 }
 
-void FVulkanBufferRHI::SetDebugName(const String& InName)
+void FVulkanBufferRHI::SetDebugName(const FString& InName)
 {
     VkBuffer BufferHandle = GetVkBuffer();
     if (BufferHandle != VK_NULL_HANDLE)
@@ -305,7 +305,7 @@ void FVulkanBufferRHI::SetDebugName(const String& InName)
 #endif
 }
 
-void FVulkanBufferRHI::GetDebugName(String& OutDebugName) const
+void FVulkanBufferRHI::GetDebugName(FString& OutDebugName) const
 {
 #if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;
@@ -326,7 +326,7 @@ void* FVulkanBufferRHI::Map(uint64 Offset, uint64 Size)
 
     if (!Desc.IsDynamic() && !Desc.IsReadBack() && !Desc.IsTransient())
     {
-        String DebugNameStr;
+        FString DebugNameStr;
         GetDebugName(DebugNameStr);
         VULKAN_ERROR("Attempting to map a non-mappable buffer. Name='%s'", *DebugNameStr);
         return nullptr;

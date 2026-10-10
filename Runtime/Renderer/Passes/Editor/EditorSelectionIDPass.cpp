@@ -153,7 +153,7 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FVe
     }
     else
     {
-        const String DebugName = String::Printf("Editor SelectionID PSO %d", static_cast<int32>(Features.Flags));
+        const FString DebugName = FString::Printf("Editor SelectionID PSO %d", static_cast<int32>(Features.Flags));
         NewPipelineInstance.PipelineState->SetDebugName(DebugName);
     }
 

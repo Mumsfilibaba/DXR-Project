@@ -1,13 +1,13 @@
 #include "Core/Json/JsonValue.h"
 
-String FJsonError::ToString() const
+FString FJsonError::ToString() const
 {
     if (Line <= 0)
     {
         return Message;
     }
 
-    return String::Printf("line %d, column %d: %s", Line, Column, Message.Data());
+    return FString::Printf("line %d, column %d: %s", Line, Column, Message.Data());
 }
 
 
@@ -60,21 +60,21 @@ FJsonValue::FJsonValue(const CHAR_T* Value)
     : FJsonValue()
 {
     Type        = EJsonType::String;
-    StringValue = Value ? String(Value) : String();
+    StringValue = Value ? FString(Value) : FString();
 }
 
-FJsonValue::FJsonValue(const String& Value)
+FJsonValue::FJsonValue(const FString& Value)
     : FJsonValue()
 {
     Type        = EJsonType::String;
     StringValue = Value;
 }
 
-FJsonValue::FJsonValue(const StringView& Value)
+FJsonValue::FJsonValue(const FStringView& Value)
     : FJsonValue()
 {
     Type        = EJsonType::String;
-    StringValue = String(Value.Data(), Value.Length());
+    StringValue = FString(Value.Data(), Value.Length());
 }
 
 void FJsonValue::SetIntegral(int64 Value)
@@ -148,7 +148,7 @@ bool FJsonValue::TryGetDouble(double& OutValue) const
     return true;
 }
 
-bool FJsonValue::TryGetString(String& OutValue) const
+bool FJsonValue::TryGetString(FString& OutValue) const
 {
     if (Type != EJsonType::String)
     {
@@ -177,10 +177,10 @@ double FJsonValue::GetDoubleOr(double Default) const
     return TryGetDouble(Result) ? Result : Default;
 }
 
-String FJsonValue::GetStringOr(const CHAR_T* Default) const
+FString FJsonValue::GetStringOr(const CHAR_T* Default) const
 {
-    String Result;
-    return TryGetString(Result) ? Result : String(Default ? Default : "");
+    FString Result;
+    return TryGetString(Result) ? Result : FString(Default ? Default : "");
 }
 
 FJsonValue* FJsonValue::Find(const CHAR_T* Name)
@@ -256,7 +256,7 @@ int32 FJsonValue::NumMembers() const
     return (Type == EJsonType::Object) ? Members.Size() : 0;
 }
 
-const String& FJsonValue::GetMemberName(int32 Index) const
+const FString& FJsonValue::GetMemberName(int32 Index) const
 {
     CHECK(Type == EJsonType::Object);
     return Members[Index].Name;

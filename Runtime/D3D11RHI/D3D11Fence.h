@@ -19,8 +19,8 @@ public:
     virtual bool IsSignaled()                        const override final;
     virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const override final;
 
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     bool Initialize();
     void Signal();

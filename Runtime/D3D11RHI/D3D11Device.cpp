@@ -393,7 +393,7 @@ bool FD3D11Device::FindOrCreateSamplerState(const FRHISamplerStateDesc& SamplerD
         return false;
     }
 
-    D3D11SetDebugName(NewSamplerState.Get(), String::Printf("Sampler %d", SamplerStateMap.Size()));
+    D3D11SetDebugName(NewSamplerState.Get(), FString::Printf("Sampler %d", SamplerStateMap.Size()));
 
     SamplerStateMap.Add(SamplerDesc, NewSamplerState);
     OutSamplerState = NewSamplerState;

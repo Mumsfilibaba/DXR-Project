@@ -307,7 +307,7 @@ bool ImageBatching_Test()
     TEST_SECTION("A glyph atlas and a texture are told apart even though both are textures");
     FDrawCommandList AtlasList;
     AtlasList.AddImage(0, Bounds, FUIBrush(MakeTextureKey(0x10)), FFloatColor::White);
-    AtlasList.AddText(1, FRectangle(IntVector2(0, 0), 100, 16), String("A"), Font.Get(), FFloatColor::White);
+    AtlasList.AddText(1, FRectangle(IntVector2(0, 0), 100, 16), FString("A"), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(AtlasList);
 
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 2);

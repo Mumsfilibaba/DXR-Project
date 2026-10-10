@@ -25,7 +25,7 @@ TArrayView<const FRHITarget> GetRHITargets()
     return TArrayView<const FRHITarget>(Targets);
 }
 
-const FRHITarget* FindRHITarget(const String& Name)
+const FRHITarget* FindRHITarget(const FString& Name)
 {
     for (const FRHITarget& Target : GetRHITargets())
     {
@@ -38,7 +38,7 @@ const FRHITarget* FindRHITarget(const String& Name)
     return nullptr;
 }
 
-static bool ParsePort(const String& Text, uint16& OutPort)
+static bool ParsePort(const FString& Text, uint16& OutPort)
 {
     int64 Value = 0;
     if (Text.IsEmpty() || !TTypeFromString<int64>::FromString(Text, Value) || (Value < 1) || (Value > 65535))
@@ -50,7 +50,7 @@ static bool ParsePort(const String& Text, uint16& OutPort)
     return true;
 }
 
-static bool ParseHostAndPort(const String& Text, String& OutHost, uint16& OutPort)
+static bool ParseHostAndPort(const FString& Text, FString& OutHost, uint16& OutPort)
 {
     if (Text.IsEmpty())
     {
@@ -60,7 +60,7 @@ static bool ParseHostAndPort(const String& Text, String& OutHost, uint16& OutPor
     if (Text[0] == '[')
     {
         const int32 Close = Text.FindChar(']');
-        if (Close == String::InvalidIndex || Close == 1)
+        if (Close == FString::InvalidIndex || Close == 1)
         {
             return false;
         }
@@ -76,7 +76,7 @@ static bool ParseHostAndPort(const String& Text, String& OutHost, uint16& OutPor
 
     const int32 FirstColon = Text.FindChar(':');
     const int32 LastColon  = Text.FindLastChar(':');
-    if (FirstColon == String::InvalidIndex || FirstColon != LastColon)
+    if (FirstColon == FString::InvalidIndex || FirstColon != LastColon)
     {
         OutHost = Text;
         return true;
@@ -86,18 +86,18 @@ static bool ParseHostAndPort(const String& Text, String& OutHost, uint16& OutPor
     return !OutHost.IsEmpty() && ParsePort(Text.SubString(FirstColon + 1, Text.Length() - FirstColon - 1), OutPort);
 }
 
-String ShaderCompilerTool::MakeAbsolutePath(const String& Path)
+FString ShaderCompilerTool::MakeAbsolutePath(const FString& Path)
 {
     if (!FPlatformFile::IsPathRelative(*Path))
     {
         return RemoteShaderCompilerProtocol::CollapsePath(Path);
     }
 
-    const String WorkingDirectory(FPlatformFile::GetCurrentWorkingDirectory().Data());
+    const FString WorkingDirectory(FPlatformFile::GetCurrentWorkingDirectory().Data());
     return RemoteShaderCompilerProtocol::CollapsePath(File::CombinePath(WorkingDirectory, Path));
 }
 
-static void SplitList(const String& Text, TArray<String>& OutItems)
+static void SplitList(const FString& Text, TArray<FString>& OutItems)
 {
     int32 Start = 0;
     while (Start <= Text.Length())
@@ -108,7 +108,7 @@ static void SplitList(const String& Text, TArray<String>& OutItems)
             ++End;
         }
 
-        String Item(Text.Data() + Start, End - Start);
+        FString Item(Text.Data() + Start, End - Start);
         Item.TrimInline();
         if (!Item.IsEmpty())
         {
@@ -119,12 +119,12 @@ static void SplitList(const String& Text, TArray<String>& OutItems)
     }
 }
 
-bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, String& OutError)
+bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, FString& OutError)
 {
-    const TArray<String>& Arguments = GProgramArgs;
+    const TArray<FString>& Arguments = GProgramArgs;
     for (int32 ArgumentIndex = 0; ArgumentIndex < Arguments.Size(); ++ArgumentIndex)
     {
-        const String& Argument = Arguments[ArgumentIndex];
+        const FString& Argument = Arguments[ArgumentIndex];
 
         int32 NameStart = 0;
         while ((NameStart < Argument.Length()) && (Argument[NameStart] == '-'))
@@ -134,7 +134,7 @@ bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, String& OutError
 
         if (NameStart == 0)
         {
-            OutError = String::Printf("Unexpected argument '%s'", *Argument);
+            OutError = FString::Printf("Unexpected argument '%s'", *Argument);
             return false;
         }
 
@@ -144,9 +144,9 @@ bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, String& OutError
             ++NameEnd;
         }
 
-        const String Name(Argument.Data() + NameStart, NameEnd - NameStart);
-        const bool   bHasValue = NameEnd < Argument.Length();
-        const String Value     = bHasValue ? String(Argument.Data() + NameEnd + 1, Argument.Length() - NameEnd - 1) : String();
+        const FString Name(Argument.Data() + NameStart, NameEnd - NameStart);
+        const bool    bHasValue = NameEnd < Argument.Length();
+        const FString Value     = bHasValue ? FString(Argument.Data() + NameEnd + 1, Argument.Length() - NameEnd - 1) : FString();
 
         if (Name.Equals("help", EStringCaseType::NoCase) || Name.Equals("?"))
         {
@@ -192,7 +192,7 @@ bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, String& OutError
         {
             if (!TryParseShaderStage(Value, OutOptions.ShaderStage))
             {
-                OutError = String::Printf("'%s' is not a shader stage, expected Vertex, Pixel, Compute, ...", *Value);
+                OutError = FString::Printf("'%s' is not a shader stage, expected Vertex, Pixel, Compute, ...", *Value);
                 return false;
             }
         }
@@ -200,7 +200,7 @@ bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, String& OutError
         {
             if (!TryParseShaderModel(Value, OutOptions.ShaderModel))
             {
-                OutError = String::Printf("'%s' is not a shader model, expected SM_5_0 or SM_6_0 to SM_6_10", *Value);
+                OutError = FString::Printf("'%s' is not a shader model, expected SM_5_0 or SM_6_0 to SM_6_10", *Value);
                 return false;
             }
         }
@@ -209,13 +209,13 @@ bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, String& OutError
             const int32 Equals = Value.FindChar('=');
             if (Equals == 0)
             {
-                OutError = String::Printf("'-define=%s' has to be NAME or NAME=VALUE", *Value);
+                OutError = FString::Printf("'-define=%s' has to be NAME or NAME=VALUE", *Value);
                 return false;
             }
 
-            if (Equals == String::InvalidIndex)
+            if (Equals == FString::InvalidIndex)
             {
-                OutOptions.Defines.Emplace(Value, String("1"));
+                OutOptions.Defines.Emplace(Value, FString("1"));
             }
             else
             {
@@ -242,21 +242,21 @@ bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, String& OutError
         {
             if (!ParsePort(Value, OutOptions.Port))
             {
-                OutError = String::Printf("'%s' is not a port", *Value);
+                OutError = FString::Printf("'%s' is not a port", *Value);
                 return false;
             }
         }
         else if (Name.Equals("rhi", EStringCaseType::NoCase) && !Value.IsEmpty())
         {
-            TArray<String> RHINames;
+            TArray<FString> RHINames;
             SplitList(Value, RHINames);
 
-            for (const String& RHIName : RHINames)
+            for (const FString& RHIName : RHINames)
             {
                 const FRHITarget* Target = FindRHITarget(RHIName);
                 if (!Target)
                 {
-                    OutError = String::Printf("Unknown RHI '%s', expected D3D11, D3D12, Vulkan or Metal", *RHIName);
+                    OutError = FString::Printf("Unknown RHI '%s', expected D3D11, D3D12, Vulkan or Metal", *RHIName);
                     return false;
                 }
 
@@ -265,15 +265,15 @@ bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, String& OutError
         }
         else if (Name.Equals("remote", EStringCaseType::NoCase) && !Value.IsEmpty())
         {
-            TArray<String> Entries;
+            TArray<FString> Entries;
             SplitList(Value, Entries);
 
-            for (const String& Entry : Entries)
+            for (const FString& Entry : Entries)
             {
                 const int32 At = Entry.FindChar('@');
-                if (At == String::InvalidIndex)
+                if (At == FString::InvalidIndex)
                 {
-                    OutError = String::Printf("'-remote=%s' has to be RHI@host[:port]", *Entry);
+                    OutError = FString::Printf("'-remote=%s' has to be RHI@host[:port]", *Entry);
                     return false;
                 }
 
@@ -281,13 +281,13 @@ bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, String& OutError
                 RemoteTarget.Target = FindRHITarget(Entry.SubString(0, At));
                 if (!RemoteTarget.Target)
                 {
-                    OutError = String::Printf("Unknown RHI in '-remote=%s', expected D3D11, D3D12, Vulkan or Metal", *Entry);
+                    OutError = FString::Printf("Unknown RHI in '-remote=%s', expected D3D11, D3D12, Vulkan or Metal", *Entry);
                     return false;
                 }
 
                 if (!ParseHostAndPort(Entry.SubString(At + 1, Entry.Length() - At - 1), RemoteTarget.Host, RemoteTarget.Port))
                 {
-                    OutError = String::Printf("'-remote=%s' has to be RHI@host[:port], with IPv6 literals in brackets", *Entry);
+                    OutError = FString::Printf("'-remote=%s' has to be RHI@host[:port], with IPv6 literals in brackets", *Entry);
                     return false;
                 }
 
@@ -300,7 +300,7 @@ bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, String& OutError
         }
         else
         {
-            OutError = String::Printf("Unknown or malformed option '%s'", *Argument);
+            OutError = FString::Printf("Unknown or malformed option '%s'", *Argument);
             return false;
         }
     }
@@ -407,7 +407,7 @@ bool ShaderCompilerTool::IsRHISelected(const FToolOptions& Options, const FRHITa
         return true;
     }
 
-    for (const String& RHIName : Options.RHINames)
+    for (const FString& RHIName : Options.RHINames)
     {
         if (RHIName.Equals(Target.Name, EStringCaseType::NoCase))
         {
@@ -418,9 +418,9 @@ bool ShaderCompilerTool::IsRHISelected(const FToolOptions& Options, const FRHITa
     return false;
 }
 
-static FRemoteShaderCompilerClient* FindOrConnectClient(const FRemoteTarget& RemoteTarget, TArray<TUniquePtr<FRemoteShaderCompilerClient>>& Clients, TArray<String>& ClientAddresses, String& OutError)
+static FRemoteShaderCompilerClient* FindOrConnectClient(const FRemoteTarget& RemoteTarget, TArray<TUniquePtr<FRemoteShaderCompilerClient>>& Clients, TArray<FString>& ClientAddresses, FString& OutError)
 {
-    const String Address = FSocketAddress::FormatHostAndPort(RemoteTarget.Host, RemoteTarget.Port);
+    const FString Address = FSocketAddress::FormatHostAndPort(RemoteTarget.Host, RemoteTarget.Port);
     for (int32 Index = 0; Index < ClientAddresses.Size(); ++Index)
     {
         if (ClientAddresses[Index] == Address)
@@ -449,7 +449,7 @@ TArray<FRouteEntry> ShaderCompilerTool::BuildRoutes(const FToolOptions& Options,
 {
     FShaderCompiler& Compiler = FShaderCompiler::Get();
 
-    TArray<String>      ClientAddresses;
+    TArray<FString>     ClientAddresses;
     TArray<FRouteEntry> Routes;
     bOutRemoteUnreachable = false;
 
@@ -484,7 +484,7 @@ TArray<FRouteEntry> ShaderCompilerTool::BuildRoutes(const FToolOptions& Options,
         }
         else if (RemoteTarget)
         {
-            String Error;
+            FString Error;
             FRemoteShaderCompilerClient* Client = FindOrConnectClient(*RemoteTarget, OutClients, ClientAddresses, Error);
             if (!Client)
             {
@@ -499,7 +499,7 @@ TArray<FRouteEntry> ShaderCompilerTool::BuildRoutes(const FToolOptions& Options,
             }
             else
             {
-                Route.Reason          = String::Printf("%s does not serve %s", *Client->GetPeerName(), ToString(Target.OutputLanguage));
+                Route.Reason          = FString::Printf("%s does not serve %s", *Client->GetPeerName(), ToString(Target.OutputLanguage));
                 bOutRemoteUnreachable = true;
             }
         }
@@ -511,7 +511,7 @@ TArray<FRouteEntry> ShaderCompilerTool::BuildRoutes(const FToolOptions& Options,
         }
         else
         {
-            Route.Reason = String::Printf("this %s machine cannot compile %s, pass -remote=%s@<host>", RemoteShaderCompilerProtocol::GetPlatformName(), ToString(Target.OutputLanguage), Target.Name);
+            Route.Reason = FString::Printf("this %s machine cannot compile %s, pass -remote=%s@<host>", RemoteShaderCompilerProtocol::GetPlatformName(), ToString(Target.OutputLanguage), Target.Name);
         }
 
         Routes.Add(::Move(Route));
@@ -537,7 +537,7 @@ TArray<FRouteEntry> ShaderCompilerTool::BuildRoutes(const FToolOptions& Options,
     return Routes;
 }
 
-const FRouteEntry* ShaderCompilerTool::FindRoute(const TArray<FRouteEntry>& Routes, const String& RHIName)
+const FRouteEntry* ShaderCompilerTool::FindRoute(const TArray<FRouteEntry>& Routes, const FString& RHIName)
 {
     for (const FRouteEntry& Route : Routes)
     {

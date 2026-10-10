@@ -9,9 +9,9 @@
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Math/Math.h"
 
-static TArray<String> SplitTextIntoLines(const String& Text)
+static TArray<FString> SplitTextIntoLines(const FString& Text)
 {
-    TArray<String> Lines;
+    TArray<FString> Lines;
     if (Text.IsEmpty())
     {
         return Lines;
@@ -35,7 +35,7 @@ static TArray<String> SplitTextIntoLines(const String& Text)
 
 TUniquePtr<FToolTipService> FToolTipService::ToolTipService = nullptr;
 
-TSharedPtr<FToolTip> FToolTip::Create(const String& InText, const TSharedPtr<IFontFace>& InFont)
+TSharedPtr<FToolTip> FToolTip::Create(const FString& InText, const TSharedPtr<IFontFace>& InFont)
 {
     TSharedPtr<FToolTip> NewToolTip = MakeSharedPtr<FToolTip>();
     NewToolTip->Font = InFont;
@@ -63,9 +63,9 @@ IntVector2 FToolTip::ComputeDesiredSize() const
     if (Font)
     {
         int32 WidestLine = 0;
-        for (const String& Line : Lines)
+        for (const FString& Line : Lines)
         {
-            WidestLine = Math::Max(WidestLine, Font->MeasureWidth(StringView(Line.Data(), Line.Length())));
+            WidestLine = Math::Max(WidestLine, Font->MeasureWidth(FStringView(Line.Data(), Line.Length())));
         }
 
         DesiredSize.X += WidestLine;
@@ -107,7 +107,7 @@ void FToolTip::SetOuterCornerRadius(float InCornerRadius)
     InvalidatePaint();
 }
 
-void FToolTip::SetText(const String& InText)
+void FToolTip::SetText(const FString& InText)
 {
     if (Text == InText)
     {
@@ -122,7 +122,7 @@ void FToolTip::SetText(const String& InText)
 
 TSharedPtr<FToolTipHost> FToolTipHost::Create(
     const TSharedPtr<FVisualElement>& InContent,
-    const String&                     InText,
+    const FString&                    InText,
     const TSharedPtr<IFontFace>&      InFont,
     EToolTipPlacement                 InPlacement)
 {
@@ -162,7 +162,7 @@ FEventResponse FToolTipHost::OnMouseLeft(const FCursorEvent& CursorEvent)
     return FEventResponse::Unhandled();
 }
 
-void FToolTipHost::SetToolTipText(const String& InText)
+void FToolTipHost::SetToolTipText(const FString& InText)
 {
     Text = InText;
 }
@@ -237,7 +237,7 @@ void FToolTipService::RequestToolTip(
 
 void FToolTipService::RequestTextToolTip(
     const TSharedPtr<FVisualElement>& InOwner,
-    const String&                     Text,
+    const FString&                    Text,
     const TSharedPtr<IFontFace>&      Font,
     EToolTipPlacement                 InPlacement,
     float                             DelaySeconds)

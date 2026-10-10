@@ -7,11 +7,11 @@
 class CORE_API FFileOutputDevice : public IOutputDevice
 {
 public:
-    FFileOutputDevice(const String& FilePath);
+    FFileOutputDevice(const FString& FilePath);
     virtual ~FFileOutputDevice();
 
-    virtual void Log(const String& Message) override final;
-    virtual void Log(ELogSeverity Severity, const String& Message) override final;
+    virtual void Log(const FString& Message) override final;
+    virtual void Log(ELogSeverity Severity, const FString& Message) override final;
     virtual void Flush() override final;
 
     bool IsValid() const
@@ -20,16 +20,16 @@ public:
     }
 
 private:
-    void QueueWrite(const String& Line);
+    void QueueWrite(const FString& Line);
     void FlushAsync();
     void FlushBlocking();
     void SubmitPendingLines();
-    bool WriteLines(const TArray<String>& Lines);
+    bool WriteLines(const TArray<FString>& Lines);
     void DropOverflowingLines();
 
     TFileRef<IPlatformAsyncFile> FileHandle;
     FCriticalSection             FileCS;
-    TArray<String>               PendingLines;
+    TArray<FString>              PendingLines;
     FCriticalSection             PendingLinesCS;
     bool                         bIsInsideHandle;
 };

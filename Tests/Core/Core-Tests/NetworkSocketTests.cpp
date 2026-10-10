@@ -18,29 +18,29 @@ static bool WaitUntilReadable(FNetworkSocket& Socket)
     return (FNetworkSocket::WaitForRead(Sockets, 1, &bReadable, GWaitMilliseconds) == 1) && bReadable;
 }
 
-static String ReceiveText(FNetworkSocket& Socket)
+static FString ReceiveText(FNetworkSocket& Socket)
 {
     CHAR_T Buffer[GReceiveBufferSize];
     int32 BytesRead = 0;
     if (!WaitUntilReadable(Socket) || (Socket.Recv(Buffer, sizeof(Buffer), BytesRead) != ESocketResult::Success))
     {
-        return String();
+        return FString();
     }
 
-    return String(Buffer, BytesRead);
+    return FString(Buffer, BytesRead);
 }
 
-static String ReceiveDatagram(FNetworkSocket& Socket)
+static FString ReceiveDatagram(FNetworkSocket& Socket)
 {
     CHAR_T Buffer[GReceiveBufferSize];
     int32 BytesRead = 0;
     FSocketAddress From;
     if (!WaitUntilReadable(Socket) || (Socket.RecvFrom(Buffer, sizeof(Buffer), BytesRead, From) != ESocketResult::Success))
     {
-        return String();
+        return FString();
     }
 
-    return String(Buffer, BytesRead);
+    return FString(Buffer, BytesRead);
 }
 
 static bool SendText(FNetworkSocket& Socket, const CHAR_T* Text)

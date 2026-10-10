@@ -136,7 +136,7 @@ void FMenu::AddSeparator()
     Panel->AddSlot(Separator).SetHorizontalAlignment(EHorizontalAlignment::Fill);
 }
 
-void FMenu::AddSection(const String& Label, const TSharedPtr<IFontFace>& Font)
+void FMenu::AddSection(const FString& Label, const TSharedPtr<IFontFace>& Font)
 {
     TSharedPtr<FMenuSectionHeader> Header = FMenuSectionHeader::Create(Label, Font);
     Header->SetStyle(Style);

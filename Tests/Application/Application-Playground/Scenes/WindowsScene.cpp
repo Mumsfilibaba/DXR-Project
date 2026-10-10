@@ -22,7 +22,7 @@ constexpr int32 FLOATING_WINDOW_CASCADE  = 32;
 
 static TArray<TSharedPtr<FFloatingWindow>> GOpenWindows;
 
-static TSharedPtr<FTextBlock> MakeReadout(const FPlaygroundFonts& Fonts, const String& InText)
+static TSharedPtr<FTextBlock> MakeReadout(const FPlaygroundFonts& Fonts, const FString& InText)
 {
     FTextBlock::FDesc Desc;
     Desc.Text            = InText;
@@ -59,7 +59,7 @@ static void RefreshReadout(const FPlaygroundFonts& Fonts, const TSharedPtr<FText
     const TSharedPtr<FTitleBar>& TitleBar = GOpenWindows.Last()->GetTitleBar();
     const FWindowTitleBarRegions& Regions = TitleBar->GetRegions();
 
-    Readout->SetText(String::Printf(
+    Readout->SetText(FString::Printf(
         "%d open, last caption %d x %d with %d clickable region(s), platform inset %.0f leading %.0f trailing",
         GOpenWindows.Size(),
         Regions.CaptionRect.Right - Regions.CaptionRect.Left,
@@ -99,7 +99,7 @@ static TSharedPtr<FMenuBar> MakeCaptionMenuBar(const FPlaygroundFonts& Fonts)
 static TSharedPtr<FVisualElement> MakeFloatingWindowBody(const FPlaygroundFonts& Fonts, int32 Ordinal)
 {
     FTextBlock::FDesc HeadingDesc;
-    HeadingDesc.Text            = String::Printf("Floating window %d", Ordinal);
+    HeadingDesc.Text            = FString::Printf("Floating window %d", Ordinal);
     HeadingDesc.Font            = Fonts.Heading;
     HeadingDesc.ColorAndOpacity = FUIStyle::GetDefault().Colors.Text;
 
@@ -129,7 +129,7 @@ static void OpenFloatingWindow(const FPlaygroundFonts& Fonts, const TSharedPtr<F
     const int32 Offset  = GOpenWindows.Size() * FLOATING_WINDOW_CASCADE;
 
     FFloatingWindow::FDesc Desc;
-    Desc.SetTitle(String::Printf("Inspector %d", Ordinal));
+    Desc.SetTitle(FString::Printf("Inspector %d", Ordinal));
     Desc.SetBounds(IntVector2(FLOATING_WINDOW_ORIGIN_X + Offset, FLOATING_WINDOW_ORIGIN_Y + Offset), IntVector2(520, 300));
     Desc.SetContent(MakeFloatingWindowBody(Fonts, Ordinal));
 

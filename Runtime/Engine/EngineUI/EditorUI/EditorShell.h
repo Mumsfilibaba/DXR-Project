@@ -76,13 +76,13 @@ public:
 private:
     static constexpr int32 PanelSetVersion = 2;
 
-    NODISCARD static String GetLayoutFilename();
+    NODISCARD static FString GetLayoutFilename();
     NODISCARD static FDockNode BuildDefaultLayout();
 
     NODISCARD bool RestoreLayout();
 
     void SaveLayout();
-    void OnPanelClosed(const String& PanelId);
+    void OnPanelClosed(const FString& PanelId);
 
     FEditorEngine*                   EditorEngine;
     TSharedPtr<FDockingArea>         DockingArea;

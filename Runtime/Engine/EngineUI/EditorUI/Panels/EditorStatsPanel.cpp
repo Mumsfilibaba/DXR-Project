@@ -50,15 +50,15 @@ static bool IsRHIOwnedGroup(const CHAR_T* GroupName)
     return false;
 }
 
-static String FormatStatValue(const FStatData& Stat)
+static FString FormatStatValue(const FStatData& Stat)
 {
     const int64 Value = Stat.Value.Load();
     if (Stat.Type == EStatType::Memory)
     {
-        return String::Printf("%.2f MB", static_cast<double>(Value) / BYTES_PER_MEGABYTE);
+        return FString::Printf("%.2f MB", static_cast<double>(Value) / BYTES_PER_MEGABYTE);
     }
 
-    return String::Printf("%lld", static_cast<long long>(Value));
+    return FString::Printf("%lld", static_cast<long long>(Value));
 }
 
 FEditorStatsPanel::FEditorStatsPanel(FEditorEngine* InEditorEngine)
@@ -87,7 +87,7 @@ bool FEditorStatsPanel::Initialize()
 
     ScrollBox->SetContent(Column);
 
-    TSharedPtr<FVisualElement> HeaderCard = FEditorStyle::MakeHeaderCard("Engine Stats", String(), &SummaryText);
+    TSharedPtr<FVisualElement> HeaderCard = FEditorStyle::MakeHeaderCard("Engine Stats", FString(), &SummaryText);
 
     TSharedPtr<FVerticalBox> Layout = FVerticalBox::Create();
     Layout->AddSlot(HeaderCard).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
@@ -188,7 +188,7 @@ void FEditorStatsPanel::RebuildSections()
         NumCounters += GroupSection.Values.Size();
     }
 
-    SummaryText->SetText(String::Printf("%d groups  |  %d counters", Sections.Size(), NumCounters));
+    SummaryText->SetText(FString::Printf("%d groups  |  %d counters", Sections.Size(), NumCounters));
 }
 
 void FEditorStatsPanel::RebuildGroupRows(FStatGroupSection& GroupSection)
@@ -206,7 +206,7 @@ void FEditorStatsPanel::RebuildGroupRows(FStatGroupSection& GroupSection)
     }
 }
 
-TSharedPtr<FTextBlock> FEditorStatsPanel::CreateValueText(const String& Text)
+TSharedPtr<FTextBlock> FEditorStatsPanel::CreateValueText(const FString& Text)
 {
     FTextBlock::FDesc Desc;
     Desc.Text = Text;

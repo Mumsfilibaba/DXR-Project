@@ -32,9 +32,9 @@ struct FSnapshotImage
 
 void RasterizeDrawData(const FUIDrawData& DrawData, FSnapshotImage& OutImage);
 
-NODISCARD bool WriteSnapshotPng(const FSnapshotImage& Image, const String& Filename);
-NODISCARD bool SnapshotElementToPng(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, uint32 ClearColor, const String& Filename);
+NODISCARD bool WriteSnapshotPng(const FSnapshotImage& Image, const FString& Filename);
+NODISCARD bool SnapshotElementToPng(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, uint32 ClearColor, const FString& Filename);
 
-bool EnsureSnapshotDirectory(const String& Directory);
+bool EnsureSnapshotDirectory(const FString& Directory);
 
-NODISCARD String GetSnapshotDirectory(const String& SubDirectory);
+NODISCARD FString GetSnapshotDirectory(const FString& SubDirectory);

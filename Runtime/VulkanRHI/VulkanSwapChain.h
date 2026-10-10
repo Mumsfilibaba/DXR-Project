@@ -115,7 +115,7 @@ public:
 
     VkResult AcquireNextBackBuffer(FVulkanCommands* InCommands);
 
-    void SetDebugName(const String& InName);
+    void SetDebugName(const FString& InName);
 
     uint32 GetNumBackBuffers() const
     {

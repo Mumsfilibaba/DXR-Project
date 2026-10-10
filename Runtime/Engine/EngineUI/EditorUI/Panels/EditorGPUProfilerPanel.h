@@ -22,7 +22,7 @@ public:
     virtual void OnVisibilityChanged(bool bInIsVisible) override final;
 
 private:
-    NODISCARD static TSharedPtr<FTextBlock> CreateValueText(const String& Text);
+    NODISCARD static TSharedPtr<FTextBlock> CreateValueText(const FString& Text);
 
     NODISCARD TSharedPtr<FToolBar> BuildToolBar();
 
@@ -34,12 +34,12 @@ private:
     void BuildPipelineStatisticsRows();
     void RebuildPassTable();
 
-    TSharedPtr<FToolBar>                 ToolBar;
-    TSharedPtr<FHistogram>               FrameTimeHistogram;
-    TSharedPtr<FPropertyTable>           PassTable;
-    TSharedPtr<FPropertyTable>           PipelineStatisticsTable;
-    TMap<String, TSharedPtr<FTextBlock>> PassValues;
-    TArray<TSharedPtr<FTextBlock>>       PipelineStatisticsValues;
-    int32                                LastIngestedCpuFrameIndex;
-    bool                                 bIsProfilingRequested;
+    TSharedPtr<FToolBar>                  ToolBar;
+    TSharedPtr<FHistogram>                FrameTimeHistogram;
+    TSharedPtr<FPropertyTable>            PassTable;
+    TSharedPtr<FPropertyTable>            PipelineStatisticsTable;
+    TMap<FString, TSharedPtr<FTextBlock>> PassValues;
+    TArray<TSharedPtr<FTextBlock>>        PipelineStatisticsValues;
+    int32                                 LastIngestedCpuFrameIndex;
+    bool                                  bIsProfilingRequested;
 };

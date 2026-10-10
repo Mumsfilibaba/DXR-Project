@@ -133,7 +133,7 @@ struct ENGINE_API FEditorStyle
      * @param OutSubtitleText  Filled with the dimmed line's block when the caller has to rewrite it later.
      * @return The card, ready to slot above the panel's scroll view.
      */
-    NODISCARD static TSharedPtr<FVisualElement> MakeHeaderCard(const String& Title, const String& Subtitle, TSharedPtr<FTextBlock>* OutSubtitleText = nullptr);
+    NODISCARD static TSharedPtr<FVisualElement> MakeHeaderCard(const FString& Title, const FString& Subtitle, TSharedPtr<FTextBlock>* OutSubtitleText = nullptr);
 
     /** @return The frame every editor search field draws, rounded far enough to read as a pill. */
     NODISCARD static FInputFrameStyle GetInputFrameStyle();
@@ -149,7 +149,7 @@ struct ENGINE_API FEditorStyle
      * @param OnChanged Fired whenever the search text changes.
      * @return The description, ready to hand to FSearchBox::Create.
      */
-    NODISCARD static FSearchBox::FDesc MakeSearchBoxDesc(const String& Hint, const FOnSearchTextChanged& OnChanged);
+    NODISCARD static FSearchBox::FDesc MakeSearchBoxDesc(const FString& Hint, const FOnSearchTextChanged& OnChanged);
 
     /**
      * @brief The space a collapsible section reserves above and below itself.
@@ -181,7 +181,7 @@ struct ENGINE_API FEditorStyle
      * @param bIsExpanded True to start with the content shown.
      * @return The description, ready to hand to FExpander::Create.
      */
-    NODISCARD static FExpander::FDesc MakeExpanderDesc(const String& Label, const TSharedPtr<FVisualElement>& Content, bool bIsExpanded = false);
+    NODISCARD static FExpander::FDesc MakeExpanderDesc(const FString& Label, const TSharedPtr<FVisualElement>& Content, bool bIsExpanded = false);
 
     /**
      * @brief Builds the description an editor property table is created from, so the face, the revert

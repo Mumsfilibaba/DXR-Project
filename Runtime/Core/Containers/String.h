@@ -1829,10 +1829,10 @@ private:
     StorageType CharData;
 };
 
-using String     = TString<CHAR_T>;
-using WString    = TString<WIDECHAR>;
-using AnsiString = TString<ANSICHAR>;
-using U8String   = TString<UTF8CHAR>;
+using FString     = TString<CHAR_T>;
+using FWideString = TString<WIDECHAR>;
+using FAnsiString = TString<ANSICHAR>;
+using FU8String   = TString<UTF8CHAR>;
 
 // TODO: Investigate this one
 //template<typename CharType>
@@ -1855,9 +1855,9 @@ struct TIsContiguousContainer<TString<CharType>>
 
 // Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
 template<>
-struct THash<String>
+struct THash<FString>
 {
-    static uint64 GetHash(const String& InString)
+    static uint64 GetHash(const FString& InString)
     {
         const CHAR_T* Key = *InString;
 
@@ -1881,9 +1881,9 @@ struct THash<String>
 
 // Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
 template<>
-struct THash<WString>
+struct THash<FWideString>
 {
-    static uint64 GetHash(const WString& InString)
+    static uint64 GetHash(const FWideString& InString)
     {
         // TODO: Investigate how good is this for wide chars
         const WIDECHAR* Key = *InString;
@@ -1909,48 +1909,48 @@ struct THash<WString>
 template<typename T>
 struct TTypeToString
 {
-    NODISCARD static FORCEINLINE typename TEnableIf<TIsArithmetic<T>::Value, String>::Type ToString(T Element)
+    NODISCARD static FORCEINLINE typename TEnableIf<TIsArithmetic<T>::Value, FString>::Type ToString(T Element)
     {
-        return String::Printf(TFormatSpecifier<typename TRemoveCV<T>::Type>::GetStringSpecifier(), Element);
+        return FString::Printf(TFormatSpecifier<typename TRemoveCV<T>::Type>::GetStringSpecifier(), Element);
     }
 };
 
 template<>
-NODISCARD FORCEINLINE String TTypeToString<bool>::ToString(bool bElement)
+NODISCARD FORCEINLINE FString TTypeToString<bool>::ToString(bool bElement)
 {
-    return String(bElement ? "true" : "false");
+    return FString(bElement ? "true" : "false");
 }
 
 template<typename T>
 struct TTypeToStringWide
 {
-    NODISCARD static FORCEINLINE typename TEnableIf<TIsArithmetic<T>::Value, WString>::Type ToString(T Element)
+    NODISCARD static FORCEINLINE typename TEnableIf<TIsArithmetic<T>::Value, FWideString>::Type ToString(T Element)
     {
-        return WString::Printf(TFormatSpecifierWide<typename TRemoveCV<T>::Type>::GetStringSpecifier(), Element);
+        return FWideString::Printf(TFormatSpecifierWide<typename TRemoveCV<T>::Type>::GetStringSpecifier(), Element);
     }
 };
 
 template<>
-NODISCARD FORCEINLINE WString TTypeToStringWide<bool>::ToString(bool bElement)
+NODISCARD FORCEINLINE FWideString TTypeToStringWide<bool>::ToString(bool bElement)
 {
-    return WString(bElement ? L"true" : L"false");
+    return FWideString(bElement ? L"true" : L"false");
 }
 
 template<typename T>
 struct TTypeFromString
 {
-    static FORCEINLINE bool FromString(const String& InString, T& OutElement);
+    static FORCEINLINE bool FromString(const FString& InString, T& OutElement);
 };
 
 template<>
-FORCEINLINE bool TTypeFromString<String>::FromString(const String& InString, String& OutElement)
+FORCEINLINE bool TTypeFromString<FString>::FromString(const FString& InString, FString& OutElement)
 {
     OutElement = InString;
     return true;
 }
 
 template<>
-FORCEINLINE bool TTypeFromString<int32>::FromString(const String& InString, int32& OutElement)
+FORCEINLINE bool TTypeFromString<int32>::FromString(const FString& InString, int32& OutElement)
 {
     CHAR_T* End;
     const CHAR_T* Start = *InString;
@@ -1964,7 +1964,7 @@ FORCEINLINE bool TTypeFromString<int32>::FromString(const String& InString, int3
 }
 
 template<>
-FORCEINLINE bool TTypeFromString<int64>::FromString(const String& InString, int64& OutElement)
+FORCEINLINE bool TTypeFromString<int64>::FromString(const FString& InString, int64& OutElement)
 {
     CHAR_T* End;
     const CHAR_T* Start = *InString;
@@ -1978,7 +1978,7 @@ FORCEINLINE bool TTypeFromString<int64>::FromString(const String& InString, int6
 }
 
 template<>
-FORCEINLINE bool TTypeFromString<uint32>::FromString(const String& InString, uint32& OutElement)
+FORCEINLINE bool TTypeFromString<uint32>::FromString(const FString& InString, uint32& OutElement)
 {
     CHAR_T* End;
     const CHAR_T* Start = *InString;
@@ -1992,7 +1992,7 @@ FORCEINLINE bool TTypeFromString<uint32>::FromString(const String& InString, uin
 }
 
 template<>
-FORCEINLINE bool TTypeFromString<uint64>::FromString(const String& InString, uint64& OutElement)
+FORCEINLINE bool TTypeFromString<uint64>::FromString(const FString& InString, uint64& OutElement)
 {
     CHAR_T* End;
     const CHAR_T* Start = *InString;
@@ -2006,7 +2006,7 @@ FORCEINLINE bool TTypeFromString<uint64>::FromString(const String& InString, uin
 }
 
 template<>
-FORCEINLINE bool TTypeFromString<float>::FromString(const String& InString, float& OutElement)
+FORCEINLINE bool TTypeFromString<float>::FromString(const FString& InString, float& OutElement)
 {
     CHAR_T* End;
     const CHAR_T* Start = *InString;
@@ -2020,7 +2020,7 @@ FORCEINLINE bool TTypeFromString<float>::FromString(const String& InString, floa
 }
 
 template<>
-FORCEINLINE bool TTypeFromString<double>::FromString(const String& InString, double& OutElement)
+FORCEINLINE bool TTypeFromString<double>::FromString(const FString& InString, double& OutElement)
 {
     CHAR_T* End;
     const CHAR_T* Start = *InString;
@@ -2034,7 +2034,7 @@ FORCEINLINE bool TTypeFromString<double>::FromString(const String& InString, dou
 }
 
 template<>
-FORCEINLINE bool TTypeFromString<bool>::FromString(const String& InString, bool& OutElement)
+FORCEINLINE bool TTypeFromString<bool>::FromString(const FString& InString, bool& OutElement)
 {
     const CHAR_T* Start = *InString;
     if (CString::Stricmp(Start, "true") == 0)
@@ -2061,18 +2061,18 @@ FORCEINLINE bool TTypeFromString<bool>::FromString(const String& InString, bool&
 template<typename T>
 struct TTypeFromStringWide
 {
-    static FORCEINLINE bool FromString(const WString& InString, T& OutElement);
+    static FORCEINLINE bool FromString(const FWideString& InString, T& OutElement);
 };
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<WString>::FromString(const WString& InString, WString& OutElement)
+FORCEINLINE bool TTypeFromStringWide<FWideString>::FromString(const FWideString& InString, FWideString& OutElement)
 {
     OutElement = InString;
     return true;
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<int32>::FromString(const WString& InString, int32& OutElement)
+FORCEINLINE bool TTypeFromStringWide<int32>::FromString(const FWideString& InString, int32& OutElement)
 {
     WIDECHAR* End;
     const WIDECHAR* Start = *InString;
@@ -2086,7 +2086,7 @@ FORCEINLINE bool TTypeFromStringWide<int32>::FromString(const WString& InString,
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<int64>::FromString(const WString& InString, int64& OutElement)
+FORCEINLINE bool TTypeFromStringWide<int64>::FromString(const FWideString& InString, int64& OutElement)
 {
     WIDECHAR* End;
     const WIDECHAR* Start = *InString;
@@ -2100,7 +2100,7 @@ FORCEINLINE bool TTypeFromStringWide<int64>::FromString(const WString& InString,
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<uint32>::FromString(const WString& InString, uint32& OutElement)
+FORCEINLINE bool TTypeFromStringWide<uint32>::FromString(const FWideString& InString, uint32& OutElement)
 {
     WIDECHAR* End;
     const WIDECHAR* Start = *InString;
@@ -2114,7 +2114,7 @@ FORCEINLINE bool TTypeFromStringWide<uint32>::FromString(const WString& InString
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<uint64>::FromString(const WString& InString, uint64& OutElement)
+FORCEINLINE bool TTypeFromStringWide<uint64>::FromString(const FWideString& InString, uint64& OutElement)
 {
     WIDECHAR* End;
     const WIDECHAR* Start = *InString;
@@ -2128,7 +2128,7 @@ FORCEINLINE bool TTypeFromStringWide<uint64>::FromString(const WString& InString
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<float>::FromString(const WString& InString, float& OutElement)
+FORCEINLINE bool TTypeFromStringWide<float>::FromString(const FWideString& InString, float& OutElement)
 {
     WIDECHAR* End;
     const WIDECHAR* Start = *InString;
@@ -2142,7 +2142,7 @@ FORCEINLINE bool TTypeFromStringWide<float>::FromString(const WString& InString,
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<double>::FromString(const WString& InString, double& OutElement)
+FORCEINLINE bool TTypeFromStringWide<double>::FromString(const FWideString& InString, double& OutElement)
 {
     WIDECHAR* End;
     const WIDECHAR* Start = *InString;
@@ -2156,7 +2156,7 @@ FORCEINLINE bool TTypeFromStringWide<double>::FromString(const WString& InString
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<bool>::FromString(const WString& InString, bool& OutElement)
+FORCEINLINE bool TTypeFromStringWide<bool>::FromString(const FWideString& InString, bool& OutElement)
 {
     const WIDECHAR* Start = *InString;
     if (CStringWide::Stricmp(Start, L"true") == 0)
@@ -2183,11 +2183,11 @@ FORCEINLINE bool TTypeFromStringWide<bool>::FromString(const WString& InString, 
 template<typename T>
 struct TTryParseType
 {
-    static FORCEINLINE bool TryParse(const String& InString);
+    static FORCEINLINE bool TryParse(const FString& InString);
 };
 
 template<>
-FORCEINLINE bool TTryParseType<int32>::TryParse(const String& InString)
+FORCEINLINE bool TTryParseType<int32>::TryParse(const FString& InString)
 {
     CHAR_T* End;
     const CHAR_T* Start = *InString;
@@ -2196,7 +2196,7 @@ FORCEINLINE bool TTryParseType<int32>::TryParse(const String& InString)
 }
 
 template<>
-FORCEINLINE bool TTryParseType<uint32>::TryParse(const String& InString)
+FORCEINLINE bool TTryParseType<uint32>::TryParse(const FString& InString)
 {
     CHAR_T* End;
     const CHAR_T* Start = *InString;
@@ -2205,7 +2205,7 @@ FORCEINLINE bool TTryParseType<uint32>::TryParse(const String& InString)
 }
 
 template<>
-FORCEINLINE bool TTryParseType<int64>::TryParse(const String& InString)
+FORCEINLINE bool TTryParseType<int64>::TryParse(const FString& InString)
 {
     CHAR_T* End;
     const CHAR_T* Start = *InString;
@@ -2214,7 +2214,7 @@ FORCEINLINE bool TTryParseType<int64>::TryParse(const String& InString)
 }
 
 template<>
-FORCEINLINE bool TTryParseType<uint64>::TryParse(const String& InString)
+FORCEINLINE bool TTryParseType<uint64>::TryParse(const FString& InString)
 {
     CHAR_T* End;
     const CHAR_T* Start = *InString;
@@ -2223,7 +2223,7 @@ FORCEINLINE bool TTryParseType<uint64>::TryParse(const String& InString)
 }
 
 template<>
-FORCEINLINE bool TTryParseType<float>::TryParse(const String& InString)
+FORCEINLINE bool TTryParseType<float>::TryParse(const FString& InString)
 {
     CHAR_T* End;
     const CHAR_T* Start = *InString;
@@ -2232,7 +2232,7 @@ FORCEINLINE bool TTryParseType<float>::TryParse(const String& InString)
 }
 
 template<>
-FORCEINLINE bool TTryParseType<double>::TryParse(const String& InString)
+FORCEINLINE bool TTryParseType<double>::TryParse(const FString& InString)
 {
     CHAR_T* End;
     const CHAR_T* Start = *InString;
@@ -2241,7 +2241,7 @@ FORCEINLINE bool TTryParseType<double>::TryParse(const String& InString)
 }
 
 template<>
-FORCEINLINE bool TTryParseType<bool>::TryParse(const String& InString)
+FORCEINLINE bool TTryParseType<bool>::TryParse(const FString& InString)
 {
     const CHAR_T* Start = *InString;
     if (CString::Stricmp(Start, "true") == 0)

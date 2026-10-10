@@ -16,17 +16,17 @@ namespace SPSCTest
 {
     static bool Test()
     {
-        TQueue<String, EQueueType::SPSC> Queue;
+        TQueue<FString, EQueueType::SPSC> Queue;
         for (int64 Index = 1; Index <= 50; ++Index)
         {
-            const String Item = TTypeToString<int64>::ToString(Index);
+            const FString Item = TTypeToString<int64>::ToString(Index);
             Queue.Enqueue(::Move(Item));
         }
 
-        TArray<String> Items;
+        TArray<FString> Items;
         while (Items.Size() < 50)
         {
-            String NewItem;
+            FString NewItem;
             if (Queue.Dequeue(NewItem))
             {
                 Items.Add(::Move(NewItem));
@@ -35,7 +35,7 @@ namespace SPSCTest
 
         for (int32 Index = 0; Index < 50; ++Index)
         {
-            const String ExpectedItem = TTypeToString<int64>::ToString(Index + 1);
+            const FString ExpectedItem = TTypeToString<int64>::ToString(Index + 1);
             if (Items[Index] != ExpectedItem)
             {
                 return false;
@@ -49,8 +49,8 @@ namespace SPSCTest
 // Multiple Producers, Single Consumer
 namespace MPSCTest
 {
-    static TQueue<String, EQueueType::MPSC>* GQueue = nullptr;
-    static AtomicInt32                       GActiveProducers(0);
+    static TQueue<FString, EQueueType::MPSC>* GQueue = nullptr;
+    static AtomicInt32                        GActiveProducers(0);
 
     constexpr int64 NumItemsPerProducer = 500;
     constexpr int64 ProducerOffset      = 1000;
@@ -67,7 +67,7 @@ namespace MPSCTest
         {
             for (int64 Index = 0; Index < NumItemsPerProducer; ++Index)
             {
-                const String NewItem = TTypeToString<int64>::ToString(ThreadIndex + Index);
+                const FString NewItem = TTypeToString<int64>::ToString(ThreadIndex + Index);
                 GQueue->Emplace(::Move(NewItem));
             }
 
@@ -83,7 +83,7 @@ namespace MPSCTest
         int64 ThreadIndex;
     };
 
-    static TArray<String>* GItems = nullptr;
+    static TArray<FString>* GItems = nullptr;
 
     struct FConsumerThread : public FRunnable
     {
@@ -91,7 +91,7 @@ namespace MPSCTest
         {
             while (GActiveProducers.Load() > 0 || !GQueue->IsEmpty())
             {
-                String NewItem;
+                FString NewItem;
                 if (GQueue->Dequeue(NewItem))
                 {
                     GItems->Add(::Move(NewItem));
@@ -112,8 +112,8 @@ namespace MPSCTest
         bool bResult = true;
 
         GActiveProducers.Store(static_cast<int32>(NumProducers));
-        GQueue = new TQueue<String, EQueueType::MPSC>;
-        GItems = new TArray<String>;
+        GQueue = new TQueue<FString, EQueueType::MPSC>;
+        GItems = new TArray<FString>;
 
         TArray<IPlatformThread*> Producers;
         for (int32 i = 0; i < NumProducers; ++i)
@@ -137,7 +137,7 @@ namespace MPSCTest
         {
             for (int32 Index = 0; Index < NumItemsPerProducer; ++Index)
             {
-                const String Expected = TTypeToString<int64>::ToString(((ProducerIndex + 1) * ProducerOffset) + Index);
+                const FString Expected = TTypeToString<int64>::ToString(((ProducerIndex + 1) * ProducerOffset) + Index);
                 bResult = GItems->Contains(Expected) && bResult;
             }
         }
@@ -168,7 +168,7 @@ namespace SPMCTest
     constexpr int64 NumItems     = 500;
     constexpr int64 NumConsumers = 6;
 
-    static TQueue<String, EQueueType::SPMC>* GQueue = nullptr;
+    static TQueue<FString, EQueueType::SPMC>* GQueue = nullptr;
 
     // Atomic so the consumers are guaranteed to observe the producer's write
     static AtomicInt32 GIsRunning(1);
@@ -179,7 +179,7 @@ namespace SPMCTest
         {
             for (int64 Index = 0; Index < NumItems; ++Index)
             {
-                const String NewItem = TTypeToString<int64>::ToString(Index);
+                const FString NewItem = TTypeToString<int64>::ToString(Index);
                 GQueue->Enqueue(::Move(NewItem));
             }
 
@@ -199,7 +199,7 @@ namespace SPMCTest
         {
             while (GIsRunning.Load() > 0 || !GQueue->IsEmpty())
             {
-                String NewItem;
+                FString NewItem;
                 if (GQueue->Dequeue(NewItem))
                 {
                     Items.Add(::Move(NewItem));
@@ -209,7 +209,7 @@ namespace SPMCTest
             return 0;
         }
 
-        TArray<String> Items;
+        TArray<FString> Items;
     };
 
     static bool Test()
@@ -217,7 +217,7 @@ namespace SPMCTest
         bool bResult = true;
 
         GIsRunning.Store(1);
-        GQueue = new TQueue<String, EQueueType::SPMC>;
+        GQueue = new TQueue<FString, EQueueType::SPMC>;
 
         IPlatformThread* Producer = FPlatformThread::Create(new FProducerThread, "ProducerThread", false);
 
@@ -231,7 +231,7 @@ namespace SPMCTest
 
         Producer->WaitForCompletion();
 
-        TArray<String> TotalItems;
+        TArray<FString> TotalItems;
         for (IPlatformThread* Consumer : Consumers)
         {
             Consumer->WaitForCompletion();
@@ -242,7 +242,7 @@ namespace SPMCTest
 
         for (int32 Index = 0; Index < NumItems; ++Index)
         {
-            const String Expected = TTypeToString<int64>::ToString(Index);
+            const FString Expected = TTypeToString<int64>::ToString(Index);
             bResult = TotalItems.Contains(Expected) && bResult;
         }
 
@@ -315,12 +315,12 @@ bool TQueue_Test()
 
     TEST_SECTION("Enqueue move overload");
     {
-        TQueue<String> Queue;
-        String Item = "Hello";
+        TQueue<FString> Queue;
+        FString Item = "Hello";
         TEST_EXPECT(Queue.Enqueue(::Move(Item)));
         TEST_EXPECT_EQ(Queue.Size(), 1);
 
-        String Out;
+        FString Out;
         TEST_EXPECT(Queue.Dequeue(Out));
         TEST_EXPECT(Out.Equals("Hello"));
     }

@@ -27,14 +27,14 @@ public:
 private:
     struct FEntry
     {
-        String         Name;
+        FString        Name;
         bool           bIsFolder = false;
         TArray<FEntry> Children;
     };
 
     using FEntryPath = TArray<int32>;
 
-    NODISCARD static String CreateUniqueName(const TArray<FEntry>& Siblings, const String& Name);
+    NODISCARD static FString CreateUniqueName(const TArray<FEntry>& Siblings, const FString& Name);
 
     void BuildPlaceholderTree();
     void RebuildTree();
@@ -52,7 +52,7 @@ private:
     NODISCARD FEntryPath ResolveTileTarget(int32 TileIndex) const;
 
     void NewFolder();
-    void RenameEntry(const FEntryPath& Path, const String& NewName);
+    void RenameEntry(const FEntryPath& Path, const FString& NewName);
     void DeleteEntries(const FEntryPath& ParentPath, const TArray<int32>& ChildIndices);
     void CopyEntries(const FEntryPath& ParentPath, const TArray<int32>& ChildIndices);
     void PasteEntries();
@@ -61,9 +61,9 @@ private:
 
     NODISCARD bool HasClipboardContent() const;
     NODISCARD bool CanMoveInto(const FEntryPath& SourceParentPath, const TArray<int32>& ChildIndices, const FEntryPath& TargetPath) const;
-    NODISCARD TArray<String> CollectEntryNames(const FEntryPath& ParentPath, const TArray<int32>& ChildIndices);
+    NODISCARD TArray<FString> CollectEntryNames(const FEntryPath& ParentPath, const TArray<int32>& ChildIndices);
 
-    void ReportFailure(const String& Message, const TArray<String>& FailedNames);
+    void ReportFailure(const FString& Message, const TArray<FString>& FailedNames);
 
     NODISCARD TSharedPtr<FVisualElement> BuildFolderColumn();
     NODISCARD TSharedPtr<FVisualElement> BuildContentColumn();
@@ -74,25 +74,25 @@ private:
     void OnFolderDragDetected(const TSharedPtr<FTreeItem>& Item, const FCursorEvent& CursorEvent);
     void OnTileActivated(int32 Index);
     void OnTileDragDetected(int32 Index, const FCursorEvent& CursorEvent);
-    void OnFolderSearchTextChanged(const String& SearchText);
-    void OnContentSearchTextChanged(const String& SearchText);
+    void OnFolderSearchTextChanged(const FString& SearchText);
+    void OnContentSearchTextChanged(const FString& SearchText);
     void OnTreeContextMenu(int32 Target, const IntVector2& ScreenPosition);
     void OnGridContextMenu(int32 Target, const IntVector2& ScreenPosition);
-    void OnTreeRenameCommitted(int32 Target, const String& NewName);
-    void OnGridRenameCommitted(int32 Target, const String& NewName);
+    void OnTreeRenameCommitted(int32 Target, const FString& NewName);
+    void OnGridRenameCommitted(int32 Target, const FString& NewName);
     void OnTreeRenameRequested();
     void OnGridRenameRequested();
     void OnTreeDeleteRequested();
     void OnGridDeleteRequested();
-    void OnTreeDropped(const String& PayloadId, int32 Target);
-    void OnGridDropped(const String& PayloadId, int32 Target);
+    void OnTreeDropped(const FString& PayloadId, int32 Target);
+    void OnGridDropped(const FString& PayloadId, int32 Target);
     void UpdateTreeDragPreview(int32 Target);
     void UpdateGridDragPreview(int32 Target);
-    void UpdateDragPreview(const FEntryPath& TargetPath, const String& TargetName);
+    void UpdateDragPreview(const FEntryPath& TargetPath, const FString& TargetName);
 
-    NODISCARD String GetTreeHoverTip(int32 Target) const;
-    NODISCARD String GetGridHoverTip(int32 Target) const;
-    NODISCARD String BuildHoverTip(const FEntryPath& Path, const FEntry& Entry) const;
+    NODISCARD FString GetTreeHoverTip(int32 Target) const;
+    NODISCARD FString GetGridHoverTip(int32 Target) const;
+    NODISCARD FString BuildHoverTip(const FEntryPath& Path, const FEntry& Entry) const;
 
     NODISCARD FRectangle GetTreeRowBounds(int32 Target) const;
     NODISCARD FRectangle GetTreeLabelBounds(int32 Target) const;
@@ -102,8 +102,8 @@ private:
     NODISCARD int32 HitTestGrid(const IntVector2& ClientPosition) const;
     NODISCARD bool CanDropOnTreeRow(int32 Target) const;
     NODISCARD bool CanDropOnTile(int32 Target) const;
-    NODISCARD String GetTreeLabel(int32 Target) const;
-    NODISCARD String GetTileLabel(int32 Target) const;
+    NODISCARD FString GetTreeLabel(int32 Target) const;
+    NODISCARD FString GetTileLabel(int32 Target) const;
 
     TSharedPtr<FSplitter>                 Splitter;
     TSharedPtr<FEditorContentBrowserView> TreeWrapper;
@@ -124,6 +124,6 @@ private:
     TArray<int32>                         DragChildIndices;
     FEntryPath                            ClipboardParentPath;
     TArray<int32>                         ClipboardChildIndices;
-    String                                FolderFilterText;
-    String                                ContentFilterText;
+    FString                               FolderFilterText;
+    FString                               ContentFilterText;
 };

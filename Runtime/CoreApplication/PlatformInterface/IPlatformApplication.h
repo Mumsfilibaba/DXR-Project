@@ -115,7 +115,7 @@ struct FMonitorInfo
     }
 
     /** @brief Name of the monitor as provided by the platform. */
-    String DeviceName;
+    FString DeviceName;
     
     /** @brief The workspace position of the monitor without considering UI elements like menu-bars or docks. */
     IntVector2 MainPosition;

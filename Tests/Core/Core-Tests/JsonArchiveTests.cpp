@@ -33,7 +33,7 @@ enum class ETestPlainEnum : int32
 };
 
 typedef TStaticArray<int32, 4> FTestFixedArray;
-typedef TMap<String, int32>    FTestLookup;
+typedef TMap<FString, int32>   FTestLookup;
 
 struct FTestWithOptional
 {
@@ -73,7 +73,7 @@ struct FTestActor
 {
     void Serialize(FJsonArchive& Archive)
     {
-        Archive.Field("Name", Name, String(""));
+        Archive.Field("Name", Name, FString(""));
         Archive.Field("Count", Count, 0);
         Archive.Field("Shape", Shape, ETestShape::Box);
         Archive.Field("Translation", Translation, Vector3(0.0f, 0.0f, 0.0f));
@@ -109,7 +109,7 @@ struct FTestActor
         return Light == Other.Light;
     }
 
-    String        Name;
+    FString       Name;
     int32         Count = 0;
     ETestShape    Shape = ETestShape::Box;
     Vector3       Translation{ 0.0f, 0.0f, 0.0f };
@@ -120,7 +120,7 @@ struct FTestActor
 static FTestActor MakeActor()
 {
     FTestActor Actor;
-    Actor.Name        = String("StreetLight_01");
+    Actor.Name        = FString("StreetLight_01");
     Actor.Count       = 7;
     Actor.Shape       = ETestShape::Capsule;
     Actor.Translation = Vector3(15.0f, 2.5f, -3.0f);
@@ -142,22 +142,22 @@ struct FTestInventory
     }
 
     TArray<FTestLight>     Lights;
-    TMap<String, int32>    Counts;
+    TMap<FString, int32>   Counts;
     TStaticArray<int32, 2> Pair;
 };
 
-static String LoadInventoryError(const CHAR_T* Text)
+static FString LoadInventoryError(const CHAR_T* Text)
 {
     FJsonValue Document;
-    if (!Json::Parse(StringView(Text), Document))
+    if (!Json::Parse(FStringView(Text), Document))
     {
-        return String();
+        return FString();
     }
 
     FTestInventory Inventory;
     FJsonArchive Loader = FJsonArchive::Loader(Document);
     Inventory.Serialize(Loader);
-    return (Loader.GetErrors().Size() == 1) ? Loader.GetErrors()[0] : String();
+    return (Loader.GetErrors().Size() == 1) ? Loader.GetErrors()[0] : FString();
 }
 
 template<typename T>
@@ -227,10 +227,10 @@ bool JsonArchive_Test()
     TEST_SECTION("A field missing from the input takes its default without an error");
     {
         FJsonValue Document;
-        TEST_EXPECT(Json::Parse(StringView("{\"Count\": 12}"), Document));
+        TEST_EXPECT(Json::Parse(FStringView("{\"Count\": 12}"), Document));
 
         FTestActor Loaded;
-        Loaded.Name  = String("stale");
+        Loaded.Name  = FString("stale");
         Loaded.Shape = ETestShape::Sphere;
 
         FJsonArchive Loader = FJsonArchive::Loader(Document);
@@ -246,7 +246,7 @@ bool JsonArchive_Test()
     TEST_SECTION("A wrong-typed field records one error carrying its path");
     {
         FJsonValue Document;
-        TEST_EXPECT(Json::Parse(StringView("{\"Count\": \"not a number\", \"Name\": \"kept\"}"), Document));
+        TEST_EXPECT(Json::Parse(FStringView("{\"Count\": \"not a number\", \"Name\": \"kept\"}"), Document));
 
         FTestActor Loaded;
         FJsonArchive Loader = FJsonArchive::Loader(Document);
@@ -263,7 +263,7 @@ bool JsonArchive_Test()
     TEST_SECTION("An error inside a nested struct carries the whole path");
     {
         FJsonValue Document;
-        TEST_EXPECT(Json::Parse(StringView("{\"Light\": {\"Intensity\": true}}"), Document));
+        TEST_EXPECT(Json::Parse(FStringView("{\"Light\": {\"Intensity\": true}}"), Document));
 
         FTestActor Loaded;
         FJsonArchive Loader = FJsonArchive::Loader(Document);
@@ -334,8 +334,8 @@ bool JsonArchive_Test()
 
     TEST_SECTION("Containers round-trip");
     {
-        TArray<String> Names = { String("a"), String("b"), String("c") };
-        TArray<String> LoadedNames;
+        TArray<FString> Names = { FString("a"), FString("b"), FString("c") };
+        TArray<FString> LoadedNames;
         TEST_EXPECT(SaveThenLoad(Names, LoadedNames));
         TEST_EXPECT(LoadedNames.Size() == 3);
         TEST_EXPECT(LoadedNames[2].Equals("c"));
@@ -351,19 +351,19 @@ bool JsonArchive_Test()
         TEST_EXPECT((LoadedFixed[0] == 1) && (LoadedFixed[3] == 4));
 
         FTestLookup Lookup;
-        Lookup.Add(String("one"), 1);
-        Lookup.Add(String("two"), 2);
+        Lookup.Add(FString("one"), 1);
+        Lookup.Add(FString("two"), 2);
 
         FTestLookup LoadedLookup;
         TEST_EXPECT(SaveThenLoad(Lookup, LoadedLookup));
         TEST_EXPECT(LoadedLookup.Size() == 2);
-        TEST_EXPECT(LoadedLookup.Find(String("two")) && (*LoadedLookup.Find(String("two")) == 2));
+        TEST_EXPECT(LoadedLookup.Find(FString("two")) && (*LoadedLookup.Find(FString("two")) == 2));
     }
 
     TEST_SECTION("A static array of the wrong length is reported");
     {
         FJsonValue Document;
-        TEST_EXPECT(Json::Parse(StringView("[1, 2]"), Document));
+        TEST_EXPECT(Json::Parse(FStringView("[1, 2]"), Document));
 
         FTestFixedArray Loaded;
         FJsonArchive Loader = FJsonArchive::Loader(Document);
@@ -431,7 +431,7 @@ bool JsonArchive_Test()
     TEST_SECTION("A color channel outside 0 to 255 is reported");
     {
         FJsonValue Document;
-        TEST_EXPECT(Json::Parse(StringView("[0, 300, 0, 255]"), Document));
+        TEST_EXPECT(Json::Parse(FStringView("[0, 300, 0, 255]"), Document));
 
         FColor Loaded;
         FJsonArchive Loader = FJsonArchive::Loader(Document);
@@ -484,7 +484,7 @@ bool JsonArchive_Test()
     TEST_SECTION("An error inside an array scope names the element it came from");
     {
         FJsonValue Document;
-        TEST_EXPECT(Json::Parse(StringView("{\"Actors\": [{}, {\"Count\": \"nope\"}]}"), Document));
+        TEST_EXPECT(Json::Parse(FStringView("{\"Actors\": [{}, {\"Count\": \"nope\"}]}"), Document));
 
         FJsonArchive Loader = FJsonArchive::Loader(Document);
         {
@@ -505,7 +505,7 @@ bool JsonArchive_Test()
     TEST_SECTION("A missing scope loads its contents as defaults without an error");
     {
         FJsonValue Document;
-        TEST_EXPECT(Json::Parse(StringView("{}"), Document));
+        TEST_EXPECT(Json::Parse(FStringView("{}"), Document));
 
         FJsonArchive Loader = FJsonArchive::Loader(Document);
         {
@@ -520,7 +520,7 @@ bool JsonArchive_Test()
     TEST_SECTION("A scope naming a member of the wrong type is reported");
     {
         FJsonValue Document;
-        TEST_EXPECT(Json::Parse(StringView("{\"Actors\": 5}"), Document));
+        TEST_EXPECT(Json::Parse(FStringView("{\"Actors\": 5}"), Document));
 
         FJsonArchive Loader = FJsonArchive::Loader(Document);
         {
@@ -534,8 +534,8 @@ bool JsonArchive_Test()
 
     TEST_SECTION("A document survives a trip through a file");
     {
-        const String Directory = Paths::GetProjectDir() + String("/Temp");
-        const String Filename  = Directory + String("/JsonArchiveTests.json");
+        const FString Directory = Paths::GetProjectDir() + FString("/Temp");
+        const FString Filename  = Directory + FString("/JsonArchiveTests.json");
 
         const FTestActor Source = MakeActor();
 
@@ -566,7 +566,7 @@ bool JsonArchive_Test()
     {
         FJsonValue Value;
         FJsonError Error;
-        TEST_EXPECT(!Json::LoadFromFile(String("ThisPathDoesNotExist/Nope.json"), Value, &Error));
+        TEST_EXPECT(!Json::LoadFromFile(FString("ThisPathDoesNotExist/Nope.json"), Value, &Error));
         TEST_EXPECT(!Error.Message.IsEmpty());
     }
 

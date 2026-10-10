@@ -20,16 +20,16 @@ struct ENGINE_API FEditorErrorDialog
     struct FDesc
     {
         /** @brief The caption above the message, left out when it is empty. */
-        String Title = "Error";
+        FString Title = "Error";
 
         /** @brief The line above the list, naming what failed. */
-        String Message;
+        FString Message;
 
         /** @brief One row per thing that failed, scrolled once there are more than MaxVisibleRows. */
-        TArray<String> Details;
+        TArray<FString> Details;
 
         /** @brief The label of the button that dismisses the dialog. */
-        String DismissLabel = "OK";
+        FString DismissLabel = "OK";
 
         /** @brief Fired once the dialog has been dismissed. */
         FOnErrorDialogClosed OnClosed;

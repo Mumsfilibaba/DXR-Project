@@ -51,26 +51,26 @@ static void PrintUsage()
 
 static bool GetIntOption(const CHAR_T* Name, int64& OutValue)
 {
-    StringView Value;
+    FStringView Value;
     if (!CommandLine::FindOption(Name, Value) || (Value.Size() == 0))
     {
         return false;
     }
 
-    const String Text(Value.Data(), Value.Size());
+    const FString Text(Value.Data(), Value.Size());
     OutValue = CString::Atoi64(Text.Data());
     return true;
 }
 
-static bool GetStringOption(const CHAR_T* Name, String& OutValue)
+static bool GetStringOption(const CHAR_T* Name, FString& OutValue)
 {
-    StringView Value;
+    FStringView Value;
     if (!CommandLine::FindOption(Name, Value) || (Value.Size() == 0))
     {
         return false;
     }
 
-    OutValue = String(Value.Data(), Value.Size());
+    OutValue = FString(Value.Data(), Value.Size());
     return true;
 }
 
@@ -116,28 +116,28 @@ static TArray<uint8> PackChannels(const TArray<float>& Values, int64 NumPixels, 
     return Packed;
 }
 
-static String ExtractDirectory(const String& Filename)
+static FString ExtractDirectory(const FString& Filename)
 {
     const int32 LastForward = Filename.FindLastChar('/');
     const int32 LastBack    = Filename.FindLastChar('\\');
 
-    int32 LastSeparator = String::InvalidIndex;
-    if (LastForward != String::InvalidIndex)
+    int32 LastSeparator = FString::InvalidIndex;
+    if (LastForward != FString::InvalidIndex)
     {
         LastSeparator = LastForward;
     }
 
-    if ((LastBack != String::InvalidIndex) && (LastBack > LastSeparator))
+    if ((LastBack != FString::InvalidIndex) && (LastBack > LastSeparator))
     {
         LastSeparator = LastBack;
     }
 
-    if (LastSeparator == String::InvalidIndex)
+    if (LastSeparator == FString::InvalidIndex)
     {
-        return String();
+        return FString();
     }
 
-    return String(Filename.Data(), LastSeparator);
+    return FString(Filename.Data(), LastSeparator);
 }
 
 static void ReportQuality(const TArray<float>& Values, const FBlueNoiseParams& Params)
@@ -232,9 +232,9 @@ struct FCheckpointFile
         int64  Iteration;
     };
 
-    static bool Save(const String& Path, const FBlueNoiseParams& Params, const TArray<float>& Values, int64 Iteration)
+    static bool Save(const FString& Path, const FBlueNoiseParams& Params, const TArray<float>& Values, int64 Iteration)
     {
-        const String TempPath = Path + ".tmp";
+        const FString TempPath = Path + ".tmp";
 
         {
             TFileRef<IPlatformFile> OutputFile = FPlatformFile::OpenForWrite(TempPath);
@@ -267,7 +267,7 @@ struct FCheckpointFile
         return FPlatformFile::MoveFile(TempPath.Data(), Path.Data());
     }
 
-    static bool Load(const String& Path, const FBlueNoiseParams& Params, TArray<float>& OutValues, int64& OutIteration)
+    static bool Load(const FString& Path, const FBlueNoiseParams& Params, TArray<float>& OutValues, int64& OutIteration)
     {
         TFileRef<IPlatformFile> InputFile = FPlatformFile::OpenForRead(Path);
         if (!InputFile.IsValid())
@@ -310,7 +310,7 @@ static int32 BlueNoiseGenMain()
         return 0;
     }
 
-    String Type;
+    FString Type;
     if (!GetStringOption("type", Type))
     {
         LOG_ERROR("[BlueNoiseGen] --type is required");
@@ -384,7 +384,7 @@ static int32 BlueNoiseGenMain()
         return 1;
     }
 
-    String OutputPath;
+    FString OutputPath;
     if (!GetStringOption("out", OutputPath))
     {
         LOG_ERROR("[BlueNoiseGen] --out is required");
@@ -393,7 +393,7 @@ static int32 BlueNoiseGenMain()
 
     const bool bAtlas = CommandLine::FindOption("atlas");
 
-    String CheckpointPath;
+    FString CheckpointPath;
     const bool bCheckpoint = GetStringOption("checkpoint", CheckpointPath);
 
     FThreadManager::Initialize();
@@ -489,7 +489,7 @@ static int32 BlueNoiseGenMain()
     FTaskGraph::Release();
     FThreadManager::Release();
 
-    const String Directory = ExtractDirectory(OutputPath);
+    const FString Directory = ExtractDirectory(OutputPath);
     if (!Directory.IsEmpty() && !File::CreateDirectoryTree(Directory))
     {
         LOG_ERROR("[BlueNoiseGen] Failed to create directory '%s'", Directory.Data());

@@ -36,7 +36,7 @@ public:
          * @param InText The text to show.
          * @return This desc, so the setters can be chained.
          */
-        FORCEINLINE FDesc& SetText(const String& InText)
+        FORCEINLINE FDesc& SetText(const FString& InText)
         {
             Text = InText;
             return *this;
@@ -66,7 +66,7 @@ public:
             return *this;
         }
 
-        String                     Text;
+        FString                    Text;
         TSharedPtr<IFontFace>      Font;
         FMargin                    Padding;
         FCornerRadii               CornerRadius;
@@ -111,10 +111,10 @@ public:
      *
      * @param InText The text to show.
      */
-    void SetText(const String& InText);
+    void SetText(const FString& InText);
 
     /** @return The label the button draws, which is empty for a button carrying content of its own. */
-    NODISCARD const String& GetText() const;
+    NODISCARD const FString& GetText() const;
 
     /**
      * @brief Holds a ghost button lit while something it owns is showing, which is what keeps a drop-down's

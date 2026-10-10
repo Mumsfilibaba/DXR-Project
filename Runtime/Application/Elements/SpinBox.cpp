@@ -66,7 +66,7 @@ void FSpinBox::Initialize(const FDesc& Desc)
     EditorDesc.Padding         = FMargin();
 
     Editor = FEditableText::Create(EditorDesc);
-    Editor->GetOnTextCommitted().BindLambda([this](const String& InText)
+    Editor->GetOnTextCommitted().BindLambda([this](const FString& InText)
     {
         HandleTextCommitted(InText);
     });
@@ -213,7 +213,7 @@ void FSpinBox::EndTyping(bool bCommit)
 
     if (bCommit && Editor)
     {
-        const String& Typed = Editor->GetText();
+        const FString& Typed = Editor->GetText();
         if (!Typed.IsEmpty())
         {
             ApplyValue(FPlatformString::Atof(Typed.Data()));
@@ -224,7 +224,7 @@ void FSpinBox::EndTyping(bool bCommit)
     OnValueCommittedDelegate.ExecuteIfBound(Value);
 }
 
-String FSpinBox::GetFormattedValue() const
+FString FSpinBox::GetFormattedValue() const
 {
     return Range.Format(Value);
 }
@@ -252,7 +252,7 @@ void FSpinBox::UpdateLabel()
     }
 }
 
-void FSpinBox::HandleTextCommitted(const String& InText)
+void FSpinBox::HandleTextCommitted(const FString& InText)
 {
     UNREFERENCED_VARIABLE(InText);
     EndTyping(true);

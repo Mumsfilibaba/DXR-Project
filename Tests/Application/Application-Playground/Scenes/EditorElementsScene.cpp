@@ -32,7 +32,7 @@ static const CHAR_T* AssetPayloadId = "PLAYGROUND_ASSET";
 /** @brief The type id the second chip carries, which the asset-only target turns away. */
 static const CHAR_T* ActorPayloadId = "PLAYGROUND_ACTOR";
 
-static TSharedPtr<FTextBlock> MakeReadout(const FPlaygroundFonts& Fonts, const String& InText)
+static TSharedPtr<FTextBlock> MakeReadout(const FPlaygroundFonts& Fonts, const FString& InText)
 {
     FTextBlock::FDesc Desc;
     Desc.Text            = InText;
@@ -74,7 +74,7 @@ class FDragChip final : public FVisualElement
 public:
     static constexpr int32 DragThreshold = 4;
 
-    static TSharedPtr<FDragChip> Create(const String& InLabel, const String& InTypeId, const TSharedPtr<IFontFace>& InFont)
+    static TSharedPtr<FDragChip> Create(const FString& InLabel, const FString& InTypeId, const TSharedPtr<IFontFace>& InFont)
     {
         TSharedPtr<FDragChip> NewChip = MakeSharedPtr<FDragChip>();
         NewChip->Label  = InLabel;
@@ -96,7 +96,7 @@ public:
 
     virtual IntVector2 ComputeDesiredSize() const override
     {
-        const int32 TextWidth = Font ? Font->MeasureWidth(StringView(Label.Data(), Label.Length())) : 0;
+        const int32 TextWidth = Font ? Font->MeasureWidth(FStringView(Label.Data(), Label.Length())) : 0;
         return IntVector2(TextWidth + 24, FUIStyle::GetDefault().Metrics.RowHeight);
     }
 
@@ -198,15 +198,15 @@ public:
     }
 
 private:
-    String                Label;
-    String                TypeId;
+    FString               Label;
+    FString               TypeId;
     TSharedPtr<IFontFace> Font;
     IntVector2            PressPosition;
     bool                  bIsPressed;
     bool                  bHasBegunDrag;
 };
 
-static TSharedPtr<FTreeItem> MakeBranch(const String& Label, const CHAR_T* const* ChildLabels, int32 NumChildren)
+static TSharedPtr<FTreeItem> MakeBranch(const FString& Label, const CHAR_T* const* ChildLabels, int32 NumChildren)
 {
     TSharedPtr<FTreeItem> Branch = FTreeItem::Create(Label);
     for (int32 Index = 0; Index < NumChildren; ++Index)
@@ -243,15 +243,15 @@ static TSharedPtr<FVisualElement> MakeTreeViewRow(const FPlaygroundFonts& Fonts)
             return;
         }
 
-        Readout->SetText(String::Printf("%d selected, first is '%s'", Selection.Size(), Selection[0]->Label.Data()));
+        Readout->SetText(FString::Printf("%d selected, first is '%s'", Selection.Size(), Selection[0]->Label.Data()));
     });
     TreeDesc.OnItemActivated = FOnTreeItemActivated::CreateLambda([Readout](const TSharedPtr<FTreeItem>& Item)
     {
-        Readout->SetText(String::Printf("activated '%s'", Item->Label.Data()));
+        Readout->SetText(FString::Printf("activated '%s'", Item->Label.Data()));
     });
     TreeDesc.OnExpansionChanged = FOnTreeItemExpansionChanged::CreateLambda([Readout](const TSharedPtr<FTreeItem>& Item, bool bIsExpanded)
     {
-        Readout->SetText(String::Printf("'%s' is now %s", Item->Label.Data(), bIsExpanded ? "open" : "closed"));
+        Readout->SetText(FString::Printf("'%s' is now %s", Item->Label.Data(), bIsExpanded ? "open" : "closed"));
     });
 
     TSharedPtr<FTreeView> TreeView = FTreeView::Create(TreeDesc);
@@ -261,10 +261,10 @@ static TSharedPtr<FVisualElement> MakeTreeViewRow(const FPlaygroundFonts& Fonts)
     FSearchBox::FDesc SearchDesc;
     SearchDesc.HintText      = "Filter the tree";
     SearchDesc.Font          = Fonts.Body;
-    SearchDesc.OnTextChanged = FOnSearchTextChanged::CreateLambda([TreeView, Readout](const String& SearchText)
+    SearchDesc.OnTextChanged = FOnSearchTextChanged::CreateLambda([TreeView, Readout](const FString& SearchText)
     {
         TreeView->SetFilterText(SearchText);
-        Readout->SetText(SearchText.IsEmpty() ? String("filter cleared") : String::Printf("filtering on '%s'", SearchText.Data()));
+        Readout->SetText(SearchText.IsEmpty() ? FString("filter cleared") : FString::Printf("filtering on '%s'", SearchText.Data()));
     });
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
@@ -297,11 +297,11 @@ static TSharedPtr<FVisualElement> MakeTileViewRow(const FPlaygroundFonts& Fonts)
     TileDesc.Font               = Fonts.Body;
     TileDesc.OnSelectionChanged = FOnTileSelectionChanged::CreateLambda([Readout](const TArray<int32>& SelectedIndices)
     {
-        Readout->SetText(SelectedIndices.IsEmpty() ? String("nothing selected") : String::Printf("%d tile(s) selected", SelectedIndices.Size()));
+        Readout->SetText(SelectedIndices.IsEmpty() ? FString("nothing selected") : FString::Printf("%d tile(s) selected", SelectedIndices.Size()));
     });
     TileDesc.OnItemActivated = FOnTileActivated::CreateLambda([Readout](int32 Index)
     {
-        Readout->SetText(String::Printf("opened tile %d", Index));
+        Readout->SetText(FString::Printf("opened tile %d", Index));
     });
 
     TSharedPtr<FTileView> TileView = FTileView::Create(TileDesc);
@@ -363,9 +363,9 @@ static TSharedPtr<FVisualElement> MakeExpanderRow(const FPlaygroundFonts& Fonts)
         Desc.Font           = Fonts.Body;
         Desc.Content        = FTextBlock::Create(BodyDesc);
         Desc.bIsExpanded    = Sample.bStartsOpen;
-        Desc.OnStateChanged = FOnExpanderStateChanged::CreateLambda([Readout, Label = String(Sample.Label)](bool bIsExpanded)
+        Desc.OnStateChanged = FOnExpanderStateChanged::CreateLambda([Readout, Label = FString(Sample.Label)](bool bIsExpanded)
         {
-            Readout->SetText(String::Printf("'%s' is now %s", Label.Data(), bIsExpanded ? "open" : "closed"));
+            Readout->SetText(FString::Printf("'%s' is now %s", Label.Data(), bIsExpanded ? "open" : "closed"));
         });
 
         Column->AddSlot(FExpander::Create(Desc)).SetPadding(FMargin(0, 0, 0, 4));
@@ -376,7 +376,7 @@ static TSharedPtr<FVisualElement> MakeExpanderRow(const FPlaygroundFonts& Fonts)
 }
 
 static TSharedPtr<FVisualElement> MakeVectorRow(const FPlaygroundFonts& Fonts, const TSharedPtr<FTextBlock>& Readout,
-    const String& RowName, float InitialValue, float Step)
+    const FString& RowName, float InitialValue, float Step)
 {
     struct FAxis
     {
@@ -401,9 +401,9 @@ static TSharedPtr<FVisualElement> MakeVectorRow(const FPlaygroundFonts& Fonts, c
         Desc.Step           = Step;
         Desc.Font           = Fonts.Monospace;
         Desc.OnValueChanged = FNumericEntryFloat::FOnValueChanged::CreateLambda(
-            [Readout, RowName, AxisName = String(Axis.Label)](float NewValue)
+            [Readout, RowName, AxisName = FString(Axis.Label)](float NewValue)
         {
-            Readout->SetText(String::Printf("%s.%s is now %.3f", RowName.Data(), AxisName.Data(), NewValue));
+            Readout->SetText(FString::Printf("%s.%s is now %.3f", RowName.Data(), AxisName.Data(), NewValue));
         });
 
         Row->AddSlot(FNumericEntryFloat::Create(Desc)).SetFillCoefficient(1.0f).SetPadding(FMargin(0, 0, 4, 0));
@@ -432,7 +432,7 @@ static TSharedPtr<FVisualElement> MakePropertyTableRow(const FPlaygroundFonts& F
     ShadowDesc.InitialState   = ECheckBoxState::Checked;
     ShadowDesc.OnStateChanged = FOnCheckStateChanged::CreateLambda([Readout](ECheckBoxState NewState)
     {
-        Readout->SetText(String::Printf("Cast Shadows is now %s", NewState == ECheckBoxState::Checked ? "on" : "off"));
+        Readout->SetText(FString::Printf("Cast Shadows is now %s", NewState == ECheckBoxState::Checked ? "on" : "off"));
     });
     Table->AddRow("Cast Shadows", FCheckBox::Create(ShadowDesc));
 
@@ -441,7 +441,7 @@ static TSharedPtr<FVisualElement> MakePropertyTableRow(const FPlaygroundFonts& F
     DoubleSidedDesc.InitialState   = ECheckBoxState::Unchecked;
     DoubleSidedDesc.OnStateChanged = FOnCheckStateChanged::CreateLambda([Readout](ECheckBoxState NewState)
     {
-        Readout->SetText(String::Printf("Double Sided is now %s", NewState == ECheckBoxState::Checked ? "on" : "off"));
+        Readout->SetText(FString::Printf("Double Sided is now %s", NewState == ECheckBoxState::Checked ? "on" : "off"));
     });
     Table->AddRow("Double Sided", FCheckBox::Create(DoubleSidedDesc));
 
@@ -453,7 +453,7 @@ static TSharedPtr<FVisualElement> MakePropertyTableRow(const FPlaygroundFonts& F
     SlotsDesc.Font           = Fonts.Monospace;
     SlotsDesc.OnValueChanged = FNumericEntryInt::FOnValueChanged::CreateLambda([Readout](int32 NewValue)
     {
-        Readout->SetText(String::Printf("Material Slots is now %d, clamped to 0 through 32", NewValue));
+        Readout->SetText(FString::Printf("Material Slots is now %d, clamped to 0 through 32", NewValue));
     });
 
     // Nested under the mesh heading, which is what the indent level is for
@@ -507,7 +507,7 @@ static TSharedPtr<FVisualElement> MakeProgressBarRow(const FPlaygroundFonts& Fon
     SliderDesc.OnValueChanged = FOnSliderValueChanged::CreateLambda([Driven](float NewValue)
     {
         Driven->SetPercent(NewValue);
-        Driven->SetOverlayText(String::Printf("%.0f%%", NewValue * 100.0f));
+        Driven->SetOverlayText(FString::Printf("%.0f%%", NewValue * 100.0f));
         Driven->SetFillColor(NewValue > 0.85f ? FFloatColor(0.85f, 0.35f, 0.25f, 1.0f) : FUIStyle::GetDefault().Colors.Accent);
     });
 
@@ -546,12 +546,12 @@ static TSharedPtr<FVisualElement> MakeHistogramRow(const FPlaygroundFonts& Fonts
         GpuTimes->AddSample(7.4f + (Wave * 1.2f) + (Spike * 0.4f));
     }
 
-    TSharedPtr<FTextBlock> Readout = MakeReadout(Fonts, String::Printf("latest %.2f ms, average %.2f ms, peak %.2f ms",
+    TSharedPtr<FTextBlock> Readout = MakeReadout(Fonts, FString::Printf("latest %.2f ms, average %.2f ms, peak %.2f ms",
         FrameTimes->GetLatest(), FrameTimes->GetAverage(), FrameTimes->GetMaximum()));
 
     const auto RefreshReadout = [Readout, FrameTimes]()
     {
-        Readout->SetText(String::Printf("latest %.2f ms, average %.2f ms, peak %.2f ms, %d sample(s) held",
+        Readout->SetText(FString::Printf("latest %.2f ms, average %.2f ms, peak %.2f ms, %d sample(s) held",
             FrameTimes->GetLatest(), FrameTimes->GetAverage(), FrameTimes->GetMaximum(), FrameTimes->GetNumSamples()));
     };
 
@@ -602,7 +602,7 @@ static TSharedPtr<FVisualElement> MakeHistogramRow(const FPlaygroundFonts& Fonts
 }
 
 static TSharedPtr<FVisualElement> MakeDropTarget(const FPlaygroundFonts& Fonts, const TSharedPtr<FTextBlock>& Readout,
-    const String& Title, const String& AcceptedTypeId)
+    const FString& Title, const FString& AcceptedTypeId)
 {
     const FUIStyle& Style = FUIStyle::GetDefault();
 
@@ -624,7 +624,7 @@ static TSharedPtr<FVisualElement> MakeDropTarget(const FPlaygroundFonts& Fonts, 
 
     FOnDragDropped OnDropped = FOnDragDropped::CreateLambda([Readout, Title](const FDragDropPayload& Payload, const IntVector2& ScreenPosition)
     {
-        Readout->SetText(String::Printf("'%s' dropped on %s at %d, %d",
+        Readout->SetText(FString::Printf("'%s' dropped on %s at %d, %d",
             Payload.DisplayText.Data(), Title.Data(), ScreenPosition.X, ScreenPosition.Y));
     });
 
@@ -657,7 +657,7 @@ static TSharedPtr<FVisualElement> MakeDragDropRow(const FPlaygroundFonts& Fonts)
     Chips->AddSlot(FSpacer::CreateHorizontal(0)).SetFillCoefficient(1.0f);
 
     TSharedPtr<FHorizontalBox> Targets = FHorizontalBox::Create();
-    Targets->AddSlot(MakeDropTarget(Fonts, Readout, "Takes anything", String())).SetFillCoefficient(1.0f).SetPadding(FMargin(0, 0, 8, 0));
+    Targets->AddSlot(MakeDropTarget(Fonts, Readout, "Takes anything", FString())).SetFillCoefficient(1.0f).SetPadding(FMargin(0, 0, 8, 0));
     Targets->AddSlot(MakeDropTarget(Fonts, Readout, "Assets only", AssetPayloadId)).SetFillCoefficient(1.0f);
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();

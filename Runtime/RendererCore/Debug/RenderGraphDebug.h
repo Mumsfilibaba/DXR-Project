@@ -13,7 +13,7 @@ enum class ERenderGraphDebugResourceKind : uint8
 
 struct FRenderGraphDebugResource
 {
-    String                        Name;
+    FString                       Name;
     ERenderGraphDebugResourceKind Kind        = ERenderGraphDebugResourceKind::Texture;
     bool                          bIsExternal = false;
     uint32                        Width       = 0;
@@ -30,7 +30,7 @@ struct FRenderGraphDebugAccess
 
 struct FRenderGraphDebugPass
 {
-    String                          Name;
+    FString                         Name;
     ERenderGraphPassFlags           Flags    = ERenderGraphPassFlags::None;
     bool                            bEnabled = true;
     bool                            bCulled  = false;
@@ -48,7 +48,7 @@ struct FRenderGraphDebugLink
 
 struct FRenderGraphDebugSnapshot
 {
-    String                            GraphName;
+    FString                           GraphName;
     FRenderGraphStatistics            Statistics;
     TArray<FRenderGraphDebugResource> Resources;
     TArray<FRenderGraphDebugPass>     Passes;

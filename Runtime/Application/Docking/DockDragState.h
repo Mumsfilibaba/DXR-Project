@@ -13,10 +13,10 @@ class FWindow;
 struct FDockDragPanel
 {
     /** @brief The panel being dragged. */
-    String PanelId;
+    FString PanelId;
 
     /** @brief The text its tab shows, which is also the caption of any window built for it. */
-    String Label;
+    FString Label;
 
     /** @brief Its content, which no area holds while the drag does. */
     TSharedPtr<FVisualElement> Content;
@@ -71,7 +71,7 @@ public:
      * @param SourceArea     The area it came from, which a cancel hands it back to.
      * @param ScreenPosition Where the cursor was, in screen coordinates.
      */
-    void BeginDrag(const String& PanelId, FDockingArea* SourceArea, const IntVector2& ScreenPosition);
+    void BeginDrag(const FString& PanelId, FDockingArea* SourceArea, const IntVector2& ScreenPosition);
 
     /**
      * @brief Moves the drag, re-resolving which area and which edge is under the cursor.
@@ -136,13 +136,13 @@ public:
     NODISCARD FDockDragPanel GetDraggedPanel() const;
 
     /** @return The panel being dragged, or an empty string when no drag is in flight. */
-    NODISCARD FORCEINLINE const String& GetDraggedPanelId() const
+    NODISCARD FORCEINLINE const FString& GetDraggedPanelId() const
     {
         return DraggedPanelId;
     }
 
     /** @return The text the ghost shows, which falls back to the panel id when the area had no label for it. */
-    NODISCARD FORCEINLINE const String& GetDraggedPanelLabel() const
+    NODISCARD FORCEINLINE const FString& GetDraggedPanelLabel() const
     {
         return DraggedPanelLabel;
     }
@@ -183,7 +183,7 @@ public:
     }
 
     /** @return The panel the drop would be placed against, which is empty when it would target the root. */
-    NODISCARD FORCEINLINE const String& GetTargetPanelId() const
+    NODISCARD FORCEINLINE const FString& GetTargetPanelId() const
     {
         return TargetPanelId;
     }
@@ -210,13 +210,13 @@ private:
     void ClearTarget();
     void InvalidateDropZones() const;
 
-    String                     DraggedPanelId;
-    String                     DraggedPanelLabel;
+    FString                    DraggedPanelId;
+    FString                    DraggedPanelLabel;
     TSharedPtr<FVisualElement> DraggedPanelContent;
     FDockingArea*              SourceArea;
     FRectangle                 SourceScreenBounds;
     FDockingArea*              TargetArea;
-    String                     TargetPanelId;
+    FString                    TargetPanelId;
     EDockDirection             TargetDirection;
     int32                      TargetTabIndex;
     IntVector2                 CursorPosition;

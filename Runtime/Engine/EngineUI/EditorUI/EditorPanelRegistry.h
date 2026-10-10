@@ -52,16 +52,16 @@ public:
      *
      * @param PanelId The panel to show.
      */
-    void ShowPanel(const String& PanelId);
-    void HidePanel(const String& PanelId);
-    void TogglePanel(const String& PanelId);
+    void ShowPanel(const FString& PanelId);
+    void HidePanel(const FString& PanelId);
+    void TogglePanel(const FString& PanelId);
 
     /**
      * @brief Records that a panel left the tree, which is what a closed tab reports.
      *
      * @param PanelId The panel that was closed.
      */
-    void OnPanelClosed(const String& PanelId);
+    void OnPanelClosed(const FString& PanelId);
 
     /**
      * @brief Finds a panel by the id a saved layout refers to it by.
@@ -69,7 +69,7 @@ public:
      * @param PanelId The id to look for.
      * @return The panel, or null when no panel carries that id.
      */
-    NODISCARD TSharedPtr<FEditorPanel> FindPanel(const String& PanelId) const;
+    NODISCARD TSharedPtr<FEditorPanel> FindPanel(const FString& PanelId) const;
 
     /** @return Every panel, in the order they were registered, which is the order the Windows menu lists them. */
     NODISCARD FORCEINLINE const TArray<TSharedPtr<FEditorPanel>>& GetPanels() const
@@ -92,8 +92,8 @@ public:
 private:
     bool Add(const TSharedPtr<FEditorPanel>& Panel);
 
-    NODISCARD bool IsPanelDocked(const String& PanelId) const;
-    NODISCARD bool IsPanelVisible(const String& PanelId) const;
+    NODISCARD bool IsPanelDocked(const FString& PanelId) const;
+    NODISCARD bool IsPanelVisible(const FString& PanelId) const;
 
     FEditorEngine*                    EditorEngine;
     TSharedPtr<FDockingArea>          DockingArea;

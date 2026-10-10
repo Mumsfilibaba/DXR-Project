@@ -7,9 +7,9 @@ constexpr const CHAR_T* LAYOUT_SECTION       = "Layout";
 constexpr const CHAR_T* LAYOUT_NODE_PREFIX   = "Node";
 constexpr const CHAR_T* LAYOUT_WINDOW_PREFIX = "Window";
 
-static void SplitList(const String& Value, TArray<String>& OutTokens)
+static void SplitList(const FString& Value, TArray<FString>& OutTokens)
 {
-    String Token;
+    FString Token;
     for (int32 Index = 0; Index < Value.Length(); ++Index)
     {
         const CHAR_T Character = Value[Index];
@@ -33,9 +33,9 @@ static void SplitList(const String& Value, TArray<String>& OutTokens)
     }
 }
 
-static String JoinList(const TArray<String>& Tokens)
+static FString JoinList(const TArray<FString>& Tokens)
 {
-    String Result;
+    FString Result;
     for (int32 Index = 0; Index < Tokens.Size(); ++Index)
     {
         if (Index > 0)
@@ -49,14 +49,14 @@ static String JoinList(const TArray<String>& Tokens)
     return Result;
 }
 
-static String WritePoint(const IntVector2& Point)
+static FString WritePoint(const IntVector2& Point)
 {
-    return String::Printf("%d,%d", Point.X, Point.Y);
+    return FString::Printf("%d,%d", Point.X, Point.Y);
 }
 
-static IntVector2 ReadPoint(const String& Value)
+static IntVector2 ReadPoint(const FString& Value)
 {
-    TArray<String> Tokens;
+    TArray<FString> Tokens;
     SplitList(Value, Tokens);
 
     if (Tokens.Size() != 2)
@@ -71,32 +71,32 @@ static int32 WriteNode(FIniFile& File, const FDockNode& Node, int32& InOutNextIn
 {
     const int32 NodeIndex = InOutNextIndex++;
 
-    TArray<String> ChildIndices;
+    TArray<FString> ChildIndices;
     if (Node.Kind == EDockNodeKind::Split)
     {
         for (const FDockNode& Child : Node.Children)
         {
-            ChildIndices.Add(String::Printf("%d", WriteNode(File, Child, InOutNextIndex)));
+            ChildIndices.Add(FString::Printf("%d", WriteNode(File, Child, InOutNextIndex)));
         }
     }
 
-    const String SectionName = String::Printf("%s%d", LAYOUT_NODE_PREFIX, NodeIndex);
+    const FString SectionName = FString::Printf("%s%d", LAYOUT_NODE_PREFIX, NodeIndex);
     if (Node.Kind == EDockNodeKind::Split)
     {
-        TArray<String> Fractions;
+        TArray<FString> Fractions;
         for (float Fraction : Node.ChildFractions)
         {
-            Fractions.Add(String::Printf("%.6f", Fraction));
+            Fractions.Add(FString::Printf("%.6f", Fraction));
         }
 
-        File.SetOrAddString(SectionName.Data(), "Kind", String("Split"));
-        File.SetOrAddString(SectionName.Data(), "Orientation", String(Node.Orientation == EDockSplitOrientation::Horizontal ? "Horizontal" : "Vertical"));
+        File.SetOrAddString(SectionName.Data(), "Kind", FString("Split"));
+        File.SetOrAddString(SectionName.Data(), "Orientation", FString(Node.Orientation == EDockSplitOrientation::Horizontal ? "Horizontal" : "Vertical"));
         File.SetOrAddString(SectionName.Data(), "Children", JoinList(ChildIndices));
         File.SetOrAddString(SectionName.Data(), "Fractions", JoinList(Fractions));
     }
     else
     {
-        File.SetOrAddString(SectionName.Data(), "Kind", String("Tabs"));
+        File.SetOrAddString(SectionName.Data(), "Kind", FString("Tabs"));
         File.SetOrAddString(SectionName.Data(), "Tabs", JoinList(Node.TabIds));
         File.SetOrAddInt(SectionName.Data(), "ActiveTab", Node.ActiveTabIndex);
     }
@@ -111,9 +111,9 @@ static bool ReadNode(FIniFile& File, int32 NodeIndex, int32 NumNodes, int32 Dept
         return false;
     }
 
-    const String SectionName = String::Printf("%s%d", LAYOUT_NODE_PREFIX, NodeIndex);
+    const FString SectionName = FString::Printf("%s%d", LAYOUT_NODE_PREFIX, NodeIndex);
 
-    String Kind;
+    FString Kind;
     if (!File.GetString(SectionName.Data(), "Kind", Kind))
     {
         return false;
@@ -123,7 +123,7 @@ static bool ReadNode(FIniFile& File, int32 NodeIndex, int32 NumNodes, int32 Dept
     {
         OutNode.Kind = EDockNodeKind::Tabs;
 
-        String Tabs;
+        FString Tabs;
         File.GetString(SectionName.Data(), "Tabs", Tabs);
         SplitList(Tabs, OutNode.TabIds);
 
@@ -136,18 +136,18 @@ static bool ReadNode(FIniFile& File, int32 NodeIndex, int32 NumNodes, int32 Dept
 
     OutNode.Kind = EDockNodeKind::Split;
 
-    String Orientation;
+    FString Orientation;
     File.GetString(SectionName.Data(), "Orientation", Orientation);
 
     OutNode.Orientation = Orientation == "Vertical" ? EDockSplitOrientation::Vertical : EDockSplitOrientation::Horizontal;
 
-    String Children;
+    FString Children;
     File.GetString(SectionName.Data(), "Children", Children);
 
-    TArray<String> ChildIndices;
+    TArray<FString> ChildIndices;
     SplitList(Children, ChildIndices);
 
-    for (const String& ChildIndex : ChildIndices)
+    for (const FString& ChildIndex : ChildIndices)
     {
         FDockNode ChildNode;
         if (!ReadNode(File, CString::Atoi(ChildIndex.Data()), NumNodes, Depth + 1, ChildNode))
@@ -158,15 +158,15 @@ static bool ReadNode(FIniFile& File, int32 NodeIndex, int32 NumNodes, int32 Dept
         OutNode.Children.Add(ChildNode);
     }
 
-    String Fractions;
+    FString Fractions;
     File.GetString(SectionName.Data(), "Fractions", Fractions);
 
-    TArray<String> FractionTokens;
+    TArray<FString> FractionTokens;
     SplitList(Fractions, FractionTokens);
 
     if (FractionTokens.Size() == OutNode.Children.Size())
     {
-        for (const String& Token : FractionTokens)
+        for (const FString& Token : FractionTokens)
         {
             OutNode.ChildFractions.Add(CString::Atof(Token.Data()));
         }
@@ -188,7 +188,7 @@ FDockWindowLayout::FDockWindowLayout()
 {
 }
 
-bool FDockLayoutFile::Save(const String& Filename, const TArray<FDockWindowLayout>& Windows)
+bool FDockLayoutFile::Save(const FString& Filename, const TArray<FDockWindowLayout>& Windows)
 {
     FIniFile File;
     File.Filename = Filename;
@@ -199,7 +199,7 @@ bool FDockLayoutFile::Save(const String& Filename, const TArray<FDockWindowLayou
         const FDockWindowLayout& Layout    = Windows[Index];
         const int32              RootIndex = WriteNode(File, Layout.Root, NextIndex);
 
-        const String SectionName = String::Printf("%s%d", LAYOUT_WINDOW_PREFIX, Index);
+        const FString SectionName = FString::Printf("%s%d", LAYOUT_WINDOW_PREFIX, Index);
 
         File.SetOrAddString(SectionName.Data(), "Title", Layout.Title);
         File.SetOrAddString(SectionName.Data(), "Position", WritePoint(Layout.Position));
@@ -215,7 +215,7 @@ bool FDockLayoutFile::Save(const String& Filename, const TArray<FDockWindowLayou
     return File.WriteToFile();
 }
 
-bool FDockLayoutFile::Load(const String& Filename, TArray<FDockWindowLayout>& OutWindows)
+bool FDockLayoutFile::Load(const FString& Filename, TArray<FDockWindowLayout>& OutWindows)
 {
     OutWindows.Clear();
 
@@ -252,9 +252,9 @@ bool FDockLayoutFile::Load(const String& Filename, TArray<FDockWindowLayout>& Ou
         int32 RootIndex = 0;
         if (Version == CurrentVersion)
         {
-            const String SectionName = String::Printf("%s%d", LAYOUT_WINDOW_PREFIX, Index);
+            const FString SectionName = FString::Printf("%s%d", LAYOUT_WINDOW_PREFIX, Index);
 
-            String Value;
+            FString Value;
             if (File.GetString(SectionName.Data(), "Title", Value))
             {
                 Layout.Title = Value;

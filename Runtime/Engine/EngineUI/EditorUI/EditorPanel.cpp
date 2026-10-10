@@ -1,7 +1,7 @@
 #include "Engine/EngineUI/EditorUI/EditorPanel.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
 
-FEditorPanel::FEditorPanel(FEditorEngine* InEditorEngine, const String& InPanelId, const String& InLabel)
+FEditorPanel::FEditorPanel(FEditorEngine* InEditorEngine, const FString& InPanelId, const FString& InLabel)
     : EditorEngine(InEditorEngine)
     , PanelId(InPanelId)
     , Label(InLabel)

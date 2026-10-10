@@ -22,7 +22,7 @@ FOutputDeviceManager* FOutputDeviceManager::Get()
     return &StaticOutputDeviceManager;
 }
 
-void FOutputDeviceManager::Log(const String& Message)
+void FOutputDeviceManager::Log(const FString& Message)
 {
     TArray<IOutputDevice*> CurrentOutputDevices;
     {
@@ -42,7 +42,7 @@ void FOutputDeviceManager::Log(const String& Message)
     }
 }
 
-void FOutputDeviceManager::Log(ELogSeverity Severity, const String& Message)
+void FOutputDeviceManager::Log(ELogSeverity Severity, const FString& Message)
 {
     TArray<IOutputDevice*> CurrentOutputDevices;
     {
@@ -62,7 +62,7 @@ void FOutputDeviceManager::Log(ELogSeverity Severity, const String& Message)
     }
 }
 
-void FOutputDeviceManager::QueuePendingLine(const String& Message, ELogSeverity Severity, bool bHasSeverity)
+void FOutputDeviceManager::QueuePendingLine(const FString& Message, ELogSeverity Severity, bool bHasSeverity)
 {
     PendingLines.Emplace(FPendingLine{ Message, Severity, bHasSeverity });
 

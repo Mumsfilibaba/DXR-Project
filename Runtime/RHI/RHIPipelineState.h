@@ -454,7 +454,7 @@ NODISCARD constexpr const CHAR_T* ToString(EVertexInputClass BlendOp)
 struct FRHIInputElementDesc
 {
     /** @brief Semantic in the shader to match */
-    String Semantic;
+    FString Semantic;
 
     /** @brief Index of the semantic in the shader */
     uint32 SemanticIndex = 0;
@@ -515,8 +515,8 @@ public:
     /** @return D3D12: ID3D12PipelineState* or ID3D12StateObject*. Vulkan: VkPipeline. Metal: id<MTLRenderPipelineState> or nullptr. Null: nullptr. */
     virtual void* GetRHINativeState() const = 0;
 
-    virtual void SetDebugName(const String& InName) = 0;
-    virtual void GetDebugName(String& OutDebugName) const = 0;
+    virtual void SetDebugName(const FString& InName) = 0;
+    virtual void GetDebugName(FString& OutDebugName) const = 0;
 };
 
 struct FRHIGraphicsPipelineFormats

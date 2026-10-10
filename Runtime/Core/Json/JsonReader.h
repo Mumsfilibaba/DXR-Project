@@ -12,15 +12,15 @@ public:
 
     // Succeeds only when the whole input was one valid value. A leading UTF-8 BOM is 
     // skipped, both LF and CRLF are accepted, and OutValue is left untouched on failure.
-    bool Parse(const StringView& Text, FJsonValue& OutValue, FJsonError* OutError = nullptr);
+    bool Parse(const FStringView& Text, FJsonValue& OutValue, FJsonError* OutError = nullptr);
 
 private:
-    static void AppendUtf8(uint32 CodePoint, String& OutString);
+    static void AppendUtf8(uint32 CodePoint, FString& OutString);
 
     bool ParseValue(FJsonValue& OutValue, int32 Depth);
     bool ParseObject(FJsonValue& OutValue, int32 Depth);
     bool ParseArray(FJsonValue& OutValue, int32 Depth);
-    bool ParseString(String& OutString);
+    bool ParseString(FString& OutString);
     bool ParseNumber(FJsonValue& OutValue);
     bool ParseKeyword(const CHAR_T* Keyword, FJsonValue&& Result, FJsonValue& OutValue);
 
@@ -28,7 +28,7 @@ private:
     bool ParseHexQuad(uint32& OutCodePoint);
 
     // Appends a code point to OutString as UTF-8, combining surrogate pairs
-    bool ParseEscape(String& OutString);
+    bool ParseEscape(FString& OutString);
 
     void SkipWhitespaceAndComments();
     bool SkipComment();

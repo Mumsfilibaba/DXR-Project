@@ -57,7 +57,7 @@ int32 FProgressBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
 
     if (Font && !OverlayText.IsEmpty())
     {
-        const IntVector2 TextSize(Font->MeasureWidth(StringView(OverlayText.Data(), OverlayText.Length())), Font->GetLineHeight());
+        const IntVector2 TextSize(Font->MeasureWidth(FStringView(OverlayText.Data(), OverlayText.Length())), Font->GetLineHeight());
         const FRectangle TextBounds = FLayout::AlignInBounds(Bounds, TextSize, EHorizontalAlignment::Center, EVerticalAlignment::Center);
 
         OutCommandList.AddText(LayerId + 1, TextBounds, OverlayText, Font.Get(), TextColor);
@@ -79,7 +79,7 @@ void FProgressBar::SetPercent(float InPercent)
     InvalidatePaint();
 }
 
-void FProgressBar::SetOverlayText(const String& InText)
+void FProgressBar::SetOverlayText(const FString& InText)
 {
     if (OverlayText == InText)
     {

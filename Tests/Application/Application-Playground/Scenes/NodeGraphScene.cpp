@@ -24,7 +24,7 @@ static TSharedPtr<FGraphModel>  GShaderModel;
 static TSharedPtr<FGraphCanvas> GShaderCanvas;
 static TSharedPtr<FTextBlock>   GShaderReadout;
 
-static FFloatColor GetTypeTint(const String& TypeTag)
+static FFloatColor GetTypeTint(const FString& TypeTag)
 {
     if (TypeTag == "Float")
     {
@@ -62,7 +62,7 @@ static FGraphNode MakeNode(const CHAR_T* Title, const Vector2& Position, const F
 static TSharedPtr<FVisualElement> MakeValueBody(const FPlaygroundFonts& Fonts, float StartingValue)
 {
     FTextBlock::FDesc ValueDesc;
-    ValueDesc.Text            = String::Printf("%.2f", StartingValue);
+    ValueDesc.Text            = FString::Printf("%.2f", StartingValue);
     ValueDesc.Font            = Fonts.Monospace;
     ValueDesc.ColorAndOpacity = FUIStyle::GetDefault().Colors.TextDisabled;
 
@@ -72,7 +72,7 @@ static TSharedPtr<FVisualElement> MakeValueBody(const FPlaygroundFonts& Fonts, f
     SliderDesc.SetRange(0.0f, 1.0f).SetValue(StartingValue);
     SliderDesc.OnValueChanged = FOnSliderValueChanged::CreateLambda([ValueText](float NewValue)
     {
-        ValueText->SetText(String::Printf("%.2f", NewValue));
+        ValueText->SetText(FString::Printf("%.2f", NewValue));
     });
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
@@ -130,7 +130,7 @@ static void RefreshShaderReadout()
 
     const int32 NumSelected = GShaderCanvas->GetSelectedNodes().Size();
 
-    String Description = String::Printf(
+    FString Description = FString::Printf(
         "%d nodes, %d links, zoom %.2fx, ",
         GShaderModel->GetNodes().Size(),
         GShaderModel->GetLinks().Size(),
@@ -143,11 +143,11 @@ static void RefreshShaderReadout()
     else if (NumSelected == 1)
     {
         const FGraphNode* Node = GShaderModel->FindNode(GShaderCanvas->GetSelectedNodes()[0]);
-        Description.Append(Node ? String::Printf("%s selected", Node->Title.Data()) : String("nothing selected"));
+        Description.Append(Node ? FString::Printf("%s selected", Node->Title.Data()) : FString("nothing selected"));
     }
     else if (NumSelected > 1)
     {
-        Description.Append(String::Printf("%d nodes selected", NumSelected));
+        Description.Append(FString::Printf("%d nodes selected", NumSelected));
     }
     else
     {
@@ -355,7 +355,7 @@ static TSharedPtr<FVisualElement> MakeRenderGraphView(const FPlaygroundFonts& Fo
 
         for (int32 Other = 0; Other < Index; ++Other)
         {
-            if (String(Passes[Other].Output) == Passes[Index].Input)
+            if (FString(Passes[Other].Output) == Passes[Index].Input)
             {
                 const FGraphNode* From = Model->FindNode(PassIds[Other]);
                 const FGraphNode* To   = Model->FindNode(PassIds[Index]);

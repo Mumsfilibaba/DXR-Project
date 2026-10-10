@@ -98,7 +98,7 @@ void FDrawCommandList::AddBoxOutline(int32 LayerId, const FRectangle& Bounds, co
     Command.Thickness    = Thickness;
 }
 
-void FDrawCommandList::AddText(int32 LayerId, const FRectangle& Bounds, const StringView& InText, const IFontFace* Font, const FFloatColor& Tint)
+void FDrawCommandList::AddText(int32 LayerId, const FRectangle& Bounds, const FStringView& InText, const IFontFace* Font, const FFloatColor& Tint)
 {
     FDrawCommand& Command = EmplaceCommand(EDrawCommandType::Text, LayerId);
     Command.Bounds      = Bounds;
@@ -663,7 +663,7 @@ bool FDrawCommandList::FindFirstDifference(
     const FDrawCommandList& Left,
     const FDrawCommandList& Right,
     int32&                  OutIndex,
-    String&                 OutReason)
+    FString&                OutReason)
 {
     const int32 SharedCount = Math::Min(Left.Commands.Size(), Right.Commands.Size());
 
@@ -734,8 +734,8 @@ bool FDrawCommandList::FindFirstDifference(
         {
             case EDrawCommandType::Text:
             {
-                const StringView LeftText  = Left.GetCommandText(LeftCommand);
-                const StringView RightText = Right.GetCommandText(RightCommand);
+                const FStringView LeftText  = Left.GetCommandText(LeftCommand);
+                const FStringView RightText = Right.GetCommandText(RightCommand);
 
                 if (!LeftText.Equals(RightText))
                 {
@@ -810,14 +810,14 @@ TArrayView<const Vector2> FDrawCommandList::GetCommandPoints(const FDrawCommand&
     return TArrayView<const Vector2>(Points.Data() + Command.PayloadOffset, Command.PayloadCount);
 }
 
-StringView FDrawCommandList::GetCommandText(const FDrawCommand& Command) const
+FStringView FDrawCommandList::GetCommandText(const FDrawCommand& Command) const
 {
     if (Command.Type != EDrawCommandType::Text || Command.PayloadCount <= 0)
     {
-        return StringView();
+        return FStringView();
     }
 
-    return StringView(TextPool.Data() + Command.PayloadOffset, Command.PayloadCount);
+    return FStringView(TextPool.Data() + Command.PayloadOffset, Command.PayloadCount);
 }
 
 const FUIBrush* FDrawCommandList::GetCommandBrush(const FDrawCommand& Command) const
@@ -855,7 +855,7 @@ int32 FDrawCommandList::CountCommandsOfType(EDrawCommandType Type) const
     return Count;
 }
 
-int32 FDrawCommandList::FindTextCommand(const StringView& InText) const
+int32 FDrawCommandList::FindTextCommand(const FStringView& InText) const
 {
     for (int32 Index = 0; Index < Commands.Size(); Index++)
     {
@@ -879,7 +879,7 @@ void FDrawCommandList::StorePoints(FDrawCommand& Command, TArrayView<const Vecto
     Memory::Memcpy(Points.Data() + Start, InPoints.Data(), static_cast<uint32>(InPoints.Size()) * sizeof(Vector2));
 }
 
-void FDrawCommandList::StoreText(FDrawCommand& Command, StringView InText)
+void FDrawCommandList::StoreText(FDrawCommand& Command, FStringView InText)
 {
     Command.PayloadOffset = TextPool.Size();
     Command.PayloadCount  = InText.Length();

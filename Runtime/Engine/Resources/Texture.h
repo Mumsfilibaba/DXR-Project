@@ -23,20 +23,20 @@ public:
     virtual void ReleaseData() = 0;
 
     virtual EFormat GetFormat() const = 0;
-    virtual void SetDebugName(const String& InName) = 0;
+    virtual void SetDebugName(const FString& InName) = 0;
 
-    void SetFilename(const String& InFilename)
+    void SetFilename(const FString& InFilename)
     {
         Filename = InFilename;
     }
 
-    const String& GetFilename() const
+    const FString& GetFilename() const
     {
         return Filename;
     }
 
 protected:
-    String Filename;
+    FString Filename;
 };
 
 class ENGINE_API FTexture2D : public FTexture
@@ -53,7 +53,7 @@ public:
     virtual void CreateData() override final;
     virtual void ReleaseData() override final;
 
-    virtual void SetDebugName(const String& InName) override final;
+    virtual void SetDebugName(const FString& InName) override final;
     virtual EFormat GetFormat() const override final { return Format; }
 
     FRHITextureRef GetRHITexture() const { return TextureRHI; }

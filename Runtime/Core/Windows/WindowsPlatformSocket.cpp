@@ -122,7 +122,7 @@ IPlatformSocket* FWindowsPlatformSocket::Create(ESocketType Type, ESocketFamily 
     return new FWindowsPlatformSocket(Type, Family, static_cast<UINT_PTR>(NewSocket));
 }
 
-bool FWindowsPlatformSocket::Resolve(const String& Host, uint16 Port, TArray<FSocketAddress>& OutAddresses)
+bool FWindowsPlatformSocket::Resolve(const FString& Host, uint16 Port, TArray<FSocketAddress>& OutAddresses)
 {
     OutAddresses.Clear();
     if (!InitializeWinsock())
@@ -156,7 +156,7 @@ bool FWindowsPlatformSocket::Resolve(const String& Host, uint16 Port, TArray<FSo
     return !OutAddresses.IsEmpty();
 }
 
-bool FWindowsPlatformSocket::ParseAddress(const String& Text, uint16 Port, FSocketAddress& OutAddress)
+bool FWindowsPlatformSocket::ParseAddress(const FString& Text, uint16 Port, FSocketAddress& OutAddress)
 {
     in_addr IPv4;
     if (::inet_pton(AF_INET, *Text, &IPv4) == 1)
@@ -175,7 +175,7 @@ bool FWindowsPlatformSocket::ParseAddress(const String& Text, uint16 Port, FSock
     return false;
 }
 
-String FWindowsPlatformSocket::AddressToString(const FSocketAddress& Address)
+FString FWindowsPlatformSocket::AddressToString(const FSocketAddress& Address)
 {
     CHAR_T Buffer[INET6_ADDRSTRLEN] = {};
     if (Address.IsIPv4())
@@ -189,7 +189,7 @@ String FWindowsPlatformSocket::AddressToString(const FSocketAddress& Address)
         ::inet_ntop(AF_INET6, Address.GetBytes(), Buffer, sizeof(Buffer));
     }
 
-    return String(Buffer);
+    return FString(Buffer);
 }
 
 int32 FWindowsPlatformSocket::WaitForRead(IPlatformSocket* const* Sockets, int32 NumSockets, bool* OutReadable, uint32 TimeoutMilliseconds)

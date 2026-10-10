@@ -33,7 +33,7 @@ public:
     ~FConfig();
 
     /** @brief Loads a file and keeps it open, without making it part of any layer */
-    FIniFile* LoadFile(const String& Filename);
+    FIniFile* LoadFile(const FString& Filename);
 
     /** @return Returns the file installed as 'ConfigFile', or nullptr when that layer is absent */
     FIniFile* GetFile(EConfigFile::Type ConfigFile);
@@ -45,7 +45,7 @@ public:
     FIniValue* FindValue(const CHAR_T* SectionName, const CHAR_T* Name);
 
     /** @brief Retrieve a string from the highest layer that has it */
-    bool GetString(const CHAR_T* SectionName, const CHAR_T* Name, String& OutValue);
+    bool GetString(const CHAR_T* SectionName, const CHAR_T* Name, FString& OutValue);
 
     /** @brief Retrieve a int from the highest layer that has it */
     bool GetInt(const CHAR_T* SectionName, const CHAR_T* Name, int32& OutValue);
@@ -60,11 +60,11 @@ public:
     void LoadConsoleVariables();
 
 private:
-    FIniFile* AddLayer(EConfigFile::Type ConfigFile, const String& Filename);
+    FIniFile* AddLayer(EConfigFile::Type ConfigFile, const FString& Filename);
     void AddDefaultLayers();
 
-    TMap<String, FIniFile> ConfigFiles;
-    FIniFile*              LayerFiles[EConfigFile::Count];
+    TMap<FString, FIniFile> ConfigFiles;
+    FIniFile*               LayerFiles[EConfigFile::Count];
 };
 
 extern CORE_API FConfig* GConfig;

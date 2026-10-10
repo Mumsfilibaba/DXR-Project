@@ -25,7 +25,7 @@ public:
         return Allocator.Get();
     }
 
-    void SetDebugName(const String& Name)
+    void SetDebugName(const FString& Name)
     {
         D3D12SetDebugName(Allocator.Get(), Name);
     }
@@ -91,13 +91,13 @@ public:
         return NumCommands;
     }
 
-    FORCEINLINE void SetDebugName(const String& Name)
+    FORCEINLINE void SetDebugName(const FString& Name)
     {
         DebugName = Name;
         D3D12SetDebugName(CmdList.Get(), Name);
     }
 
-    FORCEINLINE const String& GetDebugName() const
+    FORCEINLINE const FString& GetDebugName() const
     {
         return DebugName;
     }
@@ -236,7 +236,7 @@ private:
     TComPtr<ID3D12GraphicsCommandList10> CmdList10;
 #endif
     FD3D12ResidencySet                   ResidencySet;
-    String                               DebugName;
+    FString                              DebugName;
     uint32                               NumCommands;
     bool                                 bIsReady;
 };

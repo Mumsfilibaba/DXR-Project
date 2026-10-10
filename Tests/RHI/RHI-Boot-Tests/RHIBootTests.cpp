@@ -398,7 +398,7 @@ static bool ProbeShaders()
     {
         TEST_SECTION("A compute PSO materialises a static sampler on s0");
 
-        const String SamplerSource(
+        const FString SamplerSource(
             "SamplerState LinearSampler : register(s0);\n"
             "Texture2D<float4> SourceTex : register(t0);\n"
             "RWTexture2D<float4> DestTex : register(u0);\n"
@@ -638,7 +638,7 @@ static bool ProbeCommandRecording()
                     ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopySource));
                 TEST_EXPECT(DestTexture != nullptr);
 
-                const String SamplerSource(
+                const FString SamplerSource(
                     "SamplerState LinearSampler : register(s0);\n"
                     "Texture2D<float4> SourceTex : register(t0);\n"
                     "RWTexture2D<float4> DestTex : register(u0);\n"
@@ -710,7 +710,7 @@ static bool ProbeCommandRecording()
 
             TEST_SECTION("Each dispatch reads its own update of a transient constant buffer");
             {
-                const String ConstantsSource(
+                const FString ConstantsSource(
                     "cbuffer Params : register(b0) { uint Index; uint Value; uint2 Padding; };\n"
                     "RWBuffer<uint> Dest : register(u0);\n"
                     "[numthreads(1, 1, 1)]\n"
@@ -801,7 +801,7 @@ static bool ProbeCommandRecording()
 
             TEST_SECTION("Views of a transient buffer follow it to each update's storage");
             {
-                const String ViewsSource(
+                const FString ViewsSource(
                     "StructuredBuffer<uint> Structured : register(t0);\n"
                     "Buffer<uint> Typed : register(t1);\n"
                     "RWBuffer<uint> Dest : register(u0);\n"
@@ -904,7 +904,7 @@ static bool ProbeCommandRecording()
 
             TEST_SECTION("An offscreen Draw(3) writes a red pixel");
             {
-                const String VertexSource(
+                const FString VertexSource(
                     "float4 Main(uint VertexID : SV_VertexID) : SV_Position\n"
                     "{\n"
                     "    float2 Positions[3];\n"
@@ -914,7 +914,7 @@ static bool ProbeCommandRecording()
                     "    return float4(Positions[VertexID], 0.0, 1.0);\n"
                     "}\n");
 
-                const String PixelSource(
+                const FString PixelSource(
                     "float4 Main() : SV_Target\n"
                     "{\n"
                     "    return float4(1.0, 0.0, 0.0, 1.0);\n"
@@ -1046,7 +1046,7 @@ static bool ProbeIndirectCommands()
         return true;
     }
 
-    const String VertexSource(
+    const FString VertexSource(
         "float4 Main(uint VertexID : SV_VertexID) : SV_Position\n"
         "{\n"
         "    float2 Positions[3];\n"
@@ -1056,13 +1056,13 @@ static bool ProbeIndirectCommands()
         "    return float4(Positions[VertexID], 0.0, 1.0);\n"
         "}\n");
 
-    const String PixelSource(
+    const FString PixelSource(
         "float4 Main() : SV_Target\n"
         "{\n"
         "    return float4(1.0, 0.0, 0.0, 1.0);\n"
         "}\n");
 
-    const String ComputeSource(
+    const FString ComputeSource(
         "RWBuffer<uint> OutBuf : register(u0);\n"
         "[numthreads(1, 1, 1)]\n"
         "void Main(uint3 DispatchThreadID : SV_DispatchThreadID)\n"
@@ -1394,7 +1394,7 @@ static bool ProbeDispatchMesh()
         return true;
     }
 
-    const String MeshSource(
+    const FString MeshSource(
         "struct VertexOut\n"
         "{\n"
         "    float4 Position : SV_Position;\n"
@@ -1411,7 +1411,7 @@ static bool ProbeDispatchMesh()
         "    Tris[0] = uint3(0, 1, 2);\n"
         "}\n");
 
-    const String PixelSource(
+    const FString PixelSource(
         "float4 Main() : SV_Target\n"
         "{\n"
         "    return float4(1.0, 0.0, 0.0, 1.0);\n"
@@ -3840,7 +3840,7 @@ static bool ProbePipelinePersistence()
 
     TEST_SECTION("Shaders compiled from the same bytecode share one function");
 
-    const String ComputeSource(
+    const FString ComputeSource(
         "SamplerState LinearSampler : register(s0);\n"
         "Texture2D<float4> SourceTex : register(t0);\n"
         "RWTexture2D<float4> DestTex : register(u0);\n"
@@ -3914,7 +3914,7 @@ static bool ProbePipelinePersistence()
 
     TEST_SECTION("Graphics PSOs that differ only in cull and depth state share one pipeline");
 
-    const String VertexSource(
+    const FString VertexSource(
         "float4 Main(uint VertexID : SV_VertexID) : SV_Position\n"
         "{\n"
         "    float2 Positions[3];\n"
@@ -3924,7 +3924,7 @@ static bool ProbePipelinePersistence()
         "    return float4(Positions[VertexID], 0.0, 1.0);\n"
         "}\n");
 
-    const String PixelSource(
+    const FString PixelSource(
         "float4 Main() : SV_Target\n"
         "{\n"
         "    return float4(1.0, 0.0, 0.0, 1.0);\n"
@@ -4005,8 +4005,8 @@ static bool ProbePipelinePersistence()
 #endif
     }
 
-    const String ArchivePath = Paths::GetAssetDir() + "/RHIBootTests_Probe.metalarchive";
-    const String SidecarPath = ArchivePath + ".version";
+    const FString ArchivePath = Paths::GetAssetDir() + "/RHIBootTests_Probe.metalarchive";
+    const FString SidecarPath = ArchivePath + ".version";
     FPlatformFile::DeleteFile(*ArchivePath);
     FPlatformFile::DeleteFile(*SidecarPath);
 
@@ -4077,7 +4077,7 @@ static bool ProbePipelinePersistence()
 
             FMetalBinaryArchive RejectingArchive(MetalDevice);
             TEST_EXPECT(RejectingArchive.Initialize(EMetalBinaryArchiveMode::Use, ArchivePath));
-            TEST_EXPECT(RejectingArchive.GetRejectionReason().Find("OS build") != String::InvalidIndex);
+            TEST_EXPECT(RejectingArchive.GetRejectionReason().Find("OS build") != FString::InvalidIndex);
             TEST_EXPECT(RejectingArchive.CreateComputePipeline(MakeDescriptor()) != nullptr);
         }
     }
@@ -4220,7 +4220,7 @@ static bool BootReadPixel(FRHITexture* Texture, ERHIResourceState State, uint32 
 static bool BootCompileShader(const CHAR_T* Source, EShaderStage Stage, TArray<uint8>& OutByteCode)
 {
     const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, Stage, RHI::GetShaderOutputLanguage());
-    return FShaderCompiler::Get().CompileFromSource(String(Source), CompileInfo, OutByteCode);
+    return FShaderCompiler::Get().CompileFromSource(FString(Source), CompileInfo, OutByteCode);
 }
 
 struct FBootFullscreenPipeline

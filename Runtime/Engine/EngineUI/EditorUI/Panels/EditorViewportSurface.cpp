@@ -157,11 +157,11 @@ int32 FEditorViewportSurface::OnDraw(const FDrawGeometry& AllottedGeometry, FDra
                 CHAR_T FpsText[16];
                 CString::Snprintf(FpsText, static_cast<int32>(sizeof(FpsText)), "%d", FFrameProfiler::Get().GetFramesPerSecond());
 
-                const String FpsString(FpsText);
-                const int32  TextWidth  = Font->MeasureWidth(StringView(FpsString.Data(), FpsString.Length()));
-                const int32  TextHeight = Font->GetLineHeight();
-                const int32  Padding    = 4;
-                const int32  Margin     = 6;
+                const FString FpsString(FpsText);
+                const int32   TextWidth  = Font->MeasureWidth(FStringView(FpsString.Data(), FpsString.Length()));
+                const int32   TextHeight = Font->GetLineHeight();
+                const int32   Padding    = 4;
+                const int32   Margin     = 6;
 
                 FRectangle Box;
                 Box.Width      = TextWidth + (Padding * 2);

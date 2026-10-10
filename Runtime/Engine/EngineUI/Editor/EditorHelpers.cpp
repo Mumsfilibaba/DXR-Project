@@ -484,9 +484,9 @@ static FORCEINLINE bool SelectionIntersectsLine(const FRichTextSelectionPoint& S
     return LineCharCount > 0;
 }
 
-static String BuildLineText(const FRichTextViewContext& Ctx, int32 LineIndex)
+static FString BuildLineText(const FRichTextViewContext& Ctx, int32 LineIndex)
 {
-    String Result;
+    FString Result;
 
     if (!Ctx.Lines.IsValidIndex(LineIndex))
     {
@@ -502,25 +502,25 @@ static String BuildLineText(const FRichTextViewContext& Ctx, int32 LineIndex)
     return Result;
 }
 
-static String BuildSelectedText(const FRichTextViewContext& Ctx)
+static FString BuildSelectedText(const FRichTextViewContext& Ctx)
 {
     if (!Ctx.bHasSelection || Ctx.Lines.IsEmpty())
     {
-        return String();
+        return FString();
     }
 
     FRichTextSelectionPoint A = Ctx.SelStart;
     FRichTextSelectionPoint B = Ctx.SelEnd;
     NormalizeSelection(A, B);
 
-    String Result;
+    FString Result;
 
     const int32 LineMin = ClampInt32(A.Line, 0, Ctx.Lines.Size() - 1);
     const int32 LineMax = ClampInt32(B.Line, 0, Ctx.Lines.Size() - 1);
 
     for (int32 L = LineMin; L <= LineMax; ++L)
     {
-        const String  FullLine = BuildLineText(Ctx, L);
+        const FString FullLine = BuildLineText(Ctx, L);
         const CHAR_T* Full     = *FullLine;
         const int32   FullLen  = static_cast<int32>(CString::Strlen(Full));
 
@@ -542,7 +542,7 @@ static String BuildSelectedText(const FRichTextViewContext& Ctx)
         {
             const int32 SubLen = SelColEnd - SelColStart;
 
-            String Sub;
+            FString Sub;
             Sub.Reserve(SubLen + 1);
 
             for (int32 i = 0; i < SubLen; ++i)
@@ -563,9 +563,9 @@ static String BuildSelectedText(const FRichTextViewContext& Ctx)
     return Result;
 }
 
-static String BuildAllText(const FRichTextViewContext& Ctx)
+static FString BuildAllText(const FRichTextViewContext& Ctx)
 {
-    String Result;
+    FString Result;
 
     for (int32 L = 0; L < Ctx.Lines.Size(); ++L)
     {
@@ -875,7 +875,7 @@ static void DrawSubMenuArrow(ImDrawList* DrawList, const ImVec2& RectMin, const 
 
 static bool LoadEditorIconImage(const CHAR_T* InRelativePath, FEditorIconImage& OutImage)
 {
-    String FullPath = Paths::GetAssetDir();
+    FString FullPath = Paths::GetAssetDir();
     if (!FullPath.EndsWith("/"))
     {
         FullPath += "/";
@@ -885,7 +885,7 @@ static bool LoadEditorIconImage(const CHAR_T* InRelativePath, FEditorIconImage& 
 
     FTextureImporterBase Importer;
 
-    const StringView FullPathView(FullPath);
+    const FStringView FullPathView(FullPath);
 
     TSharedRef<FTexture> Texture   = Importer.ImportFromFile(FullPathView);
     FTexture2D*          Texture2D = Texture ? Texture->GetTexture2D() : nullptr;
@@ -932,7 +932,7 @@ static bool LoadEditorIconImage(const CHAR_T* InRelativePath, FEditorIconImage& 
 
 static ImFont* LoadEditorFont(const CHAR_T* InRelativePath, float SizePixels, const ImFontConfig* FontCfgTemplate = nullptr, const ImWchar* GlyphRanges = nullptr)
 {
-    String FullPath = Paths::GetAssetDir();
+    FString FullPath = Paths::GetAssetDir();
     if (!FullPath.EndsWith("/"))
     {
         FullPath += "/";
@@ -3673,7 +3673,7 @@ bool EditorWidgets::BeginRichTextView(const CHAR_T* InId, const ImVec2& InSize, 
     {
         EditorWidgets::MenuLabeledSeparator("Log");
 
-        const String Selected = BuildSelectedText(InOutContext);
+        const FString Selected = BuildSelectedText(InOutContext);
         if (EditorWidgets::MenuItem("Copy Selection", nullptr, false, InOutContext.bHasSelection && !Selected.IsEmpty()))
         {
             ImGui::SetClipboardText(*Selected);
@@ -3681,7 +3681,7 @@ bool EditorWidgets::BeginRichTextView(const CHAR_T* InId, const ImVec2& InSize, 
 
         if (EditorWidgets::MenuItem("Copy All"))
         {
-            const String All = BuildAllText(InOutContext);
+            const FString All = BuildAllText(InOutContext);
             ImGui::SetClipboardText(*All);
         }
 
@@ -3717,12 +3717,12 @@ void EditorWidgets::RichTextSelectAll(FRichTextViewContext& InOutContext)
     InOutContext.SelEnd.Column   = LastCol;
 }
 
-String EditorWidgets::GetSelectedRichText(const FRichTextViewContext& InContext)
+FString EditorWidgets::GetSelectedRichText(const FRichTextViewContext& InContext)
 {
     return BuildSelectedText(InContext);
 }
 
-String EditorWidgets::GetAllRichText(const FRichTextViewContext& InContext)
+FString EditorWidgets::GetAllRichText(const FRichTextViewContext& InContext)
 {
     return BuildAllText(InContext);
 }
@@ -3879,7 +3879,7 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
         }
         else if (Count == 2)
         {
-            const String LineText = BuildLineText(InOutContext, Point.Line);
+            const FString LineText = BuildLineText(InOutContext, Point.Line);
 
             int32 WordStart = 0;
             int32 WordEnd   = 0;
@@ -4008,7 +4008,7 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
 
         if (InOutContext.bHasSelection)
         {
-            const String Selected = BuildSelectedText(InOutContext);
+            const FString Selected = BuildSelectedText(InOutContext);
             if (!Selected.IsEmpty())
             {
                 ImGui::SetClipboardText(*Selected);
@@ -4017,7 +4017,7 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
         else if (bHoveredContent)
         {
             const FRichTextSelectionPoint Point    = GetMouseSelectionPoint(InOutContext, State.MousePos);
-            const String                  LineText = BuildLineText(InOutContext, Point.Line);
+            const FString                 LineText = BuildLineText(InOutContext, Point.Line);
 
             if (!LineText.IsEmpty())
             {

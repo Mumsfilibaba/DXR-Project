@@ -371,7 +371,7 @@ bool FRayTracingReflectionsPass::IsTraceEnabled() const
 
 void FRayTracingReflectionsPass::LoadReflectionNoiseMask()
 {
-    String FullPath = Paths::GetAssetDir();
+    FString FullPath = Paths::GetAssetDir();
     if (!FullPath.EndsWith("/"))
     {
         FullPath += "/";

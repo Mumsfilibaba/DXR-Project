@@ -23,6 +23,6 @@ struct IModelImporter
 {
     virtual ~IModelImporter() = default;
 
-    virtual bool ImportFromFile(const StringView& Filename, EMeshImportFlags Flags, FModelData& OutModelData) = 0;
-    virtual bool MatchExtenstion(const StringView& FileName) = 0;
+    virtual bool ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags, FModelData& OutModelData) = 0;
+    virtual bool MatchExtenstion(const FStringView& FileName) = 0;
 };

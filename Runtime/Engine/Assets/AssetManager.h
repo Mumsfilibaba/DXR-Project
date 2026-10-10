@@ -16,17 +16,17 @@ public:
     FAssetRegistry();
     ~FAssetRegistry();
 
-    String* FindFile(const String& SrcFilename);
-    void AddEntry(const String& SrcFilename, const String& Filename);
-    void RemoveEntry(const String& SrcFilename);
+    FString* FindFile(const FString& SrcFilename);
+    void AddEntry(const FString& SrcFilename, const FString& Filename);
+    void RemoveEntry(const FString& SrcFilename);
     void LoadRegistryFile();
     void UpdateRegistryFile();
 
 private:
 
-    // Maps the original path to the engine file
-    TMap<String, String> RegistryMap;
-    String               RegistryFilename;
+    // Maps the original   path to the engine file
+    TMap<FString, FString> RegistryMap;
+    FString                RegistryFilename;
 };
 
 class ENGINE_API FAssetManager
@@ -43,10 +43,10 @@ public:
     static FAssetManager& Get();
 
 public:
-    TSharedRef<FTexture> LoadTexture(const String& Filename, bool bGenerateMips = true);
+    TSharedRef<FTexture> LoadTexture(const FString& Filename, bool bGenerateMips = true);
     void UnloadTexture(const TSharedRef<FTexture>& Texture);
 
-    TSharedRef<FModel> LoadModel(const String& Filename, EMeshImportFlags Flags = EMeshImportFlags::Default);
+    TSharedRef<FModel> LoadModel(const FString& Filename, EMeshImportFlags Flags = EMeshImportFlags::Default);
     void UnloadModel(const TSharedRef<FModel>& InModel);
 
     void RegisterTextureImporter(const TSharedPtr<ITextureImporter>& InImporter);
@@ -66,12 +66,12 @@ private:
     // Meshes
     TArray<TSharedPtr<IModelImporter>>   ModelImporters;
     FCriticalSection                     ModelImportersCS;
-    TMap<String, TSharedRef<FModel>>     Models;
+    TMap<FString, TSharedRef<FModel>>    Models;
     FCriticalSection                     ModelsCS;
     // Textures
     TArray<TSharedPtr<ITextureImporter>> TextureImporters;
     FCriticalSection                     TextureImportersCS;
-    TMap<String, TSharedRef<FTexture>>   Textures;
+    TMap<FString, TSharedRef<FTexture>>  Textures;
     FCriticalSection                     TexturesCS;
 
     static FAssetManager* AssetManager;

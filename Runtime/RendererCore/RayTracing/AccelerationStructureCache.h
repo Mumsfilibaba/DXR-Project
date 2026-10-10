@@ -11,10 +11,10 @@ struct IAccelerationStructureCache
     virtual ~IAccelerationStructureCache() = default;
 
     /** @return true and fills OutBytes if Key is present; false on miss. */
-    virtual bool Load(const StringView& Key, TArray<uint8>& OutBytes) = 0;
+    virtual bool Load(const FStringView& Key, TArray<uint8>& OutBytes) = 0;
 
     /** Persists the raw serialized bytes under Key. */
-    virtual void Store(const StringView& Key, const TArray<uint8>& Bytes) = 0;
+    virtual void Store(const FStringView& Key, const TArray<uint8>& Bytes) = 0;
 };
 
 class FAccelerationStructureCache
@@ -37,7 +37,7 @@ public:
         return Backend;
     }
 
-    NODISCARD bool TryLoad(const StringView& Key, TArray<uint8>& OutBytes) const
+    NODISCARD bool TryLoad(const FStringView& Key, TArray<uint8>& OutBytes) const
     {
         if (!Backend)
         {
@@ -77,7 +77,7 @@ public:
         return sizeof(FRHIAccelerationStructureSerializationHeader);
     }
 
-    void Store(const StringView& Key, const TArray<uint8>& Bytes)
+    void Store(const FStringView& Key, const TArray<uint8>& Bytes)
     {
         if (Backend)
         {

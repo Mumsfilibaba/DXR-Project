@@ -70,7 +70,7 @@ bool DrawCommandList_Test()
 
     TEST_SECTION("Commands come back in emission order with their layers");
     CommandList.AddBox(0, FRectangle(IntVector2(0, 0), 100, 50), FFloatColor::White);
-    CommandList.AddText(1, FRectangle(IntVector2(4, 4), 90, 16), String("Hello"), Font.Get(), FFloatColor::White);
+    CommandList.AddText(1, FRectangle(IntVector2(4, 4), 90, 16), FString("Hello"), Font.Get(), FFloatColor::White);
     CommandList.AddLine(2, FRectangle(IntVector2(4, 4), 1, 16), FFloatColor::White);
 
     TEST_EXPECT_EQ(CommandList.Size(), 3);

@@ -24,22 +24,22 @@
 
 static constexpr uint32 GTestTimeoutMs = 10000;
 
-static String GetClearBufferSource()
+static FString GetClearBufferSource()
 {
     return Paths::GetEngineDir() + "/Runtime/VulkanRHI/Shaders/Internal/ClearBufferUAV.hlsl";
 }
 
-static String GetMetalClearBufferSource()
+static FString GetMetalClearBufferSource()
 {
     return Paths::GetEngineDir() + "/Runtime/MetalRHI/Shaders/Internal/ClearBufferUAV.hlsl";
 }
 
-static String GetClearTextureSource()
+static FString GetClearTextureSource()
 {
     return Paths::GetEngineDir() + "/Runtime/MetalRHI/Shaders/Internal/ClearTextureUAV.hlsl";
 }
 
-static bool WriteTestFile(const String& FilePath, const CHAR_T* Text)
+static bool WriteTestFile(const FString& FilePath, const CHAR_T* Text)
 {
     if (!File::CreateDirectoryTree(File::GetDirectoryOf(FilePath)))
     {
@@ -47,7 +47,7 @@ static bool WriteTestFile(const String& FilePath, const CHAR_T* Text)
     }
 
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(FilePath);
-    return FileHandle && File::WriteTextFile(FileHandle.Get(), String(Text));
+    return FileHandle && File::WriteTextFile(FileHandle.Get(), FString(Text));
 }
 
 static TArray<uint8> ToBytes(const CHAR_T* Text)
@@ -69,17 +69,17 @@ static uint64 GetTestMilliseconds()
 class FMemorySourceProvider final : public IShaderSourceProvider
 {
 public:
-    void AddFile(const String& Path, const TArray<CHAR_T>& Text)
+    void AddFile(const FString& Path, const TArray<CHAR_T>& Text)
     {
         Files.Add(Path, Text);
     }
 
-    NODISCARD virtual bool FileExists(const String& Path) const override final
+    NODISCARD virtual bool FileExists(const FString& Path) const override final
     {
         return Files.Contains(Path);
     }
 
-    virtual bool ReadFile(const String& Path, TArray<CHAR_T>& OutText) const override final
+    virtual bool ReadFile(const FString& Path, TArray<CHAR_T>& OutText) const override final
     {
         const TArray<CHAR_T>* Text = Files.Find(Path);
         if (!Text)
@@ -91,7 +91,7 @@ public:
         return true;
     }
 
-    TMap<String, TArray<CHAR_T>> Files;
+    TMap<FString, TArray<CHAR_T>> Files;
 };
 
 static TSharedPtr<FRemoteRequestSources> MakeRequestSources(const TArray<FShaderSourceFile>& Files)
@@ -99,7 +99,7 @@ static TSharedPtr<FRemoteRequestSources> MakeRequestSources(const TArray<FShader
     TSharedPtr<FRemoteRequestSources> Sources = MakeSharedPtr<FRemoteRequestSources>();
     for (const FShaderSourceFile& File : Files)
     {
-        Sources->Files.Add(RemoteShaderCompilerProtocol::CollapsePath(String(FRemoteShaderCompilerServer::SourceRoot) + '/' + File.Path), MakeSharedPtr<TArray<uint8>>(File.Contents));
+        Sources->Files.Add(RemoteShaderCompilerProtocol::CollapsePath(FString(FRemoteShaderCompilerServer::SourceRoot) + '/' + File.Path), MakeSharedPtr<TArray<uint8>>(File.Contents));
     }
 
     return Sources;
@@ -245,13 +245,13 @@ bool ShaderPreprocessorMemoryProvider_Test()
     TEST_BEGIN();
 
     FShaderCompiler& Compiler = FShaderCompiler::Get();
-    const String     AssetDir = Compiler.GetAssetPath();
+    const FString    AssetDir = Compiler.GetAssetPath();
 
     FShaderDefine Defines[] = { FShaderDefine("CLEAR_ELEMENT_UINT", "1") };
     const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, EShaderOutputLanguage::SPIRV, TArrayView<FShaderDefine>(Defines));
 
     TArray<FShaderSourceFile> Sources;
-    String                    Errors;
+    FString                   Errors;
     TEST_SECTION("CollectSources finds the shader and its includes");
     TEST_EXPECT(Compiler.CollectSources(GetClearBufferSource(), CompileInfo, Sources, Errors));
     TEST_EXPECT(Sources.Size() >= 2);
@@ -277,7 +277,7 @@ bool ShaderPreprocessorMemoryProvider_Test()
 
     TEST_EXPECT(bFoundAssetInclude);
 
-    const String RootPath = GetClearBufferSource();
+    const FString RootPath = GetClearBufferSource();
     TArray<CHAR_T> RootText;
     TEST_EXPECT(FDiskShaderSourceProvider::Get().ReadFile(RootPath, RootText));
 
@@ -288,7 +288,7 @@ bool ShaderPreprocessorMemoryProvider_Test()
 
     FShaderPreprocessorOutput DiskOutput;
     FShaderPreprocessorOutput MemoryOutput;
-    const StringView RootView(RootText.Data(), RootText.Size());
+    const FStringView RootView(RootText.Data(), RootText.Size());
 
     TEST_SECTION("Both providers preprocess");
     TEST_EXPECT(DiskPreprocessor.Preprocess(RootPath, RootView, DiskOutput));
@@ -325,7 +325,7 @@ bool ShaderCompilerCompileJobParity_Test()
         TEST_EXPECT(Compiler.CompileFromFile(GetClearBufferSource(), CompileInfo, LocalCode));
 
         TArray<FShaderSourceFile> Files;
-        String                    Errors;
+        FString                   Errors;
         TEST_EXPECT(Compiler.CollectSources(GetClearBufferSource(), CompileInfo, Files, Errors));
         if (Files.IsEmpty())
         {
@@ -335,9 +335,9 @@ bool ShaderCompilerCompileJobParity_Test()
         TSharedPtr<FRemoteRequestSources> Sources = MakeRequestSources(Files);
 
         FShaderCompileJob Job = FShaderCompileJob::FromCompileInfo(Files[0].Path, CompileInfo);
-        TArray<uint8>  JobCode;
-        TArray<String> Dependencies;
-        String         Messages;
+        TArray<uint8>   JobCode;
+        TArray<FString> Dependencies;
+        FString         Messages;
         TEST_EXPECT(Compiler.CompileJob(Job, FRemoteShaderCompilerServer::SourceRoot, *Sources, JobCode, Dependencies, Messages));
 
         TEST_EXPECT(!Dependencies.IsEmpty() && Dependencies[0] == Files[0].Path);
@@ -353,11 +353,11 @@ bool ShaderCompilerCompileJobParity_Test()
     Broken.OutputLanguage = EShaderOutputLanguage::SPIRV;
 
     FRemoteRequestSources BrokenSources;
-    BrokenSources.Files.Add(String(FRemoteShaderCompilerServer::SourceRoot) + "/Shaders/Broken.hlsl", MakeSharedPtr<TArray<uint8>>(ToBytes("#include \"Missing.hlsli\"\n")));
+    BrokenSources.Files.Add(FString(FRemoteShaderCompilerServer::SourceRoot) + "/Shaders/Broken.hlsl", MakeSharedPtr<TArray<uint8>>(ToBytes("#include \"Missing.hlsli\"\n")));
 
-    TArray<uint8>  BrokenCode;
-    TArray<String> BrokenDependencies;
-    String         BrokenMessages;
+    TArray<uint8>   BrokenCode;
+    TArray<FString> BrokenDependencies;
+    FString         BrokenMessages;
     TEST_EXPECT(!Compiler.CompileJob(Broken, FRemoteShaderCompilerServer::SourceRoot, BrokenSources, BrokenCode, BrokenDependencies, BrokenMessages));
     TEST_EXPECT(BrokenMessages.Contains("Shaders/Broken.hlsl"));
     TEST_EXPECT(!BrokenMessages.Contains(FRemoteShaderCompilerServer::SourceRoot));
@@ -385,7 +385,7 @@ bool ShaderCompileJobJsonRoundTrip_Test()
     Job.IncludeDirs.Emplace("Shaders/Internal");
 
     FShaderCompileJob Parsed;
-    String            Error;
+    FString           Error;
     TEST_SECTION("ToJson reads back");
     TEST_EXPECT(FShaderCompileJob::FromJson(Job.ToJson(), Parsed, Error));
     TEST_EXPECT_EQ(Parsed.GetKey(), Job.GetKey());
@@ -439,7 +439,7 @@ bool ShaderJobFileMerge_Test()
 {
     TEST_BEGIN();
 
-    const String FilePath = Paths::GetEngineDir() + "/Build/RemoteShaderCompilerTests.shaderjob";
+    const FString FilePath = Paths::GetEngineDir() + "/Build/RemoteShaderCompilerTests.shaderjob";
 
     FShaderCompileJob Job;
     Job.SourceFile     = "Shaders/Example.hlsl";
@@ -464,7 +464,7 @@ bool ShaderJobFileMerge_Test()
     TEST_EXPECT(JobFile.Save(FilePath));
 
     FShaderJobFile Loaded;
-    String         Error;
+    FString        Error;
     TEST_EXPECT(Loaded.Load(FilePath, Error));
     TEST_EXPECT_EQ(Loaded.GetEntries().Size(), 3);
 
@@ -474,9 +474,9 @@ bool ShaderJobFileMerge_Test()
     TEST_EXPECT(!Loaded.Add("Metal", FShaderCompileJob(Job)));
 
     TEST_SECTION("Filter selects by RHI");
-    const String VulkanName = "VULKAN";
-    TEST_EXPECT_EQ(Loaded.Filter(TArrayView<const String>(&VulkanName, 1)).Size(), 2);
-    TEST_EXPECT_EQ(Loaded.Filter(TArrayView<const String>()).Size(), 3);
+    const FString VulkanName = "VULKAN";
+    TEST_EXPECT_EQ(Loaded.Filter(TArrayView<const FString>(&VulkanName, 1)).Size(), 2);
+    TEST_EXPECT_EQ(Loaded.Filter(TArrayView<const FString>()).Size(), 3);
 
     TEST_SECTION("A missing file is not an error");
     FShaderJobFile Missing;
@@ -641,9 +641,9 @@ bool RemoteShaderCompilerLoopback_Test()
     const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, EShaderOutputLanguage::SPIRV, TArrayView<FShaderDefine>(Defines));
 
     TEST_SECTION("A remote compile returns the container a local compile produces");
-    TArray<uint8>  LocalCode;
-    TArray<uint8>  RemoteCode;
-    TArray<String> Dependencies;
+    TArray<uint8>   LocalCode;
+    TArray<uint8>   RemoteCode;
+    TArray<FString> Dependencies;
     TEST_EXPECT(Compiler.CompileFromFile(GetClearBufferSource(), CompileInfo, LocalCode));
     TEST_EXPECT(Compiler.CompileOnRemote(Client, GetClearBufferSource(), CompileInfo, RemoteCode, &Dependencies) == ERemoteCompileStatus::Succeeded);
     TEST_EXPECT(RemoteCode == LocalCode);
@@ -652,7 +652,7 @@ bool RemoteShaderCompilerLoopback_Test()
     TEST_EXPECT(!Dependencies.IsEmpty() && RemoteShaderCompilerProtocol::CollapsePath(Dependencies[0]) == RemoteShaderCompilerProtocol::CollapsePath(GetClearBufferSource()));
 
     bool bFoundAssetDependency = false;
-    for (const String& Dependency : Dependencies)
+    for (const FString& Dependency : Dependencies)
     {
         bFoundAssetDependency |= RemoteShaderCompilerProtocol::CollapsePath(Dependency) == RemoteShaderCompilerProtocol::CollapsePath(Compiler.GetAssetPath() + "/Shaders/CoreDefines.hlsli");
     }
@@ -727,7 +727,7 @@ bool RemoteShaderCompilerSendsFilesOnce_Test()
     const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, EShaderOutputLanguage::SPIRV, TArrayView<FShaderDefine>(Defines));
 
     TArray<FShaderSourceFile> Files;
-    String                    Errors;
+    FString                   Errors;
     TEST_EXPECT(Compiler.CollectSources(GetClearBufferSource(), CompileInfo, Files, Errors));
     if (Files.IsEmpty())
     {
@@ -737,7 +737,7 @@ bool RemoteShaderCompilerSendsFilesOnce_Test()
 
     const FShaderCompileJob Job = FShaderCompileJob::FromCompileInfo(Files[0].Path, CompileInfo);
 
-    const auto SendRequest = [&](uint32 RequestId, bool bWithContents) -> String
+    const auto SendRequest = [&](uint32 RequestId, bool bWithContents) -> FString
     {
         FProtocol::FFrame Request;
         Request.Type      = FProtocol::EMessageType::CompileRequest;
@@ -753,11 +753,11 @@ bool RemoteShaderCompilerSendsFilesOnce_Test()
         FProtocol::FFrame Result;
         if (!SendAll(Socket, Bytes) || !ReadFrame(Socket, Buffer, Result) || Result.RequestId != RequestId)
         {
-            return String("no result");
+            return FString("no result");
         }
 
         const FJsonValue* Status = Result.Header.Find("status");
-        return Status ? Status->GetStringOr("") : String();
+        return Status ? Status->GetStringOr("") : FString();
     };
 
     TEST_SECTION("Referencing files that were never sent fails");
@@ -808,7 +808,7 @@ bool ShaderCodeReadEmbedded_Test()
     FShaderCodeView Original;
     FShaderCodeView Embedded;
     TArray<uint8>   Storage;
-    String          Error;
+    FString         Error;
     TEST_SECTION("ReadEmbedded reads a misaligned copy");
     TEST_EXPECT(FShaderCodeReader::Read(ShaderCode, Original));
     TEST_EXPECT(FShaderCodeReader::ReadEmbedded(TArrayView<const uint8>(Misaligned.Data() + 1, ShaderCode.Size()), Storage, Embedded, &Error));
@@ -849,7 +849,7 @@ bool InternalClearBufferUAVReflection_Test()
 
         TEST_EXPECT_EQ(CodeView.GetInfo().ShaderConstantsSize, static_cast<uint8>(sizeof(uint32) * 5));
         TEST_EXPECT_EQ(CodeView.GetBindings().Size(), 1);
-        TEST_EXPECT(String(CodeView.GetEntryPoint()) == "Main");
+        TEST_EXPECT(FString(CodeView.GetEntryPoint()) == "Main");
 
         const FShaderResourceBinding* Output = FindBinding(CodeView, EShaderResourceType::RWTypedBuffer);
         TEST_EXPECT(Output != nullptr);
@@ -1011,12 +1011,12 @@ bool ShaderCompilerIncludeDirs_Test()
 
     FShaderCompiler& Compiler = FShaderCompiler::Get();
 
-    const String RootDir    = Paths::GetEngineDir() + "/Build/RemoteShaderCompilerTests/IncludeDirs";
-    const String ShaderPath = RootDir + "/Shader/Main.hlsl";
-    const String FirstDir   = RootDir + "/First";
-    const String SecondDir  = RootDir + "/Second";
+    const FString RootDir    = Paths::GetEngineDir() + "/Build/RemoteShaderCompilerTests/IncludeDirs";
+    const FString ShaderPath = RootDir + "/Shader/Main.hlsl";
+    const FString FirstDir   = RootDir + "/First";
+    const FString SecondDir  = RootDir + "/Second";
 
-    const String TestFiles[] =
+    const FString TestFiles[] =
     {
         ShaderPath,
         RootDir + "/Shader/Local.hlsli",
@@ -1038,14 +1038,14 @@ bool ShaderCompilerIncludeDirs_Test()
     TArray<uint8> MissingCode;
     TEST_EXPECT(!Compiler.CompileFromFile(ShaderPath, BaseInfo, MissingCode));
 
-    const String       IncludeDirs[] = { FirstDir, SecondDir };
+    const FString      IncludeDirs[] = { FirstDir, SecondDir };
     FShaderCompileInfo CompileInfo   = BaseInfo;
-    CompileInfo.IncludeDirs = TArrayView<const String>(IncludeDirs);
+    CompileInfo.IncludeDirs = TArrayView<const FString>(IncludeDirs);
 
-    const auto Contains = [](const TArray<String>& Paths, const String& Path)
+    const auto Contains = [](const TArray<FString>& Paths, const FString& Path)
     {
         bool bFound = false;
-        for (const String& Candidate : Paths)
+        for (const FString& Candidate : Paths)
         {
             bFound |= RemoteShaderCompilerProtocol::CollapsePath(Candidate) == RemoteShaderCompilerProtocol::CollapsePath(Path);
         }
@@ -1054,8 +1054,8 @@ bool ShaderCompilerIncludeDirs_Test()
     };
 
     TEST_SECTION("The include directories are searched in order, after the shader's folder");
-    TArray<uint8>  LocalCode;
-    TArray<String> Dependencies;
+    TArray<uint8>   LocalCode;
+    TArray<FString> Dependencies;
     TEST_EXPECT(Compiler.CompileFromFile(ShaderPath, CompileInfo, LocalCode, &Dependencies));
     TEST_EXPECT(Contains(Dependencies, FirstDir + "/Common.hlsli"));
     TEST_EXPECT(!Contains(Dependencies, SecondDir + "/Common.hlsli"));
@@ -1067,21 +1067,21 @@ bool ShaderCompilerIncludeDirs_Test()
 
     const auto CollectNames = [&](const FShaderCompileInfo& Info, TArray<FShaderSourceFile>& OutFiles)
     {
-        String Errors;
+        FString Errors;
         const bool bCollected = Compiler.CollectSources(ShaderPath, Info, OutFiles, Errors);
 
-        TArray<String> Names;
+        TArray<FString> Names;
         for (const FShaderSourceFile& File : OutFiles)
         {
             Names.Add(File.Path);
         }
 
-        return bCollected ? Names : TArray<String>();
+        return bCollected ? Names : TArray<FString>();
     };
 
     TEST_SECTION("CollectSources names every file after the folder it was found in");
     TArray<FShaderSourceFile> Files;
-    const TArray<String>      Names = CollectNames(CompileInfo, Files);
+    const TArray<FString>     Names = CollectNames(CompileInfo, Files);
     TEST_EXPECT(!Names.IsEmpty() && Names[0] == "@Source/Main.hlsl");
     TEST_EXPECT(Names.Contains("@Source/Local.hlsli"));
     TEST_EXPECT(Names.Contains("@Include0/Common.hlsli"));
@@ -1096,9 +1096,9 @@ bool ShaderCompilerIncludeDirs_Test()
         Job.IncludeDirs.Add("@Include1");
 
         TSharedPtr<FRemoteRequestSources> Sources = MakeRequestSources(Files);
-        TArray<uint8>  JobCode;
-        TArray<String> JobDependencies;
-        String         Messages;
+        TArray<uint8>   JobCode;
+        TArray<FString> JobDependencies;
+        FString         Messages;
         TEST_EXPECT(Compiler.CompileJob(Job, FRemoteShaderCompilerServer::SourceRoot, *Sources, JobCode, JobDependencies, Messages));
         TEST_EXPECT(JobCode == LocalCode);
         TEST_EXPECT(JobDependencies.Contains("@Include0/Common.hlsli"));
@@ -1106,12 +1106,12 @@ bool ShaderCompilerIncludeDirs_Test()
 
     TEST_SECTION("A folder inside another one is named below the outer one");
     {
-        const String       NestedDirs[] = { RootDir, FirstDir, SecondDir };
+        const FString      NestedDirs[] = { RootDir, FirstDir, SecondDir };
         FShaderCompileInfo NestedInfo   = BaseInfo;
-        NestedInfo.IncludeDirs = TArrayView<const String>(NestedDirs);
+        NestedInfo.IncludeDirs = TArrayView<const FString>(NestedDirs);
 
         TArray<FShaderSourceFile> NestedFiles;
-        const TArray<String>      NestedNames = CollectNames(NestedInfo, NestedFiles);
+        const TArray<FString>     NestedNames = CollectNames(NestedInfo, NestedFiles);
         TEST_EXPECT(!NestedNames.IsEmpty() && NestedNames[0] == "@Include0/Shader/Main.hlsl");
         TEST_EXPECT(NestedNames.Contains("@Include0/Shader/Local.hlsli"));
         TEST_EXPECT(NestedNames.Contains("@Include0/First/Common.hlsli"));
@@ -1124,21 +1124,21 @@ bool ShaderCompilerIncludeDirs_Test()
         Job.IncludeDirs.Add("@Include0/Second");
 
         TSharedPtr<FRemoteRequestSources> Sources = MakeRequestSources(NestedFiles);
-        TArray<uint8>  JobCode;
-        TArray<String> JobDependencies;
-        String         Messages;
+        TArray<uint8>   JobCode;
+        TArray<FString> JobDependencies;
+        FString         Messages;
         TEST_EXPECT(Compiler.CompileJob(Job, FRemoteShaderCompilerServer::SourceRoot, *Sources, JobCode, JobDependencies, Messages));
         TEST_EXPECT(JobCode == LocalCode);
     }
 
     TEST_SECTION("The asset directory itself has no name to send");
     {
-        const String       AssetDirs[] = { Compiler.GetAssetPath() };
+        const FString      AssetDirs[] = { Compiler.GetAssetPath() };
         FShaderCompileInfo AssetInfo   = BaseInfo;
-        AssetInfo.IncludeDirs = TArrayView<const String>(AssetDirs);
+        AssetInfo.IncludeDirs = TArrayView<const FString>(AssetDirs);
 
         TArray<FShaderSourceFile> AssetFiles;
-        String                    Errors;
+        FString                   Errors;
         TEST_EXPECT(!Compiler.CollectSources(ShaderPath, AssetInfo, AssetFiles, Errors));
         TEST_EXPECT(!Errors.IsEmpty());
     }
@@ -1157,8 +1157,8 @@ bool ShaderCompilerIncludeDirs_Test()
             FRemoteShaderCompilerClient Client;
             TEST_EXPECT(Client.Connect(RemoteShaderCompilerProtocol::LoopbackAddress, Server.GetPort(), GTestTimeoutMs));
 
-            TArray<uint8>  RemoteCode;
-            TArray<String> RemoteDependencies;
+            TArray<uint8>   RemoteCode;
+            TArray<FString> RemoteDependencies;
             TEST_EXPECT(Compiler.CompileOnRemote(Client, ShaderPath, CompileInfo, RemoteCode, &RemoteDependencies) == ERemoteCompileStatus::Succeeded);
             TEST_EXPECT(RemoteCode == LocalCode);
             TEST_EXPECT(Contains(RemoteDependencies, FirstDir + "/Common.hlsli"));
@@ -1169,7 +1169,7 @@ bool ShaderCompilerIncludeDirs_Test()
         }
     }
 
-    for (const String& TestFile : TestFiles)
+    for (const FString& TestFile : TestFiles)
     {
         FPlatformFile::DeleteFile(*TestFile);
     }
@@ -1190,8 +1190,8 @@ bool ShaderCompilerHashIgnoresAssetPath_Test()
     FShaderDefine Defines[] = { FShaderDefine("CLEAR_ELEMENT_UINT", "1") };
     const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, EShaderOutputLanguage::SPIRV, TArrayView<FShaderDefine>(Defines));
 
-    const String                  SourceFile = "Shaders/Example.hlsl";
-    const String                  AssetDir   = FShaderCompiler::Get().GetAssetPath();
+    const FString                 SourceFile = "Shaders/Example.hlsl";
+    const FString                 AssetDir   = FShaderCompiler::Get().GetAssetPath();
     const FShaderCompilerIdentity Identity   = FShaderCompiler::Get().GetLocalIdentity(EShaderOutputLanguage::SPIRV);
     const uint64                  Hash       = FShaderCompiler::Get().ComputeCompileHash(SourceFile, CompileInfo);
 
@@ -1206,9 +1206,9 @@ bool ShaderCompilerHashIgnoresAssetPath_Test()
     TEST_EXPECT(FShaderCompiler::Get().ComputeCompileHash(SourceFile, CompileInfo, FShaderCompilerIdentity()) != Hash);
 
     TEST_SECTION("Include directories change the hash");
-    const String             IncludeDirs[] = { String("Shaders/Internal") };
+    const FString            IncludeDirs[] = { FString("Shaders/Internal") };
     FShaderCompileInfo       WithIncludes  = CompileInfo;
-    WithIncludes.IncludeDirs = TArrayView<const String>(IncludeDirs);
+    WithIncludes.IncludeDirs = TArrayView<const FString>(IncludeDirs);
     TEST_EXPECT(FShaderCompiler::Get().ComputeCompileHash(SourceFile, WithIncludes) != Hash);
 
     TEST_SECTION("Another asset directory gives the same hash");

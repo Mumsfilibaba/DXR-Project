@@ -292,12 +292,12 @@ bool TreeViewSelection_Test()
             continue;
         }
 
-        if (SelectionCommands.GetCommandText(Command) == StringView("Alpha"))
+        if (SelectionCommands.GetCommandText(Command) == FStringView("Alpha"))
         {
             TEST_EXPECT(Command.HasTint(Desc.Style.SelectedLabelText));
             SelectedLabelTint = Desc.Style.SelectedLabelText;
         }
-        else if (SelectionCommands.GetCommandText(Command) == StringView("Beta"))
+        else if (SelectionCommands.GetCommandText(Command) == FStringView("Beta"))
         {
             TEST_EXPECT(Command.HasTint(Desc.Style.LabelText));
             RestingLabelTint = Desc.Style.LabelText;
@@ -793,8 +793,8 @@ bool TreeViewHeaderToolTips_Test()
     constexpr int32 TypeColumnWidth = 120;
     constexpr int32 TypeColumnX     = ViewWidth - TypeColumnWidth;
 
-    const String CallsToolTip = "How many times the scope was entered";
-    const String InclToolTip  = "Time spent in the scope, its children included";
+    const FString CallsToolTip = "How many times the scope was entered";
+    const FString InclToolTip  = "Time spent in the scope, its children included";
 
     FTreeView::FDesc Desc;
     Desc.Font               = CreateFont();

@@ -185,7 +185,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FVertexD
         }
         else
         {
-            const String DebugName = String::Printf("BasePass PipelineState%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
+            const FString DebugName = FString::Printf("BasePass PipelineState%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
             NewPipelineInstance.PipelineState->SetDebugName(DebugName);
         }
 

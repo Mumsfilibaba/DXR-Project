@@ -18,19 +18,19 @@ constexpr int32 FALLBACK_BOX_HEIGHT    = 20;
 
 struct FConsoleCandidateText
 {
-    String Name;
-    String Value;
-    String Type;
-    String SetBy;
-    String Help;
+    FString Name;
+    FString Value;
+    FString Type;
+    FString SetBy;
+    FString Help;
 };
 
-static int32 MeasureTextWidth(const TSharedPtr<IFontFace>& Font, const String& Text)
+static int32 MeasureTextWidth(const TSharedPtr<IFontFace>& Font, const FString& Text)
 {
-    return Font ? Font->MeasureWidth(StringView(Text.Data(), Text.Length())) : 0;
+    return Font ? Font->MeasureWidth(FStringView(Text.Data(), Text.Length())) : 0;
 }
 
-static FConsoleCandidateText GetCandidateText(const TPair<IConsoleObject*, String>& Candidate)
+static FConsoleCandidateText GetCandidateText(const TPair<IConsoleObject*, FString>& Candidate)
 {
     FConsoleCandidateText RowText;
     RowText.Name = Candidate.Second;
@@ -59,15 +59,15 @@ static FConsoleCandidateText GetCandidateText(const TPair<IConsoleObject*, Strin
         }
 
         const EConsoleVariableFlags VariableFlags = ConsoleVariable->GetFlags() & EConsoleVariableFlags::SetByMask;
-        RowText.SetBy = String::Printf("[%s]", SetByFlagToString(VariableFlags));
+        RowText.SetBy = FString::Printf("[%s]", SetByFlagToString(VariableFlags));
     }
     else if (Candidate.First->AsCommand())
     {
         TypeText = "Command";
     }
 
-    RowText.Type = String::Printf("[%s]", TypeText);
-    RowText.Help = String::Printf("[Help: %s]", Candidate.First->GetHelpString());
+    RowText.Type = FString::Printf("[%s]", TypeText);
+    RowText.Help = FString::Printf("[Help: %s]", Candidate.First->GetHelpString());
     return RowText;
 }
 
@@ -78,7 +78,7 @@ static int32 GetTypeColumnWidth(const TSharedPtr<IFontFace>& Font)
     int32 Width = 0;
     for (const CHAR_T* TypeText : TypeTexts)
     {
-        Width = Math::Max(Width, MeasureTextWidth(Font, String(TypeText)));
+        Width = Math::Max(Width, MeasureTextWidth(Font, FString(TypeText)));
     }
 
     return Width;
@@ -98,7 +98,7 @@ static int32 GetSetByColumnWidth(const TSharedPtr<IFontFace>& Font)
     int32 Width = 0;
     for (EConsoleVariableFlags SetByFlag : SetByFlags)
     {
-        Width = Math::Max(Width, MeasureTextWidth(Font, String::Printf("[%s]", SetByFlagToString(SetByFlag))));
+        Width = Math::Max(Width, MeasureTextWidth(Font, FString::Printf("[%s]", SetByFlagToString(SetByFlag))));
     }
 
     return Width;
@@ -319,8 +319,8 @@ void FConsole::RebuildScrollContent()
 
     if (CommandLine.HasCandidates())
     {
-        const TArray<TPair<IConsoleObject*, String>>& Candidates    = CommandLine.GetCandidates();
-        const int32                                   SelectedIndex = CommandLine.GetSelectedCandidateIndex();
+        const TArray<TPair<IConsoleObject*, FString>>& Candidates    = CommandLine.GetCandidates();
+        const int32                                    SelectedIndex = CommandLine.GetSelectedCandidateIndex();
 
         // Measured once for the whole list, so every row starts its columns in the same place
         const FConsoleCandidateColumns Columns = ComputeCandidateColumns();
@@ -452,7 +452,7 @@ EKeyInterceptResult FConsole::HandleInputKeyDown(const FKeyEvent& KeyEvent)
     return EKeyInterceptResult::NotHandled;
 }
 
-void FConsole::HandleTextChanged(const String& NewText)
+void FConsole::HandleTextChanged(const FString& NewText)
 {
     if (bIsSyncingInput)
     {
@@ -500,7 +500,7 @@ FConsoleCandidateColumns FConsole::ComputeCandidateColumns() const
     Columns.NameWidth  = CANDIDATE_NAME_MIN_WIDTH;
     Columns.ValueWidth = CANDIDATE_VALUE_MIN_WIDTH;
 
-    for (const TPair<IConsoleObject*, String>& Candidate : CommandLine.GetCandidates())
+    for (const TPair<IConsoleObject*, FString>& Candidate : CommandLine.GetCandidates())
     {
         const FConsoleCandidateText RowText = GetCandidateText(Candidate);
         Columns.NameWidth  = Math::Max(Columns.NameWidth, MeasureTextWidth(Font, RowText.Name));
@@ -518,12 +518,12 @@ FConsoleCandidateColumns FConsole::ComputeCandidateColumns() const
     return Columns;
 }
 
-void FConsole::AddCandidateRow(const TPair<IConsoleObject*, String>& Candidate, bool bIsSelected, const FConsoleCandidateColumns& Columns)
+void FConsole::AddCandidateRow(const TPair<IConsoleObject*, FString>& Candidate, bool bIsSelected, const FConsoleCandidateColumns& Columns)
 {
     const FConsoleCandidateText RowText  = GetCandidateText(Candidate);
     const FFloatColor           RowColor = bIsSelected ? FFloatColor::White : CandidateDetailColor;
 
-    const auto CreateCell = [this](const String& CellText, const FFloatColor& CellColor, int32 ColumnWidth)
+    const auto CreateCell = [this](const FString& CellText, const FFloatColor& CellColor, int32 ColumnWidth)
     {
         FTextBlock::FDesc CellDesc;
         CellDesc.Text            = CellText;

@@ -10,7 +10,7 @@
 
 #include "TestCommon/TestMacros.h"
 
-static bool ReflectConstantBufferSlots(const TArray<uint8>& ShaderCode, TMap<String, uint32>& OutSlots)
+static bool ReflectConstantBufferSlots(const TArray<uint8>& ShaderCode, TMap<FString, uint32>& OutSlots)
 {
     FShaderCodeView CodeView;
     if (!FShaderCodeReader::Read(ShaderCode, CodeView))
@@ -23,7 +23,7 @@ static bool ReflectConstantBufferSlots(const TArray<uint8>& ShaderCode, TMap<Str
     {
         if (Bindings[Index].Type == EShaderResourceType::ConstantBuffer)
         {
-            OutSlots.Add(String(CodeView.GetBindingName(Index)), Bindings[Index].Register);
+            OutSlots.Add(FString(CodeView.GetBindingName(Index)), Bindings[Index].Register);
         }
     }
 
@@ -37,7 +37,7 @@ static bool CompileFile(const CHAR_T* Filename, const CHAR_T* EntryPoint, EShade
     return FShaderCompiler::Get().CompileFromFile(Filename, CompileInfo, OutShaderCode);
 }
 
-static bool CompileSource(const String& Source, const CHAR_T* EntryPoint, EShaderModel ShaderModel, EShaderStage Stage, EShaderOutputLanguage OutputLanguage, bool bDebugInfo, TArray<uint8>& OutShaderCode)
+static bool CompileSource(const FString& Source, const CHAR_T* EntryPoint, EShaderModel ShaderModel, EShaderStage Stage, EShaderOutputLanguage OutputLanguage, bool bDebugInfo, TArray<uint8>& OutShaderCode)
 {
     FShaderCompileInfo CompileInfo(EntryPoint, ShaderModel, Stage, OutputLanguage);
     CompileInfo.bDebugInfo = bDebugInfo;
@@ -104,9 +104,9 @@ static bool ReadPartUInt64(TArrayView<const uint8> ByteCode, uint32 PartFourCC, 
     return false;
 }
 
-static String GetMSLSource(TArrayView<const uint8> NativeCode)
+static FString GetMSLSource(TArrayView<const uint8> NativeCode)
 {
-    return String(reinterpret_cast<const CHAR_T*>(NativeCode.Data()), NativeCode.Size());
+    return FString(reinterpret_cast<const CHAR_T*>(NativeCode.Data()), NativeCode.Size());
 }
 
 static bool HasExpectedSignature(const TArray<uint8>& ShaderCode, EShaderOutputLanguage OutputLanguage)
@@ -184,7 +184,7 @@ static FSpirvScan ScanSpirv(TArrayView<const uint8> NativeCode)
             ++Length;
         }
 
-        return String(Characters, static_cast<int32>(Length));
+        return FString(Characters, static_cast<int32>(Length));
     };
 
     for (uint32 Read = 5; Read < NumWords;)
@@ -329,8 +329,8 @@ bool ShaderCompilerCompileFromFile_Test()
 
             FShaderCompileInfo CompileInfo(Case.EntryPoint, EShaderModel::SM_6_2, Case.Stage, OutputLanguage);
 
-            TArray<uint8>  ShaderCode;
-            TArray<String> Dependencies;
+            TArray<uint8>   ShaderCode;
+            TArray<FString> Dependencies;
             const bool bCompiled = FShaderCompiler::Get().CompileFromFile(Case.Filename, CompileInfo, ShaderCode, &Dependencies);
             TEST_EXPECT(bCompiled);
             TEST_EXPECT(!ShaderCode.IsEmpty());
@@ -353,7 +353,7 @@ bool ShaderCompilerCompileFromSource_Test()
 {
     TEST_BEGIN();
 
-    const String Source =
+    const FString Source =
         "RWStructuredBuffer<uint> Output : register(u0);\n"
         "[numthreads(64, 1, 1)]\n"
         "void Main(uint3 ThreadID : SV_DispatchThreadID)\n"
@@ -384,8 +384,8 @@ bool ShaderCompilerCompileFailure_Test()
 {
     TEST_BEGIN();
 
-    const String BrokenSource = "float4 Main() : SV_Target { return MissingValue; }\n";
-    const String ValidSource  = "float4 Main() : SV_Target { return float4(1.0, 0.0, 0.0, 1.0); }\n";
+    const FString BrokenSource = "float4 Main() : SV_Target { return MissingValue; }\n";
+    const FString ValidSource  = "float4 Main() : SV_Target { return float4(1.0, 0.0, 0.0, 1.0); }\n";
 
     for (EShaderOutputLanguage OutputLanguage : FShaderCompiler::Get().GetSupportedOutputLanguages())
     {
@@ -423,13 +423,13 @@ bool ShaderCompilerDXBCConstantsSlot_Test()
 #if PLATFORM_WINDOWS
     if (FShaderCompiler::Get().IsOutputLanguageSupported(EShaderOutputLanguage::DXBC))
     {
-        const auto CompileAndReflect = [](const String& Source, TMap<String, uint32>& OutSlots)
+        const auto CompileAndReflect = [](const FString& Source, TMap<FString, uint32>& OutSlots)
         {
             TArray<uint8> ShaderCode;
             return CompileSource(Source, "Main", EShaderModel::SM_6_0, EShaderStage::Pixel, EShaderOutputLanguage::DXBC, true, ShaderCode) && ReflectConstantBufferSlots(ShaderCode, OutSlots);
         };
 
-        const String Declarations =
+        const FString Declarations =
             "struct FFirst  { float4 A; };\n"
             "struct FSecond { float4 B; };\n"
             "struct FShaderBlockConstants { float4 C; };\n"
@@ -437,12 +437,12 @@ bool ShaderCompilerDXBCConstantsSlot_Test()
 
         TEST_SECTION("The shader constants take the slot after the constant buffers the shader declares");
         {
-            const String Source = Declarations +
+            const FString Source = Declarations +
                 "ConstantBuffer<FFirst>  First  : register(b0);\n"
                 "ConstantBuffer<FSecond> Second : register(b1);\n"
                 "float4 Main() : SV_Target { return First.A + Second.B + Constants.C; }\n";
 
-            TMap<String, uint32> Slots;
+            TMap<FString, uint32> Slots;
             TEST_EXPECT(CompileAndReflect(Source, Slots));
             TEST_EXPECT(Slots.Find("First_CB") && *Slots.Find("First_CB") == 0);
             TEST_EXPECT(Slots.Find("Second_CB") && *Slots.Find("Second_CB") == 1);
@@ -451,19 +451,19 @@ bool ShaderCompilerDXBCConstantsSlot_Test()
 
         TEST_SECTION("A gap in the declared slots is filled first");
         {
-            const String Source = Declarations +
+            const FString Source = Declarations +
                 "ConstantBuffer<FFirst>  First  : register(b0);\n"
                 "ConstantBuffer<FSecond> Second : register(b2);\n"
                 "float4 Main() : SV_Target { return First.A + Second.B + Constants.C; }\n";
 
-            TMap<String, uint32> Slots;
+            TMap<FString, uint32> Slots;
             TEST_EXPECT(CompileAndReflect(Source, Slots));
             TEST_EXPECT(Slots.Find("Constants_CB") && *Slots.Find("Constants_CB") == 1);
         }
 
         TEST_SECTION("The shader constants are their own binding space, with their size");
         {
-            const String Source = Declarations + "float4 Main() : SV_Target { return Constants.C; }\n";
+            const FString Source = Declarations + "float4 Main() : SV_Target { return Constants.C; }\n";
 
             TArray<uint8> ShaderCode;
             TEST_EXPECT(CompileSource(Source, "Main", EShaderModel::SM_6_0, EShaderStage::Pixel, EShaderOutputLanguage::DXBC, false, ShaderCode));
@@ -477,13 +477,13 @@ bool ShaderCompilerDXBCConstantsSlot_Test()
         TEST_SECTION("An engine shader never shares a slot with its own constant buffers");
         {
             TArray<uint8> ShaderCode;
-            TMap<String, uint32> Slots;
+            TMap<FString, uint32> Slots;
             TEST_EXPECT(CompileFile("Shaders/UserInterface.hlsl", "VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, EShaderOutputLanguage::DXBC, true, ShaderCode));
             TEST_EXPECT(ReflectConstantBufferSlots(ShaderCode, Slots));
             TEST_EXPECT(Slots.Find("Constants_CB") != nullptr);
 
             TArray<uint32> UsedSlots;
-            Slots.Foreach([&](const String&, uint32 Slot)
+            Slots.Foreach([&](const FString&, uint32 Slot)
             {
                 TEST_EXPECT(!UsedSlots.Contains(Slot));
                 UsedSlots.Add(Slot);
@@ -499,7 +499,7 @@ bool ShaderCompilerCompileHash_Test()
 {
     TEST_BEGIN();
 
-    const String SourceFile = "Shaders/UserInterface.hlsl";
+    const FString SourceFile = "Shaders/UserInterface.hlsl";
 
     TEST_SECTION("The same compile settings produce the same hash");
     FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, EShaderOutputLanguage::DXIL);
@@ -704,10 +704,10 @@ bool ShaderCompilerVertexInputs_Test()
             {
                 TEST_SECTION("The MSL declares an attribute at every reflected location");
                 const TArrayView<const uint8> NativeCode = CodeView.GetNativeCode();
-                const String Source(reinterpret_cast<const CHAR_T*>(NativeCode.Data()), NativeCode.Size());
+                const FString Source(reinterpret_cast<const CHAR_T*>(NativeCode.Data()), NativeCode.Size());
                 for (uint8 Location : Locations)
                 {
-                    TEST_EXPECT(Source.Contains(String::Printf("[[attribute(%u)]]", static_cast<uint32>(Location))));
+                    TEST_EXPECT(Source.Contains(FString::Printf("[[attribute(%u)]]", static_cast<uint32>(Location))));
                 }
             }
 
@@ -886,7 +886,7 @@ bool ShaderCompilerRayTracing_Test()
 
     TEST_SECTION("A library with two functions reflects the one named in the entry point");
     {
-        const String Source =
+        const FString Source =
             "struct FPayload { float4 Color; };\n"
             "Texture2D<float4> First  : register(t0);\n"
             "Texture2D<float4> Second : register(t1);\n"
@@ -968,11 +968,11 @@ bool ShaderCompilerMSL_Test()
 
         for (const FShaderCodeView* CodeView : { &Release, &Debug })
         {
-            const String Source = GetMSLSource(CodeView->GetNativeCode());
+            const FString Source = GetMSLSource(CodeView->GetNativeCode());
 
             TEST_SECTION("The entry point is the MSL function name");
             TEST_EXPECT(CodeView->GetEntryPoint()[0] != '\0');
-            TEST_EXPECT(Source.Contains(String(CodeView->GetEntryPoint()) + "("));
+            TEST_EXPECT(Source.Contains(FString(CodeView->GetEntryPoint()) + "("));
 
             TEST_SECTION("Every slot is inside its table and unique");
             const TArrayView<const FShaderResourceBinding> Bindings = CodeView->GetBindings();
@@ -1017,10 +1017,10 @@ bool ShaderCompilerMSL_Test()
         }
 
         TEST_SECTION("Release MSL is generated from stripped SPIR-V");
-        const String ReleaseSource = GetMSLSource(Release.GetNativeCode());
+        const FString ReleaseSource = GetMSLSource(Release.GetNativeCode());
         for (int32 Index = 0; Index < Debug.GetBindings().Size(); ++Index)
         {
-            const String Name = Debug.GetBindingName(Index);
+            const FString Name = Debug.GetBindingName(Index);
             if (Name.Length() >= 6)
             {
                 TEST_EXPECT(!ReleaseSource.Contains(Name));
@@ -1030,7 +1030,7 @@ bool ShaderCompilerMSL_Test()
 
     TEST_SECTION("Every resource kind maps to an MSL binding type");
     {
-        const String Source =
+        const FString Source =
             "struct FData { float4 Value; };\n"
             "struct FConstants { uint Index; };\n"
             "[[vk::push_constant]] ConstantBuffer<FConstants> Constants : register(b0, space1);\n"
@@ -1075,7 +1075,7 @@ bool ShaderCompilerMSL_Test()
 
     TEST_SECTION("The bindless heaps sit at buffers 29 and 30");
     {
-        const String Source =
+        const FString Source =
             "struct FConstants { uint TextureIndex; uint SamplerIndex; };\n"
             "[[vk::push_constant]] ConstantBuffer<FConstants> Constants : register(b0, space1);\n"
             "RWStructuredBuffer<float4> Output : register(u0);\n"

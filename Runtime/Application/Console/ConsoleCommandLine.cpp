@@ -18,7 +18,7 @@ FConsoleCommandLine::FConsoleCommandLine()
 
 FConsoleCommandLine::~FConsoleCommandLine() = default;
 
-void FConsoleCommandLine::SetText(const String& InText)
+void FConsoleCommandLine::SetText(const FString& InText)
 {
     Text               = InText;
     TextCursorPosition = Math::Clamp(TextCursorPosition, 0, Text.Length());
@@ -55,7 +55,7 @@ void FConsoleCommandLine::RefreshCandidates()
         return;
     }
 
-    const StringView CandidateName(Text.Data() + Range.Position, Range.Length);
+    const FStringView CandidateName(Text.Data() + Range.Position, Range.Length);
     FConsoleManager::Get().FindCandidates(CandidateName, Candidates);
 
     if (!Candidates.IsEmpty())
@@ -81,8 +81,8 @@ void FConsoleCommandLine::MoveSelectionUp()
 {
     if (Candidates.IsEmpty())
     {
-        const int32           PreviousHistoryIndex = HistoryIndex;
-        const TArray<String>& History              = FConsoleManager::Get().GetHistory();
+        const int32            PreviousHistoryIndex = HistoryIndex;
+        const TArray<FString>& History              = FConsoleManager::Get().GetHistory();
 
         if (!History.IsEmpty())
         {
@@ -141,8 +141,8 @@ void FConsoleCommandLine::MoveSelectionDown()
 {
     if (Candidates.IsEmpty())
     {
-        const int32           PreviousHistoryIndex = HistoryIndex;
-        const TArray<String>& History              = FConsoleManager::Get().GetHistory();
+        const int32            PreviousHistoryIndex = HistoryIndex;
+        const TArray<FString>& History              = FConsoleManager::Get().GetHistory();
 
         if (History.IsEmpty())
         {
@@ -196,7 +196,7 @@ bool FConsoleCommandLine::AcceptCompletion()
         return false;
     }
 
-    const String& CandidateName = Candidates[SelectedCandidateIndex].Second;
+    const FString& CandidateName = Candidates[SelectedCandidateIndex].Second;
     Text.Remove(Range.Position, Range.Length);
     Text.Insert(*CandidateName, Range.Position);
     TextCursorPosition = Range.Position + CandidateName.Length();
@@ -241,8 +241,8 @@ void FConsoleCommandLine::Reset()
 
 void FConsoleCommandLine::ApplyHistoryText()
 {
-    const TArray<String>& History = FConsoleManager::Get().GetHistory();
+    const TArray<FString>& History = FConsoleManager::Get().GetHistory();
 
-    Text               = (HistoryIndex >= 0 && HistoryIndex < History.Size()) ? History[HistoryIndex] : String();
+    Text               = (HistoryIndex >= 0 && HistoryIndex < History.Size()) ? History[HistoryIndex] : FString();
     TextCursorPosition = Text.Length();
 }

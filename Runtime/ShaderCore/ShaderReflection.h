@@ -117,7 +117,7 @@ enum class EShaderComponentType : uint8
 };
 
 /** HLSL semantics are case-insensitive, so the name is upper-cased before it is hashed (CRC32) */
-NODISCARD SHADERCORE_API uint32 HashShaderSemantic(StringView SemanticName);
+NODISCARD SHADERCORE_API uint32 HashShaderSemantic(FStringView SemanticName);
 
 enum class EShaderFeatureFlags : uint32
 {
@@ -232,7 +232,7 @@ struct FShaderReflection
     FShaderReflectionInfo          Info;
 
     /** Only set where an RHI needs it: ray-tracing export names, SPIR-V and MSL entry points */
-    String                         EntryPoint;
+    FString                         EntryPoint;
 
     /** Vertex shaders only, sorted by Location */
     TArray<FShaderVertexInput>     VertexInputs;
@@ -250,5 +250,5 @@ struct FShaderReflection
     TArray<FMSLBindingSlot>        MSLSlots;
 
     /** Empty, or one per binding when compiled with debug info */
-    TArray<String>                 BindingNames;
+    TArray<FString>                 BindingNames;
 };

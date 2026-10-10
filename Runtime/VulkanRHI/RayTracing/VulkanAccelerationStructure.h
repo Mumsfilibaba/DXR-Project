@@ -44,8 +44,8 @@ public:
     // FRHIGeometryAccelerationStructure Interface
     virtual void* GetRHINativeResource() const override final;
     
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
     
     bool Build(FVulkanCommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc);
     bool CompactInPlace(FVulkanCommandContext& CmdContext, uint64 CompactedSize);
@@ -60,7 +60,7 @@ private:
     FVulkanMemoryLocation      StaleGeometryLocation;
     uint64                     TrackedAccelerationStructureMemory;
 #if VULKAN_STORE_DEBUG_NAMES
-    String                     DebugName;
+    FString                     DebugName;
 #endif
 };
 
@@ -78,8 +78,8 @@ public:
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final;
     virtual FRHIDescriptorHandle    GetBindlessHandle()     const override final;
     
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
 private:
     FVulkanMemoryLocation                             SceneLocation;
@@ -90,7 +90,7 @@ private:
     TArray<FRHIGeometryAccelerationStructureInstance> Instances;
     uint64                                            TrackedAccelerationStructureMemory;
 #if VULKAN_STORE_DEBUG_NAMES
-    String DebugName;
+    FString DebugName;
 #endif
 };
 
@@ -142,14 +142,14 @@ public:
     // FRHIClusterAccelerationStructure Interface
     virtual void* GetRHINativeResource() const override final;
 
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
 private:
     FRHIClusterAccelerationStructureDesc ClusterDesc;
     FVulkanMemoryLocation                ResultLocation;
 #if VULKAN_STORE_DEBUG_NAMES
-    String                               DebugName;
+    FString                               DebugName;
 #endif
 };
 
@@ -188,14 +188,14 @@ public:
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final;
     virtual FRHIDescriptorHandle    GetBindlessHandle()     const override final;
 
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
 private:
     FRHIRayTracingAccelerationStructurePartitionedSceneInputs SceneInputs;
     FVulkanMemoryLocation                                     ResultLocation;
     FVulkanShaderResourceViewRHIRef                           View;
 #if VULKAN_STORE_DEBUG_NAMES
-    String DebugName;
+    FString DebugName;
 #endif
 };

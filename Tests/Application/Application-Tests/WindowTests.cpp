@@ -41,7 +41,7 @@ static FWindowTitleBarMetrics MakeTrailingInsetMetrics()
     return Metrics;
 }
 
-static FTextBlock::FDesc MakeTextDesc(const String& Text, const TSharedPtr<IFontFace>& Font)
+static FTextBlock::FDesc MakeTextDesc(const FString& Text, const TSharedPtr<IFontFace>& Font)
 {
     FTextBlock::FDesc Desc;
     Desc.Text = Text;
@@ -310,10 +310,10 @@ bool FloatingWindow_Test()
     TEST_EXPECT(Body->GetContentRectangle().Position.Y >= TitleBar->GetContentRectangle().GetBottom());
 
     TEST_SECTION("The caption carries the title it was created with");
-    TEST_EXPECT_EQ(TitleBar->GetTitle(), String("Inspector"));
+    TEST_EXPECT_EQ(TitleBar->GetTitle(), FString("Inspector"));
 
     TitleBar->SetTitle("Inspector - Sponza");
-    TEST_EXPECT_EQ(TitleBar->GetTitle(), String("Inspector - Sponza"));
+    TEST_EXPECT_EQ(TitleBar->GetTitle(), FString("Inspector - Sponza"));
 
     TEST_SECTION("Replacing the body keeps the caption on top of it");
     TSharedPtr<FTextBlock> NewBody = FTextBlock::Create(MakeTextDesc("Materials", Font));

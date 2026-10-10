@@ -188,8 +188,8 @@ void FEditorFrameProfilerPanel::RefreshThreads()
 
         for (int32 ThreadIndex = 0; ThreadIndex < ThreadInfos.Size(); ++ThreadIndex)
         {
-            const String ThreadLabel = ResolveThreadName(ThreadInfos[ThreadIndex], ThreadIndex);
-            const bool   bIsExpanded = FThreadManager::Get().IsMainThread(ThreadInfos[ThreadIndex].ThreadHandle);
+            const FString ThreadLabel = ResolveThreadName(ThreadInfos[ThreadIndex], ThreadIndex);
+            const bool    bIsExpanded = FThreadManager::Get().IsMainThread(ThreadInfos[ThreadIndex].ThreadHandle);
 
             FThreadSection ThreadSection;
             ThreadSection.Table   = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
@@ -223,7 +223,7 @@ void FEditorFrameProfilerPanel::RefreshThreads()
             const float Average = Time::ToMilliseconds<float>(Scope.Calls > 0
                 ? static_cast<float>(Scope.InclusiveNanoseconds / static_cast<uint64>(Scope.Calls))
                 : 0.0f);
-            (*Value)->SetText(String::Printf("%.3f  %d", Average, Scope.Calls));
+            (*Value)->SetText(FString::Printf("%.3f  %d", Average, Scope.Calls));
         }
     }
 }
@@ -244,7 +244,7 @@ void FEditorFrameProfilerPanel::RebuildThreadRows(FThreadSection& ThreadSection,
     }
 }
 
-String FEditorFrameProfilerPanel::ResolveThreadName(const FProfilerThreadAggregate& ThreadInfo, int32 ThreadIndex)
+FString FEditorFrameProfilerPanel::ResolveThreadName(const FProfilerThreadAggregate& ThreadInfo, int32 ThreadIndex)
 {
     if (FThreadManager::Get().IsMainThread(ThreadInfo.ThreadHandle))
     {
@@ -259,10 +259,10 @@ String FEditorFrameProfilerPanel::ResolveThreadName(const FProfilerThreadAggrega
         }
     }
 
-    return String::Printf("Thread %d", ThreadIndex);
+    return FString::Printf("Thread %d", ThreadIndex);
 }
 
-TSharedPtr<FTextBlock> FEditorFrameProfilerPanel::CreateValueText(const String& Text)
+TSharedPtr<FTextBlock> FEditorFrameProfilerPanel::CreateValueText(const FString& Text)
 {
     FTextBlock::FDesc Desc;
     Desc.Text = Text;

@@ -14,14 +14,14 @@ void FProjectModuleDescriptor::Serialize(FJsonArchive& Archive)
     Archive.Field("Type", Type, EProjectModuleType::Game);
 }
 
-bool FProjectDescriptor::LoadFromFile(const String& Filename, String& OutError)
+bool FProjectDescriptor::LoadFromFile(const FString& Filename, FString& OutError)
 {
     FJsonValue Document;
     FJsonError ParseError;
 
     if (!Json::LoadFromFile(Filename, Document, &ParseError))
     {
-        OutError = String::Printf("'%s': %s", *Filename, *ParseError.ToString());
+        OutError = FString::Printf("'%s': %s", *Filename, *ParseError.ToString());
         return false;
     }
 
@@ -30,13 +30,13 @@ bool FProjectDescriptor::LoadFromFile(const String& Filename, String& OutError)
     const int32 Version = Loader.GetVersion();
     if (Version < 1)
     {
-        OutError = String::Printf("'%s' has no Version", *Filename);
+        OutError = FString::Printf("'%s' has no Version", *Filename);
         return false;
     }
 
     if (Version > CurrentVersion)
     {
-        OutError = String::Printf("'%s' is version %d, but this engine reads up to version %d", *Filename, Version, CurrentVersion);
+        OutError = FString::Printf("'%s' is version %d, but this engine reads up to version %d", *Filename, Version, CurrentVersion);
         return false;
     }
 
@@ -45,13 +45,13 @@ bool FProjectDescriptor::LoadFromFile(const String& Filename, String& OutError)
 
     if (Loader.HasErrors())
     {
-        OutError = String::Printf("'%s': %s", *Filename, *Loader.GetErrorString());
+        OutError = FString::Printf("'%s': %s", *Filename, *Loader.GetErrorString());
         return false;
     }
 
     if (Loaded.Name.IsEmpty())
     {
-        OutError = String::Printf("'%s' has no Name", *Filename);
+        OutError = FString::Printf("'%s' has no Name", *Filename);
         return false;
     }
 
@@ -59,7 +59,7 @@ bool FProjectDescriptor::LoadFromFile(const String& Filename, String& OutError)
     return true;
 }
 
-bool FProjectDescriptor::SaveToFile(const String& Filename) const
+bool FProjectDescriptor::SaveToFile(const FString& Filename) const
 {
     FJsonValue Document;
     TJsonSerializer<FProjectDescriptor>::Save(Document, *this);
@@ -74,7 +74,7 @@ void FProjectDescriptor::Serialize(FJsonArchive& Archive)
     }
 
     Archive.Field("Name", Name);
-    Archive.Field("EngineAssociation", EngineAssociation, String());
-    Archive.Field("EnginePath", EnginePath, String());
+    Archive.Field("EngineAssociation", EngineAssociation, FString());
+    Archive.Field("EnginePath", EnginePath, FString());
     Archive.Field("Modules", Modules);
 }

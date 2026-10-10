@@ -21,8 +21,8 @@ public:
     virtual void* Map(uint64 Offset = 0, uint64 Size = UINT64_MAX)   override final;
     virtual void  Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
 
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     FVulkanBufferState&       GetBufferState()       { return BufferState; }
     const FVulkanBufferState& GetBufferState() const { return BufferState; }
@@ -78,6 +78,6 @@ protected:
     FVulkanBufferState           BufferState;
     mutable FRHIDescriptorHandle BindlessHandle;
 #if VULKAN_STORE_DEBUG_NAMES
-    String                       DebugName;
+    FString                       DebugName;
 #endif
 };

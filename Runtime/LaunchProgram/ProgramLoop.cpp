@@ -9,7 +9,7 @@ IMPLEMENT_ENGINE_MODULE(IModule, LaunchProgram);
 
 const CHAR_T*      GProgramTitle = "Program";
 TFunction<int32()> GProgramBody;
-TArray<String>     GProgramArgs;
+TArray<FString>    GProgramArgs;
 
 bool FProgramLoop::bExitRequested = false;
 

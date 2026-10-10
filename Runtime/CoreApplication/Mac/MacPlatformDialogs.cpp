@@ -13,7 +13,7 @@ enum class EFileDialogKind : uint8
     PickFolder,
 };
 
-static NSString* ToNSString(const String& Text)
+static NSString* ToNSString(const FString& Text)
 {
     return [NSString stringWithUTF8String:*Text];
 }
@@ -85,7 +85,7 @@ static NSSavePanel* CreatePanel(const FFileDialogDesc& Desc, EFileDialogKind Kin
     return Panel;
 }
 
-static bool ShowFileDialog(const FFileDialogDesc& Desc, EFileDialogKind Kind, TArray<String>& OutPaths)
+static bool ShowFileDialog(const FFileDialogDesc& Desc, EFileDialogKind Kind, TArray<FString>& OutPaths)
 {
     OutPaths.Clear();
 
@@ -117,20 +117,20 @@ static bool ShowFileDialog(const FFileDialogDesc& Desc, EFileDialogKind Kind, TA
 
     for (NSString* Path in SelectedPaths)
     {
-        OutPaths.Add(String([Path UTF8String]));
+        OutPaths.Add(FString([Path UTF8String]));
     }
 
     return !OutPaths.IsEmpty();
 }
 
-bool FMacPlatformDialogs::OpenFile(const FFileDialogDesc& Desc, TArray<String>& OutFilenames)
+bool FMacPlatformDialogs::OpenFile(const FFileDialogDesc& Desc, TArray<FString>& OutFilenames)
 {
     return ShowFileDialog(Desc, EFileDialogKind::Open, OutFilenames);
 }
 
-bool FMacPlatformDialogs::SaveFile(const FFileDialogDesc& Desc, String& OutFilename)
+bool FMacPlatformDialogs::SaveFile(const FFileDialogDesc& Desc, FString& OutFilename)
 {
-    TArray<String> Paths;
+    TArray<FString> Paths;
     if (!ShowFileDialog(Desc, EFileDialogKind::Save, Paths))
     {
         return false;
@@ -140,9 +140,9 @@ bool FMacPlatformDialogs::SaveFile(const FFileDialogDesc& Desc, String& OutFilen
     return true;
 }
 
-bool FMacPlatformDialogs::PickFolder(const FFileDialogDesc& Desc, String& OutDirectory)
+bool FMacPlatformDialogs::PickFolder(const FFileDialogDesc& Desc, FString& OutDirectory)
 {
-    TArray<String> Paths;
+    TArray<FString> Paths;
     if (!ShowFileDialog(Desc, EFileDialogKind::PickFolder, Paths))
     {
         return false;

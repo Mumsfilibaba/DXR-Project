@@ -25,9 +25,9 @@ constexpr uint64 ROW_OFFSET_ALIGNMENT  = 512ull;
 static FAutoConsoleCommand CCmdUIScreenshot(
     "UI.Screenshot",
     "Writes a PNG of the main window's UI. Takes the path to write, defaulting to Screenshots/Current/UI.png",
-    FConsoleCommandDelegate::CreateLambda([](StringView Arguments)
+    FConsoleCommandDelegate::CreateLambda([](FStringView Arguments)
     {
-        const String Filename = Arguments.IsEmpty() ? String("Screenshots/Current/UI.png") : String(Arguments);
+        const FString Filename = Arguments.IsEmpty() ? FString("Screenshots/Current/UI.png") : FString(Arguments);
         UIScreenshot::CapturePrimaryWindow(Filename);
     }));
 
@@ -35,9 +35,9 @@ static FAutoConsoleCommand CCmdUIScreenshotAtFrame(
     "UI.ScreenshotAtFrame",
     "Writes a PNG of the main window's UI once the given number of frames have passed, then exits. "
     "Takes the frame count followed by the path, for example '30 Screenshots/Current/Shell.png'",
-    FConsoleCommandDelegate::CreateLambda([](StringView Arguments)
+    FConsoleCommandDelegate::CreateLambda([](FStringView Arguments)
     {
-        const String Text = String(Arguments).Trim();
+        const FString Text = FString(Arguments).Trim();
 
         int32 Split = 0;
         while (Split < Text.Length() && Text[Split] != ' ')
@@ -47,7 +47,7 @@ static FAutoConsoleCommand CCmdUIScreenshotAtFrame(
 
         const int32 Frames = (Split > 0) ? CString::Atoi(*Text.SubString(0, Split)) : DEFAULT_SETTLE_FRAMES;
 
-        String Filename;
+        FString Filename;
         if (Split + 1 < Text.Length())
         {
             Filename = Text.SubString(Split + 1, Text.Length() - (Split + 1)).Trim();
@@ -55,7 +55,7 @@ static FAutoConsoleCommand CCmdUIScreenshotAtFrame(
 
         if (Filename.IsEmpty())
         {
-            Filename = String("Screenshots/Current/Shell.png");
+            Filename = FString("Screenshots/Current/Shell.png");
         }
 
         UIScreenshot::RequestAtFrame(Frames, Filename, true);
@@ -63,10 +63,10 @@ static FAutoConsoleCommand CCmdUIScreenshotAtFrame(
 
 struct FPendingScreenshotRequest
 {
-    String Filename;
-    int32  FramesRemaining = 0;
-    bool   bIsPending      = false;
-    bool   bExitAfter      = false;
+    FString Filename;
+    int32   FramesRemaining = 0;
+    bool    bIsPending      = false;
+    bool    bExitAfter      = false;
 };
 
 static FPendingScreenshotRequest GPendingRequest;
@@ -75,7 +75,7 @@ static bool GHasReadCommandLine = false;
 
 static void ReadCommandLineRequest()
 {
-    StringView Path;
+    FStringView Path;
     if (!CommandLine::FindOption("UIScreenshot", Path) || Path.IsEmpty())
     {
         return;
@@ -83,16 +83,16 @@ static void ReadCommandLineRequest()
 
     int32 Frames = DEFAULT_SETTLE_FRAMES;
 
-    StringView FrameText;
+    FStringView FrameText;
     if (CommandLine::FindOption("UIScreenshotFrame", FrameText) && !FrameText.IsEmpty())
     {
-        Frames = CString::Atoi(*String(FrameText));
+        Frames = CString::Atoi(*FString(FrameText));
     }
 
-    UIScreenshot::RequestAtFrame(Frames, String(Path), true);
+    UIScreenshot::RequestAtFrame(Frames, FString(Path), true);
 }
 
-static bool WriteTextureToPng(const FRHITextureRef& Texture, const String& Filename)
+static bool WriteTextureToPng(const FRHITextureRef& Texture, const FString& Filename)
 {
     const FRHITextureDesc& Desc   = Texture->GetDesc();
     const uint32           Width  = Desc.Extent.X;
@@ -163,7 +163,7 @@ static bool WriteTextureToPng(const FRHITextureRef& Texture, const String& Filen
     return bResult;
 }
 
-bool UIScreenshot::CaptureElement(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, float DPIScale, const String& Filename)
+bool UIScreenshot::CaptureElement(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, float DPIScale, const FString& Filename)
 {
     if (!Element || Size.X <= 0 || Size.Y <= 0)
     {
@@ -202,7 +202,7 @@ bool UIScreenshot::CaptureElement(const TSharedPtr<FVisualElement>& Element, con
     return bResult;
 }
 
-bool UIScreenshot::CaptureWindow(const TSharedPtr<FWindow>& Window, const String& Filename)
+bool UIScreenshot::CaptureWindow(const TSharedPtr<FWindow>& Window, const FString& Filename)
 {
     if (!Window)
     {
@@ -212,7 +212,7 @@ bool UIScreenshot::CaptureWindow(const TSharedPtr<FWindow>& Window, const String
     return CaptureElement(Window->GetContent(), Window->GetSize(), Window->GetWindowDPIScale(), Filename);
 }
 
-bool UIScreenshot::CapturePrimaryWindow(const String& Filename)
+bool UIScreenshot::CapturePrimaryWindow(const FString& Filename)
 {
     if (!FApplication::IsInitialized())
     {
@@ -229,7 +229,7 @@ bool UIScreenshot::CapturePrimaryWindow(const String& Filename)
     return CaptureWindow(Windows[0], Filename);
 }
 
-void UIScreenshot::RequestAtFrame(int32 FramesFromNow, const String& Filename, bool bExitAfter)
+void UIScreenshot::RequestAtFrame(int32 FramesFromNow, const FString& Filename, bool bExitAfter)
 {
     GPendingRequest.Filename        = Filename;
     GPendingRequest.FramesRemaining = Math::Max(0, FramesFromNow);
@@ -258,8 +258,8 @@ void UIScreenshot::Tick()
         return;
     }
 
-    const String Filename   = GPendingRequest.Filename;
-    const bool   bExitAfter = GPendingRequest.bExitAfter;
+    const FString Filename   = GPendingRequest.Filename;
+    const bool    bExitAfter = GPendingRequest.bExitAfter;
 
     GPendingRequest.bIsPending = false;
     GPendingRequest.Filename.Clear();
@@ -268,6 +268,6 @@ void UIScreenshot::Tick()
 
     if (bExitAfter)
     {
-        FConsoleManager::Get().ExecuteCommand(*FOutputDeviceManager::Get(), String("Engine.Exit"));
+        FConsoleManager::Get().ExecuteCommand(*FOutputDeviceManager::Get(), FString("Engine.Exit"));
     }
 }

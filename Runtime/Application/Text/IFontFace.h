@@ -93,13 +93,13 @@ struct IFontFace
      * @return The positioned glyphs, cached on the face so that asking twice in a frame costs a lookup.
      * The reference is good until the next call, and holding one across frames is not.
      */
-    virtual const FShapedRun& ShapeText(const StringView& Text) const = 0;
+    virtual const FShapedRun& ShapeText(const FStringView& Text) const = 0;
 
     /**
      * @param Text The text to measure.
      * @return The width in pixels of the text laid out on a single line.
      */
-    NODISCARD int32 MeasureWidth(const StringView& Text) const
+    NODISCARD int32 MeasureWidth(const FStringView& Text) const
     {
         return ShapeText(Text).Width;
     }
@@ -112,25 +112,25 @@ struct IFontFace
      * @return The text unchanged when it already fits, otherwise its leading characters with the
      * ellipsis appended, and empty when the width cannot hold even the ellipsis.
      */
-    NODISCARD String ElideText(const StringView& Text, int32 MaxWidth) const
+    NODISCARD FString ElideText(const FStringView& Text, int32 MaxWidth) const
     {
         if (MaxWidth <= 0)
         {
-            return String();
+            return FString();
         }
 
-        const int32 EllipsisWidth = MeasureWidth(StringView(Ellipsis));
+        const int32 EllipsisWidth = MeasureWidth(FStringView(Ellipsis));
 
         const FShapedRun& Run = ShapeText(Text);
         if (Run.Width <= MaxWidth)
         {
-            return String(Text.Data(), Text.Length());
+            return FString(Text.Data(), Text.Length());
         }
 
         const int32 Budget = MaxWidth - EllipsisWidth;
         if (Budget <= 0)
         {
-            return String();
+            return FString();
         }
 
         int32 NumCharacters = 0;
@@ -139,7 +139,7 @@ struct IFontFace
             ++NumCharacters;
         }
 
-        return String(Text.Data(), Math::Max(0, NumCharacters - 1)) + Ellipsis;
+        return FString(Text.Data(), Math::Max(0, NumCharacters - 1)) + Ellipsis;
     }
 
     /**
@@ -149,7 +149,7 @@ struct IFontFace
      * @param OffsetX The offset from the start of the text, in pixels.
      * @return The index of the closest position in the text.
      */
-    NODISCARD int32 FindCharacterIndexAtOffset(const StringView& Text, int32 OffsetX) const
+    NODISCARD int32 FindCharacterIndexAtOffset(const FStringView& Text, int32 OffsetX) const
     {
         if (OffsetX <= 0)
         {
@@ -178,7 +178,7 @@ struct IFontFace
      * @param OutAdvance     Set to how far the pen moves over the character, in pixels, and to zero for
      *                       the position past the end.
      */
-    void GetCharacterPlacement(const StringView& Text, int32 CharacterIndex, int32& OutOffset, int32& OutAdvance) const
+    void GetCharacterPlacement(const FStringView& Text, int32 CharacterIndex, int32& OutOffset, int32& OutAdvance) const
     {
         const FShapedRun& Run = ShapeText(Text);
 

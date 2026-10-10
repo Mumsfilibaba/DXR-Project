@@ -11,7 +11,7 @@ const CHAR_T* RemoteConsoleProtocol::SeverityToString(ELogSeverity Severity)
     }
 }
 
-bool RemoteConsoleProtocol::SeverityFromString(const String& Text, ELogSeverity& OutSeverity)
+bool RemoteConsoleProtocol::SeverityFromString(const FString& Text, ELogSeverity& OutSeverity)
 {
     if (Text.Equals("info", EStringCaseType::NoCase))
     {
@@ -32,7 +32,7 @@ bool RemoteConsoleProtocol::SeverityFromString(const String& Text, ELogSeverity&
     return false;
 }
 
-bool RemoteConsoleProtocol::ExtractLines(String& Buffer, TArray<String>& OutLines)
+bool RemoteConsoleProtocol::ExtractLines(FString& Buffer, TArray<FString>& OutLines)
 {
     const CHAR_T* Data   = Buffer.Data();
     const int32   Length = Buffer.Length();
@@ -63,11 +63,11 @@ bool RemoteConsoleProtocol::ExtractLines(String& Buffer, TArray<String>& OutLine
     return Buffer.Length() <= MaxLineLength;
 }
 
-String RemoteConsoleProtocol::ToLine(const FJsonValue& Message)
+FString RemoteConsoleProtocol::ToLine(const FJsonValue& Message)
 {
     const FJsonWriter Writer(EJsonWriteFlags::Compact);
 
-    String Line;
+    FString Line;
     Writer.Write(Message, Line);
     Line.Append('\n');
     return Line;

@@ -71,7 +71,7 @@ public:
         CommandContextPool.ForEachTracked(Forward<FunctorType>(Functor));
     }
 
-    void SetDebugName(const String& Name)
+    void SetDebugName(const FString& Name)
     {
         VulkanSetObjectName(GetDevice()->GetVkDevice(), *Name, Queue, VK_OBJECT_TYPE_QUEUE);
     #if VULKAN_STORE_DEBUG_NAMES
@@ -79,7 +79,7 @@ public:
     #endif
     }
 
-    void GetDebugName(String& OutDebugName) const
+    void GetDebugName(FString& OutDebugName) const
     {
     #if VULKAN_STORE_DEBUG_NAMES
         OutDebugName = DebugName;
@@ -134,7 +134,7 @@ private:
     TArray<FVulkanQueryRHI*>                  PendingQueryRHIs;
 #endif
 #if VULKAN_STORE_DEBUG_NAMES
-    String                                    DebugName;
+    FString                                    DebugName;
 #endif
 };
 

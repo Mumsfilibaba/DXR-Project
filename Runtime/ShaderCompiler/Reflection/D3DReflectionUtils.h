@@ -15,11 +15,11 @@ struct FD3DReflectionUtils
 
     /** @brief Skips system values, sorts by Location and rejects two inputs with the same semantic hash and index */
     template<typename ReflectionType, typename ParameterDescType>
-    static bool ReflectVertexInputs(ReflectionType* Reflection, uint32 NumInputParameters, FShaderReflection& OutReflection, String& OutErrors);
+    static bool ReflectVertexInputs(ReflectionType* Reflection, uint32 NumInputParameters, FShaderReflection& OutReflection, FString& OutErrors);
 };
 
 template<typename ReflectionType, typename ParameterDescType>
-bool FD3DReflectionUtils::ReflectVertexInputs(ReflectionType* Reflection, uint32 NumInputParameters, FShaderReflection& OutReflection, String& OutErrors)
+bool FD3DReflectionUtils::ReflectVertexInputs(ReflectionType* Reflection, uint32 NumInputParameters, FShaderReflection& OutReflection, FString& OutErrors)
 {
     for (uint32 Index = 0; Index < NumInputParameters; ++Index)
     {
@@ -31,7 +31,7 @@ bool FD3DReflectionUtils::ReflectVertexInputs(ReflectionType* Reflection, uint32
 
         if (ParameterDesc.Register > 0xFF || ParameterDesc.SemanticIndex > 0xFF)
         {
-            OutErrors += String::Printf("Vertex input '%s%u' at register %u is outside the supported range\n", ParameterDesc.SemanticName, ParameterDesc.SemanticIndex, ParameterDesc.Register);
+            OutErrors += FString::Printf("Vertex input '%s%u' at register %u is outside the supported range\n", ParameterDesc.SemanticName, ParameterDesc.SemanticIndex, ParameterDesc.Register);
             return false;
         }
 

@@ -15,10 +15,10 @@ void RegisterConsoleTestVariables()
 
     bIsRegistered = true;
 
-    static TAutoConsoleVariable<int32>  IntVariable("Test.Console.Int", "An int variable for the console tests", 42);
-    static TAutoConsoleVariable<float>  FloatVariable("Test.Console.Float", "A float variable for the console tests", 1.5f);
-    static TAutoConsoleVariable<bool>   BoolVariable("Test.Console.Bool", "A bool variable for the console tests", true);
-    static TAutoConsoleVariable<String> StringVariable("Test.Console.String", "A string variable for the console tests", String("Value"));
+    static TAutoConsoleVariable<int32>   IntVariable("Test.Console.Int", "An int variable for the console tests", 42);
+    static TAutoConsoleVariable<float>   FloatVariable("Test.Console.Float", "A float variable for the console tests", 1.5f);
+    static TAutoConsoleVariable<bool>    BoolVariable("Test.Console.Bool", "A bool variable for the console tests", true);
+    static TAutoConsoleVariable<FString> StringVariable("Test.Console.String", "A string variable for the console tests", FString("Value"));
 }
 
 void RegisterConsoleCrowdVariables()
@@ -31,8 +31,8 @@ void RegisterConsoleCrowdVariables()
 
     bIsRegistered = true;
 
-    static TArray<String> Names;
-    static TArray<String> HelpStrings;
+    static TArray<FString> Names;
+    static TArray<FString> HelpStrings;
 
     Names.Reserve(GNumConsoleCrowdVariables);
     HelpStrings.Reserve(GNumConsoleCrowdVariables);
@@ -45,8 +45,8 @@ void RegisterConsoleCrowdVariables()
         const CHAR_T* Subsystem = Subsystems[Index % static_cast<int32>(ARRAY_COUNT(Subsystems))];
         const CHAR_T* Setting   = Settings[Index % static_cast<int32>(ARRAY_COUNT(Settings))];
 
-        Names.Emplace(String::Printf("%s.%s.%s%d", GConsoleCrowdPrefix, Subsystem, Setting, Index));
-        HelpStrings.Emplace(String::Printf("Controls the %s %s of the %s subsystem", Setting, "behavior", Subsystem));
+        Names.Emplace(FString::Printf("%s.%s.%s%d", GConsoleCrowdPrefix, Subsystem, Setting, Index));
+        HelpStrings.Emplace(FString::Printf("Controls the %s %s of the %s subsystem", Setting, "behavior", Subsystem));
 
         const CHAR_T* Name = *Names.Last();
         const CHAR_T* Help = *HelpStrings.Last();

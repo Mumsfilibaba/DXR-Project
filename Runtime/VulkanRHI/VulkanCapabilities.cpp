@@ -8,7 +8,7 @@
 static FAutoConsoleCommand CCmdVulkanDumpRayTracingCapsCommand(
     "VulkanRHI.DumpRayTracingCaps",
     "Logs the backend-native Vulkan ray-tracing capability table (GVulkanSupports* RT globals)",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         DumpVulkanRayTracingCapabilities();
     }));
@@ -16,7 +16,7 @@ static FAutoConsoleCommand CCmdVulkanDumpRayTracingCapsCommand(
 static FAutoConsoleCommand CCmdVulkanDumpCapsCommand(
     "VulkanRHI.DumpCaps",
     "Logs the backend-native Vulkan capability table (GVulkan* globals) followed by the ray-tracing table",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         DumpVulkanCapabilities();
     }));

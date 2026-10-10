@@ -43,7 +43,7 @@ static float GetHierarchyRowHeight()
 
 static bool DoesActorMatchQuery(FActor* Actor, const CHAR_T* Query)
 {
-    const String& Name = Actor->GetName();
+    const FString& Name = Actor->GetName();
     if (!Name.IsEmpty() && CString::Stristr(*Name, Query))
     {
         return true;
@@ -579,7 +579,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
                 RenameBuffer.Fill(0);
                 RenameBufferOriginal.Fill(0);
         
-                const String& Name = PrimaryActorForMenu->GetName();
+                const FString& Name = PrimaryActorForMenu->GetName();
                 if (!Name.IsEmpty())
                 {
                     CString::Strncpy(RenameBuffer.Data(), *Name, RenameBuffer.Size());
@@ -759,7 +759,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
         RenameBuffer.Fill(0);
         RenameBufferOriginal.Fill(0);
 
-        const String& Name = InActor->GetName();
+        const FString& Name = InActor->GetName();
         if (!Name.IsEmpty())
         {
             CString::Strncpy(RenameBuffer.Data(), *Name, RenameBuffer.Size());
@@ -777,7 +777,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
     {
         if (RenamingActor)
         {
-            RenamingActor->SetName(String(RenameBuffer.Data()));
+            RenamingActor->SetName(FString(RenameBuffer.Data()));
             RenamingActor = nullptr;
         }
 
@@ -901,7 +901,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
         FActor* PayloadActor = Actor;
         ImGui::SetDragDropPayload(ActorDragDropPayloadId, &PayloadActor, sizeof(FActor*));
 
-        const String& DraggedName = Actor->GetName();
+        const FString& DraggedName = Actor->GetName();
         ImGui::TextUnformatted(DraggedName.IsEmpty() ? "Actor" : *DraggedName);
 
         const int32 OtherSelectedCount = bSelected ? (EditorEngine->GetSelectedActors().Size() - 1) : 0;
@@ -1088,7 +1088,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
         const CHAR_T* SearchText  = CachedQuery.Data();
         const ImU32   BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
 
-        const String& Name = Actor->GetName();
+        const FString& Name = Actor->GetName();
         const CHAR_T* NameText = Name.IsEmpty() ? "Actor" : *Name;
         EditorWidgets::DrawTextWithSearchHighlight(ImGui::GetWindowDrawList(), ImVec2(LabelStartX, NameTextY), NameText, SearchText, BaseTextU32, 1.0f, 1.0f, &RowMin, &RowMax);
 
@@ -1354,7 +1354,7 @@ void FEditorSceneHierarchyWidget::DrawFilterRow(FActorFilter* Filter, float Inde
 
     const auto CommitFilterRename = [this, Filter]()
     {
-        const String NewName(RenameBuffer.Data());
+        const FString NewName(RenameBuffer.Data());
         if (!NewName.IsEmpty())
         {
             Filter->SetName(NewName);
@@ -1776,7 +1776,7 @@ void FEditorSceneHierarchyWidget::BeginFilterRename(FActorFilter* Filter)
     RenameBuffer.Fill(0);
     RenameBufferOriginal.Fill(0);
 
-    const String& Name = Filter->GetName();
+    const FString& Name = Filter->GetName();
     if (!Name.IsEmpty())
     {
         CString::Strncpy(RenameBuffer.Data(), *Name, RenameBuffer.Size());
@@ -1949,10 +1949,10 @@ void FEditorSceneHierarchyWidget::ApplyPendingFilterOperations()
 
     if (bPendingFilterCreate)
     {
-        String Name("New Filter");
+        FString Name("New Filter");
         for (int32 Suffix = 1; World->FindActorFilter(Name, PendingCreateParent); Suffix++)
         {
-            Name = String::Printf("New Filter %d", Suffix);
+            Name = FString::Printf("New Filter %d", Suffix);
         }
 
         if (PendingCreateParent)

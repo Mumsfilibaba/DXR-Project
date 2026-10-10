@@ -12,7 +12,7 @@ struct FShaderManifestEntry
 class RENDERERCORE_API FShaderManifest
 {
 public:
-    NODISCARD static String GetFilePath();
+    NODISCARD static FString GetFilePath();
 
     bool Load();
     bool Save() const;

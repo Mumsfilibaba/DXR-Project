@@ -37,7 +37,7 @@ private:
     const FActor*               MaterialSelectionOwner;
     int32                       SelectedMaterialIndex;
     FImGuiTexture               MaterialTexturePreviews[EMaterialTextureSlot::Count];
-    TArray<String>              MaterialLabels;
+    TArray<FString>             MaterialLabels;
     TArray<const CHAR_T*>       MaterialLabelText;
     const FStaticMeshComponent* MaterialLabelOwner;
     int32                       MaterialLabelCount;

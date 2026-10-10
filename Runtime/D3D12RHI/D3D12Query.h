@@ -134,7 +134,7 @@ public:
     ~FD3D12QueryHeap();
 
     bool Initialize();
-    void SetDebugName(const String& InName);
+    void SetDebugName(const FString& InName);
 
     uint64 GetQuerySize() const
     {

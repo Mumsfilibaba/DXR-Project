@@ -107,7 +107,7 @@ public:
     virtual FRHIRayTracingPipelineState*       CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) override final;
 
     virtual FRHIShaderBindingTable*                    CreateShaderBindingTable(const FRHIShaderBindingTableDesc&) override final { return nullptr; }
-    virtual FRHIRayTracingShaderIdentifier             GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState*, const String&) override final { return FRHIRayTracingShaderIdentifier(); }
+    virtual FRHIRayTracingShaderIdentifier             GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState*, const FString&) override final { return FRHIRayTracingShaderIdentifier(); }
     virtual FRHIOpacityMicromap*                       CreateOpacityMicromap(const FRHIOpacityMicromapDesc&) override final { return nullptr; }
     virtual FRHIClusterAccelerationStructure*          CreateClusterAccelerationStructure(const FRHIClusterAccelerationStructureDesc&) override final { return nullptr; }
     virtual FRHIClusterTemplate*                       CreateClusterTemplate(const FRHIClusterTemplateDesc&) override final { return nullptr; }
@@ -132,7 +132,7 @@ public:
     virtual void* GetRHINativeComputeCommandQueue() override final;
     virtual void* GetRHINativeCopyCommandQueue()    override final;
 
-    virtual String GetAdapterName() const override final;
+    virtual FString GetAdapterName() const override final;
 
     virtual ERHIType GetRHIType() const override final;
 

@@ -43,7 +43,7 @@ DECLARE_DELEGATE(FOnHierarchyContextMenu, const TSharedPtr<FTreeItem>& /*Item*/,
 DECLARE_DELEGATE(FOnHierarchyDeleteRequested);
 
 /** @brief Called with the name an edit committed, which the host writes to the model. */
-DECLARE_DELEGATE(FOnHierarchyRenameCommitted, const TSharedPtr<FTreeItem>& /*Item*/, const String& /*NewName*/);
+DECLARE_DELEGATE(FOnHierarchyRenameCommitted, const TSharedPtr<FTreeItem>& /*Item*/, const FString& /*NewName*/);
 
 /** @brief Called with the dragged rows once they were dropped, whose target is null for the space below the rows. */
 DECLARE_DELEGATE(FOnHierarchyItemsDropped, const TArray<TSharedPtr<FTreeItem>>& /*Items*/, const TSharedPtr<FTreeItem>& /*TargetItem*/);
@@ -107,7 +107,7 @@ public:
 
 private:
     void Initialize(const TSharedPtr<FTreeView>& InTreeView, const TSharedPtr<IFontFace>& InFont);
-    void CommitRename(const String& NewName);
+    void CommitRename(const FString& NewName);
     void ReleaseRenameField();
     void HandleDrop(const FDragDropPayload& Payload, const IntVector2& ScreenPosition);
     void ClearDragState();
@@ -605,7 +605,7 @@ void FEditorSceneHierarchyView::BeginDrag(const TSharedPtr<FTreeItem>& Item, con
 
     FDragDropPayload Payload;
     Payload.TypeId      = GActorDragDropPayloadId;
-    Payload.DisplayText = DraggedItems.Size() > 1 ? String::Printf("%s +%d", Item->Label.Data(), DraggedItems.Size() - 1) : Item->Label;
+    Payload.DisplayText = DraggedItems.Size() > 1 ? FString::Printf("%s +%d", Item->Label.Data(), DraggedItems.Size() - 1) : Item->Label;
     Payload.UserData    = Item->UserData;
 
     bIsDragging         = true;
@@ -616,7 +616,7 @@ void FEditorSceneHierarchyView::BeginDrag(const TSharedPtr<FTreeItem>& Item, con
     FDragDropService::Get().BeginDrag(Payload, CursorEvent.GetScreenPosition());
 }
 
-void FEditorSceneHierarchyView::CommitRename(const String& NewName)
+void FEditorSceneHierarchyView::CommitRename(const FString& NewName)
 {
     const TSharedPtr<FTreeItem> Item = RenamedItem;
 
@@ -801,7 +801,7 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildRowContextMenu()
     RenameItem->SetEnabled(SelectedCount == 1 || bHasFilterOnly);
 
     FMenuItem::FDesc DeleteDesc;
-    DeleteDesc.Label        = SelectedCount > 1 ? String::Printf("Delete %d Actors", SelectedCount) : String("Delete");
+    DeleteDesc.Label        = SelectedCount > 1 ? FString::Printf("Delete %d Actors", SelectedCount) : FString("Delete");
     DeleteDesc.ShortcutText = "Del";
     DeleteDesc.Font         = Font;
     DeleteDesc.OnActivated  = FOnMenuItemActivated::CreateRaw(this, &FEditorSceneHierarchyPanel::OnDeleteRequested);
@@ -1003,14 +1003,14 @@ uint64 FEditorSceneHierarchyPanel::ComputeWorldRevision() const
     uint64 Revision = static_cast<uint64>(World->GetActors().Size());
     for (FActor* Actor : World->GetActors())
     {
-        Revision = Revision * 31 + THash<String>::GetHash(Actor->GetName());
+        Revision = Revision * 31 + THash<FString>::GetHash(Actor->GetName());
         Revision = Revision * 31 + reinterpret_cast<uint64>(Actor->GetParentActor());
         Revision = Revision * 31 + reinterpret_cast<uint64>(Actor->GetFilter());
     }
 
     for (FActorFilter* Filter : World->GetActorFilters())
     {
-        Revision = Revision * 31 + THash<String>::GetHash(Filter->GetName());
+        Revision = Revision * 31 + THash<FString>::GetHash(Filter->GetName());
         Revision = Revision * 31 + reinterpret_cast<uint64>(Filter->GetParentFilter());
     }
 
@@ -1062,7 +1062,7 @@ void FEditorSceneHierarchyPanel::RebuildTree()
     SyncSelectionFromEngine();
 }
 
-TSharedPtr<FTreeItem> FEditorSceneHierarchyPanel::CreateItem(const String& ItemLabel, FActor* Actor, FActorFilter* Filter)
+TSharedPtr<FTreeItem> FEditorSceneHierarchyPanel::CreateItem(const FString& ItemLabel, FActor* Actor, FActorFilter* Filter)
 {
     TSharedPtr<FHierarchyNode>& Node = Nodes.Emplace(new FHierarchyNode());
     Node->Actor  = Actor;
@@ -1222,7 +1222,7 @@ void FEditorSceneHierarchyPanel::OnTreeDragDetected(const TSharedPtr<FTreeItem>&
     HierarchyView->BeginDrag(Item, CursorEvent);
 }
 
-void FEditorSceneHierarchyPanel::OnSearchTextChanged(const String& SearchText)
+void FEditorSceneHierarchyPanel::OnSearchTextChanged(const FString& SearchText)
 {
     TreeView->SetFilterText(SearchText);
 }
@@ -1294,10 +1294,10 @@ void FEditorSceneHierarchyPanel::AddFilter(FActorFilter* ParentFilter)
         return;
     }
 
-    String Name("New Filter");
+    FString Name("New Filter");
     for (int32 Suffix = 1; World->FindActorFilter(Name, ParentFilter); ++Suffix)
     {
-        Name = String::Printf("New Filter %d", Suffix);
+        Name = FString::Printf("New Filter %d", Suffix);
     }
 
     if (!World->CreateActorFilter(Name, ParentFilter))
@@ -1319,7 +1319,7 @@ FActorFilter* FEditorSceneHierarchyPanel::GetContextFilter() const
     return Actor ? Actor->GetFilter() : nullptr;
 }
 
-void FEditorSceneHierarchyPanel::OnRenameCommitted(const TSharedPtr<FTreeItem>& Item, const String& NewName)
+void FEditorSceneHierarchyPanel::OnRenameCommitted(const TSharedPtr<FTreeItem>& Item, const FString& NewName)
 {
     if (NewName.IsEmpty())
     {

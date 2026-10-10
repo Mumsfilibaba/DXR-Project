@@ -255,7 +255,7 @@ void FWorld::RemoveActor(FActor* InActor)
 
 #if EDITOR_BUILD
 
-FActorFilter* FWorld::CreateActorFilter(const String& InName, FActorFilter* InParent)
+FActorFilter* FWorld::CreateActorFilter(const FString& InName, FActorFilter* InParent)
 {
     if (FActorFilter* ExistingFilter = FindActorFilter(InName, InParent))
     {
@@ -275,7 +275,7 @@ FActorFilter* FWorld::CreateActorFilter(const String& InName, FActorFilter* InPa
     return NewFilter;
 }
 
-FActorFilter* FWorld::FindActorFilter(const String& InName, FActorFilter* InParent) const
+FActorFilter* FWorld::FindActorFilter(const FString& InName, FActorFilter* InParent) const
 {
     const TArray<FActorFilter*>& SearchScope = InParent ? InParent->ChildFilters : ActorFilters;
 
@@ -367,14 +367,14 @@ void FWorld::SetCurrentFilter(FActorFilter* InFilter)
 
 #else
 
-FActorFilter* FWorld::CreateActorFilter(const String& InName, FActorFilter* InParent)
+FActorFilter* FWorld::CreateActorFilter(const FString& InName, FActorFilter* InParent)
 {
     UNREFERENCED_VARIABLE(InName);
     UNREFERENCED_VARIABLE(InParent);
     return nullptr;
 }
 
-FActorFilter* FWorld::FindActorFilter(const String& InName, FActorFilter* InParent) const
+FActorFilter* FWorld::FindActorFilter(const FString& InName, FActorFilter* InParent) const
 {
     UNREFERENCED_VARIABLE(InName);
     UNREFERENCED_VARIABLE(InParent);

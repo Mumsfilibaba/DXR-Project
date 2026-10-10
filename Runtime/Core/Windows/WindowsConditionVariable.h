@@ -40,7 +40,7 @@ public:
         const BOOL bResult = SleepConditionVariableCS(&ConditionVariable, CriticalSection, INFINITE);
         if (!bResult)
         {
-            String ErrorString;
+            FString ErrorString;
             FPlatformMisc::GetLastErrorString(ErrorString);
 
             LOG_ERROR("%s", *ErrorString);

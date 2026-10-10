@@ -20,9 +20,9 @@ enum class EShaderJobRecording : uint8
 struct FShaderBytecodeEntry
 {
     /** An FShaderCode container: header, reflection and native code */
-    TArray<uint8>  ShaderCode;
-    TArray<String> Dependencies;
-    uint64         DependencyHash = 0;
+    TArray<uint8>   ShaderCode;
+    TArray<FString> Dependencies;
+    uint64          DependencyHash = 0;
 };
 
 class SHADERCOMPILER_API FShaderBytecodeCache
@@ -42,17 +42,17 @@ public:
     }
 
     /** @brief Returns the cached container for CompileInfo, or compiles and caches it. Without a cache (tests, Playground) it only compiles. */
-    static bool CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutShaderCode, EShaderJobRecording Recording = EShaderJobRecording::Record);
+    static bool CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutShaderCode, EShaderJobRecording Recording = EShaderJobRecording::Record);
 
     /** @brief The tool writes to the path given with -output. Must be called before Initialize. */
-    static void SetFilePathOverride(const String& InFilePath);
+    static void SetFilePathOverride(const FString& InFilePath);
 
 public:
     NODISCARD bool Find(uint64 CompileHash, TArray<uint8>& OutShaderCode);
     NODISCARD bool Contains(uint64 CompileHash);
 
     /** @brief Ignores anything that is not a valid FShaderCode container */
-    void Add(uint64 CompileHash, const TArray<uint8>& ShaderCode, const TArray<String>& Dependencies);
+    void Add(uint64 CompileHash, const TArray<uint8>& ShaderCode, const TArray<FString>& Dependencies);
 
     /** @return The standalone compiles recorded this run, empty outside EDITOR_BUILD */
     NODISCARD TArray<FShaderCompileJob> GetRecordedJobs();
@@ -65,28 +65,28 @@ public:
     bool Save();
 
 private:
-    NODISCARD static String GetFilePath();
-    NODISCARD static String CreateAssetRelativePath(const String& Path);
+    NODISCARD static FString GetFilePath();
+    NODISCARD static FString CreateAssetRelativePath(const FString& Path);
 
     FShaderBytecodeCache();
     ~FShaderBytecodeCache();
 
-    NODISCARD bool TryGetFileHash(const String& RelativePath, uint64& OutHash);
-    NODISCARD bool TryComputeDependencyHash(const TArray<String>& Dependencies, uint64& OutHash);
+    NODISCARD bool TryGetFileHash(const FString& RelativePath, uint64& OutHash);
+    NODISCARD bool TryComputeDependencyHash(const TArray<FString>& Dependencies, uint64& OutHash);
 
     bool Load();
 
-    void RecordJob(const String& Filename, const FShaderCompileInfo& CompileInfo);
+    void RecordJob(const FString& Filename, const FShaderCompileInfo& CompileInfo);
 
     TMap<uint64, FShaderBytecodeEntry> Entries;
     FCriticalSection                   EntriesCS;
-    TMap<String, uint64>               FileHashes;
+    TMap<FString, uint64>              FileHashes;
     FCriticalSection                   FileHashesCS;
     bool                               bDirty;
     TArray<FShaderCompileJob>          RecordedJobs;
     TSet<uint64>                       RecordedJobKeys;
     FCriticalSection                   RecordedJobsCS;
 
-    static String                      FilePathOverride;
+    static FString                     FilePathOverride;
     static FShaderBytecodeCache*       BytecodeCache;
 };

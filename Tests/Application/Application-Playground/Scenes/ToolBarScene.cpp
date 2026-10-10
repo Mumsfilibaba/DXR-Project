@@ -12,7 +12,7 @@
 #include "PlaygroundScene.h"
 #include "ScenePanel.h"
 
-static TSharedPtr<FTextBlock> MakeReadout(const FPlaygroundFonts& Fonts, const String& InText)
+static TSharedPtr<FTextBlock> MakeReadout(const FPlaygroundFonts& Fonts, const FString& InText)
 {
     FTextBlock::FDesc Desc;
     Desc.Text            = InText;
@@ -22,13 +22,13 @@ static TSharedPtr<FTextBlock> MakeReadout(const FPlaygroundFonts& Fonts, const S
     return FTextBlock::Create(Desc);
 }
 
-static TSharedPtr<FMenuItem> MakeItem(const FPlaygroundFonts& Fonts, const String& Label, const TSharedPtr<FTextBlock>& Readout)
+static TSharedPtr<FMenuItem> MakeItem(const FPlaygroundFonts& Fonts, const FString& Label, const TSharedPtr<FTextBlock>& Readout)
 {
     FMenuItem::FDesc Desc;
     Desc.SetLabel(Label).SetFont(Fonts.Body);
     Desc.OnActivated = FOnMenuItemActivated::CreateLambda([Readout, Label]()
     {
-        Readout->SetText(String::Printf("chose %s", Label.Data()));
+        Readout->SetText(FString::Printf("chose %s", Label.Data()));
     });
 
     return FMenuItem::Create(Desc);
@@ -60,10 +60,10 @@ static TSharedPtr<FVisualElement> MakeMainToolBarRow(const FPlaygroundFonts& Fon
     for (const CHAR_T* Action : Actions)
     {
         ToolBar->AddButton(
-            FToolBarItemDesc().SetLabel(Action).SetToolTipText(String::Printf("%s the scene", Action)),
+            FToolBarItemDesc().SetLabel(Action).SetToolTipText(FString::Printf("%s the scene", Action)),
             FOnClicked::CreateLambda([Readout, Action]()
             {
-                Readout->SetText(String::Printf("pressed %s", Action));
+                Readout->SetText(FString::Printf("pressed %s", Action));
             }));
     }
 
@@ -73,11 +73,11 @@ static TSharedPtr<FVisualElement> MakeMainToolBarRow(const FPlaygroundFonts& Fon
     for (const CHAR_T* Toggle : Toggles)
     {
         ToolBar->AddToggle(
-            FToolBarItemDesc().SetLabel(Toggle).SetToolTipText(String::Printf("Show %s in the viewport", Toggle)),
+            FToolBarItemDesc().SetLabel(Toggle).SetToolTipText(FString::Printf("Show %s in the viewport", Toggle)),
             ECheckBoxState::Unchecked,
             FOnCheckStateChanged::CreateLambda([Readout, Toggle](ECheckBoxState NewState)
             {
-                Readout->SetText(String::Printf("%s is now %s", Toggle, NewState == ECheckBoxState::Checked ? "on" : "off"));
+                Readout->SetText(FString::Printf("%s is now %s", Toggle, NewState == ECheckBoxState::Checked ? "on" : "off"));
             }));
     }
 
@@ -106,7 +106,7 @@ static TSharedPtr<FVisualElement> MakeMainToolBarRow(const FPlaygroundFonts& Fon
     ComboDesc.OnSelectionChanged = FOnComboSelectionChanged::CreateLambda([Readout](int32 SelectedIndex)
     {
         const CHAR_T* Views[] = { "Perspective", "Top", "Front", "Side" };
-        Readout->SetText(String::Printf("camera is now %s", Views[Math::Clamp(SelectedIndex, 0, 3)]));
+        Readout->SetText(FString::Printf("camera is now %s", Views[Math::Clamp(SelectedIndex, 0, 3)]));
     });
 
     ToolBar->AddWidget(FComboBox::Create(ComboDesc));
@@ -133,7 +133,7 @@ static TSharedPtr<FVisualElement> MakeVerticalToolBarRow(const FPlaygroundFonts&
     for (const CHAR_T* ToolName : ToolNames)
     {
         TSharedPtr<FToolBarButton> Tool = ToolBar->AddToggle(
-            FToolBarItemDesc().SetLabel(ToolName).SetToolTipText(String::Printf("The %s tool", ToolName)),
+            FToolBarItemDesc().SetLabel(ToolName).SetToolTipText(FString::Printf("The %s tool", ToolName)),
             ECheckBoxState::Unchecked,
             FOnCheckStateChanged());
 
@@ -159,7 +159,7 @@ static TSharedPtr<FVisualElement> MakeVerticalToolBarRow(const FPlaygroundFonts&
                 }
             }
 
-            Readout->SetText(String::Printf("%s is the tool in force", LiveTool->GetLabel().Data()));
+            Readout->SetText(FString::Printf("%s is the tool in force", LiveTool->GetLabel().Data()));
         }));
     }
 

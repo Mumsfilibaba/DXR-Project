@@ -345,7 +345,7 @@ bool FWindowsWindow::IsChildWindow(const TSharedRef<IPlatformWindow>& ChildWindo
     }
 }
 
-void FWindowsWindow::SetTitle(const String& Title)
+void FWindowsWindow::SetTitle(const FString& Title)
 {
     if (IsValid())
     {
@@ -353,7 +353,7 @@ void FWindowsWindow::SetTitle(const String& Title)
     }
 }
 
-void FWindowsWindow::GetTitle(String& OutTitle) const
+void FWindowsWindow::GetTitle(FString& OutTitle) const
 {
     if (!IsValid())
     {
@@ -368,7 +368,7 @@ void FWindowsWindow::GetTitle(String& OutTitle) const
         return;
     }
 
-    WString WideTitle;
+    FWideString WideTitle;
     WideTitle.Resize(Size);
 
     const int32 Length = ::GetWindowTextW(Window, WideTitle.Data(), Size + 1);

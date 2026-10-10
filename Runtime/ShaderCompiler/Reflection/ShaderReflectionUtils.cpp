@@ -1,12 +1,12 @@
 #include "ShaderCore/ShaderBindingConventions.h"
 #include "ShaderCompiler/Reflection/ShaderReflectionUtils.h"
 
-bool FShaderReflectionUtils::AddBinding(const CHAR_T* Name, EShaderResourceType Type, EShaderResourceDimension Dimension, EShaderBindingSpace Space, uint32 Register, uint32 Count, bool bKeepName, FShaderReflection& OutReflection, String& OutErrors)
+bool FShaderReflectionUtils::AddBinding(const CHAR_T* Name, EShaderResourceType Type, EShaderResourceDimension Dimension, EShaderBindingSpace Space, uint32 Register, uint32 Count, bool bKeepName, FShaderReflection& OutReflection, FString& OutErrors)
 {
     const uint32 BindingCount = Count == 0 ? 1 : Count;
     if (Register > 0xFF || BindingCount > 0xFF)
     {
-        OutErrors += String::Printf("Shader Parameter '%s' at register %u with %u elements is outside the supported range (register and count at most 255)\n", Name, Register, BindingCount);
+        OutErrors += FString::Printf("Shader Parameter '%s' at register %u with %u elements is outside the supported range (register and count at most 255)\n", Name, Register, BindingCount);
         return false;
     }
 
@@ -31,25 +31,25 @@ bool FShaderReflectionUtils::AddBinding(const CHAR_T* Name, EShaderResourceType 
     return true;
 }
 
-bool FShaderReflectionUtils::SetShaderConstantsSize(const CHAR_T* Name, uint32 SizeInBytes, FShaderReflection& OutReflection, String& OutErrors)
+bool FShaderReflectionUtils::SetShaderConstantsSize(const CHAR_T* Name, uint32 SizeInBytes, FShaderReflection& OutReflection, FString& OutErrors)
 {
     constexpr uint32 MaxSizeInBytes = ShaderBindings::MaxShaderConstants * sizeof(uint32);
 
     if (OutReflection.Info.ShaderConstantsSize != 0)
     {
-        OutErrors += String::Printf("Shader Parameter '%s' declares a second block of shader constants, only one is supported per shader\n", Name);
+        OutErrors += FString::Printf("Shader Parameter '%s' declares a second block of shader constants, only one is supported per shader\n", Name);
         return false;
     }
 
     if (SizeInBytes == 0)
     {
-        OutErrors += String::Printf("Shader Parameter '%s' is a block of shader constants, but its size could not be retrieved from reflection\n", Name);
+        OutErrors += FString::Printf("Shader Parameter '%s' is a block of shader constants, but its size could not be retrieved from reflection\n", Name);
         return false;
     }
 
     if (SizeInBytes > MaxSizeInBytes)
     {
-        OutErrors += String::Printf("Shader Parameter '%s' is %u bytes, which exceeds the maximum of %u bytes of shader constants\n", Name, SizeInBytes, MaxSizeInBytes);
+        OutErrors += FString::Printf("Shader Parameter '%s' is %u bytes, which exceeds the maximum of %u bytes of shader constants\n", Name, SizeInBytes, MaxSizeInBytes);
         return false;
     }
 
@@ -57,7 +57,7 @@ bool FShaderReflectionUtils::SetShaderConstantsSize(const CHAR_T* Name, uint32 S
     return true;
 }
 
-bool FShaderReflectionUtils::SortAndValidateVertexInputs(TArray<FShaderVertexInput>& InOutVertexInputs, String& OutErrors)
+bool FShaderReflectionUtils::SortAndValidateVertexInputs(TArray<FShaderVertexInput>& InOutVertexInputs, FString& OutErrors)
 {
     // Insertion sort: a vertex shader has a handful of inputs
     for (int32 Index = 1; Index < InOutVertexInputs.Size(); ++Index)
@@ -80,7 +80,7 @@ bool FShaderReflectionUtils::SortAndValidateVertexInputs(TArray<FShaderVertexInp
         {
             if (InOutVertexInputs[Index].SemanticHash == InOutVertexInputs[Other].SemanticHash && InOutVertexInputs[Index].SemanticIndex == InOutVertexInputs[Other].SemanticIndex)
             {
-                OutErrors += String::Printf("The vertex inputs at locations %u and %u have the same semantic\n", InOutVertexInputs[Index].Location, InOutVertexInputs[Other].Location);
+                OutErrors += FString::Printf("The vertex inputs at locations %u and %u have the same semantic\n", InOutVertexInputs[Index].Location, InOutVertexInputs[Other].Location);
                 return false;
             }
         }

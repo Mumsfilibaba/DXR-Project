@@ -134,7 +134,7 @@ bool FJsonWriter::ShouldIndent() const
     return IsEnumFlagSet(Flags, EJsonWriteFlags::Indent);
 }
 
-void FJsonWriter::WriteNewLine(String& Output) const
+void FJsonWriter::WriteNewLine(FString& Output) const
 {
     if (ShouldIndent())
     {
@@ -142,7 +142,7 @@ void FJsonWriter::WriteNewLine(String& Output) const
     }
 }
 
-void FJsonWriter::WriteIndent(String& Output, int32 Depth) const
+void FJsonWriter::WriteIndent(FString& Output, int32 Depth) const
 {
     if (!ShouldIndent())
     {
@@ -156,20 +156,20 @@ void FJsonWriter::WriteIndent(String& Output, int32 Depth) const
     }
 }
 
-void FJsonWriter::Write(const FJsonValue& Value, String& Output) const
+void FJsonWriter::Write(const FJsonValue& Value, FString& Output) const
 {
     WriteValue(Value, Output, 0);
 }
 
-String FJsonWriter::ToString(const FJsonValue& Value) const
+FString FJsonWriter::ToString(const FJsonValue& Value) const
 {
-    String Output;
+    FString Output;
     WriteValue(Value, Output, 0);
     WriteNewLine(Output);
     return Output;
 }
 
-void FJsonWriter::WriteValue(const FJsonValue& Value, String& Output, int32 Depth) const
+void FJsonWriter::WriteValue(const FJsonValue& Value, FString& Output, int32 Depth) const
 {
     switch (Value.GetType())
     {
@@ -243,7 +243,7 @@ bool FJsonWriter::ShouldInlineArray(const FJsonValue& Value) const
     return true;
 }
 
-void FJsonWriter::WriteArray(const FJsonValue& Value, String& Output, int32 Depth) const
+void FJsonWriter::WriteArray(const FJsonValue& Value, FString& Output, int32 Depth) const
 {
     const int32 NumElements = Value.Num();
     if (NumElements == 0)
@@ -284,7 +284,7 @@ void FJsonWriter::WriteArray(const FJsonValue& Value, String& Output, int32 Dept
     Output.Append(']');
 }
 
-void FJsonWriter::WriteObject(const FJsonValue& Value, String& Output, int32 Depth) const
+void FJsonWriter::WriteObject(const FJsonValue& Value, FString& Output, int32 Depth) const
 {
     const int32 NumMembers = Value.NumMembers();
     if (NumMembers == 0)
@@ -320,7 +320,7 @@ void FJsonWriter::WriteObject(const FJsonValue& Value, String& Output, int32 Dep
     Output.Append('}');
 }
 
-void FJsonWriter::WriteEscapedString(const String& Value, String& Output)
+void FJsonWriter::WriteEscapedString(const FString& Value, FString& Output)
 {
     Output.Append('"');
 
@@ -356,14 +356,14 @@ void FJsonWriter::WriteEscapedString(const String& Value, String& Output)
     Output.Append('"');
 }
 
-void FJsonWriter::WriteInt64(int64 Value, String& Output)
+void FJsonWriter::WriteInt64(int64 Value, FString& Output)
 {
     CHAR_T Buffer[GNumberBufferSize];
     CString::Snprintf(Buffer, GNumberBufferSize, "%lld", Value);
     Output.Append(Buffer);
 }
 
-void FJsonWriter::WriteDouble(double Value, String& Output)
+void FJsonWriter::WriteDouble(double Value, FString& Output)
 {
     if (Math::IsNaN(Value) || Math::IsInfinity(Value))
     {

@@ -130,10 +130,10 @@ private:
     void SyncInputFromCommandLine();
 
     EKeyInterceptResult HandleInputKeyDown(const FKeyEvent& KeyEvent);
-    void HandleTextChanged(const String& NewText);
+    void HandleTextChanged(const FString& NewText);
 
     void AddLogLine(const FConsoleLogLine& Line);
-    void AddCandidateRow(const TPair<IConsoleObject*, String>& Candidate, bool bIsSelected, const FConsoleCandidateColumns& Columns);
+    void AddCandidateRow(const TPair<IConsoleObject*, FString>& Candidate, bool bIsSelected, const FConsoleCandidateColumns& Columns);
 
     NODISCARD int32 GetCandidateRowHeight() const;
     NODISCARD int32 GetInputFieldHeight() const;

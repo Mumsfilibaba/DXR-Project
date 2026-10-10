@@ -28,7 +28,7 @@ public:
     struct FDesc
     {
         /** @brief The title of the window. */
-        String Title;
+        FString Title;
 
         /** @brief Optional parent/owner window (used for owned popup/tool windows). */
         TSharedPtr<FWindow> ParentWindow = nullptr;
@@ -324,7 +324,7 @@ public:
      *
      * @param InTitle The new title for the window.
      */
-    void SetTitle(const String& InTitle);
+    void SetTitle(const FString& InTitle);
     
     /**
      * @brief Sets the window style flags, and the platform window's style with them.
@@ -379,7 +379,7 @@ public:
      * 
      * @return The title of the window.
      */
-    const String& GetTitle() const
+    const FString& GetTitle() const
     {
         return Title;
     }
@@ -460,7 +460,7 @@ private:
         FOnDeferredPaint           OnPaint;
     };
 
-    String                         Title;
+    FString                        Title;
     FOnWindowClosed                OnWindowClosedDelegate;
     FOnWindowMoved                 OnWindowMovedDelegate;
     FOnWindowResized               OnWindowResizedDelegate;

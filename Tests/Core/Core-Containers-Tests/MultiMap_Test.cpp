@@ -126,10 +126,10 @@ bool TMultiMap_Test()
 
     TEST_SECTION("String keys");
     {
-        TMultiMap<String, int32> Map;
-        Map.Add(String("a"), 1);
-        Map.Add(String("a"), 2);
-        TEST_EXPECT_EQ(Map.Count(String("a")), 2);
+        TMultiMap<FString, int32> Map;
+        Map.Add(FString("a"), 1);
+        Map.Add(FString("a"), 2);
+        TEST_EXPECT_EQ(Map.Count(FString("a")), 2);
     }
 
     TEST_SECTION("TMultiMap stress vs std::multimap");

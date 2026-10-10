@@ -11,8 +11,8 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 extern int32 EngineMain(const CHAR_T* Args[], int32 NumArgs);
 
-static String GMacCommandLine;
-static int32  GEngineMainResult = 0;
+static FString GMacCommandLine;
+static int32   GEngineMainResult = 0;
 
 @interface FCocoaAppDelegate : NSObject<NSApplicationDelegate>
 
@@ -66,7 +66,7 @@ static int32  GEngineMainResult = 0;
 
 static bool IsBoolEnabledAtLaunch(const CHAR_T* Section, const CHAR_T* Name)
 {
-    StringView CommandLineValue;
+    FStringView CommandLineValue;
     if (CommandLine::FindOption(Name, CommandLineValue))
     {
         if (CommandLineValue.IsEmpty())
@@ -75,7 +75,7 @@ static bool IsBoolEnabledAtLaunch(const CHAR_T* Section, const CHAR_T* Name)
         }
 
         bool bFromCommandLine = false;
-        if (TTypeFromString<bool>::FromString(String(CommandLineValue), bFromCommandLine))
+        if (TTypeFromString<bool>::FromString(FString(CommandLineValue), bFromCommandLine))
         {
             return bFromCommandLine;
         }
@@ -97,21 +97,21 @@ int main(int NumArgs, const CHAR_T** Args)
     for (int32 Index = 1; Index < NumArgs; Index++)
     {
         GMacCommandLine += " ";
-        String CurrentArg(Args[Index]);
+        FString CurrentArg(Args[Index]);
         
         if (CurrentArg.Contains(' '))
         {
             if (CurrentArg.Contains('='))
             {
-                String Argument;
-                String ArgumentValue;
+                FString Argument;
+                FString ArgumentValue;
                 CurrentArg.Split('=', Argument, ArgumentValue);
                 
-                CurrentArg = String::Printf("%s=\"%s\"", *Argument, *ArgumentValue);
+                CurrentArg = FString::Printf("%s=\"%s\"", *Argument, *ArgumentValue);
             }
             else
             {
-                CurrentArg = String::Printf("\"%s\"", *CurrentArg);
+                CurrentArg = FString::Printf("\"%s\"", *CurrentArg);
             }
         }
         

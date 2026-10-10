@@ -82,7 +82,7 @@ bool FD3D12Queue::Initialize()
         }
     }
 
-    D3D12SetDebugName(NewCommandQueue.Get(), String::Printf("CommandQueue %s", ToString(QueueType)));
+    D3D12SetDebugName(NewCommandQueue.Get(), FString::Printf("CommandQueue %s", ToString(QueueType)));
 
     D3D12_INFO("[FD3D12Device]: Created CommandQueue '%s'", ToString(QueueType));
     CommandQueue = NewCommandQueue;
@@ -93,7 +93,7 @@ bool FD3D12Queue::Initialize()
         return false;
     }
 
-    SubmissionFence->SetDebugName(String::Printf("SubmissionFence_%s", ToString(QueueType)));
+    SubmissionFence->SetDebugName(FString::Printf("SubmissionFence_%s", ToString(QueueType)));
     return true;
 }
 
@@ -108,7 +108,7 @@ FD3D12CommandList* FD3D12Queue::ObtainCommandList(FD3D12CommandAllocator* Comman
             return nullptr;
         }
 
-        NewCommandList->SetDebugName(String::Printf("%s CommandList %d", ToString(CommandListType), Index));
+        NewCommandList->SetDebugName(FString::Printf("%s CommandList %d", ToString(CommandListType), Index));
         return NewCommandList;
     });
 
@@ -138,7 +138,7 @@ FD3D12CommandAllocator* FD3D12Queue::ObtainAllocator()
             return nullptr;
         }
 
-        NewAllocator->SetDebugName(String::Printf("%s CommandAllocator %d", ToString(CommandListType), Index));
+        NewAllocator->SetDebugName(FString::Printf("%s CommandAllocator %d", ToString(CommandListType), Index));
         return NewAllocator;
     });
 }
@@ -478,7 +478,7 @@ void FD3D12Commands::PreExecute()
         }
 
     #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
-        String DebugName;
+        FString DebugName;
         Pending.Resource->GetDebugName(DebugName);
         D3D12_INFO(
             "[PendingFixup] Resource=%s Subresource=%u Global=%s(0x%X) Desired=%s(0x%X)",

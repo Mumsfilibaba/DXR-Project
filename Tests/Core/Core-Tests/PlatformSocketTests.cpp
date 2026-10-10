@@ -24,16 +24,16 @@ static bool WaitUntilReadable(IPlatformSocket* Socket, uint32 TimeoutMillisecond
     return (FPlatformSocket::WaitForRead(Sockets, 1, &bReadable, TimeoutMilliseconds) == 1) && bReadable;
 }
 
-static String ReceiveText(IPlatformSocket* Socket)
+static FString ReceiveText(IPlatformSocket* Socket)
 {
     CHAR_T Buffer[GReceiveBufferSize];
     int32 BytesRead = 0;
     if (!WaitUntilReadable(Socket, GWaitMilliseconds) || (Socket->Recv(Buffer, sizeof(Buffer), BytesRead) != ESocketResult::Success))
     {
-        return String();
+        return FString();
     }
 
-    return String(Buffer, BytesRead);
+    return FString(Buffer, BytesRead);
 }
 
 static bool SendText(IPlatformSocket* Socket, const CHAR_T* Text)
@@ -277,7 +277,7 @@ bool PlatformSocket_Test()
         int32 BytesRead = 0;
         FSocketAddress From;
         TEST_EXPECT_EQ(Receiver->RecvFrom(Buffer, sizeof(Buffer), BytesRead, From), ESocketResult::Success);
-        TEST_EXPECT(String(Buffer, BytesRead) == "hello");
+        TEST_EXPECT(FString(Buffer, BytesRead) == "hello");
         TEST_EXPECT(From == FSocketAddress::LoopbackIPv4(SenderPort));
     }
 
@@ -301,7 +301,7 @@ bool PlatformSocket_Test()
             int32 BytesRead = 0;
             FSocketAddress From;
             TEST_EXPECT_EQ(Receiver->RecvFrom(Buffer, sizeof(Buffer), BytesRead, From), ESocketResult::Success);
-            TEST_EXPECT(String(Buffer, BytesRead) == "four");
+            TEST_EXPECT(FString(Buffer, BytesRead) == "four");
             TEST_EXPECT(From.IsIPv4());
             TEST_EXPECT(From.IsLoopback());
         }
@@ -342,7 +342,7 @@ bool PlatformSocket_Test()
         FSocketAddress From;
         TEST_EXPECT_EQ(Receiver->RecvFrom(Small, GTruncatedReadSize, BytesRead, From), ESocketResult::Success);
         TEST_EXPECT_EQ(BytesRead, GTruncatedReadSize);
-        TEST_EXPECT(String(Small, BytesRead) == String(Large, GTruncatedReadSize));
+        TEST_EXPECT(FString(Small, BytesRead) == FString(Large, GTruncatedReadSize));
 
         TEST_EXPECT_EQ(Sender->SendTo(Large, 0, ReceiverAddress, BytesSent), ESocketResult::Success);
         TEST_CHECK(WaitUntilReadable(Receiver.Get(), GWaitMilliseconds));

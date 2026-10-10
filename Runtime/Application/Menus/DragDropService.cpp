@@ -106,7 +106,7 @@ void FDragDropService::CancelDrag()
     }
 }
 
-void FDragDropService::SetPreview(EDragDropPreviewState InState, const String& InStatusText)
+void FDragDropService::SetPreview(EDragDropPreviewState InState, const FString& InStatusText)
 {
     if (!IsDragging())
     {
@@ -188,10 +188,10 @@ void FDragDropService::DrawDragVisual(FDrawCommandList& OutCommandList, int32 La
     const bool  bHasIcon        = Payload.Icon.IsValid();
     const int32 SourceIconSize  = bHasIcon ? Math::Max(Payload.IconSize, DragVisualIconSize) : 0;
     const int32 IconExtent      = bHasIcon ? SourceIconSize + DragVisualPadding : 0;
-    const int32 TextWidth       = Font ? Font->MeasureWidth(StringView(Payload.DisplayText.Data(), Payload.DisplayText.Length())) : 0;
+    const int32 TextWidth       = Font ? Font->MeasureWidth(FStringView(Payload.DisplayText.Data(), Payload.DisplayText.Length())) : 0;
     const int32 TextHeight      = Font ? Font->GetLineHeight() : DragVisualIconSize;
 
-    const int32 StatusWidth  = (Font && !Payload.StatusText.IsEmpty()) ? Font->MeasureWidth(StringView(Payload.StatusText.Data(), Payload.StatusText.Length())) : 0;
+    const int32 StatusWidth  = (Font && !Payload.StatusText.IsEmpty()) ? Font->MeasureWidth(FStringView(Payload.StatusText.Data(), Payload.StatusText.Length())) : 0;
     const int32 StatusHeight = (Font && !Payload.StatusText.IsEmpty()) ? Font->GetLineHeight() : 0;
     const FUIBrush& StatusIcon = Payload.PreviewState == EDragDropPreviewState::Forbidden
         ? Payload.ForbiddenStatusIcon
@@ -235,8 +235,8 @@ void FDragDropService::DrawDragVisual(FDrawCommandList& OutCommandList, int32 La
 
         if (Payload.SelectionCount > 1 && Font)
         {
-            const String CountText = String::Printf("+%d", Payload.SelectionCount - 1);
-            const int32  CountWidth = Font->MeasureWidth(StringView(CountText.Data(), CountText.Length()));
+            const FString CountText = FString::Printf("+%d", Payload.SelectionCount - 1);
+            const int32   CountWidth = Font->MeasureWidth(FStringView(CountText.Data(), CountText.Length()));
 
             FRectangle BadgeBounds;
             BadgeBounds.Width      = CountWidth + (DragVisualPadding * 2);

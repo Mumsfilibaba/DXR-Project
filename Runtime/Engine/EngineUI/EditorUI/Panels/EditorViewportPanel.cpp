@@ -531,7 +531,7 @@ int32 FEditorViewportPanel::ComputeViewButtonWidth() const
     int32 WidestLabel = 0;
     for (const FDebugViewEntry& Entry : DEBUG_VIEW_ENTRIES)
     {
-        WidestLabel = Math::Max(WidestLabel, Font->MeasureWidth(StringView(Entry.Label)));
+        WidestLabel = Math::Max(WidestLabel, Font->MeasureWidth(FStringView(Entry.Label)));
     }
 
     return Math::Min(WidestLabel + VIEW_BUTTON_LABEL_OVERHEAD, VIEW_BUTTON_MAX_WIDTH);
@@ -613,7 +613,7 @@ void FEditorViewportPanel::TogglePlay()
 
 TSharedPtr<FComboBox> FEditorViewportPanel::BuildSecondaryDebugViewCombo()
 {
-    TArray<String> Options;
+    TArray<FString> Options;
     Options.Reserve(NUM_DEBUG_VIEW_ENTRIES);
 
     for (const FDebugViewEntry& Entry : DEBUG_VIEW_ENTRIES)
@@ -674,7 +674,7 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildCameraMenu()
         TSharedPtr<FBorder> CaptionColumn = FBorder::Create(CaptionColumnDesc);
 
         CaptionColumns.Add(CaptionColumn);
-        CaptionColumnWidth = Math::Max(CaptionColumnWidth, Font->MeasureWidth(StringView(RowLabel)));
+        CaptionColumnWidth = Math::Max(CaptionColumnWidth, Font->MeasureWidth(FStringView(RowLabel)));
 
         TSharedPtr<FHorizontalBox> Row = FHorizontalBox::Create();
         Row->AddSlot(CaptionColumn)

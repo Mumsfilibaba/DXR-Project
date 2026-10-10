@@ -50,7 +50,7 @@ static void ReportImageLayoutDesync(FVulkanTextureRHI* Texture, const CHAR_T* Ph
     UNREFERENCED_VARIABLE(CommandBufferLayout);
     UNREFERENCED_VARIABLE(TrackedLayout);
 
-    String TextureName;
+    FString TextureName;
     Texture->GetDebugName(TextureName);
 
     VULKAN_ERROR("Image layout desync (%s) on '%s' recorded by %s: the submission says %s but the tracker says %s",

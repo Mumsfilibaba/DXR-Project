@@ -28,7 +28,7 @@ static TAutoConsoleVariable<bool> CVarSaveManifest(
 static FAutoConsoleCommand CCmdRecompileShaders(
     "Renderer.RecompileShaders",
     "Drops every compiled shader and the pipelines built from them, so the next frame recompiles",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         if (FShaderCache* Cache = FShaderCache::TryGet())
         {
@@ -36,14 +36,14 @@ static FAutoConsoleCommand CCmdRecompileShaders(
         }
     }));
 
-static void CompileAllShaders(StringView Arguments);
+static void CompileAllShaders(FStringView Arguments);
 
 static FAutoConsoleCommand CCmdCompileAllShaders(
     "Shaders.CompileAll",
     "Compiles every registered shader type and permutation for an RHI (Null, D3D11, D3D12, Vulkan or Metal, defaults to the active one) and logs the failures",
     FConsoleCommandDelegate::CreateStatic(&CompileAllShaders));
 
-static bool ParseRHIType(StringView Text, ERHIType& OutRHIType)
+static bool ParseRHIType(FStringView Text, ERHIType& OutRHIType)
 {
     constexpr ERHIType RHITypes[] =
     {
@@ -54,7 +54,7 @@ static bool ParseRHIType(StringView Text, ERHIType& OutRHIType)
         ERHIType::Metal,
     };
 
-    const String Name(Text);
+    const FString Name(Text);
     for (ERHIType RHIType : RHITypes)
     {
         if (Name.Equals(ToString(RHIType), EStringCaseType::NoCase))
@@ -68,7 +68,7 @@ static bool ParseRHIType(StringView Text, ERHIType& OutRHIType)
 }
 
 #if EDITOR_BUILD
-static void SaveShaderJobFile(StringView /* Arguments */)
+static void SaveShaderJobFile(FStringView /* Arguments */)
 {
     if (FShaderCache* Cache = FShaderCache::TryGet())
     {
@@ -104,15 +104,15 @@ FShaderPermutationDesc FShaderCache::CreateTargetPermutationDesc(ERHIType Target
     return Desc;
 }
 
-static void CompileAllShaders(StringView Arguments)
+static void CompileAllShaders(FStringView Arguments)
 {
-    StringView TargetName = Arguments;
+    FStringView TargetName = Arguments;
     TargetName.TrimInline();
 
     ERHIType TargetRHI = RHI::IsInitialized() ? RHI::Device->GetRHIType() : ERHIType::Unknown;
     if (!TargetName.IsEmpty() && !ParseRHIType(TargetName, TargetRHI))
     {
-        LOG_ERROR("Shaders.CompileAll: Unknown RHI '%s'", *String(TargetName));
+        LOG_ERROR("Shaders.CompileAll: Unknown RHI '%s'", *FString(TargetName));
         return;
     }
 
@@ -298,10 +298,10 @@ void FShaderCache::SaveJobFile()
         ERHIType::Metal,
     };
 
-    const String FilePath = FShaderJobFile::GetDefaultFilePath();
+    const FString FilePath = FShaderJobFile::GetDefaultFilePath();
 
     FShaderJobFile JobFile;
-    String         LoadError;
+    FString        LoadError;
 
     if (!JobFile.Load(FilePath, LoadError))
     {
@@ -335,7 +335,7 @@ void FShaderCache::SaveJobFile()
                     const FShaderCompileInfo CompileInfo(Type->GetEntryPoint(), Environment.ShaderModel, Type->GetStage(), OutputLanguage, Environment.Defines);
 
                     FShaderCompileJob Job = FShaderCompileJob::FromCompileInfo(Type->GetSourceFile(), CompileInfo);
-                    Job.Name = String::Printf("%s#%d", Type->GetName(), PermutationID);
+                    Job.Name = FString::Printf("%s#%d", Type->GetName(), PermutationID);
                     NumAdded += JobFile.Add(ToString(TargetRHI), ::Move(Job)) ? 1 : 0;
                 }
             }

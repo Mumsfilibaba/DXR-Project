@@ -50,7 +50,7 @@ struct ENGINE_API FMeshData
 
     TArray<uint16> GetSmallIndices() const;
 
-    String                Name;
+    FString               Name;
     TArray<FSubMesh>      SubMeshes;
     TArray<uint32>        Indices;
     TArray<FSourceVertex> Vertices;

@@ -17,10 +17,10 @@ struct FPathParts
      * @brief "/", or empty for a relative path. On Windows also "C:/", "//" for a UNC path, or "C:" for a path relative
      * to the current directory of a drive.
      */
-    String Root;
+    FString Root;
 
     /** @brief The directory and file names after the root, with "." removed and ".." resolved where possible */
-    TArray<String> Segments;
+    TArray<FString> Segments;
 };
 
 static int32 GetRemainingBytes(IPlatformFile* InFile)
@@ -42,7 +42,7 @@ static bool IsDriveLetter(CHAR_T Char)
 }
 #endif
 
-static int32 FindLastSeparator(const String& Path)
+static int32 FindLastSeparator(const FString& Path)
 {
     for (int32 Index = Path.Length() - 1; Index >= 0; --Index)
     {
@@ -52,10 +52,10 @@ static int32 FindLastSeparator(const String& Path)
         }
     }
 
-    return String::InvalidIndex;
+    return FString::InvalidIndex;
 }
 
-static int32 ParseRoot(const String& Path, String& OutRoot)
+static int32 ParseRoot(const FString& Path, FString& OutRoot)
 {
     const int32 Length = Path.Length();
 
@@ -68,7 +68,7 @@ static int32 ParseRoot(const String& Path, String& OutRoot)
 
     if ((Length >= 2) && (Path[1] == ':') && IsDriveLetter(Path[0]))
     {
-        OutRoot = String(*Path, 2);
+        OutRoot = FString(*Path, 2);
 
         if ((Length >= 3) && IsSeparator(Path[2]))
         {
@@ -90,7 +90,7 @@ static int32 ParseRoot(const String& Path, String& OutRoot)
     return 0;
 }
 
-static FPathParts SplitPath(const String& Path)
+static FPathParts SplitPath(const FString& Path)
 {
     FPathParts Parts;
 
@@ -100,7 +100,7 @@ static FPathParts SplitPath(const String& Path)
     // Nothing is above an absolute root, while a relative path is allowed to climb above where it starts
     const bool bIsAbsolute = Parts.Root.EndsWith("/");
 
-    String Segment;
+    FString Segment;
     for (int32 Index = Start; Index <= Length; ++Index)
     {
         if ((Index < Length) && !IsSeparator(Path[Index]))
@@ -132,10 +132,10 @@ static FPathParts SplitPath(const String& Path)
 }
 
 static bool CopyDirectoryContents(
-    const String&                                           Directory,
-    const String&                                           Destination,
-    bool                                                    bReplaceExisting,
-    TFunction<bool(const String& Path, bool bIsDirectory)>& Filter)
+    const FString&                                           Directory,
+    const FString&                                           Destination,
+    bool                                                     bReplaceExisting,
+    TFunction<bool(const FString& Path, bool bIsDirectory)>& Filter)
 {
     TArray<FDirectoryEntry> Entries;
     if (!FPlatformFile::IterateDirectory(*Directory, Entries) || !File::CreateDirectoryTree(Destination))
@@ -150,13 +150,13 @@ static bool CopyDirectoryContents(
             continue;
         }
 
-        const String Source = File::CombinePath(Directory, Entry.Name);
+        const FString Source = File::CombinePath(Directory, Entry.Name);
         if (Filter.IsValid() && !Filter(Source, Entry.bIsDirectory))
         {
             continue;
         }
 
-        const String Target = File::CombinePath(Destination, Entry.Name);
+        const FString Target = File::CombinePath(Destination, Entry.Name);
         if (Entry.bIsDirectory)
         {
             if (!CopyDirectoryContents(Source, Target, bReplaceExisting, Filter))
@@ -173,14 +173,14 @@ static bool CopyDirectoryContents(
     return true;
 }
 
-static String JoinPath(const FPathParts& Parts)
+static FString JoinPath(const FPathParts& Parts)
 {
     if (Parts.Segments.IsEmpty())
     {
-        return Parts.Root.IsEmpty() ? String(".") : Parts.Root;
+        return Parts.Root.IsEmpty() ? FString(".") : Parts.Root;
     }
 
-    String Result = Parts.Root;
+    FString Result = Parts.Root;
     for (int32 Index = 0; Index < Parts.Segments.Size(); ++Index)
     {
         if (Index > 0)
@@ -297,35 +297,35 @@ bool File::WriteTextFile(IPlatformFile* InFile, const CHAR_T* Text, int32 Length
     return InFile->Write(reinterpret_cast<const uint8*>(Bytes), static_cast<uint32>(NumBytes)) == NumBytes;
 }
 
-String File::GetDirectoryOf(const String& Filepath)
+FString File::GetDirectoryOf(const FString& Filepath)
 {
     const int32 LastSeparator = FindLastSeparator(Filepath);
-    return (LastSeparator == String::InvalidIndex) ? String() : String(*Filepath, LastSeparator);
+    return (LastSeparator == FString::InvalidIndex) ? FString() : FString(*Filepath, LastSeparator);
 }
 
-String File::ExtractFilename(const String& Filepath)
+FString File::ExtractFilename(const FString& Filepath)
 {
     const int32 Start = FindLastSeparator(Filepath) + 1;
-    return String(*Filepath + Start, Filepath.Length() - Start);
+    return FString(*Filepath + Start, Filepath.Length() - Start);
 }
     
-String File::ExtractFilenameWithoutExtension(const String& Filepath)
+FString File::ExtractFilenameWithoutExtension(const FString& Filepath)
 {
-    const String Filename = ExtractFilename(Filepath);
-    const int32  Dot      = Filename.FindLastChar('.');
+    const FString Filename = ExtractFilename(Filepath);
+    const int32   Dot      = Filename.FindLastChar('.');
 
-    if ((Dot == String::InvalidIndex) || (Dot == 0))
+    if ((Dot == FString::InvalidIndex) || (Dot == 0))
     {
         return Filename;
     }
 
-    return String(*Filename, Dot);
+    return FString(*Filename, Dot);
 }
 
-bool File::CreateDirectoryTree(const String& Path)
+bool File::CreateDirectoryTree(const FString& Path)
 {
     // Walk the path and create each intermediate directory in turn (like 'mkdir -p').
-    String Prefix;
+    FString Prefix;
     for (const CHAR_T* It = *Path; ; ++It)
     {
         if (*It == '/' || *It == '\\' || *It == '\0')
@@ -352,7 +352,7 @@ bool File::CreateDirectoryTree(const String& Path)
     return true;
 }
 
-bool File::DeleteDirectoryTree(const String& Directory)
+bool File::DeleteDirectoryTree(const FString& Directory)
 {
     TArray<FDirectoryEntry> Entries;
     if (!FPlatformFile::IterateDirectory(*Directory, Entries))
@@ -362,7 +362,7 @@ bool File::DeleteDirectoryTree(const String& Directory)
 
     for (const FDirectoryEntry& Entry : Entries)
     {
-        const String Child = CombinePath(Directory, Entry.Name);
+        const FString Child = CombinePath(Directory, Entry.Name);
         if (Entry.bIsSymbolicLink)
         {
             if (!FPlatformFile::DeleteFile(*Child) && !FPlatformFile::RemoveDirectory(*Child))
@@ -387,10 +387,10 @@ bool File::DeleteDirectoryTree(const String& Directory)
 }
 
 bool File::CopyDirectoryTree(
-    const String&                                          Directory,
-    const String&                                          Destination,
-    bool                                                   bReplaceExisting,
-    TFunction<bool(const String& Path, bool bIsDirectory)> Filter)
+    const FString&                                          Directory,
+    const FString&                                          Destination,
+    bool                                                    bReplaceExisting,
+    TFunction<bool(const FString& Path, bool bIsDirectory)> Filter)
 {
     if (IsUnderDirectory(Destination, Directory))
     {
@@ -401,19 +401,19 @@ bool File::CopyDirectoryTree(
     return CopyDirectoryContents(Directory, Destination, bReplaceExisting, Filter);
 }
 
-String File::ExtractExtension(const String& Filepath)
+FString File::ExtractExtension(const FString& Filepath)
 {
-    const String Filename = ExtractFilename(Filepath);
-    const int32  Dot      = Filename.FindLastChar('.');
-    if ((Dot == String::InvalidIndex) || (Dot == 0))
+    const FString Filename = ExtractFilename(Filepath);
+    const int32   Dot      = Filename.FindLastChar('.');
+    if ((Dot == FString::InvalidIndex) || (Dot == 0))
     {
-        return String();
+        return FString();
     }
 
-    return String(*Filename + Dot, Filename.Length() - Dot);
+    return FString(*Filename + Dot, Filename.Length() - Dot);
 }
 
-String File::CombinePath(const String& Left, const String& Right)
+FString File::CombinePath(const FString& Left, const FString& Right)
 {
     if (Left.IsEmpty())
     {
@@ -429,7 +429,7 @@ String File::CombinePath(const String& Left, const String& Right)
 
     if (bLeftSlash && bRightSlash)
     {
-        return Left + String(*Right + 1);
+        return Left + FString(*Right + 1);
     }
     if (!bLeftSlash && !bRightSlash)
     {
@@ -439,7 +439,7 @@ String File::CombinePath(const String& Left, const String& Right)
     return Left + Right;
 }
 
-bool File::IterateDirectoryTree(const String& Directory, TFunction<bool(const String& Path, bool bIsDirectory)> Visitor)
+bool File::IterateDirectoryTree(const FString& Directory, TFunction<bool(const FString& Path, bool bIsDirectory)> Visitor)
 {
     TArray<FDirectoryEntry> Entries;
     if (!FPlatformFile::IterateDirectory(*Directory, Entries))
@@ -449,7 +449,7 @@ bool File::IterateDirectoryTree(const String& Directory, TFunction<bool(const St
 
     for (const FDirectoryEntry& Entry : Entries)
     {
-        const String Child = CombinePath(Directory, Entry.Name);
+        const FString Child = CombinePath(Directory, Entry.Name);
         if (!Visitor(Child, Entry.bIsDirectory))
         {
             if (Entry.bIsDirectory)
@@ -469,17 +469,17 @@ bool File::IterateDirectoryTree(const String& Directory, TFunction<bool(const St
     return true;
 }
 
-String File::NormalizePath(const String& Path)
+FString File::NormalizePath(const FString& Path)
 {
     if (Path.IsEmpty())
     {
-        return String();
+        return FString();
     }
 
     return JoinPath(SplitPath(Path));
 }
 
-String File::MakeAbsolute(const String& Path)
+FString File::MakeAbsolute(const FString& Path)
 {
     const FPathParts Parts = SplitPath(Path);
     if (Parts.Root.EndsWith("/"))
@@ -490,7 +490,7 @@ String File::MakeAbsolute(const String& Path)
     return NormalizePath(CombinePath(FPlatformFile::GetCurrentWorkingDirectory(), Path));
 }
 
-String File::MakeRelative(const String& Path, const String& BaseDirectory)
+FString File::MakeRelative(const FString& Path, const FString& BaseDirectory)
 {
     const FPathParts PathParts = SplitPath(MakeAbsolute(Path));
     const FPathParts BaseParts = SplitPath(MakeAbsolute(BaseDirectory));
@@ -514,7 +514,7 @@ String File::MakeRelative(const String& Path, const String& BaseDirectory)
     FPathParts Relative;
     for (int32 Index = NumShared; Index < BaseParts.Segments.Size(); ++Index)
     {
-        Relative.Segments.Add(String(".."));
+        Relative.Segments.Add(FString(".."));
     }
 
     for (int32 Index = NumShared; Index < PathParts.Segments.Size(); ++Index)
@@ -525,7 +525,7 @@ String File::MakeRelative(const String& Path, const String& BaseDirectory)
     return JoinPath(Relative);
 }
 
-bool File::IsUnderDirectory(const String& Path, const String& Directory)
+bool File::IsUnderDirectory(const FString& Path, const FString& Directory)
 {
     const FPathParts PathParts      = SplitPath(MakeAbsolute(Path));
     const FPathParts DirectoryParts = SplitPath(MakeAbsolute(Directory));

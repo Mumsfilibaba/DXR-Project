@@ -12,7 +12,7 @@ struct TJsonSerializer<FGuid>
 
     static bool Load(const FJsonValue& InValue, FGuid& OutValue, FJsonArchive& Archive)
     {
-        String Text;
+        FString Text;
         if (!InValue.TryGetString(Text))
         {
             Archive.AddTypeError(InValue, "a GUID string");

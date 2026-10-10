@@ -46,12 +46,12 @@ struct FJsonError
     }
 
     // Formats as "line 3, column 12: expected ':'"
-    NODISCARD CORE_API String ToString() const;
+    NODISCARD CORE_API FString ToString() const;
 
-    int32  Line;
-    int32  Column;
-    int32  Offset;
-    String Message;
+    int32   Line;
+    int32   Column;
+    int32   Offset;
+    FString Message;
 };
 
 // Nesting past this many arrays/objects is rejected rather than risking the stack

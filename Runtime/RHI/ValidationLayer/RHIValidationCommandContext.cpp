@@ -2235,7 +2235,7 @@ bool FRHIValidationCommandContext::ValidateTransitionBarrierDesc(const FRHITrans
 
         if (!Device->IsLiveResource(Buffer))
         {
-            const String Destroyed = Device->DescribeDestroyedResource(Buffer);
+            const FString Destroyed = Device->DescribeDestroyedResource(Buffer);
 
             RHI_VALIDATION_ERROR("TransitionBarrier names a buffer at %p that the device no longer holds (%s), so it was "
                 "destroyed while this command list still referenced it. A command list stores a resource without taking a "
@@ -2955,7 +2955,7 @@ void FRHIValidationCommandContext::Flush()
     CommandContext->Flush();
 }
 
-void FRHIValidationCommandContext::PushEvent(const StringView& Name)
+void FRHIValidationCommandContext::PushEvent(const FStringView& Name)
 {
     CommandContext->PushEvent(Name);
 }

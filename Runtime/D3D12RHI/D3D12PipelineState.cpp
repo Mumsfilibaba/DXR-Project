@@ -10,7 +10,7 @@
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12RHI.h"
 
-static TAutoConsoleVariable<String> CVarPipelineCacheFileName(
+static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "D3D12RHI.PipelineCacheFileName",
     "FileName for the file storing the PipelineCache",
     "PipelineCache.d3d12psocache");
@@ -38,9 +38,9 @@ FD3D12InputLayoutRHI::FD3D12InputLayoutRHI(const TArray<FRHIInputElementDesc>& I
         D3D12_INPUT_ELEMENT_DESC InputElementDesc;
         Memory::Memzero(&InputElementDesc, sizeof(D3D12_INPUT_ELEMENT_DESC));
 
-        const String& Semantic = SemanticNames.Emplace(Element.Semantic);
+        const FString& Semantic = SemanticNames.Emplace(Element.Semantic);
         InputElementDesc.SemanticName = *Semantic;
-        HashCombine(CalculatedHash, THash<String>::GetHash(Semantic));
+        HashCombine(CalculatedHash, THash<FString>::GetHash(Semantic));
 
         InputElementDesc.SemanticIndex = Element.SemanticIndex;
         HashCombine(CalculatedHash, InputElementDesc.SemanticIndex);
@@ -241,7 +241,7 @@ void FD3D12EffectiveDescriptorCounts::ComputeEffectiveDescriptorCounts(const FD3
     }
 }
 
-void FD3D12PipelineState::SetDebugName(const String& InName)
+void FD3D12PipelineState::SetDebugName(const FString& InName)
 {
     D3D12SetDebugName(PipelineState.Get(), InName);
     DebugName = InName;
@@ -259,12 +259,12 @@ FD3D12GraphicsPipelineStateRHI::~FD3D12GraphicsPipelineStateRHI()
 {
 }
 
-void FD3D12GraphicsPipelineStateRHI::SetDebugName(const String& InName)
+void FD3D12GraphicsPipelineStateRHI::SetDebugName(const FString& InName)
 {
     FD3D12PipelineState::SetDebugName(InName);
 }
 
-void FD3D12GraphicsPipelineStateRHI::GetDebugName(String& OutDebugName) const
+void FD3D12GraphicsPipelineStateRHI::GetDebugName(FString& OutDebugName) const
 {
     OutDebugName = DebugName;
 }
@@ -813,12 +813,12 @@ FD3D12ComputePipelineStateRHI::~FD3D12ComputePipelineStateRHI()
 {
 }
 
-void FD3D12ComputePipelineStateRHI::SetDebugName(const String& InName)
+void FD3D12ComputePipelineStateRHI::SetDebugName(const FString& InName)
 {
     FD3D12PipelineState::SetDebugName(InName);
 }
 
-void FD3D12ComputePipelineStateRHI::GetDebugName(String& OutDebugName) const
+void FD3D12ComputePipelineStateRHI::GetDebugName(FString& OutDebugName) const
 {
     OutDebugName = DebugName;
 }
@@ -986,12 +986,12 @@ FD3D12MeshletPipelineStateRHI::~FD3D12MeshletPipelineStateRHI()
 {
 }
 
-void FD3D12MeshletPipelineStateRHI::SetDebugName(const String& InName)
+void FD3D12MeshletPipelineStateRHI::SetDebugName(const FString& InName)
 {
     FD3D12PipelineState::SetDebugName(InName);
 }
 
-void FD3D12MeshletPipelineStateRHI::GetDebugName(String& OutDebugName) const
+void FD3D12MeshletPipelineStateRHI::GetDebugName(FString& OutDebugName) const
 {
     OutDebugName = DebugName;
 }
@@ -1598,8 +1598,8 @@ bool FD3D12PipelineStateManager::SaveCacheData()
         return true;
     }
 
-    const String PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const String PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
+    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
 
     TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForWrite(PipelineCacheFilepath);
     if (!CacheFile)
@@ -1668,8 +1668,8 @@ void FD3D12PipelineStateManager::SaveCacheDataAsync()
         return;
     }
 
-    const String PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const String PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
+    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
 
     TSharedPtr<uint8[]> SerializedData;
     SIZE_T SerializedSize = 0;
@@ -1716,8 +1716,8 @@ void FD3D12PipelineStateManager::SaveCacheDataAsync()
 
 bool FD3D12PipelineStateManager::LoadCacheFromFile()
 {
-    const String PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const String PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
+    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
 
     if (!FPlatformFile::IsFile(*PipelineCacheFilepath))
     {

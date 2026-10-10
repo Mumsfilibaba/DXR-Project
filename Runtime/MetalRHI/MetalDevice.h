@@ -24,7 +24,7 @@ class FMetalBindlessDescriptorManager;
 
 struct FMetalDeviceProperties
 {
-    String                 Name;
+    FString                Name;
     uint64                 RegistryID;
     uint64                 RecommendedMaxWorkingSetSize;
     uint64                 MaxBufferLength;

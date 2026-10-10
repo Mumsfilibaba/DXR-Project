@@ -167,13 +167,13 @@ void FEditorFooterWidget::Draw()
             {
                 if (SelectedCandidateIndex >= 0 && !Candidates.IsEmpty())
                 {
-                    const String& NewText = Candidates[SelectedCandidateIndex].Second;
+                    const FString& NewText = Candidates[SelectedCandidateIndex].Second;
                     CString::Strncpy(TextBuffer.Data(), *NewText, Math::Min(TextBuffer.Size(), NewText.Size()));
                     bUpdateCursorPosition = true;
                 }
                 else
                 {
-                    const String Command(TextBuffer.Data());
+                    const FString Command(TextBuffer.Data());
                     FConsoleManager::Get().ExecuteCommand(*OutputDevice, Command);
 
                     TextBuffer[0]   = 0;
@@ -221,7 +221,7 @@ void FEditorFooterWidget::Draw()
         const float  TotalHeight    = RowHeight * MaxVisibleRows;
         const ImVec2 WindowPadding  = ImVec2(10.0f * Scale, 4.0f * Scale);
 
-        Candidates.Foreach([&](const TPair<IConsoleObject*, String>& Candidate)
+        Candidates.Foreach([&](const TPair<IConsoleObject*, FString>& Candidate)
         {
             OverlayMaxNameWidth = Math::Max(OverlayMaxNameWidth, ImGui::CalcTextSize(*Candidate.Second).x);
         });
@@ -272,7 +272,7 @@ void FEditorFooterWidget::Draw()
         const ImU32  HighlightTextU32          = IM_COL32(0, 0, 0, 255);
 
         float MaxNameWidth = 0.0f;
-        Candidates.Foreach([&](const TPair<IConsoleObject*, String>& Candidate)
+        Candidates.Foreach([&](const TPair<IConsoleObject*, FString>& Candidate)
         {
             MaxNameWidth = Math::Max(MaxNameWidth, ImGui::CalcTextSize(*Candidate.Second).x);
         });
@@ -327,7 +327,7 @@ void FEditorFooterWidget::Draw()
 
             const bool bHasVerticalScrollbar = ImGui::GetScrollMaxY() > 0.0f;
 
-            const auto DrawCandidateTooltip = [&](const TPair<IConsoleObject*, String>& Candidate, const ImRect& InItemRect)
+            const auto DrawCandidateTooltip = [&](const TPair<IConsoleObject*, FString>& Candidate, const ImRect& InItemRect)
             {
                 const ImVec4 TooltipBg        = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
                 const ImVec4 TooltipBorder    = ImVec4(71.0f / 255.0f, 71.0f / 255.0f, 71.0f / 255.0f, 1.0f);
@@ -394,7 +394,7 @@ void FEditorFooterWidget::Draw()
                         TypeText = "String";
                     }
 
-                    const String ValueString = Var->GetString();
+                    const FString ValueString = Var->GetString();
 
                     ImGui::Text("Type: %s", TypeText);
                     ImGui::Text("Value: %s", *ValueString);
@@ -431,7 +431,7 @@ void FEditorFooterWidget::Draw()
             int32 ClickedCandidateIndex = InvalidIndex;
             for (int32 CandidateIndex = 0; CandidateIndex < Candidates.Size(); ++CandidateIndex)
             {
-                const TPair<IConsoleObject*, String>& Candidate = Candidates[CandidateIndex];
+                const TPair<IConsoleObject*, FString>& Candidate = Candidates[CandidateIndex];
                 const bool bIsActiveIndex = (SelectedCandidateIndex == CandidateIndex);
 
                 ImGui::PushID(CandidateIndex);
@@ -457,7 +457,7 @@ void FEditorFooterWidget::Draw()
 
                 if (FilterText && FilterText[0] != 0)
                 {
-                    MatchStart = StringView(NameText).Find(FilterText, EStringCaseType::NoCase);
+                    MatchStart = FStringView(NameText).Find(FilterText, EStringCaseType::NoCase);
                     MatchLen   = static_cast<int32>(CString::Strlen(FilterText));
                 }
 
@@ -583,11 +583,11 @@ void FEditorFooterWidget::ApplyCandidateToBuffer(int32 CandidateIndex)
         return;
     }
 
-    const String Prefix(Buffer, static_cast<int32>(WordStart - Buffer));
-    const String Suffix(WordEnd);
+    const FString Prefix(Buffer, static_cast<int32>(WordStart - Buffer));
+    const FString Suffix(WordEnd);
 
-    const String& CandidateText = Candidates[CandidateIndex].Second;
-    const String NewBuffer = Prefix + CandidateText + Suffix;
+    const FString& CandidateText = Candidates[CandidateIndex].Second;
+    const FString NewBuffer = Prefix + CandidateText + Suffix;
 
     const int32 CopyLen = Math::Min(TextBuffer.Size(), NewBuffer.Size());
     CString::Strncpy(TextBuffer.Data(), *NewBuffer, CopyLen);
@@ -653,8 +653,8 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
             const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
             if (WordLength > 0)
             {
-                const StringView CandidateName(WordStart, WordLength);
-                CandidateFilter = String(WordStart, WordLength);
+                const FStringView CandidateName(WordStart, WordLength);
+                CandidateFilter = FString(WordStart, WordLength);
                 FConsoleManager::Get().FindCandidates(CandidateName, Candidates);
 
                 // If we found any candidates, then want to reset the history index, otherwise the index will be the 
@@ -697,7 +697,7 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
                     const int32 Pos   = static_cast<int32>(WordStart - CallbackData->Buf);
                     const int32 Count = WordLength;
 
-                    const String& NewTextData = Candidates[SelectedCandidateIndex].Second;
+                    const FString& NewTextData = Candidates[SelectedCandidateIndex].Second;
                     CallbackData->DeleteChars(Pos, Count);
                     CallbackData->InsertChars(CallbackData->CursorPos, *NewTextData);
 
@@ -725,7 +725,7 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
 
                 const int32 PrevHistoryIndex = HistoryIndex;
 
-                const TArray<String>& History = FConsoleManager::Get().GetHistory();
+                const TArray<FString>& History = FConsoleManager::Get().GetHistory();
                 if (!History.IsEmpty())
                 {
                     // If we have any console-history then we can go through the history by pressing the down-arrow key

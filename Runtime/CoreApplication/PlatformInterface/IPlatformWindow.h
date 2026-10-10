@@ -181,7 +181,7 @@ struct FPlatformWindowDesc
     }
 
     /** @brief The textual title of the window. */
-    String Title;
+    FString Title;
 
     /** @brief The desired width of the window. */
     uint32 Width;
@@ -286,14 +286,14 @@ struct IPlatformWindow : public IRefCounted
      * 
      * @param Title The new title text.
      */
-    virtual void SetTitle(const String& Title) = 0;
+    virtual void SetTitle(const FString& Title) = 0;
 
     /**
      * @brief Retrieves the current title of the window.
      * 
-     * @param OutTitle An String that will receive the window's title.
+     * @param OutTitle An FString that will receive the window's title.
      */
-    virtual void GetTitle(String& OutTitle) const = 0;
+    virtual void GetTitle(FString& OutTitle) const = 0;
 
     /**
      * @brief Repositions the window on screen.

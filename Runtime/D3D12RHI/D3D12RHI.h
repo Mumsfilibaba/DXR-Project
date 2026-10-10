@@ -103,7 +103,7 @@ public:
     virtual FRHIClusterTemplate*                       CreateClusterTemplate(const FRHIClusterTemplateDesc&) override final { return nullptr; }
     virtual FRHIPartitionedSceneAccelerationStructure* CreatePartitionedSceneAccelerationStructure(const FRHIRayTracingAccelerationStructurePartitionedSceneInputs&) override final { return nullptr; }
     
-    virtual FRHIRayTracingShaderIdentifier GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const String& InExportName) override final;
+    virtual FRHIRayTracingShaderIdentifier GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const FString& InExportName) override final;
     virtual void                           GetRayTracingAccelerationStructureOperationPrebuildInfo(const FRHIRayTracingAccelerationStructureOperationInputs&, FRHIRayTracingAccelerationStructurePrebuildInfo& OutInfo) override final { OutInfo = FRHIRayTracingAccelerationStructurePrebuildInfo(); }
 
     virtual bool IsAccelerationStructureSerializationHeaderValid(const FRHIAccelerationStructureSerializationHeader& InHeader) override final;
@@ -125,7 +125,7 @@ public:
     virtual void* GetRHINativeComputeCommandQueue() override final;
     virtual void* GetRHINativeCopyCommandQueue()    override final;
     
-    virtual String GetAdapterName() const override final;
+    virtual FString GetAdapterName() const override final;
 
     virtual ERHIType GetRHIType() const override final;
 

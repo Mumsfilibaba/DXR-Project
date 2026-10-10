@@ -36,7 +36,7 @@ public:
          * @param InTitle The title to show.
          * @return This desc, so the setters can be chained.
          */
-        FORCEINLINE FDesc& SetTitle(const String& InTitle)
+        FORCEINLINE FDesc& SetTitle(const FString& InTitle)
         {
             Title = InTitle;
             return *this;
@@ -68,7 +68,7 @@ public:
             return *this;
         }
 
-        String                     Title;
+        FString                    Title;
         TSharedPtr<FWindow>        ParentWindow;
         IntVector2                 Position;
         IntVector2                 Size;

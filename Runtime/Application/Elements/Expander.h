@@ -16,7 +16,7 @@ public:
     struct FDesc
     {
         /** @brief The text the header shows. */
-        String Label;
+        FString Label;
 
         /** @brief The face the header label is measured and drawn with. */
         TSharedPtr<IFontFace> Font = nullptr;
@@ -97,7 +97,7 @@ public:
      *
      * @param InLabel The new text.
      */
-    void SetLabel(const String& InLabel);
+    void SetLabel(const FString& InLabel);
 
     /** @return The element shown below the header, which is null when none has been set. */
     NODISCARD FORCEINLINE const TSharedPtr<FVisualElement>& GetContent() const
@@ -112,7 +112,7 @@ public:
     }
 
     /** @return The text the header shows. */
-    NODISCARD FORCEINLINE const String& GetLabel() const
+    NODISCARD FORCEINLINE const FString& GetLabel() const
     {
         return Label;
     }
@@ -137,7 +137,7 @@ private:
 
     TSharedPtr<FVisualElement> Content;
     TSharedPtr<IFontFace>      Font;
-    String                     Label;
+    FString                    Label;
     FMargin                    ContentPadding;
     FUIHeaderStyle             Style;
     FUIBrush                   ExpandedArrow;

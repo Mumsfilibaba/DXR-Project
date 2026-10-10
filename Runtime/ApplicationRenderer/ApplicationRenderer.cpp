@@ -116,9 +116,9 @@ static void ConvertIndicesToUInt16(const uint32* Source, uint16* Destination, in
     }
 }
 
-static String DescribeRectangle(const FRectangle& Rectangle)
+static FString DescribeRectangle(const FRectangle& Rectangle)
 {
-    return String::Printf("(%d, %d, %d x %d)", Rectangle.Position.X, Rectangle.Position.Y, Rectangle.Width, Rectangle.Height);
+    return FString::Printf("(%d, %d, %d x %d)", Rectangle.Position.X, Rectangle.Position.Y, Rectangle.Width, Rectangle.Height);
 }
 
 static const CHAR_T* DescribeBatchTexture(const FUITextureHandle& Texture)

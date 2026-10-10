@@ -111,7 +111,7 @@ void FUIAtlas::Release()
     bIsDirty    = false;
 }
 
-void FUIAtlas::SetDebugName(const String& InDebugName)
+void FUIAtlas::SetDebugName(const FString& InDebugName)
 {
     DebugName = InDebugName;
 
@@ -144,7 +144,7 @@ bool FUIAtlas::EnsureTexture()
         return false;
     }
 
-    Texture->SetDebugName(DebugName.IsEmpty() ? String("UI Atlas") : DebugName);
+    Texture->SetDebugName(DebugName.IsEmpty() ? FString("UI Atlas") : DebugName);
     return true;
 }
 

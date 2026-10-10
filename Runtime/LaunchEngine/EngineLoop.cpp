@@ -55,12 +55,12 @@ static TAutoConsoleVariable<int32> CVarExitAfterFrames(
     EConsoleVariableFlags::Default);
 struct FDebuggerOutputDevice : public IOutputDevice
 {
-    virtual void Log(const String& Message)
+    virtual void Log(const FString& Message)
     {
         FPlatformMisc::OutputDebugString(*Message);
     }
 
-    virtual void Log(ELogSeverity Severity, const String& Message)
+    virtual void Log(ELogSeverity Severity, const FString& Message)
     {
         FPlatformMisc::OutputDebugString(*Message);
     }
@@ -94,7 +94,7 @@ static bool InitializeOutputDevices()
         FOutputDeviceManager::Get()->RegisterOutputDevice(GDebuggerOutputDevice.Get());
     }
 
-    const String OutputLogPath = Paths::GetProjectDir() + "/OutputLog.txt";
+    const FString OutputLogPath = Paths::GetProjectDir() + "/OutputLog.txt";
     GFileOutputDevice = MakeUniquePtr<FFileOutputDevice>(OutputLogPath);
     
     if (GFileOutputDevice && GFileOutputDevice->IsValid())
@@ -190,7 +190,7 @@ int32 FEngineLoop::PreInit(const CHAR_T** Args, int32 NumArgs)
     const bool bIsCommandLineValid = CommandLine::Initialize(Args, NumArgs);
     if (!Paths::Initialize())
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", String::Printf("Could not find the engine folder. Pass -engine=<path> to a folder "
+        FPlatformApplicationMisc::MessageBox("ERROR", FString::Printf("Could not find the engine folder. Pass -engine=<path> to a folder "
             "that contains %s, or run the executable from inside one.", Paths::EngineIdentityFilename));
         return -1;
     }

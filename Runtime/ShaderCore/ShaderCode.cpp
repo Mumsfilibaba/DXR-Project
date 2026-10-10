@@ -1,7 +1,7 @@
 #include "Core/Memory/Memory.h"
 #include "ShaderCore/ShaderCode.h"
 
-static bool SetError(String* OutError, const CHAR_T* Message)
+static bool SetError(FString* OutError, const CHAR_T* Message)
 {
     if (OutError)
     {
@@ -26,7 +26,7 @@ static void AppendArray(TArray<uint8>& Bytes, const TArray<PodType>& Values)
     }
 }
 
-static void AppendString(TArray<uint8>& Bytes, const String& Value)
+static void AppendString(TArray<uint8>& Bytes, const FString& Value)
 {
     if (!Value.IsEmpty())
     {
@@ -49,7 +49,7 @@ static uint32 AlignOffset(uint32 Offset, uint32 Alignment)
     return (Offset + Alignment - 1) & ~(Alignment - 1);
 }
 
-bool FShaderCodeWriter::Write(EShaderOutputLanguage OutputLanguage, EShaderStage Stage, EShaderCodeFlags Flags, const FShaderReflection& Reflection, TArrayView<const uint8> NativeCode, TArray<uint8>& OutShaderCode, String* OutError)
+bool FShaderCodeWriter::Write(EShaderOutputLanguage OutputLanguage, EShaderStage Stage, EShaderCodeFlags Flags, const FShaderReflection& Reflection, TArrayView<const uint8> NativeCode, TArray<uint8>& OutShaderCode, FString* OutError)
 {
     const bool  bHasDebugInfo = IsEnumFlagSet(Flags, EShaderCodeFlags::DebugInfo);
     const int32 NumBindings   = Reflection.Bindings.Size();
@@ -113,7 +113,7 @@ bool FShaderCodeWriter::Write(EShaderOutputLanguage OutputLanguage, EShaderStage
 
     // Strings: the entry point always, the names only in DebugInfo containers
     AppendString(Bytes, Reflection.EntryPoint);
-    for (const String& Name : Reflection.BindingNames)
+    for (const FString& Name : Reflection.BindingNames)
     {
         AppendString(Bytes, Name);
     }
@@ -133,7 +133,7 @@ bool FShaderCodeWriter::Write(EShaderOutputLanguage OutputLanguage, EShaderStage
     return true;
 }
 
-bool FShaderCodeReader::ReadHeader(const TArray<uint8>& ShaderCode, FShaderCodeHeader& OutHeader, String* OutError)
+bool FShaderCodeReader::ReadHeader(const TArray<uint8>& ShaderCode, FShaderCodeHeader& OutHeader, FString* OutError)
 {
     constexpr uint32 MinReflectionEnd = static_cast<uint32>(sizeof(FShaderCodeHeader) + sizeof(FShaderReflectionInfo));
 
@@ -172,7 +172,7 @@ bool FShaderCodeReader::ReadHeader(const TArray<uint8>& ShaderCode, FShaderCodeH
     return true;
 }
 
-bool FShaderCodeReader::ReadEmbedded(TArrayView<const uint8> EmbeddedCode, TArray<uint8>& OutShaderCode, FShaderCodeView& OutView, String* OutError)
+bool FShaderCodeReader::ReadEmbedded(TArrayView<const uint8> EmbeddedCode, TArray<uint8>& OutShaderCode, FShaderCodeView& OutView, FString* OutError)
 {
     OutShaderCode.Clear();
     if (!EmbeddedCode.IsEmpty())
@@ -183,7 +183,7 @@ bool FShaderCodeReader::ReadEmbedded(TArrayView<const uint8> EmbeddedCode, TArra
     return Read(OutShaderCode, OutView, OutError);
 }
 
-bool FShaderCodeReader::Read(const TArray<uint8>& ShaderCode, FShaderCodeView& OutView, String* OutError)
+bool FShaderCodeReader::Read(const TArray<uint8>& ShaderCode, FShaderCodeView& OutView, FString* OutError)
 {
     FShaderCodeView View;
     if (!ReadHeader(ShaderCode, View.Header, OutError))

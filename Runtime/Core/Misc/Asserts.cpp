@@ -109,7 +109,7 @@ EAssertAction Assert::OnFailed(const CHAR_T* Expression, const CHAR_T* Filename,
         GetReportedSites().Add(SiteKey);
     }
 
-    String Record = String::Printf("Assertion failed: %s\n    at %s(%d)", Expression, Filename, Line);
+    FString Record = FString::Printf("Assertion failed: %s\n    at %s(%d)", Expression, Filename, Line);
     if (Context[0])
     {
         Record.AppendPrintf("\n    %s", Context);

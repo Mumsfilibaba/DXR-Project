@@ -20,7 +20,7 @@ struct APPLICATIONRENDERER_API UIScreenshot
      * @param Filename Where to write, either absolute or relative to the working directory.
      * @return True when the file was written.
      */
-    static bool CaptureElement(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, float DPIScale, const String& Filename);
+    static bool CaptureElement(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, float DPIScale, const FString& Filename);
 
     /**
      * @brief Repaints a window's content at the window's own size and scale, and writes it out.
@@ -29,7 +29,7 @@ struct APPLICATIONRENDERER_API UIScreenshot
      * @param Filename Where to write.
      * @return True when the file was written.
      */
-    static bool CaptureWindow(const TSharedPtr<FWindow>& Window, const String& Filename);
+    static bool CaptureWindow(const TSharedPtr<FWindow>& Window, const FString& Filename);
 
     /**
      * @brief Captures the first window the application holds, which is the shell in a normal run.
@@ -37,7 +37,7 @@ struct APPLICATIONRENDERER_API UIScreenshot
      * @param Filename Where to write.
      * @return True when the file was written.
      */
-    static bool CapturePrimaryWindow(const String& Filename);
+    static bool CapturePrimaryWindow(const FString& Filename);
 
     /**
      * @brief Asks for a capture of the primary window some number of frames from now.
@@ -52,7 +52,7 @@ struct APPLICATIONRENDERER_API UIScreenshot
      * @param bExitAfter    True to ask the engine to quit once the file is written, which is what an
      *                      unattended run wants so the process does not sit there.
      */
-    static void RequestAtFrame(int32 FramesFromNow, const String& Filename, bool bExitAfter);
+    static void RequestAtFrame(int32 FramesFromNow, const FString& Filename, bool bExitAfter);
 
     /**
      * @brief Services a pending request, taking the capture when its frame has come around.

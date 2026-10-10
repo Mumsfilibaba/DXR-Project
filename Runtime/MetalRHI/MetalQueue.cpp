@@ -41,7 +41,7 @@ static TAutoConsoleVariable<bool> CVarEncoderExecutionStatus(
     "When enabled, a failed command buffer reports which of its encoders completed, faulted or never ran, each named by the scope path it opened under. On an AMD GPU this makes indirect mesh draws time out",
     false);
 
-static TAutoConsoleVariable<String> CVarFaultReportFilePath(
+static TAutoConsoleVariable<FString> CVarFaultReportFilePath(
     "MetalRHI.FaultReportFilePath",
     "File a failed command buffer's report is also written to, or empty to only log it",
     "MetalFaultReport.txt");
@@ -62,7 +62,7 @@ static void ReportFunctionLogs(id<MTLCommandBuffer> CommandBuffer)
 
     for (id<MTLFunctionLog> FunctionLog in CommandBuffer.logs)
     {
-        const String Description(FunctionLog.description);
+        const FString Description(FunctionLog.description);
 
         if (CString::Stristr(*Description, "error") != nullptr || CString::Stristr(*Description, "fault") != nullptr)
         {
@@ -113,22 +113,22 @@ static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer, const F
         return;
     }
 
-    const String Label(CommandBuffer.label ? CommandBuffer.label : @"<unnamed>");
+    const FString Label(CommandBuffer.label ? CommandBuffer.label : @"<unnamed>");
 
     TFileRef<IPlatformFile> File;
-    const String FaultReportFilePath = CVarFaultReportFilePath.GetValue();
+    const FString FaultReportFilePath = CVarFaultReportFilePath.GetValue();
     if (!FaultReportFilePath.IsEmpty())
     {
         File = FPlatformFile::OpenForWrite(FaultReportFilePath);
     }
 
-    const auto WriteLine = [&File](const String& Line)
+    const auto WriteLine = [&File](const FString& Line)
     {
         LOG_ERROR("%s", *Line);
 
         if (File)
         {
-            String Out = Line;
+            FString Out = Line;
             Out += '\n';
             File->Write(reinterpret_cast<const uint8*>(*Out), static_cast<uint32>(Out.Size()));
         }
@@ -138,20 +138,20 @@ static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer, const F
 
     if (!Error)
     {
-        WriteLine(String::Printf("[MetalRHI] Command buffer '%s' failed without reporting an error", *Label));
+        WriteLine(FString::Printf("[MetalRHI] Command buffer '%s' failed without reporting an error", *Label));
         return;
     }
 
-    const String Description(Error.localizedDescription);
+    const FString Description(Error.localizedDescription);
 
     if ([Error.domain isEqualToString:MTLCommandBufferErrorDomain])
     {
-        WriteLine(String::Printf("[MetalRHI] Command buffer '%s' failed with %s: %s", *Label, ToString(MTLCommandBufferError(Error.code)), *Description));
+        WriteLine(FString::Printf("[MetalRHI] Command buffer '%s' failed with %s: %s", *Label, ToString(MTLCommandBufferError(Error.code)), *Description));
     }
     else
     {
-        const String Domain(Error.domain);
-        WriteLine(String::Printf("[MetalRHI] Command buffer '%s' failed with %s(%ld): %s", *Label, *Domain, long(Error.code), *Description));
+        const FString Domain(Error.domain);
+        WriteLine(FString::Printf("[MetalRHI] Command buffer '%s' failed with %s(%ld): %s", *Label, *Domain, long(Error.code), *Description));
     }
 
     NSArray<id<MTLCommandBufferEncoderInfo>>* EncoderInfos = Error.userInfo[MTLCommandBufferEncoderInfoErrorKey];
@@ -172,19 +172,19 @@ static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer, const F
 
     if (EncoderInfos.count > 0)
     {
-        WriteLine(String::Printf("[MetalRHI]   Last completed: '%s', faulted: '%s'",
-            *String(LastCompleted ? LastCompleted : @"<none>"), *String(FirstFaulted ? FirstFaulted : @"<unknown>")));
+        WriteLine(FString::Printf("[MetalRHI]   Last completed: '%s', faulted: '%s'",
+            *FString(LastCompleted ? LastCompleted : @"<none>"), *FString(FirstFaulted ? FirstFaulted : @"<unknown>")));
     }
 
     for (id<MTLCommandBufferEncoderInfo> EncoderInfo in EncoderInfos)
     {
-        const String EncoderLabel(EncoderInfo.label ? EncoderInfo.label : @"<unnamed>");
-        WriteLine(String::Printf("[MetalRHI]   Encoder '%s': %s", *EncoderLabel, ToString(EncoderInfo.errorState)));
+        const FString EncoderLabel(EncoderInfo.label ? EncoderInfo.label : @"<unnamed>");
+        WriteLine(FString::Printf("[MetalRHI]   Encoder '%s': %s", *EncoderLabel, ToString(EncoderInfo.errorState)));
 
         for (NSString* Signpost in EncoderInfo.debugSignposts)
         {
-            const String SignpostLabel(Signpost);
-            WriteLine(String::Printf("[MetalRHI]     %s", *SignpostLabel));
+            const FString SignpostLabel(Signpost);
+            WriteLine(FString::Printf("[MetalRHI]     %s", *SignpostLabel));
         }
     }
 
@@ -193,12 +193,12 @@ static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer, const F
         WriteLine("[MetalRHI]   Breadcrumbs:");
         Breadcrumbs.ForEach([&WriteLine](const CHAR_T* Name)
         {
-            WriteLine(String::Printf("[MetalRHI]     %s", Name));
+            WriteLine(FString::Printf("[MetalRHI]     %s", Name));
         });
     }
 }
 
-void FMetalBreadcrumbRing::Push(const StringView& Name)
+void FMetalBreadcrumbRing::Push(const FStringView& Name)
 {
     const uint32 Length = Math::Min<uint32>(static_cast<uint32>(Name.Length()), EntryLength - 1);
     Memory::Memcpy(Entries[Head], Name.Data(), Length);

@@ -10,10 +10,10 @@
 
 #define INVALID_MATERIAL_INDEX (-1)
 
-static String ExtractPath(const String& FullFilePath)
+static FString ExtractPath(const FString& FullFilePath)
 {
     auto Pos = FullFilePath.FindLastChar('/');
-    if (Pos != String::InvalidIndex)
+    if (Pos != FString::InvalidIndex)
     {
         return FullFilePath.SubString(0, Pos);
     }
@@ -52,7 +52,7 @@ static bool DoesFlipHandness(const Matrix4& Matrix)
 }
 #endif
 
-static auto LoadMaterialTexture(const String& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
+static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
 {
     const ofbx::Texture* MaterialTexture = Material->getTexture(Type);
     if (MaterialTexture)
@@ -61,7 +61,7 @@ static auto LoadMaterialTexture(const String& Path, const ofbx::Material* Materi
         MaterialTexture->getRelativeFileName().toString(StringBuffer);
 
         // Make sure that correct slashes are used
-        String Filename = Path + '/' + StringBuffer;
+        FString Filename = Path + '/' + StringBuffer;
         Filename.ReplaceAll('\\', '/');
 
         return StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
@@ -70,9 +70,9 @@ static auto LoadMaterialTexture(const String& Path, const ofbx::Material* Materi
     return FTexture2DRef();
 }
 
-bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags InFlags, FModelData& OutModelData)
+bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags InFlags, FModelData& OutModelData)
 {
-    const String Filename = String(InFilename);
+    const FString Filename = FString(InFilename);
 
     TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(Filename);
     if (!File)
@@ -121,7 +121,7 @@ bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
     OutModelData.Materials.Reserve(MaterialCount);
 
     // Convert data
-    const String Path = ExtractPath(Filename);
+    const FString Path = ExtractPath(Filename);
 
     // Get the global settings
     const ofbx::GlobalSettings* GlobalSettings = FBXScene->getGlobalSettings();
@@ -331,7 +331,7 @@ bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
     return true;
 }
 
-bool FFBXImporter::MatchExtenstion(const StringView& FileName)
+bool FFBXImporter::MatchExtenstion(const FStringView& FileName)
 {
     return FileName.EndsWith(".fbx", EStringCaseType::NoCase);
 }

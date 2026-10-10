@@ -139,12 +139,12 @@ void FD3D12Resource::UnmapRange(uint32 SubresourceIndex, const D3D12_RANGE* Rang
     Resource->Unmap(SubresourceIndex, Range);
 }
 
-void FD3D12Resource::SetDebugName(const String& InDebugName)
+void FD3D12Resource::SetDebugName(const FString& InDebugName)
 {
     D3D12SetDebugName(Resource.Get(), InDebugName);
 }
 
-void FD3D12Resource::GetDebugName(String& OutDebugName) const
+void FD3D12Resource::GetDebugName(FString& OutDebugName) const
 {
     D3D12GetDebugName(Resource.Get(), OutDebugName);
 }

@@ -31,7 +31,7 @@ bool Config_Test()
         FIniFile PlatformFile = ParseIni("[Test]\nContested = FromPlatform\n");
 
         FConfig ConfigStack;
-        String  Value;
+        FString Value;
 
         ConfigStack.SetFile(EConfigFile::Engine, &EngineFile);
         TEST_EXPECT(ConfigStack.GetString("Test", "Contested", Value));
@@ -59,7 +59,7 @@ bool Config_Test()
         ConfigStack.SetFile(EConfigFile::Engine, &EngineFile);
         ConfigStack.SetFile(EConfigFile::Editor, &EditorFile);
 
-        String Value;
+        FString Value;
         TEST_EXPECT(ConfigStack.GetString("Test", "EngineOnly", Value));
         TEST_EXPECT(Value == "1280");
 
@@ -80,7 +80,7 @@ bool Config_Test()
         TEST_EXPECT(ConfigStack.GetFile(EConfigFile::Game) == nullptr);
         TEST_EXPECT(ConfigStack.GetFile(EConfigFile::Editor) == nullptr);
 
-        String Value;
+        FString Value;
         TEST_EXPECT(ConfigStack.GetString("Test", "Contested", Value));
         TEST_EXPECT(Value == "FromPlatform");
 
@@ -119,7 +119,7 @@ bool Config_Test()
         ConfigStack.SetFile(EConfigFile::Engine, &EngineFile);
         ConfigStack.SetFile(EConfigFile::Platform, &PlatformFile);
 
-        String Value;
+        FString Value;
         TEST_EXPECT(ConfigStack.GetString("", "Test.Config.Sectioned", Value));
         TEST_EXPECT(Value == "FromPlatform");
     }
@@ -135,7 +135,7 @@ bool Config_Test()
         ConfigStack.SetFile(EConfigFile::Game, &GameFile);
         ConfigStack.SetFile(EConfigFile::Editor, &EditorFile);
 
-        TAutoConsoleVariable<String> CVar("Test.Config.CVar", "", "Default");
+        TAutoConsoleVariable<FString> CVar("Test.Config.CVar", "", "Default");
         TEST_EXPECT(CVar.GetValue().Equals("Default"));
 
         ConfigStack.LoadConsoleVariables();

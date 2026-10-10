@@ -9,7 +9,7 @@
 #include "Core/Templates/CString.h"
 #include "RendererCore/Shaders/ShaderManifest.h"
 
-static TAutoConsoleVariable<String> CVarManifestFileName(
+static TAutoConsoleVariable<FString> CVarManifestFileName(
     "Renderer.ShaderCache.ManifestFileName",
     "FileName for the file recording which shader permutations to pre-warm",
     "Shaders.shadermanifest");
@@ -32,7 +32,7 @@ static bool CanRead(const FByteInputStream& Stream, uint64 NumBytes)
     return static_cast<uint64>(Stream.Size() - Stream.ReadOffset()) >= NumBytes;
 }
 
-String FShaderManifest::GetFilePath()
+FString FShaderManifest::GetFilePath()
 {
     return Paths::GetAssetDir() + '/' + CVarManifestFileName.GetValue();
 }
@@ -41,7 +41,7 @@ bool FShaderManifest::Load()
 {
     Entries.Clear();
 
-    const String FilePath = GetFilePath();
+    const FString FilePath = GetFilePath();
     if (!FPlatformFile::IsFile(*FilePath))
     {
         LOG_INFO("[FShaderManifest]: No manifest found at '%s' (expected on first run)", *FilePath);
@@ -121,7 +121,7 @@ bool FShaderManifest::Load()
         NameBuffer.Resize(static_cast<int32>(NameLength));
         Stream.Read(NameBuffer.Data(), NameBuffer.Size());
 
-        const String TypeName(NameBuffer.Data(), NameBuffer.Size());
+        const FString TypeName(NameBuffer.Data(), NameBuffer.Size());
 
         uint64 SpaceSignature  = 0;
         uint32 NumPermutations = 0;
@@ -198,7 +198,7 @@ bool FShaderManifest::Save() const
     Header.DataSize   = static_cast<uint32>(Payload.Size());
     Header.NumEntries = NumEntries;
 
-    const String FilePath = GetFilePath();
+    const FString FilePath = GetFilePath();
 
     TFileRef<IPlatformFile> ManifestFile = FPlatformFile::OpenForWrite(FilePath);
     if (!ManifestFile)

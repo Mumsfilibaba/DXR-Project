@@ -130,7 +130,7 @@ public:
      * @param InParent Filter to nest the new filter inside, or nullptr to place it at the root of the hierarchy
      * @return Returns the filter, or nullptr outside an editor build
      */
-    FActorFilter* CreateActorFilter(const String& InName, FActorFilter* InParent = nullptr);
+    FActorFilter* CreateActorFilter(const FString& InName, FActorFilter* InParent = nullptr);
 
     /**
      * @brief Look for a filter by name among the filters nested directly inside a parent
@@ -139,7 +139,7 @@ public:
      * @param InParent Filter to search inside, or nullptr to search the root of the hierarchy
      * @return Returns the filter with the given name, or nullptr if no such filter exists
      */
-    FActorFilter* FindActorFilter(const String& InName, FActorFilter* InParent = nullptr) const;
+    FActorFilter* FindActorFilter(const FString& InName, FActorFilter* InParent = nullptr) const;
 
     /**
      * @brief Move a filter, and everything nested inside it, into another filter. A filter cannot 

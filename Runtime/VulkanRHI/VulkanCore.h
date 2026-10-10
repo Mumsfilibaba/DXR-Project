@@ -449,9 +449,9 @@ struct THash<FVulkanHashableImageView>
 namespace VulkanRHI
 {
 
-inline String GetVersionAsString(uint32 VersionNumber)
+inline FString GetVersionAsString(uint32 VersionNumber)
 {
-    return String::Printf("%d.%d.%d.%d", VK_API_VERSION_MAJOR(VersionNumber), VK_API_VERSION_MINOR(VersionNumber),
+    return FString::Printf("%d.%d.%d.%d", VK_API_VERSION_MAJOR(VersionNumber), VK_API_VERSION_MINOR(VersionNumber),
         VK_API_VERSION_PATCH(VersionNumber), VK_API_VERSION_VARIANT(VersionNumber));
 }
 

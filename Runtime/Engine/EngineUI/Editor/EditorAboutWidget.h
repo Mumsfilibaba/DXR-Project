@@ -31,6 +31,6 @@ private:
 
     FDelegateHandle ImGuiDelegateHandle;
     bool            bVisible;
-    String          ContextRowLabel;
-    String          ContextRowValue;
+    FString         ContextRowLabel;
+    FString         ContextRowValue;
 };

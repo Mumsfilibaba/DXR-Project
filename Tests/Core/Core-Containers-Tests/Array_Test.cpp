@@ -232,64 +232,64 @@ bool TArray_Test()
 
     TEST_SECTION("TArray construction (count/value, ptr+size, initializer-list)");
     {
-        TArray<String> Empty;
+        TArray<FString> Empty;
         TEST_EXPECT(Empty.IsEmpty());
 
-        TArray<String> Filled(5, "Hello");
+        TArray<FString> Filled(5, "Hello");
         TEST_EXPECT_EQ(Filled.Size(), 5);
-        TEST_EXPECT(Filled == TArray<String>({ "Hello", "Hello", "Hello", "Hello", "Hello" }));
+        TEST_EXPECT(Filled == TArray<FString>({ "Hello", "Hello", "Hello", "Hello", "Hello" }));
 
-        TArray<String> FromPtr(Filled.Data(), Filled.Size());
+        TArray<FString> FromPtr(Filled.Data(), Filled.Size());
         TEST_EXPECT(FromPtr == Filled);
 
-        TArray<String> FromList = { "Hello World", "TArray", "This is a longer teststring" };
+        TArray<FString> FromList = { "Hello World", "TArray", "This is a longer teststring" };
         TEST_EXPECT_EQ(FromList.Size(), 3);
     }
 
     TEST_SECTION("TArray copy / move construction");
     {
-        TArray<String> Source = { "A", "B", "C" };
-        TArray<String> Copy = Source;
+        TArray<FString> Source = { "A", "B", "C" };
+        TArray<FString> Copy = Source;
         TEST_EXPECT(Copy == Source);
 
-        TArray<String> Moved = ::Move(Copy);
+        TArray<FString> Moved = ::Move(Copy);
         TEST_EXPECT(Moved == Source);
         TEST_EXPECT(Copy.IsEmpty());
     }
 
     TEST_SECTION("TArray::Reset (count/value, init-list, ptr+size)");
     {
-        TArray<String> Array;
+        TArray<FString> Array;
         Array.Reset(3, "X");
-        TEST_EXPECT(Array == TArray<String>({ "X", "X", "X" }));
+        TEST_EXPECT(Array == TArray<FString>({ "X", "X", "X" }));
 
         Array.Reset({ "1", "2" });
-        TEST_EXPECT(Array == TArray<String>({ "1", "2" }));
+        TEST_EXPECT(Array == TArray<FString>({ "1", "2" }));
 
-        TArray<String> Other = { "p", "q", "r" };
+        TArray<FString> Other = { "p", "q", "r" };
         Array.Reset(Other.Data(), Other.Size());
         TEST_EXPECT(Array == Other);
     }
 
     TEST_SECTION("TArray::Resize grow / shrink");
     {
-        TArray<String> Array = { "a", "b", "c", "d" };
+        TArray<FString> Array = { "a", "b", "c", "d" };
         Array.Resize(6);
         TEST_EXPECT_EQ(Array.Size(), 6);
         TEST_EXPECT(Array[0] == "a" && Array[3] == "d");
         TEST_EXPECT(Array[4].IsEmpty() && Array[5].IsEmpty());
 
         Array.Resize(2);
-        TEST_EXPECT(Array == TArray<String>({ "a", "b" }));
+        TEST_EXPECT(Array == TArray<FString>({ "a", "b" }));
         TEST_EXPECT(Array.Capacity() >= Array.Size());
     }
 
     TEST_SECTION("TArray::Reserve / Shrink");
     {
-        TArray<String> Array = { "a", "b" };
+        TArray<FString> Array = { "a", "b" };
         Array.Reserve(32);
         TEST_EXPECT(Array.Capacity() >= 32);
-        TEST_EXPECT(Array == TArray<String>({ "a", "b" }));
+        TEST_EXPECT(Array == TArray<FString>({ "a", "b" }));
 
         Array.Shrink();
         TEST_EXPECT(Array.Capacity() == Array.Size());
@@ -297,83 +297,83 @@ bool TArray_Test()
 
     TEST_SECTION("TArray assignment (copy / move / initializer-list)");
     {
-        TArray<String> Source = { "a", "b", "c" };
-        TArray<String> Copy;
+        TArray<FString> Source = { "a", "b", "c" };
+        TArray<FString> Copy;
         Copy = Source;
         TEST_EXPECT(Copy == Source);
 
-        TArray<String> Moved;
+        TArray<FString> Moved;
         Moved = ::Move(Copy);
         TEST_EXPECT(Moved == Source);
         TEST_EXPECT_EQ(Copy.Size(), 0);
 
-        TArray<String> FromList;
+        TArray<FString> FromList;
         FromList = { "x", "y" };
-        TEST_EXPECT(FromList == TArray<String>({ "x", "y" }));
+        TEST_EXPECT(FromList == TArray<FString>({ "x", "y" }));
     }
 
     TEST_SECTION("TArray::Add / Emplace / Pop");
     {
-        TArray<String> Array;
+        TArray<FString> Array;
         for (int32 Index = 0; Index < 3; ++Index)
         {
-            Array.Add(String::Printf("P%d", Index));
+            Array.Add(FString::Printf("P%d", Index));
         }
 
         Array.Emplace("E0");
-        TEST_EXPECT(Array == TArray<String>({ "P0", "P1", "P2", "E0" }));
+        TEST_EXPECT(Array == TArray<FString>({ "P0", "P1", "P2", "E0" }));
 
         Array.Pop();
-        TEST_EXPECT(Array == TArray<String>({ "P0", "P1", "P2" }));
+        TEST_EXPECT(Array == TArray<FString>({ "P0", "P1", "P2" }));
 
         Array.Pop(2);
-        TEST_EXPECT(Array == TArray<String>({ "P0" }));
+        TEST_EXPECT(Array == TArray<FString>({ "P0" }));
     }
 
     TEST_SECTION("TArray::Insert (value / initializer-list at front/middle/end)");
     {
-        TArray<String> Array = { "a", "b", "c" };
+        TArray<FString> Array = { "a", "b", "c" };
         Array.Insert(0, "front");
-        TEST_EXPECT(Array == TArray<String>({ "front", "a", "b", "c" }));
+        TEST_EXPECT(Array == TArray<FString>({ "front", "a", "b", "c" }));
 
         Array.Insert(2, "mid");
-        TEST_EXPECT(Array == TArray<String>({ "front", "a", "mid", "b", "c" }));
+        TEST_EXPECT(Array == TArray<FString>({ "front", "a", "mid", "b", "c" }));
 
         Array.Insert(Array.Size(), { "e1", "e2" });
-        TEST_EXPECT(Array == TArray<String>({ "front", "a", "mid", "b", "c", "e1", "e2" }));
+        TEST_EXPECT(Array == TArray<FString>({ "front", "a", "mid", "b", "c", "e1", "e2" }));
 
         // Force reallocation, then insert at the front.
         Array.Shrink();
         Array.Insert(0, { "r1", "r2" });
-        TEST_EXPECT(Array == TArray<String>({ "r1", "r2", "front", "a", "mid", "b", "c", "e1", "e2" }));
+        TEST_EXPECT(Array == TArray<FString>({ "r1", "r2", "front", "a", "mid", "b", "c", "e1", "e2" }));
     }
 
     TEST_SECTION("TArray::RemoveAt (single / range)");
     {
-        TArray<String> Array = { "0", "1", "2", "3", "4", "5" };
+        TArray<FString> Array = { "0", "1", "2", "3", "4", "5" };
         Array.RemoveAt(0);
-        TEST_EXPECT(Array == TArray<String>({ "1", "2", "3", "4", "5" }));
+        TEST_EXPECT(Array == TArray<FString>({ "1", "2", "3", "4", "5" }));
 
         Array.RemoveAt(1, 2);
-        TEST_EXPECT(Array == TArray<String>({ "1", "4", "5" }));
+        TEST_EXPECT(Array == TArray<FString>({ "1", "4", "5" }));
 
         Array.RemoveAt(Array.Size() - 1);
-        TEST_EXPECT(Array == TArray<String>({ "1", "4" }));
+        TEST_EXPECT(Array == TArray<FString>({ "1", "4" }));
     }
 
     TEST_SECTION("TArray::Swap / Fill / Append");
     {
-        TArray<String> First = { "a", "b" };
-        TArray<String> Second = { "x", "y", "z" };
+        TArray<FString> First = { "a", "b" };
+        TArray<FString> Second = { "x", "y", "z" };
         ::Swap(First, Second);
-        TEST_EXPECT(First == TArray<String>({ "x", "y", "z" }));
-        TEST_EXPECT(Second == TArray<String>({ "a", "b" }));
+        TEST_EXPECT(First == TArray<FString>({ "x", "y", "z" }));
+        TEST_EXPECT(Second == TArray<FString>({ "a", "b" }));
 
         First.Fill("F");
-        TEST_EXPECT(First == TArray<String>({ "F", "F", "F" }));
+        TEST_EXPECT(First == TArray<FString>({ "F", "F", "F" }));
 
         First.Append({ "g", "h" });
-        TEST_EXPECT(First == TArray<String>({ "F", "F", "F", "g", "h" }));
+        TEST_EXPECT(First == TArray<FString>({ "F", "F", "F", "g", "h" }));
     }
 
     TEST_SECTION("TArray heap operations (Heapify/HeapPush/HeapPop/HeapSort)");
@@ -395,10 +395,10 @@ bool TArray_Test()
 
     TEST_SECTION("TArray with inline allocator");
     {
-        TInlineArray<String, 4> Array;
+        TInlineArray<FString, 4> Array;
         for (int32 Index = 0; Index < 8; ++Index)
         {
-            Array.Add(String::Printf("S%d", Index));
+            Array.Add(FString::Printf("S%d", Index));
         }
 
         TEST_EXPECT_EQ(Array.Size(), 8);
@@ -529,13 +529,13 @@ bool TArray_Test()
     {
         STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)
         {
-            FRandom                 Random(Seed);
-            TInlineArray<String, 4> Array;
-            std::vector<String>     Oracle;
+            FRandom                  Random(Seed);
+            TInlineArray<FString, 4> Array;
+            std::vector<FString>     Oracle;
 
             for (int32 Step = 0; Step < TargetSize; ++Step)
             {
-                String Value = String::Printf("StressString-%d-padding-to-exceed-inline-buffer", Step);
+                FString Value = FString::Printf("StressString-%d-padding-to-exceed-inline-buffer", Step);
                 if (!Array.IsEmpty() && Random.RandBool())
                 {
                     const int32 At = static_cast<int32>(Random.RandInt(0, Array.Size() - 1));

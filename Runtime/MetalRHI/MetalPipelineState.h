@@ -260,8 +260,8 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     bool Initialize();
 
@@ -270,7 +270,7 @@ public:
 private:
     FRHIGraphicsPipelineStateDesc Desc;
     FMetalRenderPipeline          RenderPipeline;
-    String                        DebugName;
+    FString                       DebugName;
 };
 
 class FMetalComputePipelineStateRHI : public FRHIComputePipelineState, public FMetalDeviceChild
@@ -282,8 +282,8 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     bool Initialize();
 
@@ -298,7 +298,7 @@ private:
     FMetalPipelineBindingLayout             Bindings;
     TArray<FMetalStaticSamplerBinding>      StaticSamplers;
     MTLSize                                 ThreadsPerThreadgroup;
-    String                                  DebugName;
+    FString                                 DebugName;
 };
 
 class FMetalMeshletPipelineStateRHI : public FRHIMeshletPipelineState, public FMetalDeviceChild
@@ -310,8 +310,8 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     bool Initialize();
 
@@ -324,7 +324,7 @@ private:
     FMetalRenderPipeline         RenderPipeline;
     MTLSize                      MeshThreadgroupSize;
     MTLSize                      ObjectThreadgroupSize;
-    String                       DebugName;
+    FString                      DebugName;
 };
 
 class FMetalRayTracingPipelineStateRHI : public FRHIRayTracingPipelineState, public FMetalDeviceChild
@@ -336,11 +336,11 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     // FRHIRayTracingPipelineState Interface
-    virtual void GetExportName(ERayTracingShaderRecordKind Kind, uint32 RecordIndex, String& OutExportName) const override final;
+    virtual void GetExportName(ERayTracingShaderRecordKind Kind, uint32 RecordIndex, FString& OutExportName) const override final;
     virtual uint32 GetNumExportNames(ERayTracingShaderRecordKind Kind) const override final;
 
     bool Initialize();
@@ -351,16 +351,16 @@ public:
     }
 
 private:
-    TArray<String>& GetExportNameArray(ERayTracingShaderRecordKind Kind);
-    const TArray<String>& GetExportNameArray(ERayTracingShaderRecordKind Kind) const;
+    TArray<FString>& GetExportNameArray(ERayTracingShaderRecordKind Kind);
+    const TArray<FString>& GetExportNameArray(ERayTracingShaderRecordKind Kind) const;
 
     FRHIRayTracingPipelineStateDesc Desc;
     id<MTLComputePipelineState>     PipelineState;
-    TArray<String>                  RayGenerationExports;
-    TArray<String>                  MissExports;
-    TArray<String>                  CallableExports;
-    TArray<String>                  HitGroupExports;
-    String                          DebugName;
+    TArray<FString>                 RayGenerationExports;
+    TArray<FString>                 MissExports;
+    TArray<FString>                 CallableExports;
+    TArray<FString>                 HitGroupExports;
+    FString                         DebugName;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

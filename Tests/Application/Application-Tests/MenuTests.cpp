@@ -43,10 +43,10 @@ static TSharedPtr<IFontFace> CreateFont()
     return MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 }
 
-static TSharedPtr<FMenu> CreateMenu(const TSharedPtr<IFontFace>& Font, const TArray<String>& Labels)
+static TSharedPtr<FMenu> CreateMenu(const TSharedPtr<IFontFace>& Font, const TArray<FString>& Labels)
 {
     TSharedPtr<FMenu> Menu = FMenu::Create();
-    for (const String& Label : Labels)
+    for (const FString& Label : Labels)
     {
         FMenuItem::FDesc Desc;
         Desc.SetLabel(Label).SetFont(Font);
@@ -216,7 +216,7 @@ bool MenuStackPlacement_Test()
     Stack.DismissAll();
 
     TEST_SECTION("A menu too tall for its host falls back to a popup window, clamped to the monitor instead");
-    TArray<String> ManyLabels;
+    TArray<FString> ManyLabels;
     for (int32 Index = 0; Index < 80; ++Index)
     {
         ManyLabels.Add("Row");
@@ -347,7 +347,7 @@ bool MenuItemLayout_Test()
     FDrawCommandList ShortcutCommands;
     DrawElement(WithShortcut, ShortcutCommands);
     TEST_EXPECT_EQ(CountCommands(ShortcutCommands, EDrawCommandType::Text), 2);
-    TEST_EXPECT(ShortcutCommands.GetCommandText(ShortcutCommands.GetCommands()[1]) == StringView("CTRL+O"));
+    TEST_EXPECT(ShortcutCommands.GetCommandText(ShortcutCommands.GetCommands()[1]) == FStringView("CTRL+O"));
 
     TEST_SECTION("A submenu widens the row by the arrow it has to draw");
     FMenuItem::FDesc SubMenuDesc;
@@ -428,7 +428,7 @@ bool MenuItemLayout_Test()
     TEST_EXPECT_EQ(Header->GetCachedDesiredSize().Y, Math::Max(Font->GetLineHeight(), Style.Metrics.MenuSeparatorThickness) + 8);
 
     TEST_SECTION("It draws its caption upper case, whatever case it was given");
-    TEST_EXPECT_EQ(Header->GetLabel(), String("OPEN"));
+    TEST_EXPECT_EQ(Header->GetLabel(), FString("OPEN"));
 
     const int32 HeaderHeight = Header->GetCachedDesiredSize().Y;
     Header->Arrange(FRectangle(IntVector2(0, 0), 160, HeaderHeight));
@@ -444,7 +444,7 @@ bool MenuItemLayout_Test()
     TEST_EXPECT_EQ(CaptionCommand.Bounds.Position.X, FMenuSectionHeader::InsetX);
 
     TEST_SECTION("The rule runs to the right of the caption only, and stops at the far inset");
-    const int32         CaptionWidth = Font->MeasureWidth(StringView("OPEN", 4));
+    const int32         CaptionWidth = Font->MeasureWidth(FStringView("OPEN", 4));
     const FDrawCommand& RuleCommand  = HeaderCommands.GetCommands()[1];
     TEST_EXPECT_EQ(RuleCommand.Type, EDrawCommandType::Box);
     TEST_EXPECT_EQ(RuleCommand.Bounds.Position.X, FMenuSectionHeader::InsetX + CaptionWidth + FMenuSectionHeader::LabelGap);
@@ -867,11 +867,11 @@ bool MenuKeyboard_Test()
 
     Sectioned->OnKeyDown(MakeKeyEvent(Keys::Down));
     TEST_EXPECT_EQ(Sectioned->GetHighlightedIndex(), 0);
-    TEST_EXPECT_EQ(Sectioned->GetItems()[0]->GetLabel(), String("New Level"));
+    TEST_EXPECT_EQ(Sectioned->GetItems()[0]->GetLabel(), FString("New Level"));
 
     Sectioned->OnKeyDown(MakeKeyEvent(Keys::Down));
     TEST_EXPECT_EQ(Sectioned->GetHighlightedIndex(), 1);
-    TEST_EXPECT_EQ(Sectioned->GetItems()[1]->GetLabel(), String("Exit"));
+    TEST_EXPECT_EQ(Sectioned->GetItems()[1]->GetLabel(), FString("Exit"));
 
     Sectioned->OnKeyDown(MakeKeyEvent(Keys::Down));
     TEST_EXPECT_EQ(Sectioned->GetHighlightedIndex(), 0);
@@ -1397,7 +1397,7 @@ bool ComboBoxControl_Test()
 
     TEST_SECTION("With nothing selected it shows the placeholder");
     TEST_EXPECT_EQ(ComboBox->GetSelectedIndex(), -1);
-    TEST_EXPECT(ComboBox->GetSelectedText() == String("None"));
+    TEST_EXPECT(ComboBox->GetSelectedText() == FString("None"));
 
     TEST_SECTION("It is wide enough for the longest option, so it does not resize as the choice changes");
     ComboBox->PrepareDesiredSize();
@@ -1408,7 +1408,7 @@ bool ComboBoxControl_Test()
     ComboBox->SetSelectedIndex(1);
     TEST_EXPECT_EQ(SelectionChangedCount, 1);
     TEST_EXPECT_EQ(LastSelectedIndex, 1);
-    TEST_EXPECT(ComboBox->GetSelectedText() == String("Medium"));
+    TEST_EXPECT(ComboBox->GetSelectedText() == FString("Medium"));
 
     ComboBox->SetSelectedIndex(1);
     TEST_EXPECT_EQ(SelectionChangedCount, 1);
@@ -1438,7 +1438,7 @@ bool ComboBoxControl_Test()
     TEST_SECTION("Replacing the options clears the selection");
     ComboBox->SetOptions({ "One", "Two" });
     TEST_EXPECT_EQ(ComboBox->GetSelectedIndex(), -1);
-    TEST_EXPECT(ComboBox->GetSelectedText() == String("None"));
+    TEST_EXPECT(ComboBox->GetSelectedText() == FString("None"));
 
     TEST_END();
 }
@@ -1450,7 +1450,7 @@ bool DragDropService_Test()
     FDragDropService& DragDrop = FDragDropService::Get();
 
     int32      DropCount    = 0;
-    String     DroppedType;
+    FString    DroppedType;
     IntVector2 DropPosition = IntVector2(0, 0);
 
     TSharedPtr<FVisualElement> Accepting = CreateDropTarget(FRectangle(IntVector2(100, 100), 200, 100));
@@ -1483,8 +1483,8 @@ bool DragDropService_Test()
     TEST_SECTION("A payload naming one starts the drag and is remembered with where the cursor was");
     DragDrop.BeginDrag(AssetPayload, IntVector2(150, 150));
     TEST_EXPECT(DragDrop.IsDragging());
-    TEST_EXPECT(DragDrop.GetPayload().TypeId == String("Asset"));
-    TEST_EXPECT(DragDrop.GetPayload().DisplayText == String("Rock.mesh"));
+    TEST_EXPECT(DragDrop.GetPayload().TypeId == FString("Asset"));
+    TEST_EXPECT(DragDrop.GetPayload().DisplayText == FString("Rock.mesh"));
     TEST_EXPECT_EQ(DragDrop.GetScreenPosition(), IntVector2(150, 150));
     TEST_EXPECT(DragDrop.HasTarget());
 
@@ -1503,7 +1503,7 @@ bool DragDropService_Test()
     TEST_SECTION("Ending the drag hands the payload and the release point to the target under the cursor");
     DragDrop.EndDrag(IntVector2(220, 160));
     TEST_EXPECT_EQ(DropCount, 1);
-    TEST_EXPECT(DroppedType == String("Asset"));
+    TEST_EXPECT(DroppedType == FString("Asset"));
     TEST_EXPECT_EQ(DropPosition, IntVector2(220, 160));
     TEST_EXPECT(!DragDrop.IsDragging());
     TEST_EXPECT(!DragDrop.HasTarget());
@@ -1572,7 +1572,7 @@ bool DragDropService_Test()
     TEST_SECTION("A forbidden preview adds a status line without moving the ghost");
     DragDrop.SetPreview(EDragDropPreviewState::Forbidden, "Cannot move Rock.mesh");
     TEST_EXPECT_EQ(DragDrop.GetPayload().PreviewState, EDragDropPreviewState::Forbidden);
-    TEST_EXPECT(DragDrop.GetPayload().StatusText == String("Cannot move Rock.mesh"));
+    TEST_EXPECT(DragDrop.GetPayload().StatusText == FString("Cannot move Rock.mesh"));
 
     FDrawCommandList ForbiddenCommands;
     DragDrop.DrawDragVisual(ForbiddenCommands, 0);

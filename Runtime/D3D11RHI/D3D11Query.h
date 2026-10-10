@@ -20,8 +20,8 @@ public:
 
     bool GetData(void* OutData, uint32 DataSize, EQueryResultMode Mode) const;
 
-    void SetDebugName(const String& InName);
-    void GetDebugName(String& OutDebugName) const;
+    void SetDebugName(const FString& InName);
+    void GetDebugName(FString& OutDebugName) const;
 
     ID3D11Query* GetD3D11Query() const
     {

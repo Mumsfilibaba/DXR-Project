@@ -69,7 +69,7 @@ struct IPlatformLibrary
      * @brief Retrieve the full name for the library including prefixes and extension 
      * @param LibraryName Name of the library without extension or prefixes
      */
-    static FORCEINLINE String GetRealName(const CHAR_T* LibraryName)
+    static FORCEINLINE FString GetRealName(const CHAR_T* LibraryName)
     {
         return "";
     }

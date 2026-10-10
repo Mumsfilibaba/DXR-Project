@@ -218,7 +218,7 @@ int32 FPropertyTable::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
         if (IFontFace* const RowFont = GetRowFont(Index); RowFont && !Row.Label.IsEmpty())
         {
             const FRectangle LabelBounds = GetLabelRectangle(Index, AllottedGeometry.Bounds);
-            const String     LabelText   = RowFont->ElideText(StringView(Row.Label.Data(), Row.Label.Length()), LabelBounds.Width);
+            const FString    LabelText   = RowFont->ElideText(FStringView(Row.Label.Data(), Row.Label.Length()), LabelBounds.Width);
 
             OutCommandList.AddText(LayerId, LabelBounds, LabelText, RowFont, DefaultStyle.Colors.Text);
         }
@@ -460,7 +460,7 @@ bool FPropertyTable::GetCursor(ECursor& OutCursor) const
     return false;
 }
 
-FPropertyRow& FPropertyTable::AddRow(const String& Label, const TSharedPtr<FVisualElement>& Editor)
+FPropertyRow& FPropertyTable::AddRow(const FString& Label, const TSharedPtr<FVisualElement>& Editor)
 {
     FPropertyRow& NewRow = Rows.Emplace();
     NewRow.Label         = Label;
@@ -475,7 +475,7 @@ FPropertyRow& FPropertyTable::AddRow(const String& Label, const TSharedPtr<FVisu
     return NewRow;
 }
 
-FPropertyRow& FPropertyTable::AddHeaderRow(const String& Label)
+FPropertyRow& FPropertyTable::AddHeaderRow(const FString& Label)
 {
     FPropertyRow& NewRow = Rows.Emplace();
     NewRow.Label         = Label;
@@ -714,7 +714,7 @@ FRectangle FPropertyTable::GetLabelAccessoryRectangle(int32 Index, const FRectan
     const FRectangle LabelBounds = GetLabelRectangle(Index, Bounds);
     const IntVector2 Desired     = Rows[Index].LabelAccessory->ComputeDesiredSize();
 
-    const int32 TextWidth = Font ? Font->MeasureWidth(StringView(Rows[Index].Label.Data(), Rows[Index].Label.Length())) : 0;
+    const int32 TextWidth = Font ? Font->MeasureWidth(FStringView(Rows[Index].Label.Data(), Rows[Index].Label.Length())) : 0;
     const int32 Left      = LabelBounds.Position.X + TextWidth + PROPERTY_TABLE_ACCESSORY_SPACING;
 
     return FRectangle(IntVector2(Left, RowBounds.Position.Y + ((RowBounds.Height - Desired.Y) / 2)), Desired.X, Desired.Y);
@@ -757,11 +757,11 @@ int32 FPropertyTable::FindRevertRowAtPoint(const IntVector2& ClientPosition) con
     return GetRevertRectangle(RowIndex, GetContentRectangle()).EncapsulatesPoint(ClientPosition) ? RowIndex : InvalidRowIndex;
 }
 
-const String& FPropertyTable::GetElidedLabel(int32 Index) const
+const FString& FPropertyTable::GetElidedLabel(int32 Index) const
 {
-    static const String EmptyLabel;
+    static const FString EmptyLabel;
 
-    const String&    Label   = Rows[Index].Label;
+    const FString&   Label   = Rows[Index].Label;
     IFontFace* const RowFont = GetRowFont(Index);
 
     if (!RowFont || Label.IsEmpty())
@@ -770,7 +770,7 @@ const String& FPropertyTable::GetElidedLabel(int32 Index) const
     }
 
     const int32 LabelWidth = GetLabelRectangle(Index, GetContentRectangle()).Width;
-    return RowFont->MeasureWidth(StringView(Label.Data(), Label.Length())) > LabelWidth ? Label : EmptyLabel;
+    return RowFont->MeasureWidth(FStringView(Label.Data(), Label.Length())) > LabelWidth ? Label : EmptyLabel;
 }
 
 void FPropertyTable::UpdateHoveredRow(const IntVector2& ClientPosition)
@@ -790,7 +790,7 @@ void FPropertyTable::UpdateHoveredRow(const IntVector2& ClientPosition)
         return;
     }
 
-    const String& ToolTipText = Rows[RowIndex].ToolTipText.IsEmpty()
+    const FString& ToolTipText = Rows[RowIndex].ToolTipText.IsEmpty()
         ? GetElidedLabel(RowIndex)
         : Rows[RowIndex].ToolTipText;
 

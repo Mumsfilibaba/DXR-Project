@@ -28,7 +28,7 @@ static DxcBuffer MakeDxcBuffer(IDxcBlob* Blob)
     return Buffer;
 }
 
-bool FDXILShaderReflector::Reflect(IDxcUtils* Utils, IDxcBlob* ShaderObject, IDxcBlob* ReflectionBlob, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, String& OutErrors)
+bool FDXILShaderReflector::Reflect(IDxcUtils* Utils, IDxcBlob* ShaderObject, IDxcBlob* ReflectionBlob, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, FString& OutErrors)
 {
     const DxcBuffer ReflectionBuffer = MakeDxcBuffer(ReflectionBlob);
 
@@ -69,7 +69,7 @@ bool FDXILShaderReflector::Reflect(IDxcUtils* Utils, IDxcBlob* ShaderObject, IDx
     return true;
 }
 
-bool FDXILShaderReflector::ReflectShader(ID3D12ShaderReflection* Reflection, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, String& OutErrors)
+bool FDXILShaderReflector::ReflectShader(ID3D12ShaderReflection* Reflection, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, FString& OutErrors)
 {
     D3D12_SHADER_DESC ShaderDesc = {};
     if (FAILED(Reflection->GetDesc(&ShaderDesc)))
@@ -102,7 +102,7 @@ bool FDXILShaderReflector::ReflectShader(ID3D12ShaderReflection* Reflection, con
     return true;
 }
 
-bool FDXILShaderReflector::ReflectLibrary(ID3D12LibraryReflection* Reflection, IDxcUtils* Utils, IDxcBlob* ShaderObject, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, String& OutErrors)
+bool FDXILShaderReflector::ReflectLibrary(ID3D12LibraryReflection* Reflection, IDxcUtils* Utils, IDxcBlob* ShaderObject, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, FString& OutErrors)
 {
     D3D12_LIBRARY_DESC LibraryDesc = {};
     if (FAILED(Reflection->GetDesc(&LibraryDesc)))
@@ -127,7 +127,7 @@ bool FDXILShaderReflector::ReflectLibrary(ID3D12LibraryReflection* Reflection, I
 
     if (!Function)
     {
-        OutErrors += String::Printf("The shader library has no function named '%s'\n", *CompileInfo.EntryPoint);
+        OutErrors += FString::Printf("The shader library has no function named '%s'\n", *CompileInfo.EntryPoint);
         return false;
     }
 
@@ -156,11 +156,11 @@ bool FDXILShaderReflector::ReflectLibrary(ID3D12LibraryReflection* Reflection, I
 }
 
 template<typename ReflectionType>
-bool FDXILShaderReflector::ReflectBinding(ReflectionType* Reflection, const D3D12_SHADER_INPUT_BIND_DESC& BindDesc, bool bIsLibrary, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, String& OutErrors)
+bool FDXILShaderReflector::ReflectBinding(ReflectionType* Reflection, const D3D12_SHADER_INPUT_BIND_DESC& BindDesc, bool bIsLibrary, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, FString& OutErrors)
 {
     if (!IsLegalRegisterSpace(BindDesc))
     {
-        OutErrors += String::Printf("Shader Parameter '%s' has register space '%u' specified, which is invalid\n", BindDesc.Name, BindDesc.Space);
+        OutErrors += FString::Printf("Shader Parameter '%s' has register space '%u' specified, which is invalid\n", BindDesc.Name, BindDesc.Space);
         return false;
     }
 
@@ -176,7 +176,7 @@ bool FDXILShaderReflector::ReflectBinding(ReflectionType* Reflection, const D3D1
     bool bHasCounter = false;
     if (!FD3DReflectionUtils::TranslateInputType(BindDesc.Type, BindDesc.Dimension, Type, bHasCounter) || bHasCounter || BindDesc.Type == D3D_SIT_TBUFFER)
     {
-        OutErrors += String::Printf("Unhandled shader resource type '%u' for parameter '%s' at register %u, space %u. This binding would be missing from the root signature\n",
+        OutErrors += FString::Printf("Unhandled shader resource type '%u' for parameter '%s' at register %u, space %u. This binding would be missing from the root signature\n",
             BindDesc.Type, BindDesc.Name, BindDesc.BindPoint, BindDesc.Space);
         return false;
     }
@@ -185,7 +185,7 @@ bool FDXILShaderReflector::ReflectBinding(ReflectionType* Reflection, const D3D1
     {
         if (BindDesc.BindCount > 1)
         {
-            OutErrors += String::Printf("Shader Parameter '%s' is an array of %u 32-bit constant buffers, only a single constant buffer is supported in register space %u\n",
+            OutErrors += FString::Printf("Shader Parameter '%s' is an array of %u 32-bit constant buffers, only a single constant buffer is supported in register space %u\n",
                 BindDesc.Name, BindDesc.BindCount, ShaderBindings::ShaderConstantsSpace);
             return false;
         }
@@ -206,7 +206,7 @@ bool FDXILShaderReflector::ReflectBinding(ReflectionType* Reflection, const D3D1
     const bool bIsTextureUAV = Type == EShaderResourceType::RWTexture;
     if (bIsLocalSpace && bIsTextureUAV)
     {
-        OutErrors += String::Printf("Shader Parameter '%s': Texture UAVs are not supported in RT local root signatures (space %u). Only buffer UAVs are allowed\n", BindDesc.Name, BindDesc.Space);
+        OutErrors += FString::Printf("Shader Parameter '%s': Texture UAVs are not supported in RT local root signatures (space %u). Only buffer UAVs are allowed\n", BindDesc.Name, BindDesc.Space);
         return false;
     }
 
@@ -242,7 +242,7 @@ bool FDXILShaderReflector::ReadFeatureInfo(IDxcUtils* Utils, IDxcBlob* ShaderObj
 
 // DXC mangles the names of the functions in a shader-library ('\x1?MyRayGen@@YAXXZ'),
 // while D3D12 expects the unmangled name to be used as export-name.
-String FDXILShaderReflector::DemangleFunctionName(const String& MangledName)
+FString FDXILShaderReflector::DemangleFunctionName(const FString& MangledName)
 {
     constexpr const CHAR_T* ManglingPrefix = "\x1?";
     constexpr int32         PrefixLength   = 2;

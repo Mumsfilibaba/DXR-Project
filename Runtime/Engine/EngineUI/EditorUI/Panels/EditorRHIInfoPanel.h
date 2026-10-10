@@ -34,7 +34,7 @@ private:
     NODISCARD bool BuildOverview(const TSharedPtr<FVerticalBox>& InColumn);
     NODISCARD bool BuildCounters(const TSharedPtr<FVerticalBox>& InColumn);
 
-    static void AddSection(const TSharedPtr<FVerticalBox>& InColumn, const String& Label, const TSharedPtr<FVisualElement>& SectionContent, bool bIsExpanded);
+    static void AddSection(const TSharedPtr<FVerticalBox>& InColumn, const FString& Label, const TSharedPtr<FVisualElement>& SectionContent, bool bIsExpanded);
 
     void RefreshBudgets();
     void RefreshCounters();
@@ -43,7 +43,7 @@ private:
     void RebuildDetailSections();
     void CollectDetailGroups();
 
-    NODISCARD static TSharedPtr<FTextBlock> CreateValueText(const String& Text);
+    NODISCARD static TSharedPtr<FTextBlock> CreateValueText(const FString& Text);
     NODISCARD static TSharedPtr<FProgressBar> CreateMemoryBar();
 
     TSharedPtr<FProgressBar>  LocalMemoryBar;

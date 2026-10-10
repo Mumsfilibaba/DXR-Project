@@ -40,7 +40,7 @@ static FFloatColor FromBytes(int32 R, int32 G, int32 B, int32 A = 255)
 
 static TSharedPtr<IFontFace> LoadFace(const CHAR_T* Filename, int32 PixelHeight)
 {
-    const String Path = Paths::GetAssetDir() + "/Editor/Fonts/" + Filename;
+    const FString Path = Paths::GetAssetDir() + "/Editor/Fonts/" + Filename;
 
     TSharedPtr<FTrueTypeFontFace> Face = FTrueTypeFontFace::CreateFromFile(Path, PixelHeight);
     if (!Face)
@@ -257,7 +257,7 @@ TSharedPtr<FVisualElement> FEditorStyle::MakeInnerFrame(const TSharedPtr<FVisual
     return FBorder::Create(FrameDesc);
 }
 
-TSharedPtr<FVisualElement> FEditorStyle::MakeHeaderCard(const String& Title, const String& Subtitle, TSharedPtr<FTextBlock>* OutSubtitleText)
+TSharedPtr<FVisualElement> FEditorStyle::MakeHeaderCard(const FString& Title, const FString& Subtitle, TSharedPtr<FTextBlock>* OutSubtitleText)
 {
     FTextBlock::FDesc TitleDesc;
     TitleDesc.Text     = Title;
@@ -318,7 +318,7 @@ FInputFrameStyle FEditorStyle::GetConsoleInputFrameStyle()
     return FrameStyle;
 }
 
-FSearchBox::FDesc FEditorStyle::MakeSearchBoxDesc(const String& Hint, const FOnSearchTextChanged& OnChanged)
+FSearchBox::FDesc FEditorStyle::MakeSearchBoxDesc(const FString& Hint, const FOnSearchTextChanged& OnChanged)
 {
     FSearchBox::FDesc Desc;
     Desc.HintText      = Hint;
@@ -342,7 +342,7 @@ FMargin FEditorStyle::GetSectionStackSpacing()
     return FMargin(0, 0, 0, SECTION_STACK_SPACING);
 }
 
-FExpander::FDesc FEditorStyle::MakeExpanderDesc(const String& Label, const TSharedPtr<FVisualElement>& Content, bool bIsExpanded)
+FExpander::FDesc FEditorStyle::MakeExpanderDesc(const FString& Label, const TSharedPtr<FVisualElement>& Content, bool bIsExpanded)
 {
     FExpander::FDesc Desc;
     Desc.Label          = Label;

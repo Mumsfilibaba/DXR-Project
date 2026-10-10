@@ -123,13 +123,13 @@ int32 FTileView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         if (Font && !Item.Label.IsEmpty() && !LabelBand.IsEmpty())
         {
             FCachedTextMetrics& Metrics  = LabelMetrics[Index];
-            const String&    LabelText   = Metrics.GetElided(Font.Get(), StringView(Item.Label.Data(), Item.Label.Length()), LabelBand.Width);
-            const IntVector2 LabelSize   = IntVector2(Font->MeasureWidth(StringView(LabelText.Data(), LabelText.Length())), Font->GetLineHeight());
+            const FString&   LabelText   = Metrics.GetElided(Font.Get(), FStringView(Item.Label.Data(), Item.Label.Length()), LabelBand.Width);
+            const IntVector2 LabelSize   = IntVector2(Font->MeasureWidth(FStringView(LabelText.Data(), LabelText.Length())), Font->GetLineHeight());
             const FRectangle LabelBounds = FLayout::AlignInBounds(LabelBand, LabelSize, EHorizontalAlignment::Center, EVerticalAlignment::Top);
 
             // Matching the elided label rather than the whole one, so a match in the elided tail draws plain
-            const int32 MatchOffset = FilterText.IsEmpty() ? String::InvalidIndex : LabelText.Find(FilterText, EStringCaseType::NoCase);
-            if (MatchOffset == String::InvalidIndex)
+            const int32 MatchOffset = FilterText.IsEmpty() ? FString::InvalidIndex : LabelText.Find(FilterText, EStringCaseType::NoCase);
+            if (MatchOffset == FString::InvalidIndex)
             {
                 OutCommandList.AddText(LayerId + 2, LabelBounds, LabelText, Font.Get(), Style.Colors.Text);
             }
@@ -287,7 +287,7 @@ void FTileView::SetItems(const TArray<FTileItem>& InItems)
     InvalidateDesiredSize();
 }
 
-void FTileView::SetFilterText(const String& InFilter)
+void FTileView::SetFilterText(const FString& InFilter)
 {
     if (FilterText == InFilter)
     {

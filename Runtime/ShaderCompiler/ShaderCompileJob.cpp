@@ -1,6 +1,6 @@
 #include "ShaderCompiler/ShaderCompileJob.h"
 
-FShaderCompileJob FShaderCompileJob::FromCompileInfo(const String& InSourceFile, const FShaderCompileInfo& CompileInfo)
+FShaderCompileJob FShaderCompileJob::FromCompileInfo(const FString& InSourceFile, const FShaderCompileInfo& CompileInfo)
 {
     FShaderCompileJob Job;
     Job.SourceFile     = InSourceFile;
@@ -18,7 +18,7 @@ FShaderCompileJob FShaderCompileJob::FromCompileInfo(const String& InSourceFile,
     }
 
     Job.IncludeDirs.Reserve(CompileInfo.IncludeDirs.Size());
-    for (const String& IncludeDir : CompileInfo.IncludeDirs)
+    for (const FString& IncludeDir : CompileInfo.IncludeDirs)
     {
         Job.IncludeDirs.Emplace(IncludeDir);
     }
@@ -31,13 +31,13 @@ FShaderCompileInfo FShaderCompileJob::ToCompileInfo()
     FShaderCompileInfo CompileInfo(EntryPoint, ShaderModel, ShaderStage, OutputLanguage, TArrayView<FShaderDefine>(Defines));
     CompileInfo.bOptimize   = bOptimize;
     CompileInfo.bDebugInfo  = bDebugInfo;
-    CompileInfo.IncludeDirs = TArrayView<const String>(IncludeDirs);
+    CompileInfo.IncludeDirs = TArrayView<const FString>(IncludeDirs);
     return CompileInfo;
 }
 
 uint64 FShaderCompileJob::GetKey() const
 {
-    uint64 Key = THash<String>::GetHash(SourceFile);
+    uint64 Key = THash<FString>::GetHash(SourceFile);
     HashCombine(Key, EntryPoint);
     HashCombine(Key, ShaderModel);
     HashCombine(Key, ShaderStage);
@@ -52,7 +52,7 @@ uint64 FShaderCompileJob::GetKey() const
         HashCombine(Key, Define.Value);
     }
 
-    for (const String& IncludeDir : IncludeDirs)
+    for (const FString& IncludeDir : IncludeDirs)
     {
         HashCombine(Key, IncludeDir);
     }
@@ -86,7 +86,7 @@ FJsonValue FShaderCompileJob::ToJson() const
     if (!IncludeDirs.IsEmpty())
     {
         FJsonValue IncludeDirArray = FJsonValue::MakeArray();
-        for (const String& IncludeDir : IncludeDirs)
+        for (const FString& IncludeDir : IncludeDirs)
         {
             IncludeDirArray.Add(FJsonValue(IncludeDir));
         }
@@ -97,19 +97,19 @@ FJsonValue FShaderCompileJob::ToJson() const
     return Object;
 }
 
-static bool ReadStringMember(const FJsonValue& Object, const CHAR_T* Name, String& OutValue, String& OutError)
+static bool ReadStringMember(const FJsonValue& Object, const CHAR_T* Name, FString& OutValue, FString& OutError)
 {
     const FJsonValue* Member = Object.Find(Name);
     if (!Member || !Member->TryGetString(OutValue))
     {
-        OutError = String::Printf("'%s' must be a string", Name);
+        OutError = FString::Printf("'%s' must be a string", Name);
         return false;
     }
 
     return true;
 }
 
-bool FShaderCompileJob::FromJson(const FJsonValue& Value, FShaderCompileJob& OutJob, String& OutError)
+bool FShaderCompileJob::FromJson(const FJsonValue& Value, FShaderCompileJob& OutJob, FString& OutError)
 {
     if (!Value.IsObject())
     {
@@ -124,9 +124,9 @@ bool FShaderCompileJob::FromJson(const FJsonValue& Value, FShaderCompileJob& Out
         Job.Name = NameValue->GetStringOr("");
     }
 
-    String StageText;
-    String ModelText;
-    String LanguageText;
+    FString StageText;
+    FString ModelText;
+    FString LanguageText;
 
     if (!ReadStringMember(Value, "source", Job.SourceFile, OutError) ||
         !ReadStringMember(Value, "entry", Job.EntryPoint, OutError) ||
@@ -145,19 +145,19 @@ bool FShaderCompileJob::FromJson(const FJsonValue& Value, FShaderCompileJob& Out
 
     if (!TryParseShaderStage(StageText, Job.ShaderStage))
     {
-        OutError = String::Printf("'%s' is not a shader stage", *StageText);
+        OutError = FString::Printf("'%s' is not a shader stage", *StageText);
         return false;
     }
 
     if (!TryParseShaderModel(ModelText, Job.ShaderModel))
     {
-        OutError = String::Printf("'%s' is not a shader model", *ModelText);
+        OutError = FString::Printf("'%s' is not a shader model", *ModelText);
         return false;
     }
 
     if (!TryParseShaderOutputLanguage(LanguageText, Job.OutputLanguage))
     {
-        OutError = String::Printf("'%s' is not an output language", *LanguageText);
+        OutError = FString::Printf("'%s' is not an output language", *LanguageText);
         return false;
     }
 
@@ -188,8 +188,8 @@ bool FShaderCompileJob::FromJson(const FJsonValue& Value, FShaderCompileJob& Out
         {
             const FJsonValue& Pair = (*DefinesValue)[Index];
 
-            String DefineName;
-            String DefineValue;
+            FString DefineName;
+            FString DefineValue;
 
             if (!Pair.IsArray() || Pair.Num() != 2 || !Pair[0].TryGetString(DefineName) || !Pair[1].TryGetString(DefineValue) || DefineName.IsEmpty())
             {
@@ -211,7 +211,7 @@ bool FShaderCompileJob::FromJson(const FJsonValue& Value, FShaderCompileJob& Out
 
         for (int32 Index = 0; Index < IncludeDirsValue->Num(); ++Index)
         {
-            String IncludeDir;
+            FString IncludeDir;
             if (!(*IncludeDirsValue)[Index].TryGetString(IncludeDir) || IncludeDir.IsEmpty())
             {
                 OutError = "Every include directory must be a non-empty string";
@@ -226,7 +226,7 @@ bool FShaderCompileJob::FromJson(const FJsonValue& Value, FShaderCompileJob& Out
     return true;
 }
 
-bool TryParseShaderStage(const String& Text, EShaderStage& OutStage)
+bool TryParseShaderStage(const FString& Text, EShaderStage& OutStage)
 {
     for (uint8 Value = static_cast<uint8>(EShaderStage::Vertex); Value <= static_cast<uint8>(EShaderStage::RayCallable); ++Value)
     {
@@ -241,7 +241,7 @@ bool TryParseShaderStage(const String& Text, EShaderStage& OutStage)
     return false;
 }
 
-bool TryParseShaderModel(const String& Text, EShaderModel& OutModel)
+bool TryParseShaderModel(const FString& Text, EShaderModel& OutModel)
 {
     constexpr EShaderModel ShaderModels[] =
     {
@@ -271,7 +271,7 @@ bool TryParseShaderModel(const String& Text, EShaderModel& OutModel)
     return false;
 }
 
-bool TryParseShaderOutputLanguage(const String& Text, EShaderOutputLanguage& OutOutputLanguage)
+bool TryParseShaderOutputLanguage(const FString& Text, EShaderOutputLanguage& OutOutputLanguage)
 {
     constexpr EShaderOutputLanguage OutputLanguages[] =
     {

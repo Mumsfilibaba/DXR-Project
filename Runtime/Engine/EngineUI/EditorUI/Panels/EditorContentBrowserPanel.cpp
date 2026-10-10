@@ -69,7 +69,7 @@ DECLARE_RETURN_DELEGATE(FOnBrowserHitTest, int32, const IntVector2& /*ClientPosi
 DECLARE_RETURN_DELEGATE(FOnBrowserTargetBounds, FRectangle, int32 /*Target*/);
 
 /** @brief Called with a target, for the text an edit over it starts from. */
-DECLARE_RETURN_DELEGATE(FOnBrowserTargetLabel, String, int32 /*Target*/);
+DECLARE_RETURN_DELEGATE(FOnBrowserTargetLabel, FString, int32 /*Target*/);
 
 /** @brief Called with the target a drag is over, for whether dropping there would move anything. */
 DECLARE_RETURN_DELEGATE(FOnBrowserCanDrop, bool, int32 /*Target*/);
@@ -78,7 +78,7 @@ DECLARE_RETURN_DELEGATE(FOnBrowserCanDrop, bool, int32 /*Target*/);
 DECLARE_DELEGATE(FOnBrowserContextMenu, int32 /*Target*/, const IntVector2& /*ScreenPosition*/);
 
 /** @brief Called with the name an edit committed. */
-DECLARE_DELEGATE(FOnBrowserRenameCommitted, int32 /*Target*/, const String& /*NewName*/);
+DECLARE_DELEGATE(FOnBrowserRenameCommitted, int32 /*Target*/, const FString& /*NewName*/);
 
 /** @brief Called when F2 went down on the view, for the host to pick what to rename. */
 DECLARE_DELEGATE(FOnBrowserRenameRequested);
@@ -87,9 +87,9 @@ DECLARE_DELEGATE(FOnBrowserRenameRequested);
 DECLARE_DELEGATE(FOnBrowserDeleteRequested);
 
 /** @brief Called with the payload dropped on a target, which is InvalidTarget for the space below the items. */
-DECLARE_DELEGATE(FOnBrowserDropped, const String& /*PayloadId*/, int32 /*Target*/);
+DECLARE_DELEGATE(FOnBrowserDropped, const FString& /*PayloadId*/, int32 /*Target*/);
 DECLARE_DELEGATE(FOnBrowserDragPreview, int32 /*Target*/);
-DECLARE_RETURN_DELEGATE(FOnBrowserHoverTip, String, int32 /*Target*/);
+DECLARE_RETURN_DELEGATE(FOnBrowserHoverTip, FString, int32 /*Target*/);
 
 class FBrowserGlyph final : public FVisualElement
 {
@@ -152,7 +152,7 @@ public:
         TSharedPtr<IFontFace> Font;
 
         /** @brief What a drag out of this view is called. */
-        String PayloadId;
+        FString PayloadId;
 
         /** @brief Where a target is, for the outline a drop candidate carries. */
         FOnBrowserTargetBounds TargetBounds;
@@ -223,7 +223,7 @@ public:
      * @param DisplayText What the ghost following the cursor reads.
      * @param CursorEvent The move that crossed the drag threshold.
      */
-    void BeginDrag(const String& DisplayText, const FUIBrush& Icon, int32 SelectionCount, const FCursorEvent& CursorEvent);
+    void BeginDrag(const FString& DisplayText, const FUIBrush& Icon, int32 SelectionCount, const FCursorEvent& CursorEvent);
 
     /** @brief Drops the field without writing anything back, and returns the keyboard to the view. */
     void CancelRename();
@@ -236,7 +236,7 @@ public:
 
 private:
     void Initialize(const FDesc& Desc);
-    void CommitRename(const String& NewName);
+    void CommitRename(const FString& NewName);
     void ReleaseRenameField();
     void HandleDrop(const FDragDropPayload& Payload, const IntVector2& ScreenPosition);
     void ClearDragState();
@@ -247,7 +247,7 @@ private:
     TSharedPtr<IFontFace>      Font;
     TSharedPtr<FEditableText>  RenameField;
     TSharedPtr<FEditableText>  RetiredRenameField;
-    String                     PayloadId;
+    FString                    PayloadId;
     FOnBrowserTargetBounds     TargetBounds;
     FOnBrowserTargetBounds     LabelBounds;
     FOnBrowserTargetLabel      TargetLabel;
@@ -478,7 +478,7 @@ FEventResponse FEditorContentBrowserView::OnMouseMove(const FCursorEvent& Cursor
 
         if (HoverTip.IsBound() && Target != InvalidTarget && !FDragDropService::Get().IsDragging())
         {
-            const String Tip = HoverTip.Execute(Target);
+            const FString Tip = HoverTip.Execute(Target);
             if (!Tip.IsEmpty())
             {
                 HoveredTipTarget = Target;
@@ -577,7 +577,7 @@ void FEditorContentBrowserView::BeginRename(int32 Target)
     const FUIStyle& Style = FUIStyle::GetDefault();
 
     FEditableText::FDesc Desc;
-    Desc.Text            = TargetLabel.IsBound() ? TargetLabel.Execute(Target) : String();
+    Desc.Text            = TargetLabel.IsBound() ? TargetLabel.Execute(Target) : FString();
     Desc.Font            = Font;
     Desc.ForegroundColor = Style.Colors.Text;
     Desc.SelectionColor  = Style.Colors.TextSelectionBackground;
@@ -601,7 +601,7 @@ void FEditorContentBrowserView::BeginRename(int32 Target)
     FApplication::Get().SetFocusElement(RenameField);
 }
 
-void FEditorContentBrowserView::BeginDrag(const String& DisplayText, const FUIBrush& Icon, int32 SelectionCount, const FCursorEvent& CursorEvent)
+void FEditorContentBrowserView::BeginDrag(const FString& DisplayText, const FUIBrush& Icon, int32 SelectionCount, const FCursorEvent& CursorEvent)
 {
     if (IsRenaming() || !FApplication::IsInitialized())
     {
@@ -632,7 +632,7 @@ void FEditorContentBrowserView::CancelRename()
     ReleaseRenameField();
 }
 
-void FEditorContentBrowserView::CommitRename(const String& NewName)
+void FEditorContentBrowserView::CommitRename(const FString& NewName)
 {
     const int32 Target = RenamedTarget;
 
@@ -1177,7 +1177,7 @@ void FEditorContentBrowserPanel::RefreshBreadcrumbs()
 
     BreadcrumbBar->ClearSlots();
 
-    const auto AddCrumb = [&](const String& CrumbLabel, const FEntryPath& Path)
+    const auto AddCrumb = [&](const FString& CrumbLabel, const FEntryPath& Path)
     {
         FButton::FDesc Desc;
         Desc.SetText(CrumbLabel).SetFont(FEditorStyle::GetFonts().Body);
@@ -1387,7 +1387,7 @@ void FEditorContentBrowserPanel::NewFolder()
 
     if (ContentSearchBox)
     {
-        ContentSearchBox->SetText(String());
+        ContentSearchBox->SetText(FString());
     }
 
     RebuildTree();
@@ -1403,7 +1403,7 @@ void FEditorContentBrowserPanel::NewFolder()
     }
 }
 
-void FEditorContentBrowserPanel::RenameEntry(const FEntryPath& Path, const String& NewName)
+void FEditorContentBrowserPanel::RenameEntry(const FEntryPath& Path, const FString& NewName)
 {
     FEntry* Entry = FindEntry(Path);
     if (!Entry || NewName.IsEmpty())
@@ -1418,7 +1418,7 @@ void FEditorContentBrowserPanel::RenameEntry(const FEntryPath& Path, const Strin
     else
     {
         const int32 Dot = Entry->Name.FindLastChar('.');
-        Entry->Name = (Dot != String::InvalidIndex) 
+        Entry->Name = (Dot != FString::InvalidIndex) 
             ? (NewName + Entry->Name.SubString(Dot, Entry->Name.Length() - Dot)) 
             : NewName;
     }
@@ -1460,9 +1460,9 @@ void FEditorContentBrowserPanel::DeleteEntries(const FEntryPath& ParentPath, con
     RefreshBreadcrumbs();
 }
 
-String FEditorContentBrowserPanel::CreateUniqueName(const TArray<FEntry>& Siblings, const String& Name)
+FString FEditorContentBrowserPanel::CreateUniqueName(const TArray<FEntry>& Siblings, const FString& Name)
 {
-    const auto IsTaken = [&Siblings](const String& Candidate)
+    const auto IsTaken = [&Siblings](const FString& Candidate)
     {
         for (const FEntry& Sibling : Siblings)
         {
@@ -1480,13 +1480,13 @@ String FEditorContentBrowserPanel::CreateUniqueName(const TArray<FEntry>& Siblin
         return Name;
     }
 
-    const int32  Dot       = Name.FindLastChar('.');
-    const String Stem      = (Dot != String::InvalidIndex) ? Name.SubString(0, Dot) : Name;
-    const String Extension = (Dot != String::InvalidIndex) ? Name.SubString(Dot, Name.Length() - Dot) : String();
+    const int32   Dot       = Name.FindLastChar('.');
+    const FString Stem      = (Dot != FString::InvalidIndex) ? Name.SubString(0, Dot) : Name;
+    const FString Extension = (Dot != FString::InvalidIndex) ? Name.SubString(Dot, Name.Length() - Dot) : FString();
 
     for (int32 Suffix = 1;; ++Suffix)
     {
-        const String Candidate = String::Printf("%s (%d)%s", Stem.Data(), Suffix, Extension.Data());
+        const FString Candidate = FString::Printf("%s (%d)%s", Stem.Data(), Suffix, Extension.Data());
         if (!IsTaken(Candidate))
         {
             return Candidate;
@@ -1568,7 +1568,7 @@ void FEditorContentBrowserPanel::MoveEntries(const FEntryPath& SourceParentPath,
     TArray<FEntry>* Target = FindChildArray(TargetPath);
     if (!Target)
     {
-        TArray<String> FailedNames;
+        TArray<FString> FailedNames;
         FailedNames.Reserve(Moved.Size());
 
         for (FEntry& Entry : Moved)
@@ -1615,17 +1615,17 @@ void FEditorContentBrowserPanel::RequestDelete(const FEntryPath& ParentPath, con
 
     if (bIsFolderPanel)
     {
-        const String Name = Children->IsValidIndex(ChildIndices[0]) ? (*Children)[ChildIndices[0]].Name : String("this folder");
+        const FString Name = Children->IsValidIndex(ChildIndices[0]) ? (*Children)[ChildIndices[0]].Name : FString("this folder");
 
         Desc.Title   = "Delete Folder";
-        Desc.Message = String::Printf("Are you sure you want to delete \"%s\" and its contents?", Name.Data());
+        Desc.Message = FString::Printf("Are you sure you want to delete \"%s\" and its contents?", Name.Data());
     }
     else if (ChildIndices.Size() == 1)
     {
-        const String Name = Children->IsValidIndex(ChildIndices[0]) ? (*Children)[ChildIndices[0]].Name : String("this item");
+        const FString Name = Children->IsValidIndex(ChildIndices[0]) ? (*Children)[ChildIndices[0]].Name : FString("this item");
 
         Desc.Title   = "Delete";
-        Desc.Message = String::Printf("Are you sure you want to delete \"%s\"?", Name.Data());
+        Desc.Message = FString::Printf("Are you sure you want to delete \"%s\"?", Name.Data());
     }
     else
     {
@@ -1657,9 +1657,9 @@ bool FEditorContentBrowserPanel::CanMoveInto(const FEntryPath& SourceParentPath,
     return FIndexedPathMove::CanMoveAny(SourceParentPath, ChildIndices, TargetPath);
 }
 
-TArray<String> FEditorContentBrowserPanel::CollectEntryNames(const FEntryPath& ParentPath, const TArray<int32>& ChildIndices)
+TArray<FString> FEditorContentBrowserPanel::CollectEntryNames(const FEntryPath& ParentPath, const TArray<int32>& ChildIndices)
 {
-    TArray<String> Names;
+    TArray<FString> Names;
 
     const TArray<FEntry>* Children = FindChildArray(ParentPath);
     if (!Children)
@@ -1679,7 +1679,7 @@ TArray<String> FEditorContentBrowserPanel::CollectEntryNames(const FEntryPath& P
     return Names;
 }
 
-void FEditorContentBrowserPanel::ReportFailure(const String& Message, const TArray<String>& FailedNames)
+void FEditorContentBrowserPanel::ReportFailure(const FString& Message, const TArray<FString>& FailedNames)
 {
     if (FailedNames.IsEmpty())
     {
@@ -1867,13 +1867,13 @@ void FEditorContentBrowserPanel::OnTileDragDetected(int32 Index, const FCursorEv
     GridWrapper->BeginDrag(Item.Label, Item.Icon, DragChildIndices.Size(), CursorEvent);
 }
 
-void FEditorContentBrowserPanel::OnFolderSearchTextChanged(const String& SearchText)
+void FEditorContentBrowserPanel::OnFolderSearchTextChanged(const FString& SearchText)
 {
     FolderFilterText = SearchText;
     FolderTree->SetFilterText(SearchText);
 }
 
-void FEditorContentBrowserPanel::OnContentSearchTextChanged(const String& SearchText)
+void FEditorContentBrowserPanel::OnContentSearchTextChanged(const FString& SearchText)
 {
     ContentFilterText = SearchText;
     RefreshTiles();
@@ -1928,7 +1928,7 @@ void FEditorContentBrowserPanel::OnGridContextMenu(int32 Target, const IntVector
     }
 }
 
-void FEditorContentBrowserPanel::OnTreeRenameCommitted(int32 Target, const String& NewName)
+void FEditorContentBrowserPanel::OnTreeRenameCommitted(int32 Target, const FString& NewName)
 {
     const TArray<TSharedPtr<FTreeItem>>& Rows = FolderTree->GetVisibleRows();
     if (Rows.IsValidIndex(Target))
@@ -1937,7 +1937,7 @@ void FEditorContentBrowserPanel::OnTreeRenameCommitted(int32 Target, const Strin
     }
 }
 
-void FEditorContentBrowserPanel::OnGridRenameCommitted(int32 Target, const String& NewName)
+void FEditorContentBrowserPanel::OnGridRenameCommitted(int32 Target, const FString& NewName)
 {
     if (VisibleChildIndices.IsValidIndex(Target))
     {
@@ -2006,7 +2006,7 @@ void FEditorContentBrowserPanel::OnGridDeleteRequested()
     RequestDelete(CurrentPath, Indices, false);
 }
 
-void FEditorContentBrowserPanel::OnTreeDropped(const String& PayloadId, int32 Target)
+void FEditorContentBrowserPanel::OnTreeDropped(const FString& PayloadId, int32 Target)
 {
     UNREFERENCED_VARIABLE(PayloadId);
 
@@ -2020,7 +2020,7 @@ void FEditorContentBrowserPanel::OnTreeDropped(const String& PayloadId, int32 Ta
     DragChildIndices.Clear();
 }
 
-void FEditorContentBrowserPanel::OnGridDropped(const String& PayloadId, int32 Target)
+void FEditorContentBrowserPanel::OnGridDropped(const FString& PayloadId, int32 Target)
 {
     UNREFERENCED_VARIABLE(PayloadId);
 
@@ -2110,24 +2110,24 @@ bool FEditorContentBrowserPanel::CanDropOnTile(int32 Target) const
     return CanMoveInto(DragParentPath, DragChildIndices, TilePath);
 }
 
-String FEditorContentBrowserPanel::GetTreeLabel(int32 Target) const
+FString FEditorContentBrowserPanel::GetTreeLabel(int32 Target) const
 {
     const TArray<TSharedPtr<FTreeItem>>& Rows = FolderTree->GetVisibleRows();
-    return Rows.IsValidIndex(Target) ? Rows[Target]->Label : String();
+    return Rows.IsValidIndex(Target) ? Rows[Target]->Label : FString();
 }
 
-String FEditorContentBrowserPanel::GetTileLabel(int32 Target) const
+FString FEditorContentBrowserPanel::GetTileLabel(int32 Target) const
 {
     const TArray<FTileItem>& Items = TileView->GetItems();
     if (!Items.IsValidIndex(Target))
     {
-        return String();
+        return FString();
     }
 
-    const String& ItemLabel = Items[Target].Label;
-    const int32   Dot       = ItemLabel.FindLastChar('.');
+    const FString& ItemLabel = Items[Target].Label;
+    const int32    Dot       = ItemLabel.FindLastChar('.');
 
-    return (Dot != String::InvalidIndex) ? ItemLabel.SubString(0, Dot) : ItemLabel;
+    return (Dot != FString::InvalidIndex) ? ItemLabel.SubString(0, Dot) : ItemLabel;
 }
 
 void FEditorContentBrowserPanel::UpdateTreeDragPreview(int32 Target)
@@ -2135,7 +2135,7 @@ void FEditorContentBrowserPanel::UpdateTreeDragPreview(int32 Target)
     const TArray<TSharedPtr<FTreeItem>>& Rows = FolderTree->GetVisibleRows();
     if (!Rows.IsValidIndex(Target))
     {
-        UpdateDragPreview(FEntryPath(), String());
+        UpdateDragPreview(FEntryPath(), FString());
         return;
     }
 
@@ -2145,7 +2145,7 @@ void FEditorContentBrowserPanel::UpdateTreeDragPreview(int32 Target)
 void FEditorContentBrowserPanel::UpdateGridDragPreview(int32 Target)
 {
     FEntryPath TargetPath = CurrentPath;
-    String     TargetName;
+    FString    TargetName;
 
     const FEntryPath TilePath = ResolveTileTarget(Target);
     if (const FEntry* Entry = FindEntry(TilePath))
@@ -2157,10 +2157,10 @@ void FEditorContentBrowserPanel::UpdateGridDragPreview(int32 Target)
         }
         else
         {
-            const TArray<String> Names = CollectEntryNames(DragParentPath, DragChildIndices);
-            const String         SourceName = Names.IsEmpty() ? String() : Names[0];
+            const TArray<FString> Names = CollectEntryNames(DragParentPath,  DragChildIndices);
+            const FString         SourceName = Names.IsEmpty() ? FString() : Names[0];
             FDragDropService::Get().SetPreview(EDragDropPreviewState::Forbidden,
-                String::Printf("Cannot move %s to %s", *SourceName, *Entry->Name));
+                FString::Printf("Cannot move %s to %s", *SourceName, *Entry->Name));
             return;
         }
     }
@@ -2180,13 +2180,13 @@ void FEditorContentBrowserPanel::UpdateGridDragPreview(int32 Target)
     UpdateDragPreview(TargetPath, TargetName);
 }
 
-void FEditorContentBrowserPanel::UpdateDragPreview(const FEntryPath& TargetPath, const String& TargetName)
+void FEditorContentBrowserPanel::UpdateDragPreview(const FEntryPath& TargetPath, const FString& TargetName)
 {
     TArray<int32> Legal;
     TArray<int32> Illegal;
     FIndexedPathMove::Classify(DragParentPath, DragChildIndices, TargetPath, Legal, Illegal);
 
-    String SourceName;
+    FString SourceName;
     if (!DragChildIndices.IsEmpty())
     {
         FEntryPath SourcePath = DragParentPath;
@@ -2198,52 +2198,52 @@ void FEditorContentBrowserPanel::UpdateDragPreview(const FEntryPath& TargetPath,
     }
 
     EDragDropPreviewState State = EDragDropPreviewState::Neutral;
-    String                Status;
+    FString               Status;
     if (!TargetName.IsEmpty())
     {
         if (Legal.IsEmpty())
         {
             State  = EDragDropPreviewState::Forbidden;
-            Status = String::Printf("Cannot move %s to %s", *SourceName, *TargetName);
+            Status = FString::Printf("Cannot move %s to %s", *SourceName, *TargetName);
         }
         else if (!Illegal.IsEmpty())
         {
             State  = EDragDropPreviewState::Partial;
-            Status = String::Printf("Move %s and others to %s", *SourceName, *TargetName);
+            Status = FString::Printf("Move %s and others to %s", *SourceName, *TargetName);
         }
         else
         {
             State  = EDragDropPreviewState::Allowed;
-            Status = String::Printf("Move %s to %s", *SourceName, *TargetName);
+            Status = FString::Printf("Move %s to %s", *SourceName, *TargetName);
         }
     }
 
     FDragDropService::Get().SetPreview(State, Status);
 }
 
-String FEditorContentBrowserPanel::GetTreeHoverTip(int32 Target) const
+FString FEditorContentBrowserPanel::GetTreeHoverTip(int32 Target) const
 {
     const TArray<TSharedPtr<FTreeItem>>& Rows = FolderTree->GetVisibleRows();
     if (!Rows.IsValidIndex(Target))
     {
-        return String();
+        return FString();
     }
 
     const FEntryPath Path  = FindTreeItemPath(Rows[Target]);
     const FEntry*    Entry = FindEntry(Path);
-    return Entry ? BuildHoverTip(Path, *Entry) : String();
+    return Entry ? BuildHoverTip(Path, *Entry) : FString();
 }
 
-String FEditorContentBrowserPanel::GetGridHoverTip(int32 Target) const
+FString FEditorContentBrowserPanel::GetGridHoverTip(int32 Target) const
 {
     const FEntryPath Path  = ResolveTileTarget(Target);
     const FEntry*    Entry = FindEntry(Path);
-    return Entry ? BuildHoverTip(Path, *Entry) : String();
+    return Entry ? BuildHoverTip(Path, *Entry) : FString();
 }
 
-String FEditorContentBrowserPanel::BuildHoverTip(const FEntryPath& Path, const FEntry& Entry) const
+FString FEditorContentBrowserPanel::BuildHoverTip(const FEntryPath& Path, const FEntry& Entry) const
 {
-    String FullPath;
+    FString FullPath;
     for (int32 Depth = 0; Depth < Path.Size(); ++Depth)
     {
         FEntryPath Prefix = Path;
@@ -2258,5 +2258,5 @@ String FEditorContentBrowserPanel::BuildHoverTip(const FEntryPath& Path, const F
         }
     }
 
-    return String::Printf("%s\n%s\nPath: %s", *Entry.Name, Entry.bIsFolder ? "Folder" : "Document", *FullPath);
+    return FString::Printf("%s\n%s\nPath: %s", *Entry.Name, Entry.bIsFolder ? "Folder" : "Document", *FullPath);
 }

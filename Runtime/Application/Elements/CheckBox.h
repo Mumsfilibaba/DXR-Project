@@ -38,7 +38,7 @@ public:
          * @param InText The text to show.
          * @return This desc, so the setters can be chained.
          */
-        FORCEINLINE FDesc& SetText(const String& InText)
+        FORCEINLINE FDesc& SetText(const FString& InText)
         {
             Text = InText;
             return *this;
@@ -57,7 +57,7 @@ public:
         }
 
         /** @brief The label placed beside the box, ignored when Label is set. */
-        String Text;
+        FString Text;
 
         /** @brief The face the label is measured and drawn with. */
         TSharedPtr<IFontFace> Font;

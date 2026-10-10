@@ -362,7 +362,7 @@ void FMacAsyncFileHandle::FreePendingWrite(FPendingWrite* PendingWrite)
     delete PendingWrite;
 }
 
-IPlatformAsyncFile* FMacPlatformFile::OpenForAsyncWrite(const String& Filename, bool bTruncate)
+IPlatformAsyncFile* FMacPlatformFile::OpenForAsyncWrite(const FString& Filename, bool bTruncate)
 {
     int32 Flags =
         O_WRONLY |
@@ -381,7 +381,7 @@ IPlatformAsyncFile* FMacPlatformFile::OpenForAsyncWrite(const String& Filename, 
     int32 FileHandle = ::open(*Filename, Flags, PermissionFlags);
     if (FileHandle < 0)
     {
-        String ErrorString;
+        FString ErrorString;
         const int32 ErrorCode = FMacPlatformMisc::GetLastErrorString(ErrorString);
         LOG_ERROR("Failed to open '%s' for async write with error %d '%s'", *Filename, ErrorCode, *ErrorString);
         return nullptr;
@@ -392,7 +392,7 @@ IPlatformAsyncFile* FMacPlatformFile::OpenForAsyncWrite(const String& Filename, 
     if (Result != 0)
     {
         // Read before the close, since that overwrites errno
-        String ErrorString;
+        FString ErrorString;
         const int32 ErrorCode = FMacPlatformMisc::GetLastErrorString(ErrorString);
         LOG_ERROR("Failed to lock '%s' for async write with error %d '%s'", *Filename, ErrorCode, *ErrorString);
 
@@ -403,12 +403,12 @@ IPlatformAsyncFile* FMacPlatformFile::OpenForAsyncWrite(const String& Filename, 
     return new FMacAsyncFileHandle(FileHandle);
 }
 
-IPlatformFile* FMacPlatformFile::OpenForRead(const String& Filename)
+IPlatformFile* FMacPlatformFile::OpenForRead(const FString& Filename)
 {
     int32 FileHandle = ::open(*Filename, O_RDONLY);
     if (FileHandle < 0)
     {
-        String ErrorString;
+        FString ErrorString;
         const int32 ErrorCode = FMacPlatformMisc::GetLastErrorString(ErrorString);
         LOG_ERROR("Failed to open '%s' for read with error %d '%s'", *Filename, ErrorCode, *ErrorString);
         return nullptr;
@@ -422,7 +422,7 @@ IPlatformFile* FMacPlatformFile::OpenForRead(const String& Filename)
     if (Result != 0)
     {
         // Read before the close, since that overwrites errno
-        String ErrorString;
+        FString ErrorString;
         const int32 ErrorCode = FMacPlatformMisc::GetLastErrorString(ErrorString);
         LOG_ERROR("Failed to lock '%s' for read with error %d '%s'", *Filename, ErrorCode, *ErrorString);
 
@@ -435,7 +435,7 @@ IPlatformFile* FMacPlatformFile::OpenForRead(const String& Filename)
     }
 }
 
-IPlatformFile* FMacPlatformFile::OpenForWrite(const String& Filename, bool bTruncate)
+IPlatformFile* FMacPlatformFile::OpenForWrite(const FString& Filename, bool bTruncate)
 {
     int32 Flags =
         O_WRONLY | // Writing only 
@@ -457,7 +457,7 @@ IPlatformFile* FMacPlatformFile::OpenForWrite(const String& Filename, bool bTrun
     int32 FileHandle = ::open(*Filename, Flags, PermissonFlags);
     if (FileHandle < 0)
     {
-        String ErrorString;
+        FString ErrorString;
         const int32 ErrorCode = FMacPlatformMisc::GetLastErrorString(ErrorString);
         LOG_ERROR("Failed to open '%s' for write with error %d '%s'", *Filename, ErrorCode, *ErrorString);
         return nullptr;
@@ -471,7 +471,7 @@ IPlatformFile* FMacPlatformFile::OpenForWrite(const String& Filename, bool bTrun
     if (Result != 0)
     {
         // Read before the close, since that overwrites errno
-        String ErrorString;
+        FString ErrorString;
         const int32 ErrorCode = FMacPlatformMisc::GetLastErrorString(ErrorString);
         LOG_ERROR("Failed to lock '%s' for write with error %d '%s'", *Filename, ErrorCode, *ErrorString);
 
@@ -484,16 +484,16 @@ IPlatformFile* FMacPlatformFile::OpenForWrite(const String& Filename, bool bTrun
     }
 }
 
-String FMacPlatformFile::GetCurrentWorkingDirectory()
+FString FMacPlatformFile::GetCurrentWorkingDirectory()
 {
     CHAR_T Buffer[MAXPATHLEN] = { 0 };
     CHAR_T* CurrentDirectory = ::getcwd(Buffer, sizeof(Buffer));
     if (!CurrentDirectory)
     {
-        String ErrorString;
+        FString ErrorString;
         const int32 ErrorCode = FMacPlatformMisc::GetLastErrorString(ErrorString);
         LOG_ERROR("GetCurrentWorkingDirectory failed with error %d '%s'", ErrorCode, *ErrorString);
-        return String();
+        return FString();
     }
     else
     {
@@ -527,7 +527,7 @@ bool FMacPlatformFile::CopyFile(const CHAR_T* FromFilename, const CHAR_T* ToFile
     return ::copyfile(FromFilename, ToFilename, nullptr, Flags) == 0;
 }
 
-String FMacPlatformFile::GetUserSettingsDirectory()
+FString FMacPlatformFile::GetUserSettingsDirectory()
 {
     SCOPED_AUTORELEASE_POOL();
 
@@ -535,10 +535,10 @@ String FMacPlatformFile::GetUserSettingsDirectory()
     if ([Directories count] == 0)
     {
         LOG_ERROR("GetUserSettingsDirectory failed to find the Application Support directory");
-        return String();
+        return FString();
     }
 
-    return String([[Directories firstObject] UTF8String]);
+    return FString([[Directories firstObject] UTF8String]);
 }
 
 FFileInfo FMacPlatformFile::GetFileInfo(const CHAR_T* Path)
@@ -583,8 +583,8 @@ bool FMacPlatformFile::IterateDirectory(const CHAR_T* Path, TArray<FDirectoryEnt
         FDirectoryEntry Child;
         Child.Name = DirEntry->d_name;
 
-        const String ChildPath = String::Printf("%s/%s", Path, DirEntry->d_name);
-        Child.bIsDirectory     = IsDirectory(*ChildPath);
+        const FString ChildPath = FString::Printf("%s/%s", Path, DirEntry->d_name);
+        Child.bIsDirectory      = IsDirectory(*ChildPath);
 
         struct stat LinkStat;
         Child.bIsSymbolicLink = (::lstat(*ChildPath, &LinkStat) == 0) && S_ISLNK(LinkStat.st_mode);

@@ -4,7 +4,7 @@
 struct CORE_API FWindowsPlatformSystemClipboard : public IPlatformSystemClipboard
 {
     static bool HasText();
-    static bool GetText(String& OutText);
-    static bool SetText(const String& InText);
+    static bool GetText(FString& OutText);
+    static bool SetText(const FString& InText);
     static void Clear();
 };

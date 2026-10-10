@@ -33,7 +33,7 @@ IntVector2 FComboBoxButton::ComputeDesiredSize() const
     IntVector2 DesiredSize(Inset.GetTotalHorizontal() + COMBO_ARROW_WIDTH, Inset.GetTotalVertical());
     if (Font)
     {
-        DesiredSize.X += Math::Max(ReservedTextWidth, Font->MeasureWidth(StringView(Label.Data(), Label.Length())));
+        DesiredSize.X += Math::Max(ReservedTextWidth, Font->MeasureWidth(FStringView(Label.Data(), Label.Length())));
         DesiredSize.Y += Font->GetLineHeight();
     }
 
@@ -61,7 +61,7 @@ int32 FComboBoxButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComman
         FRectangle TextBounds = Inner;
         TextBounds.Width      = Math::Max(Inner.Width - COMBO_ARROW_WIDTH, 0);
 
-        OutCommandList.AddText(LayerId, TextBounds, Font->ElideText(StringView(Label.Data(), Label.Length()), TextBounds.Width), Font.Get(), TextColor);
+        OutCommandList.AddText(LayerId, TextBounds, Font->ElideText(FStringView(Label.Data(), Label.Length()), TextBounds.Width), Font.Get(), TextColor);
     }
 
     const float CenterX = static_cast<float>(Bounds.GetRight()) - (static_cast<float>(Bounds.Height) * 0.5f);
@@ -81,7 +81,7 @@ void FComboBoxButton::SetAnchor(FMenuAnchor* InAnchor)
     Anchor = InAnchor;
 }
 
-void FComboBoxButton::SetText(const String& InText)
+void FComboBoxButton::SetText(const FString& InText)
 {
     if (Label == InText)
     {
@@ -173,12 +173,12 @@ void FComboBox::SetSelectedIndex(int32 Index)
     OnSelectionChangedDelegate.ExecuteIfBound(SelectedIndex);
 }
 
-const String& FComboBox::GetSelectedText() const
+const FString& FComboBox::GetSelectedText() const
 {
     return Options.IsValidIndex(SelectedIndex) ? Options[SelectedIndex] : PlaceholderText;
 }
 
-void FComboBox::SetOptions(const TArray<String>& InOptions)
+void FComboBox::SetOptions(const TArray<FString>& InOptions)
 {
     Options       = InOptions;
     SelectedIndex = -1;
@@ -252,10 +252,10 @@ void FComboBox::RefreshButtonText()
 
     if (Font)
     {
-        int32 WidestOption = Font->MeasureWidth(StringView(PlaceholderText.Data(), PlaceholderText.Length()));
-        for (const String& Option : Options)
+        int32 WidestOption = Font->MeasureWidth(FStringView(PlaceholderText.Data(), PlaceholderText.Length()));
+        for (const FString& Option : Options)
         {
-            WidestOption = Math::Max(WidestOption, Font->MeasureWidth(StringView(Option.Data(), Option.Length())));
+            WidestOption = Math::Max(WidestOption, Font->MeasureWidth(FStringView(Option.Data(), Option.Length())));
         }
 
         Button->SetReservedTextWidth(WidestOption);

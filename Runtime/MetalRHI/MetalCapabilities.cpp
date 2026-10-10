@@ -6,7 +6,7 @@
 static FAutoConsoleCommand CCmdMetalDumpCapsCommand(
     "MetalRHI.DumpCaps",
     "Logs the backend-native Metal capability table (all GMetal* globals)",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         DumpMetalCapabilities();
     }));

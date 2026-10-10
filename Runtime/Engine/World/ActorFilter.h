@@ -9,7 +9,7 @@ public:
     /**
      * @return Returns the name the filter is presented under in the scene-hierarchy
      */
-    const String& GetName() const
+    const FString& GetName() const
     {
         return Name;
     }
@@ -19,7 +19,7 @@ public:
      *
      * @param InName New name of the filter
      */
-    void SetName(const String& InName)
+    void SetName(const FString& InName)
     {
         Name = InName;
     }
@@ -64,7 +64,7 @@ public:
 private:
     friend class FWorld;
 
-    explicit FActorFilter(const String& InName)
+    explicit FActorFilter(const FString& InName)
         : Name(InName)
         , ParentFilter(nullptr)
         , ChildFilters()
@@ -72,7 +72,7 @@ private:
 
     ~FActorFilter() = default;
 
-    String                Name;
+    FString               Name;
     FActorFilter*         ParentFilter;
     TArray<FActorFilter*> ChildFilters;
 };

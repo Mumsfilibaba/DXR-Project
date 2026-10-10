@@ -5,7 +5,7 @@
 
 extern const CHAR_T*      GProgramTitle;
 extern TFunction<int32()> GProgramBody;
-extern TArray<String>     GProgramArgs;
+extern TArray<FString>    GProgramArgs;
 
 #define IMPLEMENT_PROGRAM_MAIN(Title, BodyFn) \
     struct FProgramMainRegistrar \

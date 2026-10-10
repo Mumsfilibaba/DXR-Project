@@ -43,20 +43,20 @@ private:
     int32 InputTextCallback(struct ImGuiInputTextCallbackData* Data);
 
 private:
-    TArray<TPair<IConsoleObject*, String>> Candidates;
-    String                                 CandidateFilter;
-    TStaticArray<CHAR_T, 256>              TextBuffer;
-    TSharedPtr<IOutputDevice>              OutputDevice;
-    TSharedPtr<FConsoleInputHandler>       InputHandler;
-    int32                                  SelectedCandidateIndex;
-    int32                                  HistoryIndex;
-    int32                                  LastCursorPosition;
-    int32                                  PendingCursorPosition;
-    float                                  CachedConsoleInputHeight;
-    bool                                   bCandidateSelectionChanged : 1;
-    bool                                   bRequestCursorPosition : 1;
-    bool                                   bRequestInputFocus : 1;
-    bool                                   bUpdateCursorPosition : 1;
-    bool                                   bScrollToBottom : 1;
-    bool                                   bCandidatesOverlayOpen : 1;
+    TArray<TPair<IConsoleObject*, FString>> Candidates;
+    FString                                 CandidateFilter;
+    TStaticArray<CHAR_T, 256>               TextBuffer;
+    TSharedPtr<IOutputDevice>               OutputDevice;
+    TSharedPtr<FConsoleInputHandler>        InputHandler;
+    int32                                   SelectedCandidateIndex;
+    int32                                   HistoryIndex;
+    int32                                   LastCursorPosition;
+    int32                                   PendingCursorPosition;
+    float                                   CachedConsoleInputHeight;
+    bool                                    bCandidateSelectionChanged : 1;
+    bool                                    bRequestCursorPosition : 1;
+    bool                                    bRequestInputFocus : 1;
+    bool                                    bUpdateCursorPosition : 1;
+    bool                                    bScrollToBottom : 1;
+    bool                                    bCandidatesOverlayOpen : 1;
 };

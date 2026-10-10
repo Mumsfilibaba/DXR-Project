@@ -13,7 +13,7 @@ public:
     virtual int32 GetAscent() const override final;
     virtual int32 GetDescent() const override final;
     virtual int32 GetCapHeight() const override final;
-    virtual const FShapedRun& ShapeText(const StringView& Text) const override final;
+    virtual const FShapedRun& ShapeText(const FStringView& Text) const override final;
 
 private:
     int32              CharacterAdvance;

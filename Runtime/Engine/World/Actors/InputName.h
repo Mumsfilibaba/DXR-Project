@@ -26,7 +26,7 @@ public:
         return Hash;
     }
 
-    const String& ToString() const
+    const FString& ToString() const
     {
         return Name;
     }
@@ -43,6 +43,6 @@ private:
         return HashInputName(InName.Data(), static_cast<uint32>(InName.Length()));
     }
 
-    String Name;
+    FString Name;
     uint32 Hash;
 };

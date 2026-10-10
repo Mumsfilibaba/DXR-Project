@@ -232,7 +232,7 @@ void FVulkanCrashMarkers::ResetMarkers(FVulkanCommandBuffer& /*CmdBuf*/)
     CurrentRegion.Clear();
 }
 
-void FVulkanCrashMarkers::WriteMarker(FVulkanCommandBuffer& CmdBuf, const StringView& Name)
+void FVulkanCrashMarkers::WriteMarker(FVulkanCommandBuffer& CmdBuf, const FStringView& Name)
 {
     DrawCounter   = 0;
     CurrentRegion = Name.Data();
@@ -244,21 +244,21 @@ void FVulkanCrashMarkers::WriteEndMarker(FVulkanCommandBuffer& CmdBuf)
 {
     if (!CurrentRegion.IsEmpty())
     {
-        String Name = String::Printf("%s [END]", *CurrentRegion);
+        FString Name = FString::Printf("%s [END]", *CurrentRegion);
         WriteMarkerInternal(CmdBuf, *Name);
     }
 }
 
-void FVulkanCrashMarkers::WriteDrawMarker(FVulkanCommandBuffer& CmdBuf, const StringView& DrawType)
+void FVulkanCrashMarkers::WriteDrawMarker(FVulkanCommandBuffer& CmdBuf, const FStringView& DrawType)
 {
-    String Name;
+    FString Name;
     if (!CurrentRegion.IsEmpty())
     {
-        Name = String::Printf("%s > %s #%u", *CurrentRegion, DrawType.Data(), DrawCounter);
+        Name = FString::Printf("%s > %s #%u", *CurrentRegion, DrawType.Data(), DrawCounter);
     }
     else
     {
-        Name = String::Printf("%s #%u", DrawType.Data(), DrawCounter);
+        Name = FString::Printf("%s #%u", DrawType.Data(), DrawCounter);
     }
 
     DrawCounter++;
@@ -270,7 +270,7 @@ void FVulkanCrashMarkers::WriteSplitMarker(FVulkanCommandBuffer& CmdBuf)
     WriteMarkerInternal(CmdBuf, "---------- CommandBuffer Split ----------");
 }
 
-void FVulkanCrashMarkers::WriteMarkerInternal(FVulkanCommandBuffer& CmdBuf, const StringView& Name)
+void FVulkanCrashMarkers::WriteMarkerInternal(FVulkanCommandBuffer& CmdBuf, const FStringView& Name)
 {
     if (Extension == ECrashMarkerExtension::None)
     {
@@ -281,7 +281,7 @@ void FVulkanCrashMarkers::WriteMarkerInternal(FVulkanCommandBuffer& CmdBuf, cons
     if (!HashToIndex.Contains(Hash))
     {
         HashToIndex.Add(Hash, static_cast<uint32>(StringPool.Size()));
-        StringPool.Add(String(Name.Data()));
+        StringPool.Add(FString(Name.Data()));
     }
 
     if (Extension == ECrashMarkerExtension::AMDBufferMarker)
@@ -306,9 +306,9 @@ void FVulkanCrashMarkers::WriteMarkerInternal(FVulkanCommandBuffer& CmdBuf, cons
     NextIndex++;
 }
 
-const String& FVulkanCrashMarkers::ResolveHash(uint32 Hash) const
+const FString& FVulkanCrashMarkers::ResolveHash(uint32 Hash) const
 {
-    static const String Unknown("???");
+    static const FString Unknown("???");
     
     const uint32* Index = HashToIndex.Find(Hash);
     if (Index && *Index < static_cast<uint32>(StringPool.Size()))

@@ -33,12 +33,12 @@ FNetworkSocket::~FNetworkSocket()
     Close();
 }
 
-bool FNetworkSocket::Resolve(const String& Host, uint16 Port, TArray<FSocketAddress>& OutAddresses)
+bool FNetworkSocket::Resolve(const FString& Host, uint16 Port, TArray<FSocketAddress>& OutAddresses)
 {
     return FPlatformSocket::Resolve(Host, Port, OutAddresses);
 }
 
-bool FNetworkSocket::ParseAddress(const String& Text, uint16 Port, FSocketAddress& OutAddress)
+bool FNetworkSocket::ParseAddress(const FString& Text, uint16 Port, FSocketAddress& OutAddress)
 {
     return FPlatformSocket::ParseAddress(Text, Port, OutAddress);
 }
@@ -138,7 +138,7 @@ bool FNetworkSocket::ConnectToAny(const TArray<FSocketAddress>& Addresses, uint3
     return false;
 }
 
-bool FNetworkSocket::ConnectToHost(const String& Host, uint16 Port, uint32 TimeoutMilliseconds)
+bool FNetworkSocket::ConnectToHost(const FString& Host, uint16 Port, uint32 TimeoutMilliseconds)
 {
     TArray<FSocketAddress> Addresses;
     return Resolve(Host, Port, Addresses) && ConnectToAny(Addresses, TimeoutMilliseconds);

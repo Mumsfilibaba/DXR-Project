@@ -11,7 +11,7 @@ int32 FUIStyleMetrics::ResolveButtonMinWidth(const IFontFace* Face, const FMargi
         return 0;
     }
 
-    return Face->MeasureWidth(StringView(ButtonMinLabel)) + Padding.GetTotalHorizontal();
+    return Face->MeasureWidth(FStringView(ButtonMinLabel)) + Padding.GetTotalHorizontal();
 }
 
 const FUIStyle& FUIStyle::GetDefault()

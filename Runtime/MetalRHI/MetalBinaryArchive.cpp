@@ -19,25 +19,25 @@ static TAutoConsoleVariable<int32> CVarBinaryArchiveSaveInterval(
 // Bump whenever the pipeline descriptors change in a way an archive on disk cannot detect, which discards every archive
 static constexpr uint32 GMetalPipelineFormatVersion = 2;
 
-static int64 GetFileSize(const String& Path)
+static int64 GetFileSize(const FString& Path)
 {
     struct stat FileStat;
     return ::stat(*Path, &FileStat) == 0 ? static_cast<int64>(FileStat.st_size) : -1;
 }
 
-static String GetErrorString(NSError* Error)
+static FString GetErrorString(NSError* Error)
 {
-    return Error ? String([Error localizedDescription]) : String("unknown error");
+    return Error ? FString([Error localizedDescription]) : FString("unknown error");
 }
 
-static void CopyToFixedString(CHAR_T* Dest, uint32 DestSize, const String& Source)
+static void CopyToFixedString(CHAR_T* Dest, uint32 DestSize, const FString& Source)
 {
     const uint32 Length = Math::Min<uint32>(static_cast<uint32>(Source.Length()), DestSize - 1);
     Memory::Memcpy(Dest, *Source, Length);
     Dest[Length] = '\0';
 }
 
-static bool ReadSidecar(const String& Path, FMetalBinaryArchiveHeader& OutHeader)
+static bool ReadSidecar(const FString& Path, FMetalBinaryArchiveHeader& OutHeader)
 {
     TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(Path);
     if (!File)
@@ -55,9 +55,9 @@ static bool ReadSidecar(const String& Path, FMetalBinaryArchiveHeader& OutHeader
     return true;
 }
 
-static bool WriteSidecar(const String& Path, const FMetalBinaryArchiveHeader& Header)
+static bool WriteSidecar(const FString& Path, const FMetalBinaryArchiveHeader& Header)
 {
-    const String TempPath = Path + ".tmp";
+    const FString TempPath = Path + ".tmp";
     {
         TFileRef<IPlatformFile> File = FPlatformFile::OpenForWrite(TempPath);
         if (!File)
@@ -74,7 +74,7 @@ static bool WriteSidecar(const String& Path, const FMetalBinaryArchiveHeader& He
     return FPlatformFile::MoveFile(*TempPath, *Path);
 }
 
-static bool ValidateHeader(const FMetalBinaryArchiveHeader& Found, const FMetalBinaryArchiveHeader& Expected, int64 ArchiveSize, String& OutReason)
+static bool ValidateHeader(const FMetalBinaryArchiveHeader& Found, const FMetalBinaryArchiveHeader& Expected, int64 ArchiveSize, FString& OutReason)
 {
     if (Found.Magic != Expected.Magic)
     {
@@ -84,62 +84,62 @@ static bool ValidateHeader(const FMetalBinaryArchiveHeader& Found, const FMetalB
 
     if (Found.Version != Expected.Version)
     {
-        OutReason = String::Printf("sidecar version %u, expected %u", Found.Version, Expected.Version);
+        OutReason = FString::Printf("sidecar version %u, expected %u", Found.Version, Expected.Version);
         return false;
     }
 
     if (Found.ShaderFormatVersion != Expected.ShaderFormatVersion)
     {
-        OutReason = String::Printf("shader format %u, expected %u", Found.ShaderFormatVersion, Expected.ShaderFormatVersion);
+        OutReason = FString::Printf("shader format %u, expected %u", Found.ShaderFormatVersion, Expected.ShaderFormatVersion);
         return false;
     }
 
     if (Found.PipelineFormatVersion != Expected.PipelineFormatVersion)
     {
-        OutReason = String::Printf("pipeline format %u, expected %u", Found.PipelineFormatVersion, Expected.PipelineFormatVersion);
+        OutReason = FString::Printf("pipeline format %u, expected %u", Found.PipelineFormatVersion, Expected.PipelineFormatVersion);
         return false;
     }
 
     if (CString::Strcmp(Found.DeviceName, Expected.DeviceName) != 0)
     {
-        OutReason = String::Printf("GPU '%s', expected '%s'", Found.DeviceName, Expected.DeviceName);
+        OutReason = FString::Printf("GPU '%s', expected '%s'", Found.DeviceName, Expected.DeviceName);
         return false;
     }
 
     if (Found.RegistryID != Expected.RegistryID)
     {
-        OutReason = String::Printf("GPU registry ID 0x%llx, expected 0x%llx", static_cast<unsigned long long>(Found.RegistryID), static_cast<unsigned long long>(Expected.RegistryID));
+        OutReason = FString::Printf("GPU registry ID 0x%llx, expected 0x%llx", static_cast<unsigned long long>(Found.RegistryID), static_cast<unsigned long long>(Expected.RegistryID));
         return false;
     }
 
     if (Found.HighestFamily != Expected.HighestFamily)
     {
-        OutReason = String::Printf("GPU family %lld, expected %lld", static_cast<long long>(Found.HighestFamily), static_cast<long long>(Expected.HighestFamily));
+        OutReason = FString::Printf("GPU family %lld, expected %lld", static_cast<long long>(Found.HighestFamily), static_cast<long long>(Expected.HighestFamily));
         return false;
     }
 
     if (Found.OSMajor != Expected.OSMajor || Found.OSMinor != Expected.OSMinor || Found.OSPatch != Expected.OSPatch)
     {
-        OutReason = String::Printf("OS %d.%d.%d, expected %d.%d.%d", Found.OSMajor, Found.OSMinor, Found.OSPatch, Expected.OSMajor, Expected.OSMinor, Expected.OSPatch);
+        OutReason = FString::Printf("OS %d.%d.%d, expected %d.%d.%d", Found.OSMajor, Found.OSMinor, Found.OSPatch, Expected.OSMajor, Expected.OSMinor, Expected.OSPatch);
         return false;
     }
 
     if (CString::Strcmp(Found.OSBuild, Expected.OSBuild) != 0)
     {
-        OutReason = String::Printf("OS build %s, expected %s", Found.OSBuild, Expected.OSBuild);
+        OutReason = FString::Printf("OS build %s, expected %s", Found.OSBuild, Expected.OSBuild);
         return false;
     }
 
     if (ArchiveSize < 0 || Found.ArchiveSize != static_cast<uint64>(ArchiveSize))
     {
-        OutReason = String::Printf("archive size %lld, expected %llu", static_cast<long long>(ArchiveSize), static_cast<unsigned long long>(Found.ArchiveSize));
+        OutReason = FString::Printf("archive size %lld, expected %llu", static_cast<long long>(ArchiveSize), static_cast<unsigned long long>(Found.ArchiveSize));
         return false;
     }
 
     return true;
 }
 
-EMetalBinaryArchiveMode FMetalBinaryArchive::ParseMode(const String& ModeName)
+EMetalBinaryArchiveMode FMetalBinaryArchive::ParseMode(const FString& ModeName)
 {
     if (ModeName.Equals("Ignore", EStringCaseType::NoCase))
     {
@@ -199,7 +199,7 @@ FMetalBinaryArchive::~FMetalBinaryArchive()
     [LookupArchive release];
 }
 
-bool FMetalBinaryArchive::Initialize(EMetalBinaryArchiveMode InMode, const String& InFilePath)
+bool FMetalBinaryArchive::Initialize(EMetalBinaryArchiveMode InMode, const FString& InFilePath)
 {
     Mode              = InMode;
     FilePath          = InFilePath;
@@ -229,7 +229,7 @@ bool FMetalBinaryArchive::LoadFromFile()
 {
     SCOPED_AUTORELEASE_POOL();
 
-    const String SidecarPath = FilePath + ".version";
+    const FString SidecarPath = FilePath + ".version";
     if (!FPlatformFile::IsFile(*FilePath) || !FPlatformFile::IsFile(*SidecarPath))
     {
         RejectionReason = "no archive on disk yet";
@@ -258,7 +258,7 @@ bool FMetalBinaryArchive::LoadFromFile()
     LookupArchive = [Device->GetMTLDevice() newBinaryArchiveWithDescriptor:Descriptor error:&Error];
     if (!LookupArchive)
     {
-        RejectionReason = String::Printf("Metal refused the file (error %ld: %s)", static_cast<long>(Error ? Error.code : 0), *GetErrorString(Error));
+        RejectionReason = FString::Printf("Metal refused the file (error %ld: %s)", static_cast<long>(Error ? Error.code : 0), *GetErrorString(Error));
         METAL_WARNING("[FMetalBinaryArchive] '%s' rejected: %s. Pipelines compile normally", *FilePath, *RejectionReason);
         return false;
     }
@@ -504,7 +504,7 @@ bool FMetalBinaryArchive::Save()
         return true;
     }
 
-    const String TempPath = FilePath + ".tmp";
+    const FString TempPath = FilePath + ".tmp";
     Error = nil;
     if (![Archive serializeToURL:[NSURL fileURLWithPath:TempPath.GetNSString()] error:&Error])
     {

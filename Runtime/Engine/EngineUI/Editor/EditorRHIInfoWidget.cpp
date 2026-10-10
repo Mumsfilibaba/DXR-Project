@@ -55,7 +55,7 @@ void FEditorRHIInfoWidget::DrawAdapterInfo()
 
     if (FRHIDevice* Device = RHI::Device)
     {
-        const String AdapterName = Device->GetAdapterName();
+        const FString AdapterName = Device->GetAdapterName();
         ImGui::Text("Adapter: %s", *AdapterName);
     }
 }

@@ -266,14 +266,14 @@ bool UIDrawDataClipCulling_Test()
     TEST_SECTION("Text off the end of a long list never reaches the atlas either");
     FDrawCommandList TextList;
     TextList.PushClip(0, FRectangle(IntVector2(0, 0), 200, 50));
-    TextList.AddText(1, FRectangle(IntVector2(0, 400), 100, 16), String("Offscreen"), Font.Get(), FFloatColor::White);
-    TextList.AddText(2, FRectangle(IntVector2(0, 0), 100, 16), String("Onscreen"), Font.Get(), FFloatColor::White);
+    TextList.AddText(1, FRectangle(IntVector2(0, 400), 100, 16), FString("Offscreen"), Font.Get(), FFloatColor::White);
+    TextList.AddText(2, FRectangle(IntVector2(0, 0), 100, 16), FString("Onscreen"), Font.Get(), FFloatColor::White);
     TextList.PopClip(3);
 
     DrawData.BuildFromCommandList(TextList);
 
     FDrawCommandList OnscreenOnlyList;
-    OnscreenOnlyList.AddText(0, FRectangle(IntVector2(0, 0), 100, 16), String("Onscreen"), Font.Get(), FFloatColor::White);
+    OnscreenOnlyList.AddText(0, FRectangle(IntVector2(0, 0), 100, 16), FString("Onscreen"), Font.Get(), FFloatColor::White);
 
     FUIDrawData OnscreenOnlyData;
     OnscreenOnlyData.BuildFromCommandList(OnscreenOnlyList);
@@ -670,7 +670,7 @@ bool UIDrawDataText_Test()
     TSharedPtr<FFixedWidthFontFace> FixedFont = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 
     FDrawCommandList FixedList;
-    FixedList.AddText(0, FRectangle(IntVector2(0, 0), 100, 16), String("Hello"), FixedFont.Get(), FFloatColor::White);
+    FixedList.AddText(0, FRectangle(IntVector2(0, 0), 100, 16), FString("Hello"), FixedFont.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(FixedList);
 
     TEST_EXPECT(DrawData.IsEmpty());
@@ -685,7 +685,7 @@ bool UIDrawDataText_Test()
 
     TEST_SECTION("Every printable glyph becomes one quad");
     FDrawCommandList TextList;
-    TextList.AddText(0, FRectangle(IntVector2(0, 0), 100, 16), String("AB"), Font.Get(), FFloatColor::White);
+    TextList.AddText(0, FRectangle(IntVector2(0, 0), 100, 16), FString("AB"), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(TextList);
 
     TEST_EXPECT_EQ(DrawData.GetTextGlyphInstances().Size(), 2);
@@ -696,12 +696,12 @@ bool UIDrawDataText_Test()
 
     TEST_SECTION("Whitespace advances the pen without adding a quad");
     FDrawCommandList SpacedList;
-    SpacedList.AddText(0, FRectangle(IntVector2(0, 0), 100, 16), String("A B"), Font.Get(), FFloatColor::White);
+    SpacedList.AddText(0, FRectangle(IntVector2(0, 0), 100, 16), FString("A B"), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(SpacedList);
 
     TEST_EXPECT_EQ(DrawData.GetTextGlyphInstances().Size(), 2);
     TEST_EXPECT(DrawData.GetTextGlyphInstances()[1].Position.X
-        > DrawData.GetTextGlyphInstances()[0].Position.X + Font->ShapeText(StringView("A")).Width);
+        > DrawData.GetTextGlyphInstances()[0].Position.X + Font->ShapeText(FStringView("A")).Width);
 
     TEST_SECTION("The texture coordinates stay inside the atlas");
     for (const FUITextGlyphInstance& Glyph : DrawData.GetTextGlyphInstances())
@@ -714,7 +714,7 @@ bool UIDrawDataText_Test()
 
     TEST_SECTION("An empty string draws nothing");
     FDrawCommandList EmptyTextList;
-    EmptyTextList.AddText(0, FRectangle(IntVector2(0, 0), 100, 16), String(), Font.Get(), FFloatColor::White);
+    EmptyTextList.AddText(0, FRectangle(IntVector2(0, 0), 100, 16), FString(), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(EmptyTextList);
     TEST_EXPECT(DrawData.IsEmpty());
 
@@ -731,7 +731,7 @@ bool UIDrawDataText_Test()
         const int32 BoxHeight = BandHeight + (Padding * 2);
 
         FDrawCommandList PaddedList;
-        PaddedList.AddText(0, FRectangle(IntVector2(0, 0), 100, BoxHeight), String("HI"), Font.Get(), FFloatColor::White);
+        PaddedList.AddText(0, FRectangle(IntVector2(0, 0), 100, BoxHeight), FString("HI"), Font.Get(), FFloatColor::White);
         DrawData.BuildFromCommandList(PaddedList);
 
         float InkTop    = static_cast<float>(BoxHeight);
@@ -750,7 +750,7 @@ bool UIDrawDataText_Test()
     const int32 TallBoxHeight = BandHeight + 8;
 
     FDrawCommandList DescenderList;
-    DescenderList.AddText(0, FRectangle(IntVector2(0, 0), 100, TallBoxHeight), String("Hg"), Font.Get(), FFloatColor::White);
+    DescenderList.AddText(0, FRectangle(IntVector2(0, 0), 100, TallBoxHeight), FString("Hg"), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(DescenderList);
 
     float DescenderTop    = static_cast<float>(TallBoxHeight);
@@ -767,7 +767,7 @@ bool UIDrawDataText_Test()
     TEST_SECTION("A rectangle with no room to spare starts the band at the top rather than pushing glyphs out of it");
 
     FDrawCommandList TightList;
-    TightList.AddText(0, FRectangle(IntVector2(0, 0), 100, BandHeight), String("A"), Font.Get(), FFloatColor::White);
+    TightList.AddText(0, FRectangle(IntVector2(0, 0), 100, BandHeight), FString("A"), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(TightList);
 
     TEST_EXPECT_EQ(DrawData.GetTextGlyphInstances().Size(), 1);
@@ -775,7 +775,7 @@ bool UIDrawDataText_Test()
     TEST_EXPECT(TightTop == static_cast<float>(Font->GetAscent() - Font->GetCapHeight()));
 
     FDrawCommandList ShortList;
-    ShortList.AddText(0, FRectangle(IntVector2(0, 0), 100, 1), String("A"), Font.Get(), FFloatColor::White);
+    ShortList.AddText(0, FRectangle(IntVector2(0, 0), 100, 1), FString("A"), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(ShortList);
 
     TEST_EXPECT(DrawData.GetTextGlyphInstances()[0].Position.Y == TightTop);
@@ -783,7 +783,7 @@ bool UIDrawDataText_Test()
     TEST_SECTION("Text and boxes land in separate batches, since they sample different textures");
     FDrawCommandList MixedList;
     MixedList.AddBox(0, FRectangle(IntVector2(0, 0), 100, 16), FFloatColor::White);
-    MixedList.AddText(1, FRectangle(IntVector2(0, 0), 100, 16), String("A"), Font.Get(), FFloatColor::White);
+    MixedList.AddText(1, FRectangle(IntVector2(0, 0), 100, 16), FString("A"), Font.Get(), FFloatColor::White);
     MixedList.AddBox(2, FRectangle(IntVector2(0, 16), 100, 16), FFloatColor::White);
     DrawData.BuildFromCommandList(MixedList);
 

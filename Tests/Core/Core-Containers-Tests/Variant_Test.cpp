@@ -106,36 +106,36 @@ bool TVariant_Test()
 
     TEST_SECTION("Non-trivial type (String): InPlace / const GetValue / TryGetValue");
     {
-        TVariant<String, int32> Var(TInPlaceType<String>(), "Test");
-        TEST_EXPECT(Var.IsType<String>());
+        TVariant<FString, int32> Var(TInPlaceType<FString>(), "Test");
+        TEST_EXPECT(Var.IsType<FString>());
         TEST_EXPECT(!Var.IsType<int32>());
-        TEST_EXPECT(Var.GetValue<String>() == "Test");
+        TEST_EXPECT(Var.GetValue<FString>() == "Test");
 
-        const TVariant<String, int32>& Ref = Var;
-        TEST_EXPECT(Ref.GetValue<String>() == "Test");
+        const TVariant<FString, int32>& Ref = Var;
+        TEST_EXPECT(Ref.GetValue<FString>() == "Test");
         TEST_EXPECT(Ref.TryGetValue<int32>() == nullptr);
-        TEST_EXPECT(Ref.TryGetValue<String>() != nullptr);
+        TEST_EXPECT(Ref.TryGetValue<FString>() != nullptr);
     }
 
     TEST_SECTION("Non-trivial type (String): Swap with heap strings / Emplace reassign");
     {
-        const String One = "String Number One 11111111111111111111111111111111111111111111111111";
-        const String Two = "String Number Two 22222222222222222222222222222222222222222222222222";
+        const FString One = "String Number One 11111111111111111111111111111111111111111111111111";
+        const FString Two = "String Number Two 22222222222222222222222222222222222222222222222222";
 
-        TVariant<String, int32> First(TInPlaceType<String>(), One);
-        TVariant<String, int32> Second(TInPlaceType<String>(), Two);
+        TVariant<FString, int32> First(TInPlaceType<FString>(), One);
+        TVariant<FString, int32> Second(TInPlaceType<FString>(), Two);
 
         First.Swap(Second);
-        TEST_EXPECT(First.GetValue<String>() == Two);
-        TEST_EXPECT(Second.GetValue<String>() == One);
+        TEST_EXPECT(First.GetValue<FString>() == Two);
+        TEST_EXPECT(Second.GetValue<FString>() == One);
 
-        TVariant<String, int32> Var;
+        TVariant<FString, int32> Var;
         
-        Var.Emplace<String>("Long string long string long string long string 1111111111111111");
-        TEST_EXPECT(Var.GetValue<String>() == "Long string long string long string long string 1111111111111111");
+        Var.Emplace<FString>("Long string long string long string long string 1111111111111111");
+        TEST_EXPECT(Var.GetValue<FString>() == "Long string long string long string long string 1111111111111111");
 
-        Var.Emplace<String>("Long string long string long string long string 2222222222222222");
-        TEST_EXPECT(Var.GetValue<String>() == "Long string long string long string long string 2222222222222222");
+        Var.Emplace<FString>("Long string long string long string long string 2222222222222222");
+        TEST_EXPECT(Var.GetValue<FString>() == "Long string long string long string long string 2222222222222222");
     }
 
     TEST_END();

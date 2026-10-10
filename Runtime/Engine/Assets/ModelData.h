@@ -57,7 +57,7 @@ struct FMaterialData
         Routes[EMaterialScalar::Opacity] = FMaterialSourceRoute(EMaterialTexture::Diffuse, ETextureChannel::A);
     }
 
-    String               Name;
+    FString              Name;
     FTexture2DRef        Textures[EMaterialTexture::Count];
     FMaterialSourceRoute Routes[EMaterialScalar::Count];
     Vector3              Diffuse;

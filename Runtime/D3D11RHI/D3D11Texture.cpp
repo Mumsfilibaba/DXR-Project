@@ -468,12 +468,12 @@ bool FD3D11TextureRHI::CreateResource(DXGI_FORMAT ResourceFormat, const D3D11_SU
     return true;
 }
 
-void FD3D11TextureRHI::SetDebugName(const String& InName)
+void FD3D11TextureRHI::SetDebugName(const FString& InName)
 {
     D3D11SetDebugName(Resource.Get(), InName);
 }
 
-void FD3D11TextureRHI::GetDebugName(String& OutDebugName) const
+void FD3D11TextureRHI::GetDebugName(FString& OutDebugName) const
 {
     D3D11GetDebugName(Resource.Get(), OutDebugName);
 }

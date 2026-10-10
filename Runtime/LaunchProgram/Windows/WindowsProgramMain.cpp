@@ -58,7 +58,7 @@ int wmain(int NumArgs, WIDECHAR** Args)
     }
 
     TArray<const CHAR_T*> ArgumentPointers;
-    for (const String& Argument : GProgramArgs)
+    for (const FString& Argument : GProgramArgs)
     {
         ArgumentPointers.Add(*Argument);
     }
@@ -71,7 +71,7 @@ int WINAPI wWinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPWSTR CmdLine, 
 {
     InitCRunTime();
 
-    const String  CommandLineText  = StringCast<CHAR_T>(CmdLine).ToString();
+    const FString CommandLineText  = StringCast<CHAR_T>(CmdLine).ToString();
     const CHAR_T* LocalCommandLine = *CommandLineText;
 
     CommandLine::Initialize(&LocalCommandLine, 1);

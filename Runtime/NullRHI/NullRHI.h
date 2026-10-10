@@ -183,7 +183,7 @@ public:
     }
 
     virtual FRHIShaderBindingTable* CreateShaderBindingTable(const FRHIShaderBindingTableDesc& InDesc) override final { return new FNullShaderBindingTableRHI(InDesc); }
-    virtual FRHIRayTracingShaderIdentifier GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState*, const String&) override final { return FRHIRayTracingShaderIdentifier(); }
+    virtual FRHIRayTracingShaderIdentifier GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState*, const FString&) override final { return FRHIRayTracingShaderIdentifier(); }
     virtual FRHIOpacityMicromap* CreateOpacityMicromap(const FRHIOpacityMicromapDesc&) override final { return nullptr; }
     virtual FRHIClusterAccelerationStructure* CreateClusterAccelerationStructure(const FRHIClusterAccelerationStructureDesc&) override final { return nullptr; }
     virtual FRHIClusterTemplate* CreateClusterTemplate(const FRHIClusterTemplateDesc&) override final { return nullptr; }
@@ -269,9 +269,9 @@ public:
         return nullptr;
     }
 
-    virtual String GetAdapterName() const override final
+    virtual FString GetAdapterName() const override final
     {
-        return String("NullRHI Adapter");
+        return FString("NullRHI Adapter");
     }
 
     virtual ERHIType GetRHIType() const override final;

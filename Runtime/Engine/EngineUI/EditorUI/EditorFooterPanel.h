@@ -43,11 +43,11 @@ private:
     };
 
     EKeyInterceptResult OnFieldKeyDown(const FKeyEvent& KeyEvent);
-    void OnFieldTextChanged(const String& NewText);
+    void OnFieldTextChanged(const FString& NewText);
     void SyncFieldFromCommandLine();
     void RebuildCandidateList();
     void AddCandidateRow(int32 CandidateIndex);
-    void AddCandidateNameRuns(const TSharedPtr<FHorizontalBox>& Row, const String& Name, const FFloatColor& TextColor, TArray<TSharedPtr<FTextBlock>>& OutNameRuns);
+    void AddCandidateNameRuns(const TSharedPtr<FHorizontalBox>& Row, const FString& Name, const FFloatColor& TextColor, TArray<TSharedPtr<FTextBlock>>& OutNameRuns);
     void ApplyCandidateSelection();
     void OnCandidateRowHovered(int32 RowIndex);
     void OnCandidateRowClicked(int32 RowIndex);
@@ -55,7 +55,7 @@ private:
 
     NODISCARD TSharedPtr<FVisualElement> MakeCandidateToolTip(int32 CandidateIndex) const;
     NODISCARD int32 GetCandidateRowHeight() const;
-    NODISCARD String GetCandidateFilterText() const;
+    NODISCARD FString GetCandidateFilterText() const;
 
     TUniquePtr<FConsoleCommandLine>        CommandLine;
     TSharedPtr<FEditableText>              Field;

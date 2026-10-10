@@ -349,8 +349,8 @@ public:
     /** @brief Answers the view made with the texture, or nullptr without DepthStencil usage or with NoDefaultDSV */
     virtual FRHIDepthStencilView* GetDepthStencilView() const = 0;
 
-    virtual void SetDebugName(const String& InName) = 0;
-    virtual void GetDebugName(String& OutDebugName) const = 0;
+    virtual void SetDebugName(const FString& InName) = 0;
+    virtual void GetDebugName(FString& OutDebugName) const = 0;
 
     NODISCARD const FRHITextureDesc& GetDesc() const
     {

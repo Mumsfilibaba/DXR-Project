@@ -131,7 +131,7 @@ bool FImGuiPlugin::Load()
     PluginImGuiIO->SetClipboardTextFn = [](void* UserData, const char* Text)
     {
         UNREFERENCED_VARIABLE(UserData);
-        FPlatformSystemClipboard::SetText(String(Text));
+        FPlatformSystemClipboard::SetText(FString(Text));
     };
 
     PluginImGuiIO->GetClipboardTextFn = [](void* UserData) -> const char*

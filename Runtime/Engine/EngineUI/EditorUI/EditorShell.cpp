@@ -39,7 +39,7 @@ FEditorShell::~FEditorShell()
     Release();
 }
 
-String FEditorShell::GetLayoutFilename()
+FString FEditorShell::GetLayoutFilename()
 {
     return Paths::GetProjectDir() + "/EditorLayout.ini";
 }
@@ -133,7 +133,7 @@ bool FEditorShell::InitPostRenderer()
 
 bool FEditorShell::RestoreLayout()
 {
-    const String LayoutFilename = GetLayoutFilename();
+    const FString LayoutFilename = GetLayoutFilename();
     if (!FPlatformFile::IsFile(*LayoutFilename))
     {
         return false;
@@ -197,7 +197,7 @@ void FEditorShell::SaveLayout()
         Windows.Append(FDockWindowManager::Get().SaveHostLayouts());
     }
 
-    const String LayoutFilename = GetLayoutFilename();
+    const FString LayoutFilename = GetLayoutFilename();
     if (!FDockLayoutFile::Save(LayoutFilename, Windows))
     {
         return;
@@ -307,7 +307,7 @@ const TSharedPtr<FEditorViewportPanel>& FEditorShell::GetViewportPanel() const
     return Registry->GetViewportPanel();
 }
 
-void FEditorShell::OnPanelClosed(const String& PanelId)
+void FEditorShell::OnPanelClosed(const FString& PanelId)
 {
     if (Registry)
     {

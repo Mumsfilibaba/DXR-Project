@@ -6,7 +6,7 @@
 static FAutoConsoleCommand CCmdDumpRayTracingCapsCommand(
     "RHI.DumpRayTracingCaps",
     "Logs the ray-tracing (DXR 2.0) capability table for the active RHI backend",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         RHI::DumpRayTracingCapabilities();
     }));
@@ -14,7 +14,7 @@ static FAutoConsoleCommand CCmdDumpRayTracingCapsCommand(
 static FAutoConsoleCommand CCmdDumpCapsCommand(
     "RHI.DumpCaps",
     "Logs the full device capability table (general + ray tracing) for the active RHI backend",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         RHI::DumpCapabilities();
     }));

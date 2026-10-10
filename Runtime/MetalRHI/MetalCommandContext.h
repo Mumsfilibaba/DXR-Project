@@ -123,8 +123,8 @@ public:
     virtual void ClearState() override final;
     virtual void Flush()      override final;
 
-    virtual void PushEvent(const StringView& Name) override final;
-    virtual void PopEvent()                        override final;
+    virtual void PushEvent(const FStringView& Name) override final;
+    virtual void PopEvent()                         override final;
 
     virtual void* GetRHINativeCommandList() override final;
 
@@ -188,7 +188,7 @@ private:
     FMetalQueryRHI*           ActiveOcclusionQuery;
     uint64                    LastUsedFrame;
     bool                      bIsRecording;
-    TArray<String>            DebugGroups;
+    TArray<FString>           DebugGroups;
 #if METAL_VALIDATE_CONTEXT_THREAD_OWNERSHIP
     TAtomicInt<uint32>        OwnerThreadID;
 #endif

@@ -35,7 +35,7 @@ int32 FFixedWidthFontFace::GetCapHeight() const
     return GetAscent();
 }
 
-const FShapedRun& FFixedWidthFontFace::ShapeText(const StringView& Text) const
+const FShapedRun& FFixedWidthFontFace::ShapeText(const FStringView& Text) const
 {
     ShapedRun.Glyphs.Clear();
     ShapedRun.Glyphs.Reserve(Text.Length());

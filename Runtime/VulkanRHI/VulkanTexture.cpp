@@ -751,7 +751,7 @@ bool FVulkanTextureRHI::InitializeSwapChainTexture()
     return true;
 }
 
-void FVulkanTextureRHI::SetDebugName(const String& InName)
+void FVulkanTextureRHI::SetDebugName(const FString& InName)
 {
     if (VULKAN_CHECK_HANDLE(Image))
     {
@@ -762,7 +762,7 @@ void FVulkanTextureRHI::SetDebugName(const String& InName)
     }
 }
 
-void FVulkanTextureRHI::GetDebugName(String& OutDebugName) const
+void FVulkanTextureRHI::GetDebugName(FString& OutDebugName) const
 {
 #if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;

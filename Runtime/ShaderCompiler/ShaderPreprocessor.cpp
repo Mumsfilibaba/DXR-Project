@@ -48,9 +48,9 @@ static FShaderToken MakeToken(const FShaderToken& Location, const CHAR_T* Text, 
     return Token;
 }
 
-static String JoinTokens(TArrayView<const FShaderToken> Tokens)
+static FString JoinTokens(TArrayView<const FShaderToken> Tokens)
 {
-    String Result;
+    FString Result;
     for (int32 Index = 0; Index < Tokens.Size(); ++Index)
     {
         if (Index > 0 && Tokens[Index].bLeadingSpace)
@@ -115,13 +115,13 @@ public:
         OutValue = ParseTernary(true);
         if (ErrorMessage.IsEmpty() && Position < Tokens.Size())
         {
-            ErrorMessage = String::Printf("Unexpected '%s' in #if expression", *Tokens[Position].Text);
+            ErrorMessage = FString::Printf("Unexpected '%s' in #if expression", *Tokens[Position].Text);
         }
 
         return ErrorMessage.IsEmpty();
     }
 
-    NODISCARD const String& GetError() const
+    NODISCARD const FString& GetError() const
     {
         return ErrorMessage;
     }
@@ -138,7 +138,7 @@ private:
         return false;
     }
 
-    int64 Fail(const String& Message)
+    int64 Fail(const FString& Message)
     {
         if (ErrorMessage.IsEmpty())
         {
@@ -167,7 +167,7 @@ private:
         return Condition != 0 ? TrueValue : FalseValue;
     }
 
-    static int32 GetPrecedence(const String& Operator)
+    static int32 GetPrecedence(const FString& Operator)
     {
         static const CHAR_T* const Levels[][4] =
         {
@@ -202,7 +202,7 @@ private:
         int64 Left = ParseUnary(bEvaluate);
         while (Position < Tokens.Size())
         {
-            const String& Operator = Tokens[Position].Text;
+            const FString& Operator = Tokens[Position].Text;
             const int32 Precedence = GetPrecedence(Operator);
             if (Precedence < MinPrecedence)
             {
@@ -229,7 +229,7 @@ private:
         return Left;
     }
 
-    int64 Apply(const String& Operator, int64 Left, int64 Right, bool bEvaluate)
+    int64 Apply(const FString& Operator, int64 Left, int64 Right, bool bEvaluate)
     {
         if (Operator.Equals("||"))
         {
@@ -365,13 +365,13 @@ private:
         const FShaderToken& Token = Tokens[Position++];
         if (Token.Type != EShaderTokenType::Number)
         {
-            return Fail(String::Printf("Unexpected '%s' in #if expression", *Token.Text));
+            return Fail(FString::Printf("Unexpected '%s' in #if expression", *Token.Text));
         }
 
         return ParseInteger(Token.Text);
     }
 
-    int64 ParseInteger(const String& Text)
+    int64 ParseInteger(const FString& Text)
     {
         int32 End = Text.Length();
         while (End > 0 && (Text[End - 1] == 'u' || Text[End - 1] == 'U' || Text[End - 1] == 'l' || Text[End - 1] == 'L'))
@@ -413,7 +413,7 @@ private:
 
             if (Digit >= Base)
             {
-                return Fail(String::Printf("'%s' is not an integer, #if only works with integers", *Text));
+                return Fail(FString::Printf("'%s' is not an integer, #if only works with integers", *Text));
             }
 
             Value = Value * Base + Digit;
@@ -424,18 +424,18 @@ private:
 
     TArrayView<const FShaderToken> Tokens;
     int32                          Position;
-    String                         ErrorMessage;
+    FString                        ErrorMessage;
 };
 
 // ------------------------------------------------------------------------------------------------
 // Output
 // ------------------------------------------------------------------------------------------------
 
-String FShaderPreprocessorOutput::GenerateSource(const String& BaseDirectory) const
+FString FShaderPreprocessorOutput::GenerateSource(const FString& BaseDirectory) const
 {
-    TArray<String> FileNames;
+    TArray<FString> FileNames;
     FileNames.Reserve(Files.Size());
-    for (const String& FilePath : Files)
+    for (const FString& FilePath : Files)
     {
         const bool bIsUnderBase = !BaseDirectory.IsEmpty() && File::IsUnderDirectory(FilePath, BaseDirectory);
         FileNames.Add(bIsUnderBase ? File::MakeRelative(FilePath, BaseDirectory) : FilePath);
@@ -444,7 +444,7 @@ String FShaderPreprocessorOutput::GenerateSource(const String& BaseDirectory) co
     // A gap this small is cheaper to bridge with empty lines than with a #line marker
     constexpr int32 MaxLineGap = 8;
 
-    String Result;
+    FString Result;
     Result.Reserve(Tokens.Size() * 6);
 
     int32 CurrentFile  = -1;
@@ -461,8 +461,8 @@ String FShaderPreprocessorOutput::GenerateSource(const String& BaseDirectory) co
                 Result += '\n';
             }
 
-            const String& FileName = (Token.FileIndex >= 0 && Token.FileIndex < FileNames.Size()) ? FileNames[Token.FileIndex] : String();
-            Result += String::Printf("#line %d \"%s\"\n", Token.Line, *FileName);
+            const FString& FileName = (Token.FileIndex >= 0 && Token.FileIndex < FileNames.Size()) ? FileNames[Token.FileIndex] : FString();
+            Result += FString::Printf("#line %d \"%s\"\n", Token.Line, *FileName);
 
             CurrentFile = Token.FileIndex;
             CurrentLine = Token.Line;
@@ -516,7 +516,7 @@ String FShaderPreprocessorOutput::GenerateSource(const String& BaseDirectory) co
 // Lexer
 // ------------------------------------------------------------------------------------------------
 
-void FShaderPreprocessor::Tokenize(StringView Source, int32 FileIndex, TArray<FShaderToken>& OutTokens)
+void FShaderPreprocessor::Tokenize(FStringView Source, int32 FileIndex, TArray<FShaderToken>& OutTokens)
 {
     // Remove the  line continuations up front, remembering where they were so the line numbers stay right
     TArray<CHAR_T> Text;
@@ -689,7 +689,7 @@ void FShaderPreprocessor::Tokenize(StringView Source, int32 FileIndex, TArray<FS
         }
 
         FShaderToken& Token = OutTokens.Emplace();
-        Token.Text          = String(Chars + Start, Index - Start);
+        Token.Text          = FString(Chars + Start, Index - Start);
         Token.Type          = Type;
         Token.FileIndex     = FileIndex;
         Token.Line          = Line;
@@ -705,7 +705,7 @@ void FShaderPreprocessor::Tokenize(StringView Source, int32 FileIndex, TArray<FS
 // Preprocessor
 // ------------------------------------------------------------------------------------------------
 
-FShaderPreprocessor::FShaderPreprocessor(const String& InIncludeDir, const IShaderSourceProvider* InSourceProvider)
+FShaderPreprocessor::FShaderPreprocessor(const FString& InIncludeDir, const IShaderSourceProvider* InSourceProvider)
     : IncludeDir(InIncludeDir)
     , AdditionalIncludeDirs()
     , SourceProvider(InSourceProvider ? InSourceProvider : &FDiskShaderSourceProvider::Get())
@@ -718,25 +718,25 @@ FShaderPreprocessor::FShaderPreprocessor(const String& InIncludeDir, const IShad
 
 FShaderPreprocessor::~FShaderPreprocessor() = default;
 
-void FShaderPreprocessor::AddIncludeDir(const String& Directory)
+void FShaderPreprocessor::AddIncludeDir(const FString& Directory)
 {
     AdditionalIncludeDirs.Add(Directory);
 }
 
-void FShaderPreprocessor::AddDefine(const String& Name, const String& Value)
+void FShaderPreprocessor::AddDefine(const FString& Name, const FString& Value)
 {
     FMacro Macro;
-    Tokenize(StringView(Value), -1, Macro.Body);
+    Tokenize(FStringView(Value), -1, Macro.Body);
     Macros.Add(Name, Macro);
 }
 
-bool FShaderPreprocessor::Preprocess(const String& FilePath, StringView Source, FShaderPreprocessorOutput& OutOutput)
+bool FShaderPreprocessor::Preprocess(const FString& FilePath, FStringView Source, FShaderPreprocessorOutput& OutOutput)
 {
     Output = &OutOutput;
     Conditionals.Clear();
     OnceFiles.Clear();
 
-    const bool bResult = ProcessFile(FilePath.IsEmpty() ? String("ShaderSource") : FilePath, Source, 0);
+    const bool bResult = ProcessFile(FilePath.IsEmpty() ? FString("ShaderSource") : FilePath, Source, 0);
 
     Output = nullptr;
     return bResult;
@@ -747,14 +747,14 @@ bool FShaderPreprocessor::IsActive() const
     return Conditionals.IsEmpty() || Conditionals.Last().bActive;
 }
 
-bool FShaderPreprocessor::Error(const FShaderToken& Location, const String& Message)
+bool FShaderPreprocessor::Error(const FShaderToken& Location, const FString& Message)
 {
     const bool bHasFile = Location.FileIndex >= 0 && Location.FileIndex < Output->Files.Size();
-    Output->Errors += String::Printf("%s(%d): error: %s\n", bHasFile ? *Output->Files[Location.FileIndex] : "ShaderSource", Location.Line, *Message);
+    Output->Errors += FString::Printf("%s(%d): error: %s\n", bHasFile ? *Output->Files[Location.FileIndex] : "ShaderSource", Location.Line, *Message);
     return false;
 }
 
-bool FShaderPreprocessor::ProcessFile(const String& FilePath, StringView Source, int32 IncludeDepth)
+bool FShaderPreprocessor::ProcessFile(const FString& FilePath, FStringView Source, int32 IncludeDepth)
 {
     const int32 FileIndex = Output->Files.Size();
     Output->Files.Add(FilePath);
@@ -846,7 +846,7 @@ bool FShaderPreprocessor::ProcessFile(const String& FilePath, StringView Source,
     return true;
 }
 
-bool FShaderPreprocessor::HandleDirective(TArrayView<const FShaderToken> Tokens, const FShaderToken& HashToken, const String& FilePath, int32 IncludeDepth)
+bool FShaderPreprocessor::HandleDirective(TArrayView<const FShaderToken> Tokens, const FShaderToken& HashToken, const FString& FilePath, int32 IncludeDepth)
 {
     // A lone '#' is the null directive
     if (Tokens.IsEmpty())
@@ -876,7 +876,7 @@ bool FShaderPreprocessor::HandleDirective(TArrayView<const FShaderToken> Tokens,
             {
                 if (Arguments.IsEmpty() || Arguments[0].Type != EShaderTokenType::Identifier)
                 {
-                    return Error(Name, String::Printf("#%s expects a macro name", *Name.Text));
+                    return Error(Name, FString::Printf("#%s expects a macro name", *Name.Text));
                 }
 
                 bValue = (Macros.Find(Arguments[0].Text) != nullptr) == Name.Is("ifdef");
@@ -893,7 +893,7 @@ bool FShaderPreprocessor::HandleDirective(TArrayView<const FShaderToken> Tokens,
     {
         if (Conditionals.IsEmpty())
         {
-            return Error(Name, String::Printf("#%s without #if", *Name.Text));
+            return Error(Name, FString::Printf("#%s without #if", *Name.Text));
         }
 
         FConditional& Conditional = Conditionals.Last();
@@ -905,7 +905,7 @@ bool FShaderPreprocessor::HandleDirective(TArrayView<const FShaderToken> Tokens,
 
         if (Conditional.bSeenElse)
         {
-            return Error(Name, String::Printf("#%s after #else", *Name.Text));
+            return Error(Name, FString::Printf("#%s after #else", *Name.Text));
         }
 
         if (Name.Is("else"))
@@ -960,7 +960,7 @@ bool FShaderPreprocessor::HandleDirective(TArrayView<const FShaderToken> Tokens,
 
     if (Name.Is("error"))
     {
-        return Error(Name, String::Printf("#error %s", *JoinTokens(Arguments)));
+        return Error(Name, FString::Printf("#error %s", *JoinTokens(Arguments)));
     }
 
     if (Name.Is("pragma"))
@@ -973,11 +973,11 @@ bool FShaderPreprocessor::HandleDirective(TArrayView<const FShaderToken> Tokens,
 
         // Pragmas belong to the compiler, so they are passed through untouched
         FShaderToken& Pragma = Output->Tokens.Emplace(MakeToken(HashToken, "", EShaderTokenType::Directive, false));
-        Pragma.Text = String("#pragma ") + JoinTokens(Arguments);
+        Pragma.Text = FString("#pragma ") + JoinTokens(Arguments);
         return true;
     }
 
-    return Error(Name, String::Printf("Unsupported directive #%s", *Name.Text));
+    return Error(Name, FString::Printf("Unsupported directive #%s", *Name.Text));
 }
 
 bool FShaderPreprocessor::HandleDefine(TArrayView<const FShaderToken> Tokens, const FShaderToken& Location)
@@ -1020,7 +1020,7 @@ bool FShaderPreprocessor::HandleDefine(TArrayView<const FShaderToken> Tokens, co
 
                 if (Tokens[Index].Type != EShaderTokenType::Identifier)
                 {
-                    return Error(Tokens[Index], String::Printf("Expected a parameter name, found '%s'", *Tokens[Index].Text));
+                    return Error(Tokens[Index], FString::Printf("Expected a parameter name, found '%s'", *Tokens[Index].Text));
                 }
 
                 Macro.Parameters.Add(Tokens[Index].Text);
@@ -1066,10 +1066,10 @@ bool FShaderPreprocessor::HandleDefine(TArrayView<const FShaderToken> Tokens, co
     return true;
 }
 
-bool FShaderPreprocessor::HandleInclude(TArrayView<const FShaderToken> Tokens, const FShaderToken& Location, const String& FilePath, int32 IncludeDepth)
+bool FShaderPreprocessor::HandleInclude(TArrayView<const FShaderToken> Tokens, const FShaderToken& Location, const FString& FilePath, int32 IncludeDepth)
 {
-    String IncludeName;
-    bool   bSystemInclude = false;
+    FString IncludeName;
+    bool    bSystemInclude = false;
 
     if (Tokens.Size() == 1 && Tokens[0].Type == EShaderTokenType::String && Tokens[0].Text.StartsWith("\"") && Tokens[0].Text.Length() >= 2)
     {
@@ -1090,15 +1090,15 @@ bool FShaderPreprocessor::HandleInclude(TArrayView<const FShaderToken> Tokens, c
 
     if (IncludeDepth >= MaxIncludeDepth)
     {
-        return Error(Location, String::Printf("Includes are nested more than %d levels deep", MaxIncludeDepth));
+        return Error(Location, FString::Printf("Includes are nested more than %d levels deep", MaxIncludeDepth));
     }
 
     // Resolve relative to the including file first, then the added include directories, then the shared shader directory
-    String ResolvedPath;
-    const String IncludingDirectory = File::GetDirectoryOf(FilePath);
+    FString ResolvedPath;
+    const FString IncludingDirectory = File::GetDirectoryOf(FilePath);
     if (!bSystemInclude && !IncludingDirectory.IsEmpty())
     {
-        const String Candidate = File::CombinePath(IncludingDirectory, IncludeName);
+        const FString Candidate = File::CombinePath(IncludingDirectory, IncludeName);
         if (SourceProvider->FileExists(Candidate))
         {
             ResolvedPath = Candidate;
@@ -1107,7 +1107,7 @@ bool FShaderPreprocessor::HandleInclude(TArrayView<const FShaderToken> Tokens, c
 
     for (int32 Index = 0; Index < AdditionalIncludeDirs.Size() && ResolvedPath.IsEmpty(); ++Index)
     {
-        const String Candidate = File::CombinePath(AdditionalIncludeDirs[Index], IncludeName);
+        const FString Candidate = File::CombinePath(AdditionalIncludeDirs[Index], IncludeName);
         if (SourceProvider->FileExists(Candidate))
         {
             ResolvedPath = Candidate;
@@ -1116,7 +1116,7 @@ bool FShaderPreprocessor::HandleInclude(TArrayView<const FShaderToken> Tokens, c
 
     if (ResolvedPath.IsEmpty())
     {
-        const String Candidate = File::CombinePath(IncludeDir, IncludeName);
+        const FString Candidate = File::CombinePath(IncludeDir, IncludeName);
         if (SourceProvider->FileExists(Candidate))
         {
             ResolvedPath = Candidate;
@@ -1125,7 +1125,7 @@ bool FShaderPreprocessor::HandleInclude(TArrayView<const FShaderToken> Tokens, c
 
     if (ResolvedPath.IsEmpty())
     {
-        return Error(Location, String::Printf("Cannot find the include '%s'", *IncludeName));
+        return Error(Location, FString::Printf("Cannot find the include '%s'", *IncludeName));
     }
 
     if (!Output->Dependencies.Contains(ResolvedPath))
@@ -1141,10 +1141,10 @@ bool FShaderPreprocessor::HandleInclude(TArrayView<const FShaderToken> Tokens, c
     TArray<CHAR_T> Text;
     if (!SourceProvider->ReadFile(ResolvedPath, Text))
     {
-        return Error(Location, String::Printf("Failed to read the include '%s'", *ResolvedPath));
+        return Error(Location, FString::Printf("Failed to read the include '%s'", *ResolvedPath));
     }
 
-    return ProcessFile(ResolvedPath, StringView(Text.Data(), Text.Size()), IncludeDepth + 1);
+    return ProcessFile(ResolvedPath, FStringView(Text.Data(), Text.Size()), IncludeDepth + 1);
 }
 
 bool FShaderPreprocessor::EvaluateCondition(TArrayView<const FShaderToken> Tokens, const FShaderToken& Location, bool& OutValue)
@@ -1195,7 +1195,7 @@ bool FShaderPreprocessor::EvaluateCondition(TArrayView<const FShaderToken> Token
 
     if (Expanded.IsEmpty())
     {
-        return Error(Location, String::Printf("#%s without an expression", *Location.Text));
+        return Error(Location, FString::Printf("#%s without an expression", *Location.Text));
     }
 
     FConditionParser Parser(TArrayView<const FShaderToken>(Expanded.Data(), Expanded.Size()));
@@ -1300,7 +1300,7 @@ bool FShaderPreprocessor::ExpandTokens(TArray<FShaderToken>&& Input, TArray<FSha
                 FShaderToken ArgumentToken;
                 if (!ReadToken(ArgumentToken))
                 {
-                    return Error(Token, String::Printf("Unterminated invocation of the macro '%s'", *Token.Text));
+                    return Error(Token, FString::Printf("Unterminated invocation of the macro '%s'", *Token.Text));
                 }
 
                 if (ArgumentToken.Is("("))
@@ -1329,7 +1329,7 @@ bool FShaderPreprocessor::ExpandTokens(TArray<FShaderToken>&& Input, TArray<FSha
             const bool bNoArguments = Macro->Parameters.IsEmpty() && Arguments.Size() == 1 && Arguments[0].IsEmpty();
             if (!bNoArguments && Arguments.Size() != Macro->Parameters.Size())
             {
-                return Error(Token, String::Printf("The macro '%s' takes %d arguments but was given %d", *Token.Text, Macro->Parameters.Size(), Arguments.Size()));
+                return Error(Token, FString::Printf("The macro '%s' takes %d arguments but was given %d", *Token.Text, Macro->Parameters.Size(), Arguments.Size()));
             }
 
             if (!Substitute(*Macro, Arguments, Token, Replacement))
@@ -1403,9 +1403,9 @@ bool FShaderPreprocessor::Substitute(const FMacro& Macro, const TArray<TArray<FS
         {
             const TArray<FShaderToken>& Argument = Arguments[FindParameter(Body[Index + 1])];
 
-            const String Joined = JoinTokens(TArrayView<const FShaderToken>(Argument.Data(), Argument.Size()));
+            const FString Joined = JoinTokens(TArrayView<const FShaderToken>(Argument.Data(), Argument.Size()));
 
-            String Text = "\"";
+            FString Text = "\"";
             for (int32 CharIndex = 0; CharIndex < Joined.Length(); ++CharIndex)
             {
                 if (Joined[CharIndex] == '"' || Joined[CharIndex] == '\\')
@@ -1489,13 +1489,13 @@ bool FShaderPreprocessor::Substitute(const FMacro& Macro, const TArray<TArray<FS
             continue;
         }
 
-        const String Pasted = Left.Text + Right.Text;
+        const FString Pasted = Left.Text + Right.Text;
 
         TArray<FShaderToken> PastedTokens;
-        Tokenize(StringView(Pasted), NameToken.FileIndex, PastedTokens);
+        Tokenize(FStringView(Pasted), NameToken.FileIndex, PastedTokens);
         if (PastedTokens.Size() != 1)
         {
-            return Error(NameToken, String::Printf("Pasting '%s' and '%s' does not give a valid token", *Left.Text, *Right.Text));
+            return Error(NameToken, FString::Printf("Pasting '%s' and '%s' does not give a valid token", *Left.Text, *Right.Text));
         }
 
         const bool bLeadingSpace = Left.bLeadingSpace;
@@ -1522,12 +1522,12 @@ const FDiskShaderSourceProvider& FDiskShaderSourceProvider::Get()
     return Instance;
 }
 
-bool FDiskShaderSourceProvider::FileExists(const String& Path) const
+bool FDiskShaderSourceProvider::FileExists(const FString& Path) const
 {
     return FPlatformFile::IsFile(*Path);
 }
 
-bool FDiskShaderSourceProvider::ReadFile(const String& Path, TArray<CHAR_T>& OutText) const
+bool FDiskShaderSourceProvider::ReadFile(const FString& Path, TArray<CHAR_T>& OutText) const
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Path);
     return FileHandle && File::ReadTextFile(FileHandle.Get(), OutText);

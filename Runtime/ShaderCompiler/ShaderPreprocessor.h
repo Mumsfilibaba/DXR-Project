@@ -25,7 +25,7 @@ struct FShaderToken
         return Text.Equals(InText);
     }
 
-    String           Text;
+    FString          Text;
     EShaderTokenType Type          = EShaderTokenType::Other;
     int32            FileIndex     = 0;
     int32            Line          = 0;
@@ -44,16 +44,16 @@ struct SHADERCOMPILER_API FShaderPreprocessorOutput
      * @param BaseDirectory When set, files under it are named relative to it in the #line markers, so the text holds no
      * absolute machine paths. Files outside it keep their full path.
      */
-    NODISCARD String GenerateSource(const String& BaseDirectory = String()) const;
+    NODISCARD FString GenerateSource(const FString& BaseDirectory = FString()) const;
 
     TArray<FShaderToken> Tokens;
 
     /** Indexed by FShaderToken::FileIndex */
-    TArray<String>       Files;
+    TArray<FString>       Files;
 
     /** Every file that was included, the root file is not part of the list */
-    TArray<String>       Dependencies;
-    String               Errors;
+    TArray<FString>      Dependencies;
+    FString              Errors;
 };
 
 class SHADERCOMPILER_API IShaderSourceProvider
@@ -61,8 +61,8 @@ class SHADERCOMPILER_API IShaderSourceProvider
 public:
     virtual ~IShaderSourceProvider() = default;
 
-    NODISCARD virtual bool FileExists(const String& Path) const = 0;
-    virtual bool ReadFile(const String& Path, TArray<CHAR_T>& OutText) const = 0;
+    NODISCARD virtual bool FileExists(const FString& Path) const = 0;
+    virtual bool ReadFile(const FString& Path, TArray<CHAR_T>& OutText) const = 0;
 };
 
 class SHADERCOMPILER_API FDiskShaderSourceProvider final : public IShaderSourceProvider
@@ -70,8 +70,8 @@ class SHADERCOMPILER_API FDiskShaderSourceProvider final : public IShaderSourceP
 public:
     NODISCARD static const FDiskShaderSourceProvider& Get();
 
-    NODISCARD virtual bool FileExists(const String& Path) const override final;
-    virtual bool ReadFile(const String& Path, TArray<CHAR_T>& OutText) const override final;
+    NODISCARD virtual bool FileExists(const FString& Path) const override final;
+    virtual bool ReadFile(const FString& Path, TArray<CHAR_T>& OutText) const override final;
 };
 
 class SHADERCOMPILER_API FShaderPreprocessor
@@ -79,7 +79,7 @@ class SHADERCOMPILER_API FShaderPreprocessor
     struct FMacro
     {
         TArray<FShaderToken> Body;
-        TArray<String>       Parameters;
+        TArray<FString>      Parameters;
         bool                 bFunctionLike = false;
 
         /** Set while the expansion of the macro is being rescanned */
@@ -106,46 +106,46 @@ public:
     static constexpr uint32 Version = 2;
 
     /** @brief Splits source text into preprocessing tokens. Line continuations are removed and comments become whitespace. */
-    static void Tokenize(StringView Source, int32 FileIndex, TArray<FShaderToken>& OutTokens);
+    static void Tokenize(FStringView Source, int32 FileIndex, TArray<FShaderToken>& OutTokens);
 
     /**
      * @param InIncludeDir Searched last, after the including file's folder and every AddIncludeDir directory
      * @param InSourceProvider Null reads from disk. Must outlive the preprocessor.
      */
-    FShaderPreprocessor(const String& InIncludeDir, const IShaderSourceProvider* InSourceProvider = nullptr);
+    FShaderPreprocessor(const FString& InIncludeDir, const IShaderSourceProvider* InSourceProvider = nullptr);
     ~FShaderPreprocessor();
 
     /** @brief Searched in the order added, before the directory given to the constructor */
-    void AddIncludeDir(const String& Directory);
+    void AddIncludeDir(const FString& Directory);
 
     /** @brief Defines a macro the same way '#define Name Value' would */
-    void AddDefine(const String& Name, const String& Value);
+    void AddDefine(const FString& Name, const FString& Value);
 
     /**
      * @brief Preprocesses a shader and every file it includes
      * @param FilePath The path of the source, used to resolve relative includes. Empty when compiling from source.
      * @return Returns false and fills OutOutput.Errors when the source cannot be preprocessed
      */
-    bool Preprocess(const String& FilePath, StringView Source, FShaderPreprocessorOutput& OutOutput);
+    bool Preprocess(const FString& FilePath, FStringView Source, FShaderPreprocessorOutput& OutOutput);
 
 private:
-    bool ProcessFile(const String& FilePath, StringView Source, int32 IncludeDepth);
-    bool HandleDirective(TArrayView<const FShaderToken> Tokens, const FShaderToken& HashToken, const String& FilePath, int32 IncludeDepth);
+    bool ProcessFile(const FString& FilePath, FStringView Source, int32 IncludeDepth);
+    bool HandleDirective(TArrayView<const FShaderToken> Tokens, const FShaderToken& HashToken, const FString& FilePath, int32 IncludeDepth);
     bool HandleDefine(TArrayView<const FShaderToken> Tokens, const FShaderToken& Location);
-    bool HandleInclude(TArrayView<const FShaderToken> Tokens, const FShaderToken& Location, const String& FilePath, int32 IncludeDepth);
+    bool HandleInclude(TArrayView<const FShaderToken> Tokens, const FShaderToken& Location, const FString& FilePath, int32 IncludeDepth);
     bool EvaluateCondition(TArrayView<const FShaderToken> Tokens, const FShaderToken& Location, bool& OutValue);
 
     bool ExpandTokens(TArray<FShaderToken>&& Input, TArray<FShaderToken>& OutTokens);
     bool Substitute(const FMacro& Macro, const TArray<TArray<FShaderToken>>& Arguments, const FShaderToken& NameToken, TArray<FShaderToken>& OutTokens);
 
     NODISCARD bool IsActive() const;
-    bool Error(const FShaderToken& Location, const String& Message);
+    bool Error(const FShaderToken& Location, const FString& Message);
 
-    String                       IncludeDir;
-    TArray<String>               AdditionalIncludeDirs;
+    FString                      IncludeDir;
+    TArray<FString>              AdditionalIncludeDirs;
     const IShaderSourceProvider* SourceProvider;
-    TMap<String, FMacro>         Macros;
-    TSet<String>                 OnceFiles;
+    TMap<FString, FMacro>        Macros;
+    TSet<FString>                OnceFiles;
     TArray<FConditional>         Conditionals;
     FShaderPreprocessorOutput*   Output;
 };

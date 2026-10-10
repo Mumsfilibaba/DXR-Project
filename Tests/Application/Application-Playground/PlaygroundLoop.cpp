@@ -261,7 +261,7 @@ int32 FPlaygroundLoop::Init()
 
 bool FPlaygroundLoop::LoadFonts()
 {
-    const String FontDir = Paths::GetAssetDir() + "/Editor/Fonts/";
+    const FString FontDir = Paths::GetAssetDir() + "/Editor/Fonts/";
 
     Fonts.Body      = FTrueTypeFontFace::CreateFromFile(FontDir + "segoeui.ttf", GBodyFontHeight);
     Fonts.Heading   = FTrueTypeFontFace::CreateFromFile(FontDir + "seguisb.ttf", GHeadingFontHeight);

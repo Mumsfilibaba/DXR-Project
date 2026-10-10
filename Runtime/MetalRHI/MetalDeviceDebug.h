@@ -10,7 +10,7 @@ bool MetalIsDebugLayerRequested();
 void MetalStartValidationCapture();
 void MetalStopValidationCapture();
 
-void MetalForceGPUHang(StringView Arguments);
+void MetalForceGPUHang(FStringView Arguments);
 
 #endif
 

@@ -12,10 +12,10 @@
 static constexpr const CHAR_T* GStampPrefix  = "// Stamp:    0x";
 static constexpr int32         GBytesPerLine = 12;
 
-static String MakeEngineRelative(const String& Path)
+static FString MakeEngineRelative(const FString& Path)
 {
-    const String CollapsedPath = RemoteShaderCompilerProtocol::CollapsePath(Path);
-    const String EnginePrefix  = RemoteShaderCompilerProtocol::CollapsePath(Paths::GetEngineDir()) + '/';
+    const FString CollapsedPath = RemoteShaderCompilerProtocol::CollapsePath(Path);
+    const FString EnginePrefix  = RemoteShaderCompilerProtocol::CollapsePath(Paths::GetEngineDir()) + '/';
 
 #if PLATFORM_WINDOWS
     const EStringCaseType CaseType = EStringCaseType::NoCase;
@@ -25,7 +25,7 @@ static String MakeEngineRelative(const String& Path)
 
     if (CollapsedPath.StartsWith(EnginePrefix, CaseType))
     {
-        return String(CollapsedPath.Data() + EnginePrefix.Length(), CollapsedPath.Length() - EnginePrefix.Length());
+        return FString(CollapsedPath.Data() + EnginePrefix.Length(), CollapsedPath.Length() - EnginePrefix.Length());
     }
 
     return CollapsedPath;
@@ -36,7 +36,7 @@ uint64 ShaderHeader::ComputeStamp(const FShaderCompileJob& Job, const TArray<FSh
     FShaderCompileJob StampJob = Job;
     StampJob.SourceFile = MakeEngineRelative(Job.SourceFile);
 
-    for (String& IncludeDir : StampJob.IncludeDirs)
+    for (FString& IncludeDir : StampJob.IncludeDirs)
     {
         IncludeDir = MakeEngineRelative(IncludeDir);
     }
@@ -84,7 +84,7 @@ static bool ParseHex(const CHAR_T* Text, uint64& OutValue)
     return NumDigits > 0 && NumDigits <= 16;
 }
 
-bool ShaderHeader::ReadStamp(const String& HeaderPath, uint64& OutStamp)
+bool ShaderHeader::ReadStamp(const FString& HeaderPath, uint64& OutStamp)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(HeaderPath);
     if (!FileHandle)
@@ -98,15 +98,15 @@ bool ShaderHeader::ReadStamp(const String& HeaderPath, uint64& OutStamp)
         return false;
     }
 
-    const String Contents(Text.Data());
-    const int32  StampStart = Contents.Find(GStampPrefix);
+    const FString Contents(Text.Data());
+    const int32   StampStart = Contents.Find(GStampPrefix);
 
-    if (StampStart == String::InvalidIndex || StampStart > Contents.Find("inline constexpr"))
+    if (StampStart == FString::InvalidIndex || StampStart > Contents.Find("inline constexpr"))
     {
         return false;
     }
 
-    return ParseHex(Contents.Data() + StampStart + String(GStampPrefix).Length(), OutStamp);
+    return ParseHex(Contents.Data() + StampStart + FString(GStampPrefix).Length(), OutStamp);
 }
 
 static const CHAR_T* GetDimensionName(EShaderResourceDimension Dimension)
@@ -140,7 +140,7 @@ static const CHAR_T* GetSpaceName(EShaderBindingSpace Space)
     }
 }
 
-static String GetRegisterName(const FShaderResourceBinding& Binding)
+static FString GetRegisterName(const FShaderResourceBinding& Binding)
 {
     if (Binding.Space == EShaderBindingSpace::ShaderConstants)
     {
@@ -156,10 +156,10 @@ static String GetRegisterName(const FShaderResourceBinding& Binding)
         default:                                   break;
     }
 
-    return Binding.Count > 1 ? String::Printf("%s%u[%u]", Prefix, Binding.Register, Binding.Count) : String::Printf("%s%u", Prefix, Binding.Register);
+    return Binding.Count > 1 ? FString::Printf("%s%u[%u]", Prefix, Binding.Register, Binding.Count) : FString::Printf("%s%u", Prefix, Binding.Register);
 }
 
-static String GetNullTextureName(uint8 NullTextureType)
+static FString GetNullTextureName(uint8 NullTextureType)
 {
     static constexpr const CHAR_T* DimensionNames[] = { "Texture1D", "Texture1DArray", "Texture2D", "Texture2DArray", "TextureCube", "TextureCubeArray", "Texture3D", "Texture2DMS", "TextureBuffer" };
     static constexpr const CHAR_T* ComponentNames[] = { "Float", "Int", "Uint", "Depth" };
@@ -169,40 +169,40 @@ static String GetNullTextureName(uint8 NullTextureType)
     const uint32 Component = NullTextureType / static_cast<uint32>(EMSLTextureDimension::Count);
     if (Component >= ARRAY_COUNT(ComponentNames))
     {
-        return String::Printf("%u", NullTextureType);
+        return FString::Printf("%u", NullTextureType);
     }
 
-    return String::Printf("%s %s", DimensionNames[Dimension], ComponentNames[Component]);
+    return FString::Printf("%s %s", DimensionNames[Dimension], ComponentNames[Component]);
 }
 
-static String BuildReflectionComment(const TArray<uint8>& ShaderCode)
+static FString BuildReflectionComment(const TArray<uint8>& ShaderCode)
 {
     FShaderCodeView CodeView;
     if (!FShaderCodeReader::Read(ShaderCode, CodeView))
     {
-        return String();
+        return FString();
     }
 
     const FShaderReflectionInfo& Info = CodeView.GetInfo();
     const bool bIsMSL = CodeView.GetOutputLanguage() == EShaderOutputLanguage::MSL;
 
-    String Comment = "// Reflection:\n";
-    Comment += String::Printf("//   Shader constants: %u bytes\n", Info.ShaderConstantsSize);
+    FString Comment = "// Reflection:\n";
+    Comment += FString::Printf("//   Shader constants: %u bytes\n", Info.ShaderConstantsSize);
 
     if (bIsMSL && CodeView.GetStage() == EShaderStage::Compute)
     {
         const FMSLShaderInfo& MSLInfo = CodeView.GetMSLInfo();
-        Comment += String::Printf("//   Thread group:     %u x %u x %u\n", MSLInfo.ThreadGroupSize[0], MSLInfo.ThreadGroupSize[1], MSLInfo.ThreadGroupSize[2]);
+        Comment += FString::Printf("//  Thread group:     %u x %u x %u\n", MSLInfo.ThreadGroupSize[0], MSLInfo.ThreadGroupSize[1], MSLInfo.ThreadGroupSize[2]);
     }
 
     if (Info.NumVertexInputs > 0)
     {
-        Comment += String::Printf("//   Vertex inputs:    %u\n", Info.NumVertexInputs);
+        Comment += FString::Printf("//   Vertex inputs:    %u\n", Info.NumVertexInputs);
     }
 
     if (Info.RequiredFeatures != EShaderFeatureFlags::None)
     {
-        Comment += String::Printf("//   Features:         0x%08x\n", static_cast<uint32>(Info.RequiredFeatures));
+        Comment += FString::Printf("//   Features:         0x%08x\n", static_cast<uint32>(Info.RequiredFeatures));
     }
 
     const TArrayView<const FShaderResourceBinding> Bindings = CodeView.GetBindings();
@@ -218,15 +218,15 @@ static String BuildReflectionComment(const TArray<uint8>& ShaderCode)
     {
         const FShaderResourceBinding& Binding = Bindings[Index];
 
-        String Line = String::Printf("//     %-10s %-21s %-16s %s", *GetRegisterName(Binding), ToString(Binding.Type), GetDimensionName(Binding.Dimension), GetSpaceName(Binding.Space));
+        FString Line = FString::Printf("//     %-10s %-21s %-16s %s", *GetRegisterName(Binding), ToString(Binding.Type), GetDimensionName(Binding.Dimension), GetSpaceName(Binding.Space));
         if (bIsMSL && Index < MSLSlots.Size())
         {
             const EMSLBindingType BindingType = GetMSLBindingType(Binding);
-            Line += String::Printf(", MSL %s slot %u", ToString(BindingType), MSLSlots[Index].Slot);
+            Line += FString::Printf(", MSL %s slot %u", ToString(BindingType), MSLSlots[Index].Slot);
 
             if (MSLSlots[Index].NullTextureType != 0 || GetMSLBindingTable(BindingType) == EMSLBindingTable::Texture)
             {
-                Line += String::Printf(", null texture %s", *GetNullTextureName(MSLSlots[Index].NullTextureType));
+                Line += FString::Printf(", null texture %s", *GetNullTextureName(MSLSlots[Index].NullTextureType));
             }
         }
 
@@ -236,9 +236,9 @@ static String BuildReflectionComment(const TArray<uint8>& ShaderCode)
     return Comment;
 }
 
-String ShaderHeader::Build(const FShaderHeaderDesc& Desc, uint64 Stamp, const FShaderCompilerIdentity& Identity, const TArray<FShaderSourceFile>& Sources, const TArray<uint8>& ShaderCode)
+FString ShaderHeader::Build(const FShaderHeaderDesc& Desc, uint64 Stamp, const FShaderCompilerIdentity& Identity, const TArray<FShaderSourceFile>& Sources, const TArray<uint8>& ShaderCode)
 {
-    String Defines;
+    FString Defines;
     for (const FShaderDefine& Define : Desc.Job.Defines)
     {
         if (!Defines.IsEmpty())
@@ -249,7 +249,7 @@ String ShaderHeader::Build(const FShaderHeaderDesc& Desc, uint64 Stamp, const FS
         Defines += Define.Define + '=' + Define.Value;
     }
 
-    String Reads;
+    FString Reads;
     for (const FShaderSourceFile& Source : Sources)
     {
         if (!Reads.IsEmpty())
@@ -260,25 +260,25 @@ String ShaderHeader::Build(const FShaderHeaderDesc& Desc, uint64 Stamp, const FS
         Reads += Source.LocalPath.IsEmpty() ? Source.Path : MakeEngineRelative(Source.LocalPath);
     }
 
-    String Compiler = String::Printf("%s %u.%u, settings %u", *Identity.Name, Identity.VersionMajor, Identity.VersionMinor, Identity.SettingsVersion);
+    FString Compiler = FString::Printf("%s %u.%u, settings %u", *Identity.Name, Identity.VersionMajor, Identity.VersionMinor, Identity.SettingsVersion);
     if (Identity.TranslatorVersion != 0)
     {
-        Compiler += String::Printf(", translator %u", Identity.TranslatorVersion);
+        Compiler += FString::Printf(", translator %u", Identity.TranslatorVersion);
     }
 
-    String Header;
+    FString Header;
     Header += "// Generated by ShaderCompiler -compile -header. Do not edit, building the module regenerates it from the sources below.\n";
-    Header += String::Printf("// Source:   %s (%s, %s, %s, %s)\n", *MakeEngineRelative(Desc.Job.SourceFile), *Desc.Job.EntryPoint, ToString(Desc.Job.ShaderStage), ToString(Desc.Job.ShaderModel), ToString(Desc.Job.OutputLanguage));
-    Header += String::Printf("// Defines:  %s\n", Defines.IsEmpty() ? "none" : *Defines);
-    Header += String::Printf("// Compiler: %s\n", *Compiler);
-    Header += String::Printf("// Reads:    %s\n", *Reads);
+    Header += FString::Printf("// Source:   %s (%s, %s, %s, %s)\n", *MakeEngineRelative(Desc.Job.SourceFile), *Desc.Job.EntryPoint, ToString(Desc.Job.ShaderStage), ToString(Desc.Job.ShaderModel), ToString(Desc.Job.OutputLanguage));
+    Header += FString::Printf("// Defines:  %s\n", Defines.IsEmpty() ? "none" : *Defines);
+    Header += FString::Printf("// Compiler: %s\n", *Compiler);
+    Header += FString::Printf("// Reads:    %s\n", *Reads);
     Header += BuildReflectionComment(ShaderCode);
-    Header += String::Printf("%s%016llx\n", GStampPrefix, Stamp);
+    Header += FString::Printf("%s%016llx\n", GStampPrefix, Stamp);
     Header += "#pragma once\n";
     Header += "#include \"Core/Core.h\"\n";
     Header += "\n";
     Header += "/** FShaderCode container, read with FShaderCodeReader::ReadEmbedded */\n";
-    Header += String::Printf("inline constexpr uint8 %s[] =\n", *Desc.SymbolName);
+    Header += FString::Printf("inline constexpr uint8 %s[] =\n", *Desc.SymbolName);
     Header += "{\n";
 
     for (int32 Offset = 0; Offset < ShaderCode.Size(); Offset += GBytesPerLine)
@@ -287,7 +287,7 @@ String ShaderHeader::Build(const FShaderHeaderDesc& Desc, uint64 Stamp, const FS
         const int32 LineEnd = (Offset + GBytesPerLine < ShaderCode.Size()) ? (Offset + GBytesPerLine) : ShaderCode.Size();
         for (int32 Index = Offset; Index < LineEnd; ++Index)
         {
-            Header += String::Printf(" 0x%02x,", static_cast<uint32>(ShaderCode[Index]));
+            Header += FString::Printf(" 0x%02x,", static_cast<uint32>(ShaderCode[Index]));
         }
 
         Header += '\n';
@@ -297,7 +297,7 @@ String ShaderHeader::Build(const FShaderHeaderDesc& Desc, uint64 Stamp, const FS
     return Header;
 }
 
-bool ShaderHeader::Write(const FShaderHeaderDesc& Desc, uint64 Stamp, const FShaderCompilerIdentity& Identity, const TArray<FShaderSourceFile>& Sources, const TArray<uint8>& ShaderCode, String& OutError)
+bool ShaderHeader::Write(const FShaderHeaderDesc& Desc, uint64 Stamp, const FShaderCompilerIdentity& Identity, const TArray<FShaderSourceFile>& Sources, const TArray<uint8>& ShaderCode, FString& OutError)
 {
     FShaderCodeHeader CodeHeader;
     if (!FShaderCodeReader::ReadHeader(ShaderCode, CodeHeader, &OutError))
@@ -305,17 +305,17 @@ bool ShaderHeader::Write(const FShaderHeaderDesc& Desc, uint64 Stamp, const FSha
         return false;
     }
 
-    const String Folder = File::GetDirectoryOf(Desc.HeaderPath);
+    const FString Folder = File::GetDirectoryOf(Desc.HeaderPath);
     if (!File::CreateDirectoryTree(Folder))
     {
-        OutError = String::Printf("Cannot create '%s'", *Folder);
+        OutError = FString::Printf("Cannot create '%s'", *Folder);
         return false;
     }
 
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(Desc.HeaderPath);
     if (!FileHandle || !File::WriteTextFile(FileHandle.Get(), Build(Desc, Stamp, Identity, Sources, ShaderCode)))
     {
-        OutError = String::Printf("Cannot write '%s'", *Desc.HeaderPath);
+        OutError = FString::Printf("Cannot write '%s'", *Desc.HeaderPath);
         return false;
     }
 
@@ -345,10 +345,10 @@ int32 ShaderHeader::RunCompile(const FToolOptions& Options)
     Desc.Job.IncludeDirs    = Options.IncludeDirs;
 
     const FShaderCompileInfo CompileInfo = Desc.Job.ToCompileInfo();
-    const String             DisplayPath = MakeEngineRelative(Desc.HeaderPath);
+    const FString            DisplayPath = MakeEngineRelative(Desc.HeaderPath);
 
     TArray<FShaderSourceFile> Sources;
-    String                    Error;
+    FString                   Error;
 
     if (!Compiler.CollectSources(Desc.Job.SourceFile, CompileInfo, Sources, Error))
     {

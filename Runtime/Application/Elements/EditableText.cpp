@@ -73,8 +73,8 @@ IntVector2 FEditableText::ComputeDesiredSize() const
         return IntVector2(Padding.GetTotalHorizontal(), Padding.GetTotalVertical());
     }
 
-    const int32 TextWidth = Font->MeasureWidth(StringView(Text.Data(), Text.Length()));
-    const int32 HintWidth = Font->MeasureWidth(StringView(HintText.Data(), HintText.Length()));
+    const int32 TextWidth = Font->MeasureWidth(FStringView(Text.Data(), Text.Length()));
+    const int32 HintWidth = Font->MeasureWidth(FStringView(HintText.Data(), HintText.Length()));
 
     return IntVector2(Math::Max(TextWidth, HintWidth) + Padding.GetTotalHorizontal(), GetTextBandHeight() + Padding.GetTotalVertical());
 }
@@ -87,9 +87,9 @@ FRectangle FEditableText::GetTextBounds(const FRectangle& Bounds) const
         return TextBounds;
     }
 
-    const String& Displayed = Text.IsEmpty() ? HintText : Text;
+    const FString& Displayed = Text.IsEmpty() ? HintText : Text;
 
-    const int32 TextWidth = Font->MeasureWidth(StringView(Displayed.Data(), Displayed.Length()));
+    const int32 TextWidth = Font->MeasureWidth(FStringView(Displayed.Data(), Displayed.Length()));
     const int32 Slack     = Math::Max(0, TextBounds.Width - TextWidth);
 
     TextBounds.Position.X += TextAlignment == EHorizontalAlignment::Center ? (Slack / 2) : Slack;
@@ -114,8 +114,8 @@ int32 FEditableText::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandL
 
     if (HasSelection() && Font)
     {
-        const int32 StartOffset = Font->MeasureWidth(StringView(Text.Data(), GetSelectionStart()));
-        const int32 EndOffset   = Font->MeasureWidth(StringView(Text.Data(), GetSelectionEnd()));
+        const int32 StartOffset = Font->MeasureWidth(FStringView(Text.Data(), GetSelectionStart()));
+        const int32 EndOffset   = Font->MeasureWidth(FStringView(Text.Data(), GetSelectionEnd()));
 
         const FUIStyleMetrics& Metrics = FUIStyle::GetDefault().Metrics;
 
@@ -145,7 +145,7 @@ int32 FEditableText::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandL
     {
         if (IsTextCursorVisibleAt(GetSecondsSinceTextCursorBlinkReset()))
         {
-            const StringView TextBeforeCursor(Text.Data(), TextCursorPosition);
+            const FStringView TextBeforeCursor(Text.Data(), TextCursorPosition);
 
             FRectangle TextCursorBounds;
             TextCursorBounds.Position.X = TextBounds.Position.X + Font->MeasureWidth(TextBeforeCursor);
@@ -329,7 +329,7 @@ FEventResponse FEditableText::OnKeyDown(const FKeyEvent& KeyEvent)
             if (bIsWordJump)
             {
                 const int32 WordStart = FindWordBoundaryLeft(TextCursorPosition);
-                ReplaceRange(WordStart, TextCursorPosition - WordStart, StringView());
+                ReplaceRange(WordStart, TextCursorPosition - WordStart, FStringView());
             }
             else
             {
@@ -346,7 +346,7 @@ FEventResponse FEditableText::OnKeyDown(const FKeyEvent& KeyEvent)
         {
             if (bIsWordJump)
             {
-                ReplaceRange(TextCursorPosition, FindWordBoundaryRight(TextCursorPosition) - TextCursorPosition, StringView());
+                ReplaceRange(TextCursorPosition, FindWordBoundaryRight(TextCursorPosition) - TextCursorPosition, FStringView());
             }
             else
             {
@@ -456,7 +456,7 @@ bool FEditableText::WantsTextInput() const
     return true;
 }
 
-void FEditableText::SetText(const String& InText)
+void FEditableText::SetText(const FString& InText)
 {
     Text               = InText;
     TextCursorPosition = Math::Clamp(TextCursorPosition, 0, Text.Length());
@@ -465,7 +465,7 @@ void FEditableText::SetText(const String& InText)
     NotifyTextChanged();
 }
 
-void FEditableText::SetTextSilently(const String& InText)
+void FEditableText::SetTextSilently(const FString& InText)
 {
     Text               = InText;
     TextCursorPosition = Text.Length();
@@ -490,7 +490,7 @@ void FEditableText::InsertCharacter(CHAR_T Character)
     if (HasSelection())
     {
         const int32 SelectionStart = GetSelectionStart();
-        ReplaceRange(SelectionStart, GetSelectionEnd() - SelectionStart, StringView(&Character, 1));
+        ReplaceRange(SelectionStart, GetSelectionEnd() - SelectionStart, FStringView(&Character, 1));
         return;
     }
 
@@ -501,7 +501,7 @@ void FEditableText::InsertCharacter(CHAR_T Character)
     NotifyTextChanged();
 }
 
-void FEditableText::InsertText(const StringView& InText)
+void FEditableText::InsertText(const FStringView& InText)
 {
     if (InText.IsEmpty())
     {
@@ -522,7 +522,7 @@ void FEditableText::InsertText(const StringView& InText)
     NotifyTextChanged();
 }
 
-void FEditableText::ReplaceRange(int32 Position, int32 Count, const StringView& InText)
+void FEditableText::ReplaceRange(int32 Position, int32 Count, const FStringView& InText)
 {
     const int32 ClampedPosition = Math::Clamp(Position, 0, Text.Length());
     const int32 ClampedCount    = Math::Clamp(Count, 0, Text.Length() - ClampedPosition);
@@ -662,14 +662,14 @@ int32 FEditableText::GetSelectionEnd() const
     return Math::Max(SelectionAnchor, TextCursorPosition);
 }
 
-String FEditableText::GetSelectedText() const
+FString FEditableText::GetSelectedText() const
 {
     if (!HasSelection())
     {
-        return String();
+        return FString();
     }
 
-    return String(Text.Data() + GetSelectionStart(), GetSelectionEnd() - GetSelectionStart());
+    return FString(Text.Data() + GetSelectionStart(), GetSelectionEnd() - GetSelectionStart());
 }
 
 void FEditableText::SelectAll()
@@ -693,7 +693,7 @@ bool FEditableText::DeleteSelection()
     }
 
     const int32 SelectionStart = GetSelectionStart();
-    ReplaceRange(SelectionStart, GetSelectionEnd() - SelectionStart, StringView());
+    ReplaceRange(SelectionStart, GetSelectionEnd() - SelectionStart, FStringView());
     return true;
 }
 
@@ -710,12 +710,12 @@ void FEditableText::CutToClipboard()
 
 void FEditableText::PasteFromClipboard()
 {
-    String ClipboardText;
+    FString ClipboardText;
     FPlatformSystemClipboard::GetText(ClipboardText);
 
     if (!ClipboardText.IsEmpty())
     {
-        InsertText(StringView(ClipboardText.Data(), ClipboardText.Length()));
+        InsertText(FStringView(ClipboardText.Data(), ClipboardText.Length()));
     }
 }
 
@@ -758,5 +758,5 @@ int32 FEditableText::FindTextCursorPositionAt(const IntVector2& ClientPosition) 
     const FRectangle TextBounds = GetTextBounds(GetContentRectangle());
     const int32      OffsetX    = ClientPosition.X - TextBounds.Position.X;
 
-    return Font->FindCharacterIndexAtOffset(StringView(Text.Data(), Text.Length()), OffsetX);
+    return Font->FindCharacterIndexAtOffset(FStringView(Text.Data(), Text.Length()), OffsetX);
 }

@@ -5,7 +5,7 @@
 #include "Application/Text/TextLayout.h"
 
 /** @brief Called when the selection changed, carrying the text now selected. */
-DECLARE_DELEGATE(FOnSelectionChanged, const String& /*SelectedText*/);
+DECLARE_DELEGATE(FOnSelectionChanged, const FString& /*SelectedText*/);
 
 class APPLICATION_API FRichTextBlock final : public FInteractiveElement
 {
@@ -57,7 +57,7 @@ public:
      * @param InSearchText The text to look for. An empty string clears the search.
      * @param InCaseType   Whether matches must use the same case as InSearchText.
      */
-    void SetRunsAndSearchText(const TArray<FTextRun>& InRuns, const String& InSearchText, EStringCaseType InCaseType = EStringCaseType::CaseSensitive);
+    void SetRunsAndSearchText(const TArray<FTextRun>& InRuns, const FString& InSearchText, EStringCaseType InCaseType = EStringCaseType::CaseSensitive);
 
     /**
      * @brief Appends one run to the end of the text.
@@ -74,7 +74,7 @@ public:
      *
      * @param InSearchText The text to look for. An empty string clears the search.
      */
-    void SetSearchText(const String& InSearchText);
+    void SetSearchText(const FString& InSearchText);
 
     /**
      * @brief Sets whether matches must use the same case as the search string.
@@ -93,7 +93,7 @@ public:
     NODISCARD int32 GetSelectionEnd() const;
 
     /** @return The text inside the selection, or an empty string when nothing is selected. */
-    NODISCARD String GetSelectedText() const;
+    NODISCARD FString GetSelectedText() const;
 
     /** @brief Selects everything, which is what the context menu and the select-all chord both do. */
     void SelectAll();
@@ -113,7 +113,7 @@ public:
     void CopyToClipboard() const;
 
     /** @return The whole text with the runs concatenated, which every selection and match index refers to. */
-    NODISCARD String GetText() const;
+    NODISCARD FString GetText() const;
 
     /**
      * @brief The character under a point.
@@ -124,7 +124,7 @@ public:
     NODISCARD int32 FindCharacterIndexAt(const IntVector2& ClientPosition) const;
 
     /** @return The string the block highlights every occurrence of, or empty when there is no search. */
-    NODISCARD FORCEINLINE const String& GetSearchText() const
+    NODISCARD FORCEINLINE const FString& GetSearchText() const
     {
         return SearchText;
     }
@@ -167,7 +167,7 @@ private:
 
     mutable FTextLayout Layout;
     FMargin             Margin;
-    String              SearchText;
+    FString             SearchText;
     EStringCaseType     SearchCaseType;
     TArray<int32>       SearchMatches;
     TArray<FTextRange>  SearchRanges;

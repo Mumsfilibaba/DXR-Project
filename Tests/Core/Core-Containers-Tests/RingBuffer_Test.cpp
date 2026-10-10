@@ -50,7 +50,7 @@ bool RingBuffer_Test()
     TEST_EXPECT_EQ(Buffer[0], 7);
 
     TEST_SECTION("Non-trivial elements are overwritten in place rather than leaked");
-    TRingBuffer<String> Strings(2);
+    TRingBuffer<FString> Strings(2);
     Strings.Emplace("Alpha");
     Strings.Emplace("Bravo");
     Strings.Emplace("Charlie");

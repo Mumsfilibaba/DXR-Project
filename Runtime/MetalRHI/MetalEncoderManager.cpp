@@ -953,7 +953,7 @@ NSString* FMetalEncoderManager::MakeEncoderLabel(const CHAR_T* Label) const
         return [NSString stringWithUTF8String:Label];
     }
 
-    return String::Printf("%s | %s", *ScopePath, Label).GetNSString();
+    return FString::Printf("%s | %s", *ScopePath, Label).GetNSString();
 }
 
 uint32 FMetalEncoderManager::TakeScheduledTimestamp()

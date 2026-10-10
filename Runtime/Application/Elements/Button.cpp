@@ -137,7 +137,7 @@ void FButton::SetHighlighted(bool bInIsHighlighted)
     InvalidatePaint();
 }
 
-void FButton::SetText(const String& InText)
+void FButton::SetText(const FString& InText)
 {
     if (Label)
     {
@@ -145,9 +145,9 @@ void FButton::SetText(const String& InText)
     }
 }
 
-const String& FButton::GetText() const
+const FString& FButton::GetText() const
 {
-    static const String EmptyText;
+    static const FString EmptyText;
     return Label ? Label->GetText() : EmptyText;
 }
 

@@ -254,7 +254,7 @@ void FEditorOutputLogPanel::Release()
     FEditorPanel::Release();
 }
 
-void FEditorOutputLogPanel::OnSearchTextChanged(const String& SearchText)
+void FEditorOutputLogPanel::OnSearchTextChanged(const FString& SearchText)
 {
     LogView->SetSearchText(SearchText, !SearchText.IsEmpty());
 }

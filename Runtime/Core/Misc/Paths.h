@@ -37,10 +37,10 @@ struct CORE_API Paths
      * @param OutSource Set to where the directory was found, or EEngineDirSource::None on failure. May be nullptr.
      * @return Returns the normalized, absolute engine directory, or an empty string if none was found
      */
-    static String FindEngineDir(
-        const String&     EngineOption,
-        const String&     ExecutableDir,
-        const String&     FallbackDir,
+    static FString FindEngineDir(
+        const FString&    EngineOption,
+        const FString&    ExecutableDir,
+        const FString&    FallbackDir,
         EEngineDirSource* OutSource = nullptr);
 
     /** @return Returns where the engine directory was found, resolving it first if Initialize has not run */
@@ -53,23 +53,23 @@ struct CORE_API Paths
      * @return Returns the engine directory, resolving it first if Initialize has not run. Falls back to ENGINE_LOCATION
      * when no engine folder was found.
      */
-    static String GetEngineDir();
+    static FString GetEngineDir();
 
     /** @return Returns the engine's Assets directory */
-    static String GetAssetDir();
+    static FString GetAssetDir();
 
     /** @return Returns the project directory baked in at compile time (PROJECT_LOCATION) */
-    static String GetProjectDir();
+    static FString GetProjectDir();
 
     /** @return Returns the project name baked in at compile time (PROJECT_NAME) */
-    static String GetProjectName();
+    static FString GetProjectName();
 
     /** @return Returns the name of the project's game module, which is currently the project name */
-    static String GetProjectModuleName();
+    static FString GetProjectModuleName();
 
     /**
      * @return Returns the engine's folder in the per-user settings directory, e.g. %LOCALAPPDATA%/DXR-Engine on Windows,
      * or an empty string if the platform's directory could not be found
      */
-    static String GetUserSettingsDir();
+    static FString GetUserSettingsDir();
 };

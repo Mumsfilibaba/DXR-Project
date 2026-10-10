@@ -43,7 +43,7 @@ struct FMacPlatformMisc final : public IPlatformMisc
         __sync_synchronize();
     }
 
-    static FORCEINLINE bool GetEnvironmentVariable(const CHAR_T* Name, String& OutValue)
+    static FORCEINLINE bool GetEnvironmentVariable(const CHAR_T* Name, FString& OutValue)
     {
         OutValue.Clear();
 
@@ -77,7 +77,7 @@ struct FMacPlatformMisc final : public IPlatformMisc
         return ::setenv(Name, Value, 1) == 0;
     }
 
-    static FORCEINLINE int32 GetLastErrorString(String& OutErrorString)
+    static FORCEINLINE int32 GetLastErrorString(FString& OutErrorString)
     {
         const int32 LastError = errno;
 

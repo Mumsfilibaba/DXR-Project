@@ -11,20 +11,20 @@
 
 struct FShaderDefine
 {
-    FShaderDefine(const String& InDefine)
+    FShaderDefine(const FString& InDefine)
         : Define(InDefine)
         , Value()
     {
     }
 
-    FShaderDefine(const String& InDefine, const String& InValue)
+    FShaderDefine(const FString& InDefine, const FString& InValue)
         : Define(InDefine)
         , Value(InValue)
     {
     }
 
-    String Define;
-    String Value;
+    FString Define;
+    FString Value;
 };
 
 struct FShaderCompileInfo;
@@ -55,7 +55,7 @@ public:
     /** @return RHI.ShaderCompiler.Debug, always false in RELEASE_BUILD */
     NODISCARD static bool IsDebugInfoEnabled();
 
-    static bool Initialize(const String& InAssetPath);
+    static bool Initialize(const FString& InAssetPath);
     static void Destroy();
 
     static FORCEINLINE FShaderCompiler& Get()
@@ -75,10 +75,10 @@ public:
      * @brief OutByteCode receives an FShaderCode container, see ShaderCore/ShaderCode.h. Uses the remote compiler when RHI.ShaderCompiler.UseRemote is set.
      * @param Filename Absolute, or relative to the asset directory
      */
-    bool CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<String>* OutDependencies = nullptr);
+    bool CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<FString>* OutDependencies = nullptr);
 
     /** Always compiles in this process, only the tests compile from source */
-    bool CompileFromSource(const String& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<String>* OutDependencies = nullptr);
+    bool CompileFromSource(const FString& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<FString>* OutDependencies = nullptr);
 
     /**
      * @brief Compiles with the local backends only, which is what the remote compiler server runs
@@ -86,17 +86,17 @@ public:
      * @param OutDependencies Relative to SourceRoot, the shader itself first
      * @param OutMessages Preprocessor and compiler output, with SourceRoot stripped from every path
      */
-    bool CompileJob(FShaderCompileJob& Job, const String& SourceRoot, const IShaderSourceProvider& Sources, TArray<uint8>& OutShaderCode, TArray<String>& OutDependencies, String& OutMessages);
+    bool CompileJob(FShaderCompileJob& Job, const FString& SourceRoot, const IShaderSourceProvider& Sources, TArray<uint8>& OutShaderCode, TArray<FString>& OutDependencies, FString& OutMessages);
 
     /** @brief Sends the compile to Client. Used by CompileFromFile and by the batch tool, which has one client per remote host. */
-    ERemoteCompileStatus CompileOnRemote(FRemoteShaderCompilerClient& Client, const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<String>* OutDependencies);
+    ERemoteCompileStatus CompileOnRemote(FRemoteShaderCompilerClient& Client, const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<FString>* OutDependencies);
 
     /**
      * @brief Preprocesses from disk without compiling and returns every file that was read, the shader itself first
      * @param OutFiles Named the way CompileOnRemote sends them: relative to the asset directory, "@Include<N>/..." below
      *        CompileInfo.IncludeDirs[N] or "@Source/..." below the shader's own folder, whichever folder contains the file and every other one
      */
-    bool CollectSources(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<FShaderSourceFile>& OutFiles, String& OutErrors) const;
+    bool CollectSources(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<FShaderSourceFile>& OutFiles, FString& OutErrors) const;
 
     /** @return True when a backend produces the language and this platform has an RHI for it. This decides what a server offers. */
     NODISCARD bool CanCompileLocally(EShaderOutputLanguage OutputLanguage) const;
@@ -104,21 +104,21 @@ public:
     NODISCARD EShaderCompileRoute GetRoute(EShaderOutputLanguage OutputLanguage) const;
 
     /** @return One line for the editor, for example "Connected to 127.0.0.1:9371 (Windows): DXIL, DXBC, SPIRV local, MSL forwarded" */
-    NODISCARD String DescribeRemoteStatus() const;
+    NODISCARD FString DescribeRemoteStatus() const;
 
-    NODISCARD const String& GetAssetPath() const
+    NODISCARD const FString& GetAssetPath() const
     {
         return AssetPath;
     }
 
     /** @return Path when it is absolute, otherwise Path below the asset directory. Used for shader files and include directories alike. */
-    NODISCARD String ResolveSourcePath(const String& Path) const;
+    NODISCARD FString ResolveSourcePath(const FString& Path) const;
 
     /** Uses the identity of whichever compiler GetRoute picks */
-    NODISCARD uint64 ComputeCompileHash(const String& SourceFile, const FShaderCompileInfo& CompileInfo) const;
+    NODISCARD uint64 ComputeCompileHash(const FString& SourceFile, const FShaderCompileInfo& CompileInfo) const;
 
     /** For a job compiled elsewhere, with Identity taken from that compiler's Hello */
-    NODISCARD uint64 ComputeCompileHash(const String& SourceFile, const FShaderCompileInfo& CompileInfo, const FShaderCompilerIdentity& Identity) const;
+    NODISCARD uint64 ComputeCompileHash(const FString& SourceFile, const FShaderCompileInfo& CompileInfo, const FShaderCompilerIdentity& Identity) const;
 
     /** @return Invalid when no local backend produces the language */
     NODISCARD FShaderCompilerIdentity GetLocalIdentity(EShaderOutputLanguage OutputLanguage) const;
@@ -142,7 +142,7 @@ public:
     }
 
 private:
-    FShaderCompiler(const String& InAssetPath);
+    FShaderCompiler(const FString& InAssetPath);
     ~FShaderCompiler();
 
     bool InitializeBackends();
@@ -151,31 +151,31 @@ private:
     void BuildCompileDefines(const FShaderCompileInfo& CompileInfo, TArray<FShaderDefine>& OutDefines) const;
 
     bool CompileLocal(
-        const String&                ShaderSource,
-        const String&                FilePath,
-        const String&                ShaderDir,
-        TArrayView<const String>     IncludeDirs,
+        const FString&               ShaderSource,
+        const FString&               FilePath,
+        const FString&               ShaderDir,
+        TArrayView<const FString>    IncludeDirs,
         const FShaderCompileInfo&    CompileInfo,
         const IShaderSourceProvider* Sources,
         bool                         bDefinesAreFinal,
         TArray<uint8>&               OutByteCode,
-        TArray<String>*              OutDependencies,
-        String*                      OutMessages);
+        TArray<FString>*             OutDependencies,
+        FString*                     OutMessages);
 
-    NODISCARD TArray<String> ResolveIncludeDirs(const FShaderCompileInfo& CompileInfo) const;
-    bool CollectSources(const FShaderSourceRoots& Roots, const FShaderCompileInfo& CompileInfo, TArray<FShaderSourceFile>& OutFiles, String& OutErrors) const;
+    NODISCARD TArray<FString> ResolveIncludeDirs(const FShaderCompileInfo& CompileInfo) const;
+    bool CollectSources(const FShaderSourceRoots& Roots, const FShaderCompileInfo& CompileInfo, TArray<FShaderSourceFile>& OutFiles, FString& OutErrors) const;
     FRemoteShaderCompilerClient* GetRemoteClient() const;
-    bool DumpContentToFile(const TArray<uint8>& ByteCode, const String& Filename);
-    void DumpPreprocessedSource(const String& DumpDir, const String& FilePath, const FShaderCompileInfo& CompileInfo, const TArray<FShaderDefine>& Defines, const String& Source);
+    bool DumpContentToFile(const TArray<uint8>& ByteCode, const FString& Filename);
+    void DumpPreprocessedSource(const FString& DumpDir, const FString& FilePath, const FShaderCompileInfo& CompileInfo, const TArray<FShaderDefine>& Defines, const FString& Source);
 
     TArray<FShaderCompilerBackend*>      Backends;
-    String                               AssetPath;
+    FString                              AssetPath;
     AtomicInt64                          NumCompiles;
     AtomicInt64                          TotalCompileTimeNS;
     FCriticalSection                     DumpCS;
     mutable FRemoteShaderCompilerClient* RemoteClient;
     mutable FCriticalSection             RemoteClientCS;
-    mutable String                       RemoteClientAddress;
+    mutable FString                      RemoteClientAddress;
     mutable uint64                       NextRemoteConnectCycles;
 
     static FShaderCompiler* ShaderCompiler;
@@ -196,7 +196,7 @@ struct FShaderCompileInfo
     }
 
     FShaderCompileInfo(
-        const String&                    InEntryPoint,
+        const FString&                   InEntryPoint,
         EShaderModel                     InShaderModel,
         EShaderStage                     InShaderStage,
         EShaderOutputLanguage            InOutputLanguage,
@@ -218,6 +218,6 @@ struct FShaderCompileInfo
     bool                      bOptimize;
     bool                      bDebugInfo;
     TArrayView<FShaderDefine> Defines;
-    TArrayView<const String>  IncludeDirs;
-    String                    EntryPoint;
+    TArrayView<const FString> IncludeDirs;
+    FString                   EntryPoint;
 };

@@ -47,7 +47,7 @@ static void CloseDialog(const TSharedPtr<FErrorDialogState>& State)
     OnClosed.ExecuteIfBound();
 }
 
-static TSharedPtr<FButton> CreateDismissButton(const String& Label, const FOnClicked& OnClicked)
+static TSharedPtr<FButton> CreateDismissButton(const FString& Label, const FOnClicked& OnClicked)
 {
     FTextBlock::FDesc LabelDesc;
     LabelDesc.Text            = Label;
@@ -76,12 +76,12 @@ static TSharedPtr<FButton> CreateDismissButton(const String& Label, const FOnCli
     return FButton::Create(Desc);
 }
 
-static TSharedPtr<FVisualElement> CreateDetailList(const TArray<String>& Details)
+static TSharedPtr<FVisualElement> CreateDetailList(const TArray<FString>& Details)
 {
     const TSharedPtr<IFontFace>& Font = FEditorStyle::GetFonts().Body;
 
     TSharedPtr<FVerticalBox> Rows = FVerticalBox::Create();
-    for (const String& Detail : Details)
+    for (const FString& Detail : Details)
     {
         FTextBlock::FDesc RowDesc;
         RowDesc.Text            = Detail;

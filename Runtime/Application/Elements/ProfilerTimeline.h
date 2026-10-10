@@ -40,10 +40,10 @@ struct FProfilerTimelineBar
 struct FProfilerTimelineLane
 {
     /** @brief The name drawn in the gutter, which is the thread's name or "GPU". */
-    String Label;
+    FString Label;
 
     /** @brief The dimmed line under the label, which is where a lane says how busy it was. */
-    String SubLabel;
+    FString SubLabel;
 
     /** @brief The scopes on the lane, in the order they opened. */
     TArray<FProfilerTimelineBar> Bars;
@@ -182,7 +182,7 @@ private:
     };
 
     NODISCARD static int32 GetLaneRowCount(const FProfilerTimelineLane& Lane);
-    NODISCARD static String FormatBarToolTip(const FProfilerTimelineBar& Bar);
+    NODISCARD static FString FormatBarToolTip(const FProfilerTimelineBar& Bar);
 
     NODISCARD int32 GetRowHeight() const;
     NODISCARD int32 GetRulerHeight() const;

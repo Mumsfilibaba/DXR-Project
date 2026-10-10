@@ -9,7 +9,7 @@
 
 #include <cstdio>
 
-static bool ReadClosedFile(const String& Path, TArray<CHAR_T>& OutText)
+static bool ReadClosedFile(const FString& Path, TArray<CHAR_T>& OutText)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Path);
     if (!FileHandle)
@@ -35,7 +35,7 @@ bool FileOutputDevice_Test()
 {
     TEST_BEGIN();
 
-    const String TempPath("FileOutputDeviceTests.tmp.log");
+    const FString TempPath("FileOutputDeviceTests.tmp.log");
 
     TEST_SECTION("Lines logged from many threads all reach the file exactly once");
     {
@@ -52,7 +52,7 @@ bool FileOutputDevice_Test()
             {
                 for (int32 Index = 0; Index < NumLinesPerWriter; Index++)
                 {
-                    Device.Log(ELogSeverity::Info, String::Printf("FileOutputDeviceTests W%03dL%03d", Writer, Index));
+                    Device.Log(ELogSeverity::Info, FString::Printf("FileOutputDeviceTests W%03dL%03d", Writer, Index));
                 }
             });
         }
@@ -65,7 +65,7 @@ bool FileOutputDevice_Test()
         {
             for (int32 Index = 0; Index < NumLinesPerWriter; Index++)
             {
-                const String Expected = String::Printf("FileOutputDeviceTests W%03dL%03d", Writer, Index);
+                const FString Expected = FString::Printf("FileOutputDeviceTests W%03dL%03d", Writer, Index);
                 if (CountOccurrences(Text.Data(), *Expected) != 1)
                 {
                     NumWrong++;
@@ -94,7 +94,7 @@ bool FileOutputDevice_Test()
                 for (int32 Index = 0; Index < NumLinesPerWriter; Index++)
                 {
                     const ELogSeverity Severity = (Index % 2 == 0) ? ELogSeverity::Warning : ELogSeverity::Info;
-                    Device.Log(Severity, String::Printf("FileOutputDeviceTests Mixed W%03dL%03d", Writer, Index));
+                    Device.Log(Severity, FString::Printf("FileOutputDeviceTests Mixed W%03dL%03d", Writer, Index));
                 }
             });
         }
@@ -107,7 +107,7 @@ bool FileOutputDevice_Test()
         {
             for (int32 Index = 0; Index < NumLinesPerWriter; Index++)
             {
-                const String Expected = String::Printf("FileOutputDeviceTests Mixed W%03dL%03d", Writer, Index);
+                const FString Expected = FString::Printf("FileOutputDeviceTests Mixed W%03dL%03d", Writer, Index);
                 if (CountOccurrences(Text.Data(), *Expected) != 1)
                 {
                     NumWrong++;
@@ -122,15 +122,15 @@ bool FileOutputDevice_Test()
 
     TEST_SECTION("A device that could not open its file absorbs lines instead of growing a backlog");
     {
-        FFileOutputDevice Device(String("FileOutputDeviceTests_NoSuchDirectory/Output.log"));
+        FFileOutputDevice Device(FString("FileOutputDeviceTests_NoSuchDirectory/Output.log"));
         TEST_EXPECT(!Device.IsValid());
 
         for (int32 Index = 0; Index < 512; Index++)
         {
-            Device.Log(ELogSeverity::Info, String::Printf("FileOutputDeviceTests Dropped%03d", Index));
+            Device.Log(ELogSeverity::Info, FString::Printf("FileOutputDeviceTests Dropped%03d", Index));
         }
 
-        Device.Log(ELogSeverity::Error, String("FileOutputDeviceTests Dropped error"));
+        Device.Log(ELogSeverity::Error, FString("FileOutputDeviceTests Dropped error"));
         Device.Flush();
     }
 
@@ -146,7 +146,7 @@ bool FileOutputDevice_Test()
 
             for (int32 Index = 0; Index < NumLines; Index++)
             {
-                Device.Log(ELogSeverity::Info, String::Printf("FileOutputDeviceTests Once%03d", Index));
+                Device.Log(ELogSeverity::Info, FString::Printf("FileOutputDeviceTests Once%03d", Index));
                 Device.Flush();
                 Device.Flush();
             }
@@ -158,7 +158,7 @@ bool FileOutputDevice_Test()
         int32 NumWrong = 0;
         for (int32 Index = 0; Index < NumLines; Index++)
         {
-            const String Expected = String::Printf("FileOutputDeviceTests Once%03d", Index);
+            const FString Expected = FString::Printf("FileOutputDeviceTests Once%03d", Index);
             if (CountOccurrences(Text.Data(), *Expected) != 1)
             {
                 NumWrong++;

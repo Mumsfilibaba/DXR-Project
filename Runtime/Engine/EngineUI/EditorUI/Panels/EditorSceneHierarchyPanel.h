@@ -40,10 +40,10 @@ private:
     void OnTreeSelectionChanged(const TArray<TSharedPtr<FTreeItem>>& Selection);
     void OnTreeItemActivated(const TSharedPtr<FTreeItem>& Item);
     void OnTreeDragDetected(const TSharedPtr<FTreeItem>& Item, const FCursorEvent& CursorEvent);
-    void OnSearchTextChanged(const String& SearchText);
+    void OnSearchTextChanged(const FString& SearchText);
     void OnRowContextMenu(const TSharedPtr<FTreeItem>& Item, const IntVector2& ScreenPosition);
     void OnDeleteRequested();
-    void OnRenameCommitted(const TSharedPtr<FTreeItem>& Item, const String& NewName);
+    void OnRenameCommitted(const TSharedPtr<FTreeItem>& Item, const FString& NewName);
     void OnItemsDropped(const TArray<TSharedPtr<FTreeItem>>& Items, const TSharedPtr<FTreeItem>& TargetItem);
     void AddFilter(FActorFilter* ParentFilter);
     void AddMoveToFilterItems(const TSharedPtr<FMenu>& Menu, FActorFilter* Filter);
@@ -52,7 +52,7 @@ private:
     NODISCARD TSharedPtr<FMenu> BuildRowContextMenu();
     NODISCARD TSharedPtr<FMenu> BuildMoveToFilterMenu();
     NODISCARD uint64 ComputeWorldRevision() const;
-    NODISCARD TSharedPtr<FTreeItem> CreateItem(const String& ItemLabel, FActor* Actor, FActorFilter* Filter);
+    NODISCARD TSharedPtr<FTreeItem> CreateItem(const FString& ItemLabel, FActor* Actor, FActorFilter* Filter);
     NODISCARD FActorFilter* GetContextFilter() const;
 
     TSharedPtr<FEditorSceneHierarchyView>      HierarchyView;

@@ -197,7 +197,7 @@ bool FMetalAccelerationStructure::EncodeBuild(FMetalCommandContext& Context, MTL
     return true;
 }
 
-void FMetalAccelerationStructure::SetLabel(const String& InName)
+void FMetalAccelerationStructure::SetLabel(const FString& InName)
 {
     DebugName = InName;
 
@@ -271,12 +271,12 @@ void* FMetalGeometryAccelerationStructureRHI::GetRHINativeResource() const
     return reinterpret_cast<void*>(GetMTLAccelerationStructure());
 }
 
-void FMetalGeometryAccelerationStructureRHI::SetDebugName(const String& InName)
+void FMetalGeometryAccelerationStructureRHI::SetDebugName(const FString& InName)
 {
     SetLabel(InName);
 }
 
-void FMetalGeometryAccelerationStructureRHI::GetDebugName(String& OutDebugName) const
+void FMetalGeometryAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
 {
     OutDebugName = GetLabel();
 }
@@ -408,12 +408,12 @@ FRHIDescriptorHandle FMetalSceneAccelerationStructureRHI::GetBindlessHandle() co
     return View ? View->GetBindlessHandle() : FRHIDescriptorHandle();
 }
 
-void FMetalSceneAccelerationStructureRHI::SetDebugName(const String& InName)
+void FMetalSceneAccelerationStructureRHI::SetDebugName(const FString& InName)
 {
     SetLabel(InName);
 }
 
-void FMetalSceneAccelerationStructureRHI::GetDebugName(String& OutDebugName) const
+void FMetalSceneAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
 {
     OutDebugName = GetLabel();
 }

@@ -31,13 +31,13 @@ static const CHAR_T* const GTonemappers[]        = { "Default", "ACES", "Reinhar
 static const CHAR_T* const GRayTracingSection     = "Ray Tracing";
 static const CHAR_T* const GShaderCompilerSection = "Shader Compiler";
 
-static String DescribeShaderCompilerStatus()
+static FString DescribeShaderCompilerStatus()
 {
     const FShaderCompiler* Compiler = FShaderCompiler::TryGet();
-    return Compiler ? Compiler->DescribeRemoteStatus() : String("Not initialized");
+    return Compiler ? Compiler->DescribeRemoteStatus() : FString("Not initialized");
 }
 
-static String DescribeRayTracingSupport()
+static FString DescribeRayTracingSupport()
 {
     if (!RHI::bSupportsRayTracing)
     {
@@ -49,7 +49,7 @@ static String DescribeRayTracingSupport()
         return "Inline only";
     }
 
-    return String::Printf("Tier %s, inline %s, SER %s",
+    return FString::Printf("Tier %s, inline %s, SER %s",
         ToString(RHI::RayTracingTier),
         RHI::bSupportsInlineRayTracing ? "yes" : "no",
         RHI::bSupportsShaderExecutionReordering ? "yes" : "no");
@@ -190,7 +190,7 @@ static const CHAR_T* FindParentSection(const CHAR_T* Section)
 {
     for (const FRendererSubsection& Subsection : GRendererSubsections)
     {
-        if (String(Subsection.Section) == Section)
+        if (FString(Subsection.Section) == Section)
         {
             return Subsection.ParentSection;
         }
@@ -257,8 +257,8 @@ bool FEditorRendererSettingsPanel::PassesFilter(const FRendererSetting& Setting)
         return true;
     }
 
-    return String(Setting.Label).Contains(FilterText, EStringCaseType::NoCase)
-        || String(Setting.CVarName).Contains(FilterText, EStringCaseType::NoCase);
+    return FString(Setting.Label).Contains(FilterText, EStringCaseType::NoCase)
+        || FString(Setting.CVarName).Contains(FilterText, EStringCaseType::NoCase);
 }
 
 void FEditorRendererSettingsPanel::RebuildSections()
@@ -300,7 +300,7 @@ void FEditorRendererSettingsPanel::RebuildSections()
             continue;
         }
 
-        if (!CurrentSection || String(CurrentSection) != Setting.Section)
+        if (!CurrentSection || FString(CurrentSection) != Setting.Section)
         {
             CurrentTable   = FPropertyTable::Create(FEditorStyle::MakePropertyTableDesc(RENDERER_SETTINGS_LABEL_FRACTION));
             CurrentSection = Setting.Section;
@@ -316,7 +316,7 @@ void FEditorRendererSettingsPanel::RebuildSections()
 
             for (const FSectionBox& Candidate : SectionBoxes)
             {
-                if (ParentName && String(Candidate.Name) == ParentName)
+                if (ParentName && FString(Candidate.Name) == ParentName)
                 {
                     ParentBox = Candidate.Box;
                     break;
@@ -334,7 +334,7 @@ void FEditorRendererSettingsPanel::RebuildSections()
 
             SectionBoxes.Emplace(FSectionBox{ Setting.Section, SectionBox });
 
-            if (String(Setting.Section) == GRayTracingSection)
+            if (FString(Setting.Section) == GRayTracingSection)
             {
                 FTextBlock::FDesc SupportDesc;
                 SupportDesc.Text = DescribeRayTracingSupport();
@@ -343,7 +343,7 @@ void FEditorRendererSettingsPanel::RebuildSections()
                 CurrentTable->AddRow("Hardware support", FTextBlock::Create(SupportDesc)).ToolTipText =
                     "What this RHI reports, which is what decides whether the rows below it do anything";
             }
-            else if (String(Setting.Section) == GShaderCompilerSection)
+            else if (FString(Setting.Section) == GShaderCompilerSection)
             {
                 FTextBlock::FDesc StatusDesc;
                 StatusDesc.Text = DescribeShaderCompilerStatus();
@@ -358,7 +358,7 @@ void FEditorRendererSettingsPanel::RebuildSections()
         const bool bIsSupported = !Setting.IsSupported || Setting.IsSupported();
 
         FPropertyRow& Row = CurrentTable->AddRow(Setting.Label, Editor);
-        Row.ToolTipText   = bIsSupported ? String(Setting.CVarName) : String::Printf("%s (not supported by this RHI)", Setting.CVarName);
+        Row.ToolTipText   = bIsSupported ? FString(Setting.CVarName) : FString::Printf("%s (not supported by this RHI)", Setting.CVarName);
 
         if (!bIsSupported && Setting.Kind == ERendererSettingKind::Bool)
         {
@@ -448,7 +448,7 @@ TSharedPtr<FVisualElement> FEditorRendererSettingsPanel::BuildEditor(const FRend
                 SelectedIndex = Math::Clamp<int32>(RawValue, 0, Setting.NumOptions - 1);
             }
 
-            TArray<String> Options;
+            TArray<FString> Options;
             Options.Reserve(Setting.NumOptions);
             for (int32 Index = 0; Index < Setting.NumOptions; ++Index)
             {
@@ -477,7 +477,7 @@ TSharedPtr<FVisualElement> FEditorRendererSettingsPanel::BuildEditor(const FRend
             Desc.Font = FEditorStyle::GetFonts().Body;
 
             TSharedPtr<FEditableText> TextEditor = FEditableText::Create(Desc);
-            TextEditor->GetOnTextCommitted() = FOnTextCommittedDelegate::CreateLambda([Variable](const String& Text)
+            TextEditor->GetOnTextCommitted() = FOnTextCommittedDelegate::CreateLambda([Variable](const FString& Text)
             {
                 Variable->SetString(Text, EConsoleVariableFlags::SetByCode);
             });
@@ -489,7 +489,7 @@ TSharedPtr<FVisualElement> FEditorRendererSettingsPanel::BuildEditor(const FRend
     return nullptr;
 }
 
-void FEditorRendererSettingsPanel::OnSearchTextChanged(const String& SearchText)
+void FEditorRendererSettingsPanel::OnSearchTextChanged(const FString& SearchText)
 {
     if (FilterText == SearchText)
     {
@@ -551,7 +551,7 @@ void FEditorRendererSettingsPanel::RefreshValues()
             case ERendererSettingKind::String:
             {
                 TSharedPtr<FEditableText> TextEditor = StaticCastSharedPtr<FEditableText>(Row.Editor);
-                const String Value = Row.Variable->GetString();
+                const FString Value = Row.Variable->GetString();
                 if (!TextEditor->HasKeyboardFocus() && TextEditor->GetText() != Value)
                 {
                     TextEditor->SetTextSilently(Value);
@@ -564,7 +564,7 @@ void FEditorRendererSettingsPanel::RefreshValues()
 
     if (ShaderCompilerStatus)
     {
-        const String Status = DescribeShaderCompilerStatus();
+        const FString Status = DescribeShaderCompilerStatus();
         if (ShaderCompilerStatus->GetText() != Status)
         {
             ShaderCompilerStatus->SetText(Status);

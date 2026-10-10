@@ -11,7 +11,7 @@ class FMenuBar;
 class APPLICATION_API FMenuBarButton final : public FInteractiveElement
 {
 public:
-    static TSharedPtr<FMenuBarButton> Create(const String& InLabel, const TSharedPtr<IFontFace>& InFont);
+    static TSharedPtr<FMenuBarButton> Create(const FString& InLabel, const TSharedPtr<IFontFace>& InFont);
 
 public:
     FMenuBarButton();
@@ -38,7 +38,7 @@ public:
     void SetStyle(const FUIMenuBarStyle& InStyle);
 
     /** @return The text the button is named by. */
-    NODISCARD FORCEINLINE const String& GetLabel() const
+    NODISCARD FORCEINLINE const FString& GetLabel() const
     {
         return Label;
     }
@@ -49,7 +49,7 @@ protected:
     virtual void OnClicked() override;
 
 private:
-    String                Label;
+    FString               Label;
     TSharedPtr<IFontFace> Font;
     FUIMenuBarStyle       Style;
     FMenuBar*             OwnerBar;
@@ -79,7 +79,7 @@ public:
      * @param MenuContent The menu the button opens.
      * @return The anchor, so a caller can open or close the menu itself.
      */
-    TSharedPtr<FMenuAnchor> AddMenu(const String& Label, const TSharedPtr<IFontFace>& Font, const TSharedPtr<FVisualElement>& MenuContent);
+    TSharedPtr<FMenuAnchor> AddMenu(const FString& Label, const TSharedPtr<IFontFace>& Font, const TSharedPtr<FVisualElement>& MenuContent);
 
     /** @brief Closes whichever drop-down is open. */
     void CloseActiveMenu();

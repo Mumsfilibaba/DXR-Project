@@ -259,7 +259,7 @@ struct FMacScreenInfo
     uint32 DisplayDPI;
 
     /** @brief A human readable name for the monitor. */
-    String DeviceName;
+    FString DeviceName;
 
     /** @brief True if this is the primary monitor. */
     bool bIsPrimary;
@@ -270,7 +270,7 @@ class COREAPPLICATION_API FMacApplication final : public IPlatformApplication
 public:
     static TSharedPtr<IPlatformApplication> Create();
 
-    static String FindMonitorName(NSScreen* Screen);
+    static FString FindMonitorName(NSScreen* Screen);
     static uint32 MonitorDPIFromScreen(NSScreen* Screen);
     static NSPoint ConvertCocoaPointToEngine(CGFloat PositionX, CGFloat PositionY);
     static NSPoint ConvertEnginePointToCocoa(CGFloat PositionX, CGFloat PositionY);

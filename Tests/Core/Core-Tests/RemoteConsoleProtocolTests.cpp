@@ -14,8 +14,8 @@ bool RemoteConsoleProtocol_Test()
 
     TEST_SECTION("Complete lines are extracted and the partial remainder stays buffered");
     {
-        String Buffer = "exec one\nexec two\npart";
-        TArray<String> Lines;
+        FString Buffer = "exec one\nexec two\npart";
+        TArray<FString> Lines;
         TEST_EXPECT(RemoteConsoleProtocol::ExtractLines(Buffer, Lines));
         TEST_EXPECT_EQ(Lines.Size(), 2);
         TEST_EXPECT(Lines[0] == "exec one");
@@ -25,8 +25,8 @@ bool RemoteConsoleProtocol_Test()
 
     TEST_SECTION("A line split across reads is joined once its end arrives");
     {
-        String Buffer;
-        TArray<String> Lines;
+        FString Buffer;
+        TArray<FString> Lines;
 
         Buffer.Append("{\"type\":");
         TEST_EXPECT(RemoteConsoleProtocol::ExtractLines(Buffer, Lines));
@@ -41,8 +41,8 @@ bool RemoteConsoleProtocol_Test()
 
     TEST_SECTION("CRLF line endings lose their carriage return and empty lines survive");
     {
-        String Buffer = "first\r\n\r\nsecond\r\n";
-        TArray<String> Lines;
+        FString Buffer = "first\r\n\r\nsecond\r\n";
+        TArray<FString> Lines;
         TEST_EXPECT(RemoteConsoleProtocol::ExtractLines(Buffer, Lines));
         TEST_EXPECT_EQ(Lines.Size(), 3);
         TEST_EXPECT(Lines[0] == "first");
@@ -52,14 +52,14 @@ bool RemoteConsoleProtocol_Test()
 
     TEST_SECTION("An unterminated line longer than MaxLineLength is reported");
     {
-        String Buffer;
+        FString Buffer;
         Buffer.Resize(RemoteConsoleProtocol::MaxLineLength);
         for (int32 Index = 0; Index < Buffer.Length(); ++Index)
         {
             Buffer[Index] = 'a';
         }
 
-        TArray<String> Lines;
+        TArray<FString> Lines;
         TEST_EXPECT(RemoteConsoleProtocol::ExtractLines(Buffer, Lines));
 
         Buffer.Append('a');
@@ -73,13 +73,13 @@ bool RemoteConsoleProtocol_Test()
         Message.AddMember("type", FJsonValue(RemoteConsoleProtocol::TypeLog));
         Message.AddMember("message", FJsonValue("two\nlines"));
 
-        const String Line = RemoteConsoleProtocol::ToLine(Message);
+        const FString Line = RemoteConsoleProtocol::ToLine(Message);
         TEST_EXPECT(Line.EndsWith("\n"));
         TEST_EXPECT_EQ(Line.FindChar('\n'), Line.Length() - 1);
 
         FJsonReader Reader;
         FJsonValue  ReadBack;
-        TEST_CHECK(Reader.Parse(StringView(Line.Data(), Line.Length()), ReadBack));
+        TEST_CHECK(Reader.Parse(FStringView(Line.Data(), Line.Length()), ReadBack));
         TEST_EXPECT(ReadBack == Message);
     }
 

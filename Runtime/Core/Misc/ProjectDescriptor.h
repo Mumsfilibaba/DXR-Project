@@ -17,7 +17,7 @@ struct CORE_API FProjectModuleDescriptor
 {
     void Serialize(FJsonArchive& Archive);
 
-    String             Name;
+    FString            Name;
     EProjectModuleType Type = EProjectModuleType::Game;
 };
 
@@ -33,20 +33,20 @@ struct CORE_API FProjectDescriptor
      * @return Returns false if the file is missing, is not valid JSON, has no Version, was written by a newer engine, has no
      * Name, or holds a field of the wrong type
      */
-    bool LoadFromFile(const String& Filename, String& OutError);
+    bool LoadFromFile(const FString& Filename, FString& OutError);
 
     /** @return Returns false if the file could not be written */
-    bool SaveToFile(const String& Filename) const;
+    bool SaveToFile(const FString& Filename) const;
 
     void Serialize(FJsonArchive& Archive);
 
-    String Name;
+    FString Name;
 
     /** @brief The ID of the engine install the project uses, looked up in the per-user engine registry */
-    String EngineAssociation;
+    FString EngineAssociation;
 
     /** @brief A path to the engine, relative to the descriptor or absolute, used when EngineAssociation does not resolve */
-    String EnginePath;
+    FString EnginePath;
 
     TArray<FProjectModuleDescriptor> Modules;
 };

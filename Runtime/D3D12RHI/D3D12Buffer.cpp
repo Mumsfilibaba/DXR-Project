@@ -252,7 +252,7 @@ void* FD3D12BufferRHI::Map(uint64 Offset, uint64 Size)
 
     if (!Desc.IsDynamic() && !Desc.IsReadBack() && !Desc.IsTransient())
     {
-        String DebugName;
+        FString DebugName;
         GetDebugName(DebugName);
         D3D12_ERROR("Attempting to map a non-mappable buffer. Name='%s'", *DebugName);
         return nullptr;
@@ -314,7 +314,7 @@ void FD3D12BufferRHI::Unmap(uint64 Offset, uint64 Size)
     ResourceStorage.GetResource()->UnmapRange(0, &WrittenRange);
 }
 
-void FD3D12BufferRHI::SetDebugName(const String& InName)
+void FD3D12BufferRHI::SetDebugName(const FString& InName)
 {
     if (ResourceStorage.GetResource())
     {
@@ -322,7 +322,7 @@ void FD3D12BufferRHI::SetDebugName(const String& InName)
     }
 }
 
-void FD3D12BufferRHI::GetDebugName(String& OutDebugName) const
+void FD3D12BufferRHI::GetDebugName(FString& OutDebugName) const
 {
     if (ResourceStorage.GetResource())
     {

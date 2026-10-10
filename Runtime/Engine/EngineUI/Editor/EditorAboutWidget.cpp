@@ -17,7 +17,7 @@ static const CHAR_T* GetDirtySuffix()
 
 static void CopyRowToClipboard(const CHAR_T* Label, const CHAR_T* ValueText)
 {
-    String Text;
+    FString Text;
     Text.AppendPrintf("%s: %s", Label, ValueText ? ValueText : "");
     ImGui::SetClipboardText(*Text);
 }
@@ -159,7 +159,7 @@ void FEditorAboutWidget::DrawGraphicsInfo()
         DrawProperty("Backend", ToString(Device->GetRHIType()));
 
         // The Metal backend does not report an adapter name yet
-        const String AdapterName = Device->GetAdapterName();
+        const FString AdapterName = Device->GetAdapterName();
         DrawProperty("Adapter", AdapterName.IsEmpty() ? "Unknown" : *AdapterName);
 
         EditorWidgets::EndPropertyTable();

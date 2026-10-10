@@ -101,19 +101,19 @@ static FFloatColor GetBarLabelColor(const FFloatColor& Fill)
     return (Luminance > 0.55f) ? FromBytes(16, 16, 18) : FromBytes(238, 238, 242);
 }
 
-static String FormatTimeLabel(double Nanoseconds, double StepNanoseconds)
+static FString FormatTimeLabel(double Nanoseconds, double StepNanoseconds)
 {
     if (StepNanoseconds >= 1000000.0)
     {
-        return String::Printf("%.1f ms", Time::ToMilliseconds(Nanoseconds));
+        return FString::Printf("%.1f ms", Time::ToMilliseconds(Nanoseconds));
     }
 
     if (StepNanoseconds >= 1000.0)
     {
-        return String::Printf("%.0f us", Time::ToMicroseconds(Nanoseconds));
+        return FString::Printf("%.0f us", Time::ToMicroseconds(Nanoseconds));
     }
 
-    return String::Printf("%.0f ns", Nanoseconds);
+    return FString::Printf("%.0f ns", Nanoseconds);
 }
 
 TSharedPtr<FProfilerTimeline> FProfilerTimeline::Create(const FDesc& Desc)
@@ -546,8 +546,8 @@ void FProfilerTimeline::DrawRuler(const FRectangle& Bounds, FDrawCommandList& Ou
 
         if (Font)
         {
-            const String Text      = FormatTimeLabel(Tick, Step);
-            const int32  TextWidth = Font->MeasureWidth(StringView(Text.Data(), Text.Length()));
+            const FString Text      = FormatTimeLabel(Tick, Step);
+            const int32   TextWidth = Font->MeasureWidth(FStringView(Text.Data(), Text.Length()));
 
             if ((X + 3 + TextWidth) <= Bounds.GetRight())
             {
@@ -579,8 +579,8 @@ int32 FProfilerTimeline::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
 
     if (Lanes.IsEmpty() && Font)
     {
-        const String     Empty      = String("Nothing was captured for this frame");
-        const IntVector2 Size       = IntVector2(Font->MeasureWidth(StringView(Empty.Data(), Empty.Length())), Font->GetLineHeight());
+        const FString    Empty      = FString("Nothing was captured for this frame");
+        const IntVector2 Size       = IntVector2(Font->MeasureWidth(FStringView(Empty.Data(), Empty.Length())), Font->GetLineHeight());
         const FRectangle TextBounds = FLayout::AlignInBounds(Bounds, Size, EHorizontalAlignment::Center, EVerticalAlignment::Center);
 
         OutCommandList.AddText(TextLayer, TextBounds, Empty, Font.Get(), Style.Colors.TextDisabled);
@@ -620,14 +620,14 @@ int32 FProfilerTimeline::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
         {
             const FRectangle LabelBounds(IntVector2(Bounds.Position.X + 6, LaneTop), PROFILER_LANE_LABEL_WIDTH - 10, RowHeight);
             OutCommandList.AddText(TextLayer, LabelBounds,
-                Font->ElideText(StringView(Lane.Label.Data(), Lane.Label.Length()), LabelBounds.Width), Font.Get(), Style.Colors.Text);
+                Font->ElideText(FStringView(Lane.Label.Data(), Lane.Label.Length()), LabelBounds.Width), Font.Get(), Style.Colors.Text);
 
             if (!Lane.SubLabel.IsEmpty() && LaneRowCount > 1)
             {
                 const FRectangle SubBounds(IntVector2(Bounds.Position.X + 6, LaneTop + RowHeight),
                     PROFILER_LANE_LABEL_WIDTH - 10, RowHeight);
                 OutCommandList.AddText(TextLayer, SubBounds,
-                    Font->ElideText(StringView(Lane.SubLabel.Data(), Lane.SubLabel.Length()), SubBounds.Width), Font.Get(), Style.Colors.TextDisabled);
+                    Font->ElideText(FStringView(Lane.SubLabel.Data(), Lane.SubLabel.Length()), SubBounds.Width), Font.Get(), Style.Colors.TextDisabled);
             }
         }
 
@@ -663,9 +663,9 @@ int32 FProfilerTimeline::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
             if (Font && Bar.Name && !Bar.bInstant && !(Bar.bDimmed && !bBarIsSelected))
             {
                 const FRectangle TextBounds = BarBounds.Deflate(FMargin(PROFILER_BAR_LABEL_PADDING, 0, PROFILER_BAR_LABEL_PADDING, 0));
-                if (TextBounds.Width > 0 && Font->MeasureWidth(StringView(Bar.Name)) <= TextBounds.Width)
+                if (TextBounds.Width > 0 && Font->MeasureWidth(FStringView(Bar.Name)) <= TextBounds.Width)
                 {
-                    OutCommandList.AddText(TextLayer, TextBounds, StringView(Bar.Name), Font.Get(), GetBarLabelColor(Fill));
+                    OutCommandList.AddText(TextLayer, TextBounds, FStringView(Bar.Name), Font.Get(), GetBarLabelColor(Fill));
                 }
             }
         }
@@ -803,15 +803,15 @@ FEventResponse FProfilerTimeline::OnMouseLeft(const FCursorEvent& CursorEvent)
     return FInteractiveElement::OnMouseLeft(CursorEvent);
 }
 
-String FProfilerTimeline::FormatBarToolTip(const FProfilerTimelineBar& Bar)
+FString FProfilerTimeline::FormatBarToolTip(const FProfilerTimelineBar& Bar)
 {
-    const String Name = Bar.Name ? String(Bar.Name) : String("<unnamed>");
+    const FString Name = Bar.Name ? FString(Bar.Name) : FString("<unnamed>");
     if (Bar.bInstant)
     {
         return Name + "\nevent";
     }
 
-    return Name + String::Printf("\n%.3f ms",
+    return Name + FString::Printf("\n%.3f ms",
         Time::ToMilliseconds(static_cast<double>(Bar.EndNanoseconds - Bar.StartNanoseconds)));
 }
 

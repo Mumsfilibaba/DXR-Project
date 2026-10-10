@@ -167,7 +167,7 @@ void FMaterial::SetParallaxLayers(float InParallaxMinLayers, float InParallaxMax
     MaterialInfo.ParallaxMaxLayers = InParallaxMaxLayers;
 }
 
-void FMaterial::SetName(const String& InName)
+void FMaterial::SetName(const FString& InName)
 {
     Name = InName;
 }

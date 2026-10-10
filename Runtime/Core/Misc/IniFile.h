@@ -13,13 +13,13 @@ struct FIniValue
     FIniValue& operator=(FIniValue&& Other) = default;
     FIniValue& operator=(const FIniValue& Other) = default;
 
-    explicit FIniValue(String&& InString)
+    explicit FIniValue(FString&& InString)
         : SavedValue(InString)
         , CurrentValue(::Move(InString))
     {
     }
 
-    explicit FIniValue(const String& InString)
+    explicit FIniValue(const FString& InString)
         : SavedValue(InString)
         , CurrentValue(InString)
     {
@@ -48,10 +48,10 @@ struct FIniValue
     }
 
      /** @brief Current value in the config file */
-    String SavedValue;
+    FString SavedValue;
 
      /** @brief Current value in the runtime, this will be saved when the file is flushed to disk */
-    String CurrentValue;
+    FString CurrentValue;
 };
 
 struct CORE_API FIniSection
@@ -64,7 +64,7 @@ struct CORE_API FIniSection
     void Restore();
 
     /** @brief Dump the values to a string */
-    void DumpToString(String& OutString);
+    void DumpToString(FString& OutString);
 
     bool operator==(const FIniSection& Other) const
     {
@@ -76,8 +76,8 @@ struct CORE_API FIniSection
         return !(*this == Other);
     }
 
-    String                  Name;
-    TMap<String, FIniValue> Values;
+    FString                  Name;
+    TMap<FString, FIniValue> Values;
 };
 
 struct CORE_API FIniFile
@@ -86,7 +86,7 @@ struct CORE_API FIniFile
     ~FIniFile();
 
     /** @brief Reads the file at 'InFilename' and parses it, existing values are overwritten */
-    bool LoadFromFile(const String& InFilename);
+    bool LoadFromFile(const FString& InFilename);
 
     /** @brief Parses ini-formatted text in place, resolves include lines, and flattens included values on dump or write-back */
     void ParseFromText(TArray<CHAR_T>& InText);
@@ -106,7 +106,7 @@ struct CORE_API FIniFile
     FIniSection& FindOrAddSection(const CHAR_T* SectionName);
 
      /** @brief Set a string from the Engine config */
-    bool SetString(const CHAR_T* SectionName, const CHAR_T* Name, const String& NewValue);
+    bool SetString(const CHAR_T* SectionName, const CHAR_T* Name, const FString& NewValue);
 
      /** @brief Set a int from the Engine config */
     bool SetInt(const CHAR_T* SectionName, const CHAR_T* Name, int32 NewValue);
@@ -127,7 +127,7 @@ struct CORE_API FIniFile
      * @param Name        The key to write.
      * @param NewValue    The value to store.
      */
-    void SetOrAddString(const CHAR_T* SectionName, const CHAR_T* Name, const String& NewValue);
+    void SetOrAddString(const CHAR_T* SectionName, const CHAR_T* Name, const FString& NewValue);
 
     /**
      * @brief Sets an int, creating the section and the key when either is missing.
@@ -157,7 +157,7 @@ struct CORE_API FIniFile
     void SetOrAddBool(const CHAR_T* SectionName, const CHAR_T* Name, bool bNewValue);
 
      /** @brief Retrieve a string from the Engine config */
-    bool GetString(const CHAR_T* SectionName, const CHAR_T* Name, String& OutValue);
+    bool GetString(const CHAR_T* SectionName, const CHAR_T* Name, FString& OutValue);
 
      /** @brief Retrieve a int from the Engine config */
     bool GetInt(const CHAR_T* SectionName, const CHAR_T* Name, int32& OutValue);
@@ -172,7 +172,7 @@ struct CORE_API FIniFile
 	bool WriteToFile();
 
 	/** @brief Prints the content into a string */
-	void DumpToString(String& OutString);
+	void DumpToString(FString& OutString);
 
     bool operator==(const FIniFile& Other) const
     {
@@ -184,6 +184,6 @@ struct CORE_API FIniFile
         return !(*this == Other);
     }
 
-    String                    Filename;
-    TMap<String, FIniSection> Sections;
+    FString                    Filename;
+    TMap<FString, FIniSection> Sections;
 };

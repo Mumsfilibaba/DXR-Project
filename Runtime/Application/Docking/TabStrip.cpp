@@ -9,7 +9,7 @@
 constexpr float PREVIEW_TAB_FADE_SECONDS = 0.12f;
 constexpr float TAB_SLIDE_SECONDS        = 0.15f;
 
-TSharedPtr<FTab> FTab::Create(const String& InPanelId, const String& InLabel, const TSharedPtr<IFontFace>& InFont, bool bInIsClosable)
+TSharedPtr<FTab> FTab::Create(const FString& InPanelId, const FString& InLabel, const TSharedPtr<IFontFace>& InFont, bool bInIsClosable)
 {
     TSharedPtr<FTab> NewTab = MakeSharedPtr<FTab>();
     NewTab->PanelId     = InPanelId;
@@ -42,7 +42,7 @@ FTab::~FTab() = default;
 
 IntVector2 FTab::ComputeDesiredSize() const
 {
-    const int32 LabelWidth = LabelMetrics.GetWidth(Font.Get(), StringView(Label));
+    const int32 LabelWidth = LabelMetrics.GetWidth(Font.Get(), FStringView(Label));
     const int32 TabHeight = Math::Max(Style.StripHeight - Style.TopInset - Style.BottomInset, 0);
 
     const int32 TrailingWidth = bIsClosable
@@ -98,7 +98,7 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
 
     if (Font)
     {
-        const int32 LabelWidth = LabelMetrics.GetWidth(Font.Get(), StringView(Label));
+        const int32 LabelWidth = LabelMetrics.GetWidth(Font.Get(), FStringView(Label));
 
         const int32 LabelRegionRight = bIsClosable
             ? GetCloseButtonRectangle().Position.X
@@ -578,7 +578,7 @@ int32 FTabStrip::GetMaxScrollOffset() const
     return Math::Max(0, ContentWidth - ViewWidth);
 }
 
-void FTabStrip::ScrollTabIntoView(const String& PanelId)
+void FTabStrip::ScrollTabIntoView(const FString& PanelId)
 {
     int32 Offset = Style.Spacing;
     for (const TSharedPtr<FTab>& Tab : Tabs)
@@ -637,7 +637,7 @@ void FTabStrip::UpdateScrollBar(const FRectangle& AllottedBounds)
     ScrollBar->Arrange(FRectangle(IntVector2(AllottedBounds.Position.X, BarTop), AllottedBounds.Width, Style.ScrollBarThickness));
 }
 
-void FTabStrip::AddTab(const String& PanelId, const String& Label, bool bIsClosable)
+void FTabStrip::AddTab(const FString& PanelId, const FString& Label, bool bIsClosable)
 {
     TSharedPtr<FTab> Tab = FTab::Create(PanelId, Label, Font, bIsClosable);
     Tab->SetStyle(Style);
@@ -656,7 +656,7 @@ void FTabStrip::AddTab(const String& PanelId, const String& Label, bool bIsClosa
     ScrollTabIntoView(PanelId);
 }
 
-void FTabStrip::RemoveTab(const String& PanelId)
+void FTabStrip::RemoveTab(const FString& PanelId)
 {
     for (int32 Index = 0; Index < Tabs.Size(); ++Index)
     {
@@ -685,7 +685,7 @@ void FTabStrip::RemoveTab(const String& PanelId)
     }
 }
 
-void FTabStrip::SetActiveTab(const String& PanelId)
+void FTabStrip::SetActiveTab(const FString& PanelId)
 {
     bool bFoundTab = false;
     for (const TSharedPtr<FTab>& Tab : Tabs)
@@ -707,7 +707,7 @@ void FTabStrip::SetActiveTab(const String& PanelId)
     ScrollTabIntoView(PanelId);
 }
 
-void FTabStrip::SetPreviewTab(const String& Label, int32 InsertIndex)
+void FTabStrip::SetPreviewTab(const FString& Label, int32 InsertIndex)
 {
     if (PreviewTab && PreviewTab->GetLabel() == Label)
     {
@@ -729,7 +729,7 @@ void FTabStrip::SetPreviewTab(const String& Label, int32 InsertIndex)
         ScrollOffsetBeforePreview = ScrollOffset;
     }
 
-    PreviewTab = FTab::Create(String(), Label, Font, true);
+    PreviewTab = FTab::Create(FString(), Label, Font, true);
     PreviewTab->SetStyle(Style);
     PreviewTab->SetCloseIcon(CloseIcon);
     PreviewTab->SetParentElement(AsWeakPtr());
@@ -860,13 +860,13 @@ void FTabStrip::OnTabReleased(FTab* Tab, const IntVector2& ClientPosition, const
         return;
     }
 
-    const String FinishedPanelId = DetachedPanelId;
+    const FString FinishedPanelId = DetachedPanelId;
     DetachedPanelId.Clear();
 
     OnTabDragFinishedDelegate.ExecuteIfBound(FinishedPanelId, ClientPosition, ScreenPosition);
 }
 
-const String& FTabStrip::GetActivePanelId() const
+const FString& FTabStrip::GetActivePanelId() const
 {
     return ActivePanelId;
 }

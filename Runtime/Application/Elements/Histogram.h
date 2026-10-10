@@ -38,7 +38,7 @@ public:
         TSharedPtr<IFontFace> Font = nullptr;
 
         /** @brief The text drawn at the top-left, which names what the strip is measuring. */
-        String Label;
+        FString Label;
 
         /** @brief The color a bar below the warning threshold is drawn in. */
         FFloatColor BarColor = FUIStyle::GetDefault().Colors.Accent;
@@ -166,7 +166,7 @@ private:
     NODISCARD int32 ResolveSampleAt(const IntVector2& ClientPosition, bool bClampToStrip) const;
 
     TSharedPtr<IFontFace>      Font;
-    String                     Label;
+    FString                    Label;
     mutable FCachedTextMetrics LabelMetrics;
     mutable FCachedTextMetrics ValueMetrics;
     TArray<float>              Samples;

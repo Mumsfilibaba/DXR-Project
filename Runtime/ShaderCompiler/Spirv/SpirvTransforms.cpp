@@ -247,7 +247,7 @@ static bool IsGoogleDecorateIdDecoration(uint32 DecorationId)
     return DecorationId == SpirvOps::DecorationHlslCounterBufferGOOGLE;
 }
 
-bool FSpirvTransforms::PrepareForVulkan(const TArray<uint32>& InWords, TArray<uint32>& OutWords, String* OutError)
+bool FSpirvTransforms::PrepareForVulkan(const TArray<uint32>& InWords, TArray<uint32>& OutWords, FString* OutError)
 {
     TArray<uint32> StrippedWords;
     if (!StripGoogleSpirvRequirements(InWords, StrippedWords))
@@ -260,12 +260,12 @@ bool FSpirvTransforms::PrepareForVulkan(const TArray<uint32>& InWords, TArray<ui
         return false;
     }
 
-    String GoogleValidationError;
+    FString GoogleValidationError;
     if (!ValidateNoGoogleSpirvRequirements(StrippedWords, &GoogleValidationError))
     {
         if (OutError)
         {
-            *OutError = String::Printf("Google SPIR-V requirements remain after stripping: %s", *GoogleValidationError);
+            *OutError = FString::Printf("Google SPIR-V requirements remain after stripping: %s", *GoogleValidationError);
         }
 
         return false;
@@ -426,7 +426,7 @@ bool FSpirvTransforms::StripGoogleSpirvRequirements(const TArray<uint32>& InWord
     return true;
 }
 
-bool FSpirvTransforms::ValidateNoGoogleSpirvRequirements(const TArray<uint32>& Words, String* OutErrorMessage)
+bool FSpirvTransforms::ValidateNoGoogleSpirvRequirements(const TArray<uint32>& Words, FString* OutErrorMessage)
 {
     if (Words.Size() < 5)
     {
@@ -458,7 +458,7 @@ bool FSpirvTransforms::ValidateNoGoogleSpirvRequirements(const TArray<uint32>& W
                 {
                     if (OutErrorMessage)
                     {
-                        *OutErrorMessage = String::Printf("Found Google extension: %s", ExtName);
+                        *OutErrorMessage = FString::Printf("Found Google extension: %s", ExtName);
                     }
 
                     return false;

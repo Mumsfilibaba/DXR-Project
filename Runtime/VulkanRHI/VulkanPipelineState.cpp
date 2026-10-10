@@ -12,7 +12,7 @@
 #include "VulkanRHI/VulkanShader.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 
-static TAutoConsoleVariable<String> CVarPipelineCacheFileName(
+static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "VulkanRHI.PipelineCacheFileName",
     "FileName for the file storing the PipelineCache",
     "PipelineCache.vkpsocache");
@@ -102,7 +102,7 @@ FVulkanInputLayoutRHI::FVulkanInputLayoutRHI(const TArray<FRHIInputElementDesc>&
     SemanticHashes.Reserve(NumElements);
     for (const FRHIInputElementDesc& Element : InInputElements)
     {
-        SemanticHashes.Add(HashShaderSemantic(StringView(Element.Semantic)));
+        SemanticHashes.Add(HashShaderSemantic(FStringView(Element.Semantic)));
     }
 
     // VertexInputStateCreateInfo
@@ -335,7 +335,7 @@ FVulkanPipeline::~FVulkanPipeline()
     PipelineLayout = nullptr;
 }
 
-void FVulkanPipeline::SetDebugName(const String& InName)
+void FVulkanPipeline::SetDebugName(const FString& InName)
 {
     VulkanSetObjectName(GetDevice()->GetVkDevice(), *InName, Pipeline, VK_OBJECT_TYPE_PIPELINE);
 #if VULKAN_STORE_DEBUG_NAMES
@@ -360,12 +360,12 @@ void* FVulkanGraphicsPipelineStateRHI::GetRHINativeState() const
     return reinterpret_cast<void*>(GetVkPipeline());
 }
 
-void FVulkanGraphicsPipelineStateRHI::SetDebugName(const String& InName)
+void FVulkanGraphicsPipelineStateRHI::SetDebugName(const FString& InName)
 {
     FVulkanPipeline::SetDebugName(InName);
 }
 
-void FVulkanGraphicsPipelineStateRHI::GetDebugName(String& OutDebugName) const
+void FVulkanGraphicsPipelineStateRHI::GetDebugName(FString& OutDebugName) const
 {
 #if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;
@@ -804,12 +804,12 @@ void* FVulkanComputePipelineStateRHI::GetRHINativeState() const
     return reinterpret_cast<void*>(GetVkPipeline());
 }
 
-void FVulkanComputePipelineStateRHI::SetDebugName(const String& InName)
+void FVulkanComputePipelineStateRHI::SetDebugName(const FString& InName)
 {
     FVulkanPipeline::SetDebugName(InName);
 }
 
-void FVulkanComputePipelineStateRHI::GetDebugName(String& OutDebugName) const
+void FVulkanComputePipelineStateRHI::GetDebugName(FString& OutDebugName) const
 {
 #if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;
@@ -912,12 +912,12 @@ void* FVulkanMeshletPipelineStateRHI::GetRHINativeState() const
     return reinterpret_cast<void*>(GetVkPipeline());
 }
 
-void FVulkanMeshletPipelineStateRHI::SetDebugName(const String& InName)
+void FVulkanMeshletPipelineStateRHI::SetDebugName(const FString& InName)
 {
     FVulkanPipeline::SetDebugName(InName);
 }
 
-void FVulkanMeshletPipelineStateRHI::GetDebugName(String& OutDebugName) const
+void FVulkanMeshletPipelineStateRHI::GetDebugName(FString& OutDebugName) const
 {
 #if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;
@@ -1365,8 +1365,8 @@ bool FVulkanPipelineStateManager::SaveCacheData()
         return true;
     }
 
-    const String PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const String PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
+    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
 
     TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForWrite(PipelineCacheFilepath);
     if (!CacheFile)
@@ -1443,8 +1443,8 @@ void FVulkanPipelineStateManager::SaveCacheDataAsync()
         return;
     }
 
-    const String PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const String PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
+    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
 
     TSharedPtr<uint8[]> SerializedData;
     SIZE_T SerializedSize = 0;
@@ -1497,8 +1497,8 @@ void FVulkanPipelineStateManager::SaveCacheDataAsync()
 
 bool FVulkanPipelineStateManager::LoadCacheFromFile()
 {
-    const String PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const String PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
+    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
     
     TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForRead(PipelineCacheFilepath);
     if (!CacheFile)

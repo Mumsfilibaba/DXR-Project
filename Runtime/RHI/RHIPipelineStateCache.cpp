@@ -9,7 +9,7 @@ FRHIPipelineStateCache* FRHIPipelineStateCache::PipelineStateCache = nullptr;
 static FAutoConsoleCommand CCmdDumpPipelineCacheStats(
     "RHI.DumpPipelineCacheStats",
     "Logs how many objects the pipeline state cache was asked for against how many it actually created",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
         {
@@ -41,7 +41,7 @@ static const CHAR_T* GetPipelineCacheKindName(EPipelineCacheKind::Type Kind)
 
 static uint64 HashInputElement(const FRHIInputElementDesc& Element)
 {
-    uint64 Result = THash<String>::GetHash(Element.Semantic);
+    uint64 Result = THash<FString>::GetHash(Element.Semantic);
     HashCombine(Result, Element.SemanticIndex);
     HashCombine(Result, UnderlyingTypeValue(Element.Format));
     HashCombine(Result, Element.VertexStride);
@@ -242,7 +242,7 @@ static uint64 HashRayTracingDesc(const FRHIRayTracingPipelineStateDesc& Desc)
 
     for (const FRHIRayTracingHitGroupInfo& HitGroup : Desc.HitGroups)
     {
-        HashCombine(Result, THash<String>::GetHash(HitGroup.Name));
+        HashCombine(Result, THash<FString>::GetHash(HitGroup.Name));
         HashCombine(Result, UnderlyingTypeValue(HitGroup.Type));
 
         for (FRHIRayTracingShader* Shader : HitGroup.Shaders)

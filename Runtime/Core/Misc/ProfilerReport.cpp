@@ -15,16 +15,16 @@
 #include "Core/Math/Math.h"
 #include "Core/Containers/Map.h"
 
-static String FormatMilliseconds(uint64 Nanoseconds)
+static FString FormatMilliseconds(uint64 Nanoseconds)
 {
-    return String::Printf("%.3f", Time::ToMilliseconds(static_cast<double>(Nanoseconds)));
+    return FString::Printf("%.3f", Time::ToMilliseconds(static_cast<double>(Nanoseconds)));
 }
 
-static String ResolveThreadName(void* ThreadHandle, int32 FallbackIndex)
+static FString ResolveThreadName(void* ThreadHandle, int32 FallbackIndex)
 {
     if (FThreadManager::Get().IsMainThread(ThreadHandle))
     {
-        return String("GameThread");
+        return FString("GameThread");
     }
 
     if (IPlatformThread* Thread = FThreadManager::Get().GetThreadFromHandle(ThreadHandle))
@@ -32,10 +32,10 @@ static String ResolveThreadName(void* ThreadHandle, int32 FallbackIndex)
         return Thread->GetName();
     }
 
-    return String::Printf("Thread %d", FallbackIndex);
+    return FString::Printf("Thread %d", FallbackIndex);
 }
 
-static void AppendIndent(String& Out, int32 Depth)
+static void AppendIndent(FString& Out, int32 Depth)
 {
     for (int32 Index = 0; Index < Depth; ++Index)
     {
@@ -43,7 +43,7 @@ static void AppendIndent(String& Out, int32 Depth)
     }
 }
 
-static void AppendIntervalTree(String& Out, const TArray<FProfilerInterval>& Intervals, int32 ParentIndex, int32 Depth)
+static void AppendIntervalTree(FString& Out, const TArray<FProfilerInterval>& Intervals, int32 ParentIndex, int32 Depth)
 {
     for (int32 Index = 0; Index < Intervals.Size(); ++Index)
     {
@@ -58,11 +58,11 @@ static void AppendIntervalTree(String& Out, const TArray<FProfilerInterval>& Int
         const CHAR_T* Name = Interval.Name ? Interval.Name : "<unnamed>";
         if (Interval.bInstant)
         {
-            Out.Append(String::Printf("%s  event\n", Name));
+            Out.Append(FString::Printf("%s  event\n", Name));
         }
         else
         {
-            Out.Append(String::Printf("%s  inclusive=%sms  exclusive=%sms\n", Name,
+            Out.Append(FString::Printf("%s  inclusive=%sms  exclusive=%sms\n", Name,
                 *FormatMilliseconds(Interval.InclusiveNanoseconds),
                 *FormatMilliseconds(Interval.ExclusiveNanoseconds)));
         }
@@ -81,7 +81,7 @@ static void AppendIntervalTree(String& Out, const TArray<FProfilerInterval>& Int
 
                 AppendIndent(Out, Depth + 2);
                 
-                Out.Append(String::Printf("%s  %s:%u\n", Entry.FunctionName, Entry.Filename, Entry.Line));
+                Out.Append(FString::Printf("%s  %s:%u\n", Entry.FunctionName, Entry.Filename, Entry.Line));
             }
 
             FPlatformStackTrace::ReleaseSymbols();
@@ -93,13 +93,13 @@ static void AppendIntervalTree(String& Out, const TArray<FProfilerInterval>& Int
 
 struct FHotScope
 {
-    String Name;
-    uint64 Inclusive = 0;
-    uint64 Exclusive = 0;
-    int32  Calls     = 0;
+    FString Name;
+    uint64  Inclusive = 0;
+    uint64  Exclusive = 0;
+    int32   Calls     = 0;
 };
 
-static void CollectHotScopes(TMap<String, FHotScope>& OutHotScopes, double& OutCapturedFrameMilliseconds)
+static void CollectHotScopes(TMap<FString, FHotScope>& OutHotScopes, double& OutCapturedFrameMilliseconds)
 {
     OutHotScopes.Clear();
     OutCapturedFrameMilliseconds = 0.0;
@@ -121,7 +121,7 @@ static void CollectHotScopes(TMap<String, FHotScope>& OutHotScopes, double& OutC
         {
             for (const FProfilerInterval& Interval : ThreadFrame.Intervals)
             {
-                const String Name = Interval.Name ? Interval.Name : "<unnamed>";
+                const FString Name = Interval.Name ? Interval.Name : "<unnamed>";
 
                 FHotScope* Entry = OutHotScopes.Find(Name);
                 if (!Entry)
@@ -139,7 +139,7 @@ static void CollectHotScopes(TMap<String, FHotScope>& OutHotScopes, double& OutC
     }
 }
 
-static void AppendChromeComma(String& Out)
+static void AppendChromeComma(FString& Out)
 {
     if (!Out.IsEmpty() && Out[Out.Length() - 1] != '[' && Out[Out.Length() - 1] != ',')
     {
@@ -147,16 +147,16 @@ static void AppendChromeComma(String& Out)
     }
 }
 
-static void AppendChromeMetadata(String& Out, const CHAR_T* Name, int32 Pid, int64 Tid)
+static void AppendChromeMetadata(FString& Out, const CHAR_T* Name, int32 Pid, int64 Tid)
 {
     AppendChromeComma(Out);
-    Out.Append(String::Printf("{\"name\":\"thread_name\",\"ph\":\"M\",\"pid\":%d,\"tid\":%lld,\"args\":{\"name\":\"%s\"}}",
+    Out.Append(FString::Printf("{\"name\":\"thread_name\",\"ph\":\"M\",\"pid\":%d,\"tid\":%lld,\"args\":{\"name\":\"%s\"}}",
         Pid,
         static_cast<long long>(Tid),
         *FProfilerReport::EscapeChromeString(Name)));
 }
 
-static void AppendFrameChromeEvents(String& Out, const FProfilerFrame& Frame, uint64 BaseStamp, uint64 Frequency, int32 Pid)
+static void AppendFrameChromeEvents(FString& Out, const FProfilerFrame& Frame, uint64 BaseStamp, uint64 Frequency, int32 Pid)
 {
     for (int32 ThreadIndex = 0; ThreadIndex < Frame.Threads.Size(); ++ThreadIndex)
     {
@@ -208,7 +208,7 @@ static uint64 ComputeChromeBaseTimeStamp()
 
 TArray<FProfilerOptimizationTarget> FProfilerReport::CollectOptimizationTargets(int32 MaxTargets)
 {
-    TMap<String, FHotScope> HotScopes;
+    TMap<FString, FHotScope> HotScopes;
 
     double CapturedFrameMilliseconds = 0.0;
     CollectHotScopes(HotScopes, CapturedFrameMilliseconds);
@@ -339,7 +339,7 @@ void FProfilerReport::CollectThreadAggregates(TArray<FProfilerThreadAggregate>& 
             FProfilerThreadAggregate& ThreadAggregate = OutThreads[ThreadIndex];
             for (const FProfilerInterval& Interval : ThreadFrame.Intervals)
             {
-                const String Name = Interval.Name ? Interval.Name : "<unnamed>";
+                const FString Name = Interval.Name ? Interval.Name : "<unnamed>";
 
                 FProfilerScopeAggregate* Entry = nullptr;
                 for (FProfilerScopeAggregate& Scope : ThreadAggregate.Scopes)
@@ -366,15 +366,15 @@ void FProfilerReport::CollectThreadAggregates(TArray<FProfilerThreadAggregate>& 
     }
 }
 
-String FProfilerReport::BuildCpuAndBootText()
+FString FProfilerReport::BuildCpuAndBootText()
 {
-    String Text;
+    FString Text;
     Text.Append("DXR Profile Run\n");
-    Text.Append(String::Printf("Engine=%s %s\n", BuildInfo::GetEngineName(), BuildInfo::GetVersionString()));
-    Text.Append(String::Printf("Configuration=%s (%s)\n", BuildInfo::GetConfigurationName(), BuildInfo::GetLinkageName()));
-    Text.Append(String::Printf("Platform=%s %s\n", BuildInfo::GetPlatformName(), BuildInfo::GetArchitectureName()));
-    Text.Append(String::Printf("CommandLine=%s\n", CommandLine::GetOriginal()));
-    Text.Append(String::Printf("NativeStacks=%s\n", CommandLine::FindOption("ProfileNativeStacks") ? "enabled" : "disabled"));
+    Text.Append(FString::Printf("Engine=%s %s\n", BuildInfo::GetEngineName(), BuildInfo::GetVersionString()));
+    Text.Append(FString::Printf("Configuration=%s (%s)\n", BuildInfo::GetConfigurationName(), BuildInfo::GetLinkageName()));
+    Text.Append(FString::Printf("Platform=%s %s\n", BuildInfo::GetPlatformName(), BuildInfo::GetArchitectureName()));
+    Text.Append(FString::Printf("CommandLine=%s\n", CommandLine::GetOriginal()));
+    Text.Append(FString::Printf("NativeStacks=%s\n", CommandLine::FindOption("ProfileNativeStacks") ? "enabled" : "disabled"));
 
     const FFrameProfiler& FrameProfiler = FFrameProfiler::Get();
     const int32 StoredFrames = FrameProfiler.GetStoredFrameCount();
@@ -406,7 +406,7 @@ String FProfilerReport::BuildCpuAndBootText()
         CpuMax = 0.0f;
     }
 
-    Text.Append(String::Printf("Frames=%d  FPS=%d  CPU avg=%.3fms min=%.3fms max=%.3fms\n\n",
+    Text.Append(FString::Printf("Frames=%d  FPS=%d  CPU avg=%.3fms min=%.3fms max=%.3fms\n\n",
         StoredFrames,
         FrameProfiler.GetFramesPerSecond(),
         CpuAvg,
@@ -417,18 +417,18 @@ String FProfilerReport::BuildCpuAndBootText()
 
     const FProfilerFrame& Boot = FBootProfiler::Get().GetSession();
 
-    Text.Append(String::Printf("Boot total=%.3fms\n", Boot.CpuMilliseconds));
+    Text.Append(FString::Printf("Boot total=%.3fms\n", Boot.CpuMilliseconds));
 
     for (int32 ThreadIndex = 0; ThreadIndex < Boot.Threads.Size(); ++ThreadIndex)
     {
         const FProfilerThreadFrame& ThreadFrame = Boot.Threads[ThreadIndex];
-        Text.Append(String::Printf("Thread %s\n", *ResolveThreadName(ThreadFrame.ThreadHandle, ThreadIndex)));
+        Text.Append(FString::Printf("Thread %s\n", *ResolveThreadName(ThreadFrame.ThreadHandle, ThreadIndex)));
         AppendIntervalTree(Text, ThreadFrame.Intervals, -1, 1);
     }
 
     Text.Append("\n== CPU HOT SPOTS ==\n");
 
-    TMap<String, FHotScope> HotScopes;
+    TMap<FString, FHotScope> HotScopes;
 
     double CapturedFrameMilliseconds = 0.0;
     CollectHotScopes(HotScopes, CapturedFrameMilliseconds);
@@ -448,7 +448,7 @@ String FProfilerReport::BuildCpuAndBootText()
     for (int32 Index = 0; Index < HotLimit; ++Index)
     {
         const FHotScope& Scope = SortedHot[Index];
-        Text.Append(String::Printf("%s  calls=%d  inclusive=%sms  exclusive=%sms\n", *Scope.Name, 
+        Text.Append(FString::Printf("%s  calls=%d  inclusive=%sms  exclusive=%sms\n", *Scope.Name, 
             Scope.Calls, *FormatMilliseconds(Scope.Inclusive), *FormatMilliseconds(Scope.Exclusive)));
     }
 
@@ -459,7 +459,7 @@ String FProfilerReport::BuildCpuAndBootText()
     for (int32 Index = 0; Index < Targets.Size(); ++Index)
     {
         const FProfilerOptimizationTarget& Target = Targets[Index];
-        Text.Append(String::Printf("%2d. %s  self=%.3fms/frame  inclusive=%.3fms/frame  budget=%.1f%%  calls=%.2f/frame\n",
+        Text.Append(FString::Printf("%2d. %s  self=%.3fms/frame  inclusive=%.3fms/frame  budget=%.1f%%  calls=%.2f/frame\n",
             Index + 1, *Target.Name, Target.SelfMillisecondsPerFrame, Target.InclusiveMillisecondsPerFrame,
             Target.BudgetPercent, Target.CallsPerFrame));
     }
@@ -474,11 +474,11 @@ String FProfilerReport::BuildCpuAndBootText()
             continue;
         }
 
-        Text.Append(String::Printf("Frame %d  %.3fms\n", Frame->FrameIndex, Frame->CpuMilliseconds));
+        Text.Append(FString::Printf("Frame %d  %.3fms\n", Frame->FrameIndex, Frame->CpuMilliseconds));
         for (int32 ThreadIndex = 0; ThreadIndex < Frame->Threads.Size(); ++ThreadIndex)
         {
             const FProfilerThreadFrame& ThreadFrame = Frame->Threads[ThreadIndex];
-            Text.Append(String::Printf("  %s\n", *ResolveThreadName(ThreadFrame.ThreadHandle, ThreadIndex)));
+            Text.Append(FString::Printf("  %s\n", *ResolveThreadName(ThreadFrame.ThreadHandle, ThreadIndex)));
             AppendIntervalTree(Text, ThreadFrame.Intervals, -1, 2);
         }
     }
@@ -489,7 +489,7 @@ String FProfilerReport::BuildCpuAndBootText()
     for (int32 ThreadIndex = 0; ThreadIndex < ThreadInfos.Size(); ++ThreadIndex)
     {
         const FProfilerThreadAggregate& ThreadInfo = ThreadInfos[ThreadIndex];
-        Text.Append(String::Printf("%s\n", *ResolveThreadName(ThreadInfo.ThreadHandle, ThreadIndex)));
+        Text.Append(FString::Printf("%s\n", *ResolveThreadName(ThreadInfo.ThreadHandle, ThreadIndex)));
 
         for (const FProfilerScopeAggregate& Scope : ThreadInfo.Scopes)
         {
@@ -497,7 +497,7 @@ String FProfilerReport::BuildCpuAndBootText()
                 ? (static_cast<double>(Scope.InclusiveNanoseconds) / static_cast<double>(Scope.Calls))
                 : 0.0;
 
-            Text.Append(String::Printf("  %s  avg=%.3fms  calls=%d\n", *Scope.Name,
+            Text.Append(FString::Printf("  %s  avg=%.3fms  calls=%d\n", *Scope.Name,
                 Time::ToMilliseconds(AverageNs), Scope.Calls));
         }
     }
@@ -505,9 +505,9 @@ String FProfilerReport::BuildCpuAndBootText()
     return Text;
 }
 
-String FProfilerReport::EscapeChromeString(const CHAR_T* Text)
+FString FProfilerReport::EscapeChromeString(const CHAR_T* Text)
 {
-    String Out;
+    FString Out;
     if (!Text)
     {
         return Out;
@@ -532,19 +532,19 @@ String FProfilerReport::EscapeChromeString(const CHAR_T* Text)
     return Out;
 }
 
-void FProfilerReport::AppendChromeCompleteEvent(String& Out, const CHAR_T* Name, const CHAR_T* Category,
+void FProfilerReport::AppendChromeCompleteEvent(FString& Out, const CHAR_T* Name, const CHAR_T* Category,
     double TimestampUs, double DurationUs, int32 Pid, int64 Tid)
 {
     AppendChromeComma(Out);
-    Out.Append(String::Printf("{\"name\":\"%s\",\"cat\":\"%s\",\"ph\":\"X\",\"ts\":%.3f,\"dur\":%.3f,\"pid\":%d,\"tid\":%lld}",
+    Out.Append(FString::Printf("{\"name\":\"%s\",\"cat\":\"%s\",\"ph\":\"X\",\"ts\":%.3f,\"dur\":%.3f,\"pid\":%d,\"tid\":%lld}",
         *EscapeChromeString(Name), Category ? Category : "cpu", TimestampUs, DurationUs, Pid, static_cast<long long>(Tid)));
 }
 
-void FProfilerReport::AppendChromeInstantEvent(String& Out, const CHAR_T* Name, const CHAR_T* Category,
+void FProfilerReport::AppendChromeInstantEvent(FString& Out, const CHAR_T* Name, const CHAR_T* Category,
     double TimestampUs, int32 Pid, int64 Tid)
 {
     AppendChromeComma(Out);
-    Out.Append(String::Printf("{\"name\":\"%s\",\"cat\":\"%s\",\"ph\":\"i\",\"s\":\"t\",\"ts\":%.3f,\"pid\":%d,\"tid\":%lld}",
+    Out.Append(FString::Printf("{\"name\":\"%s\",\"cat\":\"%s\",\"ph\":\"i\",\"s\":\"t\",\"ts\":%.3f,\"pid\":%d,\"tid\":%lld}",
         *EscapeChromeString(Name), Category ? Category : "cpu", TimestampUs, Pid, static_cast<long long>(Tid)));
 }
 
@@ -575,9 +575,9 @@ bool FProfilerReport::TryGetChromeFrameTimestampUs(int32 CpuFrameIndex, uint64 F
     return true;
 }
 
-String FProfilerReport::BuildChromeCpuJson()
+FString FProfilerReport::BuildChromeCpuJson()
 {
-    String Events("[");
+    FString Events("[");
 
     const FFrameProfiler& FrameProfiler = FFrameProfiler::Get();
     const uint64          Frequency     = FrameProfiler.GetFrequency();
@@ -635,17 +635,17 @@ String FProfilerReport::BuildChromeCpuJson()
     return Events;
 }
 
-String FProfilerReport::MergeChromeJson(const String& CpuJson, const String& ExtraEvents)
+FString FProfilerReport::MergeChromeJson(const FString& CpuJson, const FString& ExtraEvents)
 {
     if (ExtraEvents.IsEmpty())
     {
         return CpuJson;
     }
 
-    String Merged = CpuJson;
+    FString Merged = CpuJson;
     if (Merged.IsEmpty())
     {
-        Merged = String("[");
+        Merged = FString("[");
         Merged.Append(ExtraEvents);
         Merged.Append("]");
         return Merged;
@@ -666,9 +666,9 @@ String FProfilerReport::MergeChromeJson(const String& CpuJson, const String& Ext
     return Merged;
 }
 
-bool FProfilerReport::WriteFile(const String& Path, const String& Text)
+bool FProfilerReport::WriteFile(const FString& Path, const FString& Text)
 {
-    const String Directory = File::GetDirectoryOf(Path);
+    const FString Directory = File::GetDirectoryOf(Path);
     if (!Directory.IsEmpty() && !File::CreateDirectoryTree(Directory))
     {
         LOG_ERROR("Failed to create profiling directory '%s'", *Directory);

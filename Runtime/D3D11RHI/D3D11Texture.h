@@ -25,8 +25,8 @@ public:
     virtual FRHIRenderTargetView*    GetRenderTargetView()    const override final { return RenderTargetView.Get(); }
     virtual FRHIDepthStencilView*    GetDepthStencilView()    const override final { return DepthStencilView.Get(); }
 
-    virtual void SetDebugName(const String& InName) override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName) override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     bool Initialize(ERHIResourceState InInitialState, const IRHITextureData* InInitialData);
 

@@ -3,7 +3,7 @@
 
 struct Debug
 {
-    static FORCEINLINE void OutputDebugString(const String& Message)
+    static FORCEINLINE void OutputDebugString(const FString& Message)
     {
         FPlatformMisc::OutputDebugString(*Message);
     }
@@ -15,7 +15,7 @@ struct Debug
     template<typename... ArgTypes>
     static FORCEINLINE void OutputDebugFormat(const CHAR_T* InFormat, ArgTypes&&... Args)
     {
-        const String FormattedMessage = String::Printf(InFormat, Forward<ArgTypes>(Args)...);
+        const FString FormattedMessage = FString::Printf(InFormat, Forward<ArgTypes>(Args)...);
         OutputDebugString(FormattedMessage);
     }
 

@@ -10,7 +10,7 @@
 static bool ParseOk(const CHAR_T* Text, FJsonValue& OutValue, EJsonParseFlags Flags = EJsonParseFlags::None)
 {
     FJsonError Error;
-    if (Json::Parse(StringView(Text), OutValue, &Error, Flags))
+    if (Json::Parse(FStringView(Text), OutValue, &Error, Flags))
     {
         return true;
     }
@@ -22,14 +22,14 @@ static bool ParseOk(const CHAR_T* Text, FJsonValue& OutValue, EJsonParseFlags Fl
 static bool ParseFails(const CHAR_T* Text, EJsonParseFlags Flags = EJsonParseFlags::None)
 {
     FJsonValue Value;
-    return !Json::Parse(StringView(Text), Value, nullptr, Flags);
+    return !Json::Parse(FStringView(Text), Value, nullptr, Flags);
 }
 
 static bool FailsAt(const CHAR_T* Text, int32 ExpectedLine, int32 ExpectedColumn, EJsonParseFlags Flags = EJsonParseFlags::None)
 {
     FJsonValue Value;
     FJsonError Error;
-    if (Json::Parse(StringView(Text), Value, &Error, Flags))
+    if (Json::Parse(FStringView(Text), Value, &Error, Flags))
     {
         LOG_ERROR("[FAIL] expected a parse failure on '%s'", Text);
         return false;
@@ -53,14 +53,14 @@ static bool ParsesToString(const CHAR_T* Text, const CHAR_T* Expected)
         return false;
     }
 
-    String Parsed;
+    FString Parsed;
     return Value.TryGetString(Parsed) && Parsed.Equals(Expected);
 }
 
 // Builds "[[[ ... ]]]" nested Depth levels deep
-static String MakeNestedArrays(int32 Depth)
+static FString MakeNestedArrays(int32 Depth)
 {
-    String Text;
+    FString Text;
     Text.Reserve(Depth * 2);
 
     for (int32 Index = 0; Index < Depth; ++Index)
@@ -243,11 +243,11 @@ bool JsonParser_Test()
     {
         FJsonValue Value;
 
-        const String JustUnder = MakeNestedArrays(JSON_DEFAULT_MAX_DEPTH);
-        TEST_EXPECT(Json::Parse(StringView(JustUnder), Value));
+        const FString JustUnder = MakeNestedArrays(JSON_DEFAULT_MAX_DEPTH);
+        TEST_EXPECT(Json::Parse(FStringView(JustUnder), Value));
 
-        const String WayOver = MakeNestedArrays(JSON_DEFAULT_MAX_DEPTH + 5000);
-        TEST_EXPECT(!Json::Parse(StringView(WayOver), Value));
+        const FString WayOver = MakeNestedArrays(JSON_DEFAULT_MAX_DEPTH + 5000);
+        TEST_EXPECT(!Json::Parse(FStringView(WayOver), Value));
     }
 
     TEST_SECTION("Comments are rejected by default and accepted with the flag");
@@ -319,7 +319,7 @@ bool JsonParser_Test()
         const CHAR_T* Backing = "[1,2,3]garbage";
 
         FJsonValue Value;
-        TEST_EXPECT(Json::Parse(StringView(Backing, 7), Value));
+        TEST_EXPECT(Json::Parse(FStringView(Backing, 7), Value));
         TEST_EXPECT(Value.IsArray() && (Value.Num() == 3));
     }
 

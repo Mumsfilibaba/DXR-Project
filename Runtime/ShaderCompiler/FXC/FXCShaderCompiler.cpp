@@ -128,14 +128,14 @@ bool FFXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
     const CHAR_T* Profile = GetFXCProfile(CompileInfo.ShaderStage);
     if (!Profile)
     {
-        OutResult.Messages = String::Printf("Stage %s cannot be compiled to DXBC", ToString(CompileInfo.ShaderStage));
+        OutResult.Messages = FString::Printf("Stage %s cannot be compiled to DXBC", ToString(CompileInfo.ShaderStage));
         return false;
     }
 
     // Requests up to SM 6.2 are lowered to 5.0, anything newer relies on features that D3D11 does not have
     if (CompileInfo.ShaderModel > EShaderModel::SM_6_2)
     {
-        OutResult.Messages = String::Printf("Shader Model %s cannot be compiled to DXBC", ToString(CompileInfo.ShaderModel));
+        OutResult.Messages = FString::Printf("Shader Model %s cannot be compiled to DXBC", ToString(CompileInfo.ShaderModel));
         return false;
     }
 
@@ -166,7 +166,7 @@ bool FFXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
             --Length;
         }
 
-        OutResult.Messages = String(Messages, Length);
+        OutResult.Messages = FString(Messages, Length);
     }
 
     if (FAILED(Result) || !CodeBlob)

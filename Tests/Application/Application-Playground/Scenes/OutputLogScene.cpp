@@ -24,7 +24,7 @@ static TSharedPtr<FRichTextBlock>  GRichText;
 static TSharedPtr<FTextBlock>      GLogReadout;
 static TSharedPtr<FTextBlock>      GSelectionReadout;
 static bool                        GFilterToMatches = false;
-static String                      GSearchText;
+static FString                     GSearchText;
 static int32                       GNextSample = 0;
 
 static void RefreshLogReadout()
@@ -34,7 +34,7 @@ static void RefreshLogReadout()
         return;
     }
 
-    GLogReadout->SetText(String::Printf(
+    GLogReadout->SetText(FString::Printf(
         "%d line(s) held, %d showing, %s, %s",
         GLogView->GetNumLines(),
         GLogView->GetNumVisibleLines(),
@@ -64,7 +64,7 @@ static void LogNextSample()
     const FSample& Sample = Samples[GNextSample % static_cast<int32>(ARRAY_COUNT(Samples))];
     GNextSample++;
 
-    GLogView->Log(Sample.Severity, String::Printf("%s (#%d)", Sample.Message, GNextSample));
+    GLogView->Log(Sample.Severity, FString::Printf("%s (#%d)", Sample.Message, GNextSample));
     GLogView->Flush();
 
     RefreshLogReadout();
@@ -176,7 +176,7 @@ static TSharedPtr<FVisualElement> MakeLogControls(const FPlaygroundFonts& Fonts)
     SearchDesc.Font     = Fonts.Body;
 
     TSharedPtr<FEditableText> SearchField = FEditableText::Create(SearchDesc);
-    SearchField->GetOnTextChanged() = FOnTextChangedDelegate::CreateLambda([](const String& NewText)
+    SearchField->GetOnTextChanged() = FOnTextChangedDelegate::CreateLambda([](const FString& NewText)
     {
         GSearchText = NewText;
 
@@ -225,11 +225,11 @@ static TSharedPtr<FVisualElement> MakeRichTextRow(const FPlaygroundFonts& Fonts)
     Desc.Runs.Add(FTextRun("but a selection crosses all three without noticing where one ends. ", Fonts.Body.Get(), Style.Colors.Text));
     Desc.Runs.Add(FTextRun("Drag across it, then press Command-C to copy what you took.", Fonts.Body.Get(), Style.Colors.Text));
 
-    Desc.OnSelectionChanged = FOnSelectionChanged::CreateLambda([](const String& SelectedText)
+    Desc.OnSelectionChanged = FOnSelectionChanged::CreateLambda([](const FString& SelectedText)
     {
         GSelectionReadout->SetText(SelectedText.IsEmpty()
-            ? String("nothing selected")
-            : String::Printf("%d character(s): \"%s\"", SelectedText.Length(), SelectedText.Data()));
+            ? FString("nothing selected")
+            : FString::Printf("%d character(s): \"%s\"", SelectedText.Length(), SelectedText.Data()));
     });
 
     GRichText = FRichTextBlock::Create(Desc);
@@ -239,7 +239,7 @@ static TSharedPtr<FVisualElement> MakeRichTextRow(const FPlaygroundFonts& Fonts)
     SearchDesc.Font     = Fonts.Body;
 
     TSharedPtr<FEditableText> SearchField = FEditableText::Create(SearchDesc);
-    SearchField->GetOnTextChanged() = FOnTextChangedDelegate::CreateLambda([](const String& NewText)
+    SearchField->GetOnTextChanged() = FOnTextChangedDelegate::CreateLambda([](const FString& NewText)
     {
         GRichText->SetSearchText(NewText);
     });

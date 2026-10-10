@@ -227,7 +227,7 @@ private:
     struct FTextGeometryCacheEntry
     {
         uint64 AtlasRevision = 0;
-        String Text;
+        FString Text;
         const IFontFace* Font = nullptr;
         FRectangle Bounds;
         uint32 PackedColor = 0;

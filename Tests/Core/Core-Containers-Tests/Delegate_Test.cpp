@@ -239,16 +239,16 @@ bool TDelegate_Test()
 
     TEST_SECTION("TTuple: size / GetByIndex / comparison / Swap / Apply");
     {
-        TTuple<int32, float, double, String> Tuple(5, 0.9f, 5.0, "A string");
+        TTuple<int32, float, double, FString> Tuple(5, 0.9f, 5.0, "A string");
         TEST_EXPECT_EQ(Tuple.Size(), 4);
         TEST_EXPECT_EQ((TTuple<int, float, double>::StaticSize()), 3);
         TEST_EXPECT_EQ(Tuple.GetByIndex<0>(), 5);
         TEST_EXPECT(Tuple.GetByIndex<3>() == "A string");
 
-        TTuple<int32, float, double, String> Copy;
+        TTuple<int32, float, double, FString> Copy;
         Copy = Tuple;
 
-        TTuple<int32, float, double, String> Moved = ::Move(Copy);
+        TTuple<int32, float, double, FString> Moved = ::Move(Copy);
         TEST_EXPECT(Tuple == Moved);
         TEST_EXPECT(!(Tuple != Moved));
         TEST_EXPECT(Tuple <= Moved);
@@ -273,12 +273,12 @@ bool TDelegate_Test()
 
     TEST_SECTION("TPair: construct / comparison / Swap");
     {
-        TPair<String, int32> P0("Pair0", 32);
-        TPair<String, int32> P1("Pair1", 42);
+        TPair<FString, int32> P0("Pair0", 32);
+        TPair<FString, int32> P1("Pair1", 42);
         TEST_EXPECT(!(P0 == P1));
         TEST_EXPECT(P0 != P1);
 
-        TPair<String, int32> P0Copy = P0;
+        TPair<FString, int32> P0Copy = P0;
         P0.Swap(P1);
         
         TEST_EXPECT(P1 == P0Copy);

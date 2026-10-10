@@ -107,13 +107,13 @@ bool TStringConversion_Test()
 
     TEST_SECTION("StringCast between CHAR_T and WIDECHAR");
     {
-        const String Text = TEXT("Åäö 日本語 😀");
+        const FString Text = TEXT("Åäö 日本語 😀");
 
         const TStringConversion<WIDECHAR, CHAR_T> Wide = StringCast<WIDECHAR>(Text);
         TEST_EXPECT(TCString<WIDECHAR>::Strcmp(Wide.Get(), L"Åäö 日本語 😀") == 0);
         TEST_EXPECT_EQ(Wide.Length(), TCString<WIDECHAR>::Strlen(L"Åäö 日本語 😀"));
 
-        const String Back = StringCast<CHAR_T>(Wide.Get()).ToString();
+        const FString Back = StringCast<CHAR_T>(Wide.Get()).ToString();
         TEST_EXPECT(Back.Equals(Text));
 
         const TStringConversion<UTF8CHAR, WIDECHAR> FromWide = StringCast<UTF8CHAR>(L"Åäö 日本語 😀");
@@ -123,15 +123,15 @@ bool TStringConversion_Test()
 
     TEST_SECTION("StringCast points at null-terminated text of the same encoding instead of copying");
     {
-        const AnsiString Ansi = "Åäö";
+        const FAnsiString Ansi = "Åäö";
         TEST_EXPECT(reinterpret_cast<const void*>(StringCast<UTF8CHAR>(Ansi).Get()) == reinterpret_cast<const void*>(*Ansi));
         TEST_EXPECT(reinterpret_cast<const void*>(StringCast<ANSICHAR>(Ansi.Data()).Get()) == reinterpret_cast<const void*>(Ansi.Data()));
 
-        const WString Wide = L"Wide";
+        const FWideString Wide = L"Wide";
         TEST_EXPECT(StringCast<WIDECHAR>(Wide).Get() == *Wide);
 
         // A view is not null-terminated where it ends, so it is copied
-        const AnsiStringView View = AnsiStringView(Ansi).SubString(0, 2);
+        const FAnsiStringView View = FAnsiStringView(Ansi).SubString(0, 2);
         const TStringConversion<UTF8CHAR, ANSICHAR> FromView = StringCast<UTF8CHAR>(View);
         TEST_EXPECT(reinterpret_cast<const void*>(FromView.Get()) != reinterpret_cast<const void*>(View.Data()));
         TEST_EXPECT(TCString<UTF8CHAR>::Strcmp(FromView.Get(), u8"Å") == 0);
@@ -148,11 +148,11 @@ bool TStringConversion_Test()
         const TStringConversion<WIDECHAR, ANSICHAR> Null = StringCast<WIDECHAR>(static_cast<const ANSICHAR*>(nullptr));
         TEST_EXPECT(Null.Length() == 0 && Null.Get() != nullptr && Null.Get()[0] == 0);
 
-        const TStringConversion<ANSICHAR, WIDECHAR> EmptyWide = StringCast<ANSICHAR>(WString());
+        const TStringConversion<ANSICHAR, WIDECHAR> EmptyWide = StringCast<ANSICHAR>(FWideString());
         TEST_EXPECT(EmptyWide.Length() == 0 && EmptyWide.Get()[0] == 0);
 
         const TStaticString<ANSICHAR, 32> Static = "日本語";
-        const WString FromStatic = StringCast<WIDECHAR>(Static).ToString();
+        const FWideString FromStatic = StringCast<WIDECHAR>(Static).ToString();
         TEST_EXPECT(FromStatic.Equals(L"日本語"));
     }
 

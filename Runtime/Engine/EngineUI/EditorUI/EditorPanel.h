@@ -16,7 +16,7 @@ public:
      * @param InPanelId      The stable id, which must not change once a layout has been written.
      * @param InLabel        The text its tab shows.
      */
-    FEditorPanel(FEditorEngine* InEditorEngine, const String& InPanelId, const String& InLabel);
+    FEditorPanel(FEditorEngine* InEditorEngine, const FString& InPanelId, const FString& InLabel);
     virtual ~FEditorPanel();
 
     /**
@@ -64,13 +64,13 @@ public:
     }
 
     /** @return The stable id a saved layout refers to the panel by. */
-    NODISCARD FORCEINLINE const String& GetPanelId() const
+    NODISCARD FORCEINLINE const FString& GetPanelId() const
     {
         return PanelId;
     }
 
     /** @return The text the panel's tab shows. */
-    NODISCARD FORCEINLINE const String& GetLabel() const
+    NODISCARD FORCEINLINE const FString& GetLabel() const
     {
         return Label;
     }
@@ -99,8 +99,8 @@ public:
 
 protected:
     FEditorEngine*             EditorEngine;
-    String                     PanelId;
-    String                     Label;
+    FString                    PanelId;
+    FString                    Label;
     TSharedPtr<FVisualElement> Content;
     bool                       bIsOpen;
     bool                       bIsVisible;

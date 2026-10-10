@@ -74,13 +74,13 @@ bool TSet_Test()
 
     TEST_SECTION("String elements (non-trivial element hashing)");
     {
-        TSet<String> Strings;
-        Strings.Add(String("alpha"));
-        Strings.Add(String("beta"));
-        Strings.Add(String("alpha"));
+        TSet<FString> Strings;
+        Strings.Add(FString("alpha"));
+        Strings.Add(FString("beta"));
+        Strings.Add(FString("alpha"));
 
         TEST_EXPECT_EQ(Strings.Size(), 2);
-        TEST_EXPECT(Strings.Contains(String("beta")));
+        TEST_EXPECT(Strings.Contains(FString("beta")));
     }
 
     TEST_SECTION("Add(out) / Emplace / FindOrAdd / Append / Remove");
@@ -271,10 +271,10 @@ bool TSet_Test()
         TEST_EXPECT_EQ(Set.Size(), 0);
         TEST_EXPECT(!Set.IsHeapAllocated());
 
-        TInlineSet<String, 4> Strings = { String("alpha"), String("beta"), String("alpha") };
+        TInlineSet<FString, 4> Strings = { FString("alpha"), FString("beta"), FString("alpha") };
         TEST_EXPECT_EQ(Strings.Size(), 2);
         TEST_EXPECT(!Strings.IsHeapAllocated());
-        TEST_EXPECT(Strings.Contains(String("beta")));
+        TEST_EXPECT(Strings.Contains(FString("beta")));
 
         Moved.Reset();
         TEST_EXPECT(!Moved.IsHeapAllocated());

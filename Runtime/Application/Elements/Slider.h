@@ -154,7 +154,7 @@ public:
     NODISCARD FRectangle GetTrackBounds() const;
 
     /** @return The value as written over the track, in fixed point to the precision asked for. */
-    NODISCARD String GetFormattedValue() const;
+    NODISCARD FString GetFormattedValue() const;
 
     /** @return The value the handle sits at, already clamped to the range and snapped to the step. */
     NODISCARD FORCEINLINE float GetValue() const

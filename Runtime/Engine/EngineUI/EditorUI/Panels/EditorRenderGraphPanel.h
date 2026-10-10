@@ -24,7 +24,7 @@ public:
     virtual void Tick(float DeltaTime) override final;
 
     /** @brief Opens and selects the render-graph node whose pass name matches, if it is present. */
-    void ShowPassByName(const String& PassName);
+    void ShowPassByName(const FString& PassName);
 
 private:
     struct FBuiltPass
@@ -37,7 +37,7 @@ private:
         {
         }
 
-        String        Name;
+        FString       Name;
         TArray<int32> AccessPinIds;
         TArray<int32> LoadPinIds;
         int32         NodeId;
@@ -45,17 +45,17 @@ private:
 
 #if EDITOR_BUILD
     NODISCARD static bool IsPassInactive(const FRenderGraphDebugPass& Pass);
-    NODISCARD static String BuildNodeTitle(const FRenderGraphDebugPass& Pass);
+    NODISCARD static FString BuildNodeTitle(const FRenderGraphDebugPass& Pass);
     NODISCARD static bool HasIncomingLink(const FRenderGraphDebugSnapshot& Snapshot, int32 PassIndex, int32 AccessIndex);
 
-    NODISCARD String BuildSignature(const FRenderGraphDebugSnapshot& Snapshot) const;
+    NODISCARD FString BuildSignature(const FRenderGraphDebugSnapshot& Snapshot) const;
     bool RebuildModel(const FRenderGraphDebugSnapshot& Snapshot);
     void RefreshStatistics(const FRenderGraphDebugSnapshot& Snapshot);
 #endif
 
     NODISCARD TSharedPtr<FVisualElement> BuildHeaderRow();
     NODISCARD TSharedPtr<FVisualElement> BuildNodeContextMenu(const Vector2& GraphPosition, int32 NodeId);
-    void ShowPassInProfiler(const String& PassName);
+    void ShowPassInProfiler(const FString& PassName);
     void ApplyPendingPassSelection();
 
     void SetCaptureEnabled(bool bEnabled);
@@ -65,10 +65,10 @@ private:
     TSharedPtr<FGraphModel>  Model;
     TSharedPtr<FTextBlock>   GraphNameText;
     TSharedPtr<FTextBlock>   StatisticsText;
-    TMap<String, Vector2>    PositionsByPassName;
+    TMap<FString, Vector2>   PositionsByPassName;
     TArray<FBuiltPass>       BuiltPasses;
-    String                   BuiltSignature;
-    String                   PendingPassName;
+    FString                  BuiltSignature;
+    FString                  PendingPassName;
     bool                     bIsCapturing;
     bool                     bShowCulled;
     bool                     bNeedsFitView;

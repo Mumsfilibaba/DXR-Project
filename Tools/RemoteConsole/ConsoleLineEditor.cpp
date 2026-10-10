@@ -232,7 +232,7 @@ static bool ReadByte(CHAR_T& OutByte, int32 TimeoutMilliseconds)
 
 #endif
 
-static void WriteRaw(const String& Text)
+static void WriteRaw(const FString& Text)
 {
     WriteRaw(Text.Data(), Text.Length());
 }
@@ -289,7 +289,7 @@ void FConsoleLineEditor::Release()
     }
 }
 
-bool FConsoleLineEditor::PopLine(String& OutLine)
+bool FConsoleLineEditor::PopLine(FString& OutLine)
 {
     TScopedLock Lock(EditorCS);
     if (SubmittedLines.IsEmpty())
@@ -308,7 +308,7 @@ bool FConsoleLineEditor::HasPendingLines()
     return !SubmittedLines.IsEmpty();
 }
 
-void FConsoleLineEditor::Print(ELogSeverity Severity, const String& Message)
+void FConsoleLineEditor::Print(ELogSeverity Severity, const FString& Message)
 {
     TScopedLock Lock(EditorCS);
     EraseInputLine();
@@ -316,7 +316,7 @@ void FConsoleLineEditor::Print(ELogSeverity Severity, const String& Message)
     RedrawInputLine();
 }
 
-void FConsoleLineEditor::Print(const String& Message)
+void FConsoleLineEditor::Print(const FString& Message)
 {
     TScopedLock Lock(EditorCS);
     EraseInputLine();
@@ -324,7 +324,7 @@ void FConsoleLineEditor::Print(const String& Message)
     RedrawInputLine();
 }
 
-void FConsoleLineEditor::SetPrompt(const String& InPrompt)
+void FConsoleLineEditor::SetPrompt(const FString& InPrompt)
 {
     TScopedLock Lock(EditorCS);
     EraseInputLine();
@@ -506,7 +506,7 @@ void FConsoleLineEditor::RunInteractive()
 void FConsoleLineEditor::RunLineMode()
 {
     CHAR_T Chunk[GInputChunkSize];
-    String Pending;
+    FString Pending;
 
     for (;;)
     {
@@ -518,11 +518,11 @@ void FConsoleLineEditor::RunLineMode()
 
         Pending.Append(Chunk, BytesRead);
 
-        TArray<String> NewLines;
+        TArray<FString> NewLines;
         RemoteConsoleProtocol::ExtractLines(Pending, NewLines);
 
         TScopedLock Lock(EditorCS);
-        for (String& Line : NewLines)
+        for (FString& Line : NewLines)
         {
             SubmittedLines.Add(::Move(Line));
         }
@@ -594,13 +594,13 @@ void FConsoleLineEditor::HandleKey(const FKeyPress& KeyPress)
 
 void FConsoleLineEditor::SubmitLine()
 {
-    const String Line = Buffer;
+    const FString Line = Buffer;
     EraseInputLine();
     WriteRaw(Prompt);
     WriteRaw(Line);
     WriteRaw("\n", 1);
 
-    String Trimmed = Line;
+    FString Trimmed = Line;
     Trimmed.TrimInline();
     if (!Trimmed.IsEmpty() && (History.IsEmpty() || (History.Last() != Line)))
     {
@@ -631,7 +631,7 @@ void FConsoleLineEditor::Complete()
         ++WordEnd;
     }
 
-    const String Prefix(Buffer.Data() + WordStart, CursorPosition - WordStart);
+    const FString Prefix(Buffer.Data() + WordStart, CursorPosition - WordStart);
 
     bool bMetaCommands  = false;
     bool bVariablesOnly = false;
@@ -648,7 +648,7 @@ void FConsoleLineEditor::Complete()
             ++FirstWordEnd;
         }
 
-        const String FirstWord(Buffer.Data(), FirstWordEnd);
+        const FString FirstWord(Buffer.Data(), FirstWordEnd);
 
         int32 SecondWordStart = FirstWordEnd;
         while ((SecondWordStart < Buffer.Length()) && (Buffer[SecondWordStart] == ' '))
@@ -700,7 +700,7 @@ void FConsoleLineEditor::Complete()
         return;
     }
 
-    const String& First = Matches[0]->Name;
+    const FString& First = Matches[0]->Name;
     int32 CommonLength = First.Length();
     for (const FCompletionCandidate* Match : Matches)
     {
@@ -715,14 +715,14 @@ void FConsoleLineEditor::Complete()
 
     if ((Matches.Size() == 1) || (CommonLength > Prefix.Length()))
     {
-        String Replacement(First.Data(), CommonLength);
+        FString Replacement(First.Data(), CommonLength);
         if ((Matches.Size() == 1) && (WordEnd == Buffer.Length()))
         {
             Replacement.Append(' ');
         }
 
-        const String Before(Buffer.Data(), WordStart);
-        const String After(Buffer.Data() + WordEnd, Buffer.Length() - WordEnd);
+        const FString Before(Buffer.Data(), WordStart);
+        const FString After(Buffer.Data() + WordEnd, Buffer.Length() - WordEnd);
 
         Buffer = Before;
         Buffer.Append(Replacement);
@@ -742,12 +742,12 @@ void FConsoleLineEditor::Complete()
     const int32 NumListed = Math::Min(Matches.Size(), GMaxListedCandidates);
     for (int32 Index = 0; Index < NumListed; ++Index)
     {
-        FOutputDeviceManager::Get()->Log(String::Printf("  %-*s %s", GCandidateNameColumnWidth, *Matches[Index]->Name, *Matches[Index]->Kind));
+        FOutputDeviceManager::Get()->Log(FString::Printf("  %-*s %s", GCandidateNameColumnWidth, *Matches[Index]->Name, *Matches[Index]->Kind));
     }
 
     if (Matches.Size() > NumListed)
     {
-        FOutputDeviceManager::Get()->Log(String::Printf("  ... and %d more, keep typing to narrow it down", Matches.Size() - NumListed));
+        FOutputDeviceManager::Get()->Log(FString::Printf("  ... and %d more, keep typing to narrow it down", Matches.Size() - NumListed));
     }
 }
 
@@ -782,7 +782,7 @@ void FConsoleLineEditor::EraseInputLine()
     }
 
 #if PLATFORM_WINDOWS
-    String Blank;
+    FString Blank;
     Blank.Append('\r');
     for (int32 Index = 1; Index < GetTerminalWidth(); ++Index)
     {
@@ -808,11 +808,11 @@ void FConsoleLineEditor::RedrawInputLine()
     const int32 Start     = (CursorPosition > Available) ? (CursorPosition - Available) : 0;
     const int32 Visible   = Math::Min(Buffer.Length() - Start, Available);
 
-    String Line = Prompt;
+    FString Line = Prompt;
     Line.Append(Buffer.Data() + Start, Visible);
     WriteRaw(Line);
 
-    String Back;
+    FString Back;
     for (int32 Index = Start + Visible; Index > CursorPosition; --Index)
     {
         Back.Append('\b');

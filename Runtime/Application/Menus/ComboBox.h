@@ -38,7 +38,7 @@ public:
      *
      * @param InText The selected option, or the placeholder when nothing is selected.
      */
-    void SetText(const String& InText);
+    void SetText(const FString& InText);
 
     /**
      * @brief Sets the width the widest option needs, so the button does not resize as the selection changes.
@@ -53,7 +53,7 @@ protected:
     virtual void OnClicked() override;
 
 private:
-    String                Label;
+    FString               Label;
     TSharedPtr<IFontFace> Font;
     int32                 ReservedTextWidth;
 
@@ -80,7 +80,7 @@ public:
          * @param InOptions The options, in the order they are listed.
          * @return This desc, so the setters can be chained.
          */
-        FORCEINLINE FDesc& SetOptions(const TArray<String>& InOptions)
+        FORCEINLINE FDesc& SetOptions(const TArray<FString>& InOptions)
         {
             Options = InOptions;
             return *this;
@@ -99,7 +99,7 @@ public:
         }
 
         /** @brief The options the drop-down offers, in the order they are listed. */
-        TArray<String> Options;
+        TArray<FString> Options;
 
         /** @brief The option selected at the start, or -1 for none. */
         int32 SelectedIndex;
@@ -108,7 +108,7 @@ public:
         TSharedPtr<IFontFace> Font;
 
         /** @brief Shown while nothing is selected. */
-        String PlaceholderText;
+        FString PlaceholderText;
 
         /** @brief Fired when a different option is chosen from the drop-down. */
         FOnComboSelectionChanged OnSelectionChanged;
@@ -136,14 +136,14 @@ public:
     void SetSelectedIndex(int32 Index);
 
     /** @return The closed button's text: the selected option, or the placeholder when none is selected. */
-    NODISCARD const String& GetSelectedText() const;
+    NODISCARD const FString& GetSelectedText() const;
 
     /**
      * @brief Replaces the options and clears the selection.
      *
      * @param InOptions The options, in the order they are listed.
      */
-    void SetOptions(const TArray<String>& InOptions);
+    void SetOptions(const TArray<FString>& InOptions);
 
     /** @brief Opens the drop-down, as a click on the button does. */
     void OpenMenu();
@@ -161,7 +161,7 @@ public:
     }
 
     /** @return The options the drop-down offers, in the order they are listed. */
-    NODISCARD FORCEINLINE const TArray<String>& GetOptions() const
+    NODISCARD FORCEINLINE const TArray<FString>& GetOptions() const
     {
         return Options;
     }
@@ -171,9 +171,9 @@ private:
 
     void RefreshButtonText();
 
-    TArray<String>              Options;
+    TArray<FString>             Options;
     int32                       SelectedIndex;
-    String                      PlaceholderText;
+    FString                     PlaceholderText;
     TSharedPtr<IFontFace>       Font;
     TSharedPtr<FComboBoxButton> Button;
     TSharedPtr<FMenuAnchor>     Anchor;

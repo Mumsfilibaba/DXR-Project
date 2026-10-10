@@ -14,7 +14,7 @@ public:
         float Percent = 0.0f;
 
         /** @brief The text written over the track, which needs a font to be of any use. */
-        String OverlayText;
+        FString OverlayText;
 
         /** @brief The face the overlay text is drawn with. */
         TSharedPtr<IFontFace> Font = nullptr;
@@ -65,7 +65,7 @@ public:
      *
      * @param InText The text to write, which is drawn only when the bar has a font.
      */
-    void SetOverlayText(const String& InText);
+    void SetOverlayText(const FString& InText);
 
     /**
      * @brief Sets the color the filled part of the track is drawn in, which is how a bar warns about
@@ -82,13 +82,13 @@ public:
     }
 
     /** @return The text written over the track, which is empty when there is none. */
-    NODISCARD FORCEINLINE const String& GetOverlayText() const
+    NODISCARD FORCEINLINE const FString& GetOverlayText() const
     {
         return OverlayText;
     }
 
 private:
-    String                OverlayText;
+    FString               OverlayText;
     TSharedPtr<IFontFace> Font;
     FFloatColor           FillColor;
     FFloatColor           BackgroundColor;

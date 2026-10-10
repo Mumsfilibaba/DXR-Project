@@ -118,7 +118,7 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
     }
     else
     {
-        const String DebugName = String::Printf("Editor NoJitter Depth PSO%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
+        const FString DebugName = FString::Printf("Editor NoJitter Depth PSO%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
         NewPipelineInstance.PipelineState->SetDebugName(DebugName);
     }
 

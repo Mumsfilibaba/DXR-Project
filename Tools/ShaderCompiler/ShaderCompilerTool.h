@@ -43,12 +43,12 @@ inline constexpr ERHIType GRHITypes[] =
 NODISCARD TArrayView<const FRHITarget> GetRHITargets();
 
 /** @return The target named Name, compared without case, or nullptr */
-NODISCARD const FRHITarget* FindRHITarget(const String& Name);
+NODISCARD const FRHITarget* FindRHITarget(const FString& Name);
 
 struct FRemoteTarget
 {
     const FRHITarget* Target = nullptr;
-    String            Host;
+    FString           Host;
     uint16            Port   = RemoteShaderCompilerProtocol::DefaultPort;
 };
 
@@ -57,21 +57,21 @@ struct FToolOptions
     bool                  bShowHelp     = false;                                     // -help
     bool                  bServer       = false;                                     // -server
     bool                  bCheck        = false;                                     // -check with -header, reports a stale header without writing it
-    String                CompileFile;                                               // -compile=<file>, compiles one shader file, absolute once parsed
-    String                HeaderPath;                                                // -header=<file> with -compile, writes a C++ header embedding the container instead, absolute once parsed
-    String                SymbolName;                                                // -symbol=<name> with -header, the array the header declares
-    String                EntryPoint;                                                // -entry= with -compile
+    FString               CompileFile;                                               // -compile=<file>, compiles one shader file, absolute once parsed
+    FString               HeaderPath;                                                // -header=<file> with -compile, writes a C++ header embedding the container instead, absolute once parsed
+    FString               SymbolName;                                                // -symbol=<name> with -header, the array the header declares
+    FString               EntryPoint;                                                // -entry= with -compile
     EShaderStage          ShaderStage   = EShaderStage::Unknown;                     // -stage= with -compile
     EShaderModel          ShaderModel   = EShaderModel::Unknown;                     // -model= with -compile
     TArray<FShaderDefine> Defines;                                                   // -define=NAME[=VALUE] with -compile, repeatable, the value defaults to 1
-    TArray<String>        IncludeDirs;                                               // -includedir=<dir>, repeatable, absolute once parsed. Used by -compile.
-    String                JobFilePath;                                               // -jobs=, defaults to FShaderJobFile::GetDefaultFilePath()
-    TArray<String>        RHINames;                                                  // -rhi=D3D11,Metal, defaults to every entry of GRHITypes
+    TArray<FString>       IncludeDirs;                                               // -includedir=<dir>, repeatable, absolute once parsed. Used by -compile.
+    FString               JobFilePath;                                               // -jobs=, defaults to FShaderJobFile::GetDefaultFilePath()
+    TArray<FString>       RHINames;                                                  // -rhi=D3D11,Metal, defaults to every entry of GRHITypes
     TArray<FRemoteTarget> RemoteTargets;                                             // -remote=RHI@host[:port], repeatable; IPv6 literals in brackets, -remote=Metal@[fe80::1]:9371
-    String                OutputPath;                                                // -output=, absolute once parsed. The bytecode cache in batch mode (default Assets/Shaders.shaderbytecode), the container with -compile (default <shader>.shadercode)
+    FString               OutputPath;                                                // -output=, absolute once parsed. The bytecode cache in batch mode (default Assets/Shaders.shaderbytecode), the container with -compile (default <shader>.shadercode)
     bool                  bForce        = false;                                     // -force, recompiles jobs that are already cached and rewrites a -header that is up to date
     bool                  bCrossCompile = false;                                     // -crosscompile, compiles a language this platform has no RHI for locally when a backend can still produce it and no -remote is given
-    String                BindAddress;                                               // -bind=, only with -allowremote
+    FString               BindAddress;                                               // -bind=, only with -allowremote
     uint16                Port          = RemoteShaderCompilerProtocol::DefaultPort; // -port=
     bool                  bAllowRemote  = false;                                     // -allowremote
 };
@@ -89,12 +89,12 @@ struct FRouteEntry
     EJobRoute                    Route    = EJobRoute::Skipped;
     FRemoteShaderCompilerClient* Client   = nullptr;
     FShaderCompilerIdentity      Identity;
-    String                       Reason; // Shown in the routing table when the RHI is skipped
+    FString                      Reason; // Shown in the routing table when the RHI is skipped
 };
 
 struct ShaderCompilerTool
 {
-    static bool ParseOptions(FToolOptions& OutOptions, String& OutError);
+    static bool ParseOptions(FToolOptions& OutOptions, FString& OutError);
     static void PrintUsage();
 
     /** @return True when the RHI is one the options select, every RHI when -rhi was not given */
@@ -108,10 +108,10 @@ struct ShaderCompilerTool
      */
     static TArray<FRouteEntry> BuildRoutes(const FToolOptions& Options, TArray<TUniquePtr<FRemoteShaderCompilerClient>>& OutClients, bool& bOutRemoteUnreachable);
 
-    NODISCARD static const FRouteEntry* FindRoute(const TArray<FRouteEntry>& Routes, const String& RHIName);
+    NODISCARD static const FRouteEntry* FindRoute(const TArray<FRouteEntry>& Routes, const FString& RHIName);
 
     /** @return Path when it is absolute, otherwise Path below the working directory. Called while parsing, before the program changes directory. */
-    NODISCARD static String MakeAbsolutePath(const String& Path);
+    NODISCARD static FString MakeAbsolutePath(const FString& Path);
 
     static int32 RunBatch(const FToolOptions& Options);
     static int32 RunServer(const FToolOptions& Options);

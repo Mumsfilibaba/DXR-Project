@@ -195,7 +195,7 @@ void FJsonReader::SkipWhitespaceAndComments()
     }
 }
 
-bool FJsonReader::Parse(const StringView& Text, FJsonValue& OutValue, FJsonError* OutError)
+bool FJsonReader::Parse(const FStringView& Text, FJsonValue& OutValue, FJsonError* OutError)
 {
     Start   = Text.Data();
     Current = Start;
@@ -302,7 +302,7 @@ bool FJsonReader::ParseValue(FJsonValue& OutValue, int32 Depth)
 
         case '"':
         {
-            String Parsed;
+            FString Parsed;
             if (!ParseString(Parsed))
             {
                 return false;
@@ -379,7 +379,7 @@ bool FJsonReader::ParseObject(FJsonValue& OutValue, int32 Depth)
             return Fail("expected a member name in quotes but found '%c'", Peek());
         }
 
-        String Name;
+        FString Name;
         if (!ParseString(Name))
         {
             return false;
@@ -550,7 +550,7 @@ bool FJsonReader::ParseHexQuad(uint32& OutCodePoint)
     return true;
 }
 
-void FJsonReader::AppendUtf8(uint32 CodePoint, String& OutString)
+void FJsonReader::AppendUtf8(uint32 CodePoint, FString& OutString)
 {
     if (CodePoint <= 0x7F)
     {
@@ -576,7 +576,7 @@ void FJsonReader::AppendUtf8(uint32 CodePoint, String& OutString)
     }
 }
 
-bool FJsonReader::ParseEscape(String& OutString)
+bool FJsonReader::ParseEscape(FString& OutString)
 {
     const CHAR_T Escaped = Advance();
     switch (Escaped)
@@ -640,7 +640,7 @@ bool FJsonReader::ParseEscape(String& OutString)
     return true;
 }
 
-bool FJsonReader::ParseString(String& OutString)
+bool FJsonReader::ParseString(FString& OutString)
 {
     if (!Expect('"'))
     {

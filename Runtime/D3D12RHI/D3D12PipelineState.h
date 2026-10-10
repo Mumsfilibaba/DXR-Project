@@ -46,7 +46,7 @@ public:
 private:
     TArray<FRHIInputElementDesc>     InputElements;
     D3D12_INPUT_LAYOUT_DESC          D3D12Desc;
-    TArray<String>                   SemanticNames;
+    TArray<FString>                  SemanticNames;
     TArray<D3D12_INPUT_ELEMENT_DESC> ElementDesc;
     uint64                           Hash;
 };
@@ -161,7 +161,7 @@ public:
     FD3D12PipelineState(FD3D12Device* InDevice);
     virtual ~FD3D12PipelineState();
 
-    void SetDebugName(const String& InName);
+    void SetDebugName(const FString& InName);
 
     ID3D12PipelineState* GetD3D12PipelineState() const
     {
@@ -176,7 +176,7 @@ public:
 protected:
     TComPtr<ID3D12PipelineState> PipelineState;
     FD3D12RootSignatureRef       RootSignature;
-    String                       DebugName;
+    FString                      DebugName;
 };
 
 #if D3D12_ENABLE_PIPELINE_STATE_STREAM
@@ -350,8 +350,8 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
     
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     bool Initialize(const FRHIGraphicsPipelineStateDesc& Desc);
 
@@ -419,8 +419,8 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
     
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
     
     bool Initialize(const FRHIComputePipelineStateDesc& Desc);
 
@@ -541,8 +541,8 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     bool Initialize(const FRHIMeshletPipelineStateDesc& Desc);
 

@@ -22,7 +22,7 @@ class FDrawCommandList;
  * @param TextColor      The color the runs either side of the match take.
  */
 APPLICATION_API void DrawTextWithSearchHighlight(FDrawCommandList& OutCommandList, int32 LayerId, const FRectangle& LabelBounds,
-    const String& Label, int32 MatchOffset, int32 MatchLength, const IFontFace* Font, const FFloatColor& TextColor);
+    const FString& Label, int32 MatchOffset, int32 MatchLength, const IFontFace* Font, const FFloatColor& TextColor);
 
 struct FTextRun
 {
@@ -34,7 +34,7 @@ struct FTextRun
     {
     }
 
-    FTextRun(const String& InText, const IFontFace* InFont, const FFloatColor& InTint)
+    FTextRun(const FString& InText, const IFontFace* InFont, const FFloatColor& InTint)
         : Text(InText)
         , Font(InFont)
         , Tint(InTint)
@@ -42,7 +42,7 @@ struct FTextRun
     {
     }
 
-    String           Text;
+    FString          Text;
     const IFontFace* Font;
     FFloatColor      Tint;
     FFloatColor      BackgroundTint;
@@ -159,7 +159,7 @@ public:
      *
      * @return The text of every run concatenated.
      */
-    NODISCARD const String& GetText() const;
+    NODISCARD const FString& GetText() const;
 
     /**
      * @brief Emits the wrapped text.
@@ -234,7 +234,7 @@ private:
     TArray<FTextRun>  Runs;
     TArray<int32>     RunSourceOffsets;
     TArray<FTextLine> Lines;
-    mutable String    CachedText;
+    mutable FString   CachedText;
     IntVector2        CachedSize;
     int32             CachedWrapWidth;
     int32             SourceLength;

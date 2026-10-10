@@ -88,9 +88,9 @@ struct CORE_API IPlatformStackTrace
     static TArray<FStackTraceEntry> GetThreadStack(const FThreadStackContext& ThreadContext, int32 MaxDepth = MAX_STACK_DEPTH);
 
     /** @return Returns the full path of the running executable */
-    static FORCEINLINE String GetExecutableFilename()
+    static FORCEINLINE FString GetExecutableFilename()
     {
-        return String();
+        return FString();
     }
 };
 

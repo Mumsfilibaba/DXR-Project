@@ -41,10 +41,10 @@ static DWORD GetDialogOptions(EFileDialogKind Kind, bool bAllowMultiple)
     return Options;
 }
 
-static String CreateFilterSpec(const String& Extensions)
+static FString CreateFilterSpec(const FString& Extensions)
 {
-    String Spec;
-    String Extension;
+    FString Spec;
+    FString Extension;
 
     for (int32 Index = 0; Index <= Extensions.Length(); ++Index)
     {
@@ -66,22 +66,22 @@ static String CreateFilterSpec(const String& Extensions)
     return Spec;
 }
 
-static String ShellItemToPath(IShellItem* Item)
+static FString ShellItemToPath(IShellItem* Item)
 {
     PWSTR WidePath = nullptr;
     if (FAILED(Item->GetDisplayName(SIGDN_FILESYSPATH, &WidePath)))
     {
-        return String();
+        return FString();
     }
 
-    String Path = StringCast<CHAR_T>(WidePath).ToString();
+    FString Path = StringCast<CHAR_T>(WidePath).ToString();
     ::CoTaskMemFree(WidePath);
 
     Path.ReplaceAll('\\', '/');
     return Path;
 }
 
-static void ApplyDesc(IFileDialog* Dialog, const FFileDialogDesc& Desc, EFileDialogKind Kind, TArray<WString>& OutFilterStrings)
+static void ApplyDesc(IFileDialog* Dialog, const FFileDialogDesc& Desc, EFileDialogKind Kind, TArray<FWideString>& OutFilterStrings)
 {
     DWORD Options = 0;
     Dialog->GetOptions(&Options);
@@ -99,7 +99,7 @@ static void ApplyDesc(IFileDialog* Dialog, const FFileDialogDesc& Desc, EFileDia
 
     if (!Desc.DefaultDirectory.IsEmpty())
     {
-        String Directory = Desc.DefaultDirectory;
+        FString Directory = Desc.DefaultDirectory;
         Directory.ReplaceAll('/', '\\');
 
         TComPtr<IShellItem> Folder;
@@ -133,9 +133,9 @@ static void ApplyDesc(IFileDialog* Dialog, const FFileDialogDesc& Desc, EFileDia
 
     if ((Kind == EFileDialogKind::Save) && !Desc.Filters.IsEmpty())
     {
-        const String& Extensions = Desc.Filters[0].Extensions;
-        const int32   Separator  = Extensions.FindChar(';');
-        const String  First      = (Separator == String::InvalidIndex) ? Extensions : String(*Extensions, Separator);
+        const FString& Extensions = Desc.Filters[0].Extensions;
+        const int32    Separator  = Extensions.FindChar(';');
+        const FString  First      = (Separator == FString::InvalidIndex) ? Extensions : FString(*Extensions, Separator);
 
         if (!First.IsEmpty() && !First.Equals("*"))
         {
@@ -144,7 +144,7 @@ static void ApplyDesc(IFileDialog* Dialog, const FFileDialogDesc& Desc, EFileDia
     }
 }
 
-static void CollectResults(IFileDialog* Dialog, EFileDialogKind Kind, TArray<String>& OutPaths)
+static void CollectResults(IFileDialog* Dialog, EFileDialogKind Kind, TArray<FString>& OutPaths)
 {
     if (Kind != EFileDialogKind::Open)
     {
@@ -178,7 +178,7 @@ static void CollectResults(IFileDialog* Dialog, EFileDialogKind Kind, TArray<Str
     }
 }
 
-static bool RunFileDialog(const FFileDialogDesc& Desc, EFileDialogKind Kind, TArray<String>& OutPaths)
+static bool RunFileDialog(const FFileDialogDesc& Desc, EFileDialogKind Kind, TArray<FString>& OutPaths)
 {
     const CLSID DialogClass = (Kind == EFileDialogKind::Save) ? CLSID_FileSaveDialog : CLSID_FileOpenDialog;
 
@@ -189,7 +189,7 @@ static bool RunFileDialog(const FFileDialogDesc& Desc, EFileDialogKind Kind, TAr
         return false;
     }
 
-    TArray<WString> FilterStrings;
+    TArray<FWideString> FilterStrings;
     ApplyDesc(Dialog.Get(), Desc, Kind, FilterStrings);
 
     const HRESULT ShowResult = Dialog->Show(reinterpret_cast<HWND>(Desc.ParentWindowHandle));
@@ -207,7 +207,7 @@ static bool RunFileDialog(const FFileDialogDesc& Desc, EFileDialogKind Kind, TAr
     return !OutPaths.IsEmpty();
 }
 
-static bool ShowFileDialog(const FFileDialogDesc& Desc, EFileDialogKind Kind, TArray<String>& OutPaths)
+static bool ShowFileDialog(const FFileDialogDesc& Desc, EFileDialogKind Kind, TArray<FString>& OutPaths)
 {
     OutPaths.Clear();
 
@@ -222,14 +222,14 @@ static bool ShowFileDialog(const FFileDialogDesc& Desc, EFileDialogKind Kind, TA
     return bAccepted;
 }
 
-bool FWindowsPlatformDialogs::OpenFile(const FFileDialogDesc& Desc, TArray<String>& OutFilenames)
+bool FWindowsPlatformDialogs::OpenFile(const FFileDialogDesc& Desc, TArray<FString>& OutFilenames)
 {
     return ShowFileDialog(Desc, EFileDialogKind::Open, OutFilenames);
 }
 
-bool FWindowsPlatformDialogs::SaveFile(const FFileDialogDesc& Desc, String& OutFilename)
+bool FWindowsPlatformDialogs::SaveFile(const FFileDialogDesc& Desc, FString& OutFilename)
 {
-    TArray<String> Paths;
+    TArray<FString> Paths;
     if (!ShowFileDialog(Desc, EFileDialogKind::Save, Paths))
     {
         return false;
@@ -239,9 +239,9 @@ bool FWindowsPlatformDialogs::SaveFile(const FFileDialogDesc& Desc, String& OutF
     return true;
 }
 
-bool FWindowsPlatformDialogs::PickFolder(const FFileDialogDesc& Desc, String& OutDirectory)
+bool FWindowsPlatformDialogs::PickFolder(const FFileDialogDesc& Desc, FString& OutDirectory)
 {
-    TArray<String> Paths;
+    TArray<FString> Paths;
     if (!ShowFileDialog(Desc, EFileDialogKind::PickFolder, Paths))
     {
         return false;

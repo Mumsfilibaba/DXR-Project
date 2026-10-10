@@ -108,7 +108,7 @@ struct RHI
         Device->GetRayTracingAccelerationStructureOperationPrebuildInfo(InInputs, OutInfo);
     }
 
-    static FORCEINLINE FRHIRayTracingShaderIdentifier GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const String& InExportName)
+    static FORCEINLINE FRHIRayTracingShaderIdentifier GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const FString& InExportName)
     {
         return Device->GetRayTracingShaderIdentifier(InPipeline, InExportName);
     }

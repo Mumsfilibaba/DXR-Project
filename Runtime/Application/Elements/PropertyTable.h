@@ -15,10 +15,10 @@ DECLARE_DELEGATE(FOnPropertyRowContext, int32 /*RowIndex*/);
 struct FPropertyRow
 {
     /** @brief Drawn in the left column, moved right by the indent level. */
-    String Label;
+    FString Label;
 
     /** @brief Shown while the cursor rests on the row, or empty for a row that explains itself. */
-    String ToolTipText;
+    FString ToolTipText;
 
     /** @brief The element the right column holds, which is null for a heading. */
     TSharedPtr<FVisualElement> Editor;
@@ -136,7 +136,7 @@ public:
      * @param Editor The element the right column holds, which may be null.
      * @return The new row, so the caller can set its tool tip and its indent level.
      */
-    FPropertyRow& AddRow(const String& Label, const TSharedPtr<FVisualElement>& Editor);
+    FPropertyRow& AddRow(const FString& Label, const TSharedPtr<FVisualElement>& Editor);
 
     /**
      * @brief Appends a heading below the rows already there, which spans both columns and takes no editor.
@@ -144,7 +144,7 @@ public:
      * @param Label The text the heading draws.
      * @return The new row, so the caller can set its tool tip and its indent level.
      */
-    FPropertyRow& AddHeaderRow(const String& Label);
+    FPropertyRow& AddHeaderRow(const FString& Label);
 
     /**
      * @brief Places an element beside a row's label, which is what puts the uniform lock next to Scale.
@@ -243,7 +243,7 @@ private:
     NODISCARD FRectangle GetRevertRectangle(int32 Index, const FRectangle& Bounds) const;
     NODISCARD bool IsRowModified(int32 Index) const;
     NODISCARD int32 FindRevertRowAtPoint(const IntVector2& ClientPosition) const;
-    NODISCARD const String& GetElidedLabel(int32 Index) const;
+    NODISCARD const FString& GetElidedLabel(int32 Index) const;
     NODISCARD IFontFace* GetRowFont(int32 Index) const;
 
     void UpdateHoveredRow(const IntVector2& ClientPosition);

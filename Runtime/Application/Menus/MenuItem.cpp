@@ -53,12 +53,12 @@ IntVector2 FMenuItem::ComputeDesiredSize() const
 
     if (Font)
     {
-        Width += Font->MeasureWidth(StringView(Label.Data(), Label.Length()));
+        Width += Font->MeasureWidth(FStringView(Label.Data(), Label.Length()));
         Height += Font->GetLineHeight();
 
         if (!ShortcutText.IsEmpty())
         {
-            Width += ShortcutGap + Font->MeasureWidth(StringView(ShortcutText.Data(), ShortcutText.Length()));
+            Width += ShortcutGap + Font->MeasureWidth(FStringView(ShortcutText.Data(), ShortcutText.Length()));
         }
     }
 
@@ -124,7 +124,7 @@ int32 FMenuItem::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 
     if (Font && !ShortcutText.IsEmpty())
     {
-        const int32 ShortcutWidth = Font->MeasureWidth(StringView(ShortcutText.Data(), ShortcutText.Length()));
+        const int32 ShortcutWidth = Font->MeasureWidth(FStringView(ShortcutText.Data(), ShortcutText.Length()));
 
         FRectangle ShortcutBounds = Inner;
         ShortcutBounds.Position.X = Inner.GetRight() - ShortcutWidth - (SubMenu ? ArrowWidth : 0);
@@ -290,7 +290,7 @@ void FMenuSeparator::SetStyle(const FUIMenuStyle& InStyle)
     InvalidatePaint();
 }
 
-TSharedPtr<FMenuSectionHeader> FMenuSectionHeader::Create(const String& Label, const TSharedPtr<IFontFace>& Font)
+TSharedPtr<FMenuSectionHeader> FMenuSectionHeader::Create(const FString& Label, const TSharedPtr<IFontFace>& Font)
 {
     TSharedPtr<FMenuSectionHeader> NewHeader = MakeSharedPtr<FMenuSectionHeader>();
     NewHeader->Initialize(Label, Font);
@@ -307,7 +307,7 @@ FMenuSectionHeader::FMenuSectionHeader()
 
 FMenuSectionHeader::~FMenuSectionHeader() = default;
 
-void FMenuSectionHeader::Initialize(const String& InLabel, const TSharedPtr<IFontFace>& InFont)
+void FMenuSectionHeader::Initialize(const FString& InLabel, const TSharedPtr<IFontFace>& InFont)
 {
     Label = InLabel.ToUpper();
     Font  = InFont;
@@ -322,7 +322,7 @@ IntVector2 FMenuSectionHeader::ComputeDesiredSize() const
 
     if (Font && !Label.IsEmpty())
     {
-        Width += Font->MeasureWidth(StringView(Label.Data(), Label.Length()));
+        Width += Font->MeasureWidth(FStringView(Label.Data(), Label.Length()));
         Height = Math::Max(Height, Font->GetLineHeight());
     }
 
@@ -343,7 +343,7 @@ int32 FMenuSectionHeader::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCom
 
         OutCommandList.AddText(LayerId, LabelBounds, Label, Font.Get(), Style.SectionText);
 
-        LineLeft += Font->MeasureWidth(StringView(Label.Data(), Label.Length())) + LabelGap;
+        LineLeft += Font->MeasureWidth(FStringView(Label.Data(), Label.Length())) + LabelGap;
     }
 
     FRectangle Line(IntVector2(LineLeft, 0), Bounds.GetRight() - InsetX - LineLeft, FUIStyle::GetDefault().Metrics.MenuSeparatorThickness);

@@ -297,7 +297,7 @@ void FEditorGPUProfilerPanel::RefreshPasses(IGPUProfiler& Profiler)
         PassTable->AddHeaderRow("Pass  (inclusive / exclusive ms)");
         for (const FGPUProfilerInterval& Interval : Latest.Intervals)
         {
-            const String Name = Interval.Name ? Interval.Name : "<unnamed>";
+            const FString Name = Interval.Name ? Interval.Name : "<unnamed>";
 
             TSharedPtr<FTextBlock> Value = CreateValueText("-");
             PassTable->AddRow(Name, Value);
@@ -307,7 +307,7 @@ void FEditorGPUProfilerPanel::RefreshPasses(IGPUProfiler& Profiler)
 
     for (const FGPUProfilerInterval& Interval : Latest.Intervals)
     {
-        const String Name = Interval.Name ? Interval.Name : "<unnamed>";
+        const FString Name = Interval.Name ? Interval.Name : "<unnamed>";
 
         TSharedPtr<FTextBlock>* Value = PassValues.Find(Name);
         if (!Value)
@@ -315,7 +315,7 @@ void FEditorGPUProfilerPanel::RefreshPasses(IGPUProfiler& Profiler)
             continue;
         }
 
-        (*Value)->SetText(String::Printf("%.3f  %.3f",
+        (*Value)->SetText(FString::Printf("%.3f  %.3f",
             Time::ToMilliseconds<float>(static_cast<float>(Interval.InclusiveNanoseconds)),
             Time::ToMilliseconds<float>(static_cast<float>(Interval.ExclusiveNanoseconds))));
     }
@@ -364,11 +364,11 @@ void FEditorGPUProfilerPanel::RefreshPipelineStatistics(IGPUProfiler& Profiler)
     for (int32 Index = 0; Index < PipelineStatisticsValues.Size(); ++Index)
     {
         const uint64 Counter = Statistics.*GPipelineStatisticsCounters[Index].Member;
-        PipelineStatisticsValues[Index]->SetText(String::Printf("%llu", static_cast<unsigned long long>(Counter)));
+        PipelineStatisticsValues[Index]->SetText(FString::Printf("%llu", static_cast<unsigned long long>(Counter)));
     }
 }
 
-TSharedPtr<FTextBlock> FEditorGPUProfilerPanel::CreateValueText(const String& Text)
+TSharedPtr<FTextBlock> FEditorGPUProfilerPanel::CreateValueText(const FString& Text)
 {
     FTextBlock::FDesc Desc;
     Desc.Text = Text;

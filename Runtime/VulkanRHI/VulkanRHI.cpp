@@ -1180,7 +1180,7 @@ FRHIShaderBindingTable* FVulkanDeviceRHI::CreateShaderBindingTable(const FRHISha
     return NewTable.ReleaseOwnership();
 }
 
-FRHIRayTracingShaderIdentifier FVulkanDeviceRHI::GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const String& InExportName)
+FRHIRayTracingShaderIdentifier FVulkanDeviceRHI::GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const FString& InExportName)
 {
     FRHIRayTracingShaderIdentifier Identifier;
     if (FVulkanRayTracingPipelineStateRHI* VulkanPipeline = FVulkanDeviceRHI::ResourceCast(InPipeline))
@@ -1395,16 +1395,16 @@ bool FVulkanDeviceRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelin
     return true;
 }
 
-String FVulkanDeviceRHI::GetAdapterName() const
+FString FVulkanDeviceRHI::GetAdapterName() const
 {
     if (!PhysicalDevice)
     {
         VULKAN_ERROR_CRITICAL("PhysicalDevice is not initialized properly");
-        return String();
+        return FString();
     }
 
     VkPhysicalDeviceProperties DeviceProperties = PhysicalDevice->GetProperties();
-    return String(DeviceProperties.deviceName);
+    return FString(DeviceProperties.deviceName);
 }
 
 IRHICommandContext* FVulkanDeviceRHI::ObtainCommandContext()

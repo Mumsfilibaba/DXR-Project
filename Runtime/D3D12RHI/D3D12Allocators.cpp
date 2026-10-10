@@ -2678,7 +2678,7 @@ int32 FD3D12BufferAllocator::RecordDefragMoves(FD3D12CommandContext* InCommandCo
         }
 
         {
-            String DefragDebugName;
+            FString DefragDebugName;
             OldResource->GetDebugName(DefragDebugName);
             NewResource->SetDebugName(DefragDebugName);
         }
@@ -3279,7 +3279,7 @@ int32 FD3D12TextureAllocator::RecordDefragMoves(FD3D12CommandContext* InCommandC
         }
 
         {
-            String DefragDebugName;
+            FString DefragDebugName;
             OldResource->GetDebugName(DefragDebugName);
             NewResource->SetDebugName(DefragDebugName);
         }

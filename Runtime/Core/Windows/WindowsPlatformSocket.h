@@ -6,10 +6,10 @@ class CORE_API FWindowsPlatformSocket final : public IPlatformSocket
 {
 public:
     static IPlatformSocket* Create(ESocketType Type, ESocketFamily Family);
-    static bool   Resolve(const String& Host, uint16 Port, TArray<FSocketAddress>& OutAddresses);
-    static bool   ParseAddress(const String& Text, uint16 Port, FSocketAddress& OutAddress);
-    static String AddressToString(const FSocketAddress& Address);
-    static int32  WaitForRead(IPlatformSocket* const* Sockets, int32 NumSockets, bool* OutReadable, uint32 TimeoutMilliseconds);
+    static bool    Resolve(const FString& Host, uint16 Port, TArray<FSocketAddress>& OutAddresses);
+    static bool    ParseAddress(const FString& Text, uint16 Port, FSocketAddress& OutAddress);
+    static FString AddressToString(const FSocketAddress& Address);
+    static int32   WaitForRead(IPlatformSocket* const* Sockets, int32 NumSockets, bool* OutReadable, uint32 TimeoutMilliseconds);
 
 public:
     virtual ~FWindowsPlatformSocket();

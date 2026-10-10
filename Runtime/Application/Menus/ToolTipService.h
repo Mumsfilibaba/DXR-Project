@@ -29,7 +29,7 @@ public:
      * @param InFont The face to draw it with.
      * @return The new tip.
      */
-    static TSharedPtr<FToolTip> Create(const String& InText, const TSharedPtr<IFontFace>& InFont);
+    static TSharedPtr<FToolTip> Create(const FString& InText, const TSharedPtr<IFontFace>& InFont);
 
 public:
     FToolTip();
@@ -45,23 +45,23 @@ public:
      *
      * @param InText The text to show, which may carry newlines.
      */
-    void SetText(const String& InText);
+    void SetText(const FString& InText);
 
     /** @return The text the tip shows, newlines and all. */
-    NODISCARD FORCEINLINE const String& GetText() const
+    NODISCARD FORCEINLINE const FString& GetText() const
     {
         return Text;
     }
 
     /** @return The text broken at its newlines, which is one entry for the usual single-line tip. */
-    NODISCARD FORCEINLINE const TArray<String>& GetLines() const
+    NODISCARD FORCEINLINE const TArray<FString>& GetLines() const
     {
         return Lines;
     }
 
 private:
-    String                Text;
-    TArray<String>        Lines;
+    FString               Text;
+    TArray<FString>       Lines;
     TSharedPtr<IFontFace> Font;
     float                 CornerRadius;
 };
@@ -81,7 +81,7 @@ public:
      */
     static TSharedPtr<FToolTipHost> Create(
         const TSharedPtr<FVisualElement>& InContent,
-        const String&                     InText,
+        const FString&                    InText,
         const TSharedPtr<IFontFace>&      InFont,
         EToolTipPlacement                 InPlacement = EToolTipPlacement::FollowCursor);
 
@@ -98,10 +98,10 @@ public:
      *
      * @param InText The text to show.
      */
-    void SetToolTipText(const String& InText);
+    void SetToolTipText(const FString& InText);
 
 private:
-    String                Text;
+    FString               Text;
     TSharedPtr<IFontFace> Font;
     EToolTipPlacement     Placement;
 };
@@ -167,7 +167,7 @@ public:
      */
     void RequestTextToolTip(
         const TSharedPtr<FVisualElement>& Owner,
-        const String&                     Text,
+        const FString&                    Text,
         const TSharedPtr<IFontFace>&      Font,
         EToolTipPlacement                 Placement    = EToolTipPlacement::FollowCursor,
         float                             DelaySeconds = DefaultDelay);
@@ -209,7 +209,7 @@ public:
     }
 
     /** @return The text of the shown or pending tip, which is empty for a tip built from an element. */
-    NODISCARD FORCEINLINE const String& GetRequestedText() const
+    NODISCARD FORCEINLINE const FString& GetRequestedText() const
     {
         return RequestedText;
     }
@@ -243,7 +243,7 @@ private:
     FRectangle                 ClampArea;
     FRectangle                 ToolTipBounds;
     IntVector2                 CursorPosition;
-    String                     RequestedText;
+    FString                    RequestedText;
     float                      RequestedDelay;
     float                      RemainingSeconds;
     bool                       bIsShowing;

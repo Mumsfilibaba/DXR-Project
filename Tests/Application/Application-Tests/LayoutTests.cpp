@@ -137,18 +137,18 @@ bool FixedWidthFontFace_Test()
     TEST_EXPECT_EQ(Font.GetDescent(), 4);
 
     TEST_SECTION("Every character shapes to the same advance, at a pen that steps by it");
-    const FShapedRun& Shaped = Font.ShapeText(StringView("Test"));
+    const FShapedRun& Shaped = Font.ShapeText(FStringView("Test"));
     TEST_EXPECT_EQ(Shaped.Glyphs.Size(), 4);
     TEST_EXPECT_EQ(Shaped.Glyphs[0].Offset, 0);
     TEST_EXPECT_EQ(Shaped.Glyphs[0].Advance, 8);
     TEST_EXPECT_EQ(Shaped.Glyphs[3].Offset, 24);
 
     TEST_SECTION("Width is the character count times the advance");
-    TEST_EXPECT_EQ(Font.MeasureWidth(StringView("")), 0);
-    TEST_EXPECT_EQ(Font.MeasureWidth(StringView("Test")), 32);
+    TEST_EXPECT_EQ(Font.MeasureWidth(FStringView("")), 0);
+    TEST_EXPECT_EQ(Font.MeasureWidth(FStringView("Test")), 32);
 
     TEST_SECTION("Hit testing an offset rounds to the nearest position between characters");
-    const StringView Text("Test");
+    const FStringView Text("Test");
     TEST_EXPECT_EQ(Font.FindCharacterIndexAtOffset(Text, 0), 0);
     TEST_EXPECT_EQ(Font.FindCharacterIndexAtOffset(Text, 3), 0);
     TEST_EXPECT_EQ(Font.FindCharacterIndexAtOffset(Text, 5), 1);
@@ -161,7 +161,7 @@ bool FixedWidthFontFace_Test()
     TEST_SECTION("A degenerate face still measures");
     const FFixedWidthFontFace Degenerate(0, 0);
     TEST_EXPECT_EQ(Degenerate.GetLineHeight(), 1);
-    TEST_EXPECT_EQ(Degenerate.MeasureWidth(StringView("A")), 1);
+    TEST_EXPECT_EQ(Degenerate.MeasureWidth(FStringView("A")), 1);
 
     TEST_END();
 }

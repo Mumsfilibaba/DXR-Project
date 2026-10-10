@@ -8,7 +8,7 @@ struct APPLICATION_API FDockWindowLayout
     FDockWindowLayout();
 
     /** @brief The caption the window had, which a restored host shows until its tabs change. */
-    String Title;
+    FString Title;
 
     /** @brief Where the window sat on the desktop, ignored for the main window. */
     IntVector2 Position;
@@ -42,7 +42,7 @@ public:
      * @param Windows  The windows to write, the main window first.
      * @return True when the file was written.
      */
-    static bool Save(const String& Filename, const TArray<FDockWindowLayout>& Windows);
+    static bool Save(const FString& Filename, const TArray<FDockWindowLayout>& Windows);
 
     /**
      * @brief Reads every window back, taking a version 1 file as a main window on its own. A host whose tree
@@ -53,5 +53,5 @@ public:
      * @param OutWindows Receives the windows, the main window first, cleared before anything is added.
      * @return True when at least the main window was read.
      */
-    static bool Load(const String& Filename, TArray<FDockWindowLayout>& OutWindows);
+    static bool Load(const FString& Filename, TArray<FDockWindowLayout>& OutWindows);
 };

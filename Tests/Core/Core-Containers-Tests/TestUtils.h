@@ -102,7 +102,7 @@ public:
 
     explicit FInstanced(int32 InId)
         : Id(InId)
-        , Payload(String::Printf("%d", InId))
+        , Payload(FString::Printf("%d", InId))
     {
         Counters().Live++;
         Counters().ValueCtor++;
@@ -156,7 +156,7 @@ public:
     // The payload must always mirror the id; a torn copy/move breaks this invariant.
     bool IsPayloadValid() const
     {
-        return Payload == String::Printf("%d", Id);
+        return Payload == FString::Printf("%d", Id);
     }
 
     bool operator==(const FInstanced& Other) const
@@ -175,8 +175,8 @@ public:
     }
 
 private:
-    int32  Id;
-    String Payload;
+    int32   Id;
+    FString Payload;
 };
 
 template<>

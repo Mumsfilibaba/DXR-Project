@@ -115,7 +115,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FVertexDecla
         }
         else
         {
-            const String DebugName = String::Printf("PrePass PipelineState%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
+            const FString DebugName = FString::Printf("PrePass PipelineState%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
             NewPipelineInstance.PipelineState->SetDebugName(DebugName);
         }
 

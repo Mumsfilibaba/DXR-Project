@@ -46,8 +46,8 @@ static void CompileEntry(const FShaderJobFileEntry& Entry, const FRouteEntry& Ro
         return;
     }
 
-    TArray<uint8>  ShaderCode;
-    TArray<String> Dependencies;
+    TArray<uint8>   ShaderCode;
+    TArray<FString> Dependencies;
 
     bool bCompiled = false;
     if (Route.Route == EJobRoute::Local)
@@ -72,10 +72,10 @@ static void CompileEntry(const FShaderJobFileEntry& Entry, const FRouteEntry& Ro
 
 int32 ShaderCompilerTool::RunBatch(const FToolOptions& Options)
 {
-    const String JobFilePath = Options.JobFilePath.IsEmpty() ? FShaderJobFile::GetDefaultFilePath() : Options.JobFilePath;
+    const FString JobFilePath = Options.JobFilePath.IsEmpty() ? FShaderJobFile::GetDefaultFilePath() : Options.JobFilePath;
 
     FShaderJobFile JobFile;
-    String         LoadError;
+    FString        LoadError;
     if (!JobFile.Load(JobFilePath, LoadError) || JobFile.GetEntries().IsEmpty())
     {
         LOG_ERROR("[ShaderCompiler] No jobs in '%s' %s. Run SandboxEditor first, or Shaders.SaveJobFile in its console.", *JobFilePath, *LoadError);
@@ -102,7 +102,7 @@ int32 ShaderCompilerTool::RunBatch(const FToolOptions& Options)
     FRHIStats Stats[ARRAY_COUNT(GRHITypes)];
 
     TArray<FWorkItem> Work;
-    for (const FShaderJobFileEntry* Entry : JobFile.Filter(TArrayView<const String>(Options.RHINames)))
+    for (const FShaderJobFileEntry* Entry : JobFile.Filter(TArrayView<const FString>(Options.RHINames)))
     {
         int32 RouteIndex = -1;
         for (int32 Index = 0; Index < Routes.Size(); ++Index)
@@ -164,16 +164,16 @@ int32 ShaderCompilerTool::RunBatch(const FToolOptions& Options)
     return bRemoteUnreachable ? ToExitCode(EShaderCompilerExitCode::RemoteUnreachable) : ToExitCode(EShaderCompilerExitCode::Success);
 }
 
-static String GetCompileOutputPath(const FToolOptions& Options, const FRHITarget& Target, int32 NumTargets)
+static FString GetCompileOutputPath(const FToolOptions& Options, const FRHITarget& Target, int32 NumTargets)
 {
     if (NumTargets == 1)
     {
         return Options.OutputPath;
     }
 
-    const String Extension = File::ExtractExtension(Options.OutputPath);
-    const String Stem(Options.OutputPath.Data(), Options.OutputPath.Length() - Extension.Length());
-    return String::Printf("%s_%s%s", *Stem, Target.Name, *Extension);
+    const FString Extension = File::ExtractExtension(Options.OutputPath);
+    const FString Stem(Options.OutputPath.Data(), Options.OutputPath.Length() - Extension.Length());
+    return FString::Printf("%s_%s%s", *Stem, Target.Name, *Extension);
 }
 
 int32 ShaderCompilerTool::RunCompile(const FToolOptions& Options)
@@ -230,7 +230,7 @@ int32 ShaderCompilerTool::RunCompile(const FToolOptions& Options)
             continue;
         }
 
-        const String OutputPath = GetCompileOutputPath(Options, *Route.Target, Routes.Size());
+        const FString OutputPath = GetCompileOutputPath(Options, *Route.Target, Routes.Size());
         File::CreateDirectoryTree(File::GetDirectoryOf(OutputPath));
 
         TFileRef<IPlatformFile> Output = FPlatformFile::OpenForWrite(OutputPath);
@@ -299,7 +299,7 @@ int32 ShaderCompilerTool::RunServer(const FToolOptions& Options)
 static int32 ShaderCompilerMain()
 {
     FToolOptions Options;
-    String       Error;
+    FString      Error;
     if (!ShaderCompilerTool::ParseOptions(Options, Error))
     {
         LOG_ERROR("[ShaderCompiler] %s", *Error);

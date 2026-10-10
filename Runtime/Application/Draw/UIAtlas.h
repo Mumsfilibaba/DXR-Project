@@ -50,7 +50,7 @@ public:
      *
      * @param InDebugName The name, applied to the texture as soon as there is one.
      */
-    void SetDebugName(const String& InDebugName);
+    void SetDebugName(const FString& InDebugName);
 
     /** @return The texture every brush from this atlas samples, or null when there is nothing packed yet. */
     NODISCARD FORCEINLINE FRHITexture* GetTexture() const
@@ -76,7 +76,7 @@ private:
 
     TArray<uint8>  Pixels;
     FRHITextureRef Texture;
-    String         DebugName;
+    FString        DebugName;
     int32          ShelfX;
     int32          ShelfY;
     int32          ShelfHeight;

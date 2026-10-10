@@ -232,7 +232,7 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
                 CHAR_T KeyBuffer[32] = {};
                 CString::Snprintf(KeyBuffer, int32(sizeof(KeyBuffer)), "blas_%llx", static_cast<unsigned long long>(reinterpret_cast<uintptr_t>(Geometry)));
 
-                SerializationHelper.RequestSerialize(CommandList, Geometry, String(KeyBuffer));
+                SerializationHelper.RequestSerialize(CommandList, Geometry, FString(KeyBuffer));
                 SerializationRequested.Emplace(Geometry);
             }
         }

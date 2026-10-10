@@ -55,7 +55,7 @@ struct FD3D11ShaderBindingInfo
         uint16            Register;
         uint16            Count;
     #if D3D11_ENABLE_BINDING_DEBUG_NAMES
-        String            DebugName;
+        FString            DebugName;
     #endif
     };
 

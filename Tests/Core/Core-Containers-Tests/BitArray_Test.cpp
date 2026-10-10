@@ -7,9 +7,9 @@
 
 // Renders a bit array as a string with the most-significant (highest index) bit first.
 template<typename BitArrayType>
-static String MakeStringFromBitArray(const BitArrayType& BitArray)
+static FString MakeStringFromBitArray(const BitArrayType& BitArray)
 {
-    String NewString;
+    FString NewString;
     NewString.Reserve(BitArray.Size());
 
     for (int32 Index = BitArray.Size() - 1; Index >= 0; --Index)

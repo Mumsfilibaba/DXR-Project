@@ -49,7 +49,7 @@ bool FMetalFenceRHI::Wait(uint64 TimeoutNs) const
     return [SharedEvent waitUntilSignaledValue:TargetValue timeoutMS:TimeoutMS];
 }
 
-void FMetalFenceRHI::SetDebugName(const String& InName)
+void FMetalFenceRHI::SetDebugName(const FString& InName)
 {
     DebugName = InName;
 
@@ -59,7 +59,7 @@ void FMetalFenceRHI::SetDebugName(const String& InName)
     }
 }
 
-void FMetalFenceRHI::GetDebugName(String& OutDebugName) const
+void FMetalFenceRHI::GetDebugName(FString& OutDebugName) const
 {
     OutDebugName = DebugName;
 }

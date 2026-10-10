@@ -51,7 +51,7 @@ FDockDragState::FDockDragState()
 
 FDockDragState::~FDockDragState() = default;
 
-void FDockDragState::BeginDrag(const String& PanelId, FDockingArea* InSourceArea, const IntVector2& ScreenPosition)
+void FDockDragState::BeginDrag(const FString& PanelId, FDockingArea* InSourceArea, const IntVector2& ScreenPosition)
 {
     if (PanelId.IsEmpty())
     {
@@ -69,7 +69,7 @@ void FDockDragState::BeginDrag(const String& PanelId, FDockingArea* InSourceArea
     {
         SourceScreenBounds = InSourceArea->GetPanelScreenBounds(PanelId);
 
-        String                     Label;
+        FString                    Label;
         TSharedPtr<FVisualElement> Panel;
 
         if (InSourceArea->GetPanelRegistration(PanelId, Label, Panel))
@@ -120,7 +120,7 @@ void FDockDragState::UpdateDrag(const IntVector2& ScreenPosition)
             continue;
         }
 
-        String PanelId;
+        FString PanelId;
         
         EDockDirection Direction = EDockDirection::Center;
         int32          TabIndex  = -1;
@@ -147,7 +147,7 @@ void FDockDragState::EndDrag()
 
     const FDockDragPanel Panel        = GetDraggedPanel();
     FDockingArea* const  Area         = TargetArea;
-    const String         TargetId     = TargetPanelId;
+    const FString        TargetId     = TargetPanelId;
     const EDockDirection Direction    = TargetDirection;
     const int32          TabIndex     = TargetTabIndex;
     const IntVector2     DropPosition = CursorPosition;
@@ -181,7 +181,7 @@ void FDockDragState::CancelDrag()
     if (bWasDragging && SourceArea)
     {
         SourceArea->RegisterPanel(DraggedPanelId, DraggedPanelLabel, DraggedPanelContent);
-        SourceArea->DockPanel(DraggedPanelId, String(), EDockDirection::Center);
+        SourceArea->DockPanel(DraggedPanelId, FString(), EDockDirection::Center);
     }
 
     DraggedPanelId.Clear();

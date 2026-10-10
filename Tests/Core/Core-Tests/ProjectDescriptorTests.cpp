@@ -7,7 +7,7 @@
 
 #include "TestCommon/TestMacros.h"
 
-static bool WriteText(const String& Filename, const CHAR_T* Text)
+static bool WriteText(const FString& Filename, const CHAR_T* Text)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(Filename);
     if (!FileHandle)
@@ -15,24 +15,24 @@ static bool WriteText(const String& Filename, const CHAR_T* Text)
         return false;
     }
 
-    return File::WriteTextFile(FileHandle.Get(), String(Text));
+    return File::WriteTextFile(FileHandle.Get(), FString(Text));
 }
 
-static String ReadText(const String& Filename)
+static FString ReadText(const FString& Filename)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Filename);
     if (!FileHandle)
     {
-        return String();
+        return FString();
     }
 
     TArray<CHAR_T> Text;
     if (!File::ReadTextFile(FileHandle.Get(), Text))
     {
-        return String();
+        return FString();
     }
 
-    return String(Text.Data());
+    return FString(Text.Data());
 }
 
 static FProjectDescriptor CreateDescriptor()
@@ -50,7 +50,7 @@ static FProjectDescriptor CreateDescriptor()
     return Descriptor;
 }
 
-static bool FailsToLoad(const String& Filename, const CHAR_T* Text)
+static bool FailsToLoad(const FString& Filename, const CHAR_T* Text)
 {
     if (!WriteText(Filename, Text))
     {
@@ -59,7 +59,7 @@ static bool FailsToLoad(const String& Filename, const CHAR_T* Text)
 
     FProjectDescriptor Descriptor = CreateDescriptor();
 
-    String Error;
+    FString Error;
     const bool bLoaded = Descriptor.LoadFromFile(Filename, Error);
     return !bLoaded && !Error.IsEmpty() && Descriptor.Name.Equals("MyGame") && (Descriptor.Modules.Size() == 2);
 }
@@ -68,18 +68,18 @@ bool ProjectDescriptor_Test()
 {
     TEST_BEGIN();
 
-    const String Root("ProjectDescriptorTests.Scratch");
+    const FString Root("ProjectDescriptorTests.Scratch");
     File::DeleteDirectoryTree(Root);
     TEST_EXPECT(File::CreateDirectoryTree(Root));
 
     TEST_SECTION("A descriptor round trips through a file");
     {
-        const String Filename = Root + "/MyGame.dxrproject";
+        const FString Filename = Root + "/MyGame.dxrproject";
         const FProjectDescriptor Source = CreateDescriptor();
         TEST_EXPECT(Source.SaveToFile(Filename));
 
         FProjectDescriptor Loaded;
-        String Error;
+        FString Error;
         TEST_EXPECT(Loaded.LoadFromFile(Filename, Error));
         TEST_EXPECT(Error.IsEmpty());
         TEST_EXPECT(Loaded.Name.Equals("MyGame"));
@@ -94,53 +94,53 @@ bool ProjectDescriptor_Test()
 
     TEST_SECTION("The file follows the text format rules");
     {
-        const String Filename = Root + "/MyGame.dxrproject";
-        const String Text     = ReadText(Filename);
+        const FString Filename = Root + "/MyGame.dxrproject";
+        const FString Text     = ReadText(Filename);
 
         TEST_EXPECT(Text.StartsWith("{"));
         TEST_EXPECT(Text.EndsWith("}\n"));
         TEST_EXPECT(!Text.Contains('\r'));
 
         const int32 VersionPosition = Text.Find("\"Version\": 1");
-        TEST_EXPECT(VersionPosition != String::InvalidIndex);
+        TEST_EXPECT(VersionPosition != FString::InvalidIndex);
         TEST_EXPECT(VersionPosition < Text.Find("\"Name\""));
 
-        TEST_EXPECT(Text.Find("\"Type\": \"Editor\"") != String::InvalidIndex);
-        TEST_EXPECT(Text.Find("\"Type\": \"Game\"") == String::InvalidIndex);
-        TEST_EXPECT(Text.Find("EnginePath") == String::InvalidIndex);
+        TEST_EXPECT(Text.Find("\"Type\": \"Editor\"") != FString::InvalidIndex);
+        TEST_EXPECT(Text.Find("\"Type\": \"Game\"") == FString::InvalidIndex);
+        TEST_EXPECT(Text.Find("EnginePath") == FString::InvalidIndex);
     }
 
     TEST_SECTION("Saving an unchanged descriptor writes identical bytes");
     {
-        const String First  = Root + "/First.dxrproject";
-        const String Second = Root + "/Second.dxrproject";
+        const FString First  = Root + "/First.dxrproject";
+        const FString Second = Root + "/Second.dxrproject";
 
         FProjectDescriptor Descriptor = CreateDescriptor();
         Descriptor.EnginePath = "../DXR-Project";
         TEST_EXPECT(Descriptor.SaveToFile(First));
 
         FProjectDescriptor Reloaded;
-        String Error;
+        FString Error;
         TEST_EXPECT(Reloaded.LoadFromFile(First, Error));
         TEST_EXPECT(Reloaded.SaveToFile(Second));
 
-        const String FirstText = ReadText(First);
+        const FString FirstText = ReadText(First);
         TEST_EXPECT(!FirstText.IsEmpty());
         TEST_EXPECT(FirstText.Equals(ReadText(Second)));
-        TEST_EXPECT(FirstText.Find("\"EnginePath\": \"../DXR-Project\"") != String::InvalidIndex);
+        TEST_EXPECT(FirstText.Find("\"EnginePath\": \"../DXR-Project\"") != FString::InvalidIndex);
     }
 
     TEST_SECTION("A missing file fails and names the file");
     {
         FProjectDescriptor Descriptor;
-        String Error;
+        FString Error;
         TEST_EXPECT(!Descriptor.LoadFromFile(Root + "/Missing.dxrproject", Error));
-        TEST_EXPECT(Error.Find("Missing.dxrproject") != String::InvalidIndex);
+        TEST_EXPECT(Error.Find("Missing.dxrproject") != FString::InvalidIndex);
     }
 
     TEST_SECTION("Broken or unsupported files fail and leave the descriptor untouched");
     {
-        const String Filename = Root + "/Broken.dxrproject";
+        const FString Filename = Root + "/Broken.dxrproject";
         TEST_EXPECT(FailsToLoad(Filename, "{ \"Version\": 1, \"Name\": "));
         TEST_EXPECT(FailsToLoad(Filename, "{ \"Name\": \"MyGame\" }"));
         TEST_EXPECT(FailsToLoad(Filename, "{ \"Version\": 2, \"Name\": \"MyGame\" }"));
@@ -152,13 +152,13 @@ bool ProjectDescriptor_Test()
 
     TEST_SECTION("A field with the wrong type is reported by its path");
     {
-        const String Filename = Root + "/WrongType.dxrproject";
+        const FString Filename = Root + "/WrongType.dxrproject";
         TEST_EXPECT(WriteText(Filename, "{ \"Version\": 1, \"Name\": \"MyGame\", \"Modules\": [ { \"Name\": 7 } ] }"));
 
         FProjectDescriptor Descriptor;
-        String Error;
+        FString Error;
         TEST_EXPECT(!Descriptor.LoadFromFile(Filename, Error));
-        TEST_EXPECT(Error.Find("Modules[0].Name") != String::InvalidIndex);
+        TEST_EXPECT(Error.Find("Modules[0].Name") != FString::InvalidIndex);
     }
 
     TEST_EXPECT(File::DeleteDirectoryTree(Root));

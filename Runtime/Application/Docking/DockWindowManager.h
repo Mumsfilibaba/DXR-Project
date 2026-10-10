@@ -98,7 +98,7 @@ public:
      * @param Size           The client size for the window.
      * @return The host's area, or null when the window could not be created.
      */
-    TSharedPtr<FDockingArea> SpawnHost(const String& PanelId, const String& Label, const TSharedPtr<FVisualElement>& Content, const IntVector2& ScreenPosition, const IntVector2& Size);
+    TSharedPtr<FDockingArea> SpawnHost(const FString& PanelId, const FString& Label, const TSharedPtr<FVisualElement>& Content, const IntVector2& ScreenPosition, const IntVector2& Size);
 
     /** @brief Closes every host, returning its panels to the main area. */
     void CloseAllHosts();
@@ -157,7 +157,7 @@ public:
      * @param PanelId The panel to look for.
      * @return The area whose tree holds it, or null when nothing does.
      */
-    NODISCARD TSharedPtr<FDockingArea> FindAreaForPanel(const String& PanelId) const;
+    NODISCARD TSharedPtr<FDockingArea> FindAreaForPanel(const FString& PanelId) const;
 
     /**
      * @brief Gets whether any area holds a panel, which is what tells a torn-out panel from a closed one.
@@ -165,7 +165,7 @@ public:
      * @param PanelId The panel to look for.
      * @return True when the main area or a host holds it.
      */
-    NODISCARD bool IsPanelDockedAnywhere(const String& PanelId) const;
+    NODISCARD bool IsPanelDockedAnywhere(const FString& PanelId) const;
 
     /**
      * @brief Gets whether a panel's content is on screen in any window.
@@ -173,7 +173,7 @@ public:
      * @param PanelId The panel to look for.
      * @return True when the area holding it shows it rather than another tab of its strip.
      */
-    NODISCARD bool IsPanelVisibleAnywhere(const String& PanelId) const;
+    NODISCARD bool IsPanelVisibleAnywhere(const FString& PanelId) const;
 
     /**
      * @brief Brings the tab of a panel torn out into a host forward, and the host's window with it, which is
@@ -182,7 +182,7 @@ public:
      * @param PanelId The panel to show.
      * @return True when a host holds it, false when it is in the main area or nowhere.
      */
-    bool FocusPanelInHost(const String& PanelId);
+    bool FocusPanelInHost(const FString& PanelId);
 
     /**
      * @brief Gets a host's window, so a caller can focus it or read where it sits.
@@ -233,7 +233,7 @@ private:
     {
         FRHITextureRef      Texture;
         const FDockingArea* Area;
-        String              PanelId;
+        FString             PanelId;
         EDockDirection      Direction;
         IntVector2          Size;
     };
@@ -253,14 +253,14 @@ private:
     };
 
     NODISCARD static IntVector2 ResolveHostPosition(const IntVector2& ScreenPosition);
-    NODISCARD static String ResolveHostTitle(const TSharedPtr<FDockingArea>& Area);
+    NODISCARD static FString ResolveHostTitle(const TSharedPtr<FDockingArea>& Area);
 
     static void ReleaseTextureDeferred(FRHITextureRef& Texture);
     static void LiftRootTabStrip(const TSharedPtr<FDockingArea>& Area, const TSharedPtr<FTitleBar>& TitleBar, bool bLift);
 
     NODISCARD int32 FindHostByArea(const FDockingArea* Area) const;
     NODISCARD int32 FindHostByWindow(const FWindow* Window) const;
-    NODISCARD int32 FindDropPreview(const FDockingArea* Area, const String& PanelId, EDockDirection Direction, const IntVector2& Size) const;
+    NODISCARD int32 FindDropPreview(const FDockingArea* Area, const FString& PanelId, EDockDirection Direction, const IntVector2& Size) const;
 
     void OnDragBegan(const FDockDragPanel& Panel, const IntVector2& ScreenPosition);
     void OnDropOutside(const FDockDragPanel& Panel, const IntVector2& ScreenPosition);

@@ -3,7 +3,7 @@
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
 
-TSharedPtr<FMenuBarButton> FMenuBarButton::Create(const String& InLabel, const TSharedPtr<IFontFace>& InFont)
+TSharedPtr<FMenuBarButton> FMenuBarButton::Create(const FString& InLabel, const TSharedPtr<IFontFace>& InFont)
 {
     TSharedPtr<FMenuBarButton> NewButton = MakeSharedPtr<FMenuBarButton>();
     NewButton->Label = InLabel;
@@ -31,7 +31,7 @@ IntVector2 FMenuBarButton::ComputeDesiredSize() const
     IntVector2 DesiredSize(Inset.GetTotalHorizontal(), Inset.GetTotalVertical());
     if (Font)
     {
-        DesiredSize.X += Font->MeasureWidth(StringView(Label.Data(), Label.Length()));
+        DesiredSize.X += Font->MeasureWidth(FStringView(Label.Data(), Label.Length()));
         DesiredSize.Y += Font->GetLineHeight();
     }
 
@@ -129,7 +129,7 @@ IntVector2 FMenuBar::ComputeDesiredSize() const
     return DesiredSize;
 }
 
-TSharedPtr<FMenuAnchor> FMenuBar::AddMenu(const String& Label, const TSharedPtr<IFontFace>& Font, const TSharedPtr<FVisualElement>& MenuContent)
+TSharedPtr<FMenuAnchor> FMenuBar::AddMenu(const FString& Label, const TSharedPtr<IFontFace>& Font, const TSharedPtr<FVisualElement>& MenuContent)
 {
     TSharedPtr<FMenuBarButton> Button = FMenuBarButton::Create(Label, Font);
     Button->SetStyle(Style);

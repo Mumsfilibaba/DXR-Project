@@ -99,7 +99,7 @@ public:
     virtual void ClearState() override final;
     virtual void Flush() override final;
 
-    virtual void PushEvent(const StringView& Name) override final;
+    virtual void PushEvent(const FStringView& Name) override final;
     virtual void PopEvent() override final;
 
     virtual void* GetRHINativeCommandList() override final;

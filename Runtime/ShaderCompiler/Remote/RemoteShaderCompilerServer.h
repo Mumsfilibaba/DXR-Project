@@ -17,7 +17,7 @@
 struct FRemoteForwardTarget
 {
     EShaderOutputLanguage OutputLanguage = EShaderOutputLanguage::Unknown;
-    String                Host;
+    FString               Host;
     uint16                Port = RemoteShaderCompilerProtocol::DefaultPort;
 };
 
@@ -28,7 +28,7 @@ struct FRemoteShaderCompilerServerSettings
      * dual-stack and falls back to 0.0.0.0 where IPv6 is unavailable. Without remote connections the server binds
      * 127.0.0.1 and ::1 instead.
      */
-    String                       BindAddress             = "::";
+    FString                       BindAddress             = "::";
 
     /** Zero lets the OS pick, which is what the tests do */
     uint16                       Port                    = RemoteShaderCompilerProtocol::DefaultPort;
@@ -42,11 +42,11 @@ struct FRemoteShaderCompilerServerSettings
 class FRemoteRequestSources final : public IShaderSourceProvider
 {
 public:
-    NODISCARD virtual bool FileExists(const String& Path) const override final;
-    virtual bool ReadFile(const String& Path, TArray<CHAR_T>& OutText) const override final;
+    NODISCARD virtual bool FileExists(const FString& Path) const override final;
+    virtual bool ReadFile(const FString& Path, TArray<CHAR_T>& OutText) const override final;
 
     /** Keyed by the collapsed path below the server's source root */
-    TMap<String, TSharedPtr<TArray<uint8>>> Files;
+    TMap<FString, TSharedPtr<TArray<uint8>>> Files;
 
     /** The same files as they were sent, only filled when the request is forwarded */
     TArray<FShaderSourceFile>               SourceFiles;
@@ -74,7 +74,7 @@ public:
     NODISCARD int32  GetNumConnections() const;
 
     /** @return Every bound address, "127.0.0.1:9371 and [::1]:9371", for the startup log */
-    NODISCARD String DescribeListeners() const;
+    NODISCARD FString DescribeListeners() const;
 
 public:
 
@@ -86,7 +86,7 @@ public:
 private:
     struct FConnection
     {
-        FConnection(uint32 InConnectionId, FNetworkSocket&& InSocket, const String& InPeerAddress)
+        FConnection(uint32 InConnectionId, FNetworkSocket&& InSocket, const FString& InPeerAddress)
             : ConnectionId(InConnectionId)
             , Socket(::Move(InSocket))
             , PeerAddress(InPeerAddress)
@@ -99,15 +99,15 @@ private:
         {
         }
 
-        uint32                                  ConnectionId;
-        FNetworkSocket                          Socket;
-        String                                  PeerAddress;
-        TArray<uint8>                           ReceiveBuffer;
-        TMap<String, TSharedPtr<TArray<uint8>>> Files;
-        TArray<uint8>                           SendBuffer;
-        FCriticalSection                        SendCS;
-        String                                  CloseReason;
-        bool                                    bPendingClose;
+        uint32                                   ConnectionId;
+        FNetworkSocket                           Socket;
+        FString                                  PeerAddress;
+        TArray<uint8>                            ReceiveBuffer;
+        TMap<FString, TSharedPtr<TArray<uint8>>> Files;
+        TArray<uint8>                            SendBuffer;
+        FCriticalSection                         SendCS;
+        FString                                  CloseReason;
+        bool                                     bPendingClose;
     };
 
     struct FForwarder
@@ -119,15 +119,15 @@ private:
     };
 
     bool ListenOn(const FSocketAddress& Address);
-    void AcceptConnections(FNetworkSocket& ListenSocket, TArray<String>& OutLogMessages);
+    void AcceptConnections(FNetworkSocket& ListenSocket, TArray<FString>& OutLogMessages);
     void Reject(FNetworkSocket& Socket, const CHAR_T* Reason);
     void ReceiveFrom(const TSharedPtr<FConnection>& Connection);
     void HandleCompileRequest(const TSharedPtr<FConnection>& Connection, RemoteShaderCompilerProtocol::FFrame&& Frame);
-    bool IngestFiles(FConnection& Connection, const RemoteShaderCompilerProtocol::FFrame& Frame, bool bKeepSourceFiles, FRemoteRequestSources& OutSources, String& OutError);
+    bool IngestFiles(FConnection& Connection, const RemoteShaderCompilerProtocol::FFrame& Frame, bool bKeepSourceFiles, FRemoteRequestSources& OutSources, FString& OutError);
     void FlushConnection(FConnection& Connection);
     void RetryForwarders();
     void RunCompile(TSharedPtr<FConnection> Connection, uint32 RequestId, FShaderCompileJob Job, TSharedPtr<FRemoteRequestSources> Sources, int32 Hops, bool bForward);
-    void QueueResult(FConnection& Connection, uint32 RequestId, const CHAR_T* Status, const String& Messages, const TArray<String>& Dependencies, const TArray<uint8>& ShaderCode);
+    void QueueResult(FConnection& Connection, uint32 RequestId, const CHAR_T* Status, const FString& Messages, const TArray<FString>& Dependencies, const TArray<uint8>& ShaderCode);
 
     NODISCARD FRemoteShaderCompilerClient* FindForwarder(EShaderOutputLanguage OutputLanguage);
     NODISCARD RemoteShaderCompilerProtocol::FFrame BuildHello();

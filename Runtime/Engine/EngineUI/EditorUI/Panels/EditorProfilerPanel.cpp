@@ -82,7 +82,7 @@ static bool AreScopeNamesEqual(const CHAR_T* Lhs, const CHAR_T* Rhs)
     return Lhs && Rhs && CString::Strcmp(Lhs, Rhs) == 0;
 }
 
-static bool NameContainsIgnoreCase(const CHAR_T* Name, const String& Query)
+static bool NameContainsIgnoreCase(const CHAR_T* Name, const FString& Query)
 {
     if (Query.IsEmpty())
     {
@@ -126,15 +126,15 @@ static FRHIPipelineStatistics SumPipelineStatistics(const TArray<FGPUProfilerInt
     return Total;
 }
 
-static String BuildChromeGpuEvents()
+static FString BuildChromeGpuEvents()
 {
     IGPUProfiler* Gpu = GetGPUProfiler();
     if (!Gpu)
     {
-        return String();
+        return FString();
     }
 
-    String Events;
+    FString Events;
     Events.Append("{\"name\":\"thread_name\",\"ph\":\"M\",\"pid\":1,\"tid\":0,\"args\":{\"name\":\"GPU\"}}");
 
     FProfilerGpuFrame GpuFrame;
@@ -249,10 +249,10 @@ bool FEditorProfilerPanel::Initialize()
 
     TreeDesc.TypeColumnToolTips = 
     {
-        String("How many times the scope was entered this frame."),
-        String("Time spent in the scope this frame, its children included."),
-        String("Time spent in the scope itself this frame, children taken out."),
-        String("The share of its lane's total that inclusive time is, so a scope\n"
+        FString("How many times the scope was entered this frame."),
+        FString("Time spent in the scope this frame, its children included."),
+        FString("Time spent in the scope itself this frame, children taken out."),
+        FString("The share of its lane's total that inclusive time is, so a scope\n"
                "on a worker thread is read against that thread rather than the frame."),
     };
 
@@ -276,10 +276,10 @@ bool FEditorProfilerPanel::Initialize()
     
     TargetsDesc.TypeColumnToolTips = 
     {
-        String("How often the scope ran, averaged over the stored frames."),
-        String("Average time in the scope, its children included."),
-        String("Average time in the scope itself, children taken out."),
-        String("The share of the captured frame time that the scope's own work took."),
+        FString("How often the scope ran, averaged over the stored frames."),
+        FString("Average time in the scope, its children included."),
+        FString("Average time in the scope itself, children taken out."),
+        FString("The share of the captured frame time that the scope's own work took."),
     };
 
     TargetsDesc.OnSelectionChanged       = FOnTreeSelectionChanged::CreateRaw(this, &FEditorProfilerPanel::OnTargetSelectionChanged);
@@ -287,9 +287,9 @@ bool FEditorProfilerPanel::Initialize()
     TargetsDesc.OnGetContextMenu         = FOnGetTreeItemContextMenu();
     TargetsTree = FTreeView::Create(TargetsDesc);
 
-    TArray<String> TargetDomainOptions;
-    TargetDomainOptions.Add(String("CPU scopes"));
-    TargetDomainOptions.Add(String("GPU passes"));
+    TArray<FString> TargetDomainOptions;
+    TargetDomainOptions.Add(FString("CPU scopes"));
+    TargetDomainOptions.Add(FString("GPU passes"));
 
     FComboBox::FDesc TargetDomainDesc;
     TargetDomainDesc.Options            = TargetDomainOptions;
@@ -797,7 +797,7 @@ void FEditorProfilerPanel::RefreshHeader()
     const CHAR_T* Bound = GpuMs <= 0.0f ? "no GPU timings" : (CpuMs >= GpuMs ? "CPU-bound" : "GPU-bound");
     const CHAR_T* Which = Mode == EProfilerMode::Boot ? "boot session" : (bIsFrozen ? "frozen" : (bFollowLatestFrame ? "live" : "pinned"));
 
-    SummaryText->SetText(String::Printf("%d FPS   CPU %.2f ms   GPU %.2f ms   %s   boot %.0f ms   frame %d (%s)%s%s",
+    SummaryText->SetText(FString::Printf("%d FPS   CPU %.2f ms   GPU %.2f ms   %s   boot %.0f ms   frame %d (%s)%s%s",
         Cpu.GetFramesPerSecond(), CpuMs, GpuMs, Bound, FBootProfiler::Get().GetSession().CpuMilliseconds,
         ShownFrameNumber, Which, GpuStatusText.IsEmpty() ? "" : "   ", *GpuStatusText));
 }
@@ -1059,13 +1059,13 @@ void FEditorProfilerPanel::RefreshDetails()
                 FProfilerGpuFrame Latest;
                 if (!Gpu->GetLatestFrame(Latest))
                 {
-                    GpuStatusText = String("No GPU capture for this CPU frame");
+                    GpuStatusText = FString("No GPU capture for this CPU frame");
                 }
                 else if (bFollowLatestFrame)
                 {
                     if (Latest.CpuFrameIndex < 0)
                     {
-                        GpuStatusText = String("not matched to a CPU frame");
+                        GpuStatusText = FString("not matched to a CPU frame");
                     }
 
                     ShownGpuMilliseconds = Latest.GpuMilliseconds;
@@ -1074,11 +1074,11 @@ void FEditorProfilerPanel::RefreshDetails()
                 }
                 else if (Latest.CpuFrameIndex >= 0 && ShownFrameNumber > Latest.CpuFrameIndex)
                 {
-                    GpuStatusText = String::Printf("GPU is %d frames behind", ShownFrameNumber - Latest.CpuFrameIndex);
+                    GpuStatusText = FString::Printf("GPU is %d frames behind", ShownFrameNumber - Latest.CpuFrameIndex);
                 }
                 else
                 {
-                    GpuStatusText = String("No GPU capture for this CPU frame");
+                    GpuStatusText = FString("No GPU capture for this CPU frame");
                 }
             }
         }
@@ -1132,7 +1132,7 @@ void FEditorProfilerPanel::FillTimeline()
             }
         }
 
-        Lane.SubLabel = String::Printf("%.2f ms", ToMilliseconds(LaneNanoseconds));
+        Lane.SubLabel = FString::Printf("%.2f ms", ToMilliseconds(LaneNanoseconds));
         Lanes.Add(Move(Lane));
     }
 
@@ -1167,7 +1167,7 @@ void FEditorProfilerPanel::FillTimeline()
         }
         else
         {
-            GpuLane.SubLabel = GpuIntervals.IsEmpty() ? String("no queries") : String::Printf("%.2f ms", ToMilliseconds(GpuNanoseconds));
+            GpuLane.SubLabel = GpuIntervals.IsEmpty() ? FString("no queries") : FString::Printf("%.2f ms", ToMilliseconds(GpuNanoseconds));
         }
 
         Lanes.Add(Move(GpuLane));
@@ -1179,7 +1179,7 @@ void FEditorProfilerPanel::FillTimeline()
 
 TSharedPtr<FTreeItem> FEditorProfilerPanel::BuildCallTree(
     int32                        LaneIndex,
-    const String&                LaneLabel,
+    const FString&               LaneLabel,
     const TArray<const CHAR_T*>& Names,
     const TArray<int32>&         Parents,
     const TArray<uint64>&        Inclusive,
@@ -1219,7 +1219,7 @@ TSharedPtr<FTreeItem> FEditorProfilerPanel::BuildCallTree(
             FCallTreeNode Node;
             Node.Name       = Names[Index];
             Node.ParentNode = ParentNode;
-            Node.Item       = FTreeItem::Create(Names[Index] ? String(Names[Index]) : String("<unnamed>"));
+            Node.Item       = FTreeItem::Create(Names[Index] ? FString(Names[Index]) : FString("<unnamed>"));
 
             NodeIndex = Nodes.Size();
             Nodes.Add(Node);
@@ -1334,12 +1334,12 @@ void FEditorProfilerPanel::RebuildHierarchy()
             Exclusive.Add(Interval.ExclusiveNanoseconds);
         }
 
-        TSharedPtr<FTreeItem> GpuItem = BuildCallTree(ShownFrame.Threads.Size(), String("GPU"),
+        TSharedPtr<FTreeItem> GpuItem = BuildCallTree(ShownFrame.Threads.Size(), FString("GPU"),
             Names, Parents, Inclusive, Exclusive, true);
 
         if (GpuIntervals.IsEmpty())
         {
-            GpuItem->TypeLabel = String("no queries resolved");
+            GpuItem->TypeLabel = FString("no queries resolved");
         }
 
         HierarchyRoots.Add(GpuItem);
@@ -1353,14 +1353,14 @@ void FEditorProfilerPanel::RebuildHierarchy()
     }
 }
 
-String FEditorProfilerPanel::FormatScopeColumns(int32 Calls, uint64 InclusiveNanoseconds, uint64 ExclusiveNanoseconds, double LanePercent)
+FString FEditorProfilerPanel::FormatScopeColumns(int32 Calls, uint64 InclusiveNanoseconds, uint64 ExclusiveNanoseconds, double LanePercent)
 {
-    return String::Printf("%5d %10.3f %10.3f %8.1f%%", Calls, ToMilliseconds(InclusiveNanoseconds), ToMilliseconds(ExclusiveNanoseconds), LanePercent);
+    return FString::Printf("%5d %10.3f %10.3f %8.1f%%", Calls, ToMilliseconds(InclusiveNanoseconds), ToMilliseconds(ExclusiveNanoseconds), LanePercent);
 }
 
-String FEditorProfilerPanel::FormatTargetColumns(double CallsPerFrame, double InclusiveMilliseconds, double ExclusiveMilliseconds, double BudgetPercent)
+FString FEditorProfilerPanel::FormatTargetColumns(double CallsPerFrame, double InclusiveMilliseconds, double ExclusiveMilliseconds, double BudgetPercent)
 {
-    return String::Printf("%6.2f %10.3f %10.3f %8.1f%%", CallsPerFrame, InclusiveMilliseconds, ExclusiveMilliseconds, BudgetPercent);
+    return FString::Printf("%6.2f %10.3f %10.3f %8.1f%%", CallsPerFrame, InclusiveMilliseconds, ExclusiveMilliseconds, BudgetPercent);
 }
 
 void FEditorProfilerPanel::OnTargetSelectionChanged(const TArray<TSharedPtr<FTreeItem>>& InSelection)
@@ -1376,7 +1376,7 @@ void FEditorProfilerPanel::OnTargetSelectionChanged(const TArray<TSharedPtr<FTre
         return;
     }
 
-    const String& Name = TargetScopeNames[Rank - 1];
+    const FString& Name = TargetScopeNames[Rank - 1];
     if (SearchBox)
     {
         SearchBox->SetText(Name);
@@ -1436,7 +1436,7 @@ TSharedPtr<FVisualElement> FEditorProfilerPanel::BuildTimelineBarContextMenu(int
         return nullptr;
     }
 
-    return BuildGpuPassContextMenu(String(GpuIntervals[BarIndex].Name));
+    return BuildGpuPassContextMenu(FString(GpuIntervals[BarIndex].Name));
 }
 
 TSharedPtr<FVisualElement> FEditorProfilerPanel::BuildScopeContextMenu(const TSharedPtr<FTreeItem>& Item)
@@ -1459,10 +1459,10 @@ TSharedPtr<FVisualElement> FEditorProfilerPanel::BuildScopeContextMenu(const TSh
         return nullptr;
     }
 
-    return BuildGpuPassContextMenu(String(GpuIntervals[Scope.IntervalIndex].Name));
+    return BuildGpuPassContextMenu(FString(GpuIntervals[Scope.IntervalIndex].Name));
 }
 
-TSharedPtr<FVisualElement> FEditorProfilerPanel::BuildGpuPassContextMenu(const String& PassName)
+TSharedPtr<FVisualElement> FEditorProfilerPanel::BuildGpuPassContextMenu(const FString& PassName)
 {
     if (PassName.IsEmpty())
     {
@@ -1483,7 +1483,7 @@ TSharedPtr<FVisualElement> FEditorProfilerPanel::BuildGpuPassContextMenu(const S
     return Menu;
 }
 
-void FEditorProfilerPanel::ShowGpuPassInRenderGraph(const String& PassName)
+void FEditorProfilerPanel::ShowGpuPassInRenderGraph(const FString& PassName)
 {
     if (!EditorEngine || !EditorEngine->GetEditorShell() || !EditorEngine->GetEditorShell()->GetRegistry())
     {
@@ -1592,7 +1592,7 @@ void FEditorProfilerPanel::ApplySearchToHierarchy()
     }
 }
 
-void FEditorProfilerPanel::OnSearchTextChanged(const String& Text)
+void FEditorProfilerPanel::OnSearchTextChanged(const FString& Text)
 {
     SearchQuery      = Text;
     bDetailsAreDirty = true;
@@ -1662,11 +1662,11 @@ void FEditorProfilerPanel::RebuildCallers()
     {
         const int32 Caller = Callers[Index];
         CallersTable->AddRow(Names[Caller] ? Names[Caller] : "<unnamed>",
-            CreateValueText(String::Printf("%.3f ms", ToMilliseconds(Inclusive[Caller]))));
+            CreateValueText(FString::Printf("%.3f ms", ToMilliseconds(Inclusive[Caller]))));
     }
 
     FPropertyRow& Row = CallersTable->AddRow(Names[Selection.IntervalIndex] ? Names[Selection.IntervalIndex] : "<unnamed>",
-        CreateValueText(String::Printf("%.3f ms   selected", ToMilliseconds(Inclusive[Selection.IntervalIndex]))));
+        CreateValueText(FString::Printf("%.3f ms   selected", ToMilliseconds(Inclusive[Selection.IntervalIndex]))));
     Row.IndentLevel = Callers.Size();
 }
 
@@ -1708,7 +1708,7 @@ void FEditorProfilerPanel::RebuildNativeStack()
     {
         FStackTraceEntry Entry;
         FPlatformStackTrace::GetStackTraceEntryFromAddress(Interval.StackFrames[Frame], Entry);
-        NativeStackTable->AddRow(Entry.FunctionName, CreateValueText(String::Printf("%s:%u", Entry.Filename, Entry.Line)));
+        NativeStackTable->AddRow(Entry.FunctionName, CreateValueText(FString::Printf("%s:%u", Entry.Filename, Entry.Line)));
     }
 
     FPlatformStackTrace::ReleaseSymbols();
@@ -1734,12 +1734,12 @@ void FEditorProfilerPanel::BindPipelineStatistics(const FRHIPipelineStatistics* 
     {
         if (!Statistics)
         {
-            PipelineStatisticsValues[Index]->SetText(String("-"));
+            PipelineStatisticsValues[Index]->SetText(FString("-"));
             continue;
         }
 
         const uint64 Counter = Statistics->*GPipelineStatisticsCounters[Index].Member;
-        PipelineStatisticsValues[Index]->SetText(String::Printf("%llu", static_cast<unsigned long long>(Counter)));
+        PipelineStatisticsValues[Index]->SetText(FString::Printf("%llu", static_cast<unsigned long long>(Counter)));
     }
 }
 
@@ -1748,7 +1748,7 @@ void FEditorProfilerPanel::RefreshPipelineStatistics()
     IGPUProfiler* Profiler = GetGPUProfiler();
     if (!Profiler)
     {
-        PipelineStatisticsContext->SetText(String("GPU profiler unavailable"));
+        PipelineStatisticsContext->SetText(FString("GPU profiler unavailable"));
         BindPipelineStatistics(nullptr);
         return;
     }
@@ -1756,7 +1756,7 @@ void FEditorProfilerPanel::RefreshPipelineStatistics()
     if (!Profiler->IsPipelineStatisticsEnabled())
     {
         PipelineStatisticsContext->SetText(
-            String("Not measured - enable Pipeline Statistics and wait for a new GPU frame"));
+            FString("Not measured - enable Pipeline Statistics and wait for a new GPU frame"));
         BindPipelineStatistics(nullptr);
         return;
     }
@@ -1764,8 +1764,8 @@ void FEditorProfilerPanel::RefreshPipelineStatistics()
     if (!bHasShownGpuFrame)
     {
         PipelineStatisticsContext->SetText(ShownFrameNumber >= 0
-            ? String::Printf("Frame %d - no correlated GPU capture", ShownFrameNumber)
-            : String("No GPU frame selected"));
+            ? FString::Printf("Frame %d - no correlated GPU capture", ShownFrameNumber)
+            : FString("No GPU frame selected"));
 
         BindPipelineStatistics(nullptr);
         return;
@@ -1779,13 +1779,13 @@ void FEditorProfilerPanel::RefreshPipelineStatistics()
         if (Interval.bHasPipelineStats)
         {
             PipelineStatisticsContext->SetText(
-                String::Printf("Frame %d / pass %s", ShownFrameNumber, Name));
+                FString::Printf("Frame %d / pass %s", ShownFrameNumber, Name));
             BindPipelineStatistics(&Interval.PipelineStats);
         }
         else
         {
             PipelineStatisticsContext->SetText(
-                String::Printf("Frame %d / pass %s - not measured", ShownFrameNumber, Name));
+                FString::Printf("Frame %d / pass %s - not measured", ShownFrameNumber, Name));
             BindPipelineStatistics(nullptr);
         }
 
@@ -1801,14 +1801,14 @@ void FEditorProfilerPanel::RefreshPipelineStatistics()
     if (!bHasStatistics)
     {
         PipelineStatisticsContext->SetText(
-            String::Printf("Frame %d - no pass statistics were measured", ShownFrameNumber));
+            FString::Printf("Frame %d - no pass statistics were measured", ShownFrameNumber));
         BindPipelineStatistics(nullptr);
         return;
     }
 
     const FRHIPipelineStatistics Total = SumPipelineStatistics(GpuIntervals);
     PipelineStatisticsContext->SetText(
-        String::Printf("Frame %d / measured top-level GPU passes", ShownFrameNumber));
+        FString::Printf("Frame %d / measured top-level GPU passes", ShownFrameNumber));
     BindPipelineStatistics(&Total);
 }
 
@@ -1850,7 +1850,7 @@ void FEditorProfilerPanel::RefreshOptimizationTargets()
         const FProfilerOptimizationTarget& Target = Targets[Index];
         const int32                        Rank   = Index + 1;
 
-        TSharedPtr<FTreeItem> Item = FTreeItem::Create(String::Printf("%2d. %s", Rank, *Target.Name));
+        TSharedPtr<FTreeItem> Item = FTreeItem::Create(FString::Printf("%2d. %s", Rank, *Target.Name));
         Item->TypeLabel = FormatTargetColumns(Target.CallsPerFrame, Target.InclusiveMillisecondsPerFrame,
             Target.SelfMillisecondsPerFrame, Target.BudgetPercent);
         Item->UserData  = reinterpret_cast<void*>(static_cast<uintptr_t>(Rank));
@@ -1865,10 +1865,10 @@ TArray<FProfilerOptimizationTarget> FEditorProfilerPanel::CollectGpuOptimization
 {
     struct FHotPass
     {
-        String Name;
-        uint64 Inclusive = 0;
-        uint64 Exclusive = 0;
-        int32  Calls     = 0;
+        FString Name;
+        uint64  Inclusive = 0;
+        uint64  Exclusive = 0;
+        int32   Calls     = 0;
     };
 
     TArray<FProfilerOptimizationTarget> Targets;
@@ -1879,7 +1879,7 @@ TArray<FProfilerOptimizationTarget> FEditorProfilerPanel::CollectGpuOptimization
         return Targets;
     }
 
-    TMap<String, FHotPass> HotPasses;
+    TMap<FString, FHotPass> HotPasses;
 
     double CapturedGpuMilliseconds = 0.0;
     int32  CapturedFrames          = 0;
@@ -1898,7 +1898,7 @@ TArray<FProfilerOptimizationTarget> FEditorProfilerPanel::CollectGpuOptimization
 
         for (const FGPUProfilerInterval& Interval : Frame.Intervals)
         {
-            const String Name = Interval.Name ? String(Interval.Name) : String("<unnamed>");
+            const FString Name = Interval.Name ? FString(Interval.Name) : FString("<unnamed>");
 
             FHotPass* Entry = HotPasses.Find(Name);
             if (!Entry)
@@ -2012,7 +2012,7 @@ void FEditorProfilerPanel::RefreshWorstFrames()
             break;
         }
 
-        TSharedPtr<FToolTipHost> ToolTip = FToolTipHost::Create(Button, String(), FEditorStyle::GetFonts().Body, EToolTipPlacement::BelowAnchor);
+        TSharedPtr<FToolTipHost> ToolTip = FToolTipHost::Create(Button, FString(), FEditorStyle::GetFonts().Body, EToolTipPlacement::BelowAnchor);
         if (!ToolTip)
         {
             break;
@@ -2030,8 +2030,8 @@ void FEditorProfilerPanel::RefreshWorstFrames()
     {
         const FProfilerWorstFrame& Hitch = Worst[Index];
 
-        WorstFrameButtons[Index]->SetText(String::Printf("%d  %.1fms", Hitch.FrameIndex, Hitch.CpuMilliseconds));
-        WorstFrameToolTips[Index]->SetToolTipText(String::Printf("Jumps the timeline to frame %d, one of the slowest recorded at %.2f ms.\n"
+        WorstFrameButtons[Index]->SetText(FString::Printf("%d  %.1fms", Hitch.FrameIndex, Hitch.CpuMilliseconds));
+        WorstFrameToolTips[Index]->SetToolTipText(FString::Printf("Jumps the timeline to frame %d, one of the slowest recorded at %.2f ms.\n"
                                                                  "Freeze first, so the frames are still there to jump into.",
             Hitch.FrameIndex, Hitch.CpuMilliseconds));
 
@@ -2039,7 +2039,7 @@ void FEditorProfilerPanel::RefreshWorstFrames()
     }
 }
 
-void FEditorProfilerPanel::SelectGpuScopeByName(const String& Name)
+void FEditorProfilerPanel::SelectGpuScopeByName(const FString& Name)
 {
     if (Name.IsEmpty())
     {
@@ -2128,7 +2128,7 @@ void FEditorProfilerPanel::SelectGpuScopeByName(const String& Name)
 
 void FEditorProfilerPanel::WriteCapture()
 {
-    String Text = FProfilerReport::BuildCpuAndBootText();
+    FString Text = FProfilerReport::BuildCpuAndBootText();
     Text.Append("\n== GPU ==\n");
 
     if (IGPUProfiler* Gpu = GetGPUProfiler())
@@ -2157,7 +2157,7 @@ void FEditorProfilerPanel::WriteCapture()
             Latest = Stored;
         }
 
-        Text.Append(String::Printf("GPU frame avg=%.3f ms  min=%.3f  max=%.3f\n",
+        Text.Append(FString::Printf("GPU frame avg=%.3f ms  min=%.3f  max=%.3f\n",
             Count > 0 ? static_cast<float>(Sum / static_cast<double>(Count)) : 0.0f,
             MinMs == TNumericLimits<float>::Max() ? 0.0f : MinMs,
             MaxMs == TNumericLimits<float>::Lowest() ? 0.0f : MaxMs));
@@ -2170,26 +2170,26 @@ void FEditorProfilerPanel::WriteCapture()
                 Text.Append("  ");
             }
 
-            Text.Append(String::Printf("%s  inc=%.3f ms  exc=%.3f ms\n",
+            Text.Append(FString::Printf("%s  inc=%.3f ms  exc=%.3f ms\n",
                 Interval.Name ? Interval.Name : "<unnamed>",
                 ToMilliseconds(Interval.InclusiveNanoseconds),
                 ToMilliseconds(Interval.ExclusiveNanoseconds)));
         }
     }
 
-    const uint64 Stamp    = FPlatformTime::QueryPerformanceCounter();
-    const String TxtPath  = File::CombinePath(Paths::GetProjectDir(), String::Printf("Profiling/ProfileCapture_%llu.txt", Stamp));
-    const String JsonPath = File::CombinePath(Paths::GetProjectDir(), String::Printf("Profiling/ProfileCapture_%llu.json", Stamp));
+    const uint64  Stamp    = FPlatformTime::QueryPerformanceCounter();
+    const FString TxtPath  = File::CombinePath(Paths::GetProjectDir(), FString::Printf("Profiling/ProfileCapture_%llu.txt", Stamp));
+    const FString JsonPath = File::CombinePath(Paths::GetProjectDir(), FString::Printf("Profiling/ProfileCapture_%llu.json", Stamp));
 
     FProfilerReport::WriteFile(TxtPath, Text);
     FProfilerReport::WriteFile(JsonPath, FProfilerReport::MergeChromeJson(FProfilerReport::BuildChromeCpuJson(), BuildChromeGpuEvents()));
 }
 
-String FEditorProfilerPanel::ResolveThreadName(void* ThreadHandle, int32 ThreadIndex)
+FString FEditorProfilerPanel::ResolveThreadName(void* ThreadHandle, int32 ThreadIndex)
 {
     if (FThreadManager::Get().IsMainThread(ThreadHandle))
     {
-        return String("GameThread");
+        return FString("GameThread");
     }
 
     if (IPlatformThread* Thread = FThreadManager::Get().GetThreadFromHandle(ThreadHandle))
@@ -2197,10 +2197,10 @@ String FEditorProfilerPanel::ResolveThreadName(void* ThreadHandle, int32 ThreadI
         return Thread->GetName();
     }
 
-    return String::Printf("Thread %d", ThreadIndex);
+    return FString::Printf("Thread %d", ThreadIndex);
 }
 
-TSharedPtr<FTextBlock> FEditorProfilerPanel::CreateValueText(const String& Text)
+TSharedPtr<FTextBlock> FEditorProfilerPanel::CreateValueText(const FString& Text)
 {
     FTextBlock::FDesc Desc;
     Desc.Text = Text;

@@ -12,7 +12,7 @@ FD3D12Heap::FD3D12Heap(FD3D12Device* InDevice, ID3D12Heap* InHeap)
 {
 }
 
-void FD3D12Heap::SetDebugName(const String& Name)
+void FD3D12Heap::SetDebugName(const FString& Name)
 {
     D3D12SetDebugName(Heap.Get(), Name);
 }

@@ -87,7 +87,7 @@ void RHIValidationInternal::LogCallStack(const CHAR_T* Filename, int32 Line)
         FirstFrame = 0;
     }
 
-    String Record;
+    FString Record;
     for (int32 Index = FirstFrame; Index < Stack.Size(); Index++)
     {
         const FStackTraceEntry& Entry = Stack[Index];
@@ -125,15 +125,15 @@ ERHIType RHIValidationInternal::SafeGetRHIType(FRHIDevice* RealRHI)
     return RealRHI ? RealRHI->GetRHIType() : ERHIType::Unknown;
 }
 
-String RHIValidationInternal::GetResourceIdentity(const FRHIResource* Resource)
+FString RHIValidationInternal::GetResourceIdentity(const FRHIResource* Resource)
 {
     if (!Resource)
     {
-        return String("<null>");
+        return FString("<null>");
     }
 
     // Only textures and buffers carry a debug name, and the shared base does not declare the accessor
-    String DebugName;
+    FString DebugName;
     switch (Resource->GetResourceType())
     {
         case ERHIResourceType::Texture: static_cast<const FRHITexture*>(Resource)->GetDebugName(DebugName); break;
@@ -144,10 +144,10 @@ String RHIValidationInternal::GetResourceIdentity(const FRHIResource* Resource)
     const CHAR_T* ResourceType = ToString(Resource->GetResourceType());
     if (DebugName.IsEmpty())
     {
-        return String::Printf("%s <unnamed> (%p)", ResourceType, reinterpret_cast<const void*>(Resource));
+        return FString::Printf("%s <unnamed> (%p)", ResourceType, reinterpret_cast<const void*>(Resource));
     }
 
-    return String::Printf("%s '%s'", ResourceType, *DebugName);
+    return FString::Printf("%s '%s'", ResourceType, *DebugName);
 }
 
 bool RHIValidationInternal::IsBufferValidAsCopyDestination(const FRHIBufferDesc& BufferDesc)

@@ -17,13 +17,13 @@ public:
     virtual void Show(bool bShow) override final;
     virtual bool IsVisible() const override final { return (WindowHandle != nullptr); }
 
-    virtual void SetTitle(const String& Title) override final;
+    virtual void SetTitle(const FString& Title) override final;
     virtual void SetTextColor(EConsoleTextColor Color) override final;
     virtual void SetOnClosed(const TFunction<void()>& Callback) override final;
 
     // IOutputDevice Interface Overrides
-    virtual void Log(const String& Message) override final;
-    virtual void Log(ELogSeverity Severity, const String& Message) override final;
+    virtual void Log(const FString& Message) override final;
+    virtual void Log(ELogSeverity Severity, const FString& Message) override final;
     virtual void Flush() override final;
 
     void OnWindowDidClose();
@@ -31,7 +31,7 @@ public:
 private:
     struct FPendingLine
     {
-        String            Text;
+        FString           Text;
         EConsoleTextColor Color;
     };
 
@@ -39,7 +39,7 @@ private:
     void DestroyConsole();
     void DestroyResources();
 
-    void EnqueueLine(const String& Message, EConsoleTextColor Color);
+    void EnqueueLine(const FString& Message, EConsoleTextColor Color);
 
     void MainThreadCreateAttributeCache();
     NSDictionary* MainThreadAttributesForColor(EConsoleTextColor Color) const;
@@ -55,7 +55,7 @@ private:
     NSArray*                 AttributeCache;
     mutable FCriticalSection WindowCS;
     mutable FCriticalSection PendingCS;
-    String                   Title;
+    FString                  Title;
     TFunction<void()>        OnClosed;
     TArray<FPendingLine>     PendingLines;
     EConsoleTextColor        CurrentTextColor;

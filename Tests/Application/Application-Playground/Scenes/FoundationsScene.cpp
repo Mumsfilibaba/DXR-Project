@@ -167,7 +167,7 @@ static TSharedPtr<FVisualElement> MakeScrollDemo(const FPlaygroundFonts& Fonts)
     for (int32 RowIndex = 0; RowIndex < 24; ++RowIndex)
     {
         FTextBlock::FDesc RowDesc;
-        RowDesc.Text            = String::Printf("Row %02d - scroll with the wheel, the clip is the scroll box's own", RowIndex);
+        RowDesc.Text            = FString::Printf("Row %02d - scroll with the wheel, the clip is the scroll box's own", RowIndex);
         RowDesc.Font            = Fonts.Monospace;
         RowDesc.ColorAndOpacity = (RowIndex % 2) == 0 ? Style.Colors.Text : Style.Colors.TextDisabled;
 

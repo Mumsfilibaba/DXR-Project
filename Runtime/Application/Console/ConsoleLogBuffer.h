@@ -14,13 +14,13 @@ struct FConsoleLogLine
     {
     }
 
-    FConsoleLogLine(const String& InMessage, ELogSeverity InSeverity)
+    FConsoleLogLine(const FString& InMessage, ELogSeverity InSeverity)
         : Message(InMessage)
         , Severity(InSeverity)
     {
     }
 
-    String       Message;
+    FString      Message;
     ELogSeverity Severity;
 };
 
@@ -44,8 +44,8 @@ public:
     virtual ~FConsoleLogBuffer();
 
     // IOutputDevice Interface
-    virtual void Log(const String& Message) override final;
-    virtual void Log(ELogSeverity Severity, const String& Message) override final;
+    virtual void Log(const FString& Message) override final;
+    virtual void Log(ELogSeverity Severity, const FString& Message) override final;
 
     /** @brief Starts receiving everything the engine logs. */
     void RegisterWithLogger();

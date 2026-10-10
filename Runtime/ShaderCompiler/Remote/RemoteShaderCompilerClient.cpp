@@ -14,9 +14,9 @@ static uint64 GetMillisecondsNow()
     return static_cast<uint64>(static_cast<double>(FPlatformTime::QueryPerformanceCounter()) * 1000.0 / static_cast<double>(FPlatformTime::QueryPerformanceFrequency()));
 }
 
-static String MakeSentFileKey(const String& Path, uint32 Hash)
+static FString MakeSentFileKey(const FString& Path, uint32 Hash)
 {
-    return String::Printf("%s:%u", *Path, Hash);
+    return FString::Printf("%s:%u", *Path, Hash);
 }
 
 FRemoteShaderCompilerClient::FRemoteShaderCompilerClient()
@@ -45,7 +45,7 @@ FRemoteShaderCompilerClient::~FRemoteShaderCompilerClient()
     Disconnect();
 }
 
-bool FRemoteShaderCompilerClient::Connect(const String& InHost, uint16 InPort, uint32 TimeoutMilliseconds)
+bool FRemoteShaderCompilerClient::Connect(const FString& InHost, uint16 InPort, uint32 TimeoutMilliseconds)
 {
     Disconnect();
 
@@ -55,7 +55,7 @@ bool FRemoteShaderCompilerClient::Connect(const String& InHost, uint16 InPort, u
     FNetworkSocket NewSocket(ESocketType::TCP);
     if (!NewSocket.ConnectToHost(InHost, InPort, TimeoutMilliseconds))
     {
-        LastError = String::Printf("Could not connect to %s", *FSocketAddress::FormatHostAndPort(InHost, InPort));
+        LastError = FString::Printf("Could not connect to %s", *FSocketAddress::FormatHostAndPort(InHost, InPort));
         return false;
     }
 
@@ -159,13 +159,13 @@ TArray<FRemoteLanguageInfo> FRemoteShaderCompilerClient::GetLanguages() const
     return Languages;
 }
 
-String FRemoteShaderCompilerClient::GetPeerName() const
+FString FRemoteShaderCompilerClient::GetPeerName() const
 {
-    const String Address = FSocketAddress::FormatHostAndPort(Host, Port);
-    return PeerPlatform.IsEmpty() ? Address : String::Printf("%s (%s)", *Address, *PeerPlatform);
+    const FString Address = FSocketAddress::FormatHostAndPort(Host, Port);
+    return PeerPlatform.IsEmpty() ? Address : FString::Printf("%s (%s)", *Address, *PeerPlatform);
 }
 
-String FRemoteShaderCompilerClient::GetLastError() const
+FString FRemoteShaderCompilerClient::GetLastError() const
 {
     return LastError;
 }
@@ -192,7 +192,7 @@ bool FRemoteShaderCompilerClient::ReceiveHello(uint32 TimeoutMilliseconds)
             if (Frame.Type == RemoteShaderCompilerProtocol::EMessageType::Rejected)
             {
                 const FJsonValue* Reason = Frame.Header.Find("reason");
-                LastError = String::Printf("The server rejected the connection: %s", Reason ? *Reason->GetStringOr("no reason given") : "no reason given");
+                LastError = FString::Printf("The server rejected the connection: %s", Reason ? *Reason->GetStringOr("no reason given") : "no reason given");
                 return false;
             }
 
@@ -205,12 +205,12 @@ bool FRemoteShaderCompilerClient::ReceiveHello(uint32 TimeoutMilliseconds)
             const FJsonValue* ProtocolValue = Frame.Header.Find("protocol");
             if (!ProtocolValue || ProtocolValue->GetInt64Or(0) != static_cast<int64>(RemoteShaderCompilerProtocol::Version))
             {
-                LastError = String::Printf("The server speaks protocol %lld, this client speaks %u", ProtocolValue ? ProtocolValue->GetInt64Or(0) : 0ll, RemoteShaderCompilerProtocol::Version);
+                LastError = FString::Printf("The server speaks protocol %lld, this client speaks %u", ProtocolValue ? ProtocolValue->GetInt64Or(0) : 0ll, RemoteShaderCompilerProtocol::Version);
                 return false;
             }
 
             const FJsonValue* PlatformValue = Frame.Header.Find("platform");
-            PeerPlatform = PlatformValue ? PlatformValue->GetStringOr("") : String();
+            PeerPlatform = PlatformValue ? PlatformValue->GetStringOr("") : FString();
 
             TArray<FRemoteLanguageInfo> NewLanguages;
             if (const FJsonValue* LanguagesValue = Frame.Header.Find("languages"); LanguagesValue && LanguagesValue->IsArray())
@@ -359,7 +359,7 @@ ERemoteCompileStatus FRemoteShaderCompilerClient::Compile(const FShaderCompileJo
         else
         {
             PendingRequests.Remove(RequestId);
-            OutResult.Messages = String::Printf("%s did not answer within %u ms", *GetPeerName(), TimeoutMilliseconds);
+            OutResult.Messages = FString::Printf("%s did not answer within %u ms", *GetPeerName(), TimeoutMilliseconds);
         }
     }
 
@@ -424,15 +424,15 @@ void FRemoteShaderCompilerClient::HandleFrame(RemoteShaderCompilerProtocol::FFra
 
     const FJsonValue* StatusValue   = Frame.Header.Find("status");
     const FJsonValue* MessagesValue = Frame.Header.Find("messages");
-    const String      StatusText    = StatusValue ? StatusValue->GetStringOr("") : String();
+    const FString     StatusText    = StatusValue ? StatusValue->GetStringOr("") : FString();
 
-    Pending->Result.Messages = MessagesValue ? MessagesValue->GetStringOr("") : String();
+    Pending->Result.Messages = MessagesValue ? MessagesValue->GetStringOr("") : FString();
 
     if (const FJsonValue* DependenciesValue = Frame.Header.Find("dependencies"); DependenciesValue && DependenciesValue->IsArray())
     {
         for (int32 Index = 0; Index < DependenciesValue->Num(); ++Index)
         {
-            String Dependency;
+            FString Dependency;
             if ((*DependenciesValue)[Index].TryGetString(Dependency) && RemoteShaderCompilerProtocol::IsValidSourcePath(Dependency))
             {
                 Pending->Result.Dependencies.Add(Dependency);

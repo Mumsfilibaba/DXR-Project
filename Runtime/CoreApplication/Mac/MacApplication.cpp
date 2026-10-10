@@ -90,7 +90,7 @@ TSharedPtr<IPlatformApplication> FMacApplication::Create()
     return NewMacApplication;
 }
 
-String FMacApplication::FindMonitorName(NSScreen* Screen)
+FString FMacApplication::FindMonitorName(NSScreen* Screen)
 {
     if (!Screen)
     {
@@ -159,7 +159,7 @@ String FMacApplication::FindMonitorName(NSScreen* Screen)
     
     NSString* MonitorName = (__bridge NSString*)NameRef;
     
-    String Result(MonitorName);
+    FString Result(MonitorName);
     CFRelease(DisplayInfo);
     return Result;
 }

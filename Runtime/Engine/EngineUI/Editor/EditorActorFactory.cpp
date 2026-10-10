@@ -134,7 +134,7 @@ FActor* EditorActorFactory::SpawnPrimitive(FWorld* World, EEditorPrimitiveType T
         return nullptr;
     }
 
-    const String ActorName = CreateUniqueActorName(World, GetPrimitiveName(Type));
+    const FString ActorName = CreateUniqueActorName(World, GetPrimitiveName(Type));
 
     FActor* NewActor = World->CreateActor();
     if (!NewActor)
@@ -168,7 +168,7 @@ FActor* EditorActorFactory::SpawnLight(FWorld* World, EEditorLightType Type, con
         return nullptr;
     }
 
-    const String ActorName = CreateUniqueActorName(World, GetLightName(Type));
+    const FString ActorName = CreateUniqueActorName(World, GetLightName(Type));
 
     FActor* NewActor = nullptr;
     switch (Type)
@@ -223,7 +223,7 @@ FActor* EditorActorFactory::SpawnCamera(FWorld* World, const Vector3& Location)
         return nullptr;
     }
 
-    const String ActorName = CreateUniqueActorName(World, "Camera");
+    const FString ActorName = CreateUniqueActorName(World, "Camera");
 
     FCameraActor* NewActor = World->SpawnActor<FCameraActor>(Location, Vector3(0.0f, 0.0f, 0.0f));
     if (NewActor)
@@ -301,15 +301,15 @@ FActor* EditorActorFactory::DrawPlaceActorMenu(FWorld* World, const Vector3& Loc
     return SpawnedActor;
 }
 
-String EditorActorFactory::CreateUniqueActorName(FWorld* World, const CHAR_T* BaseName)
+FString EditorActorFactory::CreateUniqueActorName(FWorld* World, const CHAR_T* BaseName)
 {
-    String Name = BaseName;
+    FString Name = BaseName;
     if (!World)
     {
         return Name;
     }
 
-    auto IsNameTaken = [World](const String& Candidate) -> bool
+    auto IsNameTaken = [World](const FString& Candidate) -> bool
     {
         for (FActor* Actor : World->GetActors())
         {

@@ -105,13 +105,13 @@ static EShaderResourceDimension GetImageDimension(spvc_compiler Compiler, spvc_t
     }
 }
 
-static bool GatherMSLResources(spvc_compiler Compiler, spvc_resources Resources, spvc_resource_type ResourceType, TArray<FMSLReflectedResource>& OutResources, String& OutErrors)
+static bool GatherMSLResources(spvc_compiler Compiler, spvc_resources Resources, spvc_resource_type ResourceType, TArray<FMSLReflectedResource>& OutResources, FString& OutErrors)
 {
     size_t                         NumReflected = 0;
     const spvc_reflected_resource* Reflected    = nullptr;
     if (spvc_resources_get_resource_list_for_type(Resources, ResourceType, &Reflected, &NumReflected) != SPVC_SUCCESS)
     {
-        OutErrors += String::Printf("Failed to reflect resource type %d\n", static_cast<int32>(ResourceType));
+        OutErrors += FString::Printf("Failed to reflect resource type %d\n", static_cast<int32>(ResourceType));
         return false;
     }
 
@@ -213,7 +213,7 @@ static bool GatherMSLResources(spvc_compiler Compiler, spvc_resources Resources,
                 bool bIsReadOnly = false;
                 if (!IsStorageBufferReadOnly(Compiler, Id, bIsReadOnly))
                 {
-                    OutErrors += String::Printf("Failed to read buffer block decorations for storage buffer at register %u\n", Register);
+                    OutErrors += FString::Printf("Failed to read buffer block decorations for storage buffer at register %u\n", Register);
                     return false;
                 }
 
@@ -231,14 +231,14 @@ static bool GatherMSLResources(spvc_compiler Compiler, spvc_resources Resources,
 
             default:
             {
-                OutErrors += String::Printf("Unhandled resource type %d\n", static_cast<int32>(ResourceType));
+                OutErrors += FString::Printf("Unhandled resource type %d\n", static_cast<int32>(ResourceType));
                 return false;
             }
         }
 
         if (Register > 0xFF)
         {
-            OutErrors += String::Printf("%s register %u is out of range for an MSL binding table\n", ToString(BindingType), Register);
+            OutErrors += FString::Printf("%s register %u is out of range for an MSL binding table\n", ToString(BindingType), Register);
             return false;
         }
 
@@ -327,7 +327,7 @@ static const CHAR_T* GetMSLTableName(EMSLBindingType BindingType)
     }
 }
 
-bool FMSLShaderConverter::Convert(const TArray<uint32>& Spirv, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, TArray<uint8>& OutMSLSource, String& OutErrors)
+bool FMSLShaderConverter::Convert(const TArray<uint32>& Spirv, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, TArray<uint8>& OutMSLSource, FString& OutErrors)
 {
     if (Spirv.IsEmpty() || CompileInfo.EntryPoint.IsEmpty())
     {
@@ -351,7 +351,7 @@ bool FMSLShaderConverter::Convert(const TArray<uint32>& Spirv, const FShaderComp
     // The spvc_* calls only report SPVC_ERROR_*, the reason SPIRV-Cross gives comes through this callback
     spvc_context_set_error_callback(Context, [](void* UserData, const CHAR_T* Error)
     {
-        *static_cast<String*>(UserData) += String::Printf("SPIRV-Cross: %s\n", Error);
+        *static_cast<FString*>(UserData) += FString::Printf("SPIRV-Cross: %s\n", Error);
     }, &OutErrors);
 
     spvc_parsed_ir ParsedCode = nullptr;
@@ -553,7 +553,7 @@ bool FMSLShaderConverter::Convert(const TArray<uint32>& Spirv, const FShaderComp
         const uint8 TableLimit = GetMSLMaxSlotCount(ReflectedResource.BindingType);
         if (Slot > 0xFF || Slot >= TableLimit)
         {
-            OutErrors += String::Printf("%s register %u resolved to MSL slot %u, which exceeds the %u-slot %s table\n",
+            OutErrors += FString::Printf("%s register %u resolved to MSL slot %u, which exceeds the %u-slot %s table\n",
                 ToString(ReflectedResource.BindingType), ReflectedResource.RegisterIndex, Slot, TableLimit, GetMSLTableName(ReflectedResource.BindingType));
             return false;
         }
@@ -569,7 +569,7 @@ bool FMSLShaderConverter::Convert(const TArray<uint32>& Spirv, const FShaderComp
             {
                 if (CollectedTypes[Existing] == ReflectedResource.BindingType && OutReflection.Bindings[Existing].Register == ReflectedResource.RegisterIndex)
                 {
-                    OutErrors += String::Printf("'%s' declares two %s resources on register %u\n", *CompileInfo.EntryPoint, ToString(ReflectedResource.BindingType), ReflectedResource.RegisterIndex);
+                    OutErrors += FString::Printf("'%s' declares two %s resources on register %u\n", *CompileInfo.EntryPoint, ToString(ReflectedResource.BindingType), ReflectedResource.RegisterIndex);
                     return false;
                 }
             }
@@ -622,7 +622,7 @@ bool FMSLShaderConverter::Convert(const TArray<uint32>& Spirv, const FShaderComp
 
     // The entry point lives in OpEntryPoint, so stripping OpName never changes the name Metal looks up
     const CHAR_T* CleansedEntryPoint = spvc_compiler_get_cleansed_entry_point_name(CompilerMSL, *CompileInfo.EntryPoint, ExecutionModel);
-    OutReflection.EntryPoint = CleansedEntryPoint && CleansedEntryPoint[0] != '\0' ? String(CleansedEntryPoint) : CompileInfo.EntryPoint;
+    OutReflection.EntryPoint = CleansedEntryPoint && CleansedEntryPoint[0] != '\0' ? FString(CleansedEntryPoint) : CompileInfo.EntryPoint;
 
     const int32 SourceLength = static_cast<int32>(CString::Strlen(MSLSource));
     OutMSLSource = TArray<uint8>(reinterpret_cast<const uint8*>(MSLSource), SourceLength);

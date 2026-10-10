@@ -75,7 +75,7 @@ public:
      * @param Font    The face the text was measured with, which may be null.
      * @param Tint    The text color.
      */
-    void AddText(int32 LayerId, const FRectangle& Bounds, const StringView& InText, const IFontFace* Font, const FFloatColor& Tint);
+    void AddText(int32 LayerId, const FRectangle& Bounds, const FStringView& InText, const IFontFace* Font, const FFloatColor& Tint);
 
     /**
      * @brief Appends a thin axis-aligned rule.
@@ -330,7 +330,7 @@ public:
      * @param Command The command to read the range from.
      * @return A view over the command's characters, which is not null terminated.
      */
-    NODISCARD StringView GetCommandText(const FDrawCommand& Command) const;
+    NODISCARD FStringView GetCommandText(const FDrawCommand& Command) const;
 
     /**
      * @brief The brush one command owns, which only an image command has.
@@ -365,7 +365,7 @@ public:
      * @param InText The text to look for.
      * @return The index of the command, or InvalidIndex when there is none.
      */
-    NODISCARD int32 FindTextCommand(const StringView& InText) const;
+    NODISCARD int32 FindTextCommand(const FStringView& InText) const;
 
     /**
      * @brief Notes where the list stands, so a subtree about to record can have its range lifted out after.
@@ -435,7 +435,7 @@ public:
         const FDrawCommandList& Left,
         const FDrawCommandList& Right,
         int32&                  OutIndex,
-        String&                 OutReason);
+        FString&                OutReason);
 
     /**
      * @brief Appends a run of text on one line.
@@ -446,15 +446,15 @@ public:
      * @param Font    The face the text was measured with, which may be null.
      * @param Tint    The text color.
      */
-    FORCEINLINE void AddText(int32 LayerId, const FRectangle& Bounds, const String& InText, const IFontFace* Font, const FFloatColor& Tint)
+    FORCEINLINE void AddText(int32 LayerId, const FRectangle& Bounds, const FString& InText, const IFontFace* Font, const FFloatColor& Tint)
     {
-        AddText(LayerId, Bounds, StringView(InText), Font, Tint);
+        AddText(LayerId, Bounds, FStringView(InText), Font, Tint);
     }
 
     /**
      * @brief Appends a run of text on one line.
      *
-     * A literal converts to both String and StringView, so it needs an overload of its own to call.
+     * A literal converts to both FString and FStringView, so it needs an overload of its own to call.
      *
      * @param LayerId The layer to draw on.
      * @param Bounds  The rectangle the text is anchored to at the top-left.
@@ -464,7 +464,7 @@ public:
      */
     FORCEINLINE void AddText(int32 LayerId, const FRectangle& Bounds, const CHAR_T* InText, const IFontFace* Font, const FFloatColor& Tint)
     {
-        AddText(LayerId, Bounds, StringView(InText), Font, Tint);
+        AddText(LayerId, Bounds, FStringView(InText), Font, Tint);
     }
 
     /** @return True when no clip region is still open and no pop arrived without a push. */
@@ -573,7 +573,7 @@ private:
 
     FDrawCommand& EmplaceCommand(EDrawCommandType Type, int32 LayerId);
     void StorePoints(FDrawCommand& Command, TArrayView<const Vector2> InPoints);
-    void StoreText(FDrawCommand& Command, StringView InText);
+    void StoreText(FDrawCommand& Command, FStringView InText);
     void BuildArcPoints(const Vector2& Center, float Radius, float StartAngle, float EndAngle, int32 Segments);
 
     TArray<FDrawCommand>  Commands;

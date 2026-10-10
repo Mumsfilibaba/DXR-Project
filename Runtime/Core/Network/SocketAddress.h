@@ -28,7 +28,7 @@ public:
     static FSocketAddress LoopbackIPv6(uint16 Port);
 
     /** @return "host:port", with an IPv6 literal bracketed as in "[::1]:9370". Host may also be a name. */
-    static String FormatHostAndPort(const String& Host, uint16 Port);
+    static FString FormatHostAndPort(const FString& Host, uint16 Port);
 
 public:
 
@@ -64,10 +64,10 @@ public:
     }
 
     /** @return "a.b.c.d:port" for IPv4 and "[address]:port" for IPv6; IPv4 never prints as ::ffff:a.b.c.d */
-    NODISCARD String ToString() const;
+    NODISCARD FString ToString() const;
 
     /** @return The address alone, without the port or brackets; the platform layer does the formatting */
-    NODISCARD String ToAddressString() const;
+    NODISCARD FString ToAddressString() const;
 
     NODISCARD bool operator==(const FSocketAddress& Other) const;
     NODISCARD bool operator!=(const FSocketAddress& Other) const;

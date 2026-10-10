@@ -89,7 +89,7 @@ int32 FSeparatorText::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
     return LayerId;
 }
 
-void FSeparatorText::SetText(const String& InText)
+void FSeparatorText::SetText(const FString& InText)
 {
     if (Text != InText)
     {
@@ -100,5 +100,5 @@ void FSeparatorText::SetText(const String& InText)
 
 int32 FSeparatorText::GetTextWidth() const
 {
-    return Font ? Font->MeasureWidth(StringView(Text.Data(), Text.Length())) : 0;
+    return Font ? Font->MeasureWidth(FStringView(Text.Data(), Text.Length())) : 0;
 }

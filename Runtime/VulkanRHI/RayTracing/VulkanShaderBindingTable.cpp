@@ -111,7 +111,7 @@ uint64 FVulkanShaderBindingTable::GetRegionBaseOffset(ERayTracingShaderRecordKin
 
 void FVulkanShaderBindingTable::PopulateRecord(uint8* OutRecord, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
 {
-    String ExportName;
+    FString ExportName;
     if (Pipeline)
     {
         Pipeline->GetExportName(RecordKind, RecordIndex, ExportName);

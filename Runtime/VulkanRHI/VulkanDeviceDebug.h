@@ -83,15 +83,15 @@ public:
     void Release();
 
     void ResetMarkers(FVulkanCommandBuffer& CmdBuf);
-    void WriteMarker(FVulkanCommandBuffer& CmdBuf, const StringView& Name);
+    void WriteMarker(FVulkanCommandBuffer& CmdBuf, const FStringView& Name);
     void WriteEndMarker(FVulkanCommandBuffer& CmdBuf);
-    void WriteDrawMarker(FVulkanCommandBuffer& CmdBuf, const StringView& DrawType);
+    void WriteDrawMarker(FVulkanCommandBuffer& CmdBuf, const FStringView& DrawType);
     void WriteSplitMarker(FVulkanCommandBuffer& CmdBuf);
     void DumpCrashMarkers();
 
 private:
-    void WriteMarkerInternal(FVulkanCommandBuffer& CmdBuf, const StringView& Name);
-    const String& ResolveHash(uint32 Hash) const;
+    void WriteMarkerInternal(FVulkanCommandBuffer& CmdBuf, const FStringView& Name);
+    const FString& ResolveHash(uint32 Hash) const;
 
     ECrashMarkerExtension Extension;
     FVulkanQueue*         GraphicsQueue;
@@ -99,8 +99,8 @@ private:
     uint32*               MappedData;
     uint32                NextIndex;
     uint32                DrawCounter;
-    String                CurrentRegion;
-    TArray<String>        StringPool;
+    FString               CurrentRegion;
+    TArray<FString>       StringPool;
     TMap<uint32, uint32>  HashToIndex;
 };
 

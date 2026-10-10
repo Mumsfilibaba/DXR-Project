@@ -14,7 +14,7 @@ static TAutoConsoleVariable<int32> CVarDrawCacheBudgetKB(
 static FAutoConsoleCommand CCmdDumpDrawCacheStats(
     "UI.DumpDrawCacheStats",
     "Logs how many subtrees are keeping their recording and how much memory those recordings hold",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         DrawCacheRegistry::DumpStats();
     }));

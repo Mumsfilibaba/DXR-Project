@@ -17,7 +17,7 @@ FD3D11InputLayoutRHI::FD3D11InputLayoutRHI(const TArray<FRHIInputElementDesc>& I
     {
         D3D11_INPUT_ELEMENT_DESC InputElementDesc = {};
 
-        const String& Semantic = SemanticNames.Emplace(Element.Semantic);
+        const FString& Semantic = SemanticNames.Emplace(Element.Semantic);
         InputElementDesc.SemanticName         = *Semantic;
         InputElementDesc.SemanticIndex        = Element.SemanticIndex;
         InputElementDesc.Format               = ConvertFormat(Element.Format);
@@ -216,12 +216,12 @@ FD3D11GraphicsPipelineStateRHI::FD3D11GraphicsPipelineStateRHI(FD3D11Device* InD
 
 FD3D11GraphicsPipelineStateRHI::~FD3D11GraphicsPipelineStateRHI() = default;
 
-void FD3D11GraphicsPipelineStateRHI::SetDebugName(const String& InName)
+void FD3D11GraphicsPipelineStateRHI::SetDebugName(const FString& InName)
 {
     DebugName = InName;
 }
 
-void FD3D11GraphicsPipelineStateRHI::GetDebugName(String& OutDebugName) const
+void FD3D11GraphicsPipelineStateRHI::GetDebugName(FString& OutDebugName) const
 {
     OutDebugName = DebugName;
 }
@@ -379,12 +379,12 @@ FD3D11ComputePipelineStateRHI::FD3D11ComputePipelineStateRHI(FD3D11Device* InDev
 
 FD3D11ComputePipelineStateRHI::~FD3D11ComputePipelineStateRHI() = default;
 
-void FD3D11ComputePipelineStateRHI::SetDebugName(const String& InName)
+void FD3D11ComputePipelineStateRHI::SetDebugName(const FString& InName)
 {
     DebugName = InName;
 }
 
-void FD3D11ComputePipelineStateRHI::GetDebugName(String& OutDebugName) const
+void FD3D11ComputePipelineStateRHI::GetDebugName(FString& OutDebugName) const
 {
     OutDebugName = DebugName;
 }

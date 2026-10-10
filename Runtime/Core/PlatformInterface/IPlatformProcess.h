@@ -8,13 +8,13 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 struct FProcessDesc
 {
     /** @brief Path of the executable to start */
-    String Executable;
+    FString Executable;
 
     /** @brief One entry per argument. Quoting for the platform is added when the process is started. */
-    TArray<String> Arguments;
+    TArray<FString> Arguments;
 
     /** @brief The directory the process starts in, or empty to inherit the current one */
-    String WorkingDirectory;
+    FString WorkingDirectory;
 
     /** @brief Collect standard output and standard error into one stream, read with IPlatformProcessHandle::ReadOutput */
     bool bCaptureOutput = false;
@@ -31,7 +31,7 @@ struct IPlatformProcessHandle
      * @brief Append whatever captured output is available to OutText without waiting for more
      * @return Returns false once the process has exited and all of its output has been read
      */
-    virtual bool ReadOutput(String& OutText) = 0;
+    virtual bool ReadOutput(FString& OutText) = 0;
 
     /** @return Returns true until the process has exited */
     virtual bool IsRunning() = 0;

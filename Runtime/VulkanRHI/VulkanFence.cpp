@@ -187,7 +187,7 @@ bool FVulkanTimelineFence::WaitForValue(uint64 Value, uint64 TimeoutNs)
     return true;
 }
 
-void FVulkanTimelineFence::SetDebugName(const String& Name)
+void FVulkanTimelineFence::SetDebugName(const FString& Name)
 {
     if (VULKAN_CHECK_HANDLE(TimelineSemaphore))
     {
@@ -199,7 +199,7 @@ void FVulkanTimelineFence::SetDebugName(const String& Name)
 #endif
 }
 
-void FVulkanTimelineFence::GetDebugName(String& OutDebugName) const
+void FVulkanTimelineFence::GetDebugName(FString& OutDebugName) const
 {
 #if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;
@@ -322,7 +322,7 @@ void* FVulkanFenceRHI::GetRHINativeFence() const
     return reinterpret_cast<void*>(TimelineSemaphore);
 }
 
-void FVulkanFenceRHI::SetDebugName(const String& InName)
+void FVulkanFenceRHI::SetDebugName(const FString& InName)
 {
 #if VULKAN_STORE_DEBUG_NAMES
     DebugName = InName;
@@ -334,7 +334,7 @@ void FVulkanFenceRHI::SetDebugName(const String& InName)
     }
 }
 
-void FVulkanFenceRHI::GetDebugName(String& OutDebugName) const
+void FVulkanFenceRHI::GetDebugName(FString& OutDebugName) const
 {
 #if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;

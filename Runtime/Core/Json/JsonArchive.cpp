@@ -145,7 +145,7 @@ void FJsonArchive::PushElementScope(EJsonType ContainerType)
 
     ++Enclosing.ElementCursor;
 
-    PathSegments.Emplace(String::Printf("[%d]", ElementIndex));
+    PathSegments.Emplace(FString::Printf("[%d]", ElementIndex));
     Scopes.Add(Move(NewScope));
 }
 
@@ -156,12 +156,12 @@ void FJsonArchive::PopScope()
     PathSegments.Pop();
 }
 
-String FJsonArchive::GetPath() const
+FString FJsonArchive::GetPath() const
 {
-    String Path;
+    FString Path;
     for (int32 Index = 0; Index < PathSegments.Size(); ++Index)
     {
-        const String& Segment = PathSegments[Index];
+        const FString& Segment = PathSegments[Index];
         if (!Path.IsEmpty() && !Segment.StartsWith("["))
         {
             Path.Append('.');
@@ -183,14 +183,14 @@ void FJsonArchive::AddError(const CHAR_T* Format, ...)
     vsnprintf(Message, sizeof(Message), Format, ArgList);
     va_end(ArgList);
 
-    const String Path = GetPath();
+    const FString Path = GetPath();
     if (Path.IsEmpty())
     {
         Errors.Emplace(Message);
     }
     else
     {
-        Errors.Add(String::Printf("%s: %s", Path.Data(), Message));
+        Errors.Add(FString::Printf("%s: %s", Path.Data(), Message));
     }
 }
 
@@ -201,10 +201,10 @@ void FJsonArchive::AddTypeError(const FJsonValue& Found, const CHAR_T* Expected)
 
 void FJsonArchive::AppendErrors(const FJsonArchive& Nested)
 {
-    const String Path = GetPath();
+    const FString Path = GetPath();
     for (int32 Index = 0; Index < Nested.Errors.Size(); ++Index)
     {
-        const String& NestedError = Nested.Errors[Index];
+        const FString& NestedError = Nested.Errors[Index];
         if (Path.IsEmpty())
         {
             Errors.Add(NestedError);
@@ -212,14 +212,14 @@ void FJsonArchive::AppendErrors(const FJsonArchive& Nested)
         else
         {
             const CHAR_T* Separator = NestedError.StartsWith("[") ? "" : ".";
-            Errors.Add(String::Printf("%s%s%s", Path.Data(), Separator, NestedError.Data()));
+            Errors.Add(FString::Printf("%s%s%s", Path.Data(), Separator, NestedError.Data()));
         }
     }
 }
 
-String FJsonArchive::GetErrorString() const
+FString FJsonArchive::GetErrorString() const
 {
-    String Result;
+    FString Result;
     for (int32 Index = 0; Index < Errors.Size(); ++Index)
     {
         if (Index > 0)
@@ -281,7 +281,7 @@ int32 FJsonArchive::FArrayScope::Num() const
     return Array ? Array->Num() : 0;
 }
 
-FJsonArchive::FPathScope::FPathScope(FJsonArchive& InArchive, const String& Segment)
+FJsonArchive::FPathScope::FPathScope(FJsonArchive& InArchive, const FString& Segment)
     : Archive(InArchive)
 {
     Archive.PathSegments.Add(Segment);

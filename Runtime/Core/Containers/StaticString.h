@@ -1573,10 +1573,10 @@ private:
 };
 
 template<int32 NUM_CHARS = STANDARD_STATIC_STRING_LENGTH>
-using StaticString = TStaticString<CHAR_T, NUM_CHARS>;
+using FStaticString = TStaticString<CHAR_T, NUM_CHARS>;
 
 template<int32 NUM_CHARS = STANDARD_STATIC_STRING_LENGTH>
-using WStaticString = TStaticString<WIDECHAR, NUM_CHARS>;
+using FWideStaticString = TStaticString<WIDECHAR, NUM_CHARS>;
 
 template<typename CharType, int32 NUM_CHARS>
 struct TIsTStringType<TStaticString<CharType, NUM_CHARS>>

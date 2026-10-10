@@ -58,14 +58,14 @@ class CORE_API FModuleManager
     {
         FModuleData() = default;
 
-        FModuleData(const String& InName, IModule* InInterface)
+        FModuleData(const FString& InName, IModule* InInterface)
             : Name(InName)
             , Interface(InInterface)
             , Handle(nullptr)
         {
         }
 
-        String         Name;
+        FString        Name;
         IModule*       Interface;
         PlatformModule Handle;
     };
@@ -236,7 +236,7 @@ protected:
         return static_cast<uint32>(Modules.Size());
     }
 
-    typedef TPair<String, FInitializeStaticModuleDelegate> FStaticModulePair;
+    typedef TPair<FString, FInitializeStaticModuleDelegate> FStaticModulePair;
 
     TArray<FStaticModulePair> StaticModuleDelegates;
     FCriticalSection          StaticModuleDelegatesCS;

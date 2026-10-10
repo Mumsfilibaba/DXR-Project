@@ -212,7 +212,7 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskCS::FPermutat
     }
     else
     {
-        PipelineStateInstance.PipelineState->SetDebugName(String::Printf("ShadowMask PSO (Permutation %d)", PermutationID));
+        PipelineStateInstance.PipelineState->SetDebugName(FString::Printf("ShadowMask PSO (Permutation %d)", PermutationID));
     }
 
     PipelineStates.Add(PermutationID, PipelineStateInstance);

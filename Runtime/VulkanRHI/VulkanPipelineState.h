@@ -105,7 +105,7 @@ public:
     FVulkanPipeline(FVulkanDevice* InDevice);
     virtual ~FVulkanPipeline();
 
-    void SetDebugName(const String& InName);
+    void SetDebugName(const FString& InName);
 
     VkPipeline GetVkPipeline() const
     {
@@ -121,7 +121,7 @@ protected:
     VkPipeline             Pipeline;
     FVulkanPipelineLayout* PipelineLayout; // Layout is NOT owned by this class and should not be deleted when the FVulkanPipeline is destroyed
 #if VULKAN_STORE_DEBUG_NAMES
-    String                 DebugName;
+    FString                 DebugName;
 #endif
 };
 
@@ -136,8 +136,8 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     FORCEINLINE const FRHIViewInstancingState& GetViewInstancingState() const
     {
@@ -171,8 +171,8 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
     
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 };
 
 class FVulkanMeshletPipelineStateRHI : public FRHIMeshletPipelineState, public FVulkanPipeline
@@ -186,8 +186,8 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     FORCEINLINE const FRHIViewInstancingState& GetViewInstancingState() const
     {

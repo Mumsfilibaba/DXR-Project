@@ -58,44 +58,44 @@ public:
      * @brief Write the characters of Text at the file's current position as UTF-8, without a null-terminator
      * @return Returns false if not every byte could be written. Writing an empty string succeeds.
      */
-    static FORCEINLINE bool WriteTextFile(IPlatformFile* InFile, const String& Text)
+    static FORCEINLINE bool WriteTextFile(IPlatformFile* InFile, const FString& Text)
     {
         return WriteTextFile(InFile, Text.Data(), Text.Length());
     }
 
     /** @return Returns the directory containing the file, or an empty string when the path has no directory component */
-    static String GetDirectoryOf(const String& Filepath);
+    static FString GetDirectoryOf(const FString& Filepath);
 
     /** @return Returns the filename with its extension, without the rest of the path */
-    static String ExtractFilename(const String& Filepath);
+    static FString ExtractFilename(const FString& Filepath);
 
     /** @return Returns the filename without its extension or the rest of the path. A leading dot is part of the name. */
-    static String ExtractFilenameWithoutExtension(const String& Filepath);
+    static FString ExtractFilenameWithoutExtension(const FString& Filepath);
 
     /** @return Returns the last ".ext" including the dot, or empty if there is none */
-    static String ExtractExtension(const String& Filepath);
+    static FString ExtractExtension(const FString& Filepath);
 
     /** @brief Join Left and Right with a single '/', ignoring extra separators */
-    static String CombinePath(const String& Left, const String& Right);
+    static FString CombinePath(const FString& Left, const FString& Right);
 
     /**
      * @brief Clean up a path without touching the disk: '\' becomes '/', repeated separators and "." are removed, ".." is
      * resolved where possible and a trailing separator is dropped. "/A/../B/" becomes "/B", and "A/.." becomes ".".
      */
-    static String NormalizePath(const String& Path);
+    static FString NormalizePath(const FString& Path);
 
     /** @return Returns Path normalized and, when relative, resolved against the current working directory */
-    static String MakeAbsolute(const String& Path);
+    static FString MakeAbsolute(const FString& Path);
 
     /**
      * @brief Express Path relative to BaseDirectory, e.g. "/Engine/Content/A.png" from "/Engine/Saved" is "../Content/A.png"
      * @return Returns the relative path, "." for the directory itself, or the absolute Path when the two have different
      * roots, such as two Windows drives
      */
-    static String MakeRelative(const String& Path, const String& BaseDirectory);
+    static FString MakeRelative(const FString& Path, const FString& BaseDirectory);
 
     /** @return Returns true if Path is Directory itself or anything inside it. Both are resolved before comparing. */
-    static bool IsUnderDirectory(const String& Path, const String& Directory);
+    static bool IsUnderDirectory(const FString& Path, const FString& Directory);
 
     /**
      * @brief Depth-first walk of Directory
@@ -103,19 +103,19 @@ public:
      * a file to abort the walk.
      * @return Returns false if Directory cannot be listed or a file visitor aborted
      */
-    static bool IterateDirectoryTree(const String& Directory, TFunction<bool(const String& Path, bool bIsDirectory)> Visitor);
+    static bool IterateDirectoryTree(const FString& Directory, TFunction<bool(const FString& Path, bool bIsDirectory)> Visitor);
 
     /**
      * @brief Create every directory in Path that does not already exist
      * @return Returns true if the full directory tree exists afterwards
      */
-    static bool CreateDirectoryTree(const String& Path);
+    static bool CreateDirectoryTree(const FString& Path);
 
     /**
      * @brief Delete Directory and everything in it. Symbolic links are removed without touching what they point at.
      * @return Returns true if Directory is gone afterwards
      */
-    static bool DeleteDirectoryTree(const String& Directory);
+    static bool DeleteDirectoryTree(const FString& Directory);
 
     /**
      * @brief Copy Directory and everything in it to Destination, creating Destination if needed. Links to directories are
@@ -127,10 +127,10 @@ public:
      * copied. Files copied before a failure are left in place.
      */
     static bool CopyDirectoryTree(
-        const String&                                          Directory,
-        const String&                                          Destination,
-        bool                                                   bReplaceExisting = false,
-        TFunction<bool(const String& Path, bool bIsDirectory)> Filter           = nullptr);
+        const FString&                                          Directory,
+        const FString&                                          Destination,
+        bool                                                    bReplaceExisting = false,
+        TFunction<bool(const FString& Path, bool bIsDirectory)> Filter           = nullptr);
 
 private:
     static bool WriteTextFile(IPlatformFile* InFile, const CHAR_T* Text, int32 Length);

@@ -37,7 +37,7 @@ public:
      * @param Label The caption.
      * @param Font  The face the caption is measured and drawn with.
      */
-    void AddSection(const String& Label, const TSharedPtr<IFontFace>& Font);
+    void AddSection(const FString& Label, const TSharedPtr<IFontFace>& Font);
 
     /**
      * @brief Appends anything that is not a row, such as a search field at the head of the menu.

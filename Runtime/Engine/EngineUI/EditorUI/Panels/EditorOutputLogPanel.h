@@ -68,7 +68,7 @@ private:
     NODISCARD TSharedPtr<FVisualElement> BuildFilterButton();
     NODISCARD TSharedPtr<FVisualElement> BuildFilterMenu();
 
-    void OnSearchTextChanged(const String& SearchText);
+    void OnSearchTextChanged(const FString& SearchText);
     void OnMatchCaseChanged(ECheckBoxState NewState);
     void OnLogContextMenu(const IntVector2& ScreenPosition);
 

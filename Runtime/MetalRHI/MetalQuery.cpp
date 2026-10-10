@@ -151,7 +151,7 @@ bool FMetalTimestampQueries::Initialize()
 
     for (id<MTLCounterSet> CounterSet in DeviceHandle.counterSets)
     {
-        METAL_INFO("Counter set '%s' has %lu counters", *String(CounterSet.name), (unsigned long)CounterSet.counters.count);
+        METAL_INFO("Counter set '%s' has %lu counters", *FString(CounterSet.name), (unsigned long)CounterSet.counters.count);
 
         if ([CounterSet.name isEqualToString:MTLCommonCounterSetTimestamp])
         {
@@ -164,10 +164,10 @@ bool FMetalTimestampQueries::Initialize()
         return false;
     }
 
-    METAL_INFO("Timestamp counter set '%s' has %lu counters", *String(TimestampSet.name), (unsigned long)TimestampSet.counters.count);
+    METAL_INFO("Timestamp counter set '%s' has %lu counters", *FString(TimestampSet.name), (unsigned long)TimestampSet.counters.count);
     for (id<MTLCounter> Counter in TimestampSet.counters)
     {
-        METAL_INFO("  Counter: %s", *String(Counter.name));
+        METAL_INFO("  Counter: %s", *FString(Counter.name));
     }
 
     MTLCounterSampleBufferDescriptor* Descriptor = [MTLCounterSampleBufferDescriptor new];
@@ -181,7 +181,7 @@ bool FMetalTimestampQueries::Initialize()
 
     if (!SampleBuffer)
     {
-        const String ErrorString(Error ? [Error localizedDescription] : @"unknown error");
+        const FString ErrorString(Error ? [Error localizedDescription] : @"unknown error");
         METAL_ERROR("Failed to create the timestamp counter sample buffer: %s", *ErrorString);
         return false;
     }
@@ -539,8 +539,8 @@ bool FMetalCounterPairs::Initialize(NSString* CounterSetName)
 
     if (!SampleBuffer)
     {
-        const String ErrorString(Error ? [Error localizedDescription] : @"unknown error");
-        METAL_ERROR("Failed to create the '%s' counter sample buffer: %s", *String(CounterSetName), *ErrorString);
+        const FString ErrorString(Error ? [Error localizedDescription] : @"unknown error");
+        METAL_ERROR("Failed to create the '%s' counter sample buffer: %s", *FString(CounterSetName), *ErrorString);
         return false;
     }
 

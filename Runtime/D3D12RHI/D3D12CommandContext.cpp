@@ -84,7 +84,7 @@ static void D3D12WarnOnDroppedTransition(MAYBE_UNUSED const FD3D12Resource* Reso
     const D3D12_RESOURCE_STATES DefaultState = Resource->GetDefaultState();
     if (DesiredState != D3D12_RESOURCE_STATE_COMMON && (DesiredState & ~DefaultState) != D3D12_RESOURCE_STATES(0))
     {
-        String DebugName;
+        FString DebugName;
         Resource->GetDebugName(DebugName);
 
         D3D12_ERROR("Dropped transition on Static resource '%s': AfterState=%s is not covered by its resting state %s",
@@ -146,7 +146,7 @@ void FD3D12BarrierBatcher::AddTransitionBarrier(FD3D12Resource* InResource, D3D1
 
 #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
     {
-        String DebugName;
+        FString DebugName;
         InResource->GetDebugName(DebugName);
         D3D12_INFO("AddTransitionBarrier Resource=%s Subresource=%u Before=%s After=%s Flags=0x%X", *DebugName, SubresourceIndex, ToString(BeforeState), ToString(AfterState), uint32(Flags));
     }
@@ -161,7 +161,7 @@ void FD3D12BarrierBatcher::AddUnorderedAccessBarrier(FD3D12Resource* InResource)
 
 #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
     {
-        String DebugName;
+        FString DebugName;
         InResource->GetDebugName(DebugName);
         D3D12_INFO("AddUnorderedAccessBarrier Resource=%s", *DebugName);
     }
@@ -307,7 +307,7 @@ void FD3D12BarrierBatcher::AddAliasingBarrier(FD3D12Resource* InResourceAfter, I
 
 #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
     {
-        String DebugName;
+        FString DebugName;
         InResourceAfter->GetDebugName(DebugName);
         D3D12_INFO("AddAliasingBarrier Resource=%s", *DebugName);
     }
@@ -2500,7 +2500,7 @@ void FD3D12CommandContext::EnsureResourceState(const FD3D12Resource* Resource, D
             return;
         }
 
-        String DebugName;
+        FString DebugName;
         Resource->GetDebugName(DebugName);
 
         D3D12_ERROR("Untracked resource '%s' is in %s (0x%08X) where %s (0x%08X) is required",
@@ -2536,7 +2536,7 @@ void FD3D12CommandContext::EnsureDefaultState(const FD3D12Resource* Resource) co
         const D3D12_RESOURCE_STATES DefaultState = Resource->GetDefaultState();
         if (CurrentState != D3D12_RESOURCE_STATE_TO_BE_DETERMINED && CurrentState != DefaultState)
         {
-            String DebugName;
+            FString DebugName;
             Resource->GetDebugName(DebugName);
 
             D3D12_ERROR("EnsureDefaultState mismatch on '%s': CurrentState=%s (0x%08X, Source=%s), DefaultState=%s (0x%08X)",
@@ -3683,7 +3683,7 @@ void* FD3D12CommandContext::GetRHINativeCommandList()
     return reinterpret_cast<void*>(CommandList->GetCommandList());
 }
 
-void FD3D12CommandContext::PushEvent(const StringView& Name)
+void FD3D12CommandContext::PushEvent(const FStringView& Name)
 {
     EventStack.Emplace(Name.Data());
 

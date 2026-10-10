@@ -44,7 +44,7 @@ static void DragSelection(const TSharedPtr<FRichTextBlock>& Block, const IntVect
     Block->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, To, false));
 }
 
-static TSharedPtr<FRichTextBlock> MakeBlock(const TSharedPtr<IFontFace>& Font, const TArray<String>& Texts, bool bAutoWrapText = false)
+static TSharedPtr<FRichTextBlock> MakeBlock(const TSharedPtr<IFontFace>& Font, const TArray<FString>& Texts, bool bAutoWrapText = false)
 {
     const FUIStyle& Style = FUIStyle::GetDefault();
 
@@ -97,7 +97,7 @@ bool RichTextLayout_Test()
     LayoutElement(Block, FRectangle(IntVector2(0, 0), 400, 60));
 
     TEST_SECTION("The runs concatenate into one string the indices refer to");
-    TEST_EXPECT_EQ(Block->GetText(), String("[Info] engine started"));
+    TEST_EXPECT_EQ(Block->GetText(), FString("[Info] engine started"));
     TEST_EXPECT_EQ(Block->GetLayout().GetCharacterCount(), 21);
 
     TEST_SECTION("Without wrapping it is one line as wide as the text");
@@ -136,7 +136,7 @@ bool RichTextLayout_Test()
     Block->SetRuns({ FTextRun("replaced", Font.Get(), FUIStyle::GetDefault().Colors.Text) });
     LayoutElement(Block, FRectangle(IntVector2(0, 0), 400, 60));
 
-    TEST_EXPECT_EQ(Block->GetText(), String("replaced"));
+    TEST_EXPECT_EQ(Block->GetText(), FString("replaced"));
 
     TEST_SECTION("Clearing leaves nothing behind");
     Block->ClearRuns();
@@ -154,10 +154,10 @@ bool RichTextCulling_Test()
 
     const TSharedPtr<IFontFace> Font = CreateFont();
 
-    String LongText;
+    FString LongText;
     for (int32 Index = 0; Index < 100; ++Index)
     {
-        LongText += String::Printf("line %d\n", Index);
+        LongText += FString::Printf("line %d\n", Index);
     }
 
     TSharedPtr<FRichTextBlock> Block = MakeBlock(Font, { LongText });
@@ -196,13 +196,13 @@ bool RichTextSelection_Test()
 
     const TSharedPtr<IFontFace> Font = CreateFont();
 
-    String LastSelection;
-    int32  NumSelectionCallbacks = 0;
+    FString LastSelection;
+    int32   NumSelectionCallbacks = 0;
 
     FRichTextBlock::FDesc Desc;
     Desc.Runs.Add(FTextRun("[Error] ", Font.Get(), FUIStyle::GetDefault().Colors.Accent));
     Desc.Runs.Add(FTextRun("disk full", Font.Get(), FUIStyle::GetDefault().Colors.Text));
-    Desc.OnSelectionChanged = FOnSelectionChanged::CreateLambda([&](const String& SelectedText)
+    Desc.OnSelectionChanged = FOnSelectionChanged::CreateLambda([&](const FString& SelectedText)
     {
         LastSelection = SelectedText;
         NumSelectionCallbacks++;
@@ -221,10 +221,10 @@ bool RichTextSelection_Test()
     TEST_EXPECT(Block->HasSelection());
     TEST_EXPECT_EQ(Block->GetSelectionStart(), 2);
     TEST_EXPECT_EQ(Block->GetSelectionEnd(), 11);
-    TEST_EXPECT_EQ(Block->GetSelectedText(), String("rror] dis"));
+    TEST_EXPECT_EQ(Block->GetSelectedText(), FString("rror] dis"));
 
     TEST_SECTION("Which is what the selection callback was told");
-    TEST_EXPECT_EQ(LastSelection, String("rror] dis"));
+    TEST_EXPECT_EQ(LastSelection, FString("rror] dis"));
 
     TEST_SECTION("Dragging back the other way selects the same span");
     DragSelection(Block, IntVector2(11 * 8 + 1, 8), IntVector2(2 * 8 + 1, 8));
@@ -241,7 +241,7 @@ bool RichTextSelection_Test()
     TEST_SECTION("Select all takes the whole text");
     Block->SelectAll();
 
-    TEST_EXPECT_EQ(Block->GetSelectedText(), String("[Error] disk full"));
+    TEST_EXPECT_EQ(Block->GetSelectedText(), FString("[Error] disk full"));
     TEST_EXPECT_EQ(Block->GetSelectionEnd(), 17);
 
     TEST_SECTION("A selection is drawn behind the text, one box per line it covers");
@@ -370,7 +370,7 @@ bool RichTextSearch_Test()
     Block->SetSearchText("dog");
 
     TEST_EXPECT(Block->GetSearchMatches().IsEmpty());
-    TEST_EXPECT_EQ(Block->GetText(), String("the cat sat on the mat"));
+    TEST_EXPECT_EQ(Block->GetText(), FString("the cat sat on the mat"));
 
     TEST_SECTION("Clearing the search clears the matches");
     Block->SetSearchText("the");
@@ -470,7 +470,7 @@ bool LogViewLogging_Test()
     LayoutElement(LogView, FRectangle(IntVector2(0, 0), 400, 200));
 
     TEST_EXPECT_EQ(LogView->GetNumLines(), 1);
-    TEST_EXPECT_EQ(LogView->GetLines()[0].Message, String("engine started"));
+    TEST_EXPECT_EQ(LogView->GetLines()[0].Message, FString("engine started"));
     TEST_EXPECT_EQ(LogView->GetLines()[0].Severity, ELogSeverity::Info);
 
     TEST_SECTION("Flush folds them in without waiting for a tick");
@@ -490,16 +490,16 @@ bool LogViewLogging_Test()
     const TArray<FTextRun>& Runs = LogView->GetTextBlock()->GetLayout().GetSourceRuns();
 
     TEST_EXPECT_EQ(Runs.Size(), 8);
-    TEST_EXPECT_EQ(Runs[0].Text, String("[Info] "));
-    TEST_EXPECT_EQ(Runs[1].Text, String("engine started"));
-    TEST_EXPECT_EQ(Runs[2].Text, String("\n"));
-    TEST_EXPECT_EQ(Runs[3].Text, String("[Warning] "));
+    TEST_EXPECT_EQ(Runs[0].Text, FString("[Info] "));
+    TEST_EXPECT_EQ(Runs[1].Text, FString("engine started"));
+    TEST_EXPECT_EQ(Runs[2].Text, FString("\n"));
+    TEST_EXPECT_EQ(Runs[3].Text, FString("[Warning] "));
 
     TEST_EXPECT_EQ(Runs[3].Tint, FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Warning));
     TEST_EXPECT_EQ(Runs[4].Tint, FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Warning));
 
     TEST_SECTION("Which still reads back as one line per message");
-    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetText(), String("[Info] engine started\n[Warning] shader cache cold\n[Info] plain"));
+    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetText(), FString("[Info] engine started\n[Warning] shader cache cold\n[Info] plain"));
 
     TEST_SECTION("Past the cap the oldest lines are dropped");
     LogView->Log("fourth");
@@ -508,21 +508,21 @@ bool LogViewLogging_Test()
     LogView->Flush();
 
     TEST_EXPECT_EQ(LogView->GetNumLines(), 4);
-    TEST_EXPECT_EQ(LogView->GetLines()[0].Message, String("plain"));
-    TEST_EXPECT_EQ(LogView->GetLines()[3].Message, String("sixth"));
+    TEST_EXPECT_EQ(LogView->GetLines()[0].Message, FString("plain"));
+    TEST_EXPECT_EQ(LogView->GetLines()[3].Message, FString("sixth"));
 
     TEST_SECTION("Shrinking the cap trims what is already held");
     LogView->SetMaxLineCount(2);
 
     TEST_EXPECT_EQ(LogView->GetNumLines(), 2);
-    TEST_EXPECT_EQ(LogView->GetLines()[0].Message, String("fifth"));
+    TEST_EXPECT_EQ(LogView->GetLines()[0].Message, FString("fifth"));
 
     TEST_SECTION("Clearing empties both the lines and the text");
     LogView->Clear();
     LogView->Flush();
 
     TEST_EXPECT_EQ(LogView->GetNumLines(), 0);
-    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetText(), String());
+    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetText(), FString());
 
     TEST_SECTION("Registering with the logger routes what the engine logs into the view");
     LogView->SetMaxLineCount(16);
@@ -571,7 +571,7 @@ bool LogViewFiltering_Test()
 
     TEST_EXPECT_EQ(LogView->GetNumVisibleLines(), 2);
     TEST_EXPECT_EQ(LogView->GetNumLines(), 4);
-    TEST_EXPECT_EQ(LogView->GetVisibleMessages()[0], String("texture missing"));
+    TEST_EXPECT_EQ(LogView->GetVisibleMessages()[0], FString("texture missing"));
 
     TEST_SECTION("Which is what the text is rebuilt from, once the frame that asked for it comes round");
     LogView->Flush();
@@ -598,7 +598,7 @@ bool LogViewFiltering_Test()
     LogView->SetSearchText("loading", true);
 
     TEST_EXPECT_EQ(LogView->GetNumVisibleLines(), 2);
-    TEST_EXPECT_EQ(LogView->GetVisibleMessages()[1], String("loading complete"));
+    TEST_EXPECT_EQ(LogView->GetVisibleMessages()[1], FString("loading complete"));
 
     TEST_SECTION("The two filters compose rather than replacing one another");
     LogView->SetMinimumSeverity(ELogSeverity::Warning);
@@ -627,7 +627,7 @@ bool LogViewFiltering_Test()
     LogView->SetSearchText("", false);
     LogView->Flush();
 
-    const String SettledText = LogView->GetTextBlock()->GetText();
+    const FString SettledText = LogView->GetTextBlock()->GetText();
     LogView->SetSearchText("l", true);
     LogView->SetSearchText("lo", true);
     LogView->SetSearchText("loa", true);
@@ -661,7 +661,7 @@ bool LogViewFiltering_Test()
 
     TEST_EXPECT(LogView->IsSearchCaseSensitive());
     TEST_EXPECT_EQ(LogView->GetNumVisibleLines(), 1);
-    TEST_EXPECT_EQ(LogView->GetVisibleMessages()[0], String("Create actor"));
+    TEST_EXPECT_EQ(LogView->GetVisibleMessages()[0], FString("Create actor"));
     TEST_EXPECT_EQ(LogView->GetTextBlock()->GetSearchMatches().Size(), 1);
 
     TEST_SECTION("Turning Match Case off brings the other spelling back");
@@ -697,7 +697,7 @@ bool LogViewAutoScroll_Test()
     TEST_SECTION("Following the tail keeps the last line showing as more arrive");
     for (int32 Index = 0; Index < 20; ++Index)
     {
-        LogView->Log(String::Printf("line %d", Index));
+        LogView->Log(FString::Printf("line %d", Index));
     }
 
     LayoutElement(LogView, Bounds);

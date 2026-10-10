@@ -8,7 +8,7 @@
 #include "RHI/RHI.h"
 #include "Core/Memory/Memory.h"
 
-static NSString* PipelineDebugLabel(const String& Name, NSString* Fallback)
+static NSString* PipelineDebugLabel(const FString& Name, NSString* Fallback)
 {
     return Name.IsEmpty() ? Fallback : Name.GetNSString();
 }
@@ -540,7 +540,7 @@ FMetalInputLayoutRHI::FMetalInputLayoutRHI(const TArray<FRHIInputElementDesc>& I
     for (int32 Index = 0; Index < InputElements.Size(); ++Index)
     {
         const FRHIInputElementDesc& Element = InputElements[Index];
-        SemanticHashes.Add(HashShaderSemantic(StringView(Element.Semantic)));
+        SemanticHashes.Add(HashShaderSemantic(FStringView(Element.Semantic)));
 
         if (Element.InputSlot >= MSL_MAX_VERTEX_STREAMS)
         {
@@ -995,12 +995,12 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
     return true;
 }
 
-void FMetalGraphicsPipelineStateRHI::SetDebugName(const String& InName)
+void FMetalGraphicsPipelineStateRHI::SetDebugName(const FString& InName)
 {
     DebugName = InName;
 }
 
-void FMetalGraphicsPipelineStateRHI::GetDebugName(String& OutDebugName) const
+void FMetalGraphicsPipelineStateRHI::GetDebugName(FString& OutDebugName) const
 {
     OutDebugName = DebugName;
 }
@@ -1070,12 +1070,12 @@ bool FMetalComputePipelineStateRHI::Initialize()
     return true;
 }
 
-void FMetalComputePipelineStateRHI::SetDebugName(const String& InName)
+void FMetalComputePipelineStateRHI::SetDebugName(const FString& InName)
 {
     DebugName = InName;
 }
 
-void FMetalComputePipelineStateRHI::GetDebugName(String& OutDebugName) const
+void FMetalComputePipelineStateRHI::GetDebugName(FString& OutDebugName) const
 {
     OutDebugName = DebugName;
 }
@@ -1198,12 +1198,12 @@ bool FMetalMeshletPipelineStateRHI::Initialize()
     return true;
 }
 
-void FMetalMeshletPipelineStateRHI::SetDebugName(const String& InName)
+void FMetalMeshletPipelineStateRHI::SetDebugName(const FString& InName)
 {
     DebugName = InName;
 }
 
-void FMetalMeshletPipelineStateRHI::GetDebugName(String& OutDebugName) const
+void FMetalMeshletPipelineStateRHI::GetDebugName(FString& OutDebugName) const
 {
     OutDebugName = DebugName;
 }
@@ -1231,7 +1231,7 @@ FMetalRayTracingPipelineStateRHI::~FMetalRayTracingPipelineStateRHI()
     }
 }
 
-TArray<String>& FMetalRayTracingPipelineStateRHI::GetExportNameArray(ERayTracingShaderRecordKind Kind)
+TArray<FString>& FMetalRayTracingPipelineStateRHI::GetExportNameArray(ERayTracingShaderRecordKind Kind)
 {
     switch (Kind)
     {
@@ -1243,7 +1243,7 @@ TArray<String>& FMetalRayTracingPipelineStateRHI::GetExportNameArray(ERayTracing
     }
 }
 
-const TArray<String>& FMetalRayTracingPipelineStateRHI::GetExportNameArray(ERayTracingShaderRecordKind Kind) const
+const TArray<FString>& FMetalRayTracingPipelineStateRHI::GetExportNameArray(ERayTracingShaderRecordKind Kind) const
 {
     return const_cast<FMetalRayTracingPipelineStateRHI*>(this)->GetExportNameArray(Kind);
 }
@@ -1288,14 +1288,14 @@ bool FMetalRayTracingPipelineStateRHI::Initialize()
     {
         AddLinkedFunction(Miss);
         FMetalRayTracingShader* MetalMiss = GetMetalRayTracingShader(Miss);
-        MissExports.Emplace(MetalMiss ? MetalMiss->GetIdentifier() : String());
+        MissExports.Emplace(MetalMiss ? MetalMiss->GetIdentifier() : FString());
     }
 
     for (FRHIRayCallableShader* Callable : Desc.CallableShaders)
     {
         AddLinkedFunction(Callable);
         FMetalRayTracingShader* MetalCallable = GetMetalRayTracingShader(Callable);
-        CallableExports.Emplace(MetalCallable ? MetalCallable->GetIdentifier() : String());
+        CallableExports.Emplace(MetalCallable ? MetalCallable->GetIdentifier() : FString());
     }
 
     for (const FRHIRayTracingHitGroupInfo& HitGroup : Desc.HitGroups)
@@ -1316,7 +1316,7 @@ bool FMetalRayTracingPipelineStateRHI::Initialize()
     for (FRHIRayGenShader* RayGen : Desc.RayGenShaders)
     {
         FMetalRayTracingShader* MetalRayGen = GetMetalRayTracingShader(RayGen);
-        RayGenerationExports.Emplace(MetalRayGen ? MetalRayGen->GetIdentifier() : String());
+        RayGenerationExports.Emplace(MetalRayGen ? MetalRayGen->GetIdentifier() : FString());
     }
 
     MTLComputePipelineDescriptor* Descriptor = [[MTLComputePipelineDescriptor new] autorelease];
@@ -1339,7 +1339,7 @@ bool FMetalRayTracingPipelineStateRHI::Initialize()
 
     if (PipelineState == nil)
     {
-        const String ErrorString([Error localizedDescription]);
+        const FString ErrorString([Error localizedDescription]);
         METAL_ERROR("Failed to create ray-tracing pipeline state, error %s", *ErrorString);
         return false;
     }
@@ -1347,10 +1347,10 @@ bool FMetalRayTracingPipelineStateRHI::Initialize()
     return true;
 }
 
-void FMetalRayTracingPipelineStateRHI::GetExportName(ERayTracingShaderRecordKind Kind, uint32 RecordIndex, String& OutExportName) const
+void FMetalRayTracingPipelineStateRHI::GetExportName(ERayTracingShaderRecordKind Kind, uint32 RecordIndex, FString& OutExportName) const
 {
-    const TArray<String>& Names = GetExportNameArray(Kind);
-    OutExportName = (RecordIndex < static_cast<uint32>(Names.Size())) ? Names[RecordIndex] : String();
+    const TArray<FString>& Names = GetExportNameArray(Kind);
+    OutExportName = (RecordIndex < static_cast<uint32>(Names.Size())) ? Names[RecordIndex] : FString();
 }
 
 uint32 FMetalRayTracingPipelineStateRHI::GetNumExportNames(ERayTracingShaderRecordKind Kind) const
@@ -1358,12 +1358,12 @@ uint32 FMetalRayTracingPipelineStateRHI::GetNumExportNames(ERayTracingShaderReco
     return static_cast<uint32>(GetExportNameArray(Kind).Size());
 }
 
-void FMetalRayTracingPipelineStateRHI::SetDebugName(const String& InName)
+void FMetalRayTracingPipelineStateRHI::SetDebugName(const FString& InName)
 {
     DebugName = InName;
 }
 
-void FMetalRayTracingPipelineStateRHI::GetDebugName(String& OutDebugName) const
+void FMetalRayTracingPipelineStateRHI::GetDebugName(FString& OutDebugName) const
 {
     OutDebugName = DebugName;
 }

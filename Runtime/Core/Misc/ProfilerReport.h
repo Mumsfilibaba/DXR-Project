@@ -4,7 +4,7 @@
 
 struct CORE_API FProfilerOptimizationTarget
 {
-    String Name;
+    FString Name;
     double SelfMillisecondsPerFrame = 0.0;
     double InclusiveMillisecondsPerFrame = 0.0;
     double BudgetPercent = 0.0;
@@ -19,10 +19,10 @@ struct CORE_API FProfilerWorstFrame
 
 struct CORE_API FProfilerScopeAggregate
 {
-    String Name;
-    int32  Calls = 0;
-    uint64 InclusiveNanoseconds = 0;
-    uint64 ExclusiveNanoseconds = 0;
+    FString Name;
+    int32   Calls = 0;
+    uint64  InclusiveNanoseconds = 0;
+    uint64  ExclusiveNanoseconds = 0;
 };
 
 struct CORE_API FProfilerThreadAggregate
@@ -38,7 +38,7 @@ struct CORE_API FProfilerReport
      *
      * @return The report text, ready to write or to have a GPU section appended.
      */
-    static String BuildCpuAndBootText();
+    static FString BuildCpuAndBootText();
 
     /**
      * @brief Ranks named CPU scopes by aggregate self time across stored frames.
@@ -68,7 +68,7 @@ struct CORE_API FProfilerReport
      *
      * @return A document chrome://tracing and Perfetto can load.
      */
-    static String BuildChromeCpuJson();
+    static FString BuildChromeCpuJson();
 
     /** @return The QPC stamp Chrome events are rebased from, or 0 when nothing was captured. */
     static uint64 GetChromeBaseTimeStamp();
@@ -90,18 +90,18 @@ struct CORE_API FProfilerReport
      * @param Text The raw scope name.
      * @return Text with quotes and backslashes escaped.
      */
-    static String EscapeChromeString(const CHAR_T* Text);
+    static FString EscapeChromeString(const CHAR_T* Text);
 
     /**
      * @brief Appends a complete (ph=X) Chrome trace event.
      */
-    static void AppendChromeCompleteEvent(String& Out, const CHAR_T* Name, const CHAR_T* Category,
+    static void AppendChromeCompleteEvent(FString& Out, const CHAR_T* Name, const CHAR_T* Category,
         double TimestampUs, double DurationUs, int32 Pid, int64 Tid);
 
     /**
      * @brief Appends an instant (ph=i) Chrome trace event.
      */
-    static void AppendChromeInstantEvent(String& Out, const CHAR_T* Name, const CHAR_T* Category,
+    static void AppendChromeInstantEvent(FString& Out, const CHAR_T* Name, const CHAR_T* Category,
         double TimestampUs, int32 Pid, int64 Tid);
 
     /**
@@ -111,7 +111,7 @@ struct CORE_API FProfilerReport
      * @param ExtraEvents  Comma-separated event objects, or empty.
      * @return The merged document.
      */
-    static String MergeChromeJson(const String& CpuJson, const String& ExtraEvents);
+    static FString MergeChromeJson(const FString& CpuJson, const FString& ExtraEvents);
 
     /**
      * @brief Writes Text to Path, creating parent directories as needed.
@@ -120,5 +120,5 @@ struct CORE_API FProfilerReport
      * @param Text The full report.
      * @return True when the file was written.
      */
-    static bool WriteFile(const String& Path, const String& Text);
+    static bool WriteFile(const FString& Path, const FString& Text);
 };

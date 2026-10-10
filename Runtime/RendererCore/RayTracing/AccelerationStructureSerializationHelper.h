@@ -21,7 +21,7 @@ class FAccelerationStructureSerializationHelper
 
     struct FPendingSerialize
     {
-        String                               CacheKey;
+        FString                              CacheKey;
         FRHIRayTracingAccelerationStructure* Source          = nullptr;
         FRHIBufferRef                        SizeReadbackBuffer;
         FRHIBufferRef                        SerializeDestBuffer;
@@ -43,7 +43,7 @@ public:
         ReleaseAll();
     }
 
-    void RequestSerialize(FRHICommandList& CommandList, FRHIRayTracingAccelerationStructure* AccelerationStructure, const String& CacheKey)
+    void RequestSerialize(FRHICommandList& CommandList, FRHIRayTracingAccelerationStructure* AccelerationStructure, const FString& CacheKey)
     {
         if (!AccelerationStructure || !Cache || !Cache->HasBackend() || CacheKey.IsEmpty())
         {
@@ -178,7 +178,7 @@ private:
 
             if (Cache)
             {
-                Cache->Store(StringView(Pending.CacheKey), Blob);
+                Cache->Store(FStringView(Pending.CacheKey), Blob);
             }
         }
 

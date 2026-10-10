@@ -10,10 +10,10 @@ class CORE_API FNetworkSocket : public FNonCopyable
 public:
 
     /** @brief Same as FPlatformSocket::Resolve, for callers that want to tell an unknown host from an unreachable one */
-    static bool Resolve(const String& Host, uint16 Port, TArray<FSocketAddress>& OutAddresses);
+    static bool Resolve(const FString& Host, uint16 Port, TArray<FSocketAddress>& OutAddresses);
 
     /** @brief Same as FPlatformSocket::ParseAddress, so engine code never has to reach into the platform layer */
-    static bool ParseAddress(const String& Text, uint16 Port, FSocketAddress& OutAddress);
+    static bool ParseAddress(const FString& Text, uint16 Port, FSocketAddress& OutAddress);
 
     /** @brief FPlatformSocket::WaitForRead for network sockets; null entries and sockets without a platform socket are never readable */
     static int32 WaitForRead(FNetworkSocket* const* Sockets, int32 NumSockets, bool* OutReadable, uint32 TimeoutMilliseconds);
@@ -39,7 +39,7 @@ public:
     bool ConnectToAny(const TArray<FSocketAddress>& Addresses, uint32 TimeoutMilliseconds);
 
     /** @brief Resolve, then ConnectToAny */
-    bool ConnectToHost(const String& Host, uint16 Port, uint32 TimeoutMilliseconds);
+    bool ConnectToHost(const FString& Host, uint16 Port, uint32 TimeoutMilliseconds);
 
     ESocketResult Send(const void* Data, int32 Size, int32& OutBytesSent);
     ESocketResult Recv(void* Buffer, int32 Size, int32& OutBytesRead);

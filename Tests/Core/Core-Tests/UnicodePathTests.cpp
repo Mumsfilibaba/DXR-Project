@@ -15,25 +15,25 @@
 
 static constexpr int32 PROCESS_TIMEOUT_MILLISECONDS = 30 * 1000;
 
-static bool WriteText(const String& Filename, const CHAR_T* Text)
+static bool WriteText(const FString& Filename, const CHAR_T* Text)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(Filename);
-    return FileHandle && File::WriteTextFile(FileHandle.Get(), String(Text));
+    return FileHandle && File::WriteTextFile(FileHandle.Get(), FString(Text));
 }
 
-static String ReadText(const String& Filename)
+static FString ReadText(const FString& Filename)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Filename);
     if (!FileHandle)
     {
-        return String();
+        return FString();
     }
 
     TArray<CHAR_T> Text;
-    return File::ReadTextFile(FileHandle.Get(), Text) ? String(Text.Data()) : String();
+    return File::ReadTextFile(FileHandle.Get(), Text) ? FString(Text.Data()) : FString();
 }
 
-static bool ContainsReplacementCharacter(const String& Text)
+static bool ContainsReplacementCharacter(const FString& Text)
 {
     const TStringConversion<WIDECHAR, CHAR_T> WideText = StringCast<WIDECHAR>(Text);
     for (int32 Index = 0; Index < WideText.Length(); ++Index)
@@ -51,9 +51,9 @@ bool UnicodePath_Test()
 {
     TEST_BEGIN();
 
-    const String Root      = Paths::GetUserSettingsDir() + TEXT("/Tests/UnicodePathTests.Scratch");
-    const String Directory = Root + TEXT("/Åäö 日本語 😀");
-    const String Filename  = Directory + TEXT("/Fil ö.txt");
+    const FString Root      = Paths::GetUserSettingsDir() + TEXT("/Tests/UnicodePathTests.Scratch");
+    const FString Directory = Root + TEXT("/Åäö 日本語 😀");
+    const FString Filename  = Directory + TEXT("/Fil ö.txt");
 
     File::DeleteDirectoryTree(Root);
     TEST_EXPECT(File::CreateDirectoryTree(Directory));
@@ -81,7 +81,7 @@ bool UnicodePath_Test()
 
     TEST_SECTION("Text files hold UTF-8, and a byte-order mark at the start is not part of the text");
     {
-        const String BomFile = Directory + TEXT("/Bom.txt");
+        const FString BomFile = Directory + TEXT("/Bom.txt");
         {
             TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(BomFile);
             const uint8 Bytes[] = { 0xEF, 0xBB, 0xBF, 'a', 0xC3, 0xA5 };
@@ -94,7 +94,7 @@ bool UnicodePath_Test()
             TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(BomFile);
             TArray<CHAR_T> Text;
             TEST_EXPECT(FileHandle && FileHandle->SeekFromStart(3) && File::ReadTextFile(FileHandle.Get(), Text));
-            TEST_EXPECT(String(Text.Data()).Equals(TEXT("aå")));
+            TEST_EXPECT(FString(Text.Data()).Equals(TEXT("aå")));
         }
 
         TArray<uint8> Written;
@@ -111,18 +111,18 @@ bool UnicodePath_Test()
 
     TEST_SECTION("Files and directories with non-ASCII names are copied, moved and deleted");
     {
-        const String Copied = Directory + TEXT("/Kopia ä.txt");
+        const FString Copied = Directory + TEXT("/Kopia ä.txt");
         TEST_EXPECT(FPlatformFile::CopyFile(*Filename, *Copied));
         TEST_EXPECT(ReadText(Copied).Equals(TEXT("Innehåll 日本語")));
 
-        const String Moved = Directory + TEXT("/Flyttad 本.txt");
+        const FString Moved = Directory + TEXT("/Flyttad 本.txt");
         TEST_EXPECT(FPlatformFile::MoveFile(*Copied, *Moved));
         TEST_EXPECT(!FPlatformFile::IsFile(*Copied) && FPlatformFile::IsFile(*Moved));
 
         TEST_EXPECT(FPlatformFile::DeleteFile(*Moved));
         TEST_EXPECT(!FPlatformFile::IsFile(*Moved));
 
-        const String MovedDirectory = Root + TEXT("/Flyttad mapp ö");
+        const FString MovedDirectory = Root + TEXT("/Flyttad mapp ö");
         TEST_EXPECT(FPlatformFile::MoveDirectory(*Directory, *MovedDirectory));
         TEST_EXPECT(FPlatformFile::IsFile(*(MovedDirectory + TEXT("/Fil ö.txt"))));
         TEST_EXPECT(FPlatformFile::MoveDirectory(*MovedDirectory, *Directory));
@@ -134,12 +134,12 @@ bool UnicodePath_Test()
         FProcessDesc Desc;
     #if PLATFORM_WINDOWS
         Desc.Executable = TEXT("cmd.exe");
-        Desc.Arguments.Add(String(TEXT("/c")));
-        Desc.Arguments.Add(String(TEXT("exit 7")));
+        Desc.Arguments.Add(FString(TEXT("/c")));
+        Desc.Arguments.Add(FString(TEXT("exit 7")));
     #else
         Desc.Executable = TEXT("/bin/sh");
-        Desc.Arguments.Add(String(TEXT("-c")));
-        Desc.Arguments.Add(String(TEXT("exit 7")));
+        Desc.Arguments.Add(FString(TEXT("-c")));
+        Desc.Arguments.Add(FString(TEXT("exit 7")));
     #endif
         Desc.WorkingDirectory = Directory;
 
@@ -167,7 +167,7 @@ bool UnicodePath_Test()
     {
         TEST_EXPECT(FPlatformFile::OpenForRead(Directory + TEXT("/Saknas ö.txt")) == nullptr);
 
-        String Error;
+        FString Error;
         TEST_EXPECT(FPlatformMisc::GetLastErrorString(Error) != 0);
         TEST_EXPECT(!Error.IsEmpty());
         TEST_EXPECT(!ContainsReplacementCharacter(Error));
@@ -176,7 +176,7 @@ bool UnicodePath_Test()
 
     TEST_SECTION("The executable path and working directory are valid UTF-8");
     {
-        TEST_EXPECT(!ContainsReplacementCharacter(String(FPlatformFile::GetExecutablePath())));
+        TEST_EXPECT(!ContainsReplacementCharacter(FString(FPlatformFile::GetExecutablePath())));
         TEST_EXPECT(!ContainsReplacementCharacter(FPlatformFile::GetCurrentWorkingDirectory()));
     }
 

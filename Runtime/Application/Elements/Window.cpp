@@ -457,7 +457,7 @@ void FWindow::SetTitleBarRegions(const FWindowTitleBarRegions& InRegions)
     }
 }
 
-void FWindow::SetTitle(const String& InTitle)
+void FWindow::SetTitle(const FString& InTitle)
 {
     Title = InTitle;
 

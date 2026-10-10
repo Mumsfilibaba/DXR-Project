@@ -90,7 +90,7 @@ bool FRHIValidationDevice::IsLiveResource(const FRHIResource* Resource) const
     return LiveResources.Contains(const_cast<FRHIResource*>(Resource));
 }
 
-String FRHIValidationDevice::DescribeDestroyedResource(const FRHIResource* Resource) const
+FString FRHIValidationDevice::DescribeDestroyedResource(const FRHIResource* Resource) const
 {
     TScopedLock Lock(LiveResourcesCS);
 
@@ -102,7 +102,7 @@ String FRHIValidationDevice::DescribeDestroyedResource(const FRHIResource* Resou
         }
     }
 
-    return String();
+    return FString();
 }
 
 void FRHIValidationDevice::RememberDestroyedResource(const FRHIResource* Resource)
@@ -1441,7 +1441,7 @@ FRHIDepthStencilView* FRHIValidationDevice::CreateDepthStencilView(FRHIResource*
 static bool ValidateShaderCode(const CHAR_T* FunctionName, ERHIType RHIType, EShaderStage ExpectedStage, const TArray<uint8>& ShaderCode)
 {
     FShaderCodeHeader Header;
-    String            Error;
+    FString           Error;
     if (!FShaderCodeReader::ReadHeader(ShaderCode, Header, &Error))
     {
         RHI_VALIDATION_ERROR("%s: The shader code is not a valid container (%s).", FunctionName, *Error);
@@ -1743,7 +1743,7 @@ FRHIGraphicsPipelineState* FRHIValidationDevice::CreateGraphicsPipelineState(con
             for (uint32 Index = 0; Index < InDesc.InputLayout->GetNumInputElementDescs() && !bFound; ++Index)
             {
                 const FRHIInputElementDesc* Element = InDesc.InputLayout->GetInputElementDesc(Index);
-                bFound = Element && HashShaderSemantic(StringView(Element->Semantic)) == ShaderInput.SemanticHash && Element->SemanticIndex == ShaderInput.SemanticIndex;
+                bFound = Element && HashShaderSemantic(FStringView(Element->Semantic)) == ShaderInput.SemanticHash && Element->SemanticIndex == ShaderInput.SemanticIndex;
             }
 
             if (!bFound)
@@ -2117,7 +2117,7 @@ void FRHIValidationDevice::GetRayTracingAccelerationStructureOperationPrebuildIn
     Device->GetRayTracingAccelerationStructureOperationPrebuildInfo(InInputs, OutInfo);
 }
 
-FRHIRayTracingShaderIdentifier FRHIValidationDevice::GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const String& InExportName)
+FRHIRayTracingShaderIdentifier FRHIValidationDevice::GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const FString& InExportName)
 {
     if (!InPipeline)
     {
@@ -2316,7 +2316,7 @@ bool FRHIValidationDevice::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRH
     return Device->QueryVideoMemoryInfo(MemoryType, OutMemoryInfo);
 }
 
-String FRHIValidationDevice::GetAdapterName() const
+FString FRHIValidationDevice::GetAdapterName() const
 {
     return Device->GetAdapterName();
 }

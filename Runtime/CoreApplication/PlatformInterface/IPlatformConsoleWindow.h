@@ -48,7 +48,7 @@ struct COREAPPLICATION_API IPlatformConsoleWindow : public IOutputDevice
      *
      * @param Title The new title for the console window.
      */
-    virtual void SetTitle(const String& Title) = 0;
+    virtual void SetTitle(const FString& Title) = 0;
 
     /**
      * @brief Sets the color for subsequent console output.

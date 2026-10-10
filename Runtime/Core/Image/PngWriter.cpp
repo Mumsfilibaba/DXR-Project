@@ -102,7 +102,7 @@ bool FPngWriter::Encode(const FImageView& Image, TArray<uint8>& OutBytes)
     return true;
 }
 
-bool FPngWriter::WriteToFile(const String& Filename, const FImageView& Image)
+bool FPngWriter::WriteToFile(const FString& Filename, const FImageView& Image)
 {
     if (!Encode(Image, FileBytes))
     {
@@ -110,7 +110,7 @@ bool FPngWriter::WriteToFile(const String& Filename, const FImageView& Image)
         return false;
     }
 
-    const String Directory = File::GetDirectoryOf(Filename);
+    const FString Directory = File::GetDirectoryOf(Filename);
     if (!Directory.IsEmpty() && !File::CreateDirectoryTree(Directory))
     {
         LOG_ERROR("[FPngWriter]: Failed to create '%s' to write '%s' into", *Directory, *Filename);

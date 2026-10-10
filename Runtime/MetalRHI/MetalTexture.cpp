@@ -427,7 +427,7 @@ bool FMetalTextureRHI::ResizeSwapChainTexture(const FRHITextureDesc& InTextureDe
     return !bFormatChanged || CreateDefaultViews();
 }
 
-void FMetalTextureRHI::SetDebugName(const String& InName)
+void FMetalTextureRHI::SetDebugName(const FString& InName)
 {
     @autoreleasepool
     {
@@ -440,7 +440,7 @@ void FMetalTextureRHI::SetDebugName(const String& InName)
     }
 }
 
-void FMetalTextureRHI::GetDebugName(String& OutDebugName) const
+void FMetalTextureRHI::GetDebugName(FString& OutDebugName) const
 {
     OutDebugName.Clear();
 
@@ -450,7 +450,7 @@ void FMetalTextureRHI::GetDebugName(String& OutDebugName) const
 
         if (TextureHandle)
         {
-            OutDebugName = String(TextureHandle.label);
+            OutDebugName = FString(TextureHandle.label);
         }
     }
 }

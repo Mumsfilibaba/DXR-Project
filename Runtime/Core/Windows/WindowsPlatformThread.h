@@ -18,7 +18,7 @@ public:
     virtual void WaitForCompletion() override final;
     virtual void* GetPlatformHandle() override final;
 
-    virtual const String& GetName() const override final
+    virtual const FString& GetName() const override final
     {
         return Name;
     }
@@ -33,7 +33,7 @@ private:
 
     FWindowsPlatformThread(FRunnable* InRunnable, const CHAR_T* InThreadName, bool bSuspended);
 
-    String     Name;
+    FString    Name;
     FRunnable* Runnable;
     HANDLE     Thread;
     DWORD      hThreadID;

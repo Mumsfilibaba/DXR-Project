@@ -142,7 +142,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         }
         else
         {
-            const String DebugName = String::Printf("Point ShadowMap PipelineState%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
+            const FString DebugName = FString::Printf("Point ShadowMap PipelineState%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
             NewPipelineStateInstance.PipelineState->SetDebugName(DebugName);
         }
 

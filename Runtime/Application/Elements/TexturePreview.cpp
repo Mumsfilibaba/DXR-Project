@@ -41,7 +41,7 @@ IntVector2 FTexturePreview::ComputeDesiredSize() const
     }
 
     const int32 Height = Font ? Font->GetTextBandHeight() : FUIStyle::GetDefault().Metrics.RowHeight;
-    const int32 Width  = (Font && !EmptyText.IsEmpty()) ? Font->MeasureWidth(StringView(EmptyText.Data(), EmptyText.Length())) : 0;
+    const int32 Width  = (Font && !EmptyText.IsEmpty()) ? Font->MeasureWidth(FStringView(EmptyText.Data(), EmptyText.Length())) : 0;
 
     return IntVector2(Width, Height);
 }

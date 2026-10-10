@@ -37,13 +37,13 @@ void FTestConsoleOutputDevice::Write(const CHAR_T* Text)
     }
 }
 
-void FTestConsoleOutputDevice::Log(const String& Message)
+void FTestConsoleOutputDevice::Log(const FString& Message)
 {
     Write(Message.Data());
     Write("\n");
 }
 
-void FTestConsoleOutputDevice::Log(ELogSeverity Severity, const String& Message)
+void FTestConsoleOutputDevice::Log(ELogSeverity Severity, const FString& Message)
 {
     const CHAR_T* Prefix = "";
     switch (Severity)

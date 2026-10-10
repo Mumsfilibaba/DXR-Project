@@ -15,7 +15,7 @@ FCachedTextMetrics::FCachedTextMetrics()
 
 FCachedTextMetrics::~FCachedTextMetrics() = default;
 
-void FCachedTextMetrics::Refresh(const IFontFace* Font, const StringView& Text)
+void FCachedTextMetrics::Refresh(const IFontFace* Font, const FStringView& Text)
 {
     const FFontAtlas* Atlas          = Font ? Font->GetAtlas() : nullptr;
     const uint64      LayoutRevision = Atlas ? Atlas->GetLayoutRevision() : 0;
@@ -35,11 +35,11 @@ void FCachedTextMetrics::Refresh(const IFontFace* Font, const StringView& Text)
 
     if (!bSameText)
     {
-        CachedText = String(Text.Data(), Text.Length());
+        CachedText = FString(Text.Data(), Text.Length());
     }
 }
 
-int32 FCachedTextMetrics::GetWidth(const IFontFace* Font, const StringView& Text)
+int32 FCachedTextMetrics::GetWidth(const IFontFace* Font, const FStringView& Text)
 {
     Refresh(Font, Text);
 
@@ -51,13 +51,13 @@ int32 FCachedTextMetrics::GetWidth(const IFontFace* Font, const StringView& Text
     return CachedWidth;
 }
 
-const String& FCachedTextMetrics::GetElided(const IFontFace* Font, const StringView& Text, int32 MaxWidth)
+const FString& FCachedTextMetrics::GetElided(const IFontFace* Font, const FStringView& Text, int32 MaxWidth)
 {
     Refresh(Font, Text);
 
     if (CachedMaxWidth != MaxWidth)
     {
-        CachedElided   = Font ? Font->ElideText(Text, MaxWidth) : String(Text.Data(), Text.Length());
+        CachedElided   = Font ? Font->ElideText(Text, MaxWidth) : FString(Text.Data(), Text.Length());
         CachedMaxWidth = MaxWidth;
     }
 

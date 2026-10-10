@@ -119,7 +119,7 @@ void FMacConsoleWindow::Show(bool bShow)
     }
 }
 
-void FMacConsoleWindow::SetTitle(const String& InTitle)
+void FMacConsoleWindow::SetTitle(const FString& InTitle)
 {
     SCOPED_AUTORELEASE_POOL();
 
@@ -149,12 +149,12 @@ void FMacConsoleWindow::SetTextColor(EConsoleTextColor Color)
     CurrentTextColor = Color;
 }
 
-void FMacConsoleWindow::Log(const String& Message)
+void FMacConsoleWindow::Log(const FString& Message)
 {
     EnqueueLine(Message, CurrentTextColor);
 }
 
-void FMacConsoleWindow::Log(ELogSeverity Severity, const String& Message)
+void FMacConsoleWindow::Log(ELogSeverity Severity, const FString& Message)
 {
     EnqueueLine(Message, SeverityToColor(Severity));
 }
@@ -366,7 +366,7 @@ void FMacConsoleWindow::DestroyResources()
     LineCount = 0;
 }
 
-void FMacConsoleWindow::EnqueueLine(const String& Message, EConsoleTextColor Color)
+void FMacConsoleWindow::EnqueueLine(const FString& Message, EConsoleTextColor Color)
 {
     bool bNeedsFlush = false;
     {

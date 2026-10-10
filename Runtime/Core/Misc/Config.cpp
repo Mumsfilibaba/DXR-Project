@@ -35,7 +35,7 @@ void FConfig::Release()
     }
 }
 
-FIniFile* FConfig::LoadFile(const String& Filename)
+FIniFile* FConfig::LoadFile(const FString& Filename)
 {
     // Get a config file, if the file already exists the values will be overwritten
     FIniFile& ConfigFile = ConfigFiles.FindOrAdd(Filename);
@@ -76,7 +76,7 @@ FIniValue* FConfig::FindValue(const CHAR_T* SectionName, const CHAR_T* Name)
     return nullptr;
 }
 
-bool FConfig::GetString(const CHAR_T* SectionName, const CHAR_T* Name, String& OutValue)
+bool FConfig::GetString(const CHAR_T* SectionName, const CHAR_T* Name, FString& OutValue)
 {
     if (FIniValue* Value = FindValue(SectionName, Name))
     {
@@ -156,7 +156,7 @@ void FConfig::LoadConsoleVariables()
     }
 }
 
-FIniFile* FConfig::AddLayer(EConfigFile::Type ConfigFile, const String& Filename)
+FIniFile* FConfig::AddLayer(EConfigFile::Type ConfigFile, const FString& Filename)
 {
     FIniFile* File = LoadFile(Filename);
     if (File)
@@ -177,13 +177,13 @@ FIniFile* FConfig::AddLayer(EConfigFile::Type ConfigFile, const String& Filename
 
 void FConfig::AddDefaultLayers()
 {
-    const String ConfigDir = Paths::GetEngineDir();
-    AddLayer(EConfigFile::Engine, String::Printf("%s/Engine.ini", *ConfigDir));
-    AddLayer(EConfigFile::Game, String::Printf("%s/Game.ini", *ConfigDir));
+    const FString ConfigDir = Paths::GetEngineDir();
+    AddLayer(EConfigFile::Engine, FString::Printf("%s/Engine.ini", *ConfigDir));
+    AddLayer(EConfigFile::Game, FString::Printf("%s/Game.ini", *ConfigDir));
 
 #if EDITOR_BUILD
-    AddLayer(EConfigFile::Editor, String::Printf("%s/Editor.ini", *ConfigDir));
+    AddLayer(EConfigFile::Editor, FString::Printf("%s/Editor.ini", *ConfigDir));
 #endif
 
-    AddLayer(EConfigFile::Platform, String::Printf("%s/%s.ini", *ConfigDir, BuildInfo::GetPlatformName()));
+    AddLayer(EConfigFile::Platform, FString::Printf("%s/%s.ini", *ConfigDir, BuildInfo::GetPlatformName()));
 }

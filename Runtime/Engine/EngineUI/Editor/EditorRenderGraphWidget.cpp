@@ -194,7 +194,7 @@ void FEditorRenderGraphWidget::EstimateNodeSizes(TArrayView<const int32> Visible
     {
         const FRenderGraphDebugPass& Pass = Snapshot.Passes[PassIndex];
 
-        String Title = Pass.Name;
+        FString Title = Pass.Name;
         if (IsEnumFlagSet(Pass.Flags, ERenderGraphPassFlags::Raster))
         {
             Title.Append(" [Raster]");
@@ -444,7 +444,7 @@ void FEditorRenderGraphWidget::DrawWindow()
             continue;
         }
 
-        String Title = Pass.Name;
+        FString Title = Pass.Name;
         if (IsEnumFlagSet(Pass.Flags, ERenderGraphPassFlags::Raster))
         {
             Title.Append(" [Raster]");

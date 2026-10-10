@@ -732,7 +732,7 @@ FRHIRenderTargetView* FD3D11DeviceRHI::CreateRenderTargetView(FRHIResource* InRe
 
     if (!D3D11Texture->GetDesc().IsRenderTarget())
     {
-        String DebugName;
+        FString DebugName;
         D3D11Texture->GetDebugName(DebugName);
         D3D11_ERROR("Texture '%s' does not allow RenderTargetViews", *DebugName);
         return nullptr;
@@ -907,7 +907,7 @@ FRHIDepthStencilView* FD3D11DeviceRHI::CreateDepthStencilView(FRHIResource* InRe
 
     if (!D3D11Texture->GetDesc().IsDepthStencil())
     {
-        String DebugName;
+        FString DebugName;
         D3D11Texture->GetDebugName(DebugName);
         D3D11_ERROR("Texture '%s' does not allow DepthStencilViews", *DebugName);
         return nullptr;
@@ -1329,7 +1329,7 @@ void* FD3D11DeviceRHI::GetRHINativeDevice()
     return reinterpret_cast<void*>(Device->GetD3D11Device());
 }
 
-String FD3D11DeviceRHI::GetAdapterName() const
+FString FD3D11DeviceRHI::GetAdapterName() const
 {
     CHECK(Adapter != nullptr);
     return Adapter->GetDescription();

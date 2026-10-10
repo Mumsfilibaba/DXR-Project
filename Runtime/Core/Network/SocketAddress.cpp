@@ -59,14 +59,14 @@ FSocketAddress FSocketAddress::LoopbackIPv6(uint16 Port)
     return Address;
 }
 
-String FSocketAddress::FormatHostAndPort(const String& Host, uint16 Port)
+FString FSocketAddress::FormatHostAndPort(const FString& Host, uint16 Port)
 {
     if (Host.Contains(':'))
     {
-        return String::Printf("[%s]:%u", *Host, static_cast<uint32>(Port));
+        return FString::Printf("[%s]:%u", *Host, static_cast<uint32>(Port));
     }
 
-    return String::Printf("%s:%u", *Host, static_cast<uint32>(Port));
+    return FString::Printf("%s:%u", *Host, static_cast<uint32>(Port));
 }
 
 bool FSocketAddress::IsIPv4() const
@@ -126,12 +126,12 @@ uint32 FSocketAddress::GetIPv4() const
     return HostOrderIPv4;
 }
 
-String FSocketAddress::ToString() const
+FString FSocketAddress::ToString() const
 {
     return FormatHostAndPort(ToAddressString(), Port);
 }
 
-String FSocketAddress::ToAddressString() const
+FString FSocketAddress::ToAddressString() const
 {
     return FPlatformSocket::AddressToString(*this);
 }

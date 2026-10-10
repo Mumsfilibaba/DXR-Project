@@ -278,7 +278,7 @@ void FEditorMenus::BuildWindowsMenu(const TSharedPtr<FMenuBar>& Bar)
 
     for (const TSharedPtr<FEditorPanel>& Panel : Registry->GetPanels())
     {
-        const String PanelId = Panel->GetPanelId();
+        const FString PanelId = Panel->GetPanelId();
 
         FMenuItem::FDesc Desc;
         Desc.Label        = Panel->GetLabel();

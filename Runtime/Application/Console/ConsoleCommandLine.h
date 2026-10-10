@@ -56,7 +56,7 @@ public:
      *
      * @param InText The new line.
      */
-    void SetText(const String& InText);
+    void SetText(const FString& InText);
 
     /**
      * @brief Moves the text cursor, clamped into the line.
@@ -126,7 +126,7 @@ public:
     void Reset();
 
     /** @return The line as it currently reads. */
-    NODISCARD FORCEINLINE const String& GetText() const
+    NODISCARD FORCEINLINE const FString& GetText() const
     {
         return Text;
     }
@@ -143,7 +143,7 @@ public:
      * @return The console objects whose names start with the word at the text cursor, ignoring case,
      * each paired with its name, and empty when nothing matched.
      */
-    NODISCARD FORCEINLINE const TArray<TPair<IConsoleObject*, String>>& GetCandidates() const
+    NODISCARD FORCEINLINE const TArray<TPair<IConsoleObject*, FString>>& GetCandidates() const
     {
         return Candidates;
     }
@@ -169,10 +169,10 @@ public:
 private:
     void ApplyHistoryText();
 
-    String                                 Text;
-    TArray<TPair<IConsoleObject*, String>> Candidates;
-    int32                                  TextCursorPosition;
-    int32                                  SelectedCandidateIndex;
-    int32                                  HistoryIndex;
-    bool                                   bSelectionChanged : 1;
+    FString                                 Text;
+    TArray<TPair<IConsoleObject*, FString>> Candidates;
+    int32                                   TextCursorPosition;
+    int32                                   SelectedCandidateIndex;
+    int32                                   HistoryIndex;
+    bool                                    bSelectionChanged : 1;
 };

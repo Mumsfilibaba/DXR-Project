@@ -10,15 +10,15 @@
 
 static constexpr int32 PROCESS_TIMEOUT_MILLISECONDS = 30 * 1000;
 
-static bool RunShell(const String& Command, const String& WorkingDirectory, String& OutOutput, int32& OutExitCode)
+static bool RunShell(const FString& Command, const FString& WorkingDirectory, FString& OutOutput, int32& OutExitCode)
 {
     FProcessDesc Desc;
 #if PLATFORM_WINDOWS
     Desc.Executable = "cmd.exe";
-    Desc.Arguments.Add(String("/c"));
+    Desc.Arguments.Add(FString("/c"));
 #else
     Desc.Executable = "/bin/sh";
-    Desc.Arguments.Add(String("-c"));
+    Desc.Arguments.Add(FString("-c"));
 #endif
     Desc.Arguments.Add(Command);
     Desc.WorkingDirectory = WorkingDirectory;
@@ -44,7 +44,7 @@ static bool RunShell(const String& Command, const String& WorkingDirectory, Stri
     return Process->GetExitCode(OutExitCode);
 }
 
-static String TrimLineEnd(const String& Text)
+static FString TrimLineEnd(const FString& Text)
 {
     int32 Length = Text.Length();
     while ((Length > 0) && ((Text[Length - 1] == '\n') || (Text[Length - 1] == '\r')))
@@ -52,7 +52,7 @@ static String TrimLineEnd(const String& Text)
         --Length;
     }
 
-    return String(*Text, Length);
+    return FString(*Text, Length);
 }
 
 bool PlatformProcess_Test()
@@ -61,36 +61,36 @@ bool PlatformProcess_Test()
 
     TEST_SECTION("Output and the exit code of a finished process are collected");
     {
-        String Output;
-        int32  ExitCode = -1;
-        TEST_EXPECT(RunShell("echo Hello", String(), Output, ExitCode));
+        FString Output;
+        int32   ExitCode = -1;
+        TEST_EXPECT(RunShell("echo Hello", FString(), Output, ExitCode));
         TEST_EXPECT(TrimLineEnd(Output).Equals("Hello"));
         TEST_EXPECT(ExitCode == 0);
     }
 
     TEST_SECTION("A non-zero exit code is reported");
     {
-        String Output;
-        int32  ExitCode = -1;
-        TEST_EXPECT(RunShell("exit 3", String(), Output, ExitCode));
+        FString Output;
+        int32   ExitCode = -1;
+        TEST_EXPECT(RunShell("exit 3", FString(), Output, ExitCode));
         TEST_EXPECT(ExitCode == 3);
     }
 
     TEST_SECTION("Standard error is captured with standard output");
     {
-        String Output;
-        int32  ExitCode = -1;
-        TEST_EXPECT(RunShell("echo Problem>&2", String(), Output, ExitCode));
+        FString Output;
+        int32   ExitCode = -1;
+        TEST_EXPECT(RunShell("echo Problem>&2", FString(), Output, ExitCode));
         TEST_EXPECT(TrimLineEnd(Output).Equals("Problem"));
     }
 
     TEST_SECTION("The process starts in the requested working directory");
     {
-        const String Directory = File::MakeAbsolute("PlatformProcessTests.Scratch");
+        const FString Directory = File::MakeAbsolute("PlatformProcessTests.Scratch");
         TEST_EXPECT(File::CreateDirectoryTree(Directory));
 
-        String Output;
-        int32  ExitCode = -1;
+        FString Output;
+        int32   ExitCode = -1;
 #if PLATFORM_WINDOWS
         TEST_EXPECT(RunShell("cd", Directory, Output, ExitCode));
 #else
@@ -105,11 +105,11 @@ bool PlatformProcess_Test()
         FProcessDesc Desc;
 #if PLATFORM_WINDOWS
         Desc.Executable = "cmd.exe";
-        Desc.Arguments.Add(String("/c"));
-        Desc.Arguments.Add(String("ping -n 30 127.0.0.1 > nul"));
+        Desc.Arguments.Add(FString("/c"));
+        Desc.Arguments.Add(FString("ping -n 30 127.0.0.1 > nul"));
 #else
         Desc.Executable = "/bin/sleep";
-        Desc.Arguments.Add(String("30"));
+        Desc.Arguments.Add(FString("30"));
 #endif
 
         TUniquePtr<IPlatformProcessHandle> Process = FPlatformProcess::LaunchProcess(Desc);

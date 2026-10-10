@@ -125,7 +125,7 @@ uint32 FD3D12ShaderBindingTable::GetSubTableBaseRecord(ERayTracingShaderRecordKi
     }
 }
 
-void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSignature, uint8* OutRecord, uint64 RecordByteOffset, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const String& ExportName, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
+void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSignature, uint8* OutRecord, uint64 RecordByteOffset, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FString& ExportName, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
 {
     UNREFERENCED_VARIABLE(RecordKind);
     UNREFERENCED_VARIABLE(RecordIndex);
@@ -374,7 +374,7 @@ void FD3D12ShaderBindingTable::SetBindings(ERayTracingShaderRecordKind RecordKin
 
     if (Pipeline)
     {
-        String ExportName;
+        FString ExportName;
         Pipeline->GetExportName(RecordKind, RecordIndex, ExportName);
 
         FD3D12RootSignature* LocalRootSignature = Pipeline->GetLocalRootSignature(ExportName);
@@ -382,7 +382,7 @@ void FD3D12ShaderBindingTable::SetBindings(ERayTracingShaderRecordKind RecordKin
     }
     else
     {
-        PopulateRecord(nullptr, CpuShadow.Data() + ByteOffset, ByteOffset, RecordKind, RecordIndex, String(), Bindings, NumBindings);
+        PopulateRecord(nullptr, CpuShadow.Data() + ByteOffset, ByteOffset, RecordKind, RecordIndex, FString(), Bindings, NumBindings);
     }
 }
 

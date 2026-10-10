@@ -6,7 +6,7 @@
 
 struct SHADERCOMPILER_API FShaderCompileJob
 {
-    NODISCARD static FShaderCompileJob FromCompileInfo(const String& InSourceFile, const FShaderCompileInfo& CompileInfo);
+    NODISCARD static FShaderCompileJob FromCompileInfo(const FString& InSourceFile, const FShaderCompileInfo& CompileInfo);
 
     /** The returned info views Defines and IncludeDirs, so the job has to outlive it */
     NODISCARD FShaderCompileInfo ToCompileInfo();
@@ -15,14 +15,14 @@ struct SHADERCOMPILER_API FShaderCompileJob
     NODISCARD uint64 GetKey() const;
 
     NODISCARD FJsonValue ToJson() const;
-    static bool FromJson(const FJsonValue& Value, FShaderCompileJob& OutJob, String& OutError);
+    static bool FromJson(const FJsonValue& Value, FShaderCompileJob& OutJob, FString& OutError);
 
     /** Only shown in logs, "FDeferredLightingCS#12" for typed shaders */
-    String                Name;
+    FString                Name;
 
     /** The same string FShaderCompiler::CompileFromFile takes. Jobs sent over the network use the names CollectSources gives. */
-    String                SourceFile;
-    String                EntryPoint;
+    FString               SourceFile;
+    FString               EntryPoint;
     EShaderModel          ShaderModel    = EShaderModel::Unknown;
     EShaderStage          ShaderStage    = EShaderStage::Unknown;
     EShaderOutputLanguage OutputLanguage = EShaderOutputLanguage::Unknown;
@@ -34,22 +34,22 @@ struct SHADERCOMPILER_API FShaderCompileJob
     TArray<FShaderDefine> Defines;
 
     /** FShaderCompileInfo::IncludeDirs, named like SourceFile */
-    TArray<String>        IncludeDirs;
+    TArray<FString>        IncludeDirs;
 };
 
 struct FShaderSourceFile
 {
     /** The name FShaderCompiler::CollectSources gives it, with '/' separators */
-    String        Path;
+    FString        Path;
 
     /** Where it was read on this machine, empty for files a server received */
-    String        LocalPath;
+    FString        LocalPath;
 
     /** Line endings normalized with ShaderSourceHash::NormalizeLineEndings */
     TArray<uint8> Contents;
     uint32        Hash = 0;
 };
 
-NODISCARD SHADERCOMPILER_API bool TryParseShaderStage(const String& Text, EShaderStage& OutStage);
-NODISCARD SHADERCOMPILER_API bool TryParseShaderModel(const String& Text, EShaderModel& OutModel);
-NODISCARD SHADERCOMPILER_API bool TryParseShaderOutputLanguage(const String& Text, EShaderOutputLanguage& OutOutputLanguage);
+NODISCARD SHADERCOMPILER_API bool TryParseShaderStage(const FString& Text, EShaderStage& OutStage);
+NODISCARD SHADERCOMPILER_API bool TryParseShaderModel(const FString& Text, EShaderModel& OutModel);
+NODISCARD SHADERCOMPILER_API bool TryParseShaderOutputLanguage(const FString& Text, EShaderOutputLanguage& OutOutputLanguage);

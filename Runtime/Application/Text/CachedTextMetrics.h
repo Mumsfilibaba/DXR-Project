@@ -17,7 +17,7 @@ public:
      * @param Text The string to measure.
      * @return The width in pixels, zero without a face.
      */
-    NODISCARD int32 GetWidth(const IFontFace* Font, const StringView& Text);
+    NODISCARD int32 GetWidth(const IFontFace* Font, const FStringView& Text);
 
     /**
      * @brief Elides a string to a width.
@@ -27,15 +27,15 @@ public:
      * @param MaxWidth The widest the result may measure, in pixels.
      * @return The elided string, which stays valid until the next call.
      */
-    NODISCARD const String& GetElided(const IFontFace* Font, const StringView& Text, int32 MaxWidth);
+    NODISCARD const FString& GetElided(const IFontFace* Font, const FStringView& Text, int32 MaxWidth);
 
 private:
-    void Refresh(const IFontFace* Font, const StringView& Text);
+    void Refresh(const IFontFace* Font, const FStringView& Text);
 
     const IFontFace* CachedFont;
     uint64           CachedLayoutRevision;
-    String           CachedText;
+    FString          CachedText;
     int32            CachedWidth;
     int32            CachedMaxWidth;
-    String           CachedElided;
+    FString          CachedElided;
 };

@@ -11,7 +11,7 @@ struct FShaderCompilerIdentity
 
     NODISCARD uint64 GetHash() const
     {
-        uint64 Hash = THash<String>::GetHash(Name);
+        uint64 Hash = THash<FString>::GetHash(Name);
         HashCombine(Hash, VersionMajor);
         HashCombine(Hash, VersionMinor);
         HashCombine(Hash, SettingsVersion);
@@ -19,7 +19,7 @@ struct FShaderCompilerIdentity
         return Hash;
     }
 
-    String Name;
+    FString Name;
     uint32 VersionMajor      = 0;
     uint32 VersionMinor      = 0;
 

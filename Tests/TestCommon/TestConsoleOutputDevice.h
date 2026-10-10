@@ -13,8 +13,8 @@ public:
     /** @brief Close the log file if one is open. */
     void CloseLogFile();
 
-    virtual void Log(const String& Message) override;
-    virtual void Log(ELogSeverity Severity, const String& Message) override;
+    virtual void Log(const FString& Message) override;
+    virtual void Log(ELogSeverity Severity, const FString& Message) override;
     virtual void Flush() override;
 
 private:

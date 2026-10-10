@@ -38,13 +38,13 @@ struct FMetalBinaryArchiveHeader
 class FMetalBinaryArchive
 {
 public:
-    static EMetalBinaryArchiveMode ParseMode(const String& ModeName);
+    static EMetalBinaryArchiveMode ParseMode(const FString& ModeName);
     static const CHAR_T* GetModeName(EMetalBinaryArchiveMode Mode);
 
     explicit FMetalBinaryArchive(FMetalDevice* InDevice);
     ~FMetalBinaryArchive();
 
-    bool Initialize(EMetalBinaryArchiveMode InMode, const String& InFilePath);
+    bool Initialize(EMetalBinaryArchiveMode InMode, const FString& InFilePath);
 
     TSharedRef<FMetalCachedRenderPipeline>  CreateRenderPipeline(MTLRenderPipelineDescriptor* Descriptor);
     TSharedRef<FMetalCachedRenderPipeline>  CreateMeshRenderPipeline(MTLMeshRenderPipelineDescriptor* Descriptor);
@@ -55,8 +55,8 @@ public:
     void WaitForSave();
 
     EMetalBinaryArchiveMode GetMode()            const { return Mode; }
-    const String&           GetFilePath()        const { return FilePath; }
-    const String&           GetRejectionReason() const { return RejectionReason; }
+    const FString&          GetFilePath()        const { return FilePath; }
+    const FString&          GetRejectionReason() const { return RejectionReason; }
 
 private:
     bool LoadFromFile();
@@ -65,8 +65,8 @@ private:
 
     FMetalDevice*           Device;
     EMetalBinaryArchiveMode Mode;
-    String                  FilePath;
-    String                  RejectionReason;
+    FString                 FilePath;
+    FString                 RejectionReason;
     id<MTLBinaryArchive>    LookupArchive;
     NSMutableSet*           HarvestedDescriptors;
     FCriticalSection        ArchiveCS;

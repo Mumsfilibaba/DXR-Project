@@ -132,8 +132,8 @@ static DWORD WINAPI CrashReportThreadEntry(LPVOID)
     const EXCEPTION_RECORD& ExceptionRecord = *GExceptionPointers->ExceptionRecord;
 
     // Resolved here rather than in the handler, because it allocates and the faulting thread must not.
-    String ThreadName;
-    PWSTR  Description = nullptr;
+    FString ThreadName;
+    PWSTR   Description = nullptr;
     if (SUCCEEDED(::GetThreadDescription(GFaultingThread, &Description)))
     {
         ThreadName = StringCast<CHAR_T>(Description).ToString();

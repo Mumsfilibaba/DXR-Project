@@ -8,26 +8,26 @@
 #define LOG_ERROR_CRITICAL(Format, ...) \
     do \
     { \
-        FOutputDeviceManager::Get()->Log(ELogSeverity::Error, String::Printf(LOG_FORMAT(Format) __VA_OPT__(,) __VA_ARGS__)); \
+        FOutputDeviceManager::Get()->Log(ELogSeverity::Error, FString::Printf(LOG_FORMAT(Format) __VA_OPT__(,) __VA_ARGS__)); \
         DEBUG_BREAK(); \
     } while (false)
 
 #define LOG_ERROR(Format, ...) \
     do \
     { \
-        FOutputDeviceManager::Get()->Log(ELogSeverity::Error, String::Printf(LOG_FORMAT(Format) __VA_OPT__(,) __VA_ARGS__)); \
+        FOutputDeviceManager::Get()->Log(ELogSeverity::Error, FString::Printf(LOG_FORMAT(Format) __VA_OPT__(,) __VA_ARGS__)); \
     } while (false)
 
 #define LOG_WARNING(Format, ...) \
     do \
     { \
-        FOutputDeviceManager::Get()->Log(ELogSeverity::Warning, String::Printf(LOG_FORMAT(Format) __VA_OPT__(,) __VA_ARGS__)); \
+        FOutputDeviceManager::Get()->Log(ELogSeverity::Warning, FString::Printf(LOG_FORMAT(Format) __VA_OPT__(,) __VA_ARGS__)); \
     } while (false)
 
 #define LOG_INFO(Format, ...) \
     do \
     { \
-        FOutputDeviceManager::Get()->Log(ELogSeverity::Info, String::Printf(LOG_FORMAT(Format) __VA_OPT__(,) __VA_ARGS__)); \
+        FOutputDeviceManager::Get()->Log(ELogSeverity::Info, FString::Printf(LOG_FORMAT(Format) __VA_OPT__(,) __VA_ARGS__)); \
     } while (false)
 
 class CORE_API FOutputDeviceManager : public IOutputDevice
@@ -39,10 +39,10 @@ public:
 
 public:
     /** @brief Log a simple message to all output devices */
-    virtual void Log(const String& Message) override final;
+    virtual void Log(const FString& Message) override final;
 
     /** @brief Log a message with severity to all output devices */
-    virtual void Log(ELogSeverity Severity, const String& Message) override final;
+    virtual void Log(ELogSeverity Severity, const FString& Message) override final;
 
     /** @brief Flush all output devices */
     virtual void Flush() override final;
@@ -74,7 +74,7 @@ public:
 private:
     struct FPendingLine
     {
-        String       Message;
+        FString      Message;
         ELogSeverity Severity;
         bool         bHasSeverity;
     };
@@ -82,7 +82,7 @@ private:
     FOutputDeviceManager();
     ~FOutputDeviceManager();
 
-    void QueuePendingLine(const String& Message, ELogSeverity Severity, bool bHasSeverity);
+    void QueuePendingLine(const FString& Message, ELogSeverity Severity, bool bHasSeverity);
 
     TArray<IOutputDevice*> OutputDevices;
     TArray<FPendingLine>   PendingLines;

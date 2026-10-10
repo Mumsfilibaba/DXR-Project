@@ -162,11 +162,11 @@ bool Profiler_Test()
         {
             for (const FProfilerScopeAggregate& Scope : ThreadInfo.Scopes)
             {
-                if (Scope.Name == String("FrameOnly"))
+                if (Scope.Name == FString("FrameOnly"))
                 {
                     bHasFrameOnly = true;
                 }
-                if (Scope.Name == String("BootOnly"))
+                if (Scope.Name == FString("BootOnly"))
                 {
                     bHasBootOnly = true;
                 }
@@ -231,7 +231,7 @@ bool Profiler_Test()
         }
         FFrameProfiler::Get().Tick();
 
-        const String Text = FProfilerReport::BuildCpuAndBootText();
+        const FString Text = FProfilerReport::BuildCpuAndBootText();
         TEST_EXPECT(Text.Contains("DXR Profile Run"));
         TEST_EXPECT(Text.Contains("== BOOT =="));
         TEST_EXPECT(Text.Contains("DumpBoot"));
@@ -378,7 +378,7 @@ bool Profiler_Test()
         }
         FFrameProfiler::Get().Tick();
 
-        const String Json = FProfilerReport::BuildChromeCpuJson();
+        const FString Json = FProfilerReport::BuildChromeCpuJson();
         TEST_EXPECT(Json.Contains("\"ph\":\"X\""));
         TEST_EXPECT(Json.Contains("\"ph\":\"i\""));
         TEST_EXPECT(Json.Contains("Quoted\\\"Name") || Json.Contains("Quoted"));

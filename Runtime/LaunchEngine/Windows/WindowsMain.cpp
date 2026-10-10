@@ -31,7 +31,7 @@ int WINAPI wWinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPWSTR CommandLi
 {
     InitCRunTime();
 
-    const String  CommandLineText  = StringCast<CHAR_T>(CommandLine).ToString();
+    const FString CommandLineText  = StringCast<CHAR_T>(CommandLine).ToString();
     const CHAR_T* LocalCommandLine = *CommandLineText;
     return EngineMain(&LocalCommandLine, 1);
 }

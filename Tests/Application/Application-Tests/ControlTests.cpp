@@ -153,7 +153,7 @@ static void DrawElement(const TSharedPtr<FVisualElement>& Element, FDrawCommandL
 static TArray<FProfilerTimelineLane> MakeTimelineLanes(uint64 Base)
 {
     FProfilerTimelineLane CpuLane;
-    CpuLane.Label = String("GameThread");
+    CpuLane.Label = FString("GameThread");
 
     FProfilerTimelineBar ParentBar;
     ParentBar.Name             = "Parent";
@@ -171,7 +171,7 @@ static TArray<FProfilerTimelineLane> MakeTimelineLanes(uint64 Base)
     CpuLane.Bars.Add(ChildBar);
 
     FProfilerTimelineLane GpuLane;
-    GpuLane.Label  = String("GPU");
+    GpuLane.Label  = FString("GPU");
     GpuLane.bIsGpu = true;
 
     FProfilerTimelineBar GpuBar;
@@ -270,7 +270,7 @@ bool ButtonControl_Test()
     ShortButton->PrepareDesiredSize();
 
     TEST_EXPECT_EQ(LabelFloor,
-        ButtonFont->MeasureWidth(StringView(Style.Metrics.ButtonMinLabel)) + Style.Metrics.ButtonPadding.GetTotalHorizontal());
+        ButtonFont->MeasureWidth(FStringView(Style.Metrics.ButtonMinLabel)) + Style.Metrics.ButtonPadding.GetTotalHorizontal());
     TEST_EXPECT(8 + Style.Metrics.ButtonPadding.GetTotalHorizontal() < LabelFloor);
     TEST_EXPECT_EQ(ShortButton->GetCachedDesiredSize().X, LabelFloor);
 
@@ -658,7 +658,7 @@ bool SpinBoxControl_Test()
     LayoutElement(SpinBox, FRectangle(IntVector2(0, 0), 120, 24));
 
     TEST_SECTION("The value is written at the requested precision behind its prefix");
-    TEST_EXPECT(SpinBox->GetFormattedValue() == String("0.0"));
+    TEST_EXPECT(SpinBox->GetFormattedValue() == FString("0.0"));
 
     TEST_SECTION("A press that never moves opens the text box rather than scrubbing");
     SpinBox->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(60, 12)));
@@ -1028,11 +1028,11 @@ bool OverlayControl_Test()
             continue;
         }
 
-        if (Commands.GetCommandText(Command) == StringView("0123456789"))
+        if (Commands.GetCommandText(Command) == FStringView("0123456789"))
         {
             BaseLayer = Command.LayerId;
         }
-        else if (Commands.GetCommandText(Command) == StringView("9"))
+        else if (Commands.GetCommandText(Command) == FStringView("9"))
         {
             BadgeLayer = Command.LayerId;
         }
@@ -1214,7 +1214,7 @@ bool ExpanderControl_Test()
 
     TEST_SECTION("The label the header shows can be replaced afterwards");
     Expander->SetLabel("Renamed");
-    TEST_EXPECT(Expander->GetLabel() == String("Renamed"));
+    TEST_EXPECT(Expander->GetLabel() == FString("Renamed"));
 
     TEST_SECTION("Only the header is pressable, so only the header carries the hand");
     ECursor Cursor = ECursor::Arrow;
@@ -1316,7 +1316,7 @@ bool SearchBoxControl_Test()
 
     const FRectangle Bounds(IntVector2(0, 0), 200, 24);
 
-    TArray<String> Changes;
+    TArray<FString> Changes;
 
     FInputFrameStyle FrameStyle;
     FrameStyle.Fill          = FFloatColor(0.05f, 0.05f, 0.05f, 1.0f);
@@ -1330,7 +1330,7 @@ bool SearchBoxControl_Test()
     Desc.SearchIcon    = MakeIcon();
     Desc.ClearIcon     = MakeIcon();
     Desc.Style         = FrameStyle;
-    Desc.OnTextChanged = FOnSearchTextChanged::CreateLambda([&Changes](const String& NewText) { Changes.Add(NewText); });
+    Desc.OnTextChanged = FOnSearchTextChanged::CreateLambda([&Changes](const FString& NewText) { Changes.Add(NewText); });
 
     TSharedPtr<FSearchBox> SearchBox = FSearchBox::Create(Desc);
     LayoutElement(SearchBox, Bounds);
@@ -1363,9 +1363,9 @@ bool SearchBoxControl_Test()
     SearchBox->SetText("Mesh");
 
     TEST_EXPECT(!SearchBox->IsEmpty());
-    TEST_EXPECT(SearchBox->GetText() == String("Mesh"));
+    TEST_EXPECT(SearchBox->GetText() == FString("Mesh"));
     TEST_EXPECT_EQ(Changes.Size(), 1);
-    TEST_EXPECT(Changes[0] == String("Mesh"));
+    TEST_EXPECT(Changes[0] == FString("Mesh"));
 
     TEST_SECTION("The clear button takes the right square, and the magnifier keeps the left one it had");
     const FRectangle ClearBounds = SearchBox->GetClearButtonRectangle(Bounds);
@@ -1638,7 +1638,7 @@ bool NumericEntryControl_Test()
     TEST_EXPECT_EQ(FloatChanges.Size(), ChangesBeforeCommit + 1);
 
     TEST_SECTION("Committing rewrites the line in the form the field formats values in");
-    TEST_EXPECT(FloatEntry->GetEditor()->GetText() == String("12.500"));
+    TEST_EXPECT(FloatEntry->GetEditor()->GetText() == FString("12.500"));
 
     TEST_SECTION("A typed value outside the range is clamped the same way a pushed one is");
     FloatEntry->GetEditor()->SetText("999");
@@ -1670,7 +1670,7 @@ bool NumericEntryControl_Test()
 
     TEST_EXPECT_EQ(IntEntry->GetValue(), 7);
     TEST_EXPECT_EQ(IntChanges.Size(), IntChangesBeforeCommit + 1);
-    TEST_EXPECT(IntEntry->GetEditor()->GetText() == String("7"));
+    TEST_EXPECT(IntEntry->GetEditor()->GetText() == FString("7"));
 
     TEST_SECTION("A ranged field asked for a track fills from its left edge to where the value sits");
     FNumericEntryFloat::FDesc TrackDesc;
@@ -1813,7 +1813,7 @@ bool ProgressBarControl_Test()
 
     TEST_SECTION("The overlay text waits for a font before there is anything to draw it with");
     ProgressBar->SetOverlayText("50%");
-    TEST_EXPECT(ProgressBar->GetOverlayText() == String("50%"));
+    TEST_EXPECT(ProgressBar->GetOverlayText() == FString("50%"));
 
     FDrawCommandList FontlessCommands;
     DrawElement(ProgressBar, FontlessCommands);
@@ -2186,7 +2186,7 @@ bool ProfilerTimelineControl_Test()
     TEST_SECTION("A name is only written across a bar wide enough to hold the whole of it");
 
     FProfilerTimelineLane LabelLane;
-    LabelLane.Label = String("GameThread");
+    LabelLane.Label = FString("GameThread");
 
     FProfilerTimelineBar FittingBar;
     FittingBar.Name             = "Fits";
@@ -2222,11 +2222,11 @@ bool ProfilerTimelineControl_Test()
             continue;
         }
 
-        if (LabelCommands.GetCommandText(Command) == StringView("Fits"))
+        if (LabelCommands.GetCommandText(Command) == FStringView("Fits"))
         {
             bWroteFittingName = true;
         }
-        else if (LabelCommands.GetCommandText(Command) == StringView("VeryLongScopeNameHere"))
+        else if (LabelCommands.GetCommandText(Command) == FStringView("VeryLongScopeNameHere"))
         {
             bWroteOverflowingName = true;
         }
@@ -2238,7 +2238,7 @@ bool ProfilerTimelineControl_Test()
     TEST_SECTION("A dimmed bar is drawn with reduced fill alpha and without its label");
 
     FProfilerTimelineLane DimLane;
-    DimLane.Label = String("GameThread");
+    DimLane.Label = FString("GameThread");
 
     FProfilerTimelineBar MatchBar;
     MatchBar.Name             = "Tessellate";
@@ -2271,11 +2271,11 @@ bool ProfilerTimelineControl_Test()
     {
         if (Command.Type == EDrawCommandType::Text)
         {
-            if (DimCommands.GetCommandText(Command) == StringView("Tessellate"))
+            if (DimCommands.GetCommandText(Command) == FStringView("Tessellate"))
             {
                 bWroteTessellate = true;
             }
-            else if (DimCommands.GetCommandText(Command) == StringView("Other"))
+            else if (DimCommands.GetCommandText(Command) == FStringView("Other"))
             {
                 bWroteOther = true;
             }

@@ -43,7 +43,7 @@ IntVector2 FTextBlock::ComputeDesiredSize() const
         return IntVector2(Margin.GetTotalHorizontal(), Margin.GetTotalVertical());
     }
 
-    const int32 TextWidth = Font->MeasureWidth(StringView(Text.Data(), Text.Length()));
+    const int32 TextWidth = Font->MeasureWidth(FStringView(Text.Data(), Text.Length()));
     return IntVector2(TextWidth + Margin.GetTotalHorizontal(), Font->GetLineHeight() + Margin.GetTotalVertical());
 }
 
@@ -61,7 +61,7 @@ int32 FTextBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
 
         if (Overflow == ETextOverflow::Elide && Font)
         {
-            const String& Elided = ElideMetrics.GetElided(Font.Get(), StringView(Text.Data(), Text.Length()), TextBounds.Width);
+            const FString& Elided = ElideMetrics.GetElided(Font.Get(), FStringView(Text.Data(), Text.Length()), TextBounds.Width);
             OutCommandList.AddText(LayerId, TextBounds, Elided, Font.Get(), ColorAndOpacity);
         }
         else
@@ -73,7 +73,7 @@ int32 FTextBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
     return LayerId;
 }
 
-void FTextBlock::SetText(const String& InText)
+void FTextBlock::SetText(const FString& InText)
 {
     if (Text != InText)
     {

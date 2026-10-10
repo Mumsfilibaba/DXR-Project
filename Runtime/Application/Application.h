@@ -531,7 +531,7 @@ private:
     void RecordWindow(const TSharedPtr<FWindow>& InWindow);
     void ValidateDrawCache(const TSharedPtr<FWindow>& InWindow, const FDrawGeometry& WindowGeometry, const FDrawCommandList& RecordedCommands);
     void ValidateDrawCacheSubtree(const TSharedPtr<FWindow>& InWindow, const TSharedPtr<FVisualElement>& Element, const FDrawGeometry& Geometry);
-    void ReportDrawCacheDivergence(const TSharedPtr<FWindow>& InWindow, int32 DifferenceIndex, const String& Reason);
+    void ReportDrawCacheDivergence(const TSharedPtr<FWindow>& InWindow, int32 DifferenceIndex, const FString& Reason);
 
     TSharedPtr<IPlatformApplication>   PlatformApplication;
     TSet<EKeyboardKeyName::Type>       PressedKeys;

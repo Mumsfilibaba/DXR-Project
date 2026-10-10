@@ -24,7 +24,7 @@ static TSharedPtr<IFontFace> CreateFont()
     return MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 }
 
-static TSharedPtr<FVisualElement> MakePanelBody(const String& Text, const TSharedPtr<IFontFace>& Font)
+static TSharedPtr<FVisualElement> MakePanelBody(const FString& Text, const TSharedPtr<IFontFace>& Font)
 {
     FTextBlock::FDesc Desc;
     Desc.Text = Text;
@@ -46,10 +46,10 @@ static TSharedPtr<FDockingArea> BuildShellArea(const TSharedPtr<IFontFace>& Font
     Area->RegisterPanel("Output", "Output Log", MakePanelBody("Output Log", Font));
     Area->RegisterPanel("Content", "Content Browser", MakePanelBody("Content Browser", Font));
 
-    const FDockNode Hierarchy = FDockNode::CreateTabs({ String("Hierarchy") });
-    const FDockNode Viewport  = FDockNode::CreateTabs({ String("Viewport") });
-    const FDockNode Details   = FDockNode::CreateTabs({ String("Details") });
-    const FDockNode Bottom    = FDockNode::CreateTabs({ String("Output"), String("Content") });
+    const FDockNode Hierarchy = FDockNode::CreateTabs({ FString("Hierarchy") });
+    const FDockNode Viewport  = FDockNode::CreateTabs({ FString("Viewport") });
+    const FDockNode Details   = FDockNode::CreateTabs({ FString("Details") });
+    const FDockNode Bottom    = FDockNode::CreateTabs({ FString("Output"), FString("Content") });
 
     const FDockNode Centre = FDockNode::CreateSplit(EDockSplitOrientation::Vertical, Viewport, Bottom);
     const FDockNode Left   = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, Hierarchy, Centre);
@@ -70,8 +70,8 @@ static TSharedPtr<FDockingArea> BuildPairArea(const TSharedPtr<IFontFace>& Font)
 
     Area->RestoreLayout(FDockNode::CreateSplit(
         EDockSplitOrientation::Horizontal,
-        FDockNode::CreateTabs({ String("Left") }),
-        FDockNode::CreateTabs({ String("Right") })));
+        FDockNode::CreateTabs({ FString("Left") }),
+        FDockNode::CreateTabs({ FString("Right") })));
 
     return Area;
 }
@@ -390,7 +390,7 @@ bool PanelChromeSnapshots_Test()
     TEST_BEGIN();
 
     const TSharedPtr<IFontFace> Font      = CreateFont();
-    const String                Directory = GetSnapshotDirectory("Current");
+    const FString               Directory = GetSnapshotDirectory("Current");
 
     TEST_SECTION("The snapshot directory can be created");
     TEST_EXPECT(EnsureSnapshotDirectory(Directory));
@@ -431,7 +431,7 @@ bool PanelChromeSnapshots_Test()
         Area->RegisterPanel("Output", "Output Log", MakePanelBody("Output Log", Font));
         Area->RegisterPanel("Content", "Content Browser", MakePanelBody("Content Browser", Font));
         Area->RegisterPanel("Console", "Console", MakePanelBody("Console", Font));
-        Area->RestoreLayout(FDockNode::CreateTabs({ String("Output"), String("Content"), String("Console") }));
+        Area->RestoreLayout(FDockNode::CreateTabs({ FString("Output"), FString("Content"), FString("Console") }));
 
         TEST_EXPECT(SnapshotElementToPng(Area, IntVector2(800, 300), ClearColor, Directory + "/Tabs.png"));
     }

@@ -15,14 +15,14 @@ struct FRemoteConsoleRequest
 {
     uint32     ClientId   = 0;
     FJsonValue Id;                // Echoed back verbatim, null for raw text lines
-    String     Type;
+    FString    Type;
     FJsonValue Payload;           // The whole request object
     bool       bIsRawText = false;
 };
 
 struct FRemoteConsoleClient
 {
-    FRemoteConsoleClient(uint32 InClientId, FNetworkSocket&& InSocket, const String& InPeerAddress, const String& InSendBuffer)
+    FRemoteConsoleClient(uint32 InClientId, FNetworkSocket&& InSocket, const FString& InPeerAddress, const FString& InSendBuffer)
         : ClientId(InClientId)
         , Socket(::Move(InSocket))
         , PeerAddress(InPeerAddress)
@@ -36,10 +36,10 @@ struct FRemoteConsoleClient
 
     uint32         ClientId;
     FNetworkSocket Socket;
-    String         PeerAddress;
-    String         ReceiveBuffer;
-    String         SendBuffer;
-    String         CloseReason;      // Logged by the network thread once the client is removed
+    FString        PeerAddress;
+    FString        ReceiveBuffer;
+    FString        SendBuffer;
+    FString        CloseReason;      // Logged by the network thread once the client is removed
     bool           bSubscribedToLog;
     bool           bPendingClose;
 };
@@ -50,8 +50,8 @@ public:
     FRemoteConsoleLogDevice();
     virtual ~FRemoteConsoleLogDevice();
 
-    virtual void Log(const String& Message) override final;
-    virtual void Log(ELogSeverity Severity, const String& Message) override final;
+    virtual void Log(const FString& Message) override final;
+    virtual void Log(ELogSeverity Severity, const FString& Message) override final;
 
     /** @brief Main thread. Starts recording main-thread log lines. */
     void BeginCapture();
@@ -90,7 +90,7 @@ public:
     static int32 GetNumConnectedClients();
 
     /** @brief Any thread. Queues a log event for every subscribed client of the running server, if there is one. */
-    static void BroadcastLog(ELogSeverity Severity, const String& Message);
+    static void BroadcastLog(ELogSeverity Severity, const FString& Message);
 
 public:
     virtual bool  Start() override final;
@@ -105,16 +105,16 @@ private:
     static void StopInstance();
 
     bool ListenOn(const FSocketAddress& Address);
-    NODISCARD String DescribeListeners() const;
+    NODISCARD FString DescribeListeners() const;
     void ProcessRequests();
 
     // Network thread
-    void AcceptClients(FNetworkSocket* ListenSocket, TArray<String>& OutLogMessages);
+    void AcceptClients(FNetworkSocket* ListenSocket, TArray<FString>& OutLogMessages);
     void RejectClient(FNetworkSocket* Socket, const CHAR_T* Reason);
     void ReceiveFromClient(FRemoteConsoleClient& Client, TArray<FRemoteConsoleRequest>& OutRequests);
     void FlushClient(FRemoteConsoleClient& Client);
     void FlushAllClients(uint32 TimeoutMilliseconds);
-    bool ParseLine(FRemoteConsoleClient& Client, const String& Line, FRemoteConsoleRequest& OutRequest);
+    bool ParseLine(FRemoteConsoleClient& Client, const FString& Line, FRemoteConsoleRequest& OutRequest);
 
     // Main thread
     void HandleRequest(const FRemoteConsoleRequest& Request);
@@ -124,15 +124,15 @@ private:
     void HandleSubscribeLog(const FRemoteConsoleRequest& Request);
 
     FJsonValue MakeResult(const FRemoteConsoleRequest& Request, bool bSucceeded) const;
-    void       SendError(const FRemoteConsoleRequest& Request, const String& Error);
+    void       SendError(const FRemoteConsoleRequest& Request, const FString& Error);
     void       SendResult(const FRemoteConsoleRequest& Request, const FJsonValue& Result);
-    void       SendToClient(uint32 ClientId, const String& Line);
+    void       SendToClient(uint32 ClientId, const FString& Line);
 
     TArray<FNetworkSocket>                   ListenSockets;
     TArray<FSocketAddress>                   ListenAddresses;
     IPlatformThread*                         Thread;
     AtomicBool                               bStopRequested;
-    String                                   HelloLine;
+    FString                                  HelloLine;
     TArray<TUniquePtr<FRemoteConsoleClient>> Clients;
     FCriticalSection                         ClientsCS;
     uint32                                   NextClientId;

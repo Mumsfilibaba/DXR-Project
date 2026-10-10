@@ -35,7 +35,7 @@ void FMetalHeap::DeferredRelease()
     Heap = nil;
 }
 
-void FMetalHeap::SetDebugName(const String& Name)
+void FMetalHeap::SetDebugName(const FString& Name)
 {
     if (Heap)
     {

@@ -39,7 +39,7 @@ static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRect
     Element->Arrange(Bounds);
 }
 
-static TSharedPtr<FVisualElement> CreateEditor(const String& Text, const TSharedPtr<IFontFace>& Font)
+static TSharedPtr<FVisualElement> CreateEditor(const FString& Text, const TSharedPtr<IFontFace>& Font)
 {
     FTextBlock::FDesc Desc;
     Desc.Text = Text;
@@ -83,9 +83,9 @@ bool PropertyTableRows_Test()
     LocationRow.IndentLevel   = 1;
 
     TEST_EXPECT_EQ(Table->GetNumRows(), 1);
-    TEST_EXPECT(Table->GetRow(0).Label == String("Location"));
+    TEST_EXPECT(Table->GetRow(0).Label == FString("Location"));
     TEST_EXPECT(Table->GetRow(0).Editor == LocationEditor);
-    TEST_EXPECT(Table->GetRow(0).ToolTipText == String("Where the actor sits in the world"));
+    TEST_EXPECT(Table->GetRow(0).ToolTipText == FString("Where the actor sits in the world"));
     TEST_EXPECT_EQ(Table->GetRow(0).IndentLevel, 1);
     TEST_EXPECT(!Table->GetRow(0).bIsHeader);
 
@@ -95,17 +95,17 @@ bool PropertyTableRows_Test()
 
     TEST_EXPECT(Table->GetRow(1).bIsHeader);
     TEST_EXPECT(Table->GetRow(1).Editor == nullptr);
-    TEST_EXPECT(Table->GetRow(1).Label == String("Rendering"));
-    TEST_EXPECT(Table->GetRow(1).ToolTipText == String("How the actor is drawn"));
+    TEST_EXPECT(Table->GetRow(1).Label == FString("Rendering"));
+    TEST_EXPECT(Table->GetRow(1).ToolTipText == FString("How the actor is drawn"));
 
     TEST_SECTION("The count takes in the headings, and the rows read back in the order they arrived");
     TSharedPtr<FVisualElement> VisibleEditor = CreateEditor("true", Font);
     Table->AddRow("Visible", VisibleEditor);
 
     TEST_EXPECT_EQ(Table->GetNumRows(), 3);
-    TEST_EXPECT(Table->GetRow(0).Label == String("Location"));
-    TEST_EXPECT(Table->GetRow(1).Label == String("Rendering"));
-    TEST_EXPECT(Table->GetRow(2).Label == String("Visible"));
+    TEST_EXPECT(Table->GetRow(0).Label == FString("Location"));
+    TEST_EXPECT(Table->GetRow(1).Label == FString("Rendering"));
+    TEST_EXPECT(Table->GetRow(2).Label == FString("Visible"));
     TEST_EXPECT(Table->GetRow(2).Editor == VisibleEditor);
 
     TEST_SECTION("The table is as tall as its rows together and asks for no width of its own");

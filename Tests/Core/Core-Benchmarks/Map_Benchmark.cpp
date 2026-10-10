@@ -326,11 +326,11 @@ void TMap_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                std::unordered_map<String, int32, FStdHasher> Map;
+                std::unordered_map<FString, int32, FStdHasher> Map;
                 FScopedClock ScopedClock(Clock);
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Map.emplace(String::Printf("%u", j), static_cast<int32>(j));
+                    Map.emplace(FString::Printf("%u", j), static_cast<int32>(j));
                 }
             }
 
@@ -341,11 +341,11 @@ void TMap_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                TMap<String, int32> Map;
+                TMap<FString, int32> Map;
                 FScopedClock ScopedClock(Clock);
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Map.Add(String::Printf("%u", j), static_cast<int32>(j));
+                    Map.Add(FString::Printf("%u", j), static_cast<int32>(j));
                 }
             }
 

@@ -51,13 +51,13 @@ IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 
 struct FDebuggerOutputDevice : public IOutputDevice
 {
-    virtual void Log(const String& Message)
+    virtual void Log(const FString& Message)
     {
         FPlatformMisc::OutputDebugString(Message.Data());
         FPlatformMisc::OutputDebugString("\n");
     }
 
-    virtual void Log(ELogSeverity Severity, const String& Message)
+    virtual void Log(ELogSeverity Severity, const FString& Message)
     {
         Log(Message);
     }

@@ -43,7 +43,7 @@ static void CloseDialog(const TSharedPtr<FConfirmDialogState>& State, bool bConf
     OnClosed.ExecuteIfBound(bConfirmed);
 }
 
-static TSharedPtr<FButton> CreateDialogButton(const String& Label, const FOnClicked& OnClicked)
+static TSharedPtr<FButton> CreateDialogButton(const FString& Label, const FOnClicked& OnClicked)
 {
     FTextBlock::FDesc LabelDesc;
     LabelDesc.Text            = Label;

@@ -59,7 +59,7 @@ public:
     virtual FRHIFence*                                 CreateFence() override final;
 
     virtual void                           GetRayTracingAccelerationStructureOperationPrebuildInfo(const FRHIRayTracingAccelerationStructureOperationInputs& InInputs, FRHIRayTracingAccelerationStructurePrebuildInfo& OutInfo) override final;
-    virtual FRHIRayTracingShaderIdentifier GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const String& InExportName) override final;
+    virtual FRHIRayTracingShaderIdentifier GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const FString& InExportName) override final;
     virtual bool                           IsAccelerationStructureSerializationHeaderValid(const FRHIAccelerationStructureSerializationHeader& InHeader) override final;
 
     virtual IRHICommandContext* ObtainCommandContext() override final;
@@ -79,7 +79,7 @@ public:
     virtual void* GetRHINativeComputeCommandQueue() override final;
     virtual void* GetRHINativeCopyCommandQueue()    override final;
 
-    virtual String GetAdapterName() const override final;
+    virtual FString GetAdapterName() const override final;
 
     virtual ERHIType GetRHIType() const override final;
 
@@ -97,7 +97,7 @@ public:
      * fallen out of the window of recent destructions. Only a dangling pointer can be described this way, so
      * a caller has to have established that the resource is not live.
      */
-    NODISCARD String DescribeDestroyedResource(const FRHIResource* Resource) const;
+    NODISCARD FString DescribeDestroyedResource(const FRHIResource* Resource) const;
 
 private:
 
@@ -107,7 +107,7 @@ private:
     struct FDestroyedResource
     {
         const FRHIResource* Resource;
-        String              Identity;
+        FString             Identity;
     };
 
     template<typename ResourceType>

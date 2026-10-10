@@ -13,7 +13,7 @@ bool FWindowsPlatformSystemClipboard::HasText()
     return ::IsClipboardFormatAvailable(CF_UNICODETEXT) != 0;
 }
 
-bool FWindowsPlatformSystemClipboard::GetText(String& OutText)
+bool FWindowsPlatformSystemClipboard::GetText(FString& OutText)
 {
     OutText.Clear();
 
@@ -48,7 +48,7 @@ bool FWindowsPlatformSystemClipboard::GetText(String& OutText)
     return true;
 }
 
-bool FWindowsPlatformSystemClipboard::SetText(const String& InText)
+bool FWindowsPlatformSystemClipboard::SetText(const FString& InText)
 {
     if (!OpenClipboardScoped(nullptr))
     {

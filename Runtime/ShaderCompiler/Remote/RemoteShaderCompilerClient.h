@@ -32,10 +32,10 @@ struct FRemoteCompileResult
     TArray<uint8>  ShaderCode;
 
     /** Relative to the asset directory */
-    TArray<String> Dependencies;
+    TArray<FString> Dependencies;
 
     /** Compiler output, with paths relative to the asset directory */
-    String         Messages;
+    FString         Messages;
 };
 
 struct FRemoteLanguageInfo
@@ -55,7 +55,7 @@ public:
      * @brief Resolves InHost, connects with FNetworkSocket::ConnectToHost (IPv4 or IPv6) and waits for the Hello.
      *        Closes any earlier connection first, which fails its in-flight requests.
      */
-    bool Connect(const String& InHost, uint16 InPort, uint32 TimeoutMilliseconds);
+    bool Connect(const FString& InHost, uint16 InPort, uint32 TimeoutMilliseconds);
     void Disconnect();
 
     NODISCARD bool IsConnected() const;
@@ -64,10 +64,10 @@ public:
     NODISCARD TArray<FRemoteLanguageInfo> GetLanguages() const;
 
     /** @return FSocketAddress::FormatHostAndPort plus the platform, "192.168.1.20:9371 (macOS)" or "[fe80::1]:9371 (macOS)" */
-    NODISCARD String GetPeerName() const;
+    NODISCARD FString GetPeerName() const;
 
     /** @return Why the last Connect failed, empty after a successful one */
-    NODISCARD String GetLastError() const;
+    NODISCARD FString GetLastError() const;
 
     /**
      * @brief Blocking and thread-safe. Files this connection has not sent yet go along with the request.
@@ -96,18 +96,18 @@ private:
     void FailAllPending();
     bool FlushSendBuffer();
 
-    String                          Host;
+    FString                         Host;
     uint16                          Port;
     FNetworkSocket                  Socket;
     IPlatformThread*                Thread;
     AtomicBool                      bStopRequested;
     AtomicBool                      bConnected;
-    String                          PeerPlatform;
-    String                          LastError;
+    FString                         PeerPlatform;
+    FString                         LastError;
     TArray<FRemoteLanguageInfo>     Languages;
     mutable FCriticalSection        LanguagesCS;
     TArray<uint8>                   SendBuffer;
-    TSet<String>                    SentFiles;
+    TSet<FString>                   SentFiles;
     FCriticalSection                SendCS;
     TArray<uint8>                   ReceiveBuffer;
     TMap<uint32, FPendingRequest*>  PendingRequests;

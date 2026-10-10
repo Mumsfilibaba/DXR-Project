@@ -9,10 +9,10 @@ struct FToolOptions;
 struct FShaderHeaderDesc
 {
     /** Absolute */
-    String            HeaderPath;
+    FString            HeaderPath;
 
     /** The array the header declares */
-    String            SymbolName;
+    FString           SymbolName;
 
     /** Always optimized and without debug info */
     FShaderCompileJob Job;
@@ -24,12 +24,12 @@ struct ShaderHeader
     NODISCARD static uint64 ComputeStamp(const FShaderCompileJob& Job, const TArray<FShaderSourceFile>& Sources);
 
     /** @return False when the header does not exist or has no "// Stamp:" line */
-    static bool ReadStamp(const String& HeaderPath, uint64& OutStamp);
+    static bool ReadStamp(const FString& HeaderPath, uint64& OutStamp);
 
     /** @return The whole header. The output does not change between runs with the same inputs, so regenerating leaves no diff. */
-    NODISCARD static String Build(const FShaderHeaderDesc& Desc, uint64 Stamp, const FShaderCompilerIdentity& Identity, const TArray<FShaderSourceFile>& Sources, const TArray<uint8>& ShaderCode);
+    NODISCARD static FString Build(const FShaderHeaderDesc& Desc, uint64 Stamp, const FShaderCompilerIdentity& Identity, const TArray<FShaderSourceFile>& Sources, const TArray<uint8>& ShaderCode);
 
-    static bool Write(const FShaderHeaderDesc& Desc, uint64 Stamp, const FShaderCompilerIdentity& Identity, const TArray<FShaderSourceFile>& Sources, const TArray<uint8>& ShaderCode, String& OutError);
+    static bool Write(const FShaderHeaderDesc& Desc, uint64 Stamp, const FShaderCompilerIdentity& Identity, const TArray<FShaderSourceFile>& Sources, const TArray<uint8>& ShaderCode, FString& OutError);
 
     /** @brief -compile with -header: writes the header unless its stamp is current, or only reports a stale header with -check */
     static int32 RunCompile(const FToolOptions& Options);

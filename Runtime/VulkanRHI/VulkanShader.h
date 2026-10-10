@@ -165,7 +165,7 @@ struct FVulkanShaderInfo
         EVulkanNullImageViewType NullViewType = EVulkanNullImageViewType::Texture2D;
         uint16                   OriginalBindingIndex;
     #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
-        String                   DebugName;
+        FString                   DebugName;
     #endif
     };
     
@@ -225,7 +225,7 @@ public:
         return ShaderInfo;
     }
 
-    const String& GetEntryPointName() const
+    const FString& GetEntryPointName() const
     {
         return EntryPointName;
     }
@@ -236,7 +236,7 @@ protected:
     FSpirvArray                          SpirvCode;
     FVulkanShaderInfo                    ShaderInfo;
     EShaderVisibility::Type              ShaderVisibility;
-    String                               EntryPointName;
+    FString                              EntryPointName;
     TMap<uint64, FVulkanShaderModuleRef> ShaderModules;
     FCriticalSection                     ShaderModulesCS;
 };
@@ -326,7 +326,7 @@ public:
     FVulkanRayTracingShader(FVulkanDevice* InDevice);
     virtual ~FVulkanRayTracingShader();
 
-    const String& GetIdentifier() const
+    const FString& GetIdentifier() const
     {
         return GetEntryPointName();
     }

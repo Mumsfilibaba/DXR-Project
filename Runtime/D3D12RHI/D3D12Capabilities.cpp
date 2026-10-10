@@ -18,7 +18,7 @@ static TAutoConsoleVariable<bool> CVarEnableTightAlignment(
 static FAutoConsoleCommand CCmdD3D12DumpRayTracingCapsCommand(
     "D3D12RHI.DumpRayTracingCaps",
     "Logs the backend-native D3D12 ray-tracing capability table (GD3D12Supports* RT globals)",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         DumpD3D12RayTracingCapabilities();
     }));
@@ -26,7 +26,7 @@ static FAutoConsoleCommand CCmdD3D12DumpRayTracingCapsCommand(
 static FAutoConsoleCommand CCmdD3D12DumpCapsCommand(
     "D3D12RHI.DumpCaps",
     "Logs the backend-native D3D12 capability table (all GD3D12* globals, including ray tracing)",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         DumpD3D12Capabilities();
     }));

@@ -67,15 +67,15 @@ static void QueryStatsByGroup(const CHAR_T* GroupName, TArray<FStatData*>& OutSt
     FStatRegistry::Get().GetStatsByGroup(GroupName, OutStats);
 }
 
-static String FormatStatValue(const FStatData& Stat)
+static FString FormatStatValue(const FStatData& Stat)
 {
     const int64 Value = Stat.Value.Load();
     if (Stat.Type == EStatType::Memory)
     {
-        return String::Printf("%.2f MB", static_cast<double>(Value) / BYTES_PER_MEGABYTE);
+        return FString::Printf("%.2f MB", static_cast<double>(Value) / BYTES_PER_MEGABYTE);
     }
 
-    return String::Printf("%lld", static_cast<long long>(Value));
+    return FString::Printf("%lld", static_cast<long long>(Value));
 }
 
 static void UpdateMemoryBar(const TSharedPtr<FProgressBar>& Bar, int64 Usage, int64 Budget)
@@ -83,7 +83,7 @@ static void UpdateMemoryBar(const TSharedPtr<FProgressBar>& Bar, int64 Usage, in
     const float Ratio = Budget > 0 ? static_cast<float>(static_cast<double>(Usage) / static_cast<double>(Budget)) : 0.0f;
 
     Bar->SetPercent(Ratio);
-    Bar->SetOverlayText(String::Printf("%lld / %lld MB",
+    Bar->SetOverlayText(FString::Printf("%lld / %lld MB",
         static_cast<long long>(static_cast<double>(Usage) / BYTES_PER_MEGABYTE),
         static_cast<long long>(static_cast<double>(Budget) / BYTES_PER_MEGABYTE)));
 
@@ -147,10 +147,10 @@ bool FEditorRHIInfoPanel::Initialize()
 
 TSharedPtr<FVisualElement> FEditorRHIInfoPanel::BuildHeaderCard()
 {
-    const String AdapterName = RHI::Device ? RHI::Device->GetAdapterName() : String();
-    const String Backend     = RHI::Device ? String(ToString(RHI::Device->GetRHIType())) : String("None");
+    const FString AdapterName = RHI::Device ? RHI::Device->GetAdapterName() : FString();
+    const FString Backend     = RHI::Device ? FString(ToString(RHI::Device->GetRHIType())) : FString("None");
 
-    return FEditorStyle::MakeHeaderCard(AdapterName.IsEmpty() ? String("Unknown Adapter") : AdapterName, Backend);
+    return FEditorStyle::MakeHeaderCard(AdapterName.IsEmpty() ? FString("Unknown Adapter") : AdapterName, Backend);
 }
 
 bool FEditorRHIInfoPanel::BuildOverview(const TSharedPtr<FVerticalBox>& InColumn)
@@ -191,7 +191,7 @@ bool FEditorRHIInfoPanel::BuildCounters(const TSharedPtr<FVerticalBox>& InColumn
     return true;
 }
 
-void FEditorRHIInfoPanel::AddSection(const TSharedPtr<FVerticalBox>& InColumn, const String& Label, const TSharedPtr<FVisualElement>& SectionContent, bool bIsExpanded)
+void FEditorRHIInfoPanel::AddSection(const TSharedPtr<FVerticalBox>& InColumn, const FString& Label, const TSharedPtr<FVisualElement>& SectionContent, bool bIsExpanded)
 {
     InColumn->AddSlot(FExpander::Create(FEditorStyle::MakeExpanderDesc(Label, SectionContent, bIsExpanded))).SetPadding(FEditorStyle::GetSectionStackSpacing());
 }
@@ -231,9 +231,9 @@ void FEditorRHIInfoPanel::RefreshBudgets()
 
 void FEditorRHIInfoPanel::RefreshCounters()
 {
-    DrawCallsText->SetText(String::Printf("%lld", static_cast<long long>(STAT_GET(STAT_RHI_DrawCalls))));
-    DispatchCallsText->SetText(String::Printf("%lld", static_cast<long long>(STAT_GET(STAT_RHI_DispatchCalls))));
-    CommandsText->SetText(String::Printf("%lld", static_cast<long long>(STAT_GET(STAT_RHI_Commands))));
+    DrawCallsText->SetText(FString::Printf("%lld", static_cast<long long>(STAT_GET(STAT_RHI_DrawCalls))));
+    DispatchCallsText->SetText(FString::Printf("%lld", static_cast<long long>(STAT_GET(STAT_RHI_DispatchCalls))));
+    CommandsText->SetText(FString::Printf("%lld", static_cast<long long>(STAT_GET(STAT_RHI_Commands))));
 }
 
 void FEditorRHIInfoPanel::RefreshDetailGroups()
@@ -328,7 +328,7 @@ void FEditorRHIInfoPanel::RebuildGroupRows(FStatGroupSection& GroupSection)
     }
 }
 
-TSharedPtr<FTextBlock> FEditorRHIInfoPanel::CreateValueText(const String& Text)
+TSharedPtr<FTextBlock> FEditorRHIInfoPanel::CreateValueText(const FString& Text)
 {
     FTextBlock::FDesc Desc;
     Desc.Text = Text;

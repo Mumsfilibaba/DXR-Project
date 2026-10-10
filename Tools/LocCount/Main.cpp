@@ -24,16 +24,16 @@ struct FLocTotals
 
 struct FLocEntry
 {
-    String     Name;
+    FString    Name;
     FLocTotals Totals;
 };
 
-static FLocTotals               GTotals;
-static TMap<String, FLocTotals> GByExtension;
-static TMap<String, FLocTotals> GByModule;
-static TMap<String, String>     GModuleByDirectory;
+static FLocTotals                GTotals;
+static TMap<FString, FLocTotals> GByExtension;
+static TMap<FString, FLocTotals> GByModule;
+static TMap<FString, FString>    GModuleByDirectory;
 
-static bool ShouldSkipDirectory(const String& Name)
+static bool ShouldSkipDirectory(const FString& Name)
 {
     return (Name == "ThirdParty")
         || (Name == "Build")
@@ -42,7 +42,7 @@ static bool ShouldSkipDirectory(const String& Name)
         || (Name == "Generated");
 }
 
-static bool IsCountedExtension(const String& Extension)
+static bool IsCountedExtension(const FString& Extension)
 {
     static const CHAR_T* CountedExtensions[] =
     {
@@ -68,20 +68,20 @@ static bool IsCountedExtension(const String& Extension)
     return false;
 }
 
-static bool IsModuleRoot(const String& Directory)
+static bool IsModuleRoot(const FString& Directory)
 {
     return FPlatformFile::IsFile(*File::CombinePath(Directory, "Module.lua"))
         || FPlatformFile::IsFile(*File::CombinePath(Directory, "Target.lua"));
 }
 
-static String ResolveModuleName(const String& Directory, const String& ScanRoot, const String& ScanRootName)
+static FString ResolveModuleName(const FString& Directory, const FString& ScanRoot, const FString& ScanRootName)
 {
-    if (const String* Cached = GModuleByDirectory.Find(Directory))
+    if (const FString* Cached = GModuleByDirectory.Find(Directory))
     {
         return *Cached;
     }
 
-    String Name;
+    FString Name;
     if (Directory.Length() <= ScanRoot.Length())
     {
         Name = ScanRootName;
@@ -89,7 +89,7 @@ static String ResolveModuleName(const String& Directory, const String& ScanRoot,
     else if (IsModuleRoot(Directory))
     {
         const int32 Offset = ScanRoot.Length() + 1;
-        Name = File::CombinePath(ScanRootName, String(*Directory + Offset, Directory.Length() - Offset));
+        Name = File::CombinePath(ScanRootName, FString(*Directory + Offset, Directory.Length() - Offset));
     }
     else
     {
@@ -108,19 +108,19 @@ static void AddTo(FLocTotals& Bucket, const FLineStats& Stats)
     Bucket.NonBlank += Stats.NonBlank;
 }
 
-static void Accumulate(const FLineStats& Stats, const String& Extension, const String& Module)
+static void Accumulate(const FLineStats& Stats, const FString& Extension, const FString& Module)
 {
     AddTo(GByExtension.FindOrAdd(Extension), Stats);
     AddTo(GByModule.FindOrAdd(Module), Stats);
     AddTo(GTotals, Stats);
 }
 
-static TArray<FLocEntry> SortedByTotal(TMap<String, FLocTotals>& Buckets)
+static TArray<FLocEntry> SortedByTotal(TMap<FString, FLocTotals>& Buckets)
 {
     TArray<FLocEntry> Entries;
     Entries.Reserve(Buckets.Size());
 
-    for (TMap<String, FLocTotals>::IteratorType It = Buckets.CreateIterator(); !It.IsEnd(); ++It)
+    for (TMap<FString, FLocTotals>::IteratorType It = Buckets.CreateIterator(); !It.IsEnd(); ++It)
     {
         Entries.Emplace(FLocEntry{ It.GetKey(), It.GetValue() });
     }
@@ -170,12 +170,12 @@ static void PrintReport()
 
 static int32 LocCountMain()
 {
-    String Root = Paths::GetEngineDir();
+    FString Root = Paths::GetEngineDir();
 
-    StringView RootOption;
+    FStringView RootOption;
     if (CommandLine::FindOption("root", RootOption) && (RootOption.Size() > 0))
     {
-        Root = String(RootOption.Data(), RootOption.Size());
+        Root = FString(RootOption.Data(), RootOption.Size());
     }
 
     LOG_INFO("[LocCount] Scanning '%s'", *Root);
@@ -196,14 +196,14 @@ static int32 LocCountMain()
             break;
         }
 
-        const String FolderPath = File::CombinePath(Root, Folder);
+        const FString FolderPath = File::CombinePath(Root, Folder);
         if (!FPlatformFile::IsDirectory(*FolderPath))
         {
             LOG_WARNING("[LocCount] Skipping missing folder '%s'", *FolderPath);
             continue;
         }
 
-        File::IterateDirectoryTree(FolderPath, [&](const String& Path, bool bIsDirectory) -> bool
+        File::IterateDirectoryTree(FolderPath, [&](const FString& Path, bool bIsDirectory) -> bool
         {
             if (FProgramLoop::IsExitRequested())
             {
@@ -215,7 +215,7 @@ static int32 LocCountMain()
                 return !ShouldSkipDirectory(File::ExtractFilename(Path));
             }
 
-            const String Extension = File::ExtractExtension(Path);
+            const FString Extension = File::ExtractExtension(Path);
             if (!IsCountedExtension(Extension))
             {
                 return true;
@@ -229,7 +229,7 @@ static int32 LocCountMain()
                 return true;
             }
 
-            const String Module = ResolveModuleName(File::GetDirectoryOf(Path), FolderPath, Folder);
+            const FString Module = ResolveModuleName(File::GetDirectoryOf(Path), FolderPath, Folder);
             Accumulate(Parse::CountLines(Text.Data()), Extension, Module);
             return true;
         });

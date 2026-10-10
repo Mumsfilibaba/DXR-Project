@@ -6,7 +6,7 @@
 
 static constexpr DWORD OUTPUT_PIPE_SIZE = 64 * 1024;
 
-static void AppendQuotedArgument(String& CommandLine, const String& Argument)
+static void AppendQuotedArgument(FString& CommandLine, const FString& Argument)
 {
     const bool bNeedsQuotes = Argument.IsEmpty() || Argument.Contains(' ') || Argument.Contains('\t') || Argument.Contains('"');
     if (!bNeedsQuotes)
@@ -64,7 +64,7 @@ FWindowsPlatformProcessHandle::~FWindowsPlatformProcessHandle()
     ::CloseHandle(Process);
 }
 
-bool FWindowsPlatformProcessHandle::ReadOutput(String& OutText)
+bool FWindowsPlatformProcessHandle::ReadOutput(FString& OutText)
 {
     const bool bHasExited = !IsRunning();
     if (OutputPipe)
@@ -128,12 +128,12 @@ void FWindowsPlatformProcessHandle::Kill()
 
 TUniquePtr<IPlatformProcessHandle> FWindowsPlatformProcess::LaunchProcess(const FProcessDesc& Desc)
 {
-    String Executable = Desc.Executable;
+    FString Executable = Desc.Executable;
     Executable.ReplaceAll('/', '\\');
 
-    String CommandLine;
+    FString CommandLine;
     AppendQuotedArgument(CommandLine, Executable);
-    for (const String& Argument : Desc.Arguments)
+    for (const FString& Argument : Desc.Arguments)
     {
         CommandLine.Append(' ');
         AppendQuotedArgument(CommandLine, Argument);
@@ -167,7 +167,7 @@ TUniquePtr<IPlatformProcessHandle> FWindowsPlatformProcess::LaunchProcess(const 
         StartupInfo.hStdError  = WritePipe;
     }
 
-    String WorkingDirectory = Desc.WorkingDirectory;
+    FString WorkingDirectory = Desc.WorkingDirectory;
     WorkingDirectory.ReplaceAll('/', '\\');
 
     const DWORD Flags = Desc.bHidden ? CREATE_NO_WINDOW : 0;
@@ -175,7 +175,7 @@ TUniquePtr<IPlatformProcessHandle> FWindowsPlatformProcess::LaunchProcess(const 
     PROCESS_INFORMATION ProcessInfo;
     Memory::Memzero(&ProcessInfo, sizeof(ProcessInfo));
 
-    WString WideCommandLine = StringCast<WIDECHAR>(CommandLine).ToString();
+    FWideString WideCommandLine = StringCast<WIDECHAR>(CommandLine).ToString();
     const BOOL bCreated = ::CreateProcessW(
         nullptr,
         WideCommandLine.Data(),
@@ -195,7 +195,7 @@ TUniquePtr<IPlatformProcessHandle> FWindowsPlatformProcess::LaunchProcess(const 
 
     if (!bCreated)
     {
-        String Error;
+        FString Error;
         const int32 ErrorCode = FWindowsPlatformMisc::GetLastErrorString(Error);
         LOG_ERROR("[FWindowsPlatformProcess]: Failed to start '%s' with error %d '%s'", *Desc.Executable, ErrorCode, *Error);
 

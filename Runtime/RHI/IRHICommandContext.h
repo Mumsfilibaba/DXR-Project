@@ -676,7 +676,7 @@ struct IRHICommandContext
      * @brief Begins a named GPU event region for profiling tools (PIX, RenderDoc, etc.)
      * @param Name Name displayed for the event region in GPU profiling tools.
      */
-    virtual void PushEvent(const StringView& Name) = 0;
+    virtual void PushEvent(const FStringView& Name) = 0;
 
     /**
      * @brief Ends the current GPU event region

@@ -178,8 +178,8 @@ public:
     void EndResidencyTracking();
     bool RequiresResourceStateTracking() const;
 
-    void SetDebugName(const String& InDebugName);
-    void GetDebugName(String& OutDebugName) const;
+    void SetDebugName(const FString& InDebugName);
+    void GetDebugName(FString& OutDebugName) const;
 
     FORCEINLINE bool IsPlacedResource()      const { return Heap != nullptr; }
     FORCEINLINE bool IsHeapTypeDefault()     const { return HeapType == D3D12_HEAP_TYPE_DEFAULT; }

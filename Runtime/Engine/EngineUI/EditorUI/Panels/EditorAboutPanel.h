@@ -17,7 +17,7 @@ public:
     virtual void Tick(float DeltaTime) override final;
 
 private:
-    NODISCARD static TSharedPtr<FVisualElement> CreateValueText(const String& Text);
+    NODISCARD static TSharedPtr<FVisualElement> CreateValueText(const FString& Text);
 
     /**
      * @brief Adds a collapsible section to the column and returns the table inside it, so each group of
@@ -27,7 +27,7 @@ private:
      * @param SectionName The title the section header shows.
      * @return The table the section's rows go into.
      */
-    NODISCARD TSharedPtr<FPropertyTable> AddSection(const TSharedPtr<FVerticalBox>& Column, const String& SectionName);
+    NODISCARD TSharedPtr<FPropertyTable> AddSection(const TSharedPtr<FVerticalBox>& Column, const FString& SectionName);
 
     void BuildSections(const TSharedPtr<FVerticalBox>& Column);
     void CopyRow(const TSharedPtr<FPropertyTable>& FromTable, int32 RowIndex);

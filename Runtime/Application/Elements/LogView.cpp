@@ -77,12 +77,12 @@ IntVector2 FLogView::PrepareDesiredSize()
     return FCompoundElement::PrepareDesiredSize();
 }
 
-void FLogView::Log(const String& Message)
+void FLogView::Log(const FString& Message)
 {
     Log(ELogSeverity::Info, Message);
 }
 
-void FLogView::Log(ELogSeverity Severity, const String& Message)
+void FLogView::Log(ELogSeverity Severity, const FString& Message)
 {
     TScopedLock Lock(PendingLinesCS);
     PendingLines.Emplace(Message, Severity);
@@ -156,7 +156,7 @@ void FLogView::SetMinimumSeverity(ELogSeverity InMinimumSeverity)
     SetSeverityVisible(ELogSeverity::Error, ELogSeverity::Error >= InMinimumSeverity);
 }
 
-void FLogView::SetSearchText(const String& InSearchText, bool bInFilterToMatches)
+void FLogView::SetSearchText(const FString& InSearchText, bool bInFilterToMatches)
 {
     if (SearchText == InSearchText && bFilterToMatches == bInFilterToMatches)
     {
@@ -251,9 +251,9 @@ TArray<FLogLine> FLogView::GetLines() const
     return Lines;
 }
 
-TArray<String> FLogView::GetVisibleMessages() const
+TArray<FString> FLogView::GetVisibleMessages() const
 {
-    TArray<String> Messages;
+    TArray<FString> Messages;
     for (const FLogLine& Line : Lines)
     {
         if (IsLineVisible(Line))

@@ -45,7 +45,7 @@ struct APPLICATION_API FDockNode
      * @param InTabIds The panels, in tab order.
      * @return The new node.
      */
-    NODISCARD static FDockNode CreateTabs(const TArray<String>& InTabIds);
+    NODISCARD static FDockNode CreateTabs(const TArray<FString>& InTabIds);
 
     /**
      * @brief Builds a split of two children, sharing their space evenly.
@@ -84,7 +84,7 @@ struct APPLICATION_API FDockNode
      *
      * @param OutPanelIds Receives the ids, appended to whatever it already holds.
      */
-    void GatherPanelIds(TArray<String>& OutPanelIds) const;
+    void GatherPanelIds(TArray<FString>& OutPanelIds) const;
 
     /**
      * @brief Finds the leaf holding a panel.
@@ -92,8 +92,8 @@ struct APPLICATION_API FDockNode
      * @param PanelId The panel to look for.
      * @return The Tabs node holding it, or null when the tree does not have it.
      */
-    NODISCARD FDockNode*       FindTabsNode(const String& PanelId);
-    NODISCARD const FDockNode* FindTabsNode(const String& PanelId) const;
+    NODISCARD FDockNode*       FindTabsNode(const FString& PanelId);
+    NODISCARD const FDockNode* FindTabsNode(const FString& PanelId) const;
 
     /**
      * @brief Finds the leaf that is most in view, going by how the splits share the space. Each leaf is rated by how close
@@ -139,7 +139,7 @@ struct APPLICATION_API FDockNode
     TArray<FDockNode> Children;
 
     /** @brief Populated for a Tabs node, naming panels by stable id. */
-    TArray<String> TabIds;
+    TArray<FString> TabIds;
 
     /** @brief Which tab in TabIds a Tabs node shows. A collapse clamps it back into range. */
     int32 ActiveTabIndex;

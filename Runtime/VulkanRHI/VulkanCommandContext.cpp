@@ -70,25 +70,25 @@ struct FVulkanBarrierStatsData
     AtomicInt32 NumSameLayoutImageBarriers;
     AtomicInt32 NumRenderPassPauses;
 
-    FCriticalSection    PauseReasonsCS;
-    TMap<String, int32> PauseReasons;
-    uint32              NumFrames = 0;
+    FCriticalSection     PauseReasonsCS;
+    TMap<FString, int32> PauseReasons;
+    uint32               NumFrames = 0;
 };
 
 static FVulkanBarrierStatsData GBarrierStats;
 
-static String GetBarrierDebugName(FVulkanTextureRHI* Texture)
+static FString GetBarrierDebugName(FVulkanTextureRHI* Texture)
 {
-    String Name;
+    FString Name;
     Texture->GetDebugName(Name);
-    return Name.IsEmpty() ? String("Unnamed") : Name;
+    return Name.IsEmpty() ? FString("Unnamed") : Name;
 }
 
-static String GetBarrierDebugName(FVulkanBufferRHI* Buffer)
+static FString GetBarrierDebugName(FVulkanBufferRHI* Buffer)
 {
-    String Name;
+    FString Name;
     Buffer->GetDebugName(Name);
-    return Name.IsEmpty() ? String("Unnamed") : Name;
+    return Name.IsEmpty() ? FString("Unnamed") : Name;
 }
 
 struct FScopedBarrierReason
@@ -105,7 +105,7 @@ struct FScopedBarrierReason
     {
         if (Batcher.GetGeneration() != Generation && FVulkanBarrierStats::IsEnabled())
         {
-            Batcher.AddDebugReason(String::Printf("Texture '%s' -> %s", *GetBarrierDebugName(Texture), ToString(AfterLayout)));
+            Batcher.AddDebugReason(FString::Printf("Texture '%s' -> %s", *GetBarrierDebugName(Texture), ToString(AfterLayout)));
         }
     }
 
@@ -280,17 +280,17 @@ void FVulkanBarrierStats::RecordPipelineBarrier(const VkDependencyInfoKHR& Depen
     GBarrierStats.NumSameLayoutImageBarriers.Add(NumSameLayout);
 }
 
-void FVulkanBarrierStats::RecordRenderPassPause(const TArray<String>& Reasons)
+void FVulkanBarrierStats::RecordRenderPassPause(const TArray<FString>& Reasons)
 {
     GBarrierStats.NumRenderPassPauses.Add(1);
 
     TScopedLock Lock(GBarrierStats.PauseReasonsCS);
     if (Reasons.IsEmpty())
     {
-        GBarrierStats.PauseReasons.FindOrAdd(String("<untracked barrier>"))++;
+        GBarrierStats.PauseReasons.FindOrAdd(FString("<untracked barrier>"))++;
     }
 
-    for (const String& Reason : Reasons)
+    for (const FString& Reason : Reasons)
     {
         GBarrierStats.PauseReasons.FindOrAdd(Reason)++;
     }
@@ -3149,7 +3149,7 @@ void FVulkanCommandContext::RequireBufferState(FVulkanBufferRHI* VulkanBuffer, E
     #if VULKAN_ENABLE_BARRIER_STATS
         if (FVulkanBarrierStats::IsEnabled())
         {
-            BarrierBatcher.AddDebugReason(String::Printf("Buffer '%s' (stage=0x%llx access=0x%llx) -> %s", *GetBarrierDebugName(VulkanBuffer),
+            BarrierBatcher.AddDebugReason(FString::Printf("Buffer '%s' (stage=0x%llx access=0x%llx) -> %s", *GetBarrierDebugName(VulkanBuffer),
                 static_cast<uint64>(LocalState.GetStage()), static_cast<uint64>(LocalState.GetAccess()), ToString(RequiredState)));
         }
     #endif
@@ -3935,9 +3935,9 @@ void FVulkanCommandContext::Flush()
     Queue.WaitForCompletion();
 }
 
-void FVulkanCommandContext::PushEvent(const StringView& Name)
+void FVulkanCommandContext::PushEvent(const FStringView& Name)
 {
-    const String& EventName = EventStack.Emplace(Name);
+    const FString& EventName = EventStack.Emplace(Name);
 
 #if VK_EXT_debug_utils
     if (GVulkanSupportsDebugUtils)

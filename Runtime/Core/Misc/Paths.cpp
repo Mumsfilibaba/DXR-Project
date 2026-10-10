@@ -3,18 +3,18 @@
 #include "Core/Filesystem/File.h"
 #include "Core/Platform/PlatformFile.h"
 
-static String           GEngineDir;
+static FString          GEngineDir;
 static EEngineDirSource GEngineDirSource     = EEngineDirSource::None;
 static bool             GIsEngineDirResolved = false;
 
-static bool IsEngineDir(const String& Directory)
+static bool IsEngineDir(const FString& Directory)
 {
     return !Directory.IsEmpty() && FPlatformFile::IsFile(*File::CombinePath(Directory, Paths::EngineIdentityFilename));
 }
 
-static String FindEngineDirAbove(const String& Directory)
+static FString FindEngineDirAbove(const FString& Directory)
 {
-    for (String Current = Directory; !Current.IsEmpty(); Current = File::GetDirectoryOf(Current))
+    for (FString Current = Directory; !Current.IsEmpty(); Current = File::GetDirectoryOf(Current))
     {
         if (IsEngineDir(Current))
         {
@@ -22,13 +22,13 @@ static String FindEngineDirAbove(const String& Directory)
         }
     }
 
-    return String();
+    return FString();
 }
 
 bool Paths::Initialize()
 {
-    String     EngineOption;
-    StringView EngineOptionValue;
+    FString     EngineOption;
+    FStringView EngineOptionValue;
 
     if (CommandLine::FindOption("engine", EngineOptionValue))
     {
@@ -41,29 +41,29 @@ bool Paths::Initialize()
             return false;
         }
 
-        EngineOption = String(EngineOptionValue.Data(), EngineOptionValue.Length());
+        EngineOption = FString(EngineOptionValue.Data(), EngineOptionValue.Length());
     }
 
-    const String ExecutableDir = File::GetDirectoryOf(FPlatformFile::GetExecutablePath());
+    const FString ExecutableDir = File::GetDirectoryOf(FPlatformFile::GetExecutablePath());
 
-    GEngineDir           = FindEngineDir(EngineOption, ExecutableDir, String(ENGINE_LOCATION), &GEngineDirSource);
+    GEngineDir           = FindEngineDir(EngineOption, ExecutableDir, FString(ENGINE_LOCATION), &GEngineDirSource);
     GIsEngineDirResolved = true;
 
     return !GEngineDir.IsEmpty();
 }
 
-String Paths::FindEngineDir(
-    const String&     EngineOption,
-    const String&     ExecutableDir,
-    const String&     FallbackDir,
+FString Paths::FindEngineDir(
+    const FString&    EngineOption,
+    const FString&    ExecutableDir,
+    const FString&    FallbackDir,
     EEngineDirSource* OutSource)
 {
     EEngineDirSource Source = EEngineDirSource::None;
-    String           Result;
+    FString          Result;
 
     if (!EngineOption.IsEmpty())
     {
-        const String Directory = File::MakeAbsolute(EngineOption);
+        const FString Directory = File::MakeAbsolute(EngineOption);
         if (IsEngineDir(Directory))
         {
             Source = EEngineDirSource::CommandLine;
@@ -72,8 +72,8 @@ String Paths::FindEngineDir(
     }
     else
     {
-        const String FoundAbove = ExecutableDir.IsEmpty() ? String() : FindEngineDirAbove(File::MakeAbsolute(ExecutableDir));
-        const String Fallback   = File::NormalizePath(FallbackDir);
+        const FString FoundAbove = ExecutableDir.IsEmpty() ? FString() : FindEngineDirAbove(File::MakeAbsolute(ExecutableDir));
+        const FString Fallback   = File::NormalizePath(FallbackDir);
 
         if (!FoundAbove.IsEmpty())
         {
@@ -112,38 +112,38 @@ const CHAR_T* Paths::GetEngineDirSourceName()
     }
 }
 
-String Paths::GetEngineDir()
+FString Paths::GetEngineDir()
 {
     if (!GIsEngineDirResolved)
     {
         Initialize();
     }
 
-    return GEngineDir.IsEmpty() ? File::NormalizePath(String(ENGINE_LOCATION)) : GEngineDir;
+    return GEngineDir.IsEmpty() ? File::NormalizePath(FString(ENGINE_LOCATION)) : GEngineDir;
 }
 
-String Paths::GetAssetDir()
+FString Paths::GetAssetDir()
 {
-    return Paths::GetEngineDir() + String("/Assets");
+    return Paths::GetEngineDir() + FString("/Assets");
 }
 
-String Paths::GetProjectDir()
+FString Paths::GetProjectDir()
 {
-    return String(PROJECT_LOCATION);
+    return FString(PROJECT_LOCATION);
 }
 
-String Paths::GetProjectName()
+FString Paths::GetProjectName()
 {
-    return String(PROJECT_NAME);
+    return FString(PROJECT_NAME);
 }
 
-String Paths::GetProjectModuleName()
+FString Paths::GetProjectModuleName()
 {
-    return String(PROJECT_NAME);
+    return FString(PROJECT_NAME);
 }
 
-String Paths::GetUserSettingsDir()
+FString Paths::GetUserSettingsDir()
 {
-    const String BaseDirectory = FPlatformFile::GetUserSettingsDirectory();
-    return BaseDirectory.IsEmpty() ? String() : BaseDirectory + String("/DXR-Engine");
+    const FString BaseDirectory = FPlatformFile::GetUserSettingsDirectory();
+    return BaseDirectory.IsEmpty() ? FString() : BaseDirectory + FString("/DXR-Engine");
 }

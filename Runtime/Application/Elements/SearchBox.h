@@ -7,7 +7,7 @@
 #include "Application/Text/IFontFace.h"
 
 /** @brief Called whenever the search text changes, which is every keystroke and every clear. */
-DECLARE_DELEGATE(FOnSearchTextChanged, const String& /*SearchText*/);
+DECLARE_DELEGATE(FOnSearchTextChanged, const FString& /*SearchText*/);
 
 class APPLICATION_API FSearchBox final : public FVisualElement
 {
@@ -15,7 +15,7 @@ public:
     struct FDesc
     {
         /** @brief Drawn in place of the text while the field is empty. */
-        String HintText = "Search";
+        FString HintText = "Search";
 
         /** @brief The face the text is measured and drawn with. */
         TSharedPtr<IFontFace> Font;
@@ -68,10 +68,10 @@ public:
      *
      * @param InText The new search text.
      */
-    void SetText(const String& InText);
+    void SetText(const FString& InText);
 
     /** @return The search text being edited, which is empty while the hint shows instead. */
-    NODISCARD const String& GetText() const;
+    NODISCARD const FString& GetText() const;
 
     /** @brief Empties the search text and fires the change delegate. */
     void ClearText();
@@ -113,7 +113,7 @@ protected:
     virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
 
 private:
-    void HandleTextChanged(const String& InText);
+    void HandleTextChanged(const FString& InText);
 
     NODISCARD FRectangle GetEditorRectangle(const FRectangle& Bounds) const;
     NODISCARD FRectangle GetIconRectangle(const FRectangle& Bounds) const;

@@ -5,7 +5,7 @@
 #include "D3D12RHI/RayTracing/D3D12RayTracingPipeline.h"
 
 #if D3D12_ENABLE_DESCRIPTOR_HEAP_ROLLOVER_LOGGING
-static void LogDescriptorHeapRollover(const String& PSOName, bool bCommandListSplit, uint32 NumResourceDescriptors)
+static void LogDescriptorHeapRollover(const FString& PSOName, bool bCommandListSplit, uint32 NumResourceDescriptors)
 {
     const CHAR_T* PSONameStr = PSOName.Length() > 0 ? PSOName.Data() : "<unnamed>";
     D3D12_INFO("[DescriptorHeapRollover] %s (PSO: '%s', RequestedDescriptors: %u)",
@@ -324,7 +324,7 @@ void FD3D12CommandContextState::BindComputeState()
 
 #if D3D12_ENABLE_PIPELINE_BIND_LOGGING
     {
-        String PSODebugName;
+        FString PSODebugName;
         ComputeState.PipelineState->GetDebugName(PSODebugName);
         
         const CHAR_T* PSONameStr = PSODebugName.Length() > 0 ? PSODebugName.Data() : "<unnamed>";
@@ -776,7 +776,7 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
         {
         #if D3D12_ENABLE_DESCRIPTOR_HEAP_ROLLOVER_LOGGING
             {
-                String PSODebugName;
+                FString PSODebugName;
                 switch (ActivePipeline)
                 {
                     case EActivePipeline::Graphics:
@@ -1504,7 +1504,7 @@ void FD3D12CommandContextState::SetStencilRef(uint32 InStencilRef)
         FD3D12GraphicsPipelineStateRHI* BoundPSO = GraphicsState.PipelineState.Get();
         if (BoundPSO != nullptr && IsEnumFlagSet(BoundPSO->GetShaderFlags(), ED3D12ShaderFlags::RequiresStencilRef))
         {
-            String PSOName;
+            FString PSOName;
             BoundPSO->GetDebugName(PSOName);
 
             if (PSOName.IsEmpty())

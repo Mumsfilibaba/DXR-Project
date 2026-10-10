@@ -42,7 +42,7 @@ void FMacPlatformProcessHandle::UpdateExitStatus(bool bBlock)
     }
 }
 
-bool FMacPlatformProcessHandle::ReadOutput(String& OutText)
+bool FMacPlatformProcessHandle::ReadOutput(FString& OutText)
 {
     const bool bHasExitedBeforeRead = !IsRunning();
     if (OutputPipe >= 0)
@@ -110,7 +110,7 @@ TUniquePtr<IPlatformProcessHandle> FMacPlatformProcess::LaunchProcess(const FPro
 {
     TArray<CHAR_T*> Arguments;
     Arguments.Add(const_cast<CHAR_T*>(*Desc.Executable));
-    for (const String& Argument : Desc.Arguments)
+    for (const FString& Argument : Desc.Arguments)
     {
         Arguments.Add(const_cast<CHAR_T*>(*Argument));
     }

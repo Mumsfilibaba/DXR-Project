@@ -11,7 +11,7 @@ static FORCEINLINE int32 ToCodepoint(CHAR_T Character)
     return static_cast<int32>(static_cast<uint8>(Character));
 }
 
-TSharedPtr<FTrueTypeFontFace> FTrueTypeFontFace::CreateFromFile(const String& Filename, int32 PixelHeight)
+TSharedPtr<FTrueTypeFontFace> FTrueTypeFontFace::CreateFromFile(const FString& Filename, int32 PixelHeight)
 {
     TArray<uint8> FontData;
     {
@@ -73,7 +73,7 @@ int32 FTrueTypeFontFace::GetCapHeight() const
     return Atlas.GetCapHeight();
 }
 
-const FShapedRun& FTrueTypeFontFace::ShapeText(const StringView& Text) const
+const FShapedRun& FTrueTypeFontFace::ShapeText(const FStringView& Text) const
 {
     const int32  SetIndex  = static_cast<int32>(HashBytes(Text.Data(), static_cast<uint64>(Text.Length())) & (ShapedRunCacheSetCount - 1));
     const int32  SetOffset = SetIndex * ShapedRunCacheWays;
@@ -97,12 +97,12 @@ const FShapedRun& FTrueTypeFontFace::ShapeText(const StringView& Text) const
     ShapeRun(Text, Cached.Run);
 
     // Shaping can pack pages, and the run is valid at the revision it ended on rather than the one it started from
-    Cached.Text     = String(Text.Data(), Text.Length());
+    Cached.Text     = FString(Text.Data(), Text.Length());
     Cached.Revision = Atlas.GetRevision();
     return Cached.Run;
 }
 
-void FTrueTypeFontFace::ShapeRun(const StringView& Text, FShapedRun& OutRun) const
+void FTrueTypeFontFace::ShapeRun(const FStringView& Text, FShapedRun& OutRun) const
 {
     uint64 LayoutRevision = 0;
     do

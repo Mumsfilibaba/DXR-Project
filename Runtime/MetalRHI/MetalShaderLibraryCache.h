@@ -33,7 +33,7 @@ private:
     struct FEntry
     {
         TArray<uint8>                    Source;
-        String                           EntryPoint;
+        FString                          EntryPoint;
         TSharedRef<FMetalCompiledShader> Shader;
     };
 

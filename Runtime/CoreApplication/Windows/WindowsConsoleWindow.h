@@ -15,13 +15,13 @@ public:
     virtual void Show(bool bShow) override final;
     virtual bool IsVisible() const override final { return (ConsoleHandle != nullptr); }
 
-    virtual void SetTitle(const String& Title) override final;
+    virtual void SetTitle(const FString& Title) override final;
     virtual void SetTextColor(EConsoleTextColor Color) override final;
     virtual void SetOnClosed(const TFunction<void()>& Callback) override final;
 
     // IOutputDevice Interface
-    virtual void Log(const String& Message) override final;
-    virtual void Log(ELogSeverity Severity, const String& Message) override final;
+    virtual void Log(const FString& Message) override final;
+    virtual void Log(ELogSeverity Severity, const FString& Message) override final;
     virtual void Flush() override final;
 
 private:
@@ -32,7 +32,7 @@ private:
     bool NotifyClosed();
     void Write(const CHAR_T* Data, uint32 Length);
 
-    String            Title;
+    FString           Title;
     HANDLE            ConsoleHandle;
     FCriticalSection  ConsoleHandleCS;
     TFunction<void()> OnClosed;

@@ -3,7 +3,7 @@
 #include "Core/Templates/CString.h"
 #include "ShaderCore/ShaderReflection.h"
 
-uint32 HashShaderSemantic(StringView SemanticName)
+uint32 HashShaderSemantic(FStringView SemanticName)
 {
     constexpr int32 MaxSemanticLength = 256;
 

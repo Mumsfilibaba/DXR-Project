@@ -29,11 +29,11 @@ static bool   GReportWritten         = false;
 static bool   GCaptureNativeStacks   = false;
 static uint64 GCaptureStartTimeStamp = 0;
 
-static String BuildFullProfileReport()
+static FString BuildFullProfileReport()
 {
-    String Text = FProfilerReport::BuildCpuAndBootText();
+    FString Text = FProfilerReport::BuildCpuAndBootText();
     Text.Append("\n== GPU ==\n");
-    Text.Append(String::Printf("RHI=%s\n", RHI::Device ? ToString(RHI::Device->GetRHIType()) : "None"));
+    Text.Append(FString::Printf("RHI=%s\n", RHI::Device ? ToString(RHI::Device->GetRHIType()) : "None"));
 
     IRendererModule* RendererModule = IRendererModule::Get();
     if (!RendererModule)
@@ -68,7 +68,7 @@ static String BuildFullProfileReport()
         Latest = Stored;
     }
 
-    Text.Append(String::Printf("GPU frame avg=%.3f ms  min=%.3f  max=%.3f\n",
+    Text.Append(FString::Printf("GPU frame avg=%.3f ms  min=%.3f  max=%.3f\n",
         Count > 0 ? static_cast<float>(Sum / static_cast<double>(Count)) : 0.0f,
         MinMs == TNumericLimits<float>::Max() ? 0.0f : MinMs,
         MaxMs == TNumericLimits<float>::Lowest() ? 0.0f : MaxMs));
@@ -84,7 +84,7 @@ static String BuildFullProfileReport()
             }
 
             const CHAR_T* Name = Interval.Name ? Interval.Name : "<unnamed>";
-            Text.Append(String::Printf("%s  inclusive=%.3fms  exclusive=%.3fms\n", Name,
+            Text.Append(FString::Printf("%s  inclusive=%.3fms  exclusive=%.3fms\n", Name,
                 Time::ToMilliseconds(static_cast<double>(Interval.InclusiveNanoseconds)),
                 Time::ToMilliseconds(static_cast<double>(Interval.ExclusiveNanoseconds))));
         }
@@ -93,9 +93,9 @@ static String BuildFullProfileReport()
     return Text;
 }
 
-static String BuildChromeGpuEvents(IGPUProfiler& Gpu)
+static FString BuildChromeGpuEvents(IGPUProfiler& Gpu)
 {
-    String Events("{\"name\":\"thread_name\",\"ph\":\"M\",\"pid\":1,\"tid\":0,\"args\":{\"name\":\"GPU\"}}");
+    FString Events("{\"name\":\"thread_name\",\"ph\":\"M\",\"pid\":1,\"tid\":0,\"args\":{\"name\":\"GPU\"}}");
 
     FProfilerGpuFrame GpuFrame;
     for (int32 Index = 0; Index < Gpu.GetStoredFrameCount(); ++Index)
@@ -146,12 +146,12 @@ static void WriteReportsAndExit()
 
     GReportWritten = true;
 
-    const uint64 Stamp    = FPlatformTime::QueryPerformanceCounter();
-    const String BasePath = File::CombinePath(Paths::GetProjectDir(), String::Printf("Profiling/ProfileRun_%llu", Stamp));
+    const uint64  Stamp    = FPlatformTime::QueryPerformanceCounter();
+    const FString BasePath = File::CombinePath(Paths::GetProjectDir(), FString::Printf("Profiling/ProfileRun_%llu", Stamp));
 
     FProfilerReport::WriteFile(BasePath + ".txt", BuildFullProfileReport());
 
-    String GpuEvents;
+    FString GpuEvents;
     if (IRendererModule* RendererModule = IRendererModule::Get())
     {
         GpuEvents = BuildChromeGpuEvents(RendererModule->GetGPUProfiler());
@@ -166,11 +166,11 @@ void FProfileRun::ConfigureFromCommandLine()
     GProfileRun          = CommandLine::FindOption("ProfileRun");
     GCaptureNativeStacks = CommandLine::FindOption("ProfileNativeStacks");
 
-    StringView ProfileDurationText;
+    FStringView ProfileDurationText;
     if (CommandLine::FindOption("ProfileDuration", ProfileDurationText) && !ProfileDurationText.IsEmpty())
     {
-        const String DurationString = String(ProfileDurationText);
-        const float  ParsedDuration = CString::Atof(*DurationString);
+        const FString DurationString = FString(ProfileDurationText);
+        const float   ParsedDuration = CString::Atof(*DurationString);
 
         if (ParsedDuration > 0.0f)
         {

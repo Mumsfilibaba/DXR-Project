@@ -12,7 +12,7 @@
 
 #include "TestCommon/TestMacros.h"
 
-static bool WriteText(const String& Filename, const CHAR_T* Text)
+static bool WriteText(const FString& Filename, const CHAR_T* Text)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(Filename);
     if (!FileHandle)
@@ -20,7 +20,7 @@ static bool WriteText(const String& Filename, const CHAR_T* Text)
         return false;
     }
 
-    return File::WriteTextFile(FileHandle.Get(), String(Text));
+    return File::WriteTextFile(FileHandle.Get(), FString(Text));
 }
 
 struct FFakeFile : public IPlatformFile
@@ -86,24 +86,24 @@ struct FFakeFile : public IPlatformFile
     int32 WriteResult;
 };
 
-static bool CreateDirectoryLink(const String& Link, const String& Target)
+static bool CreateDirectoryLink(const FString& Link, const FString& Target)
 {
     FProcessDesc Desc;
 #if PLATFORM_WINDOWS
-    String WindowsLink   = Link;
-    String WindowsTarget = Target;
+    FString WindowsLink   = Link;
+    FString WindowsTarget = Target;
     WindowsLink.ReplaceAll('/', '\\');
     WindowsTarget.ReplaceAll('/', '\\');
 
     Desc.Executable = "cmd.exe";
-    Desc.Arguments.Add(String("/c"));
-    Desc.Arguments.Add(String("mklink"));
-    Desc.Arguments.Add(String("/J"));
+    Desc.Arguments.Add(FString("/c"));
+    Desc.Arguments.Add(FString("mklink"));
+    Desc.Arguments.Add(FString("/J"));
     Desc.Arguments.Add(WindowsLink);
     Desc.Arguments.Add(WindowsTarget);
 #else
     Desc.Executable = "/bin/ln";
-    Desc.Arguments.Add(String("-s"));
+    Desc.Arguments.Add(FString("-s"));
     Desc.Arguments.Add(Target);
     Desc.Arguments.Add(Link);
 #endif
@@ -119,21 +119,21 @@ static bool CreateDirectoryLink(const String& Link, const String& Target)
     return Process->GetExitCode(ExitCode) && (ExitCode == 0);
 }
 
-static String ReadText(const String& Filename)
+static FString ReadText(const FString& Filename)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Filename);
     if (!FileHandle)
     {
-        return String();
+        return FString();
     }
 
     TArray<CHAR_T> Text;
     if (!File::ReadTextFile(FileHandle.Get(), Text))
     {
-        return String();
+        return FString();
     }
 
-    return String(Text.Data());
+    return FString(Text.Data());
 }
 
 bool File_Test()
@@ -142,12 +142,12 @@ bool File_Test()
 
     TEST_SECTION("The working directory has no trailing null-terminator");
     {
-        const String WorkingDirectory = FPlatformFile::GetCurrentWorkingDirectory();
+        const FString WorkingDirectory = FPlatformFile::GetCurrentWorkingDirectory();
         TEST_EXPECT(!WorkingDirectory.IsEmpty());
         TEST_EXPECT(WorkingDirectory.Length() == static_cast<int32>(CString::Strlen(*WorkingDirectory)));
         TEST_EXPECT(FPlatformFile::IsDirectory(*WorkingDirectory));
 
-        const String Appended = WorkingDirectory + "/File.txt";
+        const FString Appended = WorkingDirectory + "/File.txt";
         TEST_EXPECT(static_cast<int32>(CString::Strlen(*Appended)) == Appended.Length());
     }
 
@@ -186,7 +186,7 @@ bool File_Test()
 
     TEST_SECTION("Json::SaveToFile writes a file that has no directory in its name");
     {
-        const String Filename("FileTests.NoDirectory.json");
+        const FString Filename("FileTests.NoDirectory.json");
 
         FJsonValue Document = FJsonValue::MakeObject();
         Document.AddMember("Value", FJsonValue(1));
@@ -203,8 +203,8 @@ bool File_Test()
 
     TEST_SECTION("FPngWriter writes a file that has no directory in its name");
     {
-        const String Filename("FileTests.NoDirectory.png");
-        const uint8  Pixel[FImageView::BytesPerPixel] = { 255, 0, 0, 255 };
+        const FString Filename("FileTests.NoDirectory.png");
+        const uint8   Pixel[FImageView::BytesPerPixel] = { 255, 0, 0, 255 };
 
         FPngWriter Writer;
         TEST_EXPECT(Writer.WriteToFile(Filename, FImageView(Pixel, 1, 1)));
@@ -239,20 +239,20 @@ bool File_Test()
         for (const int32 WriteResult : { 3, 0, -1 })
         {
             FFakeFile Fake(0, 0, WriteResult);
-            TEST_EXPECT(!File::WriteTextFile(&Fake, String("0123456789")));
+            TEST_EXPECT(!File::WriteTextFile(&Fake, FString("0123456789")));
         }
 
         FFakeFile Complete(0, 0, 10);
-        TEST_EXPECT(File::WriteTextFile(&Complete, String("0123456789")));
+        TEST_EXPECT(File::WriteTextFile(&Complete, FString("0123456789")));
     }
 
-    const String Root("FileTests.Scratch");
+    const FString Root("FileTests.Scratch");
     File::DeleteDirectoryTree(Root);
     TEST_EXPECT(File::CreateDirectoryTree(Root));
 
     TEST_SECTION("An empty file reads as empty and an empty string writes");
     {
-        const String Filename = Root + "/Empty.txt";
+        const FString Filename = Root + "/Empty.txt";
         TEST_EXPECT(WriteText(Filename, ""));
         TEST_EXPECT(FPlatformFile::GetFileInfo(*Filename).Size == 0);
 
@@ -277,7 +277,7 @@ bool File_Test()
 
     TEST_SECTION("Reads start at the file's current position");
     {
-        const String Filename = Root + "/Position.txt";
+        const FString Filename = Root + "/Position.txt";
         TEST_EXPECT(WriteText(Filename, "0123456789"));
 
         TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Filename);
@@ -301,14 +301,14 @@ bool File_Test()
 
             TArray<CHAR_T> Text;
             TEST_EXPECT(File::ReadTextFile(FileHandle.Get(), Text));
-            TEST_EXPECT(String(Text.Data()).Equals("456789"));
+            TEST_EXPECT(FString(Text.Data()).Equals("456789"));
             TEST_EXPECT(FileHandle->Tell() == 10);
         }
     }
 
     TEST_SECTION("IsFile is false for a directory");
     {
-        const String Filename = Root + "/IsFile.txt";
+        const FString Filename = Root + "/IsFile.txt";
         TEST_EXPECT(WriteText(Filename, "Text"));
 
         TEST_EXPECT(FPlatformFile::IsFile(*Filename));
@@ -318,7 +318,7 @@ bool File_Test()
 
     TEST_SECTION("GetFileInfo reports size, kind and write time");
     {
-        const String Filename = Root + "/Info.txt";
+        const FString Filename = Root + "/Info.txt";
         TEST_EXPECT(WriteText(Filename, "0123456789"));
 
         const FFileInfo FileInfo = FPlatformFile::GetFileInfo(*Filename);
@@ -341,8 +341,8 @@ bool File_Test()
 
     TEST_SECTION("CopyFile refuses to overwrite unless asked to");
     {
-        const String Source      = Root + "/CopySource.txt";
-        const String Destination = Root + "/CopyDestination.txt";
+        const FString Source      = Root + "/CopySource.txt";
+        const FString Destination = Root + "/CopyDestination.txt";
         TEST_EXPECT(WriteText(Source, "Source"));
         TEST_EXPECT(WriteText(Destination, "Old"));
 
@@ -353,15 +353,15 @@ bool File_Test()
         TEST_EXPECT(ReadText(Destination).Equals("Source"));
         TEST_EXPECT(ReadText(Source).Equals("Source"));
 
-        const String NewDestination = Root + "/CopyNew.txt";
+        const FString NewDestination = Root + "/CopyNew.txt";
         TEST_EXPECT(FPlatformFile::CopyFile(*Source, *NewDestination));
         TEST_EXPECT(ReadText(NewDestination).Equals("Source"));
     }
 
     TEST_SECTION("MoveDirectory renames a directory with its contents and refuses an existing target");
     {
-        const String From = Root + "/MoveFrom";
-        const String To   = Root + "/MoveTo";
+        const FString From = Root + "/MoveFrom";
+        const FString To   = Root + "/MoveTo";
         TEST_EXPECT(File::CreateDirectoryTree(From + "/Nested"));
         TEST_EXPECT(WriteText(From + "/Nested/File.txt", "Moved"));
 
@@ -369,7 +369,7 @@ bool File_Test()
         TEST_EXPECT(!FPlatformFile::IsDirectory(*From));
         TEST_EXPECT(ReadText(To + "/Nested/File.txt").Equals("Moved"));
 
-        const String Occupied = Root + "/Occupied";
+        const FString Occupied = Root + "/Occupied";
         TEST_EXPECT(FPlatformFile::CreateDirectory(*Occupied));
         TEST_EXPECT(!FPlatformFile::MoveDirectory(*To, *Occupied));
         TEST_EXPECT(FPlatformFile::IsDirectory(*To));
@@ -377,7 +377,7 @@ bool File_Test()
 
     TEST_SECTION("DeleteDirectoryTree removes nested directories and files");
     {
-        const String Tree = Root + "/Tree";
+        const FString Tree = Root + "/Tree";
         TEST_EXPECT(File::CreateDirectoryTree(Tree + "/A/B/C"));
         TEST_EXPECT(WriteText(Tree + "/Top.txt", "1"));
         TEST_EXPECT(WriteText(Tree + "/A/B/Deep.txt", "2"));
@@ -391,9 +391,9 @@ bool File_Test()
 
     TEST_SECTION("DeleteDirectoryTree removes a link to a directory without touching its target");
     {
-        const String Target = File::MakeAbsolute(Root + "/LinkTarget");
-        const String Tree   = File::MakeAbsolute(Root + "/TreeWithLink");
-        const String Link   = Tree + "/Link";
+        const FString Target = File::MakeAbsolute(Root + "/LinkTarget");
+        const FString Tree   = File::MakeAbsolute(Root + "/TreeWithLink");
+        const FString Link   = Tree + "/Link";
         TEST_EXPECT(File::CreateDirectoryTree(Target));
         TEST_EXPECT(File::CreateDirectoryTree(Tree));
         TEST_EXPECT(WriteText(Target + "/Kept.txt", "Kept"));
@@ -412,8 +412,8 @@ bool File_Test()
 
     TEST_SECTION("CopyDirectoryTree copies nested directories, files and empty directories");
     {
-        const String Source      = Root + "/CopyTreeSource";
-        const String Destination = Root + "/CopyTreeDestination";
+        const FString Source      = Root + "/CopyTreeSource";
+        const FString Destination = Root + "/CopyTreeDestination";
         TEST_EXPECT(File::CreateDirectoryTree(Source + "/A/B"));
         TEST_EXPECT(File::CreateDirectoryTree(Source + "/Empty"));
         TEST_EXPECT(WriteText(Source + "/Top.txt", "1"));
@@ -428,8 +428,8 @@ bool File_Test()
 
     TEST_SECTION("CopyDirectoryTree refuses to overwrite unless asked to");
     {
-        const String Source      = Root + "/CopyTreeSource";
-        const String Destination = Root + "/CopyTreeDestination";
+        const FString Source      = Root + "/CopyTreeSource";
+        const FString Destination = Root + "/CopyTreeDestination";
         TEST_EXPECT(WriteText(Source + "/Top.txt", "New"));
 
         TEST_EXPECT(!File::CopyDirectoryTree(Source, Destination));
@@ -441,10 +441,10 @@ bool File_Test()
 
     TEST_SECTION("CopyDirectoryTree skips what the filter rejects");
     {
-        const String Source      = Root + "/CopyTreeSource";
-        const String Destination = Root + "/CopyTreeFiltered";
+        const FString Source      = Root + "/CopyTreeSource";
+        const FString Destination = Root + "/CopyTreeFiltered";
 
-        const bool bCopied = File::CopyDirectoryTree(Source, Destination, false, [](const String& Path, bool bIsDirectory)
+        const bool bCopied = File::CopyDirectoryTree(Source, Destination, false, [](const FString& Path, bool bIsDirectory)
         {
             return !File::ExtractFilename(Path).Equals("Top.txt") && !(bIsDirectory && File::ExtractFilename(Path).Equals("A"));
         });
@@ -457,7 +457,7 @@ bool File_Test()
 
     TEST_SECTION("CopyDirectoryTree refuses to copy a directory into itself");
     {
-        const String Source = Root + "/CopyTreeSource";
+        const FString Source = Root + "/CopyTreeSource";
         TEST_EXPECT(!File::CopyDirectoryTree(Source, Source + "/Inside"));
         TEST_EXPECT(!File::CopyDirectoryTree(Source, Source));
         TEST_EXPECT(!FPlatformFile::GetFileInfo(*(Source + "/Inside")).bExists);
@@ -465,9 +465,9 @@ bool File_Test()
 
     TEST_SECTION("CopyDirectoryTree skips a link to a directory");
     {
-        const String Target      = File::MakeAbsolute(Root + "/CopyLinkTarget");
-        const String Source      = File::MakeAbsolute(Root + "/CopyTreeWithLink");
-        const String Destination = File::MakeAbsolute(Root + "/CopyTreeWithLinkCopy");
+        const FString Target      = File::MakeAbsolute(Root + "/CopyLinkTarget");
+        const FString Source      = File::MakeAbsolute(Root + "/CopyTreeWithLink");
+        const FString Destination = File::MakeAbsolute(Root + "/CopyTreeWithLinkCopy");
         TEST_EXPECT(File::CreateDirectoryTree(Target));
         TEST_EXPECT(File::CreateDirectoryTree(Source));
         TEST_EXPECT(WriteText(Target + "/Linked.txt", "Linked"));
@@ -509,7 +509,7 @@ bool File_Test()
 
     TEST_SECTION("MakeAbsolute resolves against the working directory");
     {
-        const String WorkingDirectory = File::NormalizePath(FPlatformFile::GetCurrentWorkingDirectory());
+        const FString WorkingDirectory = File::NormalizePath(FPlatformFile::GetCurrentWorkingDirectory());
         TEST_EXPECT(File::MakeAbsolute("A/B.txt").Equals(WorkingDirectory + "/A/B.txt"));
         TEST_EXPECT(File::MakeAbsolute(".").Equals(WorkingDirectory));
         TEST_EXPECT(File::MakeAbsolute("/Engine/../Game").Equals("/Game"));
@@ -538,7 +538,7 @@ bool File_Test()
 
     TEST_SECTION("The user settings directory exists and the engine's lives inside it");
     {
-        const String Directory = FPlatformFile::GetUserSettingsDirectory();
+        const FString Directory = FPlatformFile::GetUserSettingsDirectory();
         TEST_EXPECT(!Directory.IsEmpty());
         TEST_EXPECT(!Directory.Contains('\\'));
         TEST_EXPECT(FPlatformFile::IsDirectory(*Directory));
@@ -578,7 +578,7 @@ bool File_Test()
 
     TEST_SECTION("Outside Windows 'C:' is an ordinary name");
     {
-        const String WorkingDirectory = File::NormalizePath(FPlatformFile::GetCurrentWorkingDirectory());
+        const FString WorkingDirectory = File::NormalizePath(FPlatformFile::GetCurrentWorkingDirectory());
         TEST_EXPECT(File::NormalizePath("C:/Engine/..").Equals("C:"));
         TEST_EXPECT(File::MakeAbsolute("C:/Engine").Equals(WorkingDirectory + "/C:/Engine"));
     }

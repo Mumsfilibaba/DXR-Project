@@ -395,7 +395,7 @@ EKeyInterceptResult FEditorFooterPanel::OnFieldKeyDown(const FKeyEvent& KeyEvent
     return EKeyInterceptResult::NotHandled;
 }
 
-void FEditorFooterPanel::OnFieldTextChanged(const String& NewText)
+void FEditorFooterPanel::OnFieldTextChanged(const FString& NewText)
 {
     if (bIsSyncingField)
     {
@@ -458,7 +458,7 @@ void FEditorFooterPanel::RebuildCandidateList()
 
 void FEditorFooterPanel::AddCandidateRow(int32 CandidateIndex)
 {
-    const TPair<IConsoleObject*, String>& Candidate = CommandLine->GetCandidates()[CandidateIndex];
+    const TPair<IConsoleObject*, FString>& Candidate = CommandLine->GetCandidates()[CandidateIndex];
 
     const bool bIsSelected = CandidateIndex == CommandLine->GetSelectedCandidateIndex();
 
@@ -481,16 +481,16 @@ void FEditorFooterPanel::AddCandidateRow(int32 CandidateIndex)
     CandidateRowVisuals.Add(RowVisuals);
 }
 
-void FEditorFooterPanel::AddCandidateNameRuns(const TSharedPtr<FHorizontalBox>& Row, const String& Name, const FFloatColor& TextColor, TArray<TSharedPtr<FTextBlock>>& OutNameRuns)
+void FEditorFooterPanel::AddCandidateNameRuns(const TSharedPtr<FHorizontalBox>& Row, const FString& Name, const FFloatColor& TextColor, TArray<TSharedPtr<FTextBlock>>& OutNameRuns)
 {
     const TSharedPtr<IFontFace>& Font   = FEditorStyle::GetFonts().Monospace;
-    const String                 Filter = GetCandidateFilterText();
+    const FString                Filter = GetCandidateFilterText();
 
     const int32 MatchLength = Filter.Length();
-    const int32 MatchStart  = MatchLength > 0 ? StringView(Name.Data(), Name.Length()).Find(Filter.Data(), EStringCaseType::NoCase) : -1;
+    const int32 MatchStart  = MatchLength > 0 ? FStringView(Name.Data(), Name.Length()).Find(Filter.Data(), EStringCaseType::NoCase) : -1;
     const bool  bHasMatch   = MatchStart >= 0 && (MatchStart + MatchLength) <= Name.Length();
 
-    const auto MakeRun = [&](const String& RunText, const FFloatColor& RunColor)
+    const auto MakeRun = [&](const FString& RunText, const FFloatColor& RunColor)
     {
         FTextBlock::FDesc RunDesc;
         RunDesc.Text            = RunText;
@@ -500,7 +500,7 @@ void FEditorFooterPanel::AddCandidateNameRuns(const TSharedPtr<FHorizontalBox>& 
         return FTextBlock::Create(RunDesc);
     };
 
-    const auto AddPlainRun = [&](const String& RunText)
+    const auto AddPlainRun = [&](const FString& RunText)
     {
         TSharedPtr<FTextBlock> RunBlock = MakeRun(RunText, TextColor);
 
@@ -614,8 +614,8 @@ void FEditorFooterPanel::ClearHoveredCandidate()
 
 TSharedPtr<FVisualElement> FEditorFooterPanel::MakeCandidateToolTip(int32 CandidateIndex) const
 {
-    const TPair<IConsoleObject*, String>& Candidate = CommandLine->GetCandidates()[CandidateIndex];
-    const TSharedPtr<IFontFace>&          Font      = FEditorStyle::GetFonts().Monospace;
+    const TPair<IConsoleObject*, FString>& Candidate = CommandLine->GetCandidates()[CandidateIndex];
+    const TSharedPtr<IFontFace>&           Font      = FEditorStyle::GetFonts().Monospace;
 
     FRichTextBlock::FDesc NameDesc;
     NameDesc.Runs.Add(FTextRun(Candidate.Second, Font.Get(), FFloatColor::White));
@@ -632,9 +632,9 @@ TSharedPtr<FVisualElement> FEditorFooterPanel::MakeCandidateToolTip(int32 Candid
     {
         const EConsoleVariableFlags SetByFlags = static_cast<EConsoleVariableFlags>(Variable->GetFlags() & EConsoleVariableFlags::SetByMask);
 
-        DetailRuns.Add(FTextRun(String("Type: ") + GetConsoleVariableTypeName(Variable) + "\n", Font.Get(), DetailColor));
-        DetailRuns.Add(FTextRun(String("Value: ") + Variable->GetString() + "\n", Font.Get(), DetailColor));
-        DetailRuns.Add(FTextRun(String("Set By: ") + SetByFlagToString(SetByFlags), Font.Get(), DetailColor));
+        DetailRuns.Add(FTextRun(FString("Type: ") + GetConsoleVariableTypeName(Variable) + "\n", Font.Get(), DetailColor));
+        DetailRuns.Add(FTextRun(FString("Value: ") + Variable->GetString() + "\n", Font.Get(), DetailColor));
+        DetailRuns.Add(FTextRun(FString("Set By: ") + SetByFlagToString(SetByFlags), Font.Get(), DetailColor));
     }
     else if (Candidate.First->AsCommand())
     {
@@ -644,7 +644,7 @@ TSharedPtr<FVisualElement> FEditorFooterPanel::MakeCandidateToolTip(int32 Candid
     const CHAR_T* HelpString = Candidate.First->GetHelpString();
     if (HelpString && HelpString[0] != 0)
     {
-        const String HelpText = DetailRuns.IsEmpty() ? String(HelpString) : String("\n") + HelpString;
+        const FString HelpText = DetailRuns.IsEmpty() ? FString(HelpString) : FString("\n") + HelpString;
         DetailRuns.Add(FTextRun(HelpText, Font.Get(), FFloatColor::White));
     }
 
@@ -667,12 +667,12 @@ int32 FEditorFooterPanel::GetCandidateRowHeight() const
     return CANDIDATE_ROW_HEIGHT;
 }
 
-String FEditorFooterPanel::GetCandidateFilterText() const
+FString FEditorFooterPanel::GetCandidateFilterText() const
 {
     const FConsoleWordRange Word = CommandLine->FindWordRangeAtTextCursor();
     if (Word.IsEmpty())
     {
-        return String();
+        return FString();
     }
 
     return CommandLine->GetText().SubString(Word.Position, Word.Length);
@@ -701,10 +701,10 @@ void FEditorFooterPanel::Refresh()
     const int32 NumRemoteConsoles = FRemoteConsoleServer::GetNumConnectedClients();
     if (NumRemoteConsoles > 0)
     {
-        StatusLabel->SetText(String::Printf("Remote console: %d connected    %.1f FPS  %.2f ms", NumRemoteConsoles, FramesPerSecond, FrameTimeMs));
+        StatusLabel->SetText(FString::Printf("Remote console: %d connected    %.1f FPS  %.2f ms", NumRemoteConsoles, FramesPerSecond, FrameTimeMs));
     }
     else
     {
-        StatusLabel->SetText(String::Printf("%.1f FPS  %.2f ms", FramesPerSecond, FrameTimeMs));
+        StatusLabel->SetText(FString::Printf("%.1f FPS  %.2f ms", FramesPerSecond, FrameTimeMs));
     }
 }

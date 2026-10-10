@@ -53,8 +53,8 @@ public:
     virtual bool IsMaximized() const override final { return bIsMaximized; }
     virtual bool IsChildWindow(const TSharedRef<IPlatformWindow>&) const override final { return false; }
 
-    virtual void SetTitle(const String& InTitle) override final { Title = InTitle; }
-    virtual void GetTitle(String& OutTitle) const override final { OutTitle = Title; }
+    virtual void SetTitle(const FString& InTitle) override final { Title = InTitle; }
+    virtual void GetTitle(FString& OutTitle) const override final { OutTitle = Title; }
 
     virtual void SetWindowPos(int32 x, int32 y) override final { Shape.Position = IntVector2(x, y); }
     virtual void SetWindowShape(const FWindowShape& InShape, bool) override final { Shape = InShape; }
@@ -94,7 +94,7 @@ public:
 
 private:
     FWindowShape           Shape;
-    String                 Title;
+    FString                Title;
     EWindowStyleFlags      StyleFlags;
     FWindowTitleBarMetrics TitleBarMetrics;
     FWindowTitleBarRegions TitleBarRegions;

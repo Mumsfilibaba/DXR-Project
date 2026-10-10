@@ -74,7 +74,7 @@ static_assert(sizeof(FRHIDrawIndexedIndirectParameters) == sizeof(D3D11_DRAW_IND
         do { } while(false)
 #endif
 
-inline void D3D11SetDebugName(ID3D11DeviceChild* DeviceChild, const String& Name)
+inline void D3D11SetDebugName(ID3D11DeviceChild* DeviceChild, const FString& Name)
 {
     if (DeviceChild)
     {
@@ -100,7 +100,7 @@ inline void D3D11SetDebugName(ID3D11DeviceChild* DeviceChild, const String& Name
     }
 }
 
-inline void D3D11GetDebugName(ID3D11DeviceChild* DeviceChild, String& OutName)
+inline void D3D11GetDebugName(ID3D11DeviceChild* DeviceChild, FString& OutName)
 {
     OutName.Clear();
 

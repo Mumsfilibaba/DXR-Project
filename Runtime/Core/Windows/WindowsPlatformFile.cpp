@@ -93,7 +93,7 @@ int32 FWindowsFileHandle::Read(uint8* Dst, uint32 BytesToRead)
             // ERROR_IO_PENDING only means the operation has not landed yet
             if (Error != ERROR_IO_PENDING)
             {
-                String ErrorString;
+                FString ErrorString;
 
                 FWindowsPlatformMisc::GetLastErrorString(ErrorString);
                 LOG_ERROR("Failed to read file, Error '%d' Message '%s'", Error, *ErrorString);
@@ -189,7 +189,7 @@ void FWindowsFileHandle::UpdateFileSize()
 }
 
 
-IPlatformFile* FWindowsPlatformFile::OpenForRead(const String& Filename)
+IPlatformFile* FWindowsPlatformFile::OpenForRead(const FString& Filename)
 {
     ::SetLastError(S_OK);
 
@@ -199,11 +199,11 @@ IPlatformFile* FWindowsPlatformFile::OpenForRead(const String& Filename)
     {
         const DWORD LastError = ::GetLastError();
 
-        String ErrorString;
+        FString ErrorString;
         FWindowsPlatformMisc::GetLastErrorString(ErrorString);
         
         int32 Position = ErrorString.FindLast("\r\n");
-        if (Position != String::InvalidIndex)
+        if (Position != FString::InvalidIndex)
         {
             ErrorString.Remove(Position, 2);
         }
@@ -226,7 +226,7 @@ IPlatformFile* FWindowsPlatformFile::OpenForRead(const String& Filename)
     }
 }
 
-IPlatformFile* FWindowsPlatformFile::OpenForWrite(const String& Filename, bool bTruncate)
+IPlatformFile* FWindowsPlatformFile::OpenForWrite(const FString& Filename, bool bTruncate)
 {
     ::SetLastError(S_OK);
 
@@ -237,11 +237,11 @@ IPlatformFile* FWindowsPlatformFile::OpenForWrite(const String& Filename, bool b
     {
         const DWORD LastError = ::GetLastError();
 
-        String ErrorString;
+        FString ErrorString;
         FWindowsPlatformMisc::GetLastErrorString(ErrorString);
 
         int32 Position = ErrorString.FindLast("\r\n");
-        if (Position != String::InvalidIndex)
+        if (Position != FString::InvalidIndex)
         {
             ErrorString.Remove(Position, 2);
         }
@@ -264,7 +264,7 @@ IPlatformFile* FWindowsPlatformFile::OpenForWrite(const String& Filename, bool b
     }
 }
 
-IPlatformAsyncFile* FWindowsPlatformFile::OpenForAsyncWrite(const String& Filename, bool bTruncate)
+IPlatformAsyncFile* FWindowsPlatformFile::OpenForAsyncWrite(const FString& Filename, bool bTruncate)
 {
     ::SetLastError(S_OK);
 
@@ -273,11 +273,11 @@ IPlatformAsyncFile* FWindowsPlatformFile::OpenForAsyncWrite(const String& Filena
     HANDLE NewHandle = ::CreateFileW(StringCast<WIDECHAR>(Filename).Get(), GENERIC_WRITE, 0, 0, CreationDisposition, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, 0);
     if (NewHandle == INVALID_HANDLE_VALUE)
     {
-        String ErrorString;
+        FString ErrorString;
         FWindowsPlatformMisc::GetLastErrorString(ErrorString);
 
         int32 Position = ErrorString.FindLast("\r\n");
-        if (Position != String::InvalidIndex)
+        if (Position != FString::InvalidIndex)
         {
             ErrorString.Remove(Position, 2);
         }
@@ -436,11 +436,11 @@ void FWindowsAsyncFileHandle::ReportWriteFailure(const CHAR_T* What, uint32 Erro
 
     ::SetLastError(static_cast<DWORD>(ErrorCode));
 
-    String ErrorString;
+    FString ErrorString;
     FWindowsPlatformMisc::GetLastErrorString(ErrorString);
 
     const int32 Position = ErrorString.FindLast("\r\n");
-    if (Position != String::InvalidIndex)
+    if (Position != FString::InvalidIndex)
     {
         ErrorString.Remove(Position, 2);
     }
@@ -518,7 +518,7 @@ void FWindowsAsyncFileHandle::FreePendingWrite(FPendingWrite* PendingWrite)
 
 const CHAR_T* FWindowsPlatformFile::GetExecutablePath()
 {
-    static String StaticExecutablePath;
+    static FString StaticExecutablePath;
 
     if (StaticExecutablePath.IsEmpty())
     {
@@ -544,48 +544,48 @@ const CHAR_T* FWindowsPlatformFile::GetExecutablePath()
     return *StaticExecutablePath;
 }
 
-String FWindowsPlatformFile::GetCurrentWorkingDirectory()
+FString FWindowsPlatformFile::GetCurrentWorkingDirectory()
 {
     const int32 RequiredSize = ::GetCurrentDirectoryW(0, nullptr);
     if (!RequiredSize)
     {
-        String Error;
+        FString Error;
         const int32 ErrorCode = FWindowsPlatformMisc::GetLastErrorString(Error);
         LOG_ERROR("GetCurrentWorkingDirectory failed with error %d '%s' ", ErrorCode, *Error);
-        return String();
+        return FString();
     }
 
-    WString WideResult;
+    FWideString WideResult;
     WideResult.Resize(RequiredSize - 1);
 
     const int32 Length = ::GetCurrentDirectoryW(RequiredSize, WideResult.Data());
     if (!Length || Length >= RequiredSize)
     {
-        String Error;
+        FString Error;
 
         const int32 ErrorCode = FWindowsPlatformMisc::GetLastErrorString(Error);
         LOG_ERROR("GetCurrentWorkingDirectory failed with error %d '%s' ", ErrorCode, *Error);
-        return String();
+        return FString();
     }
     else
     {
-        String Result = StringCast<CHAR_T>(WideResult.Data(), Length).ToString();
+        FString Result = StringCast<CHAR_T>(WideResult.Data(), Length).ToString();
         Result.ReplaceAll('\\', '/');
         return Result;
     }
 }
 
-String FWindowsPlatformFile::GetUserSettingsDirectory()
+FString FWindowsPlatformFile::GetUserSettingsDirectory()
 {
     PWSTR WidePath = nullptr;
     if (FAILED(::SHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_DEFAULT, nullptr, &WidePath)))
     {
         ::CoTaskMemFree(WidePath);
         LOG_ERROR("GetUserSettingsDirectory failed to find the local application data directory");
-        return String();
+        return FString();
     }
 
-    String Path = StringCast<CHAR_T>(WidePath).ToString();
+    FString Path = StringCast<CHAR_T>(WidePath).ToString();
     ::CoTaskMemFree(WidePath);
 
     Path.ReplaceAll('\\', '/');
@@ -622,7 +622,7 @@ bool FWindowsPlatformFile::IterateDirectory(const CHAR_T* Path, TArray<FDirector
     OutEntries.Clear();
 
     WIN32_FIND_DATAW FindData;
-    const String     Search = String::Printf(TEXT("%s\\*"), Path);
+    const FString    Search = FString::Printf(TEXT("%s\\*"), Path);
     const HANDLE     Handle = ::FindFirstFileW(StringCast<WIDECHAR>(Search).Get(), &FindData);
     if (Handle == INVALID_HANDLE_VALUE)
     {

@@ -29,7 +29,7 @@ public:
 
 private:
     TArray<FRHIInputElementDesc>     InputElements;
-    TArray<String>                   SemanticNames;
+    TArray<FString>                  SemanticNames;
     TArray<D3D11_INPUT_ELEMENT_DESC> ElementDesc;
 };
 
@@ -109,8 +109,8 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final { return nullptr; }
 
-    virtual void SetDebugName(const String& InName) override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName) override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     bool Initialize(const FRHIGraphicsPipelineStateDesc& Desc);
 
@@ -159,7 +159,7 @@ private:
     TArray<FD3D11StaticSampler>   StaticSamplers;
     D3D11_PRIMITIVE_TOPOLOGY      PrimitiveTopology;
     uint32                        SampleMask;
-    String                        DebugName;
+    FString                       DebugName;
 };
 
 class FD3D11ComputePipelineStateRHI : public FRHIComputePipelineState, public FD3D11DeviceChild
@@ -171,8 +171,8 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final { return nullptr; }
 
-    virtual void SetDebugName(const String& InName) override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName) override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     bool Initialize(const FRHIComputePipelineStateDesc& Desc);
 
@@ -189,5 +189,5 @@ public:
 private:
     FD3D11ComputeShaderRHIRef   Shader;
     TArray<FD3D11StaticSampler> StaticSamplers;
-    String                      DebugName;
+    FString                     DebugName;
 };

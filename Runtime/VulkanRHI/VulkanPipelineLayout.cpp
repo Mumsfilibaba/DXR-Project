@@ -658,7 +658,7 @@ FVulkanPipelineLayout* FVulkanPipelineLayoutManager::FindOrCreateLayout(const FV
     if (NewLayout->Initialize(LayoutInfo))
     {
         // Set a debug-name for the pipeline-layout
-        const String DebugName = String::Printf("PipelineLayout %d", Layouts.Size());
+        const FString DebugName = FString::Printf("PipelineLayout %d", Layouts.Size());
         NewLayout->SetDebugName(DebugName.Data());
         Layouts.Add(LayoutInfo, NewLayout);
 

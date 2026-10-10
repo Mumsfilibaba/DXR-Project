@@ -371,8 +371,8 @@ public:
     }
 #endif
 
-    bool IsLayerEnabled(const String& LayerName)         const { return (LayerNames.Find(LayerName) != nullptr); }
-    bool IsExtensionEnabled(const String& ExtensionName) const { return (ExtensionNames.Find(ExtensionName) != nullptr); }
+    bool IsLayerEnabled(const FString& LayerName)         const { return (LayerNames.Find(LayerName) != nullptr); }
+    bool IsExtensionEnabled(const FString& ExtensionName) const { return (ExtensionNames.Find(ExtensionName) != nullptr); }
 
 #if VULKAN_ENABLE_CRASH_MARKERS
     bool IsAMDBufferMarkerEnabled()         const { return bSupportsAMDBufferMarker; }
@@ -430,8 +430,8 @@ private:
     FVulkanQueryPoolManager*             PipelineStatsQueryPoolManager;
     FVulkanDefaultResources              DefaultResources;
     FVulkanBufferClearPipelines          BufferClearPipelines;
-    TSet<String>                         ExtensionNames;
-    TSet<String>                         LayerNames;
+    TSet<FString>                        ExtensionNames;
+    TSet<FString>                        LayerNames;
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
     FVulkanQueue*                        GraphicsQueue;
     FVulkanQueue*                        PresentQueue;

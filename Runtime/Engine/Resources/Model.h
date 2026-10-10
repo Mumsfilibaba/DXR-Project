@@ -93,7 +93,7 @@ public:
         return IndexFormat;
     }
     
-    const String& GetName() const
+    const FString& GetName() const
     {
         return MeshName;
     }
@@ -108,7 +108,7 @@ private:
         SubMeshes.Add(InSubMesh);
     }
 
-    String                               MeshName;
+    FString                              MeshName;
     FVertexDeclaration                   Declaration;
     FRHIBufferRef                        VertexStreams[VERTEX_MAX_STREAMS];
     FRHIShaderResourceViewRef            AttributeBufferSRV;

@@ -333,7 +333,7 @@ void RasterizeDrawData(const FUIDrawData& DrawData, FSnapshotImage& OutImage)
     RasterizeShapeBatches(DrawData, OutImage);
 }
 
-bool WriteSnapshotPng(const FSnapshotImage& Image, const String& Filename)
+bool WriteSnapshotPng(const FSnapshotImage& Image, const FString& Filename)
 {
     if (!Image.IsValid())
     {
@@ -353,7 +353,7 @@ bool WriteSnapshotPng(const FSnapshotImage& Image, const String& Filename)
     return true;
 }
 
-bool SnapshotElementToPng(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, uint32 ClearColor, const String& Filename)
+bool SnapshotElementToPng(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, uint32 ClearColor, const FString& Filename)
 {
     if (!Element || Size.X <= 0 || Size.Y <= 0)
     {
@@ -379,9 +379,9 @@ bool SnapshotElementToPng(const TSharedPtr<FVisualElement>& Element, const IntVe
     return WriteSnapshotPng(Image, Filename);
 }
 
-bool EnsureSnapshotDirectory(const String& Directory)
+bool EnsureSnapshotDirectory(const FString& Directory)
 {
-    String Partial;
+    FString Partial;
     for (int32 Index = 0; Index < Directory.Length(); ++Index)
     {
         const CHAR_T Character = Directory[Index];
@@ -396,7 +396,7 @@ bool EnsureSnapshotDirectory(const String& Directory)
     return FPlatformFile::CreateDirectory(*Directory);
 }
 
-String GetSnapshotDirectory(const String& SubDirectory)
+FString GetSnapshotDirectory(const FString& SubDirectory)
 {
-    return String("Screenshots/") + SubDirectory;
+    return FString("Screenshots/") + SubDirectory;
 }

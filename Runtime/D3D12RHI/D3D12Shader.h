@@ -129,7 +129,7 @@ struct FD3D12ShaderBindingInfo
         bool                     bIsTexture           = false;
         ED3D12NullDescriptorType NullDescriptorType   = ED3D12NullDescriptorType::Texture2D;
 #if D3D12_ENABLE_BINDING_DEBUG_NAMES
-        String                   DebugName;
+        FString                   DebugName;
 #endif
     };
     
@@ -286,7 +286,7 @@ public:
     // FD3D12Shader Interface
     virtual bool Initialize(const FShaderCodeView& InCode) override final;
     
-    FORCEINLINE const String& GetIdentifier() const
+    FORCEINLINE const FString& GetIdentifier() const
     {
         return Identifier;
     }
@@ -297,7 +297,7 @@ public:
     }
 
 protected:
-    String Identifier;
+    FString Identifier;
 
 private:
     FD3D12ShaderBindingInfo LocalBindingInfo;

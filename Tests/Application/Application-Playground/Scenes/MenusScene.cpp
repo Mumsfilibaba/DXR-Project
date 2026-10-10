@@ -19,7 +19,7 @@
 #include "PlaygroundScene.h"
 #include "ScenePanel.h"
 
-static TSharedPtr<FTextBlock> MakeReadout(const FPlaygroundFonts& Fonts, const String& InText)
+static TSharedPtr<FTextBlock> MakeReadout(const FPlaygroundFonts& Fonts, const FString& InText)
 {
     FTextBlock::FDesc Desc;
     Desc.Text            = InText;
@@ -31,8 +31,8 @@ static TSharedPtr<FTextBlock> MakeReadout(const FPlaygroundFonts& Fonts, const S
 
 static TSharedPtr<FMenuItem> MakeItem(
     const FPlaygroundFonts&       Fonts,
-    const String&                 Label,
-    const String&                 ShortcutText,
+    const FString&                Label,
+    const FString&                ShortcutText,
     const TSharedPtr<FTextBlock>& Readout)
 {
     FMenuItem::FDesc Desc;
@@ -40,7 +40,7 @@ static TSharedPtr<FMenuItem> MakeItem(
     Desc.ShortcutText = ShortcutText;
     Desc.OnActivated  = FOnMenuItemActivated::CreateLambda([Readout, Label]()
     {
-        Readout->SetText(String::Printf("chose %s", Label.Data()));
+        Readout->SetText(FString::Printf("chose %s", Label.Data()));
     });
 
     return FMenuItem::Create(Desc);
@@ -48,7 +48,7 @@ static TSharedPtr<FMenuItem> MakeItem(
 
 static TSharedPtr<FMenuItem> MakeCheckableItem(
     const FPlaygroundFonts&       Fonts,
-    const String&                 Label,
+    const FString&                Label,
     bool                          bIsChecked,
     const TSharedPtr<FTextBlock>& Readout)
 {
@@ -71,7 +71,7 @@ static TSharedPtr<FMenuItem> MakeCheckableItem(
         const bool bIsNowChecked = LiveItem->GetCheckState() != ECheckBoxState::Checked;
         LiveItem->SetCheckState(bIsNowChecked ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);
 
-        Readout->SetText(String::Printf("%s is now %s", Label.Data(), bIsNowChecked ? "on" : "off"));
+        Readout->SetText(FString::Printf("%s is now %s", Label.Data(), bIsNowChecked ? "on" : "off"));
     }));
 
     return Item;
@@ -227,7 +227,7 @@ static TSharedPtr<FVisualElement> MakeComboBoxRow(const FPlaygroundFonts& Fonts)
         { "Anti-aliasing", -1 },
     };
 
-    const TArray<String> Options[] =
+    const TArray<FString> Options[] =
     {
         { "Off", "Low", "Medium", "High", "Ultra" },
         { "None", "FXAA", "TAA" },
@@ -243,10 +243,10 @@ static TSharedPtr<FVisualElement> MakeComboBoxRow(const FPlaygroundFonts& Fonts)
         Desc.SetOptions(Options[Index]).SetFont(Fonts.Body);
         Desc.SelectedIndex      = Samples[Index].InitialIndex;
         Desc.PlaceholderText    = "Select...";
-        Desc.OnSelectionChanged = FOnComboSelectionChanged::CreateLambda([Readout, Label = String(Samples[Index].Label), Choices = Options[Index]](int32 SelectedIndex)
+        Desc.OnSelectionChanged = FOnComboSelectionChanged::CreateLambda([Readout, Label = FString(Samples[Index].Label), Choices = Options[Index]](int32 SelectedIndex)
         {
-            const String& Choice = Choices.IsValidIndex(SelectedIndex) ? Choices[SelectedIndex] : String("nothing");
-            Readout->SetText(String::Printf("%s is now %s", Label.Data(), Choice.Data()));
+            const FString& Choice = Choices.IsValidIndex(SelectedIndex) ? Choices[SelectedIndex] : FString("nothing");
+            Readout->SetText(FString::Printf("%s is now %s", Label.Data(), Choice.Data()));
         });
 
         Row->AddSlot(FTextBlock::Create(LabelDesc)).SetPadding(FMargin(0, 0, 8, 0)).SetVerticalAlignment(EVerticalAlignment::Center);

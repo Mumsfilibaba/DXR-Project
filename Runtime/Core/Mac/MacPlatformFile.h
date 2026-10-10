@@ -59,12 +59,12 @@ private:
 
 struct CORE_API FMacPlatformFile final : public IPlatformFileSystem
 {
-    static IPlatformFile* OpenForRead(const String& Filename);
-    static IPlatformFile* OpenForWrite(const String& Filename, bool bTruncate = true);
-    static IPlatformAsyncFile* OpenForAsyncWrite(const String& Filename, bool bTruncate = true);
-    static String GetCurrentWorkingDirectory();
+    static IPlatformFile* OpenForRead(const FString& Filename);
+    static IPlatformFile* OpenForWrite(const FString& Filename, bool bTruncate = true);
+    static IPlatformAsyncFile* OpenForAsyncWrite(const FString& Filename, bool bTruncate = true);
+    static FString GetCurrentWorkingDirectory();
     static const CHAR_T* GetExecutablePath();
-    static String GetUserSettingsDirectory();
+    static FString GetUserSettingsDirectory();
 
     static FORCEINLINE bool IsDirectory(const CHAR_T* Path)
     {

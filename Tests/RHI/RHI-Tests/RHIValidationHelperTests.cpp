@@ -64,7 +64,7 @@ bool RHIValidationHelpers_Test()
     BufferDesc.Flags = EBufferFlags::Default | EBufferFlags::UnorderedAccessBuffer | EBufferFlags::IndirectArguments;
     TEST_EXPECT(BufferDesc.IsIndirectArguments());
     TEST_EXPECT(BufferDesc.IsUnorderedAccessBuffer());
-    TEST_EXPECT(StringView(ToString(ERHIResourceState::IndirectArgument)) == StringView("IndirectArgument"));
+    TEST_EXPECT(FStringView(ToString(ERHIResourceState::IndirectArgument)) == FStringView("IndirectArgument"));
 
     TEST_SECTION("Read-only state classification");
     TEST_EXPECT(!RHIIsReadOnlyState(ERHIResourceState::Common));

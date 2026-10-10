@@ -25,13 +25,13 @@ struct FDragDropPayload
     }
 
     /** @brief What is being dragged, which is how a target decides whether it wants the drop. */
-    String TypeId;
+    FString TypeId;
 
     /** @brief The text drawn under the cursor while the drag is in flight. */
-    String DisplayText;
+    FString DisplayText;
 
     /** @brief The status line drawn under DisplayText, such as "Cannot move X to Y". */
-    String StatusText;
+    FString StatusText;
 
     /** @brief Whether the current target would take the drop. */
     EDragDropPreviewState PreviewState = EDragDropPreviewState::Neutral;
@@ -129,7 +129,7 @@ public:
      * @param InState      Allowed, partial, forbidden, or none.
      * @param InStatusText The line under the payload name.
      */
-    void SetPreview(EDragDropPreviewState InState, const String& InStatusText);
+    void SetPreview(EDragDropPreviewState InState, const FString& InStatusText);
 
     /**
      * @brief Registers an element as a possible drop target, replacing its earlier registration. Held

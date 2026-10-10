@@ -22,7 +22,7 @@ constexpr const CHAR_T* DOCKING_LAYOUT_FILE = "PlaygroundLayout.ini";
 static TSharedPtr<FDockingArea> GDockingArea;
 static TSharedPtr<FTextBlock>   GLayoutReadout;
 
-static TSharedPtr<FVisualElement> MakePanelBody(const FPlaygroundFonts& Fonts, const String& Title, const String& Body)
+static TSharedPtr<FVisualElement> MakePanelBody(const FPlaygroundFonts& Fonts, const FString& Title, const FString& Body)
 {
     FTextBlock::FDesc HeadingDesc;
     HeadingDesc.Text            = Title;
@@ -47,7 +47,7 @@ static TSharedPtr<FVisualElement> MakePanelBody(const FPlaygroundFonts& Fonts, c
     return FBorder::Create(BorderDesc);
 }
 
-static void DescribeNode(const FDockNode& Node, String& OutText)
+static void DescribeNode(const FDockNode& Node, FString& OutText)
 {
     if (Node.Kind == EDockNodeKind::Tabs)
     {
@@ -86,7 +86,7 @@ static void DescribeNode(const FDockNode& Node, String& OutText)
 
         const float Share = Index < Node.ChildFractions.Size() ? Node.ChildFractions[Index] : 0.0f;
 
-        OutText.Append(String::Printf("%.0f%%:", Share * 100.0f));
+        OutText.Append(FString::Printf("%.0f%%:", Share * 100.0f));
         DescribeNode(Node.Children[Index], OutText);
     }
 
@@ -100,7 +100,7 @@ static void RefreshReadout()
         return;
     }
 
-    String Description;
+    FString Description;
     DescribeNode(GDockingArea->SaveLayout(), Description);
 
     GLayoutReadout->SetText(Description);
@@ -120,12 +120,12 @@ static TSharedPtr<FVisualElement> MakeDockingArea(const FPlaygroundFonts& Fonts)
     FDockingArea::FDesc Desc;
     Desc.Font = Fonts.Body;
 
-    Desc.OnPanelClosed = FOnPanelClosed::CreateLambda([](const String&)
+    Desc.OnPanelClosed = FOnPanelClosed::CreateLambda([](const FString&)
     {
         RefreshReadout();
     });
 
-    Desc.OnPanelTornOut = FOnPanelTornOut::CreateLambda([](const String&, const IntVector2&)
+    Desc.OnPanelTornOut = FOnPanelTornOut::CreateLambda([](const FString&, const IntVector2&)
     {
         RefreshReadout();
     });

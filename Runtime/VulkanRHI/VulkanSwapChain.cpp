@@ -1121,7 +1121,7 @@ bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
     return true;
 }
 
-void FVulkanSwapChainRHI::SetDebugName(const String& InName)
+void FVulkanSwapChainRHI::SetDebugName(const FString& InName)
 {
     if (SwapChainResource)
     {
@@ -1129,10 +1129,10 @@ void FVulkanSwapChainRHI::SetDebugName(const String& InName)
 
         for (int32 Index = 0; Index < BackBufferImages.Size(); ++Index)
         {
-            const String ImageName = InName + String::Printf(" BackBuffer Image[%d]", Index);
+            const FString ImageName = InName + FString::Printf(" BackBuffer Image[%d]", Index);
             VulkanSetObjectName(GetDevice()->GetVkDevice(), *ImageName, BackBufferImages[Index].Image, VK_OBJECT_TYPE_IMAGE);
 
-            const String ImageViewName = InName + String::Printf(" BackBuffer ImageView[%d]", Index);
+            const FString ImageViewName = InName + FString::Printf(" BackBuffer ImageView[%d]", Index);
             VulkanSetObjectName(GetDevice()->GetVkDevice(), *ImageViewName, BackBufferImages[Index].ImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
         }
     }

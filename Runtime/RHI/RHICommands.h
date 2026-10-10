@@ -1597,7 +1597,7 @@ DECLARE_RHICOMMAND(FRHICommandDeserializeAccelerationStructure)
 
 DECLARE_RHICOMMAND(FRHICommandPushEvent)
 {
-    FORCEINLINE FRHICommandPushEvent(const StringView& InName)
+    FORCEINLINE FRHICommandPushEvent(const FStringView& InName)
         : Name(InName)
     {
     }
@@ -1606,13 +1606,13 @@ DECLARE_RHICOMMAND(FRHICommandPushEvent)
     {
         if (GRHIVerboseEventOutput && Debug::IsDebuggerPresent())
         {
-            Debug::OutputDebugString(String(Name) + '\n');
+            Debug::OutputDebugString(FString(Name) + '\n');
         }
 
         CommandContext.PushEvent(Name);
     }
 
-    StringView Name;
+    FStringView Name;
 };
 
 DECLARE_RHICOMMAND(FRHICommandPopEvent)

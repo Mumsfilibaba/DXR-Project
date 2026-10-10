@@ -116,7 +116,7 @@ FEventResponse FRichTextBlock::OnMouseButtonDown(const FCursorEvent& CursorEvent
     SelectionCursor = CharacterIndex;
     InvalidatePaint();
 
-    OnSelectionChangedDelegate.ExecuteIfBound(String());
+    OnSelectionChangedDelegate.ExecuteIfBound(FString());
     return Response;
 }
 
@@ -164,7 +164,7 @@ void FRichTextBlock::SetRuns(const TArray<FTextRun>& InRuns)
     InvalidateDesiredSize();
 }
 
-void FRichTextBlock::SetRunsAndSearchText(const TArray<FTextRun>& InRuns, const String& InSearchText, EStringCaseType InCaseType)
+void FRichTextBlock::SetRunsAndSearchText(const TArray<FTextRun>& InRuns, const FString& InSearchText, EStringCaseType InCaseType)
 {
     Layout.Clear();
     for (const FTextRun& Run : InRuns)
@@ -197,7 +197,7 @@ void FRichTextBlock::ClearRuns()
     InvalidateDesiredSize();
 }
 
-void FRichTextBlock::SetSearchText(const String& InSearchText)
+void FRichTextBlock::SetSearchText(const FString& InSearchText)
 {
     if (SearchText == InSearchText)
     {
@@ -237,15 +237,15 @@ int32 FRichTextBlock::GetSelectionEnd() const
     return Math::Max(SelectionAnchor, SelectionCursor);
 }
 
-String FRichTextBlock::GetSelectedText() const
+FString FRichTextBlock::GetSelectedText() const
 {
     if (!HasSelection())
     {
-        return String();
+        return FString();
     }
 
-    const String Text = Layout.GetText();
-    return String(Text.Data() + GetSelectionStart(), GetSelectionEnd() - GetSelectionStart());
+    const FString Text = Layout.GetText();
+    return FString(Text.Data() + GetSelectionStart(), GetSelectionEnd() - GetSelectionStart());
 }
 
 void FRichTextBlock::SelectAll()
@@ -264,7 +264,7 @@ void FRichTextBlock::ClearSelection()
     SelectionCursor = 0;
     InvalidatePaint();
 
-    OnSelectionChangedDelegate.ExecuteIfBound(String());
+    OnSelectionChangedDelegate.ExecuteIfBound(FString());
 }
 
 void FRichTextBlock::SetSelection(int32 StartIndex, int32 EndIndex)
@@ -291,7 +291,7 @@ void FRichTextBlock::CopyToClipboard() const
     FPlatformSystemClipboard::SetText(HasSelection() ? GetSelectedText() : Layout.GetText());
 }
 
-String FRichTextBlock::GetText() const
+FString FRichTextBlock::GetText() const
 {
     return Layout.GetText();
 }
@@ -382,9 +382,9 @@ void FRichTextBlock::RefreshSearchMatches()
         return;
     }
 
-    const String& Text        = Layout.GetText();
-    const int32   MatchLength = SearchText.Length();
-    const int32   TextLength  = Text.Length();
+    const FString& Text        = Layout.GetText();
+    const int32    MatchLength = SearchText.Length();
+    const int32    TextLength  = Text.Length();
 
     if (MatchLength <= 0 || TextLength < MatchLength)
     {

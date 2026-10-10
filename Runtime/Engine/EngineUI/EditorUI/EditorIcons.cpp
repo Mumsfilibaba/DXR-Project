@@ -58,7 +58,7 @@ static FUIAtlas GIconAtlas;
 
 static bool LoadIconImage(const CHAR_T* RelativePath, FIconImage& OutImage)
 {
-    String FullPath = Paths::GetAssetDir();
+    FString FullPath = Paths::GetAssetDir();
     if (!FullPath.EndsWith("/"))
     {
         FullPath += "/";
@@ -68,7 +68,7 @@ static bool LoadIconImage(const CHAR_T* RelativePath, FIconImage& OutImage)
 
     FTextureImporterBase Importer;
 
-    TSharedRef<FTexture> Texture   = Importer.ImportFromFile(StringView(FullPath));
+    TSharedRef<FTexture> Texture   = Importer.ImportFromFile(FStringView(FullPath));
     FTexture2D*          Texture2D = Texture ? Texture->GetTexture2D() : nullptr;
 
     if (!Texture2D)

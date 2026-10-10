@@ -6,7 +6,7 @@
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Time/Time.h"
 
-static int32 CompareThreadNames(const String& Left, const String& Right)
+static int32 CompareThreadNames(const FString& Left, const FString& Right)
 {
     int32 LeftIndex  = 0;
     int32 RightIndex = 0;
@@ -128,9 +128,9 @@ void SortProfilerThreadFrames(TArray<FProfilerThreadFrame>& Threads)
 
     struct FThreadOrder
     {
-        String Name;
-        bool   bIsMainThread = false;
-        bool   bIsNamed      = false;
+        FString Name;
+        bool    bIsMainThread = false;
+        bool    bIsNamed      = false;
     };
 
     FThreadManager& ThreadManager = FThreadManager::Get();

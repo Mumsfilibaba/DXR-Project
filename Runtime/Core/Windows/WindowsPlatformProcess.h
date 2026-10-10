@@ -8,7 +8,7 @@ public:
     FWindowsPlatformProcessHandle(HANDLE InProcess, HANDLE InOutputPipe);
     virtual ~FWindowsPlatformProcessHandle();
 
-    virtual bool ReadOutput(String& OutText) override final;
+    virtual bool ReadOutput(FString& OutText) override final;
     virtual bool IsRunning() override final;
     virtual bool Wait(int32 TimeoutMilliseconds = -1) override final;
     virtual bool GetExitCode(int32& OutExitCode) override final;

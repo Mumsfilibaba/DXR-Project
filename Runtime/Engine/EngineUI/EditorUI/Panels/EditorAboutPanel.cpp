@@ -12,7 +12,7 @@
 
 static TSharedPtr<FVisualElement> BuildAboutHeader()
 {
-    const String Version = String::Printf("Version %s  |  %s", BuildInfo::GetVersionString(), BuildInfo::GetConfigurationName());
+    const FString Version = FString::Printf("Version %s  |  %s", BuildInfo::GetVersionString(), BuildInfo::GetConfigurationName());
 
     return FEditorStyle::MakeHeaderCard(BuildInfo::GetEngineName(), Version);
 }
@@ -53,7 +53,7 @@ bool FEditorAboutPanel::Initialize()
     return true;
 }
 
-TSharedPtr<FPropertyTable> FEditorAboutPanel::AddSection(const TSharedPtr<FVerticalBox>& Column, const String& SectionName)
+TSharedPtr<FPropertyTable> FEditorAboutPanel::AddSection(const TSharedPtr<FVerticalBox>& Column, const FString& SectionName)
 {
     TSharedPtr<FPropertyTable> SectionTable = FPropertyTable::Create(FEditorStyle::MakeInfoTableDesc());
     if (!SectionTable)
@@ -76,9 +76,9 @@ void FEditorAboutPanel::BuildSections(const TSharedPtr<FVerticalBox>& Column)
 {
     if (TSharedPtr<FPropertyTable> Source = AddSection(Column, "Source"))
     {
-        const String Commit = BuildInfo::IsWorkingTreeDirty()
-            ? String::Printf("%s (dirty)", BuildInfo::GetCommit())
-            : String(BuildInfo::GetCommit());
+        const FString Commit = BuildInfo::IsWorkingTreeDirty()
+            ? FString::Printf("%s (dirty)", BuildInfo::GetCommit())
+            : FString(BuildInfo::GetCommit());
 
         Source->AddRow("Branch", CreateValueText(BuildInfo::GetBranch()));
         Source->AddRow("Commit", CreateValueText(Commit));
@@ -87,8 +87,8 @@ void FEditorAboutPanel::BuildSections(const TSharedPtr<FVerticalBox>& Column)
 
     if (TSharedPtr<FPropertyTable> Build = AddSection(Column, "Build"))
     {
-        Build->AddRow("Configuration", CreateValueText(String::Printf("%s (%s)", BuildInfo::GetConfigurationName(), BuildInfo::GetLinkageName())));
-        Build->AddRow("Platform", CreateValueText(String::Printf("%s %s", BuildInfo::GetPlatformName(), BuildInfo::GetArchitectureName())));
+        Build->AddRow("Configuration", CreateValueText(FString::Printf("%s (%s)", BuildInfo::GetConfigurationName(), BuildInfo::GetLinkageName())));
+        Build->AddRow("Platform", CreateValueText(FString::Printf("%s %s", BuildInfo::GetPlatformName(), BuildInfo::GetArchitectureName())));
         Build->AddRow("Compiler", CreateValueText(BuildInfo::GetCompilerName()));
         Build->AddRow("Compiled", CreateValueText(BuildInfo::GetCompileTimestamp()));
     }
@@ -97,10 +97,10 @@ void FEditorAboutPanel::BuildSections(const TSharedPtr<FVerticalBox>& Column)
     {
         if (RHI::Device)
         {
-            const String AdapterName = RHI::Device->GetAdapterName();
+            const FString AdapterName = RHI::Device->GetAdapterName();
 
             Graphics->AddRow("Backend", CreateValueText(ToString(RHI::Device->GetRHIType())));
-            Graphics->AddRow("Adapter", CreateValueText(AdapterName.IsEmpty() ? String("Unknown") : AdapterName));
+            Graphics->AddRow("Adapter", CreateValueText(AdapterName.IsEmpty() ? FString("Unknown") : AdapterName));
         }
         else
         {
@@ -120,7 +120,7 @@ void FEditorAboutPanel::Tick(float /*DeltaTime*/)
 {
 }
 
-TSharedPtr<FVisualElement> FEditorAboutPanel::CreateValueText(const String& Text)
+TSharedPtr<FVisualElement> FEditorAboutPanel::CreateValueText(const FString& Text)
 {
     FTextBlock::FDesc Desc;
     Desc.Text     = Text;
@@ -139,11 +139,11 @@ void FEditorAboutPanel::CopyRow(const TSharedPtr<FPropertyTable>& FromTable, int
 
     const FPropertyRow& Row = FromTable->GetRow(RowIndex);
 
-    String Value;
+    FString Value;
     if (const TSharedPtr<FTextBlock> ValueText = StaticCastSharedPtr<FTextBlock>(Row.Editor))
     {
         Value = ValueText->GetText();
     }
 
-    FPlatformSystemClipboard::SetText(String::Printf("%s: %s", *Row.Label, *Value));
+    FPlatformSystemClipboard::SetText(FString::Printf("%s: %s", *Row.Label, *Value));
 }

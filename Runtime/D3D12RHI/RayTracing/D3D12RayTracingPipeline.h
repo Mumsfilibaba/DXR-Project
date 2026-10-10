@@ -15,7 +15,7 @@ struct FD3D12RayTracingShaderIdentifier
 
 struct FD3D12RootSignatureAssociation
 {
-    FD3D12RootSignatureAssociation(ID3D12RootSignature* InRootSignature, const TArray<WString>& InShaderExportNames)
+    FD3D12RootSignatureAssociation(ID3D12RootSignature* InRootSignature, const TArray<FWideString>& InShaderExportNames)
         : ExportAssociation()
         , RootSignature(InRootSignature)
         , ShaderExportNames(InShaderExportNames)
@@ -28,14 +28,14 @@ struct FD3D12RootSignatureAssociation
     }
 
     ID3D12RootSignature*                   RootSignature;
-    TArray<WString>                        ShaderExportNames;
+    TArray<FWideString>                    ShaderExportNames;
     TArray<LPCWSTR>                        ShaderExportNamesRef;
     D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION ExportAssociation;
 };
 
 struct FD3D12HitGroup
 {
-    FD3D12HitGroup(const WString& InHitGroupName, ERayTracingHitGroupType InHitGroupType, const WString& InClosestHit, const WString& InAnyHit, const WString& InIntersection)
+    FD3D12HitGroup(const FWideString& InHitGroupName, ERayTracingHitGroupType InHitGroupType, const FWideString& InClosestHit, const FWideString& InAnyHit, const FWideString& InIntersection)
         : Desc()
         , HitGroupName(InHitGroupName)
         , ClosestHit(InClosestHit)
@@ -67,15 +67,15 @@ struct FD3D12HitGroup
     }
 
     D3D12_HIT_GROUP_DESC Desc;
-    WString              HitGroupName;
-    WString              ClosestHit;
-    WString              AnyHit;
-    WString              Intersection;
+    FWideString          HitGroupName;
+    FWideString          ClosestHit;
+    FWideString          AnyHit;
+    FWideString          Intersection;
 };
 
 struct FD3D12Library
 {
-    FD3D12Library(D3D12_SHADER_BYTECODE ByteCode, const TArray<WString>& InExportNames)
+    FD3D12Library(D3D12_SHADER_BYTECODE ByteCode, const TArray<FWideString>& InExportNames)
         : ExportNames(InExportNames)
         , ExportDescs(InExportNames.Size())
         , Desc()
@@ -93,7 +93,7 @@ struct FD3D12Library
         Desc.NumExports  = ExportDescs.Size();
     }
 
-    TArray<WString>           ExportNames;
+    TArray<FWideString>       ExportNames;
     TArray<D3D12_EXPORT_DESC> ExportDescs;
     D3D12_DXIL_LIBRARY_DESC   Desc;
 };
@@ -106,17 +106,17 @@ public:
 
     void Generate();
 
-    void AddLibrary(D3D12_SHADER_BYTECODE ByteCode, const TArray<WString>& ExportNames)
+    void AddLibrary(D3D12_SHADER_BYTECODE ByteCode, const TArray<FWideString>& ExportNames)
     {
         Libraries.Emplace(ByteCode, ExportNames);
     }
 
-    void AddHitGroup(const WString& HitGroupName, ERayTracingHitGroupType HitGroupType, const WString& ClosestHit, const WString& AnyHit, const WString& Intersection)
+    void AddHitGroup(const FWideString& HitGroupName, ERayTracingHitGroupType HitGroupType, const FWideString& ClosestHit, const FWideString& AnyHit, const FWideString& Intersection)
     {
         HitGroups.Emplace(HitGroupName, HitGroupType, ClosestHit, AnyHit, Intersection);
     }
 
-    void AddRootSignatureAssociation(ID3D12RootSignature* RootSignature, const TArray<WString>& ShaderExportNames)
+    void AddRootSignatureAssociation(ID3D12RootSignature* RootSignature, const TArray<FWideString>& ShaderExportNames)
     {
         RootSignatureAssociations.Emplace(RootSignature, ShaderExportNames);
     }
@@ -133,7 +133,7 @@ public:
     D3D12_RAYTRACING_PIPELINE_CONFIG       PipelineConfig;
     D3D12_RAYTRACING_SHADER_CONFIG         ShaderConfig;
     D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION ShaderConfigAssociation;
-    TArray<WString>                        PayLoadExportNames;
+    TArray<FWideString>                    PayLoadExportNames;
     TArray<LPCWSTR>                        PayLoadExportNamesRef;
     ID3D12RootSignature*                   GlobalRootSignature;
     TArray<D3D12_STATE_SUBOBJECT>          SubObjects;
@@ -152,14 +152,14 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     // FRHIRayTracingPipelineState Interface
-    virtual void GetExportName(ERayTracingShaderRecordKind Kind, uint32 RecordIndex, String& OutExportName) const override final;
+    virtual void GetExportName(ERayTracingShaderRecordKind Kind, uint32 RecordIndex, FString& OutExportName) const override final;
     virtual uint32 GetNumExportNames(ERayTracingShaderRecordKind Kind) const override final;
 
-    void* GetShaderIdentifier(const String& ExportName);
+    void* GetShaderIdentifier(const FString& ExportName);
 
     FORCEINLINE ID3D12StateObject* GetD3D12StateObject() const
     {
@@ -171,7 +171,7 @@ public:
         return StateObjectProperties.Get();
     }
 
-    FORCEINLINE FD3D12RootSignature* GetLocalRootSignature(const String& ExportName) const
+    FORCEINLINE FD3D12RootSignature* GetLocalRootSignature(const FString& ExportName) const
     {
         if (const FD3D12RootSignatureRef* Found = LocalRootSignatures.Find(ExportName))
         {
@@ -187,21 +187,21 @@ public:
     }
 
 private:
-    TArray<String>& GetExportNameArray(ERayTracingShaderRecordKind Kind)
+    TArray<FString>& GetExportNameArray(ERayTracingShaderRecordKind Kind)
     {
         return ExportNames[uint32(Kind)];
     }
 
-    const TArray<String>& GetExportNameArray(ERayTracingShaderRecordKind Kind) const
+    const TArray<FString>& GetExportNameArray(ERayTracingShaderRecordKind Kind) const
     {
         return ExportNames[uint32(Kind)];
     }
 
-    TArray<String>                                 ExportNames[4];
-    String                                         DebugName;
-    TComPtr<ID3D12StateObject>                     StateObject;
-    TComPtr<ID3D12StateObjectProperties>           StateObjectProperties;
-    FD3D12RootSignatureRef                         GlobalRootSignature;
-    TMap<String, FD3D12RootSignatureRef>           LocalRootSignatures;
-    TMap<String, FD3D12RayTracingShaderIdentifier> ShaderIdentifiers;
+    TArray<FString>                                 ExportNames[4];
+    FString                                         DebugName;
+    TComPtr<ID3D12StateObject>                      StateObject;
+    TComPtr<ID3D12StateObjectProperties>            StateObjectProperties;
+    FD3D12RootSignatureRef                          GlobalRootSignature;
+    TMap<FString, FD3D12RootSignatureRef>           LocalRootSignatures;
+    TMap<FString, FD3D12RayTracingShaderIdentifier> ShaderIdentifiers;
 };

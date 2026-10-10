@@ -27,11 +27,11 @@ protected:
     bool ReserveStorage(FMetalCommandContext& Context, MTLSizeAndAlign SizeAndAlign);
     bool EncodeBuild(FMetalCommandContext& Context, MTLAccelerationStructureDescriptor* Descriptor, bool bRefit);
 
-    void SetLabel(const String& InName);
+    void SetLabel(const FString& InName);
 
     virtual void OnStorageReplaced() { }
 
-    FORCEINLINE const String& GetLabel() const { return DebugName; }
+    FORCEINLINE const FString& GetLabel() const { return DebugName; }
 
 private:
     TUniquePtr<FMetalResourceStorage> AllocateStorage(FMetalCommandContext& Context, MTLSizeAndAlign SizeAndAlign);
@@ -41,7 +41,7 @@ private:
 
     TUniquePtr<FMetalResourceStorage> Storage;
     FMetalResidencyEntry*             PinnedEntry;
-    String                            DebugName;
+    FString                           DebugName;
     int64                             TrackedMemory;
 };
 
@@ -54,8 +54,8 @@ public:
     // FRHIGeometryAccelerationStructure Interface
     virtual void* GetRHINativeResource() const override final;
 
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     bool Build(FMetalCommandContext& Context, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc);
 
@@ -75,8 +75,8 @@ public:
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final;
     virtual FRHIDescriptorHandle    GetBindlessHandle()     const override final;
 
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     bool Build(FMetalCommandContext& Context, const FRHISceneAccelerationStructureBuildDesc& BuildDesc);
 

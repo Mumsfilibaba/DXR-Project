@@ -98,12 +98,12 @@ bool FD3D11Query::GetData(void* OutData, uint32 DataSize, EQueryResultMode Mode)
     return Result == S_OK;
 }
 
-void FD3D11Query::SetDebugName(const String& InName)
+void FD3D11Query::SetDebugName(const FString& InName)
 {
     D3D11SetDebugName(Query.Get(), InName);
 }
 
-void FD3D11Query::GetDebugName(String& OutDebugName) const
+void FD3D11Query::GetDebugName(FString& OutDebugName) const
 {
     D3D11GetDebugName(Query.Get(), OutDebugName);
 }
@@ -133,7 +133,7 @@ bool FD3D11QueryRHI::Initialize()
         return false;
     }
 
-    NewQuery->SetDebugName(String::Printf("%s Query", ToString(GetType())));
+    NewQuery->SetDebugName(FString::Printf("%s Query", ToString(GetType())));
     Query = NewQuery;
     return true;
 }

@@ -99,7 +99,7 @@ public:
          * @param InTitle The title to show.
          * @return This desc, so the setters can be chained.
          */
-        FORCEINLINE FDesc& SetTitle(const String& InTitle)
+        FORCEINLINE FDesc& SetTitle(const FString& InTitle)
         {
             Title = InTitle;
             return *this;
@@ -130,7 +130,7 @@ public:
         }
 
         /** @brief The caption text, drawn to the right of the icon. */
-        String Title;
+        FString Title;
 
         /** @brief The face the caption text is measured and drawn with. */
         TSharedPtr<IFontFace> Font;
@@ -170,7 +170,7 @@ public:
      *
      * @param InTitle The title to show.
      */
-    void SetTitle(const String& InTitle);
+    void SetTitle(const FString& InTitle);
 
     /**
      * @brief Lays the bar out again when the window's title bar metrics have changed since it was last laid out.
@@ -209,7 +209,7 @@ public:
     }
 
     /** @return The caption text. */
-    NODISCARD FORCEINLINE const String& GetTitle() const
+    NODISCARD FORCEINLINE const FString& GetTitle() const
     {
         return Title;
     }
@@ -251,7 +251,7 @@ private:
 
     FWindowTitleBarMetrics             Metrics;
     FWindowTitleBarRegions             Regions;
-    String                             Title;
+    FString                            Title;
     FUIBrush                           Icon;
     bool                               bShowCaptionButtons;
     TWeakPtr<FWindow>                  OwningWindow;

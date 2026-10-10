@@ -10,12 +10,12 @@
 #include "Engine/Assets/AssetImporters/FBXImporter.h"
 #include "Engine/Assets/AssetImporters/OBJImporter.h"
 
-bool FModelImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags, FModelData& OutModelData)
+bool FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags, FModelData& OutModelData)
 {
     FByteInputStream InputStream;
 
     {
-        const String Filename = String(InFilename);
+        const FString Filename = FString(InFilename);
         TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Filename);
         if (!FileHandle)
         {
@@ -135,14 +135,14 @@ bool FModelImporter::ImportFromFile(const StringView& InFilename, EMeshImportFla
     const ModelFormat::FTextureInfo* Textures = InputStream.PeekData<ModelFormat::FTextureInfo>(ModelHeader->TextureDataOffset);
     for (int32 TextureIdx = 0; TextureIdx < ModelHeader->NumTextures; ++TextureIdx)
     {
-        const StringView FilenameView = Textures[TextureIdx].Filepath;
+        const FStringView FilenameView = Textures[TextureIdx].Filepath;
         if (!FPlatformFile::IsFile(*FilenameView))
         {
             LOG_ERROR("[FModelImporter] Stored file contains a invalid file reference, file will be reloaded from source");
             return false;
         }
 
-        const String Filename = String(FilenameView);
+        const FString Filename = FString(FilenameView);
         LoadedTextures[TextureIdx] = FAssetManager::Get().LoadTexture(Filename);
         if (!LoadedTextures[TextureIdx])
         {
@@ -199,12 +199,12 @@ bool FModelImporter::ImportFromFile(const StringView& InFilename, EMeshImportFla
     return true;
 }
 
-bool FModelImporter::MatchExtenstion(const StringView& FileName)
+bool FModelImporter::MatchExtenstion(const FStringView& FileName)
 {
     return FileName.EndsWith(".dxrmesh", EStringCaseType::NoCase);
 }
 
-bool FModelSerializer::Serialize(const String& Filename, const FModelData& ModelData)
+bool FModelSerializer::Serialize(const FString& Filename, const FModelData& ModelData)
 {
     ModelFormat::FModelHeader ModelHeader;
     Memory::Memzero(&ModelHeader, sizeof(ModelFormat::FModelHeader));

@@ -55,8 +55,8 @@ public:
 
     bool WaitForValue(uint64 Value, uint64 TimeoutNs = UINT64_MAX);
 
-    void SetDebugName(const String& Name);
-    void GetDebugName(String& OutDebugName) const;
+    void SetDebugName(const FString& Name);
+    void GetDebugName(FString& OutDebugName) const;
 
     uint64 GetLastSignaledValue() const
     {
@@ -79,7 +79,7 @@ private:
     uint64         CurrentValue;
     AtomicUInt64   LastSignaledValue;
 #if VULKAN_STORE_DEBUG_NAMES
-    String         DebugName;
+    FString         DebugName;
 #endif
 };
 
@@ -95,8 +95,8 @@ public:
     virtual bool IsSignaled()                        const override final;
     virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const override final;
     
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     bool Initialize();
     void EnqueueSignal(FVulkanCommands& InCommands);
@@ -117,6 +117,6 @@ private:
     uint64      TargetValue;
     AtomicBool  bHasPendingSignal;
 #if VULKAN_STORE_DEBUG_NAMES
-    String      DebugName;
+    FString      DebugName;
 #endif
 };

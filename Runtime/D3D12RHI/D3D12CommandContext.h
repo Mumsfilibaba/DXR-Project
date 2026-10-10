@@ -127,7 +127,7 @@ public:
     virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) override final;
     virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace) override final;
     virtual void SetSwapChainHDRMetadata(FRHISwapChain* SwapChain, const FRHIHDRMetadata& Metadata) override final;
-    virtual void PushEvent(const StringView& Name) override final;
+    virtual void PushEvent(const FStringView& Name) override final;
     virtual void PopEvent() override final;
 
     virtual void ClearState() override final;
@@ -259,7 +259,7 @@ private:
     TArray<FD3D12QueryRHI*>                    PendingQueries;
     TArray<FD3D12DeferredObject>               DeferredObjects;
     FD3D12Queue&                               Queue;
-    TArray<String>                             EventStack;
+    TArray<FString>                            EventStack;
     uint64                                     LastUsedFrame;
     int32                                      ActiveQueryCount;
 #if D3D12_VALIDATE_CONTEXT_THREAD_OWNERSHIP

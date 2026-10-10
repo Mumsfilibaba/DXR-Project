@@ -16,7 +16,7 @@ public:
      * @param PixelHeight The height to rasterize at, in pixels.
      * @return The face, or null when the file could not be read or packed.
      */
-    static TSharedPtr<FTrueTypeFontFace> CreateFromFile(const String& Filename, int32 PixelHeight);
+    static TSharedPtr<FTrueTypeFontFace> CreateFromFile(const FString& Filename, int32 PixelHeight);
 
 public:
     FTrueTypeFontFace();
@@ -28,7 +28,7 @@ public:
     virtual int32 GetAscent() const override final;
     virtual int32 GetDescent() const override final;
     virtual int32 GetCapHeight() const override final;
-    virtual const FShapedRun& ShapeText(const StringView& Text) const override final;
+    virtual const FShapedRun& ShapeText(const FStringView& Text) const override final;
 
 private:
     static constexpr int32 ShapedRunCacheWays     = 4;
@@ -44,12 +44,12 @@ private:
         {
         }
 
-        String     Text;
+        FString    Text;
         FShapedRun Run;
         uint64     Revision;
     };
 
-    void ShapeRun(const StringView& Text, FShapedRun& OutRun) const;
+    void ShapeRun(const FStringView& Text, FShapedRun& OutRun) const;
 
     FFontAtlas                                           Atlas;
     mutable TStaticArray<FCachedRun, ShapedRunCacheSize> ShapedRuns;

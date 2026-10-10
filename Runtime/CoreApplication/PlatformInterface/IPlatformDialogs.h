@@ -7,21 +7,21 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 struct FFileDialogFilter
 {
     /** @brief Shown to the user, e.g. "Scenes" */
-    String Description;
+    FString Description;
 
     /** @brief Extensions without dots separated by ';', e.g. "png;jpg;tga". "*" matches every file. */
-    String Extensions;
+    FString Extensions;
 };
 
 struct FFileDialogDesc
 {
-    String Title;
+    FString Title;
 
     /** @brief The directory the dialog starts in, or empty to let the platform choose */
-    String DefaultDirectory;
+    FString DefaultDirectory;
 
     /** @brief The name a save dialog starts with */
-    String DefaultFilename;
+    FString DefaultFilename;
 
     /** @brief The first filter is selected when the dialog opens, and its first extension is added to a save name without one */
     TArray<FFileDialogFilter> Filters;
@@ -35,17 +35,17 @@ struct FFileDialogDesc
 
 struct IPlatformDialogs
 {
-    static FORCEINLINE bool OpenFile(const FFileDialogDesc& Desc, TArray<String>& OutFilenames)
+    static FORCEINLINE bool OpenFile(const FFileDialogDesc& Desc, TArray<FString>& OutFilenames)
     {
         return false;
     }
 
-    static FORCEINLINE bool SaveFile(const FFileDialogDesc& Desc, String& OutFilename)
+    static FORCEINLINE bool SaveFile(const FFileDialogDesc& Desc, FString& OutFilename)
     {
         return false;
     }
 
-    static FORCEINLINE bool PickFolder(const FFileDialogDesc& Desc, String& OutDirectory)
+    static FORCEINLINE bool PickFolder(const FFileDialogDesc& Desc, FString& OutDirectory)
     {
         return false;
     }

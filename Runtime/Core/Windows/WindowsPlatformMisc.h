@@ -71,7 +71,7 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
     #endif
     }
 
-    static FORCEINLINE bool GetEnvironmentVariable(const CHAR_T* Name, String& OutValue)
+    static FORCEINLINE bool GetEnvironmentVariable(const CHAR_T* Name, FString& OutValue)
     {
         OutValue.Clear();
 
@@ -87,7 +87,7 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
         {
             const DWORD Length = RequiredSize - 1;
 
-            WString WideValue;
+            FWideString WideValue;
             WideValue.Resize(static_cast<int32>(Length));
 
             const DWORD Copied = ::GetEnvironmentVariableW(WideName.Get(), WideValue.Data(), RequiredSize);
@@ -123,7 +123,7 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
 
     NODISCARD static CORE_API FGuid CreateGuid();
 
-    static FORCEINLINE int32 GetLastErrorString(String& OutErrorString)
+    static FORCEINLINE int32 GetLastErrorString(FString& OutErrorString)
     {
         const int32 LastError = ::GetLastError();
         const int32 Flags     = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;

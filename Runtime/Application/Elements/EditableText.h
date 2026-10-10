@@ -5,8 +5,8 @@
 #include "Application/Text/IFontFace.h"
 #include "Application/Elements/VisualElement.h"
 
-DECLARE_DELEGATE(FOnTextChangedDelegate, const String& /*NewText*/);
-DECLARE_DELEGATE(FOnTextCommittedDelegate, const String& /*Text*/);
+DECLARE_DELEGATE(FOnTextChangedDelegate, const FString& /*NewText*/);
+DECLARE_DELEGATE(FOnTextCommittedDelegate, const FString& /*Text*/);
 
 enum class EKeyInterceptResult : uint8
 {
@@ -24,8 +24,8 @@ class APPLICATION_API FEditableText final : public FVisualElement
 public:
     struct FDesc
     {
-        String                Text;
-        String                HintText;
+        FString               Text;
+        FString               HintText;
         TSharedPtr<IFontFace> Font = nullptr;
         FFloatColor           ForegroundColor = FFloatColor::White;
         FFloatColor           HintColor = FFloatColor(0.5f, 0.5f, 0.5f, 1.0f);
@@ -75,10 +75,10 @@ public:
     virtual bool WantsTextInput() const override;
 
     /** @brief Replaces the text, clamps the text cursor and fires OnTextChanged. */
-    void SetText(const String& InText);
+    void SetText(const FString& InText);
 
     /** @brief Replaces the text and puts the text cursor at the end without firing OnTextChanged. */
-    void SetTextSilently(const String& InText);
+    void SetTextSilently(const FString& InText);
 
     /** @brief Empties the text and fires OnTextChanged. */
     void ClearText();
@@ -95,7 +95,7 @@ public:
      *
      * @param InText The text to insert.
      */
-    void InsertText(const StringView& InText);
+    void InsertText(const FStringView& InText);
 
     /**
      * @brief Replaces [Position, Position + Count) with InText and leaves the text cursor after it.
@@ -104,7 +104,7 @@ public:
      * @param Count    The length of the range to replace.
      * @param InText   The replacement text.
      */
-    void ReplaceRange(int32 Position, int32 Count, const StringView& InText);
+    void ReplaceRange(int32 Position, int32 Count, const FStringView& InText);
 
     /**
      * @brief Removes the character before the text cursor and drops any selection.
@@ -201,7 +201,7 @@ public:
     NODISCARD int32 GetSelectionEnd() const;
 
     /** @return The text inside the selection, or an empty string when nothing is selected. */
-    NODISCARD String GetSelectedText() const;
+    NODISCARD FString GetSelectedText() const;
 
     /** @brief Selects the whole text and leaves the text cursor at the end. */
     void SelectAll();
@@ -251,7 +251,7 @@ public:
     NODISCARD bool IsTextCursorVisibleAt(double ElapsedSeconds) const;
 
     /** @return The text currently being edited. */
-    NODISCARD FORCEINLINE const String& GetText() const
+    NODISCARD FORCEINLINE const FString& GetText() const
     {
         return Text;
     }
@@ -312,8 +312,8 @@ private:
     void MoveTextCursor(int32 NewTextCursorPosition, bool bExtendSelection);
     void ResetTextCursorBlink();
 
-    String                         Text;
-    String                         HintText;
+    FString                        Text;
+    FString                        HintText;
     TSharedPtr<IFontFace>          Font;
     FFloatColor                    ForegroundColor;
     FFloatColor                    HintColor;

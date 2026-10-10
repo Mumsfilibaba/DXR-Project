@@ -34,7 +34,7 @@ public:
          * @param InLabel The label to show.
          * @return This desc, so the setters can be chained.
          */
-        FORCEINLINE FDesc& SetLabel(const String& InLabel)
+        FORCEINLINE FDesc& SetLabel(const FString& InLabel)
         {
             Label = InLabel;
             return *this;
@@ -53,10 +53,10 @@ public:
         }
 
         /** @brief The text the row is named by. */
-        String Label;
+        FString Label;
 
         /** @brief Right-aligned accelerator hint, drawn upper case and not bound. */
-        String ShortcutText;
+        FString ShortcutText;
 
         /** @brief Drawn in the gutter, and only while no check mark is taking it. */
         FUIBrush Icon;
@@ -172,7 +172,7 @@ public:
     }
 
     /** @return The text the row is named by. */
-    NODISCARD FORCEINLINE const String& GetLabel() const
+    NODISCARD FORCEINLINE const FString& GetLabel() const
     {
         return Label;
     }
@@ -195,8 +195,8 @@ protected:
     virtual void OnClicked() override;
 
 private:
-    String                     Label;
-    String                     ShortcutText;
+    FString                    Label;
+    FString                    ShortcutText;
     FUIBrush                   Icon;
     TSharedPtr<IFontFace>      Font;
     FUIMenuStyle               Style;
@@ -255,7 +255,7 @@ public:
      * @param Font  The face the caption is measured and drawn with.
      * @return The new header.
      */
-    NODISCARD static TSharedPtr<FMenuSectionHeader> Create(const String& Label, const TSharedPtr<IFontFace>& Font);
+    NODISCARD static TSharedPtr<FMenuSectionHeader> Create(const FString& Label, const TSharedPtr<IFontFace>& Font);
 
 public:
     FMenuSectionHeader();
@@ -267,7 +267,7 @@ public:
      * @param InLabel The caption, which is folded to upper case here rather than on every draw.
      * @param InFont  The face the caption is measured and drawn with.
      */
-    void Initialize(const String& InLabel, const TSharedPtr<IFontFace>& InFont);
+    void Initialize(const FString& InLabel, const TSharedPtr<IFontFace>& InFont);
 
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
@@ -281,13 +281,13 @@ public:
     void SetStyle(const FUIMenuStyle& InStyle);
 
     /** @return The caption as it is drawn, which is upper case whatever the header was given. */
-    NODISCARD FORCEINLINE const String& GetLabel() const
+    NODISCARD FORCEINLINE const FString& GetLabel() const
     {
         return Label;
     }
 
 private:
-    String                Label;
+    FString               Label;
     TSharedPtr<IFontFace> Font;
     FUIMenuStyle          Style;
 };

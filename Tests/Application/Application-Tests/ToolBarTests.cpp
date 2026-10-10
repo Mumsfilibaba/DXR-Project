@@ -46,10 +46,10 @@ static FUIBrush MakeIcon()
 }
 
 /** @brief A menu of plainly labelled rows, which is all a dropdown needs to have something to open. */
-static TSharedPtr<FMenu> CreateMenu(const TSharedPtr<IFontFace>& Font, const TArray<String>& Labels)
+static TSharedPtr<FMenu> CreateMenu(const TSharedPtr<IFontFace>& Font, const TArray<FString>& Labels)
 {
     TSharedPtr<FMenu> Menu = FMenu::Create();
-    for (const String& Label : Labels)
+    for (const FString& Label : Labels)
     {
         FMenuItem::FDesc Desc;
         Desc.SetLabel(Label).SetFont(Font);
@@ -147,7 +147,7 @@ bool ToolBarComposition_Test()
     TEST_EXPECT(ToolBar->GetButton(2) == nullptr);
     TEST_EXPECT_EQ(ToolBar->GetButton(0), Save);
     TEST_EXPECT_EQ(ToolBar->GetItems()[4].Element, StaticCastSharedPtr<FVisualElement>(View));
-    TEST_EXPECT_EQ(ToolBar->GetButton(4)->GetLabel(), String("View"));
+    TEST_EXPECT_EQ(ToolBar->GetButton(4)->GetLabel(), FString("View"));
 
     TEST_SECTION("Entries can be found by the label they show");
     TEST_EXPECT_EQ(ToolBar->FindButton("Grid"), Grid);
@@ -172,7 +172,7 @@ bool ToolBarComposition_Test()
     const FUIStyleMetrics& Metrics = FUIStyle::GetDefault().Metrics;
     const int32 LabelFloor = Metrics.ResolveButtonMinWidth(Font.Get(), Fit->GetPadding());
 
-    TEST_EXPECT_EQ(LabelFloor, Font->MeasureWidth(StringView(Metrics.ButtonMinLabel)) + Fit->GetPadding().GetTotalHorizontal());
+    TEST_EXPECT_EQ(LabelFloor, Font->MeasureWidth(FStringView(Metrics.ButtonMinLabel)) + Fit->GetPadding().GetTotalHorizontal());
     TEST_EXPECT_EQ(Fit->GetCachedDesiredSize().X, LabelFloor);
     TEST_EXPECT_EQ(Save->GetCachedDesiredSize().X, LabelFloor);
     TEST_EXPECT_EQ(Icon->GetCachedDesiredSize().X, 28);
@@ -429,7 +429,7 @@ bool ToolBarGroups_Test()
     int32 MoveLabelLeft = -1;
     for (const FDrawCommand& Command : CommandList.GetCommands())
     {
-        if (Command.Type == EDrawCommandType::Text && CommandList.GetCommandText(Command) == StringView("Move"))
+        if (Command.Type == EDrawCommandType::Text && CommandList.GetCommandText(Command) == FStringView("Move"))
         {
             MoveLabelLeft = Command.Bounds.Position.X;
         }

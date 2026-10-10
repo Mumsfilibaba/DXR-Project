@@ -60,7 +60,7 @@ void FSearchBox::Initialize(const FDesc& Desc)
     Editor->SetParentElement(AsWeakPtr());
 
     Editor->SetActivationPolicy(EElementActivationPolicy::DoNotAutoFocusOnWindowActivate);
-    Editor->GetOnTextChanged().BindLambda([this](const String& InText)
+    Editor->GetOnTextChanged().BindLambda([this](const FString& InText)
     {
         HandleTextChanged(InText);
     });
@@ -231,7 +231,7 @@ bool FSearchBox::GetCursor(ECursor& OutCursor) const
     return true;
 }
 
-void FSearchBox::SetText(const String& InText)
+void FSearchBox::SetText(const FString& InText)
 {
     if (Editor)
     {
@@ -239,7 +239,7 @@ void FSearchBox::SetText(const String& InText)
     }
 }
 
-const String& FSearchBox::GetText() const
+const FString& FSearchBox::GetText() const
 {
     CHECK(Editor != nullptr);
     return Editor->GetText();
@@ -281,7 +281,7 @@ FRectangle FSearchBox::GetClearButtonRectangle(const FRectangle& Bounds) const
     return FRectangle(IntVector2(Inner.GetRight() - Side, Inner.Position.Y + ((Inner.Height - Side) / 2)), Side, Side);
 }
 
-void FSearchBox::HandleTextChanged(const String& InText)
+void FSearchBox::HandleTextChanged(const FString& InText)
 {
     OnTextChangedDelegate.ExecuteIfBound(InText);
 }

@@ -57,9 +57,9 @@ static void EnableAvailableFeaturesHelper(FeatureStructType& OutEnabled, const F
     }
 }
 
-static String GetQueuePropertiesAsString(const VkQueueFamilyProperties& Properties)
+static FString GetQueuePropertiesAsString(const VkQueueFamilyProperties& Properties)
 {
-    String PropertyString = "QueueCount=" + TTypeToString<int32>::ToString(Properties.queueCount) + ", QueueBits=(";
+    FString PropertyString = "QueueCount=" + TTypeToString<int32>::ToString(Properties.queueCount) + ", QueueBits=(";
     if (Properties.queueFlags & VK_QUEUE_GRAPHICS_BIT)
     {
         PropertyString += "GRAPHICS | ";
@@ -156,7 +156,7 @@ static VkSampleCountFlagBits GetNullImageSampleCount(FVulkanDevice& Device)
     return VK_SAMPLE_COUNT_1_BIT;
 }
 
-static bool CreateNullImage(FVulkanDevice& Device, const VkImageCreateInfo& ImageCreateInfo, const String& DebugName, FVulkanNullImage& OutImage)
+static bool CreateNullImage(FVulkanDevice& Device, const VkImageCreateInfo& ImageCreateInfo, const FString& DebugName, FVulkanNullImage& OutImage)
 {
     VkResult Result = vkCreateImage(Device.GetVkDevice(), &ImageCreateInfo, nullptr, &OutImage.Image);
     if (VULKAN_FAILED(Result))
@@ -243,7 +243,7 @@ static bool CreateNullImages(FVulkanDevice& Device, VkImageUsageFlags Usage, con
         ImageCreateInfo.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
         ImageCreateInfo.arrayLayers           = ImageDesc.ArrayLayers;
 
-        const String DebugName = String::Printf("%s%s", DebugPrefix, ImageDesc.DebugName);
+        const FString DebugName = FString::Printf("%s%s", DebugPrefix, ImageDesc.DebugName);
         if (!CreateNullImage(Device, ImageCreateInfo, DebugName, OutImages[static_cast<uint32>(ImageDesc.ImageType)]))
         {
             return false;
@@ -304,7 +304,7 @@ static bool CreateNullImages(FVulkanDevice& Device, VkImageUsageFlags Usage, con
         ImageViewCreateInfo.viewType                    = GetVkImageViewType(ViewDesc.ViewType);
         ImageViewCreateInfo.subresourceRange.layerCount = ViewDesc.LayerCount;
 
-        const String DebugName = String::Printf("%s%s", DebugPrefix, ViewDesc.DebugName);
+        const FString DebugName = FString::Printf("%s%s", DebugPrefix, ViewDesc.DebugName);
 
         VkResult Result = vkCreateImageView(Device.GetVkDevice(), &ImageViewCreateInfo, nullptr, &OutViews[ViewIndex]);
         if (VULKAN_FAILED(Result))
@@ -680,7 +680,7 @@ TOptional<FVulkanQueueFamilyIndices> FVulkanPhysicalDevice::GetQueueFamilyIndice
         uint32 Index = 0;
         for (const VkQueueFamilyProperties& Properties : QueueFamilies)
         {
-            const String PropertyString = GetQueuePropertiesAsString(Properties);
+            const FString PropertyString = GetQueuePropertiesAsString(Properties);
             VULKAN_INFO("Queue[%d]: %s", Index, *PropertyString);
             Index++;
         }
@@ -1288,7 +1288,7 @@ bool FVulkanDevice::FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreate
     }
     else
     {
-        const String DebugName = String::Printf("Sampler %d", SamplerMap.Size());
+        const FString DebugName = FString::Printf("Sampler %d", SamplerMap.Size());
         VulkanSetObjectName(GetVkDevice(), DebugName.Data(), OutSampler, VK_OBJECT_TYPE_SAMPLER);
     }
 
@@ -1710,7 +1710,7 @@ FVulkanComputePipelineStateRHI* FVulkanBufferClearPipelines::GetOrCreatePipeline
 
     TArray<uint8>              ShaderCode;
     FShaderCodeView            CodeView;
-    String                     ReadError;
+    FString                    ReadError;
     FVulkanComputeShaderRHIRef ClearShader = new FVulkanComputeShaderRHI(&Device);
     if (!FShaderCodeReader::ReadEmbedded(EmbeddedCode, ShaderCode, CodeView, &ReadError) || !ClearShader->Initialize(CodeView))
     {

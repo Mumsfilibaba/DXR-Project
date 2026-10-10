@@ -293,7 +293,7 @@ private:
     float                    DragStartLengthV;
     float                    ScreenFactor;
     uint16                   StateBits;
-    String                   Readout;
+    FString                  Readout;
     FOnGizmoTransformChanged OnTransformChangedDelegate;
     FOnGizmoDragStarted      OnDragStartedDelegate;
     FOnGizmoDragFinished     OnDragFinishedDelegate;

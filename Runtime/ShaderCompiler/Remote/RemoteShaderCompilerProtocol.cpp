@@ -10,7 +10,7 @@ static bool IsKnownMessageType(uint32 Type)
 
 void RemoteShaderCompilerProtocol::EncodeFrame(const FFrame& Frame, TArray<uint8>& OutBytes)
 {
-    const String HeaderText = Frame.Header.IsNull() ? String() : Json::ToString(Frame.Header, EJsonWriteFlags::Compact);
+    const FString HeaderText = Frame.Header.IsNull() ? FString() : Json::ToString(Frame.Header, EJsonWriteFlags::Compact);
 
     FFrameHeader FrameHeader;
     FrameHeader.Type        = Frame.Type;
@@ -68,7 +68,7 @@ bool RemoteShaderCompilerProtocol::TryDecodeFrame(TArray<uint8>& InOutBuffer, FF
     const CHAR_T* HeaderText = reinterpret_cast<const CHAR_T*>(InOutBuffer.Data() + FrameHeaderSize);
     if (FrameHeader.HeaderSize > 0)
     {
-        if (!Json::Parse(StringView(HeaderText, static_cast<int32>(FrameHeader.HeaderSize)), Frame.Header) || !Frame.Header.IsObject())
+        if (!Json::Parse(FStringView(HeaderText, static_cast<int32>(FrameHeader.HeaderSize)), Frame.Header) || !Frame.Header.IsObject())
         {
             return false;
         }
@@ -90,7 +90,7 @@ bool RemoteShaderCompilerProtocol::TryDecodeFrame(TArray<uint8>& InOutBuffer, FF
     return true;
 }
 
-bool RemoteShaderCompilerProtocol::IsValidSourcePath(const String& Path)
+bool RemoteShaderCompilerProtocol::IsValidSourcePath(const FString& Path)
 {
     if (Path.IsEmpty() || Path.Contains('\\') || Path.Contains(':') || Path[0] == '/')
     {
@@ -122,9 +122,9 @@ bool RemoteShaderCompilerProtocol::IsValidSourcePath(const String& Path)
     return true;
 }
 
-String RemoteShaderCompilerProtocol::CollapsePath(const String& Path)
+FString RemoteShaderCompilerProtocol::CollapsePath(const FString& Path)
 {
-    TArray<String> Segments;
+    TArray<FString> Segments;
 
     int32 SegmentStart = 0;
     for (int32 Index = 0; Index <= Path.Length(); ++Index)
@@ -134,7 +134,7 @@ String RemoteShaderCompilerProtocol::CollapsePath(const String& Path)
             continue;
         }
 
-        const String Segment = Path.SubString(SegmentStart, Index - SegmentStart);
+        const FString Segment = Path.SubString(SegmentStart, Index - SegmentStart);
         SegmentStart = Index + 1;
 
         if (Segment == ".")
@@ -151,7 +151,7 @@ String RemoteShaderCompilerProtocol::CollapsePath(const String& Path)
         Segments.Add(Segment);
     }
 
-    String Result;
+    FString Result;
     for (int32 Index = 0; Index < Segments.Size(); ++Index)
     {
         if (Index > 0)

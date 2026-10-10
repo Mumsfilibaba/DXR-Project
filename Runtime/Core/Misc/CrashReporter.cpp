@@ -8,7 +8,7 @@ void CrashReporter::Report(const FCrashContext& Context)
     const CHAR_T* ExceptionName = Context.ExceptionName ? Context.ExceptionName : "Unknown";
     const CHAR_T* ThreadName    = (Context.ThreadName && Context.ThreadName[0]) ? Context.ThreadName : "Unnamed";
 
-    String Record = String::Printf("Fatal error: %s (code 0x%llX) on thread '%s'", ExceptionName, Context.ExceptionCode, ThreadName);
+    FString Record = FString::Printf("Fatal error: %s (code 0x%llX) on thread '%s'", ExceptionName, Context.ExceptionCode, ThreadName);
     Record.AppendPrintf("\n    Faulting address: 0x%016llX", Context.FaultAddress);
 
     const TArray<FStackTraceEntry> Stack = FPlatformStackTrace::GetThreadStack(Context.ThreadStack, MAX_STACK_DEPTH);

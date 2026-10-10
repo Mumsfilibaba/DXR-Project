@@ -29,7 +29,7 @@ namespace EditorNodeGraphPrivate
         float                        NodeWidth   = 180.0f;
         float                        TitleHeight = 24.0f;
         int32                        NodeId      = 0;
-        String                       Title;
+        FString                      Title;
         EditorNodeGraph::ENodeStyle  Style       = EditorNodeGraph::ENodeStyle::Normal;
         bool                         bActive     = false;
         TArray<FPendingPin>          PendingPins;

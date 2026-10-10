@@ -15,7 +15,7 @@ static TAutoConsoleVariable<bool> CVarEnableValidation(
     "Enables the custom RHI-validation",
     false);
 
-static TAutoConsoleVariable<String> CVarType(
+static TAutoConsoleVariable<FString> CVarType(
     "RHI.Type", 
     "Selects the RHI Layer to use",
     "Unknown");
@@ -27,7 +27,7 @@ static FRHIModule* LoadNullRHI()
 
 static ERHIType GetRHITypeFromConfig()
 {
-    const String RHITypeString = CVarType->GetString();
+    const FString RHITypeString = CVarType->GetString();
     if (RHITypeString.Equals("D3D12", EStringCaseType::NoCase))
     {
         return ERHIType::D3D12;

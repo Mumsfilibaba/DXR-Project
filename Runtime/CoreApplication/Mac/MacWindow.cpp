@@ -432,7 +432,7 @@ bool FMacWindow::IsChildWindow(const TSharedRef<IPlatformWindow>& ChildWindow) c
     return bIsChildWindow;
 }
 
-void FMacWindow::SetTitle(const String& InTitle)
+void FMacWindow::SetTitle(const FString& InTitle)
 {
     SCOPED_AUTORELEASE_POOL();
 
@@ -449,7 +449,7 @@ void FMacWindow::SetTitle(const String& InTitle)
     }, NSDefaultRunLoopMode, true);
 }
 
-void FMacWindow::GetTitle(String& OutTitle) const
+void FMacWindow::GetTitle(FString& OutTitle) const
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -462,7 +462,7 @@ void FMacWindow::GetTitle(String& OutTitle) const
         }
     }, NSDefaultRunLoopMode, true);
 
-    OutTitle = String(Title);
+    OutTitle = FString(Title);
 }
 
 void FMacWindow::SetWindowPos(int32 x, int32 y)

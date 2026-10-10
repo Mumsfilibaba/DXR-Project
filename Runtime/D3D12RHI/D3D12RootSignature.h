@@ -335,7 +335,7 @@ public:
         return ShaderStages[Stage].IsRootCBV(Register);
     }
 
-    FORCEINLINE void SetDebugName(const String& Name)
+    FORCEINLINE void SetDebugName(const FString& Name)
     {
         D3D12SetDebugName(RootSignature.Get(), Name);
     }

@@ -20,7 +20,7 @@ public:
     virtual void WaitForCompletion() override final;
     virtual void* GetPlatformHandle() override final;
 
-    virtual const String& GetName() const override final
+    virtual const FString& GetName() const override final
     {
         return Name;
     }
@@ -35,7 +35,7 @@ private:
 
     FMacPlatformThread(FRunnable* InRunnable, const CHAR_T* ThreadName);
 
-    String     Name;
+    FString    Name;
     FRunnable* Runnable;
     pthread_t  Thread;
     bool       bIsJoinable;

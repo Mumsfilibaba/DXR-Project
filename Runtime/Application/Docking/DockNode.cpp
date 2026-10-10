@@ -21,7 +21,7 @@ FDockNode& FDockNode::operator=(const FDockNode& Other) = default;
 
 FDockNode& FDockNode::operator=(FDockNode&& Other) = default;
 
-FDockNode FDockNode::CreateTabs(const TArray<String>& InTabIds)
+FDockNode FDockNode::CreateTabs(const TArray<FString>& InTabIds)
 {
     FDockNode Node;
     Node.Kind   = EDockNodeKind::Tabs;
@@ -84,11 +84,11 @@ bool FDockNode::IsEmpty() const
     return Kind == EDockNodeKind::Tabs ? TabIds.IsEmpty() : Children.IsEmpty();
 }
 
-void FDockNode::GatherPanelIds(TArray<String>& OutPanelIds) const
+void FDockNode::GatherPanelIds(TArray<FString>& OutPanelIds) const
 {
     if (Kind == EDockNodeKind::Tabs)
     {
-        for (const String& TabId : TabIds)
+        for (const FString& TabId : TabIds)
         {
             OutPanelIds.Add(TabId);
         }
@@ -102,12 +102,12 @@ void FDockNode::GatherPanelIds(TArray<String>& OutPanelIds) const
     }
 }
 
-FDockNode* FDockNode::FindTabsNode(const String& PanelId)
+FDockNode* FDockNode::FindTabsNode(const FString& PanelId)
 {
     return const_cast<FDockNode*>(static_cast<const FDockNode*>(this)->FindTabsNode(PanelId));
 }
 
-const FDockNode* FDockNode::FindTabsNode(const String& PanelId) const
+const FDockNode* FDockNode::FindTabsNode(const FString& PanelId) const
 {
     if (Kind == EDockNodeKind::Tabs)
     {

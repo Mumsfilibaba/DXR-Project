@@ -6,9 +6,9 @@
 
 #include "TestCommon/TestMacros.h"
 
-static String JoinTokens(const FShaderPreprocessorOutput& Output)
+static FString JoinTokens(const FShaderPreprocessorOutput& Output)
 {
-    String Result;
+    FString Result;
     for (const FShaderToken& Token : Output.Tokens)
     {
         if (!Result.IsEmpty())
@@ -30,21 +30,21 @@ static bool Preprocess(const CHAR_T* Source, FShaderPreprocessorOutput& OutOutpu
         Preprocessor.AddDefine(DefineName, DefineValue);
     }
 
-    return Preprocessor.Preprocess(String(), StringView(Source), OutOutput);
+    return Preprocessor.Preprocess(FString(), FStringView(Source), OutOutput);
 }
 
-static String PreprocessToText(const CHAR_T* Source, const CHAR_T* DefineName = nullptr, const CHAR_T* DefineValue = nullptr)
+static FString PreprocessToText(const CHAR_T* Source, const CHAR_T* DefineName = nullptr, const CHAR_T* DefineValue = nullptr)
 {
     FShaderPreprocessorOutput Output;
     if (!Preprocess(Source, Output, DefineName, DefineValue))
     {
-        return String("<failed> ") + Output.Errors;
+        return FString("<failed> ") + Output.Errors;
     }
 
     return JoinTokens(Output);
 }
 
-static String TranslateToText(const CHAR_T* Source, bool* bOutSucceeded = nullptr)
+static FString TranslateToText(const CHAR_T* Source, bool* bOutSucceeded = nullptr)
 {
     FShaderPreprocessorOutput Output;
     const bool bSucceeded = Preprocess(Source, Output) && FFXCShaderTranslator::Translate(Output);
@@ -126,14 +126,14 @@ bool ShaderPreprocessorIncludes_Test()
 {
     TEST_BEGIN();
 
-    const String FilePath = Paths::GetAssetDir() + "/Shaders/GenerateMipsTex2D.hlsl";
+    const FString FilePath = Paths::GetAssetDir() + "/Shaders/GenerateMipsTex2D.hlsl";
 
     FShaderPreprocessor Preprocessor(Paths::GetAssetDir() + "/Shaders");
     Preprocessor.AddDefine("SHADER_BACKEND_D3D12", "(1)");
     Preprocessor.AddDefine("SHADER_BACKEND", "SHADER_BACKEND_D3D12");
 
     FShaderPreprocessorOutput Output;
-    const bool bPreprocessed = Preprocessor.Preprocess(FilePath, StringView("#define CONFIG_CUBE_MAP 0\n#include \"GenerateMips.hlsli\""), Output);
+    const bool bPreprocessed = Preprocessor.Preprocess(FilePath, FStringView("#define CONFIG_CUBE_MAP 0\n#include \"GenerateMips.hlsli\""), Output);
 
     TEST_SECTION("Includes resolve next to the including file and in the shader directory");
     TEST_EXPECT(bPreprocessed);
@@ -141,7 +141,7 @@ bool ShaderPreprocessorIncludes_Test()
 
     bool bFoundGenerateMips = false;
     bool bFoundCoreDefines  = false;
-    for (const String& Dependency : Output.Dependencies)
+    for (const FString& Dependency : Output.Dependencies)
     {
         bFoundGenerateMips |= Dependency.EndsWith("Shaders/GenerateMips.hlsli");
         bFoundCoreDefines  |= Dependency.EndsWith("Shaders/CoreDefines.hlsli");
@@ -204,7 +204,7 @@ bool ShaderPreprocessorGenerateSource_Test()
     FShaderPreprocessorOutput Output;
     TEST_EXPECT(Preprocess("#define X 1\nfloat a = X;\n\n\nfloat b;\n#pragma warning(disable : 3078)\nfloat c;", Output));
 
-    const String Generated = Output.GenerateSource();
+    const FString Generated = Output.GenerateSource();
 
     TEST_SECTION("Every line keeps its line number");
     TEST_EXPECT(Generated.StartsWith("#line 2 \"ShaderSource\"\nfloat a = 1;\n\n\nfloat b;\n"));

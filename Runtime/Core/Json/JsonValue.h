@@ -33,8 +33,8 @@ public:
     explicit FJsonValue(float Value);
     explicit FJsonValue(double Value);
     explicit FJsonValue(const CHAR_T* Value);
-    explicit FJsonValue(const String& Value);
-    explicit FJsonValue(const StringView& Value);
+    explicit FJsonValue(const FString& Value);
+    explicit FJsonValue(const FStringView& Value);
 
     NODISCARD static FJsonValue MakeArray();
     NODISCARD static FJsonValue MakeObject();
@@ -56,13 +56,13 @@ public:
     NODISCARD bool TryGetBool(bool& OutValue) const;
     NODISCARD bool TryGetInt64(int64& OutValue) const;
     NODISCARD bool TryGetDouble(double& OutValue) const;
-    NODISCARD bool TryGetString(String& OutValue) const;
+    NODISCARD bool TryGetString(FString& OutValue) const;
 
     // Typed access with a fallback, for call sites that have a sensible default.
-    NODISCARD bool   GetBoolOr(bool bDefault) const;
-    NODISCARD int64  GetInt64Or(int64 Default) const;
-    NODISCARD double GetDoubleOr(double Default) const;
-    NODISCARD String GetStringOr(const CHAR_T* Default) const;
+    NODISCARD bool    GetBoolOr(bool bDefault) const;
+    NODISCARD int64   GetInt64Or(int64 Default) const;
+    NODISCARD double  GetDoubleOr(double Default) const;
+    NODISCARD FString GetStringOr(const CHAR_T* Default) const;
 
     NODISCARD FJsonValue*       Find(const CHAR_T* Name);
     NODISCARD const FJsonValue* Find(const CHAR_T* Name) const;
@@ -84,7 +84,7 @@ public:
     NODISCARD int32 Num() const;
     NODISCARD int32 NumMembers() const;
 
-    NODISCARD const String&     GetMemberName(int32 Index) const;
+    NODISCARD const FString&    GetMemberName(int32 Index) const;
     NODISCARD FJsonValue&       GetMemberValue(int32 Index);
     NODISCARD const FJsonValue& GetMemberValue(int32 Index) const;
 
@@ -105,7 +105,7 @@ private:
         double DoubleValue;
     };
 
-    String              StringValue;
+    FString             StringValue;
     TArray<FJsonValue>  ArrayValues;
     TArray<FJsonMember> Members;
 };
@@ -120,7 +120,7 @@ struct FJsonMember
     {
     }
 
-    String     Name;
+    FString    Name;
     FJsonValue Value;
 };
 

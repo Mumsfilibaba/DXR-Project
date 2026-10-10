@@ -14,16 +14,16 @@ static FShaderToken MakeToken(const FShaderToken& Location, const CHAR_T* Text, 
     return Token;
 }
 
-static bool TranslationError(FShaderPreprocessorOutput& Source, const FShaderToken& Location, const String& Message)
+static bool TranslationError(FShaderPreprocessorOutput& Source, const FShaderToken& Location, const FString& Message)
 {
     const bool bHasFile = Location.FileIndex >= 0 && Location.FileIndex < Source.Files.Size();
-    Source.Errors += String::Printf("%s(%d): error: %s\n", bHasFile ? *Source.Files[Location.FileIndex] : "ShaderSource", Location.Line, *Message);
+    Source.Errors += FString::Printf("%s(%d): error: %s\n", bHasFile ? *Source.Files[Location.FileIndex] : "ShaderSource", Location.Line, *Message);
     return false;
 }
 
 static bool IsHexFloat(const FShaderToken& Token)
 {
-    const String& Text = Token.Text;
+    const FString& Text = Token.Text;
     if (Token.Type != EShaderTokenType::Number || Text.Length() < 3 || Text[0] != '0' || (Text[1] != 'x' && Text[1] != 'X'))
     {
         return false;
@@ -60,7 +60,7 @@ static int32 GetHexDigit(CHAR_T Char)
     return -1;
 }
 
-static bool ConvertHexFloat(const String& Text, String& OutText)
+static bool ConvertHexFloat(const FString& Text, FString& OutText)
 {
     double Mantissa       = 0.0;
     int32  Exponent       = 0;
@@ -130,7 +130,7 @@ static bool ConvertHexFloat(const String& Text, String& OutText)
     }
 
     // Everything after the number is the suffix, f or h for example
-    const String Suffix = Text.SubString(Index, Text.Length() - Index);
+    const FString Suffix = Text.SubString(Index, Text.Length() - Index);
     for (int32 SuffixIndex = 0; SuffixIndex < Suffix.Length(); ++SuffixIndex)
     {
         const CHAR_T Char = Suffix[SuffixIndex];
@@ -152,7 +152,7 @@ static bool ConvertHexFloat(const String& Text, String& OutText)
     }
 
     // 17 significant digits round-trip any double, so the literal keeps its exact value
-    OutText = String::Printf("%.17g", Value);
+    OutText = FString::Printf("%.17g", Value);
     if (!OutText.Contains('.') && !OutText.Contains('e'))
     {
         OutText += ".0";
@@ -239,23 +239,23 @@ static bool TranslateConstantBuffer(FShaderPreprocessorOutput& Source, const TAr
     const FShaderToken& Name = Tokens[Index++];
     if (Index < Tokens.Size() && Tokens[Index].Is("["))
     {
-        return TranslationError(Source, Name, String::Printf("'%s' is an array of constant buffers, which Shader Model 5.0 does not have", *Name.Text));
+        return TranslationError(Source, Name, FString::Printf("'%s' is an array of constant buffers, which Shader Model 5.0 does not have", *Name.Text));
     }
 
     // : register ( bN [, spaceM] )
-    String Register;
+    FString Register;
     if (Index < Tokens.Size() && Tokens[Index].Is(":"))
     {
         const bool bHasRegister = Index + 3 < Tokens.Size() && Tokens[Index + 1].Is("register") && Tokens[Index + 2].Is("(");
         if (!bHasRegister)
         {
-            return TranslationError(Source, Name, String::Printf("Expected ': register(bN)' after '%s'", *Name.Text));
+            return TranslationError(Source, Name, FString::Printf("Expected ': register(bN)' after '%s'", *Name.Text));
         }
 
         Index += 3;
         Register = Tokens[Index++].Text;
 
-        String Space;
+        FString Space;
         if (Index < Tokens.Size() && Tokens[Index].Is(","))
         {
             ++Index;
@@ -267,14 +267,14 @@ static bool TranslateConstantBuffer(FShaderPreprocessorOutput& Source, const TAr
 
         if (Index >= Tokens.Size() || !Tokens[Index].Is(")"))
         {
-            return TranslationError(Source, Name, String::Printf("Expected ')' after the register of '%s'", *Name.Text));
+            return TranslationError(Source, Name, FString::Printf("Expected ')' after the register of '%s'", *Name.Text));
         }
 
         ++Index;
 
         if (!Register.StartsWith("b"))
         {
-            return TranslationError(Source, Name, String::Printf("'%s' uses register '%s', constant buffers use b registers", *Name.Text, *Register));
+            return TranslationError(Source, Name, FString::Printf("'%s' uses register '%s', constant buffers use b registers", *Name.Text, *Register));
         }
 
         // The shader constants have no slot of their own, so FXC picks one that the shader does not use
@@ -284,17 +284,17 @@ static bool TranslateConstantBuffer(FShaderPreprocessorOutput& Source, const TAr
         }
         else if (!Space.IsEmpty() && !Space.Equals("space0"))
         {
-            return TranslationError(Source, Name, String::Printf("'%s' is in register %s, Shader Model 5.0 has no register spaces", *Name.Text, *Space));
+            return TranslationError(Source, Name, FString::Printf("'%s' is in register %s, Shader Model 5.0 has no register spaces", *Name.Text, *Space));
         }
     }
 
     if (Index >= Tokens.Size() || !Tokens[Index].Is(";"))
     {
-        return TranslationError(Source, Name, String::Printf("Expected ';' after the declaration of '%s'", *Name.Text));
+        return TranslationError(Source, Name, FString::Printf("Expected ';' after the declaration of '%s'", *Name.Text));
     }
 
     // cbuffer Name_CB : register(bN) { Type Name; }
-    const String BufferName = Name.Text + "_CB";
+    const FString BufferName = Name.Text + "_CB";
     OutTokens.Add(MakeToken(Keyword, "cbuffer", EShaderTokenType::Identifier, Keyword.bLeadingSpace));
     OutTokens.Add(MakeToken(Keyword, *BufferName, EShaderTokenType::Identifier, true));
 
@@ -363,10 +363,10 @@ bool FFXCShaderTranslator::Translate(FShaderPreprocessorOutput& InOutSource)
 
         if (IsHexFloat(Token))
         {
-            String Decimal;
+            FString Decimal;
             if (!ConvertHexFloat(Token.Text, Decimal))
             {
-                return TranslationError(InOutSource, Token, String::Printf("'%s' is not a valid hexadecimal float", *Token.Text));
+                return TranslationError(InOutSource, Token, FString::Printf("'%s' is not a valid hexadecimal float", *Token.Text));
             }
 
             FShaderToken& Converted = Result.Emplace(Token);

@@ -1034,7 +1034,7 @@ bool FD3D12Device::CreateDevice()
     }
     else
     {
-        const String Description = Adapter->GetDescription();
+        const FString Description = Adapter->GetDescription();
         D3D12_INFO("[FD3D12Device]: Created Device for adapter '%s'", *Description);
     }
 

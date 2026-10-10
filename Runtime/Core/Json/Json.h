@@ -6,9 +6,9 @@
 
 struct CORE_API Json
 {
-    static bool Parse(const StringView& Text, FJsonValue& OutValue, FJsonError* OutError = nullptr, EJsonParseFlags Flags = EJsonParseFlags::None);
-    static bool LoadFromFile(const String& Filename, FJsonValue& OutValue, FJsonError* OutError = nullptr, EJsonParseFlags Flags = EJsonParseFlags::None);
-    static bool SaveToFile(const String& Filename, const FJsonValue& Value, EJsonWriteFlags Flags = EJsonWriteFlags::Pretty);
+    static bool Parse(const FStringView& Text, FJsonValue& OutValue, FJsonError* OutError = nullptr, EJsonParseFlags Flags = EJsonParseFlags::None);
+    static bool LoadFromFile(const FString& Filename, FJsonValue& OutValue, FJsonError* OutError = nullptr, EJsonParseFlags Flags = EJsonParseFlags::None);
+    static bool SaveToFile(const FString& Filename, const FJsonValue& Value, EJsonWriteFlags Flags = EJsonWriteFlags::Pretty);
 
-    NODISCARD static String ToString(const FJsonValue& Value, EJsonWriteFlags Flags = EJsonWriteFlags::Pretty);
+    NODISCARD static FString ToString(const FJsonValue& Value, EJsonWriteFlags Flags = EJsonWriteFlags::Pretty);
 };

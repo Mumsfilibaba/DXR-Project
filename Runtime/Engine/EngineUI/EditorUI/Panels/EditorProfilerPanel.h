@@ -33,7 +33,7 @@ public:
     virtual void Tick(float DeltaTime) override final;
     virtual void OnVisibilityChanged(bool bInIsVisible) override final;
 
-    void SelectGpuScopeByName(const String& Name);
+    void SelectGpuScopeByName(const FString& Name);
 
     NODISCARD int32 GetShownCpuFrameIndex() const
     {
@@ -77,10 +77,10 @@ private:
         TSharedPtr<FTreeItem> Item;
     };
 
-    NODISCARD static TSharedPtr<FTextBlock> CreateValueText(const String& Text);
-    NODISCARD static String ResolveThreadName(void* ThreadHandle, int32 ThreadIndex);
-    NODISCARD static String FormatScopeColumns(int32 Calls, uint64 InclusiveNanoseconds, uint64 ExclusiveNanoseconds, double LanePercent);
-    NODISCARD static String FormatTargetColumns(double CallsPerFrame, double InclusiveMilliseconds, double ExclusiveMilliseconds, double BudgetPercent);
+    NODISCARD static TSharedPtr<FTextBlock> CreateValueText(const FString& Text);
+    NODISCARD static FString ResolveThreadName(void* ThreadHandle, int32 ThreadIndex);
+    NODISCARD static FString FormatScopeColumns(int32 Calls, uint64 InclusiveNanoseconds, uint64 ExclusiveNanoseconds, double LanePercent);
+    NODISCARD static FString FormatTargetColumns(double CallsPerFrame, double InclusiveMilliseconds, double ExclusiveMilliseconds, double BudgetPercent);
     
     NODISCARD TSharedPtr<FToolBar> BuildToolBar();
     NODISCARD TArray<FProfilerOptimizationTarget> CollectGpuOptimizationTargets() const;
@@ -113,11 +113,11 @@ private:
     void RebuildNativeStack();
     void ApplySearchToHierarchy();
     void SelectTreeItemForScope(const FScopeRef& Scope);
-    void OnSearchTextChanged(const String& Text);
+    void OnSearchTextChanged(const FString& Text);
 
     NODISCARD TSharedPtr<FTreeItem> BuildCallTree(
         int32                        LaneIndex,
-        const String&                LaneLabel,
+        const FString&               LaneLabel,
         const TArray<const CHAR_T*>& Names,
         const TArray<int32>&         Parents,
         const TArray<uint64>&        Inclusive,
@@ -126,13 +126,13 @@ private:
 
     NODISCARD TSharedPtr<FVisualElement> BuildTimelineBarContextMenu(int32 LaneIndex, int32 BarIndex);
     NODISCARD TSharedPtr<FVisualElement> BuildScopeContextMenu(const TSharedPtr<FTreeItem>& Item);
-    NODISCARD TSharedPtr<FVisualElement> BuildGpuPassContextMenu(const String& PassName);
+    NODISCARD TSharedPtr<FVisualElement> BuildGpuPassContextMenu(const FString& PassName);
 
     void OnTreeSelectionChanged(const TArray<TSharedPtr<FTreeItem>>& Selection);
     void OnTreeExpansionChanged(const TSharedPtr<FTreeItem>& Item, bool bIsExpanded);
     void OnTargetSelectionChanged(const TArray<TSharedPtr<FTreeItem>>& Selection);
     void OnTimelineBarSelected(int32 LaneIndex, int32 BarIndex);
-    void ShowGpuPassInRenderGraph(const String& PassName);
+    void ShowGpuPassInRenderGraph(const FString& PassName);
     void WriteCapture();
     void BuildPipelineStatisticsRows();
     void BindPipelineStatistics(const FRHIPipelineStatistics* Statistics);
@@ -159,7 +159,7 @@ private:
     TSharedPtr<FExpander>                 PipelineStatisticsExpander;
     TSharedPtr<FVerticalBox>              DetailSections;
     TSharedPtr<FComboBox>                 TargetDomainCombo;
-    TArray<String>                        TargetScopeNames;
+    TArray<FString>                       TargetScopeNames;
     TSharedPtr<FPropertyTable>            CallersTable;
     TSharedPtr<FPropertyTable>            NativeStackTable;
     TSharedPtr<FPropertyTable>            PipelineStatisticsTable;
@@ -172,8 +172,8 @@ private:
     TArray<FScopeRef>                     HierarchyRefs;
     TArray<TArray<TSharedPtr<FTreeItem>>> LaneIntervalItems;
     FScopeRef                             Selection;
-    String                                SearchQuery;
-    String                                GpuStatusText;
+    FString                               SearchQuery;
+    FString                               GpuStatusText;
     EProfilerMode                         Mode;
     ETargetDomain                         TargetDomain;
     float                                 TimeSinceDetailRefresh;

@@ -96,7 +96,7 @@ void FDockWindowManager::Tick()
             continue;
         }
 
-        const String Title = ResolveHostTitle(Area);
+        const FString Title = ResolveHostTitle(Area);
         if (!Title.IsEmpty() && Title != Window->GetTitle())
         {
             if (const TSharedPtr<FTitleBar>& TitleBar = Hosts[Index].TitleBar)
@@ -116,7 +116,7 @@ void FDockWindowManager::Tick()
     }
 }
 
-TSharedPtr<FDockingArea> FDockWindowManager::SpawnHost(const String& PanelId, const String& Label, const TSharedPtr<FVisualElement>& Content, const IntVector2& ScreenPosition, const IntVector2& Size)
+TSharedPtr<FDockingArea> FDockWindowManager::SpawnHost(const FString& PanelId, const FString& Label, const TSharedPtr<FVisualElement>& Content, const IntVector2& ScreenPosition, const IntVector2& Size)
 {
     if (PanelId.IsEmpty() || !FApplication::IsInitialized())
     {
@@ -146,7 +146,7 @@ TSharedPtr<FDockingArea> FDockWindowManager::SpawnHost(const String& PanelId, co
     }
 
     Area->RegisterPanel(PanelId, Label, Content);
-    Area->DockPanel(PanelId, String(), EDockDirection::Center);
+    Area->DockPanel(PanelId, FString(), EDockDirection::Center);
 
     FTitleBar::FDesc TitleBarDesc;
     TitleBarDesc.Title   = WindowDesc.Title;
@@ -338,7 +338,7 @@ FRHITexture* FDockWindowManager::GetDropPreviewTexture() const
     return Index >= 0 ? DropPreviews[Index].Texture.Get() : nullptr;
 }
 
-int32 FDockWindowManager::FindDropPreview(const FDockingArea* Area, const String& PanelId, EDockDirection Direction, const IntVector2& Size) const
+int32 FDockWindowManager::FindDropPreview(const FDockingArea* Area, const FString& PanelId, EDockDirection Direction, const IntVector2& Size) const
 {
     for (int32 Index = 0; Index < DropPreviews.Size(); ++Index)
     {
@@ -395,7 +395,7 @@ void FDockWindowManager::DestroyDecorator()
 
     if (Area)
     {
-        for (const String& PanelId : Area->GetRegisteredPanelIds())
+        for (const FString& PanelId : Area->GetRegisteredPanelIds())
         {
             Area->UnregisterPanel(PanelId);
         }
@@ -442,13 +442,13 @@ void FDockWindowManager::RestoreHostLayouts(const TArray<FDockWindowLayout>& Lay
 
     for (const FDockWindowLayout& Layout : Layouts)
     {
-        TArray<String> PanelIds;
+        TArray<FString> PanelIds;
         Layout.Root.GatherPanelIds(PanelIds);
 
         TSharedPtr<FDockingArea> Area = nullptr;
-        for (const String& PanelId : PanelIds)
+        for (const FString& PanelId : PanelIds)
         {
-            String                     Label;
+            FString                    Label;
             TSharedPtr<FVisualElement> Panel;
 
             if (!Main->GetPanelRegistration(PanelId, Label, Panel))
@@ -491,7 +491,7 @@ void FDockWindowManager::RestoreHostLayouts(const TArray<FDockWindowLayout>& Lay
     }
 }
 
-TSharedPtr<FDockingArea> FDockWindowManager::FindAreaForPanel(const String& PanelId) const
+TSharedPtr<FDockingArea> FDockWindowManager::FindAreaForPanel(const FString& PanelId) const
 {
     if (Desc.MainArea && Desc.MainArea->IsPanelDocked(PanelId))
     {
@@ -509,18 +509,18 @@ TSharedPtr<FDockingArea> FDockWindowManager::FindAreaForPanel(const String& Pane
     return nullptr;
 }
 
-bool FDockWindowManager::IsPanelDockedAnywhere(const String& PanelId) const
+bool FDockWindowManager::IsPanelDockedAnywhere(const FString& PanelId) const
 {
     return FindAreaForPanel(PanelId) != nullptr;
 }
 
-bool FDockWindowManager::IsPanelVisibleAnywhere(const String& PanelId) const
+bool FDockWindowManager::IsPanelVisibleAnywhere(const FString& PanelId) const
 {
     const TSharedPtr<FDockingArea> Area = FindAreaForPanel(PanelId);
     return Area && Area->IsPanelVisible(PanelId);
 }
 
-bool FDockWindowManager::FocusPanelInHost(const String& PanelId)
+bool FDockWindowManager::FocusPanelInHost(const FString& PanelId)
 {
     for (const FHost& Host : Hosts)
     {
@@ -558,21 +558,21 @@ IntVector2 FDockWindowManager::ResolveHostPosition(const IntVector2& ScreenPosit
     return ScreenPosition - IntVector2(SpawnCursorInset, SpawnCursorInset);
 }
 
-String FDockWindowManager::ResolveHostTitle(const TSharedPtr<FDockingArea>& Area)
+FString FDockWindowManager::ResolveHostTitle(const TSharedPtr<FDockingArea>& Area)
 {
     if (!Area)
     {
-        return String();
+        return FString();
     }
 
-    for (const String& PanelId : Area->GetDockedPanelIds())
+    for (const FString& PanelId : Area->GetDockedPanelIds())
     {
         if (!Area->IsPanelVisible(PanelId))
         {
             continue;
         }
 
-        String                     Label;
+        FString                    Label;
         TSharedPtr<FVisualElement> Panel;
 
         if (Area->GetPanelRegistration(PanelId, Label, Panel))
@@ -581,7 +581,7 @@ String FDockWindowManager::ResolveHostTitle(const TSharedPtr<FDockingArea>& Area
         }
     }
 
-    return String();
+    return FString();
 }
 
 int32 FDockWindowManager::FindHostByArea(const FDockingArea* Area) const
@@ -649,7 +649,7 @@ void FDockWindowManager::OnDragBegan(const FDockDragPanel& Panel, const IntVecto
     }
 
     Area->RegisterPanel(Panel.PanelId, Panel.Label, Panel.Content);
-    Area->DockPanel(Panel.PanelId, String(), EDockDirection::Center);
+    Area->DockPanel(Panel.PanelId, FString(), EDockDirection::Center);
 
     FTitleBar::FDesc TitleBarDesc;
     TitleBarDesc.Title = WindowDesc.Title;
@@ -769,7 +769,7 @@ void FDockWindowManager::OnDropOutside(const FDockDragPanel& Panel, const IntVec
     if (SourceHostIndex >= 0 && Panel.SourceArea->GetDockedPanelIds().IsEmpty())
     {
         Panel.SourceArea->RegisterPanel(Panel.PanelId, Panel.Label, Panel.Content);
-        Panel.SourceArea->DockPanel(Panel.PanelId, String(), EDockDirection::Center);
+        Panel.SourceArea->DockPanel(Panel.PanelId, FString(), EDockDirection::Center);
 
         if (const TSharedPtr<FWindow>& Window = Hosts[SourceHostIndex].Window)
         {
@@ -859,9 +859,9 @@ void FDockWindowManager::ReturnPanelRegistrationsToMainArea(const TSharedPtr<FDo
         return;
     }
 
-    for (const String& PanelId : Area->GetRegisteredPanelIds())
+    for (const FString& PanelId : Area->GetRegisteredPanelIds())
     {
-        String                     Label;
+        FString                    Label;
         TSharedPtr<FVisualElement> Panel;
 
         if (Area->GetPanelRegistration(PanelId, Label, Panel))

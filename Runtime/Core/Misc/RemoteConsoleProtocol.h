@@ -33,14 +33,14 @@ struct CORE_API RemoteConsoleProtocol
     static constexpr const CHAR_T* SettingsPrefix = "RemoteConsole.";
 
     static const CHAR_T* SeverityToString(ELogSeverity Severity);
-    static bool          SeverityFromString(const String& Text, ELogSeverity& OutSeverity);
+    static bool          SeverityFromString(const FString& Text, ELogSeverity& OutSeverity);
 
     /**
      * @brief Moves every complete '\n'-terminated line from the front of Buffer into OutLines, stripping any '\r'.
      * @return False when the unterminated remainder is longer than MaxLineLength, meaning the peer should be dropped
      */
-    static bool ExtractLines(String& Buffer, TArray<String>& OutLines);
+    static bool ExtractLines(FString& Buffer, TArray<FString>& OutLines);
 
     /** @return Message written as compact JSON followed by '\n' */
-    static String ToLine(const FJsonValue& Message);
+    static FString ToLine(const FJsonValue& Message);
 };

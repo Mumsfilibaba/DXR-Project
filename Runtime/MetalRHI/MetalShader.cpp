@@ -63,6 +63,6 @@ bool FMetalRayTracingShader::Initialize(const FShaderCodeView& InCode)
         return false;
     }
 
-    Identifier = String(CompiledShader->FunctionName);
+    Identifier = FString(CompiledShader->FunctionName);
     return true;
 }

@@ -74,9 +74,9 @@ static EFormat GetFloatFormat(int32 Channels)
     }
 }
 
-TSharedRef<FTexture> FTextureImporterBase::ImportFromFile(const StringView& FileName)
+TSharedRef<FTexture> FTextureImporterBase::ImportFromFile(const FStringView& FileName)
 {
-    TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(String(FileName));
+    TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(FString(FileName));
     if (!File)
     {
         LOG_ERROR("[FTextureImporterBase]: Failed to open '%s'", *FileName);
@@ -150,7 +150,7 @@ TSharedRef<FTexture> FTextureImporterBase::ImportFromFile(const StringView& File
     return NewTexture;
 }
 
-bool FTextureImporterBase::MatchExtenstion(const StringView& FileName)
+bool FTextureImporterBase::MatchExtenstion(const FStringView& FileName)
 {
     return FileName.EndsWith(".jpeg", EStringCaseType::NoCase)
         || FileName.EndsWith(".jpg", EStringCaseType::NoCase)

@@ -40,7 +40,7 @@ bool CommandLine_Test()
     {
         InitializeFromLine("-RHI.Type=Vulkan");
 
-        StringView Value;
+        FStringView Value;
         TEST_EXPECT(CommandLine::FindOption("RHI.Type", Value));
         TEST_EXPECT(Value.Equals("Vulkan"));
     }
@@ -49,7 +49,7 @@ bool CommandLine_Test()
     {
         InitializeFromLine("-RHI.ShaderCompiler.VerboseLogging=true -Some_Underscored_Name=7");
 
-        StringView Value;
+        FStringView Value;
         TEST_EXPECT(CommandLine::FindOption("RHI.ShaderCompiler.VerboseLogging", Value));
         TEST_EXPECT(Value.Equals("true"));
 
@@ -61,7 +61,7 @@ bool CommandLine_Test()
     {
         InitializeFromLine("-A.B=Vulkan -C.D=1");
 
-        StringView Value;
+        FStringView Value;
         TEST_EXPECT(CommandLine::FindOption("A.B", Value));
         TEST_EXPECT(Value.Equals("Vulkan"));
 
@@ -73,7 +73,7 @@ bool CommandLine_Test()
     {
         InitializeFromLine("-A.B=1.5");
 
-        StringView Value;
+        FStringView Value;
         TEST_EXPECT(CommandLine::FindOption("A.B", Value));
         TEST_EXPECT(Value.Equals("1.5"));
 
@@ -90,7 +90,7 @@ bool CommandLine_Test()
     {
         InitializeFromLine("-A.B=\"Hello World\" -C.D=2");
 
-        StringView Value;
+        FStringView Value;
         TEST_EXPECT(CommandLine::FindOption("A.B", Value));
         TEST_EXPECT(Value.Equals("Hello World"));
 
@@ -102,7 +102,7 @@ bool CommandLine_Test()
     {
         InitializeFromLine("-RHI.Type=Vulkan -RHI.EnableDebugLayer=true -Foo.Bar=3");
 
-        StringView Value;
+        FStringView Value;
         TEST_EXPECT(CommandLine::FindOption("RHI.Type", Value));
         TEST_EXPECT(Value.Equals("Vulkan"));
 
@@ -117,7 +117,7 @@ bool CommandLine_Test()
     {
         InitializeFromLine("-A.B=x-y -C.D=2");
 
-        StringView Value;
+        FStringView Value;
         TEST_EXPECT(CommandLine::FindOption("A.B", Value));
         TEST_EXPECT(Value.Equals("x-y"));
 
@@ -135,7 +135,7 @@ bool CommandLine_Test()
         // A partial hit must not stop the scan from reaching the real option
         InitializeFromLine("-RHI.TypeExtra=1 -RHI.Type=Vulkan");
 
-        StringView Value;
+        FStringView Value;
         TEST_EXPECT(CommandLine::FindOption("RHI.Type", Value));
         TEST_EXPECT(Value.Equals("Vulkan"));
 
@@ -148,7 +148,7 @@ bool CommandLine_Test()
     {
         InitializeFromLine("-RHI.Type=Vulkan");
 
-        StringView Value;
+        FStringView Value;
         TEST_EXPECT(CommandLine::FindOption("rhi.type", Value));
         TEST_EXPECT(Value.Equals("Vulkan"));
     }
@@ -159,7 +159,7 @@ bool CommandLine_Test()
 
         TEST_EXPECT(CommandLine::FindOption("RHI.EnableDebugLayer"));
 
-        StringView Value;
+        FStringView Value;
         TEST_EXPECT(CommandLine::FindOption("RHI.EnableDebugLayer", Value));
         TEST_EXPECT(Value.IsEmpty());
 
@@ -172,7 +172,7 @@ bool CommandLine_Test()
     {
         InitializeFromLine("-RHI.EnableValidation");
 
-        StringView Value;
+        FStringView Value;
         TEST_EXPECT(CommandLine::FindOption("RHI.EnableValidation", Value));
         TEST_EXPECT(Value.IsEmpty());
     }
@@ -181,7 +181,7 @@ bool CommandLine_Test()
     {
         InitializeFromLine("-RHI.Type=Vulkan");
 
-        StringView Value("sentinel");
+        FStringView Value("sentinel");
         TEST_EXPECT(!CommandLine::FindOption("Does.Not.Exist", Value));
         TEST_EXPECT(Value.Equals("sentinel"));
     }
@@ -191,7 +191,7 @@ bool CommandLine_Test()
         const CHAR_T* Args[] = { "-RHI.Type=Vulkan", "-RHI.EnableDebugLayer=true" };
         TEST_EXPECT(CommandLine::Initialize(Args, 2));
 
-        StringView Value;
+        FStringView Value;
         TEST_EXPECT(CommandLine::FindOption("RHI.Type", Value));
         TEST_EXPECT(Value.Equals("Vulkan"));
 
@@ -199,7 +199,7 @@ bool CommandLine_Test()
         TEST_EXPECT(Value.Equals("true"));
 
         // Arguments must be separated in the raw copy, not run together
-        TEST_EXPECT(StringView(CommandLine::GetOriginal()).Equals("-RHI.Type=Vulkan -RHI.EnableDebugLayer=true"));
+        TEST_EXPECT(FStringView(CommandLine::GetOriginal()).Equals("-RHI.Type=Vulkan -RHI.EnableDebugLayer=true"));
     }
 
     TEST_SECTION("Re-initializing replaces the previous command line");
@@ -207,7 +207,7 @@ bool CommandLine_Test()
         InitializeFromLine("-A.Long.Option.Name=SomethingLong -B.Another=2");
         InitializeFromLine("-A.Long.Option.Name=Short");
 
-        StringView Value;
+        FStringView Value;
         TEST_EXPECT(CommandLine::FindOption("A.Long.Option.Name", Value));
         TEST_EXPECT(Value.Equals("Short"));
         TEST_EXPECT(!CommandLine::FindOption("B.Another"));
@@ -217,7 +217,7 @@ bool CommandLine_Test()
     {
         InitializeFromLine("-A.B=\"Unterminated");
 
-        StringView Value;
+        FStringView Value;
         TEST_EXPECT(CommandLine::FindOption("A.B", Value));
         TEST_EXPECT(Value.Equals("Unterminated"));
     }
@@ -233,10 +233,10 @@ bool CommandLine_Test()
     {
         for (const CHAR_T* Name : GNameCorpus)
         {
-            const String Line = String::Printf("-%s=ProbeValue", Name);
+            const FString Line = FString::Printf("-%s=ProbeValue", Name);
             InitializeFromLine(*Line);
 
-            StringView Value;
+            FStringView Value;
             const bool bRoundTripped = CommandLine::FindOption(Name, Value) && Value.Equals("ProbeValue");
             if (!bRoundTripped)
             {
@@ -252,11 +252,11 @@ bool CommandLine_Test()
         const CHAR_T* Alphabet = "abzABZ019._";
         for (const CHAR_T* Char = Alphabet; *Char != '\0'; ++Char)
         {
-            const String Name = String::Printf("Prefix%cSuffix", *Char);
-            const String Line = String::Printf("-%s=ProbeValue", *Name);
+            const FString Name = FString::Printf("Prefix%cSuffix", *Char);
+            const FString Line = FString::Printf("-%s=ProbeValue", *Name);
             InitializeFromLine(*Line);
 
-            StringView Value;
+            FStringView Value;
             const bool bRoundTripped = CommandLine::FindOption(*Name, Value) && Value.Equals("ProbeValue");
             if (!bRoundTripped)
             {
@@ -269,7 +269,7 @@ bool CommandLine_Test()
 
     TEST_SECTION("An over-long command line truncates safely");
     {
-        String LongLine;
+        FString LongLine;
         for (int32 Index = 0; Index < 200; ++Index)
         {
             LongLine.AppendPrintf("-Long.Option%d=Value%d ", Index, Index);
@@ -283,7 +283,7 @@ bool CommandLine_Test()
         TEST_EXPECT(OriginalLength < CommandLine::MaxCommandLineLength);
 
         // Whatever did fit has to still be readable
-        StringView Value;
+        FStringView Value;
         TEST_EXPECT(CommandLine::FindOption("Long.Option0", Value));
         TEST_EXPECT(Value.Equals("Value0"));
     }

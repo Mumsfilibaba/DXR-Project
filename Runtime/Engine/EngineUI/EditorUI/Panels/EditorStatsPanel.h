@@ -28,7 +28,7 @@ private:
         TArray<TSharedPtr<FTextBlock>> Values;
     };
 
-    NODISCARD static TSharedPtr<FTextBlock> CreateValueText(const String& Text);
+    NODISCARD static TSharedPtr<FTextBlock> CreateValueText(const FString& Text);
 
     void RebuildSections();
     void RebuildGroupRows(FStatGroupSection& GroupSection);

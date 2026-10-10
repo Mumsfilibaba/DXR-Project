@@ -41,7 +41,7 @@ static TAutoConsoleVariable<bool> CVarMapMin16FloatToFloat(
     "RelaxedPrecision codegen bug). Disable to keep native min-precision types (also sets MIN16FLOAT_AVAILABLE).",
     true);
 
-static TAutoConsoleVariable<String> CVarDumpPreprocessedDir(
+static TAutoConsoleVariable<FString> CVarDumpPreprocessedDir(
     "RHI.ShaderCompiler.DumpPreprocessedDir",
     "When set, every shader is written to this directory after preprocessing and translation, with the defines it was compiled with",
     "");
@@ -51,7 +51,7 @@ static TAutoConsoleVariable<bool> CVarUseRemote(
     "Send shader compiles to the ShaderCompiler -server at RHI.ShaderCompiler.RemoteHost instead of compiling in the engine",
     false);
 
-static TAutoConsoleVariable<String> CVarRemoteHost(
+static TAutoConsoleVariable<FString> CVarRemoteHost(
     "RHI.ShaderCompiler.RemoteHost",
     "Host name, IPv4 or IPv6 address of the ShaderCompiler -server",
     RemoteShaderCompilerProtocol::LoopbackAddress);
@@ -79,7 +79,7 @@ static constexpr uint32 GRemoteConnectTimeoutMilliseconds = 2000;
 static FAutoConsoleCommand CCmdDumpShaderCompileStats(
     "RHI.DumpShaderCompileStats",
     "Logs how many shaders the compiler has built and how long they took",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         if (FShaderCompiler* Compiler = FShaderCompiler::TryGet())
         {
@@ -123,7 +123,7 @@ bool FShaderCompiler::IsDebugInfoEnabled()
 #endif
 }
 
-FShaderCompiler::FShaderCompiler(const String& InAssetPath)
+FShaderCompiler::FShaderCompiler(const FString& InAssetPath)
     : Backends()
     , AssetPath(InAssetPath)
     , NumCompiles(0)
@@ -151,7 +151,7 @@ FShaderCompiler::~FShaderCompiler()
     Backends.Clear();
 }
 
-bool FShaderCompiler::Initialize(const String& InAssetPath)
+bool FShaderCompiler::Initialize(const FString& InAssetPath)
 {
     CHECK(ShaderCompiler == nullptr);
 
@@ -284,7 +284,7 @@ void FShaderCompiler::BuildCompileDefines(const FShaderCompileInfo& CompileInfo,
     }
 }
 
-bool FShaderCompiler::CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<String>* OutDependencies)
+bool FShaderCompiler::CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<FString>* OutDependencies)
 {
     const EShaderCompileRoute Route = GetRoute(CompileInfo.OutputLanguage);
     if (Route == EShaderCompileRoute::Unavailable)
@@ -310,7 +310,7 @@ bool FShaderCompiler::CompileFromFile(const String& Filename, const FShaderCompi
         LOG_WARNING("[FShaderCompiler]: The remote shader compiler is unreachable, compiling '%s' locally", *Filename);
     }
 
-    const String FilePath = ResolveSourcePath(Filename);
+    const FString FilePath = ResolveSourcePath(Filename);
 
     // Store the ShaderFile in this array
     TArray<CHAR_T> Text;
@@ -339,25 +339,25 @@ bool FShaderCompiler::CompileFromFile(const String& Filename, const FShaderCompi
     }
 
     // Compile the source
-    const String         Source(Text.Data(), Text.Size());
-    const TArray<String> IncludeDirs = ResolveIncludeDirs(CompileInfo);
-    return CompileLocal(Source, FilePath, AssetPath + "/Shaders", TArrayView<const String>(IncludeDirs), CompileInfo, nullptr, false, OutByteCode, OutDependencies, nullptr);
+    const FString         Source(Text.Data(), Text.Size());
+    const TArray<FString> IncludeDirs = ResolveIncludeDirs(CompileInfo);
+    return CompileLocal(Source, FilePath, AssetPath + "/Shaders", TArrayView<const FString>(IncludeDirs), CompileInfo, nullptr, false, OutByteCode, OutDependencies, nullptr);
 }
 
-bool FShaderCompiler::CompileFromSource(const String& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<String>* OutDependencies)
+bool FShaderCompiler::CompileFromSource(const FString& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<FString>* OutDependencies)
 {
-    const TArray<String> IncludeDirs = ResolveIncludeDirs(CompileInfo);
-    return CompileLocal(ShaderSource, "", AssetPath + "/Shaders", TArrayView<const String>(IncludeDirs), CompileInfo, nullptr, false, OutByteCode, OutDependencies, nullptr);
+    const TArray<FString> IncludeDirs = ResolveIncludeDirs(CompileInfo);
+    return CompileLocal(ShaderSource, "", AssetPath + "/Shaders", TArrayView<const FString>(IncludeDirs), CompileInfo, nullptr, false, OutByteCode, OutDependencies, nullptr);
 }
 
-uint64 FShaderCompiler::ComputeCompileHash(const String& SourceFile, const FShaderCompileInfo& CompileInfo) const
+uint64 FShaderCompiler::ComputeCompileHash(const FString& SourceFile, const FShaderCompileInfo& CompileInfo) const
 {
     return ComputeCompileHash(SourceFile, CompileInfo, GetIdentityForRoute(CompileInfo.OutputLanguage));
 }
 
-uint64 FShaderCompiler::ComputeCompileHash(const String& SourceFile, const FShaderCompileInfo& CompileInfo, const FShaderCompilerIdentity& Identity) const
+uint64 FShaderCompiler::ComputeCompileHash(const FString& SourceFile, const FShaderCompileInfo& CompileInfo, const FShaderCompilerIdentity& Identity) const
 {
-    uint64 Hash = THash<String>::GetHash(SourceFile);
+    uint64 Hash = THash<FString>::GetHash(SourceFile);
 
     HashCombine(Hash, CompileInfo.EntryPoint);
     HashCombine(Hash, CompileInfo.ShaderModel);
@@ -373,7 +373,7 @@ uint64 FShaderCompiler::ComputeCompileHash(const String& SourceFile, const FShad
         HashCombine(Hash, Define.Value);
     }
 
-    for (const String& IncludeDir : CompileInfo.IncludeDirs)
+    for (const FString& IncludeDir : CompileInfo.IncludeDirs)
     {
         HashCombine(Hash, IncludeDir);
     }
@@ -414,12 +414,12 @@ FShaderCompilerIdentity FShaderCompiler::GetIdentityForRoute(EShaderOutputLangua
 class FRecordingSourceProvider final : public IShaderSourceProvider
 {
 public:
-    NODISCARD virtual bool FileExists(const String& Path) const override final
+    NODISCARD virtual bool FileExists(const FString& Path) const override final
     {
         return FDiskShaderSourceProvider::Get().FileExists(Path);
     }
 
-    virtual bool ReadFile(const String& Path, TArray<CHAR_T>& OutText) const override final
+    virtual bool ReadFile(const FString& Path, TArray<CHAR_T>& OutText) const override final
     {
         if (!FDiskShaderSourceProvider::Get().ReadFile(Path, OutText))
         {
@@ -435,23 +435,23 @@ public:
         return true;
     }
 
-    mutable TArray<String>               Order;
-    mutable TMap<String, TArray<CHAR_T>> Files;
+    mutable TArray<FString>               Order;
+    mutable TMap<FString, TArray<CHAR_T>> Files;
 };
 
-static String ReplaceAll(const String& Text, const String& From, const String& To)
+static FString ReplaceAll(const FString& Text, const FString& From, const FString& To)
 {
     if (Text.IsEmpty() || From.IsEmpty())
     {
         return Text;
     }
 
-    String Result;
-    int32  Start = 0;
+    FString Result;
+    int32   Start = 0;
     while (Start < Text.Length())
     {
         const int32 Found = Text.Find(*From, Start);
-        if (Found == String::InvalidIndex || Found < Start)
+        if (Found == FString::InvalidIndex || Found < Start)
         {
             break;
         }
@@ -472,27 +472,27 @@ static String ReplaceAll(const String& Text, const String& From, const String& T
 class FShaderSourceRoots
 {
 public:
-    FShaderSourceRoots(const String& AssetPath, const String& InFilePath, TArrayView<const String> InIncludeDirs)
+    FShaderSourceRoots(const FString& AssetPath, const FString& InFilePath, TArrayView<const FString> InIncludeDirs)
         : FilePath(InFilePath)
         , IncludeDirs()
     {
-        AddRoot(String(), AssetPath);
+        AddRoot(FString(), AssetPath);
      
         for (int32 Index = 0; Index < InIncludeDirs.Size(); ++Index)
         {
             IncludeDirs.Add(InIncludeDirs[Index]);
-            AddRoot(String::Printf("@Include%d", Index), InIncludeDirs[Index]);
+            AddRoot(FString::Printf("@Include%d", Index), InIncludeDirs[Index]);
         }
 
         AddRoot("@Source", File::GetDirectoryOf(FilePath));
 
         MakePortable(FilePath, PortableFilePath);
-        for (const String& IncludeDir : IncludeDirs)
+        for (const FString& IncludeDir : IncludeDirs)
         {
-            String PortableDir;
+            FString PortableDir;
             if (!MakePortable(IncludeDir, PortableDir) || PortableDir.IsEmpty())
             {
-                Error = String::Printf("The include directory '%s' is the asset directory itself, pass its Shaders folder or a folder below it instead", *IncludeDir);
+                Error = FString::Printf("The include directory '%s' is the asset directory itself, pass its Shaders folder or a folder below it instead", *IncludeDir);
             }
 
             PortableIncludeDirs.Add(::Move(PortableDir));
@@ -500,9 +500,9 @@ public:
     }
 
     /** @return False when no folder holds Path, which happens for a relative include that climbs out of every folder */
-    bool MakePortable(const String& Path, String& OutPath) const
+    bool MakePortable(const FString& Path, FString& OutPath) const
     {
-        const String CollapsedPath = RemoteShaderCompilerProtocol::CollapsePath(Path) + '/';
+        const FString CollapsedPath = RemoteShaderCompilerProtocol::CollapsePath(Path) + '/';
 
         const FRoot* Outermost = nullptr;
         for (const FRoot& Root : Roots)
@@ -519,8 +519,8 @@ public:
         }
 
         // The '/' added above is dropped again, a folder that is a root itself becomes the bare root name
-        const int32  RelativeLength = CollapsedPath.Length() - Outermost->Prefix.Length() - 1;
-        const String Relative       = RelativeLength > 0 ? String(CollapsedPath.Data() + Outermost->Prefix.Length(), RelativeLength) : String();
+        const int32   RelativeLength = CollapsedPath.Length() - Outermost->Prefix.Length() - 1;
+        const FString Relative       = RelativeLength > 0 ? FString(CollapsedPath.Data() + Outermost->Prefix.Length(), RelativeLength) : FString();
 
         if (Outermost->Name.IsEmpty())
         {
@@ -535,13 +535,13 @@ public:
     }
 
     /** @return The path on this machine of a name MakePortable gave, which is what a server reports dependencies with */
-    NODISCARD String MakeLocal(const String& PortablePath) const
+    NODISCARD FString MakeLocal(const FString& PortablePath) const
     {
         for (const FRoot& Root : Roots)
         {
             if (!Root.Name.IsEmpty() && PortablePath.StartsWith(Root.Name + '/'))
             {
-                return Root.Prefix + String(PortablePath.Data() + Root.Name.Length() + 1, PortablePath.Length() - Root.Name.Length() - 1);
+                return Root.Prefix + FString(PortablePath.Data() + Root.Name.Length() + 1, PortablePath.Length() - Root.Name.Length() - 1);
             }
         }
 
@@ -549,9 +549,9 @@ public:
     }
 
     /** @return Text with the root names replaced by their folders, so errors from a server point at files on this machine */
-    NODISCARD String LocalizeMessages(const String& Text) const
+    NODISCARD FString LocalizeMessages(const FString& Text) const
     {
-        String Result = Text;
+        FString Result = Text;
         for (const FRoot& Root : Roots)
         {
             if (!Root.Name.IsEmpty())
@@ -563,28 +563,28 @@ public:
         return Result;
     }
 
-    NODISCARD const String& GetFilePath() const
+    NODISCARD const FString& GetFilePath() const
     {
         return FilePath;
     }
 
-    NODISCARD const TArray<String>& GetIncludeDirs() const
+    NODISCARD const TArray<FString>& GetIncludeDirs() const
     {
         return IncludeDirs;
     }
 
-    NODISCARD const String& GetPortableFilePath() const
+    NODISCARD const FString& GetPortableFilePath() const
     {
         return PortableFilePath;
     }
 
-    NODISCARD const TArray<String>& GetPortableIncludeDirs() const
+    NODISCARD const TArray<FString>& GetPortableIncludeDirs() const
     {
         return PortableIncludeDirs;
     }
 
     /** @return Empty when every include directory has a name */
-    NODISCARD const String& GetError() const
+    NODISCARD const FString& GetError() const
     {
         return Error;
     }
@@ -592,37 +592,37 @@ public:
 private:
     struct FRoot
     {
-        String Name;
+        FString Name;
 
         /** Collapsed, with a trailing '/' */
-        String Prefix;
+        FString Prefix;
     };
 
-    void AddRoot(const String& Name, const String& Directory)
+    void AddRoot(const FString& Name, const FString& Directory)
     {
         FRoot& Root = Roots.Emplace();
         Root.Name   = Name;
         Root.Prefix = RemoteShaderCompilerProtocol::CollapsePath(Directory) + '/';
     }
 
-    String         FilePath;
-    TArray<String> IncludeDirs;
-    TArray<FRoot>  Roots;
-    String         PortableFilePath;
-    TArray<String> PortableIncludeDirs;
-    String         Error;
+    FString         FilePath;
+    TArray<FString> IncludeDirs;
+    TArray<FRoot>   Roots;
+    FString         PortableFilePath;
+    TArray<FString> PortableIncludeDirs;
+    FString         Error;
 };
 
-String FShaderCompiler::ResolveSourcePath(const String& Path) const
+FString FShaderCompiler::ResolveSourcePath(const FString& Path) const
 {
     return FPlatformFile::IsPathRelative(*Path) ? (AssetPath + '/' + Path) : Path;
 }
 
-TArray<String> FShaderCompiler::ResolveIncludeDirs(const FShaderCompileInfo& CompileInfo) const
+TArray<FString> FShaderCompiler::ResolveIncludeDirs(const FShaderCompileInfo& CompileInfo) const
 {
-    TArray<String> IncludeDirs;
+    TArray<FString> IncludeDirs;
     IncludeDirs.Reserve(CompileInfo.IncludeDirs.Size());
-    for (const String& IncludeDir : CompileInfo.IncludeDirs)
+    for (const FString& IncludeDir : CompileInfo.IncludeDirs)
     {
         IncludeDirs.Add(ResolveSourcePath(IncludeDir));
     }
@@ -630,14 +630,14 @@ TArray<String> FShaderCompiler::ResolveIncludeDirs(const FShaderCompileInfo& Com
     return IncludeDirs;
 }
 
-bool FShaderCompiler::CollectSources(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<FShaderSourceFile>& OutFiles, String& OutErrors) const
+bool FShaderCompiler::CollectSources(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<FShaderSourceFile>& OutFiles, FString& OutErrors) const
 {
-    const TArray<String>     IncludeDirs = ResolveIncludeDirs(CompileInfo);
-    const FShaderSourceRoots Roots(AssetPath, ResolveSourcePath(Filename), TArrayView<const String>(IncludeDirs));
+    const TArray<FString>    IncludeDirs = ResolveIncludeDirs(CompileInfo);
+    const FShaderSourceRoots Roots(AssetPath, ResolveSourcePath(Filename), TArrayView<const FString>(IncludeDirs));
     return CollectSources(Roots, CompileInfo, OutFiles, OutErrors);
 }
 
-bool FShaderCompiler::CollectSources(const FShaderSourceRoots& Roots, const FShaderCompileInfo& CompileInfo, TArray<FShaderSourceFile>& OutFiles, String& OutErrors) const
+bool FShaderCompiler::CollectSources(const FShaderSourceRoots& Roots, const FShaderCompileInfo& CompileInfo, TArray<FShaderSourceFile>& OutFiles, FString& OutErrors) const
 {
     if (!Roots.GetError().IsEmpty())
     {
@@ -645,14 +645,14 @@ bool FShaderCompiler::CollectSources(const FShaderSourceRoots& Roots, const FSha
         return false;
     }
 
-    const String& FilePath = Roots.GetFilePath();
+    const FString& FilePath = Roots.GetFilePath();
 
     FRecordingSourceProvider Recorder;
 
     TArray<CHAR_T> RootText;
     if (!Recorder.ReadFile(FilePath, RootText))
     {
-        OutErrors = String::Printf("Failed to open '%s'", *FilePath);
+        OutErrors = FString::Printf("Failed to open '%s'", *FilePath);
         return false;
     }
 
@@ -660,7 +660,7 @@ bool FShaderCompiler::CollectSources(const FShaderSourceRoots& Roots, const FSha
     BuildCompileDefines(CompileInfo, Defines);
 
     FShaderPreprocessor Preprocessor(AssetPath + "/Shaders", &Recorder);
-    for (const String& IncludeDir : Roots.GetIncludeDirs())
+    for (const FString& IncludeDir : Roots.GetIncludeDirs())
     {
         Preprocessor.AddIncludeDir(IncludeDir);
     }
@@ -671,18 +671,18 @@ bool FShaderCompiler::CollectSources(const FShaderSourceRoots& Roots, const FSha
     }
 
     FShaderPreprocessorOutput Preprocessed;
-    if (!Preprocessor.Preprocess(FilePath, StringView(RootText.Data(), RootText.Size()), Preprocessed))
+    if (!Preprocessor.Preprocess(FilePath, FStringView(RootText.Data(), RootText.Size()), Preprocessed))
     {
         OutErrors = Preprocessed.Errors;
         return false;
     }
 
-    for (const String& Path : Recorder.Order)
+    for (const FString& Path : Recorder.Order)
     {
-        String SourcePath;
+        FString SourcePath;
         if (!Roots.MakePortable(Path, SourcePath))
         {
-            OutErrors = String::Printf("'%s' is outside the asset directory, the include directories and the shader's folder, so it cannot be sent to a remote compiler", *Path);
+            OutErrors = FString::Printf("'%s' is outside the asset directory, the include directories and the shader's folder, so it cannot be sent to a remote compiler", *Path);
             return false;
         }
 
@@ -722,34 +722,34 @@ bool FShaderCompiler::CollectSources(const FShaderSourceRoots& Roots, const FSha
     return true;
 }
 
-bool FShaderCompiler::CompileJob(FShaderCompileJob& Job, const String& SourceRoot, const IShaderSourceProvider& Sources, TArray<uint8>& OutShaderCode, TArray<String>& OutDependencies, String& OutMessages)
+bool FShaderCompiler::CompileJob(FShaderCompileJob& Job, const FString& SourceRoot, const IShaderSourceProvider& Sources, TArray<uint8>& OutShaderCode, TArray<FString>& OutDependencies, FString& OutMessages)
 {
-    const String FilePath = SourceRoot + '/' + Job.SourceFile;
+    const FString FilePath = SourceRoot + '/' + Job.SourceFile;
 
     TArray<CHAR_T> Text;
     if (!Sources.ReadFile(FilePath, Text))
     {
-        OutMessages = String::Printf("'%s' was not sent with the request", *Job.SourceFile);
+        OutMessages = FString::Printf("'%s' was not sent with the request", *Job.SourceFile);
         return false;
     }
 
-    TArray<String> Dependencies;
+    TArray<FString> Dependencies;
     Dependencies.Emplace(FilePath);
 
-    TArray<String> IncludeDirs;
-    for (const String& IncludeDir : Job.IncludeDirs)
+    TArray<FString> IncludeDirs;
+    for (const FString& IncludeDir : Job.IncludeDirs)
     {
         IncludeDirs.Add(SourceRoot + '/' + IncludeDir);
     }
 
     const FShaderCompileInfo CompileInfo = Job.ToCompileInfo();
-    const bool bCompiled = CompileLocal(String(Text.Data(), Text.Size()), FilePath, SourceRoot + "/Shaders", TArrayView<const String>(IncludeDirs), CompileInfo,
+    const bool bCompiled = CompileLocal(FString(Text.Data(), Text.Size()), FilePath, SourceRoot + "/Shaders", TArrayView<const FString>(IncludeDirs), CompileInfo,
         &Sources, Job.bHasEngineDefines, OutShaderCode, &Dependencies, &OutMessages);
 
-    const String RootPrefix = SourceRoot + '/';
-    for (const String& Dependency : Dependencies)
+    const FString RootPrefix = SourceRoot + '/';
+    for (const FString& Dependency : Dependencies)
     {
-        const String RelativePath = Dependency.StartsWith(RootPrefix) ? String(Dependency.Data() + RootPrefix.Length(), Dependency.Length() - RootPrefix.Length()) : Dependency;
+        const FString RelativePath = Dependency.StartsWith(RootPrefix) ? FString(Dependency.Data() + RootPrefix.Length(), Dependency.Length() - RootPrefix.Length()) : Dependency;
         if (!OutDependencies.Contains(RelativePath))
         {
             OutDependencies.Emplace(RelativePath);
@@ -760,16 +760,16 @@ bool FShaderCompiler::CompileJob(FShaderCompileJob& Job, const String& SourceRoo
     return bCompiled;
 }
 
-ERemoteCompileStatus FShaderCompiler::CompileOnRemote(FRemoteShaderCompilerClient& Client, const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<String>* OutDependencies)
+ERemoteCompileStatus FShaderCompiler::CompileOnRemote(FRemoteShaderCompilerClient& Client, const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<FString>* OutDependencies)
 {
     FScopedCompileTimer CompileTimer(NumCompiles, TotalCompileTimeNS);
     OutByteCode.Clear();
 
-    const TArray<String>     IncludeDirs = ResolveIncludeDirs(CompileInfo);
-    const FShaderSourceRoots Roots(AssetPath, ResolveSourcePath(Filename), TArrayView<const String>(IncludeDirs));
+    const TArray<FString>    IncludeDirs = ResolveIncludeDirs(CompileInfo);
+    const FShaderSourceRoots Roots(AssetPath, ResolveSourcePath(Filename), TArrayView<const FString>(IncludeDirs));
 
     TArray<FShaderSourceFile> Sources;
-    String                    Errors;
+    FString                   Errors;
     if (!CollectSources(Roots, CompileInfo, Sources, Errors))
     {
         LOG_ERROR("[FShaderCompiler]: FAILED to preprocess '%s' for the remote compiler with error: %s", *Filename, *Errors);
@@ -797,7 +797,7 @@ ERemoteCompileStatus FShaderCompiler::CompileOnRemote(FRemoteShaderCompilerClien
     }
 
     FShaderCodeView CodeView;
-    String          ReadError;
+    FString         ReadError;
 
     if (!FShaderCodeReader::Read(Result.ShaderCode, CodeView, &ReadError) || CodeView.GetOutputLanguage() != CompileInfo.OutputLanguage || CodeView.GetStage() != CompileInfo.ShaderStage)
     {
@@ -807,9 +807,9 @@ ERemoteCompileStatus FShaderCompiler::CompileOnRemote(FRemoteShaderCompilerClien
 
     if (OutDependencies)
     {
-        for (const String& Dependency : Result.Dependencies)
+        for (const FString& Dependency : Result.Dependencies)
         {
-            const String DependencyPath = Roots.MakeLocal(Dependency);
+            const FString DependencyPath = Roots.MakeLocal(Dependency);
             if (!OutDependencies->Contains(DependencyPath))
             {
                 OutDependencies->Emplace(DependencyPath);
@@ -868,9 +868,9 @@ FRemoteShaderCompilerClient* FShaderCompiler::GetRemoteClient() const
         RemoteClient = new FRemoteShaderCompilerClient();
     }
 
-    const String Host    = CVarRemoteHost.GetValue();
-    const uint16 Port    = static_cast<uint16>(CVarRemotePort.GetValue());
-    const String Address = FSocketAddress::FormatHostAndPort(Host, Port);
+    const FString Host    = CVarRemoteHost.GetValue();
+    const uint16  Port    = static_cast<uint16>(CVarRemotePort.GetValue());
+    const FString Address = FSocketAddress::FormatHostAndPort(Host, Port);
 
     const bool bAddressChanged = Address != RemoteClientAddress;
     if (bAddressChanged)
@@ -902,7 +902,7 @@ FRemoteShaderCompilerClient* FShaderCompiler::GetRemoteClient() const
     return RemoteClient;
 }
 
-String FShaderCompiler::DescribeRemoteStatus() const
+FString FShaderCompiler::DescribeRemoteStatus() const
 {
     if (!CVarUseRemote.GetValue())
     {
@@ -912,15 +912,15 @@ String FShaderCompiler::DescribeRemoteStatus() const
     FRemoteShaderCompilerClient* Client = GetRemoteClient();
     if (!Client || !Client->IsConnected())
     {
-        return String::Printf("Not connected to %s, %s", *FSocketAddress::FormatHostAndPort(CVarRemoteHost.GetValue(), static_cast<uint16>(CVarRemotePort.GetValue())),
+        return FString::Printf("Not connected to %s, %s", *FSocketAddress::FormatHostAndPort(CVarRemoteHost.GetValue(), static_cast<uint16>(CVarRemotePort.GetValue())),
             CVarRemoteFallbackToLocal.GetValue() ? "compiling in the engine" : "shaders cannot compile");
     }
 
-    String Local;
-    String Forwarded;
+    FString Local;
+    FString Forwarded;
     for (const FRemoteLanguageInfo& Language : Client->GetLanguages())
     {
-        String& List = Language.bForwarded ? Forwarded : Local;
+        FString& List = Language.bForwarded ? Forwarded : Local;
         if (!List.IsEmpty())
         {
             List += ", ";
@@ -929,15 +929,15 @@ String FShaderCompiler::DescribeRemoteStatus() const
         List += ToString(Language.OutputLanguage);
     }
 
-    String Description = String::Printf("Connected to %s", *Client->GetPeerName());
+    FString Description = FString::Printf("Connected to %s", *Client->GetPeerName());
     if (!Local.IsEmpty())
     {
-        Description += String::Printf(": %s local", *Local);
+        Description += FString::Printf(": %s local", *Local);
     }
 
     if (!Forwarded.IsEmpty())
     {
-        Description += String::Printf("%s%s forwarded", Local.IsEmpty() ? ": " : ", ", *Forwarded);
+        Description += FString::Printf("%s%s forwarded", Local.IsEmpty() ? ": " : ", ", *Forwarded);
     }
 
     return Description;
@@ -958,8 +958,8 @@ void FShaderCompiler::LogCompileStats() const
         Count, Total.AsSeconds(), Total.AsMilliseconds() / static_cast<double>(Count));
 }
 
-bool FShaderCompiler::CompileLocal(const String& ShaderSource, const String& FilePath, const String& ShaderDir, TArrayView<const String> IncludeDirs, const FShaderCompileInfo& CompileInfo,
-    const IShaderSourceProvider* Sources, bool bDefinesAreFinal, TArray<uint8>& OutByteCode, TArray<String>* OutDependencies, String* OutMessages)
+bool FShaderCompiler::CompileLocal(const FString& ShaderSource, const FString& FilePath, const FString& ShaderDir, TArrayView<const FString> IncludeDirs, const FShaderCompileInfo& CompileInfo,
+    const IShaderSourceProvider* Sources, bool bDefinesAreFinal, TArray<uint8>& OutByteCode, TArray<FString>* OutDependencies, FString* OutMessages)
 {
     FScopedCompileTimer CompileTimer(NumCompiles, TotalCompileTimeNS);
 
@@ -969,7 +969,7 @@ bool FShaderCompiler::CompileLocal(const String& ShaderSource, const String& Fil
     FShaderCompilerBackend* Backend = FindBackend(CompileInfo.OutputLanguage);
     if (!Backend)
     {
-        const String Error = String::Printf("No compiler backend can produce %s", ToString(CompileInfo.OutputLanguage));
+        const FString Error = FString::Printf("No compiler backend can produce %s", ToString(CompileInfo.OutputLanguage));
         LOG_ERROR("[FShaderCompiler]: %s", *Error);
 
         if (OutMessages)
@@ -1014,7 +1014,7 @@ bool FShaderCompiler::CompileLocal(const String& ShaderSource, const String& Fil
 
     // Both compilers get source the engine has preprocessed, so macros and includes behave the same for every backend
     FShaderPreprocessor Preprocessor(ShaderDir, Sources);
-    for (const String& IncludeDir : IncludeDirs)
+    for (const FString& IncludeDir : IncludeDirs)
     {
         Preprocessor.AddIncludeDir(IncludeDir);
     }
@@ -1025,11 +1025,11 @@ bool FShaderCompiler::CompileLocal(const String& ShaderSource, const String& Fil
     }
 
     FShaderPreprocessorOutput Preprocessed;
-    const bool bPreprocessed = Preprocessor.Preprocess(FilePath, StringView(ShaderSource), Preprocessed) && Backend->TranslateSource(Preprocessed);
+    const bool bPreprocessed = Preprocessor.Preprocess(FilePath, FStringView(ShaderSource), Preprocessed) && Backend->TranslateSource(Preprocessed);
 
     if (OutDependencies)
     {
-        for (const String& Dependency : Preprocessed.Dependencies)
+        for (const FString& Dependency : Preprocessed.Dependencies)
         {
             if (!OutDependencies->Contains(Dependency))
             {
@@ -1055,10 +1055,10 @@ bool FShaderCompiler::CompileLocal(const String& ShaderSource, const String& Fil
         return false;
     }
 
-    const String PreprocessedSource = Preprocessed.GenerateSource(ShaderDir);
-    const String SourceName         = File::IsUnderDirectory(FilePath, ShaderDir) ? File::MakeRelative(FilePath, ShaderDir) : FilePath;
+    const FString PreprocessedSource = Preprocessed.GenerateSource(ShaderDir);
+    const FString SourceName         = File::IsUnderDirectory(FilePath, ShaderDir) ? File::MakeRelative(FilePath, ShaderDir) : FilePath;
 
-    const String DumpDir = CVarDumpPreprocessedDir.GetValue();
+    const FString DumpDir = CVarDumpPreprocessedDir.GetValue();
     if (!DumpDir.IsEmpty())
     {
         DumpPreprocessedSource(DumpDir, FilePath, CompileInfo, Defines, PreprocessedSource);
@@ -1066,7 +1066,7 @@ bool FShaderCompiler::CompileLocal(const String& ShaderSource, const String& Fil
 
     FShaderCompileRequest Request;
     Request.CompileInfo     = &CompileInfo;
-    Request.Source          = StringView(PreprocessedSource);
+    Request.Source          = FStringView(PreprocessedSource);
     Request.FilePath        = FilePath;
     Request.SourceName      = SourceName;
     Request.IncludeDir      = ShaderDir;
@@ -1088,7 +1088,7 @@ bool FShaderCompiler::CompileLocal(const String& ShaderSource, const String& Fil
 
         if (OutMessages)
         {
-            *OutMessages += Result.Messages.IsEmpty() ? String::Printf("%s failed without reporting an error", Backend->GetName()) : Result.Messages;
+            *OutMessages += Result.Messages.IsEmpty() ? FString::Printf("%s failed without reporting an error", Backend->GetName()) : Result.Messages;
         }
 
         // Callers handle the failure, so only stop when someone is there to look at the error
@@ -1124,7 +1124,7 @@ bool FShaderCompiler::CompileLocal(const String& ShaderSource, const String& Fil
 
     const EShaderCodeFlags CodeFlags = CompileInfo.bDebugInfo ? EShaderCodeFlags::DebugInfo : EShaderCodeFlags::None;
 
-    String WriteError;
+    FString WriteError;
     if (!FShaderCodeWriter::Write(CompileInfo.OutputLanguage, CompileInfo.ShaderStage, CodeFlags, Result.Reflection, Result.ByteCode, OutByteCode, &WriteError))
     {
         LOG_ERROR("[FShaderCompiler]: Failed to write the shader code container for '%s': %s", FilePath.IsEmpty() ? *CompileInfo.EntryPoint : *FilePath, *WriteError);
@@ -1151,7 +1151,7 @@ bool FShaderCompiler::CompileLocal(const String& ShaderSource, const String& Fil
     {
         LOG_INFO("[FShaderCompiler]: Compiled from the following files:");
 
-        for (const String& Dependency : *OutDependencies)
+        for (const FString& Dependency : *OutDependencies)
         {
             LOG_INFO("    %s", *Dependency);
         }
@@ -1173,7 +1173,7 @@ bool FShaderCompiler::CompileLocal(const String& ShaderSource, const String& Fil
     return true;
 }
 
-void FShaderCompiler::DumpPreprocessedSource(const String& DumpDir, const String& FilePath, const FShaderCompileInfo& CompileInfo, const TArray<FShaderDefine>& Defines, const String& Source)
+void FShaderCompiler::DumpPreprocessedSource(const FString& DumpDir, const FString& FilePath, const FShaderCompileInfo& CompileInfo, const TArray<FShaderDefine>& Defines, const FString& Source)
 {
     uint64 DefinesHash = 0;
     for (const FShaderDefine& Define : Defines)
@@ -1182,13 +1182,13 @@ void FShaderCompiler::DumpPreprocessedSource(const String& DumpDir, const String
         HashCombine(DefinesHash, Define.Value);
     }
 
-    const String BaseName = FilePath.IsEmpty() ? String("ShaderSource") : File::ExtractFilenameWithoutExtension(FilePath);
-    const String Filename = String::Printf("%s/%s_%s_%s_%016llx.hlsl", *DumpDir, *BaseName, *CompileInfo.EntryPoint, ToString(CompileInfo.OutputLanguage), DefinesHash);
+    const FString BaseName = FilePath.IsEmpty() ? FString("ShaderSource") : File::ExtractFilenameWithoutExtension(FilePath);
+    const FString Filename = FString::Printf("%s/%s_%s_%s_%016llx.hlsl", *DumpDir, *BaseName, *CompileInfo.EntryPoint, ToString(CompileInfo.OutputLanguage), DefinesHash);
 
-    String Contents = String::Printf("// Source: %s\n// Entry: %s\n// Stage: %s\n// Model: %s\n", *FilePath, *CompileInfo.EntryPoint, ToString(CompileInfo.ShaderStage), ToString(CompileInfo.ShaderModel));
+    FString Contents = FString::Printf("// Source: %s\n// Entry: %s\n// Stage: %s\n// Model: %s\n", *FilePath, *CompileInfo.EntryPoint, ToString(CompileInfo.ShaderStage), ToString(CompileInfo.ShaderModel));
     for (const FShaderDefine& Define : Defines)
     {
-        Contents += String::Printf("// Define: %s=%s\n", *Define.Define, *Define.Value);
+        Contents += FString::Printf("// Define: %s=%s\n", *Define.Define, *Define.Value);
     }
 
     Contents += Source;
@@ -1208,7 +1208,7 @@ void FShaderCompiler::DumpPreprocessedSource(const String& DumpDir, const String
     }
 }
 
-bool FShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const String& Filename)
+bool FShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const FString& Filename)
 {
     // Permutations of one shader all dump to the same path, so concurrent compiles would otherwise interleave in the file.
     TScopedLock Lock(DumpCS);

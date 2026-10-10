@@ -8,8 +8,8 @@
 
 struct FCompletionCandidate
 {
-    String Name;
-    String Kind; // "command", "variable", or "remote console command" for the ':' commands
+    FString Name;
+    FString Kind; // "command", "variable", or "remote console command" for the ':' commands
 };
 
 class FConsoleLineEditor final : public FRunnable
@@ -37,18 +37,18 @@ public:
     }
 
     /** @brief Takes the oldest line the user submitted. */
-    bool PopLine(String& OutLine);
+    bool PopLine(FString& OutLine);
 
     /** @return True while submitted lines are waiting for PopLine. */
     NODISCARD bool HasPendingLines();
 
     /** @brief Prints above the line being edited, any thread. */
-    void Print(ELogSeverity Severity, const String& Message);
+    void Print(ELogSeverity Severity, const FString& Message);
 
     /** @brief Prints above the line being edited in the default color, any thread. */
-    void Print(const String& Message);
+    void Print(const FString& Message);
 
-    void SetPrompt(const String& InPrompt);
+    void SetPrompt(const FString& InPrompt);
 
     /** @brief Replaces the console object names that Tab completes. */
     void SetCompletions(TArray<FCompletionCandidate>&& InCandidates);
@@ -97,15 +97,15 @@ private:
     void RedrawInputLine();
 
     FCriticalSection             EditorCS;
-    String                       Prompt;
-    String                       Buffer;
+    FString                      Prompt;
+    FString                      Buffer;
     int32                        CursorPosition;
-    TArray<String>               History;
+    TArray<FString>              History;
     int32                        HistoryIndex;
-    String                       HistoryDraft;
+    FString                      HistoryDraft;
     TArray<FCompletionCandidate> Candidates;
-    String                       LastListedBuffer;
-    TArray<String>               SubmittedLines;
+    FString                      LastListedBuffer;
+    TArray<FString>              SubmittedLines;
     AtomicBool                   bFinished;
     AtomicBool                   bCompletionRefreshRequested;
     bool                         bIsInteractive;

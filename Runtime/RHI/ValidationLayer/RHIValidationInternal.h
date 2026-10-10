@@ -12,7 +12,7 @@ namespace RHIValidationInternal
     void LogCallStack(const CHAR_T* Filename, int32 Line);
 
     ERHIType SafeGetRHIType(FRHIDevice* RealRHI);
-    String   GetResourceIdentity(const FRHIResource* Resource);
+    FString  GetResourceIdentity(const FRHIResource* Resource);
 
     bool IsBufferValidAsCopyDestination(const FRHIBufferDesc& BufferDesc);
     bool IsBufferValidAsCopySource(const FRHIBufferDesc& BufferDesc);

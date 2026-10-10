@@ -472,7 +472,7 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
 #endif
 }
 
-void FD3D12GeometryAccelerationStructureRHI::SetDebugName(const String& InName)
+void FD3D12GeometryAccelerationStructureRHI::SetDebugName(const FString& InName)
 {
     FD3D12Resource* D3D12Resource = GetResource();
     if (D3D12Resource)
@@ -481,7 +481,7 @@ void FD3D12GeometryAccelerationStructureRHI::SetDebugName(const String& InName)
     }
 }
 
-void FD3D12GeometryAccelerationStructureRHI::GetDebugName(String& OutDebugName) const
+void FD3D12GeometryAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
 {
     if (FD3D12Resource* D3D12Resource = GetResource())
     {
@@ -743,7 +743,7 @@ bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext
 #endif
 }
 
-void FD3D12SceneAccelerationStructureRHI::SetDebugName(const String& InName)
+void FD3D12SceneAccelerationStructureRHI::SetDebugName(const FString& InName)
 {
     FD3D12Resource* D3D12Resource = GetResource();
     if (D3D12Resource)
@@ -752,7 +752,7 @@ void FD3D12SceneAccelerationStructureRHI::SetDebugName(const String& InName)
     }
 }
 
-void FD3D12SceneAccelerationStructureRHI::GetDebugName(String& OutDebugName) const
+void FD3D12SceneAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
 {
     if (FD3D12Resource* D3D12Resource = GetResource())
     {

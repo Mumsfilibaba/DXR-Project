@@ -26,8 +26,8 @@ public:
     virtual FRHIRenderTargetView*    GetRenderTargetView()    const override final;
     virtual FRHIDepthStencilView*    GetDepthStencilView()    const override final;
 
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     bool Initialize(FD3D12CommandContext* InCommandContext, ERHIResourceState InInitialAccess, const IRHITextureData* InInitialData);
 

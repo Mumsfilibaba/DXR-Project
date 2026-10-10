@@ -170,7 +170,7 @@ void FVulkanQueryPool::ResetPool()
     }
 }
 
-void FVulkanQueryPool::SetDebugName(const String& InName)
+void FVulkanQueryPool::SetDebugName(const FString& InName)
 {
     if (VULKAN_CHECK_HANDLE(QueryPool))
     {
@@ -244,7 +244,7 @@ FVulkanQueryPool* FVulkanQueryPoolManager::ObtainPool()
             return nullptr;
         }
 
-        NewPool->SetDebugName(String::Printf("QueryPool [%d]", Index));
+        NewPool->SetDebugName(FString::Printf("QueryPool [%d]", Index));
         return NewPool;
     });
 

@@ -161,7 +161,7 @@ struct FRHIDevice
      * @param InExportName The name of the export.
      * @return The ray tracing shader identifier.
      */
-    virtual FRHIRayTracingShaderIdentifier GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const String& InExportName) = 0;
+    virtual FRHIRayTracingShaderIdentifier GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const FString& InExportName) = 0;
 
     /**
      * @brief Validates whether previously-serialized acceleration-structure bytes can be deserialized on this device.
@@ -449,7 +449,7 @@ struct FRHIDevice
      * @brief Gets the adapter name.
      * @return A string with the adapter name.
      */
-    virtual String GetAdapterName() const = 0;
+    virtual FString GetAdapterName() const = 0;
 
     /**
      * @brief Gets the current RHI's API type.

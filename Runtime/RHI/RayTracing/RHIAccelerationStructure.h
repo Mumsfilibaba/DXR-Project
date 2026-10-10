@@ -96,8 +96,8 @@ public:
     /** @return D3D12: ID3D12Resource*. Vulkan: VkAccelerationStructureKHR or VkBuffer. Metal: id<MTLAccelerationStructure>. Null: nullptr. */
     virtual void* GetRHINativeResource() const = 0;
 
-    virtual void SetDebugName(const String& InName) = 0;
-    virtual void GetDebugName(String& OutDebugName) const = 0;
+    virtual void SetDebugName(const FString& InName) = 0;
+    virtual void GetDebugName(FString& OutDebugName) const = 0;
 
     NODISCARD EAccelerationStructureBuildFlags GetFlags() const
     {

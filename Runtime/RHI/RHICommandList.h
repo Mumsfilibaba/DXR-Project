@@ -605,9 +605,9 @@ public:
         EmplaceCommand<FRHICommandSetSwapChainHDRMetadata>(SwapChain, Metadata);
     }
 
-    FORCEINLINE void PushEvent(const StringView& Name) noexcept
+    FORCEINLINE void PushEvent(const FStringView& Name) noexcept
     {
-        StringView AllocatedName = AllocateString(*Name);
+        FStringView AllocatedName = AllocateString(*Name);
         EmplaceCommand<FRHICommandPushEvent>(AllocatedName);
     }
 
@@ -632,7 +632,7 @@ private:
 
 struct FRHIScopedEvent
 {
-    FORCEINLINE FRHIScopedEvent(FRHICommandList& InCommandList, const StringView& Name)
+    FORCEINLINE FRHIScopedEvent(FRHICommandList& InCommandList, const FStringView& Name)
         : CommandList(InCommandList)
     {
         CommandList.PushEvent(Name);

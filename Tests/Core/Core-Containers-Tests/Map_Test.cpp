@@ -87,13 +87,13 @@ bool TMap_Test()
 
     TEST_SECTION("String keys (non-trivial key hashing)");
     {
-        TMap<String, int32> StringMap;
-        StringMap.Add(String("one"), 1);
-        StringMap.Add(String("two"), 2);
+        TMap<FString, int32> StringMap;
+        StringMap.Add(FString("one"), 1);
+        StringMap.Add(FString("two"), 2);
 
-        TEST_EXPECT(StringMap.Contains(String("one")));
+        TEST_EXPECT(StringMap.Contains(FString("one")));
 
-        const int32* OneValue = StringMap.Find(String("one"));
+        const int32* OneValue = StringMap.Find(FString("one"));
         TEST_EXPECT(OneValue != nullptr && *OneValue == 1);
     }
 
@@ -335,11 +335,11 @@ bool TMap_Test()
         TEST_EXPECT(!Map.IsHeapAllocated());
         TEST_EXPECT_EQ(*Moved.Find(7), 70);
 
-        TInlineMap<String, int32, 4> Strings;
-        Strings.Add(String("alpha"), 1);
-        Strings.Add(String("beta"), 2);
+        TInlineMap<FString, int32, 4> Strings;
+        Strings.Add(FString("alpha"), 1);
+        Strings.Add(FString("beta"), 2);
         TEST_EXPECT(!Strings.IsHeapAllocated());
-        TEST_EXPECT_EQ(*Strings.Find(String("beta")), 2);
+        TEST_EXPECT_EQ(*Strings.Find(FString("beta")), 2);
 
         Moved.Reset();
         TEST_EXPECT(!Moved.IsHeapAllocated());

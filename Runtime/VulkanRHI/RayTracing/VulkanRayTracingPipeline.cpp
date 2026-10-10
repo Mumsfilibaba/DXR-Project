@@ -136,7 +136,7 @@ bool FVulkanRayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineS
 
         FVulkanRayTracingShader* VulkanRayGen = GetVulkanRayTracingShader(RayGen);
         
-        const String RayGenName = VulkanRayGen ? VulkanRayGen->GetIdentifier() : String();
+        const FString RayGenName = VulkanRayGen ? VulkanRayGen->GetIdentifier() : FString();
         GroupNames.Add(RayGenName);
 
         GetExportNameArray(ERayTracingShaderRecordKind::RayGeneration).Emplace(RayGenName);
@@ -158,7 +158,7 @@ bool FVulkanRayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineS
 
         FVulkanRayTracingShader* VulkanMiss = GetVulkanRayTracingShader(Miss);
         
-        const String MissName = VulkanMiss ? VulkanMiss->GetIdentifier() : String();
+        const FString MissName = VulkanMiss ? VulkanMiss->GetIdentifier() : FString();
         GroupNames.Add(MissName);
 
         GetExportNameArray(ERayTracingShaderRecordKind::Miss).Emplace(MissName);
@@ -228,7 +228,7 @@ bool FVulkanRayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineS
 
         FVulkanRayTracingShader* VulkanCallable = GetVulkanRayTracingShader(Callable);
 
-        const String CallableName = VulkanCallable ? VulkanCallable->GetIdentifier() : String();
+        const FString CallableName = VulkanCallable ? VulkanCallable->GetIdentifier() : FString();
         GroupNames.Add(CallableName);
 
         GetExportNameArray(ERayTracingShaderRecordKind::Callable).Emplace(CallableName);
@@ -303,7 +303,7 @@ bool FVulkanRayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineS
 #endif
 }
 
-const uint8* FVulkanRayTracingPipelineStateRHI::GetShaderGroupHandle(const String& ExportName) const
+const uint8* FVulkanRayTracingPipelineStateRHI::GetShaderGroupHandle(const FString& ExportName) const
 {
     for (int32 Index = 0; Index < GroupNames.Size(); ++Index)
     {
@@ -320,12 +320,12 @@ const uint8* FVulkanRayTracingPipelineStateRHI::GetShaderGroupHandle(const Strin
     return nullptr;
 }
 
-void FVulkanRayTracingPipelineStateRHI::GetExportName(ERayTracingShaderRecordKind Kind, uint32 RecordIndex, String& OutExportName) const
+void FVulkanRayTracingPipelineStateRHI::GetExportName(ERayTracingShaderRecordKind Kind, uint32 RecordIndex, FString& OutExportName) const
 {
-    const TArray<String>& Names = GetExportNameArray(Kind);
+    const TArray<FString>& Names = GetExportNameArray(Kind);
     if (Names.IsEmpty())
     {
-        OutExportName = String();
+        OutExportName = FString();
         return;
     }
 
@@ -335,7 +335,7 @@ void FVulkanRayTracingPipelineStateRHI::GetExportName(ERayTracingShaderRecordKin
         return;
     }
 
-    OutExportName = (Kind == ERayTracingShaderRecordKind::HitGroup) ? Names[0] : String();
+    OutExportName = (Kind == ERayTracingShaderRecordKind::HitGroup) ? Names[0] : FString();
 }
 
 uint32 FVulkanRayTracingPipelineStateRHI::GetNumExportNames(ERayTracingShaderRecordKind Kind) const
@@ -348,7 +348,7 @@ void* FVulkanRayTracingPipelineStateRHI::GetRHINativeState() const
     return reinterpret_cast<void*>(GetVkPipeline());
 }
 
-void FVulkanRayTracingPipelineStateRHI::SetDebugName(const String& InName)
+void FVulkanRayTracingPipelineStateRHI::SetDebugName(const FString& InName)
 {
     FVulkanPipeline::SetDebugName(InName);
 #if VULKAN_STORE_DEBUG_NAMES
@@ -356,7 +356,7 @@ void FVulkanRayTracingPipelineStateRHI::SetDebugName(const String& InName)
 #endif
 }
 
-void FVulkanRayTracingPipelineStateRHI::GetDebugName(String& OutDebugName) const
+void FVulkanRayTracingPipelineStateRHI::GetDebugName(FString& OutDebugName) const
 {
 #if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;

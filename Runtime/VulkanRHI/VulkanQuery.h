@@ -135,7 +135,7 @@ public:
 
     bool Initialize();
     void ResetPool();
-    void SetDebugName(const String& InName);
+    void SetDebugName(const FString& InName);
 
     void ExtendResetRange(int32 EndQueryIndex)
     {
@@ -150,7 +150,7 @@ public:
         return QueryPool;
     }
 
-    void GetDebugName(String& OutDebugName) const
+    void GetDebugName(FString& OutDebugName) const
     {
     #if VULKAN_STORE_DEBUG_NAMES
         OutDebugName = DebugName;
@@ -194,7 +194,7 @@ private:
     VkQueryPool           QueryPool;
     int32                 NumQueriesToReset;
 #if VULKAN_STORE_DEBUG_NAMES
-    String                DebugName;
+    FString                DebugName;
 #endif
 #if !VULKAN_USE_CPU_QUERY_RESOLVE
     FVulkanMemoryLocation ReadbackLocation;

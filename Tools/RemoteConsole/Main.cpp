@@ -47,7 +47,7 @@ static int32 ToExitCode(ERemoteConsoleExitCode Code)
     return static_cast<int32>(Code);
 }
 
-static void Print(ELogSeverity Severity, const String& Message)
+static void Print(ELogSeverity Severity, const FString& Message)
 {
     if (GLineEditor)
     {
@@ -59,7 +59,7 @@ static void Print(ELogSeverity Severity, const String& Message)
     }
 }
 
-static void Print(const String& Message)
+static void Print(const FString& Message)
 {
     if (GLineEditor)
     {
@@ -78,15 +78,15 @@ static uint64 GetMilliseconds()
 
 struct FRemoteConsoleOptions
 {
-    String            Host                = RemoteConsoleProtocol::LoopbackAddress;
-    uint16            Port                = RemoteConsoleProtocol::DefaultPort;
-    uint32            TimeoutMilliseconds = GDefaultTimeoutMilliseconds;
-    uint32            WaitSeconds         = 0;     // Keeps retrying the connection this long while the engine boots
-    bool              bJsonOutput         = false; // Prints the raw response lines instead of formatted text
-    bool              bShowHelp           = false;
-    TArray<String>    ExecCommands;                // From -exec="CmdA;CmdB", which may be given more than once
-    TOptional<String> ListFilter;                  // From -list or -list=Filter
-    String            GetName;                     // From -get=Name
+    FString            Host                = RemoteConsoleProtocol::LoopbackAddress;
+    uint16             Port                = RemoteConsoleProtocol::DefaultPort;
+    uint32             TimeoutMilliseconds = GDefaultTimeoutMilliseconds;
+    uint32             WaitSeconds         = 0;     // Keeps retrying the connection this long while the engine boots
+    bool               bJsonOutput         = false; // Prints the raw response lines instead of formatted text
+    bool               bShowHelp           = false;
+    TArray<FString>    ExecCommands;               // From -exec="CmdA;CmdB", which may be given more than once
+    TOptional<FString> ListFilter;                 // From -list or -list=Filter
+    FString            GetName;                    // From -get=Name
 
     NODISCARD bool IsOneShot() const
     {
@@ -110,19 +110,19 @@ public:
     ~FRemoteConsoleConnection();
 
     /** @brief Connects and reads the greeting, retrying for WaitSeconds while nothing accepts. Prints nothing. */
-    EConnectResult Connect(const String& Host, uint16 Port, uint32 WaitSeconds, uint32 AttemptMilliseconds, uint32 TimeoutMilliseconds);
+    EConnectResult Connect(const FString& Host, uint16 Port, uint32 WaitSeconds, uint32 AttemptMilliseconds, uint32 TimeoutMilliseconds);
 
     /** @return The id the response will carry, or -1 when the send failed */
     int64 SendRequest(const CHAR_T* Type, FJsonValue&& Payload);
 
     /** @brief Pumps the socket until the result with RequestId arrives. Log events received meanwhile are printed. */
-    bool WaitForResult(int64 RequestId, uint32 TimeoutMilliseconds, FJsonValue& OutResult, String& OutLine);
+    bool WaitForResult(int64 RequestId, uint32 TimeoutMilliseconds, FJsonValue& OutResult, FString& OutLine);
 
     /** @brief Interactive mode. Reads whatever has arrived within the timeout and prints log events. */
     bool Poll(uint32 TimeoutMilliseconds);
 
     NODISCARD const FJsonValue& GetHello() const { return Hello; }
-    NODISCARD const String& GetRejectReason() const { return RejectReason; }
+    NODISCARD const FString& GetRejectReason() const { return RejectReason; }
     NODISCARD bool IsClosed() const { return bIsClosed; }
 
     /** @brief Receives results that arrive while nothing is waiting for their id, such as a background 'list'. */
@@ -134,19 +134,19 @@ public:
     void SetJsonOutput(bool bInJsonOutput) { bJsonOutput = bInJsonOutput; }
 
 private:
-    bool ReadNextMessage(uint64 DeadlineMilliseconds, FJsonValue& OutMessage, String& OutLine);
+    bool ReadNextMessage(uint64 DeadlineMilliseconds, FJsonValue& OutMessage, FString& OutLine);
     void Receive(uint32 TimeoutMilliseconds);
-    void PrintEvent(const FJsonValue& Event, const String& Line);
-    bool SendAll(const String& Line);
+    void PrintEvent(const FJsonValue& Event, const FString& Line);
+    bool SendAll(const FString& Line);
 
-    void HandleMessage(const FJsonValue& Message, const String& Line);
+    void HandleMessage(const FJsonValue& Message, const FString& Line);
 
     FNetworkSocket                      Socket;
-    String                              ReceiveBuffer;
-    TArray<String>                      PendingLines;
+    FString                             ReceiveBuffer;
+    TArray<FString>                     PendingLines;
     int64                               NextRequestId;
     FJsonValue                          Hello;
-    String                              RejectReason;
+    FString                             RejectReason;
     TFunction<void(const FJsonValue&)>  OnUnsolicitedResult;
     bool                                bJsonOutput;
     bool                                bIsClosed;
@@ -169,7 +169,7 @@ FRemoteConsoleConnection::FRemoteConsoleConnection()
 
 FRemoteConsoleConnection::~FRemoteConsoleConnection() = default;
 
-EConnectResult FRemoteConsoleConnection::Connect(const String& Host, uint16 Port, uint32 WaitSeconds, uint32 AttemptMilliseconds, uint32 TimeoutMilliseconds)
+EConnectResult FRemoteConsoleConnection::Connect(const FString& Host, uint16 Port, uint32 WaitSeconds, uint32 AttemptMilliseconds, uint32 TimeoutMilliseconds)
 {
     const uint64 RetryDeadline = GetMilliseconds() + (static_cast<uint64>(WaitSeconds) * GMillisecondsPerSecond);
 
@@ -196,18 +196,18 @@ EConnectResult FRemoteConsoleConnection::Connect(const String& Host, uint16 Port
     }
 
     FJsonValue Greeting;
-    String     Line;
+    FString    Line;
     if (!ReadNextMessage(GetMilliseconds() + TimeoutMilliseconds, Greeting, Line))
     {
         Socket.Close();
         return EConnectResult::NoGreeting;
     }
 
-    const String Type = Greeting.Find("type") ? Greeting.Find("type")->GetStringOr("") : String();
+    const FString Type = Greeting.Find("type") ? Greeting.Find("type")->GetStringOr("") : FString();
     if (Type == RemoteConsoleProtocol::TypeRejected)
     {
         const FJsonValue* Reason = Greeting.Find("reason");
-        RejectReason = Reason ? Reason->GetStringOr("") : String("no reason given");
+        RejectReason = Reason ? Reason->GetStringOr("") : FString("no reason given");
         Socket.Close();
         return EConnectResult::Rejected;
     }
@@ -233,12 +233,12 @@ int64 FRemoteConsoleConnection::SendRequest(const CHAR_T* Type, FJsonValue&& Pay
     return SendAll(RemoteConsoleProtocol::ToLine(Request)) ? RequestId : -1;
 }
 
-bool FRemoteConsoleConnection::WaitForResult(int64 RequestId, uint32 TimeoutMilliseconds, FJsonValue& OutResult, String& OutLine)
+bool FRemoteConsoleConnection::WaitForResult(int64 RequestId, uint32 TimeoutMilliseconds, FJsonValue& OutResult, FString& OutLine)
 {
     const uint64 Deadline = GetMilliseconds() + TimeoutMilliseconds;
 
     FJsonValue Message;
-    String     Line;
+    FString    Line;
     while (ReadNextMessage(Deadline, Message, Line))
     {
         const FJsonValue* Type = Message.Find("type");
@@ -261,7 +261,7 @@ bool FRemoteConsoleConnection::Poll(uint32 TimeoutMilliseconds)
     const uint64 Deadline = GetMilliseconds() + TimeoutMilliseconds;
 
     FJsonValue Message;
-    String     Line;
+    FString    Line;
     while (ReadNextMessage(Deadline, Message, Line))
     {
         HandleMessage(Message, Line);
@@ -270,7 +270,7 @@ bool FRemoteConsoleConnection::Poll(uint32 TimeoutMilliseconds)
     return !bIsClosed;
 }
 
-void FRemoteConsoleConnection::HandleMessage(const FJsonValue& Message, const String& Line)
+void FRemoteConsoleConnection::HandleMessage(const FJsonValue& Message, const FString& Line)
 {
     const FJsonValue* Type = Message.Find("type");
     if (Type && (Type->GetStringOr("") == RemoteConsoleProtocol::TypeResult))
@@ -286,17 +286,17 @@ void FRemoteConsoleConnection::HandleMessage(const FJsonValue& Message, const St
     PrintEvent(Message, Line);
 }
 
-bool FRemoteConsoleConnection::ReadNextMessage(uint64 DeadlineMilliseconds, FJsonValue& OutMessage, String& OutLine)
+bool FRemoteConsoleConnection::ReadNextMessage(uint64 DeadlineMilliseconds, FJsonValue& OutMessage, FString& OutLine)
 {
     for (;;)
     {
         while (!PendingLines.IsEmpty())
         {
-            String Line = ::Move(PendingLines[0]);
+            FString Line = ::Move(PendingLines[0]);
             PendingLines.RemoveAt(0);
 
             FJsonReader Reader;
-            if (Reader.Parse(StringView(Line.Data(), Line.Length()), OutMessage) && OutMessage.IsObject())
+            if (Reader.Parse(FStringView(Line.Data(), Line.Length()), OutMessage) && OutMessage.IsObject())
             {
                 OutLine = ::Move(Line);
                 return true;
@@ -349,7 +349,7 @@ void FRemoteConsoleConnection::Receive(uint32 TimeoutMilliseconds)
     RemoteConsoleProtocol::ExtractLines(ReceiveBuffer, PendingLines);
 }
 
-void FRemoteConsoleConnection::PrintEvent(const FJsonValue& Event, const String& Line)
+void FRemoteConsoleConnection::PrintEvent(const FJsonValue& Event, const FString& Line)
 {
     const FJsonValue* Type = Event.Find("type");
     if (!Type || (Type->GetStringOr("") != RemoteConsoleProtocol::TypeLog))
@@ -359,7 +359,7 @@ void FRemoteConsoleConnection::PrintEvent(const FJsonValue& Event, const String&
 
     if (bJsonOutput)
     {
-        String TrimmedLine = Line;
+        FString TrimmedLine = Line;
         TrimmedLine.TrimInline();
         Print(ELogSeverity::Info, TrimmedLine);
         return;
@@ -372,10 +372,10 @@ void FRemoteConsoleConnection::PrintEvent(const FJsonValue& Event, const String&
     }
 
     const FJsonValue* Message = Event.Find("message");
-    Print(Severity, Message ? Message->GetStringOr("") : String());
+    Print(Severity, Message ? Message->GetStringOr("") : FString());
 }
 
-bool FRemoteConsoleConnection::SendAll(const String& Line)
+bool FRemoteConsoleConnection::SendAll(const FString& Line)
 {
     int32 Offset = 0;
     while (Socket.IsOpen() && (Offset < Line.Length()))
@@ -399,7 +399,7 @@ bool FRemoteConsoleConnection::SendAll(const String& Line)
     return Socket.IsOpen();
 }
 
-static bool ParseUnsigned(const String& Text, uint32 MaxValue, uint32& OutValue)
+static bool ParseUnsigned(const FString& Text, uint32 MaxValue, uint32& OutValue)
 {
     int64 Value = 0;
     if (Text.IsEmpty() || !TTypeFromString<int64>::FromString(Text, Value) || (Value < 0) || (Value > static_cast<int64>(MaxValue)))
@@ -411,7 +411,7 @@ static bool ParseUnsigned(const String& Text, uint32 MaxValue, uint32& OutValue)
     return true;
 }
 
-static void SplitCommands(const String& Text, TArray<String>& OutCommands)
+static void SplitCommands(const FString& Text, TArray<FString>& OutCommands)
 {
     int32 Start = 0;
     while (Start <= Text.Length())
@@ -422,7 +422,7 @@ static void SplitCommands(const String& Text, TArray<String>& OutCommands)
             ++End;
         }
 
-        String Command(Text.Data() + Start, End - Start);
+        FString Command(Text.Data() + Start, End - Start);
         Command.TrimInline();
         if (!Command.IsEmpty())
         {
@@ -433,12 +433,12 @@ static void SplitCommands(const String& Text, TArray<String>& OutCommands)
     }
 }
 
-static bool IsOptionArgument(const String& Argument)
+static bool IsOptionArgument(const FString& Argument)
 {
     return !Argument.IsEmpty() && (Argument[0] == '-');
 }
 
-static bool OptionTakesValue(const String& Name)
+static bool OptionTakesValue(const FString& Name)
 {
     static const CHAR_T* ValueOptions[] = { "host", "port", "timeout", "wait", "exec", "list", "get" };
     for (const CHAR_T* ValueOption : ValueOptions)
@@ -454,10 +454,10 @@ static bool OptionTakesValue(const String& Name)
 
 static bool ParseOptions(FRemoteConsoleOptions& OutOptions)
 {
-    const TArray<String>& Arguments = GProgramArgs;
+    const TArray<FString>& Arguments = GProgramArgs;
     for (int32 ArgumentIndex = 0; ArgumentIndex < Arguments.Size(); ++ArgumentIndex)
     {
-        const String& Argument = Arguments[ArgumentIndex];
+        const FString& Argument = Arguments[ArgumentIndex];
 
         int32 NameStart = 0;
         while ((NameStart < Argument.Length()) && (Argument[NameStart] == '-'))
@@ -467,7 +467,7 @@ static bool ParseOptions(FRemoteConsoleOptions& OutOptions)
 
         if (NameStart == 0)
         {
-            Print(ELogSeverity::Error, String::Printf("[RemoteConsole] Unexpected argument '%s'", *Argument));
+            Print(ELogSeverity::Error, FString::Printf("[RemoteConsole] Unexpected argument '%s'", *Argument));
             return false;
         }
 
@@ -477,9 +477,9 @@ static bool ParseOptions(FRemoteConsoleOptions& OutOptions)
             ++NameEnd;
         }
 
-        const String Name(Argument.Data() + NameStart, NameEnd - NameStart);
-        bool         bHasValue = NameEnd < Argument.Length();
-        String       Value     = bHasValue ? String(Argument.Data() + NameEnd + 1, Argument.Length() - NameEnd - 1) : String();
+        const FString Name(Argument.Data() + NameStart, NameEnd - NameStart);
+        bool          bHasValue = NameEnd < Argument.Length();
+        FString       Value     = bHasValue ? FString(Argument.Data() + NameEnd + 1, Argument.Length() - NameEnd - 1) : FString();
 
         if (bHasValue)
         {
@@ -533,7 +533,7 @@ static bool ParseOptions(FRemoteConsoleOptions& OutOptions)
         }
         else
         {
-            Print(ELogSeverity::Error, String::Printf("[RemoteConsole] Unknown or malformed option '%s'", *Argument));
+            Print(ELogSeverity::Error, FString::Printf("[RemoteConsole] Unknown or malformed option '%s'", *Argument));
             return false;
         }
     }
@@ -543,7 +543,7 @@ static bool ParseOptions(FRemoteConsoleOptions& OutOptions)
 
 static void PrintUsage()
 {
-    Print(String::Printf(
+    Print(FString::Printf(
         "Usage: RemoteConsole [options]\n"
         "\n"
         "Runs console commands in a running engine as if they were typed into its console.\n"
@@ -579,7 +579,7 @@ static void PrintUsage()
 }
 
 /** @return True when Line is Command, alone or followed by a space, with whatever follows trimmed into OutArgument. */
-static bool ParseCommandArgument(const String& Line, const CHAR_T* Command, String& OutArgument)
+static bool ParseCommandArgument(const FString& Line, const CHAR_T* Command, FString& OutArgument)
 {
     const int32 CommandLength = CString::Strlen(Command);
     if (!Line.StartsWith(Command, CommandLength, EStringCaseType::NoCase))
@@ -592,7 +592,7 @@ static bool ParseCommandArgument(const String& Line, const CHAR_T* Command, Stri
         return false;
     }
 
-    OutArgument = String(Line.Data() + CommandLength, Line.Length() - CommandLength);
+    OutArgument = FString(Line.Data() + CommandLength, Line.Length() - CommandLength);
     OutArgument.TrimInline();
     return true;
 }
@@ -611,7 +611,7 @@ static void PrintError(const FJsonValue& Result)
     }
 }
 
-static void PrintExecOutput(const FJsonValue& Result, const String& EchoToSkip)
+static void PrintExecOutput(const FJsonValue& Result, const FString& EchoToSkip)
 {
     if (const FJsonValue* Output = Result.Find("output"))
     {
@@ -626,7 +626,7 @@ static void PrintExecOutput(const FJsonValue& Result, const String& EchoToSkip)
             }
 
             const FJsonValue* Message = Line.Find("message");
-            const String      Text    = Message ? Message->GetStringOr("") : String();
+            const FString     Text    = Message ? Message->GetStringOr("") : FString();
 
             if ((Index == 0) && !EchoToSkip.IsEmpty() && (Text == EchoToSkip))
             {
@@ -657,19 +657,19 @@ static void PrintListResult(const FJsonValue& Result)
         const FJsonValue* Help  = Object.Find("help");
         const FJsonValue* Value = Object.Find("value");
 
-        const String NameText = Name ? Name->GetStringOr("") : String();
-        const String HelpText = Help ? Help->GetStringOr("") : String();
+        const FString NameText = Name ? Name->GetStringOr("") : FString();
+        const FString HelpText = Help ? Help->GetStringOr("") : FString();
         if (Value)
         {
-            Print(ELogSeverity::Info, String::Printf("%s = %s    %s", *NameText, *Value->GetStringOr(""), *HelpText));
+            Print(ELogSeverity::Info, FString::Printf("%s = %s    %s", *NameText, *Value->GetStringOr(""), *HelpText));
         }
         else
         {
-            Print(ELogSeverity::Info, String::Printf("%s    %s", *NameText, *HelpText));
+            Print(ELogSeverity::Info, FString::Printf("%s    %s", *NameText, *HelpText));
         }
     }
 
-    Print(ELogSeverity::Info, String::Printf("%d console objects", Objects->Num()));
+    Print(ELogSeverity::Info, FString::Printf("%d console objects", Objects->Num()));
 }
 
 static void PrintGetResult(const FJsonValue& Result)
@@ -684,7 +684,7 @@ static void PrintGetResult(const FJsonValue& Result)
         return;
     }
 
-    Print(ELogSeverity::Info, String::Printf("%s = %s (%s, set by %s)",
+    Print(ELogSeverity::Info, FString::Printf("%s = %s (%s, set by %s)",
         *Name->GetStringOr(""),
         *Value->GetStringOr(""),
         ValueType ? *ValueType->GetStringOr("") : "unknown",
@@ -710,7 +710,7 @@ static ERequestOutcome RunRequest(FRemoteConsoleConnection& Connection, const FR
     }
 
     FJsonValue Result;
-    String     ResultLine;
+    FString    ResultLine;
     if (!Connection.WaitForResult(RequestId, Options.TimeoutMilliseconds, Result, ResultLine))
     {
         if (Connection.IsClosed())
@@ -719,7 +719,7 @@ static ERequestOutcome RunRequest(FRemoteConsoleConnection& Connection, const FR
             return ERequestOutcome::ConnectionLost;
         }
 
-        Print(ELogSeverity::Error, String::Printf("[RemoteConsole] No response within %u ms (raise it with -timeout)", Options.TimeoutMilliseconds));
+        Print(ELogSeverity::Error, FString::Printf("[RemoteConsole] No response within %u ms (raise it with -timeout)", Options.TimeoutMilliseconds));
         return ERequestOutcome::Failed;
     }
 
@@ -735,12 +735,12 @@ static ERequestOutcome RunRequest(FRemoteConsoleConnection& Connection, const FR
     return CheckResult(Result) ? ERequestOutcome::Succeeded : ERequestOutcome::Failed;
 }
 
-static ERequestOutcome RunExec(FRemoteConsoleConnection& Connection, const FRemoteConsoleOptions& Options, const String& Command, bool bSkipEcho)
+static ERequestOutcome RunExec(FRemoteConsoleConnection& Connection, const FRemoteConsoleOptions& Options, const FString& Command, bool bSkipEcho)
 {
     FJsonValue Payload = FJsonValue::MakeObject();
     Payload.AddMember("command", FJsonValue(Command));
 
-    const String EchoToSkip = bSkipEcho ? Command : String();
+    const FString EchoToSkip = bSkipEcho ? Command : FString();
     const FPrintResult PrintResult = Connection.IsLogSubscribed()
         ? FPrintResult(&PrintError)
         : FPrintResult([EchoToSkip](const FJsonValue& Result) { PrintExecOutput(Result, EchoToSkip); });
@@ -748,14 +748,14 @@ static ERequestOutcome RunExec(FRemoteConsoleConnection& Connection, const FRemo
     return RunRequest(Connection, Options, RemoteConsoleProtocol::TypeExec, ::Move(Payload), PrintResult);
 }
 
-static ERequestOutcome RunList(FRemoteConsoleConnection& Connection, const FRemoteConsoleOptions& Options, const String& Filter)
+static ERequestOutcome RunList(FRemoteConsoleConnection& Connection, const FRemoteConsoleOptions& Options, const FString& Filter)
 {
     FJsonValue Payload = FJsonValue::MakeObject();
     Payload.AddMember("filter", FJsonValue(Filter));
     return RunRequest(Connection, Options, RemoteConsoleProtocol::TypeList, ::Move(Payload), FPrintResult(&PrintListResult));
 }
 
-static ERequestOutcome RunGet(FRemoteConsoleConnection& Connection, const FRemoteConsoleOptions& Options, const String& Name)
+static ERequestOutcome RunGet(FRemoteConsoleConnection& Connection, const FRemoteConsoleOptions& Options, const FString& Name)
 {
     FJsonValue Payload = FJsonValue::MakeObject();
     Payload.AddMember("name", FJsonValue(Name));
@@ -786,7 +786,7 @@ static int32 RunOneShot(FRemoteConsoleConnection& Connection, const FRemoteConso
         return Outcome != ERequestOutcome::ConnectionLost;
     };
 
-    for (const String& Command : Options.ExecCommands)
+    for (const FString& Command : Options.ExecCommands)
     {
         if (!Record(RunExec(Connection, Options, Command, false)))
         {
@@ -807,15 +807,15 @@ static int32 RunOneShot(FRemoteConsoleConnection& Connection, const FRemoteConso
     return ToExitCode(bAnyFailed ? ERemoteConsoleExitCode::CommandFailed : ERemoteConsoleExitCode::Success);
 }
 
-static String DescribeEngine(const FJsonValue& Hello)
+static FString DescribeEngine(const FJsonValue& Hello)
 {
-    auto Field = [&Hello](const CHAR_T* Name) -> String
+    auto Field = [&Hello](const CHAR_T* Name) -> FString
     {
         const FJsonValue* Value = Hello.Find(Name);
-        return Value ? Value->GetStringOr("") : String();
+        return Value ? Value->GetStringOr("") : FString();
     };
 
-    return String::Printf("%s %s (%s, %s)", *Field("engine"), *Field("version"), *Field("project"), *Field("config"));
+    return FString::Printf("%s %s (%s, %s)", *Field("engine"), *Field("version"), *Field("project"), *Field("config"));
 }
 
 static int64 RequestCompletions(FRemoteConsoleConnection& Connection)
@@ -841,7 +841,7 @@ static void ApplyCompletions(FConsoleLineEditor& Editor, const FJsonValue& Resul
         const FJsonValue* Kind   = Object.Find("kind");
         if (Name)
         {
-            Candidates.Add(FCompletionCandidate{ Name->GetStringOr(""), Kind ? Kind->GetStringOr("") : String() });
+            Candidates.Add(FCompletionCandidate{ Name->GetStringOr(""), Kind ? Kind->GetStringOr("") : FString() });
         }
     }
 
@@ -859,20 +859,20 @@ static int32 RunInteractive(const FRemoteConsoleOptions& Options)
 
     GLineEditor = Editor;
 
-    const String Address       = FSocketAddress::FormatHostAndPort(Options.Host, Options.Port);
-    const String OnlinePrompt  = "> ";
-    const String OfflinePrompt = "(offline) > ";
+    const FString Address       = FSocketAddress::FormatHostAndPort(Options.Host, Options.Port);
+    const FString OnlinePrompt  = "> ";
+    const FString OfflinePrompt = "(offline) > ";
 
     Editor->SetPrompt(OfflinePrompt);
-    Print(String::Printf("RemoteConsole: waiting for the engine on %s. Tab completes names, Up and Down walk the history, :help lists the commands", *Address));
+    Print(FString::Printf("RemoteConsole: waiting for the engine on %s. Tab completes names, Up and Down walk the history, :help lists the commands", *Address));
 
     TUniquePtr<FRemoteConsoleConnection> Connection;
-    String LastRejectReason;
-    uint64 NextAttemptMilliseconds = 0;
-    int64  CompletionRequestId     = -1;
-    bool   bWantsLogStream         = false;
-    bool   bAnyFailed              = false;
-    bool   bReportedUnknownHost    = false;
+    FString LastRejectReason;
+    uint64  NextAttemptMilliseconds = 0;
+    int64   CompletionRequestId     = -1;
+    bool    bWantsLogStream         = false;
+    bool    bAnyFailed              = false;
+    bool    bReportedUnknownHost    = false;
 
     const auto Finish = [&]() -> int32
     {
@@ -888,7 +888,7 @@ static int32 RunInteractive(const FRemoteConsoleOptions& Options)
         NextAttemptMilliseconds = GetMilliseconds() + GReconnectDelayMilliseconds;
 
         Editor->SetPrompt(OfflinePrompt);
-        Print(ELogSeverity::Warning, String::Printf("Lost the connection to the engine on %s, waiting for it to come back", *Address));
+        Print(ELogSeverity::Warning, FString::Printf("Lost the connection to the engine on %s, waiting for it to come back", *Address));
     };
 
     for (;;)
@@ -914,7 +914,7 @@ static int32 RunInteractive(const FRemoteConsoleOptions& Options)
 
                 LastRejectReason.Clear();
                 Editor->SetPrompt(OnlinePrompt);
-                Print(ELogSeverity::Info, String::Printf("Connected to %s on %s", *DescribeEngine(Connection->GetHello()), *Address));
+                Print(ELogSeverity::Info, FString::Printf("Connected to %s on %s", *DescribeEngine(Connection->GetHello()), *Address));
 
                 CompletionRequestId = RequestCompletions(*Connection);
                 if (bWantsLogStream)
@@ -930,7 +930,7 @@ static int32 RunInteractive(const FRemoteConsoleOptions& Options)
                 if (Attempt->GetRejectReason() != LastRejectReason)
                 {
                     LastRejectReason = Attempt->GetRejectReason();
-                    Print(ELogSeverity::Warning, String::Printf("The engine on %s refused the connection: %s. Retrying every few seconds", *Address, *LastRejectReason));
+                    Print(ELogSeverity::Warning, FString::Printf("The engine on %s refused the connection: %s. Retrying every few seconds", *Address, *LastRejectReason));
                 }
 
                 NextAttemptMilliseconds = GetMilliseconds() + GRejectedRetryMilliseconds;
@@ -940,7 +940,7 @@ static int32 RunInteractive(const FRemoteConsoleOptions& Options)
                 if (!bReportedUnknownHost)
                 {
                     bReportedUnknownHost = true;
-                    Print(ELogSeverity::Warning, String::Printf("Could not resolve '%s'. Retrying every few seconds", *Options.Host));
+                    Print(ELogSeverity::Warning, FString::Printf("Could not resolve '%s'. Retrying every few seconds", *Options.Host));
                 }
 
                 NextAttemptMilliseconds = GetMilliseconds() + GRejectedRetryMilliseconds;
@@ -978,7 +978,7 @@ static int32 RunInteractive(const FRemoteConsoleOptions& Options)
             continue;
         }
 
-        String Line;
+        FString Line;
         while (Editor->PopLine(Line))
         {
             Line.TrimInline();
@@ -1000,12 +1000,12 @@ static int32 RunInteractive(const FRemoteConsoleOptions& Options)
 
             if (!Connection)
             {
-                Print(ELogSeverity::Warning, String::Printf("Not connected to the engine on %s yet, '%s' was not sent", *Address, *Line));
+                Print(ELogSeverity::Warning, FString::Printf("Not connected to the engine on %s yet, '%s' was not sent", *Address, *Line));
                 continue;
             }
 
             ERequestOutcome Outcome = ERequestOutcome::Succeeded;
-            String Argument;
+            FString Argument;
             if (ParseCommandArgument(Line, GListCommand, Argument))
             {
                 Outcome = RunList(*Connection, Options, Argument);
@@ -1021,7 +1021,7 @@ static int32 RunInteractive(const FRemoteConsoleOptions& Options)
             }
             else if (Line[0] == ':')
             {
-                Print(ELogSeverity::Error, String::Printf("Unknown command '%s', type :help for the list", *Line));
+                Print(ELogSeverity::Error, FString::Printf("Unknown command '%s', type :help for the list", *Line));
             }
             else
             {
@@ -1068,25 +1068,25 @@ static int32 RemoteConsoleMain()
     Connection.SetJsonOutput(Options.bJsonOutput);
 
     const EConnectResult Result = Connection.Connect(Options.Host, Options.Port, Options.WaitSeconds, GConnectAttemptMilliseconds, Options.TimeoutMilliseconds);
-    const String Address = FSocketAddress::FormatHostAndPort(Options.Host, Options.Port);
+    const FString Address = FSocketAddress::FormatHostAndPort(Options.Host, Options.Port);
     if (Result == EConnectResult::Rejected)
     {
-        Print(ELogSeverity::Error, String::Printf("[RemoteConsole] The engine rejected the connection: %s", *Connection.GetRejectReason()));
+        Print(ELogSeverity::Error, FString::Printf("[RemoteConsole] The engine rejected the connection: %s", *Connection.GetRejectReason()));
         return ToExitCode(ERemoteConsoleExitCode::ConnectionFailed);
     }
     else if (Result == EConnectResult::UnknownHost)
     {
-        Print(ELogSeverity::Error, String::Printf("[RemoteConsole] Could not resolve '%s'", *Options.Host));
+        Print(ELogSeverity::Error, FString::Printf("[RemoteConsole] Could not resolve '%s'", *Options.Host));
         return ToExitCode(ERemoteConsoleExitCode::ConnectionFailed);
     }
     else if (Result == EConnectResult::NoGreeting)
     {
-        Print(ELogSeverity::Error, String::Printf("[RemoteConsole] Something on %s accepted the connection but is not a remote console", *Address));
+        Print(ELogSeverity::Error, FString::Printf("[RemoteConsole] Something on %s accepted the connection but is not a remote console", *Address));
         return ToExitCode(ERemoteConsoleExitCode::ConnectionFailed);
     }
     else if (Result == EConnectResult::Unreachable)
     {
-        Print(ELogSeverity::Error, String::Printf(
+        Print(ELogSeverity::Error, FString::Printf(
             "[RemoteConsole] Could not connect to %s. The engine may not be running, RemoteConsole.Enable may be false, "
             "or the engine is on another machine with RemoteConsole.AllowRemoteConnections set to false",
             *Address));

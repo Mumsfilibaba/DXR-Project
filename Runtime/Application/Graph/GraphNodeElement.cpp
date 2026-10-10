@@ -51,11 +51,11 @@ IntVector2 FGraphNodeElement::ComputeDesiredSize() const
 
     if (Font)
     {
-        TitleWidth = Font->MeasureWidth(StringView(Node.Title.Data(), Node.Title.Length()));
+        TitleWidth = Font->MeasureWidth(FStringView(Node.Title.Data(), Node.Title.Length()));
 
         for (const FGraphPin& Pin : Node.Pins)
         {
-            const int32 LabelWidth = Font->MeasureWidth(StringView(Pin.Name.Data(), Pin.Name.Length()));
+            const int32 LabelWidth = Font->MeasureWidth(FStringView(Pin.Name.Data(), Pin.Name.Length()));
             if (Pin.Direction == EGraphPinDirection::Input)
             {
                 InputLabelWidth = Math::Max(InputLabelWidth, LabelWidth);
@@ -173,7 +173,7 @@ int32 FGraphNodeElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
 
             const int32 LabelWidth = bIsInput
                 ? Math::Max(Bounds.Width - (Inset * 2), 0)
-                : Font->MeasureWidth(StringView(Pin.Name.Data(), Pin.Name.Length()));
+                : Font->MeasureWidth(FStringView(Pin.Name.Data(), Pin.Name.Length()));
 
             const int32 LabelLeft = bIsInput
                 ? (static_cast<int32>(Center.X) + LabelGap)

@@ -50,7 +50,7 @@ static bool        GCaptureActive = false;
 
 static bool IsEnvFlagEnabled(const CHAR_T* Name)
 {
-    String Value;
+    FString Value;
 
     if (!FPlatformMisc::GetEnvironmentVariable(Name, Value) || Value.IsEmpty() || Value[0] == '0')
     {
@@ -88,8 +88,8 @@ static const CHAR_T* SkipNSLogPrefix(const CHAR_T* Text)
     return Separator + 2;
 }
 
-static String GLastReportedLine;
-static int32  GRepeatedLineCount = 0;
+static FString GLastReportedLine;
+static int32   GRepeatedLineCount = 0;
 
 static void FlushRepeatedLine()
 {
@@ -254,7 +254,7 @@ public:
         constexpr int32 MaxValidationLineLength = 4096;
 
         CHAR_T Chunk[512];
-        String Line;
+        FString Line;
 
         while (!bStop.Load())
         {
@@ -386,7 +386,7 @@ void MetalStopValidationCapture()
     GStderrCapture.Restore();
 }
 
-void MetalForceGPUHang(StringView)
+void MetalForceGPUHang(FStringView)
 {
     SCOPED_AUTORELEASE_POOL();
 
@@ -416,7 +416,7 @@ void MetalForceGPUHang(StringView)
 
     if (!Pipeline || !Flag)
     {
-        METAL_ERROR("ForceGPUHang: failed to build the hang kernel: %s", *String(Error ? [Error localizedDescription] : @"unknown error"));
+        METAL_ERROR("ForceGPUHang: failed to build the hang kernel: %s", *FString(Error ? [Error localizedDescription] : @"unknown error"));
         return;
     }
 
@@ -497,7 +497,7 @@ void MetalBeginFrameCapture(id<MTLDevice> Device)
 
     if (![Manager startCaptureWithDescriptor:Descriptor error:&Error])
     {
-        const String ErrorString(Error ? [Error localizedDescription] : @"unknown error");
+        const FString ErrorString(Error ? [Error localizedDescription] : @"unknown error");
         METAL_ERROR("Failed to start a Metal GPU capture: %s", *ErrorString);
         return;
     }

@@ -86,7 +86,7 @@ bool EditableTextEditing_Test()
 
     TEST_SECTION("Inserting in the middle splits the text");
     Editable->SetTextCursorPosition(1);
-    Editable->InsertText(StringView("XY"));
+    Editable->InsertText(FStringView("XY"));
     TEST_EXPECT(Editable->GetText().Equals("AXYbc"));
     TEST_EXPECT_EQ(Editable->GetTextCursorPosition(), 3);
 
@@ -111,7 +111,7 @@ bool EditableTextEditing_Test()
     TEST_EXPECT(Editable->GetText().Equals("Xbc"));
 
     TEST_SECTION("Replacing a range leaves the text cursor after the replacement");
-    Editable->ReplaceRange(0, 1, StringView("Long"));
+    Editable->ReplaceRange(0, 1, FStringView("Long"));
     TEST_EXPECT(Editable->GetText().Equals("Longbc"));
     TEST_EXPECT_EQ(Editable->GetTextCursorPosition(), 4);
 
@@ -124,7 +124,7 @@ bool EditableTextEditing_Test()
     int32 NumChanges = 0;
 
     TSharedPtr<FEditableText> Watched = CreateEditableText("", Font);
-    Watched->GetOnTextChanged().BindLambda([&NumChanges](const String&)
+    Watched->GetOnTextChanged().BindLambda([&NumChanges](const FString&)
     {
         NumChanges++;
     });
@@ -235,7 +235,7 @@ bool EditableTextKeyInterceptor_Test()
 
     TEST_SECTION("Enter reaches the commit delegate when it is not claimed");
     int32 NumCommits = 0;
-    Editable->GetOnTextCommitted().BindLambda([&NumCommits](const String&)
+    Editable->GetOnTextCommitted().BindLambda([&NumCommits](const FString&)
     {
         NumCommits++;
     });
@@ -701,7 +701,7 @@ bool EditableTextBandAlignment_Test()
     TEST_EXPECT(SpaceBelow - SpaceAbove == 0 || SpaceBelow - SpaceAbove == 1);
 
     FDrawCommandList TextOnlyList;
-    TextOnlyList.AddText(0, CommandList[TextIndex].Bounds, String("lg"), Font.Get(), FFloatColor::White);
+    TextOnlyList.AddText(0, CommandList[TextIndex].Bounds, FString("lg"), Font.Get(), FFloatColor::White);
 
     FUIDrawData DrawData;
     DrawData.BuildFromCommandList(TextOnlyList);
@@ -728,7 +728,7 @@ bool EditableTextBandAlignment_Test()
     TEST_SECTION("And a line of capitals ends up with the same room above it as below it");
 
     FDrawCommandList CapitalsList;
-    CapitalsList.AddText(0, CommandList[TextIndex].Bounds, String("HI"), Font.Get(), FFloatColor::White);
+    CapitalsList.AddText(0, CommandList[TextIndex].Bounds, FString("HI"), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(CapitalsList);
 
     float CapitalTop    = static_cast<float>(BoxHeight);

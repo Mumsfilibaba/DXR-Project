@@ -74,7 +74,7 @@ public:
     virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) override final;
     virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace) override final;
     virtual void SetSwapChainHDRMetadata(FRHISwapChain* SwapChain, const FRHIHDRMetadata& Metadata) override final;
-    virtual void PushEvent(const StringView& Name) override final;
+    virtual void PushEvent(const FStringView& Name) override final;
     virtual void PopEvent() override final;
 
     virtual void ClearState() override final;

@@ -69,7 +69,7 @@ int32 FScenePanel::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLis
 }
 
 TSharedPtr<FVisualElement> MakeSceneColumn(
-    const String&                             Title,
+    const FString&                            Title,
     const FPlaygroundFonts&                   Fonts,
     const TArray<TSharedPtr<FVisualElement>>& Panels)
 {

@@ -117,11 +117,11 @@ constexpr EFormat ConvertFormat(tinyddsloader::DDSFile::DXGIFormat Format)
     }
 }
 
-TSharedRef<FTexture> FTextureImporterDDS::ImportFromFile(const StringView& FileName)
+TSharedRef<FTexture> FTextureImporterDDS::ImportFromFile(const FStringView& FileName)
 {
     TArray<uint8> FileData;
     {
-        TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(String(FileName));
+        TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(FString(FileName));
         if (!FileHandle || !File::ReadFile(FileHandle.Get(), FileData))
         {
             LOG_ERROR("[FTextureImporterDDS]: Failed to open '%s'", *FileName);
@@ -167,7 +167,7 @@ TSharedRef<FTexture> FTextureImporterDDS::ImportFromFile(const StringView& FileN
     return NewTexture;
 }
 
-bool FTextureImporterDDS::MatchExtenstion(const StringView& FileName)
+bool FTextureImporterDDS::MatchExtenstion(const FStringView& FileName)
 {
     return FileName.EndsWith(".dds", EStringCaseType::NoCase);
 }

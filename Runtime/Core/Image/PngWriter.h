@@ -18,7 +18,7 @@ public:
      * @param Image    The image to encode.
      * @return True when the whole file was written.
      */
-    bool WriteToFile(const String& Filename, const FImageView& Image);
+    bool WriteToFile(const FString& Filename, const FImageView& Image);
 
     /**
      * @brief Encodes an image into memory.

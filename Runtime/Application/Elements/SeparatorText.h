@@ -12,7 +12,7 @@ public:
     struct FDesc
     {
         /** @brief The caption the rule is broken around. */
-        String Text;
+        FString Text;
 
         /** @brief The face the caption is measured and drawn with. */
         TSharedPtr<IFontFace> Font = nullptr;
@@ -59,10 +59,10 @@ public:
      *
      * @param InText The new caption.
      */
-    void SetText(const String& InText);
+    void SetText(const FString& InText);
 
     /** @return The caption the rule is broken around. */
-    NODISCARD FORCEINLINE const String& GetText() const
+    NODISCARD FORCEINLINE const FString& GetText() const
     {
         return Text;
     }
@@ -70,7 +70,7 @@ public:
 private:
     NODISCARD int32 GetTextWidth() const;
 
-    String                Text;
+    FString               Text;
     TSharedPtr<IFontFace> Font;
     FFloatColor           TextColor;
     FFloatColor           RuleColor;

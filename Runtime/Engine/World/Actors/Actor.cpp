@@ -347,7 +347,7 @@ void FActor::InvalidateWorldTransformCache() const
     }
 }
 
-void FActor::SetName(const String& InName)
+void FActor::SetName(const FString& InName)
 {
     Name = InName;
 }

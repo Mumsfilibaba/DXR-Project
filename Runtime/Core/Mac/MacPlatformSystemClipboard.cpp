@@ -22,11 +22,11 @@ bool FMacPlatformSystemClipboard::HasText()
     }, NSDefaultRunLoopMode);
 }
 
-bool FMacPlatformSystemClipboard::GetText(String& OutText)
+bool FMacPlatformSystemClipboard::GetText(FString& OutText)
 {
     OutText.Clear();
 
-    __block String Text;
+    __block FString Text;
     const bool bResult = FMacThreadManager::Get().MainThreadDispatchAndReturn(^
     {
         CHECK_COCOA_MAIN_THREAD();
@@ -50,7 +50,7 @@ bool FMacPlatformSystemClipboard::GetText(String& OutText)
             return false;
         }
 
-        Text = String(Utf8);
+        Text = FString(Utf8);
         return true;
     }, NSDefaultRunLoopMode);
 
@@ -63,9 +63,9 @@ bool FMacPlatformSystemClipboard::GetText(String& OutText)
     return true;
 }
 
-bool FMacPlatformSystemClipboard::SetText(const String& InText)
+bool FMacPlatformSystemClipboard::SetText(const FString& InText)
 {
-    __block String Text = InText;
+    __block FString Text = InText;
     return FMacThreadManager::Get().MainThreadDispatchAndReturn(^
     {
         CHECK_COCOA_MAIN_THREAD();

@@ -358,7 +358,7 @@ private:
 
 * Class sections themselves are ordered `public`, then `protected`, then `private`.
 
-* Classes use 'F' as prefix, with the exception of core value types (see [Core Value Types](#core-value-types)).
+* Classes use 'F' as prefix, unless they only hold static members (see [Static-Only Classes](#static-only-classes)). Templates use 'T' and interfaces 'I' instead.
 
 * Include headers in `.cpp` files. A header includes another header only when the full type is needed beyond a pointer or reference. Otherwise forward-declare.
 
@@ -385,7 +385,7 @@ class CORE_API FMyClass
 ### Structs
 * Structs should be used when all members are public.
 
-* Structs use 'F' as prefix (except core value types, see [Core Value Types](#core-value-types)), for example:
+* Structs use 'F' as prefix, with the same exceptions as classes, for example:
 
 ```cpp
 struct FMyStruct
@@ -396,23 +396,23 @@ struct FMyStruct
 ```
 
 ### Core Value Types
-* Core string, math, and atomic `value` types are used **without** the `F` prefix and keep their bare name. These are the small, ubiquitous value types in `Runtime/Core/` (strings, vectors, matrices, quaternion, plane, atomic aliases).
+* The small, ubiquitous value types in `Runtime/Core/` (strings, vectors, matrices, quaternion, plane, atomics) hold state like any other type, so they take the `F` prefix too.
 
 ```cpp
-// Correct - core value types are prefix-free
-String   Name;
-Vector3  Position;
-Matrix4  ViewProjection;
-AtomicInt32 RefCount;
+// Correct - core value types take the F prefix
+FString      Name;
+FVector3     Position;
+FMatrix4     ViewProjection;
+FAtomicInt32 RefCount;
 ```
 
-* Examples: `String`, `StringView`, `CString`, `Vector2/3/4`, `IntVector2/3/4`, `Matrix2/3/4`, `Matrix3x4`, `Quaternion`, `Plane`, `AtomicBool`, `AtomicInt32`.
+* Examples: `FString`, `FStringView`, `FStaticString`, `FWideString`, `FAnsiString`, `FU8String`, `FVector2/3/4`, `FIntVector2/3/4`, `FMatrix2/3/4`, `FMatrix3x4`, `FQuaternion`, `FPlane`, `FAtomicBool`, `FAtomicInt32`.
 
-* Non-core gameplay/engine structs and classes still use the `F` prefix (for example `FCameraConstants`, `FViewportRegion`, `FRectangle`). The color types `FColor`/`FFloatColor`/`FFloatColor16` also keep the `F` prefix. Only the core value types listed above drop it.
+* The wide variants spell out `Wide` (`FWideString`, `FWideStringView`, `FWideStaticString`), and the narrow ones name their encoding (`FAnsiString`, `FU8String`). Plain `FString` holds `CHAR_T`.
 
-* The platform-abstraction / SIMD layer keeps the `F` prefix (for example `FPlatformString`, `FPlatformMath`, `FPlatformVectorMathSSE`, `FPlatformVectorMathNEON`, `FInt128`, `FFloat128`). The interfaces those implementations satisfy are named by the [Interfaces](#interfaces) rule instead, so `IPlatformString` and `IPlatformVectorMath` take the `I` prefix while the `FPlatformX` typedefs that select between them keep the `F`.
+* The templates underneath keep their `T` prefix (`TString`, `TStringView`, `TStaticString`, `TAtomicInt`, `TAtomicEnum`), and the `F` names are aliases over them. `CString` and `CStringWide` stay without a prefix, since `TCString` only holds static functions (see [Static-Only Classes](#static-only-classes)).
 
-* Underlying templates keep their `T` prefix (`TString`, `TStringView`, `TStaticString`, `TCString`, `TAtomicInt`, `TAtomicEnum`); only the `F` aliases over them lose the prefix. Interfaces keep `I` and enums keep `E` as usual.
+* The platform-abstraction / SIMD layer keeps the `F` prefix as well (for example `FPlatformString`, `FPlatformMath`, `FPlatformVectorMathSSE`, `FPlatformVectorMathNEON`, `FInt128`, `FFloat128`). The interfaces those implementations satisfy are named by the [Interfaces](#interfaces) rule instead, so `IPlatformString` and `IPlatformVectorMath` take the `I` prefix while the `FPlatformX` typedefs that select between them keep the `F`.
 
 ### Static-Only Classes
 * A struct/class that contains only static members (no instance state, no virtuals) acts as a namespace. Drop the `F` prefix and give it a plural or semantic name that reads like a namespace at the call site.

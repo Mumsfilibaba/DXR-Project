@@ -28,9 +28,9 @@ struct TNumericEntryTraits<float>
      * @param Precision How many decimal places to write.
      * @return The value at the given number of decimal places.
      */
-    NODISCARD static FORCEINLINE String Format(float Value, int32 Precision)
+    NODISCARD static FORCEINLINE FString Format(float Value, int32 Precision)
     {
-        return String::Printf("%.*f", Precision, Value);
+        return FString::Printf("%.*f", Precision, Value);
     }
 
     /**
@@ -39,7 +39,7 @@ struct TNumericEntryTraits<float>
      * @param Value The value to format.
      * @return The value at between one and four decimal places.
      */
-    NODISCARD static FORCEINLINE String FormatDynamic(float Value)
+    NODISCARD static FORCEINLINE FString FormatDynamic(float Value)
     {
         static const float ScaleFactors[4] = { 10.0f, 100.0f, 1000.0f, 10000.0f };
 
@@ -58,7 +58,7 @@ struct TNumericEntryTraits<float>
             }
         }
 
-        return String::Printf("%.*f", Decimals, Value);
+        return FString::Printf("%.*f", Decimals, Value);
     }
 
     /**
@@ -67,7 +67,7 @@ struct TNumericEntryTraits<float>
      * @param InText The text to parse.
      * @return The value the text names, or zero when it names none.
      */
-    NODISCARD static FORCEINLINE float Parse(const String& InText)
+    NODISCARD static FORCEINLINE float Parse(const FString& InText)
     {
         return FPlatformString::Atof(InText.Data());
     }
@@ -89,14 +89,14 @@ struct TNumericEntryTraits<int32>
      * @param Precision Ignored, an integer having no decimals to place.
      * @return The value in decimal.
      */
-    NODISCARD static FORCEINLINE String Format(int32 Value, int32 Precision)
+    NODISCARD static FORCEINLINE FString Format(int32 Value, int32 Precision)
     {
         UNREFERENCED_VARIABLE(Precision);
-        return String::Printf("%d", Value);
+        return FString::Printf("%d", Value);
     }
 
     /** @return The value in decimal, an integer having no decimals to drop. */
-    NODISCARD static FORCEINLINE String FormatDynamic(int32 Value)
+    NODISCARD static FORCEINLINE FString FormatDynamic(int32 Value)
     {
         return Format(Value, 0);
     }
@@ -107,7 +107,7 @@ struct TNumericEntryTraits<int32>
      * @param InText The text to parse.
      * @return The value the text names, or zero when it names none.
      */
-    NODISCARD static FORCEINLINE int32 Parse(const String& InText)
+    NODISCARD static FORCEINLINE int32 Parse(const FString& InText)
     {
         return FPlatformString::Atoi(InText.Data());
     }
@@ -128,7 +128,7 @@ public:
     struct FDesc
     {
         /** @brief Written in the coloured tag at the left, which is usually an axis name. */
-        String Label;
+        FString Label;
 
         /** @brief The value the field starts at, clamped into the range. */
         T Value = T(0);
@@ -161,7 +161,7 @@ public:
         FFloatColor AccentEdge = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 
         /** @brief Drawn after the value, which is what puts a degree sign on an angle. */
-        String Suffix;
+        FString Suffix;
 
         /** @brief How many decimal places the value is written out at, which a float field ignores while bDynamicPrecision is set. */
         int32 Precision = 3;
@@ -282,17 +282,17 @@ protected:
 
 private:
     NODISCARD bool HasFillTrack() const;
-    NODISCARD String FormatValue() const;
+    NODISCARD FString FormatValue() const;
 
     void ApplyValue(T InValue);
     void UpdateEditorText();
-    void HandleTextCommitted(const String& InText);
+    void HandleTextCommitted(const FString& InText);
     void BeginEditing(const IntVector2& ClientPosition);
 
     TSharedPtr<FEditableText> Editor;
     TSharedPtr<IFontFace>     Font;
-    String                    Label;
-    String                    Suffix;
+    FString                   Label;
+    FString                   Suffix;
     FFloatColor               LabelColor;
     FFloatColor               AccentEdge;
     T                         Value;
@@ -371,7 +371,7 @@ void TNumericEntry<T>::Initialize(const FDesc& Desc)
     Editor = FEditableText::Create(EditorDesc);
     Editor->SetParentElement(AsWeakPtr());
     Editor->SetActivationPolicy(EElementActivationPolicy::DoNotAutoFocusOnWindowActivate);
-    Editor->GetOnTextCommitted().BindLambda([this](const String& InText)
+    Editor->GetOnTextCommitted().BindLambda([this](const FString& InText)
     {
         HandleTextCommitted(InText);
     });
@@ -457,7 +457,7 @@ int32 TNumericEntry<T>::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComma
 
         if (Font && !Label.IsEmpty())
         {
-            const int32 LabelTextWidth = Font->MeasureWidth(StringView(Label.Data(), Label.Length()));
+            const int32 LabelTextWidth = Font->MeasureWidth(FStringView(Label.Data(), Label.Length()));
 
             FRectangle LabelTextBounds;
             LabelTextBounds.Position.X = LabelBounds.Position.X + Math::Max(0, (LabelBounds.Width - LabelTextWidth) / 2);
@@ -610,9 +610,9 @@ FRectangle TNumericEntry<T>::GetEditorRectangle(const FRectangle& Bounds) const
 }
 
 template<typename T>
-String TNumericEntry<T>::FormatValue() const
+FString TNumericEntry<T>::FormatValue() const
 {
-    String Text = bDynamicPrecision ? TNumericEntryTraits<T>::FormatDynamic(Value) : TNumericEntryTraits<T>::Format(Value, Range.Precision);
+    FString Text = bDynamicPrecision ? TNumericEntryTraits<T>::FormatDynamic(Value) : TNumericEntryTraits<T>::Format(Value, Range.Precision);
     if (!Suffix.IsEmpty())
     {
         Text += Suffix;
@@ -648,7 +648,7 @@ void TNumericEntry<T>::UpdateEditorText()
 }
 
 template<typename T>
-void TNumericEntry<T>::HandleTextCommitted(const String& InText)
+void TNumericEntry<T>::HandleTextCommitted(const FString& InText)
 {
     ApplyValue(TNumericEntryTraits<T>::Parse(InText));
     UpdateEditorText();
@@ -669,10 +669,10 @@ void TNumericEntry<T>::BeginEditing(const IntVector2& ClientPosition)
 
     if (Font)
     {
-        const String& EditorText = Editor->GetText();
-        const int32   OffsetX    = ClientPosition.X - Editor->GetContentRectangle().Position.X;
+        const FString& EditorText = Editor->GetText();
+        const int32    OffsetX    = ClientPosition.X - Editor->GetContentRectangle().Position.X;
 
-        Editor->SetTextCursorPosition(Font->FindCharacterIndexAtOffset(StringView(EditorText.Data(), EditorText.Length()), OffsetX));
+        Editor->SetTextCursorPosition(Font->FindCharacterIndexAtOffset(FStringView(EditorText.Data(), EditorText.Length()), OffsetX));
     }
 }
 

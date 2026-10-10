@@ -919,7 +919,7 @@ bool FD3D12TextureRHI::InitializeSwapChainTexture()
     return true;
 }
 
-void FD3D12TextureRHI::SetDebugName(const String& InName)
+void FD3D12TextureRHI::SetDebugName(const FString& InName)
 {
     if (ResourceStorage.GetResource())
     {
@@ -927,7 +927,7 @@ void FD3D12TextureRHI::SetDebugName(const String& InName)
     }
 }
 
-void FD3D12TextureRHI::GetDebugName(String& OutDebugName) const
+void FD3D12TextureRHI::GetDebugName(FString& OutDebugName) const
 {
     if (ResourceStorage.GetResource())
     {

@@ -298,7 +298,7 @@ void FGPUProfiler::CollectResults()
 
             if (Scope.bOwnsPipelineStats)
             {
-                const String ScopeName = Scope.Name ? Scope.Name : "";
+                const FString ScopeName = Scope.Name ? Scope.Name : "";
                 if (FGPUProfileScopeQueries* Queries = ScopeQueries.Find(ScopeName))
                 {
                     if (Queries->PipelineStatsQuery[ReadIndex])
@@ -495,7 +495,7 @@ void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const CHAR_T* Name)
 
     if (bPipelineStatsEnabled && !OpenPipelineStatsQuery)
     {
-        const String ScopeName = Name;
+        const FString ScopeName = Name;
 
         FGPUProfileScopeQueries* Queries = ScopeQueries.Find(ScopeName);
         if (!Queries)

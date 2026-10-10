@@ -96,7 +96,7 @@ public:
 private:
     uint32 GetSubTableBaseRecord(ERayTracingShaderRecordKind RecordKind) const;
 
-    void PopulateRecord(FD3D12RootSignature* LocalRootSignature, uint8* OutRecord, uint64 RecordByteOffset, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const String& ExportName, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings);
+    void PopulateRecord(FD3D12RootSignature* LocalRootSignature, uint8* OutRecord, uint64 RecordByteOffset, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FString& ExportName, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings);
     void UploadCpuShadow(FD3D12CommandContext& CmdContext);
     void RemovePendingTablesInRange(uint64 BeginByteOffset, uint64 EndByteOffset);
 

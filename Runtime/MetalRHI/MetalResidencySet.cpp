@@ -48,7 +48,7 @@ void FMetalResidencySet::Initialize()
 
         if (!ResidencySet)
         {
-            const String ErrorString(Error ? [Error localizedDescription] : @"unknown error");
+            const FString ErrorString(Error ? [Error localizedDescription] : @"unknown error");
             METAL_INFO("MTLResidencySet is unavailable on this device (%s), declaring residency per encoder", *ErrorString);
             return;
         }

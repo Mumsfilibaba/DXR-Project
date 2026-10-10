@@ -9,20 +9,20 @@ struct FShaderCompileRequest
     const FShaderCompileInfo* CompileInfo = nullptr;
 
     /** Preprocessed by FShaderPreprocessor, so there are no includes or defines left to resolve */
-    StringView                Source;
+    FStringView                Source;
 
     /** Empty when compiling from source */
-    String                    FilePath;
+    FString                    FilePath;
 
     /**
      * The name the compiler knows the source by, which the #line markers in it use too. Relative to IncludeDir for shaders
      * inside it, so compilers never see the engine folder's path. That keeps shader debug info free of machine paths, and
      * DXC fails to match a source name with non-ASCII characters in it against its #line markers.
      */
-    String                    SourceName;
+    FString                    SourceName;
 
     /** <Assets>/Shaders, where every shader include was resolved from */
-    String                    IncludeDir;
+    FString                    IncludeDir;
 
     bool                      bVerboseLogging = false;
 };
@@ -32,7 +32,7 @@ struct FShaderCompileResult
     /** Native code: a DXIL or DXBC container, SPIR-V words or MSL source */
     TArray<uint8>     ByteCode;
     FShaderReflection Reflection;
-    String            Messages;
+    FString           Messages;
 };
 
 class FShaderCompilerBackend

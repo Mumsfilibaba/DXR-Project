@@ -25,7 +25,7 @@ struct FVulkanBarrierStats
 {
     static bool IsEnabled();
     static void RecordPipelineBarrier(const VkDependencyInfoKHR& DependencyInfo);
-    static void RecordRenderPassPause(const TArray<String>& Reasons);
+    static void RecordRenderPassPause(const TArray<FString>& Reasons);
     static void EndFrame();
 };
 #endif
@@ -79,12 +79,12 @@ public:
         return Generation;
     }
 
-    void AddDebugReason(String&& Reason)
+    void AddDebugReason(FString&& Reason)
     {
         DebugReasons.Add(Move(Reason));
     }
 
-    const TArray<String>& GetDebugReasons() const
+    const TArray<FString>& GetDebugReasons() const
     {
         return DebugReasons;
     }
@@ -93,7 +93,7 @@ public:
 private:
     TArray<FBatch>           Batches;
 #if VULKAN_ENABLE_BARRIER_STATS
-    TArray<String>           DebugReasons;
+    TArray<FString>          DebugReasons;
     uint32                   Generation = 0;
 #endif
 #if VK_EXT_sample_locations
@@ -197,7 +197,7 @@ public:
     virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) override final;
     virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace) override final;
     virtual void SetSwapChainHDRMetadata(FRHISwapChain* SwapChain, const FRHIHDRMetadata& Metadata) override final;
-    virtual void PushEvent(const StringView& Name) override final;
+    virtual void PushEvent(const FStringView& Name) override final;
     virtual void PopEvent() override final;
     
     virtual void ClearState() override final;
@@ -328,7 +328,7 @@ private:
     TMap<FVulkanBufferRHI*, FVulkanBufferState>       PendingBufferStates;
     FVulkanTransientDescriptorAllocator*              TransientDescriptorAllocator;
     int32                                             ActiveQueryCount;
-    TArray<String>                                    EventStack;
+    TArray<FString>                                   EventStack;
     uint64                                            LastUsedFrame;
 #if VULKAN_VALIDATE_CONTEXT_THREAD_OWNERSHIP
     TAtomicInt<uint32>                                OwnerThreadID;

@@ -18,7 +18,7 @@ struct APPLICATION_API FTreeItem : public TSharedFromThis<FTreeItem>
      * @param InUserData Whatever the host wants to find the node by again, which the node does not own.
      * @return The new node, with no parent until it is added to one.
      */
-    NODISCARD static TSharedPtr<FTreeItem> Create(const String& InLabel, void* InUserData = nullptr);
+    NODISCARD static TSharedPtr<FTreeItem> Create(const FString& InLabel, void* InUserData = nullptr);
 
     /**
      * @brief Appends a child and points it back at this node.
@@ -37,10 +37,10 @@ struct APPLICATION_API FTreeItem : public TSharedFromThis<FTreeItem>
     NODISCARD int32 GetDepth() const;
 
     /** @brief The text the node's row shows. */
-    String Label;
+    FString Label;
 
     /** @brief Drawn right-aligned in a column of its own, dimmed, or empty for no second column. */
-    String TypeLabel;
+    FString TypeLabel;
 
     /** @brief Drawn ahead of the label whenever it has a texture. */
     FUIBrush Icon;
@@ -112,14 +112,14 @@ public:
         int32 TypeColumnWidth = 0;
 
         /** @brief The caption over the label column, where two empty captions draw no header at all. */
-        String LabelColumnHeader;
+        FString LabelColumnHeader;
 
         /** @brief The caption over the type column, drawn only when TypeColumnWidth is not zero. */
-        String TypeColumnHeader;
+        FString TypeColumnHeader;
 
         /** @brief Explains the label column once the cursor has rested on its caption, a newline starting
          * a further line. Empty for a column that speaks for itself. */
-        String LabelColumnToolTip;
+        FString LabelColumnToolTip;
 
         /**
          * @brief Explains the type column, one entry per caption in TypeColumnHeader and in that order,
@@ -130,7 +130,7 @@ public:
          * caption. A view with a single entry hangs it off the whole column, and an empty array asks for
          * no tip at all. An entry left empty leaves its own column without one.
          */
-        TArray<String> TypeColumnToolTips;
+        TArray<FString> TypeColumnToolTips;
 
         /** @brief How tall the header is, in pixels. */
         int32 HeaderHeight = FUIStyle::GetDefault().Metrics.RowHeight;
@@ -267,7 +267,7 @@ public:
      * @param InFilter The text to match, compared without regard to case. An empty filter shows
      * everything.
      */
-    void SetFilterText(const String& InFilter);
+    void SetFilterText(const FString& InFilter);
 
     /**
      * @brief Scrolls the least amount that brings an item's row fully into view.
@@ -323,7 +323,7 @@ public:
     }
 
     /** @return The text a row's label has to contain to survive, which is empty when nothing is filtered. */
-    NODISCARD FORCEINLINE const String& GetFilterText() const
+    NODISCARD FORCEINLINE const FString& GetFilterText() const
     {
         return FilterText;
     }
@@ -343,7 +343,7 @@ private:
 
     static void SetSubtreeExpanded(const TArray<TSharedPtr<FTreeItem>>& Items, bool bExpanded);
 
-    NODISCARD const String* FindHeaderToolTip(const IntVector2& ClientPosition) const;    
+    NODISCARD const FString* FindHeaderToolTip(const IntVector2& ClientPosition) const;    
     NODISCARD bool MatchesFilterText(const FTreeItem& Item) const;
     bool MarkFilterMatches(FTreeItem& Item) const;
     NODISCARD bool IsAncestorOfSelection(const TSharedPtr<FTreeItem>& Item) const;
@@ -385,11 +385,11 @@ private:
     FUITreeRowStyle                       Style;
     FUIBrush                              ExpandedArrow;
     FUIBrush                              CollapsedArrow;
-    String                                FilterText;
-    String                                LabelColumnHeader;
-    String                                TypeColumnHeader;
-    String                                LabelColumnToolTip;
-    TArray<String>                        TypeColumnToolTips;
+    FString                               FilterText;
+    FString                               LabelColumnHeader;
+    FString                               TypeColumnHeader;
+    FString                               LabelColumnToolTip;
+    TArray<FString>                       TypeColumnToolTips;
     TArray<int32>                         TypeColumnToolTipSplits;
     IntVector2                            PressPosition;
     IntVector2                            LastCursorPosition;

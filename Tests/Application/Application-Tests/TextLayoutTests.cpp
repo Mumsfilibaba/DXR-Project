@@ -20,9 +20,9 @@ static TSharedPtr<FFixedWidthFontFace> CreateFont()
 }
 
 /** @brief The text of every laid-out run concatenated, which drops what wrapping did not carry over. */
-static String ConcatenateRuns(const FTextLayout& Layout)
+static FString ConcatenateRuns(const FTextLayout& Layout)
 {
-    String Result;
+    FString Result;
     for (const FTextRun& Run : Layout.GetRuns())
     {
         Result.Append(Run.Text);
@@ -32,11 +32,11 @@ static String ConcatenateRuns(const FTextLayout& Layout)
 }
 
 /** @brief The text of the runs on one line. */
-static String LineText(const FTextLayout& Layout, int32 LineIndex)
+static FString LineText(const FTextLayout& Layout, int32 LineIndex)
 {
     const FTextLine& Line = Layout.GetLines()[LineIndex];
 
-    String Result;
+    FString Result;
     for (int32 Index = 0; Index < Line.RunCount; ++Index)
     {
         Result.Append(Layout.GetRuns()[Line.FirstRunIndex + Index].Text);
@@ -66,7 +66,7 @@ bool TextLayoutBasics_Test()
 
     TEST_SECTION("One run is one line as wide as its characters");
     Layout.Clear();
-    Layout.AppendRun(FTextRun(String("Hello"), Font.Get(), FFloatColor::White));
+    Layout.AppendRun(FTextRun(FString("Hello"), Font.Get(), FFloatColor::White));
     Layout.WrapToWidth(0);
 
     TEST_EXPECT_EQ(Layout.GetLines().Size(), 1);
@@ -77,7 +77,7 @@ bool TextLayoutBasics_Test()
     TEST_EXPECT_EQ(Layout.GetLines()[0].Baseline, Font->GetAscent());
 
     TEST_SECTION("Two runs sit side by side on the same line, which is what a styled sentence needs");
-    Layout.AppendRun(FTextRun(String(" World"), Font.Get(), FFloatColor::Red));
+    Layout.AppendRun(FTextRun(FString(" World"), Font.Get(), FFloatColor::Red));
     Layout.WrapToWidth(0);
 
     TEST_EXPECT_EQ(Layout.GetLines().Size(), 1);
@@ -94,13 +94,13 @@ bool TextLayoutBasics_Test()
     TEST_EXPECT_EQ(Layout.GetCharacterCount(), 11);
 
     TEST_SECTION("Appending after a layout drops it, so a stale line count is never read back");
-    Layout.AppendRun(FTextRun(String("!"), Font.Get(), FFloatColor::White));
+    Layout.AppendRun(FTextRun(FString("!"), Font.Get(), FFloatColor::White));
     TEST_EXPECT(Layout.GetLines().IsEmpty());
     TEST_EXPECT(Layout.GetSize() == IntVector2(0, 0));
 
     TEST_SECTION("A run with no face measures to nothing but still counts as text");
     FTextLayout FacelessLayout;
-    FacelessLayout.AppendRun(FTextRun(String("Hello"), nullptr, FFloatColor::White));
+    FacelessLayout.AppendRun(FTextRun(FString("Hello"), nullptr, FFloatColor::White));
     FacelessLayout.WrapToWidth(0);
 
     TEST_EXPECT_EQ(FacelessLayout.GetSize().X, 0);
@@ -124,7 +124,7 @@ bool TextLayoutNewlines_Test()
 
     TEST_SECTION("A newline breaks the line even with no wrap width");
     FTextLayout Layout;
-    Layout.AppendRun(FTextRun(String("A\nB"), Font.Get(), FFloatColor::White));
+    Layout.AppendRun(FTextRun(FString("A\nB"), Font.Get(), FFloatColor::White));
     Layout.WrapToWidth(0);
 
     TEST_EXPECT_EQ(Layout.GetLines().Size(), 2);
@@ -141,7 +141,7 @@ bool TextLayoutNewlines_Test()
 
     TEST_SECTION("A trailing newline opens a line that takes a full row of its own");
     FTextLayout TrailingLayout;
-    TrailingLayout.AppendRun(FTextRun(String("A\n"), Font.Get(), FFloatColor::White));
+    TrailingLayout.AppendRun(FTextRun(FString("A\n"), Font.Get(), FFloatColor::White));
     TrailingLayout.WrapToWidth(0);
 
     TEST_EXPECT_EQ(TrailingLayout.GetLines().Size(), 2);
@@ -151,7 +151,7 @@ bool TextLayoutNewlines_Test()
 
     TEST_SECTION("A blank line between two paragraphs survives as a blank line");
     FTextLayout BlankLayout;
-    BlankLayout.AppendRun(FTextRun(String("A\n\nB"), Font.Get(), FFloatColor::White));
+    BlankLayout.AppendRun(FTextRun(FString("A\n\nB"), Font.Get(), FFloatColor::White));
     BlankLayout.WrapToWidth(0);
 
     TEST_EXPECT_EQ(BlankLayout.GetLines().Size(), 3);
@@ -161,7 +161,7 @@ bool TextLayoutNewlines_Test()
 
     TEST_SECTION("A newline in the middle of a run breaks it without needing two runs");
     FTextLayout SplitLayout;
-    SplitLayout.AppendRun(FTextRun(String("one\ntwo"), Font.Get(), FFloatColor::White));
+    SplitLayout.AppendRun(FTextRun(FString("one\ntwo"), Font.Get(), FFloatColor::White));
     SplitLayout.WrapToWidth(0);
 
     TEST_EXPECT_EQ(SplitLayout.GetLines().Size(), 2);
@@ -170,8 +170,8 @@ bool TextLayoutNewlines_Test()
 
     TEST_SECTION("A line break between two runs lands where the runs meet");
     FTextLayout PairLayout;
-    PairLayout.AppendRun(FTextRun(String("one\n"), Font.Get(), FFloatColor::White));
-    PairLayout.AppendRun(FTextRun(String("two"), Font.Get(), FFloatColor::Red));
+    PairLayout.AppendRun(FTextRun(FString("one\n"), Font.Get(), FFloatColor::White));
+    PairLayout.AppendRun(FTextRun(FString("two"), Font.Get(), FFloatColor::Red));
     PairLayout.WrapToWidth(0);
 
     TEST_EXPECT_EQ(PairLayout.GetLines().Size(), 2);
@@ -190,7 +190,7 @@ bool TextLayoutWrapping_Test()
 
     TEST_SECTION("Text that fits stays on one line");
     FTextLayout Layout;
-    Layout.AppendRun(FTextRun(String("aaa bbb ccc"), Font.Get(), FFloatColor::White));
+    Layout.AppendRun(FTextRun(FString("aaa bbb ccc"), Font.Get(), FFloatColor::White));
     Layout.WrapToWidth(1000);
 
     TEST_EXPECT_EQ(Layout.GetLines().Size(), 1);
@@ -223,7 +223,7 @@ bool TextLayoutWrapping_Test()
 
     TEST_SECTION("A word wider than the whole line is cut rather than looping forever");
     FTextLayout LongWordLayout;
-    LongWordLayout.AppendRun(FTextRun(String("aaaaaaaaaaaa"), Font.Get(), FFloatColor::White));
+    LongWordLayout.AppendRun(FTextRun(FString("aaaaaaaaaaaa"), Font.Get(), FFloatColor::White));
     LongWordLayout.WrapToWidth(5 * GAdvance);
 
     TEST_EXPECT_EQ(LongWordLayout.GetLines().Size(), 3);
@@ -236,8 +236,8 @@ bool TextLayoutWrapping_Test()
 
     TEST_SECTION("A word that does not fit in what is left of a line moves down whole");
     FTextLayout PushDownLayout;
-    PushDownLayout.AppendRun(FTextRun(String("ab "), Font.Get(), FFloatColor::White));
-    PushDownLayout.AppendRun(FTextRun(String("cdefgh"), Font.Get(), FFloatColor::Red));
+    PushDownLayout.AppendRun(FTextRun(FString("ab "), Font.Get(), FFloatColor::White));
+    PushDownLayout.AppendRun(FTextRun(FString("cdefgh"), Font.Get(), FFloatColor::Red));
     PushDownLayout.WrapToWidth(8 * GAdvance);
 
     TEST_EXPECT_EQ(PushDownLayout.GetLines().Size(), 2);
@@ -246,8 +246,8 @@ bool TextLayoutWrapping_Test()
 
     TEST_SECTION("Wrapping crosses a run boundary, so one paragraph of mixed styles reflows as one");
     FTextLayout MixedLayout;
-    MixedLayout.AppendRun(FTextRun(String("aaa "), Font.Get(), FFloatColor::White));
-    MixedLayout.AppendRun(FTextRun(String("bbb ccc"), Font.Get(), FFloatColor::Red));
+    MixedLayout.AppendRun(FTextRun(FString("aaa "), Font.Get(), FFloatColor::White));
+    MixedLayout.AppendRun(FTextRun(FString("bbb ccc"), Font.Get(), FFloatColor::Red));
     MixedLayout.WrapToWidth(8 * GAdvance);
 
     TEST_EXPECT(MixedLayout.GetLines().Size() >= 2);
@@ -255,7 +255,7 @@ bool TextLayoutWrapping_Test()
 
     TEST_SECTION("Wrapping and newlines compose, so a wrapped paragraph still ends where it says it does");
     FTextLayout ParagraphLayout;
-    ParagraphLayout.AppendRun(FTextRun(String("aaa bbb\nccc"), Font.Get(), FFloatColor::White));
+    ParagraphLayout.AppendRun(FTextRun(FString("aaa bbb\nccc"), Font.Get(), FFloatColor::White));
     ParagraphLayout.WrapToWidth(4 * GAdvance);
 
     TEST_EXPECT_EQ(ParagraphLayout.GetLines().Size(), 3);
@@ -271,8 +271,8 @@ bool TextLayoutHitTesting_Test()
     TSharedPtr<FFixedWidthFontFace> Font = CreateFont();
 
     FTextLayout Layout;
-    Layout.AppendRun(FTextRun(String("Hello"), Font.Get(), FFloatColor::White));
-    Layout.AppendRun(FTextRun(String(" World"), Font.Get(), FFloatColor::Red));
+    Layout.AppendRun(FTextRun(FString("Hello"), Font.Get(), FFloatColor::White));
+    Layout.AppendRun(FTextRun(FString(" World"), Font.Get(), FFloatColor::Red));
     Layout.WrapToWidth(0);
 
     TEST_SECTION("A click at the start lands on the first character");
@@ -318,7 +318,7 @@ bool TextLayoutHitTesting_Test()
     TEST_EXPECT_EQ(Layout.FindLineIndexForCharacter(11), 0);
 
     FTextLayout MultiLineLayout;
-    MultiLineLayout.AppendRun(FTextRun(String("Hello\nWorld"), Font.Get(), FFloatColor::White));
+    MultiLineLayout.AppendRun(FTextRun(FString("Hello\nWorld"), Font.Get(), FFloatColor::White));
     MultiLineLayout.WrapToWidth(0);
 
     TEST_SECTION("A click on the second line resolves against that line's own runs");
@@ -357,9 +357,9 @@ bool TextLayoutDraw_Test()
     TEST_EXPECT_EQ(EmptyList.CountCommandsOfType(EDrawCommandType::Text), 0);
 
     FTextLayout Layout;
-    Layout.AppendRun(FTextRun(String("Hello"), Font.Get(), FFloatColor::White));
+    Layout.AppendRun(FTextRun(FString("Hello"), Font.Get(), FFloatColor::White));
 
-    FTextRun Highlighted(String(" World"), Font.Get(), FFloatColor::Red);
+    FTextRun Highlighted(FString(" World"), Font.Get(), FFloatColor::Red);
     Highlighted.BackgroundTint = FFloatColor(0.0f, 0.0f, 1.0f, 1.0f);
     Layout.AppendRun(Highlighted);
 
@@ -375,7 +375,7 @@ bool TextLayoutDraw_Test()
     TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::Box), 1);
 
     TEST_SECTION("The background sits under the text rather than over it");
-    const int32 TextIndex = CommandList.FindTextCommand(StringView("Hello"));
+    const int32 TextIndex = CommandList.FindTextCommand(FStringView("Hello"));
     TEST_EXPECT(TextIndex != FDrawCommandList::InvalidIndex);
 
     for (const FDrawCommand& Command : CommandList.GetCommands())
@@ -393,7 +393,7 @@ bool TextLayoutDraw_Test()
     TEST_EXPECT_EQ(HighestLayer, 4);
 
     TEST_SECTION("The runs are placed left to right from the top-left of the geometry");
-    const int32 SecondIndex = CommandList.FindTextCommand(StringView(" World"));
+    const int32 SecondIndex = CommandList.FindTextCommand(FStringView(" World"));
     TEST_EXPECT(SecondIndex != FDrawCommandList::InvalidIndex);
 
     if (TextIndex != FDrawCommandList::InvalidIndex && SecondIndex != FDrawCommandList::InvalidIndex)
@@ -412,14 +412,14 @@ bool TextLayoutDraw_Test()
 
     TEST_SECTION("A second line is drawn one line height below the first");
     FTextLayout MultiLineLayout;
-    MultiLineLayout.AppendRun(FTextRun(String("one\ntwo"), Font.Get(), FFloatColor::White));
+    MultiLineLayout.AppendRun(FTextRun(FString("one\ntwo"), Font.Get(), FFloatColor::White));
     MultiLineLayout.WrapToWidth(0);
 
     FDrawCommandList MultiLineList;
     MultiLineLayout.Draw(FDrawGeometry(FRectangle(IntVector2(0, 0), 200, 40), 1.0f), MultiLineList, 0);
 
-    const int32 FirstLineIndex  = MultiLineList.FindTextCommand(StringView("one"));
-    const int32 SecondLineIndex = MultiLineList.FindTextCommand(StringView("two"));
+    const int32 FirstLineIndex  = MultiLineList.FindTextCommand(FStringView("one"));
+    const int32 SecondLineIndex = MultiLineList.FindTextCommand(FStringView("two"));
 
     TEST_EXPECT(FirstLineIndex != FDrawCommandList::InvalidIndex);
     TEST_EXPECT(SecondLineIndex != FDrawCommandList::InvalidIndex);

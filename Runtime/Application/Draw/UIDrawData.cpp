@@ -623,7 +623,7 @@ void FUIDrawData::AddText(const FDrawCommand& Command, int32 CacheIndex)
         return;
     }
 
-    const StringView Text = SourceCommandList->GetCommandText(Command);
+    const FStringView Text = SourceCommandList->GetCommandText(Command);
     if (Text.IsEmpty())
     {
         return;
@@ -720,7 +720,7 @@ void FUIDrawData::AddText(const FDrawCommand& Command, int32 CacheIndex)
     }
 
     Cached.AtlasRevision = Atlas->GetRevision();
-    Cached.Text          = String(Text.Data(), Text.Length());
+    Cached.Text          = FString(Text.Data(), Text.Length());
     Cached.Font          = Command.Font;
     Cached.Bounds        = Command.Bounds;
     Cached.PackedColor   = Command.PackedColor;

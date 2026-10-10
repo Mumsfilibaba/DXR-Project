@@ -479,7 +479,7 @@ FGuid FMacPlatformMisc::CreateGuid()
 
 void FMacPlatformMisc::PrepareMetalDebugLayerEnvironment(bool bEnableDebugLayer, bool bEnableShaderValidation)
 {
-    String Existing;
+    FString Existing;
     if (bEnableDebugLayer)
     {
         if (!GetEnvironmentVariable("MTL_DEBUG_LAYER", Existing) || Existing.IsEmpty())

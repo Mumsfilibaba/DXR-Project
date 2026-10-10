@@ -69,7 +69,7 @@ IntVector2 FExpander::ComputeDesiredSize() const
     int32 HeaderWidth = Style.FramePadding.GetTotalHorizontal() + GetArrowExtent() + EXPANDER_DISCLOSURE_SPACING;
     if (Font && !Label.IsEmpty())
     {
-        HeaderWidth += Font->MeasureWidth(StringView(Label.Data(), Label.Length()));
+        HeaderWidth += Font->MeasureWidth(FStringView(Label.Data(), Label.Length()));
     }
 
     IntVector2 DesiredSize(HeaderWidth, GetDisplayedHeight());
@@ -242,7 +242,7 @@ void FExpander::SetExpanded(bool bInIsExpanded)
     OnStateChangedDelegate.ExecuteIfBound(bIsExpanded);
 }
 
-void FExpander::SetLabel(const String& InLabel)
+void FExpander::SetLabel(const FString& InLabel)
 {
     if (Label != InLabel)
     {

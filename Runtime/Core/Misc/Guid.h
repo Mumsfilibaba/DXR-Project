@@ -11,7 +11,7 @@ struct CORE_API FGuid
      * @brief Parse 32 hex digits, either packed or in the dashed 8-4-4-4-12 form, in upper or lower case
      * @return Returns false and leaves OutGuid untouched if Text is not a GUID
      */
-    static bool Parse(const String& Text, FGuid& OutGuid);
+    static bool Parse(const FString& Text, FGuid& OutGuid);
 
 public:
     constexpr FGuid() = default;
@@ -25,7 +25,7 @@ public:
     }
 
     /** @return Returns the GUID as 32 lowercase hex digits without dashes, e.g. "6f9619ff8b86d011b42d00cf4fc964ff" */
-    NODISCARD String ToString() const;
+    NODISCARD FString ToString() const;
 
     NODISCARD constexpr bool IsValid() const
     {

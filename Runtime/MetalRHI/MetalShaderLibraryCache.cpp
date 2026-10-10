@@ -142,7 +142,7 @@ TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Compile(TArrayView<co
 {
     SCOPED_AUTORELEASE_POOL();
 
-    const String SourceString(reinterpret_cast<const CHAR_T*>(Source.Data()), Source.Size());
+    const FString SourceString(reinterpret_cast<const CHAR_T*>(Source.Data()), Source.Size());
 
     NSString* SourceText = SourceString.GetNSString();
     CHECK(SourceText != nil);
@@ -155,7 +155,7 @@ TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Compile(TArrayView<co
 
     if (!Library)
     {
-        const String ErrorString([Error localizedDescription]);
+        const FString ErrorString([Error localizedDescription]);
         LOG_ERROR("Failed to compile shader. Error: %s", *ErrorString);
         return nullptr;
     }
@@ -174,7 +174,7 @@ TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Compile(TArrayView<co
 
     if (!NewShader->Function)
     {
-        const String NameString(NewShader->FunctionName);
+        const FString NameString(NewShader->FunctionName);
         LOG_ERROR("Failed to retrieve function '%s' from Library", *NameString);
         return nullptr;
     }

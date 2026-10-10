@@ -40,7 +40,7 @@ public:
      * @brief Looks up a name, or reads a numeric address, into every IPv4 and IPv6 address it stands for, in the order
      *        the OS prefers. Trying them is left to the caller. Each platform hides this with its own.
      */
-    static bool Resolve(const String& Host, uint16 Port, TArray<FSocketAddress>& OutAddresses)
+    static bool Resolve(const FString& Host, uint16 Port, TArray<FSocketAddress>& OutAddresses)
     {
         return false;
     }
@@ -49,15 +49,15 @@ public:
      * @brief Reads a numeric IPv4 ("127.0.0.1") or IPv6 ("::1", "fe80::1") address. Names are not looked up; use
      *        Resolve for those. Each platform hides this with its own.
      */
-    static bool ParseAddress(const String& Text, uint16 Port, FSocketAddress& OutAddress)
+    static bool ParseAddress(const FString& Text, uint16 Port, FSocketAddress& OutAddress)
     {
         return false;
     }
 
     /** @return The address as text without the port, IPv4 always as a.b.c.d. Each platform hides this with its own. */
-    static String AddressToString(const FSocketAddress& Address)
+    static FString AddressToString(const FSocketAddress& Address)
     {
-        return String();
+        return FString();
     }
 
     /**

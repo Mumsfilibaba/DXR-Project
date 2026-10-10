@@ -116,7 +116,7 @@ static_assert(sizeof(FRHIDispatchMeshIndirectParameters) == sizeof(D3D12_DISPATC
     #define D3D12_LOG_TRANSITION_MISMATCH(InResource, InContext, InD3D12BeforeState, InD3D12AfterState, InCurrentState) \
         do \
         { \
-            String TransitionDebugName; \
+            FString TransitionDebugName; \
             (InResource)->GetDebugName(TransitionDebugName); \
             D3D12_ERROR( \
                 "TransitionBarrier mismatch on '%s' [%s]: " \
@@ -131,7 +131,7 @@ static_assert(sizeof(FRHIDispatchMeshIndirectParameters) == sizeof(D3D12_DISPATC
     #define D3D12_LOG_TRANSITION_MISMATCH(InResource, InContext, InD3D12BeforeState, InD3D12AfterState, InCurrentState) ((void)0)
 #endif
 
-inline void D3D12SetDebugName(ID3D12Object* Object, const String& Name)
+inline void D3D12SetDebugName(ID3D12Object* Object, const FString& Name)
 {
     if (Object)
     {
@@ -157,7 +157,7 @@ inline void D3D12SetDebugName(ID3D12Object* Object, const String& Name)
     }
 }
 
-inline void D3D12GetDebugName(ID3D12Object* Object, String& OutName)
+inline void D3D12GetDebugName(ID3D12Object* Object, FString& OutName)
 {
     OutName.Clear();
 

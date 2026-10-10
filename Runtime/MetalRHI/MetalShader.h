@@ -50,13 +50,13 @@ public:
 
     bool Initialize(const FShaderCodeView& InCode);
 
-    const String& GetIdentifier() const
+    const FString& GetIdentifier() const
     {
         return Identifier;
     }
 
 protected:
-    String Identifier;
+    FString Identifier;
 };
 
 // GetMetalShader and GetMetalRayTracingShader reinterpret the base interface, so MetalBaseType has to sit at the same address as FMetalShader

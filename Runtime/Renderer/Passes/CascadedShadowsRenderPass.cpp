@@ -168,7 +168,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         }
         else
         {
-            const String DebugName = String::Printf("CSM PipelineState%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
+            const FString DebugName = FString::Printf("CSM PipelineState%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
             NewPipelineStateInstance.PipelineState->SetDebugName(DebugName);
         }
 
@@ -212,7 +212,7 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
 
     if (Resources.ShadowCascades)
     {
-        const String DebugName = String::Printf("Shadow Map Cascades");
+        const FString DebugName = FString::Printf("Shadow Map Cascades");
         Resources.ShadowCascades->SetDebugName(DebugName);
     }
     else

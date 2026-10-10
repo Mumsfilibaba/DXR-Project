@@ -7,6 +7,6 @@ struct ENGINE_API FFBXImporter : public IModelImporter
 {
     virtual ~FFBXImporter() = default;
 
-    virtual bool ImportFromFile(const StringView& Filename, EMeshImportFlags Flags, FModelData& OutModelData) override final;
-    virtual bool MatchExtenstion(const StringView& FileName) override final;
+    virtual bool ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags, FModelData& OutModelData) override final;
+    virtual bool MatchExtenstion(const FStringView& FileName) override final;
 };

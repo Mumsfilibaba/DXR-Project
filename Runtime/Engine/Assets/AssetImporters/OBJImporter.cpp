@@ -11,7 +11,7 @@
 #include <tiny_obj_loader.h>
 #include <sstream>
 
-static bool ReadText(const String& Filename, std::string& OutText)
+static bool ReadText(const FString& Filename, std::string& OutText)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Filename);
     if (!FileHandle)
@@ -33,14 +33,14 @@ static bool ReadText(const String& Filename, std::string& OutText)
 class FOBJMaterialReader final : public tinyobj::MaterialReader
 {
 public:
-    explicit FOBJMaterialReader(const String& InDirectory)
+    explicit FOBJMaterialReader(const FString& InDirectory)
         : Directory(InDirectory)
     {
     }
 
     virtual bool operator()(const std::string& MaterialFile, std::vector<tinyobj::material_t>* Materials, std::map<std::string, int>* MaterialMap, std::string* Warning, std::string* Error) override final
     {
-        const String Filename = File::CombinePath(Directory, StringCast<CHAR_T>(MaterialFile.c_str(), static_cast<int32>(MaterialFile.size())).ToString());
+        const FString Filename = File::CombinePath(Directory, StringCast<CHAR_T>(MaterialFile.c_str(), static_cast<int32>(MaterialFile.size())).ToString());
 
         std::string Text;
         if (!ReadText(Filename, Text))
@@ -59,10 +59,10 @@ public:
     }
 
 private:
-    String Directory;
+    FString Directory;
 };
 
-bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags /* Flags */, FModelData& OutModelData)
+bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags /* Flags */, FModelData& OutModelData)
 {
     // Load Scene File
     std::string                      Warning;
@@ -72,9 +72,9 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
     tinyobj::attrib_t                Attributes;
 
     // Extract just the name of the file
-    const String Filename            = String(InFilename);
-    const String MTLFiledir          = File::GetDirectoryOf(Filename);
-    const String FilenameWithoutPath = File::ExtractFilenameWithoutExtension(Filename);
+    const FString Filename            = FString(InFilename);
+    const FString MTLFiledir          = File::GetDirectoryOf(Filename);
+    const FString FilenameWithoutPath = File::ExtractFilenameWithoutExtension(Filename);
     
     // Load the OBJ file
     std::string Text;
@@ -135,11 +135,11 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
 
         if (Mat.name.empty())
         {
-            MaterialData.Name = String::Printf("%s_material_%d", *FilenameWithoutPath, SceneMaterialIndex);
+            MaterialData.Name = FString::Printf("%s_material_%d", *FilenameWithoutPath, SceneMaterialIndex);
         }
         else
         {
-            MaterialData.Name = String(Mat.name.c_str());
+            MaterialData.Name = FString(Mat.name.c_str());
         }
         
         OutModelData.Materials.Add(Move(MaterialData));
@@ -239,7 +239,7 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
 
         if (Shape.name.empty())
         {
-            MeshData.Name = String::Printf("%s_%d", *FilenameWithoutPath, ShapeIndex);
+            MeshData.Name = FString::Printf("%s_%d", *FilenameWithoutPath, ShapeIndex);
         }
         else
         {
@@ -254,7 +254,7 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
     return true;
 }
 
-bool FOBJImporter::MatchExtenstion(const StringView& FileName)
+bool FOBJImporter::MatchExtenstion(const FStringView& FileName)
 {
     return FileName.EndsWith(".obj", EStringCaseType::NoCase);
 }

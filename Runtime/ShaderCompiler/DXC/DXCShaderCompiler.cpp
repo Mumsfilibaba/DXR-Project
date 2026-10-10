@@ -103,7 +103,7 @@ static LPCWSTR GetShaderModelString(EShaderModel Model)
     }
 }
 
-static void BuildFixedCompileArguments(const FShaderCompileInfo& CompileInfo, const WString& IncludeDir, TArray<LPCWSTR>& OutArgs)
+static void BuildFixedCompileArguments(const FShaderCompileInfo& CompileInfo, const FWideString& IncludeDir, TArray<LPCWSTR>& OutArgs)
 {
     OutArgs.Emplace(L"-HV 2021"); // Use HLSL 2021
     OutArgs.Emplace(L"-WX");      // Warnings as errors
@@ -160,7 +160,7 @@ static void BuildSpirvCompileArguments(const FShaderCompileInfo& CompileInfo, TA
     OutArgs.Emplace(L"31");
 }
 
-static void BuildCompileArguments(const FShaderCompileInfo& CompileInfo, const WString& IncludeDir, TArray<LPCWSTR>& OutArgs)
+static void BuildCompileArguments(const FShaderCompileInfo& CompileInfo, const FWideString& IncludeDir, TArray<LPCWSTR>& OutArgs)
 {
     BuildFixedCompileArguments(CompileInfo, IncludeDir, OutArgs);
 
@@ -263,7 +263,7 @@ bool FDXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
         return false;
     }
 
-    const WString WideShaderIncludeDir = StringCast<WIDECHAR>(Request.IncludeDir).ToString();
+    const FWideString WideShaderIncludeDir = StringCast<WIDECHAR>(Request.IncludeDir).ToString();
 
     TArray<LPCWSTR> CompileArgs;
     BuildCompileArguments(CompileInfo, WideShaderIncludeDir, CompileArgs);
@@ -326,7 +326,7 @@ bool FDXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
 
     if (PrintBlob && PrintBlob->GetBufferSize() > 0)
     {
-        OutResult.Messages = String(reinterpret_cast<LPCSTR>(PrintBlob->GetBufferPointer()), static_cast<int32>(PrintBlob->GetBufferSize()));
+        OutResult.Messages = FString(reinterpret_cast<LPCSTR>(PrintBlob->GetBufferPointer()), static_cast<int32>(PrintBlob->GetBufferSize()));
     }
 
     // If the error encountered an error
@@ -385,7 +385,7 @@ bool FDXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
     if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
     {
         TArray<uint32> PreparedSpirv;
-        String         PrepareError;
+        FString        PrepareError;
         if (!FSpirvTransforms::PrepareForVulkan(Spirv, PreparedSpirv, &PrepareError))
         {
             OutResult.Messages += PrepareError;

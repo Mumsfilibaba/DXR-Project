@@ -11,7 +11,7 @@
     #define CONSOLE_DEFAULT_HISTORY_LENGTH (50)
 #endif
 
-DECLARE_DELEGATE(FConsoleCommandDelegate, StringView);
+DECLARE_DELEGATE(FConsoleCommandDelegate, FStringView);
 DECLARE_DELEGATE(FConsoleVariableDelegate, struct IConsoleVariable*);
 
 struct IOutputDevice;
@@ -77,7 +77,7 @@ struct IConsoleCommand : public IConsoleObject
      * @brief Execute the ConsoleCommand
      * @param Args Arguments passed to the command
      */
-    virtual void Execute(StringView Args) = 0;
+    virtual void Execute(FStringView Args) = 0;
 };
 
 struct IConsoleVariable : public IConsoleObject
@@ -104,7 +104,7 @@ struct IConsoleVariable : public IConsoleObject
      * @brief Set the variable with an string
      * @param InValue Value to store
      */
-    virtual void SetString(const String& InValue, EConsoleVariableFlags Flags) = 0;
+    virtual void SetString(const FString& InValue, EConsoleVariableFlags Flags) = 0;
 
     /**
      * @brief Retrieve the variable as an int
@@ -128,7 +128,7 @@ struct IConsoleVariable : public IConsoleObject
      * @brief Retrieve the variable as an string
      * @return Returns an string with the value of the variable
      */
-    virtual String GetString() const = 0;
+    virtual FString GetString() const = 0;
 
     /**
      * @brief Retrieve the variable's data as a pointer
@@ -152,7 +152,7 @@ struct IConsoleVariable : public IConsoleObject
      * @brief Retrieve the variable's datacontainer as a pointer
      * @return Returns an pointer to string-datacontainer if this is a string variable otherwise nullptr
      */
-    virtual TConsoleVariableData<String>* GetStringData() = 0;
+    virtual TConsoleVariableData<FString>* GetStringData() = 0;
 
     /**
     * @brief  - Retrieve the variable's current flags
@@ -370,7 +370,7 @@ public:
     /**
      * @brief Register a new String ConsoleVariable that references an externally-owned variable
      */
-    IConsoleVariable* RegisterVariableRef(const CHAR_T* InName, const CHAR_T* HelpString, String& RefValue, EConsoleVariableFlags Flags);
+    IConsoleVariable* RegisterVariableRef(const CHAR_T* InName, const CHAR_T* HelpString, FString& RefValue, EConsoleVariableFlags Flags);
 
     /**
      * @brief Unregister a ConsoleObject
@@ -390,7 +390,7 @@ public:
      * @param ConsoleObject Name of the ConsoleCommand
      * @return The ConsoleCommand matching the name
      */
-    String FindConsoleObjectName(IConsoleObject* ConsoleObject);
+    FString FindConsoleObjectName(IConsoleObject* ConsoleObject);
 
     /**
      * @brief Finds the ConsoleCommand with the matching name, returns nullptr if not found
@@ -418,7 +418,7 @@ public:
      * @param CandidateName Names to match
      * @param OutCandidates Array to store the console-objects that matches the candidate-name
      */
-    void FindCandidates(const StringView& CandidateName, TArray<TPair<IConsoleObject*, String>>& OutCandidates);
+    void FindCandidates(const FStringView& CandidateName, TArray<TPair<IConsoleObject*, FString>>& OutCandidates);
 
     /**
      * @brief Clears the console history
@@ -431,13 +431,13 @@ public:
      * @param Command Command to execute by the console
      * @return False when the name is not a registered command or variable, or the value is invalid for the variable
      */
-    bool ExecuteCommand(IOutputDevice& OutputDevice, const String& Command);
+    bool ExecuteCommand(IOutputDevice& OutputDevice, const FString& Command);
 
     /**
      * @brief Queue a command to run on the next ExecuteQueuedCommands, can be called from any thread
      * @param Command Command to execute by the console
      */
-    void EnqueueCommand(const String& Command);
+    void EnqueueCommand(const FString& Command);
 
     /**
      * @brief Execute every queued command in the order they were queued. Commands queued while executing wait for the next call.
@@ -449,7 +449,7 @@ public:
      * @brief Retrieve all registered console objects
      * @param OutObjects Array to populate with name/object pairs
      */
-    void GetConsoleObjects(TArray<TPair<String, IConsoleObject*>>& OutObjects) const;
+    void GetConsoleObjects(TArray<TPair<FString, IConsoleObject*>>& OutObjects) const;
 
     /**
      * @brief Dump all console variable values to an output device
@@ -471,7 +471,7 @@ public:
      * @brief Retrieve all the history that has been written to the console
      * @return An array containing string of all history written to the console
      */
-    const TArray<String>& GetHistory() const
+    const TArray<FString>& GetHistory() const
     {
         return History;
     }
@@ -485,10 +485,10 @@ private:
     IConsoleObject* RegisterObject(const CHAR_T* Name, IConsoleObject* Variable);
 
     int32                          HistoryLength;
-    TArray<String>                History;
-    TMap<String, IConsoleObject*> ConsoleObjects;
-    TArray<String>                QueuedCommands;
-    FCriticalSection              QueuedCommandsCS;
+    TArray<FString>                History;
+    TMap<FString, IConsoleObject*> ConsoleObjects;
+    TArray<FString>                QueuedCommands;
+    FCriticalSection               QueuedCommandsCS;
 
     static FConsoleManager* ConsoleManager;
 };
@@ -643,7 +643,7 @@ private:
 };
 
 template<>
-FORCEINLINE TAutoConsoleVariable<String>::TAutoConsoleVariable(const CHAR_T* InName, const CHAR_T* InHelpString, const String& DefaultValue, EConsoleVariableFlags InFlags)
+FORCEINLINE TAutoConsoleVariable<FString>::TAutoConsoleVariable(const CHAR_T* InName, const CHAR_T* InHelpString, const FString& DefaultValue, EConsoleVariableFlags InFlags)
     : FAutoConsoleObject(FConsoleManager::Get().RegisterVariable(InName, InHelpString, *DefaultValue, InFlags))
 { 
     Data = static_cast<FConsoleVariableData*>(AsVariable()->GetStringData());
@@ -709,7 +709,7 @@ FORCEINLINE void TAutoConsoleVariable<bool>::SetVariable(const bool& bInValue, E
 }
 
 template<>
-FORCEINLINE void TAutoConsoleVariable<String>::SetVariable(const String& InValue, EConsoleVariableFlags InFlags)
+FORCEINLINE void TAutoConsoleVariable<FString>::SetVariable(const FString& InValue, EConsoleVariableFlags InFlags)
 {
     AsVariable()->SetString(InValue, InFlags);
 }
@@ -733,7 +733,7 @@ public:
     {
     }
 
-    FAutoConsoleVariableRef(const CHAR_T* InName, const CHAR_T* InHelpString, String& RefValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
+    FAutoConsoleVariableRef(const CHAR_T* InName, const CHAR_T* InHelpString, FString& RefValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
         : FAutoConsoleObject(FConsoleManager::Get().RegisterVariableRef(InName, InHelpString, RefValue, InFlags))
     {
     }
@@ -756,7 +756,7 @@ public:
         AsVariable()->SetOnChangedDelegate(VariableChangedDelegate);
     }
 
-    FAutoConsoleVariableRef(const CHAR_T* InName, const CHAR_T* InHelpString, String& RefValue, const FConsoleVariableDelegate& VariableChangedDelegate, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
+    FAutoConsoleVariableRef(const CHAR_T* InName, const CHAR_T* InHelpString, FString& RefValue, const FConsoleVariableDelegate& VariableChangedDelegate, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
         : FAutoConsoleVariableRef(InName, InHelpString, RefValue, InFlags)
     {
         AsVariable()->SetOnChangedDelegate(VariableChangedDelegate);
@@ -799,7 +799,7 @@ public:
         AsVariable()->SetAsBool(bInValue, InFlags);
     }
 
-    FORCEINLINE void SetVariable(const String& InValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::SetByCode)
+    FORCEINLINE void SetVariable(const FString& InValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::SetByCode)
     {
         AsVariable()->SetString(InValue, InFlags);
     }

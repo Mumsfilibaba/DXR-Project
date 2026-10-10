@@ -231,9 +231,9 @@ public:
         return 3;
     }
 
-    NODISCARD static String ToDefineValue(Type Value)
+    NODISCARD static FString ToDefineValue(Type Value)
     {
-        return String::Printf("%d", 16 << Value);
+        return FString::Printf("%d", 16 << Value);
     }
 };
 

@@ -716,7 +716,7 @@ void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
                 const float Distance = FGizmoMath::SnapValue(RawDelta.DotProduct(DragAxis), Snap.TranslationSnap);
 
                 Delta   = DragAxis * Distance;
-                Readout = String::Printf("%s  %.3f", AxisNames[AxisIndex], Distance);
+                Readout = FString::Printf("%s  %.3f", AxisNames[AxisIndex], Distance);
                 break;
             }
 
@@ -728,14 +728,14 @@ void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
                 const float AlongV = FGizmoMath::SnapValue(RawDelta.DotProduct(DragBasisV), Snap.TranslationSnap);
 
                 Delta   = (DragBasisU * AlongU) + (DragBasisV * AlongV);
-                Readout = String::Printf("%s %.3f  %s %.3f", AxisNames[(AxisIndex + 1) % 3], AlongU, AxisNames[(AxisIndex + 2) % 3], AlongV);
+                Readout = FString::Printf("%s %.3f  %s %.3f", AxisNames[(AxisIndex + 1) % 3], AlongU, AxisNames[(AxisIndex + 2) % 3], AlongV);
                 break;
             }
 
             default:
             {
                 Delta   = FGizmoMath::SnapVector(RawDelta, Snap.TranslationSnap);
-                Readout = String::Printf("%.3f  %.3f  %.3f", Delta.X, Delta.Y, Delta.Z);
+                Readout = FString::Printf("%.3f  %.3f  %.3f", Delta.X, Delta.Y, Delta.Z);
                 break;
             }
         }
@@ -765,8 +765,8 @@ void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
         const Matrix4 AboutPivot = Matrix4::Translation(-DragPlanePoint) * Rotation * Matrix4::Translation(DragPlanePoint);
 
         Readout = ActiveHandle == EGizmoHandle::RotateScreen
-            ? String::Printf("%.2f deg", Math::RadiansToDegrees(Applied))
-            : String::Printf("%s  %.2f deg", AxisNames[AxisIndex], Math::RadiansToDegrees(Applied));
+            ? FString::Printf("%.2f deg", Math::RadiansToDegrees(Applied))
+            : FString::Printf("%s  %.2f deg", AxisNames[AxisIndex], Math::RadiansToDegrees(Applied));
 
         ApplyTransform(TransformAtDragStart * AboutPivot);
         return;
@@ -799,7 +799,7 @@ void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
     if (bIsUniform)
     {
         ScaleVector = Vector3(Factor, Factor, Factor);
-        Readout     = String::Printf("%.3f", Factor);
+        Readout     = FString::Printf("%.3f", Factor);
     }
     else if (bIsPlane)
     {
@@ -812,12 +812,12 @@ void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
 
         ScaleVector[IndexU] = AlongU;
         ScaleVector[IndexV] = AlongV;
-        Readout             = String::Printf("%s %.3f  %s %.3f", AxisNames[IndexU], AlongU, AxisNames[IndexV], AlongV);
+        Readout             = FString::Printf("%s %.3f  %s %.3f", AxisNames[IndexU], AlongU, AxisNames[IndexV], AlongV);
     }
     else
     {
         ScaleVector[AxisIndex] = Factor;
-        Readout                = String::Printf("%s  %.3f", AxisNames[AxisIndex], Factor);
+        Readout                = FString::Printf("%s  %.3f", AxisNames[AxisIndex], Factor);
     }
 
     ApplyTransform(Matrix4::Scale(ScaleVector) * TransformAtDragStart);
@@ -1063,7 +1063,7 @@ void FGizmo::DrawReadout(FDrawCommandList& OutCommandList, int32 LayerId) const
     const FUIStyle& Style = FUIStyle::GetDefault();
 
     const IntVector2 Position(static_cast<int32>(PivotClient.X) + GIZMO_READOUT_OFFSET, static_cast<int32>(PivotClient.Y) + GIZMO_READOUT_OFFSET);
-    const FRectangle Bounds(Position, Font->MeasureWidth(StringView(Readout.Data(), Readout.Length())), Font->GetLineHeight());
+    const FRectangle Bounds(Position, Font->MeasureWidth(FStringView(Readout.Data(), Readout.Length())), Font->GetLineHeight());
 
     OutCommandList.AddText(LayerId, FRectangle(Position + IntVector2(1, 1), Bounds.Width, Bounds.Height), Readout, Font.Get(), Style.Colors.WindowBackground);
     OutCommandList.AddText(LayerId + 1, Bounds, Readout, Font.Get(), Style.Colors.Text);

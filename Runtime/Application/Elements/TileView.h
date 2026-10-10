@@ -11,7 +11,7 @@
 struct FTileItem
 {
     /** @brief The text drawn under the icon, elided when it is wider than the tile. */
-    String Label;
+    FString Label;
 
     /** @brief The image drawn in the upper part of the tile, which is unset for an item without one. */
     FUIBrush Icon;
@@ -124,7 +124,7 @@ public:
      *
      * @param InFilter The text to match, compared without regard to case. An empty filter highlights nothing.
      */
-    void SetFilterText(const String& InFilter);
+    void SetFilterText(const FString& InFilter);
 
     /** @brief Drops the selection, firing the selection delegate when there was one to drop. */
     void ClearSelection();
@@ -204,7 +204,7 @@ public:
     }
 
     /** @return The run of a label drawn highlighted, which is empty when nothing is highlighted. */
-    NODISCARD FORCEINLINE const String& GetFilterText() const
+    NODISCARD FORCEINLINE const FString& GetFilterText() const
     {
         return FilterText;
     }
@@ -249,7 +249,7 @@ private:
     TArray<int32>                      SelectedIndices;
     TArray<uint8>                      SelectedFlags;
     TSharedPtr<IFontFace>              Font;
-    String                             FilterText;
+    FString                            FilterText;
     IntVector2                         TileSize;
     IntVector2                         PressPosition;
     int32                              TileSpacing;

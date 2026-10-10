@@ -61,7 +61,7 @@ struct FToolBarItemDesc
      * @param InLabel The text to show.
      * @return This desc, so the setters can be chained.
      */
-    FORCEINLINE FToolBarItemDesc& SetLabel(const String& InLabel)
+    FORCEINLINE FToolBarItemDesc& SetLabel(const FString& InLabel)
     {
         Label = InLabel;
         return *this;
@@ -73,7 +73,7 @@ struct FToolBarItemDesc
      * @param InToolTipText The text to show, which is empty for an entry with no tip.
      * @return This desc, so the setters can be chained.
      */
-    FORCEINLINE FToolBarItemDesc& SetToolTipText(const String& InToolTipText)
+    FORCEINLINE FToolBarItemDesc& SetToolTipText(const FString& InToolTipText)
     {
         ToolTipText = InToolTipText;
         return *this;
@@ -95,10 +95,10 @@ struct FToolBarItemDesc
     FUIBrush Icon;
 
     /** @brief The text drawn beside the icon, which is empty for an icon-only entry. */
-    String Label;
+    FString Label;
 
     /** @brief The tip shown once the cursor has rested, which is empty for an entry with no tip. */
-    String ToolTipText;
+    FString ToolTipText;
 
     /** @brief A width the entry will not shrink below, or zero to size it to its content. */
     int32 MinWidth;
@@ -149,7 +149,7 @@ public:
      *
      * @param InLabel The text to show, empty for an icon-only entry.
      */
-    void SetLabel(const String& InLabel);
+    void SetLabel(const FString& InLabel);
 
     /**
      * @brief Sets the icon drawn ahead of the label, empty for a text-only entry.
@@ -163,7 +163,7 @@ public:
      *
      * @param InToolTipText The text to show, which is empty for an entry with no tip.
      */
-    void SetToolTipText(const String& InToolTipText);
+    void SetToolTipText(const FString& InToolTipText);
 
     /**
      * @brief Sets what a click on the entry does.
@@ -237,13 +237,13 @@ public:
     }
 
     /** @return The text the entry shows, which is empty for an icon-only entry. */
-    NODISCARD FORCEINLINE const String& GetLabel() const
+    NODISCARD FORCEINLINE const FString& GetLabel() const
     {
         return Label;
     }
 
     /** @return The tip shown once the cursor has rested, which is empty for an entry with no tip. */
-    NODISCARD FORCEINLINE const String& GetToolTipText() const
+    NODISCARD FORCEINLINE const FString& GetToolTipText() const
     {
         return ToolTipText;
     }
@@ -260,8 +260,8 @@ private:
     void DrawArrow(const FRectangle& Bounds, FDrawCommandList& OutCommandList, int32 LayerId, const FFloatColor& Tint) const;
 
     FUIBrush              Icon;
-    String                Label;
-    String                ToolTipText;
+    FString               Label;
+    FString               ToolTipText;
     TSharedPtr<IFontFace> Font;
     EToolBarItemType      ItemType;
     ECheckBoxState        CheckState;
@@ -470,7 +470,7 @@ public:
      * @param InLabel The label to look for.
      * @return The entry, or null when the bar has none by that name.
      */
-    NODISCARD TSharedPtr<FToolBarButton> FindButton(const String& InLabel) const;
+    NODISCARD TSharedPtr<FToolBarButton> FindButton(const FString& InLabel) const;
 
     /** @return The bar's entries, in the order they were added, rules and custom elements included. */
     NODISCARD FORCEINLINE const TArray<FToolBarEntry>& GetItems() const

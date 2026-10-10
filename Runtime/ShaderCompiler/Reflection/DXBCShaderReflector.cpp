@@ -6,7 +6,7 @@
 #include "ShaderCompiler/Reflection/DXBCShaderReflector.h"
 #include "ShaderCompiler/Reflection/ShaderReflectionUtils.h"
 
-bool FDXBCShaderReflector::Reflect(PFN_FXC_D3D_REFLECT D3DReflectFunc, const void* Code, SIZE_T CodeSize, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, String& OutErrors)
+bool FDXBCShaderReflector::Reflect(PFN_FXC_D3D_REFLECT D3DReflectFunc, const void* Code, SIZE_T CodeSize, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, FString& OutErrors)
 {
     TComPtr<ID3D11ShaderReflection> Reflection;
     if (!D3DReflectFunc || FAILED(D3DReflectFunc(Code, CodeSize, IID_PPV_ARGS(&Reflection))))
@@ -35,7 +35,7 @@ bool FDXBCShaderReflector::Reflect(PFN_FXC_D3D_REFLECT D3DReflectFunc, const voi
         bool bHasCounter = false;
         if (!FD3DReflectionUtils::TranslateInputType(BindDesc.Type, BindDesc.Dimension, Type, bHasCounter))
         {
-            OutErrors += String::Printf("Unhandled shader resource type '%u' for parameter '%s' at register %u\n", BindDesc.Type, BindDesc.Name, BindDesc.BindPoint);
+            OutErrors += FString::Printf("Unhandled shader resource type '%u' for parameter '%s' at register %u\n", BindDesc.Type, BindDesc.Name, BindDesc.BindPoint);
             return false;
         }
 

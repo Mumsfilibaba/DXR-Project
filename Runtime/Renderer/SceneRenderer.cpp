@@ -184,7 +184,7 @@ static FAutoConsoleVariableRef CVarCSMTightFrustum(
 static FAutoConsoleCommand CCmdFreezeRendering(
     "Renderer.FreezeRendering",
     "Freezes the updating of Frustum culling",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         GFreezeRendering = !GFreezeRendering;
     }));

@@ -43,7 +43,7 @@ public:
     virtual void* GetPlatformHandle() = 0;
 
     /** @return Returns the name of the thread */
-    virtual const String& GetName() const = 0;
+    virtual const FString& GetName() const = 0;
 
     /** @return Returns a pointer to the interface currently running on the thread */
     virtual FRunnable* GetRunnable() const = 0;

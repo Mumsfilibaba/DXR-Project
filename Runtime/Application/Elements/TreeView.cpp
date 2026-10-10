@@ -19,7 +19,7 @@ constexpr int32 TREE_HEADER_PADDING = 4;
 
 constexpr float TREE_HOVER_OPACITY = 0.5f;
 
-TSharedPtr<FTreeItem> FTreeItem::Create(const String& InLabel, void* InUserData)
+TSharedPtr<FTreeItem> FTreeItem::Create(const FString& InLabel, void* InUserData)
 {
     TSharedPtr<FTreeItem> NewItem = MakeSharedPtr<FTreeItem>();
     NewItem->Label    = InLabel;
@@ -316,9 +316,9 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
             const int32      LabelRight    = TypeColumnWidth > 0 ? Math::Min(TypeColumnX, RowBounds.GetRight()) : RowBounds.GetRight();
             const IntVector2 LabelPosition = IntVector2(PenX, RowBounds.Position.Y + Font->GetTextBandOffset(RowHeight));
             const FRectangle LabelBounds   = FRectangle(LabelPosition, Math::Max(LabelRight - PenX, 0), Font->GetTextBandHeight());
-            const int32      MatchOffset   = FilterText.IsEmpty() ? String::InvalidIndex : Item->Label.Find(FilterText, EStringCaseType::NoCase);
+            const int32      MatchOffset   = FilterText.IsEmpty() ? FString::InvalidIndex : Item->Label.Find(FilterText, EStringCaseType::NoCase);
 
-            if (MatchOffset == String::InvalidIndex)
+            if (MatchOffset == FString::InvalidIndex)
             {
                 OutCommandList.AddText(LayerId + 2, LabelBounds, Item->Label, Font.Get(), RowLabelColor);
             }
@@ -712,7 +712,7 @@ void FTreeView::CollapseAll()
     UpdateHoveredRow();
 }
 
-void FTreeView::SetFilterText(const String& InFilter)
+void FTreeView::SetFilterText(const FString& InFilter)
 {
     if (FilterText == InFilter)
     {
@@ -867,13 +867,13 @@ void FTreeView::RebuildTypeColumnToolTipSplits()
             break;
         }
 
-        const int32 EndWidth   = Font->MeasureWidth(StringView(TypeColumnHeader.Data(), CaptionEnd));
-        const int32 StartWidth = Font->MeasureWidth(StringView(TypeColumnHeader.Data(), Index));
+        const int32 EndWidth   = Font->MeasureWidth(FStringView(TypeColumnHeader.Data(), CaptionEnd));
+        const int32 StartWidth = Font->MeasureWidth(FStringView(TypeColumnHeader.Data(), Index));
         TypeColumnToolTipSplits.Add((EndWidth + StartWidth) / 2);
     }
 }
 
-const String* FTreeView::FindHeaderToolTip(const IntVector2& ClientPosition) const
+const FString* FTreeView::FindHeaderToolTip(const IntVector2& ClientPosition) const
 {
     const int32 HeaderExtent = GetHeaderExtent();
     if (HeaderExtent <= 0)
@@ -911,7 +911,7 @@ const String* FTreeView::FindHeaderToolTip(const IntVector2& ClientPosition) con
         return nullptr;
     }
 
-    const String& ToolTip = TypeColumnToolTips[ColumnIndex];
+    const FString& ToolTip = TypeColumnToolTips[ColumnIndex];
     return ToolTip.IsEmpty() ? nullptr : &ToolTip;
 }
 
@@ -924,7 +924,7 @@ void FTreeView::UpdateHeaderToolTip(const FCursorEvent& CursorEvent)
 
     FToolTipService& ToolTips = FToolTipService::Get();
 
-    if (const String* ToolTip = FindHeaderToolTip(CursorEvent.GetClientPosition()))
+    if (const FString* ToolTip = FindHeaderToolTip(CursorEvent.GetClientPosition()))
     {
         ToolTips.NotifyCursorMoved(CursorEvent.GetScreenPosition());
         ToolTips.RequestTextToolTip(AsSharedPtr(), *ToolTip, Font);
@@ -1001,7 +1001,7 @@ int32 FTreeView::ComputeRowExtent(const TSharedPtr<FTreeItem>& Item) const
 
     if (Font && !Item->Label.IsEmpty())
     {
-        Extent += Font->MeasureWidth(StringView(Item->Label.Data(), Item->Label.Length()));
+        Extent += Font->MeasureWidth(FStringView(Item->Label.Data(), Item->Label.Length()));
     }
 
     return Extent + TypeColumnWidth;

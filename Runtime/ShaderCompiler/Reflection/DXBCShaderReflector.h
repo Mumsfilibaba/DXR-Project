@@ -9,7 +9,7 @@ typedef HRESULT(WINAPI* PFN_FXC_D3D_REFLECT)(LPCVOID pSrcData, SIZE_T SrcDataSiz
 
 struct FDXBCShaderReflector
 {
-    static bool Reflect(PFN_FXC_D3D_REFLECT D3DReflectFunc, const void* Code, SIZE_T CodeSize, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, String& OutErrors);
+    static bool Reflect(PFN_FXC_D3D_REFLECT D3DReflectFunc, const void* Code, SIZE_T CodeSize, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, FString& OutErrors);
 };
 
 #endif

@@ -82,7 +82,7 @@ bool MSLShaderBinding_Test()
         TEST_EXPECT(Source.Size() > 0);
         TEST_EXPECT(Bindings.Size() > 0);
 
-        const String SourceText(reinterpret_cast<const CHAR_T*>(Source.Data()), Source.Size());
+        const FString SourceText(reinterpret_cast<const CHAR_T*>(Source.Data()), Source.Size());
         TEST_EXPECT(SourceText.Contains("metal_stdlib"));
 
         TEST_SECTION("No aliased argument survives into the MSL");
@@ -173,7 +173,7 @@ bool MSLShaderBinding_Test()
             TEST_EXPECT(FindSlot(BindlessBindings, EMSLBindingType::BindlessResourceHeap, 0) == MSL_BINDLESS_RESOURCE_HEAP_BUFFER_INDEX);
             TEST_EXPECT(FindSlot(BindlessBindings, EMSLBindingType::BindlessSamplerHeap, 0) == MSL_BINDLESS_SAMPLER_HEAP_BUFFER_INDEX);
 
-            const String BindlessText(reinterpret_cast<const CHAR_T*>(BindlessSourceView.Data()), BindlessSourceView.Size());
+            const FString BindlessText(reinterpret_cast<const CHAR_T*>(BindlessSourceView.Data()), BindlessSourceView.Size());
             TEST_EXPECT(BindlessText.Contains("spvDescriptorSet31Binding0"));
             TEST_EXPECT(BindlessText.Contains("spvDescriptorSet31Binding1"));
             TEST_EXPECT(BindlessText.Contains("[[buffer(29)]]"));

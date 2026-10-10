@@ -41,12 +41,12 @@ FConsoleLogBuffer::~FConsoleLogBuffer()
     UnregisterFromLogger();
 }
 
-void FConsoleLogBuffer::Log(const String& Message)
+void FConsoleLogBuffer::Log(const FString& Message)
 {
     Log(ELogSeverity::Info, Message);
 }
 
-void FConsoleLogBuffer::Log(ELogSeverity Severity, const String& Message)
+void FConsoleLogBuffer::Log(ELogSeverity Severity, const FString& Message)
 {
     TScopedLock Lock(LinesCS);
 

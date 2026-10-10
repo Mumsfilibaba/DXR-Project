@@ -105,11 +105,11 @@ int32 FSlider::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
 
     if (bShowValueText && Font)
     {
-        const String Text      = GetFormattedValue();
-        const int32  TextWidth = ValueTextMetrics.GetWidth(Font.Get(), StringView(Text.Data(), Text.Length()));
-        const int32  CapInset  = Math::Max(Font->GetAscent() - Font->GetCapHeight(), 0);
-        const int32  TextX     = AllottedGeometry.Bounds.Position.X + ((AllottedGeometry.Bounds.Width - TextWidth) / 2);
-        const int32  TextY     = TrackArea.GetBottom() + VALUE_TEXT_SPACING - CapInset;
+        const FString Text      = GetFormattedValue();
+        const int32   TextWidth = ValueTextMetrics.GetWidth(Font.Get(), FStringView(Text.Data(), Text.Length()));
+        const int32   CapInset  = Math::Max(Font->GetAscent() - Font->GetCapHeight(), 0);
+        const int32   TextX     = AllottedGeometry.Bounds.Position.X + ((AllottedGeometry.Bounds.Width - TextWidth) / 2);
+        const int32   TextY     = TrackArea.GetBottom() + VALUE_TEXT_SPACING - CapInset;
 
         const FRectangle TextBounds(IntVector2(TextX, TextY), TextWidth, Font->GetTextBandHeight());
 
@@ -217,7 +217,7 @@ FRectangle FSlider::GetTrackBounds() const
     return ComputeTrackBounds(GetContentRectangle());
 }
 
-String FSlider::GetFormattedValue() const
+FString FSlider::GetFormattedValue() const
 {
     return Range.Format(Value);
 }

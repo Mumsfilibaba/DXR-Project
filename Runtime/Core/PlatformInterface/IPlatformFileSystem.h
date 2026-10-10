@@ -143,8 +143,8 @@ private:
 
 struct FDirectoryEntry
 {
-    String Name;
-    bool   bIsDirectory = false;
+    FString Name;
+    bool    bIsDirectory = false;
 
     /** @brief The entry is a symbolic link (or a Windows junction) rather than the file or directory it points at */
     bool bIsSymbolicLink = false;
@@ -169,7 +169,7 @@ struct CORE_API IPlatformFileSystem
      * @param Filename Path of the file to open
      * @return Returns a handle the caller closes, or nullptr if the file could not be opened
      */
-    static FORCEINLINE IPlatformFile* OpenForRead(const String& Filename)
+    static FORCEINLINE IPlatformFile* OpenForRead(const FString& Filename)
     {
         return nullptr;
     }
@@ -180,7 +180,7 @@ struct CORE_API IPlatformFileSystem
      * @param bTruncate Discard the existing contents instead of writing over them
      * @return Returns a handle the caller closes, or nullptr if the file could not be opened
      */
-    static FORCEINLINE IPlatformFile* OpenForWrite(const String& Filename, bool bTruncate = true)
+    static FORCEINLINE IPlatformFile* OpenForWrite(const FString& Filename, bool bTruncate = true)
     {
         return nullptr;
     }
@@ -191,15 +191,15 @@ struct CORE_API IPlatformFileSystem
      * @param bTruncate Discard the existing contents instead of writing over them
      * @return Returns a handle the caller closes, or nullptr if the file could not be opened
      */
-    static FORCEINLINE IPlatformAsyncFile* OpenForAsyncWrite(const String& Filename, bool bTruncate = true)
+    static FORCEINLINE IPlatformAsyncFile* OpenForAsyncWrite(const FString& Filename, bool bTruncate = true)
     {
         return nullptr;
     }
 
     /** @return Returns the working directory of the process using '/' separators, or an empty string if it could not be queried */
-    static FORCEINLINE String GetCurrentWorkingDirectory()
+    static FORCEINLINE FString GetCurrentWorkingDirectory()
     {
-        return String();
+        return FString();
     }
 
     /** @return Returns the full path of the running executable using '/' separators */
@@ -212,9 +212,9 @@ struct CORE_API IPlatformFileSystem
      * @return Returns the per-user directory applications keep their settings in, using '/' separators, or an empty
      * string if it could not be found. This is %LOCALAPPDATA% on Windows and ~/Library/Application Support on macOS.
      */
-    static FORCEINLINE String GetUserSettingsDirectory()
+    static FORCEINLINE FString GetUserSettingsDirectory()
     {
-        return String();
+        return FString();
     }
 
     /** @return Returns true if Path names an existing directory */

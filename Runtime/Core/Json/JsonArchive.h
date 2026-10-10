@@ -59,7 +59,7 @@ public:
 
     struct FPathScope : public FNonCopyable
     {
-        FPathScope(FJsonArchive& InArchive, const String& Segment);
+        FPathScope(FJsonArchive& InArchive, const FString& Segment);
         ~FPathScope();
 
     private:
@@ -105,10 +105,10 @@ public:
     void AppendErrors(const FJsonArchive& Nested);
 
     // Every error joined by newlines, for logging in one go
-    NODISCARD String GetErrorString() const;
+    NODISCARD FString GetErrorString() const;
 
     // The field currently being serialized, such as "Actors[12].Intensity"
-    NODISCARD String GetPath() const;
+    NODISCARD FString GetPath() const;
 
     // The name JSON uses for a type, for error messages
     NODISCARD static const CHAR_T* GetTypeName(EJsonType Type);
@@ -118,7 +118,7 @@ public:
         return !Errors.IsEmpty();
     }
     
-    NODISCARD const TArray<String>& GetErrors() const
+    NODISCARD const TArray<FString>& GetErrors() const
     {
         return Errors;
     }
@@ -148,8 +148,8 @@ private:
     FJsonValue*       SaveRoot;
     const FJsonValue* LoadRoot;
     TArray<FScope>    Scopes;
-    TArray<String>    PathSegments;
-    TArray<String>    Errors;
+    TArray<FString>   PathSegments;
+    TArray<FString>   Errors;
 };
 
 template<typename T>

@@ -30,7 +30,7 @@ struct FRHIRayTracingHitGroupInfo
     FRHIRayTracingHitGroupInfo() noexcept = default;
 
     FRHIRayTracingHitGroupInfo(
-        const String&                     InName,
+        const FString&                    InName,
         ERayTracingHitGroupType           InType,
         TArrayView<FRHIRayTracingShader*> InRayTracingShaders) noexcept
         : Name(InName)
@@ -41,7 +41,7 @@ struct FRHIRayTracingHitGroupInfo
 
     bool operator==(const FRHIRayTracingHitGroupInfo& Other) const noexcept = default;
 
-    String                        Name;
+    FString                       Name;
     TArray<FRHIRayTracingShader*> Shaders;
     ERayTracingHitGroupType       Type = ERayTracingHitGroupType::Unknown;
 };
@@ -93,7 +93,7 @@ public:
     }
 
     /** @brief Returns the backend export/group name for a sub-table record, or an empty string. */
-    virtual void GetExportName(ERayTracingShaderRecordKind Kind, uint32 RecordIndex, String& OutExportName) const = 0;
+    virtual void GetExportName(ERayTracingShaderRecordKind Kind, uint32 RecordIndex, FString& OutExportName) const = 0;
 
     /** @brief Returns the number of registered export names for the given record kind. */
     virtual uint32 GetNumExportNames(ERayTracingShaderRecordKind Kind) const = 0;

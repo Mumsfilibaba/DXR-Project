@@ -15,10 +15,10 @@ public:
     FRAMAccelerationStructureCacheBackend()           = default;
     ~FRAMAccelerationStructureCacheBackend() override = default;
 
-    bool Load(const StringView& Key, TArray<uint8>& OutBytes) override
+    bool Load(const FStringView& Key, TArray<uint8>& OutBytes) override
     {
         TScopedLock Lock(EntriesLock);
-        if (const TArray<uint8>* Existing = Entries.Find(String(Key)))
+        if (const TArray<uint8>* Existing = Entries.Find(FString(Key)))
         {
             OutBytes = *Existing;
             return !OutBytes.IsEmpty();
@@ -27,10 +27,10 @@ public:
         return false;
     }
 
-    void Store(const StringView& Key, const TArray<uint8>& Bytes) override
+    void Store(const FStringView& Key, const TArray<uint8>& Bytes) override
     {
         TScopedLock Lock(EntriesLock);
-        Entries.Add(String(Key), Bytes);
+        Entries.Add(FString(Key), Bytes);
     }
 
     void Clear()
@@ -40,14 +40,14 @@ public:
     }
 
 private:
-    TMap<String, TArray<uint8>> Entries;
-    FSpinLock                   EntriesLock;
+    TMap<FString, TArray<uint8>> Entries;
+    FSpinLock                    EntriesLock;
 };
 
 class FDiskAccelerationStructureCacheBackend : public IAccelerationStructureCache
 {
 public:
-    explicit FDiskAccelerationStructureCacheBackend(const String& InDirectory)
+    explicit FDiskAccelerationStructureCacheBackend(const FString& InDirectory)
         : Directory(InDirectory)
     {
         // Ensure <AssetDir>/RTASCache (and any missing parents) exists so Store can persist entries
@@ -56,9 +56,9 @@ public:
 
     ~FDiskAccelerationStructureCacheBackend() override = default;
 
-    bool Load(const StringView& Key, TArray<uint8>& OutBytes) override
+    bool Load(const FStringView& Key, TArray<uint8>& OutBytes) override
     {
-        const String FilePath = CreateFilePath(Key);
+        const FString FilePath = CreateFilePath(Key);
 
         // A cache miss is expected - skip the open attempt (and its logging) when the file is absent
         if (!FPlatformFile::IsFile(*FilePath))
@@ -80,14 +80,14 @@ public:
         return !OutBytes.IsEmpty();
     }
 
-    void Store(const StringView& Key, const TArray<uint8>& Bytes) override
+    void Store(const FStringView& Key, const TArray<uint8>& Bytes) override
     {
         if (Bytes.IsEmpty())
         {
             return;
         }
 
-        const String FilePath = CreateFilePath(Key);
+        const FString FilePath = CreateFilePath(Key);
 
         TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(FilePath);
         if (!FileHandle)
@@ -99,10 +99,10 @@ public:
     }
 
 private:
-    NODISCARD String CreateFilePath(const StringView& Key) const
+    NODISCARD FString CreateFilePath(const FStringView& Key) const
     {
-        return Directory + '/' + String(Key) + ".rtas";
+        return Directory + '/' + FString(Key) + ".rtas";
     }
 
-    String Directory;
+    FString Directory;
 };

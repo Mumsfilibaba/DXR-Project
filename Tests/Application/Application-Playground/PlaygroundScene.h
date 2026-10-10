@@ -29,13 +29,13 @@ struct FPlaygroundScene
     {
     }
 
-    FPlaygroundScene(const String& InName, const TSharedPtr<FVisualElement>& InContent)
+    FPlaygroundScene(const FString& InName, const TSharedPtr<FVisualElement>& InContent)
         : Name(InName)
         , Content(InContent)
     {
     }
 
-    String                     Name;
+    FString                    Name;
     TSharedPtr<FVisualElement> Content;
 };
 

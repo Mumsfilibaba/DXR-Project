@@ -8,7 +8,7 @@ public:
     FMacPlatformProcessHandle(pid_t InProcessId, int32 InOutputPipe);
     virtual ~FMacPlatformProcessHandle();
 
-    virtual bool ReadOutput(String& OutText) override final;
+    virtual bool ReadOutput(FString& OutText) override final;
     virtual bool IsRunning() override final;
     virtual bool Wait(int32 TimeoutMilliseconds = -1) override final;
     virtual bool GetExitCode(int32& OutExitCode) override final;

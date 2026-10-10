@@ -406,9 +406,9 @@ bool FEditorRenderGraphPanel::IsPassInactive(const FRenderGraphDebugPass& Pass)
     return Pass.bCulled || !Pass.bEnabled;
 }
 
-String FEditorRenderGraphPanel::BuildNodeTitle(const FRenderGraphDebugPass& Pass)
+FString FEditorRenderGraphPanel::BuildNodeTitle(const FRenderGraphDebugPass& Pass)
 {
-    String Title = Pass.Name;
+    FString Title = Pass.Name;
 
     if (IsEnumFlagSet(Pass.Flags, ERenderGraphPassFlags::Raster))
     {
@@ -448,9 +448,9 @@ bool FEditorRenderGraphPanel::HasIncomingLink(const FRenderGraphDebugSnapshot& S
     return false;
 }
 
-String FEditorRenderGraphPanel::BuildSignature(const FRenderGraphDebugSnapshot& Snapshot) const
+FString FEditorRenderGraphPanel::BuildSignature(const FRenderGraphDebugSnapshot& Snapshot) const
 {
-    String Signature = String::Printf("%d|%d|", bShowCulled ? 1 : 0, Snapshot.Links.Size());
+    FString Signature = FString::Printf("%d|%d|", bShowCulled ? 1 : 0, Snapshot.Links.Size());
 
     for (const FRenderGraphDebugPass& Pass : Snapshot.Passes)
     {
@@ -459,7 +459,7 @@ String FEditorRenderGraphPanel::BuildSignature(const FRenderGraphDebugSnapshot& 
             continue;
         }
 
-        Signature.Append(String::Printf("%s;%d;%d,", *Pass.Name, Pass.Accesses.Size(), IsPassInactive(Pass) ? 1 : 0));
+        Signature.Append(FString::Printf("%s;%d;%d,", *Pass.Name, Pass.Accesses.Size(), IsPassInactive(Pass) ? 1 : 0));
     }
 
     return Signature;
@@ -467,7 +467,7 @@ String FEditorRenderGraphPanel::BuildSignature(const FRenderGraphDebugSnapshot& 
 
 bool FEditorRenderGraphPanel::RebuildModel(const FRenderGraphDebugSnapshot& Snapshot)
 {
-    const String Signature = BuildSignature(Snapshot);
+    const FString Signature = BuildSignature(Snapshot);
     if (Signature == BuiltSignature)
     {
         return false;
@@ -525,7 +525,7 @@ bool FEditorRenderGraphPanel::RebuildModel(const FRenderGraphDebugSnapshot& Snap
             }
 
             const FRenderGraphDebugResource& Resource = Snapshot.Resources[Access.ResourceIndex];
-            const String                     TypeTag  = Resource.Kind == ERenderGraphDebugResourceKind::Buffer ? String("Buffer") : String("Texture");
+            const FString                    TypeTag  = Resource.Kind == ERenderGraphDebugResourceKind::Buffer ? FString("Buffer") : FString("Texture");
 
             if (Access.bIsWrite && HasIncomingLink(Snapshot, PassIndex, AccessIndex))
             {
@@ -601,9 +601,9 @@ void FEditorRenderGraphPanel::RefreshStatistics(const FRenderGraphDebugSnapshot&
 {
     const FRenderGraphStatistics& Statistics = Snapshot.Statistics;
 
-    GraphNameText->SetText(String::Printf("Graph: %s", Snapshot.GraphName.IsEmpty() ? "(none)" : *Snapshot.GraphName));
+    GraphNameText->SetText(FString::Printf("Graph: %s", Snapshot.GraphName.IsEmpty() ? "(none)" : *Snapshot.GraphName));
 
-    StatisticsText->SetText(String::Printf("| Passes: %d  Culled: %d  Disabled: %d  Textures: %d  Buffers: %d",
+    StatisticsText->SetText(FString::Printf("| Passes: %d  Culled: %d  Disabled: %d  Textures: %d  Buffers: %d",
         Statistics.NumPasses, Statistics.NumCulledPasses, Statistics.NumDisabledPasses,
         Statistics.NumTexturesAllocated, Statistics.NumBuffersAllocated));
 }
@@ -613,7 +613,7 @@ void FEditorRenderGraphPanel::RefreshStatistics(const FRenderGraphDebugSnapshot&
 TSharedPtr<FVisualElement> FEditorRenderGraphPanel::BuildNodeContextMenu(
     const Vector2& /*GraphPosition*/, int32 NodeId)
 {
-    String PassName;
+    FString PassName;
     for (const FBuiltPass& Pass : BuiltPasses)
     {
         if (Pass.NodeId == NodeId)
@@ -642,7 +642,7 @@ TSharedPtr<FVisualElement> FEditorRenderGraphPanel::BuildNodeContextMenu(
     return Menu;
 }
 
-void FEditorRenderGraphPanel::ShowPassInProfiler(const String& PassName)
+void FEditorRenderGraphPanel::ShowPassInProfiler(const FString& PassName)
 {
     if (!EditorEngine || !EditorEngine->GetEditorShell() || !EditorEngine->GetEditorShell()->GetRegistry())
     {
@@ -660,7 +660,7 @@ void FEditorRenderGraphPanel::ShowPassInProfiler(const String& PassName)
     }
 }
 
-void FEditorRenderGraphPanel::ShowPassByName(const String& PassName)
+void FEditorRenderGraphPanel::ShowPassByName(const FString& PassName)
 {
     if (!Canvas || !EditorEngine || !EditorEngine->GetEditorShell() || !EditorEngine->GetEditorShell()->GetRegistry())
     {

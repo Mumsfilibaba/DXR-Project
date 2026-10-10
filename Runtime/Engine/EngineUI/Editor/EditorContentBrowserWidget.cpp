@@ -132,14 +132,14 @@ static void SplitNameAndExtension(const CHAR_T* InName, TStaticArray<CHAR_T, 256
     OutExtension[ExtCopyLen] = 0;
 }
 
-static String AppendNameToPath(const String& BasePath, const String& Name)
+static FString AppendNameToPath(const FString& BasePath, const FString& Name)
 {
     if (Name.IsEmpty())
     {
         return BasePath;
     }
 
-    String Result = BasePath;
+    FString Result = BasePath;
     if (!Result.IsEmpty())
     {
         Result += "/";
@@ -618,7 +618,7 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
                 const FFileInfo* Folder = GetFolderFromPath(SelectedFolderPath);
                 if (Folder)
                 {
-                    const String FolderName = Folder->Name.IsEmpty() ? "this folder" : Folder->Name;
+                    const FString FolderName = Folder->Name.IsEmpty() ? "this folder" : Folder->Name;
                     DeleteConfirmContext.Message.InlinePrintf("Are you sure you want to delete \"%s\" and its contents?", *FolderName);
                 }
                 else
@@ -792,7 +792,7 @@ void FEditorContentBrowserWidget::DrawContentPanel()
                 if (Folder->FolderContents.IsValidIndex(Index))
                 {
                     const FFileInfo& Item = Folder->FolderContents[Index];
-                    const String ItemName = Item.Name.IsEmpty() ? "this item" : Item.Name;
+                    const FString ItemName = Item.Name.IsEmpty() ? "this item" : Item.Name;
                     DeleteConfirmContext.Message.InlinePrintf("Are you sure you want to delete \"%s\"?", *ItemName);
                 }
                 else
@@ -2678,7 +2678,7 @@ void FEditorContentBrowserWidget::CommitFolderRename()
     FFileInfo* Folder = GetFolderFromPath(RenamingFolderPath);
     if (Folder)
     {
-        Folder->Name = String(FolderRenameBuffer.Data());
+        Folder->Name = FString(FolderRenameBuffer.Data());
     }
 
     RenamingFolderPath.Clear();
@@ -2736,13 +2736,13 @@ void FEditorContentBrowserWidget::CommitItemRename()
         FFileInfo& Item = ParentFolder->FolderContents[RenamingItemIndex];
         if (Item.bIsFolder || ItemRenameExtension[0] == 0)
         {
-            Item.Name = String(ItemRenameBuffer.Data());
+            Item.Name = FString(ItemRenameBuffer.Data());
         }
         else
         {
             TStaticArray<CHAR_T, 320> NewName{};
             CString::Snprintf(NewName.Data(), static_cast<int32>(NewName.Size()), "%s%s", ItemRenameBuffer.Data(), ItemRenameExtension.Data());
-            Item.Name = String(NewName.Data());
+            Item.Name = FString(NewName.Data());
         }
     }
 
@@ -2901,7 +2901,7 @@ bool FEditorContentBrowserWidget::MoveItemsToFolder(const TArray<int32>& InSourc
 
     BuildFolderPathString(InSourceParentPath, SourceParentPathBuffer, PathBufferSize);
 
-    const String  SourceParentPathStr = SourceParentPathBuffer;
+    const FString SourceParentPathStr = SourceParentPathBuffer;
     TArray<int32> TargetParentPath    = InTargetFolderPath;
 
     const int32 TargetFolderIndexOriginal = TargetParentPath.Last();
@@ -3048,7 +3048,7 @@ bool FEditorContentBrowserWidget::MoveItemsToFolder(const TArray<int32>& InSourc
         }
 
         FFileInfo& Item = SourceParent->FolderContents[SourceIndex];
-        const String ItemPath = AppendNameToPath(SourceParentPathStr, Item.Name);
+        const FString ItemPath = AppendNameToPath(SourceParentPathStr, Item.Name);
         if (Item.bIsFolder)
         {
             const int32 ExistingFolderIndex = FindChildFolderIndexByName(*TargetFolder, Item.Name);
@@ -3135,9 +3135,9 @@ bool FEditorContentBrowserWidget::MoveItemsToFolder(const TArray<int32>& InSourc
     return true;
 }
 
-void FEditorContentBrowserWidget::ReportFailedMove(const String& InFullPath)
+void FEditorContentBrowserWidget::ReportFailedMove(const FString& InFullPath)
 {
-    String Entry = InFullPath;
+    FString Entry = InFullPath;
     if (Entry.IsEmpty())
     {
         Entry = "Unnamed asset";
@@ -3690,7 +3690,7 @@ void FEditorContentBrowserWidget::AppendFolderPayloadPath(const ImGuiPayload* Pa
     }
 }
 
-int32 FEditorContentBrowserWidget::FindChildFolderIndexByName(const FFileInfo& ParentFolder, const String& FolderName) const
+int32 FEditorContentBrowserWidget::FindChildFolderIndexByName(const FFileInfo& ParentFolder, const FString& FolderName) const
 {
     for (int32 Index = 0; Index < ParentFolder.FolderContents.Size(); ++Index)
     {
@@ -3709,7 +3709,7 @@ int32 FEditorContentBrowserWidget::FindChildFolderIndexByName(const FFileInfo& P
     return -1;
 }
 
-int32 FEditorContentBrowserWidget::FindChildFileIndexByName(const FFileInfo& ParentFolder, const String& FileName) const
+int32 FEditorContentBrowserWidget::FindChildFileIndexByName(const FFileInfo& ParentFolder, const FString& FileName) const
 {
     for (int32 Index = 0; Index < ParentFolder.FolderContents.Size(); ++Index)
     {
@@ -3839,7 +3839,7 @@ void FEditorContentBrowserWidget::SetDragPreviewTarget(const CHAR_T* TargetName,
     UpdateDragPreviewNameConflicts(SourceFolderPaths, SourceParentFolder, SourceIndices, SourceParentPath, TargetPath);
 }
 
-bool FEditorContentBrowserWidget::MergeFolderContents(FFileInfo& TargetFolder, FFileInfo& SourceFolder, const String& SourceFolderPath)
+bool FEditorContentBrowserWidget::MergeFolderContents(FFileInfo& TargetFolder, FFileInfo& SourceFolder, const FString& SourceFolderPath)
 {
     if (!TargetFolder.bIsFolder || !SourceFolder.bIsFolder)
     {
@@ -3862,7 +3862,7 @@ bool FEditorContentBrowserWidget::MergeFolderContents(FFileInfo& TargetFolder, F
     for (int32 Index = 0; Index < SourceFolder.FolderContents.Size();)
     {
         FFileInfo& Item = SourceFolder.FolderContents[Index];
-        const String ItemPath = AppendNameToPath(SourceFolderPath, Item.Name);
+        const FString ItemPath = AppendNameToPath(SourceFolderPath, Item.Name);
         if (Item.bIsFolder)
         {
             const int32 ExistingFolderIndex = FindChildFolderIndexByName(TargetFolder, Item.Name);
@@ -3929,7 +3929,7 @@ void FEditorContentBrowserWidget::AddNewFolderInCurrentPath()
         return;
     }
 
-    const String NewFolderName("New folder");
+    const FString NewFolderName("New folder");
 
     FFileInfo NewFolder;
     NewFolder.Name      = NewFolderName;
@@ -4070,7 +4070,7 @@ void FEditorContentBrowserWidget::PasteInCurrentFolder()
             }
 
             const FFileInfo& SourceItem = SourceParent->FolderContents[SourceIndex];
-            String BaseName = SourceItem.Name;
+            FString BaseName = SourceItem.Name;
             int32 Suffix = 0;
 
             TStaticArray<CHAR_T, 256> Buffer{};
@@ -4136,7 +4136,7 @@ void FEditorContentBrowserWidget::PasteInCurrentFolder()
                 continue;
             }
 
-            String BaseName = SourceFolder->Name;
+            FString BaseName = SourceFolder->Name;
             int32 Suffix = 0;
 
             while (FindChildFolderIndexByName(*TargetFolder, BaseName) >= 0)

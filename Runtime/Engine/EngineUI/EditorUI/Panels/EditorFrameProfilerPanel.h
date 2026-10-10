@@ -27,13 +27,13 @@ public:
 private:
     struct FThreadSection
     {
-        TSharedPtr<FExpander>                Section;
-        TSharedPtr<FPropertyTable>           Table;
-        TMap<String, TSharedPtr<FTextBlock>> Values;
+        TSharedPtr<FExpander>                 Section;
+        TSharedPtr<FPropertyTable>            Table;
+        TMap<FString, TSharedPtr<FTextBlock>> Values;
     };
 
-    NODISCARD static String ResolveThreadName(const FProfilerThreadAggregate& ThreadInfo, int32 ThreadIndex);
-    NODISCARD static TSharedPtr<FTextBlock> CreateValueText(const String& Text);
+    NODISCARD static FString ResolveThreadName(const FProfilerThreadAggregate& ThreadInfo, int32 ThreadIndex);
+    NODISCARD static TSharedPtr<FTextBlock> CreateValueText(const FString& Text);
 
     NODISCARD TSharedPtr<FToolBar> BuildToolBar();
 

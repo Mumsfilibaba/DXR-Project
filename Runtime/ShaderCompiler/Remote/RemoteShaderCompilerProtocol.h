@@ -61,10 +61,10 @@ struct SHADERCOMPILER_API RemoteShaderCompilerProtocol
     static bool TryDecodeFrame(TArray<uint8>& InOutBuffer, FFrame& OutFrame, bool& bOutHasFrame);
 
     /** @return False for anything but a relative path of plain names: no absolute paths, drive letters, backslashes, '.', '..' or empty segments */
-    NODISCARD static bool IsValidSourcePath(const String& Path);
+    NODISCARD static bool IsValidSourcePath(const FString& Path);
 
     /** @return Path with '\' turned into '/', "." segments dropped and "Name/.." pairs collapsed, so the same file always has the same name */
-    NODISCARD static String CollapsePath(const String& Path);
+    NODISCARD static FString CollapsePath(const FString& Path);
 
     NODISCARD static FJsonValue IdentityToJson(const FShaderCompilerIdentity& Identity);
     static bool IdentityFromJson(const FJsonValue& Value, FShaderCompilerIdentity& OutIdentity);

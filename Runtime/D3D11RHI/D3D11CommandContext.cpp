@@ -800,7 +800,7 @@ void FD3D11CommandContext::SetSwapChainHDRMetadata(FRHISwapChain* SwapChain, con
     D3D11SwapChain->SetHDRMetadata(Metadata);
 }
 
-void FD3D11CommandContext::PushEvent(const StringView& Name)
+void FD3D11CommandContext::PushEvent(const FStringView& Name)
 {
 #if D3D11_ENABLE_ANNOTATIONS
     if (Annotation)

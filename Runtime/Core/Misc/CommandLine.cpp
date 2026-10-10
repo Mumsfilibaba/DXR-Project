@@ -151,7 +151,7 @@ bool CommandLine::FindOption(const CHAR_T* Value)
     return FindOptionToken(CommandLineBuffer, Value) != nullptr;
 }
 
-bool CommandLine::FindOption(const CHAR_T* Value, StringView& OutValue)
+bool CommandLine::FindOption(const CHAR_T* Value, FStringView& OutValue)
 {
     const CHAR_T* Result = FindOptionToken(CommandLineBuffer, Value);
     if (!Result)
@@ -164,7 +164,7 @@ bool CommandLine::FindOption(const CHAR_T* Value, StringView& OutValue)
     // A bare switch: report it as found, with an empty but valid view
     if (*Result != '=')
     {
-        OutValue = StringView(Result, 0);
+        OutValue = FStringView(Result, 0);
         return true;
     }
 
@@ -188,6 +188,6 @@ bool CommandLine::FindOption(const CHAR_T* Value, StringView& OutValue)
         Parse::ParseValue(&StringEnd);
     }
 
-    OutValue = StringView(Result, static_cast<int32>(StringEnd - Result));
+    OutValue = FStringView(Result, static_cast<int32>(StringEnd - Result));
     return true;
 }

@@ -9,5 +9,5 @@ struct FMSLShaderConverter
      * once the source has been emitted. Fills Bindings, MSLSlots, MSLInfo, ShaderConstantsSize, EntryPoint and,
      * with bDebugInfo, BindingNames. Vertex inputs must already be in OutReflection.
      */
-    static bool Convert(const TArray<uint32>& Spirv, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, TArray<uint8>& OutMSLSource, String& OutErrors);
+    static bool Convert(const TArray<uint32>& Spirv, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, TArray<uint8>& OutMSLSource, FString& OutErrors);
 };

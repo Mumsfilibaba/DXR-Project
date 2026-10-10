@@ -24,7 +24,7 @@ FGuid FGuid::Create()
     return FPlatformMisc::CreateGuid();
 }
 
-bool FGuid::Parse(const String& Text, FGuid& OutGuid)
+bool FGuid::Parse(const FString& Text, FGuid& OutGuid)
 {
     const bool bIsDashed = (Text.Length() == 36);
     if (!bIsDashed && (Text.Length() != 32))
@@ -62,7 +62,7 @@ bool FGuid::Parse(const String& Text, FGuid& OutGuid)
     return true;
 }
 
-String FGuid::ToString() const
+FString FGuid::ToString() const
 {
-    return String::Printf("%08x%08x%08x%08x", A, B, C, D);
+    return FString::Printf("%08x%08x%08x%08x", A, B, C, D);
 }

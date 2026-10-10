@@ -1152,8 +1152,8 @@ void FApplication::ValidateDrawCache(const TSharedPtr<FWindow>& InWindow, const 
     FreshCommands.SetDrawCacheSuppressed(true);
     InWindow->Draw(WindowGeometry, FreshCommands, 0);
 
-    int32  DifferenceIndex = 0;
-    String Reason;
+    int32   DifferenceIndex = 0;
+    FString Reason;
 
     if (FDrawCommandList::FindFirstDifference(RecordedCommands, FreshCommands, DifferenceIndex, Reason))
     {
@@ -1179,8 +1179,8 @@ void FApplication::ValidateDrawCacheSubtree(const TSharedPtr<FWindow>& InWindow,
     FreshCommands.SetDrawCacheSuppressed(true);
     Element->Draw(Geometry, FreshCommands, 0);
 
-    int32  DifferenceIndex = 0;
-    String Reason;
+    int32   DifferenceIndex = 0;
+    FString Reason;
 
     if (FDrawCommandList::FindFirstDifference(ReplayedCommands, FreshCommands, DifferenceIndex, Reason))
     {
@@ -1188,7 +1188,7 @@ void FApplication::ValidateDrawCacheSubtree(const TSharedPtr<FWindow>& InWindow,
     }
 }
 
-void FApplication::ReportDrawCacheDivergence(const TSharedPtr<FWindow>& InWindow, int32 DifferenceIndex, const String& Reason)
+void FApplication::ReportDrawCacheDivergence(const TSharedPtr<FWindow>& InWindow, int32 DifferenceIndex, const FString& Reason)
 {
     LOG_WARNING("The draw cache diverged from a fresh recording of '%s' at command %d (%s). An element drew "
         "something different without calling InvalidatePaint.", InWindow->GetTitle().Data(), DifferenceIndex, Reason.Data());

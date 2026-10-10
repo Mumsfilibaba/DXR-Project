@@ -118,13 +118,13 @@ struct ENGINE_API FModelImporter : public IModelImporter
 {
     virtual ~FModelImporter() = default;
 
-    virtual bool ImportFromFile(const StringView& Filename, EMeshImportFlags Flags, FModelData& OutModelData) override final;
-    virtual bool MatchExtenstion(const StringView& FileName) override final;
+    virtual bool ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags, FModelData& OutModelData) override final;
+    virtual bool MatchExtenstion(const FStringView& FileName) override final;
 };
 
 struct ENGINE_API FModelSerializer
 {
     virtual ~FModelSerializer() = default;
 
-    bool Serialize(const String& Filename, const FModelData& ModelData);
+    bool Serialize(const FString& Filename, const FModelData& ModelData);
 };

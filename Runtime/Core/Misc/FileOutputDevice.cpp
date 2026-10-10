@@ -14,7 +14,7 @@ static const CHAR_T* SeverityToString(ELogSeverity Severity)
 
 static constexpr int32 MaxPendingLines = 4096;
 
-FFileOutputDevice::FFileOutputDevice(const String& FilePath)
+FFileOutputDevice::FFileOutputDevice(const FString& FilePath)
     : FileHandle(FPlatformFile::OpenForAsyncWrite(FilePath, true))
     , bIsInsideHandle(false)
 {
@@ -25,14 +25,14 @@ FFileOutputDevice::~FFileOutputDevice()
     FlushBlocking();
 }
 
-void FFileOutputDevice::Log(const String& Message)
+void FFileOutputDevice::Log(const FString& Message)
 {
     QueueWrite(Message + "\n");
 }
 
-void FFileOutputDevice::Log(ELogSeverity Severity, const String& Message)
+void FFileOutputDevice::Log(ELogSeverity Severity, const FString& Message)
 {
-    QueueWrite(String(SeverityToString(Severity)) + Message + "\n");
+    QueueWrite(FString(SeverityToString(Severity)) + Message + "\n");
 
     if (Severity >= ELogSeverity::Warning)
     {
@@ -45,7 +45,7 @@ void FFileOutputDevice::Flush()
     FlushBlocking();
 }
 
-void FFileOutputDevice::QueueWrite(const String& Line)
+void FFileOutputDevice::QueueWrite(const FString& Line)
 {
     {
         TScopedLock Lock(PendingLinesCS);
@@ -90,7 +90,7 @@ void FFileOutputDevice::FlushBlocking()
 
 void FFileOutputDevice::SubmitPendingLines()
 {
-    TArray<String> LinesToWrite;
+    TArray<FString> LinesToWrite;
     {
         TScopedLock Lock(PendingLinesCS);
         if (PendingLines.IsEmpty())
@@ -113,7 +113,7 @@ void FFileOutputDevice::SubmitPendingLines()
     }
 }
 
-bool FFileOutputDevice::WriteLines(const TArray<String>& Lines)
+bool FFileOutputDevice::WriteLines(const TArray<FString>& Lines)
 {
     if (!FileHandle.IsValid() || FileHandle->HasWriteError())
     {
@@ -121,7 +121,7 @@ bool FFileOutputDevice::WriteLines(const TArray<String>& Lines)
     }
 
     uint32 TotalSize = 0;
-    for (const String& Line : Lines)
+    for (const FString& Line : Lines)
     {
         TotalSize += Line.SizeInBytes();
     }
@@ -135,7 +135,7 @@ bool FFileOutputDevice::WriteLines(const TArray<String>& Lines)
     Buffer.Resize(TotalSize);
 
     uint32 Offset = 0;
-    for (const String& Line : Lines)
+    for (const FString& Line : Lines)
     {
         Memory::Memcpy(Buffer.Data() + Offset, *Line, Line.SizeInBytes());
         Offset += Line.SizeInBytes();

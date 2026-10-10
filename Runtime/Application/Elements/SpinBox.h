@@ -94,7 +94,7 @@ public:
         int32 Precision;
 
         /** @brief Written before the value, so a field can read as "X: 12.0". */
-        String Prefix;
+        FString Prefix;
 
         /** @brief The face the value is measured and drawn with. */
         TSharedPtr<IFontFace> Font;
@@ -167,7 +167,7 @@ public:
      *
      * @return The formatted value, without the prefix the label puts in front of it.
      */
-    NODISCARD String GetFormattedValue() const;
+    NODISCARD FString GetFormattedValue() const;
 
     /** @return The value the field holds, already clamped to the range and snapped to the step. */
     NODISCARD FORCEINLINE float GetValue() const
@@ -204,7 +204,7 @@ private:
     void ApplyValue(float InValue);
 
     void UpdateLabel();
-    void HandleTextCommitted(const String& InText);
+    void HandleTextCommitted(const FString& InText);
 
     TSharedPtr<class FTextBlock>    Label;
     TSharedPtr<class FEditableText> Editor;
@@ -212,7 +212,7 @@ private:
     TValueScrubber<float>           Scrubber;
     float                           Value;
     float                           ScrubSpeed;
-    String                          Prefix;
+    FString                         Prefix;
     FCornerRadii                    CornerRadius;
     int32                           MinWidth;
     int32                           MinHeight;

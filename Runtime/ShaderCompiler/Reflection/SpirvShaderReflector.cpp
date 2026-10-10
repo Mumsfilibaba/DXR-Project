@@ -36,7 +36,7 @@ private:
     spvc_context Context;
 };
 
-static spvc_compiler CreateReflectionCompiler(const FScopedSpvcContext& Context, const TArray<uint32>& Spirv, String& OutErrors)
+static spvc_compiler CreateReflectionCompiler(const FScopedSpvcContext& Context, const TArray<uint32>& Spirv, FString& OutErrors)
 {
     if (!Context.Get())
     {
@@ -47,7 +47,7 @@ static spvc_compiler CreateReflectionCompiler(const FScopedSpvcContext& Context,
     // The context lives in the caller, which outlives every spvc_* call made with OutErrors still in scope
     spvc_context_set_error_callback(Context.Get(), [](void* UserData, const CHAR_T* Error)
     {
-        *static_cast<String*>(UserData) += String::Printf("SPIRV-Cross: %s\n", Error);
+        *static_cast<FString*>(UserData) += FString::Printf("SPIRV-Cross: %s\n", Error);
     }, &OutErrors);
 
     spvc_parsed_ir ParsedCode = nullptr;
@@ -125,13 +125,13 @@ static bool IsStorageBufferReadOnly(spvc_compiler Compiler, spvc_variable_id Id,
     return true;
 }
 
-static bool AddResources(spvc_compiler Compiler, spvc_resources Resources, spvc_resource_type ResourceType, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, String& OutErrors)
+static bool AddResources(spvc_compiler Compiler, spvc_resources Resources, spvc_resource_type ResourceType, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, FString& OutErrors)
 {
     size_t                         NumResources = 0;
     const spvc_reflected_resource* Reflected    = nullptr;
     if (spvc_resources_get_resource_list_for_type(Resources, ResourceType, &Reflected, &NumResources) != SPVC_SUCCESS)
     {
-        OutErrors += String::Printf("Failed to reflect the SPIR-V resources of type %d\n", static_cast<int32>(ResourceType));
+        OutErrors += FString::Printf("Failed to reflect the SPIR-V resources of type %d\n", static_cast<int32>(ResourceType));
         return false;
     }
 
@@ -148,13 +148,13 @@ static bool AddResources(spvc_compiler Compiler, spvc_resources Resources, spvc_
         if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, Resource.id, SpvDecorationBinding, &BindingOffset) ||
             !spvc_compiler_get_binary_offset_for_decoration(Compiler, Resource.id, SpvDecorationDescriptorSet, &SetOffset))
         {
-            OutErrors += String::Printf("Resource '%s' at binding %u has no DescriptorSet or Binding decoration to patch\n", Name, RawBinding);
+            OutErrors += FString::Printf("Resource '%s' at binding %u has no DescriptorSet or Binding decoration to patch\n", Name, RawBinding);
             return false;
         }
 
         if (BindingOffset >= 0xFFFF || SetOffset >= 0xFFFF)
         {
-            OutErrors += String::Printf("Resource '%s' at binding %u is decorated past word 65535 of the module, which the container cannot record\n", Name, RawBinding);
+            OutErrors += FString::Printf("Resource '%s' at binding %u is decorated past word 65535 of the module, which the container cannot record\n", Name, RawBinding);
             return false;
         }
 
@@ -193,7 +193,7 @@ static bool AddResources(spvc_compiler Compiler, spvc_resources Resources, spvc_
                 bool bIsReadOnly = false;
                 if (!IsStorageBufferReadOnly(Compiler, Resource.id, bIsReadOnly))
                 {
-                    OutErrors += String::Printf("Failed to read buffer block decorations for storage buffer at register %u\n", RawBinding);
+                    OutErrors += FString::Printf("Failed to read buffer block decorations for storage buffer at register %u\n", RawBinding);
                     return false;
                 }
 
@@ -209,7 +209,7 @@ static bool AddResources(spvc_compiler Compiler, spvc_resources Resources, spvc_
 
             default:
             {
-                OutErrors += String::Printf("Unhandled SPIR-V resource type %d\n", static_cast<int32>(ResourceType));
+                OutErrors += FString::Printf("Unhandled SPIR-V resource type %d\n", static_cast<int32>(ResourceType));
                 return false;
             }
         }
@@ -227,7 +227,7 @@ static bool AddResources(spvc_compiler Compiler, spvc_resources Resources, spvc_
 
             if (RawBinding != ExpectedBinding)
             {
-                OutErrors += String::Printf("Resource at marker set %u must sit at binding %u (got %u). HLSL must not declare regular resources at space%u.\n",
+                OutErrors += FString::Printf("Resource at marker set %u must sit at binding %u (got %u). HLSL must not declare regular resources at space%u.\n",
                     ShaderBindings::SpirvHeapMarkerSet, ExpectedBinding, RawBinding, ShaderBindings::SpirvHeapMarkerSet);
                 return false;
             }
@@ -264,7 +264,7 @@ static bool AddResources(spvc_compiler Compiler, spvc_resources Resources, spvc_
     return true;
 }
 
-static bool ReflectPushConstants(spvc_compiler Compiler, spvc_resources Resources, FShaderReflection& OutReflection, String& OutErrors)
+static bool ReflectPushConstants(spvc_compiler Compiler, spvc_resources Resources, FShaderReflection& OutReflection, FString& OutErrors)
 {
     size_t                         NumPushConstants = 0;
     const spvc_reflected_resource* PushConstants    = nullptr;
@@ -296,7 +296,7 @@ static bool ReflectPushConstants(spvc_compiler Compiler, spvc_resources Resource
     return FShaderReflectionUtils::SetShaderConstantsSize("PushConstants", static_cast<uint32>(NumPushBytes), OutReflection, OutErrors);
 }
 
-bool FSpirvShaderReflector::Reflect(const TArray<uint32>& Spirv, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, String& OutErrors)
+bool FSpirvShaderReflector::Reflect(const TArray<uint32>& Spirv, const FShaderCompileInfo& CompileInfo, FShaderReflection& OutReflection, FString& OutErrors)
 {
     FScopedSpvcContext Context;
     spvc_compiler Compiler = CreateReflectionCompiler(Context, Spirv, OutErrors);
@@ -330,7 +330,7 @@ bool FSpirvShaderReflector::Reflect(const TArray<uint32>& Spirv, const FShaderCo
 
     if (!EntryPoint || spvc_compiler_set_entry_point(Compiler, EntryPoint->name, EntryPoint->execution_model) != SPVC_SUCCESS)
     {
-        OutErrors += String::Printf("The SPIR-V module has no entry point named '%s'\n", *CompileInfo.EntryPoint);
+        OutErrors += FString::Printf("The SPIR-V module has no entry point named '%s'\n", *CompileInfo.EntryPoint);
         return false;
     }
 
@@ -365,7 +365,7 @@ bool FSpirvShaderReflector::Reflect(const TArray<uint32>& Spirv, const FShaderCo
     return ReflectPushConstants(Compiler, Resources, OutReflection, OutErrors);
 }
 
-static bool SplitSemantic(const CHAR_T* Semantic, String& OutName, uint32& OutIndex)
+static bool SplitSemantic(const CHAR_T* Semantic, FString& OutName, uint32& OutIndex)
 {
     const int32 Length = static_cast<int32>(CString::Strlen(Semantic));
 
@@ -375,7 +375,7 @@ static bool SplitSemantic(const CHAR_T* Semantic, String& OutName, uint32& OutIn
         --DigitsStart;
     }
 
-    OutName  = String(Semantic, DigitsStart);
+    OutName  = FString(Semantic, DigitsStart);
     OutIndex = 0;
     for (int32 Index = DigitsStart; Index < Length; ++Index)
     {
@@ -399,7 +399,7 @@ static EShaderComponentType GetComponentType(spvc_type Type)
     }
 }
 
-bool FSpirvShaderReflector::ReflectVertexInputs(const TArray<uint32>& UntransformedSpirv, FShaderReflection& OutReflection, String& OutErrors)
+bool FSpirvShaderReflector::ReflectVertexInputs(const TArray<uint32>& UntransformedSpirv, FShaderReflection& OutReflection, FString& OutErrors)
 {
     FScopedSpvcContext Context;
     spvc_compiler Compiler = CreateReflectionCompiler(Context, UntransformedSpirv, OutErrors);
@@ -434,29 +434,29 @@ bool FSpirvShaderReflector::ReflectVertexInputs(const TArray<uint32>& Untransfor
         const CHAR_T* Semantic = spvc_compiler_get_decoration_string(Compiler, Id, SpvDecorationUserSemantic);
         if (!Semantic || Semantic[0] == '\0')
         {
-            OutErrors += String::Printf("Vertex input '%s' has no HLSL semantic, the vertex shader must be compiled with -fspv-reflect\n", spvc_compiler_get_name(Compiler, Id));
+            OutErrors += FString::Printf("Vertex input '%s' has no HLSL semantic, the vertex shader must be compiled with -fspv-reflect\n", spvc_compiler_get_name(Compiler, Id));
             return false;
         }
 
-        String SemanticName;
+        FString SemanticName;
         uint32 SemanticIndex = 0;
         if (!SplitSemantic(Semantic, SemanticName, SemanticIndex))
         {
-            OutErrors += String::Printf("Vertex input semantic '%s' has no name\n", Semantic);
+            OutErrors += FString::Printf("Vertex input semantic '%s' has no name\n", Semantic);
             return false;
         }
 
         const uint32 Location = spvc_compiler_get_decoration(Compiler, Id, SpvDecorationLocation);
         if (Location > 0xFF || SemanticIndex > 0xFF)
         {
-            OutErrors += String::Printf("Vertex input '%s' at location %u is outside the supported range\n", Semantic, Location);
+            OutErrors += FString::Printf("Vertex input '%s' at location %u is outside the supported range\n", Semantic, Location);
             return false;
         }
 
         const spvc_type Type = spvc_compiler_get_type_handle(Compiler, Inputs[Index].type_id);
 
         FShaderVertexInput& Input = OutReflection.VertexInputs.Emplace();
-        Input.SemanticHash  = HashShaderSemantic(StringView(SemanticName));
+        Input.SemanticHash  = HashShaderSemantic(FStringView(SemanticName));
         Input.SemanticIndex = static_cast<uint8>(SemanticIndex);
         Input.Location      = static_cast<uint8>(Location);
         Input.ComponentType = GetComponentType(Type);

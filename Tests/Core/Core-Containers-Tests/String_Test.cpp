@@ -14,7 +14,7 @@ bool TString_Test()
 
     TEST_SECTION("IsEmpty / Length / Append / Add / Pop");
     {
-        String Str;
+        FString Str;
         TEST_EXPECT(Str.IsEmpty());
 
         Str.Append("Hello");
@@ -38,28 +38,28 @@ bool TString_Test()
 
     TEST_SECTION("First / Last / indexing");
     {
-        String Str = "abcde";
+        FString Str = "abcde";
         TEST_EXPECT_EQ(Str.First(), 'a');
         TEST_EXPECT_EQ(Str[2], 'c');
         TEST_EXPECT_EQ(Str.LastIndex(), 4);
         TEST_EXPECT_EQ(Str.Last(), 'e');
 
-        const String Empty;
+        const FString Empty;
         TEST_EXPECT(Empty.IsEmpty());
-        TEST_EXPECT_EQ(Empty.LastIndex(), String::InvalidIndex);
+        TEST_EXPECT_EQ(Empty.LastIndex(), FString::InvalidIndex);
 
-        String Cleared = "abc";
+        FString Cleared = "abc";
         Cleared.Clear();
-        TEST_EXPECT_EQ(Cleared.LastIndex(), String::InvalidIndex);
+        TEST_EXPECT_EQ(Cleared.LastIndex(), FString::InvalidIndex);
     }
 
     TEST_SECTION("ToLower / ToUpper (copy + inline)");
     {
-        String Mixed = "MixedCase123";
+        FString Mixed = "MixedCase123";
         TEST_EXPECT(Mixed.ToLower().Equals("mixedcase123"));
         TEST_EXPECT(Mixed.ToUpper().Equals("MIXEDCASE123"));
 
-        String Lower = "abc";
+        FString Lower = "abc";
         
         Lower.ToUpperInline();
         TEST_EXPECT(Lower.Equals("ABC"));
@@ -70,19 +70,19 @@ bool TString_Test()
 
     TEST_SECTION("Trim variants");
     {
-        String Padded = "   spaced   ";
+        FString Padded = "   spaced   ";
         TEST_EXPECT(Padded.Trim().Equals("spaced"));
         TEST_EXPECT(Padded.TrimStart().Equals("spaced   "));
         TEST_EXPECT(Padded.TrimEnd().Equals("   spaced"));
 
-        String Inline = "  inline  ";
+        FString Inline = "  inline  ";
         Inline.TrimInline();
         TEST_EXPECT(Inline.Equals("inline"));
     }
 
     TEST_SECTION("Reverse");
     {
-        String Str = "abcd";
+        FString Str = "abcd";
         
         TEST_EXPECT(Str.Reverse().Equals("dcba"));
         Str.ReverseInline();
@@ -92,7 +92,7 @@ bool TString_Test()
 
     TEST_SECTION("Compare / Equals with case sensitivity");
     {
-        String Str = "Hello";
+        FString Str = "Hello";
         TEST_EXPECT_EQ(Str.Compare("Hello"), 0);
         TEST_EXPECT(Str.Compare("hello") != 0);
         TEST_EXPECT_EQ(Str.Compare("hello", EStringCaseType::NoCase), 0);
@@ -103,7 +103,7 @@ bool TString_Test()
 
     TEST_SECTION("Find / FindLast / FindChar / Contains");
     {
-        String Str = "abcabc";
+        FString Str = "abcabc";
         TEST_EXPECT_EQ(Str.Find("bc"), 1);
         TEST_EXPECT_EQ(Str.FindLast("bc"), 4);
         TEST_EXPECT_EQ(Str.FindChar('c'), 2);
@@ -111,12 +111,12 @@ bool TString_Test()
         TEST_EXPECT(Str.Contains("cab"));
         TEST_EXPECT(!Str.Contains("xyz"));
         TEST_EXPECT(Str.Contains('a'));
-        TEST_EXPECT_EQ(Str.Find("zzz"), String::InvalidIndex);
+        TEST_EXPECT_EQ(Str.Find("zzz"), FString::InvalidIndex);
     }
 
     TEST_SECTION("StartsWith / EndsWith");
     {
-        String Str = "FileName.txt";
+        FString Str = "FileName.txt";
         TEST_EXPECT(Str.StartsWith("File"));
         TEST_EXPECT(!Str.StartsWith("file"));
         TEST_EXPECT(Str.StartsWith("file", EStringCaseType::NoCase));
@@ -125,48 +125,48 @@ bool TString_Test()
 
         TEST_EXPECT(Str.StartsWith("FileName.txt"));
         TEST_EXPECT(Str.EndsWith("FileName.txt"));
-        TEST_EXPECT(String("/").EndsWith("/"));
+        TEST_EXPECT(FString("/").EndsWith("/"));
         TEST_EXPECT(!Str.EndsWith("AFileName.txt"));
         TEST_EXPECT(!Str.StartsWith("FileName.txtA"));
     }
 
     TEST_SECTION("Insert / Remove / Replace / ReplaceAll");
     {
-        String Str = "HelloWorld";
+        FString Str = "HelloWorld";
         Str.Insert(' ', 5);
         TEST_EXPECT(Str.Equals("Hello World"));
 
         Str.Remove(5, 1);
         TEST_EXPECT(Str.Equals("HelloWorld"));
 
-        String Rep = "aaaa";
+        FString Rep = "aaaa";
         Rep.Replace("bb", 1);
         TEST_EXPECT(Rep.Equals("abba"));
 
-        String All = "a.b.c.d";
+        FString All = "a.b.c.d";
         All.ReplaceAll('.', '-');
         TEST_EXPECT(All.Equals("a-b-c-d"));
     }
 
     TEST_SECTION("SubString / Split / Swap");
     {
-        String Str = "abcdef";
+        FString Str = "abcdef";
         TEST_EXPECT(Str.SubString(2, 3).Equals("cde"));
         TEST_EXPECT(Str.SubString(0, Str.Length()).Equals("abcdef"));
         TEST_EXPECT(Str.SubString(3, Str.Length() - 3).Equals("def"));
         TEST_EXPECT(Str.SubString(Str.Length(), 0).IsEmpty());
         TEST_EXPECT(Str.SubString(2, 0).IsEmpty());
 
-        String Left;
-        String Right;
-        String Path = "key=value";
+        FString Left;
+        FString Right;
+        FString Path = "key=value";
         Path.Split('=', Left, Right);
 
         TEST_EXPECT(Left.Equals("key"));
         TEST_EXPECT(Right.Equals("value"));
 
-        String First  = "first";
-        String Second = "second";
+        FString First  = "first";
+        FString Second = "second";
         First.Swap(Second);
 
         TEST_EXPECT(First.Equals("second"));
@@ -175,7 +175,7 @@ bool TString_Test()
 
     TEST_SECTION("Clear / Reset / Reserve");
     {
-        String Str = "Some content";
+        FString Str = "Some content";
         Str.Reserve(64);
         TEST_EXPECT(Str.Capacity() >= 64);
 
@@ -189,9 +189,9 @@ bool TString_Test()
 
     TEST_SECTION("operator+ / operator+=");
     {
-        String First = "foo";
-        String Second = "bar";
-        String Combined = First + Second;
+        FString First = "foo";
+        FString Second = "bar";
+        FString Combined = First + Second;
         TEST_EXPECT(Combined.Equals("foobar"));
 
         First += Second;
@@ -203,33 +203,33 @@ bool TString_Test()
 
     TEST_SECTION("Construction / capacity invariants");
     {
-        String Empty;
+        FString Empty;
         TEST_EXPECT_EQ(Empty.Length(), 0);
         TEST_EXPECT_EQ(Empty.Capacity(), 1); // null-terminator invariant
 
-        String Hello = "Hello String";
+        FString Hello = "Hello String";
         TEST_EXPECT_EQ(Hello.Length(), 12);
         TEST_EXPECT_EQ(Hello.Capacity(), 13);
 
-        String Sub = String("Hello World", 5);
+        FString Sub = FString("Hello World", 5);
         TEST_EXPECT(Sub.Equals("Hello"));
         TEST_EXPECT_EQ(Sub.Length(), 5);
 
-        StringView View("Hello StringView");
-        String FromView = String(View);
+        FStringView View("Hello StringView");
+        FString FromView = FString(View);
         TEST_EXPECT(FromView.Equals("Hello StringView"));
 
-        String Copy = Hello;
+        FString Copy = Hello;
         TEST_EXPECT(Copy.Equals("Hello String"));
 
-        String Moved = ::Move(Copy);
+        FString Moved = ::Move(Copy);
         TEST_EXPECT(Moved.Equals("Hello String"));
         TEST_EXPECT(Copy.IsEmpty());
     }
 
     TEST_SECTION("InlinePrintf / AppendPrintf");
     {
-        String Str;
+        FString Str;
         Str.InlinePrintf("Formatted String=%.4f", 0.004f);
         TEST_EXPECT(Str.Equals("Formatted String=0.0040"));
 
@@ -240,7 +240,7 @@ bool TString_Test()
 
     TEST_SECTION("Reset to length");
     {
-        String Str = "NewString";
+        FString Str = "NewString";
         Str.Reset(12);
 
         TEST_EXPECT_EQ(Str.Size(), 12);
@@ -250,7 +250,7 @@ bool TString_Test()
 
     TEST_SECTION("FindCharWithPredicate / FindLastCharWithPredicate");
     {
-        String Str = "0123MeSearch89Me89";
+        FString Str = "0123MeSearch89Me89";
         TEST_EXPECT_EQ(Str.FindCharWithPredicate([](CHAR_T Ch)
         {
             return (Ch == 'e') || (Ch == 'c');
@@ -272,7 +272,7 @@ bool TString_Test()
 
     TEST_SECTION("CopyToBuffer");
     {
-        String Str = "compare";
+        FString Str = "compare";
         CHAR_T Buffer[6];
         Buffer[5] = 0;
         Str.CopyToBuffer(Buffer, 6, 2);
@@ -281,7 +281,7 @@ bool TString_Test()
 
     TEST_SECTION("Insert(string) / Replace(string) / Replace(char)");
     {
-        String Str = "COMPARE";
+        FString Str = "COMPARE";
 
         Str.Insert("lower", 4);
         TEST_EXPECT(Str.Equals("COMPlowerARE"));
@@ -295,11 +295,11 @@ bool TString_Test()
 
     TEST_SECTION("operator+ with chars / comparison operators");
     {
-        String Str  = "Test";
-        String Plus = Str + '5';
+        FString Str  = "Test";
+        FString Plus = Str + '5';
         TEST_EXPECT(Plus.Equals("Test5"));
 
-        String PrePlus = '5' + Str;
+        FString PrePlus = '5' + Str;
         TEST_EXPECT(PrePlus.Equals("5Test"));
 
         TEST_EXPECT(("Test" == Str));
@@ -313,74 +313,74 @@ bool TString_Test()
 
     TEST_SECTION("StringCast round-trip");
     {
-        String  Narrow = "Round Trip 123";
-        WString Wide   = StringCast<WIDECHAR>(Narrow).ToString();
+        FString     Narrow = "Round Trip 123";
+        FWideString Wide   = StringCast<WIDECHAR>(Narrow).ToString();
         TEST_EXPECT(TCString<WIDECHAR>::Strcmp(Wide.Data(), L"Round Trip 123") == 0);
 
-        String Back = StringCast<CHAR_T>(Wide).ToString();
+        FString Back = StringCast<CHAR_T>(Wide).ToString();
         TEST_EXPECT(Back.Equals("Round Trip 123"));
     }
 
     TEST_SECTION("Printf: %s and %c take the string's own character type, at any length");
     {
-        TEST_EXPECT(String::Printf(TEXT("%s=%d %c"), TEXT("Value"), 5, TEXT('x')).Equals(TEXT("Value=5 x")));
-        TEST_EXPECT(WString::Printf(L"%s=%d %c", L"Wide", 5, L'x').Equals(L"Wide=5 x"));
-        TEST_EXPECT(WString::Printf(L"[%s]", L"Åäö 日本語").Equals(L"[Åäö 日本語]"));
+        TEST_EXPECT(FString::Printf(TEXT("%s=%d %c"), TEXT("Value"), 5, TEXT('x')).Equals(TEXT("Value=5 x")));
+        TEST_EXPECT(FWideString::Printf(L"%s=%d %c", L"Wide", 5, L'x').Equals(L"Wide=5 x"));
+        TEST_EXPECT(FWideString::Printf(L"[%s]", L"Åäö 日本語").Equals(L"[Åäö 日本語]"));
 
         const int32 Lengths[] = { STRING_FORMAT_BUFFER_SIZE - 1, STRING_FORMAT_BUFFER_SIZE, STRING_FORMAT_BUFFER_SIZE + 1, 5000 };
         for (int32 Length : Lengths)
         {
-            String  Narrow;
-            WString Wide;
+            FString     Narrow;
+            FWideString Wide;
             for (int32 Index = 0; Index < Length; ++Index)
             {
                 Narrow.Append(static_cast<CHAR_T>('a' + Index % 26));
                 Wide.Append(static_cast<WIDECHAR>(L'a' + Index % 26));
             }
 
-            const String NarrowFormatted = String::Printf("%s", *Narrow);
+            const FString NarrowFormatted = FString::Printf("%s", *Narrow);
             TEST_EXPECT_EQ(NarrowFormatted.Length(), Length);
             TEST_EXPECT(NarrowFormatted.Equals(Narrow));
 
-            const WString WideFormatted = WString::Printf(L"%s", *Wide);
+            const FWideString WideFormatted = FWideString::Printf(L"%s", *Wide);
             TEST_EXPECT_EQ(WideFormatted.Length(), Length);
             TEST_EXPECT(WideFormatted.Equals(Wide));
 
-            WString WideAppended = L"<";
+            FWideString WideAppended = L"<";
             WideAppended.AppendPrintf(L"%s>", *Wide);
             TEST_EXPECT_EQ(WideAppended.Length(), Length + 2);
         }
 
-        String Self = "abc";
+        FString Self = "abc";
         Self.InlinePrintf("%s-%s", *Self, *Self);
         TEST_EXPECT(Self.Equals("abc-abc"));
     }
 
     TEST_SECTION("WString core operations");
     {
-        WString Str = L"Hello String";
+        FWideString Str = L"Hello String";
         TEST_EXPECT_EQ(Str.Length(), 12);
 
         Str.Append(L'!');
         TEST_EXPECT(TCString<WIDECHAR>::Strcmp(Str.Data(), L"Hello String!") == 0);
 
-        WString Formatted;
+        FWideString Formatted;
         Formatted.InlinePrintf(L"Formatted String=%.4f", 0.004f);
         TEST_EXPECT(TCString<WIDECHAR>::Strcmp(Formatted.Data(), L"Formatted String=0.0040") == 0);
 
-        WString Search = L"0123MeSearch89Me89";
+        FWideString Search = L"0123MeSearch89Me89";
         TEST_EXPECT_EQ(Search.Find(L"Me"), 4);
         TEST_EXPECT_EQ(Search.FindLast(L"Me"), 14);
         TEST_EXPECT(Search.StartsWith(L"0123ME", EStringCaseType::NoCase));
         TEST_EXPECT(Search.EndsWith(L"ME89", EStringCaseType::NoCase));
 
-        WString Lower = Search.ToLower();
+        FWideString Lower = Search.ToLower();
         TEST_EXPECT(TCString<WIDECHAR>::Strcmp(Lower.Data(), L"0123mesearch89me89") == 0);
     }
 
     TEST_SECTION("AnsiString holds UTF-8 in plain chars");
     {
-        AnsiString Str = "Åäö 日本語";
+        FAnsiString Str = "Åäö 日本語";
         TEST_EXPECT_EQ(Str.Length(), 16);
         TEST_EXPECT_EQ(Str.Find("日本"), 7);
 
@@ -390,7 +390,7 @@ bool TString_Test()
 
     TEST_SECTION("U8String core operations");
     {
-        U8String Str = u8"Åäö 日本語";
+        FU8String Str = u8"Åäö 日本語";
         TEST_EXPECT_EQ(Str.Length(), 16);
         TEST_EXPECT(TCString<UTF8CHAR>::Strcmp(Str.Data(), u8"Åäö 日本語") == 0);
 
@@ -400,19 +400,19 @@ bool TString_Test()
         TEST_EXPECT_EQ(Str.FindChar(u8' '), 6);
         TEST_EXPECT(Str.EndsWith(u8"語!"));
 
-        U8String Mixed = u8"Mixed Åäö Case";
+        FU8String Mixed = u8"Mixed Åäö Case";
         TEST_EXPECT(Mixed.StartsWith(u8"MIXED", EStringCaseType::NoCase));
         TEST_EXPECT(Mixed.ToUpper().Equals(u8"MIXED Åäö CASE"));
 
-        U8String Formatted;
+        FU8String Formatted;
         Formatted.InlinePrintf(u8"Value=%d", 42);
         TEST_EXPECT(Formatted.Equals(u8"Value=42"));
 
-        const U8StringView View(Str);
+        const FU8StringView View(Str);
         TEST_EXPECT_EQ(View.Length(), 17);
         TEST_EXPECT(View.SubString(7, 9).Equals(u8"日本語"));
 
-        TEST_EXPECT(U8String(TCString<UTF8CHAR>::Empty()).IsEmpty());
+        TEST_EXPECT(FU8String(TCString<UTF8CHAR>::Empty()).IsEmpty());
 
         TEST_EXPECT_EQ(FPlatformString::Strlen(u8"日本"), 6);
         TEST_EXPECT_EQ(FPlatformString::Stricmp(u8"Åäö ABC", u8"Åäö abc"), 0);
@@ -426,7 +426,7 @@ bool TString_Test()
         STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)
         {
             FRandom     Random(Seed);
-            String      Str;
+            FString     Str;
             std::string Oracle;
 
             // Grow the buffer with a random mix of append/insert across the boundary sizes.

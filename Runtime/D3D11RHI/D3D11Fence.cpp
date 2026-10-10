@@ -159,7 +159,7 @@ void* FD3D11FenceRHI::GetRHINativeFence() const
     return EventQuery ? reinterpret_cast<void*>(EventQuery->GetD3D11Query()) : nullptr;
 }
 
-void FD3D11FenceRHI::SetDebugName(const String& InName)
+void FD3D11FenceRHI::SetDebugName(const FString& InName)
 {
     if (Fence)
     {
@@ -171,7 +171,7 @@ void FD3D11FenceRHI::SetDebugName(const String& InName)
     }
 }
 
-void FD3D11FenceRHI::GetDebugName(String& OutDebugName) const
+void FD3D11FenceRHI::GetDebugName(FString& OutDebugName) const
 {
     if (Fence)
     {

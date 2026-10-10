@@ -221,7 +221,7 @@ FGraphicsPipelineStateInstance* FForwardPass::CompilePipelineState(const FMateri
         return nullptr;
     }
 
-    const String DebugName = String::Printf("ForwardPass PipelineState%s%s%s%s%s%s [Declaration %u]",
+    const FString DebugName = FString::Printf("ForwardPass PipelineState%s%s%s%s%s%s [Declaration %u]",
         Permutation.Get<FParallax>() ? " [Parallax]" : "", Permutation.Get<FClipping>() ? " [Clipping]" : "",
         Permutation.Get<FAlphaMask>() ? " [AlphaMask]" : "", Permutation.Get<FTranslucent>() ? " [Translucent]" : "",
         Permutation.Get<FRefraction>() ? " [Refraction]" : "", Permutation.Get<FBindless>() ? " [Bindless]" : "",

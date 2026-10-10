@@ -239,7 +239,7 @@ bool ConsoleLogDraw_Test()
 
     for (int32 Index = 0; Index < 200; ++Index)
     {
-        LongConsole->GetLogBuffer().Log(ELogSeverity::Info, String::Printf("Line %d", Index));
+        LongConsole->GetLogBuffer().Log(ELogSeverity::Info, FString::Printf("Line %d", Index));
     }
 
     TEST_EXPECT_EQ(LongConsole->GetLogBuffer().GetNumLines(), FConsoleLogBuffer::DefaultMaxLines);
@@ -480,8 +480,8 @@ bool ConsoleCandidateColumns_Test()
 
     TEST_SECTION("The set-by flag has a column of its own rather than riding along with the help");
     TEST_EXPECT(CommandList.FindTextCommand("[Int]") != FDrawCommandList::InvalidIndex);
-    const String SetByText = String::Printf("[%s]", SetByFlagToString(EConsoleVariableFlags::SetByConstructor));
-    TEST_EXPECT(CommandList.FindTextCommand(StringView(SetByText.Data(), SetByText.Length())) != FDrawCommandList::InvalidIndex);
+    const FString SetByText = FString::Printf("[%s]", SetByFlagToString(EConsoleVariableFlags::SetByConstructor));
+    TEST_EXPECT(CommandList.FindTextCommand(FStringView(SetByText.Data(), SetByText.Length())) != FDrawCommandList::InvalidIndex);
     TEST_EXPECT(CommandList.FindTextCommand("[Help: An int variable for the console tests]") != FDrawCommandList::InvalidIndex);
 
     TEST_SECTION("A row is as tall as the selectable the ImGui console used, so its text can centre");
@@ -496,10 +496,10 @@ bool ConsoleCandidateColumns_Test()
     TEST_EXPECT_EQ(CommandList[HighlightIndex].Bounds.Height, GExpectedRowHeight);
 
     TEST_SECTION("The text of the selected row fills that height rather than sitting on top of it");
-    const int32   SelectedIndex = Console->GetCommandLine().GetSelectedCandidateIndex();
-    const String& SelectedName  = Console->GetCommandLine().GetCandidates()[SelectedIndex].Second;
+    const int32    SelectedIndex = Console->GetCommandLine().GetSelectedCandidateIndex();
+    const FString& SelectedName  = Console->GetCommandLine().GetCandidates()[SelectedIndex].Second;
 
-    const int32 SelectedNameIndex = CommandList.FindTextCommand(StringView(SelectedName.Data(), SelectedName.Length()));
+    const int32 SelectedNameIndex = CommandList.FindTextCommand(FStringView(SelectedName.Data(), SelectedName.Length()));
     TEST_EXPECT(SelectedNameIndex != FDrawCommandList::InvalidIndex);
 
     if (SelectedNameIndex != FDrawCommandList::InvalidIndex)
@@ -675,7 +675,7 @@ bool ConsoleInputFieldSurvives_Test()
 
     for (int32 Index = 0; Index < FConsoleLogBuffer::DefaultMaxLines; ++Index)
     {
-        Console->GetLogBuffer().Log(ELogSeverity::Info, String::Printf("[FRenderer]: Frame %d finished in 16.7ms with 428 draw calls", Index));
+        Console->GetLogBuffer().Log(ELogSeverity::Info, FString::Printf("[FRenderer]: Frame %d finished in 16.7ms with 428 draw calls", Index));
     }
 
     TEST_SECTION("One typed character brings up a candidate list longer than the console");
@@ -1016,7 +1016,7 @@ bool ConsoleTypeAndExecute_Test()
     TEST_SECTION("The executed line is reachable again through the history");
     Input->OnKeyDown(CreateKeyDownEvent(Keys::Up));
 
-    const TArray<String>& History = FConsoleManager::Get().GetHistory();
+    const TArray<FString>& History = FConsoleManager::Get().GetHistory();
     TEST_EXPECT(!History.IsEmpty());
     TEST_EXPECT(Console->GetCommandLine().GetText().Equals(History.Last()));
     TEST_EXPECT(Console->GetInput()->GetText().Equals(History.Last()));

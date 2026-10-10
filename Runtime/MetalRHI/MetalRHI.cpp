@@ -876,7 +876,7 @@ void* FMetalDeviceRHI::GetRHINativeCopyCommandQueue()
     return reinterpret_cast<void*>(Device->GetQueue(EMetalQueueType::Copy)->GetMTLCommandQueue());
 }
 
-String FMetalDeviceRHI::GetAdapterName() const
+FString FMetalDeviceRHI::GetAdapterName() const
 {
     CHECK(Device != nullptr);
     return Device->GetProperties().Name;

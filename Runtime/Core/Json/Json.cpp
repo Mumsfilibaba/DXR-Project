@@ -2,13 +2,13 @@
 #include "Core/Filesystem/File.h"
 #include "Core/Platform/PlatformFile.h"
 
-bool Json::Parse(const StringView& Text, FJsonValue& OutValue, FJsonError* OutError, EJsonParseFlags Flags)
+bool Json::Parse(const FStringView& Text, FJsonValue& OutValue, FJsonError* OutError, EJsonParseFlags Flags)
 {
     FJsonReader Reader(Flags);
     return Reader.Parse(Text, OutValue, OutError);
 }
 
-bool Json::LoadFromFile(const String& Filename, FJsonValue& OutValue, FJsonError* OutError, EJsonParseFlags Flags)
+bool Json::LoadFromFile(const FString& Filename, FJsonValue& OutValue, FJsonError* OutError, EJsonParseFlags Flags)
 {
     const auto ReportFailure = [OutError](const CHAR_T* Message)
     {
@@ -34,20 +34,20 @@ bool Json::LoadFromFile(const String& Filename, FJsonValue& OutValue, FJsonError
     }
 
     const int32 TextLength = CString::Strlen(Text.Data());
-    return Json::Parse(StringView(Text.Data(), TextLength), OutValue, OutError, Flags);
+    return Json::Parse(FStringView(Text.Data(), TextLength), OutValue, OutError, Flags);
 }
 
-bool Json::SaveToFile(const String& Filename, const FJsonValue& Value, EJsonWriteFlags Flags)
+bool Json::SaveToFile(const FString& Filename, const FJsonValue& Value, EJsonWriteFlags Flags)
 {
-    const String Text = Json::ToString(Value, Flags);
+    const FString Text = Json::ToString(Value, Flags);
 
-    const String Directory = File::GetDirectoryOf(Filename);
+    const FString Directory = File::GetDirectoryOf(Filename);
     if (!Directory.IsEmpty() && !File::CreateDirectoryTree(Directory))
     {
         return false;
     }
 
-    const String TempFilename = Filename + ".tmp";
+    const FString TempFilename = Filename + ".tmp";
 
     {
         TFileRef<IPlatformFile> TempFile = FPlatformFile::OpenForWrite(TempFilename);
@@ -73,7 +73,7 @@ bool Json::SaveToFile(const String& Filename, const FJsonValue& Value, EJsonWrit
     return true;
 }
 
-String Json::ToString(const FJsonValue& Value, EJsonWriteFlags Flags)
+FString Json::ToString(const FJsonValue& Value, EJsonWriteFlags Flags)
 {
     FJsonWriter Writer(Flags);
     return Writer.ToString(Value);
