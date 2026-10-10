@@ -12,10 +12,12 @@ struct IPlatformTypes
     typedef unsigned int uint32;
     typedef unsigned long long uint64;
 
+    typedef unsigned char byte;
+
     typedef char ANSICHAR;
+    typedef char8_t UTF8CHAR;
     typedef wchar_t WIDECHAR;
 
-    // The engine's character type: UTF-8 in a char by default, or wchar_t when built with --widechar
 #if WIDE_CHAR_BUILD
     typedef WIDECHAR CHAR;
     typedef WIDECHAR CHAR_T;

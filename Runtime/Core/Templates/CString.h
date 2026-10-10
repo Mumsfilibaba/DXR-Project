@@ -4,6 +4,12 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Platform/PlatformString.h"
 
+template<typename CharType>
+struct TIsCharType
+{
+    inline static constexpr bool Value = TIsSame<CharType, ANSICHAR>::Value || TIsSame<CharType, UTF8CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value;
+};
+
 template<typename InCharType>
 struct TCharTraits 
 {
@@ -232,9 +238,15 @@ public:
 };
 
 template<>
-FORCEINLINE const CHAR* TCString<CHAR>::Empty() noexcept
+FORCEINLINE const ANSICHAR* TCString<ANSICHAR>::Empty() noexcept
 {
     return "";
+}
+
+template<>
+FORCEINLINE const UTF8CHAR* TCString<UTF8CHAR>::Empty() noexcept
+{
+    return u8"";
 }
 
 template<>

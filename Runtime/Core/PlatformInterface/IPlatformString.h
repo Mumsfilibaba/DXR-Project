@@ -9,72 +9,72 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct IPlatformString
 {
-    static FORCEINLINE SIZE_T Mbstowcs(WIDECHAR* Dest, const CHAR* Src, uint64 Max)
+    static FORCEINLINE SIZE_T Mbstowcs(WIDECHAR* Dest, const ANSICHAR* Src, uint64 Max)
     {
         return ::mbstowcs(Dest, Src, Max);
     }
 
-    static FORCEINLINE SIZE_T Wcstombs(CHAR* Dest, const WIDECHAR* Src, uint64 Max)
+    static FORCEINLINE SIZE_T Wcstombs(ANSICHAR* Dest, const WIDECHAR* Src, uint64 Max)
     {
         return ::wcstombs(Dest, Src, Max);
     }
 
     // -------------------------------------------------------------------------------------------
-    // CHAR
+    // ANSICHAR
     // -------------------------------------------------------------------------------------------
 
-    NODISCARD static FORCEINLINE CHAR ToUpper(CHAR Char)
+    NODISCARD static FORCEINLINE ANSICHAR ToUpper(ANSICHAR Char)
     {
-        return static_cast<CHAR>(::toupper(static_cast<uint8>(Char)));
+        return static_cast<ANSICHAR>(::toupper(static_cast<uint8>(Char)));
     }
 
-    NODISCARD static FORCEINLINE CHAR ToLower(CHAR Char)
+    NODISCARD static FORCEINLINE ANSICHAR ToLower(ANSICHAR Char)
     {
-        return static_cast<CHAR>(::tolower(static_cast<uint8>(Char)));
+        return static_cast<ANSICHAR>(::tolower(static_cast<uint8>(Char)));
     }
 
-    NODISCARD static FORCEINLINE bool IsWhitespace(CHAR Char)
+    NODISCARD static FORCEINLINE bool IsWhitespace(ANSICHAR Char)
     {
         return static_cast<bool>(::isspace(static_cast<uint8>(Char)));
     }
 
-    NODISCARD static FORCEINLINE bool IsUpper(CHAR Char)
+    NODISCARD static FORCEINLINE bool IsUpper(ANSICHAR Char)
     {
         return static_cast<bool>(::isupper(static_cast<uint8>(Char)));
     }
 
-    NODISCARD static FORCEINLINE bool IsLower(CHAR Char)
+    NODISCARD static FORCEINLINE bool IsLower(ANSICHAR Char)
     {
         return static_cast<bool>(::islower(static_cast<uint8>(Char)));
     }
 
-    NODISCARD static FORCEINLINE bool IsAlnum(CHAR Char)
+    NODISCARD static FORCEINLINE bool IsAlnum(ANSICHAR Char)
     {
         return static_cast<bool>(::isalnum(static_cast<uint8>(Char)));
     }
 
-    NODISCARD static FORCEINLINE bool IsDigit(CHAR Char)
+    NODISCARD static FORCEINLINE bool IsDigit(ANSICHAR Char)
     {
         return static_cast<bool>(::isdigit(static_cast<uint8>(Char)));
     }
 
-    NODISCARD static FORCEINLINE bool IsAlpha(CHAR Char)
+    NODISCARD static FORCEINLINE bool IsAlpha(ANSICHAR Char)
     {
         return static_cast<bool>(::isalpha(static_cast<uint8>(Char)));
     }
 
-    NODISCARD static FORCEINLINE bool IsPunct(CHAR Char)
+    NODISCARD static FORCEINLINE bool IsPunct(ANSICHAR Char)
     {
         return static_cast<bool>(::ispunct(static_cast<uint8>(Char)));
     }
 
-    NODISCARD static FORCEINLINE bool IsHexDigit(CHAR Char)
+    NODISCARD static FORCEINLINE bool IsHexDigit(ANSICHAR Char)
     {
         return static_cast<bool>(::isxdigit(static_cast<uint8>(Char)));
     }
 
     template<typename... ArgTypes>
-    static FORCEINLINE int32 Snprintf(CHAR* Buffer, SIZE_T BufferSize, const CHAR* Format, ArgTypes&&... Args) noexcept
+    static FORCEINLINE int32 Snprintf(ANSICHAR* Buffer, SIZE_T BufferSize, const ANSICHAR* Format, ArgTypes&&... Args) noexcept
     {
         // The format string is a literal at the call site, it cannot be one here.
         DISABLE_FORMAT_SECURITY_WARNING
@@ -82,14 +82,14 @@ struct IPlatformString
         ENABLE_FORMAT_SECURITY_WARNING
     }
 
-    NODISCARD static FORCEINLINE CHAR* Strstr(const CHAR* String, const CHAR* Find) noexcept
+    NODISCARD static FORCEINLINE ANSICHAR* Strstr(const ANSICHAR* String, const ANSICHAR* Find) noexcept
     {
         // NOTE: This is super strange looking at the docs this function should return 'char' but seems to return 'const char'
         // https://en.cppreference.com/w/c/string/byte/strstr
-        return const_cast<CHAR*>(static_cast<const CHAR*>(::strstr(String, Find)));
+        return const_cast<ANSICHAR*>(static_cast<const ANSICHAR*>(::strstr(String, Find)));
     }
 
-	NODISCARD static FORCEINLINE CHAR* Stristr(const CHAR* String, const CHAR* Find) noexcept
+	NODISCARD static FORCEINLINE ANSICHAR* Stristr(const ANSICHAR* String, const ANSICHAR* Find) noexcept
 	{
         if (!String || !Find)
         {
@@ -98,18 +98,18 @@ struct IPlatformString
 
         if (*Find == '\0')
         {
-			return const_cast<CHAR*>(String); // Empty needle matches at start (same as strstr)
+			return const_cast<ANSICHAR*>(String); // Empty needle matches at start (same as strstr)
         }
 
-		for (const CHAR* S = String; *S != '\0'; ++S)
+		for (const ANSICHAR* S = String; *S != '\0'; ++S)
 		{
-			const CHAR* H = S;
-			const CHAR* N = Find;
+			const ANSICHAR* H = S;
+			const ANSICHAR* N = Find;
 
 			while (*H != '\0' && *N != '\0')
 			{
-				const CHAR Hc = ToLower(*H);
-				const CHAR Nc = ToLower(*N);
+				const ANSICHAR Hc = ToLower(*H);
+				const ANSICHAR Nc = ToLower(*N);
 
                 if (Hc != Nc)
                 {
@@ -122,119 +122,119 @@ struct IPlatformString
 
             if (*N == '\0')
             {
-				return const_cast<CHAR*>(S); // Matched whole needle
+				return const_cast<ANSICHAR*>(S); // Matched whole needle
             }
 		}
 
 		return nullptr;
 	}
 
-    NODISCARD static FORCEINLINE CHAR* Strpbrk(const CHAR* String, const CHAR* Find) noexcept
+    NODISCARD static FORCEINLINE ANSICHAR* Strpbrk(const ANSICHAR* String, const ANSICHAR* Find) noexcept
     {
-        return const_cast<CHAR*>(static_cast<const CHAR*>(::strpbrk(String, Find)));
+        return const_cast<ANSICHAR*>(static_cast<const ANSICHAR*>(::strpbrk(String, Find)));
     }
 
-    NODISCARD static FORCEINLINE CHAR* Strchr(const CHAR* String, CHAR Char) noexcept
+    NODISCARD static FORCEINLINE ANSICHAR* Strchr(const ANSICHAR* String, ANSICHAR Char) noexcept
     {
-        return const_cast<CHAR*>(static_cast<const CHAR*>(::strchr(String, Char)));
+        return const_cast<ANSICHAR*>(static_cast<const ANSICHAR*>(::strchr(String, Char)));
     }
 
-    NODISCARD static FORCEINLINE CHAR* Strrchr(const CHAR* String, CHAR Char) noexcept
+    NODISCARD static FORCEINLINE ANSICHAR* Strrchr(const ANSICHAR* String, ANSICHAR Char) noexcept
     {
-        return const_cast<CHAR*>(static_cast<const CHAR*>(::strrchr(String, Char)));
+        return const_cast<ANSICHAR*>(static_cast<const ANSICHAR*>(::strrchr(String, Char)));
     }
     
-    NODISCARD static FORCEINLINE int32 Strlen(const CHAR* String) noexcept
+    NODISCARD static FORCEINLINE int32 Strlen(const ANSICHAR* String) noexcept
     {
         return static_cast<int32>(::strlen(String));
     }
 
-    NODISCARD static FORCEINLINE SIZE_T Strspn(const CHAR* String, const CHAR* Set) noexcept
+    NODISCARD static FORCEINLINE SIZE_T Strspn(const ANSICHAR* String, const ANSICHAR* Set) noexcept
     {
         return static_cast<SIZE_T>(::strspn(String, Set));
     }
 
-    static FORCEINLINE CHAR* Strcpy(CHAR* Dst, const CHAR* Src) noexcept
+    static FORCEINLINE ANSICHAR* Strcpy(ANSICHAR* Dst, const ANSICHAR* Src) noexcept
     {
-        return static_cast<CHAR*>(::strcpy(Dst, Src));
+        return static_cast<ANSICHAR*>(::strcpy(Dst, Src));
     }
 
-    static FORCEINLINE CHAR* Strncpy(CHAR* Dst, const CHAR* Src, SIZE_T InLength) noexcept
+    static FORCEINLINE ANSICHAR* Strncpy(ANSICHAR* Dst, const ANSICHAR* Src, SIZE_T InLength) noexcept
     {
-        return static_cast<CHAR*>(::strncpy(Dst, Src, InLength));
+        return static_cast<ANSICHAR*>(::strncpy(Dst, Src, InLength));
     }
 
-    static FORCEINLINE CHAR* Strcat(CHAR* Dst, const CHAR* Src) noexcept
+    static FORCEINLINE ANSICHAR* Strcat(ANSICHAR* Dst, const ANSICHAR* Src) noexcept
     {
-        return static_cast<CHAR*>(::strcat(Dst, Src));
+        return static_cast<ANSICHAR*>(::strcat(Dst, Src));
     }
 
-    static FORCEINLINE CHAR* Strncat(CHAR* Dst, const CHAR* Src, SIZE_T InLength) noexcept
+    static FORCEINLINE ANSICHAR* Strncat(ANSICHAR* Dst, const ANSICHAR* Src, SIZE_T InLength) noexcept
     {
-        return static_cast<CHAR*>(::strncat(Dst, Src, InLength));
+        return static_cast<ANSICHAR*>(::strncat(Dst, Src, InLength));
     }
 
-    NODISCARD static FORCEINLINE int32 Strcmp(const CHAR* String0, const CHAR* String1) noexcept
+    NODISCARD static FORCEINLINE int32 Strcmp(const ANSICHAR* String0, const ANSICHAR* String1) noexcept
     {
         return static_cast<int32>(::strcmp(String0, String1));
     }
 
-    NODISCARD static FORCEINLINE int32 Strncmp(const CHAR* String0, const CHAR* String1, SIZE_T InLength) noexcept
+    NODISCARD static FORCEINLINE int32 Strncmp(const ANSICHAR* String0, const ANSICHAR* String1, SIZE_T InLength) noexcept
     {
         return static_cast<int32>(::strncmp(String0, String1, InLength));
     }
 
-    NODISCARD static FORCEINLINE int32 Strtoi(const CHAR* String, CHAR** End, int32 Base) noexcept
+    NODISCARD static FORCEINLINE int32 Strtoi(const ANSICHAR* String, ANSICHAR** End, int32 Base) noexcept
     {
         return static_cast<int32>(::strtol(String, End, Base));
     }
 
-    NODISCARD static FORCEINLINE int64 Strtoi64(const CHAR* String, CHAR** End, int32 Base) noexcept
+    NODISCARD static FORCEINLINE int64 Strtoi64(const ANSICHAR* String, ANSICHAR** End, int32 Base) noexcept
     {
         return static_cast<int64>(::strtoll(String, End, Base));
     }
 
-    NODISCARD static FORCEINLINE uint32 Strtoui(const CHAR* String, CHAR** End, int32 Base) noexcept
+    NODISCARD static FORCEINLINE uint32 Strtoui(const ANSICHAR* String, ANSICHAR** End, int32 Base) noexcept
     {
         return static_cast<uint32>(::strtoul(String, End, Base));
     }
 
-    NODISCARD static FORCEINLINE uint64 Strtoui64(const CHAR* String, CHAR** End, int32 Base) noexcept
+    NODISCARD static FORCEINLINE uint64 Strtoui64(const ANSICHAR* String, ANSICHAR** End, int32 Base) noexcept
     {
         return static_cast<uint64>(::strtoll(String, End, Base));
     }
 
-    NODISCARD static FORCEINLINE float Strtof(const CHAR* String, CHAR** End) noexcept
+    NODISCARD static FORCEINLINE float Strtof(const ANSICHAR* String, ANSICHAR** End) noexcept
     {
         return static_cast<float>(::strtof(String, End));
     }
 
-    NODISCARD static FORCEINLINE double Strtod(const CHAR* String, CHAR** End) noexcept
+    NODISCARD static FORCEINLINE double Strtod(const ANSICHAR* String, ANSICHAR** End) noexcept
     {
         return static_cast<double>(::strtod(String, End));
     }
 
-    NODISCARD static FORCEINLINE long double Strtold(const CHAR* String, CHAR** End) noexcept
+    NODISCARD static FORCEINLINE long double Strtold(const ANSICHAR* String, ANSICHAR** End) noexcept
     {
         return static_cast<long double>(::strtold(String, End));
     }
     
-    NODISCARD static FORCEINLINE int32 Atoi(const CHAR* String) noexcept
+    NODISCARD static FORCEINLINE int32 Atoi(const ANSICHAR* String) noexcept
     {
         return static_cast<int32>(::atol(String));
     }
 
-    NODISCARD static FORCEINLINE int64 Atoi64(const CHAR* String) noexcept
+    NODISCARD static FORCEINLINE int64 Atoi64(const ANSICHAR* String) noexcept
     {
         return static_cast<int64>(::atoll(String));
     }
 
-    NODISCARD static FORCEINLINE float Atof(const CHAR* String) noexcept
+    NODISCARD static FORCEINLINE float Atof(const ANSICHAR* String) noexcept
     {
         return static_cast<float>(::atof(String));
     }
 
-    NODISCARD static FORCEINLINE double Atod(const CHAR* String) noexcept
+    NODISCARD static FORCEINLINE double Atod(const ANSICHAR* String) noexcept
     {
         return static_cast<double>(::atof(String));
     }
@@ -451,6 +451,207 @@ struct IPlatformString
     NODISCARD static FORCEINLINE double Atod(const WIDECHAR* String) noexcept
     {
         return static_cast<double>(::wcstod(String, nullptr));
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // UTF8CHAR
+    // -------------------------------------------------------------------------------------------
+
+    NODISCARD static FORCEINLINE UTF8CHAR ToUpper(UTF8CHAR Char)
+    {
+        return static_cast<UTF8CHAR>(ToUpper(static_cast<ANSICHAR>(Char)));
+    }
+
+    NODISCARD static FORCEINLINE UTF8CHAR ToLower(UTF8CHAR Char)
+    {
+        return static_cast<UTF8CHAR>(ToLower(static_cast<ANSICHAR>(Char)));
+    }
+
+    NODISCARD static FORCEINLINE bool IsWhitespace(UTF8CHAR Char)
+    {
+        return IsWhitespace(static_cast<ANSICHAR>(Char));
+    }
+
+    NODISCARD static FORCEINLINE bool IsUpper(UTF8CHAR Char)
+    {
+        return IsUpper(static_cast<ANSICHAR>(Char));
+    }
+
+    NODISCARD static FORCEINLINE bool IsLower(UTF8CHAR Char)
+    {
+        return IsLower(static_cast<ANSICHAR>(Char));
+    }
+
+    NODISCARD static FORCEINLINE bool IsAlnum(UTF8CHAR Char)
+    {
+        return IsAlnum(static_cast<ANSICHAR>(Char));
+    }
+
+    NODISCARD static FORCEINLINE bool IsDigit(UTF8CHAR Char)
+    {
+        return IsDigit(static_cast<ANSICHAR>(Char));
+    }
+
+    NODISCARD static FORCEINLINE bool IsAlpha(UTF8CHAR Char)
+    {
+        return IsAlpha(static_cast<ANSICHAR>(Char));
+    }
+
+    NODISCARD static FORCEINLINE bool IsPunct(UTF8CHAR Char)
+    {
+        return IsPunct(static_cast<ANSICHAR>(Char));
+    }
+
+    NODISCARD static FORCEINLINE bool IsHexDigit(UTF8CHAR Char)
+    {
+        return IsHexDigit(static_cast<ANSICHAR>(Char));
+    }
+
+    template<typename... ArgTypes>
+    static FORCEINLINE int32 Snprintf(UTF8CHAR* Buffer, SIZE_T BufferSize, const UTF8CHAR* Format, ArgTypes&&... Args) noexcept
+    {
+        return Snprintf(AsAnsi(Buffer), BufferSize, AsAnsi(Format), Forward<ArgTypes>(Args)...);
+    }
+
+    NODISCARD static FORCEINLINE UTF8CHAR* Strstr(const UTF8CHAR* String, const UTF8CHAR* Find) noexcept
+    {
+        return AsUtf8(Strstr(AsAnsi(String), AsAnsi(Find)));
+    }
+
+    NODISCARD static FORCEINLINE UTF8CHAR* Stristr(const UTF8CHAR* String, const UTF8CHAR* Find) noexcept
+    {
+        return AsUtf8(Stristr(AsAnsi(String), AsAnsi(Find)));
+    }
+
+    NODISCARD static FORCEINLINE UTF8CHAR* Strpbrk(const UTF8CHAR* String, const UTF8CHAR* Find) noexcept
+    {
+        return AsUtf8(Strpbrk(AsAnsi(String), AsAnsi(Find)));
+    }
+
+    NODISCARD static FORCEINLINE UTF8CHAR* Strchr(const UTF8CHAR* String, UTF8CHAR Char) noexcept
+    {
+        return AsUtf8(Strchr(AsAnsi(String), static_cast<ANSICHAR>(Char)));
+    }
+
+    NODISCARD static FORCEINLINE UTF8CHAR* Strrchr(const UTF8CHAR* String, UTF8CHAR Char) noexcept
+    {
+        return AsUtf8(Strrchr(AsAnsi(String), static_cast<ANSICHAR>(Char)));
+    }
+
+    NODISCARD static FORCEINLINE int32 Strlen(const UTF8CHAR* String) noexcept
+    {
+        return Strlen(AsAnsi(String));
+    }
+
+    NODISCARD static FORCEINLINE SIZE_T Strspn(const UTF8CHAR* String, const UTF8CHAR* Set) noexcept
+    {
+        return Strspn(AsAnsi(String), AsAnsi(Set));
+    }
+
+    static FORCEINLINE UTF8CHAR* Strcpy(UTF8CHAR* Dst, const UTF8CHAR* Src) noexcept
+    {
+        return AsUtf8(Strcpy(AsAnsi(Dst), AsAnsi(Src)));
+    }
+
+    static FORCEINLINE UTF8CHAR* Strncpy(UTF8CHAR* Dst, const UTF8CHAR* Src, SIZE_T InLength) noexcept
+    {
+        return AsUtf8(Strncpy(AsAnsi(Dst), AsAnsi(Src), InLength));
+    }
+
+    static FORCEINLINE UTF8CHAR* Strcat(UTF8CHAR* Dst, const UTF8CHAR* Src) noexcept
+    {
+        return AsUtf8(Strcat(AsAnsi(Dst), AsAnsi(Src)));
+    }
+
+    static FORCEINLINE UTF8CHAR* Strncat(UTF8CHAR* Dst, const UTF8CHAR* Src, SIZE_T InLength) noexcept
+    {
+        return AsUtf8(Strncat(AsAnsi(Dst), AsAnsi(Src), InLength));
+    }
+
+    NODISCARD static FORCEINLINE int32 Strcmp(const UTF8CHAR* String0, const UTF8CHAR* String1) noexcept
+    {
+        return Strcmp(AsAnsi(String0), AsAnsi(String1));
+    }
+
+    NODISCARD static FORCEINLINE int32 Strncmp(const UTF8CHAR* String0, const UTF8CHAR* String1, SIZE_T InLength) noexcept
+    {
+        return Strncmp(AsAnsi(String0), AsAnsi(String1), InLength);
+    }
+
+    NODISCARD static FORCEINLINE int32 Strtoi(const UTF8CHAR* String, UTF8CHAR** End, int32 Base) noexcept
+    {
+        return Strtoi(AsAnsi(String), AsAnsi(End), Base);
+    }
+
+    NODISCARD static FORCEINLINE int64 Strtoi64(const UTF8CHAR* String, UTF8CHAR** End, int32 Base) noexcept
+    {
+        return Strtoi64(AsAnsi(String), AsAnsi(End), Base);
+    }
+
+    NODISCARD static FORCEINLINE uint32 Strtoui(const UTF8CHAR* String, UTF8CHAR** End, int32 Base) noexcept
+    {
+        return Strtoui(AsAnsi(String), AsAnsi(End), Base);
+    }
+
+    NODISCARD static FORCEINLINE uint64 Strtoui64(const UTF8CHAR* String, UTF8CHAR** End, int32 Base) noexcept
+    {
+        return Strtoui64(AsAnsi(String), AsAnsi(End), Base);
+    }
+
+    NODISCARD static FORCEINLINE float Strtof(const UTF8CHAR* String, UTF8CHAR** End) noexcept
+    {
+        return Strtof(AsAnsi(String), AsAnsi(End));
+    }
+
+    NODISCARD static FORCEINLINE double Strtod(const UTF8CHAR* String, UTF8CHAR** End) noexcept
+    {
+        return Strtod(AsAnsi(String), AsAnsi(End));
+    }
+
+    NODISCARD static FORCEINLINE long double Strtold(const UTF8CHAR* String, UTF8CHAR** End) noexcept
+    {
+        return Strtold(AsAnsi(String), AsAnsi(End));
+    }
+
+    NODISCARD static FORCEINLINE int32 Atoi(const UTF8CHAR* String) noexcept
+    {
+        return Atoi(AsAnsi(String));
+    }
+
+    NODISCARD static FORCEINLINE int64 Atoi64(const UTF8CHAR* String) noexcept
+    {
+        return Atoi64(AsAnsi(String));
+    }
+
+    NODISCARD static FORCEINLINE float Atof(const UTF8CHAR* String) noexcept
+    {
+        return Atof(AsAnsi(String));
+    }
+
+    NODISCARD static FORCEINLINE double Atod(const UTF8CHAR* String) noexcept
+    {
+        return Atod(AsAnsi(String));
+    }
+
+protected:
+    static FORCEINLINE const ANSICHAR* AsAnsi(const UTF8CHAR* String) noexcept
+    {
+        return reinterpret_cast<const ANSICHAR*>(String);
+    }
+
+    static FORCEINLINE ANSICHAR* AsAnsi(UTF8CHAR* String) noexcept
+    {
+        return reinterpret_cast<ANSICHAR*>(String);
+    }
+
+    static FORCEINLINE ANSICHAR** AsAnsi(UTF8CHAR** End) noexcept
+    {
+        return reinterpret_cast<ANSICHAR**>(End);
+    }
+
+    static FORCEINLINE UTF8CHAR* AsUtf8(ANSICHAR* String) noexcept
+    {
+        return reinterpret_cast<UTF8CHAR*>(String);
     }
 };
 

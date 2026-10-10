@@ -21,6 +21,9 @@ static_assert(sizeof(uint32) == 4, "uint8 has to be equal to 4 byte in size");
 typedef FPlatformTypes::uint64 uint64;
 static_assert(sizeof(uint64) == 8, "uint64 has to be equal to 8 byte in size");
 
+typedef FPlatformTypes::byte byte;
+static_assert(sizeof(byte) == 1, "byte has to be equal to 1 byte in size");
+
 typedef FPlatformTypes::int8 int8;
 static_assert(sizeof(int8) == 1, "int8 has to be equal to 1 byte in size");
 
@@ -39,6 +42,8 @@ static_assert(sizeof(PTR_INT) == sizeof(void*), "The size of PTR_INT has to be e
 typedef FPlatformTypes::UPTR_INT UPTR_INT;
 static_assert(sizeof(UPTR_INT) == sizeof(void*), "The size of UPTR_INT has to be equal to the size of uint64");
 
+typedef FPlatformTypes::ANSICHAR ANSICHAR;
+typedef FPlatformTypes::UTF8CHAR UTF8CHAR;
 typedef FPlatformTypes::WIDECHAR WIDECHAR;
 typedef FPlatformTypes::CHAR CHAR;
 typedef FPlatformTypes::CHAR_T CHAR_T;

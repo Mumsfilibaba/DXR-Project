@@ -35,7 +35,7 @@ public:
 
     typedef TArray<CharType, TStringAllocator<CharType>> StorageType;
 
-    static_assert(TIsSame<CharType, CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value, "TString only supports 'CHAR' and 'WIDECHAR'");
+    static_assert(TIsCharType<CharType>::Value, "TString only supports 'ANSICHAR', 'UTF8CHAR' and 'WIDECHAR'");
     static_assert(TIsSigned<SizeType>::Value, "TString only supports a SizeType that's signed");
 
     typedef TArrayIterator<TString, CharType>                    IteratorType;
@@ -156,7 +156,7 @@ public:
     FORCEINLINE TString(NSString* InString)
     {
         const CharType* CastString = nullptr;
-        if constexpr (TIsSame<CharType, CHAR>::Value)
+        if constexpr (sizeof(CharType) == sizeof(byte))
         {
             CastString = reinterpret_cast<const CharType*>([InString cStringUsingEncoding:NSUTF8StringEncoding]);
         }
@@ -164,8 +164,8 @@ public:
         {
             CastString = reinterpret_cast<const CharType*>([InString cStringUsingEncoding:NSUTF32LittleEndianStringEncoding]);
         }
-        
-        InitializeByCopy(CastString, static_cast<int32>(InString.length));
+
+        InitializeByCopy(CastString, CStringType::Strlen(CastString));
     }
 #endif
 
@@ -1408,7 +1408,7 @@ public:
      */
     NODISCARD FORCEINLINE NSString* GetNSString() const
     {
-        if constexpr (TIsSame<CharType, CHAR>::Value)
+        if constexpr (sizeof(CharType) == sizeof(byte))
         {
             return [[[NSString alloc] initWithBytes:CharData.Data() length:Length() * sizeof(CharType) encoding:NSUTF8StringEncoding] autorelease];
         }
@@ -1856,8 +1856,10 @@ private:
     StorageType CharData;
 };
 
-using String  = TString<CHAR>;
-using WString = TString<WIDECHAR>;
+using String     = TString<CHAR>;
+using WString    = TString<WIDECHAR>;
+using AnsiString = TString<ANSICHAR>;
+using U8String   = TString<UTF8CHAR>;
 
 // TODO: Investigate this one
 //template<typename CharType>

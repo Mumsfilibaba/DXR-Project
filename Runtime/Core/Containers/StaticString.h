@@ -14,7 +14,7 @@ public:
     typedef int32      SizeType;
     typedef InCharType CharType;
 
-    static_assert(TIsSame<CharType, CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value, "TStaticString only supports 'CHAR' and 'WIDECHAR'");
+    static_assert(TIsCharType<CharType>::Value, "TStaticString only supports 'ANSICHAR', 'UTF8CHAR' and 'WIDECHAR'");
     static_assert(NUM_CHARS > 0, "TStaticString does not support a zero element count");
 
     typedef TArrayIterator<TStaticString, CharType>                    IteratorType;

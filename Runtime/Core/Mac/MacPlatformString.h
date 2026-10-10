@@ -6,14 +6,14 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 struct FMacPlatformString final : public IPlatformString
 {
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    // CHAR
+    // ANSICHAR
 
-    NODISCARD static FORCEINLINE int32 Stricmp(const CHAR* String0, const CHAR* String1) noexcept
+    NODISCARD static FORCEINLINE int32 Stricmp(const ANSICHAR* String0, const ANSICHAR* String1) noexcept
     {
         return static_cast<int32>(::strcasecmp(String0, String1));
     }
 
-    NODISCARD static FORCEINLINE int32 Strnicmp(const CHAR* String0, const CHAR* String1, SIZE_T InLength) noexcept
+    NODISCARD static FORCEINLINE int32 Strnicmp(const ANSICHAR* String0, const ANSICHAR* String1, SIZE_T InLength) noexcept
     {
         return static_cast<int32>(::strncasecmp(String0, String1, InLength));
     }
@@ -29,6 +29,19 @@ struct FMacPlatformString final : public IPlatformString
     NODISCARD static FORCEINLINE int32 Strnicmp(const WIDECHAR* String0, const WIDECHAR* String1, SIZE_T InLength) noexcept
     {
         return static_cast<int32>(::wcsncasecmp(String0, String1, InLength));
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // UTF8CHAR
+
+    NODISCARD static FORCEINLINE int32 Stricmp(const UTF8CHAR* String0, const UTF8CHAR* String1) noexcept
+    {
+        return Stricmp(AsAnsi(String0), AsAnsi(String1));
+    }
+
+    NODISCARD static FORCEINLINE int32 Strnicmp(const UTF8CHAR* String0, const UTF8CHAR* String1, SIZE_T InLength) noexcept
+    {
+        return Strnicmp(AsAnsi(String0), AsAnsi(String1), InLength);
     }
 };
 

@@ -21,7 +21,7 @@ public:
     typedef int32      SizeType;
     typedef InCharType CharType;
 
-    static_assert(TIsSame<CharType, CHAR>::Value || TIsSame<CharType, WIDECHAR>::Value, "TStringView only supports 'CHAR' and 'WIDECHAR'");
+    static_assert(TIsCharType<CharType>::Value, "TStringView only supports 'ANSICHAR', 'UTF8CHAR' and 'WIDECHAR'");
     static_assert(TIsSigned<SizeType>::Value, "TStringView only supports a SizeType that's signed");
 
     typedef TArrayIterator<const TStringView, const CharType>        ConstIteratorType;
@@ -1040,8 +1040,10 @@ private:
     const CharType* ViewEnd{ nullptr };
 };
 
-using StringView  = TStringView<CHAR>;
-using WStringView = TStringView<WIDECHAR>;
+using StringView     = TStringView<CHAR>;
+using WStringView    = TStringView<WIDECHAR>;
+using AnsiStringView = TStringView<ANSICHAR>;
+using U8StringView   = TStringView<UTF8CHAR>;
 
 template<typename CharType>
 NODISCARD inline bool operator==(const TStringView<CharType>& LHS, const CharType* RHS)

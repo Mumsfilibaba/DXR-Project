@@ -10,25 +10,25 @@ struct FWindowsPlatformString final : public IPlatformString
     using IPlatformString::Atod;
 
     // -------------------------------------------------------------------------------------------
-    // CHAR
+    // ANSICHAR
     // -------------------------------------------------------------------------------------------
 
-    NODISCARD static FORCEINLINE int32 Stricmp(const CHAR* String0, const CHAR* String1) noexcept
+    NODISCARD static FORCEINLINE int32 Stricmp(const ANSICHAR* String0, const ANSICHAR* String1) noexcept
     {
         return static_cast<int32>(::_stricmp(String0, String1));
     }
 
-    NODISCARD static FORCEINLINE int32 Strnicmp(const CHAR* String0, const CHAR* String1, SIZE_T InLength) noexcept
+    NODISCARD static FORCEINLINE int32 Strnicmp(const ANSICHAR* String0, const ANSICHAR* String1, SIZE_T InLength) noexcept
     {
         return static_cast<int32>(::_strnicmp(String0, String1, InLength));
     }
 
-    NODISCARD static FORCEINLINE int64 Strtoi64(const CHAR* String, CHAR** End, int32 Base) noexcept
+    NODISCARD static FORCEINLINE int64 Strtoi64(const ANSICHAR* String, ANSICHAR** End, int32 Base) noexcept
     {
         return static_cast<int64>(::_strtoi64(String, End, Base));
     }
 
-    NODISCARD static FORCEINLINE uint64 Strtoui64(const CHAR* String, CHAR** End, int32 Base) noexcept
+    NODISCARD static FORCEINLINE uint64 Strtoui64(const ANSICHAR* String, ANSICHAR** End, int32 Base) noexcept
     {
         return static_cast<uint64>(::_strtoui64(String, End, Base));
     }
@@ -75,5 +75,29 @@ struct FWindowsPlatformString final : public IPlatformString
     NODISCARD static FORCEINLINE double Atod(const WIDECHAR* String) noexcept
     {
         return static_cast<double>(::_wtof(String));
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // UTF8CHAR
+    // -------------------------------------------------------------------------------------------
+
+    NODISCARD static FORCEINLINE int32 Stricmp(const UTF8CHAR* String0, const UTF8CHAR* String1) noexcept
+    {
+        return Stricmp(AsAnsi(String0), AsAnsi(String1));
+    }
+
+    NODISCARD static FORCEINLINE int32 Strnicmp(const UTF8CHAR* String0, const UTF8CHAR* String1, SIZE_T InLength) noexcept
+    {
+        return Strnicmp(AsAnsi(String0), AsAnsi(String1), InLength);
+    }
+
+    NODISCARD static FORCEINLINE int64 Strtoi64(const UTF8CHAR* String, UTF8CHAR** End, int32 Base) noexcept
+    {
+        return Strtoi64(AsAnsi(String), AsAnsi(End), Base);
+    }
+
+    NODISCARD static FORCEINLINE uint64 Strtoui64(const UTF8CHAR* String, UTF8CHAR** End, int32 Base) noexcept
+    {
+        return Strtoui64(AsAnsi(String), AsAnsi(End), Base);
     }
 };

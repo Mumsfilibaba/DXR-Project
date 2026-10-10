@@ -342,6 +342,49 @@ bool TString_Test()
         TEST_EXPECT(TCString<WIDECHAR>::Strcmp(Lower.Data(), L"0123mesearch89me89") == 0);
     }
 
+    TEST_SECTION("AnsiString holds UTF-8 in plain chars");
+    {
+        AnsiString Str = "Åäö 日本語";
+        TEST_EXPECT_EQ(Str.Length(), 16);
+        TEST_EXPECT_EQ(Str.Find("日本"), 7);
+
+        Str.AppendPrintf(" %d", 42);
+        TEST_EXPECT(Str.Equals("Åäö 日本語 42"));
+    }
+
+    TEST_SECTION("U8String core operations");
+    {
+        U8String Str = u8"Åäö 日本語";
+        TEST_EXPECT_EQ(Str.Length(), 16);
+        TEST_EXPECT(TCString<UTF8CHAR>::Strcmp(Str.Data(), u8"Åäö 日本語") == 0);
+
+        Str.Append(u8'!');
+        TEST_EXPECT(Str.Equals(u8"Åäö 日本語!"));
+        TEST_EXPECT_EQ(Str.Find(u8"日本"), 7);
+        TEST_EXPECT_EQ(Str.FindChar(u8' '), 6);
+        TEST_EXPECT(Str.EndsWith(u8"語!"));
+
+        U8String Mixed = u8"Mixed Åäö Case";
+        TEST_EXPECT(Mixed.StartsWith(u8"MIXED", EStringCaseType::NoCase));
+        TEST_EXPECT(Mixed.ToUpper().Equals(u8"MIXED Åäö CASE"));
+
+        U8String Formatted;
+        Formatted.InlinePrintf(u8"Value=%d", 42);
+        TEST_EXPECT(Formatted.Equals(u8"Value=42"));
+
+        const U8StringView View(Str);
+        TEST_EXPECT_EQ(View.Length(), 17);
+        TEST_EXPECT(View.SubString(7, 9).Equals(u8"日本語"));
+
+        TEST_EXPECT(U8String(TCString<UTF8CHAR>::Empty()).IsEmpty());
+
+        TEST_EXPECT_EQ(FPlatformString::Strlen(u8"日本"), 6);
+        TEST_EXPECT_EQ(FPlatformString::Stricmp(u8"Åäö ABC", u8"Åäö abc"), 0);
+        TEST_EXPECT_EQ(FPlatformString::Strtoi64(u8"-1234", nullptr, 10), -1234);
+        TEST_EXPECT_EQ(FPlatformString::Atoi(u8"42"), 42);
+        TEST_EXPECT(FPlatformString::ToUpper(u8'a') == u8'A');
+    }
+
     TEST_SECTION("String reallocation stress (seeded size sweep vs std::string)");
     {
         STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)
