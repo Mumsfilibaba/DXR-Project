@@ -1,6 +1,14 @@
 #pragma once
 #include "Core/Platform/PlatformTypes.h"
 
+#undef TEXT
+#if WIDE_CHAR_BUILD
+    #define TEXT_PASTE(x) L ## x
+    #define TEXT(x) TEXT_PASTE(x)
+#else
+    #define TEXT(x) x
+#endif
+
 typedef FPlatformTypes::uint8 uint8;
 static_assert(sizeof(uint8) == 1, "uint8 has to be equal to 1 byte in size");
 

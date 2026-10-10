@@ -383,6 +383,13 @@ function GenerateWorkspace()
         })
     end
 
+    -- Character type
+    if _OPTIONS["widechar"] then
+        AddGlobalDefines({
+            "WIDE_CHAR_BUILD=(1)"
+        })
+    end
+
     -- Include the target scripts and collect the type of targets we will have in the workspace
     for i = 1, #gTargets do
         local CurrentTargetName = gTargets[i]

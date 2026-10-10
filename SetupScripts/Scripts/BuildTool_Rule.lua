@@ -432,11 +432,13 @@ function BuildRules(Name)
                 cppdialect(self.CppVersion)
             end
 
-            -- Conforming preprocessor and __cplusplus value for VS.
+            -- Conforming preprocessor and __cplusplus value for VS. Source files and narrow string literals are UTF-8, as
+            -- they already are with Clang, instead of the system code page.
             filter { "action:vs*" }
                 buildoptions({
                     "/Zc:__cplusplus",
-                    "/Zc:preprocessor"
+                    "/Zc:preprocessor",
+                    "/utf-8"
                 })
             filter {}
 

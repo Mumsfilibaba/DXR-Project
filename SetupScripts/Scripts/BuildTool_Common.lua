@@ -20,6 +20,12 @@ newoption
 
 newoption
 {
+    trigger = "widechar",
+    description = "Use wchar_t for the engine's CHAR and TEXT() instead of UTF-8 in a char"
+}
+
+newoption
+{
     trigger = "fatalwarnings",
     description = "Treat compiler warnings as errors (thirdparty modules are exempt)"
 }

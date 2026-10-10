@@ -14,8 +14,15 @@ struct IPlatformTypes
 
     typedef char ANSICHAR;
     typedef wchar_t WIDECHAR;
+
+    // The engine's character type: UTF-8 in a char by default, or wchar_t when built with --widechar
+#if WIDE_CHAR_BUILD
+    typedef WIDECHAR CHAR;
+    typedef WIDECHAR CHAR_T;
+#else
     typedef ANSICHAR CHAR;
     typedef ANSICHAR CHAR_T;
+#endif
 
     typedef int64 PTR_INT;
     typedef uint64 UPTR_INT;

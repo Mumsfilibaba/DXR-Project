@@ -7,6 +7,9 @@
     #define WIN32_LEAN_AND_MEAN (1)
 #endif
 
+#pragma push_macro("TEXT")
+#undef TEXT
+
 #include <Windows.h>
 #include <windowsx.h>
 #include <sdkddkver.h>
@@ -46,6 +49,9 @@
 #if PLATFORM_WINDOWS_8_1
     #include <shellscalingapi.h>
 #endif
+
+#undef TEXT
+#pragma pop_macro("TEXT")
 
 // NOTE: Undefine these as we have functions with these names
 #undef CreateWindow

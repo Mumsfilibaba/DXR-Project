@@ -28,6 +28,7 @@
 #include "PlatformProcessTests.h"
 #include "ProjectDescriptorTests.h"
 #include "PathsTests.h"
+#include "CharTypeTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -70,6 +71,7 @@ static int32 RunCoreTests()
     RUN_TEST("PlatformProcess", PlatformProcess_Test());
     RUN_TEST("ProjectDescriptor", ProjectDescriptor_Test());
     RUN_TEST("Paths", Paths_Test());
+    RUN_TEST("CharType", CharType_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();
