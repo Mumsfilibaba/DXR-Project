@@ -7,13 +7,13 @@ static DWORD GetWindowsBuildNumber()
 {
     typedef LONG(WINAPI* PFN_RtlGetVersion)(OSVERSIONINFOW*);
 
-    void* NtDll = FPlatformLibrary::GetLoadedHandle("ntdll");
+    void* NtDll = FPlatformLibrary::GetLoadedHandle(TEXT("ntdll"));
     if (!NtDll)
     {
         return 0;
     }
 
-    PFN_RtlGetVersion RtlGetVersion = FPlatformLibrary::LoadSymbol<PFN_RtlGetVersion>("RtlGetVersion", NtDll);
+    PFN_RtlGetVersion RtlGetVersion = FPlatformLibrary::LoadSymbol<PFN_RtlGetVersion>(TEXT("RtlGetVersion"), NtDll);
     if (!RtlGetVersion)
     {
         return 0;

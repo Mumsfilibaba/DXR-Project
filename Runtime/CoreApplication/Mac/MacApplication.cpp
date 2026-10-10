@@ -94,7 +94,7 @@ FString FMacApplication::FindMonitorName(NSScreen* Screen)
 {
     if (!Screen)
     {
-        return "Unknown Display";
+        return TEXT("Unknown Display");
     }
     
     if ([Screen respondsToSelector:@selector(localizedName)])
@@ -111,7 +111,7 @@ FString FMacApplication::FindMonitorName(NSScreen* Screen)
     io_iterator_t Iterator;
     if (IOServiceGetMatchingServices(MACH_PORT_NULL, IOServiceMatching("IODisplayConnect"), &Iterator) != 0)
     {
-        return "Unknown Display";
+        return TEXT("Unknown Display");
     }
     
     io_service_t    Service;
@@ -145,7 +145,7 @@ FString FMacApplication::FindMonitorName(NSScreen* Screen)
     IOObjectRelease(Iterator);
     if (!Service)
     {
-        return "Unknown Display";
+        return TEXT("Unknown Display");
     }
 
     CFDictionaryRef Names = (CFDictionaryRef)CFDictionaryGetValue(DisplayInfo, CFSTR(kDisplayProductName));
@@ -154,7 +154,7 @@ FString FMacApplication::FindMonitorName(NSScreen* Screen)
     if (!Names || !CFDictionaryGetValueIfPresent(Names, CFSTR("en_US"), reinterpret_cast<const void**>(&NameRef)))
     {
         CFRelease(DisplayInfo);
-        return "Unknown Display";
+        return TEXT("Unknown Display");
     }
     
     NSString* MonitorName = (__bridge NSString*)NameRef;

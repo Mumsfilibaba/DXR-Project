@@ -10,14 +10,14 @@
 #include "CoreApplication/PlatformInterface/IPlatformApplicationMessageHandler.h"
 
 static TAutoConsoleVariable<bool> CVarIsProcessDPIAware(
-    "Windows.IsProcessDPIAware", 
-    "If set to true the process is set to be DPI aware, otherwise not", 
+    TEXT("Windows.IsProcessDPIAware"), 
+    TEXT("If set to true the process is set to be DPI aware, otherwise not"), 
     true,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarEnableDeferredMessages(
-    "Windows.EnableDeferredMessages",
-    "If set to true the application defers all windows messages to be processed at a single point in time",
+    TEXT("Windows.EnableDeferredMessages"),
+    TEXT("If set to true the application defers all windows messages to be processed at a single point in time"),
     true,
     EConsoleVariableFlags::Default);
 

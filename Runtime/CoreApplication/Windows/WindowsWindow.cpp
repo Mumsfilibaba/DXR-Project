@@ -357,14 +357,14 @@ void FWindowsWindow::GetTitle(FString& OutTitle) const
 {
     if (!IsValid())
     {
-        OutTitle = "";
+        OutTitle = TEXT("");
         return;
     }
 
     const int32 Size = ::GetWindowTextLengthW(Window);
     if (Size <= 0)
     {
-        OutTitle = "";
+        OutTitle = TEXT("");
         return;
     }
 

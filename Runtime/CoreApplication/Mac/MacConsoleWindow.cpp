@@ -11,24 +11,24 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 static TAutoConsoleVariable<int32> CVarMaxConsoleLineCount(
-    "Mac.OutputConsole.MaxLineCount",
-    "Maximum number of lines kept in the output console window before the oldest are trimmed",
+    TEXT("Mac.OutputConsole.MaxLineCount"),
+    TEXT("Maximum number of lines kept in the output console window before the oldest are trimmed"),
     1024,
     64,
     65536,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarConsoleWindowWidth(
-    "Mac.OutputConsole.Width",
-    "Initial width in points of the output console window, the window stays resizable afterwards",
+    TEXT("Mac.OutputConsole.Width"),
+    TEXT("Initial width in points of the output console window, the window stays resizable afterwards"),
     800,
     240,
     3840,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarConsoleWindowHeight(
-    "Mac.OutputConsole.Height",
-    "Initial height in points of the output console window, the window stays resizable afterwards",
+    TEXT("Mac.OutputConsole.Height"),
+    TEXT("Initial height in points of the output console window, the window stays resizable afterwards"),
     480,
     160,
     2160,

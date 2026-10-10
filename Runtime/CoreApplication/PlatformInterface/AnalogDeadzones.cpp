@@ -3,24 +3,24 @@
 #include "Core/Misc/ConsoleManager.h"
 
 static TAutoConsoleVariable<float> CVarLeftThumbDeadzone(
-    "Input.LeftThumbDeadzone",
-    "Normalized left-stick deadzone (XInput-equivalent default)",
+    TEXT("Input.LeftThumbDeadzone"),
+    TEXT("Normalized left-stick deadzone (XInput-equivalent default)"),
     AnalogInput::DefaultLeftThumbDeadzone,
     0.0f,
     1.0f,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<float> CVarRightThumbDeadzone(
-    "Input.RightThumbDeadzone",
-    "Normalized right-stick deadzone (XInput-equivalent default)",
+    TEXT("Input.RightThumbDeadzone"),
+    TEXT("Normalized right-stick deadzone (XInput-equivalent default)"),
     AnalogInput::DefaultRightThumbDeadzone,
     0.0f,
     1.0f,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<float> CVarTriggerDeadzone(
-    "Input.TriggerDeadzone",
-    "Normalized trigger deadzone (XInput-equivalent default)",
+    TEXT("Input.TriggerDeadzone"),
+    TEXT("Normalized trigger deadzone (XInput-equivalent default)"),
     AnalogInput::DefaultTriggerDeadzone,
     0.0f,
     1.0f,

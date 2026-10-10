@@ -172,7 +172,7 @@ void FWindowsConsoleWindow::Log(const FString& Message)
     if (ConsoleHandle)
     {
         Write(*Message, static_cast<uint32>(Message.Length()));
-        Write("\n", 1);
+        Write(TEXT("\n"), 1);
     }
 }
 
@@ -205,7 +205,7 @@ void FWindowsConsoleWindow::Log(ELogSeverity Severity, const FString& Message)
         SetTextColor(NewColor);
 
         Write(*Message, static_cast<uint32>(Message.Length()));
-        Write("\n", 1);
+        Write(TEXT("\n"), 1);
 
         SetTextColor(EConsoleTextColor::White);
     }

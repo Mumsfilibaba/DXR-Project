@@ -9,8 +9,8 @@
 #include "CoreApplication/PlatformInterface/IPlatformApplicationMessageHandler.h"
 
 static TAutoConsoleVariable<int32> CVarGameControllerButtonRepeatDelay(
-    "GameController.ButtonRepeatDelay",
-    "Number of repeated messages that gets ignored before sending repeat events",
+    TEXT("GameController.ButtonRepeatDelay"),
+    TEXT("Number of repeated messages that gets ignored before sending repeat events"),
     60,
     0,
     (1 << 7) - 1,

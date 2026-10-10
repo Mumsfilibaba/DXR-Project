@@ -56,7 +56,7 @@ static FString CreateFilterSpec(const FString& Extensions)
 
         if (!Extension.IsEmpty())
         {
-            Spec.Append(Spec.IsEmpty() ? "*." : ";*.");
+            Spec.Append(Spec.IsEmpty() ? TEXT("*.") : TEXT(";*."));
             Spec.Append(Extension);
         }
 
@@ -137,7 +137,7 @@ static void ApplyDesc(IFileDialog* Dialog, const FFileDialogDesc& Desc, EFileDia
         const int32    Separator  = Extensions.FindChar(';');
         const FString  First      = (Separator == FString::InvalidIndex) ? Extensions : FString(*Extensions, Separator);
 
-        if (!First.IsEmpty() && !First.Equals("*"))
+        if (!First.IsEmpty() && !First.Equals(TEXT("*")))
         {
             Dialog->SetDefaultExtension(StringCast<WIDECHAR>(First).Get());
         }

@@ -149,127 +149,127 @@ constexpr const CHAR_T* ToString(EKeyboardKeyName::Type key)
 {
     switch (key)
     {
-    case EKeyboardKeyName::Zero:           return "0";
-    case EKeyboardKeyName::One:            return "1";
-    case EKeyboardKeyName::Two:            return "2";
-    case EKeyboardKeyName::Three:          return "3";
-    case EKeyboardKeyName::Four:           return "4";
-    case EKeyboardKeyName::Five:           return "5";
-    case EKeyboardKeyName::Six:            return "6";
-    case EKeyboardKeyName::Seven:          return "7";
-    case EKeyboardKeyName::Eight:          return "8";
-    case EKeyboardKeyName::Nine:           return "9";
-    case EKeyboardKeyName::A:              return "A";
-    case EKeyboardKeyName::B:              return "B";
-    case EKeyboardKeyName::C:              return "C";
-    case EKeyboardKeyName::D:              return "D";
-    case EKeyboardKeyName::E:              return "E";
-    case EKeyboardKeyName::F:              return "F";
-    case EKeyboardKeyName::G:              return "G";
-    case EKeyboardKeyName::H:              return "H";
-    case EKeyboardKeyName::I:              return "I";
-    case EKeyboardKeyName::J:              return "J";
-    case EKeyboardKeyName::K:              return "K";
-    case EKeyboardKeyName::L:              return "L";
-    case EKeyboardKeyName::M:              return "M";
-    case EKeyboardKeyName::N:              return "N";
-    case EKeyboardKeyName::O:              return "O";
-    case EKeyboardKeyName::P:              return "P";
-    case EKeyboardKeyName::Q:              return "Q";
-    case EKeyboardKeyName::R:              return "R";
-    case EKeyboardKeyName::S:              return "S";
-    case EKeyboardKeyName::T:              return "T";
-    case EKeyboardKeyName::U:              return "U";
-    case EKeyboardKeyName::V:              return "V";
-    case EKeyboardKeyName::W:              return "W";
-    case EKeyboardKeyName::X:              return "X";
-    case EKeyboardKeyName::Y:              return "Y";
-    case EKeyboardKeyName::Z:              return "Z";
-    case EKeyboardKeyName::F1:             return "F1";
-    case EKeyboardKeyName::F2:             return "F2";
-    case EKeyboardKeyName::F3:             return "F3";
-    case EKeyboardKeyName::F4:             return "F4";
-    case EKeyboardKeyName::F5:             return "F5";
-    case EKeyboardKeyName::F6:             return "F6";
-    case EKeyboardKeyName::F7:             return "F7";
-    case EKeyboardKeyName::F8:             return "F8";
-    case EKeyboardKeyName::F9:             return "F9";
-    case EKeyboardKeyName::F10:            return "F10";
-    case EKeyboardKeyName::F11:            return "F11";
-    case EKeyboardKeyName::F12:            return "F12";
-    case EKeyboardKeyName::F13:            return "F13";
-    case EKeyboardKeyName::F14:            return "F14";
-    case EKeyboardKeyName::F15:            return "F15";
-    case EKeyboardKeyName::F16:            return "F16";
-    case EKeyboardKeyName::F17:            return "F17";
-    case EKeyboardKeyName::F18:            return "F18";
-    case EKeyboardKeyName::F19:            return "F19";
-    case EKeyboardKeyName::F20:            return "F20";
-    case EKeyboardKeyName::F21:            return "F21";
-    case EKeyboardKeyName::F22:            return "F22";
-    case EKeyboardKeyName::F23:            return "F23";
-    case EKeyboardKeyName::F24:            return "F24";
-    case EKeyboardKeyName::F25:            return "F25";
-    case EKeyboardKeyName::KeypadZero:     return "Keypad0";
-    case EKeyboardKeyName::KeypadOne:      return "Keypad1";
-    case EKeyboardKeyName::KeypadTwo:      return "Keypad2";
-    case EKeyboardKeyName::KeypadThree:    return "Keypad3";
-    case EKeyboardKeyName::KeypadFour:     return "Keypad4";
-    case EKeyboardKeyName::KeypadFive:     return "Keypad5";
-    case EKeyboardKeyName::KeypadSix:      return "Keypad6";
-    case EKeyboardKeyName::KeypadSeven:    return "Keypad7";
-    case EKeyboardKeyName::KeypadEight:    return "Keypad8";
-    case EKeyboardKeyName::KeypadNine:     return "Keypad9";
-    case EKeyboardKeyName::KeypadDecimal:  return "KeypadDecimal";
-    case EKeyboardKeyName::KeypadDivide:   return "KeypadDivide";
-    case EKeyboardKeyName::KeypadMultiply: return "KeypadMultiply";
-    case EKeyboardKeyName::KeypadSubtract: return "KeypadSubtract";
-    case EKeyboardKeyName::KeypadAdd:      return "KeypadAdd";
-    case EKeyboardKeyName::KeypadEnter:    return "KeypadEnter";
-    case EKeyboardKeyName::KeypadEqual:    return "KeypadEqual";
-    case EKeyboardKeyName::LeftShift:      return "LeftShift";
-    case EKeyboardKeyName::LeftControl:    return "LeftControl";
-    case EKeyboardKeyName::LeftAlt:        return "LeftAlt";
-    case EKeyboardKeyName::LeftSuper:      return "LeftSuper";
-    case EKeyboardKeyName::RightShift:     return "RightShift";
-    case EKeyboardKeyName::RightControl:   return "RightControl";
-    case EKeyboardKeyName::RightAlt:       return "RightAlt";
-    case EKeyboardKeyName::RightSuper:     return "RightSuper";
-    case EKeyboardKeyName::Menu:           return "Menu";
-    case EKeyboardKeyName::Space:          return "Space";
-    case EKeyboardKeyName::Apostrophe:     return "Apostrophe";
-    case EKeyboardKeyName::Comma:          return "Comma";
-    case EKeyboardKeyName::Minus:          return "Minus";
-    case EKeyboardKeyName::Period:         return "Period";
-    case EKeyboardKeyName::Slash:          return "Slash";
-    case EKeyboardKeyName::Semicolon:      return "Semicolon";
-    case EKeyboardKeyName::Equal:          return "Equal";
-    case EKeyboardKeyName::LeftBracket:    return "LeftBracket";
-    case EKeyboardKeyName::Backslash:      return "Backslash";
-    case EKeyboardKeyName::RightBracket:   return "RightBracket";
-    case EKeyboardKeyName::GraveAccent:    return "GraveAccent";
-    case EKeyboardKeyName::World1:         return "World1";
-    case EKeyboardKeyName::World2:         return "World2";
-    case EKeyboardKeyName::Escape:         return "Escape";
-    case EKeyboardKeyName::Enter:          return "Enter";
-    case EKeyboardKeyName::Tab:            return "Tab";
-    case EKeyboardKeyName::Backspace:      return "Backspace";
-    case EKeyboardKeyName::Insert:         return "Insert";
-    case EKeyboardKeyName::Delete:         return "Delete";
-    case EKeyboardKeyName::Right:          return "Right";
-    case EKeyboardKeyName::Left:           return "Left";
-    case EKeyboardKeyName::Down:           return "Down";
-    case EKeyboardKeyName::Up:             return "Up";
-    case EKeyboardKeyName::PageUp:         return "PageUp";
-    case EKeyboardKeyName::PageDown:       return "PageDown";
-    case EKeyboardKeyName::Home:           return "Home";
-    case EKeyboardKeyName::End:            return "End";
-    case EKeyboardKeyName::CapsLock:       return "CapsLock";
-    case EKeyboardKeyName::ScrollLock:     return "ScrollLock";
-    case EKeyboardKeyName::NumLock:        return "NumLock";
-    case EKeyboardKeyName::PrintScreen:    return "PrintScreen";
-    case EKeyboardKeyName::Pause:          return "Pause";
-    default:                               return "Unknown";
+    case EKeyboardKeyName::Zero:           return TEXT("0");
+    case EKeyboardKeyName::One:            return TEXT("1");
+    case EKeyboardKeyName::Two:            return TEXT("2");
+    case EKeyboardKeyName::Three:          return TEXT("3");
+    case EKeyboardKeyName::Four:           return TEXT("4");
+    case EKeyboardKeyName::Five:           return TEXT("5");
+    case EKeyboardKeyName::Six:            return TEXT("6");
+    case EKeyboardKeyName::Seven:          return TEXT("7");
+    case EKeyboardKeyName::Eight:          return TEXT("8");
+    case EKeyboardKeyName::Nine:           return TEXT("9");
+    case EKeyboardKeyName::A:              return TEXT("A");
+    case EKeyboardKeyName::B:              return TEXT("B");
+    case EKeyboardKeyName::C:              return TEXT("C");
+    case EKeyboardKeyName::D:              return TEXT("D");
+    case EKeyboardKeyName::E:              return TEXT("E");
+    case EKeyboardKeyName::F:              return TEXT("F");
+    case EKeyboardKeyName::G:              return TEXT("G");
+    case EKeyboardKeyName::H:              return TEXT("H");
+    case EKeyboardKeyName::I:              return TEXT("I");
+    case EKeyboardKeyName::J:              return TEXT("J");
+    case EKeyboardKeyName::K:              return TEXT("K");
+    case EKeyboardKeyName::L:              return TEXT("L");
+    case EKeyboardKeyName::M:              return TEXT("M");
+    case EKeyboardKeyName::N:              return TEXT("N");
+    case EKeyboardKeyName::O:              return TEXT("O");
+    case EKeyboardKeyName::P:              return TEXT("P");
+    case EKeyboardKeyName::Q:              return TEXT("Q");
+    case EKeyboardKeyName::R:              return TEXT("R");
+    case EKeyboardKeyName::S:              return TEXT("S");
+    case EKeyboardKeyName::T:              return TEXT("T");
+    case EKeyboardKeyName::U:              return TEXT("U");
+    case EKeyboardKeyName::V:              return TEXT("V");
+    case EKeyboardKeyName::W:              return TEXT("W");
+    case EKeyboardKeyName::X:              return TEXT("X");
+    case EKeyboardKeyName::Y:              return TEXT("Y");
+    case EKeyboardKeyName::Z:              return TEXT("Z");
+    case EKeyboardKeyName::F1:             return TEXT("F1");
+    case EKeyboardKeyName::F2:             return TEXT("F2");
+    case EKeyboardKeyName::F3:             return TEXT("F3");
+    case EKeyboardKeyName::F4:             return TEXT("F4");
+    case EKeyboardKeyName::F5:             return TEXT("F5");
+    case EKeyboardKeyName::F6:             return TEXT("F6");
+    case EKeyboardKeyName::F7:             return TEXT("F7");
+    case EKeyboardKeyName::F8:             return TEXT("F8");
+    case EKeyboardKeyName::F9:             return TEXT("F9");
+    case EKeyboardKeyName::F10:            return TEXT("F10");
+    case EKeyboardKeyName::F11:            return TEXT("F11");
+    case EKeyboardKeyName::F12:            return TEXT("F12");
+    case EKeyboardKeyName::F13:            return TEXT("F13");
+    case EKeyboardKeyName::F14:            return TEXT("F14");
+    case EKeyboardKeyName::F15:            return TEXT("F15");
+    case EKeyboardKeyName::F16:            return TEXT("F16");
+    case EKeyboardKeyName::F17:            return TEXT("F17");
+    case EKeyboardKeyName::F18:            return TEXT("F18");
+    case EKeyboardKeyName::F19:            return TEXT("F19");
+    case EKeyboardKeyName::F20:            return TEXT("F20");
+    case EKeyboardKeyName::F21:            return TEXT("F21");
+    case EKeyboardKeyName::F22:            return TEXT("F22");
+    case EKeyboardKeyName::F23:            return TEXT("F23");
+    case EKeyboardKeyName::F24:            return TEXT("F24");
+    case EKeyboardKeyName::F25:            return TEXT("F25");
+    case EKeyboardKeyName::KeypadZero:     return TEXT("Keypad0");
+    case EKeyboardKeyName::KeypadOne:      return TEXT("Keypad1");
+    case EKeyboardKeyName::KeypadTwo:      return TEXT("Keypad2");
+    case EKeyboardKeyName::KeypadThree:    return TEXT("Keypad3");
+    case EKeyboardKeyName::KeypadFour:     return TEXT("Keypad4");
+    case EKeyboardKeyName::KeypadFive:     return TEXT("Keypad5");
+    case EKeyboardKeyName::KeypadSix:      return TEXT("Keypad6");
+    case EKeyboardKeyName::KeypadSeven:    return TEXT("Keypad7");
+    case EKeyboardKeyName::KeypadEight:    return TEXT("Keypad8");
+    case EKeyboardKeyName::KeypadNine:     return TEXT("Keypad9");
+    case EKeyboardKeyName::KeypadDecimal:  return TEXT("KeypadDecimal");
+    case EKeyboardKeyName::KeypadDivide:   return TEXT("KeypadDivide");
+    case EKeyboardKeyName::KeypadMultiply: return TEXT("KeypadMultiply");
+    case EKeyboardKeyName::KeypadSubtract: return TEXT("KeypadSubtract");
+    case EKeyboardKeyName::KeypadAdd:      return TEXT("KeypadAdd");
+    case EKeyboardKeyName::KeypadEnter:    return TEXT("KeypadEnter");
+    case EKeyboardKeyName::KeypadEqual:    return TEXT("KeypadEqual");
+    case EKeyboardKeyName::LeftShift:      return TEXT("LeftShift");
+    case EKeyboardKeyName::LeftControl:    return TEXT("LeftControl");
+    case EKeyboardKeyName::LeftAlt:        return TEXT("LeftAlt");
+    case EKeyboardKeyName::LeftSuper:      return TEXT("LeftSuper");
+    case EKeyboardKeyName::RightShift:     return TEXT("RightShift");
+    case EKeyboardKeyName::RightControl:   return TEXT("RightControl");
+    case EKeyboardKeyName::RightAlt:       return TEXT("RightAlt");
+    case EKeyboardKeyName::RightSuper:     return TEXT("RightSuper");
+    case EKeyboardKeyName::Menu:           return TEXT("Menu");
+    case EKeyboardKeyName::Space:          return TEXT("Space");
+    case EKeyboardKeyName::Apostrophe:     return TEXT("Apostrophe");
+    case EKeyboardKeyName::Comma:          return TEXT("Comma");
+    case EKeyboardKeyName::Minus:          return TEXT("Minus");
+    case EKeyboardKeyName::Period:         return TEXT("Period");
+    case EKeyboardKeyName::Slash:          return TEXT("Slash");
+    case EKeyboardKeyName::Semicolon:      return TEXT("Semicolon");
+    case EKeyboardKeyName::Equal:          return TEXT("Equal");
+    case EKeyboardKeyName::LeftBracket:    return TEXT("LeftBracket");
+    case EKeyboardKeyName::Backslash:      return TEXT("Backslash");
+    case EKeyboardKeyName::RightBracket:   return TEXT("RightBracket");
+    case EKeyboardKeyName::GraveAccent:    return TEXT("GraveAccent");
+    case EKeyboardKeyName::World1:         return TEXT("World1");
+    case EKeyboardKeyName::World2:         return TEXT("World2");
+    case EKeyboardKeyName::Escape:         return TEXT("Escape");
+    case EKeyboardKeyName::Enter:          return TEXT("Enter");
+    case EKeyboardKeyName::Tab:            return TEXT("Tab");
+    case EKeyboardKeyName::Backspace:      return TEXT("Backspace");
+    case EKeyboardKeyName::Insert:         return TEXT("Insert");
+    case EKeyboardKeyName::Delete:         return TEXT("Delete");
+    case EKeyboardKeyName::Right:          return TEXT("Right");
+    case EKeyboardKeyName::Left:           return TEXT("Left");
+    case EKeyboardKeyName::Down:           return TEXT("Down");
+    case EKeyboardKeyName::Up:             return TEXT("Up");
+    case EKeyboardKeyName::PageUp:         return TEXT("PageUp");
+    case EKeyboardKeyName::PageDown:       return TEXT("PageDown");
+    case EKeyboardKeyName::Home:           return TEXT("Home");
+    case EKeyboardKeyName::End:            return TEXT("End");
+    case EKeyboardKeyName::CapsLock:       return TEXT("CapsLock");
+    case EKeyboardKeyName::ScrollLock:     return TEXT("ScrollLock");
+    case EKeyboardKeyName::NumLock:        return TEXT("NumLock");
+    case EKeyboardKeyName::PrintScreen:    return TEXT("PrintScreen");
+    case EKeyboardKeyName::Pause:          return TEXT("Pause");
+    default:                               return TEXT("Unknown");
     }
 }
 
@@ -294,12 +294,12 @@ constexpr const CHAR_T* ToString(EMouseButtonName::Type Button)
 {
     switch (Button)
     {
-    case EMouseButtonName::Left:   return "Left";
-    case EMouseButtonName::Right:  return "Right";
-    case EMouseButtonName::Middle: return "Middle";
-    case EMouseButtonName::Thumb1: return "Thumb1";
-    case EMouseButtonName::Thumb2: return "Thumb2";
-    default:                       return "Unknown";
+    case EMouseButtonName::Left:   return TEXT("Left");
+    case EMouseButtonName::Right:  return TEXT("Right");
+    case EMouseButtonName::Middle: return TEXT("Middle");
+    case EMouseButtonName::Thumb1: return TEXT("Thumb1");
+    case EMouseButtonName::Thumb2: return TEXT("Thumb2");
+    default:                       return TEXT("Unknown");
     }
 }
 
@@ -313,9 +313,9 @@ constexpr const CHAR_T* ToString(EScrollAxis ScrollAxis)
 {
     switch (ScrollAxis)
     {
-    case EScrollAxis::Horizontal: return "Horizontal";
-    case EScrollAxis::Vertical:   return "Vertical";
-    default:                      return "Unknown";
+    case EScrollAxis::Horizontal: return TEXT("Horizontal");
+    case EScrollAxis::Vertical:   return TEXT("Vertical");
+    default:                      return TEXT("Unknown");
     }
 }
 
@@ -349,21 +349,21 @@ constexpr const CHAR_T* ToString(EGamepadButtonName::Type Button)
 {
     switch (Button)
     {
-    case EGamepadButtonName::DPadUp:        return "DPadUp";
-    case EGamepadButtonName::DPadDown:      return "DPadDown";
-    case EGamepadButtonName::DPadLeft:      return "DPadLeft";
-    case EGamepadButtonName::DPadRight:     return "DPadRight";
-    case EGamepadButtonName::FaceUp:        return "FaceUp";
-    case EGamepadButtonName::FaceDown:      return "FaceDown";
-    case EGamepadButtonName::FaceLeft:      return "FaceLeft";
-    case EGamepadButtonName::FaceRight:     return "FaceRight";
-    case EGamepadButtonName::RightThumb:    return "RightThumb";
-    case EGamepadButtonName::LeftThumb:     return "LeftThumb";
-    case EGamepadButtonName::RightShoulder: return "RightShoulder";
-    case EGamepadButtonName::LeftShoulder:  return "LeftShoulder";
-    case EGamepadButtonName::Start:         return "Start";
-    case EGamepadButtonName::Back:          return "Back";
-    default:                                return "Unknown";
+    case EGamepadButtonName::DPadUp:        return TEXT("DPadUp");
+    case EGamepadButtonName::DPadDown:      return TEXT("DPadDown");
+    case EGamepadButtonName::DPadLeft:      return TEXT("DPadLeft");
+    case EGamepadButtonName::DPadRight:     return TEXT("DPadRight");
+    case EGamepadButtonName::FaceUp:        return TEXT("FaceUp");
+    case EGamepadButtonName::FaceDown:      return TEXT("FaceDown");
+    case EGamepadButtonName::FaceLeft:      return TEXT("FaceLeft");
+    case EGamepadButtonName::FaceRight:     return TEXT("FaceRight");
+    case EGamepadButtonName::RightThumb:    return TEXT("RightThumb");
+    case EGamepadButtonName::LeftThumb:     return TEXT("LeftThumb");
+    case EGamepadButtonName::RightShoulder: return TEXT("RightShoulder");
+    case EGamepadButtonName::LeftShoulder:  return TEXT("LeftShoulder");
+    case EGamepadButtonName::Start:         return TEXT("Start");
+    case EGamepadButtonName::Back:          return TEXT("Back");
+    default:                                return TEXT("Unknown");
     }
 }
 
@@ -389,12 +389,12 @@ constexpr const CHAR_T* ToString(EAnalogSourceName::Type AnalogSourceName)
 {
     switch (AnalogSourceName)
     {
-    case EAnalogSourceName::RightThumbX:  return "RightThumbX";
-    case EAnalogSourceName::RightThumbY:  return "RightThumbY";
-    case EAnalogSourceName::LeftThumbX:   return "LeftThumbX";
-    case EAnalogSourceName::LeftThumbY:   return "LeftThumbY";
-    case EAnalogSourceName::RightTrigger: return "RightTrigger";
-    case EAnalogSourceName::LeftTrigger:  return "LeftTrigger";
-    default:                              return "Unknown";
+    case EAnalogSourceName::RightThumbX:  return TEXT("RightThumbX");
+    case EAnalogSourceName::RightThumbY:  return TEXT("RightThumbY");
+    case EAnalogSourceName::LeftThumbX:   return TEXT("LeftThumbX");
+    case EAnalogSourceName::LeftThumbY:   return TEXT("LeftThumbY");
+    case EAnalogSourceName::RightTrigger: return TEXT("RightTrigger");
+    case EAnalogSourceName::LeftTrigger:  return TEXT("LeftTrigger");
+    default:                              return TEXT("Unknown");
     }
 }

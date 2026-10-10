@@ -8,8 +8,8 @@
 #include "CoreApplication/PlatformInterface/IPlatformApplicationMessageHandler.h"
 
 static TAutoConsoleVariable<int32> CVarXInputButtonRepeatDelay(
-    "XInput.ButtonRepeatDelay",
-    "Number of repeated messages that gets ignored before sending repeat events",
+    TEXT("XInput.ButtonRepeatDelay"),
+    TEXT("Number of repeated messages that gets ignored before sending repeat events"),
     60,
     EConsoleVariableFlags::Default);
 
