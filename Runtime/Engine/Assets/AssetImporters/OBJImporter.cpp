@@ -2,11 +2,65 @@
 #include "Core/Containers/Map.h"
 #include "Core/PlatformInterface/IPlatformFileSystem.h"
 #include "Core/Filesystem/File.h"
+#include "Core/Containers/StringConversion.h"
+#include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetImporters/OBJImporter.h"
 
 #include <tiny_obj_loader.h>
+#include <sstream>
+
+static bool ReadText(const String& Filename, std::string& OutText)
+{
+    TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Filename);
+    if (!FileHandle)
+    {
+        return false;
+    }
+
+    TArray<CHAR> Text;
+    if (!File::ReadTextFile(FileHandle.Get(), Text))
+    {
+        return false;
+    }
+
+    const TStringConversion<ANSICHAR, CHAR> Utf8Text = StringCast<ANSICHAR>(Text.Data(), Text.Size() - 1);
+    OutText.assign(Utf8Text.Get(), static_cast<size_t>(Utf8Text.Length()));
+    return true;
+}
+
+class FOBJMaterialReader final : public tinyobj::MaterialReader
+{
+public:
+    explicit FOBJMaterialReader(const String& InDirectory)
+        : Directory(InDirectory)
+    {
+    }
+
+    virtual bool operator()(const std::string& MaterialFile, std::vector<tinyobj::material_t>* Materials, std::map<std::string, int>* MaterialMap, std::string* Warning, std::string* Error) override final
+    {
+        const String Filename = File::CombinePath(Directory, StringCast<CHAR>(MaterialFile.c_str(), static_cast<int32>(MaterialFile.size())).ToString());
+
+        std::string Text;
+        if (!ReadText(Filename, Text))
+        {
+            if (Warning)
+            {
+                *Warning += "Material file [ " + MaterialFile + " ] not found\n";
+            }
+
+            return false;
+        }
+
+        std::istringstream Stream(Text);
+        tinyobj::LoadMtl(MaterialMap, Materials, &Stream, Warning, Error);
+        return true;
+    }
+
+private:
+    String Directory;
+};
 
 bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags /* Flags */, FModelData& OutModelData)
 {
@@ -23,7 +77,16 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
     const String FilenameWithoutPath = File::ExtractFilenameWithoutExtension(Filename);
     
     // Load the OBJ file
-    if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, *Filename, *MTLFiledir, true, false))
+    std::string Text;
+    if (!ReadText(Filename, Text))
+    {
+        LOG_ERROR("[FOBJImporter]: Failed to open '%s'", *Filename);
+        return false;
+    }
+
+    std::istringstream TextStream(Text);
+    FOBJMaterialReader MaterialReader(MTLFiledir);
+    if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, &TextStream, &MaterialReader, true, false))
     {
         LOG_ERROR("[FOBJImporter]: Failed to load '%s'. Warning: %s Error: %s", *Filename, Warning.c_str(), Error.c_str());
         return false;

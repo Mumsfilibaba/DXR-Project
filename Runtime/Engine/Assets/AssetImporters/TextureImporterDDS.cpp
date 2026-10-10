@@ -1,4 +1,6 @@
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Filesystem/File.h"
+#include "Core/Platform/PlatformFile.h"
 #include "RHI/RHITypes.h"
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"
 #include "Engine/Resources/Texture.h"
@@ -117,9 +119,19 @@ constexpr EFormat ConvertFormat(tinyddsloader::DDSFile::DXGIFormat Format)
 
 TSharedRef<FTexture> FTextureImporterDDS::ImportFromFile(const StringView& FileName)
 {
+    TArray<uint8> FileData;
+    {
+        TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(String(FileName));
+        if (!FileHandle || !File::ReadFile(FileHandle.Get(), FileData))
+        {
+            LOG_ERROR("[FTextureImporterDDS]: Failed to open '%s'", *FileName);
+            return nullptr;
+        }
+    }
+
     tinyddsloader::DDSFile File;
 
-    auto Result = File.Load(*FileName);
+    auto Result = File.Load(FileData.Data(), static_cast<size_t>(FileData.Size()));
     if (Result != tinyddsloader::Success)
     {
         LOG_ERROR("[FTextureImporterDDS]: Failed to open '%s'", *FileName);

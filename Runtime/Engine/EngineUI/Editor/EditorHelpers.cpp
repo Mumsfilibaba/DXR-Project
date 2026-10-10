@@ -1,5 +1,6 @@
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Core/Containers/StaticArray.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Misc/Paths.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformFile.h"
@@ -940,7 +941,7 @@ static ImFont* LoadEditorFont(const CHAR* InRelativePath, float SizePixels, cons
     FullPath += InRelativePath;
 
     ImGuiIO& State = ImGui::GetIO();
-    return State.Fonts->AddFontFromFileTTF(*FullPath, SizePixels, FontCfgTemplate, GlyphRanges);
+    return State.Fonts->AddFontFromFileTTF(StringCast<ANSICHAR>(FullPath).Get(), SizePixels, FontCfgTemplate, GlyphRanges);
 }
 
 #if PLATFORM_WINDOWS
@@ -979,7 +980,7 @@ static ImFont* LoadSystemIconFont()
             continue;
         }
 
-        if (ImFont* IconFont = State.Fonts->AddFontFromFileTTF(IconFontPath, SystemIconSizePixels, &FontConfig, CaptionGlyphRanges))
+        if (ImFont* IconFont = State.Fonts->AddFontFromFileTTF(StringCast<ANSICHAR>(IconFontPath).Get(), SystemIconSizePixels, &FontConfig, CaptionGlyphRanges))
         {
             return IconFont;
         }

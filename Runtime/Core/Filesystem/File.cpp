@@ -2,6 +2,7 @@
 #include "Core/PlatformInterface/IPlatformFileSystem.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Memory/Memory.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
 #if PLATFORM_WINDOWS
@@ -231,11 +232,10 @@ bool File::ReadFile(IPlatformFile* InFile, TArray<uint8>& OutData)
     return true;
 }
 
-bool File::ReadTextFile(IPlatformFile* InFile, TArray<CHAR>& OutText)
+static bool ReadUtf8TextFile(IPlatformFile* InFile, TArray<ANSICHAR>& OutText)
 {
-    CHECK(InFile != nullptr);
-
-    const int32 NumBytes = GetRemainingBytes(InFile);
+    const bool  bIsAtStart = InFile->Tell() == 0;
+    const int32 NumBytes   = GetRemainingBytes(InFile);
     OutText.Resize(NumBytes + 1);
 
     if ((NumBytes > 0) && (InFile->Read(reinterpret_cast<uint8*>(OutText.Data()), static_cast<uint32>(NumBytes)) != NumBytes))
@@ -245,19 +245,56 @@ bool File::ReadTextFile(IPlatformFile* InFile, TArray<CHAR>& OutText)
     }
 
     OutText[NumBytes] = 0;
+
+    const uint8* Bytes = reinterpret_cast<const uint8*>(OutText.Data());
+    if (bIsAtStart && (NumBytes >= 3) && (Bytes[0] == 0xEF) && (Bytes[1] == 0xBB) && (Bytes[2] == 0xBF))
+    {
+        Memory::Memmove(OutText.Data(), OutText.Data() + 3, NumBytes - 3 + 1);
+        OutText.Resize(NumBytes - 3 + 1);
+    }
+
     return true;
 }
 
-bool File::WriteTextFile(IPlatformFile* InFile, const CHAR* Text, uint32 Size)
+bool File::ReadTextFile(IPlatformFile* InFile, TArray<CHAR>& OutText)
 {
     CHECK(InFile != nullptr);
 
-    if (Size == 0)
+#if WIDE_CHAR_BUILD
+    TArray<ANSICHAR> Utf8Text;
+    if (!ReadUtf8TextFile(InFile, Utf8Text))
+    {
+        OutText.Clear(true);
+        return false;
+    }
+
+    const TStringConversion<CHAR, ANSICHAR> Text = StringCast<CHAR>(Utf8Text.Data(), Utf8Text.Size() - 1);
+    OutText.Reset(TArray<CHAR>(Text.Get(), Text.Length() + 1));
+    return true;
+#else
+    return ReadUtf8TextFile(InFile, OutText);
+#endif
+}
+
+bool File::WriteTextFile(IPlatformFile* InFile, const CHAR* Text, int32 Length)
+{
+    CHECK(InFile != nullptr);
+
+    if (Length <= 0)
     {
         return true;
     }
 
-    return InFile->Write(reinterpret_cast<const uint8*>(Text), Size) == static_cast<int32>(Size);
+#if WIDE_CHAR_BUILD
+    const TStringConversion<ANSICHAR, CHAR> Utf8Text = StringCast<ANSICHAR>(Text, Length);
+    const ANSICHAR* Bytes    = Utf8Text.Get();
+    const int32     NumBytes = Utf8Text.Length();
+#else
+    const ANSICHAR* Bytes    = Text;
+    const int32     NumBytes = Length;
+#endif
+
+    return InFile->Write(reinterpret_cast<const uint8*>(Bytes), static_cast<uint32>(NumBytes)) == NumBytes;
 }
 
 String File::GetDirectoryOf(const String& Filepath)

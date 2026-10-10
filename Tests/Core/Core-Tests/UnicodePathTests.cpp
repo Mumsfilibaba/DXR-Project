@@ -9,6 +9,7 @@
 #include <Core/Platform/PlatformMisc.h>
 #include <Core/Platform/PlatformProcess.h>
 #include <Core/Platform/PlatformThreadMisc.h>
+#include <Core/Memory/Memory.h>
 
 #include "TestCommon/TestMacros.h"
 
@@ -76,6 +77,36 @@ bool UnicodePath_Test()
         TArray<FDirectoryEntry> RootEntries;
         TEST_EXPECT(FPlatformFile::IterateDirectory(*Root, RootEntries));
         TEST_EXPECT(RootEntries.Size() == 1 && RootEntries[0].Name.Equals(TEXT("Åäö 日本語 😀")) && RootEntries[0].bIsDirectory);
+    }
+
+    TEST_SECTION("Text files hold UTF-8, and a byte-order mark at the start is not part of the text");
+    {
+        const String BomFile = Directory + TEXT("/Bom.txt");
+        {
+            TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(BomFile);
+            const uint8 Bytes[] = { 0xEF, 0xBB, 0xBF, 'a', 0xC3, 0xA5 };
+            TEST_EXPECT(FileHandle && FileHandle->Write(Bytes, sizeof(Bytes)) == static_cast<int32>(sizeof(Bytes)));
+        }
+
+        TEST_EXPECT(ReadText(BomFile).Equals(TEXT("aå")));
+
+        {
+            TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(BomFile);
+            TArray<CHAR> Text;
+            TEST_EXPECT(FileHandle && FileHandle->SeekFromStart(3) && File::ReadTextFile(FileHandle.Get(), Text));
+            TEST_EXPECT(String(Text.Data()).Equals(TEXT("aå")));
+        }
+
+        TArray<uint8> Written;
+        TEST_EXPECT(WriteText(BomFile, TEXT("Åä 日")));
+        {
+            TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(BomFile);
+            TEST_EXPECT(FileHandle && File::ReadFile(FileHandle.Get(), Written));
+        }
+
+        const uint8 Expected[] = { 0xC3, 0x85, 0xC3, 0xA4, ' ', 0xE6, 0x97, 0xA5 };
+        TEST_EXPECT(Written.Size() == static_cast<int32>(sizeof(Expected)) && Memory::Memcmp(Written.Data(), Expected, sizeof(Expected)) == 0);
+        TEST_EXPECT(FPlatformFile::DeleteFile(*BomFile));
     }
 
     TEST_SECTION("Files and directories with non-ASCII names are copied, moved and deleted");
