@@ -3,29 +3,31 @@
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Misc/IOutputDevice.h"
 
-#define LOG_ERROR_CRITICAL(...) \
+#define LOG_FORMAT(Format) TEXT("" Format)
+
+#define LOG_ERROR_CRITICAL(Format, ...) \
     do \
     { \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, String::Printf(__VA_ARGS__)); \
+        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, String::Printf(LOG_FORMAT(Format) __VA_OPT__(,) __VA_ARGS__)); \
         DEBUG_BREAK(); \
     } while (false)
 
-#define LOG_ERROR(...) \
+#define LOG_ERROR(Format, ...) \
     do \
     { \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, String::Printf(__VA_ARGS__)); \
+        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, String::Printf(LOG_FORMAT(Format) __VA_OPT__(,) __VA_ARGS__)); \
     } while (false)
 
-#define LOG_WARNING(...) \
+#define LOG_WARNING(Format, ...) \
     do \
     { \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Warning, String::Printf(__VA_ARGS__)); \
+        FOutputDeviceLogger::Get()->Log(ELogSeverity::Warning, String::Printf(LOG_FORMAT(Format) __VA_OPT__(,) __VA_ARGS__)); \
     } while (false)
 
-#define LOG_INFO(...) \
+#define LOG_INFO(Format, ...) \
     do \
     { \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Info, String::Printf(__VA_ARGS__)); \
+        FOutputDeviceLogger::Get()->Log(ELogSeverity::Info, String::Printf(LOG_FORMAT(Format) __VA_OPT__(,) __VA_ARGS__)); \
     } while (false)
 
 class CORE_API FOutputDeviceLogger : public IOutputDevice

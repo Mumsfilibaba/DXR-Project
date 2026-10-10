@@ -1,6 +1,11 @@
 #pragma once
 #include "Core/PlatformInterface/IPlatformString.h"
 
+// MSVC reads %s and %c in a wide format as wide, which is what the engine relies on. This define switches it to standard C.
+#if defined(_CRT_STDIO_ISO_WIDE_SPECIFIERS)
+    #error "_CRT_STDIO_ISO_WIDE_SPECIFIERS changes what %s and %c mean in wide formats"
+#endif
+
 struct FWindowsPlatformString final : public IPlatformString
 {
     using IPlatformString::Strtoui64;

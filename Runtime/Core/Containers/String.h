@@ -10,6 +10,7 @@
 
 #define STRING_USE_INLINE_ALLOCATOR (1)
 #define STRING_FORMAT_BUFFER_SIZE (512)
+#define STRING_FORMAT_MAX_BUFFER_SIZE (1 << 22)
 
 #if STRING_USE_INLINE_ALLOCATOR 
     // Use a small static buffer for small strings
@@ -353,76 +354,48 @@ public:
     }
 
     /**
-     * @brief Replace the string with a formatted string (similar to snprintf)
+     * @brief Replace the string with a formatted string (similar to snprintf). In the format, %s and %c take this string's
+     * own character type.
      * @param InFormat Formatted string to replace the string with
      * @param Args Arguments for the formatted string
      */
     template<typename... ArgTypes>
     inline void InlinePrintf(const CharType* InFormat, ArgTypes&&... Args)
     {
-        CharType Buffer[STRING_FORMAT_BUFFER_SIZE];
-        SizeType BufferSize = STRING_FORMAT_BUFFER_SIZE;
-
-        CharType* DynamicBuffer = nullptr;
-        CharType* WrittenString = Buffer;
-        
-        // Start by printing to the static buffer
-        SizeType WrittenChars = CStringType::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
-       
-        // In case the buffer size is too small, increase the buffer size with a dynamic allocation until we have enough space
-        while ((WrittenChars > BufferSize) || (WrittenChars == -1))
-        {
-            BufferSize   += WrittenChars;
-            DynamicBuffer = reinterpret_cast<CharType*>(Memory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
-            WrittenString = DynamicBuffer;
-            WrittenChars  = CStringType::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
-        }
-
-        const SizeType WrittenLength = CStringType::Strlen(WrittenString);
-        CharData.Reset(WrittenLength + 1);
-        CStringType::Strncpy(CharData.Data(), WrittenString, WrittenLength);
-        CharData[WrittenLength] = 0;
-
-        if (DynamicBuffer)
-        {
-            Memory::Free(DynamicBuffer);
-        }
+        TString Formatted;
+        Formatted.AppendPrintf(InFormat, Forward<ArgTypes>(Args)...);
+        Swap(Formatted);
     }
 
     /**
-     * @brief Appends a formatted string to the string
+     * @brief Appends a formatted string to the string. In the format, %s and %c take this string's own character type.
      * @param InFormat Formatted string to append
      * @param Args Arguments for the formatted string
      */
     template<typename... ArgTypes>
     inline void AppendPrintf(const CharType* InFormat, ArgTypes&&... Args)
     {
-        CharType Buffer[STRING_FORMAT_BUFFER_SIZE];
-        SizeType BufferSize = STRING_FORMAT_BUFFER_SIZE;
-
+        CharType  StackBuffer[STRING_FORMAT_BUFFER_SIZE];
         CharType* DynamicBuffer = nullptr;
-        CharType* WrittenString = Buffer;
+        CharType* Buffer        = StackBuffer;
+        SizeType  BufferSize    = STRING_FORMAT_BUFFER_SIZE;
 
-        // Start by printing to the static buffer
-        SizeType WrittenChars = CStringType::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
-        
-        // In case the buffer size is too small, increase the buffer size with a dynamic allocation until we have enough space
-        while ((WrittenChars > BufferSize) || (WrittenChars == -1))
+        SizeType NumChars = CStringType::Snprintf(Buffer, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
+        while (NumChars < 0 || NumChars >= BufferSize)
         {
-            BufferSize   += WrittenChars;
+            if (NumChars < 0 && BufferSize >= STRING_FORMAT_MAX_BUFFER_SIZE)
+            {
+                NumChars = 0;
+                break;
+            }
+
+            BufferSize    = (NumChars < 0) ? BufferSize * 2 : NumChars + 1;
             DynamicBuffer = reinterpret_cast<CharType*>(Memory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
-            WrittenString = DynamicBuffer;
-            WrittenChars  = CStringType::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
+            Buffer        = DynamicBuffer;
+            NumChars      = CStringType::Snprintf(Buffer, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
         }
 
-        const SizeType WrittenLength = CStringType::Strlen(WrittenString);
-        const SizeType OldSize       = Length();
-        const SizeType NewSize       = CharData.IsEmpty() ? WrittenLength + 1 : WrittenLength;
-
-        CharData.AppendUninitialized(NewSize);
-
-        CStringType::Strncpy(CharData.Data() + OldSize, WrittenString, WrittenLength);
-        CharData[OldSize + WrittenLength] = 0;
+        Append(Buffer, NumChars);
 
         if (DynamicBuffer)
         {

@@ -251,6 +251,6 @@ bool TaskGraph_Test()
     bResult = Test_MainThreadPumpNoDeadlock()  && bResult;
     bResult = Test_WorkStealingStress()        && bResult;
 
-    LOG_INFO(bResult ? "[TASK GRAPH TESTS SUCCEEDED]" : "[TASK GRAPH TESTS FAILED]");
+    LOG_INFO("%s", bResult ? TEXT("[TASK GRAPH TESTS SUCCEEDED]") : TEXT("[TASK GRAPH TESTS FAILED]"));
     return bResult;
 }

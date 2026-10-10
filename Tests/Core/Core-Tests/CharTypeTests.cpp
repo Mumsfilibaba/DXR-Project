@@ -1,6 +1,8 @@
 #include "CharTypeTests.h"
 
 #include <Core/Core.h>
+#include <Core/Platform/PlatformString.h>
+#include <Core/Templates/CString.h>
 #include <Core/Templates/TypeTraits/DecayTraits.h>
 #include <Core/Templates/TypeTraits/EqualTraits.h>
 
@@ -47,6 +49,29 @@ bool CharType_Test()
         TEST_EXPECT(Index == 18);
     }
 #endif
+
+    TEST_SECTION("Wide formats are rewritten so standard C reads %s and %c as wide, like MSVC");
+    {
+        WIDECHAR Converted[128];
+        TEST_EXPECT(FPlatformString::ConvertWideFormatToStandard(Converted, 128, L"%s %c %ls %lc %d %%s %%%s %-10s %.*s %5.2f %1$s %hs %zu"));
+        TEST_EXPECT(TCString<WIDECHAR>::Strcmp(Converted, L"%ls %lc %ls %lc %d %%s %%%ls %-10ls %.*ls %5.2f %1$ls %hs %zu") == 0);
+
+        TEST_EXPECT(FPlatformString::ConvertWideFormatToStandard(Converted, 128, L""));
+        TEST_EXPECT(Converted[0] == 0);
+
+        TEST_EXPECT(!FPlatformString::ConvertWideFormatToStandard(Converted, 4, L"%s%s"));
+    }
+
+    TEST_SECTION("LOG_* takes a plain literal format and makes it a TEXT() literal");
+    {
+        #define CHARTYPE_TEST_LOG(...) LOG_INFO("[CharType] " __VA_ARGS__)
+
+        LOG_INFO("[CharType] A format without arguments");
+        LOG_INFO("[CharType] %s=%d", TEXT("Value"), 5);
+        CHARTYPE_TEST_LOG("A prefixed format, as the RHI log macros build them: %s", TEXT("ok"));
+
+        #undef CHARTYPE_TEST_LOG
+    }
 
     TEST_END();
 }

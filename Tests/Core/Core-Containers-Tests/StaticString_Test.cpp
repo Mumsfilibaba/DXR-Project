@@ -66,6 +66,31 @@ bool StaticString_Suite()
         TEST_EXPECT(Mixed.ToUpper().Equals("MIXEDCASE"));
     }
 
+    TEST_SECTION("Printf that does not fit is cut off, narrow and wide");
+    {
+        TStaticString<ANSICHAR, 8> Narrow;
+        Narrow.InlinePrintf("%s", "0123456789");
+        TEST_EXPECT_EQ(Narrow.Length(), 7);
+        TEST_EXPECT(Narrow.Equals("0123456"));
+
+        Narrow.AppendPrintf("%d", 42);
+        TEST_EXPECT(Narrow.Equals("0123456"));
+
+        Narrow.InlinePrintf("%s", "0123456");
+        TEST_EXPECT(Narrow.Equals("0123456"));
+
+        TStaticString<WIDECHAR, 8> Wide;
+        Wide.InlinePrintf(L"%s", L"0123456789");
+        TEST_EXPECT(Wide.Length() >= 0 && Wide.Length() <= 7);
+        TEST_EXPECT(Wide.Data()[Wide.Length()] == 0);
+
+        Wide.InlinePrintf(L"%s%c", L"Åäö", L'!');
+        TEST_EXPECT(Wide.Equals(L"Åäö!"));
+
+        Wide.AppendPrintf(L"%d", 12);
+        TEST_EXPECT(Wide.Equals(L"Åäö!12"));
+    }
+
     TEST_SECTION("Reset / Trim / Reverse");
     {
         StaticString<64> Str = "  Trimmable String  ";

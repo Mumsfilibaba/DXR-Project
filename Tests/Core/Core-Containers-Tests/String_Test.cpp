@@ -321,6 +321,41 @@ bool TString_Test()
         TEST_EXPECT(Back.Equals("Round Trip 123"));
     }
 
+    TEST_SECTION("Printf: %s and %c take the string's own character type, at any length");
+    {
+        TEST_EXPECT(String::Printf(TEXT("%s=%d %c"), TEXT("Value"), 5, TEXT('x')).Equals(TEXT("Value=5 x")));
+        TEST_EXPECT(WString::Printf(L"%s=%d %c", L"Wide", 5, L'x').Equals(L"Wide=5 x"));
+        TEST_EXPECT(WString::Printf(L"[%s]", L"Åäö 日本語").Equals(L"[Åäö 日本語]"));
+
+        const int32 Lengths[] = { STRING_FORMAT_BUFFER_SIZE - 1, STRING_FORMAT_BUFFER_SIZE, STRING_FORMAT_BUFFER_SIZE + 1, 5000 };
+        for (int32 Length : Lengths)
+        {
+            String  Narrow;
+            WString Wide;
+            for (int32 Index = 0; Index < Length; ++Index)
+            {
+                Narrow.Append(static_cast<CHAR>('a' + Index % 26));
+                Wide.Append(static_cast<WIDECHAR>(L'a' + Index % 26));
+            }
+
+            const String NarrowFormatted = String::Printf("%s", *Narrow);
+            TEST_EXPECT_EQ(NarrowFormatted.Length(), Length);
+            TEST_EXPECT(NarrowFormatted.Equals(Narrow));
+
+            const WString WideFormatted = WString::Printf(L"%s", *Wide);
+            TEST_EXPECT_EQ(WideFormatted.Length(), Length);
+            TEST_EXPECT(WideFormatted.Equals(Wide));
+
+            WString WideAppended = L"<";
+            WideAppended.AppendPrintf(L"%s>", *Wide);
+            TEST_EXPECT_EQ(WideAppended.Length(), Length + 2);
+        }
+
+        String Self = "abc";
+        Self.InlinePrintf("%s-%s", *Self, *Self);
+        TEST_EXPECT(Self.Equals("abc-abc"));
+    }
+
     TEST_SECTION("WString core operations");
     {
         WString Str = L"Hello String";

@@ -192,17 +192,8 @@ public:
     template<typename... ArgTypes>
     FORCEINLINE void InlinePrintf(const CharType* InFormat, ArgTypes&&... Args)
     {
-        const SizeType NumWritten = CStringType::Snprintf(CharData, NUM_CHARS - 1, InFormat, Forward<ArgTypes>(Args)...);
-        if (NumWritten < NUM_CHARS)
-        {
-            StringLength = NumWritten;
-        }
-        else
-        {
-            StringLength = NUM_CHARS - 1;
-        }
-
-        CharData[StringLength] = 0;
+        StringLength = 0;
+        AppendPrintf(InFormat, Forward<ArgTypes>(Args)...);
     }
 
     /**
@@ -213,25 +204,9 @@ public:
     template<typename... ArgTypes>
     FORCEINLINE void AppendPrintf(const CharType* InFormat, ArgTypes&&... Args)
     {
-        // Remaining space excluding the implicit null terminator slot.
-        const SizeType RemainingCapacity = (NUM_CHARS - 1) - StringLength;
-        if (RemainingCapacity <= 0)
-        {
-            return;
-        }
-
-        const SizeType NumWritten = CStringType::Snprintf(CharData + StringLength, RemainingCapacity, InFormat, Forward<ArgTypes>(Args)...);
-        const SizeType NewLength  = StringLength + NumWritten;
-        if (NewLength < NUM_CHARS)
-        {
-            StringLength = NewLength;
-        }
-        else
-        {
-            StringLength = NUM_CHARS - 1;
-        }
-
-        CharData[StringLength] = 0;
+        CStringType::Snprintf(CharData + StringLength, NUM_CHARS - StringLength, InFormat, Forward<ArgTypes>(Args)...);
+        CharData[NUM_CHARS - 1] = 0;
+        StringLength += CStringType::Strlen(CharData + StringLength);
     }
 
     /**

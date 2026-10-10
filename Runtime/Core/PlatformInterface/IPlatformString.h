@@ -9,6 +9,57 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct IPlatformString
 {
+    /**
+     * @brief Copy a wide format, turning every %s and %c without a length modifier into %ls and %lc. In the engine, %s and %c
+     * take the format's own character type, which is what MSVC does. Standard C reads them as narrow in a wide format, so
+     * platforms that follow it pass wide formats through this first.
+     * @return Returns false if the result does not fit in OutFormatLength characters, including the null-terminator
+     */
+    static bool ConvertWideFormatToStandard(WIDECHAR* OutFormat, int32 OutFormatLength, const WIDECHAR* Format) noexcept
+    {
+        int32 NumWritten = 0;
+        while (*Format != 0)
+        {
+            if (NumWritten + 3 > OutFormatLength)
+            {
+                return false;
+            }
+
+            const WIDECHAR Char = *Format++;
+            OutFormat[NumWritten++] = Char;
+            if (Char != L'%')
+            {
+                continue;
+            }
+
+            if (*Format == L'%')
+            {
+                OutFormat[NumWritten++] = *Format++;
+                continue;
+            }
+
+            bool bHasLengthModifier = false;
+            while (*Format != 0 && Strchr(L"-+ #0123456789.*$hljztLqI", *Format) != nullptr)
+            {
+                if (NumWritten + 3 > OutFormatLength)
+                {
+                    return false;
+                }
+
+                bHasLengthModifier = bHasLengthModifier || Strchr(L"hljztLqI", *Format) != nullptr;
+                OutFormat[NumWritten++] = *Format++;
+            }
+
+            if (!bHasLengthModifier && (*Format == L's' || *Format == L'c'))
+            {
+                OutFormat[NumWritten++] = L'l';
+            }
+        }
+
+        OutFormat[NumWritten] = 0;
+        return true;
+    }
+
     // -------------------------------------------------------------------------------------------
     // ANSICHAR
     // -------------------------------------------------------------------------------------------
