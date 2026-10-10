@@ -192,6 +192,11 @@ void FEditorOutputLogPanel::Tick(float DeltaTime)
 {
     FEditorPanel::Tick(DeltaTime);
 
+    if (LogView)
+    {
+        LogView->InvalidateForArrivedLines();
+    }
+
     if (FilterButton && FilterAnchor)
     {
         FilterButton->SetHighlighted(FilterAnchor->IsOpen());

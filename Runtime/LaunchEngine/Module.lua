@@ -26,4 +26,5 @@ LaunchEngineModule.AddModules({
     "Renderer",
     "RendererCore",
     "Engine",
+    "RemoteConsole",
 })

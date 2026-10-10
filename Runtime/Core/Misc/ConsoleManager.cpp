@@ -1611,7 +1611,7 @@ void FConsoleManager::FindCandidates(const StringView& CandidateName, TArray<TPa
     }
 }
 
-void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const String& Command)
+bool FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const String& Command)
 {
     OutputDevice.Log(ELogSeverity::Info, Command);
 
@@ -1628,13 +1628,11 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const String& 
         if (!CommandObject)
         {
             OutputDevice.Log(ELogSeverity::Error, "'" + Command + "' is not a registered command");
+            return false;
         }
-        else
-        {
-            CommandObject->Execute(StringView());
-        }
-        
-        return;
+
+        CommandObject->Execute(StringView());
+        return true;
     }
 
     const String CommandName(*Command, Pos);
@@ -1646,14 +1644,14 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const String& 
     if (IConsoleCommand* CommandObject = FindConsoleCommand(*CommandName))
     {
         CommandObject->Execute(TrimmedArgs);
-        return;
+        return true;
     }
 
     IConsoleVariable* VariableObject = FindConsoleVariable(*CommandName);
     if (!VariableObject)
     {
         OutputDevice.Log(ELogSeverity::Error, "'" + Command + "' is not a registered command or variable");
-        return;
+        return false;
     }
 
     const String Value(TrimmedArgs);
@@ -1716,6 +1714,8 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const String& 
     {
         OutputDevice.Log(ELogSeverity::Error, "'" + Value + "' Is an invalid value for '" + CommandName + "'");
     }
+
+    return bHandled;
 }
 
 void FConsoleManager::EnqueueCommand(const String& Command)

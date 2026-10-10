@@ -98,6 +98,20 @@ void FLogView::Flush()
     }
 }
 
+void FLogView::InvalidateForArrivedLines()
+{
+    bool bHasPendingLines = false;
+    {
+        TScopedLock Lock(PendingLinesCS);
+        bHasPendingLines = !PendingLines.IsEmpty();
+    }
+
+    if (bHasPendingLines)
+    {
+        InvalidateDesiredSize();
+    }
+}
+
 void FLogView::RegisterWithLogger()
 {
     if (!bIsRegisteredWithLogger)

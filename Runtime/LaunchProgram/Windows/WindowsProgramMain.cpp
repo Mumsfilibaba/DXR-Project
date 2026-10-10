@@ -51,6 +51,11 @@ int main(int NumArgs, const CHAR** Args)
 {
     InitCRunTime();
 
+    for (int32 Index = 1; Index < NumArgs; ++Index)
+    {
+        GProgramArgs.Emplace(Args[Index]);
+    }
+
     CommandLine::Initialize(Args + 1, NumArgs - 1);
     return RunProgram();
 }

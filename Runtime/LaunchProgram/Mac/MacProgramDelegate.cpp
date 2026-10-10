@@ -56,6 +56,8 @@ int main(int NumArgs, const CHAR** Args)
 {
     for (int32 Index = 1; Index < NumArgs; Index++)
     {
+        GProgramArgs.Emplace(Args[Index]);
+
         GMacCommandLine += " ";
         String CurrentArg(Args[Index]);
 

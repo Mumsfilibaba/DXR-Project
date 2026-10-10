@@ -23,6 +23,10 @@
 #include "MemoryStackTests.h"
 #include "PlatformEventPoolTests.h"
 #include "ProfilerTests.h"
+#include "SocketAddressTests.h"
+#include "PlatformSocketTests.h"
+#include "NetworkSocketTests.h"
+#include "RemoteConsoleProtocolTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -60,6 +64,10 @@ static int32 RunCoreTests()
     RUN_TEST("PlatformEventPool", PlatformEventPool_Test());
     RUN_TEST("Profiler", Profiler_Test());
     RUN_TEST("ProfilerGPUTraceSentinel", ProfilerGPUTraceSentinel_Test());
+    RUN_TEST("SocketAddress", SocketAddress_Test());
+    RUN_TEST("PlatformSocket", PlatformSocket_Test());
+    RUN_TEST("NetworkSocket", NetworkSocket_Test());
+    RUN_TEST("RemoteConsoleProtocol", RemoteConsoleProtocol_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();

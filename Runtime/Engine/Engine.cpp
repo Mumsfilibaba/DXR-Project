@@ -31,6 +31,8 @@ static FAutoConsoleCommand CCmdExit(
         {
             FEngine::Get()->Exit();
         }
+
+        RequestEngineExit("Engine.Exit");
     }));
 
 static FAutoConsoleCommand CCmdToggleFullscreen(

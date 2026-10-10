@@ -429,8 +429,9 @@ public:
      * @brief Execute a string from the console
      * @param OutputDevice OutputDevice to print any messages to
      * @param Command Command to execute by the console
+     * @return False when the name is not a registered command or variable, or the value is invalid for the variable
      */
-    void ExecuteCommand(IOutputDevice& OutputDevice, const String& Command);
+    bool ExecuteCommand(IOutputDevice& OutputDevice, const String& Command);
 
     /**
      * @brief Queue a command to run on the next ExecuteQueuedCommands, can be called from any thread

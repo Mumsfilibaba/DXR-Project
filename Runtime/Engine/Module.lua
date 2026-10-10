@@ -20,4 +20,5 @@ EngineModule.AddModules({
     "ImGuiPlugin",
     "OpenFBX",
     "tinyobjloader",
+    "RemoteConsole",
 })

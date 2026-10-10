@@ -67,6 +67,12 @@ public:
     virtual void Log(ELogSeverity Severity, const String& Message) override;
     virtual void Flush() override;
 
+    /**
+     * @brief Main thread, once per frame. Lines arriving from Log are only added during a layout pass, and an idle UI
+     * skips layout, so this asks for one whenever lines are waiting.
+     */
+    void InvalidateForArrivedLines();
+
     /** @brief Starts receiving everything the engine logs. */
     void RegisterWithLogger();
 
