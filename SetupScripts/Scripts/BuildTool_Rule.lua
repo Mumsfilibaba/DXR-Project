@@ -170,7 +170,7 @@ function BuildRules(Name)
         CppVersion = "C++20",
         SystemVersion = "latest",
         MacOSVersion = "15.0",
-        CharacterSet = "Ascii",
+        CharacterSet = _OPTIONS["widechar"] and "Unicode" or "Ascii",
 
         Flags = {
             "MultiProcessorCompile",

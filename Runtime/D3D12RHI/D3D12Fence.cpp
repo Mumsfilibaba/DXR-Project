@@ -32,7 +32,7 @@ bool FD3D12Fence::Initialize(uint64 InitialValue)
         return false;
     }
 
-    Event = ::CreateEventA(nullptr, FALSE, FALSE, nullptr);
+    Event = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
     if (Event == 0)
     {
         D3D12_ERROR_CRITICAL("[FD3D12Fence]: FAILED to create Event for Fence");

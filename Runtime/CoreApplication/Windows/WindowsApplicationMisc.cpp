@@ -32,14 +32,14 @@ void FWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)
 
     do
     {
-        BOOL Result = PeekMessage(&Message, 0, 0, 0, PM_REMOVE);
+        BOOL Result = ::PeekMessageW(&Message, nullptr, 0, 0, PM_REMOVE);
         if (!Result)
         {
             break;
         }
 
-        TranslateMessage(&Message);
-        DispatchMessage(&Message);
+        ::TranslateMessage(&Message);
+        ::DispatchMessageW(&Message);
     } while (bUntilEmpty);
 }
 

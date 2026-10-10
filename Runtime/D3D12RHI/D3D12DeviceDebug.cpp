@@ -344,7 +344,7 @@ void FD3D12Device::RegisterDeviceRemovedEvent()
         return;
     }
 
-    HANDLE Event = ::CreateEventA(nullptr, TRUE, FALSE, nullptr);
+    HANDLE Event = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
     if (!Event)
     {
         D3D12_WARNING("[FD3D12Device]: Failed to create device-removed event");

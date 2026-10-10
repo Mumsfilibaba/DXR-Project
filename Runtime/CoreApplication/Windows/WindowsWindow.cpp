@@ -1,4 +1,5 @@
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "Core/Threading/ScopedLock.h"
 #include "CoreApplication/Windows/WindowsWindow.h"
@@ -127,11 +128,10 @@ bool FWindowsWindow::Initialize(const FPlatformWindowDesc& InDesc)
         ParentWindow = reinterpret_cast<HWND>(InDesc.ParentWindow->GetPlatformHandle());
     }
 
-    const CHAR* Title     = *InDesc.Title;
-    const CHAR* ClassName = FWindowsWindow::GetClassName();
+    const TStringConversion<WIDECHAR, CHAR> Title = StringCast<WIDECHAR>(InDesc.Title);
 
     HINSTANCE Instance = Application->GetInstance();
-    Window = ::CreateWindowExA(NewStyle.StyleEx, ClassName, Title, NewStyle.Style, PositionX, PositionY, RealWidth, RealHeight, ParentWindow, nullptr, Instance, nullptr);
+    Window = ::CreateWindowExW(NewStyle.StyleEx, FWindowsWindow::GetClassName(), Title.Get(), NewStyle.Style, PositionX, PositionY, RealWidth, RealHeight, ParentWindow, nullptr, Instance, nullptr);
 
     if (!Window)
     {
@@ -164,7 +164,7 @@ bool FWindowsWindow::Initialize(const FPlatformWindowDesc& InDesc)
 
     ::SetLastError(0);
 
-    LONG_PTR Result    = ::SetWindowLongPtrA(Window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+    LONG_PTR Result    = ::SetWindowLongPtrW(Window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
     DWORD    LastError = ::GetLastError();
 
     if (Result == 0 && LastError != 0)
@@ -261,11 +261,11 @@ void FWindowsWindow::ToggleFullscreen()
 
         if (Style.Style == 0)
         {
-            Style.Style = ::GetWindowLong(Window, GWL_STYLE);
+            Style.Style = ::GetWindowLongW(Window, GWL_STYLE);
         }
         if (Style.StyleEx == 0)
         {
-            Style.StyleEx = ::GetWindowLong(Window, GWL_EXSTYLE);
+            Style.StyleEx = ::GetWindowLongW(Window, GWL_EXSTYLE);
         }
 
         LONG NewStyle = Style.Style;
@@ -276,8 +276,8 @@ void FWindowsWindow::ToggleFullscreen()
         LONG NewStyleEx = Style.StyleEx;
         NewStyleEx &= ~WS_EX_WINDOWEDGE;
 
-        ::SetWindowLong(Window, GWL_STYLE, NewStyle | WS_POPUP);
-        ::SetWindowLong(Window, GWL_EXSTYLE, NewStyleEx | WS_EX_TOPMOST);
+        ::SetWindowLongW(Window, GWL_STYLE, NewStyle | WS_POPUP);
+        ::SetWindowLongW(Window, GWL_EXSTYLE, NewStyleEx | WS_EX_TOPMOST);
 
         ::ShowWindow(Window, SW_SHOWMAXIMIZED);
     }
@@ -285,8 +285,8 @@ void FWindowsWindow::ToggleFullscreen()
     {
         bIsFullscreen = false;
 
-        ::SetWindowLong(Window, GWL_STYLE, Style.Style);
-        ::SetWindowLong(Window, GWL_EXSTYLE, Style.StyleEx);
+        ::SetWindowLongW(Window, GWL_STYLE, Style.Style);
+        ::SetWindowLongW(Window, GWL_EXSTYLE, Style.StyleEx);
 
         ::ShowWindow(Window, SW_SHOWNORMAL);
         ::SetWindowPlacement(Window, &StoredPlacement);
@@ -349,7 +349,7 @@ void FWindowsWindow::SetTitle(const String& Title)
 {
     if (IsValid())
     {
-        ::SetWindowTextA(Window, *Title);
+        ::SetWindowTextW(Window, StringCast<WIDECHAR>(Title).Get());
     }
 }
 
@@ -361,18 +361,18 @@ void FWindowsWindow::GetTitle(String& OutTitle) const
         return;
     }
 
-    const int32 Size = ::GetWindowTextLengthA(Window);
+    const int32 Size = ::GetWindowTextLengthW(Window);
     if (Size <= 0)
     {
         OutTitle = "";
         return;
     }
 
-    OutTitle.Resize(Size + 1);
-    ::GetWindowTextA(Window, OutTitle.Data(), Size + 1);
+    WString WideTitle;
+    WideTitle.Resize(Size);
 
-    OutTitle[Size] = '\0';
-    OutTitle.Resize(Size);
+    const int32 Length = ::GetWindowTextW(Window, WideTitle.Data(), Size + 1);
+    OutTitle = StringCast<CHAR>(WideTitle.Data(), Length).ToString();
 }
 
 void FWindowsWindow::SetWindowPos(int32 x, int32 y)
@@ -496,7 +496,7 @@ void FWindowsWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) cons
     MONITORINFO MonitorInfo;
     MonitorInfo.cbSize = sizeof(MONITORINFO);
 
-    ::GetMonitorInfoA(Monitor, &MonitorInfo);
+    ::GetMonitorInfoW(Monitor, &MonitorInfo);
     OutWidth  = MonitorInfo.rcMonitor.right  - MonitorInfo.rcMonitor.left;
     OutHeight = MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top;
 }
@@ -531,15 +531,15 @@ void FWindowsWindow::SetStyle(EWindowStyleFlags InStyle)
     FWindowsWindowStyle NewStyle = GetWindowsWindowStyle(InStyle);
     NewStyle.StyleEx = (NewStyle.StyleEx & ~WS_EX_NOREDIRECTIONBITMAP) | (Style.StyleEx & WS_EX_NOREDIRECTIONBITMAP);
 
-    if ((::GetWindowLongA(Window, GWL_EXSTYLE) & WS_EX_LAYERED) != 0)
+    if ((::GetWindowLongW(Window, GWL_EXSTYLE) & WS_EX_LAYERED) != 0)
     {
         NewStyle.StyleEx |= WS_EX_LAYERED;
     }
 
     if (NewStyle != Style)
     {
-        ::SetWindowLong(Window, GWL_STYLE, NewStyle.Style);
-        ::SetWindowLong(Window, GWL_EXSTYLE, NewStyle.StyleEx);
+        ::SetWindowLongW(Window, GWL_STYLE, NewStyle.Style);
+        ::SetWindowLongW(Window, GWL_EXSTYLE, NewStyle.StyleEx);
 
         ::ShowWindow(Window, SW_SHOWNA);
 
@@ -628,19 +628,19 @@ void FWindowsWindow::SetWindowOpacity(float Alpha)
         return;
     }
 
-    DWORD CurrentStyle = ::GetWindowLongA(Window, GWL_EXSTYLE);
+    DWORD CurrentStyle = ::GetWindowLongW(Window, GWL_EXSTYLE);
 
     if (Alpha < 1.0f)
     {
         CurrentStyle |= WS_EX_LAYERED;
 
-        ::SetWindowLongA(Window, GWL_EXSTYLE, CurrentStyle);
+        ::SetWindowLongW(Window, GWL_EXSTYLE, CurrentStyle);
         ::SetLayeredWindowAttributes(Window, 0, static_cast<BYTE>(255.0f * Alpha), LWA_ALPHA);
     }
     else
     {
         CurrentStyle &= ~WS_EX_LAYERED;
-        ::SetWindowLongA(Window, GWL_EXSTYLE, CurrentStyle);
+        ::SetWindowLongW(Window, GWL_EXSTYLE, CurrentStyle);
     }
 }
 
@@ -651,8 +651,8 @@ void FWindowsWindow::SetPlatformHandle(void* InPlatformHandle)
     {
         Window = InWindowHandle;
 
-        Style.Style   = ::GetWindowLong(Window, GWL_STYLE);
-        Style.StyleEx = ::GetWindowLong(Window, GWL_EXSTYLE);
+        Style.Style   = ::GetWindowLongW(Window, GWL_STYLE);
+        Style.StyleEx = ::GetWindowLongW(Window, GWL_EXSTYLE);
 
         uint32 FullscreenWidth = 0;
         uint32 FullscreenHeight = 0;

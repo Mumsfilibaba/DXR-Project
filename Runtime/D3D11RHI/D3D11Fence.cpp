@@ -30,7 +30,7 @@ bool FD3D11FenceRHI::Initialize()
         HRESULT Result = D3D11Device5->CreateFence(0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
         if (SUCCEEDED(Result))
         {
-            Event = ::CreateEventA(nullptr, FALSE, FALSE, nullptr);
+            Event = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
             if (Event == 0)
             {
                 D3D11_ERROR_CRITICAL("[FD3D11FenceRHI]: FAILED to create Event for Fence");

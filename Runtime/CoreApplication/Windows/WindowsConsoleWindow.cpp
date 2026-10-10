@@ -1,4 +1,5 @@
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Threading/ScopedLock.h"
 #include "CoreApplication/Windows/WindowsConsoleWindow.h"
 
@@ -90,7 +91,7 @@ void FWindowsConsoleWindow::Show(bool bShow)
             GActiveWindowsConsole = this;
 
             ::SetConsoleCtrlHandler(&FWindowsConsoleWindow::ConsoleCtrlHandler, TRUE);
-            ::SetConsoleTitleA(Title.IsEmpty() ? "Console Output" : *Title);
+            ::SetConsoleTitleW(Title.IsEmpty() ? L"Console Output" : StringCast<WIDECHAR>(Title).Get());
         }
     }
     else
@@ -115,7 +116,7 @@ void FWindowsConsoleWindow::SetTitle(const String& InTitle)
 
     if (ConsoleHandle)
     {
-        ::SetConsoleTitleA(*InTitle);
+        ::SetConsoleTitleW(StringCast<WIDECHAR>(InTitle).Get());
     }
 }
 
@@ -154,11 +155,13 @@ void FWindowsConsoleWindow::Write(const CHAR* Data, uint32 Length)
     DWORD ConsoleMode = 0;
     if (::GetConsoleMode(ConsoleHandle, &ConsoleMode))
     {
-        ::WriteConsoleA(ConsoleHandle, Data, Length, nullptr, nullptr);
+        const TStringConversion<WIDECHAR, CHAR> WideData = StringCast<WIDECHAR>(Data, static_cast<int32>(Length));
+        ::WriteConsoleW(ConsoleHandle, WideData.Get(), static_cast<DWORD>(WideData.Length()), nullptr, nullptr);
     }
     else
     {
-        ::WriteFile(ConsoleHandle, Data, Length, nullptr, nullptr);
+        const TStringConversion<ANSICHAR, CHAR> Utf8Data = StringCast<ANSICHAR>(Data, static_cast<int32>(Length));
+        ::WriteFile(ConsoleHandle, Utf8Data.Get(), static_cast<DWORD>(Utf8Data.Length()), nullptr, nullptr);
     }
 }
 
@@ -222,7 +225,7 @@ void FWindowsConsoleWindow::Flush()
             COORD Dest = {0, static_cast<SHORT>(-ConsoleScreenInfo.dwSize.Y)};
             CHAR_INFO FillInfo = {' ', static_cast<WORD>(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)};
 
-            ::ScrollConsoleScreenBufferA(ConsoleHandle, &ConsoleScreenInfo.srWindow, nullptr, Dest, &FillInfo);
+            ::ScrollConsoleScreenBufferW(ConsoleHandle, &ConsoleScreenInfo.srWindow, nullptr, Dest, &FillInfo);
 
             COORD CursorPos = {0, 0};
             ::SetConsoleCursorPosition(ConsoleHandle, CursorPos);

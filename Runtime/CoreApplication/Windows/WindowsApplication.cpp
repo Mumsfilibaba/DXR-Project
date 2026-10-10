@@ -1,6 +1,7 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Containers/StringConversion.h"
 #include "CoreApplication/Windows/WindowsApplication.h"
 #include "CoreApplication/Windows/WindowsInputMapper.h"
 #include "CoreApplication/Windows/WindowsCursor.h"
@@ -69,10 +70,10 @@ static LRESULT HitTestResizeBorder(HWND WindowHandle, const IntVector2& ClientPo
 
 TSharedPtr<IPlatformApplication> FWindowsApplication::Create()
 {
-    HINSTANCE AppInstanceHandle = static_cast<HINSTANCE>(::GetModuleHandleA(0));
+    HINSTANCE AppInstanceHandle = static_cast<HINSTANCE>(::GetModuleHandleW(nullptr));
     
     // TODO: Replace with actual icon
-    HICON Icon = ::LoadIcon(0, IDI_APPLICATION);
+    HICON Icon = ::LoadIconW(nullptr, ToWideResourceId(IDI_APPLICATION));
 
     TSharedPtr<FWindowsApplication> NewWindowsApplication = MakeSharedPtr<FWindowsApplication>(AppInstanceHandle, Icon);
     GWindowsApplication = NewWindowsApplication.Get();
@@ -89,6 +90,7 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIco
     , bDeferredMessagesEnabled(false)
     , bIsApplicationActive(true)
     , bIsInModalSizeLoop(false)
+    , PendingHighSurrogate(0)
     , ModalInteraction(EWindowInteraction::Resize)
     , Messages()
     , MessagesCS()
@@ -156,10 +158,10 @@ void FWindowsApplication::ProcessEvents()
 {
     MSG Message;
 
-    while (::PeekMessage(&Message, nullptr, 0, 0, PM_REMOVE))
+    while (::PeekMessageW(&Message, nullptr, 0, 0, PM_REMOVE))
     {
         ::TranslateMessage(&Message);
-        ::DispatchMessage(&Message);
+        ::DispatchMessageW(&Message);
     }
 }
 
@@ -405,7 +407,7 @@ LRESULT FWindowsApplication::WindowProc(HWND WindowHandle, UINT Message, WPARAM 
 {
     if (!GWindowsApplication)
     {
-        return ::DefWindowProc(WindowHandle, Message, wParam, lParam);
+        return ::DefWindowProcW(WindowHandle, Message, wParam, lParam);
     }
 
     return GWindowsApplication->ProcessMessage(WindowHandle, Message, wParam, lParam);
@@ -422,11 +424,11 @@ BOOL FWindowsApplication::EnumerateMonitors(HMONITOR Monitor, HDC /*DeviceContex
     TArray<FMonitorInfo>* MonitorInfos = reinterpret_cast<TArray<FMonitorInfo>*>(lParam);
     CHECK(MonitorInfos != nullptr);
 
-    MONITORINFOEXA MonitorInfo;
+    MONITORINFOEXW MonitorInfo;
     Memory::Memzero(&MonitorInfo);
-    MonitorInfo.cbSize = sizeof(MONITORINFOEXA);
+    MonitorInfo.cbSize = sizeof(MONITORINFOEXW);
 
-    if (!::GetMonitorInfoA(Monitor, &MonitorInfo))
+    if (!::GetMonitorInfoW(Monitor, &MonitorInfo))
     {
         return TRUE;
     }
@@ -437,7 +439,7 @@ BOOL FWindowsApplication::EnumerateMonitors(HMONITOR Monitor, HDC /*DeviceContex
     CHECK(DpiX == DpiY);
 
     FMonitorInfo NewMonitorInfo;
-    NewMonitorInfo.DeviceName     = String(MonitorInfo.szDevice);
+    NewMonitorInfo.DeviceName     = StringCast<CHAR>(MonitorInfo.szDevice).ToString();
     NewMonitorInfo.MainPosition   = IntVector2(MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.top);
     NewMonitorInfo.MainSize       = IntVector2(MonitorInfo.rcMonitor.right  - MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top);
     NewMonitorInfo.WorkPosition   = IntVector2(MonitorInfo.rcWork.left, MonitorInfo.rcWork.top);
@@ -452,7 +454,7 @@ BOOL FWindowsApplication::EnumerateMonitors(HMONITOR Monitor, HDC /*DeviceContex
 
 bool FWindowsApplication::RegisterWindowClass()
 {
-    WNDCLASSA WindowClass;
+    WNDCLASSW WindowClass;
     Memory::Memzero(&WindowClass);
 
     WindowClass.style         = CS_DBLCLKS | CS_OWNDC;
@@ -463,7 +465,7 @@ bool FWindowsApplication::RegisterWindowClass()
     WindowClass.hCursor       = nullptr;
     WindowClass.lpfnWndProc   = &FWindowsApplication::WindowProc;
 
-    ATOM ClassAtom = ::RegisterClassA(&WindowClass);
+    ATOM ClassAtom = ::RegisterClassW(&WindowClass);
     if (ClassAtom == 0)
     {
         LOG_ERROR("[FWindowsApplication]: FAILED to register WindowClass\n");
@@ -603,7 +605,7 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
 
         case WM_NCHITTEST:
         {
-            const LONG_PTR UserData = ::GetWindowLongPtrA(WindowHandle, GWLP_USERDATA);
+            const LONG_PTR UserData = ::GetWindowLongPtrW(WindowHandle, GWLP_USERDATA);
             if (const FWindowsWindow* MsgWindow = reinterpret_cast<const FWindowsWindow*>(UserData))
             {
                 if (!MsgWindow->GetAcceptsInput())
@@ -664,7 +666,7 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
         {
             if (wParam == HTMAXBUTTON)
             {
-                const LONG_PTR UserData = ::GetWindowLongPtrA(WindowHandle, GWLP_USERDATA);
+                const LONG_PTR UserData = ::GetWindowLongPtrW(WindowHandle, GWLP_USERDATA);
                 if (FWindowsWindow* MsgWindow = reinterpret_cast<FWindowsWindow*>(UserData))
                 {
                     if (MsgWindow->IsMaximized())
@@ -701,7 +703,7 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
             }
             else
             {
-                ::SetCursor(::LoadCursor(nullptr, IDC_ARROW));
+                ::SetCursor(::LoadCursorW(nullptr, ToWideResourceId(IDC_ARROW)));
             }
 
             return TRUE;
@@ -709,7 +711,7 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
 
         case WM_NCCALCSIZE:
         {
-            const LONG_PTR        UserData  = ::GetWindowLongPtrA(WindowHandle, GWLP_USERDATA);
+            const LONG_PTR        UserData  = ::GetWindowLongPtrW(WindowHandle, GWLP_USERDATA);
             const FWindowsWindow* MsgWindow = reinterpret_cast<const FWindowsWindow*>(UserData);
 
             if (wParam != TRUE || !MsgWindow || (MsgWindow->GetStyle() & EWindowStyleFlags::CustomTitleBar) == EWindowStyleFlags::None)
@@ -894,7 +896,7 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
         return ResultFromListeners;
     }
 
-    return ::DefWindowProc(WindowHandle, Message, wParam, lParam);
+    return ::DefWindowProcW(WindowHandle, Message, wParam, lParam);
 }
 
 void FWindowsApplication::ProcessDeferredMessage(const FWindowsDeferredMessage& Message)
@@ -1151,7 +1153,25 @@ void FWindowsApplication::ProcessKeyMessage(const FWindowsDeferredMessage& Messa
 
 void FWindowsApplication::ProcessKeyCharMessage(const FWindowsDeferredMessage& Message)
 {
-    const uint32 Character = static_cast<uint32>(Message.wParam);
+    const WIDECHAR Unit = static_cast<WIDECHAR>(Message.wParam);
+    if (Unit >= 0xD800 && Unit <= 0xDBFF)
+    {
+        PendingHighSurrogate = Unit;
+        return;
+    }
+
+    uint32 Character = static_cast<uint32>(Unit);
+    if (Unit >= 0xDC00 && Unit <= 0xDFFF)
+    {
+        if (PendingHighSurrogate == 0)
+        {
+            return;
+        }
+
+        Character = 0x10000 + ((static_cast<uint32>(PendingHighSurrogate) - 0xD800) << 10) + (static_cast<uint32>(Unit) - 0xDC00);
+    }
+
+    PendingHighSurrogate = 0;
     MessageHandler->OnKeyChar(Character);
 }
 

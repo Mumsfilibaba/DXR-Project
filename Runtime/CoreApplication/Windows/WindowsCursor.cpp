@@ -3,7 +3,7 @@
 #include "CoreApplication/Windows/WindowsCursor.h"
 #include "CoreApplication/Windows/WindowsWindow.h"
 
-static LPSTR ResolveCursorName(ECursor Cursor)
+static LPTSTR ResolveCursorName(ECursor Cursor)
 {
     switch (Cursor)
     {
@@ -52,10 +52,10 @@ void FWindowsCursor::SetCursor(ECursor Cursor)
         return;
     }
 
-    HCURSOR CursorHandle = ::LoadCursor(nullptr, ResolveCursorName(Cursor));
+    HCURSOR CursorHandle = ::LoadCursorW(nullptr, ToWideResourceId(ResolveCursorName(Cursor)));
     if (!CursorHandle)
     {
-        CursorHandle = ::LoadCursor(nullptr, IDC_ARROW);
+        CursorHandle = ::LoadCursorW(nullptr, ToWideResourceId(IDC_ARROW));
     }
 
     ::SetCursor(CursorHandle);

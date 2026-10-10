@@ -43,9 +43,9 @@ class COREAPPLICATION_API FWindowsWindow final : public IPlatformWindow, public 
 public:
     static TSharedRef<FWindowsWindow> Create(FWindowsApplication* InApplication);
     
-    static const CHAR* GetClassName()
+    static const WIDECHAR* GetClassName()
     {
-        return "WindowClass";
+        return L"WindowClass";
     }
 
 public:

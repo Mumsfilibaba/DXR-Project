@@ -145,6 +145,7 @@ private:
     bool                                           bDeferredMessagesEnabled;
     bool                                           bIsApplicationActive;
     bool                                           bIsInModalSizeLoop;
+    WIDECHAR                                       PendingHighSurrogate;
     EWindowInteraction                             ModalInteraction;
     TArray<FWindowsDeferredMessage>                Messages;
     FCriticalSection                               MessagesCS;

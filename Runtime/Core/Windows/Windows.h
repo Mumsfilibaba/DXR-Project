@@ -83,3 +83,13 @@
 
 #undef IsMinimized
 #undef IsMaximized
+
+inline LPCWSTR ToWideResourceId(LPCSTR Id)
+{
+    return MAKEINTRESOURCEW(reinterpret_cast<ULONG_PTR>(Id));
+}
+
+inline LPCWSTR ToWideResourceId(LPCWSTR Id)
+{
+    return Id;
+}
