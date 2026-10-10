@@ -16,6 +16,7 @@ EngineModule.AddModules({
     "Application",
     "RHI",
     "RendererCore",
+    "ShaderCompiler",
     "ImGui",
     "ImGuiPlugin",
     "OpenFBX",

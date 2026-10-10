@@ -103,17 +103,17 @@ UINT FFXCShaderCompiler::BuildCompileFlags(const FShaderCompileInfo& CompileInfo
     return Flags;
 }
 
-void FFXCShaderCompiler::HashCompileSettings(const FShaderCompileInfo& CompileInfo, const String& IncludeDir, uint64& InOutHash) const
-{
-    HashCombine(InOutHash, THash<String>::GetHash(String("d3dcompiler_47")));
-    HashCombine(InOutHash, FFXCShaderTranslator::Version);
-    HashCombine(InOutHash, THash<String>::GetHash(IncludeDir));
-    HashCombine(InOutHash, static_cast<uint32>(BuildCompileFlags(CompileInfo)));
+// Bump when BuildCompileFlags or GetFXCProfile changes.
+static constexpr uint32 GFXCSettingsVersion = 1;
 
-    if (const CHAR* Profile = GetFXCProfile(CompileInfo.ShaderStage))
-    {
-        HashCombine(InOutHash, THash<String>::GetHash(String(Profile)));
-    }
+FShaderCompilerIdentity FFXCShaderCompiler::GetIdentity() const
+{
+    FShaderCompilerIdentity Identity;
+    Identity.Name              = GetName();
+    Identity.VersionMajor      = 47; // d3dcompiler_47 has no version query
+    Identity.SettingsVersion   = GFXCSettingsVersion;
+    Identity.TranslatorVersion = FFXCShaderTranslator::Version;
+    return Identity;
 }
 
 bool FFXCShaderCompiler::TranslateSource(FShaderPreprocessorOutput& InOutSource) const

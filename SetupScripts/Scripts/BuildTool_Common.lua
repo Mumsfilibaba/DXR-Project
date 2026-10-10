@@ -448,6 +448,75 @@ function GetOutputConfigPath()
     return gOutputConfigPath
 end
 
+-- Suffix of the tools workspace that belongs to this generation, the one the Generate_Tools scripts use: "Tools"
+-- for a normal generation and "<Name>Tools" for --buildsuffix=<Name>, with a trailing "Tests" or "Tools" dropped
+function GetToolsBuildSuffix()
+    local Base = GetBuildSuffix() or ""
+    Base = (Base:gsub("Tests$", ""))
+    Base = (Base:gsub("Tools$", ""))
+    return Base .. "Tools"
+end
+
+-- Build commands only ever use the Development build of the tools workspace, whatever configuration runs them
+local function GetToolsProjectPath(ProjectName)
+    local Extension = BuildWithXcode() and ".xcodeproj" or ".vcxproj"
+    return JoinPath(JoinPath(JoinPath(gEnginePath, "Solutions"), GetToolsBuildSuffix()), ProjectName .. Extension)
+end
+
+function GetShaderCompilerToolPath()
+    local Folder = JoinPath(JoinPath(GetBuildFolderPath(), "bin"), "Development-%{cfg.system}-%{cfg.platform}-Monolithic-" .. GetToolsBuildSuffix())
+    if IsPlatformMac() then
+        return JoinPath(Folder, "ShaderCompiler.app/Contents/MacOS/ShaderCompiler")
+    end
+
+    return JoinPath(Folder, "ShaderCompiler.exe")
+end
+
+-- Builds the ShaderCompiler tool in the tools workspace, which does nothing once it is up to date. Chain the command
+-- that runs the tool with '&&', a Visual Studio build event only reports the exit code of its last command.
+function GetShaderCompilerToolBuildCommand()
+    local ProjectPath = GetToolsProjectPath("ShaderCompilerTool")
+    if BuildWithXcode() then
+        return ('xcodebuild -project "%s" -configuration Development -quiet build'):format(ProjectPath)
+    end
+
+    -- Its own process, so it builds the tool's project references even when Visual Studio runs the event
+    return ('"$(MSBuildBinPath)\\MSBuild.exe" "%s" /p:Configuration=Development /p:Platform=%%{cfg.platform} /m /nr:false /nologo /v:minimal'):format(ProjectPath)
+end
+
+-- The ShaderCompiler command that compiles one shader into a header a module embeds. The tool skips a header whose
+-- stamp shows that nothing it reads has changed.
+--
+-- Source, Header:  Paths relative to the module
+-- Entry, Stage, Model: As in HLSL, for example 'Main', 'Compute' and 'SM_6_2'
+-- RHI:             'D3D11', 'D3D12', 'Vulkan' or 'Metal', which picks the output language
+-- Symbol:          Name of the array the header declares
+-- Defines:         Optional array of 'NAME=VALUE'
+-- IncludeDirs:     Optional array of folders relative to the module, searched before Assets/Shaders
+function GetShaderHeaderCommand(Module, Desc)
+    local Arguments =
+    {
+        ('"%s"'):format(GetShaderCompilerToolPath()),
+        ('-compile="%s"'):format(JoinPath(Module.GetPath(), Desc.Source)),
+        '-entry=' .. Desc.Entry,
+        '-stage=' .. Desc.Stage,
+        '-model=' .. Desc.Model,
+        '-rhi=' .. Desc.RHI,
+    }
+
+    for _, Define in ipairs(Desc.Defines or {}) do
+        table.insert(Arguments, '-define=' .. Define)
+    end
+
+    for _, IncludeDir in ipairs(Desc.IncludeDirs or {}) do
+        table.insert(Arguments, ('-includedir="%s"'):format(JoinPath(Module.GetPath(), IncludeDir)))
+    end
+
+    table.insert(Arguments, ('-header="%s"'):format(JoinPath(Module.GetPath(), Desc.Header)))
+    table.insert(Arguments, '-symbol=' .. Desc.Symbol)
+    return table.concat(Arguments, ' ')
+end
+
 -- Make path relative to the thirdparty folder
 function CreateExternalThirdpartyPath(ThirdpartyPath)
     return JoinPath(GetExternalThirdPartyFolderPath(), ThirdpartyPath)

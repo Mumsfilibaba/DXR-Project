@@ -18,7 +18,7 @@ public:
 
     virtual const CHAR* GetName() const override final { return "DXC"; }
     virtual bool SupportsOutputLanguage(EShaderOutputLanguage OutputLanguage) const override final;
-    virtual void HashCompileSettings(const FShaderCompileInfo& CompileInfo, const String& IncludeDir, uint64& InOutHash) const override final;
+    virtual FShaderCompilerIdentity GetIdentity() const override final;
     virtual bool Compile(const FShaderCompileRequest& Request, FShaderCompileResult& OutResult) override final;
 
 private:

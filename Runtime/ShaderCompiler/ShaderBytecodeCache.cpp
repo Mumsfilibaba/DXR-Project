@@ -6,8 +6,10 @@
 #include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Paths.h"
 #include "Core/Platform/PlatformFile.h"
-#include "RendererCore/Shaders/ShaderBytecodeCache.h"
+#include "Core/Filesystem/File.h"
+#include "ShaderCompiler/ShaderBytecodeCache.h"
 #include "ShaderCompiler/ShaderCompiler.h"
+#include "ShaderCompiler/ShaderSourceHash.h"
 #include "ShaderCore/ShaderCode.h"
 
 static TAutoConsoleVariable<bool> CVarEnableBytecodeCache(
@@ -32,7 +34,7 @@ static FAutoConsoleCommand CCmdDumpShaderBytecodeCacheStats(
     }));
 
 static const CHAR*      GShaderBytecodeMagic        = "DXRSHBIN";
-static constexpr uint32 GShaderBytecodeVersion      = 2;
+static constexpr uint32 GShaderBytecodeVersion      = 3;
 static constexpr uint32 GMaxShaderBytecodeCacheSize = 256 * 1024 * 1024; // MSL is stored as text and every permutation carries its own blob, so this is generous rather than tight.
 
 struct FShaderBytecodeHeader
@@ -80,6 +82,7 @@ static void WriteString(FByteOutputStream& Stream, const String& Value)
 }
 
 FShaderBytecodeCache* FShaderBytecodeCache::BytecodeCache = nullptr;
+String                FShaderBytecodeCache::FilePathOverride;
 
 FShaderBytecodeCache::FShaderBytecodeCache()
     : Entries()
@@ -117,8 +120,19 @@ void FShaderBytecodeCache::Release()
     }
 }
 
+void FShaderBytecodeCache::SetFilePathOverride(const String& InFilePath)
+{
+    CHECK(BytecodeCache == nullptr);
+    FilePathOverride = InFilePath;
+}
+
 String FShaderBytecodeCache::GetFilePath()
 {
+    if (!FilePathOverride.IsEmpty())
+    {
+        return FilePathOverride;
+    }
+
     return Paths::GetAssetDir() + '/' + CVarBytecodeFileName.GetValue();
 }
 
@@ -155,7 +169,7 @@ bool FShaderBytecodeCache::TryGetFileHash(const String& RelativePath, uint64& Ou
         TArray<uint8> Contents;
         if (File::ReadFile(SourceFile.Get(), Contents) && !Contents.IsEmpty())
         {
-            FileHash = CRC32::Generate(Contents.Data(), static_cast<uint64>(Contents.Size()));
+            FileHash = ShaderSourceHash::Compute(Contents);
         }
     }
 
@@ -188,7 +202,7 @@ bool FShaderBytecodeCache::TryComputeDependencyHash(const TArray<String>& Depend
     return true;
 }
 
-bool FShaderBytecodeCache::CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutShaderCode)
+bool FShaderBytecodeCache::CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutShaderCode, EShaderJobRecording Recording)
 {
     FShaderCompiler& Compiler = FShaderCompiler::Get();
 
@@ -197,6 +211,15 @@ bool FShaderBytecodeCache::CompileFromFile(const String& Filename, const FShader
     {
         return Compiler.CompileFromFile(Filename, CompileInfo, OutShaderCode);
     }
+
+#if EDITOR_BUILD
+    if (Recording == EShaderJobRecording::Record)
+    {
+        Cache->RecordJob(Filename, CompileInfo);
+    }
+#else
+    UNREFERENCED_VARIABLE(Recording);
+#endif
 
     const uint64 CompileHash = Compiler.ComputeCompileHash(Filename, CompileInfo);
     if (Cache->Find(CompileHash, OutShaderCode))
@@ -265,6 +288,34 @@ void FShaderBytecodeCache::Add(uint64 CompileHash, const TArray<uint8>& ShaderCo
 
     Entries.Add(CompileHash, ::Move(NewEntry));
     bDirty = true;
+}
+
+bool FShaderBytecodeCache::Contains(uint64 CompileHash)
+{
+    TScopedLock Lock(EntriesCS);
+    return Entries.Contains(CompileHash);
+}
+
+void FShaderBytecodeCache::RecordJob(const String& Filename, const FShaderCompileInfo& CompileInfo)
+{
+    FShaderCompileJob Job = FShaderCompileJob::FromCompileInfo(Filename, CompileInfo);
+    Job.Name = File::ExtractFilenameWithoutExtension(Filename) + ':' + CompileInfo.EntryPoint;
+
+    TScopedLock Lock(RecordedJobsCS);
+
+    bool bAlreadyRecorded = false;
+    RecordedJobKeys.Add(Job.GetKey(), &bAlreadyRecorded);
+
+    if (!bAlreadyRecorded)
+    {
+        RecordedJobs.Emplace(::Move(Job));
+    }
+}
+
+TArray<FShaderCompileJob> FShaderBytecodeCache::GetRecordedJobs()
+{
+    TScopedLock Lock(RecordedJobsCS);
+    return RecordedJobs;
 }
 
 int32 FShaderBytecodeCache::GetNumEntries()

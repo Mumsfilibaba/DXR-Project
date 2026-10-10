@@ -29,7 +29,7 @@
 #include <RHI/RHI.h>
 #include <RHI/RHICommandList.h>
 #include <ShaderCompiler/ShaderCompiler.h>
-#include <RendererCore/Shaders/ShaderBytecodeCache.h>
+#include <ShaderCompiler/ShaderBytecodeCache.h>
 #include <RendererCore/Shaders/ShaderCache.h>
 #include <RendererCore/TextureFactory.h>
 #include <LaunchProgram/ProgramEntry.h>

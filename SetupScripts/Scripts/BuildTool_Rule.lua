@@ -141,6 +141,10 @@ function BuildRules(Name)
         -- Location for the build, this overrides the default behavior
         OutputPathOverride = "",
 
+        -- File name of the built binary without extension, Name when empty. Lets a program take the name of a
+        -- module it links, the program database keeps Name so it does not overwrite the module's.
+        OutputName = "",
+
         -- Should use precompiled headers (PreCompiled.h / PreCompiled.cpp)
         bUsePrecompiledHeaders = false,
 
@@ -228,6 +232,9 @@ function BuildRules(Name)
         -- even though they are not module dependencies, such as the game library
         ForceLinkNames = {},
 
+        -- Pre-build steps (strings), run before anything in the project compiles
+        PreBuildCommands = {},
+
         -- Post-build steps (strings)
         PostBuildCommands = {},
 
@@ -282,6 +289,7 @@ function BuildRules(Name)
     function self.AddLibraryPaths(InLibraryPaths) AddUniqueElements(InLibraryPaths, self.LibraryPaths) end
     function self.AddLinkOptions(InLinkOptions) AddUniqueElements(InLinkOptions, self.LinkOptions) end
     function self.AddForceLinkNames(InForceLinkNames) AddUniqueElements(InForceLinkNames, self.ForceLinkNames) end
+    function self.AddPreBuildCommands(InPreBuildCommands) AddUniqueElements(InPreBuildCommands, self.PreBuildCommands) end
     function self.AddPostBuildCommands(InPostBuildCommands) AddUniqueElements(InPostBuildCommands, self.PostBuildCommands) end
     function self.AddCustomBuildRules(InCustomBuildRules) AddUniqueElements(InCustomBuildRules, self.CustomBuildRules) end
 
@@ -319,6 +327,10 @@ function BuildRules(Name)
     function self.GetTargetFolderPath()
         local BasePath = JoinPath(JoinPath(GetBuildFolderPath(), "bin"), GetOutputConfigPath())
         return (type(self.OutputPathOverride) == "string" and self.OutputPathOverride ~= "") and JoinPath(BasePath, self.OutputPathOverride) or BasePath
+    end
+
+    function self.GetOutputName()
+        return (type(self.OutputName) == "string" and self.OutputName ~= "") and self.OutputName or self.Name
     end
 
     -- Object files directory
@@ -480,6 +492,12 @@ function BuildRules(Name)
             LogInfo("Target location '%s'", FullTargetFolderPath)
             targetdir(FullTargetFolderPath)
 
+            if self.GetOutputName() ~= self.Name then
+                LogInfo("Target name '%s'", self.GetOutputName())
+                targetname(self.GetOutputName())
+                symbolspath(JoinPath(FullTargetFolderPath, self.Name .. ".pdb"))
+            end
+
             local FullIntermediateFolderPath = self.GetObjectFilesFolderPath()
             LogInfo("Object files location '%s'", FullIntermediateFolderPath)
             objdir(FullIntermediateFolderPath)
@@ -573,6 +591,11 @@ function BuildRules(Name)
                 PrintTable("  Embed '%s'", self.ExtraEmbedNames)
             end
 
+            LogInfo("--- Pre-Build-Commands '%s' (Num Pre-Build-Commands=%d) ---", self.Name, #self.PreBuildCommands)
+            if #self.PreBuildCommands > 0 then
+                PrintTable("  Pre-Build-Command '%s'", self.PreBuildCommands)
+            end
+
             LogInfo("--- Post-Build-Commands '%s' (Num Post-Build-Commands=%d) ---", self.Name, #self.PostBuildCommands)
             if #self.PostBuildCommands > 0 then
                 PrintTable("  Post-Build-Command '%s'", self.PostBuildCommands)
@@ -592,6 +615,7 @@ function BuildRules(Name)
             defines(self.Defines)
             libdirs(self.LibraryPaths)
             files(self.Files)
+            prebuildcommands(self.PreBuildCommands)
             postbuildcommands(self.PostBuildCommands)
 
             for _, CustomBuildRule in ipairs(self.CustomBuildRules) do
@@ -717,7 +741,7 @@ function BuildRules(Name)
                     if #RuntimeLibraries > 0 then
                         PrintTable("  Bundle '%s'", RuntimeLibraries)
 
-                        local FrameworksPath = JoinPath(TargetPath, self.Name .. ".app/Contents/Frameworks")
+                        local FrameworksPath = JoinPath(TargetPath, self.GetOutputName() .. ".app/Contents/Frameworks")
 
                         local CopyCommands = {
                             ('mkdir -p "%s"'):format(FrameworksPath)

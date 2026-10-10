@@ -4,12 +4,14 @@
 #include "Core/Tasks/Tasks.h"
 #include "Core/Threading/Atomic.h"
 #include "RendererCore/RenderSettings.h"
-#include "RendererCore/Shaders/ShaderBytecodeCache.h"
+#include "ShaderCompiler/ShaderBytecodeCache.h"
 #include "RendererCore/Shaders/ShaderCache.h"
 #include "RendererCore/Shaders/ShaderManifest.h"
 #include "RHI/RHI.h"
 #include "RHI/RHIPipelineStateCache.h"
 #include "ShaderCompiler/ShaderCompiler.h"
+#include "ShaderCompiler/ShaderCompileJob.h"
+#include "ShaderCompiler/ShaderJobFile.h"
 
 FShaderCache* FShaderCache::ShaderCache = nullptr;
 
@@ -65,7 +67,22 @@ static bool ParseRHIType(StringView Text, ERHIType& OutRHIType)
     return false;
 }
 
-static FShaderPermutationDesc CreateTargetPermutationDesc(ERHIType TargetRHI, int32 PermutationID)
+#if EDITOR_BUILD
+static void SaveShaderJobFile(StringView /* Arguments */)
+{
+    if (FShaderCache* Cache = FShaderCache::TryGet())
+    {
+        Cache->SaveJobFile();
+    }
+}
+
+static FAutoConsoleCommand CCmdSaveShaderJobFile(
+    "Shaders.SaveJobFile",
+    "Writes every shader permutation used so far, for every RHI, to the job file the ShaderCompiler tool compiles",
+    FConsoleCommandDelegate::CreateStatic(&SaveShaderJobFile));
+#endif
+
+FShaderPermutationDesc FShaderCache::CreateTargetPermutationDesc(ERHIType TargetRHI, int32 PermutationID)
 {
     if (RHI::IsInitialized() && RHI::Device->GetRHIType() == TargetRHI)
     {
@@ -100,10 +117,14 @@ static void CompileAllShaders(StringView Arguments)
     }
 
     FShaderCompiler* Compiler = FShaderCompiler::TryGet();
+
     const EShaderOutputLanguage OutputLanguage = RHI::GetShaderOutputLanguage(TargetRHI);
-    if (!Compiler || !RHI::IsRHISupportedByPlatform(TargetRHI) || !Compiler->IsOutputLanguageSupported(OutputLanguage))
+    const EShaderCompileRoute   Route          = Compiler ? Compiler->GetRoute(OutputLanguage) : EShaderCompileRoute::Unavailable;
+
+    const bool bCanCompile = Route == EShaderCompileRoute::Remote || (Route == EShaderCompileRoute::Local && Compiler->CanCompileLocally(OutputLanguage));
+    if (!bCanCompile)
     {
-        LOG_ERROR("Shaders.CompileAll: %s (%s) cannot be compiled on this platform", ToString(TargetRHI), ToString(OutputLanguage));
+        LOG_ERROR("Shaders.CompileAll: %s (%s) cannot be compiled on this platform or by the remote shader compiler", ToString(TargetRHI), ToString(OutputLanguage));
         return;
     }
 
@@ -118,7 +139,7 @@ static void CompileAllShaders(StringView Arguments)
     {
         for (int32 PermutationID = 0; PermutationID < Type->GetPermutationCount(); ++PermutationID)
         {
-            const FShaderPermutationDesc Desc = CreateTargetPermutationDesc(TargetRHI, PermutationID);
+            const FShaderPermutationDesc Desc = FShaderCache::CreateTargetPermutationDesc(TargetRHI, PermutationID);
             if (Type->ShouldCompilePermutation(Desc))
             {
                 Work.Add({ Type, Desc });
@@ -139,7 +160,7 @@ static void CompileAllShaders(StringView Arguments)
         const FShaderCompileInfo CompileInfo(Item.Type->GetEntryPoint(), Environment.ShaderModel, Item.Type->GetStage(), OutputLanguage, Environment.Defines);
 
         TArray<uint8> ShaderCode;
-        if (!FShaderBytecodeCache::CompileFromFile(Item.Type->GetSourceFile(), CompileInfo, ShaderCode))
+        if (!FShaderBytecodeCache::CompileFromFile(Item.Type->GetSourceFile(), CompileInfo, ShaderCode, EShaderJobRecording::Skip))
         {
             LOG_ERROR("Shaders.CompileAll: %s permutation %d failed (%s, entry '%s')", Item.Type->GetName(), Item.Desc.PermutationID, Item.Type->GetSourceFile(), Item.Type->GetEntryPoint());
             NumFailed.Add(1);
@@ -187,6 +208,10 @@ void FShaderCache::Release()
         // Startup never waits on the warm, but shutdown has to, or the workers outlive the cache they are filling.
         ShaderCache->PrewarmTask.Wait();
         ShaderCache->SaveManifest();
+
+#if EDITOR_BUILD
+        ShaderCache->SaveJobFile();
+#endif
 
         delete ShaderCache;
         ShaderCache = nullptr;
@@ -262,6 +287,82 @@ void FShaderCache::SaveManifest()
     bManifestDirty = false;
 }
 
+#if EDITOR_BUILD
+void FShaderCache::SaveJobFile()
+{
+    constexpr ERHIType TargetRHIs[] =
+    {
+        ERHIType::D3D11,
+        ERHIType::D3D12,
+        ERHIType::Vulkan,
+        ERHIType::Metal,
+    };
+
+    const String FilePath = FShaderJobFile::GetDefaultFilePath();
+
+    FShaderJobFile JobFile;
+    String         LoadError;
+
+    if (!JobFile.Load(FilePath, LoadError))
+    {
+        LOG_WARNING("[FShaderCache]: Rewriting '%s' from scratch: %s", *FilePath, *LoadError);
+        JobFile = FShaderJobFile();
+    }
+
+    int32 NumAdded = 0;
+    {
+        TScopedLock Lock(RequestedPermutationsCS);
+
+        RequestedPermutations.Foreach([&](FShaderType* Type, const TSet<int32>& PermutationIDs)
+        {
+            const TArray<int32> PermutationList = PermutationIDs.GetValues();
+
+            for (ERHIType TargetRHI : TargetRHIs)
+            {
+                const EShaderOutputLanguage OutputLanguage = RHI::GetShaderOutputLanguage(TargetRHI);
+
+                for (int32 PermutationID : PermutationList)
+                {
+                    const FShaderPermutationDesc Desc = CreateTargetPermutationDesc(TargetRHI, PermutationID);
+                    if (!Type->ShouldCompilePermutation(Desc))
+                    {
+                        continue;
+                    }
+
+                    FShaderCompilationEnvironment Environment;
+                    Type->BuildCompilationEnvironment(Desc, Environment);
+
+                    const FShaderCompileInfo CompileInfo(Type->GetEntryPoint(), Environment.ShaderModel, Type->GetStage(), OutputLanguage, Environment.Defines);
+
+                    FShaderCompileJob Job = FShaderCompileJob::FromCompileInfo(Type->GetSourceFile(), CompileInfo);
+                    Job.Name = String::Printf("%s#%d", Type->GetName(), PermutationID);
+                    NumAdded += JobFile.Add(ToString(TargetRHI), ::Move(Job)) ? 1 : 0;
+                }
+            }
+        });
+    }
+
+    // FXC lowers SM 6.0 to 6.2 requests to 5.0, so the standalone compiles only need their output language changed
+    if (FShaderBytecodeCache* BytecodeCache = FShaderBytecodeCache::TryGet())
+    {
+        for (const FShaderCompileJob& Recorded : BytecodeCache->GetRecordedJobs())
+        {
+            for (ERHIType TargetRHI : TargetRHIs)
+            {
+                FShaderCompileJob Job = Recorded;
+                Job.OutputLanguage = RHI::GetShaderOutputLanguage(TargetRHI);
+                NumAdded += JobFile.Add(ToString(TargetRHI), ::Move(Job)) ? 1 : 0;
+            }
+        }
+    }
+
+    if (NumAdded > 0 && JobFile.Save(FilePath))
+    {
+        LOG_INFO("[FShaderCache]: Added %d shader jobs to '%s' (%d in total)", NumAdded, *FilePath, JobFile.GetEntries().Size());
+    }
+}
+#endif
+
 void FShaderCache::FlushCompiledShaders()
 {
     {
@@ -335,14 +436,14 @@ FRHIShaderRef FShaderCache::GetOrCompile(FShaderType& Type, int32 PermutationID)
     const EShaderOutputLanguage OutputLanguage = RHI::GetShaderOutputLanguage();
     const FShaderCompileInfo    CompileInfo    = FShaderCompileInfo(Type.GetEntryPoint(), Environment.ShaderModel, Type.GetStage(), OutputLanguage, Environment.Defines);
 
-    // DXBC is always SM 5.0 and FXC rejects the requests it cannot lower itself
+    // DXBC is always SM 5.0 and FXC rejects the requests it cannot lower itself.
     if (OutputLanguage != EShaderOutputLanguage::DXBC && RHI::MaxShaderModel != EShaderModel::Unknown && Environment.ShaderModel > RHI::MaxShaderModel)
     {
         LOG_ERROR("'%s' requests Shader Model %s but the device supports at most %s", Type.GetSourceFile(), ToString(Environment.ShaderModel), ToString(RHI::MaxShaderModel));
     }
 
     TArray<uint8> ShaderCode;
-    if (!FShaderBytecodeCache::CompileFromFile(Type.GetSourceFile(), CompileInfo, ShaderCode))
+    if (!FShaderBytecodeCache::CompileFromFile(Type.GetSourceFile(), CompileInfo, ShaderCode, EShaderJobRecording::Skip))
     {
         LOG_ERROR("Failed to compile %s permutation %d (%s, entry '%s')", Type.GetName(), PermutationID, Type.GetSourceFile(), Type.GetEntryPoint());
         return FRHIShaderRef();

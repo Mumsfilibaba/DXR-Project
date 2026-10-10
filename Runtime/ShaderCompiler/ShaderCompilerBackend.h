@@ -1,5 +1,6 @@
 #pragma once
 #include "ShaderCompiler/ShaderCompiler.h"
+#include "ShaderCompiler/ShaderCompilerIdentity.h"
 #include "ShaderCompiler/ShaderPreprocessor.h"
 #include "ShaderCore/ShaderReflection.h"
 
@@ -37,8 +38,8 @@ public:
     NODISCARD virtual const CHAR* GetName() const = 0;
     NODISCARD virtual bool SupportsOutputLanguage(EShaderOutputLanguage OutputLanguage) const = 0;
 
-    /** Adds the compiler identity (version) and every flag that changes the output */
-    virtual void HashCompileSettings(const FShaderCompileInfo& CompileInfo, const String& IncludeDir, uint64& InOutHash) const = 0;
+    /** Must not depend on paths or anything else that differs between machines */
+    NODISCARD virtual FShaderCompilerIdentity GetIdentity() const = 0;
 
     /** @brief Rewrites the preprocessed source into what the compiler accepts. Errors are added to InOutSource.Errors. */
     virtual bool TranslateSource(FShaderPreprocessorOutput& /* InOutSource */) const

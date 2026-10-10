@@ -24,3 +24,6 @@ AddBrowseOnlyModule("LaunchProgram")
 
 -- Generate the workspace
 GenerateWorkspace()
+
+-- The RHI modules build and run the ShaderCompiler tool from it in a pre-build command
+GenerateToolsWorkspace()

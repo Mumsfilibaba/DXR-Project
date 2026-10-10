@@ -140,21 +140,34 @@ VulkanRHI.AddLibraryPaths({
     VulkanLibraries,
 })
 
--- Fall back to the dxc the Vulkan SDK ships, which is the only one available on platforms where
--- none is committed to ThirdParty.
-local DxcExecutable = ResolveDxcExecutable(VulkanBinaries)
-LogHighlight('DXC path=%s', DxcExecutable)
+-- The internal shaders are compiled into headers in Generated/ before the module builds. The ShaderCompiler tool is
+-- built in the tools workspace first, and only rewrites a header when something it reads has changed.
+local ShaderCommands =
+{
+    GetShaderCompilerToolBuildCommand(),
+}
 
--- The buffer-clear shader is compiled to SPIR-V headers as a build step so that creating the clear
--- pipelines never has to touch the shader compiler or the disk.
-AddGeneratedShaderHeaderRule(VulkanRHI, {
-    Compiler     = DxcExecutable,
-    Source       = 'Shaders/Internal/ClearBufferUAV.hlsl',
-    Arguments    = GetSpirvShaderArguments('cs_6_2'),
-    SymbolPrefix = 'GVulkanClearBufferUAV_',
-    Permutations = {
-        { Name = 'Float', Defines = { 'CLEAR_ELEMENT_UINT=0', 'CLEAR_ELEMENT_SINT=0' } },
-        { Name = 'Uint',  Defines = { 'CLEAR_ELEMENT_UINT=1', 'CLEAR_ELEMENT_SINT=0' } },
-        { Name = 'Sint',  Defines = { 'CLEAR_ELEMENT_UINT=0', 'CLEAR_ELEMENT_SINT=1' } },
-    },
+local ClearBufferPermutations =
+{
+    { Name = 'Float', Defines = { 'CLEAR_ELEMENT_UINT=0', 'CLEAR_ELEMENT_SINT=0' } },
+    { Name = 'Uint',  Defines = { 'CLEAR_ELEMENT_UINT=1', 'CLEAR_ELEMENT_SINT=0' } },
+    { Name = 'Sint',  Defines = { 'CLEAR_ELEMENT_UINT=0', 'CLEAR_ELEMENT_SINT=1' } },
+}
+
+for _, Permutation in ipairs(ClearBufferPermutations) do
+    table.insert(ShaderCommands, GetShaderHeaderCommand(VulkanRHI, {
+        Source  = 'Shaders/Internal/ClearBufferUAV.hlsl',
+        Entry   = 'Main',
+        Stage   = 'Compute',
+        Model   = 'SM_6_2',
+        RHI     = 'Vulkan',
+        Defines = Permutation.Defines,
+        Header  = 'Generated/ClearBufferUAV_' .. Permutation.Name .. '.h',
+        Symbol  = 'GVulkanClearBufferUAV_' .. Permutation.Name,
+    }))
+end
+
+-- One command, a build event only reports the exit code of its last command
+VulkanRHI.AddPreBuildCommands({
+    table.concat(ShaderCommands, ' && '),
 })

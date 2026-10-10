@@ -172,6 +172,17 @@ bool FShaderCodeReader::ReadHeader(const TArray<uint8>& ShaderCode, FShaderCodeH
     return true;
 }
 
+bool FShaderCodeReader::ReadEmbedded(TArrayView<const uint8> EmbeddedCode, TArray<uint8>& OutShaderCode, FShaderCodeView& OutView, String* OutError)
+{
+    OutShaderCode.Clear();
+    if (!EmbeddedCode.IsEmpty())
+    {
+        OutShaderCode.Append(EmbeddedCode.Data(), EmbeddedCode.Size());
+    }
+
+    return Read(OutShaderCode, OutView, OutError);
+}
+
 bool FShaderCodeReader::Read(const TArray<uint8>& ShaderCode, FShaderCodeView& OutView, String* OutError)
 {
     FShaderCodeView View;

@@ -22,14 +22,26 @@ struct FRemoteConsoleRequest
 
 struct FRemoteConsoleClient
 {
-    uint32         ClientId = 0;
-    FNetworkSocket Socket { ESocketType::TCP };
+    FRemoteConsoleClient(uint32 InClientId, FNetworkSocket&& InSocket, const String& InPeerAddress, const String& InSendBuffer)
+        : ClientId(InClientId)
+        , Socket(::Move(InSocket))
+        , PeerAddress(InPeerAddress)
+        , ReceiveBuffer()
+        , SendBuffer(InSendBuffer)
+        , CloseReason()
+        , bSubscribedToLog(false)
+        , bPendingClose(false)
+    {
+    }
+
+    uint32         ClientId;
+    FNetworkSocket Socket;
     String         PeerAddress;
     String         ReceiveBuffer;
     String         SendBuffer;
     String         CloseReason;      // Logged by the network thread once the client is removed
-    bool           bSubscribedToLog = false;
-    bool           bPendingClose    = false;
+    bool           bSubscribedToLog;
+    bool           bPendingClose;
 };
 
 class FRemoteConsoleLogDevice final : public IOutputDevice

@@ -55,62 +55,6 @@ static uint16 ComputeEffectiveRegister(EShaderBindingSpace Space, uint8 Register
     return static_cast<uint16>(Register);
 }
 
-static bool FindDescriptorDecorationOffsets(const uint32* Words, uint32 NumWords, uint32 Set, uint32 Binding, FSpirvBindingOffsets& OutOffsets)
-{
-    constexpr uint16 OpDecorate              = 71;
-    constexpr uint32 DecorationBinding       = 33;
-    constexpr uint32 DecorationDescriptorSet = 34;
-
-    struct FDecorations
-    {
-        uint32 SetValue      = UINT32_MAX;
-        uint32 SetOffset     = UINT32_MAX;
-        uint32 BindingValue  = UINT32_MAX;
-        uint32 BindingOffset = UINT32_MAX;
-    };
-
-    TMap<uint32, FDecorations> DecorationsById;
-    for (uint32 Read = 5; Read < NumWords;)
-    {
-        const uint16 OpCode    = static_cast<uint16>(Words[Read] & 0xFFFFu);
-        const uint16 InstWords = static_cast<uint16>(Words[Read] >> 16);
-        if (InstWords == 0 || Read + InstWords > NumWords)
-        {
-            return false;
-        }
-
-        if (OpCode == OpDecorate && InstWords == 4)
-        {
-            FDecorations& Decorations = DecorationsById.FindOrAdd(Words[Read + 1]);
-            if (Words[Read + 2] == DecorationDescriptorSet)
-            {
-                Decorations.SetValue  = Words[Read + 3];
-                Decorations.SetOffset = Read + 3;
-            }
-            else if (Words[Read + 2] == DecorationBinding)
-            {
-                Decorations.BindingValue  = Words[Read + 3];
-                Decorations.BindingOffset = Read + 3;
-            }
-        }
-
-        Read += InstWords;
-    }
-
-    uint32 NumMatches = 0;
-    DecorationsById.Foreach([&](const uint32&, const FDecorations& Decorations)
-    {
-        if (Decorations.SetValue == Set && Decorations.BindingValue == Binding && Decorations.SetOffset < UINT16_MAX && Decorations.BindingOffset < UINT16_MAX)
-        {
-            OutOffsets.SetWordOffset     = static_cast<uint16>(Decorations.SetOffset);
-            OutOffsets.BindingWordOffset = static_cast<uint16>(Decorations.BindingOffset);
-            NumMatches++;
-        }
-    });
-
-    return NumMatches == 1;
-}
-
 FVulkanDevice* FVulkanShaderModule::StaticDevice = nullptr;
 
 FVulkanShaderModule::FVulkanShaderModule(FVulkanDevice* InDevice, VkShaderModule InShaderModule)
@@ -161,32 +105,6 @@ bool FVulkanShader::Initialize(const FShaderCodeView& InCode)
     }
 
     return BuildShaderInfo(InCode);
-}
-
-bool FVulkanShader::CreateInternalShaderCode(EShaderStage Stage, TArrayView<const uint8> Spirv, FShaderReflection Reflection, TArray<uint8>& OutShaderCode)
-{
-    const uint32* Words    = reinterpret_cast<const uint32*>(Spirv.Data());
-    const uint32  NumWords = static_cast<uint32>(Spirv.Size() / sizeof(uint32));
-
-    Reflection.SpirvOffsets.Clear();
-    for (const FShaderResourceBinding& Binding : Reflection.Bindings)
-    {
-        const uint32 Set = Binding.Space == EShaderBindingSpace::RayTracingLocal ? VULKAN_RAY_TRACING_LOCAL_SET : 0;
-        if (!FindDescriptorDecorationOffsets(Words, NumWords, Set, Binding.Register, Reflection.SpirvOffsets.Emplace()))
-        {
-            VULKAN_ERROR("Internal shader binding (set %u, binding %u) was not found exactly once", Set, static_cast<uint32>(Binding.Register));
-            return false;
-        }
-    }
-
-    String Error;
-    if (!FShaderCodeWriter::Write(EShaderOutputLanguage::SPIRV, Stage, EShaderCodeFlags::None, Reflection, Spirv, OutShaderCode, &Error))
-    {
-        VULKAN_ERROR("Failed to write the internal shader code: %s", *Error);
-        return false;
-    }
-
-    return true;
 }
 
 FVulkanShaderModuleRef FVulkanShader::GetOrCreateShaderModule(FVulkanPipelineLayout* Layout)

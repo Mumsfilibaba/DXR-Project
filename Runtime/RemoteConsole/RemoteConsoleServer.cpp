@@ -515,12 +515,7 @@ void FRemoteConsoleServer::AcceptClients(FNetworkSocket* ListenSocket, TArray<St
             continue;
         }
 
-        TUniquePtr<FRemoteConsoleClient> Client = MakeUniquePtr<FRemoteConsoleClient>();
-        Client->ClientId    = NextClientId++;
-        Client->Socket      = ::Move(Socket);
-        Client->PeerAddress = PeerText;
-        Client->SendBuffer  = HelloLine;
-        Clients.Add(::Move(Client));
+        Clients.Add(MakeUniquePtr<FRemoteConsoleClient>(NextClientId++, ::Move(Socket), PeerText, HelloLine));
         NumConnectedClients.Store(Clients.Size());
 
         OutLogMessages.Add(String::Printf("[RemoteConsole] Remote console connected from %s (%d connected)", *PeerText, Clients.Size()));

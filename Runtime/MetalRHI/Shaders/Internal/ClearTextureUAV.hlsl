@@ -1,3 +1,5 @@
+#include "CoreDefines.hlsli"
+
 #ifndef CLEAR_ELEMENT_UINT
     #define CLEAR_ELEMENT_UINT 0
 #endif
@@ -16,11 +18,9 @@
     #define CLEAR_DIMENSION CLEAR_DIMENSION_2D
 #endif
 
-[[vk::push_constant]]
-struct FShaderBlockConstants
-{
+SHADER_CONSTANT_BLOCK_BEGIN
     uint4 ClearValue;
-} Constants;
+SHADER_CONSTANT_BLOCK_END
 
 #if CLEAR_ELEMENT_UINT
     #define CLEAR_ELEMENT_TYPE  uint4
@@ -34,15 +34,15 @@ struct FShaderBlockConstants
 #endif
 
 #if CLEAR_DIMENSION == CLEAR_DIMENSION_1D
-    [[vk::image_format("unknown")]] RWTexture1D<CLEAR_ELEMENT_TYPE> OutputTexture : register(u0);
+    TEXTURE_FORMAT_UNKNOWN RWTexture1D<CLEAR_ELEMENT_TYPE> OutputTexture : register(u0);
 #elif CLEAR_DIMENSION == CLEAR_DIMENSION_1D_ARRAY
-    [[vk::image_format("unknown")]] RWTexture1DArray<CLEAR_ELEMENT_TYPE> OutputTexture : register(u0);
+    TEXTURE_FORMAT_UNKNOWN RWTexture1DArray<CLEAR_ELEMENT_TYPE> OutputTexture : register(u0);
 #elif CLEAR_DIMENSION == CLEAR_DIMENSION_2D
-    [[vk::image_format("unknown")]] RWTexture2D<CLEAR_ELEMENT_TYPE> OutputTexture : register(u0);
+    TEXTURE_FORMAT_UNKNOWN RWTexture2D<CLEAR_ELEMENT_TYPE> OutputTexture : register(u0);
 #elif CLEAR_DIMENSION == CLEAR_DIMENSION_2D_ARRAY
-    [[vk::image_format("unknown")]] RWTexture2DArray<CLEAR_ELEMENT_TYPE> OutputTexture : register(u0);
+    TEXTURE_FORMAT_UNKNOWN RWTexture2DArray<CLEAR_ELEMENT_TYPE> OutputTexture : register(u0);
 #else
-    [[vk::image_format("unknown")]] RWTexture3D<CLEAR_ELEMENT_TYPE> OutputTexture : register(u0);
+    TEXTURE_FORMAT_UNKNOWN RWTexture3D<CLEAR_ELEMENT_TYPE> OutputTexture : register(u0);
 #endif
 
 // The dispatch is sized from the texture desc, so every write is bounds-checked against the view itself

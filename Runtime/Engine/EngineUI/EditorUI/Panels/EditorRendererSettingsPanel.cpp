@@ -4,6 +4,7 @@
 #include "RHI/RHI.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/CheckBox.h"
+#include "Application/Elements/EditableText.h"
 #include "Application/Elements/Expander.h"
 #include "Application/Elements/NumericEntry.h"
 #include "Application/Elements/PropertyTable.h"
@@ -11,6 +12,7 @@
 #include "Application/Elements/SearchBox.h"
 #include "Application/Elements/TextBlock.h"
 #include "Application/Menus/ComboBox.h"
+#include "ShaderCompiler/ShaderCompiler.h"
 
 static const CHAR* const GCascadeResolutions[]      = { "512", "1024", "2048", "4096" };
 static const int32       GCascadeResolutionValues[] = { 512, 1024, 2048, 4096 };
@@ -26,8 +28,14 @@ static const CHAR* const GFilterFunctions[]    = { "Grid", "Poisson Disk", "Voge
 static const CHAR* const GReflectionSamplers[] = { "White noise", "Halton", "Blue noise" };
 static const CHAR* const GTonemappers[]        = { "Default", "ACES", "Reinhard", "Uncharted 2" };
 
-// The section whose rows the capability line above them explains
-static const CHAR* const GRayTracingSection = "Ray Tracing";
+static const CHAR* const GRayTracingSection     = "Ray Tracing";
+static const CHAR* const GShaderCompilerSection = "Shader Compiler";
+
+static String DescribeShaderCompilerStatus()
+{
+    const FShaderCompiler* Compiler = FShaderCompiler::TryGet();
+    return Compiler ? Compiler->DescribeRemoteStatus() : String("Not initialized");
+}
 
 static String DescribeRayTracingSupport()
 {
@@ -64,6 +72,9 @@ static String DescribeRayTracingSupport()
 
 #define SETTING_COMBO_VALUES(Section, Label, Name, Items, Values) \
     { Section, Label, Name, ERendererSettingKind::ComboValues, 0.0f, 0.0f, 0.0f, Items, Values, int32(ARRAY_COUNT(Items)), nullptr }
+
+#define SETTING_STRING(Section, Label, Name) \
+    { Section, Label, Name, ERendererSettingKind::String, 0.0f, 0.0f, 0.0f, nullptr, nullptr, 0, nullptr }
 
 static const FRendererSetting GRendererSettings[] =
 {
@@ -152,6 +163,11 @@ static const FRendererSetting GRendererSettings[] =
     SETTING_BOOL("Debug", "Enable debug-draw AABBs",        "Renderer.Debug.DrawAABBs"),
     SETTING_BOOL("Debug", "Enable debug-draw point-lights", "Renderer.Debug.DrawPointLights"),
     SETTING_BOOL("Debug", "Enable debug-draw light-probes", "Renderer.Debug.LightProbes"),
+
+    SETTING_BOOL  ("Shader Compiler", "Use remote shader compiler", "RHI.ShaderCompiler.UseRemote"),
+    SETTING_STRING("Shader Compiler", "Remote host",                "RHI.ShaderCompiler.RemoteHost"),
+    SETTING_INT   ("Shader Compiler", "Remote port",                "RHI.ShaderCompiler.RemotePort", 1, 65535),
+    SETTING_BOOL  ("Shader Compiler", "Fall back to local",         "RHI.ShaderCompiler.RemoteFallbackToLocal"),
 };
 
 #undef SETTING_BOOL
@@ -159,6 +175,7 @@ static const FRendererSetting GRendererSettings[] =
 #undef SETTING_FLOAT
 #undef SETTING_COMBO
 #undef SETTING_COMBO_VALUES
+#undef SETTING_STRING
 
 static const FRendererSubsection GRendererSubsections[] =
 {
@@ -227,6 +244,7 @@ void FEditorRendererSettingsPanel::Release()
     ScrollBox.Reset();
     Column.Reset();
     SearchBox.Reset();
+    ShaderCompilerStatus.Reset();
     Rows.Clear();
 
     FEditorPanel::Release();
@@ -247,6 +265,7 @@ void FEditorRendererSettingsPanel::RebuildSections()
 {
     Column->ClearSlots();
     Rows.Clear();
+    ShaderCompilerStatus.Reset();
 
     FConsoleManager& ConsoleManager = FConsoleManager::Get();
 
@@ -323,6 +342,16 @@ void FEditorRendererSettingsPanel::RebuildSections()
 
                 CurrentTable->AddRow("Hardware support", FTextBlock::Create(SupportDesc)).ToolTipText =
                     "What this RHI reports, which is what decides whether the rows below it do anything";
+            }
+            else if (String(Setting.Section) == GShaderCompilerSection)
+            {
+                FTextBlock::FDesc StatusDesc;
+                StatusDesc.Text = DescribeShaderCompilerStatus();
+                StatusDesc.Font = FEditorStyle::GetFonts().Monospace;
+
+                ShaderCompilerStatus = FTextBlock::Create(StatusDesc);
+                CurrentTable->AddRow("Status", ShaderCompilerStatus).ToolTipText =
+                    "Where shaders compile right now. Shaders already compiled stay as they are until Renderer.RecompileShaders.";
             }
         }
 
@@ -440,6 +469,21 @@ TSharedPtr<FVisualElement> FEditorRendererSettingsPanel::BuildEditor(const FRend
 
             return FComboBox::Create(Desc);
         }
+
+        case ERendererSettingKind::String:
+        {
+            FEditableText::FDesc Desc;
+            Desc.Text = Variable->GetString();
+            Desc.Font = FEditorStyle::GetFonts().Body;
+
+            TSharedPtr<FEditableText> TextEditor = FEditableText::Create(Desc);
+            TextEditor->GetOnTextCommitted() = FOnTextCommittedDelegate::CreateLambda([Variable](const String& Text)
+            {
+                Variable->SetString(Text, EConsoleVariableFlags::SetByCode);
+            });
+
+            return TextEditor;
+        }
     }
 
     return nullptr;
@@ -503,6 +547,27 @@ void FEditorRendererSettingsPanel::RefreshValues()
             {
                 break;
             }
+
+            case ERendererSettingKind::String:
+            {
+                TSharedPtr<FEditableText> TextEditor = StaticCastSharedPtr<FEditableText>(Row.Editor);
+                const String Value = Row.Variable->GetString();
+                if (!TextEditor->HasKeyboardFocus() && TextEditor->GetText() != Value)
+                {
+                    TextEditor->SetTextSilently(Value);
+                }
+
+                break;
+            }
+        }
+    }
+
+    if (ShaderCompilerStatus)
+    {
+        const String Status = DescribeShaderCompilerStatus();
+        if (ShaderCompilerStatus->GetText() != Status)
+        {
+            ShaderCompilerStatus->SetText(Status);
         }
     }
 }

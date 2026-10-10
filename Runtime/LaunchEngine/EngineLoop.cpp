@@ -30,7 +30,7 @@
 #include "Engine/Engine.h"
 #include "Engine/Performance/ProfileRun.h"
 #include "RendererCore/RenderGraph/RenderGraphResourcePool.h"
-#include "RendererCore/Shaders/ShaderBytecodeCache.h"
+#include "ShaderCompiler/ShaderBytecodeCache.h"
 #include "RendererCore/Shaders/ShaderCache.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/VertexStreamCache.h"

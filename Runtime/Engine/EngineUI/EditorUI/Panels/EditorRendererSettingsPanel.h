@@ -5,6 +5,7 @@
 class FPropertyTable;
 class FScrollBox;
 class FSearchBox;
+class FTextBlock;
 class FVerticalBox;
 struct IConsoleVariable;
 
@@ -19,6 +20,9 @@ enum class ERendererSettingKind : uint8
 
     /** @brief An index into the option list, stored in the variable as the matching entry of OptionValues. */
     ComboValues,
+
+    /** @brief Free text, applied to the variable when Enter is pressed. */
+    String,
 };
 
 struct FRendererSubsection
@@ -76,6 +80,7 @@ private:
     TSharedPtr<FScrollBox>   ScrollBox;
     TSharedPtr<FVerticalBox> Column;
     TSharedPtr<FSearchBox>   SearchBox;
+    TSharedPtr<FTextBlock>   ShaderCompilerStatus;
     TArray<FSettingRow>      Rows;
     String                   FilterText;
 };

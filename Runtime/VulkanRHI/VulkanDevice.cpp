@@ -1685,55 +1685,36 @@ FVulkanComputePipelineStateRHI* FVulkanBufferClearPipelines::GetOrCreatePipeline
 
     bCreationFailed[ClearTypeIndex] = true;
 
-    const uint8* EmbeddedCode = nullptr;
-    uint32       EmbeddedSize = 0;
+    TArrayView<const uint8> EmbeddedCode;
 
     switch (ClearType)
     {
         case EVulkanBufferClearType::Uint:
         {
-            EmbeddedCode = GVulkanClearBufferUAV_Uint;
-            EmbeddedSize = ARRAY_COUNT(GVulkanClearBufferUAV_Uint);
+            EmbeddedCode = TArrayView<const uint8>(GVulkanClearBufferUAV_Uint, static_cast<int32>(ARRAY_COUNT(GVulkanClearBufferUAV_Uint)));
             break;
         }
 
         case EVulkanBufferClearType::Sint:
         {
-            EmbeddedCode = GVulkanClearBufferUAV_Sint;
-            EmbeddedSize = ARRAY_COUNT(GVulkanClearBufferUAV_Sint);
+            EmbeddedCode = TArrayView<const uint8>(GVulkanClearBufferUAV_Sint, static_cast<int32>(ARRAY_COUNT(GVulkanClearBufferUAV_Sint)));
             break;
         }
 
         default:
         {
-            EmbeddedCode = GVulkanClearBufferUAV_Float;
-            EmbeddedSize = ARRAY_COUNT(GVulkanClearBufferUAV_Float);
+            EmbeddedCode = TArrayView<const uint8>(GVulkanClearBufferUAV_Float, static_cast<int32>(ARRAY_COUNT(GVulkanClearBufferUAV_Float)));
             break;
         }
     }
 
-    // Must match Shaders/Internal/ClearBufferUAV.hlsl
-    FShaderReflection Reflection;
-    Reflection.EntryPoint               = "Main";
-    Reflection.Info.ShaderConstantsSize = sizeof(uint32) * 5;
-
-    FShaderResourceBinding& OutputBuffer = Reflection.Bindings.Emplace();
-    OutputBuffer.Type      = EShaderResourceType::RWTypedBuffer;
-    OutputBuffer.Dimension = EShaderResourceDimension::Buffer;
-    OutputBuffer.Register  = 0;
-
-    TArray<uint8> ShaderCode;
-    if (!FVulkanShader::CreateInternalShaderCode(EShaderStage::Compute, TArrayView<const uint8>(EmbeddedCode, static_cast<int32>(EmbeddedSize)), Reflection, ShaderCode))
-    {
-        VULKAN_ERROR("Failed to create the internal buffer-clear shader code");
-        return nullptr;
-    }
-
+    TArray<uint8>              ShaderCode;
     FShaderCodeView            CodeView;
+    String                     ReadError;
     FVulkanComputeShaderRHIRef ClearShader = new FVulkanComputeShaderRHI(&Device);
-    if (!FShaderCodeReader::Read(ShaderCode, CodeView) || !ClearShader->Initialize(CodeView))
+    if (!FShaderCodeReader::ReadEmbedded(EmbeddedCode, ShaderCode, CodeView, &ReadError) || !ClearShader->Initialize(CodeView))
     {
-        VULKAN_ERROR("Failed to create the internal buffer-clear shader");
+        VULKAN_ERROR("Failed to create the internal buffer-clear shader, building VulkanRHI regenerates it: %s", *ReadError);
         return nullptr;
     }
 

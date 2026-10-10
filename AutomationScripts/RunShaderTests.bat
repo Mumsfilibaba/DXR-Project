@@ -95,7 +95,7 @@ goto ParseArgs
 :AfterArgs
 if defined TESTS_NO_PAUSE set "NO_PAUSE=1"
 
-REM --- Bundled compiler first, then PATH, mirroring ResolveDxcExecutable -----
+REM --- The dxc in ThirdParty\DXC\bin first, then the one on PATH --------------
 if not defined DXC (
     if exist "%ROOT%ThirdParty\DXC\bin\dxc.exe" (
         set "DXC=%ROOT%ThirdParty\DXC\bin\dxc.exe"

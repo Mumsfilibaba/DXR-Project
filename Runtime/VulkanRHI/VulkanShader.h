@@ -212,9 +212,6 @@ public:
 
     bool Initialize(const FShaderCodeView& InCode);
 
-    /** @brief Builds the container for shaders the build compiles into headers, which never pass through ShaderCompiler */
-    static bool CreateInternalShaderCode(EShaderStage Stage, TArrayView<const uint8> Spirv, FShaderReflection Reflection, TArray<uint8>& OutShaderCode);
-
     FVulkanShaderModuleRef GetOrCreateShaderModule(class FVulkanPipelineLayout* Layout);
     bool PatchShaderBindings(FSpirvArray& OutSpirv, class FVulkanPipelineLayout* Layout, uint32 DescriptorSetIndex);
 
