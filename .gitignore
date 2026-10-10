@@ -47,6 +47,7 @@ packages/
 *.metalarchive.version.tmp
 *.shadermanifest
 *.shaderbytecode
+*.shaderjob
 *.log
 /Assets/RTASCache
 
