@@ -14,6 +14,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CommandLine.h"
 #include "Core/Misc/Paths.h"
+#include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/BuildInfo.h"
 #include "Core/Misc/FileOutputDevice.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
@@ -109,6 +110,8 @@ static void LogStartupInformation()
     LOG_INFO("Platform=%s %s", BuildInfo::GetPlatformName(), BuildInfo::GetArchitectureName());
     LOG_INFO("Commit=%s%s (%s)", BuildInfo::GetCommit(), BuildInfo::IsWorkingTreeDirty() ? " (modified)" : "", BuildInfo::GetBranch());
     LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
+    LOG_INFO("Executable=%s", FPlatformFile::GetExecutablePath());
+    LOG_INFO("EngineDir=%s (%s)", *Paths::GetEngineDir(), Paths::GetEngineDirSourceName());
     LOG_INFO("ProjectName=%s", *Paths::GetProjectName());
     LOG_INFO("ProjectDir=%s", *Paths::GetProjectDir());
 }
@@ -181,6 +184,14 @@ bool FEngineLoop::LoadCoreModules()
 
 int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 {
+    const bool bIsCommandLineValid = CommandLine::Initialize(Args, NumArgs);
+    if (!Paths::Initialize())
+    {
+        FPlatformApplicationMisc::MessageBox("ERROR", String::Printf("Could not find the engine folder. Pass -engine=<path> to a folder "
+            "that contains %s, or run the executable from inside one.", Paths::EngineIdentityFilename));
+        return -1;
+    }
+
     if (!InitializeOutputDevices())
     {
         return -1;
@@ -189,7 +200,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
     // The earliest point a report has somewhere to go, and everything below here is worth having covered.
     FPlatformMisc::InstallCrashHandler();
 
-    if (!CommandLine::Initialize(Args, NumArgs))
+    if (!bIsCommandLineValid)
     {
         LOG_WARNING("Invalid CommandLine");
     }

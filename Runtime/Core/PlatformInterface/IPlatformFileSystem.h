@@ -186,13 +186,13 @@ struct CORE_API IPlatformFileSystem
         return nullptr;
     }
 
-    /** @return Returns the working directory of the process, or an empty string if it could not be queried */
+    /** @return Returns the working directory of the process using '/' separators, or an empty string if it could not be queried */
     static FORCEINLINE String GetCurrentWorkingDirectory()
     {
         return String();
     }
 
-    /** @return Returns the full path of the running executable */
+    /** @return Returns the full path of the running executable using '/' separators */
     static FORCEINLINE const CHAR* GetExecutablePath()
     {
         return "";

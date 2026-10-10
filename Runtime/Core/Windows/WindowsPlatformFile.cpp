@@ -416,6 +416,14 @@ const CHAR* FWindowsPlatformFile::GetExecutablePath()
         {
             StaticExecutablePath[0] = 0;
         }
+
+        for (CHAR* Character = StaticExecutablePath; *Character; ++Character)
+        {
+            if (*Character == '\\')
+            {
+                *Character = '/';
+            }
+        }
     }
 
     return StaticExecutablePath;
@@ -447,6 +455,7 @@ String FWindowsPlatformFile::GetCurrentWorkingDirectory()
     else
     {
         Result.Resize(Length);
+        Result.ReplaceAll('\\', '/');
         return Result;
     }
 }

@@ -6,6 +6,7 @@
 *.dxrscene text eol=lf
 *.dxrmodel text eol=lf
 *.dxrmaterial text eol=lf
+dxrengine.json text eol=lf
 
 Assets/Scenes/Bistro/BistroExterior.fbx filter=lfs diff=lfs merge=lfs -text
 Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx filter=lfs diff=lfs merge=lfs -text

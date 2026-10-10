@@ -15,7 +15,8 @@ struct FDirectoryEntry;
  *  - Drive letters ("C:/") and UNC roots ("//Server/Share") are only recognized on Windows. Elsewhere "C:" is an
  *    ordinary name and a leading "//" is the same root as "/".
  *  - Paths compare without regard to case on Windows and with regard to it elsewhere.
- * FPlatformFile, by contrast, takes and returns the platform's own paths and interprets nothing.
+ * FPlatformFile, by contrast, takes the platform's own paths and interprets nothing. The paths it returns, such as the
+ * executable and working directory, always use '/', so every path the engine prints or stores uses the same separator.
  */
 
 class CORE_API File
