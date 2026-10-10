@@ -20,7 +20,7 @@ public:
     bool IsDebugLayerEnabled() const { return bEnableDebugLayer; }
     bool IsTearingSupported()  const { return bAllowTearing; }
 
-    String GetDescription() const { return WideToChar(WStringView(AdapterDesc.Description)); }
+    String GetDescription() const { return StringCast<CHAR>(AdapterDesc.Description).ToString(); }
 
     FORCEINLINE const DXGI_ADAPTER_DESC1& GetAdapterDesc() const
     {

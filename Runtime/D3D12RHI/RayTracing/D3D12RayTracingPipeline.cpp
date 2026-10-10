@@ -244,7 +244,7 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
         LocalRootSignatures.Add(D3D12RayGen->GetIdentifier(), RayGenLocalRootSignature);
         GetExportNameArray(ERayTracingShaderRecordKind::RayGeneration).Emplace(D3D12RayGen->GetIdentifier());
 
-        WString RayGenIdentifier = CharToWide(D3D12RayGen->GetIdentifier());
+        WString RayGenIdentifier = StringCast<WIDECHAR>(D3D12RayGen->GetIdentifier()).ToString();
         PipelineStream.AddLibrary(D3D12RayGen->GetByteCode().GetD3D12Bytecode(), { RayGenIdentifier });
         PipelineStream.AddRootSignatureAssociation(RayGenLocalRootSignature->GetD3D12RootSignature(), { RayGenIdentifier });
         PipelineStream.PayLoadExportNames.Emplace(RayGenIdentifier);
@@ -266,7 +266,7 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
                 continue;
             }
 
-            const WString ShaderIdentifier = CharToWide(D3D12HitGroupShader->GetIdentifier());
+            const WString ShaderIdentifier = StringCast<WIDECHAR>(D3D12HitGroupShader->GetIdentifier()).ToString();
 
             Shaders.Emplace(D3D12HitGroupShader);
             PipelineStream.AddLibrary(D3D12HitGroupShader->GetByteCode().GetD3D12Bytecode(), { ShaderIdentifier });
@@ -293,7 +293,7 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
             }
         }
 
-        PipelineStream.AddHitGroup(CharToWide(HitGroup.Name), HitGroup.Type, ClosestHitName, AnyHitName, IntersectionName);
+        PipelineStream.AddHitGroup(StringCast<WIDECHAR>(HitGroup.Name).ToString(), HitGroup.Type, ClosestHitName, AnyHitName, IntersectionName);
         GetExportNameArray(ERayTracingShaderRecordKind::HitGroup).Emplace(HitGroup.Name);
 
         if (!HitGroupMemberShaders.IsEmpty())
@@ -338,7 +338,7 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
         LocalRootSignatures.Add(D3D12MissShader->GetIdentifier(), MissLocalRootSignature);
         GetExportNameArray(ERayTracingShaderRecordKind::Miss).Emplace(D3D12MissShader->GetIdentifier());
 
-        WString MissIdentifier = CharToWide(D3D12MissShader->GetIdentifier());
+        WString MissIdentifier = StringCast<WIDECHAR>(D3D12MissShader->GetIdentifier()).ToString();
         PipelineStream.AddLibrary(D3D12MissShader->GetByteCode().GetD3D12Bytecode(), { MissIdentifier });
         PipelineStream.AddRootSignatureAssociation(MissLocalRootSignature->GetD3D12RootSignature(), { MissIdentifier });
         PipelineStream.PayLoadExportNames.Emplace(MissIdentifier);
@@ -361,7 +361,7 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
         LocalRootSignatures.Add(D3D12CallableShader->GetIdentifier(), CallableLocalRootSignature);
         GetExportNameArray(ERayTracingShaderRecordKind::Callable).Emplace(D3D12CallableShader->GetIdentifier());
 
-        WString CallableIdentifier = CharToWide(D3D12CallableShader->GetIdentifier());
+        WString CallableIdentifier = StringCast<WIDECHAR>(D3D12CallableShader->GetIdentifier()).ToString();
         PipelineStream.AddLibrary(D3D12CallableShader->GetByteCode().GetD3D12Bytecode(), { CallableIdentifier });
         PipelineStream.AddRootSignatureAssociation(CallableLocalRootSignature->GetD3D12RootSignature(), { CallableIdentifier });
         PipelineStream.PayLoadExportNames.Emplace(CallableIdentifier);
@@ -492,9 +492,7 @@ void* FD3D12RayTracingPipelineStateRHI::GetShaderIdentifier(const String& Export
     }
     else
     {
-        WString WideExportName = CharToWide(ExportName);
-
-        void* Result = StateObjectProperties->GetShaderIdentifier(*WideExportName);
+        void* Result = StateObjectProperties->GetShaderIdentifier(StringCast<WIDECHAR>(ExportName).Get());
         if (!Result)
         {
             return nullptr;

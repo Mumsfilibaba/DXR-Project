@@ -4,6 +4,7 @@
 #include "TestUtils.h"
 
 #include <Core/Containers/String.h>
+#include <Core/Containers/StringConversion.h>
 
 #include <string>
 
@@ -310,13 +311,13 @@ bool TString_Test()
         TEST_EXPECT(!("Test" > Str));
     }
 
-    TEST_SECTION("CharToWide / WideToChar round-trip");
+    TEST_SECTION("StringCast round-trip");
     {
         String  Narrow = "Round Trip 123";
-        WString Wide   = CharToWide(Narrow);
+        WString Wide   = StringCast<WIDECHAR>(Narrow).ToString();
         TEST_EXPECT(TCString<WIDECHAR>::Strcmp(Wide.Data(), L"Round Trip 123") == 0);
 
-        String Back = WideToChar(Wide);
+        String Back = StringCast<CHAR>(Wide).ToString();
         TEST_EXPECT(Back.Equals("Round Trip 123"));
     }
 

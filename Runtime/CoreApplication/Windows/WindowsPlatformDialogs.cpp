@@ -1,6 +1,7 @@
 #include "CoreApplication/Windows/WindowsPlatformDialogs.h"
 #include "Core/Windows/Windows.h"
 #include "Core/Containers/ComPtr.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
 #include <objbase.h>
@@ -73,7 +74,7 @@ static String ShellItemToPath(IShellItem* Item)
         return String();
     }
 
-    String Path = WideToChar(WStringView(WidePath));
+    String Path = StringCast<CHAR>(WidePath).ToString();
     ::CoTaskMemFree(WidePath);
 
     Path.ReplaceAll('\\', '/');
@@ -88,12 +89,12 @@ static void ApplyDesc(IFileDialog* Dialog, const FFileDialogDesc& Desc, EFileDia
 
     if (!Desc.Title.IsEmpty())
     {
-        Dialog->SetTitle(*CharToWide(Desc.Title));
+        Dialog->SetTitle(StringCast<WIDECHAR>(Desc.Title).Get());
     }
 
     if (!Desc.DefaultFilename.IsEmpty())
     {
-        Dialog->SetFileName(*CharToWide(Desc.DefaultFilename));
+        Dialog->SetFileName(StringCast<WIDECHAR>(Desc.DefaultFilename).Get());
     }
 
     if (!Desc.DefaultDirectory.IsEmpty())
@@ -102,7 +103,7 @@ static void ApplyDesc(IFileDialog* Dialog, const FFileDialogDesc& Desc, EFileDia
         Directory.ReplaceAll('/', '\\');
 
         TComPtr<IShellItem> Folder;
-        if (SUCCEEDED(::SHCreateItemFromParsingName(*CharToWide(Directory), nullptr, IID_PPV_ARGS(&Folder))))
+        if (SUCCEEDED(::SHCreateItemFromParsingName(StringCast<WIDECHAR>(Directory).Get(), nullptr, IID_PPV_ARGS(&Folder))))
         {
             Dialog->SetFolder(Folder.Get());
         }
@@ -113,8 +114,8 @@ static void ApplyDesc(IFileDialog* Dialog, const FFileDialogDesc& Desc, EFileDia
         OutFilterStrings.Clear();
         for (const FFileDialogFilter& Filter : Desc.Filters)
         {
-            OutFilterStrings.Add(CharToWide(Filter.Description));
-            OutFilterStrings.Add(CharToWide(CreateFilterSpec(Filter.Extensions)));
+            OutFilterStrings.Add(StringCast<WIDECHAR>(Filter.Description).ToString());
+            OutFilterStrings.Add(StringCast<WIDECHAR>(CreateFilterSpec(Filter.Extensions)).ToString());
         }
 
         TArray<COMDLG_FILTERSPEC> FilterEntries;
@@ -138,7 +139,7 @@ static void ApplyDesc(IFileDialog* Dialog, const FFileDialogDesc& Desc, EFileDia
 
         if (!First.IsEmpty() && !First.Equals("*"))
         {
-            Dialog->SetDefaultExtension(*CharToWide(First));
+            Dialog->SetDefaultExtension(StringCast<WIDECHAR>(First).Get());
         }
     }
 }

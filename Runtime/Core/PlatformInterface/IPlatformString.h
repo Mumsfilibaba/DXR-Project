@@ -9,16 +9,6 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct IPlatformString
 {
-    static FORCEINLINE SIZE_T Mbstowcs(WIDECHAR* Dest, const ANSICHAR* Src, uint64 Max)
-    {
-        return ::mbstowcs(Dest, Src, Max);
-    }
-
-    static FORCEINLINE SIZE_T Wcstombs(ANSICHAR* Dest, const WIDECHAR* Src, uint64 Max)
-    {
-        return ::wcstombs(Dest, Src, Max);
-    }
-
     // -------------------------------------------------------------------------------------------
     // ANSICHAR
     // -------------------------------------------------------------------------------------------

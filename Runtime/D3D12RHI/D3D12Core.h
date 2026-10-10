@@ -2,6 +2,7 @@
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Containers/ComPtr.h"
+#include "Core/Containers/StringConversion.h"
 #include "RHI/RHIIndirect.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIRayTracing.h"
@@ -145,9 +146,9 @@ inline void D3D12SetDebugName(ID3D12Object* Object, const String& Name)
                 D3D12_ERROR("Failed to set the debug name '%s'", *Name);
             }
 
-            const WString WideName = CharToWide(Name);
+            const TStringConversion<WIDECHAR, CHAR> WideName = StringCast<WIDECHAR>(Name);
 
-            Result = Object->SetPrivateData(WKPDID_D3DDebugObjectNameW, static_cast<UINT>((WideName.Length() + 1) * sizeof(WIDECHAR)), *WideName);
+            Result = Object->SetPrivateData(WKPDID_D3DDebugObjectNameW, static_cast<UINT>((WideName.Length() + 1) * sizeof(WIDECHAR)), WideName.Get());
             if (FAILED(Result))
             {
                 D3D12_ERROR("Failed to set the wide debug name '%s'", *Name);

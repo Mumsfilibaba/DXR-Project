@@ -1,4 +1,5 @@
 #include "Core/Windows/WindowsPlatformMisc.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Windows/WindowsPlatformStackTrace.h"
 #include "Core/Misc/CrashReporter.h"
 #include "Core/Misc/OutputDeviceLogger.h"
@@ -135,7 +136,7 @@ static DWORD WINAPI CrashReportThreadEntry(LPVOID)
     PWSTR  Description = nullptr;
     if (SUCCEEDED(::GetThreadDescription(GFaultingThread, &Description)))
     {
-        ThreadName = WideToChar(WString(Description));
+        ThreadName = StringCast<CHAR>(Description).ToString();
         ::LocalFree(Description);
     }
 

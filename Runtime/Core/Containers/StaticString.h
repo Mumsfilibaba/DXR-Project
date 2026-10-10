@@ -1608,21 +1608,3 @@ struct TIsTStringType<TStaticString<CharType, NUM_CHARS>>
 {
     inline static constexpr bool Value = true;
 };
-
-template<int32 NUM_CHARS>
-NODISCARD inline WStaticString<NUM_CHARS> CharToWide(const StaticString<NUM_CHARS>& CharString)
-{
-    WStaticString<NUM_CHARS> NewString;
-    NewString.Resize(CharString.Length());
-    FPlatformString::Mbstowcs(NewString.Data(), CharString.Data(), CharString.Length());
-    return NewString;
-}
-
-template<int32 NUM_CHARS>
-NODISCARD inline StaticString<NUM_CHARS> WideToChar(const WStaticString<NUM_CHARS>& WideString)
-{
-    StaticString<NUM_CHARS> NewString;
-    NewString.Resize(WideString.Length());
-    FPlatformString::Wcstombs(NewString.Data(), WideString.Data(), WideString.Length());
-    return NewString;
-}

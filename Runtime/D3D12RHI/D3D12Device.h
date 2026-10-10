@@ -48,7 +48,7 @@ public:
     bool IsDebugLayerEnabled() const { return bEnableDebugLayer; }
     bool IsTearingSupported()  const { return bAllowTearing; }
 
-    String GetDescription() const { return WideToChar(WStringView(AdapterDesc.Description)); }
+    String GetDescription() const { return StringCast<CHAR>(AdapterDesc.Description).ToString(); }
 
     FORCEINLINE uint32 GetAdapterIndex() const
     { 

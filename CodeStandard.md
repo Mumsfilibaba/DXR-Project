@@ -231,6 +231,28 @@ SomeStruct Desc = { 0 };
 ```
 
 ### General Code
+* Don't use `auto`. Write the type out, even when it is a long template type, so a reader sees what a variable is without working it out from the right-hand side. This covers local variables, range-based `for` loops, lambda parameters and return types, `decltype(auto)` included. The one exception is a local variable holding a lambda, whose type cannot be written. Anywhere else, use `auto` only when there is genuinely no type to write.
+
+Good:
+
+```cpp
+const TStringConversion<WIDECHAR, CHAR> WideName = StringCast<WIDECHAR>(Name);
+
+for (const FDirectoryEntry& Entry : Entries)
+{
+}
+```
+
+Bad:
+
+```cpp
+const auto WideName = StringCast<WIDECHAR>(Name);
+
+for (const auto& Entry : Entries)
+{
+}
+```
+
 * Put a blank line between a run of function-call statements and the next local variable declaration.
 
 Good:

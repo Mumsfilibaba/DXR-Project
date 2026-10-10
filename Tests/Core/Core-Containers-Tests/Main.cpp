@@ -15,6 +15,7 @@
 #include "ArrayView_Test.h"
 #include "Delegate_Test.h"
 #include "String_Test.h"
+#include "StringConversion_Test.h"
 #include "Optional_Test.h"
 #include "Queue_Test.h"
 #include "Variant_Test.h"
@@ -96,6 +97,10 @@ static void Tests()
 
 #if RUN_TSTRING_TEST
     RUN_TEST("String", TString_Test());
+#endif
+
+#if RUN_TSTRINGCONVERSION_TEST
+    RUN_TEST("StringConversion", TStringConversion_Test());
 #endif
 
 #if RUN_TOPIONAL_TEST

@@ -1,4 +1,5 @@
 #include "Core/Windows/WindowsPlatformThread.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformTLS.h"
 #include "Core/Threading/ThreadManager.h"
@@ -106,8 +107,7 @@ DWORD WINAPI FWindowsPlatformThread::ThreadRoutine(LPVOID ThreadParameter)
 
         if (!CurrentThread->Name.IsEmpty())
         {
-            WString WideName = CharToWide(CurrentThread->Name);
-            ::SetThreadDescription(CurrentThread->Thread, *WideName);
+            ::SetThreadDescription(CurrentThread->Thread, StringCast<WIDECHAR>(CurrentThread->Name).Get());
         }
 
         if (FRunnable* Runnable = CurrentThread->Runnable)

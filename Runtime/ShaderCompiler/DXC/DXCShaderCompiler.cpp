@@ -1,5 +1,6 @@
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Containers/StringConversion.h"
 #include "ShaderCore/ShaderBindingConventions.h"
 #include "ShaderCompiler/DXC/DXCShaderCompiler.h"
 #include "ShaderCompiler/DXC/MSLShaderConverter.h"
@@ -242,7 +243,7 @@ void FDXCShaderCompiler::HashCompileSettings(const FShaderCompileInfo& CompileIn
     HashCombine(InOutHash, VersionMajor);
     HashCombine(InOutHash, VersionMinor);
 
-    const WString WideIncludeDir = CharToWide(IncludeDir);
+    const WString WideIncludeDir = StringCast<WIDECHAR>(IncludeDir).ToString();
 
     TArray<LPCWSTR> CompileArgs;
     BuildCompileArguments(CompileInfo, WideIncludeDir, CompileArgs);
@@ -273,7 +274,7 @@ bool FDXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
         return false;
     }
 
-    const WString WideShaderIncludeDir = CharToWide(Request.IncludeDir);
+    const WString WideShaderIncludeDir = StringCast<WIDECHAR>(Request.IncludeDir).ToString();
 
     TArray<LPCWSTR> CompileArgs;
     BuildCompileArguments(CompileInfo, WideShaderIncludeDir, CompileArgs);
@@ -286,12 +287,12 @@ bool FDXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
     WCHAR TargetProfile[BufferLength];
     CStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
 
-    const WString WideFilePath   = CharToWide(Request.FilePath);
-    const WString WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
+    const TStringConversion<WIDECHAR, CHAR> WideFilePath   = StringCast<WIDECHAR>(Request.FilePath);
+    const TStringConversion<WIDECHAR, CHAR> WideEntrypoint = StringCast<WIDECHAR>(CompileInfo.EntryPoint);
 
     // The source is already preprocessed, so there are no defines to pass
     TComPtr<IDxcCompilerArgs> CompileArguments;
-    hr = Utils->BuildArguments(*WideFilePath, *WideEntrypoint, TargetProfile, CompileArgs.Data(), CompileArgs.Size(), nullptr, 0, &CompileArguments);
+    hr = Utils->BuildArguments(WideFilePath.Get(), WideEntrypoint.Get(), TargetProfile, CompileArgs.Data(), CompileArgs.Size(), nullptr, 0, &CompileArguments);
     if (FAILED(hr))
     {
         LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to create compiler arguments");

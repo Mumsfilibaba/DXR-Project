@@ -2,6 +2,7 @@
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Containers/ComPtr.h"
+#include "Core/Containers/StringConversion.h"
 #include "RHI/RHIIndirect.h"
 #include "RHI/RHIResources.h"
 #include "D3D11RHI/D3D11Constants.h"
@@ -88,9 +89,9 @@ inline void D3D11SetDebugName(ID3D11DeviceChild* DeviceChild, const String& Name
                 D3D11_ERROR("Failed to set the debug name '%s'", *Name);
             }
 
-            const WString WideName = CharToWide(Name);
+            const TStringConversion<WIDECHAR, CHAR> WideName = StringCast<WIDECHAR>(Name);
 
-            Result = DeviceChild->SetPrivateData(WKPDID_D3DDebugObjectNameW, static_cast<UINT>((WideName.Length() + 1) * sizeof(WIDECHAR)), *WideName);
+            Result = DeviceChild->SetPrivateData(WKPDID_D3DDebugObjectNameW, static_cast<UINT>((WideName.Length() + 1) * sizeof(WIDECHAR)), WideName.Get());
             if (FAILED(Result))
             {
                 D3D11_ERROR("Failed to set the wide debug name '%s'", *Name);

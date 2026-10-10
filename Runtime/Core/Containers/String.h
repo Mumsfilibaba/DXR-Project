@@ -1880,38 +1880,6 @@ struct TIsContiguousContainer<TString<CharType>>
     inline static constexpr bool Value = true;
 };
 
-NODISCARD inline WString CharToWide(const StringView& CharString)
-{
-    WString NewString;
-    NewString.Resize(CharString.Length());
-    FPlatformString::Mbstowcs(NewString.Data(), CharString.Data(), CharString.Length());
-    return NewString;
-}
-
-NODISCARD inline WString CharToWide(const String& CharString)
-{
-    WString NewString;
-    NewString.Resize(CharString.Length());
-    FPlatformString::Mbstowcs(NewString.Data(), CharString.Data(), CharString.Length());
-    return NewString;
-}
-
-NODISCARD inline String WideToChar(const WStringView& WideString)
-{
-    String NewString;
-    NewString.Resize(WideString.Length());
-    FPlatformString::Wcstombs(NewString.Data(), WideString.Data(), WideString.Length());
-    return NewString;
-}
-
-NODISCARD inline String WideToChar(const WString& WideString)
-{
-    String NewString;
-    NewString.Resize(WideString.Length());
-    FPlatformString::Wcstombs(NewString.Data(), WideString.Data(), WideString.Length());
-    return NewString;
-}
-
 // Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
 template<>
 struct THash<String>

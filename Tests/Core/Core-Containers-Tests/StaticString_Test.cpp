@@ -4,6 +4,7 @@
 #include "TestUtils.h"
 
 #include <Core/Containers/StaticString.h>
+#include <Core/Containers/StringConversion.h>
 #include <Core/Containers/StringView.h>
 #include <Core/Templates/CString.h>
 
@@ -148,10 +149,10 @@ bool StaticString_Suite()
         TEST_EXPECT(TCString<WIDECHAR>::Strcmp(Wide.Data(), L"Hello String!") == 0);
 
         StaticString<64>  Narrow = "Round Trip";
-        WStaticString<64> ToWide = CharToWide(Narrow);
+        WStaticString<64> ToWide = StringCast<WIDECHAR>(Narrow).Get();
         TEST_EXPECT(TCString<WIDECHAR>::Strcmp(ToWide.Data(), L"Round Trip") == 0);
 
-        StaticString<64> Back = WideToChar(ToWide);
+        StaticString<64> Back = StringCast<CHAR>(ToWide).Get();
         TEST_EXPECT(Back.Equals("Round Trip"));
     }
 

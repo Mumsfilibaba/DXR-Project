@@ -1,4 +1,5 @@
 #include "Core/Windows/WindowsPlatformSystemClipboard.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Windows/Windows.h"
 #include "Core/Memory/Memory.h"
 
@@ -40,7 +41,7 @@ bool FWindowsPlatformSystemClipboard::GetText(String& OutText)
         return false;
     }
 
-    OutText = WideToChar(WStringView(WideText));
+    OutText = StringCast<CHAR>(WideText).ToString();
 
     ::GlobalUnlock(DataHandle);
     ::CloseClipboard();
@@ -56,17 +57,9 @@ bool FWindowsPlatformSystemClipboard::SetText(const String& InText)
 
     ::EmptyClipboard();
 
-    const WString WideText = CharToWide(StringView(InText));
+    const TStringConversion<WIDECHAR, CHAR> WideText = StringCast<WIDECHAR>(InText);
 
-    const WIDECHAR* WidePtr = *WideText;
-    if (!WidePtr)
-    {
-        ::CloseClipboard();
-        return false;
-    }
-
-    const SIZE_T CharCount = CStringWide::Strlen(WidePtr) + 1;
-    const SIZE_T ByteCount = CharCount * sizeof(WIDECHAR);
+    const SIZE_T ByteCount = (WideText.Length() + 1) * sizeof(WIDECHAR);
 
     HGLOBAL GlobalHandle = ::GlobalAlloc(GMEM_MOVEABLE, ByteCount);
     if (!GlobalHandle)
@@ -83,7 +76,7 @@ bool FWindowsPlatformSystemClipboard::SetText(const String& InText)
         return false;
     }
 
-    Memory::Memcpy(Dest, WidePtr, ByteCount);
+    Memory::Memcpy(Dest, WideText.Get(), ByteCount);
 
     ::GlobalUnlock(GlobalHandle);
 

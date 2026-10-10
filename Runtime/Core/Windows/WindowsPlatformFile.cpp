@@ -1,4 +1,5 @@
 #include "Core/Windows/WindowsPlatformFile.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Windows/WindowsPlatformMisc.h"
 #include "Core/Templates/CString.h"
 #include "Core/Templates/NumericLimits.h"
@@ -470,7 +471,7 @@ String FWindowsPlatformFile::GetUserSettingsDirectory()
         return String();
     }
 
-    String Path = WideToChar(WStringView(WidePath));
+    String Path = StringCast<CHAR>(WidePath).ToString();
     ::CoTaskMemFree(WidePath);
 
     Path.ReplaceAll('\\', '/');

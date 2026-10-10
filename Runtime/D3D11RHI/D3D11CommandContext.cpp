@@ -805,7 +805,7 @@ void FD3D11CommandContext::PushEvent(const StringView& Name)
 #if D3D11_ENABLE_ANNOTATIONS
     if (Annotation)
     {
-        Annotation->BeginEvent(*CharToWide(Name));
+        Annotation->BeginEvent(StringCast<WIDECHAR>(Name).Get());
     }
 #endif
 }
