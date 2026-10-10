@@ -29,7 +29,7 @@ private:
 
     bool Initialize(bool bInManualReset)
     {
-        Event = ::CreateEventA(nullptr, bInManualReset, FALSE, nullptr);
+        Event = ::CreateEventW(nullptr, bInManualReset, FALSE, nullptr);
         if (!Event)
         {
             return false;

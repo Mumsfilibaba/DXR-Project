@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Windows/Windows.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/PlatformInterface/IPlatformFileSystem.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Threading/ScopedLock.h"
@@ -70,13 +71,13 @@ struct CORE_API FWindowsPlatformFile : public IPlatformFileSystem
 
     static FORCEINLINE bool IsDirectory(const CHAR* Path)
     {
-        const BOOL Result = ::PathIsDirectoryA(Path);
+        const BOOL Result = ::PathIsDirectoryW(StringCast<WIDECHAR>(Path).Get());
         return Result == static_cast<BOOL>(FILE_ATTRIBUTE_DIRECTORY);
     }
 
     static FORCEINLINE bool IsFile(const CHAR* Path)
     {
-        const DWORD Attributes = ::GetFileAttributesA(Path);
+        const DWORD Attributes = ::GetFileAttributesW(StringCast<WIDECHAR>(Path).Get());
         return (Attributes != INVALID_FILE_ATTRIBUTES) && ((Attributes & FILE_ATTRIBUTE_DIRECTORY) == 0);
     }
 
@@ -85,41 +86,41 @@ struct CORE_API FWindowsPlatformFile : public IPlatformFileSystem
     static FORCEINLINE bool CreateDirectory(const CHAR* Path)
     {
         // Success if the directory was created now or already existed.
-        return ::CreateDirectoryA(Path, nullptr) || (::GetLastError() == ERROR_ALREADY_EXISTS);
+        return ::CreateDirectoryW(StringCast<WIDECHAR>(Path).Get(), nullptr) || (::GetLastError() == ERROR_ALREADY_EXISTS);
     }
 
     static FORCEINLINE bool RemoveDirectory(const CHAR* Path)
     {
         // Success if the directory is gone now or was never there.
-        return ::RemoveDirectoryA(Path) || (::GetLastError() == ERROR_FILE_NOT_FOUND) || (::GetLastError() == ERROR_PATH_NOT_FOUND);
+        return ::RemoveDirectoryW(StringCast<WIDECHAR>(Path).Get()) || (::GetLastError() == ERROR_FILE_NOT_FOUND) || (::GetLastError() == ERROR_PATH_NOT_FOUND);
     }
 
     static FORCEINLINE bool DeleteFile(const CHAR* Path)
     {
         // Success if the file is gone now or was never there.
-        return ::DeleteFileA(Path) || (::GetLastError() == ERROR_FILE_NOT_FOUND) || (::GetLastError() == ERROR_PATH_NOT_FOUND);
+        return ::DeleteFileW(StringCast<WIDECHAR>(Path).Get()) || (::GetLastError() == ERROR_FILE_NOT_FOUND) || (::GetLastError() == ERROR_PATH_NOT_FOUND);
     }
 
     static FORCEINLINE bool MoveFile(const CHAR* FromFilename, const CHAR* ToFilename)
     {
         // MOVEFILE_REPLACE_EXISTING is what makes this usable when swapping a file.
-        return ::MoveFileExA(FromFilename, ToFilename, MOVEFILE_REPLACE_EXISTING) != FALSE;
+        return ::MoveFileExW(StringCast<WIDECHAR>(FromFilename).Get(), StringCast<WIDECHAR>(ToFilename).Get(), MOVEFILE_REPLACE_EXISTING) != FALSE;
     }
 
     static FORCEINLINE bool CopyFile(const CHAR* FromFilename, const CHAR* ToFilename, bool bReplaceExisting = false)
     {
-        return ::CopyFileA(FromFilename, ToFilename, bReplaceExisting ? FALSE : TRUE) != FALSE;
+        return ::CopyFileW(StringCast<WIDECHAR>(FromFilename).Get(), StringCast<WIDECHAR>(ToFilename).Get(), bReplaceExisting ? FALSE : TRUE) != FALSE;
     }
 
     static FORCEINLINE bool MoveDirectory(const CHAR* FromPath, const CHAR* ToPath)
     {
         // MOVEFILE_REPLACE_EXISTING does not work for directories, so an existing ToPath makes this fail
-        return ::MoveFileExA(FromPath, ToPath, 0) != FALSE;
+        return ::MoveFileExW(StringCast<WIDECHAR>(FromPath).Get(), StringCast<WIDECHAR>(ToPath).Get(), 0) != FALSE;
     }
 
     static FORCEINLINE bool IsPathRelative(const CHAR* Filepath)
     {
-        const BOOL Result = ::PathIsRelativeA(Filepath);
+        const BOOL Result = ::PathIsRelativeW(StringCast<WIDECHAR>(Filepath).Get());
         return Result == TRUE;
     }
 

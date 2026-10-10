@@ -251,8 +251,8 @@ void FWindowsPlatformMisc::InstallCrashHandler()
     ULONG StackGuarantee = STACK_GUARANTEE_BYTES;
     ::SetThreadStackGuarantee(&StackGuarantee);
 
-    GReportRequestedEvent = ::CreateEventA(nullptr, FALSE, FALSE, nullptr);
-    GReportCompleteEvent  = ::CreateEventA(nullptr, FALSE, FALSE, nullptr);
+    GReportRequestedEvent = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    GReportCompleteEvent  = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
     if (!GReportRequestedEvent || !GReportCompleteEvent)
     {
         LOG_ERROR("Failed to create the crash handler's events");

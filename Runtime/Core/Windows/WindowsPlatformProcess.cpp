@@ -1,6 +1,7 @@
 #include "Core/Windows/WindowsPlatformProcess.h"
 #include "Core/Windows/WindowsPlatformMisc.h"
 #include "Core/Memory/Memory.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
 static constexpr DWORD OUTPUT_PIPE_SIZE = 64 * 1024;
@@ -76,7 +77,7 @@ bool FWindowsPlatformProcessHandle::ReadOutput(String& OutText)
                 break;
             }
 
-            CHAR        Buffer[4096];
+            ANSICHAR    Buffer[4096];
             const DWORD NumToRead = (NumAvailable < sizeof(Buffer)) ? NumAvailable : sizeof(Buffer);
 
             DWORD NumRead = 0;
@@ -85,7 +86,7 @@ bool FWindowsPlatformProcessHandle::ReadOutput(String& OutText)
                 break;
             }
 
-            OutText.Append(Buffer, static_cast<int32>(NumRead));
+            OutText.Append(StringCast<CHAR>(Buffer, static_cast<int32>(NumRead)).ToString());
         }
     }
 
@@ -138,7 +139,7 @@ TUniquePtr<IPlatformProcessHandle> FWindowsPlatformProcess::LaunchProcess(const 
         AppendQuotedArgument(CommandLine, Argument);
     }
 
-    STARTUPINFOA StartupInfo;
+    STARTUPINFOW StartupInfo;
     Memory::Memzero(&StartupInfo, sizeof(StartupInfo));
     StartupInfo.cb = sizeof(StartupInfo);
 
@@ -174,15 +175,16 @@ TUniquePtr<IPlatformProcessHandle> FWindowsPlatformProcess::LaunchProcess(const 
     PROCESS_INFORMATION ProcessInfo;
     Memory::Memzero(&ProcessInfo, sizeof(ProcessInfo));
 
-    const BOOL bCreated = ::CreateProcessA(
+    WString WideCommandLine = StringCast<WIDECHAR>(CommandLine).ToString();
+    const BOOL bCreated = ::CreateProcessW(
         nullptr,
-        CommandLine.Data(),
+        WideCommandLine.Data(),
         nullptr,
         nullptr,
         Desc.bCaptureOutput ? TRUE : FALSE,
         Flags,
         nullptr,
-        WorkingDirectory.IsEmpty() ? nullptr : *WorkingDirectory,
+        WorkingDirectory.IsEmpty() ? nullptr : StringCast<WIDECHAR>(WorkingDirectory).Get(),
         &StartupInfo,
         &ProcessInfo);
 

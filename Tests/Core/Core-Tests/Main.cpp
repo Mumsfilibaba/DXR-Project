@@ -29,6 +29,7 @@
 #include "ProjectDescriptorTests.h"
 #include "PathsTests.h"
 #include "CharTypeTests.h"
+#include "UnicodePathTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -72,6 +73,7 @@ static int32 RunCoreTests()
     RUN_TEST("ProjectDescriptor", ProjectDescriptor_Test());
     RUN_TEST("Paths", Paths_Test());
     RUN_TEST("CharType", CharType_Test());
+    RUN_TEST("UnicodePath", UnicodePath_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();

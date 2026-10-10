@@ -1,5 +1,6 @@
 #include "Core/Misc/Debug.h"
 #include "Core/Windows/Windows.h"
+#include "Core/Containers/StringConversion.h"
 
 extern int32 EngineMain(const CHAR* Args[], int32 NumArgs);
 
@@ -26,11 +27,12 @@ static void InitCRunTime()
     }
 #endif
 
-int WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CommandLine, int CmdShow)
+int WINAPI wWinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPWSTR CommandLine, int CmdShow)
 {
     InitCRunTime();
 
-    const CHAR* LocalCommandLine = CommandLine;
+    const String CommandLineText  = StringCast<CHAR>(CommandLine).ToString();
+    const CHAR*  LocalCommandLine = *CommandLineText;
     return EngineMain(&LocalCommandLine, 1);
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/String.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Windows/Windows.h"
 #include "Core/PlatformInterface/IPlatformLibrary.h"
 
@@ -8,13 +9,13 @@ struct FWindowsPlatformLibrary final : public IPlatformLibrary
     static FORCEINLINE void* LoadDynamicLib(const CHAR* LibraryName)
     {
         const String RealName = GetRealName(LibraryName);
-        return reinterpret_cast<void*>(::LoadLibraryA(*RealName));
+        return reinterpret_cast<void*>(::LoadLibraryW(StringCast<WIDECHAR>(RealName).Get()));
     }
 
     static FORCEINLINE void* GetLoadedHandle(const CHAR* LibraryName)
     {
         const String RealName = GetRealName(LibraryName);
-        return reinterpret_cast<void*>(::GetModuleHandleA(*RealName));
+        return reinterpret_cast<void*>(::GetModuleHandleW(StringCast<WIDECHAR>(RealName).Get()));
     }
 
     static FORCEINLINE void FreeDynamicLib(void* LibraryHandle)
@@ -24,7 +25,7 @@ struct FWindowsPlatformLibrary final : public IPlatformLibrary
 
     static FORCEINLINE void* LoadSymbol(const CHAR* SymbolName, void* LibraryHandle)
     {
-        return ::GetProcAddress(reinterpret_cast<HMODULE>(LibraryHandle), SymbolName);
+        return ::GetProcAddress(reinterpret_cast<HMODULE>(LibraryHandle), StringCast<ANSICHAR>(SymbolName).Get());
     }
 
     template<typename SymbolType>

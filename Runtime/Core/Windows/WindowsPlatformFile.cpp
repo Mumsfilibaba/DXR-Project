@@ -194,7 +194,7 @@ IPlatformFile* FWindowsPlatformFile::OpenForRead(const String& Filename)
     ::SetLastError(S_OK);
 
     // Readers must not lock each other out; permutations of one shader are compiled in parallel and share a source file.
-    HANDLE NewHandle = ::CreateFileA(*Filename, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    HANDLE NewHandle = ::CreateFileW(StringCast<WIDECHAR>(Filename).Get(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (NewHandle == INVALID_HANDLE_VALUE)
     {
         const DWORD LastError = ::GetLastError();
@@ -232,7 +232,7 @@ IPlatformFile* FWindowsPlatformFile::OpenForWrite(const String& Filename, bool b
 
     const DWORD CreationDisposition = bTruncate ? CREATE_ALWAYS : OPEN_ALWAYS;
 
-    HANDLE NewHandle = ::CreateFileA(*Filename, GENERIC_WRITE, 0, 0, CreationDisposition, FILE_ATTRIBUTE_NORMAL, 0);
+    HANDLE NewHandle = ::CreateFileW(StringCast<WIDECHAR>(Filename).Get(), GENERIC_WRITE, 0, 0, CreationDisposition, FILE_ATTRIBUTE_NORMAL, 0);
     if (NewHandle == INVALID_HANDLE_VALUE)
     {
         const DWORD LastError = ::GetLastError();
@@ -270,7 +270,7 @@ IPlatformAsyncFile* FWindowsPlatformFile::OpenForAsyncWrite(const String& Filena
 
     const DWORD CreationDisposition = bTruncate ? CREATE_ALWAYS : OPEN_ALWAYS;
 
-    HANDLE NewHandle = ::CreateFileA(*Filename, GENERIC_WRITE, 0, 0, CreationDisposition, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, 0);
+    HANDLE NewHandle = ::CreateFileW(StringCast<WIDECHAR>(Filename).Get(), GENERIC_WRITE, 0, 0, CreationDisposition, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, 0);
     if (NewHandle == INVALID_HANDLE_VALUE)
     {
         String ErrorString;
@@ -316,7 +316,7 @@ bool FWindowsAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
     Pending->Buffer = reinterpret_cast<uint8*>(Memory::Malloc(BytesToWrite));
     Memory::Memcpy(Pending->Buffer, Src, BytesToWrite);
 
-    Pending->CompletionEvent = ::CreateEventA(nullptr, TRUE, FALSE, nullptr);
+    Pending->CompletionEvent = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
     if (Pending->CompletionEvent == nullptr)
     {
         Memory::Free(Pending->Buffer);
@@ -409,30 +409,35 @@ void FWindowsAsyncFileHandle::FreePendingWrite(FPendingWrite* PendingWrite)
 
 const CHAR* FWindowsPlatformFile::GetExecutablePath()
 {
-    static CHAR StaticExecutablePath[512] = { 0 };
+    static String StaticExecutablePath;
 
-    if(!StaticExecutablePath[0])
+    if (StaticExecutablePath.IsEmpty())
     {
-        if (!GetModuleFileName(0, StaticExecutablePath, ARRAY_COUNT(StaticExecutablePath)))
+        TArray<WIDECHAR> WidePath;
+        WidePath.Resize(MAX_PATH);
+
+        DWORD Length = 0;
+        while (true)
         {
-            StaticExecutablePath[0] = 0;
+            Length = ::GetModuleFileNameW(nullptr, WidePath.Data(), static_cast<DWORD>(WidePath.Size()));
+            if (Length < static_cast<DWORD>(WidePath.Size()) || WidePath.Size() >= 32768)
+            {
+                break;
+            }
+
+            WidePath.Resize(WidePath.Size() * 2);
         }
 
-        for (CHAR* Character = StaticExecutablePath; *Character; ++Character)
-        {
-            if (*Character == '\\')
-            {
-                *Character = '/';
-            }
-        }
+        StaticExecutablePath = StringCast<CHAR>(WidePath.Data(), static_cast<int32>(Length)).ToString();
+        StaticExecutablePath.ReplaceAll('\\', '/');
     }
 
-    return StaticExecutablePath;
+    return *StaticExecutablePath;
 }
 
 String FWindowsPlatformFile::GetCurrentWorkingDirectory()
 {
-    const int32 RequiredSize = ::GetCurrentDirectoryA(0, nullptr);
+    const int32 RequiredSize = ::GetCurrentDirectoryW(0, nullptr);
     if (!RequiredSize)
     {
         String Error;
@@ -441,10 +446,10 @@ String FWindowsPlatformFile::GetCurrentWorkingDirectory()
         return String();
     }
 
-    String Result;
-    Result.Resize(RequiredSize - 1);
+    WString WideResult;
+    WideResult.Resize(RequiredSize - 1);
 
-    const int32 Length = ::GetCurrentDirectoryA(RequiredSize, Result.Data());
+    const int32 Length = ::GetCurrentDirectoryW(RequiredSize, WideResult.Data());
     if (!Length || Length >= RequiredSize)
     {
         String Error;
@@ -455,7 +460,7 @@ String FWindowsPlatformFile::GetCurrentWorkingDirectory()
     }
     else
     {
-        Result.Resize(Length);
+        String Result = StringCast<CHAR>(WideResult.Data(), Length).ToString();
         Result.ReplaceAll('\\', '/');
         return Result;
     }
@@ -483,7 +488,7 @@ FFileInfo FWindowsPlatformFile::GetFileInfo(const CHAR* Path)
     FFileInfo Info;
 
     WIN32_FILE_ATTRIBUTE_DATA Data;
-    if (!::GetFileAttributesExA(Path, GetFileExInfoStandard, &Data))
+    if (!::GetFileAttributesExW(StringCast<WIDECHAR>(Path).Get(), GetFileExInfoStandard, &Data))
     {
         return Info;
     }
@@ -507,9 +512,9 @@ bool FWindowsPlatformFile::IterateDirectory(const CHAR* Path, TArray<FDirectoryE
 {
     OutEntries.Clear();
 
-    WIN32_FIND_DATAA FindData;
-    const String     Search = String::Printf("%s\\*", Path);
-    const HANDLE     Handle = ::FindFirstFileA(*Search, &FindData);
+    WIN32_FIND_DATAW FindData;
+    const String     Search = String::Printf(TEXT("%s\\*"), Path);
+    const HANDLE     Handle = ::FindFirstFileW(StringCast<WIDECHAR>(Search).Get(), &FindData);
     if (Handle == INVALID_HANDLE_VALUE)
     {
         return false;
@@ -517,7 +522,7 @@ bool FWindowsPlatformFile::IterateDirectory(const CHAR* Path, TArray<FDirectoryE
 
     do
     {
-        if ((CString::Strcmp(FindData.cFileName, ".") == 0) || (CString::Strcmp(FindData.cFileName, "..") == 0))
+        if ((CStringWide::Strcmp(FindData.cFileName, L".") == 0) || (CStringWide::Strcmp(FindData.cFileName, L"..") == 0))
         {
             continue;
         }
@@ -526,12 +531,12 @@ bool FWindowsPlatformFile::IterateDirectory(const CHAR* Path, TArray<FDirectoryE
         const bool bIsLinkTag      = (FindData.dwReserved0 == IO_REPARSE_TAG_SYMLINK) || (FindData.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT);
 
         FDirectoryEntry Entry;
-        Entry.Name            = FindData.cFileName;
+        Entry.Name            = StringCast<CHAR>(FindData.cFileName).ToString();
         Entry.bIsDirectory    = (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
         Entry.bIsSymbolicLink = bIsReparsePoint && bIsLinkTag;
         OutEntries.Add(Move(Entry));
     }
-    while (::FindNextFileA(Handle, &FindData));
+    while (::FindNextFileW(Handle, &FindData));
 
     ::FindClose(Handle);
     return true;

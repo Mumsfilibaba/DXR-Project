@@ -1,15 +1,16 @@
 #pragma once
 #include "Core/Windows/Windows.h"
 #include "Core/Containers/String.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/PlatformInterface/IPlatformMisc.h"
 
 struct FWindowsPlatformMisc final : public IPlatformMisc
 {
     static FORCEINLINE void OutputDebugString(const CHAR* Message)
     {
-        ::OutputDebugStringA(Message);
+        ::OutputDebugStringW(StringCast<WIDECHAR>(Message).Get());
         // Add a new line here since that makes this function consistent with OutputDebugString on other platforms
-        ::OutputDebugStringA("\n");
+        ::OutputDebugStringW(L"\n");
     }
 
     static FORCEINLINE void WriteToStdOutput(const CHAR* Text, uint32 Length)
@@ -23,14 +24,15 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
         if (Handle && (Handle != INVALID_HANDLE_VALUE))
         {
             DWORD Written = 0;
-            // Console handles need WriteConsoleA, but redirected handles (files/pipes) require WriteFile
             if (::GetFileType(Handle) == FILE_TYPE_CHAR)
             {
-                ::WriteConsoleA(Handle, Text, Length, &Written, nullptr);
+                const TStringConversion<WIDECHAR, CHAR> WideText = StringCast<WIDECHAR>(Text, static_cast<int32>(Length));
+                ::WriteConsoleW(Handle, WideText.Get(), static_cast<DWORD>(WideText.Length()), &Written, nullptr);
             }
             else
             {
-                ::WriteFile(Handle, Text, Length, &Written, nullptr);
+                const TStringConversion<ANSICHAR, CHAR> Utf8Text = StringCast<ANSICHAR>(Text, static_cast<int32>(Length));
+                ::WriteFile(Handle, Utf8Text.Get(), static_cast<DWORD>(Utf8Text.Length()), &Written, nullptr);
             }
         }
     }
@@ -46,7 +48,7 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
         // default button so that hitting Enter does not terminate the process.
         const UINT Flags = MB_ICONERROR | MB_ABORTRETRYIGNORE | MB_DEFBUTTON2 | MB_TASKMODAL | MB_TOPMOST | MB_SETFOREGROUND;
 
-        switch (::MessageBoxA(nullptr, Message, Title, Flags))
+        switch (::MessageBoxW(nullptr, StringCast<WIDECHAR>(Message).Get(), StringCast<WIDECHAR>(Title).Get(), Flags))
         {
             case IDABORT:
                 return EAssertDialogResult::Abort;
@@ -78,12 +80,11 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
         const int32 LastError = ::GetLastError();
         const int32 Flags     = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
 
-        LPSTR MessageBuffer = nullptr;
+        LPWSTR MessageBuffer = nullptr;
 
-        const uint32 MessageLength = FormatMessageA(Flags, nullptr, LastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&MessageBuffer, 0, nullptr);
-        OutErrorString.Clear();
-        OutErrorString.Append(MessageBuffer, MessageLength);
-        LocalFree(MessageBuffer);
+        const uint32 MessageLength = ::FormatMessageW(Flags, nullptr, LastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&MessageBuffer), 0, nullptr);
+        OutErrorString = StringCast<CHAR>(MessageBuffer, static_cast<int32>(MessageLength)).ToString();
+        ::LocalFree(MessageBuffer);
         return LastError;
     }
 };
