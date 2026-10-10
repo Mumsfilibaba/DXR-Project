@@ -7,7 +7,7 @@
 #include "Core/Math/Math.h"
 #include "Core/Misc/CommandLine.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Image/PngWriter.h"
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
@@ -268,6 +268,6 @@ void UIScreenshot::Tick()
 
     if (bExitAfter)
     {
-        FConsoleManager::Get().ExecuteCommand(*FOutputDeviceLogger::Get(), String("Engine.Exit"));
+        FConsoleManager::Get().ExecuteCommand(*FOutputDeviceManager::Get(), String("Engine.Exit"));
     }
 }

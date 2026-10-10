@@ -1,4 +1,4 @@
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Containers/StringConversion.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "Core/Threading/ScopedLock.h"

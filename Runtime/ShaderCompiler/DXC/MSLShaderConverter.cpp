@@ -348,6 +348,12 @@ bool FMSLShaderConverter::Convert(const TArray<uint32>& Spirv, const FShaderComp
         spvc_context Context;
     } ContextGuard{ Context };
 
+    // The spvc_* calls only report SPVC_ERROR_*, the reason SPIRV-Cross gives comes through this callback
+    spvc_context_set_error_callback(Context, [](void* UserData, const CHAR* Error)
+    {
+        *static_cast<String*>(UserData) += String::Printf("SPIRV-Cross: %s\n", Error);
+    }, &OutErrors);
+
     spvc_parsed_ir ParsedCode = nullptr;
     if (spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(Spirv.Data()), Spirv.Size(), &ParsedCode) != SPVC_SUCCESS)
     {

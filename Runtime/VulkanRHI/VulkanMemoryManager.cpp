@@ -2811,7 +2811,7 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
             break;
         }
 
-        const VkImageAspectFlags AspectMask = GetImageAspectFlagsFromFormat(OldCreateInfo.format);
+        const VkImageAspectFlags AspectMask = VulkanRHI::GetImageAspectFlagsFromFormat(OldCreateInfo.format);
 
         {
             VkImageMemoryBarrier2KHR SrcBarrier = {};

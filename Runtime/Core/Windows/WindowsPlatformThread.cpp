@@ -1,6 +1,6 @@
 #include "Core/Windows/WindowsPlatformThread.h"
 #include "Core/Containers/StringConversion.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformTLS.h"
 #include "Core/Threading/ThreadManager.h"
 

@@ -18,7 +18,7 @@ static void VulkanTransitionInitialLayout(FVulkanCommandContext* CommandContext,
     ImageBarrier.dstAccessMask                   = VK_ACCESS_2_MEMORY_READ_BIT_KHR | VK_ACCESS_2_MEMORY_WRITE_BIT_KHR;
     ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
     ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
-    ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(Format);
+    ImageBarrier.subresourceRange.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(Format);
     ImageBarrier.subresourceRange.baseArrayLayer = 0;
     ImageBarrier.subresourceRange.baseMipLevel   = 0;
     ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
@@ -28,12 +28,15 @@ static void VulkanTransitionInitialLayout(FVulkanCommandContext* CommandContext,
     CommandContext->GetBarrierBatcher().FlushBarriers(CommandContext->GetCommandBuffer());
 }
 
+namespace VulkanRHI
+{
+
 uint32 VkCalculateTextureRowPitch(VkFormat Format, uint32 Width)
 {
-    const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
+    const bool bIsBlockCompressed = VulkanRHI::VkFormatIsBlockCompressed(Format);
     if (bIsBlockCompressed)
     {
-        const uint32 BlockSize = GetVkFormatBlockSize(Format);
+        const uint32 BlockSize = VulkanRHI::GetVkFormatBlockSize(Format);
         CHECK(BlockSize != 0);
         
         Width = Math::Max<uint32>(1, (Width + 3) / 4);
@@ -41,7 +44,7 @@ uint32 VkCalculateTextureRowPitch(VkFormat Format, uint32 Width)
     }
     else
     {
-        const uint32 PixelSize = GetVkFormatByteStride(Format);
+        const uint32 PixelSize = VulkanRHI::GetVkFormatByteStride(Format);
         CHECK(PixelSize != 0);
         return Width * PixelSize;
     }
@@ -49,16 +52,16 @@ uint32 VkCalculateTextureRowPitch(VkFormat Format, uint32 Width)
 
 uint32 VkCalculateTextureNumRows(VkFormat Format, uint32 Height)
 {
-    const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
+    const bool bIsBlockCompressed = VulkanRHI::VkFormatIsBlockCompressed(Format);
     return bIsBlockCompressed ? Math::Max<uint32>(1, (Height + 3) / 4) : Height;
 }
 
 uint64 VkCalculateTextureUploadSize(VkFormat Format, uint32 Width, uint32 Height)
 {
-    const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
+    const bool bIsBlockCompressed = VulkanRHI::VkFormatIsBlockCompressed(Format);
     if (bIsBlockCompressed)
     {
-        const uint32 BlockSize = GetVkFormatBlockSize(Format);
+        const uint32 BlockSize = VulkanRHI::GetVkFormatBlockSize(Format);
         CHECK(BlockSize != 0);
         
         Width  = Math::Max<uint32>(1, (Width + 3) / 4);
@@ -67,10 +70,12 @@ uint64 VkCalculateTextureUploadSize(VkFormat Format, uint32 Width, uint32 Height
     }
     else
     {
-        const uint32 PixelSize = GetVkFormatByteStride(Format);
+        const uint32 PixelSize = VulkanRHI::GetVkFormatByteStride(Format);
         CHECK(PixelSize != 0);
         return Width * Height * PixelSize;
     }
+}
+
 }
 
 FVulkanTextureRHI::FVulkanTextureRHI(FVulkanDevice* InDevice, const FRHITextureDesc& InTextureDesc)
@@ -149,7 +154,7 @@ FVulkanTextureRHI::~FVulkanTextureRHI()
 
 bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHIResourceState InInitialAccess, const IRHITextureData* InInitialData)
 {
-    const VkSampleCountFlagBits SampleCount = ConvertSampleCount(Desc.NumSamples);
+    const VkSampleCountFlagBits SampleCount = VulkanRHI::ConvertSampleCount(Desc.NumSamples);
     if (SampleCount < VK_SAMPLE_COUNT_1_BIT)
     {
         VULKAN_ERROR_CRITICAL("Invalid SampleCount");
@@ -158,8 +163,8 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHI
 
     VkImageCreateInfo ImageCreateInfo = {};
     ImageCreateInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ImageCreateInfo.imageType             = ConvertTextureDimension(Desc.Dimension);
-    ImageCreateInfo.format                = ConvertFormat(Desc.Format);
+    ImageCreateInfo.imageType             = VulkanRHI::ConvertTextureDimension(Desc.Dimension);
+    ImageCreateInfo.format                = VulkanRHI::ConvertFormat(Desc.Format);
     ImageCreateInfo.extent.width          = Desc.Extent.X;
     ImageCreateInfo.extent.height         = Desc.Extent.Y;
     ImageCreateInfo.mipLevels             = Desc.NumMipLevels;
@@ -236,7 +241,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHI
     TArray<VkFormat> ViewFormats;
     if ((ImageCreateInfo.flags & VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT) != 0)
     {
-        ViewFormats = GetVulkanFormatCompatibilityClass(ImageCreateInfo.format);
+        ViewFormats = VulkanRHI::GetVulkanFormatCompatibilityClass(ImageCreateInfo.format);
 
         if (ViewFormats.Size() > 0)
         {
@@ -470,7 +475,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHI
         ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
         ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT_KHR;
         ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
-        ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
+        ImageBarrier.subresourceRange.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
         ImageBarrier.subresourceRange.baseArrayLayer = 0;
         ImageBarrier.subresourceRange.baseMipLevel   = 0;
         ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
@@ -497,8 +502,8 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHI
             const uint32 SrcRowPitch   = static_cast<uint32>(InInitialData->GetMipRowPitch(MipIndex));
             const int64  SrcSlicePitch = InInitialData->GetMipSlicePitch(MipIndex);
 
-            const uint32 RowPitch = VkCalculateTextureRowPitch(Format, Width);
-            const uint32 NumRows  = VkCalculateTextureNumRows(Format, Height);
+            const uint32 RowPitch = VulkanRHI::VkCalculateTextureRowPitch(Format, Width);
+            const uint32 NumRows  = VulkanRHI::VkCalculateTextureNumRows(Format, Height);
 
             for (uint32 ArrayLayer = 0; ArrayLayer < NumArrayLayers; ++ArrayLayer)
             {
@@ -527,7 +532,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHI
                 BufferImageCopy.bufferOffset                    = UploadLocation.GetBufferOffset();
                 BufferImageCopy.bufferRowLength                 = 0;
                 BufferImageCopy.bufferImageHeight               = 0;
-                BufferImageCopy.imageSubresource.aspectMask     = GetImageAspectFlagsFromFormat(Format);
+                BufferImageCopy.imageSubresource.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(Format);
                 BufferImageCopy.imageSubresource.mipLevel       = MipIndex;
                 BufferImageCopy.imageSubresource.baseArrayLayer = ArrayLayer;
                 BufferImageCopy.imageSubresource.layerCount     = 1;
@@ -572,7 +577,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHI
         ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
         ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT_KHR;
         ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
-        ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
+        ImageBarrier.subresourceRange.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
         ImageBarrier.subresourceRange.baseArrayLayer = 0;
         ImageBarrier.subresourceRange.baseMipLevel   = 0;
         ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
@@ -582,7 +587,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHI
         InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandBuffer());
 
         VkImageSubresourceRange SubresourceRange = {};
-        SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
+        SubresourceRange.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
         SubresourceRange.baseArrayLayer = 0;
         SubresourceRange.baseMipLevel   = 0;
         SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
@@ -610,7 +615,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHI
                 1, 
                 &SubresourceRange);
         }
-        else if (!VkFormatIsBlockCompressed(ImageCreateInfo.format))
+        else if (!VulkanRHI::VkFormatIsBlockCompressed(ImageCreateInfo.format))
         {
             VkClearColorValue ClearColor = {};
             if (Desc.ClearValue.IsColorValue())
@@ -655,7 +660,7 @@ void FVulkanTextureRHI::SetVkImage(VkImage InImage, VkImageLayout InLayout)
 
     if (CreateInfo.format == VK_FORMAT_UNDEFINED)
     {
-        CreateInfo.format      = ConvertFormat(Desc.Format);
+        CreateInfo.format      = VulkanRHI::ConvertFormat(Desc.Format);
         CreateInfo.mipLevels   = Desc.NumMipLevels;
         CreateInfo.arrayLayers = Desc.NumArraySlices;
         CreateInfo.extent      = { static_cast<uint32>(Desc.Extent.X), static_cast<uint32>(Desc.Extent.Y), Math::Max(static_cast<uint32>(Desc.Extent.Z), 1u) };
@@ -679,7 +684,7 @@ void FVulkanTextureRHI::SetSwapChainImage(VkImage InImage, EFormat InFormat, uin
     Desc.Extent.X = static_cast<int32>(InWidth);
     Desc.Extent.Y = static_cast<int32>(InHeight);
 
-    CreateInfo.format      = ConvertFormat(Desc.Format);
+    CreateInfo.format      = VulkanRHI::ConvertFormat(Desc.Format);
     CreateInfo.mipLevels   = Desc.NumMipLevels;
     CreateInfo.arrayLayers = Desc.NumArraySlices;
     CreateInfo.extent      = { InWidth, InHeight, 1 };
@@ -689,10 +694,10 @@ void FVulkanTextureRHI::SetSwapChainImage(VkImage InImage, EFormat InFormat, uin
 
 bool FVulkanTextureRHI::InitializeSwapChainTexture()
 {
-    const VkFormat BackBufferFormat = ConvertFormat(Desc.Format);
+    const VkFormat BackBufferFormat = VulkanRHI::ConvertFormat(Desc.Format);
 
     VkImageSubresourceRange SubresourceRange = {};
-    SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(BackBufferFormat);
+    SubresourceRange.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(BackBufferFormat);
     SubresourceRange.baseArrayLayer = 0;
     SubresourceRange.layerCount     = 1;
     SubresourceRange.baseMipLevel   = 0;

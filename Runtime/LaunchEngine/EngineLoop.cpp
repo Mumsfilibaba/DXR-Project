@@ -7,7 +7,7 @@
 #include "Core/Tasks/TaskGraph.h"
 #include "Core/Tasks/Tasks.h"
 #include "Core/Misc/CoreDelegates.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Config.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/BootProfiler.h"
@@ -25,11 +25,13 @@
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Platform/PlatformConsoleWindow.h"
+#include "RHI/RHI.h"
 #include "ShaderCompiler/ShaderCompiler.h"
+#include "RemoteConsole/RemoteConsoleServer.h"
 #include "Engine/Engine.h"
 #include "Engine/Performance/ProfileRun.h"
 #include "RendererCore/RenderGraph/RenderGraphResourcePool.h"
-#include "RendererCore/Shaders/ShaderBytecodeCache.h"
+#include "ShaderCompiler/ShaderBytecodeCache.h"
 #include "RendererCore/Shaders/ShaderCache.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/VertexStreamCache.h"
@@ -78,7 +80,7 @@ static bool InitializeOutputDevices()
     {
         GConsoleWindow->Show(true);
         GConsoleWindow->SetTitle("DXR-Engine Output Console");
-        FOutputDeviceLogger::Get()->RegisterOutputDevice(GConsoleWindow.Get());
+        FOutputDeviceManager::Get()->RegisterOutputDevice(GConsoleWindow.Get());
     }
     else
     {
@@ -89,7 +91,7 @@ static bool InitializeOutputDevices()
     if (FPlatformMisc::IsDebuggerPresent())
     {
         GDebuggerOutputDevice = MakeUniquePtr<FDebuggerOutputDevice>();
-        FOutputDeviceLogger::Get()->RegisterOutputDevice(GDebuggerOutputDevice.Get());
+        FOutputDeviceManager::Get()->RegisterOutputDevice(GDebuggerOutputDevice.Get());
     }
 
     const String OutputLogPath = Paths::GetProjectDir() + "/OutputLog.txt";
@@ -97,9 +99,10 @@ static bool InitializeOutputDevices()
     
     if (GFileOutputDevice && GFileOutputDevice->IsValid())
     {
-        FOutputDeviceLogger::Get()->RegisterOutputDevice(GFileOutputDevice.Get());
+        FOutputDeviceManager::Get()->RegisterOutputDevice(GFileOutputDevice.Get());
     }
 
+    FOutputDeviceManager::Get()->FlushPendingLines();
     return true;
 }
 
@@ -229,6 +232,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         }
     }
 
+    GConfig->LoadConsoleVariables();
     FConsoleManager::Get().LoadFromCommandLine();
 
     {
@@ -238,6 +242,15 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         {
             FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ThreadManager");
             return -1;
+        }
+    }
+
+    {
+        TRACE_BOOT_SCOPE("RemoteConsole");
+
+        if (!FRemoteConsoleServer::Initialize())
+        {
+            LOG_WARNING("Failed to start the RemoteConsole server, continuing without it");
         }
     }
 
@@ -278,9 +291,12 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
         if (!RHI::Initialize())
         {
+            LOG_ERROR("[BOOT] Failed at RHI initialize");
             return -1;
         }
     }
+
+    LOG_INFO("[BOOT] RHI initialized type=%s", ToString(RHI::Device->GetRHIType()));
 
     CoreDelegates::PostInitRHIDelegate.Broadcast();
 
@@ -387,10 +403,13 @@ int32 FEngineLoop::Init()
 
             if (!CreateApplicationRenderer())
             {
+                LOG_ERROR("[BOOT] Failed at ApplicationRenderer RHI initialize");
                 FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create the UI renderer");
                 return -1;
             }
         }
+
+        LOG_INFO("[BOOT] ApplicationRenderer RHI initialized");
 
         CoreDelegates::PreEngineInitDelegate.Broadcast();
 
@@ -414,10 +433,13 @@ int32 FEngineLoop::Init()
             RendererModule = IRendererModule::Get();
             if (!RendererModule->Initialize())
             {
+                LOG_ERROR("[BOOT] Failed at scene renderer initialize");
                 FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create Renderer");
                 return -1;
             }
         }
+
+        LOG_INFO("[BOOT] Scene renderer initialized");
 
         UIRenderer->SetGPUProfiler(&RendererModule->GetGPUProfiler());
 
@@ -453,6 +475,7 @@ int32 FEngineLoop::Init()
             
             if (!FEngine::Get()->Start())
             {
+                LOG_ERROR("[BOOT] Failed at engine start");
                 return -1;
             }
         }
@@ -464,6 +487,7 @@ int32 FEngineLoop::Init()
 
     FProfileRun::BeginCapture();
 
+    LOG_INFO("[BOOT] Engine started");
     return 0;
 }
 
@@ -545,13 +569,24 @@ void FEngineLoop::Tick()
 
     ++FrameCounter;
 
-    FConsoleManager::Get().ExecuteQueuedCommands(*FOutputDeviceLogger::Get());
+    if (FrameCounter == 1)
+    {
+        LOG_INFO("[BOOT] First frame submitted");
+    }
+
+    FConsoleManager::Get().ExecuteQueuedCommands(*FOutputDeviceManager::Get());
+
+    {
+        TRACE_SCOPE("RemoteConsole Tick");
+        FRemoteConsoleServer::Tick();
+    }
 
     FProfileRun::Tick();
 
     const int32 ExitAfterFrames = CVarExitAfterFrames.GetValue();
     if (ExitAfterFrames > 0 && FrameCounter >= static_cast<uint64>(ExitAfterFrames))
     {
+        LOG_INFO("[BOOT] ExitAfterFrames reached count=%llu", static_cast<uint64>(FrameCounter));
         RequestEngineExit("Engine.ExitAfterFrames reached");
     }
 }
@@ -559,6 +594,8 @@ void FEngineLoop::Tick()
 void FEngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
+
+    FRemoteConsoleServer::Release();
 
     FApplication::Get().SetOnWindowLiveResize(FOnWindowLiveResize());
 

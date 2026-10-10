@@ -1,4 +1,4 @@
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Application/Application.h"
 #include "Application/IApplicationRenderer.h"
 #include "Application/Elements/Viewport.h"

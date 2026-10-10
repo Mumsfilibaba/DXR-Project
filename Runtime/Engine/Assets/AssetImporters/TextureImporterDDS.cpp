@@ -1,4 +1,4 @@
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Filesystem/File.h"
 #include "Core/Platform/PlatformFile.h"
 #include "RHI/RHITypes.h"

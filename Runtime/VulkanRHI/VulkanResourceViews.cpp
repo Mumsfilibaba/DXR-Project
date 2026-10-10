@@ -487,7 +487,7 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
         {
             case EBufferViewType::Typed:
             {
-                const VkFormat     VulkanFormat = ConvertFormat(BufferDesc.Format);
+                const VkFormat     VulkanFormat = VulkanRHI::ConvertFormat(BufferDesc.Format);
                 const VkDeviceSize ElementSize  = GetByteStrideFromFormat(BufferDesc.Format);
                 const VkDeviceSize ViewOffset   = ElementSize * BufferDesc.FirstElement;
                 const VkDeviceSize Range        = ElementSize * BufferDesc.NumElements;
@@ -638,12 +638,12 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
 
         const VkImage            Image            = VulkanTexture->GetVkImage();
         const VkFormat           ImageFormat      = VulkanTexture->GetVkFormat();
-        const VkFormat           VulkanFormat     = ConvertFormat(ViewFormat);
-        const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
+        const VkFormat           VulkanFormat     = VulkanRHI::ConvertFormat(ViewFormat);
+        const VkImageAspectFlags ImageAspectFlags = VulkanRHI::GetImageAspectFlagsFromFormat(VulkanFormat);
 
         if (ImageFormat != VK_FORMAT_UNDEFINED && ImageFormat != VulkanFormat)
         {
-            if (!IsFormatInCompatibilityClass(ImageFormat, VulkanFormat))
+            if (!VulkanRHI::IsFormatInCompatibilityClass(ImageFormat, VulkanFormat))
             {
                 VULKAN_ERROR_CRITICAL("Cannot create SRV with format '%s' on image with format '%s' (different compatibility class)",
                     ToString(VulkanFormat), ToString(ImageFormat));
@@ -776,7 +776,7 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
         {
             case EBufferViewType::Typed:
             {
-                const VkFormat     VulkanFormat = ConvertFormat(BufferDesc.Format);
+                const VkFormat     VulkanFormat = VulkanRHI::ConvertFormat(BufferDesc.Format);
                 const VkDeviceSize ElementSize  = GetByteStrideFromFormat(BufferDesc.Format);
                 const VkDeviceSize ViewOffset   = ElementSize * BufferDesc.FirstElement;
                 const VkDeviceSize Range        = ElementSize * BufferDesc.NumElements;
@@ -921,12 +921,12 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
 
         const VkImage            Image            = VulkanTexture->GetVkImage();
         const VkFormat           ImageFormat      = VulkanTexture->GetVkFormat();
-        const VkFormat           VulkanFormat     = ConvertFormat(ViewFormat);
-        const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
+        const VkFormat           VulkanFormat     = VulkanRHI::ConvertFormat(ViewFormat);
+        const VkImageAspectFlags ImageAspectFlags = VulkanRHI::GetImageAspectFlagsFromFormat(VulkanFormat);
 
         if (ImageFormat != VK_FORMAT_UNDEFINED && ImageFormat != VulkanFormat)
         {
-            if (!IsFormatInCompatibilityClass(ImageFormat, VulkanFormat))
+            if (!VulkanRHI::IsFormatInCompatibilityClass(ImageFormat, VulkanFormat))
             {
                 VULKAN_ERROR_CRITICAL("Cannot create UAV with format '%s' on image with format '%s' (different compatibility class)",
                     ToString(VulkanFormat), ToString(ImageFormat));
@@ -1111,8 +1111,8 @@ bool FVulkanRenderTargetViewRHI::Initialize(FRHITexture* InTexture, const FRHIRe
         }
     }
 
-    const VkFormat           VulkanFormat     = ConvertFormat(ViewFormat);
-    const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
+    const VkFormat           VulkanFormat     = VulkanRHI::ConvertFormat(ViewFormat);
+    const VkImageAspectFlags ImageAspectFlags = VulkanRHI::GetImageAspectFlagsFromFormat(VulkanFormat);
 
     if (!InitializeImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, MipLevel, /*NumMips=*/1u))
     {
@@ -1271,8 +1271,8 @@ bool FVulkanDepthStencilViewRHI::Initialize(FRHITexture* InTexture, const FRHIDe
         }
     }
 
-    const VkFormat           VulkanFormat     = ConvertFormat(ViewFormat);
-    const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
+    const VkFormat           VulkanFormat     = VulkanRHI::ConvertFormat(ViewFormat);
+    const VkImageAspectFlags ImageAspectFlags = VulkanRHI::GetImageAspectFlagsFromFormat(VulkanFormat);
 
     if (!InitializeImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, MipLevel, /*NumMips=*/1u))
     {

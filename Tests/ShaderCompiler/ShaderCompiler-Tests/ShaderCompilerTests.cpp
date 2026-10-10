@@ -662,14 +662,17 @@ bool ShaderCompilerVertexInputs_Test()
 
     const CHAR* const Filenames[] = { "Shaders/UserInterface.hlsl", "Shaders/ImGui.hlsl" };
 
-    const EShaderOutputLanguage Languages[] = { EShaderOutputLanguage::DXIL, EShaderOutputLanguage::DXBC, EShaderOutputLanguage::SPIRV };
+    // DXC compiles DXIL everywhere, but only Windows can reflect it, so the platform filter decides
+    const TArray<EShaderOutputLanguage> SupportedLanguages = FShaderCompiler::Get().GetSupportedOutputLanguages();
+
+    const EShaderOutputLanguage Languages[] = { EShaderOutputLanguage::DXIL, EShaderOutputLanguage::DXBC, EShaderOutputLanguage::SPIRV, EShaderOutputLanguage::MSL };
 
     for (const CHAR* Filename : Filenames)
     {
         TArray<uint8> FirstLocations;
         for (EShaderOutputLanguage OutputLanguage : Languages)
         {
-            if (!FShaderCompiler::Get().IsOutputLanguageSupported(OutputLanguage))
+            if (!SupportedLanguages.Contains(OutputLanguage))
             {
                 continue;
             }
@@ -698,6 +701,18 @@ bool ShaderCompilerVertexInputs_Test()
                 }
             }
 
+            // MetalRHI places each attribute at the reflected location, so the MSL has to declare the same index
+            if (OutputLanguage == EShaderOutputLanguage::MSL)
+            {
+                TEST_SECTION("The MSL declares an attribute at every reflected location");
+                const TArrayView<const uint8> NativeCode = CodeView.GetNativeCode();
+                const String Source(reinterpret_cast<const CHAR*>(NativeCode.Data()), NativeCode.Size());
+                for (uint8 Location : Locations)
+                {
+                    TEST_EXPECT(Source.Contains(String::Printf("[[attribute(%u)]]", static_cast<uint32>(Location))));
+                }
+            }
+
             TEST_SECTION("Every language reports the same locations");
             if (FirstLocations.IsEmpty())
             {
@@ -719,7 +734,7 @@ bool ShaderCompilerVertexInputs_Test()
     TEST_SECTION("System values are not vertex inputs");
     for (EShaderOutputLanguage OutputLanguage : Languages)
     {
-        if (!FShaderCompiler::Get().IsOutputLanguageSupported(OutputLanguage))
+        if (!SupportedLanguages.Contains(OutputLanguage))
         {
             continue;
         }
@@ -772,11 +787,14 @@ bool ShaderCompilerRayTracing_Test()
         { true,  true,  EShaderModel::SM_6_9 },
     };
 
+    // DXC compiles DXIL everywhere, but only Windows can reflect it, so the platform filter decides
+    const TArray<EShaderOutputLanguage> SupportedLanguages = FShaderCompiler::Get().GetSupportedOutputLanguages();
+
     const EShaderOutputLanguage Languages[] = { EShaderOutputLanguage::DXIL, EShaderOutputLanguage::SPIRV };
 
     for (EShaderOutputLanguage OutputLanguage : Languages)
     {
-        if (!FShaderCompiler::Get().IsOutputLanguageSupported(OutputLanguage))
+        if (!SupportedLanguages.Contains(OutputLanguage))
         {
             continue;
         }
@@ -882,7 +900,7 @@ bool ShaderCompilerRayTracing_Test()
 
         for (EShaderOutputLanguage OutputLanguage : Languages)
         {
-            if (!FShaderCompiler::Get().IsOutputLanguageSupported(OutputLanguage))
+            if (!SupportedLanguages.Contains(OutputLanguage))
             {
                 continue;
             }

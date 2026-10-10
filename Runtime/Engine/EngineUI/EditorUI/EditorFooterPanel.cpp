@@ -1,6 +1,6 @@
 #include "Engine/EngineUI/EditorUI/EditorFooterPanel.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Math/Math.h"
 #include "Application/Console/ConsoleCommandLine.h"
@@ -14,6 +14,7 @@
 #include "Application/Input/Keys.h"
 #include "Application/Menus/MenuStack.h"
 #include "Application/Menus/ToolTipService.h"
+#include "RemoteConsole/RemoteConsoleServer.h"
 
 /** @brief The space between either end of the footer strip and what it holds, in pixels. */
 constexpr int32 FOOTER_INSET = 16;
@@ -371,7 +372,7 @@ EKeyInterceptResult FEditorFooterPanel::OnFieldKeyDown(const FKeyEvent& KeyEvent
 
     if (Key == Keys::Enter)
     {
-        CommandLine->Submit(*FOutputDeviceLogger::Get());
+        CommandLine->Submit(*FOutputDeviceManager::Get());
         SyncFieldFromCommandLine();
         RebuildCandidateList();
 
@@ -697,5 +698,13 @@ void FEditorFooterPanel::Refresh()
     const float FrameTimeMs = Profiler.GetLatestCpuMilliseconds();
     const float FramesPerSecond = FrameTimeMs > 0.0f ? (1000.0f / FrameTimeMs) : 0.0f;
 
-    StatusLabel->SetText(String::Printf("%.1f FPS  %.2f ms", FramesPerSecond, FrameTimeMs));
+    const int32 NumRemoteConsoles = FRemoteConsoleServer::GetNumConnectedClients();
+    if (NumRemoteConsoles > 0)
+    {
+        StatusLabel->SetText(String::Printf("Remote console: %d connected    %.1f FPS  %.2f ms", NumRemoteConsoles, FramesPerSecond, FrameTimeMs));
+    }
+    else
+    {
+        StatusLabel->SetText(String::Printf("%.1f FPS  %.2f ms", FramesPerSecond, FrameTimeMs));
+    }
 }

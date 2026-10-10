@@ -1,5 +1,5 @@
 #include "Core/Math/Math.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Templates/CString.h"
 #include "ShaderCore/ShaderBindingConventions.h"
 #include "ShaderCompiler/Reflection/ShaderReflectionUtils.h"
@@ -43,6 +43,12 @@ static spvc_compiler CreateReflectionCompiler(const FScopedSpvcContext& Context,
         OutErrors += "Failed to create the SPIRV-Cross context\n";
         return nullptr;
     }
+
+    // The context lives in the caller, which outlives every spvc_* call made with OutErrors still in scope
+    spvc_context_set_error_callback(Context.Get(), [](void* UserData, const CHAR* Error)
+    {
+        *static_cast<String*>(UserData) += String::Printf("SPIRV-Cross: %s\n", Error);
+    }, &OutErrors);
 
     spvc_parsed_ir ParsedCode = nullptr;
     if (spvc_context_parse_spirv(Context.Get(), reinterpret_cast<const SpvId*>(Spirv.Data()), Spirv.Size(), &ParsedCode) != SPVC_SUCCESS)

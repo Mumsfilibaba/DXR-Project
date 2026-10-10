@@ -425,7 +425,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
         {
             VkPhysicalDeviceProperties AdapterProperties;
             vkGetPhysicalDeviceProperties(CurrentAdapter, &AdapterProperties);
-            LOG_INFO("    '%s' Supports Vulkan '%s'", AdapterProperties.deviceName, *GetVersionAsString(AdapterProperties.apiVersion));
+            LOG_INFO("    '%s' Supports Vulkan '%s'", AdapterProperties.deviceName, *VulkanRHI::GetVersionAsString(AdapterProperties.apiVersion));
         }
     }
 
@@ -443,7 +443,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
 
         if (AdapterProperties.apiVersion < VULKAN_TARGET_API_VERSION)
         {
-            VULKAN_INFO("Skipping device '%s' since it's api-version is below Vulkan 1.2 (apiVersion=%s)", AdapterProperties.deviceName, *GetVersionAsString(AdapterProperties.apiVersion));
+            VULKAN_INFO("Skipping device '%s' since it's api-version is below Vulkan 1.2 (apiVersion=%s)", AdapterProperties.deviceName, *VulkanRHI::GetVersionAsString(AdapterProperties.apiVersion));
             continue;
         }
 
@@ -610,7 +610,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
 
     vkGetPhysicalDeviceMemoryProperties2(PhysicalDevice, &DeviceMemoryProperties2);
     
-    VULKAN_INFO("Using adapter '%s' Which supports Vulkan '%s'", DeviceProperties.deviceName, *GetVersionAsString(DeviceProperties.apiVersion));
+    VULKAN_INFO("Using adapter '%s' Which supports Vulkan '%s'", DeviceProperties.deviceName, *VulkanRHI::GetVersionAsString(DeviceProperties.apiVersion));
     return true;
 }
 
@@ -1213,7 +1213,7 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
         ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
         ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
         ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
-        ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(VK_FORMAT_R8G8B8A8_UNORM);
+        ImageBarrier.subresourceRange.aspectMask     = VulkanRHI::GetImageAspectFlagsFromFormat(VK_FORMAT_R8G8B8A8_UNORM);
         ImageBarrier.subresourceRange.baseArrayLayer = 0;
         ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
         ImageBarrier.subresourceRange.baseMipLevel   = 0;
@@ -1300,17 +1300,17 @@ bool FVulkanDevice::FindOrCreateSampler(const FRHISamplerStateDesc& SamplerDesc,
 {
     VkSamplerCreateInfo CreateInfo = {};
     CreateInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    CreateInfo.magFilter               = ConvertSamplerFilterToMagFilter(SamplerDesc.Filter);
-    CreateInfo.minFilter               = ConvertSamplerFilterToMinFilter(SamplerDesc.Filter);
-    CreateInfo.mipmapMode              = ConvertSamplerFilterToMipmapMode(SamplerDesc.Filter);
-    CreateInfo.addressModeU            = ConvertSamplerMode(SamplerDesc.AddressU);
-    CreateInfo.addressModeV            = ConvertSamplerMode(SamplerDesc.AddressV);
-    CreateInfo.addressModeW            = ConvertSamplerMode(SamplerDesc.AddressW);
+    CreateInfo.magFilter               = VulkanRHI::ConvertSamplerFilterToMagFilter(SamplerDesc.Filter);
+    CreateInfo.minFilter               = VulkanRHI::ConvertSamplerFilterToMinFilter(SamplerDesc.Filter);
+    CreateInfo.mipmapMode              = VulkanRHI::ConvertSamplerFilterToMipmapMode(SamplerDesc.Filter);
+    CreateInfo.addressModeU            = VulkanRHI::ConvertSamplerMode(SamplerDesc.AddressU);
+    CreateInfo.addressModeV            = VulkanRHI::ConvertSamplerMode(SamplerDesc.AddressV);
+    CreateInfo.addressModeW            = VulkanRHI::ConvertSamplerMode(SamplerDesc.AddressW);
     CreateInfo.mipLodBias              = SamplerDesc.MipLODBias;
-    CreateInfo.anisotropyEnable        = IsAnisotropySampler(SamplerDesc.Filter);
+    CreateInfo.anisotropyEnable        = VulkanRHI::IsAnisotropySampler(SamplerDesc.Filter);
     CreateInfo.maxAnisotropy           = SamplerDesc.MaxAnisotropy;
-    CreateInfo.compareEnable           = IsComparisonSampler(SamplerDesc.Filter);
-    CreateInfo.compareOp               = ConvertComparisonFunc(SamplerDesc.ComparisonFunc);
+    CreateInfo.compareEnable           = VulkanRHI::IsComparisonSampler(SamplerDesc.Filter);
+    CreateInfo.compareOp               = VulkanRHI::ConvertComparisonFunc(SamplerDesc.ComparisonFunc);
     CreateInfo.minLod                  = SamplerDesc.MinLOD;
     CreateInfo.maxLod                  = SamplerDesc.MaxLOD;
     CreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
@@ -1685,55 +1685,36 @@ FVulkanComputePipelineStateRHI* FVulkanBufferClearPipelines::GetOrCreatePipeline
 
     bCreationFailed[ClearTypeIndex] = true;
 
-    const uint8* EmbeddedCode = nullptr;
-    uint32       EmbeddedSize = 0;
+    TArrayView<const uint8> EmbeddedCode;
 
     switch (ClearType)
     {
         case EVulkanBufferClearType::Uint:
         {
-            EmbeddedCode = GVulkanClearBufferUAV_Uint;
-            EmbeddedSize = ARRAY_COUNT(GVulkanClearBufferUAV_Uint);
+            EmbeddedCode = TArrayView<const uint8>(GVulkanClearBufferUAV_Uint, static_cast<int32>(ARRAY_COUNT(GVulkanClearBufferUAV_Uint)));
             break;
         }
 
         case EVulkanBufferClearType::Sint:
         {
-            EmbeddedCode = GVulkanClearBufferUAV_Sint;
-            EmbeddedSize = ARRAY_COUNT(GVulkanClearBufferUAV_Sint);
+            EmbeddedCode = TArrayView<const uint8>(GVulkanClearBufferUAV_Sint, static_cast<int32>(ARRAY_COUNT(GVulkanClearBufferUAV_Sint)));
             break;
         }
 
         default:
         {
-            EmbeddedCode = GVulkanClearBufferUAV_Float;
-            EmbeddedSize = ARRAY_COUNT(GVulkanClearBufferUAV_Float);
+            EmbeddedCode = TArrayView<const uint8>(GVulkanClearBufferUAV_Float, static_cast<int32>(ARRAY_COUNT(GVulkanClearBufferUAV_Float)));
             break;
         }
     }
 
-    // Must match Shaders/Internal/ClearBufferUAV.hlsl
-    FShaderReflection Reflection;
-    Reflection.EntryPoint               = "Main";
-    Reflection.Info.ShaderConstantsSize = sizeof(uint32) * 5;
-
-    FShaderResourceBinding& OutputBuffer = Reflection.Bindings.Emplace();
-    OutputBuffer.Type      = EShaderResourceType::RWTypedBuffer;
-    OutputBuffer.Dimension = EShaderResourceDimension::Buffer;
-    OutputBuffer.Register  = 0;
-
-    TArray<uint8> ShaderCode;
-    if (!FVulkanShader::CreateInternalShaderCode(EShaderStage::Compute, TArrayView<const uint8>(EmbeddedCode, static_cast<int32>(EmbeddedSize)), Reflection, ShaderCode))
-    {
-        VULKAN_ERROR("Failed to create the internal buffer-clear shader code");
-        return nullptr;
-    }
-
+    TArray<uint8>              ShaderCode;
     FShaderCodeView            CodeView;
+    String                     ReadError;
     FVulkanComputeShaderRHIRef ClearShader = new FVulkanComputeShaderRHI(&Device);
-    if (!FShaderCodeReader::Read(ShaderCode, CodeView) || !ClearShader->Initialize(CodeView))
+    if (!FShaderCodeReader::ReadEmbedded(EmbeddedCode, ShaderCode, CodeView, &ReadError) || !ClearShader->Initialize(CodeView))
     {
-        VULKAN_ERROR("Failed to create the internal buffer-clear shader");
+        VULKAN_ERROR("Failed to create the internal buffer-clear shader, building VulkanRHI regenerates it: %s", *ReadError);
         return nullptr;
     }
 

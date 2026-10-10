@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Misc/Debug.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Containers/ComPtr.h"
 #include "Core/Containers/StringConversion.h"
 #include "RHI/RHIIndirect.h"

@@ -135,7 +135,7 @@ bool FD3D12OpacityMicromapRHI::Build(FD3D12CommandContext& CmdContext, const FRH
         D3D12_RAYTRACING_OPACITY_MICROMAP_HISTOGRAM_ENTRY& HistogramEntry = HistogramEntries.Emplace();
         HistogramEntry.Count            = BuildDesc.NumOpacityMicromaps;
         HistogramEntry.SubdivisionLevel = SubdivisionLevel;
-        HistogramEntry.Format           = ConvertOpacityMicromapFormat(Format);
+        HistogramEntry.Format           = D3D12RHI::ConvertOpacityMicromapFormat(Format);
     }
     else
     {
@@ -146,7 +146,7 @@ bool FD3D12OpacityMicromapRHI::Build(FD3D12CommandContext& CmdContext, const FRH
             D3D12_RAYTRACING_OPACITY_MICROMAP_HISTOGRAM_ENTRY& HistogramEntry = HistogramEntries.Emplace();
             HistogramEntry.Count            = Entry.Count;
             HistogramEntry.SubdivisionLevel = Entry.SubdivisionLevel;
-            HistogramEntry.Format           = ConvertOpacityMicromapFormat(Entry.Format);
+            HistogramEntry.Format           = D3D12RHI::ConvertOpacityMicromapFormat(Entry.Format);
         }
     }
 
@@ -163,7 +163,7 @@ bool FD3D12OpacityMicromapRHI::Build(FD3D12CommandContext& CmdContext, const FRH
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs = {};
     Inputs.Type                      = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_OPACITY_MICROMAP_ARRAY;
-    Inputs.Flags                     = ConvertAccelerationStructureBuildFlags(GetFlags());
+    Inputs.Flags                     = D3D12RHI::ConvertAccelerationStructureBuildFlags(GetFlags());
     Inputs.NumDescs                  = 1;
     Inputs.DescsLayout               = D3D12_ELEMENTS_LAYOUT_ARRAY;
     Inputs.pOpacityMicromapArrayDesc = &OMMArrayDesc;
@@ -295,7 +295,7 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
 
         if (IndexBuffer)
         {
-            GeometryDesc.Triangles.IndexFormat = ConvertIndexFormat(BuildDesc.IndexFormat);
+            GeometryDesc.Triangles.IndexFormat = D3D12RHI::ConvertIndexFormat(BuildDesc.IndexFormat);
             GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetGPUVirtualAddress();
             GeometryDesc.Triangles.IndexCount  = BuildDesc.NumIndices;
         }
@@ -306,7 +306,7 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
     Inputs.NumDescs       = 1;
     Inputs.pGeometryDescs = &GeometryDesc;
     Inputs.Type           = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
-    Inputs.Flags          = ConvertAccelerationStructureBuildFlags(GetFlags());
+    Inputs.Flags          = D3D12RHI::ConvertAccelerationStructureBuildFlags(GetFlags());
 
     if (BuildDesc.bUpdate)
     {
@@ -530,7 +530,7 @@ bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext
     Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
     Inputs.NumDescs    = BuildDesc.NumInstances;
     Inputs.Type        = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
-    Inputs.Flags       = ConvertAccelerationStructureBuildFlags(GetFlags());
+    Inputs.Flags       = D3D12RHI::ConvertAccelerationStructureBuildFlags(GetFlags());
     
     if (BuildDesc.bUpdate)
     {
@@ -653,7 +653,7 @@ bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext
 
         Desc.AccelerationStructure               = D3D12Geometry->GetGPUVirtualAddress();
         Desc.InstanceID                          = BuildDesc.Instances[Instance].InstanceIndex;
-        Desc.Flags                               = ConvertRayTracingInstanceFlags(BuildDesc.Instances[Instance].Flags);
+        Desc.Flags                               = D3D12RHI::ConvertRayTracingInstanceFlags(BuildDesc.Instances[Instance].Flags);
         Desc.InstanceMask                        = BuildDesc.Instances[Instance].Mask;
         Desc.InstanceContributionToHitGroupIndex = BuildDesc.Instances[Instance].HitGroupIndex;
     }

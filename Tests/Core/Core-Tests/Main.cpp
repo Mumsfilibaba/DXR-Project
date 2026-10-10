@@ -20,8 +20,10 @@
 #include "JsonArchiveTests.h"
 #include "BlueNoiseGeneratorTests.h"
 #include "PlatformTimeTests.h"
+#include "PlatformMiscTests.h"
 #include "MemoryStackTests.h"
 #include "PlatformEventPoolTests.h"
+#include "FileOutputDeviceTests.h"
 #include "ProfilerTests.h"
 #include "FileTests.h"
 #include "GuidTests.h"
@@ -30,6 +32,10 @@
 #include "PathsTests.h"
 #include "CharTypeTests.h"
 #include "UnicodePathTests.h"
+#include "SocketAddressTests.h"
+#include "PlatformSocketTests.h"
+#include "NetworkSocketTests.h"
+#include "RemoteConsoleProtocolTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -63,8 +69,10 @@ static int32 RunCoreTests()
     RUN_TEST("JsonArchive", JsonArchive_Test());
     RUN_TEST("BlueNoiseGenerator", BlueNoiseGenerator_Test());
     RUN_TEST("PlatformTime", PlatformTime_Test());
+    RUN_TEST("PlatformMisc", PlatformMisc_Test());
     RUN_TEST("MemoryStack", MemoryStack_Test());
     RUN_TEST("PlatformEventPool", PlatformEventPool_Test());
+    RUN_TEST("FileOutputDevice", FileOutputDevice_Test());
     RUN_TEST("Profiler", Profiler_Test());
     RUN_TEST("ProfilerGPUTraceSentinel", ProfilerGPUTraceSentinel_Test());
     RUN_TEST("File", File_Test());
@@ -74,6 +82,10 @@ static int32 RunCoreTests()
     RUN_TEST("Paths", Paths_Test());
     RUN_TEST("CharType", CharType_Test());
     RUN_TEST("UnicodePath", UnicodePath_Test());
+    RUN_TEST("SocketAddress", SocketAddress_Test());
+    RUN_TEST("PlatformSocket", PlatformSocket_Test());
+    RUN_TEST("NetworkSocket", NetworkSocket_Test());
+    RUN_TEST("RemoteConsoleProtocol", RemoteConsoleProtocol_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();

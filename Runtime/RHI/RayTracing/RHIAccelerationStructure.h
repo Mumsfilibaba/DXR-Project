@@ -93,7 +93,7 @@ protected:
 
 public:
 
-    /** @return D3D12: ID3D12Resource*. Vulkan: VkAccelerationStructureKHR or VkBuffer. Metal: nullptr. Null: nullptr. */
+    /** @return D3D12: ID3D12Resource*. Vulkan: VkAccelerationStructureKHR or VkBuffer. Metal: id<MTLAccelerationStructure>. Null: nullptr. */
     virtual void* GetRHINativeResource() const = 0;
 
     virtual void SetDebugName(const String& InName) = 0;

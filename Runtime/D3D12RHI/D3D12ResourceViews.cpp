@@ -586,7 +586,7 @@ bool FD3D12DepthStencilViewRHI::UpdateView(FD3D12Resource* InResource, const D3D
     }
 
     D3D12Desc    = InDesc;
-    bHasStencil  = IsStencilFormat(InDesc.Format);
+    bHasStencil  = D3D12RHI::IsStencilFormat(InDesc.Format);
     ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
 
     ID3D12Resource* D3DResource = nullptr;
@@ -605,7 +605,7 @@ bool FD3D12DepthStencilViewRHI::UpdateView(FD3D12Resource* InResource, const D3D
 void FD3D12DepthStencilViewRHI::InitializeExternal(const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
 {
     D3D12Desc   = InDesc;
-    bHasStencil = IsStencilFormat(InDesc.Format);
+    bHasStencil = D3D12RHI::IsStencilFormat(InDesc.Format);
 
     FD3D12View::InitializeExternal();
 }

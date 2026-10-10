@@ -23,8 +23,13 @@ private:
     void QueueWrite(const String& Line);
     void FlushAsync();
     void FlushBlocking();
+    void SubmitPendingLines();
+    bool WriteLines(const TArray<String>& Lines);
+    void DropOverflowingLines();
 
     TFileRef<IPlatformAsyncFile> FileHandle;
+    FCriticalSection             FileCS;
     TArray<String>               PendingLines;
     FCriticalSection             PendingLinesCS;
+    bool                         bIsInsideHandle;
 };

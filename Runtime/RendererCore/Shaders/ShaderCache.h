@@ -6,6 +6,8 @@
 #include "RendererCore/Shaders/ShaderType.h"
 #include "RHI/RHIShader.h"
 
+enum class ERHIType : uint32;
+
 template<EShaderStage Stage>
 struct TShaderStageType;
 
@@ -64,6 +66,9 @@ public:
 
     NODISCARD static FShaderPermutationDesc CreatePermutationDesc(int32 PermutationID);
 
+    /** The running RHI's real features when TargetRHI is the running RHI, otherwise the features its backend can have */
+    NODISCARD static FShaderPermutationDesc CreateTargetPermutationDesc(ERHIType TargetRHI, int32 PermutationID);
+
     static FORCEINLINE FShaderCache& Get()
     {
         return *ShaderCache;
@@ -78,6 +83,11 @@ public:
     void PrewarmAsync();
     void FlushCompiledShaders();
     void EvictUnsupportedPermutations();
+
+#if EDITOR_BUILD
+    /** @brief Merges every permutation used this run, resolved for D3D11, D3D12, Vulkan and Metal, into the job file */
+    void SaveJobFile();
+#endif
 
     template<typename ShaderType>
     NODISCARD typename TShaderStageType<ShaderType::Stage>::FRefType GetShader(const typename ShaderType::FPermutation& Permutation)

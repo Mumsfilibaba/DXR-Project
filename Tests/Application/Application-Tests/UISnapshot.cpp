@@ -7,7 +7,7 @@
 #include "Application/Text/FontAtlas.h"
 #include "Core/Math/Math.h"
 #include "RHI/RHITexture.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Image/PngWriter.h"
 #include "Core/Platform/PlatformFile.h"
 

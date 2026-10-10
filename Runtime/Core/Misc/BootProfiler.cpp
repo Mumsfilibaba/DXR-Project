@@ -1,7 +1,7 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/BootProfiler.h"
 #include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformTLS.h"
 #include "Core/PlatformInterface/IPlatformStackTrace.h"
 #include "Core/PlatformInterface/IPlatformThreadMisc.h"

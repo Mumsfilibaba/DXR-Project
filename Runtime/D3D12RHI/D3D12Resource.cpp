@@ -67,7 +67,7 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResourc
         }
 
         const uint32 ArraySize = Desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D ? Desc.DepthOrArraySize : 1u;
-        NumSubresources = D3D12CalculateSubresourceCount(Desc.MipLevels, ArraySize, PlaneCount);
+        NumSubresources = D3D12RHI::D3D12CalculateSubresourceCount(Desc.MipLevels, ArraySize, PlaneCount);
 
         D3D12_RESOURCE_DESC QueryDesc = Desc;
     #if D3D12_USE_TIGHT_ALIGNMENT

@@ -1,6 +1,6 @@
 #include "Core/Mac/Mac.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "CoreApplication/Mac/CocoaWindow.h"
 #include "CoreApplication/Mac/MacApplication.h"
 #include "CoreApplication/Mac/MacWindow.h"

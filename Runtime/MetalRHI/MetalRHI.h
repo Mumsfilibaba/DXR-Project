@@ -1,4 +1,9 @@
 #pragma once
+#include "Core/Containers/Array.h"
+#include "Core/Containers/Map.h"
+#include "Core/Containers/SharedRef.h"
+#include "Core/Platform/CriticalSection.h"
+#include "Core/Threading/ScopedLock.h"
 #include "RHI/RHI.h"
 #include "MetalRHI/MetalBuffer.h"
 #include "MetalRHI/MetalTexture.h"
@@ -12,7 +17,9 @@
 #include "MetalRHI/MetalPipelineState.h"
 #include "MetalRHI/MetalRayTracing.h"
 #include "MetalRHI/MetalDevice.h"
+#include "MetalRHI/MetalDeletionQueue.h"
 #include "MetalRHI/MetalTypeTraits.h"
+#include "MetalRHI/MetalUAVClear.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -21,7 +28,7 @@ struct FMetalModuleRHI final : public FRHIModule
     virtual FRHIDevice* CreateDevice() override final;
 };
 
-class FMetalDeviceRHI : public FRHIDevice
+class METALRHI_API FMetalDeviceRHI : public FRHIDevice
 {
 public:
     static FORCEINLINE FMetalDeviceRHI* Get()
@@ -30,16 +37,24 @@ public:
         return MetalDeviceRHI;
     }
 
-    template<typename TRHIType>
-    static FORCEINLINE typename TAddPointer<typename TMetalRHIResourceType<TRHIType>::Type>::Type ResourceCast(TRHIType* Resource)
+    template<typename... ArgTypes>
+    static void DeferDeletion(ArgTypes&&... Args)
     {
-        return static_cast<typename TAddPointer<typename TMetalRHIResourceType<TRHIType>::Type>::Type>(Resource);
+        FMetalDeviceRHI* DeviceRHI = Get();
+        TScopedLock Lock(DeviceRHI->DeferredObjectsCS);
+        DeviceRHI->DeferredObjects.Emplace(Forward<ArgTypes>(Args)...);
     }
 
-    template<typename TRHIType>
-    static FORCEINLINE typename TAddPointer<const typename TMetalRHIResourceType<TRHIType>::Type>::Type ResourceCast(const TRHIType* Resource)
+    template<typename RHIType>
+    static FORCEINLINE typename TAddPointer<typename TMetalRHIResourceType<RHIType>::Type>::Type ResourceCast(RHIType* Resource)
     {
-        return static_cast<typename TAddPointer<const typename TMetalRHIResourceType<TRHIType>::Type>::Type>(Resource);
+        return static_cast<typename TAddPointer<typename TMetalRHIResourceType<RHIType>::Type>::Type>(Resource);
+    }
+
+    template<typename RHIType>
+    static FORCEINLINE typename TAddPointer<const typename TMetalRHIResourceType<RHIType>::Type>::Type ResourceCast(const RHIType* Resource)
+    {
+        return static_cast<typename TAddPointer<const typename TMetalRHIResourceType<RHIType>::Type>::Type>(Resource);
     }
 
 public:
@@ -47,6 +62,9 @@ public:
     ~FMetalDeviceRHI();
 
     bool Initialize();
+    bool InitializeDeviceFeatureSupport();
+    void FlushDeletionQueue(FMetalCommands* Commands);
+    void FlushDeferredDeletions();
 
     // FRHIDevice interface
     virtual void BeginFrame() override final;
@@ -123,14 +141,26 @@ public:
         return Device;
     }
 
-    FMetalCommandContext* ObtainMetalCommandContext()
+    FMetalUAVClearPipelines& GetUAVClearPipelines()
     {
-        return CommandContext;
+        return UAVClearPipelines;
     }
 
 private:
-    FMetalDevice*         Device;
-    FMetalCommandContext* CommandContext;
+    typedef TMap<FRHISamplerStateDesc, TSharedRef<FMetalSamplerStateRHI>> FSamplerStateMap;
+
+    template<typename MetalShaderType>
+    MetalShaderType* CreateShader(EShaderStage Stage, const TArray<uint8>& ShaderCode);
+
+    bool WaitForQuery(FMetalQueryRHI& MetalQuery, EQueryResultMode Mode);
+
+    FMetalDevice*                Device;
+    FMetalCommandContext*        CommandContext;
+    FMetalUAVClearPipelines      UAVClearPipelines;
+    TArray<FMetalDeferredObject> DeferredObjects;
+    FCriticalSection             DeferredObjectsCS;
+    FSamplerStateMap             SamplerStateMap;
+    FCriticalSection             SamplerStateMapCS;
 
     static FMetalDeviceRHI* MetalDeviceRHI;
 };

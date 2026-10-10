@@ -1,6 +1,6 @@
 #include "Core/Misc/CrashReporter.h"
 #include "Core/Containers/String.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformStackTrace.h"
 
 void CrashReporter::Report(const FCrashContext& Context)
@@ -33,5 +33,5 @@ void CrashReporter::Report(const FCrashContext& Context)
     LOG_ERROR("%s", *Record);
 
     // The process is about to die, so the report is worth nothing unless it has reached the file.
-    FOutputDeviceLogger::Get()->Flush();
+    FOutputDeviceManager::Get()->Flush();
 }

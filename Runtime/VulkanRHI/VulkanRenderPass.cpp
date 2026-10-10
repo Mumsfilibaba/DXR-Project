@@ -68,7 +68,7 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
     TArray<VkAttachmentDescription> Attachments;
 
     // Number of samples (MSAA)
-    const VkSampleCountFlagBits SampleCount = ConvertSampleCount(1u << Key.SampleCountLog2);
+    const VkSampleCountFlagBits SampleCount = VulkanRHI::ConvertSampleCount(1u << Key.SampleCountLog2);
     if (SampleCount < VK_SAMPLE_COUNT_1_BIT)
     {
         VULKAN_ERROR_CRITICAL("Invalid SampleCount");
@@ -80,10 +80,10 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
     {
         // Setup Attachments
         VkAttachmentDescription ColorAttachment = {};
-        ColorAttachment.format         = ConvertFormat(Key.RenderTargetFormats[Index]);
+        ColorAttachment.format         = VulkanRHI::ConvertFormat(Key.RenderTargetFormats[Index]);
         ColorAttachment.samples        = SampleCount;
-        ColorAttachment.loadOp         = ConvertLoadAction(Key.RenderTargetActions[Index].LoadAction);
-        ColorAttachment.storeOp        = ConvertStoreAction(Key.RenderTargetActions[Index].StoreAction);
+        ColorAttachment.loadOp         = VulkanRHI::ConvertLoadAction(Key.RenderTargetActions[Index].LoadAction);
+        ColorAttachment.storeOp        = VulkanRHI::ConvertStoreAction(Key.RenderTargetActions[Index].StoreAction);
         ColorAttachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         ColorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         ColorAttachment.initialLayout  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -128,10 +128,10 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
         }
 
         VkAttachmentDescription DepthAttachment = {};
-        DepthAttachment.format         = ConvertFormat(Key.DepthStencilFormat);
+        DepthAttachment.format         = VulkanRHI::ConvertFormat(Key.DepthStencilFormat);
         DepthAttachment.samples        = SampleCount;
-        DepthAttachment.loadOp         = ConvertLoadAction(Key.DepthStencilActions.LoadAction);
-        DepthAttachment.storeOp        = ConvertStoreAction(Key.DepthStencilActions.StoreAction);
+        DepthAttachment.loadOp         = VulkanRHI::ConvertLoadAction(Key.DepthStencilActions.LoadAction);
+        DepthAttachment.storeOp        = VulkanRHI::ConvertStoreAction(Key.DepthStencilActions.StoreAction);
         DepthAttachment.stencilLoadOp  = DepthAttachment.loadOp;
         DepthAttachment.stencilStoreOp = DepthAttachment.storeOp;
         DepthAttachment.initialLayout  = DepthStencilLayout;

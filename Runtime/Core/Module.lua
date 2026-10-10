@@ -16,6 +16,7 @@ elseif IsPlatformWindows() then
         "Shell32.lib",
         "shlwapi.lib",
         "User32.lib",
+        "Ws2_32.lib",
     })
 end
 

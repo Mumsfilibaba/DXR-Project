@@ -14,7 +14,7 @@ protected:
     
 public:
 
-    /** @return D3D12: ID3D12Fence*. Vulkan: VkSemaphore (timeline). Metal: nullptr. Null: nullptr. */
+    /** @return D3D12: ID3D12Fence*. Vulkan: VkSemaphore (timeline). Metal: id<MTLSharedEvent>. Null: nullptr. */
     virtual void* GetRHINativeFence() const = 0;
 
     virtual bool IsSignaled() const = 0; 

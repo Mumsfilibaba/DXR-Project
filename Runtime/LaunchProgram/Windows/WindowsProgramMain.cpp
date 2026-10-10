@@ -52,15 +52,13 @@ int wmain(int NumArgs, WIDECHAR** Args)
 {
     InitCRunTime();
 
-    TArray<String>      Arguments;
-    TArray<const CHAR*> ArgumentPointers;
-
     for (int32 Index = 1; Index < NumArgs; ++Index)
     {
-        Arguments.Add(StringCast<CHAR>(Args[Index]).ToString());
+        GProgramArgs.Emplace(StringCast<CHAR>(Args[Index]).ToString());
     }
 
-    for (const String& Argument : Arguments)
+    TArray<const CHAR*> ArgumentPointers;
+    for (const String& Argument : GProgramArgs)
     {
         ArgumentPointers.Add(*Argument);
     }

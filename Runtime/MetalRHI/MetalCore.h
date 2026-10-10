@@ -1,9 +1,13 @@
 #pragma once
 #include "Core/Mac/Mac.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Math/Math.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Debug.h"
 #include "RHI/RHIResources.h"
+#include "RHI/RHIShader.h"
+#include "ShaderCore/MSLShaderBindings.h"
 #include "MetalRHI/MetalConfiguration.h"
+#include "MetalRHI/MetalCapabilities.h"
 #include <Metal/Metal.h>
 #include <QuartzCore/QuartzCore.h>
 
@@ -74,14 +78,62 @@ constexpr uint32 MAX_UAVS             = 16;
 constexpr uint32 MAX_CONSTANT_BUFFERS = 16;
 constexpr uint32 MAX_SAMPLER_STATES   = 16;
 
-constexpr uint32 MAX_TEXTURES = 32;
-constexpr uint32 MAX_BUFFERS  = 48;
-
 constexpr uint32 MAX_SHADER_CONSTANTS = 32;
 constexpr uint32 MAX_VIEWPORTS        = 16;
 
-constexpr uint32 BUFFER_ALIGNMENT          = 16;
-constexpr uint32 CONSTANT_BUFFER_ALIGNMENT = 256;
+constexpr uint32 BUFFER_ALIGNMENT                 = 16;
+constexpr uint32 CONSTANT_BUFFER_ALIGNMENT        = 256;
+constexpr uint32 ACCELERATION_STRUCTURE_ALIGNMENT = 256;
+
+constexpr uint32 TEXEL_BUFFER_ALIGNMENT = 256;
+
+constexpr uint32 TEXTURE_UPLOAD_ALIGNMENT = 256;
+
+struct EShaderVisibility
+{
+    enum Type : uint8
+    {
+        Compute       = 0,
+        Vertex        = 1,
+        Pixel         = 2,
+        Mesh          = 3,
+        Amplification = 4,
+        Count         = Amplification + 1,
+    };
+};
+
+enum class EMetalMemoryClass : uint8
+{
+    GPUOnly = 0,
+    Upload,
+    CPUWriteGPURead,
+    Readback,
+};
+
+namespace MetalRHI
+{
+
+constexpr EShaderVisibility::Type GetShaderVisibility(EShaderStage ShaderStage)
+{
+    switch (ShaderStage)
+    {
+        case EShaderStage::Vertex:        return EShaderVisibility::Vertex;
+        case EShaderStage::Pixel:         return EShaderVisibility::Pixel;
+        case EShaderStage::Mesh:          return EShaderVisibility::Mesh;
+        case EShaderStage::Amplification: return EShaderVisibility::Amplification;
+        default:                          return EShaderVisibility::Compute;
+    }
+}
+
+FORCEINLINE uint32 FirstSetBit(uint32 Mask)
+{
+    return static_cast<uint32>(__builtin_ctz(Mask));
+}
+
+FORCEINLINE uint32 FirstSetBit(uint64 Mask)
+{
+    return static_cast<uint32>(__builtin_ctzll(Mask));
+}
 
 constexpr MTLLoadAction ConvertAttachmentLoadAction(EAttachmentLoadAction LoadAction)
 {
@@ -126,6 +178,8 @@ constexpr MTLSamplerMinMagFilter ConvertSamplerFilterToMinFilter(ESamplerFilter 
         case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear:
         case ESamplerFilter::Comparison_MinMagLinear_MipPoint:
         case ESamplerFilter::Comparison_MinMagMipLinear:
+        case ESamplerFilter::Anistrotopic:
+        case ESamplerFilter::Comparison_Anisotropic:
             return MTLSamplerMinMagFilterLinear;
             
         default:
@@ -155,6 +209,8 @@ constexpr MTLSamplerMinMagFilter ConvertSamplerFilterToMagFilter(ESamplerFilter 
         case ESamplerFilter::Comparison_MinMagMipLinear:
         case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:
         case ESamplerFilter::Comparison_MinPoint_MagMipLinear:
+        case ESamplerFilter::Anistrotopic:
+        case ESamplerFilter::Comparison_Anisotropic:
             return MTLSamplerMinMagFilterLinear;
             
         default:
@@ -184,6 +240,8 @@ constexpr MTLSamplerMipFilter ConvertSamplerFilterToMipmapMode(ESamplerFilter Sa
         case ESamplerFilter::MinMagMipLinear:
         case ESamplerFilter::Comparison_MinMagMipLinear:
         case ESamplerFilter::Comparison_MinPoint_MagMipLinear:
+        case ESamplerFilter::Anistrotopic:
+        case ESamplerFilter::Comparison_Anisotropic:
             return MTLSamplerMipFilterLinear;
             
         default:
@@ -204,6 +262,19 @@ constexpr MTLSamplerAddressMode ConvertSamplerMode(ESamplerMode SamplerMode)
     }
 }
 
+// Metal offers only three fixed border colours, so the requested colour snaps to the nearest one
+inline MTLSamplerBorderColor ConvertBorderColor(const FFloatColor& Color)
+{
+    if (Color.A < 0.5f)
+    {
+        return MTLSamplerBorderColorTransparentBlack;
+    }
+
+    return (Color.R + Color.G + Color.B) * (1.0f / 3.0f) < 0.5f
+        ? MTLSamplerBorderColorOpaqueBlack
+        : MTLSamplerBorderColorOpaqueWhite;
+}
+
 constexpr bool IsAnisotropySampler(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
@@ -217,7 +288,7 @@ constexpr bool IsAnisotropySampler(ESamplerFilter SamplerFilter)
     }
 }
 
-constexpr bool IsComparissonSampler(ESamplerFilter SamplerFilter)
+constexpr bool IsComparisonSampler(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
     {
@@ -234,22 +305,6 @@ constexpr bool IsComparissonSampler(ESamplerFilter SamplerFilter)
             
         default:
             return false;
-    }
-}
-
-constexpr MTLCompareFunction ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
-{
-    switch (ComparisonFunc)
-    {
-    case EComparisonFunc::Never:        return MTLCompareFunctionNever;
-    case EComparisonFunc::Less:         return MTLCompareFunctionLess;
-    case EComparisonFunc::Equal:        return MTLCompareFunctionEqual;
-    case EComparisonFunc::LessEqual:    return MTLCompareFunctionLessEqual;
-    case EComparisonFunc::Greater:      return MTLCompareFunctionGreater;
-    case EComparisonFunc::NotEqual:     return MTLCompareFunctionNotEqual;
-    case EComparisonFunc::GreaterEqual: return MTLCompareFunctionGreaterEqual;
-    case EComparisonFunc::Always:       return MTLCompareFunctionAlways;
-    default:                            return MTLCompareFunctionNever;
     }
 }
 
@@ -296,6 +351,7 @@ constexpr MTLBlendFactor ConvertBlend(EBlendType  Blend)
 constexpr MTLColorWriteMask ConvertColorWriteFlags(EColorWriteFlags ColorWriteFlags)
 {
     MTLColorWriteMask ColorWriteMask = MTLColorWriteMaskNone;
+
     if (ColorWriteFlags == EColorWriteFlags::All)
     {
         ColorWriteMask = MTLColorWriteMaskAll;
@@ -306,14 +362,17 @@ constexpr MTLColorWriteMask ConvertColorWriteFlags(EColorWriteFlags ColorWriteFl
         {
             ColorWriteMask |= MTLColorWriteMaskRed;
         }
+
         if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Green))
         {
             ColorWriteMask |= MTLColorWriteMaskGreen;
         }
+
         if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Blue))
         {
             ColorWriteMask |= MTLColorWriteMaskBlue;
         }
+
         if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Alpha))
         {
             ColorWriteMask |= MTLColorWriteMaskAlpha;
@@ -327,6 +386,8 @@ constexpr MTLTextureType GetMTLTextureType(ETextureDimension TextureDimension, b
 {
     switch(TextureDimension)
     {
+        case ETextureDimension::Texture1D:        return MTLTextureType1D;
+        case ETextureDimension::Texture1DArray:   return MTLTextureType1DArray;
         case ETextureDimension::Texture2D:        return bIsMultisampled ? MTLTextureType2DMultisample      : MTLTextureType2D;
         case ETextureDimension::Texture2DArray:   return bIsMultisampled ? MTLTextureType2DMultisampleArray : MTLTextureType2DArray;
         case ETextureDimension::TextureCube:      return MTLTextureTypeCube;
@@ -341,27 +402,118 @@ constexpr MTLTextureType GetMTLTextureType(ETextureDimension TextureDimension, b
     }
 }
 
+constexpr MTLTextureType GetMTLTextureType(EViewDimension ViewDimension, bool bIsMultisampled)
+{
+    switch (ViewDimension)
+    {
+        case EViewDimension::Texture1D:        return MTLTextureType1D;
+        case EViewDimension::Texture1DArray:   return MTLTextureType1DArray;
+        case EViewDimension::Texture2D:        return bIsMultisampled ? MTLTextureType2DMultisample      : MTLTextureType2D;
+        case EViewDimension::Texture2DArray:   return bIsMultisampled ? MTLTextureType2DMultisampleArray : MTLTextureType2DArray;
+        case EViewDimension::TextureCube:      return MTLTextureTypeCube;
+        case EViewDimension::TextureCubeArray: return MTLTextureTypeCubeArray;
+        case EViewDimension::Texture3D:        return MTLTextureType3D;
+
+        default:
+        {
+            CHECK(false);
+            return MTLTextureType(-1);
+        }
+    }
+}
+
 constexpr MTLTextureUsage ConvertTextureFlags(ETextureUsageFlags Flag)
 {
     MTLTextureUsage Result = MTLTextureUsageUnknown;
+
     if (IsEnumFlagSet(Flag, ETextureUsageFlags::UnorderedAccessTexture))
     {
         Result |= MTLTextureUsageShaderWrite;
     }
+
     if (IsEnumFlagSet(Flag, ETextureUsageFlags::RenderTarget))
     {
         Result |= MTLTextureUsageRenderTarget;
     }
+
     if (IsEnumFlagSet(Flag, ETextureUsageFlags::DepthStencil))
     {
         Result |= MTLTextureUsageRenderTarget;
     }
+
     if (IsEnumFlagSet(Flag, ETextureUsageFlags::ShaderResourceTexture))
     {
         Result |= MTLTextureUsageShaderRead;
     }
 
+    if (IsEnumFlagSet(Flag, ETextureUsageFlags::CopySource))
+    {
+        Result |= MTLTextureUsageShaderRead;
+    }
+
     return Result;
+}
+
+constexpr EMetalMemoryClass GetMetalMemoryClass(const FRHIBufferDesc& BufferDesc)
+{
+    if (BufferDesc.IsReadBack())
+    {
+        return EMetalMemoryClass::Readback;
+    }
+
+    if (BufferDesc.IsDynamic() || BufferDesc.IsTransient())
+    {
+        return EMetalMemoryClass::CPUWriteGPURead;
+    }
+
+    return EMetalMemoryClass::GPUOnly;
+}
+
+FORCEINLINE MTLResourceOptions GetMTLResourceOptions(EMetalMemoryClass MemoryClass)
+{
+    constexpr MTLResourceOptions Untracked = MTLResourceHazardTrackingModeUntracked;
+
+    switch (MemoryClass)
+    {
+        case EMetalMemoryClass::GPUOnly:
+            return MTLResourceStorageModePrivate | Untracked;
+        case EMetalMemoryClass::Upload:
+            return MTLResourceStorageModeShared | MTLResourceCPUCacheModeWriteCombined | Untracked;
+        case EMetalMemoryClass::Readback:
+            return MTLResourceStorageModeShared | MTLResourceCPUCacheModeDefaultCache | Untracked;
+        case EMetalMemoryClass::CPUWriteGPURead:
+            return (HasUnifiedMemory() ? MTLResourceStorageModeShared : MTLResourceStorageModeManaged) | MTLResourceCPUCacheModeWriteCombined | Untracked;
+    }
+
+    return MTLResourceStorageModePrivate | Untracked;
+}
+
+FORCEINLINE void FlushCPUWrite(id<MTLBuffer> Buffer, uint64 Offset, uint64 Size)
+{
+    if (!HasUnifiedMemory() && Buffer.storageMode == MTLStorageModeManaged)
+    {
+        [Buffer didModifyRange:NSMakeRange(Offset, Size)];
+    }
+}
+
+constexpr uint64 GetMTLBufferAlignment(const FRHIBufferDesc& BufferDesc)
+{
+    if (BufferDesc.IsAccelerationStructure())
+    {
+        return ACCELERATION_STRUCTURE_ALIGNMENT;
+    }
+
+    if (BufferDesc.IsConstantBuffer())
+    {
+        return CONSTANT_BUFFER_ALIGNMENT;
+    }
+
+    if (BufferDesc.IsShaderResourceBuffer() || BufferDesc.IsUnorderedAccessBuffer())
+    {
+        return TEXEL_BUFFER_ALIGNMENT;
+    }
+
+    return BUFFER_ALIGNMENT;
 }
 
 constexpr MTLPixelFormat ConvertFormat(EFormat Format)
@@ -464,6 +616,154 @@ constexpr MTLPixelFormat ConvertFormat(EFormat Format)
         case EFormat::BC7_UNorm_SRGB:        return MTLPixelFormatBC7_RGBAUnorm_sRGB;
             
         default:                             return MTLPixelFormatInvalid;
+    }
+}
+
+NODISCARD inline bool FormatSupportsShaderWrite(MTLPixelFormat Format)
+{
+    switch (Format)
+    {
+        case MTLPixelFormatR8Unorm:
+        case MTLPixelFormatR8Snorm:
+        case MTLPixelFormatR8Uint:
+        case MTLPixelFormatR8Sint:
+        case MTLPixelFormatR16Unorm:
+        case MTLPixelFormatR16Snorm:
+        case MTLPixelFormatR16Float:
+        case MTLPixelFormatR16Uint:
+        case MTLPixelFormatR16Sint:
+        case MTLPixelFormatR32Float:
+        case MTLPixelFormatR32Uint:
+        case MTLPixelFormatR32Sint:
+        case MTLPixelFormatRG8Unorm:
+        case MTLPixelFormatRG8Snorm:
+        case MTLPixelFormatRG8Uint:
+        case MTLPixelFormatRG8Sint:
+        case MTLPixelFormatRG16Unorm:
+        case MTLPixelFormatRG16Snorm:
+        case MTLPixelFormatRG16Float:
+        case MTLPixelFormatRG16Uint:
+        case MTLPixelFormatRG16Sint:
+        case MTLPixelFormatRG32Float:
+        case MTLPixelFormatRG32Uint:
+        case MTLPixelFormatRG32Sint:
+        case MTLPixelFormatRGBA8Unorm:
+        case MTLPixelFormatRGBA8Snorm:
+        case MTLPixelFormatRGBA8Uint:
+        case MTLPixelFormatRGBA8Sint:
+        case MTLPixelFormatBGRA8Unorm:
+        case MTLPixelFormatRGB10A2Unorm:
+        case MTLPixelFormatRGB10A2Uint:
+        case MTLPixelFormatRG11B10Float:
+        case MTLPixelFormatRGBA16Unorm:
+        case MTLPixelFormatRGBA16Snorm:
+        case MTLPixelFormatRGBA16Float:
+        case MTLPixelFormatRGBA16Uint:
+        case MTLPixelFormatRGBA16Sint:
+        case MTLPixelFormatRGBA32Float:
+        case MTLPixelFormatRGBA32Uint:
+        case MTLPixelFormatRGBA32Sint:
+        {
+            return true;
+        }
+
+        default:
+        {
+            return false;
+        }
+    }
+}
+
+NODISCARD inline bool FormatIsRenderable(MTLPixelFormat Format)
+{
+    switch (Format)
+    {
+        case MTLPixelFormatInvalid:
+        case MTLPixelFormatBC1_RGBA:
+        case MTLPixelFormatBC1_RGBA_sRGB:
+        case MTLPixelFormatBC2_RGBA:
+        case MTLPixelFormatBC2_RGBA_sRGB:
+        case MTLPixelFormatBC3_RGBA:
+        case MTLPixelFormatBC3_RGBA_sRGB:
+        case MTLPixelFormatBC4_RUnorm:
+        case MTLPixelFormatBC4_RSnorm:
+        case MTLPixelFormatBC5_RGUnorm:
+        case MTLPixelFormatBC5_RGSnorm:
+        case MTLPixelFormatBC6H_RGBFloat:
+        case MTLPixelFormatBC6H_RGBUfloat:
+        case MTLPixelFormatBC7_RGBAUnorm:
+        case MTLPixelFormatBC7_RGBAUnorm_sRGB:
+        {
+            return false;
+        }
+
+        case MTLPixelFormatRGB9E5Float:
+        {
+            return IsAppleGPU();
+        }
+
+        case MTLPixelFormatDepth24Unorm_Stencil8:
+        case MTLPixelFormatX24_Stencil8:
+        {
+            return SupportsDepth24Stencil8();
+        }
+
+        default:
+        {
+            return true;
+        }
+    }
+}
+
+NODISCARD inline bool FormatSupportsShaderReadWrite(MTLPixelFormat Format, MTLReadWriteTextureTier ReadWriteTextureTier)
+{
+    if (Format == MTLPixelFormatInvalid || ReadWriteTextureTier == MTLReadWriteTextureTierNone)
+    {
+        return false;
+    }
+
+    switch (Format)
+    {
+        case MTLPixelFormatR32Float:
+        case MTLPixelFormatR32Uint:
+        case MTLPixelFormatR32Sint:
+        {
+            return true;
+        }
+
+        default:
+        {
+            break;
+        }
+    }
+
+    if (ReadWriteTextureTier < MTLReadWriteTextureTier2)
+    {
+        return false;
+    }
+
+    switch (Format)
+    {
+        case MTLPixelFormatRGBA8Unorm:
+        case MTLPixelFormatRGBA8Sint:
+        case MTLPixelFormatRGBA8Uint:
+        case MTLPixelFormatRGBA16Float:
+        case MTLPixelFormatRGBA16Uint:
+        case MTLPixelFormatRGBA16Sint:
+        case MTLPixelFormatRGBA32Float:
+        case MTLPixelFormatRGBA32Uint:
+        case MTLPixelFormatRGBA32Sint:
+        case MTLPixelFormatRG32Float:
+        case MTLPixelFormatRG32Uint:
+        case MTLPixelFormatRG32Sint:
+        {
+            return true;
+        }
+
+        default:
+        {
+            return false;
+        }
     }
 }
 
@@ -581,6 +881,29 @@ constexpr MTLPrimitiveType ConvertPrimitiveTopology(EPrimitiveTopology Primitive
     }
 }
 
+constexpr MTLPrimitiveTopologyClass ConvertPrimitiveTopologyClass(EPrimitiveTopology PrimitiveTopology)
+{
+    switch (PrimitiveTopology)
+    {
+        case EPrimitiveTopology::PointList:     return MTLPrimitiveTopologyClassPoint;
+        case EPrimitiveTopology::LineList:
+        case EPrimitiveTopology::LineStrip:     return MTLPrimitiveTopologyClassLine;
+        case EPrimitiveTopology::TriangleList:
+        case EPrimitiveTopology::TriangleStrip: return MTLPrimitiveTopologyClassTriangle;
+        default:                                return MTLPrimitiveTopologyClassUnspecified;
+    }
+}
+
+constexpr MTLIndexType ConvertIndexFormat(EIndexFormat IndexFormat)
+{
+    switch (IndexFormat)
+    {
+        case EIndexFormat::uint16: return MTLIndexTypeUInt16;
+        case EIndexFormat::uint32: return MTLIndexTypeUInt32;
+        default:                   return MTLIndexType(-1);
+    }
+}
+
 constexpr MTLTriangleFillMode ConvertFillMode(EFillMode FillMode)
 {
     switch (FillMode)
@@ -589,4 +912,112 @@ constexpr MTLTriangleFillMode ConvertFillMode(EFillMode FillMode)
         case EFillMode::Solid:     return MTLTriangleFillModeFill;
         default:                   return MTLTriangleFillMode(-1);
     }
+}
+
+constexpr MTLCullMode ConvertCullMode(ECullMode CullMode)
+{
+    switch (CullMode)
+    {
+        case ECullMode::None:  return MTLCullModeNone;
+        case ECullMode::Front: return MTLCullModeFront;
+        case ECullMode::Back:  return MTLCullModeBack;
+        default:               return MTLCullModeNone;
+    }
+}
+
+constexpr bool IsStencilPixelFormat(MTLPixelFormat Format)
+{
+    switch (Format)
+    {
+        case MTLPixelFormatDepth32Float_Stencil8:
+        case MTLPixelFormatStencil8:
+        case MTLPixelFormatX32_Stencil8:
+        case MTLPixelFormatDepth24Unorm_Stencil8:
+        case MTLPixelFormatX24_Stencil8:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+constexpr EMSLTextureComponent GetTextureComponent(MTLPixelFormat Format)
+{
+    switch (Format)
+    {
+        case MTLPixelFormatR8Uint:
+        case MTLPixelFormatR16Uint:
+        case MTLPixelFormatR32Uint:
+        case MTLPixelFormatRG8Uint:
+        case MTLPixelFormatRG16Uint:
+        case MTLPixelFormatRG32Uint:
+        case MTLPixelFormatRGBA8Uint:
+        case MTLPixelFormatRGBA16Uint:
+        case MTLPixelFormatRGBA32Uint:
+        case MTLPixelFormatRGB10A2Uint:
+        case MTLPixelFormatStencil8:
+        case MTLPixelFormatX24_Stencil8:
+        case MTLPixelFormatX32_Stencil8:
+            return EMSLTextureComponent::Uint;
+
+        case MTLPixelFormatR8Sint:
+        case MTLPixelFormatR16Sint:
+        case MTLPixelFormatR32Sint:
+        case MTLPixelFormatRG8Sint:
+        case MTLPixelFormatRG16Sint:
+        case MTLPixelFormatRG32Sint:
+        case MTLPixelFormatRGBA8Sint:
+        case MTLPixelFormatRGBA16Sint:
+        case MTLPixelFormatRGBA32Sint:
+            return EMSLTextureComponent::Int;
+
+        case MTLPixelFormatDepth16Unorm:
+        case MTLPixelFormatDepth32Float:
+        case MTLPixelFormatDepth24Unorm_Stencil8:
+        case MTLPixelFormatDepth32Float_Stencil8:
+            return EMSLTextureComponent::Depth;
+
+        default:
+            return EMSLTextureComponent::Float;
+    }
+}
+
+constexpr uint8 GetNullTextureType(MTLTextureType TextureType, MTLPixelFormat Format)
+{
+    EMSLTextureDimension Dimension = EMSLTextureDimension::Texture2D;
+    switch (TextureType)
+    {
+        case MTLTextureType1D:                 Dimension = EMSLTextureDimension::Texture1D;        break;
+        case MTLTextureType1DArray:            Dimension = EMSLTextureDimension::Texture1DArray;   break;
+        case MTLTextureType2DArray:            Dimension = EMSLTextureDimension::Texture2DArray;   break;
+        case MTLTextureType2DMultisample:
+        case MTLTextureType2DMultisampleArray: Dimension = EMSLTextureDimension::Texture2DMS;      break;
+        case MTLTextureTypeCube:               Dimension = EMSLTextureDimension::TextureCube;      break;
+        case MTLTextureTypeCubeArray:          Dimension = EMSLTextureDimension::TextureCubeArray; break;
+        case MTLTextureType3D:                 Dimension = EMSLTextureDimension::Texture3D;        break;
+        case MTLTextureTypeTextureBuffer:      Dimension = EMSLTextureDimension::TextureBuffer;    break;
+        default:                                                                                   break;
+    }
+
+    return MakeMSLNullTextureType(Dimension, GetTextureComponent(Format));
+}
+
+constexpr NSUInteger GetMipExtent(NSUInteger Extent, uint32 MipLevel)
+{
+    const NSUInteger MipExtent = Extent >> MipLevel;
+    return (MipExtent > 0) ? MipExtent : 1;
+}
+
+constexpr NSUInteger ResolveMipCopyExtent(uint32 RequestedEnd, NSUInteger SrcOrigin, NSUInteger DstOrigin, NSUInteger SrcExtent, NSUInteger DstExtent)
+{
+    if (SrcOrigin >= SrcExtent || DstOrigin >= DstExtent)
+    {
+        return 0;
+    }
+
+    const NSUInteger Requested = (NSUInteger(RequestedEnd) > SrcOrigin) ? (NSUInteger(RequestedEnd) - SrcOrigin) : 1;
+    const NSUInteger Available = Math::Min<NSUInteger>(SrcExtent - SrcOrigin, DstExtent - DstOrigin);
+    return Math::Min<NSUInteger>(Requested, Available);
+}
+
 }

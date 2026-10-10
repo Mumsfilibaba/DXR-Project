@@ -41,7 +41,7 @@ FShaderType::~FShaderType() = default;
 
 bool FShaderType::ShouldCompilePermutation(const FShaderPermutationDesc& Desc) const
 {
-    if (IsShaderStageRayTracing(Stage) && !Desc.bSupportsRayTracing)
+    if (IsShaderStageRayTracing(Stage) && !Desc.bSupportsRayTracingPipeline)
     {
         return false;
     }

@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Misc/Debug.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Containers/ComPtr.h"
 #include "Core/Containers/StringConversion.h"
 #include "RHI/RHIIndirect.h"
@@ -188,6 +188,9 @@ inline void D3D12GetDebugName(ID3D12Object* Object, String& OutName)
     }
 }
 
+namespace D3D12RHI
+{
+
 NODISCARD inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties = { };
@@ -358,6 +361,8 @@ NODISCARD inline FRHIDepthStencilViewDesc GetDefaultDepthStencilViewDescForTextu
     return FRHIDepthStencilViewDesc{};
 }
 
+}
+
 enum class ED3D12NullDescriptorType : uint8
 {
     Texture2D = 0,
@@ -397,6 +402,9 @@ NODISCARD constexpr const CHAR* ToString(ED3D12CommandQueueType QueueType)
     return "CommandQueueType::Unknown";
 }
 
+namespace D3D12RHI
+{
+
 NODISCARD constexpr D3D12_COMMAND_LIST_TYPE ToCommandListType(ED3D12CommandQueueType QueueType)
 {
     switch (QueueType)
@@ -407,6 +415,8 @@ NODISCARD constexpr D3D12_COMMAND_LIST_TYPE ToCommandListType(ED3D12CommandQueue
     }
 
     return D3D12_COMMAND_LIST_TYPE(-1);
+}
+
 }
 
 NODISCARD constexpr const CHAR* ToString(D3D12_COMMAND_LIST_TYPE CommandListType)
@@ -436,6 +446,9 @@ enum class ED3D12ResourceStateMode : uint8
     /** Backend never tracks. The caller owns every transition and supplies it verbatim */
     ManualState,
 };
+
+namespace D3D12RHI
+{
 
 NODISCARD constexpr ED3D12ResourceStateMode ConvertResourceStateMode(ERHIResourceStateTrackingMode TrackingMode)
 {
@@ -625,6 +638,8 @@ NODISCARD constexpr DXGI_FORMAT ConvertFormat(EFormat Format)
     }
 }
 
+}
+
 constexpr const CHAR* ToString(DXGI_FORMAT Format)
 {
     switch (Format)
@@ -756,6 +771,9 @@ constexpr const CHAR* ToString(DXGI_FORMAT Format)
     }
 }
 
+namespace D3D12RHI
+{
+
 NODISCARD constexpr bool IsStencilFormat(DXGI_FORMAT Format)
 {
     switch (Format)
@@ -769,7 +787,7 @@ NODISCARD constexpr bool IsStencilFormat(DXGI_FORMAT Format)
     }
 }
 
-NODISCARD constexpr DXGI_USAGE D3D12ConvertSwapChainUsage(ESwapChainUsageFlags Usage)
+NODISCARD constexpr DXGI_USAGE ConvertSwapChainUsage(ESwapChainUsageFlags Usage)
 {
     DXGI_USAGE Result = 0;
     if (IsEnumFlagSet(Usage, ESwapChainUsageFlags::RenderTarget))
@@ -814,6 +832,8 @@ NODISCARD constexpr EColorSpace ConvertColorSpace(DXGI_COLOR_SPACE_TYPE ColorSpa
     }
 }
 
+}
+
 constexpr const CHAR* ToString(DXGI_COLOR_SPACE_TYPE ColorSpace)
 {
     switch (ColorSpace)
@@ -849,6 +869,9 @@ constexpr const CHAR* ToString(DXGI_COLOR_SPACE_TYPE ColorSpace)
             return "Unknown DXGI_COLOR_SPACE_TYPE";
     }
 }
+
+namespace D3D12RHI
+{
 
 NODISCARD constexpr DXGI_FORMAT ConvertIndexFormat(EIndexFormat IndexFormat)
 {
@@ -1655,6 +1678,8 @@ NODISCARD inline D3D12_QUERY_TYPE GetResolveQueryType(D3D12_QUERY_HEAP_TYPE Heap
     }
 }
 
+}
+
 struct FD3D12HashableTextureView
 {
     FD3D12HashableTextureView()
@@ -1914,6 +1939,9 @@ NODISCARD constexpr const CHAR* ToString(D3D12_RESOURCE_STATES ResourceState)
 	}
 }
 
+namespace D3D12RHI
+{
+
 NODISCARD constexpr uint32 D3D12CalculateSubresource(uint32 MipSlice, uint32 ArraySlice, uint32 PlaneSlice, uint32 MipLevels, uint32 ArraySize) noexcept
 {
     return MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize;
@@ -1927,4 +1955,6 @@ NODISCARD constexpr uint32 D3D12CalculateSubresourceCount(uint32 MipLevels, uint
 NODISCARD constexpr uint32 D3D12CalculateRegionNumRows(EFormat Format, uint32 Height) noexcept
 {
     return IsBlockCompressed(Format) ? Math::DivideByMultiple<uint32>(Height, 4u) : Height;
+}
+
 }

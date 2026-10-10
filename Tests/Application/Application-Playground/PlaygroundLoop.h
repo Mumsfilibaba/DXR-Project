@@ -21,7 +21,7 @@ public:
     ~FPlaygroundLoop();
 
 
-    int32 PreInit(const CHAR** Args, int32 NumArgs);
+    int32 PreInit();
     int32 Init();
     void Tick();
     void Release();
@@ -42,5 +42,3 @@ private:
     TSharedPtr<FConsoleToggleHandler> ConsoleToggleHandler;
     bool                              bIsRHIInitialized;
 };
-
-int32 PlaygroundMain(const CHAR* Args[], int32 NumArgs);

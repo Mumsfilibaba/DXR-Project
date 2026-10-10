@@ -18,6 +18,23 @@ static EConsoleVariableFlags GetSetByFlag(const IConsoleVariable* Variable)
     return Variable->GetFlags() & EConsoleVariableFlags::SetByMask;
 }
 
+struct FCountingOutputDevice : public IOutputDevice
+{
+    virtual void Log(const String&) override
+    {
+        ++NumMessages;
+    }
+
+    virtual void Log(ELogSeverity Severity, const String&) override
+    {
+        ++NumMessages;
+        NumErrors += (Severity == ELogSeverity::Error) ? 1 : 0;
+    }
+
+    int32 NumMessages = 0;
+    int32 NumErrors   = 0;
+};
+
 bool ConsoleManagerCommandLine_Test()
 {
     TEST_BEGIN();
@@ -230,6 +247,34 @@ bool ConsoleManagerCommandLine_Test()
 
         TEST_EXPECT(CVarUntouched.GetValue().Equals("Default"));
         TEST_EXPECT(GetSetByFlag(CVarUntouched.operator->()) != EConsoleVariableFlags::SetByCommandLine);
+    }
+
+    TEST_SECTION("ExecuteCommand reports whether the line did anything");
+    {
+        InitializeFromLine("");
+
+        int32 NumCalls = 0;
+        FAutoConsoleCommand CCmdCounter("Test.Execute.Counter", "", FConsoleCommandDelegate::CreateLambda([&NumCalls](StringView)
+        {
+            ++NumCalls;
+        }));
+
+        TAutoConsoleVariable<int32> CVarInt("Test.Execute.Int", "", 0);
+
+        FCountingOutputDevice OutputDevice;
+        TEST_EXPECT(FConsoleManager::Get().ExecuteCommand(OutputDevice, "Test.Execute.Counter"));
+        TEST_EXPECT(FConsoleManager::Get().ExecuteCommand(OutputDevice, "Test.Execute.Counter with arguments"));
+        TEST_EXPECT_EQ(NumCalls, 2);
+
+        TEST_EXPECT(FConsoleManager::Get().ExecuteCommand(OutputDevice, "Test.Execute.Int 7"));
+        TEST_EXPECT_EQ(CVarInt.GetValue(), 7);
+        TEST_EXPECT_EQ(OutputDevice.NumErrors, 0);
+
+        TEST_EXPECT(!FConsoleManager::Get().ExecuteCommand(OutputDevice, "Test.Execute.Missing"));
+        TEST_EXPECT(!FConsoleManager::Get().ExecuteCommand(OutputDevice, "Test.Execute.Missing 1"));
+        TEST_EXPECT(!FConsoleManager::Get().ExecuteCommand(OutputDevice, "Test.Execute.Int NotANumber"));
+        TEST_EXPECT_EQ(CVarInt.GetValue(), 7);
+        TEST_EXPECT_EQ(OutputDevice.NumErrors, 3);
     }
 
     // Leave the command line empty so later suites start from a clean slate

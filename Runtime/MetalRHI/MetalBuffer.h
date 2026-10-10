@@ -1,11 +1,15 @@
 #pragma once
 #include "RHI/RHIResources.h"
 #include "MetalRHI/MetalDeviceChild.h"
+#include "MetalRHI/MetalRelocatable.h"
+#include "MetalRHI/MetalResource.h"
 DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+class FMetalQueue;
 
 typedef TSharedRef<class FMetalBufferRHI> FMetalBufferRef;
 
-class FMetalBufferRHI : public FRHIBuffer, public FMetalDeviceChild
+class FMetalBufferRHI : public FRHIBuffer, public FMetalDeviceChild, public FMetalRelocatable
 {
 public:
     FMetalBufferRHI(FMetalDevice* InDevice, const FRHIBufferDesc& InBufferDesc);
@@ -23,19 +27,47 @@ public:
     virtual void GetDebugName(String& OutDebugName) const override final;
     
     bool Initialize(ERHIResourceState InInitialAccess, const void* InInitialData);
-    
-    FORCEINLINE id<MTLBuffer> GetMTLBuffer() const 
-    { 
-        return Buffer; 
+    bool RelocateTransientStorage(uint64 SizeInBytes, const void* SourceData, FMetalQueue* Queue);
+
+    FORCEINLINE id<MTLBuffer> GetMTLBuffer() const
+    {
+        return ResourceStorage.GetBuffer();
     }
 
-    FORCEINLINE void SetMTLBuffer(id<MTLBuffer> InBuffer) 
-    { 
-        Buffer = [InBuffer retain]; 
-    } 
-    
+    FORCEINLINE NSUInteger GetMetalBindOffset() const
+    {
+        return IsHeapPlaced() ? 0 : static_cast<NSUInteger>(ResourceStorage.GetResourceOffset());
+    }
+
+    FORCEINLINE bool IsHeapPlaced() const
+    {
+        return ResourceStorage.IsPlacedResource();
+    }
+
+    FORCEINLINE const FMetalResourceStorage& GetResourceStorage() const
+    {
+        return ResourceStorage;
+    }
+
+    FORCEINLINE FMetalResidencyEntry* GetResidencyEntry() const
+    {
+        return ResourceStorage.GetResidencyEntry();
+    }
+
+protected:
+
+    // FMetalRelocatable Interface
+    virtual FMetalResourceStorage& GetRelocatableStorage() override final;
+    virtual void OnStorageSwapped() override final;
+
 private:
-    id<MTLBuffer> Buffer;
+    void FreeBindlessHandle();
+    void UpdateMemoryStats();
+
+    FMetalResourceStorage         ResourceStorage;
+    mutable FRHIDescriptorHandle  BindlessHandle;
+    mutable FMetalResidencyEntry* PinnedEntry;
+    int64                         TrackedMemory;
 };
 
 inline FMetalBufferRHI* GetMetalBuffer(FRHIBuffer* Buffer)

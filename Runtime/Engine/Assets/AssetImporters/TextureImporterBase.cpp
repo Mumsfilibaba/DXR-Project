@@ -1,4 +1,4 @@
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"

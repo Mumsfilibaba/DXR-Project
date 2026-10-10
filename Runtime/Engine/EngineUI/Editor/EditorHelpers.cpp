@@ -2,7 +2,7 @@
 #include "Core/Containers/StaticArray.h"
 #include "Core/Containers/StringConversion.h"
 #include "Core/Misc/Paths.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Templates/CString.h"
 #include "Engine/Assets/AssetManager.h"

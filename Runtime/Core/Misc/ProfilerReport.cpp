@@ -4,7 +4,7 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/BuildInfo.h"
 #include "Core/Misc/CommandLine.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Filesystem/File.h"
 #include "Core/Templates/NumericLimits.h"
 #include "Core/Platform/PlatformFile.h"

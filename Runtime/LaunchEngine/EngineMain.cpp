@@ -2,7 +2,7 @@
 #include "Core/Core.h"
 #include "Core/CoreGlobals.h"
 #include "Core/Misc/IOutputDevice.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Memory/Malloc.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"

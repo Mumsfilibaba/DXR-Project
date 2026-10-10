@@ -44,6 +44,7 @@ FNullDeviceRHI::FNullDeviceRHI()
     RHI::RayTracingMaxRecursionDepth          = 31;
     RHI::bSupportsRayTracingPipelineAdditions = false;
     RHI::bSupportsRayTracing                  = true;
+    RHI::bSupportsRayTracingPipeline          = true;
     RHI::bSupportsDispatchRaysIndirect        = true;
 
     // -------------------------------------------------------------------------------------------

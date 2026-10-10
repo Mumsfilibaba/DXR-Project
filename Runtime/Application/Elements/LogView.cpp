@@ -4,7 +4,7 @@
 #include "Application/Elements/ScrollBox.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 
 constexpr uint8 LOG_VIEW_ALL_SEVERITIES = 0x7;
 
@@ -98,11 +98,25 @@ void FLogView::Flush()
     }
 }
 
+void FLogView::InvalidateForArrivedLines()
+{
+    bool bHasPendingLines = false;
+    {
+        TScopedLock Lock(PendingLinesCS);
+        bHasPendingLines = !PendingLines.IsEmpty();
+    }
+
+    if (bHasPendingLines)
+    {
+        InvalidateDesiredSize();
+    }
+}
+
 void FLogView::RegisterWithLogger()
 {
     if (!bIsRegisteredWithLogger)
     {
-        FOutputDeviceLogger::Get()->RegisterOutputDevice(this);
+        FOutputDeviceManager::Get()->RegisterOutputDevice(this);
         bIsRegisteredWithLogger = true;
     }
 }
@@ -111,7 +125,7 @@ void FLogView::UnregisterFromLogger()
 {
     if (bIsRegisteredWithLogger)
     {
-        FOutputDeviceLogger::Get()->UnregisterOutputDevice(this);
+        FOutputDeviceManager::Get()->UnregisterOutputDevice(this);
         bIsRegisteredWithLogger = false;
     }
 }

@@ -1,228 +1,68 @@
 #include "MetalRHI/MetalShader.h"
 
-FMetalShader::FMetalShader(FMetalDevice* InDevice, EShaderVisibility::Type InVisibility)
+FMetalShader::FMetalShader(FMetalDevice* InDevice)
     : FMetalDeviceChild(InDevice)
-    , Library(nil)
-    , FunctionName(nil)
-    , Visibility(InVisibility)
-    , Function(nil)
+    , CompiledShader()
+    , ThreadGroupSizeX(0)
+    , ThreadGroupSizeY(0)
+    , ThreadGroupSizeZ(0)
+    , ShaderConstantsSize(0)
 {
 }
 
-FMetalShader::~FMetalShader()
-{
-    [Library release];
-    [FunctionName release];
-    [Function release];
-}
+FMetalShader::~FMetalShader() = default;
 
-bool FMetalShader::Initialize(const TArray<uint8>& InCode)
+bool FMetalShader::Initialize(const FShaderCodeView& InCode)
 {
-    @autoreleasepool
+    const TArrayView<const FShaderResourceBinding> ShaderBindings = InCode.GetBindings();
+    const TArrayView<const FMSLBindingSlot>        MSLSlots       = InCode.GetMSLSlots();
+
+    if (MSLSlots.Size() != ShaderBindings.Size())
     {
-        // NOTE: That there are no null-terminator in the shader code, therefore, when creating this string we need to use the known size
-        const CHAR* CodeString = reinterpret_cast<const CHAR*>(InCode.Data());
-        const int32 CodeLength = InCode.Size();
-        
-        const String SourceString(CodeString, CodeLength);
-        
-        NSString* Source = SourceString.GetNSString();
-        CHECK(Source != nil);
-        [Source retain];
-        
-        id<MTLDevice> Device = GetDevice()->GetMTLDevice();
-        CHECK(Device != nil);
-        
-        NSError* Error = nil;
-        Library = [Device newLibraryWithSource:Source options:nil error:&Error];
-        if (!Library)
+        LOG_ERROR("Shader code has %d bindings but %d MSL slots", ShaderBindings.Size(), MSLSlots.Size());
+        return false;
+    }
+
+    Bindings.Reset(ShaderBindings.Size());
+    for (int32 Index = 0; Index < ShaderBindings.Size(); Index++)
+    {
+        FMSLShaderBinding& Binding = Bindings[Index];
+        Binding.BindingType     = GetMSLBindingType(ShaderBindings[Index]);
+        Binding.RegisterIndex   = ShaderBindings[Index].Register;
+        Binding.SlotIndex       = MSLSlots[Index].Slot;
+        Binding.NullTextureType = MSLSlots[Index].NullTextureType;
+
+        if (Binding.BindingType == EMSLBindingType::Unknown)
         {
-            const String ErrorString([Error localizedDescription]);
-            LOG_ERROR("Failed to compile shader. Error: %s", *ErrorString);
-            return false;
-        }
-        
-        // Retrieve the entrypoint (All SPIR-V shaders have a static entrypoint)
-        NSString* EntryPoint = String("Spirv_Main").GetNSString();
-        FunctionName = [EntryPoint retain];
-        
-        // Retrieve the function
-        Function = [Library newFunctionWithName:EntryPoint];
-        if (!Function)
-        {
-            LOG_ERROR("Failed to retrieve function from Library");
+            LOG_ERROR("Shader binding %d has resource type %s, which has no MSL binding", Index, ToString(ShaderBindings[Index].Type));
             return false;
         }
     }
-    
-    return true;
+
+    const FMSLShaderInfo& MSLInfo = InCode.GetMSLInfo();
+    ThreadGroupSizeX    = MSLInfo.ThreadGroupSize[0];
+    ThreadGroupSizeY    = MSLInfo.ThreadGroupSize[1];
+    ThreadGroupSizeZ    = MSLInfo.ThreadGroupSize[2];
+    ShaderConstantsSize = InCode.GetInfo().ShaderConstantsSize;
+
+    CompiledShader = GetDevice()->GetShaderLibraryCache().GetOrCompile(InCode.GetNativeCode(), InCode.GetEntryPoint());
+    return CompiledShader != nullptr;
 }
-
-FMetalVertexShaderRHI::FMetalVertexShaderRHI(FMetalDevice* InDevice)
-    : FRHIVertexShader()
-    , FMetalShader(InDevice, EShaderVisibility::Vertex)
-{
-}
-
-FMetalVertexShaderRHI::~FMetalVertexShaderRHI() = default;
-
-FMetalPixelShaderRHI::FMetalPixelShaderRHI(FMetalDevice* InDevice)
-    : FRHIPixelShader()
-    , FMetalShader(InDevice, EShaderVisibility::Pixel)
-{
-}
-
-FMetalPixelShaderRHI::~FMetalPixelShaderRHI() = default;
-
-FMetalComputeShaderRHI::FMetalComputeShaderRHI(FMetalDevice* InDevice)
-    : FRHIComputeShader()
-    , FMetalShader(InDevice, EShaderVisibility::Compute)
-{
-}
-
-FMetalComputeShaderRHI::~FMetalComputeShaderRHI() = default;
 
 FMetalRayTracingShader::FMetalRayTracingShader(FMetalDevice* InDevice)
-    : FMetalShader(InDevice, EShaderVisibility::Compute)
+    : FMetalShader(InDevice)
 {
 }
 
 FMetalRayTracingShader::~FMetalRayTracingShader() = default;
 
-FMetalRayGenShaderRHI::FMetalRayGenShaderRHI(FMetalDevice* InDevice)
-    : FRHIRayGenShader()
-    , FMetalRayTracingShader(InDevice)
+bool FMetalRayTracingShader::Initialize(const FShaderCodeView& InCode)
 {
-}
+    if (!FMetalShader::Initialize(InCode))
+    {
+        return false;
+    }
 
-FMetalRayGenShaderRHI::~FMetalRayGenShaderRHI() = default;
-
-FMetalRayAnyHitShaderRHI::FMetalRayAnyHitShaderRHI(FMetalDevice* InDevice)
-    : FRHIRayAnyHitShader()
-    , FMetalRayTracingShader(InDevice)
-{
-}
-
-FMetalRayAnyHitShaderRHI::~FMetalRayAnyHitShaderRHI() = default;
-
-FMetalRayClosestHitShaderRHI::FMetalRayClosestHitShaderRHI(FMetalDevice* InDevice)
-    : FRHIRayClosestHitShader()
-    , FMetalRayTracingShader(InDevice)
-{
-}
-
-FMetalRayClosestHitShaderRHI::~FMetalRayClosestHitShaderRHI() = default;
-
-FMetalRayMissShaderRHI::FMetalRayMissShaderRHI(FMetalDevice* InDevice)
-    : FRHIRayMissShader()
-    , FMetalRayTracingShader(InDevice)
-{
-}
-
-FMetalRayMissShaderRHI::~FMetalRayMissShaderRHI() = default;
-
-FMetalRayIntersectionShaderRHI::FMetalRayIntersectionShaderRHI(FMetalDevice* InDevice)
-    : FRHIRayIntersectionShader()
-    , FMetalRayTracingShader(InDevice)
-{
-}
-
-FMetalRayIntersectionShaderRHI::~FMetalRayIntersectionShaderRHI() = default;
-
-FMetalRayCallableShaderRHI::FMetalRayCallableShaderRHI(FMetalDevice* InDevice)
-    : FRHIRayCallableShader()
-    , FMetalRayTracingShader(InDevice)
-{
-}
-
-FMetalRayCallableShaderRHI::~FMetalRayCallableShaderRHI() = default;
-
-void* FMetalVertexShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalVertexShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalShader*>(this);
-}
-
-void* FMetalPixelShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalPixelShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalShader*>(this);
-}
-
-void* FMetalRayGenShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalRayGenShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalRayTracingShader*>(this);
-}
-
-void* FMetalRayAnyHitShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalRayAnyHitShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalRayTracingShader*>(this);
-}
-
-void* FMetalRayClosestHitShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalRayClosestHitShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalRayTracingShader*>(this);
-}
-
-void* FMetalRayMissShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalRayMissShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalRayTracingShader*>(this);
-}
-
-void* FMetalRayIntersectionShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalRayIntersectionShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalRayTracingShader*>(this);
-}
-
-void* FMetalRayCallableShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalRayCallableShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalRayTracingShader*>(this);
-}
-
-void* FMetalComputeShaderRHI::GetRHINativeHandle()
-{
-    return reinterpret_cast<void*>(GetMTLFunction());
-}
-
-void* FMetalComputeShaderRHI::GetRHIBaseInterface()
-{
-    return static_cast<FMetalShader*>(this);
+    Identifier = String(CompiledShader->FunctionName);
+    return true;
 }

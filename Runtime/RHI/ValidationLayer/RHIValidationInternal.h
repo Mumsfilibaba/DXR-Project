@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "RHI/RHIDevice.h"
 #include "RHI/ValidationLayer/RHIValidationHelpers.h"
 

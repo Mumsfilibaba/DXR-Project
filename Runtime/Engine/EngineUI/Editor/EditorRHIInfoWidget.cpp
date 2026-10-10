@@ -174,12 +174,18 @@ void FEditorRHIInfoWidget::DrawAllocatorDetails()
             (CString::Strcmp(GroupName, "D3D11 Resources") == 0) ||
             (CString::Strcmp(GroupName, "D3D12 Allocators") == 0) ||
             (CString::Strcmp(GroupName, "Vulkan Allocators") == 0) ||
+            (CString::Strcmp(GroupName, "Metal Allocators") == 0) ||
+            (CString::Strcmp(GroupName, "Metal Heaps") == 0) ||
+            (CString::Strcmp(GroupName, "Metal Standalone") == 0) ||
+            (CString::Strcmp(GroupName, "Metal Defrag") == 0) ||
             (CString::Strcmp(GroupName, "D3D11 PSO") == 0) ||
             (CString::Strcmp(GroupName, "D3D12 PSO") == 0) ||
             (CString::Strcmp(GroupName, "Vulkan PSO") == 0) ||
+            (CString::Strcmp(GroupName, "Metal PSO") == 0) ||
             (CString::Strcmp(GroupName, "D3D11 State Changes") == 0) ||
             (CString::Strcmp(GroupName, "D3D12 Commands") == 0) ||
             (CString::Strcmp(GroupName, "Vulkan Commands") == 0) ||
+            (CString::Strcmp(GroupName, "Metal Commands") == 0) ||
             (CString::Strcmp(GroupName, "D3D12 Submissions / Frame") == 0) ||
             (CString::Strcmp(GroupName, "Vulkan Submissions / Frame") == 0) ||
             (CString::Strcmp(GroupName, "D3D12 Ray Tracing / Frame") == 0) ||
@@ -187,7 +193,11 @@ void FEditorRHIInfoWidget::DrawAllocatorDetails()
             (CString::Strcmp(GroupName, "D3D11 Queries") == 0) ||
             (CString::Strcmp(GroupName, "D3D12 Queries") == 0) ||
             (CString::Strcmp(GroupName, "Vulkan Queries") == 0) ||
-            (CString::Strcmp(GroupName, "D3D12 Residency") == 0);
+            (CString::Strcmp(GroupName, "Metal Queries") == 0) ||
+            (CString::Strcmp(GroupName, "Metal GPU") == 0) ||
+            (CString::Strcmp(GroupName, "D3D12 Residency") == 0) ||
+            (CString::Strcmp(GroupName, "Metal Residency") == 0) ||
+            (CString::Strcmp(GroupName, "Metal Bindless") == 0);
 
         if (!bIsRHIDetailGroup)
         {

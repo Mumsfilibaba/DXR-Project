@@ -19,6 +19,8 @@ SetWorkspaceName("DXR-Engine Tools")
 
 AddTarget("BlueNoiseGen")
 AddTarget("LocCount")
+AddTarget("RemoteConsole")
+AddTarget("ShaderCompilerTool")
 
 -- Generate the workspace
 GenerateWorkspace()

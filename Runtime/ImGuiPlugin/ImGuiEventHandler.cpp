@@ -1,6 +1,6 @@
 #include "ImGuiPlugin.h"
 #include "ImGuiExtensions.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Application/Application.h"
 #include "Application/Input/InputMapper.h"
 

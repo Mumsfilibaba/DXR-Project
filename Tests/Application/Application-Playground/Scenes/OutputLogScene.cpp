@@ -1,5 +1,5 @@
 #include <Core/Containers/SharedPtr.h>
-#include <Core/Misc/OutputDeviceLogger.h>
+#include <Core/Misc/OutputDeviceManager.h>
 #include <Application/Elements/Border.h>
 #include <Application/Elements/Box.h>
 #include <Application/Elements/Button.h>

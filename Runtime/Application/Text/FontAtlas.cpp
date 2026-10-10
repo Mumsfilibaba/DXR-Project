@@ -2,7 +2,7 @@
 #include "Core/Algorithms/Algorithm.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 
 #define STBTT_STATIC
 #define STB_TRUETYPE_IMPLEMENTATION

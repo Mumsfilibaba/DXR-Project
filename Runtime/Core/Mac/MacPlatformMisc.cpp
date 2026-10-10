@@ -1,7 +1,7 @@
 #include "Core/Mac/MacPlatformMisc.h"
 #include "Core/Mac/MacPlatformStackTrace.h"
 #include "Core/Misc/CrashReporter.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformAtomic.h"
 #include "Core/Misc/Guid.h"
 
@@ -316,7 +316,7 @@ static void HandleUncaughtObjectiveCException(NSException* Exception)
     const CHAR* Reason = Exception.reason ? [Exception.reason UTF8String] : "None";
 
     LOG_ERROR("Uncaught Objective-C exception: %s - %s", Name, Reason);
-    FOutputDeviceLogger::Get()->Flush();
+    FOutputDeviceManager::Get()->Flush();
 }
 
 bool FMacPlatformMisc::IsDebuggerPresent()
@@ -475,4 +475,34 @@ FGuid FMacPlatformMisc::CreateGuid()
     uuid_t Bytes;
     ::uuid_generate_random(Bytes);
     return FGuid(ReadBigEndian32(Bytes), ReadBigEndian32(Bytes + 4), ReadBigEndian32(Bytes + 8), ReadBigEndian32(Bytes + 12));
+}
+
+void FMacPlatformMisc::PrepareMetalDebugLayerEnvironment(bool bEnableDebugLayer, bool bEnableShaderValidation)
+{
+    String Existing;
+    if (bEnableDebugLayer)
+    {
+        if (!GetEnvironmentVariable("MTL_DEBUG_LAYER", Existing) || Existing.IsEmpty())
+        {
+            SetEnvironmentVariable("MTL_DEBUG_LAYER", "1");
+        }
+    }
+
+    if (bEnableShaderValidation)
+    {
+        if (!GetEnvironmentVariable("MTL_SHADER_VALIDATION", Existing) || Existing.IsEmpty())
+        {
+            SetEnvironmentVariable("MTL_SHADER_VALIDATION", "1");
+        }
+    }
+
+    if (!GetEnvironmentVariable("MTL_DEBUG_LAYER_ERROR_MODE", Existing) || Existing.IsEmpty())
+    {
+        SetEnvironmentVariable("MTL_DEBUG_LAYER_ERROR_MODE", "nslog");
+    }
+
+    if (!GetEnvironmentVariable("MTL_DEBUG_LAYER_WARNING_MODE", Existing) || Existing.IsEmpty())
+    {
+        SetEnvironmentVariable("MTL_DEBUG_LAYER_WARNING_MODE", "nslog");
+    }
 }

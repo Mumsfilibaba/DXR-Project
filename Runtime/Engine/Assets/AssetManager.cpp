@@ -2,7 +2,7 @@
 #include "Core/Filesystem/File.h"
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Parse.h"
 #include "Core/Misc/Paths.h"
 #include "RHI/RHICommandList.h"

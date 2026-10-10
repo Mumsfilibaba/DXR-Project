@@ -209,9 +209,10 @@ RHI_API void RHI::DumpCapabilities()
     LOG_INFO("[RHI]   Max View Instances                      : %u", RHI::MaxViewInstanceCount);
 
     // -------------------------------------------------------------------------------------------
-    // Hardware Ray Tracing
+    // Ray Tracing
     // -------------------------------------------------------------------------------------------
     LOG_INFO("[RHI] Ray Tracing                               : %s", YesNo(RHI::bSupportsRayTracing));
+    LOG_INFO("[RHI]   Ray Tracing Pipeline                    : %s", YesNo(RHI::bSupportsRayTracingPipeline));
     LOG_INFO("[RHI]   Tier                                    : %s", ToString(RHI::RayTracingTier));
     LOG_INFO("[RHI]   Max Recursion Depth                     : %u", RHI::RayTracingMaxRecursionDepth);
     
@@ -364,6 +365,8 @@ bool RHI::Initialize()
     {
         return false;
     }
+
+    CHECK(RHI::bSupportsRayTracing == (RHI::bSupportsRayTracingPipeline || RHI::bSupportsInlineRayTracing));
 
     // Log features of the loaded device and RHI
     DumpCapabilities();

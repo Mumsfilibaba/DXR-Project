@@ -140,4 +140,10 @@ struct SHADERCORE_API FShaderCodeReader
 
     /** @brief ReadHeader, then checks every enum value, array range and string inside the reflection block */
     NODISCARD static bool Read(const TArray<uint8>& ShaderCode, FShaderCodeView& OutView, String* OutError = nullptr);
+
+    /**
+     * @brief Copies a container that a generated header embeds into OutShaderCode, then reads it. The copy gives SPIR-V
+     *        the alignment that a static byte array does not guarantee. The view points into OutShaderCode, which has to outlive it.
+     */
+    NODISCARD static bool ReadEmbedded(TArrayView<const uint8> EmbeddedCode, TArray<uint8>& OutShaderCode, FShaderCodeView& OutView, String* OutError = nullptr);
 };

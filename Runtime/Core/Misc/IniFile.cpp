@@ -1,6 +1,6 @@
 #include "Core/Misc/IniFile.h"
 #include "Core/Misc/Parse.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Filesystem/File.h"
 #include "Core/Templates/CString.h"

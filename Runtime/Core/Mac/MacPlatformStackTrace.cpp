@@ -2,7 +2,7 @@
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include <dlfcn.h>
 #include <execinfo.h>
 #include <mach/mach.h>

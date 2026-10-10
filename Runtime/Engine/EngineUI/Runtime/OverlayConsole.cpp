@@ -1,5 +1,5 @@
 #include "Engine/EngineUI/Runtime/OverlayConsole.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Paths.h"
 #include "Application/Application.h"
 #include "Application/Text/TrueTypeFontFace.h"

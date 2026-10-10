@@ -1,4 +1,4 @@
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "RHI/RHI.h"
 #include "RHI/ValidationLayer/RHIValidationInternal.h"
 #include "RendererCore/RenderGraph/RenderGraphBuilder.h"

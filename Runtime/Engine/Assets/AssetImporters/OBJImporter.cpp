@@ -4,7 +4,7 @@
 #include "Core/Filesystem/File.h"
 #include "Core/Containers/StringConversion.h"
 #include "Core/Platform/PlatformFile.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetImporters/OBJImporter.h"
 

@@ -1,6 +1,6 @@
 #include "Core/PlatformInterface/IPlatformThread.h"
 #include "Core/Platform/PlatformTLS.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 
 uint32 IPlatformThread::TLSSlot = IPlatformThread::AllocTLSSlot();
 

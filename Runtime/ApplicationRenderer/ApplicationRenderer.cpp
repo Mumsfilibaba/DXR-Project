@@ -5,7 +5,7 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Platform/PlatformTime.h"
 #include "Core/Tasks/Tasks.h"
@@ -20,7 +20,7 @@
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIResources.h"
 #include "ShaderCompiler/ShaderCompiler.h"
-#include "RendererCore/Shaders/ShaderBytecodeCache.h"
+#include "ShaderCompiler/ShaderBytecodeCache.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/TextureResourceData.h"
 
