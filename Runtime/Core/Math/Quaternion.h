@@ -21,7 +21,7 @@ public:
     /**
      * @brief Default constructor (identity rotation).
      */
-    FORCEINLINE Quaternion() noexcept
+    FORCEINLINE constexpr Quaternion() noexcept
         : X(0.0f)
         , Y(0.0f)
         , Z(0.0f)
@@ -36,7 +36,7 @@ public:
      * @param InZ Z component.
      * @param InW W component.
      */
-    FORCEINLINE explicit Quaternion(float InX, float InY, float InZ, float InW) noexcept
+    FORCEINLINE constexpr explicit Quaternion(float InX, float InY, float InZ, float InW) noexcept
         : X(InX)
         , Y(InY)
         , Z(InZ)
@@ -49,7 +49,7 @@ public:
      * @param InXYZ Vector part (X,Y,Z).
      * @param InW Scalar part.
      */
-    FORCEINLINE explicit Quaternion(const Vector3& InXYZ, float InW) noexcept
+    FORCEINLINE constexpr explicit Quaternion(const Vector3& InXYZ, float InW) noexcept
         : X(InXYZ.X)
         , Y(InXYZ.Y)
         , Z(InXYZ.Z)

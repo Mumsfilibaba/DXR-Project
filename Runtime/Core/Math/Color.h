@@ -11,7 +11,7 @@ class FColor
 public:
 
     /** @brief Default constructor */
-    FORCEINLINE FColor()
+    FORCEINLINE constexpr FColor()
         : PackedRGBA(0)
     {
     }
@@ -23,7 +23,7 @@ public:
      * @param InB Blue channel
      * @param InA Alpha channel
      */
-    FORCEINLINE FColor(uint8 InR, uint8 InG, uint8 InB, uint8 InA)
+    FORCEINLINE constexpr FColor(uint8 InR, uint8 InG, uint8 InB, uint8 InA)
         : R(InR)
         , G(InG)
         , B(InB)
@@ -121,9 +121,12 @@ public:
 public:
 
     /** @brief Default constructor */
-    FORCEINLINE FFloatColor()
+    FORCEINLINE constexpr FFloatColor()
+        : R(0.0f)
+        , G(0.0f)
+        , B(0.0f)
+        , A(0.0f)
     {
-        Memory::Memzero(RGBA, sizeof(RGBA));
     }
 
     /**
@@ -133,7 +136,7 @@ public:
      * @param InB Blue channel
      * @param InA Alpha channel
      */
-    FORCEINLINE FFloatColor(float InR, float InG, float InB, float InA)
+    FORCEINLINE constexpr FFloatColor(float InR, float InG, float InB, float InA)
         : R(InR)
         , G(InG)
         , B(InB)
@@ -145,20 +148,24 @@ public:
      * @brief Constructs a float color from a 3D vector.
      * @param InVector The input vector containing RGB components.
      */
-    FORCEINLINE explicit FFloatColor(const Vector3& InVector)
+    FORCEINLINE constexpr explicit FFloatColor(const Vector3& InVector)
+        : R(InVector.X)
+        , G(InVector.Y)
+        , B(InVector.Z)
+        , A(1.0f)
     {
-        Memory::Memcpy(RGBA, &InVector, sizeof(Vector3));
-
-        RGBA[3] = 1.0f;
     }
 
     /**
      * @brief Constructs a float color from a 4D vector.
      * @param InVector The input vector containing RGBA components.
      */
-    FORCEINLINE explicit FFloatColor(const Vector4& InVector)
+    FORCEINLINE constexpr explicit FFloatColor(const Vector4& InVector)
+        : R(InVector.X)
+        , G(InVector.Y)
+        , B(InVector.Z)
+        , A(InVector.W)
     {
-        Memory::Memcpy(RGBA, &InVector, sizeof(RGBA));
     }
 
     /**

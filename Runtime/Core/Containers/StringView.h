@@ -50,7 +50,7 @@ public:
      * @param InLength Length of the string to view
      * @param Offset Offset into the string
      */
-    FORCEINLINE explicit TStringView(const CharType* InString, SizeType InLength, SizeType Offset = 0)
+    FORCEINLINE constexpr explicit TStringView(const CharType* InString, SizeType InLength, SizeType Offset = 0)
         : ViewStart(InString + Offset)
         , ViewEnd(ViewStart + InLength)
     {
@@ -71,7 +71,7 @@ public:
      * @brief Copy Constructor
      * @param Other Other view to copy from
      */
-    FORCEINLINE TStringView(const TStringView& Other)
+    FORCEINLINE constexpr TStringView(const TStringView& Other)
         : ViewStart(Other.ViewStart)
         , ViewEnd(Other.ViewEnd)
     {
@@ -81,7 +81,7 @@ public:
      * @brief Move Constructor
      * @param Other Other view to move from
      */
-    FORCEINLINE TStringView(TStringView&& Other)
+    FORCEINLINE constexpr TStringView(TStringView&& Other)
         : ViewStart(Other.ViewStart)
         , ViewEnd(Other.ViewEnd)
     {

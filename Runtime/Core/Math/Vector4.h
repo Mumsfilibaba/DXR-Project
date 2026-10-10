@@ -9,7 +9,7 @@ public:
     /**
      * @brief Default constructor (initializes components to zero).
      */
-    FORCEINLINE Vector4() noexcept
+    FORCEINLINE constexpr Vector4() noexcept
         : X(0.0f)
         , Y(0.0f)
         , Z(0.0f)
@@ -24,7 +24,7 @@ public:
      * @param InZ The Z-coordinate.
      * @param InW The W-coordinate.
      */
-    FORCEINLINE explicit Vector4(float InX, float InY, float InZ, float InW) noexcept
+    FORCEINLINE constexpr explicit Vector4(float InX, float InY, float InZ, float InW) noexcept
         : X(InX)
         , Y(InY)
         , Z(InZ)
@@ -36,7 +36,7 @@ public:
      * @brief Constructor initializing all components with a single value.
      * @param Scalar Value to set all components to.
      */
-    FORCEINLINE explicit Vector4(float Scalar) noexcept
+    FORCEINLINE constexpr explicit Vector4(float Scalar) noexcept
         : X(Scalar)
         , Y(Scalar)
         , Z(Scalar)
@@ -48,7 +48,7 @@ public:
      * @brief Constructor copying a 3D vector into the first components, setting W-component to zero.
      * @param XYZ Value to set first components to.
      */
-    FORCEINLINE Vector4(const Vector3& XYZ) noexcept
+    FORCEINLINE constexpr Vector4(const Vector3& XYZ) noexcept
         : X(XYZ.X)
         , Y(XYZ.Y)
         , Z(XYZ.Z)
@@ -61,7 +61,7 @@ public:
      * @param XYZ Value to set first components to.
      * @param InW Value to set the W-component to.
      */
-    FORCEINLINE explicit Vector4(const Vector3& XYZ, float InW) noexcept
+    FORCEINLINE constexpr explicit Vector4(const Vector3& XYZ, float InW) noexcept
         : X(XYZ.X)
         , Y(XYZ.Y)
         , Z(XYZ.Z)

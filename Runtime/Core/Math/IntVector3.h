@@ -391,7 +391,7 @@ class IntVector3
 public:
 
     /** @brief Default constructor initializes components to zero. */
-    FORCEINLINE IntVector3() noexcept
+    FORCEINLINE constexpr IntVector3() noexcept
         : X(0)
         , Y(0)
         , Z(0)
@@ -404,7 +404,7 @@ public:
      * @param InY The Y-coordinate.
      * @param InZ The Z-coordinate.
      */
-    FORCEINLINE IntVector3(int32 InX, int32 InY, int32 InZ) noexcept
+    FORCEINLINE constexpr IntVector3(int32 InX, int32 InY, int32 InZ) noexcept
         : X(InX)
         , Y(InY)
         , Z(InZ)
@@ -415,7 +415,7 @@ public:
      * @brief Constructs the vector by setting X, Y, and Z to the same scalar value.
      * @param Scalar The scalar value to set all components.
      */
-    FORCEINLINE explicit IntVector3(int32 Scalar) noexcept
+    FORCEINLINE constexpr explicit IntVector3(int32 Scalar) noexcept
         : X(Scalar)
         , Y(Scalar)
         , Z(Scalar)

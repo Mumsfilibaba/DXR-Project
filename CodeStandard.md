@@ -252,6 +252,22 @@ FRHITexture* ResolvedOutput = OutputTarget ? PassResources.Get(OutputGraphTextur
 Record(PassCommandList, *Context.FrameResources, ResolvedOutput, bOutputSRGB);
 ```
 
+* A global or `static` variable whose initializer can run at compile time is declared `CONST_INIT`, so the compiler guarantees it holds its value before any code runs and an initialization-order mistake fails to build. This applies to atomics, spin locks, `FThreadLocalSlot`, math constants and stat storage. A constructor that only stores its arguments, or constants, into members is declared `constexpr` so those types qualify.
+
+Good:
+
+```cpp
+static CONST_INIT AtomicInt32 GValidationErrorCount;
+CORE_API CONST_INIT const Vector3 Vector3::Up = Vector3(0.0f, 1.0f, 0.0f);
+```
+
+Bad:
+
+```cpp
+static AtomicInt32 GValidationErrorCount;
+CORE_API const Vector3 Vector3::Up = Vector3(0.0f, 1.0f, 0.0f);
+```
+
 ### Templates
 
 Templates should use the following style. The class name uses a capital `T` prefix, and `typename` is preferred over `class` for type parameters.

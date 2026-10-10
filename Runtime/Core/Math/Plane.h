@@ -11,7 +11,7 @@ public:
      * @brief Default constructor
      * Initializes a plane with default values.
      */
-    FORCEINLINE Plane() noexcept
+    FORCEINLINE constexpr Plane() noexcept
         : X(0.0f)
         , Y(1.0f)
         , Z(0.0f)
@@ -23,7 +23,7 @@ public:
      * @brief Constructor that creates a plane from a Vector4.
      * @param Plane A Vector4 representing the plane.
      */
-    FORCEINLINE explicit Plane(const Vector4& Plane) noexcept
+    FORCEINLINE constexpr explicit Plane(const Vector4& Plane) noexcept
         : X(Plane.X)
         , Y(Plane.Y)
         , Z(Plane.Z)
@@ -36,7 +36,7 @@ public:
      * @param Normal The normal vector of the plane.
      * @param InW The offset from the origin along the normal.
      */
-    FORCEINLINE explicit Plane(const Vector3& Normal, float InW) noexcept
+    FORCEINLINE constexpr explicit Plane(const Vector3& Normal, float InW) noexcept
         : X(Normal.X)
         , Y(Normal.Y)
         , Z(Normal.Z)
@@ -51,7 +51,7 @@ public:
      * @param InZ The z-component of the plane.
      * @param InW The w-component of the plane.
      */
-    FORCEINLINE explicit Plane(float InX, float InY, float InZ, float InW) noexcept
+    FORCEINLINE constexpr explicit Plane(float InX, float InY, float InZ, float InW) noexcept
         : X(InX)
         , Y(InY)
         , Z(InZ)

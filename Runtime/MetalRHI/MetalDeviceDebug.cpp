@@ -43,7 +43,7 @@ static TAutoConsoleVariable<bool> CVarEnableShaderValidation(
     false);
 #endif
 
-static AtomicInt32 GValidationErrorCount;
+static CONST_INIT AtomicInt32 GValidationErrorCount;
 static bool        GCaptureActive = false;
 
 #if METAL_ENABLE_DEBUG_LAYER

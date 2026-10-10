@@ -10,7 +10,7 @@ class VECTOR_ALIGN Matrix4
 public:
 
     /** @brief Default constructor (Initializes all components to zero) */
-    FORCEINLINE Matrix4() noexcept
+    FORCEINLINE constexpr Matrix4() noexcept
         : M{ { 0.0f, 0.0f, 0.0f, 0.0f },
              { 0.0f, 0.0f, 0.0f, 0.0f },
              { 0.0f, 0.0f, 0.0f, 0.0f },
@@ -22,7 +22,7 @@ public:
      * @brief Constructor initializing all diagonal values with a single value. Other values are set to zero.
      * @param Diagonal Value to set on the diagonal
      */
-    FORCEINLINE explicit Matrix4(float Diagonal) noexcept
+    FORCEINLINE constexpr explicit Matrix4(float Diagonal) noexcept
         : M{ { Diagonal, 0.0f,     0.0f,     0.0f },
              { 0.0f,     Diagonal, 0.0f,     0.0f },
              { 0.0f,     0.0f,     Diagonal, 0.0f },
@@ -37,7 +37,7 @@ public:
      * @param Row2 Vector to set the third row to
      * @param Row3 Vector to set the fourth row to
      */
-    FORCEINLINE explicit Matrix4(const Vector4& Row0, const Vector4& Row1, const Vector4& Row2, const Vector4& Row3) noexcept
+    FORCEINLINE constexpr explicit Matrix4(const Vector4& Row0, const Vector4& Row1, const Vector4& Row2, const Vector4& Row3) noexcept
         : M{ { Row0.X, Row0.Y, Row0.Z, Row0.W },
              { Row1.X, Row1.Y, Row1.Z, Row1.W },
              { Row2.X, Row2.Y, Row2.Z, Row2.W },
@@ -64,7 +64,7 @@ public:
      * @param M32 Value to set at row 3, column 2
      * @param M33 Value to set at row 3, column 3
      */
-    FORCEINLINE explicit Matrix4(
+    FORCEINLINE constexpr explicit Matrix4(
         float M00, float M01, float M02, float M03,
         float M10, float M11, float M12, float M13,
         float M20, float M21, float M22, float M23,

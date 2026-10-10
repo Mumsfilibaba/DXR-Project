@@ -18,7 +18,7 @@ static TAutoConsoleVariable<bool> CVarLogResidencyEvents(
     false);
 #endif
 
-AtomicInt64 FD3D12ResidencySet::NextSetId;
+CONST_INIT AtomicInt64 FD3D12ResidencySet::NextSetId;
 
 FD3D12PagingWorker::FD3D12PagingWorker(ID3D12Device* InDevice)
     : Device(InDevice)

@@ -375,7 +375,7 @@ class IntVector2
 public:
 
     /** @brief Default constructor initializes components to zero. */
-    FORCEINLINE IntVector2() noexcept
+    FORCEINLINE constexpr IntVector2() noexcept
         : X(0)
         , Y(0)
     {
@@ -386,7 +386,7 @@ public:
      * @param InX The X-coordinate.
      * @param InY The Y-coordinate.
      */
-    FORCEINLINE IntVector2(int32 InX, int32 InY) noexcept
+    FORCEINLINE constexpr IntVector2(int32 InX, int32 InY) noexcept
         : X(InX)
         , Y(InY)
     {
@@ -396,7 +396,7 @@ public:
      * @brief Constructs the vector by setting both X and Y to the same scalar value.
      * @param Scalar The scalar value to set both components.
      */
-    FORCEINLINE explicit IntVector2(int32 Scalar) noexcept
+    FORCEINLINE constexpr explicit IntVector2(int32 Scalar) noexcept
         : X(Scalar)
         , Y(Scalar)
     {

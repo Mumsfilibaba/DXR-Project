@@ -6,7 +6,7 @@ struct FAABB
 public:
 
     /** @brief Default constructor */
-    FORCEINLINE FAABB()
+    FORCEINLINE constexpr FAABB()
         : Min(0.0f, 0.0f, 0.0f)
         , Max(0.0f, 0.0f, 0.0f)
     {
@@ -17,7 +17,7 @@ public:
      * @param InPointA First point.
      * @param InPointB Second point.
      */
-    FORCEINLINE FAABB(const Vector3& InPointA, const Vector3& InPointB)
+    FORCEINLINE constexpr FAABB(const Vector3& InPointA, const Vector3& InPointB)
         : Min(Vector3(Math::Min(InPointA.X, InPointB.X), Math::Min(InPointA.Y, InPointB.Y), Math::Min(InPointA.Z, InPointB.Z)))
         , Max(Vector3(Math::Max(InPointA.X, InPointB.X), Math::Max(InPointA.Y, InPointB.Y), Math::Max(InPointA.Z, InPointB.Z)))
     {
@@ -29,7 +29,7 @@ public:
      * @param Height The height of the box along the y-axis.
      * @param Depth The depth of the box along the z-axis.
      */
-    FORCEINLINE FAABB(float Width, float Height, float Depth)
+    FORCEINLINE constexpr FAABB(float Width, float Height, float Depth)
     {
         const Vector3 HalfSize = Vector3(Width * 0.5f, Height * 0.5f, Depth * 0.5f);
         Min = Vector3(-HalfSize.X, -HalfSize.Y, -HalfSize.Z);

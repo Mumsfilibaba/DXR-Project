@@ -8,7 +8,7 @@ class VECTOR_ALIGN Matrix2
 public:
 
     /** @brief Default constructor (Initialize components to zero) */
-    FORCEINLINE Matrix2() noexcept 
+    FORCEINLINE constexpr Matrix2() noexcept 
         : M{ { 0.0f, 0.0f }, { 0.0f, 0.0f } }
     {
     }
@@ -17,7 +17,7 @@ public:
      * @brief Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
      * @param Diagonal Value to set on the diagonal
      */
-    FORCEINLINE explicit Matrix2(float Diagonal) noexcept
+    FORCEINLINE constexpr explicit Matrix2(float Diagonal) noexcept
         : M{ { Diagonal, 0.0f }, { 0.0f, Diagonal } }
     {
     }
@@ -27,7 +27,7 @@ public:
      * @param Row0 Vector to set the first row to
      * @param Row1 Vector to set the second row to
      */
-    FORCEINLINE explicit Matrix2(const Vector2& Row0, const Vector2& Row1) noexcept
+    FORCEINLINE constexpr explicit Matrix2(const Vector2& Row0, const Vector2& Row1) noexcept
         : M{ { Row0.X, Row0.Y }, { Row1.X, Row1.Y } }
     {
     }
@@ -39,7 +39,7 @@ public:
      * @param M10 Value to set on row 1 and column 0
      * @param M11 Value to set on row 1 and column 1
      */
-    FORCEINLINE explicit Matrix2(float M00, float M01, float M10, float M11) noexcept
+    FORCEINLINE constexpr explicit Matrix2(float M00, float M01, float M10, float M11) noexcept
         : M{ { M00, M01 }, { M10, M11 } }
     {
     }

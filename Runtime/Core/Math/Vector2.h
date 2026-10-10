@@ -8,7 +8,7 @@ public:
     /**
      * @brief Default constructor (initializes components to zero).
      */
-    FORCEINLINE Vector2() noexcept
+    FORCEINLINE constexpr Vector2() noexcept
         : X(0.0f)
         , Y(0.0f)
     {
@@ -19,7 +19,7 @@ public:
      * @param InX The X-coordinate.
      * @param InY The Y-coordinate.
      */
-    FORCEINLINE explicit Vector2(float InX, float InY) noexcept
+    FORCEINLINE constexpr explicit Vector2(float InX, float InY) noexcept
         : X(InX)
         , Y(InY)
     {
@@ -29,7 +29,7 @@ public:
      * @brief Constructor initializing all components with a single value.
      * @param Scalar Value to set all components to.
      */
-    FORCEINLINE explicit Vector2(float Scalar) noexcept
+    FORCEINLINE constexpr explicit Vector2(float Scalar) noexcept
         : X(Scalar)
         , Y(Scalar)
     {

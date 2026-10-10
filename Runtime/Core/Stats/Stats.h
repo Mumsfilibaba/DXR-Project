@@ -77,15 +77,15 @@ struct CORE_API FStatAutoRegistration
         extern ApiMacro FStatData StatId
 
     #define STAT_DEFINE_MEMORY(StatId, DisplayName, GroupName) \
-        FStatData StatId = { DisplayName, GroupName, EStatType::Memory, {}, {} }; \
+        CONST_INIT FStatData StatId = { DisplayName, GroupName, EStatType::Memory, {}, {} }; \
         static FStatAutoRegistration StatId##_AutoReg(&StatId)
 
     #define STAT_DEFINE_COUNTER(StatId, DisplayName, GroupName) \
-        FStatData StatId = { DisplayName, GroupName, EStatType::Counter, {}, {} }; \
+        CONST_INIT FStatData StatId = { DisplayName, GroupName, EStatType::Counter, {}, {} }; \
         static FStatAutoRegistration StatId##_AutoReg(&StatId)
 
     #define STAT_DEFINE_FRAME_COUNTER(StatId, DisplayName, GroupName) \
-        FStatData StatId = { DisplayName, GroupName, EStatType::FrameCounter, {}, {} }; \
+        CONST_INIT FStatData StatId = { DisplayName, GroupName, EStatType::FrameCounter, {}, {} }; \
         static FStatAutoRegistration StatId##_AutoReg(&StatId)
 
     #define STAT_ADD_FRAME(StatId, Amount) (StatId).FrameValue.Add(static_cast<int64>(Amount))

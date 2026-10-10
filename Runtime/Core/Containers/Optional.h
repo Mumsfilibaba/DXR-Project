@@ -27,7 +27,7 @@ public:
     friend class TOptional;
 
     /** @brief Default constructor */
-    TOptional()
+    constexpr TOptional()
         : Value()
         , bHasValue(false)
     {
@@ -36,7 +36,7 @@ public:
     /**
      * @brief Construct from nullptr
      */
-    FORCEINLINE TOptional(NULLPTR_TYPE)
+    FORCEINLINE constexpr TOptional(NULLPTR_TYPE)
         : Value()
         , bHasValue(false)
     {

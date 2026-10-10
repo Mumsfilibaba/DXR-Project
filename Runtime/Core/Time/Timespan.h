@@ -5,7 +5,7 @@
 class FTimespan
 {
 public:
-    FORCEINLINE FTimespan(uint64 InTimespanNS = 0)
+    FORCEINLINE constexpr FTimespan(uint64 InTimespanNS = 0)
         : TimespanNS(InTimespanNS)
     {
     }

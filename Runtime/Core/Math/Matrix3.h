@@ -8,7 +8,7 @@ class Matrix3
 public:
 
     /** @brief Default constructor (Initializes all components to zero) */
-    FORCEINLINE Matrix3() noexcept
+    FORCEINLINE constexpr Matrix3() noexcept
         : M{ { 0.0f, 0.0f, 0.0f },
              { 0.0f, 0.0f, 0.0f },
              { 0.0f, 0.0f, 0.0f } }
@@ -19,7 +19,7 @@ public:
      * @brief Constructor initializing all diagonal values with a single value. The other values are set to zero.
      * @param Diagonal Value to set on the diagonal
      */
-    FORCEINLINE explicit Matrix3(float Diagonal) noexcept
+    FORCEINLINE constexpr explicit Matrix3(float Diagonal) noexcept
         : M{ { Diagonal, 0.0f, 0.0f },
              { 0.0f, Diagonal, 0.0f },
              { 0.0f, 0.0f, Diagonal } }
@@ -32,7 +32,7 @@ public:
      * @param Row1 Vector to set the second row to
      * @param Row2 Vector to set the third row to
      */
-    FORCEINLINE explicit Matrix3(const Vector3& Row0, const Vector3& Row1, const Vector3& Row2) noexcept
+    FORCEINLINE constexpr explicit Matrix3(const Vector3& Row0, const Vector3& Row1, const Vector3& Row2) noexcept
         : M{ { Row0.X, Row0.Y, Row0.Z },
              { Row1.X, Row1.Y, Row1.Z },
              { Row2.X, Row2.Y, Row2.Z } }
@@ -51,7 +51,7 @@ public:
      * @param M21 Value to set on row 2 and column 1
      * @param M22 Value to set on row 2 and column 2
      */
-    FORCEINLINE explicit Matrix3(
+    FORCEINLINE constexpr explicit Matrix3(
         float M00, float M01, float M02,
         float M10, float M11, float M12,
         float M20, float M21, float M22) noexcept

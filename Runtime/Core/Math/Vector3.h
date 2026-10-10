@@ -19,7 +19,7 @@ public:
     /**
      * @brief Default constructor (initializes components to zero).
      */
-    FORCEINLINE Vector3() noexcept
+    FORCEINLINE constexpr Vector3() noexcept
         : X(0.0f)
         , Y(0.0f)
         , Z(0.0f)
@@ -32,7 +32,7 @@ public:
      * @param InY The Y-coordinate.
      * @param InZ The Z-coordinate.
      */
-    FORCEINLINE explicit Vector3(float InX, float InY, float InZ) noexcept
+    FORCEINLINE constexpr explicit Vector3(float InX, float InY, float InZ) noexcept
         : X(InX)
         , Y(InY)
         , Z(InZ)
@@ -43,7 +43,7 @@ public:
      * @brief Constructor initializing all components with a single value.
      * @param Scalar Value to set all components to.
      */
-    FORCEINLINE explicit Vector3(float Scalar) noexcept
+    FORCEINLINE constexpr explicit Vector3(float Scalar) noexcept
         : X(Scalar)
         , Y(Scalar)
         , Z(Scalar)

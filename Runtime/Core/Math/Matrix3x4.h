@@ -9,7 +9,7 @@ class VECTOR_ALIGN Matrix3x4
 public:
 
     /** @brief Default constructor (Initializes all components to zero) */
-    FORCEINLINE Matrix3x4() noexcept
+    FORCEINLINE constexpr Matrix3x4() noexcept
         : M{ {0.0f, 0.0f, 0.0f, 0.0f},
              {0.0f, 0.0f, 0.0f, 0.0f},
              {0.0f, 0.0f, 0.0f, 0.0f} }
@@ -31,7 +31,7 @@ public:
      * @param M22 Value to set on row 2 and column 2
      * @param M23 Value to set on row 2 and column 3
      */
-    FORCEINLINE explicit Matrix3x4(
+    FORCEINLINE constexpr explicit Matrix3x4(
         float M00, float M01, float M02, float M03,
         float M10, float M11, float M12, float M13,
         float M20, float M21, float M22, float M23) noexcept

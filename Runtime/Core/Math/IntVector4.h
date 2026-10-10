@@ -407,7 +407,7 @@ class IntVector4
 public:
 
     /** @brief Default constructor initializes all components to zero. */
-    FORCEINLINE IntVector4() noexcept
+    FORCEINLINE constexpr IntVector4() noexcept
         : X(0)
         , Y(0)
         , Z(0)
@@ -422,7 +422,7 @@ public:
      * @param InZ The Z-coordinate.
      * @param InW The W-coordinate.
      */
-    FORCEINLINE IntVector4(int32 InX, int32 InY, int32 InZ, int32 InW) noexcept
+    FORCEINLINE constexpr IntVector4(int32 InX, int32 InY, int32 InZ, int32 InW) noexcept
         : X(InX)
         , Y(InY)
         , Z(InZ)
@@ -434,7 +434,7 @@ public:
      * @brief Constructs the vector by setting X, Y, Z, and W to the same scalar value.
      * @param Scalar The scalar value to set all components.
      */
-    FORCEINLINE explicit IntVector4(int32 Scalar) noexcept
+    FORCEINLINE constexpr explicit IntVector4(int32 Scalar) noexcept
         : X(Scalar)
         , Y(Scalar)
         , Z(Scalar)
