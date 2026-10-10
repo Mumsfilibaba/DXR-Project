@@ -17,7 +17,7 @@ public:
     ~FSpinLock() = default;
 
     /** @brief Default constructor */
-    FORCEINLINE FSpinLock() noexcept
+    FORCEINLINE constexpr FSpinLock() noexcept
         : State(EState::Unlocked)
     {
     }

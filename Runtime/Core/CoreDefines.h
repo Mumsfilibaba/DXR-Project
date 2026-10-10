@@ -296,6 +296,12 @@
     #define NODISCARD
 #endif
 
+#if defined(__cpp_constinit) && (__cpp_constinit >= 201907L)
+    #define CONST_INIT constinit
+#else
+    #define CONST_INIT
+#endif
+
 #if __has_cpp_attribute(noreturn)
     #define NORETURN [[noreturn]]
 #else

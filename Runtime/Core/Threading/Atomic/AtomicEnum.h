@@ -16,13 +16,13 @@ public:
     typedef T Type;
 
     /** @brief Default constructor zero-initializes the enum value. */
-    FORCEINLINE TAtomicEnum() noexcept
+    FORCEINLINE constexpr TAtomicEnum() noexcept
         : Value(0)
     {
     }
 
     /** @brief Construct with an initial enum value. */
-    FORCEINLINE TAtomicEnum(EnumType InValue) noexcept
+    FORCEINLINE constexpr TAtomicEnum(EnumType InValue) noexcept
         : Value(static_cast<SignedType>(InValue))
     {
     }

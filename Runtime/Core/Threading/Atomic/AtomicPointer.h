@@ -15,7 +15,7 @@ public:
     typedef PointerType Type;
 
     /** @brief Default constructor initializes to nullptr */
-    FORCEINLINE TAtomicPointer() noexcept
+    FORCEINLINE constexpr TAtomicPointer() noexcept
         : Value(0)
     {
     }

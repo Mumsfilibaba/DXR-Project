@@ -11,7 +11,7 @@ public:
     typedef bool Type;
 
     /** @brief Default constructor initializes to false */
-    FORCEINLINE AtomicBool() noexcept
+    FORCEINLINE constexpr AtomicBool() noexcept
         : Value(false)
     {
     }
@@ -30,7 +30,7 @@ public:
      * @brief Construct with an initial value
      * @param InValue Initial value
      */
-    FORCEINLINE AtomicBool(bool bInValue) noexcept
+    FORCEINLINE constexpr AtomicBool(bool bInValue) noexcept
         : Value(static_cast<IntegerType>(bInValue))
     {
     }

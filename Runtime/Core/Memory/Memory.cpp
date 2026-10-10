@@ -3,9 +3,12 @@
 #include "Core/Memory/Malloc.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "Core/Platform/PlatformStackTrace.h"
+#include "Core/Platform/PlatformThreadMisc.h"
+#include "Core/Threading/Atomic.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <new>
 
 // TODO: Add CVar for these
 #if DEBUG_BUILD
@@ -22,24 +25,40 @@
     #define TRACK_MALLOC_CALLSTACK (0)
 #endif
 
+alignas(FMallocANSI) static uint8 GMallocANSIStorage[sizeof(FMallocANSI)];
+
+enum class EMallocState : int32
+{
+    Uncreated = 0,
+    Creating  = 1,
+    Created   = 2,
+};
+
+static CONST_INIT TAtomicEnum<EMallocState> GMallocState;
+
 static void CreateMalloc()
 {
-    CHECK(GMalloc == nullptr);
-
-    if (!GMalloc)
+    if (GMallocState.CompareExchange(EMallocState::Creating, EMallocState::Uncreated))
     {
-        GMalloc = new FMallocANSI();
+        FMalloc* NewMalloc = ::new (GMallocANSIStorage) FMallocANSI();
         if constexpr(USE_DEBUG_MALLOC)
         {
-            GMalloc = new FMallocLeakTracker(GMalloc);
+            NewMalloc = new FMallocLeakTracker(NewMalloc);
         }
         else if constexpr(TRACK_MALLOC_CALLSTACK)
         {
-            GMalloc = new FMallocStackTraceTracker(GMalloc);
+            NewMalloc = new FMallocStackTraceTracker(NewMalloc);
         }
+
+        GMalloc = NewMalloc;
+        GMallocState.Store(EMallocState::Created, EMemoryOrder::Release);
+        return;
     }
 
-    CHECK(GMalloc != nullptr);
+    while (GMallocState.Load(EMemoryOrder::Acquire) != EMallocState::Created)
+    {
+        FPlatformThreadMisc::Pause();
+    }
 }
 
 static FORCEINLINE uint32 NormalizeAlignment(uint32 Alignment)

@@ -16,7 +16,7 @@ public:
     static_assert(TIsIntegerNotBool<Type>::Value, "TAtomicInt only supports integer types");
 
     /** @brief Default constructor initializes to zero */
-    FORCEINLINE TAtomicInt() noexcept
+    FORCEINLINE constexpr TAtomicInt() noexcept
         : Value(0)
     {
     }
@@ -35,7 +35,7 @@ public:
      * @brief Construct with an initial value
      * @param InValue Initial value
      */
-    FORCEINLINE TAtomicInt(IntegerType InValue) noexcept
+    FORCEINLINE constexpr TAtomicInt(IntegerType InValue) noexcept
         : Value(static_cast<SignedType>(InValue))
     {
     }
