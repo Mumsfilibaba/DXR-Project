@@ -43,7 +43,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
@@ -152,7 +152,7 @@ private:
     NODISCARD FFloatColor ApplyOpacity(const FFloatColor& Color) const;
 
     void ApplyOffset(int32 InOffset);
-    void SetOffsetFromPosition(const IntVector2& ClientPosition);
+    void SetOffsetFromPosition(const FIntVector2& ClientPosition);
     void UpdateFadeTarget();
 
     EOrientation              Orientation;

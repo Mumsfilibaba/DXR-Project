@@ -49,22 +49,22 @@ static FString JoinList(const TArray<FString>& Tokens)
     return Result;
 }
 
-static FString WritePoint(const IntVector2& Point)
+static FString WritePoint(const FIntVector2& Point)
 {
     return FString::Printf("%d,%d", Point.X, Point.Y);
 }
 
-static IntVector2 ReadPoint(const FString& Value)
+static FIntVector2 ReadPoint(const FString& Value)
 {
     TArray<FString> Tokens;
     SplitList(Value, Tokens);
 
     if (Tokens.Size() != 2)
     {
-        return IntVector2(0, 0);
+        return FIntVector2(0, 0);
     }
 
-    return IntVector2(CString::Atoi(Tokens[0].Data()), CString::Atoi(Tokens[1].Data()));
+    return FIntVector2(CString::Atoi(Tokens[0].Data()), CString::Atoi(Tokens[1].Data()));
 }
 
 static int32 WriteNode(FIniFile& File, const FDockNode& Node, int32& InOutNextIndex)

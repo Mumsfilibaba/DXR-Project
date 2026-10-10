@@ -53,14 +53,14 @@ static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRect
     Element->Arrange(Bounds);
 }
 
-static FCursorEvent MakeMoveEvent(const IntVector2& ClientPosition)
+static FCursorEvent MakeMoveEvent(const FIntVector2& ClientPosition)
 {
-    return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, IntVector2(0, 0), FModifierKeyState());
+    return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, FIntVector2(0, 0), FModifierKeyState());
 }
 
-static FCursorEvent MakeButtonEvent(EInputEventType Type, const IntVector2& ClientPosition, FKey Key = Keys::MouseButtonLeft)
+static FCursorEvent MakeButtonEvent(EInputEventType Type, const FIntVector2& ClientPosition, FKey Key = Keys::MouseButtonLeft)
 {
-    return FCursorEvent(Type, Key, ClientPosition, IntVector2(0, 0), FModifierKeyState(), Type == EInputEventType::MouseButtonDown);
+    return FCursorEvent(Type, Key, ClientPosition, FIntVector2(0, 0), FModifierKeyState(), Type == EInputEventType::MouseButtonDown);
 }
 
 static FCursorEvent MakeScrollEvent(float ScrollDelta, FModifierKeyState Modifiers = FModifierKeyState())
@@ -69,12 +69,12 @@ static FCursorEvent MakeScrollEvent(float ScrollDelta, FModifierKeyState Modifie
 }
 
 /** @brief Presses, drags through every waypoint and releases, which is one gesture end to end. */
-static void DragThrough(const TSharedPtr<FVisualElement>& Element, const IntVector2& From, const TArray<IntVector2>& Waypoints)
+static void DragThrough(const TSharedPtr<FVisualElement>& Element, const FIntVector2& From, const TArray<FIntVector2>& Waypoints)
 {
     Element->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, From));
 
-    IntVector2 Last = From;
-    for (const IntVector2& Waypoint : Waypoints)
+    FIntVector2 Last = From;
+    for (const FIntVector2& Waypoint : Waypoints)
     {
         Element->OnMouseMove(MakeMoveEvent(Waypoint));
         Last = Waypoint;
@@ -202,26 +202,26 @@ bool ButtonControl_Test()
     Button->PrepareDesiredSize();
 
     TEST_SECTION("The label and the button padding decide the width, and the button height the height");
-    const IntVector2 DesiredSize = Button->GetCachedDesiredSize();
+    const FIntVector2 DesiredSize = Button->GetCachedDesiredSize();
     TEST_EXPECT_EQ(DesiredSize.X, (10 * 8) + Style.Metrics.ButtonPadding.GetTotalHorizontal());
     TEST_EXPECT_EQ(DesiredSize.Y, Math::Max(16 + Style.Metrics.ButtonPadding.GetTotalVertical(), Style.Metrics.ButtonHeight));
 
     TEST_SECTION("Clicking it fires the delegate once");
-    Button->Arrange(FRectangle(IntVector2(10, 10), 120, 32));
+    Button->Arrange(FRectangle(FIntVector2(10, 10), 120, 32));
 
-    Button->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(50, 20)));
-    Button->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(50, 20)));
+    Button->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(50, 20)));
+    Button->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(50, 20)));
     TEST_EXPECT_EQ(ClickCount, 1);
 
     TEST_SECTION("Releasing away from it does not");
-    Button->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(50, 20)));
-    Button->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(900, 900)));
+    Button->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(50, 20)));
+    Button->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(900, 900)));
     TEST_EXPECT_EQ(ClickCount, 1);
 
     TEST_SECTION("A disabled button ignores the click entirely");
     Button->SetEnabled(false);
-    Button->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(50, 20)));
-    Button->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(50, 20)));
+    Button->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(50, 20)));
+    Button->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(50, 20)));
     TEST_EXPECT_EQ(ClickCount, 1);
     Button->SetEnabled(true);
 
@@ -233,7 +233,7 @@ bool ButtonControl_Test()
     TEST_EXPECT(NormalBox != nullptr);
     TEST_EXPECT(NormalBox->HasTint(Style.Colors.ButtonNormal));
 
-    Button->OnMouseEntered(MakeMoveEvent(IntVector2(50, 20)));
+    Button->OnMouseEntered(MakeMoveEvent(FIntVector2(50, 20)));
 
     FDrawCommandList HoveredCommands;
     DrawElement(Button, HoveredCommands);
@@ -320,7 +320,7 @@ bool ButtonControl_Test()
     Button->SetEnabled(true);
 
     TEST_SECTION("So does one the cursor is nowhere near");
-    Button->OnMouseLeft(MakeMoveEvent(IntVector2(900, 900)));
+    Button->OnMouseLeft(MakeMoveEvent(FIntVector2(900, 900)));
     TEST_EXPECT(!Button->GetCursor(Cursor));
 
     TEST_END();
@@ -339,7 +339,7 @@ bool GhostButtonControl_Test()
     Desc.bIsGhost = true;
 
     TSharedPtr<FButton> Ghost = FButton::Create(Desc);
-    LayoutElement(Ghost, FRectangle(IntVector2(10, 10), 120, 32));
+    LayoutElement(Ghost, FRectangle(FIntVector2(10, 10), 120, 32));
 
     TEST_SECTION("A ghost paints no fill at rest, so the strip behind it shows through");
     FDrawCommandList RestCommands;
@@ -349,7 +349,7 @@ bool GhostButtonControl_Test()
     TEST_EXPECT_EQ(CountCommands(RestCommands, EDrawCommandType::Text), 1);
 
     TEST_SECTION("Hovering it brings up the fill an ordinary button wears at rest");
-    Ghost->OnMouseEntered(MakeMoveEvent(IntVector2(50, 20)));
+    Ghost->OnMouseEntered(MakeMoveEvent(FIntVector2(50, 20)));
 
     FDrawCommandList HoveredCommands;
     DrawElement(Ghost, HoveredCommands);
@@ -359,14 +359,14 @@ bool GhostButtonControl_Test()
     TEST_EXPECT(HoveredFill->HasTint(Style.Colors.ButtonNormal));
 
     TEST_SECTION("Pressing it takes the next step up rather than sinking, since there is nothing below to sink to");
-    Ghost->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(50, 20)));
+    Ghost->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(50, 20)));
 
     FDrawCommandList PressedCommands;
     DrawElement(Ghost, PressedCommands);
     TEST_EXPECT(FindFirstBox(PressedCommands)->HasTint(Style.Colors.ButtonHovered));
 
-    Ghost->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(50, 20)));
-    Ghost->OnMouseLeft(MakeMoveEvent(IntVector2(900, 900)));
+    Ghost->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(50, 20)));
+    Ghost->OnMouseLeft(MakeMoveEvent(FIntVector2(900, 900)));
 
     TEST_SECTION("Holding it highlighted keeps that fill with the cursor away, which is how an open menu reads");
     Ghost->SetHighlighted(true);
@@ -387,7 +387,7 @@ bool GhostButtonControl_Test()
     PlainDesc.SetText("Filter").SetFont(CreateFont());
 
     TSharedPtr<FButton> Plain = FButton::Create(PlainDesc);
-    LayoutElement(Plain, FRectangle(IntVector2(10, 10), 120, 32));
+    LayoutElement(Plain, FRectangle(FIntVector2(10, 10), 120, 32));
 
     FDrawCommandList PlainCommands;
     DrawElement(Plain, PlainCommands);
@@ -412,7 +412,7 @@ bool CheckBoxControl_Test()
     });
 
     TSharedPtr<FCheckBox> CheckBox = FCheckBox::Create(Desc);
-    LayoutElement(CheckBox, FRectangle(IntVector2(0, 0), 200, 20));
+    LayoutElement(CheckBox, FRectangle(FIntVector2(0, 0), 200, 20));
 
     const int32 BoxSize = Desc.BoxSize;
 
@@ -423,15 +423,15 @@ bool CheckBoxControl_Test()
     TEST_SECTION("A two-state box flips between checked and unchecked");
     TEST_EXPECT(CheckBox->GetCheckState() == ECheckBoxState::Unchecked);
 
-    CheckBox->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(8, 10)));
-    CheckBox->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(8, 10)));
+    CheckBox->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(8, 10)));
+    CheckBox->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(8, 10)));
 
     TEST_EXPECT(CheckBox->IsChecked());
     TEST_EXPECT_EQ(ChangeCount, 1);
     TEST_EXPECT(LastState == ECheckBoxState::Checked);
 
-    CheckBox->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(8, 10)));
-    CheckBox->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(8, 10)));
+    CheckBox->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(8, 10)));
+    CheckBox->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(8, 10)));
 
     TEST_EXPECT(!CheckBox->IsChecked());
     TEST_EXPECT_EQ(ChangeCount, 2);
@@ -446,13 +446,13 @@ bool CheckBoxControl_Test()
     TriDesc.bIsTriState = true;
 
     TSharedPtr<FCheckBox> TriState = FCheckBox::Create(TriDesc);
-    LayoutElement(TriState, FRectangle(IntVector2(0, 0), 20, 20));
+    LayoutElement(TriState, FRectangle(FIntVector2(0, 0), 20, 20));
 
     const ECheckBoxState Expected[] = { ECheckBoxState::Checked, ECheckBoxState::Undetermined, ECheckBoxState::Unchecked };
     for (const ECheckBoxState State : Expected)
     {
-        TriState->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(8, 10)));
-        TriState->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(8, 10)));
+        TriState->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(8, 10)));
+        TriState->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(8, 10)));
         TEST_EXPECT(TriState->GetCheckState() == State);
     }
 
@@ -483,11 +483,11 @@ bool CheckBoxControl_Test()
     TEST_SECTION("The hand follows the whole row rather than the square, since the label toggles it too");
     ECursor Cursor = ECursor::Arrow;
 
-    CheckBox->OnMouseEntered(MakeMoveEvent(IntVector2(150, 10)));
+    CheckBox->OnMouseEntered(MakeMoveEvent(FIntVector2(150, 10)));
     TEST_EXPECT(CheckBox->GetCursor(Cursor));
     TEST_EXPECT(Cursor == ECursor::Hand);
 
-    CheckBox->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    CheckBox->OnMouseLeft(MakeMoveEvent(FIntVector2(400, 400)));
     TEST_EXPECT(!CheckBox->GetCursor(Cursor));
 
     TEST_END();
@@ -510,7 +510,7 @@ bool SliderControl_Test()
     TSharedPtr<FSlider> Slider = FSlider::Create(Desc);
 
     // A hundred pixels of travel between the two half-handle insets, so one pixel is one unit
-    LayoutElement(Slider, FRectangle(IntVector2(0, 0), 110, 20));
+    LayoutElement(Slider, FRectangle(FIntVector2(0, 0), 110, 20));
 
     TEST_SECTION("The track is inset by half a handle at each end, so the handle never leaves the element");
     const FRectangle Track = Slider->GetTrackBounds();
@@ -523,24 +523,24 @@ bool SliderControl_Test()
     Slider->SetValue(0.0f);
 
     TEST_SECTION("Clicking the track jumps the value there without waiting for a drag");
-    Slider->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(30, 10)));
+    Slider->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(30, 10)));
     TEST_EXPECT(Math::Abs(Slider->GetValue() - 25.0f) < 0.01f);
     TEST_EXPECT_EQ(Changes.Size(), 1);
 
     TEST_SECTION("Dragging reports every step and the release reports once");
-    Slider->OnMouseMove(MakeMoveEvent(IntVector2(55, 10)));
-    Slider->OnMouseMove(MakeMoveEvent(IntVector2(80, 10)));
-    Slider->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(80, 10)));
+    Slider->OnMouseMove(MakeMoveEvent(FIntVector2(55, 10)));
+    Slider->OnMouseMove(MakeMoveEvent(FIntVector2(80, 10)));
+    Slider->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(80, 10)));
 
     TEST_EXPECT_EQ(Changes.Size(), 3);
     TEST_EXPECT_EQ(Commits.Size(), 1);
     TEST_EXPECT(Math::Abs(Commits[0] - 75.0f) < 0.01f);
 
     TEST_SECTION("Dragging past either end clamps rather than running off");
-    DragThrough(Slider, IntVector2(50, 10), { IntVector2(-900, 10) });
+    DragThrough(Slider, FIntVector2(50, 10), { FIntVector2(-900, 10) });
     TEST_EXPECT_EQ(Slider->GetValue(), 0.0f);
 
-    DragThrough(Slider, IntVector2(50, 10), { IntVector2(900, 10) });
+    DragThrough(Slider, FIntVector2(50, 10), { FIntVector2(900, 10) });
     TEST_EXPECT_EQ(Slider->GetValue(), 100.0f);
 
     TEST_SECTION("A step size snaps the value to its multiples");
@@ -550,7 +550,7 @@ bool SliderControl_Test()
     SteppedDesc.HandleSize = 10;
 
     TSharedPtr<FSlider> Stepped = FSlider::Create(SteppedDesc);
-    LayoutElement(Stepped, FRectangle(IntVector2(0, 0), 110, 20));
+    LayoutElement(Stepped, FRectangle(FIntVector2(0, 0), 110, 20));
 
     Stepped->SetValue(30.0f);
     TEST_EXPECT_EQ(Stepped->GetValue(), 25.0f);
@@ -578,25 +578,25 @@ bool SliderControl_Test()
     VerticalDesc.HandleSize  = 10;
 
     TSharedPtr<FSlider> Vertical = FSlider::Create(VerticalDesc);
-    LayoutElement(Vertical, FRectangle(IntVector2(0, 0), 20, 110));
+    LayoutElement(Vertical, FRectangle(FIntVector2(0, 0), 20, 110));
 
-    Vertical->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(10, 105)));
+    Vertical->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(10, 105)));
     TEST_EXPECT(Vertical->GetValue() < 1.0f);
 
-    Vertical->OnMouseMove(MakeMoveEvent(IntVector2(10, 5)));
+    Vertical->OnMouseMove(MakeMoveEvent(FIntVector2(10, 5)));
     TEST_EXPECT(Vertical->GetValue() > 99.0f);
 
-    Vertical->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(10, 5)));
+    Vertical->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(10, 5)));
 
     TEST_SECTION("A disabled slider does not move");
     Slider->SetValue(50.0f);
     Slider->SetEnabled(false);
-    Slider->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(10, 10)));
+    Slider->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(10, 10)));
     TEST_EXPECT_EQ(Slider->GetValue(), 50.0f);
 
     TEST_SECTION("The handle is dragged rather than pressed, so hovering it offers no shape of its own");
     Slider->SetEnabled(true);
-    Slider->OnMouseEntered(MakeMoveEvent(IntVector2(50, 10)));
+    Slider->OnMouseEntered(MakeMoveEvent(FIntVector2(50, 10)));
 
     ECursor Cursor = ECursor::Arrow;
     TEST_EXPECT(Slider->IsHovered());
@@ -615,7 +615,7 @@ bool SliderControl_Test()
     Labelled->PrepareDesiredSize();
     TEST_EXPECT_EQ(Labelled->GetCachedDesiredSize().Y, 10 + 2 + ValueFont->GetCapHeight() + ValueFont->GetDescent());
 
-    LayoutElement(Labelled, FRectangle(IntVector2(0, 0), 110, Labelled->GetCachedDesiredSize().Y));
+    LayoutElement(Labelled, FRectangle(FIntVector2(0, 0), 110, Labelled->GetCachedDesiredSize().Y));
 
     FDrawCommandList LabelledCommands;
     DrawElement(Labelled, LabelledCommands);
@@ -655,14 +655,14 @@ bool SpinBoxControl_Test()
     Desc.OnValueCommitted = FOnSpinBoxValueCommitted::CreateLambda([&Commits](float FinalValue) { Commits.Add(FinalValue); });
 
     TSharedPtr<FSpinBox> SpinBox = FSpinBox::Create(Desc);
-    LayoutElement(SpinBox, FRectangle(IntVector2(0, 0), 120, 24));
+    LayoutElement(SpinBox, FRectangle(FIntVector2(0, 0), 120, 24));
 
     TEST_SECTION("The value is written at the requested precision behind its prefix");
     TEST_EXPECT(SpinBox->GetFormattedValue() == FString("0.0"));
 
     TEST_SECTION("A press that never moves opens the text box rather than scrubbing");
-    SpinBox->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(60, 12)));
-    SpinBox->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(60, 12)));
+    SpinBox->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(60, 12)));
+    SpinBox->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(60, 12)));
 
     TEST_EXPECT(SpinBox->IsTyping());
     TEST_EXPECT_EQ(Changes.Size(), 0);
@@ -674,26 +674,26 @@ bool SpinBoxControl_Test()
     Commits.Clear();
 
     TEST_SECTION("A press that moves past the threshold scrubs and never opens the box");
-    SpinBox->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(60, 12)));
-    SpinBox->OnMouseMove(MakeMoveEvent(IntVector2(61, 12)));
+    SpinBox->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(60, 12)));
+    SpinBox->OnMouseMove(MakeMoveEvent(FIntVector2(61, 12)));
     TEST_EXPECT_EQ(Changes.Size(), 0);
 
-    SpinBox->OnMouseMove(MakeMoveEvent(IntVector2(80, 12)));
+    SpinBox->OnMouseMove(MakeMoveEvent(FIntVector2(80, 12)));
     TEST_EXPECT_EQ(Changes.Size(), 1);
     TEST_EXPECT(Math::Abs(SpinBox->GetValue() - 2.0f) < 0.01f);
 
-    SpinBox->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(80, 12)));
+    SpinBox->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(80, 12)));
     TEST_EXPECT(!SpinBox->IsTyping());
     TEST_EXPECT_EQ(Commits.Size(), 1);
 
     TEST_SECTION("Scrubbing past the range clamps rather than running off");
-    SpinBox->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(60, 12)));
-    SpinBox->OnMouseMove(MakeMoveEvent(IntVector2(6000, 12)));
+    SpinBox->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(60, 12)));
+    SpinBox->OnMouseMove(MakeMoveEvent(FIntVector2(6000, 12)));
     TEST_EXPECT_EQ(SpinBox->GetValue(), 10.0f);
 
-    SpinBox->OnMouseMove(MakeMoveEvent(IntVector2(-6000, 12)));
+    SpinBox->OnMouseMove(MakeMoveEvent(FIntVector2(-6000, 12)));
     TEST_EXPECT_EQ(SpinBox->GetValue(), -10.0f);
-    SpinBox->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(-6000, 12)));
+    SpinBox->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(-6000, 12)));
 
     TEST_SECTION("Typing mode takes focus, and losing it commits on the next arrange");
     SpinBox->SetValue(1.0f);
@@ -702,7 +702,7 @@ bool SpinBoxControl_Test()
     TEST_EXPECT(SpinBox->GetFocusTarget() != StaticCastSharedPtr<FVisualElement>(SpinBox));
 
     Harness.GetApplication().SetFocusElement(nullptr);
-    LayoutElement(SpinBox, FRectangle(IntVector2(0, 0), 120, 24));
+    LayoutElement(SpinBox, FRectangle(FIntVector2(0, 0), 120, 24));
     TEST_EXPECT(!SpinBox->IsTyping());
 
     TEST_SECTION("A drag cursor is offered while scrubbing is available and withheld while typing");
@@ -731,7 +731,7 @@ bool ScrollBarControl_Test()
     Desc.OnOffsetChanged = FOnScrollBarOffsetChanged::CreateLambda([&Offsets](int32 NewOffset) { Offsets.Add(NewOffset); });
 
     TSharedPtr<FScrollBar> ScrollBar = FScrollBar::Create(Desc);
-    LayoutElement(ScrollBar, FRectangle(IntVector2(0, 0), 12, 200));
+    LayoutElement(ScrollBar, FRectangle(FIntVector2(0, 0), 12, 200));
 
     TEST_SECTION("A bar with nothing to scroll has no travel and draws only its track");
     TEST_EXPECT(!ScrollBar->IsScrollable());
@@ -746,7 +746,7 @@ bool ScrollBarControl_Test()
     PaddedDesc.Orientation = EOrientation::Vertical;
 
     TSharedPtr<FScrollBar> Padded = FScrollBar::Create(PaddedDesc);
-    const FRectangle       PaddedBounds(IntVector2(20, 0), 12, 200);
+    const FRectangle       PaddedBounds(FIntVector2(20, 0), 12, 200);
     LayoutElement(Padded, PaddedBounds);
     Padded->SetScrollState(800, 200, 0);
 
@@ -777,18 +777,18 @@ bool ScrollBarControl_Test()
     ScrollBar->SetScrollState(800, 200, 0);
     Offsets.Clear();
 
-    ScrollBar->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(6, 5)));
-    ScrollBar->OnMouseMove(MakeMoveEvent(IntVector2(6, 5)));
+    ScrollBar->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(6, 5)));
+    ScrollBar->OnMouseMove(MakeMoveEvent(FIntVector2(6, 5)));
 
     TEST_EXPECT_EQ(ScrollBar->GetOffset(), 0);
     TEST_EXPECT_EQ(Offsets.Size(), 0);
 
     TEST_SECTION("Dragging it reports the offset it lands on, and the far end is reachable");
-    ScrollBar->OnMouseMove(MakeMoveEvent(IntVector2(6, 80)));
+    ScrollBar->OnMouseMove(MakeMoveEvent(FIntVector2(6, 80)));
     TEST_EXPECT_EQ(ScrollBar->GetOffset(), 300);
 
-    ScrollBar->OnMouseMove(MakeMoveEvent(IntVector2(6, 900)));
-    ScrollBar->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(6, 900)));
+    ScrollBar->OnMouseMove(MakeMoveEvent(FIntVector2(6, 900)));
+    ScrollBar->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(6, 900)));
 
     TEST_EXPECT_EQ(ScrollBar->GetOffset(), 600);
     TEST_EXPECT_EQ(Offsets.Size(), 2);
@@ -797,11 +797,11 @@ bool ScrollBarControl_Test()
     ScrollBar->SetScrollState(800, 200, 0);
     Offsets.Clear();
 
-    ScrollBar->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(6, 100)));
+    ScrollBar->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(6, 100)));
     TEST_EXPECT_EQ(Offsets.Size(), 1);
     TEST_EXPECT_EQ(ScrollBar->GetOffset(), 300);
 
-    ScrollBar->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(6, 100)));
+    ScrollBar->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(6, 100)));
 
     TEST_SECTION("An offset pushed in from the host is clamped and fires nothing");
     Offsets.Clear();
@@ -815,14 +815,14 @@ bool ScrollBarControl_Test()
     HorizontalDesc.TrackPadding = FMargin();
 
     TSharedPtr<FScrollBar> Horizontal = FScrollBar::Create(HorizontalDesc);
-    LayoutElement(Horizontal, FRectangle(IntVector2(0, 0), 200, 12));
+    LayoutElement(Horizontal, FRectangle(FIntVector2(0, 0), 200, 12));
 
     Horizontal->SetScrollState(400, 200, 200);
     TEST_EXPECT_EQ(Horizontal->GetThumbBounds().Width, 100);
     TEST_EXPECT_EQ(Horizontal->GetThumbBounds().GetRight(), 200);
 
     TEST_SECTION("The thumb is dragged rather than pressed, so hovering the bar offers no shape of its own");
-    ScrollBar->OnMouseEntered(MakeMoveEvent(IntVector2(6, 20)));
+    ScrollBar->OnMouseEntered(MakeMoveEvent(FIntVector2(6, 20)));
 
     ECursor Cursor = ECursor::Arrow;
     TEST_EXPECT(ScrollBar->IsHovered());
@@ -850,14 +850,14 @@ bool ScrollBoxScrollBar_Test()
 
     TSharedPtr<FScrollBox> ShortBox = FScrollBox::Create();
     ShortBox->SetContent(Short);
-    LayoutElement(ShortBox, FRectangle(IntVector2(0, 0), 200, 300));
+    LayoutElement(ShortBox, FRectangle(FIntVector2(0, 0), 200, 300));
 
     TEST_EXPECT(!ShortBox->IsScrollBarVisible());
     TEST_EXPECT_EQ(Short->GetContentRectangle().Width, 200);
 
     TEST_SECTION("Content taller than the view brings the bar in beside it");
-    LayoutElement(ScrollBox, FRectangle(IntVector2(0, 0), 200, 100));
-    LayoutElement(ScrollBox, FRectangle(IntVector2(0, 0), 200, 100));
+    LayoutElement(ScrollBox, FRectangle(FIntVector2(0, 0), 200, 100));
+    LayoutElement(ScrollBox, FRectangle(FIntVector2(0, 0), 200, 100));
 
     TEST_EXPECT(ScrollBox->IsScrollBarVisible());
 
@@ -868,7 +868,7 @@ bool ScrollBoxScrollBar_Test()
 
     TEST_SECTION("A gutter holds space between the content and a visible bar, and is ignored when the bar is hidden");
     ScrollBox->SetScrollBarGutter(6);
-    LayoutElement(ScrollBox, FRectangle(IntVector2(0, 0), 200, 100));
+    LayoutElement(ScrollBox, FRectangle(FIntVector2(0, 0), 200, 100));
     TEST_EXPECT_EQ(Tall->GetContentRectangle().Width, 200 - Bar->GetCachedDesiredSize().X - 6);
 
     TEST_SECTION("The gutter is that gap rather than a wider bar, the bar keeping its width at the trailing edge");
@@ -877,33 +877,33 @@ bool ScrollBoxScrollBar_Test()
     TEST_EXPECT_EQ(Bar->GetContentRectangle().Position.X - Tall->GetContentRectangle().GetRight(), 6);
 
     ScrollBox->SetScrollBarVisibility(EScrollBarVisibility::Never);
-    LayoutElement(ScrollBox, FRectangle(IntVector2(0, 0), 200, 100));
+    LayoutElement(ScrollBox, FRectangle(FIntVector2(0, 0), 200, 100));
     TEST_EXPECT_EQ(Tall->GetContentRectangle().Width, 200);
 
     ScrollBox->SetScrollBarVisibility(EScrollBarVisibility::Auto);
     ScrollBox->SetScrollBarGutter(0);
-    LayoutElement(ScrollBox, FRectangle(IntVector2(0, 0), 200, 100));
+    LayoutElement(ScrollBox, FRectangle(FIntVector2(0, 0), 200, 100));
 
     TEST_SECTION("The bar knows what the box knows, without either being told twice");
     TEST_EXPECT_EQ(Bar->GetMaxOffset(), ScrollBox->GetMaxScrollOffset());
     TEST_EXPECT_EQ(Bar->GetOffset(), ScrollBox->GetScrollOffset());
 
     TEST_SECTION("Dragging the bar scrolls the box");
-    DragThrough(Bar, Bar->GetThumbBounds().GetCenter(), { IntVector2(Bar->GetThumbBounds().GetCenter().X, 90) });
+    DragThrough(Bar, Bar->GetThumbBounds().GetCenter(), { FIntVector2(Bar->GetThumbBounds().GetCenter().X, 90) });
 
     TEST_EXPECT(ScrollBox->GetScrollOffset() > 0);
     TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), Bar->GetOffset());
 
     TEST_SECTION("Always keeps the strip reserved even when everything fits");
     ShortBox->SetScrollBarVisibility(EScrollBarVisibility::Always);
-    LayoutElement(ShortBox, FRectangle(IntVector2(0, 0), 200, 300));
+    LayoutElement(ShortBox, FRectangle(FIntVector2(0, 0), 200, 300));
 
     TEST_EXPECT(ShortBox->IsScrollBarVisible());
     TEST_EXPECT(Short->GetContentRectangle().Width < 200);
 
     TEST_SECTION("Never leaves the wheel as the only way to scroll");
     ScrollBox->SetScrollBarVisibility(EScrollBarVisibility::Never);
-    LayoutElement(ScrollBox, FRectangle(IntVector2(0, 0), 200, 100));
+    LayoutElement(ScrollBox, FRectangle(FIntVector2(0, 0), 200, 100));
 
     TEST_EXPECT(!ScrollBox->IsScrollBarVisible());
     TEST_EXPECT_EQ(Tall->GetContentRectangle().Width, 200);
@@ -918,7 +918,7 @@ bool ScrollBarAutoHide_Test()
     FUIStyle::ResetDefault();
 
     const FUIScrollBarStyle& BarStyle = FUIStyle::GetDefault().ScrollBar;
-    const FRectangle         Bounds   = FRectangle(IntVector2(0, 0), 200, 100);
+    const FRectangle         Bounds   = FRectangle(FIntVector2(0, 0), 200, 100);
 
     FTextBlock::FDesc TallDesc;
     TallDesc.Text = "Line";
@@ -948,7 +948,7 @@ bool ScrollBarAutoHide_Test()
     TEST_EXPECT(ClearCommands.GetCommands().IsEmpty());
 
     TEST_SECTION("The cursor arriving anywhere in the view brings it in, and the style's duration has it all the way in");
-    Box->OnMouseEntered(MakeMoveEvent(IntVector2(20, 20)));
+    Box->OnMouseEntered(MakeMoveEvent(FIntVector2(20, 20)));
     TEST_EXPECT(Bar->IsRevealed());
 
     SpinForSeconds(static_cast<double>(BarStyle.FadeInDuration) + 0.05);
@@ -962,7 +962,7 @@ bool ScrollBarAutoHide_Test()
     TEST_EXPECT(!ShownCommands.GetCommands().IsEmpty());
 
     TEST_SECTION("The cursor leaving sets it fading rather than snapping it away");
-    Box->OnMouseLeft(MakeMoveEvent(IntVector2(-40, -40)));
+    Box->OnMouseLeft(MakeMoveEvent(FIntVector2(-40, -40)));
     TEST_EXPECT(!Bar->IsRevealed());
 
     SpinForSeconds(0.05);
@@ -999,7 +999,7 @@ bool OverlayControl_Test()
     Overlay->AddSlot(Base);
     Overlay->AddSlot(Badge).SetHorizontalAlignment(EHorizontalAlignment::Right).SetVerticalAlignment(EVerticalAlignment::Top);
 
-    LayoutElement(Overlay, FRectangle(IntVector2(0, 0), 200, 100));
+    LayoutElement(Overlay, FRectangle(FIntVector2(0, 0), 200, 100));
 
     TEST_SECTION("The overlay is as big as its largest layer rather than their sum");
     TEST_EXPECT_EQ(Overlay->GetCachedDesiredSize().X, 80);
@@ -1043,13 +1043,13 @@ bool OverlayControl_Test()
 
     TEST_SECTION("A click lands on the topmost layer under it");
     FElementPath Path;
-    Overlay->HitTest(IntVector2(196, 4), Path);
+    Overlay->HitTest(FIntVector2(196, 4), Path);
 
     TEST_EXPECT(Path.GetElements().Size() >= 2);
     TEST_EXPECT(Path.GetElements().Last() == StaticCastSharedPtr<FVisualElement>(Badge));
 
     FElementPath BasePath;
-    Overlay->HitTest(IntVector2(20, 60), BasePath);
+    Overlay->HitTest(FIntVector2(20, 60), BasePath);
     TEST_EXPECT(BasePath.GetElements().Last() == StaticCastSharedPtr<FVisualElement>(Base));
 
     TEST_SECTION("Removing a layer takes it out of measurement and hit testing alike");
@@ -1065,8 +1065,8 @@ bool SpacerSeparatorControl_Test()
     TEST_BEGIN();
 
     TEST_SECTION("A spacer asks for its size and draws nothing");
-    TSharedPtr<FSpacer> Spacer = FSpacer::Create(IntVector2(24, 8));
-    LayoutElement(Spacer, FRectangle(IntVector2(0, 0), 24, 8));
+    TSharedPtr<FSpacer> Spacer = FSpacer::Create(FIntVector2(24, 8));
+    LayoutElement(Spacer, FRectangle(FIntVector2(0, 0), 24, 8));
 
     TEST_EXPECT_EQ(Spacer->GetCachedDesiredSize().X, 24);
     TEST_EXPECT_EQ(Spacer->GetCachedDesiredSize().Y, 8);
@@ -1081,7 +1081,7 @@ bool SpacerSeparatorControl_Test()
 
     TEST_SECTION("A horizontal rule is thick on one axis and asks for nothing on the other");
     TSharedPtr<FSeparator> Horizontal = FSeparator::CreateHorizontal();
-    LayoutElement(Horizontal, FRectangle(IntVector2(0, 0), 200, 20));
+    LayoutElement(Horizontal, FRectangle(FIntVector2(0, 0), 200, 20));
 
     TEST_EXPECT_EQ(Horizontal->GetCachedDesiredSize().X, 0);
     TEST_EXPECT_EQ(Horizontal->GetCachedDesiredSize().Y, FUIStyle::GetDefault().Metrics.SeparatorThickness);
@@ -1098,7 +1098,7 @@ bool SpacerSeparatorControl_Test()
 
     TEST_SECTION("A vertical rule is the same thing turned ninety degrees");
     TSharedPtr<FSeparator> Vertical = FSeparator::CreateVertical();
-    LayoutElement(Vertical, FRectangle(IntVector2(0, 0), 20, 200));
+    LayoutElement(Vertical, FRectangle(FIntVector2(0, 0), 20, 200));
 
     TEST_EXPECT_EQ(Vertical->GetCachedDesiredSize().Y, 0);
 
@@ -1115,7 +1115,7 @@ bool SpacerSeparatorControl_Test()
     InsetDesc.Padding = FMargin(10, 0, 10, 0);
 
     TSharedPtr<FSeparator> Inset = FSeparator::Create(InsetDesc);
-    LayoutElement(Inset, FRectangle(IntVector2(0, 0), 200, 20));
+    LayoutElement(Inset, FRectangle(FIntVector2(0, 0), 200, 20));
 
     FDrawCommandList InsetCommands;
     DrawElement(Inset, InsetCommands);
@@ -1155,10 +1155,10 @@ bool ExpanderControl_Test()
     Desc.OnStateChanged = FOnExpanderStateChanged::CreateLambda([&StateChanges](bool bNewState) { StateChanges.Add(bNewState); });
 
     TSharedPtr<FExpander> Expander = FExpander::Create(Desc);
-    LayoutElement(Expander, FRectangle(IntVector2(0, 0), 200, 100));
+    LayoutElement(Expander, FRectangle(FIntVector2(0, 0), 200, 100));
 
     TEST_SECTION("A closed section asks only for the height of its header");
-    const IntVector2 ClosedSize = Expander->GetCachedDesiredSize();
+    const FIntVector2 ClosedSize = Expander->GetCachedDesiredSize();
     TEST_EXPECT_EQ(ClosedSize.Y, HeaderHeight);
 
     TEST_SECTION("The content is measured even while the section is closed, so opening it needs no further pass");
@@ -1166,7 +1166,7 @@ bool ExpanderControl_Test()
     TEST_EXPECT_EQ(Content->GetCachedDesiredSize().Y, 16);
 
     TEST_SECTION("Clicking the header opens the section and reports the state it moved to, once");
-    Expander->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(20, 10)));
+    Expander->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(20, 10)));
 
     TEST_EXPECT(Expander->IsExpanded());
     TEST_EXPECT_EQ(StateChanges.Size(), 1);
@@ -1175,19 +1175,19 @@ bool ExpanderControl_Test()
     TEST_SECTION("An open one asks for the header, the content and the content padding together");
     Expander->PrepareDesiredSize();
 
-    const IntVector2 OpenSize = Expander->GetCachedDesiredSize();
+    const FIntVector2 OpenSize = Expander->GetCachedDesiredSize();
     TEST_EXPECT_EQ(OpenSize.Y, HeaderHeight + Content->GetCachedDesiredSize().Y + ContentPadding.GetTotalVertical());
     TEST_EXPECT_EQ(OpenSize.X, Math::Max(ClosedSize.X, Content->GetCachedDesiredSize().X + ContentPadding.GetTotalHorizontal()));
 
     TEST_SECTION("Clicking it again closes the section");
-    Expander->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(20, 10)));
+    Expander->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(20, 10)));
 
     TEST_EXPECT(!Expander->IsExpanded());
     TEST_EXPECT_EQ(StateChanges.Size(), 2);
     TEST_EXPECT(!StateChanges[1]);
 
     TEST_SECTION("A press below the header leaves the section as it was");
-    Expander->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(20, 60)));
+    Expander->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(20, 60)));
 
     TEST_EXPECT(!Expander->IsExpanded());
     TEST_EXPECT_EQ(StateChanges.Size(), 2);
@@ -1220,18 +1220,18 @@ bool ExpanderControl_Test()
     ECursor Cursor = ECursor::Arrow;
     TEST_EXPECT(!Expander->GetCursor(Cursor));
 
-    Expander->OnMouseEntered(MakeMoveEvent(IntVector2(20, 10)));
+    Expander->OnMouseEntered(MakeMoveEvent(FIntVector2(20, 10)));
     TEST_EXPECT(Expander->GetCursor(Cursor));
     TEST_EXPECT(Cursor == ECursor::Hand);
 
     TEST_SECTION("Crossing between the header and the body inside the element is followed either way");
-    Expander->OnMouseMove(MakeMoveEvent(IntVector2(20, 60)));
+    Expander->OnMouseMove(MakeMoveEvent(FIntVector2(20, 60)));
     TEST_EXPECT(!Expander->GetCursor(Cursor));
 
-    Expander->OnMouseMove(MakeMoveEvent(IntVector2(20, 10)));
+    Expander->OnMouseMove(MakeMoveEvent(FIntVector2(20, 10)));
     TEST_EXPECT(Expander->GetCursor(Cursor));
 
-    Expander->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    Expander->OnMouseLeft(MakeMoveEvent(FIntVector2(400, 400)));
     TEST_EXPECT(!Expander->GetCursor(Cursor));
 
     TEST_END();
@@ -1254,7 +1254,7 @@ bool ExpanderAnimation_Test()
     Desc.Style.ExpandDuration = 1000.0f;
 
     TSharedPtr<FExpander> Expander = FExpander::Create(Desc);
-    LayoutElement(Expander, FRectangle(IntVector2(0, 0), 200, 200));
+    LayoutElement(Expander, FRectangle(FIntVector2(0, 0), 200, 200));
 
     const int32 ClosedHeight = Expander->GetCachedDesiredSize().Y;
     TEST_EXPECT_EQ(ClosedHeight, 20);
@@ -1314,7 +1314,7 @@ bool SearchBoxControl_Test()
 {
     TEST_BEGIN();
 
-    const FRectangle Bounds(IntVector2(0, 0), 200, 24);
+    const FRectangle Bounds(FIntVector2(0, 0), 200, 24);
 
     TArray<FString> Changes;
 
@@ -1428,7 +1428,7 @@ bool SearchBoxControl_Test()
 
     TEST_SECTION("Losing both puts the normal stroke back");
     SearchBox->GetEditor()->OnFocusLost();
-    SearchBox->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    SearchBox->OnMouseLeft(MakeMoveEvent(FIntVector2(400, 400)));
 
     FDrawCommandList IdleList;
     DrawElement(SearchBox, IdleList);
@@ -1436,7 +1436,7 @@ bool SearchBoxControl_Test()
 
     TEST_SECTION("An empty box has no clear button, so its right edge offers no shape");
     ECursor Cursor = ECursor::Arrow;
-    SearchBox->OnMouseMove(MakeMoveEvent(IntVector2(Bounds.GetRight() - Desc.Padding.Right - 4, 12)));
+    SearchBox->OnMouseMove(MakeMoveEvent(FIntVector2(Bounds.GetRight() - Desc.Padding.Right - 4, 12)));
     TEST_EXPECT(!SearchBox->GetCursor(Cursor));
 
     TEST_SECTION("Once there is text to clear, the cross carries the hand and the line of text does not");
@@ -1458,7 +1458,7 @@ bool SearchBoxClearStyle_Test()
 
     FUIStyle::ResetDefault();
 
-    const FRectangle Bounds(IntVector2(0, 0), 200, 24);
+    const FRectangle Bounds(FIntVector2(0, 0), 200, 24);
 
     FInputFrameStyle FrameStyle;
     FrameStyle.ClearHovered      = FFloatColor(0.90f, 0.10f, 0.10f, 1.0f);
@@ -1499,7 +1499,7 @@ bool SearchBoxClearStyle_Test()
     TEST_EXPECT(FInputFrameStyle().ClearCornerRadius != FrameStyle.ClearCornerRadius);
 
     TEST_SECTION("Leaving the field takes the pill away again");
-    SearchBox->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    SearchBox->OnMouseLeft(MakeMoveEvent(FIntVector2(400, 400)));
 
     FDrawCommandList LeftList;
     DrawElement(SearchBox, LeftList);
@@ -1512,7 +1512,7 @@ bool NumericEntryControl_Test()
 {
     TEST_BEGIN();
 
-    const FRectangle Bounds(IntVector2(0, 0), 120, 24);
+    const FRectangle Bounds(FIntVector2(0, 0), 120, 24);
     const int32      Travel = FNumericEntryFloat::ScrubThreshold + 7;
 
     TArray<float> FloatChanges;
@@ -1540,7 +1540,7 @@ bool NumericEntryControl_Test()
     TEST_EXPECT_EQ(FloatChanges.Size(), 0);
 
     TEST_SECTION("A drag past the scrub threshold moves the value by the travel times the step, and reports it");
-    DragThrough(FloatEntry, IntVector2(40, 12), { IntVector2(40 + Travel, 12) });
+    DragThrough(FloatEntry, FIntVector2(40, 12), { FIntVector2(40 + Travel, 12) });
 
     const float ScrubbedValue = static_cast<float>(Travel) * FloatDesc.Step;
     TEST_EXPECT(Math::Abs(FloatEntry->GetValue() - ScrubbedValue) < 0.001f);
@@ -1549,7 +1549,7 @@ bool NumericEntryControl_Test()
     TEST_EXPECT(!FloatEntry->IsScrubbing());
 
     TEST_SECTION("A drag shorter than the threshold is a click rather than a scrub, so the value stands still");
-    DragThrough(FloatEntry, IntVector2(40, 12), { IntVector2(40 + FNumericEntryFloat::ScrubThreshold - 1, 12) });
+    DragThrough(FloatEntry, FIntVector2(40, 12), { FIntVector2(40 + FNumericEntryFloat::ScrubThreshold - 1, 12) });
 
     TEST_EXPECT(Math::Abs(FloatEntry->GetValue() - ScrubbedValue) < 0.001f);
     TEST_EXPECT_EQ(FloatChanges.Size(), 1);
@@ -1604,7 +1604,7 @@ bool NumericEntryControl_Test()
     IntEntry->SetValue(0);
     TEST_EXPECT_EQ(IntChanges.Size(), 0);
 
-    DragThrough(IntEntry, IntVector2(40, 12), { IntVector2(40 + Travel, 12) });
+    DragThrough(IntEntry, FIntVector2(40, 12), { FIntVector2(40 + Travel, 12) });
 
     TEST_EXPECT_EQ(IntEntry->GetValue(), Travel * IntDesc.Step);
     TEST_EXPECT_EQ(IntChanges.Size(), 1);
@@ -1719,7 +1719,7 @@ bool NumericEntryControl_Test()
 
     TEST_SECTION("A fill track maps the cursor across the range instead of stepping by pixels");
     Track->SetValue(0.0f);
-    DragThrough(Track, IntVector2(0, 12), { IntVector2(Bounds.Width, 12) });
+    DragThrough(Track, FIntVector2(0, 12), { FIntVector2(Bounds.Width, 12) });
     TEST_EXPECT(Math::Abs(Track->GetValue() - 1.0f) < 0.01f);
 
     TEST_SECTION("A read-only field neither scrubs nor opens its line, and offers no drag cursor");
@@ -1736,7 +1736,7 @@ bool NumericEntryControl_Test()
     TSharedPtr<FNumericEntryFloat> ReadOnly = FNumericEntryFloat::Create(ReadOnlyDesc);
     LayoutElement(ReadOnly, Bounds);
 
-    DragThrough(ReadOnly, IntVector2(40, 12), { IntVector2(40 + Travel, 12) });
+    DragThrough(ReadOnly, FIntVector2(40, 12), { FIntVector2(40 + Travel, 12) });
 
     TEST_EXPECT_EQ(ReadOnly->GetValue(), 0.0f);
     TEST_EXPECT_EQ(ReadOnlyChanges.Size(), 0);
@@ -1758,7 +1758,7 @@ bool ProgressBarControl_Test()
 
     constexpr int32 PreferredHeight = 20;
 
-    const FRectangle Bounds(IntVector2(0, 0), 200, PreferredHeight);
+    const FRectangle Bounds(FIntVector2(0, 0), 200, PreferredHeight);
 
     FProgressBar::FDesc Desc;
     Desc.Percent         = 0.25f;
@@ -1842,7 +1842,7 @@ bool HistogramControl_Test()
     constexpr int32 Capacity = 4;
 
     const FUIStyle&  Style  = FUIStyle::GetDefault();
-    const FRectangle Bounds(IntVector2(0, 0), 200, 64);
+    const FRectangle Bounds(FIntVector2(0, 0), 200, 64);
 
     FHistogram::FDesc Desc;
     Desc.Capacity        = Capacity;
@@ -1963,44 +1963,44 @@ bool HistogramControl_Test()
     TEST_EXPECT_EQ(CountCommands(CollapsedCommands, EDrawCommandType::Box), 1);
 
     TEST_SECTION("Moving over a bar names it, and leaving the strip puts that back");
-    Histogram->OnMouseMove(MakeMoveEvent(IntVector2(75, 30)));
+    Histogram->OnMouseMove(MakeMoveEvent(FIntVector2(75, 30)));
     TEST_EXPECT_EQ(Histogram->GetHoveredSample(), 1);
 
-    Histogram->OnMouseMove(MakeMoveEvent(IntVector2(900, 30)));
+    Histogram->OnMouseMove(MakeMoveEvent(FIntVector2(900, 30)));
     TEST_EXPECT_EQ(Histogram->GetHoveredSample(), FHistogram::InvalidSampleIndex);
 
-    Histogram->OnMouseMove(MakeMoveEvent(IntVector2(75, 30)));
-    Histogram->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(75, 30)));
-    Histogram->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(75, 30)));
+    Histogram->OnMouseMove(MakeMoveEvent(FIntVector2(75, 30)));
+    Histogram->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(75, 30)));
+    Histogram->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(75, 30)));
     TEST_EXPECT_EQ(Histogram->GetSelectedSample(), 1);
     TEST_EXPECT(!Histogram->IsScrubbing());
 
-    Histogram->OnMouseMove(MakeMoveEvent(IntVector2(75, 30)));
-    Histogram->OnMouseLeft(MakeMoveEvent(IntVector2(75, 30)));
+    Histogram->OnMouseMove(MakeMoveEvent(FIntVector2(75, 30)));
+    Histogram->OnMouseLeft(MakeMoveEvent(FIntVector2(75, 30)));
     TEST_EXPECT_EQ(Histogram->GetHoveredSample(), FHistogram::InvalidSampleIndex);
     TEST_EXPECT_EQ(Histogram->GetSelectedSample(), 1);
 
     TEST_SECTION("Holding the button down walks the selection along with the cursor rather than waiting for a second click");
-    Histogram->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(25, 30)));
+    Histogram->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(25, 30)));
     TEST_EXPECT(Histogram->IsScrubbing());
     TEST_EXPECT_EQ(Histogram->GetSelectedSample(), 0);
 
-    Histogram->OnMouseMove(MakeMoveEvent(IntVector2(120, 30)));
+    Histogram->OnMouseMove(MakeMoveEvent(FIntVector2(120, 30)));
     TEST_EXPECT_EQ(Histogram->GetSelectedSample(), 2);
 
     TEST_SECTION("A drag run past either end holds the nearest bar instead of letting the selection go");
-    Histogram->OnMouseMove(MakeMoveEvent(IntVector2(900, 30)));
+    Histogram->OnMouseMove(MakeMoveEvent(FIntVector2(900, 30)));
     TEST_EXPECT_EQ(Histogram->GetHoveredSample(), FHistogram::InvalidSampleIndex);
     TEST_EXPECT_EQ(Histogram->GetSelectedSample(), 2);
 
-    Histogram->OnMouseMove(MakeMoveEvent(IntVector2(-50, 30)));
+    Histogram->OnMouseMove(MakeMoveEvent(FIntVector2(-50, 30)));
     TEST_EXPECT_EQ(Histogram->GetSelectedSample(), 0);
 
     TEST_SECTION("Once the button is let go the strip goes back to only naming what the cursor is over");
-    Histogram->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(-50, 30)));
+    Histogram->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(-50, 30)));
     TEST_EXPECT(!Histogram->IsScrubbing());
 
-    Histogram->OnMouseMove(MakeMoveEvent(IntVector2(120, 30)));
+    Histogram->OnMouseMove(MakeMoveEvent(FIntVector2(120, 30)));
     TEST_EXPECT_EQ(Histogram->GetHoveredSample(), 2);
     TEST_EXPECT_EQ(Histogram->GetSelectedSample(), 0);
 
@@ -2017,7 +2017,7 @@ bool ProfilerTimelineControl_Test()
     constexpr int32 CpuChildRowY = 54;
     constexpr int32 GpuRowY      = 76;
 
-    const FRectangle Bounds(IntVector2(0, 0), 400, 120);
+    const FRectangle Bounds(FIntVector2(0, 0), 400, 120);
 
     int32 SelectedLane = -2;
     int32 SelectedBar  = -2;
@@ -2062,49 +2062,49 @@ bool ProfilerTimelineControl_Test()
     TEST_EXPECT_EQ(Timeline->GetViewSpanNanoseconds(), 1000000.0f);
 
     TEST_SECTION("Clicking a bar selects it and reports it");
-    Timeline->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(300, CpuRootRowY)));
+    Timeline->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(300, CpuRootRowY)));
     TEST_EXPECT_EQ(Timeline->GetSelectedLane(), 0);
     TEST_EXPECT_EQ(Timeline->GetSelectedBar(), 0);
     TEST_EXPECT_EQ(SelectedLane, 0);
     TEST_EXPECT_EQ(SelectedBar, 0);
 
     TEST_SECTION("A nested scope is picked off the row its depth puts it on");
-    Timeline->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(150, CpuChildRowY)));
+    Timeline->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(150, CpuChildRowY)));
     TEST_EXPECT_EQ(Timeline->GetSelectedLane(), 0);
     TEST_EXPECT_EQ(Timeline->GetSelectedBar(), 1);
 
     TEST_SECTION("The GPU lane is hit under the thread lanes rather than behind them");
-    Timeline->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(150, GpuRowY)));
+    Timeline->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(150, GpuRowY)));
     TEST_EXPECT_EQ(Timeline->GetSelectedLane(), 1);
     TEST_EXPECT_EQ(Timeline->GetSelectedBar(), 0);
 
     TEST_SECTION("A bar context request identifies the GPU pass under the cursor");
     Timeline->OnMouseButtonDown(MakeButtonEvent(
-        EInputEventType::MouseButtonDown, IntVector2(150, GpuRowY), Keys::MouseButtonRight));
+        EInputEventType::MouseButtonDown, FIntVector2(150, GpuRowY), Keys::MouseButtonRight));
     TEST_EXPECT_EQ(ContextLane, 1);
     TEST_EXPECT_EQ(ContextBar, 0);
 
     TEST_SECTION("Clicking past the end of a row clears the selection");
-    Timeline->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(390, CpuChildRowY)));
+    Timeline->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(390, CpuChildRowY)));
     TEST_EXPECT_EQ(Timeline->GetSelectedLane(), FProfilerTimeline::InvalidIndex);
     TEST_EXPECT_EQ(SelectedLane, FProfilerTimeline::InvalidIndex);
 
     TEST_SECTION("Resting on a bar asks for the tip naming it, rather than the chart writing one in its corner");
     FToolTipService& TimelineToolTips = FToolTipService::Get();
 
-    Timeline->OnMouseMove(MakeMoveEvent(IntVector2(300, CpuRootRowY)));
+    Timeline->OnMouseMove(MakeMoveEvent(FIntVector2(300, CpuRootRowY)));
     TEST_EXPECT(TimelineToolTips.IsPending());
     TEST_EXPECT_EQ(TimelineToolTips.GetOwner(), StaticCastSharedPtr<FVisualElement>(Timeline));
 
     TEST_SECTION("Moving onto bare track takes the tip back down");
-    Timeline->OnMouseMove(MakeMoveEvent(IntVector2(390, CpuChildRowY)));
+    Timeline->OnMouseMove(MakeMoveEvent(FIntVector2(390, CpuChildRowY)));
     TEST_EXPECT(!TimelineToolTips.IsPending());
 
     TEST_SECTION("Leaving the chart takes the tip with it");
-    Timeline->OnMouseMove(MakeMoveEvent(IntVector2(150, GpuRowY)));
+    Timeline->OnMouseMove(MakeMoveEvent(FIntVector2(150, GpuRowY)));
     TEST_EXPECT(TimelineToolTips.IsPending());
 
-    Timeline->OnMouseLeft(MakeMoveEvent(IntVector2(800, 800)));
+    Timeline->OnMouseLeft(MakeMoveEvent(FIntVector2(800, 800)));
     TEST_EXPECT(!TimelineToolTips.IsPending());
 
     TEST_SECTION("The bare wheel over a view nothing is outside of is handed back to the panel around it");
@@ -2140,7 +2140,7 @@ bool ProfilerTimelineControl_Test()
 
     const float StartBeforeScroll = Timeline->GetViewStartNanoseconds();
     const FRectangle ScrollBounds = TimelineScrollBar->GetContentRectangle();
-    const IntVector2 PageRight(ScrollBounds.GetRight() - 2, ScrollBounds.Position.Y + (ScrollBounds.Height / 2));
+    const FIntVector2 PageRight(ScrollBounds.GetRight() - 2, ScrollBounds.Position.Y + (ScrollBounds.Height / 2));
     TimelineScrollBar->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, PageRight));
     TimelineScrollBar->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, PageRight));
 

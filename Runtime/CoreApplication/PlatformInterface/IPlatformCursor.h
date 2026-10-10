@@ -44,7 +44,7 @@ struct IPlatformCursor
      * 
      * @return The cursor position.
      */
-    virtual IntVector2 GetPosition() const = 0;
+    virtual FIntVector2 GetPosition() const = 0;
 
     /**
      * @brief Sets the cursor visibility.

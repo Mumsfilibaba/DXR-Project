@@ -53,7 +53,7 @@ bool FDockInputHandler::OnMouseButtonUp(const FCursorEvent& CursorEvent)
     return true;
 }
 
-void FDockInputHandler::UpdateDrag(const IntVector2& ScreenPosition)
+void FDockInputHandler::UpdateDrag(const FIntVector2& ScreenPosition)
 {
     FDockDragState& DragState = FDockDragState::Get();
     DragState.UpdateDrag(ScreenPosition);

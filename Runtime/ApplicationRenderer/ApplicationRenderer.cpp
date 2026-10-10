@@ -765,7 +765,7 @@ FRHIShaderResourceView* FApplicationRenderer::PrepareAtlasTexture(FRHICommandLis
     }
     else if (Entry->Revision != Atlas->GetRevision())
     {
-        const FRectangle Changed = Atlas->GetChangedSinceLayout().Intersect(FRectangle(IntVector2(0, 0), AtlasWidth, AtlasHeight));
+        const FRectangle Changed = Atlas->GetChangedSinceLayout().Intersect(FRectangle(FIntVector2(0, 0), AtlasWidth, AtlasHeight));
         if (!Changed.IsEmpty())
         {
             const int32 ChangedRowPitch = Changed.Width * 4;
@@ -938,7 +938,7 @@ bool FApplicationRenderer::AddWindowSurface(const TSharedPtr<FWindow>& InWindow)
 {
     const bool bIsPrimary = (PrimaryWindow == InWindow);
 
-    const IntVector2 WindowSize = InWindow->GetSize();
+    const FIntVector2 WindowSize = InWindow->GetSize();
 
     FRHISwapChainDesc SwapChainDesc;
     SwapChainDesc.WindowHandle = InWindow->GetPlatformWindow()->GetPlatformHandle();
@@ -1228,7 +1228,7 @@ void FApplicationRenderer::RedrawWindowSurface(FRHICommandList& InCommandList, F
 
 void FApplicationRenderer::ReconcileSurfaceSize(FRHICommandList& InCommandList, FWindowSurface& Surface)
 {
-    const IntVector2 WindowSize = Surface.Window->GetSize();
+    const FIntVector2 WindowSize = Surface.Window->GetSize();
     if (WindowSize != Surface.Size && WindowSize.X > 0 && WindowSize.Y > 0)
     {
         Surface.Size = WindowSize;
@@ -1302,7 +1302,7 @@ void FApplicationRenderer::RenderWindow(FRHICommandList& InCommandList, const FW
         return;
     }
 
-    const IntVector2 WindowSize = Window->GetSize();
+    const FIntVector2 WindowSize = Window->GetSize();
     if (WindowSize.X <= 0 || WindowSize.Y <= 0)
     {
         return;
@@ -1311,7 +1311,7 @@ void FApplicationRenderer::RenderWindow(FRHICommandList& InCommandList, const FW
     RenderDrawData(InCommandList, WindowState, WindowSize, 1.0f);
 }
 
-void FApplicationRenderer::RenderDrawData(FRHICommandList& InCommandList, const FWindowDrawState& WindowState, const IntVector2& GeometrySize, float SupersampleScale)
+void FApplicationRenderer::RenderDrawData(FRHICommandList& InCommandList, const FWindowDrawState& WindowState, const FIntVector2& GeometrySize, float SupersampleScale)
 {
     const float GeometryWidth  = static_cast<float>(GeometrySize.X);
     const float GeometryHeight = static_cast<float>(GeometrySize.Y);
@@ -1330,7 +1330,7 @@ void FApplicationRenderer::RenderDrawData(FRHICommandList& InCommandList, const 
     Memory::Memcpy(&Constants.ProjectionMatrix, Matrix, sizeof(Matrix));
 
     InCommandList.SetViewport(FViewportRegion(FramebufferW, FramebufferH, 0.0f, 0.0f, 0.0f, 1.0f));
-    InCommandList.SetBlendFactor(Vector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+    InCommandList.SetBlendFactor(FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
 
     EUIDrawBatchKind        BoundKind     = EUIDrawBatchKind::Textured;
     FRHIShaderResourceView* BoundView     = nullptr;
@@ -1456,7 +1456,7 @@ void FApplicationRenderer::RenderDrawData(FRHICommandList& InCommandList, const 
     }
 }
 
-FRHITextureRef FApplicationRenderer::RenderElementToTexture(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, float DPIScale)
+FRHITextureRef FApplicationRenderer::RenderElementToTexture(const TSharedPtr<FVisualElement>& Element, const FIntVector2& Size, float DPIScale)
 {
     if (!Element || Size.X <= 0 || Size.Y <= 0)
     {
@@ -1467,7 +1467,7 @@ FRHITextureRef FApplicationRenderer::RenderElementToTexture(const TSharedPtr<FVi
 
     FWindowDrawState SnapshotState;
 
-    Element->OnDraw(FDrawGeometry(FRectangle(IntVector2(0, 0), Size.X, Size.Y), ClampedScale), SnapshotState.Commands, 0);
+    Element->OnDraw(FDrawGeometry(FRectangle(FIntVector2(0, 0), Size.X, Size.Y), ClampedScale), SnapshotState.Commands, 0);
 
     SnapshotState.DrawData.BuildFromCommandList(SnapshotState.Commands);
 

@@ -33,17 +33,17 @@ void FTexturePreview::Initialize(const FDesc& Desc)
     ZoomSize    = Math::Max(0, Desc.ZoomSize);
 }
 
-IntVector2 FTexturePreview::ComputeDesiredSize() const
+FIntVector2 FTexturePreview::ComputeDesiredSize() const
 {
     if (Brush.IsValid())
     {
-        return IntVector2(PreviewSize, PreviewSize);
+        return FIntVector2(PreviewSize, PreviewSize);
     }
 
     const int32 Height = Font ? Font->GetTextBandHeight() : FUIStyle::GetDefault().Metrics.RowHeight;
     const int32 Width  = (Font && !EmptyText.IsEmpty()) ? Font->MeasureWidth(FStringView(EmptyText.Data(), EmptyText.Length())) : 0;
 
-    return IntVector2(Width, Height);
+    return FIntVector2(Width, Height);
 }
 
 int32 FTexturePreview::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const

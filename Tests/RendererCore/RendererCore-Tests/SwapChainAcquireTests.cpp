@@ -43,7 +43,7 @@ bool SwapChainAcquire_Test()
             TEST_EXPECT_EQ(SwapChain->GetBackBuffer(), FirstBackBuffer);
 
             TransitionBackBuffer(CommandList, SwapChain.Get(), ERHIResourceState::Undefined, ERHIResourceState::RenderTarget);
-            CommandList.ClearRenderTargetView(SwapChain->GetRenderTargetView(), Vector4());
+            CommandList.ClearRenderTargetView(SwapChain->GetRenderTargetView(), FVector4());
             TransitionBackBuffer(CommandList, SwapChain.Get(), ERHIResourceState::RenderTarget, ERHIResourceState::Present);
             CommandList.PresentSwapChain(SwapChain.Get(), false);
         }

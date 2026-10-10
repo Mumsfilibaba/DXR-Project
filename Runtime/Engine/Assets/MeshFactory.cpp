@@ -40,40 +40,40 @@ FMeshData MeshFactory::CreateCube(float Width, float Height, float Depth) noexce
     CubeData.Vertices =
     {
         // FRONT FACE
-        { Vector3(-HalfWidth,  HalfHeight, -HalfDepth), Vector3(0.0f,  0.0f, -1.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(0.0f, 0.0f) },
-        { Vector3( HalfWidth,  HalfHeight, -HalfDepth), Vector3(0.0f,  0.0f, -1.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(1.0f, 0.0f) },
-        { Vector3(-HalfWidth, -HalfHeight, -HalfDepth), Vector3(0.0f,  0.0f, -1.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(0.0f, 1.0f) },
-        { Vector3( HalfWidth, -HalfHeight, -HalfDepth), Vector3(0.0f,  0.0f, -1.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(1.0f, 1.0f) },
+        { FVector3(-HalfWidth, HalfHeight,  -HalfDepth), FVector3(0.0f, 0.0f, -1.0f), FVector3(1.0f, 0.0f, 0.0f), FVector2(0.0f, 0.0f) },
+        { FVector3( HalfWidth, HalfHeight,  -HalfDepth), FVector3(0.0f, 0.0f, -1.0f), FVector3(1.0f, 0.0f, 0.0f), FVector2(1.0f, 0.0f) },
+        { FVector3(-HalfWidth, -HalfHeight, -HalfDepth), FVector3(0.0f, 0.0f, -1.0f), FVector3(1.0f, 0.0f, 0.0f), FVector2(0.0f, 1.0f) },
+        { FVector3( HalfWidth, -HalfHeight, -HalfDepth), FVector3(0.0f, 0.0f, -1.0f), FVector3(1.0f, 0.0f, 0.0f), FVector2(1.0f, 1.0f) },
 
         // BACK FACE
-        { Vector3( HalfWidth,  HalfHeight,  HalfDepth), Vector3(0.0f,  0.0f,  1.0f), Vector3(-1.0f,  0.0f, 0.0f), Vector2(0.0f, 0.0f) },
-        { Vector3(-HalfWidth,  HalfHeight,  HalfDepth), Vector3(0.0f,  0.0f,  1.0f), Vector3(-1.0f,  0.0f, 0.0f), Vector2(1.0f, 0.0f) },
-        { Vector3( HalfWidth, -HalfHeight,  HalfDepth), Vector3(0.0f,  0.0f,  1.0f), Vector3(-1.0f,  0.0f, 0.0f), Vector2(0.0f, 1.0f) },
-        { Vector3(-HalfWidth, -HalfHeight,  HalfDepth), Vector3(0.0f,  0.0f,  1.0f), Vector3(-1.0f,  0.0f, 0.0f), Vector2(1.0f, 1.0f) },
+        { FVector3( HalfWidth, HalfHeight,  HalfDepth), FVector3(0.0f, 0.0f,  1.0f), FVector3(-1.0f, 0.0f, 0.0f), FVector2(0.0f, 0.0f) },
+        { FVector3(-HalfWidth, HalfHeight,  HalfDepth), FVector3(0.0f, 0.0f,  1.0f), FVector3(-1.0f, 0.0f, 0.0f), FVector2(1.0f, 0.0f) },
+        { FVector3( HalfWidth, -HalfHeight, HalfDepth), FVector3(0.0f, 0.0f,  1.0f), FVector3(-1.0f, 0.0f, 0.0f), FVector2(0.0f, 1.0f) },
+        { FVector3(-HalfWidth, -HalfHeight, HalfDepth), FVector3(0.0f, 0.0f,  1.0f), FVector3(-1.0f, 0.0f, 0.0f), FVector2(1.0f, 1.0f) },
 
         // RIGHT FACE
-        { Vector3(HalfWidth,  HalfHeight, -HalfDepth), Vector3(1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(0.0f, 0.0f) },
-        { Vector3(HalfWidth,  HalfHeight,  HalfDepth), Vector3(1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(1.0f, 0.0f) },
-        { Vector3(HalfWidth, -HalfHeight, -HalfDepth), Vector3(1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(0.0f, 1.0f) },
-        { Vector3(HalfWidth, -HalfHeight,  HalfDepth), Vector3(1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(1.0f, 1.0f) },
+        { FVector3(HalfWidth, HalfHeight, -HalfDepth),  FVector3(1.0f, 0.0f, 0.0f), FVector3(0.0f, 0.0f, 1.0f), FVector2(0.0f, 0.0f) },
+        { FVector3(HalfWidth, HalfHeight,  HalfDepth),  FVector3(1.0f, 0.0f, 0.0f), FVector3(0.0f, 0.0f, 1.0f), FVector2(1.0f, 0.0f) },
+        { FVector3(HalfWidth, -HalfHeight, -HalfDepth), FVector3(1.0f, 0.0f, 0.0f), FVector3(0.0f, 0.0f, 1.0f), FVector2(0.0f, 1.0f) },
+        { FVector3(HalfWidth, -HalfHeight,  HalfDepth), FVector3(1.0f, 0.0f, 0.0f), FVector3(0.0f, 0.0f, 1.0f), FVector2(1.0f, 1.0f) },
 
         // LEFT FACE
-        { Vector3(-HalfWidth,  HalfHeight,  HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, -1.0f), Vector2(0.0f, 0.0f) },
-        { Vector3(-HalfWidth,  HalfHeight, -HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, -1.0f), Vector2(1.0f, 0.0f) },
-        { Vector3(-HalfWidth, -HalfHeight,  HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, -1.0f), Vector2(0.0f, 1.0f) },
-        { Vector3(-HalfWidth, -HalfHeight, -HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, -1.0f), Vector2(1.0f, 1.0f) },
+        { FVector3(-HalfWidth, HalfHeight,  HalfDepth),  FVector3(-1.0f, 0.0f, 0.0f), FVector3(0.0f, 0.0f, -1.0f), FVector2(0.0f, 0.0f) },
+        { FVector3(-HalfWidth, HalfHeight, -HalfDepth),  FVector3(-1.0f, 0.0f, 0.0f), FVector3(0.0f, 0.0f, -1.0f), FVector2(1.0f, 0.0f) },
+        { FVector3(-HalfWidth, -HalfHeight,  HalfDepth), FVector3(-1.0f, 0.0f, 0.0f), FVector3(0.0f, 0.0f, -1.0f), FVector2(0.0f, 1.0f) },
+        { FVector3(-HalfWidth, -HalfHeight, -HalfDepth), FVector3(-1.0f, 0.0f, 0.0f), FVector3(0.0f, 0.0f, -1.0f), FVector2(1.0f, 1.0f) },
 
         // TOP FACE
-        { Vector3(-HalfWidth,  HalfHeight,  HalfDepth), Vector3(0.0f,  1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(0.0f, 0.0f) },
-        { Vector3( HalfWidth,  HalfHeight,  HalfDepth), Vector3(0.0f,  1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(1.0f, 0.0f) },
-        { Vector3(-HalfWidth,  HalfHeight, -HalfDepth), Vector3(0.0f,  1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(0.0f, 1.0f) },
-        { Vector3( HalfWidth,  HalfHeight, -HalfDepth), Vector3(0.0f,  1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(1.0f, 1.0f) },
+        { FVector3(-HalfWidth, HalfHeight,  HalfDepth), FVector3(0.0f, 1.0f,  0.0f), FVector3(1.0f, 0.0f, 0.0f), FVector2(0.0f, 0.0f) },
+        { FVector3( HalfWidth, HalfHeight,  HalfDepth), FVector3(0.0f, 1.0f,  0.0f), FVector3(1.0f, 0.0f, 0.0f), FVector2(1.0f, 0.0f) },
+        { FVector3(-HalfWidth, HalfHeight, -HalfDepth), FVector3(0.0f, 1.0f,  0.0f), FVector3(1.0f, 0.0f, 0.0f), FVector2(0.0f, 1.0f) },
+        { FVector3( HalfWidth, HalfHeight, -HalfDepth), FVector3(0.0f, 1.0f,  0.0f), FVector3(1.0f, 0.0f, 0.0f), FVector2(1.0f, 1.0f) },
 
         // BOTTOM FACE
-        { Vector3(-HalfWidth, -HalfHeight, -HalfDepth), Vector3(0.0f, -1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(0.0f, 0.0f) },
-        { Vector3( HalfWidth, -HalfHeight, -HalfDepth), Vector3(0.0f, -1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(1.0f, 0.0f) },
-        { Vector3(-HalfWidth, -HalfHeight,  HalfDepth), Vector3(0.0f, -1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(0.0f, 1.0f) },
-        { Vector3( HalfWidth, -HalfHeight,  HalfDepth), Vector3(0.0f, -1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(1.0f, 1.0f) },
+        { FVector3(-HalfWidth, -HalfHeight, -HalfDepth), FVector3(0.0f, -1.0f, 0.0f), FVector3(1.0f, 0.0f, 0.0f), FVector2(0.0f, 0.0f) },
+        { FVector3( HalfWidth, -HalfHeight, -HalfDepth), FVector3(0.0f, -1.0f, 0.0f), FVector3(1.0f, 0.0f, 0.0f), FVector2(1.0f, 0.0f) },
+        { FVector3(-HalfWidth, -HalfHeight, HalfDepth),  FVector3(0.0f, -1.0f, 0.0f), FVector3(1.0f, 0.0f, 0.0f), FVector2(0.0f, 1.0f) },
+        { FVector3( HalfWidth, -HalfHeight, HalfDepth),  FVector3(0.0f, -1.0f, 0.0f), FVector3(1.0f, 0.0f, 0.0f), FVector2(1.0f, 1.0f) },
     };
 
     CubeData.Indices =
@@ -126,22 +126,22 @@ FMeshData MeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
     PlaneData.Indices.Resize((Width * Height) * 6);
 
     // Size of each quad, size of the plane will always be between -0.5 and 0.5
-    Vector2 QuadSize   = Vector2(1.0f / float(Width), 1.0f / float(Height));
-    Vector2 UvQuadSize = Vector2(1.0f / float(Width), 1.0f / float(Height));
+    FVector2 QuadSize   = FVector2(1.0f / float(Width), 1.0f / float(Height));
+    FVector2 UvQuadSize = FVector2(1.0f / float(Width), 1.0f / float(Height));
 
     for (uint32 x = 0; x <= Width; x++)
     {
         for (uint32 y = 0; y <= Height; y++)
         {
             int32 v = ((1 + Height) * x) + y;
-            PlaneData.Vertices[v].Position = Vector3(0.5f - (QuadSize.X * x), 0.5f - (QuadSize.Y * y), 0.0f);
+            PlaneData.Vertices[v].Position = FVector3(0.5f - (QuadSize.X * x), 0.5f - (QuadSize.Y * y), 0.0f);
 
             // TODO: Fix vertices so normal is positive
-            PlaneData.Vertices[v].Normal   = Vector3(0.0f, 0.0f, -1.0f);
-            PlaneData.Vertices[v].Tangent  = Vector3(1.0f, 0.0f, 0.0f);
+            PlaneData.Vertices[v].Normal   = FVector3(0.0f, 0.0f, -1.0f);
+            PlaneData.Vertices[v].Tangent  = FVector3(1.0f, 0.0f, 0.0f);
 
             // The plane faces -Z, so U increases along +X and V along -Y to keep the texture non-mirrored
-            PlaneData.Vertices[v].TexCoord = Vector2(1.0f - (UvQuadSize.X * x), 0.0f + (UvQuadSize.Y * y));
+            PlaneData.Vertices[v].TexCoord = FVector2(1.0f - (UvQuadSize.X * x), 0.0f + (UvQuadSize.Y * y));
         }
     }
 
@@ -172,18 +172,18 @@ FMeshData MeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
     SphereData.Vertices.Resize(12);
 
     const float t = (1.0f + Math::Sqrt(5.0f)) / 2.0f;
-    SphereData.Vertices[0].Position  = Vector3(-1.0f,  t   ,  0.0f);
-    SphereData.Vertices[1].Position  = Vector3( 1.0f,  t   ,  0.0f);
-    SphereData.Vertices[2].Position  = Vector3(-1.0f, -t   ,  0.0f);
-    SphereData.Vertices[3].Position  = Vector3( 1.0f, -t   ,  0.0f);
-    SphereData.Vertices[4].Position  = Vector3( 0.0f, -1.0f,  t);
-    SphereData.Vertices[5].Position  = Vector3( 0.0f,  1.0f,  t);
-    SphereData.Vertices[6].Position  = Vector3( 0.0f, -1.0f, -t);
-    SphereData.Vertices[7].Position  = Vector3( 0.0f,  1.0f, -t);
-    SphereData.Vertices[8].Position  = Vector3( t   ,  0.0f, -1.0f);
-    SphereData.Vertices[9].Position  = Vector3( t   ,  0.0f,  1.0f);
-    SphereData.Vertices[10].Position = Vector3(-t   ,  0.0f, -1.0f);
-    SphereData.Vertices[11].Position = Vector3(-t   ,  0.0f,  1.0f);
+    SphereData.Vertices[0].Position  = FVector3(-1.0f, t   ,  0.0f);
+    SphereData.Vertices[1].Position  = FVector3( 1.0f, t   ,  0.0f);
+    SphereData.Vertices[2].Position  = FVector3(-1.0f, -t  ,  0.0f);
+    SphereData.Vertices[3].Position  = FVector3( 1.0f, -t  ,  0.0f);
+    SphereData.Vertices[4].Position  = FVector3( 0.0f, -1.0f, t);
+    SphereData.Vertices[5].Position  = FVector3( 0.0f,  1.0f, t);
+    SphereData.Vertices[6].Position  = FVector3( 0.0f, -1.0f, -t);
+    SphereData.Vertices[7].Position  = FVector3( 0.0f, 1.0f, -t);
+    SphereData.Vertices[8].Position  = FVector3( t  ,  0.0f, -1.0f);
+    SphereData.Vertices[9].Position  = FVector3( t  ,  0.0f,  1.0f);
+    SphereData.Vertices[10].Position = FVector3(-t  ,  0.0f, -1.0f);
+    SphereData.Vertices[11].Position = FVector3(-t  ,  0.0f,  1.0f);
 
     SphereData.Indices =
     {
@@ -220,7 +220,7 @@ FMeshData MeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
     for (uint32 i = 0; i < static_cast<uint32>(SphereData.Vertices.Size()); i++)
     {
         // Calculate the new position and normal
-        Vector3 Direction = SphereData.Vertices[i].Position;
+        FVector3 Direction = SphereData.Vertices[i].Position;
         Direction.Normalize();
 
         SphereData.Vertices[i].Normal   = Direction;
@@ -347,13 +347,13 @@ FMeshData MeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noex
     // The normal of the slanted side is perpendicular to the slant line, i.e. (Height * Cos, Radius, Height * Sin)
     const auto CalculateSideNormal = [Radius, Height](float SideAngle)
     {
-        return Vector3(Height * Math::Cos(SideAngle), Radius, Height * Math::Sin(SideAngle)).GetNormalized();
+        return FVector3(Height * Math::Cos(SideAngle), Radius, Height * Math::Sin(SideAngle)).GetNormalized();
     };
 
     // Create the center vertex for the base cap
-    MeshData.Vertices[0].Position = Vector3(0.0f, 0.0f, 0.0f);
-    MeshData.Vertices[0].Normal   = Vector3(0.0f, -1.0f, 0.0f);
-    MeshData.Vertices[0].TexCoord = Vector2(0.5f, 0.5f); // Center UV coordinates
+    MeshData.Vertices[0].Position = FVector3(0.0f, 0.0f, 0.0f);
+    MeshData.Vertices[0].Normal   = FVector3(0.0f, -1.0f, 0.0f);
+    MeshData.Vertices[0].TexCoord = FVector2(0.5f, 0.5f); // Center UV coordinates
 
     // Create vertices for the base cap
     for (uint32 i = 0; i < Sides; ++i)
@@ -361,9 +361,9 @@ FMeshData MeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noex
         const float CosAngle = Math::Cos(Angle * i);
         const float SinAngle = Math::Sin(Angle * i);
 
-        MeshData.Vertices[i + 1].Position = Vector3(Radius * CosAngle, 0.0f, Radius * SinAngle);
-        MeshData.Vertices[i + 1].Normal   = Vector3(0.0f, -1.0f, 0.0f); // Pointing downwards
-        MeshData.Vertices[i + 1].TexCoord = Vector2((CosAngle + 1.0f) * 0.5f, (SinAngle + 1.0f) * 0.5f);
+        MeshData.Vertices[i + 1].Position = FVector3(Radius * CosAngle, 0.0f, Radius * SinAngle);
+        MeshData.Vertices[i + 1].Normal   = FVector3(0.0f, -1.0f, 0.0f); // Pointing downwards
+        MeshData.Vertices[i + 1].TexCoord = FVector2((CosAngle + 1.0f) * 0.5f, (SinAngle + 1.0f) * 0.5f);
     }
 
     // Create vertices for the side ring
@@ -372,9 +372,9 @@ FMeshData MeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noex
     {
         const float SideAngle = (i % Sides) * Angle;
 
-        MeshData.Vertices[SideOffset + i].Position = Vector3(Radius * Math::Cos(SideAngle), 0.0f, Radius * Math::Sin(SideAngle));
+        MeshData.Vertices[SideOffset + i].Position = FVector3(Radius * Math::Cos(SideAngle), 0.0f, Radius * Math::Sin(SideAngle));
         MeshData.Vertices[SideOffset + i].Normal   = CalculateSideNormal(SideAngle);
-        MeshData.Vertices[SideOffset + i].TexCoord = Vector2(static_cast<float>(i) / static_cast<float>(Sides), 1.0f);
+        MeshData.Vertices[SideOffset + i].TexCoord = FVector2(static_cast<float>(i) / static_cast<float>(Sides), 1.0f);
     }
 
     // Create the apex vertices, the normal at the apex is undefined so use the normal at the center of the side
@@ -383,9 +383,9 @@ FMeshData MeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noex
     {
         const float CenterAngle = (static_cast<float>(i) + 0.5f) * Angle;
 
-        MeshData.Vertices[ApexOffset + i].Position = Vector3(0.0f, Height, 0.0f);
+        MeshData.Vertices[ApexOffset + i].Position = FVector3(0.0f, Height, 0.0f);
         MeshData.Vertices[ApexOffset + i].Normal   = CalculateSideNormal(CenterAngle);
-        MeshData.Vertices[ApexOffset + i].TexCoord = Vector2((static_cast<float>(i) + 0.5f) / static_cast<float>(Sides), 0.0f);
+        MeshData.Vertices[ApexOffset + i].TexCoord = FVector2((static_cast<float>(i) + 0.5f) / static_cast<float>(Sides), 0.0f);
     }
 
     // Create indices for the base cap
@@ -449,18 +449,18 @@ FMeshData MeshFactory::CreateTorus(float RingRadius, float TubeRadius, uint32 Ri
             const float SinTube   = Math::Sin(TubeAngle);
 
             // Normal vector, pointing away from the center of the tube
-            const Vector3 Normal = Vector3(CosTube * CosRing, SinTube, CosTube * SinRing);
+            const FVector3 Normal = FVector3(CosTube * CosRing, SinTube, CosTube * SinRing);
             MeshData.Vertices[VertexIndex].Normal = Normal;
 
             // Position of the vertex
-            const Vector3 RingCenter = Vector3(RingRadius * CosRing, 0.0f, RingRadius * SinRing);
+            const FVector3 RingCenter = FVector3(RingRadius * CosRing, 0.0f, RingRadius * SinRing);
             MeshData.Vertices[VertexIndex].Position = RingCenter + Normal * TubeRadius;
 
             // Texture coordinates, the tube angle goes upwards on the outside of the torus, so V is flipped
             // in order to point down along the surface (otherwise the texture would be mirrored)
             const float u = static_cast<float>(i) / static_cast<float>(RingSegments);
             const float v = 1.0f - static_cast<float>(j) / static_cast<float>(TubeSegments);
-            MeshData.Vertices[VertexIndex].TexCoord = Vector2(u, v);
+            MeshData.Vertices[VertexIndex].TexCoord = FVector2(u, v);
 
             ++VertexIndex;
         }
@@ -636,7 +636,7 @@ FMeshData MeshFactory::CreateTeapot(uint32 Tessellation) noexcept
     };
 
     // Evaluates the position and the partial derivatives of a Bezier patch
-    const auto EvaluateBezierPatch = [&](const float ControlPoints[16][3], float u, float v, Vector3& OutPosition, Vector3& OutTangentU, Vector3& OutTangentV)
+    const auto EvaluateBezierPatch = [&](const float ControlPoints[16][3], float u, float v, FVector3& OutPosition, FVector3& OutTangentU, FVector3& OutTangentV)
     {
         float Bu[4];
         float Bv[4];
@@ -667,17 +667,17 @@ FMeshData MeshFactory::CreateTeapot(uint32 Tessellation) noexcept
         }
 
         // The control points are Z-up, convert to Y-up (a rotation around the X-axis, which keeps the handedness)
-        OutPosition = Vector3(Position[0], Position[2], -Position[1]);
-        OutTangentU = Vector3(TangentU[0], TangentU[2], -TangentU[1]);
-        OutTangentV = Vector3(TangentV[0], TangentV[2], -TangentV[1]);
+        OutPosition = FVector3(Position[0], Position[2], -Position[1]);
+        OutTangentU = FVector3(TangentU[0], TangentU[2], -TangentU[1]);
+        OutTangentV = FVector3(TangentV[0], TangentV[2], -TangentV[1]);
     };
 
     // Function to evaluate a vertex on a Bezier patch
     const auto EvaluateBezierVertex = [&](const float ControlPoints[16][3], float u, float v, FSourceVertex& Vertex)
     {
-        Vector3 Position;
-        Vector3 TangentU;
-        Vector3 TangentV;
+        FVector3 Position;
+        FVector3 TangentU;
+        FVector3 TangentV;
         EvaluateBezierPatch(ControlPoints, u, v, Position, TangentU, TangentV);
 
         // Some patches (the lid knob and the bottom center) collapse an entire row of control points into a single
@@ -689,12 +689,12 @@ FMeshData MeshFactory::CreateTeapot(uint32 Tessellation) noexcept
         {
             constexpr float Offset = 1.0e-3f;
 
-            Vector3 OffsetPosition;
+            FVector3 OffsetPosition;
             EvaluateBezierPatch(ControlPoints, u + (0.5f - u) * Offset, v + (0.5f - v) * Offset, OffsetPosition, TangentU, TangentV);
         }
 
         // The patches are oriented so that the cross product of the derivatives points inwards
-        const Vector3 Normal = TangentV.CrossProduct(TangentU);
+        const FVector3 Normal = TangentV.CrossProduct(TangentU);
 
         Vertex.Position = Position;
         Vertex.Normal   = Normal.GetNormalized();
@@ -713,9 +713,9 @@ FMeshData MeshFactory::CreateTeapot(uint32 Tessellation) noexcept
     // Adds a triangle unless it is degenerate, which happens at the collapsed rows of the patches
     const auto AddTriangle = [&MeshData](uint32 Index0, uint32 Index1, uint32 Index2)
     {
-        const Vector3& Position0 = MeshData.Vertices[Index0].Position;
-        const Vector3& Position1 = MeshData.Vertices[Index1].Position;
-        const Vector3& Position2 = MeshData.Vertices[Index2].Position;
+        const FVector3& Position0 = MeshData.Vertices[Index0].Position;
+        const FVector3& Position1 = MeshData.Vertices[Index1].Position;
+        const FVector3& Position2 = MeshData.Vertices[Index2].Position;
         if ((Position1 - Position0).CrossProduct(Position2 - Position0).GetLengthSquared() > 1.0e-14f)
         {
             MeshData.Indices.Add(Index0);
@@ -784,26 +784,26 @@ FMeshData MeshFactory::CreatePyramid(float Width, float Depth, float Height) noe
 
     // Bottom vertices
     FSourceVertex v0;
-    v0.Position = Vector3(-HalfWidth, 0.0f, -HalfDepth); // Front-left
+    v0.Position = FVector3(-HalfWidth, 0.0f, -HalfDepth); // Front-left
     FSourceVertex v1;
-    v1.Position = Vector3( HalfWidth, 0.0f, -HalfDepth); // Front-right
+    v1.Position = FVector3( HalfWidth, 0.0f, -HalfDepth); // Front-right
     FSourceVertex v2;
-    v2.Position = Vector3( HalfWidth, 0.0f,  HalfDepth); // Back-right
+    v2.Position = FVector3( HalfWidth, 0.0f,  HalfDepth); // Back-right
     FSourceVertex v3;
-    v3.Position = Vector3(-HalfWidth, 0.0f,  HalfDepth); // Back-left
+    v3.Position = FVector3(-HalfWidth, 0.0f,  HalfDepth); // Back-left
 
     // Apex vertex
     FSourceVertex v4;
-    v4.Position = Vector3(0.0f, Height, 0.0f); // Top center
+    v4.Position = FVector3(0.0f, Height, 0.0f); // Top center
 
     // Base normal
-    Vector3 BaseNormal = Vector3(0.0f, -1.0f, 0.0f);
+    FVector3 BaseNormal = FVector3(0.0f, -1.0f, 0.0f);
 
     // Side normals (calculated for each face)
-    Vector3 Normal0 = (v4.Position - v0.Position).CrossProduct(v1.Position - v0.Position).Normalize();
-    Vector3 Normal1 = (v4.Position - v1.Position).CrossProduct(v2.Position - v1.Position).Normalize();
-    Vector3 Normal2 = (v4.Position - v2.Position).CrossProduct(v3.Position - v2.Position).Normalize();
-    Vector3 Normal3 = (v4.Position - v3.Position).CrossProduct(v0.Position - v3.Position).Normalize();
+    FVector3 Normal0 = (v4.Position - v0.Position).CrossProduct(v1.Position - v0.Position).Normalize();
+    FVector3 Normal1 = (v4.Position - v1.Position).CrossProduct(v2.Position - v1.Position).Normalize();
+    FVector3 Normal2 = (v4.Position - v2.Position).CrossProduct(v3.Position - v2.Position).Normalize();
+    FVector3 Normal3 = (v4.Position - v3.Position).CrossProduct(v0.Position - v3.Position).Normalize();
 
     // Assign normals to the base vertices
     v0.Normal = BaseNormal;
@@ -812,10 +812,10 @@ FMeshData MeshFactory::CreatePyramid(float Width, float Depth, float Height) noe
     v3.Normal = BaseNormal;
 
     // Assign texture coordinates for the base
-    v0.TexCoord = Vector2(0.0f, 0.0f);
-    v1.TexCoord = Vector2(1.0f, 0.0f);
-    v2.TexCoord = Vector2(1.0f, 1.0f);
-    v3.TexCoord = Vector2(0.0f, 1.0f);
+    v0.TexCoord = FVector2(0.0f, 0.0f);
+    v1.TexCoord = FVector2(1.0f, 0.0f);
+    v2.TexCoord = FVector2(1.0f, 1.0f);
+    v3.TexCoord = FVector2(0.0f, 1.0f);
 
     // Add base vertices to the mesh
     uint32 BaseIndex = static_cast<uint32>(MeshData.Vertices.Size());
@@ -840,9 +840,9 @@ FMeshData MeshFactory::CreatePyramid(float Width, float Depth, float Height) noe
     s0v0.Normal   = Normal0;
     s0v1.Normal   = Normal0;
     s0v4.Normal   = Normal0;
-    s0v0.TexCoord = Vector2(0.0f, 1.0f);
-    s0v1.TexCoord = Vector2(1.0f, 1.0f);
-    s0v4.TexCoord = Vector2(0.5f, 0.0f);
+    s0v0.TexCoord = FVector2(0.0f, 1.0f);
+    s0v1.TexCoord = FVector2(1.0f, 1.0f);
+    s0v4.TexCoord = FVector2(0.5f, 0.0f);
 
     const uint32 Side0Index = static_cast<uint32>(MeshData.Vertices.Size());
     MeshData.Vertices.Add(s0v0);
@@ -860,9 +860,9 @@ FMeshData MeshFactory::CreatePyramid(float Width, float Depth, float Height) noe
     s1v0.Normal   = Normal1;
     s1v1.Normal   = Normal1;
     s1v4.Normal   = Normal1;
-    s1v0.TexCoord = Vector2(0.0f, 1.0f);
-    s1v1.TexCoord = Vector2(1.0f, 1.0f);
-    s1v4.TexCoord = Vector2(0.5f, 0.0f);
+    s1v0.TexCoord = FVector2(0.0f, 1.0f);
+    s1v1.TexCoord = FVector2(1.0f, 1.0f);
+    s1v4.TexCoord = FVector2(0.5f, 0.0f);
 
     const uint32 Side1Index = static_cast<uint32>(MeshData.Vertices.Size());
     MeshData.Vertices.Add(s1v0);
@@ -880,9 +880,9 @@ FMeshData MeshFactory::CreatePyramid(float Width, float Depth, float Height) noe
     s2v0.Normal   = Normal2;
     s2v1.Normal   = Normal2;
     s2v4.Normal   = Normal2;
-    s2v0.TexCoord = Vector2(0.0f, 1.0f);
-    s2v1.TexCoord = Vector2(1.0f, 1.0f);
-    s2v4.TexCoord = Vector2(0.5f, 0.0f);
+    s2v0.TexCoord = FVector2(0.0f, 1.0f);
+    s2v1.TexCoord = FVector2(1.0f, 1.0f);
+    s2v4.TexCoord = FVector2(0.5f, 0.0f);
 
     const uint32 Side2Index = static_cast<uint32>(MeshData.Vertices.Size());
     MeshData.Vertices.Add(s2v0);
@@ -900,9 +900,9 @@ FMeshData MeshFactory::CreatePyramid(float Width, float Depth, float Height) noe
     s3v0.Normal   = Normal3;
     s3v1.Normal   = Normal3;
     s3v4.Normal   = Normal3;
-    s3v0.TexCoord = Vector2(0.0f, 1.0f);
-    s3v1.TexCoord = Vector2(1.0f, 1.0f);
-    s3v4.TexCoord = Vector2(0.5f, 0.0f);
+    s3v0.TexCoord = FVector2(0.0f, 1.0f);
+    s3v1.TexCoord = FVector2(1.0f, 1.0f);
+    s3v4.TexCoord = FVector2(0.5f, 0.0f);
 
     const uint32 Side3Index = static_cast<uint32>(MeshData.Vertices.Size());
     MeshData.Vertices.Add(s3v0);
@@ -939,9 +939,9 @@ FMeshData MeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height) 
 
     // Generate top cap vertices
     FSourceVertex TopCenterVertex;
-    TopCenterVertex.Position = Vector3(0.0f, HalfHeight, 0.0f);
-    TopCenterVertex.Normal   = Vector3(0.0f, 1.0f, 0.0f);
-    TopCenterVertex.TexCoord = Vector2(0.5f, 0.5f); // Center of the texture
+    TopCenterVertex.Position = FVector3(0.0f, HalfHeight, 0.0f);
+    TopCenterVertex.Normal   = FVector3(0.0f, 1.0f, 0.0f);
+    TopCenterVertex.TexCoord = FVector2(0.5f, 0.5f); // Center of the texture
     MeshData.Vertices.Add(TopCenterVertex);
 
     for (uint32 i = 0; i < Sides; ++i)
@@ -951,9 +951,9 @@ FMeshData MeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height) 
         const float Z     = Radius * sinf(Angle);
         
         FSourceVertex Vertex;
-        Vertex.Position = Vector3(X, HalfHeight, Z);
-        Vertex.Normal   = Vector3(0.0f, 1.0f, 0.0f);
-        Vertex.TexCoord = Vector2((cosf(Angle) + 1.0f) * 0.5f, (1.0f - sinf(Angle)) * 0.5f); // Map to [0,1], V flipped since the cap is seen from above
+        Vertex.Position = FVector3(X, HalfHeight, Z);
+        Vertex.Normal   = FVector3(0.0f, 1.0f, 0.0f);
+        Vertex.TexCoord = FVector2((cosf(Angle) + 1.0f) * 0.5f, (1.0f - sinf(Angle)) * 0.5f); // Map to [0,1], V flipped since the cap is seen from above
         MeshData.Vertices.Add(Vertex);
     }
 
@@ -961,9 +961,9 @@ FMeshData MeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height) 
     const uint32 BottomCenterIndex = static_cast<uint32>(MeshData.Vertices.Size());
 
     FSourceVertex BottomCenterVertex;
-    BottomCenterVertex.Position = Vector3(0.0f, -HalfHeight, 0.0f);
-    BottomCenterVertex.Normal   = Vector3(0.0f, -1.0f, 0.0f);
-    BottomCenterVertex.TexCoord = Vector2(0.5f, 0.5f);
+    BottomCenterVertex.Position = FVector3(0.0f, -HalfHeight, 0.0f);
+    BottomCenterVertex.Normal   = FVector3(0.0f, -1.0f, 0.0f);
+    BottomCenterVertex.TexCoord = FVector2(0.5f, 0.5f);
     MeshData.Vertices.Add(BottomCenterVertex);
 
     for (uint32 i = 0; i < Sides; ++i)
@@ -973,9 +973,9 @@ FMeshData MeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height) 
         const float Z     = Radius * sinf(Angle);
 
         FSourceVertex Vertex;
-        Vertex.Position = Vector3(X, -HalfHeight, Z);
-        Vertex.Normal   = Vector3(0.0f, -1.0f, 0.0f);
-        Vertex.TexCoord = Vector2((cosf(Angle) + 1.0f) * 0.5f, (sinf(Angle) + 1.0f) * 0.5f);
+        Vertex.Position = FVector3(X, -HalfHeight, Z);
+        Vertex.Normal   = FVector3(0.0f, -1.0f, 0.0f);
+        Vertex.TexCoord = FVector2((cosf(Angle) + 1.0f) * 0.5f, (sinf(Angle) + 1.0f) * 0.5f);
         MeshData.Vertices.Add(Vertex);
     }
 
@@ -988,20 +988,20 @@ FMeshData MeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height) 
         const float Z     = Radius * sinf(Angle);
         const float U     = static_cast<float>(i) / static_cast<float>(Sides); // Texture coordinate U
 
-        const Vector3 Normal = Vector3(X, 0.0f, Z).Normalize();
+        const FVector3 Normal = FVector3(X, 0.0f, Z).Normalize();
 
         // Top vertex
         FSourceVertex TopVertex;
-        TopVertex.Position = Vector3(X, HalfHeight, Z);
+        TopVertex.Position = FVector3(X, HalfHeight, Z);
         TopVertex.Normal   = Normal;
-        TopVertex.TexCoord = Vector2(U, 0.0f); // V = 0 at the top
+        TopVertex.TexCoord = FVector2(U, 0.0f); // V = 0 at the top
         MeshData.Vertices.Add(TopVertex);
 
         // Bottom vertex
         FSourceVertex BottomVertex;
-        BottomVertex.Position = Vector3(X, -HalfHeight, Z);
+        BottomVertex.Position = FVector3(X, -HalfHeight, Z);
         BottomVertex.Normal   = Normal;
-        BottomVertex.TexCoord = Vector2(U, 1.0f); // V = 1 at the bottom
+        BottomVertex.TexCoord = FVector2(U, 1.0f); // V = 1 at the bottom
         MeshData.Vertices.Add(BottomVertex);
     }
 
@@ -1126,12 +1126,12 @@ FMeshData MeshFactory::CreateCapsule(uint32 Sides, uint32 Rings, float Radius, f
             const float CosTheta = Math::Cos(Angle);
             const float SinTheta = Math::Sin(Angle);
 
-            const Vector3 Normal(SinPhi * CosTheta, CosPhi, SinPhi * SinTheta);
+            const FVector3 Normal(SinPhi * CosTheta, CosPhi, SinPhi * SinTheta);
 
             FSourceVertex Vertex;
-            Vertex.Position = Vector3(Radius * Normal.X, CenterY + Radius * Normal.Y, Radius * Normal.Z);
+            Vertex.Position = FVector3(Radius * Normal.X, CenterY + Radius * Normal.Y, Radius * Normal.Z);
             Vertex.Normal   = Normal;
-            Vertex.TexCoord = Vector2((static_cast<float>(Column) + (bIsPole ? 0.5f : 0.0f)) / static_cast<float>(Sides), V);
+            Vertex.TexCoord = FVector2((static_cast<float>(Column) + (bIsPole ? 0.5f : 0.0f)) / static_cast<float>(Sides), V);
             MeshData.Vertices.Add(Vertex);
         }
     }

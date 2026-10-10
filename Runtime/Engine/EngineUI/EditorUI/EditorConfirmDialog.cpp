@@ -149,12 +149,12 @@ bool FEditorConfirmDialog::Open(const TSharedPtr<FVisualElement>& AnchorElement,
 
     Frame->PrepareDesiredSize();
 
-    const IntVector2 DesiredSize = Frame->GetCachedDesiredSize();
-    const IntVector2 DialogSize(Math::Max(DesiredSize.X, MinWidth), Math::Max(DesiredSize.Y, 1));
+    const FIntVector2 DesiredSize = Frame->GetCachedDesiredSize();
+    const FIntVector2 DialogSize(Math::Max(DesiredSize.X, MinWidth), Math::Max(DesiredSize.Y, 1));
 
-    const IntVector2 ParentPosition = ParentWindow->GetPosition();
-    const IntVector2 ParentSize     = ParentWindow->GetSize();
-    const IntVector2 DialogPosition(
+    const FIntVector2 ParentPosition = ParentWindow->GetPosition();
+    const FIntVector2 ParentSize     = ParentWindow->GetSize();
+    const FIntVector2 DialogPosition(
         ParentPosition.X + ((ParentSize.X - DialogSize.X) / 2),
         ParentPosition.Y + ((ParentSize.Y - DialogSize.Y) / 2));
 

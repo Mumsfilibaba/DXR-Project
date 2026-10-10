@@ -60,7 +60,7 @@ struct FMaterialData
     FString              Name;
     FTexture2DRef        Textures[EMaterialTexture::Count];
     FMaterialSourceRoute Routes[EMaterialScalar::Count];
-    Vector3              Diffuse;
+    FVector3             Diffuse;
     float                AmbientFactor;
     float                Roughness;
     float                Metallic;

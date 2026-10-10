@@ -41,10 +41,10 @@ int64 FLayeredGraphLayout::CountCrossings(TArrayView<const FLayerEdge> SortedEdg
 }
 
 void FLayeredGraphLayout::Layout(
-    TArrayView<const Vector2>          NodeSizes,
+    TArrayView<const FVector2>         NodeSizes,
     TArrayView<const FGraphLayoutEdge> Edges,
     const FGraphLayoutSettings&        Settings,
-    TArray<Vector2>&                   OutPositions,
+    TArray<FVector2>&                  OutPositions,
     TArrayView<const int32>            SeedKeys)
 {
     const int32 NumNodes = NodeSizes.Size();
@@ -440,7 +440,7 @@ void FLayeredGraphLayout::Layout(
         {
             if (Index < NumNodes)
             {
-                OutPositions[Index] = Vector2(CursorX, NodeY[Index]);
+                OutPositions[Index] = FVector2(CursorX, NodeY[Index]);
             }
         }
 

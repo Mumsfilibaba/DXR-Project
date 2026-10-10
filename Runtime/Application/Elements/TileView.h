@@ -49,7 +49,7 @@ public:
         TSharedPtr<IFontFace> Font = nullptr;
 
         /** @brief How large one tile is, in pixels, icon and label together. */
-        IntVector2 TileSize = IntVector2(80, 92);
+        FIntVector2 TileSize = FIntVector2(80, 92);
 
         /** @brief The gap left between two tiles, in pixels, on both axes. */
         int32 TileSpacing = 8;
@@ -100,7 +100,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
@@ -149,7 +149,7 @@ public:
      *
      * @param InTileSize The new size in pixels, clamped to at least one pixel on each axis.
      */
-    void SetTileSize(const IntVector2& InTileSize);
+    void SetTileSize(const FIntVector2& InTileSize);
 
     /**
      * @brief Scrolls to an absolute offset, clamped into the scrollable range.
@@ -195,7 +195,7 @@ public:
      * @param ClientPosition The point to test, in client coordinates.
      * @return The tile under the point, or InvalidTileIndex when the point is over none.
      */
-    NODISCARD int32 FindTileAt(const IntVector2& ClientPosition) const;
+    NODISCARD int32 FindTileAt(const FIntVector2& ClientPosition) const;
 
     /** @return The items shown, in layout order. */
     NODISCARD FORCEINLINE const TArray<FTileItem>& GetItems() const
@@ -216,7 +216,7 @@ public:
     }
 
     /** @return How large one tile is, in pixels, icon and label together. */
-    NODISCARD FORCEINLINE const IntVector2& GetTileSize() const
+    NODISCARD FORCEINLINE const FIntVector2& GetTileSize() const
     {
         return TileSize;
     }
@@ -250,8 +250,8 @@ private:
     TArray<uint8>                      SelectedFlags;
     TSharedPtr<IFontFace>              Font;
     FString                            FilterText;
-    IntVector2                         TileSize;
-    IntVector2                         PressPosition;
+    FIntVector2                        TileSize;
+    FIntVector2                        PressPosition;
     int32                              TileSpacing;
     int32                              IconSize;
     int32                              LabelInset;

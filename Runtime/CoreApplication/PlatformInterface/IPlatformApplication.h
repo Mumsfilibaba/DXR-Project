@@ -118,16 +118,16 @@ struct FMonitorInfo
     FString DeviceName;
     
     /** @brief The workspace position of the monitor without considering UI elements like menu-bars or docks. */
-    IntVector2 MainPosition;
+    FIntVector2 MainPosition;
 
     /** @brief The workspace size of the monitor without considering UI elements like menu-bars or docks. */
-    IntVector2 MainSize;
+    FIntVector2 MainSize;
 
     /** @brief The usable workspace position of the monitor, taking UI elements into account. */
-    IntVector2 WorkPosition;
+    FIntVector2 WorkPosition;
 
     /** @brief The usable workspace size of the monitor, taking UI elements into account. */
-    IntVector2 WorkSize;
+    FIntVector2 WorkSize;
 
     /** @brief The DPI (dots per inch) of the monitor. */
     int32 DisplayDPI;
@@ -205,7 +205,7 @@ struct IPlatformApplication
      * @param Size Width and height of the region, in pixels.
      * @return True if the cursor was confined, false if not supported.
      */
-    virtual bool ConfineCursorToRect(const TSharedRef<IPlatformWindow>& Window, const IntVector2& Position, const IntVector2& Size) = 0;
+    virtual bool ConfineCursorToRect(const TSharedRef<IPlatformWindow>& Window, const FIntVector2& Position, const FIntVector2& Size) = 0;
 
     /** @brief Lets the cursor leave the region set by ConfineCursorToRect. */
     virtual void ReleaseCursorConfinement() = 0;

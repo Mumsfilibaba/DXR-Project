@@ -49,7 +49,7 @@ void FFirstPersonCameraController::SetCamera(FCameraComponent* InCamera)
     if (Camera != InCamera)
     {
         Camera   = InCamera;
-        Velocity = Vector3();
+        Velocity = FVector3();
     }
 
     if (!Camera)
@@ -71,7 +71,7 @@ void FFirstPersonCameraController::SyncFromCamera()
         return;
     }
 
-    const Vector3& Rotation = Camera->GetRotation();
+    const FVector3& Rotation = Camera->GetRotation();
     Pitch = Math::RadiansToDegrees(Rotation.X);
     Yaw   = Math::RadiansToDegrees(Rotation.Y);
 }
@@ -111,21 +111,21 @@ void FFirstPersonCameraController::ApplyLook(float DeltaTime, const FFirstPerson
 
 void FFirstPersonCameraController::ApplyMovement(float DeltaTime, const FFirstPersonCameraInput& Input)
 {
-    const float   Acceleration       = MoveSpeed * (Input.bBoost ? BoostMultiplier : 1.0f);
-    const Vector3 CameraAcceleration = Input.MoveAxis * Acceleration;
-    const float   DampingFactor      = Math::Exp(-MOVEMENT_DAMPING_RATE * DeltaTime);
+    const float    Acceleration       = MoveSpeed * (Input.bBoost ? BoostMultiplier : 1.0f);
+    const FVector3 CameraAcceleration = Input.MoveAxis * Acceleration;
+    const float    DampingFactor      = Math::Exp(-MOVEMENT_DAMPING_RATE * DeltaTime);
 
     Velocity = Velocity * DampingFactor;
     Velocity = Velocity + (CameraAcceleration * DeltaTime);
 
     if ((CameraAcceleration.GetLengthSquared() <= 0.0f) && (Velocity.GetLengthSquared() <= (MOVEMENT_REST_SPEED * MOVEMENT_REST_SPEED)))
     {
-        Velocity = Vector3();
+        Velocity = FVector3();
     }
 
     if (Velocity.GetLengthSquared() > 0.0f)
     {
-        const Vector3 Movement = Velocity * DeltaTime;
+        const FVector3 Movement = Velocity * DeltaTime;
         Camera->AddLocalMovement(Movement.X, Movement.Y, Movement.Z);
     }
 }

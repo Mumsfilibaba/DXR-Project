@@ -251,7 +251,7 @@ TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu(FEditorEngine* InEditorEngin
     return Menu;
 }
 
-Vector3 FEditorMenus::GetPlaceActorLocation() const
+FVector3 FEditorMenus::GetPlaceActorLocation() const
 {
     constexpr float DefaultDistance = 10.0f;
 
@@ -263,7 +263,7 @@ Vector3 FEditorMenus::GetPlaceActorLocation() const
         }
     }
 
-    return Vector3(0.0f, 0.0f, 0.0f);
+    return FVector3(0.0f, 0.0f, 0.0f);
 }
 
 void FEditorMenus::BuildWindowsMenu(const TSharedPtr<FMenuBar>& Bar)

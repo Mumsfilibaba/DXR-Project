@@ -2,22 +2,22 @@
 #include "Core/Math/Math.h"
 
 FRectangle FPopupPlacement::Resolve(
-    const FRectangle& Anchor,
-    const IntVector2& Size,
-    const FRectangle& Area,
-    EPopupSide        Side,
-    EPopupFlip        Flips,
-    int32             Gap,
-    int32             CrossOffset)
+    const FRectangle&  Anchor,
+    const FIntVector2& Size,
+    const FRectangle&  Area,
+    EPopupSide         Side,
+    EPopupFlip         Flips,
+    int32              Gap,
+    int32              CrossOffset)
 {
     const bool bMayFlipMain  = (Flips & EPopupFlip::Main) != EPopupFlip::None;
     const bool bMayFlipCross = (Flips & EPopupFlip::Cross) != EPopupFlip::None;
 
-    FRectangle Result(IntVector2(), Size.X, Size.Y);
+    FRectangle Result(FIntVector2(), Size.X, Size.Y);
 
     if (Side == EPopupSide::Below)
     {
-        Result.Position = IntVector2(Anchor.Position.X + CrossOffset, Anchor.GetBottom() + Gap);
+        Result.Position = FIntVector2(Anchor.Position.X + CrossOffset, Anchor.GetBottom() + Gap);
 
         const int32 AboveY = Anchor.Position.Y - Gap - Size.Y;
         if (bMayFlipMain && Result.GetBottom() > Area.GetBottom() && AboveY >= Area.Position.Y)
@@ -33,7 +33,7 @@ FRectangle FPopupPlacement::Resolve(
     }
     else
     {
-        Result.Position = IntVector2(Anchor.GetRight() + Gap, Anchor.Position.Y + CrossOffset);
+        Result.Position = FIntVector2(Anchor.GetRight() + Gap, Anchor.Position.Y + CrossOffset);
 
         const int32 LeftX = Anchor.Position.X - Gap - Size.X;
         if (bMayFlipMain && Result.GetRight() > Area.GetRight() && LeftX >= Area.Position.X)

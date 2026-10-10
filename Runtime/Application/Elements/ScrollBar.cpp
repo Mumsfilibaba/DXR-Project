@@ -45,9 +45,9 @@ void FScrollBar::Initialize(const FDesc& Desc)
     Fade.Settle(Opacity);
 }
 
-IntVector2 FScrollBar::ComputeDesiredSize() const
+FIntVector2 FScrollBar::ComputeDesiredSize() const
 {
-    return Orientation == EOrientation::Vertical ? IntVector2(Thickness, 0) : IntVector2(0, Thickness);
+    return Orientation == EOrientation::Vertical ? FIntVector2(Thickness, 0) : FIntVector2(0, Thickness);
 }
 
 void FScrollBar::OnArrange(const FRectangle& AllottedBounds)
@@ -288,7 +288,7 @@ void FScrollBar::ApplyOffset(int32 InOffset)
     OnOffsetChangedDelegate.ExecuteIfBound(Offset);
 }
 
-void FScrollBar::SetOffsetFromPosition(const IntVector2& ClientPosition)
+void FScrollBar::SetOffsetFromPosition(const FIntVector2& ClientPosition)
 {
     const FRectangle Bounds = GetContentRectangle();
     const int32      Travel = GetThumbTravel(Bounds);

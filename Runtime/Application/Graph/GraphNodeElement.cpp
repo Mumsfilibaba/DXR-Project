@@ -43,7 +43,7 @@ FGraphNodeElement::FGraphNodeElement()
 
 FGraphNodeElement::~FGraphNodeElement() = default;
 
-IntVector2 FGraphNodeElement::ComputeDesiredSize() const
+FIntVector2 FGraphNodeElement::ComputeDesiredSize() const
 {
     int32 TitleWidth      = 0;
     int32 InputLabelWidth = 0;
@@ -71,13 +71,13 @@ IntVector2 FGraphNodeElement::ComputeDesiredSize() const
         ? (Math::Max(InputLabelWidth, OutputLabelWidth) + (GRAPH_NODE_PADDING * 2) + (PinRadius * 4))
         : (InputLabelWidth + OutputLabelWidth + GRAPH_NODE_LABEL_GAP + (GRAPH_NODE_PADDING * 2) + (PinRadius * 4));
 
-    IntVector2 DesiredSize;
+    FIntVector2 DesiredSize;
     DesiredSize.X = Math::Max(MinimumWidth, Math::Max(TitleWidth + (GRAPH_NODE_PADDING * 2), PinsWidth));
     DesiredSize.Y = TitleHeight + (CountPinRows() * PinRowHeight) + GRAPH_NODE_PADDING;
 
     if (Content)
     {
-        const IntVector2 ContentSize = Content->GetCachedDesiredSize();
+        const FIntVector2 ContentSize = Content->GetCachedDesiredSize();
         DesiredSize.X = Math::Max(DesiredSize.X, ContentSize.X + (GRAPH_NODE_PADDING * 2));
         DesiredSize.Y += ContentSize.Y + GRAPH_NODE_PADDING;
     }
@@ -106,7 +106,7 @@ void FGraphNodeElement::OnArrange(const FRectangle& AllottedBounds)
         const int32      CenterX  = bIsInput ? AllottedBounds.Position.X + PinInset : AllottedBounds.GetRight() - PinInset;
         const int32      CenterY  = FirstRowTop + (Row * RowHeight) + (RowHeight / 2);
 
-        PinCenters[Index] = Vector2(static_cast<float>(CenterX), static_cast<float>(CenterY));
+        PinCenters[Index] = FVector2(static_cast<float>(CenterX), static_cast<float>(CenterY));
     }
 
     if (!Content)
@@ -119,7 +119,7 @@ void FGraphNodeElement::OnArrange(const FRectangle& AllottedBounds)
     const int32 ContentBottom = Math::Max(AllottedBounds.GetBottom() - Inset, ContentTop);
 
     const FRectangle ContentBounds(
-        IntVector2(AllottedBounds.Position.X + Inset, ContentTop),
+        FIntVector2(AllottedBounds.Position.X + Inset, ContentTop),
         Math::Max(AllottedBounds.Width - (Inset * 2), 0),
         ContentBottom - ContentTop);
 
@@ -165,7 +165,7 @@ int32 FGraphNodeElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
         {
             const FGraphPin& Pin      = Node.Pins[Index];
             const bool       bIsInput = Pin.Direction == EGraphPinDirection::Input;
-            const Vector2&   Center   = PinCenters[Index];
+            const FVector2&  Center   = PinCenters[Index];
 
             const int32 RowHeight = Scaled(PinRowHeight);
             const int32 LabelGap  = Scaled(PinRadius * 2);
@@ -179,7 +179,7 @@ int32 FGraphNodeElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
                 ? (static_cast<int32>(Center.X) + LabelGap)
                 : (static_cast<int32>(Center.X) - LabelGap - LabelWidth);
 
-            OutCommandList.AddText(LayerId + 1, FRectangle(IntVector2(LabelLeft, Top), LabelWidth, RowHeight), Pin.Name, Font.Get(), TextColor);
+            OutCommandList.AddText(LayerId + 1, FRectangle(FIntVector2(LabelLeft, Top), LabelWidth, RowHeight), Pin.Name, Font.Get(), TextColor);
         }
     }
 
@@ -224,7 +224,7 @@ void FGraphNodeElement::DrawPinSeparator(const FRectangle& Bounds, FDrawCommandL
     const int32 Inset = Scaled(GRAPH_NODE_SEPARATOR_INSET);
     const int32 Y     = Bounds.Position.Y + Scaled(TitleHeight) + (NumInputs * Scaled(PinRowHeight));
 
-    OutCommandList.AddLine(LayerId, FRectangle(IntVector2(Bounds.Position.X + Inset, Y), Math::Max(Bounds.Width - (Inset * 2), 0), 1), Color);
+    OutCommandList.AddLine(LayerId, FRectangle(FIntVector2(Bounds.Position.X + Inset, Y), Math::Max(Bounds.Width - (Inset * 2), 0), 1), Color);
 }
 
 void FGraphNodeElement::SetZoom(float InZoom)
@@ -266,7 +266,7 @@ void FGraphNodeElement::SetHoveredPin(int32 InPinId)
     InvalidatePaint();
 }
 
-bool FGraphNodeElement::GetPinCenter(int32 PinId, Vector2& OutPosition) const
+bool FGraphNodeElement::GetPinCenter(int32 PinId, FVector2& OutPosition) const
 {
     for (int32 Index = 0; Index < Node.Pins.Size() && Index < PinCenters.Size(); ++Index)
     {
@@ -280,10 +280,10 @@ bool FGraphNodeElement::GetPinCenter(int32 PinId, Vector2& OutPosition) const
     return false;
 }
 
-int32 FGraphNodeElement::FindPinAt(const IntVector2& ClientPosition) const
+int32 FGraphNodeElement::FindPinAt(const FIntVector2& ClientPosition) const
 {
-    const float   GrabRadius = Math::Max(static_cast<float>(Scaled(PinRadius)) * 2.0f, 6.0f);
-    const Vector2 Position   = Vector2(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
+    const float    GrabRadius = Math::Max(static_cast<float>(Scaled(PinRadius)) * 2.0f, 6.0f);
+    const FVector2 Position   = FVector2(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
 
     for (int32 Index = 0; Index < Node.Pins.Size() && Index < PinCenters.Size(); ++Index)
     {

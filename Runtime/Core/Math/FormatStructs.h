@@ -59,7 +59,7 @@ struct FR10G10B10A2
     FORCEINLINE FR10G10B10A2(float InR, float InG, float InB, float InA = 0.0f)
         : ARGB(0)
     {
-        Vector3 Vector(InR, InG, InB);
+        FVector3 Vector(InR, InG, InB);
         Vector.Normalize();
 
         Vector.X = Math::Clamp(Vector.X, 0.0f, 1.0f);
@@ -415,7 +415,7 @@ struct FRGBA16Snorm
      * @param InRGB Red, Green and Blue components (-1.0f to 1.0f).
      * @param InA Alpha component (-1.0f to 1.0f, default is 0).
      */
-    FORCEINLINE explicit FRGBA16Snorm(const Vector3& InRGB, float InA = 0.0f)
+    FORCEINLINE explicit FRGBA16Snorm(const FVector3& InRGB, float InA = 0.0f)
         : R(EncodeChannel(InRGB.X))
         , G(EncodeChannel(InRGB.Y))
         , B(EncodeChannel(InRGB.Z))
@@ -427,9 +427,9 @@ struct FRGBA16Snorm
      * @brief Decodes the Red, Green and Blue channels into a vector.
      * @return The decoded vector.
      */
-    FORCEINLINE Vector3 ToVector3() const
+    FORCEINLINE FVector3 ToVector3() const
     {
-        return Vector3(DecodeChannel(R), DecodeChannel(G), DecodeChannel(B));
+        return FVector3(DecodeChannel(R), DecodeChannel(G), DecodeChannel(B));
     }
 
     /**

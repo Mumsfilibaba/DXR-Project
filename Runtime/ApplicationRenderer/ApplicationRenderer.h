@@ -66,7 +66,7 @@ public:
     virtual FDrawCommandList* BeginWindow(const TSharedPtr<FWindow>& InWindow) override final;
     virtual void EndWindow(const TSharedPtr<FWindow>& InWindow) override final;
     virtual void OnWindowDestroyed(const TSharedPtr<FWindow>& InWindow) override final;
-    virtual FRHITextureRef RenderElementToTexture(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, float DPIScale) override final;
+    virtual FRHITextureRef RenderElementToTexture(const TSharedPtr<FVisualElement>& Element, const FIntVector2& Size, float DPIScale) override final;
     virtual void RetireTexture(const FRHITextureRef& Texture) override final;
     virtual void SetPrimaryWindow(const TSharedPtr<FWindow>& InWindow) override final;
     virtual void EnsureWindowSurface(const TSharedPtr<FWindow>& InWindow) override final;
@@ -151,7 +151,7 @@ private:
     {
         TSharedPtr<FWindow> Window;
         FRHISwapChainRef    SwapChain;
-        IntVector2          Size;
+        FIntVector2         Size;
         EDeferredShowState  DeferredShowState = EDeferredShowState::None;
         bool                bIsPrimary        = false;
         bool                bIsRendered       = false;
@@ -180,7 +180,7 @@ private:
     FRHIShaderResourceView* PrepareBrushTexture(FRHICommandList& InCommandList, FRHITexture* Texture);
     void                    PrepareBatchTextures(FRHICommandList& InCommandList, const FUIDrawData& DrawData);
     void                    RenderWindow(FRHICommandList& InCommandList, const FWindowDrawState& WindowState);
-    void                    RenderDrawData(FRHICommandList& InCommandList, const FWindowDrawState& WindowState, const IntVector2& GeometrySize, float SupersampleScale);
+    void                    RenderDrawData(FRHICommandList& InCommandList, const FWindowDrawState& WindowState, const FIntVector2& GeometrySize, float SupersampleScale);
     FRHIShaderResourceView* GetDefaultShaderResourceView() const;
     FRHIShaderResourceView* GetAtlasShaderResourceView(const FFontAtlas* Atlas) const;
     FRHIShaderResourceView* GetBatchShaderResourceView(const FUITextureHandle& Texture) const;

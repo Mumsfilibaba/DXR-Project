@@ -17,7 +17,7 @@ public:
     }
 
     virtual void SetPosition(int32 x, int32 y) override final;
-    virtual IntVector2 GetPosition() const override final;
+    virtual FIntVector2 GetPosition() const override final;
 
     virtual void SetVisibility(bool bVisible) override final;
 

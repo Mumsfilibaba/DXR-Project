@@ -30,7 +30,7 @@ TSharedPtr<FWindow> Popups::Open(const TSharedPtr<FWindow>& ParentWindow, const 
     FWindow::FDesc Desc;
     Desc.Title           = "Popup";
     Desc.ParentWindow    = ParentWindow;
-    Desc.Size            = IntVector2(Bounds.Width, Bounds.Height);
+    Desc.Size            = FIntVector2(Bounds.Width, Bounds.Height);
     Desc.Position        = Bounds.Position;
     Desc.StyleFlags      = EWindowStyleFlags::TopMost | EWindowStyleFlags::NoTaskBarIcon;
     Desc.bActivateOnShow = false;
@@ -78,7 +78,7 @@ void Popups::Close(const TSharedPtr<FWindow>& PopupWindow)
     }
 }
 
-FRectangle Popups::FindWorkArea(const IntVector2& Point)
+FRectangle Popups::FindWorkArea(const FIntVector2& Point)
 {
     TArray<FMonitorInfo> Monitors;
     if (FApplication::IsInitialized())

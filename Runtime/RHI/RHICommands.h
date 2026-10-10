@@ -134,14 +134,14 @@ DECLARE_RHICOMMAND(FRHICommandQueryTimestamp)
 
 DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)
 {
-    FORCEINLINE FRHICommandClearRenderTargetView(FRHIRenderTargetViewRef InRenderTargetView, const Vector4& InClearColor)
+    FORCEINLINE FRHICommandClearRenderTargetView(FRHIRenderTargetViewRef InRenderTargetView, const FVector4& InClearColor)
         : RenderTargetView(Move(InRenderTargetView))
         , ClearColor(InClearColor)
     {
         CHECK(RenderTargetView.Get() != nullptr);
     }
 
-    FORCEINLINE FRHICommandClearRenderTargetView(FRHIRenderTargetView* InRenderTargetView, const Vector4& InClearColor)
+    FORCEINLINE FRHICommandClearRenderTargetView(FRHIRenderTargetView* InRenderTargetView, const FVector4& InClearColor)
         : FRHICommandClearRenderTargetView(MakeSharedRef<FRHIRenderTargetView>(InRenderTargetView), InClearColor)
     {
     }
@@ -152,7 +152,7 @@ DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)
     }
 
     FRHIRenderTargetViewRef RenderTargetView;
-    Vector4                 ClearColor;
+    FVector4                ClearColor;
 };
 
 DECLARE_RHICOMMAND(FRHICommandClearDepthStencilView)
@@ -182,14 +182,14 @@ DECLARE_RHICOMMAND(FRHICommandClearDepthStencilView)
 
 DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewFloat)
 {
-    FORCEINLINE FRHICommandClearUnorderedAccessViewFloat(FRHIUnorderedAccessViewRef InUnorderedAccessView, const Vector4& InClearColor)
+    FORCEINLINE FRHICommandClearUnorderedAccessViewFloat(FRHIUnorderedAccessViewRef InUnorderedAccessView, const FVector4& InClearColor)
         : UnorderedAccessView(Move(InUnorderedAccessView))
         , ClearColor(InClearColor)
     {
         CHECK(UnorderedAccessView.Get() != nullptr);
     }
 
-    FORCEINLINE FRHICommandClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* InUnorderedAccessView, const Vector4& InClearColor)
+    FORCEINLINE FRHICommandClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* InUnorderedAccessView, const FVector4& InClearColor)
         : FRHICommandClearUnorderedAccessViewFloat(MakeSharedRef<FRHIUnorderedAccessView>(InUnorderedAccessView), InClearColor)
     {
     }
@@ -200,7 +200,7 @@ DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewFloat)
     }
 
     FRHIUnorderedAccessViewRef UnorderedAccessView;
-    Vector4                    ClearColor;
+    FVector4                   ClearColor;
 };
 
 DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewUint)
@@ -283,7 +283,7 @@ DECLARE_RHICOMMAND(FRHICommandSetScissorRect)
 
 DECLARE_RHICOMMAND(FRHICommandSetBlendFactor)
 {
-    FORCEINLINE FRHICommandSetBlendFactor(const Vector4& InColor)
+    FORCEINLINE FRHICommandSetBlendFactor(const FVector4& InColor)
         : Color(InColor)
     {
     }
@@ -293,7 +293,7 @@ DECLARE_RHICOMMAND(FRHICommandSetBlendFactor)
         CommandContext.SetBlendFactor(Color);
     }
 
-    Vector4 Color;
+    FVector4 Color;
 };
 
 DECLARE_RHICOMMAND(FRHICommandSetStencilRef)

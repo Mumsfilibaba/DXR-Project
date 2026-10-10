@@ -71,9 +71,9 @@ void FEditorViewportSurface::SetLayers(const TSharedPtr<FEditorViewportImage>& I
     }
 }
 
-IntVector2 FEditorViewportSurface::ComputeDesiredSize() const
+FIntVector2 FEditorViewportSurface::ComputeDesiredSize() const
 {
-    return IntVector2(0, 0);
+    return FIntVector2(0, 0);
 }
 
 void FEditorViewportSurface::OnArrange(const FRectangle& AllottedBounds)
@@ -85,7 +85,7 @@ void FEditorViewportSurface::OnArrange(const FRectangle& AllottedBounds)
 
     if (HostViewport)
     {
-        HostViewport->SetSize(IntVector2(AllottedBounds.Width, AllottedBounds.Height));
+        HostViewport->SetSize(FIntVector2(AllottedBounds.Width, AllottedBounds.Height));
         HostViewport->Arrange(AllottedBounds);
     }
 
@@ -100,7 +100,7 @@ EChildVisit FEditorViewportSurface::VisitChildren(FChildVisitor& Visitor, EChild
     return VisitChildList(Visitor, Order, Image, HostViewport, Gizmo);
 }
 
-void FEditorViewportSurface::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+void FEditorViewportSurface::HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath)
 {
     if (HostViewport)
     {
@@ -207,8 +207,8 @@ bool FEditorViewportSurface::IsGizmoBusy() const
 
 FRectangle FEditorViewportSurface::GetMarqueeRectangle() const
 {
-    const IntVector2 Min(Math::Min(MarqueeStartPosition.X, MarqueeEndPosition.X), Math::Min(MarqueeStartPosition.Y, MarqueeEndPosition.Y));
-    const IntVector2 Max(Math::Max(MarqueeStartPosition.X, MarqueeEndPosition.X), Math::Max(MarqueeStartPosition.Y, MarqueeEndPosition.Y));
+    const FIntVector2 Min(Math::Min(MarqueeStartPosition.X, MarqueeEndPosition.X), Math::Min(MarqueeStartPosition.Y, MarqueeEndPosition.Y));
+    const FIntVector2 Max(Math::Max(MarqueeStartPosition.X, MarqueeEndPosition.X), Math::Max(MarqueeStartPosition.Y, MarqueeEndPosition.Y));
 
     return FRectangle(Min, Max.X - Min.X, Max.Y - Min.Y);
 }
@@ -230,8 +230,8 @@ void FEditorViewportSurface::EndMarquee()
 
 FEventResponse FEditorViewportSurface::OnMouseMove(const FCursorEvent& CursorEvent)
 {
-    const IntVector2 Position = CursorEvent.GetClientPosition();
-    const IntVector2 Delta    = Position - LastCursorPosition;
+    const FIntVector2 Position = CursorEvent.GetClientPosition();
+    const FIntVector2 Delta    = Position - LastCursorPosition;
 
     LastCursorPosition = Position;
 
@@ -264,7 +264,7 @@ FEventResponse FEditorViewportSurface::OnMouseMove(const FCursorEvent& CursorEve
 
         if (!bMarqueeActive)
         {
-            const IntVector2 Travel = Position - MarqueeStartPosition;
+            const FIntVector2 Travel = Position - MarqueeStartPosition;
             bMarqueeActive = ((Travel.X * Travel.X) + (Travel.Y * Travel.Y)) > (MarqueeDragThreshold * MarqueeDragThreshold);
 
             if (bMarqueeActive && FApplication::IsInitialized())
@@ -354,7 +354,7 @@ FEventResponse FEditorViewportSurface::OnMouseButtonUp(const FCursorEvent& Curso
     {
         CameraInput->bLeftMouseDown = false;
 
-        const IntVector2 Origin = GetContentRectangle().Position;
+        const FIntVector2 Origin = GetContentRectangle().Position;
 
         if (bMarqueeActive)
         {
@@ -363,7 +363,7 @@ FEventResponse FEditorViewportSurface::OnMouseButtonUp(const FCursorEvent& Curso
 
             EndMarquee();
 
-            OnMarqueeSelectDelegate.ExecuteIfBound(Marquee.Position - Origin, IntVector2(Marquee.GetRight(), Marquee.GetBottom()) - Origin, bAdditive);
+            OnMarqueeSelectDelegate.ExecuteIfBound(Marquee.Position - Origin, FIntVector2(Marquee.GetRight(), Marquee.GetBottom()) - Origin, bAdditive);
         }
         else if (bLeftPressedInside && !IsGizmoBusy())
         {
@@ -516,8 +516,8 @@ FEventResponse FEditorViewportSurface::OnKeyUp(const FKeyEvent& KeyEvent)
 
 FEventResponse FEditorViewportSurface::OnFocusLost()
 {
-    CameraInput->MoveAxis     = Vector3(0.0f);
-    CameraInput->RotationAxis = Vector2(0.0f, 0.0f);
+    CameraInput->MoveAxis     = FVector3(0.0f);
+    CameraInput->RotationAxis = FVector2(0.0f, 0.0f);
 
     return FEventResponse::Unhandled();
 }
@@ -533,8 +533,8 @@ void FEditorViewportSurface::ResetInputState()
 
     *CameraInput = FEditorCameraInputState();
 
-    MarqueeStartPosition   = IntVector2();
-    MarqueeEndPosition     = IntVector2();
+    MarqueeStartPosition   = FIntVector2();
+    MarqueeEndPosition     = FIntVector2();
     RightMouseDragDistance = 0.0f;
     bMouseLookActive       = false;
     bLeftPressedInside     = false;
@@ -547,8 +547,8 @@ const FEditorCameraInputState& FEditorViewportSurface::GetCameraInput() const
 
 void FEditorViewportSurface::ConsumeCameraInputDeltas()
 {
-    CameraInput->LookDelta     = Vector2(0.0f, 0.0f);
-    CameraInput->PanDelta      = Vector2(0.0f, 0.0f);
+    CameraInput->LookDelta     = FVector2(0.0f, 0.0f);
+    CameraInput->PanDelta      = FVector2(0.0f, 0.0f);
     CameraInput->WheelDelta    = 0.0f;
     CameraInput->bFocusPressed = false;
     CameraInput->bResetPressed = false;

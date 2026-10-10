@@ -46,7 +46,7 @@ public:
      * @param ClientPosition The point, in the client space of the window holding this host.
      * @return True when a hit testable menu is over the point.
      */
-    NODISCARD bool CoversPoint(const IntVector2& ClientPosition) const;
+    NODISCARD bool CoversPoint(const FIntVector2& ClientPosition) const;
 
     /**
      * @brief Hit tests the host the way its window does, which leaves the host out of the path unless a hit testable
@@ -55,7 +55,7 @@ public:
      * @param ClientPosition The point, in the client space of the window holding this host.
      * @param OutPath        The path to append the host and the chain under the point to.
      */
-    void HitTestHostedChild(const IntVector2& ClientPosition, FElementPath& OutPath);
+    void HitTestHostedChild(const FIntVector2& ClientPosition, FElementPath& OutPath);
 
 public:
 
@@ -65,7 +65,7 @@ public:
 
 protected:
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
-    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+    virtual void HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath) override;
 
 private:
     struct FHostedChild
@@ -82,7 +82,7 @@ private:
         bool                       bHitTestable;
     };
 
-    NODISCARD const FHostedChild* FindChildAtPoint(const IntVector2& ClientPosition) const;
+    NODISCARD const FHostedChild* FindChildAtPoint(const FIntVector2& ClientPosition) const;
 
     TArray<FHostedChild> Children;
 };

@@ -67,9 +67,9 @@ void FHistogram::Initialize(const FDesc& Desc)
     Clear();
 }
 
-IntVector2 FHistogram::ComputeDesiredSize() const
+FIntVector2 FHistogram::ComputeDesiredSize() const
 {
-    return IntVector2(Capacity, PreferredHeight);
+    return FIntVector2(Capacity, PreferredHeight);
 }
 
 int32 FHistogram::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -90,7 +90,7 @@ int32 FHistogram::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
         if (SelectedSample != InvalidSampleIndex)
         {
             const int32 Left = Bounds.Position.X + (SelectedSample * ColumnWidth);
-            const FRectangle Selection(IntVector2(Left, Bounds.Position.Y),
+            const FRectangle Selection(FIntVector2(Left, Bounds.Position.Y),
                 Math::Min(ColumnWidth, Math::Max(Bounds.GetRight() - Left, 0)), Bounds.Height);
             if (!Selection.IsEmpty())
             {
@@ -98,7 +98,7 @@ int32 FHistogram::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
             }
         }
 
-        TArray<Vector2> Points;
+        TArray<FVector2> Points;
         Points.Reserve(NumSamples);
 
         for (int32 Index = 0; Index < NumSamples; ++Index)
@@ -114,7 +114,7 @@ int32 FHistogram::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
             const float X        = static_cast<float>(Math::Min(Left + (ColumnWidth / 2), Bounds.GetRight() - 1));
             const float Y        = static_cast<float>(Bounds.GetBottom() - 1) - (Fraction * static_cast<float>(Math::Max(Bounds.Height - 1, 0)));
 
-            Points.Add(Vector2(X, Y));
+            Points.Add(FVector2(X, Y));
         }
 
         if (Points.Size() >= 2)
@@ -134,7 +134,7 @@ int32 FHistogram::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
             const int32 WarningY        = Bounds.GetBottom() - 1 - 
                 Math::RoundToInt(WarningFraction * static_cast<float>(Math::Max(Bounds.Height - 1, 0)));
             
-            OutCommandList.AddLine(LayerId + 2, FRectangle(IntVector2(Bounds.Position.X, WarningY), Bounds.Width, 1), WarningColor);
+            OutCommandList.AddLine(LayerId + 2, FRectangle(FIntVector2(Bounds.Position.X, WarningY), Bounds.Width, 1), WarningColor);
             MaxLayerId = LayerId + 2;
         }
     }
@@ -183,7 +183,7 @@ int32 FHistogram::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
 
         if (!Value.IsEmpty() && ValueWidth <= TextBounds.Width)
         {
-            const FRectangle ValueBounds = FLayout::AlignInBounds(TextBounds, IntVector2(ValueWidth, Font->GetLineHeight()),
+            const FRectangle ValueBounds = FLayout::AlignInBounds(TextBounds, FIntVector2(ValueWidth, Font->GetLineHeight()),
                 EHorizontalAlignment::Right, EVerticalAlignment::Top);
             OutCommandList.AddText(LayerId + 3, ValueBounds, Value, Font.Get(), Style.Colors.Text);
 
@@ -197,7 +197,7 @@ int32 FHistogram::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
 
             if (!Elided.IsEmpty())
             {
-                const FRectangle LabelBounds = FLayout::AlignInBounds(TextBounds, IntVector2(LabelWidth, Font->GetLineHeight()),
+                const FRectangle LabelBounds = FLayout::AlignInBounds(TextBounds, FIntVector2(LabelWidth, Font->GetLineHeight()),
                     EHorizontalAlignment::Left, EVerticalAlignment::Top);
                 OutCommandList.AddText(LayerId + 3, LabelBounds, Elided, Font.Get(), Style.Colors.Text);
 
@@ -212,7 +212,7 @@ int32 FHistogram::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
 
 FEventResponse FHistogram::OnMouseMove(const FCursorEvent& CursorEvent)
 {
-    const IntVector2 ClientPosition = CursorEvent.GetClientPosition();
+    const FIntVector2 ClientPosition = CursorEvent.GetClientPosition();
 
     HoveredSample = ResolveSampleAt(ClientPosition, false);
 
@@ -375,7 +375,7 @@ int32 FHistogram::ResolveColumnWidth(int32 AvailableWidth) const
     return Math::Max(AvailableWidth / Math::Max(Capacity, 1), 1);
 }
 
-int32 FHistogram::ResolveSampleAt(const IntVector2& ClientPosition, bool bClampToStrip) const
+int32 FHistogram::ResolveSampleAt(const FIntVector2& ClientPosition, bool bClampToStrip) const
 {
     if (NumSamples <= 0)
     {

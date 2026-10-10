@@ -36,11 +36,11 @@ private:
         TranslateInsteadOfScale,
     };
 
-    Vector3 GetActorGizmoPoint(FActor* Actor, bool bUseBoundsCenter) const;
+    FVector3 GetActorGizmoPoint(FActor* Actor, bool bUseBoundsCenter) const;
     
     bool DrawGuizmo();
-    void DrawSingleActor(FActor* Actor, const Matrix4& View, const Matrix4& Projection, EditorGuizmo::EOperation::Type Operation, EditorGuizmo::EMode Orientation, bool bUseBoundsCenter);
-    bool DrawMultipleActors(const TArray<FActor*>& Actors, const Matrix4& View, const Matrix4& Projection, EditorGuizmo::EOperation::Type Operation, EditorGuizmo::EMode Orientation, bool bUseBoundsCenter);
+    void DrawSingleActor(FActor* Actor, const FMatrix4& View, const FMatrix4& Projection, EditorGuizmo::EOperation::Type Operation, EditorGuizmo::EMode Orientation, bool bUseBoundsCenter);
+    bool DrawMultipleActors(const TArray<FActor*>& Actors, const FMatrix4& View, const FMatrix4& Projection, EditorGuizmo::EOperation::Type Operation, EditorGuizmo::EMode Orientation, bool bUseBoundsCenter);
     void UpdateShortcuts(bool bViewportHovered);
     void CaptureMultiDragState(const TArray<FActor*>& Actors, EditorGuizmo::EMode Orientation, bool bUseBoundsCenter);
 
@@ -48,10 +48,10 @@ private:
 
     FEditorEngine*     EditorEngine;
     FDelegateHandle    ImGuiEndFrameDelegateHandle;
-    Matrix4            GizmoMatrix;
-    Matrix4            GizmoStartMatrix;
+    FMatrix4           GizmoMatrix;
+    FMatrix4           GizmoStartMatrix;
     TArray<FActor*>    DragActors;
-    TArray<Matrix4>    DragStartTransforms;
+    TArray<FMatrix4>   DragStartTransforms;
     TSet<FActor*>      SelectionLookup;
     FActor*            OperationOverrideActor;
     EOperationOverride OperationOverride;

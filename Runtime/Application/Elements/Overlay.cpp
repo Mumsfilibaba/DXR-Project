@@ -16,9 +16,9 @@ FOverlay::FOverlay()
 
 FOverlay::~FOverlay() = default;
 
-IntVector2 FOverlay::ComputeDesiredSize() const
+FIntVector2 FOverlay::ComputeDesiredSize() const
 {
-    IntVector2 DesiredSize;
+    FIntVector2 DesiredSize;
     for (const FOverlaySlot& Slot : Slots)
     {
         if (!Slot.Element)
@@ -26,9 +26,9 @@ IntVector2 FOverlay::ComputeDesiredSize() const
             continue;
         }
 
-        const IntVector2 ChildSize = Slot.Element->GetCachedDesiredSize();
-        DesiredSize.X              = Math::Max(DesiredSize.X, ChildSize.X + Slot.Padding.GetTotalHorizontal());
-        DesiredSize.Y              = Math::Max(DesiredSize.Y, ChildSize.Y + Slot.Padding.GetTotalVertical());
+        const FIntVector2 ChildSize = Slot.Element->GetCachedDesiredSize();
+        DesiredSize.X               = Math::Max(DesiredSize.X, ChildSize.X + Slot.Padding.GetTotalHorizontal());
+        DesiredSize.Y               = Math::Max(DesiredSize.Y, ChildSize.Y + Slot.Padding.GetTotalVertical());
     }
 
     return DesiredSize;

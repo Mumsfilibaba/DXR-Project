@@ -145,9 +145,9 @@ public:
      * @brief Constructs a float color from a 3D vector.
      * @param InVector The input vector containing RGB components.
      */
-    FORCEINLINE explicit FFloatColor(const Vector3& InVector)
+    FORCEINLINE explicit FFloatColor(const FVector3& InVector)
     {
-        Memory::Memcpy(RGBA, &InVector, sizeof(Vector3));
+        Memory::Memcpy(RGBA, &InVector, sizeof(FVector3));
 
         RGBA[3] = 1.0f;
     }
@@ -156,7 +156,7 @@ public:
      * @brief Constructs a float color from a 4D vector.
      * @param InVector The input vector containing RGBA components.
      */
-    FORCEINLINE explicit FFloatColor(const Vector4& InVector)
+    FORCEINLINE explicit FFloatColor(const FVector4& InVector)
     {
         Memory::Memcpy(RGBA, &InVector, sizeof(RGBA));
     }

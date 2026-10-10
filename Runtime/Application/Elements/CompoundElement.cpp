@@ -11,12 +11,12 @@ FCompoundElement::FCompoundElement()
 
 FCompoundElement::~FCompoundElement() = default;
 
-IntVector2 FCompoundElement::ComputeDesiredSize() const
+FIntVector2 FCompoundElement::ComputeDesiredSize() const
 {
-    IntVector2 DesiredSize(Padding.GetTotalHorizontal(), Padding.GetTotalVertical());
+    FIntVector2 DesiredSize(Padding.GetTotalHorizontal(), Padding.GetTotalVertical());
     if (Content)
     {
-        const IntVector2 ContentSize = Content->GetCachedDesiredSize();
+        const FIntVector2 ContentSize = Content->GetCachedDesiredSize();
         DesiredSize.X += ContentSize.X;
         DesiredSize.Y += ContentSize.Y;
     }

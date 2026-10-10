@@ -10,14 +10,14 @@ public:
     FLightComponent(const FObjectInitializer& ObjectInitializer);
     virtual ~FLightComponent();
 
-    void SetColor(const Vector3& InColor);
+    void SetColor(const FVector3& InColor);
     void SetIntensity(float InIntensity);
     void SetCastShadows(bool bInCastShadows);
     void SetShadowNearPlane(float InShadowNearPlane);
     void SetShadowFarPlane(float InShadowFarPlane);
     void SetShadowBias(float InShadowBias);
 
-    FORCEINLINE const Vector3& GetColor() const
+    FORCEINLINE const FVector3& GetColor() const
     {
         return Color;
     }
@@ -50,10 +50,10 @@ public:
 protected:
     FLightComponent(const FObjectInitializer& ObjectInitializer, float InShadowNearPlane, float InShadowFarPlane);
 
-    Vector3 Color;
-    float   Intensity;
-    float   ShadowNearPlane;
-    float   ShadowFarPlane;
-    float   ShadowBias;
-    bool    bCastShadows;
+    FVector3 Color;
+    float    Intensity;
+    float    ShadowNearPlane;
+    float    ShadowFarPlane;
+    float    ShadowBias;
+    bool     bCastShadows;
 };

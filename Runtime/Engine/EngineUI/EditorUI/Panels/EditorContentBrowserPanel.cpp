@@ -63,7 +63,7 @@ constexpr float CONTENT_SEARCH_FRACTION = 0.25f;
 constexpr int32 CONTENT_SEARCH_MIN      = 120;
 
 /** @brief Called with the target under a point, which is InvalidTarget when the point is over none. */
-DECLARE_RETURN_DELEGATE(FOnBrowserHitTest, int32, const IntVector2& /*ClientPosition*/);
+DECLARE_RETURN_DELEGATE(FOnBrowserHitTest, int32, const FIntVector2& /*ClientPosition*/);
 
 /** @brief Called with a target, for the bounds to outline or to place an edit field over. */
 DECLARE_RETURN_DELEGATE(FOnBrowserTargetBounds, FRectangle, int32 /*Target*/);
@@ -75,7 +75,7 @@ DECLARE_RETURN_DELEGATE(FOnBrowserTargetLabel, FString, int32 /*Target*/);
 DECLARE_RETURN_DELEGATE(FOnBrowserCanDrop, bool, int32 /*Target*/);
 
 /** @brief Called with the target that was right-clicked, which is InvalidTarget below the items. */
-DECLARE_DELEGATE(FOnBrowserContextMenu, int32 /*Target*/, const IntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnBrowserContextMenu, int32 /*Target*/, const FIntVector2& /*ScreenPosition*/);
 
 /** @brief Called with the name an edit committed. */
 DECLARE_DELEGATE(FOnBrowserRenameCommitted, int32 /*Target*/, const FString& /*NewName*/);
@@ -112,16 +112,16 @@ public:
 
     virtual ~FBrowserGlyph() = default;
 
-    virtual IntVector2 ComputeDesiredSize() const override final
+    virtual FIntVector2 ComputeDesiredSize() const override final
     {
-        return IntVector2(Size, Size);
+        return FIntVector2(Size, Size);
     }
 
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final
     {
         if (Brush.IsValid())
         {
-            const FRectangle Bounds = FLayout::AlignInBounds(AllottedGeometry.Bounds, IntVector2(Size, Size),
+            const FRectangle Bounds = FLayout::AlignInBounds(AllottedGeometry.Bounds, FIntVector2(Size, Size),
                 EHorizontalAlignment::Center, EVerticalAlignment::Center);
 
             OutCommandList.AddImage(LayerId, Bounds, Brush, Tint);
@@ -199,7 +199,7 @@ public:
     virtual ~FEditorContentBrowserView();
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override final;
+    virtual FIntVector2 ComputeDesiredSize() const override final;
     virtual void OnArrange(const FRectangle& AllottedBounds) override final;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final;
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override final;
@@ -238,7 +238,7 @@ private:
     void Initialize(const FDesc& Desc);
     void CommitRename(const FString& NewName);
     void ReleaseRenameField();
-    void HandleDrop(const FDragDropPayload& Payload, const IntVector2& ScreenPosition);
+    void HandleDrop(const FDragDropPayload& Payload, const FIntVector2& ScreenPosition);
     void ClearDragState();
 
     NODISCARD EKeyInterceptResult HandleRenameFieldKeyDown(const FKeyEvent& KeyEvent);
@@ -268,7 +268,7 @@ private:
     bool                       bRestoreViewFocus;
 };
 
-static IntVector2 ScreenToClient(const TSharedPtr<FVisualElement>& Element, const IntVector2& ScreenPosition)
+static FIntVector2 ScreenToClient(const TSharedPtr<FVisualElement>& Element, const FIntVector2& ScreenPosition)
 {
     const FRectangle ScreenBounds = FMenuStack::GetScreenBounds(Element);
     if (ScreenBounds.IsEmpty())
@@ -347,9 +347,9 @@ void FEditorContentBrowserView::Initialize(const FDesc& Desc)
     FDragDropService::Get().RegisterTarget(AsSharedPtr(), FOnDragDropped::CreateRaw(this, &FEditorContentBrowserView::HandleDrop), OnOver);
 }
 
-IntVector2 FEditorContentBrowserView::ComputeDesiredSize() const
+FIntVector2 FEditorContentBrowserView::ComputeDesiredSize() const
 {
-    return View ? View->GetCachedDesiredSize() : IntVector2(0, 0);
+    return View ? View->GetCachedDesiredSize() : FIntVector2(0, 0);
 }
 
 void FEditorContentBrowserView::OnArrange(const FRectangle& AllottedBounds)
@@ -489,8 +489,8 @@ FEventResponse FEditorContentBrowserView::OnMouseMove(const FCursorEvent& Cursor
         return FEventResponse::Unhandled();
     }
 
-    const IntVector2 ScreenPosition = CursorEvent.GetScreenPosition();
-    const IntVector2 ClientPosition = ScreenToClient(AsSharedPtr(), ScreenPosition);
+    const FIntVector2 ScreenPosition = CursorEvent.GetScreenPosition();
+    const FIntVector2 ClientPosition = ScreenToClient(AsSharedPtr(), ScreenPosition);
 
     DropTarget          = HitTest.IsBound() ? HitTest.Execute(ClientPosition) : InvalidTarget;
     bIsCursorInsideView = GetContentRectangle().EncapsulatesPoint(ClientPosition);
@@ -669,7 +669,7 @@ EKeyInterceptResult FEditorContentBrowserView::HandleRenameFieldKeyDown(const FK
     return EKeyInterceptResult::NotHandled;
 }
 
-void FEditorContentBrowserView::HandleDrop(const FDragDropPayload& Payload, const IntVector2& ScreenPosition)
+void FEditorContentBrowserView::HandleDrop(const FDragDropPayload& Payload, const FIntVector2& ScreenPosition)
 {
     const int32 Target = HitTest.IsBound() ? HitTest.Execute(ScreenToClient(AsSharedPtr(), ScreenPosition)) : InvalidTarget;
     if (CanDrop.IsBound() && !CanDrop.Execute(Target))
@@ -750,8 +750,8 @@ bool FEditorContentBrowserPanel::Initialize()
         return false;
     }
 
-    Splitter->AddChild(FolderColumn, IntVector2(FOLDER_PANEL_MIN, 0));
-    Splitter->AddChild(ContentColumn, IntVector2(CONTENT_PANEL_MIN, 0));
+    Splitter->AddChild(FolderColumn, FIntVector2(FOLDER_PANEL_MIN, 0));
+    Splitter->AddChild(ContentColumn, FIntVector2(CONTENT_PANEL_MIN, 0));
 
     Content = Splitter;
 
@@ -839,7 +839,7 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildContentColumn()
 
     FTileView::FDesc TileDesc;
     TileDesc.Font            = FEditorStyle::GetFonts().Body;
-    TileDesc.TileSize        = IntVector2(TILE_WIDTH, TILE_HEIGHT);
+    TileDesc.TileSize        = FIntVector2(TILE_WIDTH, TILE_HEIGHT);
     TileDesc.TileSpacing     = TILE_SPACING;
     TileDesc.IconSize        = TILE_ICON_SIZE;
     TileDesc.LabelInset      = TILE_LABEL_INSET;
@@ -1879,7 +1879,7 @@ void FEditorContentBrowserPanel::OnContentSearchTextChanged(const FString& Searc
     RefreshTiles();
 }
 
-void FEditorContentBrowserPanel::OnTreeContextMenu(int32 Target, const IntVector2& ScreenPosition)
+void FEditorContentBrowserPanel::OnTreeContextMenu(int32 Target, const FIntVector2& ScreenPosition)
 {
     if (!FApplication::IsInitialized())
     {
@@ -1904,7 +1904,7 @@ void FEditorContentBrowserPanel::OnTreeContextMenu(int32 Target, const IntVector
     }
 }
 
-void FEditorContentBrowserPanel::OnGridContextMenu(int32 Target, const IntVector2& ScreenPosition)
+void FEditorContentBrowserPanel::OnGridContextMenu(int32 Target, const FIntVector2& ScreenPosition)
 {
     if (!FApplication::IsInitialized())
     {
@@ -2063,7 +2063,7 @@ FRectangle FEditorContentBrowserPanel::GetTileLabelBounds(int32 Target) const
     return TileView->GetTileLabelBounds(Target);
 }
 
-int32 FEditorContentBrowserPanel::HitTestTree(const IntVector2& ClientPosition) const
+int32 FEditorContentBrowserPanel::HitTestTree(const FIntVector2& ClientPosition) const
 {
     const TSharedPtr<FTreeItem> Item = FolderTree->FindItemAt(ClientPosition);
     if (!Item)
@@ -2075,7 +2075,7 @@ int32 FEditorContentBrowserPanel::HitTestTree(const IntVector2& ClientPosition) 
     return (Index != TArray<TSharedPtr<FTreeItem>>::InvalidIndex) ? Index : FEditorContentBrowserView::InvalidTarget;
 }
 
-int32 FEditorContentBrowserPanel::HitTestGrid(const IntVector2& ClientPosition) const
+int32 FEditorContentBrowserPanel::HitTestGrid(const FIntVector2& ClientPosition) const
 {
     const int32 Index = TileView->FindTileAt(ClientPosition);
     return (Index != FTileView::InvalidTileIndex) ? Index : FEditorContentBrowserView::InvalidTarget;

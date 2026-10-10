@@ -111,12 +111,12 @@ public:
         return Application;
     }
 
-    FORCEINLINE void SetCachedPosition(const IntVector2& InPosition)
+    FORCEINLINE void SetCachedPosition(const FIntVector2& InPosition)
     {
         Position = InPosition;
     }
 
-    FORCEINLINE const IntVector2& GetCachedPosition() const
+    FORCEINLINE const FIntVector2& GetCachedPosition() const
     {
         return Position;
     }
@@ -128,7 +128,7 @@ private:
     FCocoaWindow*            CocoaWindow;
     FCocoaWindow*            ParentCocoaWindow;
     FCocoaWindowView*        CocoaWindowView;
-    IntVector2               Position;
+    FIntVector2              Position;
     EWindowStyleFlags        StyleParams;
     bool                     bAcceptsInput;
     FWindowTitleBarRegions   TitleBarRegions;

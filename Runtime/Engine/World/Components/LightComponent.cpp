@@ -31,7 +31,7 @@ FLightComponent::~FLightComponent()
 {
 }
 
-void FLightComponent::SetColor(const Vector3& InColor)
+void FLightComponent::SetColor(const FVector3& InColor)
 {
     Color = InColor;
 }

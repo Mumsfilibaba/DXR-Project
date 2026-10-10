@@ -54,7 +54,7 @@ private:
 #endif
 
     NODISCARD TSharedPtr<FVisualElement> BuildHeaderRow();
-    NODISCARD TSharedPtr<FVisualElement> BuildNodeContextMenu(const Vector2& GraphPosition, int32 NodeId);
+    NODISCARD TSharedPtr<FVisualElement> BuildNodeContextMenu(const FVector2& GraphPosition, int32 NodeId);
     void ShowPassInProfiler(const FString& PassName);
     void ApplyPendingPassSelection();
 
@@ -65,7 +65,7 @@ private:
     TSharedPtr<FGraphModel>  Model;
     TSharedPtr<FTextBlock>   GraphNameText;
     TSharedPtr<FTextBlock>   StatisticsText;
-    TMap<FString, Vector2>   PositionsByPassName;
+    TMap<FString, FVector2>  PositionsByPassName;
     TArray<FBuiltPass>       BuiltPasses;
     FString                  BuiltSignature;
     FString                  PendingPassName;

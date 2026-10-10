@@ -478,15 +478,15 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
 
     struct FGenMipsConstants
     {
-        uint32  SrcMipLevel;  // MipLevel to read from
-        uint32  NumMipLevels; // Number of MipLevels we want to create (Up to 4)
-        Vector2 TexelSize;    // Size of the first destination miplevel
+        uint32   SrcMipLevel;  // MipLevel to read from
+        uint32   NumMipLevels; // Number of MipLevels we want to create (Up to 4)
+        FVector2 TexelSize;    // Size of the first destination miplevel
     } ShaderConstantData;
 
     // Start with size of the destination to be divided by 2 since we are starting with mip 1
-    const IntVector3 TextureExtent = StagingTexture->GetDesc().Extent;
-    uint32 DstWidth  = static_cast<uint32>(TextureExtent.X) / 2;
-    uint32 DstHeight = static_cast<uint32>(TextureExtent.Y) / 2;
+    const FIntVector3 TextureExtent = StagingTexture->GetDesc().Extent;
+    uint32 DstWidth   = static_cast<uint32>(TextureExtent.X) / 2;
+    uint32 DstHeight  = static_cast<uint32>(TextureExtent.Y) / 2;
     ShaderConstantData.SrcMipLevel = 0;
 
     constexpr uint32 NumThreadsTexture2D   = 1;
@@ -497,7 +497,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
     uint32 RemainingMiplevels = NumMipLevels - 1;
     for (uint32 DispatchIndex = 0; DispatchIndex < NumDispatches; DispatchIndex++)
     {
-        ShaderConstantData.TexelSize = Vector2(1.0f / static_cast<float>(DstWidth), 1.0f / static_cast<float>(DstHeight));
+        ShaderConstantData.TexelSize = FVector2(1.0f / static_cast<float>(DstWidth), 1.0f / static_cast<float>(DstHeight));
 
         const uint32 NumMipLevelsThisBatch = Math::Min<uint32>(MipLevelsPerDispatch, RemainingMiplevels);
         ShaderConstantData.NumMipLevels = NumMipLevelsThisBatch;
@@ -797,10 +797,10 @@ bool FTextureFactory::PackMaterialParamsTexture(const FRHITextureRef& AOTexture,
     FRHITextureCopyDesc CopyDesc;
     CopyDesc.DstArraySlice  = 0;
     CopyDesc.DstMipSlice    = 0;
-    CopyDesc.DstPosition    = IntVector3();
+    CopyDesc.DstPosition    = FIntVector3();
     CopyDesc.SrcArraySlice  = 0;
     CopyDesc.SrcMipSlice    = 0;
-    CopyDesc.SrcPosition    = IntVector3();
+    CopyDesc.SrcPosition    = FIntVector3();
     CopyDesc.Size.X         = Width;
     CopyDesc.Size.Y         = Height;
     CopyDesc.Size.Z         = 1;
@@ -878,10 +878,10 @@ bool FTextureFactory::BakeAlphaIntoAlbedo(const FRHITextureRef& AlbedoTexture, c
     FRHITextureCopyDesc CopyDesc;
     CopyDesc.DstArraySlice  = 0;
     CopyDesc.DstMipSlice    = 0;
-    CopyDesc.DstPosition    = IntVector3();
+    CopyDesc.DstPosition    = FIntVector3();
     CopyDesc.SrcArraySlice  = 0;
     CopyDesc.SrcMipSlice    = 0;
-    CopyDesc.SrcPosition    = IntVector3();
+    CopyDesc.SrcPosition    = FIntVector3();
     CopyDesc.Size.X         = Width;
     CopyDesc.Size.Y         = Height;
     CopyDesc.Size.Z         = 1;

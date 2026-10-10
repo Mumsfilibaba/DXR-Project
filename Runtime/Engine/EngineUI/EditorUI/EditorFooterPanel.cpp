@@ -60,9 +60,9 @@ public:
     }
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override
+    virtual FIntVector2 ComputeDesiredSize() const override
     {
-        return IntVector2(0, 0);
+        return FIntVector2(0, 0);
     }
 
     virtual void OnArrange(const FRectangle& AllottedBounds) override
@@ -72,9 +72,9 @@ public:
             return;
         }
 
-        const IntVector2 ContentSize = Content->GetCachedDesiredSize();
-        const int32      RoomAbove   = Math::Max(0, AllottedBounds.Position.Y);
-        const int32      FieldWidth  = WidthSource ? WidthSource->GetContentRectangle().Width : 0;
+        const FIntVector2 ContentSize = Content->GetCachedDesiredSize();
+        const int32       RoomAbove   = Math::Max(0, AllottedBounds.Position.Y);
+        const int32       FieldWidth  = WidthSource ? WidthSource->GetContentRectangle().Width : 0;
 
         FRectangle ContentBounds;
         ContentBounds.Width      = FieldWidth > 0 ? FieldWidth : ContentSize.X;
@@ -153,7 +153,7 @@ public:
     FOnCandidateRowClicked OnRowClicked;
 
 private:
-    int32 FindRowAtPoint(const IntVector2& ClientPosition) const
+    int32 FindRowAtPoint(const FIntVector2& ClientPosition) const
     {
         if (!Rows || !GetContentRectangle().EncapsulatesPoint(ClientPosition))
         {

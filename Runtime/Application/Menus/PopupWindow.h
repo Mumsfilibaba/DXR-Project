@@ -49,7 +49,7 @@ struct APPLICATION_API Popups
      * @param Point The point to look up, in screen coordinates.
      * @return The work area, falling back to the primary monitor when the point is on none of them.
      */
-    NODISCARD static FRectangle FindWorkArea(const IntVector2& Point);
+    NODISCARD static FRectangle FindWorkArea(const FIntVector2& Point);
 
     /**
      * @brief Slides a rectangle back onto the monitor it is anchored to, without resizing it.

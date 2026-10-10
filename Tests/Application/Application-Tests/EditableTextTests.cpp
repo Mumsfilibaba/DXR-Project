@@ -44,15 +44,15 @@ static FKeyEvent CreateCharEvent(CHAR_T Character, EModifierFlag Modifiers)
     return FKeyEvent(EInputEventType::KeyChar, Keys::Unknown, FModifierKeyState(Modifiers), static_cast<uint32>(Character), false, true);
 }
 
-static FCursorEvent CreateMouseButtonEvent(const IntVector2& ClientPosition, bool bIsDown)
+static FCursorEvent CreateMouseButtonEvent(const FIntVector2& ClientPosition, bool bIsDown)
 {
     const EInputEventType EventType = bIsDown ? EInputEventType::MouseButtonDown : EInputEventType::MouseButtonUp;
-    return FCursorEvent(EventType, Keys::MouseButtonLeft, ClientPosition, IntVector2(0, 0), FModifierKeyState(), bIsDown);
+    return FCursorEvent(EventType, Keys::MouseButtonLeft, ClientPosition, FIntVector2(0, 0), FModifierKeyState(), bIsDown);
 }
 
-static FCursorEvent CreateMouseMoveEvent(const IntVector2& ClientPosition)
+static FCursorEvent CreateMouseMoveEvent(const FIntVector2& ClientPosition)
 {
-    return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, IntVector2(0, 0), FModifierKeyState());
+    return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, FIntVector2(0, 0), FModifierKeyState());
 }
 
 static TSharedPtr<FEditableText> CreateEditableText(const CHAR_T* Text, const TSharedPtr<IFontFace>& Font)
@@ -196,7 +196,7 @@ bool EditableTextCursor_Test()
     TEST_SECTION("The desired size never collapses below the hint");
     TSharedPtr<FEditableText> Empty = CreateEditableText("", Font);
 
-    const IntVector2 DesiredSize = Empty->PrepareDesiredSize();
+    const FIntVector2 DesiredSize = Empty->PrepareDesiredSize();
     TEST_EXPECT_EQ(DesiredSize.X, 4 * 8);
     TEST_EXPECT_EQ(DesiredSize.Y, 16);
 
@@ -328,7 +328,7 @@ bool EditableTextSelection_Test()
     TEST_SECTION("A selection is drawn as a fill behind the text, spanning the selected characters");
     TSharedPtr<FEditableText> Drawn = CreateEditableText("Hello", Font);
     Drawn->PrepareDesiredSize();
-    Drawn->Arrange(FRectangle(IntVector2(0, 0), 200, 16));
+    Drawn->Arrange(FRectangle(FIntVector2(0, 0), 200, 16));
 
     FDrawCommandList CommandList;
     Drawn->OnDraw(FDrawGeometry(Drawn->GetContentRectangle(), 1.0f), CommandList, 0);
@@ -369,33 +369,33 @@ bool EditableTextMouseSelection_Test()
 
     TSharedPtr<FEditableText> Editable = CreateEditableText("Hello", Font);
     Editable->PrepareDesiredSize();
-    Editable->Arrange(FRectangle(IntVector2(20, 10), 200, 16));
+    Editable->Arrange(FRectangle(FIntVector2(20, 10), 200, 16));
 
     TEST_SECTION("A press puts the text cursor under the cursor position");
-    TEST_EXPECT(Editable->OnMouseButtonDown(CreateMouseButtonEvent(IntVector2(20 + (3 * 8), 12), true)).IsEventHandled());
+    TEST_EXPECT(Editable->OnMouseButtonDown(CreateMouseButtonEvent(FIntVector2(20 + (3 * 8), 12), true)).IsEventHandled());
     TEST_EXPECT_EQ(Editable->GetTextCursorPosition(), 3);
     TEST_EXPECT(!Editable->HasSelection());
 
     TEST_SECTION("Dragging from there extends a selection");
-    TEST_EXPECT(Editable->OnMouseMove(CreateMouseMoveEvent(IntVector2(20 + (5 * 8), 12))).IsEventHandled());
+    TEST_EXPECT(Editable->OnMouseMove(CreateMouseMoveEvent(FIntVector2(20 + (5 * 8), 12))).IsEventHandled());
     TEST_EXPECT(Editable->HasSelection());
     TEST_EXPECT_EQ(Editable->GetSelectionStart(), 3);
     TEST_EXPECT_EQ(Editable->GetSelectionEnd(), 5);
 
     TEST_SECTION("Releasing ends the drag, so later moves leave the selection alone");
-    TEST_EXPECT(Editable->OnMouseButtonUp(CreateMouseButtonEvent(IntVector2(20 + (5 * 8), 12), false)).IsEventHandled());
-    TEST_EXPECT(!Editable->OnMouseMove(CreateMouseMoveEvent(IntVector2(20, 12))).IsEventHandled());
+    TEST_EXPECT(Editable->OnMouseButtonUp(CreateMouseButtonEvent(FIntVector2(20 + (5 * 8), 12), false)).IsEventHandled());
+    TEST_EXPECT(!Editable->OnMouseMove(CreateMouseMoveEvent(FIntVector2(20, 12))).IsEventHandled());
     TEST_EXPECT_EQ(Editable->GetSelectionStart(), 3);
     TEST_EXPECT_EQ(Editable->GetSelectionEnd(), 5);
 
     TEST_SECTION("A press outside the element is left for whatever is under it");
-    TEST_EXPECT(!Editable->OnMouseButtonDown(CreateMouseButtonEvent(IntVector2(20, 400), true)).IsEventHandled());
+    TEST_EXPECT(!Editable->OnMouseButtonDown(CreateMouseButtonEvent(FIntVector2(20, 400), true)).IsEventHandled());
     TEST_EXPECT_EQ(Editable->GetSelectionStart(), 3);
     TEST_EXPECT_EQ(Editable->GetTextCursorPosition(), 5);
 
     TEST_SECTION("Shift-clicking extends from where the text cursor already was");
     Editable->SetTextCursorPosition(1);
-    Editable->OnMouseButtonDown(FCursorEvent(EInputEventType::MouseButtonDown, Keys::MouseButtonLeft, IntVector2(20 + (4 * 8), 12), IntVector2(0, 0), FModifierKeyState(EModifierFlag::Shift), true));
+    Editable->OnMouseButtonDown(FCursorEvent(EInputEventType::MouseButtonDown, Keys::MouseButtonLeft, FIntVector2(20 + (4 * 8), 12), FIntVector2(0, 0), FModifierKeyState(EModifierFlag::Shift), true));
 
     TEST_EXPECT_EQ(Editable->GetSelectionStart(), 1);
     TEST_EXPECT_EQ(Editable->GetSelectionEnd(), 4);
@@ -607,7 +607,7 @@ bool EditableTextCaretBlink_Test()
 
     TEST_SECTION("A solid cursor draws for as long as the element has focus");
     Solid->PrepareDesiredSize();
-    Solid->Arrange(FRectangle(IntVector2(0, 0), 200, 16));
+    Solid->Arrange(FRectangle(FIntVector2(0, 0), 200, 16));
     Solid->OnFocusGained();
 
     FDrawCommandList CommandList;
@@ -625,7 +625,7 @@ bool EditableTextCaretBlink_Test()
 
     TSharedPtr<FEditableText> Blinking = FEditableText::Create(BlinkingDesc);
     Blinking->PrepareDesiredSize();
-    Blinking->Arrange(FRectangle(IntVector2(0, 0), 200, 16));
+    Blinking->Arrange(FRectangle(FIntVector2(0, 0), 200, 16));
     Blinking->OnFocusGained();
 
     for (int32 Index = 0; Index < 64; ++Index)
@@ -663,7 +663,7 @@ bool EditableTextBandAlignment_Test()
 
     const int32 BoxHeight = Font->GetTextBandHeight() + 8;
     Editable->PrepareDesiredSize();
-    Editable->Arrange(FRectangle(IntVector2(0, 0), 200, BoxHeight));
+    Editable->Arrange(FRectangle(FIntVector2(0, 0), 200, BoxHeight));
 
     FDrawCommandList CommandList;
     Editable->OnDraw(FDrawGeometry(Editable->GetContentRectangle(), 1.0f), CommandList, 0);
@@ -752,7 +752,7 @@ bool EditableTextDraw_Test()
 
     TSharedPtr<FEditableText> Editable = CreateEditableText("Hello", Font);
     Editable->PrepareDesiredSize();
-    Editable->Arrange(FRectangle(IntVector2(0, 0), 200, 16));
+    Editable->Arrange(FRectangle(FIntVector2(0, 0), 200, 16));
 
     TEST_SECTION("An unfocused element draws its text without a cursor");
     FDrawCommandList CommandList;
@@ -786,7 +786,7 @@ bool EditableTextDraw_Test()
     TEST_SECTION("An empty element draws the hint instead of the text");
     TSharedPtr<FEditableText> Empty = CreateEditableText("", Font);
     Empty->PrepareDesiredSize();
-    Empty->Arrange(FRectangle(IntVector2(0, 0), 200, 16));
+    Empty->Arrange(FRectangle(FIntVector2(0, 0), 200, 16));
 
     CommandList.Reset();
     Empty->OnDraw(FDrawGeometry(Empty->GetContentRectangle(), 1.0f), CommandList, 0);
@@ -802,7 +802,7 @@ bool EditableTextAlignment_Test()
 
     TSharedPtr<IFontFace> Font = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 
-    const FRectangle Bounds(IntVector2(0, 0), 200, 16);
+    const FRectangle Bounds(FIntVector2(0, 0), 200, 16);
 
     FEditableText::FDesc Desc;
     Desc.Text                  = "Hello";
@@ -833,8 +833,8 @@ bool EditableTextAlignment_Test()
     TEST_EXPECT_EQ(CommandList[1].Bounds.Position.X, ExpectedLeft + (3 * 8));
 
     TEST_SECTION("Hit testing follows it too, so a click over a character lands on that character");
-    Centered->OnMouseButtonDown(CreateMouseButtonEvent(IntVector2(ExpectedLeft + (2 * 8) + 1, 8), true));
-    Centered->OnMouseButtonUp(CreateMouseButtonEvent(IntVector2(ExpectedLeft + (2 * 8) + 1, 8), false));
+    Centered->OnMouseButtonDown(CreateMouseButtonEvent(FIntVector2(ExpectedLeft + (2 * 8) + 1, 8), true));
+    Centered->OnMouseButtonUp(CreateMouseButtonEvent(FIntVector2(ExpectedLeft + (2 * 8) + 1, 8), false));
 
     TEST_EXPECT_EQ(Centered->GetTextCursorPosition(), 2);
 

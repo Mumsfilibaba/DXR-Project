@@ -16,7 +16,7 @@ public:
      * @param InClientPosition The point, in the window's client space.
      * @return The path from the window down, which stays valid until the next call or Invalidate.
      */
-    const FElementPath& Resolve(const TSharedPtr<FWindow>& InWindow, const IntVector2& InClientPosition);
+    const FElementPath& Resolve(const TSharedPtr<FWindow>& InWindow, const FIntVector2& InClientPosition);
 
     /**
      * @brief Forgets the cached path and lets go of the elements on it, so the next Resolve walks the tree again
@@ -27,7 +27,7 @@ public:
 private:
     FElementPath      Path;
     TWeakPtr<FWindow> Window;
-    IntVector2        ClientPosition;
+    FIntVector2       ClientPosition;
     uint64            Generation;
     bool              bIsValid;
 };

@@ -10,9 +10,9 @@
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
 #include "ImGuiPlugin/ImGuiCore.h"
 
-static void CompensateGizmoPivot(const FActorTransform& OldTransform, const Vector3& GizmoPosition, FActorTransform& InOutTransform)
+static void CompensateGizmoPivot(const FActorTransform& OldTransform, const FVector3& GizmoPosition, FActorTransform& InOutTransform)
 {
-    const Vector3 OldScale = OldTransform.GetScale();
+    const FVector3 OldScale = OldTransform.GetScale();
 
     if (Math::Abs(OldScale.X) < Math::Constants::Epsilon || 
         Math::Abs(OldScale.Y) < Math::Constants::Epsilon || 
@@ -21,14 +21,14 @@ static void CompensateGizmoPivot(const FActorTransform& OldTransform, const Vect
         return;
     }
 
-    const Matrix4 OldBasis = Matrix4::Scale(OldScale)                  * Matrix4::RotationRollPitchYaw(OldTransform.GetRotation());
-    const Matrix4 NewBasis = Matrix4::Scale(InOutTransform.GetScale()) * Matrix4::RotationRollPitchYaw(InOutTransform.GetRotation());
+    const FMatrix4 OldBasis = FMatrix4::Scale(OldScale)                  * FMatrix4::RotationRollPitchYaw(OldTransform.GetRotation());
+    const FMatrix4 NewBasis = FMatrix4::Scale(InOutTransform.GetScale()) * FMatrix4::RotationRollPitchYaw(InOutTransform.GetRotation());
 
-    const Vector4 PivotOffset      = Vector4(GizmoPosition - OldTransform.GetTranslation(), 0.0f);
-    const Vector4 PivotOffsetLocal = OldBasis.GetInverse().Transform(PivotOffset);
-    const Vector4 PivotOffsetWorld = NewBasis.Transform(PivotOffsetLocal);
+    const FVector4 PivotOffset      = FVector4(GizmoPosition - OldTransform.GetTranslation(), 0.0f);
+    const FVector4 PivotOffsetLocal = OldBasis.GetInverse().Transform(PivotOffset);
+    const FVector4 PivotOffsetWorld = NewBasis.Transform(PivotOffsetLocal);
 
-    InOutTransform.SetTranslation(GizmoPosition - Vector3(PivotOffsetWorld.X, PivotOffsetWorld.Y, PivotOffsetWorld.Z));
+    InOutTransform.SetTranslation(GizmoPosition - FVector3(PivotOffsetWorld.X, PivotOffsetWorld.Y, PivotOffsetWorld.Z));
 }
 
 static bool HasSelectedAncestor(const TSet<FActor*>& Selection, FActor* Actor)
@@ -231,8 +231,8 @@ bool FEditorGuizmoWidget::DrawGuizmo()
 
     const bool bUseBoundsCenter = Viewport->GetGizmoPlacement() == FEditorViewportWidget::EGizmoPlacement::Center;
 
-    const Matrix4& View       = Camera->GetViewMatrix();
-    const Matrix4& Projection = Camera->GetProjectionMatrix();
+    const FMatrix4& View       = Camera->GetViewMatrix();
+    const FMatrix4& Projection = Camera->GetProjectionMatrix();
 
     if (SelectedActors.Size() == 1)
     {
@@ -243,9 +243,9 @@ bool FEditorGuizmoWidget::DrawGuizmo()
     return DrawMultipleActors(SelectedActors, View, Projection, Operation, Orientation, bUseBoundsCenter);
 }
 
-Vector3 FEditorGuizmoWidget::GetActorGizmoPoint(FActor* Actor, bool bUseBoundsCenter) const
+FVector3 FEditorGuizmoWidget::GetActorGizmoPoint(FActor* Actor, bool bUseBoundsCenter) const
 {
-    const Matrix4 ActorModel = Actor->GetWorldTransform().GetTransformMatrix();
+    const FMatrix4 ActorModel = Actor->GetWorldTransform().GetTransformMatrix();
 
     if (bUseBoundsCenter)
     {
@@ -299,22 +299,22 @@ EditorGuizmo::EOperation::Type FEditorGuizmoWidget::ResolveOperation(FActor* Act
     }
 }
 
-void FEditorGuizmoWidget::DrawSingleActor(FActor* Actor, const Matrix4& View, const Matrix4& Projection, EditorGuizmo::EOperation::Type Operation, EditorGuizmo::EMode Orientation, bool bUseBoundsCenter)
+void FEditorGuizmoWidget::DrawSingleActor(FActor* Actor, const FMatrix4& View, const FMatrix4& Projection, EditorGuizmo::EOperation::Type Operation, EditorGuizmo::EMode Orientation, bool bUseBoundsCenter)
 {
     const EditorGuizmo::EOperation::Type EffectiveOperation = ResolveOperation(Actor, Operation);
 
     const FActorTransform& ActorWorldTransform = Actor->GetWorldTransform();
-    const Vector3         InitialGizmoPosition = GetActorGizmoPoint(Actor, bUseBoundsCenter);
+    const FVector3         InitialGizmoPosition = GetActorGizmoPoint(Actor, bUseBoundsCenter);
 
-    Matrix4 Model = ActorWorldTransform.GetTransformMatrix();
+    FMatrix4 Model = ActorWorldTransform.GetTransformMatrix();
     Model.SetTranslation(InitialGizmoPosition);
 
     const bool bChanged = EditorGuizmo::Manipulate(View, Projection, EffectiveOperation, Orientation, Model);
     if (bChanged || EditorGuizmo::IsUsing())
     {
-        Vector3 Translation;
-        Vector3 RotationDegrees;
-        Vector3 Scale;
+        FVector3 Translation;
+        FVector3 RotationDegrees;
+        FVector3 Scale;
 
         EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale);
 
@@ -325,14 +325,14 @@ void FEditorGuizmoWidget::DrawSingleActor(FActor* Actor, const Matrix4& View, co
 
         if (EffectiveOperation == EditorGuizmo::EOperation::Translate)
         {
-            const Vector3 TranslationDelta = Translation - InitialGizmoPosition;
+            const FVector3 TranslationDelta = Translation - InitialGizmoPosition;
             NewWorldTransform.SetTranslation(ActorWorldTransform.GetTranslation() + TranslationDelta);
 
             Actor->SetWorldTransform(NewWorldTransform);
         }
         else if (EffectiveOperation == EditorGuizmo::EOperation::Rotate)
         {
-            const Vector3 RotationRadians = Vector3::DegreesToRadians(RotationDegrees);
+            const FVector3 RotationRadians = FVector3::DegreesToRadians(RotationDegrees);
             if (FCameraComponent* CameraComponent = Actor->GetComponentOfType<FCameraComponent>())
             {
                 NewWorldTransform.SetRotation(RotationRadians);
@@ -356,7 +356,7 @@ void FEditorGuizmoWidget::DrawSingleActor(FActor* Actor, const Matrix4& View, co
     }
 }
 
-bool FEditorGuizmoWidget::DrawMultipleActors(const TArray<FActor*>& Actors, const Matrix4& View, const Matrix4& Projection, EditorGuizmo::EOperation::Type Operation, EditorGuizmo::EMode Orientation, bool bUseBoundsCenter)
+bool FEditorGuizmoWidget::DrawMultipleActors(const TArray<FActor*>& Actors, const FMatrix4& View, const FMatrix4& Projection, EditorGuizmo::EOperation::Type Operation, EditorGuizmo::EMode Orientation, bool bUseBoundsCenter)
 {
     if (!EditorGuizmo::IsUsing())
     {
@@ -368,7 +368,7 @@ bool FEditorGuizmoWidget::DrawMultipleActors(const TArray<FActor*>& Actors, cons
         return false;
     }
 
-    Matrix4 Model = GizmoMatrix;
+    FMatrix4 Model = GizmoMatrix;
 
     const bool bChanged = EditorGuizmo::Manipulate(View, Projection, Operation, Orientation, Model);
     GizmoMatrix = Model;
@@ -378,7 +378,7 @@ bool FEditorGuizmoWidget::DrawMultipleActors(const TArray<FActor*>& Actors, cons
         return true;
     }
 
-    const Matrix4 Delta = GizmoStartMatrix.GetInverse() * GizmoMatrix;
+    const FMatrix4 Delta = GizmoStartMatrix.GetInverse() * GizmoMatrix;
     for (int32 Index = 0; Index < DragActors.Size(); Index++)
     {
         FActor* Actor = DragActors[Index];
@@ -415,8 +415,8 @@ void FEditorGuizmoWidget::CaptureMultiDragState(const TArray<FActor*>& Actors, E
         }
     }
 
-    Vector3 Center     = Vector3(0.0f, 0.0f, 0.0f);
-    int32   PointCount = 0;
+    FVector3 Center     = FVector3(0.0f, 0.0f, 0.0f);
+    int32    PointCount = 0;
 
     for (FActor* Actor : Actors)
     {
@@ -440,15 +440,15 @@ void FEditorGuizmoWidget::CaptureMultiDragState(const TArray<FActor*>& Actors, E
         Center = Center / static_cast<float>(PointCount);
     }
 
-    Vector3 RotationDegrees = Vector3(0.0f, 0.0f, 0.0f);
+    FVector3 RotationDegrees = FVector3(0.0f, 0.0f, 0.0f);
     if (Orientation == EditorGuizmo::EMode::Local)
     {
         if (FActor* PrimaryActor = EditorEngine->GetSelectedActor())
         {
-            RotationDegrees = Vector3::RadiansToDegrees(PrimaryActor->GetWorldTransform().GetRotation());
+            RotationDegrees = FVector3::RadiansToDegrees(PrimaryActor->GetWorldTransform().GetRotation());
         }
     }
 
-    EditorGuizmo::RecomposeMatrixFromComponents(Center, RotationDegrees, Vector3(1.0f, 1.0f, 1.0f), GizmoMatrix);
+    EditorGuizmo::RecomposeMatrixFromComponents(Center, RotationDegrees, FVector3(1.0f, 1.0f, 1.0f), GizmoMatrix);
     GizmoStartMatrix = GizmoMatrix;
 }

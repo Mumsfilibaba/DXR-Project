@@ -5,9 +5,9 @@
 
 struct FCameraBasis
 {
-    Vector3 Forward;
-    Vector3 Right;
-    Vector3 Up;
+    FVector3 Forward;
+    FVector3 Right;
+    FVector3 Up;
 };
 
 static FCameraBasis BuildCameraBasis(float PitchRadians, float YawRadians)
@@ -19,10 +19,10 @@ static FCameraBasis BuildCameraBasis(float PitchRadians, float YawRadians)
     const float CosY = Math::Cos(YawRadians);
     const float SinY = Math::Sin(YawRadians);
 
-    Basis.Forward = Vector3(CosP * SinY, -SinP, CosP * CosY);
+    Basis.Forward = FVector3(CosP * SinY, -SinP, CosP * CosY);
     Basis.Forward.Normalize();
 
-    Basis.Right = Basis.Forward.CrossProduct(Vector3::Up);
+    Basis.Right = Basis.Forward.CrossProduct(FVector3::Up);
     const float RightLengthSquared = Basis.Right.GetLengthSquared();
     if (RightLengthSquared > 1.0e-6f)
     {
@@ -30,7 +30,7 @@ static FCameraBasis BuildCameraBasis(float PitchRadians, float YawRadians)
     }
     else
     {
-        Basis.Right = Vector3(-CosY, 0.0f, SinY);
+        Basis.Right = FVector3(-CosY, 0.0f, SinY);
         Basis.Right.Normalize();
     }
 
@@ -42,7 +42,7 @@ static FCameraBasis BuildCameraBasis(float PitchRadians, float YawRadians)
 
 static bool IsOrthonormalBasis(const FCameraBasis& Basis, float Tolerance)
 {
-    const auto IsNearUnit = [Tolerance](const Vector3& Vector)
+    const auto IsNearUnit = [Tolerance](const FVector3& Vector)
     {
         return Math::Abs(Vector.GetLengthSquared() - 1.0f) <= Tolerance;
     };
@@ -65,9 +65,9 @@ bool TestCameraBasis()
     {
         const FCameraBasis Basis = BuildCameraBasis(0.0f, 0.0f);
 
-        TEST_EXPECT(Basis.Forward.IsEqual(Vector3::Forward, Tolerance));
-        TEST_EXPECT(Basis.Right.IsEqual(Vector3(-1.0f, 0.0f, 0.0f), Tolerance));
-        TEST_EXPECT(Basis.Up.IsEqual(Vector3::Up, Tolerance));
+        TEST_EXPECT(Basis.Forward.IsEqual(FVector3::Forward, Tolerance));
+        TEST_EXPECT(Basis.Right.IsEqual(FVector3(-1.0f, 0.0f, 0.0f), Tolerance));
+        TEST_EXPECT(Basis.Up.IsEqual(FVector3::Up, Tolerance));
     }
 
     TEST_SECTION("Camera basis matches RotationRollPitchYaw forward");
@@ -76,7 +76,7 @@ bool TestCameraBasis()
         const float Yaw   = Math::DegreesToRadians(30.0f);
 
         const FCameraBasis Basis = BuildCameraBasis(Pitch, Yaw);
-        const Vector3 MatrixForward = Matrix4::RotationRollPitchYaw(Pitch, Yaw, 0.0f).TransformNormal(Vector3::Forward);
+        const FVector3 MatrixForward = FMatrix4::RotationRollPitchYaw(Pitch, Yaw, 0.0f).TransformNormal(FVector3::Forward);
 
         TEST_EXPECT(Basis.Forward.IsEqual(MatrixForward, Tolerance));
     }
@@ -96,11 +96,11 @@ bool TestCameraBasis()
     TEST_SECTION("Camera right vector stays continuous near pitch limits");
     {
         const float Yaw = Math::DegreesToRadians(45.0f);
-        Vector3 PreviousRight = BuildCameraBasis(Math::DegreesToRadians(80.0f), Yaw).Right;
+        FVector3 PreviousRight = BuildCameraBasis(Math::DegreesToRadians(80.0f), Yaw).Right;
 
         for (float PitchDegrees = 81.0f; PitchDegrees <= 89.0f; PitchDegrees += 1.0f)
         {
-            const Vector3 CurrentRight = BuildCameraBasis(Math::DegreesToRadians(PitchDegrees), Yaw).Right;
+            const FVector3 CurrentRight = BuildCameraBasis(Math::DegreesToRadians(PitchDegrees), Yaw).Right;
             TEST_EXPECT(PreviousRight.DotProduct(CurrentRight) > 0.99f);
             PreviousRight = CurrentRight;
         }

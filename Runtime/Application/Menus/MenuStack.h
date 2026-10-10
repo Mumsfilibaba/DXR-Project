@@ -110,7 +110,7 @@ public:
      * @param ScreenPosition Where the click landed, in screen coordinates.
      * @return True when the click was consumed by dismissing.
      */
-    bool DismissOnClickOutside(const IntVector2& ScreenPosition);
+    bool DismissOnClickOutside(const FIntVector2& ScreenPosition);
 
     /**
      * @brief Gets whether any menu is open, which a host uses to route Escape and arrows here first.
@@ -213,7 +213,7 @@ private:
         float                      RemainingSeconds;
     };
 
-    NODISCARD FRectangle ResolveBounds(const FRectangle& AnchorBounds, const IntVector2& MenuSize, EMenuPlacement Placement,
+    NODISCARD FRectangle ResolveBounds(const FRectangle& AnchorBounds, const FIntVector2& MenuSize, EMenuPlacement Placement,
         int32 ContentTopInset, const FRectangle& ClampArea) const;
     NODISCARD int32 FindMenuIndex(const FMenuHandle& Menu) const;
 

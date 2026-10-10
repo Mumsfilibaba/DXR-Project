@@ -176,7 +176,7 @@ static TSharedPtr<FVisualElement> MakeVerticalToolBarRow(const FPlaygroundFonts&
     TSharedPtr<FHorizontalBox> Row = FHorizontalBox::Create();
     Row->AddSlot(FrameToolBar(ToolBar)).SetVerticalAlignment(EVerticalAlignment::Top);
     Row->AddSlot(Readout).SetPadding(FMargin(12, 4, 0, 0)).SetVerticalAlignment(EVerticalAlignment::Top);
-    Row->AddSlot(FSpacer::Create(IntVector2(0, 0))).SetFillCoefficient(1.0f);
+    Row->AddSlot(FSpacer::Create(FIntVector2(0, 0))).SetFillCoefficient(1.0f);
     return Row;
 }
 

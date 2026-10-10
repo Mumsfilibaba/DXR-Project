@@ -481,7 +481,7 @@ void FImGuiPlugin::NewFrame(float DeltaTime)
     else if (bIsAppFocused)
     {
     #ifndef EDITOR_BUILD
-        const IntVector2 ForegroundWindowPosition = ForegroundWindow->GetPosition();
+        const FIntVector2 ForegroundWindowPosition = ForegroundWindow->GetPosition();
     #endif
 
         const bool bIsTrackingMouse = FApplication::Get().IsTrackingCursor();
@@ -493,12 +493,12 @@ void FImGuiPlugin::NewFrame(float DeltaTime)
             MousePos.y = MousePos.y - ForegroundWindowPosition.Y;
         #endif
 
-            const IntVector2 CursorPos = IntVector2(static_cast<int32>(MousePos.x), static_cast<int32>(MousePos.y));
+            const FIntVector2 CursorPos = FIntVector2(static_cast<int32>(MousePos.x), static_cast<int32>(MousePos.y));
             FApplication::Get().SetCursorPosition(CursorPos);
         }
         else if (!bIsTrackingMouse)
         {
-            IntVector2 CursorPos = FApplication::Get().GetCursorPosition();
+            FIntVector2 CursorPos = FApplication::Get().GetCursorPosition();
         #ifndef EDITOR_BUILD
             CursorPos.X = CursorPos.X - ForegroundWindowPosition.X;
             CursorPos.Y = CursorPos.Y - ForegroundWindowPosition.Y;
@@ -759,8 +759,8 @@ void FImGuiPlugin::OnCreatePlatformWindow(ImGuiViewport* Viewport)
 
     FWindow::FDesc WindowDesc;
     WindowDesc.Title               = GetImGuiViewportPlatformTitle(Viewport);
-    WindowDesc.Size                = IntVector2(static_cast<int32>(Viewport->Size.x), static_cast<int32>(Viewport->Size.y));
-    WindowDesc.Position            = IntVector2(static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
+    WindowDesc.Size                = FIntVector2(static_cast<int32>(Viewport->Size.x), static_cast<int32>(Viewport->Size.y));
+    WindowDesc.Position            = FIntVector2(static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
     WindowDesc.StyleFlags          = WindowStyle;
     WindowDesc.ParentWindow        = ParentWindow;
     WindowDesc.bActivateOnShow     = !(Viewport->Flags & ImGuiViewportFlags_NoFocusOnAppearing);
@@ -779,7 +779,7 @@ void FImGuiPlugin::OnCreatePlatformWindow(ImGuiViewport* Viewport)
     Viewport->PlatformRequestResize = false;
     Viewport->PlatformWindowCreated = true;
 
-    ViewportData->Window->SetOnWindowResized(FOnWindowResized::CreateLambda([PlatformHandle = Viewport->PlatformHandle](const IntVector2&)
+    ViewportData->Window->SetOnWindowResized(FOnWindowResized::CreateLambda([PlatformHandle = Viewport->PlatformHandle](const FIntVector2&)
     {
         if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(PlatformHandle))
         {
@@ -787,7 +787,7 @@ void FImGuiPlugin::OnCreatePlatformWindow(ImGuiViewport* Viewport)
         }
     }));
 
-    ViewportData->Window->SetOnWindowMoved(FOnWindowMoved::CreateLambda([PlatformHandle = Viewport->PlatformHandle](const IntVector2&)
+    ViewportData->Window->SetOnWindowMoved(FOnWindowMoved::CreateLambda([PlatformHandle = Viewport->PlatformHandle](const FIntVector2&)
     {
         if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(PlatformHandle))
         {
@@ -861,7 +861,7 @@ ImVec2 FImGuiPlugin::OnGetPlatformWindowPosition(ImGuiViewport* Viewport)
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
 
-    const IntVector2 Position = ViewportData->Window->GetPosition();
+    const FIntVector2 Position = ViewportData->Window->GetPosition();
     return ImVec2(static_cast<float>(Position.X), static_cast<float>(Position.Y));
 }
 
@@ -870,7 +870,7 @@ void FImGuiPlugin::OnSetPlatformWindowPosition(ImGuiViewport* Viewport, ImVec2 P
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
     
-    ViewportData->Window->MoveTo(IntVector2(static_cast<int32>(Position.x), static_cast<int32>(Position.y)));
+    ViewportData->Window->MoveTo(FIntVector2(static_cast<int32>(Position.x), static_cast<int32>(Position.y)));
     Viewport->PlatformRequestMove = false;
 }
 
@@ -879,7 +879,7 @@ ImVec2 FImGuiPlugin::OnGetPlatformWindowSize(ImGuiViewport* Viewport)
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
 
-    const IntVector2 Size = ViewportData->Window->GetSize();
+    const FIntVector2 Size = ViewportData->Window->GetSize();
     return ImVec2(static_cast<float>(Size.X), static_cast<float>(Size.Y));
 }
 
@@ -888,7 +888,7 @@ void FImGuiPlugin::OnSetPlatformWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
     
-    ViewportData->Window->Resize(IntVector2(static_cast<int32>(Size.x), static_cast<int32>(Size.y)));
+    ViewportData->Window->Resize(FIntVector2(static_cast<int32>(Size.x), static_cast<int32>(Size.y)));
     Viewport->PlatformRequestResize = false;
 }
 

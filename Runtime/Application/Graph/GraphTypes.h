@@ -118,7 +118,7 @@ struct FGraphNode
     int32 NodeId;
 
     /** @brief The top-left corner, in graph space, which zoom and pan turn into a client rectangle. */
-    Vector2 Position;
+    FVector2 Position;
 
     /** @brief The text the title bar shows. */
     FString Title;

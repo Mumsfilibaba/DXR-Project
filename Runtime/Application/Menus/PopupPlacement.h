@@ -42,13 +42,13 @@ struct APPLICATION_API FPopupPlacement
      * @return The popup's bounds.
      */
     NODISCARD static FRectangle Resolve(
-        const FRectangle& Anchor,
-        const IntVector2& Size,
-        const FRectangle& Area,
-        EPopupSide        Side,
-        EPopupFlip        Flips,
-        int32             Gap         = 0,
-        int32             CrossOffset = 0);
+        const FRectangle&  Anchor,
+        const FIntVector2& Size,
+        const FRectangle&  Area,
+        EPopupSide         Side,
+        EPopupFlip         Flips,
+        int32              Gap         = 0,
+        int32              CrossOffset = 0);
 
     /**
      * @brief Moves a rectangle the least distance that puts it inside an area, as far as it fits.

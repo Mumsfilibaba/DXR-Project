@@ -60,10 +60,10 @@ void FButton::Initialize(const FDesc& Desc)
     ApplyInteractionTextColor(Label.Get());
 }
 
-IntVector2 FButton::ComputeDesiredSize() const
+FIntVector2 FButton::ComputeDesiredSize() const
 {
-    IntVector2 DesiredSize = FCompoundElement::ComputeDesiredSize();
-    DesiredSize.Y          = Math::Max(DesiredSize.Y, MinHeight);
+    FIntVector2 DesiredSize = FCompoundElement::ComputeDesiredSize();
+    DesiredSize.Y           = Math::Max(DesiredSize.Y, MinHeight);
 
     if (Label)
     {

@@ -595,7 +595,7 @@ void FWindowsWindow::SetTitleBarRegions(const FWindowTitleBarRegions& InRegions)
     TitleBarRegions = InRegions;
 }
 
-bool FWindowsWindow::HitTestTitleBar(const IntVector2& ClientPoint) const
+bool FWindowsWindow::HitTestTitleBar(const FIntVector2& ClientPoint) const
 {
     SCOPED_LOCK(TitleBarRegionsCS);
 
@@ -615,7 +615,7 @@ bool FWindowsWindow::HitTestTitleBar(const IntVector2& ClientPoint) const
     return true;
 }
 
-bool FWindowsWindow::HitTestMaximizeButton(const IntVector2& ClientPoint) const
+bool FWindowsWindow::HitTestMaximizeButton(const FIntVector2& ClientPoint) const
 {
     SCOPED_LOCK(TitleBarRegionsCS);
     return TitleBarRegions.MaximizeButtonRect.Contains(ClientPoint);

@@ -450,7 +450,7 @@ FRHITexture* FRHIValidationDevice::CreateTexture(const FRHITextureDesc& InTextur
         }
 
         // Each mip region dimension must be a power of two, at least 4, and at most half the paired mip-0 extent.
-        const IntVector3 MipRegion = InTextureDesc.SamplerFeedbackMipRegion;
+        const FIntVector3 MipRegion = InTextureDesc.SamplerFeedbackMipRegion;
         if (MipRegion.X <= 0 || MipRegion.Y <= 0)
         {
             RHI_VALIDATION_ERROR("CreateTexture: SamplerFeedback requires a SamplerFeedbackMipRegion with positive X and Y. (Got %d,%d).", MipRegion.X, MipRegion.Y);
@@ -1155,7 +1155,7 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateUnorderedAccessView(FRHIRes
 
         if (InDesc.ViewDimension == EViewDimension::Texture3D)
         {
-            IntVector3 MipExtent;
+            FIntVector3 MipExtent;
             if (!ValidateTextureMip("CreateUnorderedAccessView", TextureDesc, MipLevel, MipExtent))
             {
                 return nullptr;
@@ -1322,7 +1322,7 @@ FRHIRenderTargetView* FRHIValidationDevice::CreateRenderTargetView(FRHIResource*
 
     if (InDesc.ViewDimension == EViewDimension::Texture3D)
     {
-        IntVector3 MipExtent;
+        FIntVector3 MipExtent;
         if (!ValidateTextureMip("CreateRenderTargetView", TextureDesc, MipLevel, MipExtent))
         {
             return nullptr;

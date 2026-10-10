@@ -7,13 +7,13 @@ class FViewport;
 class FEditorViewportImage;
 
 /** @brief Called for a click the gizmo and the game both declined, with the position inside the image. */
-DECLARE_DELEGATE(FOnViewportClicked, const IntVector2& /*ImagePosition*/, bool /*bAdditive*/);
+DECLARE_DELEGATE(FOnViewportClicked, const FIntVector2& /*ImagePosition*/, bool /*bAdditive*/);
 
 /** @brief Called for a right click that did not turn into a look drag, with the position inside the image and on the desktop. */
-DECLARE_DELEGATE(FOnViewportContextMenu, const IntVector2& /*ImagePosition*/, const IntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnViewportContextMenu, const FIntVector2& /*ImagePosition*/, const FIntVector2& /*ScreenPosition*/);
 
 /** @brief Called when a left drag across the image is released, with the dragged corners inside the image. */
-DECLARE_DELEGATE(FOnViewportMarqueeSelect, const IntVector2& /*ImageMin*/, const IntVector2& /*ImageMax*/, bool /*bAdditive*/);
+DECLARE_DELEGATE(FOnViewportMarqueeSelect, const FIntVector2& /*ImageMin*/, const FIntVector2& /*ImageMax*/, bool /*bAdditive*/);
 
 /** @brief Called for a key the surface did not want itself, and only while a look drag is not underway. */
 DECLARE_RETURN_DELEGATE(FOnViewportShortcut, bool, const FKeyEvent& /*KeyEvent*/);
@@ -36,10 +36,10 @@ public:
     virtual ~FEditorViewportSurface();
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override final;
+    virtual FIntVector2 ComputeDesiredSize() const override final;
     virtual void OnArrange(const FRectangle& AllottedBounds) override final;
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override final;
-    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override final;
+    virtual void HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath) override final;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final;
 
     virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override final;
@@ -97,9 +97,9 @@ private:
     TSharedPtr<FViewport>                      HostViewport;
     TSharedPtr<FGizmo>                         Gizmo;
     TUniquePtr<struct FEditorCameraInputState> CameraInput;
-    IntVector2                                 LastCursorPosition;
-    IntVector2                                 MarqueeStartPosition;
-    IntVector2                                 MarqueeEndPosition;
+    FIntVector2                                LastCursorPosition;
+    FIntVector2                                MarqueeStartPosition;
+    FIntVector2                                MarqueeEndPosition;
     float                                      RightMouseDragDistance;
     bool                                       bMouseLookActive;
     bool                                       bLeftPressedInside;

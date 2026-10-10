@@ -59,7 +59,7 @@ static void TypeText(const TSharedPtr<FConsole>& Console, const CHAR_T* Text)
 static void LayOutAndDraw(const TSharedPtr<FConsole>& Console, FDrawCommandList& OutCommandList)
 {
     Console->PrepareDesiredSize();
-    Console->Arrange(FRectangle(IntVector2(0, 0), 1280, 720));
+    Console->Arrange(FRectangle(FIntVector2(0, 0), 1280, 720));
 
     OutCommandList.Reset();
     Console->OnDraw(FDrawGeometry(Console->GetContentRectangle(), 1.0f), OutCommandList, 0);
@@ -161,7 +161,7 @@ bool ConsoleLayout_Test()
     Console->GetLogBuffer().Log(ELogSeverity::Info, "A line of log");
 
     Console->PrepareDesiredSize();
-    Console->Arrange(FRectangle(IntVector2(0, 0), 1280, 720));
+    Console->Arrange(FRectangle(FIntVector2(0, 0), 1280, 720));
 
     TEST_SECTION("The console takes the full width but only the text-area height");
     TEST_EXPECT_EQ(Console->GetContentRectangle().Width, 1280);
@@ -181,7 +181,7 @@ bool ConsoleLayout_Test()
     TSharedPtr<FConsole> SmallConsole = CreateConsole();
     SmallConsole->SetIsOpen(true);
     SmallConsole->PrepareDesiredSize();
-    SmallConsole->Arrange(FRectangle(IntVector2(0, 0), 640, 200));
+    SmallConsole->Arrange(FRectangle(FIntVector2(0, 0), 640, 200));
 
     TEST_EXPECT_EQ(SmallConsole->GetContentRectangle().Height, 200);
 
@@ -592,7 +592,7 @@ bool ConsoleCursorShape_Test()
     TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
     Console->PrepareDesiredSize();
-    Console->Arrange(FRectangle(IntVector2(0, 0), 1280, 720));
+    Console->Arrange(FRectangle(FIntVector2(0, 0), 1280, 720));
 
     TEST_SECTION("An element has no opinion on the shape unless it says so");
     ECursor ElementCursor = ECursor::None;
@@ -616,7 +616,7 @@ bool ConsoleCursorShape_Test()
 
     TEST_SECTION("So does the padding ring around it, which has no element of its own");
     const FRectangle TextBounds = Console->GetInput()->GetContentRectangle();
-    const IntVector2 RingPoint(TextBounds.Position.X - 5, TextBounds.Position.Y + 2);
+    const FIntVector2 RingPoint(TextBounds.Position.X - 5, TextBounds.Position.Y + 2);
 
     FElementPath RingPath;
     Console->HitTest(RingPoint, RingPath);
@@ -763,7 +763,7 @@ bool ConsoleModalInput_Test()
 
     FWindow::FDesc WindowDesc;
     WindowDesc.Title = "Console Host";
-    WindowDesc.Size  = IntVector2(1280, 720);
+    WindowDesc.Size  = FIntVector2(1280, 720);
 
     TSharedPtr<FWindow> Window = FWindow::Create(WindowDesc);
 
@@ -782,7 +782,7 @@ bool ConsoleModalInput_Test()
     TEST_EXPECT(!Console->CapturesAllInput());
 
     FElementPath ClosedPath;
-    Window->HitTest(IntVector2(640, 600), ClosedPath);
+    Window->HitTest(FIntVector2(640, 600), ClosedPath);
     TEST_EXPECT(ClosedPath.Contains(Content));
 
     TEST_SECTION("An open console reports that it takes everything");
@@ -792,14 +792,14 @@ bool ConsoleModalInput_Test()
 
     TEST_SECTION("A click below the console never reaches the content underneath it");
     FElementPath BelowConsolePath;
-    Window->HitTest(IntVector2(640, 600), BelowConsolePath);
+    Window->HitTest(FIntVector2(640, 600), BelowConsolePath);
 
     TEST_EXPECT(!BelowConsolePath.Contains(Content));
     TEST_EXPECT(!BelowConsolePath.IsEmpty());
 
     TEST_SECTION("A click on the console still reaches the console");
     FElementPath OnConsolePath;
-    Window->HitTest(IntVector2(640, 40), OnConsolePath);
+    Window->HitTest(FIntVector2(640, 40), OnConsolePath);
 
     TEST_EXPECT(OnConsolePath.Contains(Console));
     TEST_EXPECT(!OnConsolePath.Contains(Content));
@@ -809,7 +809,7 @@ bool ConsoleModalInput_Test()
     FApplication::LayoutWindow(Window);
 
     FElementPath ReopenedPath;
-    Window->HitTest(IntVector2(640, 600), ReopenedPath);
+    Window->HitTest(FIntVector2(640, 600), ReopenedPath);
     TEST_EXPECT(ReopenedPath.Contains(Content));
 
     TEST_END();
@@ -823,7 +823,7 @@ bool ConsoleClickFocus_Test()
 
     FWindow::FDesc WindowDesc;
     WindowDesc.Title = "Console Host";
-    WindowDesc.Size  = IntVector2(1280, 720);
+    WindowDesc.Size  = FIntVector2(1280, 720);
 
     TSharedPtr<FWindow> Window = FWindow::Create(WindowDesc);
 
@@ -857,7 +857,7 @@ bool ConsoleClickFocus_Test()
 
     TEST_SECTION("So does clicking below the console, where the window is all there is under the cursor");
     FElementPath BelowPath;
-    Window->HitTest(IntVector2(640, 600), BelowPath);
+    Window->HitTest(FIntVector2(640, 600), BelowPath);
 
     TEST_EXPECT(!BelowPath.Contains(Content));
 
@@ -906,8 +906,8 @@ bool ConsoleInWindow_Test()
 
     FWindow::FDesc WindowDesc;
     WindowDesc.Title    = "Console Host";
-    WindowDesc.Size     = IntVector2(1280, 720);
-    WindowDesc.Position = IntVector2(220, 140);
+    WindowDesc.Size     = FIntVector2(1280, 720);
+    WindowDesc.Position = FIntVector2(220, 140);
 
     TSharedPtr<FWindow>  Window  = FWindow::Create(WindowDesc);
     TSharedPtr<FConsole> Console = CreateConsole();
@@ -927,7 +927,7 @@ bool ConsoleInWindow_Test()
     TEST_EXPECT_EQ(Console->GetContentRectangle().Width, 1280);
 
     TEST_SECTION("Moving the window does not drag the console along");
-    Window->OnWindowMoved(IntVector2(700, 320));
+    Window->OnWindowMoved(FIntVector2(700, 320));
     FApplication::LayoutWindow(Window);
     TEST_EXPECT_EQ(Console->GetContentRectangle().Position.X, 0);
     TEST_EXPECT_EQ(Console->GetContentRectangle().Position.Y, 0);
@@ -1004,7 +1004,7 @@ bool ConsoleTypeAndExecute_Test()
 
     TEST_SECTION("The tree lays out and draws without a device");
     Console->PrepareDesiredSize();
-    Console->Arrange(FRectangle(IntVector2(0, 0), 1280, 720));
+    Console->Arrange(FRectangle(FIntVector2(0, 0), 1280, 720));
 
     FDrawCommandList CommandList;
     Console->OnDraw(FDrawGeometry(Console->GetContentRectangle(), 1.0f), CommandList, 0);

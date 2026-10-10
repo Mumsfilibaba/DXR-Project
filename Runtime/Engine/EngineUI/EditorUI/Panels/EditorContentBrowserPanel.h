@@ -76,8 +76,8 @@ private:
     void OnTileDragDetected(int32 Index, const FCursorEvent& CursorEvent);
     void OnFolderSearchTextChanged(const FString& SearchText);
     void OnContentSearchTextChanged(const FString& SearchText);
-    void OnTreeContextMenu(int32 Target, const IntVector2& ScreenPosition);
-    void OnGridContextMenu(int32 Target, const IntVector2& ScreenPosition);
+    void OnTreeContextMenu(int32 Target, const FIntVector2& ScreenPosition);
+    void OnGridContextMenu(int32 Target, const FIntVector2& ScreenPosition);
     void OnTreeRenameCommitted(int32 Target, const FString& NewName);
     void OnGridRenameCommitted(int32 Target, const FString& NewName);
     void OnTreeRenameRequested();
@@ -98,8 +98,8 @@ private:
     NODISCARD FRectangle GetTreeLabelBounds(int32 Target) const;
     NODISCARD FRectangle GetTileBounds(int32 Target) const;
     NODISCARD FRectangle GetTileLabelBounds(int32 Target) const;
-    NODISCARD int32 HitTestTree(const IntVector2& ClientPosition) const;
-    NODISCARD int32 HitTestGrid(const IntVector2& ClientPosition) const;
+    NODISCARD int32 HitTestTree(const FIntVector2& ClientPosition) const;
+    NODISCARD int32 HitTestGrid(const FIntVector2& ClientPosition) const;
     NODISCARD bool CanDropOnTreeRow(int32 Target) const;
     NODISCARD bool CanDropOnTile(int32 Target) const;
     NODISCARD FString GetTreeLabel(int32 Target) const;

@@ -36,15 +36,15 @@ void FTextBlock::Initialize(const FDesc& Desc)
     VerticalAlignment   = Desc.VerticalAlignment;
 }
 
-IntVector2 FTextBlock::ComputeDesiredSize() const
+FIntVector2 FTextBlock::ComputeDesiredSize() const
 {
     if (!Font)
     {
-        return IntVector2(Margin.GetTotalHorizontal(), Margin.GetTotalVertical());
+        return FIntVector2(Margin.GetTotalHorizontal(), Margin.GetTotalVertical());
     }
 
     const int32 TextWidth = Font->MeasureWidth(FStringView(Text.Data(), Text.Length()));
-    return IntVector2(TextWidth + Margin.GetTotalHorizontal(), Font->GetLineHeight() + Margin.GetTotalVertical());
+    return FIntVector2(TextWidth + Margin.GetTotalHorizontal(), Font->GetLineHeight() + Margin.GetTotalVertical());
 }
 
 int32 FTextBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const

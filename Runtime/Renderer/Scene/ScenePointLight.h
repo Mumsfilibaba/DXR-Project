@@ -12,10 +12,10 @@ struct FScenePointLight : public FSceneObject
 {
     struct FShadowData
     {
-        Matrix4 ViewProjMatrix;
-        Vector3 Position;
-        float   NearPlane;
-        float   FarPlane;
+        FMatrix4 ViewProjMatrix;
+        FVector3 Position;
+        float    NearPlane;
+        float    FarPlane;
     };
 
     FScenePointLight(FScene* InScene);
@@ -27,10 +27,10 @@ struct FScenePointLight : public FSceneObject
     FShadowData  ShadowData[RHI_NUM_CUBE_FACES]; // Shadow generation information
     FSceneView   ShadowView[RHI_NUM_CUBE_FACES]; // Store data for each face
     FSceneView   SinglePassShadowView;           // Store data for a single pass cube-map
-    Matrix4      ViewMatrix[RHI_NUM_CUBE_FACES]; // Per-face view matrices (for frustum culling)
-    Matrix4      ProjMatrix[RHI_NUM_CUBE_FACES]; // Per-face projection matrices (for frustum culling)
-    Vector3      Position;
-    Vector3      Color;            // Pre-multiplied by intensity.
+    FMatrix4     ViewMatrix[RHI_NUM_CUBE_FACES]; // Per-face view matrices (for frustum culling)
+    FMatrix4     ProjMatrix[RHI_NUM_CUBE_FACES]; // Per-face projection matrices (for frustum culling)
+    FVector3     Position;
+    FVector3     Color;            // Pre-multiplied by intensity.
     float        ShadowBias;
     float        ShadowFarPlane;   // Doubles as the light radius for shading.
     bool         bCastShadows;     // Decides which of the two point-light buffers the light feeds.

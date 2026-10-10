@@ -70,7 +70,7 @@ public:
     NODISCARD FORCEINLINE T GetStartValue() const { return StartValue; }
 
     /** @brief Starts tracking a press at a position, over a value. */
-    void Begin(const IntVector2& Position, T Value)
+    void Begin(const FIntVector2& Position, T Value)
     {
         StartValue    = Value;
         StartPosition = Position;
@@ -86,7 +86,7 @@ public:
      * @param OutTravel How far it has travelled along X since the press, written every call.
      * @return True once the press is a scrub, which it stays until the next Begin.
      */
-    bool Update(const IntVector2& Position, int32 Threshold, int32& OutTravel)
+    bool Update(const FIntVector2& Position, int32 Threshold, int32& OutTravel)
     {
         OutTravel = Position.X - StartPosition.X;
         if (!bHasScrubbed && Math::Abs(OutTravel) < Threshold)
@@ -110,8 +110,8 @@ public:
     }
 
 private:
-    T          StartValue;
-    IntVector2 StartPosition;
-    bool       bIsPressed;
-    bool       bHasScrubbed;
+    T           StartValue;
+    FIntVector2 StartPosition;
+    bool        bIsPressed;
+    bool        bHasScrubbed;
 };

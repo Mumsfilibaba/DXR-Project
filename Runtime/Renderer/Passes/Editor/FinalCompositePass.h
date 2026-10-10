@@ -12,24 +12,24 @@
 
 struct FFinalCompositeInfoHLSL
 {
-    int32   bEnableSelectionOutline;
-    int32   bEnableGrid;
-    float   OutlineAlpha;
-    float   GridPlaneY;
-    float   GridMinorSize;
-    float   GridMajorSize;
-    float   GridMinorWidth;
-    float   GridMajorWidth;
-    Vector3 OutlineColor;
-    float   GridFadeDistance;
-    Vector3 GridMinorColor;
-    float   GridMinorAlpha;
-    Vector3 GridMajorColor;
-    float   GridMajorAlpha;
-    float   GridHorizonFade;
-    float   GridDepthBias;
-    float   GridMaxTraceDistance;
-    float   Padding2;
+    int32    bEnableSelectionOutline;
+    int32    bEnableGrid;
+    float    OutlineAlpha;
+    float    GridPlaneY;
+    float    GridMinorSize;
+    float    GridMajorSize;
+    float    GridMinorWidth;
+    float    GridMajorWidth;
+    FVector3 OutlineColor;
+    float    GridFadeDistance;
+    FVector3 GridMinorColor;
+    float    GridMinorAlpha;
+    FVector3 GridMajorColor;
+    float    GridMajorAlpha;
+    float    GridHorizonFade;
+    float    GridDepthBias;
+    float    GridMaxTraceDistance;
+    float    Padding2;
 };
 
 MARK_AS_REALLOCATABLE(FFinalCompositeInfoHLSL);

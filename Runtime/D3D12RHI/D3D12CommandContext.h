@@ -53,15 +53,15 @@ public:
     virtual void BeginQuery(FRHIQuery* Query) override final;
     virtual void EndQuery(FRHIQuery* Query) override final;
     virtual void QueryTimestamp(FRHIQuery* Query) override final;
-    virtual void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const Vector4& ClearColor) override final;
+    virtual void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor) override final;
     virtual void ClearDepthStencilView(FRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil) override final;
-    virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const Vector4& ClearColor) override final;
+    virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final;
     virtual void ClearUnorderedAccessViewUint(FRHIUnorderedAccessView* UnorderedAccessView, const uint32 Values[4]) override final;
     virtual void BeginRenderPass(const FRHIBeginRenderPassDesc& BeginRenderPassDesc) override final;
     virtual void EndRenderPass() override final { }
     virtual void SetViewport(const FViewportRegion& ViewportRegion) override final;
     virtual void SetScissorRect(const FScissorRegion& ScissorRegion) override final;
-    virtual void SetBlendFactor(const Vector4& Color) override final;
+    virtual void SetBlendFactor(const FVector4& Color) override final;
     virtual void SetStencilRef(uint32 StencilRef) override final;
     virtual void SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias) override final;
     virtual void SetDepthBounds(float MinDepth, float MaxDepth) override final;

@@ -221,7 +221,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
@@ -278,7 +278,7 @@ public:
 
 protected:
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
-    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+    virtual void HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath) override;
 
 private:
     NODISCARD bool HasFillTrack() const;
@@ -287,7 +287,7 @@ private:
     void ApplyValue(T InValue);
     void UpdateEditorText();
     void HandleTextCommitted(const FString& InText);
-    void BeginEditing(const IntVector2& ClientPosition);
+    void BeginEditing(const FIntVector2& ClientPosition);
 
     TSharedPtr<FEditableText> Editor;
     TSharedPtr<IFontFace>     Font;
@@ -378,9 +378,9 @@ void TNumericEntry<T>::Initialize(const FDesc& Desc)
 }
 
 template<typename T>
-IntVector2 TNumericEntry<T>::ComputeDesiredSize() const
+FIntVector2 TNumericEntry<T>::ComputeDesiredSize() const
 {
-    IntVector2 DesiredSize = Editor ? Editor->GetCachedDesiredSize() : IntVector2(0, 0);
+    FIntVector2 DesiredSize = Editor ? Editor->GetCachedDesiredSize() : FIntVector2(0, 0);
     DesiredSize.X += TextInset * 2;
     DesiredSize.Y = Math::Max(DesiredSize.Y, FUIStyle::GetDefault().Metrics.FrameHeight);
 
@@ -409,7 +409,7 @@ EChildVisit TNumericEntry<T>::VisitChildren(FChildVisitor& Visitor, EChildOrder 
 }
 
 template<typename T>
-void TNumericEntry<T>::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+void TNumericEntry<T>::HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath)
 {
     if (Editor && Editor->HasKeyboardFocus())
     {
@@ -442,7 +442,7 @@ int32 TNumericEntry<T>::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComma
 
     if (AccentEdge.A > 0.0f && AllottedGeometry.Bounds.Height > (AccentEdgeInset * 2))
     {
-        const IntVector2 EdgePosition(
+        const FIntVector2 EdgePosition(
             AllottedGeometry.Bounds.Position.X + AccentEdgeOffset - (AccentEdgeThickness / 2),
             AllottedGeometry.Bounds.Position.Y + AccentEdgeInset);
 
@@ -606,7 +606,7 @@ FRectangle TNumericEntry<T>::GetEditorRectangle(const FRectangle& Bounds) const
 
     Left += TextInset;
 
-    return FRectangle(IntVector2(Left, Bounds.Position.Y), Math::Max(0, Bounds.GetRight() - TextInset - Left), Bounds.Height);
+    return FRectangle(FIntVector2(Left, Bounds.Position.Y), Math::Max(0, Bounds.GetRight() - TextInset - Left), Bounds.Height);
 }
 
 template<typename T>
@@ -655,7 +655,7 @@ void TNumericEntry<T>::HandleTextCommitted(const FString& InText)
 }
 
 template<typename T>
-void TNumericEntry<T>::BeginEditing(const IntVector2& ClientPosition)
+void TNumericEntry<T>::BeginEditing(const FIntVector2& ClientPosition)
 {
     if (!Editor)
     {

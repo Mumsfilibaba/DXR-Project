@@ -16,19 +16,19 @@ namespace Geometry2D
      * @param End   The other end.
      * @return The squared distance.
      */
-    NODISCARD inline float DistanceSquaredToSegment(const Vector2& Point, const Vector2& Start, const Vector2& End)
+    NODISCARD inline float DistanceSquaredToSegment(const FVector2& Point, const FVector2& Start, const FVector2& End)
     {
-        const Vector2 Segment       = End - Start;
-        const float   LengthSquared = Segment.DotProduct(Segment);
+        const FVector2 Segment       = End - Start;
+        const float    LengthSquared = Segment.DotProduct(Segment);
 
         if (LengthSquared <= Math::Constants::Epsilon)
         {
-            const Vector2 Offset = Point - Start;
+            const FVector2 Offset = Point - Start;
             return Offset.DotProduct(Offset);
         }
 
-        const float   Parameter = Math::Clamp((Point - Start).DotProduct(Segment) / LengthSquared, 0.0f, 1.0f);
-        const Vector2 Offset    = Point - (Start + (Segment * Parameter));
+        const float    Parameter = Math::Clamp((Point - Start).DotProduct(Segment) / LengthSquared, 0.0f, 1.0f);
+        const FVector2 Offset    = Point - (Start + (Segment * Parameter));
         return Offset.DotProduct(Offset);
     }
 
@@ -40,7 +40,7 @@ namespace Geometry2D
      * @param End   The other end.
      * @return The distance in the same units as the points.
      */
-    NODISCARD inline float DistanceToSegment(const Vector2& Point, const Vector2& Start, const Vector2& End)
+    NODISCARD inline float DistanceToSegment(const FVector2& Point, const FVector2& Start, const FVector2& End)
     {
         return Math::Sqrt(DistanceSquaredToSegment(Point, Start, End));
     }
@@ -53,7 +53,7 @@ namespace Geometry2D
      * @param Point  The point to measure from.
      * @return The distance in the same units as the points.
      */
-    NODISCARD inline float DistanceToPolyline(TArrayView<const Vector2> Points, const Vector2& Point)
+    NODISCARD inline float DistanceToPolyline(TArrayView<const FVector2> Points, const FVector2& Point)
     {
         if (Points.IsEmpty())
         {
@@ -81,15 +81,15 @@ namespace Geometry2D
      * @param Quad  The four corners, in order around the quad.
      * @return True when the point is inside or on an edge.
      */
-    NODISCARD inline bool IsPointInsideQuad(const Vector2& Point, const Vector2 Quad[4])
+    NODISCARD inline bool IsPointInsideQuad(const FVector2& Point, const FVector2 Quad[4])
     {
         bool bHasPositive = false;
         bool bHasNegative = false;
 
         for (int32 EdgeIndex = 0; EdgeIndex < 4; ++EdgeIndex)
         {
-            const Vector2& Corner = Quad[EdgeIndex];
-            const Vector2& Next   = Quad[(EdgeIndex + 1) % 4];
+            const FVector2& Corner = Quad[EdgeIndex];
+            const FVector2& Next   = Quad[(EdgeIndex + 1) % 4];
 
             const float Cross = ((Next.X - Corner.X) * (Point.Y - Corner.Y)) - ((Next.Y - Corner.Y) * (Point.X - Corner.X));
 
@@ -110,7 +110,7 @@ namespace Geometry2D
      * @param T  How far along the curve, from zero at the start to one at the end.
      * @return The point.
      */
-    NODISCARD inline Vector2 EvaluateCubicBezier(const Vector2& P0, const Vector2& P1, const Vector2& P2, const Vector2& P3, float T)
+    NODISCARD inline FVector2 EvaluateCubicBezier(const FVector2& P0, const FVector2& P1, const FVector2& P2, const FVector2& P3, float T)
     {
         const float InverseT     = 1.0f - T;
         const float StartWeight  = InverseT * InverseT * InverseT;
@@ -132,7 +132,7 @@ namespace Geometry2D
      * @param OutPoints   Receives NumSegments + 1 points appended, from the start point to the end point.
      */
     template<typename AllocatorType>
-    inline void FlattenCubicBezier(const Vector2& P0, const Vector2& P1, const Vector2& P2, const Vector2& P3, int32 NumSegments, TArray<Vector2, AllocatorType>& OutPoints)
+    inline void FlattenCubicBezier(const FVector2& P0, const FVector2& P1, const FVector2& P2, const FVector2& P3, int32 NumSegments, TArray<FVector2, AllocatorType>& OutPoints)
     {
         const int32 Segments = Math::Max(NumSegments, 1);
         OutPoints.Reserve(OutPoints.Size() + Segments + 1);

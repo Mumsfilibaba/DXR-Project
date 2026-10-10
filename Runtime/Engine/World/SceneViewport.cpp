@@ -117,7 +117,7 @@ bool FSceneViewport::CaptureMouse()
 
     Application.ShowCursor(false);
     Application.ConfineCursorToRect(Window, CaptureRect);
-    Application.SetCursorPosition(IntVector2(CaptureRect.Position.X + (CaptureRect.Width / 2), CaptureRect.Position.Y + (CaptureRect.Height / 2)));
+    Application.SetCursorPosition(FIntVector2(CaptureRect.Position.X + (CaptureRect.Width / 2), CaptureRect.Position.Y + (CaptureRect.Height / 2)));
 
     if (!Application.CaptureMouse(Host))
     {
@@ -193,7 +193,7 @@ FRectangle FSceneViewport::GetCaptureRect() const
     FRectangle WindowRect;
     if (Window)
     {
-        const IntVector2 WindowSize = Window->GetSize();
+        const FIntVector2 WindowSize = Window->GetSize();
         WindowRect.Position = Window->GetPosition();
         WindowRect.Width    = WindowSize.X;
         WindowRect.Height   = WindowSize.Y;
@@ -210,7 +210,7 @@ void FSceneViewport::SetPlayerInputEnabled(bool bEnabled)
     }
 
     bPlayerInputEnabled     = bEnabled;
-    HighPrecisionMouseDelta = IntVector2();
+    HighPrecisionMouseDelta = FIntVector2();
 
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
@@ -225,10 +225,10 @@ void FSceneViewport::SetPlayerInputEnabled(bool bEnabled)
     }
 }
 
-IntVector2 FSceneViewport::ConsumeHighPrecisionMouseDelta()
+FIntVector2 FSceneViewport::ConsumeHighPrecisionMouseDelta()
 {
-    const IntVector2 Delta = HighPrecisionMouseDelta;
-    HighPrecisionMouseDelta = IntVector2();
+    const FIntVector2 Delta = HighPrecisionMouseDelta;
+    HighPrecisionMouseDelta = FIntVector2();
     return Delta;
 }
 
@@ -393,7 +393,7 @@ FEventResponse FSceneViewport::OnMouseEntered(const FCursorEvent& CursorEvent)
 
 FEventResponse FSceneViewport::OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent)
 {
-    const IntVector2 Delta = CursorEvent.GetHighPrecisionDelta();
+    const FIntVector2 Delta = CursorEvent.GetHighPrecisionDelta();
 
     if (bPlayerInputEnabled && bDiscardCaptureWarpDelta)
     {

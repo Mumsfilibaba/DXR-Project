@@ -198,7 +198,7 @@ bool FMacWindow::Initialize(const FPlatformWindowDesc& InDesc)
             [CocoaWindow setTabbingMode:NSWindowTabbingModeDisallowed];
         }
         
-        Position    = IntVector2(static_cast<int32>(WindowRect.origin.x), static_cast<int32>(WindowRect.origin.y));
+        Position    = FIntVector2(static_cast<int32>(WindowRect.origin.x), static_cast<int32>(WindowRect.origin.y));
         StyleParams = InDesc.Style;
         bResult     = true;
         
@@ -480,7 +480,7 @@ void FMacWindow::SetWindowPos(int32 x, int32 y)
             const NSRect WindowFrame = [CocoaWindow frameRectForContentRect:NewContentRect];
             [CocoaWindow setFrameOrigin:WindowFrame.origin];
             
-            Position = IntVector2(static_cast<int32>(WindowFrame.origin.x), static_cast<int32>(WindowFrame.origin.y));
+            Position = FIntVector2(static_cast<int32>(WindowFrame.origin.x), static_cast<int32>(WindowFrame.origin.y));
         }
         
         FPlatformApplicationMisc::PumpMessages(true);
@@ -511,7 +511,7 @@ void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
             const NSRect NewFrame = [NSWindow frameRectForContentRect:NewContentRect styleMask:[CocoaWindow styleMask]];
             [CocoaWindow setFrame: NewFrame display: YES];
             
-            Position = IntVector2(static_cast<int32>(NewFrame.origin.x), static_cast<int32>(NewFrame.origin.y));
+            Position = FIntVector2(static_cast<int32>(NewFrame.origin.x), static_cast<int32>(NewFrame.origin.y));
         }
         
         FPlatformApplicationMisc::PumpMessages(true);
@@ -775,8 +775,8 @@ bool FMacWindow::HitTestTitleBar(NSPoint LocationInWindow) const
         }
     }
 
-    const NSRect     ContentRect = [CocoaWindow contentRectForFrameRect:CocoaWindow.frame];
-    const IntVector2 ClientPoint = IntVector2(static_cast<int32>(LocationInWindow.x), static_cast<int32>(ContentRect.size.height - LocationInWindow.y));
+    const NSRect      ContentRect = [CocoaWindow contentRectForFrameRect:CocoaWindow.frame];
+    const FIntVector2 ClientPoint = FIntVector2(static_cast<int32>(LocationInWindow.x), static_cast<int32>(ContentRect.size.height - LocationInWindow.y));
 
     SCOPED_LOCK(TitleBarRegionsCS);
 

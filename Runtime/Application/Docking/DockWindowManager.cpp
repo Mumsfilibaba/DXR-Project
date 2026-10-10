@@ -116,7 +116,7 @@ void FDockWindowManager::Tick()
     }
 }
 
-TSharedPtr<FDockingArea> FDockWindowManager::SpawnHost(const FString& PanelId, const FString& Label, const TSharedPtr<FVisualElement>& Content, const IntVector2& ScreenPosition, const IntVector2& Size)
+TSharedPtr<FDockingArea> FDockWindowManager::SpawnHost(const FString& PanelId, const FString& Label, const TSharedPtr<FVisualElement>& Content, const FIntVector2& ScreenPosition, const FIntVector2& Size)
 {
     if (PanelId.IsEmpty() || !FApplication::IsInitialized())
     {
@@ -200,7 +200,7 @@ void FDockWindowManager::CloseAllHosts()
     }
 }
 
-void FDockWindowManager::MoveDecorator(const IntVector2& ScreenPosition)
+void FDockWindowManager::MoveDecorator(const FIntVector2& ScreenPosition)
 {
     if (!DecoratorWindow)
     {
@@ -217,7 +217,7 @@ FRectangle FDockWindowManager::GetDecoratorScreenBounds() const
         return FRectangle();
     }
 
-    const IntVector2 Size = DecoratorWindow->GetSize();
+    const FIntVector2 Size = DecoratorWindow->GetSize();
     return FRectangle(DecoratorWindow->GetPosition(), Size.X, Size.Y);
 }
 
@@ -279,7 +279,7 @@ void FDockWindowManager::UpdateDropPreview()
         return;
     }
 
-    const IntVector2 PreviewSize(PreviewBounds.Width, PreviewBounds.Height);
+    const FIntVector2 PreviewSize(PreviewBounds.Width, PreviewBounds.Height);
     if (FindDropPreview(Target, DragState.GetTargetPanelId(), DragState.GetTargetDirection(), PreviewSize) >= 0)
     {
         return;
@@ -295,7 +295,7 @@ void FDockWindowManager::UpdateDropPreview()
     DecoratorArea->FlushPendingRebuild();
 
     DecoratorArea->PrepareDesiredSize();
-    DecoratorArea->Arrange(FRectangle(IntVector2(0, 0), PreviewSize.X, PreviewSize.Y));
+    DecoratorArea->Arrange(FRectangle(FIntVector2(0, 0), PreviewSize.X, PreviewSize.Y));
 
     FRHITextureRef Texture = Renderer->RenderElementToTexture(DecoratorArea, PreviewSize, 1.0f);
 
@@ -333,12 +333,12 @@ FRHITexture* FDockWindowManager::GetDropPreviewTexture() const
     }
 
     const int32 Index = FindDropPreview(Target, DragState.GetTargetPanelId(), DragState.GetTargetDirection(),
-        IntVector2(PreviewBounds.Width, PreviewBounds.Height));
+        FIntVector2(PreviewBounds.Width, PreviewBounds.Height));
 
     return Index >= 0 ? DropPreviews[Index].Texture.Get() : nullptr;
 }
 
-int32 FDockWindowManager::FindDropPreview(const FDockingArea* Area, const FString& PanelId, EDockDirection Direction, const IntVector2& Size) const
+int32 FDockWindowManager::FindDropPreview(const FDockingArea* Area, const FString& PanelId, EDockDirection Direction, const FIntVector2& Size) const
 {
     for (int32 Index = 0; Index < DropPreviews.Size(); ++Index)
     {
@@ -462,8 +462,8 @@ void FDockWindowManager::RestoreHostLayouts(const TArray<FDockWindowLayout>& Lay
             }
             else
             {
-                const bool       bHasSize = Layout.Size.X > 0 && Layout.Size.Y > 0;
-                const IntVector2 Size     = bHasSize ? Layout.Size : Desc.DefaultSize;
+                const bool        bHasSize = Layout.Size.X > 0 && Layout.Size.Y > 0;
+                const FIntVector2 Size     = bHasSize ? Layout.Size : Desc.DefaultSize;
 
                 Area = SpawnHost(PanelId, Label, Panel, Layout.Position, Size);
                 if (!Area)
@@ -553,9 +553,9 @@ TSharedPtr<FDockingArea> FDockWindowManager::GetHostArea(int32 HostIndex) const
     return Hosts.IsValidIndex(HostIndex) ? Hosts[HostIndex].Area : nullptr;
 }
 
-IntVector2 FDockWindowManager::ResolveHostPosition(const IntVector2& ScreenPosition)
+FIntVector2 FDockWindowManager::ResolveHostPosition(const FIntVector2& ScreenPosition)
 {
-    return ScreenPosition - IntVector2(SpawnCursorInset, SpawnCursorInset);
+    return ScreenPosition - FIntVector2(SpawnCursorInset, SpawnCursorInset);
 }
 
 FString FDockWindowManager::ResolveHostTitle(const TSharedPtr<FDockingArea>& Area)
@@ -610,7 +610,7 @@ int32 FDockWindowManager::FindHostByWindow(const FWindow* Window) const
     return -1;
 }
 
-void FDockWindowManager::OnDragBegan(const FDockDragPanel& Panel, const IntVector2& ScreenPosition)
+void FDockWindowManager::OnDragBegan(const FDockDragPanel& Panel, const FIntVector2& ScreenPosition)
 {
     DestroyDecorator();
 
@@ -631,12 +631,12 @@ void FDockWindowManager::OnDragBegan(const FDockDragPanel& Panel, const IntVecto
         return;
     }
 
-    DecoratorGrabOffset = IntVector2(SpawnCursorInset, SpawnCursorInset);
+    DecoratorGrabOffset = FIntVector2(SpawnCursorInset, SpawnCursorInset);
 
     FWindow::FDesc WindowDesc;
     WindowDesc.Title           = Panel.Label.IsEmpty() ? Panel.PanelId : Panel.Label;
     WindowDesc.Position        = ScreenPosition - DecoratorGrabOffset;
-    WindowDesc.Size            = IntVector2(DecoratorWidth, DecoratorHeight);
+    WindowDesc.Size            = FIntVector2(DecoratorWidth, DecoratorHeight);
     WindowDesc.StyleFlags      = EWindowStyleFlags::TopMost | EWindowStyleFlags::NoTaskBarIcon | EWindowStyleFlags::Opaque;
     WindowDesc.bAcceptsInput   = false;
     WindowDesc.bActivateOnShow = false;
@@ -685,13 +685,13 @@ void FDockWindowManager::OnDragBegan(const FDockDragPanel& Panel, const IntVecto
     TSharedPtr<IApplicationRenderer> Renderer = FApplication::Get().GetRenderer();
     if (Panel.SourceArea && !Panel.SourceScreenBounds.IsEmpty() && Renderer)
     {
-        const IntVector2 SourceSize(Panel.SourceScreenBounds.Width, Panel.SourceScreenBounds.Height);
+        const FIntVector2 SourceSize(Panel.SourceScreenBounds.Width, Panel.SourceScreenBounds.Height);
 
         Area->SetSuppressRootTabStrip(true);
         Area->FlushPendingRebuild();
 
         Area->PrepareDesiredSize();
-        Area->Arrange(FRectangle(IntVector2(0, 0), SourceSize.X, SourceSize.Y));
+        Area->Arrange(FRectangle(FIntVector2(0, 0), SourceSize.X, SourceSize.Y));
 
         FRHITextureRef Picture = Renderer->RenderElementToTexture(Area, SourceSize, 1.0f);
 
@@ -727,7 +727,7 @@ void FDockWindowManager::SnapshotDecorator()
         return;
     }
 
-    const IntVector2 Size = DecoratorWindow->GetSize();
+    const FIntVector2 Size = DecoratorWindow->GetSize();
     const TSharedPtr<FVisualElement> Content = DecoratorWindow->GetContent();
     if (!Content)
     {
@@ -755,15 +755,15 @@ void FDockWindowManager::SnapshotDecorator()
     FApplication::LayoutWindow(DecoratorWindow);
 }
 
-void FDockWindowManager::OnDropOutside(const FDockDragPanel& Panel, const IntVector2& ScreenPosition)
+void FDockWindowManager::OnDropOutside(const FDockDragPanel& Panel, const FIntVector2& ScreenPosition)
 {
     if (Panel.PanelId.IsEmpty())
     {
         return;
     }
 
-    const IntVector2 Position = DecoratorWindow ? DecoratorWindow->GetPosition() : ResolveHostPosition(ScreenPosition);
-    const IntVector2 Size     = Desc.DefaultSize;
+    const FIntVector2 Position = DecoratorWindow ? DecoratorWindow->GetPosition() : ResolveHostPosition(ScreenPosition);
+    const FIntVector2 Size     = Desc.DefaultSize;
 
     const int32 SourceHostIndex = FindHostByArea(Panel.SourceArea);
     if (SourceHostIndex >= 0 && Panel.SourceArea->GetDockedPanelIds().IsEmpty())

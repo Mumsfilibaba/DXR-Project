@@ -72,7 +72,7 @@ private:
 
 struct FPointLightDataHLSL
 {
-    Vector3 Color    = Vector3(1.0f, 1.0f, 1.0f);
+    FVector3 Color    = FVector3(1.0f, 1.0f, 1.0f);
     float    Padding0 = 0.0f;
 };
 
@@ -81,8 +81,8 @@ MARK_AS_REALLOCATABLE(FPointLightDataHLSL);
 struct FShadowCastingPointLightDataHLSL
 {
     // 0-16
-    Vector3 Color      = Vector3(1.0f, 1.0f, 1.0f);
-    float   ShadowBias = 0.005f;
+    FVector3 Color      = FVector3(1.0f, 1.0f, 1.0f);
+    float    ShadowBias = 0.005f;
 
     // 16-32
     float   FarPlane   = 10.0f;
@@ -96,19 +96,19 @@ MARK_AS_REALLOCATABLE(FShadowCastingPointLightDataHLSL);
 struct FDirectionalLightDataHLSL
 {
     // 0-16
-    Vector3 Color      = Vector3(1.0f, 1.0f, 1.0f);
-    float   ShadowBias = 0.005f;
+    FVector3 Color      = FVector3(1.0f, 1.0f, 1.0f);
+    float    ShadowBias = 0.005f;
     
     // 16-32
-    Vector3 Direction  = Vector3(0.0f, -1.0f, 0.0f);
-    float   Padding0   = 0.0f;
+    FVector3 Direction = FVector3(0.0f, -1.0f, 0.0f);
+    float    Padding0  = 0.0f;
     
     // 32-48
-    Vector3 UpVector   = Vector3(0.0f, 0.0f, -1.0f);
-    float   LightSize  = 0.0f;
+    FVector3 UpVector  = FVector3(0.0f, 0.0f, -1.0f);
+    float    LightSize = 0.0f;
 
     // 48-112
-    Matrix4 ShadowMatrix;
+    FMatrix4 ShadowMatrix;
 };
 
 MARK_AS_REALLOCATABLE(FDirectionalLightDataHLSL);
@@ -116,15 +116,15 @@ MARK_AS_REALLOCATABLE(FDirectionalLightDataHLSL);
 struct FCascadeGenerationInfoHLSL
 {
     // 0-64
-    Matrix4 ShadowMatrix;
+    FMatrix4 ShadowMatrix;
 
     // 64-80
-    Vector3 LightDirection;
-    float   CascadeSplitLambda;
+    FVector3 LightDirection;
+    float    CascadeSplitLambda;
 
     // 80-96
-    Vector3 LightUp;
-    float   CascadeResolution;
+    FVector3 LightUp;
+    float    CascadeResolution;
 
     // 96-112
     int32   MaxCascadeIndex;
@@ -144,16 +144,16 @@ MARK_AS_REALLOCATABLE(FCascadeGenerationInfoHLSL);
 struct FLightProbeInfoHLSL
 {
     // 0-16
-    Vector3 BoxOriginWS;
-    float   BoxProjection;
+    FVector3 BoxOriginWS;
+    float    BoxProjection;
 
     // 16-32
-    Vector3 BoxMinWS;
-    float   Padding0;
+    FVector3 BoxMinWS;
+    float    Padding0;
 
     // 32-48
-    Vector3 BoxMaxWS;
-    float   Padding1;
+    FVector3 BoxMaxWS;
+    float    Padding1;
 };
 
 MARK_AS_REALLOCATABLE(FLightProbeInfoHLSL);
@@ -242,11 +242,11 @@ struct FFrameResources
     FRHITextureRef ReducedDepthBuffer[NumReducedDepthBuffers];
 
     // PointLights
-    TArray<Vector4>                         PointLightsPosRad;
+    TArray<FVector4>                         PointLightsPosRad;
     TArray<FPointLightDataHLSL>              PointLightsData;
     FRHIBufferRef                            PointLightsBuffer;
     FRHIBufferRef                            PointLightsPosRadBuffer;
-    TArray<Vector4>                         ShadowCastingPointLightsPosRad;
+    TArray<FVector4>                         ShadowCastingPointLightsPosRad;
     TArray<FShadowCastingPointLightDataHLSL> ShadowCastingPointLightsData;
     FRHIBufferRef                            ShadowCastingPointLightsBuffer;
     FRHIBufferRef                            ShadowCastingPointLightsPosRadBuffer;

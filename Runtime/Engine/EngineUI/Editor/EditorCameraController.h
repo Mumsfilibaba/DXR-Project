@@ -10,20 +10,20 @@ class FCameraComponent;
 
 struct FEditorCameraInputState
 {
-    Vector3 MoveAxis;
-    Vector2 LookDelta;
-    Vector2 RotationAxis;
-    Vector2 PanDelta;
-    float   WheelDelta       = 0.0f;
-    bool    bLeftMouseDown   = false;
-    bool    bRightMouseDown  = false;
-    bool    bMiddleMouseDown = false;
-    bool    bAltDown         = false;
-    bool    bCmdDown         = false;
-    bool    bBoost           = false;
-    bool    bFlyActive       = false;
-    bool    bFocusPressed    = false;
-    bool    bResetPressed    = false;
+    FVector3 MoveAxis;
+    FVector2 LookDelta;
+    FVector2 RotationAxis;
+    FVector2 PanDelta;
+    float    WheelDelta       = 0.0f;
+    bool     bLeftMouseDown   = false;
+    bool     bRightMouseDown  = false;
+    bool     bMiddleMouseDown = false;
+    bool     bAltDown         = false;
+    bool     bCmdDown         = false;
+    bool     bBoost           = false;
+    bool     bFlyActive       = false;
+    bool     bFocusPressed    = false;
+    bool     bResetPressed    = false;
 };
 
 class FEditorCameraController
@@ -36,7 +36,7 @@ public:
     ~FEditorCameraController();
 
     void Tick(float DeltaTime, const FEditorCameraInputState& Input, FActor* SelectedActor);
-    void UpdateProjection(const IntVector2& ViewportSize);
+    void UpdateProjection(const FIntVector2& ViewportSize);
 
     FCameraComponent* GetCamera() const;
 
@@ -72,8 +72,8 @@ private:
     void HandleFlyMovement(float DeltaTime, const FEditorCameraInputState& Input);
     void HandleMouse(float DeltaTime, const FEditorCameraInputState& Input);
     void AnchorOrbitPivot();
-    void Orbit(const Vector2& Delta);
-    void Pan(const Vector2& Delta);
+    void Orbit(const FVector2& Delta);
+    void Pan(const FVector2& Delta);
     void Dolly(float Steps);
     void ZoomForward(float Steps);
 
@@ -84,13 +84,13 @@ private:
 
     TUniquePtr<FCameraActor> CameraActor;
     FActor*                  AttachedActor;
-    Vector3                  AttachLocalOffset;
-    Vector3                  AttachRotationOffset;
-    Vector3                  Velocity;
-    Vector3                  OrbitPivot;
-    Vector3                  ResetPosition;
-    Vector3                  ResetRotation;
-    IntVector2               ViewportSize;
+    FVector3                 AttachLocalOffset;
+    FVector3                 AttachRotationOffset;
+    FVector3                 Velocity;
+    FVector3                 OrbitPivot;
+    FVector3                 ResetPosition;
+    FVector3                 ResetRotation;
+    FIntVector2              ViewportSize;
     float                    OrbitDistance;
     float                    MoveSpeed;
     float                    RotationSpeed;

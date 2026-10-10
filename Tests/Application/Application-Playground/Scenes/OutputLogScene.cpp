@@ -189,7 +189,7 @@ static TSharedPtr<FVisualElement> MakeLogControls(const FPlaygroundFonts& Fonts)
     ButtonRow->AddSlot(FButton::Create(BurstDesc)).SetPadding(FMargin(0, 0, 12, 0)).SetVerticalAlignment(EVerticalAlignment::Center);
     ButtonRow->AddSlot(FButton::Create(ClearDesc)).SetPadding(FMargin(0, 0, 12, 0)).SetVerticalAlignment(EVerticalAlignment::Center);
     ButtonRow->AddSlot(FButton::Create(CopyDesc)).SetVerticalAlignment(EVerticalAlignment::Center);
-    ButtonRow->AddSlot(FSpacer::Create(IntVector2(0, 0))).SetFillCoefficient(1.0f);
+    ButtonRow->AddSlot(FSpacer::Create(FIntVector2(0, 0))).SetFillCoefficient(1.0f);
 
     TSharedPtr<FHorizontalBox> FilterRow = FHorizontalBox::Create();
     FilterRow->AddSlot(FComboBox::Create(SeverityDesc)).SetPadding(FMargin(0, 0, 16, 0)).SetVerticalAlignment(EVerticalAlignment::Center);

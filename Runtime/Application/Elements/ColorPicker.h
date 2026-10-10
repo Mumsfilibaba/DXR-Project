@@ -42,7 +42,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
 
@@ -68,7 +68,7 @@ private:
     NODISCARD FRectangle GetSquareRectangle(const FRectangle& Bounds) const;
     NODISCARD FRectangle GetHueBarRectangle(const FRectangle& Bounds) const;
 
-    void ApplyCursor(const IntVector2& ClientPosition);
+    void ApplyCursor(const FIntVector2& ClientPosition);
     void NotifyColorPicked();
 
     float          Hue;

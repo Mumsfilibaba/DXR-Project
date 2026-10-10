@@ -110,7 +110,7 @@ public:
 
 protected:
     // FEngine Interface
-    virtual IntVector2 GetSceneRenderSize() const override final;
+    virtual FIntVector2 GetSceneRenderSize() const override final;
     virtual void SetSceneRenderTarget(const FRHITextureRef& InViewportImage) override final;
 
 private:

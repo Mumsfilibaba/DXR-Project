@@ -570,7 +570,7 @@ void EditorNodeGraph::LayoutLayered(const FRenderGraphDebugSnapshot& Snapshot, T
     TMap<int32, int32> PassToLocal;
     PassToLocal.Reserve(NumVisible);
 
-    TArray<Vector2> NodeSizes;
+    TArray<FVector2> NodeSizes;
     NodeSizes.Reserve(NumVisible);
 
     for (int32 Local = 0; Local < NumVisible; ++Local)
@@ -579,7 +579,7 @@ void EditorNodeGraph::LayoutLayered(const FRenderGraphDebugSnapshot& Snapshot, T
         PassToLocal.FindOrAdd(PassIndex) = Local;
 
         const int32 Measured = FindMeasuredIndex(MeasuredNodes, PassIndex);
-        NodeSizes.Add(Measured >= 0 ? Vector2(MeasuredNodes[Measured].Width, MeasuredNodes[Measured].Height) : Vector2(0.0f, 80.0f));
+        NodeSizes.Add(Measured >= 0 ? FVector2(MeasuredNodes[Measured].Width, MeasuredNodes[Measured].Height) : FVector2(0.0f, 80.0f));
     }
 
     TArray<FGraphLayoutEdge> Edges;
@@ -600,7 +600,7 @@ void EditorNodeGraph::LayoutLayered(const FRenderGraphDebugSnapshot& Snapshot, T
     Settings.MinColumnWidth             = MinNodeWidthWorld;
     Settings.bSourcesFollowPreviousNode = true;
 
-    TArray<Vector2> Positions;
+    TArray<FVector2> Positions;
     FLayeredGraphLayout::Layout(MakeArrayView(NodeSizes), MakeArrayView(Edges), Settings, Positions, VisiblePassIndices);
 
     for (int32 Local = 0; Local < NumVisible; ++Local)

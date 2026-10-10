@@ -67,20 +67,20 @@ static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRect
     Element->Arrange(Bounds);
 }
 
-static FCursorEvent MakeMoveEvent(const IntVector2& ClientPosition)
+static FCursorEvent MakeMoveEvent(const FIntVector2& ClientPosition)
 {
-    return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, IntVector2(0, 0), FModifierKeyState());
+    return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, FIntVector2(0, 0), FModifierKeyState());
 }
 
-static FCursorEvent MakeButtonEvent(EInputEventType Type, const IntVector2& ClientPosition)
+static FCursorEvent MakeButtonEvent(EInputEventType Type, const FIntVector2& ClientPosition)
 {
-    return FCursorEvent(Type, Keys::MouseButtonLeft, ClientPosition, IntVector2(0, 0), FModifierKeyState(), Type == EInputEventType::MouseButtonDown);
+    return FCursorEvent(Type, Keys::MouseButtonLeft, ClientPosition, FIntVector2(0, 0), FModifierKeyState(), Type == EInputEventType::MouseButtonDown);
 }
 
 /** @brief Presses and releases in the middle of an element, which is one click end to end. */
 static void ClickElement(const TSharedPtr<FVisualElement>& Element)
 {
-    const IntVector2 Center = Element->GetContentRectangle().GetCenter();
+    const FIntVector2 Center = Element->GetContentRectangle().GetCenter();
 
     Element->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, Center));
     Element->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, Center));
@@ -154,20 +154,20 @@ bool ToolBarComposition_Test()
     TEST_EXPECT(ToolBar->FindButton("Missing") == nullptr);
 
     TEST_SECTION("An entry is as wide as what it shows, and as tall as a row whatever that is");
-    LayoutElement(ToolBar, FRectangle(IntVector2(0, 0), 400, 40));
+    LayoutElement(ToolBar, FRectangle(FIntVector2(0, 0), 400, 40));
 
-    TEST_EXPECT_EQ(Save->GetCachedDesiredSize(), IntVector2(52, 24));
-    TEST_EXPECT_EQ(Undo->GetCachedDesiredSize(), IntVector2(28, 24));
+    TEST_EXPECT_EQ(Save->GetCachedDesiredSize(), FIntVector2(52, 24));
+    TEST_EXPECT_EQ(Undo->GetCachedDesiredSize(), FIntVector2(28, 24));
 
     TEST_SECTION("A dropdown reserves the room its arrow is drawn in");
-    TEST_EXPECT_EQ(ToolBar->GetButton(4)->GetCachedDesiredSize(), IntVector2(58, 24));
+    TEST_EXPECT_EQ(ToolBar->GetButton(4)->GetCachedDesiredSize(), FIntVector2(58, 24));
 
     TEST_SECTION("A word too short to fill an entry is widened to the shared floor, which an icon is spared");
     TSharedPtr<FToolBar>       Narrow = FToolBar::Create(Desc);
     TSharedPtr<FToolBarButton> Fit    = Narrow->AddButton(FToolBarItemDesc().SetLabel("Fit"), FOnClicked());
     TSharedPtr<FToolBarButton> Icon   = Narrow->AddButton(FToolBarItemDesc().SetIcon(MakeIcon()), FOnClicked());
 
-    LayoutElement(Narrow, FRectangle(IntVector2(0, 0), 400, 40));
+    LayoutElement(Narrow, FRectangle(FIntVector2(0, 0), 400, 40));
 
     const FUIStyleMetrics& Metrics = FUIStyle::GetDefault().Metrics;
     const int32 LabelFloor = Metrics.ResolveButtonMinWidth(Font.Get(), Fit->GetPadding());
@@ -181,8 +181,8 @@ bool ToolBarComposition_Test()
     TSharedPtr<FToolBar> IconAndLabel = FToolBar::Create(Desc);
     TSharedPtr<FToolBarButton> Both   = IconAndLabel->AddButton(FToolBarItemDesc().SetIcon(MakeIcon()).SetLabel("Save"), FOnClicked());
 
-    LayoutElement(IconAndLabel, FRectangle(IntVector2(0, 0), 400, 40));
-    TEST_EXPECT_EQ(Both->GetCachedDesiredSize(), IntVector2(64, 24));
+    LayoutElement(IconAndLabel, FRectangle(FIntVector2(0, 0), 400, 40));
+    TEST_EXPECT_EQ(Both->GetCachedDesiredSize(), FIntVector2(64, 24));
 
     TEST_SECTION("The strip runs left to right, spaced, inside its own padding");
     TEST_EXPECT_EQ(Save->GetContentRectangle().Position.X, 4);
@@ -208,7 +208,7 @@ bool ToolBarComposition_Test()
     TEST_EXPECT_EQ(Grid->GetContentRectangle().Position.X - RuleBounds.GetRight(), 8);
 
     TEST_SECTION("The strip asks for what its entries add up to, plus the gaps and its own padding");
-    TEST_EXPECT_EQ(ToolBar->GetCachedDesiredSize(), IntVector2(220, 28));
+    TEST_EXPECT_EQ(ToolBar->GetCachedDesiredSize(), FIntVector2(220, 28));
 
     TEST_SECTION("A vertical strip stacks its entries down and gives them all one width");
     FToolBar::FDesc VerticalDesc;
@@ -219,10 +219,10 @@ bool ToolBarComposition_Test()
     TSharedPtr<FToolBarButton> First    = Vertical->AddButton(FToolBarItemDesc().SetLabel("One"), FOnClicked());
     TSharedPtr<FToolBarButton> Second   = Vertical->AddButton(FToolBarItemDesc().SetLabel("Two"), FOnClicked());
 
-    LayoutElement(Vertical, FRectangle(IntVector2(0, 0), 120, 200));
+    LayoutElement(Vertical, FRectangle(FIntVector2(0, 0), 120, 200));
 
-    TEST_EXPECT_EQ(First->GetContentRectangle().Position, IntVector2(4, 2));
-    TEST_EXPECT_EQ(Second->GetContentRectangle().Position, IntVector2(4, 28));
+    TEST_EXPECT_EQ(First->GetContentRectangle().Position, FIntVector2(4, 2));
+    TEST_EXPECT_EQ(Second->GetContentRectangle().Position, FIntVector2(4, 28));
     TEST_EXPECT_EQ(First->GetContentRectangle().Width, 112);
     TEST_EXPECT_EQ(Second->GetContentRectangle().Width, 112);
 
@@ -266,7 +266,7 @@ bool ToolBarInteraction_Test()
             ReportedState = NewState;
         }));
 
-    LayoutElement(ToolBar, FRectangle(IntVector2(0, 0), 400, 40));
+    LayoutElement(ToolBar, FRectangle(FIntVector2(0, 0), 400, 40));
 
     TEST_SECTION("A button fires once per click and holds nothing afterwards");
     ClickElement(Save);
@@ -300,8 +300,8 @@ bool ToolBarInteraction_Test()
     Grid->SetCheckState(ECheckBoxState::Unchecked);
 
     // A release leaves the cursor where it was, so both entries are still hovered from the clicks above
-    Save->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
-    Grid->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    Save->OnMouseLeft(MakeMoveEvent(FIntVector2(400, 400)));
+    Grid->OnMouseLeft(MakeMoveEvent(FIntVector2(400, 400)));
 
     const FUIStyle& Style = FUIStyle::GetDefault();
 
@@ -322,7 +322,7 @@ bool ToolBarInteraction_Test()
     TEST_EXPECT(FindFillHasTint(HoveredList, Grid, Style.Colors.ButtonNormal));
 
     TEST_SECTION("Latching switches the fill to the accent, and hovering a latched entry brightens it");
-    Save->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    Save->OnMouseLeft(MakeMoveEvent(FIntVector2(400, 400)));
     Grid->SetCheckState(ECheckBoxState::Checked);
 
     FDrawCommandList CheckedList;
@@ -335,7 +335,7 @@ bool ToolBarInteraction_Test()
     DrawElement(ToolBar, CheckedHoveredList);
     TEST_EXPECT(FindFillHasTint(CheckedHoveredList, Grid, Style.Colors.AccentHovered));
 
-    Grid->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    Grid->OnMouseLeft(MakeMoveEvent(FIntVector2(400, 400)));
 
     TEST_SECTION("A plain button can be lit from outside, which is how a set of them reads as a radio group");
     TEST_EXPECT(!Save->IsHighlighted());
@@ -357,13 +357,13 @@ bool ToolBarInteraction_Test()
     TEST_EXPECT(ToolTips.IsPending());
     TEST_EXPECT_EQ(ToolTips.GetOwner(), StaticCastSharedPtr<FVisualElement>(Save));
 
-    Save->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    Save->OnMouseLeft(MakeMoveEvent(FIntVector2(400, 400)));
     TEST_EXPECT(!ToolTips.IsPending());
 
     TEST_SECTION("An entry with no tip never asks for one");
     Grid->OnMouseEntered(MakeMoveEvent(Grid->GetContentRectangle().GetCenter()));
     TEST_EXPECT(!ToolTips.IsPending());
-    Grid->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    Grid->OnMouseLeft(MakeMoveEvent(FIntVector2(400, 400)));
 
     TEST_END();
 }
@@ -408,7 +408,7 @@ bool ToolBarGroups_Test()
     TEST_EXPECT(Loose->GetCornerRadius() == FCornerRadii(Radius));
 
     TEST_SECTION("A minimum width is honoured however narrow the label is");
-    LayoutElement(ToolBar, FRectangle(IntVector2(0, 0), 600, 40));
+    LayoutElement(ToolBar, FRectangle(FIntVector2(0, 0), 600, 40));
 
     TEST_EXPECT_EQ(Move->GetContentRectangle().Width, 80);
     TEST_EXPECT_EQ(Turn->GetContentRectangle().Width, 60);
@@ -478,10 +478,10 @@ bool ToolBarFlexibleSpace_Test()
     TEST_EXPECT(Filtered->GetItems()[1].Type == EToolBarItemType::Custom);
     TEST_EXPECT(Filtered->GetItems()[2].Type == EToolBarItemType::FlexibleSpace);
 
-    LayoutElement(Filtered, FRectangle(IntVector2(0, 0), 400, 40));
+    LayoutElement(Filtered, FRectangle(FIntVector2(0, 0), 400, 40));
 
-    const IntVector2 Intrinsic = SearchBox->GetCachedDesiredSize();
-    const FRectangle Field     = SearchBox->GetContentRectangle();
+    const FIntVector2 Intrinsic = SearchBox->GetCachedDesiredSize();
+    const FRectangle  Field     = SearchBox->GetContentRectangle();
 
     TEST_EXPECT(Intrinsic.X > 0);
     TEST_EXPECT(Field.Width > Intrinsic.X);
@@ -503,7 +503,7 @@ bool ToolBarFlexibleSpace_Test()
 
     TSharedPtr<FToolBarButton> Tail = Centred->AddButton(FToolBarItemDesc().SetLabel("Tail"), FOnClicked());
 
-    LayoutElement(Centred, FRectangle(IntVector2(0, 0), 500, 40));
+    LayoutElement(Centred, FRectangle(FIntVector2(0, 0), 500, 40));
 
     const int32 LeadingGap  = Play->GetContentRectangle().Position.X - Head->GetContentRectangle().GetRight();
     const int32 TrailingGap = Tail->GetContentRectangle().Position.X - Pause->GetContentRectangle().GetRight();
@@ -536,14 +536,14 @@ bool ToolBarFlexibleSpace_Test()
 
     TEST_SECTION("The field's own background survives the clip and the layer sort intact");
 
-    const Vector2 FieldCentre(
+    const FVector2 FieldCentre(
         (static_cast<float>(Field.Position.X) + static_cast<float>(Field.GetRight())) * 0.5f,
         (static_cast<float>(Field.Position.Y) + static_cast<float>(Field.GetBottom())) * 0.5f);
 
     bool bFoundField = false;
     for (const FUIShapeVertex& Vertex : GetShapeVertices(DrawData))
     {
-        const Vector2 Origin = Vertex.Position - Vertex.LocalPos;
+        const FVector2 Origin = Vertex.Position - Vertex.LocalPos;
         bFoundField |= FieldCentre.X >= Origin.X && FieldCentre.X <= Origin.X + Vertex.RectSize.X
             && FieldCentre.Y >= Origin.Y && FieldCentre.Y <= Origin.Y + Vertex.RectSize.Y;
     }
@@ -569,7 +569,7 @@ bool ToolBarDropDown_Test()
     FScopedToolBarTestServices MenuServices;
 
     const TSharedPtr<IFontFace> Font   = CreateFont();
-    TSharedPtr<FWindow>         Window = Application.CreateWindow(IntVector2(800, 600), IntVector2(0, 0));
+    TSharedPtr<FWindow>         Window = Application.CreateWindow(FIntVector2(800, 600), FIntVector2(0, 0));
 
     FToolBar::FDesc Desc;
     Desc.Font           = Font;
@@ -596,7 +596,7 @@ bool ToolBarDropDown_Test()
     TEST_EXPECT_EQ(FMenuStack::Get().GetDepth(), 1);
 
     const FRectangle ButtonBounds = ViewButton->GetContentRectangle();
-    TEST_EXPECT_EQ(ViewAnchor->GetMenu()->ScreenBounds.Position, IntVector2(ButtonBounds.Position.X, ButtonBounds.GetBottom()));
+    TEST_EXPECT_EQ(ViewAnchor->GetMenu()->ScreenBounds.Position, FIntVector2(ButtonBounds.Position.X, ButtonBounds.GetBottom()));
 
     TEST_SECTION("The open entry stays lit, so it is clear which menu belongs to which entry");
     TEST_EXPECT(ViewButton->IsHighlighted());

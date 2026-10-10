@@ -99,10 +99,10 @@ void FMacCursor::SetPosition(int32 x, int32 y)
 {
     CGWarpMouseCursorPosition(CGPointMake(static_cast<CGFloat>(x), static_cast<CGFloat>(y)));
 
-    UpdateCursorPosition(IntVector2(x, y));
+    UpdateCursorPosition(FIntVector2(x, y));
 }
 
-IntVector2 FMacCursor::GetPosition() const
+FIntVector2 FMacCursor::GetPosition() const
 {
     if (bIsPositionInitialized)
     {
@@ -117,7 +117,7 @@ IntVector2 FMacCursor::GetPosition() const
     }, NSDefaultRunLoopMode);
 
     const NSPoint CursorPosition = FMacApplication::ConvertCocoaPointToEngine(MouseLocation.x, MouseLocation.y);
-    return IntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+    return FIntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
 }
 
 void FMacCursor::SetVisibility(bool bVisible)
@@ -144,7 +144,7 @@ void FMacCursor::SetVisibility(bool bVisible)
     }, NSDefaultRunLoopMode, false);
 }
 
-void FMacCursor::UpdateCursorPosition(const IntVector2& InPosition)
+void FMacCursor::UpdateCursorPosition(const FIntVector2& InPosition)
 {
     CurrentPosition = InPosition;
     bIsPositionInitialized = true;

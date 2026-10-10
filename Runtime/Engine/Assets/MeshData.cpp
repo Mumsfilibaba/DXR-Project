@@ -7,18 +7,18 @@ constexpr float TangentLengthSquaredEpsilon = 1.0e-12f;
 
 struct FTriangleTangentFrame
 {
-    Vector3 Tangent;
-    Vector3 Bitangent;
-    float   Determinant;
+    FVector3 Tangent;
+    FVector3 Bitangent;
+    float    Determinant;
 };
 
 // Lengyel's method
 static FTriangleTangentFrame ComputeTriangleTangentFrame(const FSourceVertex& Vertex0, const FSourceVertex& Vertex1, const FSourceVertex& Vertex2)
 {
-    const Vector3 Edge1    = Vertex1.Position - Vertex0.Position;
-    const Vector3 Edge2    = Vertex2.Position - Vertex0.Position;
-    const Vector2 DeltaUV1 = Vertex1.TexCoord - Vertex0.TexCoord;
-    const Vector2 DeltaUV2 = Vertex2.TexCoord - Vertex0.TexCoord;
+    const FVector3 Edge1    = Vertex1.Position - Vertex0.Position;
+    const FVector3 Edge2    = Vertex2.Position - Vertex0.Position;
+    const FVector2 DeltaUV1 = Vertex1.TexCoord - Vertex0.TexCoord;
+    const FVector2 DeltaUV2 = Vertex2.TexCoord - Vertex0.TexCoord;
 
     FTriangleTangentFrame Frame;
     Frame.Determinant = DeltaUV1.X * DeltaUV2.Y - DeltaUV2.X * DeltaUV1.Y;
@@ -36,7 +36,7 @@ static FTriangleTangentFrame ComputeTriangleTangentFrame(const FSourceVertex& Ve
     return Frame;
 }
 
-static float DeriveTangentSign(const Vector3& Normal, const Vector3& Tangent, const Vector3& AccumulatedBitangent)
+static float DeriveTangentSign(const FVector3& Normal, const FVector3& Tangent, const FVector3& AccumulatedBitangent)
 {
     return (Normal.CrossProduct(Tangent).DotProduct(AccumulatedBitangent) < 0.0f) ? -1.0f : 1.0f;
 }
@@ -95,7 +95,7 @@ bool FMeshData::PackVertexStreams(TArray<uint8> (&OutStreams)[VERTEX_MAX_STREAMS
                 switch (Attribute.Element)
                 {
                     case EVertexElement::Position:
-                        *reinterpret_cast<Vector3*>(Destination) = Vertex.Position;
+                        *reinterpret_cast<FVector3*>(Destination) = Vertex.Position;
                         break;
 
                     case EVertexElement::Normal:
@@ -107,7 +107,7 @@ bool FMeshData::PackVertexStreams(TArray<uint8> (&OutStreams)[VERTEX_MAX_STREAMS
                         break;
 
                     case EVertexElement::TexCoord0:
-                        *reinterpret_cast<Vector2*>(Destination) = Vertex.TexCoord;
+                        *reinterpret_cast<FVector2*>(Destination) = Vertex.TexCoord;
                         break;
 
                     default:
@@ -184,9 +184,9 @@ void FMeshData::CalculateHardNormals()
         FSourceVertex& Vertex1 = Vertices[Indices[i + 1]];
         FSourceVertex& Vertex2 = Vertices[Indices[i + 2]];
 
-        Vector3 Edge0  = Vertex2.Position - Vertex0.Position;
-        Vector3 Edge1  = Vertex1.Position - Vertex0.Position;
-        Vector3 Normal = Edge0.CrossProduct(Edge1);
+        FVector3 Edge0  = Vertex2.Position - Vertex0.Position;
+        FVector3 Edge1  = Vertex1.Position - Vertex0.Position;
+        FVector3 Normal = Edge0.CrossProduct(Edge1);
         Normal.Normalize();
 
         Vertex0.Normal = Normal;
@@ -208,9 +208,9 @@ void FMeshData::CalculateSoftNormals()
         FSourceVertex& Vertex1 = Vertices[Indices[i + 1]];
         FSourceVertex& Vertex2 = Vertices[Indices[i + 2]];
 
-        Vector3 Edge0  = Vertex2.Position - Vertex0.Position;
-        Vector3 Edge1  = Vertex1.Position - Vertex0.Position;
-        Vector3 Normal = Edge0.CrossProduct(Edge1);
+        FVector3 Edge0  = Vertex2.Position - Vertex0.Position;
+        FVector3 Edge1  = Vertex1.Position - Vertex0.Position;
+        FVector3 Normal = Edge0.CrossProduct(Edge1);
         Normal.Normalize();
 
         // Average current and new normal
@@ -227,10 +227,10 @@ void FMeshData::CalculateTangents()
 {
     CHECK(Indices.Size() % 3 == 0);
 
-    TArray<Vector3> TangentAccumulation;
+    TArray<FVector3> TangentAccumulation;
     TangentAccumulation.Resize(Vertices.Size());
 
-    TArray<Vector3> BitangentAccumulation;
+    TArray<FVector3> BitangentAccumulation;
     BitangentAccumulation.Resize(Vertices.Size());
 
     for (int32 i = 0; i < Indices.Size(); i += 3)
@@ -251,9 +251,9 @@ void FMeshData::CalculateTangents()
 
     for (int32 i = 0; i < Vertices.Size(); i++)
     {
-        const Vector3 Tangent = TangentAccumulation[i].GetNormalized();
-        Vertices[i].Tangent     = Tangent.GetOrthonormalTo(Vertices[i].Normal);
-        Vertices[i].TangentSign = DeriveTangentSign(Vertices[i].Normal, Vertices[i].Tangent, BitangentAccumulation[i]);
+        const FVector3 Tangent = TangentAccumulation[i].GetNormalized();
+        Vertices[i].Tangent      = Tangent.GetOrthonormalTo(Vertices[i].Normal);
+        Vertices[i].TangentSign  = DeriveTangentSign(Vertices[i].Normal, Vertices[i].Tangent, BitangentAccumulation[i]);
     }
 
     ValidateTangents();
@@ -264,7 +264,7 @@ void FMeshData::CalculateTangentSigns()
 {
     CHECK(Indices.Size() % 3 == 0);
 
-    TArray<Vector3> BitangentAccumulation;
+    TArray<FVector3> BitangentAccumulation;
     BitangentAccumulation.Resize(Vertices.Size());
 
     for (int32 i = 0; i < Indices.Size(); i += 3)
@@ -363,7 +363,7 @@ void FMeshData::SplitTangentSeams()
 void FMeshData::ValidateTangents()
 {
     // A tangent that collapsed to zero is as unusable as a NaN.
-    const auto IsValid = [](const Vector3& Vector)
+    const auto IsValid = [](const FVector3& Vector)
     {
         return !Vector.ContainsInfinity() && !Vector.ContainsNaN() && Vector.GetLengthSquared() > TangentLengthSquaredEpsilon;
     };
@@ -387,13 +387,13 @@ void FMeshData::ValidateTangents()
         if (!bValid1 || !bValid2 || !bValid3)
         {
             // Compute two edge vectors from the triangle.
-            Vector3 Edge1 = Vertex2.Position - Vertex1.Position;
-            Vector3 Edge2 = Vertex3.Position - Vertex1.Position;
+            FVector3 Edge1 = Vertex2.Position - Vertex1.Position;
+            FVector3 Edge2 = Vertex3.Position - Vertex1.Position;
 
             // Calculate the triangle's normal using the cross product, then normalize.
-            Vector3 TriangleNormal  = Edge1.CrossProduct(Edge2).GetNormalized();
-            Vector3 Arbitrary       = (Math::Abs<float>(TriangleNormal.X) < 0.9f) ? Vector3(1.0f, 0.0f, 0.0f) : Vector3(0.0f, 1.0f, 0.0f);
-            Vector3 TriangleTangent = TriangleNormal.CrossProduct(Arbitrary).GetNormalized();
+            FVector3 TriangleNormal  = Edge1.CrossProduct(Edge2).GetNormalized();
+            FVector3 Arbitrary       = (Math::Abs<float>(TriangleNormal.X) < 0.9f) ? FVector3(1.0f, 0.0f, 0.0f) : FVector3(0.0f, 1.0f, 0.0f);
+            FVector3 TriangleTangent = TriangleNormal.CrossProduct(Arbitrary).GetNormalized();
 
             // Update vertices with invalid tangent.
             if (!bValid1)
@@ -483,11 +483,11 @@ void FMeshData::Subdivide(uint32 Subdivisions)
         for (uint32 j = 0; j < IndexCount; j += 3)
         {
             // Calculate Position
-            Vector3 Position0 = Vertices[Indices[j]].Position;
-            Vector3 Position1 = Vertices[Indices[j + 1]].Position;
-            Vector3 Position2 = Vertices[Indices[j + 2]].Position;
+            FVector3 Position0 = Vertices[Indices[j]].Position;
+            FVector3 Position1 = Vertices[Indices[j + 1]].Position;
+            FVector3 Position2 = Vertices[Indices[j + 2]].Position;
 
-            Vector3 Position = Position0 + Position1;
+            FVector3 Position = Position0 + Position1;
             TempVertices[0].Position = Position * 0.5f;
 
             Position = Position0 + Position2;
@@ -497,11 +497,11 @@ void FMeshData::Subdivide(uint32 Subdivisions)
             TempVertices[2].Position = Position * 0.5f;
 
             // Calculate TexCoord
-            Vector2 TexCoord0 = Vertices[Indices[j]].TexCoord;
-            Vector2 TexCoord1 = Vertices[Indices[j + 1]].TexCoord;
-            Vector2 TexCoord2 = Vertices[Indices[j + 2]].TexCoord;
+            FVector2 TexCoord0 = Vertices[Indices[j]].TexCoord;
+            FVector2 TexCoord1 = Vertices[Indices[j + 1]].TexCoord;
+            FVector2 TexCoord2 = Vertices[Indices[j + 2]].TexCoord;
 
-            Vector2 TexCoord = TexCoord0 + TexCoord1;
+            FVector2 TexCoord = TexCoord0 + TexCoord1;
             TempVertices[0].TexCoord = TexCoord * 0.5f;
 
             TexCoord = TexCoord0 + TexCoord2;
@@ -511,11 +511,11 @@ void FMeshData::Subdivide(uint32 Subdivisions)
             TempVertices[2].TexCoord = TexCoord * 0.5f;
 
             // Calculate Normal
-            Vector3 Normal0 = Vertices[Indices[j]].Normal;
-            Vector3 Normal1 = Vertices[Indices[j + 1]].Normal;
-            Vector3 Normal2 = Vertices[Indices[j + 2]].Normal;
+            FVector3 Normal0 = Vertices[Indices[j]].Normal;
+            FVector3 Normal1 = Vertices[Indices[j + 1]].Normal;
+            FVector3 Normal2 = Vertices[Indices[j + 2]].Normal;
 
-            Vector3 Normal = Normal0 + Normal1;
+            FVector3 Normal = Normal0 + Normal1;
             Normal = Normal * 0.5f;
             TempVertices[0].Normal = Normal.GetNormalized();
 
@@ -528,11 +528,11 @@ void FMeshData::Subdivide(uint32 Subdivisions)
             TempVertices[2].Normal = Normal.GetNormalized();
 
             // Calculate Tangent
-            Vector3 Tangent0 = Vertices[Indices[j]].Tangent;
-            Vector3 Tangent1 = Vertices[Indices[j + 1]].Tangent;
-            Vector3 Tangent2 = Vertices[Indices[j + 2]].Tangent;
+            FVector3 Tangent0 = Vertices[Indices[j]].Tangent;
+            FVector3 Tangent1 = Vertices[Indices[j + 1]].Tangent;
+            FVector3 Tangent2 = Vertices[Indices[j + 2]].Tangent;
 
-            Vector3 Tangent         = Tangent0 + Tangent1;
+            FVector3 Tangent        = Tangent0 + Tangent1;
             Tangent                 = Tangent * 0.5f;
             TempVertices[0].Tangent = Tangent.GetNormalized();
 

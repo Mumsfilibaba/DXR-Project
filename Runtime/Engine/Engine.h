@@ -124,7 +124,7 @@ public:
 protected:
     bool CreateViewportRenderTarget();
 
-    virtual IntVector2 GetSceneRenderSize() const;
+    virtual FIntVector2 GetSceneRenderSize() const;
 
     virtual void SetSceneRenderTarget(const FRHITextureRef& InViewportImage);
 
@@ -138,8 +138,8 @@ private:
     void UpdateViewportRenderTarget(float DeltaTime);
 
     void OnEngineWindowClosed();
-    void OnEngineWindowMoved(const IntVector2& NewScreenPosition);
-    void OnEngineWindowResized(const IntVector2& NewScreenSize);
+    void OnEngineWindowMoved(const FIntVector2& NewScreenPosition);
+    void OnEngineWindowResized(const FIntVector2& NewScreenSize);
 
     FWorld*                    World;
     FGameModule*               GameModule;
@@ -147,8 +147,8 @@ private:
     TSharedPtr<FViewport>      EngineViewport;
     TSharedPtr<FSceneViewport> SceneViewport;
     FRHITextureRef             ViewportImage;
-    IntVector2                 ViewportImageSize;
-    IntVector2                 PendingViewportImageSize;
+    FIntVector2                ViewportImageSize;
+    FIntVector2                PendingViewportImageSize;
     float                      ViewportResizeSettleTime;
 
     static FEngine* Engine;

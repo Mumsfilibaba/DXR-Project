@@ -1,6 +1,6 @@
 #include "Application/Elements/Spacer.h"
 
-TSharedPtr<FSpacer> FSpacer::Create(const IntVector2& InSize)
+TSharedPtr<FSpacer> FSpacer::Create(const FIntVector2& InSize)
 {
     TSharedPtr<FSpacer> NewSpacer = MakeSharedPtr<FSpacer>();
     NewSpacer->SetSize(InSize);
@@ -9,12 +9,12 @@ TSharedPtr<FSpacer> FSpacer::Create(const IntVector2& InSize)
 
 TSharedPtr<FSpacer> FSpacer::CreateHorizontal(int32 InWidth)
 {
-    return Create(IntVector2(InWidth, 0));
+    return Create(FIntVector2(InWidth, 0));
 }
 
 TSharedPtr<FSpacer> FSpacer::CreateVertical(int32 InHeight)
 {
-    return Create(IntVector2(0, InHeight));
+    return Create(FIntVector2(0, InHeight));
 }
 
 FSpacer::FSpacer()
@@ -25,12 +25,12 @@ FSpacer::FSpacer()
 
 FSpacer::~FSpacer() = default;
 
-IntVector2 FSpacer::ComputeDesiredSize() const
+FIntVector2 FSpacer::ComputeDesiredSize() const
 {
     return Size;
 }
 
-void FSpacer::SetSize(const IntVector2& InSize)
+void FSpacer::SetSize(const FIntVector2& InSize)
 {
     if (Size != InSize)
     {

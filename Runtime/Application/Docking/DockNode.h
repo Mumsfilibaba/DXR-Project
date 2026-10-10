@@ -70,7 +70,7 @@ struct APPLICATION_API FDockNode
      *
      * @return The minimum size in pixels, counting the strip on every leaf and the handles between children.
      */
-    NODISCARD IntVector2 ComputeMinimumSize() const;
+    NODISCARD FIntVector2 ComputeMinimumSize() const;
 
     /**
      * @brief Gets whether the node holds nothing, which is what a collapse deletes.

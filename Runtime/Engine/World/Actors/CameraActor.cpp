@@ -18,7 +18,7 @@ FCameraActor::~FCameraActor()
 {
 }
 
-void FCameraActor::Initialize(const Vector3& InPosition, const Vector3& InRotation)
+void FCameraActor::Initialize(const FVector3& InPosition, const FVector3& InRotation)
 {
     GetTransform().SetTranslation(InPosition);
     GetTransform().SetRotation(InRotation);

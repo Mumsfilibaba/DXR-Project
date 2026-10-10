@@ -84,7 +84,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
@@ -167,7 +167,7 @@ public:
 
 protected:
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
-    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+    virtual void HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath) override;
 
     virtual bool IsPressable() const override
     {
@@ -191,14 +191,14 @@ private:
     NODISCARD FRectangle GetLanesBounds(const FRectangle& Bounds) const;
     NODISCARD FRectangle GetScrollBarBounds(const FRectangle& Bounds) const;
     NODISCARD int32 GetLaneTop(const FRectangle& Bounds, int32 LaneIndex) const;
-    NODISCARD FHit HitTest(const IntVector2& ClientPosition) const;
+    NODISCARD FHit HitTest(const FIntVector2& ClientPosition) const;
     NODISCARD bool ProjectBar(const FRectangle& Track, const FProfilerTimelineBar& Bar, int32& OutLeft, int32& OutWidth) const;
 
     void FitView();
     void ClampView();
     void SyncScrollBar();
     void OnScrollBarMoved(int32 NewOffset);
-    void ZoomAt(const IntVector2& ClientPosition, float Factor);
+    void ZoomAt(const FIntVector2& ClientPosition, float Factor);
     void UpdateBarToolTip(const FCursorEvent& CursorEvent);
     void DrawRuler(const FRectangle& Bounds, FDrawCommandList& OutCommandList, int32 LayerId) const;
 
@@ -216,7 +216,7 @@ private:
     float                         ViewStartNs;
     float                         ViewSpanNs;
     float                         DragStartView;
-    IntVector2                    DragOrigin;
+    FIntVector2                   DragOrigin;
     bool                          bDragging;
     bool                          bViewIsUserAdjusted;
 };

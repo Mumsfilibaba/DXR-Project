@@ -55,7 +55,7 @@ public:
     void Tick();
 
     void SetPlayerInputEnabled(bool bEnabled);
-    IntVector2 ConsumeHighPrecisionMouseDelta();
+    FIntVector2 ConsumeHighPrecisionMouseDelta();
 
     bool CaptureMouse();
     void ReleaseMouse();
@@ -92,8 +92,8 @@ private:
     FWorld*             World;
     TWeakPtr<FViewport> Viewport;
     FRHISwapChainRef    RHISwapChain;
-    IntVector2          HighPrecisionMouseDelta;
-    IntVector2          MouseRestorePosition;
+    FIntVector2         HighPrecisionMouseDelta;
+    FIntVector2         MouseRestorePosition;
     bool                bPlayerInputEnabled;
     bool                bMouseCaptured;
     bool                bCursorWasVisible;

@@ -14,13 +14,13 @@ struct FSceneDirectionalLight : public FSceneObject
     ~FSceneDirectionalLight();
 
     // Applies a per-frame light snapshot and recomputes the cascade shadow matrix for the rendered view.
-    void RenderThread_ApplyUpdate(const FDirectionalLightProxyUpdate& Update, const Matrix4& CameraViewProjectionInverse);
+    void RenderThread_ApplyUpdate(const FDirectionalLightProxyUpdate& Update, const FMatrix4& CameraViewProjectionInverse);
 
     FSceneView ShadowView;
-    Vector3    Color;
-    Vector3    Direction;
-    Vector3    UpVector;
-    Matrix4    ShadowMatrix;
+    FVector3   Color;
+    FVector3   Direction;
+    FVector3   UpVector;
+    FMatrix4   ShadowMatrix;
     float      ShadowNearPlane;
     float      ShadowFarPlane;
     float      ShadowBias;

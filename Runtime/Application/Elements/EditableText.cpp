@@ -66,17 +66,17 @@ void FEditableText::Initialize(const FDesc& Desc)
     SetActivationPolicy(EElementActivationPolicy::AutoFocusOnWindowActivate);
 }
 
-IntVector2 FEditableText::ComputeDesiredSize() const
+FIntVector2 FEditableText::ComputeDesiredSize() const
 {
     if (!Font)
     {
-        return IntVector2(Padding.GetTotalHorizontal(), Padding.GetTotalVertical());
+        return FIntVector2(Padding.GetTotalHorizontal(), Padding.GetTotalVertical());
     }
 
     const int32 TextWidth = Font->MeasureWidth(FStringView(Text.Data(), Text.Length()));
     const int32 HintWidth = Font->MeasureWidth(FStringView(HintText.Data(), HintText.Length()));
 
-    return IntVector2(Math::Max(TextWidth, HintWidth) + Padding.GetTotalHorizontal(), GetTextBandHeight() + Padding.GetTotalVertical());
+    return FIntVector2(Math::Max(TextWidth, HintWidth) + Padding.GetTotalHorizontal(), GetTextBandHeight() + Padding.GetTotalVertical());
 }
 
 FRectangle FEditableText::GetTextBounds(const FRectangle& Bounds) const
@@ -753,7 +753,7 @@ void FEditableText::MoveTextCursor(int32 NewTextCursorPosition, bool bExtendSele
     ResetTextCursorBlink();
 }
 
-int32 FEditableText::FindTextCursorPositionAt(const IntVector2& ClientPosition) const
+int32 FEditableText::FindTextCursorPositionAt(const FIntVector2& ClientPosition) const
 {
     const FRectangle TextBounds = GetTextBounds(GetContentRectangle());
     const int32      OffsetX    = ClientPosition.X - TextBounds.Position.X;

@@ -199,8 +199,8 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     {
         FScenePointLight* PointLight = Scene->GetPointLights()[Index];
 
-        const float   Radius            = PointLight->ShadowFarPlane;
-        const Vector4 PositionAndRadius = Vector4(PointLight->Position, Radius);
+        const float    Radius            = PointLight->ShadowFarPlane;
+        const FVector4 PositionAndRadius = FVector4(PointLight->Position, Radius);
 
         const bool bHasShadowSlot =
             PointLight->bCastShadows &&

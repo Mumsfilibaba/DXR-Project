@@ -29,7 +29,7 @@ void FImage::Initialize(const FDesc& Desc)
     Tint        = Desc.Tint;
 }
 
-IntVector2 FImage::ComputeDesiredSize() const
+FIntVector2 FImage::ComputeDesiredSize() const
 {
     return DesiredSize;
 }

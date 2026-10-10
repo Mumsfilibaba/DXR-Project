@@ -14,9 +14,9 @@ class FTabStrip;
 DECLARE_DELEGATE(FOnTabActivated, const FString& /*PanelId*/);
 DECLARE_DELEGATE(FOnTabClosed, const FString& /*PanelId*/);
 DECLARE_DELEGATE(FOnTabReordered, const FString& /*PanelId*/, int32 /*NewIndex*/);
-DECLARE_DELEGATE(FOnTabDragDetached, const FString& /*PanelId*/, const IntVector2& /*ClientPosition*/, const IntVector2& /*ScreenPosition*/);
-DECLARE_DELEGATE(FOnTabDragMoved, const FString& /*PanelId*/, const IntVector2& /*ClientPosition*/, const IntVector2& /*ScreenPosition*/);
-DECLARE_DELEGATE(FOnTabDragFinished, const FString& /*PanelId*/, const IntVector2& /*ClientPosition*/, const IntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnTabDragDetached, const FString& /*PanelId*/, const FIntVector2& /*ClientPosition*/, const FIntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnTabDragMoved, const FString& /*PanelId*/, const FIntVector2& /*ClientPosition*/, const FIntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnTabDragFinished, const FString& /*PanelId*/, const FIntVector2& /*ClientPosition*/, const FIntVector2& /*ScreenPosition*/);
 
 class APPLICATION_API FTab final : public FInteractiveElement
 {
@@ -37,7 +37,7 @@ public:
     virtual ~FTab();
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
@@ -219,7 +219,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseScroll(const FCursorEvent& CursorEvent) override;
@@ -275,7 +275,7 @@ public:
      * @param Tab            The tab pressed.
      * @param ClientPosition Where the press landed.
      */
-    void OnTabPressed(FTab* Tab, const IntVector2& ClientPosition);
+    void OnTabPressed(FTab* Tab, const FIntVector2& ClientPosition);
 
     /**
      * @brief Reports the cursor moving while a tab is held, which reorders it or tears it out. The strip needs
@@ -286,7 +286,7 @@ public:
      * @param ClientPosition Where the cursor is now, relative to the window the strip is in.
      * @param ScreenPosition Where the cursor is now, in screen space.
      */
-    void OnTabDragged(FTab* Tab, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
+    void OnTabDragged(FTab* Tab, const FIntVector2& ClientPosition, const FIntVector2& ScreenPosition);
 
     /**
      * @brief Reports a tab being let go, which closes it when both ends of the click landed on its cross
@@ -296,7 +296,7 @@ public:
      * @param ClientPosition Where the cursor was, relative to the window the strip is in.
      * @param ScreenPosition Where the cursor was, in screen space.
      */
-    void OnTabReleased(FTab* Tab, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
+    void OnTabReleased(FTab* Tab, const FIntVector2& ClientPosition, const FIntVector2& ScreenPosition);
 
     /** @return The panel whose tab is active, or an empty string when the strip has no tabs. */
     NODISCARD const FString& GetActivePanelId() const;
@@ -383,7 +383,7 @@ public:
 
 protected:
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
-    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+    virtual void HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath) override;
 
 private:
     NODISCARD int32 FindTabIndexAt(int32 PositionX) const;
@@ -404,7 +404,7 @@ private:
     FString                      ActivePanelId;
     FString                      DraggedPanelId;
     FString                      DetachedPanelId;
-    IntVector2                   DragOrigin;
+    FIntVector2                  DragOrigin;
     int32                        ScrollOffset;
     int32                        ScrollOffsetBeforePreview;
     int32                        ScrollAmountPerWheelStep;

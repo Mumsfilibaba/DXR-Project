@@ -10,7 +10,7 @@ class FSearchBox;
 class FToolBar;
 
 /** @brief Called with where the log body was right-clicked, in screen coordinates. */
-DECLARE_DELEGATE(FOnLogContextMenu, const IntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnLogContextMenu, const FIntVector2& /*ScreenPosition*/);
 
 class ENGINE_API FEditorLogContextArea final : public FCompoundElement
 {
@@ -70,7 +70,7 @@ private:
 
     void OnSearchTextChanged(const FString& SearchText);
     void OnMatchCaseChanged(ECheckBoxState NewState);
-    void OnLogContextMenu(const IntVector2& ScreenPosition);
+    void OnLogContextMenu(const FIntVector2& ScreenPosition);
 
     TSharedPtr<FLogView>              LogView;
     TSharedPtr<FSearchBox>            SearchBox;

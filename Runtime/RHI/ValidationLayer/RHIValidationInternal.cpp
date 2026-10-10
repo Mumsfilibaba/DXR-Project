@@ -257,7 +257,7 @@ bool RHIValidationInternal::ValidateBufferView(const CHAR_T* Caller, const FRHIB
     return ValidateBufferRange(Caller, BufferDesc, ByteOffset, ByteSize);
 }
 
-bool RHIValidationInternal::ValidateTextureMip(const CHAR_T* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, IntVector3& OutExtent)
+bool RHIValidationInternal::ValidateTextureMip(const CHAR_T* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, FIntVector3& OutExtent)
 {
     if (MipLevel >= TextureDesc.NumMipLevels)
     {
@@ -273,7 +273,7 @@ bool RHIValidationInternal::ValidateTextureMip(const CHAR_T* Caller, const FRHIT
 
 bool RHIValidationInternal::ValidateTextureRegion2D(const CHAR_T* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, const FTextureRegion2D& Region)
 {
-    IntVector3 MipExtent;
+    FIntVector3 MipExtent;
     if (!ValidateTextureMip(Caller, TextureDesc, MipLevel, MipExtent))
     {
         return false;
@@ -297,7 +297,7 @@ bool RHIValidationInternal::ValidateTextureRegion2D(const CHAR_T* Caller, const 
 
 bool RHIValidationInternal::ValidateTextureRegion3D(const CHAR_T* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, const FTextureRegion3D& Region)
 {
-    IntVector3 MipExtent;
+    FIntVector3 MipExtent;
     if (!ValidateTextureMip(Caller, TextureDesc, MipLevel, MipExtent))
     {
         return false;

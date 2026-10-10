@@ -49,7 +49,7 @@ public:
          * @param InSize     The width and height.
          * @return This desc, so the setters can be chained.
          */
-        FORCEINLINE FDesc& SetBounds(const IntVector2& InPosition, const IntVector2& InSize)
+        FORCEINLINE FDesc& SetBounds(const FIntVector2& InPosition, const FIntVector2& InSize)
         {
             Position = InPosition;
             Size     = InSize;
@@ -70,8 +70,8 @@ public:
 
         FString                    Title;
         TSharedPtr<FWindow>        ParentWindow;
-        IntVector2                 Position;
-        IntVector2                 Size;
+        FIntVector2                Position;
+        FIntVector2                Size;
         TSharedPtr<IFontFace>      Font;
         FUIBrush                   Icon;
         TSharedPtr<FVisualElement> TitleBarContent;

@@ -527,7 +527,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
             FSubMenuState AddActorSubMenu;
             if (EditorWidgets::BeginSubMenu(AddActorSubMenu, "##SceneHierarchyAddActorMenu", "Add Actor"))
             {
-                if (FActor* NewActor = EditorActorFactory::DrawPlaceActorMenu(World, Vector3(0.0f, 0.0f, 0.0f)))
+                if (FActor* NewActor = EditorActorFactory::DrawPlaceActorMenu(World, FVector3(0.0f, 0.0f, 0.0f)))
                 {
                     EditorEngine->SetSelectedActor(NewActor);
                     bRequestClosePopup = true;

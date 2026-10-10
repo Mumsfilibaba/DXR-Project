@@ -24,9 +24,9 @@ public:
     ~FActorTransform() = default;
 
     void SetTranslation(float x, float y, float z);
-    void SetTranslation(const Vector3& InPosition);
+    void SetTranslation(const FVector3& InPosition);
     void SetScale(float x, float y, float z);
-    void SetScale(const Vector3& InScale);
+    void SetScale(const FVector3& InScale);
 
     void SetUniformScale(float InScale)
     {
@@ -34,7 +34,7 @@ public:
     }
 
     void SetRotation(float x, float y, float z);
-    void SetRotation(const Vector3& InRotation);
+    void SetRotation(const FVector3& InRotation);
 
     /**
      * @brief Set the transform from a transformation-matrix
@@ -44,7 +44,7 @@ public:
      *
      * @param InMatrix Transformation-matrix to assign to the transform
      */
-    void SetFromMatrix(const Matrix4& InMatrix);
+    void SetFromMatrix(const FMatrix4& InMatrix);
 
     /**
      * @brief Retrieve a counter that is incremented every time the transform is modified
@@ -56,45 +56,45 @@ public:
         return Version;
     }
 
-    const Vector3& GetTranslation() const
+    const FVector3& GetTranslation() const
     {
         return Translation;
     }
 
-    const Vector3& GetScale() const
+    const FVector3& GetScale() const
     {
         return Scale;
     }
 
-    const Vector3& GetRotation() const
+    const FVector3& GetRotation() const
     {
         return Rotation;
     }
 
-    const Matrix4& GetTransformMatrix() const
+    const FMatrix4& GetTransformMatrix() const
     {
         return TransformMatrix;
     }
 
-    Matrix4 GetTransformMatrixInverse() const
+    FMatrix4 GetTransformMatrixInverse() const
     {
-        Matrix4 MatrixInverse = TransformMatrix.GetInverse();
+        FMatrix4 MatrixInverse = TransformMatrix.GetInverse();
         return MatrixInverse;
     }
 
-    Matrix3x4 GetTinyMatrix() const
+    FMatrix3x4 GetTinyMatrix() const
     {
-        return Matrix3x4(TransformMatrix);
+        return FMatrix3x4(TransformMatrix);
     }
 
 private:
     void CalculateMatrix();
 
-    Vector3 Translation;
-    Vector3 Scale;
-    Vector3 Rotation;
-    Matrix4 TransformMatrix;
-    uint64  Version;
+    FVector3 Translation;
+    FVector3 Scale;
+    FVector3 Rotation;
+    FMatrix4 TransformMatrix;
+    uint64   Version;
 };
 
 class ENGINE_API FActor : public FObject
@@ -208,7 +208,7 @@ public:
      *
      * @param InMatrix New world-space transformation-matrix of the actor
      */
-    void SetWorldTransformMatrix(const Matrix4& InMatrix);
+    void SetWorldTransformMatrix(const FMatrix4& InMatrix);
 
     /**
      * @brief Convert a world-space transformation-matrix into a matrix relative to the parent of this actor
@@ -218,7 +218,7 @@ public:
      * @param InWorldMatrix World-space transformation-matrix to convert
      * @return Returns the matrix expressed relative to the parent of the actor
      */
-    Matrix4 ConvertWorldToRelativeMatrix(const Matrix4& InWorldMatrix) const;
+    FMatrix4 ConvertWorldToRelativeMatrix(const FMatrix4& InWorldMatrix) const;
 
     /**
      * @brief Convert a world-space transform into a transform relative to the parent of this actor

@@ -12,7 +12,7 @@ FKinematicMovementComponent::FKinematicMovementComponent(const FObjectInitialize
 {
 }
 
-void FKinematicMovementComponent::SetInitialVelocity(const Vector3& InVelocity)
+void FKinematicMovementComponent::SetInitialVelocity(const FVector3& InVelocity)
 {
     Velocity = InVelocity;
 }

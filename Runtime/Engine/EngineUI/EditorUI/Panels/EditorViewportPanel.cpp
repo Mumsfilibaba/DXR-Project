@@ -142,7 +142,7 @@ FEditorViewportPanel::FEditorViewportPanel(FEditorEngine* InEditorEngine)
     , ViewItem(nullptr)
     , ViewportImage(nullptr)
     , CachedViewportSize(0, 0)
-    , ContextMenuViewProjectionInverse(Matrix4::Identity())
+    , ContextMenuViewProjectionInverse(FMatrix4::Identity())
     , ContextMenuLocation(0.0f, 0.0f, 0.0f)
     , ContextMenuNdc(0.0f, 0.0f)
     , ContextMenuScreenPosition()
@@ -183,9 +183,9 @@ FViewportTransportLayer::FViewportTransportLayer()
 
 FViewportTransportLayer::~FViewportTransportLayer() = default;
 
-IntVector2 FViewportTransportLayer::ComputeDesiredSize() const
+FIntVector2 FViewportTransportLayer::ComputeDesiredSize() const
 {
-    return Transport ? Transport->GetCachedDesiredSize() : IntVector2();
+    return Transport ? Transport->GetCachedDesiredSize() : FIntVector2();
 }
 
 void FViewportTransportLayer::OnArrange(const FRectangle& AllottedBounds)
@@ -195,7 +195,7 @@ void FViewportTransportLayer::OnArrange(const FRectangle& AllottedBounds)
         return;
     }
 
-    const IntVector2 Size = Transport->GetCachedDesiredSize();
+    const FIntVector2 Size = Transport->GetCachedDesiredSize();
 
     const int32 MinX = GetLeadingRight(AllottedBounds) + TOOLBAR_GROUP_GAP;
     const int32 MaxX = GetTrailingLeft(AllottedBounds) - TOOLBAR_GROUP_GAP - Size.X;
@@ -214,7 +214,7 @@ void FViewportTransportLayer::OnArrange(const FRectangle& AllottedBounds)
     const int32 PositionX = Math::Clamp(CenteredX, MinX, MaxX);
     const int32 PositionY = AllottedBounds.Position.Y + ((AllottedBounds.Height - Size.Y) / 2);
 
-    const FRectangle TransportBounds(IntVector2(PositionX, PositionY), Size.X, Size.Y);
+    const FRectangle TransportBounds(FIntVector2(PositionX, PositionY), Size.X, Size.Y);
 
     Transport->Arrange(TransportBounds);
     SetContentRectangle(TransportBounds);
@@ -925,7 +925,7 @@ void FEditorViewportPanel::Tick(float DeltaTime)
 
     const FRectangle Bounds = Surface->GetContentRectangle();
 
-    CachedViewportSize = IntVector2(Math::Max(Bounds.Width, 0), Math::Max(Bounds.Height, 0));
+    CachedViewportSize = FIntVector2(Math::Max(Bounds.Width, 0), Math::Max(Bounds.Height, 0));
 
     if (EditorEngine->IsEditing())
     {
@@ -970,21 +970,21 @@ void FEditorViewportPanel::UpdateGizmoFromSelection()
 
     Gizmo->SetOperation(ResolveGizmoOperation(Selection));
 
-    Matrix4 Pivot = Matrix4::Identity();
+    FMatrix4 Pivot = FMatrix4::Identity();
 
     if (Gizmo->GetMode() == EGizmoMode::Local && Selection.Size() == 1)
     {
-        Pivot = Matrix4::RotationRollPitchYaw(Selection[0]->GetWorldTransform().GetRotation());
+        Pivot = FMatrix4::RotationRollPitchYaw(Selection[0]->GetWorldTransform().GetRotation());
     }
 
     Pivot.SetTranslation(ComputeGizmoLocation(Selection));
     Gizmo->SetTransform(Pivot);
 }
 
-Vector3 FEditorViewportPanel::ComputeGizmoLocation(const TArray<FActor*>& Selection) const
+FVector3 FEditorViewportPanel::ComputeGizmoLocation(const TArray<FActor*>& Selection) const
 {
-    Vector3 Center     = Vector3(0.0f, 0.0f, 0.0f);
-    int32   PointCount = 0;
+    FVector3 Center     = FVector3(0.0f, 0.0f, 0.0f);
+    int32    PointCount = 0;
 
     for (FActor* Actor : Selection)
     {
@@ -1000,9 +1000,9 @@ Vector3 FEditorViewportPanel::ComputeGizmoLocation(const TArray<FActor*>& Select
     return PointCount > 0 ? Center / static_cast<float>(PointCount) : Center;
 }
 
-Vector3 FEditorViewportPanel::GetActorGizmoPoint(FActor* Actor) const
+FVector3 FEditorViewportPanel::GetActorGizmoPoint(FActor* Actor) const
 {
-    const Matrix4 ActorModel = Actor->GetWorldTransform().GetTransformMatrix();
+    const FMatrix4 ActorModel = Actor->GetWorldTransform().GetTransformMatrix();
 
     if (GizmoPlacement == EEditorGizmoPlacement::Center)
     {
@@ -1049,7 +1049,7 @@ void FEditorViewportPanel::OnGizmoDragStarted(EGizmoHandle /*Handle*/)
     }
 }
 
-void FEditorViewportPanel::OnGizmoTransformChanged(const Matrix4& /*NewTransform*/, const Matrix4& Delta)
+void FEditorViewportPanel::OnGizmoTransformChanged(const FMatrix4& /*NewTransform*/, const FMatrix4& Delta)
 {
     for (int32 Index = 0; Index < DragActors.Size(); ++Index)
     {
@@ -1068,7 +1068,7 @@ void FEditorViewportPanel::OnGizmoTransformChanged(const Matrix4& /*NewTransform
     }
 }
 
-void FEditorViewportPanel::OnGizmoDragFinished(const Matrix4& /*TransformAtDragStart*/, const Matrix4& /*Transform*/)
+void FEditorViewportPanel::OnGizmoDragFinished(const FMatrix4& /*TransformAtDragStart*/, const FMatrix4& /*Transform*/)
 {
     DragActors.Clear();
     DragStartTransforms.Clear();
@@ -1076,7 +1076,7 @@ void FEditorViewportPanel::OnGizmoDragFinished(const Matrix4& /*TransformAtDragS
     UpdateGizmoFromSelection();
 }
 
-void FEditorViewportPanel::OnViewportClicked(const IntVector2& ImagePosition, bool bAdditive)
+void FEditorViewportPanel::OnViewportClicked(const FIntVector2& ImagePosition, bool bAdditive)
 {
     if (!EditorEngine->IsEditing() || CachedViewportSize.X <= 0 || CachedViewportSize.Y <= 0)
     {
@@ -1090,7 +1090,7 @@ void FEditorViewportPanel::OnViewportClicked(const IntVector2& ImagePosition, bo
     EditorEngine->RequestPick(PixelX, PixelY, EEditorPickPurpose::Selection);
 }
 
-void FEditorViewportPanel::OnViewportContextMenu(const IntVector2& ImagePosition, const IntVector2& ScreenPosition)
+void FEditorViewportPanel::OnViewportContextMenu(const FIntVector2& ImagePosition, const FIntVector2& ScreenPosition)
 {
     if (!EditorEngine->IsEditing() || CachedViewportSize.X <= 0 || CachedViewportSize.Y <= 0)
     {
@@ -1101,7 +1101,7 @@ void FEditorViewportPanel::OnViewportContextMenu(const IntVector2& ImagePosition
     const uint32 PixelY = static_cast<uint32>(Math::Clamp(ImagePosition.Y, 0, CachedViewportSize.Y - 1));
 
     ContextMenuScreenPosition = ScreenPosition;
-    ContextMenuNdc            = Vector2(
+    ContextMenuNdc            = FVector2(
         ((static_cast<float>(PixelX) + 0.5f) / static_cast<float>(CachedViewportSize.X)) * 2.0f - 1.0f,
         1.0f - ((static_cast<float>(PixelY) + 0.5f) / static_cast<float>(CachedViewportSize.Y)) * 2.0f);
 
@@ -1112,7 +1112,7 @@ void FEditorViewportPanel::OnViewportContextMenu(const IntVector2& ImagePosition
 
     if (!ComputeFallbackPlacement(ContextMenuNdc, ContextMenuLocation))
     {
-        ContextMenuLocation = Vector3(0.0f, 0.0f, 0.0f);
+        ContextMenuLocation = FVector3(0.0f, 0.0f, 0.0f);
     }
 
     ContextMenuActor         = nullptr;
@@ -1121,7 +1121,7 @@ void FEditorViewportPanel::OnViewportContextMenu(const IntVector2& ImagePosition
     ShowContextMenu();
 }
 
-void FEditorViewportPanel::OnViewportMarqueeSelect(const IntVector2& ImageMin, const IntVector2& ImageMax, bool bAdditive)
+void FEditorViewportPanel::OnViewportMarqueeSelect(const FIntVector2& ImageMin, const FIntVector2& ImageMax, bool bAdditive)
 {
     if (!EditorEngine->IsEditing() || CachedViewportSize.X <= 0 || CachedViewportSize.Y <= 0)
     {
@@ -1223,7 +1223,7 @@ TSharedPtr<FMenu> FEditorViewportPanel::BuildContextMenu()
     return Menu;
 }
 
-bool FEditorViewportPanel::ComputeFallbackPlacement(const Vector2& Ndc, Vector3& OutLocation) const
+bool FEditorViewportPanel::ComputeFallbackPlacement(const FVector2& Ndc, FVector3& OutLocation) const
 {
     const FCameraComponent* Camera = GetViewCamera();
     if (!Camera)
@@ -1231,19 +1231,19 @@ bool FEditorViewportPanel::ComputeFallbackPlacement(const Vector2& Ndc, Vector3&
         return false;
     }
 
-    const Matrix4& ViewProjectionInverse = Camera->GetViewProjectionInverseMatrix();
+    const FMatrix4& ViewProjectionInverse = Camera->GetViewProjectionInverseMatrix();
 
-    const Vector4 NearWorld = ViewProjectionInverse.Transform(Vector4(Ndc.X, Ndc.Y, 0.0f, 1.0f));
-    const Vector4 FarWorld  = ViewProjectionInverse.Transform(Vector4(Ndc.X, Ndc.Y, 1.0f, 1.0f));
+    const FVector4 NearWorld = ViewProjectionInverse.Transform(FVector4(Ndc.X, Ndc.Y, 0.0f, 1.0f));
+    const FVector4 FarWorld  = ViewProjectionInverse.Transform(FVector4(Ndc.X, Ndc.Y, 1.0f, 1.0f));
 
     if (Math::Abs(NearWorld.W) < 1e-6f || Math::Abs(FarWorld.W) < 1e-6f)
     {
         return false;
     }
 
-    const Vector3 RayStart     = Vector3(NearWorld.X, NearWorld.Y, NearWorld.Z) / NearWorld.W;
-    const Vector3 RayEnd       = Vector3(FarWorld.X, FarWorld.Y, FarWorld.Z) / FarWorld.W;
-    const Vector3 RayDirection = (RayEnd - RayStart).GetNormalized();
+    const FVector3 RayStart     = FVector3(NearWorld.X, NearWorld.Y, NearWorld.Z) / NearWorld.W;
+    const FVector3 RayEnd       = FVector3(FarWorld.X, FarWorld.Y, FarWorld.Z) / FarWorld.W;
+    const FVector3 RayDirection = (RayEnd - RayStart).GetNormalized();
 
     if (Math::Abs(RayDirection.Y) > 1e-4f)
     {
@@ -1289,12 +1289,12 @@ void FEditorViewportPanel::OnContextMenuPickResult(const FEditorPickResult& Resu
 
     if (Result.bHasDepth)
     {
-        const Vector4 Clip  = Vector4(ContextMenuNdc.X, ContextMenuNdc.Y, Result.DeviceDepth, 1.0f);
-        const Vector4 World = ContextMenuViewProjectionInverse.Transform(Clip);
+        const FVector4 Clip  = FVector4(ContextMenuNdc.X, ContextMenuNdc.Y, Result.DeviceDepth, 1.0f);
+        const FVector4 World = ContextMenuViewProjectionInverse.Transform(Clip);
 
         if (Math::Abs(World.W) > 1e-6f)
         {
-            ContextMenuLocation = Vector3(World.X, World.Y, World.Z) / World.W;
+            ContextMenuLocation = FVector3(World.X, World.Y, World.Z) / World.W;
         }
     }
 }
@@ -1330,7 +1330,7 @@ void FEditorViewportPanel::SetViewportImage(FRHITextureRef InViewportImage)
     }
 }
 
-IntVector2 FEditorViewportPanel::GetViewportSize() const
+FIntVector2 FEditorViewportPanel::GetViewportSize() const
 {
     if (CachedViewportSize.X > 0 && CachedViewportSize.Y > 0)
     {
@@ -1342,11 +1342,11 @@ IntVector2 FEditorViewportPanel::GetViewportSize() const
         const FRectangle Bounds = Window->GetContentRectangle();
         if (Bounds.Width > 0 && Bounds.Height > 0)
         {
-            return IntVector2(Bounds.Width, Bounds.Height);
+            return FIntVector2(Bounds.Width, Bounds.Height);
         }
     }
 
-    return IntVector2(1920, 1080);
+    return FIntVector2(1920, 1080);
 }
 
 FSceneRenderView::EDebugView FEditorViewportPanel::GetDebugView() const

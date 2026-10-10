@@ -15,7 +15,7 @@ struct FSourceVertex
     {
     }
 
-    FSourceVertex(const Vector3& InPosition, const Vector3& InNormal, const Vector3& InTangent, const Vector2& InTexCoord)
+    FSourceVertex(const FVector3& InPosition, const FVector3& InNormal, const FVector3& InTangent, const FVector2& InTexCoord)
         : Position(InPosition)
         , Normal(InNormal)
         , Tangent(InTangent)
@@ -24,7 +24,7 @@ struct FSourceVertex
     {
     }
 
-    FSourceVertex(const Vector3& InPosition, const Vector3& InNormal, const Vector3& InTangent, float InTangentSign, const Vector2& InTexCoord)
+    FSourceVertex(const FVector3& InPosition, const FVector3& InNormal, const FVector3& InTangent, float InTangentSign, const FVector2& InTexCoord)
         : Position(InPosition)
         , Normal(InNormal)
         , Tangent(InTangent)
@@ -43,11 +43,11 @@ struct FSourceVertex
         return !(*this == Other);
     }
 
-    Vector3 Position;
-    Vector3 Normal;
-    Vector3 Tangent;
-    float   TangentSign;
-    Vector2 TexCoord;
+    FVector3 Position;
+    FVector3 Normal;
+    FVector3 Tangent;
+    float    TangentSign;
+    FVector2 TexCoord;
 };
 
 static_assert(sizeof(FSourceVertex) == 48, "FSourceVertex must match the layout the .dxrmesh cache writes");
@@ -57,11 +57,11 @@ struct THash<FSourceVertex>
 {
     static uint64 GetHash(const FSourceVertex& Vertex)
     {
-        uint64 Result = THash<Vector3>::GetHash(Vertex.Position);
-        HashCombine<Vector3>(Result, Vertex.Normal);
-        HashCombine<Vector3>(Result, Vertex.Tangent);
+        uint64 Result = THash<FVector3>::GetHash(Vertex.Position);
+        HashCombine<FVector3>(Result, Vertex.Normal);
+        HashCombine<FVector3>(Result, Vertex.Tangent);
         HashCombine<float>(Result, Vertex.TangentSign);
-        HashCombine<Vector2>(Result, Vertex.TexCoord);
+        HashCombine<FVector2>(Result, Vertex.TexCoord);
         return Result;
     }
 };
@@ -75,7 +75,7 @@ struct FVertexAttributes
     {
     }
 
-    FVertexAttributes(const Vector3& InNormal, const Vector3& InTangent, float InTangentSign, const Vector2& InTexCoord)
+    FVertexAttributes(const FVector3& InNormal, const FVector3& InTangent, float InTangentSign, const FVector2& InTexCoord)
         : Normal(InNormal)
         , Tangent(InTangent, InTangentSign)
         , TexCoord(InTexCoord)
@@ -94,7 +94,7 @@ struct FVertexAttributes
 
     FRGBA16Snorm Normal;   // w unused
     FRGBA16Snorm Tangent;  // w = handedness sign
-    Vector2      TexCoord;
+    FVector2     TexCoord;
 };
 
 static_assert(sizeof(FVertexAttributes) == 24, "FVertexAttributes must match the attribute stream stride");
@@ -108,7 +108,7 @@ struct THash<FVertexAttributes>
     {
         uint64 Result = THash<FRGBA16Snorm>::GetHash(Vertex.Normal);
         HashCombine<FRGBA16Snorm>(Result, Vertex.Tangent);
-        HashCombine<Vector2>(Result, Vertex.TexCoord);
+        HashCombine<FVector2>(Result, Vertex.TexCoord);
         return Result;
     }
 };

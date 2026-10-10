@@ -25,33 +25,33 @@ struct FUIVertex
     {
     }
 
-    Vector2 Position;
-    Vector2 TexCoord;
-    uint32  Color;
+    FVector2 Position;
+    FVector2 TexCoord;
+    uint32   Color;
 };
 
 struct FUIShapeInstance
 {
-    Vector2 Position;
-    uint32  Color;
-    Vector2 DrawSize;
-    Vector2 LocalOrigin;
-    Vector2 RectSize;
-    float   RadiusTL;
-    float   RadiusTR;
-    float   RadiusBR;
-    float   RadiusBL;
-    float   Thickness;
-    float   ShapeKind;
+    FVector2 Position;
+    uint32   Color;
+    FVector2 DrawSize;
+    FVector2 LocalOrigin;
+    FVector2 RectSize;
+    float    RadiusTL;
+    float    RadiusTR;
+    float    RadiusBR;
+    float    RadiusBL;
+    float    Thickness;
+    float    ShapeKind;
 };
 
 struct FUITextGlyphInstance
 {
-    Vector2 Position;
-    Vector2 Size;
-    Vector2 MinTexCoord;
-    Vector2 MaxTexCoord;
-    uint32  Color;
+    FVector2 Position;
+    FVector2 Size;
+    FVector2 MinTexCoord;
+    FVector2 MaxTexCoord;
+    uint32   Color;
 };
 
 static_assert(sizeof(FUIVertex) == 20, "FUIVertex no longer matches its input layout");
@@ -255,11 +255,11 @@ private:
 
     void TessellateCommand(const FDrawCommand& Command, const FDrawCommandList& CommandList);
 
-    NODISCARD static FRectangle ComputePointBounds(TArrayView<const Vector2> Points, float Thickness);
-    NODISCARD static float ComputeWindingSign(TArrayView<const Vector2> Points);
+    NODISCARD static FRectangle ComputePointBounds(TArrayView<const FVector2> Points, float Thickness);
+    NODISCARD static float ComputeWindingSign(TArrayView<const FVector2> Points);
 
-    static void BuildRoundedBoxOutline(const FRectangle& Bounds, const FCornerRadii& Radius, TArray<Vector2>& OutPoints, float Inset = 0.0f);
-    static void BuildMiterOffsets(TArrayView<const Vector2> Points, bool bClosed, TArray<Vector2>& OutOffsets);
+    static void BuildRoundedBoxOutline(const FRectangle& Bounds, const FCornerRadii& Radius, TArray<FVector2>& OutPoints, float Inset = 0.0f);
+    static void BuildMiterOffsets(TArrayView<const FVector2> Points, bool bClosed, TArray<FVector2>& OutOffsets);
 
     NODISCARD bool IsCulledByClip(const FRectangle& Bounds) const;
 
@@ -274,25 +274,25 @@ private:
     void AddRoundedAccentRing(const FDrawCommand& Command);
     void AddCornerWedges(const FDrawCommand& Command);
     void AddWedge(const FDrawCommand& Command);
-    bool AddWedgeInstance(const Vector2& SquareMin, const Vector2& Center, float Radius, uint32 PackedColor);
+    bool AddWedgeInstance(const FVector2& SquareMin, const FVector2& Center, float Radius, uint32 PackedColor);
     void TrimTextGeometryCache();
-    void AddPolyline(TArrayView<const Vector2> Points, float Thickness, bool bClosed, uint32 PackedColor);
-    void AddConvexPolygon(TArrayView<const Vector2> Points, uint32 PackedColor);
-    void AddQuad(const FRectangle& Bounds, const Vector2& MinTexCoord, const Vector2& MaxTexCoord, uint32 PackedColor);
+    void AddPolyline(TArrayView<const FVector2> Points, float Thickness, bool bClosed, uint32 PackedColor);
+    void AddConvexPolygon(TArrayView<const FVector2> Points, uint32 PackedColor);
+    void AddQuad(const FRectangle& Bounds, const FVector2& MinTexCoord, const FVector2& MaxTexCoord, uint32 PackedColor);
     void AddRoundedBox(const FRectangle& Bounds, const FCornerRadii& Radius, uint32 PackedColor,
-        const Vector2& MinTexCoord = Vector2(0.0f, 0.0f), const Vector2& MaxTexCoord = Vector2(1.0f, 1.0f));
+        const FVector2& MinTexCoord = FVector2(0.0f, 0.0f), const FVector2& MaxTexCoord = FVector2(1.0f, 1.0f));
     void AddSdfRoundedQuad(const FRectangle& Bounds, const FCornerRadii& Radius, uint32 PackedColor, float Thickness, float ShapeKind);
-    void EmplaceVertex(const Vector2& Position, uint32 PackedColor);
-    void EmplaceFillVertex(const Vector2& Position, const FRectangle& Bounds, uint32 PackedColor,
-        const Vector2& MinTexCoord = Vector2(0.0f, 0.0f), const Vector2& MaxTexCoord = Vector2(1.0f, 1.0f));
+    void EmplaceVertex(const FVector2& Position, uint32 PackedColor);
+    void EmplaceFillVertex(const FVector2& Position, const FRectangle& Bounds, uint32 PackedColor,
+        const FVector2& MinTexCoord = FVector2(0.0f, 0.0f), const FVector2& MaxTexCoord = FVector2(1.0f, 1.0f));
 
     TArray<FUIVertex>               Vertices;
     TArray<uint32>                  Indices;
     TArray<FUIShapeInstance>        ShapeInstances;
     TArray<FUITextGlyphInstance>    TextGlyphInstances;
     TArray<FUIDrawBatch>            Batches;
-    TArray<Vector2>                 ScratchPoints;
-    TArray<Vector2>                 ScratchOffsets;
+    TArray<FVector2>                ScratchPoints;
+    TArray<FVector2>                ScratchOffsets;
     TArray<int32>                   SortedCommandIndices;
     TArray<int32>                   SortScratchIndices;
     TArray<FTextGeometryCacheEntry> TextGeometryCache;

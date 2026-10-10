@@ -49,7 +49,7 @@ static FGraphPin MakePin(EGraphPinDirection Direction, const CHAR_T* Name, const
     return FGraphPin(Direction, Name, TypeTag, GetTypeTint(TypeTag));
 }
 
-static FGraphNode MakeNode(const CHAR_T* Title, const Vector2& Position, const FFloatColor& TitleTint)
+static FGraphNode MakeNode(const CHAR_T* Title, const FVector2& Position, const FFloatColor& TitleTint)
 {
     FGraphNode Node;
     Node.Title     = Title;
@@ -87,24 +87,24 @@ static void BuildShaderGraph(const FPlaygroundFonts& Fonts)
 
     const FUIStyle& Style = FUIStyle::GetDefault();
 
-    FGraphNode Texture = MakeNode("Base Color", Vector2(40.0f, 60.0f), Style.Colors.ControlNormal);
+    FGraphNode Texture = MakeNode("Base Color", FVector2(40.0f, 60.0f), Style.Colors.ControlNormal);
     Texture.Pins.Add(MakePin(EGraphPinDirection::Input, "UV", "Vector"));
     Texture.Pins.Add(MakePin(EGraphPinDirection::Output, "RGB", "Vector"));
     Texture.Pins.Add(MakePin(EGraphPinDirection::Output, "Alpha", "Float"));
 
-    FGraphNode Coordinates = MakeNode("Texture Coordinate", Vector2(40.0f, 240.0f), Style.Colors.ControlNormal);
+    FGraphNode Coordinates = MakeNode("Texture Coordinate", FVector2(40.0f, 240.0f), Style.Colors.ControlNormal);
     Coordinates.Pins.Add(MakePin(EGraphPinDirection::Output, "UV", "Vector"));
 
-    FGraphNode Roughness = MakeNode("Roughness", Vector2(40.0f, 350.0f), Style.Colors.ControlNormal);
+    FGraphNode Roughness = MakeNode("Roughness", FVector2(40.0f, 350.0f), Style.Colors.ControlNormal);
     Roughness.Pins.Add(MakePin(EGraphPinDirection::Output, "Value", "Float"));
     Roughness.Content = MakeValueBody(Fonts, 0.35f);
 
-    FGraphNode Multiply = MakeNode("Multiply", Vector2(320.0f, 120.0f), Style.Colors.ControlNormal);
+    FGraphNode Multiply = MakeNode("Multiply", FVector2(320.0f, 120.0f), Style.Colors.ControlNormal);
     Multiply.Pins.Add(MakePin(EGraphPinDirection::Input, "A", "Vector"));
     Multiply.Pins.Add(MakePin(EGraphPinDirection::Input, "B", "Vector"));
     Multiply.Pins.Add(MakePin(EGraphPinDirection::Output, "Result", "Vector"));
 
-    FGraphNode Output = MakeNode("Surface", Vector2(600.0f, 160.0f), Style.Colors.Accent);
+    FGraphNode Output = MakeNode("Surface", FVector2(600.0f, 160.0f), Style.Colors.Accent);
     Output.Pins.Add(MakePin(EGraphPinDirection::Input, "Base Color", "Vector"));
     Output.Pins.Add(MakePin(EGraphPinDirection::Input, "Roughness", "Float"));
     Output.Pins.Add(MakePin(EGraphPinDirection::Input, "Normal", "Vector"));
@@ -157,7 +157,7 @@ static void RefreshShaderReadout()
     GShaderReadout->SetText(Description);
 }
 
-static void AddNodeAt(const CHAR_T* Title, const CHAR_T* TypeTag, const Vector2& GraphPosition)
+static void AddNodeAt(const CHAR_T* Title, const CHAR_T* TypeTag, const FVector2& GraphPosition)
 {
     FGraphNode Node = MakeNode(Title, GraphPosition, FUIStyle::GetDefault().Colors.ControlNormal);
     Node.Pins.Add(MakePin(EGraphPinDirection::Input, "A", TypeTag));
@@ -168,7 +168,7 @@ static void AddNodeAt(const CHAR_T* Title, const CHAR_T* TypeTag, const Vector2&
     RefreshShaderReadout();
 }
 
-static TSharedPtr<FVisualElement> MakeContextMenu(const FPlaygroundFonts& Fonts, const Vector2& GraphPosition)
+static TSharedPtr<FVisualElement> MakeContextMenu(const FPlaygroundFonts& Fonts, const FVector2& GraphPosition)
 {
     struct FEntry
     {
@@ -209,7 +209,7 @@ static TSharedPtr<FVisualElement> MakeShaderGraph(const FPlaygroundFonts& Fonts)
     Desc.Font  = Fonts.Body;
     Desc.Model = GShaderModel;
 
-    Desc.OnGetContextMenu = FOnGetGraphContextMenu::CreateLambda([Fonts](const Vector2& GraphPosition, int32 /*NodeId*/)
+    Desc.OnGetContextMenu = FOnGetGraphContextMenu::CreateLambda([Fonts](const FVector2& GraphPosition, int32 /*NodeId*/)
     {
         return MakeContextMenu(Fonts, GraphPosition);
     });
@@ -270,7 +270,7 @@ static TSharedPtr<FVisualElement> MakeGraphControls(const FPlaygroundFonts& Font
         FOnClicked::CreateLambda([]()
         {
             GShaderCanvas->SetZoom(1.0f);
-            GShaderCanvas->SetPan(Vector2(0.0f, 0.0f));
+            GShaderCanvas->SetPan(FVector2(0.0f, 0.0f));
             RefreshShaderReadout();
         }));
 
@@ -334,7 +334,7 @@ static TSharedPtr<FVisualElement> MakeRenderGraphView(const FPlaygroundFonts& Fo
     TArray<int32> PassIds;
     for (const FPass& Pass : Passes)
     {
-        FGraphNode Node = MakeNode(Pass.Title, Vector2(0.0f, 0.0f), Style.Colors.ControlNormal);
+        FGraphNode Node = MakeNode(Pass.Title, FVector2(0.0f, 0.0f), Style.Colors.ControlNormal);
         Node.bIsMuted   = Pass.bIsCulled;
 
         if (Pass.Input)

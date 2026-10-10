@@ -46,11 +46,11 @@ void FBorder::Initialize(const FDesc& Desc)
     SetContent(Desc.Content);
 }
 
-IntVector2 FBorder::ComputeDesiredSize() const
+FIntVector2 FBorder::ComputeDesiredSize() const
 {
-    IntVector2 DesiredSize = FCompoundElement::ComputeDesiredSize();
-    DesiredSize.X          = Math::Max(DesiredSize.X, MinWidth);
-    DesiredSize.Y          = Math::Max(DesiredSize.Y, MinHeight);
+    FIntVector2 DesiredSize = FCompoundElement::ComputeDesiredSize();
+    DesiredSize.X           = Math::Max(DesiredSize.X, MinWidth);
+    DesiredSize.Y           = Math::Max(DesiredSize.Y, MinHeight);
     return DesiredSize;
 }
 

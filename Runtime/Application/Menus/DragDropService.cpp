@@ -39,7 +39,7 @@ FDragDropService::FDragDropService()
 
 FDragDropService::~FDragDropService() = default;
 
-void FDragDropService::BeginDrag(const FDragDropPayload& InPayload, const IntVector2& InScreenPosition)
+void FDragDropService::BeginDrag(const FDragDropPayload& InPayload, const FIntVector2& InScreenPosition)
 {
     if (!InPayload.IsValid())
     {
@@ -57,7 +57,7 @@ void FDragDropService::BeginDrag(const FDragDropPayload& InPayload, const IntVec
     UpdateDrag(InScreenPosition);
 }
 
-void FDragDropService::UpdateDrag(const IntVector2& InScreenPosition)
+void FDragDropService::UpdateDrag(const FIntVector2& InScreenPosition)
 {
     ScreenPosition = InScreenPosition;
 
@@ -69,7 +69,7 @@ void FDragDropService::UpdateDrag(const IntVector2& InScreenPosition)
     TargetIndex = FindTargetAt(InScreenPosition);
 }
 
-void FDragDropService::EndDrag(const IntVector2& InScreenPosition)
+void FDragDropService::EndDrag(const FIntVector2& InScreenPosition)
 {
     if (!IsDragging())
     {
@@ -124,7 +124,7 @@ void FDragDropService::OnWindowPainting(const TSharedPtr<FWindow>& Window)
         return;
     }
 
-    const IntVector2 ClientOrigin = Window->GetPosition();
+    const FIntVector2 ClientOrigin = Window->GetPosition();
     Window->QueueDeferredPainting(FOnDeferredPaint::CreateLambda([this, ClientOrigin](FDrawCommandList& OutCommandList, int32 LayerId)
     {
         DrawDragVisual(OutCommandList, LayerId, ClientOrigin);
@@ -175,7 +175,7 @@ void FDragDropService::UnregisterTarget(const TWeakPtr<FVisualElement>& Target)
     }
 }
 
-void FDragDropService::DrawDragVisual(FDrawCommandList& OutCommandList, int32 LayerId, const IntVector2& ClientOrigin) const
+void FDragDropService::DrawDragVisual(FDrawCommandList& OutCommandList, int32 LayerId, const FIntVector2& ClientOrigin) const
 {
     if (!IsDragging())
     {
@@ -202,7 +202,7 @@ void FDragDropService::DrawDragVisual(FDrawCommandList& OutCommandList, int32 La
     FRectangle Ghost;
     Ghost.Width    = (DragVisualPadding * 2) + IconExtent + Math::Max(TextWidth, StatusIconExtent + StatusWidth);
     Ghost.Height   = (DragVisualPadding * 2) + Math::Max(TextHeight + StatusHeight, SourceIconSize);
-    Ghost.Position = (ScreenPosition - ClientOrigin) + IntVector2(DragVisualCursorOffset, DragVisualCursorOffset);
+    Ghost.Position = (ScreenPosition - ClientOrigin) + FIntVector2(DragVisualCursorOffset, DragVisualCursorOffset);
 
     const FCornerRadii Radii(Style.Metrics.CornerRadius);
     FFloatColor Outline = Style.Colors.Border;
@@ -291,7 +291,7 @@ FRectangle FDragDropService::ResolveTargetBounds(const TSharedPtr<FVisualElement
     return ScreenBounds.IsEmpty() ? Element->GetContentRectangle() : ScreenBounds;
 }
 
-int32 FDragDropService::FindTargetAt(const IntVector2& InScreenPosition) const
+int32 FDragDropService::FindTargetAt(const FIntVector2& InScreenPosition) const
 {
     for (int32 Index = Targets.Size() - 1; Index >= 0; --Index)
     {

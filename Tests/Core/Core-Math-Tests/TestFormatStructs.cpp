@@ -27,20 +27,20 @@ bool TestFormatStructs()
 
     TEST_SECTION("FRGBA16Snorm::ToVector3 / GetAlpha (axis round trip)");
     {
-        const FRGBA16Snorm AxisX(Vector3(1.0f, 0.0f, 0.0f), 1.0f);
-        const FRGBA16Snorm AxisY(Vector3(0.0f, -1.0f, 0.0f), -1.0f);
+        const FRGBA16Snorm AxisX(FVector3(1.0f, 0.0f, 0.0f), 1.0f);
+        const FRGBA16Snorm AxisY(FVector3(0.0f, -1.0f, 0.0f), -1.0f);
 
-        TEST_EXPECT(AxisX.ToVector3() == Vector3(1.0f, 0.0f, 0.0f));
+        TEST_EXPECT(AxisX.ToVector3() == FVector3(1.0f, 0.0f, 0.0f));
         TEST_EXPECT(AxisX.GetAlpha() == 1.0f);
-        TEST_EXPECT(AxisY.ToVector3() == Vector3(0.0f, -1.0f, 0.0f));
+        TEST_EXPECT(AxisY.ToVector3() == FVector3(0.0f, -1.0f, 0.0f));
         TEST_EXPECT(AxisY.GetAlpha() == -1.0f);
     }
 
     TEST_SECTION("FRGBA16Snorm::ToVector3 (arbitrary direction stays within a quantization step)");
     {
-        const Vector3      Direction = Vector3(0.267261f, 0.534522f, 0.801784f);
+        const FVector3     Direction = FVector3(0.267261f, 0.534522f, 0.801784f);
         const FRGBA16Snorm Encoded(Direction);
-        const Vector3      Decoded = Encoded.ToVector3();
+        const FVector3     Decoded = Encoded.ToVector3();
 
         const float Tolerance = 1.0f / FRGBA16SNORM_MAX;
         TEST_EXPECT(Math::Abs(Decoded.X - Direction.X) <= Tolerance);

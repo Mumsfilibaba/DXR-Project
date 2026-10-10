@@ -114,7 +114,7 @@ int32 FMenuHost::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     return MaxLayerId;
 }
 
-const FMenuHost::FHostedChild* FMenuHost::FindChildAtPoint(const IntVector2& ClientPosition) const
+const FMenuHost::FHostedChild* FMenuHost::FindChildAtPoint(const FIntVector2& ClientPosition) const
 {
     for (int32 Index = Children.Size() - 1; Index >= 0; --Index)
     {
@@ -133,12 +133,12 @@ const FMenuHost::FHostedChild* FMenuHost::FindChildAtPoint(const IntVector2& Cli
     return nullptr;
 }
 
-bool FMenuHost::CoversPoint(const IntVector2& ClientPosition) const
+bool FMenuHost::CoversPoint(const FIntVector2& ClientPosition) const
 {
     return FindChildAtPoint(ClientPosition) != nullptr;
 }
 
-void FMenuHost::HitTestHostedChild(const IntVector2& ClientPosition, FElementPath& OutPath)
+void FMenuHost::HitTestHostedChild(const FIntVector2& ClientPosition, FElementPath& OutPath)
 {
     if (FindChildAtPoint(ClientPosition))
     {
@@ -146,7 +146,7 @@ void FMenuHost::HitTestHostedChild(const IntVector2& ClientPosition, FElementPat
     }
 }
 
-void FMenuHost::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+void FMenuHost::HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath)
 {
     if (const FHostedChild* Child = FindChildAtPoint(ClientPosition))
     {

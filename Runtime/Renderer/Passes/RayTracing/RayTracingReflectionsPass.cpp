@@ -496,8 +496,8 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
         {
             Constants.PointLightPositionRadius[LightIndex] = Resources.ShadowCastingPointLightsPosRad[LightIndex];
 
-            const Vector3 LightColor = Resources.ShadowCastingPointLightsData[LightIndex].Color;
-            Constants.PointLightColor[LightIndex] = Vector4(LightColor.X, LightColor.Y, LightColor.Z, 0.0f);
+            const FVector3 LightColor = Resources.ShadowCastingPointLightsData[LightIndex].Color;
+            Constants.PointLightColor[LightIndex] = FVector4(LightColor.X, LightColor.Y, LightColor.Z, 0.0f);
         }
 
         Constants.ReflectionMaxRayDistance           = Math::Max(1.0f, GReflectionMaxRayDistance);

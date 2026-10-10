@@ -14,9 +14,9 @@ static FEditorGridSettings GEditorGridSettings =
     /* FadeDistance     */ 5000.0f,
     /* HorizonFade      */ 4.0f,
     /* DepthBias        */ 0.01f,
-    /* MinorColor       */ Vector3(0.1f, 0.1f, 0.1f),
+    /* MinorColor       */ FVector3(0.1f, 0.1f, 0.1f),
     /* MinorAlpha       */ 0.6f,
-    /* MajorColor       */ Vector3(0.14f, 0.14f, 0.14f),
+    /* MajorColor       */ FVector3(0.14f, 0.14f, 0.14f),
     /* MajorAlpha       */ 0.7f,
 };
 

@@ -46,7 +46,7 @@ bool RenderGraphViewSlice_Test()
         {
             FRHIUnorderedAccessView* UAV = Resources.Get(SliceUAV);
             TEST_EXPECT_OR_RETURN(UAV != nullptr);
-            PassCommandList.ClearUnorderedAccessViewFloat(UAV, Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+            PassCommandList.ClearUnorderedAccessViewFloat(UAV, FVector4(1.0f, 0.0f, 0.0f, 1.0f));
             bWriteRan = true;
         });
 
@@ -257,7 +257,7 @@ bool RenderGraphViewHybridUsage_Test()
         [&](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
         {
             TEST_EXPECT_OR_RETURN(Resources.Get(UnorderedAccessView) != nullptr);
-            PassCommandList.ClearUnorderedAccessViewFloat(Resources.Get(UnorderedAccessView), Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+            PassCommandList.ClearUnorderedAccessViewFloat(Resources.Get(UnorderedAccessView), FVector4(1.0f, 0.0f, 0.0f, 1.0f));
         });
 
     GraphBuilder.AddPass("Draw", ERenderGraphPassFlags::Raster | ERenderGraphPassFlags::NeverCull, [RenderTargetView](FRenderGraphPassBuilder& PassBuilder)
@@ -331,7 +331,7 @@ bool RenderGraphSubresourceRejoin_Test()
             {
                 FRHIUnorderedAccessView* UnorderedAccessView = Resources.Get(SliceView);
                 TEST_EXPECT_OR_RETURN(UnorderedAccessView != nullptr);
-                PassCommandList.ClearUnorderedAccessViewFloat(UnorderedAccessView, Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                PassCommandList.ClearUnorderedAccessViewFloat(UnorderedAccessView, FVector4(1.0f, 1.0f, 1.0f, 1.0f));
             }
         });
 

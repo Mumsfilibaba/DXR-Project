@@ -50,7 +50,7 @@ struct IEditorViewportHost
     virtual void SetViewportImage(FRHITextureRef InViewportImage) = 0;
 
     /** @return The size the scene should render at, in pixels, which is zero before the first layout. */
-    virtual IntVector2 GetViewportSize() const = 0;
+    virtual FIntVector2 GetViewportSize() const = 0;
 
     /** @return The debug view the scene is drawn with, Nothing for the lit image. */
     virtual FSceneRenderView::EDebugView GetDebugView() const = 0;

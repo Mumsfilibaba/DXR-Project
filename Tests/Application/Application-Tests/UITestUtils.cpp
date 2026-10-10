@@ -7,12 +7,12 @@ void UITestUtils::ExpandShapeInstances(const FUIDrawData& DrawData, TArray<FUISh
     OutVertices.ResizeUninitialized(Instances.Size() * 4);
     OutIndices.ResizeUninitialized(Instances.Size() * 6);
 
-    static const Vector2 Corners[4] =
+    static const FVector2 Corners[4] =
     {
-        Vector2(0.0f, 0.0f),
-        Vector2(1.0f, 0.0f),
-        Vector2(1.0f, 1.0f),
-        Vector2(0.0f, 1.0f),
+        FVector2(0.0f, 0.0f),
+        FVector2(1.0f, 0.0f),
+        FVector2(1.0f, 1.0f),
+        FVector2(0.0f, 1.0f),
     };
 
     for (int32 InstanceIndex = 0; InstanceIndex < Instances.Size(); ++InstanceIndex)

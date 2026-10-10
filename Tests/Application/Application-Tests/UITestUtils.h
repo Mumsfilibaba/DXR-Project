@@ -5,16 +5,16 @@
 
 struct FUIShapeVertex
 {
-    Vector2 Position;
-    uint32  Color;
-    Vector2 LocalPos;
-    Vector2 RectSize;
-    float   RadiusTL;
-    float   RadiusTR;
-    float   RadiusBR;
-    float   RadiusBL;
-    float   Thickness;
-    float   ShapeKind;
+    FVector2 Position;
+    uint32   Color;
+    FVector2 LocalPos;
+    FVector2 RectSize;
+    float    RadiusTL;
+    float    RadiusTR;
+    float    RadiusBR;
+    float    RadiusBL;
+    float    Thickness;
+    float    ShapeKind;
 };
 
 namespace UITestUtils

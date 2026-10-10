@@ -41,7 +41,7 @@ private:
     void OnTreeItemActivated(const TSharedPtr<FTreeItem>& Item);
     void OnTreeDragDetected(const TSharedPtr<FTreeItem>& Item, const FCursorEvent& CursorEvent);
     void OnSearchTextChanged(const FString& SearchText);
-    void OnRowContextMenu(const TSharedPtr<FTreeItem>& Item, const IntVector2& ScreenPosition);
+    void OnRowContextMenu(const TSharedPtr<FTreeItem>& Item, const FIntVector2& ScreenPosition);
     void OnDeleteRequested();
     void OnRenameCommitted(const TSharedPtr<FTreeItem>& Item, const FString& NewName);
     void OnItemsDropped(const TArray<TSharedPtr<FTreeItem>>& Items, const TSharedPtr<FTreeItem>& TargetItem);

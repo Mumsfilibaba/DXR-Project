@@ -55,98 +55,98 @@ struct TJsonComponentArray
 };
 
 template<>
-struct TJsonSerializer<Vector2>
+struct TJsonSerializer<FVector2>
 {
-    static void Save(FJsonValue& OutValue, const Vector2& InValue)
+    static void Save(FJsonValue& OutValue, const FVector2& InValue)
     {
         TJsonComponentArray<2>::Save(OutValue, InValue.XY);
     }
 
-    static bool Load(const FJsonValue& InValue, Vector2& OutValue, FJsonArchive& Archive)
+    static bool Load(const FJsonValue& InValue, FVector2& OutValue, FJsonArchive& Archive)
     {
         return TJsonComponentArray<2>::Load(InValue, OutValue.XY, Archive);
     }
 };
 
 template<>
-struct TJsonSerializer<Vector3>
+struct TJsonSerializer<FVector3>
 {
-    static void Save(FJsonValue& OutValue, const Vector3& InValue)
+    static void Save(FJsonValue& OutValue, const FVector3& InValue)
     {
         TJsonComponentArray<3>::Save(OutValue, InValue.XYZ);
     }
 
-    static bool Load(const FJsonValue& InValue, Vector3& OutValue, FJsonArchive& Archive)
+    static bool Load(const FJsonValue& InValue, FVector3& OutValue, FJsonArchive& Archive)
     {
         return TJsonComponentArray<3>::Load(InValue, OutValue.XYZ, Archive);
     }
 };
 
 template<>
-struct TJsonSerializer<Vector4>
+struct TJsonSerializer<FVector4>
 {
-    static void Save(FJsonValue& OutValue, const Vector4& InValue)
+    static void Save(FJsonValue& OutValue, const FVector4& InValue)
     {
         TJsonComponentArray<4>::Save(OutValue, InValue.XYZW);
     }
 
-    static bool Load(const FJsonValue& InValue, Vector4& OutValue, FJsonArchive& Archive)
+    static bool Load(const FJsonValue& InValue, FVector4& OutValue, FJsonArchive& Archive)
     {
         return TJsonComponentArray<4>::Load(InValue, OutValue.XYZW, Archive);
     }
 };
 
 template<>
-struct TJsonSerializer<Quaternion>
+struct TJsonSerializer<FQuaternion>
 {
-    static void Save(FJsonValue& OutValue, const Quaternion& InValue)
+    static void Save(FJsonValue& OutValue, const FQuaternion& InValue)
     {
         TJsonComponentArray<4>::Save(OutValue, InValue.XYZW);
     }
 
-    static bool Load(const FJsonValue& InValue, Quaternion& OutValue, FJsonArchive& Archive)
+    static bool Load(const FJsonValue& InValue, FQuaternion& OutValue, FJsonArchive& Archive)
     {
         return TJsonComponentArray<4>::Load(InValue, OutValue.XYZW, Archive);
     }
 };
 
 template<>
-struct TJsonSerializer<Matrix3>
+struct TJsonSerializer<FMatrix3>
 {
-    static void Save(FJsonValue& OutValue, const Matrix3& InValue)
+    static void Save(FJsonValue& OutValue, const FMatrix3& InValue)
     {
         TJsonComponentArray<9>::Save(OutValue, &InValue.M[0][0]);
     }
 
-    static bool Load(const FJsonValue& InValue, Matrix3& OutValue, FJsonArchive& Archive)
+    static bool Load(const FJsonValue& InValue, FMatrix3& OutValue, FJsonArchive& Archive)
     {
         return TJsonComponentArray<9>::Load(InValue, &OutValue.M[0][0], Archive);
     }
 };
 
 template<>
-struct TJsonSerializer<Matrix3x4>
+struct TJsonSerializer<FMatrix3x4>
 {
-    static void Save(FJsonValue& OutValue, const Matrix3x4& InValue)
+    static void Save(FJsonValue& OutValue, const FMatrix3x4& InValue)
     {
         TJsonComponentArray<12>::Save(OutValue, &InValue.M[0][0]);
     }
 
-    static bool Load(const FJsonValue& InValue, Matrix3x4& OutValue, FJsonArchive& Archive)
+    static bool Load(const FJsonValue& InValue, FMatrix3x4& OutValue, FJsonArchive& Archive)
     {
         return TJsonComponentArray<12>::Load(InValue, &OutValue.M[0][0], Archive);
     }
 };
 
 template<>
-struct TJsonSerializer<Matrix4>
+struct TJsonSerializer<FMatrix4>
 {
-    static void Save(FJsonValue& OutValue, const Matrix4& InValue)
+    static void Save(FJsonValue& OutValue, const FMatrix4& InValue)
     {
         TJsonComponentArray<16>::Save(OutValue, &InValue.M[0][0]);
     }
 
-    static bool Load(const FJsonValue& InValue, Matrix4& OutValue, FJsonArchive& Archive)
+    static bool Load(const FJsonValue& InValue, FMatrix4& OutValue, FJsonArchive& Archive)
     {
         return TJsonComponentArray<16>::Load(InValue, &OutValue.M[0][0], Archive);
     }

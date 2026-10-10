@@ -4,12 +4,12 @@
 #include "Core/Math/Plane.h"
 
 bool FGizmoMath::WorldToClient(
-    const Matrix4&    ViewProjection, 
+    const FMatrix4&   ViewProjection, 
     const FRectangle& Viewport, 
-    const Vector3&    WorldPosition, 
-    Vector2&          OutClientPosition)
+    const FVector3&   WorldPosition, 
+    FVector2&         OutClientPosition)
 {
-    const Vector4 ClipPosition = ViewProjection.Transform(Vector4(WorldPosition.X, WorldPosition.Y, WorldPosition.Z, 1.0f));
+    const FVector4 ClipPosition = ViewProjection.Transform(FVector4(WorldPosition.X, WorldPosition.Y, WorldPosition.Z, 1.0f));
     if (ClipPosition.W <= Math::Constants::Epsilon)
     {
         return false;
@@ -19,7 +19,7 @@ bool FGizmoMath::WorldToClient(
     const float RangeX   = (ClipPosition.X * InverseW) * 0.5f + 0.5f;
     const float RangeY   = 1.0f - ((ClipPosition.Y * InverseW) * 0.5f + 0.5f);
 
-    OutClientPosition = Vector2(
+    OutClientPosition = FVector2(
         static_cast<float>(Viewport.Position.X) + (RangeX * static_cast<float>(Viewport.Width)),
         static_cast<float>(Viewport.Position.Y) + (RangeY * static_cast<float>(Viewport.Height)));
 
@@ -27,13 +27,13 @@ bool FGizmoMath::WorldToClient(
 }
 
 void FGizmoMath::ComputeCameraRay(
-    const Matrix4&    ViewProjection, 
-    const FRectangle& Viewport, 
-    const IntVector2& ClientPosition, 
-    Vector3&          OutOrigin, 
-    Vector3&          OutDirection)
+    const FMatrix4&    ViewProjection, 
+    const FRectangle&  Viewport, 
+    const FIntVector2& ClientPosition, 
+    FVector3&          OutOrigin, 
+    FVector3&          OutDirection)
 {
-    const Matrix4 InverseViewProjection = ViewProjection.GetInverse();
+    const FMatrix4 InverseViewProjection = ViewProjection.GetInverse();
 
     const float Width  = Viewport.Width > 0 ? static_cast<float>(Viewport.Width) : 1.0f;
     const float Height = Viewport.Height > 0 ? static_cast<float>(Viewport.Height) : 1.0f;
@@ -42,8 +42,8 @@ void FGizmoMath::ComputeCameraRay(
     const float ClipX  = (RangeX * 2.0f) - 1.0f;
     const float ClipY  = 1.0f - (RangeY * 2.0f);
 
-    Vector4 NearPoint = InverseViewProjection.Transform(Vector4(ClipX, ClipY, 0.0f, 1.0f));
-    Vector4 FarPoint  = InverseViewProjection.Transform(Vector4(ClipX, ClipY, 1.0f, 1.0f));
+    FVector4 NearPoint = InverseViewProjection.Transform(FVector4(ClipX, ClipY, 0.0f, 1.0f));
+    FVector4 FarPoint  = InverseViewProjection.Transform(FVector4(ClipX, ClipY, 1.0f, 1.0f));
 
     if (Math::Abs(NearPoint.W) > Math::Constants::Epsilon)
     {
@@ -55,18 +55,18 @@ void FGizmoMath::ComputeCameraRay(
         FarPoint *= 1.0f / FarPoint.W;
     }
 
-    OutOrigin    = Vector3(NearPoint.X, NearPoint.Y, NearPoint.Z);
-    OutDirection = (Vector3(FarPoint.X, FarPoint.Y, FarPoint.Z) - OutOrigin).GetNormalized();
+    OutOrigin    = FVector3(NearPoint.X, NearPoint.Y, NearPoint.Z);
+    OutDirection = (FVector3(FarPoint.X, FarPoint.Y, FarPoint.Z) - OutOrigin).GetNormalized();
 }
 
 bool FGizmoMath::IntersectRayPlane(
-    const Vector3& PlanePoint, 
-    const Vector3& PlaneNormal, 
-    const Vector3& RayOrigin, 
-    const Vector3& RayDirection, 
-    Vector3&       OutHit)
+    const FVector3& PlanePoint, 
+    const FVector3& PlaneNormal, 
+    const FVector3& RayOrigin, 
+    const FVector3& RayDirection, 
+    FVector3&       OutHit)
 {
-    const Plane HitPlane(PlaneNormal, -PlaneNormal.DotProduct(PlanePoint));
+    const FPlane HitPlane(PlaneNormal, -PlaneNormal.DotProduct(PlanePoint));
 
     const float Distance = HitPlane.IntersectRay(RayOrigin, RayDirection);
     if (Distance < 0.0f)
@@ -78,29 +78,29 @@ bool FGizmoMath::IntersectRayPlane(
     return true;
 }
 
-Vector3 FGizmoMath::ComputeAxisPlaneNormal(const Vector3& Axis, const Vector3& ViewDirection)
+FVector3 FGizmoMath::ComputeAxisPlaneNormal(const FVector3& Axis, const FVector3& ViewDirection)
 {
-    const Vector3 Orthogonal = Axis.CrossProduct(ViewDirection);
+    const FVector3 Orthogonal = Axis.CrossProduct(ViewDirection);
     if (Orthogonal.GetLength() < Math::Constants::CmpThreshold)
     {
-        const Vector3 Fallback = Math::Abs(Axis.Z) < 0.9f ? Vector3(0.0f, 0.0f, 1.0f) : Vector3(1.0f, 0.0f, 0.0f);
+        const FVector3 Fallback = Math::Abs(Axis.Z) < 0.9f ? FVector3(0.0f, 0.0f, 1.0f) : FVector3(1.0f, 0.0f, 0.0f);
         return Axis.CrossProduct(Axis.CrossProduct(Fallback)).GetNormalized();
     }
 
     return Axis.CrossProduct(Orthogonal).GetNormalized();
 }
 
-float FGizmoMath::DistanceToSegment(const Vector2& Point, const Vector2& Start, const Vector2& End)
+float FGizmoMath::DistanceToSegment(const FVector2& Point, const FVector2& Start, const FVector2& End)
 {
     return Geometry2D::DistanceToSegment(Point, Start, End);
 }
 
-bool FGizmoMath::IsPointInsideQuad(const Vector2& Point, const Vector2 Quad[4])
+bool FGizmoMath::IsPointInsideQuad(const FVector2& Point, const FVector2 Quad[4])
 {
     return Geometry2D::IsPointInsideQuad(Point, Quad);
 }
 
-bool FGizmoMath::IsPointOverQuad(const Vector2& Point, const Vector2 Quad[4], float Padding)
+bool FGizmoMath::IsPointOverQuad(const FVector2& Point, const FVector2 Quad[4], float Padding)
 {
     if (IsPointInsideQuad(Point, Quad))
     {
@@ -128,15 +128,15 @@ float FGizmoMath::SnapValue(float Value, float Snap)
     return Math::Round(Value / Snap) * Snap;
 }
 
-Vector3 FGizmoMath::SnapVector(const Vector3& Value, float Snap)
+FVector3 FGizmoMath::SnapVector(const FVector3& Value, float Snap)
 {
-    return Vector3(SnapValue(Value.X, Snap), SnapValue(Value.Y, Snap), SnapValue(Value.Z, Snap));
+    return FVector3(SnapValue(Value.X, Snap), SnapValue(Value.Y, Snap), SnapValue(Value.Z, Snap));
 }
 
-float FGizmoMath::GetSegmentLengthInClipSpace(const Matrix4& ViewProjection, float AspectRatio, const Vector3& Start, const Vector3& End)
+float FGizmoMath::GetSegmentLengthInClipSpace(const FMatrix4& ViewProjection, float AspectRatio, const FVector3& Start, const FVector3& End)
 {
-    Vector4 StartClip = ViewProjection.Transform(Vector4(Start.X, Start.Y, Start.Z, 1.0f));
-    Vector4 EndClip   = ViewProjection.Transform(Vector4(End.X, End.Y, End.Z, 1.0f));
+    FVector4 StartClip = ViewProjection.Transform(FVector4(Start.X, Start.Y, Start.Z, 1.0f));
+    FVector4 EndClip   = ViewProjection.Transform(FVector4(End.X, End.Y, End.Z, 1.0f));
 
     if (Math::Abs(StartClip.W) > Math::Constants::Epsilon)
     {
@@ -148,46 +148,46 @@ float FGizmoMath::GetSegmentLengthInClipSpace(const Matrix4& ViewProjection, flo
         EndClip *= 1.0f / EndClip.W;
     }
 
-    const float   SafeAspect = AspectRatio > Math::Constants::Epsilon ? AspectRatio : 1.0f;
-    const Vector2 Delta      = Vector2(EndClip.X - StartClip.X, (EndClip.Y - StartClip.Y) / SafeAspect);
+    const float    SafeAspect = AspectRatio > Math::Constants::Epsilon ? AspectRatio : 1.0f;
+    const FVector2 Delta      = FVector2(EndClip.X - StartClip.X, (EndClip.Y - StartClip.Y) / SafeAspect);
 
     return Delta.GetLength();
 }
 
 float FGizmoMath::GetParallelogramArea(
-    const Matrix4& ViewProjection, 
-    float          AspectRatio, 
-    const Vector3& Origin, 
-    const Vector3& PointA, 
-    const Vector3& PointB)
+    const FMatrix4& ViewProjection, 
+    float           AspectRatio, 
+    const FVector3& Origin, 
+    const FVector3& PointA, 
+    const FVector3& PointB)
 {
-    const Vector3 Points[3] = { Origin, PointA, PointB };
+    const FVector3 Points[3] = { Origin, PointA, PointB };
 
-    Vector2 Projected[3];
+    FVector2 Projected[3];
     for (int32 Index = 0; Index < 3; ++Index)
     {
-        Vector4 Clip = ViewProjection.Transform(Vector4(Points[Index].X, Points[Index].Y, Points[Index].Z, 1.0f));
+        FVector4 Clip = ViewProjection.Transform(FVector4(Points[Index].X, Points[Index].Y, Points[Index].Z, 1.0f));
         if (Math::Abs(Clip.W) > Math::Constants::Epsilon)
         {
             Clip *= 1.0f / Clip.W;
         }
 
-        Projected[Index] = Vector2(Clip.X, Clip.Y);
+        Projected[Index] = FVector2(Clip.X, Clip.Y);
     }
 
-    const float   SafeAspect = AspectRatio > Math::Constants::Epsilon ? AspectRatio : 1.0f;
-    const Vector2 SideA      = Vector2(Projected[1].X - Projected[0].X, (Projected[1].Y - Projected[0].Y) / SafeAspect);
-    const Vector2 SideB      = Vector2(Projected[2].X - Projected[0].X, (Projected[2].Y - Projected[0].Y) / SafeAspect);
+    const float    SafeAspect = AspectRatio > Math::Constants::Epsilon ?  AspectRatio : 1.0f;
+    const FVector2 SideA      = FVector2(Projected[1].X - Projected[0].X, (Projected[1].Y - Projected[0].Y) / SafeAspect);
+    const FVector2 SideB      = FVector2(Projected[2].X - Projected[0].X, (Projected[2].Y - Projected[0].Y) / SafeAspect);
 
     return Math::Abs((SideA.X * SideB.Y) - (SideA.Y * SideB.X));
 }
 
-float FGizmoMath::ComputeScreenFactor(const Matrix4& ViewProjection, const Vector3& CameraRight, const Vector3& Pivot, float SizeInClipSpace)
+float FGizmoMath::ComputeScreenFactor(const FMatrix4& ViewProjection, const FVector3& CameraRight, const FVector3& Pivot, float SizeInClipSpace)
 {
-    const Vector4 PivotClip = ViewProjection.Transform(Vector4(Pivot.X, Pivot.Y, Pivot.Z, 1.0f));
+    const FVector4 PivotClip = ViewProjection.Transform(FVector4(Pivot.X, Pivot.Y, Pivot.Z, 1.0f));
 
-    const Vector3 RightPoint = Pivot + CameraRight;
-    const Vector4 RightClip  = ViewProjection.Transform(Vector4(RightPoint.X, RightPoint.Y, RightPoint.Z, 1.0f));
+    const FVector3 RightPoint = Pivot + CameraRight;
+    const FVector4 RightClip  = ViewProjection.Transform(FVector4(RightPoint.X, RightPoint.Y, RightPoint.Z, 1.0f));
 
     if (Math::Abs(PivotClip.W) < Math::Constants::Epsilon || Math::Abs(RightClip.W) < Math::Constants::Epsilon)
     {

@@ -60,7 +60,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 PrepareDesiredSize() override;
+    virtual FIntVector2 PrepareDesiredSize() override;
 
     // IOutputDevice Interface
     virtual void Log(const FString& Message) override;

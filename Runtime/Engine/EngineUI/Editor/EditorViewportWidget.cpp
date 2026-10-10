@@ -849,11 +849,11 @@ void FEditorViewportWidget::DrawViewportWindow()
 
         // Update the relative viewport position
         const ImVec2 ContentPos = ImGui::GetCursorScreenPos();
-        HostViewport->SetPosition(IntVector2(static_cast<int32>(ContentPos.x), static_cast<int32>(ContentPos.y)), EViewportPositionSpace::Screen);
+        HostViewport->SetPosition(FIntVector2(static_cast<int32>(ContentPos.x), static_cast<int32>(ContentPos.y)), EViewportPositionSpace::Screen);
 
         // Update the viewport image that we will render to
         const ImVec2 ContentSize = ImGui::GetContentRegionAvail();
-        CachedViewportSize = IntVector2(static_cast<int32>(ContentSize.x), static_cast<int32>(ContentSize.y));
+        CachedViewportSize = FIntVector2(static_cast<int32>(ContentSize.x), static_cast<int32>(ContentSize.y));
         HostViewport->SetSize(CachedViewportSize);
 
         // Draw the viewport texture
@@ -933,7 +933,7 @@ void FEditorViewportWidget::DrawViewportWindow()
             EditorGuizmo::IsUsingViewManipulate() ||
             EditorGuizmo::IsViewManipulateHovered();
 
-        IntVector2 RawMouseDelta;
+        FIntVector2 RawMouseDelta;
         if (const TSharedPtr<FSceneViewport> SceneViewport = EditorEngine->GetSceneViewport())
         {
             RawMouseDelta = SceneViewport->ConsumeHighPrecisionMouseDelta();
@@ -964,7 +964,7 @@ void FEditorViewportWidget::DrawViewportWindow()
         {
             const ImGuiIO& IO = ImGui::GetIO();
 
-            PendingCameraInput.LookDelta        = Vector2(IO.MouseDelta.x, IO.MouseDelta.y);
+            PendingCameraInput.LookDelta        = FVector2(IO.MouseDelta.x, IO.MouseDelta.y);
             PendingCameraInput.PanDelta         = PendingCameraInput.LookDelta;
             PendingCameraInput.WheelDelta       = IO.MouseWheel;
             PendingCameraInput.bLeftMouseDown   = ImGui::IsMouseDown(ImGuiMouseButton_Left);
@@ -1008,7 +1008,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                 (bKeyboardFlyActive && ImGui::IsKeyDown(ImGuiKey_S) ? 1.0f : 0.0f) +
                 GamepadMoveForward;
 
-            PendingCameraInput.MoveAxis = Vector3(
+            PendingCameraInput.MoveAxis = FVector3(
                 Math::Clamp(MoveRight, -1.0f, 1.0f),
                 Math::Clamp(MoveUp, -1.0f, 1.0f),
                 Math::Clamp(MoveForward, -1.0f, 1.0f));
@@ -1034,7 +1034,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                     ImGui::GetKeyData(ImGuiKey_GamepadRStickUp)->AnalogValue,
                     AnalogInput::GetDeadzone(EAnalogSourceName::RightThumbY));
 
-            PendingCameraInput.RotationAxis = Vector2(
+            PendingCameraInput.RotationAxis = FVector2(
                 Math::Clamp(RotateRight, -1.0f, 1.0f),
                 Math::Clamp(RotateDown, -1.0f, 1.0f));
 
@@ -1061,7 +1061,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                 {
                     if (bRawLookActive)
                     {
-                        PendingCameraInput.LookDelta = Vector2(float(RawMouseDelta.X), float(RawMouseDelta.Y));
+                        PendingCameraInput.LookDelta = FVector2(float(RawMouseDelta.X), float(RawMouseDelta.Y));
                     }
                 }
                 else
@@ -1161,7 +1161,7 @@ void FEditorViewportWidget::DrawViewportWindow()
             {
                 bMarqueeActive   = true;
                 bMarqueeAdditive = ImGui::GetIO().KeyCtrl || ImGui::GetIO().KeyShift;
-                MarqueeStartPos  = Vector2(DragStart.x, DragStart.y);
+                MarqueeStartPos  = FVector2(DragStart.x, DragStart.y);
             }
         }
 
@@ -1243,7 +1243,7 @@ void FEditorViewportWidget::DrawViewportWindow()
             const float  SafeW    = ImageSize.x > 0.0f ? ImageSize.x : 1.0f;
             const float  SafeH    = ImageSize.y > 0.0f ? ImageSize.y : 1.0f;
 
-            ContextMenuNdc = Vector2(
+            ContextMenuNdc = FVector2(
                 ((MousePos.x - ImageMin.x) / SafeW) * 2.0f - 1.0f,
                 1.0f - ((MousePos.y - ImageMin.y) / SafeH) * 2.0f);
 
@@ -1409,7 +1409,7 @@ void FEditorViewportWidget::OnActorRemoved(FActor* Actor)
     }
 }
 
-bool FEditorViewportWidget::ComputeFallbackPlacement(const Vector2& Ndc, Vector3& OutLocation) const
+bool FEditorViewportWidget::ComputeFallbackPlacement(const FVector2& Ndc, FVector3& OutLocation) const
 {
     FCameraComponent* Camera = GetViewCamera();
     if (!Camera)
@@ -1417,19 +1417,19 @@ bool FEditorViewportWidget::ComputeFallbackPlacement(const Vector2& Ndc, Vector3
         return false;
     }
 
-    const Matrix4& ViewProjectionInverse = Camera->GetViewProjectionInverseMatrix();
+    const FMatrix4& ViewProjectionInverse = Camera->GetViewProjectionInverseMatrix();
 
-    const Vector4 NearWorld = ViewProjectionInverse.Transform(Vector4(Ndc.X, Ndc.Y, 0.0f, 1.0f));
-    const Vector4 FarWorld  = ViewProjectionInverse.Transform(Vector4(Ndc.X, Ndc.Y, 1.0f, 1.0f));
+    const FVector4 NearWorld = ViewProjectionInverse.Transform(FVector4(Ndc.X, Ndc.Y, 0.0f, 1.0f));
+    const FVector4 FarWorld  = ViewProjectionInverse.Transform(FVector4(Ndc.X, Ndc.Y, 1.0f, 1.0f));
 
     if (Math::Abs(NearWorld.W) < 1e-6f || Math::Abs(FarWorld.W) < 1e-6f)
     {
         return false;
     }
 
-    const Vector3 RayStart     = Vector3(NearWorld.X, NearWorld.Y, NearWorld.Z) / NearWorld.W;
-    const Vector3 RayEnd       = Vector3(FarWorld.X, FarWorld.Y, FarWorld.Z) / FarWorld.W;
-    const Vector3 RayDirection = (RayEnd - RayStart).GetNormalized();
+    const FVector3 RayStart     = FVector3(NearWorld.X, NearWorld.Y, NearWorld.Z) / NearWorld.W;
+    const FVector3 RayEnd       = FVector3(FarWorld.X, FarWorld.Y, FarWorld.Z) / FarWorld.W;
+    const FVector3 RayDirection = (RayEnd - RayStart).GetNormalized();
 
     constexpr float MaxGroundDistance = 1000.0f;
 
@@ -1506,12 +1506,12 @@ void FEditorViewportWidget::OnContextMenuPickResult(const FEditorPickResult& Res
 
     if (Result.bHasDepth)
     {
-        const Vector4 Clip  = Vector4(ContextMenuNdc.X, ContextMenuNdc.Y, Result.DeviceDepth, 1.0f);
-        const Vector4 World = ContextMenuViewProjectionInverse.Transform(Clip);
+        const FVector4 Clip  = FVector4(ContextMenuNdc.X, ContextMenuNdc.Y, Result.DeviceDepth, 1.0f);
+        const FVector4 World = ContextMenuViewProjectionInverse.Transform(Clip);
 
         if (Math::Abs(World.W) > 1e-6f)
         {
-            ContextMenuLocation = Vector3(World.X, World.Y, World.Z) / World.W;
+            ContextMenuLocation = FVector3(World.X, World.Y, World.Z) / World.W;
         }
     }
 }
@@ -1602,7 +1602,7 @@ void FEditorViewportWidget::SetViewportImage(FRHITextureRef InViewportImage)
     }
 }
 
-IntVector2 FEditorViewportWidget::GetViewportSize() const
+FIntVector2 FEditorViewportWidget::GetViewportSize() const
 {
     if (CachedViewportSize.X > 0 && CachedViewportSize.Y > 0)
     {
@@ -1612,10 +1612,10 @@ IntVector2 FEditorViewportWidget::GetViewportSize() const
     if (ImGuiWindow* ViewportWindow = ImGui::FindWindowByName("Viewport"))
     {
         const ImVec2 Size = ViewportWindow->ContentRegionRect.GetSize();
-        return IntVector2(static_cast<int32>(Size.x), static_cast<int32>(Size.y));
+        return FIntVector2(static_cast<int32>(Size.x), static_cast<int32>(Size.y));
     }
 
-    return IntVector2(1920, 1080);
+    return FIntVector2(1920, 1080);
 }
 
 FSceneRenderView::EDebugView FEditorViewportWidget::GetDebugView() const

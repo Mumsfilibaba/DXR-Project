@@ -120,7 +120,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
@@ -195,7 +195,7 @@ public:
      * @param ClientPosition The point to place, in client coordinates.
      * @return The row's index, or InvalidRowIndex when the point is outside the rows.
      */
-    NODISCARD int32 FindRowAtPoint(const IntVector2& ClientPosition) const;
+    NODISCARD int32 FindRowAtPoint(const FIntVector2& ClientPosition) const;
 
     /** @return How many rows the table holds, headings counted. */
     NODISCARD FORCEINLINE int32 GetNumRows() const
@@ -227,11 +227,11 @@ public:
 
 protected:
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
-    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+    virtual void HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath) override;
 
 private:
     NODISCARD int32 GetDividerOffset(const FRectangle& Bounds) const;
-    NODISCARD bool IsPointOnDivider(const IntVector2& ClientPosition) const;
+    NODISCARD bool IsPointOnDivider(const FIntVector2& ClientPosition) const;
     NODISCARD bool HasRowOffsets() const;
     void RebuildRowOffsets() const;
     NODISCARD int32 GetRowHeight(int32 Index) const;
@@ -242,11 +242,11 @@ private:
     NODISCARD FRectangle GetLabelAccessoryRectangle(int32 Index, const FRectangle& Bounds) const;
     NODISCARD FRectangle GetRevertRectangle(int32 Index, const FRectangle& Bounds) const;
     NODISCARD bool IsRowModified(int32 Index) const;
-    NODISCARD int32 FindRevertRowAtPoint(const IntVector2& ClientPosition) const;
+    NODISCARD int32 FindRevertRowAtPoint(const FIntVector2& ClientPosition) const;
     NODISCARD const FString& GetElidedLabel(int32 Index) const;
     NODISCARD IFontFace* GetRowFont(int32 Index) const;
 
-    void UpdateHoveredRow(const IntVector2& ClientPosition);
+    void UpdateHoveredRow(const FIntVector2& ClientPosition);
     void ClearHoveredRow();
 
     TArray<FPropertyRow>  Rows;
@@ -255,7 +255,7 @@ private:
     TSharedPtr<IFontFace> HeaderFont;
     FUIPropertyTableStyle Style;
     FUIBrush              RevertIcon;
-    IntVector2            DragOrigin;
+    FIntVector2           DragOrigin;
     float                 LabelColumnFraction;
     float                 DragStartFraction;
     int32                 LabelColumnWidth;

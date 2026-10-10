@@ -205,7 +205,7 @@ struct FEventPreProcessor
     }
 };
 
-static bool IsWindowReachable(const TArray<FMonitorInfo>& Monitors, const IntVector2& Position, const IntVector2& Size)
+static bool IsWindowReachable(const TArray<FMonitorInfo>& Monitors, const FIntVector2& Position, const FIntVector2& Size)
 {
     constexpr int32 MinVisible = 32;
 
@@ -445,7 +445,7 @@ bool FApplication::OnKeyChar(uint32 Character)
 
 bool FApplication::OnMouseMove(int32 MouseX, int32 MouseY)
 {
-    const IntVector2 CursorPosition(MouseX, MouseY);
+    const FIntVector2 CursorPosition(MouseX, MouseY);
     if (bIsCursorPositionValid && LastCursorPosition == CursorPosition)
     {
         return false;
@@ -640,7 +640,7 @@ bool FApplication::OnMouseLeft()
 
 bool FApplication::OnHighPrecisionMouseInput(int32 MouseX, int32 MouseY)
 {
-    const FCursorEvent CursorEvent(EInputEventType::HighPrecisionMouse, IntVector2(MouseX, MouseY), GetClientOrigin(), PlatformApplication->GetModifierKeyState());
+    const FCursorEvent CursorEvent(EInputEventType::HighPrecisionMouse, FIntVector2(MouseX, MouseY), GetClientOrigin(), PlatformApplication->GetModifierKeyState());
 
     const FEventResponse PreProcessResponse = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
@@ -718,7 +718,7 @@ bool FApplication::OnWindowResized(const TSharedRef<IPlatformWindow>& PlatformWi
 
     if (TSharedPtr<FWindow> Window = FindWindowFromPlatformWindow(PlatformWindow))
     {
-        IntVector2 NewScreenSize(Width, Height);
+        FIntVector2 NewScreenSize(Width, Height);
         Window->OnWindowResize(NewScreenSize);
         bResult = true;
     }
@@ -750,7 +750,7 @@ bool FApplication::OnOSPaint(const TSharedRef<IPlatformWindow>& PlatformWindow)
         return false;
     }
 
-    const IntVector2 ClientSize(static_cast<int32>(PlatformWindow->GetWidth()), static_cast<int32>(PlatformWindow->GetHeight()));
+    const FIntVector2 ClientSize(static_cast<int32>(PlatformWindow->GetWidth()), static_cast<int32>(PlatformWindow->GetHeight()));
     if (ClientSize.X <= 0 || ClientSize.Y <= 0)
     {
         return false;
@@ -802,7 +802,7 @@ bool FApplication::OnWindowMoved(const TSharedRef<IPlatformWindow>& PlatformWind
 
     if (TSharedPtr<FWindow> Window = FindWindowFromPlatformWindow(PlatformWindow))
     {
-        IntVector2 NewScreenPosition(x, y);
+        FIntVector2 NewScreenPosition(x, y);
         Window->OnWindowMoved(NewScreenPosition);
         bResult = true;
     }
@@ -939,7 +939,7 @@ void FApplication::CreateWindow(const TSharedPtr<FWindow>& InWindow)
         WindowDesc.ParentWindow = ParentWindow->GetPlatformWindow().Get();
     }
 
-    const IntVector2 WindowSize(static_cast<int32>(WindowDesc.Width), static_cast<int32>(WindowDesc.Height));
+    const FIntVector2 WindowSize(static_cast<int32>(WindowDesc.Width), static_cast<int32>(WindowDesc.Height));
     if (!IsWindowReachable(MonitorInfos, WindowDesc.Position, WindowSize))
     {
         const FMonitorInfo& MonitorInfo = MonitorInfos[PrimaryMonitorIndex];
@@ -1064,7 +1064,7 @@ void FApplication::LayoutWindow(const TSharedPtr<FWindow>& InWindow)
     TRACE_SCOPE("UI Layout");
 
     FRectangle WindowRectangle;
-    WindowRectangle.Position = IntVector2(0, 0);
+    WindowRectangle.Position = FIntVector2(0, 0);
     WindowRectangle.Width    = InWindow->GetSize().X;
     WindowRectangle.Height   = InWindow->GetSize().Y;
 
@@ -1279,7 +1279,7 @@ bool FApplication::ConfineCursorToRect(const TSharedPtr<FWindow>& Window, const 
         return false;
     }
 
-    return PlatformApplication->ConfineCursorToRect(PlatformWindow, ScreenRect.Position, IntVector2(ScreenRect.Width, ScreenRect.Height));
+    return PlatformApplication->ConfineCursorToRect(PlatformWindow, ScreenRect.Position, FIntVector2(ScreenRect.Width, ScreenRect.Height));
 }
 
 void FApplication::ReleaseCursorConfinement()
@@ -1292,7 +1292,7 @@ FModifierKeyState FApplication::GetModifierKeyState() const
     return PlatformApplication->GetModifierKeyState();
 }
 
-void FApplication::SetCursorPosition(const IntVector2& Position)
+void FApplication::SetCursorPosition(const FIntVector2& Position)
 {
     if (TSharedPtr<IPlatformCursor> Cursor = GetCursor())
     {
@@ -1300,7 +1300,7 @@ void FApplication::SetCursorPosition(const IntVector2& Position)
     }
 }
 
-IntVector2 FApplication::GetCursorPosition() const
+FIntVector2 FApplication::GetCursorPosition() const
 {
     if (TSharedPtr<IPlatformCursor> Cursor = GetCursor())
     {
@@ -1465,7 +1465,7 @@ void FApplication::FindElementsUnderCursor(FElementPath& OutCursorPath)
     }
 }
 
-void FApplication::FindElementsUnderCursor(const IntVector2& ScreenPosition, FElementPath& OutCursorPath)
+void FApplication::FindElementsUnderCursor(const FIntVector2& ScreenPosition, FElementPath& OutCursorPath)
 {
     const FElementPath& CursorPath = ResolveCursorPath(ScreenPosition);
     for (int32 Index = 0; Index < CursorPath.Size(); ++Index)
@@ -1484,20 +1484,20 @@ TSharedPtr<FWindow> FApplication::ResolveCursorWindow() const
     return nullptr;
 }
 
-const FElementPath& FApplication::ResolveCursorPath(const IntVector2& ScreenPosition)
+const FElementPath& FApplication::ResolveCursorPath(const FIntVector2& ScreenPosition)
 {
     const TSharedPtr<FWindow> CursorWindow = ResolveCursorWindow();
     return HitCache.Resolve(CursorWindow, CursorWindow ? ScreenPosition - CursorWindow->GetPosition() : ScreenPosition);
 }
 
-IntVector2 FApplication::GetClientOrigin()
+FIntVector2 FApplication::GetClientOrigin()
 {
     if (const TSharedPtr<FWindow> CursorWindow = ResolveCursorWindow())
     {
         return CursorWindow->GetPosition();
     }
 
-    return IntVector2(0, 0);
+    return FIntVector2(0, 0);
 }
 
 void FApplication::UpdateMonitorInfo()

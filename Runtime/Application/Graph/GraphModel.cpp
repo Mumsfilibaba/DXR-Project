@@ -135,7 +135,7 @@ bool FGraphModel::CanConnect(int32 FromPinId, int32 ToPinId) const
     return !CanReachNode(ToNodeId, FromNodeId);
 }
 
-void FGraphModel::SetNodePosition(int32 NodeId, const Vector2& Position)
+void FGraphModel::SetNodePosition(int32 NodeId, const FVector2& Position)
 {
     if (bIsReadOnly)
     {

@@ -51,14 +51,14 @@ public:
      *
      * @param InSize The new size.
      */
-    void SetSize(const IntVector2& InSize);
+    void SetSize(const FIntVector2& InSize);
 
     /**
      * @brief Sets the relative viewport position. This size will be clamped to the parent element's size during Arrange.
      *
      * @param InPosition The new position.
      */
-    void SetPosition(const IntVector2& InPosition, EViewportPositionSpace InSpace = EViewportPositionSpace::Parent);
+    void SetPosition(const FIntVector2& InPosition, EViewportPositionSpace InSpace = EViewportPositionSpace::Parent);
 
     TSharedPtr<IViewport>       GetViewportInterface()       { return ViewportInterface; }
     TSharedPtr<const IViewport> GetViewportInterface() const { return ViewportInterface; }
@@ -88,18 +88,18 @@ public:
      * 
      * @return The size of the viewport.
      */
-    IntVector2 GetSize() const { return Size; }
+    FIntVector2 GetSize() const { return Size; }
     
     /**
      * @brief Gets the current viewport position.
      * 
      * @return The position of the viewport.
      */
-    IntVector2 GetPosition() const { return Position; }
+    FIntVector2 GetPosition() const { return Position; }
 
 private:
     TSharedPtr<IViewport> ViewportInterface;
     FUIBrush              SceneBrush;
-    IntVector2            Position;
-    IntVector2            Size;
+    FIntVector2           Position;
+    FIntVector2           Size;
 };

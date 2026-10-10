@@ -62,7 +62,7 @@ struct APPLICATION_API FDrawCacheBlock : public FNonCopyable
         int32                InBaseLayerId,
         int32                ClipDepth,
         const FRectangle&    ClipRectangle,
-        IntVector2&          OutOffset) const;
+        FIntVector2&         OutOffset) const;
 
     /**
      * @brief Moves everything the block recorded, so it replays where the element stands now. The captured geometry
@@ -70,7 +70,7 @@ struct APPLICATION_API FDrawCacheBlock : public FNonCopyable
      *
      * @param Offset How far to move, in pixels.
      */
-    void Translate(const IntVector2& Offset);
+    void Translate(const FIntVector2& Offset);
 
     /** @return The number of commands the block replays, which is also its span in the frame's command list. */
     NODISCARD FORCEINLINE int32 GetCommandCount() const
@@ -82,7 +82,7 @@ struct APPLICATION_API FDrawCacheBlock : public FNonCopyable
     TArray<FDrawCommand> Commands;
 
     /** @brief The points the polyline and polygon commands index. */
-    TArray<Vector2> Points;
+    TArray<FVector2> Points;
 
     /** @brief The characters the text commands index, packed end to end without terminators. */
     TArray<CHAR_T> TextPool;

@@ -42,9 +42,9 @@ public:
     virtual ~FFractionWidthBox() = default;
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override final
+    virtual FIntVector2 ComputeDesiredSize() const override final
     {
-        return Child ? Child->GetCachedDesiredSize() : IntVector2(0, 0);
+        return Child ? Child->GetCachedDesiredSize() : FIntVector2(0, 0);
     }
 
     virtual void OnArrange(const FRectangle& AllottedBounds) override final

@@ -21,10 +21,10 @@ class FTextBlock;
 class FVerticalBox;
 
 /** @brief Called with the vector a three-field row moved to. */
-DECLARE_DELEGATE(FOnVectorChanged, const Vector3& /*NewValue*/);
+DECLARE_DELEGATE(FOnVectorChanged, const FVector3& /*NewValue*/);
 
 /** @brief Called once a tick for the value a three-field row shows, on a row that follows the model. */
-DECLARE_RETURN_DELEGATE(FOnVectorRead, Vector3);
+DECLARE_RETURN_DELEGATE(FOnVectorRead, FVector3);
 
 /** @brief Called with the color a swatch and its three fields moved to. */
 DECLARE_DELEGATE(FOnColorChanged, const FFloatColor& /*NewValue*/);
@@ -86,11 +86,11 @@ private:
     FPropertyRow& AddVectorRow(
         const TSharedPtr<FPropertyTable>& Table,
         const FString&                    RowLabel,
-        const Vector3&                    Value,
+        const FVector3&                   Value,
         float                             Step,
         const FOnVectorChanged&           OnChanged,
         bool                              bIsAngular   = false,
-        const Vector3*                    DefaultValue = nullptr,
+        const FVector3*                   DefaultValue = nullptr,
         const FOnVectorRead&              OnRead       = FOnVectorRead(),
         bool                              bAllowUniform = false);
 

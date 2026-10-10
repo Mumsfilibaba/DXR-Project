@@ -33,7 +33,7 @@ static int32 GetResizeBorderThickness(HWND WindowHandle)
 #endif
 }
 
-static LRESULT HitTestResizeBorder(HWND WindowHandle, const IntVector2& ClientPoint)
+static LRESULT HitTestResizeBorder(HWND WindowHandle, const FIntVector2& ClientPoint)
 {
     RECT ClientRect = { 0, 0, 0, 0 };
     ::GetClientRect(WindowHandle, &ClientRect);
@@ -218,7 +218,7 @@ bool FWindowsApplication::SetHighPrecisionMouseMode(const TSharedRef<IPlatformWi
     return false;
 }
 
-bool FWindowsApplication::ConfineCursorToRect(const TSharedRef<IPlatformWindow>& Window, const IntVector2& Position, const IntVector2& Size)
+bool FWindowsApplication::ConfineCursorToRect(const TSharedRef<IPlatformWindow>& Window, const FIntVector2& Position, const FIntVector2& Size)
 {
     TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
     if (!WindowsWindow || !WindowsWindow->IsValid() || Size.X <= 0 || Size.Y <= 0)
@@ -440,10 +440,10 @@ BOOL FWindowsApplication::EnumerateMonitors(HMONITOR Monitor, HDC /*DeviceContex
 
     FMonitorInfo NewMonitorInfo;
     NewMonitorInfo.DeviceName     = StringCast<CHAR_T>(MonitorInfo.szDevice).ToString();
-    NewMonitorInfo.MainPosition   = IntVector2(MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.top);
-    NewMonitorInfo.MainSize       = IntVector2(MonitorInfo.rcMonitor.right  - MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top);
-    NewMonitorInfo.WorkPosition   = IntVector2(MonitorInfo.rcWork.left, MonitorInfo.rcWork.top);
-    NewMonitorInfo.WorkSize       = IntVector2(MonitorInfo.rcWork.right - MonitorInfo.rcWork.left, MonitorInfo.rcWork.bottom - MonitorInfo.rcWork.top);
+    NewMonitorInfo.MainPosition   = FIntVector2(MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.top);
+    NewMonitorInfo.MainSize       = FIntVector2(MonitorInfo.rcMonitor.right  - MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top);
+    NewMonitorInfo.WorkPosition   = FIntVector2(MonitorInfo.rcWork.left, MonitorInfo.rcWork.top);
+    NewMonitorInfo.WorkSize       = FIntVector2(MonitorInfo.rcWork.right - MonitorInfo.rcWork.left, MonitorInfo.rcWork.bottom - MonitorInfo.rcWork.top);
     NewMonitorInfo.bIsPrimary     = (MonitorInfo.dwFlags & MONITORINFOF_PRIMARY) != 0;
     NewMonitorInfo.DisplayDPI     = DpiX;
     NewMonitorInfo.DisplayScaling = static_cast<float>(DpiX) / 96.0f;
@@ -556,7 +556,7 @@ LRESULT FWindowsApplication::ProcessRawInput(HWND WindowHandle, UINT Message, WP
                 DeferredMsg.MessageType  = Message;
                 DeferredMsg.wParam       = wParam;
                 DeferredMsg.lParam       = lParam;
-                DeferredMsg.MouseDelta   = IntVector2(DeltaX, DeltaY);
+                DeferredMsg.MouseDelta   = FIntVector2(DeltaX, DeltaY);
 
                 DeferMessage(DeferredMsg);
             }
@@ -618,7 +618,7 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
                     POINT ScreenPoint = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
                     ::ScreenToClient(WindowHandle, &ScreenPoint);
 
-                    const IntVector2 ClientPoint(ScreenPoint.x, ScreenPoint.y);
+                    const FIntVector2 ClientPoint(ScreenPoint.x, ScreenPoint.y);
 
                     // A maximized window has no borders to grab, and one that was never resizable has none either.
                     const bool bIsResizable = (MsgWindow->GetStyle() & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None;

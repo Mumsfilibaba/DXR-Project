@@ -19,7 +19,7 @@ void DrawTextWithSearchHighlight(FDrawCommandList& OutCommandList, int32 LayerId
     const int32 MatchLeft  = Font->MeasureWidth(FStringView(LabelView.Data(), MatchOffset));
     const int32 MatchWidth = Font->MeasureWidth(FStringView(LabelView.Data() + MatchOffset, MatchLength));
 
-    const FRectangle MatchBounds(IntVector2(LabelBounds.Position.X + MatchLeft, LabelBounds.Position.Y), MatchWidth, LabelBounds.Height);
+    const FRectangle MatchBounds(FIntVector2(LabelBounds.Position.X + MatchLeft, LabelBounds.Position.Y), MatchWidth, LabelBounds.Height);
     const FRectangle HighlightBounds = MatchBounds.Inflate(Style.Metrics.TextHighlightPadding);
 
     OutCommandList.AddBox(LayerId, HighlightBounds, RowStyle.SearchHighlight, FCornerRadii(Style.Metrics.TextHighlightCornerRadius));
@@ -68,7 +68,7 @@ void FTextLayout::AppendRun(const FTextRun& Run)
     RunSourceOffsets.Clear();
     Lines.Clear();
 
-    CachedSize        = IntVector2(0, 0);
+    CachedSize        = FIntVector2(0, 0);
     bIsTextCacheValid = false;
 }
 
@@ -80,7 +80,7 @@ void FTextLayout::Clear()
     Lines.Clear();
     CachedText.Clear();
 
-    CachedSize        = IntVector2(0, 0);
+    CachedSize        = FIntVector2(0, 0);
     CachedWrapWidth   = 0;
     SourceLength      = 0;
     PendingLineWidth  = 0;
@@ -94,7 +94,7 @@ void FTextLayout::WrapToWidth(int32 WrapWidth)
     Lines.Clear();
 
     CachedWrapWidth  = WrapWidth;
-    CachedSize       = IntVector2(0, 0);
+    CachedSize       = FIntVector2(0, 0);
     PendingLineWidth = 0;
 
     StartLine();
@@ -142,7 +142,7 @@ void FTextLayout::WrapToWidth(int32 WrapWidth)
         TotalHeight += Line.Height;
     }
 
-    CachedSize = IntVector2(WidestLine, TotalHeight);
+    CachedSize = FIntVector2(WidestLine, TotalHeight);
 }
 
 void FTextLayout::StartLine()
@@ -298,7 +298,7 @@ int32 FTextLayout::MeasureRun(const FTextRun& Run)
     return Run.Font->MeasureWidth(FStringView(Run.Text.Data(), Run.Text.Length()));
 }
 
-int32 FTextLayout::FindCharacterIndexAt(const IntVector2& LocalPosition) const
+int32 FTextLayout::FindCharacterIndexAt(const FIntVector2& LocalPosition) const
 {
     if (Lines.IsEmpty())
     {
@@ -387,7 +387,7 @@ FRectangle FTextLayout::GetCharacterBounds(int32 CharacterIndex) const
                     Run.Font->GetCharacterPlacement(FStringView(Run.Text.Data(), RunLength), OffsetInRun, PrefixWidth, Advance);
                 }
 
-                return FRectangle(IntVector2(RunLeft + PrefixWidth, LineTop), Advance, Line.Height);
+                return FRectangle(FIntVector2(RunLeft + PrefixWidth, LineTop), Advance, Line.Height);
             }
 
             RunLeft += RunWidth;
@@ -396,7 +396,7 @@ FRectangle FTextLayout::GetCharacterBounds(int32 CharacterIndex) const
         LineTop += Line.Height;
     }
 
-    return FRectangle(IntVector2(0, 0), 0, Lines.IsEmpty() ? 0 : Lines[0].Height);
+    return FRectangle(FIntVector2(0, 0), 0, Lines.IsEmpty() ? 0 : Lines[0].Height);
 }
 
 void FTextLayout::GatherRangeRectangles(const TArray<FTextRange>& Ranges, TArray<FRectangle>& OutRectangles) const
@@ -466,7 +466,7 @@ void FTextLayout::GatherRangeRectangles(const TArray<FTextRange>& Ranges, TArray
             const int32 Left  = MeasureOffsetOnLine(SpanStart);
             const int32 Right = MeasureOffsetOnLine(SpanEnd);
 
-            OutRectangles.Emplace(IntVector2(Left, LineTop), Right - Left, Line.Height);
+            OutRectangles.Emplace(FIntVector2(Left, LineTop), Right - Left, Line.Height);
         }
 
         LineTop += Line.Height;
@@ -537,11 +537,11 @@ const FString& FTextLayout::GetText() const
 
 int32 FTextLayout::Draw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const IntVector2 Origin        = AllottedGeometry.Bounds.Position;
-    const FRectangle ClipRectangle = OutCommandList.GetCurrentClipRectangle();
-    const bool       bIsClipped    = !ClipRectangle.IsEmpty();
-    const int32      VisibleTop    = ClipRectangle.Position.Y;
-    const int32      VisibleBottom = ClipRectangle.GetBottom();
+    const FIntVector2 Origin        = AllottedGeometry.Bounds.Position;
+    const FRectangle  ClipRectangle = OutCommandList.GetCurrentClipRectangle();
+    const bool        bIsClipped    = !ClipRectangle.IsEmpty();
+    const int32       VisibleTop    = ClipRectangle.Position.Y;
+    const int32       VisibleBottom = ClipRectangle.GetBottom();
 
     int32 HighestLayer = Lines.IsEmpty() ? LayerId : LayerId + 1;
     int32 LineTop      = 0;
@@ -568,7 +568,7 @@ int32 FTextLayout::Draw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         {
             const FTextRun&  Run       = Runs[Line.FirstRunIndex + Index];
             const int32      RunWidth  = MeasureRun(Run);
-            const FRectangle RunBounds = FRectangle(IntVector2(Origin.X + RunLeft, Origin.Y + LineTop), RunWidth, Line.Height);
+            const FRectangle RunBounds = FRectangle(FIntVector2(Origin.X + RunLeft, Origin.Y + LineTop), RunWidth, Line.Height);
 
             if (Run.BackgroundTint.A > 0.0f && RunWidth > 0)
             {

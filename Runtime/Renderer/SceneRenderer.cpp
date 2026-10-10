@@ -813,12 +813,12 @@ void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& Scen
 
     if (GEnableTemporalAntiAliasing)
     {
-        const Vector2 CameraJitter    = HaltonState.NextSample();
-        const Vector2 ClipSpaceJitter = CameraJitter / Vector2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
+        const FVector2 CameraJitter    = HaltonState.NextSample();
+        const FVector2 ClipSpaceJitter = CameraJitter / FVector2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
 
         if (bUseHardwareJitter)
         {
-            CameraBuffer.ProjectionJitter = Vector2(0.0f);
+            CameraBuffer.ProjectionJitter = FVector2(0.0f);
 
             // Moving the sample within the pixel shifts the image the opposite way, so this is the negated
             // jitter. HaltonState.NextSample() returns [-1, 1], so halving lands in [-0.5, 0.5]; the upper
@@ -839,7 +839,7 @@ void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& Scen
             CameraBuffer.ProjectionJitter = ClipSpaceJitter;
 
             // Add Jitter to projection matrix
-            Matrix4 JitterOffset           = Matrix4::Translation(Vector3(ClipSpaceJitter.X, ClipSpaceJitter.Y, 0.0f));
+            FMatrix4 JitterOffset          = FMatrix4::Translation(FVector3(ClipSpaceJitter.X, ClipSpaceJitter.Y, 0.0f));
             CameraBuffer.Projection        = CameraBuffer.Projection * JitterOffset;
             CameraBuffer.ProjectionInv     = CameraBuffer.Projection.GetInverse();
 
@@ -852,8 +852,8 @@ void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& Scen
     }
     else
     {
-        CameraBuffer.ProjectionJitter = Vector2(0.0f);
-        CameraBuffer.ImageJitter      = Vector2(0.0f);
+        CameraBuffer.ProjectionJitter = FVector2(0.0f);
+        CameraBuffer.ImageJitter      = FVector2(0.0f);
     }
 
     // Prepare matrices for the GPU

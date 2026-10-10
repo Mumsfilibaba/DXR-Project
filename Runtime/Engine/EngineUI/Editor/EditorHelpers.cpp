@@ -1019,7 +1019,7 @@ ImU32  EditorStyleVars::ButtonBgHovered                       = IM_COL32(87, 87,
 ImU32  EditorStyleVars::ButtonBgSelected                      = IM_COL32(9, 92, 176, 255);
 ImU32  EditorStyleVars::ButtonBgSelectedHovered               = IM_COL32(15, 110, 205, 255);
 
-bool EditorWidgets::DrawFloat3Control(const CHAR_T* Label, Vector3& OutValue, float Speed, const Vector3* InRevertValue, EVector3ControlType InType)
+bool EditorWidgets::DrawFloat3Control(const CHAR_T* Label, FVector3& OutValue, float Speed, const FVector3* InRevertValue, EVector3ControlType InType)
 {
     ImGuiTable* CurrentTable = ImGui::GetCurrentTable();
     if (!CurrentTable)
@@ -1907,7 +1907,7 @@ void EditorWidgets::DrawTextureProperty(const CHAR_T* Label, ImTextureID Texture
     ApplyHoveredRowBg(bRowHovered);
 }
 
-void EditorWidgets::DrawReadOnlyFloat3Property(const CHAR_T* Label, const Vector3& Value)
+void EditorWidgets::DrawReadOnlyFloat3Property(const CHAR_T* Label, const FVector3& Value)
 {
     ImGuiTable* Table = ImGui::GetCurrentTable();
     if (!Table)

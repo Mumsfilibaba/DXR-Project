@@ -85,7 +85,7 @@ struct IRHICommandContext
      * @param RenderTargetView RenderTargetView to clear
      * @param ClearColor Color to set each pixel within the RenderTargetView to
      */
-    virtual void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const Vector4& ClearColor) = 0;
+    virtual void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor) = 0;
 
     /**
      * @brief Clears a depth-stencil view with depth and stencil values.
@@ -100,7 +100,7 @@ struct IRHICommandContext
      * @param UnorderedAccessView UnorderedAccessView to clear
      * @param ClearColor Value to set each pixel within the UnorderedAccessView to
      */
-    virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const Vector4& ClearColor) = 0;
+    virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) = 0;
 
     /**
      * @brief Clears a UnorderedAccessView with unsigned integer values
@@ -136,7 +136,7 @@ struct IRHICommandContext
      * @brief Set the BlendFactor color
      * @param Color New blend-factor to use
      */
-    virtual void SetBlendFactor(const Vector4& Color) = 0;
+    virtual void SetBlendFactor(const FVector4& Color) = 0;
 
     /**
      * @brief Set the stencil reference value

@@ -19,6 +19,6 @@ public:
     virtual bool OnMouseButtonUp(const FCursorEvent& CursorEvent) override final;
 
 private:
-    static void UpdateDrag(const IntVector2& ScreenPosition);
+    static void UpdateDrag(const FIntVector2& ScreenPosition);
     static void FinishDrag();
 };

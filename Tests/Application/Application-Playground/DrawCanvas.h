@@ -17,7 +17,7 @@ public:
         {
         }
 
-        IntVector2    DesiredSize;
+        FIntVector2   DesiredSize;
         FOnCanvasDraw OnCanvasDraw;
     };
 
@@ -36,10 +36,10 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
 
 private:
-    IntVector2    DesiredSize;
+    FIntVector2   DesiredSize;
     FOnCanvasDraw OnCanvasDraw;
 };

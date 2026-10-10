@@ -23,8 +23,8 @@ void FSceneLightProbe::RenderThread_ApplyUpdate(const FLightProbeProxyUpdate& Up
     Origin         = Update.Position;
     bBoxProjection = Update.bBoxProjection;
 
-    Vector3 BoxMidPoint   = Origin + Update.BoxOffset;
-    Vector3 BoxExtentHalf = Update.BoxExtent * 0.5f;
+    FVector3 BoxMidPoint   = Origin + Update.BoxOffset;
+    FVector3 BoxExtentHalf = Update.BoxExtent * 0.5f;
 
     BoxMin = BoxMidPoint - BoxExtentHalf;
     BoxMax = BoxMidPoint + BoxExtentHalf;

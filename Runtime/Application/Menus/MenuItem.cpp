@@ -44,7 +44,7 @@ void FMenuItem::Initialize(const FDesc& Desc)
     SetPadding(FMargin(8, 0, 20, 0));
 }
 
-IntVector2 FMenuItem::ComputeDesiredSize() const
+FIntVector2 FMenuItem::ComputeDesiredSize() const
 {
     const FMargin& Inset = GetPadding();
 
@@ -67,7 +67,7 @@ IntVector2 FMenuItem::ComputeDesiredSize() const
         Width += ShortcutGap + ArrowWidth;
     }
 
-    return IntVector2(Width, Math::Max(Height, Style.RowHeight));
+    return FIntVector2(Width, Math::Max(Height, Style.RowHeight));
 }
 
 int32 FMenuItem::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -92,24 +92,24 @@ int32 FMenuItem::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 
         if (CheckState == ECheckBoxState::Checked)
         {
-            const Vector2 Tick[] =
+            const FVector2 Tick[] =
             {
-                Vector2(Left,        Mid + 1.0f),
-                Vector2(Left + 4.0f, Mid + 5.0f),
-                Vector2(Left + 11.0f, Mid - 5.0f),
+                FVector2(Left,        Mid + 1.0f),
+                FVector2(Left + 4.0f, Mid + 5.0f),
+                FVector2(Left + 11.0f, Mid - 5.0f),
             };
 
-            OutCommandList.AddPolyline(LayerId, TArrayView<const Vector2>(Tick, ARRAY_COUNT(Tick)), TextColor, 2.0f);
+            OutCommandList.AddPolyline(LayerId, TArrayView<const FVector2>(Tick, ARRAY_COUNT(Tick)), TextColor, 2.0f);
         }
         else
         {
-            FRectangle Dash(IntVector2(Inner.Position.X + 4, MidY - 1), 10, 2);
+            FRectangle Dash(FIntVector2(Inner.Position.X + 4, MidY - 1), 10, 2);
             OutCommandList.AddBox(LayerId, Dash, TextColor);
         }
     }
     else if (Icon.IsValid())
     {
-        FRectangle IconBounds(IntVector2(Inner.Position.X + 2, MidY - 8), 16, 16);
+        FRectangle IconBounds(FIntVector2(Inner.Position.X + 2, MidY - 8), 16, 16);
         OutCommandList.AddImage(LayerId, IconBounds, Icon, FFloatColor::White);
     }
 
@@ -138,14 +138,14 @@ int32 FMenuItem::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         const float Right = static_cast<float>(Inner.GetRight());
         const float Mid   = static_cast<float>(MidY);
 
-        const Vector2 Arrow[] =
+        const FVector2 Arrow[] =
         {
-            Vector2(Right - 5.0f, Mid - 4.0f),
-            Vector2(Right,        Mid),
-            Vector2(Right - 5.0f, Mid + 4.0f),
+            FVector2(Right - 5.0f, Mid - 4.0f),
+            FVector2(Right,        Mid),
+            FVector2(Right - 5.0f, Mid + 4.0f),
         };
 
-        OutCommandList.AddPolyline(LayerId, TArrayView<const Vector2>(Arrow, ARRAY_COUNT(Arrow)), TextColor, 1.5f);
+        OutCommandList.AddPolyline(LayerId, TArrayView<const FVector2>(Arrow, ARRAY_COUNT(Arrow)), TextColor, 1.5f);
     }
 
     return LayerId;
@@ -265,9 +265,9 @@ FMenuSeparator::FMenuSeparator()
 
 FMenuSeparator::~FMenuSeparator() = default;
 
-IntVector2 FMenuSeparator::ComputeDesiredSize() const
+FIntVector2 FMenuSeparator::ComputeDesiredSize() const
 {
-    return IntVector2(0, FUIStyle::GetDefault().Metrics.MenuSeparatorThickness + 8);
+    return FIntVector2(0, FUIStyle::GetDefault().Metrics.MenuSeparatorThickness + 8);
 }
 
 int32 FMenuSeparator::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -313,7 +313,7 @@ void FMenuSectionHeader::Initialize(const FString& InLabel, const TSharedPtr<IFo
     Font  = InFont;
 }
 
-IntVector2 FMenuSectionHeader::ComputeDesiredSize() const
+FIntVector2 FMenuSectionHeader::ComputeDesiredSize() const
 {
     const int32 Thickness = FUIStyle::GetDefault().Metrics.MenuSeparatorThickness;
 
@@ -326,7 +326,7 @@ IntVector2 FMenuSectionHeader::ComputeDesiredSize() const
         Height = Math::Max(Height, Font->GetLineHeight());
     }
 
-    return IntVector2(Width, Height + 8);
+    return FIntVector2(Width, Height + 8);
 }
 
 int32 FMenuSectionHeader::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -346,7 +346,7 @@ int32 FMenuSectionHeader::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCom
         LineLeft += Font->MeasureWidth(FStringView(Label.Data(), Label.Length())) + LabelGap;
     }
 
-    FRectangle Line(IntVector2(LineLeft, 0), Bounds.GetRight() - InsetX - LineLeft, FUIStyle::GetDefault().Metrics.MenuSeparatorThickness);
+    FRectangle Line(FIntVector2(LineLeft, 0), Bounds.GetRight() - InsetX - LineLeft, FUIStyle::GetDefault().Metrics.MenuSeparatorThickness);
     Line.Position.Y = Bounds.Position.Y + ((Bounds.Height - Line.Height) / 2);
 
     if (!Line.IsEmpty())

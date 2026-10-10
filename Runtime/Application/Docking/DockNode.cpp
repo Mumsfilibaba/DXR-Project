@@ -41,17 +41,17 @@ FDockNode FDockNode::CreateSplit(EDockSplitOrientation InOrientation, const FDoc
     return Node;
 }
 
-IntVector2 FDockNode::ComputeMinimumSize() const
+FIntVector2 FDockNode::ComputeMinimumSize() const
 {
     if (Kind == EDockNodeKind::Tabs)
     {
-        return IntVector2(FDockMetrics::MinimumPanelWidth, FDockMetrics::MinimumPanelHeight + FDockMetrics::TabStripHeight);
+        return FIntVector2(FDockMetrics::MinimumPanelWidth, FDockMetrics::MinimumPanelHeight + FDockMetrics::TabStripHeight);
     }
 
-    IntVector2 Minimum(0, 0);
+    FIntVector2 Minimum(0, 0);
     for (const FDockNode& Child : Children)
     {
-        const IntVector2 ChildMinimum = Child.ComputeMinimumSize();
+        const FIntVector2 ChildMinimum = Child.ComputeMinimumSize();
         if (Orientation == EDockSplitOrientation::Horizontal)
         {
             Minimum.X += ChildMinimum.X;

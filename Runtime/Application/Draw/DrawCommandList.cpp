@@ -4,7 +4,7 @@
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 
-static FORCEINLINE void ReserveAtLeast(TArray<Vector2>& Array, int32 RequiredCapacity)
+static FORCEINLINE void ReserveAtLeast(TArray<FVector2>& Array, int32 RequiredCapacity)
 {
     if (RequiredCapacity > Array.Capacity())
     {
@@ -114,13 +114,13 @@ void FDrawCommandList::AddLine(int32 LayerId, const FRectangle& Bounds, const FF
     Command.PackedColor = Tint.ToPackedRGBA();
 }
 
-void FDrawCommandList::AddLine(int32 LayerId, const Vector2& Start, const Vector2& End, const FFloatColor& Tint, float Thickness)
+void FDrawCommandList::AddLine(int32 LayerId, const FVector2& Start, const FVector2& End, const FFloatColor& Tint, float Thickness)
 {
-    const Vector2 LinePoints[2] = { Start, End };
-    AddPolyline(LayerId, TArrayView<const Vector2>(LinePoints, 2), Tint, Thickness, false);
+    const FVector2 LinePoints[2] = { Start, End };
+    AddPolyline(LayerId, TArrayView<const FVector2>(LinePoints, 2), Tint, Thickness, false);
 }
 
-void FDrawCommandList::AddPolyline(int32 LayerId, TArrayView<const Vector2> InPoints, const FFloatColor& Tint, float Thickness, bool bClosed)
+void FDrawCommandList::AddPolyline(int32 LayerId, TArrayView<const FVector2> InPoints, const FFloatColor& Tint, float Thickness, bool bClosed)
 {
     if (InPoints.Size() < 2 || Thickness <= 0.0f)
     {
@@ -138,7 +138,7 @@ void FDrawCommandList::AddPolyline(int32 LayerId, TArrayView<const Vector2> InPo
     StorePoints(Command, InPoints);
 }
 
-void FDrawCommandList::AddConvexPolygon(int32 LayerId, TArrayView<const Vector2> InPoints, const FFloatColor& Tint)
+void FDrawCommandList::AddConvexPolygon(int32 LayerId, TArrayView<const FVector2> InPoints, const FFloatColor& Tint)
 {
     if (InPoints.Size() < 3)
     {
@@ -218,17 +218,17 @@ void FDrawCommandList::AddTabShape(int32 LayerId, const FRectangle& Bounds, floa
     }
 
     const int32 FlareTop = Bounds.GetBottom() - Flare;
-    AddWedge(LayerId, FRectangle(IntVector2(Bounds.Position.X - Flare, FlareTop), Flare, Flare), ERectangleCorner::TopLeft, Tint);
-    AddWedge(LayerId, FRectangle(IntVector2(Bounds.GetRight(), FlareTop), Flare, Flare), ERectangleCorner::TopRight, Tint);
+    AddWedge(LayerId, FRectangle(FIntVector2(Bounds.Position.X - Flare, FlareTop), Flare, Flare), ERectangleCorner::TopLeft, Tint);
+    AddWedge(LayerId, FRectangle(FIntVector2(Bounds.GetRight(), FlareTop), Flare, Flare), ERectangleCorner::TopRight, Tint);
 }
 
-void FDrawCommandList::AddTriangle(int32 LayerId, const Vector2& A, const Vector2& B, const Vector2& C, const FFloatColor& Tint)
+void FDrawCommandList::AddTriangle(int32 LayerId, const FVector2& A, const FVector2& B, const FVector2& C, const FFloatColor& Tint)
 {
-    const Vector2 Corners[3] = { A, B, C };
-    AddConvexPolygon(LayerId, TArrayView<const Vector2>(Corners, 3), Tint);
+    const FVector2 Corners[3] = { A, B, C };
+    AddConvexPolygon(LayerId, TArrayView<const FVector2>(Corners, 3), Tint);
 }
 
-void FDrawCommandList::AddCircle(int32 LayerId, const Vector2& Center, float Radius, const FFloatColor& Tint, float Thickness, int32 Segments)
+void FDrawCommandList::AddCircle(int32 LayerId, const FVector2& Center, float Radius, const FFloatColor& Tint, float Thickness, int32 Segments)
 {
     if (Radius <= 0.0f)
     {
@@ -241,7 +241,7 @@ void FDrawCommandList::AddCircle(int32 LayerId, const Vector2& Center, float Rad
     AddPolyline(LayerId, ScratchPoints, Tint, Thickness, true);
 }
 
-void FDrawCommandList::AddCircleFilled(int32 LayerId, const Vector2& Center, float Radius, const FFloatColor& Tint, int32 Segments)
+void FDrawCommandList::AddCircleFilled(int32 LayerId, const FVector2& Center, float Radius, const FFloatColor& Tint, int32 Segments)
 {
     if (Radius <= 0.0f)
     {
@@ -254,7 +254,7 @@ void FDrawCommandList::AddCircleFilled(int32 LayerId, const Vector2& Center, flo
     AddConvexPolygon(LayerId, ScratchPoints, Tint);
 }
 
-void FDrawCommandList::AddArc(int32 LayerId, const Vector2& Center, float Radius, float StartAngle, float EndAngle, const FFloatColor& Tint, float Thickness, int32 Segments)
+void FDrawCommandList::AddArc(int32 LayerId, const FVector2& Center, float Radius, float StartAngle, float EndAngle, const FFloatColor& Tint, float Thickness, int32 Segments)
 {
     if (Radius <= 0.0f)
     {
@@ -267,7 +267,7 @@ void FDrawCommandList::AddArc(int32 LayerId, const Vector2& Center, float Radius
     AddPolyline(LayerId, ScratchPoints, Tint, Thickness, false);
 }
 
-void FDrawCommandList::AddArcFilled(int32 LayerId, const Vector2& Center, float Radius, float StartAngle, float EndAngle, const FFloatColor& Tint, int32 Segments)
+void FDrawCommandList::AddArcFilled(int32 LayerId, const FVector2& Center, float Radius, float StartAngle, float EndAngle, const FFloatColor& Tint, int32 Segments)
 {
     if (Radius <= 0.0f)
     {
@@ -282,7 +282,7 @@ void FDrawCommandList::AddArcFilled(int32 LayerId, const Vector2& Center, float 
     AddConvexPolygon(LayerId, ScratchPoints, Tint);
 }
 
-void FDrawCommandList::AddBezier(int32 LayerId, const Vector2& P0, const Vector2& P1, const Vector2& P2, const Vector2& P3, const FFloatColor& Tint, float Thickness, int32 Segments)
+void FDrawCommandList::AddBezier(int32 LayerId, const FVector2& P0, const FVector2& P1, const FVector2& P2, const FVector2& P3, const FFloatColor& Tint, float Thickness, int32 Segments)
 {
     int32 SegmentCount = Segments;
     if (SegmentCount <= 0)
@@ -304,7 +304,7 @@ void FDrawCommandList::AddBezier(int32 LayerId, const Vector2& P0, const Vector2
         const float W2 = 3.0f * OneMinus * T * T;
         const float W3 = T * T * T;
 
-        ScratchPoints.Add(Vector2((P0.X * W0) + (P1.X * W1) + (P2.X * W2) + (P3.X * W3), (P0.Y * W0) + (P1.Y * W1) + (P2.Y * W2) + (P3.Y * W3)));
+        ScratchPoints.Add(FVector2((P0.X * W0) + (P1.X * W1) + (P2.X * W2) + (P3.X * W3), (P0.Y * W0) + (P1.Y * W1) + (P2.Y * W2) + (P3.Y * W3)));
     }
 
     AddPolyline(LayerId, ScratchPoints, Tint, Thickness, false);
@@ -749,12 +749,12 @@ bool FDrawCommandList::FindFirstDifference(
             case EDrawCommandType::Polyline:
             case EDrawCommandType::ConvexPolygon:
             {
-                const TArrayView<const Vector2> LeftPoints  = Left.GetCommandPoints(LeftCommand);
-                const TArrayView<const Vector2> RightPoints = Right.GetCommandPoints(RightCommand);
+                const TArrayView<const FVector2> LeftPoints  = Left.GetCommandPoints(LeftCommand);
+                const TArrayView<const FVector2> RightPoints = Right.GetCommandPoints(RightCommand);
 
                 if (LeftPoints.Size() != RightPoints.Size()
                     || (LeftPoints.Size() > 0 && Memory::Memcmp(LeftPoints.Data(), RightPoints.Data(),
-                        LeftPoints.Size() * static_cast<int32>(sizeof(Vector2))) != 0))
+                        LeftPoints.Size() * static_cast<int32>(sizeof(FVector2))) != 0))
                 {
                     OutReason = "points";
                     return true;
@@ -800,14 +800,14 @@ bool FDrawCommandList::FindFirstDifference(
     return false;
 }
 
-TArrayView<const Vector2> FDrawCommandList::GetCommandPoints(const FDrawCommand& Command) const
+TArrayView<const FVector2> FDrawCommandList::GetCommandPoints(const FDrawCommand& Command) const
 {
     if ((Command.Type != EDrawCommandType::Polyline && Command.Type != EDrawCommandType::ConvexPolygon) || Command.PayloadCount <= 0)
     {
-        return TArrayView<const Vector2>();
+        return TArrayView<const FVector2>();
     }
 
-    return TArrayView<const Vector2>(Points.Data() + Command.PayloadOffset, Command.PayloadCount);
+    return TArrayView<const FVector2>(Points.Data() + Command.PayloadOffset, Command.PayloadCount);
 }
 
 FStringView FDrawCommandList::GetCommandText(const FDrawCommand& Command) const
@@ -869,14 +869,14 @@ int32 FDrawCommandList::FindTextCommand(const FStringView& InText) const
     return InvalidIndex;
 }
 
-void FDrawCommandList::StorePoints(FDrawCommand& Command, TArrayView<const Vector2> InPoints)
+void FDrawCommandList::StorePoints(FDrawCommand& Command, TArrayView<const FVector2> InPoints)
 {
     Command.PayloadOffset = Points.Size();
     Command.PayloadCount  = InPoints.Size();
 
     const int32 Start = Points.Size();
     Points.AppendUninitialized(InPoints.Size());
-    Memory::Memcpy(Points.Data() + Start, InPoints.Data(), static_cast<uint32>(InPoints.Size()) * sizeof(Vector2));
+    Memory::Memcpy(Points.Data() + Start, InPoints.Data(), static_cast<uint32>(InPoints.Size()) * sizeof(FVector2));
 }
 
 void FDrawCommandList::StoreText(FDrawCommand& Command, FStringView InText)
@@ -894,7 +894,7 @@ void FDrawCommandList::StoreText(FDrawCommand& Command, FStringView InText)
     Memory::Memcpy(TextPool.Data() + Start, InText.Data(), static_cast<uint32>(InText.Length()) * sizeof(CHAR_T));
 }
 
-void FDrawCommandList::BuildArcPoints(const Vector2& Center, float Radius, float StartAngle, float EndAngle, int32 Segments)
+void FDrawCommandList::BuildArcPoints(const FVector2& Center, float Radius, float StartAngle, float EndAngle, int32 Segments)
 {
     ScratchPoints.Clear();
 
@@ -906,7 +906,7 @@ void FDrawCommandList::BuildArcPoints(const Vector2& Center, float Radius, float
     for (int32 Index = 0; Index < PointCount; ++Index)
     {
         const float Angle = StartAngle + (AngleStep * static_cast<float>(Index));
-        ScratchPoints.Add(Vector2(Center.X + (Radius * Math::Cos(Angle)), Center.Y + (Radius * Math::Sin(Angle))));
+        ScratchPoints.Add(FVector2(Center.X + (Radius * Math::Cos(Angle)), Center.Y + (Radius * Math::Sin(Angle))));
     }
 }
 

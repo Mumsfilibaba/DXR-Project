@@ -32,7 +32,7 @@ bool UIDrawDataTextCacheTrim_Test()
         FDrawCommandList Commands;
         for (int32 Index = 0; Index < TextCount; ++Index)
         {
-            Commands.AddText(0, FRectangle(IntVector2(0, Index * 16), 80, 16), "Label", Font.Get(), FFloatColor::White);
+            Commands.AddText(0, FRectangle(FIntVector2(0, Index * 16), 80, 16), "Label", Font.Get(), FFloatColor::White);
         }
 
         DrawData.BuildFromCommandList(Commands);
@@ -78,7 +78,7 @@ bool UIDrawDataLayerOrder_Test()
     TEST_EXPECT(DrawData.GetIndices().IsEmpty());
 
     TEST_SECTION("A box becomes one quad of four vertices and six indices");
-    CommandList.AddBox(0, FRectangle(IntVector2(10, 20), 30, 40), FFloatColor::White);
+    CommandList.AddBox(0, FRectangle(FIntVector2(10, 20), 30, 40), FFloatColor::White);
     DrawData.BuildFromCommandList(CommandList);
 
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 4);
@@ -88,39 +88,39 @@ bool UIDrawDataLayerOrder_Test()
     TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetAtlas() == nullptr);
 
     TEST_SECTION("The quad spans the bounds of the command");
-    TEST_EXPECT(DrawData.GetVertices()[0].Position == Vector2(10.0f, 20.0f));
-    TEST_EXPECT(DrawData.GetVertices()[2].Position == Vector2(40.0f, 60.0f));
+    TEST_EXPECT(DrawData.GetVertices()[0].Position == FVector2(10.0f, 20.0f));
+    TEST_EXPECT(DrawData.GetVertices()[2].Position == FVector2(40.0f, 60.0f));
 
     TEST_SECTION("The tint is packed with red in the low byte");
     TEST_EXPECT_EQ(DrawData.GetVertices()[0].Color, 0xffffffffu);
 
     FDrawCommandList RedList;
-    RedList.AddBox(0, FRectangle(IntVector2(0, 0), 1, 1), FFloatColor(1.0f, 0.0f, 0.0f, 1.0f));
+    RedList.AddBox(0, FRectangle(FIntVector2(0, 0), 1, 1), FFloatColor(1.0f, 0.0f, 0.0f, 1.0f));
     DrawData.BuildFromCommandList(RedList);
     TEST_EXPECT_EQ(DrawData.GetVertices()[0].Color, 0xff0000ffu);
 
     TEST_SECTION("Commands are emitted in layer order rather than emission order");
     FDrawCommandList LayeredList;
-    LayeredList.AddBox(5, FRectangle(IntVector2(100, 100), 10, 10), FFloatColor::White);
-    LayeredList.AddBox(1, FRectangle(IntVector2(0, 0), 10, 10), FFloatColor::White);
+    LayeredList.AddBox(5, FRectangle(FIntVector2(100, 100), 10, 10), FFloatColor::White);
+    LayeredList.AddBox(1, FRectangle(FIntVector2(0, 0), 10, 10), FFloatColor::White);
     DrawData.BuildFromCommandList(LayeredList);
 
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 8);
-    TEST_EXPECT(DrawData.GetVertices()[0].Position == Vector2(0.0f, 0.0f));
-    TEST_EXPECT(DrawData.GetVertices()[4].Position == Vector2(100.0f, 100.0f));
+    TEST_EXPECT(DrawData.GetVertices()[0].Position == FVector2(0.0f, 0.0f));
+    TEST_EXPECT(DrawData.GetVertices()[4].Position == FVector2(100.0f, 100.0f));
 
     TEST_SECTION("Two commands on one layer keep the order they were recorded in");
     FDrawCommandList TiedList;
-    TiedList.AddBox(2, FRectangle(IntVector2(7, 7), 10, 10), FFloatColor::White);
-    TiedList.AddBox(2, FRectangle(IntVector2(9, 9), 10, 10), FFloatColor::White);
+    TiedList.AddBox(2, FRectangle(FIntVector2(7, 7), 10, 10), FFloatColor::White);
+    TiedList.AddBox(2, FRectangle(FIntVector2(9, 9), 10, 10), FFloatColor::White);
     DrawData.BuildFromCommandList(TiedList);
 
-    TEST_EXPECT(DrawData.GetVertices()[0].Position == Vector2(7.0f, 7.0f));
-    TEST_EXPECT(DrawData.GetVertices()[4].Position == Vector2(9.0f, 9.0f));
+    TEST_EXPECT(DrawData.GetVertices()[0].Position == FVector2(7.0f, 7.0f));
+    TEST_EXPECT(DrawData.GetVertices()[4].Position == FVector2(9.0f, 9.0f));
 
     TEST_SECTION("An empty box contributes nothing");
     FDrawCommandList EmptyBoxList;
-    EmptyBoxList.AddBox(0, FRectangle(IntVector2(0, 0), 0, 10), FFloatColor::White);
+    EmptyBoxList.AddBox(0, FRectangle(FIntVector2(0, 0), 0, 10), FFloatColor::White);
     DrawData.BuildFromCommandList(EmptyBoxList);
     TEST_EXPECT(DrawData.IsEmpty());
 
@@ -141,30 +141,30 @@ bool UIDrawDataBatching_Test()
 
     TEST_SECTION("Boxes under one clip region share a batch");
     FDrawCommandList CommandList;
-    CommandList.PushClip(0, FRectangle(IntVector2(0, 0), 50, 50));
-    CommandList.AddBox(1, FRectangle(IntVector2(0, 0), 10, 10), FFloatColor::White);
-    CommandList.AddBox(2, FRectangle(IntVector2(10, 10), 10, 10), FFloatColor::White);
+    CommandList.PushClip(0, FRectangle(FIntVector2(0, 0), 50, 50));
+    CommandList.AddBox(1, FRectangle(FIntVector2(0, 0), 10, 10), FFloatColor::White);
+    CommandList.AddBox(2, FRectangle(FIntVector2(10, 10), 10, 10), FFloatColor::White);
     CommandList.PopClip(3);
 
     DrawData.BuildFromCommandList(CommandList);
 
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
     TEST_EXPECT_EQ(DrawData.GetBatches()[0].IndexCount, 12);
-    TEST_EXPECT(DrawData.GetBatches()[0].ScissorRectangle == FRectangle(IntVector2(0, 0), 50, 50));
+    TEST_EXPECT(DrawData.GetBatches()[0].ScissorRectangle == FRectangle(FIntVector2(0, 0), 50, 50));
 
     TEST_SECTION("Entering and leaving a clip region splits the batches");
     FDrawCommandList SplitList;
-    SplitList.AddBox(0, FRectangle(IntVector2(0, 0), 10, 10), FFloatColor::White);
-    SplitList.PushClip(1, FRectangle(IntVector2(0, 0), 50, 50));
-    SplitList.AddBox(2, FRectangle(IntVector2(0, 0), 10, 10), FFloatColor::White);
+    SplitList.AddBox(0, FRectangle(FIntVector2(0, 0), 10, 10), FFloatColor::White);
+    SplitList.PushClip(1, FRectangle(FIntVector2(0, 0), 50, 50));
+    SplitList.AddBox(2, FRectangle(FIntVector2(0, 0), 10, 10), FFloatColor::White);
     SplitList.PopClip(3);
-    SplitList.AddBox(4, FRectangle(IntVector2(0, 0), 10, 10), FFloatColor::White);
+    SplitList.AddBox(4, FRectangle(FIntVector2(0, 0), 10, 10), FFloatColor::White);
 
     DrawData.BuildFromCommandList(SplitList);
 
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 3);
     TEST_EXPECT(DrawData.GetBatches()[0].ScissorRectangle.IsEmpty());
-    TEST_EXPECT(DrawData.GetBatches()[1].ScissorRectangle == FRectangle(IntVector2(0, 0), 50, 50));
+    TEST_EXPECT(DrawData.GetBatches()[1].ScissorRectangle == FRectangle(FIntVector2(0, 0), 50, 50));
     TEST_EXPECT(DrawData.GetBatches()[2].ScissorRectangle.IsEmpty());
 
     TEST_SECTION("The batches partition the index buffer without a gap");
@@ -184,16 +184,16 @@ bool UIDrawDataBatching_Test()
 
     TEST_SECTION("A nested region carries the intersection down to the batch");
     FDrawCommandList NestedList;
-    NestedList.PushClip(0, FRectangle(IntVector2(0, 0), 100, 100));
-    NestedList.PushClip(1, FRectangle(IntVector2(50, 50), 100, 100));
-    NestedList.AddBox(2, FRectangle(IntVector2(60, 60), 10, 10), FFloatColor::White);
+    NestedList.PushClip(0, FRectangle(FIntVector2(0, 0), 100, 100));
+    NestedList.PushClip(1, FRectangle(FIntVector2(50, 50), 100, 100));
+    NestedList.AddBox(2, FRectangle(FIntVector2(60, 60), 10, 10), FFloatColor::White);
     NestedList.PopClip(3);
     NestedList.PopClip(4);
 
     DrawData.BuildFromCommandList(NestedList);
 
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
-    TEST_EXPECT(DrawData.GetBatches()[0].ScissorRectangle == FRectangle(IntVector2(50, 50), 50, 50));
+    TEST_EXPECT(DrawData.GetBatches()[0].ScissorRectangle == FRectangle(FIntVector2(50, 50), 50, 50));
     TEST_EXPECT(DrawData.GetBatches()[0].bIsClipped);
 
     TEST_END();
@@ -207,8 +207,8 @@ bool UIDrawDataClipCulling_Test()
 
     TEST_SECTION("A box that misses the active region is dropped rather than scissored away");
     FDrawCommandList CulledList;
-    CulledList.PushClip(0, FRectangle(IntVector2(0, 0), 50, 50));
-    CulledList.AddBox(1, FRectangle(IntVector2(200, 200), 10, 10), FFloatColor::White);
+    CulledList.PushClip(0, FRectangle(FIntVector2(0, 0), 50, 50));
+    CulledList.AddBox(1, FRectangle(FIntVector2(200, 200), 10, 10), FFloatColor::White);
     CulledList.PopClip(2);
 
     DrawData.BuildFromCommandList(CulledList);
@@ -217,8 +217,8 @@ bool UIDrawDataClipCulling_Test()
 
     TEST_SECTION("One that only overlaps it is kept whole, since the scissor takes care of the rest");
     FDrawCommandList OverlappingList;
-    OverlappingList.PushClip(0, FRectangle(IntVector2(0, 0), 50, 50));
-    OverlappingList.AddBox(1, FRectangle(IntVector2(40, 40), 100, 100), FFloatColor::White);
+    OverlappingList.PushClip(0, FRectangle(FIntVector2(0, 0), 50, 50));
+    OverlappingList.AddBox(1, FRectangle(FIntVector2(40, 40), 100, 100), FFloatColor::White);
     OverlappingList.PopClip(2);
 
     DrawData.BuildFromCommandList(OverlappingList);
@@ -226,8 +226,8 @@ bool UIDrawDataClipCulling_Test()
 
     TEST_SECTION("A line is culled the same way");
     FDrawCommandList LineList;
-    LineList.PushClip(0, FRectangle(IntVector2(0, 0), 50, 50));
-    LineList.AddLine(1, FRectangle(IntVector2(200, 0), 1, 16), FFloatColor::White);
+    LineList.PushClip(0, FRectangle(FIntVector2(0, 0), 50, 50));
+    LineList.AddLine(1, FRectangle(FIntVector2(200, 0), 1, 16), FFloatColor::White);
     LineList.PopClip(2);
 
     DrawData.BuildFromCommandList(LineList);
@@ -235,8 +235,8 @@ bool UIDrawDataClipCulling_Test()
 
     TEST_SECTION("A region clipped to nothing draws nothing at all, rather than everything unclipped");
     FDrawCommandList EmptyClipList;
-    EmptyClipList.PushClip(0, FRectangle(IntVector2(0, 0), 0, 0));
-    EmptyClipList.AddBox(1, FRectangle(IntVector2(0, 0), 10, 10), FFloatColor::White);
+    EmptyClipList.PushClip(0, FRectangle(FIntVector2(0, 0), 0, 0));
+    EmptyClipList.AddBox(1, FRectangle(FIntVector2(0, 0), 10, 10), FFloatColor::White);
     EmptyClipList.PopClip(2);
 
     DrawData.BuildFromCommandList(EmptyClipList);
@@ -244,10 +244,10 @@ bool UIDrawDataClipCulling_Test()
 
     TEST_SECTION("Leaving the region again lets the commands after it through");
     FDrawCommandList AfterList;
-    AfterList.PushClip(0, FRectangle(IntVector2(0, 0), 50, 50));
-    AfterList.AddBox(1, FRectangle(IntVector2(200, 200), 10, 10), FFloatColor::White);
+    AfterList.PushClip(0, FRectangle(FIntVector2(0, 0), 50, 50));
+    AfterList.AddBox(1, FRectangle(FIntVector2(200, 200), 10, 10), FFloatColor::White);
     AfterList.PopClip(2);
-    AfterList.AddBox(3, FRectangle(IntVector2(200, 200), 10, 10), FFloatColor::White);
+    AfterList.AddBox(3, FRectangle(FIntVector2(200, 200), 10, 10), FFloatColor::White);
 
     DrawData.BuildFromCommandList(AfterList);
 
@@ -265,15 +265,15 @@ bool UIDrawDataClipCulling_Test()
 
     TEST_SECTION("Text off the end of a long list never reaches the atlas either");
     FDrawCommandList TextList;
-    TextList.PushClip(0, FRectangle(IntVector2(0, 0), 200, 50));
-    TextList.AddText(1, FRectangle(IntVector2(0, 400), 100, 16), FString("Offscreen"), Font.Get(), FFloatColor::White);
-    TextList.AddText(2, FRectangle(IntVector2(0, 0), 100, 16), FString("Onscreen"), Font.Get(), FFloatColor::White);
+    TextList.PushClip(0, FRectangle(FIntVector2(0, 0), 200, 50));
+    TextList.AddText(1, FRectangle(FIntVector2(0, 400), 100, 16), FString("Offscreen"), Font.Get(), FFloatColor::White);
+    TextList.AddText(2, FRectangle(FIntVector2(0, 0), 100, 16), FString("Onscreen"), Font.Get(), FFloatColor::White);
     TextList.PopClip(3);
 
     DrawData.BuildFromCommandList(TextList);
 
     FDrawCommandList OnscreenOnlyList;
-    OnscreenOnlyList.AddText(0, FRectangle(IntVector2(0, 0), 100, 16), FString("Onscreen"), Font.Get(), FFloatColor::White);
+    OnscreenOnlyList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 16), FString("Onscreen"), Font.Get(), FFloatColor::White);
 
     FUIDrawData OnscreenOnlyData;
     OnscreenOnlyData.BuildFromCommandList(OnscreenOnlyList);
@@ -289,20 +289,20 @@ bool UIDrawDataSiblingClips_Test()
 
     FUIDrawData DrawData;
 
-    const FRectangle LeftRegion(IntVector2(0, 0), 100, 100);
-    const FRectangle RightRegion(IntVector2(200, 0), 100, 100);
+    const FRectangle LeftRegion(FIntVector2(0, 0), 100, 100);
+    const FRectangle RightRegion(FIntVector2(200, 0), 100, 100);
 
     TEST_SECTION("Two disjoint regions opened on the same layer each keep their own contents");
 
     FDrawCommandList SiblingList;
     SiblingList.PushClip(0, LeftRegion);
-    SiblingList.AddBox(0, FRectangle(IntVector2(10, 10), 20, 20), FFloatColor::White);
-    SiblingList.AddBox(1, FRectangle(IntVector2(10, 40), 20, 20), FFloatColor::White);
+    SiblingList.AddBox(0, FRectangle(FIntVector2(10, 10), 20, 20), FFloatColor::White);
+    SiblingList.AddBox(1, FRectangle(FIntVector2(10, 40), 20, 20), FFloatColor::White);
     SiblingList.PopClip(1);
 
     SiblingList.PushClip(0, RightRegion);
-    SiblingList.AddBox(0, FRectangle(IntVector2(210, 10), 20, 20), FFloatColor::White);
-    SiblingList.AddBox(1, FRectangle(IntVector2(210, 40), 20, 20), FFloatColor::White);
+    SiblingList.AddBox(0, FRectangle(FIntVector2(210, 10), 20, 20), FFloatColor::White);
+    SiblingList.AddBox(1, FRectangle(FIntVector2(210, 40), 20, 20), FFloatColor::White);
     SiblingList.PopClip(1);
 
     DrawData.BuildFromCommandList(SiblingList);
@@ -320,13 +320,13 @@ bool UIDrawDataSiblingClips_Test()
 
     FDrawCommandList NestedList;
     NestedList.PushClip(0, LeftRegion);
-    NestedList.PushClip(0, FRectangle(IntVector2(0, 0), 40, 40));
-    NestedList.AddBox(1, FRectangle(IntVector2(5, 5), 10, 10), FFloatColor::White);
+    NestedList.PushClip(0, FRectangle(FIntVector2(0, 0), 40, 40));
+    NestedList.AddBox(1, FRectangle(FIntVector2(5, 5), 10, 10), FFloatColor::White);
     NestedList.PopClip(1);
     NestedList.PopClip(1);
 
     NestedList.PushClip(0, RightRegion);
-    NestedList.AddBox(2, FRectangle(IntVector2(210, 10), 20, 20), FFloatColor::White);
+    NestedList.AddBox(2, FRectangle(FIntVector2(210, 10), 20, 20), FFloatColor::White);
     NestedList.PopClip(2);
 
     DrawData.BuildFromCommandList(NestedList);
@@ -335,16 +335,16 @@ bool UIDrawDataSiblingClips_Test()
 
     TEST_SECTION("A nested region is still intersected with its parent when it is recorded");
     FDrawCommandList IntersectedList;
-    IntersectedList.PushClip(0, FRectangle(IntVector2(0, 0), 100, 100));
-    IntersectedList.PushClip(0, FRectangle(IntVector2(50, 50), 100, 100));
-    IntersectedList.AddBox(1, FRectangle(IntVector2(60, 60), 10, 10), FFloatColor::White);
+    IntersectedList.PushClip(0, FRectangle(FIntVector2(0, 0), 100, 100));
+    IntersectedList.PushClip(0, FRectangle(FIntVector2(50, 50), 100, 100));
+    IntersectedList.AddBox(1, FRectangle(FIntVector2(60, 60), 10, 10), FFloatColor::White);
     IntersectedList.PopClip(1);
     IntersectedList.PopClip(1);
 
     DrawData.BuildFromCommandList(IntersectedList);
 
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
-    TEST_EXPECT_EQ(DrawData.GetBatches()[0].ScissorRectangle, FRectangle(IntVector2(50, 50), 50, 50));
+    TEST_EXPECT_EQ(DrawData.GetBatches()[0].ScissorRectangle, FRectangle(FIntVector2(50, 50), 50, 50));
 
     TEST_END();
 }
@@ -356,7 +356,7 @@ bool UIDrawDataRoundedBox_Test()
     FUIDrawData DrawData;
     DrawData.SetAntiAliasingEnabled(false);
 
-    const FRectangle Bounds(IntVector2(0, 0), 100, 20);
+    const FRectangle Bounds(FIntVector2(0, 0), 100, 20);
 
     TEST_SECTION("A box with no radius still becomes the four-vertex quad");
     FDrawCommandList SquareList;
@@ -380,8 +380,8 @@ bool UIDrawDataRoundedBox_Test()
     TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetAtlas() == nullptr);
 
     TEST_SECTION("The quad covers the bounds and carries the corner radii");
-    TEST_EXPECT(GetShapeVertices(DrawData)[0].Position == Vector2(0.0f, 0.0f));
-    TEST_EXPECT(GetShapeVertices(DrawData)[2].Position == Vector2(100.0f, 20.0f));
+    TEST_EXPECT(GetShapeVertices(DrawData)[0].Position == FVector2(0.0f, 0.0f));
+    TEST_EXPECT(GetShapeVertices(DrawData)[2].Position == FVector2(100.0f, 20.0f));
 
     constexpr float EdgeTolerance = 0.01f;
 
@@ -398,7 +398,7 @@ bool UIDrawDataRoundedBox_Test()
 
     TEST_SECTION("A radius past half the shorter side is clamped rather than turned inside out");
     FDrawCommandList OversizedList;
-    OversizedList.AddBox(0, FRectangle(IntVector2(0, 0), 10, 10), FFloatColor::White, 50.0f);
+    OversizedList.AddBox(0, FRectangle(FIntVector2(0, 0), 10, 10), FFloatColor::White, 50.0f);
     DrawData.BuildFromCommandList(OversizedList);
 
     TEST_EXPECT_EQ(GetShapeVertices(DrawData).Size(), 4);
@@ -412,7 +412,7 @@ bool UIDrawDataRoundedBox_Test()
 
     TEST_SECTION("A line keeps its square ends, since it shares the box path");
     FDrawCommandList LineList;
-    LineList.AddLine(0, FRectangle(IntVector2(0, 0), 1, 16), FFloatColor::White);
+    LineList.AddLine(0, FRectangle(FIntVector2(0, 0), 1, 16), FFloatColor::White);
     DrawData.BuildFromCommandList(LineList);
 
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 4);
@@ -428,7 +428,7 @@ bool UIDrawDataRoundedBottomBar_Test()
     FUIDrawData DrawData;
     DrawData.SetAntiAliasingEnabled(false);
 
-    const FRectangle Bounds(IntVector2(0, 0), 120, 28);
+    const FRectangle Bounds(FIntVector2(0, 0), 120, 28);
 
     constexpr float Radius    = 6.0f;
     constexpr float Thickness = 3.0f;
@@ -536,7 +536,7 @@ bool UIDrawDataRoundedAccentRing_Test()
     FUIDrawData DrawData;
     DrawData.SetAntiAliasingEnabled(false);
 
-    const FRectangle Bounds(IntVector2(0, 0), 120, 28);
+    const FRectangle Bounds(FIntVector2(0, 0), 120, 28);
 
     constexpr float Radius       = 8.0f;
     constexpr float Thickness    = 2.0f;
@@ -670,7 +670,7 @@ bool UIDrawDataText_Test()
     TSharedPtr<FFixedWidthFontFace> FixedFont = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 
     FDrawCommandList FixedList;
-    FixedList.AddText(0, FRectangle(IntVector2(0, 0), 100, 16), FString("Hello"), FixedFont.Get(), FFloatColor::White);
+    FixedList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 16), FString("Hello"), FixedFont.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(FixedList);
 
     TEST_EXPECT(DrawData.IsEmpty());
@@ -685,7 +685,7 @@ bool UIDrawDataText_Test()
 
     TEST_SECTION("Every printable glyph becomes one quad");
     FDrawCommandList TextList;
-    TextList.AddText(0, FRectangle(IntVector2(0, 0), 100, 16), FString("AB"), Font.Get(), FFloatColor::White);
+    TextList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 16), FString("AB"), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(TextList);
 
     TEST_EXPECT_EQ(DrawData.GetTextGlyphInstances().Size(), 2);
@@ -696,7 +696,7 @@ bool UIDrawDataText_Test()
 
     TEST_SECTION("Whitespace advances the pen without adding a quad");
     FDrawCommandList SpacedList;
-    SpacedList.AddText(0, FRectangle(IntVector2(0, 0), 100, 16), FString("A B"), Font.Get(), FFloatColor::White);
+    SpacedList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 16), FString("A B"), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(SpacedList);
 
     TEST_EXPECT_EQ(DrawData.GetTextGlyphInstances().Size(), 2);
@@ -714,7 +714,7 @@ bool UIDrawDataText_Test()
 
     TEST_SECTION("An empty string draws nothing");
     FDrawCommandList EmptyTextList;
-    EmptyTextList.AddText(0, FRectangle(IntVector2(0, 0), 100, 16), FString(), Font.Get(), FFloatColor::White);
+    EmptyTextList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 16), FString(), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(EmptyTextList);
     TEST_EXPECT(DrawData.IsEmpty());
 
@@ -731,7 +731,7 @@ bool UIDrawDataText_Test()
         const int32 BoxHeight = BandHeight + (Padding * 2);
 
         FDrawCommandList PaddedList;
-        PaddedList.AddText(0, FRectangle(IntVector2(0, 0), 100, BoxHeight), FString("HI"), Font.Get(), FFloatColor::White);
+        PaddedList.AddText(0, FRectangle(FIntVector2(0, 0), 100, BoxHeight), FString("HI"), Font.Get(), FFloatColor::White);
         DrawData.BuildFromCommandList(PaddedList);
 
         float InkTop    = static_cast<float>(BoxHeight);
@@ -750,7 +750,7 @@ bool UIDrawDataText_Test()
     const int32 TallBoxHeight = BandHeight + 8;
 
     FDrawCommandList DescenderList;
-    DescenderList.AddText(0, FRectangle(IntVector2(0, 0), 100, TallBoxHeight), FString("Hg"), Font.Get(), FFloatColor::White);
+    DescenderList.AddText(0, FRectangle(FIntVector2(0, 0), 100, TallBoxHeight), FString("Hg"), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(DescenderList);
 
     float DescenderTop    = static_cast<float>(TallBoxHeight);
@@ -767,7 +767,7 @@ bool UIDrawDataText_Test()
     TEST_SECTION("A rectangle with no room to spare starts the band at the top rather than pushing glyphs out of it");
 
     FDrawCommandList TightList;
-    TightList.AddText(0, FRectangle(IntVector2(0, 0), 100, BandHeight), FString("A"), Font.Get(), FFloatColor::White);
+    TightList.AddText(0, FRectangle(FIntVector2(0, 0), 100, BandHeight), FString("A"), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(TightList);
 
     TEST_EXPECT_EQ(DrawData.GetTextGlyphInstances().Size(), 1);
@@ -775,16 +775,16 @@ bool UIDrawDataText_Test()
     TEST_EXPECT(TightTop == static_cast<float>(Font->GetAscent() - Font->GetCapHeight()));
 
     FDrawCommandList ShortList;
-    ShortList.AddText(0, FRectangle(IntVector2(0, 0), 100, 1), FString("A"), Font.Get(), FFloatColor::White);
+    ShortList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 1), FString("A"), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(ShortList);
 
     TEST_EXPECT(DrawData.GetTextGlyphInstances()[0].Position.Y == TightTop);
 
     TEST_SECTION("Text and boxes land in separate batches, since they sample different textures");
     FDrawCommandList MixedList;
-    MixedList.AddBox(0, FRectangle(IntVector2(0, 0), 100, 16), FFloatColor::White);
-    MixedList.AddText(1, FRectangle(IntVector2(0, 0), 100, 16), FString("A"), Font.Get(), FFloatColor::White);
-    MixedList.AddBox(2, FRectangle(IntVector2(0, 16), 100, 16), FFloatColor::White);
+    MixedList.AddBox(0, FRectangle(FIntVector2(0, 0), 100, 16), FFloatColor::White);
+    MixedList.AddText(1, FRectangle(FIntVector2(0, 0), 100, 16), FString("A"), Font.Get(), FFloatColor::White);
+    MixedList.AddBox(2, FRectangle(FIntVector2(0, 16), 100, 16), FFloatColor::White);
     DrawData.BuildFromCommandList(MixedList);
 
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 3);
@@ -814,14 +814,14 @@ bool UIDrawDataAntiAliasing_Test()
 
     TEST_SECTION("A square box is still the plain quad, since an axis-aligned edge already rasterizes crisp");
     FDrawCommandList SquareList;
-    SquareList.AddBox(0, FRectangle(IntVector2(0, 0), 100, 20), FFloatColor::White);
+    SquareList.AddBox(0, FRectangle(FIntVector2(0, 0), 100, 20), FFloatColor::White);
     DrawData.BuildFromCommandList(SquareList);
 
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 4);
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 6);
 
     TEST_SECTION("A rounded box is still one SDF quad; anti-aliasing pads it by half a pixel");
-    const FRectangle Bounds(IntVector2(0, 0), 100, 20);
+    const FRectangle Bounds(FIntVector2(0, 0), 100, 20);
 
     FDrawCommandList RoundedList;
     RoundedList.AddBox(0, Bounds, FFloatColor::White, 3.0f);
@@ -840,7 +840,7 @@ bool UIDrawDataAntiAliasing_Test()
 
     TEST_SECTION("A stroke gains a fringe either side, so it is four vertices per point and eighteen indices per segment");
     FDrawCommandList LineList;
-    LineList.AddLine(0, Vector2(0.0f, 10.0f), Vector2(100.0f, 10.0f), FFloatColor::White, 4.0f);
+    LineList.AddLine(0, FVector2(0.0f, 10.0f), FVector2(100.0f, 10.0f), FFloatColor::White, 4.0f);
     DrawData.BuildFromCommandList(LineList);
 
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 2 * 4);
@@ -858,7 +858,7 @@ bool UIDrawDataAntiAliasing_Test()
 
     TEST_SECTION("A stroke thinner than the fringe collapses its core and pays for the width in alpha instead");
     FDrawCommandList HairlineList;
-    HairlineList.AddLine(0, Vector2(0.0f, 10.0f), Vector2(100.0f, 10.0f), FFloatColor::White, 0.5f);
+    HairlineList.AddLine(0, FVector2(0.0f, 10.0f), FVector2(100.0f, 10.0f), FFloatColor::White, 0.5f);
     DrawData.BuildFromCommandList(HairlineList);
 
     TEST_EXPECT_EQ(DrawData.GetVertices()[1].Color >> 24, 0x80u);
@@ -868,16 +868,16 @@ bool UIDrawDataAntiAliasing_Test()
     TEST_EXPECT(Math::Abs(DrawData.GetVertices()[0].Position.Y - (10.0f + FUIDrawData::FringeWidth)) <= Tolerance);
 
     TEST_SECTION("A convex polygon keeps its fan and has the fringe stitched around the outside of it");
-    const Vector2 Quad[4] =
+    const FVector2 Quad[4] =
     {
-        Vector2(0.0f, 0.0f),
-        Vector2(10.0f, 0.0f),
-        Vector2(10.0f, 10.0f),
-        Vector2(0.0f, 10.0f),
+        FVector2(0.0f, 0.0f),
+        FVector2(10.0f, 0.0f),
+        FVector2(10.0f, 10.0f),
+        FVector2(0.0f, 10.0f),
     };
 
     FDrawCommandList QuadList;
-    QuadList.AddConvexPolygon(0, TArrayView<const Vector2>(Quad, 4), FFloatColor::White);
+    QuadList.AddConvexPolygon(0, TArrayView<const FVector2>(Quad, 4), FFloatColor::White);
     DrawData.BuildFromCommandList(QuadList);
 
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 4 * 2);
@@ -887,7 +887,7 @@ bool UIDrawDataAntiAliasing_Test()
     TEST_EXPECT_EQ(DrawData.GetVertices()[1].Color >> 24, 0x00u);
 
     TEST_SECTION("The accent bar hangs a clear row under the arc, which is the only edge of it that curves");
-    const FRectangle BarBounds(IntVector2(0, 0), 120, 28);
+    const FRectangle BarBounds(FIntVector2(0, 0), 120, 28);
 
     FDrawCommandList BarList;
     BarList.AddRoundedBottomBar(0, BarBounds, FCornerRadii(6.0f), 3.0f, FFloatColor::White, 0.0f);

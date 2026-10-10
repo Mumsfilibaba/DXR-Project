@@ -57,14 +57,14 @@ void FExpander::Initialize(const FDesc& Desc)
     SetContent(Desc.Content);
 }
 
-IntVector2 FExpander::PrepareDesiredSize()
+FIntVector2 FExpander::PrepareDesiredSize()
 {
     AnimationAlpha = ComputeAnimationAlpha();
 
     return FVisualElement::PrepareDesiredSize();
 }
 
-IntVector2 FExpander::ComputeDesiredSize() const
+FIntVector2 FExpander::ComputeDesiredSize() const
 {
     int32 HeaderWidth = Style.FramePadding.GetTotalHorizontal() + GetArrowExtent() + EXPANDER_DISCLOSURE_SPACING;
     if (Font && !Label.IsEmpty())
@@ -72,10 +72,10 @@ IntVector2 FExpander::ComputeDesiredSize() const
         HeaderWidth += Font->MeasureWidth(FStringView(Label.Data(), Label.Length()));
     }
 
-    IntVector2 DesiredSize(HeaderWidth, GetDisplayedHeight());
+    FIntVector2 DesiredSize(HeaderWidth, GetDisplayedHeight());
     if (Content)
     {
-        const IntVector2 ContentSize = Content->GetCachedDesiredSize();
+        const FIntVector2 ContentSize = Content->GetCachedDesiredSize();
         DesiredSize.X = Math::Max(DesiredSize.X, ContentSize.X + ContentPadding.GetTotalHorizontal());
     }
 
@@ -108,7 +108,7 @@ EChildVisit FExpander::VisitChildren(FChildVisitor& Visitor, EChildOrder /*Order
     return VisitChild(Visitor, Content);
 }
 
-void FExpander::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+void FExpander::HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath)
 {
     if (IsContentShown() && Content)
     {
@@ -129,9 +129,9 @@ int32 FExpander::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 
     const FRectangle HeaderBounds = GetHeaderBounds(PanelBounds);
 
-    const FUIBrush&  ArrowBrush  = bIsExpanded ? ExpandedArrow : CollapsedArrow;
-    const int32      ArrowExtent = GetArrowExtent();
-    const IntVector2 ArrowPosition(
+    const FUIBrush&   ArrowBrush  = bIsExpanded ? ExpandedArrow : CollapsedArrow;
+    const int32       ArrowExtent = GetArrowExtent();
+    const FIntVector2 ArrowPosition(
         HeaderBounds.Position.X + Style.FramePadding.Left,
         HeaderBounds.Position.Y + ((HeaderBounds.Height - ArrowExtent) / 2));
 
@@ -147,10 +147,10 @@ int32 FExpander::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 
     if (Font && !Label.IsEmpty())
     {
-        const int32      LabelLeft  = ArrowBounds.GetRight() + EXPANDER_DISCLOSURE_SPACING;
-        const int32      LabelRight = HeaderBounds.GetRight() - Style.FramePadding.Right;
-        const IntVector2 LabelPosition(LabelLeft, HeaderBounds.Position.Y + Font->GetTextBandOffset(HeaderBounds.Height));
-        const FRectangle LabelBounds(LabelPosition, Math::Max(LabelRight - LabelLeft, 0), Font->GetTextBandHeight());
+        const int32       LabelLeft  = ArrowBounds.GetRight() + EXPANDER_DISCLOSURE_SPACING;
+        const int32       LabelRight = HeaderBounds.GetRight() - Style.FramePadding.Right;
+        const FIntVector2 LabelPosition(LabelLeft, HeaderBounds.Position.Y + Font->GetTextBandOffset(HeaderBounds.Height));
+        const FRectangle  LabelBounds(LabelPosition, Math::Max(LabelRight - LabelLeft, 0), Font->GetTextBandHeight());
 
         OutCommandList.AddText(LayerId + 1, LabelBounds, Label, Font.Get(), FUIStyle::GetDefault().Colors.Text);
     }

@@ -15,7 +15,7 @@ class FTabStrip;
 struct FPanelOutline;
 
 /** @brief Called when a tab was dragged clear of every docking area, which is what floats a panel. */
-DECLARE_DELEGATE(FOnPanelTornOut, const FString& /*PanelId*/, const IntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnPanelTornOut, const FString& /*PanelId*/, const FIntVector2& /*ScreenPosition*/);
 
 /** @brief Called when a panel's tab was closed. */
 DECLARE_DELEGATE(FOnPanelClosed, const FString& /*PanelId*/);
@@ -87,7 +87,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 PrepareDesiredSize() override;
+    virtual FIntVector2 PrepareDesiredSize() override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
 
     /**
@@ -156,7 +156,7 @@ public:
      *                       panel, except for an area holding none at all, which offers the whole of itself,
      *                       and for a strip lifted into a host caption, which offers itself alone.
      */
-    void GatherDropZones(const IntVector2& ClientPosition, TArray<FDropZone>& OutZones) const;
+    void GatherDropZones(const FIntVector2& ClientPosition, TArray<FDropZone>& OutZones) const;
 
     /**
      * @brief Finds the drop zone under a point, which is a panel plus which side of it or the center. The
@@ -168,7 +168,7 @@ public:
      * @param OutTabIndex      Where among the target's tabs a drop onto a tab strip goes, or -1 to go after all of them.
      * @return True when the point is inside a zone of this area.
      */
-    NODISCARD bool HitTestDropTarget(const IntVector2& ScreenPosition, FString& OutTargetPanelId, EDockDirection& OutDirection, int32& OutTabIndex) const;
+    NODISCARD bool HitTestDropTarget(const FIntVector2& ScreenPosition, FString& OutTargetPanelId, EDockDirection& OutDirection, int32& OutTabIndex) const;
 
     /**
      * @brief Gets where a drop resolved against this area would put the panel, which is what the drag
@@ -351,9 +351,9 @@ private:
         TSharedPtr<FVisualElement> Panel;
     };
     
-    NODISCARD int32 FindLeafAt(const IntVector2& ClientPosition) const;
+    NODISCARD int32 FindLeafAt(const FIntVector2& ClientPosition) const;
     NODISCARD FRectangle GetLiftedTabStripBounds() const;
-    NODISCARD bool IsOverLiftedTabStrip(const IntVector2& ClientPosition) const;
+    NODISCARD bool IsOverLiftedTabStrip(const FIntVector2& ClientPosition) const;
     NODISCARD FRectangle ComputeDropBounds(const FString& TargetPanelId, EDockDirection Direction) const;
     NODISCARD const FVisualElement* FindFocusedFrame() const;
     NODISCARD FPanelOutline ComputeLeafOutline(const FLeafGeometry& Leaf) const;
@@ -363,8 +363,8 @@ private:
     NODISCARD FRectangle GetDisplayedLandingBounds() const;
     NODISCARD FRectangle GetDisplayedTearOutBounds() const;
     NODISCARD FRectangle GetDecoratorClientBounds() const;
-    NODISCARD bool GetWindowPosition(IntVector2& OutPosition) const;
-    NODISCARD bool GetDragClientPosition(IntVector2& OutClientPosition) const;
+    NODISCARD bool GetWindowPosition(FIntVector2& OutPosition) const;
+    NODISCARD bool GetDragClientPosition(FIntVector2& OutClientPosition) const;
     void RetireTearOutPicture();
 
     TSharedPtr<FVisualElement> BuildNode(FDockNode& Node, const TArray<int32>& Path);
@@ -374,9 +374,9 @@ private:
     void OnTabActivated(const FString& PanelId);
     void OnTabClosed(const FString& PanelId);
     void OnTabReordered(const TArray<int32>& Path, const FString& PanelId, int32 NewIndex);
-    void OnTabDetached(const FString& PanelId, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
-    void OnTabDragMoved(const FString& PanelId, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
-    void OnTabDragFinished(const FString& PanelId, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
+    void OnTabDetached(const FString& PanelId, const FIntVector2& ClientPosition, const FIntVector2& ScreenPosition);
+    void OnTabDragMoved(const FString& PanelId, const FIntVector2& ClientPosition, const FIntVector2& ScreenPosition);
+    void OnTabDragFinished(const FString& PanelId, const FIntVector2& ClientPosition, const FIntVector2& ScreenPosition);
     void OnSplitterFractionsChanged(const TArray<int32>& Path, const TArray<float>& Fractions);
 
     FDockNode                  Root;

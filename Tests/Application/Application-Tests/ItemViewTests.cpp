@@ -39,14 +39,14 @@ static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRect
     Element->Arrange(Bounds);
 }
 
-static FCursorEvent MakeMoveEvent(const IntVector2& ClientPosition)
+static FCursorEvent MakeMoveEvent(const FIntVector2& ClientPosition)
 {
-    return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, IntVector2(0, 0), FModifierKeyState());
+    return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, FIntVector2(0, 0), FModifierKeyState());
 }
 
-static FCursorEvent MakeButtonEvent(EInputEventType Type, const IntVector2& ClientPosition, EModifierFlag Modifiers = EModifierFlag::None)
+static FCursorEvent MakeButtonEvent(EInputEventType Type, const FIntVector2& ClientPosition, EModifierFlag Modifiers = EModifierFlag::None)
 {
-    return FCursorEvent(Type, Keys::MouseButtonLeft, ClientPosition, IntVector2(0, 0), FModifierKeyState(Modifiers), Type == EInputEventType::MouseButtonDown);
+    return FCursorEvent(Type, Keys::MouseButtonLeft, ClientPosition, FIntVector2(0, 0), FModifierKeyState(Modifiers), Type == EInputEventType::MouseButtonDown);
 }
 
 static FCursorEvent MakeScrollEvent(float ScrollDelta)
@@ -168,7 +168,7 @@ bool TreeViewModel_Test()
     });
 
     TSharedPtr<FTreeView> TreeView = FTreeView::Create(Desc);
-    LayoutElement(TreeView, FRectangle(IntVector2(0, 0), 200, 200));
+    LayoutElement(TreeView, FRectangle(FIntVector2(0, 0), 200, 200));
 
     TEST_SECTION("The roots are the only rows while every one of them is closed");
     TreeView->SetRootItems({ Assets, Scenes });
@@ -255,10 +255,10 @@ bool TreeViewSelection_Test()
 
     TSharedPtr<FTreeView> TreeView = FTreeView::Create(Desc);
     TreeView->SetRootItems(Roots);
-    LayoutElement(TreeView, FRectangle(IntVector2(0, 0), 200, 200));
+    LayoutElement(TreeView, FRectangle(FIntVector2(0, 0), 200, 200));
 
     TEST_SECTION("A click takes the row under it and reports the selection it leaves behind");
-    TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(100, 10)));
+    TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(100, 10)));
 
     TEST_EXPECT_EQ(ChangeCount, 1);
     TEST_EXPECT_EQ(TreeView->GetSelection().Size(), 1);
@@ -308,7 +308,7 @@ bool TreeViewSelection_Test()
     TEST_EXPECT(RestingLabelTint == Desc.Style.LabelText);
 
     TEST_SECTION("A chord click adds a row without dropping the one already held");
-    TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(100, 50), EModifierFlag::Ctrl));
+    TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(100, 50), EModifierFlag::Ctrl));
 
     TEST_EXPECT_EQ(ChangeCount, 2);
     TEST_EXPECT_EQ(TreeView->GetSelection().Size(), 2);
@@ -317,7 +317,7 @@ bool TreeViewSelection_Test()
     TEST_EXPECT_EQ(LastSelection.Size(), 2);
 
     TEST_SECTION("A shift click takes the whole run between the anchor and the row clicked");
-    TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(100, 10), EModifierFlag::Shift));
+    TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(100, 10), EModifierFlag::Shift));
 
     TEST_EXPECT_EQ(ChangeCount, 3);
     TEST_EXPECT_EQ(TreeView->GetSelection().Size(), 3);
@@ -336,7 +336,7 @@ bool TreeViewSelection_Test()
     TEST_EXPECT_EQ(ChangeCount, CountBeforePush);
 
     TEST_SECTION("A shift click after a pushed selection runs from that selection, which carries no anchor");
-    TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(100, 10), EModifierFlag::Shift));
+    TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(100, 10), EModifierFlag::Shift));
 
     TEST_EXPECT_EQ(TreeView->GetSelection().Size(), 4);
     TEST_EXPECT(TreeView->IsSelected(Alpha));
@@ -360,10 +360,10 @@ bool TreeViewSelection_Test()
 
     TSharedPtr<FTreeView> SingleSelect = FTreeView::Create(SingleDesc);
     SingleSelect->SetRootItems(Roots);
-    LayoutElement(SingleSelect, FRectangle(IntVector2(0, 0), 200, 200));
+    LayoutElement(SingleSelect, FRectangle(FIntVector2(0, 0), 200, 200));
 
-    SingleSelect->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(100, 10)));
-    SingleSelect->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(100, 50), EModifierFlag::Ctrl));
+    SingleSelect->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(100, 10)));
+    SingleSelect->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(100, 50), EModifierFlag::Ctrl));
 
     TEST_EXPECT_EQ(SingleSelect->GetSelection().Size(), 1);
     TEST_EXPECT(SingleSelect->IsSelected(Gamma));
@@ -398,7 +398,7 @@ bool TreeViewFiltering_Test()
 
     TSharedPtr<FTreeView> TreeView = FTreeView::Create(Desc);
     TreeView->SetRootItems({ Assets, Scenes });
-    LayoutElement(TreeView, FRectangle(IntVector2(0, 0), 200, 200));
+    LayoutElement(TreeView, FRectangle(FIntVector2(0, 0), 200, 200));
 
     TEST_SECTION("Nothing is filtered to begin with, so the closed roots are the rows");
     TEST_EXPECT(TreeView->GetFilterText().IsEmpty());
@@ -458,7 +458,7 @@ bool TreeViewFiltering_Test()
 
     TSharedPtr<FTreeView> TypeColumnTree = FTreeView::Create(Desc);
     TypeColumnTree->SetRootItems({ Scope });
-    LayoutElement(TypeColumnTree, FRectangle(IntVector2(0, 0), 200, 200));
+    LayoutElement(TypeColumnTree, FRectangle(FIntVector2(0, 0), 200, 200));
     TypeColumnTree->SetFilterText("0.120");
 
     TEST_EXPECT_EQ(TypeColumnTree->GetVisibleRows().Size(), 1);
@@ -469,7 +469,7 @@ bool TreeViewFiltering_Test()
 
     TSharedPtr<FTreeView> LabelOnlyTree = FTreeView::Create(LabelOnlyDesc);
     LabelOnlyTree->SetRootItems({ Scope });
-    LayoutElement(LabelOnlyTree, FRectangle(IntVector2(0, 0), 200, 200));
+    LayoutElement(LabelOnlyTree, FRectangle(FIntVector2(0, 0), 200, 200));
     LabelOnlyTree->SetFilterText("0.120");
 
     TEST_EXPECT_EQ(LabelOnlyTree->GetVisibleRows().Size(), 0);
@@ -507,7 +507,7 @@ bool TreeViewKeyboard_Test()
 
     TSharedPtr<FTreeView> TreeView = FTreeView::Create(Desc);
     TreeView->SetRootItems({ Assets, Scenes });
-    LayoutElement(TreeView, FRectangle(IntVector2(0, 0), 200, 200));
+    LayoutElement(TreeView, FRectangle(FIntVector2(0, 0), 200, 200));
 
     TEST_SECTION("Down takes the first row when nothing is selected yet, and a row at a time after that");
     TEST_EXPECT(TreeView->OnKeyDown(MakeKeyEvent(Keys::Down)).IsEventHandled());
@@ -557,13 +557,13 @@ bool TreeViewKeyboard_Test()
     TEST_EXPECT(LastActivated == Assets);
 
     TEST_SECTION("A double click opens the row under the cursor the same way");
-    TreeView->OnMouseDoubleClick(MakeButtonEvent(EInputEventType::MouseButtonDoubleClick, IntVector2(100, 30)));
+    TreeView->OnMouseDoubleClick(MakeButtonEvent(EInputEventType::MouseButtonDoubleClick, FIntVector2(100, 30)));
 
     TEST_EXPECT_EQ(ActivationCount, 2);
     TEST_EXPECT(LastActivated == Scenes);
 
     TEST_SECTION("A double click below the last row opens nothing");
-    TEST_EXPECT(!TreeView->OnMouseDoubleClick(MakeButtonEvent(EInputEventType::MouseButtonDoubleClick, IntVector2(100, 150))).IsEventHandled());
+    TEST_EXPECT(!TreeView->OnMouseDoubleClick(MakeButtonEvent(EInputEventType::MouseButtonDoubleClick, FIntVector2(100, 150))).IsEventHandled());
     TEST_EXPECT_EQ(ActivationCount, 2);
 
     TEST_SECTION("A key the view has no use for is left to whatever else is listening");
@@ -588,7 +588,7 @@ bool TreeViewScrolling_Test()
 
     TSharedPtr<FTreeView> TreeView = FTreeView::Create(Desc);
     TreeView->SetRootItems(Rows);
-    LayoutElement(TreeView, FRectangle(IntVector2(0, 0), 200, ViewHeight));
+    LayoutElement(TreeView, FRectangle(FIntVector2(0, 0), 200, ViewHeight));
 
     TEST_SECTION("One wheel step moves the rows by the step the view is built with");
     TEST_EXPECT(TreeView->OnMouseScroll(MakeScrollEvent(-1.0f)).IsEventHandled());
@@ -639,7 +639,7 @@ bool TreeViewScrolling_Test()
     TEST_SECTION("A view whose rows all fit leaves the wheel to whatever else is listening");
     TSharedPtr<FTreeView> ShortView = FTreeView::Create(Desc);
     ShortView->SetRootItems(CreateLeafRows(2));
-    LayoutElement(ShortView, FRectangle(IntVector2(0, 0), 200, ViewHeight));
+    LayoutElement(ShortView, FRectangle(FIntVector2(0, 0), 200, ViewHeight));
 
     TEST_EXPECT(!ShortView->OnMouseScroll(MakeScrollEvent(-1.0f)).IsEventHandled());
     TEST_EXPECT_EQ(ShortView->GetScrollOffset(), 0);
@@ -653,7 +653,7 @@ bool TreeViewScrolling_Test()
     TSharedPtr<FTreeView> BarView = FTreeView::Create(BarDesc);
     BarView->SetRootItems(CreateLeafRows(NumRows));
     BarView->SetSelection({ BarView->GetVisibleRows()[0] });
-    LayoutElement(BarView, FRectangle(IntVector2(0, 0), 200, ViewHeight));
+    LayoutElement(BarView, FRectangle(FIntVector2(0, 0), 200, ViewHeight));
 
     FDrawCommandList HighlightCommands;
     BarView->OnDraw(FDrawGeometry(BarView->GetContentRectangle(), 1.0f), HighlightCommands, 0);
@@ -705,7 +705,7 @@ bool TreeViewColumnsAndIndent_Test()
 
     TSharedPtr<FTreeView> TreeView = FTreeView::Create(Desc);
     TreeView->SetRootItems(Rows);
-    LayoutElement(TreeView, FRectangle(IntVector2(0, 0), 200, ViewHeight));
+    LayoutElement(TreeView, FRectangle(FIntVector2(0, 0), 200, ViewHeight));
 
     TEST_SECTION("The header takes its height off the band the rows scroll in");
     TreeView->OnMouseScroll(MakeScrollEvent(-100.0f));
@@ -718,8 +718,8 @@ bool TreeViewColumnsAndIndent_Test()
     TEST_EXPECT_EQ(TreeView->GetItemRowBounds(Rows[0]).Position.Y, HeaderHeight);
 
     TEST_SECTION("A click on the header selects nothing, and one just below it takes the first row");
-    TEST_EXPECT(!TreeView->FindItemAt(IntVector2(10, HeaderHeight / 2)));
-    TEST_EXPECT(TreeView->FindItemAt(IntVector2(10, HeaderHeight + 1)) == Rows[0]);
+    TEST_EXPECT(!TreeView->FindItemAt(FIntVector2(10, HeaderHeight / 2)));
+    TEST_EXPECT(TreeView->FindItemAt(FIntVector2(10, HeaderHeight + 1)) == Rows[0]);
 
     TEST_SECTION("A view with no captions keeps its rows hard against the top");
     Desc.LabelColumnHeader.Clear();
@@ -727,7 +727,7 @@ bool TreeViewColumnsAndIndent_Test()
 
     TSharedPtr<FTreeView> BareView = FTreeView::Create(Desc);
     BareView->SetRootItems(CreateLeafRows(NumRows));
-    LayoutElement(BareView, FRectangle(IntVector2(0, 0), 200, ViewHeight));
+    LayoutElement(BareView, FRectangle(FIntVector2(0, 0), 200, ViewHeight));
 
     TEST_EXPECT_EQ(BareView->GetItemRowBounds(BareView->GetVisibleRows()[0]).Position.Y, 0);
 
@@ -750,7 +750,7 @@ bool TreeViewColumnsAndIndent_Test()
     TSharedPtr<FTreeView> IndentView = FTreeView::Create(IndentDesc);
     IndentView->SetRootItems({ Filter, LooseItem });
     IndentView->SetItemExpanded(Filter, true);
-    LayoutElement(IndentView, FRectangle(IntVector2(0, 0), 200, ViewHeight));
+    LayoutElement(IndentView, FRectangle(FIntVector2(0, 0), 200, ViewHeight));
 
     const int32 FilterLabelX = IndentView->GetItemLabelBounds(Filter).Position.X;
     const int32 LooseLabelX  = IndentView->GetItemLabelBounds(LooseItem).Position.X;
@@ -772,7 +772,7 @@ bool TreeViewColumnsAndIndent_Test()
     TSharedPtr<FTreeView> PlainView = FTreeView::Create(IndentDesc);
     PlainView->SetRootItems({ PlainParent });
     PlainView->SetItemExpanded(PlainParent, true);
-    LayoutElement(PlainView, FRectangle(IntVector2(0, 0), 200, ViewHeight));
+    LayoutElement(PlainView, FRectangle(FIntVector2(0, 0), 200, ViewHeight));
 
     TEST_EXPECT(PlainView->GetItemLabelBounds(PlainParent).Position.X < FilterLabelX);
     TEST_EXPECT_EQ(PlainView->GetItemLabelBounds(PlainChild).Position.X,
@@ -808,37 +808,37 @@ bool TreeViewHeaderToolTips_Test()
 
     TSharedPtr<FTreeView> TreeView = FTreeView::Create(Desc);
     TreeView->SetRootItems(CreateLeafRows(4));
-    LayoutElement(TreeView, FRectangle(IntVector2(0, 0), ViewWidth, 100));
+    LayoutElement(TreeView, FRectangle(FIntVector2(0, 0), ViewWidth, 100));
 
     FToolTipService& ToolTips = FToolTipService::Get();
 
     TEST_SECTION("Resting on a caption asks for the tip explaining that column");
-    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(10, HeaderHeight / 2)));
+    TreeView->OnMouseMove(MakeMoveEvent(FIntVector2(10, HeaderHeight / 2)));
 
     TEST_EXPECT(ToolTips.IsPending());
     TEST_EXPECT_EQ(ToolTips.GetOwner(), StaticCastSharedPtr<FVisualElement>(TreeView));
     TEST_EXPECT_EQ(ToolTips.GetRequestedText(), Desc.LabelColumnToolTip);
 
     TEST_SECTION("Every caption in the type column carries its own tip, rather than one for the lot");
-    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 10, HeaderHeight / 2)));
+    TreeView->OnMouseMove(MakeMoveEvent(FIntVector2(TypeColumnX + 10, HeaderHeight / 2)));
 
     TEST_EXPECT(ToolTips.IsPending());
     TEST_EXPECT_EQ(ToolTips.GetRequestedText(), CallsToolTip);
 
-    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 60, HeaderHeight / 2)));
+    TreeView->OnMouseMove(MakeMoveEvent(FIntVector2(TypeColumnX + 60, HeaderHeight / 2)));
 
     TEST_EXPECT(ToolTips.IsPending());
     TEST_EXPECT_EQ(ToolTips.GetRequestedText(), InclToolTip);
 
     TEST_SECTION("The gap between two captions belongs to the nearer of them");
-    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 45, HeaderHeight / 2)));
+    TreeView->OnMouseMove(MakeMoveEvent(FIntVector2(TypeColumnX + 45, HeaderHeight / 2)));
     TEST_EXPECT_EQ(ToolTips.GetRequestedText(), CallsToolTip);
 
-    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 55, HeaderHeight / 2)));
+    TreeView->OnMouseMove(MakeMoveEvent(FIntVector2(TypeColumnX + 55, HeaderHeight / 2)));
     TEST_EXPECT_EQ(ToolTips.GetRequestedText(), InclToolTip);
 
     TEST_SECTION("Past the last caption the column still reads as that caption's");
-    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(ViewWidth - 2, HeaderHeight / 2)));
+    TreeView->OnMouseMove(MakeMoveEvent(FIntVector2(ViewWidth - 2, HeaderHeight / 2)));
     TEST_EXPECT_EQ(ToolTips.GetRequestedText(), InclToolTip);
 
     TEST_SECTION("A column with one tip hangs it off the whole of it");
@@ -847,27 +847,27 @@ bool TreeViewHeaderToolTips_Test()
 
     TSharedPtr<FTreeView> SharedView = FTreeView::Create(SharedDesc);
     SharedView->SetRootItems(CreateLeafRows(4));
-    LayoutElement(SharedView, FRectangle(IntVector2(0, 0), ViewWidth, 100));
+    LayoutElement(SharedView, FRectangle(FIntVector2(0, 0), ViewWidth, 100));
 
-    SharedView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 10, HeaderHeight / 2)));
+    SharedView->OnMouseMove(MakeMoveEvent(FIntVector2(TypeColumnX + 10, HeaderHeight / 2)));
     TEST_EXPECT_EQ(ToolTips.GetRequestedText(), CallsToolTip);
 
-    SharedView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 100, HeaderHeight / 2)));
+    SharedView->OnMouseMove(MakeMoveEvent(FIntVector2(TypeColumnX + 100, HeaderHeight / 2)));
     TEST_EXPECT_EQ(ToolTips.GetRequestedText(), CallsToolTip);
 
-    SharedView->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    SharedView->OnMouseLeft(MakeMoveEvent(FIntVector2(400, 400)));
 
     TEST_SECTION("Dropping onto the rows takes the tip down, since only the captions explain themselves");
-    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(TypeColumnX + 10, HeaderHeight / 2)));
-    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(10, HeaderHeight + 10)));
+    TreeView->OnMouseMove(MakeMoveEvent(FIntVector2(TypeColumnX + 10, HeaderHeight / 2)));
+    TreeView->OnMouseMove(MakeMoveEvent(FIntVector2(10, HeaderHeight + 10)));
 
     TEST_EXPECT(!ToolTips.IsPending());
 
     TEST_SECTION("Leaving the view takes the tip with it");
-    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(10, HeaderHeight / 2)));
+    TreeView->OnMouseMove(MakeMoveEvent(FIntVector2(10, HeaderHeight / 2)));
     TEST_EXPECT(ToolTips.IsPending());
 
-    TreeView->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    TreeView->OnMouseLeft(MakeMoveEvent(FIntVector2(400, 400)));
     TEST_EXPECT(!ToolTips.IsPending());
 
     TEST_SECTION("A view whose columns speak for themselves asks for nothing");
@@ -876,9 +876,9 @@ bool TreeViewHeaderToolTips_Test()
 
     TSharedPtr<FTreeView> BareView = FTreeView::Create(Desc);
     BareView->SetRootItems(CreateLeafRows(4));
-    LayoutElement(BareView, FRectangle(IntVector2(0, 0), ViewWidth, 100));
+    LayoutElement(BareView, FRectangle(FIntVector2(0, 0), ViewWidth, 100));
 
-    BareView->OnMouseMove(MakeMoveEvent(IntVector2(10, HeaderHeight / 2)));
+    BareView->OnMouseMove(MakeMoveEvent(FIntVector2(10, HeaderHeight / 2)));
 
     TEST_EXPECT(!ToolTips.IsPending());
 
@@ -914,10 +914,10 @@ bool TreeViewHoverAndRowClick_Test()
 
     TSharedPtr<FTreeView> TreeView = FTreeView::Create(Desc);
     TreeView->SetRootItems({ Assets, FTreeItem::Create("Scenes") });
-    LayoutElement(TreeView, FRectangle(IntVector2(0, 0), 200, 200));
+    LayoutElement(TreeView, FRectangle(FIntVector2(0, 0), 200, 200));
 
     const FFloatColor HoverFill = MakeTreeHoverFill(Desc.Style);
-    const IntVector2  FirstRow  = IntVector2(100, RowHeight / 2);
+    const FIntVector2 FirstRow  = FIntVector2(100, RowHeight / 2);
 
     TEST_SECTION("A hover fill stays after the roots are replaced without a further mouse move");
     TreeView->OnMouseMove(MakeMoveEvent(FirstRow));
@@ -930,7 +930,7 @@ bool TreeViewHoverAndRowClick_Test()
     const TArray<TSharedPtr<FTreeItem>> Rows = CreateLeafRows(20);
     TSharedPtr<FTreeView> ScrollView = FTreeView::Create(Desc);
     ScrollView->SetRootItems(Rows);
-    LayoutElement(ScrollView, FRectangle(IntVector2(0, 0), 200, 100));
+    LayoutElement(ScrollView, FRectangle(FIntVector2(0, 0), 200, 100));
 
     ScrollView->OnMouseMove(MakeMoveEvent(FirstRow));
     TEST_EXPECT(DrawsHoverForItem(ScrollView, Rows[0], HoverFill));
@@ -941,7 +941,7 @@ bool TreeViewHoverAndRowClick_Test()
 
     TEST_SECTION("A completed click on an expandable row opens it, not only a click on the arrow");
     const FRectangle LabelBounds = TreeView->GetItemLabelBounds(Assets);
-    const IntVector2 LabelClick(LabelBounds.Position.X + 8, LabelBounds.Position.Y + (LabelBounds.Height / 2));
+    const FIntVector2 LabelClick(LabelBounds.Position.X + 8, LabelBounds.Position.Y + (LabelBounds.Height / 2));
 
     TEST_EXPECT(!Assets->bIsExpanded);
     TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, LabelClick));
@@ -952,8 +952,8 @@ bool TreeViewHoverAndRowClick_Test()
     TEST_SECTION("A press that travels far enough to become a drag does not toggle expansion");
     const int32 CountBeforeDrag = ExpansionCount;
     TreeView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, LabelClick));
-    TreeView->OnMouseMove(MakeMoveEvent(IntVector2(LabelClick.X + FTreeView::DragThreshold + 1, LabelClick.Y)));
-    TreeView->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(LabelClick.X + FTreeView::DragThreshold + 1, LabelClick.Y)));
+    TreeView->OnMouseMove(MakeMoveEvent(FIntVector2(LabelClick.X + FTreeView::DragThreshold + 1, LabelClick.Y)));
+    TreeView->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(LabelClick.X + FTreeView::DragThreshold + 1, LabelClick.Y)));
     TEST_EXPECT_EQ(DragCount, 1);
     TEST_EXPECT_EQ(ExpansionCount, CountBeforeDrag);
     TEST_EXPECT(Assets->bIsExpanded);
@@ -976,11 +976,11 @@ bool TileViewLayout_Test()
     constexpr int32 ViewWidth   = 250;
     constexpr int32 ViewHeight  = 100;
 
-    const FRectangle Bounds(IntVector2(0, 0), ViewWidth, ViewHeight);
+    const FRectangle Bounds(FIntVector2(0, 0), ViewWidth, ViewHeight);
 
     FTileView::FDesc Desc;
     Desc.Font        = CreateFont();
-    Desc.TileSize    = IntVector2(TileSide, TileSide);
+    Desc.TileSize    = FIntVector2(TileSide, TileSide);
     Desc.TileSpacing = TileSpacing;
     Desc.IconSize    = 32;
 
@@ -996,7 +996,7 @@ bool TileViewLayout_Test()
     TEST_EXPECT_EQ(TileView->GetMaxScrollOffset(), 0);
 
     TEST_SECTION("Replacing the items drops the selection along with them");
-    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(25, 25)));
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(25, 25)));
     TEST_EXPECT_EQ(TileView->GetSelection().Size(), 1);
 
     TileView->SetItems(CreateTileItems(6));
@@ -1007,10 +1007,10 @@ bool TileViewLayout_Test()
     LayoutElement(TileView, Bounds);
 
     TEST_SECTION("The tiles wrap once the width runs out, which is four of them across here");
-    TileView->OnMouseMove(MakeMoveEvent(IntVector2(205, 25)));
+    TileView->OnMouseMove(MakeMoveEvent(FIntVector2(205, 25)));
     TEST_EXPECT_EQ(TileView->GetHoveredTile(), 3);
 
-    TileView->OnMouseMove(MakeMoveEvent(IntVector2(25, 85)));
+    TileView->OnMouseMove(MakeMoveEvent(FIntVector2(25, 85)));
     TEST_EXPECT_EQ(TileView->GetHoveredTile(), 4);
 
     TEST_SECTION("A second row of tiles overhangs the view, and that overhang is the range");
@@ -1018,12 +1018,12 @@ bool TileViewLayout_Test()
     TEST_EXPECT_EQ(TileView->GetMaxScrollOffset(), 10);
 
     TEST_SECTION("A wider tile re-flows the grid into fewer columns");
-    TileView->SetTileSize(IntVector2(110, TileSide));
+    TileView->SetTileSize(FIntVector2(110, TileSide));
     LayoutElement(TileView, Bounds);
 
     TEST_EXPECT_EQ(TileView->GetTileSize().X, 110);
 
-    TileView->OnMouseMove(MakeMoveEvent(IntVector2(55, 85)));
+    TileView->OnMouseMove(MakeMoveEvent(FIntVector2(55, 85)));
     TEST_EXPECT_EQ(TileView->GetHoveredTile(), 2);
 
     TEST_SECTION("The taller grid the re-flow leaves has a longer range to scroll");
@@ -1084,7 +1084,7 @@ bool TileViewSelection_Test()
 
     FTileView::FDesc Desc;
     Desc.Font               = CreateFont();
-    Desc.TileSize           = IntVector2(50, 50);
+    Desc.TileSize           = FIntVector2(50, 50);
     Desc.TileSpacing        = 10;
     Desc.IconSize           = 32;
     Desc.OnSelectionChanged = FOnTileSelectionChanged::CreateLambda([&](const TArray<int32>& SelectedIndices)
@@ -1101,10 +1101,10 @@ bool TileViewSelection_Test()
 
     TSharedPtr<FTileView> TileView = FTileView::Create(Desc);
     TileView->SetItems(CreateTileItems(8));
-    LayoutElement(TileView, FRectangle(IntVector2(0, 0), 250, 100));
+    LayoutElement(TileView, FRectangle(FIntVector2(0, 0), 250, 100));
 
     TEST_SECTION("A click takes the tile under it and reports which one that was");
-    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(85, 25)));
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(85, 25)));
 
     TEST_EXPECT_EQ(ChangeCount, 1);
     TEST_EXPECT_EQ(TileView->GetSelection().Size(), 1);
@@ -1114,21 +1114,21 @@ bool TileViewSelection_Test()
     TEST_EXPECT_EQ(LastSelection[0], 1);
 
     TEST_SECTION("A chord click adds a tile to the selection and a second one takes it back out");
-    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(145, 25), EModifierFlag::Ctrl));
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(145, 25), EModifierFlag::Ctrl));
 
     TEST_EXPECT_EQ(ChangeCount, 2);
     TEST_EXPECT_EQ(TileView->GetSelection().Size(), 2);
     TEST_EXPECT(TileView->IsSelected(1));
     TEST_EXPECT(TileView->IsSelected(2));
 
-    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(145, 25), EModifierFlag::Ctrl));
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(145, 25), EModifierFlag::Ctrl));
 
     TEST_EXPECT_EQ(ChangeCount, 3);
     TEST_EXPECT_EQ(TileView->GetSelection().Size(), 1);
     TEST_EXPECT(!TileView->IsSelected(2));
 
     TEST_SECTION("A shift click takes the whole run between the anchor and the tile clicked");
-    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(85, 85), EModifierFlag::Shift));
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(85, 85), EModifierFlag::Shift));
 
     TEST_EXPECT_EQ(ChangeCount, 4);
     TEST_EXPECT_EQ(TileView->GetSelection().Size(), 4);
@@ -1140,14 +1140,14 @@ bool TileViewSelection_Test()
     TEST_EXPECT_EQ(LastSelection.Size(), 4);
 
     TEST_SECTION("A click that lands on no tile at all drops the selection");
-    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(245, 25)));
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(245, 25)));
 
     TEST_EXPECT_EQ(ChangeCount, 5);
     TEST_EXPECT(TileView->GetSelection().IsEmpty());
     TEST_EXPECT(LastSelection.IsEmpty());
 
     TEST_SECTION("Dropping a selection reports it once, and dropping nothing reports nothing");
-    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(25, 25)));
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(25, 25)));
     TEST_EXPECT_EQ(ChangeCount, 6);
 
     TileView->ClearSelection();
@@ -1158,30 +1158,30 @@ bool TileViewSelection_Test()
     TEST_EXPECT_EQ(ChangeCount, 7);
 
     TEST_SECTION("A double click opens the tile under the cursor");
-    TileView->OnMouseDoubleClick(MakeButtonEvent(EInputEventType::MouseButtonDoubleClick, IntVector2(145, 85)));
+    TileView->OnMouseDoubleClick(MakeButtonEvent(EInputEventType::MouseButtonDoubleClick, FIntVector2(145, 85)));
 
     TEST_EXPECT_EQ(ActivationCount, 1);
     TEST_EXPECT_EQ(LastActivated, 6);
 
     TEST_SECTION("A double click away from every tile opens nothing");
-    TEST_EXPECT(!TileView->OnMouseDoubleClick(MakeButtonEvent(EInputEventType::MouseButtonDoubleClick, IntVector2(245, 25))).IsEventHandled());
+    TEST_EXPECT(!TileView->OnMouseDoubleClick(MakeButtonEvent(EInputEventType::MouseButtonDoubleClick, FIntVector2(245, 25))).IsEventHandled());
     TEST_EXPECT_EQ(ActivationCount, 1);
 
     TEST_SECTION("The hover follows the cursor from tile to tile");
-    TileView->OnMouseMove(MakeMoveEvent(IntVector2(25, 25)));
+    TileView->OnMouseMove(MakeMoveEvent(FIntVector2(25, 25)));
     TEST_EXPECT_EQ(TileView->GetHoveredTile(), 0);
 
-    TileView->OnMouseMove(MakeMoveEvent(IntVector2(205, 85)));
+    TileView->OnMouseMove(MakeMoveEvent(FIntVector2(205, 85)));
     TEST_EXPECT_EQ(TileView->GetHoveredTile(), 7);
 
     TEST_SECTION("The hover is dropped where there is no tile, and dropped again once the cursor leaves");
-    TileView->OnMouseMove(MakeMoveEvent(IntVector2(245, 25)));
+    TileView->OnMouseMove(MakeMoveEvent(FIntVector2(245, 25)));
     TEST_EXPECT_EQ(TileView->GetHoveredTile(), FTileView::InvalidTileIndex);
 
-    TileView->OnMouseMove(MakeMoveEvent(IntVector2(25, 25)));
+    TileView->OnMouseMove(MakeMoveEvent(FIntVector2(25, 25)));
     TEST_EXPECT_EQ(TileView->GetHoveredTile(), 0);
 
-    TileView->OnMouseLeft(MakeMoveEvent(IntVector2(900, 900)));
+    TileView->OnMouseLeft(MakeMoveEvent(FIntVector2(900, 900)));
     TEST_EXPECT_EQ(TileView->GetHoveredTile(), FTileView::InvalidTileIndex);
 
     TEST_END();
@@ -1199,7 +1199,7 @@ bool TileViewDrag_Test()
 
     FTileView::FDesc Desc;
     Desc.Font        = CreateFont();
-    Desc.TileSize    = IntVector2(TileSide, TileSide);
+    Desc.TileSize    = FIntVector2(TileSide, TileSide);
     Desc.TileSpacing = TileSpacing;
     Desc.IconSize    = 32;
     Desc.OnDragDetected.BindLambda([&](int32 Index, const FCursorEvent&)
@@ -1210,7 +1210,7 @@ bool TileViewDrag_Test()
 
     TSharedPtr<FTileView> TileView = FTileView::Create(Desc);
     TileView->SetItems(CreateTileItems(8));
-    LayoutElement(TileView, FRectangle(IntVector2(0, 0), 250, 100));
+    LayoutElement(TileView, FRectangle(FIntVector2(0, 0), 250, 100));
 
     TEST_SECTION("Where a tile sits is the grid position it was laid out at");
     const FRectangle FirstTile = TileView->GetTileBounds(0);
@@ -1228,43 +1228,43 @@ bool TileViewDrag_Test()
     TEST_EXPECT_EQ(TileView->GetTileBounds(99).Width, 0);
 
     TEST_SECTION("Moving without a press behind it is not a drag");
-    TileView->OnMouseMove(MakeMoveEvent(IntVector2(200, 80)));
+    TileView->OnMouseMove(MakeMoveEvent(FIntVector2(200, 80)));
     TEST_EXPECT_EQ(DragCount, 0);
 
     TEST_SECTION("A press followed by a move short of the threshold is still a click");
-    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(25, 25)));
-    TileView->OnMouseMove(MakeMoveEvent(IntVector2(25 + FTileView::DragThreshold, 25)));
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(25, 25)));
+    TileView->OnMouseMove(MakeMoveEvent(FIntVector2(25 + FTileView::DragThreshold, 25)));
     TEST_EXPECT_EQ(DragCount, 0);
 
     TEST_SECTION("One pixel past the threshold turns the press into a drag of the tile it started on");
-    TEST_EXPECT(TileView->OnMouseMove(MakeMoveEvent(IntVector2(25 + FTileView::DragThreshold + 1, 25))).IsEventHandled());
+    TEST_EXPECT(TileView->OnMouseMove(MakeMoveEvent(FIntVector2(25 + FTileView::DragThreshold + 1, 25))).IsEventHandled());
     TEST_EXPECT_EQ(DragCount, 1);
     TEST_EXPECT_EQ(DraggedTile, 0);
 
     TEST_SECTION("The drag is raised once, not again for every move that follows");
-    TileView->OnMouseMove(MakeMoveEvent(IntVector2(145, 85)));
+    TileView->OnMouseMove(MakeMoveEvent(FIntVector2(145, 85)));
     TEST_EXPECT_EQ(DragCount, 1);
 
     TEST_SECTION("Releasing the button drops the press, so a later move is not a drag");
-    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(85, 25)));
-    TileView->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(85, 25)));
-    TileView->OnMouseMove(MakeMoveEvent(IntVector2(205, 85)));
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(85, 25)));
+    TileView->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(85, 25)));
+    TileView->OnMouseMove(MakeMoveEvent(FIntVector2(205, 85)));
     TEST_EXPECT_EQ(DragCount, 1);
 
     TEST_SECTION("A press that lands on no tile has nothing to drag");
-    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(245, 25)));
-    TileView->OnMouseMove(MakeMoveEvent(IntVector2(145, 85)));
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(245, 25)));
+    TileView->OnMouseMove(MakeMoveEvent(FIntVector2(145, 85)));
     TEST_EXPECT_EQ(DragCount, 1);
 
     TEST_SECTION("The cursor leaving drops the press along with the hover");
-    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(25, 25)));
-    TileView->OnMouseLeft(MakeMoveEvent(IntVector2(900, 900)));
-    TileView->OnMouseMove(MakeMoveEvent(IntVector2(145, 85)));
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(25, 25)));
+    TileView->OnMouseLeft(MakeMoveEvent(FIntVector2(900, 900)));
+    TileView->OnMouseMove(MakeMoveEvent(FIntVector2(145, 85)));
     TEST_EXPECT_EQ(DragCount, 1);
 
     TEST_SECTION("A drag that starts on the second tile reports that tile");
-    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(85, 25)));
-    TileView->OnMouseMove(MakeMoveEvent(IntVector2(85, 60)));
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(85, 25)));
+    TileView->OnMouseMove(MakeMoveEvent(FIntVector2(85, 60)));
     TEST_EXPECT_EQ(DragCount, 2);
     TEST_EXPECT_EQ(DraggedTile, 1);
 

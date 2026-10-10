@@ -74,11 +74,11 @@ void FSpinBox::Initialize(const FDesc& Desc)
     SetContent(Label);
 }
 
-IntVector2 FSpinBox::ComputeDesiredSize() const
+FIntVector2 FSpinBox::ComputeDesiredSize() const
 {
-    IntVector2 DesiredSize = FCompoundElement::ComputeDesiredSize();
-    DesiredSize.X          = Math::Max(DesiredSize.X, MinWidth);
-    DesiredSize.Y          = Math::Max(DesiredSize.Y, MinHeight);
+    FIntVector2 DesiredSize = FCompoundElement::ComputeDesiredSize();
+    DesiredSize.X           = Math::Max(DesiredSize.X, MinWidth);
+    DesiredSize.Y           = Math::Max(DesiredSize.Y, MinHeight);
     return DesiredSize;
 }
 

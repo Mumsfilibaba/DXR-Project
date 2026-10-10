@@ -193,7 +193,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
@@ -282,7 +282,7 @@ public:
      * @param ClientPosition The position to test, in the client space the view was arranged in.
      * @return The item, or null when the point falls outside the view or below the last row.
      */
-    NODISCARD TSharedPtr<FTreeItem> FindItemAt(const IntVector2& ClientPosition) const;
+    NODISCARD TSharedPtr<FTreeItem> FindItemAt(const FIntVector2& ClientPosition) const;
 
     /**
      * @brief Gets the rectangle an item's row covers, which is what a host overlays something on a row with.
@@ -336,14 +336,14 @@ public:
 
 protected:
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
-    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+    virtual void HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath) override;
 
 private:
     static constexpr int32 InvalidRowIndex = TArray<TSharedPtr<FTreeItem>>::InvalidIndex;
 
     static void SetSubtreeExpanded(const TArray<TSharedPtr<FTreeItem>>& Items, bool bExpanded);
 
-    NODISCARD const FString* FindHeaderToolTip(const IntVector2& ClientPosition) const;    
+    NODISCARD const FString* FindHeaderToolTip(const FIntVector2& ClientPosition) const;    
     NODISCARD bool MatchesFilterText(const FTreeItem& Item) const;
     bool MarkFilterMatches(FTreeItem& Item) const;
     NODISCARD bool IsAncestorOfSelection(const TSharedPtr<FTreeItem>& Item) const;
@@ -354,7 +354,7 @@ private:
     NODISCARD FRectangle ComputeDisclosureBounds(const FRectangle& RowBounds, int32 Depth) const;
     NODISCARD int32 ComputeRowExtent(const TSharedPtr<FTreeItem>& Item) const;
     NODISCARD int32 ComputeLabelStartX(const FRectangle& RowBounds, const TSharedPtr<FTreeItem>& Item) const;
-    NODISCARD int32 FindRowAt(const IntVector2& ClientPosition) const;
+    NODISCARD int32 FindRowAt(const FIntVector2& ClientPosition) const;
     NODISCARD int32 FindRowIndex(const TSharedPtr<FTreeItem>& Item) const;
     NODISCARD int32 GetCurrentRowIndex() const;
     NODISCARD int32 GetMaxScrollOffset() const;
@@ -391,8 +391,8 @@ private:
     FString                               LabelColumnToolTip;
     TArray<FString>                       TypeColumnToolTips;
     TArray<int32>                         TypeColumnToolTipSplits;
-    IntVector2                            PressPosition;
-    IntVector2                            LastCursorPosition;
+    FIntVector2                           PressPosition;
+    FIntVector2                           LastCursorPosition;
     int32                                 ArrowSize;
     int32                                 TypeColumnWidth;
     int32                                 HeaderHeight;

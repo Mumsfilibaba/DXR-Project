@@ -57,7 +57,7 @@ bool TextLayoutBasics_Test()
     TEST_EXPECT(Layout.GetLines().IsEmpty());
     TEST_EXPECT(Layout.GetRuns().IsEmpty());
     TEST_EXPECT_EQ(Layout.GetCharacterCount(), 0);
-    TEST_EXPECT(Layout.GetSize() == IntVector2(0, 0));
+    TEST_EXPECT(Layout.GetSize() == FIntVector2(0, 0));
 
     TEST_SECTION("Laying out no text still leaves one line, so a caret has somewhere to sit");
     Layout.WrapToWidth(0);
@@ -71,7 +71,7 @@ bool TextLayoutBasics_Test()
 
     TEST_EXPECT_EQ(Layout.GetLines().Size(), 1);
     TEST_EXPECT_EQ(Layout.GetRuns().Size(), 1);
-    TEST_EXPECT(Layout.GetSize() == IntVector2(5 * GAdvance, GLineHeight));
+    TEST_EXPECT(Layout.GetSize() == FIntVector2(5 * GAdvance, GLineHeight));
     TEST_EXPECT_EQ(Layout.GetLines()[0].Width, 5 * GAdvance);
     TEST_EXPECT_EQ(Layout.GetLines()[0].Height, GLineHeight);
     TEST_EXPECT_EQ(Layout.GetLines()[0].Baseline, Font->GetAscent());
@@ -83,7 +83,7 @@ bool TextLayoutBasics_Test()
     TEST_EXPECT_EQ(Layout.GetLines().Size(), 1);
     TEST_EXPECT_EQ(Layout.GetRuns().Size(), 2);
     TEST_EXPECT_EQ(Layout.GetLines()[0].RunCount, 2);
-    TEST_EXPECT(Layout.GetSize() == IntVector2(11 * GAdvance, GLineHeight));
+    TEST_EXPECT(Layout.GetSize() == FIntVector2(11 * GAdvance, GLineHeight));
 
     TEST_SECTION("Each run keeps its own color rather than the last one winning");
     TEST_EXPECT(Layout.GetRuns()[0].Tint == FFloatColor::White);
@@ -96,7 +96,7 @@ bool TextLayoutBasics_Test()
     TEST_SECTION("Appending after a layout drops it, so a stale line count is never read back");
     Layout.AppendRun(FTextRun(FString("!"), Font.Get(), FFloatColor::White));
     TEST_EXPECT(Layout.GetLines().IsEmpty());
-    TEST_EXPECT(Layout.GetSize() == IntVector2(0, 0));
+    TEST_EXPECT(Layout.GetSize() == FIntVector2(0, 0));
 
     TEST_SECTION("A run with no face measures to nothing but still counts as text");
     FTextLayout FacelessLayout;
@@ -128,7 +128,7 @@ bool TextLayoutNewlines_Test()
     Layout.WrapToWidth(0);
 
     TEST_EXPECT_EQ(Layout.GetLines().Size(), 2);
-    TEST_EXPECT(Layout.GetSize() == IntVector2(GAdvance, 2 * GLineHeight));
+    TEST_EXPECT(Layout.GetSize() == FIntVector2(GAdvance, 2 * GLineHeight));
     TEST_EXPECT(LineText(Layout, 0) == "A");
     TEST_EXPECT(LineText(Layout, 1) == "B");
 
@@ -276,20 +276,20 @@ bool TextLayoutHitTesting_Test()
     Layout.WrapToWidth(0);
 
     TEST_SECTION("A click at the start lands on the first character");
-    TEST_EXPECT_EQ(Layout.FindCharacterIndexAt(IntVector2(0, 0)), 0);
+    TEST_EXPECT_EQ(Layout.FindCharacterIndexAt(FIntVector2(0, 0)), 0);
 
     TEST_SECTION("A click inside a run lands on the character under it");
-    TEST_EXPECT_EQ(Layout.FindCharacterIndexAt(IntVector2(3 * GAdvance, 0)), 3);
+    TEST_EXPECT_EQ(Layout.FindCharacterIndexAt(FIntVector2(3 * GAdvance, 0)), 3);
 
     TEST_SECTION("A click on the second run resolves through the run it landed in");
-    TEST_EXPECT_EQ(Layout.FindCharacterIndexAt(IntVector2(5 * GAdvance, 0)), 5);
-    TEST_EXPECT_EQ(Layout.FindCharacterIndexAt(IntVector2(8 * GAdvance, 0)), 8);
+    TEST_EXPECT_EQ(Layout.FindCharacterIndexAt(FIntVector2(5 * GAdvance, 0)), 5);
+    TEST_EXPECT_EQ(Layout.FindCharacterIndexAt(FIntVector2(8 * GAdvance, 0)), 8);
 
     TEST_SECTION("A click past the end of the text lands after the last character");
-    TEST_EXPECT_EQ(Layout.FindCharacterIndexAt(IntVector2(1000, 0)), Layout.GetCharacterCount());
+    TEST_EXPECT_EQ(Layout.FindCharacterIndexAt(FIntVector2(1000, 0)), Layout.GetCharacterCount());
 
     TEST_SECTION("A click below the last line stays on it rather than running off the end");
-    TEST_EXPECT_EQ(Layout.FindCharacterIndexAt(IntVector2(0, 1000)), 0);
+    TEST_EXPECT_EQ(Layout.FindCharacterIndexAt(FIntVector2(0, 1000)), 0);
 
     TEST_SECTION("Every character can be found again from the left edge of its own box");
     for (int32 Index = 0; Index < Layout.GetCharacterCount(); ++Index)
@@ -302,11 +302,11 @@ bool TextLayoutHitTesting_Test()
     const FRectangle FirstBounds = Layout.GetCharacterBounds(0);
     TEST_EXPECT_EQ(FirstBounds.Width, GAdvance);
     TEST_EXPECT_EQ(FirstBounds.Height, GLineHeight);
-    TEST_EXPECT(FirstBounds.Position == IntVector2(0, 0));
+    TEST_EXPECT(FirstBounds.Position == FIntVector2(0, 0));
 
     TEST_SECTION("The boxes march across the line in order");
-    TEST_EXPECT(Layout.GetCharacterBounds(1).Position == IntVector2(GAdvance, 0));
-    TEST_EXPECT(Layout.GetCharacterBounds(5).Position == IntVector2(5 * GAdvance, 0));
+    TEST_EXPECT(Layout.GetCharacterBounds(1).Position == FIntVector2(GAdvance, 0));
+    TEST_EXPECT(Layout.GetCharacterBounds(5).Position == FIntVector2(5 * GAdvance, 0));
 
     TEST_SECTION("The position one past the end is a caret rather than a character, so it has no width");
     const FRectangle EndBounds = Layout.GetCharacterBounds(Layout.GetCharacterCount());
@@ -322,11 +322,11 @@ bool TextLayoutHitTesting_Test()
     MultiLineLayout.WrapToWidth(0);
 
     TEST_SECTION("A click on the second line resolves against that line's own runs");
-    TEST_EXPECT_EQ(MultiLineLayout.FindCharacterIndexAt(IntVector2(0, GLineHeight)), 6);
-    TEST_EXPECT_EQ(MultiLineLayout.FindCharacterIndexAt(IntVector2(2 * GAdvance, GLineHeight)), 8);
+    TEST_EXPECT_EQ(MultiLineLayout.FindCharacterIndexAt(FIntVector2(0, GLineHeight)), 6);
+    TEST_EXPECT_EQ(MultiLineLayout.FindCharacterIndexAt(FIntVector2(2 * GAdvance, GLineHeight)), 8);
 
     TEST_SECTION("A character on the second line is drawn one line down");
-    TEST_EXPECT(MultiLineLayout.GetCharacterBounds(6).Position == IntVector2(0, GLineHeight));
+    TEST_EXPECT(MultiLineLayout.GetCharacterBounds(6).Position == FIntVector2(0, GLineHeight));
 
     TEST_SECTION("The line index follows the break");
     TEST_EXPECT_EQ(MultiLineLayout.FindLineIndexForCharacter(0), 0);
@@ -336,7 +336,7 @@ bool TextLayoutHitTesting_Test()
 
     TEST_SECTION("Hit testing an empty layout is answerable rather than out of range");
     FTextLayout EmptyLayout;
-    TEST_EXPECT_EQ(EmptyLayout.FindCharacterIndexAt(IntVector2(50, 50)), 0);
+    TEST_EXPECT_EQ(EmptyLayout.FindCharacterIndexAt(FIntVector2(50, 50)), 0);
     TEST_EXPECT_EQ(EmptyLayout.FindLineIndexForCharacter(0), 0);
 
     TEST_END();
@@ -353,7 +353,7 @@ bool TextLayoutDraw_Test()
     EmptyLayout.WrapToWidth(0);
 
     FDrawCommandList EmptyList;
-    EmptyLayout.Draw(FDrawGeometry(FRectangle(IntVector2(0, 0), 100, 20), 1.0f), EmptyList, 0);
+    EmptyLayout.Draw(FDrawGeometry(FRectangle(FIntVector2(0, 0), 100, 20), 1.0f), EmptyList, 0);
     TEST_EXPECT_EQ(EmptyList.CountCommandsOfType(EDrawCommandType::Text), 0);
 
     FTextLayout Layout;
@@ -367,7 +367,7 @@ bool TextLayoutDraw_Test()
 
     TEST_SECTION("Each run becomes one text command");
     FDrawCommandList CommandList;
-    const int32 HighestLayer = Layout.Draw(FDrawGeometry(FRectangle(IntVector2(10, 20), 200, 40), 1.0f), CommandList, 3);
+    const int32 HighestLayer = Layout.Draw(FDrawGeometry(FRectangle(FIntVector2(10, 20), 200, 40), 1.0f), CommandList, 3);
 
     TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::Text), 2);
 
@@ -398,8 +398,8 @@ bool TextLayoutDraw_Test()
 
     if (TextIndex != FDrawCommandList::InvalidIndex && SecondIndex != FDrawCommandList::InvalidIndex)
     {
-        TEST_EXPECT(CommandList[TextIndex].Bounds.Position == IntVector2(10, 20));
-        TEST_EXPECT(CommandList[SecondIndex].Bounds.Position == IntVector2(10 + (5 * GAdvance), 20));
+        TEST_EXPECT(CommandList[TextIndex].Bounds.Position == FIntVector2(10, 20));
+        TEST_EXPECT(CommandList[SecondIndex].Bounds.Position == FIntVector2(10 + (5 * GAdvance), 20));
         TEST_EXPECT_EQ(CommandList[SecondIndex].Bounds.Width, 6 * GAdvance);
     }
 
@@ -416,7 +416,7 @@ bool TextLayoutDraw_Test()
     MultiLineLayout.WrapToWidth(0);
 
     FDrawCommandList MultiLineList;
-    MultiLineLayout.Draw(FDrawGeometry(FRectangle(IntVector2(0, 0), 200, 40), 1.0f), MultiLineList, 0);
+    MultiLineLayout.Draw(FDrawGeometry(FRectangle(FIntVector2(0, 0), 200, 40), 1.0f), MultiLineList, 0);
 
     const int32 FirstLineIndex  = MultiLineList.FindTextCommand(FStringView("one"));
     const int32 SecondLineIndex = MultiLineList.FindTextCommand(FStringView("two"));
@@ -426,8 +426,8 @@ bool TextLayoutDraw_Test()
 
     if (FirstLineIndex != FDrawCommandList::InvalidIndex && SecondLineIndex != FDrawCommandList::InvalidIndex)
     {
-        TEST_EXPECT(MultiLineList[FirstLineIndex].Bounds.Position == IntVector2(0, 0));
-        TEST_EXPECT(MultiLineList[SecondLineIndex].Bounds.Position == IntVector2(0, GLineHeight));
+        TEST_EXPECT(MultiLineList[FirstLineIndex].Bounds.Position == FIntVector2(0, 0));
+        TEST_EXPECT(MultiLineList[SecondLineIndex].Bounds.Position == FIntVector2(0, GLineHeight));
     }
 
     TEST_END();

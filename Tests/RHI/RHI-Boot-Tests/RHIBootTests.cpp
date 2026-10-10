@@ -2358,8 +2358,8 @@ static bool ProbeDefaultResourcesAndClears()
         {
             auto Record = [&RenderTarget](FRHICommandList& CommandList)
             {
-                CommandList.ClearRenderTargetView(RenderTarget->GetRenderTargetView(), Vector4(0.0f, 0.0f, 1.0f, 1.0f));
-                CommandList.ClearRenderTargetView(RenderTarget->GetRenderTargetView(), Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+                CommandList.ClearRenderTargetView(RenderTarget->GetRenderTargetView(), FVector4(0.0f, 0.0f, 1.0f, 1.0f));
+                CommandList.ClearRenderTargetView(RenderTarget->GetRenderTargetView(), FVector4(1.0f, 0.0f, 0.0f, 1.0f));
             };
 
             uint8 Pixel[4] = {};
@@ -2379,7 +2379,7 @@ static bool ProbeDefaultResourcesAndClears()
         {
             auto Record = [&RenderTarget](FRHICommandList& CommandList)
             {
-                CommandList.ClearRenderTargetView(RenderTarget->GetRenderTargetView(), Vector4(0.0f, 1.0f, 0.0f, 1.0f));
+                CommandList.ClearRenderTargetView(RenderTarget->GetRenderTargetView(), FVector4(0.0f, 1.0f, 0.0f, 1.0f));
 
                 FRHIBeginRenderPassDesc::FRenderTargetAttachments Attachments;
                 Attachments[0] = FRHIRenderTargetAttachment(RenderTarget->GetRenderTargetView(), EAttachmentLoadAction::Load, EAttachmentStoreAction::Store);
@@ -2553,7 +2553,7 @@ static FRHIGeometryAccelerationStructureBuildDesc GetProbeGeometryBuildDesc(cons
 
 static FRHIGeometryAccelerationStructureInstance MakeProbeInstance(FRHIGeometryAccelerationStructure* Geometry, uint32 InstanceIndex, float OffsetX)
 {
-    const Matrix3x4 Transform(
+    const FMatrix3x4 Transform(
         1.0f, 0.0f, 0.0f, OffsetX,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f);
@@ -4537,7 +4537,7 @@ static bool ProbeMetalParityGaps()
             {
                 FRHICommandList CommandList;
                 CommandList.DiscardContents(RenderTarget.Get());
-                CommandList.ClearRenderTargetView(RenderTarget->GetRenderTargetView(), Vector4(0.0f, 0.0f, 1.0f, 1.0f));
+                CommandList.ClearRenderTargetView(RenderTarget->GetRenderTargetView(), FVector4(0.0f, 0.0f, 1.0f, 1.0f));
                 BootRecordFullscreenPass(CommandList, RenderTarget.Get(), EAttachmentLoadAction::Load, FFloatColor(), nullptr);
                 TEST_EXPECT(BootSubmitAndWait(CommandList));
 
@@ -4629,7 +4629,7 @@ static bool ProbeMetalParityGaps()
         {
             FRHICommandList CommandList;
             CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Cube.Get(), ERHIResourceState::Common, ERHIResourceState::UnorderedAccess));
-            CommandList.ClearUnorderedAccessViewFloat(Cube->GetUnorderedAccessView(), Vector4(0.0f, 0.0f, 1.0f, 1.0f));
+            CommandList.ClearUnorderedAccessViewFloat(Cube->GetUnorderedAccessView(), FVector4(0.0f, 0.0f, 1.0f, 1.0f));
             TEST_EXPECT(BootSubmitAndWait(CommandList));
 
             uint8 Pixel[4] = {};

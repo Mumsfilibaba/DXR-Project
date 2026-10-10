@@ -96,9 +96,9 @@ void FColorPicker::Initialize(const FDesc& Desc)
     SetColor(Desc.Color);
 }
 
-IntVector2 FColorPicker::ComputeDesiredSize() const
+FIntVector2 FColorPicker::ComputeDesiredSize() const
 {
-    return IntVector2(SquareExtent + Spacing + HueBarWidth, SquareExtent);
+    return FIntVector2(SquareExtent + Spacing + HueBarWidth, SquareExtent);
 }
 
 int32 FColorPicker::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -113,7 +113,7 @@ int32 FColorPicker::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
     {
         const float Fraction = static_cast<float>(OffsetX) / static_cast<float>(Math::Max(1, Square.Width - 1));
 
-        const FRectangle Band(IntVector2(Square.Position.X + OffsetX, Square.Position.Y), Math::Min(COLOR_PICKER_BAND_WIDTH, Square.Width - OffsetX), Square.Height);
+        const FRectangle Band(FIntVector2(Square.Position.X + OffsetX, Square.Position.Y), Math::Min(COLOR_PICKER_BAND_WIDTH, Square.Width - OffsetX), Square.Height);
         OutCommandList.AddBox(LayerId, Band, FFloatColor(1.0f, 1.0f, 1.0f, 1.0f - Fraction));
     }
 
@@ -121,7 +121,7 @@ int32 FColorPicker::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
     {
         const float Fraction = static_cast<float>(OffsetY) / static_cast<float>(Math::Max(1, Square.Height - 1));
 
-        const FRectangle Band(IntVector2(Square.Position.X, Square.Position.Y + OffsetY), Square.Width, Math::Min(COLOR_PICKER_BAND_WIDTH, Square.Height - OffsetY));
+        const FRectangle Band(FIntVector2(Square.Position.X, Square.Position.Y + OffsetY), Square.Width, Math::Min(COLOR_PICKER_BAND_WIDTH, Square.Height - OffsetY));
         OutCommandList.AddBox(LayerId, Band, FFloatColor(0.0f, 0.0f, 0.0f, Fraction));
     }
 
@@ -131,13 +131,13 @@ int32 FColorPicker::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
     {
         const float Fraction = static_cast<float>(OffsetY) / static_cast<float>(Math::Max(1, HueBar.Height - 1));
 
-        const FRectangle Band(IntVector2(HueBar.Position.X, HueBar.Position.Y + OffsetY), HueBar.Width, Math::Min(COLOR_PICKER_BAND_WIDTH, HueBar.Height - OffsetY));
+        const FRectangle Band(FIntVector2(HueBar.Position.X, HueBar.Position.Y + OffsetY), HueBar.Width, Math::Min(COLOR_PICKER_BAND_WIDTH, HueBar.Height - OffsetY));
         OutCommandList.AddBox(LayerId, Band, MakeColorFromHSV(Fraction, 1.0f, 1.0f));
     }
 
     OutCommandList.AddBoxOutline(LayerId, HueBar, Style.Colors.InputFieldBorder, Style.Metrics.BorderThickness);
 
-    const Vector2 Crosshair(
+    const FVector2 Crosshair(
         static_cast<float>(Square.Position.X) + (Saturation * static_cast<float>(Square.Width)),
         static_cast<float>(Square.Position.Y) + ((1.0f - Brightness) * static_cast<float>(Square.Height)));
 
@@ -146,7 +146,7 @@ int32 FColorPicker::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
 
     const int32 MarkerY = HueBar.Position.Y + static_cast<int32>(Hue * static_cast<float>(HueBar.Height)) - (COLOR_PICKER_HUE_MARKER_HEIGHT / 2);
 
-    const FRectangle Marker(IntVector2(HueBar.Position.X, MarkerY), HueBar.Width, COLOR_PICKER_HUE_MARKER_HEIGHT);
+    const FRectangle Marker(FIntVector2(HueBar.Position.X, MarkerY), HueBar.Width, COLOR_PICKER_HUE_MARKER_HEIGHT);
     OutCommandList.AddBoxOutline(LayerId, Marker, FFloatColor::White, 1.0f);
 
     return LayerId;
@@ -197,10 +197,10 @@ FRectangle FColorPicker::GetSquareRectangle(const FRectangle& Bounds) const
 FRectangle FColorPicker::GetHueBarRectangle(const FRectangle& Bounds) const
 {
     const FRectangle Square = GetSquareRectangle(Bounds);
-    return FRectangle(IntVector2(Square.GetRight() + Spacing, Bounds.Position.Y), HueBarWidth, Square.Height);
+    return FRectangle(FIntVector2(Square.GetRight() + Spacing, Bounds.Position.Y), HueBarWidth, Square.Height);
 }
 
-void FColorPicker::ApplyCursor(const IntVector2& ClientPosition)
+void FColorPicker::ApplyCursor(const FIntVector2& ClientPosition)
 {
     const FRectangle Bounds = GetContentRectangle();
 

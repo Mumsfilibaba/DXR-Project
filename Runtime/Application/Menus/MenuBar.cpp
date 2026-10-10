@@ -24,11 +24,11 @@ FMenuBarButton::FMenuBarButton()
 
 FMenuBarButton::~FMenuBarButton() = default;
 
-IntVector2 FMenuBarButton::ComputeDesiredSize() const
+FIntVector2 FMenuBarButton::ComputeDesiredSize() const
 {
     const FMargin& Inset = GetPadding();
 
-    IntVector2 DesiredSize(Inset.GetTotalHorizontal(), Inset.GetTotalVertical());
+    FIntVector2 DesiredSize(Inset.GetTotalHorizontal(), Inset.GetTotalVertical());
     if (Font)
     {
         DesiredSize.X += Font->MeasureWidth(FStringView(Label.Data(), Label.Length()));
@@ -122,10 +122,10 @@ void FMenuBar::Initialize()
     SetContent(Panel);
 }
 
-IntVector2 FMenuBar::ComputeDesiredSize() const
+FIntVector2 FMenuBar::ComputeDesiredSize() const
 {
-    IntVector2 DesiredSize = FCompoundElement::ComputeDesiredSize();
-    DesiredSize.Y          = Math::Max(DesiredSize.Y, Style.Height);
+    FIntVector2 DesiredSize = FCompoundElement::ComputeDesiredSize();
+    DesiredSize.Y           = Math::Max(DesiredSize.Y, Style.Height);
     return DesiredSize;
 }
 

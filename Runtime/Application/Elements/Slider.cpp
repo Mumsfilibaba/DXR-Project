@@ -48,7 +48,7 @@ void FSlider::Initialize(const FDesc& Desc)
     Value = Range.Sanitize(Desc.Value);
 }
 
-IntVector2 FSlider::ComputeDesiredSize() const
+FIntVector2 FSlider::ComputeDesiredSize() const
 {
     int32 Breadth = Math::Max(HandleSize, TrackThickness);
     if (bShowValueText && Font && Orientation == EOrientation::Horizontal)
@@ -56,7 +56,7 @@ IntVector2 FSlider::ComputeDesiredSize() const
         Breadth += VALUE_TEXT_SPACING + Font->GetCapHeight() + Font->GetDescent();
     }
 
-    return Orientation == EOrientation::Horizontal ? IntVector2(MinLength, Breadth) : IntVector2(Breadth, MinLength);
+    return Orientation == EOrientation::Horizontal ? FIntVector2(MinLength, Breadth) : FIntVector2(Breadth, MinLength);
 }
 
 int32 FSlider::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -111,7 +111,7 @@ int32 FSlider::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
         const int32   TextX     = AllottedGeometry.Bounds.Position.X + ((AllottedGeometry.Bounds.Width - TextWidth) / 2);
         const int32   TextY     = TrackArea.GetBottom() + VALUE_TEXT_SPACING - CapInset;
 
-        const FRectangle TextBounds(IntVector2(TextX, TextY), TextWidth, Font->GetTextBandHeight());
+        const FRectangle TextBounds(FIntVector2(TextX, TextY), TextWidth, Font->GetTextBandHeight());
 
         OutCommandList.AddText(LayerId + 1, TextBounds, Text, Font.Get(), Style.GetTextColor(State));
         return LayerId + 1;
@@ -241,7 +241,7 @@ void FSlider::ApplyValue(float InValue)
     OnValueChangedDelegate.ExecuteIfBound(Value);
 }
 
-void FSlider::SetValueFromPosition(const IntVector2& ClientPosition)
+void FSlider::SetValueFromPosition(const FIntVector2& ClientPosition)
 {
     const FRectangle Track = GetTrackBounds();
 

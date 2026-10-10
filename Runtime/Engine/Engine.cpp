@@ -178,9 +178,9 @@ bool FEngine::CreateSceneViewport()
     return true;
 }
 
-IntVector2 FEngine::GetSceneRenderSize() const
+FIntVector2 FEngine::GetSceneRenderSize() const
 {
-    return EngineWindow ? EngineWindow->GetSize() : IntVector2(0, 0);
+    return EngineWindow ? EngineWindow->GetSize() : FIntVector2(0, 0);
 }
 
 void FEngine::SetSceneRenderTarget(const FRHITextureRef& InViewportImage)
@@ -193,7 +193,7 @@ void FEngine::SetSceneRenderTarget(const FRHITextureRef& InViewportImage)
 
 bool FEngine::CreateViewportRenderTarget()
 {
-    const IntVector2 Size = GetSceneRenderSize();
+    const FIntVector2 Size = GetSceneRenderSize();
     if (Size.X == 0 || Size.Y == 0)
     {
         return ViewportImage != nullptr;
@@ -227,7 +227,7 @@ bool FEngine::CreateViewportRenderTarget()
 
 void FEngine::UpdateViewportRenderTarget(float DeltaTime)
 {
-    const IntVector2 RenderSize = GetSceneRenderSize();
+    const FIntVector2 RenderSize = GetSceneRenderSize();
     if (RenderSize == ViewportImageSize)
     {
         PendingViewportImageSize = RenderSize;
@@ -264,11 +264,11 @@ void FEngine::OnEngineWindowClosed()
     RequestEngineExit("Window Closed");
 }
 
-void FEngine::OnEngineWindowMoved(const IntVector2& /* NewScreenPosition */)
+void FEngine::OnEngineWindowMoved(const FIntVector2& /* NewScreenPosition */)
 {
 }
 
-void FEngine::OnEngineWindowResized(const IntVector2& /* NewScreenSize */)
+void FEngine::OnEngineWindowResized(const FIntVector2& /* NewScreenSize */)
 {
 }
 

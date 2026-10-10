@@ -124,7 +124,7 @@ public:
     virtual ~FToolBarButton();
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;

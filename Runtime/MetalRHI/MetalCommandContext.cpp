@@ -296,7 +296,7 @@ void* FMetalCommandContext::GetRHINativeCommandList()
     return nullptr;
 }
 
-void FMetalCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const Vector4& ClearColor)
+void FMetalCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor)
 {
     SCOPED_AUTORELEASE_POOL();
 
@@ -336,7 +336,7 @@ void FMetalCommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthSten
     Encoders.AddPendingClear(DepthAttachment, Clear);
 }
 
-void FMetalCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const Vector4& ClearColor)
+void FMetalCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)
 {
     MetalUAVClear::Clear(*this, static_cast<FMetalUnorderedAccessViewRHI*>(UnorderedAccessView), reinterpret_cast<const uint32*>(ClearColor.XYZW));
 }
@@ -395,7 +395,7 @@ void FMetalCommandContext::SetScissorRect(const FScissorRegion& ScissorRegion)
     ContextState.SetScissorRects(&Rect, 1);
 }
 
-void FMetalCommandContext::SetBlendFactor(const Vector4& Color)
+void FMetalCommandContext::SetBlendFactor(const FVector4& Color)
 {
     const float BlendFactor[4] = { Color.X, Color.Y, Color.Z, Color.W };
     ContextState.SetBlendFactor(BlendFactor);

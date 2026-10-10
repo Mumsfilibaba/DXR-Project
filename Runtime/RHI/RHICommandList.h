@@ -165,7 +165,7 @@ public:
         EmplaceCommand<FRHICommandQueryTimestamp>(Query);
     }
 
-    FORCEINLINE void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const Vector4& ClearColor) noexcept
+    FORCEINLINE void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor) noexcept
     {
         EmplaceCommand<FRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
     }
@@ -175,7 +175,7 @@ public:
         EmplaceCommand<FRHICommandClearDepthStencilView>(DepthStencilView, Depth, Stencil);
     }
 
-    FORCEINLINE void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const Vector4& ClearColor) noexcept
+    FORCEINLINE void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) noexcept
     {
         EmplaceCommand<FRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
     }
@@ -205,7 +205,7 @@ public:
         EmplaceCommand<FRHICommandSetScissorRect>(ScissorRegion);
     }
 
-    FORCEINLINE void SetBlendFactor(const Vector4& Color) noexcept
+    FORCEINLINE void SetBlendFactor(const FVector4& Color) noexcept
     {
         EmplaceCommand<FRHICommandSetBlendFactor>(Color);
     }

@@ -17,12 +17,12 @@ FLightProbeComponent::~FLightProbeComponent()
 {
 }
 
-void FLightProbeComponent::SetBoxExtent(const Vector3& InBoxExtent)
+void FLightProbeComponent::SetBoxExtent(const FVector3& InBoxExtent)
 {
     BoxExtent = InBoxExtent;
 }
 
-void FLightProbeComponent::SetBoxOffset(const Vector3& InBoxOffset)
+void FLightProbeComponent::SetBoxOffset(const FVector3& InBoxOffset)
 {
     BoxOffset = InBoxOffset;
 }
@@ -53,7 +53,7 @@ void FLightProbeComponent::SetCubeMap(const FRHITextureRef& InCubeMap)
     }
 }
 
-const Vector3& FLightProbeComponent::GetPosition() const
+const FVector3& FLightProbeComponent::GetPosition() const
 {
     CHECK(GetActorOwner() != nullptr);
     return GetActorOwner()->GetWorldTransform().GetTranslation();

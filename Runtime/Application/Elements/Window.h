@@ -8,10 +8,10 @@
 class FMenuHost;
 
 /** @brief Delegate called when the window is moved. */
-DECLARE_DELEGATE(FOnWindowMoved, const IntVector2&);
+DECLARE_DELEGATE(FOnWindowMoved, const FIntVector2&);
 
 /** @brief Delegate called when the window is resized. */
-DECLARE_DELEGATE(FOnWindowResized, const IntVector2&);
+DECLARE_DELEGATE(FOnWindowResized, const FIntVector2&);
 
 /** @brief Delegate called when the window is closed. */
 DECLARE_DELEGATE(FOnWindowClosed);
@@ -34,10 +34,10 @@ public:
         TSharedPtr<FWindow> ParentWindow = nullptr;
 
         /** @brief The size of the window (width, height). */
-        IntVector2 Size;
+        FIntVector2 Size;
 
         /** @brief The position of the window (x, y). */
-        IntVector2 Position;
+        FIntVector2 Position;
 
         /** @brief Style flags for the window. */
         EWindowStyleFlags StyleFlags = EWindowStyleFlags::Default;
@@ -71,7 +71,7 @@ public:
     virtual ~FWindow();
 
     // FVisualElement Interface
-    virtual IntVector2 PrepareDesiredSize() override final;
+    virtual FIntVector2 PrepareDesiredSize() override final;
     virtual void OnArrange(const FRectangle& AllottedBounds) override final;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final;
     virtual bool SupportsKeyboardFocus() const override final;
@@ -127,56 +127,56 @@ public:
      * 
      * @param InSize The new size of the window.
      */
-    void OnWindowResize(const IntVector2& InSize);
+    void OnWindowResize(const FIntVector2& InSize);
 
     /**
      * @brief Called when the platform window is moved.
      * 
      * @param InPosition The new position of the window.
      */
-    void OnWindowMoved(const IntVector2& InPosition);
+    void OnWindowMoved(const FIntVector2& InPosition);
 
     /**
      * @brief Resizes the window, and the platform window with it.
      *
      * @param InSize The new size for the window.
      */
-    void Resize(const IntVector2& InSize);
+    void Resize(const FIntVector2& InSize);
 
     /**
      * @brief Moves the window, and the platform window with it.
      *
      * @param InPosition The new position for the window.
      */
-    void MoveTo(const IntVector2& InPosition);
+    void MoveTo(const FIntVector2& InPosition);
         
     /**
      * @brief Sets the cached window size without modifying the platform window size.
      * 
      * @param InSize The new cached size.
      */
-    void SetSize(const IntVector2& InSize);
+    void SetSize(const FIntVector2& InSize);
     
     /**
      * @brief Sets the cached window position without modifying the platform window position.
      * 
      * @param InPosition The new cached position.
      */
-    void SetPosition(const IntVector2& InPosition);
+    void SetPosition(const FIntVector2& InPosition);
 
     /**
      * @brief Gets the current cached window size.
      * 
      * @return The size of the window.
      */
-    IntVector2 GetSize() const;
+    FIntVector2 GetSize() const;
     
     /**
      * @brief Gets the current cached window position.
      * 
      * @return The position of the window.
      */
-    IntVector2 GetPosition() const;
+    FIntVector2 GetPosition() const;
 
     /**
      * @brief Gets the current cached window width.
@@ -450,7 +450,7 @@ public:
 
 protected:
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override final;
-    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override final;
+    virtual void HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath) override final;
 
 private:
     struct FDeferredPaint
@@ -465,8 +465,8 @@ private:
     FOnWindowMoved                 OnWindowMovedDelegate;
     FOnWindowResized               OnWindowResizedDelegate;
     FOnWindowFocusChanged          OnWindowFocusChangedDelegate;
-    IntVector2                     CachedPosition;
-    IntVector2                     CachedSize;
+    FIntVector2                    CachedPosition;
+    FIntVector2                    CachedSize;
     float                          CachedOpacity;
     EWindowStyleFlags              StyleFlags;
     bool                           bActivateOnShow : 1;

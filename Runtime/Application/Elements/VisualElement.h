@@ -297,7 +297,7 @@ public:
      *
      * @return The desired size in pixels, which is zero for an element that takes no part in layout.
      */
-    virtual IntVector2 ComputeDesiredSize() const;
+    virtual FIntVector2 ComputeDesiredSize() const;
 
     /**
      * @brief Arranges the children inside the rectangle this element was given.
@@ -371,7 +371,7 @@ public:
      * @param OutPath        The path to append to.
      * @return True when the element took the point and was added to the path.
      */
-    bool HitTest(const IntVector2& ClientPosition, FElementPath& OutPath);
+    bool HitTest(const FIntVector2& ClientPosition, FElementPath& OutPath);
 
     /**
      * @brief A counter that moves whenever anything that could change a hit test result changes: an arranged
@@ -390,7 +390,7 @@ public:
      * something first, since by the time ComputeDesiredSize runs the children have already been measured.
      * @return The desired size of this element.
      */
-    virtual IntVector2 PrepareDesiredSize();
+    virtual FIntVector2 PrepareDesiredSize();
 
     /**
      * @brief Marks the cached desired size of this element and every parent above it as out of date, so that
@@ -531,7 +531,7 @@ public:
      *
      * @return The cached desired size in pixels.
      */
-    NODISCARD IntVector2 GetCachedDesiredSize() const
+    NODISCARD FIntVector2 GetCachedDesiredSize() const
     {
         return CachedDesiredSize;
     }
@@ -608,7 +608,7 @@ public:
 protected:
 
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const;
-    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath);
+    virtual void HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath);
 
     void EnableHitTestOverflow();
 
@@ -676,7 +676,7 @@ private:
     FORCEINLINE void ClearElementFlags(EElementFlags InFlags) const { Flags &= ~InFlags; }
 
     FRectangle                          ContentRectangle;
-    IntVector2                          CachedDesiredSize;
+    FIntVector2                         CachedDesiredSize;
     TWeakPtr<FVisualElement>            ParentElement;
     mutable TUniquePtr<FDrawCacheBlock> DrawCacheBlock;
     mutable uint16                      LastRecordedCommandCount;

@@ -99,7 +99,7 @@ static int32 DrawClipping(const FDrawGeometry& Geometry, FDrawCommandList& Comma
     CommandList.AddBox(LayerId, ClipRegion, Style.Colors.ControlNormal, 8.0f);
     CommandList.PushClip(LayerId, ClipRegion);
 
-    const Vector2 Center(
+    const FVector2 Center(
         static_cast<float>(ClipRegion.Position.X + ClipRegion.Width),
         static_cast<float>(ClipRegion.Position.Y + (ClipRegion.Height / 2)));
 
@@ -108,9 +108,9 @@ static int32 DrawClipping(const FDrawGeometry& Geometry, FDrawCommandList& Comma
     for (int32 Index = 0; Index < 9; ++Index)
     {
         const float Angle = static_cast<float>(Index) * (Math::Constants::PI / 8.0f);
-        const Vector2 Direction(Math::Cos(Angle), Math::Sin(Angle));
-        const Vector2 Start = Center - (Direction * 220.0f);
-        const Vector2 End   = Center + (Direction * 220.0f);
+        const FVector2 Direction(Math::Cos(Angle), Math::Sin(Angle));
+        const FVector2 Start = Center - (Direction * 220.0f);
+        const FVector2 End   = Center + (Direction * 220.0f);
 
         CommandList.AddLine(LayerId + 2, Start, End, Style.Colors.Text, 1.0f);
     }
@@ -122,7 +122,7 @@ static int32 DrawClipping(const FDrawGeometry& Geometry, FDrawCommandList& Comma
 static TSharedPtr<FVisualElement> MakeCanvas(int32 Height, const FOnCanvasDraw& OnDraw)
 {
     FDrawCanvas::FDesc CanvasDesc;
-    CanvasDesc.DesiredSize  = IntVector2(0, Height);
+    CanvasDesc.DesiredSize  = FIntVector2(0, Height);
     CanvasDesc.OnCanvasDraw = OnDraw;
     return FDrawCanvas::Create(CanvasDesc);
 }

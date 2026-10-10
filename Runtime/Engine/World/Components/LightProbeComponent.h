@@ -11,19 +11,19 @@ public:
     FLightProbeComponent(const FObjectInitializer& ObjectInitializer);
     ~FLightProbeComponent();
 
-    void SetBoxExtent(const Vector3& InBoxExtent);
-    void SetBoxOffset(const Vector3& InBoxOffset);
+    void SetBoxExtent(const FVector3& InBoxExtent);
+    void SetBoxOffset(const FVector3& InBoxOffset);
     void SetBoxProjection(bool bInBoxProjection);
     void SetCubeMap(const FRHITextureRef& InCubeMap);
 
-    const Vector3& GetPosition() const;
+    const FVector3& GetPosition() const;
 
-    const Vector3& GetBoxOffset() const
+    const FVector3& GetBoxOffset() const
     {
         return BoxOffset;
     }
 
-    const Vector3& GetBoxExtents() const
+    const FVector3& GetBoxExtents() const
     {
         return BoxExtent;
     }
@@ -40,7 +40,7 @@ public:
 
 private:
     FRHITextureRef CubeMap;
-    Vector3        BoxOffset;
-    Vector3        BoxExtent;
+    FVector3       BoxOffset;
+    FVector3       BoxExtent;
     bool           bBoxProjection;
 };

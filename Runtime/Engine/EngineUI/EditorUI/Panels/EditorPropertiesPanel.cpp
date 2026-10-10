@@ -55,7 +55,7 @@ constexpr int32 UNIFORM_LOCK_SIZE = 16;
 constexpr int32 COLOR_ROW_SPACING = 4;
 constexpr float COLOR_ROW_STEP    = 0.01f;
 
-static FString FormatVector(const Vector3& Value)
+static FString FormatVector(const FVector3& Value)
 {
     return FString::Printf("%.3f, %.3f, %.3f", Value.X, Value.Y, Value.Z);
 }
@@ -76,9 +76,9 @@ public:
 
     ~FUniformScaleToggle() = default;
 
-    virtual IntVector2 ComputeDesiredSize() const override final
+    virtual FIntVector2 ComputeDesiredSize() const override final
     {
-        return IntVector2(UNIFORM_LOCK_SIZE, UNIFORM_LOCK_SIZE);
+        return FIntVector2(UNIFORM_LOCK_SIZE, UNIFORM_LOCK_SIZE);
     }
 
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final
@@ -288,26 +288,26 @@ void FEditorPropertiesPanel::BuildTransformSection(const TSharedPtr<FVerticalBox
 
     const FActorTransform& Transform = Actor->GetTransform();
 
-    const Vector3 TranslationDefault = Vector3(0.0f, 0.0f, 0.0f);
+    const FVector3 TranslationDefault = FVector3(0.0f, 0.0f, 0.0f);
     AddVectorRow(Table, "Location", Transform.GetTranslation(), 0.1f,
-        FOnVectorChanged::CreateLambda([this](const Vector3& Value)
+        FOnVectorChanged::CreateLambda([this](const FVector3& Value)
         {
             if (FActor* Target = EditorEngine->GetSelectedActor())
             {
                 Target->GetTransform().SetTranslation(Value);
             }
         }), false, &TranslationDefault,
-        FOnVectorRead::CreateLambda([this]() -> Vector3
+        FOnVectorRead::CreateLambda([this]() -> FVector3
         {
             FActor* Target = EditorEngine->GetSelectedActor();
-            return Target ? Target->GetTransform().GetTranslation() : Vector3(0.0f, 0.0f, 0.0f);
+            return Target ? Target->GetTransform().GetTranslation() : FVector3(0.0f, 0.0f, 0.0f);
         }));
 
     FCameraComponent* Camera = Actor->GetComponentOfType<FCameraComponent>();
 
-    const Vector3 RotationDefault = Vector3(0.0f, 0.0f, 0.0f);
+    const FVector3 RotationDefault = FVector3(0.0f, 0.0f, 0.0f);
     AddVectorRow(Table, "Rotation", Transform.GetRotation(), 0.5f,
-        FOnVectorChanged::CreateLambda([this, Camera](const Vector3& Value)
+        FOnVectorChanged::CreateLambda([this, Camera](const FVector3& Value)
         {
             if (Camera)
             {
@@ -318,25 +318,25 @@ void FEditorPropertiesPanel::BuildTransformSection(const TSharedPtr<FVerticalBox
                 Target->GetTransform().SetRotation(Value);
             }
         }), true, &RotationDefault,
-        FOnVectorRead::CreateLambda([this]() -> Vector3
+        FOnVectorRead::CreateLambda([this]() -> FVector3
         {
             FActor* Target = EditorEngine->GetSelectedActor();
-            return Target ? Target->GetTransform().GetRotation() : Vector3(0.0f, 0.0f, 0.0f);
+            return Target ? Target->GetTransform().GetRotation() : FVector3(0.0f, 0.0f, 0.0f);
         }));
 
-    const Vector3 ScaleDefault = Vector3(1.0f, 1.0f, 1.0f);
+    const FVector3 ScaleDefault = FVector3(1.0f, 1.0f, 1.0f);
     AddVectorRow(Table, "Scale", Transform.GetScale(), 0.01f,
-        FOnVectorChanged::CreateLambda([this](const Vector3& Value)
+        FOnVectorChanged::CreateLambda([this](const FVector3& Value)
         {
             if (FActor* Target = EditorEngine->GetSelectedActor())
             {
                 Target->GetTransform().SetScale(Value);
             }
         }), false, &ScaleDefault,
-        FOnVectorRead::CreateLambda([this]() -> Vector3
+        FOnVectorRead::CreateLambda([this]() -> FVector3
         {
             FActor* Target = EditorEngine->GetSelectedActor();
-            return Target ? Target->GetTransform().GetScale() : Vector3(1.0f, 1.0f, 1.0f);
+            return Target ? Target->GetTransform().GetScale() : FVector3(1.0f, 1.0f, 1.0f);
         }), true);
 
     AddSection(InColumn, Actor->GetParentActor() ? "Transform (Relative)" : "Transform", Table);
@@ -478,7 +478,7 @@ void FEditorPropertiesPanel::AddMaterialTextureRows(const TSharedPtr<FPropertyTa
         PreviewDesc.PreviewSize = MATERIAL_TEXTURE_PREVIEW_SIZE;
         PreviewDesc.ZoomSize    = MATERIAL_TEXTURE_ZOOM_SIZE;
 
-        const IntVector3& Extent = Texture->GetDesc().Extent;
+        const FIntVector3& Extent = Texture->GetDesc().Extent;
 
         FPropertyRow& Row  = Table->AddRow(GMaterialTextureSlotNames[Slot], FTexturePreview::Create(PreviewDesc));
         Row.HeightOverride = MATERIAL_TEXTURE_ROW_HEIGHT;
@@ -617,13 +617,13 @@ void FEditorPropertiesPanel::BuildDirectionalLightSection(const TSharedPtr<FVert
 
 void FEditorPropertiesPanel::AddLightSettingRows(const TSharedPtr<FPropertyTable>& Table, FLightComponent* Component, const CHAR_T* IntensityLabel)
 {
-    const Vector3     Color        = Component->GetColor();
+    const FVector3    Color        = Component->GetColor();
     const FFloatColor ColorDefault = FFloatColor::White;
 
     AddColorRow(Table, "Color", FFloatColor(Color.X, Color.Y, Color.Z, 1.0f), &ColorDefault,
         FOnColorChanged::CreateLambda([Component](const FFloatColor& Value)
         {
-            Component->SetColor(Vector3(Value.R, Value.G, Value.B));
+            Component->SetColor(FVector3(Value.R, Value.G, Value.B));
         }));
 
     AddFloatRow(Table, IntensityLabel, Component->GetIntensity(), 0.0f, 200000.0f, 0.1f, 1.0f, 1,
@@ -692,14 +692,14 @@ void FEditorPropertiesPanel::AddLightDirectionRows(const TSharedPtr<FPropertyTab
         return;
     }
 
-    const Vector3 Rotation = Actor->GetWorldTransform().GetRotation();
+    const FVector3 Rotation = Actor->GetWorldTransform().GetRotation();
 
     AddFloatRow(Table, "Rotation theta (degrees)", Math::RadiansToDegrees(Rotation.X), -90.0f, 90.0f, 0.25f, 0.0f, 2,
         TDelegate<void(float)>::CreateLambda([Actor](float Degrees)
         {
             FActorTransform NewWorldTransform = Actor->GetWorldTransform();
 
-            Vector3 NewRotation = NewWorldTransform.GetRotation();
+            FVector3 NewRotation = NewWorldTransform.GetRotation();
             NewRotation.X = Math::DegreesToRadians(Degrees);
 
             NewWorldTransform.SetRotation(NewRotation);
@@ -711,14 +711,14 @@ void FEditorPropertiesPanel::AddLightDirectionRows(const TSharedPtr<FPropertyTab
         {
             FActorTransform NewWorldTransform = Actor->GetWorldTransform();
 
-            Vector3 NewRotation = NewWorldTransform.GetRotation();
+            FVector3 NewRotation = NewWorldTransform.GetRotation();
             NewRotation.Y = Math::DegreesToRadians(Degrees);
 
             NewWorldTransform.SetRotation(NewRotation);
             Actor->SetWorldTransform(NewWorldTransform);
         }));
 
-    const Vector3 Direction = Component->GetDirectionVector();
+    const FVector3 Direction = Component->GetDirectionVector();
 
     TSharedPtr<FHorizontalBox> DirectionRow = FHorizontalBox::Create();
     for (int32 Axis = 0; Axis < 3; ++Axis)
@@ -789,24 +789,24 @@ void FEditorPropertiesPanel::BuildCameraSection(const TSharedPtr<FVerticalBox>& 
 
     TSharedPtr<FPropertyTable> TransformTable = CreateTable();
 
-    const Vector3 PositionDefault = Vector3(0.0f, 0.0f, 0.0f);
+    const FVector3 PositionDefault = FVector3(0.0f, 0.0f, 0.0f);
     AddVectorRow(TransformTable, "Position", Component->GetPosition(), 0.1f,
-        FOnVectorChanged::CreateLambda([Component](const Vector3& Value)
+        FOnVectorChanged::CreateLambda([Component](const FVector3& Value)
         {
             Component->SetPosition(Value);
         }), false, &PositionDefault,
-        FOnVectorRead::CreateLambda([Component]() -> Vector3
+        FOnVectorRead::CreateLambda([Component]() -> FVector3
         {
             return Component->GetPosition();
         }));
 
-    const Vector3 RotationDefault = Vector3(0.0f, 0.0f, 0.0f);
+    const FVector3 RotationDefault = FVector3(0.0f, 0.0f, 0.0f);
     AddVectorRow(TransformTable, "Rotation", Component->GetRotation(), 0.5f,
-        FOnVectorChanged::CreateLambda([Component](const Vector3& Value)
+        FOnVectorChanged::CreateLambda([Component](const FVector3& Value)
         {
             Component->SetRotation(Value);
         }), true, &RotationDefault,
-        FOnVectorRead::CreateLambda([Component]() -> Vector3
+        FOnVectorRead::CreateLambda([Component]() -> FVector3
         {
             return Component->GetRotation();
         }));
@@ -820,16 +820,16 @@ void FEditorPropertiesPanel::BuildLightProbeSection(const TSharedPtr<FVerticalBo
 
     TSharedPtr<FPropertyTable> Table = CreateTable();
 
-    const Vector3 BoxExtentDefault = Vector3(0.0f, 0.0f, 0.0f);
+    const FVector3 BoxExtentDefault = FVector3(0.0f, 0.0f, 0.0f);
     AddVectorRow(Table, "Box extents", Component->GetBoxExtents(), 0.1f,
-        FOnVectorChanged::CreateLambda([Component](const Vector3& Value)
+        FOnVectorChanged::CreateLambda([Component](const FVector3& Value)
         {
             Component->SetBoxExtent(Value);
         }), false, &BoxExtentDefault);
 
-    const Vector3 BoxOffsetDefault = Vector3(0.0f, 0.0f, 0.0f);
+    const FVector3 BoxOffsetDefault = FVector3(0.0f, 0.0f, 0.0f);
     AddVectorRow(Table, "Box offset", Component->GetBoxOffset(), 0.1f,
-        FOnVectorChanged::CreateLambda([Component](const Vector3& Value)
+        FOnVectorChanged::CreateLambda([Component](const FVector3& Value)
         {
             Component->SetBoxOffset(Value);
         }), false, &BoxOffsetDefault);
@@ -847,11 +847,11 @@ void FEditorPropertiesPanel::BuildLightProbeSection(const TSharedPtr<FVerticalBo
 FPropertyRow& FEditorPropertiesPanel::AddVectorRow(
     const TSharedPtr<FPropertyTable>& Table,
     const FString&                    RowLabel,
-    const Vector3&                    Value,
+    const FVector3&                   Value,
     float                             Step,
     const FOnVectorChanged&           OnChanged,
     bool                              bIsAngular,
-    const Vector3*                    DefaultValue,
+    const FVector3*                   DefaultValue,
     const FOnVectorRead&              OnRead,
     bool                              bAllowUniform)
 {
@@ -910,7 +910,7 @@ FPropertyRow& FEditorPropertiesPanel::AddVectorRow(
         return NewRow;
     }
 
-    const Vector3 Default = *DefaultValue;
+    const FVector3 Default = *DefaultValue;
 
     NewRow.ToolTipText = FString::Printf("Default %s", *FormatVector(Default));
 
@@ -1181,7 +1181,7 @@ void FEditorPropertiesPanel::WriteVectorRow(int32 RowIndex, int32 DrivingAxis)
         }
     }
 
-    Vector3 Result;
+    FVector3 Result;
     for (int32 Axis = 0; Axis < 3; ++Axis)
     {
         const float Field = Row.Fields[Axis]->GetValue();
@@ -1215,7 +1215,7 @@ void FEditorPropertiesPanel::RefreshValues()
             continue;
         }
 
-        const Vector3 Value = Row.OnRead.Execute();
+        const FVector3 Value = Row.OnRead.Execute();
         for (int32 Axis = 0; Axis < 3; ++Axis)
         {
             const TSharedPtr<FEditableText>& FieldEditor = Row.Fields[Axis]->GetEditor();
@@ -1236,7 +1236,7 @@ void FEditorPropertiesPanel::RefreshValues()
     FActor* Actor = EditorEngine->GetSelectedActor();
     if (FDirectionalLightComponent* Light = Actor ? Actor->GetComponentOfType<FDirectionalLightComponent>() : nullptr)
     {
-        const Vector3 Direction = Light->GetDirectionVector();
+        const FVector3 Direction = Light->GetDirectionVector();
         for (int32 Axis = 0; Axis < 3; ++Axis)
         {
             LightDirectionFields[Axis]->SetValue(Direction[Axis]);

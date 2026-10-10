@@ -20,9 +20,9 @@ FCameraComponent::FCameraComponent(const FObjectInitializer& ObjectInitializer)
     , ViewportWidth(0.0f)
     , ViewportHeight(0.0f)
     , FieldOfView(90.0f)
-    , ForwardVector(Vector3::Forward)
+    , ForwardVector(FVector3::Forward)
     , RightVector(-1.0f, 0.0f, 0.0f)
-    , UpVector(Vector3::Up)
+    , UpVector(FVector3::Up)
 {
 }
 
@@ -36,17 +36,17 @@ void FCameraComponent::AddLocalMovement(float x, float y, float z)
 
     FActorTransform& Transform = GetActorOwner()->GetTransform();
 
-    const Vector3 LocalRight   = RightVector * x;
-    const Vector3 LocalUp      = UpVector * y;
-    const Vector3 LocalForward = ForwardVector * z;
-    const Vector3 Translation  = Transform.GetTranslation() + LocalRight + LocalUp + LocalForward;
+    const FVector3 LocalRight   = RightVector * x;
+    const FVector3 LocalUp      = UpVector * y;
+    const FVector3 LocalForward = ForwardVector * z;
+    const FVector3 Translation  = Transform.GetTranslation() + LocalRight + LocalUp + LocalForward;
 
     Transform.SetTranslation(Translation);
 }
 
 void FCameraComponent::AddRotation(float Pitch, float Yaw, float Roll)
 {
-    const Vector3 CurrentRotation = GetActorOwner()->GetTransform().GetRotation();
+    const FVector3 CurrentRotation = GetActorOwner()->GetTransform().GetRotation();
     SetRotation(CurrentRotation.X + Pitch, CurrentRotation.Y + Yaw, CurrentRotation.Z + Roll);
 }
 
@@ -69,10 +69,10 @@ void FCameraComponent::SetFarPlane(float InFarPlane)
 
 void FCameraComponent::SetPosition(float x, float y, float z)
 {
-    SetPosition(Vector3(x, y, z));
+    SetPosition(FVector3(x, y, z));
 }
 
-void FCameraComponent::SetPosition(const Vector3& InPosition)
+void FCameraComponent::SetPosition(const FVector3& InPosition)
 {
     GetActorOwner()->GetTransform().SetTranslation(InPosition);
 }
@@ -85,7 +85,7 @@ void FCameraComponent::SetRotation(float Pitch, float Yaw, float Roll)
     UpdateDirectionVectors();
 }
 
-void FCameraComponent::SetRotation(const Vector3& InRotation)
+void FCameraComponent::SetRotation(const FVector3& InRotation)
 {
     SetRotation(InRotation.X, InRotation.Y, InRotation.Z);
 }
@@ -94,7 +94,7 @@ void FCameraComponent::UpdateDirectionVectors()
 {
     CHECK(GetActorOwner() != nullptr);
 
-    const Vector3& Rotation = GetActorOwner()->GetWorldTransform().GetRotation();
+    const FVector3& Rotation = GetActorOwner()->GetWorldTransform().GetRotation();
     const float Pitch = Rotation.X;
     const float Yaw   = Rotation.Y;
 
@@ -103,10 +103,10 @@ void FCameraComponent::UpdateDirectionVectors()
     const float CosY = Math::Cos(Yaw);
     const float SinY = Math::Sin(Yaw);
 
-    ForwardVector = Vector3(CosP * SinY, -SinP, CosP * CosY);
+    ForwardVector = FVector3(CosP * SinY, -SinP, CosP * CosY);
     ForwardVector.Normalize();
 
-    RightVector = ForwardVector.CrossProduct(Vector3::Up);
+    RightVector = ForwardVector.CrossProduct(FVector3::Up);
     const float RightLengthSquared = RightVector.GetLengthSquared();
     if (RightLengthSquared > 1.0e-6f)
     {
@@ -114,7 +114,7 @@ void FCameraComponent::UpdateDirectionVectors()
     }
     else
     {
-        RightVector = Vector3(-CosY, 0.0f, SinY);
+        RightVector = FVector3(-CosY, 0.0f, SinY);
         RightVector.Normalize();
     }
 
@@ -131,7 +131,7 @@ void FCameraComponent::UpdateProjectionMatrix(float InViewportWidth, float InVie
 
     const float FieldOfViewRadians = Math::DegreesToRadians(FieldOfView);
 
-    Projection        = Matrix4::PerspectiveProjection(FieldOfViewRadians, InViewportWidth, InViewportHeight, NearPlane, FarPlane);
+    Projection        = FMatrix4::PerspectiveProjection(FieldOfViewRadians, InViewportWidth, InViewportHeight, NearPlane, FarPlane);
     ProjectionInverse = Projection.GetInverse();
     AspectRatio       = InViewportWidth / InViewportHeight;
     ViewportWidth     = InViewportWidth;
@@ -144,8 +144,8 @@ void FCameraComponent::UpdateViewMatrix()
 
     UpdateDirectionVectors();
 
-    const Vector3& Position = GetActorOwner()->GetWorldTransform().GetTranslation();
-    View        = Matrix4::LookTo(Position, ForwardVector, UpVector);
+    const FVector3& Position = GetActorOwner()->GetWorldTransform().GetTranslation();
+    View        = FMatrix4::LookTo(Position, ForwardVector, UpVector);
     ViewInverse = View.GetInverse();
 }
 
@@ -154,7 +154,7 @@ void FCameraComponent::UpdateWorldToClipSpaceMatrices()
     ViewProjection        = View * Projection;
     ViewProjectionInverse = ViewProjection.GetInverse();
 
-    const Matrix3 View3x3 = View.GetRotationAndScale();
+    const FMatrix3 View3x3 = View.GetRotationAndScale();
     ViewProjectionNoTranslation.SetIdentity();
     ViewProjectionNoTranslation.SetRotationAndScale(View3x3);
     ViewProjectionNoTranslation = ViewProjectionNoTranslation * Projection;
@@ -178,13 +178,13 @@ void FCameraComponent::PrepareSceneViewInfo(FCameraSnapshot& OutCameraSnapshot) 
     OutCameraSnapshot.AspectRatio                 = AspectRatio;
 }
 
-const Vector3& FCameraComponent::GetPosition() const
+const FVector3& FCameraComponent::GetPosition() const
 {
     CHECK(GetActorOwner() != nullptr);
     return GetActorOwner()->GetWorldTransform().GetTranslation();
 }
 
-const Vector3& FCameraComponent::GetRotation() const
+const FVector3& FCameraComponent::GetRotation() const
 {
     CHECK(GetActorOwner() != nullptr);
     return GetActorOwner()->GetWorldTransform().GetRotation();

@@ -92,7 +92,7 @@ public:
      * @param Functor Called with each item index, in increasing order.
      */
     template<typename FunctorType>
-    void ForEachInCell(const IntVector2& Point, FunctorType&& Functor) const
+    void ForEachInCell(const FIntVector2& Point, FunctorType&& Functor) const
     {
         if (NumColumns <= 0 || !Bounds.EncapsulatesPoint(Point))
         {

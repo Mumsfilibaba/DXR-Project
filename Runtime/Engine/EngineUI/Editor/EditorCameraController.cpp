@@ -76,7 +76,7 @@ void FEditorCameraController::Tick(float DeltaTime, const FEditorCameraInputStat
     Camera->UpdateWorldToClipSpaceMatrices();
 }
 
-void FEditorCameraController::UpdateProjection(const IntVector2& InViewportSize)
+void FEditorCameraController::UpdateProjection(const FIntVector2& InViewportSize)
 {
     if (InViewportSize.X <= 0 || InViewportSize.Y <= 0)
     {
@@ -98,7 +98,7 @@ FCameraComponent* FEditorCameraController::GetCamera() const
 void FEditorCameraController::Reset()
 {
     Detach();
-    Velocity = Vector3(0.0f);
+    Velocity = FVector3(0.0f);
 
     if (FCameraComponent* Camera = GetCamera())
     {
@@ -121,7 +121,7 @@ void FEditorCameraController::FocusOn(FActor* Actor)
     Detach();
 
     const FActorTransform& Transform = Actor->GetTransform();
-    Vector3 FocusPoint = Transform.GetTranslation();
+    FVector3 FocusPoint = Transform.GetTranslation();
     float Radius = 1.0f;
 
     if (FStaticMeshComponent* MeshComponent = Actor->GetComponentOfType<FStaticMeshComponent>())
@@ -132,9 +132,9 @@ void FEditorCameraController::FocusOn(FActor* Actor)
             const FAABB& Bounds = Mesh->GetAABB();
             FocusPoint = Transform.GetTransformMatrix().Transform(Bounds.GetCenter());
 
-            const Vector3 BoundsSize = Bounds.GetSize();
-            const Vector3 Scale      = Transform.GetScale();
-            const float   MaxSize    = Math::Max(BoundsSize.X * Math::Abs(Scale.X), Math::Max(BoundsSize.Y * Math::Abs(Scale.Y), BoundsSize.Z * Math::Abs(Scale.Z)));
+            const FVector3 BoundsSize = Bounds.GetSize();
+            const FVector3 Scale      = Transform.GetScale();
+            const float    MaxSize    = Math::Max(BoundsSize.X * Math::Abs(Scale.X), Math::Max(BoundsSize.Y * Math::Abs(Scale.Y), BoundsSize.Z * Math::Abs(Scale.Z)));
 
             Radius = Math::Max(MaxSize * 0.5f, 0.5f);
         }
@@ -144,7 +144,7 @@ void FEditorCameraController::FocusOn(FActor* Actor)
     OrbitDistance = Math::Max(Radius * 2.5f, 1.0f);
     Camera->SetPosition(OrbitPivot - Camera->GetForwardVector() * OrbitDistance);
 
-    Velocity = Vector3(0.0f);
+    Velocity = FVector3(0.0f);
     
     MarkCameraCut();
 }
@@ -162,7 +162,7 @@ void FEditorCameraController::AttachTo(FActor* Actor)
     const FActorTransform& Transform = AttachedActor->GetTransform();
     AttachLocalOffset    = Transform.GetTransformMatrixInverse().Transform(Camera->GetPosition());
     AttachRotationOffset = Camera->GetRotation() - Transform.GetRotation();
-    Velocity             = Vector3(0.0f);
+    Velocity             = FVector3(0.0f);
 
     MarkCameraCut();
 }
@@ -172,7 +172,7 @@ void FEditorCameraController::Detach()
     if (AttachedActor)
     {
         AttachedActor = nullptr;
-        Velocity      = Vector3(0.0f);
+        Velocity      = FVector3(0.0f);
         MarkCameraCut();
     }
 }
@@ -290,18 +290,18 @@ void FEditorCameraController::HandleFlyMovement(float DeltaTime, const FEditorCa
 
     if (!Input.bFlyActive)
     {
-        Velocity = Vector3(0.0f);
+        Velocity = FVector3(0.0f);
         return;
     }
 
-    const float   Acceleration       = MoveSpeed * (Input.bBoost ? 3.0f : 1.0f);
-    const Vector3 CameraAcceleration = Input.MoveAxis * Acceleration;
-    const float   DampingFactor      = Math::Exp(-5.0f * DeltaTime);
+    const float    Acceleration       = MoveSpeed * (Input.bBoost ? 3.0f : 1.0f);
+    const FVector3 CameraAcceleration = Input.MoveAxis * Acceleration;
+    const float    DampingFactor      = Math::Exp(-5.0f * DeltaTime);
 
     Velocity = Velocity * DampingFactor;
     Velocity = Velocity + CameraAcceleration * DeltaTime;
 
-    const Vector3 Movement = Velocity * DeltaTime;
+    const FVector3 Movement = Velocity * DeltaTime;
     Camera->AddLocalMovement(Movement.X, Movement.Y, Movement.Z);
 
     if (Movement.GetLengthSquared() > 0.0f)
@@ -376,7 +376,7 @@ void FEditorCameraController::AnchorOrbitPivot()
     }
 }
 
-void FEditorCameraController::Orbit(const Vector2& Delta)
+void FEditorCameraController::Orbit(const FVector2& Delta)
 {
     FCameraComponent* Camera = GetCamera();
     if (!Camera)
@@ -388,10 +388,10 @@ void FEditorCameraController::Orbit(const Vector2& Delta)
     const float Yaw   = Math::DegreesToRadians(Delta.X * MouseSensitivity);
     Camera->AddRotation(Pitch, Yaw, 0.0f);
     Camera->SetPosition(OrbitPivot - Camera->GetForwardVector() * OrbitDistance);
-    Velocity = Vector3(0.0f);
+    Velocity = FVector3(0.0f);
 }
 
-void FEditorCameraController::Pan(const Vector2& Delta)
+void FEditorCameraController::Pan(const FVector2& Delta)
 {
     FCameraComponent* Camera = GetCamera();
     if (!Camera)
@@ -403,10 +403,10 @@ void FEditorCameraController::Pan(const Vector2& Delta)
 
     // Both axes drag the scene with the cursor. The X sign looks wrong for that, but RightVector is
     // Forward x Up and so points to the camera's left.
-    const Vector3 PreviousPosition = Camera->GetPosition();
+    const FVector3 PreviousPosition = Camera->GetPosition();
     Camera->AddLocalMovement(Delta.X * Scale, Delta.Y * Scale, 0.0f);
     OrbitPivot += Camera->GetPosition() - PreviousPosition;
-    Velocity = Vector3(0.0f);
+    Velocity = FVector3(0.0f);
 }
 
 void FEditorCameraController::Dolly(float Steps)
@@ -419,7 +419,7 @@ void FEditorCameraController::Dolly(float Steps)
 
     OrbitDistance = Math::Clamp(OrbitDistance * Math::Exp(-Steps * ZoomSpeed), 0.1f, 100000.0f);
     Camera->SetPosition(OrbitPivot - Camera->GetForwardVector() * OrbitDistance);
-    Velocity = Vector3(0.0f);
+    Velocity = FVector3(0.0f);
 }
 
 void FEditorCameraController::ZoomForward(float Steps)

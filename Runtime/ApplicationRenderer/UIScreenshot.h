@@ -20,7 +20,7 @@ struct APPLICATIONRENDERER_API UIScreenshot
      * @param Filename Where to write, either absolute or relative to the working directory.
      * @return True when the file was written.
      */
-    static bool CaptureElement(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, float DPIScale, const FString& Filename);
+    static bool CaptureElement(const TSharedPtr<FVisualElement>& Element, const FIntVector2& Size, float DPIScale, const FString& Filename);
 
     /**
      * @brief Repaints a window's content at the window's own size and scale, and writes it out.

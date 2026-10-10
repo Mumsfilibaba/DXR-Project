@@ -50,7 +50,7 @@ static MTLAccelerationStructureInstanceOptions ConvertInstanceFlags(ERayTracingI
     return Options;
 }
 
-static MTLPackedFloat4x3 ConvertTransform(const Matrix3x4& Transform)
+static MTLPackedFloat4x3 ConvertTransform(const FMatrix3x4& Transform)
 {
     MTLPackedFloat4x3 Result;
     for (int32 Column = 0; Column < 4; ++Column)

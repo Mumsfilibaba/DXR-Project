@@ -52,13 +52,13 @@ static EGizmoHandle CreateHandle(EGizmoHandle First, int32 Offset)
     return static_cast<EGizmoHandle>(static_cast<uint8>(First) + static_cast<uint8>(Offset));
 }
 
-static Matrix4 CreateAxisAngleRotation(const Vector3& Axis, float AngleRadians)
+static FMatrix4 CreateAxisAngleRotation(const FVector3& Axis, float AngleRadians)
 {
-    const Vector3 RotatedX = Vector3(1.0f, 0.0f, 0.0f).GetRotated(Axis, AngleRadians);
-    const Vector3 RotatedY = Vector3(0.0f, 1.0f, 0.0f).GetRotated(Axis, AngleRadians);
-    const Vector3 RotatedZ = Vector3(0.0f, 0.0f, 1.0f).GetRotated(Axis, AngleRadians);
+    const FVector3 RotatedX = FVector3(1.0f, 0.0f, 0.0f).GetRotated(Axis, AngleRadians);
+    const FVector3 RotatedY = FVector3(0.0f, 1.0f, 0.0f).GetRotated(Axis, AngleRadians);
+    const FVector3 RotatedZ = FVector3(0.0f, 0.0f, 1.0f).GetRotated(Axis, AngleRadians);
 
-    return Matrix4(
+    return FMatrix4(
         RotatedX.X, RotatedX.Y, RotatedX.Z, 0.0f,
         RotatedY.X, RotatedY.Y, RotatedY.Z, 0.0f,
         RotatedZ.X, RotatedZ.Y, RotatedZ.Z, 0.0f,
@@ -80,10 +80,10 @@ static float WrapAngle(float Angle)
     return Angle;
 }
 
-static Vector3 GetMatrixRow(const Matrix4& Matrix, int32 RowIndex)
+static FVector3 GetMatrixRow(const FMatrix4& Matrix, int32 RowIndex)
 {
-    const Vector4 Row = Matrix.GetRow(RowIndex);
-    return Vector3(Row.X, Row.Y, Row.Z);
+    const FVector4 Row = Matrix.GetRow(RowIndex);
+    return FVector3(Row.X, Row.Y, Row.Z);
 }
 
 TSharedPtr<FGizmo> FGizmo::Create(const FDesc& Desc)
@@ -95,11 +95,11 @@ TSharedPtr<FGizmo> FGizmo::Create(const FDesc& Desc)
 
 FGizmo::FGizmo()
     : FVisualElement()
-    , ViewMatrix(Matrix4::Identity())
-    , ProjectionMatrix(Matrix4::Identity())
-    , ViewProjectionMatrix(Matrix4::Identity())
-    , Transform(Matrix4::Identity())
-    , TransformAtDragStart(Matrix4::Identity())
+    , ViewMatrix(FMatrix4::Identity())
+    , ProjectionMatrix(FMatrix4::Identity())
+    , ViewProjectionMatrix(FMatrix4::Identity())
+    , Transform(FMatrix4::Identity())
+    , TransformAtDragStart(FMatrix4::Identity())
     , Font(nullptr)
     , Operation(EGizmoOperation::Translate)
     , Mode(EGizmoMode::World)
@@ -133,7 +133,7 @@ FGizmo::FGizmo()
 
     for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
     {
-        Axes[AxisIndex] = Vector3(AxisIndex == 0 ? 1.0f : 0.0f, AxisIndex == 1 ? 1.0f : 0.0f, AxisIndex == 2 ? 1.0f : 0.0f);
+        Axes[AxisIndex] = FVector3(AxisIndex == 0 ? 1.0f : 0.0f, AxisIndex == 1 ? 1.0f : 0.0f, AxisIndex == 2 ? 1.0f : 0.0f);
     }
 }
 
@@ -154,9 +154,9 @@ void FGizmo::Initialize(const FDesc& Desc)
     UpdateContext();
 }
 
-IntVector2 FGizmo::ComputeDesiredSize() const
+FIntVector2 FGizmo::ComputeDesiredSize() const
 {
-    return IntVector2(0, 0);
+    return FIntVector2(0, 0);
 }
 
 void FGizmo::OnArrange(const FRectangle& AllottedBounds)
@@ -241,7 +241,7 @@ FEventResponse FGizmo::OnMouseButtonUp(const FCursorEvent& CursorEvent)
     return FEventResponse::Handled();
 }
 
-void FGizmo::SetCamera(const Matrix4& InViewMatrix, const Matrix4& InProjectionMatrix, bool bInIsOrthographic)
+void FGizmo::SetCamera(const FMatrix4& InViewMatrix, const FMatrix4& InProjectionMatrix, bool bInIsOrthographic)
 {
     ViewMatrix       = InViewMatrix;
     ProjectionMatrix = InProjectionMatrix;
@@ -250,7 +250,7 @@ void FGizmo::SetCamera(const Matrix4& InViewMatrix, const Matrix4& InProjectionM
     UpdateContext();
 }
 
-void FGizmo::SetTransform(const Matrix4& InTransform)
+void FGizmo::SetTransform(const FMatrix4& InTransform)
 {
     if (IsDragging())
     {
@@ -313,17 +313,17 @@ bool FGizmo::IsPlaneVisible(int32 AxisIndex) const
     return AxisIndex >= 0 && AxisIndex < 3 && HasAxisBit(StateBit_PlaneVisible, AxisIndex);
 }
 
-Vector3 FGizmo::GetAxisDirection(int32 AxisIndex) const
+FVector3 FGizmo::GetAxisDirection(int32 AxisIndex) const
 {
     if (AxisIndex < 0 || AxisIndex >= 3)
     {
-        return Vector3(0.0f, 0.0f, 0.0f);
+        return FVector3(0.0f, 0.0f, 0.0f);
     }
 
     return HasAxisBit(StateBit_AxisFlipped, AxisIndex) ? -Axes[AxisIndex] : Axes[AxisIndex];
 }
 
-Vector3 FGizmo::GetPivot() const
+FVector3 FGizmo::GetPivot() const
 {
     return Pivot;
 }
@@ -332,21 +332,21 @@ void FGizmo::UpdateContext()
 {
     ViewProjectionMatrix = ViewMatrix * ProjectionMatrix;
 
-    const Matrix4 InverseView    = ViewMatrix.GetInverse();
-    const Vector3 CameraPosition = InverseView.GetTranslation();
-    const Vector3 CameraForward  = GetMatrixRow(InverseView, 2).GetNormalized();
+    const FMatrix4 InverseView    = ViewMatrix.GetInverse();
+    const FVector3 CameraPosition = InverseView.GetTranslation();
+    const FVector3 CameraForward  = GetMatrixRow(InverseView, 2).GetNormalized();
 
     CameraRight = GetMatrixRow(InverseView, 0).GetNormalized();
     CameraUp    = GetMatrixRow(InverseView, 1).GetNormalized();
     Pivot       = Transform.GetTranslation();
 
-    const Vector3 ToPivot = Pivot - CameraPosition;
+    const FVector3 ToPivot = Pivot - CameraPosition;
     ViewDirection = (HasStateBit(StateBit_Orthographic) || ToPivot.GetLength() < Math::Constants::CmpThreshold) ? CameraForward : ToPivot.GetNormalized();
 
     const float SizeScale = Math::Clamp(CVarGizmoSize.GetValue(), SizeScaleMin, SizeScaleMax);
     ScreenFactor = FGizmoMath::ComputeScreenFactor(ViewProjectionMatrix, CameraRight, Pivot, SizeInClipSpace * SizeScale);
 
-    Vector2 PivotClient;
+    FVector2 PivotClient;
     SetStateBit(StateBit_Projected, FGizmoMath::WorldToClient(ViewProjectionMatrix, GetContentRectangle(), Pivot, PivotClient));
 
     if (IsDragging())
@@ -360,14 +360,14 @@ void FGizmo::UpdateContext()
 
     for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
     {
-        const Vector3 WorldAxis(AxisIndex == 0 ? 1.0f : 0.0f, AxisIndex == 1 ? 1.0f : 0.0f, AxisIndex == 2 ? 1.0f : 0.0f);
+        const FVector3 WorldAxis(AxisIndex == 0 ? 1.0f : 0.0f, AxisIndex == 1 ? 1.0f : 0.0f, AxisIndex == 2 ? 1.0f : 0.0f);
         if (!bUseLocalAxes)
         {
             Axes[AxisIndex] = WorldAxis;
             continue;
         }
 
-        const Vector3 LocalAxis = GetMatrixRow(Transform, AxisIndex);
+        const FVector3 LocalAxis = GetMatrixRow(Transform, AxisIndex);
         Axes[AxisIndex] = LocalAxis.GetLength() > Math::Constants::CmpThreshold ? LocalAxis.GetNormalized() : WorldAxis;
     }
 
@@ -381,7 +381,7 @@ void FGizmo::ComputeAxisVisibility()
 
     for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
     {
-        const Vector3 Reach = Axes[AxisIndex] * ScreenFactor;
+        const FVector3 Reach = Axes[AxisIndex] * ScreenFactor;
 
         const float Forward  = FGizmoMath::GetSegmentLengthInClipSpace(ViewProjectionMatrix, AspectRatio, Pivot, Pivot + Reach);
         const float Backward = FGizmoMath::GetSegmentLengthInClipSpace(ViewProjectionMatrix, AspectRatio, Pivot, Pivot - Reach);
@@ -392,15 +392,15 @@ void FGizmo::ComputeAxisVisibility()
 
     for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
     {
-        const Vector3 SideU = GetAxisDirection((AxisIndex + 1) % 3) * ScreenFactor;
-        const Vector3 SideV = GetAxisDirection((AxisIndex + 2) % 3) * ScreenFactor;
+        const FVector3 SideU = GetAxisDirection((AxisIndex + 1) % 3) * ScreenFactor;
+        const FVector3 SideV = GetAxisDirection((AxisIndex + 2) % 3) * ScreenFactor;
 
         const float Area = FGizmoMath::GetParallelogramArea(ViewProjectionMatrix, AspectRatio, Pivot, Pivot + SideU, Pivot + SideV);
         SetStateBit(GetAxisBit(StateBit_PlaneVisible, AxisIndex), Area > PlaneVisibilityLimit);
     }
 }
 
-EGizmoHandle FGizmo::FindHandleAt(const IntVector2& ClientPosition) const
+EGizmoHandle FGizmo::FindHandleAt(const FIntVector2& ClientPosition) const
 {
     if (!IsProjected())
     {
@@ -408,9 +408,9 @@ EGizmoHandle FGizmo::FindHandleAt(const IntVector2& ClientPosition) const
     }
 
     const FRectangle& Bounds = GetContentRectangle();
-    const Vector2     Point(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
+    const FVector2    Point(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
 
-    Vector2 PivotClient;
+    FVector2 PivotClient;
     if (!FGizmoMath::WorldToClient(ViewProjectionMatrix, Bounds, Pivot, PivotClient))
     {
         return EGizmoHandle::None;
@@ -423,10 +423,10 @@ EGizmoHandle FGizmo::FindHandleAt(const IntVector2& ClientPosition) const
 
         for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
         {
-            const Vector3& BasisU = Axes[(AxisIndex + 1) % 3];
-            const Vector3& BasisV = Axes[(AxisIndex + 2) % 3];
+            const FVector3& BasisU = Axes[(AxisIndex + 1) % 3];
+            const FVector3& BasisV = Axes[(AxisIndex + 2) % 3];
 
-            TArray<Vector2> Points;
+            TArray<FVector2> Points;
             if (!GetRingPoints(BasisU, BasisV, ScreenFactor, Points))
             {
                 continue;
@@ -450,8 +450,8 @@ EGizmoHandle FGizmo::FindHandleAt(const IntVector2& ClientPosition) const
                 continue;
             }
 
-            const float   Angle  = (Math::Constants::TwoPI * static_cast<float>(ClosestStep)) / static_cast<float>(RingSegments);
-            const Vector3 OnRing = Pivot + (BasisU * (Math::Cos(Angle) * ScreenFactor)) + (BasisV * (Math::Sin(Angle) * ScreenFactor));
+            const float    Angle  = (Math::Constants::TwoPI * static_cast<float>(ClosestStep)) / static_cast<float>(RingSegments);
+            const FVector3 OnRing = Pivot + (BasisU * (Math::Cos(Angle) * ScreenFactor)) + (BasisV * (Math::Sin(Angle) * ScreenFactor));
 
             const float Depth = ViewMatrix.TransformCoord(OnRing).Z;
             if (Depth < NearestDepth)
@@ -466,7 +466,7 @@ EGizmoHandle FGizmo::FindHandleAt(const IntVector2& ClientPosition) const
             return NearestHandle;
         }
 
-        TArray<Vector2> OuterPoints;
+        TArray<FVector2> OuterPoints;
         if (GetRingPoints(CameraRight, CameraUp, ScreenFactor * OuterRingScale, OuterPoints))
         {
             for (int32 Index = 0; Index < OuterPoints.Size(); ++Index)
@@ -493,7 +493,7 @@ EGizmoHandle FGizmo::FindHandleAt(const IntVector2& ClientPosition) const
 
     for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
     {
-        Vector2 Quad[4];
+        FVector2 Quad[4];
         if (HasAxisBit(StateBit_PlaneVisible, AxisIndex) && GetPlaneQuad(AxisIndex, Quad) && FGizmoMath::IsPointOverQuad(Point, Quad, FGizmoMath::PlaneGrabPadding))
         {
             return CreateHandle(bIsTranslate ? EGizmoHandle::TranslateYZ : EGizmoHandle::ScaleYZ, AxisIndex);
@@ -502,8 +502,8 @@ EGizmoHandle FGizmo::FindHandleAt(const IntVector2& ClientPosition) const
 
     for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
     {
-        Vector2 Start;
-        Vector2 End;
+        FVector2 Start;
+        FVector2 End;
 
         if (!HasAxisBit(StateBit_AxisVisible, AxisIndex) || !GetAxisSegment(AxisIndex, Start, End))
         {
@@ -519,21 +519,21 @@ EGizmoHandle FGizmo::FindHandleAt(const IntVector2& ClientPosition) const
     return EGizmoHandle::None;
 }
 
-bool FGizmo::GetAxisSegment(int32 AxisIndex, Vector2& OutStart, Vector2& OutEnd) const
+bool FGizmo::GetAxisSegment(int32 AxisIndex, FVector2& OutStart, FVector2& OutEnd) const
 {
     const FRectangle& Bounds    = GetContentRectangle();
-    const Vector3     Direction = GetAxisDirection(AxisIndex);
+    const FVector3    Direction = GetAxisDirection(AxisIndex);
 
     return FGizmoMath::WorldToClient(ViewProjectionMatrix, Bounds, Pivot + (Direction * (ScreenFactor * GIZMO_SHAFT_START)), OutStart)
         && FGizmoMath::WorldToClient(ViewProjectionMatrix, Bounds, Pivot + (Direction * ScreenFactor), OutEnd);
 }
 
-bool FGizmo::GetPlaneQuad(int32 AxisIndex, Vector2 OutQuad[4]) const
+bool FGizmo::GetPlaneQuad(int32 AxisIndex, FVector2 OutQuad[4]) const
 {
     const FRectangle& Bounds = GetContentRectangle();
 
-    const Vector3 SideU = GetAxisDirection((AxisIndex + 1) % 3) * ScreenFactor;
-    const Vector3 SideV = GetAxisDirection((AxisIndex + 2) % 3) * ScreenFactor;
+    const FVector3 SideU = GetAxisDirection((AxisIndex + 1) % 3) * ScreenFactor;
+    const FVector3 SideV = GetAxisDirection((AxisIndex + 2) % 3) * ScreenFactor;
 
     const float Corners[4][2] =
     {
@@ -545,7 +545,7 @@ bool FGizmo::GetPlaneQuad(int32 AxisIndex, Vector2 OutQuad[4]) const
 
     for (int32 CornerIndex = 0; CornerIndex < 4; ++CornerIndex)
     {
-        const Vector3 Corner = Pivot + (SideU * Corners[CornerIndex][0]) + (SideV * Corners[CornerIndex][1]);
+        const FVector3 Corner = Pivot + (SideU * Corners[CornerIndex][0]) + (SideV * Corners[CornerIndex][1]);
         if (!FGizmoMath::WorldToClient(ViewProjectionMatrix, Bounds, Corner, OutQuad[CornerIndex]))
         {
             return false;
@@ -555,7 +555,7 @@ bool FGizmo::GetPlaneQuad(int32 AxisIndex, Vector2 OutQuad[4]) const
     return true;
 }
 
-bool FGizmo::GetRingPoints(const Vector3& BasisU, const Vector3& BasisV, float Radius, TArray<Vector2>& OutPoints) const
+bool FGizmo::GetRingPoints(const FVector3& BasisU, const FVector3& BasisV, float Radius, TArray<FVector2>& OutPoints) const
 {
     const FRectangle& Bounds = GetContentRectangle();
 
@@ -565,9 +565,9 @@ bool FGizmo::GetRingPoints(const Vector3& BasisU, const Vector3& BasisV, float R
     for (int32 Step = 0; Step < RingSegments; ++Step)
     {
         const float Angle = (Math::Constants::TwoPI * static_cast<float>(Step)) / static_cast<float>(RingSegments);
-        const Vector3 Corner = Pivot + (BasisU * (Math::Cos(Angle) * Radius)) + (BasisV * (Math::Sin(Angle) * Radius));
+        const FVector3 Corner = Pivot + (BasisU * (Math::Cos(Angle) * Radius)) + (BasisV * (Math::Sin(Angle) * Radius));
 
-        Vector2 Projected;
+        FVector2 Projected;
         if (!FGizmoMath::WorldToClient(ViewProjectionMatrix, Bounds, Corner, Projected))
         {
             OutPoints.Clear();
@@ -580,13 +580,13 @@ bool FGizmo::GetRingPoints(const Vector3& BasisU, const Vector3& BasisV, float R
     return true;
 }
 
-float FGizmo::GetAngleOnDragPlane(const Vector3& WorldPosition) const
+float FGizmo::GetAngleOnDragPlane(const FVector3& WorldPosition) const
 {
-    const Vector3 Local = WorldPosition - DragPlanePoint;
+    const FVector3 Local = WorldPosition - DragPlanePoint;
     return Math::Atan2(Local.DotProduct(DragBasisV), Local.DotProduct(DragBasisU));
 }
 
-void FGizmo::GetDragPlane(EGizmoHandle Handle, Vector3& OutPoint, Vector3& OutNormal) const
+void FGizmo::GetDragPlane(EGizmoHandle Handle, FVector3& OutPoint, FVector3& OutNormal) const
 {
     OutPoint = Pivot;
 
@@ -624,16 +624,16 @@ void FGizmo::GetDragPlane(EGizmoHandle Handle, Vector3& OutPoint, Vector3& OutNo
     }
 }
 
-bool FGizmo::ProjectOntoDragPlane(const IntVector2& ClientPosition, Vector3& OutHit) const
+bool FGizmo::ProjectOntoDragPlane(const FIntVector2& ClientPosition, FVector3& OutHit) const
 {
-    Vector3 RayOrigin;
-    Vector3 RayDirection;
+    FVector3 RayOrigin;
+    FVector3 RayDirection;
 
     FGizmoMath::ComputeCameraRay(ViewProjectionMatrix, GetContentRectangle(), ClientPosition, RayOrigin, RayDirection);
     return FGizmoMath::IntersectRayPlane(DragPlanePoint, DragPlaneNormal, RayOrigin, RayDirection, OutHit);
 }
 
-void FGizmo::BeginDrag(EGizmoHandle Handle, const IntVector2& ClientPosition)
+void FGizmo::BeginDrag(EGizmoHandle Handle, const FIntVector2& ClientPosition)
 {
     ActiveHandle         = Handle;
     HoveredHandle        = Handle;
@@ -658,10 +658,10 @@ void FGizmo::BeginDrag(EGizmoHandle Handle, const IntVector2& ClientPosition)
 
     if (Handle == EGizmoHandle::ScaleUniform)
     {
-        Vector2 PivotClient;
+        FVector2 PivotClient;
         if (FGizmoMath::WorldToClient(ViewProjectionMatrix, GetContentRectangle(), Pivot, PivotClient))
         {
-            const Vector2 Cursor(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
+            const FVector2 Cursor(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
             DragStartLength = Math::Max((Cursor - PivotClient).GetLength(), 1.0f);
         }
         else
@@ -671,7 +671,7 @@ void FGizmo::BeginDrag(EGizmoHandle Handle, const IntVector2& ClientPosition)
     }
     else
     {
-        const Vector3 Grabbed = DragStartHit - DragPlanePoint;
+        const FVector3 Grabbed = DragStartHit - DragPlanePoint;
 
         const float GrabbedAt = Grabbed.DotProduct(DragAxis);
         DragStartLength = Math::Abs(GrabbedAt) > Math::Constants::CmpThreshold ? GrabbedAt : ScreenFactor;
@@ -691,9 +691,9 @@ void FGizmo::BeginDrag(EGizmoHandle Handle, const IntVector2& ClientPosition)
     OnDragStartedDelegate.ExecuteIfBound(Handle);
 }
 
-void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
+void FGizmo::UpdateDrag(const FIntVector2& ClientPosition)
 {
-    Vector3 Hit;
+    FVector3 Hit;
     if (!ProjectOntoDragPlane(ClientPosition, Hit))
     {
         return;
@@ -704,9 +704,9 @@ void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
 
     if (IsTranslateHandle(ActiveHandle))
     {
-        const Vector3 RawDelta = Hit - DragStartHit;
+        const FVector3 RawDelta = Hit - DragStartHit;
 
-        Vector3 Delta = RawDelta;
+        FVector3 Delta = RawDelta;
         switch (ActiveHandle)
         {
             case EGizmoHandle::TranslateX:
@@ -740,7 +740,7 @@ void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
             }
         }
 
-        Matrix4 NewTransform = TransformAtDragStart;
+        FMatrix4 NewTransform = TransformAtDragStart;
         NewTransform.SetTranslation(TransformAtDragStart.GetTranslation() + Delta);
 
         ApplyTransform(NewTransform);
@@ -759,10 +759,10 @@ void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
             Applied = Math::DegreesToRadians(FGizmoMath::SnapValue(Math::RadiansToDegrees(DragTotalAngle), Snap.RotationSnapDegrees));
         }
 
-        const Vector3 RotationAxis = IsRotateHandle(ActiveHandle) && AxisIndex >= 0 ? Axes[AxisIndex] : ViewDirection;
-        const Matrix4 Rotation     = CreateAxisAngleRotation(RotationAxis, Applied);
+        const FVector3 RotationAxis = IsRotateHandle(ActiveHandle) && AxisIndex >= 0 ? Axes[AxisIndex] : ViewDirection;
+        const FMatrix4 Rotation     = CreateAxisAngleRotation(RotationAxis, Applied);
 
-        const Matrix4 AboutPivot = Matrix4::Translation(-DragPlanePoint) * Rotation * Matrix4::Translation(DragPlanePoint);
+        const FMatrix4 AboutPivot = FMatrix4::Translation(-DragPlanePoint) * Rotation * FMatrix4::Translation(DragPlanePoint);
 
         Readout = ActiveHandle == EGizmoHandle::RotateScreen
             ? FString::Printf("%.2f deg", Math::RadiansToDegrees(Applied))
@@ -779,10 +779,10 @@ void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
     float Factor = 1.0f;
     if (ActiveHandle == EGizmoHandle::ScaleUniform)
     {
-        Vector2 PivotClient;
+        FVector2 PivotClient;
         if (FGizmoMath::WorldToClient(ViewProjectionMatrix, GetContentRectangle(), Pivot, PivotClient))
         {
-            const Vector2 Cursor(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
+            const FVector2 Cursor(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
             Factor = (Cursor - PivotClient).GetLength() / DragStartLength;
         }
     }
@@ -795,20 +795,20 @@ void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
 
     const bool bIsUniform = ActiveHandle == EGizmoHandle::ScaleUniform || Operation == EGizmoOperation::UniversalScale;
 
-    Vector3 ScaleVector(1.0f, 1.0f, 1.0f);
+    FVector3 ScaleVector(1.0f, 1.0f, 1.0f);
     if (bIsUniform)
     {
-        ScaleVector = Vector3(Factor, Factor, Factor);
-        Readout     = FString::Printf("%.3f", Factor);
+        ScaleVector = FVector3(Factor, Factor, Factor);
+        Readout     = FString::Printf("%.3f",  Factor);
     }
     else if (bIsPlane)
     {
         const int32 IndexU = (AxisIndex + 1) % 3;
         const int32 IndexV = (AxisIndex + 2) % 3;
 
-        const Vector3 Along  = Hit - DragPlanePoint;
-        const float   AlongU = Math::Max(FGizmoMath::SnapValue(Along.DotProduct(DragBasisU) / DragStartLengthU, Snap.ScaleSnap), GIZMO_MINIMUM_SCALE);
-        const float   AlongV = Math::Max(FGizmoMath::SnapValue(Along.DotProduct(DragBasisV) / DragStartLengthV, Snap.ScaleSnap), GIZMO_MINIMUM_SCALE);
+        const FVector3 Along  = Hit - DragPlanePoint;
+        const float    AlongU = Math::Max(FGizmoMath::SnapValue(Along.DotProduct(DragBasisU) / DragStartLengthU, Snap.ScaleSnap), GIZMO_MINIMUM_SCALE);
+        const float    AlongV = Math::Max(FGizmoMath::SnapValue(Along.DotProduct(DragBasisV) / DragStartLengthV, Snap.ScaleSnap), GIZMO_MINIMUM_SCALE);
 
         ScaleVector[IndexU] = AlongU;
         ScaleVector[IndexV] = AlongV;
@@ -820,7 +820,7 @@ void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
         Readout                = FString::Printf("%s  %.3f", AxisNames[AxisIndex], Factor);
     }
 
-    ApplyTransform(Matrix4::Scale(ScaleVector) * TransformAtDragStart);
+    ApplyTransform(FMatrix4::Scale(ScaleVector) * TransformAtDragStart);
 }
 
 void FGizmo::EndDrag()
@@ -842,7 +842,7 @@ void FGizmo::EndDrag()
     UpdateContext();
 }
 
-void FGizmo::ApplyTransform(const Matrix4& NewTransform)
+void FGizmo::ApplyTransform(const FMatrix4& NewTransform)
 {
     if (NewTransform.IsEqual(Transform))
     {
@@ -859,7 +859,7 @@ void FGizmo::DrawTranslate(FDrawCommandList& OutCommandList, int32 LayerId) cons
 {
     for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
     {
-        Vector2 Quad[4];
+        FVector2 Quad[4];
         if (!HasAxisBit(StateBit_PlaneVisible, AxisIndex) || !GetPlaneQuad(AxisIndex, Quad))
         {
             continue;
@@ -870,14 +870,14 @@ void FGizmo::DrawTranslate(FDrawCommandList& OutCommandList, int32 LayerId) cons
         FFloatColor FillColor = Color;
         FillColor.A *= GIZMO_PLANE_OPACITY;
 
-        OutCommandList.AddConvexPolygon(LayerId, MakeArrayView<const Vector2>(Quad, 4), FillColor);
-        OutCommandList.AddPolyline(LayerId + 1, MakeArrayView<const Vector2>(Quad, 4), Color, GIZMO_OUTLINE_THICKNESS, true);
+        OutCommandList.AddConvexPolygon(LayerId, MakeArrayView<const FVector2>(Quad, 4), FillColor);
+        OutCommandList.AddPolyline(LayerId + 1, MakeArrayView<const FVector2>(Quad, 4), Color, GIZMO_OUTLINE_THICKNESS, true);
     }
 
     for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
     {
-        Vector2 Start;
-        Vector2 End;
+        FVector2 Start;
+        FVector2 End;
 
         if (!HasAxisBit(StateBit_AxisVisible, AxisIndex) || !GetAxisSegment(AxisIndex, Start, End))
         {
@@ -886,10 +886,10 @@ void FGizmo::DrawTranslate(FDrawCommandList& OutCommandList, int32 LayerId) cons
 
         const FFloatColor Color = GetHandleColor(CreateHandle(EGizmoHandle::TranslateX, AxisIndex), AxisIndex);
 
-        const Vector2 Along    = (End - Start).GetNormalized();
-        const Vector2 Side     = Vector2(-Along.Y, Along.X);
-        const Vector2 Base     = End - (Along * GIZMO_ARROW_LENGTH);
-        const Vector2 ShaftEnd = Base + (Along * 1.0f);
+        const FVector2 Along    = (End - Start).GetNormalized();
+        const FVector2 Side     = FVector2(-Along.Y, Along.X);
+        const FVector2 Base     = End - (Along * GIZMO_ARROW_LENGTH);
+        const FVector2 ShaftEnd = Base + (Along * 1.0f);
 
         OutCommandList.AddLine(LayerId + 1, Start, ShaftEnd, Color, GIZMO_SHAFT_THICKNESS);
 
@@ -907,7 +907,7 @@ void FGizmo::DrawTranslate(FDrawCommandList& OutCommandList, int32 LayerId) cons
 
 void FGizmo::DrawRotate(FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    TArray<Vector2> Points;
+    TArray<FVector2> Points;
 
     if (GetRingPoints(CameraRight, CameraUp, ScreenFactor * OuterRingScale, Points))
     {
@@ -930,7 +930,7 @@ void FGizmo::DrawRotate(FDrawCommandList& OutCommandList, int32 LayerId) const
         return;
     }
 
-    Vector2 PivotClient;
+    FVector2 PivotClient;
     if (!FGizmoMath::WorldToClient(ViewProjectionMatrix, GetContentRectangle(), Pivot, PivotClient))
     {
         return;
@@ -943,13 +943,13 @@ void FGizmo::DrawRotate(FDrawCommandList& OutCommandList, int32 LayerId) const
 
     const int32 Steps = Math::Max(static_cast<int32>(Math::Abs(DragTotalAngle) / (Math::Constants::TwoPI / static_cast<float>(RingSegments))), 1);
 
-    Vector2 Previous;
+    FVector2 Previous;
     for (int32 Step = 0; Step <= Steps; ++Step)
     {
-        const float Angle  = DragStartAngle + (DragTotalAngle * (static_cast<float>(Step) / static_cast<float>(Steps)));
-        const Vector3 Edge = DragPlanePoint + (DragBasisU * (Math::Cos(Angle) * Radius)) + (DragBasisV * (Math::Sin(Angle) * Radius));
+        const float Angle   = DragStartAngle + (DragTotalAngle * (static_cast<float>(Step) / static_cast<float>(Steps)));
+        const FVector3 Edge = DragPlanePoint + (DragBasisU * (Math::Cos(Angle) * Radius)) + (DragBasisV * (Math::Sin(Angle) * Radius));
 
-        Vector2 Projected;
+        FVector2 Projected;
         if (!FGizmoMath::WorldToClient(ViewProjectionMatrix, GetContentRectangle(), Edge, Projected))
         {
             break;
@@ -968,7 +968,7 @@ void FGizmo::DrawScale(FDrawCommandList& OutCommandList, int32 LayerId) const
 {
     for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
     {
-        Vector2 Quad[4];
+        FVector2 Quad[4];
         if (!HasAxisBit(StateBit_PlaneVisible, AxisIndex) || !GetPlaneQuad(AxisIndex, Quad))
         {
             continue;
@@ -979,14 +979,14 @@ void FGizmo::DrawScale(FDrawCommandList& OutCommandList, int32 LayerId) const
         FFloatColor FillColor = Color;
         FillColor.A *= GIZMO_PLANE_OPACITY;
 
-        OutCommandList.AddConvexPolygon(LayerId, MakeArrayView<const Vector2>(Quad, 4), FillColor);
-        OutCommandList.AddPolyline(LayerId + 1, MakeArrayView<const Vector2>(Quad, 4), Color, GIZMO_OUTLINE_THICKNESS, true);
+        OutCommandList.AddConvexPolygon(LayerId, MakeArrayView<const FVector2>(Quad, 4), FillColor);
+        OutCommandList.AddPolyline(LayerId + 1, MakeArrayView<const FVector2>(Quad, 4), Color, GIZMO_OUTLINE_THICKNESS, true);
     }
 
     for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
     {
-        Vector2 Start;
-        Vector2 End;
+        FVector2 Start;
+        FVector2 End;
 
         if (!HasAxisBit(StateBit_AxisVisible, AxisIndex) || !GetAxisSegment(AxisIndex, Start, End))
         {
@@ -997,7 +997,7 @@ void FGizmo::DrawScale(FDrawCommandList& OutCommandList, int32 LayerId) const
         OutCommandList.AddLine(LayerId + 1, Start, End, Color, GIZMO_SHAFT_THICKNESS);
 
         const FRectangle Knob(
-            IntVector2(static_cast<int32>(End.X - GIZMO_KNOB_HALF_SIZE), static_cast<int32>(End.Y - GIZMO_KNOB_HALF_SIZE)),
+            FIntVector2(static_cast<int32>(End.X - GIZMO_KNOB_HALF_SIZE), static_cast<int32>(End.Y - GIZMO_KNOB_HALF_SIZE)),
             static_cast<int32>(GIZMO_KNOB_HALF_SIZE * 2.0f),
             static_cast<int32>(GIZMO_KNOB_HALF_SIZE * 2.0f));
 
@@ -1011,7 +1011,7 @@ void FGizmo::DrawScale(FDrawCommandList& OutCommandList, int32 LayerId) const
         return;
     }
 
-    Vector2 PivotClient;
+    FVector2 PivotClient;
     if (FGizmoMath::WorldToClient(ViewProjectionMatrix, GetContentRectangle(), Pivot, PivotClient))
     {
         OutCommandList.AddCircle(LayerId + 2, PivotClient, CenterHandleSize * 2.0f, GetHandleColor(EGizmoHandle::ScaleUniform, -1), GIZMO_OUTLINE_THICKNESS);
@@ -1020,7 +1020,7 @@ void FGizmo::DrawScale(FDrawCommandList& OutCommandList, int32 LayerId) const
 
 void FGizmo::DrawCenterHandle(FDrawCommandList& OutCommandList, int32 LayerId, EGizmoHandle Handle, bool bDrawAsSphere) const
 {
-    Vector2 PivotClient;
+    FVector2 PivotClient;
     if (!FGizmoMath::WorldToClient(ViewProjectionMatrix, GetContentRectangle(), Pivot, PivotClient))
     {
         return;
@@ -1039,7 +1039,7 @@ void FGizmo::DrawCenterHandle(FDrawCommandList& OutCommandList, int32 LayerId, E
     }
 
     const FRectangle Bounds(
-        IntVector2(static_cast<int32>(PivotClient.X - CenterHandleSize), static_cast<int32>(PivotClient.Y - CenterHandleSize)),
+        FIntVector2(static_cast<int32>(PivotClient.X - CenterHandleSize), static_cast<int32>(PivotClient.Y - CenterHandleSize)),
         static_cast<int32>(CenterHandleSize * 2.0f),
         static_cast<int32>(CenterHandleSize * 2.0f));
 
@@ -1054,7 +1054,7 @@ void FGizmo::DrawReadout(FDrawCommandList& OutCommandList, int32 LayerId) const
         return;
     }
 
-    Vector2 PivotClient;
+    FVector2 PivotClient;
     if (!FGizmoMath::WorldToClient(ViewProjectionMatrix, GetContentRectangle(), Pivot, PivotClient))
     {
         return;
@@ -1062,10 +1062,10 @@ void FGizmo::DrawReadout(FDrawCommandList& OutCommandList, int32 LayerId) const
 
     const FUIStyle& Style = FUIStyle::GetDefault();
 
-    const IntVector2 Position(static_cast<int32>(PivotClient.X) + GIZMO_READOUT_OFFSET, static_cast<int32>(PivotClient.Y) + GIZMO_READOUT_OFFSET);
+    const FIntVector2 Position(static_cast<int32>(PivotClient.X) + GIZMO_READOUT_OFFSET, static_cast<int32>(PivotClient.Y) + GIZMO_READOUT_OFFSET);
     const FRectangle Bounds(Position, Font->MeasureWidth(FStringView(Readout.Data(), Readout.Length())), Font->GetLineHeight());
 
-    OutCommandList.AddText(LayerId, FRectangle(Position + IntVector2(1, 1), Bounds.Width, Bounds.Height), Readout, Font.Get(), Style.Colors.WindowBackground);
+    OutCommandList.AddText(LayerId, FRectangle(Position + FIntVector2(1, 1), Bounds.Width, Bounds.Height), Readout, Font.Get(), Style.Colors.WindowBackground);
     OutCommandList.AddText(LayerId + 1, Bounds, Readout, Font.Get(), Style.Colors.Text);
 }
 

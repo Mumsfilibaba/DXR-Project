@@ -100,7 +100,7 @@ static TSharedPtr<FVisualElement> MakeWrappingCanvas(const FPlaygroundFonts& Fon
     Layout->AppendRun(FTextRun(GWrapSample, Fonts.Body.Get(), Style.Colors.Text));
 
     FDrawCanvas::FDesc CanvasDesc;
-    CanvasDesc.DesiredSize  = IntVector2(0, 96);
+    CanvasDesc.DesiredSize  = FIntVector2(0, 96);
     CanvasDesc.OnCanvasDraw = FOnCanvasDraw::CreateLambda(
         [Layout](const FDrawGeometry& Geometry, FDrawCommandList& CommandList, int32 LayerId) -> int32
         {
@@ -136,7 +136,7 @@ static TSharedPtr<FVisualElement> MakeRichRunCanvas(const FPlaygroundFonts& Font
     Layout->AppendRun(FTextRun(".\n\nA blank line keeps its height, and a trailing newline opens an empty line after it.\n", Fonts.Body.Get(), Style.Colors.TextDisabled));
 
     FDrawCanvas::FDesc CanvasDesc;
-    CanvasDesc.DesiredSize  = IntVector2(0, 130);
+    CanvasDesc.DesiredSize  = FIntVector2(0, 130);
     CanvasDesc.OnCanvasDraw = FOnCanvasDraw::CreateLambda(
         [Layout](const FDrawGeometry& Geometry, FDrawCommandList& CommandList, int32 LayerId) -> int32
         {

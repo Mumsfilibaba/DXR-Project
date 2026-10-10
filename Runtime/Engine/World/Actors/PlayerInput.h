@@ -120,7 +120,7 @@ public:
     void ClearInputStates();
     void ClearMouseDelta();
 
-    IntVector2 ConsumeMouseDelta();
+    FIntVector2 ConsumeMouseDelta();
 
     int32 AddActionKeyMapping(const FActionKeyMapping& ActionKeyMapping);
     int32 AddAxisMapping(const FAxisMapping& AxisMapping);
@@ -128,14 +128,14 @@ public:
 
     void OnAxisEvent(EAnalogSourceName::Type AxisSource, float AxisValue);
     void OnKeyEvent(FKey Key, bool bIsDown, bool bIsRepeat);
-    void OnHighPrecisionMouseInput(const IntVector2& Delta);
+    void OnHighPrecisionMouseInput(const FIntVector2& Delta);
 
-    void SetCursorPosition(const IntVector2& Postion);
+    void SetCursorPosition(const FIntVector2& Postion);
 
-    FKeyState  GetKeyState(FKey Key) const;
-    IntVector2 GetCursorPosition() const;
-    FAxisState GetAnalogState(EAnalogSourceName::Type AnalogSource) const;
-    float      GetAxisValue(const CHAR_T* AxisName) const;
+    FKeyState   GetKeyState(FKey Key) const;
+    FIntVector2 GetCursorPosition() const;
+    FAxisState  GetAnalogState(EAnalogSourceName::Type AnalogSource) const;
+    float       GetAxisValue(const CHAR_T* AxisName) const;
 
     template<typename StringType>
     FORCEINLINE float GetAxisValue(const StringType& AxisName) const requires(TIsTStringType<StringType>::Value)
@@ -182,7 +182,7 @@ private:
     float GetAxisValueByHash(uint32 Hash) const;
 
     TSharedPtr<IPlatformCursor>  CursorInterface;
-    IntVector2                   MouseDelta;
+    FIntVector2                  MouseDelta;
     TArray<FKeyState>            KeyStates;
     TArray<FAxisState>           AxisStates;
     TArray<FActionKeyMapping>    ActionKeyMappings;

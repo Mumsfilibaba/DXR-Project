@@ -36,7 +36,7 @@ public:
     virtual ~FToolTip();
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual void SetOuterCornerRadius(float InCornerRadius) override;
 
@@ -184,7 +184,7 @@ public:
      *
      * @param ScreenPosition The cursor position, in screen coordinates.
      */
-    void NotifyCursorMoved(const IntVector2& ScreenPosition);
+    void NotifyCursorMoved(const FIntVector2& ScreenPosition);
 
     /** @brief Hides the tip and forgets the request, which a click or a key press does. */
     void DismissToolTip();
@@ -230,7 +230,7 @@ private:
     void ShowToolTip();
     void MoveToolTip();
 
-    NODISCARD FRectangle ResolveBounds(const IntVector2& ToolTipSize) const;
+    NODISCARD FRectangle ResolveBounds(const FIntVector2& ToolTipSize) const;
     NODISCARD FRectangle ResolveAnchorBounds() const;
     NODISCARD bool HasAnchorBoundsOverride() const;
 
@@ -242,7 +242,7 @@ private:
     FRectangle                 AnchorBounds;
     FRectangle                 ClampArea;
     FRectangle                 ToolTipBounds;
-    IntVector2                 CursorPosition;
+    FIntVector2                CursorPosition;
     FString                    RequestedText;
     float                      RequestedDelay;
     float                      RemainingSeconds;

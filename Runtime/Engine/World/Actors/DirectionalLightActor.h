@@ -12,7 +12,7 @@ public:
     ~FDirectionalLightActor();
 
     using FActor::Initialize;
-    void Initialize(const Vector3& InRotation);
+    void Initialize(const FVector3& InRotation);
 
     virtual const CHAR_T* GetTypeLabel() const override
     {

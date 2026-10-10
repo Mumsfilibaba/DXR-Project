@@ -139,7 +139,7 @@ TSharedPtr<FVisualElement> FEditorOutputLogPanel::BuildFilterButton()
     {
         FImage::FDesc IconDesc;
         IconDesc.Brush       = Brush;
-        IconDesc.DesiredSize = IntVector2(FEditorStyle::IconSize, FEditorStyle::IconSize);
+        IconDesc.DesiredSize = FIntVector2(FEditorStyle::IconSize, FEditorStyle::IconSize);
         IconDesc.Tint        = Style.Colors.Text;
 
         return FImage::Create(IconDesc);
@@ -270,7 +270,7 @@ void FEditorOutputLogPanel::OnMatchCaseChanged(ECheckBoxState NewState)
     }
 }
 
-void FEditorOutputLogPanel::OnLogContextMenu(const IntVector2& ScreenPosition)
+void FEditorOutputLogPanel::OnLogContextMenu(const FIntVector2& ScreenPosition)
 {
     if (!FApplication::IsInitialized() || !LogView)
     {

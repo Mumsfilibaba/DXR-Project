@@ -12,7 +12,7 @@ public:
     virtual ~FEditorViewportImage();
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override final;
+    virtual FIntVector2 ComputeDesiredSize() const override final;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final;
 
     /**

@@ -116,7 +116,7 @@ public:
      * @param LocalPosition The point, relative to the top-left of the layout.
      * @return The index into the concatenated text.
      */
-    NODISCARD int32 FindCharacterIndexAt(const IntVector2& LocalPosition) const;
+    NODISCARD int32 FindCharacterIndexAt(const FIntVector2& LocalPosition) const;
 
     /**
      * @brief The rectangle one character occupies, for caret and selection drawing.
@@ -177,7 +177,7 @@ public:
      * @return The width of the widest line and the heights of every line added up, in pixels, both zero
      * until WrapToWidth has run.
      */
-    NODISCARD FORCEINLINE IntVector2 GetSize() const
+    NODISCARD FORCEINLINE FIntVector2 GetSize() const
     {
         return CachedSize;
     }
@@ -235,7 +235,7 @@ private:
     TArray<int32>     RunSourceOffsets;
     TArray<FTextLine> Lines;
     mutable FString   CachedText;
-    IntVector2        CachedSize;
+    FIntVector2       CachedSize;
     int32             CachedWrapWidth;
     int32             SourceLength;
     int32             PendingLineWidth;

@@ -280,7 +280,7 @@ bool FPlaygroundLoop::CreateMainWindow()
 {
     FWindow::FDesc WindowDesc;
     WindowDesc.Title      = "DXR UI Playground";
-    WindowDesc.Size       = IntVector2(GDefaultWindowWidth, GDefaultWindowHeight);
+    WindowDesc.Size       = FIntVector2(GDefaultWindowWidth, GDefaultWindowHeight);
     WindowDesc.StyleFlags = EWindowStyleFlags::Default | EWindowStyleFlags::CustomTitleBar;
 
     MainWindow = FWindow::Create(WindowDesc);

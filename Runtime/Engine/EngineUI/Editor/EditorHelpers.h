@@ -242,14 +242,14 @@ struct ENGINE_API EditorWidgets
     // Inputs
     // -----------------------------------------------------------------------------------------
 
-    static bool DrawFloat3Control(const CHAR_T* Label, Vector3& OutValue, float Speed, const Vector3* InRevertValue, EVector3ControlType InType);
+    static bool DrawFloat3Control(const CHAR_T* Label, FVector3& OutValue, float Speed, const FVector3* InRevertValue, EVector3ControlType InType);
     static bool DrawFloatProperty(const CHAR_T* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const CHAR_T* Format, bool bUseSlider, const float* InRevertValue, bool bEnabled = true);
     static bool DrawIntProperty(const CHAR_T* Label, int32& InOutValue, float Speed, int32 MinValue, int32 MaxValue, const CHAR_T* Format, bool bUseSlider, const int32* InRevertValue, bool bEnabled = true);
     static bool DrawCheckbox(const CHAR_T* Label, bool& InOutValue, bool bEnabled = true);
     static bool DrawCheckboxProperty(const CHAR_T* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled = true);
     static bool DrawComboProperty(const CHAR_T* Label, int32& InOutValue, const CHAR_T* const* Items, int32 ItemCount, const int32* InRevertValue, bool bEnabled = true);
     static bool DrawTextProperty(const CHAR_T* Label, const CHAR_T* ValueText);
-    static void DrawReadOnlyFloat3Property(const CHAR_T* Label, const Vector3& Value);
+    static void DrawReadOnlyFloat3Property(const CHAR_T* Label, const FVector3& Value);
 
     static void DrawTextureProperty(const CHAR_T* Label, ImTextureID Texture, float PreviewSize = 48.0f);
 
@@ -260,12 +260,12 @@ struct ENGINE_API EditorWidgets
         return DrawColor3Property(Label, InOutColor.RGBA, InRevertColor.RGBA, bEnabled, Flags);
     }
 
-    static FORCEINLINE bool DrawColor3Property(const CHAR_T* Label, Vector3& InOutColor, const Vector3& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
+    static FORCEINLINE bool DrawColor3Property(const CHAR_T* Label, FVector3& InOutColor, const FVector3& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
     {
         return DrawColor3Property(Label, InOutColor.XYZ, InRevertColor.XYZ, bEnabled, Flags);
     }
 
-    static FORCEINLINE bool DrawColorEdit3(const CHAR_T* Label, Vector3& OutColor, ImGuiColorEditFlags Flags = 0)
+    static FORCEINLINE bool DrawColorEdit3(const CHAR_T* Label, FVector3& OutColor, ImGuiColorEditFlags Flags = 0)
     {
         return ImGui::ColorEdit3(Label, OutColor.XYZ, Flags);
     }

@@ -50,7 +50,7 @@ FTileView::~FTileView() = default;
 void FTileView::Initialize(const FDesc& Desc)
 {
     Font                       = Desc.Font;
-    TileSize                   = IntVector2(Math::Max(Desc.TileSize.X, 1), Math::Max(Desc.TileSize.Y, 1));
+    TileSize                   = FIntVector2(Math::Max(Desc.TileSize.X, 1), Math::Max(Desc.TileSize.Y, 1));
     TileSpacing                = Math::Max(Desc.TileSpacing, 0);
     IconSize                   = Math::Max(Desc.IconSize, 0);
     LabelInset                 = Math::Max(Desc.LabelInset, 0);
@@ -64,7 +64,7 @@ void FTileView::Initialize(const FDesc& Desc)
     OnDragDetectedDelegate     = Desc.OnDragDetected;
 }
 
-IntVector2 FTileView::ComputeDesiredSize() const
+FIntVector2 FTileView::ComputeDesiredSize() const
 {
     return TileSize;
 }
@@ -122,10 +122,10 @@ int32 FTileView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         const FRectangle LabelBand = ComputeLabelBounds(Tile);
         if (Font && !Item.Label.IsEmpty() && !LabelBand.IsEmpty())
         {
-            FCachedTextMetrics& Metrics  = LabelMetrics[Index];
-            const FString&   LabelText   = Metrics.GetElided(Font.Get(), FStringView(Item.Label.Data(), Item.Label.Length()), LabelBand.Width);
-            const IntVector2 LabelSize   = IntVector2(Font->MeasureWidth(FStringView(LabelText.Data(), LabelText.Length())), Font->GetLineHeight());
-            const FRectangle LabelBounds = FLayout::AlignInBounds(LabelBand, LabelSize, EHorizontalAlignment::Center, EVerticalAlignment::Top);
+            FCachedTextMetrics& Metrics   = LabelMetrics[Index];
+            const FString&    LabelText   = Metrics.GetElided(Font.Get(), FStringView(Item.Label.Data(), Item.Label.Length()), LabelBand.Width);
+            const FIntVector2 LabelSize   = FIntVector2(Font->MeasureWidth(FStringView(LabelText.Data(), LabelText.Length())), Font->GetLineHeight());
+            const FRectangle  LabelBounds = FLayout::AlignInBounds(LabelBand, LabelSize, EHorizontalAlignment::Center, EVerticalAlignment::Top);
 
             // Matching the elided label rather than the whole one, so a match in the elided tail draws plain
             const int32 MatchOffset = FilterText.IsEmpty() ? FString::InvalidIndex : LabelText.Find(FilterText, EStringCaseType::NoCase);
@@ -199,7 +199,7 @@ FEventResponse FTileView::OnMouseMove(const FCursorEvent& CursorEvent)
 
     if (PressedIndex != InvalidTileIndex)
     {
-        const IntVector2 Travel = CursorEvent.GetClientPosition() - PressPosition;
+        const FIntVector2 Travel = CursorEvent.GetClientPosition() - PressPosition;
         if (Math::Abs(Travel.X) > DragThreshold || Math::Abs(Travel.Y) > DragThreshold)
         {
             const int32 DraggedIndex = PressedIndex;
@@ -363,9 +363,9 @@ void FTileView::ClearSelectedTiles()
     SelectedIndices.Clear();
 }
 
-void FTileView::SetTileSize(const IntVector2& InTileSize)
+void FTileView::SetTileSize(const FIntVector2& InTileSize)
 {
-    const IntVector2 ClampedSize(Math::Max(InTileSize.X, 1), Math::Max(InTileSize.Y, 1));
+    const FIntVector2 ClampedSize(Math::Max(InTileSize.X, 1), Math::Max(InTileSize.Y, 1));
     if (TileSize != ClampedSize)
     {
         TileSize = ClampedSize;
@@ -495,7 +495,7 @@ FRectangle FTileView::GetTileLabelBounds(int32 Index) const
     return Tile.IsEmpty() ? FRectangle() : ComputeLabelBounds(Tile);
 }
 
-int32 FTileView::FindTileAt(const IntVector2& ClientPosition) const
+int32 FTileView::FindTileAt(const FIntVector2& ClientPosition) const
 {
     const FRectangle Bounds = GetContentRectangle();
     if (!Bounds.EncapsulatesPoint(ClientPosition))

@@ -37,7 +37,7 @@ public:
     virtual ~FCaptionButton();
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual bool GetCursor(ECursor& OutCursor) const override;
     virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
@@ -48,7 +48,7 @@ public:
      *
      * @param InSize The width and height to ask for.
      */
-    void SetButtonSize(const IntVector2& InSize);
+    void SetButtonSize(const FIntVector2& InSize);
 
     /** @return The window command the button carries out, which is the kind it was created as. */
     NODISCARD FORCEINLINE ECaptionButtonKind GetKind() const
@@ -73,7 +73,7 @@ private:
     NODISCARD float GetHoverFillAlpha() const;
 
     ECaptionButtonKind Kind;
-    IntVector2         ButtonSize;
+    FIntVector2        ButtonSize;
     float              HoverFadeStartAlpha;
     FUIAnimation       HoverFade;
     bool               bIsWindowMaximized;
@@ -160,8 +160,8 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 PrepareDesiredSize() override;
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 PrepareDesiredSize() override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
 

@@ -6,8 +6,8 @@ FSceneDirectionalLight::FSceneDirectionalLight(FScene* InScene)
     : FSceneObject(InScene)
     , ShadowView()
     , Color(1.0f, 1.0f, 1.0f)
-    , Direction(-Vector3::Up)
-    , UpVector(Vector3::Up)
+    , Direction(-FVector3::Up)
+    , UpVector(FVector3::Up)
     , ShadowMatrix()
     , ShadowNearPlane(0.0f)
     , ShadowFarPlane(0.0f)
@@ -20,7 +20,7 @@ FSceneDirectionalLight::FSceneDirectionalLight(FScene* InScene)
 
 FSceneDirectionalLight::~FSceneDirectionalLight() = default;
 
-void FSceneDirectionalLight::RenderThread_ApplyUpdate(const FDirectionalLightProxyUpdate& Update, const Matrix4& CameraViewProjectionInverse)
+void FSceneDirectionalLight::RenderThread_ApplyUpdate(const FDirectionalLightProxyUpdate& Update, const FMatrix4& CameraViewProjectionInverse)
 {
     Color                = Update.Color;
     Direction            = Update.Direction;
@@ -33,24 +33,24 @@ void FSceneDirectionalLight::RenderThread_ApplyUpdate(const FDirectionalLightPro
     bCastShadows         = Update.bCastShadows;
 
     // Update ShadowMatrix
-    Vector3 FrustumCorners[8] =
+    FVector3 FrustumCorners[8] =
     {
-        Vector3(-1.0f,  1.0f, 0.0f),
-        Vector3( 1.0f,  1.0f, 0.0f),
-        Vector3( 1.0f, -1.0f, 0.0f),
-        Vector3(-1.0f, -1.0f, 0.0f),
-        Vector3(-1.0f,  1.0f, 1.0f),
-        Vector3( 1.0f,  1.0f, 1.0f),
-        Vector3( 1.0f, -1.0f, 1.0f),
-        Vector3(-1.0f, -1.0f, 1.0f),
+        FVector3(-1.0f, 1.0f, 0.0f),
+        FVector3( 1.0f, 1.0f, 0.0f),
+        FVector3( 1.0f, -1.0f, 0.0f),
+        FVector3(-1.0f, -1.0f, 0.0f),
+        FVector3(-1.0f, 1.0f, 1.0f),
+        FVector3( 1.0f, 1.0f, 1.0f),
+        FVector3( 1.0f, -1.0f, 1.0f),
+        FVector3(-1.0f, -1.0f, 1.0f),
     };
 
     // NOTE: Need to transpose since this matrix is assumed to be used on the GPU
-    Matrix4 InvViewProjection = CameraViewProjectionInverse;
+    FMatrix4 InvViewProjection = CameraViewProjectionInverse;
     InvViewProjection = InvViewProjection.GetTranspose();
 
     // Calculate the center of frustum
-    Vector3 FrustumCenter = Vector3(0.0f);
+    FVector3 FrustumCenter = FVector3(0.0f);
     for (int32 Corner = 0; Corner < 8; ++Corner)
     {
         FrustumCorners[Corner] = InvViewProjection.TransformCoord(FrustumCorners[Corner]);
@@ -61,12 +61,12 @@ void FSceneDirectionalLight::RenderThread_ApplyUpdate(const FDirectionalLightPro
 
     // Calculate a Shadow-matrix
     {
-        UpVector = Vector3::Up;
+        UpVector = FVector3::Up;
 
-        Vector3 ShadowLookAt           = FrustumCenter - Direction;
-        Vector3 ShadowPosition         = FrustumCenter + Direction * -0.5f;
-        Matrix4 ShadowViewMatrix       = Matrix4::LookAt(ShadowPosition, ShadowLookAt, UpVector);
-        Matrix4 ShadowProjectionMatrix = Matrix4::OrthographicProjection(-0.5f, 0.5f, -0.5f, 0.5f, 0.0f, 1.0f);
+        FVector3 ShadowLookAt           = FrustumCenter - Direction;
+        FVector3 ShadowPosition         = FrustumCenter + Direction * -0.5f;
+        FMatrix4 ShadowViewMatrix       = FMatrix4::LookAt(ShadowPosition, ShadowLookAt, UpVector);
+        FMatrix4 ShadowProjectionMatrix = FMatrix4::OrthographicProjection(-0.5f, 0.5f, -0.5f, 0.5f, 0.0f, 1.0f);
         ShadowMatrix = ShadowViewMatrix * ShadowProjectionMatrix;
     }
 }

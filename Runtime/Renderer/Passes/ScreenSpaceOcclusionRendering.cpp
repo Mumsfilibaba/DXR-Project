@@ -30,13 +30,13 @@ static FAutoConsoleVariableRef CVarSSAOKernelSize(
 
 struct FSSAOSettingsHLSL
 {
-    Vector2    ScreenSize;
-    Vector2    NoiseSize;
-    IntVector2 GBufferSize;
-    float      Radius;
-    float      Bias;
-    uint32     KernelSize;
-    uint32     FrameIndex;
+    FVector2    ScreenSize;
+    FVector2    NoiseSize;
+    FIntVector2 GBufferSize;
+    float       Radius;
+    float       Bias;
+    uint32      KernelSize;
+    uint32      FrameIndex;
 };
 
 class FSSAOCS
@@ -169,7 +169,7 @@ void FScreenSpaceOcclusionPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBui
         [Context](FRHICommandList& PassCommandList, const FRenderGraphPassResources& PassResources)
         {
             FRHITexture* SSAOTexture = PassResources.Get(Context.SSAOBuffer);
-            PassCommandList.ClearUnorderedAccessViewFloat(SSAOTexture->GetUnorderedAccessView(), Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            PassCommandList.ClearUnorderedAccessViewFloat(SSAOTexture->GetUnorderedAccessView(), FVector4(1.0f, 1.0f, 1.0f, 1.0f));
         });
 }
 
@@ -191,9 +191,9 @@ void FScreenSpaceOcclusionPass::Record(FRHICommandList& CommandList, const FPass
     const uint32 GBufferWidth  = PassResources.GBufferDepth->GetDesc().Extent.X;
     const uint32 GBufferHeight = PassResources.GBufferDepth->GetDesc().Extent.Y;
 
-    SSAOSettings.ScreenSize  = Vector2(float(Width), float(Height));
-    SSAOSettings.NoiseSize   = Vector2(4.0f, 4.0f);
-    SSAOSettings.GBufferSize = IntVector2(GBufferWidth, GBufferHeight);
+    SSAOSettings.ScreenSize  = FVector2(float(Width), float(Height));
+    SSAOSettings.NoiseSize   = FVector2(4.0f, 4.0f);
+    SSAOSettings.GBufferSize = FIntVector2(GBufferWidth, GBufferHeight);
     SSAOSettings.Radius      = GSSAORadius;
     SSAOSettings.KernelSize  = GSSAOKernelSize;
     SSAOSettings.Bias        = GSSAOBias;

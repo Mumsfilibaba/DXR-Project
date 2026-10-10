@@ -25,12 +25,12 @@ FComboBoxButton::FComboBoxButton()
 
 FComboBoxButton::~FComboBoxButton() = default;
 
-IntVector2 FComboBoxButton::ComputeDesiredSize() const
+FIntVector2 FComboBoxButton::ComputeDesiredSize() const
 {
     const FUIStyle& Style = FUIStyle::GetDefault();
     const FMargin&  Inset = GetPadding();
 
-    IntVector2 DesiredSize(Inset.GetTotalHorizontal() + COMBO_ARROW_WIDTH, Inset.GetTotalVertical());
+    FIntVector2 DesiredSize(Inset.GetTotalHorizontal() + COMBO_ARROW_WIDTH, Inset.GetTotalVertical());
     if (Font)
     {
         DesiredSize.X += Math::Max(ReservedTextWidth, Font->MeasureWidth(FStringView(Label.Data(), Label.Length())));
@@ -68,9 +68,9 @@ int32 FComboBoxButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComman
     const float CenterY = static_cast<float>(Bounds.Position.Y) + (static_cast<float>(Bounds.Height) * 0.5f);
 
     OutCommandList.AddTriangle(LayerId,
-        Vector2(CenterX - COMBO_ARROW_HALF_WIDTH, CenterY - (COMBO_ARROW_HALF_WIDTH * 0.5f)),
-        Vector2(CenterX + COMBO_ARROW_HALF_WIDTH, CenterY - (COMBO_ARROW_HALF_WIDTH * 0.5f)),
-        Vector2(CenterX,                          CenterY + (COMBO_ARROW_HALF_WIDTH * 0.5f)),
+        FVector2(CenterX - COMBO_ARROW_HALF_WIDTH, CenterY - (COMBO_ARROW_HALF_WIDTH * 0.5f)),
+        FVector2(CenterX + COMBO_ARROW_HALF_WIDTH, CenterY - (COMBO_ARROW_HALF_WIDTH * 0.5f)),
+        FVector2(CenterX,                          CenterY + (COMBO_ARROW_HALF_WIDTH * 0.5f)),
         Style.ComboBox.Arrow);
 
     return LayerId;

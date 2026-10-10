@@ -192,7 +192,7 @@ static FString BuildReflectionComment(const TArray<uint8>& ShaderCode)
     if (bIsMSL && CodeView.GetStage() == EShaderStage::Compute)
     {
         const FMSLShaderInfo& MSLInfo = CodeView.GetMSLInfo();
-        Comment += FString::Printf("//  Thread group:     %u x %u x %u\n", MSLInfo.ThreadGroupSize[0], MSLInfo.ThreadGroupSize[1], MSLInfo.ThreadGroupSize[2]);
+        Comment += FString::Printf("//   Thread group:     %u x %u x %u\n", MSLInfo.ThreadGroupSize[0], MSLInfo.ThreadGroupSize[1], MSLInfo.ThreadGroupSize[2]);
     }
 
     if (Info.NumVertexInputs > 0)

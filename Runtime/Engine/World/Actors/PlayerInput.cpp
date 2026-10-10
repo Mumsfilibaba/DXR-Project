@@ -203,24 +203,24 @@ void FPlayerInput::ClearInputStates()
 {
     KeyStates.Clear();
     AxisStates.Clear();
-    MouseDelta = IntVector2();
+    MouseDelta = FIntVector2();
 }
 
 void FPlayerInput::ClearMouseDelta()
 {
-    MouseDelta = IntVector2();
+    MouseDelta = FIntVector2();
 }
 
-void FPlayerInput::OnHighPrecisionMouseInput(const IntVector2& Delta)
+void FPlayerInput::OnHighPrecisionMouseInput(const FIntVector2& Delta)
 {
     MouseDelta.X += Delta.X;
     MouseDelta.Y += Delta.Y;
 }
 
-IntVector2 FPlayerInput::ConsumeMouseDelta()
+FIntVector2 FPlayerInput::ConsumeMouseDelta()
 {
-    const IntVector2 Result = MouseDelta;
-    MouseDelta = IntVector2();
+    const FIntVector2 Result = MouseDelta;
+    MouseDelta = FIntVector2();
     return Result;
 }
 
@@ -247,7 +247,7 @@ int32 FPlayerInput::AddAxisKeyMapping(const FAxisKeyMapping& AxisKeyMapping)
     return MappingIndex;
 }
 
-void FPlayerInput::SetCursorPosition(const IntVector2& Position)
+void FPlayerInput::SetCursorPosition(const FIntVector2& Position)
 {
     if (TSharedPtr<IPlatformCursor> Cursor = GetCursorInterface())
     {
@@ -303,14 +303,14 @@ void FPlayerInput::OnKeyEvent(FKey Key, bool bIsDown, bool bIsRepeat)
     }
 }
 
-IntVector2 FPlayerInput::GetCursorPosition() const
+FIntVector2 FPlayerInput::GetCursorPosition() const
 {
     if (TSharedPtr<IPlatformCursor> Cursor = GetCursorInterface())
     {
         Cursor->GetPosition();
     }
 
-    return IntVector2(0, 0);
+    return FIntVector2(0, 0);
 }
 
 FKeyState FPlayerInput::GetKeyState(FKey Key) const

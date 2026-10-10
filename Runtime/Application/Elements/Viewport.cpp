@@ -44,7 +44,7 @@ int32 FViewport::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     return LayerId;
 }
 
-void FViewport::SetPosition(const IntVector2& InPosition, EViewportPositionSpace InSpace)
+void FViewport::SetPosition(const FIntVector2& InPosition, EViewportPositionSpace InSpace)
 {
     Position = InPosition;
     InvalidateArrange();
@@ -60,7 +60,7 @@ void FViewport::SetPosition(const IntVector2& InPosition, EViewportPositionSpace
             {
                 TSharedPtr<FWindow> Window = StaticCastSharedPtr<FWindow>(LocalParentElement.ToSharedPtr());
 
-                const IntVector2 WindowPos = Window->GetPosition();
+                const FIntVector2 WindowPos = Window->GetPosition();
                 Position.X -= WindowPos.X;
                 Position.Y -= WindowPos.Y;
                 break;
@@ -105,7 +105,7 @@ void FViewport::OnArrange(const FRectangle& AllottedBounds)
     }
 }
 
-void FViewport::SetSize(const IntVector2& InSize)
+void FViewport::SetSize(const FIntVector2& InSize)
 {
     if (Size != InSize)
     {

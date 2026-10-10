@@ -192,7 +192,7 @@ bool FFontAtlas::PackPage(int32 PageIndex, FRectangle& OutPackedRegion) const
 
         FGlyph& Glyph = NewPage->Glyphs[(RangeStart - FirstOfPage) + Index];
         Glyph.AtlasRectangle = FRectangle(
-            IntVector2(static_cast<int32>(PackedGlyph.x0), static_cast<int32>(PackedGlyph.y0)),
+            FIntVector2(static_cast<int32>(PackedGlyph.x0), static_cast<int32>(PackedGlyph.y0)),
             static_cast<int32>(PackedGlyph.x1) - static_cast<int32>(PackedGlyph.x0),
             static_cast<int32>(PackedGlyph.y1) - static_cast<int32>(PackedGlyph.y0));
 
@@ -257,7 +257,7 @@ bool FFontAtlas::PackAtSize(int32 InWidth, int32 InHeight)
     }
 
     Pixels.Resize(TexelCount * 4);
-    ExpandCoverage(FRectangle(IntVector2(0, 0), Width, Height));
+    ExpandCoverage(FRectangle(FIntVector2(0, 0), Width, Height));
     return true;
 }
 
@@ -314,7 +314,7 @@ bool FFontAtlas::RasterizePage(int32 PageIndex) const
 
 void FFontAtlas::ExpandCoverage(const FRectangle& Region) const
 {
-    const FRectangle Clamped = Region.Intersect(FRectangle(IntVector2(0, 0), Width, Height));
+    const FRectangle Clamped = Region.Intersect(FRectangle(FIntVector2(0, 0), Width, Height));
     if (Clamped.IsEmpty() || Pixels.Size() < Width * Height * 4)
     {
         return;

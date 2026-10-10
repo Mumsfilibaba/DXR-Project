@@ -61,7 +61,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnKeyChar(const FKeyEvent& KeyEvent) override;
     virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override;
@@ -306,7 +306,7 @@ private:
     NODISCARD FRectangle GetTextBounds(const FRectangle& Bounds) const;
     NODISCARD int32 GetTextBandHeight() const;
     NODISCARD int32 GetTextBandTop(const FRectangle& TextBounds) const;
-    NODISCARD int32 FindTextCursorPositionAt(const IntVector2& ClientPosition) const;
+    NODISCARD int32 FindTextCursorPositionAt(const FIntVector2& ClientPosition) const;
     NODISCARD double GetSecondsSinceTextCursorBlinkReset() const;
 
     void MoveTextCursor(int32 NewTextCursorPosition, bool bExtendSelection);

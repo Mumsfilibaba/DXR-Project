@@ -40,7 +40,7 @@ FTab::FTab()
 
 FTab::~FTab() = default;
 
-IntVector2 FTab::ComputeDesiredSize() const
+FIntVector2 FTab::ComputeDesiredSize() const
 {
     const int32 LabelWidth = LabelMetrics.GetWidth(Font.Get(), FStringView(Label));
     const int32 TabHeight = Math::Max(Style.StripHeight - Style.TopInset - Style.BottomInset, 0);
@@ -50,7 +50,7 @@ IntVector2 FTab::ComputeDesiredSize() const
         : Style.HorizontalPadding;
 
     const int32 TabWidth = Style.HorizontalPadding + LabelWidth + TrailingWidth;
-    return IntVector2(Math::Max(TabWidth, Style.MinWidth), TabHeight);
+    return FIntVector2(Math::Max(TabWidth, Style.MinWidth), TabHeight);
 }
 
 int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -90,7 +90,7 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
 
     if (Style.SeparatorThickness > 0)
     {
-        const FRectangle SeparatorBounds(IntVector2(Bounds.GetRight() - Style.SeparatorThickness, Bounds.Position.Y),
+        const FRectangle SeparatorBounds(FIntVector2(Bounds.GetRight() - Style.SeparatorThickness, Bounds.Position.Y),
             Style.SeparatorThickness, Bounds.Height);
 
         OutCommandList.AddBox(LayerId, SeparatorBounds, Faded(Style.Separator));
@@ -117,7 +117,7 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
             LabelX = Bounds.Position.X + Math::Max(LabelRegionWidth - LabelWidth - Style.LabelCloseGap, 0);
         }
 
-        const FRectangle LabelBounds(IntVector2(LabelX, LabelY), LabelWidth, Math::Max(Bounds.Height - Style.LabelOffsetY, 0));
+        const FRectangle LabelBounds(FIntVector2(LabelX, LabelY), LabelWidth, Math::Max(Bounds.Height - Style.LabelOffsetY, 0));
 
         const FFloatColor& LabelColor = bIsActive ? Style.LabelColorActive : Style.LabelColor;
         OutCommandList.AddText(LayerId + 1, LabelBounds, Label, Font.Get(), Faded(LabelColor));
@@ -147,10 +147,10 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
             const float CenterX = static_cast<float>(CloseBounds.Position.X) + static_cast<float>(CloseBounds.Width) * 0.5f;
             const float CenterY = static_cast<float>(CloseBounds.Position.Y) + static_cast<float>(CloseBounds.Height) * 0.5f;
 
-            OutCommandList.AddLine(LayerId + 2, Vector2(CenterX - Extent, CenterY - Extent),
-                Vector2(CenterX + Extent, CenterY + Extent), CrossColor, Style.CloseGlyphThickness);
-            OutCommandList.AddLine(LayerId + 2, Vector2(CenterX + Extent, CenterY - Extent),
-                Vector2(CenterX - Extent, CenterY + Extent), CrossColor, Style.CloseGlyphThickness);
+            OutCommandList.AddLine(LayerId + 2, FVector2(CenterX - Extent, CenterY - Extent),
+                FVector2(CenterX + Extent, CenterY + Extent), CrossColor, Style.CloseGlyphThickness);
+            OutCommandList.AddLine(LayerId + 2, FVector2(CenterX + Extent, CenterY - Extent),
+                FVector2(CenterX - Extent, CenterY + Extent), CrossColor, Style.CloseGlyphThickness);
         }
     }
 
@@ -277,7 +277,7 @@ FRectangle FTab::GetCloseButtonRectangle() const
     const FRectangle& Bounds = GetContentRectangle();
     const int32       Inset  = Math::Max((Bounds.Height - Style.CloseSize) / 2, 0);
 
-    return FRectangle(IntVector2(Bounds.GetRight() - Style.CloseInset - Style.CloseSize, Bounds.Position.Y + Inset),
+    return FRectangle(FIntVector2(Bounds.GetRight() - Style.CloseInset - Style.CloseSize, Bounds.Position.Y + Inset),
         Style.CloseSize, Style.CloseSize);
 }
 
@@ -361,9 +361,9 @@ void FTabStrip::Initialize(const FDesc& Desc)
     ScrollBar->SetOpacity(0.0f);
 }
 
-IntVector2 FTabStrip::ComputeDesiredSize() const
+FIntVector2 FTabStrip::ComputeDesiredSize() const
 {
-    IntVector2 DesiredSize((Tabs.IsEmpty() && !PreviewTab) ? 0 : Style.Spacing, Style.StripHeight);
+    FIntVector2 DesiredSize((Tabs.IsEmpty() && !PreviewTab) ? 0 : Style.Spacing, Style.StripHeight);
     for (const TSharedPtr<FTab>& Tab : Tabs)
     {
         DesiredSize.X += Tab->GetCachedDesiredSize().X + Style.Spacing;
@@ -403,7 +403,7 @@ void FTabStrip::OnArrange(const FRectangle& AllottedBounds)
         const int32 TabWidth = Tab.GetCachedDesiredSize().X;
 
         Tab.SetSlotOffset(Slot);
-        Tab.Arrange(FRectangle(IntVector2(Origin + Tab.GetDisplayedSlotOffset(), TabTop), TabWidth, TabHeight));
+        Tab.Arrange(FRectangle(FIntVector2(Origin + Tab.GetDisplayedSlotOffset(), TabTop), TabWidth, TabHeight));
 
         bIsSliding = bIsSliding || Tab.IsSliding();
         Slot += TabWidth + Style.Spacing;
@@ -518,7 +518,7 @@ int32 FTabStrip::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     return NextLayerId;
 }
 
-void FTabStrip::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+void FTabStrip::HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath)
 {
     if (ScrollBar && GetMaxScrollOffset() > 0 && ScrollBar->GetContentRectangle().EncapsulatesPoint(ClientPosition))
     {
@@ -634,7 +634,7 @@ void FTabStrip::UpdateScrollBar(const FRectangle& AllottedBounds)
     ScrollBar->SetScrollState(ContentWidth, ViewWidth, ScrollOffset);
 
     const int32 BarTop = AllottedBounds.GetBottom() - Style.ScrollBarThickness;
-    ScrollBar->Arrange(FRectangle(IntVector2(AllottedBounds.Position.X, BarTop), AllottedBounds.Width, Style.ScrollBarThickness));
+    ScrollBar->Arrange(FRectangle(FIntVector2(AllottedBounds.Position.X, BarTop), AllottedBounds.Width, Style.ScrollBarThickness));
 }
 
 void FTabStrip::AddTab(const FString& PanelId, const FString& Label, bool bIsClosable)
@@ -782,7 +782,7 @@ void FTabStrip::ClearTabs()
     InvalidateDesiredSize();
 }
 
-void FTabStrip::OnTabPressed(FTab* Tab, const IntVector2& ClientPosition)
+void FTabStrip::OnTabPressed(FTab* Tab, const FIntVector2& ClientPosition)
 {
     if (!Tab)
     {
@@ -798,7 +798,7 @@ void FTabStrip::OnTabPressed(FTab* Tab, const IntVector2& ClientPosition)
     OnTabActivatedDelegate.ExecuteIfBound(Tab->GetPanelId());
 }
 
-void FTabStrip::OnTabDragged(FTab* Tab, const IntVector2& ClientPosition, const IntVector2& ScreenPosition)
+void FTabStrip::OnTabDragged(FTab* Tab, const FIntVector2& ClientPosition, const FIntVector2& ScreenPosition)
 {
     if (!DetachedPanelId.IsEmpty())
     {
@@ -840,7 +840,7 @@ void FTabStrip::OnTabDragged(FTab* Tab, const IntVector2& ClientPosition, const 
     }
 }
 
-void FTabStrip::OnTabReleased(FTab* Tab, const IntVector2& ClientPosition, const IntVector2& ScreenPosition)
+void FTabStrip::OnTabReleased(FTab* Tab, const FIntVector2& ClientPosition, const FIntVector2& ScreenPosition)
 {
     if (Tab && Tab->IsClosable() && DetachedPanelId.IsEmpty())
     {

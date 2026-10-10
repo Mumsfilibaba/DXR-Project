@@ -43,9 +43,9 @@ void FSplitter::Initialize(const FDesc& Desc)
     TryNormalizeFractions(Desc.Fractions);
 }
 
-IntVector2 FSplitter::ComputeDesiredSize() const
+FIntVector2 FSplitter::ComputeDesiredSize() const
 {
-    IntVector2 DesiredSize(0, 0);
+    FIntVector2 DesiredSize(0, 0);
     for (const TSharedPtr<FVisualElement>& Child : Children)
     {
         if (!Child)
@@ -53,7 +53,7 @@ IntVector2 FSplitter::ComputeDesiredSize() const
             continue;
         }
 
-        const IntVector2 ChildSize = Child->GetCachedDesiredSize();
+        const FIntVector2 ChildSize = Child->GetCachedDesiredSize();
         if (Orientation == EDockSplitOrientation::Horizontal)
         {
             DesiredSize.X += ChildSize.X;
@@ -124,8 +124,8 @@ void FSplitter::OnArrange(const FRectangle& AllottedBounds)
         if (Children[Index])
         {
             const FRectangle ChildBounds = bIsHorizontal
-                ? FRectangle(IntVector2(Offset, AllottedBounds.Position.Y), Length, AllottedBounds.Height)
-                : FRectangle(IntVector2(AllottedBounds.Position.X, Offset), AllottedBounds.Width, Length);
+                ? FRectangle(FIntVector2(Offset, AllottedBounds.Position.Y), Length, AllottedBounds.Height)
+                : FRectangle(FIntVector2(AllottedBounds.Position.X, Offset), AllottedBounds.Width, Length);
 
             Children[Index]->Arrange(ChildBounds);
         }
@@ -191,7 +191,7 @@ int32 FSplitter::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     return NextLayerId + 1;
 }
 
-void FSplitter::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+void FSplitter::HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath)
 {
     if (GetHandleIndexAt(ClientPosition) >= 0)
     {
@@ -264,7 +264,7 @@ FEventResponse FSplitter::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 
 FEventResponse FSplitter::OnMouseMove(const FCursorEvent& CursorEvent)
 {
-    const IntVector2 Position = CursorEvent.GetClientPosition();
+    const FIntVector2 Position = CursorEvent.GetClientPosition();
 
     if (ActiveHandleIndex < 0)
     {
@@ -302,7 +302,7 @@ FEventResponse FSplitter::OnMouseLeft(const FCursorEvent& CursorEvent)
     return FEventResponse::Unhandled();
 }
 
-void FSplitter::AddChild(const TSharedPtr<FVisualElement>& InChild, const IntVector2& InMinimumSize)
+void FSplitter::AddChild(const TSharedPtr<FVisualElement>& InChild, const FIntVector2& InMinimumSize)
 {
     const int32 ChildIndex = Children.Size();
     Children.Add(InChild);
@@ -411,13 +411,13 @@ FRectangle FSplitter::GetHandleRectangle(int32 HandleIndex) const
 
     if (Orientation == EDockSplitOrientation::Horizontal)
     {
-        return FRectangle(IntVector2(ChildBounds.GetRight(), Bounds.Position.Y), HandleThickness, Bounds.Height);
+        return FRectangle(FIntVector2(ChildBounds.GetRight(), Bounds.Position.Y), HandleThickness, Bounds.Height);
     }
 
-    return FRectangle(IntVector2(Bounds.Position.X, ChildBounds.GetBottom()), Bounds.Width, HandleThickness);
+    return FRectangle(FIntVector2(Bounds.Position.X, ChildBounds.GetBottom()), Bounds.Width, HandleThickness);
 }
 
-int32 FSplitter::GetHandleIndexAt(const IntVector2& ClientPosition) const
+int32 FSplitter::GetHandleIndexAt(const FIntVector2& ClientPosition) const
 {
     for (int32 HandleIndex = 0; HandleIndex < Children.Size() - 1; ++HandleIndex)
     {

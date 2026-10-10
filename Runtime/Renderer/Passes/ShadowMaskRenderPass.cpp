@@ -292,7 +292,7 @@ void FShadowMaskRenderPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder
         },
         [Context](FRHICommandList& PassCommandList, const FRenderGraphPassResources& PassResources)
         {
-            const Vector4 MaskClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            const FVector4 MaskClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             PassCommandList.ClearUnorderedAccessViewFloat(PassResources.Get(Context.DirectionalShadowMask)->GetUnorderedAccessView(), MaskClearColor);
 
             const uint32 DebugClearValues[4] = { 0, 0, 0, 0 };

@@ -16,7 +16,7 @@
 #define ENABLE_SORT_BENCHMARK (0)
 #define ENABLE_STANDARD_BENCHMARK (1)
 
-// Individual operations within the standard benchmark (apply to both FString and Vector3).
+// Individual operations within the standard benchmark (apply to both FString and FVector3).
 #define ENABLE_INSERT_BENCHMARK    (1)
 #define ENABLE_EMPLACEAT_BENCHMARK (1)
 #define ENABLE_ADD_BENCHMARK       (1)
@@ -326,7 +326,7 @@ void TArray_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                std::vector<Vector3> Vectors0;
+                std::vector<FVector3> Vectors0;
 
                 FScopedClock ScopedClock(Clock);
 
@@ -335,7 +335,7 @@ void TArray_Benchmark()
             #endif
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Vectors0.insert(Vectors0.begin(), Vector3(3.0f, 5.0f, -6.0f));
+                    Vectors0.insert(Vectors0.begin(), FVector3(3.0f, 5.0f, -6.0f));
 
                 #if ENABLE_SHRINKTOFIT_BENCHMARK
                     if (ResetCounter >= 5)
@@ -357,7 +357,7 @@ void TArray_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                TArray<Vector3, TArrayAllocator<Vector3>> Vectors1;
+                TArray<FVector3, TArrayAllocator<FVector3>> Vectors1;
 
                 FScopedClock ScopedClock(Clock);
 
@@ -366,7 +366,7 @@ void TArray_Benchmark()
             #endif
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Vectors1.Insert(0, Vector3(3.0f, 5.0f, -6.0f));
+                    Vectors1.Insert(0, FVector3(3.0f, 5.0f, -6.0f));
 
                 #if ENABLE_SHRINKTOFIT_BENCHMARK
                     if (ResetCounter >= 5)
@@ -395,7 +395,7 @@ void TArray_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                std::vector<Vector3> Vectors0;
+                std::vector<FVector3> Vectors0;
 
                 FScopedClock ScopedClock(Clock);
 
@@ -426,7 +426,7 @@ void TArray_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                TArray<Vector3, TArrayAllocator<Vector3>> Vectors1;
+                TArray<FVector3, TArrayAllocator<FVector3>> Vectors1;
 
                 FScopedClock ScopedClock(Clock);
 
@@ -464,7 +464,7 @@ void TArray_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                std::vector<Vector3> Vectors0;
+                std::vector<FVector3> Vectors0;
 
                 FScopedClock ScopedClock(Clock);
 
@@ -473,7 +473,7 @@ void TArray_Benchmark()
             #endif
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Vectors0.push_back(Vector3(3.0f, 5.0f, -6.0f));
+                    Vectors0.push_back(FVector3(3.0f, 5.0f, -6.0f));
 
                 #if ENABLE_SHRINKTOFIT_BENCHMARK
                     if (ResetCounter >= 5)
@@ -495,7 +495,7 @@ void TArray_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                TArray<Vector3, TArrayAllocator<Vector3>> Vectors1;
+                TArray<FVector3, TArrayAllocator<FVector3>> Vectors1;
 
                 FScopedClock ScopedClock(Clock);
 
@@ -504,7 +504,7 @@ void TArray_Benchmark()
             #endif
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Vectors1.Add(Vector3(3.0f, 5.0f, -6.0f));
+                    Vectors1.Add(FVector3(3.0f, 5.0f, -6.0f));
 
                 #if ENABLE_SHRINKTOFIT_BENCHMARK
                     if (ResetCounter >= 5)
@@ -533,7 +533,7 @@ void TArray_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                std::vector<Vector3> Vectors0;
+                std::vector<FVector3> Vectors0;
 
                 FScopedClock ScopedClock(Clock);
 
@@ -564,7 +564,7 @@ void TArray_Benchmark()
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
             {
-                TArray<Vector3, TArrayAllocator<Vector3>> Vectors1;
+                TArray<FVector3, TArrayAllocator<FVector3>> Vectors1;
 
                 FScopedClock ScopedClock(Clock);
 

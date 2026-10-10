@@ -106,7 +106,7 @@ void FGraphCanvas::Initialize(const FDesc& Desc)
     SetModel(Desc.Model);
 }
 
-IntVector2 FGraphCanvas::PrepareDesiredSize()
+FIntVector2 FGraphCanvas::PrepareDesiredSize()
 {
     if (Model && Model->GetRevision() != BuiltRevision)
     {
@@ -116,9 +116,9 @@ IntVector2 FGraphCanvas::PrepareDesiredSize()
     return FInteractiveElement::PrepareDesiredSize();
 }
 
-IntVector2 FGraphCanvas::ComputeDesiredSize() const
+FIntVector2 FGraphCanvas::ComputeDesiredSize() const
 {
-    return IntVector2(240, 160);
+    return FIntVector2(240, 160);
 }
 
 void FGraphCanvas::OnArrange(const FRectangle& AllottedBounds)
@@ -127,12 +127,12 @@ void FGraphCanvas::OnArrange(const FRectangle& AllottedBounds)
 
     for (const TSharedPtr<FGraphNodeElement>& Element : NodeElements)
     {
-        const Vector2    TopLeft = GraphToScreen(Element->GetNode().Position);
-        const IntVector2 Size    = Element->GetCachedDesiredSize();
+        const FVector2    TopLeft = GraphToScreen(Element->GetNode().Position);
+        const FIntVector2 Size    = Element->GetCachedDesiredSize();
 
         Element->SetZoom(Zoom);
         Element->Arrange(FRectangle(
-            IntVector2(static_cast<int32>(TopLeft.X), static_cast<int32>(TopLeft.Y)),
+            FIntVector2(static_cast<int32>(TopLeft.X), static_cast<int32>(TopLeft.Y)),
             static_cast<int32>(static_cast<float>(Size.X) * Zoom),
             static_cast<int32>(static_cast<float>(Size.Y) * Zoom)));
     }
@@ -208,8 +208,8 @@ int32 FGraphCanvas::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
 
 FEventResponse FGraphCanvas::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 {
-    const IntVector2 ClientPosition = CursorEvent.GetClientPosition();
-    const FKey       Key            = CursorEvent.GetKey();
+    const FIntVector2 ClientPosition = CursorEvent.GetClientPosition();
+    const FKey        Key            = CursorEvent.GetKey();
 
     if (Key == Keys::MouseButtonRight)
     {
@@ -231,7 +231,7 @@ FEventResponse FGraphCanvas::OnMouseButtonDown(const FCursorEvent& CursorEvent)
         {
             DragMode           = EGraphDragMode::Link;
             DraggingFromPinId  = PinId;
-            DraggingToPosition = Vector2(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
+            DraggingToPosition = FVector2(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
         }
         else if (NodeId >= 0)
         {
@@ -300,7 +300,7 @@ FEventResponse FGraphCanvas::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 FEventResponse FGraphCanvas::OnMouseMove(const FCursorEvent& CursorEvent)
 {
     const FEventResponse Response       = FInteractiveElement::OnMouseMove(CursorEvent);
-    const IntVector2     ClientPosition = CursorEvent.GetClientPosition();
+    const FIntVector2    ClientPosition = CursorEvent.GetClientPosition();
 
     if (DragMode == EGraphDragMode::None)
     {
@@ -365,7 +365,7 @@ void FGraphCanvas::FitToNodes()
 
     if (NodeElements.IsEmpty())
     {
-        Pan  = Vector2(0.0f, 0.0f);
+        Pan  = FVector2(0.0f, 0.0f);
         Zoom = 1.0f;
         return;
     }
@@ -376,13 +376,13 @@ void FGraphCanvas::FitToNodes()
         return;
     }
 
-    Vector2 Minimum = Vector2(TNumericLimits<float>::Max(), TNumericLimits<float>::Max());
-    Vector2 Maximum = Vector2(TNumericLimits<float>::Lowest(), TNumericLimits<float>::Lowest());
+    FVector2 Minimum = FVector2(TNumericLimits<float>::Max(), TNumericLimits<float>::Max());
+    FVector2 Maximum = FVector2(TNumericLimits<float>::Lowest(), TNumericLimits<float>::Lowest());
 
     for (const TSharedPtr<FGraphNodeElement>& Element : NodeElements)
     {
-        const Vector2&   Position = Element->GetNode().Position;
-        const IntVector2 Size     = Element->GetCachedDesiredSize();
+        const FVector2&   Position = Element->GetNode().Position;
+        const FIntVector2 Size     = Element->GetCachedDesiredSize();
 
         Minimum.X = Math::Min(Minimum.X, Position.X);
         Minimum.Y = Math::Min(Minimum.Y, Position.Y);
@@ -390,14 +390,14 @@ void FGraphCanvas::FitToNodes()
         Maximum.Y = Math::Max(Maximum.Y, Position.Y + static_cast<float>(Size.Y));
     }
 
-    const Vector2 GraphSize  = Maximum - Minimum;
-    const float   WidthZoom  = GraphSize.X > 0.0f ? (static_cast<float>(Bounds.Width) / GraphSize.X) : MaxZoom;
-    const float   HeightZoom = GraphSize.Y > 0.0f ? (static_cast<float>(Bounds.Height) / GraphSize.Y) : MaxZoom;
+    const FVector2 GraphSize  = Maximum - Minimum;
+    const float    WidthZoom  = GraphSize.X > 0.0f ? (static_cast<float>(Bounds.Width) / GraphSize.X) : MaxZoom;
+    const float    HeightZoom = GraphSize.Y > 0.0f ? (static_cast<float>(Bounds.Height) / GraphSize.Y) : MaxZoom;
 
     Zoom = Math::Clamp(Math::Min(WidthZoom, HeightZoom), FitMinZoom, MaxZoom);
 
-    const Vector2 ScaledSize(GraphSize.X * Zoom, GraphSize.Y * Zoom);
-    Pan = Vector2(((static_cast<float>(Bounds.Width) - ScaledSize.X) * 0.5f) - (Minimum.X * Zoom),
+    const FVector2 ScaledSize(GraphSize.X * Zoom, GraphSize.Y * Zoom);
+    Pan = FVector2(((static_cast<float>(Bounds.Width) - ScaledSize.X) * 0.5f) - (Minimum.X * Zoom),
         ((static_cast<float>(Bounds.Height) - ScaledSize.Y) * 0.5f) - (Minimum.Y * Zoom));
 
     ArrangeNodeElements();
@@ -414,7 +414,7 @@ void FGraphCanvas::AutoLayout()
 
     const TArray<FGraphNode>& Nodes = Model->GetNodes();
 
-    TArray<Vector2>    NodeSizes;
+    TArray<FVector2>   NodeSizes;
     TMap<int32, int32> NodeIndexById;
     NodeSizes.Reserve(Nodes.Size());
 
@@ -424,11 +424,11 @@ void FGraphCanvas::AutoLayout()
 
         TSharedPtr<FGraphNodeElement> Element = FindNodeElement(Node.NodeId);
 
-        const IntVector2 Size = Element 
+        const FIntVector2 Size = Element 
             ? Element->GetCachedDesiredSize() 
-            : IntVector2(FGraphNodeElement::MinimumWidth, FGraphNodeElement::TitleHeight);
+            : FIntVector2(FGraphNodeElement::MinimumWidth, FGraphNodeElement::TitleHeight);
 
-        NodeSizes.Add(Vector2(static_cast<float>(Size.X), static_cast<float>(Size.Y)));
+        NodeSizes.Add(FVector2(static_cast<float>(Size.X), static_cast<float>(Size.Y)));
     }
 
     TArray<FGraphLayoutEdge> Edges;
@@ -457,7 +457,7 @@ void FGraphCanvas::AutoLayout()
         }
     }
 
-    TArray<Vector2> Positions;
+    TArray<FVector2> Positions;
     FLayeredGraphLayout::Layout(MakeArrayView(NodeSizes), MakeArrayView(Edges), FGraphLayoutSettings(), Positions);
 
     for (int32 Index = 0; Index < Nodes.Size() && Index < Positions.Size(); ++Index)
@@ -468,16 +468,16 @@ void FGraphCanvas::AutoLayout()
     ArrangeNodeElements();
 }
 
-void FGraphCanvas::ZoomAt(const IntVector2& ClientPosition, float ZoomDelta)
+void FGraphCanvas::ZoomAt(const FIntVector2& ClientPosition, float ZoomDelta)
 {
-    const Vector2 Anchor      = Vector2(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
-    const Vector2 GraphAnchor = ScreenToGraph(Anchor);
-    const float   NewZoom     = Math::Clamp(Zoom * ZoomDelta, MinZoom, MaxZoom);
+    const FVector2 Anchor      = FVector2(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
+    const FVector2 GraphAnchor = ScreenToGraph(Anchor);
+    const float    NewZoom     = Math::Clamp(Zoom * ZoomDelta, MinZoom, MaxZoom);
 
     Zoom = NewZoom;
 
     const FRectangle& Bounds = GetContentRectangle();
-    Pan = Vector2(
+    Pan = FVector2(
         Anchor.X - static_cast<float>(Bounds.Position.X) - (GraphAnchor.X * NewZoom),
         Anchor.Y - static_cast<float>(Bounds.Position.Y) - (GraphAnchor.Y * NewZoom));
 
@@ -490,29 +490,29 @@ void FGraphCanvas::SetZoom(float InZoom)
     MarkViewChanged();
 }
 
-void FGraphCanvas::SetPan(const Vector2& InPan)
+void FGraphCanvas::SetPan(const FVector2& InPan)
 {
     Pan = InPan;
     MarkViewChanged();
 }
 
-Vector2 FGraphCanvas::GraphToScreen(const Vector2& GraphPosition) const
+FVector2 FGraphCanvas::GraphToScreen(const FVector2& GraphPosition) const
 {
     const FRectangle& Bounds = GetContentRectangle();
-    return Vector2(
+    return FVector2(
         static_cast<float>(Bounds.Position.X) + Pan.X + (GraphPosition.X * Zoom),
         static_cast<float>(Bounds.Position.Y) + Pan.Y + (GraphPosition.Y * Zoom));
 }
 
-Vector2 FGraphCanvas::ScreenToGraph(const Vector2& ClientPosition) const
+FVector2 FGraphCanvas::ScreenToGraph(const FVector2& ClientPosition) const
 {
     const FRectangle& Bounds = GetContentRectangle();
-    return Vector2(
+    return FVector2(
         (ClientPosition.X - static_cast<float>(Bounds.Position.X) - Pan.X) / Zoom,
         (ClientPosition.Y - static_cast<float>(Bounds.Position.Y) - Pan.Y) / Zoom);
 }
 
-int32 FGraphCanvas::FindNodeAt(const IntVector2& ClientPosition) const
+int32 FGraphCanvas::FindNodeAt(const FIntVector2& ClientPosition) const
 {
     RefreshSpatialIndex();
 
@@ -528,7 +528,7 @@ int32 FGraphCanvas::FindNodeAt(const IntVector2& ClientPosition) const
     return TopIndex >= 0 ? NodeElements[TopIndex]->GetNodeId() : -1;
 }
 
-int32 FGraphCanvas::FindPinAt(const IntVector2& ClientPosition) const
+int32 FGraphCanvas::FindPinAt(const FIntVector2& ClientPosition) const
 {
     RefreshSpatialIndex();
 
@@ -552,7 +552,7 @@ int32 FGraphCanvas::FindPinAt(const IntVector2& ClientPosition) const
     return TopPinId;
 }
 
-int32 FGraphCanvas::FindLinkAt(const IntVector2& ClientPosition) const
+int32 FGraphCanvas::FindLinkAt(const FIntVector2& ClientPosition) const
 {
     if (!Model)
     {
@@ -561,7 +561,7 @@ int32 FGraphCanvas::FindLinkAt(const IntVector2& ClientPosition) const
 
     RefreshSpatialIndex();
 
-    const Vector2 Position(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
+    const FVector2 Position(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
 
     int32 ClosestLinkId   = -1;
     float ClosestDistance = LinkGrabDistance;
@@ -647,8 +647,8 @@ TSharedPtr<FGraphNodeElement> FGraphCanvas::FindNodeElement(int32 NodeId) const
 
 void FGraphCanvas::OnDragged(const FCursorEvent& CursorEvent)
 {
-    const IntVector2 ClientPosition = CursorEvent.GetClientPosition();
-    const IntVector2 Delta          = ClientPosition - LastDragPosition;
+    const FIntVector2 ClientPosition = CursorEvent.GetClientPosition();
+    const FIntVector2 Delta          = ClientPosition - LastDragPosition;
 
     LastDragPosition = ClientPosition;
 
@@ -661,7 +661,7 @@ void FGraphCanvas::OnDragged(const FCursorEvent& CursorEvent)
     {
         case EGraphDragMode::Pan:
         {
-            Pan = Pan + Vector2(static_cast<float>(Delta.X), static_cast<float>(Delta.Y));
+            Pan = Pan + FVector2(static_cast<float>(Delta.X), static_cast<float>(Delta.Y));
             MarkViewChanged();
             break;
         }
@@ -673,7 +673,7 @@ void FGraphCanvas::OnDragged(const FCursorEvent& CursorEvent)
                 break;
             }
 
-            const Vector2 GraphDelta(static_cast<float>(Delta.X) / Zoom, static_cast<float>(Delta.Y) / Zoom);
+            const FVector2 GraphDelta(static_cast<float>(Delta.X) / Zoom, static_cast<float>(Delta.Y) / Zoom);
             for (const int32 NodeId : SelectedNodeIds)
             {
                 const FGraphNode* Node = Model->FindNode(NodeId);
@@ -689,8 +689,8 @@ void FGraphCanvas::OnDragged(const FCursorEvent& CursorEvent)
 
         case EGraphDragMode::Marquee:
         {
-            const IntVector2 Minimum = IntVector2(Math::Min(DragAnchor.X, ClientPosition.X), Math::Min(DragAnchor.Y, ClientPosition.Y));
-            const IntVector2 Maximum = IntVector2(Math::Max(DragAnchor.X, ClientPosition.X), Math::Max(DragAnchor.Y, ClientPosition.Y));
+            const FIntVector2 Minimum = FIntVector2(Math::Min(DragAnchor.X, ClientPosition.X), Math::Min(DragAnchor.Y, ClientPosition.Y));
+            const FIntVector2 Maximum = FIntVector2(Math::Max(DragAnchor.X, ClientPosition.X), Math::Max(DragAnchor.Y, ClientPosition.Y));
 
             MarqueeBounds = FRectangle(Minimum, Maximum.X - Minimum.X, Maximum.Y - Minimum.Y);
             break;
@@ -698,7 +698,7 @@ void FGraphCanvas::OnDragged(const FCursorEvent& CursorEvent)
 
         case EGraphDragMode::Link:
         {
-            DraggingToPosition = Vector2(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
+            DraggingToPosition = FVector2(static_cast<float>(ClientPosition.X), static_cast<float>(ClientPosition.Y));
             HoveredPinId       = FindPinAt(ClientPosition);
 
             for (const TSharedPtr<FGraphNodeElement>& Element : NodeElements)
@@ -772,7 +772,7 @@ void FGraphCanvas::ArrangeNodeElements()
     }
 }
 
-void FGraphCanvas::EndDrag(const IntVector2& ClientPosition)
+void FGraphCanvas::EndDrag(const FIntVector2& ClientPosition)
 {
     if (DragMode == EGraphDragMode::Link && Model)
     {
@@ -811,7 +811,7 @@ void FGraphCanvas::EndDrag(const IntVector2& ClientPosition)
     MarqueeBounds     = FRectangle();
 }
 
-bool FGraphCanvas::GetLinkCurve(const FGraphLink& Link, Vector2& OutStart, Vector2& OutStartControl, Vector2& OutEndControl, Vector2& OutEnd) const
+bool FGraphCanvas::GetLinkCurve(const FGraphLink& Link, FVector2& OutStart, FVector2& OutStartControl, FVector2& OutEndControl, FVector2& OutEnd) const
 {
     if (!Model)
     {
@@ -840,8 +840,8 @@ bool FGraphCanvas::GetLinkCurve(const FGraphLink& Link, Vector2& OutStart, Vecto
     }
 
     const float Reach = Math::Max(GRAPH_LINK_MIN_REACH * Zoom, Math::Abs(OutEnd.X - OutStart.X) * 0.5f);
-    OutStartControl = Vector2(OutStart.X + Reach, OutStart.Y);
-    OutEndControl   = Vector2(OutEnd.X - Reach, OutEnd.Y);
+    OutStartControl = FVector2(OutStart.X + Reach, OutStart.Y);
+    OutEndControl   = FVector2(OutEnd.X - Reach, OutEnd.Y);
     return true;
 }
 
@@ -857,9 +857,9 @@ void FGraphCanvas::MarkViewChanged()
     InvalidatePaint();
 }
 
-TArrayView<const Vector2> FGraphCanvas::GetLinkPoints(const FLinkCurve& Curve) const
+TArrayView<const FVector2> FGraphCanvas::GetLinkPoints(const FLinkCurve& Curve) const
 {
-    return TArrayView<const Vector2>(LinkPoints.Data() + Curve.FirstPoint, GRAPH_LINK_SEGMENTS + 1);
+    return TArrayView<const FVector2>(LinkPoints.Data() + Curve.FirstPoint, GRAPH_LINK_SEGMENTS + 1);
 }
 
 void FGraphCanvas::RefreshSpatialIndex() const
@@ -906,16 +906,16 @@ void FGraphCanvas::RefreshSpatialIndex() const
 
             Geometry2D::FlattenCubicBezier(Curve.Start, Curve.StartControl, Curve.EndControl, Curve.End, GRAPH_LINK_SEGMENTS, LinkPoints);
 
-            Vector2 Minimum = Curve.Start;
-            Vector2 Maximum = Curve.Start;
-            for (const Vector2& Point : GetLinkPoints(Curve))
+            FVector2 Minimum = Curve.Start;
+            FVector2 Maximum = Curve.Start;
+            for (const FVector2& Point : GetLinkPoints(Curve))
             {
-                Minimum = Vector2(Math::Min(Minimum.X, Point.X), Math::Min(Minimum.Y, Point.Y));
-                Maximum = Vector2(Math::Max(Maximum.X, Point.X), Math::Max(Maximum.Y, Point.Y));
+                Minimum = FVector2(Math::Min(Minimum.X, Point.X), Math::Min(Minimum.Y, Point.Y));
+                Maximum = FVector2(Math::Max(Maximum.X, Point.X), Math::Max(Maximum.Y, Point.Y));
             }
 
-            const IntVector2 MinimumCorner(static_cast<int32>(Math::Floor(Minimum.X)), static_cast<int32>(Math::Floor(Minimum.Y)));
-            const IntVector2 MaximumCorner(static_cast<int32>(Math::Ceil(Maximum.X)), static_cast<int32>(Math::Ceil(Maximum.Y)));
+            const FIntVector2 MinimumCorner(static_cast<int32>(Math::Floor(Minimum.X)), static_cast<int32>(Math::Floor(Minimum.Y)));
+            const FIntVector2 MaximumCorner(static_cast<int32>(Math::Ceil(Maximum.X)), static_cast<int32>(Math::Ceil(Maximum.Y)));
 
             const FRectangle CurveBounds(MinimumCorner, (MaximumCorner.X - MinimumCorner.X) + 1, (MaximumCorner.Y - MinimumCorner.Y) + 1);
             ScratchItemBounds.Add(CurveBounds.Inflate(FMargin(GrabMargin)));
@@ -954,7 +954,7 @@ void FGraphCanvas::DrawGrid(const FRectangle& Bounds, FDrawCommandList& OutComma
 
         const bool bIsMajor = (Index % GRAPH_GRID_MAJOR_EVERY) == 0;
         const int32 LineX = Math::RoundToInt(X);
-        OutCommandList.AddLine(LayerId, FRectangle(IntVector2(LineX, Bounds.Position.Y), 1, Bounds.Height), bIsMajor ? MajorColor : MinorColor);
+        OutCommandList.AddLine(LayerId, FRectangle(FIntVector2(LineX, Bounds.Position.Y), 1, Bounds.Height), bIsMajor ? MajorColor : MinorColor);
     }
 
     Index = 0;
@@ -967,7 +967,7 @@ void FGraphCanvas::DrawGrid(const FRectangle& Bounds, FDrawCommandList& OutComma
 
         const bool bIsMajor = (Index % GRAPH_GRID_MAJOR_EVERY) == 0;
         const int32 LineY = Math::RoundToInt(Y);
-        OutCommandList.AddLine(LayerId, FRectangle(IntVector2(Bounds.Position.X, LineY), Bounds.Width, 1), bIsMajor ? MajorColor : MinorColor);
+        OutCommandList.AddLine(LayerId, FRectangle(FIntVector2(Bounds.Position.X, LineY), Bounds.Width, 1), bIsMajor ? MajorColor : MinorColor);
     }
 }
 
@@ -1007,7 +1007,7 @@ void FGraphCanvas::DrawLinks(FDrawCommandList& OutCommandList, int32 LayerId) co
     const FGraphPin*              FromPin     = Model->FindPin(DraggingFromPinId, FromNodeId);
     TSharedPtr<FGraphNodeElement> FromElement = FindNodeElement(FromNodeId);
 
-    Vector2 Start;
+    FVector2 Start;
     if (!FromElement || !FromElement->GetPinCenter(DraggingFromPinId, Start))
     {
         return;
@@ -1016,8 +1016,8 @@ void FGraphCanvas::DrawLinks(FDrawCommandList& OutCommandList, int32 LayerId) co
     const bool  bIsFromOutput = FromPin && FromPin->Direction == EGraphPinDirection::Output;
     const float Reach         = Math::Max(GRAPH_LINK_MIN_REACH * Zoom, Math::Abs(DraggingToPosition.X - Start.X) * 0.5f);
 
-    const Vector2 StartControl = Vector2(Start.X + (bIsFromOutput ? Reach : -Reach), Start.Y);
-    const Vector2 EndControl   = Vector2(DraggingToPosition.X + (bIsFromOutput ? -Reach : Reach), DraggingToPosition.Y);
+    const FVector2 StartControl = FVector2(Start.X + (bIsFromOutput ? Reach : -Reach), Start.Y);
+    const FVector2 EndControl   = FVector2(DraggingToPosition.X + (bIsFromOutput ? -Reach : Reach), DraggingToPosition.Y);
 
     OutCommandList.AddBezier(LayerId, Start, StartControl, EndControl, DraggingToPosition, ResolveLinkColor(FromPin), GRAPH_LINK_THICKNESS);
 }
@@ -1039,7 +1039,7 @@ void FGraphCanvas::OpenContextMenu(const FCursorEvent& CursorEvent)
         return;
     }
 
-    const Vector2 ClientPosition(static_cast<float>(CursorEvent.GetClientPosition().X), static_cast<float>(CursorEvent.GetClientPosition().Y));
+    const FVector2 ClientPosition(static_cast<float>(CursorEvent.GetClientPosition().X), static_cast<float>(CursorEvent.GetClientPosition().Y));
 
     TSharedPtr<FVisualElement> Menu = OnGetContextMenuDelegate.Execute(
         ScreenToGraph(ClientPosition), FindNodeAt(CursorEvent.GetClientPosition()));

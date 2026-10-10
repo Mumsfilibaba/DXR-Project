@@ -27,17 +27,17 @@ static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRect
     Element->Arrange(Bounds);
 }
 
-static FCursorEvent MakeButtonEvent(EInputEventType Type, const IntVector2& ClientPosition, bool bIsDown)
+static FCursorEvent MakeButtonEvent(EInputEventType Type, const FIntVector2& ClientPosition, bool bIsDown)
 {
-    return FCursorEvent(Type, Keys::MouseButtonLeft, ClientPosition, IntVector2(0, 0), FModifierKeyState(), bIsDown);
+    return FCursorEvent(Type, Keys::MouseButtonLeft, ClientPosition, FIntVector2(0, 0), FModifierKeyState(), bIsDown);
 }
 
-static FCursorEvent MakeMoveEvent(const IntVector2& ClientPosition)
+static FCursorEvent MakeMoveEvent(const FIntVector2& ClientPosition)
 {
-    return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, IntVector2(0, 0), FModifierKeyState());
+    return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, FIntVector2(0, 0), FModifierKeyState());
 }
 
-static void DragSelection(const TSharedPtr<FRichTextBlock>& Block, const IntVector2& From, const IntVector2& To)
+static void DragSelection(const TSharedPtr<FRichTextBlock>& Block, const FIntVector2& From, const FIntVector2& To)
 {
     Block->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, From, true));
     Block->OnMouseMove(MakeMoveEvent(To));
@@ -94,7 +94,7 @@ bool RichTextLayout_Test()
     const TSharedPtr<IFontFace> Font = CreateFont();
 
     TSharedPtr<FRichTextBlock> Block = MakeBlock(Font, { "[Info] ", "engine started" });
-    LayoutElement(Block, FRectangle(IntVector2(0, 0), 400, 60));
+    LayoutElement(Block, FRectangle(FIntVector2(0, 0), 400, 60));
 
     TEST_SECTION("The runs concatenate into one string the indices refer to");
     TEST_EXPECT_EQ(Block->GetText(), FString("[Info] engine started"));
@@ -106,19 +106,19 @@ bool RichTextLayout_Test()
 
     TEST_SECTION("A newline in a run starts a line without any wrapping");
     TSharedPtr<FRichTextBlock> TwoLines = MakeBlock(Font, { "first\n", "second\n" });
-    LayoutElement(TwoLines, FRectangle(IntVector2(0, 0), 400, 60));
+    LayoutElement(TwoLines, FRectangle(FIntVector2(0, 0), 400, 60));
 
     TEST_EXPECT_EQ(TwoLines->GetLayout().GetLines().Size(), 3);
 
     TEST_SECTION("A wrapping block breaks at the width it was arranged to");
     TSharedPtr<FRichTextBlock> Wrapped = MakeBlock(Font, { "aaaa bbbb cccc dddd" }, true);
-    LayoutElement(Wrapped, FRectangle(IntVector2(0, 0), 80, 200));
+    LayoutElement(Wrapped, FRectangle(FIntVector2(0, 0), 80, 200));
 
     TEST_EXPECT(Wrapped->GetLayout().GetLines().Size() > 1);
     TEST_EXPECT(Wrapped->GetLayout().GetSize().X <= 80);
 
     TEST_SECTION("Re-arranging to a wider box re-wraps rather than keeping the old breaks");
-    LayoutElement(Wrapped, FRectangle(IntVector2(0, 0), 400, 200));
+    LayoutElement(Wrapped, FRectangle(FIntVector2(0, 0), 400, 200));
     TEST_EXPECT_EQ(Wrapped->GetLayout().GetLines().Size(), 1);
 
     TEST_SECTION("A margin insets the text without changing what it measures");
@@ -127,20 +127,20 @@ bool RichTextLayout_Test()
     InsetDesc.Margin = FMargin(10, 6);
 
     TSharedPtr<FRichTextBlock> Inset = FRichTextBlock::Create(InsetDesc);
-    LayoutElement(Inset, FRectangle(IntVector2(0, 0), 400, 60));
+    LayoutElement(Inset, FRectangle(FIntVector2(0, 0), 400, 60));
 
     TEST_EXPECT_EQ(Inset->ComputeDesiredSize().X, 5 * 8 + 20);
     TEST_EXPECT_EQ(Inset->ComputeDesiredSize().Y, 16 + 12);
 
     TEST_SECTION("Replacing the runs replaces the text");
     Block->SetRuns({ FTextRun("replaced", Font.Get(), FUIStyle::GetDefault().Colors.Text) });
-    LayoutElement(Block, FRectangle(IntVector2(0, 0), 400, 60));
+    LayoutElement(Block, FRectangle(FIntVector2(0, 0), 400, 60));
 
     TEST_EXPECT_EQ(Block->GetText(), FString("replaced"));
 
     TEST_SECTION("Clearing leaves nothing behind");
     Block->ClearRuns();
-    LayoutElement(Block, FRectangle(IntVector2(0, 0), 400, 60));
+    LayoutElement(Block, FRectangle(FIntVector2(0, 0), 400, 60));
 
     TEST_EXPECT_EQ(Block->GetLayout().GetCharacterCount(), 0);
     TEST_EXPECT(!Block->HasSelection());
@@ -161,7 +161,7 @@ bool RichTextCulling_Test()
     }
 
     TSharedPtr<FRichTextBlock> Block = MakeBlock(Font, { LongText });
-    LayoutElement(Block, FRectangle(IntVector2(0, 0), 400, 100 * 16));
+    LayoutElement(Block, FRectangle(FIntVector2(0, 0), 400, 100 * 16));
 
     TEST_SECTION("With nothing clipping it every line is drawn");
     FDrawCommandList Unclipped;
@@ -171,7 +171,7 @@ bool RichTextCulling_Test()
 
     TEST_SECTION("Behind a clip only the lines it leaves open are, so scrolling costs the view not the document");
     FDrawCommandList Clipped;
-    Clipped.PushClip(0, FRectangle(IntVector2(0, 0), 400, 3 * 16));
+    Clipped.PushClip(0, FRectangle(FIntVector2(0, 0), 400, 3 * 16));
     DrawElement(Block, Clipped);
     Clipped.PopClip(1);
 
@@ -179,7 +179,7 @@ bool RichTextCulling_Test()
 
     TEST_SECTION("A clip part way down draws the band it covers rather than the lines above it");
     FDrawCommandList Scrolled;
-    Scrolled.PushClip(0, FRectangle(IntVector2(0, 50 * 16), 400, 4 * 16));
+    Scrolled.PushClip(0, FRectangle(FIntVector2(0, 50 * 16), 400, 4 * 16));
     DrawElement(Block, Scrolled);
     Scrolled.PopClip(1);
 
@@ -209,14 +209,14 @@ bool RichTextSelection_Test()
     });
 
     TSharedPtr<FRichTextBlock> Block = FRichTextBlock::Create(Desc);
-    LayoutElement(Block, FRectangle(IntVector2(0, 0), 400, 60));
+    LayoutElement(Block, FRectangle(FIntVector2(0, 0), 400, 60));
 
     TEST_SECTION("Nothing is selected to begin with");
     TEST_EXPECT(!Block->HasSelection());
     TEST_EXPECT(Block->GetSelectedText().IsEmpty());
 
     TEST_SECTION("A drag selects the characters it crossed, whatever run they came from");
-    DragSelection(Block, IntVector2(2 * 8 + 1, 8), IntVector2(11 * 8 + 1, 8));
+    DragSelection(Block, FIntVector2(2 * 8 + 1, 8), FIntVector2(11 * 8 + 1, 8));
 
     TEST_EXPECT(Block->HasSelection());
     TEST_EXPECT_EQ(Block->GetSelectionStart(), 2);
@@ -227,14 +227,14 @@ bool RichTextSelection_Test()
     TEST_EXPECT_EQ(LastSelection, FString("rror] dis"));
 
     TEST_SECTION("Dragging back the other way selects the same span");
-    DragSelection(Block, IntVector2(11 * 8 + 1, 8), IntVector2(2 * 8 + 1, 8));
+    DragSelection(Block, FIntVector2(11 * 8 + 1, 8), FIntVector2(2 * 8 + 1, 8));
 
     TEST_EXPECT_EQ(Block->GetSelectionStart(), 2);
     TEST_EXPECT_EQ(Block->GetSelectionEnd(), 11);
 
     TEST_SECTION("A press with no drag places a caret rather than selecting anything");
-    Block->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(4 * 8 + 1, 8), true));
-    Block->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(4 * 8 + 1, 8), false));
+    Block->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(4 * 8 + 1, 8), true));
+    Block->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(4 * 8 + 1, 8), false));
 
     TEST_EXPECT(!Block->HasSelection());
 
@@ -257,7 +257,7 @@ bool RichTextSelection_Test()
 
     TEST_SECTION("A selection spanning wrapped lines is one box per line");
     TSharedPtr<FRichTextBlock> Wrapped = MakeBlock(Font, { "aaaa bbbb cccc" }, true);
-    LayoutElement(Wrapped, FRectangle(IntVector2(0, 0), 40, 200));
+    LayoutElement(Wrapped, FRectangle(FIntVector2(0, 0), 40, 200));
 
     TEST_EXPECT_EQ(Wrapped->GetLayout().GetLines().Size(), 3);
 
@@ -282,30 +282,30 @@ bool RichTextSelection_Test()
     FixedDesc.bIsSelectable = false;
 
     TSharedPtr<FRichTextBlock> Fixed = FRichTextBlock::Create(FixedDesc);
-    LayoutElement(Fixed, FRectangle(IntVector2(0, 0), 400, 60));
+    LayoutElement(Fixed, FRectangle(FIntVector2(0, 0), 400, 60));
 
-    DragSelection(Fixed, IntVector2(1, 8), IntVector2(60, 8));
+    DragSelection(Fixed, FIntVector2(1, 8), FIntVector2(60, 8));
     TEST_EXPECT(!Fixed->HasSelection());
 
     TEST_SECTION("Text that can be dragged through puts the text cursor under the pointer, so the log reads as selectable");
     TSharedPtr<FRichTextBlock> Hovered = MakeBlock(Font, { "hover me" });
-    LayoutElement(Hovered, FRectangle(IntVector2(0, 0), 400, 60));
+    LayoutElement(Hovered, FRectangle(FIntVector2(0, 0), 400, 60));
 
     ECursor Cursor = ECursor::Arrow;
     TEST_EXPECT(!Hovered->GetCursor(Cursor));
 
-    Hovered->OnMouseEntered(MakeMoveEvent(IntVector2(4 * 8 + 1, 8)));
+    Hovered->OnMouseEntered(MakeMoveEvent(FIntVector2(4 * 8 + 1, 8)));
 
     TEST_EXPECT(Hovered->GetCursor(Cursor));
     TEST_EXPECT(Cursor == ECursor::TextInput);
 
     TEST_SECTION("Leaving it hands the shape back");
-    Hovered->OnMouseLeft(MakeMoveEvent(IntVector2(900, 900)));
+    Hovered->OnMouseLeft(MakeMoveEvent(FIntVector2(900, 900)));
 
     TEST_EXPECT(!Hovered->GetCursor(Cursor));
 
     TEST_SECTION("Text that cannot be selected keeps the arrow, which is what a tool tip wants");
-    Fixed->OnMouseEntered(MakeMoveEvent(IntVector2(1, 8)));
+    Fixed->OnMouseEntered(MakeMoveEvent(FIntVector2(1, 8)));
 
     TEST_EXPECT(!Fixed->GetCursor(Cursor));
 
@@ -319,14 +319,14 @@ bool RichTextSelection_Test()
     TSharedPtr<FRichTextBlock> TallBlock = FRichTextBlock::Create(TallDesc);
     TSharedPtr<FScrollBox>     Host      = FScrollBox::Create();
     Host->SetContent(TallBlock);
-    LayoutElement(Host, FRectangle(IntVector2(0, 0), 200, 48));
+    LayoutElement(Host, FRectangle(FIntVector2(0, 0), 200, 48));
     Host->SetScrollOffset(FScrollBox::DefaultScrollAmountPerWheelStep * 2);
 
     const int32 OffsetBefore = Host->GetScrollOffset();
     TEST_EXPECT(OffsetBefore > 0);
 
-    TallBlock->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(8, 24), true));
-    TallBlock->OnMouseMove(MakeMoveEvent(IntVector2(8, -20)));
+    TallBlock->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(8, 24), true));
+    TallBlock->OnMouseMove(MakeMoveEvent(FIntVector2(8, -20)));
 
     TEST_EXPECT(Host->GetScrollOffset() < OffsetBefore);
     TEST_EXPECT(TallBlock->HasSelection());
@@ -341,7 +341,7 @@ bool RichTextSearch_Test()
     const TSharedPtr<IFontFace> Font = CreateFont();
 
     TSharedPtr<FRichTextBlock> Block = MakeBlock(Font, { "the cat sat on ", "the mat" });
-    LayoutElement(Block, FRectangle(IntVector2(0, 0), 400, 60));
+    LayoutElement(Block, FRectangle(FIntVector2(0, 0), 400, 60));
 
     TEST_SECTION("No search means no matches");
     TEST_EXPECT(Block->GetSearchMatches().IsEmpty());
@@ -361,7 +361,7 @@ bool RichTextSearch_Test()
 
     TEST_SECTION("Matches do not overlap");
     TSharedPtr<FRichTextBlock> Repeated = MakeBlock(Font, { "aaaa" });
-    LayoutElement(Repeated, FRectangle(IntVector2(0, 0), 400, 60));
+    LayoutElement(Repeated, FRectangle(FIntVector2(0, 0), 400, 60));
 
     Repeated->SetSearchText("aa");
     TEST_EXPECT_EQ(Repeated->GetSearchMatches().Size(), 2);
@@ -424,13 +424,13 @@ bool RichTextSearch_Test()
 
     TEST_SECTION("Replacing the text re-runs the search against it");
     Block->SetRuns({ FTextRun("the the the", Font.Get(), FUIStyle::GetDefault().Colors.Text) });
-    LayoutElement(Block, FRectangle(IntVector2(0, 0), 400, 60));
+    LayoutElement(Block, FRectangle(FIntVector2(0, 0), 400, 60));
 
     TEST_EXPECT_EQ(Block->GetSearchMatches().Size(), 3);
 
     TEST_SECTION("A case-sensitive search does not treat Create and create as the same");
     TSharedPtr<FRichTextBlock> Cased = MakeBlock(Font, { "Create create CREATE" });
-    LayoutElement(Cased, FRectangle(IntVector2(0, 0), 400, 60));
+    LayoutElement(Cased, FRectangle(FIntVector2(0, 0), 400, 60));
 
     Cased->SetSearchText("Create");
     TEST_EXPECT_EQ(Cased->GetSearchMatches().Size(), 1);
@@ -458,7 +458,7 @@ bool LogViewLogging_Test()
     Desc.MaxLineCount = 4;
 
     TSharedPtr<FLogView> LogView = FLogView::Create(Desc);
-    LayoutElement(LogView, FRectangle(IntVector2(0, 0), 400, 200));
+    LayoutElement(LogView, FRectangle(FIntVector2(0, 0), 400, 200));
 
     TEST_SECTION("A fresh view holds nothing");
     TEST_EXPECT_EQ(LogView->GetNumLines(), 0);
@@ -467,7 +467,7 @@ bool LogViewLogging_Test()
     LogView->Log(ELogSeverity::Info, "engine started");
 
     TEST_EXPECT_EQ(LogView->GetNumLines(), 0);
-    LayoutElement(LogView, FRectangle(IntVector2(0, 0), 400, 200));
+    LayoutElement(LogView, FRectangle(FIntVector2(0, 0), 400, 200));
 
     TEST_EXPECT_EQ(LogView->GetNumLines(), 1);
     TEST_EXPECT_EQ(LogView->GetLines()[0].Message, FString("engine started"));
@@ -555,7 +555,7 @@ bool LogViewFiltering_Test()
     Desc.Font = Font;
 
     TSharedPtr<FLogView> LogView = FLogView::Create(Desc);
-    LayoutElement(LogView, FRectangle(IntVector2(0, 0), 400, 200));
+    LayoutElement(LogView, FRectangle(FIntVector2(0, 0), 400, 200));
 
     LogView->Log(ELogSeverity::Info, "loading level");
     LogView->Log(ELogSeverity::Warning, "texture missing");
@@ -688,7 +688,7 @@ bool LogViewAutoScroll_Test()
 
     TSharedPtr<FLogView> LogView = FLogView::Create(Desc);
 
-    const FRectangle Bounds(IntVector2(0, 0), 400, 40);
+    const FRectangle Bounds(FIntVector2(0, 0), 400, 40);
     LayoutElement(LogView, Bounds);
 
     TEST_SECTION("An empty view is at the bottom, because there is nowhere else to be");

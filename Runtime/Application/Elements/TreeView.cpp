@@ -161,7 +161,7 @@ void FTreeView::Initialize(const FDesc& Desc)
     }
 }
 
-IntVector2 FTreeView::ComputeDesiredSize() const
+FIntVector2 FTreeView::ComputeDesiredSize() const
 {
     const TArray<TSharedPtr<FTreeItem>>& Rows = GetVisibleRows();
 
@@ -171,7 +171,7 @@ IntVector2 FTreeView::ComputeDesiredSize() const
         Width = Math::Max(Width, ComputeRowExtent(Row));
     }
 
-    return IntVector2(Width, GetHeaderExtent() + (Rows.Size() * RowHeight));
+    return FIntVector2(Width, GetHeaderExtent() + (Rows.Size() * RowHeight));
 }
 
 void FTreeView::OnArrange(const FRectangle& AllottedBounds)
@@ -187,7 +187,7 @@ void FTreeView::OnArrange(const FRectangle& AllottedBounds)
         const int32 Thickness    = FUIStyle::GetDefault().Metrics.ScrollBarThickness;
 
         ScrollBar->SetScrollState(GetVisibleRows().Size() * RowHeight, ViewHeight - HeaderExtent, ScrollOffset);
-        ScrollBar->Arrange(FRectangle(IntVector2(AllottedBounds.GetRight() - Thickness, AllottedBounds.Position.Y + HeaderExtent),
+        ScrollBar->Arrange(FRectangle(FIntVector2(AllottedBounds.GetRight() - Thickness, AllottedBounds.Position.Y + HeaderExtent),
             Thickness, Math::Max(AllottedBounds.Height - HeaderExtent, 0)));
     }
 }
@@ -197,7 +197,7 @@ EChildVisit FTreeView::VisitChildren(FChildVisitor& Visitor, EChildOrder /*Order
     return VisitChild(Visitor, ScrollBar);
 }
 
-void FTreeView::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+void FTreeView::HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath)
 {
     if (ScrollBar && ScrollBar->IsScrollable())
     {
@@ -227,23 +227,23 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
             const int32 LabelX   = Bounds.Position.X + TREE_HEADER_PADDING;
 
             OutCommandList.AddText(LayerId + 1,
-                FRectangle(IntVector2(LabelX, CaptionY), Math::Max(TypeColumnX - LabelX, 0), Font->GetTextBandHeight()),
+                FRectangle(FIntVector2(LabelX, CaptionY), Math::Max(TypeColumnX - LabelX, 0), Font->GetTextBandHeight()),
                 LabelColumnHeader, Font.Get(), Style.SecondaryText);
 
             if (TypeColumnWidth > 0 && !TypeColumnHeader.IsEmpty())
             {
                 OutCommandList.AddText(LayerId + 1,
-                    FRectangle(IntVector2(TypeColumnX, CaptionY), TypeColumnWidth, Font->GetTextBandHeight()),
+                    FRectangle(FIntVector2(TypeColumnX, CaptionY), TypeColumnWidth, Font->GetTextBandHeight()),
                     TypeColumnHeader, Font.Get(), Style.SecondaryText);
             }
         }
 
         const float SeparatorY = static_cast<float>(HeaderBounds.GetBottom());
-        OutCommandList.AddLine(LayerId + 1, Vector2(static_cast<float>(Bounds.Position.X), SeparatorY),
-            Vector2(static_cast<float>(Bounds.GetRight()), SeparatorY), Style.HeaderSeparator, 1.0f);
+        OutCommandList.AddLine(LayerId + 1, FVector2(static_cast<float>(Bounds.Position.X), SeparatorY),
+            FVector2(static_cast<float>(Bounds.GetRight()), SeparatorY), Style.HeaderSeparator, 1.0f);
     }
 
-    OutCommandList.PushClip(LayerId, FRectangle(IntVector2(Bounds.Position.X, Bounds.Position.Y + HeaderExtent),
+    OutCommandList.PushClip(LayerId, FRectangle(FIntVector2(Bounds.Position.X, Bounds.Position.Y + HeaderExtent),
         Bounds.Width, Math::Max(Bounds.Height - HeaderExtent, 0)));
 
     const bool bHasFocus = FApplication::IsInitialized() && FApplication::Get().GetFocusElementLeaf().Get() == this;
@@ -307,16 +307,16 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         const FUIBrush& Icon = (Item->bIsExpanded && Item->ExpandedIcon.IsValid()) ? Item->ExpandedIcon : Item->Icon;
         if (Icon.IsValid())
         {
-            const IntVector2 IconPosition(DisclosureBounds.GetRight() + TREE_DISCLOSURE_SPACING, RowBounds.Position.Y + ((RowHeight - TREE_ICON_SIZE) / 2));
+            const FIntVector2 IconPosition(DisclosureBounds.GetRight() + TREE_DISCLOSURE_SPACING, RowBounds.Position.Y + ((RowHeight - TREE_ICON_SIZE) / 2));
             OutCommandList.AddImage(LayerId + 1, FRectangle(IconPosition, TREE_ICON_SIZE, TREE_ICON_SIZE), Icon, RowLabelColor);
         }
 
         if (Font && !Item->Label.IsEmpty())
         {
-            const int32      LabelRight    = TypeColumnWidth > 0 ? Math::Min(TypeColumnX, RowBounds.GetRight()) : RowBounds.GetRight();
-            const IntVector2 LabelPosition = IntVector2(PenX, RowBounds.Position.Y + Font->GetTextBandOffset(RowHeight));
-            const FRectangle LabelBounds   = FRectangle(LabelPosition, Math::Max(LabelRight - PenX, 0), Font->GetTextBandHeight());
-            const int32      MatchOffset   = FilterText.IsEmpty() ? FString::InvalidIndex : Item->Label.Find(FilterText, EStringCaseType::NoCase);
+            const int32       LabelRight    = TypeColumnWidth > 0 ? Math::Min(TypeColumnX, RowBounds.GetRight()) : RowBounds.GetRight();
+            const FIntVector2 LabelPosition = FIntVector2(PenX, RowBounds.Position.Y + Font->GetTextBandOffset(RowHeight));
+            const FRectangle  LabelBounds   = FRectangle(LabelPosition, Math::Max(LabelRight - PenX, 0), Font->GetTextBandHeight());
+            const int32       MatchOffset   = FilterText.IsEmpty() ? FString::InvalidIndex : Item->Label.Find(FilterText, EStringCaseType::NoCase);
 
             if (MatchOffset == FString::InvalidIndex)
             {
@@ -331,8 +331,8 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 
         if (Font && TypeColumnWidth > 0 && !Item->TypeLabel.IsEmpty())
         {
-            const IntVector2 TypePosition = IntVector2(TypeColumnX, RowBounds.Position.Y + Font->GetTextBandOffset(RowHeight));
-            const FRectangle TypeBounds   = FRectangle(TypePosition, TypeColumnWidth, Font->GetTextBandHeight());
+            const FIntVector2 TypePosition = FIntVector2(TypeColumnX, RowBounds.Position.Y + Font->GetTextBandOffset(RowHeight));
+            const FRectangle  TypeBounds   = FRectangle(TypePosition, TypeColumnWidth, Font->GetTextBandHeight());
 
             OutCommandList.AddText(LayerId + 2, TypeBounds, Item->TypeLabel, Font.Get(), RowSecondaryColor);
         }
@@ -375,8 +375,8 @@ FEventResponse FTreeView::OnMouseButtonDown(const FCursorEvent& CursorEvent)
         return FEventResponse::Unhandled();
     }
 
-    const IntVector2 ClientPosition = CursorEvent.GetClientPosition();
-    const int32      RowIndex       = FindRowAt(ClientPosition);
+    const FIntVector2 ClientPosition = CursorEvent.GetClientPosition();
+    const int32       RowIndex       = FindRowAt(ClientPosition);
 
     if (RowIndex == InvalidRowIndex)
     {
@@ -454,7 +454,7 @@ FEventResponse FTreeView::OnMouseDoubleClick(const FCursorEvent& CursorEvent)
 
 FEventResponse FTreeView::OnMouseMove(const FCursorEvent& CursorEvent)
 {
-    const IntVector2 ClientPosition = CursorEvent.GetClientPosition();
+    const FIntVector2 ClientPosition = CursorEvent.GetClientPosition();
     LastCursorPosition = ClientPosition;
     bHasCursorInside   = true;
 
@@ -463,7 +463,7 @@ FEventResponse FTreeView::OnMouseMove(const FCursorEvent& CursorEvent)
 
     if (PressedRowIndex != InvalidRowIndex && OnDragDetectedDelegate.IsBound())
     {
-        const IntVector2 Travel = ClientPosition - PressPosition;
+        const FIntVector2 Travel = ClientPosition - PressPosition;
         if ((Math::Abs(Travel.X) >= DragThreshold) || (Math::Abs(Travel.Y) >= DragThreshold))
         {
             const TArray<TSharedPtr<FTreeItem>>& Rows = GetVisibleRows();
@@ -733,7 +733,7 @@ void FTreeView::ScrollToItem(const TSharedPtr<FTreeItem>& Item)
     }
 }
 
-TSharedPtr<FTreeItem> FTreeView::FindItemAt(const IntVector2& ClientPosition) const
+TSharedPtr<FTreeItem> FTreeView::FindItemAt(const FIntVector2& ClientPosition) const
 {
     const int32 RowIndex = FindRowAt(ClientPosition);
     return RowIndex == InvalidRowIndex ? nullptr : GetVisibleRows()[RowIndex];
@@ -760,7 +760,7 @@ FRectangle FTreeView::GetItemLabelBounds(const TSharedPtr<FTreeItem>& Item) cons
     }
 
     const int32 LabelStartX = ComputeLabelStartX(RowBounds, Item);
-    return FRectangle(IntVector2(LabelStartX, RowBounds.Position.Y), Math::Max(RowBounds.GetRight() - LabelStartX, 0), RowBounds.Height);
+    return FRectangle(FIntVector2(LabelStartX, RowBounds.Position.Y), Math::Max(RowBounds.GetRight() - LabelStartX, 0), RowBounds.Height);
 }
 
 void FTreeView::SetSubtreeExpanded(const TArray<TSharedPtr<FTreeItem>>& Items, bool bExpanded)
@@ -873,7 +873,7 @@ void FTreeView::RebuildTypeColumnToolTipSplits()
     }
 }
 
-const FString* FTreeView::FindHeaderToolTip(const IntVector2& ClientPosition) const
+const FString* FTreeView::FindHeaderToolTip(const FIntVector2& ClientPosition) const
 {
     const int32 HeaderExtent = GetHeaderExtent();
     if (HeaderExtent <= 0)
@@ -964,7 +964,7 @@ bool FTreeView::MarkFilterMatches(FTreeItem& Item) const
 
 FRectangle FTreeView::ComputeRowBounds(const FRectangle& ViewBounds, int32 RowIndex) const
 {
-    const IntVector2 Position(ViewBounds.Position.X, ViewBounds.Position.Y + GetHeaderExtent() + (RowIndex * RowHeight) - ScrollOffset);
+    const FIntVector2 Position(ViewBounds.Position.X, ViewBounds.Position.Y + GetHeaderExtent() + (RowIndex * RowHeight) - ScrollOffset);
     return FRectangle(Position, ViewBounds.Width, RowHeight);
 }
 
@@ -985,8 +985,8 @@ FRectangle FTreeView::ComputeHighlightBounds(const FRectangle& RowBounds) const
 
 FRectangle FTreeView::ComputeDisclosureBounds(const FRectangle& RowBounds, int32 Depth) const
 {
-    const int32      Extent   = GetArrowExtent();
-    const IntVector2 Position = IntVector2(RowBounds.Position.X + Style.ContentInset + (Depth * IndentPerLevel), RowBounds.Position.Y + ((RowHeight - Extent) / 2));
+    const int32       Extent   = GetArrowExtent();
+    const FIntVector2 Position = FIntVector2(RowBounds.Position.X + Style.ContentInset + (Depth * IndentPerLevel), RowBounds.Position.Y + ((RowHeight - Extent) / 2));
     return FRectangle(Position, Extent, Extent);
 }
 
@@ -1035,7 +1035,7 @@ int32 FTreeView::GetHeaderExtent() const
     return (LabelColumnHeader.IsEmpty() && TypeColumnHeader.IsEmpty()) ? 0 : HeaderHeight;
 }
 
-int32 FTreeView::FindRowAt(const IntVector2& ClientPosition) const
+int32 FTreeView::FindRowAt(const FIntVector2& ClientPosition) const
 {
     const FRectangle& Bounds = GetContentRectangle();
     if (!Bounds.EncapsulatesPoint(ClientPosition))

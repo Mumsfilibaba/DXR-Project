@@ -17,7 +17,7 @@ FPointLightActor::~FPointLightActor()
 {
 }
 
-void FPointLightActor::Initialize(const Vector3& InPosition, bool bInCastShadows)
+void FPointLightActor::Initialize(const FVector3& InPosition, bool bInCastShadows)
 {
     GetTransform().SetTranslation(InPosition);
     LightComponent->SetCastShadows(bInCastShadows);

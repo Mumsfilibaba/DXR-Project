@@ -194,7 +194,7 @@ int32 FProfilerTimeline::GetLaneHeight(const FProfilerTimelineLane& Lane) const
     return (GetLaneRowCount(Lane) * GetRowHeight()) + PROFILER_LANE_PADDING;
 }
 
-IntVector2 FProfilerTimeline::ComputeDesiredSize() const
+FIntVector2 FProfilerTimeline::ComputeDesiredSize() const
 {
     int32 Height = GetRulerHeight() + PROFILER_LANE_PADDING;
     for (const FProfilerTimelineLane& Lane : Lanes)
@@ -207,7 +207,7 @@ IntVector2 FProfilerTimeline::ComputeDesiredSize() const
         Height += FUIStyle::GetDefault().Metrics.ScrollBarThickness;
     }
 
-    return IntVector2(320, Math::Max(Height, PreferredHeight));
+    return FIntVector2(320, Math::Max(Height, PreferredHeight));
 }
 
 void FProfilerTimeline::OnArrange(const FRectangle& /* AllottedBounds */)
@@ -223,7 +223,7 @@ EChildVisit FProfilerTimeline::VisitChildren(FChildVisitor& Visitor, EChildOrder
     return VisitChild(Visitor, HorizontalScrollBar);
 }
 
-void FProfilerTimeline::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+void FProfilerTimeline::HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath)
 {
     if (HorizontalScrollBar && IsHorizontalScrollBarVisible())
     {
@@ -278,7 +278,7 @@ int32 FProfilerTimeline::GetLaneTop(const FRectangle& Bounds, int32 LaneIndex) c
 
 void FProfilerTimeline::SetLanes(TArray<FProfilerTimelineLane> InLanes)
 {
-    const IntVector2 PreviousDesiredSize = ComputeDesiredSize();
+    const FIntVector2 PreviousDesiredSize = ComputeDesiredSize();
     Lanes = Move(InLanes);
 
     uint64 MinStart = TNumericLimits<uint64>::Max();
@@ -438,7 +438,7 @@ bool FProfilerTimeline::ProjectBar(const FRectangle& Track, const FProfilerTimel
     return Bar.bInstant || OutWidth >= 1;
 }
 
-FProfilerTimeline::FHit FProfilerTimeline::HitTest(const IntVector2& ClientPosition) const
+FProfilerTimeline::FHit FProfilerTimeline::HitTest(const FIntVector2& ClientPosition) const
 {
     FHit Hit;
 
@@ -542,7 +542,7 @@ void FProfilerTimeline::DrawRuler(const FRectangle& Bounds, FDrawCommandList& Ou
         const double Fraction = (Tick - static_cast<double>(ViewStartNs)) / static_cast<double>(ViewSpanNs);
         const int32  X        = Track.Position.X + Math::RoundToInt(static_cast<float>(Fraction) * static_cast<float>(Track.Width));
 
-        OutCommandList.AddLine(LayerId, FRectangle(IntVector2(X, Bounds.Position.Y + RulerHeight - 4), 1, Bounds.Height - RulerHeight + 4), GridColor);
+        OutCommandList.AddLine(LayerId, FRectangle(FIntVector2(X, Bounds.Position.Y + RulerHeight - 4), 1, Bounds.Height - RulerHeight + 4), GridColor);
 
         if (Font)
         {
@@ -551,13 +551,13 @@ void FProfilerTimeline::DrawRuler(const FRectangle& Bounds, FDrawCommandList& Ou
 
             if ((X + 3 + TextWidth) <= Bounds.GetRight())
             {
-                const FRectangle LabelBounds(IntVector2(X + 3, Bounds.Position.Y + 1), TextWidth, RulerHeight - 2);
+                const FRectangle LabelBounds(FIntVector2(X + 3, Bounds.Position.Y + 1), TextWidth, RulerHeight - 2);
                 OutCommandList.AddText(LayerId, LabelBounds, Text, Font.Get(), Style.Colors.TextDisabled);
             }
         }
     }
 
-    OutCommandList.AddLine(LayerId, FRectangle(IntVector2(Bounds.Position.X, RulerBottom), Bounds.Width, 1), GridColor);
+    OutCommandList.AddLine(LayerId, FRectangle(FIntVector2(Bounds.Position.X, RulerBottom), Bounds.Width, 1), GridColor);
 }
 
 int32 FProfilerTimeline::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -579,9 +579,9 @@ int32 FProfilerTimeline::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
 
     if (Lanes.IsEmpty() && Font)
     {
-        const FString    Empty      = FString("Nothing was captured for this frame");
-        const IntVector2 Size       = IntVector2(Font->MeasureWidth(FStringView(Empty.Data(), Empty.Length())), Font->GetLineHeight());
-        const FRectangle TextBounds = FLayout::AlignInBounds(Bounds, Size, EHorizontalAlignment::Center, EVerticalAlignment::Center);
+        const FString     Empty      = FString("Nothing was captured for this frame");
+        const FIntVector2 Size       = FIntVector2(Font->MeasureWidth(FStringView(Empty.Data(), Empty.Length())), Font->GetLineHeight());
+        const FRectangle  TextBounds = FLayout::AlignInBounds(Bounds, Size, EHorizontalAlignment::Center, EVerticalAlignment::Center);
 
         OutCommandList.AddText(TextLayer, TextBounds, Empty, Font.Get(), Style.Colors.TextDisabled);
         OutCommandList.PopClip(TextLayer);
@@ -602,7 +602,7 @@ int32 FProfilerTimeline::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
         const int32 LaneHeight   = LaneRowCount * RowHeight;
         const int32 NextLaneTop  = LaneTop + LaneHeight + PROFILER_LANE_PADDING;
 
-        const FRectangle  LaneBounds = FRectangle(IntVector2(Bounds.Position.X, LaneTop), Bounds.Width, LaneHeight);
+        const FRectangle  LaneBounds = FRectangle(FIntVector2(Bounds.Position.X, LaneTop), Bounds.Width, LaneHeight);
         const FRectangle& ClipBounds = OutCommandList.GetCurrentClipRectangle();
 
         if (!ClipBounds.IsEmpty() && ClipBounds.Intersect(LaneBounds).IsEmpty())
@@ -613,18 +613,18 @@ int32 FProfilerTimeline::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
 
         if ((LaneIndex % 2) == 1)
         {
-            OutCommandList.AddBox(GridLayer, FRectangle(IntVector2(Track.Position.X, LaneTop), Track.Width, LaneHeight), LaneBand);
+            OutCommandList.AddBox(GridLayer, FRectangle(FIntVector2(Track.Position.X, LaneTop), Track.Width, LaneHeight), LaneBand);
         }
 
         if (Font)
         {
-            const FRectangle LabelBounds(IntVector2(Bounds.Position.X + 6, LaneTop), PROFILER_LANE_LABEL_WIDTH - 10, RowHeight);
+            const FRectangle LabelBounds(FIntVector2(Bounds.Position.X + 6, LaneTop), PROFILER_LANE_LABEL_WIDTH - 10, RowHeight);
             OutCommandList.AddText(TextLayer, LabelBounds,
                 Font->ElideText(FStringView(Lane.Label.Data(), Lane.Label.Length()), LabelBounds.Width), Font.Get(), Style.Colors.Text);
 
             if (!Lane.SubLabel.IsEmpty() && LaneRowCount > 1)
             {
-                const FRectangle SubBounds(IntVector2(Bounds.Position.X + 6, LaneTop + RowHeight),
+                const FRectangle SubBounds(FIntVector2(Bounds.Position.X + 6, LaneTop + RowHeight),
                     PROFILER_LANE_LABEL_WIDTH - 10, RowHeight);
                 OutCommandList.AddText(TextLayer, SubBounds,
                     Font->ElideText(FStringView(Lane.SubLabel.Data(), Lane.SubLabel.Length()), SubBounds.Width), Font.Get(), Style.Colors.TextDisabled);
@@ -673,7 +673,7 @@ int32 FProfilerTimeline::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
         LaneTop = NextLaneTop;
     }
 
-    OutCommandList.AddLine(GridLayer, FRectangle(IntVector2(Track.Position.X, Bounds.Position.Y), 1, Bounds.Height), FromBytes(38, 38, 38));
+    OutCommandList.AddLine(GridLayer, FRectangle(FIntVector2(Track.Position.X, Bounds.Position.Y), 1, Bounds.Height), FromBytes(38, 38, 38));
 
     int32 MaxLayer = TextLayer;
     if (HorizontalScrollBar && IsHorizontalScrollBarVisible())
@@ -829,7 +829,7 @@ void FProfilerTimeline::UpdateBarToolTip(const FCursorEvent& CursorEvent)
     ToolTips.RequestTextToolTip(AsSharedPtr(), FormatBarToolTip(Lanes[HoveredLane].Bars[HoveredBar]), Font);
 }
 
-void FProfilerTimeline::ZoomAt(const IntVector2& ClientPosition, float Factor)
+void FProfilerTimeline::ZoomAt(const FIntVector2& ClientPosition, float Factor)
 {
     const FRectangle Track   = GetTrackBounds(GetContentRectangle());
     const float      Pivot   = Math::Saturate(static_cast<float>(ClientPosition.X - Track.Position.X) / static_cast<float>(Math::Max(Track.Width, 1)));

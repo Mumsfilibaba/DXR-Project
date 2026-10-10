@@ -124,8 +124,8 @@ public:
         return reinterpret_cast<void*>(Window);
     }
 
-    bool HitTestTitleBar(const IntVector2& ClientPoint) const;
-    bool HitTestMaximizeButton(const IntVector2& ClientPoint) const;
+    bool HitTestTitleBar(const FIntVector2& ClientPoint) const;
+    bool HitTestMaximizeButton(const FIntVector2& ClientPoint) const;
 
     FORCEINLINE HWND GetWindowHandle() const 
     { 

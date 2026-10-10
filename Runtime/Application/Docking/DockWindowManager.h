@@ -48,7 +48,7 @@ public:
         TSharedPtr<FVisualElement> TitleBarContent = nullptr;
 
         /** @brief The size a host gets when the layout being restored does not carry one. */
-        IntVector2 DefaultSize = IntVector2(DefaultHostWidth, DefaultHostHeight);
+        FIntVector2 DefaultSize = FIntVector2(DefaultHostWidth, DefaultHostHeight);
     };
 
 public:
@@ -98,7 +98,7 @@ public:
      * @param Size           The client size for the window.
      * @return The host's area, or null when the window could not be created.
      */
-    TSharedPtr<FDockingArea> SpawnHost(const FString& PanelId, const FString& Label, const TSharedPtr<FVisualElement>& Content, const IntVector2& ScreenPosition, const IntVector2& Size);
+    TSharedPtr<FDockingArea> SpawnHost(const FString& PanelId, const FString& Label, const TSharedPtr<FVisualElement>& Content, const FIntVector2& ScreenPosition, const FIntVector2& Size);
 
     /** @brief Closes every host, returning its panels to the main area. */
     void CloseAllHosts();
@@ -110,7 +110,7 @@ public:
      *
      * @param ScreenPosition Where the cursor is now.
      */
-    void MoveDecorator(const IntVector2& ScreenPosition);
+    void MoveDecorator(const FIntVector2& ScreenPosition);
 
     /** @return Where the dragged window is on screen, or an empty rectangle while nothing is dragged. */
     NODISCARD FRectangle GetDecoratorScreenBounds() const;
@@ -235,7 +235,7 @@ private:
         const FDockingArea* Area;
         FString             PanelId;
         EDockDirection      Direction;
-        IntVector2          Size;
+        FIntVector2         Size;
     };
 
     struct FHost
@@ -252,7 +252,7 @@ private:
         TSharedPtr<FTitleBar>    TitleBar;
     };
 
-    NODISCARD static IntVector2 ResolveHostPosition(const IntVector2& ScreenPosition);
+    NODISCARD static FIntVector2 ResolveHostPosition(const FIntVector2& ScreenPosition);
     NODISCARD static FString ResolveHostTitle(const TSharedPtr<FDockingArea>& Area);
 
     static void ReleaseTextureDeferred(FRHITextureRef& Texture);
@@ -260,10 +260,10 @@ private:
 
     NODISCARD int32 FindHostByArea(const FDockingArea* Area) const;
     NODISCARD int32 FindHostByWindow(const FWindow* Window) const;
-    NODISCARD int32 FindDropPreview(const FDockingArea* Area, const FString& PanelId, EDockDirection Direction, const IntVector2& Size) const;
+    NODISCARD int32 FindDropPreview(const FDockingArea* Area, const FString& PanelId, EDockDirection Direction, const FIntVector2& Size) const;
 
-    void OnDragBegan(const FDockDragPanel& Panel, const IntVector2& ScreenPosition);
-    void OnDropOutside(const FDockDragPanel& Panel, const IntVector2& ScreenPosition);
+    void OnDragBegan(const FDockDragPanel& Panel, const FIntVector2& ScreenPosition);
+    void OnDropOutside(const FDockDragPanel& Panel, const FIntVector2& ScreenPosition);
     void OnHostWindowClosed(FWindow* Window);
     void SnapshotDecorator();
     void CloseHost(int32 HostIndex);
@@ -278,7 +278,7 @@ private:
     TSharedPtr<FDockingArea> DecoratorArea;
     TSharedPtr<FTitleBar>    DecoratorTitleBar;
     FRHITextureRef           DecoratorSnapshot;
-    IntVector2               DecoratorGrabOffset;
+    FIntVector2              DecoratorGrabOffset;
     FUIAnimation             DecoratorFade;
     FUIAnimation             DecoratorTearOut;
     float                    DecoratorAppliedOpacity;

@@ -20,7 +20,7 @@ namespace RHIValidationInternal
     bool ValidateBufferRange(const CHAR_T* Caller, const FRHIBufferDesc& BufferDesc, uint64 Offset, uint64 Size);
     bool ValidateIndirectCountBuffer(const CHAR_T* Operation, FRHIBuffer* CountBuffer, uint64 CountBufferOffset);
     RHI_API bool ValidateBufferView(const CHAR_T* Caller, const FRHIBufferDesc& BufferDesc, EBufferViewType ViewType, uint32 FirstElement, uint32 NumElements, EFormat Format);
-    bool ValidateTextureMip(const CHAR_T* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, IntVector3& OutExtent);
+    bool ValidateTextureMip(const CHAR_T* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, FIntVector3& OutExtent);
     bool ValidateTextureRegion2D(const CHAR_T* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, const FTextureRegion2D& Region);
     bool ValidateTextureRegion3D(const CHAR_T* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, const FTextureRegion3D& Region);
     RHI_API bool ValidateTextureSlicesAndMips(const CHAR_T* Caller, const FRHITextureDesc& TextureDesc, uint32 BaseLayer, uint32 LayerCount, uint32 FirstMip, uint32 NumMips, EFormat ViewFormat, EViewDimension ViewDimension);

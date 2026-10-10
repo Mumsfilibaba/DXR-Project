@@ -26,7 +26,7 @@ static TSharedPtr<FTextBlock> CreateTextBlock(const CHAR_T* Text, const TSharedP
     return FTextBlock::Create(Desc);
 }
 
-static int32 CountCoveredPixels(const FSnapshotImage& Image, const IntVector2& Start, const IntVector2& End)
+static int32 CountCoveredPixels(const FSnapshotImage& Image, const FIntVector2& Start, const FIntVector2& End)
 {
     int32 Covered = 0;
     for (int32 Y = Start.Y; Y <= End.Y; ++Y)
@@ -69,9 +69,9 @@ bool DrawCommandList_Test()
     TEST_EXPECT(CommandList.IsClipStackBalanced());
 
     TEST_SECTION("Commands come back in emission order with their layers");
-    CommandList.AddBox(0, FRectangle(IntVector2(0, 0), 100, 50), FFloatColor::White);
-    CommandList.AddText(1, FRectangle(IntVector2(4, 4), 90, 16), FString("Hello"), Font.Get(), FFloatColor::White);
-    CommandList.AddLine(2, FRectangle(IntVector2(4, 4), 1, 16), FFloatColor::White);
+    CommandList.AddBox(0, FRectangle(FIntVector2(0, 0), 100, 50), FFloatColor::White);
+    CommandList.AddText(1, FRectangle(FIntVector2(4, 4), 90, 16), FString("Hello"), Font.Get(), FFloatColor::White);
+    CommandList.AddLine(2, FRectangle(FIntVector2(4, 4), 1, 16), FFloatColor::White);
 
     TEST_EXPECT_EQ(CommandList.Size(), 3);
     TEST_EXPECT(!CommandList.IsEmpty());
@@ -95,7 +95,7 @@ bool DrawCommandList_Test()
     TEST_EXPECT_EQ(CommandList.FindTextCommand("Missing"), FDrawCommandList::InvalidIndex);
 
     TEST_SECTION("Reset empties the list and the clip state");
-    CommandList.PushClip(0, FRectangle(IntVector2(0, 0), 10, 10));
+    CommandList.PushClip(0, FRectangle(FIntVector2(0, 0), 10, 10));
     CommandList.Reset();
 
     TEST_EXPECT(CommandList.IsEmpty());
@@ -113,30 +113,30 @@ bool HairlineCoverage_Test()
     TEST_SECTION("A horizontal hairline on an integer coordinate covers pixels");
     {
         FDrawCommandList CommandList;
-        CommandList.AddLine(0, Vector2(4.0f, 8.0f), Vector2(28.0f, 8.0f), FFloatColor::White, Hairline);
+        CommandList.AddLine(0, FVector2(4.0f, 8.0f), FVector2(28.0f, 8.0f), FFloatColor::White, Hairline);
 
         const FSnapshotImage Image = RasterizeCommands(CommandList, 32, 16);
         TEST_EXPECT(Image.IsValid());
-        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(4, 6), IntVector2(27, 9)) > 0);
+        TEST_EXPECT(CountCoveredPixels(Image, FIntVector2(4, 6), FIntVector2(27, 9)) > 0);
     }
 
     TEST_SECTION("A vertical hairline on an integer coordinate covers pixels");
     {
         FDrawCommandList CommandList;
-        CommandList.AddLine(0, Vector2(8.0f, 4.0f), Vector2(8.0f, 28.0f), FFloatColor::White, Hairline);
+        CommandList.AddLine(0, FVector2(8.0f, 4.0f), FVector2(8.0f, 28.0f), FFloatColor::White, Hairline);
 
         const FSnapshotImage Image = RasterizeCommands(CommandList, 16, 32);
-        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(6, 4), IntVector2(9, 27)) > 0);
+        TEST_EXPECT(CountCoveredPixels(Image, FIntVector2(6, 4), FIntVector2(9, 27)) > 0);
     }
 
     TEST_SECTION("A closed axis-aligned hairline outline covers pixels on every side");
     {
-        const Vector2 Corners[] =
+        const FVector2 Corners[] =
         {
-            Vector2(6.0f, 6.0f),
-            Vector2(26.0f, 6.0f),
-            Vector2(26.0f, 26.0f),
-            Vector2(6.0f, 26.0f),
+            FVector2(6.0f, 6.0f),
+            FVector2(26.0f, 6.0f),
+            FVector2(26.0f, 26.0f),
+            FVector2(6.0f, 26.0f),
         };
 
         FDrawCommandList CommandList;
@@ -144,19 +144,19 @@ bool HairlineCoverage_Test()
 
         const FSnapshotImage Image = RasterizeCommands(CommandList, 32, 32);
 
-        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(7, 5), IntVector2(25, 7)) > 0);
-        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(7, 25), IntVector2(25, 27)) > 0);
-        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(5, 7), IntVector2(7, 25)) > 0);
-        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(25, 7), IntVector2(27, 25)) > 0);
+        TEST_EXPECT(CountCoveredPixels(Image, FIntVector2(7, 5), FIntVector2(25, 7)) > 0);
+        TEST_EXPECT(CountCoveredPixels(Image, FIntVector2(7, 25), FIntVector2(25, 27)) > 0);
+        TEST_EXPECT(CountCoveredPixels(Image, FIntVector2(5, 7), FIntVector2(7, 25)) > 0);
+        TEST_EXPECT(CountCoveredPixels(Image, FIntVector2(25, 7), FIntVector2(27, 25)) > 0);
     }
 
     TEST_SECTION("A diagonal hairline still covers pixels");
     {
         FDrawCommandList CommandList;
-        CommandList.AddLine(0, Vector2(4.0f, 4.0f), Vector2(28.0f, 28.0f), FFloatColor::White, Hairline);
+        CommandList.AddLine(0, FVector2(4.0f, 4.0f), FVector2(28.0f, 28.0f), FFloatColor::White, Hairline);
 
         const FSnapshotImage Image = RasterizeCommands(CommandList, 32, 32);
-        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(4, 4), IntVector2(27, 27)) > 0);
+        TEST_EXPECT(CountCoveredPixels(Image, FIntVector2(4, 4), FIntVector2(27, 27)) > 0);
     }
 
     TEST_END();
@@ -169,10 +169,10 @@ bool DrawClipNesting_Test()
     FDrawCommandList CommandList;
 
     TEST_SECTION("A nested region is intersected with the enclosing one");
-    CommandList.PushClip(0, FRectangle(IntVector2(0, 0), 100, 100));
-    TEST_EXPECT(CommandList.GetCurrentClipRectangle() == FRectangle(IntVector2(0, 0), 100, 100));
+    CommandList.PushClip(0, FRectangle(FIntVector2(0, 0), 100, 100));
+    TEST_EXPECT(CommandList.GetCurrentClipRectangle() == FRectangle(FIntVector2(0, 0), 100, 100));
 
-    CommandList.PushClip(1, FRectangle(IntVector2(50, 50), 100, 100));
+    CommandList.PushClip(1, FRectangle(FIntVector2(50, 50), 100, 100));
 
     const FRectangle Nested = CommandList.GetCurrentClipRectangle();
     TEST_EXPECT_EQ(Nested.Position.X, 50);
@@ -181,7 +181,7 @@ bool DrawClipNesting_Test()
     TEST_EXPECT_EQ(Nested.Height, 50);
 
     TEST_SECTION("A draw recorded inside the nested region stores that clip");
-    CommandList.AddBox(2, FRectangle(IntVector2(60, 60), 10, 10), FFloatColor::White);
+    CommandList.AddBox(2, FRectangle(FIntVector2(60, 60), 10, 10), FFloatColor::White);
     TEST_EXPECT_EQ(CommandList.Size(), 1);
     TEST_EXPECT(CommandList[0].IsClipped());
     TEST_EXPECT(CommandList.GetCommandClipRectangle(CommandList[0]) == Nested);
@@ -189,7 +189,7 @@ bool DrawClipNesting_Test()
 
     TEST_SECTION("Popping restores the enclosing region");
     CommandList.PopClip(1);
-    TEST_EXPECT(CommandList.GetCurrentClipRectangle() == FRectangle(IntVector2(0, 0), 100, 100));
+    TEST_EXPECT(CommandList.GetCurrentClipRectangle() == FRectangle(FIntVector2(0, 0), 100, 100));
 
     TEST_SECTION("An unclosed push leaves the list unbalanced");
     TEST_EXPECT(!CommandList.IsClipStackBalanced());
@@ -214,7 +214,7 @@ bool DrawClipNesting_Test()
     TSharedPtr<FScrollBox> ScrollBox = FScrollBox::Create();
     ScrollBox->SetContent(Content);
     ScrollBox->PrepareDesiredSize();
-    ScrollBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
+    ScrollBox->Arrange(FRectangle(FIntVector2(0, 0), 200, 100));
 
     FDrawCommandList ScrollCommandList;
     ScrollBox->OnDraw(FDrawGeometry(ScrollBox->GetContentRectangle(), 1.0f), ScrollCommandList, 0);
@@ -251,7 +251,7 @@ bool BorderDraw_Test()
 
     TSharedPtr<FBorder> Border = FBorder::Create(Desc);
     Border->PrepareDesiredSize();
-    Border->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
+    Border->Arrange(FRectangle(FIntVector2(0, 0), 200, 100));
 
     FDrawCommandList CommandList;
     const int32      MaxLayerId = Border->OnDraw(FDrawGeometry(Border->GetContentRectangle(), 1.0f), CommandList, 0);
@@ -273,7 +273,7 @@ bool BorderDraw_Test()
 
     TSharedPtr<FBorder> Transparent = FBorder::Create(TransparentDesc);
     Transparent->PrepareDesiredSize();
-    Transparent->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
+    Transparent->Arrange(FRectangle(FIntVector2(0, 0), 200, 100));
 
     FDrawCommandList TransparentCommandList;
     Transparent->OnDraw(FDrawGeometry(Transparent->GetContentRectangle(), 1.0f), TransparentCommandList, 0);
@@ -289,7 +289,7 @@ bool BorderDraw_Test()
 
     TSharedPtr<FBorder> UnderBorder = FBorder::Create(StrokeDesc);
     UnderBorder->PrepareDesiredSize();
-    UnderBorder->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
+    UnderBorder->Arrange(FRectangle(FIntVector2(0, 0), 200, 100));
 
     FDrawCommandList UnderCommandList;
     UnderBorder->OnDraw(FDrawGeometry(UnderBorder->GetContentRectangle(), 1.0f), UnderCommandList, 0);
@@ -303,7 +303,7 @@ bool BorderDraw_Test()
 
     TSharedPtr<FBorder> OverBorder = FBorder::Create(StrokeDesc);
     OverBorder->PrepareDesiredSize();
-    OverBorder->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
+    OverBorder->Arrange(FRectangle(FIntVector2(0, 0), 200, 100));
 
     FDrawCommandList OverCommandList;
     const int32      OverMaxLayerId = OverBorder->OnDraw(FDrawGeometry(OverBorder->GetContentRectangle(), 1.0f), OverCommandList, 0);
@@ -367,7 +367,7 @@ bool BoxLayerSequencing_Test()
     RootBox->AddSlot(FBorder::Create(InputDesc)).SetVerticalAlignment(EVerticalAlignment::Bottom);
 
     RootBox->PrepareDesiredSize();
-    RootBox->Arrange(FRectangle(IntVector2(0, 0), 200, 100));
+    RootBox->Arrange(FRectangle(FIntVector2(0, 0), 200, 100));
 
     FDrawCommandList CommandList;
     RootBox->OnDraw(FDrawGeometry(RootBox->GetContentRectangle(), 1.0f), CommandList, 0);

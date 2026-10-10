@@ -79,7 +79,7 @@ void FBox::RemoveSlotAt(int32 Index)
     InvalidateDesiredSize();
 }
 
-FRectangle FBox::ArrangeInSlot(const FRectangle& SlotBounds, const IntVector2& ChildDesiredSize, const FBoxSlot& Slot)
+FRectangle FBox::ArrangeInSlot(const FRectangle& SlotBounds, const FIntVector2& ChildDesiredSize, const FBoxSlot& Slot)
 {
     return FLayout::AlignInBounds(SlotBounds.Deflate(Slot.Padding), ChildDesiredSize, Slot.HorizontalAlignment, Slot.VerticalAlignment);
 }

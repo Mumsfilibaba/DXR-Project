@@ -56,7 +56,7 @@ public:
         // Recorded top first, so the block's own layers go down before they go up again
         OutCommandList.AddBox(LayerId + 2, FRectangle(Bounds.Position, 10, 10), FFloatColor(1.0f, 0.0f, 0.0f, 1.0f));
         OutCommandList.AddBox(LayerId, Bounds, FFloatColor(0.0f, 0.0f, 1.0f, 1.0f), FCornerRadii(4.0f));
-        OutCommandList.AddBox(LayerId + 1, FRectangle(Bounds.Position + IntVector2(5, 5), 20, 20), FFloatColor(0.0f, 1.0f, 0.0f, 1.0f));
+        OutCommandList.AddBox(LayerId + 1, FRectangle(Bounds.Position + FIntVector2(5, 5), 20, 20), FFloatColor(0.0f, 1.0f, 0.0f, 1.0f));
         return LayerId + 2;
     }
 };
@@ -75,7 +75,7 @@ public:
     {
         if (Child)
         {
-            const IntVector2 ChildPosition = bPinChild ? IntVector2(0, 0) : AllottedBounds.Position;
+            const FIntVector2 ChildPosition = bPinChild ? FIntVector2(0, 0) : AllottedBounds.Position;
             Child->Arrange(FRectangle(ChildPosition, 20, 20));
         }
     }
@@ -106,14 +106,14 @@ static TSharedPtr<IFontFace> CreateFont()
     return MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 }
 
-static FCursorEvent MakeMoveEvent(const IntVector2& ClientPosition)
+static FCursorEvent MakeMoveEvent(const FIntVector2& ClientPosition)
 {
-    return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, IntVector2(0, 0), FModifierKeyState());
+    return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, FIntVector2(0, 0), FModifierKeyState());
 }
 
-static FCursorEvent MakeButtonEvent(EInputEventType Type, const IntVector2& ClientPosition)
+static FCursorEvent MakeButtonEvent(EInputEventType Type, const FIntVector2& ClientPosition)
 {
-    return FCursorEvent(Type, Keys::MouseButtonLeft, ClientPosition, IntVector2(0, 0), FModifierKeyState(),
+    return FCursorEvent(Type, Keys::MouseButtonLeft, ClientPosition, FIntVector2(0, 0), FModifierKeyState(),
         Type == EInputEventType::MouseButtonDown);
 }
 
@@ -284,7 +284,7 @@ bool DrawCacheEquivalence_Test()
     TSharedPtr<FBorder>         Panel = MakePanel(Font);
 
     Panel->SetDrawCachePolicy(EDrawCachePolicy::Always);
-    LayoutElement(Panel, FRectangle(IntVector2(10, 20), 200, 160));
+    LayoutElement(Panel, FRectangle(FIntVector2(10, 20), 200, 160));
 
     TEST_SECTION("The first recording is walked rather than replayed, and it is what gets kept");
     FDrawCommandList FirstPass;
@@ -312,7 +312,7 @@ bool DrawCacheEquivalence_Test()
     TSharedPtr<FOverlay> Overlay = FOverlay::Create();
     Overlay->AddSlot(MakePanel(Font));
     Overlay->SetDrawCachePolicy(EDrawCachePolicy::Always);
-    LayoutElement(Overlay, FRectangle(IntVector2(0, 0), 240, 200));
+    LayoutElement(Overlay, FRectangle(FIntVector2(0, 0), 240, 200));
 
     FDrawCommandList OverlayFirst;
     Record(Overlay, OverlayFirst);
@@ -327,7 +327,7 @@ bool DrawCacheEquivalence_Test()
     TSharedPtr<FScrollBox> Scroller = FScrollBox::Create();
     Scroller->SetContent(MakePanel(Font));
     Scroller->SetDrawCachePolicy(EDrawCachePolicy::Always);
-    LayoutElement(Scroller, FRectangle(IntVector2(0, 0), 120, 60));
+    LayoutElement(Scroller, FRectangle(FIntVector2(0, 0), 120, 60));
 
     FDrawCommandList ScrollFirst;
     Record(Scroller, ScrollFirst);
@@ -350,7 +350,7 @@ bool DrawCacheGuards_Test()
     TSharedPtr<FBorder> Panel = MakePanel(CreateFont());
     Panel->SetDrawCachePolicy(EDrawCachePolicy::Always);
 
-    const FRectangle Bounds = FRectangle(IntVector2(10, 20), 200, 160);
+    const FRectangle Bounds = FRectangle(FIntVector2(10, 20), 200, 160);
     LayoutElement(Panel, Bounds);
 
     FDrawCommandList Warmup;
@@ -379,7 +379,7 @@ bool DrawCacheGuards_Test()
     TEST_EXPECT(Replayable.WasFullyReplayed());
 
     FDrawCommandList Clipped;
-    Clipped.PushClip(0, FRectangle(IntVector2(0, 0), 50, 50));
+    Clipped.PushClip(0, FRectangle(FIntVector2(0, 0), 50, 50));
     Panel->Draw(FDrawGeometry(Bounds, 1.0f), Clipped, 0);
     Clipped.PopClip(0);
     TEST_EXPECT(!Clipped.WasFullyReplayed());
@@ -391,7 +391,7 @@ bool DrawCacheGuards_Test()
     Record(Panel, BeforeMove);
     TEST_EXPECT(BeforeMove.WasFullyReplayed());
 
-    LayoutElement(Panel, FRectangle(IntVector2(40, 20), 200, 160));
+    LayoutElement(Panel, FRectangle(FIntVector2(40, 20), 200, 160));
 
     FDrawCommandList AfterMove;
     Record(Panel, AfterMove);
@@ -446,7 +446,7 @@ bool DrawCacheNesting_Test()
     Outer->SetDrawCachePolicy(EDrawCachePolicy::Always);
     Inner->SetDrawCachePolicy(EDrawCachePolicy::Always);
 
-    LayoutElement(Outer, FRectangle(IntVector2(0, 0), 240, 200));
+    LayoutElement(Outer, FRectangle(FIntVector2(0, 0), 240, 200));
 
     TEST_SECTION("Only the outermost candidate keeps a block, since its own covers everything below");
     FDrawCommandList FirstPass;
@@ -498,7 +498,7 @@ bool DrawCacheInvalidation_Test()
 
     TSharedPtr<FButton> Button = FButton::Create(ButtonDesc);
     Button->SetDrawCachePolicy(EDrawCachePolicy::Always);
-    LayoutElement(Button, FRectangle(IntVector2(10, 10), 120, 32));
+    LayoutElement(Button, FRectangle(FIntVector2(10, 10), 120, 32));
 
     SettleDrawCache(Button);
 
@@ -506,7 +506,7 @@ bool DrawCacheInvalidation_Test()
     Record(Button, AtRest);
     TEST_EXPECT(AtRest.WasFullyReplayed());
 
-    Button->OnMouseEntered(MakeMoveEvent(IntVector2(50, 20)));
+    Button->OnMouseEntered(MakeMoveEvent(FIntVector2(50, 20)));
     TEST_EXPECT(Button->IsPaintDirty());
 
     FDrawCommandList Hovered;
@@ -534,7 +534,7 @@ bool DrawCacheInvalidation_Test()
 
     TSharedPtr<FCheckBox> CheckBox = FCheckBox::Create(CheckDesc);
     CheckBox->SetDrawCachePolicy(EDrawCachePolicy::Always);
-    LayoutElement(CheckBox, FRectangle(IntVector2(0, 0), 200, 20));
+    LayoutElement(CheckBox, FRectangle(FIntVector2(0, 0), 200, 20));
 
     SettleDrawCache(CheckBox);
 
@@ -555,7 +555,7 @@ bool DrawCacheInvalidation_Test()
     TSharedPtr<FScrollBox> Scroller = FScrollBox::Create();
     Scroller->SetContent(MakePanel(Font));
     Scroller->SetDrawCachePolicy(EDrawCachePolicy::Always);
-    LayoutElement(Scroller, FRectangle(IntVector2(0, 0), 120, 40));
+    LayoutElement(Scroller, FRectangle(FIntVector2(0, 0), 120, 40));
 
     SettleDrawCache(Scroller);
 
@@ -573,14 +573,14 @@ bool DrawCacheInvalidation_Test()
     TEST_EXPECT(!Scrolled.WasFullyReplayed());
 
     TEST_SECTION("Pressing a button re-records it as well");
-    Button->OnMouseLeft(MakeMoveEvent(IntVector2(900, 900)));
+    Button->OnMouseLeft(MakeMoveEvent(FIntVector2(900, 900)));
     SettleDrawCache(Button);
 
     FDrawCommandList Released;
     Record(Button, Released);
     TEST_EXPECT(Released.WasFullyReplayed());
 
-    Button->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(50, 20)));
+    Button->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(50, 20)));
 
     FDrawCommandList Pressed;
     Record(Button, Pressed);
@@ -609,7 +609,7 @@ bool DrawCacheAtlasRevision_Test()
     TSharedPtr<FBorder> Panel = MakePanel(Font);
 
     Panel->SetDrawCachePolicy(EDrawCachePolicy::Always);
-    LayoutElement(Panel, FRectangle(IntVector2(0, 0), 200, 160));
+    LayoutElement(Panel, FRectangle(FIntVector2(0, 0), 200, 160));
 
     SettleDrawCache(Panel);
 
@@ -673,7 +673,7 @@ bool DrawCacheGeometry_Test()
     TSharedPtr<FBorder>         Panel = MakePanel(Font);
 
     Panel->SetDrawCachePolicy(EDrawCachePolicy::Always);
-    LayoutElement(Panel, FRectangle(IntVector2(10, 20), 200, 160));
+    LayoutElement(Panel, FRectangle(FIntVector2(10, 20), 200, 160));
 
     TEST_SECTION("The first build tessellates a fresh recording, which is the answer everything is held to");
     FDrawCommandList FirstCommands;
@@ -774,7 +774,7 @@ bool DrawCacheGeometry_Test()
     TEST_SECTION("Something drawn outside the block stops the build counting as fully replayed");
     FDrawCommandList MixedCommands;
     Record(Panel, MixedCommands);
-    MixedCommands.AddBox(9, FRectangle(IntVector2(0, 0), 4, 4), FFloatColor::White);
+    MixedCommands.AddBox(9, FRectangle(FIntVector2(0, 0), 4, 4), FFloatColor::White);
 
     FUIDrawData MixedData;
     MixedData.BuildFromCommandList(MixedCommands);
@@ -797,10 +797,10 @@ bool DrawCacheMenuHost_Test()
     TSharedPtr<FMenuHost> Host = FMenuHost::Create();
     TSharedPtr<FMenu>     Menu = MakeLongMenu(Font);
 
-    LayoutElement(Menu, FRectangle(IntVector2(0, 0), 200, 600));
+    LayoutElement(Menu, FRectangle(FIntVector2(0, 0), 200, 600));
 
-    Host->AddChild(Menu, FRectangle(IntVector2(20, 40), 200, 600));
-    LayoutElement(Host, FRectangle(IntVector2(0, 0), 800, 800));
+    Host->AddChild(Menu, FRectangle(FIntVector2(20, 40), 200, 600));
+    LayoutElement(Host, FRectangle(FIntVector2(0, 0), 800, 800));
 
     TEST_SECTION("An open menu is drawn through its host, and settles into a recording worth keeping");
     SettleDrawCache(Host);
@@ -812,7 +812,7 @@ bool DrawCacheMenuHost_Test()
 
     TEST_SECTION("Closing the menu takes it out of the host's recording rather than leaving a ghost behind");
     Host->RemoveChild(Menu);
-    LayoutElement(Host, FRectangle(IntVector2(0, 0), 800, 800));
+    LayoutElement(Host, FRectangle(FIntVector2(0, 0), 800, 800));
 
     FDrawCommandList AfterClose;
     Record(Host, AfterClose);
@@ -825,13 +825,13 @@ bool DrawCacheMenuHost_Test()
     TEST_EXPECT(Menu->GetParentElement() == nullptr);
 
     TEST_SECTION("Reopening it brings it back, and moving it afterwards takes the move with it");
-    Host->AddChild(Menu, FRectangle(IntVector2(20, 40), 200, 600));
-    LayoutElement(Host, FRectangle(IntVector2(0, 0), 800, 800));
+    Host->AddChild(Menu, FRectangle(FIntVector2(20, 40), 200, 600));
+    LayoutElement(Host, FRectangle(FIntVector2(0, 0), 800, 800));
     SettleDrawCache(Host);
     TEST_EXPECT(RecordingReplays(Host));
 
-    Host->SetChildBounds(Menu, FRectangle(IntVector2(300, 40), 200, 600));
-    LayoutElement(Host, FRectangle(IntVector2(0, 0), 800, 800));
+    Host->SetChildBounds(Menu, FRectangle(FIntVector2(300, 40), 200, 600));
+    LayoutElement(Host, FRectangle(FIntVector2(0, 0), 800, 800));
 
     TEST_EXPECT(ReplayMatchesFreshWalk(Host));
 
@@ -849,7 +849,7 @@ bool DrawCacheWindowDeferred_Test()
     DrawCacheRegistry::ReleaseAll();
 
     const TSharedPtr<IFontFace> Font   = CreateFont();
-    TSharedPtr<FWindow>         Window = Application.CreateWindow(IntVector2(800, 600), IntVector2(0, 0));
+    TSharedPtr<FWindow>         Window = Application.CreateWindow(FIntVector2(800, 600), FIntVector2(0, 0));
 
     Window->SetContent(MakeBigPanel(Font));
     FApplication::LayoutWindow(Window);
@@ -860,7 +860,7 @@ bool DrawCacheWindowDeferred_Test()
 
     TEST_SECTION("A menu left open long enough for the window to settle again is still painted every frame");
     TSharedPtr<FMenu> Menu   = CreateMenu(Font, { "New", "Open" });
-    FMenuHandle       Handle = FMenuStack::Get().PushMenu(Window, FRectangle(IntVector2(10, 10), 40, 24), EMenuPlacement::BelowLeftAligned, Menu);
+    FMenuHandle       Handle = FMenuStack::Get().PushMenu(Window, FRectangle(FIntVector2(10, 10), 40, 24), EMenuPlacement::BelowLeftAligned, Menu);
 
     TEST_EXPECT(Handle != nullptr);
     TEST_EXPECT(Handle->bIsInline);
@@ -900,7 +900,7 @@ bool DrawCacheMenuBar_Test()
     DrawCacheRegistry::ReleaseAll();
 
     const TSharedPtr<IFontFace> Font   = CreateFont();
-    TSharedPtr<FWindow>         Window = Application.CreateWindow(IntVector2(800, 600), IntVector2(0, 0));
+    TSharedPtr<FWindow>         Window = Application.CreateWindow(FIntVector2(800, 600), FIntVector2(0, 0));
 
     TSharedPtr<FMenuBar> MenuBar = FMenuBar::Create();
 
@@ -964,7 +964,7 @@ bool DrawCacheToolTip_Test()
     DrawCacheRegistry::ReleaseAll();
 
     const TSharedPtr<IFontFace> Font   = CreateFont();
-    TSharedPtr<FWindow>         Window = Application.CreateWindow(IntVector2(800, 600), IntVector2(0, 0));
+    TSharedPtr<FWindow>         Window = Application.CreateWindow(FIntVector2(800, 600), FIntVector2(0, 0));
 
     TSharedPtr<FBorder> Panel = MakeBigPanel(Font);
     Window->SetContent(Panel);
@@ -975,7 +975,7 @@ bool DrawCacheToolTip_Test()
 
     TEST_SECTION("A tip that is still up once the window has gone quiet again is painted every frame");
     FToolTipService& ToolTips = FToolTipService::Get();
-    ToolTips.NotifyCursorMoved(IntVector2(300, 200));
+    ToolTips.NotifyCursorMoved(FIntVector2(300, 200));
     ToolTips.RequestTextToolTip(Panel, "Opens the file", Font, EToolTipPlacement::FollowCursor, 0.5f);
     ToolTips.Tick(1.0f);
 
@@ -1022,7 +1022,7 @@ bool DrawCacheLayerOrder_Test()
 
     TSharedPtr<FLayerStepDownElement> Element = MakeSharedPtr<FLayerStepDownElement>();
     Element->SetDrawCachePolicy(EDrawCachePolicy::Always);
-    LayoutElement(Element, FRectangle(IntVector2(10, 20), 60, 40));
+    LayoutElement(Element, FRectangle(FIntVector2(10, 20), 60, 40));
 
     FDrawCommandList FreshCommands;
     FreshCommands.SetDrawCacheSuppressed(true);
@@ -1091,11 +1091,11 @@ bool DrawCacheTranslation_Test()
     Panel->SetDrawCachePolicy(EDrawCachePolicy::Always);
     Frame->SetContent(Panel);
 
-    LayoutElement(Frame, FRectangle(IntVector2(0, 0), 200, 160));
+    LayoutElement(Frame, FRectangle(FIntVector2(0, 0), 200, 160));
     SettleDrawCache(Frame);
 
     TEST_SECTION("Moving the frame without resizing carries the panel along, so it stays clean");
-    LayoutElement(Frame, FRectangle(IntVector2(30, 40), 200, 160));
+    LayoutElement(Frame, FRectangle(FIntVector2(30, 40), 200, 160));
     TEST_EXPECT(!Panel->IsPaintDirty());
     TEST_EXPECT(Frame->IsPaintDirty());
 
@@ -1110,7 +1110,7 @@ bool DrawCacheTranslation_Test()
     TEST_EXPECT(RecordingsMatch(Moved, Fresh));
 
     TEST_SECTION("A resize is not a move, so the panel records again");
-    LayoutElement(Frame, FRectangle(IntVector2(30, 40), 220, 160));
+    LayoutElement(Frame, FRectangle(FIntVector2(30, 40), 220, 160));
     TEST_EXPECT(Panel->IsPaintDirty());
 
     TEST_SECTION("A child placed where its moving parent was is dirtied, while one that moves along is not");
@@ -1118,17 +1118,17 @@ bool DrawCacheTranslation_Test()
     TSharedPtr<FVisualElement>      Child = MakeSharedPtr<FCompoundElement>();
     Host->SetChild(Child);
 
-    LayoutElement(Host, FRectangle(IntVector2(0, 0), 100, 100));
+    LayoutElement(Host, FRectangle(FIntVector2(0, 0), 100, 100));
     FDrawCommandList Settle;
     Record(Host, Settle);
 
-    LayoutElement(Host, FRectangle(IntVector2(10, 0), 100, 100));
+    LayoutElement(Host, FRectangle(FIntVector2(10, 0), 100, 100));
     TEST_EXPECT(!Child->IsPaintDirty());
 
     Record(Host, Settle);
     Host->bPinChild = true;
     Host->InvalidateArrange();
-    LayoutElement(Host, FRectangle(IntVector2(20, 0), 100, 100));
+    LayoutElement(Host, FRectangle(FIntVector2(20, 0), 100, 100));
     TEST_EXPECT(Child->IsPaintDirty());
 
     DrawCacheRegistry::ReleaseAll();
@@ -1140,7 +1140,7 @@ bool DrawCommandPayload_Test()
     TEST_BEGIN();
 
     TSharedPtr<IFontFace> Font = CreateFont();
-    const FRectangle      Bounds(IntVector2(0, 0), 40, 20);
+    const FRectangle      Bounds(FIntVector2(0, 0), 40, 20);
     const FCornerRadii    Radii(1.0f, 2.0f, 3.0f, 4.0f);
     const FFloatColor     Tint(1.0f, 1.0f, 1.0f, 1.0f);
 

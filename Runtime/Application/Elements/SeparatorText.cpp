@@ -36,10 +36,10 @@ void FSeparatorText::Initialize(const FDesc& Desc)
     TextGap       = Math::Max(Desc.TextGap, 0);
 }
 
-IntVector2 FSeparatorText::ComputeDesiredSize() const
+FIntVector2 FSeparatorText::ComputeDesiredSize() const
 {
     const int32 BandHeight = Font ? Font->GetTextBandHeight() : Math::CeilToInt(RuleThickness);
-    return IntVector2(GetTextWidth() + (TextGap * 2) + Padding.GetTotalHorizontal(), BandHeight + Padding.GetTotalVertical());
+    return FIntVector2(GetTextWidth() + (TextGap * 2) + Padding.GetTotalHorizontal(), BandHeight + Padding.GetTotalVertical());
 }
 
 int32 FSeparatorText::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -83,7 +83,7 @@ int32 FSeparatorText::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
         OutCommandList.AddBox(LayerId, Rule, RuleColor);
     }
 
-    const FRectangle TextBounds(IntVector2(TextLeft, Available.Position.Y), TextWidth, Available.Height);
+    const FRectangle TextBounds(FIntVector2(TextLeft, Available.Position.Y), TextWidth, Available.Height);
     OutCommandList.AddText(LayerId, TextBounds, Text, Font.Get(), TextColor);
 
     return LayerId;

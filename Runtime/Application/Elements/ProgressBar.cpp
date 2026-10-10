@@ -37,9 +37,9 @@ void FProgressBar::Initialize(const FDesc& Desc)
     Percent = Math::Saturate(Desc.Percent);
 }
 
-IntVector2 FProgressBar::ComputeDesiredSize() const
+FIntVector2 FProgressBar::ComputeDesiredSize() const
 {
-    return IntVector2(0, PreferredHeight);
+    return FIntVector2(0, PreferredHeight);
 }
 
 int32 FProgressBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -57,7 +57,7 @@ int32 FProgressBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
 
     if (Font && !OverlayText.IsEmpty())
     {
-        const IntVector2 TextSize(Font->MeasureWidth(FStringView(OverlayText.Data(), OverlayText.Length())), Font->GetLineHeight());
+        const FIntVector2 TextSize(Font->MeasureWidth(FStringView(OverlayText.Data(), OverlayText.Length())), Font->GetLineHeight());
         const FRectangle TextBounds = FLayout::AlignInBounds(Bounds, TextSize, EHorizontalAlignment::Center, EVerticalAlignment::Center);
 
         OutCommandList.AddText(LayerId + 1, TextBounds, OverlayText, Font.Get(), TextColor);

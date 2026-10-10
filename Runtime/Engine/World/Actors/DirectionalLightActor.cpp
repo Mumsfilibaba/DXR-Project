@@ -17,7 +17,7 @@ FDirectionalLightActor::~FDirectionalLightActor()
 {
 }
 
-void FDirectionalLightActor::Initialize(const Vector3& InRotation)
+void FDirectionalLightActor::Initialize(const FVector3& InRotation)
 {
     GetTransform().SetRotation(InRotation);
 }

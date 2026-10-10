@@ -40,7 +40,7 @@ void FMaterial::Initialize()
 
 void FMaterial::FillMaterialData(FMaterialHLSL& OutData) const
 {
-    OutData.Albedo              = Vector3(MaterialInfo.Albedo.R, MaterialInfo.Albedo.G, MaterialInfo.Albedo.B);
+    OutData.Albedo              = FVector3(MaterialInfo.Albedo.R, MaterialInfo.Albedo.G, MaterialInfo.Albedo.B);
     OutData.Metallic            = MaterialInfo.Metallic;
     OutData.Roughness           = MaterialInfo.Roughness;
     OutData.AmbientOcclusion    = MaterialInfo.AmbientOcclusion;

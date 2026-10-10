@@ -115,7 +115,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
@@ -190,7 +190,7 @@ protected:
 private:
     void ApplyValue(float InValue);
 
-    void SetValueFromPosition(const IntVector2& ClientPosition);
+    void SetValueFromPosition(const FIntVector2& ClientPosition);
 
     NODISCARD FRectangle ComputeHandleBounds(const FRectangle& Bounds) const;
     NODISCARD FRectangle ComputeTrackBounds(const FRectangle& Bounds) const;

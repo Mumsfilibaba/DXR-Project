@@ -11,8 +11,8 @@ enum class ERHIType : uint32;
 
 struct FRayPayload
 {
-    Vector3 Color;
-    float   HitT;
+    FVector3 Color;
+    float    HitT;
 };
 
 struct FRayIntersectionAttributes
@@ -157,7 +157,7 @@ struct FRHIGeometryAccelerationStructureInstance
     FRHIGeometryAccelerationStructureInstance() noexcept = default;
 
     FRHIGeometryAccelerationStructureInstance(FRHIGeometryAccelerationStructure* InGeometry, uint32 InInstanceIndex, uint32 InHitGroupIndex,
-        ERayTracingInstanceFlags InFlags, uint32 InMask, const Matrix3x4& InTransform) noexcept
+        ERayTracingInstanceFlags InFlags, uint32 InMask, const FMatrix3x4& InTransform) noexcept
         : Geometry(InGeometry)
         , InstanceIndex(InInstanceIndex)
         , HitGroupIndex(InHitGroupIndex)
@@ -174,7 +174,7 @@ struct FRHIGeometryAccelerationStructureInstance
     uint32                             HitGroupIndex = 0;
     ERayTracingInstanceFlags           Flags         = ERayTracingInstanceFlags::None;
     uint32                             Mask          = RHI_DEFAULT_GEOMETRY_INSTANCE_MASK;
-    Matrix3x4                          Transform     = { };
+    FMatrix3x4                         Transform     = { };
 };
 
 // -------------------------------------------------------------------------------------------

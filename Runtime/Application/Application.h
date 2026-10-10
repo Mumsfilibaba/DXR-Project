@@ -249,14 +249,14 @@ public:
      * 
      * @param Position The new absolute screen coordinates for the cursor.
      */
-    void SetCursorPosition(const IntVector2& Position);
+    void SetCursorPosition(const FIntVector2& Position);
 
     /**
      * @brief Retrieves the global cursor position in screen coordinates.
      * 
      * @return The current (X, Y) position of the system cursor.
      */
-    IntVector2 GetCursorPosition() const;
+    FIntVector2 GetCursorPosition() const;
 
     /**
      * @brief Sets the cursor appearance (pointer, hand, crosshair, etc.).
@@ -369,7 +369,7 @@ public:
      * @param ScreenPosition The coordinate in screen space, converted to client space per window.
      * @param OutCursorPath A element path object to populate.
      */
-    void FindElementsUnderCursor(const IntVector2& ScreenPosition, FElementPath& OutCursorPath);
+    void FindElementsUnderCursor(const FIntVector2& ScreenPosition, FElementPath& OutCursorPath);
 
     /** @brief Re-reads the resolution, DPI and primary flag of every monitor after a setup change. */
     void UpdateMonitorInfo();
@@ -522,8 +522,8 @@ private:
 
     NODISCARD TSharedPtr<FWindow> ResolveCursorWindow() const;
     FEventResponse                UpdateHoverTracking(const FElementPath& CursorPath, const FCursorEvent& CursorEvent, EHoverUpdate Update);
-    const FElementPath&           ResolveCursorPath(const IntVector2& ScreenPosition);
-    IntVector2                    GetClientOrigin();
+    const FElementPath&           ResolveCursorPath(const FIntVector2& ScreenPosition);
+    FIntVector2                   GetClientOrigin();
 
     void ReleaseAllPressedInput();
     void ResolveMouseDispatchPath(FElementPath& OutPath);
@@ -551,7 +551,7 @@ private:
     EWindowInteraction                 WindowInteraction;
     TWeakPtr<FWindow>                  FocusWindow;
     TWeakPtr<FVisualElement>           MouseCaptor;
-    IntVector2                         LastCursorPosition;
+    FIntVector2                        LastCursorPosition;
     bool                               bIsMonitorInfoValid : 1;
     bool                               bIsCursorPositionValid : 1;
     bool                               bIsTrackingCursor : 1;

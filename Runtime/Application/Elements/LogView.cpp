@@ -65,7 +65,7 @@ void FLogView::Initialize(const FDesc& Desc)
     SetContent(ScrollBox);
 }
 
-IntVector2 FLogView::PrepareDesiredSize()
+FIntVector2 FLogView::PrepareDesiredSize()
 {
     DrainPendingLines();
 

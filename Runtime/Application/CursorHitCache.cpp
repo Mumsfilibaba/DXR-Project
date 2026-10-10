@@ -19,7 +19,7 @@ void FCursorHitCache::Invalidate()
     bIsValid = false;
 }
 
-const FElementPath& FCursorHitCache::Resolve(const TSharedPtr<FWindow>& InWindow, const IntVector2& InClientPosition)
+const FElementPath& FCursorHitCache::Resolve(const TSharedPtr<FWindow>& InWindow, const FIntVector2& InClientPosition)
 {
     const uint64 CurrentGeneration = FVisualElement::GetHitTestGeneration();
 

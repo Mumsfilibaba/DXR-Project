@@ -13,7 +13,7 @@ public:
     ~FLightProbeActor();
 
     using FActor::Initialize;
-    void Initialize(const Vector3& InPosition, const FRHITextureRef& InCubeMap);
+    void Initialize(const FVector3& InPosition, const FRHITextureRef& InCubeMap);
 
     virtual const CHAR_T* GetTypeLabel() const override
     {

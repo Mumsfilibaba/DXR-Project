@@ -7,42 +7,42 @@
 
 struct FStaticMeshProxyUpdate
 {
-    Matrix4 TransformMatrix        = {};
-    Matrix4 TransformMatrixInverse = {};
+    FMatrix4 TransformMatrix        = {};
+    FMatrix4 TransformMatrixInverse = {};
 };
 
 struct FDirectionalLightProxyUpdate
 {
-    Vector3 Color                       = {};
-    Vector3 Direction                   = {};
-    float   ShadowNearPlane             = 0.0f;
-    float   ShadowFarPlane              = 0.0f;
-    float   ShadowBias                  = 0.0f;
-    float   ShadowPositionOffset        = 0.0f;
-    float   CascadeSplitLambda          = 0.0f;
-    float   LightArea                   = 0.0f;
-    bool    bCastShadows                = true;
+    FVector3 Color                      = {};
+    FVector3 Direction                  = {};
+    float    ShadowNearPlane            = 0.0f;
+    float    ShadowFarPlane             = 0.0f;
+    float    ShadowBias                 = 0.0f;
+    float    ShadowPositionOffset       = 0.0f;
+    float    CascadeSplitLambda         = 0.0f;
+    float    LightArea                  = 0.0f;
+    bool     bCastShadows               = true;
 };
 
 struct FPointLightProxyUpdate
 {
-    Vector3 Position                           = {};
-    Vector3 Color                              = {};
-    float   ShadowBias                         = 0.0f;
-    float   ShadowNearPlane                    = 0.0f;
-    float   ShadowFarPlane                     = 0.0f;
-    Matrix4 ViewMatrix[RHI_NUM_CUBE_FACES]     = {};
-    Matrix4 ProjMatrix[RHI_NUM_CUBE_FACES]     = {};
-    Matrix4 ViewProjMatrix[RHI_NUM_CUBE_FACES] = {};
-    bool    bCastShadows                       = true;
+    FVector3 Position                           = {};
+    FVector3 Color                              = {};
+    float    ShadowBias                         = 0.0f;
+    float    ShadowNearPlane                    = 0.0f;
+    float    ShadowFarPlane                     = 0.0f;
+    FMatrix4 ViewMatrix[RHI_NUM_CUBE_FACES]     = {};
+    FMatrix4 ProjMatrix[RHI_NUM_CUBE_FACES]     = {};
+    FMatrix4 ViewProjMatrix[RHI_NUM_CUBE_FACES] = {};
+    bool     bCastShadows                       = true;
 };
 
 struct FLightProbeProxyUpdate
 {
-    Vector3 Position       = {};
-    Vector3 BoxOffset      = {};
-    Vector3 BoxExtent      = {};
-    bool    bBoxProjection = false;
+    FVector3 Position       = {};
+    FVector3 BoxOffset      = {};
+    FVector3 BoxExtent      = {};
+    bool     bBoxProjection = false;
 };
 
 struct FRenderUpdateBatch

@@ -16,7 +16,7 @@ public:
     void SetShadowPositionOffset(float InShadowPositionOffset);
     void SetLightArea(float InLightArea);
 
-    Vector3 GetDirectionVector() const;
+    FVector3 GetDirectionVector() const;
 
     FORCEINLINE float GetShadowPositionOffset() const
     {

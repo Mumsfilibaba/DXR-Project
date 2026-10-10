@@ -95,7 +95,7 @@ public:
      * @param Tint      The stroke color.
      * @param Thickness The stroke width in pixels.
      */
-    void AddLine(int32 LayerId, const Vector2& Start, const Vector2& End, const FFloatColor& Tint, float Thickness);
+    void AddLine(int32 LayerId, const FVector2& Start, const FVector2& End, const FFloatColor& Tint, float Thickness);
 
     /**
      * @brief Appends a stroked run of points at any orientation.
@@ -106,7 +106,7 @@ public:
      * @param Thickness The stroke width in pixels.
      * @param bClosed   True to join the last point back to the first.
      */
-    void AddPolyline(int32 LayerId, TArrayView<const Vector2> Points, const FFloatColor& Tint, float Thickness, bool bClosed = false);
+    void AddPolyline(int32 LayerId, TArrayView<const FVector2> Points, const FFloatColor& Tint, float Thickness, bool bClosed = false);
 
     /**
      * @brief Appends a filled convex polygon, tessellated as a fan around its first point.
@@ -115,7 +115,7 @@ public:
      * @param Points  The points in winding order. Fewer than three draws nothing.
      * @param Tint    The fill color.
      */
-    void AddConvexPolygon(int32 LayerId, TArrayView<const Vector2> Points, const FFloatColor& Tint);
+    void AddConvexPolygon(int32 LayerId, TArrayView<const FVector2> Points, const FFloatColor& Tint);
 
     /**
      * @brief Appends the rounded frame of a panel so that it survives whatever the panel's content paints.
@@ -181,7 +181,7 @@ public:
      * @param C       The third corner.
      * @param Tint    The fill color.
      */
-    void AddTriangle(int32 LayerId, const Vector2& A, const Vector2& B, const Vector2& C, const FFloatColor& Tint);
+    void AddTriangle(int32 LayerId, const FVector2& A, const FVector2& B, const FVector2& C, const FFloatColor& Tint);
 
     /**
      * @brief Appends a circle outline. Shorthand for a closed polyline.
@@ -193,7 +193,7 @@ public:
      * @param Thickness The stroke width in pixels.
      * @param Segments  How many segments to tessellate into, or zero to derive it from the radius.
      */
-    void AddCircle(int32 LayerId, const Vector2& Center, float Radius, const FFloatColor& Tint, float Thickness, int32 Segments = 0);
+    void AddCircle(int32 LayerId, const FVector2& Center, float Radius, const FFloatColor& Tint, float Thickness, int32 Segments = 0);
 
     /**
      * @brief Appends a filled circle. Shorthand for a convex polygon.
@@ -204,7 +204,7 @@ public:
      * @param Tint     The fill color.
      * @param Segments How many segments to tessellate into, or zero to derive it from the radius.
      */
-    void AddCircleFilled(int32 LayerId, const Vector2& Center, float Radius, const FFloatColor& Tint, int32 Segments = 0);
+    void AddCircleFilled(int32 LayerId, const FVector2& Center, float Radius, const FFloatColor& Tint, int32 Segments = 0);
 
     /**
      * @brief Appends a stroked arc, which is a circle walked between two angles.
@@ -218,7 +218,7 @@ public:
      * @param Thickness  The stroke width in pixels.
      * @param Segments   How many segments to tessellate into, or zero to derive it from the sweep.
      */
-    void AddArc(int32 LayerId, const Vector2& Center, float Radius, float StartAngle, float EndAngle, const FFloatColor& Tint, float Thickness, int32 Segments = 0);
+    void AddArc(int32 LayerId, const FVector2& Center, float Radius, float StartAngle, float EndAngle, const FFloatColor& Tint, float Thickness, int32 Segments = 0);
 
     /**
      * @brief Appends a filled wedge, which is an arc closed back through its center.
@@ -231,7 +231,7 @@ public:
      * @param Tint       The fill color.
      * @param Segments   How many segments to tessellate into, or zero to derive it from the sweep.
      */
-    void AddArcFilled(int32 LayerId, const Vector2& Center, float Radius, float StartAngle, float EndAngle, const FFloatColor& Tint, int32 Segments = 0);
+    void AddArcFilled(int32 LayerId, const FVector2& Center, float Radius, float StartAngle, float EndAngle, const FFloatColor& Tint, int32 Segments = 0);
 
     /**
      * @brief Appends a cubic bezier, flattened to a polyline.
@@ -245,7 +245,7 @@ public:
      * @param Thickness The stroke width in pixels.
      * @param Segments  How many segments to flatten into, or zero to derive it from the extent.
      */
-    void AddBezier(int32 LayerId, const Vector2& P0, const Vector2& P1, const Vector2& P2, const Vector2& P3, const FFloatColor& Tint, float Thickness, int32 Segments = 0);
+    void AddBezier(int32 LayerId, const FVector2& P0, const FVector2& P1, const FVector2& P2, const FVector2& P3, const FFloatColor& Tint, float Thickness, int32 Segments = 0);
 
     /**
      * @brief Appends a textured rectangle.
@@ -319,7 +319,7 @@ public:
      * @param Command The command to read the range from.
      * @return A view over the command's points.
      */
-    NODISCARD TArrayView<const Vector2> GetCommandPoints(const FDrawCommand& Command) const;
+    NODISCARD TArrayView<const FVector2> GetCommandPoints(const FDrawCommand& Command) const;
 
     /**
      * @brief The text one command owns, which is empty for anything but a text command that carries characters.
@@ -502,7 +502,7 @@ public:
     }
 
     /** @return The point pool every polyline or polygon command indexes into by offset and count. */
-    NODISCARD FORCEINLINE const TArray<Vector2>& GetPoints() const
+    NODISCARD FORCEINLINE const TArray<FVector2>& GetPoints() const
     {
         return Points;
     }
@@ -572,16 +572,16 @@ private:
     NODISCARD static int32 ResolveCircleSegments(float Radius, float AngleSweep, int32 RequestedSegments);
 
     FDrawCommand& EmplaceCommand(EDrawCommandType Type, int32 LayerId);
-    void StorePoints(FDrawCommand& Command, TArrayView<const Vector2> InPoints);
+    void StorePoints(FDrawCommand& Command, TArrayView<const FVector2> InPoints);
     void StoreText(FDrawCommand& Command, FStringView InText);
-    void BuildArcPoints(const Vector2& Center, float Radius, float StartAngle, float EndAngle, int32 Segments);
+    void BuildArcPoints(const FVector2& Center, float Radius, float StartAngle, float EndAngle, int32 Segments);
 
     TArray<FDrawCommand>  Commands;
-    TArray<Vector2>       Points;
+    TArray<FVector2>      Points;
     TArray<CHAR_T>        TextPool;
     TArray<FUIBrush>      Brushes;
     TArray<FRectangle>    ClipRects;
-    TArray<Vector2>       ScratchPoints;
+    TArray<FVector2>      ScratchPoints;
     TArray<uint16>        ClipStack;
     TArray<FReplayedSpan> ReplayedSpans;
     FRectangle            EmptyClipRectangle;

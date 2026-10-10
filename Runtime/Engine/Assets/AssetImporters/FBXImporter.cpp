@@ -23,9 +23,9 @@ static FString ExtractPath(const FString& FullFilePath)
     }
 }
 
-static Matrix4 FBXConvertMatrix(const ofbx::DMatrix& Matrix)
+static FMatrix4 FBXConvertMatrix(const ofbx::DMatrix& Matrix)
 {
-    Matrix4 Result;
+    FMatrix4 Result;
     for (uint32 y = 0; y < 4; y++)
     {
         for (uint32 x = 0; x < 4; x++)
@@ -39,15 +39,15 @@ static Matrix4 FBXConvertMatrix(const ofbx::DMatrix& Matrix)
 }
 
 #if 0 // Currently unused
-static bool DoesFlipHandness(const Matrix4& Matrix)
+static bool DoesFlipHandness(const FMatrix4& Matrix)
 {
-    Vector3 X(1.0f, 0.0f, 0.0f);
+    FVector3 X(1.0f, 0.0f, 0.0f);
     X = Matrix.TransformNormal(X);
     
-    Vector3 Y(0.0f, 1.0f, 0.0f);
+    FVector3 Y(0.0f, 1.0f, 0.0f);
     Y = Matrix.TransformNormal(Y);
 
-    Vector3 Z = Matrix.GetInverse().TransformCoord(X.CrossProduct(Y));
+    FVector3 Z = Matrix.GetInverse().TransformCoord(X.CrossProduct(Y));
     return Z.Z < 0.0f;
 }
 #endif
@@ -159,7 +159,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
                 MaterialData.Routes[EMaterialScalar::Occlusion] = FMaterialSourceRoute(EMaterialTexture::AmbientOcclusion, ETextureChannel::R);
             }
 
-            MaterialData.Diffuse       = Vector3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
+            MaterialData.Diffuse       = FVector3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
             MaterialData.AmbientFactor = 1.0f; // CurrentMaterial->getSpecularColor().r;
             MaterialData.Roughness     = 1.0f; // CurrentMaterial->getSpecularColor().g;
             MaterialData.Metallic      = 1.0f; // CurrentMaterial->getSpecularColor().b;
@@ -171,10 +171,10 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 
         const bool bApplyScaleFactor = (InFlags & EMeshImportFlags::ApplyScaleFactor) != EMeshImportFlags::None;
 
-        const Matrix4 ScaleMatrix     = Matrix4::Scale(bApplyScaleFactor ? GlobalSettings->UnitScaleFactor : 1.0f);
-        const Matrix4 GlobalTransform = FBXConvertMatrix(CurrentMesh->getGlobalTransform());
-        const Matrix4 GeometricMatrix = FBXConvertMatrix(CurrentMesh->getGeometricMatrix());
-        const Matrix4 Transform       = GlobalTransform * GeometricMatrix * ScaleMatrix;
+        const FMatrix4 ScaleMatrix     = FMatrix4::Scale(bApplyScaleFactor ? GlobalSettings->UnitScaleFactor : 1.0f);
+        const FMatrix4 GlobalTransform = FBXConvertMatrix(CurrentMesh->getGlobalTransform());
+        const FMatrix4 GeometricMatrix = FBXConvertMatrix(CurrentMesh->getGeometricMatrix());
+        const FMatrix4 Transform       = GlobalTransform * GeometricMatrix * ScaleMatrix;
 
         const ofbx::GeometryData& GeometryData = CurrentMesh->getGeometryData();
         ofbx::Vec3Attributes Positions = GeometryData.getPositions();
@@ -219,14 +219,14 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 
                     // Position
                     const ofbx::Vec3 OfbxPosition = Positions.get(VertexIdx);
-                    const Vector3 Position(OfbxPosition.x, OfbxPosition.y, OfbxPosition.z);
+                    const FVector3 Position(OfbxPosition.x, OfbxPosition.y, OfbxPosition.z);
                     Vertex.Position = Transform.Transform(Position);
 
                     // Normal
                     if (Normals.values)
                     {
                         const ofbx::Vec3 OfbxNormal = Normals.get(VertexIdx);
-                        const Vector3 Normal(OfbxNormal.x, OfbxNormal.y, OfbxNormal.z);
+                        const FVector3 Normal(OfbxNormal.x, OfbxNormal.y, OfbxNormal.z);
                         Vertex.Normal = Transform.TransformNormal(Normal);
                     }
 
@@ -234,7 +234,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
                     if (Tangents.values)
                     {
                         const ofbx::Vec3 OfbxTangent = Tangents.get(VertexIdx);
-                        const Vector3 Tangent(OfbxTangent.x, OfbxTangent.y, OfbxTangent.z);
+                        const FVector3 Tangent(OfbxTangent.x, OfbxTangent.y, OfbxTangent.z);
                         Vertex.Tangent = Transform.TransformNormal(Tangent);
                     }
 
@@ -243,7 +243,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
                     {
                         // We need to correct UVs (I assume since DirectX coordinate system)
                         const ofbx::Vec2 OfbxTexCoord = TexCoords.get(VertexIdx);
-                        Vertex.TexCoord = Vector2(OfbxTexCoord.x, 1.0f - OfbxTexCoord.y);
+                        Vertex.TexCoord = FVector2(OfbxTexCoord.x, 1.0f - OfbxTexCoord.y);
                     }
 
                     // Only push unique vertices

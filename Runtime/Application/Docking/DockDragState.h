@@ -29,10 +29,10 @@ struct FDockDragPanel
 };
 
 /** @brief Called at tear-out, which is what puts the panel on screen as something to drag. */
-DECLARE_DELEGATE(FOnDockDragBegan, const FDockDragPanel& /*Panel*/, const IntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnDockDragBegan, const FDockDragPanel& /*Panel*/, const FIntVector2& /*ScreenPosition*/);
 
 /** @brief Called when a drag was let go where no area is, which is what floats a panel into a window of its own. */
-DECLARE_DELEGATE(FOnDockDropOutside, const FDockDragPanel& /*Panel*/, const IntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnDockDropOutside, const FDockDragPanel& /*Panel*/, const FIntVector2& /*ScreenPosition*/);
 
 /** @brief Called once a drag is over however it ended, which is what takes down whatever tear-out put up. */
 DECLARE_DELEGATE(FOnDockDragEnded);
@@ -71,14 +71,14 @@ public:
      * @param SourceArea     The area it came from, which a cancel hands it back to.
      * @param ScreenPosition Where the cursor was, in screen coordinates.
      */
-    void BeginDrag(const FString& PanelId, FDockingArea* SourceArea, const IntVector2& ScreenPosition);
+    void BeginDrag(const FString& PanelId, FDockingArea* SourceArea, const FIntVector2& ScreenPosition);
 
     /**
      * @brief Moves the drag, re-resolving which area and which edge is under the cursor.
      *
      * @param ScreenPosition Where the cursor is now, in screen coordinates.
      */
-    void UpdateDrag(const IntVector2& ScreenPosition);
+    void UpdateDrag(const FIntVector2& ScreenPosition);
 
     /**
      * @brief Ends the drag, docking the panel into the last valid target and telling whoever listens when
@@ -160,7 +160,7 @@ public:
     }
 
     /** @return Where the cursor last was, in screen coordinates. */
-    NODISCARD FORCEINLINE const IntVector2& GetCursorPosition() const
+    NODISCARD FORCEINLINE const FIntVector2& GetCursorPosition() const
     {
         return CursorPosition;
     }
@@ -219,7 +219,7 @@ private:
     FString                    TargetPanelId;
     EDockDirection             TargetDirection;
     int32                      TargetTabIndex;
-    IntVector2                 CursorPosition;
+    FIntVector2                CursorPosition;
     const FWindow*             CursorWindow;
     TArray<FDockingArea*>      RegisteredAreas;
     FOnDockDragBegan           OnDragBeganDelegate;

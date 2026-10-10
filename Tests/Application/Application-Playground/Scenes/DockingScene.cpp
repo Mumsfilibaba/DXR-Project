@@ -37,7 +37,7 @@ static TSharedPtr<FVisualElement> MakePanelBody(const FPlaygroundFonts& Fonts, c
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
     Column->AddSlot(FTextBlock::Create(HeadingDesc)).SetPadding(FMargin(0, 0, 0, 8));
     Column->AddSlot(FTextBlock::Create(BodyDesc));
-    Column->AddSlot(FSpacer::Create(IntVector2(0, 0))).SetFillCoefficient(1.0f);
+    Column->AddSlot(FSpacer::Create(FIntVector2(0, 0))).SetFillCoefficient(1.0f);
 
     FBorder::FDesc BorderDesc;
     BorderDesc.BackgroundColor = FUIStyle::GetDefault().Colors.PanelBackground;
@@ -125,7 +125,7 @@ static TSharedPtr<FVisualElement> MakeDockingArea(const FPlaygroundFonts& Fonts)
         RefreshReadout();
     });
 
-    Desc.OnPanelTornOut = FOnPanelTornOut::CreateLambda([](const FString&, const IntVector2&)
+    Desc.OnPanelTornOut = FOnPanelTornOut::CreateLambda([](const FString&, const FIntVector2&)
     {
         RefreshReadout();
     });
@@ -196,7 +196,7 @@ static TSharedPtr<FVisualElement> MakeLayoutControls(const FPlaygroundFonts& Fon
     Row->AddSlot(FButton::Create(RestoreDesc)).SetPadding(FMargin(0, 0, 12, 0)).SetVerticalAlignment(EVerticalAlignment::Center);
     Row->AddSlot(FButton::Create(ResetDesc)).SetPadding(FMargin(0, 0, 12, 0)).SetVerticalAlignment(EVerticalAlignment::Center);
     Row->AddSlot(FButton::Create(ReadDesc)).SetVerticalAlignment(EVerticalAlignment::Center);
-    Row->AddSlot(FSpacer::Create(IntVector2(0, 0))).SetFillCoefficient(1.0f);
+    Row->AddSlot(FSpacer::Create(FIntVector2(0, 0))).SetFillCoefficient(1.0f);
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
     Column->AddSlot(Row);

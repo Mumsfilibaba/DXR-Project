@@ -51,16 +51,16 @@ static FTextBlock::FDesc MakeTextDesc(const FString& Text, const TSharedPtr<IFon
 
 static void ClickElement(const TSharedPtr<FVisualElement>& Element)
 {
-    const IntVector2 Center = Element->GetContentRectangle().GetCenter();
+    const FIntVector2 Center = Element->GetContentRectangle().GetCenter();
 
-    const FCursorEvent DownEvent(EInputEventType::MouseButtonDown, Keys::MouseButtonLeft, Center, IntVector2(0, 0), FModifierKeyState(), true);
-    const FCursorEvent UpEvent(EInputEventType::MouseButtonUp, Keys::MouseButtonLeft, Center, IntVector2(0, 0), FModifierKeyState(), false);
+    const FCursorEvent DownEvent(EInputEventType::MouseButtonDown, Keys::MouseButtonLeft, Center, FIntVector2(0, 0), FModifierKeyState(), true);
+    const FCursorEvent UpEvent(EInputEventType::MouseButtonUp, Keys::MouseButtonLeft, Center, FIntVector2(0, 0), FModifierKeyState(), false);
 
     Element->OnMouseButtonDown(DownEvent);
     Element->OnMouseButtonUp(UpEvent);
 }
 
-static bool IsPointInteractive(const FWindowTitleBarRegions& Regions, const IntVector2& Point)
+static bool IsPointInteractive(const FWindowTitleBarRegions& Regions, const FIntVector2& Point)
 {
     for (const FWindowRect& Rect : Regions.InteractiveRects)
     {
@@ -80,7 +80,7 @@ bool TitleBarMetrics_Test()
     FScopedStubApplication Application;
 
     const TSharedPtr<IFontFace> Font   = CreateFont();
-    TSharedPtr<FWindow>         Window = Application.CreateWindow(IntVector2(800, 600), IntVector2(0, 0), EWindowStyleFlags::Default | EWindowStyleFlags::CustomTitleBar);
+    TSharedPtr<FWindow>         Window = Application.CreateWindow(FIntVector2(800, 600), FIntVector2(0, 0), EWindowStyleFlags::Default | EWindowStyleFlags::CustomTitleBar);
 
     GetStubWindow(Window).SetTitleBarMetrics(MakeLeadingInsetMetrics());
 
@@ -131,7 +131,7 @@ bool TitleBarMetrics_Test()
     TEST_EXPECT_EQ(MinimizeBounds.Position.X, 800 - 138);
 
     TEST_SECTION("Nothing is inset on a window without a custom title bar");
-    TSharedPtr<FWindow>   PlainWindow   = Application.CreateWindow(IntVector2(400, 300));
+    TSharedPtr<FWindow>   PlainWindow   = Application.CreateWindow(FIntVector2(400, 300));
     TSharedPtr<FTitleBar> PlainTitleBar = FTitleBar::Create(FTitleBar::FDesc().SetTitle("Plain").SetFont(Font));
 
     PlainWindow->SetContent(PlainTitleBar);
@@ -150,7 +150,7 @@ bool TitleBarRegions_Test()
     FScopedStubApplication Application;
 
     const TSharedPtr<IFontFace> Font   = CreateFont();
-    TSharedPtr<FWindow>         Window = Application.CreateWindow(IntVector2(800, 600), IntVector2(0, 0), EWindowStyleFlags::Default | EWindowStyleFlags::CustomTitleBar);
+    TSharedPtr<FWindow>         Window = Application.CreateWindow(FIntVector2(800, 600), FIntVector2(0, 0), EWindowStyleFlags::Default | EWindowStyleFlags::CustomTitleBar);
 
     GetStubWindow(Window).SetTitleBarMetrics(MakeTrailingInsetMetrics());
 
@@ -192,8 +192,8 @@ bool TitleBarRegions_Test()
 
     TEST_SECTION("The gap between the menu row and the buttons drags the window");
     const int32 GapX = (EditButton->GetContentRectangle().GetRight() + TitleBar->GetCaptionButtons()[0]->GetContentRectangle().Position.X) / 2;
-    TEST_EXPECT(Published.CaptionRect.Contains(IntVector2(GapX, 8)));
-    TEST_EXPECT(!IsPointInteractive(Published, IntVector2(GapX, 8)));
+    TEST_EXPECT(Published.CaptionRect.Contains(FIntVector2(GapX, 8)));
+    TEST_EXPECT(!IsPointInteractive(Published, FIntVector2(GapX, 8)));
 
     TEST_SECTION("Windows is told where the maximize button is, so it can offer Snap Layouts");
     const FRectangle MaximizeBounds = TitleBar->GetCaptionButtons()[1]->GetContentRectangle();
@@ -201,7 +201,7 @@ bool TitleBarRegions_Test()
     TEST_EXPECT_EQ(Published.MaximizeButtonRect.Right, MaximizeBounds.GetRight());
 
     TEST_SECTION("The regions follow the window as it is resized");
-    Window->Resize(IntVector2(1200, 600));
+    Window->Resize(FIntVector2(1200, 600));
     FApplication::LayoutWindow(Window);
 
     TEST_EXPECT_EQ(GetStubWindow(Window).GetTitleBarRegions().CaptionRect.Right, 1200);
@@ -217,7 +217,7 @@ bool CaptionButtons_Test()
     FScopedStubApplication Application;
 
     const TSharedPtr<IFontFace> Font   = CreateFont();
-    TSharedPtr<FWindow>         Window = Application.CreateWindow(IntVector2(800, 600), IntVector2(0, 0), EWindowStyleFlags::Default | EWindowStyleFlags::CustomTitleBar);
+    TSharedPtr<FWindow>         Window = Application.CreateWindow(FIntVector2(800, 600), FIntVector2(0, 0), EWindowStyleFlags::Default | EWindowStyleFlags::CustomTitleBar);
 
     GetStubWindow(Window).SetTitleBarMetrics(MakeTrailingInsetMetrics());
 
@@ -255,7 +255,7 @@ bool CaptionButtons_Test()
     Buttons[2]->OnDraw(FDrawGeometry(Buttons[2]->GetContentRectangle(), 1.0f), NormalCommands, 0);
     const int32 NormalCount = NormalCommands.GetCommands().Size();
 
-    const FCursorEvent EnterEvent(EInputEventType::MouseMoved, Buttons[2]->GetContentRectangle().GetCenter(), IntVector2(0, 0), FModifierKeyState());
+    const FCursorEvent EnterEvent(EInputEventType::MouseMoved, Buttons[2]->GetContentRectangle().GetCenter(), FIntVector2(0, 0), FModifierKeyState());
     Buttons[2]->OnMouseEntered(EnterEvent);
 
     FDrawCommandList HoveredCommands;
@@ -277,11 +277,11 @@ bool FloatingWindow_Test()
     FScopedStubApplication Application;
 
     const TSharedPtr<IFontFace> Font       = CreateFont();
-    TSharedPtr<FWindow>         MainWindow = Application.CreateWindow(IntVector2(1280, 720));
+    TSharedPtr<FWindow>         MainWindow = Application.CreateWindow(FIntVector2(1280, 720));
     TSharedPtr<FTextBlock>      Body       = FTextBlock::Create(MakeTextDesc("Details", Font));
 
     FFloatingWindow::FDesc Desc;
-    Desc.SetTitle("Inspector").SetBounds(IntVector2(200, 150), IntVector2(320, 240)).SetContent(Body);
+    Desc.SetTitle("Inspector").SetBounds(FIntVector2(200, 150), FIntVector2(320, 240)).SetContent(Body);
     Desc.ParentWindow = MainWindow;
     Desc.Font         = Font;
 
@@ -291,8 +291,8 @@ bool FloatingWindow_Test()
 
     TEST_SECTION("The window is created where it was asked for, over its parent");
     TSharedPtr<FWindow> Window = Floating->GetWindow();
-    TEST_EXPECT_EQ(Window->GetPosition(), IntVector2(200, 150));
-    TEST_EXPECT_EQ(Window->GetSize(), IntVector2(320, 240));
+    TEST_EXPECT_EQ(Window->GetPosition(), FIntVector2(200, 150));
+    TEST_EXPECT_EQ(Window->GetSize(), FIntVector2(320, 240));
     TEST_EXPECT(Window->GetParentWindow() == MainWindow);
 
     TEST_SECTION("It asks the platform for a caption of its own to draw");

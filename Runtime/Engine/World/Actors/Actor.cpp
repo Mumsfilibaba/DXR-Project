@@ -17,10 +17,10 @@ FActorTransform::FActorTransform()
 
 void FActorTransform::SetTranslation(float x, float y, float z)
 {
-    SetTranslation(Vector3(x, y, z));
+    SetTranslation(FVector3(x, y, z));
 }
 
-void FActorTransform::SetTranslation(const Vector3& InPosition)
+void FActorTransform::SetTranslation(const FVector3& InPosition)
 {
     Translation = InPosition;
     CalculateMatrix();
@@ -28,10 +28,10 @@ void FActorTransform::SetTranslation(const Vector3& InPosition)
 
 void FActorTransform::SetScale(float x, float y, float z)
 {
-    SetScale(Vector3(x, y, z));
+    SetScale(FVector3(x, y, z));
 }
 
-void FActorTransform::SetScale(const Vector3& InScale)
+void FActorTransform::SetScale(const FVector3& InScale)
 {
     Scale = InScale;
     CalculateMatrix();
@@ -39,28 +39,28 @@ void FActorTransform::SetScale(const Vector3& InScale)
 
 void FActorTransform::SetRotation(float x, float y, float z)
 {
-    SetRotation(Vector3(x, y, z));
+    SetRotation(FVector3(x, y, z));
 }
 
-void FActorTransform::SetRotation(const Vector3& InRotation)
+void FActorTransform::SetRotation(const FVector3& InRotation)
 {
     Rotation = InRotation;
     CalculateMatrix();
 }
 
-void FActorTransform::SetFromMatrix(const Matrix4& InMatrix)
+void FActorTransform::SetFromMatrix(const FMatrix4& InMatrix)
 {
-    const Vector3 AxisX(InMatrix.M[0][0], InMatrix.M[0][1], InMatrix.M[0][2]);
-    const Vector3 AxisY(InMatrix.M[1][0], InMatrix.M[1][1], InMatrix.M[1][2]);
-    const Vector3 AxisZ(InMatrix.M[2][0], InMatrix.M[2][1], InMatrix.M[2][2]);
+    const FVector3 AxisX(InMatrix.M[0][0], InMatrix.M[0][1], InMatrix.M[0][2]);
+    const FVector3 AxisY(InMatrix.M[1][0], InMatrix.M[1][1], InMatrix.M[1][2]);
+    const FVector3 AxisZ(InMatrix.M[2][0], InMatrix.M[2][1], InMatrix.M[2][2]);
 
-    Scale       = Vector3(AxisX.GetLength(), AxisY.GetLength(), AxisZ.GetLength());
+    Scale       = FVector3(AxisX.GetLength(), AxisY.GetLength(), AxisZ.GetLength());
     Translation = InMatrix.GetTranslation();
 
-    Matrix4 OrthoNormalMatrix = InMatrix;
+    FMatrix4 OrthoNormalMatrix = InMatrix;
     OrthoNormalMatrix.OrthoNormalize();
 
-    const Quaternion RotationQuaternion = Quaternion::FromRotationMatrix(OrthoNormalMatrix.GetRotationAndScale());
+    const FQuaternion RotationQuaternion = FQuaternion::FromRotationMatrix(OrthoNormalMatrix.GetRotationAndScale());
     Rotation = RotationQuaternion.ToEuler();
 
     // Store the matrix as-is instead of recomposing it, since a decomposed transform cannot 
@@ -71,9 +71,9 @@ void FActorTransform::SetFromMatrix(const Matrix4& InMatrix)
 
 void FActorTransform::CalculateMatrix()
 {
-    Matrix4 ScaleMatrix       = Matrix4::Scale(Scale);
-    Matrix4 RotationMatrix    = Matrix4::RotationRollPitchYaw(Rotation);
-    Matrix4 TranslationMatrix = Matrix4::Translation(Translation);
+    FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale);
+    FMatrix4 RotationMatrix    = FMatrix4::RotationRollPitchYaw(Rotation);
+    FMatrix4 TranslationMatrix = FMatrix4::Translation(Translation);
 
     TransformMatrix = (ScaleMatrix * RotationMatrix) * TranslationMatrix;
     Version++;
@@ -210,7 +210,7 @@ bool FActor::AttachToActor(FActor* NewParent, EAttachmentRule Rule)
         return false;
     }
 
-    const Matrix4 WorldMatrix = GetWorldTransform().GetTransformMatrix();
+    const FMatrix4 WorldMatrix = GetWorldTransform().GetTransformMatrix();
 
     UnlinkFromParent();
 
@@ -234,7 +234,7 @@ void FActor::DetachFromParent(EAttachmentRule Rule)
         return;
     }
 
-    const Matrix4 WorldMatrix = GetWorldTransform().GetTransformMatrix();
+    const FMatrix4 WorldMatrix = GetWorldTransform().GetTransformMatrix();
 
     UnlinkFromParent();
     InvalidateWorldTransformCache();
@@ -294,12 +294,12 @@ void FActor::SetWorldTransform(const FActorTransform& InTransform)
     SetWorldTransformMatrix(InTransform.GetTransformMatrix());
 }
 
-void FActor::SetWorldTransformMatrix(const Matrix4& InMatrix)
+void FActor::SetWorldTransformMatrix(const FMatrix4& InMatrix)
 {
     Transform.SetFromMatrix(ConvertWorldToRelativeMatrix(InMatrix));
 }
 
-Matrix4 FActor::ConvertWorldToRelativeMatrix(const Matrix4& InWorldMatrix) const
+FMatrix4 FActor::ConvertWorldToRelativeMatrix(const FMatrix4& InWorldMatrix) const
 {
     if (!ParentActor)
     {

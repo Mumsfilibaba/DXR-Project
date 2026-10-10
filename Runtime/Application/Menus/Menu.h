@@ -16,7 +16,7 @@ public:
     void Initialize();
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override;
     virtual void SetOuterCornerRadius(float InCornerRadius) override;

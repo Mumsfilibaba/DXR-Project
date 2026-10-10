@@ -38,7 +38,7 @@ struct ENGINE_API EditorActorFactory
      * @param Location Point on the surface the mesh should sit on
      * @return Returns the new actor, or nullptr if it could not be created
      */
-    static FActor* SpawnPrimitive(FWorld* World, EEditorPrimitiveType Type, const Vector3& Location);
+    static FActor* SpawnPrimitive(FWorld* World, EEditorPrimitiveType Type, const FVector3& Location);
 
     /**
      * @brief Spawn a light actor at the given location
@@ -48,7 +48,7 @@ struct ENGINE_API EditorActorFactory
      * @param Location Position of the light
      * @return Returns the new actor, or nullptr if it could not be created
      */
-    static FActor* SpawnLight(FWorld* World, EEditorLightType Type, const Vector3& Location);
+    static FActor* SpawnLight(FWorld* World, EEditorLightType Type, const FVector3& Location);
 
     /**
      * @brief Spawn a camera actor at the given location
@@ -57,7 +57,7 @@ struct ENGINE_API EditorActorFactory
      * @param Location Position of the camera
      * @return Returns the new actor, or nullptr if it could not be created
      */
-    static FActor* SpawnCamera(FWorld* World, const Vector3& Location);
+    static FActor* SpawnCamera(FWorld* World, const FVector3& Location);
 
     /**
      * @brief Draw the Mesh, Light and Camera entries that place a new actor
@@ -69,7 +69,7 @@ struct ENGINE_API EditorActorFactory
      * @param Location Where a picked entry should place its actor
      * @return Returns the actor spawned this frame, or nullptr if no entry was picked
      */
-    static FActor* DrawPlaceActorMenu(FWorld* World, const Vector3& Location);
+    static FActor* DrawPlaceActorMenu(FWorld* World, const FVector3& Location);
 
     /**
      * @brief Check whether a light of the given type can be spawned

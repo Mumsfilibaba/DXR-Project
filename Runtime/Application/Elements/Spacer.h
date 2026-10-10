@@ -11,7 +11,7 @@ public:
      * @param InSize The space the spacer asks for.
      * @return The new spacer.
      */
-    static TSharedPtr<FSpacer> Create(const IntVector2& InSize);
+    static TSharedPtr<FSpacer> Create(const FIntVector2& InSize);
 
     /**
      * @brief Creates a spacer that is only as wide as it is asked to be.
@@ -34,21 +34,21 @@ public:
     virtual ~FSpacer();
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
 
     /**
      * @brief Sets the space the spacer asks for.
      *
      * @param InSize The new size.
      */
-    void SetSize(const IntVector2& InSize);
+    void SetSize(const FIntVector2& InSize);
 
     /** @return The space the spacer asks for, in pixels on each axis. */
-    NODISCARD FORCEINLINE const IntVector2& GetSize() const
+    NODISCARD FORCEINLINE const FIntVector2& GetSize() const
     {
         return Size;
     }
 
 private:
-    IntVector2 Size;
+    FIntVector2 Size;
 };

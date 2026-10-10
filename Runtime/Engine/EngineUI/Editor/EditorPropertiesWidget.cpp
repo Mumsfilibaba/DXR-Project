@@ -239,8 +239,8 @@ void FEditorPropertiesWidget::DrawWindowContents()
             {
                 // Translation
                 {
-                    Vector3 Translation = SelectedActor->GetTransform().GetTranslation();
-                    const Vector3 TranslationRevert = Vector3(0.0f, 0.0f, 0.0f);
+                    FVector3 Translation = SelectedActor->GetTransform().GetTranslation();
+                    const FVector3 TranslationRevert = FVector3(0.0f, 0.0f, 0.0f);
 
                     if (EditorWidgets::DrawFloat3Control("Translation", Translation, 0.0f, &TranslationRevert, EVector3ControlType::Position))
                     {
@@ -250,14 +250,14 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
                 // Rotation (degrees UI)
                 {
-                    Vector3 Rotation = SelectedActor->GetTransform().GetRotation();
-                    Rotation = Vector3::RadiansToDegrees(Rotation);
+                    FVector3 Rotation = SelectedActor->GetTransform().GetRotation();
+                    Rotation = FVector3::RadiansToDegrees(Rotation);
 
-                    const Vector3 RotationRevert = Vector3(0.0f, 0.0f, 0.0f);
+                    const FVector3 RotationRevert = FVector3(0.0f, 0.0f, 0.0f);
 
                     if (EditorWidgets::DrawFloat3Control("Rotation", Rotation, 0.0f, &RotationRevert, EVector3ControlType::RotationDegrees))
                     {
-                        const Vector3 Radians = Vector3::DegreesToRadians(Rotation);
+                        const FVector3 Radians = FVector3::DegreesToRadians(Rotation);
                         if (SelectedCamera)
                         {
                             SelectedCamera->SetRotation(Radians);
@@ -271,8 +271,8 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
                 // Scale
                 {
-                    Vector3 Scale = SelectedActor->GetTransform().GetScale();
-                    const Vector3 ScaleRevert = Vector3(1.0f, 1.0f, 1.0f);
+                    FVector3 Scale = SelectedActor->GetTransform().GetScale();
+                    const FVector3 ScaleRevert = FVector3(1.0f, 1.0f, 1.0f);
 
                     const bool bScaleChanged = EditorWidgets::DrawFloat3Control("Scale", Scale, 1.0f, &ScaleRevert, EVector3ControlType::Scale);
                     if (bScaleChanged)
@@ -640,8 +640,8 @@ void FEditorPropertiesWidget::DrawWindowContents()
             {
                 if (EditorWidgets::BeginPropertyTable("##PointLightSettingsTable", LabelColumnWidth, RevertColumnWidth))
                 {
-                    Vector3 Color = PointLight->GetColor();
-                    const Vector3 Color0 = Vector3(1.0f, 1.0f, 1.0f);
+                    FVector3 Color = PointLight->GetColor();
+                    const FVector3 Color0 = FVector3(1.0f, 1.0f, 1.0f);
                     
                     if (EditorWidgets::DrawColor3Property("Color", Color, Color0))
                     {
@@ -664,8 +664,8 @@ void FEditorPropertiesWidget::DrawWindowContents()
             {
                 if (EditorWidgets::BeginPropertyTable("##PointLightTransformTable", LabelColumnWidth, RevertColumnWidth))
                 {
-                    Vector3 Translation = PointLight->GetPosition();
-                    const Vector3 Translation0 = Vector3(0.0f, 0.0f, 0.0f);
+                    FVector3 Translation = PointLight->GetPosition();
+                    const FVector3 Translation0 = FVector3(0.0f, 0.0f, 0.0f);
                     
                     if (EditorWidgets::DrawFloat3Control("Translation", Translation, 0.0f, &Translation0, EVector3ControlType::Position))
                     {
@@ -728,8 +728,8 @@ void FEditorPropertiesWidget::DrawWindowContents()
             {
                 if (EditorWidgets::BeginPropertyTable("##DirLightSettingsTable", LabelColumnWidth, RevertColumnWidth))
                 {
-                    Vector3 Color = DirectionalLight->GetColor();
-                    const Vector3 Color0 = Vector3(1.0f, 1.0f, 1.0f);
+                    FVector3 Color = DirectionalLight->GetColor();
+                    const FVector3 Color0 = FVector3(1.0f, 1.0f, 1.0f);
 
                     if (EditorWidgets::DrawColor3Property("Color", Color, Color0))
                     {
@@ -752,7 +752,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
             {
                 if (EditorWidgets::BeginPropertyTable("##DirLightDirectionTable", LabelColumnWidth, RevertColumnWidth))
                 {
-                    Vector3 Rotation = SelectedActor->GetWorldTransform().GetRotation();
+                    FVector3 Rotation = SelectedActor->GetWorldTransform().GetRotation();
                     
                     float RotationTheta = Math::RadiansToDegrees(Rotation.X);
                     float RotationPhi   = Math::RadiansToDegrees(Rotation.Y);
@@ -774,7 +774,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         SelectedActor->SetWorldTransform(NewWorldTransform);
                     }
 
-                    const Vector3 Direction = DirectionalLight->GetDirectionVector();
+                    const FVector3 Direction = DirectionalLight->GetDirectionVector();
                     EditorWidgets::DrawReadOnlyFloat3Property("Direction", Direction);
 
                     EditorWidgets::EndPropertyTable();
@@ -911,21 +911,21 @@ void FEditorPropertiesWidget::DrawWindowContents()
         {
             if (EditorWidgets::BeginPropertyTable("##CameraTransformTable", LabelColumnWidth, RevertColumnWidth))
             {
-                Vector3 Position = SelectedCamera->GetPosition();
-                const Vector3 Position0 = Vector3(0.0f, 0.0f, 0.0f);
+                FVector3 Position = SelectedCamera->GetPosition();
+                const FVector3 Position0 = FVector3(0.0f, 0.0f, 0.0f);
                 
                 if (EditorWidgets::DrawFloat3Control("Position", Position, 0.0f, &Position0, EVector3ControlType::Position))
                 {
                     SelectedCamera->SetPosition(Position.X, Position.Y, Position.Z);
                 }
 
-                Vector3 Rotation = SelectedCamera->GetRotation();
-                Rotation = Vector3::RadiansToDegrees(Rotation);
+                FVector3 Rotation = SelectedCamera->GetRotation();
+                Rotation = FVector3::RadiansToDegrees(Rotation);
                 
-                const Vector3 Rotation0 = Vector3(0.0f, 0.0f, 0.0f);
+                const FVector3 Rotation0 = FVector3(0.0f, 0.0f, 0.0f);
                 if (EditorWidgets::DrawFloat3Control("Rotation", Rotation, 0.0f, &Rotation0, EVector3ControlType::RotationDegrees))
                 {
-                    const Vector3 Radians = Vector3::DegreesToRadians(Rotation);
+                    const FVector3 Radians = FVector3::DegreesToRadians(Rotation);
                     SelectedCamera->SetRotation(Radians.X, Radians.Y, Radians.Z);
                 }
 
@@ -950,8 +950,8 @@ void FEditorPropertiesWidget::DrawWindowContents()
         {
             if (EditorWidgets::BeginPropertyTable("##ProbeTransformTable", LabelColumnWidth, RevertColumnWidth))
             {
-                Vector3 Position = SelectedLightProbe->GetPosition();
-                const Vector3 Position0 = Vector3(0.0f, 0.0f, 0.0f);
+                FVector3 Position = SelectedLightProbe->GetPosition();
+                const FVector3 Position0 = FVector3(0.0f, 0.0f, 0.0f);
                 
                 if (EditorWidgets::DrawFloat3Control("Position", Position, 0.0f, &Position0, EVector3ControlType::Position))
                 {
@@ -968,16 +968,16 @@ void FEditorPropertiesWidget::DrawWindowContents()
         {
             if (EditorWidgets::BeginPropertyTable("##ProbeBoxProjectionTable", LabelColumnWidth, RevertColumnWidth))
             {
-                Vector3 BoxExtent = SelectedLightProbe->GetBoxExtents();
-                const Vector3 BoxExtent0 = Vector3(0.0f, 0.0f, 0.0f);
+                FVector3 BoxExtent = SelectedLightProbe->GetBoxExtents();
+                const FVector3 BoxExtent0 = FVector3(0.0f, 0.0f, 0.0f);
                 
                 if (EditorWidgets::DrawFloat3Control("Box Extent", BoxExtent, 0.0f, &BoxExtent0, EVector3ControlType::Position))
                 {
                     SelectedLightProbe->SetBoxExtent(BoxExtent);
                 }
 
-                Vector3 BoxOffset = SelectedLightProbe->GetBoxOffset();
-                const Vector3 BoxOffset0 = Vector3(0.0f, 0.0f, 0.0f);
+                FVector3 BoxOffset = SelectedLightProbe->GetBoxOffset();
+                const FVector3 BoxOffset0 = FVector3(0.0f, 0.0f, 0.0f);
                 
                 if (EditorWidgets::DrawFloat3Control("Box Origin", BoxOffset, 0.0f, &BoxOffset0, EVector3ControlType::Position))
                 {

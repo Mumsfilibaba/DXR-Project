@@ -163,7 +163,7 @@ static bool WriteTextureToPng(const FRHITextureRef& Texture, const FString& File
     return bResult;
 }
 
-bool UIScreenshot::CaptureElement(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, float DPIScale, const FString& Filename)
+bool UIScreenshot::CaptureElement(const TSharedPtr<FVisualElement>& Element, const FIntVector2& Size, float DPIScale, const FString& Filename)
 {
     if (!Element || Size.X <= 0 || Size.Y <= 0)
     {

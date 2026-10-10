@@ -46,7 +46,7 @@ static FRectangle LerpRectangle(const FRectangle& From, const FRectangle& To, fl
     const int32 Top    = Math::RoundToInt(Math::Lerp(static_cast<float>(From.Position.Y), static_cast<float>(To.Position.Y), Alpha));
     const int32 Right  = Math::RoundToInt(Math::Lerp(static_cast<float>(From.GetRight()), static_cast<float>(To.GetRight()), Alpha));
     const int32 Bottom = Math::RoundToInt(Math::Lerp(static_cast<float>(From.GetBottom()), static_cast<float>(To.GetBottom()), Alpha));
-    return FRectangle(IntVector2(Left, Top), Math::Max(Right - Left, 0), Math::Max(Bottom - Top, 0));
+    return FRectangle(FIntVector2(Left, Top), Math::Max(Right - Left, 0), Math::Max(Bottom - Top, 0));
 }
 
 constexpr int32 PANEL_OUTLINE_ARC_SEGMENTS = 8;
@@ -89,7 +89,7 @@ static FPanelOutline ComputePanelOutline(const FRectangle& FrameBounds, const FT
     }
 
     const int32 BodyTop = Math::Clamp(StripBounds.GetBottom() - Outline.Border, StripBounds.Position.Y, FrameBounds.GetBottom());
-    Outline.BodyBounds = FRectangle(IntVector2(FrameBounds.Position.X, BodyTop), FrameBounds.Width, FrameBounds.GetBottom() - BodyTop);
+    Outline.BodyBounds = FRectangle(FIntVector2(FrameBounds.Position.X, BodyTop), FrameBounds.Width, FrameBounds.GetBottom() - BodyTop);
 
     const FRectangle TabBounds = Strip->GetActiveTabRectangle();
     if (TabBounds.IsEmpty())
@@ -125,7 +125,7 @@ static FPanelOutline ComputePanelOutline(const FRectangle& FrameBounds, const FT
     return Outline;
 }
 
-static void AppendOutlinePoint(TArray<Vector2>& OutPoints, const Vector2& Point)
+static void AppendOutlinePoint(TArray<FVector2>& OutPoints, const FVector2& Point)
 {
     if (OutPoints.IsEmpty() || (OutPoints.Last() - Point).GetLengthSquared() > 1.0e-4f)
     {
@@ -133,7 +133,7 @@ static void AppendOutlinePoint(TArray<Vector2>& OutPoints, const Vector2& Point)
     }
 }
 
-static void AppendOutlineArc(TArray<Vector2>& OutPoints, const Vector2& Center, float Radius, float StartAngle, float EndAngle)
+static void AppendOutlineArc(TArray<FVector2>& OutPoints, const FVector2& Center, float Radius, float StartAngle, float EndAngle)
 {
     if (Radius <= 0.0f)
     {
@@ -144,11 +144,11 @@ static void AppendOutlineArc(TArray<Vector2>& OutPoints, const Vector2& Center, 
     for (int32 Index = 0; Index <= PANEL_OUTLINE_ARC_SEGMENTS; ++Index)
     {
         const float Angle = StartAngle + (EndAngle - StartAngle) * (static_cast<float>(Index) / static_cast<float>(PANEL_OUTLINE_ARC_SEGMENTS));
-        AppendOutlinePoint(OutPoints, Center + Vector2(Math::Cos(Angle), Math::Sin(Angle)) * Radius);
+        AppendOutlinePoint(OutPoints, Center + FVector2(Math::Cos(Angle), Math::Sin(Angle)) * Radius);
     }
 }
 
-static void BuildPanelOutline(const FPanelOutline& Outline, float TabCornerRadius, float Thickness, TArray<Vector2>& OutPoints)
+static void BuildPanelOutline(const FPanelOutline& Outline, float TabCornerRadius, float Thickness, TArray<FVector2>& OutPoints)
 {
     OutPoints.Clear();
 
@@ -172,11 +172,11 @@ static void BuildPanelOutline(const FPanelOutline& Outline, float TabCornerRadiu
 
     if (Radius.TopLeft > 0.0f)
     {
-        AppendOutlineArc(OutPoints, Vector2(Left + Radius.TopLeft, Top + Radius.TopLeft), Radius.TopLeft - HalfThickness, 2.0f * QuarterTurn, 3.0f * QuarterTurn);
+        AppendOutlineArc(OutPoints, FVector2(Left + Radius.TopLeft, Top + Radius.TopLeft), Radius.TopLeft - HalfThickness, 2.0f * QuarterTurn, 3.0f * QuarterTurn);
     }
     else
     {
-        AppendOutlinePoint(OutPoints, Vector2(InnerLeft, InnerTop));
+        AppendOutlinePoint(OutPoints, FVector2(InnerLeft, InnerTop));
     }
 
     const FRectangle& Tab = Outline.TabBounds;
@@ -190,54 +190,54 @@ static void BuildPanelOutline(const FPanelOutline& Outline, float TabCornerRadiu
         if (Outline.FlareLeft > 0)
         {
             const float Flare = static_cast<float>(Outline.FlareLeft);
-            AppendOutlineArc(OutPoints, Vector2(TabLeft - Flare, StripBottom - Flare), Flare - Border + HalfThickness, QuarterTurn, 0.0f);
+            AppendOutlineArc(OutPoints, FVector2(TabLeft - Flare, StripBottom - Flare), Flare - Border + HalfThickness, QuarterTurn, 0.0f);
         }
         else
         {
-            AppendOutlinePoint(OutPoints, Vector2(TabLeft - Border + HalfThickness, InnerTop));
+            AppendOutlinePoint(OutPoints, FVector2(TabLeft - Border + HalfThickness, InnerTop));
         }
 
         const float CornerRadius  = Math::Max(TabCornerRadius, 0.0f);
         const float OutlineRadius = CornerRadius + Border - HalfThickness;
-        AppendOutlineArc(OutPoints, Vector2(TabLeft + CornerRadius, TabTop + CornerRadius), OutlineRadius, 2.0f * QuarterTurn, 3.0f * QuarterTurn);
-        AppendOutlineArc(OutPoints, Vector2(TabRight - CornerRadius, TabTop + CornerRadius), OutlineRadius, 3.0f * QuarterTurn, 4.0f * QuarterTurn);
+        AppendOutlineArc(OutPoints, FVector2(TabLeft + CornerRadius, TabTop + CornerRadius), OutlineRadius, 2.0f * QuarterTurn, 3.0f * QuarterTurn);
+        AppendOutlineArc(OutPoints, FVector2(TabRight - CornerRadius, TabTop + CornerRadius), OutlineRadius, 3.0f * QuarterTurn, 4.0f * QuarterTurn);
 
         if (Outline.FlareRight > 0)
         {
             const float Flare = static_cast<float>(Outline.FlareRight);
-            AppendOutlineArc(OutPoints, Vector2(TabRight + Flare, StripBottom - Flare), Flare - Border + HalfThickness, 2.0f * QuarterTurn, QuarterTurn);
+            AppendOutlineArc(OutPoints, FVector2(TabRight + Flare, StripBottom - Flare), Flare - Border + HalfThickness, 2.0f * QuarterTurn, QuarterTurn);
         }
         else
         {
-            AppendOutlinePoint(OutPoints, Vector2(TabRight + Border - HalfThickness, InnerTop));
+            AppendOutlinePoint(OutPoints, FVector2(TabRight + Border - HalfThickness, InnerTop));
         }
     }
 
     if (Radius.TopRight > 0.0f)
     {
-        AppendOutlineArc(OutPoints, Vector2(Right - Radius.TopRight, Top + Radius.TopRight), Radius.TopRight - HalfThickness, 3.0f * QuarterTurn, 4.0f * QuarterTurn);
+        AppendOutlineArc(OutPoints, FVector2(Right - Radius.TopRight, Top + Radius.TopRight), Radius.TopRight - HalfThickness, 3.0f * QuarterTurn, 4.0f * QuarterTurn);
     }
     else
     {
-        AppendOutlinePoint(OutPoints, Vector2(InnerRight, InnerTop));
+        AppendOutlinePoint(OutPoints, FVector2(InnerRight, InnerTop));
     }
 
     if (Radius.BottomRight > 0.0f)
     {
-        AppendOutlineArc(OutPoints, Vector2(Right - Radius.BottomRight, Bottom - Radius.BottomRight), Radius.BottomRight - HalfThickness, 0.0f, QuarterTurn);
+        AppendOutlineArc(OutPoints, FVector2(Right - Radius.BottomRight, Bottom - Radius.BottomRight), Radius.BottomRight - HalfThickness, 0.0f, QuarterTurn);
     }
     else
     {
-        AppendOutlinePoint(OutPoints, Vector2(InnerRight, InnerBottom));
+        AppendOutlinePoint(OutPoints, FVector2(InnerRight, InnerBottom));
     }
 
     if (Radius.BottomLeft > 0.0f)
     {
-        AppendOutlineArc(OutPoints, Vector2(Left + Radius.BottomLeft, Bottom - Radius.BottomLeft), Radius.BottomLeft - HalfThickness, QuarterTurn, 2.0f * QuarterTurn);
+        AppendOutlineArc(OutPoints, FVector2(Left + Radius.BottomLeft, Bottom - Radius.BottomLeft), Radius.BottomLeft - HalfThickness, QuarterTurn, 2.0f * QuarterTurn);
     }
     else
     {
-        AppendOutlinePoint(OutPoints, Vector2(InnerLeft, InnerBottom));
+        AppendOutlinePoint(OutPoints, FVector2(InnerLeft, InnerBottom));
     }
 
     if (OutPoints.Size() > 1 && (OutPoints.Last() - OutPoints[0]).GetLengthSquared() <= 1.0e-4f)
@@ -261,7 +261,7 @@ bool FDockingArea::IsShowingStrip(const FLeafGeometry& Leaf) const
     return Leaf.Strip && !(bSuppressRootTabStrip && Leaf.Path.IsEmpty());
 }
 
-bool FDockingArea::GetWindowPosition(IntVector2& OutPosition) const
+bool FDockingArea::GetWindowPosition(FIntVector2& OutPosition) const
 {
     if (!FApplication::IsInitialized())
     {
@@ -278,9 +278,9 @@ bool FDockingArea::GetWindowPosition(IntVector2& OutPosition) const
     return true;
 }
 
-bool FDockingArea::GetDragClientPosition(IntVector2& OutClientPosition) const
+bool FDockingArea::GetDragClientPosition(FIntVector2& OutClientPosition) const
 {
-    IntVector2 WindowPosition;
+    FIntVector2 WindowPosition;
     if (!GetWindowPosition(WindowPosition))
     {
         return false;
@@ -292,7 +292,7 @@ bool FDockingArea::GetDragClientPosition(IntVector2& OutClientPosition) const
 
 FRectangle FDockingArea::GetDecoratorClientBounds() const
 {
-    IntVector2 WindowPosition;
+    FIntVector2 WindowPosition;
     if (!FDockWindowManager::IsInitialized() || !GetWindowPosition(WindowPosition))
     {
         return FRectangle();
@@ -309,7 +309,7 @@ FRectangle FDockingArea::GetDecoratorClientBounds() const
 
 FRectangle FDockingArea::GetPanelScreenBounds(const FString& PanelId) const
 {
-    IntVector2 WindowPosition;
+    FIntVector2 WindowPosition;
     if (!Root.FindTabsNode(PanelId) || !GetWindowPosition(WindowPosition))
     {
         return FRectangle();
@@ -326,7 +326,7 @@ FRectangle FDockingArea::GetPanelScreenBounds(const FString& PanelId) const
 
 void FDockingArea::BeginTearOut(const FRectangle& FromScreenBounds, const FRHITextureRef& Picture)
 {
-    IntVector2 WindowPosition;
+    FIntVector2 WindowPosition;
     if (FromScreenBounds.IsEmpty() || !Picture || !GetWindowPosition(WindowPosition))
     {
         return;
@@ -472,7 +472,7 @@ void FDockingArea::UpdateDropPreview()
 
     TArray<FDropZone> Zones;
 
-    IntVector2 ClientPosition;
+    FIntVector2 ClientPosition;
     if (bIsDropTarget && DragState.IsDragging() && IsInCursorWindow() && GetDragClientPosition(ClientPosition)
         && GetContentRectangle().EncapsulatesPoint(ClientPosition) && !IsOverLiftedTabStrip(ClientPosition))
     {
@@ -624,7 +624,7 @@ void FDockingArea::Initialize(const FDesc& Desc)
     }
 }
 
-IntVector2 FDockingArea::PrepareDesiredSize()
+FIntVector2 FDockingArea::PrepareDesiredSize()
 {
     FlushPendingRebuild();
     return FCompoundElement::PrepareDesiredSize();
@@ -668,7 +668,7 @@ int32 FDockingArea::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
 
     const int32 NextLayerId = FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId + 1);
 
-    TArray<Vector2> OutlinePoints;
+    TArray<FVector2> OutlinePoints;
 
     const FVisualElement* FocusedFrame = FindFocusedFrame();
     for (const FLeafGeometry& Leaf : Leaves)
@@ -810,7 +810,7 @@ void FDockingArea::UndockPanel(const FString& PanelId)
     RequestRebuild();
 }
 
-void FDockingArea::GatherDropZones(const IntVector2& ClientPosition, TArray<FDropZone>& OutZones) const
+void FDockingArea::GatherDropZones(const FIntVector2& ClientPosition, TArray<FDropZone>& OutZones) const
 {
     OutZones.Clear();
 
@@ -870,10 +870,10 @@ void FDockingArea::GatherDropZones(const IntVector2& ClientPosition, TArray<FDro
         return;
     }
 
-    const IntVector2 Center = LeafBounds.GetCenter();
-    const int32      Reach  = (ChipSize / 2) + DROP_ZONE_CHIP_GAP;
+    const FIntVector2 Center = LeafBounds.GetCenter();
+    const int32       Reach  = (ChipSize / 2) + DROP_ZONE_CHIP_GAP;
 
-    const auto AddChip = [&](const IntVector2& Position, EDockDirection Direction)
+    const auto AddChip = [&](const FIntVector2& Position, EDockDirection Direction)
     {
         FDropZone Chip;
         Chip.Bounds        = FRectangle(Position, ChipSize, ChipSize);
@@ -883,18 +883,18 @@ void FDockingArea::GatherDropZones(const IntVector2& ClientPosition, TArray<FDro
         OutZones.Add(Chip);
     };
 
-    AddChip(IntVector2(Center.X - Reach - ChipSize, Center.Y - (ChipSize / 2)),   EDockDirection::Left);
-    AddChip(IntVector2(Center.X + Reach,            Center.Y - (ChipSize / 2)),   EDockDirection::Right);
-    AddChip(IntVector2(Center.X - (ChipSize / 2),   Center.Y - Reach - ChipSize), EDockDirection::Top);
-    AddChip(IntVector2(Center.X - (ChipSize / 2),   Center.Y + Reach),            EDockDirection::Bottom);
+    AddChip(FIntVector2(Center.X - Reach - ChipSize, Center.Y - (ChipSize / 2)),   EDockDirection::Left);
+    AddChip(FIntVector2(Center.X + Reach,            Center.Y - (ChipSize / 2)),   EDockDirection::Right);
+    AddChip(FIntVector2(Center.X - (ChipSize / 2),   Center.Y - Reach - ChipSize), EDockDirection::Top);
+    AddChip(FIntVector2(Center.X - (ChipSize / 2),   Center.Y + Reach),            EDockDirection::Bottom);
 
     if (bIsStripLifted)
     {
-        AddChip(IntVector2(Center.X - (ChipSize / 2), Center.Y - (ChipSize / 2)), EDockDirection::Center);
+        AddChip(FIntVector2(Center.X - (ChipSize / 2), Center.Y - (ChipSize / 2)), EDockDirection::Center);
     }
 }
 
-bool FDockingArea::HitTestDropTarget(const IntVector2& ScreenPosition, FString& OutTargetPanelId, EDockDirection& OutDirection, int32& OutTabIndex) const
+bool FDockingArea::HitTestDropTarget(const FIntVector2& ScreenPosition, FString& OutTargetPanelId, EDockDirection& OutDirection, int32& OutTabIndex) const
 {
     OutTargetPanelId.Clear();
     OutDirection = EDockDirection::Center;
@@ -911,7 +911,7 @@ bool FDockingArea::HitTestDropTarget(const IntVector2& ScreenPosition, FString& 
         return false;
     }
 
-    const IntVector2 ClientPosition = ScreenPosition - Window->GetPosition();
+    const FIntVector2 ClientPosition = ScreenPosition - Window->GetPosition();
     if (!GetContentRectangle().EncapsulatesPoint(ClientPosition) && !IsOverLiftedTabStrip(ClientPosition))
     {
         return false;
@@ -1182,7 +1182,7 @@ TSharedPtr<FVisualElement> FDockingArea::BuildNode(FDockNode& Node, const TArray
     return Splitter;
 }
 
-int32 FDockingArea::FindLeafAt(const IntVector2& ClientPosition) const
+int32 FDockingArea::FindLeafAt(const FIntVector2& ClientPosition) const
 {
     for (int32 Index = 0; Index < Leaves.Size(); ++Index)
     {
@@ -1206,7 +1206,7 @@ FRectangle FDockingArea::GetLiftedTabStripBounds() const
     return Strip ? Strip->GetContentRectangle() : FRectangle();
 }
 
-bool FDockingArea::IsOverLiftedTabStrip(const IntVector2& ClientPosition) const
+bool FDockingArea::IsOverLiftedTabStrip(const FIntVector2& ClientPosition) const
 {
     const FRectangle StripBounds = GetLiftedTabStripBounds();
     return !StripBounds.IsEmpty() && StripBounds.EncapsulatesPoint(ClientPosition);
@@ -1226,7 +1226,7 @@ FRectangle FDockingArea::ComputeDropBounds(const FString& TargetPanelId, EDockDi
             if (Direction == EDockDirection::Center && IsShowingStrip(Leaf))
             {
                 const int32 BodyTop = Math::Clamp(Leaf.Strip->GetContentRectangle().GetBottom(), LeafBounds.Position.Y, LeafBounds.GetBottom());
-                LeafBounds = FRectangle(IntVector2(LeafBounds.Position.X, BodyTop), LeafBounds.Width, LeafBounds.GetBottom() - BodyTop);
+                LeafBounds = FRectangle(FIntVector2(LeafBounds.Position.X, BodyTop), LeafBounds.Width, LeafBounds.GetBottom() - BodyTop);
             }
 
             break;
@@ -1381,7 +1381,7 @@ int32 FDockingArea::DrawDropZones(FDrawCommandList& OutCommandList, int32 LayerI
 
     const int32 ChipLayerId = LayerId + 1;
 
-    IntVector2 ClientPosition;
+    FIntVector2 ClientPosition;
     if (!DragState.IsDragging() || !IsInCursorWindow() || !GetDragClientPosition(ClientPosition))
     {
         return ChipLayerId;
@@ -1514,18 +1514,18 @@ void FDockingArea::OnTabReordered(const TArray<int32>& Path, const FString& Pane
     }
 }
 
-void FDockingArea::OnTabDetached(const FString& PanelId, const IntVector2& /* ClientPosition */, const IntVector2& ScreenPosition)
+void FDockingArea::OnTabDetached(const FString& PanelId, const FIntVector2& /* ClientPosition */, const FIntVector2& ScreenPosition)
 {
     FDockDragState::Get().BeginDrag(PanelId, this, ScreenPosition);
     OnPanelTornOutDelegate.ExecuteIfBound(PanelId, ScreenPosition);
 }
 
-void FDockingArea::OnTabDragMoved(const FString& /* PanelId */, const IntVector2& /* ClientPosition */, const IntVector2& ScreenPosition)
+void FDockingArea::OnTabDragMoved(const FString& /* PanelId */, const FIntVector2& /* ClientPosition */, const FIntVector2& ScreenPosition)
 {
     FDockDragState::Get().UpdateDrag(ScreenPosition);
 }
 
-void FDockingArea::OnTabDragFinished(const FString& /* PanelId */, const IntVector2& /* ClientPosition */, const IntVector2& ScreenPosition)
+void FDockingArea::OnTabDragFinished(const FString& /* PanelId */, const FIntVector2& /* ClientPosition */, const FIntVector2& ScreenPosition)
 {
     FDockDragState::Get().UpdateDrag(ScreenPosition);
     FDockDragState::Get().EndDrag();

@@ -21,11 +21,11 @@ static bool HasQuadCovering(const FUIDrawData& DrawData, const FRectangle& Bound
 
     for (int32 Index = 0; Index + 3 < Vertices.Size(); Index += 4)
     {
-        const Vector2 TopLeft     = Vertices[Index].Position;
-        const Vector2 BottomRight = Vertices[Index + 2].Position;
+        const FVector2 TopLeft     = Vertices[Index].Position;
+        const FVector2 BottomRight = Vertices[Index + 2].Position;
 
-        if (TopLeft == Vector2(static_cast<float>(Bounds.Position.X), static_cast<float>(Bounds.Position.Y)) &&
-            BottomRight == Vector2(static_cast<float>(Bounds.GetRight()), static_cast<float>(Bounds.GetBottom())))
+        if (TopLeft == FVector2(static_cast<float>(Bounds.Position.X), static_cast<float>(Bounds.Position.Y)) &&
+            BottomRight == FVector2(static_cast<float>(Bounds.GetRight()), static_cast<float>(Bounds.GetBottom())))
         {
             return true;
         }
@@ -42,8 +42,8 @@ bool ImageBrush_Test()
     const FUIBrush Empty;
     TEST_EXPECT(!Empty.IsValid());
     TEST_EXPECT(!Empty.IsNineSlice());
-    TEST_EXPECT(Empty.MinTexCoord == Vector2(0.0f, 0.0f));
-    TEST_EXPECT(Empty.MaxTexCoord == Vector2(1.0f, 1.0f));
+    TEST_EXPECT(Empty.MinTexCoord == FVector2(0.0f, 0.0f));
+    TEST_EXPECT(Empty.MaxTexCoord == FVector2(1.0f, 1.0f));
 
     TEST_SECTION("A brush over a texture is valid and still samples the whole of it");
     const FUIBrush Whole(MakeTextureKey(0x10));
@@ -71,7 +71,7 @@ bool ImageDrawQuad_Test()
 
     FUIDrawData DrawData;
 
-    const FRectangle Bounds(IntVector2(10, 20), 100, 40);
+    const FRectangle Bounds(FIntVector2(10, 20), 100, 40);
 
     TEST_SECTION("An image is one quad over its bounds");
     FDrawCommandList ImageList;
@@ -80,26 +80,26 @@ bool ImageDrawQuad_Test()
 
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 4);
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 6);
-    TEST_EXPECT(DrawData.GetVertices()[0].Position == Vector2(10.0f, 20.0f));
-    TEST_EXPECT(DrawData.GetVertices()[2].Position == Vector2(110.0f, 60.0f));
+    TEST_EXPECT(DrawData.GetVertices()[0].Position == FVector2(10.0f, 20.0f));
+    TEST_EXPECT(DrawData.GetVertices()[2].Position == FVector2(110.0f, 60.0f));
 
     TEST_SECTION("It samples the whole texture by default");
-    TEST_EXPECT(DrawData.GetVertices()[0].TexCoord == Vector2(0.0f, 0.0f));
-    TEST_EXPECT(DrawData.GetVertices()[2].TexCoord == Vector2(1.0f, 1.0f));
+    TEST_EXPECT(DrawData.GetVertices()[0].TexCoord == FVector2(0.0f, 0.0f));
+    TEST_EXPECT(DrawData.GetVertices()[2].TexCoord == FVector2(1.0f, 1.0f));
 
     TEST_SECTION("A sub-region of an atlas page maps onto the same four corners");
     FUIBrush Region(MakeTextureKey(0x10));
-    Region.MinTexCoord = Vector2(0.25f, 0.5f);
-    Region.MaxTexCoord = Vector2(0.75f, 1.0f);
+    Region.MinTexCoord = FVector2(0.25f, 0.5f);
+    Region.MaxTexCoord = FVector2(0.75f, 1.0f);
 
     FDrawCommandList RegionList;
     RegionList.AddImage(0, Bounds, Region, FFloatColor::White);
     DrawData.BuildFromCommandList(RegionList);
 
-    TEST_EXPECT(DrawData.GetVertices()[0].TexCoord == Vector2(0.25f, 0.5f));
-    TEST_EXPECT(DrawData.GetVertices()[1].TexCoord == Vector2(0.75f, 0.5f));
-    TEST_EXPECT(DrawData.GetVertices()[2].TexCoord == Vector2(0.75f, 1.0f));
-    TEST_EXPECT(DrawData.GetVertices()[3].TexCoord == Vector2(0.25f, 1.0f));
+    TEST_EXPECT(DrawData.GetVertices()[0].TexCoord == FVector2(0.25f, 0.5f));
+    TEST_EXPECT(DrawData.GetVertices()[1].TexCoord == FVector2(0.75f, 0.5f));
+    TEST_EXPECT(DrawData.GetVertices()[2].TexCoord == FVector2(0.75f, 1.0f));
+    TEST_EXPECT(DrawData.GetVertices()[3].TexCoord == FVector2(0.25f, 1.0f));
 
     TEST_SECTION("A radius rounds the image itself rather than only whatever is framed around it");
     FDrawCommandList RoundedList;
@@ -107,7 +107,7 @@ bool ImageDrawQuad_Test()
     DrawData.BuildFromCommandList(RoundedList);
 
     TEST_EXPECT(DrawData.GetVertices().Size() > 4);
-    TEST_EXPECT(DrawData.GetVertices()[0].TexCoord == Vector2(0.5f, 0.75f));
+    TEST_EXPECT(DrawData.GetVertices()[0].TexCoord == FVector2(0.5f, 0.75f));
 
     TEST_SECTION("Its corners keep sampling inside the region the square image sampled");
     constexpr float TexCoordTolerance = 0.02f;
@@ -146,14 +146,14 @@ bool ImageDrawQuad_Test()
 
     TEST_SECTION("An image with no extent draws nothing");
     FDrawCommandList EmptyList;
-    EmptyList.AddImage(0, FRectangle(IntVector2(0, 0), 0, 40), FUIBrush(MakeTextureKey(0x10)), FFloatColor::White);
+    EmptyList.AddImage(0, FRectangle(FIntVector2(0, 0), 0, 40), FUIBrush(MakeTextureKey(0x10)), FFloatColor::White);
     DrawData.BuildFromCommandList(EmptyList);
     TEST_EXPECT(DrawData.IsEmpty());
 
     TEST_SECTION("One that misses the clip region is culled like any other command");
     FDrawCommandList CulledList;
-    CulledList.PushClip(0, FRectangle(IntVector2(0, 0), 50, 50));
-    CulledList.AddImage(1, FRectangle(IntVector2(400, 400), 40, 40), FUIBrush(MakeTextureKey(0x10)), FFloatColor::White);
+    CulledList.PushClip(0, FRectangle(FIntVector2(0, 0), 50, 50));
+    CulledList.AddImage(1, FRectangle(FIntVector2(400, 400), 40, 40), FUIBrush(MakeTextureKey(0x10)), FFloatColor::White);
     CulledList.PopClip(2);
 
     DrawData.BuildFromCommandList(CulledList);
@@ -171,7 +171,7 @@ bool ImageNineSlice_Test()
     FUIBrush Brush(MakeTextureKey(0x10));
     Brush.Margin = FMargin(10, 8, 10, 8);
 
-    const FRectangle Bounds(IntVector2(0, 0), 100, 40);
+    const FRectangle Bounds(FIntVector2(0, 0), 100, 40);
 
     TEST_SECTION("A nine-slice is nine quads rather than one");
     FDrawCommandList SlicedList;
@@ -182,23 +182,23 @@ bool ImageNineSlice_Test()
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 9 * 6);
 
     TEST_SECTION("The corners keep the pixel size the margin asked for");
-    TEST_EXPECT(HasQuadCovering(DrawData, FRectangle(IntVector2(0, 0), 10, 8)));
-    TEST_EXPECT(HasQuadCovering(DrawData, FRectangle(IntVector2(90, 0), 10, 8)));
-    TEST_EXPECT(HasQuadCovering(DrawData, FRectangle(IntVector2(0, 32), 10, 8)));
-    TEST_EXPECT(HasQuadCovering(DrawData, FRectangle(IntVector2(90, 32), 10, 8)));
+    TEST_EXPECT(HasQuadCovering(DrawData, FRectangle(FIntVector2(0, 0), 10, 8)));
+    TEST_EXPECT(HasQuadCovering(DrawData, FRectangle(FIntVector2(90, 0), 10, 8)));
+    TEST_EXPECT(HasQuadCovering(DrawData, FRectangle(FIntVector2(0, 32), 10, 8)));
+    TEST_EXPECT(HasQuadCovering(DrawData, FRectangle(FIntVector2(90, 32), 10, 8)));
 
     TEST_SECTION("The middle takes whatever is left over");
-    TEST_EXPECT(HasQuadCovering(DrawData, FRectangle(IntVector2(10, 8), 80, 24)));
+    TEST_EXPECT(HasQuadCovering(DrawData, FRectangle(FIntVector2(10, 8), 80, 24)));
 
     TEST_SECTION("Widening the panel widens only the middle and the two rules across it");
     FDrawCommandList WideList;
-    WideList.AddImage(0, FRectangle(IntVector2(0, 0), 300, 40), Brush, FFloatColor::White);
+    WideList.AddImage(0, FRectangle(FIntVector2(0, 0), 300, 40), Brush, FFloatColor::White);
     DrawData.BuildFromCommandList(WideList);
 
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 9 * 4);
-    TEST_EXPECT(HasQuadCovering(DrawData, FRectangle(IntVector2(0, 0), 10, 8)));
-    TEST_EXPECT(HasQuadCovering(DrawData, FRectangle(IntVector2(290, 0), 10, 8)));
-    TEST_EXPECT(HasQuadCovering(DrawData, FRectangle(IntVector2(10, 8), 280, 24)));
+    TEST_EXPECT(HasQuadCovering(DrawData, FRectangle(FIntVector2(0, 0), 10, 8)));
+    TEST_EXPECT(HasQuadCovering(DrawData, FRectangle(FIntVector2(290, 0), 10, 8)));
+    TEST_EXPECT(HasQuadCovering(DrawData, FRectangle(FIntVector2(10, 8), 280, 24)));
 
     TEST_SECTION("The source is cut at the same fractions the destination is");
     const TArray<FUIVertex>& Vertices = DrawData.GetVertices();
@@ -206,11 +206,11 @@ bool ImageNineSlice_Test()
     bool bFoundTopLeftPatch = false;
     for (int32 Index = 0; Index + 3 < Vertices.Size(); Index += 4)
     {
-        if (Vertices[Index].Position == Vector2(0.0f, 0.0f))
+        if (Vertices[Index].Position == FVector2(0.0f, 0.0f))
         {
             bFoundTopLeftPatch = true;
-            TEST_EXPECT(Vertices[Index].TexCoord == Vector2(0.0f, 0.0f));
-            TEST_EXPECT(Vertices[Index + 2].TexCoord == Vector2(10.0f / 300.0f, 8.0f / 40.0f));
+            TEST_EXPECT(Vertices[Index].TexCoord == FVector2(0.0f, 0.0f));
+            TEST_EXPECT(Vertices[Index + 2].TexCoord == FVector2(10.0f / 300.0f, 8.0f / 40.0f));
         }
     }
 
@@ -218,7 +218,7 @@ bool ImageNineSlice_Test()
 
     TEST_SECTION("A panel narrower than its own border collapses the patches that no longer fit");
     FDrawCommandList NarrowList;
-    NarrowList.AddImage(0, FRectangle(IntVector2(0, 0), 12, 40), Brush, FFloatColor::White);
+    NarrowList.AddImage(0, FRectangle(FIntVector2(0, 0), 12, 40), Brush, FFloatColor::White);
     DrawData.BuildFromCommandList(NarrowList);
 
     TEST_EXPECT(DrawData.GetVertices().Size() < 9 * 4);
@@ -242,7 +242,7 @@ bool ImageBatching_Test()
 
     FUIDrawData DrawData;
 
-    const FRectangle Bounds(IntVector2(0, 0), 20, 20);
+    const FRectangle Bounds(FIntVector2(0, 0), 20, 20);
 
     TEST_SECTION("Two images off one texture share a batch");
     FDrawCommandList SameList;
@@ -307,7 +307,7 @@ bool ImageBatching_Test()
     TEST_SECTION("A glyph atlas and a texture are told apart even though both are textures");
     FDrawCommandList AtlasList;
     AtlasList.AddImage(0, Bounds, FUIBrush(MakeTextureKey(0x10)), FFloatColor::White);
-    AtlasList.AddText(1, FRectangle(IntVector2(0, 0), 100, 16), FString("A"), Font.Get(), FFloatColor::White);
+    AtlasList.AddText(1, FRectangle(FIntVector2(0, 0), 100, 16), FString("A"), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(AtlasList);
 
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 2);

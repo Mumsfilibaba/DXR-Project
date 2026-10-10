@@ -247,7 +247,7 @@ void FRHIValidationCommandContext::QueryTimestamp(FRHIQuery* Query)
     CommandContext->QueryTimestamp(Query);
 }
 
-void FRHIValidationCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const Vector4& ClearColor)
+void FRHIValidationCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor)
 {
     if (!RenderTargetView)
     {
@@ -284,7 +284,7 @@ void FRHIValidationCommandContext::ClearDepthStencilView(FRHIDepthStencilView* D
     CommandContext->ClearDepthStencilView(DepthStencilView, Depth, Stencil);
 }
 
-void FRHIValidationCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const Vector4& ClearColor)
+void FRHIValidationCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)
 {
     if (!UnorderedAccessView)
     {
@@ -410,7 +410,7 @@ void FRHIValidationCommandContext::SetScissorRect(const FScissorRegion& ScissorR
     CommandContext->SetScissorRect(ScissorRegion);
 }
 
-void FRHIValidationCommandContext::SetBlendFactor(const Vector4& Color)
+void FRHIValidationCommandContext::SetBlendFactor(const FVector4& Color)
 {
     CommandContext->SetBlendFactor(Color);
 }
@@ -1038,7 +1038,7 @@ void FRHIValidationCommandContext::TranscodeSamplerFeedback(FRHITexture* Dst, ui
         return;
     }
 
-    const IntVector3 MipRegion = OpaqueDesc.SamplerFeedbackMipRegion;
+    const FIntVector3 MipRegion = OpaqueDesc.SamplerFeedbackMipRegion;
     if (MipRegion.X <= 0 || MipRegion.Y <= 0)
     {
         RHI_VALIDATION_ERROR("TranscodeSamplerFeedback: the feedback map has an invalid SamplerFeedbackMipRegion (%d,%d).", MipRegion.X, MipRegion.Y);
@@ -1284,8 +1284,8 @@ void FRHIValidationCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITextu
 
     for (uint32 MipOffset = 0; MipOffset < CopyDesc.NumMipLevels; ++MipOffset)
     {
-        IntVector3 SrcExtent;
-        IntVector3 DstExtent;
+        FIntVector3 SrcExtent;
+        FIntVector3 DstExtent;
         if (!ValidateTextureMip("CopyTextureRegion source", SrcDesc, CopyDesc.SrcMipSlice + MipOffset, SrcExtent) ||
             !ValidateTextureMip("CopyTextureRegion destination", DstDesc, CopyDesc.DstMipSlice + MipOffset, DstExtent))
         {

@@ -10,7 +10,7 @@ class FMenu;
 class FMenuBar;
 class FMenuItem;
 
-DECLARE_RETURN_DELEGATE(FGetPlaceActorLocation, Vector3);
+DECLARE_RETURN_DELEGATE(FGetPlaceActorLocation, FVector3);
 
 class ENGINE_API FEditorMenus
 {
@@ -50,7 +50,7 @@ private:
     void BuildWindowsMenu(const TSharedPtr<FMenuBar>& Bar);
     void BuildHelpMenu(const TSharedPtr<FMenuBar>& Bar);
 
-    NODISCARD Vector3 GetPlaceActorLocation() const;
+    NODISCARD FVector3 GetPlaceActorLocation() const;
 
     FEditorEngine*                   EditorEngine;
     TSharedPtr<FEditorPanelRegistry> Registry;

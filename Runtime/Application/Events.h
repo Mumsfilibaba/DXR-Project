@@ -107,7 +107,7 @@ public:
     {
     }
 
-    FCursorEvent(EInputEventType InEventType, const IntVector2& InScreenPosition, const IntVector2& InClientOrigin, const FModifierKeyState& InModifierKeys)
+    FCursorEvent(EInputEventType InEventType, const FIntVector2& InScreenPosition, const FIntVector2& InClientOrigin, const FModifierKeyState& InModifierKeys)
         : FInputEvent(InEventType, InModifierKeys)
         , Key(Keys::Unknown)
         , ScreenPosition(InScreenPosition)
@@ -142,7 +142,7 @@ public:
         CHECK(InKey.IsMouseButton());
     }
 
-    FCursorEvent(EInputEventType InEventType, FKey InKey, const IntVector2& InScreenPosition, const IntVector2& InClientOrigin, const FModifierKeyState& InModifierKeys, bool bInIsDown)
+    FCursorEvent(EInputEventType InEventType, FKey InKey, const FIntVector2& InScreenPosition, const FIntVector2& InClientOrigin, const FModifierKeyState& InModifierKeys, bool bInIsDown)
         : FInputEvent(InEventType, InModifierKeys)
         , Key(InKey)
         , ScreenPosition(InScreenPosition)
@@ -171,10 +171,10 @@ public:
     EScrollAxis GetScrollAxis()  const { return ScrollAxis; }
     float       GetScrollDelta() const { return ScrollDelta; }
 
-    NODISCARD const IntVector2& GetScreenPosition() const { return ScreenPosition; }
-    NODISCARD IntVector2        GetClientPosition() const { return ScreenPosition - ClientOrigin; }
+    NODISCARD const FIntVector2& GetScreenPosition() const { return ScreenPosition; }
+    NODISCARD FIntVector2        GetClientPosition() const { return ScreenPosition - ClientOrigin; }
 
-    NODISCARD const IntVector2& GetHighPrecisionDelta() const
+    NODISCARD const FIntVector2& GetHighPrecisionDelta() const
     {
         CHECK(GetEventType() == EInputEventType::HighPrecisionMouse);
         return ScreenPosition;
@@ -182,8 +182,8 @@ public:
 
 private:
     FKey        Key;
-    IntVector2  ScreenPosition;
-    IntVector2  ClientOrigin;
+    FIntVector2 ScreenPosition;
+    FIntVector2 ClientOrigin;
     float       ScrollDelta;
     EScrollAxis ScrollAxis;
     bool        bIsDown : 1;

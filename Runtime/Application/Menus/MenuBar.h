@@ -18,7 +18,7 @@ public:
     virtual ~FMenuBarButton();
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
 
@@ -66,7 +66,7 @@ public:
     virtual ~FMenuBar();
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
 
     /** @brief Puts the row of buttons in place, which cannot happen before the bar has a shared reference. */
     void Initialize();

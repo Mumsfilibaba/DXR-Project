@@ -220,10 +220,10 @@ struct FDeferredMacEvent
     NSEventPhase ScrollPhase;
 
     /** @brief Scroll deltas (X, Y) for wheel/trackpad scrolling. */
-    Vector2 ScrollDelta;
+    FVector2 ScrollDelta;
 
     /** @brief Relative motion (X, Y) in Cocoa coordinates, valid for move and drag events. */
-    Vector2 MouseDelta;
+    FVector2 MouseDelta;
 
     /** @brief Character code for keyboard events, if applicable (e.g., key down). */
     uint32 Character;
@@ -293,7 +293,7 @@ public:
 
     virtual bool SupportsHighPrecisionMouse() const override final;
     virtual bool SetHighPrecisionMouseMode(const TSharedRef<IPlatformWindow>& Window, EHighPrecisionMouseMode Mode) override final;
-    virtual bool ConfineCursorToRect(const TSharedRef<IPlatformWindow>& Window, const IntVector2& Position, const IntVector2& Size) override final;
+    virtual bool ConfineCursorToRect(const TSharedRef<IPlatformWindow>& Window, const FIntVector2& Position, const FIntVector2& Size) override final;
     virtual void ReleaseCursorConfinement() override final;
 
     virtual FModifierKeyState GetModifierKeyState() const override final;
@@ -365,9 +365,9 @@ private:
     mutable FCriticalSection                       CapturedWindowCS;
     NSUInteger                                     CurrentModifierFlags;
     EMouseButtonName::Type                         LastPressedButton;
-    Vector2                                        HighPrecisionMouseRemainder;
-    IntVector2                                     CursorConfinementPosition;
-    IntVector2                                     CursorConfinementSize;
+    FVector2                                       HighPrecisionMouseRemainder;
+    FIntVector2                                    CursorConfinementPosition;
+    FIntVector2                                    CursorConfinementSize;
     bool                                           bHighPrecisionMouseEnabled;
     bool                                           bCursorConfined;
     TSharedPtr<FMacCursor>                         MacCursor;

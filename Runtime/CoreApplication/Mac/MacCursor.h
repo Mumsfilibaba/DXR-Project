@@ -17,7 +17,7 @@ public:
     }
 
     virtual void SetPosition(int32 x, int32 y) override final;
-    virtual IntVector2 GetPosition() const override final;
+    virtual FIntVector2 GetPosition() const override final;
 
     virtual void SetVisibility(bool bVisible) override final;
 
@@ -26,13 +26,13 @@ public:
         return bIsVisible;
     }
 
-    void UpdateCursorPosition(const IntVector2& InPosition);
+    void UpdateCursorPosition(const FIntVector2& InPosition);
 
 private:
-    IntVector2 CurrentPosition;
-    ECursor    CurrentCursor;
-    bool       bIsVisible;
-    bool       bIsPositionInitialized;
-    bool       bIsCursorInitialized;
+    FIntVector2 CurrentPosition;
+    ECursor     CurrentCursor;
+    bool        bIsVisible;
+    bool        bIsPositionInitialized;
+    bool        bIsCursorInitialized;
 };
 

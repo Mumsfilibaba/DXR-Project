@@ -56,7 +56,7 @@ static void TryCompressBC5(FTextureCompressor& Compressor, FRHITextureRef& Textu
 
 static bool AddSandboxPlayer(FWorld* World, const FRHITextureRef& Skybox, FActorFilter* CamerasFilter = nullptr, FActorFilter* ActorsFilter = nullptr)
 {
-    FCameraActor* CameraActor = World->SpawnActor<FCameraActor>(Vector3(0.0f, 10.0f, -2.0f), Vector3(0.0f, 0.0f, 0.0f));
+    FCameraActor* CameraActor = World->SpawnActor<FCameraActor>(FVector3(0.0f, 10.0f, -2.0f), FVector3(0.0f, 0.0f, 0.0f));
     FSandboxPlayerController* Player = World->SpawnActor<FSandboxPlayerController>();
 
     if (!CameraActor || !Player)
@@ -642,67 +642,67 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     const float Intensity      = 80.0f;
     const float ShadowFarPlane = 35.0f;
 
-    if (FPointLightActor* PointLightActor0 = InWorld->SpawnActor<FPointLightActor>(Vector3(15.0f, 2.5f, 0.0f), true))
+    if (FPointLightActor* PointLightActor0 = InWorld->SpawnActor<FPointLightActor>(FVector3(15.0f, 2.5f, 0.0f), true))
     {
         PointLightActor0->SetFilter(LightingFilter);
 
         FPointLightComponent* PointLight0 = PointLightActor0->GetLightComponent();
-        PointLight0->SetColor(Vector3(1.0f, 1.0f, 1.0f));
+        PointLight0->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         PointLight0->SetShadowBias(0.02f);
         PointLight0->SetShadowFarPlane(ShadowFarPlane);
         PointLight0->SetIntensity(Intensity);
     }
 
-    if (FPointLightActor* PointLightActor1 = InWorld->SpawnActor<FPointLightActor>(Vector3(-15.0f, 2.5f, 0.0f), true))
+    if (FPointLightActor* PointLightActor1 = InWorld->SpawnActor<FPointLightActor>(FVector3(-15.0f, 2.5f, 0.0f), true))
     {
         PointLightActor1->SetFilter(LightingFilter);
 
         FPointLightComponent* PointLight1 = PointLightActor1->GetLightComponent();
-        PointLight1->SetColor(Vector3(1.0f, 1.0f, 1.0f));
+        PointLight1->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         PointLight1->SetShadowBias(0.02f);
         PointLight1->SetShadowFarPlane(ShadowFarPlane);
         PointLight1->SetIntensity(Intensity);
     }
 
-    if (FPointLightActor* PointLightActor2 = InWorld->SpawnActor<FPointLightActor>(Vector3(17.0f, 10.0f, 6.0f), true))
+    if (FPointLightActor* PointLightActor2 = InWorld->SpawnActor<FPointLightActor>(FVector3(17.0f, 10.0f, 6.0f), true))
     {
         PointLightActor2->SetFilter(LightingFilter);
 
         FPointLightComponent* PointLight2 = PointLightActor2->GetLightComponent();
-        PointLight2->SetColor(Vector3(1.0f, 1.0f, 1.0f));
+        PointLight2->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         PointLight2->SetShadowBias(0.02f);
         PointLight2->SetShadowFarPlane(ShadowFarPlane);
         PointLight2->SetIntensity(Intensity);
     }
 
-    if (FPointLightActor* PointLightActor3 = InWorld->SpawnActor<FPointLightActor>(Vector3(-18.0f, 10.0f, 6.0f), true))
+    if (FPointLightActor* PointLightActor3 = InWorld->SpawnActor<FPointLightActor>(FVector3(-18.0f, 10.0f, 6.0f), true))
     {
         PointLightActor3->SetFilter(LightingFilter);
 
         FPointLightComponent* PointLight3 = PointLightActor3->GetLightComponent();
-        PointLight3->SetColor(Vector3(1.0f, 1.0f, 1.0f));
+        PointLight3->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         PointLight3->SetShadowBias(0.02f);
         PointLight3->SetShadowFarPlane(ShadowFarPlane);
         PointLight3->SetIntensity(Intensity);
     }
 
-    if (FPointLightActor* PointLightActor4 = InWorld->SpawnActor<FPointLightActor>(Vector3(17.0f, 10.0f, -7.0f), true))
+    if (FPointLightActor* PointLightActor4 = InWorld->SpawnActor<FPointLightActor>(FVector3(17.0f, 10.0f, -7.0f), true))
     {
         PointLightActor4->SetFilter(LightingFilter);
 
         FPointLightComponent* PointLight4 = PointLightActor4->GetLightComponent();
-        PointLight4->SetColor(Vector3(1.0f, 1.0f, 1.0f));
+        PointLight4->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         PointLight4->SetShadowBias(0.02f);
         PointLight4->SetShadowFarPlane(ShadowFarPlane);
         PointLight4->SetIntensity(Intensity);
     }
 
-    if (FPointLightActor* PointLightActor5 = InWorld->SpawnActor<FPointLightActor>(Vector3(-18.0f, 10.0f, -7.0f), true))
+    if (FPointLightActor* PointLightActor5 = InWorld->SpawnActor<FPointLightActor>(FVector3(-18.0f, 10.0f, -7.0f), true))
     {
         PointLightActor5->SetFilter(LightingFilter);
 
         FPointLightComponent* PointLight5 = PointLightActor5->GetLightComponent();
-        PointLight5->SetColor(Vector3(1.0f, 1.0f, 1.0f));
+        PointLight5->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         PointLight5->SetShadowBias(0.02f);
         PointLight5->SetShadowFarPlane(ShadowFarPlane);
         PointLight5->SetIntensity(Intensity);
@@ -721,7 +721,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             float z          = RandomFloats(Generator) * 16.0f - 8.0f;
             float Intentsity = RandomFloats(Generator) * 5.0f + 1.0f;
 
-            if (FPointLightActor* LightActor = InWorld->SpawnActor<FPointLightActor>(Vector3(x, y, z), false))
+            if (FPointLightActor* LightActor = InWorld->SpawnActor<FPointLightActor>(FVector3(x, y, z), false))
             {
                 FPointLightComponent* Light = LightActor->GetLightComponent();
                 Light->SetColor(RandomFloats(Generator), RandomFloats(Generator), RandomFloats(Generator));
@@ -739,13 +739,13 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     // Add DirectionalLight
     if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(
-        Vector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f)))
+        FVector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f)))
     {
         DirectionalLightActor->SetFilter(LightingFilter);
 
         FDirectionalLightComponent* DirectionalLight = DirectionalLightActor->GetLightComponent();
         DirectionalLight->SetShadowBias(0.0005f);
-        DirectionalLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
+        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
     }
 
@@ -808,11 +808,11 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
 
     // Add DirectionalLight
     if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(
-        Vector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f)))
+        FVector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f)))
     {
         FDirectionalLightComponent* DirectionalLight = DirectionalLightActor->GetLightComponent();
         DirectionalLight->SetShadowBias(0.0005f);
-        DirectionalLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
+        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
     }
 
@@ -865,11 +865,11 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
     }
 
     // Add Light-Probes
-    if (FLightProbeActor* LightProbeActor = InWorld->SpawnActor<FLightProbeActor>(Vector3(0.0f, 13.0f, 0.5f), ReflectionProbeExterior))
+    if (FLightProbeActor* LightProbeActor = InWorld->SpawnActor<FLightProbeActor>(FVector3(0.0f, 13.0f, 0.5f), ReflectionProbeExterior))
     {
         FLightProbeComponent* LightProbe = LightProbeActor->GetLightProbeComponent();
-        LightProbe->SetBoxExtent(Vector3(19.0f, 21.5f, 22.0f));
-        LightProbe->SetBoxOffset(Vector3(0.0f, 0.0f, 0.0f));
+        LightProbe->SetBoxExtent(FVector3(19.0f, 21.5f, 22.0f));
+        LightProbe->SetBoxOffset(FVector3(0.0f, 0.0f, 0.0f));
         LightProbe->SetBoxProjection(true);
     }
 
@@ -882,21 +882,21 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
     }
 
     // Add Light-Probes
-    if (FLightProbeActor* LightProbeActor = InWorld->SpawnActor<FLightProbeActor>(Vector3(0.0f, 6.0f, 30.0f), ReflectionProbeInterior))
+    if (FLightProbeActor* LightProbeActor = InWorld->SpawnActor<FLightProbeActor>(FVector3(0.0f, 6.0f, 30.0f), ReflectionProbeInterior))
     {
         FLightProbeComponent* LightProbe = LightProbeActor->GetLightProbeComponent();
-        LightProbe->SetBoxExtent(Vector3(19.0f, 21.5f, 22.0f));
-        LightProbe->SetBoxOffset(Vector3(0.0f, 0.0f, 0.0f));
+        LightProbe->SetBoxExtent(FVector3(19.0f, 21.5f, 22.0f));
+        LightProbe->SetBoxOffset(FVector3(0.0f, 0.0f, 0.0f));
         LightProbe->SetBoxProjection(true);
     }
 
     // Add DirectionalLight
     if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(
-        Vector3(Math::DegreesToRadians(-55.0f), Math::DegreesToRadians(325.0f), 0.0f)))
+        FVector3(Math::DegreesToRadians(-55.0f), Math::DegreesToRadians(325.0f), 0.0f)))
     {
         FDirectionalLightComponent* DirectionalLight = DirectionalLightActor->GetLightComponent();
         DirectionalLight->SetShadowBias(0.0005f);
-        DirectionalLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
+        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
     }
 
@@ -942,11 +942,11 @@ bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
 
     // Add DirectionalLight
     if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(
-        Vector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f)))
+        FVector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f)))
     {
         FDirectionalLightComponent* DirectionalLight = DirectionalLightActor->GetLightComponent();
         DirectionalLight->SetShadowBias(0.0005f);
-        DirectionalLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
+        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
     }
 
@@ -1102,10 +1102,10 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
 
     // Add PointLight
     const float Intensity = 10.0f;
-    if (FPointLightActor* PointLightActor = InWorld->SpawnActor<FPointLightActor>(Vector3(8.0f, 1.0f, -8.0f), true))
+    if (FPointLightActor* PointLightActor = InWorld->SpawnActor<FPointLightActor>(FVector3(8.0f, 1.0f, -8.0f), true))
     {
         FPointLightComponent* PointLight = PointLightActor->GetLightComponent();
-        PointLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
+        PointLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         PointLight->SetShadowBias(0.006f);
         PointLight->SetShadowNearPlane(0.01f);
         PointLight->SetShadowFarPlane(30.0f);
@@ -1129,11 +1129,11 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     InWorld->SpawnActor<FSkyLightActor>(Skybox);
 
     // Add DirectionalLight
-    if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(Vector3(Math::DegreesToRadians(45.0f), 0.0f, 0.0f)))
+    if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(FVector3(Math::DegreesToRadians(45.0f), 0.0f, 0.0f)))
     {
         FDirectionalLightComponent* DirectionalLight = DirectionalLightActor->GetLightComponent();
         DirectionalLight->SetShadowBias(0.0005f);
-        DirectionalLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
+        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
     }
 

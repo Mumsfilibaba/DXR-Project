@@ -52,13 +52,13 @@ void FCheckBox::Initialize(const FDesc& Desc)
     }
 }
 
-IntVector2 FCheckBox::ComputeDesiredSize() const
+FIntVector2 FCheckBox::ComputeDesiredSize() const
 {
-    IntVector2 DesiredSize(BoxSize, BoxSize);
+    FIntVector2 DesiredSize(BoxSize, BoxSize);
 
     if (Content)
     {
-        const IntVector2 LabelSize = Content->GetCachedDesiredSize();
+        const FIntVector2 LabelSize = Content->GetCachedDesiredSize();
         DesiredSize.X += LabelSpacing + LabelSize.X;
         DesiredSize.Y = Math::Max(DesiredSize.Y, LabelSize.Y);
     }
@@ -85,7 +85,7 @@ int32 FCheckBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     const FUIStyle&         Style = FUIStyle::GetDefault();
     const EInteractionState State = GetInteractionState();
 
-    const FRectangle Box = FLayout::AlignInBounds(AllottedGeometry.Bounds, IntVector2(BoxSize, BoxSize), EHorizontalAlignment::Left, EVerticalAlignment::Center);
+    const FRectangle Box = FLayout::AlignInBounds(AllottedGeometry.Bounds, FIntVector2(BoxSize, BoxSize), EHorizontalAlignment::Left, EVerticalAlignment::Center);
 
     const FCornerRadii BoxRadii = FCornerRadii(Math::Min(Style.Metrics.CornerRadius, static_cast<float>(BoxSize) * 0.25f));
 
@@ -109,14 +109,14 @@ int32 FCheckBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         const float Top    = static_cast<float>(Box.Position.Y);
         const float Extent = static_cast<float>(BoxSize);
 
-        const Vector2 Points[] =
+        const FVector2 Points[] =
         {
-            Vector2(Left + (Extent * 0.24f), Top + (Extent * 0.52f)),
-            Vector2(Left + (Extent * 0.44f), Top + (Extent * 0.72f)),
-            Vector2(Left + (Extent * 0.78f), Top + (Extent * 0.28f)),
+            FVector2(Left + (Extent * 0.24f), Top + (Extent * 0.52f)),
+            FVector2(Left + (Extent * 0.44f), Top + (Extent * 0.72f)),
+            FVector2(Left + (Extent * 0.78f), Top + (Extent * 0.28f)),
         };
 
-        OutCommandList.AddPolyline(LayerId, TArrayView<const Vector2>(Points, ARRAY_COUNT(Points)), MarkColor, Math::Max(Extent * 0.14f, 1.0f));
+        OutCommandList.AddPolyline(LayerId, TArrayView<const FVector2>(Points, ARRAY_COUNT(Points)), MarkColor, Math::Max(Extent * 0.14f, 1.0f));
     }
     else if (CheckState == ECheckBoxState::Undetermined)
     {
@@ -152,7 +152,7 @@ void FCheckBox::SetCheckState(ECheckBoxState InState)
 
 FRectangle FCheckBox::GetBoxBounds() const
 {
-    return FLayout::AlignInBounds(GetContentRectangle(), IntVector2(BoxSize, BoxSize), EHorizontalAlignment::Left, EVerticalAlignment::Center);
+    return FLayout::AlignInBounds(GetContentRectangle(), FIntVector2(BoxSize, BoxSize), EHorizontalAlignment::Left, EVerticalAlignment::Center);
 }
 
 void FCheckBox::OnClicked()

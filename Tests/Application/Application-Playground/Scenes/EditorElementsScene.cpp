@@ -58,7 +58,7 @@ static TSharedPtr<FVisualElement> MakeFrame(const TSharedPtr<FVisualElement>& Co
     return FBorder::Create(Desc);
 }
 
-static IntVector2 ClientToScreen(const TSharedPtr<FVisualElement>& Element, const IntVector2& ClientPosition)
+static FIntVector2 ClientToScreen(const TSharedPtr<FVisualElement>& Element, const FIntVector2& ClientPosition)
 {
     const FRectangle ScreenBounds = FMenuStack::GetScreenBounds(Element);
     if (ScreenBounds.IsEmpty())
@@ -94,10 +94,10 @@ public:
     {
     }
 
-    virtual IntVector2 ComputeDesiredSize() const override
+    virtual FIntVector2 ComputeDesiredSize() const override
     {
         const int32 TextWidth = Font ? Font->MeasureWidth(FStringView(Label.Data(), Label.Length())) : 0;
-        return IntVector2(TextWidth + 24, FUIStyle::GetDefault().Metrics.RowHeight);
+        return FIntVector2(TextWidth + 24, FUIStyle::GetDefault().Metrics.RowHeight);
     }
 
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override
@@ -148,12 +148,12 @@ public:
             return FEventResponse::Unhandled();
         }
 
-        const IntVector2 ClientPosition = CursorEvent.GetClientPosition();
-        const IntVector2 ScreenPosition = ClientToScreen(AsSharedPtr(), ClientPosition);
+        const FIntVector2 ClientPosition = CursorEvent.GetClientPosition();
+        const FIntVector2 ScreenPosition = ClientToScreen(AsSharedPtr(), ClientPosition);
 
         if (!bHasBegunDrag)
         {
-            const IntVector2 Travel = ClientPosition - PressPosition;
+            const FIntVector2 Travel = ClientPosition - PressPosition;
             if ((Math::Abs(Travel.X) < DragThreshold) && (Math::Abs(Travel.Y) < DragThreshold))
             {
                 return FEventResponse::Handled();
@@ -201,7 +201,7 @@ private:
     FString               Label;
     FString               TypeId;
     TSharedPtr<IFontFace> Font;
-    IntVector2            PressPosition;
+    FIntVector2           PressPosition;
     bool                  bIsPressed;
     bool                  bHasBegunDrag;
 };
@@ -313,7 +313,7 @@ static TSharedPtr<FVisualElement> MakeTileViewRow(const FPlaygroundFonts& Fonts)
     ZoomDesc.OnValueChanged = FOnSliderValueChanged::CreateLambda([TileView](float NewValue)
     {
         const int32 Side = static_cast<int32>(NewValue);
-        TileView->SetTileSize(IntVector2(Side, Side + 12));
+        TileView->SetTileSize(FIntVector2(Side, Side + 12));
     });
 
     FTextBlock::FDesc ZoomLabel;
@@ -622,7 +622,7 @@ static TSharedPtr<FVisualElement> MakeDropTarget(const FPlaygroundFonts& Fonts, 
 
     TSharedPtr<FBorder> Target = FBorder::Create(Desc);
 
-    FOnDragDropped OnDropped = FOnDragDropped::CreateLambda([Readout, Title](const FDragDropPayload& Payload, const IntVector2& ScreenPosition)
+    FOnDragDropped OnDropped = FOnDragDropped::CreateLambda([Readout, Title](const FDragDropPayload& Payload, const FIntVector2& ScreenPosition)
     {
         Readout->SetText(FString::Printf("'%s' dropped on %s at %d, %d",
             Payload.DisplayText.Data(), Title.Data(), ScreenPosition.X, ScreenPosition.Y));

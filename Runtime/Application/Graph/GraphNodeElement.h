@@ -35,7 +35,7 @@ public:
     virtual ~FGraphNodeElement();
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
 
@@ -74,7 +74,7 @@ public:
      * @param OutPosition Receives the centre of the pin.
      * @return True when the pin belongs to this node.
      */
-    NODISCARD bool GetPinCenter(int32 PinId, Vector2& OutPosition) const;
+    NODISCARD bool GetPinCenter(int32 PinId, FVector2& OutPosition) const;
 
     /**
      * @brief The pin whose circle covers a point, which is what starts a link drag.
@@ -82,7 +82,7 @@ public:
      * @param ClientPosition The position to test.
      * @return The pin id, or -1 when the point is not on a pin.
      */
-    NODISCARD int32 FindPinAt(const IntVector2& ClientPosition) const;
+    NODISCARD int32 FindPinAt(const FIntVector2& ClientPosition) const;
 
     /** @return What the node is drawn with, which is the canvas' style until one is pushed in. */
     NODISCARD FORCEINLINE const FGraphNodeStyle& GetStyle() const
@@ -124,7 +124,7 @@ private:
     FGraphNode            Node;
     FGraphNodeStyle       Style;
     TSharedPtr<IFontFace> Font;
-    TArray<Vector2>       PinCenters;
+    TArray<FVector2>      PinCenters;
     float                 Zoom;
     int32                 HoveredPinId;
     bool                  bIsSelected;

@@ -43,18 +43,18 @@ void FRichTextBlock::Initialize(const FDesc& Desc)
     SetRuns(Desc.Runs);
 }
 
-IntVector2 FRichTextBlock::ComputeDesiredSize() const
+FIntVector2 FRichTextBlock::ComputeDesiredSize() const
 {
     const int32 AvailableWidth = Math::Max(0, GetContentRectangle().Width - Margin.GetTotalHorizontal());
     RefreshLayout(AvailableWidth);
 
-    const IntVector2 TextSize = Layout.GetSize();
-    return IntVector2(TextSize.X + Margin.GetTotalHorizontal(), TextSize.Y + Margin.GetTotalVertical());
+    const FIntVector2 TextSize = Layout.GetSize();
+    return FIntVector2(TextSize.X + Margin.GetTotalHorizontal(), TextSize.Y + Margin.GetTotalVertical());
 }
 
 void FRichTextBlock::OnArrange(const FRectangle& AllottedBounds)
 {
-    const IntVector2 PreviousSize = Layout.GetSize();
+    const FIntVector2 PreviousSize = Layout.GetSize();
     RefreshLayout(Math::Max(0, AllottedBounds.Width - Margin.GetTotalHorizontal()));
 
     if (Layout.GetSize() != PreviousSize)
@@ -296,7 +296,7 @@ FString FRichTextBlock::GetText() const
     return Layout.GetText();
 }
 
-int32 FRichTextBlock::FindCharacterIndexAt(const IntVector2& ClientPosition) const
+int32 FRichTextBlock::FindCharacterIndexAt(const FIntVector2& ClientPosition) const
 {
     const FRectangle TextBounds = GetTextBounds();
     RefreshLayout(TextBounds.Width);
@@ -365,7 +365,7 @@ void FRichTextBlock::GatherRangeRectangles(const TArray<FTextRange>& Ranges, TAr
     const int32 FirstRectangle = OutRectangles.Size();
     Layout.GatherRangeRectangles(Ranges, OutRectangles);
 
-    const IntVector2 Origin = GetTextBounds().Position;
+    const FIntVector2 Origin = GetTextBounds().Position;
     for (int32 Index = FirstRectangle; Index < OutRectangles.Size(); ++Index)
     {
         OutRectangles[Index].Position += Origin;

@@ -17,21 +17,21 @@ public:
     void SetShadowNearPlane(float InShadowNearPlane);
     void SetShadowFarPlane(float InShadowFarPlane);
 
-    const Vector3& GetPosition() const;
+    const FVector3& GetPosition() const;
 
-    FORCEINLINE const Matrix4& GetViewProjectionMatrix(uint32 Index) const
+    FORCEINLINE const FMatrix4& GetViewProjectionMatrix(uint32 Index) const
     {
         CHECK(Index < 6);
         return ViewProjMatrices[Index];
     }
 
-    FORCEINLINE const Matrix4& GetViewMatrix(uint32 Index) const
+    FORCEINLINE const FMatrix4& GetViewMatrix(uint32 Index) const
     {
         CHECK(Index < 6);
         return ViewMatrices[Index];
     }
 
-    FORCEINLINE const Matrix4& GetProjectionMatrix(uint32 Index) const
+    FORCEINLINE const FMatrix4& GetProjectionMatrix(uint32 Index) const
     {
         CHECK(Index < 6);
         return ProjMatrices[Index];
@@ -40,7 +40,7 @@ public:
 private:
     void CalculateMatrices();
 
-    Matrix4 ViewProjMatrices[6];
-    Matrix4 ViewMatrices[6];
-    Matrix4 ProjMatrices[6];
+    FMatrix4 ViewProjMatrices[6];
+    FMatrix4 ViewMatrices[6];
+    FMatrix4 ProjMatrices[6];
 };

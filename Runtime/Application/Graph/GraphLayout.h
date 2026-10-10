@@ -73,10 +73,10 @@ struct APPLICATION_API FLayeredGraphLayout
      *                     and it breaks ties between equal barycenters.
      */
     static void Layout(
-        TArrayView<const Vector2>          NodeSizes,
+        TArrayView<const FVector2>         NodeSizes,
         TArrayView<const FGraphLayoutEdge> Edges,
         const FGraphLayoutSettings&        Settings,
-        TArray<Vector2>&                   OutPositions,
+        TArray<FVector2>&                  OutPositions,
         TArrayView<const int32>            SeedKeys = TArrayView<const int32>());
 
     /**

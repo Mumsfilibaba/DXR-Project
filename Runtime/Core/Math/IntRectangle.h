@@ -75,7 +75,7 @@ struct FRectangle
     {
     }
 
-    FRectangle(const IntVector2& InPosition, int32 InWidth, int32 InHeight)
+    FRectangle(const FIntVector2& InPosition, int32 InWidth, int32 InHeight)
         : Width(InWidth)
         , Height(InHeight)
         , Position(InPosition)
@@ -89,7 +89,7 @@ struct FRectangle
      * @param Point The point to check.
      * @return True if the point is within the rectangle; false otherwise.
      */
-    NODISCARD FORCEINLINE bool EncapsulatesPoint(const IntVector2& Point) const
+    NODISCARD FORCEINLINE bool EncapsulatesPoint(const FIntVector2& Point) const
     {
         return Point.X >= Position.X && Point.Y >= Position.Y && Point.X < GetRight() && Point.Y < GetBottom();
     }
@@ -113,15 +113,15 @@ struct FRectangle
     }
 
     /** @return The center of the rectangle, with each half rounded down by the integer division. */
-    NODISCARD FORCEINLINE IntVector2 GetCenter() const
+    NODISCARD FORCEINLINE FIntVector2 GetCenter() const
     {
-        return IntVector2(Position.X + (Width / 2), Position.Y + (Height / 2));
+        return FIntVector2(Position.X + (Width / 2), Position.Y + (Height / 2));
     }
 
     /** @return The extent of the rectangle, the width and the height without the position. */
-    NODISCARD FORCEINLINE IntVector2 GetSize() const
+    NODISCARD FORCEINLINE FIntVector2 GetSize() const
     {
-        return IntVector2(Width, Height);
+        return FIntVector2(Width, Height);
     }
 
     /**
@@ -199,7 +199,7 @@ struct FRectangle
         const int32 MinY = Math::Min(Position.Y, Other.Position.Y);
         const int32 MaxX = Math::Max(GetRight(), Other.GetRight());
         const int32 MaxY = Math::Max(GetBottom(), Other.GetBottom());
-        return FRectangle(IntVector2(MinX, MinY), MaxX - MinX, MaxY - MinY);
+        return FRectangle(FIntVector2(MinX, MinY), MaxX - MinX, MaxY - MinY);
     }
 
     /**
@@ -231,5 +231,5 @@ struct FRectangle
     int32 Height;
 
     /** @brief Position of the rectangle (x, y). */
-    IntVector2 Position;
+    FIntVector2 Position;
 };

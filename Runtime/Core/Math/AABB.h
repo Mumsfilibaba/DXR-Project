@@ -17,9 +17,9 @@ public:
      * @param InPointA First point.
      * @param InPointB Second point.
      */
-    FORCEINLINE FAABB(const Vector3& InPointA, const Vector3& InPointB)
-        : Min(Vector3(Math::Min(InPointA.X, InPointB.X), Math::Min(InPointA.Y, InPointB.Y), Math::Min(InPointA.Z, InPointB.Z)))
-        , Max(Vector3(Math::Max(InPointA.X, InPointB.X), Math::Max(InPointA.Y, InPointB.Y), Math::Max(InPointA.Z, InPointB.Z)))
+    FORCEINLINE FAABB(const FVector3& InPointA, const FVector3& InPointB)
+        : Min(FVector3(Math::Min(InPointA.X, InPointB.X), Math::Min(InPointA.Y, InPointB.Y), Math::Min(InPointA.Z, InPointB.Z)))
+        , Max(FVector3(Math::Max(InPointA.X, InPointB.X), Math::Max(InPointA.Y, InPointB.Y), Math::Max(InPointA.Z, InPointB.Z)))
     {
     }
 
@@ -31,16 +31,16 @@ public:
      */
     FORCEINLINE FAABB(float Width, float Height, float Depth)
     {
-        const Vector3 HalfSize = Vector3(Width * 0.5f, Height * 0.5f, Depth * 0.5f);
-        Min = Vector3(-HalfSize.X, -HalfSize.Y, -HalfSize.Z);
-        Max = Vector3( HalfSize.X,  HalfSize.Y,  HalfSize.Z);
+        const FVector3 HalfSize = FVector3(Width * 0.5f, Height * 0.5f, Depth * 0.5f);
+        Min = FVector3(-HalfSize.X, -HalfSize.Y, -HalfSize.Z);
+        Max = FVector3( HalfSize.X,  HalfSize.Y,  HalfSize.Z);
     }
 
     /**
      * @brief Calculates the center position of the bounding box.
      * @return The center position of the bounding box.
      */
-    FORCEINLINE Vector3 GetCenter() const
+    FORCEINLINE FVector3 GetCenter() const
     {
         return (Min + Max) * 0.5f;
     }
@@ -49,7 +49,7 @@ public:
      * @brief Calculates the size of the bounding box.
      * @return A vector representing the width, height, and depth.
      */
-    FORCEINLINE Vector3 GetSize() const
+    FORCEINLINE FVector3 GetSize() const
     {
         return Max - Min;
     }
@@ -95,7 +95,7 @@ public:
      * @param Point The point to check.
      * @return `true` if the point is inside the bounding box, `false` otherwise.
      */
-    FORCEINLINE bool Contains(const Vector3& Point) const
+    FORCEINLINE bool Contains(const FVector3& Point) const
     {
         return (Point.X >= Min.X && Point.X <= Max.X) && (Point.Y >= Min.Y && Point.Y <= Max.Y) && (Point.Z >= Min.Z && Point.Z <= Max.Z);
     }
@@ -129,7 +129,7 @@ public:
      * @brief Expands the bounding box to include the given point.
      * @param Point The point to include.
      */
-    FORCEINLINE void Encapsulate(const Vector3& Point)
+    FORCEINLINE void Encapsulate(const FVector3& Point)
     {
         Min.X = Math::Min(Min.X, Point.X);
         Min.Y = Math::Min(Min.Y, Point.Y);
@@ -161,10 +161,10 @@ public:
 public:
 
     /** @brief Minimum corner of the bounding box */
-    Vector3 Min;
+    FVector3 Min;
 
     /** @brief Maximum corner of the bounding box */
-    Vector3 Max;
+    FVector3 Max;
 };
 
 MARK_AS_REALLOCATABLE(FAABB);

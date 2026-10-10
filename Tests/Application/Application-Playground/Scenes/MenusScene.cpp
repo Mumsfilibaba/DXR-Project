@@ -253,7 +253,7 @@ static TSharedPtr<FVisualElement> MakeComboBoxRow(const FPlaygroundFonts& Fonts)
         Row->AddSlot(FComboBox::Create(Desc)).SetPadding(FMargin(0, 0, 24, 0)).SetVerticalAlignment(EVerticalAlignment::Center);
     }
 
-    Row->AddSlot(FSpacer::Create(IntVector2(0, 0))).SetFillCoefficient(1.0f);
+    Row->AddSlot(FSpacer::Create(FIntVector2(0, 0))).SetFillCoefficient(1.0f);
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
     Column->AddSlot(Row);
@@ -277,7 +277,7 @@ static TSharedPtr<FVisualElement> MakeToolTipRow(const FPlaygroundFonts& Fonts)
     Row->AddSlot(FToolTipHost::Create(FButton::Create(AnchoredDesc), "Anchored under the thing it describes", Fonts.Body, EToolTipPlacement::BelowAnchor))
         .SetVerticalAlignment(EVerticalAlignment::Center);
 
-    Row->AddSlot(FSpacer::Create(IntVector2(0, 0))).SetFillCoefficient(1.0f);
+    Row->AddSlot(FSpacer::Create(FIntVector2(0, 0))).SetFillCoefficient(1.0f);
     return Row;
 }
 

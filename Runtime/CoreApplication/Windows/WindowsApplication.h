@@ -48,7 +48,7 @@ struct FWindowsDeferredMessage
     LPARAM lParam;
 
     /** @brief Horizontal delta for raw mouse movements. */
-    IntVector2 MouseDelta;
+    FIntVector2 MouseDelta;
 };
 
 struct IWindowsMessageListener
@@ -79,7 +79,7 @@ public:
 
     virtual bool SupportsHighPrecisionMouse() const override final;
     virtual bool SetHighPrecisionMouseMode(const TSharedRef<IPlatformWindow>& Window, EHighPrecisionMouseMode Mode) override final;
-    virtual bool ConfineCursorToRect(const TSharedRef<IPlatformWindow>& Window, const IntVector2& Position, const IntVector2& Size) override final;
+    virtual bool ConfineCursorToRect(const TSharedRef<IPlatformWindow>& Window, const FIntVector2& Position, const FIntVector2& Size) override final;
     virtual void ReleaseCursorConfinement() override final;
 
     virtual FModifierKeyState GetModifierKeyState() const override final;

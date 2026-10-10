@@ -6,13 +6,13 @@
 #include "Application/Text/IFontFace.h"
 
 /** @brief Called for every change a drag makes, with the delta measured from the transform it began on. */
-DECLARE_DELEGATE(FOnGizmoTransformChanged, const Matrix4& /*NewTransform*/, const Matrix4& /*Delta*/);
+DECLARE_DELEGATE(FOnGizmoTransformChanged, const FMatrix4& /*NewTransform*/, const FMatrix4& /*Delta*/);
 
 /** @brief Called as a handle is grabbed, which is where a host opens its undo transaction. */
 DECLARE_DELEGATE(FOnGizmoDragStarted, EGizmoHandle /*Handle*/);
 
 /** @brief Called as a handle is let go, with the transform the drag began and ended on. */
-DECLARE_DELEGATE(FOnGizmoDragFinished, const Matrix4& /*TransformAtDragStart*/, const Matrix4& /*Transform*/);
+DECLARE_DELEGATE(FOnGizmoDragFinished, const FMatrix4& /*TransformAtDragStart*/, const FMatrix4& /*Transform*/);
 
 class APPLICATION_API FGizmo final : public FVisualElement
 {
@@ -84,7 +84,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override;
@@ -98,14 +98,14 @@ public:
      * @param InProjectionMatrix The view-to-clip matrix.
      * @param bInIsOrthographic  True to skip the behind-the-camera hiding rule.
      */
-    void SetCamera(const Matrix4& InViewMatrix, const Matrix4& InProjectionMatrix, bool bInIsOrthographic);
+    void SetCamera(const FMatrix4& InViewMatrix, const FMatrix4& InProjectionMatrix, bool bInIsOrthographic);
 
     /**
      * @brief Sets the transform being edited. Ignored while a drag is in progress.
      *
      * @param InTransform The transform, which the gizmo writes back through its delegate.
      */
-    void SetTransform(const Matrix4& InTransform);
+    void SetTransform(const FMatrix4& InTransform);
 
     /**
      * @brief Sets which handles the gizmo shows. Ignored while a drag is in progress.
@@ -158,17 +158,17 @@ public:
      * @param AxisIndex Zero for X, one for Y, two for Z.
      * @return The unit direction.
      */
-    NODISCARD Vector3 GetAxisDirection(int32 AxisIndex) const;
+    NODISCARD FVector3 GetAxisDirection(int32 AxisIndex) const;
 
     /** @return Where the gizmo sits in world space, the translation of the transform being edited. */
-    NODISCARD Vector3 GetPivot() const;
+    NODISCARD FVector3 GetPivot() const;
 
     NODISCARD FORCEINLINE EGizmoOperation           GetOperation() const { return Operation; }
     NODISCARD FORCEINLINE EGizmoMode                GetMode()      const { return Mode; }
     NODISCARD FORCEINLINE const FGizmoSnapSettings& GetSnap()      const { return Snap; }
 
     /** @return The transform being edited, which a drag in progress has already written into. */
-    NODISCARD FORCEINLINE const Matrix4& GetTransform() const
+    NODISCARD FORCEINLINE const FMatrix4& GetTransform() const
     {
         return Transform;
     }
@@ -239,19 +239,19 @@ private:
     void UpdateContext();
     void ComputeAxisVisibility();
 
-    NODISCARD EGizmoHandle FindHandleAt(const IntVector2& ClientPosition) const;
-    NODISCARD bool GetAxisSegment(int32 AxisIndex, Vector2& OutStart, Vector2& OutEnd) const;
-    NODISCARD bool GetPlaneQuad(int32 AxisIndex, Vector2 OutQuad[4]) const;
-    NODISCARD bool GetRingPoints(const Vector3& BasisU, const Vector3& BasisV, float Radius, TArray<Vector2>& OutPoints) const;
-    NODISCARD float GetAngleOnDragPlane(const Vector3& WorldPosition) const;
+    NODISCARD EGizmoHandle FindHandleAt(const FIntVector2& ClientPosition) const;
+    NODISCARD bool GetAxisSegment(int32 AxisIndex, FVector2& OutStart, FVector2& OutEnd) const;
+    NODISCARD bool GetPlaneQuad(int32 AxisIndex, FVector2 OutQuad[4]) const;
+    NODISCARD bool GetRingPoints(const FVector3& BasisU, const FVector3& BasisV, float Radius, TArray<FVector2>& OutPoints) const;
+    NODISCARD float GetAngleOnDragPlane(const FVector3& WorldPosition) const;
     NODISCARD FFloatColor GetHandleColor(EGizmoHandle Handle, int32 AxisIndex) const;    
-    NODISCARD bool ProjectOntoDragPlane(const IntVector2& ClientPosition, Vector3& OutHit) const;
+    NODISCARD bool ProjectOntoDragPlane(const FIntVector2& ClientPosition, FVector3& OutHit) const;
 
-    void GetDragPlane(EGizmoHandle Handle, Vector3& OutPoint, Vector3& OutNormal) const;
-    void BeginDrag(EGizmoHandle Handle, const IntVector2& ClientPosition);
-    void UpdateDrag(const IntVector2& ClientPosition);
+    void GetDragPlane(EGizmoHandle Handle, FVector3& OutPoint, FVector3& OutNormal) const;
+    void BeginDrag(EGizmoHandle Handle, const FIntVector2& ClientPosition);
+    void UpdateDrag(const FIntVector2& ClientPosition);
     void EndDrag();
-    void ApplyTransform(const Matrix4& NewTransform);
+    void ApplyTransform(const FMatrix4& NewTransform);
     void DrawTranslate(FDrawCommandList& OutCommandList, int32 LayerId) const;
     void DrawRotate(FDrawCommandList& OutCommandList, int32 LayerId) const;
     void DrawScale(FDrawCommandList& OutCommandList, int32 LayerId) const;
@@ -263,28 +263,28 @@ private:
 
     FORCEINLINE void SetStateBit(uint16 Bit, bool bValue) { StateBits = static_cast<uint16>(bValue ? (StateBits | Bit) : (StateBits & ~Bit)); }
 
-    Matrix4                  ViewMatrix;
-    Matrix4                  ProjectionMatrix;
-    Matrix4                  ViewProjectionMatrix;
-    Matrix4                  Transform;
-    Matrix4                  TransformAtDragStart;
+    FMatrix4                 ViewMatrix;
+    FMatrix4                 ProjectionMatrix;
+    FMatrix4                 ViewProjectionMatrix;
+    FMatrix4                 Transform;
+    FMatrix4                 TransformAtDragStart;
     TSharedPtr<IFontFace>    Font;
     EGizmoOperation          Operation;
     EGizmoMode               Mode;
     EGizmoHandle             HoveredHandle;
     EGizmoHandle             ActiveHandle;
     FGizmoSnapSettings       Snap;
-    Vector3                  Pivot;
-    Vector3                  Axes[3];
-    Vector3                  CameraRight;
-    Vector3                  CameraUp;
-    Vector3                  ViewDirection;
-    Vector3                  DragStartHit;
-    Vector3                  DragPlanePoint;
-    Vector3                  DragPlaneNormal;
-    Vector3                  DragAxis;
-    Vector3                  DragBasisU;
-    Vector3                  DragBasisV;
+    FVector3                 Pivot;
+    FVector3                 Axes[3];
+    FVector3                 CameraRight;
+    FVector3                 CameraUp;
+    FVector3                 ViewDirection;
+    FVector3                 DragStartHit;
+    FVector3                 DragPlanePoint;
+    FVector3                 DragPlaneNormal;
+    FVector3                 DragAxis;
+    FVector3                 DragBasisU;
+    FVector3                 DragBasisV;
     float                    DragStartAngle;
     float                    DragLastAngle;
     float                    DragTotalAngle;

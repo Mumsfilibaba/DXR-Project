@@ -14,7 +14,7 @@
  * NodeId is -1 over empty canvas; GraphPosition is retained for authoring menus that add a node at
  * the cursor.
  */
-DECLARE_RETURN_DELEGATE(FOnGetGraphContextMenu, TSharedPtr<FVisualElement>, const Vector2& /*GraphPosition*/, int32 /*NodeId*/);
+DECLARE_RETURN_DELEGATE(FOnGetGraphContextMenu, TSharedPtr<FVisualElement>, const FVector2& /*GraphPosition*/, int32 /*NodeId*/);
 
 /** @brief Called when the set of selected nodes changed. */
 DECLARE_DELEGATE(FOnGraphSelectionChanged);
@@ -128,8 +128,8 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 PrepareDesiredSize() override;
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 PrepareDesiredSize() override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
@@ -158,7 +158,7 @@ public:
      * @param ClientPosition The point to hold still.
      * @param ZoomDelta      How much to zoom by, as a multiplier applied to the current zoom.
      */
-    void ZoomAt(const IntVector2& ClientPosition, float ZoomDelta);
+    void ZoomAt(const FIntVector2& ClientPosition, float ZoomDelta);
 
     /**
      * @brief Sets the scale the graph is drawn at, clamped between the two limits.
@@ -172,7 +172,7 @@ public:
      *
      * @param InPan The offset, in pixels.
      */
-    void SetPan(const Vector2& InPan);
+    void SetPan(const FVector2& InPan);
 
     /**
      * @brief Projects a graph-space point into the client space the canvas was arranged in.
@@ -180,7 +180,7 @@ public:
      * @param GraphPosition The point to project.
      * @return The point in client space, which the pan offsets and the zoom scales.
      */
-    NODISCARD Vector2 GraphToScreen(const Vector2& GraphPosition) const;
+    NODISCARD FVector2 GraphToScreen(const FVector2& GraphPosition) const;
 
     /**
      * @brief Projects a client-space point back into graph space, the inverse of GraphToScreen.
@@ -188,7 +188,7 @@ public:
      * @param ClientPosition The point to project.
      * @return The point in graph space.
      */
-    NODISCARD Vector2 ScreenToGraph(const Vector2& ClientPosition) const;
+    NODISCARD FVector2 ScreenToGraph(const FVector2& ClientPosition) const;
 
     /**
      * @brief The node whose rectangle covers a point, in front to back order.
@@ -196,7 +196,7 @@ public:
      * @param ClientPosition The position to test.
      * @return The node id, or -1 when the point is over empty canvas.
      */
-    NODISCARD int32 FindNodeAt(const IntVector2& ClientPosition) const;
+    NODISCARD int32 FindNodeAt(const FIntVector2& ClientPosition) const;
 
     /**
      * @brief The pin whose circle covers a point.
@@ -204,7 +204,7 @@ public:
      * @param ClientPosition The position to test.
      * @return The pin id, or -1 when the point is not on a pin.
      */
-    NODISCARD int32 FindPinAt(const IntVector2& ClientPosition) const;
+    NODISCARD int32 FindPinAt(const FIntVector2& ClientPosition) const;
 
     /**
      * @brief The link whose curve passes within the grab distance of a point.
@@ -212,7 +212,7 @@ public:
      * @param ClientPosition The position to test.
      * @return The link id, or -1 when no link is near enough.
      */
-    NODISCARD int32 FindLinkAt(const IntVector2& ClientPosition) const;
+    NODISCARD int32 FindLinkAt(const FIntVector2& ClientPosition) const;
 
     /**
      * @brief Replaces the selection.
@@ -278,7 +278,7 @@ public:
         return Zoom;
     }
 
-    NODISCARD FORCEINLINE const Vector2& GetPan() const
+    NODISCARD FORCEINLINE const FVector2& GetPan() const
     {
         return Pan;
     }
@@ -334,25 +334,25 @@ private:
     void RebuildElements();
     void MeasureNodeElements();
     void ArrangeNodeElements();
-    void EndDrag(const IntVector2& ClientPosition);
+    void EndDrag(const FIntVector2& ClientPosition);
 
-    NODISCARD bool GetLinkCurve(const FGraphLink& Link, Vector2& OutStart, Vector2& OutStartControl, Vector2& OutEndControl, Vector2& OutEnd) const;
+    NODISCARD bool GetLinkCurve(const FGraphLink& Link, FVector2& OutStart, FVector2& OutStartControl, FVector2& OutEndControl, FVector2& OutEnd) const;
 
     struct FLinkCurve
     {
-        int32   LinkId;
-        int32   FromPinId;
-        Vector2 Start;
-        Vector2 StartControl;
-        Vector2 EndControl;
-        Vector2 End;
-        int32   FirstPoint;
+        int32    LinkId;
+        int32    FromPinId;
+        FVector2 Start;
+        FVector2 StartControl;
+        FVector2 EndControl;
+        FVector2 End;
+        int32    FirstPoint;
     };
 
     void RefreshSpatialIndex() const;
     void MarkSpatialIndexDirty();
     void MarkViewChanged();
-    NODISCARD TArrayView<const Vector2> GetLinkPoints(const FLinkCurve& Curve) const;
+    NODISCARD TArrayView<const FVector2> GetLinkPoints(const FLinkCurve& Curve) const;
 
     void DrawGrid(const FRectangle& Bounds, FDrawCommandList& OutCommandList, int32 LayerId) const;
     void DrawLinks(FDrawCommandList& OutCommandList, int32 LayerId) const;
@@ -366,7 +366,7 @@ private:
     TArray<TSharedPtr<FGraphNodeElement>>  NodeElements;
     TMap<int32, int32>                     NodeElementIndexById;
     mutable TArray<FLinkCurve>             LinkCurves;
-    mutable TArray<Vector2>                LinkPoints;
+    mutable TArray<FVector2>               LinkPoints;
     mutable TArray<FRectangle>             ScratchItemBounds;
     mutable FUniformGrid2D                 NodeGrid;
     mutable FUniformGrid2D                 LinkGrid;
@@ -380,10 +380,10 @@ private:
     FFloatColor                            SurroundColor;
     float                                  CornerRadius;
     FRectangle                             MarqueeBounds;
-    Vector2                                Pan;
-    Vector2                                DraggingToPosition;
-    IntVector2                             DragAnchor;
-    IntVector2                             LastDragPosition;
+    FVector2                               Pan;
+    FVector2                               DraggingToPosition;
+    FIntVector2                            DragAnchor;
+    FIntVector2                            LastDragPosition;
     float                                  Zoom;
     float                                  FitMinZoom;
     int32                                  GridSpacingInGraphSpace;

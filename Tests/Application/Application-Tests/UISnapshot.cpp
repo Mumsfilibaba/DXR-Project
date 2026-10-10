@@ -11,7 +11,7 @@
 #include "Core/Image/PngWriter.h"
 #include "Core/Platform/PlatformFile.h"
 
-static FORCEINLINE float EdgeFunction(const Vector2& A, const Vector2& B, const Vector2& C)
+static FORCEINLINE float EdgeFunction(const FVector2& A, const FVector2& B, const FVector2& C)
 {
     return ((C.X - A.X) * (B.Y - A.Y)) - ((C.Y - A.Y) * (B.X - A.X));
 }
@@ -54,14 +54,14 @@ static float SampleAtlasAlpha(const FFontAtlas& Atlas, float U, float V)
     return static_cast<float>(Atlas.GetPixels()[((Y * AtlasWidth) + X) * 4 + 3]) / 255.0f;
 }
 
-static float SignedDistanceToRoundedBox(const Vector2& P, const Vector2& HalfSize, float RadiusTL, float RadiusTR, float RadiusBR, float RadiusBL)
+static float SignedDistanceToRoundedBox(const FVector2& P, const FVector2& HalfSize, float RadiusTL, float RadiusTR, float RadiusBR, float RadiusBL)
 {
     const float BottomRadius = (P.X > 0.0f) ? RadiusBR : RadiusBL;
     const float TopRadius    = (P.X > 0.0f) ? RadiusTR : RadiusTL;
     const float Radius       = (P.Y > 0.0f) ? BottomRadius : TopRadius;
 
-    const Vector2 Q(Math::Abs(P.X) - HalfSize.X + Radius, Math::Abs(P.Y) - HalfSize.Y + Radius);
-    return Math::Min(Math::Max(Q.X, Q.Y), 0.0f) + Vector2(Math::Max(Q.X, 0.0f), Math::Max(Q.Y, 0.0f)).GetLength() - Radius;
+    const FVector2 Q(Math::Abs(P.X) - HalfSize.X + Radius, Math::Abs(P.Y) - HalfSize.Y + Radius);
+    return Math::Min(Math::Max(Q.X, Q.Y), 0.0f) + FVector2(Math::Max(Q.X, 0.0f), Math::Max(Q.Y, 0.0f)).GetLength() - Radius;
 }
 
 static void RasterizeShapeBatches(const FUIDrawData& DrawData, FSnapshotImage& OutImage)
@@ -123,7 +123,7 @@ static void RasterizeShapeBatches(const FUIDrawData& DrawData, FSnapshotImage& O
             {
                 for (int32 X = MinX; X < MaxX; ++X)
                 {
-                    const Vector2 Sample(static_cast<float>(X) + 0.5f, static_cast<float>(Y) + 0.5f);
+                    const FVector2 Sample(static_cast<float>(X) + 0.5f, static_cast<float>(Y) + 0.5f);
                     float W0 = EdgeFunction(V1.Position, V2.Position, Sample) * InverseArea;
                     float W1 = EdgeFunction(V2.Position, V0.Position, Sample) * InverseArea;
                     float W2 = EdgeFunction(V0.Position, V1.Position, Sample) * InverseArea;
@@ -133,19 +133,19 @@ static void RasterizeShapeBatches(const FUIDrawData& DrawData, FSnapshotImage& O
                         continue;
                     }
 
-                    const Vector2 Local(
+                    const FVector2 Local(
                         (V0.LocalPos.X * W0) + (V1.LocalPos.X * W1) + (V2.LocalPos.X * W2),
                         (V0.LocalPos.Y * W0) + (V1.LocalPos.Y * W1) + (V2.LocalPos.Y * W2));
 
                     float Distance = 0.0f;
                     if (V0.ShapeKind > 1.5f)
                     {
-                        Distance = V0.RadiusBR - (Local - Vector2(V0.RadiusTL, V0.RadiusTR)).GetLength();
+                        Distance = V0.RadiusBR - (Local - FVector2(V0.RadiusTL, V0.RadiusTR)).GetLength();
                     }
                     else
                     {
-                        const Vector2 Centered(Local.X - (V0.RectSize.X * 0.5f), Local.Y - (V0.RectSize.Y * 0.5f));
-                        Distance = SignedDistanceToRoundedBox(Centered, Vector2(V0.RectSize.X * 0.5f, V0.RectSize.Y * 0.5f),
+                        const FVector2 Centered(Local.X - (V0.RectSize.X * 0.5f), Local.Y - (V0.RectSize.Y * 0.5f));
+                        Distance = SignedDistanceToRoundedBox(Centered, FVector2(V0.RectSize.X * 0.5f, V0.RectSize.Y * 0.5f),
                             V0.RadiusTL, V0.RadiusTR, V0.RadiusBR, V0.RadiusBL);
 
                         if (V0.ShapeKind > 0.5f)
@@ -279,7 +279,7 @@ void RasterizeDrawData(const FUIDrawData& DrawData, FSnapshotImage& OutImage)
             {
                 for (int32 X = MinX; X < MaxX; ++X)
                 {
-                    const Vector2 Sample(static_cast<float>(X) + 0.5f, static_cast<float>(Y) + 0.5f);
+                    const FVector2 Sample(static_cast<float>(X) + 0.5f, static_cast<float>(Y) + 0.5f);
 
                     float W0 = EdgeFunction(V1.Position, V2.Position, Sample) * InverseArea;
                     float W1 = EdgeFunction(V2.Position, V0.Position, Sample) * InverseArea;
@@ -353,14 +353,14 @@ bool WriteSnapshotPng(const FSnapshotImage& Image, const FString& Filename)
     return true;
 }
 
-bool SnapshotElementToPng(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, uint32 ClearColor, const FString& Filename)
+bool SnapshotElementToPng(const TSharedPtr<FVisualElement>& Element, const FIntVector2& Size, uint32 ClearColor, const FString& Filename)
 {
     if (!Element || Size.X <= 0 || Size.Y <= 0)
     {
         return false;
     }
 
-    const FRectangle Bounds(IntVector2(0, 0), Size.X, Size.Y);
+    const FRectangle Bounds(FIntVector2(0, 0), Size.X, Size.Y);
 
     Element->PrepareDesiredSize();
     Element->Arrange(Bounds);

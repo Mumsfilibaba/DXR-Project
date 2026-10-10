@@ -521,7 +521,7 @@ bool FMacApplication::SetHighPrecisionMouseMode(const TSharedRef<IPlatformWindow
             CFRelease(EventSource);
         }
 
-        HighPrecisionMouseRemainder = Vector2();
+        HighPrecisionMouseRemainder = FVector2();
     }
     else
     {
@@ -532,7 +532,7 @@ bool FMacApplication::SetHighPrecisionMouseMode(const TSharedRef<IPlatformWindow
     return true;
 }
 
-bool FMacApplication::ConfineCursorToRect(const TSharedRef<IPlatformWindow>&, const IntVector2& Position, const IntVector2& Size)
+bool FMacApplication::ConfineCursorToRect(const TSharedRef<IPlatformWindow>&, const FIntVector2& Position, const FIntVector2& Size)
 {
     if (!MacCursor || Size.X <= 0 || Size.Y <= 0)
     {
@@ -550,8 +550,8 @@ bool FMacApplication::ConfineCursorToRect(const TSharedRef<IPlatformWindow>&, co
 void FMacApplication::ReleaseCursorConfinement()
 {
     bCursorConfined           = false;
-    CursorConfinementPosition = IntVector2();
-    CursorConfinementSize     = IntVector2();
+    CursorConfinementPosition = FIntVector2();
+    CursorConfinementSize     = FIntVector2();
 }
 
 void FMacApplication::ClampCursorToConfinement()
@@ -561,9 +561,9 @@ void FMacApplication::ClampCursorToConfinement()
         return;
     }
 
-    const IntVector2 CursorPosition = MacCursor->GetPosition();
-    const int32      ClampedX       = Math::Clamp(CursorPosition.X, CursorConfinementPosition.X, CursorConfinementPosition.X + CursorConfinementSize.X - 1);
-    const int32      ClampedY       = Math::Clamp(CursorPosition.Y, CursorConfinementPosition.Y, CursorConfinementPosition.Y + CursorConfinementSize.Y - 1);
+    const FIntVector2 CursorPosition = MacCursor->GetPosition();
+    const int32       ClampedX       = Math::Clamp(CursorPosition.X, CursorConfinementPosition.X, CursorConfinementPosition.X + CursorConfinementSize.X - 1);
+    const int32       ClampedY       = Math::Clamp(CursorPosition.Y, CursorConfinementPosition.Y, CursorConfinementPosition.Y + CursorConfinementSize.Y - 1);
 
     if (ClampedX != CursorPosition.X || ClampedY != CursorPosition.Y)
     {
@@ -678,10 +678,10 @@ void FMacApplication::QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) con
 
         FMonitorInfo& MonitorInfo = OutMonitorInfo[Index++];
         MonitorInfo.DeviceName     = Screen.DeviceName;
-        MonitorInfo.MainPosition   = IntVector2(MainTopLeft.x, MainTopLeft.y);
-        MonitorInfo.MainSize       = IntVector2(Screen.Frame.size.width, Screen.Frame.size.height);
-        MonitorInfo.WorkPosition   = IntVector2(WorkTopLeft.x, WorkTopLeft.y);
-        MonitorInfo.WorkSize       = IntVector2(Screen.VisibleFrame.size.width, Screen.VisibleFrame.size.height);
+        MonitorInfo.MainPosition   = FIntVector2(MainTopLeft.x, MainTopLeft.y);
+        MonitorInfo.MainSize       = FIntVector2(Screen.Frame.size.width, Screen.Frame.size.height);
+        MonitorInfo.WorkPosition   = FIntVector2(WorkTopLeft.x, WorkTopLeft.y);
+        MonitorInfo.WorkSize       = FIntVector2(Screen.VisibleFrame.size.width, Screen.VisibleFrame.size.height);
         MonitorInfo.bIsPrimary     = Screen.bIsPrimary;
         MonitorInfo.DisplayDPI     = Screen.DisplayDPI;
         MonitorInfo.DisplayScaling = Screen.BackingScaleFactor;
@@ -797,7 +797,7 @@ void FMacApplication::DeferEvent(NSObject* EventObject)
                 case NSEventTypeScrollWheel:
                 {
                     NewDeferredEvent.ScrollPhase                = [CurrentEvent phase];
-                    NewDeferredEvent.ScrollDelta                = Vector2([CurrentEvent scrollingDeltaX], [CurrentEvent scrollingDeltaY]);
+                    NewDeferredEvent.ScrollDelta                = FVector2([CurrentEvent scrollingDeltaX], [CurrentEvent scrollingDeltaY]);
                     NewDeferredEvent.bHasPreciseScrollingDeltas = [CurrentEvent hasPreciseScrollingDeltas];
                     break;
                 }
@@ -807,7 +807,7 @@ void FMacApplication::DeferEvent(NSObject* EventObject)
                 case NSEventTypeRightMouseDragged:
                 case NSEventTypeOtherMouseDragged:
                 {
-                    NewDeferredEvent.MouseDelta = Vector2([CurrentEvent deltaX], [CurrentEvent deltaY]);
+                    NewDeferredEvent.MouseDelta = FVector2([CurrentEvent deltaX], [CurrentEvent deltaY]);
                     break;
                 }
 
@@ -1199,7 +1199,7 @@ NSPoint FMacApplication::UpdateCursorFromDeferredEvent(const FDeferredMacEvent& 
     const NSPoint MouseLocation  = DeferredEvent.MouseLocation;
     const NSPoint CursorPosition = ConvertCocoaPointToEngine(MouseLocation.x, MouseLocation.y);
 
-    MacCursor->UpdateCursorPosition(IntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y)));
+    MacCursor->UpdateCursorPosition(FIntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y)));
     return CursorPosition;
 }
 
@@ -1403,11 +1403,11 @@ void FMacApplication::ProcessWindowResized(const FDeferredMacEvent& DeferredEven
     const int32 PositionX = static_cast<int32>(ContentFrame.origin.x);
     const int32 PositionY = static_cast<int32>(ContentFrame.origin.y);
     
-    const IntVector2 CachedPosition = DeferredEvent.Window->GetCachedPosition();
+    const FIntVector2 CachedPosition = DeferredEvent.Window->GetCachedPosition();
     if (CachedPosition.X != PositionX || CachedPosition.Y != PositionY)
     {
         MessageHandler->OnWindowMoved(DeferredEvent.Window, PositionX, PositionY);
-        DeferredEvent.Window->SetCachedPosition(IntVector2(PositionX, PositionY));
+        DeferredEvent.Window->SetCachedPosition(FIntVector2(PositionX, PositionY));
     }
 
     MessageHandler->OnWindowResizing(DeferredEvent.Window, uint32(ContentFrame.size.width), uint32(ContentFrame.size.height));
@@ -1425,10 +1425,10 @@ void FMacApplication::ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent)
     const int32 PositionX = static_cast<int32>(ContentFrame.origin.x);
     const int32 PositionY = static_cast<int32>(ContentFrame.origin.y);
     
-    const IntVector2 CachedPosition = DeferredEvent.Window->GetCachedPosition();
+    const FIntVector2 CachedPosition = DeferredEvent.Window->GetCachedPosition();
     if (CachedPosition.X != PositionX || CachedPosition.Y != PositionY)
     {
         MessageHandler->OnWindowMoved(DeferredEvent.Window, PositionX, PositionY);
-        DeferredEvent.Window->SetCachedPosition(IntVector2(PositionX, PositionY));
+        DeferredEvent.Window->SetCachedPosition(FIntVector2(PositionX, PositionY));
     }
 }

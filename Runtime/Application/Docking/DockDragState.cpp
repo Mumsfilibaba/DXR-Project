@@ -51,7 +51,7 @@ FDockDragState::FDockDragState()
 
 FDockDragState::~FDockDragState() = default;
 
-void FDockDragState::BeginDrag(const FString& PanelId, FDockingArea* InSourceArea, const IntVector2& ScreenPosition)
+void FDockDragState::BeginDrag(const FString& PanelId, FDockingArea* InSourceArea, const FIntVector2& ScreenPosition)
 {
     if (PanelId.IsEmpty())
     {
@@ -98,7 +98,7 @@ void FDockDragState::InvalidateDropZones() const
     }
 }
 
-void FDockDragState::UpdateDrag(const IntVector2& ScreenPosition)
+void FDockDragState::UpdateDrag(const FIntVector2& ScreenPosition)
 {
     CursorPosition = ScreenPosition;
 
@@ -150,7 +150,7 @@ void FDockDragState::EndDrag()
     const FString        TargetId     = TargetPanelId;
     const EDockDirection Direction    = TargetDirection;
     const int32          TabIndex     = TargetTabIndex;
-    const IntVector2     DropPosition = CursorPosition;
+    const FIntVector2    DropPosition = CursorPosition;
 
     DraggedPanelId.Clear();
     DraggedPanelLabel.Clear();

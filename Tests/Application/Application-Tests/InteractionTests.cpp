@@ -20,15 +20,15 @@ public:
     {
     }
 
-    virtual IntVector2 ComputeDesiredSize() const override
+    virtual FIntVector2 ComputeDesiredSize() const override
     {
         return DesiredSize;
     }
 
-    int32      ClickCount;
-    int32      StateChangeCount;
-    int32      DragCount;
-    IntVector2 DesiredSize;
+    int32       ClickCount;
+    int32       StateChangeCount;
+    int32       DragCount;
+    FIntVector2 DesiredSize;
 
 protected:
     virtual void OnClicked() override
@@ -57,22 +57,22 @@ static TSharedPtr<FCountingInteractiveElement> CreateElement(const FRectangle& B
 }
 
 /** @brief A move, enter or leave, which carries a position but no button. */
-static FCursorEvent MakeMoveEvent(EInputEventType Type, const IntVector2& ClientPosition)
+static FCursorEvent MakeMoveEvent(EInputEventType Type, const FIntVector2& ClientPosition)
 {
-    return FCursorEvent(Type, ClientPosition, IntVector2(0, 0), FModifierKeyState());
+    return FCursorEvent(Type, ClientPosition, FIntVector2(0, 0), FModifierKeyState());
 }
 
 /** @brief A press or a release of one button at a position. */
-static FCursorEvent MakeButtonEvent(EInputEventType Type, const IntVector2& ClientPosition, FKey Key)
+static FCursorEvent MakeButtonEvent(EInputEventType Type, const FIntVector2& ClientPosition, FKey Key)
 {
-    return FCursorEvent(Type, Key, ClientPosition, IntVector2(0, 0), FModifierKeyState(), Type == EInputEventType::MouseButtonDown);
+    return FCursorEvent(Type, Key, ClientPosition, FIntVector2(0, 0), FModifierKeyState(), Type == EInputEventType::MouseButtonDown);
 }
 
 bool InteractionState_Test()
 {
     TEST_BEGIN();
 
-    TSharedPtr<FCountingInteractiveElement> Element = CreateElement(FRectangle(IntVector2(10, 10), 100, 30));
+    TSharedPtr<FCountingInteractiveElement> Element = CreateElement(FRectangle(FIntVector2(10, 10), 100, 30));
 
     TEST_SECTION("A fresh element is enabled, unhovered and unpressed");
     TEST_EXPECT(Element->IsEnabled());
@@ -81,17 +81,17 @@ bool InteractionState_Test()
     TEST_EXPECT(Element->GetInteractionState() == EInteractionState::Normal);
 
     TEST_SECTION("Entering hovers it and leaving takes the hover away again");
-    Element->OnMouseEntered(MakeMoveEvent(EInputEventType::MouseEntered, IntVector2(50, 20)));
+    Element->OnMouseEntered(MakeMoveEvent(EInputEventType::MouseEntered, FIntVector2(50, 20)));
     TEST_EXPECT(Element->IsHovered());
     TEST_EXPECT(Element->GetInteractionState() == EInteractionState::Hovered);
 
-    Element->OnMouseLeft(MakeMoveEvent(EInputEventType::MouseLeft, IntVector2(500, 500)));
+    Element->OnMouseLeft(MakeMoveEvent(EInputEventType::MouseLeft, FIntVector2(500, 500)));
     TEST_EXPECT(!Element->IsHovered());
     TEST_EXPECT(Element->GetInteractionState() == EInteractionState::Normal);
 
     TEST_SECTION("Pressed outranks hovered, since that is what the eye reads first");
-    Element->OnMouseEntered(MakeMoveEvent(EInputEventType::MouseEntered, IntVector2(50, 20)));
-    Element->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(50, 20), Keys::MouseButtonLeft));
+    Element->OnMouseEntered(MakeMoveEvent(EInputEventType::MouseEntered, FIntVector2(50, 20)));
+    Element->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(50, 20), Keys::MouseButtonLeft));
     TEST_EXPECT(Element->IsPressed());
     TEST_EXPECT(Element->GetInteractionState() == EInteractionState::Pressed);
 
@@ -104,8 +104,8 @@ bool InteractionState_Test()
 
     TEST_SECTION("A disabled element ignores input rather than queueing it up");
     const int32 ClicksBefore = Element->ClickCount;
-    Element->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(50, 20), Keys::MouseButtonLeft));
-    Element->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(50, 20), Keys::MouseButtonLeft));
+    Element->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(50, 20), Keys::MouseButtonLeft));
+    Element->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(50, 20), Keys::MouseButtonLeft));
     TEST_EXPECT_EQ(Element->ClickCount, ClicksBefore);
 
     TEST_SECTION("Enabling it again leaves it unhovered until the cursor says otherwise");
@@ -117,8 +117,8 @@ bool InteractionState_Test()
     Element->SetEnabled(true);
     TEST_EXPECT_EQ(Element->StateChangeCount, ChangesBefore);
 
-    Element->OnMouseEntered(MakeMoveEvent(EInputEventType::MouseEntered, IntVector2(50, 20)));
-    Element->OnMouseEntered(MakeMoveEvent(EInputEventType::MouseEntered, IntVector2(51, 20)));
+    Element->OnMouseEntered(MakeMoveEvent(EInputEventType::MouseEntered, FIntVector2(50, 20)));
+    Element->OnMouseEntered(MakeMoveEvent(EInputEventType::MouseEntered, FIntVector2(51, 20)));
     TEST_EXPECT_EQ(Element->StateChangeCount, ChangesBefore + 1);
 
     TEST_END();
@@ -128,13 +128,13 @@ bool InteractionClick_Test()
 {
     TEST_BEGIN();
 
-    const FRectangle Bounds(IntVector2(10, 10), 100, 30);
+    const FRectangle Bounds(FIntVector2(10, 10), 100, 30);
 
     TEST_SECTION("A press and a release both inside count as one click");
     TSharedPtr<FCountingInteractiveElement> Element = CreateElement(Bounds);
 
-    Element->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(50, 20), Keys::MouseButtonLeft));
-    Element->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(60, 25), Keys::MouseButtonLeft));
+    Element->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(50, 20), Keys::MouseButtonLeft));
+    Element->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(60, 25), Keys::MouseButtonLeft));
 
     TEST_EXPECT_EQ(Element->ClickCount, 1);
     TEST_EXPECT(!Element->IsPressed());
@@ -142,8 +142,8 @@ bool InteractionClick_Test()
     TEST_SECTION("Dragging off the element before releasing cancels the click");
     TSharedPtr<FCountingInteractiveElement> Dragged = CreateElement(Bounds);
 
-    Dragged->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(50, 20), Keys::MouseButtonLeft));
-    Dragged->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(500, 500), Keys::MouseButtonLeft));
+    Dragged->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(50, 20), Keys::MouseButtonLeft));
+    Dragged->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(500, 500), Keys::MouseButtonLeft));
 
     TEST_EXPECT_EQ(Dragged->ClickCount, 0);
     TEST_EXPECT(!Dragged->IsPressed());
@@ -151,26 +151,26 @@ bool InteractionClick_Test()
     TEST_SECTION("A release with no press before it does nothing");
     TSharedPtr<FCountingInteractiveElement> Stray = CreateElement(Bounds);
 
-    const FEventResponse StrayResponse = Stray->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(50, 20), Keys::MouseButtonLeft));
+    const FEventResponse StrayResponse = Stray->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(50, 20), Keys::MouseButtonLeft));
     TEST_EXPECT(!StrayResponse.IsEventHandled());
     TEST_EXPECT_EQ(Stray->ClickCount, 0);
 
     TEST_SECTION("The right button is left to whatever wants to open a context menu with it");
     TSharedPtr<FCountingInteractiveElement> RightClicked = CreateElement(Bounds);
 
-    const FEventResponse RightResponse = RightClicked->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(50, 20), Keys::MouseButtonRight));
+    const FEventResponse RightResponse = RightClicked->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(50, 20), Keys::MouseButtonRight));
     TEST_EXPECT(!RightResponse.IsEventHandled());
     TEST_EXPECT(!RightClicked->IsPressed());
 
     TEST_SECTION("A move while held is reported as a drag, and one while idle is not");
     TSharedPtr<FCountingInteractiveElement> Scrubbed = CreateElement(Bounds);
 
-    Scrubbed->OnMouseMove(MakeMoveEvent(EInputEventType::MouseMoved, IntVector2(50, 20)));
+    Scrubbed->OnMouseMove(MakeMoveEvent(EInputEventType::MouseMoved, FIntVector2(50, 20)));
     TEST_EXPECT_EQ(Scrubbed->DragCount, 0);
 
-    Scrubbed->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(50, 20), Keys::MouseButtonLeft));
-    Scrubbed->OnMouseMove(MakeMoveEvent(EInputEventType::MouseMoved, IntVector2(70, 20)));
-    Scrubbed->OnMouseMove(MakeMoveEvent(EInputEventType::MouseMoved, IntVector2(400, 20)));
+    Scrubbed->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(50, 20), Keys::MouseButtonLeft));
+    Scrubbed->OnMouseMove(MakeMoveEvent(EInputEventType::MouseMoved, FIntVector2(70, 20)));
+    Scrubbed->OnMouseMove(MakeMoveEvent(EInputEventType::MouseMoved, FIntVector2(400, 20)));
     TEST_EXPECT_EQ(Scrubbed->DragCount, 2);
 
     TEST_SECTION("Hover follows the cursor during a drag, since the leave event is held back while held");
@@ -186,14 +186,14 @@ bool InteractionCapture_Test()
 
     FScopedStubApplication Harness;
 
-    TSharedPtr<FWindow>                     Window  = Harness.CreateWindow(IntVector2(400, 300));
+    TSharedPtr<FWindow>                     Window  = Harness.CreateWindow(FIntVector2(400, 300));
     TSharedPtr<FCountingInteractiveElement> Element = MakeSharedPtr<FCountingInteractiveElement>();
 
     Window->SetContent(Element);
     FApplication::LayoutWindow(Window);
 
     TEST_SECTION("Hovering runs through the real enter path rather than being set by hand");
-    Harness.MoveCursor(IntVector2(50, 20));
+    Harness.MoveCursor(FIntVector2(50, 20));
     TEST_EXPECT(Element->IsHovered());
 
     TEST_SECTION("A press takes capture, so the application routes to the element wherever the cursor goes");
@@ -202,7 +202,7 @@ bool InteractionCapture_Test()
     TEST_EXPECT(Harness.GetApplication().HasMouseCapture());
 
     TEST_SECTION("A release outside the element still reaches it, and is not counted as a click");
-    Harness.MoveCursor(IntVector2(5000, 5000));
+    Harness.MoveCursor(FIntVector2(5000, 5000));
     Harness.ReleaseMouseButton();
 
     TEST_EXPECT(!Element->IsPressed());
@@ -212,7 +212,7 @@ bool InteractionCapture_Test()
     TEST_EXPECT(!Harness.GetApplication().HasMouseCapture());
 
     TEST_SECTION("A press and release in place clicks");
-    Harness.MoveCursor(IntVector2(50, 20));
+    Harness.MoveCursor(FIntVector2(50, 20));
     Harness.PressMouseButton(Window);
     Harness.ReleaseMouseButton();
 
@@ -249,7 +249,7 @@ bool InteractionKeyboard_Test()
 {
     TEST_BEGIN();
 
-    TSharedPtr<FCountingInteractiveElement> Element = CreateElement(FRectangle(IntVector2(0, 0), 100, 30));
+    TSharedPtr<FCountingInteractiveElement> Element = CreateElement(FRectangle(FIntVector2(0, 0), 100, 30));
 
     TEST_SECTION("An enabled element takes the keyboard and a disabled one does not");
     TEST_EXPECT(Element->SupportsKeyboardFocus());

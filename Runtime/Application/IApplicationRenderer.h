@@ -48,7 +48,7 @@ struct IApplicationRenderer
      * @param DPIScale The scale the element was arranged at.
      * @return The texture, or null when there is no RHI to draw with or the subtree drew nothing.
      */
-    virtual FRHITextureRef RenderElementToTexture(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, float DPIScale) = 0;
+    virtual FRHITextureRef RenderElementToTexture(const TSharedPtr<FVisualElement>& Element, const FIntVector2& Size, float DPIScale) = 0;
 
     /**
      * @brief Takes over the last reference to a texture a brush was drawn with, holding it the few frames it

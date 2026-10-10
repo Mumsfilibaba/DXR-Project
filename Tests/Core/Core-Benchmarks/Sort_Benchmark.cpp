@@ -171,7 +171,7 @@ void Sort_Benchmark()
         LOG_INFO("\nVector3 random n=65536");
         const uint32 Trials = LargeTrials;
         FRandom Random(99);
-        TArray<Vector3> Source;
+        TArray<FVector3> Source;
         Source.Reserve(65536);
         for (int32 Index = 0; Index < 65536; ++Index)
         {
@@ -182,9 +182,9 @@ void Sort_Benchmark()
             FClock Clock;
             for (uint32 Trial = 0; Trial < Trials; ++Trial)
             {
-                TArray<Vector3> Values = Source;
+                TArray<FVector3> Values = Source;
                 FScopedClock ScopedClock(Clock);
-                Algorithm::Sort(Values, [](const Vector3& Left, const Vector3& Right)
+                Algorithm::Sort(Values, [](const FVector3& Left, const FVector3& Right)
                 {
                     return Left.X < Right.X;
                 });
@@ -195,9 +195,9 @@ void Sort_Benchmark()
             FClock Clock;
             for (uint32 Trial = 0; Trial < Trials; ++Trial)
             {
-                TArray<Vector3> Values = Source;
+                TArray<FVector3> Values = Source;
                 FScopedClock ScopedClock(Clock);
-                std::sort(Values.Data(), Values.Data() + Values.Size(), [](const Vector3& Left, const Vector3& Right)
+                std::sort(Values.Data(), Values.Data() + Values.Size(), [](const FVector3& Left, const FVector3& Right)
                 {
                     return Left.X < Right.X;
                 });

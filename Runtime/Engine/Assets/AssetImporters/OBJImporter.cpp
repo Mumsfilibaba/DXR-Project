@@ -127,7 +127,7 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
             MaterialData.Routes[EMaterialScalar::Opacity] = FMaterialSourceRoute(EMaterialTexture::AlphaMask, ETextureChannel::R);
         }
 
-        MaterialData.Diffuse       = Vector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
+        MaterialData.Diffuse       = FVector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
         MaterialData.Metallic      = Mat.ambient[0];
         MaterialData.AmbientFactor = 1.0f;
         MaterialData.Roughness     = 1.0f;
@@ -199,19 +199,19 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
                 FSourceVertex Vertex;
 
                 const uint32 PositionIndex = NumPositionsPerTriangle * Index.vertex_index;
-                Vertex.Position = Vector3(Attributes.vertices[PositionIndex + 0], Attributes.vertices[PositionIndex + 1], Attributes.vertices[PositionIndex + 2]);
+                Vertex.Position = FVector3(Attributes.vertices[PositionIndex + 0], Attributes.vertices[PositionIndex + 1], Attributes.vertices[PositionIndex + 2]);
 
                 if (Index.normal_index >= 0)
                 {
                     const uint32 NormalIndex = NumNormalsPerTriangle * Index.normal_index;
-                    Vertex.Normal = Vector3(Attributes.normals[NormalIndex + 0], Attributes.normals[NormalIndex + 1], Attributes.normals[NormalIndex + 2]);
+                    Vertex.Normal = FVector3(Attributes.normals[NormalIndex + 0], Attributes.normals[NormalIndex + 1], Attributes.normals[NormalIndex + 2]);
                     Vertex.Normal.Normalize();
                 }
 
                 if (Index.texcoord_index >= 0)
                 {
                     const uint32 TexCoordIndex = NumTexCoordsPerTriangle * Index.texcoord_index;
-                    Vertex.TexCoord = Vector2(Attributes.texcoords[TexCoordIndex + 0], 1.0f - Attributes.texcoords[TexCoordIndex + 1]);
+                    Vertex.TexCoord = FVector2(Attributes.texcoords[TexCoordIndex + 0], 1.0f - Attributes.texcoords[TexCoordIndex + 1]);
                 }
 
                 uint32 VertexIndex;

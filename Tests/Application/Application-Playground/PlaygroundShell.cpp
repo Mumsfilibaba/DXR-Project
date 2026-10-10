@@ -38,7 +38,7 @@ void FPlaygroundShell::Initialize(const FPlaygroundFonts& Fonts, const TArray<FP
     TSharedPtr<FVerticalBox> SidebarBox = FVerticalBox::Create();
 
     FDrawCanvas::FDesc WidthAnchorDesc;
-    WidthAnchorDesc.DesiredSize = IntVector2(SidebarWidth, 0);
+    WidthAnchorDesc.DesiredSize = FIntVector2(SidebarWidth, 0);
     SidebarBox->AddSlot(FDrawCanvas::Create(WidthAnchorDesc));
 
     FTextBlock::FDesc TitleDesc;

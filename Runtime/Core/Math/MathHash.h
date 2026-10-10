@@ -36,9 +36,9 @@ struct THash<FFloat64>
 };
 
 template<>
-struct THash<Int16Vector2>
+struct THash<FInt16Vector2>
 {
-    static uint64 GetHash(const Int16Vector2& Value)
+    static uint64 GetHash(const FInt16Vector2& Value)
     {
         uint64 Result = THash<int16>::GetHash(Value.X);
         HashCombine<int16>(Result, Value.Y);
@@ -47,9 +47,9 @@ struct THash<Int16Vector2>
 };
 
 template<>
-struct THash<Int16Vector3>
+struct THash<FInt16Vector3>
 {
-    static uint64 GetHash(const Int16Vector3& Value)
+    static uint64 GetHash(const FInt16Vector3& Value)
     {
         uint64 Result = THash<int16>::GetHash(Value.X);
         HashCombine<int16>(Result, Value.Y);
@@ -59,9 +59,9 @@ struct THash<Int16Vector3>
 };
 
 template<>
-struct THash<Int16Vector4>
+struct THash<FInt16Vector4>
 {
-    static uint64 GetHash(const Int16Vector4& Value)
+    static uint64 GetHash(const FInt16Vector4& Value)
     {
         uint64 Result = THash<int16>::GetHash(Value.X);
         HashCombine<int16>(Result, Value.Y);
@@ -72,9 +72,9 @@ struct THash<Int16Vector4>
 };
 
 template<>
-struct THash<IntVector2>
+struct THash<FIntVector2>
 {
-    static uint64 GetHash(const IntVector2& Value)
+    static uint64 GetHash(const FIntVector2& Value)
     {
         uint64 Result = THash<int32>::GetHash(Value.X);
         HashCombine<int32>(Result, Value.Y);
@@ -83,9 +83,9 @@ struct THash<IntVector2>
 };
 
 template<>
-struct THash<IntVector3>
+struct THash<FIntVector3>
 {
-    static uint64 GetHash(const IntVector3& Value)
+    static uint64 GetHash(const FIntVector3& Value)
     {
         uint64 Result = THash<int32>::GetHash(Value.X);
         HashCombine<int32>(Result, Value.Y);
@@ -95,9 +95,9 @@ struct THash<IntVector3>
 };
 
 template<>
-struct THash<IntVector4>
+struct THash<FIntVector4>
 {
-    static uint64 GetHash(const IntVector4& Value)
+    static uint64 GetHash(const FIntVector4& Value)
     {
         uint64 Result = THash<int32>::GetHash(Value.X);
         HashCombine<int32>(Result, Value.Y);
@@ -108,9 +108,9 @@ struct THash<IntVector4>
 };
 
 template<>
-struct THash<Vector2>
+struct THash<FVector2>
 {
-    static uint64 GetHash(const Vector2& Value)
+    static uint64 GetHash(const FVector2& Value)
     {
         uint64 Result = THash<float>::GetHash(Value.X);
         HashCombine<float>(Result, Value.Y);
@@ -119,9 +119,9 @@ struct THash<Vector2>
 };
 
 template<>
-struct THash<Vector3>
+struct THash<FVector3>
 {
-    static uint64 GetHash(const Vector3& Value)
+    static uint64 GetHash(const FVector3& Value)
     {
         uint64 Result = THash<float>::GetHash(Value.X);
         HashCombine<float>(Result, Value.Y);
@@ -131,9 +131,9 @@ struct THash<Vector3>
 };
 
 template<>
-struct THash<Vector4>
+struct THash<FVector4>
 {
-    static uint64 GetHash(const Vector4& Value)
+    static uint64 GetHash(const FVector4& Value)
     {
         uint64 Result = THash<float>::GetHash(Value.X);
         HashCombine<float>(Result, Value.Y);

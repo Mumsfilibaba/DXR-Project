@@ -38,9 +38,9 @@ void FScrollBox::Initialize()
     ScrollBar->SetParentElement(AsWeakPtr());
 }
 
-IntVector2 FScrollBox::ComputeDesiredSize() const
+FIntVector2 FScrollBox::ComputeDesiredSize() const
 {
-    IntVector2 DesiredSize(Padding.GetTotalHorizontal(), Padding.GetTotalVertical());
+    FIntVector2 DesiredSize(Padding.GetTotalHorizontal(), Padding.GetTotalVertical());
     if (Content)
     {
         DesiredSize.X += Content->GetCachedDesiredSize().X;
@@ -117,7 +117,7 @@ int32 FScrollBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
     return MaxLayerId;
 }
 
-void FScrollBox::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+void FScrollBox::HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath)
 {
     if (IsScrollBarVisible() && ScrollBar->GetContentRectangle().EncapsulatesPoint(ClientPosition))
     {

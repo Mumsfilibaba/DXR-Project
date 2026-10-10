@@ -37,7 +37,7 @@ static const EEditorLightType GPlaceableLightTypes[] =
 };
 
 /** @brief Called with the row that was right-clicked, which is null when the click landed below the rows. */
-DECLARE_DELEGATE(FOnHierarchyContextMenu, const TSharedPtr<FTreeItem>& /*Item*/, const IntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnHierarchyContextMenu, const TSharedPtr<FTreeItem>& /*Item*/, const FIntVector2& /*ScreenPosition*/);
 
 /** @brief Called when the Delete key went down on the tree. */
 DECLARE_DELEGATE(FOnHierarchyDeleteRequested);
@@ -58,7 +58,7 @@ public:
     virtual ~FEditorSceneHierarchyView();
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override final;
+    virtual FIntVector2 ComputeDesiredSize() const override final;
     virtual void OnArrange(const FRectangle& AllottedBounds) override final;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final;
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override final;
@@ -109,7 +109,7 @@ private:
     void Initialize(const TSharedPtr<FTreeView>& InTreeView, const TSharedPtr<IFontFace>& InFont);
     void CommitRename(const FString& NewName);
     void ReleaseRenameField();
-    void HandleDrop(const FDragDropPayload& Payload, const IntVector2& ScreenPosition);
+    void HandleDrop(const FDragDropPayload& Payload, const FIntVector2& ScreenPosition);
     void ClearDragState();
 
     NODISCARD EKeyInterceptResult HandleRenameFieldKeyDown(const FKeyEvent& KeyEvent);
@@ -203,7 +203,7 @@ static bool CanDropItemOn(const TSharedPtr<FTreeItem>& Item, const TSharedPtr<FT
     return Actor->GetParentActor() != nullptr || Actor->GetFilter() != nullptr;
 }
 
-static IntVector2 ScreenToClient(const TSharedPtr<FVisualElement>& Element, const IntVector2& ScreenPosition)
+static FIntVector2 ScreenToClient(const TSharedPtr<FVisualElement>& Element, const FIntVector2& ScreenPosition)
 {
     const FRectangle ScreenBounds = FMenuStack::GetScreenBounds(Element);
     if (ScreenBounds.IsEmpty())
@@ -214,7 +214,7 @@ static IntVector2 ScreenToClient(const TSharedPtr<FVisualElement>& Element, cons
     return Element->GetContentRectangle().Position + (ScreenPosition - ScreenBounds.Position);
 }
 
-static Vector3 ResolvePlaceActorLocation(FEditorEngine* EditorEngine)
+static FVector3 ResolvePlaceActorLocation(FEditorEngine* EditorEngine)
 {
     constexpr float DefaultDistance = 10.0f;
 
@@ -226,7 +226,7 @@ static Vector3 ResolvePlaceActorLocation(FEditorEngine* EditorEngine)
         }
     }
 
-    return Vector3(0.0f, 0.0f, 0.0f);
+    return FVector3(0.0f, 0.0f, 0.0f);
 }
 
 static TSharedPtr<FMenu> BuildPlaceActorMenu(FEditorEngine* EditorEngine)
@@ -347,9 +347,9 @@ void FEditorSceneHierarchyView::Initialize(const TSharedPtr<FTreeView>& InTreeVi
     FDragDropService::Get().RegisterTarget(AsSharedPtr(), FOnDragDropped::CreateRaw(this, &FEditorSceneHierarchyView::HandleDrop), OnOver);
 }
 
-IntVector2 FEditorSceneHierarchyView::ComputeDesiredSize() const
+FIntVector2 FEditorSceneHierarchyView::ComputeDesiredSize() const
 {
-    return TreeView ? TreeView->GetCachedDesiredSize() : IntVector2(0, 0);
+    return TreeView ? TreeView->GetCachedDesiredSize() : FIntVector2(0, 0);
 }
 
 void FEditorSceneHierarchyView::OnArrange(const FRectangle& AllottedBounds)
@@ -464,7 +464,7 @@ FEventResponse FEditorSceneHierarchyView::OnMouseButtonDown(const FCursorEvent& 
         CancelRename();
     }
 
-    const IntVector2            ClientPosition = CursorEvent.GetClientPosition();
+    const FIntVector2           ClientPosition = CursorEvent.GetClientPosition();
     const TSharedPtr<FTreeItem> Item           = TreeView ? TreeView->FindItemAt(ClientPosition) : nullptr;
 
     OnContextMenu.ExecuteIfBound(Item, CursorEvent.GetScreenPosition());
@@ -479,8 +479,8 @@ FEventResponse FEditorSceneHierarchyView::OnMouseMove(const FCursorEvent& Cursor
         return FEventResponse::Unhandled();
     }
 
-    const IntVector2 ScreenPosition = CursorEvent.GetScreenPosition();
-    const IntVector2 ClientPosition = ScreenToClient(AsSharedPtr(), ScreenPosition);
+    const FIntVector2 ScreenPosition = CursorEvent.GetScreenPosition();
+    const FIntVector2 ClientPosition = ScreenToClient(AsSharedPtr(), ScreenPosition);
 
     DropTargetItem      = TreeView ? TreeView->FindItemAt(ClientPosition) : nullptr;
     bIsCursorInsideView = GetContentRectangle().EncapsulatesPoint(ClientPosition);
@@ -653,7 +653,7 @@ EKeyInterceptResult FEditorSceneHierarchyView::HandleRenameFieldKeyDown(const FK
     return EKeyInterceptResult::NotHandled;
 }
 
-void FEditorSceneHierarchyView::HandleDrop(const FDragDropPayload& Payload, const IntVector2& ScreenPosition)
+void FEditorSceneHierarchyView::HandleDrop(const FDragDropPayload& Payload, const FIntVector2& ScreenPosition)
 {
     if (Payload.TypeId != GActorDragDropPayloadId || DraggedItems.IsEmpty())
     {
@@ -1227,7 +1227,7 @@ void FEditorSceneHierarchyPanel::OnSearchTextChanged(const FString& SearchText)
     TreeView->SetFilterText(SearchText);
 }
 
-void FEditorSceneHierarchyPanel::OnRowContextMenu(const TSharedPtr<FTreeItem>& Item, const IntVector2& ScreenPosition)
+void FEditorSceneHierarchyPanel::OnRowContextMenu(const TSharedPtr<FTreeItem>& Item, const FIntVector2& ScreenPosition)
 {
     if (!FApplication::IsInitialized())
     {

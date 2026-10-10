@@ -61,7 +61,7 @@ public:
         bWindowWasStillAlive = InWindow && InWindow->GetPlatformWindow()->IsValid();
     }
 
-    virtual FRHITextureRef RenderElementToTexture(const TSharedPtr<FVisualElement>&, const IntVector2&, float) override final
+    virtual FRHITextureRef RenderElementToTexture(const TSharedPtr<FVisualElement>&, const FIntVector2&, float) override final
     {
         return nullptr;
     }
@@ -108,7 +108,7 @@ bool ApplicationRendererWindowPass_Test()
     Application->SetRenderer(Renderer);
     TEST_EXPECT(Application->GetRenderer() == Renderer);
 
-    TSharedPtr<FWindow> Window = CreateStubWindow(Application, IntVector2(800, 600));
+    TSharedPtr<FWindow> Window = CreateStubWindow(Application, FIntVector2(800, 600));
     TEST_EXPECT(Window->GetPlatformWindow() != nullptr);
 
     FBorder::FDesc BorderDesc;
@@ -179,13 +179,13 @@ bool ApplicationRendererExternalSurface_Test()
     Application->SetRenderer(Renderer);
 
     TEST_SECTION("A window's surface is the renderer's unless the window says otherwise");
-    TSharedPtr<FWindow> Owned = CreateStubWindow(Application, IntVector2(400, 300));
+    TSharedPtr<FWindow> Owned = CreateStubWindow(Application, FIntVector2(400, 300));
     TEST_EXPECT(!Owned->HasExternalSurface());
 
     TEST_SECTION("An ImGui viewport says otherwise, which is what keeps a second swap chain off its native window");
     FWindow::FDesc ExternalDesc;
     ExternalDesc.Title               = "Viewport";
-    ExternalDesc.Size                = IntVector2(400, 300);
+    ExternalDesc.Size                = FIntVector2(400, 300);
     ExternalDesc.bHasExternalSurface = true;
 
     TSharedPtr<FWindow> External = FWindow::Create(ExternalDesc);
@@ -217,8 +217,8 @@ bool ApplicationRendererWindowLifetime_Test()
 
     Application->SetRenderer(Renderer);
 
-    TSharedPtr<FWindow> First  = CreateStubWindow(Application, IntVector2(400, 300));
-    TSharedPtr<FWindow> Second = CreateStubWindow(Application, IntVector2(400, 300));
+    TSharedPtr<FWindow> First  = CreateStubWindow(Application, FIntVector2(400, 300));
+    TSharedPtr<FWindow> Second = CreateStubWindow(Application, FIntVector2(400, 300));
 
     Application->Tick(0.0f);
 
@@ -257,12 +257,12 @@ bool ApplicationRendererPopupSurface_Test()
     FUIStyle::ResetDefault();
 
     const float         MenuRadius     = FUIStyle::GetDefault().Menu.CornerRadius;
-    TSharedPtr<FWindow> Parent         = Application.CreateWindow(IntVector2(800, 600));
+    TSharedPtr<FWindow> Parent         = Application.CreateWindow(FIntVector2(800, 600));
     const float         ExpectedRadius = (Popups::ResolveCornerRounding() == EPopupCornerRounding::Content) ? MenuRadius : 0.0f;
 
     TEST_SECTION("With no renderer at all a popup still opens, and its content rounds by what the platform and RHI allow");
     TSharedPtr<FMenu>   NoRendererContent = FMenu::Create();
-    TSharedPtr<FWindow> NoRendererPopup   = Popups::Open(Parent, FRectangle(IntVector2(0, 0), 200, 100), NoRendererContent);
+    TSharedPtr<FWindow> NoRendererPopup   = Popups::Open(Parent, FRectangle(FIntVector2(0, 0), 200, 100), NoRendererContent);
 
     TEST_EXPECT(NoRendererPopup != nullptr);
     TEST_EXPECT_EQ(NoRendererContent->GetStyle().CornerRadius, ExpectedRadius);
@@ -274,7 +274,7 @@ bool ApplicationRendererPopupSurface_Test()
     Application.GetApplication().SetRenderer(Renderer);
 
     TSharedPtr<FMenu>   NoSurfaceContent = FMenu::Create();
-    TSharedPtr<FWindow> NoSurfacePopup   = Popups::Open(Parent, FRectangle(IntVector2(0, 0), 200, 100), NoSurfaceContent);
+    TSharedPtr<FWindow> NoSurfacePopup   = Popups::Open(Parent, FRectangle(FIntVector2(0, 0), 200, 100), NoSurfaceContent);
 
     TEST_EXPECT(NoSurfacePopup != nullptr);
     TEST_EXPECT_EQ(NoSurfaceContent->GetStyle().CornerRadius, ExpectedRadius);

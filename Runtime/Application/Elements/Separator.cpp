@@ -41,11 +41,11 @@ void FSeparator::Initialize(const FDesc& Desc)
     Color       = Desc.Color;
 }
 
-IntVector2 FSeparator::ComputeDesiredSize() const
+FIntVector2 FSeparator::ComputeDesiredSize() const
 {
     return Orientation == EOrientation::Horizontal
-        ? IntVector2(Padding.GetTotalHorizontal(), Thickness + Padding.GetTotalVertical())
-        : IntVector2(Thickness + Padding.GetTotalHorizontal(), Padding.GetTotalVertical());
+        ? FIntVector2(Padding.GetTotalHorizontal(), Thickness + Padding.GetTotalVertical())
+        : FIntVector2(Thickness + Padding.GetTotalHorizontal(), Padding.GetTotalVertical());
 }
 
 int32 FSeparator::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const

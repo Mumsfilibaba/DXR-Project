@@ -157,8 +157,8 @@ ENUM_CLASS_OPERATORS(ENormalMapFlags);
 struct FMaterialHLSL
 {
     // 0-16 
-    Vector3 Albedo    = Vector3(1.0f);
-    float   Roughness = 1.0f;
+    FVector3 Albedo    = FVector3(1.0f);
+    float    Roughness = 1.0f;
     
     // 16-32
     float Metallic            = 0.0f;

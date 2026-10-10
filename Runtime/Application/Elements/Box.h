@@ -137,7 +137,7 @@ public:
 protected:
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
 
-    NODISCARD static FRectangle ArrangeInSlot(const FRectangle& SlotBounds, const IntVector2& ChildDesiredSize, const FBoxSlot& Slot);
+    NODISCARD static FRectangle ArrangeInSlot(const FRectangle& SlotBounds, const FIntVector2& ChildDesiredSize, const FBoxSlot& Slot);
 
     TArray<FBoxSlot> Slots;
 };
@@ -153,13 +153,13 @@ public:
     }
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
 
 protected:
     using FAxis = TLayoutAxis<Orientation>;
 
-    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+    virtual void HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath) override;
 
     struct FArrangedSlot
     {
@@ -191,7 +191,7 @@ public:
 };
 
 template<EOrientation Orientation>
-IntVector2 TStackBox<Orientation>::ComputeDesiredSize() const
+FIntVector2 TStackBox<Orientation>::ComputeDesiredSize() const
 {
     int32 MainExtent  = 0;
     int32 CrossExtent = 0;
@@ -203,7 +203,7 @@ IntVector2 TStackBox<Orientation>::ComputeDesiredSize() const
             continue;
         }
 
-        const IntVector2 ChildSize = Slot.Element->GetCachedDesiredSize();
+        const FIntVector2 ChildSize = Slot.Element->GetCachedDesiredSize();
         MainExtent += FAxis::Main(ChildSize) + FAxis::MainTotal(Slot.Padding);
         CrossExtent = Math::Max(CrossExtent, FAxis::Cross(ChildSize) + FAxis::CrossTotal(Slot.Padding));
     }
@@ -251,7 +251,7 @@ void TStackBox<Orientation>::OnArrange(const FRectangle& AllottedBounds)
             continue;
         }
 
-        const IntVector2 ChildDesiredSize = Slot.Element->GetCachedDesiredSize();
+        const FIntVector2 ChildDesiredSize = Slot.Element->GetCachedDesiredSize();
 
         int32 Extent = 0;
         if (Slot.IsFillSlot())
@@ -274,7 +274,7 @@ void TStackBox<Orientation>::OnArrange(const FRectangle& AllottedBounds)
 }
 
 template<EOrientation Orientation>
-void TStackBox<Orientation>::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+void TStackBox<Orientation>::HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath)
 {
     if (HasHitTestOverflow())
     {

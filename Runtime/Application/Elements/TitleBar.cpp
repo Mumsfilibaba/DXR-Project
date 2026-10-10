@@ -64,7 +64,7 @@ FCaptionButton::FCaptionButton()
 
 FCaptionButton::~FCaptionButton() = default;
 
-IntVector2 FCaptionButton::ComputeDesiredSize() const
+FIntVector2 FCaptionButton::ComputeDesiredSize() const
 {
     return ButtonSize;
 }
@@ -146,7 +146,7 @@ int32 FCaptionButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
     {
         case ECaptionButtonKind::Minimize:
         {
-            const FRectangle Dash(IntVector2(Bounds.Position.X + (Bounds.Width - CAPTION_MAXIMIZE_SIZE) / 2, Bounds.Position.Y + Bounds.Height / 2),
+            const FRectangle Dash(FIntVector2(Bounds.Position.X + (Bounds.Width - CAPTION_MAXIMIZE_SIZE) / 2, Bounds.Position.Y + Bounds.Height / 2),
                 CAPTION_MAXIMIZE_SIZE, static_cast<int32>(CAPTION_GLYPH_THICKNESS));
 
             OutCommandList.AddBox(LayerId + 1, Dash, GlyphColor);
@@ -162,18 +162,18 @@ int32 FCaptionButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
 
             if (!bIsWindowMaximized)
             {
-                const FRectangle Square(IntVector2(GlyphLeft, GlyphTop), CAPTION_MAXIMIZE_SIZE, CAPTION_MAXIMIZE_SIZE);
+                const FRectangle Square(FIntVector2(GlyphLeft, GlyphTop), CAPTION_MAXIMIZE_SIZE, CAPTION_MAXIMIZE_SIZE);
                 OutCommandList.AddBoxOutline(LayerId + 1, Square, GlyphColor, CAPTION_GLYPH_THICKNESS, GlyphRadii);
                 break;
             }
 
-            const FRectangle FrontSquare(IntVector2(GlyphLeft, GlyphTop + CAPTION_RESTORE_SHIFT), CAPTION_RESTORE_SIZE, CAPTION_RESTORE_SIZE);
-            const FRectangle BackSquare(IntVector2(GlyphLeft + CAPTION_RESTORE_SHIFT, GlyphTop), CAPTION_RESTORE_SIZE, CAPTION_RESTORE_SIZE);
+            const FRectangle FrontSquare(FIntVector2(GlyphLeft, GlyphTop + CAPTION_RESTORE_SHIFT), CAPTION_RESTORE_SIZE, CAPTION_RESTORE_SIZE);
+            const FRectangle BackSquare(FIntVector2(GlyphLeft + CAPTION_RESTORE_SHIFT, GlyphTop), CAPTION_RESTORE_SIZE, CAPTION_RESTORE_SIZE);
 
             OutCommandList.AddBoxOutline(LayerId + 1, FrontSquare, GlyphColor, CAPTION_GLYPH_THICKNESS, GlyphRadii);
 
-            const FRectangle AboveFront(IntVector2(BackSquare.Position.X, BackSquare.Position.Y), BackSquare.Width, FrontSquare.Position.Y - BackSquare.Position.Y);
-            const FRectangle RightOfFront(IntVector2(FrontSquare.GetRight(), BackSquare.Position.Y), BackSquare.GetRight() - FrontSquare.GetRight(), BackSquare.Height);
+            const FRectangle AboveFront(FIntVector2(BackSquare.Position.X, BackSquare.Position.Y), BackSquare.Width, FrontSquare.Position.Y - BackSquare.Position.Y);
+            const FRectangle RightOfFront(FIntVector2(FrontSquare.GetRight(), BackSquare.Position.Y), BackSquare.GetRight() - FrontSquare.GetRight(), BackSquare.Height);
 
             for (const FRectangle& Visible : { AboveFront, RightOfFront })
             {
@@ -187,8 +187,8 @@ int32 FCaptionButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
 
         case ECaptionButtonKind::Close:
         {
-            OutCommandList.AddLine(LayerId + 1, Vector2(CenterX - Extent, CenterY - Extent), Vector2(CenterX + Extent, CenterY + Extent), GlyphColor, CAPTION_GLYPH_THICKNESS);
-            OutCommandList.AddLine(LayerId + 1, Vector2(CenterX + Extent, CenterY - Extent), Vector2(CenterX - Extent, CenterY + Extent), GlyphColor, CAPTION_GLYPH_THICKNESS);
+            OutCommandList.AddLine(LayerId + 1, FVector2(CenterX - Extent, CenterY - Extent), FVector2(CenterX + Extent, CenterY + Extent), GlyphColor, CAPTION_GLYPH_THICKNESS);
+            OutCommandList.AddLine(LayerId + 1, FVector2(CenterX + Extent, CenterY - Extent), FVector2(CenterX - Extent, CenterY + Extent), GlyphColor, CAPTION_GLYPH_THICKNESS);
             break;
         }
     }
@@ -211,7 +211,7 @@ void FCaptionButton::SetWindowMaximized(bool bInIsWindowMaximized)
     }
 }
 
-void FCaptionButton::SetButtonSize(const IntVector2& InSize)
+void FCaptionButton::SetButtonSize(const FIntVector2& InSize)
 {
     if (ButtonSize != InSize)
     {
@@ -345,15 +345,15 @@ void FTitleBar::Initialize(const FDesc& Desc)
     SetContent(Layers);
 }
 
-IntVector2 FTitleBar::PrepareDesiredSize()
+FIntVector2 FTitleBar::PrepareDesiredSize()
 {
     RefreshMetrics();
     return FCompoundElement::PrepareDesiredSize();
 }
 
-IntVector2 FTitleBar::ComputeDesiredSize() const
+FIntVector2 FTitleBar::ComputeDesiredSize() const
 {
-    IntVector2 DesiredSize = FCompoundElement::ComputeDesiredSize();
+    FIntVector2 DesiredSize = FCompoundElement::ComputeDesiredSize();
     DesiredSize.Y = Math::Max(DesiredSize.Y, Math::CeilToInt(Metrics.Height));
     DesiredSize.Y = Math::Max(DesiredSize.Y, FUIStyle::GetDefault().Metrics.RowHeight);
     return DesiredSize;
@@ -385,7 +385,7 @@ int32 FTitleBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     if (Icon.IsValid() && IconSpacer)
     {
         const FRectangle& SpacerBounds = IconSpacer->GetContentRectangle();
-        const IntVector2  IconPosition = IntVector2(SpacerBounds.Position.X, SpacerBounds.Position.Y + (SpacerBounds.Height - TITLE_ICON_SIZE) / 2);
+        const FIntVector2 IconPosition = FIntVector2(SpacerBounds.Position.X, SpacerBounds.Position.Y + (SpacerBounds.Height - TITLE_ICON_SIZE) / 2);
         const FRectangle  IconBounds   = FRectangle(IconPosition, TITLE_ICON_SIZE, TITLE_ICON_SIZE);
 
         OutCommandList.AddImage(LayerId + 1, IconBounds, Icon, FFloatColor(1.0f, 1.0f, 1.0f, 1.0f));
@@ -501,13 +501,13 @@ void FTitleBar::RefreshMetrics()
     {
         const int32 StyleInset   = LeadingInsetOverride >= 0 ? LeadingInsetOverride : FUIStyle::GetDefault().Metrics.TitleBarLeadingInset;
         const int32 LeadingInset = Math::Max(Math::CeilToInt(Metrics.LeadingInset), StyleInset);
-        LeadingSpacer->SetSize(IntVector2(LeadingInset, 0));
+        LeadingSpacer->SetSize(FIntVector2(LeadingInset, 0));
     }
 
     if (TrailingSpacer)
     {
         const float TrailingReserve = bShowCaptionButtons ? 0.0f : Metrics.TrailingInset;
-        TrailingSpacer->SetSize(IntVector2(Math::CeilToInt(TrailingReserve), 0));
+        TrailingSpacer->SetSize(FIntVector2(Math::CeilToInt(TrailingReserve), 0));
     }
 
     if (bShowCaptionButtons)
@@ -517,7 +517,7 @@ void FTitleBar::RefreshMetrics()
 
         for (const TSharedPtr<FCaptionButton>& Button : CaptionButtons)
         {
-            Button->SetButtonSize(IntVector2(ButtonWidth, ButtonHeight));
+            Button->SetButtonSize(FIntVector2(ButtonWidth, ButtonHeight));
         }
     }
 }

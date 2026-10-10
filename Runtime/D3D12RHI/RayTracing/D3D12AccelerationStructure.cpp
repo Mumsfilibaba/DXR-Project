@@ -649,7 +649,7 @@ bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext
         }
 
         D3D12_RAYTRACING_INSTANCE_DESC& Desc = InstanceDescs.Emplace();
-        Memory::Memcpy(&Desc.Transform, &BuildDesc.Instances[Instance].Transform, sizeof(Matrix3x4));
+        Memory::Memcpy(&Desc.Transform, &BuildDesc.Instances[Instance].Transform, sizeof(FMatrix3x4));
 
         Desc.AccelerationStructure               = D3D12Geometry->GetGPUVirtualAddress();
         Desc.InstanceID                          = BuildDesc.Instances[Instance].InstanceIndex;

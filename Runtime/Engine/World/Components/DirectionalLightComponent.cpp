@@ -30,11 +30,11 @@ void FDirectionalLightComponent::SetLightArea(float InLightArea)
     LightArea = InLightArea;
 }
 
-Vector3 FDirectionalLightComponent::GetDirectionVector() const
+FVector3 FDirectionalLightComponent::GetDirectionVector() const
 {
     CHECK(GetActorOwner() != nullptr);
 
-    const Vector3& Rotation = GetActorOwner()->GetWorldTransform().GetRotation();
-    const Matrix4 RotationMatrix = Matrix4::RotationRollPitchYaw(Rotation);
-    return RotationMatrix.TransformNormal(-Vector3::Up).GetNormalized();
+    const FVector3& Rotation = GetActorOwner()->GetWorldTransform().GetRotation();
+    const FMatrix4 RotationMatrix = FMatrix4::RotationRollPitchYaw(Rotation);
+    return RotationMatrix.TransformNormal(-FVector3::Up).GetNormalized();
 }

@@ -873,8 +873,8 @@ enum class EMyPassMode : uint8
 
 struct FMyPassConstantsHLSL
 {
-  Matrix4 Transform;
-  uint32  Mode;
+  FMatrix4 Transform;
+  uint32   Mode;
 };
 
 class FMyPassCS

@@ -32,9 +32,9 @@ void FMenu::Initialize()
     SetPadding(FMargin(0, 10, 0, 10));
 }
 
-IntVector2 FMenu::ComputeDesiredSize() const
+FIntVector2 FMenu::ComputeDesiredSize() const
 {
-    IntVector2  DesiredSize = FCompoundElement::ComputeDesiredSize();
+    FIntVector2 DesiredSize = FCompoundElement::ComputeDesiredSize();
     const int32 MinWidth    = (MinDesiredWidth >= 0) ? MinDesiredWidth : Style.MinWidth;
 
     DesiredSize.X = Math::Max(DesiredSize.X, MinWidth);

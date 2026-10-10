@@ -66,13 +66,13 @@ void FSearchBox::Initialize(const FDesc& Desc)
     });
 }
 
-IntVector2 FSearchBox::ComputeDesiredSize() const
+FIntVector2 FSearchBox::ComputeDesiredSize() const
 {
-    IntVector2 DesiredSize(Padding.GetTotalHorizontal(), Padding.GetTotalVertical());
+    FIntVector2 DesiredSize(Padding.GetTotalHorizontal(), Padding.GetTotalVertical());
 
     if (Editor)
     {
-        const IntVector2 EditorSize = Editor->GetCachedDesiredSize();
+        const FIntVector2 EditorSize = Editor->GetCachedDesiredSize();
         DesiredSize.X += EditorSize.X;
         DesiredSize.Y += Math::Max(EditorSize.Y, IconSize);
     }
@@ -99,7 +99,7 @@ EChildVisit FSearchBox::VisitChildren(FChildVisitor& Visitor, EChildOrder /*Orde
     return VisitChild(Visitor, Editor);
 }
 
-void FSearchBox::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+void FSearchBox::HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath)
 {
     const FRectangle ClearBounds = GetClearButtonRectangle(GetContentRectangle());
     if (!ClearBounds.IsEmpty() && ClearBounds.EncapsulatesPoint(ClientPosition))
@@ -158,8 +158,8 @@ int32 FSearchBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
             const float      Right       = static_cast<float>(CrossBounds.GetRight());
             const float      Bottom      = static_cast<float>(CrossBounds.GetBottom());
 
-            OutCommandList.AddLine(NextLayerId, Vector2(Left, Top), Vector2(Right, Bottom), ClearTint, SEARCH_BOX_CROSS_THICKNESS);
-            OutCommandList.AddLine(NextLayerId, Vector2(Right, Top), Vector2(Left, Bottom), ClearTint, SEARCH_BOX_CROSS_THICKNESS);
+            OutCommandList.AddLine(NextLayerId, FVector2(Left, Top), FVector2(Right, Bottom), ClearTint, SEARCH_BOX_CROSS_THICKNESS);
+            OutCommandList.AddLine(NextLayerId, FVector2(Right, Top), FVector2(Left, Bottom), ClearTint, SEARCH_BOX_CROSS_THICKNESS);
         }
     }
 
@@ -278,7 +278,7 @@ FRectangle FSearchBox::GetClearButtonRectangle(const FRectangle& Bounds) const
     const FRectangle Inner = Bounds.Deflate(Padding);
     const int32      Side  = Math::Min(IconSize, Inner.Height);
 
-    return FRectangle(IntVector2(Inner.GetRight() - Side, Inner.Position.Y + ((Inner.Height - Side) / 2)), Side, Side);
+    return FRectangle(FIntVector2(Inner.GetRight() - Side, Inner.Position.Y + ((Inner.Height - Side) / 2)), Side, Side);
 }
 
 void FSearchBox::HandleTextChanged(const FString& InText)
@@ -305,7 +305,7 @@ FRectangle FSearchBox::GetEditorRectangle(const FRectangle& Bounds) const
         Right = ClearBounds.Position.X - SEARCH_BOX_ICON_SPACING;
     }
 
-    return FRectangle(IntVector2(Left, Inner.Position.Y), Math::Max(0, Right - Left), Inner.Height);
+    return FRectangle(FIntVector2(Left, Inner.Position.Y), Math::Max(0, Right - Left), Inner.Height);
 }
 
 FRectangle FSearchBox::GetIconRectangle(const FRectangle& Bounds) const
@@ -313,5 +313,5 @@ FRectangle FSearchBox::GetIconRectangle(const FRectangle& Bounds) const
     const FRectangle Inner = Bounds.Deflate(Padding);
     const int32      Side  = Math::Min(IconSize, Inner.Height);
 
-    return FRectangle(IntVector2(Inner.Position.X, Inner.Position.Y + ((Inner.Height - Side) / 2)), Side, Side);
+    return FRectangle(FIntVector2(Inner.Position.X, Inner.Position.Y + ((Inner.Height - Side) / 2)), Side, Side);
 }

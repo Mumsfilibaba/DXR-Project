@@ -13,11 +13,11 @@
 struct FPerShadowMapHLSL
 {
     // 0-64
-    Matrix4 Matrix;
+    FMatrix4 Matrix;
 
     // 64-80
-    Vector3 Position;
-    float   FarPlane;
+    FVector3 Position;
+    float    FarPlane;
 };
 
 MARK_AS_REALLOCATABLE(FPerShadowMapHLSL);
@@ -25,11 +25,11 @@ MARK_AS_REALLOCATABLE(FPerShadowMapHLSL);
 struct FSinglePassPointLightBufferHLSL
 {
     // 0-384
-    Matrix4 LightProjections[RHI_NUM_CUBE_FACES];
+    FMatrix4 LightProjections[RHI_NUM_CUBE_FACES];
 
     // 384-400
-    Vector3 LightPosition;
-    float   LightFarPlane;
+    FVector3 LightPosition;
+    float    LightFarPlane;
 };
 
 MARK_AS_REALLOCATABLE(FSinglePassPointLightBufferHLSL);

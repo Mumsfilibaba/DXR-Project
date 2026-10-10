@@ -115,7 +115,7 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
         FRHIShaderResourceView* AttributeBufferSRV = StaticMesh->Mesh->GetAttributeBufferSRV();
         FRHIShaderResourceView* IndexBufferSRV     = StaticMesh->Mesh->GetIndexBufferSRV();
 
-        const Matrix3x4 InstanceTransform = StaticMesh->PerObjectBuffer.Transform;
+        const FMatrix3x4 InstanceTransform = StaticMesh->PerObjectBuffer.Transform;
 
         uint32 HitGroupIndex = 0;
         if (uint32* ExistingIndex = Resources.RayTracingMeshToHitGroupIndex.Find(StaticMesh->Mesh.Get()))

@@ -87,7 +87,7 @@ struct FWindowShape
     uint32 Height;
 
     /** @brief The (x, y) position of the window. */
-    IntVector2 Position;
+    FIntVector2 Position;
 };
 
 struct FWindowRect
@@ -108,7 +108,7 @@ struct FWindowRect
     {
     }
 
-    bool Contains(const IntVector2& Point) const
+    bool Contains(const FIntVector2& Point) const
     {
         return Point.X >= Left && Point.X < Right && Point.Y >= Top && Point.Y < Bottom;
     }
@@ -190,7 +190,7 @@ struct FPlatformWindowDesc
     uint32 Height;
 
     /** @brief The initial on-screen position of the window (x, y). */
-    IntVector2 Position;
+    FIntVector2 Position;
 
     /** @brief Style flags controlling the appearance and behavior of the window. */
     EWindowStyleFlags Style;

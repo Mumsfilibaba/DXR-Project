@@ -412,7 +412,7 @@ bool RenderGraphDisabledPass_Test()
         },
         [&bEnabledPassRan, Output](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
         {
-            PassCommandList.ClearUnorderedAccessViewFloat(Resources.Get(Output)->GetUnorderedAccessView(), Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+            PassCommandList.ClearUnorderedAccessViewFloat(Resources.Get(Output)->GetUnorderedAccessView(), FVector4(0.0f, 0.0f, 0.0f, 1.0f));
             bEnabledPassRan = true;
         });
 
@@ -524,7 +524,7 @@ bool RenderGraphFrame_Test()
             },
             [&ExecutedPasses, ShadowMask](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
             {
-                PassCommandList.ClearUnorderedAccessViewFloat(Resources.Get(ShadowMask)->GetUnorderedAccessView(), Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                PassCommandList.ClearUnorderedAccessViewFloat(Resources.Get(ShadowMask)->GetUnorderedAccessView(), FVector4(1.0f, 1.0f, 1.0f, 1.0f));
                 ExecutedPasses.Emplace(4);
             });
 
@@ -550,7 +550,7 @@ bool RenderGraphFrame_Test()
             },
             [&ExecutedPasses, SceneColor](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
             {
-                PassCommandList.ClearUnorderedAccessViewFloat(Resources.Get(SceneColor)->GetUnorderedAccessView(), Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+                PassCommandList.ClearUnorderedAccessViewFloat(Resources.Get(SceneColor)->GetUnorderedAccessView(), FVector4(0.0f, 0.0f, 0.0f, 1.0f));
                 ExecutedPasses.Emplace(6);
             });
 
@@ -562,7 +562,7 @@ bool RenderGraphFrame_Test()
             },
             [&ExecutedPasses, Bloom](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
             {
-                PassCommandList.ClearUnorderedAccessViewFloat(Resources.Get(Bloom)->GetUnorderedAccessView(), Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+                PassCommandList.ClearUnorderedAccessViewFloat(Resources.Get(Bloom)->GetUnorderedAccessView(), FVector4(0.0f, 0.0f, 0.0f, 1.0f));
                 ExecutedPasses.Emplace(7);
             });
 
@@ -573,7 +573,7 @@ bool RenderGraphFrame_Test()
             },
             [&ExecutedPasses, Bloom](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
             {
-                PassCommandList.ClearUnorderedAccessViewFloat(Resources.Get(Bloom)->GetUnorderedAccessView(), Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+                PassCommandList.ClearUnorderedAccessViewFloat(Resources.Get(Bloom)->GetUnorderedAccessView(), FVector4(0.0f, 0.0f, 0.0f, 1.0f));
                 ExecutedPasses.Emplace(8);
             });
 

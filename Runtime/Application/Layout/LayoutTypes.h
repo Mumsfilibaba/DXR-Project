@@ -47,7 +47,7 @@ struct FLayout
      */
     NODISCARD static FORCEINLINE FRectangle AlignInBounds(
         const FRectangle&    Bounds,
-        const IntVector2&    DesiredSize,
+        const FIntVector2&   DesiredSize,
         EHorizontalAlignment HorizontalAlignment,
         EVerticalAlignment   VerticalAlignment)
     {
@@ -113,13 +113,13 @@ struct TLayoutAxis
     static constexpr bool bIsVertical = Orientation == EOrientation::Vertical;
 
     /** @return The component of a vector along the stacking axis. */
-    NODISCARD static FORCEINLINE int32 Main(const IntVector2& Vector)
+    NODISCARD static FORCEINLINE int32 Main(const FIntVector2& Vector)
     {
         return bIsVertical ? Vector.Y : Vector.X;
     }
 
     /** @return The component of a vector across the stacking axis. */
-    NODISCARD static FORCEINLINE int32 Cross(const IntVector2& Vector)
+    NODISCARD static FORCEINLINE int32 Cross(const FIntVector2& Vector)
     {
         return bIsVertical ? Vector.X : Vector.Y;
     }
@@ -149,9 +149,9 @@ struct TLayoutAxis
     }
 
     /** @return A size from its extent along the stacking axis and its extent across it. */
-    NODISCARD static FORCEINLINE IntVector2 MakeSize(int32 MainExtent, int32 CrossExtent)
+    NODISCARD static FORCEINLINE FIntVector2 MakeSize(int32 MainExtent, int32 CrossExtent)
     {
-        return bIsVertical ? IntVector2(CrossExtent, MainExtent) : IntVector2(MainExtent, CrossExtent);
+        return bIsVertical ? FIntVector2(CrossExtent, MainExtent) : FIntVector2(MainExtent, CrossExtent);
     }
 
     /**
@@ -165,7 +165,7 @@ struct TLayoutAxis
     NODISCARD static FORCEINLINE FRectangle MakeSlot(const FRectangle& Bounds, int32 Start, int32 Extent)
     {
         return bIsVertical
-            ? FRectangle(IntVector2(Bounds.Position.X, Start), Bounds.Width, Extent)
-            : FRectangle(IntVector2(Start, Bounds.Position.Y), Extent, Bounds.Height);
+            ? FRectangle(FIntVector2(Bounds.Position.X, Start), Bounds.Width, Extent)
+            : FRectangle(FIntVector2(Start, Bounds.Position.Y), Extent, Bounds.Height);
     }
 };

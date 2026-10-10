@@ -101,9 +101,9 @@ public:
 
     virtual ~FRenderGraphLegend() = default;
 
-    virtual IntVector2 ComputeDesiredSize() const override final
+    virtual FIntVector2 ComputeDesiredSize() const override final
     {
-        return IntVector2(RENDERGRAPH_LEGEND_WIDTH, (RENDERGRAPH_LEGEND_PADDING * 2) + (GetRowHeight() * RENDERGRAPH_LEGEND_ROWS));
+        return FIntVector2(RENDERGRAPH_LEGEND_WIDTH, (RENDERGRAPH_LEGEND_PADDING * 2) + (GetRowHeight() * RENDERGRAPH_LEGEND_ROWS));
     }
 
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final
@@ -151,12 +151,12 @@ public:
             const int32 CenterY = Bounds.Position.Y + RENDERGRAPH_LEGEND_PADDING + (RowHeight * Row) + (RowHeight / 2);
             if (Row < 2)
             {
-                const Vector2 Center(static_cast<float>(SwatchLeft) + (static_cast<float>(RENDERGRAPH_LEGEND_SWATCH_WIDTH) * 0.5f), static_cast<float>(CenterY));
+                const FVector2 Center(static_cast<float>(SwatchLeft) + (static_cast<float>(RENDERGRAPH_LEGEND_SWATCH_WIDTH) * 0.5f), static_cast<float>(CenterY));
                 OutCommandList.AddCircleFilled(LayerId + 1, Center, RENDERGRAPH_LEGEND_CIRCLE_RADIUS, Swatches[Row]);
             }
             else
             {
-                const FRectangle Swatch(IntVector2(SwatchLeft, CenterY - (RENDERGRAPH_LEGEND_SWATCH_HEIGHT / 2)),
+                const FRectangle Swatch(FIntVector2(SwatchLeft, CenterY - (RENDERGRAPH_LEGEND_SWATCH_HEIGHT / 2)),
                     RENDERGRAPH_LEGEND_SWATCH_WIDTH, RENDERGRAPH_LEGEND_SWATCH_HEIGHT);
 
                 const FCornerRadii SwatchCorners(RENDERGRAPH_LEGEND_SWATCH_RADIUS);
@@ -164,7 +164,7 @@ public:
                 OutCommandList.AddBoxOutline(LayerId + 1, Swatch, SwatchOutlines[Row - 2], 1.0f, SwatchCorners);
             }
 
-            const FRectangle LabelBounds(IntVector2(LabelLeft, CenterY - (LineHeight / 2)),
+            const FRectangle LabelBounds(FIntVector2(LabelLeft, CenterY - (LineHeight / 2)),
                 Bounds.GetRight() - LabelLeft - RENDERGRAPH_LEGEND_PADDING, LineHeight);
 
             OutCommandList.AddText(LayerId + 1, LabelBounds, Labels[Row], Font.Get(), RenderGraphColors::LegendText());
@@ -538,7 +538,7 @@ bool FEditorRenderGraphPanel::RebuildModel(const FRenderGraphDebugSnapshot& Snap
                 Access.bIsWrite ? RenderGraphColors::OutputPin() : RenderGraphColors::InputPin());
         }
 
-        if (const Vector2* StoredPosition = PositionsByPassName.Find(Pass.Name))
+        if (const FVector2* StoredPosition = PositionsByPassName.Find(Pass.Name))
         {
             Node.Position = *StoredPosition;
         }
@@ -611,7 +611,7 @@ void FEditorRenderGraphPanel::RefreshStatistics(const FRenderGraphDebugSnapshot&
 #endif
 
 TSharedPtr<FVisualElement> FEditorRenderGraphPanel::BuildNodeContextMenu(
-    const Vector2& /*GraphPosition*/, int32 NodeId)
+    const FVector2& /*GraphPosition*/, int32 NodeId)
 {
     FString PassName;
     for (const FBuiltPass& Pass : BuiltPasses)
@@ -693,11 +693,11 @@ void FEditorRenderGraphPanel::ApplyPendingPassSelection()
             if (const FGraphNode* Node = Model ? Model->FindNode(Pass.NodeId) : nullptr)
             {
                 const TSharedPtr<FGraphNodeElement> Element  = Canvas->FindNodeElement(Pass.NodeId);
-                const IntVector2                    NodeSize = Element ? Element->GetCachedDesiredSize() : IntVector2(0, 0);
+                const FIntVector2                   NodeSize = Element ? Element->GetCachedDesiredSize() : FIntVector2(0, 0);
                 const FRectangle&                   Bounds   = Canvas->GetContentRectangle();
         
                 const float Zoom = Canvas->GetZoom();
-                Canvas->SetPan(Vector2(
+                Canvas->SetPan(FVector2(
                     (static_cast<float>(Bounds.Width) * 0.5f) - ((Node->Position.X + (static_cast<float>(NodeSize.X) * 0.5f)) * Zoom),
                     (static_cast<float>(Bounds.Height) * 0.5f) - ((Node->Position.Y + (static_cast<float>(NodeSize.Y) * 0.5f)) * Zoom)));
             }

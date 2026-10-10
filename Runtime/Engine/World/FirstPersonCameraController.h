@@ -7,13 +7,13 @@ class FCameraComponent;
 struct FFirstPersonCameraInput
 {
     /** Right, up and forward, each in the -1..1 range */
-    Vector3 MoveAxis;
+    FVector3 MoveAxis;
 
     /** Mouse movement since the last frame, in pixels */
-    Vector2 LookDelta;
+    FVector2 LookDelta;
 
     /** Gamepad look stick, each axis in the -1..1 range, applied per second rather than per pixel */
-    Vector2 StickLook;
+    FVector2 StickLook;
 
     bool    bBoost = false;
 };
@@ -54,7 +54,7 @@ public:
      */
     void StopMovement()
     {
-        Velocity = Vector3();
+        Velocity = FVector3();
     }
 
     FCameraComponent* GetCamera() const
@@ -94,7 +94,7 @@ private:
     void ApplyMovement(float DeltaTime, const FFirstPersonCameraInput& Input);
 
     FCameraComponent* Camera;
-    Vector3           Velocity;
+    FVector3          Velocity;
     float             Pitch;
     float             Yaw;
     float             MoveSpeed;

@@ -8,21 +8,21 @@ void FDisclosureGlyph::Draw(FDrawCommandList& OutCommandList, int32 LayerId, con
     const float Right  = static_cast<float>(Bounds.GetRight());
     const float Bottom = static_cast<float>(Bounds.GetBottom());
 
-    Vector2 Corners[3];
+    FVector2 Corners[3];
     if (bIsExpanded)
     {
         const float CenterX = (Left + Right) * 0.5f;
-        Corners[0] = Vector2(Left, Top);
-        Corners[1] = Vector2(Right, Top);
-        Corners[2] = Vector2(CenterX, Bottom);
+        Corners[0] = FVector2(Left, Top);
+        Corners[1] = FVector2(Right, Top);
+        Corners[2] = FVector2(CenterX, Bottom);
     }
     else
     {
         const float CenterY = (Top + Bottom) * 0.5f;
-        Corners[0] = Vector2(Left, Top);
-        Corners[1] = Vector2(Right, CenterY);
-        Corners[2] = Vector2(Left, Bottom);
+        Corners[0] = FVector2(Left, Top);
+        Corners[1] = FVector2(Right, CenterY);
+        Corners[2] = FVector2(Left, Bottom);
     }
 
-    OutCommandList.AddConvexPolygon(LayerId, TArrayView<const Vector2>(Corners, 3), Tint);
+    OutCommandList.AddConvexPolygon(LayerId, TArrayView<const FVector2>(Corners, 3), Tint);
 }

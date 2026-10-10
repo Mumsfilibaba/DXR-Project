@@ -35,7 +35,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
@@ -121,7 +121,7 @@ public:
      * @param ClientPosition The point, in the space the block was arranged in.
      * @return The index into the concatenated text.
      */
-    NODISCARD int32 FindCharacterIndexAt(const IntVector2& ClientPosition) const;
+    NODISCARD int32 FindCharacterIndexAt(const FIntVector2& ClientPosition) const;
 
     /** @return The string the block highlights every occurrence of, or empty when there is no search. */
     NODISCARD FORCEINLINE const FString& GetSearchText() const

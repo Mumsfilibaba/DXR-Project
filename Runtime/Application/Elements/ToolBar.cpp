@@ -55,11 +55,11 @@ FToolBarButton::FToolBarButton()
 
 FToolBarButton::~FToolBarButton() = default;
 
-IntVector2 FToolBarButton::ComputeDesiredSize() const
+FIntVector2 FToolBarButton::ComputeDesiredSize() const
 {
     const FMargin& Inset = GetPadding();
 
-    IntVector2 ContentSize(ComputeContentWidth(), 0);
+    FIntVector2 ContentSize(ComputeContentWidth(), 0);
     if (Icon.IsValid())
     {
         ContentSize.Y = Math::Max(ContentSize.Y, IconSize);
@@ -74,7 +74,7 @@ IntVector2 FToolBarButton::ComputeDesiredSize() const
 
     const int32 Floor = Math::Max(MinWidth, Label.IsEmpty() ? 0 : Metrics.ResolveButtonMinWidth(Font.Get(), Inset));
 
-    IntVector2 DesiredSize(ContentSize.X + Inset.GetTotalHorizontal(), ContentSize.Y + Inset.GetTotalVertical());
+    FIntVector2 DesiredSize(ContentSize.X + Inset.GetTotalHorizontal(), ContentSize.Y + Inset.GetTotalVertical());
     DesiredSize.X = Math::Max(DesiredSize.X, Floor);
     DesiredSize.Y = Math::Max(DesiredSize.Y, Metrics.ButtonHeight);
     return DesiredSize;
@@ -101,8 +101,8 @@ int32 FToolBarButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
 
     if (Font && !Label.IsEmpty())
     {
-        const int32      LabelLeft   = Icon.IsValid() ? IconBounds.GetRight() + TOOLBAR_ICON_SPACING : Inner.Position.X + LeadingOffset;
-        const FRectangle LabelBounds = FRectangle(IntVector2(LabelLeft, Inner.Position.Y), Math::Max(Inner.GetRight() - ArrowRoom - LabelLeft, 0), Inner.Height);
+        const int32      LabelLeft   = Icon.IsValid() ? IconBounds.GetRight() + TOOLBAR_ICON_SPACING : Inner.Position.X  + LeadingOffset;
+        const FRectangle LabelBounds = FRectangle(FIntVector2(LabelLeft, Inner.Position.Y), Math::Max(Inner.GetRight() - ArrowRoom - LabelLeft, 0), Inner.Height);
 
         OutCommandList.AddText(LayerId, LabelBounds, Label, Font.Get(), TextColor);
     }
@@ -296,7 +296,7 @@ FRectangle FToolBarButton::GetIconBounds(const FRectangle& Bounds, int32 Leading
     }
 
     const FRectangle Inner = Bounds.Deflate(GetPadding());
-    return FRectangle(IntVector2(Inner.Position.X + LeadingOffset, Inner.Position.Y + ((Inner.Height - IconSize) / 2)), IconSize, IconSize);
+    return FRectangle(FIntVector2(Inner.Position.X + LeadingOffset, Inner.Position.Y + ((Inner.Height - IconSize) / 2)), IconSize, IconSize);
 }
 
 void FToolBarButton::DrawArrow(const FRectangle& Bounds, FDrawCommandList& OutCommandList, int32 LayerId, const FFloatColor& Tint) const
@@ -304,9 +304,9 @@ void FToolBarButton::DrawArrow(const FRectangle& Bounds, FDrawCommandList& OutCo
     const float CenterX = static_cast<float>(Bounds.GetRight()) - (TOOLBAR_ARROW_WIDTH * 0.5f);
     const float CenterY = static_cast<float>(Bounds.Position.Y) + (Bounds.Height * 0.5f);
 
-    const Vector2 Left  = Vector2(CenterX - TOOLBAR_ARROW_EXTENT, CenterY - (TOOLBAR_ARROW_EXTENT * 0.5f));
-    const Vector2 Right = Vector2(CenterX + TOOLBAR_ARROW_EXTENT, CenterY - (TOOLBAR_ARROW_EXTENT * 0.5f));
-    const Vector2 Tip   = Vector2(CenterX, CenterY + (TOOLBAR_ARROW_EXTENT * 0.5f));
+    const FVector2 Left  = FVector2(CenterX - TOOLBAR_ARROW_EXTENT, CenterY - (TOOLBAR_ARROW_EXTENT * 0.5f));
+    const FVector2 Right = FVector2(CenterX + TOOLBAR_ARROW_EXTENT, CenterY - (TOOLBAR_ARROW_EXTENT * 0.5f));
+    const FVector2 Tip   = FVector2(CenterX, CenterY + (TOOLBAR_ARROW_EXTENT * 0.5f));
 
     OutCommandList.AddTriangle(LayerId, Left, Right, Tip, Tint);
 }

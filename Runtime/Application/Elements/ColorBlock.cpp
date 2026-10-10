@@ -26,9 +26,9 @@ void FColorBlock::Initialize(const FDesc& Desc)
     OnClickedDelegate = Desc.OnClicked;
 }
 
-IntVector2 FColorBlock::ComputeDesiredSize() const
+FIntVector2 FColorBlock::ComputeDesiredSize() const
 {
-    return IntVector2(Extent, Extent);
+    return FIntVector2(Extent, Extent);
 }
 
 int32 FColorBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const

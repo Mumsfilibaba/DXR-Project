@@ -21,7 +21,7 @@ public:
         TArray<float> Fractions;
 
         /** @brief One per child, the least each can be squeezed to. Takes precedence over the size AddChild is given. */
-        TArray<IntVector2> MinimumSizes;
+        TArray<FIntVector2> MinimumSizes;
 
         /** @brief One per child, a pixel length to lock. Zero keeps sharing by fraction. */
         TArray<int32> FixedLengths;
@@ -45,7 +45,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual bool GetCursor(ECursor& OutCursor) const override;
@@ -60,7 +60,7 @@ public:
      * @param InChild       The element to add.
      * @param InMinimumSize The least the child can be squeezed to, ignored where the description named one.
      */
-    void AddChild(const TSharedPtr<FVisualElement>& InChild, const IntVector2& InMinimumSize);
+    void AddChild(const TSharedPtr<FVisualElement>& InChild, const FIntVector2& InMinimumSize);
 
     /** @brief Drops every child, so the splitter can be refilled. */
     void ClearChildren();
@@ -86,7 +86,7 @@ public:
      * @param ClientPosition The point to test, in the space the splitter was arranged in.
      * @return The handle index, or -1 when the point is on none of them.
      */
-    NODISCARD int32 GetHandleIndexAt(const IntVector2& ClientPosition) const;
+    NODISCARD int32 GetHandleIndexAt(const FIntVector2& ClientPosition) const;
 
     /** @return One share per child, in the order they were added, summing to one. */
     NODISCARD FORCEINLINE const TArray<float>& GetFractions() const
@@ -102,7 +102,7 @@ public:
 
 protected:
     virtual EChildVisit VisitChildren(FChildVisitor& Visitor, EChildOrder Order) const override;
-    virtual void HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath) override;
+    virtual void HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath) override;
 
 private:
     bool TryNormalizeFractions(const TArray<float>& InFractions);
@@ -118,12 +118,12 @@ private:
     int32                               HandleThickness;
     int32                               ActiveHandleIndex;
     int32                               HoveredHandleIndex;
-    IntVector2                          DragOrigin;
+    FIntVector2                         DragOrigin;
     TArray<float>                       DragStartFractions;
     TArray<int32>                       DragStartFixedLengths;
     TArray<float>                       Fractions;
     TArray<int32>                       FixedLengths;
-    TArray<IntVector2>                  MinimumSizes;
+    TArray<FIntVector2>                 MinimumSizes;
     TArray<TSharedPtr<FVisualElement>>  Children;
     FOnSplitterFractionsChanged         OnFractionsChangedDelegate;
 };

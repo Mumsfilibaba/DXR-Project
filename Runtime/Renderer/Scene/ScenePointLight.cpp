@@ -24,7 +24,7 @@ void FScenePointLight::RenderThread_ApplyUpdate(const FPointLightProxyUpdate& Up
     for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
     {
         // ViewProjMatrix is consumed on the GPU, so it is stored transposed.
-        Matrix4 ViewProjMatrix = Update.ViewProjMatrix[FaceIndex].GetTranspose();
+        FMatrix4 ViewProjMatrix = Update.ViewProjMatrix[FaceIndex].GetTranspose();
 
         ShadowData[FaceIndex].ViewProjMatrix = ViewProjMatrix;
         ShadowData[FaceIndex].Position       = Update.Position;

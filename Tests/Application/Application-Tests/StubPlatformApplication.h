@@ -56,7 +56,7 @@ public:
     virtual void SetTitle(const FString& InTitle) override final { Title = InTitle; }
     virtual void GetTitle(FString& OutTitle) const override final { OutTitle = Title; }
 
-    virtual void SetWindowPos(int32 x, int32 y) override final { Shape.Position = IntVector2(x, y); }
+    virtual void SetWindowPos(int32 x, int32 y) override final { Shape.Position = FIntVector2(x, y); }
     virtual void SetWindowShape(const FWindowShape& InShape, bool) override final { Shape = InShape; }
     virtual void GetWindowShape(FWindowShape& OutWindowShape) const override final { OutWindowShape = Shape; }
 
@@ -120,16 +120,16 @@ public:
     virtual void SetCursor(ECursor InCursor) override final { Cursor = InCursor; }
     virtual ECursor GetCursor() const override final { return Cursor; }
 
-    virtual void SetPosition(int32 x, int32 y) override final { Position = IntVector2(x, y); }
-    virtual IntVector2 GetPosition() const override final { return Position; }
+    virtual void SetPosition(int32 x, int32 y) override final { Position = FIntVector2(x, y); }
+    virtual FIntVector2 GetPosition() const override final { return Position; }
 
     virtual void SetVisibility(bool bInIsVisible) override final { bIsVisible = bInIsVisible; }
     virtual bool IsVisible() const override final { return bIsVisible; }
 
 private:
-    IntVector2 Position;
-    ECursor    Cursor;
-    bool       bIsVisible;
+    FIntVector2 Position;
+    ECursor     Cursor;
+    bool        bIsVisible;
 };
 
 class FStubPlatformApplication final : public IPlatformApplication
@@ -159,7 +159,7 @@ public:
 
     virtual bool SupportsHighPrecisionMouse() const override final { return false; }
     virtual bool SetHighPrecisionMouseMode(const TSharedRef<IPlatformWindow>&, EHighPrecisionMouseMode) override final { return false; }
-    virtual bool ConfineCursorToRect(const TSharedRef<IPlatformWindow>&, const IntVector2&, const IntVector2&) override final { return false; }
+    virtual bool ConfineCursorToRect(const TSharedRef<IPlatformWindow>&, const FIntVector2&, const FIntVector2&) override final { return false; }
     virtual void ReleaseCursorConfinement() override final {}
 
     virtual FModifierKeyState GetModifierKeyState() const override final { return FModifierKeyState(); }
@@ -174,8 +174,8 @@ public:
     {
         FMonitorInfo MonitorInfo;
         MonitorInfo.DeviceName     = "Stub";
-        MonitorInfo.MainSize       = IntVector2(1920, 1080);
-        MonitorInfo.WorkSize       = IntVector2(1920, 1080);
+        MonitorInfo.MainSize       = FIntVector2(1920, 1080);
+        MonitorInfo.WorkSize       = FIntVector2(1920, 1080);
         MonitorInfo.DisplayDPI     = 96;
         MonitorInfo.DisplayScaling = 1.0f;
         MonitorInfo.bIsPrimary     = true;
@@ -216,7 +216,7 @@ inline TSharedPtr<FApplication> CreateStubApplication()
     return NewApplication;
 }
 
-inline TSharedPtr<FWindow> CreateStubWindow(const TSharedPtr<FApplication>& Application, const IntVector2& Size)
+inline TSharedPtr<FWindow> CreateStubWindow(const TSharedPtr<FApplication>& Application, const FIntVector2& Size)
 {
     FWindow::FDesc Desc;
     Desc.Title = "Stub";
@@ -262,7 +262,7 @@ public:
      * @param StyleFlags The style to create it with, which a title bar test needs a say in.
      * @return The new window.
      */
-    TSharedPtr<FWindow> CreateWindow(const IntVector2& Size, const IntVector2& Position = IntVector2(0, 0), EWindowStyleFlags StyleFlags = EWindowStyleFlags::Default)
+    TSharedPtr<FWindow> CreateWindow(const FIntVector2& Size, const FIntVector2& Position = FIntVector2(0, 0), EWindowStyleFlags StyleFlags = EWindowStyleFlags::Default)
     {
         FWindow::FDesc Desc;
         Desc.Title      = "Stub";
@@ -282,7 +282,7 @@ public:
      *
      * @param ScreenPosition Where the cursor moved to, in screen coordinates.
      */
-    void MoveCursor(const IntVector2& ScreenPosition)
+    void MoveCursor(const FIntVector2& ScreenPosition)
     {
         PlatformApplication->GetCursor()->SetPosition(ScreenPosition.X, ScreenPosition.Y);
         GetApplication().OnMouseMove(ScreenPosition.X, ScreenPosition.Y);

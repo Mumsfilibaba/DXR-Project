@@ -67,8 +67,8 @@ FUIBrush FUIAtlas::Add(const uint8* InPixels, int32 Width, int32 Height)
     constexpr float AtlasSizeF = static_cast<float>(AtlasSize);
 
     FUIBrush Brush(Texture.Get());
-    Brush.MinTexCoord = Vector2(static_cast<float>(X) / AtlasSizeF, static_cast<float>(Y) / AtlasSizeF);
-    Brush.MaxTexCoord = Vector2(static_cast<float>(X + Width) / AtlasSizeF, static_cast<float>(Y + Height) / AtlasSizeF);
+    Brush.MinTexCoord = FVector2(static_cast<float>(X) / AtlasSizeF, static_cast<float>(Y) / AtlasSizeF);
+    Brush.MaxTexCoord = FVector2(static_cast<float>(X + Width) / AtlasSizeF, static_cast<float>(Y + Height) / AtlasSizeF);
 
     return Brush;
 }

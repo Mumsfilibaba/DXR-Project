@@ -226,10 +226,10 @@ struct FUIBrush
     FRHITexture* Texture;
 
     /** @brief The top-left of the sampled region, in normalized coordinates. */
-    Vector2 MinTexCoord;
+    FVector2 MinTexCoord;
 
     /** @brief The bottom-right of the sampled region, in normalized coordinates. */
-    Vector2 MaxTexCoord;
+    FVector2 MaxTexCoord;
 
     /** @brief The nine-slice border in pixels. A zero margin stretches the whole image. */
     FMargin Margin;

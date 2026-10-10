@@ -80,7 +80,7 @@ public:
     void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
@@ -163,7 +163,7 @@ public:
 private:
     NODISCARD float ResolveUpperBound() const;
     NODISCARD int32 ResolveColumnWidth(int32 AvailableWidth) const;
-    NODISCARD int32 ResolveSampleAt(const IntVector2& ClientPosition, bool bClampToStrip) const;
+    NODISCARD int32 ResolveSampleAt(const FIntVector2& ClientPosition, bool bClampToStrip) const;
 
     TSharedPtr<IFontFace>      Font;
     FString                    Label;

@@ -60,7 +60,7 @@ void FWindow::Initialize(const FDesc& Desc)
     FVisualElement::SetActivationPolicy(EElementActivationPolicy::AutoFocusOnWindowActivate);
 }
 
-IntVector2 FWindow::PrepareDesiredSize()
+FIntVector2 FWindow::PrepareDesiredSize()
 {
     if (Content)
     {
@@ -167,7 +167,7 @@ EChildVisit FWindow::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) co
     return VisitChildList(Visitor, Order, Content, Overlay, MenuHost);
 }
 
-void FWindow::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+void FWindow::HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath)
 {
     const bool bIsCoveredByMenu = MenuHost && MenuHost->IsVisible() && MenuHost->CoversPoint(ClientPosition);
     const bool bIsOverlayModal  = Overlay && Overlay->IsVisible() && Overlay->CapturesAllInput();
@@ -225,7 +225,7 @@ void FWindow::OnWindowFocusChanged(bool)
     OnWindowFocusChangedDelegate.ExecuteIfBound();
 }
 
-void FWindow::OnWindowMoved(const IntVector2& InPosition)
+void FWindow::OnWindowMoved(const FIntVector2& InPosition)
 {
     if (CachedPosition != InPosition)
     {
@@ -235,7 +235,7 @@ void FWindow::OnWindowMoved(const IntVector2& InPosition)
     }
 }
 
-void FWindow::OnWindowResize(const IntVector2& InSize)
+void FWindow::OnWindowResize(const FIntVector2& InSize)
 {
     if (CachedSize != InSize)
     {
@@ -252,7 +252,7 @@ void FWindow::OnWindowResize(const IntVector2& InSize)
     }
 }
 
-void FWindow::MoveTo(const IntVector2& InPosition)
+void FWindow::MoveTo(const FIntVector2& InPosition)
 {
     if (CachedPosition != InPosition)
     {
@@ -267,7 +267,7 @@ void FWindow::MoveTo(const IntVector2& InPosition)
     }
 }
 
-void FWindow::Resize(const IntVector2& InSize)
+void FWindow::Resize(const FIntVector2& InSize)
 {
     if (CachedSize != InSize)
     {
@@ -283,7 +283,7 @@ void FWindow::Resize(const IntVector2& InSize)
     }
 }
 
-void FWindow::SetSize(const IntVector2& InSize)
+void FWindow::SetSize(const FIntVector2& InSize)
 {
     if (CachedSize != InSize)
     {
@@ -292,17 +292,17 @@ void FWindow::SetSize(const IntVector2& InSize)
     }
 }
 
-void FWindow::SetPosition(const IntVector2& InPosition)
+void FWindow::SetPosition(const FIntVector2& InPosition)
 {
     CachedPosition = InPosition;
 }
 
-IntVector2 FWindow::GetSize() const
+FIntVector2 FWindow::GetSize() const
 {
     return CachedSize;
 }
 
-IntVector2 FWindow::GetPosition() const
+FIntVector2 FWindow::GetPosition() const
 {
     return CachedPosition;
 }
@@ -365,8 +365,8 @@ TSharedPtr<FMenuHost> FWindow::GetOrCreateMenuHost()
         MenuHost = FMenuHost::Create();
         MenuHost->SetParentElement(AsWeakPtr());
 
-        const IntVector2 Size = GetSize();
-        MenuHost->Arrange(FRectangle(IntVector2(), Size.X, Size.Y));
+        const FIntVector2 Size = GetSize();
+        MenuHost->Arrange(FRectangle(FIntVector2(), Size.X, Size.Y));
     }
 
     return MenuHost;
@@ -501,7 +501,7 @@ void FWindow::SetPlatformWindow(const TSharedRef<IPlatformWindow>& InPlatformWin
         FWindowShape WindowShape;
         PlatformWindow->GetWindowShape(WindowShape);
 
-        CachedSize     = IntVector2(WindowShape.Width, WindowShape.Height);
+        CachedSize     = FIntVector2(WindowShape.Width, WindowShape.Height);
         CachedPosition = WindowShape.Position;
         
         PlatformWindow->GetTitle(Title);

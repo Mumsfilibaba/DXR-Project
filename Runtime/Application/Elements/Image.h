@@ -11,7 +11,7 @@ public:
         FUIBrush Brush;
 
         /** @brief The size to ask for, which is nothing when the image takes whatever it is given. */
-        IntVector2 DesiredSize;
+        FIntVector2 DesiredSize;
 
         /** @brief The colour the brush is multiplied by. */
         FFloatColor Tint = FFloatColor::White;
@@ -25,7 +25,7 @@ public:
     virtual ~FImage();
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override final;
+    virtual FIntVector2 ComputeDesiredSize() const override final;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final;
 
     /**
@@ -45,6 +45,6 @@ private:
     void Initialize(const FDesc& Desc);
 
     FUIBrush    Brush;
-    IntVector2  DesiredSize;
+    FIntVector2 DesiredSize;
     FFloatColor Tint;
 };

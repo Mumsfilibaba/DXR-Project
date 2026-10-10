@@ -74,19 +74,19 @@ void FSandboxPlayerController::Tick(float DeltaTime)
         CameraController.SyncFromCamera();
     }
 
-    const IntVector2 MouseDelta = Input->ConsumeMouseDelta();
+    const FIntVector2 MouseDelta = Input->ConsumeMouseDelta();
 
     FFirstPersonCameraInput CameraInput;
-    CameraInput.MoveAxis  = Vector3(
+    CameraInput.MoveAxis  = FVector3(
         Input->GetAxisValue("MoveRight"),
         Input->GetAxisValue("MoveUp"),
         Input->GetAxisValue("MoveForward"));
 
-    CameraInput.StickLook = Vector2(
+    CameraInput.StickLook = FVector2(
         Input->GetAxisValue("LookRight"),
         Input->GetAxisValue("LookUp"));
             
-    CameraInput.LookDelta = Vector2(static_cast<float>(MouseDelta.X), static_cast<float>(MouseDelta.Y));
+    CameraInput.LookDelta = FVector2(static_cast<float>(MouseDelta.X), static_cast<float>(MouseDelta.Y));
     CameraInput.bBoost    = bBoostHeld;
 
     CameraController.Tick(DeltaTime, CameraInput);

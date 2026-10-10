@@ -47,52 +47,52 @@ class FSceneRenderer;
 struct FCameraHLSL
 {
     // 0-64
-    Matrix4 PrevViewProjection;
+    FMatrix4 PrevViewProjection;
 
     // 64-192
-    Matrix4 ViewProjection;
-    Matrix4 ViewProjectionInv;
+    FMatrix4 ViewProjection;
+    FMatrix4 ViewProjectionInv;
 
     // 192-320
-    Matrix4 ViewProjectionUnjittered;
-    Matrix4 ViewProjectionInvUnjittered;
+    FMatrix4 ViewProjectionUnjittered;
+    FMatrix4 ViewProjectionInvUnjittered;
 
     // 320-448
-    Matrix4 View;
-    Matrix4 ViewInv;
+    FMatrix4 View;
+    FMatrix4 ViewInv;
 
     // 448-576
-    Matrix4 Projection;
-    Matrix4 ProjectionInv;
+    FMatrix4 Projection;
+    FMatrix4 ProjectionInv;
 
     // 448-576
-    Matrix4 ProjectionUnjittered;
-    Matrix4 ProjectionInvUnjittered;
+    FMatrix4 ProjectionUnjittered;
+    FMatrix4 ProjectionInvUnjittered;
 
     // 576-592
-    Vector3 Position;
-    float   NearPlane = 0.0f;
+    FVector3 Position;
+    float    NearPlane = 0.0f;
 
     // 592-608
-    Vector3 Forward;
-    float   FarPlane = 0.0f;
+    FVector3 Forward;
+    float    FarPlane = 0.0f;
 
     // 608-624
-    Vector3 Right;
-    float   AspectRatio = 0.0f;
+    FVector3 Right;
+    float    AspectRatio = 0.0f;
 
     // 624-640
-    Vector2 ProjectionJitter;
-    Vector2 PrevProjectionJitter;
+    FVector2 ProjectionJitter;
+    FVector2 PrevProjectionJitter;
 
     // 640-656
-    float   ViewportWidth  = 0.0f;
-    float   ViewportHeight = 0.0f;
-    Vector2 ImageJitter;
+    float    ViewportWidth  = 0.0f;
+    float    ViewportHeight = 0.0f;
+    FVector2 ImageJitter;
 
     // 656-672
-    Vector3 PrevPosition;
-    float   Padding2       = 0.0f;
+    FVector3 PrevPosition;
+    float    Padding2       = 0.0f;
 };
 
 class FFrameCounterState

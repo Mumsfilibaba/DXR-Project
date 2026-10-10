@@ -147,7 +147,7 @@ bool PanelChromeGeometry_Test()
     const TSharedPtr<IFontFace> Font  = CreateFont();
 
     TSharedPtr<FDockingArea> Area = BuildPairArea(Font);
-    LayoutElement(Area, FRectangle(IntVector2(0, 0), 800, 400));
+    LayoutElement(Area, FRectangle(FIntVector2(0, 0), 800, 400));
 
     FDrawCommandList CommandList;
     DrawElement(Area, CommandList);
@@ -194,7 +194,7 @@ bool PanelChromeGap_Test()
 
     const FUIStyle&             Style  = FUIStyle::GetDefault();
     const TSharedPtr<IFontFace> Font   = CreateFont();
-    const FRectangle            Bounds = FRectangle(IntVector2(0, 0), 800, 400);
+    const FRectangle            Bounds = FRectangle(FIntVector2(0, 0), 800, 400);
 
     TSharedPtr<FDockingArea> Area = BuildPairArea(Font);
     LayoutElement(Area, Bounds);
@@ -245,7 +245,7 @@ bool SplitterHintThickness_Test()
 
     const FUIStyle&             Style  = FUIStyle::GetDefault();
     const TSharedPtr<IFontFace> Font   = CreateFont();
-    const FRectangle            Bounds = FRectangle(IntVector2(0, 0), 800, 400);
+    const FRectangle            Bounds = FRectangle(FIntVector2(0, 0), 800, 400);
 
     TSharedPtr<FDockingArea> Area = BuildPairArea(Font);
     LayoutElement(Area, Bounds);
@@ -266,7 +266,7 @@ bool SplitterHintThickness_Test()
 
         const int32 HintCount = CountCommands(CommandList, EDrawCommandType::Box);
 
-        Splitter->OnMouseMove(FCursorEvent(EInputEventType::MouseMoved, Splitter->GetHandleRectangle(0).GetCenter(), IntVector2(0, 0), FModifierKeyState()));
+        Splitter->OnMouseMove(FCursorEvent(EInputEventType::MouseMoved, Splitter->GetHandleRectangle(0).GetCenter(), FIntVector2(0, 0), FModifierKeyState()));
 
         FDrawCommandList HoveredList;
         DrawElement(Area, HoveredList);
@@ -323,7 +323,7 @@ bool TabStripBlendsIntoPanel_Test()
     Strip->AddTab("One", "One", true);
     Strip->SetActiveTab("One");
 
-    LayoutElement(Strip, FRectangle(IntVector2(0, 0), 400, Style.Tab.StripHeight));
+    LayoutElement(Strip, FRectangle(FIntVector2(0, 0), 400, Style.Tab.StripHeight));
 
     FDrawCommandList CommandList;
     DrawElement(Strip, CommandList);
@@ -354,7 +354,7 @@ bool PanelChromeFocusStroke_Test()
     const TSharedPtr<IFontFace> Font = CreateFont();
 
     TSharedPtr<FDockingArea> Area = BuildPairArea(Font);
-    LayoutElement(Area, FRectangle(IntVector2(0, 0), 800, 400));
+    LayoutElement(Area, FRectangle(FIntVector2(0, 0), 800, 400));
 
     FDrawCommandList CommandList;
     DrawElement(Area, CommandList);
@@ -400,26 +400,26 @@ bool PanelChromeSnapshots_Test()
     TEST_SECTION("The editor-shaped shell rasterizes and writes");
     {
         TSharedPtr<FDockingArea> Area = BuildShellArea(Font);
-        TEST_EXPECT(SnapshotElementToPng(Area, IntVector2(SHELL_WIDTH, SHELL_HEIGHT), ClearColor, Directory + "/Shell.png"));
+        TEST_EXPECT(SnapshotElementToPng(Area, FIntVector2(SHELL_WIDTH, SHELL_HEIGHT), ClearColor, Directory + "/Shell.png"));
     }
 
     TEST_SECTION("A single splitter between two leaves rasterizes and writes");
     {
         TSharedPtr<FDockingArea> Area = BuildPairArea(Font);
-        TEST_EXPECT(SnapshotElementToPng(Area, IntVector2(800, 400), ClearColor, Directory + "/Pair.png"));
+        TEST_EXPECT(SnapshotElementToPng(Area, FIntVector2(800, 400), ClearColor, Directory + "/Pair.png"));
     }
 
     TEST_SECTION("A hovered splitter rasterizes and writes");
     {
         TSharedPtr<FDockingArea> Area = BuildPairArea(Font);
-        LayoutElement(Area, FRectangle(IntVector2(0, 0), 800, 400));
+        LayoutElement(Area, FRectangle(FIntVector2(0, 0), 800, 400));
 
         if (TSharedPtr<FSplitter> Splitter = FindSplitter(Area))
         {
-            Splitter->OnMouseMove(FCursorEvent(EInputEventType::MouseMoved, Splitter->GetHandleRectangle(0).GetCenter(), IntVector2(0, 0), FModifierKeyState()));
+            Splitter->OnMouseMove(FCursorEvent(EInputEventType::MouseMoved, Splitter->GetHandleRectangle(0).GetCenter(), FIntVector2(0, 0), FModifierKeyState()));
         }
 
-        TEST_EXPECT(SnapshotElementToPng(Area, IntVector2(800, 400), ClearColor, Directory + "/SplitterHover.png"));
+        TEST_EXPECT(SnapshotElementToPng(Area, FIntVector2(800, 400), ClearColor, Directory + "/SplitterHover.png"));
     }
 
     TEST_SECTION("A stack of tabs rasterizes and writes");
@@ -433,7 +433,7 @@ bool PanelChromeSnapshots_Test()
         Area->RegisterPanel("Console", "Console", MakePanelBody("Console", Font));
         Area->RestoreLayout(FDockNode::CreateTabs({ FString("Output"), FString("Content"), FString("Console") }));
 
-        TEST_EXPECT(SnapshotElementToPng(Area, IntVector2(800, 300), ClearColor, Directory + "/Tabs.png"));
+        TEST_EXPECT(SnapshotElementToPng(Area, FIntVector2(800, 300), ClearColor, Directory + "/Tabs.png"));
     }
 
     TEST_END();

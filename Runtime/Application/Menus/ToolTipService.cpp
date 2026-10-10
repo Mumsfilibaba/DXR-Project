@@ -55,11 +55,11 @@ FToolTip::FToolTip()
 
 FToolTip::~FToolTip() = default;
 
-IntVector2 FToolTip::ComputeDesiredSize() const
+FIntVector2 FToolTip::ComputeDesiredSize() const
 {
     const FMargin& Inset = GetPadding();
 
-    IntVector2 DesiredSize(Inset.GetTotalHorizontal(), Inset.GetTotalVertical());
+    FIntVector2 DesiredSize(Inset.GetTotalHorizontal(), Inset.GetTotalVertical());
     if (Font)
     {
         int32 WidestLine = 0;
@@ -91,7 +91,7 @@ int32 FToolTip::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& 
 
         for (int32 LineIndex = 0; LineIndex < Lines.Size(); ++LineIndex)
         {
-            const FRectangle LineBounds(IntVector2(TextBounds.Position.X, TextBounds.Position.Y + (LineIndex * LineHeight)),
+            const FRectangle LineBounds(FIntVector2(TextBounds.Position.X, TextBounds.Position.Y + (LineIndex * LineHeight)),
                 TextBounds.Width, LineHeight);
 
             OutCommandList.AddText(LayerId + 1, LineBounds, Lines[LineIndex], Font.Get(), Style.Colors.Text);
@@ -259,7 +259,7 @@ void FToolTipService::CancelToolTip(const TSharedPtr<FVisualElement>& InOwner)
     }
 }
 
-void FToolTipService::NotifyCursorMoved(const IntVector2& ScreenPosition)
+void FToolTipService::NotifyCursorMoved(const FIntVector2& ScreenPosition)
 {
     if (CursorPosition == ScreenPosition)
     {
@@ -349,13 +349,13 @@ void FToolTipService::ShowToolTip()
 
     Content->PrepareDesiredSize();
 
-    const IntVector2 ToolTipSize = Content->GetCachedDesiredSize();
+    const FIntVector2 ToolTipSize = Content->GetCachedDesiredSize();
     if (ToolTipSize.X <= 0 || ToolTipSize.Y <= 0)
     {
         return;
     }
 
-    const IntVector2 OwningSize = OwningWindow->GetSize();
+    const FIntVector2 OwningSize = OwningWindow->GetSize();
     const FRectangle OwningArea(OwningWindow->GetPosition(), OwningSize.X, OwningSize.Y);
 
     if (ToolTipSize.X <= OwningArea.Width && ToolTipSize.Y <= OwningArea.Height)
@@ -371,7 +371,7 @@ void FToolTipService::ShowToolTip()
         return;
     }
 
-    const IntVector2 ClampAnchor = (Placement == EToolTipPlacement::FollowCursor) ? CursorPosition : ResolveAnchorBounds().Position;
+    const FIntVector2 ClampAnchor = (Placement == EToolTipPlacement::FollowCursor) ? CursorPosition : ResolveAnchorBounds().Position;
 
     ClampArea     = Popups::FindWorkArea(ClampAnchor);
     ToolTipBounds = ResolveBounds(ToolTipSize);
@@ -386,7 +386,7 @@ void FToolTipService::MoveToolTip()
         return;
     }
 
-    const IntVector2 ToolTipSize(ToolTipBounds.Width, ToolTipBounds.Height);
+    const FIntVector2 ToolTipSize(ToolTipBounds.Width, ToolTipBounds.Height);
     ToolTipBounds = ResolveBounds(ToolTipSize);
 
     if (ToolTipWindow)
@@ -403,7 +403,7 @@ void FToolTipService::MoveToolTip()
     }
 }
 
-FRectangle FToolTipService::ResolveBounds(const IntVector2& ToolTipSize) const
+FRectangle FToolTipService::ResolveBounds(const FIntVector2& ToolTipSize) const
 {
     const int32 Gap = HasAnchorBoundsOverride() ? 0 : AnchorGap;
 
@@ -421,7 +421,7 @@ FRectangle FToolTipService::ResolveBounds(const IntVector2& ToolTipSize) const
 
         default:
         {
-            const FRectangle CursorPoint(CursorPosition + IntVector2(CursorOffset, CursorOffset), 0, 0);
+            const FRectangle CursorPoint(CursorPosition + FIntVector2(CursorOffset, CursorOffset), 0, 0);
             return FPopupPlacement::Resolve(CursorPoint, ToolTipSize, ClampArea, EPopupSide::Below, EPopupFlip::None);
         }
     }

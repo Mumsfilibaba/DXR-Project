@@ -39,7 +39,7 @@ public:
     virtual ~FViewportTransportLayer();
 
     // FVisualElement Interface
-    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual FIntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
 
@@ -76,7 +76,7 @@ public:
 
     virtual void SetViewportImage(FRHITextureRef InViewportImage) override final;
 
-    virtual IntVector2                          GetViewportSize() const override final;
+    virtual FIntVector2                         GetViewportSize() const override final;
     virtual FSceneRenderView::EDebugView        GetDebugView() const override final;
     virtual FSceneRenderView::EDebugView        GetSecondaryDebugView() const override final;
     virtual FSceneRenderView::EDebugViewChannel GetDebugViewChannelMask() const override final;
@@ -123,12 +123,12 @@ public:
     void TogglePlay();
 
 private:
-    void OnViewportClicked(const IntVector2& ImagePosition, bool bAdditive);
-    void OnViewportContextMenu(const IntVector2& ImagePosition, const IntVector2& ScreenPosition);
-    void OnViewportMarqueeSelect(const IntVector2& ImageMin, const IntVector2& ImageMax, bool bAdditive);
+    void OnViewportClicked(const FIntVector2& ImagePosition, bool bAdditive);
+    void OnViewportContextMenu(const FIntVector2& ImagePosition, const FIntVector2& ScreenPosition);
+    void OnViewportMarqueeSelect(const FIntVector2& ImageMin, const FIntVector2& ImageMax, bool bAdditive);
     void OnGizmoDragStarted(EGizmoHandle Handle);
-    void OnGizmoTransformChanged(const Matrix4& NewTransform, const Matrix4& Delta);
-    void OnGizmoDragFinished(const Matrix4& TransformAtDragStart, const Matrix4& Transform);
+    void OnGizmoTransformChanged(const FMatrix4& NewTransform, const FMatrix4& Delta);
+    void OnGizmoDragFinished(const FMatrix4& TransformAtDragStart, const FMatrix4& Transform);
     NODISCARD bool OnViewportShortcut(const class FKeyEvent& KeyEvent);
 
     void UpdateGizmoFromSelection();
@@ -136,10 +136,10 @@ private:
     void RefreshToolBarState();
     void ShowContextMenu();
 
-    NODISCARD bool ComputeFallbackPlacement(const Vector2& Ndc, Vector3& OutLocation) const;
+    NODISCARD bool ComputeFallbackPlacement(const FVector2& Ndc, FVector3& OutLocation) const;
     NODISCARD EGizmoOperation ResolveGizmoOperation(const TArray<FActor*>& Selection) const;
-    NODISCARD Vector3 ComputeGizmoLocation(const TArray<FActor*>& Selection) const;
-    NODISCARD Vector3 GetActorGizmoPoint(FActor* Actor) const;
+    NODISCARD FVector3 ComputeGizmoLocation(const TArray<FActor*>& Selection) const;
+    NODISCARD FVector3 GetActorGizmoPoint(FActor* Actor) const;
     NODISCARD TSharedPtr<FToolBar> BuildToolBar();
     NODISCARD TSharedPtr<FToolBar> BuildTransportBar();
     NODISCARD int32 ComputeViewButtonWidth() const;
@@ -166,11 +166,11 @@ private:
     TSharedPtr<FToolBarButton>          PauseItem;
     TSharedPtr<FToolBarButton>          ViewItem;
     FRHITextureRef                      ViewportImage;
-    IntVector2                          CachedViewportSize;
-    Matrix4                             ContextMenuViewProjectionInverse;
-    Vector3                             ContextMenuLocation;
-    Vector2                             ContextMenuNdc;
-    IntVector2                          ContextMenuScreenPosition;
+    FIntVector2                         CachedViewportSize;
+    FMatrix4                            ContextMenuViewProjectionInverse;
+    FVector3                            ContextMenuLocation;
+    FVector2                            ContextMenuNdc;
+    FIntVector2                         ContextMenuScreenPosition;
     uint64                              ContextMenuPickRequestId;
     FActor*                             ContextMenuActor;
     FSceneRenderView::EDebugView        DebugView;
@@ -179,5 +179,5 @@ private:
     EEditorGizmoPlacement               GizmoPlacement;
     EGizmoOperation                     RequestedGizmoOperation;
     TArray<FActor*>                     DragActors;
-    TArray<Matrix4>                     DragStartTransforms;
+    TArray<FMatrix4>                    DragStartTransforms;
 };

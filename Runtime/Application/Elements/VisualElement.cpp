@@ -32,7 +32,7 @@ static TAutoConsoleVariable<int32> CVarDrawCacheMaxDirtyFrames(
 
 static uint64 GHitTestGeneration = 0;
 
-static IntVector2            GArrangeTranslation(0, 0);
+static FIntVector2            GArrangeTranslation(0, 0);
 
 static const FVisualElement* GArrangeTranslationOwner = nullptr;
 
@@ -73,11 +73,11 @@ void FVisualElement::Arrange(const FRectangle& AssignedBounds)
     ClearElementFlags(EElementFlags::ArrangeDirty);
 
     const FVisualElement* const OuterOwner       = GArrangeTranslationOwner;
-    const IntVector2            OuterTranslation = GArrangeTranslation;
+    const FIntVector2           OuterTranslation = GArrangeTranslation;
 
     const bool bOnlyMoved = PreviousRectangle.Width == AssignedBounds.Width && PreviousRectangle.Height == AssignedBounds.Height;
     GArrangeTranslationOwner = this;
-    GArrangeTranslation      = bOnlyMoved ? AssignedBounds.Position - PreviousRectangle.Position : IntVector2(0, 0);
+    GArrangeTranslation      = bOnlyMoved ? AssignedBounds.Position - PreviousRectangle.Position : FIntVector2(0, 0);
 
     OnArrange(AssignedBounds);
 
@@ -228,9 +228,9 @@ FEventResponse FVisualElement::OnFocusGained()
     return FEventResponse::Unhandled();
 }
 
-IntVector2 FVisualElement::ComputeDesiredSize() const
+FIntVector2 FVisualElement::ComputeDesiredSize() const
 {
-    return IntVector2(0, 0);
+    return FIntVector2(0, 0);
 }
 
 void FVisualElement::OnArrange(const FRectangle& /*AllottedBounds*/)
@@ -277,10 +277,10 @@ int32 FVisualElement::Draw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
         const int32       ClipDepth     = OutCommandList.GetClipDepth();
         const FRectangle& ClipRectangle = OutCommandList.GetCurrentClipRectangle();
 
-        IntVector2 ReplayOffset(0, 0);
+        FIntVector2 ReplayOffset(0, 0);
         if (DrawCacheBlock->CanReplay(AllottedGeometry, LayerId, ClipDepth, ClipRectangle, ReplayOffset))
         {
-            if (ReplayOffset != IntVector2(0, 0))
+            if (ReplayOffset != FIntVector2(0, 0))
             {
                 DrawCacheBlock->Translate(ReplayOffset);
             }
@@ -393,7 +393,7 @@ int32 FVisualElement::GetContentTopInset() const
     return 0;
 }
 
-IntVector2 FVisualElement::PrepareDesiredSize()
+FIntVector2 FVisualElement::PrepareDesiredSize()
 {
     if (!IsDesiredSizeDirty())
     {
@@ -408,7 +408,7 @@ IntVector2 FVisualElement::PrepareDesiredSize()
 
     ClearElementFlags(EElementFlags::DesiredSizeDirty);
 
-    const IntVector2 DesiredSize = ComputeDesiredSize();
+    const FIntVector2 DesiredSize = ComputeDesiredSize();
     if (DesiredSize != CachedDesiredSize)
     {
         CachedDesiredSize = DesiredSize;
@@ -516,7 +516,7 @@ void FVisualElement::FindParentElements(FElementPath& OutRootPath)
     OutRootPath.Add(Visibility, AsSharedPtr());
 }
 
-bool FVisualElement::HitTest(const IntVector2& ClientPosition, FElementPath& OutPath)
+bool FVisualElement::HitTest(const FIntVector2& ClientPosition, FElementPath& OutPath)
 {
     if (!IsVisible() || !IsHitTestable())
     {
@@ -540,7 +540,7 @@ bool FVisualElement::HitTest(const IntVector2& ClientPosition, FElementPath& Out
     return true;
 }
 
-void FVisualElement::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
+void FVisualElement::HitTestChildren(const FIntVector2& ClientPosition, FElementPath& OutPath)
 {
     ForEachChild([&ClientPosition, &OutPath](FVisualElement& Child)
     {
@@ -587,9 +587,9 @@ void FVisualElement::SetParentElement(const TWeakPtr<FVisualElement>& InParentEl
 
 void FVisualElement::SetContentRectangle(const FRectangle& InContentRectangle)
 {
-    const bool       bPlacedByParent = GArrangeTranslationOwner != nullptr && GArrangeTranslationOwner != this && GArrangeTranslationOwner == GetLiveParent();
-    const IntVector2 ParentMove      = bPlacedByParent ? GArrangeTranslation : IntVector2(0, 0);
-    const bool       bParentMoved    = ParentMove != IntVector2(0, 0);
+    const bool        bPlacedByParent = GArrangeTranslationOwner != nullptr && GArrangeTranslationOwner != this && GArrangeTranslationOwner == GetLiveParent();
+    const FIntVector2 ParentMove      = bPlacedByParent ? GArrangeTranslation : FIntVector2(0, 0);
+    const bool        bParentMoved    = ParentMove != FIntVector2(0, 0);
 
     if (ContentRectangle == InContentRectangle)
     {

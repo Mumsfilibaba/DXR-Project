@@ -11,16 +11,16 @@
 struct FCascadeMatricesHLSL
 {
     // 0-64
-    Matrix4 View;
+    FMatrix4 View;
 
     // 64-128
-    Matrix4 ViewProjection;
+    FMatrix4 ViewProjection;
 
     // 128-196
-    Matrix4 InvView;
+    FMatrix4 InvView;
 
     // 196-256
-    Matrix4 InvViewProjection;
+    FMatrix4 InvViewProjection;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeMatricesHLSL);
@@ -28,17 +28,17 @@ MARK_AS_REALLOCATABLE(FCascadeMatricesHLSL);
 struct FCascadeSplitHLSL
 {
     // 0-64
-    Vector4 FrustumPlanes[NUM_FRUSTUM_PLANES];
+    FVector4 FrustumPlanes[NUM_FRUSTUM_PLANES];
 
     // 64-96
-    Vector4 Offsets;
-    Vector4 Scale;
+    FVector4 Offsets;
+    FVector4 Scale;
 
     // 96-128
-    Vector3 MinExtent;
-    float   Split;
-    Vector3 MaxExtent;
-    float   NearPlane;
+    FVector3 MinExtent;
+    float    Split;
+    FVector3 MaxExtent;
+    float    NearPlane;
 
     // 128-144
     float   FarPlane;
@@ -47,8 +47,8 @@ struct FCascadeSplitHLSL
     float   PreviousSplit;
 
     // 144-160
-    Vector3 CascadeCameraPosition;
-    float   Padding0;
+    FVector3 CascadeCameraPosition;
+    float    Padding0;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeSplitHLSL);

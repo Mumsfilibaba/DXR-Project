@@ -8,9 +8,9 @@
 
 struct FReductionConstants
 {
-    Matrix4 CamProjection;
-    float   NearPlane;
-    float   FarPlane;
+    FMatrix4 CamProjection;
+    float    NearPlane;
+    float    FarPlane;
 };
 
 class FDepthReductionInitialCS

@@ -26,7 +26,7 @@ void FDrawCanvas::Initialize(const FDesc& Desc)
     OnCanvasDraw = Desc.OnCanvasDraw;
 }
 
-IntVector2 FDrawCanvas::ComputeDesiredSize() const
+FIntVector2 FDrawCanvas::ComputeDesiredSize() const
 {
     return DesiredSize;
 }

@@ -92,13 +92,13 @@ FMenuHandle FMenuStack::PushMenu(
 
     MenuContent->PrepareDesiredSize();
 
-    const IntVector2 MenuSize = MenuContent->GetCachedDesiredSize();
+    const FIntVector2 MenuSize = MenuContent->GetCachedDesiredSize();
     if (MenuSize.X <= 0 || MenuSize.Y <= 0)
     {
         return nullptr;
     }
 
-    const IntVector2 HostSize = HostWindow->GetSize();
+    const FIntVector2 HostSize = HostWindow->GetSize();
     const FRectangle HostArea(HostWindow->GetPosition(), HostSize.X, HostSize.Y);
 
     const bool bFitsInHost = MenuSize.X <= HostArea.Width && MenuSize.Y <= HostArea.Height;
@@ -160,7 +160,7 @@ void FMenuStack::DismissToDepth(int32 Depth)
     }
 }
 
-bool FMenuStack::DismissOnClickOutside(const IntVector2& ScreenPosition)
+bool FMenuStack::DismissOnClickOutside(const FIntVector2& ScreenPosition)
 {
     if (OpenMenus.IsEmpty())
     {
@@ -274,7 +274,7 @@ void FMenuStack::Tick(float DeltaSeconds)
     PushMenu(Pending.Item, Pending.AnchorBounds, EMenuPlacement::RightOfTopAligned, Pending.Content);
 }
 
-FRectangle FMenuStack::ResolveBounds(const FRectangle& AnchorBounds, const IntVector2& MenuSize, EMenuPlacement Placement,
+FRectangle FMenuStack::ResolveBounds(const FRectangle& AnchorBounds, const FIntVector2& MenuSize, EMenuPlacement Placement,
     int32 ContentTopInset, const FRectangle& ClampArea) const
 {
     switch (Placement)

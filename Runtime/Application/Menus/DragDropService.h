@@ -56,7 +56,7 @@ struct FDragDropPayload
 };
 
 /** @brief Called on the target under the cursor once the drag ends over it. */
-DECLARE_DELEGATE(FOnDragDropped, const FDragDropPayload& /*Payload*/, const IntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnDragDropped, const FDragDropPayload& /*Payload*/, const FIntVector2& /*ScreenPosition*/);
 
 /** @brief Asks a target whether it would take the payload, which is what picks one out of the targets under the cursor. */
 DECLARE_RETURN_DELEGATE(FOnDragOver, bool, const FDragDropPayload& /*Payload*/);
@@ -102,14 +102,14 @@ public:
      * @param InPayload        What is being dragged, which is ignored when it names no type.
      * @param InScreenPosition Where the cursor was, in screen coordinates.
      */
-    void BeginDrag(const FDragDropPayload& InPayload, const IntVector2& InScreenPosition);
+    void BeginDrag(const FDragDropPayload& InPayload, const FIntVector2& InScreenPosition);
 
     /**
      * @brief Moves the drag, re-resolving which target is under the cursor.
      *
      * @param InScreenPosition Where the cursor is now, in screen coordinates.
      */
-    void UpdateDrag(const IntVector2& InScreenPosition);
+    void UpdateDrag(const FIntVector2& InScreenPosition);
 
     /**
      * @brief Ends the drag, dropping onto the target under the cursor and dropping nothing when there is
@@ -118,7 +118,7 @@ public:
      *
      * @param InScreenPosition Where the cursor was released, in screen coordinates.
      */
-    void EndDrag(const IntVector2& InScreenPosition);
+    void EndDrag(const FIntVector2& InScreenPosition);
 
     /** @brief Ends the drag without dropping anything, which is what Escape does. */
     void CancelDrag();
@@ -156,7 +156,7 @@ public:
      * @param ClientOrigin   Where the drawing window's client area starts on screen, which is subtracted from the
      *                       drag's screen position to land the ghost in that window's own coordinates.
      */
-    void DrawDragVisual(FDrawCommandList& OutCommandList, int32 LayerId, const IntVector2& ClientOrigin = IntVector2(0, 0)) const;
+    void DrawDragVisual(FDrawCommandList& OutCommandList, int32 LayerId, const FIntVector2& ClientOrigin = FIntVector2(0, 0)) const;
 
     /** @return True while a drag is in flight. */
     NODISCARD FORCEINLINE bool IsDragging() const
@@ -171,7 +171,7 @@ public:
     }
 
     /** @return Where the cursor last was, in screen coordinates. */
-    NODISCARD FORCEINLINE const IntVector2& GetScreenPosition() const
+    NODISCARD FORCEINLINE const FIntVector2& GetScreenPosition() const
     {
         return ScreenPosition;
     }
@@ -199,12 +199,12 @@ private:
 
     NODISCARD static FRectangle ResolveTargetBounds(const TSharedPtr<FVisualElement>& Element);
 
-    NODISCARD int32 FindTargetAt(const IntVector2& InScreenPosition) const;
+    NODISCARD int32 FindTargetAt(const FIntVector2& InScreenPosition) const;
 
     void OnWindowPainting(const TSharedPtr<FWindow>& Window);
 
     FDragDropPayload Payload;
-    IntVector2       ScreenPosition;
+    FIntVector2      ScreenPosition;
     TArray<FTarget>  Targets;
     int32            TargetIndex;
     FDelegateHandle  OnWindowPaintingHandle;

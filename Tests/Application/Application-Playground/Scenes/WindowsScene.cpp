@@ -111,7 +111,7 @@ static TSharedPtr<FVisualElement> MakeFloatingWindowBody(const FPlaygroundFonts&
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
     Column->AddSlot(FTextBlock::Create(HeadingDesc)).SetPadding(FMargin(0, 0, 0, 8));
     Column->AddSlot(FTextBlock::Create(BodyDesc));
-    Column->AddSlot(FSpacer::Create(IntVector2(0, 0))).SetFillCoefficient(1.0f);
+    Column->AddSlot(FSpacer::Create(FIntVector2(0, 0))).SetFillCoefficient(1.0f);
 
     FBorder::FDesc BorderDesc;
     BorderDesc.BackgroundColor = FUIStyle::GetDefault().Colors.WindowBackground;
@@ -130,7 +130,7 @@ static void OpenFloatingWindow(const FPlaygroundFonts& Fonts, const TSharedPtr<F
 
     FFloatingWindow::FDesc Desc;
     Desc.SetTitle(FString::Printf("Inspector %d", Ordinal));
-    Desc.SetBounds(IntVector2(FLOATING_WINDOW_ORIGIN_X + Offset, FLOATING_WINDOW_ORIGIN_Y + Offset), IntVector2(520, 300));
+    Desc.SetBounds(FIntVector2(FLOATING_WINDOW_ORIGIN_X + Offset, FLOATING_WINDOW_ORIGIN_Y + Offset), FIntVector2(520, 300));
     Desc.SetContent(MakeFloatingWindowBody(Fonts, Ordinal));
 
     Desc.Font            = Fonts.Body;
@@ -182,7 +182,7 @@ static TSharedPtr<FVisualElement> MakeFloatingWindowRow(const FPlaygroundFonts& 
     Row->AddSlot(FButton::Create(OpenDesc)).SetPadding(FMargin(0, 0, 12, 0)).SetVerticalAlignment(EVerticalAlignment::Center);
     Row->AddSlot(FButton::Create(CloseDesc)).SetPadding(FMargin(0, 0, 12, 0)).SetVerticalAlignment(EVerticalAlignment::Center);
     Row->AddSlot(FButton::Create(RefreshDesc)).SetVerticalAlignment(EVerticalAlignment::Center);
-    Row->AddSlot(FSpacer::Create(IntVector2(0, 0))).SetFillCoefficient(1.0f);
+    Row->AddSlot(FSpacer::Create(FIntVector2(0, 0))).SetFillCoefficient(1.0f);
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
     Column->AddSlot(Row);

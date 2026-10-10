@@ -581,11 +581,11 @@ void FEditorEngine::DrainPendingDestroyActors()
     }
 }
 
-IntVector2 FEditorEngine::GetSceneRenderSize() const
+FIntVector2 FEditorEngine::GetSceneRenderSize() const
 {
     // The scene fills whichever panel hosts it rather than the window, and that panel reports nothing until
     // it has been laid out at least once.
-    return ViewportHost ? ViewportHost->GetViewportSize() : IntVector2(0, 0);
+    return ViewportHost ? ViewportHost->GetViewportSize() : FIntVector2(0, 0);
 }
 
 void FEditorEngine::SetSceneRenderTarget(const FRHITextureRef& InViewportImage)

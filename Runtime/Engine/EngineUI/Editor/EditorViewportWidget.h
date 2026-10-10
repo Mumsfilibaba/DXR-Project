@@ -35,7 +35,7 @@ public:
 
     virtual void SetViewportImage(FRHITextureRef InViewportImage) override final;
 
-    virtual IntVector2                          GetViewportSize() const override final;
+    virtual FIntVector2                         GetViewportSize() const override final;
     virtual FSceneRenderView::EDebugView        GetDebugView() const override final;
     virtual FSceneRenderView::EDebugView        GetSecondaryDebugView() const override final;
     virtual FSceneRenderView::EDebugViewChannel GetDebugViewChannelMask() const override final;
@@ -107,12 +107,12 @@ private:
     void TogglePlay();
 
     bool ComputeViewportPixel(const ImVec2& ImageMin, const ImVec2& ImageSize, uint32& OutPixelX, uint32& OutPixelY) const;
-    bool ComputeFallbackPlacement(const Vector2& Ndc, Vector3& OutLocation) const;
+    bool ComputeFallbackPlacement(const FVector2& Ndc, FVector3& OutLocation) const;
 
     FEditorEngine*                      EditorEngine;
     TUniquePtr<FEditorCameraController> CameraController;
     TSharedPtr<FViewport>               HostViewport;
-    IntVector2                          CachedViewportSize;
+    FIntVector2                         CachedViewportSize;
     ImVec2                              CachedImageMin;
     ImVec2                              CachedImageSize;
     ImDrawList*                         CachedImageDrawList;
@@ -123,8 +123,8 @@ private:
     bool                                bMouseLookActive;
     bool                                bRawLookActive;
     bool                                bCursorWasVisible;
-    IntVector2                          MouseLookRestorePosition;
-    Vector2                             MarqueeStartPos;
+    FIntVector2                         MouseLookRestorePosition;
+    FVector2                            MarqueeStartPos;
     bool                                bPickArmed;
     bool                                bMarqueeActive;
     bool                                bMarqueeAdditive;
@@ -133,9 +133,9 @@ private:
     bool                                bRightMousePressedOnImage;
     float                               RightMouseDragDistance;
     uint64                              ContextMenuPickRequestId;
-    Vector2                             ContextMenuNdc;
-    Matrix4                             ContextMenuViewProjectionInverse;
-    Vector3                             ContextMenuLocation;
+    FVector2                            ContextMenuNdc;
+    FMatrix4                            ContextMenuViewProjectionInverse;
+    FVector3                            ContextMenuLocation;
     FActor*                             ContextMenuActor;
     FSceneRenderView::EDebugView        DebugView;
     FSceneRenderView::EDebugView        SecondaryDebugView;

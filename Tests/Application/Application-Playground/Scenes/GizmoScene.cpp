@@ -44,7 +44,7 @@ public:
         : FVisualElement()
         , Gizmo(nullptr)
         , Font(nullptr)
-        , Transform(Matrix4::Identity())
+        , Transform(FMatrix4::Identity())
         , Target(0.0f, 0.0f, 0.0f)
         , YawDegrees(35.0f)
         , PitchDegrees(25.0f)
@@ -69,9 +69,9 @@ public:
         }
     }
 
-    virtual IntVector2 ComputeDesiredSize() const override
+    virtual FIntVector2 ComputeDesiredSize() const override
     {
-        return IntVector2(0, GIZMO_VIEWPORT_HEIGHT);
+        return FIntVector2(0, GIZMO_VIEWPORT_HEIGHT);
     }
 
     virtual void OnArrange(const FRectangle& AllottedBounds) override
@@ -160,8 +160,8 @@ public:
 
     virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override
     {
-        const IntVector2 ClientPosition = CursorEvent.GetClientPosition();
-        const IntVector2 Step           = ClientPosition - LastCursorPosition;
+        const FIntVector2 ClientPosition = CursorEvent.GetClientPosition();
+        const FIntVector2 Step           = ClientPosition - LastCursorPosition;
 
         LastCursorPosition = ClientPosition;
 
@@ -173,14 +173,14 @@ public:
         }
         else if (bIsPanning)
         {
-            const Matrix4 InverseView = GetViewMatrix().GetInverse();
-            const Vector4 Right       = InverseView.GetRow(0);
-            const Vector4 Up          = InverseView.GetRow(1);
+            const FMatrix4 InverseView = GetViewMatrix().GetInverse();
+            const FVector4 Right       = InverseView.GetRow(0);
+            const FVector4 Up          = InverseView.GetRow(1);
 
             const float PixelsToWorld = Distance * 0.002f;
 
-            Target -= Vector3(Right.X, Right.Y, Right.Z) * (static_cast<float>(Step.X) * PixelsToWorld);
-            Target += Vector3(Up.X, Up.Y, Up.Z) * (static_cast<float>(Step.Y) * PixelsToWorld);
+            Target -= FVector3(Right.X, Right.Y, Right.Z) * (static_cast<float>(Step.X) * PixelsToWorld);
+            Target += FVector3(Up.X, Up.Y, Up.Z) * (static_cast<float>(Step.Y) * PixelsToWorld);
         }
         else
         {
@@ -207,7 +207,7 @@ public:
     }
 
     /** @brief The transform the cube is drawn with, which is the one the gizmo edits. */
-    void SetTransform(const Matrix4& InTransform)
+    void SetTransform(const FMatrix4& InTransform)
     {
         Transform = InTransform;
 
@@ -220,7 +220,7 @@ public:
     /** @brief Back to where the camera started, which is the Frame action. */
     void ResetCamera()
     {
-        Target       = Vector3(0.0f, 0.0f, 0.0f);
+        Target       = FVector3(0.0f, 0.0f, 0.0f);
         YawDegrees   = 35.0f;
         PitchDegrees = 25.0f;
         Distance     = 9.0f;
@@ -229,12 +229,12 @@ public:
     }
 
 private:
-    NODISCARD Vector3 GetCameraPosition() const
+    NODISCARD FVector3 GetCameraPosition() const
     {
         const float Yaw   = Math::DegreesToRadians(YawDegrees);
         const float Pitch = Math::DegreesToRadians(PitchDegrees);
 
-        const Vector3 Offset(
+        const FVector3 Offset(
             Math::Sin(Yaw) * Math::Cos(Pitch),
             Math::Sin(Pitch),
             -Math::Cos(Yaw) * Math::Cos(Pitch));
@@ -242,17 +242,17 @@ private:
         return Target + (Offset * Distance);
     }
 
-    NODISCARD Matrix4 GetViewMatrix() const
+    NODISCARD FMatrix4 GetViewMatrix() const
     {
-        return Matrix4::LookAt(GetCameraPosition(), Target, Vector3(0.0f, 1.0f, 0.0f));
+        return FMatrix4::LookAt(GetCameraPosition(), Target, FVector3(0.0f, 1.0f, 0.0f));
     }
 
-    NODISCARD Matrix4 GetProjectionMatrix() const
+    NODISCARD FMatrix4 GetProjectionMatrix() const
     {
         const FRectangle& Bounds      = GetContentRectangle();
         const float       AspectRatio = Bounds.Height > 0 ? (static_cast<float>(Bounds.Width) / static_cast<float>(Bounds.Height)) : 1.0f;
 
-        return Matrix4::PerspectiveProjection(Math::Constants::PI * 0.25f, AspectRatio, 0.1f, 500.0f);
+        return FMatrix4::PerspectiveProjection(Math::Constants::PI * 0.25f, AspectRatio, 0.1f, 500.0f);
     }
 
     void PushCamera()
@@ -265,9 +265,9 @@ private:
 
     struct FCameraFrame
     {
-        Matrix4    ViewProjection;
-        Vector3    Position;
-        Vector3    Forward;
+        FMatrix4   ViewProjection;
+        FVector3   Position;
+        FVector3   Forward;
         FRectangle Viewport;
     };
 
@@ -282,7 +282,7 @@ private:
         return Frame;
     }
 
-    NODISCARD bool ProjectSegment(const FCameraFrame& Frame, const Vector3& Start, const Vector3& End, Vector2& OutStart, Vector2& OutEnd) const
+    NODISCARD bool ProjectSegment(const FCameraFrame& Frame, const FVector3& Start, const FVector3& End, FVector2& OutStart, FVector2& OutEnd) const
     {
         constexpr float NearDepth = 0.2f;
 
@@ -294,13 +294,13 @@ private:
             return false;
         }
 
-        Vector3 NearEnd = Start;
-        Vector3 FarEnd  = End;
+        FVector3 NearEnd = Start;
+        FVector3 FarEnd  = End;
 
         if (StartDepth < NearDepth || EndDepth < NearDepth)
         {
-            const float   Fraction = (NearDepth - StartDepth) / (EndDepth - StartDepth);
-            const Vector3 OnPlane  = NearEnd + ((FarEnd - NearEnd) * Fraction);
+            const float    Fraction = (NearDepth - StartDepth) / (EndDepth - StartDepth);
+            const FVector3 OnPlane  = NearEnd + ((FarEnd - NearEnd) * Fraction);
 
             if (StartDepth < NearDepth)
             {
@@ -316,10 +316,10 @@ private:
             && FGizmoMath::WorldToClient(Frame.ViewProjection, Frame.Viewport, FarEnd, OutEnd);
     }
 
-    void DrawWorldLine(const FCameraFrame& Frame, FDrawCommandList& OutCommandList, int32 LayerId, const Vector3& Start, const Vector3& End, const FFloatColor& Tint, float Thickness) const
+    void DrawWorldLine(const FCameraFrame& Frame, FDrawCommandList& OutCommandList, int32 LayerId, const FVector3& Start, const FVector3& End, const FFloatColor& Tint, float Thickness) const
     {
-        Vector2 ClientStart;
-        Vector2 ClientEnd;
+        FVector2 ClientStart;
+        FVector2 ClientEnd;
 
         if (ProjectSegment(Frame, Start, End, ClientStart, ClientEnd))
         {
@@ -342,23 +342,23 @@ private:
             const bool bIsOrigin = Step == 0;
 
             DrawWorldLine(Frame, OutCommandList, LayerId,
-                Vector3(Offset, 0.0f, -Extent), Vector3(Offset, 0.0f, Extent),
+                FVector3(Offset, 0.0f, -Extent), FVector3(Offset, 0.0f, Extent),
                 bIsOrigin ? AxisTintZ : GridTint, bIsOrigin ? 1.6f : 1.0f);
 
             DrawWorldLine(Frame, OutCommandList, LayerId,
-                Vector3(-Extent, 0.0f, Offset), Vector3(Extent, 0.0f, Offset),
+                FVector3(-Extent, 0.0f, Offset), FVector3(Extent, 0.0f, Offset),
                 bIsOrigin ? AxisTintX : GridTint, bIsOrigin ? 1.6f : 1.0f);
         }
     }
 
     void DrawCube(const FCameraFrame& Frame, FDrawCommandList& OutCommandList, int32 LayerId) const
     {
-        static const Vector3 Corners[8] =
+        static const FVector3 Corners[8] =
         {
-            Vector3(-0.5f, -0.5f, -0.5f), Vector3( 0.5f, -0.5f, -0.5f),
-            Vector3( 0.5f,  0.5f, -0.5f), Vector3(-0.5f,  0.5f, -0.5f),
-            Vector3(-0.5f, -0.5f,  0.5f), Vector3( 0.5f, -0.5f,  0.5f),
-            Vector3( 0.5f,  0.5f,  0.5f), Vector3(-0.5f,  0.5f,  0.5f),
+            FVector3(-0.5f, -0.5f, -0.5f), FVector3( 0.5f, -0.5f, -0.5f),
+            FVector3( 0.5f,  0.5f, -0.5f), FVector3(-0.5f,  0.5f, -0.5f),
+            FVector3(-0.5f, -0.5f, 0.5f), FVector3( 0.5f, -0.5f, 0.5f),
+            FVector3( 0.5f,  0.5f, 0.5f), FVector3(-0.5f,  0.5f, 0.5f),
         };
 
         static const int32 Edges[12][2] =
@@ -368,7 +368,7 @@ private:
             { 0, 4 }, { 1, 5 }, { 2, 6 }, { 3, 7 },
         };
 
-        Vector3 World[8];
+        FVector3 World[8];
         for (int32 Index = 0; Index < 8; ++Index)
         {
             World[Index] = Transform.TransformCoord(Corners[Index]);
@@ -383,14 +383,14 @@ private:
 
     TSharedPtr<FGizmo>    Gizmo;
     TSharedPtr<IFontFace> Font;
-    Matrix4               Transform;
-    Vector3               Target;
+    FMatrix4              Transform;
+    FVector3              Target;
     float                 YawDegrees;
     float                 PitchDegrees;
     float                 Distance;
     bool                  bIsOrbiting;
     bool                  bIsPanning;
-    IntVector2            LastCursorPosition;
+    FIntVector2           LastCursorPosition;
 };
 
 static TSharedPtr<FGizmoViewport> GViewport;
@@ -421,14 +421,14 @@ static const CHAR_T* GetHandleName(EGizmoHandle Handle)
     }
 }
 
-static Vector3 GetTransformScale(const Matrix4& Transform)
+static FVector3 GetTransformScale(const FMatrix4& Transform)
 {
-    const Vector4 Rows[3] = { Transform.GetRow(0), Transform.GetRow(1), Transform.GetRow(2) };
+    const FVector4 Rows[3] = { Transform.GetRow(0), Transform.GetRow(1), Transform.GetRow(2) };
 
-    return Vector3(
-        Vector3(Rows[0].X, Rows[0].Y, Rows[0].Z).GetLength(),
-        Vector3(Rows[1].X, Rows[1].Y, Rows[1].Z).GetLength(),
-        Vector3(Rows[2].X, Rows[2].Y, Rows[2].Z).GetLength());
+    return FVector3(
+        FVector3(Rows[0].X, Rows[0].Y, Rows[0].Z).GetLength(),
+        FVector3(Rows[1].X, Rows[1].Y, Rows[1].Z).GetLength(),
+        FVector3(Rows[2].X, Rows[2].Y, Rows[2].Z).GetLength());
 }
 
 static void RefreshGizmoReadout()
@@ -438,9 +438,9 @@ static void RefreshGizmoReadout()
         return;
     }
 
-    const Matrix4 Transform   = GGizmo->GetTransform();
-    const Vector3 Translation = Transform.GetTranslation();
-    const Vector3 Scale       = GetTransformScale(Transform);
+    const FMatrix4 Transform   = GGizmo->GetTransform();
+    const FVector3 Translation = Transform.GetTranslation();
+    const FVector3 Scale       = GetTransformScale(Transform);
 
     const EGizmoHandle Handle = GGizmo->IsDragging() ? GGizmo->GetActiveHandle() : GGizmo->GetHoveredHandle();
 
@@ -490,7 +490,7 @@ static TSharedPtr<FVisualElement> MakeGizmoViewport(const FPlaygroundFonts& Font
     Desc.Mode      = EGizmoMode::Local;
     Desc.Font      = Fonts.Monospace;
 
-    Desc.OnTransformChanged = FOnGizmoTransformChanged::CreateLambda([](const Matrix4& NewTransform, const Matrix4& Delta)
+    Desc.OnTransformChanged = FOnGizmoTransformChanged::CreateLambda([](const FMatrix4& NewTransform, const FMatrix4& Delta)
     {
         UNREFERENCED_VARIABLE(Delta);
 
@@ -498,7 +498,7 @@ static TSharedPtr<FVisualElement> MakeGizmoViewport(const FPlaygroundFonts& Font
         RefreshGizmoReadout();
     });
 
-    Desc.OnDragFinished = FOnGizmoDragFinished::CreateLambda([](const Matrix4& TransformAtDragStart, const Matrix4& Transform)
+    Desc.OnDragFinished = FOnGizmoDragFinished::CreateLambda([](const FMatrix4& TransformAtDragStart, const FMatrix4& Transform)
     {
         UNREFERENCED_VARIABLE(TransformAtDragStart);
         UNREFERENCED_VARIABLE(Transform);
@@ -616,7 +616,7 @@ static TSharedPtr<FVisualElement> MakeGizmoControls(const FPlaygroundFonts& Font
         FToolBarItemDesc().SetLabel("Reset cube").SetToolTipText("Back to the identity, at the origin"),
         FOnClicked::CreateLambda([]()
         {
-            GViewport->SetTransform(Matrix4::Identity());
+            GViewport->SetTransform(FMatrix4::Identity());
             RefreshGizmoReadout();
         }));
 

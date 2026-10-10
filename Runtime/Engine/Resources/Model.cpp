@@ -264,8 +264,8 @@ void FMesh::CreateBoundingBox(const FMeshData& MeshData)
 {
     static constexpr const float Inf = TNumericLimits<float>::Infinity();
 
-    Vector3 MinBounds = Vector3( Inf,  Inf,  Inf);
-    Vector3 MaxBounds = Vector3(-Inf, -Inf, -Inf);
+    FVector3 MinBounds = FVector3( Inf,  Inf,  Inf);
+    FVector3 MaxBounds = FVector3(-Inf, -Inf, -Inf);
 
     if (MeshData.PackedVertexCount > 0)
     {
@@ -274,17 +274,17 @@ void FMesh::CreateBoundingBox(const FMeshData& MeshData)
 
         for (int32 Index = 0; Index < MeshData.PackedVertexCount; Index++)
         {
-            const Vector3& Position = *reinterpret_cast<const Vector3*>(PositionStream.Data() + (Index * Stride));
-            MinBounds = Vector3::Min(MinBounds, Position);
-            MaxBounds = Vector3::Max(MaxBounds, Position);
+            const FVector3& Position = *reinterpret_cast<const FVector3*>(PositionStream.Data() + (Index * Stride));
+            MinBounds = FVector3::Min(MinBounds, Position);
+            MaxBounds = FVector3::Max(MaxBounds, Position);
         }
     }
     else
     {
         for (const FSourceVertex& Vertex : MeshData.Vertices)
         {
-            MinBounds = Vector3::Min(MinBounds, Vertex.Position);
-            MaxBounds = Vector3::Max(MaxBounds, Vertex.Position);
+            MinBounds = FVector3::Min(MinBounds, Vertex.Position);
+            MaxBounds = FVector3::Max(MaxBounds, Vertex.Position);
         }
     }
 

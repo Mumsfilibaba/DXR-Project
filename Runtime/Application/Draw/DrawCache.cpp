@@ -132,7 +132,7 @@ bool FDrawCacheBlock::CanReplay(
     int32                InBaseLayerId,
     int32                ClipDepth,
     const FRectangle&    ClipRectangle,
-    IntVector2&          OutOffset) const
+    FIntVector2&         OutOffset) const
 {
     if (!bValid || CapturedEpoch != DrawCacheEpoch::Get())
     {
@@ -152,7 +152,7 @@ bool FDrawCacheBlock::CanReplay(
 
     OutOffset = Bounds.Position - CapturedRectangle.Position;
 
-    const bool bMoved = OutOffset != IntVector2(0, 0);
+    const bool bMoved = OutOffset != FIntVector2(0, 0);
     if (bMoved && !Points.IsEmpty())
     {
         return false;
@@ -172,7 +172,7 @@ bool FDrawCacheBlock::CanReplay(
     return AreAtlasDependenciesCurrent();
 }
 
-void FDrawCacheBlock::Translate(const IntVector2& Offset)
+void FDrawCacheBlock::Translate(const FIntVector2& Offset)
 {
     for (FDrawCommand& Command : Commands)
     {

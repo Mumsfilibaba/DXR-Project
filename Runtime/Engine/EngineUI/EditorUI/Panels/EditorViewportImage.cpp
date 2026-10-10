@@ -16,10 +16,10 @@ FEditorViewportImage::~FEditorViewportImage()
 {
 }
 
-IntVector2 FEditorViewportImage::ComputeDesiredSize() const
+FIntVector2 FEditorViewportImage::ComputeDesiredSize() const
 {
     // The scene renders at whatever the dock leaf allots, so the image never asks for a size of its own.
-    return IntVector2(0, 0);
+    return FIntVector2(0, 0);
 }
 
 int32 FEditorViewportImage::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const

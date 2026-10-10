@@ -1017,7 +1017,7 @@ void FD3D12CommandContext::QueryTimestamp(FRHIQuery* Query)
     PendingQueries.Add(D3D12Query);
 }
 
-void FD3D12CommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const Vector4& ClearColor)
+void FD3D12CommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor)
 {
     FD3D12RenderTargetViewRHI* D3D12RenderTargetView = FD3D12DeviceRHI::ResourceCast(RenderTargetView);
     CHECK(D3D12RenderTargetView != nullptr);
@@ -1051,7 +1051,7 @@ void FD3D12CommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthSten
     GetCommandList()->ClearDepthStencilView(D3D12DepthStencilView->GetOfflineHandle(), ClearFlags, Depth, Stencil, 0, nullptr);
 }
 
-void FD3D12CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const Vector4& ClearColor)
+void FD3D12CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)
 {
     FD3D12UnorderedAccessViewRHI* D3D12UnorderedAccessView = FD3D12DeviceRHI::ResourceCast(UnorderedAccessView);
     CHECK(D3D12UnorderedAccessView != nullptr);
@@ -1225,7 +1225,7 @@ void FD3D12CommandContext::SetScissorRect(const FScissorRegion& ScissorRegion)
     ContextState.SetScissorRects(&ScissorRect, 1);
 }
 
-void FD3D12CommandContext::SetBlendFactor(const Vector4& Color)
+void FD3D12CommandContext::SetBlendFactor(const FVector4& Color)
 {
     ContextState.SetBlendFactor(Color.XYZW);
 }

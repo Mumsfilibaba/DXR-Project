@@ -13,11 +13,11 @@ public:
     // FActorComponent Interface
     virtual void Tick(float DeltaTime) override;
 
-    void SetInitialVelocity(const Vector3& InVelocity);
+    void SetInitialVelocity(const FVector3& InVelocity);
     void SetGravity(float InGravity);
     void SetDespawnBelowY(float InDespawnBelowY);
 
-    const Vector3& GetVelocity() const
+    const FVector3& GetVelocity() const
     {
         return Velocity;
     }
@@ -33,7 +33,7 @@ public:
     }
 
 private:
-    Vector3 Velocity;
-    float   Gravity;
-    float   DespawnBelowY;
+    FVector3 Velocity;
+    float    Gravity;
+    float    DespawnBelowY;
 };

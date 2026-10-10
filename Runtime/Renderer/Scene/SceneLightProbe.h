@@ -19,8 +19,8 @@ struct FSceneLightProbe : public FSceneObject
     FRHITextureRef SourceCubeMap;   
     FRHITextureRef SpecularCubeMap; 
     FRHITextureRef DiffuseCubeMap;  
-    Vector3        Origin;
-    Vector3        BoxMin;          
-    Vector3        BoxMax;          
+    FVector3       Origin;
+    FVector3       BoxMin;          
+    FVector3       BoxMax;          
     bool           bBoxProjection;  
 };

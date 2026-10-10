@@ -9,24 +9,24 @@
 // Mirrors RayTracingSceneConstants in Assets/Shaders/RayTracingBindless.hlsli.
 struct FRayTracingSceneConstantsHLSL
 {
-    uint32  FrameIndex      = 0;
-    uint32  NumSkyLightMips = 0;
-    uint32  NumPointLights  = 0;
-    uint32  Padding0        = 0;
-    Vector3 SunDirection    = Vector3(0.0f, -1.0f, 0.0f);
-    float   SunPadding0     = 0.0f;
-    Vector3 SunColor        = Vector3(0.0f, 0.0f, 0.0f);
-    float   SunPadding1     = 0.0f;
-    Vector4 PointLightPositionRadius[RT_MAX_POINT_LIGHTS];
-    Vector4 PointLightColor[RT_MAX_POINT_LIGHTS];
-    float   ReflectionMaxRayDistance           = 10000.0f;
-    float   ReflectionMirrorRoughnessThreshold = 0.05f;
-    float   ReflectionRayBias                  = 0.02f;
-    float   Padding1                           = 0.0f;
-    uint32  ReflectionSampler                  = 0;
-    uint32  ReflectionNoiseSize                = 0;
-    uint32  Padding2                           = 0;
-    uint32  Padding3                           = 0;
+    uint32   FrameIndex      = 0;
+    uint32   NumSkyLightMips = 0;
+    uint32   NumPointLights  = 0;
+    uint32   Padding0        = 0;
+    FVector3 SunDirection    = FVector3(0.0f, -1.0f, 0.0f);
+    float    SunPadding0     = 0.0f;
+    FVector3 SunColor        = FVector3(0.0f, 0.0f, 0.0f);
+    float    SunPadding1     = 0.0f;
+    FVector4 PointLightPositionRadius[RT_MAX_POINT_LIGHTS];
+    FVector4 PointLightColor[RT_MAX_POINT_LIGHTS];
+    float    ReflectionMaxRayDistance           = 10000.0f;
+    float    ReflectionMirrorRoughnessThreshold = 0.05f;
+    float    ReflectionRayBias                  = 0.02f;
+    float    Padding1                           = 0.0f;
+    uint32   ReflectionSampler                  = 0;
+    uint32   ReflectionNoiseSize                = 0;
+    uint32   Padding2                           = 0;
+    uint32   Padding3                           = 0;
 };
 
 struct FRayTracingGeometryIndicesHLSL

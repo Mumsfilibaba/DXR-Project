@@ -80,20 +80,20 @@ namespace ModelFormat
 
     struct FMaterialInfo
     {
-        int32   DiffuseTextureIdx;
-        int32   NormalTextureIdx;
-        int32   SpecularTextureIdx;
-        int32   EmissiveTextureIdx;
-        int32   AmbientOcclusionTextureIdx;
-        int32   RoughnessTextureIdx;
-        int32   MetallicTextureIdx;
-        int32   AlphaMaskTextureIdx;
-        uint32  ScalarRoutes[EMaterialScalar::Count];
-        Vector3 Diffuse;
-        float   AO;
-        float   Roughness;
-        float   Metallic;
-        int32   MaterialFlags;
+        int32    DiffuseTextureIdx;
+        int32    NormalTextureIdx;
+        int32    SpecularTextureIdx;
+        int32    EmissiveTextureIdx;
+        int32    AmbientOcclusionTextureIdx;
+        int32    RoughnessTextureIdx;
+        int32    MetallicTextureIdx;
+        int32    AlphaMaskTextureIdx;
+        uint32   ScalarRoutes[EMaterialScalar::Count];
+        FVector3 Diffuse;
+        float    AO;
+        float    Roughness;
+        float    Metallic;
+        int32    MaterialFlags;
     };
 
     inline uint32 PackSourceRoute(const FMaterialSourceRoute& Route)

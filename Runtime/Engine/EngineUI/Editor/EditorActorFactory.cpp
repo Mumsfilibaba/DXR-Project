@@ -21,20 +21,20 @@ constexpr int32 NumPrimitiveTypes = static_cast<int32>(EEditorPrimitiveType::Cou
 struct FPrimitiveRecipe
 {
     const CHAR_T* Name;
-    Vector3       Rotation;
+    FVector3      Rotation;
 };
 
 static const FPrimitiveRecipe GPrimitiveRecipes[NumPrimitiveTypes] =
 {
-    { "Cube",     Vector3(0.0f, 0.0f, 0.0f) },
-    { "Sphere",   Vector3(0.0f, 0.0f, 0.0f) },
-    { "Plane",    Vector3(Math::Constants::HalfPI, 0.0f, 0.0f) },
-    { "Cylinder", Vector3(0.0f, 0.0f, 0.0f) },
-    { "Capsule",  Vector3(0.0f, 0.0f, 0.0f) },
-    { "Cone",     Vector3(0.0f, 0.0f, 0.0f) },
-    { "Torus",    Vector3(0.0f, 0.0f, 0.0f) },
-    { "Pyramid",  Vector3(0.0f, 0.0f, 0.0f) },
-    { "Teapot",   Vector3(0.0f, 0.0f, 0.0f) },
+    { "Cube",     FVector3(0.0f, 0.0f, 0.0f) },
+    { "Sphere",   FVector3(0.0f, 0.0f, 0.0f) },
+    { "Plane",    FVector3(Math::Constants::HalfPI, 0.0f, 0.0f) },
+    { "Cylinder", FVector3(0.0f, 0.0f, 0.0f) },
+    { "Capsule",  FVector3(0.0f, 0.0f, 0.0f) },
+    { "Cone",     FVector3(0.0f, 0.0f, 0.0f) },
+    { "Torus",    FVector3(0.0f, 0.0f, 0.0f) },
+    { "Pyramid",  FVector3(0.0f, 0.0f, 0.0f) },
+    { "Teapot",   FVector3(0.0f, 0.0f, 0.0f) },
 };
 
 static const EEditorLightType GLightTypes[] =
@@ -80,13 +80,13 @@ static TSharedPtr<FMesh> GetOrCreateMesh(EEditorPrimitiveType Type)
     return GPrimitiveMeshCache[Index];
 }
 
-static float ComputeGroundOffset(const FAABB& Bounds, const Matrix4& OrientationMatrix)
+static float ComputeGroundOffset(const FAABB& Bounds, const FMatrix4& OrientationMatrix)
 {
     float LowestY = FLT_MAX;
 
     for (int32 Corner = 0; Corner < 8; ++Corner)
     {
-        const Vector3 LocalCorner = Vector3(
+        const FVector3 LocalCorner = FVector3(
             (Corner & 1) ? Bounds.Max.X : Bounds.Min.X,
             (Corner & 2) ? Bounds.Max.Y : Bounds.Min.Y,
             (Corner & 4) ? Bounds.Max.Z : Bounds.Min.Z);
@@ -121,7 +121,7 @@ static FRHITextureRef FindSkyLightCubeMap(FWorld* World)
     return FRHITextureRef();
 }
 
-FActor* EditorActorFactory::SpawnPrimitive(FWorld* World, EEditorPrimitiveType Type, const Vector3& Location)
+FActor* EditorActorFactory::SpawnPrimitive(FWorld* World, EEditorPrimitiveType Type, const FVector3& Location)
 {
     if (!World)
     {
@@ -148,7 +148,7 @@ FActor* EditorActorFactory::SpawnPrimitive(FWorld* World, EEditorPrimitiveType T
     Transform.SetRotation(GPrimitiveRecipes[static_cast<int32>(Type)].Rotation);
 
     const float GroundOffset = ComputeGroundOffset(Mesh->GetAABB(), Transform.GetTransformMatrix());
-    Transform.SetTranslation(Location + Vector3(0.0f, GroundOffset, 0.0f));
+    Transform.SetTranslation(Location + FVector3(0.0f, GroundOffset, 0.0f));
 
     FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
     if (NewComponent)
@@ -161,7 +161,7 @@ FActor* EditorActorFactory::SpawnPrimitive(FWorld* World, EEditorPrimitiveType T
     return NewActor;
 }
 
-FActor* EditorActorFactory::SpawnLight(FWorld* World, EEditorLightType Type, const Vector3& Location)
+FActor* EditorActorFactory::SpawnLight(FWorld* World, EEditorLightType Type, const FVector3& Location)
 {
     if (!World)
     {
@@ -192,7 +192,7 @@ FActor* EditorActorFactory::SpawnLight(FWorld* World, EEditorLightType Type, con
 
         case EEditorLightType::Directional:
         {
-            NewActor = World->SpawnActor<FDirectionalLightActor>(Vector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f));
+            NewActor = World->SpawnActor<FDirectionalLightActor>(FVector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f));
             break;
         }
 
@@ -216,7 +216,7 @@ FActor* EditorActorFactory::SpawnLight(FWorld* World, EEditorLightType Type, con
     return NewActor;
 }
 
-FActor* EditorActorFactory::SpawnCamera(FWorld* World, const Vector3& Location)
+FActor* EditorActorFactory::SpawnCamera(FWorld* World, const FVector3& Location)
 {
     if (!World)
     {
@@ -225,7 +225,7 @@ FActor* EditorActorFactory::SpawnCamera(FWorld* World, const Vector3& Location)
 
     const FString ActorName = CreateUniqueActorName(World, "Camera");
 
-    FCameraActor* NewActor = World->SpawnActor<FCameraActor>(Location, Vector3(0.0f, 0.0f, 0.0f));
+    FCameraActor* NewActor = World->SpawnActor<FCameraActor>(Location, FVector3(0.0f, 0.0f, 0.0f));
     if (NewActor)
     {
         NewActor->SetName(ActorName);
@@ -255,7 +255,7 @@ bool EditorActorFactory::CanSpawnLight(FWorld* World, EEditorLightType Type)
     }
 }
 
-FActor* EditorActorFactory::DrawPlaceActorMenu(FWorld* World, const Vector3& Location)
+FActor* EditorActorFactory::DrawPlaceActorMenu(FWorld* World, const FVector3& Location)
 {
     FActor* SpawnedActor = nullptr;
 

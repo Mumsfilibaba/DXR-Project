@@ -76,7 +76,7 @@ struct FTestActor
         Archive.Field("Name", Name, FString(""));
         Archive.Field("Count", Count, 0);
         Archive.Field("Shape", Shape, ETestShape::Box);
-        Archive.Field("Translation", Translation, Vector3(0.0f, 0.0f, 0.0f));
+        Archive.Field("Translation", Translation, FVector3(0.0f, 0.0f, 0.0f));
         Archive.Field("Values", Values);
         Archive.Field("Light", Light, FTestLight());
     }
@@ -112,7 +112,7 @@ struct FTestActor
     FString       Name;
     int32         Count = 0;
     ETestShape    Shape = ETestShape::Box;
-    Vector3       Translation{ 0.0f, 0.0f, 0.0f };
+    FVector3      Translation{ 0.0f, 0.0f, 0.0f };
     TArray<int32> Values;
     FTestLight    Light;
 };
@@ -123,7 +123,7 @@ static FTestActor MakeActor()
     Actor.Name        = FString("StreetLight_01");
     Actor.Count       = 7;
     Actor.Shape       = ETestShape::Capsule;
-    Actor.Translation = Vector3(15.0f, 2.5f, -3.0f);
+    Actor.Translation = FVector3(15.0f, 2.5f, -3.0f);
     Actor.Values      = { 1, 2, 3 };
 
     Actor.Light.Intensity    = 5000.0f;
@@ -394,27 +394,27 @@ bool JsonArchive_Test()
 
     TEST_SECTION("The math types round-trip as flat arrays");
     {
-        Vector2 V2(1.0f, -2.0f);
-        Vector2 V2Loaded;
+        FVector2 V2(1.0f, -2.0f);
+        FVector2 V2Loaded;
         TEST_EXPECT(SaveThenLoad(V2, V2Loaded) && (V2Loaded.X == 1.0f) && (V2Loaded.Y == -2.0f));
 
-        Vector4 V4(1.0f, 2.0f, 3.0f, 4.0f);
-        Vector4 V4Loaded;
+        FVector4 V4(1.0f, 2.0f, 3.0f, 4.0f);
+        FVector4 V4Loaded;
         TEST_EXPECT(SaveThenLoad(V4, V4Loaded) && (V4Loaded.W == 4.0f));
 
-        Quaternion Q(0.0f, 0.7071068f, 0.0f, 0.7071068f);
-        Quaternion QLoaded;
+        FQuaternion Q(0.0f, 0.7071068f, 0.0f, 0.7071068f);
+        FQuaternion QLoaded;
         TEST_EXPECT(SaveThenLoad(Q, QLoaded) && (QLoaded.Y == Q.Y) && (QLoaded.W == Q.W));
 
-        Matrix4 M = Matrix4::Identity();
+        FMatrix4 M = FMatrix4::Identity();
         M.M[3][0] = 5.0f;
 
-        Matrix4 MLoaded;
+        FMatrix4 MLoaded;
         TEST_EXPECT(SaveThenLoad(M, MLoaded));
         TEST_EXPECT((MLoaded.M[3][0] == 5.0f) && (MLoaded.M[0][0] == 1.0f) && (MLoaded.M[1][2] == 0.0f));
 
         FJsonValue MatrixDocument;
-        TJsonSerializer<Matrix4>::Save(MatrixDocument, M);
+        TJsonSerializer<FMatrix4>::Save(MatrixDocument, M);
         TEST_EXPECT(MatrixDocument.IsArray() && (MatrixDocument.Num() == 16));
 
         FColor Color(10, 20, 30, 40);

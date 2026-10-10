@@ -11,10 +11,10 @@ struct APPLICATION_API FDockWindowLayout
     FString Title;
 
     /** @brief Where the window sat on the desktop, ignored for the main window. */
-    IntVector2 Position;
+    FIntVector2 Position;
 
     /** @brief The client size the window had, zero when the file carried none. */
-    IntVector2 Size;
+    FIntVector2 Size;
 
     /** @brief Whether the window was maximized, which restores on top of the size it had before that. */
     bool bIsMaximized;

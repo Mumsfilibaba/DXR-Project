@@ -1,16 +1,16 @@
 #include "Core/Math/Frustum.h"
 
-FFrustum::FFrustum(const Matrix4& View, const Matrix4& Projection)
+FFrustum::FFrustum(const FMatrix4& View, const FMatrix4& Projection)
     : Planes()
     , Points()
 {
     Initialize(View, Projection);
 }
 
-void FFrustum::Initialize(const Matrix4& InView, const Matrix4& InProjection)
+void FFrustum::Initialize(const FMatrix4& InView, const FMatrix4& InProjection)
 {
     // Combine the view and projection matrices
-    Matrix4 CombinedMatrix = InView * InProjection;
+    FMatrix4 CombinedMatrix = InView * InProjection;
 
     // Extract frustum planes from the combined matrix
     ExtractPlanes(CombinedMatrix);
@@ -19,7 +19,7 @@ void FFrustum::Initialize(const Matrix4& InView, const Matrix4& InProjection)
     GenerateFrustumCorners(CombinedMatrix);
 }
 
-void FFrustum::ExtractPlanes(const Matrix4& CombinedMatrix)
+void FFrustum::ExtractPlanes(const FMatrix4& CombinedMatrix)
 {
     // Extract the six planes of the frustum from the combined matrix
     // The order is: near, far, left, right, top, bottom
@@ -67,23 +67,23 @@ void FFrustum::ExtractPlanes(const Matrix4& CombinedMatrix)
     Planes[5].Normalize();
 }
 
-void FFrustum::GenerateFrustumCorners(const Matrix4& CombinedMatrix)
+void FFrustum::GenerateFrustumCorners(const FMatrix4& CombinedMatrix)
 {
     // Define the eight corners of the frustum in normalized device coordinates (NDC)
-    const Vector3 FrustumCornersNDC[8] =
+    const FVector3 FrustumCornersNDC[8] =
     {
-        Vector3(-1.0f,  1.0f, 0.0f), // Near Top Left
-        Vector3( 1.0f,  1.0f, 0.0f), // Near Top Right
-        Vector3( 1.0f, -1.0f, 0.0f), // Near Bottom Right
-        Vector3(-1.0f, -1.0f, 0.0f), // Near Bottom Left
-        Vector3(-1.0f,  1.0f, 1.0f), // Far Top Left
-        Vector3( 1.0f,  1.0f, 1.0f), // Far Top Right
-        Vector3( 1.0f, -1.0f, 1.0f), // Far Bottom Right
-        Vector3(-1.0f, -1.0f, 1.0f), // Far Bottom Left
+        FVector3(-1.0f, 1.0f, 0.0f), // Near Top Left
+        FVector3( 1.0f, 1.0f, 0.0f), // Near Top Right
+        FVector3( 1.0f, -1.0f, 0.0f), // Near Bottom Right
+        FVector3(-1.0f, -1.0f, 0.0f), // Near Bottom Left
+        FVector3(-1.0f, 1.0f, 1.0f), // Far Top Left
+        FVector3( 1.0f, 1.0f, 1.0f), // Far Top Right
+        FVector3( 1.0f, -1.0f, 1.0f), // Far Bottom Right
+        FVector3(-1.0f, -1.0f, 1.0f), // Far Bottom Left
     };
 
     // Invert the combined view-projection matrix to transform NDC to world space
-    Matrix4 InverseViewProjection = CombinedMatrix.GetInverse();
+    FMatrix4 InverseViewProjection = CombinedMatrix.GetInverse();
 
     // Transform each corner from NDC to world space
     for (int32 Corner = 0; Corner < 8; ++Corner)
@@ -94,21 +94,21 @@ void FFrustum::GenerateFrustumCorners(const Matrix4& CombinedMatrix)
 
 bool FFrustum::IntersectsAABB(const FAABB& Box) const
 {
-    const Vector3 Center  = Box.GetCenter();
+    const FVector3 Center  = Box.GetCenter();
     const float HalfWidth  = Box.GetWidth()  / 2.0f;
     const float HalfHeight = Box.GetHeight() / 2.0f;
     const float HalfDepth  = Box.GetDepth()  / 2.0f;
 
     // Calculate the eight corners of the bounding box
-    Vector3 BoxCorners[8];
-    BoxCorners[0] = Vector3(Center.X - HalfWidth, Center.Y - HalfHeight, Center.Z - HalfDepth);
-    BoxCorners[1] = Vector3(Center.X + HalfWidth, Center.Y - HalfHeight, Center.Z - HalfDepth);
-    BoxCorners[2] = Vector3(Center.X - HalfWidth, Center.Y + HalfHeight, Center.Z - HalfDepth);
-    BoxCorners[3] = Vector3(Center.X + HalfWidth, Center.Y + HalfHeight, Center.Z - HalfDepth);
-    BoxCorners[4] = Vector3(Center.X - HalfWidth, Center.Y - HalfHeight, Center.Z + HalfDepth);
-    BoxCorners[5] = Vector3(Center.X + HalfWidth, Center.Y - HalfHeight, Center.Z + HalfDepth);
-    BoxCorners[6] = Vector3(Center.X - HalfWidth, Center.Y + HalfHeight, Center.Z + HalfDepth);
-    BoxCorners[7] = Vector3(Center.X + HalfWidth, Center.Y + HalfHeight, Center.Z + HalfDepth);
+    FVector3 BoxCorners[8];
+    BoxCorners[0] = FVector3(Center.X - HalfWidth, Center.Y - HalfHeight, Center.Z - HalfDepth);
+    BoxCorners[1] = FVector3(Center.X + HalfWidth, Center.Y - HalfHeight, Center.Z - HalfDepth);
+    BoxCorners[2] = FVector3(Center.X - HalfWidth, Center.Y + HalfHeight, Center.Z - HalfDepth);
+    BoxCorners[3] = FVector3(Center.X + HalfWidth, Center.Y + HalfHeight, Center.Z - HalfDepth);
+    BoxCorners[4] = FVector3(Center.X - HalfWidth, Center.Y - HalfHeight, Center.Z + HalfDepth);
+    BoxCorners[5] = FVector3(Center.X + HalfWidth, Center.Y - HalfHeight, Center.Z + HalfDepth);
+    BoxCorners[6] = FVector3(Center.X - HalfWidth, Center.Y + HalfHeight, Center.Z + HalfDepth);
+    BoxCorners[7] = FVector3(Center.X + HalfWidth, Center.Y + HalfHeight, Center.Z + HalfDepth);
 
     for (int32 PlaneIndex = 0; PlaneIndex < 6; ++PlaneIndex)
     {

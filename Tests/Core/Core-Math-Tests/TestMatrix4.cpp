@@ -18,154 +18,154 @@ bool TestMatrix4()
         13.0f, 14.0f, 15.0f, 16.0f,
     };
     
-    const Matrix4 Sample(Values);
+    const FMatrix4 Sample(Values);
 
     TEST_SECTION("Matrix4::Identity / constructors");
-    TEST_EXPECT(Matrix4::Identity() == Matrix4(1.0f));
-    TEST_EXPECT(Sample.GetRow(0) == Vector4(1.0f, 2.0f, 3.0f, 4.0f));
-    TEST_EXPECT(Sample.GetColumn(0) == Vector4(1.0f, 5.0f, 9.0f, 13.0f));
+    TEST_EXPECT(FMatrix4::Identity() == FMatrix4(1.0f));
+    TEST_EXPECT(Sample.GetRow(0) == FVector4(1.0f, 2.0f, 3.0f, 4.0f));
+    TEST_EXPECT(Sample.GetColumn(0) == FVector4(1.0f, 5.0f, 9.0f, 13.0f));
 
     TEST_SECTION("Matrix4::GetTranspose");
     TEST_EXPECT(Sample.GetTranspose().GetTranspose() == Sample);
-    TEST_EXPECT(Sample.GetTranspose().GetColumn(0) == Vector4(1.0f, 2.0f, 3.0f, 4.0f));
+    TEST_EXPECT(Sample.GetTranspose().GetColumn(0) == FVector4(1.0f, 2.0f, 3.0f, 4.0f));
 
     TEST_SECTION("Matrix4::GetDeterminant");
-    TEST_EXPECT(Matrix4::Identity().GetDeterminant() == 1.0f);
-    TEST_EXPECT(Matrix4::Scale(2.0f, 3.0f, 4.0f).GetDeterminant() == 24.0f);
+    TEST_EXPECT(FMatrix4::Identity().GetDeterminant() == 1.0f);
+    TEST_EXPECT(FMatrix4::Scale(2.0f, 3.0f, 4.0f).GetDeterminant() == 24.0f);
 
     TEST_SECTION("Matrix4::GetInverse");
     {
-        const Matrix4 Scale = Matrix4::Scale(2.0f, 3.0f, 4.0f);
-        TEST_EXPECT((Scale * Scale.GetInverse()).IsEqual(Matrix4::Identity()));
+        const FMatrix4 Scale = FMatrix4::Scale(2.0f, 3.0f, 4.0f);
+        TEST_EXPECT((Scale * Scale.GetInverse()).IsEqual(FMatrix4::Identity()));
     }
 
     TEST_SECTION("Matrix4::GetAdjugate");
     {
-        const Matrix4 Scale = Matrix4::Scale(2.0f, 3.0f, 4.0f);
-        TEST_EXPECT((Scale * Scale.GetAdjugate()).IsEqual(Matrix4(24.0f)));
+        const FMatrix4 Scale = FMatrix4::Scale(2.0f, 3.0f, 4.0f);
+        TEST_EXPECT((Scale * Scale.GetAdjugate()).IsEqual(FMatrix4(24.0f)));
     }
 
     TEST_SECTION("Matrix4::Scale");
-    TEST_EXPECT(Matrix4::Scale(2.0f).IsEqual(Matrix4::Scale(2.0f, 2.0f, 2.0f)));
-    TEST_EXPECT(Matrix4::Scale(Vector3(2.0f, 3.0f, 4.0f)).IsEqual(Matrix4::Scale(2.0f, 3.0f, 4.0f)));
+    TEST_EXPECT(FMatrix4::Scale(2.0f).IsEqual(FMatrix4::Scale(2.0f, 2.0f, 2.0f)));
+    TEST_EXPECT(FMatrix4::Scale(FVector3(2.0f, 3.0f, 4.0f)).IsEqual(FMatrix4::Scale(2.0f, 3.0f, 4.0f)));
 
     TEST_SECTION("Matrix4::Translation / GetTranslation");
-    TEST_EXPECT(Matrix4::Translation(1.0f, 2.0f, 3.0f).GetTranslation() == Vector3(1.0f, 2.0f, 3.0f));
-    TEST_EXPECT(Matrix4::Translation(Vector3(1.0f, 2.0f, 3.0f)).GetTranslation() == Vector3(1.0f, 2.0f, 3.0f));
+    TEST_EXPECT(FMatrix4::Translation(1.0f, 2.0f, 3.0f).GetTranslation() == FVector3(1.0f, 2.0f, 3.0f));
+    TEST_EXPECT(FMatrix4::Translation(FVector3(1.0f, 2.0f, 3.0f)).GetTranslation() == FVector3(1.0f, 2.0f, 3.0f));
 
     TEST_SECTION("Matrix4::RotationX/Y/Z");
-    TEST_EXPECT((Matrix4::RotationX(HalfPI) * Matrix4::RotationX(HalfPI)).IsEqual(Matrix4::RotationX(PI)));
-    TEST_EXPECT((Matrix4::RotationY(HalfPI) * Matrix4::RotationY(HalfPI)).IsEqual(Matrix4::RotationY(PI)));
-    TEST_EXPECT((Matrix4::RotationZ(HalfPI) * Matrix4::RotationZ(HalfPI)).IsEqual(Matrix4::RotationZ(PI)));
+    TEST_EXPECT((FMatrix4::RotationX(HalfPI) * FMatrix4::RotationX(HalfPI)).IsEqual(FMatrix4::RotationX(PI)));
+    TEST_EXPECT((FMatrix4::RotationY(HalfPI) * FMatrix4::RotationY(HalfPI)).IsEqual(FMatrix4::RotationY(PI)));
+    TEST_EXPECT((FMatrix4::RotationZ(HalfPI) * FMatrix4::RotationZ(HalfPI)).IsEqual(FMatrix4::RotationZ(PI)));
 
     TEST_SECTION("Matrix4::RotationRollPitchYaw");
-    TEST_EXPECT(Matrix4::RotationRollPitchYaw(0.0f, 0.0f, 0.0f).IsEqual(Matrix4::Identity()));
-    TEST_EXPECT(Matrix4::RotationRollPitchYaw(Vector3(0.0f, 0.0f, 0.0f)).IsEqual(Matrix4::Identity()));
+    TEST_EXPECT(FMatrix4::RotationRollPitchYaw(0.0f, 0.0f, 0.0f).IsEqual(FMatrix4::Identity()));
+    TEST_EXPECT(FMatrix4::RotationRollPitchYaw(FVector3(0.0f, 0.0f, 0.0f)).IsEqual(FMatrix4::Identity()));
 
     TEST_SECTION("Matrix4::Transform (Vector4)");
-    TEST_EXPECT(Matrix4::Identity().Transform(Vector4(1.0f, 2.0f, 3.0f, 4.0f)).IsEqual(Vector4(1.0f, 2.0f, 3.0f, 4.0f)));
-    TEST_EXPECT(Matrix4::Scale(2.0f, 3.0f, 4.0f).Transform(Vector4(1.0f, 1.0f, 1.0f, 1.0f)).IsEqual(Vector4(2.0f, 3.0f, 4.0f, 1.0f)));
+    TEST_EXPECT(FMatrix4::Identity().Transform(FVector4(1.0f, 2.0f, 3.0f, 4.0f)).IsEqual(FVector4(1.0f, 2.0f, 3.0f, 4.0f)));
+    TEST_EXPECT(FMatrix4::Scale(2.0f, 3.0f, 4.0f).Transform(FVector4(1.0f, 1.0f, 1.0f, 1.0f)).IsEqual(FVector4(2.0f, 3.0f, 4.0f, 1.0f)));
 
     TEST_SECTION("Matrix4::Transform / TransformCoord / TransformNormal (Vector3)");
-    TEST_EXPECT(Matrix4::Translation(1.0f, 2.0f, 3.0f).Transform(Vector3(0.0f, 0.0f, 0.0f)).IsEqual(Vector3(1.0f, 2.0f, 3.0f)));
-    TEST_EXPECT(Matrix4::Translation(1.0f, 2.0f, 3.0f).TransformCoord(Vector3(0.0f, 0.0f, 0.0f)).IsEqual(Vector3(1.0f, 2.0f, 3.0f)));
-    TEST_EXPECT(Matrix4::Translation(1.0f, 2.0f, 3.0f).TransformNormal(Vector3(1.0f, 0.0f, 0.0f)).IsEqual(Vector3(1.0f, 0.0f, 0.0f)));
+    TEST_EXPECT(FMatrix4::Translation(1.0f, 2.0f, 3.0f).Transform(FVector3(0.0f, 0.0f, 0.0f)).IsEqual(FVector3(1.0f, 2.0f, 3.0f)));
+    TEST_EXPECT(FMatrix4::Translation(1.0f, 2.0f, 3.0f).TransformCoord(FVector3(0.0f, 0.0f, 0.0f)).IsEqual(FVector3(1.0f, 2.0f, 3.0f)));
+    TEST_EXPECT(FMatrix4::Translation(1.0f, 2.0f, 3.0f).TransformNormal(FVector3(1.0f, 0.0f, 0.0f)).IsEqual(FVector3(1.0f, 0.0f, 0.0f)));
 
     TEST_SECTION("Matrix4::operator* (matrix/scalar)");
     {
-        Matrix4 Accum = Matrix4::RotationZ(HalfPI);
-        Accum *= Matrix4::RotationZ(HalfPI);
+        FMatrix4 Accum = FMatrix4::RotationZ(HalfPI);
+        Accum *= FMatrix4::RotationZ(HalfPI);
 
-        TEST_EXPECT(Accum.IsEqual(Matrix4::RotationZ(PI)));
+        TEST_EXPECT(Accum.IsEqual(FMatrix4::RotationZ(PI)));
     }
 
-    TEST_EXPECT((Matrix4(1.0f) * 2.0f).IsEqual(Matrix4(2.0f)));
+    TEST_EXPECT((FMatrix4(1.0f) * 2.0f).IsEqual(FMatrix4(2.0f)));
     {
-        Matrix4 Mat(1.0f);
+        FMatrix4 Mat(1.0f);
         Mat *= 2.0f;
 
-        TEST_EXPECT(Mat.IsEqual(Matrix4(2.0f)));
+        TEST_EXPECT(Mat.IsEqual(FMatrix4(2.0f)));
     }
 
     TEST_SECTION("Matrix4::operator+ / operator- / operator/");
-    TEST_EXPECT((Matrix4(1.0f) + Matrix4(1.0f)).IsEqual(Matrix4(2.0f)));
-    TEST_EXPECT((Matrix4(2.0f) - Matrix4(1.0f)).IsEqual(Matrix4(1.0f)));
-    TEST_EXPECT((Matrix4(4.0f) / 2.0f).IsEqual(Matrix4(2.0f)));
+    TEST_EXPECT((FMatrix4(1.0f) + FMatrix4(1.0f)).IsEqual(FMatrix4(2.0f)));
+    TEST_EXPECT((FMatrix4(2.0f) - FMatrix4(1.0f)).IsEqual(FMatrix4(1.0f)));
+    TEST_EXPECT((FMatrix4(4.0f) / 2.0f).IsEqual(FMatrix4(2.0f)));
     {
-        Matrix4 Mat(1.0f);
-        Mat += Matrix4(1.0f);
+        FMatrix4 Mat(1.0f);
+        Mat += FMatrix4(1.0f);
         Mat += 1.0f;
         Mat -= 1.0f;
-        Mat -= Matrix4(1.0f);
+        Mat -= FMatrix4(1.0f);
         Mat /= 1.0f;
 
-        TEST_EXPECT(Mat.IsEqual(Matrix4(1.0f)));
+        TEST_EXPECT(Mat.IsEqual(FMatrix4(1.0f)));
     }
 
     TEST_SECTION("Matrix4::operator== / operator!= / IsEqual");
     TEST_EXPECT(Sample == Sample);
-    TEST_EXPECT(Sample != Matrix4::Identity());
+    TEST_EXPECT(Sample != FMatrix4::Identity());
     TEST_EXPECT(Sample.IsEqual(Sample));
 
     TEST_SECTION("Matrix4::SetIdentity / SetTranslation");
     {
-        Matrix4 Mat = Sample;
+        FMatrix4 Mat = Sample;
         Mat.SetIdentity();
 
-        TEST_EXPECT(Mat == Matrix4::Identity());
+        TEST_EXPECT(Mat == FMatrix4::Identity());
 
-        Mat.SetTranslation(Vector3(1.0f, 2.0f, 3.0f));
+        Mat.SetTranslation(FVector3(1.0f, 2.0f, 3.0f));
 
-        TEST_EXPECT(Mat.GetTranslation() == Vector3(1.0f, 2.0f, 3.0f));
+        TEST_EXPECT(Mat.GetTranslation() == FVector3(1.0f, 2.0f, 3.0f));
     }
 
     TEST_SECTION("Matrix4::SetRotationAndScale / GetRotationAndScale");
     {
-        Matrix4 Mat = Matrix4::Identity();
-        Mat.SetRotationAndScale(Matrix3::Scale(2.0f, 3.0f, 4.0f));
+        FMatrix4 Mat = FMatrix4::Identity();
+        Mat.SetRotationAndScale(FMatrix3::Scale(2.0f, 3.0f, 4.0f));
 
-        TEST_EXPECT(Mat.GetRotationAndScale().IsEqual(Matrix3::Scale(2.0f, 3.0f, 4.0f)));
+        TEST_EXPECT(Mat.GetRotationAndScale().IsEqual(FMatrix3::Scale(2.0f, 3.0f, 4.0f)));
     }
 
     TEST_SECTION("Matrix4::OrthoNormalize");
     {
-        Matrix4 Mat = Matrix4::RotationZ(HalfPI);
+        FMatrix4 Mat = FMatrix4::RotationZ(HalfPI);
         Mat.OrthoNormalize();
 
-        TEST_EXPECT(Mat.IsEqual(Matrix4::RotationZ(HalfPI)));
+        TEST_EXPECT(Mat.IsEqual(FMatrix4::RotationZ(HalfPI)));
     }
 
     TEST_SECTION("Matrix4::LookAt / LookTo (eye maps to origin)");
     {
-        const Vector3 Eye(0.0f, 0.0f, -5.0f);
-        const Vector3 At(0.0f, 0.0f, 0.0f);
-        const Vector3 Up(0.0f, 1.0f, 0.0f);
-        const Matrix4 View = Matrix4::LookAt(Eye, At, Up);
-        TEST_EXPECT(View.TransformCoord(Eye).IsEqual(Vector3(0.0f, 0.0f, 0.0f)));
+        const FVector3 Eye(0.0f, 0.0f, -5.0f);
+        const FVector3 At(0.0f, 0.0f, 0.0f);
+        const FVector3 Up(0.0f, 1.0f, 0.0f);
+        const FMatrix4 View = FMatrix4::LookAt(Eye, At, Up);
+        TEST_EXPECT(View.TransformCoord(Eye).IsEqual(FVector3(0.0f, 0.0f, 0.0f)));
 
-        const Matrix4 ViewTo = Matrix4::LookTo(Eye, (At - Eye).GetNormalized(), Up);
-        TEST_EXPECT(ViewTo.TransformCoord(Eye).IsEqual(Vector3(0.0f, 0.0f, 0.0f)));
+        const FMatrix4 ViewTo = FMatrix4::LookTo(Eye, (At - Eye).GetNormalized(), Up);
+        TEST_EXPECT(ViewTo.TransformCoord(Eye).IsEqual(FVector3(0.0f, 0.0f, 0.0f)));
     }
 
     TEST_SECTION("Matrix4::Projections (well-formed)");
     {
-        TEST_EXPECT(!Matrix4::OrthographicProjection(2.0f, 2.0f, 0.1f, 100.0f).ContainsNaN());
-        TEST_EXPECT(!Matrix4::OrthographicProjection(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 100.0f).ContainsNaN());
-        TEST_EXPECT(!Matrix4::PerspectiveProjection(HalfPI, 1.777f, 0.1f, 100.0f).ContainsNaN());
-        TEST_EXPECT(!Matrix4::PerspectiveProjection(HalfPI, 1280.0f, 720.0f, 0.1f, 100.0f).ContainsNaN());
+        TEST_EXPECT(!FMatrix4::OrthographicProjection(2.0f, 2.0f, 0.1f, 100.0f).ContainsNaN());
+        TEST_EXPECT(!FMatrix4::OrthographicProjection(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 100.0f).ContainsNaN());
+        TEST_EXPECT(!FMatrix4::PerspectiveProjection(HalfPI, 1.777f, 0.1f, 100.0f).ContainsNaN());
+        TEST_EXPECT(!FMatrix4::PerspectiveProjection(HalfPI, 1280.0f, 720.0f, 0.1f, 100.0f).ContainsNaN());
     }
 
     TEST_SECTION("Matrix4::ContainsNaN / ContainsInfinity");
     {
-        Matrix4 NaN = Matrix4::Identity();
-        NaN.SetTranslation(Vector3(0.0f, 0.0f, Math::Constants::NaN));
-        Matrix4 Inf = Matrix4::Identity();
-        Inf.SetTranslation(Vector3(0.0f, 0.0f, Math::Constants::Infinity));
+        FMatrix4 NaN = FMatrix4::Identity();
+        NaN.SetTranslation(FVector3(0.0f, 0.0f, Math::Constants::NaN));
+        FMatrix4 Inf = FMatrix4::Identity();
+        Inf.SetTranslation(FVector3(0.0f, 0.0f, Math::Constants::Infinity));
 
         TEST_EXPECT(NaN.ContainsNaN());
         TEST_EXPECT(Inf.ContainsInfinity());
-        TEST_EXPECT(!Matrix4::Identity().ContainsNaN());
-        TEST_EXPECT(!Matrix4::Identity().ContainsInfinity());
+        TEST_EXPECT(!FMatrix4::Identity().ContainsNaN());
+        TEST_EXPECT(!FMatrix4::Identity().ContainsInfinity());
     }
 
     TEST_END();

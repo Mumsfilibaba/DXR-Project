@@ -55,7 +55,7 @@ public:
      * @param NodeId   The node to move.
      * @param Position The new top-left corner, in graph space.
      */
-    void SetNodePosition(int32 NodeId, const Vector2& Position);
+    void SetNodePosition(int32 NodeId, const FVector2& Position);
 
     /** @brief Drops every node and link, keeping the ids already handed out spent. */
     void Clear();

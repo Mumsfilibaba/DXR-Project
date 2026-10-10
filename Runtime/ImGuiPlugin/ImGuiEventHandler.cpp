@@ -368,9 +368,9 @@ bool FImGuiEventHandler::OnMouseMove(const FCursorEvent& CursorEvent)
     }
 
 #ifndef EDITOR_BUILD
-    const IntVector2 CursorPos = CursorEvent.GetClientPosition();
+    const FIntVector2 CursorPos = CursorEvent.GetClientPosition();
 #else
-    const IntVector2 CursorPos = CursorEvent.GetScreenPosition();
+    const FIntVector2 CursorPos = CursorEvent.GetScreenPosition();
 #endif
 
     ImGuiIO& UIState = ImGui::GetIO();
