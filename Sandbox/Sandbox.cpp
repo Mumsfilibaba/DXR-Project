@@ -3,7 +3,7 @@
 #include "SandboxProjectile.h"
 #include "GameComponents.h"
 #include <Core/Math/Math.h>
-#include <Core/Misc/OutputDeviceLogger.h>
+#include <Core/Misc/OutputDeviceManager.h>
 #include <Engine/Engine.h>
 #include <Engine/Assets/AssetManager.h>
 #include <Engine/Assets/MeshFactory.h>
@@ -424,7 +424,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     if (FActor* NewActor = InWorld->CreateActor())
     {
         NewActor->SetName("Teapot");
-        NewActor->GetTransform().SetRotation(-Math::Constants::HalfPI, Math::Constants::HalfPI, 0.0f);
+        NewActor->GetTransform().SetRotation(0.0f, Math::Constants::HalfPI, 0.0f);
         NewActor->GetTransform().SetUniformScale(1.0f);
         NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 37.5f);
 
@@ -480,6 +480,39 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             TSharedPtr<FMesh> PyramidMesh = FMesh::Create(MeshFactory::CreatePyramid(2.0f, 2.0f, 2.0f));
 
             NewComponent->SetMesh(PyramidMesh);
+            NewComponent->SetMaterial(NewMaterial);
+
+            NewActor->AddComponent(NewComponent);
+        }
+    }
+
+    if (FActor* NewActor = InWorld->CreateActor())
+    {
+        NewActor->SetName("Capsule");
+        NewActor->GetTransform().SetRotation(0.0f, 0.0f, 0.0f);
+        NewActor->GetTransform().SetUniformScale(1.0f);
+        NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 25.0f);
+
+        // Copper: 0.955, 0.638, 0.538
+        MaterialInfo.Albedo           = FFloatColor(0.955f, 0.638f, 0.538f, 1.0f);
+        MaterialInfo.AmbientOcclusion = 1.0f;
+        MaterialInfo.Metallic         = 1.0f;
+        MaterialInfo.Roughness        = 0.25f;
+        MaterialInfo.MaterialFlags    = EMaterialFlags::None;
+
+        FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
+        if (NewComponent)
+        {
+            TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
+            NewMaterial->SetTexture(EMaterialTextureSlot::BaseColor, FEngine::Get()->BaseTexture);
+            NewMaterial->SetTexture(EMaterialTextureSlot::MaskA, FEngine::Get()->BaseTexture);
+
+            NewMaterial->Initialize();
+            NewMaterial->SetName("CapsuleMaterial");
+
+            TSharedPtr<FMesh> CapsuleMesh = FMesh::Create(MeshFactory::CreateCapsule(32, 8, 0.5f, 2.0f));
+
+            NewComponent->SetMesh(CapsuleMesh);
             NewComponent->SetMaterial(NewMaterial);
 
             NewActor->AddComponent(NewComponent);

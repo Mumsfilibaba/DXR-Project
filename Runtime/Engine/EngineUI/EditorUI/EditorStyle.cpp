@@ -1,6 +1,6 @@
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
 #include "Engine/EngineUI/EditorUI/EditorIcons.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Paths.h"
 #include "Application/Docking/DockNode.h"
 #include "Application/Elements/Border.h"
@@ -13,7 +13,7 @@ static FUIStyle     GStyle;
 
 constexpr int32 BODY_PIXEL_HEIGHT      = 20;
 constexpr int32 TITLE_PIXEL_HEIGHT     = 20;
-constexpr int32 TAB_PIXEL_HEIGHT       = 22;
+constexpr int32 TAB_PIXEL_HEIGHT       = 24;
 constexpr int32 MONOSPACE_PIXEL_HEIGHT = 14;
 
 constexpr float INPUT_FIELD_BORDER_THICKNESS = 1.0f;
@@ -118,17 +118,26 @@ bool FEditorStyle::Initialize()
     GStyle.ScrollBar.Track                = GStyle.Colors.WindowBackground;
 
     GStyle.Tab.StripFill                  = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
-    GStyle.Tab.FillHovered                = FromBytes(37, 37, 37);
-    GStyle.Tab.FillActive                 = FromBytes(52, 52, 52);
+    GStyle.Tab.FillHovered                = FromBytes(45, 45, 45);
+    GStyle.Tab.FillActive                 = GStyle.Panel.Fill;
+    GStyle.Tab.LabelColor                 = FromBytes(157, 157, 157);
+    GStyle.Tab.LabelColorActive           = FromBytes(255, 255, 255);
+    GStyle.Tab.LabelAlignment             = EHorizontalAlignment::Left;
     GStyle.Tab.ActiveStrip                = GStyle.Colors.Accent;
     GStyle.Tab.ActiveStripThickness       = 0;
-    GStyle.Tab.Spacing                    = 4;
+    GStyle.Tab.Spacing                    = 0;
     GStyle.Tab.TopInset                   = 4;
-    GStyle.Tab.BottomInset                = 4;
-    GStyle.Tab.CornerRadius               = 5.0f;
+    GStyle.Tab.BottomInset                = 0;
+    GStyle.Tab.CornerRadius               = 6.0f;
+    GStyle.Tab.FlareRadius                = 6.0f;
     GStyle.Tab.CloseCornerRadius          = 5.0f;
-    GStyle.Tab.CloseSize                  = 22;
-    GStyle.Tab.CloseIconSize              = 16;
+    GStyle.Tab.CloseSize                  = 26;
+    GStyle.Tab.CloseInset                 = 9;
+    GStyle.Tab.CloseGlyphSize             = 13.0f;
+    GStyle.Tab.CloseGlyphThickness        = 1.5f;
+    GStyle.Tab.LabelCloseGap              = 11;
+    GStyle.Tab.MinWidth                   = 110;
+    GStyle.Tab.HorizontalPadding          = 15;
     GStyle.Tab.StripHeight                = FDockMetrics::TabStripHeight;
     GStyle.Tab.LabelOffsetY               = 0;
 

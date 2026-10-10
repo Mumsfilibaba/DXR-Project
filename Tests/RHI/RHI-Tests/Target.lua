@@ -9,5 +9,7 @@ RHITests.AddModules({
     "Core",
     "RHI",
     "RendererCore",
+    "ShaderCore",
+    "ShaderCompiler",
     "TestCommon",
 })

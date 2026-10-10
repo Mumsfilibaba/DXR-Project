@@ -5,7 +5,7 @@
 #include <Core/Containers/String.h>
 #include <Core/Filesystem/File.h>
 #include <Core/Misc/CommandLine.h>
-#include <Core/Misc/OutputDeviceLogger.h>
+#include <Core/Misc/OutputDeviceManager.h>
 #include <Core/Misc/Parse.h>
 #include <Core/Misc/Paths.h>
 #include <Core/Platform/PlatformFile.h>

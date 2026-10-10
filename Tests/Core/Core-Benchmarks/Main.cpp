@@ -2,7 +2,7 @@
 #include <Core/CoreDefines.h>
 #include <Core/CoreGlobals.h>
 #include <Core/Memory/Malloc.h>
-#include <Core/Misc/OutputDeviceLogger.h>
+#include <Core/Misc/OutputDeviceManager.h>
 #include <Core/Threading/ThreadManager.h>
 #include <Core/Tasks/TaskGraph.h>
 

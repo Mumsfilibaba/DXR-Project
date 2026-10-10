@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Misc/Debug.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/String.h"
 #include "Core/Templates/TypeTraits/BasicTraits.h"
@@ -445,6 +445,9 @@ struct THash<FVulkanHashableImageView>
         return Value.Hash;
     }
 };
+
+namespace VulkanRHI
+{
 
 inline String GetVersionAsString(uint32 VersionNumber)
 {
@@ -1415,6 +1418,8 @@ NODISCARD inline bool IsFormatInCompatibilityClass(VkFormat ImageFormat, VkForma
     }
 
     return false;
+}
+
 }
 
 constexpr const CHAR* ToString(VkImageLayout Layout)

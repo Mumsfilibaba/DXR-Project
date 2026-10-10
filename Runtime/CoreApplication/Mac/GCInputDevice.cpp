@@ -3,7 +3,7 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Platform/PlatformTime.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "CoreApplication/Mac/GCInputDevice.h"
 #include "CoreApplication/PlatformInterface/AnalogDeadzones.h"
 #include "CoreApplication/PlatformInterface/IPlatformApplicationMessageHandler.h"

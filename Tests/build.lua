@@ -37,6 +37,7 @@ else
 end
 
 AddTarget("RHI-Tests")
+AddTarget("RHI-Boot-Tests")
 AddTarget("RendererCore-Tests")
 AddTarget("ShaderCore-Tests")
 AddTarget("ShaderCompiler-Tests")

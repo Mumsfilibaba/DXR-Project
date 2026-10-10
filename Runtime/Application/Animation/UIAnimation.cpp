@@ -57,6 +57,19 @@ float FUIAnimation::Evaluate() const
     return Math::Lerp(StartValue, TargetValue, GetProgress());
 }
 
+float FUIAnimation::EvaluateEaseOut() const
+{
+    const float Remaining = 1.0f - GetProgress();
+    return Math::Lerp(StartValue, TargetValue, 1.0f - (Remaining * Remaining * Remaining));
+}
+
+float FUIAnimation::EvaluateEaseOutBack(float Overshoot) const
+{
+    const float Time  = GetProgress() - 1.0f;
+    const float Eased = 1.0f + ((Overshoot + 1.0f) * Time * Time * Time) + (Overshoot * Time * Time);
+    return Math::Lerp(StartValue, TargetValue, Eased);
+}
+
 bool FUIAnimation::IsRunning() const
 {
     return GetProgress() < 1.0f;

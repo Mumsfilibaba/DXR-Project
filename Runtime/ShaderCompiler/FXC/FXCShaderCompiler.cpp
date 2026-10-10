@@ -1,7 +1,7 @@
 #if PLATFORM_WINDOWS
 #include "Core/Containers/ComPtr.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformLibrary.h"
 #include "ShaderCompiler/FXC/FXCShaderCompiler.h"
 #include "ShaderCompiler/FXC/FXCShaderTranslator.h"

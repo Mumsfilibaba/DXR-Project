@@ -1,7 +1,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Algorithms/Algorithm.h"
 #include "Core/Misc/Config.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/FileOutputDevice.h"
 #include "Core/Misc/CommandLine.h"
 #include "Core/Platform/PlatformMisc.h"
@@ -41,7 +41,7 @@ static TAutoConsoleVariable<String> CVarEcho(
     {
         if (InVariable->IsVariableString())
         {
-            IOutputDevice* OutputDevice = FOutputDeviceLogger::Get();
+            IOutputDevice* OutputDevice = FOutputDeviceManager::Get();
             OutputDevice->Log(ELogSeverity::Info, InVariable->GetString());
         }
     }));

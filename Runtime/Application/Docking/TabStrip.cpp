@@ -5,8 +5,9 @@
 #include "Application/Elements/ScrollBar.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
-constexpr float TAB_CLOSE_EXTENT    = 4.0f;
-constexpr float TAB_CLOSE_THICKNESS = 1.5f;
+
+constexpr float PREVIEW_TAB_FADE_SECONDS = 0.12f;
+constexpr float TAB_SLIDE_SECONDS        = 0.15f;
 
 TSharedPtr<FTab> FTab::Create(const String& InPanelId, const String& InLabel, const TSharedPtr<IFontFace>& InFont, bool bInIsClosable)
 {
@@ -30,6 +31,10 @@ FTab::FTab()
     , bIsClosable(false)
     , bIsActive(false)
     , bIsCloseHovered(false)
+    , bHasSlot(false)
+    , Opacity(1.0f)
+    , SlotOffset(0)
+    , SlotMove()
 {
 }
 
@@ -38,14 +43,14 @@ FTab::~FTab() = default;
 IntVector2 FTab::ComputeDesiredSize() const
 {
     const int32 LabelWidth = LabelMetrics.GetWidth(Font.Get(), StringView(Label));
-    const int32 PillHeight = Math::Max(Style.StripHeight - Style.TopInset - Style.BottomInset, 0);
+    const int32 TabHeight = Math::Max(Style.StripHeight - Style.TopInset - Style.BottomInset, 0);
 
     const int32 TrailingWidth = bIsClosable
         ? Style.LabelCloseGap + Style.CloseSize + Style.CloseInset
         : Style.HorizontalPadding;
 
-    const int32 PillWidth = Style.HorizontalPadding + LabelWidth + TrailingWidth;
-    return IntVector2(Math::Max(PillWidth, Style.MinWidth), PillHeight);
+    const int32 TabWidth = Style.HorizontalPadding + LabelWidth + TrailingWidth;
+    return IntVector2(Math::Max(TabWidth, Style.MinWidth), TabHeight);
 }
 
 int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -58,12 +63,19 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
         return LayerId;
     }
 
-    const FCornerRadii Radii(Style.CornerRadius);
+    const FCornerRadii Radii = FCornerRadii::Top(Style.CornerRadius);
+
+    const auto Faded = [this](const FFloatColor& Color)
+    {
+        FFloatColor Result = Color;
+        Result.A *= Opacity;
+        return Result;
+    };
 
     if (bIsActive || IsHovered())
     {
         const FFloatColor& Fill = bIsActive ? Style.FillActive : Style.FillHovered;
-        OutCommandList.AddBox(LayerId, Bounds, Fill, Radii);
+        OutCommandList.AddTabShape(LayerId, Bounds, Style.CornerRadius, Style.FlareRadius, Faded(Fill));
     }
 
     const int32 AccentThickness = bIsActive
@@ -73,7 +85,7 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
     if (AccentThickness > 0)
     {
         OutCommandList.AddRoundedAccentRing(LayerId, Bounds, Radii, static_cast<float>(AccentThickness),
-            Style.ActiveStrip, Style.ActiveStripFadeFraction, Style.ActiveStripTrailAlpha);
+            Faded(Style.ActiveStrip), Style.ActiveStripFadeFraction, Style.ActiveStripTrailAlpha);
     }
 
     if (Style.SeparatorThickness > 0)
@@ -81,7 +93,7 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
         const FRectangle SeparatorBounds(IntVector2(Bounds.GetRight() - Style.SeparatorThickness, Bounds.Position.Y),
             Style.SeparatorThickness, Bounds.Height);
 
-        OutCommandList.AddBox(LayerId, SeparatorBounds, Style.Separator);
+        OutCommandList.AddBox(LayerId, SeparatorBounds, Faded(Style.Separator));
     }
 
     if (Font)
@@ -93,13 +105,22 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
             : Bounds.GetRight();
 
         const int32 LabelRegionWidth = Math::Max(LabelRegionRight - Bounds.Position.X, 0);
-        const int32 LabelX           = Bounds.Position.X + Math::Max((LabelRegionWidth - LabelWidth) / 2, 0);
         const int32 LabelY           = Bounds.Position.Y + Style.LabelOffsetY;
+
+        int32 LabelX = Bounds.Position.X + Style.HorizontalPadding;
+        if (Style.LabelAlignment == EHorizontalAlignment::Center)
+        {
+            LabelX = Bounds.Position.X + Math::Max((LabelRegionWidth - LabelWidth) / 2, 0);
+        }
+        else if (Style.LabelAlignment == EHorizontalAlignment::Right)
+        {
+            LabelX = Bounds.Position.X + Math::Max(LabelRegionWidth - LabelWidth - Style.LabelCloseGap, 0);
+        }
 
         const FRectangle LabelBounds(IntVector2(LabelX, LabelY), LabelWidth, Math::Max(Bounds.Height - Style.LabelOffsetY, 0));
 
-        const FFloatColor& LabelColor = bIsActive ? Colors.Text : Colors.TextDisabled;
-        OutCommandList.AddText(LayerId + 1, LabelBounds, Label, Font.Get(), LabelColor);
+        const FFloatColor& LabelColor = bIsActive ? Style.LabelColorActive : Style.LabelColor;
+        OutCommandList.AddText(LayerId + 1, LabelBounds, Label, Font.Get(), Faded(LabelColor));
     }
 
     if (bIsClosable && (bIsActive || IsHovered()))
@@ -108,10 +129,10 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
 
         if (bIsCloseHovered)
         {
-            OutCommandList.AddBox(LayerId + 1, CloseBounds, Style.CloseHovered, FCornerRadii(Style.CloseCornerRadius));
+            OutCommandList.AddBox(LayerId + 1, CloseBounds, Faded(Style.CloseHovered), FCornerRadii(Style.CloseCornerRadius));
         }
 
-        const FFloatColor& CrossColor = Colors.Text;
+        const FFloatColor CrossColor = Faded(Colors.Text);
 
         if (CloseIcon.IsValid())
         {
@@ -122,13 +143,14 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
         }
         else
         {
+            const float Extent  = Style.CloseGlyphSize * 0.5f;
             const float CenterX = static_cast<float>(CloseBounds.Position.X) + static_cast<float>(CloseBounds.Width) * 0.5f;
             const float CenterY = static_cast<float>(CloseBounds.Position.Y) + static_cast<float>(CloseBounds.Height) * 0.5f;
 
-            OutCommandList.AddLine(LayerId + 2, Vector2(CenterX - TAB_CLOSE_EXTENT, CenterY - TAB_CLOSE_EXTENT),
-                Vector2(CenterX + TAB_CLOSE_EXTENT, CenterY + TAB_CLOSE_EXTENT), CrossColor, TAB_CLOSE_THICKNESS);
-            OutCommandList.AddLine(LayerId + 2, Vector2(CenterX + TAB_CLOSE_EXTENT, CenterY - TAB_CLOSE_EXTENT),
-                Vector2(CenterX - TAB_CLOSE_EXTENT, CenterY + TAB_CLOSE_EXTENT), CrossColor, TAB_CLOSE_THICKNESS);
+            OutCommandList.AddLine(LayerId + 2, Vector2(CenterX - Extent, CenterY - Extent),
+                Vector2(CenterX + Extent, CenterY + Extent), CrossColor, Style.CloseGlyphThickness);
+            OutCommandList.AddLine(LayerId + 2, Vector2(CenterX + Extent, CenterY - Extent),
+                Vector2(CenterX - Extent, CenterY + Extent), CrossColor, Style.CloseGlyphThickness);
         }
     }
 
@@ -205,6 +227,40 @@ void FTab::SetStyle(const FUITabStyle& InStyle)
     InvalidateDesiredSize();
 }
 
+void FTab::SetOpacity(float InOpacity)
+{
+    const float NewOpacity = Math::Clamp(InOpacity, 0.0f, 1.0f);
+    if (Opacity != NewOpacity)
+    {
+        Opacity = NewOpacity;
+        InvalidatePaint();
+    }
+}
+
+void FTab::SetSlotOffset(int32 InSlotOffset)
+{
+    if (!bHasSlot)
+    {
+        bHasSlot   = true;
+        SlotOffset = InSlotOffset;
+        SlotMove.Settle(static_cast<float>(InSlotOffset));
+        return;
+    }
+
+    if (SlotOffset == InSlotOffset)
+    {
+        return;
+    }
+
+    SlotMove.Start(TAB_SLIDE_SECONDS, static_cast<float>(GetDisplayedSlotOffset()), static_cast<float>(InSlotOffset));
+    SlotOffset = InSlotOffset;
+}
+
+int32 FTab::GetDisplayedSlotOffset() const
+{
+    return SlotMove.IsRunning() ? Math::RoundToInt(SlotMove.EvaluateEaseOut()) : SlotOffset;
+}
+
 void FTab::SetCloseIcon(const FUIBrush& InCloseIcon)
 {
     CloseIcon = InCloseIcon;
@@ -246,12 +302,16 @@ FTabStrip::FTabStrip()
     , Style(FUIStyle::GetDefault().Tab)
     , CloseIcon()
     , Tabs()
+    , PreviewTab(nullptr)
+    , PreviewTabFade()
+    , PreviewTabIndex(-1)
     , ScrollBar(nullptr)
     , ActivePanelId()
     , DraggedPanelId()
     , DetachedPanelId()
     , DragOrigin()
     , ScrollOffset(0)
+    , ScrollOffsetBeforePreview(0)
     , ScrollAmountPerWheelStep(DefaultScrollAmountPerWheelStep)
     , ContentWidth(0)
     , ViewWidth(0)
@@ -303,10 +363,15 @@ void FTabStrip::Initialize(const FDesc& Desc)
 
 IntVector2 FTabStrip::ComputeDesiredSize() const
 {
-    IntVector2 DesiredSize(Tabs.IsEmpty() ? 0 : Style.Spacing, Style.StripHeight);
+    IntVector2 DesiredSize((Tabs.IsEmpty() && !PreviewTab) ? 0 : Style.Spacing, Style.StripHeight);
     for (const TSharedPtr<FTab>& Tab : Tabs)
     {
         DesiredSize.X += Tab->GetCachedDesiredSize().X + Style.Spacing;
+    }
+
+    if (PreviewTab)
+    {
+        DesiredSize.X += PreviewTab->GetCachedDesiredSize().X + Style.Spacing;
     }
 
     return DesiredSize;
@@ -316,6 +381,7 @@ void FTabStrip::OnArrange(const FRectangle& AllottedBounds)
 {
     ContentWidth = ComputeDesiredSize().X;
     ViewWidth    = AllottedBounds.Width;
+
     ScrollOffset = Math::Clamp(ScrollOffset, 0, GetMaxScrollOffset());
 
     const int32 BarBand = GetMaxScrollOffset() > 0
@@ -324,13 +390,42 @@ void FTabStrip::OnArrange(const FRectangle& AllottedBounds)
 
     const int32 TabHeight = Math::Max(AllottedBounds.Height - Style.TopInset - Style.BottomInset - BarBand, 0);
 
-    int32 Offset = (AllottedBounds.Position.X + Style.Spacing) - ScrollOffset;
-    for (const TSharedPtr<FTab>& Tab : Tabs)
-    {
-        const int32 TabWidth = Tab->GetCachedDesiredSize().X;
-        Tab->Arrange(FRectangle(IntVector2(Offset, AllottedBounds.Position.Y + Style.TopInset), TabWidth, TabHeight));
+    const int32 Origin = AllottedBounds.Position.X - ScrollOffset;
+    const int32 TabTop = AllottedBounds.Position.Y + Style.TopInset;
 
-        Offset += TabWidth + Style.Spacing;
+    const int32 PreviewIndex = !PreviewTab ? -1 : ((PreviewTabIndex >= 0 && PreviewTabIndex <= Tabs.Size()) ? PreviewTabIndex : Tabs.Size());
+
+    bool  bIsSliding = false;
+    int32 Slot       = Style.Spacing;
+
+    const auto PlaceTab = [&](FTab& Tab)
+    {
+        const int32 TabWidth = Tab.GetCachedDesiredSize().X;
+
+        Tab.SetSlotOffset(Slot);
+        Tab.Arrange(FRectangle(IntVector2(Origin + Tab.GetDisplayedSlotOffset(), TabTop), TabWidth, TabHeight));
+
+        bIsSliding = bIsSliding || Tab.IsSliding();
+        Slot += TabWidth + Style.Spacing;
+    };
+
+    for (int32 Index = 0; Index <= Tabs.Size(); ++Index)
+    {
+        if (Index == PreviewIndex)
+        {
+            PlaceTab(*PreviewTab);
+        }
+
+        if (Index < Tabs.Size())
+        {
+            PlaceTab(*Tabs[Index]);
+        }
+    }
+
+    if (bIsSliding)
+    {
+        RequestContinuousArrange();
+        RequestContinuousPaint();
     }
 
     UpdateScrollBar(AllottedBounds);
@@ -346,28 +441,70 @@ EChildVisit FTabStrip::VisitChildren(FChildVisitor& Visitor, EChildOrder Order) 
         });
     };
 
+    const auto VisitPreviewTab = [this, &Visitor]()
+    {
+        return PreviewTab ? VisitChild(Visitor, PreviewTab) : EChildVisit::Continue;
+    };
+
     if (Order == EChildOrder::BackToFront)
     {
-        return VisitTabs() == EChildVisit::Stop ? EChildVisit::Stop : VisitChild(Visitor, ScrollBar);
+        if (VisitTabs() == EChildVisit::Stop || VisitPreviewTab() == EChildVisit::Stop)
+        {
+            return EChildVisit::Stop;
+        }
+
+        return VisitChild(Visitor, ScrollBar);
     }
 
-    return VisitChild(Visitor, ScrollBar) == EChildVisit::Stop ? EChildVisit::Stop : VisitTabs();
+    if (VisitChild(Visitor, ScrollBar) == EChildVisit::Stop || VisitPreviewTab() == EChildVisit::Stop)
+    {
+        return EChildVisit::Stop;
+    }
+
+    return VisitTabs();
 }
 
 int32 FTabStrip::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.StripFill);
+    OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.StripFill, FCornerRadii::Top(Style.StripCornerRadius));
 
     OutCommandList.PushClip(LayerId, AllottedGeometry.Bounds);
+
+    const FTab* ActiveTab = nullptr;
 
     int32 NextLayerId = LayerId + 1;
     for (const TSharedPtr<FTab>& Tab : Tabs)
     {
-        if (Tab->IsVisible())
+        if (!Tab->IsVisible())
         {
-            const FDrawGeometry TabGeometry(Tab->GetContentRectangle(), AllottedGeometry.Scale);
-            NextLayerId = Math::Max(NextLayerId, Tab->Draw(TabGeometry, OutCommandList, LayerId + 1));
+            continue;
         }
+
+        if (Tab->IsActive())
+        {
+            ActiveTab = Tab.Get();
+            continue;
+        }
+
+        const FDrawGeometry TabGeometry(Tab->GetContentRectangle(), AllottedGeometry.Scale);
+        NextLayerId = Math::Max(NextLayerId, Tab->Draw(TabGeometry, OutCommandList, LayerId + 1));
+    }
+
+    if (PreviewTab)
+    {
+        PreviewTab->SetOpacity(PreviewTabFade.EvaluateEaseOut());
+        if (PreviewTabFade.IsRunning())
+        {
+            RequestContinuousPaint();
+        }
+
+        ActiveTab = PreviewTab.Get();
+    }
+
+    if (ActiveTab)
+    {
+        const FDrawGeometry TabGeometry(ActiveTab->GetContentRectangle(), AllottedGeometry.Scale);
+        NextLayerId = ActiveTab->Draw(TabGeometry, OutCommandList, NextLayerId);
     }
 
     if (ScrollBar && ScrollBar->GetOpacity() > 0.0f && GetMaxScrollOffset() > 0)
@@ -564,10 +701,70 @@ void FTabStrip::SetActiveTab(const String& PanelId)
     ActivePanelId = PanelId;
     for (const TSharedPtr<FTab>& Tab : Tabs)
     {
-        Tab->SetActive(Tab->GetPanelId() == PanelId);
+        Tab->SetActive(!PreviewTab && Tab->GetPanelId() == PanelId);
     }
 
     ScrollTabIntoView(PanelId);
+}
+
+void FTabStrip::SetPreviewTab(const String& Label, int32 InsertIndex)
+{
+    if (PreviewTab && PreviewTab->GetLabel() == Label)
+    {
+        if (PreviewTabIndex != InsertIndex)
+        {
+            PreviewTabIndex = InsertIndex;
+
+            InvalidateArrange();
+            InvalidatePaint();
+        }
+
+        return;
+    }
+
+    PreviewTabIndex = InsertIndex;
+
+    if (!PreviewTab)
+    {
+        ScrollOffsetBeforePreview = ScrollOffset;
+    }
+
+    PreviewTab = FTab::Create(String(), Label, Font, true);
+    PreviewTab->SetStyle(Style);
+    PreviewTab->SetCloseIcon(CloseIcon);
+    PreviewTab->SetParentElement(AsWeakPtr());
+    PreviewTab->SetActive(true);
+    PreviewTab->SetOpacity(0.0f);
+
+    PreviewTabFade.Start(PREVIEW_TAB_FADE_SECONDS, 0.0f, 1.0f);
+
+    for (const TSharedPtr<FTab>& Tab : Tabs)
+    {
+        Tab->SetActive(false);
+    }
+
+    InvalidateDesiredSize();
+    InvalidatePaint();
+}
+
+void FTabStrip::ClearPreviewTab()
+{
+    if (!PreviewTab)
+    {
+        return;
+    }
+
+    PreviewTab.Reset();
+
+    for (const TSharedPtr<FTab>& Tab : Tabs)
+    {
+        Tab->SetActive(Tab->GetPanelId() == ActivePanelId);
+    }
+
+    ScrollOffset = ScrollOffsetBeforePreview;
+
+    InvalidateDesiredSize();
+    InvalidatePaint();
 }
 
 void FTabStrip::ClearTabs()
@@ -674,6 +871,41 @@ const String& FTabStrip::GetActivePanelId() const
     return ActivePanelId;
 }
 
+FRectangle FTabStrip::GetActiveTabRectangle() const
+{
+    if (PreviewTab)
+    {
+        return PreviewTab->GetContentRectangle().Intersect(GetContentRectangle());
+    }
+
+    for (const TSharedPtr<FTab>& Tab : Tabs)
+    {
+        if (Tab->IsActive() && Tab->IsVisible())
+        {
+            return Tab->GetContentRectangle().Intersect(GetContentRectangle());
+        }
+    }
+
+    return FRectangle();
+}
+
+int32 FTabStrip::FindDropIndex(int32 PositionX) const
+{
+    int32 Left = (GetContentRectangle().Position.X + Style.Spacing) - ScrollOffset;
+    for (int32 Index = 0; Index < Tabs.Size(); ++Index)
+    {
+        const int32 TabWidth = Tabs[Index]->GetCachedDesiredSize().X;
+        if (PositionX < Left + (TabWidth / 2))
+        {
+            return Index;
+        }
+
+        Left += TabWidth + Style.Spacing;
+    }
+
+    return Tabs.Size();
+}
+
 void FTabStrip::MoveTab(int32 FromIndex, int32 ToIndex)
 {
     if (FromIndex < 0 || FromIndex >= Tabs.Size() || ToIndex < 0 || ToIndex >= Tabs.Size())
@@ -692,10 +924,11 @@ void FTabStrip::MoveTab(int32 FromIndex, int32 ToIndex)
 
 int32 FTabStrip::FindTabIndexAt(int32 PositionX) const
 {
+    const int32 Origin = GetContentRectangle().Position.X - ScrollOffset;
     for (int32 Index = 0; Index < Tabs.Size(); ++Index)
     {
-        const FRectangle& Bounds = Tabs[Index]->GetContentRectangle();
-        if (PositionX >= Bounds.Position.X && PositionX < Bounds.GetRight())
+        const int32 Left = Origin + Tabs[Index]->GetSlotOffset();
+        if (PositionX >= Left && PositionX < Left + Tabs[Index]->GetCachedDesiredSize().X)
         {
             return Index;
         }
@@ -706,7 +939,7 @@ int32 FTabStrip::FindTabIndexAt(int32 PositionX) const
         return -1;
     }
 
-    return PositionX < Tabs[0]->GetContentRectangle().Position.X ? 0 : Tabs.Size() - 1;
+    return PositionX < (Origin + Tabs[0]->GetSlotOffset()) ? 0 : Tabs.Size() - 1;
 }
 
 int32 FTabStrip::FindTabIndex(const FTab* Tab) const

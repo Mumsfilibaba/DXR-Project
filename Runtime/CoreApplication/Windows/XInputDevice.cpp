@@ -2,7 +2,7 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Platform/PlatformTime.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "CoreApplication/Windows/XInputDevice.h"
 #include "CoreApplication/PlatformInterface/AnalogDeadzones.h"
 #include "CoreApplication/PlatformInterface/IPlatformApplicationMessageHandler.h"

@@ -31,7 +31,7 @@ struct FDockMetrics
     static constexpr int32 MinimumPanelHeight = 60;
 
     /** @brief The height of a tab strip, which every Tabs node carries on top of its panel. */
-    static constexpr int32 TabStripHeight = 40;
+    static constexpr int32 TabStripHeight = 44;
 
     /** @brief How wide the draggable handle between two split children is. */
     static constexpr int32 SplitterThickness = 4;
@@ -94,6 +94,17 @@ struct APPLICATION_API FDockNode
      */
     NODISCARD FDockNode*       FindTabsNode(const String& PanelId);
     NODISCARD const FDockNode* FindTabsNode(const String& PanelId) const;
+
+    /**
+     * @brief Finds the leaf that is most in view, going by how the splits share the space. Each leaf is rated by how close
+     * its middle is to the middle of the space, and that rating is weighed by how much of the space the leaf covers, so a
+     * large leaf a little off the middle wins over a sliver right on it.
+     *
+     * @param Width  How wide the space the subtree is laid out in is, which only matters relative to Height.
+     * @param Height How tall that space is.
+     * @return The Tabs node with the best rating, or null when the subtree holds no tabs.
+     */
+    NODISCARD const FDockNode* FindMostCentralTabsNode(float Width, float Height) const;
 
     /**
      * @brief Follows a path of child indices from this node.

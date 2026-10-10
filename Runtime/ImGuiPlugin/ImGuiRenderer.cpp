@@ -4,7 +4,7 @@
 #include "ImGuiPluginStats.h"
 #include "Core/Time/ElapsedTime.h"
 #include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Containers/Array.h"
 #include "Core/Math/Math.h"
 #include "Core/Misc/ConsoleManager.h"
@@ -337,6 +337,11 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
         }
 
         ImDrawData* DrawData = ImGui::GetDrawData();
+        if (!DrawData || DrawData->CmdListsCount <= 0 || DrawData->TotalIdxCount <= 0)
+        {
+            return;
+        }
+
         PrepareDrawData(CommandList, DrawData);
         PrepareTexturesForShaderResourceUsage(CommandList, DrawData);
 

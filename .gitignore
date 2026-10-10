@@ -41,6 +41,10 @@ packages/
 /Solutions
 *.d3d12psocache
 *.vkpsocache
+*.metalarchive
+*.metalarchive.version
+*.metalarchive.tmp
+*.metalarchive.version.tmp
 *.shadermanifest
 *.shaderbytecode
 *.log

@@ -2,7 +2,7 @@
 #include "Core/Containers/Map.h"
 #include "Core/PlatformInterface/IPlatformFileSystem.h"
 #include "Core/Filesystem/File.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetImporters/OBJImporter.h"
 

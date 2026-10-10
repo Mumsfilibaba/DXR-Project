@@ -273,6 +273,8 @@ private:
     void AddRoundedBottomBar(const FDrawCommand& Command);
     void AddRoundedAccentRing(const FDrawCommand& Command);
     void AddCornerWedges(const FDrawCommand& Command);
+    void AddWedge(const FDrawCommand& Command);
+    bool AddWedgeInstance(const Vector2& SquareMin, const Vector2& Center, float Radius, uint32 PackedColor);
     void TrimTextGeometryCache();
     void AddPolyline(TArrayView<const Vector2> Points, float Thickness, bool bClosed, uint32 PackedColor);
     void AddConvexPolygon(TArrayView<const Vector2> Points, uint32 PackedColor);

@@ -30,6 +30,7 @@ struct FShaderPermutationDesc
     bool  bSupportsBindless                  = false;
     bool  bSupportsViewInstancing            = false;
     bool  bSupportsRayTracing                = false;
+    bool  bSupportsRayTracingPipeline        = false;
     bool  bSupportsInlineRayTracing          = false;
     bool  bSupportsShaderExecutionReordering = false;
 };

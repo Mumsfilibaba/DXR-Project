@@ -49,6 +49,7 @@ bool FEditorTitleBar::Initialize()
 void FEditorTitleBar::Refresh()
 {
     Menus->Refresh();
+    Bar->SyncWindowMetrics();
 
     const bool bIsPlaying = EditorEngine->IsPlaying();
     if (bIsPlaying != bWasPlaying)

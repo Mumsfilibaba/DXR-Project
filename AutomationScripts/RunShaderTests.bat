@@ -148,7 +148,8 @@ REM    depthattr   derive VERTEX_ATTRIBUTES from parallax and alpha mask
 REM    pointkind   POINTLIGHT_PASS_KIND over multi, single and geometry
 REM    cascadekind CASCADE_PASS_KIND over multi, single, geometry and view-instanced
 REM    gsonly      restrict the pass kind to the geometry-shader variant
-REM    raytracing  skip the entry on backends that report no ray tracing support
+REM    raytracing  skip the entry on backends that report no ray tracing pipeline
+REM    rayquery    skip the entry on backends that report no inline ray tracing
 REM    once        compile a single permutation, with none of the material defines
 REM    cubemap     ENABLE_CUBE_MAP, for the BC6H variant that reads a cube face
 REM    encodeonly  BC7_ENCODE_ONLY, for the BC7 pass that packs blocks into a texture
@@ -169,7 +170,8 @@ call :AddEntry "CascadeShadowVS|Shadows\CascadedShadows.hlsl|Cascade_VSMain|vs|m
 call :AddEntry "CascadeShadowGS|Shadows\CascadedShadows.hlsl|Cascade_GSMain|gs|material bindless depthattr cascadekind gsonly"
 call :AddEntry "CascadeShadowPS|Shadows\CascadedShadows.hlsl|Cascade_PSMain|ps|material bindless depthattr cascadekind"
 call :AddEntry "ClosestHit|ClosestHit.hlsl|ClosestHit|lib|bindless raytracing"
-call :AddEntry "InlineReflections|InlineReflections.hlsl|Main|cs|alwaysbindless raytracing"
+call :AddEntry "InlineReflections|InlineReflections.hlsl|Main|cs|alwaysbindless rayquery"
+call :AddEntry "PrimaryRayDebug|PrimaryRayDebug.hlsl|Main|cs|alwaysbindless rayquery"
 call :AddEntry "BlockCompressBC1|BlockCompression\BlockCompressionBC1.hlsl|Main|cs|once"
 call :AddEntry "BlockCompressBC2|BlockCompression\BlockCompressionBC2.hlsl|Main|cs|once"
 call :AddEntry "BlockCompressBC3|BlockCompression\BlockCompressionBC3.hlsl|Main|cs|once"
@@ -274,16 +276,18 @@ set "SPIRV_ARGS=-spirv -fspv-target-env=vulkan1.2 -fspv-reduce-load-size -fvk-us
 set "SPIRV_ARGS=!SPIRV_ARGS! -fvk-bind-resource-heap 0 31 -fvk-bind-sampler-heap 1 31 -fvk-bind-counter-heap 16 31"
 set "SPIRV_DEFINES=-D min16float=float -D min16float2=float2 -D min16float3=float3 -D min16float4=float4 -D MIN16FLOAT_AVAILABLE=(0)"
 
-REM  Mirrors RHI::bSupportsBindless and RHI::bSupportsRayTracing. MetalRHI sets neither,
-REM  so both keep the false they are given in RHICore.cpp.
+REM  Mirrors RHI::bSupportsBindless, RHI::bSupportsRayTracingPipeline and
+REM  RHI::bSupportsInlineRayTracing. TraceRay on Metal is Phase 22 of MetalRHI_Roadmap.md.
 set "MSL_CHECK="
 if /i "%BACKEND%"=="metal" (
-    set "BACKEND_SUPPORTS_BINDLESS=0"
+    set "BACKEND_SUPPORTS_BINDLESS=1"
     set "BACKEND_SUPPORTS_RAYTRACING=0"
+    set "BACKEND_SUPPORTS_RAYQUERY=1"
     if defined SPIRV_CROSS set "MSL_CHECK=1"
 ) else (
     set "BACKEND_SUPPORTS_BINDLESS=1"
     set "BACKEND_SUPPORTS_RAYTRACING=1"
+    set "BACKEND_SUPPORTS_RAYQUERY=1"
 )
 
 if /i "%BACKEND%"=="d3d12" (
@@ -345,9 +349,10 @@ set "BASE_MODEL=6_2"
 if /i "%STAGE%"=="lib" set "BASE_MODEL=6_3"
 
 REM  Mirrors ShouldCompilePermutation, which culls anything the device cannot support
-REM  before it ever reaches a compiler. Metal reports neither bindless nor ray tracing,
-REM  so sweeping those here would report failures the engine never asks for.
+REM  before it ever reaches a compiler, so sweeping it here would report failures the
+REM  engine never asks for.
 if not "!AXES:raytracing=!"=="!AXES!" if "%BACKEND_SUPPORTS_RAYTRACING%"=="0" goto :eof
+if not "!AXES:rayquery=!"=="!AXES!" if "%BACKEND_SUPPORTS_RAYQUERY%"=="0" goto :eof
 
 if not "!AXES:alwaysbindless=!"=="!AXES!" (
     if "%BACKEND_SUPPORTS_BINDLESS%"=="0" goto :eof
@@ -503,10 +508,21 @@ set "STEP_FAILED=0"
 "%DXC%" %ARGS% "%SHADER_DIR%\%~2" > "%TEMP%\dxrshadertest.txt" 2>&1
 if errorlevel 1 set "STEP_FAILED=1"
 
+REM  Bindless permutations need MSL 3.0 for resource-ID table indexing, and RayQuery
+REM  shaders need it for intersection_query, matching ConvertSpirvToMetalShader.
+REM  Discrete shaders stay on MSL 2.3. Unsized heaps emit `device const void* [[buffer(n)]]`
+REM  only when the MSL tier is 2, the same codegen gate the engine uses.
+set "MSL_CHECK_VERSION=%MSL_VERSION%"
+if not "!AXES:alwaysbindless=!"=="!AXES!" set "MSL_CHECK_VERSION=30000"
+if not "!AXES:rayquery=!"=="!AXES!" set "MSL_CHECK_VERSION=30000"
+echo.%~6| findstr /c:"ENABLE_BINDLESS=(1)" >nul && set "MSL_CHECK_VERSION=30000"
+set "MSL_CHECK_ARGS="
+if "!MSL_CHECK_VERSION!"=="30000" set "MSL_CHECK_ARGS=--msl-argument-buffer-tier 1"
+
 REM  FShaderCompiler::ConvertSpirvToMetalShader runs this same translation at
 REM  load time, so a shader that stops here never reaches a Metal device.
 if "!STEP_FAILED!"=="0" if defined MSL_CHECK (
-    "%SPIRV_CROSS%" --msl --msl-version %MSL_VERSION% "%SPIRV_TEMP%" --output "%MSL_TEMP%" > "%TEMP%\dxrshadertest.txt" 2>&1
+    "%SPIRV_CROSS%" --msl --msl-version !MSL_CHECK_VERSION! !MSL_CHECK_ARGS! "%SPIRV_TEMP%" --output "%MSL_TEMP%" > "%TEMP%\dxrshadertest.txt" 2>&1
     if errorlevel 1 set "STEP_FAILED=1"
 )
 

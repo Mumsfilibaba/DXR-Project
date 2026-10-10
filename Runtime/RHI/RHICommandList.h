@@ -389,7 +389,12 @@ public:
 
     FORCEINLINE void BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* RayTracingScene, const FRHISceneAccelerationStructureBuildDesc& BuildDesc) noexcept
     {
-        EmplaceCommand<FRHICommandBuildSceneAccelerationStructure>(RayTracingScene, BuildDesc);
+        const TArrayView<const FRHIGeometryAccelerationStructureInstance> Instances = AllocateArray(TArrayView<const FRHIGeometryAccelerationStructureInstance>(BuildDesc.Instances, BuildDesc.NumInstances));
+
+        FRHISceneAccelerationStructureBuildDesc CommandBuildDesc = BuildDesc;
+        CommandBuildDesc.Instances = Instances.Data();
+
+        EmplaceCommand<FRHICommandBuildSceneAccelerationStructure>(RayTracingScene, CommandBuildDesc);
     }
 
     FORCEINLINE void BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* RayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc) noexcept

@@ -1,5 +1,5 @@
 #include "Core/Math/Math.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "RendererCore/RenderGraph/RenderGraphBuilder.h"
 #include "RendererCore/RenderGraph/RenderGraphPass.h"
 #include "RendererCore/RenderGraph/RenderGraphViewCache.h"

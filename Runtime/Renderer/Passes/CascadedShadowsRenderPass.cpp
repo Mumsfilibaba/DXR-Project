@@ -1,6 +1,6 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "RHI/RHI.h"
 #include "RHI/RHIPipelineState.h"
 #include "Engine/Resources/Model.h"

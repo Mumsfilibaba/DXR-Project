@@ -949,7 +949,11 @@ void FEditorRendererSettingsWidget::DrawRayTracingSettings()
         return;
     }
 
-    EditorWidgets::DrawTextProperty("Hardware support", RHI::bSupportsRayTracing ? "Supported" : "Unsupported");
+    const CHAR* HardwareSupport = RHI::bSupportsRayTracingPipeline
+        ? (RHI::bSupportsInlineRayTracing ? "Pipeline and inline" : "Pipeline only")
+        : (RHI::bSupportsRayTracing ? "Inline only" : "Unsupported");
+
+    EditorWidgets::DrawTextProperty("Hardware support", HardwareSupport);
 
     if (IConsoleVariable* CVarEnableRayTracing = GetCachedConsoleVariable("Renderer.Feature.RayTracing"))
     {

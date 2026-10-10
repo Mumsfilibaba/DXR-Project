@@ -276,7 +276,6 @@ void TStackBox<Orientation>::OnArrange(const FRectangle& AllottedBounds)
 template<EOrientation Orientation>
 void TStackBox<Orientation>::HitTestChildren(const IntVector2& ClientPosition, FElementPath& OutPath)
 {
-    // A child that hit tests outside its slot, like a zero-width anchor for a popup, can't be found by slot position, so every child is tested
     if (HasHitTestOverflow())
     {
         FBox::HitTestChildren(ClientPosition, OutPath);

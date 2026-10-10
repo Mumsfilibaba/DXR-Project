@@ -107,7 +107,7 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRes
 
     D3D12_RESOURCE_DESC ResourceDesc = {};
     ResourceDesc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-    ResourceDesc.Flags              = ConvertBufferFlags(Desc.Flags);
+    ResourceDesc.Flags              = D3D12RHI::ConvertBufferFlags(Desc.Flags);
     ResourceDesc.Format             = DXGI_FORMAT_UNKNOWN;
     ResourceDesc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     ResourceDesc.Width              = AlignedSize;
@@ -118,7 +118,7 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRes
     ResourceDesc.SampleDesc.Count   = 1;
     ResourceDesc.SampleDesc.Quality = 0;
 
-    ED3D12ResourceStateMode StateMode         = ConvertResourceStateMode(Desc.TrackingMode);
+    ED3D12ResourceStateMode StateMode         = D3D12RHI::ConvertResourceStateMode(Desc.TrackingMode);
     D3D12_RESOURCE_STATES   D3D12InitialState = D3D12_RESOURCE_STATE_COMMON;
     D3D12_HEAP_TYPE         D3D12HeapType     = D3D12_HEAP_TYPE_DEFAULT;
     D3D12_RESOURCE_STATES   D3D12DefaultState = D3D12_RESOURCE_STATES(0);
@@ -140,7 +140,7 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRes
     }
     else if (StateMode == ED3D12ResourceStateMode::SingleState)
     {
-        D3D12InitialState = ConvertResourceState(InInitialAccess);
+        D3D12InitialState = D3D12RHI::ConvertResourceState(InInitialAccess);
         D3D12DefaultState = D3D12InitialState;
     }
 
@@ -178,7 +178,7 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRes
 
     FD3D12Resource* D3D12Resource = ResourceStorage.GetResource();
 
-    Desc.TrackingMode = ConvertResourceStateMode(StateMode);
+    Desc.TrackingMode = D3D12RHI::ConvertResourceStateMode(StateMode);
 
     const bool bHasDefaultState = D3D12DefaultState != D3D12_RESOURCE_STATES(0);
     const bool bPlaced          = D3D12Resource->IsPlacedResource();
@@ -225,7 +225,7 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRes
         if (bGpuUpload)
         {
             const D3D12_RESOURCE_STATES BeforeState = bHasDefaultState ? D3D12DefaultState : D3D12_RESOURCE_STATE_COMMON;
-            const D3D12_RESOURCE_STATES AfterState  = bHasDefaultState ? D3D12DefaultState : ConvertResourceState(InInitialAccess);
+            const D3D12_RESOURCE_STATES AfterState  = bHasDefaultState ? D3D12DefaultState : D3D12RHI::ConvertResourceState(InInitialAccess);
 
             InCommandContext->TransitionResourceState(D3D12Resource, BeforeState, D3D12_RESOURCE_STATE_COPY_DEST);
             InCommandContext->UpdateBuffer(this, FBufferRegion(0, Desc.Size), InInitialData);
@@ -233,7 +233,7 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRes
         }
         else if (bNeedsTransition)
         {
-            InCommandContext->TransitionResourceState(D3D12Resource, D3D12_RESOURCE_STATE_COMMON, ConvertResourceState(InInitialAccess));
+            InCommandContext->TransitionResourceState(D3D12Resource, D3D12_RESOURCE_STATE_COMMON, D3D12RHI::ConvertResourceState(InInitialAccess));
         }
 
         InCommandContext->FinishContext();

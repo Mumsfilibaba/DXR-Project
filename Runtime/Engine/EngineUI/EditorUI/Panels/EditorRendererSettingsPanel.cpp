@@ -36,6 +36,11 @@ static String DescribeRayTracingSupport()
         return "Not supported";
     }
 
+    if (!RHI::bSupportsRayTracingPipeline)
+    {
+        return "Inline only";
+    }
+
     return String::Printf("Tier %s, inline %s, SER %s",
         ToString(RHI::RayTracingTier),
         RHI::bSupportsInlineRayTracing ? "yes" : "no",
@@ -103,7 +108,7 @@ static const FRendererSetting GRendererSettings[] =
     SETTING_BOOL_GATED("Ray Tracing", "Enable ray tracing",                "Renderer.Feature.RayTracing",
         []() { return RHI::bSupportsRayTracing; }),
     SETTING_BOOL_GATED("Ray Tracing", "Use local shader bindings",         "Renderer.RayTracing.EnableLocalShaderBindings",
-        []() { return RHI::bSupportsRayTracing; }),
+        []() { return RHI::bSupportsRayTracingPipeline; }),
     SETTING_BOOL_GATED("Ray Tracing", "Inline reflections (RayQuery)",     "Renderer.RayTracing.InlineReflections",
         []() { return RHI::bSupportsInlineRayTracing; }),
     SETTING_BOOL_GATED("Ray Tracing", "Shader Execution Reordering",       "Renderer.RayTracing.SER",

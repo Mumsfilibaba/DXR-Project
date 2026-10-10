@@ -1,4 +1,4 @@
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Engine/World/Components/InputComponent.h"
 #include "Engine/World/Actors/PlayerController.h"
 #include "Engine/World/Actors/PlayerInput.h"

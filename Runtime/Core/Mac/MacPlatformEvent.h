@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Mac/Mac.h"
 #include "Core/PlatformInterface/IPlatformEvent.h"
+#include <pthread.h>
 
 class FMacPlatformEvent final : public IPlatformEvent
 {

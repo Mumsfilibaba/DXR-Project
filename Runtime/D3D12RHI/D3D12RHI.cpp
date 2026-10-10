@@ -360,11 +360,11 @@ FRHISamplerState* FD3D12DeviceRHI::CreateSamplerState(const FRHISamplerStateDesc
     else
     {
         D3D12_SAMPLER_DESC Desc = {};
-        Desc.AddressU       = ConvertSamplerMode(InSamplerDesc.AddressU);
-        Desc.AddressV       = ConvertSamplerMode(InSamplerDesc.AddressV);
-        Desc.AddressW       = ConvertSamplerMode(InSamplerDesc.AddressW);
-        Desc.ComparisonFunc = ConvertComparisonFunc(InSamplerDesc.ComparisonFunc);
-        Desc.Filter         = ConvertSamplerFilter(InSamplerDesc.Filter);
+        Desc.AddressU       = D3D12RHI::ConvertSamplerMode(InSamplerDesc.AddressU);
+        Desc.AddressV       = D3D12RHI::ConvertSamplerMode(InSamplerDesc.AddressV);
+        Desc.AddressW       = D3D12RHI::ConvertSamplerMode(InSamplerDesc.AddressW);
+        Desc.ComparisonFunc = D3D12RHI::ConvertComparisonFunc(InSamplerDesc.ComparisonFunc);
+        Desc.Filter         = D3D12RHI::ConvertSamplerFilter(InSamplerDesc.Filter);
         Desc.MaxAnisotropy  = InSamplerDesc.MaxAnisotropy;
         Desc.MaxLOD         = InSamplerDesc.MaxLOD;
         Desc.MinLOD         = InSamplerDesc.MinLOD;
@@ -496,7 +496,7 @@ FRHIShaderResourceView* FD3D12DeviceRHI::CreateShaderResourceView(FRHIResource* 
             {
                 // Buffer<T>: A real format-typed buffer view (no RAW flag, no structure stride).
                 ElementSize                     = GetByteStrideFromFormat(BufferDesc.Format);
-                Desc.Format                     = D3D12CastShaderResourceFormat(ConvertFormat(BufferDesc.Format));
+                Desc.Format                     = D3D12RHI::D3D12CastShaderResourceFormat(D3D12RHI::ConvertFormat(BufferDesc.Format));
                 Desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
                 Desc.Buffer.StructureByteStride = 0;
                 break;
@@ -552,7 +552,7 @@ FRHIShaderResourceView* FD3D12DeviceRHI::CreateShaderResourceView(FRHIResource* 
             case EViewDimension::Texture1D:
             {
                 const auto& TextureDesc            = InDesc.Texture1D;
-                Desc.Format                        = D3D12CastShaderResourceFormat(ConvertFormat(TextureDesc.Format));
+                Desc.Format                        = D3D12RHI::D3D12CastShaderResourceFormat(D3D12RHI::ConvertFormat(TextureDesc.Format));
                 Desc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE1D;
                 Desc.Texture1D.MostDetailedMip     = TextureDesc.FirstMipLevel;
                 Desc.Texture1D.MipLevels           = TextureDesc.NumMips;
@@ -563,7 +563,7 @@ FRHIShaderResourceView* FD3D12DeviceRHI::CreateShaderResourceView(FRHIResource* 
             case EViewDimension::Texture1DArray:
             {
                 const auto& TextureDesc                 = InDesc.Texture1DArray;
-                Desc.Format                             = D3D12CastShaderResourceFormat(ConvertFormat(TextureDesc.Format));
+                Desc.Format                             = D3D12RHI::D3D12CastShaderResourceFormat(D3D12RHI::ConvertFormat(TextureDesc.Format));
                 Desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
                 Desc.Texture1DArray.MostDetailedMip     = TextureDesc.FirstMipLevel;
                 Desc.Texture1DArray.MipLevels           = TextureDesc.NumMips;
@@ -576,7 +576,7 @@ FRHIShaderResourceView* FD3D12DeviceRHI::CreateShaderResourceView(FRHIResource* 
             case EViewDimension::Texture2D:
             {
                 const auto& TextureDesc = InDesc.Texture2D;
-                Desc.Format = D3D12CastShaderResourceFormat(ConvertFormat(TextureDesc.Format));
+                Desc.Format = D3D12RHI::D3D12CastShaderResourceFormat(D3D12RHI::ConvertFormat(TextureDesc.Format));
 
                 if (!bIsMultisampled)
                 {
@@ -597,7 +597,7 @@ FRHIShaderResourceView* FD3D12DeviceRHI::CreateShaderResourceView(FRHIResource* 
             case EViewDimension::Texture2DArray:
             {
                 const auto& TextureDesc = InDesc.Texture2DArray;
-                Desc.Format = D3D12CastShaderResourceFormat(ConvertFormat(TextureDesc.Format));
+                Desc.Format = D3D12RHI::D3D12CastShaderResourceFormat(D3D12RHI::ConvertFormat(TextureDesc.Format));
 
                 if (!bIsMultisampled)
                 {
@@ -622,7 +622,7 @@ FRHIShaderResourceView* FD3D12DeviceRHI::CreateShaderResourceView(FRHIResource* 
             case EViewDimension::TextureCube:
             {
                 const auto& TextureDesc              = InDesc.TextureCube;
-                Desc.Format                          = D3D12CastShaderResourceFormat(ConvertFormat(TextureDesc.Format));
+                Desc.Format                          = D3D12RHI::D3D12CastShaderResourceFormat(D3D12RHI::ConvertFormat(TextureDesc.Format));
                 Desc.ViewDimension                   = D3D12_SRV_DIMENSION_TEXTURECUBE;
                 Desc.TextureCube.MostDetailedMip     = TextureDesc.FirstMipLevel;
                 Desc.TextureCube.MipLevels           = TextureDesc.NumMips;
@@ -633,7 +633,7 @@ FRHIShaderResourceView* FD3D12DeviceRHI::CreateShaderResourceView(FRHIResource* 
             case EViewDimension::TextureCubeArray:
             {
                 const auto& TextureDesc                   = InDesc.TextureCubeArray;
-                Desc.Format                               = D3D12CastShaderResourceFormat(ConvertFormat(TextureDesc.Format));
+                Desc.Format                               = D3D12RHI::D3D12CastShaderResourceFormat(D3D12RHI::ConvertFormat(TextureDesc.Format));
                 Desc.ViewDimension                        = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
                 Desc.TextureCubeArray.MostDetailedMip     = TextureDesc.FirstMipLevel;
                 Desc.TextureCubeArray.MipLevels           = TextureDesc.NumMips;
@@ -646,7 +646,7 @@ FRHIShaderResourceView* FD3D12DeviceRHI::CreateShaderResourceView(FRHIResource* 
             case EViewDimension::Texture3D:
             {
                 const auto& TextureDesc            = InDesc.Texture3D;
-                Desc.Format                        = D3D12CastShaderResourceFormat(ConvertFormat(TextureDesc.Format));
+                Desc.Format                        = D3D12RHI::D3D12CastShaderResourceFormat(D3D12RHI::ConvertFormat(TextureDesc.Format));
                 Desc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE3D;
                 Desc.Texture3D.MostDetailedMip     = TextureDesc.FirstMipLevel;
                 Desc.Texture3D.MipLevels           = TextureDesc.NumMips;
@@ -738,7 +738,7 @@ FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateUnorderedAccessView(FRHIResource
             {
                 // RWBuffer<T>: A real format-typed buffer view (no RAW flag, no structure stride).
                 ElementSize                     = GetByteStrideFromFormat(BufferDesc.Format);
-                Desc.Format                     = D3D12CastUnorderedAccessFormat(ConvertFormat(BufferDesc.Format));
+                Desc.Format                     = D3D12RHI::D3D12CastUnorderedAccessFormat(D3D12RHI::ConvertFormat(BufferDesc.Format));
                 Desc.Buffer.Flags               = D3D12_BUFFER_UAV_FLAG_NONE;
                 Desc.Buffer.StructureByteStride = 0;
                 break;
@@ -794,7 +794,7 @@ FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateUnorderedAccessView(FRHIResource
             case EViewDimension::Texture1D:
             {
                 const auto& TextureDesc = InDesc.Texture1D;
-                Desc.Format             = ConvertFormat(TextureDesc.Format);
+                Desc.Format             = D3D12RHI::ConvertFormat(TextureDesc.Format);
                 Desc.ViewDimension      = D3D12_UAV_DIMENSION_TEXTURE1D;
                 Desc.Texture1D.MipSlice = TextureDesc.MipLevel;
                 break;
@@ -803,7 +803,7 @@ FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateUnorderedAccessView(FRHIResource
             case EViewDimension::Texture1DArray:
             {
                 const auto& TextureDesc             = InDesc.Texture1DArray;
-                Desc.Format                         = ConvertFormat(TextureDesc.Format);
+                Desc.Format                         = D3D12RHI::ConvertFormat(TextureDesc.Format);
                 Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
                 Desc.Texture1DArray.MipSlice        = TextureDesc.MipLevel;
                 Desc.Texture1DArray.FirstArraySlice = TextureDesc.FirstArraySlice;
@@ -814,7 +814,7 @@ FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateUnorderedAccessView(FRHIResource
             case EViewDimension::Texture2D:
             {
                 const auto& TextureDesc   = InDesc.Texture2D;
-                Desc.Format               = ConvertFormat(TextureDesc.Format);
+                Desc.Format               = D3D12RHI::ConvertFormat(TextureDesc.Format);
                 Desc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
                 Desc.Texture2D.MipSlice   = TextureDesc.MipLevel;
                 Desc.Texture2D.PlaneSlice = TextureDesc.PlaneSlice;
@@ -824,7 +824,7 @@ FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateUnorderedAccessView(FRHIResource
             case EViewDimension::Texture2DArray:
             {
                 const auto& TextureDesc             = InDesc.Texture2DArray;
-                Desc.Format                         = ConvertFormat(TextureDesc.Format);
+                Desc.Format                         = D3D12RHI::ConvertFormat(TextureDesc.Format);
                 Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
                 Desc.Texture2DArray.MipSlice        = TextureDesc.MipLevel;
                 Desc.Texture2DArray.PlaneSlice      = TextureDesc.PlaneSlice;
@@ -836,7 +836,7 @@ FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateUnorderedAccessView(FRHIResource
             case EViewDimension::TextureCube:
             {
                 const auto& TextureDesc             = InDesc.TextureCube;
-                Desc.Format                         = ConvertFormat(TextureDesc.Format);
+                Desc.Format                         = D3D12RHI::ConvertFormat(TextureDesc.Format);
                 Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
                 Desc.Texture2DArray.MipSlice        = TextureDesc.MipLevel;
                 Desc.Texture2DArray.PlaneSlice      = 0;
@@ -848,7 +848,7 @@ FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateUnorderedAccessView(FRHIResource
             case EViewDimension::TextureCubeArray:
             {
                 const auto& TextureDesc             = InDesc.TextureCubeArray;
-                Desc.Format                         = ConvertFormat(TextureDesc.Format);
+                Desc.Format                         = D3D12RHI::ConvertFormat(TextureDesc.Format);
                 Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
                 Desc.Texture2DArray.MipSlice        = TextureDesc.MipLevel;
                 Desc.Texture2DArray.PlaneSlice      = 0;
@@ -860,7 +860,7 @@ FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateUnorderedAccessView(FRHIResource
             case EViewDimension::Texture3D:
             {
                 const auto& TextureDesc    = InDesc.Texture3D;
-                Desc.Format                = ConvertFormat(TextureDesc.Format);
+                Desc.Format                = D3D12RHI::ConvertFormat(TextureDesc.Format);
                 Desc.ViewDimension         = D3D12_UAV_DIMENSION_TEXTURE3D;
                 Desc.Texture3D.MipSlice    = TextureDesc.MipLevel;
                 Desc.Texture3D.FirstWSlice = TextureDesc.FirstWSlice;
@@ -986,7 +986,7 @@ FRHIRenderTargetView* FD3D12DeviceRHI::CreateRenderTargetView(FRHIResource* InRe
         case EViewDimension::Texture1D:
         {
             const auto& TextureDesc    = InDesc.Texture1D;
-            RTVDesc.Format             = ConvertFormat(TextureDesc.Format);
+            RTVDesc.Format             = D3D12RHI::ConvertFormat(TextureDesc.Format);
             RTVDesc.ViewDimension      = D3D12_RTV_DIMENSION_TEXTURE1D;
             RTVDesc.Texture1D.MipSlice = TextureDesc.MipLevel;
             break;
@@ -995,7 +995,7 @@ FRHIRenderTargetView* FD3D12DeviceRHI::CreateRenderTargetView(FRHIResource* InRe
         case EViewDimension::Texture1DArray:
         {
             const auto& TextureDesc                = InDesc.Texture1DArray;
-            RTVDesc.Format                         = ConvertFormat(TextureDesc.Format);
+            RTVDesc.Format                         = D3D12RHI::ConvertFormat(TextureDesc.Format);
             RTVDesc.ViewDimension                  = D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
             RTVDesc.Texture1DArray.MipSlice        = TextureDesc.MipLevel;
             RTVDesc.Texture1DArray.FirstArraySlice = TextureDesc.FirstArraySlice;
@@ -1006,7 +1006,7 @@ FRHIRenderTargetView* FD3D12DeviceRHI::CreateRenderTargetView(FRHIResource* InRe
         case EViewDimension::Texture2D:
         {
             const auto& TextureDesc = InDesc.Texture2D;
-            RTVDesc.Format = ConvertFormat(TextureDesc.Format);
+            RTVDesc.Format = D3D12RHI::ConvertFormat(TextureDesc.Format);
 
             if (!bIsMultisampled)
             {
@@ -1025,7 +1025,7 @@ FRHIRenderTargetView* FD3D12DeviceRHI::CreateRenderTargetView(FRHIResource* InRe
         case EViewDimension::Texture2DArray:
         {
             const auto& TextureDesc = InDesc.Texture2DArray;
-            RTVDesc.Format = ConvertFormat(TextureDesc.Format);
+            RTVDesc.Format = D3D12RHI::ConvertFormat(TextureDesc.Format);
 
             if (!bIsMultisampled)
             {
@@ -1048,7 +1048,7 @@ FRHIRenderTargetView* FD3D12DeviceRHI::CreateRenderTargetView(FRHIResource* InRe
         case EViewDimension::TextureCube:
         {
             const auto& TextureDesc = InDesc.TextureCube;
-            RTVDesc.Format = ConvertFormat(TextureDesc.Format);
+            RTVDesc.Format = D3D12RHI::ConvertFormat(TextureDesc.Format);
 
             if (!bIsMultisampled)
             {
@@ -1071,7 +1071,7 @@ FRHIRenderTargetView* FD3D12DeviceRHI::CreateRenderTargetView(FRHIResource* InRe
         case EViewDimension::TextureCubeArray:
         {
             const auto& TextureDesc = InDesc.TextureCubeArray;
-            RTVDesc.Format = ConvertFormat(TextureDesc.Format);
+            RTVDesc.Format = D3D12RHI::ConvertFormat(TextureDesc.Format);
 
             const uint32 FirstLayer  = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, TextureDesc.FirstCube);
             const uint32 NumLayers   = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, Math::Max<uint16>(TextureDesc.NumCubes, 1u));
@@ -1097,7 +1097,7 @@ FRHIRenderTargetView* FD3D12DeviceRHI::CreateRenderTargetView(FRHIResource* InRe
         case EViewDimension::Texture3D:
         {
             const auto& TextureDesc       = InDesc.Texture3D;
-            RTVDesc.Format                = ConvertFormat(TextureDesc.Format);
+            RTVDesc.Format                = D3D12RHI::ConvertFormat(TextureDesc.Format);
             RTVDesc.ViewDimension         = D3D12_RTV_DIMENSION_TEXTURE3D;
             RTVDesc.Texture3D.MipSlice    = TextureDesc.MipLevel;
             RTVDesc.Texture3D.FirstWSlice = TextureDesc.FirstWSlice;
@@ -1173,7 +1173,7 @@ FRHIDepthStencilView* FD3D12DeviceRHI::CreateDepthStencilView(FRHIResource* InRe
         case EViewDimension::Texture1D:
         {
             const auto& TextureDesc    = InDesc.Texture1D;
-            DSVDesc.Format             = ConvertFormat(TextureDesc.Format);
+            DSVDesc.Format             = D3D12RHI::ConvertFormat(TextureDesc.Format);
             DSVDesc.ViewDimension      = D3D12_DSV_DIMENSION_TEXTURE1D;
             DSVDesc.Texture1D.MipSlice = TextureDesc.MipLevel;
             break;
@@ -1182,7 +1182,7 @@ FRHIDepthStencilView* FD3D12DeviceRHI::CreateDepthStencilView(FRHIResource* InRe
         case EViewDimension::Texture1DArray:
         {
             const auto& TextureDesc                = InDesc.Texture1DArray;
-            DSVDesc.Format                         = ConvertFormat(TextureDesc.Format);
+            DSVDesc.Format                         = D3D12RHI::ConvertFormat(TextureDesc.Format);
             DSVDesc.ViewDimension                  = D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
             DSVDesc.Texture1DArray.MipSlice        = TextureDesc.MipLevel;
             DSVDesc.Texture1DArray.FirstArraySlice = TextureDesc.FirstArraySlice;
@@ -1193,7 +1193,7 @@ FRHIDepthStencilView* FD3D12DeviceRHI::CreateDepthStencilView(FRHIResource* InRe
         case EViewDimension::Texture2D:
         {
             const auto& TextureDesc = InDesc.Texture2D;
-            DSVDesc.Format = ConvertFormat(TextureDesc.Format);
+            DSVDesc.Format = D3D12RHI::ConvertFormat(TextureDesc.Format);
 
             if (!bIsMultisampled)
             {
@@ -1211,7 +1211,7 @@ FRHIDepthStencilView* FD3D12DeviceRHI::CreateDepthStencilView(FRHIResource* InRe
         case EViewDimension::Texture2DArray:
         {
             const auto& TextureDesc = InDesc.Texture2DArray;
-            DSVDesc.Format = ConvertFormat(TextureDesc.Format);
+            DSVDesc.Format = D3D12RHI::ConvertFormat(TextureDesc.Format);
 
             if (!bIsMultisampled)
             {
@@ -1233,7 +1233,7 @@ FRHIDepthStencilView* FD3D12DeviceRHI::CreateDepthStencilView(FRHIResource* InRe
         case EViewDimension::TextureCube:
         {
             const auto& TextureDesc = InDesc.TextureCube;
-            DSVDesc.Format = ConvertFormat(TextureDesc.Format);
+            DSVDesc.Format = D3D12RHI::ConvertFormat(TextureDesc.Format);
 
             if (!bIsMultisampled)
             {
@@ -1255,7 +1255,7 @@ FRHIDepthStencilView* FD3D12DeviceRHI::CreateDepthStencilView(FRHIResource* InRe
         case EViewDimension::TextureCubeArray:
         {
             const auto& TextureDesc = InDesc.TextureCubeArray;
-            DSVDesc.Format = ConvertFormat(TextureDesc.Format);
+            DSVDesc.Format = D3D12RHI::ConvertFormat(TextureDesc.Format);
             
             const uint32 FirstLayer  = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, TextureDesc.FirstCube);
             const uint32 NumLayers   = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, Math::Max<uint16>(TextureDesc.NumCubes, 1u));
@@ -1618,7 +1618,7 @@ bool FD3D12DeviceRHI::QueryUAVFormatSupport(EFormat Format) const
         {
             D3D12_FEATURE_DATA_FORMAT_SUPPORT FormatSupport =
             {
-                ConvertFormat(Format),
+                D3D12RHI::ConvertFormat(Format),
                 D3D12_FORMAT_SUPPORT1_NONE,
                 D3D12_FORMAT_SUPPORT2_NONE
             };
@@ -1638,7 +1638,7 @@ bool FD3D12DeviceRHI::QuerySupportedSampleCounts(EFormat Format, uint32& OutSamp
 {
     OutSampleCounts = 0;
 
-    const DXGI_FORMAT DxgiFormat = ConvertFormat(Format);
+    const DXGI_FORMAT DxgiFormat = D3D12RHI::ConvertFormat(Format);
     if (DxgiFormat == DXGI_FORMAT_UNKNOWN)
     {
         return false;

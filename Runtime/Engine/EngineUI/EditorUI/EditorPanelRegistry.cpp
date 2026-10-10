@@ -11,7 +11,7 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorSceneHierarchyPanel.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorStatsPanel.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorViewportPanel.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Application/Docking/DockWindowManager.h"
 #include "Application/Docking/DockingArea.h"
 #include "Application/Elements/Border.h"
@@ -195,7 +195,7 @@ void FEditorPanelRegistry::ShowPanel(const String& PanelId)
 
     if (!DockingArea->IsPanelDocked(PanelId))
     {
-        DockingArea->DockPanel(PanelId, String(), EDockDirection::Center);
+        DockingArea->DockPanel(PanelId, DockingArea->GetMiddlePanelId(), EDockDirection::Center);
     }
 
     DockingArea->SetActivePanel(PanelId);

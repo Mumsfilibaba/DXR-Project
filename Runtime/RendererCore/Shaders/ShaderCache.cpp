@@ -1,5 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Tasks/ParallelFor.h"
 #include "Core/Tasks/Tasks.h"
 #include "Core/Threading/Atomic.h"
@@ -73,14 +73,17 @@ static FShaderPermutationDesc CreateTargetPermutationDesc(ERHIType TargetRHI, in
     }
 
     // Without the target's device, assume the features its backend can have. SER depends on the driver, so it stays off.
+    // Metal has bindless and inline ray tracing, but neither view instancing nor a ray tracing pipeline.
     const bool bSupportsModernFeatures = TargetRHI == ERHIType::D3D12 || TargetRHI == ERHIType::Vulkan;
+    const bool bIsMetal                = TargetRHI == ERHIType::Metal;
 
     FShaderPermutationDesc Desc;
-    Desc.PermutationID             = PermutationID;
-    Desc.bSupportsBindless         = bSupportsModernFeatures;
-    Desc.bSupportsViewInstancing   = bSupportsModernFeatures;
-    Desc.bSupportsRayTracing       = bSupportsModernFeatures;
-    Desc.bSupportsInlineRayTracing = bSupportsModernFeatures;
+    Desc.PermutationID               = PermutationID;
+    Desc.bSupportsBindless           = bSupportsModernFeatures || bIsMetal;
+    Desc.bSupportsViewInstancing     = bSupportsModernFeatures;
+    Desc.bSupportsRayTracing         = bSupportsModernFeatures || bIsMetal;
+    Desc.bSupportsRayTracingPipeline = bSupportsModernFeatures;
+    Desc.bSupportsInlineRayTracing   = bSupportsModernFeatures || bIsMetal;
     return Desc;
 }
 
@@ -298,6 +301,7 @@ FShaderPermutationDesc FShaderCache::CreatePermutationDesc(int32 PermutationID)
     Desc.bSupportsBindless                  = RHI::bSupportsBindless;
     Desc.bSupportsViewInstancing            = RHI::bSupportsViewInstancing;
     Desc.bSupportsRayTracing                = RenderSettings::IsRayTracingEnabled();
+    Desc.bSupportsRayTracingPipeline        = RenderSettings::IsRayTracingEnabled() && RHI::bSupportsRayTracingPipeline;
     Desc.bSupportsInlineRayTracing          = RenderSettings::IsRayTracingEnabled() && RHI::bSupportsInlineRayTracing;
     Desc.bSupportsShaderExecutionReordering = RenderSettings::IsRayTracingEnabled() && RHI::bSupportsShaderExecutionReordering;
     return Desc;

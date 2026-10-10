@@ -1,6 +1,6 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "RHI/RHI.h"
 #include "RHI/RHIPipelineStateCache.h"
 

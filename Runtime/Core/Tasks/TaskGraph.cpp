@@ -7,7 +7,7 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Containers/String.h"
 #include "Core/Math/Math.h"

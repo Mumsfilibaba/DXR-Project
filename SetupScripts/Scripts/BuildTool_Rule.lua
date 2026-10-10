@@ -169,7 +169,7 @@ function BuildRules(Name)
         Language = "C++",
         CppVersion = "C++20",
         SystemVersion = "latest",
-        MacOSVersion = "15.0",
+        MacOSVersion = "14.0",
         CharacterSet = "Ascii",
 
         Flags = {

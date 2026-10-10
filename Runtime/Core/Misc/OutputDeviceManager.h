@@ -6,34 +6,34 @@
 #define LOG_ERROR_CRITICAL(...) \
     do \
     { \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, String::Printf(__VA_ARGS__)); \
+        FOutputDeviceManager::Get()->Log(ELogSeverity::Error, String::Printf(__VA_ARGS__)); \
         DEBUG_BREAK(); \
     } while (false)
 
 #define LOG_ERROR(...) \
     do \
     { \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, String::Printf(__VA_ARGS__)); \
+        FOutputDeviceManager::Get()->Log(ELogSeverity::Error, String::Printf(__VA_ARGS__)); \
     } while (false)
 
 #define LOG_WARNING(...) \
     do \
     { \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Warning, String::Printf(__VA_ARGS__)); \
+        FOutputDeviceManager::Get()->Log(ELogSeverity::Warning, String::Printf(__VA_ARGS__)); \
     } while (false)
 
 #define LOG_INFO(...) \
     do \
     { \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Info, String::Printf(__VA_ARGS__)); \
+        FOutputDeviceManager::Get()->Log(ELogSeverity::Info, String::Printf(__VA_ARGS__)); \
     } while (false)
 
-class CORE_API FOutputDeviceLogger : public IOutputDevice
+class CORE_API FOutputDeviceManager : public IOutputDevice
 {
 public:
 
-    /** @return Returns the Logger singleton */
-    static FOutputDeviceLogger* Get();
+    /** @return Returns the OutputDeviceManager singleton */
+    static FOutputDeviceManager* Get();
 
 public:
     /** @brief Log a simple message to all output devices */
@@ -44,6 +44,9 @@ public:
 
     /** @brief Flush all output devices */
     virtual void Flush() override final;
+
+    /** @brief Replays what was logged before any device existed, then drops the backlog */
+    void FlushPendingLines();
 
     void RegisterOutputDevice(IOutputDevice* InOutputDevice)
     {
@@ -67,9 +70,19 @@ public:
     }
 
 private:
-    FOutputDeviceLogger();
-    ~FOutputDeviceLogger();
+    struct FPendingLine
+    {
+        String       Message;
+        ELogSeverity Severity;
+        bool         bHasSeverity;
+    };
+
+    FOutputDeviceManager();
+    ~FOutputDeviceManager();
+
+    void QueuePendingLine(const String& Message, ELogSeverity Severity, bool bHasSeverity);
 
     TArray<IOutputDevice*> OutputDevices;
+    TArray<FPendingLine>   PendingLines;
     FCriticalSection       OutputDevicesCS;
 };

@@ -55,11 +55,11 @@ IntVector2 FDockNode::ComputeMinimumSize() const
         if (Orientation == EDockSplitOrientation::Horizontal)
         {
             Minimum.X += ChildMinimum.X;
-            Minimum.Y = Math::Max(Minimum.Y, ChildMinimum.Y);
+            Minimum.Y  = Math::Max(Minimum.Y, ChildMinimum.Y);
         }
         else
         {
-            Minimum.X = Math::Max(Minimum.X, ChildMinimum.X);
+            Minimum.X  = Math::Max(Minimum.X, ChildMinimum.X);
             Minimum.Y += ChildMinimum.Y;
         }
     }
@@ -123,6 +123,75 @@ const FDockNode* FDockNode::FindTabsNode(const String& PanelId) const
     }
 
     return nullptr;
+}
+
+struct FCentralTabsSearch
+{
+    float            CenterX     = 0.0f;
+    float            CenterY     = 0.0f;
+    float            MaxDistance = 1.0f;
+    float            TotalArea   = 1.0f;
+    const FDockNode* BestNode    = nullptr;
+    float            BestScore   = -1.0f;
+};
+
+static void RateTabsNodes(const FDockNode& Node, float Left, float Top, float Width, float Height, FCentralTabsSearch& Search)
+{
+    if (Node.Kind == EDockNodeKind::Tabs)
+    {
+        if (Node.TabIds.IsEmpty())
+        {
+            return;
+        }
+
+        const float OffsetX   = (Left + (Width * 0.5f)) - Search.CenterX;
+        const float OffsetY   = (Top + (Height * 0.5f)) - Search.CenterY;
+        const float Distance  = Math::Sqrt((OffsetX * OffsetX) + (OffsetY * OffsetY));
+        const float Closeness = Math::Max(1.0f - (Distance / Search.MaxDistance), 0.0f);
+        const float Coverage  = (Width * Height) / Search.TotalArea;
+        const float Score     = Closeness * Coverage;
+
+        if (Score > Search.BestScore)
+        {
+            Search.BestScore = Score;
+            Search.BestNode  = &Node;
+        }
+
+        return;
+    }
+
+    const bool bIsHorizontal = Node.Orientation == EDockSplitOrientation::Horizontal;
+
+    float Start = 0.0f;
+    for (int32 Index = 0; Index < Node.Children.Size(); ++Index)
+    {
+        const float Share = Index < Node.ChildFractions.Size() ? Node.ChildFractions[Index] : 1.0f / static_cast<float>(Node.Children.Size());
+        if (bIsHorizontal)
+        {
+            RateTabsNodes(Node.Children[Index], Left + (Width * Start), Top, Width * Share, Height, Search);
+        }
+        else
+        {
+            RateTabsNodes(Node.Children[Index], Left, Top + (Height * Start), Width, Height * Share, Search);
+        }
+
+        Start += Share;
+    }
+}
+
+const FDockNode* FDockNode::FindMostCentralTabsNode(float Width, float Height) const
+{
+    Width  = Math::Max(Width, 1.0f);
+    Height = Math::Max(Height, 1.0f);
+
+    FCentralTabsSearch Search;
+    Search.CenterX     = Width * 0.5f;
+    Search.CenterY     = Height * 0.5f;
+    Search.MaxDistance = Math::Sqrt((Search.CenterX * Search.CenterX) + (Search.CenterY * Search.CenterY));
+    Search.TotalArea   = Width * Height;
+
+    RateTabsNodes(*this, 0.0f, 0.0f, Width, Height, Search);
+    return Search.BestNode;
 }
 
 FDockNode* FDockNode::FindByPath(const TArray<int32>& Path)
@@ -208,8 +277,10 @@ void FDockNode::CollapseDegenerateNodes()
     if (Children.IsEmpty())
     {
         Kind = EDockNodeKind::Tabs;
+
         ChildFractions.Clear();
         TabIds.Clear();
+
         ActiveTabIndex = 0;
         return;
     }

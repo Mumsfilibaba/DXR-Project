@@ -56,6 +56,13 @@ public:
         return Kind;
     }
 
+    /**
+     * @brief Tells the button whether its window is maximized, which a maximize button shows by drawing the restore glyph.
+     *
+     * @param bInIsWindowMaximized True while the window is maximized.
+     */
+    void SetWindowMaximized(bool bInIsWindowMaximized);
+
 protected:
 
     // FInteractiveElement Interface
@@ -69,6 +76,7 @@ private:
     IntVector2         ButtonSize;
     float              HoverFadeStartAlpha;
     FUIAnimation       HoverFade;
+    bool               bIsWindowMaximized;
 };
 
 class APPLICATION_API FTitleBar final : public FCompoundElement
@@ -165,11 +173,34 @@ public:
     void SetTitle(const String& InTitle);
 
     /**
+     * @brief Lays the bar out again when the window's title bar metrics have changed since it was last laid out.
+     *
+     * They change once a window is first shown, since the platform reports no caption buttons for a hidden window, as well
+     * as when the window is maximized or moves to a monitor with another DPI. Cheap enough to call once a frame.
+     */
+    void SyncWindowMetrics();
+
+    /**
      * @brief Places a tab strip (or anything else) in the caption in place of the title text.
      *
      * @param InContent The element to host, or null to restore the title.
      */
     void SetLeadingContent(const TSharedPtr<FVisualElement>& InContent);
+
+    /**
+     * @brief Sets where the caption content starts, in place of the style's leading inset, which lets a tab strip in the
+     * caption line up with the panel under the bar. Space the platform reserves for its own buttons still comes first.
+     *
+     * @param InLeadingInset The inset in pixels, or a negative value to go back to the style's.
+     */
+    void SetLeadingInsetOverride(int32 InLeadingInset);
+
+    /**
+     * @brief Sets the space above the caption content, which sits on the bar's bottom edge, so the bar grows to make room.
+     *
+     * @param InTopPadding The space in pixels.
+     */
+    void SetLeadingContentTopPadding(int32 InTopPadding);
 
     /** @return What SetLeadingContent last placed, or null when the title is showing. */
     NODISCARD FORCEINLINE const TSharedPtr<FVisualElement>& GetLeadingContent() const
@@ -233,6 +264,8 @@ private:
     TSharedPtr<FSpacer>                TrailingSpacer;
     TSharedPtr<FTextBlock>             TitleLabel;
     TSharedPtr<FVisualElement>         LeadingContent;
+    int32                              LeadingInsetOverride;
+    int32                              LeadingContentTopPadding;
     TSharedPtr<FHorizontalBox>         CaptionButtonRow;
     TArray<TSharedPtr<FCaptionButton>> CaptionButtons;
 };

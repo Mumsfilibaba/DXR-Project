@@ -38,6 +38,17 @@ enum class EDrawCommandType : uint8
 
     /** The four regions a rounded rectangle's corners leave uncovered inside its bounds, filled. */
     CornerWedges,
+
+    /** A square with a quarter circle cut out of it, the circle centred on the one corner of the square that has a radius. */
+    Wedge,
+};
+
+enum class ERectangleCorner : uint8
+{
+    TopLeft,
+    TopRight,
+    BottomRight,
+    BottomLeft,
 };
 
 enum class EDrawCommandFlags : uint8

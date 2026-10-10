@@ -1,5 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Application/Application.h"
@@ -22,7 +22,7 @@ FRuntimeConsoleWidget::FRuntimeConsoleWidget()
     , bCandidateSelectionChanged(false)
     , bShouldScrollText(false)
 {
-    if (FOutputDeviceLogger* OutputDeviceManager = FOutputDeviceLogger::Get())
+    if (FOutputDeviceManager* OutputDeviceManager = FOutputDeviceManager::Get())
     {
         OutputDeviceManager->RegisterOutputDevice(this);
     }
@@ -45,7 +45,7 @@ FRuntimeConsoleWidget::FRuntimeConsoleWidget()
 
 FRuntimeConsoleWidget::~FRuntimeConsoleWidget()
 {
-    if (FOutputDeviceLogger* OutputDeviceManager = FOutputDeviceLogger::Get())
+    if (FOutputDeviceManager* OutputDeviceManager = FOutputDeviceManager::Get())
     {
         OutputDeviceManager->UnregisterOutputDevice(this);
     }
