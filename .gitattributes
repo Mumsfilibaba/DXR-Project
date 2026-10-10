@@ -1,5 +1,12 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Engine text formats are diffed and merged as text, with LF line endings on every platform
+*.dxrproject text eol=lf
+*.dxrscene text eol=lf
+*.dxrmodel text eol=lf
+*.dxrmaterial text eol=lf
+
 Assets/Scenes/Bistro/BistroExterior.fbx filter=lfs diff=lfs merge=lfs -text
 Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx filter=lfs diff=lfs merge=lfs -text
 Assets/Scenes/EmeraldSquare/EmeraldSquare_Dusk.fbx filter=lfs diff=lfs merge=lfs -text

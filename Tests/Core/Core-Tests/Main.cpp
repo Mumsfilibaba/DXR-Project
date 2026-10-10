@@ -26,6 +26,7 @@
 #include "FileTests.h"
 #include "GuidTests.h"
 #include "PlatformProcessTests.h"
+#include "ProjectDescriptorTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -66,6 +67,7 @@ static int32 RunCoreTests()
     RUN_TEST("File", File_Test());
     RUN_TEST("Guid", Guid_Test());
     RUN_TEST("PlatformProcess", PlatformProcess_Test());
+    RUN_TEST("ProjectDescriptor", ProjectDescriptor_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();
