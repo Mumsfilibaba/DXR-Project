@@ -22,7 +22,7 @@ static TAutoConsoleVariable<int32> CVarPipelineCacheSaveInterval(
     "Minimum interval in seconds between automatic pipeline cache saves",
     30);
 
-static bool ResolveEffectiveSampleCount(const FRHIMultiSampleState& MultiSampleState, const FRHIRasterizerStateDesc& RasterizerDesc, const FRHIGraphicsPipelineFormats& OutputFormats, const CHAR* DebugContext, uint32& OutSampleCount)
+static bool ResolveEffectiveSampleCount(const FRHIMultiSampleState& MultiSampleState, const FRHIRasterizerStateDesc& RasterizerDesc, const FRHIGraphicsPipelineFormats& OutputFormats, MAYBE_UNUSED const CHAR* DebugContext, uint32& OutSampleCount)
 {
     OutSampleCount = 0;
 
@@ -926,7 +926,7 @@ void FVulkanMeshletPipelineStateRHI::GetDebugName(String& OutDebugName) const
 #endif
 }
 
-bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDesc& InDesc)
+bool FVulkanMeshletPipelineStateRHI::Initialize(MAYBE_UNUSED const FRHIMeshletPipelineStateDesc& InDesc)
 {
 #if VK_EXT_mesh_shader
     if (!GVulkanSupportsMeshShaders)
@@ -1266,7 +1266,6 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
         return true;
     }
 #else
-    UNREFERENCED_VARIABLE(InDesc);
     VULKAN_ERROR_CRITICAL("Mesh shaders are not supported in this build");
     return false;
 #endif // VK_EXT_mesh_shader

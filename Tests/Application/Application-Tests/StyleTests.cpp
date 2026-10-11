@@ -58,10 +58,9 @@ bool StyleDefaults_Test()
     TEST_SECTION("The label sits on the tab's centre line");
     TEST_EXPECT_EQ(Style.Tab.LabelOffsetY, 0);
 
-    TEST_SECTION("It sits nearer the tab's edge than the label does, at the same remove a menu row's highlight keeps");
+    TEST_SECTION("It sits nearer the tab's edge than the label does");
     TEST_EXPECT(Style.Tab.CloseInset > 0);
     TEST_EXPECT(Style.Tab.CloseInset < Style.Tab.HorizontalPadding);
-    TEST_EXPECT_EQ(Style.Tab.CloseInset, Style.Menu.ItemHighlightInset);
 
     TEST_SECTION("No rule is drawn over the active pill, though the tokens a style would stroke one with are still to hand");
     TEST_EXPECT_EQ(Style.Tab.ActiveStripThickness, 0);

@@ -40,6 +40,7 @@ static FFloatColor MakeGraphColor(int32 Red, int32 Green, int32 Blue, int32 Alph
         static_cast<float>(Blue) * Scale, static_cast<float>(Alpha) * Scale);
 }
 
+#if EDITOR_BUILD
 static void ResizeToUnassigned(TArray<int32>& Slots, int32 Size)
 {
     Slots.Clear();
@@ -50,6 +51,7 @@ static void ResizeToUnassigned(TArray<int32>& Slots, int32 Size)
         Slots.Add(-1);
     }
 }
+#endif
 
 struct RenderGraphColors
 {

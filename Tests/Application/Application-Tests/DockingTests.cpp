@@ -8,6 +8,7 @@
 #include <Core/Misc/ConsoleManager.h>
 #include <Core/Misc/IniFile.h>
 #include <Core/Misc/Paths.h>
+#include <Application/Animation/UIAnimation.h>
 #include <Application/Docking/DockDragState.h>
 #include <Application/Docking/DockLayoutFile.h>
 #include <Application/Docking/DockNode.h>
@@ -201,6 +202,18 @@ static const FDrawCommand* FindFirstClippedCommand(const FDrawCommandList& Comma
     }
 
     return nullptr;
+}
+
+static void AdvanceUIClock(double Seconds)
+{
+    FUIFrameClock::EndFrame();
+
+    const double Until = FUIFrameClock::Now() + Seconds;
+    while (FUIFrameClock::Now() < Until)
+    {
+    }
+
+    FUIFrameClock::BeginFrame();
 }
 
 static TArray<String> GetTabOrder(const TSharedPtr<FTabStrip>& Strip)
@@ -726,7 +739,7 @@ bool TabStripReorder_Test()
     TEST_EXPECT_EQ(OutlinerClose.Width, TabStyle.CloseSize);
     TEST_EXPECT(OutlinerClose.Position.X > OutlinerBounds.Position.X + TabStyle.HorizontalPadding);
 
-    TEST_SECTION("Its label is centred between the leading edge and the close button, and fills the pill so the face can sit level with the cross");
+    TEST_SECTION("Its label sits the style's padding in from the leading edge, and fills the tab so the face can sit level with the cross");
     FDrawCommandList LabelCommands;
     DrawElement(FindTab(Strip, "Outliner"), LabelCommands);
 
@@ -735,12 +748,9 @@ bool TabStripReorder_Test()
 
     if (Label)
     {
-        const int32 LabelRegionWidth = OutlinerClose.Position.X - OutlinerBounds.Position.X;
-
         TEST_EXPECT_EQ(Label->Bounds.Position.Y, OutlinerBounds.Position.Y + TabStyle.LabelOffsetY);
         TEST_EXPECT_EQ(Label->Bounds.Height, OutlinerBounds.Height - TabStyle.LabelOffsetY);
-        TEST_EXPECT_EQ(Label->Bounds.Position.X,
-            OutlinerBounds.Position.X + ((LabelRegionWidth - Label->Bounds.Width) / 2));
+        TEST_EXPECT_EQ(Label->Bounds.Position.X, OutlinerBounds.Position.X + TabStyle.HorizontalPadding);
         TEST_EXPECT(Label->Bounds.GetCenter().Y <= OutlinerClose.GetCenter().Y + 1);
     }
 
@@ -780,8 +790,9 @@ bool TabStripReorder_Test()
     TEST_EXPECT_EQ(ReorderedPanelId, String("Details"));
     TEST_EXPECT_EQ(ReorderedIndex, 0);
 
-    TEST_SECTION("The moved tab is arranged where it now sits rather than where it was");
-    TEST_EXPECT_EQ(DetailsTab->GetContentRectangle().Position.X, TabSpacing);
+    TEST_SECTION("The moved tab is given the slot where it now sits, and slides there from where it was");
+    TEST_EXPECT_EQ(DetailsTab->GetSlotOffset(), TabSpacing);
+    TEST_EXPECT(DetailsTab->IsSliding());
 
     TEST_SECTION("Letting go ends the drag");
     DetailsTab->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, DetailsTab->GetContentRectangle().GetCenter(), false));
@@ -1022,7 +1033,7 @@ bool TabStripStyle_Test()
     TabStyle.TopInset           = 5;
     TabStyle.BottomInset        = 3;
     TabStyle.CornerRadius       = 9.0f;
-    TabStyle.StripHeight        = 44;
+    TabStyle.StripHeight        = FUITabStyle().StripHeight + 4;
     TabStyle.HorizontalPadding  = 20;
     TabStyle.SeparatorThickness = 3;
     TabStyle.CloseInset         = 7;
@@ -1088,7 +1099,7 @@ bool TabStripStyle_Test()
     TEST_EXPECT_EQ(Rule.Bounds.Width, TabStyle.SeparatorThickness);
     TEST_EXPECT_EQ(Rule.Bounds.GetRight(), DetailsTab->GetContentRectangle().GetRight());
 
-    TEST_SECTION("The active one takes the active fill from the same description, rounded on every corner");
+    TEST_SECTION("The active one takes the active fill from the same description, rounded across the top so it rises out of the strip");
     TEST_EXPECT(OutlinerTab->IsActive());
 
     FDrawCommandList ActiveCommands;
@@ -1123,8 +1134,8 @@ bool TabStripStyle_Test()
         TEST_EXPECT_EQ(Pill->Bounds, OutlinerTab->GetContentRectangle());
         TEST_EXPECT_EQ(Pill->CornerRadius.TopLeft, TabStyle.CornerRadius);
         TEST_EXPECT_EQ(Pill->CornerRadius.TopRight, TabStyle.CornerRadius);
-        TEST_EXPECT_EQ(Pill->CornerRadius.BottomLeft, TabStyle.CornerRadius);
-        TEST_EXPECT_EQ(Pill->CornerRadius.BottomRight, TabStyle.CornerRadius);
+        TEST_EXPECT_EQ(Pill->CornerRadius.BottomLeft, 0.0f);
+        TEST_EXPECT_EQ(Pill->CornerRadius.BottomRight, 0.0f);
     }
 
     TEST_SECTION("The rule that description asked for is stroked along the tab itself, bright on the top and faint round the rest");
@@ -1134,14 +1145,14 @@ bool TabStripStyle_Test()
 
         TEST_EXPECT_EQ(Accent->Bounds, OutlinerTab->GetContentRectangle());
         TEST_EXPECT_EQ(Accent->CornerRadius.TopLeft, TabStyle.CornerRadius);
-        TEST_EXPECT_EQ(Accent->CornerRadius.BottomRight, TabStyle.CornerRadius);
+        TEST_EXPECT_EQ(Accent->CornerRadius.BottomRight, 0.0f);
         TEST_EXPECT(Accent->HasTint(TabStyle.ActiveStrip));
         TEST_EXPECT_EQ(Accent->Thickness, static_cast<float>(TabStyle.ActiveStripThickness));
         TEST_EXPECT_EQ(Accent->GetFadeFraction(), TabStyle.ActiveStripFadeFraction);
         TEST_EXPECT_EQ(Accent->GetTrailAlpha(), TabStyle.ActiveStripTrailAlpha);
     }
 
-    TEST_SECTION("Hovering a resting tab fills it as a pill on every corner, without lending it the accent");
+    TEST_SECTION("Hovering a resting tab fills it rounded across the top, without lending it the accent");
     DetailsTab->OnMouseEntered(MakeMoveEvent(DetailsTab->GetContentRectangle().GetCenter()));
 
     FDrawCommandList HoveredCommands;
@@ -1164,8 +1175,8 @@ bool TabStripStyle_Test()
         TEST_EXPECT_EQ(HoverFill->Bounds.Height, DetailsTab->GetContentRectangle().Height);
         TEST_EXPECT_EQ(HoverFill->CornerRadius.TopLeft, TabStyle.CornerRadius);
         TEST_EXPECT_EQ(HoverFill->CornerRadius.TopRight, TabStyle.CornerRadius);
-        TEST_EXPECT_EQ(HoverFill->CornerRadius.BottomLeft, TabStyle.CornerRadius);
-        TEST_EXPECT_EQ(HoverFill->CornerRadius.BottomRight, TabStyle.CornerRadius);
+        TEST_EXPECT_EQ(HoverFill->CornerRadius.BottomLeft, 0.0f);
+        TEST_EXPECT_EQ(HoverFill->CornerRadius.BottomRight, 0.0f);
     }
 
     for (const FDrawCommand& Command : HoveredCommands.GetCommands())
@@ -1229,7 +1240,7 @@ bool TabStripStyle_Test()
 
     TEST_EXPECT_EQ(Plain->GetCachedDesiredSize().Y, FUIStyle::GetDefault().Tab.StripHeight);
 
-    TEST_SECTION("Its active tab is a rounded pill in the panel's fill, carrying no rule at all");
+    TEST_SECTION("Its active tab is rounded across the top in the panel's fill, carrying no rule at all");
     LayoutElement(Plain, FRectangle(IntVector2(0, 0), 600, FUIStyle::GetDefault().Tab.StripHeight));
 
     const FUITabStyle&     PlainStyle = FUIStyle::GetDefault().Tab;
@@ -1247,7 +1258,7 @@ bool TabStripStyle_Test()
     TEST_EXPECT(PlainFill.HasTint(PlainStyle.FillActive));
     TEST_EXPECT_EQ(PlainFill.Bounds, PlainTab->GetContentRectangle());
     TEST_EXPECT_EQ(PlainFill.CornerRadius.TopLeft, PlainStyle.CornerRadius);
-    TEST_EXPECT_EQ(PlainFill.CornerRadius.BottomRight, PlainStyle.CornerRadius);
+    TEST_EXPECT_EQ(PlainFill.CornerRadius.BottomRight, 0.0f);
 
     TEST_END();
 }
@@ -1887,6 +1898,7 @@ bool DockDecoratorDrag_Test()
     TEST_SECTION("Tearing a tab out puts a window of its own under the cursor");
 
     const IntVector2 TearOutPosition(600, 700);
+    FUIFrameClock::BeginFrame();
     DragState.BeginDrag("Details", Source.Area.Get(), TearOutPosition);
 
     TSharedPtr<FWindow> Decorator = Manager.GetDecoratorWindow();
@@ -1905,7 +1917,13 @@ bool DockDecoratorDrag_Test()
     TEST_SECTION("And it is click-through, so the cursor keeps resolving to what is behind it");
     TEST_EXPECT(!Decorator->GetAcceptsInput());
 
-    TEST_SECTION("Dimmed, and dimmed on the platform window too, though it was asked for before that existed");
+    TEST_SECTION("It fades in from nothing to the decorator's dimmed opacity, on the platform window too");
+    TEST_EXPECT_EQ(Decorator->GetOpacity(), 0.0f);
+    TEST_EXPECT_EQ(GetStubWindow(Decorator)->GetWindowOpacity(), 0.0f);
+
+    AdvanceUIClock(0.2);
+    Manager.Tick();
+
     TEST_EXPECT_EQ(Decorator->GetOpacity(), FDockWindowManager::DecoratorOpacity);
     TEST_EXPECT_EQ(GetStubWindow(Decorator)->GetWindowOpacity(), FDockWindowManager::DecoratorOpacity);
 
@@ -1918,16 +1936,19 @@ bool DockDecoratorDrag_Test()
     DragState.UpdateDrag(TearOutPosition + IntVector2(40, 40));
     TEST_EXPECT(!DragState.HasTarget());
 
-    TEST_SECTION("Over a zone the decorator carries on following the cursor, since the zones show the drop");
+    TEST_SECTION("Over a zone the decorator still follows the cursor but fades out, since the landing preview shows the drop");
     const IntVector2 OverDestinationStrip = Destination.GetDropZoneCenter(IntVector2(200, 200), EDockDirection::Center);
 
     DragState.UpdateDrag(OverDestinationStrip);
     Manager.MoveDecorator(OverDestinationStrip);
+    Manager.Tick();
+    AdvanceUIClock(0.1);
+    Manager.Tick();
 
     TEST_EXPECT_EQ(DragState.GetTargetArea(), Destination.Area.Get());
     TEST_EXPECT_EQ(DragState.GetTargetDirection(), EDockDirection::Center);
-    TEST_EXPECT_EQ(Decorator->GetOpacity(), FDockWindowManager::DecoratorOpacity);
-    TEST_EXPECT_EQ(GetStubWindow(Decorator)->GetWindowOpacity(), FDockWindowManager::DecoratorOpacity);
+    TEST_EXPECT_EQ(Decorator->GetOpacity(), 0.0f);
+    TEST_EXPECT_EQ(GetStubWindow(Decorator)->GetWindowOpacity(), 0.0f);
     TEST_EXPECT_EQ(Decorator->GetPosition().X, OverDestinationStrip.X - FDockWindowManager::SpawnCursorInset);
     TEST_EXPECT_EQ(Decorator->GetPosition().Y, OverDestinationStrip.Y - FDockWindowManager::SpawnCursorInset);
     TEST_EXPECT_EQ(Decorator->GetSize().X, FDockWindowManager::DecoratorWidth);
@@ -1955,11 +1976,14 @@ bool DockDecoratorDrag_Test()
     TEST_EXPECT_EQ(LeftBounds.Width, PreviewBounds.Width / 2);
     TEST_EXPECT_EQ(LeftBounds.Position.X, PreviewBounds.Position.X);
 
-    TEST_SECTION("Clear of every area the decorator still just follows the cursor, at the size it began at");
+    TEST_SECTION("Clear of every area the decorator fades back in and follows the cursor, at the size it began at");
     const IntVector2 BetweenWindows(900, 200);
 
     DragState.UpdateDrag(BetweenWindows);
     Manager.MoveDecorator(BetweenWindows);
+    Manager.Tick();
+    AdvanceUIClock(0.2);
+    Manager.Tick();
 
     TEST_EXPECT(!DragState.HasTarget());
     TEST_EXPECT_EQ(Decorator->GetOpacity(), FDockWindowManager::DecoratorOpacity);
@@ -2013,6 +2037,7 @@ bool DockDecoratorDrag_Test()
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 0);
     TEST_EXPECT_EQ(Application.GetApplication().GetWindows().Size(), NumWindowsBefore);
 
+    FUIFrameClock::EndFrame();
     FDockWindowManager::Shutdown();
     FDockDragState::Shutdown();
 
@@ -2055,9 +2080,16 @@ bool DockDecoratorSnapshot_Test()
     TEST_EXPECT(Manager.GetDecoratorWindow() != nullptr);
     TEST_EXPECT(Manager.GetDecoratorArea()->IsPanelDocked("Details"));
 
-    TEST_SECTION("With no RHI behind the renderer there is nothing to snapshot into, so the area stays live");
+    TEST_SECTION("With no RHI behind the renderer there is nothing to snapshot into, so the area stays live under the title bar");
     TEST_EXPECT(Manager.GetDecoratorSnapshot() == nullptr);
-    TEST_EXPECT_EQ(Manager.GetDecoratorWindow()->GetContent().Get(), static_cast<FVisualElement*>(Manager.GetDecoratorArea().Get()));
+
+    TArray<TSharedPtr<FVisualElement>> DecoratorChildren;
+    Manager.GetDecoratorWindow()->GetContent()->GetChildren(DecoratorChildren);
+    TEST_EXPECT_EQ(DecoratorChildren.Size(), 2);
+    if (DecoratorChildren.Size() == 2)
+    {
+        TEST_EXPECT_EQ(DecoratorChildren[1].Get(), static_cast<FVisualElement*>(Manager.GetDecoratorArea().Get()));
+    }
 
     TEST_SECTION("And the drop commits the same way it does without the trial");
     DragState.UpdateDrag(Destination.GetDropZoneCenter(IntVector2(200, 200), EDockDirection::Center));
@@ -2130,7 +2162,7 @@ bool DockDropPreview_Test()
     TEST_EXPECT_EQ(Manager.GetDecoratorWindow()->GetSize().X, FDockWindowManager::DecoratorWidth);
     TEST_EXPECT_EQ(Manager.GetDecoratorWindow()->GetSize().Y, FDockWindowManager::DecoratorHeight);
     TEST_EXPECT_EQ(Manager.GetDecoratorArea()->GetContentRectangle().Width, FDockWindowManager::DecoratorWidth);
-    TEST_EXPECT_EQ(Manager.GetDecoratorArea()->GetContentRectangle().Height, FDockWindowManager::DecoratorHeight);
+    TEST_EXPECT_EQ(Manager.GetDecoratorArea()->GetContentRectangle().GetBottom(), FDockWindowManager::DecoratorHeight);
 
     TEST_SECTION("Aiming at nothing shows no picture, since the chips are islands and the gaps between them "
         "are aimed at nothing on the way from one to the next");
@@ -2397,6 +2429,7 @@ bool DockDragState_Test()
     TEST_EXPECT(!DragState.HasTarget());
 
     TEST_SECTION("A torn-out tab starts a drag that carries the panel");
+    Application.GetPlatformApplication()->SetWindowUnderCursor(Source.Window->GetPlatformWindow());
     DragState.BeginDrag("Details", Source.Area.Get(), Source.GetDropZoneCenter(IntVector2(200, 200), EDockDirection::Center));
 
     TEST_EXPECT(DragState.IsDragging());
@@ -2407,12 +2440,14 @@ bool DockDragState_Test()
     TEST_EXPECT_EQ(DragState.GetTargetArea(), Source.Area.Get());
 
     TEST_SECTION("Between the two windows there is nowhere to drop");
+    Application.GetPlatformApplication()->SetWindowUnderCursor(TSharedRef<IPlatformWindow>());
     DragState.UpdateDrag(IntVector2(450, 200));
 
     TEST_EXPECT(DragState.IsDragging());
     TEST_EXPECT(!DragState.HasTarget());
 
     TEST_SECTION("Over the other window the target moves with the cursor");
+    Application.GetPlatformApplication()->SetWindowUnderCursor(Destination.Window->GetPlatformWindow());
     DragState.UpdateDrag(Destination.GetDropZoneCenter(IntVector2(200, 200), EDockDirection::Right));
 
     TEST_EXPECT_EQ(DragState.GetTargetArea(), Destination.Area.Get());
@@ -2582,6 +2617,7 @@ bool DockTabDragIntoExistingHost_Test()
 
     TEST_SECTION("Carrying it over the floating host resolves that host, not the window it came from");
     const IntVector2 OverHost = HostArea->GetContentRectangle().GetCenter() + HostWindow->GetPosition();
+    Application.GetPlatformApplication()->SetWindowUnderCursor(HostWindow->GetPlatformWindow());
     MainStrip->OnTabDragged(ContentTab.Get(), OverHost, OverHost);
 
     TEST_EXPECT_EQ(DragState.GetTargetArea(), HostArea.Get());
@@ -2661,6 +2697,7 @@ bool DockHostCaptionTabDrop_Test()
     TEST_EXPECT_EQ(TargetTabIndex, CaptionTabElements.Size());
 
     TEST_SECTION("The host takes the drop rather than the window it floats over");
+    Application.GetPlatformApplication()->SetWindowUnderCursor(HostWindow->GetPlatformWindow());
     DragState.BeginDrag("Content", Fixture.Area.Get(), OverCaptionStripScreen);
 
     TEST_EXPECT_EQ(DragState.GetTargetArea(), HostArea.Get());

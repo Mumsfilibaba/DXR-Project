@@ -23,7 +23,7 @@ static FRHIDepthStencilStateDesc GetDisabledDepthStencilDesc()
     return Desc;
 }
 
-static bool AssignMSLSlot(uint8& Dest, const FMSLShaderBinding& Binding, EShaderVisibility::Type Stage)
+static bool AssignMSLSlot(uint8& Dest, const FMSLShaderBinding& Binding, MAYBE_UNUSED EShaderVisibility::Type Stage)
 {
     const uint8 TableLimit = GetMSLMaxSlotCount(Binding.BindingType);
 
@@ -429,7 +429,7 @@ bool FMetalPipelineBindingLayout::ConflictsWithVertexInputs(const FMetalInputLay
         }
     }
 
-    auto CheckSlot = [ReservedSlots](uint8 Slot, const CHAR* What, uint32 RegisterIndex) -> bool
+    auto CheckSlot = [ReservedSlots](uint8 Slot, MAYBE_UNUSED const CHAR* What, MAYBE_UNUSED uint32 RegisterIndex) -> bool
     {
         if (Slot != InvalidSlot && Slot < 64 && (ReservedSlots & (uint64(1) << Slot)))
         {

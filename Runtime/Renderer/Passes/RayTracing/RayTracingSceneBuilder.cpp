@@ -83,9 +83,10 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
     Resources.RayTracingMeshToHitGroupIndex.Clear();
     Resources.RayTracingGeometryTableData.Clear();
 
-    uint32 NextInstanceIndex       = 0;
-    uint32 LazyBLASBuildsThisFrame = 0;
-    uint32 SkippedNullGeometry     = 0;
+    uint32 NextInstanceIndex = 0;
+
+    MAYBE_UNUSED uint32 LazyBLASBuildsThisFrame = 0;
+    MAYBE_UNUSED uint32 SkippedNullGeometry     = 0;
 
     for (const FSceneStaticMesh* StaticMesh : Scene->GetStaticMeshes())
     {

@@ -22,10 +22,8 @@
 #include "VulkanRHI/Generated/ClearBufferUAV_Sint.h"
 
 template <typename FeatureStructType>
-static bool CheckRequiredFeaturesHelper(const FeatureStructType& Required, const FeatureStructType& Available, const char* StructName)
+static bool CheckRequiredFeaturesHelper(const FeatureStructType& Required, const FeatureStructType& Available, MAYBE_UNUSED const char* StructName)
 {
-    UNREFERENCED_VARIABLE(StructName);
-
     TVulkanFeatureView<const FeatureStructType> RequiredView(Required);
     TVulkanFeatureView<const FeatureStructType> AvailableView(Available);
 
@@ -57,6 +55,7 @@ static void EnableAvailableFeaturesHelper(FeatureStructType& OutEnabled, const F
     }
 }
 
+#if VULKAN_ENABLE_LOGGING
 static String GetQueuePropertiesAsString(const VkQueueFamilyProperties& Properties)
 {
     String PropertyString = "QueueCount=" + TTypeToString<int32>::ToString(Properties.queueCount) + ", QueueBits=(";
@@ -82,6 +81,7 @@ static String GetQueuePropertiesAsString(const VkQueueFamilyProperties& Properti
 
     return PropertyString;
 }
+#endif
 
 static bool CreateNullBuffer(FVulkanDevice& Device, VkBufferUsageFlags Usage, const CHAR* BufferDebugName, const CHAR* BufferViewDebugName, VkBuffer& OutBuffer, VkBufferView& OutBufferView, FVulkanMemoryLocation& OutLocation)
 {
@@ -674,6 +674,7 @@ TOptional<FVulkanQueueFamilyIndices> FVulkanPhysicalDevice::GetQueueFamilyIndice
     TArray<VkQueueFamilyProperties> QueueFamilies(QueueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(PhysicalDevice, &QueueFamilyCount, QueueFamilies.Data());
     
+#if VULKAN_ENABLE_LOGGING
     IConsoleVariable* VerboseVulkan = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.VerboseLogging");
     if (VerboseVulkan && VerboseVulkan->GetBool())
     {
@@ -685,6 +686,7 @@ TOptional<FVulkanQueueFamilyIndices> FVulkanPhysicalDevice::GetQueueFamilyIndice
             Index++;
         }
     }
+#endif
     
     const uint32 GraphicsIndex = GetQueueFamilyIndex(VK_QUEUE_GRAPHICS_BIT, QueueFamilies);
     if (GraphicsIndex == (~0u))

@@ -165,10 +165,12 @@ bool FMetalTimestampQueries::Initialize()
     }
 
     METAL_INFO("Timestamp counter set '%s' has %lu counters", *String(TimestampSet.name), (unsigned long)TimestampSet.counters.count);
+#if METAL_ENABLE_LOGGING
     for (id<MTLCounter> Counter in TimestampSet.counters)
     {
         METAL_INFO("  Counter: %s", *String(Counter.name));
     }
+#endif
 
     MTLCounterSampleBufferDescriptor* Descriptor = [MTLCounterSampleBufferDescriptor new];
     Descriptor.counterSet  = TimestampSet;
@@ -804,7 +806,7 @@ void FMetalStageUtilizationQueries::EndFrame(FMetalQueue& Queue)
     }
 }
 
-void FMetalStageUtilizationQueries::ResolveFrame(const FFrame& Frame)
+void FMetalStageUtilizationQueries::ResolveFrame(MAYBE_UNUSED const FFrame& Frame)
 {
 #if METAL_ENABLE_STATS
     const auto Delta = [](uint64 BeginValue, uint64 EndValue) -> int64
@@ -846,8 +848,6 @@ void FMetalStageUtilizationQueries::ResolveFrame(const FFrame& Frame)
     STAT_SET(STAT_Metal_GPUPostTessellationCycles, PostTessellationCycles);
     STAT_SET(STAT_Metal_GPUFragmentCycles,         FragmentCycles);
     STAT_SET(STAT_Metal_GPURenderTargetCycles,     RenderTargetCycles);
-#else
-    UNREFERENCED_VARIABLE(Frame);
 #endif
 }
 
