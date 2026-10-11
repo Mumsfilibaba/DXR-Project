@@ -32,7 +32,7 @@ bool FRayTracingPrimaryDebugPass::Initialize(FFrameResources& /*Resources*/)
         PrimaryRayDebugPipeline = RHI::CreateComputePipelineState(PSODesc);
         if (PrimaryRayDebugPipeline)
         {
-            PrimaryRayDebugPipeline->SetDebugName("RT Primary-Ray Debug PSO");
+            PrimaryRayDebugPipeline->SetDebugName(TEXT("RT Primary-Ray Debug PSO"));
         }
         else
         {
@@ -91,7 +91,7 @@ void FRayTracingPrimaryDebugPass::AddRenderGraphPass(FRenderGraphBuilder& GraphB
         IsEnabled(*Context.View) &&
         Context.RayTracingOutput;
 
-    GraphBuilder.AddPass("RayTracingPrimaryDebug", ERenderGraphPassFlags::Compute, bEnablePass,
+    GraphBuilder.AddPass(TEXT("RayTracingPrimaryDebug"), ERenderGraphPassFlags::Compute, bEnablePass,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             if (Context.RayTracingOutput)

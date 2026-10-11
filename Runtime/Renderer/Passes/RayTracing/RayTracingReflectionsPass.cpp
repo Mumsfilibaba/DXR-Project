@@ -18,49 +18,49 @@
 
 static bool GRayTracingEnableLocalShaderBindings = true;
 static FAutoConsoleVariableRef CVarRayTracingEnableLocalShaderBindings(
-    "Renderer.RayTracing.EnableLocalShaderBindings",
-    "When true (default), ray tracing reflections carry per-hit-group resources via local-root-signature SBT records + explicit global "
+    TEXT("Renderer.RayTracing.EnableLocalShaderBindings"),
+    TEXT("When true (default), ray tracing reflections carry per-hit-group resources via local-root-signature SBT records + explicit global "
     "bindings. When false they use the SM 6.6 bindless descriptor heap. Inverse of the old Renderer.RayTracing.Bindless. Forced to "
-    "bindless on backends without SBT descriptor support.",
+    "bindless on backends without SBT descriptor support."),
     GRayTracingEnableLocalShaderBindings);
 
 static bool GRayTracingInlineReflections = false;
 static FAutoConsoleVariableRef CVarRayTracingInlineReflections(
-    "Renderer.RayTracing.InlineReflections",
-    "When true, reflections are produced by an inline RayQuery compute pass (TraceRayInline) instead of DispatchRays. Requires inline ray "
-    "tracing support. Reuses the bindless geometry table.",
+    TEXT("Renderer.RayTracing.InlineReflections"),
+    TEXT("When true, reflections are produced by an inline RayQuery compute pass (TraceRayInline) instead of DispatchRays. Requires inline ray "
+    "tracing support. Reuses the bindless geometry table."),
     GRayTracingInlineReflections);
 
 static bool GRayTracingSER = false;
 static FAutoConsoleVariableRef CVarRayTracingSER(
-    "Renderer.RayTracing.SER",
-    "When true, reflections use a Shader-Execution-Reordering RayGen (HitObject/MaybeReorderThread, SM 6.9) over the bindless path. "
-    "Requires SER support. No-op reorder on API-only devices.",
+    TEXT("Renderer.RayTracing.SER"),
+    TEXT("When true, reflections use a Shader-Execution-Reordering RayGen (HitObject/MaybeReorderThread, SM 6.9) over the bindless path. "
+    "Requires SER support. No-op reorder on API-only devices."),
     GRayTracingSER);
 
 bool GReflectionsEnabled = true;
 static FAutoConsoleVariableRef CVarReflectionsEnabled(
-    "Renderer.RayTracing.Reflections.Enable",
-    "Enables ray-traced reflections. Acceleration structures are still built while this is off, so other ray traced effects keep working "
-    "and re-enabling does not rebuild the scene.",
+    TEXT("Renderer.RayTracing.Reflections.Enable"),
+    TEXT("Enables ray-traced reflections. Acceleration structures are still built while this is off, so other ray traced effects keep working "
+    "and re-enabling does not rebuild the scene."),
     GReflectionsEnabled);
 
 static float GReflectionMaxRayDistance = 10000.0f;
 static FAutoConsoleVariableRef CVarReflectionMaxRayDistance(
-    "Renderer.RayTracing.Reflections.MaxRayDistance",
-    "Maximum distance (TMax) traced by a reflection ray. Shorter distances trade far-field reflections for traversal cost.",
+    TEXT("Renderer.RayTracing.Reflections.MaxRayDistance"),
+    TEXT("Maximum distance (TMax) traced by a reflection ray. Shorter distances trade far-field reflections for traversal cost."),
     GReflectionMaxRayDistance);
 
 float GReflectionMirrorRoughnessThreshold = 0.05f;
 static FAutoConsoleVariableRef CVarReflectionMirrorRoughnessThreshold(
-    "Renderer.RayTracing.Reflections.MirrorRoughnessThreshold",
-    "Surfaces below this roughness trace a perfect mirror ray; above it the direction is GGX importance-sampled.",
+    TEXT("Renderer.RayTracing.Reflections.MirrorRoughnessThreshold"),
+    TEXT("Surfaces below this roughness trace a perfect mirror ray; above it the direction is GGX importance-sampled."),
     GReflectionMirrorRoughnessThreshold);
 
 static float GReflectionRayBias = 0.02f;
 static FAutoConsoleVariableRef CVarReflectionRayBias(
-    "Renderer.RayTracing.Reflections.RayBias",
-    "Distance the reflection ray origin is pushed along the surface normal to avoid self-intersection.",
+    TEXT("Renderer.RayTracing.Reflections.RayBias"),
+    TEXT("Distance the reflection ray origin is pushed along the surface normal to avoid self-intersection."),
     GReflectionRayBias);
 
 struct EReflectionSampler
@@ -78,9 +78,9 @@ struct EReflectionSampler
 
 static int32 GReflectionSampler = EReflectionSampler::BlueNoise;
 static FAutoConsoleVariableRef CVarReflectionSampler(
-    "Renderer.RayTracing.Reflections.Sampler",
-    "Sequence used to importance-sample the GGX lobe for reflection rays: 0 = white noise, 1 = Halton, 2 = blue noise. Falls back to white "
-    "noise when the blue noise mask failed to load.",
+    TEXT("Renderer.RayTracing.Reflections.Sampler"),
+    TEXT("Sequence used to importance-sample the GGX lobe for reflection rays: 0 = white noise, 1 = Halton, 2 = blue noise. Falls back to white "
+    "noise when the blue noise mask failed to load."),
     GReflectionSampler);
 
 FRayTracingReflectionsPass::FRayTracingReflectionsPass(FSceneRenderer* InRenderer)
@@ -121,7 +121,7 @@ FRayTracingVariant FRayTracingReflectionsPass::CreateVariant(const FRayTracingPe
 
     PSODesc.HitGroups =
     {
-        FRHIRayTracingHitGroupInfo("HitGroup", ERayTracingHitGroupType::Triangles, { ClosestHitShader.Get() })
+        FRHIRayTracingHitGroupInfo(TEXT("HitGroup"), ERayTracingHitGroupType::Triangles, { ClosestHitShader.Get() })
     };
 
     PSODesc.MaxRecursionDepth       = 1;
@@ -201,7 +201,7 @@ bool FRayTracingReflectionsPass::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        Resources.RayTracingSceneConstantsBuffer->SetDebugName("RayTracing Scene Constants");
+        Resources.RayTracingSceneConstantsBuffer->SetDebugName(TEXT("RayTracing Scene Constants"));
     }
 
     if (RHI::bSupportsInlineRayTracing && RHI::bSupportsBindless)
@@ -215,7 +215,7 @@ bool FRayTracingReflectionsPass::Initialize(FFrameResources& Resources)
             InlineReflectionsPipeline = RHI::CreateComputePipelineState(PSODesc);
             if (InlineReflectionsPipeline)
             {
-                InlineReflectionsPipeline->SetDebugName("Inline RT Reflections PSO");
+                InlineReflectionsPipeline->SetDebugName(TEXT("Inline RT Reflections PSO"));
             }
             else
             {
@@ -270,7 +270,7 @@ bool FRayTracingReflectionsPass::CreateResources(FFrameResources& Resources, uin
         return false;
     }
 
-    Resources.RayTracingOutput->SetDebugName("RayTracing Output");
+    Resources.RayTracingOutput->SetDebugName(TEXT("RayTracing Output"));
 
     FRHITextureDesc TraceDesc = FRHITextureDesc::CreateTexture2D(EFormat::R16G16B16A16_Float,
         Resources.GetReflectionChainWidth(), Resources.GetReflectionChainHeight(), 1, 1, UAVAndSRV,
@@ -282,7 +282,7 @@ bool FRayTracingReflectionsPass::CreateResources(FFrameResources& Resources, uin
         return false;
     }
 
-    Resources.ReflectionTrace->SetDebugName("Reflection Trace");
+    Resources.ReflectionTrace->SetDebugName(TEXT("Reflection Trace"));
     return true;
 }
 
@@ -372,12 +372,12 @@ bool FRayTracingReflectionsPass::IsTraceEnabled() const
 void FRayTracingReflectionsPass::LoadReflectionNoiseMask()
 {
     FString FullPath = Paths::GetAssetDir();
-    if (!FullPath.EndsWith("/"))
+    if (!FullPath.EndsWith(TEXT("/")))
     {
-        FullPath += "/";
+        FullPath += TEXT("/");
     }
 
-    FullPath += "Textures/Noise/BlueNoise_Vec2_128_RG.dds";
+    FullPath += TEXT("Textures/Noise/BlueNoise_Vec2_128_RG.dds");
 
     ReflectionNoiseTexture = FAssetManager::Get().LoadTexture(FullPath, false);
     if (!ReflectionNoiseTexture)
@@ -441,11 +441,11 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
     const CHAR_T* MissingResource = nullptr;
     if (!TraceTarget)
     {
-        MissingResource = bDenoise ? "ReflectionTrace" : "RayTracingOutput";
+        MissingResource = bDenoise ? TEXT("ReflectionTrace") : TEXT("RayTracingOutput");
     }
     else if (!Resources.RayTracingSceneConstantsBuffer)
     {
-        MissingResource = "RayTracingSceneConstantsBuffer";
+        MissingResource = TEXT("RayTracingSceneConstantsBuffer");
     }
 
     if (MissingResource)
@@ -661,7 +661,7 @@ void FRayTracingReflectionsPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBu
 {
     FRenderGraphTexture* const TraceTarget = bDenoise ? Context.ReflectionTrace : Context.RayTracingOutput;
 
-    GraphBuilder.AddPass("RayTracingReflections", ERenderGraphPassFlags::Compute, IsTraceEnabled(),
+    GraphBuilder.AddPass(TEXT("RayTracingReflections"), ERenderGraphPassFlags::Compute, IsTraceEnabled(),
         [&Context, TraceTarget](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.GBufferNormal, ERHIResourceState::NonPixelShaderResource);

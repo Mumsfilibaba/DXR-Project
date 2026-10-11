@@ -7,24 +7,24 @@
 
 int32 GCSMCascadeSize = 2048;
 static FAutoConsoleVariableRef CVarCSMCascadeSize(
-    "Renderer.CSM.CascadeSize",
-    "Specifies the resolution of each Shadow Cascade",
+    TEXT("Renderer.CSM.CascadeSize"),
+    TEXT("Specifies the resolution of each Shadow Cascade"),
     GCSMCascadeSize);
 
 int32 GPointLightShadowMapSize = 512;
 static FAutoConsoleVariableRef CVarPointLightShadowMapSize(
-    "Renderer.Shadows.PointLightShadowMapSize",
-    "Specifies the resolution of each Shadow Cascade",
+    TEXT("Renderer.Shadows.PointLightShadowMapSize"),
+    TEXT("Specifies the resolution of each Shadow Cascade"),
     GPointLightShadowMapSize);
 
 static TAutoConsoleVariable<int32> CVarEnvironmentIrradianceProbeSize(
-    "Renderer.Environment.IrradianceProbeSize",
-    "Specifies the resolution of each Irradiance Probe (Cube-Map) size",
+    TEXT("Renderer.Environment.IrradianceProbeSize"),
+    TEXT("Specifies the resolution of each Irradiance Probe (Cube-Map) size"),
     32);
 
 static TAutoConsoleVariable<int32> CVarEnvironmentSpecularIrradianceProbeSize(
-    "Renderer.Environment.SpecularIrradianceProbeSize",
-    "Specifies the resolution of each Specular Irradiance Probe (Cube-Map) size",
+    TEXT("Renderer.Environment.SpecularIrradianceProbeSize"),
+    TEXT("Specifies the resolution of each Specular Irradiance Probe (Cube-Map) size"),
     256);
 
 static int32 ClampTextureSize(int32 MinSize, int32 MaxSize, int32 NewSize)
@@ -61,7 +61,7 @@ bool FFrameResources::Initialize()
     }
     else
     {
-        DirectionalLightDataBuffer->SetDebugName("DirectionalLightData Buffer");
+        DirectionalLightDataBuffer->SetDebugName(TEXT("DirectionalLightData Buffer"));
     }
 
     BufferDesc                  = FRHIBufferDesc::CreateConstantBuffer(sizeof(FCascadeGenerationInfoHLSL));
@@ -74,7 +74,7 @@ bool FFrameResources::Initialize()
     }
     else
     {
-        CascadeGenerationDataBuffer->SetDebugName("CascadeGenerationData Buffer");
+        CascadeGenerationDataBuffer->SetDebugName(TEXT("CascadeGenerationData Buffer"));
     }
 
     PointLightsData.Reserve(MAX_LIGHTS_PER_TILE);
@@ -89,7 +89,7 @@ bool FFrameResources::Initialize()
     }
     else
     {
-        PointLightsBuffer->SetDebugName("PointLights Buffer");
+        PointLightsBuffer->SetDebugName(TEXT("PointLights Buffer"));
     }
 
     PointLightsPosRad.Reserve(MAX_LIGHTS_PER_TILE);
@@ -104,7 +104,7 @@ bool FFrameResources::Initialize()
     }
     else
     {
-        PointLightsPosRadBuffer->SetDebugName("PointLights Position and Radius Buffer");
+        PointLightsPosRadBuffer->SetDebugName(TEXT("PointLights Position and Radius Buffer"));
     }
 
     ShadowCastingPointLightsData.Reserve(NUM_SHADOW_CASTING_POINT_LIGHTS);
@@ -119,7 +119,7 @@ bool FFrameResources::Initialize()
     }
     else
     {
-        ShadowCastingPointLightsBuffer->SetDebugName("ShadowCasting PointLights Buffer");
+        ShadowCastingPointLightsBuffer->SetDebugName(TEXT("ShadowCasting PointLights Buffer"));
     }
 
     ShadowCastingPointLightsPosRad.Reserve(NUM_SHADOW_CASTING_POINT_LIGHTS);
@@ -134,7 +134,7 @@ bool FFrameResources::Initialize()
     }
     else
     {
-        ShadowCastingPointLightsPosRadBuffer->SetDebugName("ShadowCastingPointLightsPosRadBuffer");
+        ShadowCastingPointLightsPosRadBuffer->SetDebugName(TEXT("ShadowCastingPointLightsPosRadBuffer"));
     }
 
     LightProbeInfos.Reserve(NUM_LIGHT_PROBES);
@@ -149,7 +149,7 @@ bool FFrameResources::Initialize()
     }
     else
     {
-        LightProbeBuffer->SetDebugName("Light-Probe Infos");
+        LightProbeBuffer->SetDebugName(TEXT("Light-Probe Infos"));
     }
 
     return true;
@@ -157,9 +157,9 @@ bool FFrameResources::Initialize()
 
 void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Scene)
 {
-    RHI_EVENT_SCOPE(CommandList, "Update Lights");
+    RHI_EVENT_SCOPE(CommandList, TEXT("Update Lights"));
 
-    TRACE_SCOPE("Update LightBuffers");
+    TRACE_SCOPE(TEXT("Update LightBuffers"));
 
     PointLightsPosRad.Clear();
     PointLightsData.Clear();

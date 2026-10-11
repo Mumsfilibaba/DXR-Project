@@ -81,7 +81,7 @@ class FSelectionMaskPS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FSelectionMaskPS, "Shaders/SelectionOutline.hlsl", "SelectionMaskPS", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FSelectionMaskPS, TEXT("Shaders/SelectionOutline.hlsl"), TEXT("SelectionMaskPS"), EShaderModel::SM_6_2);
 
 class FSelectionDilateMaxPS
 {
@@ -90,7 +90,7 @@ class FSelectionDilateMaxPS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FSelectionDilateMaxPS, "Shaders/SelectionOutline.hlsl", "DilateMaxPS", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FSelectionDilateMaxPS, TEXT("Shaders/SelectionOutline.hlsl"), TEXT("DilateMaxPS"), EShaderModel::SM_6_2);
 
 class FSelectionErodeMinPS
 {
@@ -99,7 +99,7 @@ class FSelectionErodeMinPS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FSelectionErodeMinPS, "Shaders/SelectionOutline.hlsl", "ErodeMinPS", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FSelectionErodeMinPS, TEXT("Shaders/SelectionOutline.hlsl"), TEXT("ErodeMinPS"), EShaderModel::SM_6_2);
 
 class FSelectionRingPS
 {
@@ -108,7 +108,7 @@ class FSelectionRingPS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FSelectionRingPS, "Shaders/SelectionOutline.hlsl", "SelectionRingPS", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FSelectionRingPS, TEXT("Shaders/SelectionOutline.hlsl"), TEXT("SelectionRingPS"), EShaderModel::SM_6_2);
 
 FSelectionOutlinePass::FSelectionOutlinePass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -194,7 +194,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
         return false;
     }
 
-    SelectionMask->SetDebugName("SelectionMask");
+    SelectionMask->SetDebugName(TEXT("SelectionMask"));
 
     DilationTemp = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource);
     if (!DilationTemp)
@@ -202,7 +202,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
         return false;
     }
 
-    DilationTemp->SetDebugName("SelectionMask Dilate Temp");
+    DilationTemp->SetDebugName(TEXT("SelectionMask Dilate Temp"));
 
     DilatedMask = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource);
     if (!DilatedMask)
@@ -210,7 +210,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
         return false;
     }
 
-    DilatedMask->SetDebugName("SelectionMask Dilated");
+    DilatedMask->SetDebugName(TEXT("SelectionMask Dilated"));
 
     ErosionTemp = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource);
     if (!ErosionTemp)
@@ -218,7 +218,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
         return false;
     }
 
-    ErosionTemp->SetDebugName("SelectionMask Erode Temp");
+    ErosionTemp->SetDebugName(TEXT("SelectionMask Erode Temp"));
 
     ErodedMask = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource);
     if (!ErodedMask)
@@ -226,7 +226,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
         return false;
     }
 
-    ErodedMask->SetDebugName("SelectionMask Eroded");
+    ErodedMask->SetDebugName(TEXT("SelectionMask Eroded"));
 
     RingMask = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource);
     if (!RingMask)
@@ -234,7 +234,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
         return false;
     }
 
-    RingMask->SetDebugName("SelectionRing");
+    RingMask->SetDebugName(TEXT("SelectionRing"));
 
     return true;
 }
@@ -250,7 +250,7 @@ bool FSelectionOutlinePass::CreateSelectedIDsBuffer()
         return false;
     }
 
-    SelectedIDsBuffer->SetDebugName("SelectedIDs Buffer");
+    SelectedIDsBuffer->SetDebugName(TEXT("SelectedIDs Buffer"));
 
     const FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, MaxSelectedIDs);
     SelectedIDsSRV = RHI::CreateShaderResourceView(SelectedIDsBuffer.Get(), SRVDesc);
@@ -325,7 +325,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
             return false;
         }
 
-        MaskPSO->SetDebugName("SelectionMask PSO");
+        MaskPSO->SetDebugName(TEXT("SelectionMask PSO"));
     }
 
     // Dilate PSO
@@ -354,7 +354,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
             return false;
         }
 
-        DilatePSO->SetDebugName("SelectionDilate PSO");
+        DilatePSO->SetDebugName(TEXT("SelectionDilate PSO"));
     }
 
     // Erode PSO (min filter)
@@ -383,7 +383,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
             return false;
         }
 
-        ErodePSO->SetDebugName("SelectionErode PSO");
+        ErodePSO->SetDebugName(TEXT("SelectionErode PSO"));
     }
 
     // Resolve PSO (SelectedMask + DilatedMask -> RingMask)
@@ -412,7 +412,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
             return false;
         }
 
-        ResolvePSO->SetDebugName("SelectionResolve PSO");
+        ResolvePSO->SetDebugName(TEXT("SelectionResolve PSO"));
     }
 
     return true;
@@ -446,7 +446,7 @@ bool FSelectionOutlinePass::IsOutlineActive(const FFrameResources& FrameResource
 
 void FSelectionOutlinePass::RecordSelectedIDsUpload(FRHICommandList& CommandList, TArrayView<const uint32> SelectedIDs)
 {
-    GPU_TRACE_SCOPE(CommandList, "Selection IDs");
+    GPU_TRACE_SCOPE(CommandList, TEXT("Selection IDs"));
 
     uint32 IDs[MaxSelectedIDs] = { 0 };
     const uint32 SelectedCount = Math::Min<uint32>(uint32(SelectedIDs.Size()), MaxSelectedIDs);
@@ -460,7 +460,7 @@ void FSelectionOutlinePass::RecordSelectedIDsUpload(FRHICommandList& CommandList
 
 void FSelectionOutlinePass::RecordMask(FRHICommandList& CommandList, const FFrameResources& FrameResources, uint32 SelectedCount)
 {
-    GPU_TRACE_SCOPE(CommandList, "Selection Mask");
+    GPU_TRACE_SCOPE(CommandList, TEXT("Selection Mask"));
 
     const FSelectionOutlineConstantsHLSL Constants = CreateOutlineConstants(FrameResources, SelectedCount);
 
@@ -480,7 +480,7 @@ void FSelectionOutlinePass::RecordMask(FRHICommandList& CommandList, const FFram
 
 void FSelectionOutlinePass::RecordErode(FRHICommandList& CommandList, const FFrameResources& FrameResources, FRHITexture* Source, int32 DirectionX, int32 DirectionY, int32 Radius, uint32 SelectedCount)
 {
-    GPU_TRACE_SCOPE(CommandList, "Selection Erode");
+    GPU_TRACE_SCOPE(CommandList, TEXT("Selection Erode"));
 
     FSelectionOutlineConstantsHLSL Constants = CreateOutlineConstants(FrameResources, SelectedCount);
     Constants.Direction[0] = DirectionX;
@@ -492,7 +492,7 @@ void FSelectionOutlinePass::RecordErode(FRHICommandList& CommandList, const FFra
 
 void FSelectionOutlinePass::RecordDilate(FRHICommandList& CommandList, const FFrameResources& FrameResources, FRHITexture* Source, int32 DirectionX, int32 DirectionY, int32 Radius, uint32 SelectedCount)
 {
-    GPU_TRACE_SCOPE(CommandList, "Selection Dilate");
+    GPU_TRACE_SCOPE(CommandList, TEXT("Selection Dilate"));
 
     FSelectionOutlineConstantsHLSL Constants = CreateOutlineConstants(FrameResources, SelectedCount);
     Constants.Direction[0] = DirectionX;
@@ -504,7 +504,7 @@ void FSelectionOutlinePass::RecordDilate(FRHICommandList& CommandList, const FFr
 
 void FSelectionOutlinePass::RecordRing(FRHICommandList& CommandList, const FFrameResources& FrameResources, FRHITexture* InnerMask, uint32 SelectedCount)
 {
-    GPU_TRACE_SCOPE(CommandList, "Selection Ring");
+    GPU_TRACE_SCOPE(CommandList, TEXT("Selection Ring"));
 
     const FSelectionOutlineConstantsHLSL Constants = CreateOutlineConstants(FrameResources, SelectedCount);
 
@@ -536,7 +536,7 @@ void FSelectionOutlinePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder
     const bool  bEnableErosion  = bEnablePass && InnerRadius > 0;
     const uint32 SelectedCount  = Math::Min<uint32>(uint32(Context.SelectedObjectIDs->Size()), MaxSelectedIDs);
 
-    GraphBuilder.AddPass("SelectionIDs", ERenderGraphPassFlags::Copy, bEnablePass,
+    GraphBuilder.AddPass(TEXT("SelectionIDs"), ERenderGraphPassFlags::Copy, bEnablePass,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.WriteBuffer(Context.SelectedIDsBuffer, ERHIResourceState::CopyDest);
@@ -546,7 +546,7 @@ void FSelectionOutlinePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder
             RecordSelectedIDsUpload(PassCommandList, *Context.SelectedObjectIDs);
         });
 
-    GraphBuilder.AddPass("SelectionMask", ERenderGraphPassFlags::Raster, bEnablePass,
+    GraphBuilder.AddPass(TEXT("SelectionMask"), ERenderGraphPassFlags::Raster, bEnablePass,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             // The outline is drawn by a fullscreen pixel shader, so the ID target has to be readable there
@@ -561,7 +561,7 @@ void FSelectionOutlinePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder
             RecordMask(PassCommandList, *Context.FrameResources, SelectedCount);
         });
 
-    GraphBuilder.AddPass("SelectionErodeHorizontal", ERenderGraphPassFlags::Raster, bEnableErosion,
+    GraphBuilder.AddPass(TEXT("SelectionErodeHorizontal"), ERenderGraphPassFlags::Raster, bEnableErosion,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.SelectionMask, ERHIResourceState::PixelShaderResource);
@@ -572,7 +572,7 @@ void FSelectionOutlinePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder
             RecordErode(PassCommandList, *Context.FrameResources, SelectionMask.Get(), 1, 0, InnerRadius, SelectedCount);
         });
 
-    GraphBuilder.AddPass("SelectionErodeVertical", ERenderGraphPassFlags::Raster, bEnableErosion,
+    GraphBuilder.AddPass(TEXT("SelectionErodeVertical"), ERenderGraphPassFlags::Raster, bEnableErosion,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.SelectionErosionTemp, ERHIResourceState::PixelShaderResource);
@@ -583,7 +583,7 @@ void FSelectionOutlinePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder
             RecordErode(PassCommandList, *Context.FrameResources, ErosionTemp.Get(), 0, 1, InnerRadius, SelectedCount);
         });
 
-    GraphBuilder.AddPass("SelectionDilateHorizontal", ERenderGraphPassFlags::Raster, bEnablePass,
+    GraphBuilder.AddPass(TEXT("SelectionDilateHorizontal"), ERenderGraphPassFlags::Raster, bEnablePass,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.SelectionMask, ERHIResourceState::PixelShaderResource);
@@ -594,7 +594,7 @@ void FSelectionOutlinePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder
             RecordDilate(PassCommandList, *Context.FrameResources, SelectionMask.Get(), 1, 0, OuterRadius, SelectedCount);
         });
 
-    GraphBuilder.AddPass("SelectionDilateVertical", ERenderGraphPassFlags::Raster, bEnablePass,
+    GraphBuilder.AddPass(TEXT("SelectionDilateVertical"), ERenderGraphPassFlags::Raster, bEnablePass,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.SelectionDilationTemp, ERHIResourceState::PixelShaderResource);
@@ -608,7 +608,7 @@ void FSelectionOutlinePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder
     // Without erosion the ring is resolved against the unfiltered mask, which is what the chain leaves behind
     FRenderGraphTexture* InnerMaskTexture = bEnableErosion ? Context.SelectionErodedMask : Context.SelectionMask;
 
-    GraphBuilder.AddPass("SelectionRing", ERenderGraphPassFlags::Raster, bEnablePass,
+    GraphBuilder.AddPass(TEXT("SelectionRing"), ERenderGraphPassFlags::Raster, bEnablePass,
         [&Context, InnerMaskTexture](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(InnerMaskTexture, ERHIResourceState::PixelShaderResource);

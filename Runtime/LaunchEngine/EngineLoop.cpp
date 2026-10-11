@@ -43,14 +43,14 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 static bool GSynchronousResize = true;
 static FAutoConsoleVariableRef CVarSynchronousResize(
-    "Renderer.Feature.SynchronousResize",
-    "Repaints a window inline while it is being resized, instead of leaving the new area blank until the frame loop catches up",
+    TEXT("Renderer.Feature.SynchronousResize"),
+    TEXT("Repaints a window inline while it is being resized, instead of leaving the new area blank until the frame loop catches up"),
     GSynchronousResize,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarExitAfterFrames(
-    "Engine.ExitAfterFrames",
-    "Requests exit once this many frames have been submitted, which is what makes a headless boot check possible. Zero runs until closed",
+    TEXT("Engine.ExitAfterFrames"),
+    TEXT("Requests exit once this many frames have been submitted, which is what makes a headless boot check possible. Zero runs until closed"),
     0,
     EConsoleVariableFlags::Default);
 struct FDebuggerOutputDevice : public IOutputDevice
@@ -79,12 +79,12 @@ static bool InitializeOutputDevices()
     if (GConsoleWindow)
     {
         GConsoleWindow->Show(true);
-        GConsoleWindow->SetTitle("DXR-Engine Output Console");
+        GConsoleWindow->SetTitle(TEXT("DXR-Engine Output Console"));
         FOutputDeviceManager::Get()->RegisterOutputDevice(GConsoleWindow.Get());
     }
     else
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize ConsoleWindow");
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("Failed to initialize ConsoleWindow"));
         return false;
     }
 
@@ -94,7 +94,7 @@ static bool InitializeOutputDevices()
         FOutputDeviceManager::Get()->RegisterOutputDevice(GDebuggerOutputDevice.Get());
     }
 
-    const FString OutputLogPath = Paths::GetProjectDir() + "/OutputLog.txt";
+    const FString OutputLogPath = Paths::GetProjectDir() + TEXT("/OutputLog.txt");
     GFileOutputDevice = MakeUniquePtr<FFileOutputDevice>(OutputLogPath);
     
     if (GFileOutputDevice && GFileOutputDevice->IsValid())
@@ -111,8 +111,8 @@ static void LogStartupInformation()
     LOG_INFO("Engine=%s %s", BuildInfo::GetEngineName(), BuildInfo::GetVersionString());
     LOG_INFO("Configuration=%s (%s)", BuildInfo::GetConfigurationName(), BuildInfo::GetLinkageName());
     LOG_INFO("Platform=%s %s", BuildInfo::GetPlatformName(), BuildInfo::GetArchitectureName());
-    LOG_INFO("Commit=%s%s (%s)", BuildInfo::GetCommit(), BuildInfo::IsWorkingTreeDirty() ? " (modified)" : "", BuildInfo::GetBranch());
-    LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
+    LOG_INFO("Commit=%s%s (%s)", BuildInfo::GetCommit(), BuildInfo::IsWorkingTreeDirty() ? TEXT(" (modified)") : TEXT(""), BuildInfo::GetBranch());
+    LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? TEXT("true") : TEXT("false"));
     LOG_INFO("Executable=%s", FPlatformFile::GetExecutablePath());
     LOG_INFO("EngineDir=%s (%s)", *Paths::GetEngineDir(), Paths::GetEngineDirSourceName());
     LOG_INFO("ProjectName=%s", *Paths::GetProjectName());
@@ -133,49 +133,49 @@ FEngineLoop::~FEngineLoop()
 
 bool FEngineLoop::LoadCoreModules()
 {
-    IModule* CoreModule = FModuleManager::Get().LoadModule("Core");
+    IModule* CoreModule = FModuleManager::Get().LoadModule(TEXT("Core"));
     if (!CoreModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    IModule* CoreApplicationModule = FModuleManager::Get().LoadModule("CoreApplication");
+    IModule* CoreApplicationModule = FModuleManager::Get().LoadModule(TEXT("CoreApplication"));
     if (!CoreApplicationModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    IModule* ApplicationModule = FModuleManager::Get().LoadModule("Application");
+    IModule* ApplicationModule = FModuleManager::Get().LoadModule(TEXT("Application"));
     if (!ApplicationModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    IModule* EngineModule = FModuleManager::Get().LoadModule("Engine");
+    IModule* EngineModule = FModuleManager::Get().LoadModule(TEXT("Engine"));
     if (!EngineModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    IModule* RHIModule = FModuleManager::Get().LoadModule("RHI");
+    IModule* RHIModule = FModuleManager::Get().LoadModule(TEXT("RHI"));
     if (!RHIModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    IModule* RendererCoreModule = FModuleManager::Get().LoadModule("RendererCore");
+    IModule* RendererCoreModule = FModuleManager::Get().LoadModule(TEXT("RendererCore"));
     if (!RendererCoreModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    IModule* RendererModule = FModuleManager::Get().LoadModule("Renderer");
+    IModule* RendererModule = FModuleManager::Get().LoadModule(TEXT("Renderer"));
     if (!RendererModule)
     {
         DEBUG_BREAK();
@@ -190,8 +190,8 @@ int32 FEngineLoop::PreInit(const CHAR_T** Args, int32 NumArgs)
     const bool bIsCommandLineValid = CommandLine::Initialize(Args, NumArgs);
     if (!Paths::Initialize())
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", FString::Printf("Could not find the engine folder. Pass -engine=<path> to a folder "
-            "that contains %s, or run the executable from inside one.", Paths::EngineIdentityFilename));
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), FString::Printf(TEXT("Could not find the engine folder. Pass -engine=<path> to a folder "
+            "that contains %s, or run the executable from inside one."), Paths::EngineIdentityFilename));
         return -1;
     }
 
@@ -208,22 +208,22 @@ int32 FEngineLoop::PreInit(const CHAR_T** Args, int32 NumArgs)
         LOG_WARNING("Invalid CommandLine");
     }
 
-    GIsUnattended = CommandLine::FindOption("unattended");
+    GIsUnattended = CommandLine::FindOption(TEXT("unattended"));
     FProfileRun::ConfigureFromCommandLine();
 
     if (!LoadCoreModules())
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to load Core-Modules");
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("Failed to load Core-Modules"));
         return -1;
     }
 
     FBootProfiler::Get().Enable();
     FProfileRun::PrepareCapture();
 
-    TRACE_BOOT_SCOPE("PreInit");
+    TRACE_BOOT_SCOPE(TEXT("PreInit"));
 
     {
-        TRACE_BOOT_SCOPE("Config");
+        TRACE_BOOT_SCOPE(TEXT("Config"));
 
         if (!FConfig::Initialize())
         {
@@ -236,17 +236,17 @@ int32 FEngineLoop::PreInit(const CHAR_T** Args, int32 NumArgs)
     FConsoleManager::Get().LoadFromCommandLine();
 
     {
-        TRACE_BOOT_SCOPE("ThreadManager");
+        TRACE_BOOT_SCOPE(TEXT("ThreadManager"));
 
         if (!FThreadManager::Initialize())
         {
-            FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ThreadManager");
+            FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("Failed to init ThreadManager"));
             return -1;
         }
     }
 
     {
-        TRACE_BOOT_SCOPE("RemoteConsole");
+        TRACE_BOOT_SCOPE(TEXT("RemoteConsole"));
 
         if (!FRemoteConsoleServer::Initialize())
         {
@@ -255,11 +255,11 @@ int32 FEngineLoop::PreInit(const CHAR_T** Args, int32 NumArgs)
     }
 
     {
-        TRACE_BOOT_SCOPE("Application");
+        TRACE_BOOT_SCOPE(TEXT("Application"));
 
         if (!FApplication::Initialize())
         {
-            FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
+            FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("Failed to create Application"));
             return -1;
         }
     }
@@ -267,27 +267,27 @@ int32 FEngineLoop::PreInit(const CHAR_T** Args, int32 NumArgs)
     CoreDelegates::PostApplicationCreateDelegate.Broadcast();
 
     {
-        TRACE_BOOT_SCOPE("TaskGraph");
+        TRACE_BOOT_SCOPE(TEXT("TaskGraph"));
 
         if (!FTaskGraph::Initialize())
         {
-            FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize TaskGraph");
+            FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("Failed to initialize TaskGraph"));
             return -1;
         }
     }
 
     {
-        TRACE_BOOT_SCOPE("ShaderCompiler");
+        TRACE_BOOT_SCOPE(TEXT("ShaderCompiler"));
 
         if (!FShaderCompiler::Initialize(Paths::GetAssetDir()))
         {
-            FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
+            FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("Failed to Initializer ShaderCompiler"));
             return -1;
         }
     }
 
     {
-        TRACE_BOOT_SCOPE("RHI");
+        TRACE_BOOT_SCOPE(TEXT("RHI"));
 
         if (!RHI::Initialize())
         {
@@ -301,7 +301,7 @@ int32 FEngineLoop::PreInit(const CHAR_T** Args, int32 NumArgs)
     CoreDelegates::PostInitRHIDelegate.Broadcast();
 
     {
-        TRACE_BOOT_SCOPE("ShaderCache");
+        TRACE_BOOT_SCOPE(TEXT("ShaderCache"));
 
         if (!FShaderCache::Initialize())
         {
@@ -312,7 +312,7 @@ int32 FEngineLoop::PreInit(const CHAR_T** Args, int32 NumArgs)
     }
 
     {
-        TRACE_BOOT_SCOPE("TextureFactory");
+        TRACE_BOOT_SCOPE(TEXT("TextureFactory"));
 
         if (!FTextureFactory::Initialize())
         {
@@ -321,7 +321,7 @@ int32 FEngineLoop::PreInit(const CHAR_T** Args, int32 NumArgs)
     }
 
     {
-        TRACE_BOOT_SCOPE("VertexStreamCache");
+        TRACE_BOOT_SCOPE(TEXT("VertexStreamCache"));
         
         if (!FVertexStreamCache::Initialize())
         {
@@ -330,7 +330,7 @@ int32 FEngineLoop::PreInit(const CHAR_T** Args, int32 NumArgs)
     }
 
     {
-        TRACE_BOOT_SCOPE("RenderGraphResourcePool");
+        TRACE_BOOT_SCOPE(TEXT("RenderGraphResourcePool"));
 
         if (!FRenderGraphResourcePool::Initialize())
         {
@@ -339,7 +339,7 @@ int32 FEngineLoop::PreInit(const CHAR_T** Args, int32 NumArgs)
     }
 
     {
-        TRACE_BOOT_SCOPE("ShaderPrewarm");
+        TRACE_BOOT_SCOPE(TEXT("ShaderPrewarm"));
         FShaderCache::Get().PrewarmAsync();
     }
 
@@ -385,12 +385,12 @@ int32 FEngineLoop::Init()
     IRendererModule* RendererModule = nullptr;
 
     {
-        TRACE_BOOT_SCOPE("Init");
+        TRACE_BOOT_SCOPE(TEXT("Init"));
 
         {
-            TRACE_BOOT_SCOPE("ImGuiPlugin");
+            TRACE_BOOT_SCOPE(TEXT("ImGuiPlugin"));
 
-            IImguiPlugin* ImguiPlugin = FModuleManager::Get().LoadModule<IImguiPlugin>("ImGuiPlugin");
+            IImguiPlugin* ImguiPlugin = FModuleManager::Get().LoadModule<IImguiPlugin>(TEXT("ImGuiPlugin"));
             if (!ImguiPlugin)
             {
                 LOG_ERROR("Failed to load ImGuiPlugin");
@@ -399,12 +399,12 @@ int32 FEngineLoop::Init()
         }
 
         {
-            TRACE_BOOT_SCOPE("ApplicationRenderer");
+            TRACE_BOOT_SCOPE(TEXT("ApplicationRenderer"));
 
             if (!CreateApplicationRenderer())
             {
                 LOG_ERROR("[BOOT] Failed at ApplicationRenderer RHI initialize");
-                FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create the UI renderer");
+                FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("FAILED to create the UI renderer"));
                 return -1;
             }
         }
@@ -414,7 +414,7 @@ int32 FEngineLoop::Init()
         CoreDelegates::PreEngineInitDelegate.Broadcast();
 
         {
-            TRACE_BOOT_SCOPE("Engine");
+            TRACE_BOOT_SCOPE(TEXT("Engine"));
 
             if (!FEngine::Initialize())
             {
@@ -428,13 +428,13 @@ int32 FEngineLoop::Init()
         CoreDelegates::PreEngineInitDelegate.Broadcast();
 
         {
-            TRACE_BOOT_SCOPE("RendererModule");
+            TRACE_BOOT_SCOPE(TEXT("RendererModule"));
 
             RendererModule = IRendererModule::Get();
             if (!RendererModule->Initialize())
             {
                 LOG_ERROR("[BOOT] Failed at scene renderer initialize");
-                FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create Renderer");
+                FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("FAILED to create Renderer"));
                 return -1;
             }
         }
@@ -444,7 +444,7 @@ int32 FEngineLoop::Init()
         UIRenderer->SetGPUProfiler(&RendererModule->GetGPUProfiler());
 
         {
-            TRACE_BOOT_SCOPE("ShaderCompileStats");
+            TRACE_BOOT_SCOPE(TEXT("ShaderCompileStats"));
             FShaderCompiler::Get().LogCompileStats();
         }
 
@@ -452,17 +452,17 @@ int32 FEngineLoop::Init()
 
         if (IImguiPlugin::IsEnabled())
         {
-            TRACE_BOOT_SCOPE("ImGuiRHI");
+            TRACE_BOOT_SCOPE(TEXT("ImGuiRHI"));
 
             if (!IImguiPlugin::Get().InitializeRHI())
             {
-                FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to initialize RHI resources for ImGui");
+                FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("FAILED to initialize RHI resources for ImGui"));
                 return -1;
             }
         }
 
         {
-            TRACE_BOOT_SCOPE("InitPostRenderer");
+            TRACE_BOOT_SCOPE(TEXT("InitPostRenderer"));
 
             if (!FEngine::Get()->InitPostRenderer())
             {
@@ -471,7 +471,7 @@ int32 FEngineLoop::Init()
         }
 
         {
-            TRACE_BOOT_SCOPE("EngineStart");
+            TRACE_BOOT_SCOPE(TEXT("EngineStart"));
             
             if (!FEngine::Get()->Start())
             {
@@ -483,7 +483,7 @@ int32 FEngineLoop::Init()
 
     FBootProfiler::Get().Finish();
     FFrameProfiler::Get().Enable();
-    TRACE_EVENT("BootFinished");
+    TRACE_EVENT(TEXT("BootFinished"));
 
     FProfileRun::BeginCapture();
 
@@ -498,12 +498,12 @@ void FEngineLoop::Tick()
 
         // Run any work that was queued onto the main thread since the last tick.
         {
-            TRACE_SCOPE("Process Main Thread Tasks");
+            TRACE_SCOPE(TEXT("Process Main Thread Tasks"));
             Tasks::ProcessMainThreadTasks();
         }
 
         {
-            TRACE_SCOPE("Frame Timer Tick");
+            TRACE_SCOPE(TEXT("Frame Timer Tick"));
             FrameTimer.Tick();
         }
 
@@ -523,19 +523,19 @@ void FEngineLoop::Tick()
 
         UIRenderer->EndFrameAndPresent();
         {
-            TRACE_SCOPE("GPU Profiler End Frame");
+            TRACE_SCOPE(TEXT("GPU Profiler End Frame"));
             GPUProfiler.EndGPUFrame();
         }
 
         FApplication::Get().ProcessDeferredEvents();
 
         {
-            TRACE_SCOPE("Engine Tick");
+            TRACE_SCOPE(TEXT("Engine Tick"));
             FEngine::Get()->Tick(DeltaTime);
         }
 
         {
-            TRACE_SCOPE("GPU Profiler Begin Frame");
+            TRACE_SCOPE(TEXT("GPU Profiler Begin Frame"));
             GPUProfiler.BeginGPUFrame();
         }
 
@@ -544,7 +544,7 @@ void FEngineLoop::Tick()
 
         if (IImguiPlugin::IsEnabled())
         {
-            TRACE_SCOPE("ImGui Draw");
+            TRACE_SCOPE(TEXT("ImGui Draw"));
             IImguiPlugin::Get().Draw(UIRenderer->GetCommandList());
             IImguiPlugin::Get().DrawViewports(UIRenderer->GetCommandList());
         }
@@ -555,12 +555,12 @@ void FEngineLoop::Tick()
         RendererModule->KickSceneRender(::Move(Packet));
 
         {
-            TRACE_SCOPE("Memory Page Pool Tick");
+            TRACE_SCOPE(TEXT("Memory Page Pool Tick"));
             FMemoryPagePool::Get().Tick();
         }
 
         {
-            TRACE_SCOPE("Platform Event Pool Tick");
+            TRACE_SCOPE(TEXT("Platform Event Pool Tick"));
             FPlatformEventPool::Get().Tick();
         }
     }
@@ -577,7 +577,7 @@ void FEngineLoop::Tick()
     FConsoleManager::Get().ExecuteQueuedCommands(*FOutputDeviceManager::Get());
 
     {
-        TRACE_SCOPE("RemoteConsole Tick");
+        TRACE_SCOPE(TEXT("RemoteConsole Tick"));
         FRemoteConsoleServer::Tick();
     }
 
@@ -587,7 +587,7 @@ void FEngineLoop::Tick()
     if (ExitAfterFrames > 0 && FrameCounter >= static_cast<uint64>(ExitAfterFrames))
     {
         LOG_INFO("[BOOT] ExitAfterFrames reached count=%llu", static_cast<uint64>(FrameCounter));
-        RequestEngineExit("Engine.ExitAfterFrames reached");
+        RequestEngineExit(TEXT("Engine.ExitAfterFrames reached"));
     }
 }
 
@@ -625,7 +625,7 @@ void FEngineLoop::Release()
 
     if (IImguiPlugin::IsEnabled())
     {
-        FModuleManager::Get().UnloadModule("ImGuiPlugin");
+        FModuleManager::Get().UnloadModule(TEXT("ImGuiPlugin"));
     }
 
     // Release all RHI resources

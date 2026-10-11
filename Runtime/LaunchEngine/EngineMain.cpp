@@ -46,14 +46,14 @@ int32 EngineMain(const CHAR_T* Args[], int32 NumArgs)
     int32 ErrorCode = EnginePreInit(Args, NumArgs);
     if (ErrorCode != 0)
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::PreInit Failed");
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("FEngineLoop::PreInit Failed"));
         return ErrorCode;
     }
 
     ErrorCode = EngineInit();
     if (ErrorCode != 0)
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::Init Failed");
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("FEngineLoop::Init Failed"));
         return ErrorCode;
     }
 

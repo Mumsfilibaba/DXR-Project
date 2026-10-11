@@ -8,11 +8,11 @@
 
 static bool GFXAADebug = false;
 static FAutoConsoleVariableRef CVarFXAADebug(
-    "Renderer.Debug.FXAADebug",
-    "Enables FXAA (Anti-Aliasing) Debugging mode",
+    TEXT("Renderer.Debug.FXAADebug"),
+    TEXT("Enables FXAA (Anti-Aliasing) Debugging mode"),
     GFXAADebug);
 
-class FFXAADebug : SHADER_PERMUTATION_BOOL("ENABLE_DEBUG");
+class FFXAADebug : SHADER_PERMUTATION_BOOL(TEXT("ENABLE_DEBUG"));
 
 struct FFXAASettings
 {
@@ -27,7 +27,7 @@ class FFXAAPS
     using FPermutation = TShaderPermutation<FFXAADebug>;
 };
 
-IMPLEMENT_SHADER_TYPE(FFXAAPS, "Shaders/FXAA_PS.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FFXAAPS, TEXT("Shaders/FXAA_PS.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 FFXAAPass::FFXAAPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -150,7 +150,7 @@ void FFXAAPass::PreparePipelineStateForFormat(EFormat OutputFormat)
         FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
         {
-            NewPSO->SetDebugName("FXAA PipelineState");
+            NewPSO->SetDebugName(TEXT("FXAA PipelineState"));
             FXAAPSO       = NewPSO;
             FXAAPSOFormat = OutputFormat;
         }
@@ -179,9 +179,9 @@ void FFXAAPass::PreparePipelineStateForFormat(EFormat OutputFormat)
 
 void FFXAAPass::Record(FRHICommandList& CommandList, const FFrameResources& FrameResources)
 {
-    RHI_EVENT_SCOPE(CommandList, "FXAA");
+    RHI_EVENT_SCOPE(CommandList, TEXT("FXAA"));
 
-    TRACE_SCOPE("FXAA");
+    TRACE_SCOPE(TEXT("FXAA"));
 
     FFXAASettings Settings;
 
@@ -215,7 +215,7 @@ void FFXAAPass::Record(FRHICommandList& CommandList, const FFrameResources& Fram
 
 void FFXAAPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const FSceneRenderGraphContext& Context)
 {
-    GraphBuilder.AddPass("FXAA", ERenderGraphPassFlags::Raster, GEnableFXAA,
+    GraphBuilder.AddPass(TEXT("FXAA"), ERenderGraphPassFlags::Raster, GEnableFXAA,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.SceneTarget, ERHIResourceState::PixelShaderResource);

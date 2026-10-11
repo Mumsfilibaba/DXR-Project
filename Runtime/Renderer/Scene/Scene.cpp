@@ -130,7 +130,7 @@ FScene::FScene(FWorld* InWorld)
 FScene::~FScene()
 {
     // Drain any in-flight render-thread commands that captured `this` before tearing down proxies.
-    Tasks::LaunchOnRenderThread("SceneFlush", []() {}).Wait();
+    Tasks::LaunchOnRenderThread(TEXT("SceneFlush"), []() {}).Wait();
 
     DeleteDeferredObjects();
 
@@ -173,7 +173,7 @@ FScene::~FScene()
 
 void FScene::Tick()
 {
-    TRACE_SCOPE("Scene Tick");
+    TRACE_SCOPE(TEXT("Scene Tick"));
     CHECK_MAIN_THREAD();
 
     if (GFreezeRendering)
@@ -187,7 +187,7 @@ void FScene::Tick()
 
 void FScene::RenderThread_ApplyAndCull(const FCameraSnapshot& CameraSnapshot, bool bHasCamera)
 {
-    TRACE_SCOPE("Scene ApplyAndCull");
+    TRACE_SCOPE(TEXT("Scene ApplyAndCull"));
     CHECK_RENDER_THREAD();
 
     // Reclaim proxies retired by a previous frame, now that the GPU is done with them.
@@ -209,7 +209,7 @@ void FScene::RenderThread_ApplyAndCull(const FCameraSnapshot& CameraSnapshot, bo
 
 FRenderUpdateBatch FScene::CollectRenderUpdates()
 {
-    TRACE_SCOPE("CollectRenderUpdates");
+    TRACE_SCOPE(TEXT("CollectRenderUpdates"));
 
     FRenderUpdateBatch Batch;
 
@@ -292,7 +292,7 @@ FRenderUpdateBatch FScene::CollectRenderUpdates()
 
 void FScene::RenderThread_ApplyRenderUpdates(const FRenderUpdateBatch& Batch)
 {
-    TRACE_SCOPE("ApplyRenderUpdates");
+    TRACE_SCOPE(TEXT("ApplyRenderUpdates"));
 
     const int32 NumMeshUpdates = Math::Min(Batch.StaticMeshUpdates.Size(), StaticMeshes.Size());
     for (int32 Index = 0; Index < NumMeshUpdates; ++Index)
@@ -364,7 +364,7 @@ void FScene::AddDirectionalLight(FDirectionalLightComponent* InDirectionalLight)
     }
 
     DirectionalLightSource = InDirectionalLight;
-    Tasks::LaunchOnRenderThread("AddDirectionalLight", [this]()
+    Tasks::LaunchOnRenderThread(TEXT("AddDirectionalLight"), [this]()
     {
         DeferDeletion(DirectionalLight);
         DirectionalLight = new FSceneDirectionalLight(this);
@@ -386,7 +386,7 @@ void FScene::AddSkyLight(FSkyLightComponent* InSkyLight)
     SkyLightSource = InSkyLight;
 
     const FRHITextureRef CubeMap = InSkyLight->GetCubeMap();
-    Tasks::LaunchOnRenderThread("AddSkyLight", [this, CubeMap]()
+    Tasks::LaunchOnRenderThread(TEXT("AddSkyLight"), [this, CubeMap]()
     {
         DeferDeletion(SkyLight);
         SkyLight = new FSceneSkyLight(this, CubeMap);
@@ -407,7 +407,7 @@ void FScene::AddPointLight(FPointLightComponent* InPointLight)
     }
 
     PointLightSources.Add(InPointLight);
-    Tasks::LaunchOnRenderThread("AddPointLight", [this]()
+    Tasks::LaunchOnRenderThread(TEXT("AddPointLight"), [this]()
     {
         PointLights.Add(new FScenePointLight(this));
         STAT_ADD(STAT_Scene_PointLightCount, 1);
@@ -429,7 +429,7 @@ void FScene::AddLightProbe(FLightProbeComponent* InLightProbe)
     LightProbeSources.Add(InLightProbe);
 
     FRHITextureRef CubeMap = InLightProbe->GetCubeMap();
-    Tasks::LaunchOnRenderThread("AddLightProbe", [this, CubeMap]()
+    Tasks::LaunchOnRenderThread(TEXT("AddLightProbe"), [this, CubeMap]()
     {
         FSceneLightProbe* NewLightProbe = new FSceneLightProbe(this, CubeMap);
         NewLightProbe->RenderThread_FilterStaticCubeMaps();
@@ -448,7 +448,7 @@ void FScene::AddSkybox(FSkyboxComponent* InSkyboxComponent)
     SkyboxSource = InSkyboxComponent;
 
     const FRHITextureRef CubeMap = InSkyboxComponent ? InSkyboxComponent->GetCubeMap() : FRHITextureRef(nullptr);
-    Tasks::LaunchOnRenderThread("AddSkybox", [this, CubeMap]()
+    Tasks::LaunchOnRenderThread(TEXT("AddSkybox"), [this, CubeMap]()
     {
         DeferDeletion(Skybox);
         Skybox = CubeMap ? new FSceneSkybox(this, CubeMap) : nullptr;
@@ -474,7 +474,7 @@ void FScene::AddStaticMesh(FStaticMeshComponent* InMeshComponent)
     InitData.Materials = InMeshComponent->GetMaterials();
     InitData.ObjectID  = ObjectIDs.GetOrCreate(InMeshComponent->GetActorOwner());
 
-    Tasks::LaunchOnRenderThread("AddStaticMesh", [this, InitData]()
+    Tasks::LaunchOnRenderThread(TEXT("AddStaticMesh"), [this, InitData]()
     {
         FSceneStaticMesh* NewStaticMesh = new FSceneStaticMesh(this, InitData);
         StaticMeshes.Add(NewStaticMesh);
@@ -531,7 +531,7 @@ void FScene::RemoveDirectionalLight(FDirectionalLightComponent* InDirectionalLig
     }
 
     DirectionalLightSource = nullptr;
-    Tasks::LaunchOnRenderThread("RemoveDirectionalLight", [this]()
+    Tasks::LaunchOnRenderThread(TEXT("RemoveDirectionalLight"), [this]()
     {
         DeferDeletion(DirectionalLight);
         DirectionalLight = nullptr;
@@ -546,7 +546,7 @@ void FScene::RemoveSkyLight(FSkyLightComponent* InSkyLight)
     }
 
     SkyLightSource = nullptr;
-    Tasks::LaunchOnRenderThread("RemoveSkyLight", [this]()
+    Tasks::LaunchOnRenderThread(TEXT("RemoveSkyLight"), [this]()
     {
         DeferDeletion(SkyLight);
         SkyLight = nullptr;
@@ -562,7 +562,7 @@ void FScene::RemovePointLight(FPointLightComponent* InPointLight)
     }
 
     PointLightSources.RemoveAt(Index);
-    Tasks::LaunchOnRenderThread("RemovePointLight", [this, Index]()
+    Tasks::LaunchOnRenderThread(TEXT("RemovePointLight"), [this, Index]()
     {
         if (PointLights.IsValidIndex(Index))
         {
@@ -582,7 +582,7 @@ void FScene::RemoveLightProbe(FLightProbeComponent* InLightProbe)
     }
 
     LightProbeSources.RemoveAt(Index);
-    Tasks::LaunchOnRenderThread("RemoveLightProbe", [this, Index]()
+    Tasks::LaunchOnRenderThread(TEXT("RemoveLightProbe"), [this, Index]()
     {
         if (LightProbes.IsValidIndex(Index))
         {
@@ -601,7 +601,7 @@ void FScene::RemoveSkybox(FSkyboxComponent* InSkyboxComponent)
     }
 
     SkyboxSource = nullptr;
-    Tasks::LaunchOnRenderThread("RemoveSkybox", [this]()
+    Tasks::LaunchOnRenderThread(TEXT("RemoveSkybox"), [this]()
     {
         DeferDeletion(Skybox);
         Skybox = nullptr;
@@ -634,7 +634,7 @@ void FScene::RemoveStaticMesh(FStaticMeshComponent* InMeshComponent)
     }
 
     StaticMeshSources.RemoveAt(Index);
-    Tasks::LaunchOnRenderThread("RemoveStaticMesh", [this, Index]()
+    Tasks::LaunchOnRenderThread(TEXT("RemoveStaticMesh"), [this, Index]()
     {
         if (StaticMeshes.IsValidIndex(Index))
         {
@@ -668,7 +668,7 @@ FActor* FScene::GetActorByObjectID(uint32 ObjectID) const
 
 void FScene::RenderThread_PrepareViewsForRendering()
 {
-    TRACE_SCOPE("PrepareViewsForRendering");
+    TRACE_SCOPE(TEXT("PrepareViewsForRendering"));
 
     STAT_SET(STAT_Render_ObjectsTested, 0);
     STAT_SET(STAT_Render_ObjectsVisible, 0);

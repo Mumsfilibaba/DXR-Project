@@ -16,27 +16,27 @@
 extern bool GShadowsBindless;
 
 static TAutoConsoleVariable<bool> CVarCSMEnableSinglePassRendering(
-    "Renderer.CSM.EnableSinglePassRendering",
-    "Enables instancing for cascade rendering via VertexShaders, enabling a single-pass for rendering a full cube-map, which creates less "
-    "overhead on the CPU",
+    TEXT("Renderer.CSM.EnableSinglePassRendering"),
+    TEXT("Enables instancing for cascade rendering via VertexShaders, enabling a single-pass for rendering a full cube-map, which creates less "
+    "overhead on the CPU"),
     true,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarCSMEnableGeometryShaderInstancing(
-    "Renderer.CSM.EnableGeometryShaderInstancing",
-    "Enables instancing in a geometry shader, enabling single-pass cascade drawing, which creates less overhead on the CPU",
+    TEXT("Renderer.CSM.EnableGeometryShaderInstancing"),
+    TEXT("Enables instancing in a geometry shader, enabling single-pass cascade drawing, which creates less overhead on the CPU"),
     true,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarCSMEnableViewInstancing(
-    "Renderer.CSM.EnableViewInstancing",
-    "Enables view-instancing for cascade rendering, enabling single-pass cascade drawing, which creates less overhead on the CPU",
+    TEXT("Renderer.CSM.EnableViewInstancing"),
+    TEXT("Enables view-instancing for cascade rendering, enabling single-pass cascade drawing, which creates less overhead on the CPU"),
     false,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarCSMEnableDepthClipping(
-    "Renderer.CSM.EnableDepthClipping",
-    "Enables depth-clipping for cascade rendering.",
+    TEXT("Renderer.CSM.EnableDepthClipping"),
+    TEXT("Enables depth-clipping for cascade rendering."),
     false,
     EConsoleVariableFlags::Default);
 
@@ -168,7 +168,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         }
         else
         {
-            const FString DebugName = FString::Printf("CSM PipelineState%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
+            const FString DebugName = FString::Printf(TEXT("CSM PipelineState%s %d"), bBindless ? TEXT(" [Bindless]") : TEXT(""), MaterialFlags);
             NewPipelineStateInstance.PipelineState->SetDebugName(DebugName);
         }
 
@@ -192,7 +192,7 @@ bool FCascadedShadowsRenderPass::Initialize(FFrameResources& Resources)
     }
     else
     {
-        PerCascadeBuffer->SetDebugName("Per Cascade Buffer");
+        PerCascadeBuffer->SetDebugName(TEXT("Per Cascade Buffer"));
     }
 
     return CreateResources(Resources);
@@ -212,7 +212,7 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
 
     if (Resources.ShadowCascades)
     {
-        const FString DebugName = FString::Printf("Shadow Map Cascades");
+        const FString DebugName = FString::Printf(TEXT("Shadow Map Cascades"));
         Resources.ShadowCascades->SetDebugName(DebugName);
     }
     else
@@ -263,9 +263,9 @@ void FCascadedShadowsRenderPass::Record(FRHICommandList& CommandList, const FFra
         }
     };
 
-    RHI_EVENT_SCOPE(CommandList, "Render DirectionalLight ShadowMaps");
+    RHI_EVENT_SCOPE(CommandList, TEXT("Render DirectionalLight ShadowMaps"));
 
-    TRACE_SCOPE("Render DirectionalLight ShadowMaps");
+    TRACE_SCOPE(TEXT("Render DirectionalLight ShadowMaps"));
 
     const ECascadeRenderPassType RenderPassType = GetRenderMapRenderPassType();
     if (Scene->GetDirectionalLight())
@@ -518,7 +518,7 @@ void FCascadedShadowsRenderPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBu
     const bool bEnableSunShadows = GSunShadowsEnabled && (!DirectionalLight || DirectionalLight->bCastShadows);
     const bool bEnablePass       = GShadowsEnabled && bEnableSunShadows;
 
-    GraphBuilder.AddPass("CascadedShadows", ERenderGraphPassFlags::None, bEnablePass,
+    GraphBuilder.AddPass(TEXT("CascadedShadows"), ERenderGraphPassFlags::None, bEnablePass,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             if (Context.ShadowCascades)

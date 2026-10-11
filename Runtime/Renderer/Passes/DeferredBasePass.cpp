@@ -18,31 +18,31 @@ constexpr EVertexAttributeFlags BASE_PASS_ATTRIBUTES =
 
 static bool GBasePassClearAllTargets = true;
 static FAutoConsoleVariableRef CVarBasePassClearAllTargets(
-    "Renderer.BasePass.ClearAllTargets",
-    "Set to true to clear all the GBuffer RenderTargets inside of the BasePass, otherwise only a few targets are cleared to save bandwidth",
+    TEXT("Renderer.BasePass.ClearAllTargets"),
+    TEXT("Set to true to clear all the GBuffer RenderTargets inside of the BasePass, otherwise only a few targets are cleared to save bandwidth"),
     GBasePassClearAllTargets);
 
 static bool GBasePassBindless = false;
 static FAutoConsoleVariableRef CVarBasePassBindless(
-    "Renderer.BasePass.Bindless",
-    "When true, the deferred BasePass samples material textures and samplers via SM 6.6 ResourceDescriptorHeap[] / SamplerDescriptorHeap[] "
+    TEXT("Renderer.BasePass.Bindless"),
+    TEXT("When true, the deferred BasePass samples material textures and samplers via SM 6.6 ResourceDescriptorHeap[] / SamplerDescriptorHeap[] "
     "and a per-material indices buffer instead of conventional register bindings. Falls back to the static-binding variant if bindless is "
-    "not supported by the RHI.",
+    "not supported by the RHI."),
     GBasePassBindless);
 
 float GBasePassSpecularAAStrength = 1.0f;
 static FAutoConsoleVariableRef CVarBasePassSpecularAAStrength(
-    "Renderer.BasePass.SpecularAA.Strength",
-    "Strength of the geometric specular anti-aliasing roughness gain applied in the deferred BasePass.",
+    TEXT("Renderer.BasePass.SpecularAA.Strength"),
+    TEXT("Strength of the geometric specular anti-aliasing roughness gain applied in the deferred BasePass."),
     GBasePassSpecularAAStrength);
 
 float GBasePassSpecularAAMaxRoughnessGain = 0.02f;
 static FAutoConsoleVariableRef CVarBasePassSpecularAAMaxRoughnessGain(
-    "Renderer.BasePass.SpecularAA.MaxRoughnessGain",
-    "Maximum squared-roughness gain that geometric specular anti-aliasing can add in the deferred BasePass.",
+    TEXT("Renderer.BasePass.SpecularAA.MaxRoughnessGain"),
+    TEXT("Maximum squared-roughness gain that geometric specular anti-aliasing can add in the deferred BasePass."),
     GBasePassSpecularAAMaxRoughnessGain);
 
-class FNormalMap : SHADER_PERMUTATION_BOOL("ENABLE_NORMAL_MAPPING");
+class FNormalMap : SHADER_PERMUTATION_BOOL(TEXT("ENABLE_NORMAL_MAPPING"));
 
 struct FBasePassShaderRules
 {
@@ -86,8 +86,8 @@ class FBasePassPS : public FBasePassShaderRules
     DECLARE_SHADER_TYPE(FBasePassPS, EShaderStage::Pixel);
 };
 
-IMPLEMENT_SHADER_TYPE(FBasePassVS, "Shaders/BasePass.hlsl", "VSMain", EShaderModel::SM_6_2);
-IMPLEMENT_SHADER_TYPE(FBasePassPS, "Shaders/BasePass.hlsl", "PSMain", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FBasePassVS, TEXT("Shaders/BasePass.hlsl"), TEXT("VSMain"), EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FBasePassPS, TEXT("Shaders/BasePass.hlsl"), TEXT("PSMain"), EShaderModel::SM_6_2);
 
 NODISCARD static FGraphicsPipelineKey CreateBasePassPSOKey(const FMaterialFeatures& Features, bool bBindless, const FVertexDeclaration& Declaration)
 {
@@ -185,7 +185,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FVertexD
         }
         else
         {
-            const FString DebugName = FString::Printf("BasePass PipelineState%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
+            const FString DebugName = FString::Printf(TEXT("BasePass PipelineState%s %d"), bBindless ? TEXT(" [Bindless]") : TEXT(""), MaterialFlags);
             NewPipelineInstance.PipelineState->SetDebugName(DebugName);
         }
 
@@ -201,7 +201,7 @@ bool FDeferredBasePass::Initialize(FFrameResources& FrameResources)
 
 void FDeferredBasePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const FSceneRenderGraphContext& Context)
 {
-    GraphBuilder.AddPass("GBuffer", ERenderGraphPassFlags::Raster, GBasePassEnabled,
+    GraphBuilder.AddPass(TEXT("GBuffer"), ERenderGraphPassFlags::Raster, GBasePassEnabled,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.SetRenderTarget(0, Context.GBufferAlbedo, EAttachmentLoadAction::Clear);
@@ -218,9 +218,9 @@ void FDeferredBasePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, co
 
 void FDeferredBasePass::Record(FRHICommandList& CommandList, const FPassResources& PassResources, FScene* Scene)
 {
-    RHI_EVENT_SCOPE(CommandList, "Deferred BasePass");
+    RHI_EVENT_SCOPE(CommandList, TEXT("Deferred BasePass"));
 
-    TRACE_SCOPE("Deferred BasePass");
+    TRACE_SCOPE(TEXT("Deferred BasePass"));
 
     const float RenderWidth  = float(PassResources.RenderWidth);
     const float RenderHeight = float(PassResources.RenderHeight);

@@ -11,8 +11,8 @@
 
 bool GCSMStableCascades = true;
 static FAutoConsoleVariableRef CVarCSMStableCascades(
-    "Renderer.CSM.StableCascades",
-    "Set to true to enable stable cascades when generating shadow cascade matrices",
+    TEXT("Renderer.CSM.StableCascades"),
+    TEXT("Set to true to enable stable cascades when generating shadow cascade matrices"),
     GCSMStableCascades,
     EConsoleVariableFlags::Default);
 
@@ -49,7 +49,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     }
     else
     {
-        CascadeGen->SetDebugName("CascadeGen PSO");
+        CascadeGen->SetDebugName(TEXT("CascadeGen PSO"));
     }
 
     const FRHIBufferDesc CascadeMatrixBufferDesc = FRHIBufferDesc::CreateStructuredBuffer(sizeof(FCascadeMatricesHLSL), NUM_SHADOW_CASCADES,
@@ -63,7 +63,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     }
     else
     {
-        Resources.CascadeMatrixBuffer->SetDebugName("Cascade Matrices Buffer");
+        Resources.CascadeMatrixBuffer->SetDebugName(TEXT("Cascade Matrices Buffer"));
     }
 
     const FRHIBufferDesc CascadeSplitsBufferDesc = FRHIBufferDesc::CreateStructuredBuffer(sizeof(FCascadeSplitHLSL), NUM_SHADOW_CASCADES,
@@ -77,7 +77,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     }
     else
     {
-        Resources.CascadeSplitsBuffer->SetDebugName("Cascade SplitBuffer");
+        Resources.CascadeSplitsBuffer->SetDebugName(TEXT("Cascade SplitBuffer"));
     }
 
     return true;
@@ -105,7 +105,7 @@ void FCascadeGenerationPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilde
     const bool bEnableSunShadows = GSunShadowsEnabled && (!DirectionalLight || DirectionalLight->bCastShadows);
     const bool bEnablePass       = GShadowsEnabled && bEnableSunShadows && !GFreezeRendering;
 
-    GraphBuilder.AddPass("CascadeGeneration", ERenderGraphPassFlags::Compute, bEnablePass,
+    GraphBuilder.AddPass(TEXT("CascadeGeneration"), ERenderGraphPassFlags::Compute, bEnablePass,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.GBufferDepth, ERHIResourceState::NonPixelShaderResource);

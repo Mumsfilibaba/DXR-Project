@@ -15,9 +15,9 @@
 
 bool GEditorSelectionUseUnjitteredCamera = true;
 static FAutoConsoleVariableRef CVarEditorSelectionUseUnjitteredCamera(
-    "Renderer.Editor.Selection.UseUnjitteredCamera",
-    "Use unjittered camera matrices for editor selection buffers (depth/ObjectID). Disable to better match TAA-jittered shading at the "
-    "cost of more outline jitter.",
+    TEXT("Renderer.Editor.Selection.UseUnjitteredCamera"),
+    TEXT("Use unjittered camera matrices for editor selection buffers (depth/ObjectID). Disable to better match TAA-jittered shading at the "
+    "cost of more outline jitter."),
     GEditorSelectionUseUnjitteredCamera,
     EConsoleVariableFlags::Default);
 
@@ -118,7 +118,7 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
     }
     else
     {
-        const FString DebugName = FString::Printf("Editor NoJitter Depth PSO%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
+        const FString DebugName = FString::Printf(TEXT("Editor NoJitter Depth PSO%s %d"), bBindless ? TEXT(" [Bindless]") : TEXT(""), MaterialFlags);
         NewPipelineInstance.PipelineState->SetDebugName(DebugName);
     }
 
@@ -152,7 +152,7 @@ bool FEditorNoJitterDepthPass::CreateResources(FFrameResources& FrameResources, 
         return false;
     }
 
-    FrameResources.EditorNoJitterDepth->SetDebugName("Editor NoJitter Depth");
+    FrameResources.EditorNoJitterDepth->SetDebugName(TEXT("Editor NoJitter Depth"));
     return true;
 }
 
@@ -163,8 +163,8 @@ void FEditorNoJitterDepthPass::Record(FRHICommandList& CommandList, FFrameResour
         return;
     }
 
-    RHI_EVENT_SCOPE(CommandList, "Editor NoJitter Depth");
-    TRACE_SCOPE("Editor NoJitter Depth");
+    RHI_EVENT_SCOPE(CommandList, TEXT("Editor NoJitter Depth"));
+    TRACE_SCOPE(TEXT("Editor NoJitter Depth"));
     const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
     const float RenderHeight = float(FrameResources.CurrentRenderHeight);
 
@@ -242,7 +242,7 @@ void FEditorNoJitterDepthPass::Record(FRHICommandList& CommandList, FFrameResour
 
 void FEditorNoJitterDepthPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const FSceneRenderGraphContext& Context)
 {
-    GraphBuilder.AddPass("EditorNoJitterDepth", ERenderGraphPassFlags::Raster, true,
+    GraphBuilder.AddPass(TEXT("EditorNoJitterDepth"), ERenderGraphPassFlags::Raster, true,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.SetDepthStencil(Context.EditorNoJitterDepth, EAttachmentLoadAction::Clear);

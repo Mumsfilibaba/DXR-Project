@@ -13,7 +13,7 @@ class FTemporalAntiAliasingCS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FTemporalAntiAliasingCS, "Shaders/TemporalAntiAliasing.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FTemporalAntiAliasingCS, TEXT("Shaders/TemporalAntiAliasing.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 FTemporalAntiAliasing::FTemporalAntiAliasing(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -63,7 +63,7 @@ bool FTemporalAntiAliasing::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            TemporalAntiAliasingPSO->SetDebugName("TAA PSO");
+            TemporalAntiAliasingPSO->SetDebugName(TEXT("TAA PSO"));
         }
     }
 
@@ -86,9 +86,9 @@ void FTemporalAntiAliasing::Record(FRHICommandList& CommandList, FFrameResources
         return;
     }
 
-    RHI_EVENT_SCOPE(CommandList, "TAA");
+    RHI_EVENT_SCOPE(CommandList, TEXT("TAA"));
 
-    TRACE_SCOPE("TAA");
+    TRACE_SCOPE(TEXT("TAA"));
 
     CommandList.SetComputePipelineState(TemporalAntiAliasingPSO.Get());
 
@@ -120,9 +120,9 @@ void FTemporalAntiAliasing::RecordHistorySeed(FRHICommandList& CommandList, FFra
         return;
     }
 
-    RHI_EVENT_SCOPE(CommandList, "TAAHistorySeed");
+    RHI_EVENT_SCOPE(CommandList, TEXT("TAAHistorySeed"));
 
-    TRACE_SCOPE("TAAHistorySeed");
+    TRACE_SCOPE(TEXT("TAAHistorySeed"));
 
     for (FRHITextureRef& HistoryBuffer : TAAHistoryBuffers)
     {
@@ -148,7 +148,7 @@ bool FTemporalAntiAliasing::CreateResources(FFrameResources& /* FrameResources *
         TAABuffer = RHI::CreateTexture(TAABufferDesc, ERHIResourceState::NonPixelShaderResource);
         if (TAABuffer)
         {
-            TAABuffer->SetDebugName(FString::Printf("TAA History-Buffer[%u]", Index++));
+            TAABuffer->SetDebugName(FString::Printf(TEXT("TAA History-Buffer[%u]"), Index++));
         }
         else
         {
@@ -166,7 +166,7 @@ void FTemporalAntiAliasing::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder
 {
     if (!bHistoryValid)
     {
-        GraphBuilder.AddPass("TAAHistorySeed", ERenderGraphPassFlags::Copy, GEnableTemporalAntiAliasing,
+        GraphBuilder.AddPass(TEXT("TAAHistorySeed"), ERenderGraphPassFlags::Copy, GEnableTemporalAntiAliasing,
             [&Context](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.ReadTexture(Context.SceneTarget, ERHIResourceState::CopySource);
@@ -186,7 +186,7 @@ void FTemporalAntiAliasing::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder
     const uint32 WriteIndex = CurrentBufferIndex;
     const uint32 ReadIndex  = (CurrentBufferIndex + 1) % 2;
 
-    GraphBuilder.AddPass("TAA", ERenderGraphPassFlags::Compute, GEnableTemporalAntiAliasing,
+    GraphBuilder.AddPass(TEXT("TAA"), ERenderGraphPassFlags::Compute, GEnableTemporalAntiAliasing,
         [&Context, ReadIndex, WriteIndex](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.GBufferVelocity, ERHIResourceState::NonPixelShaderResource);

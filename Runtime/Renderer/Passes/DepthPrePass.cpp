@@ -14,9 +14,9 @@
 
 bool GPrePassBindless = false;
 static FAutoConsoleVariableRef CVarPrePassBindless(
-    "Renderer.PrePass.Bindless",
-    "When true, the depth pre-pass samples Albedo (alpha mask) and Height (parallax) via SM 6.6 ResourceDescriptorHeap[] / "
-    "SamplerDescriptorHeap[] and a per-material indices buffer instead of register bindings.",
+    TEXT("Renderer.PrePass.Bindless"),
+    TEXT("When true, the depth pre-pass samples Albedo (alpha mask) and Height (parallax) via SM 6.6 ResourceDescriptorHeap[] / "
+    "SamplerDescriptorHeap[] and a per-material indices buffer instead of register bindings."),
     GPrePassBindless);
 
 NODISCARD static FGraphicsPipelineKey CreatePrePassPSOKey(const FMaterialFeatures& Features, bool bBindless, const FVertexDeclaration& Declaration)
@@ -115,7 +115,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FVertexDecla
         }
         else
         {
-            const FString DebugName = FString::Printf("PrePass PipelineState%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
+            const FString DebugName = FString::Printf(TEXT("PrePass PipelineState%s %d"), bBindless ? TEXT(" [Bindless]") : TEXT(""), MaterialFlags);
             NewPipelineInstance.PipelineState->SetDebugName(DebugName);
         }
 
@@ -133,7 +133,7 @@ void FDepthPrePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const 
 {
     FRenderGraphTexture* Depth = Context.GBufferDepth;
 
-    GraphBuilder.AddPass("DepthPrepass", ERenderGraphPassFlags::Raster, GPrePassEnabled,
+    GraphBuilder.AddPass(TEXT("DepthPrepass"), ERenderGraphPassFlags::Raster, GPrePassEnabled,
         [Depth](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.SetDepthStencil(Depth, EAttachmentLoadAction::Clear);
@@ -143,7 +143,7 @@ void FDepthPrePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const 
             Record(PassCommandList, Context.CreatePassResources(PassResources), Context.Scene);
         });
 
-    GraphBuilder.AddPass("ClearDepth", ERenderGraphPassFlags::Raster, !GPrePassEnabled,
+    GraphBuilder.AddPass(TEXT("ClearDepth"), ERenderGraphPassFlags::Raster, !GPrePassEnabled,
         [Depth](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.SetDepthStencil(Depth, EAttachmentLoadAction::Clear);
@@ -155,9 +155,9 @@ void FDepthPrePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const 
 
 void FDepthPrePass::Record(FRHICommandList& CommandList, const FPassResources& PassResources, FScene* Scene)
 {
-    RHI_EVENT_SCOPE(CommandList, "Depth Pre-Pass");
+    RHI_EVENT_SCOPE(CommandList, TEXT("Depth Pre-Pass"));
 
-    TRACE_SCOPE("Depth Pre-Pass");
+    TRACE_SCOPE(TEXT("Depth Pre-Pass"));
 
     const float RenderWidth  = float(PassResources.RenderWidth);
     const float RenderHeight = float(PassResources.RenderHeight);

@@ -36,7 +36,7 @@ static int32   GEngineMainResult = 0;
 
 - (void)runAppThread
 {
-    const char* CommandLine = *GMacCommandLine;
+    const CHAR_T* CommandLine = *GMacCommandLine;
     GEngineMainResult = EngineMain(&CommandLine, 1);
     
     if (GEngineMainResult == 0)
@@ -90,13 +90,13 @@ int main(int NumArgs, const CHAR_T** Args)
     CommandLine::Initialize(Args + 1, NumArgs - 1);
     FConfig::Initialize();
     FPlatformMisc::PrepareMetalDebugLayerEnvironment(
-        IsBoolEnabledAtLaunch("RHI", "RHI.EnableDebugLayer"),
-        IsBoolEnabledAtLaunch("MetalRHI", "MetalRHI.EnableShaderValidation"));
+        IsBoolEnabledAtLaunch(TEXT("RHI"), TEXT("RHI.EnableDebugLayer")),
+        IsBoolEnabledAtLaunch(TEXT("MetalRHI"), TEXT("MetalRHI.EnableShaderValidation")));
 
     // The first argument is always the path to the application, so start processing from index 1
     for (int32 Index = 1; Index < NumArgs; Index++)
     {
-        GMacCommandLine += " ";
+        GMacCommandLine += TEXT(" ");
         FString CurrentArg(Args[Index]);
         
         if (CurrentArg.Contains(' '))
@@ -107,11 +107,11 @@ int main(int NumArgs, const CHAR_T** Args)
                 FString ArgumentValue;
                 CurrentArg.Split('=', Argument, ArgumentValue);
                 
-                CurrentArg = FString::Printf("%s=\"%s\"", *Argument, *ArgumentValue);
+                CurrentArg = FString::Printf(TEXT("%s=\"%s\""), *Argument, *ArgumentValue);
             }
             else
             {
-                CurrentArg = FString::Printf("\"%s\"", *CurrentArg);
+                CurrentArg = FString::Printf(TEXT("\"%s\""), *CurrentArg);
             }
         }
         

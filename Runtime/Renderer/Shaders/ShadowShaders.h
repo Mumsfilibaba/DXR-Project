@@ -63,7 +63,7 @@ NODISCARD typename ShaderRules::FPermutation CreateShadowPermutation(const FMate
 // Point light shadows
 // -------------------------------------------------------------------------------------------
 
-class FPointLightPassKind : SHADER_PERMUTATION_ENUM("POINTLIGHT_PASS_KIND", ECubeMapRenderPassType);
+class FPointLightPassKind : SHADER_PERMUTATION_ENUM(TEXT("POINTLIGHT_PASS_KIND"), ECubeMapRenderPassType);
 
 struct FPointLightShadowRules
 {
@@ -125,7 +125,7 @@ class FPointLightShadowPS : public FPointLightShadowRules
 // Cascaded shadows
 // -------------------------------------------------------------------------------------------
 
-class FCascadePassKind : SHADER_PERMUTATION_ENUM("CASCADE_PASS_KIND", ECascadeRenderPassType);
+class FCascadePassKind : SHADER_PERMUTATION_ENUM(TEXT("CASCADE_PASS_KIND"), ECascadeRenderPassType);
 
 struct FCascadeShadowRules
 {
@@ -199,16 +199,16 @@ class FCascadeMatrixGenCS
 // Directional shadow mask
 // -------------------------------------------------------------------------------------------
 
-class FCSMFilterFunctionDim     : SHADER_PERMUTATION_ENUM("SHADOW_FILTER_FUNCTION", ECSMFilterFunction);
-class FCSMFilterModeDim         : SHADER_PERMUTATION_ENUM("SHADOW_FILTER_MODE", ECSMFilterMode);
-class FCSMDebug                 : SHADER_PERMUTATION_BOOL("ENABLE_DEBUG");
-class FCSMRotateSamples         : SHADER_PERMUTATION_BOOL("ROTATE_SAMPLES");
-class FCSMCascadeFromProjection : SHADER_PERMUTATION_BOOL("SELECT_CASCADE_FROM_PROJECTION");
-class FCSMBlendCascades         : SHADER_PERMUTATION_BOOL("ENABLE_CASCADE_BLENDING");
+class FCSMFilterFunctionDim     : SHADER_PERMUTATION_ENUM(TEXT("SHADOW_FILTER_FUNCTION"), ECSMFilterFunction);
+class FCSMFilterModeDim         : SHADER_PERMUTATION_ENUM(TEXT("SHADOW_FILTER_MODE"), ECSMFilterMode);
+class FCSMDebug                 : SHADER_PERMUTATION_BOOL(TEXT("ENABLE_DEBUG"));
+class FCSMRotateSamples         : SHADER_PERMUTATION_BOOL(TEXT("ROTATE_SAMPLES"));
+class FCSMCascadeFromProjection : SHADER_PERMUTATION_BOOL(TEXT("SELECT_CASCADE_FROM_PROJECTION"));
+class FCSMBlendCascades         : SHADER_PERMUTATION_BOOL(TEXT("ENABLE_CASCADE_BLENDING"));
 
 class FCSMNumSamples : public TShaderPermutationInt<int32, 4>
 {
-    SHADER_PERMUTATION_DEFINE("NUM_SAMPLES");
+    SHADER_PERMUTATION_DEFINE(TEXT("NUM_SAMPLES"));
 
 public:
 
@@ -233,7 +233,7 @@ public:
 
     NODISCARD static FString ToDefineValue(Type Value)
     {
-        return FString::Printf("%d", 16 << Value);
+        return FString::Printf(TEXT("%d"), 16 << Value);
     }
 };
 

@@ -200,7 +200,7 @@ void FGPUProfiler::CollectResults()
     float  FrameMs    = 0.0f;
 
     {
-        TRACE_SCOPE("GPU Profiler Collect Frame Queries");
+        TRACE_SCOPE(TEXT("GPU Profiler Collect Frame Queries"));
 
         if (bFrameBeginRecorded[ReadIndex] && FrameBeginQuery[ReadIndex])
         {
@@ -253,7 +253,7 @@ void FGPUProfiler::CollectResults()
     uint64 EarliestStart = TNumericLimits<uint64>::Max();
     uint64 LatestEnd     = 0;
     {
-        TRACE_SCOPE("GPU Profiler Collect Scope Queries");
+        TRACE_SCOPE(TEXT("GPU Profiler Collect Scope Queries"));
 
         for (int32 ScopeIndex = 0; ScopeIndex < NumScopes; ++ScopeIndex)
         {
@@ -298,7 +298,7 @@ void FGPUProfiler::CollectResults()
 
             if (Scope.bOwnsPipelineStats)
             {
-                const FString ScopeName = Scope.Name ? Scope.Name : "";
+                const FString ScopeName = Scope.Name ? Scope.Name : TEXT("");
                 if (FGPUProfileScopeQueries* Queries = ScopeQueries.Find(ScopeName))
                 {
                     if (Queries->PipelineStatsQuery[ReadIndex])
@@ -331,7 +331,7 @@ void FGPUProfiler::CollectResults()
     }
 
     {
-        TRACE_SCOPE("GPU Profiler Publish Results");
+        TRACE_SCOPE(TEXT("GPU Profiler Publish Results"));
 
         uint64 SpanBegin = EarliestStart;
         uint64 SpanEnd   = LatestEnd;

@@ -13,14 +13,14 @@
 
 static bool GDrawTileDebug = false;
 static FAutoConsoleVariableRef CVarDrawTileDebug(
-    "Renderer.Debug.DrawTiledLightning",
-    "Draws the tiled lightning overlay, that displays how many lights are used in a certain tile",
+    TEXT("Renderer.Debug.DrawTiledLightning"),
+    TEXT("Draws the tiled lightning overlay, that displays how many lights are used in a certain tile"),
     GDrawTileDebug);
 
 float GIndirectSpecularStrength = 1.0f;
 static FAutoConsoleVariableRef CVarIndirectSpecularStrength(
-    "Renderer.Reflections.IndirectSpecularStrength",
-    "Scalar multiplier applied to the indirect specular (IBL / ray-traced reflection) contribution in the deferred light pass.",
+    TEXT("Renderer.Reflections.IndirectSpecularStrength"),
+    TEXT("Scalar multiplier applied to the indirect specular (IBL / ray-traced reflection) contribution in the deferred light pass."),
     GIndirectSpecularStrength);
 
 class FBRDFIntegrationCS
@@ -30,7 +30,7 @@ class FBRDFIntegrationCS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FBRDFIntegrationCS, "Shaders/BRDFIntegationGen.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FBRDFIntegrationCS, TEXT("Shaders/BRDFIntegationGen.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 enum class ETiledLightDebugMode : uint8
 {
@@ -41,7 +41,7 @@ enum class ETiledLightDebugMode : uint8
     Count,
 };
 
-class FTiledLightDebug : SHADER_PERMUTATION_ENUM("TILED_LIGHT_DEBUG_MODE", ETiledLightDebugMode);
+class FTiledLightDebug : SHADER_PERMUTATION_ENUM(TEXT("TILED_LIGHT_DEBUG_MODE"), ETiledLightDebugMode);
 
 struct FLightPassSettingsHLSL
 {
@@ -68,7 +68,7 @@ class FDeferredLightPassCS
     using FPermutation = TShaderPermutation<FTiledLightDebug>;
 };
 
-IMPLEMENT_SHADER_TYPE(FDeferredLightPassCS, "Shaders/DeferredLightPass.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FDeferredLightPassCS, TEXT("Shaders/DeferredLightPass.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 FTiledLightPass::FTiledLightPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -124,7 +124,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     }
     else
     {
-        StagingTexture->SetDebugName("Staging IntegrationLUT");
+        StagingTexture->SetDebugName(TEXT("Staging IntegrationLUT"));
     }
 
     LUTDesc.UsageFlags = ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopyDest;
@@ -137,7 +137,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     }
     else
     {
-        FrameResources.IntegrationLUT->SetDebugName("IntegrationLUT");
+        FrameResources.IntegrationLUT->SetDebugName(TEXT("IntegrationLUT"));
     }
 
     SamplerDesc.AddressU = ESamplerMode::Clamp;
@@ -170,7 +170,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     }
     else
     {
-        BRDFPipelineState->SetDebugName("BRDFIntegationGen PipelineState");
+        BRDFPipelineState->SetDebugName(TEXT("BRDFIntegationGen PipelineState"));
     }
 
     FRHICommandList CommandList;
@@ -221,7 +221,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     }
     else
     {
-        TiledLightPassPSO->SetDebugName("DeferredLightPass PipelineState");
+        TiledLightPassPSO->SetDebugName(TEXT("DeferredLightPass PipelineState"));
     }
 
     LightPassPermutation.Set<FTiledLightDebug>(ETiledLightDebugMode::Tiles);
@@ -243,7 +243,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     }
     else
     {
-        TiledLightPassPSO_TileDebug->SetDebugName("DeferredLightPass PipelineState Tile-Debug");
+        TiledLightPassPSO_TileDebug->SetDebugName(TEXT("DeferredLightPass PipelineState Tile-Debug"));
     }
 
     LightPassPermutation.Set<FTiledLightDebug>(ETiledLightDebugMode::Cascade);
@@ -265,7 +265,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     }
     else
     {
-        TiledLightPassPSO_CascadeDebug->SetDebugName("DeferredLightPass PipelineState Cascade-Debug");
+        TiledLightPassPSO_CascadeDebug->SetDebugName(TEXT("DeferredLightPass PipelineState Cascade-Debug"));
     }
 
     return true;
@@ -278,9 +278,9 @@ void FTiledLightPass::Record(FRHICommandList& CommandList, const FFrameResources
         return;
     }
 
-    RHI_EVENT_SCOPE(CommandList, "LightPass");
+    RHI_EVENT_SCOPE(CommandList, TEXT("LightPass"));
 
-    TRACE_SCOPE("LightPass");
+    TRACE_SCOPE(TEXT("LightPass"));
 
     const bool bDrawCascades = GCSMDebugCascades;
 
@@ -402,7 +402,7 @@ void FTiledLightPass::Record(FRHICommandList& CommandList, const FFrameResources
 
 void FTiledLightPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const FSceneRenderGraphContext& Context)
 {
-    GraphBuilder.AddPass("Lighting", ERenderGraphPassFlags::Compute, true,
+    GraphBuilder.AddPass(TEXT("Lighting"), ERenderGraphPassFlags::Compute, true,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.GBufferAlbedo, ERHIResourceState::NonPixelShaderResource);

@@ -12,44 +12,44 @@ static FSelectionOutlineSettings GSelectionOutlineSettings =
 };
 
 static FAutoConsoleVariableRef CVarSelectionOutlineEnabled(
-    "Renderer.Editor.SelectionOutline.Enable",
-    "Enables screen-space selection outline in the editor",
+    TEXT("Renderer.Editor.SelectionOutline.Enable"),
+    TEXT("Enables screen-space selection outline in the editor"),
     GSelectionOutlineSettings.bEnabled,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarSelectionOutlineThicknessPx(
-    "Renderer.Editor.SelectionOutline.ThicknessPx",
-    "Selection outline thickness in pixels",
+    TEXT("Renderer.Editor.SelectionOutline.ThicknessPx"),
+    TEXT("Selection outline thickness in pixels"),
     GSelectionOutlineSettings.ThicknessPx,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarSelectionOutlineAlpha(
-    "Renderer.Editor.SelectionOutline.Alpha",
-    "Selection outline alpha (0-1)",
+    TEXT("Renderer.Editor.SelectionOutline.Alpha"),
+    TEXT("Selection outline alpha (0-1)"),
     GSelectionOutlineSettings.Alpha,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarSelectionOutlineSmoothness(
-    "Renderer.Editor.SelectionOutline.Smoothness",
-    "Selection outline smoothing/AA amount (0 = off, 1 = default)",
+    TEXT("Renderer.Editor.SelectionOutline.Smoothness"),
+    TEXT("Selection outline smoothing/AA amount (0 = off, 1 = default)"),
     GSelectionOutlineSettings.Smoothness,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarSelectionOutlineColorR(
-    "Renderer.Editor.SelectionOutline.ColorR",
-    "Selection outline color (linear) - Red channel (0-1)",
+    TEXT("Renderer.Editor.SelectionOutline.ColorR"),
+    TEXT("Selection outline color (linear) - Red channel (0-1)"),
     GSelectionOutlineSettings.Color.X,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarSelectionOutlineColorG(
-    "Renderer.Editor.SelectionOutline.ColorG",
-    "Selection outline color (linear) - Green channel (0-1)",
+    TEXT("Renderer.Editor.SelectionOutline.ColorG"),
+    TEXT("Selection outline color (linear) - Green channel (0-1)"),
     GSelectionOutlineSettings.Color.Y,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarSelectionOutlineColorB(
-    "Renderer.Editor.SelectionOutline.ColorB",
-    "Selection outline color (linear) - Blue channel (0-1)",
+    TEXT("Renderer.Editor.SelectionOutline.ColorB"),
+    TEXT("Selection outline color (linear) - Blue channel (0-1)"),
     GSelectionOutlineSettings.Color.Z,
     EConsoleVariableFlags::Default);
 

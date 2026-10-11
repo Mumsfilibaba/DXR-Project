@@ -7,15 +7,15 @@
 
 static int32 GTonemappingFunction = 1;
 static FAutoConsoleVariableRef CVarTonemappingFunction(
-    "Renderer.Tonemapping.Function",
-    "Select function to use during tonemapping. 0: Default 1: ACES 2: Reinhard 3: Uncharted 2",
+    TEXT("Renderer.Tonemapping.Function"),
+    TEXT("Select function to use during tonemapping. 0: Default 1: ACES 2: Reinhard 3: Uncharted 2"),
     GTonemappingFunction,
     EConsoleVariableFlags::Default);
 
 static float GTonemappingReinhardIntensity = 1.0f;
 static FAutoConsoleVariableRef CVarTonemappingReinhardIntensity(
-    "Renderer.Tonemapping.ReinhardIntensity",
-    "Intensity/\"Exposure\" when using Reinhard tonemapping",
+    TEXT("Renderer.Tonemapping.ReinhardIntensity"),
+    TEXT("Intensity/\"Exposure\" when using Reinhard tonemapping"),
     GTonemappingReinhardIntensity,
     EConsoleVariableFlags::Default);
 
@@ -26,7 +26,7 @@ class FTonemappingPS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FTonemappingPS, "Shaders/Tonemapping.hlsl", "TonemappingPS", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FTonemappingPS, TEXT("Shaders/Tonemapping.hlsl"), TEXT("TonemappingPS"), EShaderModel::SM_6_2);
 
 FTonemapPass::FTonemapPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -155,9 +155,9 @@ void FTonemapPass::Record(FRHICommandList& CommandList, const FFrameResources& F
         return;
     }
 
-    RHI_EVENT_SCOPE(CommandList, "Tonemapping");
+    RHI_EVENT_SCOPE(CommandList, TEXT("Tonemapping"));
 
-    TRACE_SCOPE("Tonemapping");
+    TRACE_SCOPE(TEXT("Tonemapping"));
 
     const float RenderWidth  = static_cast<float>(FrameResources.CurrentRenderWidth);
     const float RenderHeight = static_cast<float>(FrameResources.CurrentRenderHeight);
@@ -194,7 +194,7 @@ void FTonemapPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const F
         OutputGraphTexture = Context.SceneOutput;
     }
 
-    GraphBuilder.AddPass("Tonemap", ERenderGraphPassFlags::Raster, true,
+    GraphBuilder.AddPass(TEXT("Tonemap"), ERenderGraphPassFlags::Raster, true,
         [&Context, OutputGraphTexture](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.SceneTarget, ERHIResourceState::PixelShaderResource);

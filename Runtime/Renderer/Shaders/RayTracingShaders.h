@@ -6,7 +6,7 @@
 // Mirrors MATERIAL_SRV_REGISTER_BASE in Assets/Shaders/ClosestHit.hlsl.
 constexpr uint32 RAY_TRACING_MATERIAL_SLOT_REGISTER = 2;
 
-class FRayTracingSER : SHADER_PERMUTATION_BOOL("RAY_TRACING_SHADER_EXECUTION_REORDERING");
+class FRayTracingSER : SHADER_PERMUTATION_BOOL(TEXT("RAY_TRACING_SHADER_EXECUTION_REORDERING"));
 
 using FRayTracingPermutation = TShaderPermutation<FBindless, FRayTracingSER>;
 

@@ -9,78 +9,78 @@
 
 static bool GReflectionDenoise = true;
 static FAutoConsoleVariableRef CVarReflectionDenoise(
-    "Renderer.RayTracing.Reflections.Denoise",
-    "Enable the reflection denoiser (temporal accumulation + SVGF a-trous). Off = raw 1-spp reflection trace.",
+    TEXT("Renderer.RayTracing.Reflections.Denoise"),
+    TEXT("Enable the reflection denoiser (temporal accumulation + SVGF a-trous). Off = raw 1-spp reflection trace."),
     GReflectionDenoise);
 
 static int32 GReflectionAtrousIterations = 4;
 static FAutoConsoleVariableRef CVarReflectionAtrousIterations(
-    "Renderer.RayTracing.Reflections.AtrousIterations",
-    "Number of SVGF a-trous spatial-filter iterations (0 disables the spatial filter).",
+    TEXT("Renderer.RayTracing.Reflections.AtrousIterations"),
+    TEXT("Number of SVGF a-trous spatial-filter iterations (0 disables the spatial filter)."),
     GReflectionAtrousIterations);
 
 static float GReflectionTemporalAlpha = 0.1f;
 static FAutoConsoleVariableRef CVarReflectionTemporalAlpha(
-    "Renderer.RayTracing.Reflections.TemporalAlpha",
-    "Minimum temporal blend toward the current frame (1 = no history, lower = more accumulation).",
+    TEXT("Renderer.RayTracing.Reflections.TemporalAlpha"),
+    TEXT("Minimum temporal blend toward the current frame (1 = no history, lower = more accumulation)."),
     GReflectionTemporalAlpha);
 
 static float GReflectionMaxRadiance = 8.0f;
 static FAutoConsoleVariableRef CVarReflectionMaxRadiance(
-    "Renderer.RayTracing.Reflections.MaxRadiance",
-    "Luminance clamp applied to each reflection sample before temporal accumulation to suppress fireflies (<= 0 disables the clamp).",
+    TEXT("Renderer.RayTracing.Reflections.MaxRadiance"),
+    TEXT("Luminance clamp applied to each reflection sample before temporal accumulation to suppress fireflies (<= 0 disables the clamp)."),
     GReflectionMaxRadiance);
 
 static float GReflectionHistoryClampGamma = 1.0f;
 static FAutoConsoleVariableRef CVarReflectionHistoryClampGamma(
-    "Renderer.RayTracing.Reflections.HistoryClampGamma",
-    "Width (in neighborhood std-devs) of the temporal history clamp used to suppress motion ghosting. Lower = tighter/less ghosting but "
-    "more noise. <= 0 disables history rectification.",
+    TEXT("Renderer.RayTracing.Reflections.HistoryClampGamma"),
+    TEXT("Width (in neighborhood std-devs) of the temporal history clamp used to suppress motion ghosting. Lower = tighter/less ghosting but "
+    "more noise. <= 0 disables history rectification."),
     GReflectionHistoryClampGamma);
 
 float GReflectionMaxHistoryLength = 32.0f;
 static FAutoConsoleVariableRef CVarReflectionMaxHistoryLength(
-    "Renderer.RayTracing.Reflections.MaxHistoryLength",
-    "Maximum number of frames of reflection temporal accumulation. Shorter = faster response / less ghosting, longer = smoother / more "
-    "ghosting.",
+    TEXT("Renderer.RayTracing.Reflections.MaxHistoryLength"),
+    TEXT("Maximum number of frames of reflection temporal accumulation. Shorter = faster response / less ghosting, longer = smoother / more "
+    "ghosting."),
     GReflectionMaxHistoryLength);
 
 static int32 GReflectionNeighborhoodRadius = 4;
 static FAutoConsoleVariableRef CVarReflectionNeighborhoodRadius(
-    "Renderer.RayTracing.Reflections.NeighborhoodRadius",
-    "Half-window (in texels) of the current-frame neighborhood used to build the temporal history color clamp box.",
+    TEXT("Renderer.RayTracing.Reflections.NeighborhoodRadius"),
+    TEXT("Half-window (in texels) of the current-frame neighborhood used to build the temporal history color clamp box."),
     GReflectionNeighborhoodRadius);
 
 static float GReflectionCameraMotionMaxHistory = 8.0f;
 static FAutoConsoleVariableRef CVarReflectionCameraMotionMaxHistory(
-    "Renderer.RayTracing.Reflections.CameraMotionMaxHistory",
-    "Accumulation cap (frames) applied while the camera is translating, so history decays quickly and does not smear. <= 0 disables the "
-    "camera-motion reset.",
+    TEXT("Renderer.RayTracing.Reflections.CameraMotionMaxHistory"),
+    TEXT("Accumulation cap (frames) applied while the camera is translating, so history decays quickly and does not smear. <= 0 disables the "
+    "camera-motion reset."),
     GReflectionCameraMotionMaxHistory);
 
 static bool GReflectionHalfRes = false;
 static FAutoConsoleVariableRef CVarReflectionHalfRes(
-    "Renderer.RayTracing.Reflections.HalfRes",
-    "Trace + denoise reflections at half resolution and bilateral-upsample to full res (faster, softer).",
+    TEXT("Renderer.RayTracing.Reflections.HalfRes"),
+    TEXT("Trace + denoise reflections at half resolution and bilateral-upsample to full res (faster, softer)."),
     GReflectionHalfRes);
 
 static float GReflectionAtrousPhiColor = 4.0f;
 static FAutoConsoleVariableRef CVarReflectionAtrousPhiColor(
-    "Renderer.RayTracing.Reflections.AtrousPhiColor",
-    "Color sensitivity of the SVGF a-trous edge-stopping function. Lower preserves more detail but keeps more noise.",
+    TEXT("Renderer.RayTracing.Reflections.AtrousPhiColor"),
+    TEXT("Color sensitivity of the SVGF a-trous edge-stopping function. Lower preserves more detail but keeps more noise."),
     GReflectionAtrousPhiColor);
 
 // One literal per iteration, because the graph stores a pass name as a raw pointer
 static const CHAR_T* ATROUS_PASS_NAMES[FReflectionDenoisePass::MaxAtrousIterations] =
 {
-    "ReflectionAtrous0",
-    "ReflectionAtrous1",
-    "ReflectionAtrous2",
-    "ReflectionAtrous3",
-    "ReflectionAtrous4",
-    "ReflectionAtrous5",
-    "ReflectionAtrous6",
-    "ReflectionAtrous7",
+    TEXT("ReflectionAtrous0"),
+    TEXT("ReflectionAtrous1"),
+    TEXT("ReflectionAtrous2"),
+    TEXT("ReflectionAtrous3"),
+    TEXT("ReflectionAtrous4"),
+    TEXT("ReflectionAtrous5"),
+    TEXT("ReflectionAtrous6"),
+    TEXT("ReflectionAtrous7"),
 };
 
 constexpr uint32 DENOISE_THREAD_COUNT = 8;
@@ -147,13 +147,13 @@ bool FReflectionDenoisePass::Initialize(FFrameResources& /*Resources*/)
     };
 
     TemporalShader   = FShaderCache::Get().GetShader<FReflectionTemporalCS>();
-    TemporalPipeline = CreateComputePipeline(TemporalShader, "Reflection Temporal PSO");
+    TemporalPipeline = CreateComputePipeline(TemporalShader, TEXT("Reflection Temporal PSO"));
 
     AtrousShader   = FShaderCache::Get().GetShader<FReflectionAtrousCS>();
-    AtrousPipeline = CreateComputePipeline(AtrousShader, "Reflection A-Trous PSO");
+    AtrousPipeline = CreateComputePipeline(AtrousShader, TEXT("Reflection A-Trous PSO"));
 
     UpsampleShader   = FShaderCache::Get().GetShader<FReflectionUpsampleCS>();
-    UpsamplePipeline = CreateComputePipeline(UpsampleShader, "Reflection Upsample PSO");
+    UpsamplePipeline = CreateComputePipeline(UpsampleShader, TEXT("Reflection Upsample PSO"));
 
     if (!TemporalPipeline || !AtrousPipeline)
     {
@@ -207,9 +207,9 @@ bool FReflectionDenoisePass::CreateResources(FFrameResources& Resources, uint32 
         return Texture;
     };
 
-    const CHAR_T* HistoryNames[2]  = { "Reflection History 0",  "Reflection History 1"  };
-    const CHAR_T* MomentsNames[2]  = { "Reflection Moments 0",  "Reflection Moments 1"  };
-    const CHAR_T* DenoisedNames[2] = { "Reflection Denoised 0", "Reflection Denoised 1" };
+    const CHAR_T* HistoryNames[2]  = { TEXT("Reflection History 0"),  TEXT("Reflection History 1")  };
+    const CHAR_T* MomentsNames[2]  = { TEXT("Reflection Moments 0"),  TEXT("Reflection Moments 1")  };
+    const CHAR_T* DenoisedNames[2] = { TEXT("Reflection Denoised 0"), TEXT("Reflection Denoised 1") };
 
     for (int32 Index = 0; Index < 2; ++Index)
     {
@@ -250,18 +250,18 @@ void FReflectionDenoisePass::RecordTemporal(FRHICommandList& CommandList, FFrame
         }
     };
 
-    RequireResource(TemporalPipeline.Get(), "TemporalPipeline");
-    RequireResource(TemporalShader.Get(), "TemporalShader");
-    RequireResource(Resources.ReflectionTrace.Get(), "ReflectionTrace");
-    RequireResource(Resources.GBuffer[EGBufferIndex::Normal].Get(), "GBuffer.Normal");
-    RequireResource(Resources.GBuffer[EGBufferIndex::Depth].Get(), "GBuffer.Depth");
-    RequireResource(Resources.GBuffer[EGBufferIndex::Velocity].Get(), "GBuffer.Velocity");
-    RequireResource(Resources.ReflectionHistory[ReadIndex].Get(), "ReflectionHistory[Read]");
-    RequireResource(Resources.ReflectionMoments[ReadIndex].Get(), "ReflectionMoments[Read]");
-    RequireResource(Resources.ReflectionHistory[WriteIndex].Get(), "ReflectionHistory[Write]");
-    RequireResource(Resources.ReflectionMoments[WriteIndex].Get(), "ReflectionMoments[Write]");
-    RequireResource(Resources.CameraBuffer.Get(), "CameraBuffer");
-    RequireResource(Target, "Target");
+    RequireResource(TemporalPipeline.Get(), TEXT("TemporalPipeline"));
+    RequireResource(TemporalShader.Get(), TEXT("TemporalShader"));
+    RequireResource(Resources.ReflectionTrace.Get(), TEXT("ReflectionTrace"));
+    RequireResource(Resources.GBuffer[EGBufferIndex::Normal].Get(), TEXT("GBuffer.Normal"));
+    RequireResource(Resources.GBuffer[EGBufferIndex::Depth].Get(), TEXT("GBuffer.Depth"));
+    RequireResource(Resources.GBuffer[EGBufferIndex::Velocity].Get(), TEXT("GBuffer.Velocity"));
+    RequireResource(Resources.ReflectionHistory[ReadIndex].Get(), TEXT("ReflectionHistory[Read]"));
+    RequireResource(Resources.ReflectionMoments[ReadIndex].Get(), TEXT("ReflectionMoments[Read]"));
+    RequireResource(Resources.ReflectionHistory[WriteIndex].Get(), TEXT("ReflectionHistory[Write]"));
+    RequireResource(Resources.ReflectionMoments[WriteIndex].Get(), TEXT("ReflectionMoments[Write]"));
+    RequireResource(Resources.CameraBuffer.Get(), TEXT("CameraBuffer"));
+    RequireResource(Target, TEXT("Target"));
 
     if (MissingResource)
     {
@@ -399,7 +399,7 @@ void FReflectionDenoisePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilde
     // With no spatial filter and no upsample to follow, the temporal step already produces the final image
     FRenderGraphTexture* const TemporalTarget = (!bHalfRes && NumIterations <= 0) ? Context.RayTracingOutput : Context.ReflectionDenoised[0];
 
-    GraphBuilder.AddPass("ReflectionTemporal", ERenderGraphPassFlags::Compute, true,
+    GraphBuilder.AddPass(TEXT("ReflectionTemporal"), ERenderGraphPassFlags::Compute, true,
         [&Context, ReadIndex, WriteIndex, TemporalTarget](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.ReflectionTrace, ERHIResourceState::NonPixelShaderResource);
@@ -453,7 +453,7 @@ void FReflectionDenoisePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilde
 
     FRenderGraphTexture* const ChainResult = Source;
 
-    GraphBuilder.AddPass("ReflectionUpsample", ERenderGraphPassFlags::Compute, true,
+    GraphBuilder.AddPass(TEXT("ReflectionUpsample"), ERenderGraphPassFlags::Compute, true,
         [&Context, ChainResult](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(ChainResult, ERHIResourceState::NonPixelShaderResource);

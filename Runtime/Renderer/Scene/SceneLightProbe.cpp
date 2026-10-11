@@ -57,7 +57,7 @@ void FSceneLightProbe::RenderThread_FilterStaticCubeMaps()
     }
     else
     {
-        TempSpecularCubeMap->SetDebugName("Temp Specular CubeMap");
+        TempSpecularCubeMap->SetDebugName(TEXT("Temp Specular CubeMap"));
     }
 
     const uint32 DiffuseCubeMapSize = 32;
@@ -71,7 +71,7 @@ void FSceneLightProbe::RenderThread_FilterStaticCubeMaps()
     }
     else
     {
-        TempDiffuseCubeMap->SetDebugName("Temp Diffuse CubeMap");
+        TempDiffuseCubeMap->SetDebugName(TEXT("Temp Diffuse CubeMap"));
     }
 
     FRHICommandList CommandList;
@@ -98,13 +98,13 @@ void FSceneLightProbe::RenderThread_FilterStaticCubeMaps()
 
     if (SpecularCubeMap)
     {
-        SpecularCubeMap->SetDebugName("Specular CubeMap");
+        SpecularCubeMap->SetDebugName(TEXT("Specular CubeMap"));
     }
 
     TextureCompressor.CompressCubeMapBC6(CommandList, TempDiffuseCubeMap, DiffuseCubeMap);
     if (DiffuseCubeMap)
     {
-        DiffuseCubeMap->SetDebugName("Diffuse CubeMap");
+        DiffuseCubeMap->SetDebugName(TEXT("Diffuse CubeMap"));
     }
 
     FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);

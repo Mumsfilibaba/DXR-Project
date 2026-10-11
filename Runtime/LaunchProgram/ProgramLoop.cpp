@@ -7,7 +7,7 @@
 
 IMPLEMENT_ENGINE_MODULE(IModule, LaunchProgram);
 
-const CHAR_T*      GProgramTitle = "Program";
+const CHAR_T*      GProgramTitle = TEXT("Program");
 TFunction<int32()> GProgramBody;
 TArray<FString>    GProgramArgs;
 
@@ -43,7 +43,7 @@ int32 FProgramLoop::Run(const CHAR_T* ConsoleTitle, const TFunction<int32()>& Bo
         return 1;
     }
 
-    const CHAR_T* Title = (ConsoleTitle && (*ConsoleTitle != '\0')) ? ConsoleTitle : "Program";
+    const CHAR_T* Title = (ConsoleTitle && (*ConsoleTitle != '\0')) ? ConsoleTitle : TEXT("Program");
     Console->SetTitle(Title);
     Console->Show(true);
     Console->SetOnClosed([]()

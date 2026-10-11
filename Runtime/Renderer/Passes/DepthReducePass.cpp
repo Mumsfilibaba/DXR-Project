@@ -27,8 +27,8 @@ class FDepthReductionCS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FDepthReductionInitialCS, "Shaders/DepthReduction.hlsl", "ReductionMainInital", EShaderModel::SM_6_2);
-IMPLEMENT_SHADER_TYPE(FDepthReductionCS,        "Shaders/DepthReduction.hlsl", "ReductionMain",       EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FDepthReductionInitialCS, TEXT("Shaders/DepthReduction.hlsl"), TEXT("ReductionMainInital"), EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FDepthReductionCS,        TEXT("Shaders/DepthReduction.hlsl"), TEXT("ReductionMain"),       EShaderModel::SM_6_2);
 
 /** Every step folds a 16x16 tile into a single texel, so the dispatch shrinks once per step already taken */
 constexpr uint32 REDUCTION_TILE_SIZE = 16;
@@ -84,7 +84,7 @@ bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
     }
     else
     {
-        ReduceDepthInitalPSO->SetDebugName("Initial DepthReduction PipelineState");
+        ReduceDepthInitalPSO->SetDebugName(TEXT("Initial DepthReduction PipelineState"));
     }
 
 
@@ -105,7 +105,7 @@ bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
     }
     else
     {
-        ReduceDepthPSO->SetDebugName("DepthReduction PipelineState");
+        ReduceDepthPSO->SetDebugName(TEXT("DepthReduction PipelineState"));
     }
 
     return true;
@@ -119,7 +119,7 @@ void FDepthReducePass::RecordInitialReduction(FRHICommandList& CommandList, FFra
         return;
     }
 
-    TRACE_SCOPE("Depth Reduction Initial");
+    TRACE_SCOPE(TEXT("Depth Reduction Initial"));
 
     FReductionConstants ReductionConstants;
 
@@ -151,7 +151,7 @@ void FDepthReducePass::RecordReduction(FRHICommandList& CommandList, FFrameResou
         return;
     }
 
-    TRACE_SCOPE("Depth Reduction");
+    TRACE_SCOPE(TEXT("Depth Reduction"));
 
     CommandList.SetComputePipelineState(ReduceDepthPSO.Get());
 
@@ -167,7 +167,7 @@ void FDepthReducePass::RecordReduction(FRHICommandList& CommandList, FFrameResou
 
 void FDepthReducePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const FSceneRenderGraphContext& Context)
 {
-    GraphBuilder.AddPass("DepthReduceInitial", ERenderGraphPassFlags::Compute, GCSMTightFrustum,
+    GraphBuilder.AddPass(TEXT("DepthReduceInitial"), ERenderGraphPassFlags::Compute, GCSMTightFrustum,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.GBufferDepth, ERHIResourceState::NonPixelShaderResource);
@@ -180,7 +180,7 @@ void FDepthReducePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, con
             RecordInitialReduction(PassCommandList, *Context.FrameResources, Context.Scene);
         });
 
-    GraphBuilder.AddPass("DepthReduceStep1", ERenderGraphPassFlags::Compute, GCSMTightFrustum,
+    GraphBuilder.AddPass(TEXT("DepthReduceStep1"), ERenderGraphPassFlags::Compute, GCSMTightFrustum,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.ReducedDepthBuffer0, ERHIResourceState::NonPixelShaderResource);
@@ -193,7 +193,7 @@ void FDepthReducePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, con
             RecordReduction(PassCommandList, *Context.FrameResources, 0, 1, 1);
         });
 
-    GraphBuilder.AddPass("DepthReduceStep2", ERenderGraphPassFlags::Compute, GCSMTightFrustum,
+    GraphBuilder.AddPass(TEXT("DepthReduceStep2"), ERenderGraphPassFlags::Compute, GCSMTightFrustum,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.ReducedDepthBuffer1, ERHIResourceState::NonPixelShaderResource);

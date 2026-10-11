@@ -16,7 +16,7 @@ class FFinalCompositePS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FFinalCompositePS, "Shaders/FinalComposite.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FFinalCompositePS, TEXT("Shaders/FinalComposite.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 FFinalCompositePass::FFinalCompositePass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -127,9 +127,9 @@ void FFinalCompositePass::Record(FRHICommandList& CommandList, const FFrameResou
         return;
     }
 
-    RHI_EVENT_SCOPE(CommandList, "Final Composite");
+    RHI_EVENT_SCOPE(CommandList, TEXT("Final Composite"));
 
-    TRACE_SCOPE("Final Composite");
+    TRACE_SCOPE(TEXT("Final Composite"));
 
     const float RenderWidth  = static_cast<float>(FrameResources.CurrentRenderWidth);
     const float RenderHeight = static_cast<float>(FrameResources.CurrentRenderHeight);
@@ -203,7 +203,7 @@ void FFinalCompositePass::Record(FRHICommandList& CommandList, const FFrameResou
 
 void FFinalCompositePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const FSceneRenderGraphContext& Context)
 {
-    GraphBuilder.AddPass("FinalComposite", ERenderGraphPassFlags::Raster, true,
+    GraphBuilder.AddPass(TEXT("FinalComposite"), ERenderGraphPassFlags::Raster, true,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.TonemappedTarget, ERHIResourceState::PixelShaderResource);

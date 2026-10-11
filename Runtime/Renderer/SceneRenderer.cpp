@@ -24,166 +24,166 @@
 
 bool GEnableSSAO = true;
 static FAutoConsoleVariableRef CVarEnableSSAO(
-    "Renderer.Feature.SSAO",
-    "Enables Screen-Space Ambient Occlusion",
+    TEXT("Renderer.Feature.SSAO"),
+    TEXT("Enables Screen-Space Ambient Occlusion"),
     GEnableSSAO,
     EConsoleVariableFlags::Default);
 
 bool GEnableFXAA = false;
 static FAutoConsoleVariableRef CVarEnableFXAA(
-    "Renderer.Feature.FXAA",
-    "Enables FXAA for Anti-Aliasing",
+    TEXT("Renderer.Feature.FXAA"),
+    TEXT("Enables FXAA for Anti-Aliasing"),
     GEnableFXAA,
     EConsoleVariableFlags::Default);
 
 bool GEnableTemporalAntiAliasing = true;
 static FAutoConsoleVariableRef CVarEnableTemporalAntiAliasing(
-    "Renderer.Feature.TemporalAntiAliasing",
-    "Enables Temporal Anti-Aliasing",
+    TEXT("Renderer.Feature.TemporalAntiAliasing"),
+    TEXT("Enables Temporal Anti-Aliasing"),
     GEnableTemporalAntiAliasing,
     EConsoleVariableFlags::Default);
 
 static bool GTemporalAntiAliasingHardwareJitter = false;
 static FAutoConsoleVariableRef CVarTemporalAntiAliasingHardwareJitter(
-    "Renderer.TemporalAntiAliasing.HardwareJitter",
-    "Applies TAA sub-pixel jitter via programmable sample positions instead of a projection-matrix offset",
+    TEXT("Renderer.TemporalAntiAliasing.HardwareJitter"),
+    TEXT("Applies TAA sub-pixel jitter via programmable sample positions instead of a projection-matrix offset"),
     GTemporalAntiAliasingHardwareJitter,
     EConsoleVariableFlags::Default);
 
 static bool GEnableVariableRateShading = false;
 static FAutoConsoleVariableRef CVarEnableVariableRateShading(
-    "Renderer.Feature.VariableRateShading",
-    "Enables VRS (Variable Rate Shading)",
+    TEXT("Renderer.Feature.VariableRateShading"),
+    TEXT("Enables VRS (Variable Rate Shading)"),
     GEnableVariableRateShading,
     EConsoleVariableFlags::Default);
 
 bool GPrePassEnabled = true;
 static FAutoConsoleVariableRef CVarPrePassEnabled(
-    "Renderer.Feature.PrePass",
-    "Enables Pre-Pass",
+    TEXT("Renderer.Feature.PrePass"),
+    TEXT("Enables Pre-Pass"),
     GPrePassEnabled,
     EConsoleVariableFlags::Default);
 
 #if EDITOR_BUILD
 static int32 GEditorPickSearchRadius = 1;
 static FAutoConsoleVariableRef CVarEditorPickSearchRadius(
-    "Editor.Pick.SearchRadius",
-    "When the center pixel returns ObjectID=0, search within this radius (in pixels) for a non-zero ObjectID.",
+    TEXT("Editor.Pick.SearchRadius"),
+    TEXT("When the center pixel returns ObjectID=0, search within this radius (in pixels) for a non-zero ObjectID."),
     GEditorPickSearchRadius,
     EConsoleVariableFlags::Default);
 
 static bool GEditorPickTryFlipY = false;
 static FAutoConsoleVariableRef CVarEditorPickTryFlipY(
-    "Editor.Pick.TryFlip",
-    "YDebug-only: If you suspect the pick coordinates are vertically inverted, also sample a vertically flipped Y window when the normal "
-    "sample returns ObjectID=0.",
+    TEXT("Editor.Pick.TryFlip"),
+    TEXT("YDebug-only: If you suspect the pick coordinates are vertically inverted, also sample a vertically flipped Y window when the normal "
+    "sample returns ObjectID=0."),
     GEditorPickTryFlipY,
     EConsoleVariableFlags::Default);
 
 static bool GEditorPickDebug = false;
 static FAutoConsoleVariableRef CVarEditorPickDebug(
-    "Editor.Pick.Debug",
-    "Logs editor picking requests and readback results.",
+    TEXT("Editor.Pick.Debug"),
+    TEXT("Logs editor picking requests and readback results."),
     GEditorPickDebug,
     EConsoleVariableFlags::Default);
 
 static int32 GEditorPickMaxRectRows = 512;
 static FAutoConsoleVariableRef CVarEditorPickMaxRectRows(
-    "Editor.Pick.MaxRectRows",
-    "Caps how many rows a box-select reads back, stepping over the source rows when the box is taller. A full-viewport box at 4K would "
-    "otherwise read back 33 MB.",
+    TEXT("Editor.Pick.MaxRectRows"),
+    TEXT("Caps how many rows a box-select reads back, stepping over the source rows when the box is taller. A full-viewport box at 4K would "
+    "otherwise read back 33 MB."),
     GEditorPickMaxRectRows,
     EConsoleVariableFlags::Default);
 #endif
 
 bool GBasePassEnabled = true;
 static FAutoConsoleVariableRef CVarBasePassEnabled(
-    "Renderer.Feature.BasePass",
-    "Enables BasePass (Disabling this disables most rendering)",
+    TEXT("Renderer.Feature.BasePass"),
+    TEXT("Enables BasePass (Disabling this disables most rendering)"),
     GBasePassEnabled,
     EConsoleVariableFlags::Default);
 
 bool GShadowsEnabled = true;
 static FAutoConsoleVariableRef CVarShadowsEnabled(
-    "Renderer.Feature.Shadows",
-    "Enables Rendering of ShadowMaps",
+    TEXT("Renderer.Feature.Shadows"),
+    TEXT("Enables Rendering of ShadowMaps"),
     GShadowsEnabled,
     EConsoleVariableFlags::Default);
 
 bool GShadowMaskEnabled = true;
 static FAutoConsoleVariableRef CVarShadowMaskEnabled(
-    "Renderer.Feature.ShadowMask",
-    "Enables Rendering of ShadowMask for SunShadows",
+    TEXT("Renderer.Feature.ShadowMask"),
+    TEXT("Enables Rendering of ShadowMask for SunShadows"),
     GShadowMaskEnabled,
     EConsoleVariableFlags::Default);
 
 bool GPointLightShadowsEnabled = true;
 static FAutoConsoleVariableRef CVarPointLightShadowsEnabled(
-    "Renderer.Feature.PointLightShadows",
-    "Enables Rendering of PointLight ShadowMaps",
+    TEXT("Renderer.Feature.PointLightShadows"),
+    TEXT("Enables Rendering of PointLight ShadowMaps"),
     GPointLightShadowsEnabled,
     EConsoleVariableFlags::Default);
 
 bool GSunShadowsEnabled = true;
 static FAutoConsoleVariableRef CVarSunShadowsEnabled(
-    "Renderer.Feature.SunShadows",
-    "Enables Rendering of SunLight/DirectionalLight ShadowMaps",
+    TEXT("Renderer.Feature.SunShadows"),
+    TEXT("Enables Rendering of SunLight/DirectionalLight ShadowMaps"),
     GSunShadowsEnabled,
     EConsoleVariableFlags::Default);
 
 bool GSkyboxEnabled = true;
 static FAutoConsoleVariableRef CVarSkyboxEnabled(
-    "Renderer.Feature.Skybox",
-    "Enables Rendering of the Skybox",
+    TEXT("Renderer.Feature.Skybox"),
+    TEXT("Enables Rendering of the Skybox"),
     GSkyboxEnabled,
     EConsoleVariableFlags::Default);
 
 bool GForwardPassEnabled = true;
 static FAutoConsoleVariableRef CVarForwardPassEnabled(
-    "Renderer.Feature.ForwardPass",
-    "Enables the forward pass, which draws translucent and ForceForwardPass materials over the lit scene",
+    TEXT("Renderer.Feature.ForwardPass"),
+    TEXT("Enables the forward pass, which draws translucent and ForceForwardPass materials over the lit scene"),
     GForwardPassEnabled,
     EConsoleVariableFlags::Default);
 
 static bool GDrawAABBs = false;
 static FAutoConsoleVariableRef CVarDrawAABBs(
-    "Renderer.Debug.DrawAABBs",
-    "Draws all the objects bounding boxes (AABB)",
+    TEXT("Renderer.Debug.DrawAABBs"),
+    TEXT("Draws all the objects bounding boxes (AABB)"),
     GDrawAABBs,
     EConsoleVariableFlags::Default);
 
 static bool GDrawPointLights = false;
 static FAutoConsoleVariableRef CVarDrawPointLights(
-    "Renderer.Debug.DrawPointLights",
-    "Draws all the point-lights as spheres with the light-color",
+    TEXT("Renderer.Debug.DrawPointLights"),
+    TEXT("Draws all the point-lights as spheres with the light-color"),
     GDrawPointLights,
     EConsoleVariableFlags::Default);
 
 static bool GDrawLightProbes = false;
 static FAutoConsoleVariableRef CVarDrawLightProbes(
-    "Renderer.Debug.LightProbes",
-    "Draws all the light-probes as spheres with the cube-map",
+    TEXT("Renderer.Debug.LightProbes"),
+    TEXT("Draws all the light-probes as spheres with the cube-map"),
     GDrawLightProbes,
     EConsoleVariableFlags::Default);
 
 static bool GFrustumCullEnabled = true;
 static FAutoConsoleVariableRef CVarFrustumCullEnabled(
-    "Renderer.Feature.FrustumCulling",
-    "Enables Frustum Culling (CPU) for the main scene and for all shadow frustums",
+    TEXT("Renderer.Feature.FrustumCulling"),
+    TEXT("Enables Frustum Culling (CPU) for the main scene and for all shadow frustums"),
     GFrustumCullEnabled,
     EConsoleVariableFlags::Default);
 
 bool GCSMTightFrustum = true;
 static FAutoConsoleVariableRef CVarCSMTightFrustum(
-    "Renderer.CSM.TightFrustum",
-    "Set to true to reduce the DepthBuffer to find the Min- and Max Depth in the DepthBuffer to be able to create a tight frustum that "
-    "fits the scene",
+    TEXT("Renderer.CSM.TightFrustum"),
+    TEXT("Set to true to reduce the DepthBuffer to find the Min- and Max Depth in the DepthBuffer to be able to create a tight frustum that "
+    "fits the scene"),
     GCSMTightFrustum,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleCommand CCmdFreezeRendering(
-    "Renderer.FreezeRendering",
-    "Freezes the updating of Frustum culling",
+    TEXT("Renderer.FreezeRendering"),
+    TEXT("Freezes the updating of Frustum culling"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         GFreezeRendering = !GFreezeRendering;
@@ -298,7 +298,7 @@ bool FSceneRenderer::Initialize()
     }
     else
     {
-        Resources.CameraBuffer->SetDebugName("CameraBuffer");
+        Resources.CameraBuffer->SetDebugName(TEXT("CameraBuffer"));
     }
 
     const FRHIBufferDesc PerObjectConstantBufferDesc = FRHIBufferDesc::CreateConstantBuffer(sizeof(FPerObjectHLSL), EBufferFlags::Transient);
@@ -311,7 +311,7 @@ bool FSceneRenderer::Initialize()
     }
     else
     {
-        Resources.PerObjectBuffer->SetDebugName("PerObjectBuffer");
+        Resources.PerObjectBuffer->SetDebugName(TEXT("PerObjectBuffer"));
     }
 
     {
@@ -622,7 +622,7 @@ bool FSceneRenderer::InitializeRenderPasses()
 
 void FSceneRenderer::RenderThread_BeginSceneCommandList()
 {
-    TRACE_SCOPE("SceneRender Begin Frame");
+    TRACE_SCOPE(TEXT("SceneRender Begin Frame"));
 
     CHECK_RENDER_THREAD();
 
@@ -632,7 +632,7 @@ void FSceneRenderer::RenderThread_BeginSceneCommandList()
     FrameCounter.NextFrame();
 
     CommandList.BeginFrame();
-    CommandList.PushEvent("Frame");
+    CommandList.PushEvent(TEXT("Frame"));
 
     // Begin capture GPU FrameTime
     FGPUProfiler::Get().MarkGPUFrameBegin(CommandList);
@@ -656,14 +656,14 @@ void FSceneRenderer::RenderThread_RenderSceneFrame(const FSceneRenderPacket& Pac
     CommandList.PopEvent();
 
     {
-        TRACE_SCOPE("SceneRender Submit");
+        TRACE_SCOPE(TEXT("SceneRender Submit"));
         FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     }
 }
 
 void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& SceneRenderView, FScene* Scene)
 {
-    TRACE_SCOPE("PrepareResources");
+    TRACE_SCOPE(TEXT("PrepareResources"));
 
     if (!SceneRenderView.RenderTarget)
     {
@@ -741,7 +741,7 @@ void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& Scene
 
                 if (Resources.MaterialDataBuffer)
                 {
-                    Resources.MaterialDataBuffer->SetDebugName("Material Data Buffer");
+                    Resources.MaterialDataBuffer->SetDebugName(TEXT("Material Data Buffer"));
 
                     const FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, RequiredCount);
                     Resources.MaterialDataBufferSRV = RHI::CreateShaderResourceView(Resources.MaterialDataBuffer.Get(), SRVDesc);
@@ -773,7 +773,7 @@ void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& Scene
 
 void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& SceneRenderView, FScene* Scene)
 {
-    TRACE_SCOPE("PrepareCameraData");
+    TRACE_SCOPE(TEXT("PrepareCameraData"));
 
     FSceneCamera* Camera = Scene ? Scene->GetCamera() : nullptr;
     if (!Camera)
@@ -895,7 +895,7 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
 
     // Debug geometry draws after composite
     {
-        TRACE_SCOPE("SceneRender Post Graph");
+        TRACE_SCOPE(TEXT("SceneRender Post Graph"));
 
         const bool bAnyDebugDraw =
             GDrawPointLights ||
@@ -1086,13 +1086,13 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
         return;
     }
 
-    Fence->SetDebugName("EditorObjectPick Fence");
-    ReadbackBuffer->SetDebugName("EditorObjectPick Readback");
+    Fence->SetDebugName(TEXT("EditorObjectPick Fence"));
+    ReadbackBuffer->SetDebugName(TEXT("EditorObjectPick Readback"));
 
     if (GEditorPickDebug)
     {
         LOG_INFO("[EditorPick] Request. Rect=%s Pixel=(%u,%u) Tex=%ux%u Radius=%d TryFlipY=%s Region=(%u,%u) RowStep=%u CenterLocal=(%u,%u)",
-            bIsRect ? "true" : "false", PixelX, PixelY, TexWidth, TexHeight, SampleRadius, bTryFlipY ? "true" : "false",
+            bIsRect ? TEXT("true") : TEXT("false"), PixelX, PixelY, TexWidth, TexHeight, SampleRadius, bTryFlipY ? TEXT("true") : TEXT("false"),
             RegionWidth, RegionHeight, RowStep, CenterLocalX, CenterLocalY);
     }
 
@@ -1407,7 +1407,7 @@ bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, FEditorPickResult
                         }
 
                         LOG_INFO("[EditorPick] Readback. Pixel=(%u,%u) Tex=%ux%u Radius=%u NormalCenter=%u FlippedCenter=%u Result=%u UsedFlip=%s",
-                            InFlight.PixelX, InFlight.PixelY, InFlight.TexWidth, InFlight.TexHeight, InFlight.SampleRadius, NormalCenter, FlippedCenter, ObjectID, bUsedFlipped ? "true" : "false");
+                            InFlight.PixelX, InFlight.PixelY, InFlight.TexWidth, InFlight.TexHeight, InFlight.SampleRadius, NormalCenter, FlippedCenter, ObjectID, bUsedFlipped ? TEXT("true") : TEXT("false"));
                         LOG_INFO("[EditorPick] ReadbackStats. NormalNonZero=%u FlippedNonZero=%u",
                             NormalNonZero, FlippedNonZero);
                     }
@@ -1585,7 +1585,7 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
 
                 if (ShadingImage)
                 {
-                    ShadingImage->SetDebugName("Shading Rate Image");
+                    ShadingImage->SetDebugName(TEXT("Shading Rate Image"));
                 }
             }
         }
@@ -1626,13 +1626,13 @@ bool FSceneRenderer::InitShadingImage()
     }
     else
     {
-        ShadingImage->SetDebugName("Shading Rate Image");
+        ShadingImage->SetDebugName(TEXT("Shading Rate Image"));
     }
 
     TArray<uint8> ShaderCode;
 
-    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
-    if (!FShaderBytecodeCache::CompileFromFile("Shaders/ShadingImage.hlsl", CompileInfo, ShaderCode))
+    FShaderCompileInfo CompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
+    if (!FShaderBytecodeCache::CompileFromFile(TEXT("Shaders/ShadingImage.hlsl"), CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
         return false;

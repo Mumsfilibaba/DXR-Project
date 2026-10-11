@@ -16,9 +16,9 @@ extern bool GEditorSelectionUseUnjitteredCamera;
 
 static bool GEditorSelectionAllowTranslucent = true;
 static FAutoConsoleVariableRef CVarEditorSelectionAllowTranslucent(
-    "Renderer.Editor.Selection.AllowTranslucent",
-    "Let clicks and box-selects land on translucent surfaces. Disable to pick straight through them, which is easier when a large pane of "
-    "glass covers what you are trying to select.",
+    TEXT("Renderer.Editor.Selection.AllowTranslucent"),
+    TEXT("Let clicks and box-selects land on translucent surfaces. Disable to pick straight through them, which is easier when a large pane of "
+    "glass covers what you are trying to select."),
     GEditorSelectionAllowTranslucent,
     EConsoleVariableFlags::Default);
 
@@ -58,8 +58,8 @@ class FSelectionIDPS : public FSelectionIDShaderRules
     DECLARE_SHADER_TYPE(FSelectionIDPS, EShaderStage::Pixel);
 };
 
-IMPLEMENT_SHADER_TYPE(FSelectionIDVS, "Shaders/EditorSelectionID.hlsl", "VSMain", EShaderModel::SM_6_2);
-IMPLEMENT_SHADER_TYPE(FSelectionIDPS, "Shaders/EditorSelectionID.hlsl", "PSMain", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FSelectionIDVS, TEXT("Shaders/EditorSelectionID.hlsl"), TEXT("VSMain"), EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FSelectionIDPS, TEXT("Shaders/EditorSelectionID.hlsl"), TEXT("PSMain"), EShaderModel::SM_6_2);
 
 NODISCARD static FGraphicsPipelineKey CreateSelectionIDPSOKey(const FMaterialFeatures& Features, const FVertexDeclaration& Declaration)
 {
@@ -153,7 +153,7 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FVe
     }
     else
     {
-        const FString DebugName = FString::Printf("Editor SelectionID PSO %d", static_cast<int32>(Features.Flags));
+        const FString DebugName = FString::Printf(TEXT("Editor SelectionID PSO %d"), static_cast<int32>(Features.Flags));
         NewPipelineInstance.PipelineState->SetDebugName(DebugName);
     }
 
@@ -187,7 +187,7 @@ bool FEditorSelectionIDPass::CreateResources(FFrameResources& FrameResources, ui
         return false;
     }
 
-    FrameResources.EditorObjectID_NoJitter->SetDebugName("Editor ObjectID NoJitter");
+    FrameResources.EditorObjectID_NoJitter->SetDebugName(TEXT("Editor ObjectID NoJitter"));
     return true;
 }
 
@@ -198,8 +198,8 @@ void FEditorSelectionIDPass::Record(FRHICommandList& CommandList, FFrameResource
         return;
     }
 
-    RHI_EVENT_SCOPE(CommandList, "Editor SelectionID");
-    TRACE_SCOPE("Editor SelectionID");
+    RHI_EVENT_SCOPE(CommandList, TEXT("Editor SelectionID"));
+    TRACE_SCOPE(TEXT("Editor SelectionID"));
     const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
     const float RenderHeight = float(FrameResources.CurrentRenderHeight);
 
@@ -278,7 +278,7 @@ void FEditorSelectionIDPass::Record(FRHICommandList& CommandList, FFrameResource
 
 void FEditorSelectionIDPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const FSceneRenderGraphContext& Context)
 {
-    GraphBuilder.AddPass("EditorSelectionID", ERenderGraphPassFlags::Raster, true,
+    GraphBuilder.AddPass(TEXT("EditorSelectionID"), ERenderGraphPassFlags::Raster, true,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.SetRenderTarget(0, Context.EditorObjectID_NoJitter, EAttachmentLoadAction::Clear);

@@ -15,7 +15,7 @@ static int32   GProgramMainResult = 0;
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*) Sender
 {
-    FProgramLoop::RequestExit("Application terminate");
+    FProgramLoop::RequestExit(TEXT("Application terminate"));
     return NSTerminateLater;
 }
 
@@ -53,7 +53,7 @@ int main(int NumArgs, const CHAR_T** Args)
     {
         GProgramArgs.Emplace(Args[Index]);
 
-        GMacCommandLine += " ";
+        GMacCommandLine += TEXT(" ");
         FString CurrentArg(Args[Index]);
 
         if (CurrentArg.Contains(' '))
@@ -63,11 +63,11 @@ int main(int NumArgs, const CHAR_T** Args)
                 FString Argument;
                 FString ArgumentValue;
                 CurrentArg.Split('=', Argument, ArgumentValue);
-                CurrentArg = FString::Printf("%s=\"%s\"", *Argument, *ArgumentValue);
+                CurrentArg = FString::Printf(TEXT("%s=\"%s\""), *Argument, *ArgumentValue);
             }
             else
             {
-                CurrentArg = FString::Printf("\"%s\"", *CurrentArg);
+                CurrentArg = FString::Printf(TEXT("\"%s\""), *CurrentArg);
             }
         }
 

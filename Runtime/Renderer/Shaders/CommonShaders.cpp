@@ -1,3 +1,3 @@
 #include "Renderer/Shaders/CommonShaders.h"
 
-IMPLEMENT_SHADER_TYPE(FFullscreenVS, "Shaders/FullscreenVS.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FFullscreenVS, TEXT("Shaders/FullscreenVS.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);

@@ -31,7 +31,7 @@ class FDebugViewPS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FDebugViewPS, "Shaders/DebugView.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FDebugViewPS, TEXT("Shaders/DebugView.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 static void DeclareDebugViewSources(FRenderGraphPassBuilder& PassBuilder, const FSceneRenderGraphContext& Context)
 {
@@ -198,7 +198,7 @@ void FDebugViewPass::RecordInternal(FRHICommandList& CommandList, const FSceneRe
         return;
     }
 
-    TRACE_SCOPE("DebugView");
+    TRACE_SCOPE(TEXT("DebugView"));
     const int32 TargetWidth  = static_cast<int32>(RenderTarget->GetDesc().Extent.X);
     const int32 TargetHeight = static_cast<int32>(RenderTarget->GetDesc().Extent.Y);
     const int32 ViewX        = Math::Clamp(X, 0, TargetWidth);
@@ -327,7 +327,7 @@ void FDebugViewPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const
         return;
     }
 
-    GraphBuilder.AddPass("DebugView", ERenderGraphPassFlags::NeverCull, true,
+    GraphBuilder.AddPass(TEXT("DebugView"), ERenderGraphPassFlags::NeverCull, true,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             DeclareDebugViewSources(PassBuilder, Context);
@@ -347,7 +347,7 @@ void FDebugViewPass::AddRenderGraphOverlayPass(FRenderGraphBuilder& GraphBuilder
         return;
     }
 
-    GraphBuilder.AddPass("DebugViewOverlay", ERenderGraphPassFlags::NeverCull, true,
+    GraphBuilder.AddPass(TEXT("DebugViewOverlay"), ERenderGraphPassFlags::NeverCull, true,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             DeclareDebugViewSources(PassBuilder, Context);

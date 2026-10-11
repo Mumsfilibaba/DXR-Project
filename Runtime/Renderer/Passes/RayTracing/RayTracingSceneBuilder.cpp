@@ -15,15 +15,15 @@
 
 static bool GRayTracingCompaction = false;
 static FAutoConsoleVariableRef CVarRayTracingCompaction(
-    "Renderer.RayTracing.Compaction",
-    "When true, each BLAS is compacted once after build (multi-frame read-back + in-place swap). Requires AllowCompaction on the BLAS. "
-    "UNVALIDATED on hardware.",
+    TEXT("Renderer.RayTracing.Compaction"),
+    TEXT("When true, each BLAS is compacted once after build (multi-frame read-back + in-place swap). Requires AllowCompaction on the BLAS. "
+    "UNVALIDATED on hardware."),
     GRayTracingCompaction);
 
 static bool GRayTracingASCache = false;
 static FAutoConsoleVariableRef CVarRayTracingASCache(
-    "Renderer.RayTracing.ASCache",
-    "When true, each BLAS is serialized once after build into the on-disk acceleration-structure cache. UNVALIDATED on hardware.",
+    TEXT("Renderer.RayTracing.ASCache"),
+    TEXT("When true, each BLAS is serialized once after build into the on-disk acceleration-structure cache. UNVALIDATED on hardware."),
     GRayTracingASCache);
 
 FRayTracingSceneBuilder::FRayTracingSceneBuilder(FSceneRenderer* InRenderer)
@@ -40,7 +40,7 @@ FRayTracingSceneBuilder::~FRayTracingSceneBuilder()
 
 bool FRayTracingSceneBuilder::Initialize()
 {
-    ASCacheBackend = MakeUniquePtr<FDiskAccelerationStructureCacheBackend>(Paths::GetAssetDir() + "/RTASCache");
+    ASCacheBackend = MakeUniquePtr<FDiskAccelerationStructureCacheBackend>(Paths::GetAssetDir() + TEXT("/RTASCache"));
     ASCache.SetBackend(ASCacheBackend.Get());
     return true;
 }
@@ -76,7 +76,7 @@ void FRayTracingSceneBuilder::ReleaseRayTracingResources(FScene* Scene)
 
 void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, bool bNeedBindlessData)
 {
-    TRACE_SCOPE("Gather Instances");
+    TRACE_SCOPE(TEXT("Gather Instances"));
 
     Resources.RayTracingGeometryInstances.Clear();
     Resources.RayTracingHitGroupBindings.Clear();
@@ -197,7 +197,7 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
 
         if (Resources.RayTracingScene)
         {
-            Resources.RayTracingScene->SetDebugName("RayTracing Scene (TLAS)");
+            Resources.RayTracingScene->SetDebugName(TEXT("RayTracing Scene (TLAS)"));
         }
     }
     else
@@ -230,7 +230,7 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
             if (GRayTracingASCache && ASCache.HasBackend() && !SerializationRequested.Contains(Geometry))
             {
                 CHAR_T KeyBuffer[32] = {};
-                CString::Snprintf(KeyBuffer, int32(sizeof(KeyBuffer)), "blas_%llx", static_cast<unsigned long long>(reinterpret_cast<uintptr_t>(Geometry)));
+                CString::Snprintf(KeyBuffer, ARRAY_COUNT(KeyBuffer), TEXT("blas_%llx"), static_cast<unsigned long long>(reinterpret_cast<uintptr_t>(Geometry)));
 
                 SerializationHelper.RequestSerialize(CommandList, Geometry, FString(KeyBuffer));
                 SerializationRequested.Emplace(Geometry);
@@ -261,7 +261,7 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
 
             if (Resources.RayTracingGeometryTableBuffer)
             {
-                Resources.RayTracingGeometryTableBuffer->SetDebugName("RayTracing Geometry Table");
+                Resources.RayTracingGeometryTableBuffer->SetDebugName(TEXT("RayTracing Geometry Table"));
 
                 FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, GeometryTableCapacity);
                 Resources.RayTracingGeometryTableSRV = RHI::CreateShaderResourceView(Resources.RayTracingGeometryTableBuffer.Get(), SRVDesc);

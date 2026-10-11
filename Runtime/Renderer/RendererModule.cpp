@@ -89,7 +89,7 @@ void FRendererModule::FinishPreviousFrame()
     }
 
     {
-        TRACE_SCOPE("Wait Previous SceneRender");
+        TRACE_SCOPE(TEXT("Wait Previous SceneRender"));
         PendingSceneTask.Wait();
     }
 
@@ -109,9 +109,9 @@ void FRendererModule::KickSceneRender(FSceneRenderPacket&& Packet)
     bHasPendingFrame = true;
 
     {
-        TRACE_SCOPE("Kick SceneRender");
+        TRACE_SCOPE(TEXT("Kick SceneRender"));
 
-        PendingSceneTask = Tasks::LaunchOnRenderThread("SceneRender",
+        PendingSceneTask = Tasks::LaunchOnRenderThread(TEXT("SceneRender"),
             [this, Packet = ::Move(Packet)]()
             {
                 CHECK_RENDER_THREAD();

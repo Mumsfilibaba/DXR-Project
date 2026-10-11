@@ -11,56 +11,56 @@
 
 bool GCSMDebugCascades = false;
 static FAutoConsoleVariableRef CVarCSMDebugCascades(
-    "Renderer.Debug.DrawCascades",
-    "Draws an overlay that shows which pixel uses what shadow cascade",
+    TEXT("Renderer.Debug.DrawCascades"),
+    TEXT("Draws an overlay that shows which pixel uses what shadow cascade"),
     GCSMDebugCascades,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarCSMFilterMode(
-    "Renderer.CSM.FilterMode",
-    "Select mode when filer Cascaded Shadow Maps. 0: Percentage Closer Filtering (PCF) 1: Percentage Closer Soft Shadows (PCSS)",
+    TEXT("Renderer.CSM.FilterMode"),
+    TEXT("Select mode when filer Cascaded Shadow Maps. 0: Percentage Closer Filtering (PCF) 1: Percentage Closer Soft Shadows (PCSS)"),
     0,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarCSMFilterFunction(
-    "Renderer.CSM.FilterFunction",
-    "Select function to use to filer Cascaded Shadow Maps. 0: Grid 1: Poisson Disk 2: Vogel Disk",
+    TEXT("Renderer.CSM.FilterFunction"),
+    TEXT("Select function to use to filer Cascaded Shadow Maps. 0: Grid 1: Poisson Disk 2: Vogel Disk"),
     1,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarCSMFilterSize(
-    "Renderer.CSM.FilterSize",
-    "Size of the filter for the Cascaded Shadow Maps",
+    TEXT("Renderer.CSM.FilterSize"),
+    TEXT("Size of the filter for the Cascaded Shadow Maps"),
     256,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarCSMMaxFilterSize(
-    "Renderer.CSM.MaxFilterSize",
-    "Maximum size of the filter for the Cascaded Shadow Maps",
+    TEXT("Renderer.CSM.MaxFilterSize"),
+    TEXT("Maximum size of the filter for the Cascaded Shadow Maps"),
     512,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarCSMNumPoissonDiscSamples(
-    "Renderer.CSM.NumPoissonDiscSamples",
-    "Number Poisson Samples to use when sampling the Cascaded Shadow Maps using a Poisson Disc",
+    TEXT("Renderer.CSM.NumPoissonDiscSamples"),
+    TEXT("Number Poisson Samples to use when sampling the Cascaded Shadow Maps using a Poisson Disc"),
     32,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarCSMRotateSamples(
-    "Renderer.CSM.RotateSamples",
-    "Rotate Poisson samples before using them to sample the Cascades",
+    TEXT("Renderer.CSM.RotateSamples"),
+    TEXT("Rotate Poisson samples before using them to sample the Cascades"),
     true,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarCSMBlendCascades(
-    "Renderer.CSM.BlendCascades",
-    "Blend between cascades",
+    TEXT("Renderer.CSM.BlendCascades"),
+    TEXT("Blend between cascades"),
     true,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarCSMSelectCascadeFromProjection(
-    "Renderer.CSM.SelectCascadeFromProjection",
-    "Select what cascade to use based on projection",
+    TEXT("Renderer.CSM.SelectCascadeFromProjection"),
+    TEXT("Select what cascade to use based on projection"),
     true,
     EConsoleVariableFlags::Default);
 
@@ -105,7 +105,7 @@ bool FShadowMaskRenderPass::Initialize(FFrameResources& Resources)
     }
     else
     {
-        ShadowSettingsBuffer->SetDebugName("ShadowSettingsBuffer");
+        ShadowSettingsBuffer->SetDebugName(TEXT("ShadowSettingsBuffer"));
     }
 
     return true;
@@ -132,9 +132,9 @@ void FShadowMaskRenderPass::Record(FRHICommandList& CommandList, const FFrameRes
         return;
     }
 
-    RHI_EVENT_SCOPE(CommandList, "Render ShadowMasks");
+    RHI_EVENT_SCOPE(CommandList, TEXT("Render ShadowMasks"));
 
-    TRACE_SCOPE("Render ShadowMasks");
+    TRACE_SCOPE(TEXT("Render ShadowMasks"));
 
     const FDirectionalShadowSettingsHLSL ShadowSettings = CreateShadowSettings(Resources, GetRenderer()->GetFrameCounter().GetFrameIndex());
 
@@ -212,7 +212,7 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskCS::FPermutat
     }
     else
     {
-        PipelineStateInstance.PipelineState->SetDebugName(FString::Printf("ShadowMask PSO (Permutation %d)", PermutationID));
+        PipelineStateInstance.PipelineState->SetDebugName(FString::Printf(TEXT("ShadowMask PSO (Permutation %d)"), PermutationID));
     }
 
     PipelineStates.Add(PermutationID, PipelineStateInstance);
@@ -252,7 +252,7 @@ void FShadowMaskRenderPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder
         GShadowMaskEnabled &&
         bEnableSunShadows;
 
-    GraphBuilder.AddPass("ShadowMask", ERenderGraphPassFlags::Compute, bEnablePass,
+    GraphBuilder.AddPass(TEXT("ShadowMask"), ERenderGraphPassFlags::Compute, bEnablePass,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.GBufferDepth, ERHIResourceState::NonPixelShaderResource);
@@ -284,7 +284,7 @@ void FShadowMaskRenderPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder
             Record(PassCommandList, *Context.FrameResources, bNeedsCascadeDebug);
         });
 
-    GraphBuilder.AddPass("ShadowMaskClear", ERenderGraphPassFlags::Compute, !bEnablePass,
+    GraphBuilder.AddPass(TEXT("ShadowMaskClear"), ERenderGraphPassFlags::Compute, !bEnablePass,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.WriteTexture(Context.DirectionalShadowMask, ERHIResourceState::UnorderedAccess);

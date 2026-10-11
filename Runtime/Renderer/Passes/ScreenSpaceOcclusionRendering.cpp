@@ -12,20 +12,20 @@
 
 static float GSSAORadius = 0.2f;
 static FAutoConsoleVariableRef CVarSSAORadius(
-    "Renderer.SSAO.Radius",
-    "Specifies the radius of the Screen-Space Ray-Trace in SSAO",
+    TEXT("Renderer.SSAO.Radius"),
+    TEXT("Specifies the radius of the Screen-Space Ray-Trace in SSAO"),
     GSSAORadius);
 
 static float GSSAOBias = 0.04f;
 static FAutoConsoleVariableRef CVarSSAOBias(
-    "Renderer.SSAO.Bias",
-    "Specifies the bias when testing the Screen-Space Rays against the depth-buffer",
+    TEXT("Renderer.SSAO.Bias"),
+    TEXT("Specifies the bias when testing the Screen-Space Rays against the depth-buffer"),
     GSSAOBias);
 
 static int32 GSSAOKernelSize = 8;
 static FAutoConsoleVariableRef CVarSSAOKernelSize(
-    "Renderer.SSAO.KernelSize",
-    "Specifies the number of samples for each pixel",
+    TEXT("Renderer.SSAO.KernelSize"),
+    TEXT("Specifies the number of samples for each pixel"),
     GSSAOKernelSize);
 
 struct FSSAOSettingsHLSL
@@ -46,9 +46,9 @@ class FSSAOCS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FSSAOCS, "Shaders/SSAO.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FSSAOCS, TEXT("Shaders/SSAO.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
-class FBlurHorizontal : SHADER_PERMUTATION_BOOL("HORIZONTAL_PASS");
+class FBlurHorizontal : SHADER_PERMUTATION_BOOL(TEXT("HORIZONTAL_PASS"));
 
 class FBlurCS
 {
@@ -57,7 +57,7 @@ class FBlurCS
     using FPermutation = TShaderPermutation<FBlurHorizontal>;
 };
 
-IMPLEMENT_SHADER_TYPE(FBlurCS, "Shaders/Blur.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FBlurCS, TEXT("Shaders/Blur.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 FScreenSpaceOcclusionPass::FScreenSpaceOcclusionPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -96,7 +96,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
     }
     else
     {
-        PipelineState->SetDebugName("SSAO PipelineState");
+        PipelineState->SetDebugName(TEXT("SSAO PipelineState"));
     }
 
     FBlurCS::FPermutation BlurPermutation;
@@ -119,7 +119,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
     }
     else
     {
-        BlurHorizontalPSO->SetDebugName("SSAO Horizontal Blur PSO");
+        BlurHorizontalPSO->SetDebugName(TEXT("SSAO Horizontal Blur PSO"));
     }
 
     BlurPermutation.Set<FBlurHorizontal>(false);
@@ -141,7 +141,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
     }
     else
     {
-        BlurVerticalPSO->SetDebugName("SSAO Vertical Blur PSO");
+        BlurVerticalPSO->SetDebugName(TEXT("SSAO Vertical Blur PSO"));
     }
 
     return true;
@@ -149,7 +149,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
 
 void FScreenSpaceOcclusionPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const FSceneRenderGraphContext& Context)
 {
-    GraphBuilder.AddPass("SSAO", ERenderGraphPassFlags::Compute, GEnableSSAO,
+    GraphBuilder.AddPass(TEXT("SSAO"), ERenderGraphPassFlags::Compute, GEnableSSAO,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.GBufferNormal, ERHIResourceState::NonPixelShaderResource);
@@ -161,7 +161,7 @@ void FScreenSpaceOcclusionPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBui
             Record(PassCommandList, Context.CreatePassResources(PassResources));
         });
 
-    GraphBuilder.AddPass("SSAOClear", ERenderGraphPassFlags::Compute, !GEnableSSAO,
+    GraphBuilder.AddPass(TEXT("SSAOClear"), ERenderGraphPassFlags::Compute, !GEnableSSAO,
         [Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.WriteTexture(Context.SSAOBuffer, ERHIResourceState::UnorderedAccess);
@@ -180,9 +180,9 @@ void FScreenSpaceOcclusionPass::Record(FRHICommandList& CommandList, const FPass
         return;
     }
 
-    RHI_EVENT_SCOPE(CommandList, "SSAO");
+    RHI_EVENT_SCOPE(CommandList, TEXT("SSAO"));
 
-    TRACE_SCOPE("SSAO");
+    TRACE_SCOPE(TEXT("SSAO"));
 
     FSSAOSettingsHLSL SSAOSettings;
 
@@ -220,14 +220,14 @@ void FScreenSpaceOcclusionPass::Record(FRHICommandList& CommandList, const FPass
     const uint32 DispatchHeight  = Math::DivideByMultiple<uint32>(Height, ThreadCount);
 
     {
-        GPU_TRACE_SCOPE(CommandList, "SSAO Tracing");
+        GPU_TRACE_SCOPE(CommandList, TEXT("SSAO Tracing"));
         CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
         CommandList.UnorderedAccessBarrier(PassResources.SSAOBuffer);
     }
 
     {
-        GPU_TRACE_SCOPE(CommandList, "SSAO Horizontal blur");
+        GPU_TRACE_SCOPE(CommandList, TEXT("SSAO Horizontal blur"));
         CommandList.SetComputePipelineState(BlurHorizontalPSO.Get());
         CommandList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);
         CommandList.SetShaderConstants(BlurHorizontalShader.Get(), &SSAOSettings.ScreenSize, 2);
@@ -236,7 +236,7 @@ void FScreenSpaceOcclusionPass::Record(FRHICommandList& CommandList, const FPass
     }
 
     {
-        GPU_TRACE_SCOPE(CommandList, "SSAO Vertical blur");
+        GPU_TRACE_SCOPE(CommandList, TEXT("SSAO Vertical blur"));
         CommandList.SetComputePipelineState(BlurVerticalPSO.Get());
         CommandList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);
         CommandList.SetShaderConstants(BlurVerticalShader.Get(), &SSAOSettings.ScreenSize, 2);

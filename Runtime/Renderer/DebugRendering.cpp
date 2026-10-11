@@ -16,7 +16,7 @@ struct TDebugShaderEnvironment
 {
     static void ModifyCompilationEnvironment(const FShaderPermutationDesc&, FShaderCompilationEnvironment& Environment)
     {
-        Environment.SetDefine(ShaderType::DebugDefine, "(1)");
+        Environment.SetDefine(ShaderType::DebugDefine, TEXT("(1)"));
     }
 };
 
@@ -24,89 +24,89 @@ class FDebugAABBVS : public TDebugShaderEnvironment<FDebugAABBVS>
 {
     DECLARE_SHADER_TYPE(FDebugAABBVS, EShaderStage::Vertex);
 
-    static constexpr const CHAR_T* DebugDefine = "AABB_DEBUG";
+    static constexpr const CHAR_T* DebugDefine = TEXT("AABB_DEBUG");
 
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FDebugAABBVS, "Shaders/Debug.hlsl", "AABB_VSMain", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FDebugAABBVS, TEXT("Shaders/Debug.hlsl"), TEXT("AABB_VSMain"), EShaderModel::SM_6_2);
 
 class FDebugAABBPS : public TDebugShaderEnvironment<FDebugAABBPS>
 {
     DECLARE_SHADER_TYPE(FDebugAABBPS, EShaderStage::Pixel);
 
-    static constexpr const CHAR_T* DebugDefine = "AABB_DEBUG";
+    static constexpr const CHAR_T* DebugDefine = TEXT("AABB_DEBUG");
 
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FDebugAABBPS, "Shaders/Debug.hlsl", "AABB_PSMain", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FDebugAABBPS, TEXT("Shaders/Debug.hlsl"), TEXT("AABB_PSMain"), EShaderModel::SM_6_2);
 
 class FDebugLightVS : public TDebugShaderEnvironment<FDebugLightVS>
 {
     DECLARE_SHADER_TYPE(FDebugLightVS, EShaderStage::Vertex);
 
-    static constexpr const CHAR_T* DebugDefine = "POINTLIGHT_DEBUG";
+    static constexpr const CHAR_T* DebugDefine = TEXT("POINTLIGHT_DEBUG");
 
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FDebugLightVS, "Shaders/Debug.hlsl", "Light_VSMain", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FDebugLightVS, TEXT("Shaders/Debug.hlsl"), TEXT("Light_VSMain"), EShaderModel::SM_6_2);
 
 class FDebugLightPS : public TDebugShaderEnvironment<FDebugLightPS>
 {
     DECLARE_SHADER_TYPE(FDebugLightPS, EShaderStage::Pixel);
 
-    static constexpr const CHAR_T* DebugDefine = "POINTLIGHT_DEBUG";
+    static constexpr const CHAR_T* DebugDefine = TEXT("POINTLIGHT_DEBUG");
 
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FDebugLightPS, "Shaders/Debug.hlsl", "Light_PSMain", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FDebugLightPS, TEXT("Shaders/Debug.hlsl"), TEXT("Light_PSMain"), EShaderModel::SM_6_2);
 
 class FDebugAABBSolidVS : public TDebugShaderEnvironment<FDebugAABBSolidVS>
 {
     DECLARE_SHADER_TYPE(FDebugAABBSolidVS, EShaderStage::Vertex);
 
-    static constexpr const CHAR_T* DebugDefine = "AABB_SOLID_DEBUG";
+    static constexpr const CHAR_T* DebugDefine = TEXT("AABB_SOLID_DEBUG");
 
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FDebugAABBSolidVS, "Shaders/Debug.hlsl", "AABBSolidDebug_VSMain", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FDebugAABBSolidVS, TEXT("Shaders/Debug.hlsl"), TEXT("AABBSolidDebug_VSMain"), EShaderModel::SM_6_2);
 
 class FDebugAABBSolidPS : public TDebugShaderEnvironment<FDebugAABBSolidPS>
 {
     DECLARE_SHADER_TYPE(FDebugAABBSolidPS, EShaderStage::Pixel);
 
-    static constexpr const CHAR_T* DebugDefine = "AABB_SOLID_DEBUG";
+    static constexpr const CHAR_T* DebugDefine = TEXT("AABB_SOLID_DEBUG");
 
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FDebugAABBSolidPS, "Shaders/Debug.hlsl", "AABBSolidDebug_PSMain", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FDebugAABBSolidPS, TEXT("Shaders/Debug.hlsl"), TEXT("AABBSolidDebug_PSMain"), EShaderModel::SM_6_2);
 
 class FDebugProbeVS : public TDebugShaderEnvironment<FDebugProbeVS>
 {
     DECLARE_SHADER_TYPE(FDebugProbeVS, EShaderStage::Vertex);
 
-    static constexpr const CHAR_T* DebugDefine = "LIGHTPROBE_DEBUG";
+    static constexpr const CHAR_T* DebugDefine = TEXT("LIGHTPROBE_DEBUG");
 
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FDebugProbeVS, "Shaders/Debug.hlsl", "Probe_VSMain", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FDebugProbeVS, TEXT("Shaders/Debug.hlsl"), TEXT("Probe_VSMain"), EShaderModel::SM_6_2);
 
 class FDebugProbePS : public TDebugShaderEnvironment<FDebugProbePS>
 {
     DECLARE_SHADER_TYPE(FDebugProbePS, EShaderStage::Pixel);
 
-    static constexpr const CHAR_T* DebugDefine = "LIGHTPROBE_DEBUG";
+    static constexpr const CHAR_T* DebugDefine = TEXT("LIGHTPROBE_DEBUG");
 
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FDebugProbePS, "Shaders/Debug.hlsl", "Probe_PSMain", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FDebugProbePS, TEXT("Shaders/Debug.hlsl"), TEXT("Probe_PSMain"), EShaderModel::SM_6_2);
 
 struct FAABBShaderInfoHLSL
 {
@@ -214,7 +214,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     }
     else
     {
-        SphereVertexBuffer->SetDebugName("Debug-Sphere VertexBuffer");
+        SphereVertexBuffer->SetDebugName(TEXT("Debug-Sphere VertexBuffer"));
     }
 
     // Create IndexBuffer
@@ -231,7 +231,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     }
     else
     {
-        SphereIndexBuffer->SetDebugName("Debug-Sphere IndexBuffer");
+        SphereIndexBuffer->SetDebugName(TEXT("Debug-Sphere IndexBuffer"));
     }
 
     TStaticArray<FVector3, 8> AABBVertices =
@@ -256,7 +256,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     }
     else
     {
-        AABBVertexBuffer->SetDebugName("Debug-AABB VertexBuffer");
+        AABBVertexBuffer->SetDebugName(TEXT("Debug-AABB VertexBuffer"));
     }
 
     // Create IndexBuffer
@@ -286,7 +286,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     }
     else
     {
-        AABBIndexBuffer_Wireframe->SetDebugName("Debug-AABB IndexBuffer (Wireframe)");
+        AABBIndexBuffer_Wireframe->SetDebugName(TEXT("Debug-AABB IndexBuffer (Wireframe)"));
         AABBIndexCount_Wireframe = AABBWireframeIndices.Size();
     }
 
@@ -317,7 +317,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     }
     else
     {
-        AABBIndexBuffer_Solid->SetDebugName("Debug-AABB IndexBuffer (Solid)");
+        AABBIndexBuffer_Solid->SetDebugName(TEXT("Debug-AABB IndexBuffer (Solid)"));
         AABBIndexCount_Solid = AABBSolidIndices.Size();
     }
 
@@ -342,7 +342,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
 
         TArray<FRHIInputElementDesc> InputElements =
         {
-            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
+            { TEXT("POSITION"), 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
         };
 
         AABBInputLayout = RHI::CreateInputLayout(InputElements);
@@ -397,7 +397,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     // Position-only input layout for debug sphere meshes (interleaved FSourceVertex buffer, only Position used by shaders)
     TArray<FRHIInputElementDesc> DebugSphereElements =
     {
-        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FSourceVertex), 0, 0, 0, EVertexInputClass::Vertex, 0 },
+        { TEXT("POSITION"), 0, EFormat::R32G32B32_Float, sizeof(FSourceVertex), 0, 0, 0, EVertexInputClass::Vertex, 0 },
     };
 
     DebugSphereInputLayout = RHI::CreateInputLayout(DebugSphereElements);
@@ -474,7 +474,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
 
         TArray<FRHIInputElementDesc> InputElements =
         {
-            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
+            { TEXT("POSITION"), 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
         };
 
         AABBSolidInputLayout = RHI::CreateInputLayout(InputElements);
@@ -596,7 +596,7 @@ void FDebugRenderer::PreparePipelineStateForFormat(EFormat OutputFormat)
         FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
         {
-            NewPSO->SetDebugName("AABB Wireframe Debug PSO (No Depth)");
+            NewPSO->SetDebugName(TEXT("AABB Wireframe Debug PSO (No Depth)"));
             AABB_NoDepth_PSO       = NewPSO;
             AABB_NoDepth_PSOFormat = OutputFormat;
         }
@@ -623,7 +623,7 @@ void FDebugRenderer::PreparePipelineStateForFormat(EFormat OutputFormat)
         FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
         {
-            NewPSO->SetDebugName("AABB Wireframe Debug PSO (Depth)");
+            NewPSO->SetDebugName(TEXT("AABB Wireframe Debug PSO (Depth)"));
             AABB_Depth_PSO       = NewPSO;
             AABB_Depth_PSOFormat = OutputFormat;
         }
@@ -650,7 +650,7 @@ void FDebugRenderer::PreparePipelineStateForFormat(EFormat OutputFormat)
         FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
         {
-            NewPSO->SetDebugName("Light Debug PSO");
+            NewPSO->SetDebugName(TEXT("Light Debug PSO"));
             LightDebug_PSO       = NewPSO;
             LightDebug_PSOFormat = OutputFormat;
         }
@@ -677,7 +677,7 @@ void FDebugRenderer::PreparePipelineStateForFormat(EFormat OutputFormat)
         FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
         {
-            NewPSO->SetDebugName("AABB Solid Debug PSO");
+            NewPSO->SetDebugName(TEXT("AABB Solid Debug PSO"));
             AABBSolid_PSO       = NewPSO;
             AABBSolid_PSOFormat = OutputFormat;
         }
@@ -704,7 +704,7 @@ void FDebugRenderer::PreparePipelineStateForFormat(EFormat OutputFormat)
         FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
         {
-            NewPSO->SetDebugName("LightProbe Debug PSO");
+            NewPSO->SetDebugName(TEXT("LightProbe Debug PSO"));
             ProbeDebug_PSO       = NewPSO;
             ProbeDebug_PSOFormat = OutputFormat;
         }
@@ -717,9 +717,9 @@ void FDebugRenderer::PreparePipelineStateForFormat(EFormat OutputFormat)
 
 void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, FRHITexture* InRenderTarget, FRHITexture* InDepthTarget)
 {
-    RHI_EVENT_SCOPE(CommandList, "AABB DebugPass");
+    RHI_EVENT_SCOPE(CommandList, TEXT("AABB DebugPass"));
 
-    TRACE_SCOPE("AABB DebugPass");
+    TRACE_SCOPE(TEXT("AABB DebugPass"));
 
     FRHITexture* RenderTarget = InRenderTarget ? InRenderTarget : Resources.SceneTarget.Get();
     FRHITexture* DepthTex = InDepthTarget ? InDepthTarget : Resources.GBuffer[EGBufferIndex::Depth].Get();
@@ -765,9 +765,9 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
 
 void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, FRHITexture* InRenderTarget, FRHITexture* InDepthTarget)
 {
-    RHI_EVENT_SCOPE(CommandList, "PointLight DebugPass");
+    RHI_EVENT_SCOPE(CommandList, TEXT("PointLight DebugPass"));
 
-    TRACE_SCOPE("PointLight DebugPass");
+    TRACE_SCOPE(TEXT("PointLight DebugPass"));
 
     FRHITexture* RenderTarget = InRenderTarget ? InRenderTarget : Resources.SceneTarget.Get();
     FRHITexture* DepthTex = InDepthTarget ? InDepthTarget : Resources.GBuffer[EGBufferIndex::Depth].Get();
@@ -810,9 +810,9 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
 
 void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, FRHITexture* InRenderTarget, FRHITexture* InDepthTarget)
 {
-    RHI_EVENT_SCOPE(CommandList, "LightProbe DebugPass");
+    RHI_EVENT_SCOPE(CommandList, TEXT("LightProbe DebugPass"));
 
-    TRACE_SCOPE("LightProbe DebugPass");
+    TRACE_SCOPE(TEXT("LightProbe DebugPass"));
 
     FRHITexture* RenderTarget = InRenderTarget ? InRenderTarget : Resources.SceneTarget.Get();
     FRHITexture* DepthTex     = InDepthTarget ? InDepthTarget : Resources.GBuffer[EGBufferIndex::Depth].Get();

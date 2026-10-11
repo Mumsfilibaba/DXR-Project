@@ -21,110 +21,110 @@ static FEditorGridSettings GEditorGridSettings =
 };
 
 static FAutoConsoleVariableRef CVarEditorGridEnabled(
-    "Renderer.Editor.Grid.Enable",
-    "Enables editor viewport grid overlay (procedural infinite plane)",
+    TEXT("Renderer.Editor.Grid.Enable"),
+    TEXT("Enables editor viewport grid overlay (procedural infinite plane)"),
     GEditorGridSettings.bEnabled,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridPlaneY(
-    "Renderer.Editor.Grid.PlaneY",
-    "World-space plane height for the grid (Y = PlaneY)",
+    TEXT("Renderer.Editor.Grid.PlaneY"),
+    TEXT("World-space plane height for the grid (Y = PlaneY)"),
     GEditorGridSettings.PlaneY,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridMinorSize(
-    "Renderer.Editor.Grid.MinorSize",
-    "Minor grid spacing in world units (Meters)",
+    TEXT("Renderer.Editor.Grid.MinorSize"),
+    TEXT("Minor grid spacing in world units (Meters)"),
     GEditorGridSettings.MinorSize,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridMajorSize(
-    "Renderer.Editor.Grid.MajorSize",
-    "Major grid spacing in world units (Meters)",
+    TEXT("Renderer.Editor.Grid.MajorSize"),
+    TEXT("Major grid spacing in world units (Meters)"),
     GEditorGridSettings.MajorSize,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridMinorWidth(
-    "Renderer.Editor.Grid.MinorWidth",
-    "Minor grid line width multiplier (anti-aliased using fwidth)",
+    TEXT("Renderer.Editor.Grid.MinorWidth"),
+    TEXT("Minor grid line width multiplier (anti-aliased using fwidth)"),
     GEditorGridSettings.MinorWidth,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridMajorWidth(
-    "Renderer.Editor.Grid.MajorWidth",
-    "Major grid line width multiplier (anti-aliased using fwidth)",
+    TEXT("Renderer.Editor.Grid.MajorWidth"),
+    TEXT("Major grid line width multiplier (anti-aliased using fwidth)"),
     GEditorGridSettings.MajorWidth,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridMaxTraceDistance(
-    "Renderer.Editor.Grid.MaxTraceDistance",
-    "Maximum ray-plane trace distance (along the view ray). 0 = infinite",
+    TEXT("Renderer.Editor.Grid.MaxTraceDistance"),
+    TEXT("Maximum ray-plane trace distance (along the view ray). 0 = infinite"),
     GEditorGridSettings.MaxTraceDistance,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridFadeDistance(
-    "Renderer.Editor.Grid.FadeDistance",
-    "Distance (along view ray) where the grid fades out (0 = no fade)",
+    TEXT("Renderer.Editor.Grid.FadeDistance"),
+    TEXT("Distance (along view ray) where the grid fades out (0 = no fade)"),
     GEditorGridSettings.FadeDistance,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridHorizonFade(
-    "Renderer.Editor.Grid.HorizonFade",
-    "Horizon fade strength (multiplies abs(rayDir.y))",
+    TEXT("Renderer.Editor.Grid.HorizonFade"),
+    TEXT("Horizon fade strength (multiplies abs(rayDir.y))"),
     GEditorGridSettings.HorizonFade,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridDepthBias(
-    "Renderer.Editor.Grid.DepthBias",
-    "Depth compare bias (world units along view ray) to prevent grid bleeding through geometry",
+    TEXT("Renderer.Editor.Grid.DepthBias"),
+    TEXT("Depth compare bias (world units along view ray) to prevent grid bleeding through geometry"),
     GEditorGridSettings.DepthBias,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridMinorColorR(
-    "Renderer.Editor.Grid.MinorColorR",
-    "Minor grid color (linear) - Red channel (0-1)",
+    TEXT("Renderer.Editor.Grid.MinorColorR"),
+    TEXT("Minor grid color (linear) - Red channel (0-1)"),
     GEditorGridSettings.MinorColor.X,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridMinorColorG(
-    "Renderer.Editor.Grid.MinorColorG",
-    "Minor grid color (linear) - Green channel (0-1)",
+    TEXT("Renderer.Editor.Grid.MinorColorG"),
+    TEXT("Minor grid color (linear) - Green channel (0-1)"),
     GEditorGridSettings.MinorColor.Y,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridMinorColorB(
-    "Renderer.Editor.Grid.MinorColorB",
-    "Minor grid color (linear) - Blue channel (0-1)",
+    TEXT("Renderer.Editor.Grid.MinorColorB"),
+    TEXT("Minor grid color (linear) - Blue channel (0-1)"),
     GEditorGridSettings.MinorColor.Z,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridMinorAlpha(
-    "Renderer.Editor.Grid.MinorAlpha",
-    "Minor grid alpha (0-1)",
+    TEXT("Renderer.Editor.Grid.MinorAlpha"),
+    TEXT("Minor grid alpha (0-1)"),
     GEditorGridSettings.MinorAlpha,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridMajorColorR(
-    "Renderer.Editor.Grid.MajorColorR",
-    "Major grid color (linear) - Red channel (0-1)",
+    TEXT("Renderer.Editor.Grid.MajorColorR"),
+    TEXT("Major grid color (linear) - Red channel (0-1)"),
     GEditorGridSettings.MajorColor.X,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridMajorColorG(
-    "Renderer.Editor.Grid.MajorColorG",
-    "Major grid color (linear) - Green channel (0-1)",
+    TEXT("Renderer.Editor.Grid.MajorColorG"),
+    TEXT("Major grid color (linear) - Green channel (0-1)"),
     GEditorGridSettings.MajorColor.Y,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridMajorColorB(
-    "Renderer.Editor.Grid.MajorColorB",
-    "Major grid color (linear) - Blue channel (0-1)",
+    TEXT("Renderer.Editor.Grid.MajorColorB"),
+    TEXT("Major grid color (linear) - Blue channel (0-1)"),
     GEditorGridSettings.MajorColor.Z,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleVariableRef CVarEditorGridMajorAlpha(
-    "Renderer.Editor.Grid.MajorAlpha",
-    "Major grid alpha (0-1)",
+    TEXT("Renderer.Editor.Grid.MajorAlpha"),
+    TEXT("Major grid alpha (0-1)"),
     GEditorGridSettings.MajorAlpha,
     EConsoleVariableFlags::Default);
 

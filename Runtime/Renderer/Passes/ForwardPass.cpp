@@ -23,14 +23,14 @@ static constexpr EVertexAttributeFlags FORWARD_PASS_ATTRIBUTES =
 
 static bool GForwardPassBindless = false;
 static FAutoConsoleVariableRef CVarForwardPassBindless(
-    "Renderer.ForwardPass.Bindless",
-    "When true, the forward pass samples per-material textures (Albedo / Normal / Material / Height) and the material sampler via SM 6.6 "
+    TEXT("Renderer.ForwardPass.Bindless"),
+    TEXT("When true, the forward pass samples per-material textures (Albedo / Normal / Material / Height) and the material sampler via SM 6.6 "
     "ResourceDescriptorHeap[] / SamplerDescriptorHeap[] and a per-material indices buffer instead of register bindings. Full-frame SRVs / "
-    "samplers (sky, integration LUT, shadow maps) remain non-bindless.",
+    "samplers (sky, integration LUT, shadow maps) remain non-bindless."),
     GForwardPassBindless);
 
-class FTranslucent : SHADER_PERMUTATION_BOOL("ENABLE_TRANSLUCENT");
-class FRefraction  : SHADER_PERMUTATION_BOOL("ENABLE_REFRACTION");
+class FTranslucent : SHADER_PERMUTATION_BOOL(TEXT("ENABLE_TRANSLUCENT"));
+class FRefraction  : SHADER_PERMUTATION_BOOL(TEXT("ENABLE_REFRACTION"));
 
 struct FForwardPassShaderRules
 {
@@ -79,7 +79,7 @@ struct FForwardPassShaderRules
 
     static void ModifyCompilationEnvironment(const FShaderPermutationDesc&, FShaderCompilationEnvironment& Environment)
     {
-        Environment.SetDefine("ENABLE_NORMAL_MAPPING", "(1)");
+        Environment.SetDefine(TEXT("ENABLE_NORMAL_MAPPING"), TEXT("(1)"));
     }
 };
 
@@ -117,8 +117,8 @@ class FForwardPassPS : public FForwardPassShaderRules
     DECLARE_SHADER_TYPE(FForwardPassPS, EShaderStage::Pixel);
 };
 
-IMPLEMENT_SHADER_TYPE(FForwardPassVS, "Shaders/ForwardPass.hlsl", "VSMain", EShaderModel::SM_6_2);
-IMPLEMENT_SHADER_TYPE(FForwardPassPS, "Shaders/ForwardPass.hlsl", "PSMain", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FForwardPassVS, TEXT("Shaders/ForwardPass.hlsl"), TEXT("VSMain"), EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FForwardPassPS, TEXT("Shaders/ForwardPass.hlsl"), TEXT("PSMain"), EShaderModel::SM_6_2);
 
 NODISCARD static FGraphicsPipelineKey CreateForwardPassPSOKey(const FMaterialFeatures& Features, bool bBindless, const FVertexDeclaration& Declaration)
 {
@@ -221,10 +221,10 @@ FGraphicsPipelineStateInstance* FForwardPass::CompilePipelineState(const FMateri
         return nullptr;
     }
 
-    const FString DebugName = FString::Printf("ForwardPass PipelineState%s%s%s%s%s%s [Declaration %u]",
-        Permutation.Get<FParallax>() ? " [Parallax]" : "", Permutation.Get<FClipping>() ? " [Clipping]" : "",
-        Permutation.Get<FAlphaMask>() ? " [AlphaMask]" : "", Permutation.Get<FTranslucent>() ? " [Translucent]" : "",
-        Permutation.Get<FRefraction>() ? " [Refraction]" : "", Permutation.Get<FBindless>() ? " [Bindless]" : "",
+    const FString DebugName = FString::Printf(TEXT("ForwardPass PipelineState%s%s%s%s%s%s [Declaration %u]"),
+        Permutation.Get<FParallax>() ? TEXT(" [Parallax]") : TEXT(""), Permutation.Get<FClipping>() ? TEXT(" [Clipping]") : TEXT(""),
+        Permutation.Get<FAlphaMask>() ? TEXT(" [AlphaMask]") : TEXT(""), Permutation.Get<FTranslucent>() ? TEXT(" [Translucent]") : TEXT(""),
+        Permutation.Get<FRefraction>() ? TEXT(" [Refraction]") : TEXT(""), Permutation.Get<FBindless>() ? TEXT(" [Bindless]") : TEXT(""),
         static_cast<uint32>(Declaration.GetID()));
     NewInstance.PipelineState->SetDebugName(DebugName);
 
@@ -240,9 +240,9 @@ bool FForwardPass::Initialize(FFrameResources& /* FrameResources */)
 void FForwardPass::Record(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)
 {
     // Forward Pass
-    RHI_EVENT_SCOPE(CommandList, "ForwardPass");
+    RHI_EVENT_SCOPE(CommandList, TEXT("ForwardPass"));
 
-    TRACE_SCOPE("ForwardPass");
+    TRACE_SCOPE(TEXT("ForwardPass"));
 
     const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
     const float RenderHeight = float(FrameResources.CurrentRenderHeight);
@@ -417,7 +417,7 @@ void FForwardPass::Record(FRHICommandList& CommandList, const FFrameResources& F
 
 void FForwardPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const FSceneRenderGraphContext& Context)
 {
-    GraphBuilder.AddPass("ForwardPass", ERenderGraphPassFlags::Raster, GForwardPassEnabled,
+    GraphBuilder.AddPass(TEXT("ForwardPass"), ERenderGraphPassFlags::Raster, GForwardPassEnabled,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.SetRenderTarget(0, Context.SceneTargetRenderTargetView, EAttachmentLoadAction::Load);

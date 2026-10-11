@@ -14,8 +14,8 @@
 
 bool GClearBeforeSkyboxEnabled = false;
 static FAutoConsoleVariableRef CVarClearBeforeSkyboxEnabled(
-    "Renderer.Skybox.ClearBeforeSkybox",
-    "Clear the final target before rendering the Skybox (Used for debugging)",
+    TEXT("Renderer.Skybox.ClearBeforeSkybox"),
+    TEXT("Clear the final target before rendering the Skybox (Used for debugging)"),
     GClearBeforeSkyboxEnabled);
 
 struct FSimpleCameraBufferHLSL
@@ -30,7 +30,7 @@ class FSkyboxVS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FSkyboxVS, "Shaders/Skybox.hlsl", "VSMain", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FSkyboxVS, TEXT("Shaders/Skybox.hlsl"), TEXT("VSMain"), EShaderModel::SM_6_2);
 
 class FSkyboxPS
 {
@@ -39,7 +39,7 @@ class FSkyboxPS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FSkyboxPS, "Shaders/Skybox.hlsl", "PSMain", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FSkyboxPS, TEXT("Shaders/Skybox.hlsl"), TEXT("PSMain"), EShaderModel::SM_6_2);
 
 FSkyboxRenderPass::FSkyboxRenderPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -98,7 +98,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     }
     else
     {
-        SkyboxVertexBuffer->SetDebugName("Skybox VertexBuffer");
+        SkyboxVertexBuffer->SetDebugName(TEXT("Skybox VertexBuffer"));
     }
 
     // IndexBuffers
@@ -112,7 +112,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     }
     else
     {
-        SkyboxIndexBuffer->SetDebugName("Skybox IndexBuffer");
+        SkyboxIndexBuffer->SetDebugName(TEXT("Skybox IndexBuffer"));
     }
 
     FRHISamplerStateDesc SamplerStateDesc;
@@ -146,7 +146,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     // Initialize standard input layout
     TArray<FRHIInputElementDesc> InputElements =
     {
-        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 }
+        { TEXT("POSITION"), 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 }
     };
 
     FRHIInputLayoutRef InputLayout = RHI::CreateInputLayout(InputElements);
@@ -207,7 +207,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     }
     else
     {
-        PipelineState->SetDebugName("SkyboxPSO PipelineState");
+        PipelineState->SetDebugName(TEXT("SkyboxPSO PipelineState"));
     }
 
     return true;
@@ -215,9 +215,9 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
 
 void FSkyboxRenderPass::Record(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)
 {
-    RHI_EVENT_SCOPE(CommandList, "Skybox");
+    RHI_EVENT_SCOPE(CommandList, TEXT("Skybox"));
 
-    TRACE_SCOPE("Render Skybox");
+    TRACE_SCOPE(TEXT("Render Skybox"));
 
     const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
     const float RenderHeight = float(FrameResources.CurrentRenderHeight);
@@ -255,7 +255,7 @@ void FSkyboxRenderPass::Record(FRHICommandList& CommandList, const FFrameResourc
 
 void FSkyboxRenderPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const FSceneRenderGraphContext& Context)
 {
-    GraphBuilder.AddPass("Skybox", ERenderGraphPassFlags::Raster, GSkyboxEnabled,
+    GraphBuilder.AddPass(TEXT("Skybox"), ERenderGraphPassFlags::Raster, GSkyboxEnabled,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             const EAttachmentLoadAction LoadAction = GClearBeforeSkyboxEnabled ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;

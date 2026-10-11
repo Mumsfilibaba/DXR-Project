@@ -17,22 +17,22 @@
 
 bool GShadowsBindless = false;
 static FAutoConsoleVariableRef CVarShadowsBindless(
-    "Renderer.Shadows.Bindless",
-    "When true, point-light cube shadows and cascaded directional shadows sample the alpha-mask / parallax-height textures and material "
+    TEXT("Renderer.Shadows.Bindless"),
+    TEXT("When true, point-light cube shadows and cascaded directional shadows sample the alpha-mask / parallax-height textures and material "
     "sampler through SM 6.6 ResourceDescriptorHeap[] / SamplerDescriptorHeap[] and a per-material indices buffer instead of conventional "
-    "register bindings.",
+    "register bindings."),
     GShadowsBindless);
 
 static TAutoConsoleVariable<bool> CVarPointLightsEnableSinglePassRendering(
-    "Renderer.PointLights.EnableSinglePassRendering",
-    "Enables instancing for cube-map rendering via VertexShaders, enabling a single-pass for rendering a full cube-map, which creates less "
-    "overhead on the CPU",
+    TEXT("Renderer.PointLights.EnableSinglePassRendering"),
+    TEXT("Enables instancing for cube-map rendering via VertexShaders, enabling a single-pass for rendering a full cube-map, which creates less "
+    "overhead on the CPU"),
     true,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarPointLightsEnableGeometryShaderInstancing(
-    "Renderer.PointLights.EnableGeometryShaderInstancing",
-    "Enables instancing in a geometry shader, enabling single-pass cube-map drawing, which creates less overhead on the CPU",
+    TEXT("Renderer.PointLights.EnableGeometryShaderInstancing"),
+    TEXT("Enables instancing in a geometry shader, enabling single-pass cube-map drawing, which creates less overhead on the CPU"),
     true,
     EConsoleVariableFlags::Default);
 
@@ -142,7 +142,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         }
         else
         {
-            const FString DebugName = FString::Printf("Point ShadowMap PipelineState%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
+            const FString DebugName = FString::Printf(TEXT("Point ShadowMap PipelineState%s %d"), bBindless ? TEXT(" [Bindless]") : TEXT(""), MaterialFlags);
             NewPipelineStateInstance.PipelineState->SetDebugName(DebugName);
         }
 
@@ -167,7 +167,7 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
     }
     else
     {
-        PerShadowMapBuffer->SetDebugName("Per ShadowMap Buffer");
+        PerShadowMapBuffer->SetDebugName(TEXT("Per ShadowMap Buffer"));
     }
 
     const FRHIBufferDesc SinglePassShadowMapBufferDesc = FRHIBufferDesc::CreateConstantBuffer(sizeof(FSinglePassPointLightBufferHLSL));
@@ -180,7 +180,7 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
     }
     else
     {
-        SinglePassShadowMapBuffer->SetDebugName("Single-Pass ShadowMap Buffer");
+        SinglePassShadowMapBuffer->SetDebugName(TEXT("Single-Pass ShadowMap Buffer"));
     }
 
     return CreateResources(Resources);
@@ -200,7 +200,7 @@ bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
 
     if (Resources.PointLightShadowMaps)
     {
-        Resources.PointLightShadowMaps->SetDebugName("PointLight ShadowMaps");
+        Resources.PointLightShadowMaps->SetDebugName(TEXT("PointLight ShadowMaps"));
     }
     else
     {
@@ -237,9 +237,9 @@ void FPointLightRenderPass::Record(FRHICommandList& CommandList, const FFrameRes
         }
     };
 
-    RHI_EVENT_SCOPE(CommandList, "Render PointLight ShadowMaps");
+    RHI_EVENT_SCOPE(CommandList, TEXT("Render PointLight ShadowMaps"));
 
-    TRACE_SCOPE("Render PointLight ShadowMaps");
+    TRACE_SCOPE(TEXT("Render PointLight ShadowMaps"));
 
     const ECubeMapRenderPassType RenderPassType = GetRenderMapRenderPassType();
     if (RenderPassType == ECubeMapRenderPassType::SinglePass)
@@ -499,7 +499,7 @@ void FPointLightRenderPass::RecordInternal(FRHICommandList& CommandList, const F
 
 void FPointLightRenderPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const FSceneRenderGraphContext& Context)
 {
-    GraphBuilder.AddPass("PointLightShadows", ERenderGraphPassFlags::None, GShadowsEnabled && GPointLightShadowsEnabled,
+    GraphBuilder.AddPass(TEXT("PointLightShadows"), ERenderGraphPassFlags::None, GShadowsEnabled && GPointLightShadowsEnabled,
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             if (Context.PointLightShadowMaps)
