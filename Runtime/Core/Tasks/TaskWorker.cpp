@@ -44,6 +44,8 @@ bool FTaskWorker::Initialize(const CHAR_T* InThreadName)
         return false;
     }
 
+    bIsRunning.Store(true);
+
     Thread = FPlatformThread::Create(this, InThreadName);
     if (!Thread)
     {
@@ -62,8 +64,7 @@ bool FTaskWorker::Initialize(const CHAR_T* InThreadName)
 
 bool FTaskWorker::Start()
 {
-    bIsRunning.Store(true);
-    return true;
+    return bIsRunning.Load();
 }
 
 int32 FTaskWorker::Run()

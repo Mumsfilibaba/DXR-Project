@@ -239,17 +239,34 @@ static bool Test_WorkStealingStress()
     return true;
 }
 
+// ------------------------------------------------------------------------------------------------
+// Release right after Initialize returns
+// ------------------------------------------------------------------------------------------------
+
+static bool Test_ReleaseRightAfterInitialize()
+{
+    constexpr int32 NumCycles = 50;
+    for (int32 Cycle = 0; Cycle < NumCycles; ++Cycle)
+    {
+        FTaskGraph::Release();
+        TG_CHECK(FTaskGraph::Initialize());
+    }
+
+    return true;
+}
+
 bool TaskGraph_Test()
 {
     LOG_INFO("=== Task Graph Tests ===");
 
     bool bResult = true;
-    bResult = Test_LaunchAndWait()             && bResult;
-    bResult = Test_PrerequisiteChain()         && bResult;
-    bResult = Test_NamedThreadFIFO()           && bResult;
-    bResult = Test_ParallelFor()               && bResult;
-    bResult = Test_MainThreadPumpNoDeadlock()  && bResult;
-    bResult = Test_WorkStealingStress()        && bResult;
+    bResult = Test_LaunchAndWait()               && bResult;
+    bResult = Test_PrerequisiteChain()           && bResult;
+    bResult = Test_NamedThreadFIFO()             && bResult;
+    bResult = Test_ParallelFor()                 && bResult;
+    bResult = Test_MainThreadPumpNoDeadlock()    && bResult;
+    bResult = Test_WorkStealingStress()          && bResult;
+    bResult = Test_ReleaseRightAfterInitialize() && bResult;
 
     LOG_INFO("%s", bResult ? TEXT("[TASK GRAPH TESTS SUCCEEDED]") : TEXT("[TASK GRAPH TESTS FAILED]"));
     return bResult;
