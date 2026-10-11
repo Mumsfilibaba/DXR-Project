@@ -12,13 +12,13 @@
 
 static TSharedPtr<FVisualElement> BuildAboutHeader()
 {
-    const FString Version = FString::Printf("Version %s  |  %s", BuildInfo::GetVersionString(), BuildInfo::GetConfigurationName());
+    const FString Version = FString::Printf(TEXT("Version %s  |  %s"), BuildInfo::GetVersionString(), BuildInfo::GetConfigurationName());
 
     return FEditorStyle::MakeHeaderCard(BuildInfo::GetEngineName(), Version);
 }
 
 FEditorAboutPanel::FEditorAboutPanel(FEditorEngine* InEditorEngine)
-    : FEditorPanel(InEditorEngine, "About", "About")
+    : FEditorPanel(InEditorEngine, TEXT("About"), TEXT("About"))
     , Tables()
 {
 }
@@ -74,37 +74,37 @@ TSharedPtr<FPropertyTable> FEditorAboutPanel::AddSection(const TSharedPtr<FVerti
 
 void FEditorAboutPanel::BuildSections(const TSharedPtr<FVerticalBox>& Column)
 {
-    if (TSharedPtr<FPropertyTable> Source = AddSection(Column, "Source"))
+    if (TSharedPtr<FPropertyTable> Source = AddSection(Column, TEXT("Source")))
     {
         const FString Commit = BuildInfo::IsWorkingTreeDirty()
-            ? FString::Printf("%s (dirty)", BuildInfo::GetCommit())
+            ? FString::Printf(TEXT("%s (dirty)"), BuildInfo::GetCommit())
             : FString(BuildInfo::GetCommit());
 
-        Source->AddRow("Branch", CreateValueText(BuildInfo::GetBranch()));
-        Source->AddRow("Commit", CreateValueText(Commit));
-        Source->AddRow("Commit Date", CreateValueText(BuildInfo::GetCommitDate()));
+        Source->AddRow(TEXT("Branch"), CreateValueText(BuildInfo::GetBranch()));
+        Source->AddRow(TEXT("Commit"), CreateValueText(Commit));
+        Source->AddRow(TEXT("Commit Date"), CreateValueText(BuildInfo::GetCommitDate()));
     }
 
-    if (TSharedPtr<FPropertyTable> Build = AddSection(Column, "Build"))
+    if (TSharedPtr<FPropertyTable> Build = AddSection(Column, TEXT("Build")))
     {
-        Build->AddRow("Configuration", CreateValueText(FString::Printf("%s (%s)", BuildInfo::GetConfigurationName(), BuildInfo::GetLinkageName())));
-        Build->AddRow("Platform", CreateValueText(FString::Printf("%s %s", BuildInfo::GetPlatformName(), BuildInfo::GetArchitectureName())));
-        Build->AddRow("Compiler", CreateValueText(BuildInfo::GetCompilerName()));
-        Build->AddRow("Compiled", CreateValueText(BuildInfo::GetCompileTimestamp()));
+        Build->AddRow(TEXT("Configuration"), CreateValueText(FString::Printf(TEXT("%s (%s)"), BuildInfo::GetConfigurationName(), BuildInfo::GetLinkageName())));
+        Build->AddRow(TEXT("Platform"), CreateValueText(FString::Printf(TEXT("%s %s"), BuildInfo::GetPlatformName(), BuildInfo::GetArchitectureName())));
+        Build->AddRow(TEXT("Compiler"), CreateValueText(BuildInfo::GetCompilerName()));
+        Build->AddRow(TEXT("Compiled"), CreateValueText(BuildInfo::GetCompileTimestamp()));
     }
 
-    if (TSharedPtr<FPropertyTable> Graphics = AddSection(Column, "Graphics"))
+    if (TSharedPtr<FPropertyTable> Graphics = AddSection(Column, TEXT("Graphics")))
     {
         if (RHI::Device)
         {
             const FString AdapterName = RHI::Device->GetAdapterName();
 
-            Graphics->AddRow("Backend", CreateValueText(ToString(RHI::Device->GetRHIType())));
-            Graphics->AddRow("Adapter", CreateValueText(AdapterName.IsEmpty() ? FString("Unknown") : AdapterName));
+            Graphics->AddRow(TEXT("Backend"), CreateValueText(ToString(RHI::Device->GetRHIType())));
+            Graphics->AddRow(TEXT("Adapter"), CreateValueText(AdapterName.IsEmpty() ? FString(TEXT("Unknown")) : AdapterName));
         }
         else
         {
-            Graphics->AddRow("Backend", CreateValueText("None"));
+            Graphics->AddRow(TEXT("Backend"), CreateValueText(TEXT("None")));
         }
     }
 }
@@ -145,5 +145,5 @@ void FEditorAboutPanel::CopyRow(const TSharedPtr<FPropertyTable>& FromTable, int
         Value = ValueText->GetText();
     }
 
-    FPlatformSystemClipboard::SetText(FString::Printf("%s: %s", *Row.Label, *Value));
+    FPlatformSystemClipboard::SetText(FString::Printf(TEXT("%s: %s"), *Row.Label, *Value));
 }

@@ -21,8 +21,8 @@
 #include "Application/Menus/MenuItem.h"
 #include "Application/Menus/MenuStack.h"
 
-static const CHAR_T* GActorDragDropPayloadId = "SCENE_HIERARCHY_ACTOR";
-static const CHAR_T* GFilterTypeLabel = "Filter";
+static const CHAR_T* GActorDragDropPayloadId = TEXT("SCENE_HIERARCHY_ACTOR");
+static const CHAR_T* GFilterTypeLabel = TEXT("Filter");
 
 constexpr float DROP_INDICATOR_THICKNESS = 2.0f;
 
@@ -239,7 +239,7 @@ static TSharedPtr<FMenu> BuildPlaceActorMenu(FEditorEngine* EditorEngine)
         return nullptr;
     }
 
-    Menu->AddSection("Primitives", Font);
+    Menu->AddSection(TEXT("Primitives"), Font);
 
     for (uint8 Index = 0; Index < static_cast<uint8>(EEditorPrimitiveType::Count); ++Index)
     {
@@ -259,7 +259,7 @@ static TSharedPtr<FMenu> BuildPlaceActorMenu(FEditorEngine* EditorEngine)
         Menu->AddItem(FMenuItem::Create(Desc));
     }
 
-    Menu->AddSection("Lights", Font);
+    Menu->AddSection(TEXT("Lights"), Font);
 
     FWorld* World = EditorEngine->GetWorld();
     for (const EEditorLightType Type : GPlaceableLightTypes)
@@ -287,10 +287,10 @@ static TSharedPtr<FMenu> BuildPlaceActorMenu(FEditorEngine* EditorEngine)
         Menu->AddItem(Item);
     }
 
-    Menu->AddSection("Camera", Font);
+    Menu->AddSection(TEXT("Camera"), Font);
 
     FMenuItem::FDesc CameraDesc;
-    CameraDesc.Label       = "Camera";
+    CameraDesc.Label       = TEXT("Camera");
     CameraDesc.Font        = Font;
     CameraDesc.OnActivated = FOnMenuItemActivated::CreateLambda([EditorEngine]()
     {
@@ -605,7 +605,7 @@ void FEditorSceneHierarchyView::BeginDrag(const TSharedPtr<FTreeItem>& Item, con
 
     FDragDropPayload Payload;
     Payload.TypeId      = GActorDragDropPayloadId;
-    Payload.DisplayText = DraggedItems.Size() > 1 ? FString::Printf("%s +%d", Item->Label.Data(), DraggedItems.Size() - 1) : Item->Label;
+    Payload.DisplayText = DraggedItems.Size() > 1 ? FString::Printf(TEXT("%s +%d"), Item->Label.Data(), DraggedItems.Size() - 1) : Item->Label;
     Payload.UserData    = Item->UserData;
 
     bIsDragging         = true;
@@ -687,7 +687,7 @@ bool FEditorSceneHierarchyView::CanDropOn(const TSharedPtr<FTreeItem>& TargetIte
 }
 
 FEditorSceneHierarchyPanel::FEditorSceneHierarchyPanel(FEditorEngine* InEditorEngine)
-    : FEditorPanel(InEditorEngine, "SceneHierarchy", "Scene Hierarchy")
+    : FEditorPanel(InEditorEngine, TEXT("SceneHierarchy"), TEXT("Scene Hierarchy"))
     , HierarchyView(nullptr)
     , TreeView(nullptr)
     , SearchBox(nullptr)
@@ -710,8 +710,8 @@ bool FEditorSceneHierarchyPanel::Initialize()
     TreeDesc.Font                = FEditorStyle::GetFonts().Body;
     TreeDesc.RowHeight           = FEditorStyle::RowHeight;
     TreeDesc.TypeColumnWidth     = HIERARCHY_TYPE_COLUMN_WIDTH;
-    TreeDesc.LabelColumnHeader   = "Item Label";
-    TreeDesc.TypeColumnHeader    = "Type";
+    TreeDesc.LabelColumnHeader   = TEXT("Item Label");
+    TreeDesc.TypeColumnHeader    = TEXT("Type");
     TreeDesc.bShowScrollBar      = true;
     TreeDesc.bAlternateRowColors = true;
     TreeDesc.bAllowMultiSelect   = true;
@@ -738,7 +738,7 @@ bool FEditorSceneHierarchyPanel::Initialize()
     HierarchyView->OnRenameCommitted = FOnHierarchyRenameCommitted::CreateRaw(this, &FEditorSceneHierarchyPanel::OnRenameCommitted);
     HierarchyView->OnItemsDropped    = FOnHierarchyItemsDropped::CreateRaw(this, &FEditorSceneHierarchyPanel::OnItemsDropped);
 
-    SearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc("Search Actors",
+    SearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc(TEXT("Search Actors"),
         FOnSearchTextChanged::CreateRaw(this, &FEditorSceneHierarchyPanel::OnSearchTextChanged)));
 
     if (!SearchBox)
@@ -775,7 +775,7 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildRowContextMenu()
     FActorFilter* ContextFilter = GetContextFilter();
 
     FMenuItem::FDesc AddFilterDesc;
-    AddFilterDesc.Label       = "Add Filter";
+    AddFilterDesc.Label       = TEXT("Add Filter");
     AddFilterDesc.Font        = Font;
     AddFilterDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this, ContextFilter]()
     {
@@ -783,8 +783,8 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildRowContextMenu()
     });
 
     FMenuItem::FDesc RenameDesc;
-    RenameDesc.Label        = "Rename";
-    RenameDesc.ShortcutText = "F2";
+    RenameDesc.Label        = TEXT("Rename");
+    RenameDesc.ShortcutText = TEXT("F2");
     RenameDesc.Font         = Font;
     RenameDesc.OnActivated  = FOnMenuItemActivated::CreateLambda([this]()
     {
@@ -801,8 +801,8 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildRowContextMenu()
     RenameItem->SetEnabled(SelectedCount == 1 || bHasFilterOnly);
 
     FMenuItem::FDesc DeleteDesc;
-    DeleteDesc.Label        = SelectedCount > 1 ? FString::Printf("Delete %d Actors", SelectedCount) : FString("Delete");
-    DeleteDesc.ShortcutText = "Del";
+    DeleteDesc.Label        = SelectedCount > 1 ? FString::Printf(TEXT("Delete %d Actors"), SelectedCount) : FString(TEXT("Delete"));
+    DeleteDesc.ShortcutText = TEXT("Del");
     DeleteDesc.Font         = Font;
     DeleteDesc.OnActivated  = FOnMenuItemActivated::CreateRaw(this, &FEditorSceneHierarchyPanel::OnDeleteRequested);
 
@@ -815,7 +815,7 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildRowContextMenu()
     });
 
     FMenuItem::FDesc DetachDesc;
-    DetachDesc.Label       = "Detach from Parent";
+    DetachDesc.Label       = TEXT("Detach from Parent");
     DetachDesc.Font        = Font;
     DetachDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this]()
     {
@@ -831,27 +831,27 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildRowContextMenu()
     DetachItem->SetEnabled(bHasParent);
 
     FMenuItem::FDesc CopyDesc;
-    CopyDesc.Label        = "Copy";
-    CopyDesc.ShortcutText = "Ctrl+C";
+    CopyDesc.Label        = TEXT("Copy");
+    CopyDesc.ShortcutText = TEXT("Ctrl+C");
     CopyDesc.Font         = Font;
 
     TSharedPtr<FMenuItem> CopyItem = FMenuItem::Create(CopyDesc);
     CopyItem->SetEnabled(false);
 
     FMenuItem::FDesc PasteDesc;
-    PasteDesc.Label        = "Paste";
-    PasteDesc.ShortcutText = "Ctrl+V";
+    PasteDesc.Label        = TEXT("Paste");
+    PasteDesc.ShortcutText = TEXT("Ctrl+V");
     PasteDesc.Font         = Font;
 
     TSharedPtr<FMenuItem> PasteItem = FMenuItem::Create(PasteDesc);
     PasteItem->SetEnabled(false);
 
-    Menu->AddSection("Create", Font);
+    Menu->AddSection(TEXT("Create"), Font);
 
     if (TSharedPtr<FMenu> AddActorMenu = BuildPlaceActorMenu(EditorEngine))
     {
         FMenuItem::FDesc AddActorDesc;
-        AddActorDesc.Label   = "Add Actor";
+        AddActorDesc.Label   = TEXT("Add Actor");
         AddActorDesc.Font    = Font;
         AddActorDesc.SubMenu = AddActorMenu;
 
@@ -860,7 +860,7 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildRowContextMenu()
 
     Menu->AddItem(FMenuItem::Create(AddFilterDesc));
 
-    Menu->AddSection("Common", Font);
+    Menu->AddSection(TEXT("Common"), Font);
 
     Menu->AddItem(DeleteItem);
     Menu->AddItem(RenameItem);
@@ -868,7 +868,7 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildRowContextMenu()
     if (TSharedPtr<FMenu> MoveToFilterMenu = BuildMoveToFilterMenu())
     {
         FMenuItem::FDesc MoveToDesc;
-        MoveToDesc.Label   = "Move To Filter";
+        MoveToDesc.Label   = TEXT("Move To Filter");
         MoveToDesc.Font    = Font;
         MoveToDesc.SubMenu = MoveToFilterMenu;
 
@@ -901,10 +901,10 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildMoveToFilterMenu()
 
     const TSharedPtr<IFontFace>& Font = FEditorStyle::GetFonts().Body;
 
-    Menu->AddSection("Clear", Font);
+    Menu->AddSection(TEXT("Clear"), Font);
 
     FMenuItem::FDesc NoneDesc;
-    NoneDesc.Label       = "None";
+    NoneDesc.Label       = TEXT("None");
     NoneDesc.Font        = Font;
     NoneDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this]()
     {
@@ -913,7 +913,7 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildMoveToFilterMenu()
 
     Menu->AddItem(FMenuItem::Create(NoneDesc));
 
-    Menu->AddSection("Filters", Font);
+    Menu->AddSection(TEXT("Filters"), Font);
 
     for (FActorFilter* Filter : World->GetActorFilters())
     {
@@ -1294,10 +1294,10 @@ void FEditorSceneHierarchyPanel::AddFilter(FActorFilter* ParentFilter)
         return;
     }
 
-    FString Name("New Filter");
+    FString Name(TEXT("New Filter"));
     for (int32 Suffix = 1; World->FindActorFilter(Name, ParentFilter); ++Suffix)
     {
-        Name = FString::Printf("New Filter %d", Suffix);
+        Name = FString::Printf(TEXT("New Filter %d"), Suffix);
     }
 
     if (!World->CreateActorFilter(Name, ParentFilter))

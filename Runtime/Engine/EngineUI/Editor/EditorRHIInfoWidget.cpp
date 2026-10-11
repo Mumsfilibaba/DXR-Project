@@ -35,9 +35,9 @@ void FEditorRHIInfoWidget::Draw()
         return;
     }
 
-    TRACE_SCOPE("RHI Info");
+    TRACE_SCOPE(TEXT("RHI Info"));
 
-    if (EditorWidgets::BeginEditorWindow("RHI Info", &bVisible))
+    if (EditorWidgets::BeginEditorWindow(TEXT("RHI Info"), &bVisible))
     {
         DrawAdapterInfo();
         DrawBudgetSection();
@@ -56,7 +56,7 @@ void FEditorRHIInfoWidget::DrawAdapterInfo()
     if (FRHIDevice* Device = RHI::Device)
     {
         const FString AdapterName = Device->GetAdapterName();
-        ImGui::Text("Adapter: %s", *AdapterName);
+        ImGui::Text("Adapter: %s", StringCast<ANSICHAR>(AdapterName).Get());
     }
 }
 
@@ -141,7 +141,7 @@ void FEditorRHIInfoWidget::DrawResourceMemory()
 
         const FStatRegistry& Registry = FStatRegistry::Get();
         TArray<FStatData*> RHIStats;
-        Registry.GetStatsByGroup("RHI", RHIStats);
+        Registry.GetStatsByGroup(TEXT("RHI"), RHIStats);
 
         for (const FStatData* Stat : RHIStats)
         {
@@ -154,7 +154,7 @@ void FEditorRHIInfoWidget::DrawResourceMemory()
             EditorHelpers::FormatBytes(Stat->Value.Load(), SizeText, sizeof(SizeText));
 
             ImGui::TableNextRow();
-            ImGui::TableNextColumn(); ImGui::Text("%s", Stat->StatName);
+            ImGui::TableNextColumn(); ImGui::Text("%s", StringCast<ANSICHAR>(Stat->StatName).Get());
             ImGui::TableNextColumn(); ImGui::Text("%s", SizeText);
         }
 
@@ -171,43 +171,43 @@ void FEditorRHIInfoWidget::DrawAllocatorDetails()
     for (const CHAR_T* GroupName : Groups)
     {
         const bool bIsRHIDetailGroup =
-            (CString::Strcmp(GroupName, "D3D11 Resources") == 0) ||
-            (CString::Strcmp(GroupName, "D3D12 Allocators") == 0) ||
-            (CString::Strcmp(GroupName, "Vulkan Allocators") == 0) ||
-            (CString::Strcmp(GroupName, "Metal Allocators") == 0) ||
-            (CString::Strcmp(GroupName, "Metal Heaps") == 0) ||
-            (CString::Strcmp(GroupName, "Metal Standalone") == 0) ||
-            (CString::Strcmp(GroupName, "Metal Defrag") == 0) ||
-            (CString::Strcmp(GroupName, "D3D11 PSO") == 0) ||
-            (CString::Strcmp(GroupName, "D3D12 PSO") == 0) ||
-            (CString::Strcmp(GroupName, "Vulkan PSO") == 0) ||
-            (CString::Strcmp(GroupName, "Metal PSO") == 0) ||
-            (CString::Strcmp(GroupName, "D3D11 State Changes") == 0) ||
-            (CString::Strcmp(GroupName, "D3D12 Commands") == 0) ||
-            (CString::Strcmp(GroupName, "Vulkan Commands") == 0) ||
-            (CString::Strcmp(GroupName, "Metal Commands") == 0) ||
-            (CString::Strcmp(GroupName, "D3D12 Submissions / Frame") == 0) ||
-            (CString::Strcmp(GroupName, "Vulkan Submissions / Frame") == 0) ||
-            (CString::Strcmp(GroupName, "D3D12 Ray Tracing / Frame") == 0) ||
-            (CString::Strcmp(GroupName, "Vulkan Ray Tracing / Frame") == 0) ||
-            (CString::Strcmp(GroupName, "D3D11 Queries") == 0) ||
-            (CString::Strcmp(GroupName, "D3D12 Queries") == 0) ||
-            (CString::Strcmp(GroupName, "Vulkan Queries") == 0) ||
-            (CString::Strcmp(GroupName, "Metal Queries") == 0) ||
-            (CString::Strcmp(GroupName, "Metal GPU") == 0) ||
-            (CString::Strcmp(GroupName, "D3D12 Residency") == 0) ||
-            (CString::Strcmp(GroupName, "Metal Residency") == 0) ||
-            (CString::Strcmp(GroupName, "Metal Bindless") == 0);
+            (CString::Strcmp(GroupName, TEXT("D3D11 Resources")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("D3D12 Allocators")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("Vulkan Allocators")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("Metal Allocators")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("Metal Heaps")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("Metal Standalone")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("Metal Defrag")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("D3D11 PSO")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("D3D12 PSO")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("Vulkan PSO")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("Metal PSO")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("D3D11 State Changes")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("D3D12 Commands")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("Vulkan Commands")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("Metal Commands")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("D3D12 Submissions / Frame")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("Vulkan Submissions / Frame")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("D3D12 Ray Tracing / Frame")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("Vulkan Ray Tracing / Frame")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("D3D11 Queries")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("D3D12 Queries")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("Vulkan Queries")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("Metal Queries")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("Metal GPU")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("D3D12 Residency")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("Metal Residency")) == 0) ||
+            (CString::Strcmp(GroupName, TEXT("Metal Bindless")) == 0);
 
         if (!bIsRHIDetailGroup)
         {
             continue;
         }
 
-        ImGui::SeparatorText(GroupName);
+        ImGui::SeparatorText(StringCast<ANSICHAR>(GroupName).Get());
 
         const ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp;
-        if (ImGui::BeginTable(GroupName, 2, TableFlags))
+        if (ImGui::BeginTable(StringCast<ANSICHAR>(GroupName).Get(), 2, TableFlags))
         {
             ImGui::TableSetupColumn("Pool", ImGuiTableColumnFlags_WidthStretch, 0.6f);
             ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch, 0.4f);
@@ -227,7 +227,7 @@ void FEditorRHIInfoWidget::DrawAllocatorDetails()
                 }
 
                 ImGui::TableNextRow();
-                ImGui::TableNextColumn(); ImGui::Text("%s", Stat->StatName);
+                ImGui::TableNextColumn(); ImGui::Text("%s", StringCast<ANSICHAR>(Stat->StatName).Get());
                 ImGui::TableNextColumn(); ImGui::Text("%s", ValueText);
             }
 

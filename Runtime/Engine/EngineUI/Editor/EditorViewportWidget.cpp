@@ -21,15 +21,15 @@
 #include "ImGuiPlugin/ImGuiRenderer.h" 
 
 static TAutoConsoleVariable<bool> CVarDrawFps(
-    "Engine.DrawFps",
-    "Enable FPS counter in the viewport corner",
+    TEXT("Engine.DrawFps"),
+    TEXT("Enable FPS counter in the viewport corner"),
     false,
     EConsoleVariableFlags::Default);
 
 constexpr float SPEED_OVERLAY_HOLD_TIME = 0.9f;
 constexpr float SPEED_OVERLAY_FADE_TIME = 0.35f;
 
-constexpr const CHAR_T* VIEWPORT_CONTEXT_MENU_ID = "ViewportContextMenu";
+constexpr const CHAR_T* VIEWPORT_CONTEXT_MENU_ID = TEXT("ViewportContextMenu");
 
 FEditorViewportWidget::FEditorViewportWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)
@@ -96,7 +96,7 @@ FEditorViewportWidget::~FEditorViewportWidget()
 
 void FEditorViewportWidget::Draw()
 {
-    TRACE_SCOPE("Viewport");
+    TRACE_SCOPE(TEXT("Viewport"));
 
     PendingCameraInput = FEditorCameraInputState();
 
@@ -169,7 +169,7 @@ void FEditorViewportWidget::DrawViewportWindow()
         ImGuiWindowFlags_NoScrollbar |
         ImGuiWindowFlags_NoScrollWithMouse;
 
-    if (EditorWidgets::BeginEditorWindow("Viewport", &bVisible, ViewportFlags))
+    if (EditorWidgets::BeginEditorWindow(TEXT("Viewport"), &bVisible, ViewportFlags))
     {
         const bool bAnyMouseClick =
             ImGui::IsMouseClicked(ImGuiMouseButton_Left) ||
@@ -213,31 +213,31 @@ void FEditorViewportWidget::DrawViewportWindow()
 
                 static const FDebugItem BaseViewItems[] =
                 {
-                    { "Lit",                FSceneRenderView::EDebugView::None },
-                    { "Shadow Mask",        FSceneRenderView::EDebugView::ShadowMask },
-                    { "GBuffer: Albedo",    FSceneRenderView::EDebugView::GBufferAlbedo },
-                    { "GBuffer: Normal",    FSceneRenderView::EDebugView::GBufferNormal },
-                    { "GBuffer: Material",  FSceneRenderView::EDebugView::GBufferMaterial },
-                    { "GBuffer: Velocity",  FSceneRenderView::EDebugView::GBufferVelocity },
-                    { "SSAO",               FSceneRenderView::EDebugView::SSAO },
-                    { "Depth",              FSceneRenderView::EDebugView::Depth },
+                    { TEXT("Lit"),                FSceneRenderView::EDebugView::None },
+                    { TEXT("Shadow Mask"),        FSceneRenderView::EDebugView::ShadowMask },
+                    { TEXT("GBuffer: Albedo"),    FSceneRenderView::EDebugView::GBufferAlbedo },
+                    { TEXT("GBuffer: Normal"),    FSceneRenderView::EDebugView::GBufferNormal },
+                    { TEXT("GBuffer: Material"),  FSceneRenderView::EDebugView::GBufferMaterial },
+                    { TEXT("GBuffer: Velocity"),  FSceneRenderView::EDebugView::GBufferVelocity },
+                    { TEXT("SSAO"),               FSceneRenderView::EDebugView::SSAO },
+                    { TEXT("Depth"),              FSceneRenderView::EDebugView::Depth },
                 };
 
                 static const FDebugItem ShadowDebugItems[] =
                 {
-                    { "CSM Cascades (2x2)",   FSceneRenderView::EDebugView::ShadowCascades },
-                    { "CSM Cascade Index",    FSceneRenderView::EDebugView::ShadowCascadeIndex },
-                    { "CSM Cascade Overlay",  FSceneRenderView::EDebugView::ShadowCascadeOverlay },
+                    { TEXT("CSM Cascades (2x2)"),   FSceneRenderView::EDebugView::ShadowCascades },
+                    { TEXT("CSM Cascade Index"),    FSceneRenderView::EDebugView::ShadowCascadeIndex },
+                    { TEXT("CSM Cascade Overlay"),  FSceneRenderView::EDebugView::ShadowCascadeOverlay },
                 };
 
                 static const FDebugItem RayTracingDebugItems[] =
                 {
-                    { "Reflections Radiance",        FSceneRenderView::EDebugView::RayTracingReflectionsRaw },
-                    { "Reflections Temporal Filter", FSceneRenderView::EDebugView::RayTracingReflectionsTemporal },
-                    { "Reflections Spatial Filter",  FSceneRenderView::EDebugView::RayTracingReflectionsSpatial },
-                    { "Reflections Variance",        FSceneRenderView::EDebugView::RayTracingReflectionsVariance },
-                    { "Reflections History Length",  FSceneRenderView::EDebugView::RayTracingReflectionsHistory },
-                    { "Geometry Debug",              FSceneRenderView::EDebugView::RayTracingPrimaryID },
+                    { TEXT("Reflections Radiance"),        FSceneRenderView::EDebugView::RayTracingReflectionsRaw },
+                    { TEXT("Reflections Temporal Filter"), FSceneRenderView::EDebugView::RayTracingReflectionsTemporal },
+                    { TEXT("Reflections Spatial Filter"),  FSceneRenderView::EDebugView::RayTracingReflectionsSpatial },
+                    { TEXT("Reflections Variance"),        FSceneRenderView::EDebugView::RayTracingReflectionsVariance },
+                    { TEXT("Reflections History Length"),  FSceneRenderView::EDebugView::RayTracingReflectionsHistory },
+                    { TEXT("Geometry Debug"),              FSceneRenderView::EDebugView::RayTracingPrimaryID },
                 };
 
                 const auto FindDebugLabel = [&](FSceneRenderView::EDebugView InView) -> const CHAR_T*
@@ -266,7 +266,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                         }
                     }
 
-                    return "Lit";
+                    return TEXT("Lit");
                 };
 
                 const float LabelGapFromCircle = 16.0f;
@@ -278,7 +278,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                     const float RowWidth    = ImGui::GetContentRegionAvail().x;
                     const float MenuIndentX = 20.0f;
 
-                    ImGui::PushID(Label);
+                    ImGui::PushID(StringCast<ANSICHAR>(Label).Get());
 
                     if (!bEnabled)
                     {
@@ -331,12 +331,12 @@ void FEditorViewportWidget::DrawViewportWindow()
                         DrawList->AddCircleFilled(ImVec2(CircleX, CircleY), 4.5f, UnselectedColor);
                     }
 
-                    const ImVec2 LabelSize = ImGui::CalcTextSize(Label);
+                    const ImVec2 LabelSize = ImGui::CalcTextSize(StringCast<ANSICHAR>(Label).Get());
 
                     const float LabelX = CircleX + LabelGapFromCircle;
                     const float LabelY = RectMin.y + (RowHeight - LabelSize.y) * 0.5f;
 
-                    DrawList->AddText(ImVec2(LabelX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), Label);
+                    DrawList->AddText(ImVec2(LabelX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), StringCast<ANSICHAR>(Label).Get());
 
                     if (!bEnabled)
                     {
@@ -367,17 +367,17 @@ void FEditorViewportWidget::DrawViewportWindow()
 
                     for (const FDebugItem& Item : BaseViewItems)
                     {
-                        CachedMaxDebugLabelWidth = Math::Max(CachedMaxDebugLabelWidth, ImGui::CalcTextSize(Item.Label).x);
+                        CachedMaxDebugLabelWidth = Math::Max(CachedMaxDebugLabelWidth, ImGui::CalcTextSize(StringCast<ANSICHAR>(Item.Label).Get()).x);
                     }
 
                     for (const FDebugItem& Item : ShadowDebugItems)
                     {
-                        CachedMaxDebugLabelWidth = Math::Max(CachedMaxDebugLabelWidth, ImGui::CalcTextSize(Item.Label).x);
+                        CachedMaxDebugLabelWidth = Math::Max(CachedMaxDebugLabelWidth, ImGui::CalcTextSize(StringCast<ANSICHAR>(Item.Label).Get()).x);
                     }
 
                     for (const FDebugItem& Item : RayTracingDebugItems)
                     {
-                        CachedMaxDebugLabelWidth = Math::Max(CachedMaxDebugLabelWidth, ImGui::CalcTextSize(Item.Label).x);
+                        CachedMaxDebugLabelWidth = Math::Max(CachedMaxDebugLabelWidth, ImGui::CalcTextSize(StringCast<ANSICHAR>(Item.Label).Get()).x);
                     }
 
                     CachedDebugLabelFont     = ImGui::GetFont();
@@ -399,23 +399,23 @@ void FEditorViewportWidget::DrawViewportWindow()
                         return OutBuffer.Data();
                     }
 
-                    if (ImGui::CalcTextSize(InLabel).x <= MaxWidth)
+                    const TStringConversion<ANSICHAR, CHAR_T> Utf8Label = StringCast<ANSICHAR>(InLabel);
+                    if (ImGui::CalcTextSize(Utf8Label.Get()).x <= MaxWidth)
                     {
-                        CString::Snprintf(OutBuffer.Data(), static_cast<int32>(OutBuffer.Size()), "%s", InLabel);
+                        CString::Snprintf(OutBuffer.Data(), static_cast<int32>(OutBuffer.Size()), TEXT("%s"), InLabel);
                         return OutBuffer.Data();
                     }
 
-                    const CHAR_T* Ellipsis = "...";
-
-                    const float EllipsisW = ImGui::CalcTextSize(Ellipsis).x;
+                    const float EllipsisW = ImGui::CalcTextSize("...").x;
                     const float Budget    = Math::Max(0.0f, MaxWidth - EllipsisW);
 
-                    const CHAR_T* LabelEnd  = InLabel + CString::Strlen(InLabel);
-                    const CHAR_T* Remaining = nullptr;
+                    const ANSICHAR* LabelStart = Utf8Label.Get();
+                    const ANSICHAR* LabelEnd   = LabelStart + Utf8Label.Length();
+                    const ANSICHAR* Remaining  = nullptr;
 
-                    ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), Budget, 0.0f, InLabel, LabelEnd, &Remaining);
+                    ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), Budget, 0.0f, LabelStart, LabelEnd, &Remaining);
 
-                    const int32 Count = Remaining ? static_cast<int32>(Remaining - InLabel) : 0;
+                    const int32 Count = Remaining ? static_cast<int32>(Remaining - LabelStart) : 0;
 
                     if (Count <= 0)
                     {
@@ -423,14 +423,16 @@ void FEditorViewportWidget::DrawViewportWindow()
                         return OutBuffer.Data();
                     }
 
-                    const int32 MaxCopy = Math::Min<int32>(Count, static_cast<int32>(OutBuffer.Size()) - 4);
+                    const TStringConversion<CHAR_T, ANSICHAR> Fitted = StringCast<CHAR_T>(LabelStart, Count);
+
+                    const int32 MaxCopy = Math::Min<int32>(Fitted.Length(), static_cast<int32>(OutBuffer.Size()) - 4);
                     for (int32 i = 0; i < MaxCopy; ++i)
                     {
-                        OutBuffer[i] = InLabel[i];
+                        OutBuffer[i] = Fitted.Get()[i];
                     }
 
                     OutBuffer[MaxCopy] = '\0';
-                    CString::Strcat(OutBuffer.Data(), Ellipsis);
+                    CString::Strcat(OutBuffer.Data(), TEXT("..."));
 
                     return OutBuffer.Data();
                 };
@@ -467,58 +469,58 @@ void FEditorViewportWidget::DrawViewportWindow()
 
                 ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + ContentMin.x + LeftPadding, ChildPos.y + CursorY));
 
-                const CHAR_T* CameraMenuPopupId     = "##ViewportCameraMenu";
-                const CHAR_T* ViewMenuPopupId       = "##ViewportViewModeMenu";
-                const CHAR_T* ShadowMenuPopupId     = "##ViewportShadowMenu";
-                const CHAR_T* RayTracingMenuPopupId = "##ViewportRayTracingMenu";
-                const CHAR_T* SecondaryMenuPopupId  = "##ViewportSecondaryMenu";
+                const CHAR_T* CameraMenuPopupId     = TEXT("##ViewportCameraMenu");
+                const CHAR_T* ViewMenuPopupId       = TEXT("##ViewportViewModeMenu");
+                const CHAR_T* ShadowMenuPopupId     = TEXT("##ViewportShadowMenu");
+                const CHAR_T* RayTracingMenuPopupId = TEXT("##ViewportRayTracingMenu");
+                const CHAR_T* SecondaryMenuPopupId  = TEXT("##ViewportSecondaryMenu");
 
                 const ImGuiPopupFlags PopupQueryFlags = ImGuiPopupFlags_AnyPopupLevel;
 
                 // A submenu is only ever open while the View menu that hosts it is, so it needs no term of its own
-                const bool bCameraPopupOpen = ImGui::IsPopupOpen(ImGui::GetID(CameraMenuPopupId), PopupQueryFlags);
-                const bool bViewPopupOpen   = ImGui::IsPopupOpen(ImGui::GetID(ViewMenuPopupId), PopupQueryFlags);
+                const bool bCameraPopupOpen = ImGui::IsPopupOpen(ImGui::GetID(StringCast<ANSICHAR>(CameraMenuPopupId).Get()), PopupQueryFlags);
+                const bool bViewPopupOpen   = ImGui::IsPopupOpen(ImGui::GetID(StringCast<ANSICHAR>(ViewMenuPopupId).Get()), PopupQueryFlags);
                 const bool bAnyPopupOpen    = bCameraPopupOpen || bViewPopupOpen;
 
                 FPopupAnchor CameraMenuAnchor;
                 FPopupAnchor ViewMenuAnchor;
-                if (EditorWidgets::DrawButton("Translation##GizmoOperationTranslation", ImVec2(TranslationButtonWidth, ButtonHeight), GizmoOperation == EditorGuizmo::EOperation::Translate, ImDrawFlags_RoundCornersLeft))
+                if (EditorWidgets::DrawButton(TEXT("Translation##GizmoOperationTranslation"), ImVec2(TranslationButtonWidth, ButtonHeight), GizmoOperation == EditorGuizmo::EOperation::Translate, ImDrawFlags_RoundCornersLeft))
                 {
                     GizmoOperation = EditorGuizmo::EOperation::Translate;
                 }
 
                 ImGui::SameLine(0.0f, 0.0f);
-                if (EditorWidgets::DrawButton("Rotate##GizmoOperationRotate", ImVec2(RotateButtonWidth, ButtonHeight), GizmoOperation == EditorGuizmo::EOperation::Rotate, ImDrawFlags_RoundCornersNone))
+                if (EditorWidgets::DrawButton(TEXT("Rotate##GizmoOperationRotate"), ImVec2(RotateButtonWidth, ButtonHeight), GizmoOperation == EditorGuizmo::EOperation::Rotate, ImDrawFlags_RoundCornersNone))
                 {
                     GizmoOperation = EditorGuizmo::EOperation::Rotate;
                 }
 
                 ImGui::SameLine(0.0f, 0.0f);
-                if (EditorWidgets::DrawButton("Scale##GizmoOperationScale", ImVec2(ScaleButtonWidth, ButtonHeight), GizmoOperation == EditorGuizmo::EOperation::Scale, ImDrawFlags_RoundCornersRight))
+                if (EditorWidgets::DrawButton(TEXT("Scale##GizmoOperationScale"), ImVec2(ScaleButtonWidth, ButtonHeight), GizmoOperation == EditorGuizmo::EOperation::Scale, ImDrawFlags_RoundCornersRight))
                 {
                     GizmoOperation = EditorGuizmo::EOperation::Scale;
                 }
 
                 ImGui::SameLine(0.0f, ToolbarControlGap);
-                if (EditorWidgets::DrawButton("Center##GizmoPlacementCenter", ImVec2(PlacementButtonWidth, ButtonHeight), GizmoPlacement == EGizmoPlacement::Center, ImDrawFlags_RoundCornersLeft))
+                if (EditorWidgets::DrawButton(TEXT("Center##GizmoPlacementCenter"), ImVec2(PlacementButtonWidth, ButtonHeight), GizmoPlacement == EGizmoPlacement::Center, ImDrawFlags_RoundCornersLeft))
                 {
                     GizmoPlacement = EGizmoPlacement::Center;
                 }
 
                 ImGui::SameLine(0.0f, 0.0f);
-                if (EditorWidgets::DrawButton("Pivot##GizmoPlacementPivot", ImVec2(PlacementButtonWidth, ButtonHeight), GizmoPlacement == EGizmoPlacement::Pivot, ImDrawFlags_RoundCornersRight))
+                if (EditorWidgets::DrawButton(TEXT("Pivot##GizmoPlacementPivot"), ImVec2(PlacementButtonWidth, ButtonHeight), GizmoPlacement == EGizmoPlacement::Pivot, ImDrawFlags_RoundCornersRight))
                 {
                     GizmoPlacement = EGizmoPlacement::Pivot;
                 }
 
                 ImGui::SameLine(0.0f, ToolbarControlGap);
-                if (EditorWidgets::DrawButton("Local##GizmoOrientationLocal", ImVec2(OrientationButtonWidth, ButtonHeight), GizmoOrientation == EditorGuizmo::EMode::Local, ImDrawFlags_RoundCornersLeft))
+                if (EditorWidgets::DrawButton(TEXT("Local##GizmoOrientationLocal"), ImVec2(OrientationButtonWidth, ButtonHeight), GizmoOrientation == EditorGuizmo::EMode::Local, ImDrawFlags_RoundCornersLeft))
                 {
                     GizmoOrientation = EditorGuizmo::EMode::Local;
                 }
 
                 ImGui::SameLine(0.0f, 0.0f);
-                if (EditorWidgets::DrawButton("World##GizmoOrientationWorld", ImVec2(OrientationButtonWidth, ButtonHeight), GizmoOrientation == EditorGuizmo::EMode::World, ImDrawFlags_RoundCornersRight))
+                if (EditorWidgets::DrawButton(TEXT("World##GizmoOrientationWorld"), ImVec2(OrientationButtonWidth, ButtonHeight), GizmoOrientation == EditorGuizmo::EMode::World, ImDrawFlags_RoundCornersRight))
                 {
                     GizmoOrientation = EditorGuizmo::EMode::World;
                 }
@@ -531,7 +533,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                     ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + TransportCursorX, ChildPos.y + CursorY));
 
                     // A triple hash keeps the identifier stable while the label flips between Play and Stop
-                    const CHAR_T* PlayLabel = bIsPlaying ? "Stop###PlayToggle" : "Play###PlayToggle";
+                    const CHAR_T* PlayLabel = bIsPlaying ? TEXT("Stop###PlayToggle") : TEXT("Play###PlayToggle");
                     if (EditorWidgets::DrawButton(PlayLabel, ImVec2(PlayButtonWidth, ButtonHeight), bIsPlaying, ImDrawFlags_RoundCornersLeft) && EditorEngine)
                     {
                         TogglePlay();
@@ -545,7 +547,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                         ImGui::BeginDisabled();
                     }
 
-                    if (EditorWidgets::DrawButton("Pause##PauseToggle", ImVec2(PauseButtonWidth, ButtonHeight), bIsPaused, ImDrawFlags_RoundCornersRight) && bIsPlaying)
+                    if (EditorWidgets::DrawButton(TEXT("Pause##PauseToggle"), ImVec2(PauseButtonWidth, ButtonHeight), bIsPaused, ImDrawFlags_RoundCornersRight) && bIsPlaying)
                     {
                         EditorEngine->TogglePause();
                     }
@@ -560,8 +562,8 @@ void FEditorViewportWidget::DrawViewportWindow()
 
                 bool bCameraHovered = false;
                 const bool bCameraPressed = EditorWidgets::DrawDropdownButton(
-                    "##ViewportCameraButton",
-                    "Camera",
+                    TEXT("##ViewportCameraButton"),
+                    TEXT("Camera"),
                     ImVec2(CameraButtonWidth, ButtonHeight),
                     bCameraPopupOpen,
                     CameraMenuAnchor,
@@ -569,7 +571,7 @@ void FEditorViewportWidget::DrawViewportWindow()
 
                 if (bCameraPressed || (bAnyPopupOpen && bCameraHovered))
                 {
-                    ImGui::OpenPopup(CameraMenuPopupId);
+                    ImGui::OpenPopup(StringCast<ANSICHAR>(CameraMenuPopupId).Get());
                     CameraMenuAnchor.bRequestPosition = true;
                 }
 
@@ -579,88 +581,88 @@ void FEditorViewportWidget::DrawViewportWindow()
 
                     if (Controller)
                     {
-                        EditorWidgets::MenuLabeledSeparator("NAVIGATION");
+                        EditorWidgets::MenuLabeledSeparator(TEXT("NAVIGATION"));
 
                         float MoveSpeed = Controller->GetMoveSpeed();
-                        if (EditorWidgets::MenuSliderFloat("Move Speed", MoveSpeed, FEditorCameraController::MinMoveSpeed, FEditorCameraController::MaxMoveSpeed, "%.1f"))
+                        if (EditorWidgets::MenuSliderFloat(TEXT("Move Speed"), MoveSpeed, FEditorCameraController::MinMoveSpeed, FEditorCameraController::MaxMoveSpeed, TEXT("%.1f")))
                         {
                             Controller->SetMoveSpeed(MoveSpeed);
                         }
 
                         float RotationSpeed = Controller->GetRotationSpeed();
-                        if (EditorWidgets::MenuSliderFloat("Rotation Speed", RotationSpeed, 1.0f, 360.0f, "%.0f"))
+                        if (EditorWidgets::MenuSliderFloat(TEXT("Rotation Speed"), RotationSpeed, 1.0f, 360.0f, TEXT("%.0f")))
                         {
                             Controller->SetRotationSpeed(RotationSpeed);
                         }
 
                         float MouseSensitivity = Controller->GetMouseSensitivity();
-                        if (EditorWidgets::MenuSliderFloat("Mouse Sensitivity", MouseSensitivity, 0.01f, 2.0f, "%.2f"))
+                        if (EditorWidgets::MenuSliderFloat(TEXT("Mouse Sensitivity"), MouseSensitivity, 0.01f, 2.0f, TEXT("%.2f")))
                         {
                             Controller->SetMouseSensitivity(MouseSensitivity);
                         }
 
                         float PanSpeed = Controller->GetPanSpeed();
-                        if (EditorWidgets::MenuSliderFloat("Pan Speed", PanSpeed, 0.0002f, 0.02f, "%.4f"))
+                        if (EditorWidgets::MenuSliderFloat(TEXT("Pan Speed"), PanSpeed, 0.0002f, 0.02f, TEXT("%.4f")))
                         {
                             Controller->SetPanSpeed(PanSpeed);
                         }
 
-                        EditorWidgets::MenuLabeledSeparator("LENS");
+                        EditorWidgets::MenuLabeledSeparator(TEXT("LENS"));
 
                         float FieldOfView = Controller->GetFieldOfView();
-                        if (EditorWidgets::MenuSliderFloat("Field of View", FieldOfView, 30.0f, 120.0f, "%.0f deg"))
+                        if (EditorWidgets::MenuSliderFloat(TEXT("Field of View"), FieldOfView, 30.0f, 120.0f, TEXT("%.0f deg")))
                         {
                             Controller->SetFieldOfView(FieldOfView);
                         }
 
                         float NearPlane = Controller->GetNearPlane();
-                        if (EditorWidgets::MenuDragFloat("Near Plane", NearPlane, 0.001f, 0.001f, 10.0f, "%.3f"))
+                        if (EditorWidgets::MenuDragFloat(TEXT("Near Plane"), NearPlane, 0.001f, 0.001f, 10.0f, TEXT("%.3f")))
                         {
                             Controller->SetNearPlane(NearPlane);
                         }
 
                         float FarPlane = Controller->GetFarPlane();
-                        if (EditorWidgets::MenuDragFloat("Far Plane", FarPlane, 1.0f, 1.0f, 100000.0f, "%.1f"))
+                        if (EditorWidgets::MenuDragFloat(TEXT("Far Plane"), FarPlane, 1.0f, 1.0f, 100000.0f, TEXT("%.1f")))
                         {
                             Controller->SetFarPlane(FarPlane);
                         }
 
-                        EditorWidgets::MenuLabeledSeparator("ACTIONS");
+                        EditorWidgets::MenuLabeledSeparator(TEXT("ACTIONS"));
 
-                        if (EditorWidgets::MenuItem("Reset Camera", "R"))
+                        if (EditorWidgets::MenuItem(TEXT("Reset Camera"), TEXT("R")))
                         {
                             Controller->Reset();
                         }
 
                         FActor* SelectedActor = EditorEngine ? EditorEngine->GetSelectedActor() : nullptr;
-                        if (EditorWidgets::MenuItem("Focus Selected", "F", false, SelectedActor != nullptr))
+                        if (EditorWidgets::MenuItem(TEXT("Focus Selected"), TEXT("F"), false, SelectedActor != nullptr))
                         {
                             Controller->FocusOn(SelectedActor);
                         }
 
-                        if (EditorWidgets::MenuItem("Attach To Selected", nullptr, false, SelectedActor != nullptr))
+                        if (EditorWidgets::MenuItem(TEXT("Attach To Selected"), nullptr, false, SelectedActor != nullptr))
                         {
                             Controller->AttachTo(SelectedActor);
                         }
 
-                        if (EditorWidgets::MenuItem("Detach", nullptr, false, Controller->IsAttached()))
+                        if (EditorWidgets::MenuItem(TEXT("Detach"), nullptr, false, Controller->IsAttached()))
                         {
                             Controller->Detach();
                         }
 
-                        EditorWidgets::MenuLabeledSeparator("CONTROLS");
+                        EditorWidgets::MenuLabeledSeparator(TEXT("CONTROLS"));
 
-                        EditorWidgets::MenuItem("Look", "RMB Drag", false, false);
-                        EditorWidgets::MenuItem("Fly", "RMB + WASDQE", false, false);
-                        EditorWidgets::MenuItem("Boost", "Shift", false, false);
-                        EditorWidgets::MenuItem("Zoom", "Shift + Wheel", false, false);
-                        EditorWidgets::MenuItem("Fly Speed", "Alt + Wheel", false, false);
-                        EditorWidgets::MenuItem("Orbit", "Alt + LMB", false, false);
-                        EditorWidgets::MenuItem("Dolly", "Alt + RMB", false, false);
+                        EditorWidgets::MenuItem(TEXT("Look"), TEXT("RMB Drag"), false, false);
+                        EditorWidgets::MenuItem(TEXT("Fly"), TEXT("RMB + WASDQE"), false, false);
+                        EditorWidgets::MenuItem(TEXT("Boost"), TEXT("Shift"), false, false);
+                        EditorWidgets::MenuItem(TEXT("Zoom"), TEXT("Shift + Wheel"), false, false);
+                        EditorWidgets::MenuItem(TEXT("Fly Speed"), TEXT("Alt + Wheel"), false, false);
+                        EditorWidgets::MenuItem(TEXT("Orbit"), TEXT("Alt + LMB"), false, false);
+                        EditorWidgets::MenuItem(TEXT("Dolly"), TEXT("Alt + RMB"), false, false);
                     #if PLATFORM_MACOS
-                        EditorWidgets::MenuItem("Pan", "Alt + MMB / Alt + Cmd + LMB", false, false);
+                        EditorWidgets::MenuItem(TEXT("Pan"), TEXT("Alt + MMB / Alt + Cmd + LMB"), false, false);
                     #else
-                        EditorWidgets::MenuItem("Pan", "Alt + MMB", false, false);
+                        EditorWidgets::MenuItem(TEXT("Pan"), TEXT("Alt + MMB"), false, false);
                     #endif
                     }
 
@@ -672,7 +674,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                 bool bViewHovered = false;
 
                 const bool bViewPressed = EditorWidgets::DrawDropdownButton(
-                    "##ViewportViewModeButton",
+                    TEXT("##ViewportViewModeButton"),
                     MenuLabelText,
                     ImVec2(ButtonWidth, ButtonHeight),
                     bViewPopupOpen,
@@ -680,13 +682,13 @@ void FEditorViewportWidget::DrawViewportWindow()
                     bViewHovered);
                 if (bViewPressed || (bAnyPopupOpen && bViewHovered))
                 {
-                    ImGui::OpenPopup(ViewMenuPopupId);
+                    ImGui::OpenPopup(StringCast<ANSICHAR>(ViewMenuPopupId).Get());
                     ViewMenuAnchor.bRequestPosition = true;
                 }
 
                 if (EditorWidgets::BeginMenuPopup(ViewMenuPopupId, ViewMenuAnchor, 240.0f))
                 {
-                    EditorWidgets::MenuLabeledSeparator("VIEW MODE");
+                    EditorWidgets::MenuLabeledSeparator(TEXT("VIEW MODE"));
 
                     bool bRequestClosePopup = false;
 
@@ -704,7 +706,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                         ShadowSubMenu.LabelIndentX = MenuRadioLabelIndentX;
                         ShadowSubMenu.MinWidth     = 240.0f;
 
-                        if (EditorWidgets::BeginSubMenu(ShadowSubMenu, ShadowMenuPopupId, "Shadow Debug"))
+                        if (EditorWidgets::BeginSubMenu(ShadowSubMenu, ShadowMenuPopupId, TEXT("Shadow Debug")))
                         {
                             for (const FDebugItem& Item : ShadowDebugItems)
                             {
@@ -724,7 +726,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                         RayTracingSubMenu.LabelIndentX = MenuRadioLabelIndentX;
                         RayTracingSubMenu.MinWidth     = 240.0f;
 
-                        if (EditorWidgets::BeginSubMenu(RayTracingSubMenu, RayTracingMenuPopupId, "Ray Tracing"))
+                        if (EditorWidgets::BeginSubMenu(RayTracingSubMenu, RayTracingMenuPopupId, TEXT("Ray Tracing")))
                         {
                             for (const FDebugItem& Item : RayTracingDebugItems)
                             {
@@ -744,9 +746,9 @@ void FEditorViewportWidget::DrawViewportWindow()
                         SecondarySubMenu.LabelIndentX = MenuRadioLabelIndentX;
                         SecondarySubMenu.MinWidth     = 240.0f;
 
-                        if (EditorWidgets::BeginSubMenu(SecondarySubMenu, SecondaryMenuPopupId, "Secondary View"))
+                        if (EditorWidgets::BeginSubMenu(SecondarySubMenu, SecondaryMenuPopupId, TEXT("Secondary View")))
                         {
-                            if (DrawRadioMenuItem("None", SecondaryDebugView == FSceneRenderView::EDebugView::None, true, true, nullptr))
+                            if (DrawRadioMenuItem(TEXT("None"), SecondaryDebugView == FSceneRenderView::EDebugView::None, true, true, nullptr))
                             {
                                 SecondaryDebugView = FSceneRenderView::EDebugView::None;
                                 bRequestClosePopup = true;
@@ -788,7 +790,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                     }
 
                     {
-                        EditorWidgets::MenuLabeledSeparator("CHANNELS");
+                        EditorWidgets::MenuLabeledSeparator(TEXT("CHANNELS"));
 
                         // Isolating a component only means anything once a debug view is being drawn
                         const bool bChannelsEnabled = DebugView != FSceneRenderView::EDebugView::None;
@@ -813,16 +815,16 @@ void FEditorViewportWidget::DrawViewportWindow()
 
                         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ChannelIndentX);
 
-                        DrawChannelToggle("R##DebugViewChannelR", FSceneRenderView::EDebugViewChannel::Red, ImDrawFlags_RoundCornersLeft);
+                        DrawChannelToggle(TEXT("R##DebugViewChannelR"), FSceneRenderView::EDebugViewChannel::Red, ImDrawFlags_RoundCornersLeft);
 
                         ImGui::SameLine(0.0f, 0.0f);
-                        DrawChannelToggle("G##DebugViewChannelG", FSceneRenderView::EDebugViewChannel::Green, ImDrawFlags_RoundCornersNone);
+                        DrawChannelToggle(TEXT("G##DebugViewChannelG"), FSceneRenderView::EDebugViewChannel::Green, ImDrawFlags_RoundCornersNone);
 
                         ImGui::SameLine(0.0f, 0.0f);
-                        DrawChannelToggle("B##DebugViewChannelB", FSceneRenderView::EDebugViewChannel::Blue, ImDrawFlags_RoundCornersNone);
+                        DrawChannelToggle(TEXT("B##DebugViewChannelB"), FSceneRenderView::EDebugViewChannel::Blue, ImDrawFlags_RoundCornersNone);
 
                         ImGui::SameLine(0.0f, 0.0f);
-                        DrawChannelToggle("A##DebugViewChannelA", FSceneRenderView::EDebugViewChannel::Alpha, ImDrawFlags_RoundCornersRight);
+                        DrawChannelToggle(TEXT("A##DebugViewChannelA"), FSceneRenderView::EDebugViewChannel::Alpha, ImDrawFlags_RoundCornersRight);
 
                         if (!bChannelsEnabled)
                         {
@@ -939,7 +941,7 @@ void FEditorViewportWidget::DrawViewportWindow()
             RawMouseDelta = SceneViewport->ConsumeHighPrecisionMouseDelta();
         }
 
-        const bool bContextMenuOpen = ImGui::IsPopupOpen(VIEWPORT_CONTEXT_MENU_ID);
+        const bool bContextMenuOpen = ImGui::IsPopupOpen(StringCast<ANSICHAR>(VIEWPORT_CONTEXT_MENU_ID).Get());
         if (bClickedRight)
         {
             bRightMousePressedOnImage = true;
@@ -1264,7 +1266,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                 ContextMenuPickRequestId = EditorEngine->RequestPick(PixelX, PixelY, EEditorPickPurpose::ContextMenu);
             }
 
-            ImGui::OpenPopup(VIEWPORT_CONTEXT_MENU_ID);
+            ImGui::OpenPopup(StringCast<ANSICHAR>(VIEWPORT_CONTEXT_MENU_ID).Get());
         }
 
         DrawContextMenu();
@@ -1305,7 +1307,7 @@ void FEditorViewportWidget::DrawViewportWindow()
         if (CVarDrawFps.GetValue())
         {
             char FpsText[16];
-            CString::Snprintf(FpsText, sizeof(FpsText), "%d", FFrameProfiler::Get().GetFramesPerSecond());
+            FPlatformString::Snprintf(FpsText, ARRAY_COUNT(FpsText), "%d", FFrameProfiler::Get().GetFramesPerSecond());
 
             ImDrawList* DrawList = ImGui::GetWindowDrawList();
             
@@ -1458,7 +1460,7 @@ void FEditorViewportWidget::DrawContextMenu()
 
     FWorld* World = FEngine::IsInitialized() ? FEngine::Get()->GetWorld() : nullptr;
 
-    EditorWidgets::MenuLabeledSeparator("Place Actor");
+    EditorWidgets::MenuLabeledSeparator(TEXT("Place Actor"));
 
     bool bRequestClosePopup = false;
 
@@ -1470,9 +1472,9 @@ void FEditorViewportWidget::DrawContextMenu()
 
     if (ContextMenuActor)
     {
-        EditorWidgets::MenuLabeledSeparator("Actor");
+        EditorWidgets::MenuLabeledSeparator(TEXT("Actor"));
 
-        if (EditorWidgets::MenuItem("Focus", "F"))
+        if (EditorWidgets::MenuItem(TEXT("Focus"), TEXT("F")))
         {
             if (CameraController)
             {
@@ -1480,7 +1482,7 @@ void FEditorViewportWidget::DrawContextMenu()
             }
         }
 
-        if (EditorWidgets::MenuItem("Delete", "Delete"))
+        if (EditorWidgets::MenuItem(TEXT("Delete"), TEXT("Delete")))
         {
             EditorEngine->RequestDeleteActor(ContextMenuActor);
             ContextMenuActor = nullptr;

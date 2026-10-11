@@ -1,4 +1,5 @@
 #include "Core/Misc/OutputDeviceManager.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Platform/PlatformSystemClipboard.h"
@@ -14,21 +15,21 @@
 IMPLEMENT_ENGINE_MODULE(FImGuiPlugin, ImGuiPlugin);
 
 static TAutoConsoleVariable<bool> CVarImGuiUseWindowDPIScale(
-    "ImGui.UseWindowDPIScale",
-    "Scale ImGui elements with the Window DPI scale",
+    TEXT("ImGui.UseWindowDPIScale"),
+    TEXT("Scale ImGui elements with the Window DPI scale"),
     false,
     EConsoleVariableFlags::Default);
 
 #ifndef RELEASE_BUILD
 static TAutoConsoleVariable<bool> CVarImGuiShowDemoWindow(
-    "ImGui.ShowDemoWindow",
-    "Show the ImGui Demo Window",
+    TEXT("ImGui.ShowDemoWindow"),
+    TEXT("Show the ImGui Demo Window"),
     false,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarImGuiEnableImGuiDelegates(
-    "ImGui.EnableImGuiDelegates",
-    "Enables drawing of registered ImGui delegates",
+    TEXT("ImGui.EnableImGuiDelegates"),
+    TEXT("Enables drawing of registered ImGui delegates"),
     true,
     EConsoleVariableFlags::Default);
 #endif
@@ -131,14 +132,16 @@ bool FImGuiPlugin::Load()
     PluginImGuiIO->SetClipboardTextFn = [](void* UserData, const char* Text)
     {
         UNREFERENCED_VARIABLE(UserData);
-        FPlatformSystemClipboard::SetText(FString(Text));
+        FPlatformSystemClipboard::SetText(StringCast<CHAR_T>(Text).ToString());
     };
 
     PluginImGuiIO->GetClipboardTextFn = [](void* UserData) -> const char*
     {
         FImGuiPlugin* Context = reinterpret_cast<FImGuiPlugin*>(UserData);
-        Context->ClipboardText.Clear();
-        FPlatformSystemClipboard::GetText(Context->ClipboardText);
+        FString Text;
+        FPlatformSystemClipboard::GetText(Text);
+
+        Context->ClipboardText = StringCast<ANSICHAR>(Text).ToString();
         return *Context->ClipboardText;
     };
 
@@ -227,10 +230,10 @@ bool FImGuiPlugin::Load()
         return GImGuiPlugin->OnGetPlatformWindowMinimized(Viewport);
     };
 
-    PlatformState.Platform_SetWindowTitle = [](ImGuiViewport* Viewport, const CHAR_T* Title)
+    PlatformState.Platform_SetWindowTitle = [](ImGuiViewport* Viewport, const char* Title)
     {
         CHECK(GImGuiPlugin != nullptr);
-        GImGuiPlugin->OnSetPlatformWindowTitle(Viewport, Title);
+        GImGuiPlugin->OnSetPlatformWindowTitle(Viewport, StringCast<CHAR_T>(Title).Get());
     };
 
     PlatformState.Platform_SetWindowAlpha = [](ImGuiViewport* Viewport, float Alpha)
@@ -422,7 +425,7 @@ bool FImGuiPlugin::InitializeRHI()
     Renderer = MakeSharedPtr<FImGuiRenderer>();
     if (!Renderer->InitializeRHI())
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ImGuiRenderer");
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("Failed to init ImGuiRenderer"));
         return false;
     }
 
@@ -570,13 +573,13 @@ void FImGuiPlugin::Tick(float DeltaTime)
 {
     // New Frame
     {
-        TRACE_SCOPE("ImGui New Frame");
+        TRACE_SCOPE(TEXT("ImGui New Frame"));
         NewFrame(DeltaTime);
     }
 
     // Draw all ImGui widgets
     {
-        TRACE_SCOPE("ImGui Callbacks");
+        TRACE_SCOPE(TEXT("ImGui Callbacks"));
 
         // New frame
         ImGui::NewFrame();
@@ -604,7 +607,7 @@ void FImGuiPlugin::Tick(float DeltaTime)
         EndFrameDelegates.Broadcast();
 
         {
-            TRACE_SCOPE("ImGui End Frame");
+            TRACE_SCOPE(TEXT("ImGui End Frame"));
             ImGui::EndFrame();
         }
     }
@@ -758,7 +761,7 @@ void FImGuiPlugin::OnCreatePlatformWindow(ImGuiViewport* Viewport)
     const EWindowStyleFlags WindowStyle = GetWindowStyleFromImGuiViewportFlags(Viewport->Flags);
 
     FWindow::FDesc WindowDesc;
-    WindowDesc.Title               = GetImGuiViewportPlatformTitle(Viewport);
+    WindowDesc.Title               = StringCast<CHAR_T>(GetImGuiViewportPlatformTitle(Viewport)).ToString();
     WindowDesc.Size                = FIntVector2(static_cast<int32>(Viewport->Size.x), static_cast<int32>(Viewport->Size.y));
     WindowDesc.Position            = FIntVector2(static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
     WindowDesc.StyleFlags          = WindowStyle;

@@ -110,10 +110,10 @@ public:
     {
         static const CHAR_T* const Labels[RENDERGRAPH_LEGEND_ROWS] =
         {
-            "Resource read (input)",
-            "Resource write (output)",
-            "Raster / Compute / Copy pass",
-            "Culled or disabled pass",
+            TEXT("Resource read (input)"),
+            TEXT("Resource write (output)"),
+            TEXT("Raster / Compute / Copy pass"),
+            TEXT("Culled or disabled pass"),
         };
 
         const FFloatColor Swatches[RENDERGRAPH_LEGEND_ROWS] =
@@ -183,7 +183,7 @@ private:
 };
 
 FEditorRenderGraphPanel::FEditorRenderGraphPanel(FEditorEngine* InEditorEngine)
-    : FEditorPanel(InEditorEngine, "RenderGraph", "Render Graph")
+    : FEditorPanel(InEditorEngine, TEXT("RenderGraph"), TEXT("Render Graph"))
     , Canvas(nullptr)
     , Model(nullptr)
     , GraphNameText(nullptr)
@@ -264,20 +264,20 @@ TSharedPtr<FVisualElement> FEditorRenderGraphPanel::BuildHeaderRow()
 
     FTextBlock::FDesc NameDesc;
     NameDesc.Font = FEditorStyle::GetFonts().Body;
-    NameDesc.Text = "Graph: (none)";
+    NameDesc.Text = TEXT("Graph: (none)");
 
     GraphNameText = FTextBlock::Create(NameDesc);
 
     FTextBlock::FDesc StatisticsDesc;
     StatisticsDesc.Font            = FEditorStyle::GetFonts().Body;
     StatisticsDesc.ColorAndOpacity = Style.Colors.TextDisabled;
-    StatisticsDesc.Text            = "| Passes: 0  Culled: 0  Disabled: 0  Textures: 0  Buffers: 0";
+    StatisticsDesc.Text            = TEXT("| Passes: 0  Culled: 0  Disabled: 0  Textures: 0  Buffers: 0");
 
     StatisticsText = FTextBlock::Create(StatisticsDesc);
 
     FCheckBox::FDesc CulledDesc;
     CulledDesc.Font           = FEditorStyle::GetFonts().Body;
-    CulledDesc.Text           = "Show culled/disabled";
+    CulledDesc.Text           = TEXT("Show culled/disabled");
     CulledDesc.InitialState   = bShowCulled ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
     CulledDesc.OnStateChanged = FOnCheckStateChanged::CreateLambda([this](ECheckBoxState State)
     {
@@ -286,7 +286,7 @@ TSharedPtr<FVisualElement> FEditorRenderGraphPanel::BuildHeaderRow()
 
     FButton::FDesc LayoutDesc;
     LayoutDesc.Font      = FEditorStyle::GetFonts().Body;
-    LayoutDesc.Text      = "Auto Layout";
+    LayoutDesc.Text      = TEXT("Auto Layout");
     LayoutDesc.OnClicked = FOnClicked::CreateLambda([this]()
     {
         RunAutoLayout();
@@ -294,7 +294,7 @@ TSharedPtr<FVisualElement> FEditorRenderGraphPanel::BuildHeaderRow()
 
     FButton::FDesc ResetDesc;
     ResetDesc.Font      = FEditorStyle::GetFonts().Body;
-    ResetDesc.Text      = "Reset View";
+    ResetDesc.Text      = TEXT("Reset View");
     ResetDesc.OnClicked = FOnClicked::CreateLambda([this]()
     {
         bNeedsFitView = true;
@@ -412,24 +412,24 @@ FString FEditorRenderGraphPanel::BuildNodeTitle(const FRenderGraphDebugPass& Pas
 
     if (IsEnumFlagSet(Pass.Flags, ERenderGraphPassFlags::Raster))
     {
-        Title.Append(" [Raster]");
+        Title.Append(TEXT(" [Raster]"));
     }
     else if (IsEnumFlagSet(Pass.Flags, ERenderGraphPassFlags::Compute))
     {
-        Title.Append(" [Compute]");
+        Title.Append(TEXT(" [Compute]"));
     }
     else if (IsEnumFlagSet(Pass.Flags, ERenderGraphPassFlags::Copy))
     {
-        Title.Append(" [Copy]");
+        Title.Append(TEXT(" [Copy]"));
     }
 
     if (Pass.bCulled)
     {
-        Title.Append(" (Culled)");
+        Title.Append(TEXT(" (Culled)"));
     }
     else if (!Pass.bEnabled)
     {
-        Title.Append(" (Disabled)");
+        Title.Append(TEXT(" (Disabled)"));
     }
 
     return Title;
@@ -450,7 +450,7 @@ bool FEditorRenderGraphPanel::HasIncomingLink(const FRenderGraphDebugSnapshot& S
 
 FString FEditorRenderGraphPanel::BuildSignature(const FRenderGraphDebugSnapshot& Snapshot) const
 {
-    FString Signature = FString::Printf("%d|%d|", bShowCulled ? 1 : 0, Snapshot.Links.Size());
+    FString Signature = FString::Printf(TEXT("%d|%d|"), bShowCulled ? 1 : 0, Snapshot.Links.Size());
 
     for (const FRenderGraphDebugPass& Pass : Snapshot.Passes)
     {
@@ -459,7 +459,7 @@ FString FEditorRenderGraphPanel::BuildSignature(const FRenderGraphDebugSnapshot&
             continue;
         }
 
-        Signature.Append(FString::Printf("%s;%d;%d,", *Pass.Name, Pass.Accesses.Size(), IsPassInactive(Pass) ? 1 : 0));
+        Signature.Append(FString::Printf(TEXT("%s;%d;%d,"), *Pass.Name, Pass.Accesses.Size(), IsPassInactive(Pass) ? 1 : 0));
     }
 
     return Signature;
@@ -525,7 +525,7 @@ bool FEditorRenderGraphPanel::RebuildModel(const FRenderGraphDebugSnapshot& Snap
             }
 
             const FRenderGraphDebugResource& Resource = Snapshot.Resources[Access.ResourceIndex];
-            const FString                    TypeTag  = Resource.Kind == ERenderGraphDebugResourceKind::Buffer ? FString("Buffer") : FString("Texture");
+            const FString                    TypeTag  = Resource.Kind == ERenderGraphDebugResourceKind::Buffer ? FString(TEXT("Buffer")) : FString(TEXT("Texture"));
 
             if (Access.bIsWrite && HasIncomingLink(Snapshot, PassIndex, AccessIndex))
             {
@@ -601,9 +601,9 @@ void FEditorRenderGraphPanel::RefreshStatistics(const FRenderGraphDebugSnapshot&
 {
     const FRenderGraphStatistics& Statistics = Snapshot.Statistics;
 
-    GraphNameText->SetText(FString::Printf("Graph: %s", Snapshot.GraphName.IsEmpty() ? "(none)" : *Snapshot.GraphName));
+    GraphNameText->SetText(FString::Printf(TEXT("Graph: %s"), Snapshot.GraphName.IsEmpty() ? TEXT("(none)") : *Snapshot.GraphName));
 
-    StatisticsText->SetText(FString::Printf("| Passes: %d  Culled: %d  Disabled: %d  Textures: %d  Buffers: %d",
+    StatisticsText->SetText(FString::Printf(TEXT("| Passes: %d  Culled: %d  Disabled: %d  Textures: %d  Buffers: %d"),
         Statistics.NumPasses, Statistics.NumCulledPasses, Statistics.NumDisabledPasses,
         Statistics.NumTexturesAllocated, Statistics.NumBuffersAllocated));
 }
@@ -631,7 +631,7 @@ TSharedPtr<FVisualElement> FEditorRenderGraphPanel::BuildNodeContextMenu(
     TSharedPtr<FMenu> Menu = FMenu::Create();
 
     FMenuItem::FDesc ItemDesc;
-    ItemDesc.Label       = "Show in Profiler";
+    ItemDesc.Label       = TEXT("Show in Profiler");
     ItemDesc.Font        = FEditorStyle::GetFonts().Body;
     ItemDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this, PassName]()
     {
@@ -650,11 +650,11 @@ void FEditorRenderGraphPanel::ShowPassInProfiler(const FString& PassName)
     }
 
     TSharedPtr<FEditorPanelRegistry> Registry = EditorEngine->GetEditorShell()->GetRegistry();
-    if (TSharedPtr<FEditorPanel> Panel = Registry->FindPanel("Profiler"))
+    if (TSharedPtr<FEditorPanel> Panel = Registry->FindPanel(TEXT("Profiler")))
     {
         if (FEditorProfilerPanel* Profiler = static_cast<FEditorProfilerPanel*>(Panel.Get()))
         {
-            Registry->ShowPanel("Profiler");
+            Registry->ShowPanel(TEXT("Profiler"));
             Profiler->SelectGpuScopeByName(PassName);
         }
     }
@@ -668,7 +668,7 @@ void FEditorRenderGraphPanel::ShowPassByName(const FString& PassName)
     }
 
     TSharedPtr<FEditorPanelRegistry> Registry = EditorEngine->GetEditorShell()->GetRegistry();
-    Registry->ShowPanel("RenderGraph");
+    Registry->ShowPanel(TEXT("RenderGraph"));
 
     PendingPassName = PassName;
     ApplyPendingPassSelection();

@@ -20,38 +20,38 @@ struct FIconImage
 
 static const FIconRequest GIconRequests[] =
 {
-    { "Editor/Icons/Undo.png",               &FEditorIcons::Undo               },
-    { "Editor/Icons/Search.png",             &FEditorIcons::Search             },
-    { "Editor/Icons/Locked.png",             &FEditorIcons::Locked             },
-    { "Editor/Icons/Unlocked.png",           &FEditorIcons::Unlocked           },
-    { "Editor/Icons/Folder.png",             &FEditorIcons::Folder             },
-    { "Editor/Icons/FolderSmall.png",        &FEditorIcons::FolderSmall        },
-    { "Editor/Icons/FolderSmall2.png",       &FEditorIcons::FolderSmall2       },
-    { "Editor/Icons/FolderOpenSmall.png",    &FEditorIcons::FolderOpenSmall    },
-    { "Editor/Icons/Document.png",           &FEditorIcons::Document           },
-    { "Editor/Icons/DocumentSmall.png",      &FEditorIcons::DocumentSmall      },
-    { "Editor/Icons/Checkmark.png",          &FEditorIcons::Checkmark          },
-    { "Editor/Icons/Forbidden.png",          &FEditorIcons::Forbidden          },
-    { "Editor/Icons/CircledCheckmark.png",   &FEditorIcons::CircledCheckmark   },
-    { "Editor/Icons/Next.png",               &FEditorIcons::Next               },
-    { "Editor/Icons/Previous.png",           &FEditorIcons::Previous           },
-    { "Editor/Icons/Close.png",              &FEditorIcons::Close              },
-    { "Editor/Icons/Filter.png",             &FEditorIcons::Filter             },
-    { "Editor/Icons/RightArrow.png",         &FEditorIcons::RightArrow         },
-    { "Editor/Icons/DownArrow.png",          &FEditorIcons::DownArrow          },
-    { "Editor/Icons/CollapseArrowDown.png",  &FEditorIcons::CollapseArrowDown  },
-    { "Editor/Icons/CollapseArrowRight.png", &FEditorIcons::CollapseArrowRight },
-    { "Editor/Icons/MatchCase.png",          &FEditorIcons::MatchCase          },
-    { "Editor/Icons/Translate.png",          &FEditorIcons::Translate          },
-    { "Editor/Icons/Rotate.png",             &FEditorIcons::Rotate             },
-    { "Editor/Icons/Scale.png",              &FEditorIcons::Scale              },
-    { "Editor/Icons/GizmoCenter.png",        &FEditorIcons::GizmoCenter        },
-    { "Editor/Icons/GizmoPivot.png",         &FEditorIcons::GizmoPivot         },
-    { "Editor/Icons/GizmoLocal.png",         &FEditorIcons::GizmoLocal         },
-    { "Editor/Icons/GizmoWorld.png",         &FEditorIcons::GizmoWorld         },
-    { "Editor/Icons/Play.png",               &FEditorIcons::Play               },
-    { "Editor/Icons/Pause.png",              &FEditorIcons::Pause              },
-    { "Editor/Icons/Stop.png",               &FEditorIcons::Stop               },
+    { TEXT("Editor/Icons/Undo.png"),               &FEditorIcons::Undo               },
+    { TEXT("Editor/Icons/Search.png"),             &FEditorIcons::Search             },
+    { TEXT("Editor/Icons/Locked.png"),             &FEditorIcons::Locked             },
+    { TEXT("Editor/Icons/Unlocked.png"),           &FEditorIcons::Unlocked           },
+    { TEXT("Editor/Icons/Folder.png"),             &FEditorIcons::Folder             },
+    { TEXT("Editor/Icons/FolderSmall.png"),        &FEditorIcons::FolderSmall        },
+    { TEXT("Editor/Icons/FolderSmall2.png"),       &FEditorIcons::FolderSmall2       },
+    { TEXT("Editor/Icons/FolderOpenSmall.png"),    &FEditorIcons::FolderOpenSmall    },
+    { TEXT("Editor/Icons/Document.png"),           &FEditorIcons::Document           },
+    { TEXT("Editor/Icons/DocumentSmall.png"),      &FEditorIcons::DocumentSmall      },
+    { TEXT("Editor/Icons/Checkmark.png"),          &FEditorIcons::Checkmark          },
+    { TEXT("Editor/Icons/Forbidden.png"),          &FEditorIcons::Forbidden          },
+    { TEXT("Editor/Icons/CircledCheckmark.png"),   &FEditorIcons::CircledCheckmark   },
+    { TEXT("Editor/Icons/Next.png"),               &FEditorIcons::Next               },
+    { TEXT("Editor/Icons/Previous.png"),           &FEditorIcons::Previous           },
+    { TEXT("Editor/Icons/Close.png"),              &FEditorIcons::Close              },
+    { TEXT("Editor/Icons/Filter.png"),             &FEditorIcons::Filter             },
+    { TEXT("Editor/Icons/RightArrow.png"),         &FEditorIcons::RightArrow         },
+    { TEXT("Editor/Icons/DownArrow.png"),          &FEditorIcons::DownArrow          },
+    { TEXT("Editor/Icons/CollapseArrowDown.png"),  &FEditorIcons::CollapseArrowDown  },
+    { TEXT("Editor/Icons/CollapseArrowRight.png"), &FEditorIcons::CollapseArrowRight },
+    { TEXT("Editor/Icons/MatchCase.png"),          &FEditorIcons::MatchCase          },
+    { TEXT("Editor/Icons/Translate.png"),          &FEditorIcons::Translate          },
+    { TEXT("Editor/Icons/Rotate.png"),             &FEditorIcons::Rotate             },
+    { TEXT("Editor/Icons/Scale.png"),              &FEditorIcons::Scale              },
+    { TEXT("Editor/Icons/GizmoCenter.png"),        &FEditorIcons::GizmoCenter        },
+    { TEXT("Editor/Icons/GizmoPivot.png"),         &FEditorIcons::GizmoPivot         },
+    { TEXT("Editor/Icons/GizmoLocal.png"),         &FEditorIcons::GizmoLocal         },
+    { TEXT("Editor/Icons/GizmoWorld.png"),         &FEditorIcons::GizmoWorld         },
+    { TEXT("Editor/Icons/Play.png"),               &FEditorIcons::Play               },
+    { TEXT("Editor/Icons/Pause.png"),              &FEditorIcons::Pause              },
+    { TEXT("Editor/Icons/Stop.png"),               &FEditorIcons::Stop               },
 };
 
 static FUIAtlas GIconAtlas;
@@ -59,9 +59,9 @@ static FUIAtlas GIconAtlas;
 static bool LoadIconImage(const CHAR_T* RelativePath, FIconImage& OutImage)
 {
     FString FullPath = Paths::GetAssetDir();
-    if (!FullPath.EndsWith("/"))
+    if (!FullPath.EndsWith(TEXT("/")))
     {
-        FullPath += "/";
+        FullPath += TEXT("/");
     }
 
     FullPath += RelativePath;
@@ -140,7 +140,7 @@ bool FEditorIcons::Initialize()
 {
     Release();
 
-    GIconAtlas.SetDebugName("Editor UI IconAtlas");
+    GIconAtlas.SetDebugName(TEXT("Editor UI IconAtlas"));
 
     bool bResult = true;
 

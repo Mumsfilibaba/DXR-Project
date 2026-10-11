@@ -17,7 +17,7 @@ public:
 
     virtual const CHAR_T* GetTypeLabel() const override
     {
-        return "PlayerController";
+        return TEXT("PlayerController");
     }
 
     FInputComponent* GetInputComponent() const

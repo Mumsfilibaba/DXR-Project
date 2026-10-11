@@ -48,45 +48,45 @@ void FEditorMenus::BuildFileMenu(const TSharedPtr<FMenuBar>& Bar)
 
     TSharedPtr<FMenu> Menu = FMenu::Create();
 
-    Menu->AddSection("Open", Font);
+    Menu->AddSection(TEXT("Open"), Font);
 
     FMenuItem::FDesc NewLevel;
-    NewLevel.Label        = "New Level";
-    NewLevel.ShortcutText = "Ctrl+N";
+    NewLevel.Label        = TEXT("New Level");
+    NewLevel.ShortcutText = TEXT("Ctrl+N");
     NewLevel.Font         = Font;
 
     Menu->AddItem(FMenuItem::Create(NewLevel));
 
     FMenuItem::FDesc OpenLevel;
-    OpenLevel.Label        = "Open Level";
-    OpenLevel.ShortcutText = "Ctrl+O";
+    OpenLevel.Label        = TEXT("Open Level");
+    OpenLevel.ShortcutText = TEXT("Ctrl+O");
     OpenLevel.Font         = Font;
 
     Menu->AddItem(FMenuItem::Create(OpenLevel));
 
-    Menu->AddSection("Save", Font);
+    Menu->AddSection(TEXT("Save"), Font);
 
     FMenuItem::FDesc SaveAll;
-    SaveAll.Label        = "Save All";
-    SaveAll.ShortcutText = "Ctrl+Shift+S";
+    SaveAll.Label        = TEXT("Save All");
+    SaveAll.ShortcutText = TEXT("Ctrl+Shift+S");
     SaveAll.Font         = Font;
 
     Menu->AddItem(FMenuItem::Create(SaveAll));
 
-    Menu->AddSection("Exit", Font);
+    Menu->AddSection(TEXT("Exit"), Font);
 
     FMenuItem::FDesc Exit;
-    Exit.Label        = "Exit";
-    Exit.ShortcutText = "Cmd+Q";
+    Exit.Label        = TEXT("Exit");
+    Exit.ShortcutText = TEXT("Cmd+Q");
     Exit.Font         = Font;
     Exit.OnActivated  = FOnMenuItemActivated::CreateLambda([]()
     {
-        RequestEngineExit("File / Exit");
+        RequestEngineExit(TEXT("File / Exit"));
     });
 
     Menu->AddItem(FMenuItem::Create(Exit));
 
-    Bar->AddMenu("File", Font, Menu);
+    Bar->AddMenu(TEXT("File"), Font, Menu);
 }
 
 void FEditorMenus::BuildEditMenu(const TSharedPtr<FMenuBar>& Bar)
@@ -95,11 +95,11 @@ void FEditorMenus::BuildEditMenu(const TSharedPtr<FMenuBar>& Bar)
 
     TSharedPtr<FMenu> Menu = FMenu::Create();
 
-    Menu->AddSection("Play", Font);
+    Menu->AddSection(TEXT("Play"), Font);
 
     FMenuItem::FDesc PlayDesc;
-    PlayDesc.Label        = "Play";
-    PlayDesc.ShortcutText = "F5";
+    PlayDesc.Label        = TEXT("Play");
+    PlayDesc.ShortcutText = TEXT("F5");
     PlayDesc.Font         = Font;
     PlayDesc.bIsCheckable = true;
     PlayDesc.OnActivated  = FOnMenuItemActivated::CreateLambda([this]()
@@ -117,7 +117,7 @@ void FEditorMenus::BuildEditMenu(const TSharedPtr<FMenuBar>& Bar)
     PlayItem = FMenuItem::Create(PlayDesc);
     Menu->AddItem(PlayItem);
 
-    Menu->AddSection("Create", Font);
+    Menu->AddSection(TEXT("Create"), Font);
 
     const FGetPlaceActorLocation GetLocation = FGetPlaceActorLocation::CreateLambda([this]()
     {
@@ -127,18 +127,18 @@ void FEditorMenus::BuildEditMenu(const TSharedPtr<FMenuBar>& Bar)
     if (TSharedPtr<FMenu> PlaceActorMenu = BuildPlaceActorMenu(EditorEngine, GetLocation))
     {
         FMenuItem::FDesc PlaceDesc;
-        PlaceDesc.Label   = "Place Actor";
+        PlaceDesc.Label   = TEXT("Place Actor");
         PlaceDesc.Font    = Font;
         PlaceDesc.SubMenu = PlaceActorMenu;
 
         Menu->AddItem(FMenuItem::Create(PlaceDesc));
     }
 
-    Menu->AddSection("Selection", Font);
+    Menu->AddSection(TEXT("Selection"), Font);
 
     FMenuItem::FDesc DeleteDesc;
-    DeleteDesc.Label        = "Delete Selection";
-    DeleteDesc.ShortcutText = "Del";
+    DeleteDesc.Label        = TEXT("Delete Selection");
+    DeleteDesc.ShortcutText = TEXT("Del");
     DeleteDesc.Font         = Font;
     DeleteDesc.OnActivated  = FOnMenuItemActivated::CreateLambda([this]()
     {
@@ -148,7 +148,7 @@ void FEditorMenus::BuildEditMenu(const TSharedPtr<FMenuBar>& Bar)
     Menu->AddItem(FMenuItem::Create(DeleteDesc));
 
     FMenuItem::FDesc ClearDesc;
-    ClearDesc.Label       = "Clear Selection";
+    ClearDesc.Label       = TEXT("Clear Selection");
     ClearDesc.Font        = Font;
     ClearDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this]()
     {
@@ -157,21 +157,21 @@ void FEditorMenus::BuildEditMenu(const TSharedPtr<FMenuBar>& Bar)
 
     Menu->AddItem(FMenuItem::Create(ClearDesc));
 
-    Menu->AddSection("Settings", Font);
+    Menu->AddSection(TEXT("Settings"), Font);
 
     FMenuItem::FDesc ProjectSettings;
-    ProjectSettings.Label = "Project Settings";
+    ProjectSettings.Label = TEXT("Project Settings");
     ProjectSettings.Font  = Font;
 
     Menu->AddItem(FMenuItem::Create(ProjectSettings));
 
     FMenuItem::FDesc EditorPreferences;
-    EditorPreferences.Label = "Editor Preferences";
+    EditorPreferences.Label = TEXT("Editor Preferences");
     EditorPreferences.Font  = Font;
 
     Menu->AddItem(FMenuItem::Create(EditorPreferences));
 
-    Bar->AddMenu("Edit", Font, Menu);
+    Bar->AddMenu(TEXT("Edit"), Font, Menu);
 }
 
 TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu(FEditorEngine* InEditorEngine, const FGetPlaceActorLocation& GetLocation)
@@ -192,7 +192,7 @@ TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu(FEditorEngine* InEditorEngin
         }
     };
 
-    Menu->AddSection("Primitives", Font);
+    Menu->AddSection(TEXT("Primitives"), Font);
 
     for (uint8 Index = 0; Index < static_cast<uint8>(EEditorPrimitiveType::Count); ++Index)
     {
@@ -209,7 +209,7 @@ TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu(FEditorEngine* InEditorEngin
         Menu->AddItem(FMenuItem::Create(Desc));
     }
 
-    Menu->AddSection("Lights", Font);
+    Menu->AddSection(TEXT("Lights"), Font);
 
     static const EEditorLightType LightTypes[] =
     {
@@ -236,10 +236,10 @@ TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu(FEditorEngine* InEditorEngin
         Menu->AddItem(FMenuItem::Create(Desc));
     }
 
-    Menu->AddSection("Camera", Font);
+    Menu->AddSection(TEXT("Camera"), Font);
 
     FMenuItem::FDesc CameraDesc;
-    CameraDesc.Label       = "Camera";
+    CameraDesc.Label       = TEXT("Camera");
     CameraDesc.Font        = Font;
     CameraDesc.OnActivated = FOnMenuItemActivated::CreateLambda([InEditorEngine, GetLocation, SelectPlacedActor]()
     {
@@ -274,7 +274,7 @@ void FEditorMenus::BuildWindowsMenu(const TSharedPtr<FMenuBar>& Bar)
 
     WindowItems.Clear();
 
-    Menu->AddSection("Windows", Font);
+    Menu->AddSection(TEXT("Windows"), Font);
 
     for (const TSharedPtr<FEditorPanel>& Panel : Registry->GetPanels())
     {
@@ -296,7 +296,7 @@ void FEditorMenus::BuildWindowsMenu(const TSharedPtr<FMenuBar>& Bar)
         WindowItems.Add(Item);
     }
 
-    Bar->AddMenu("Windows", Font, Menu);
+    Bar->AddMenu(TEXT("Windows"), Font, Menu);
 }
 
 void FEditorMenus::BuildHelpMenu(const TSharedPtr<FMenuBar>& Bar)
@@ -305,19 +305,19 @@ void FEditorMenus::BuildHelpMenu(const TSharedPtr<FMenuBar>& Bar)
 
     TSharedPtr<FMenu> Menu = FMenu::Create();
 
-    Menu->AddSection("About", Font);
+    Menu->AddSection(TEXT("About"), Font);
 
     FMenuItem::FDesc AboutDesc;
-    AboutDesc.Label       = "About";
+    AboutDesc.Label       = TEXT("About");
     AboutDesc.Font        = Font;
     AboutDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this]()
     {
-        Registry->ShowPanel("About");
+        Registry->ShowPanel(TEXT("About"));
     });
 
     Menu->AddItem(FMenuItem::Create(AboutDesc));
 
-    Bar->AddMenu("Help", Font, Menu);
+    Bar->AddMenu(TEXT("Help"), Font, Menu);
 }
 
 void FEditorMenus::Refresh()

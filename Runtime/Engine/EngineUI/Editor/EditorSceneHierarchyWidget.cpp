@@ -12,8 +12,8 @@
 #include "ImGuiPlugin/ImGuiExtensions.h"
 
 // Payload identifiers used when dragging a row onto another row in the outliner
-static const CHAR_T* ActorDragDropPayloadId  = "SCENE_HIERARCHY_ACTOR";
-static const CHAR_T* FilterDragDropPayloadId = "SCENE_HIERARCHY_FILTER";
+static const ANSICHAR* ActorDragDropPayloadId  = "SCENE_HIERARCHY_ACTOR";
+static const ANSICHAR* FilterDragDropPayloadId = "SCENE_HIERARCHY_FILTER";
 
 // Shared by the actor and filter rows
 static const ImVec4 RowHoverBg          = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
@@ -32,7 +32,7 @@ static const ImU32  RenameBorderActive  = IM_COL32(9, 92, 176, 255);
 
 static const CHAR_T* GetActorTypeLabel(FActor* Actor)
 {
-    return Actor ? Actor->GetTypeLabel() : "Actor";
+    return Actor ? Actor->GetTypeLabel() : TEXT("Actor");
 }
 
 static float GetHierarchyRowHeight()
@@ -167,7 +167,7 @@ void FEditorSceneHierarchyWidget::Draw()
         return;
     }
 
-    TRACE_SCOPE("Scene Hierarchy");
+    TRACE_SCOPE(TEXT("Scene Hierarchy"));
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, EditorStyleVars::SceneHierarchyItemSpacing);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, EditorStyleVars::SceneHierarchyWindowPadding);
@@ -178,7 +178,7 @@ void FEditorSceneHierarchyWidget::Draw()
         ImGuiWindowFlags_NoScrollbar |
         ImGuiWindowFlags_NoScrollWithMouse;
 
-    if (EditorWidgets::BeginEditorWindow("Scene Hierarchy", &bVisible, Flags))
+    if (EditorWidgets::BeginEditorWindow(TEXT("Scene Hierarchy"), &bVisible, Flags))
     {
         DrawSceneInfo();
     }
@@ -297,7 +297,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,   ImVec2(OldItemSpacing.x, 0.0f));
 
         ImGui::Dummy(ImVec2(0.0f, 5.0f));
-        EditorWidgets::DrawSearchField("##SceneHierarchySearch", "Search Actors", ActorSearchFilterBuffer.Data(), ActorSearchFilterBuffer.Size());
+        EditorWidgets::DrawSearchField(TEXT("##SceneHierarchySearch"), TEXT("Search Actors"), ActorSearchFilterBuffer.Data(), ActorSearchFilterBuffer.Size());
         ImGui::Dummy(ImVec2(0.0f, 12.0f));
 
         ImGui::PopStyleVar(2);
@@ -508,7 +508,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
     // Context menu
     // -----------------------------------------------------------------------------------------
 
-    if (EditorWidgets::BeginPopupContextItem("SceneHierarchyContextMenu"))
+    if (EditorWidgets::BeginPopupContextItem(TEXT("SceneHierarchyContextMenu")))
     {
         const TArray<FActor*> SelectedActorsForMenu = EditorEngine->GetSelectedActors();
 
@@ -519,13 +519,13 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         const bool  bSingleActor       = SelectedActorCount == 1;
         const bool  bHasFilterSelected = (SelectedFilter != nullptr);
 
-        EditorWidgets::MenuLabeledSeparator("Create");
+        EditorWidgets::MenuLabeledSeparator(TEXT("Create"));
 
         bool bRequestClosePopup = false;
 
         {
             FSubMenuState AddActorSubMenu;
-            if (EditorWidgets::BeginSubMenu(AddActorSubMenu, "##SceneHierarchyAddActorMenu", "Add Actor"))
+            if (EditorWidgets::BeginSubMenu(AddActorSubMenu, TEXT("##SceneHierarchyAddActorMenu"), TEXT("Add Actor")))
             {
                 if (FActor* NewActor = EditorActorFactory::DrawPlaceActorMenu(World, FVector3(0.0f, 0.0f, 0.0f)))
                 {
@@ -537,26 +537,26 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
             }
         }
 
-        if (EditorWidgets::MenuItem("Add Filter"))
+        if (EditorWidgets::MenuItem(TEXT("Add Filter")))
         {
             PendingCreateParent  = SelectedFilter;
             bPendingFilterCreate = true;
         }
 
-        EditorWidgets::MenuLabeledSeparator("Common");
+        EditorWidgets::MenuLabeledSeparator(TEXT("Common"));
 
         {
             TStaticArray<CHAR_T, 64> DeleteLabel;
             if (SelectedActorCount > 1)
             {
-                CString::Snprintf(DeleteLabel.Data(), static_cast<int32>(DeleteLabel.Size()), "Delete %d Actors", SelectedActorCount);
+                CString::Snprintf(DeleteLabel.Data(), static_cast<int32>(DeleteLabel.Size()), TEXT("Delete %d Actors"), SelectedActorCount);
             }
             else
             {
-                CString::Snprintf(DeleteLabel.Data(), static_cast<int32>(DeleteLabel.Size()), "Delete");
+                CString::Snprintf(DeleteLabel.Data(), static_cast<int32>(DeleteLabel.Size()), TEXT("Delete"));
             }
 
-            if (EditorWidgets::MenuItem(DeleteLabel.Data(), "Delete", false, bHasActorSelected || bHasFilterSelected))
+            if (EditorWidgets::MenuItem(DeleteLabel.Data(), TEXT("Delete"), false, bHasActorSelected || bHasFilterSelected))
             {
                 if (bHasActorSelected)
                 {
@@ -569,7 +569,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
             }
         }
 
-        if (EditorWidgets::MenuItem("Rename", "F2", false, bSingleActor || (!bHasActorSelected && bHasFilterSelected)))
+        if (EditorWidgets::MenuItem(TEXT("Rename"), TEXT("F2"), false, bSingleActor || (!bHasActorSelected && bHasFilterSelected)))
         {
             if (PrimaryActorForMenu)
             {
@@ -593,7 +593,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         }
 
         FSubMenuState MoveToFilterSubMenu;
-        if (EditorWidgets::BeginSubMenu(MoveToFilterSubMenu, "##MoveToFilterMenu", "Move To Filter", bHasActorSelected || bHasFilterSelected))
+        if (EditorWidgets::BeginSubMenu(MoveToFilterSubMenu, TEXT("##MoveToFilterMenu"), TEXT("Move To Filter"), bHasActorSelected || bHasFilterSelected))
         {
             FActorFilter* MovedFilter = bHasActorSelected ? nullptr : SelectedFilter;
 
@@ -602,7 +602,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
                 : (SelectedFilter->GetParentFilter() == nullptr);
 
             const bool bRootAllowed = bHasActorSelected || CanReparentFilter(MovedFilter, nullptr);
-            if (EditorWidgets::MenuItem("None", nullptr, bAllAtRoot, bRootAllowed))
+            if (EditorWidgets::MenuItem(TEXT("None"), nullptr, bAllAtRoot, bRootAllowed))
             {
                 if (bHasActorSelected)
                 {
@@ -628,7 +628,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
             if (!bHasRootFilter)
             {
-                EditorWidgets::MenuItem("No Filters", nullptr, false, false);
+                EditorWidgets::MenuItem(TEXT("No Filters"), nullptr, false, false);
             }
 
             EditorWidgets::EndSubMenu(MoveToFilterSubMenu);
@@ -639,17 +639,17 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
             return Actor && Actor->GetParentActor() != nullptr;
         });
 
-        if (EditorWidgets::MenuItem("Detach from Parent", nullptr, false, bHasParent))
+        if (EditorWidgets::MenuItem(TEXT("Detach from Parent"), nullptr, false, bHasParent))
         {
             RequestAttachment(SelectedActorsForMenu, nullptr);
         }
 
-        if (EditorWidgets::MenuItem("Copy", "Ctrl+C", false, false))
+        if (EditorWidgets::MenuItem(TEXT("Copy"), TEXT("Ctrl+C"), false, false))
         {
             // TODO
         }
 
-        if (EditorWidgets::MenuItem("Copy", "Ctrl+V", false, false))
+        if (EditorWidgets::MenuItem(TEXT("Copy"), TEXT("Ctrl+V"), false, false))
         {
             // TODO
         }
@@ -902,7 +902,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
         ImGui::SetDragDropPayload(ActorDragDropPayloadId, &PayloadActor, sizeof(FActor*));
 
         const FString& DraggedName = Actor->GetName();
-        ImGui::TextUnformatted(DraggedName.IsEmpty() ? "Actor" : *DraggedName);
+        ImGui::TextUnformatted(StringCast<ANSICHAR>(DraggedName.IsEmpty() ? TEXT("Actor") : *DraggedName).Get());
 
         const int32 OtherSelectedCount = bSelected ? (EditorEngine->GetSelectedActors().Size() - 1) : 0;
         if (OtherSelectedCount > 0)
@@ -1048,7 +1048,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
             ImGuiInputTextFlags_EnterReturnsTrue |
             ImGuiInputTextFlags_AutoSelectAll;
 
-        const bool bEnter = ImGui::InputText("##RenameActor", RenameBuffer.Data(), RenameBuffer.Size(), InputFlags);
+        const bool bEnter = EditorWidgets::InputText(TEXT("##RenameActor"), RenameBuffer.Data(), RenameBuffer.Size(), InputFlags);
 
         ImGui::PopStyleColor(5);
         ImGui::PopStyleVar(2);
@@ -1089,7 +1089,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
         const ImU32   BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
 
         const FString& Name = Actor->GetName();
-        const CHAR_T* NameText = Name.IsEmpty() ? "Actor" : *Name;
+        const CHAR_T* NameText = Name.IsEmpty() ? TEXT("Actor") : *Name;
         EditorWidgets::DrawTextWithSearchHighlight(ImGui::GetWindowDrawList(), ImVec2(LabelStartX, NameTextY), NameText, SearchText, BaseTextU32, 1.0f, 1.0f, &RowMin, &RowMax);
 
         ImGui::PopStyleColor();
@@ -1105,7 +1105,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
     ImGui::SetCursorScreenPos(ImVec2(ImGui::GetCursorScreenPos().x, TypeTextY - BaselineCompensationY));
 
     ImGui::PushStyleColor(ImGuiCol_Text, ActorTypeTextColor);
-    ImGui::TextUnformatted(Type);
+    ImGui::TextUnformatted(StringCast<ANSICHAR>(Type).Get());
     ImGui::PopStyleColor();
 
     ImGui::PopID();
@@ -1318,9 +1318,9 @@ void FEditorSceneHierarchyWidget::DrawMoveToFilterMenu(FActorFilter* Filter, con
     else
     {
         FSubMenuState ChildrenSubMenu;
-        if (EditorWidgets::BeginSubMenu(ChildrenSubMenu, "##MoveToFilterChildren", *Filter->GetName()))
+        if (EditorWidgets::BeginSubMenu(ChildrenSubMenu, TEXT("##MoveToFilterChildren"), *Filter->GetName()))
         {
-            if (EditorWidgets::MenuItem("Move Here", nullptr, bIsMember, bEnabled))
+            if (EditorWidgets::MenuItem(TEXT("Move Here"), nullptr, bIsMember, bEnabled))
             {
                 MoveHere();
             }
@@ -1449,7 +1449,7 @@ void FEditorSceneHierarchyWidget::DrawFilterRow(FActorFilter* Filter, float Inde
         FActorFilter* PayloadFilter = Filter;
         ImGui::SetDragDropPayload(FilterDragDropPayloadId, &PayloadFilter, sizeof(FActorFilter*));
 
-        ImGui::TextUnformatted(Label);
+        ImGui::TextUnformatted(StringCast<ANSICHAR>(Label).Get());
 
         ImGui::EndDragDropSource();
     }
@@ -1553,7 +1553,7 @@ void FEditorSceneHierarchyWidget::DrawFilterRow(FActorFilter* Filter, float Inde
             ImGuiInputTextFlags_EnterReturnsTrue |
             ImGuiInputTextFlags_AutoSelectAll;
 
-        const bool bEnter = ImGui::InputText("##RenameFilter", RenameBuffer.Data(), RenameBuffer.Size(), InputFlags);
+        const bool bEnter = EditorWidgets::InputText(TEXT("##RenameFilter"), RenameBuffer.Data(), RenameBuffer.Size(), InputFlags);
 
         ImGui::PopStyleColor(5);
         ImGui::PopStyleVar(2);
@@ -1949,10 +1949,10 @@ void FEditorSceneHierarchyWidget::ApplyPendingFilterOperations()
 
     if (bPendingFilterCreate)
     {
-        FString Name("New Filter");
+        FString Name(TEXT("New Filter"));
         for (int32 Suffix = 1; World->FindActorFilter(Name, PendingCreateParent); Suffix++)
         {
-            Name = FString::Printf("New Filter %d", Suffix);
+            Name = FString::Printf(TEXT("New Filter %d"), Suffix);
         }
 
         if (PendingCreateParent)

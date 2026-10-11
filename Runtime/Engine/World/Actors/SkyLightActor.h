@@ -17,7 +17,7 @@ public:
 
     virtual const CHAR_T* GetTypeLabel() const override
     {
-        return "SkyLight";
+        return TEXT("SkyLight");
     }
 
     FSkyLightComponent* GetLightComponent() const

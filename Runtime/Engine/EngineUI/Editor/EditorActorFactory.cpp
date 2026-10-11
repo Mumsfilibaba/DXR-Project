@@ -26,15 +26,15 @@ struct FPrimitiveRecipe
 
 static const FPrimitiveRecipe GPrimitiveRecipes[NumPrimitiveTypes] =
 {
-    { "Cube",     FVector3(0.0f, 0.0f, 0.0f) },
-    { "Sphere",   FVector3(0.0f, 0.0f, 0.0f) },
-    { "Plane",    FVector3(Math::Constants::HalfPI, 0.0f, 0.0f) },
-    { "Cylinder", FVector3(0.0f, 0.0f, 0.0f) },
-    { "Capsule",  FVector3(0.0f, 0.0f, 0.0f) },
-    { "Cone",     FVector3(0.0f, 0.0f, 0.0f) },
-    { "Torus",    FVector3(0.0f, 0.0f, 0.0f) },
-    { "Pyramid",  FVector3(0.0f, 0.0f, 0.0f) },
-    { "Teapot",   FVector3(0.0f, 0.0f, 0.0f) },
+    { TEXT("Cube"),     FVector3(0.0f, 0.0f, 0.0f) },
+    { TEXT("Sphere"),   FVector3(0.0f, 0.0f, 0.0f) },
+    { TEXT("Plane"),    FVector3(Math::Constants::HalfPI, 0.0f, 0.0f) },
+    { TEXT("Cylinder"), FVector3(0.0f, 0.0f, 0.0f) },
+    { TEXT("Capsule"),  FVector3(0.0f, 0.0f, 0.0f) },
+    { TEXT("Cone"),     FVector3(0.0f, 0.0f, 0.0f) },
+    { TEXT("Torus"),    FVector3(0.0f, 0.0f, 0.0f) },
+    { TEXT("Pyramid"),  FVector3(0.0f, 0.0f, 0.0f) },
+    { TEXT("Teapot"),   FVector3(0.0f, 0.0f, 0.0f) },
 };
 
 static const EEditorLightType GLightTypes[] =
@@ -223,7 +223,7 @@ FActor* EditorActorFactory::SpawnCamera(FWorld* World, const FVector3& Location)
         return nullptr;
     }
 
-    const FString ActorName = CreateUniqueActorName(World, "Camera");
+    const FString ActorName = CreateUniqueActorName(World, TEXT("Camera"));
 
     FCameraActor* NewActor = World->SpawnActor<FCameraActor>(Location, FVector3(0.0f, 0.0f, 0.0f));
     if (NewActor)
@@ -261,7 +261,7 @@ FActor* EditorActorFactory::DrawPlaceActorMenu(FWorld* World, const FVector3& Lo
 
     {
         FSubMenuState MeshSubMenu;
-        if (EditorWidgets::BeginSubMenu(MeshSubMenu, "##PlaceActorMeshMenu", "Mesh"))
+        if (EditorWidgets::BeginSubMenu(MeshSubMenu, TEXT("##PlaceActorMeshMenu"), TEXT("Mesh")))
         {
             for (int32 Index = 0; Index < NumPrimitiveTypes; ++Index)
             {
@@ -278,7 +278,7 @@ FActor* EditorActorFactory::DrawPlaceActorMenu(FWorld* World, const FVector3& Lo
 
     {
         FSubMenuState LightSubMenu;
-        if (EditorWidgets::BeginSubMenu(LightSubMenu, "##PlaceActorLightMenu", "Light"))
+        if (EditorWidgets::BeginSubMenu(LightSubMenu, TEXT("##PlaceActorLightMenu"), TEXT("Light")))
         {
             for (const EEditorLightType Type : GLightTypes)
             {
@@ -293,7 +293,7 @@ FActor* EditorActorFactory::DrawPlaceActorMenu(FWorld* World, const FVector3& Lo
         }
     }
 
-    if (EditorWidgets::MenuItem("Camera"))
+    if (EditorWidgets::MenuItem(TEXT("Camera")))
     {
         SpawnedActor = SpawnCamera(World, Location);
     }
@@ -328,7 +328,7 @@ FString EditorActorFactory::CreateUniqueActorName(FWorld* World, const CHAR_T* B
     while (IsNameTaken(Name))
     {
         ++Suffix;
-        CString::Snprintf(Buffer.Data(), static_cast<int32>(Buffer.Size()), "%s (%d)", BaseName, Suffix);
+        CString::Snprintf(Buffer.Data(), static_cast<int32>(Buffer.Size()), TEXT("%s (%d)"), BaseName, Suffix);
         Name = Buffer.Data();
     }
 
@@ -346,17 +346,17 @@ void EditorActorFactory::ReleaseCachedMeshes()
 const CHAR_T* EditorActorFactory::GetPrimitiveName(EEditorPrimitiveType Type)
 {
     const int32 Index = static_cast<int32>(Type);
-    return (Index >= 0 && Index < NumPrimitiveTypes) ? GPrimitiveRecipes[Index].Name : "Actor";
+    return (Index >= 0 && Index < NumPrimitiveTypes) ? GPrimitiveRecipes[Index].Name : TEXT("Actor");
 }
 
 const CHAR_T* EditorActorFactory::GetLightName(EEditorLightType Type)
 {
     switch (Type)
     {
-        case EEditorLightType::Point:       return "Point Light";
-        case EEditorLightType::Spot:        return "Spot Light";
-        case EEditorLightType::Directional: return "Directional Light";
-        case EEditorLightType::Sky:         return "Sky Light";
-        default:                            return "Light";
+        case EEditorLightType::Point:       return TEXT("Point Light");
+        case EEditorLightType::Spot:        return TEXT("Spot Light");
+        case EEditorLightType::Directional: return TEXT("Directional Light");
+        case EEditorLightType::Sky:         return TEXT("Sky Light");
+        default:                            return TEXT("Light");
     }
 }

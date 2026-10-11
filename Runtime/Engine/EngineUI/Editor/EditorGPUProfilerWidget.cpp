@@ -39,7 +39,7 @@ void FEditorGPUProfilerWidget::Draw()
         return;
     }
 
-    TRACE_SCOPE("GPU Profiler");
+    TRACE_SCOPE(TEXT("GPU Profiler"));
 
     DrawWindow();
 }
@@ -139,7 +139,7 @@ void FEditorGPUProfilerWidget::DrawGPUData()
             ImGui::TableNextRow();
 
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text("%s", Interval.Name ? Interval.Name : "<unnamed>");
+            ImGui::Text("%s", StringCast<ANSICHAR>(Interval.Name ? Interval.Name : TEXT("<unnamed>")).Get());
 
             ImGui::TableSetColumnIndex(1);
             ImGui::Text("%.4f ms", Time::ToMilliseconds<float>(static_cast<float>(Interval.InclusiveNanoseconds)));
@@ -159,20 +159,20 @@ static void FormatWithSeparators(CHAR_T* Buffer, int32 BufferSize, uint64 Value)
 {
     if (Value == 0 || Value == TNumericLimits<uint64>::Max())
     {
-        snprintf(Buffer, BufferSize, "%llu", Value == 0 ? 0ull : 0ull);
+        CString::Snprintf(Buffer, BufferSize, TEXT("%llu"), Value == 0 ? 0ull : 0ull);
         return;
     }
 
     CHAR_T Raw[32];
-    snprintf(Raw, sizeof(Raw), "%llu", Value);
+    CString::Snprintf(Raw, ARRAY_COUNT(Raw), TEXT("%llu"), Value);
 
-    const int32 RawLen        = static_cast<int32>(strlen(Raw));
+    const int32 RawLen        = static_cast<int32>(CString::Strlen(Raw));
     const int32 NumSeparators = (RawLen - 1) / 3;
     const int32 FinalLen      = RawLen + NumSeparators;
 
     if (FinalLen >= BufferSize)
     {
-        snprintf(Buffer, BufferSize, "%llu", Value);
+        CString::Snprintf(Buffer, BufferSize, TEXT("%llu"), Value);
         return;
     }
 
@@ -198,14 +198,14 @@ void FEditorGPUProfilerWidget::DrawPipelineStatistics()
     const bool bStatsEnabled = Profiler->IsPipelineStatisticsEnabled();
     if (bStatsEnabled)
     {
-        if (EditorWidgets::DrawButton("Stop Statistics"))
+        if (EditorWidgets::DrawButton(TEXT("Stop Statistics")))
         {
             Profiler->DisablePipelineStatistics();
         }
     }
     else
     {
-        if (EditorWidgets::DrawButton("Start Statistics"))
+        if (EditorWidgets::DrawButton(TEXT("Start Statistics")))
         {
             Profiler->EnablePipelineStatistics();
         }
@@ -213,7 +213,7 @@ void FEditorGPUProfilerWidget::DrawPipelineStatistics()
 
     ImGui::SameLine();
 
-    if (EditorWidgets::DrawButton("Reset Statistics"))
+    if (EditorWidgets::DrawButton(TEXT("Reset Statistics")))
     {
         Profiler->Reset();
     }
@@ -273,19 +273,19 @@ void FEditorGPUProfilerWidget::DrawPipelineStatistics()
             ImGui::TableNextRow();
 
             ImGui::TableSetColumnIndex(0);
-            ImGui::TextUnformatted(Label);
+            ImGui::TextUnformatted(StringCast<ANSICHAR>(Label).Get());
 
             ImGui::TableSetColumnIndex(1);
-            FormatWithSeparators(Buf, sizeof(Buf), Current);
-            ImGui::TextUnformatted(Buf);
+            FormatWithSeparators(Buf, ARRAY_COUNT(Buf), Current);
+            ImGui::TextUnformatted(StringCast<ANSICHAR>(Buf).Get());
 
             ImGui::TableSetColumnIndex(2);
             if (MinVal == TNumericLimits<uint64>::Max())
                 ImGui::TextUnformatted("-");
             else
             {
-                FormatWithSeparators(Buf, sizeof(Buf), MinVal);
-                ImGui::TextUnformatted(Buf);
+                FormatWithSeparators(Buf, ARRAY_COUNT(Buf), MinVal);
+                ImGui::TextUnformatted(StringCast<ANSICHAR>(Buf).Get());
             }
 
             ImGui::TableSetColumnIndex(3);
@@ -293,25 +293,25 @@ void FEditorGPUProfilerWidget::DrawPipelineStatistics()
                 ImGui::TextUnformatted("-");
             else
             {
-                FormatWithSeparators(Buf, sizeof(Buf), MaxVal);
-                ImGui::TextUnformatted(Buf);
+                FormatWithSeparators(Buf, ARRAY_COUNT(Buf), MaxVal);
+                ImGui::TextUnformatted(StringCast<ANSICHAR>(Buf).Get());
             }
         };
 
-        Row("IA Vertices",          Stats.IAVertices,    Stats.IAVertices,    Stats.IAVertices);
-        Row("IA Primitives",        Stats.IAPrimitives,  Stats.IAPrimitives,  Stats.IAPrimitives);
-        Row("VS Invocations",       Stats.VSInvocations, Stats.VSInvocations, Stats.VSInvocations);
-        Row("GS Invocations",       Stats.GSInvocations, Stats.GSInvocations, Stats.GSInvocations);
-        Row("GS Primitives",        Stats.GSPrimitives,  Stats.GSPrimitives,  Stats.GSPrimitives);
-        Row("Clipping Invocations", Stats.CInvocations,  Stats.CInvocations,  Stats.CInvocations);
-        Row("Clipping Primitives",  Stats.CPrimitives,   Stats.CPrimitives,   Stats.CPrimitives);
-        Row("PS Invocations",       Stats.PSInvocations, Stats.PSInvocations, Stats.PSInvocations);
-        Row("HS Invocations",       Stats.HSInvocations, Stats.HSInvocations, Stats.HSInvocations);
-        Row("DS Invocations",       Stats.DSInvocations, Stats.DSInvocations, Stats.DSInvocations);
-        Row("CS Invocations",       Stats.CSInvocations, Stats.CSInvocations, Stats.CSInvocations);
-        Row("AS Invocations",       Stats.ASInvocations, Stats.ASInvocations, Stats.ASInvocations);
-        Row("MS Invocations",       Stats.MSInvocations, Stats.MSInvocations, Stats.MSInvocations);
-        Row("MS Primitives",        Stats.MSPrimitives,  Stats.MSPrimitives,  Stats.MSPrimitives);
+        Row(TEXT("IA Vertices"),          Stats.IAVertices,    Stats.IAVertices,    Stats.IAVertices);
+        Row(TEXT("IA Primitives"),        Stats.IAPrimitives,  Stats.IAPrimitives,  Stats.IAPrimitives);
+        Row(TEXT("VS Invocations"),       Stats.VSInvocations, Stats.VSInvocations, Stats.VSInvocations);
+        Row(TEXT("GS Invocations"),       Stats.GSInvocations, Stats.GSInvocations, Stats.GSInvocations);
+        Row(TEXT("GS Primitives"),        Stats.GSPrimitives,  Stats.GSPrimitives,  Stats.GSPrimitives);
+        Row(TEXT("Clipping Invocations"), Stats.CInvocations,  Stats.CInvocations,  Stats.CInvocations);
+        Row(TEXT("Clipping Primitives"),  Stats.CPrimitives,   Stats.CPrimitives,   Stats.CPrimitives);
+        Row(TEXT("PS Invocations"),       Stats.PSInvocations, Stats.PSInvocations, Stats.PSInvocations);
+        Row(TEXT("HS Invocations"),       Stats.HSInvocations, Stats.HSInvocations, Stats.HSInvocations);
+        Row(TEXT("DS Invocations"),       Stats.DSInvocations, Stats.DSInvocations, Stats.DSInvocations);
+        Row(TEXT("CS Invocations"),       Stats.CSInvocations, Stats.CSInvocations, Stats.CSInvocations);
+        Row(TEXT("AS Invocations"),       Stats.ASInvocations, Stats.ASInvocations, Stats.ASInvocations);
+        Row(TEXT("MS Invocations"),       Stats.MSInvocations, Stats.MSInvocations, Stats.MSInvocations);
+        Row(TEXT("MS Primitives"),        Stats.MSPrimitives,  Stats.MSPrimitives,  Stats.MSPrimitives);
 
         ImGui::EndTable();
     }
@@ -323,25 +323,25 @@ void FEditorGPUProfilerWidget::DrawWindow()
 
     const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing;
 
-    if (EditorWidgets::BeginEditorWindow("GPU Profiler", &bVisible, Flags))
+    if (EditorWidgets::BeginEditorWindow(TEXT("GPU Profiler"), &bVisible, Flags))
     {
         if (Profiler)
         {
-            if (EditorWidgets::DrawButton("Start Profile"))
+            if (EditorWidgets::DrawButton(TEXT("Start Profile")))
             {
                 Profiler->Enable();
             }
 
             ImGui::SameLine();
 
-            if (EditorWidgets::DrawButton("Stop Profile"))
+            if (EditorWidgets::DrawButton(TEXT("Stop Profile")))
             {
                 Profiler->Disable();
             }
 
             ImGui::SameLine();
 
-            if (EditorWidgets::DrawButton("Reset"))
+            if (EditorWidgets::DrawButton(TEXT("Reset")))
             {
                 Profiler->Reset();
             }

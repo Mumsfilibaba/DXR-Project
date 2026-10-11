@@ -16,16 +16,16 @@ struct ENGINE_API FEditorConfirmDialog
     struct FDesc
     {
         /** @brief The caption above the message, left out when it is empty. */
-        FString Title = "Confirm";
+        FString Title = TEXT("Confirm");
 
         /** @brief The question the buttons answer. */
-        FString Message = "Are you sure?";
+        FString Message = TEXT("Are you sure?");
 
         /** @brief The label of the button that answers yes. */
-        FString ConfirmLabel = "Yes";
+        FString ConfirmLabel = TEXT("Yes");
 
         /** @brief The label of the button that answers no, which Escape and closing the dialog also pick. */
-        FString CancelLabel = "No";
+        FString CancelLabel = TEXT("No");
 
         /** @brief Fired once the dialog has closed, with which button answered it. */
         FOnConfirmDialogClosed OnClosed;

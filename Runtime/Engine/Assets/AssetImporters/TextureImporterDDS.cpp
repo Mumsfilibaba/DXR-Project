@@ -169,5 +169,5 @@ TSharedRef<FTexture> FTextureImporterDDS::ImportFromFile(const FStringView& File
 
 bool FTextureImporterDDS::MatchExtenstion(const FStringView& FileName)
 {
-    return FileName.EndsWith(".dds", EStringCaseType::NoCase);
+    return FileName.EndsWith(TEXT(".dds"), EStringCaseType::NoCase);
 }

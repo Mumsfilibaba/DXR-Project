@@ -4,16 +4,16 @@
 #include "Engine/World/Components/CameraComponent.h"
 
 static TAutoConsoleVariable<float> CVarMouseSensitivity(
-    "Game.Camera.MouseSensitivity",
-    "Degrees the first-person camera turns per pixel of mouse movement",
+    TEXT("Game.Camera.MouseSensitivity"),
+    TEXT("Degrees the first-person camera turns per pixel of mouse movement"),
     0.15f,
     0.001f,
     10.0f,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarInvertLookY(
-    "Game.Camera.InvertLookY",
-    "Invert the vertical axis of the first-person camera",
+    TEXT("Game.Camera.InvertLookY"),
+    TEXT("Invert the vertical axis of the first-person camera"),
     false,
     EConsoleVariableFlags::Default);
 

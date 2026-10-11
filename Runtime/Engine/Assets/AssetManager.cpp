@@ -14,8 +14,8 @@
 #include "Engine/Assets/AssetImporters/OBJImporter.h"
 
 static TAutoConsoleVariable<bool> CVarEnableAssetConversion(
-    "Engine.AssetManager.EnableAssetConversion",
-    "Enable conversion and serialization to the engine's custom format instead of loading from source",
+    TEXT("Engine.AssetManager.EnableAssetConversion"),
+    TEXT("Enable conversion and serialization to the engine's custom format instead of loading from source"),
     true,
     EConsoleVariableFlags::Default);
 
@@ -38,7 +38,7 @@ FAssetRegistry::FAssetRegistry()
 {
     const FString AssetPath   = Paths::GetAssetDir();
     const FString ProjectName = Paths::GetProjectName();
-    RegistryFilename = AssetPath + "/" + ProjectName + ".assetregistry";
+    RegistryFilename = AssetPath + TEXT("/") + ProjectName + TEXT(".assetregistry");
 }
 
 FAssetRegistry::~FAssetRegistry()
@@ -142,7 +142,7 @@ void FAssetRegistry::UpdateRegistryFile()
     FString FileContents;
     for (TMap<FString, FString>::IteratorType Iterator = RegistryMap.CreateIterator(); !Iterator.IsEnd(); Iterator++)
     {
-        FileContents.AppendPrintf("%s = %s\n", *Iterator.GetKey(), *Iterator.GetValue());
+        FileContents.AppendPrintf(TEXT("%s = %s\n"), *Iterator.GetKey(), *Iterator.GetValue());
     }
 
     {
@@ -374,7 +374,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
 
     if (bEnableAssetConversion)
     {
-        const FString NewFilename = ReplaceExtension(FinalPath, ".dxrmesh");
+        const FString NewFilename = ReplaceExtension(FinalPath, TEXT(".dxrmesh"));
         if (ModelSerializer->Serialize(NewFilename, NewModelData))
         {
             AssetRegistry->AddEntry(FinalPath, NewFilename);

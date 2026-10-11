@@ -7,7 +7,7 @@ FSkyLightActor::FSkyLightActor(const FObjectInitializer& ObjectInitializer)
     : FActor(ObjectInitializer)
     , LightComponent(nullptr)
 {
-    SetName("Sky Light");
+    SetName(TEXT("Sky Light"));
     
     LightComponent = NewObject<FSkyLightComponent>();
     AddComponent(LightComponent);

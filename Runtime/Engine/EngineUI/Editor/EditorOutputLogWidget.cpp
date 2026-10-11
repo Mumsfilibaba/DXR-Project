@@ -95,14 +95,14 @@ void FEditorOutputLogWidget::Draw()
         return;
     }
 
-    TRACE_SCOPE("Output Log");
+    TRACE_SCOPE(TEXT("Output Log"));
 
     ImGuiStyle& Style = ImGui::GetStyle();
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(Style.ItemSpacing.x, 0.0f));
 
-    if (EditorWidgets::BeginEditorWindow("Output Log", &bVisible))
+    if (EditorWidgets::BeginEditorWindow(TEXT("Output Log"), &bVisible))
     {
         // ImGuiMod_Ctrl resolves to Cmd on macOS, and the default focused routing keeps this off the other panels
         if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_F))
@@ -233,7 +233,7 @@ void FEditorOutputLogWidget::DrawFilterBar()
         bFocusSearchField = false;
     }
 
-    EditorWidgets::DrawSearchField("##LogSearch", "Search Log", SearchFilterBuffer.Data(), SearchFilterBuffer.Size(), SearchWidth, true);
+    EditorWidgets::DrawSearchField(TEXT("##LogSearch"), TEXT("Search Log"), SearchFilterBuffer.Data(), SearchFilterBuffer.Size(), SearchWidth, true);
 
     float SearchBarHeight = ImGui::GetItemRectSize().y;
     if (SearchBarHeight <= 0.0f)
@@ -257,9 +257,9 @@ void FEditorOutputLogWidget::DrawFilterBar()
     {
         ImGui::PushFont(EditorFonts::SegoeUI_22);
 
-        const CHAR_T* Label = "Filter";
+        const CHAR_T* Label = TEXT("Filter");
 
-        const ImVec2 TextSize     = ImGui::CalcTextSize(Label);
+        const ImVec2 TextSize     = ImGui::CalcTextSize(StringCast<ANSICHAR>(Label).Get());
         const float  ButtonHeight = SearchBarHeight;
         const float  ButtonWidth  = IconSize + IconTextGap + TextSize.x + TextArrowGap + ArrowIconSize + Style.FramePadding.x * 2.0f;
         const ImVec2 ButtonSize   = ImVec2(ButtonWidth, ButtonHeight);
@@ -291,7 +291,7 @@ void FEditorOutputLogWidget::DrawFilterBar()
         const float TextX = LeftIconMax.x + IconTextGap;
         const float TextY = Min.y + (ButtonHeight - TextSize.y) * 0.5f;
 
-        DrawList->AddText(EditorFonts::SegoeUI_22, EditorFonts::SegoeUI_22->FontSize, ImVec2(TextX, TextY), White, Label);
+        DrawList->AddText(EditorFonts::SegoeUI_22, EditorFonts::SegoeUI_22->FontSize, ImVec2(TextX, TextY), White, StringCast<ANSICHAR>(Label).Get());
 
         const float  RightIconX   = TextX + TextSize.x + TextArrowGap;
         const float  RightIconY   = Min.y + (ButtonHeight - ArrowIconSize) * 0.5f;
@@ -317,7 +317,7 @@ void FEditorOutputLogWidget::DrawFilterBar()
     FilterAnchor.Min = ImGui::GetItemRectMin();
     FilterAnchor.Max = ImGui::GetItemRectMax();
 
-    EditorWidgets::SetNextBeginPopupPos("LogFilterMenu", FilterAnchor, EPopupPlacement::BelowAnchor);
+    EditorWidgets::SetNextBeginPopupPos(TEXT("LogFilterMenu"), FilterAnchor, EPopupPlacement::BelowAnchor);
     ImGui::SetNextWindowSize(ImVec2(180.0f, 0.0f), ImGuiCond_Appearing);
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -332,19 +332,19 @@ void FEditorOutputLogWidget::DrawFilterBar()
 
     if (ImGui::BeginPopup("LogFilterMenu"))
     {
-        EditorWidgets::MenuLabeledSeparator("Verbosity", 1.0f, 4.0f);
+        EditorWidgets::MenuLabeledSeparator(TEXT("Verbosity"), 1.0f, 4.0f);
 
-        if (EditorWidgets::MenuItem("Messages", nullptr, bFilterInfo))
+        if (EditorWidgets::MenuItem(TEXT("Messages"), nullptr, bFilterInfo))
         {
             bFilterInfo = !bFilterInfo;
         }
 
-        if (EditorWidgets::MenuItem("Warnings", nullptr, bFilterWarning))
+        if (EditorWidgets::MenuItem(TEXT("Warnings"), nullptr, bFilterWarning))
         {
             bFilterWarning = !bFilterWarning;
         }
 
-        if (EditorWidgets::MenuItem("Errors", nullptr, bFilterError))
+        if (EditorWidgets::MenuItem(TEXT("Errors"), nullptr, bFilterError))
         {
             bFilterError = !bFilterError;
         }
@@ -481,43 +481,43 @@ void FEditorOutputLogWidget::DrawLogListRichText()
     ImGui::PushFont(EditorFonts::Consola_16);
     ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f));
 
-    if (EditorWidgets::BeginRichTextView("##OutputLogRichText", ImVec2(-1.0f, -1.0f), RichTextCtx, 0, false))
+    if (EditorWidgets::BeginRichTextView(TEXT("##OutputLogRichText"), ImVec2(-1.0f, -1.0f), RichTextCtx, 0, false))
     {
         RebuildRichTextIfDirty();
 
-        if (EditorWidgets::BeginPopupContextWindow("OutputLogContextMenu"))
+        if (EditorWidgets::BeginPopupContextWindow(TEXT("OutputLogContextMenu")))
         {
-            EditorWidgets::MenuLabeledSeparator("Output Log");
+            EditorWidgets::MenuLabeledSeparator(TEXT("Output Log"));
 
-            if (EditorWidgets::MenuItem("Select All", EDITOR_SHORTCUT_MOD "+A", false, true))
+            if (EditorWidgets::MenuItem(TEXT("Select All"), EDITOR_SHORTCUT_MOD TEXT("+A"), false, true))
             {
                 EditorWidgets::RichTextSelectAll(RichTextCtx);
             }
 
-            if (EditorWidgets::MenuItem("Copy", EDITOR_SHORTCUT_MOD "+C", false, RichTextCtx.bHasSelection))
+            if (EditorWidgets::MenuItem(TEXT("Copy"), EDITOR_SHORTCUT_MOD TEXT("+C"), false, RichTextCtx.bHasSelection))
             {
                 const FString Selected = EditorWidgets::GetSelectedRichText(RichTextCtx);
                 if (!Selected.IsEmpty())
                 {
-                    ImGui::SetClipboardText(*Selected);
+                    ImGui::SetClipboardText(StringCast<ANSICHAR>(Selected).Get());
                 }
             }
 
-            if (EditorWidgets::MenuItem("Copy All", nullptr, false, !RichTextCtx.Lines.IsEmpty()))
+            if (EditorWidgets::MenuItem(TEXT("Copy All"), nullptr, false, !RichTextCtx.Lines.IsEmpty()))
             {
                 const FString All = EditorWidgets::GetAllRichText(RichTextCtx);
                 if (!All.IsEmpty())
                 {
-                    ImGui::SetClipboardText(*All);
+                    ImGui::SetClipboardText(StringCast<ANSICHAR>(All).Get());
                 }
             }
 
-            if (EditorWidgets::MenuItem("Find", EDITOR_SHORTCUT_MOD "+F", false, true))
+            if (EditorWidgets::MenuItem(TEXT("Find"), EDITOR_SHORTCUT_MOD TEXT("+F"), false, true))
             {
                 bFocusSearchField = true;
             }
 
-            if (EditorWidgets::MenuItem("Clear log", nullptr, false, true))
+            if (EditorWidgets::MenuItem(TEXT("Clear log"), nullptr, false, true))
             {
                 SCOPED_LOCK(MessagesCS);
 

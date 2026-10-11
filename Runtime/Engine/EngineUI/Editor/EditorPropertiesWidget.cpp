@@ -45,7 +45,7 @@ void FEditorPropertiesWidget::Draw()
         return;
     }
 
-    TRACE_SCOPE("Properties");
+    TRACE_SCOPE(TEXT("Properties"));
 
     if (!EditorEngine)
     {
@@ -55,7 +55,7 @@ void FEditorPropertiesWidget::Draw()
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, EditorStyleVars::PropertiesItemSpacing);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, EditorStyleVars::PropertiesWindowPadding);
 
-    if (EditorWidgets::BeginEditorWindow("Properties", &bVisible))
+    if (EditorWidgets::BeginEditorWindow(TEXT("Properties"), &bVisible))
     {
         DrawWindowContents();
     }
@@ -97,11 +97,11 @@ const TArray<const CHAR_T*>& FEditorPropertiesWidget::GetMaterialLabels(const FS
         TSharedPtr<FMaterial> Entry = MeshComponent->GetMaterial(Index);
         if (Entry && !Entry->GetName().IsEmpty())
         {
-            MaterialLabels.Emplace(FString::Printf("%d: %s", Index, *Entry->GetName()));
+            MaterialLabels.Emplace(FString::Printf(TEXT("%d: %s"), Index, *Entry->GetName()));
         }
         else
         {
-            MaterialLabels.Emplace(FString::Printf("%d: <unnamed>", Index));
+            MaterialLabels.Emplace(FString::Printf(TEXT("%d: <unnamed>"), Index));
         }
     }
 
@@ -129,11 +129,11 @@ void FEditorPropertiesWidget::DrawWindowContents()
     {
         static constexpr int32 LabelLength = 256;
         TStaticArray<CHAR_T, LabelLength> Label{};
-        CString::Snprintf(Label.Data(), static_cast<int32>(Label.Size()), "%s", InLabel);
+        CString::Snprintf(Label.Data(), static_cast<int32>(Label.Size()), TEXT("%s"), InLabel);
 
         ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextBorderSize, 4.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextAlign, ImVec2(0.1f, 0.5f));
-        ImGui::SeparatorText(Label.Data());
+        ImGui::SeparatorText(StringCast<ANSICHAR>(Label.Data()).Get());
         ImGui::PopStyleVar(2);
     };
 
@@ -150,7 +150,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, EditorStyleVars::PropertiesCollapsingHeaderItemSpacing);
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, EditorStyleVars::PropertiesCollapsingFramePadding);
 
-        const bool bResult = ImGui::CollapsingHeader(Label, Flags);
+        const bool bResult = ImGui::CollapsingHeader(StringCast<ANSICHAR>(Label).Get(), Flags);
 
         const ImVec2 HeaderMin = ImGui::GetItemRectMin();
         const ImVec2 HeaderMax = ImGui::GetItemRectMax();
@@ -224,7 +224,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
         ImGui::PushID(SelectedActor);
 
         const FString& ActorName = SelectedActor->GetName();
-        DrawLabelWithSeperator(ActorName.IsEmpty() ? "Actor" : *ActorName);
+        DrawLabelWithSeperator(ActorName.IsEmpty() ? TEXT("Actor") : *ActorName);
 
         const bool bHasMeshComponent       = MeshComponent != nullptr;
         const bool bHasComponentProperties = bHasMeshComponent || SelectedLight || SelectedCamera || SelectedLightProbe;
@@ -232,17 +232,17 @@ void FEditorPropertiesWidget::DrawWindowContents()
         FActor*    ParentActor = SelectedActor->GetParentActor();
         const bool bIsAttached = ParentActor != nullptr;
 
-        const CHAR_T* TransformLabel = bIsAttached ? "Transform (Relative)" : "Transform";
+        const CHAR_T* TransformLabel = bIsAttached ? TEXT("Transform (Relative)") : TEXT("Transform");
         if (DrawCollapsingHeader(TransformLabel, ImGuiTreeNodeFlags_DefaultOpen, bIsAttached || bHasComponentProperties))
         {
-            if (EditorWidgets::BeginPropertyTable("##ActorTransformTable", LabelColumnWidth, RevertColumnWidth))
+            if (EditorWidgets::BeginPropertyTable(TEXT("##ActorTransformTable"), LabelColumnWidth, RevertColumnWidth))
             {
                 // Translation
                 {
                     FVector3 Translation = SelectedActor->GetTransform().GetTranslation();
                     const FVector3 TranslationRevert = FVector3(0.0f, 0.0f, 0.0f);
 
-                    if (EditorWidgets::DrawFloat3Control("Translation", Translation, 0.0f, &TranslationRevert, EVector3ControlType::Position))
+                    if (EditorWidgets::DrawFloat3Control(TEXT("Translation"), Translation, 0.0f, &TranslationRevert, EVector3ControlType::Position))
                     {
                         SelectedActor->GetTransform().SetTranslation(Translation);
                     }
@@ -255,7 +255,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
                     const FVector3 RotationRevert = FVector3(0.0f, 0.0f, 0.0f);
 
-                    if (EditorWidgets::DrawFloat3Control("Rotation", Rotation, 0.0f, &RotationRevert, EVector3ControlType::RotationDegrees))
+                    if (EditorWidgets::DrawFloat3Control(TEXT("Rotation"), Rotation, 0.0f, &RotationRevert, EVector3ControlType::RotationDegrees))
                     {
                         const FVector3 Radians = FVector3::DegreesToRadians(Rotation);
                         if (SelectedCamera)
@@ -274,7 +274,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     FVector3 Scale = SelectedActor->GetTransform().GetScale();
                     const FVector3 ScaleRevert = FVector3(1.0f, 1.0f, 1.0f);
 
-                    const bool bScaleChanged = EditorWidgets::DrawFloat3Control("Scale", Scale, 1.0f, &ScaleRevert, EVector3ControlType::Scale);
+                    const bool bScaleChanged = EditorWidgets::DrawFloat3Control(TEXT("Scale"), Scale, 1.0f, &ScaleRevert, EVector3ControlType::Scale);
                     if (bScaleChanged)
                     {
                         SelectedActor->GetTransform().SetScale(Scale);
@@ -288,21 +288,21 @@ void FEditorPropertiesWidget::DrawWindowContents()
         // Attachment
         if (bIsAttached)
         {
-            if (DrawCollapsingHeader("Attachment", ImGuiTreeNodeFlags_DefaultOpen, bHasComponentProperties))
+            if (DrawCollapsingHeader(TEXT("Attachment"), ImGuiTreeNodeFlags_DefaultOpen, bHasComponentProperties))
             {
-                if (EditorWidgets::BeginPropertyTable("##ActorAttachmentTable", LabelColumnWidth, RevertColumnWidth))
+                if (EditorWidgets::BeginPropertyTable(TEXT("##ActorAttachmentTable"), LabelColumnWidth, RevertColumnWidth))
                 {
-                    EditorWidgets::PropertyRowLabel("Parent");
+                    EditorWidgets::PropertyRowLabel(TEXT("Parent"));
 
                     EditorWidgets::PropertyTableBeginValueCell();
 
                     const FString& ParentName = ParentActor->GetName();
 
                     ImGui::AlignTextToFramePadding();
-                    ImGui::TextUnformatted(ParentName.IsEmpty() ? "Actor" : *ParentName);
+                    ImGui::TextUnformatted(StringCast<ANSICHAR>(ParentName.IsEmpty() ? TEXT("Actor") : *ParentName).Get());
                     ImGui::SameLine();
 
-                    if (EditorWidgets::DrawButton("Detach", ImVec2(0.0f, ImGui::GetFrameHeight())))
+                    if (EditorWidgets::DrawButton(TEXT("Detach"), ImVec2(0.0f, ImGui::GetFrameHeight())))
                     {
                         SelectedActor->DetachFromParent(EAttachmentRule::KeepWorld);
                     }
@@ -327,7 +327,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
             TSharedPtr<FMaterial> Material = MeshComponent->GetMaterial(SelectedMaterialIndex);
             if (Material)
             {
-                DrawLabelWithSeperator("StaticMesh");
+                DrawLabelWithSeperator(TEXT("StaticMesh"));
 
                 const FMaterialInfo& MaterialInfo = Material->GetMaterialInfo();
 
@@ -337,16 +337,16 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 };
 
                 const bool bHasHeightMap = Material->HasHeightMap();
-                if (DrawCollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen, true))
+                if (DrawCollapsingHeader(TEXT("Material"), ImGuiTreeNodeFlags_DefaultOpen, true))
                 {
-                    if (EditorWidgets::BeginPropertyTable("##MeshComponentMaterialTable", LabelColumnWidth, RevertColumnWidth))
+                    if (EditorWidgets::BeginPropertyTable(TEXT("##MeshComponentMaterialTable"), LabelColumnWidth, RevertColumnWidth))
                     {
                         if (NumMaterials > 1)
                         {
                             const TArray<const CHAR_T*>& ComboLabels = GetMaterialLabels(MeshComponent, NumMaterials);
 
                             const int32 SelectedMaterialIndex0 = 0;
-                            EditorWidgets::DrawComboProperty("Material", SelectedMaterialIndex, ComboLabels.Data(), ComboLabels.Size(), &SelectedMaterialIndex0);
+                            EditorWidgets::DrawComboProperty(TEXT("Material"), SelectedMaterialIndex, ComboLabels.Data(), ComboLabels.Size(), &SelectedMaterialIndex0);
                         }
 
                         // Albedo
@@ -354,7 +354,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                             FFloatColor Albedo = MaterialInfo.Albedo;
                             const FFloatColor Albedo0 = FFloatColor::White;
 
-                            if (EditorWidgets::DrawColor3Property("Albedo", Albedo, Albedo0))
+                            if (EditorWidgets::DrawColor3Property(TEXT("Albedo"), Albedo, Albedo0))
                             {
                                 Material->SetAlbedo(Albedo);
                             }
@@ -365,7 +365,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                             float Roughness = MaterialInfo.Roughness;
                             const float Roughness0 = 0.0f;
 
-                            if (EditorWidgets::DrawFloatProperty("Roughness", Roughness, 0.01f, 0.01f, 1.0f, "%.2f", true, &Roughness0))
+                            if (EditorWidgets::DrawFloatProperty(TEXT("Roughness"), Roughness, 0.01f, 0.01f, 1.0f, TEXT("%.2f"), true, &Roughness0))
                             {
                                 Material->SetRoughness(Roughness);
                             }
@@ -376,7 +376,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                             float Metallic = MaterialInfo.Metallic;
                             const float Metallic0 = 0.0f;
 
-                            if (EditorWidgets::DrawFloatProperty("Metallic", Metallic, 0.01f, 0.01f, 1.0f, "%.2f", true, &Metallic0))
+                            if (EditorWidgets::DrawFloatProperty(TEXT("Metallic"), Metallic, 0.01f, 0.01f, 1.0f, TEXT("%.2f"), true, &Metallic0))
                             {
                                 Material->SetMetallic(Metallic);
                             }
@@ -387,7 +387,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                             float AO = MaterialInfo.AmbientOcclusion;
                             const float AO0 = 1.0f;
 
-                            if (EditorWidgets::DrawFloatProperty("AO", AO, 0.01f, 0.01f, 1.0f, "%.2f", true, &AO0))
+                            if (EditorWidgets::DrawFloatProperty(TEXT("AO"), AO, 0.01f, 0.01f, 1.0f, TEXT("%.2f"), true, &AO0))
                             {
                                 Material->SetAmbientOcclusion(AO);
                             }
@@ -398,7 +398,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                             float Opacity = MaterialInfo.Opacity;
                             const float Opacity0 = 1.0f;
 
-                            if (EditorWidgets::DrawFloatProperty("Opacity", Opacity, 0.01f, 0.0f, 1.0f, "%.2f", true, &Opacity0))
+                            if (EditorWidgets::DrawFloatProperty(TEXT("Opacity"), Opacity, 0.01f, 0.0f, 1.0f, TEXT("%.2f"), true, &Opacity0))
                             {
                                 Material->SetOpacity(Opacity);
                             }
@@ -409,7 +409,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                             float IndexOfRefraction = MaterialInfo.IndexOfRefraction;
                             const float IndexOfRefraction0 = 1.5f;
 
-                            if (EditorWidgets::DrawFloatProperty("Index of Refraction", IndexOfRefraction, 0.01f, 1.0f, 3.0f, "%.2f", true, &IndexOfRefraction0))
+                            if (EditorWidgets::DrawFloatProperty(TEXT("Index of Refraction"), IndexOfRefraction, 0.01f, 1.0f, 3.0f, TEXT("%.2f"), true, &IndexOfRefraction0))
                             {
                                 Material->SetIndexOfRefraction(IndexOfRefraction);
                             }
@@ -420,7 +420,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                             float RefractionStrength = MaterialInfo.RefractionStrength;
                             const float RefractionStrength0 = 1.0f;
 
-                            if (EditorWidgets::DrawFloatProperty("Refraction Strength", RefractionStrength, 0.01f, 0.0f, 1.0f, "%.2f", true, &RefractionStrength0))
+                            if (EditorWidgets::DrawFloatProperty(TEXT("Refraction Strength"), RefractionStrength, 0.01f, 0.0f, 1.0f, TEXT("%.2f"), true, &RefractionStrength0))
                             {
                                 Material->SetRefractionStrength(RefractionStrength);
                             }
@@ -430,19 +430,19 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     }
                 }
 
-                if (DrawCollapsingHeader("Textures", ImGuiTreeNodeFlags_DefaultOpen, true))
+                if (DrawCollapsingHeader(TEXT("Textures"), ImGuiTreeNodeFlags_DefaultOpen, true))
                 {
-                    if (EditorWidgets::BeginPropertyTable("##MeshComponentTexturesTable", LabelColumnWidth, RevertColumnWidth))
+                    if (EditorWidgets::BeginPropertyTable(TEXT("##MeshComponentTexturesTable"), LabelColumnWidth, RevertColumnWidth))
                     {
                         static const CHAR_T* SlotNames[] =
                         {
-                            "Base Color",
-                            "Normal",
-                            "Height",
-                            "Mask A",
-                            "Mask B",
-                            "Mask C",
-                            "Mask D"
+                            TEXT("Base Color"),
+                            TEXT("Normal"),
+                            TEXT("Height"),
+                            TEXT("Mask A"),
+                            TEXT("Mask B"),
+                            TEXT("Mask C"),
+                            TEXT("Mask D")
                         };
 
                         static_assert(ARRAY_COUNT(SlotNames) == EMaterialTextureSlot::Count, "Every material texture slot needs a name in the Textures panel");
@@ -460,9 +460,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     }
                 }
 
-                if (DrawCollapsingHeader("Material Flags", ImGuiTreeNodeFlags_DefaultOpen, bHasHeightMap))
+                if (DrawCollapsingHeader(TEXT("Material Flags"), ImGuiTreeNodeFlags_DefaultOpen, bHasHeightMap))
                 {
-                    if (EditorWidgets::BeginPropertyTable("##MeshComponentMaterialFlagsTable", LabelColumnWidth, RevertColumnWidth))
+                    if (EditorWidgets::BeginPropertyTable(TEXT("##MeshComponentMaterialFlagsTable"), LabelColumnWidth, RevertColumnWidth))
                     {
                         const bool bHasNormalTexture = Material->GetTexture(EMaterialTextureSlot::Normal).IsValid();
 
@@ -470,7 +470,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         {
                             bool bEnableNormalMapping = IsMaterialFlagSet(EMaterialFlags::EnableNormalMapping);
 
-                            if (EditorWidgets::DrawCheckboxProperty("Normal Mapping", bEnableNormalMapping, nullptr, bHasNormalTexture))
+                            if (EditorWidgets::DrawCheckboxProperty(TEXT("Normal Mapping"), bEnableNormalMapping, nullptr, bHasNormalTexture))
                             {
                                 Material->EnableNormalMapping(bEnableNormalMapping);
                             }
@@ -480,8 +480,8 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         {
                             static const CHAR_T* const NormalMapAxisItems[] =
                             {
-                                "-Y (DirectX)",
-                                "+Y (OpenGL)"
+                                TEXT("-Y (DirectX)"),
+                                TEXT("+Y (OpenGL)")
                             };
 
                             constexpr int32 NormalMapAxisCount = static_cast<int32>(ARRAY_COUNT(NormalMapAxisItems));
@@ -490,7 +490,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
                             ImGui::Indent(12.0f);
 
-                            if (EditorWidgets::DrawComboProperty("Normal Map Axis", NormalMapAxis, NormalMapAxisItems, NormalMapAxisCount, nullptr))
+                            if (EditorWidgets::DrawComboProperty(TEXT("Normal Map Axis"), NormalMapAxis, NormalMapAxisItems, NormalMapAxisCount, nullptr))
                             {
                                 Material->SetNormalMapPositiveY(NormalMapAxis == 1);
                             }
@@ -504,7 +504,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
                             const bool bMaskable = Material->IsRouteFed(EMaterialScalar::Opacity) && !Material->IsTranslucent();
 
-                            if (EditorWidgets::DrawCheckboxProperty("Alpha Mask", bEnableAlphaMask, nullptr, bMaskable))
+                            if (EditorWidgets::DrawCheckboxProperty(TEXT("Alpha Mask"), bEnableAlphaMask, nullptr, bMaskable))
                             {
                                 Material->EnableAlphaMask(bEnableAlphaMask);
                             }
@@ -514,7 +514,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         {
                             bool bDoubleSided = IsMaterialFlagSet(EMaterialFlags::DoubleSided);
 
-                            if (EditorWidgets::DrawCheckboxProperty("Double Sided", bDoubleSided, nullptr))
+                            if (EditorWidgets::DrawCheckboxProperty(TEXT("Double Sided"), bDoubleSided, nullptr))
                             {
                                 Material->EnableDoubleSided(bDoubleSided);
                             }
@@ -524,7 +524,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         {
                             bool bEnableHeightMap = IsMaterialFlagSet(EMaterialFlags::EnableHeight);
 
-                            if (EditorWidgets::DrawCheckboxProperty("Height Map", bEnableHeightMap, nullptr, Material->GetTexture(EMaterialTextureSlot::Height).IsValid()))
+                            if (EditorWidgets::DrawCheckboxProperty(TEXT("Height Map"), bEnableHeightMap, nullptr, Material->GetTexture(EMaterialTextureSlot::Height).IsValid()))
                             {
                                 Material->EnableHeightMap(bEnableHeightMap);
                             }
@@ -534,7 +534,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         {
                             bool bEnableParallaxClipping = IsMaterialFlagSet(EMaterialFlags::EnableParallaxClipping);
 
-                            if (EditorWidgets::DrawCheckboxProperty("Parallax Clipping", bEnableParallaxClipping, nullptr, Material->HasHeightMap()))
+                            if (EditorWidgets::DrawCheckboxProperty(TEXT("Parallax Clipping"), bEnableParallaxClipping, nullptr, Material->HasHeightMap()))
                             {
                                 Material->EnableParallaxClipping(bEnableParallaxClipping);
                             }
@@ -544,7 +544,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         {
                             bool bForceForwardPass = IsMaterialFlagSet(EMaterialFlags::ForceForwardPass);
 
-                            if (EditorWidgets::DrawCheckboxProperty("Force Forward Pass", bForceForwardPass, nullptr))
+                            if (EditorWidgets::DrawCheckboxProperty(TEXT("Force Forward Pass"), bForceForwardPass, nullptr))
                             {
                                 Material->ForceForwardPass(bForceForwardPass);
                             }
@@ -554,7 +554,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         {
                             bool bTranslucent = IsMaterialFlagSet(EMaterialFlags::Translucent);
 
-                            if (EditorWidgets::DrawCheckboxProperty("Translucent", bTranslucent, nullptr))
+                            if (EditorWidgets::DrawCheckboxProperty(TEXT("Translucent"), bTranslucent, nullptr))
                             {
                                 Material->EnableTranslucent(bTranslucent);
                             }
@@ -564,7 +564,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         {
                             bool bEnableRefraction = IsMaterialFlagSet(EMaterialFlags::EnableRefraction);
 
-                            if (EditorWidgets::DrawCheckboxProperty("Refraction", bEnableRefraction, nullptr, Material->IsTranslucent()))
+                            if (EditorWidgets::DrawCheckboxProperty(TEXT("Refraction"), bEnableRefraction, nullptr, Material->IsTranslucent()))
                             {
                                 Material->EnableRefraction(bEnableRefraction);
                             }
@@ -576,16 +576,16 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
                 if (bHasHeightMap)
                 {
-                    if (DrawCollapsingHeader("Parallax", ImGuiTreeNodeFlags_DefaultOpen, false))
+                    if (DrawCollapsingHeader(TEXT("Parallax"), ImGuiTreeNodeFlags_DefaultOpen, false))
                     {
-                        if (EditorWidgets::BeginPropertyTable("##MeshComponentParallaxTable", LabelColumnWidth, RevertColumnWidth))
+                        if (EditorWidgets::BeginPropertyTable(TEXT("##MeshComponentParallaxTable"), LabelColumnWidth, RevertColumnWidth))
                         {
                             // Height scale
                             {
                                 float ParallaxHeightScale = MaterialInfo.ParallaxHeightScale;
                                 const float ParallaxHeightScale0 = 0.03f;
 
-                                if (EditorWidgets::DrawFloatProperty("Height Scale", ParallaxHeightScale, 0.001f, 0.0f, 0.2f, "%.3f", true, &ParallaxHeightScale0))
+                                if (EditorWidgets::DrawFloatProperty(TEXT("Height Scale"), ParallaxHeightScale, 0.001f, 0.0f, 0.2f, TEXT("%.3f"), true, &ParallaxHeightScale0))
                                 {
                                     Material->SetParallaxHeightScale(ParallaxHeightScale);
                                 }
@@ -596,7 +596,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                                 float ParallaxMinLayers = MaterialInfo.ParallaxMinLayers;
                                 const float ParallaxMinLayers0 = 32.0f;
 
-                                if (EditorWidgets::DrawFloatProperty("Min Layers", ParallaxMinLayers, 1.0f, 1.0f, 128.0f, "%.0f", true, &ParallaxMinLayers0))
+                                if (EditorWidgets::DrawFloatProperty(TEXT("Min Layers"), ParallaxMinLayers, 1.0f, 1.0f, 128.0f, TEXT("%.0f"), true, &ParallaxMinLayers0))
                                 {
                                     Material->SetParallaxLayers(ParallaxMinLayers, Material->GetParallaxMaxLayers());
                                 }
@@ -607,7 +607,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                                 float ParallaxMaxLayers = MaterialInfo.ParallaxMaxLayers;
                                 const float ParallaxMaxLayers0 = 64.0f;
 
-                                if (EditorWidgets::DrawFloatProperty("Max Layers", ParallaxMaxLayers, 1.0f, 1.0f, 256.0f, "%.0f", true, &ParallaxMaxLayers0))
+                                if (EditorWidgets::DrawFloatProperty(TEXT("Max Layers"), ParallaxMaxLayers, 1.0f, 1.0f, 256.0f, TEXT("%.0f"), true, &ParallaxMaxLayers0))
                                 {
                                     Material->SetParallaxLayers(Material->GetParallaxMinLayers(), ParallaxMaxLayers);
                                 }
@@ -634,16 +634,16 @@ void FEditorPropertiesWidget::DrawWindowContents()
         // Point light
         if (FPointLightComponent* PointLight = Cast<FPointLightComponent>(SelectedLight))
         {
-            DrawLabelWithSeperator("PointLight");
+            DrawLabelWithSeperator(TEXT("PointLight"));
 
-            if (DrawCollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen, true))
+            if (DrawCollapsingHeader(TEXT("Settings"), ImGuiTreeNodeFlags_DefaultOpen, true))
             {
-                if (EditorWidgets::BeginPropertyTable("##PointLightSettingsTable", LabelColumnWidth, RevertColumnWidth))
+                if (EditorWidgets::BeginPropertyTable(TEXT("##PointLightSettingsTable"), LabelColumnWidth, RevertColumnWidth))
                 {
                     FVector3 Color = PointLight->GetColor();
                     const FVector3 Color0 = FVector3(1.0f, 1.0f, 1.0f);
                     
-                    if (EditorWidgets::DrawColor3Property("Color", Color, Color0))
+                    if (EditorWidgets::DrawColor3Property(TEXT("Color"), Color, Color0))
                     {
                         PointLight->SetColor(Color);
                     }
@@ -651,7 +651,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float Intensity = PointLight->GetIntensity();
                     const float Intensity0 = 1.0f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Intensity (Lumen)", Intensity, 0.1f, 0.0f, 200000.0f, "%.1f", true, &Intensity0))
+                    if (EditorWidgets::DrawFloatProperty(TEXT("Intensity (Lumen)"), Intensity, 0.1f, 0.0f, 200000.0f, TEXT("%.1f"), true, &Intensity0))
                     {
                         PointLight->SetIntensity(Intensity);
                     }
@@ -660,14 +660,14 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 }
             }
 
-            if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen, true))
+            if (DrawCollapsingHeader(TEXT("Transform"), ImGuiTreeNodeFlags_DefaultOpen, true))
             {
-                if (EditorWidgets::BeginPropertyTable("##PointLightTransformTable", LabelColumnWidth, RevertColumnWidth))
+                if (EditorWidgets::BeginPropertyTable(TEXT("##PointLightTransformTable"), LabelColumnWidth, RevertColumnWidth))
                 {
                     FVector3 Translation = PointLight->GetPosition();
                     const FVector3 Translation0 = FVector3(0.0f, 0.0f, 0.0f);
                     
-                    if (EditorWidgets::DrawFloat3Control("Translation", Translation, 0.0f, &Translation0, EVector3ControlType::Position))
+                    if (EditorWidgets::DrawFloat3Control(TEXT("Translation"), Translation, 0.0f, &Translation0, EVector3ControlType::Position))
                     {
                         FActorTransform NewWorldTransform = SelectedActor->GetWorldTransform();
                         NewWorldTransform.SetTranslation(Translation);
@@ -678,14 +678,14 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 }
             }
 
-            if (DrawCollapsingHeader("Shadows", ImGuiTreeNodeFlags_DefaultOpen, false))
+            if (DrawCollapsingHeader(TEXT("Shadows"), ImGuiTreeNodeFlags_DefaultOpen, false))
             {
-                if (EditorWidgets::BeginPropertyTable("##PointLightShadowsTable", LabelColumnWidth, RevertColumnWidth))
+                if (EditorWidgets::BeginPropertyTable(TEXT("##PointLightShadowsTable"), LabelColumnWidth, RevertColumnWidth))
                 {
                     bool bCastShadows = PointLight->CastsShadows();
                     const bool bCastShadows0 = true;
 
-                    if (EditorWidgets::DrawCheckboxProperty("Cast shadows", bCastShadows, &bCastShadows0))
+                    if (EditorWidgets::DrawCheckboxProperty(TEXT("Cast shadows"), bCastShadows, &bCastShadows0))
                     {
                         PointLight->SetCastShadows(bCastShadows);
                     }
@@ -693,7 +693,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float ShadowBias = PointLight->GetShadowBias();
                     const float ShadowBias0 = 0.005f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Shadow-bias", ShadowBias, 0.0001f, 0.0001f, 0.1f, "%.4f", true, &ShadowBias0, bCastShadows))
+                    if (EditorWidgets::DrawFloatProperty(TEXT("Shadow-bias"), ShadowBias, 0.0001f, 0.0001f, 0.1f, TEXT("%.4f"), true, &ShadowBias0, bCastShadows))
                     {
                         PointLight->SetShadowBias(ShadowBias);
                     }
@@ -701,7 +701,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float ShadowNearPlane = PointLight->GetShadowNearPlane();
                     const float ShadowNearPlane0 = 1.0f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Shadow near-plane", ShadowNearPlane, 0.01f, 0.01f, 1.0f, "%.2f", true, &ShadowNearPlane0, bCastShadows))
+                    if (EditorWidgets::DrawFloatProperty(TEXT("Shadow near-plane"), ShadowNearPlane, 0.01f, 0.01f, 1.0f, TEXT("%.2f"), true, &ShadowNearPlane0, bCastShadows))
                     {
                         PointLight->SetShadowNearPlane(ShadowNearPlane);
                     }
@@ -711,7 +711,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float ShadowFarPlane = PointLight->GetShadowFarPlane();
                     const float ShadowFarPlane0 = 30.0f;
 
-                    if (EditorWidgets::DrawFloatProperty("Shadow far-plane", ShadowFarPlane, 1.0f, 1.0f, 100.0f, "%.1f", true, &ShadowFarPlane0))
+                    if (EditorWidgets::DrawFloatProperty(TEXT("Shadow far-plane"), ShadowFarPlane, 1.0f, 1.0f, 100.0f, TEXT("%.1f"), true, &ShadowFarPlane0))
                     {
                         PointLight->SetShadowFarPlane(ShadowFarPlane);
                     }
@@ -722,16 +722,16 @@ void FEditorPropertiesWidget::DrawWindowContents()
         }
         else if (FDirectionalLightComponent* DirectionalLight = Cast<FDirectionalLightComponent>(SelectedLight))
         {
-            DrawLabelWithSeperator("DirectionalLight");
+            DrawLabelWithSeperator(TEXT("DirectionalLight"));
 
-            if (DrawCollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen, true))
+            if (DrawCollapsingHeader(TEXT("Settings"), ImGuiTreeNodeFlags_DefaultOpen, true))
             {
-                if (EditorWidgets::BeginPropertyTable("##DirLightSettingsTable", LabelColumnWidth, RevertColumnWidth))
+                if (EditorWidgets::BeginPropertyTable(TEXT("##DirLightSettingsTable"), LabelColumnWidth, RevertColumnWidth))
                 {
                     FVector3 Color = DirectionalLight->GetColor();
                     const FVector3 Color0 = FVector3(1.0f, 1.0f, 1.0f);
 
-                    if (EditorWidgets::DrawColor3Property("Color", Color, Color0))
+                    if (EditorWidgets::DrawColor3Property(TEXT("Color"), Color, Color0))
                     {
                         DirectionalLight->SetColor(Color);
                     }
@@ -739,7 +739,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float Intensity = DirectionalLight->GetIntensity();
                     const float Intensity0 = 1.0f;
 
-                    if (EditorWidgets::DrawFloatProperty("Intensity (Lux)", Intensity, 0.1f, 0.0f, 200000.0f, "%.1f", true, &Intensity0))
+                    if (EditorWidgets::DrawFloatProperty(TEXT("Intensity (Lux)"), Intensity, 0.1f, 0.0f, 200000.0f, TEXT("%.1f"), true, &Intensity0))
                     {
                         DirectionalLight->SetIntensity(Intensity);
                     }
@@ -748,9 +748,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 }
             }
 
-            if (DrawCollapsingHeader("Direction", ImGuiTreeNodeFlags_DefaultOpen, true))
+            if (DrawCollapsingHeader(TEXT("Direction"), ImGuiTreeNodeFlags_DefaultOpen, true))
             {
-                if (EditorWidgets::BeginPropertyTable("##DirLightDirectionTable", LabelColumnWidth, RevertColumnWidth))
+                if (EditorWidgets::BeginPropertyTable(TEXT("##DirLightDirectionTable"), LabelColumnWidth, RevertColumnWidth))
                 {
                     FVector3 Rotation = SelectedActor->GetWorldTransform().GetRotation();
                     
@@ -761,8 +761,8 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     const float RotationPhi0   = 0.0f;
 
                     bool bSetRotation = false;
-                    bSetRotation |= EditorWidgets::DrawFloatProperty("Rotation theta (degrees)", RotationTheta, 0.25f, -90.0f, 90.0f, "%.2f", true, &RotationTheta0);
-                    bSetRotation |= EditorWidgets::DrawFloatProperty("Rotation phi (degrees)", RotationPhi, 0.25f, 0.0f, 360.0f, "%.2f", true, &RotationPhi0);
+                    bSetRotation |= EditorWidgets::DrawFloatProperty(TEXT("Rotation theta (degrees)"), RotationTheta, 0.25f, -90.0f, 90.0f, TEXT("%.2f"), true, &RotationTheta0);
+                    bSetRotation |= EditorWidgets::DrawFloatProperty(TEXT("Rotation phi (degrees)"), RotationPhi, 0.25f, 0.0f, 360.0f, TEXT("%.2f"), true, &RotationPhi0);
 
                     if (bSetRotation)
                     {
@@ -775,20 +775,20 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     }
 
                     const FVector3 Direction = DirectionalLight->GetDirectionVector();
-                    EditorWidgets::DrawReadOnlyFloat3Property("Direction", Direction);
+                    EditorWidgets::DrawReadOnlyFloat3Property(TEXT("Direction"), Direction);
 
                     EditorWidgets::EndPropertyTable();
                 }
             }
 
-            if (DrawCollapsingHeader("Shadows", ImGuiTreeNodeFlags_DefaultOpen, false))
+            if (DrawCollapsingHeader(TEXT("Shadows"), ImGuiTreeNodeFlags_DefaultOpen, false))
             {
-                if (EditorWidgets::BeginPropertyTable("##DirLightShadowsTable", LabelColumnWidth, RevertColumnWidth))
+                if (EditorWidgets::BeginPropertyTable(TEXT("##DirLightShadowsTable"), LabelColumnWidth, RevertColumnWidth))
                 {
                     bool bCastShadows = DirectionalLight->CastsShadows();
                     const bool bCastShadows0 = true;
 
-                    if (EditorWidgets::DrawCheckboxProperty("Cast shadows", bCastShadows, &bCastShadows0))
+                    if (EditorWidgets::DrawCheckboxProperty(TEXT("Cast shadows"), bCastShadows, &bCastShadows0))
                     {
                         DirectionalLight->SetCastShadows(bCastShadows);
                     }
@@ -796,7 +796,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float ShadowBias = DirectionalLight->GetShadowBias();
                     const float ShadowBias0 = 0.005f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Shadow-bias", ShadowBias, 0.0001f, 0.0001f, 0.1f, "%.4f", true, &ShadowBias0, bCastShadows))
+                    if (EditorWidgets::DrawFloatProperty(TEXT("Shadow-bias"), ShadowBias, 0.0001f, 0.0001f, 0.1f, TEXT("%.4f"), true, &ShadowBias0, bCastShadows))
                     {
                         DirectionalLight->SetShadowBias(ShadowBias);
                     }
@@ -804,7 +804,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float Lambda = DirectionalLight->GetCascadeSplitLambda();
                     const float Lambda0 = 0.95f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Cascade Split Lambda", Lambda, 0.01f, 0.0f, 1.0f, "%.2f", true, &Lambda0, bCastShadows))
+                    if (EditorWidgets::DrawFloatProperty(TEXT("Cascade Split Lambda"), Lambda, 0.01f, 0.0f, 1.0f, TEXT("%.2f"), true, &Lambda0, bCastShadows))
                     {
                         DirectionalLight->SetCascadeSplitLambda(Lambda);
                     }
@@ -812,7 +812,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float Offset = DirectionalLight->GetShadowPositionOffset();
                     const float Offset0 = 200.0f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Cascade Position Offset", Offset, 1.0f, 0.0f, 1000.0f, "%.1f", true, &Offset0, bCastShadows))
+                    if (EditorWidgets::DrawFloatProperty(TEXT("Cascade Position Offset"), Offset, 1.0f, 0.0f, 1000.0f, TEXT("%.1f"), true, &Offset0, bCastShadows))
                     {
                         DirectionalLight->SetShadowPositionOffset(Offset);
                     }
@@ -820,7 +820,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float ShadowNearPlane = DirectionalLight->GetShadowNearPlane();
                     const float ShadowNearPlane0 = 120.0f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Shadow near-plane", ShadowNearPlane, 1.0f, 0.0f, 1000.0f, "%.1f", true, &ShadowNearPlane0, bCastShadows))
+                    if (EditorWidgets::DrawFloatProperty(TEXT("Shadow near-plane"), ShadowNearPlane, 1.0f, 0.0f, 1000.0f, TEXT("%.1f"), true, &ShadowNearPlane0, bCastShadows))
                     {
                         DirectionalLight->SetShadowNearPlane(ShadowNearPlane);
                     }
@@ -828,7 +828,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float ShadowFarPlane = DirectionalLight->GetShadowFarPlane();
                     const float ShadowFarPlane0 = 250.0f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Shadow far-plane", ShadowFarPlane, 1.0f, 0.0f, 1000.0f, "%.1f", true, &ShadowFarPlane0, bCastShadows))
+                    if (EditorWidgets::DrawFloatProperty(TEXT("Shadow far-plane"), ShadowFarPlane, 1.0f, 0.0f, 1000.0f, TEXT("%.1f"), true, &ShadowFarPlane0, bCastShadows))
                     {
                         DirectionalLight->SetShadowFarPlane(ShadowFarPlane);
                     }
@@ -836,7 +836,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float LightArea = DirectionalLight->GetLightArea();
                     const float LightArea0 = 0.05f;
 
-                    if (EditorWidgets::DrawFloatProperty("Light area", LightArea, 0.01f, 0.0f, 1.0f, "%.2f", true, &LightArea0, bCastShadows))
+                    if (EditorWidgets::DrawFloatProperty(TEXT("Light area"), LightArea, 0.01f, 0.0f, 1.0f, TEXT("%.2f"), true, &LightArea0, bCastShadows))
                     {
                         DirectionalLight->SetLightArea(LightArea);
                     }
@@ -861,23 +861,23 @@ void FEditorPropertiesWidget::DrawWindowContents()
     {
         ImGui::PushID(SelectedCamera);
 
-        DrawLabelWithSeperator("Camera");
+        DrawLabelWithSeperator(TEXT("Camera"));
 
-        if (DrawCollapsingHeader("Projection", ImGuiTreeNodeFlags_DefaultOpen, true))
+        if (DrawCollapsingHeader(TEXT("Projection"), ImGuiTreeNodeFlags_DefaultOpen, true))
         {
-            if (EditorWidgets::BeginPropertyTable("##CameraProjectionTable", LabelColumnWidth, RevertColumnWidth))
+            if (EditorWidgets::BeginPropertyTable(TEXT("##CameraProjectionTable"), LabelColumnWidth, RevertColumnWidth))
             {
                 {
                     TStaticArray<CHAR_T, 64> ViewportText{};
-                    CString::Snprintf(ViewportText.Data(), static_cast<int32>(ViewportText.Size()), "%.1f x %.1f", SelectedCamera->GetWidth(), SelectedCamera->GetHeight());
-                    EditorWidgets::DrawTextProperty("Viewport size", ViewportText.Data());
+                    CString::Snprintf(ViewportText.Data(), static_cast<int32>(ViewportText.Size()), TEXT("%.1f x %.1f"), SelectedCamera->GetWidth(), SelectedCamera->GetHeight());
+                    EditorWidgets::DrawTextProperty(TEXT("Viewport size"), ViewportText.Data());
                 }
 
                 {
                     float FieldOfView = SelectedCamera->GetFieldOfView();
                     const float FieldOfView0 = 60.0f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Field Of View", FieldOfView, 0.1f, 40.0f, 120.0f, "%.1f", true, &FieldOfView0))
+                    if (EditorWidgets::DrawFloatProperty(TEXT("Field Of View"), FieldOfView, 0.1f, 40.0f, 120.0f, TEXT("%.1f"), true, &FieldOfView0))
                     {
                         SelectedCamera->SetFieldOfView(FieldOfView);
                     }
@@ -887,7 +887,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float Near = SelectedCamera->GetNearPlane();
                     const float Near0 = 0.01f;
 
-                    if (EditorWidgets::DrawFloatProperty("Near Plane", Near, 0.001f, 0.001f, 10.0f, "%.3f", true, &Near0))
+                    if (EditorWidgets::DrawFloatProperty(TEXT("Near Plane"), Near, 0.001f, 0.001f, 10.0f, TEXT("%.3f"), true, &Near0))
                     {
                         SelectedCamera->SetNearPlane(Near);
                     }
@@ -897,7 +897,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float Far = SelectedCamera->GetFarPlane();
                     const float Far0 = 200.0f;
 
-                    if (EditorWidgets::DrawFloatProperty("Far Plane", Far, 1.0f, 10.0f, 10000.0f, "%.0f", true, &Far0))
+                    if (EditorWidgets::DrawFloatProperty(TEXT("Far Plane"), Far, 1.0f, 10.0f, 10000.0f, TEXT("%.0f"), true, &Far0))
                     {
                         SelectedCamera->SetFarPlane(Far);
                     }
@@ -907,14 +907,14 @@ void FEditorPropertiesWidget::DrawWindowContents()
             }
         }
 
-        if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen, false))
+        if (DrawCollapsingHeader(TEXT("Transform"), ImGuiTreeNodeFlags_DefaultOpen, false))
         {
-            if (EditorWidgets::BeginPropertyTable("##CameraTransformTable", LabelColumnWidth, RevertColumnWidth))
+            if (EditorWidgets::BeginPropertyTable(TEXT("##CameraTransformTable"), LabelColumnWidth, RevertColumnWidth))
             {
                 FVector3 Position = SelectedCamera->GetPosition();
                 const FVector3 Position0 = FVector3(0.0f, 0.0f, 0.0f);
                 
-                if (EditorWidgets::DrawFloat3Control("Position", Position, 0.0f, &Position0, EVector3ControlType::Position))
+                if (EditorWidgets::DrawFloat3Control(TEXT("Position"), Position, 0.0f, &Position0, EVector3ControlType::Position))
                 {
                     SelectedCamera->SetPosition(Position.X, Position.Y, Position.Z);
                 }
@@ -923,7 +923,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 Rotation = FVector3::RadiansToDegrees(Rotation);
                 
                 const FVector3 Rotation0 = FVector3(0.0f, 0.0f, 0.0f);
-                if (EditorWidgets::DrawFloat3Control("Rotation", Rotation, 0.0f, &Rotation0, EVector3ControlType::RotationDegrees))
+                if (EditorWidgets::DrawFloat3Control(TEXT("Rotation"), Rotation, 0.0f, &Rotation0, EVector3ControlType::RotationDegrees))
                 {
                     const FVector3 Radians = FVector3::DegreesToRadians(Rotation);
                     SelectedCamera->SetRotation(Radians.X, Radians.Y, Radians.Z);
@@ -944,16 +944,16 @@ void FEditorPropertiesWidget::DrawWindowContents()
     {
         ImGui::PushID(SelectedLightProbe);
 
-        DrawLabelWithSeperator("Light Probe");
+        DrawLabelWithSeperator(TEXT("Light Probe"));
 
-        if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen, true))
+        if (DrawCollapsingHeader(TEXT("Transform"), ImGuiTreeNodeFlags_DefaultOpen, true))
         {
-            if (EditorWidgets::BeginPropertyTable("##ProbeTransformTable", LabelColumnWidth, RevertColumnWidth))
+            if (EditorWidgets::BeginPropertyTable(TEXT("##ProbeTransformTable"), LabelColumnWidth, RevertColumnWidth))
             {
                 FVector3 Position = SelectedLightProbe->GetPosition();
                 const FVector3 Position0 = FVector3(0.0f, 0.0f, 0.0f);
                 
-                if (EditorWidgets::DrawFloat3Control("Position", Position, 0.0f, &Position0, EVector3ControlType::Position))
+                if (EditorWidgets::DrawFloat3Control(TEXT("Position"), Position, 0.0f, &Position0, EVector3ControlType::Position))
                 {
                     FActorTransform NewWorldTransform = SelectedActor->GetWorldTransform();
                     NewWorldTransform.SetTranslation(Position);
@@ -964,14 +964,14 @@ void FEditorPropertiesWidget::DrawWindowContents()
             }
         }
 
-        if (DrawCollapsingHeader("Box Projection", ImGuiTreeNodeFlags_DefaultOpen, false))
+        if (DrawCollapsingHeader(TEXT("Box Projection"), ImGuiTreeNodeFlags_DefaultOpen, false))
         {
-            if (EditorWidgets::BeginPropertyTable("##ProbeBoxProjectionTable", LabelColumnWidth, RevertColumnWidth))
+            if (EditorWidgets::BeginPropertyTable(TEXT("##ProbeBoxProjectionTable"), LabelColumnWidth, RevertColumnWidth))
             {
                 FVector3 BoxExtent = SelectedLightProbe->GetBoxExtents();
                 const FVector3 BoxExtent0 = FVector3(0.0f, 0.0f, 0.0f);
                 
-                if (EditorWidgets::DrawFloat3Control("Box Extent", BoxExtent, 0.0f, &BoxExtent0, EVector3ControlType::Position))
+                if (EditorWidgets::DrawFloat3Control(TEXT("Box Extent"), BoxExtent, 0.0f, &BoxExtent0, EVector3ControlType::Position))
                 {
                     SelectedLightProbe->SetBoxExtent(BoxExtent);
                 }
@@ -979,7 +979,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 FVector3 BoxOffset = SelectedLightProbe->GetBoxOffset();
                 const FVector3 BoxOffset0 = FVector3(0.0f, 0.0f, 0.0f);
                 
-                if (EditorWidgets::DrawFloat3Control("Box Origin", BoxOffset, 0.0f, &BoxOffset0, EVector3ControlType::Position))
+                if (EditorWidgets::DrawFloat3Control(TEXT("Box Origin"), BoxOffset, 0.0f, &BoxOffset0, EVector3ControlType::Position))
                 {
                     SelectedLightProbe->SetBoxOffset(BoxOffset);
                 }
@@ -987,7 +987,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 bool bBoxProjection = SelectedLightProbe->GetBoxProjection();
                 const bool bBoxProjection0 = false;
                 
-                if (EditorWidgets::DrawCheckboxProperty("Enable Box-Projection", bBoxProjection, &bBoxProjection0))
+                if (EditorWidgets::DrawCheckboxProperty(TEXT("Enable Box-Projection"), bBoxProjection, &bBoxProjection0))
                 {
                     SelectedLightProbe->SetBoxProjection(bBoxProjection);
                 }

@@ -18,8 +18,8 @@
 #include "RendererCore/Interfaces/IRendererModule.h"
 
 static TAutoConsoleVariable<float> CVarProfileDuration(
-    "Profiler.Duration",
-    "Seconds of frame capture after Init when -ProfileRun is set. Overridden by -ProfileDuration",
+    TEXT("Profiler.Duration"),
+    TEXT("Seconds of frame capture after Init when -ProfileRun is set. Overridden by -ProfileDuration"),
     60.0f,
     EConsoleVariableFlags::Default);
 
@@ -32,13 +32,13 @@ static uint64 GCaptureStartTimeStamp = 0;
 static FString BuildFullProfileReport()
 {
     FString Text = FProfilerReport::BuildCpuAndBootText();
-    Text.Append("\n== GPU ==\n");
-    Text.Append(FString::Printf("RHI=%s\n", RHI::Device ? ToString(RHI::Device->GetRHIType()) : "None"));
+    Text.Append(TEXT("\n== GPU ==\n"));
+    Text.Append(FString::Printf(TEXT("RHI=%s\n"), RHI::Device ? ToString(RHI::Device->GetRHIType()) : TEXT("None")));
 
     IRendererModule* RendererModule = IRendererModule::Get();
     if (!RendererModule)
     {
-        Text.Append("GPU profiler unavailable\n");
+        Text.Append(TEXT("GPU profiler unavailable\n"));
         return Text;
     }
 
@@ -68,23 +68,23 @@ static FString BuildFullProfileReport()
         Latest = Stored;
     }
 
-    Text.Append(FString::Printf("GPU frame avg=%.3f ms  min=%.3f  max=%.3f\n",
+    Text.Append(FString::Printf(TEXT("GPU frame avg=%.3f ms  min=%.3f  max=%.3f\n"),
         Count > 0 ? static_cast<float>(Sum / static_cast<double>(Count)) : 0.0f,
         MinMs == TNumericLimits<float>::Max() ? 0.0f : MinMs,
         MaxMs == TNumericLimits<float>::Lowest() ? 0.0f : MaxMs));
 
     if (!Latest.Intervals.IsEmpty())
     {
-        Text.Append("GPU pass tree (latest collected frame):\n");
+        Text.Append(TEXT("GPU pass tree (latest collected frame):\n"));
         for (const FGPUProfilerInterval& Interval : Latest.Intervals)
         {
             for (int32 Depth = 0; Depth < Interval.Depth; ++Depth)
             {
-                Text.Append("  ");
+                Text.Append(TEXT("  "));
             }
 
-            const CHAR_T* Name = Interval.Name ? Interval.Name : "<unnamed>";
-            Text.Append(FString::Printf("%s  inclusive=%.3fms  exclusive=%.3fms\n", Name,
+            const CHAR_T* Name = Interval.Name ? Interval.Name : TEXT("<unnamed>");
+            Text.Append(FString::Printf(TEXT("%s  inclusive=%.3fms  exclusive=%.3fms\n"), Name,
                 Time::ToMilliseconds(static_cast<double>(Interval.InclusiveNanoseconds)),
                 Time::ToMilliseconds(static_cast<double>(Interval.ExclusiveNanoseconds))));
         }
@@ -95,7 +95,7 @@ static FString BuildFullProfileReport()
 
 static FString BuildChromeGpuEvents(IGPUProfiler& Gpu)
 {
-    FString Events("{\"name\":\"thread_name\",\"ph\":\"M\",\"pid\":1,\"tid\":0,\"args\":{\"name\":\"GPU\"}}");
+    FString Events(TEXT("{\"name\":\"thread_name\",\"ph\":\"M\",\"pid\":1,\"tid\":0,\"args\":{\"name\":\"GPU\"}}"));
 
     FProfilerGpuFrame GpuFrame;
     for (int32 Index = 0; Index < Gpu.GetStoredFrameCount(); ++Index)
@@ -113,23 +113,23 @@ static FString BuildChromeGpuEvents(IGPUProfiler& Gpu)
 
         if (GpuFrame.GpuMilliseconds > 0.0f)
         {
-            FProfilerReport::AppendChromeCompleteEvent(Events, "GPU Frame", "gpu", FrameStartUs,
+            FProfilerReport::AppendChromeCompleteEvent(Events, TEXT("GPU Frame"), TEXT("gpu"), FrameStartUs,
                 static_cast<double>(GpuFrame.GpuMilliseconds) * 1000.0, 1, 1);
         }
 
         for (const FGPUProfilerInterval& Interval : GpuFrame.Intervals)
         {
             const double TimestampUs = FrameStartUs + Time::ToMicroseconds(static_cast<double>(Interval.StartNanoseconds));
-            const CHAR_T* Name = Interval.Name ? Interval.Name : "<unnamed>";
+            const CHAR_T* Name = Interval.Name ? Interval.Name : TEXT("<unnamed>");
 
             if (Interval.bInstant || Interval.InclusiveNanoseconds == 0)
             {
-                FProfilerReport::AppendChromeInstantEvent(Events, Name, "gpu", TimestampUs, 1, 0);
+                FProfilerReport::AppendChromeInstantEvent(Events, Name, TEXT("gpu"), TimestampUs, 1, 0);
             }
             else
             {
                 const double DurationUs = Time::ToMicroseconds(static_cast<double>(Interval.InclusiveNanoseconds));
-                FProfilerReport::AppendChromeCompleteEvent(Events, Name, "gpu", TimestampUs, DurationUs, 1, 0);
+                FProfilerReport::AppendChromeCompleteEvent(Events, Name, TEXT("gpu"), TimestampUs, DurationUs, 1, 0);
             }
         }
     }
@@ -147,9 +147,9 @@ static void WriteReportsAndExit()
     GReportWritten = true;
 
     const uint64  Stamp    = FPlatformTime::QueryPerformanceCounter();
-    const FString BasePath = File::CombinePath(Paths::GetProjectDir(), FString::Printf("Profiling/ProfileRun_%llu", Stamp));
+    const FString BasePath = File::CombinePath(Paths::GetProjectDir(), FString::Printf(TEXT("Profiling/ProfileRun_%llu"), Stamp));
 
-    FProfilerReport::WriteFile(BasePath + ".txt", BuildFullProfileReport());
+    FProfilerReport::WriteFile(BasePath + TEXT(".txt"), BuildFullProfileReport());
 
     FString GpuEvents;
     if (IRendererModule* RendererModule = IRendererModule::Get())
@@ -157,17 +157,17 @@ static void WriteReportsAndExit()
         GpuEvents = BuildChromeGpuEvents(RendererModule->GetGPUProfiler());
     }
 
-    FProfilerReport::WriteFile(BasePath + ".json", FProfilerReport::MergeChromeJson(FProfilerReport::BuildChromeCpuJson(), GpuEvents));
-    RequestEngineExit("ProfileRun complete");
+    FProfilerReport::WriteFile(BasePath + TEXT(".json"), FProfilerReport::MergeChromeJson(FProfilerReport::BuildChromeCpuJson(), GpuEvents));
+    RequestEngineExit(TEXT("ProfileRun complete"));
 }
 
 void FProfileRun::ConfigureFromCommandLine()
 {
-    GProfileRun          = CommandLine::FindOption("ProfileRun");
-    GCaptureNativeStacks = CommandLine::FindOption("ProfileNativeStacks");
+    GProfileRun          = CommandLine::FindOption(TEXT("ProfileRun"));
+    GCaptureNativeStacks = CommandLine::FindOption(TEXT("ProfileNativeStacks"));
 
     FStringView ProfileDurationText;
-    if (CommandLine::FindOption("ProfileDuration", ProfileDurationText) && !ProfileDurationText.IsEmpty())
+    if (CommandLine::FindOption(TEXT("ProfileDuration"), ProfileDurationText) && !ProfileDurationText.IsEmpty())
     {
         const FString DurationString = FString(ProfileDurationText);
         const float   ParsedDuration = CString::Atof(*DurationString);

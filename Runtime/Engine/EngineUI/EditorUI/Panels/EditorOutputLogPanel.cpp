@@ -52,7 +52,7 @@ FEventResponse FEditorLogContextArea::OnMouseButtonDown(const FCursorEvent& Curs
 }
 
 FEditorOutputLogPanel::FEditorOutputLogPanel(FEditorEngine* InEditorEngine)
-    : FEditorPanel(InEditorEngine, "OutputLog", "Output Log")
+    : FEditorPanel(InEditorEngine, TEXT("OutputLog"), TEXT("Output Log"))
     , LogView(nullptr)
     , SearchBox(nullptr)
     , ToolBar(nullptr)
@@ -115,14 +115,14 @@ TSharedPtr<FToolBar> FEditorOutputLogPanel::BuildToolBar()
         return nullptr;
     }
 
-    SearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc("Search Log",
+    SearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc(TEXT("Search Log"),
         FOnSearchTextChanged::CreateRaw(this, &FEditorOutputLogPanel::OnSearchTextChanged)));
 
     Bar->AddWidget(SearchBox, LOG_SEARCH_FILL);
     MatchCaseItem = Bar->AddToggle(
         FToolBarItemDesc()
             .SetIcon(FEditorIcons::MatchCase)
-            .SetToolTipText("Match Case"),
+            .SetToolTipText(TEXT("Match Case")),
         ECheckBoxState::Unchecked,
         FOnCheckStateChanged::CreateRaw(this, &FEditorOutputLogPanel::OnMatchCaseChanged));
     Bar->AddWidget(BuildFilterButton());
@@ -146,7 +146,7 @@ TSharedPtr<FVisualElement> FEditorOutputLogPanel::BuildFilterButton()
     };
 
     FTextBlock::FDesc LabelDesc;
-    LabelDesc.Text            = "Filter";
+    LabelDesc.Text            = TEXT("Filter");
     LabelDesc.Font            = FEditorStyle::GetFonts().Body;
     LabelDesc.ColorAndOpacity = Style.Colors.Text;
 
@@ -211,7 +211,7 @@ TSharedPtr<FVisualElement> FEditorOutputLogPanel::BuildFilterMenu()
         return nullptr;
     }
 
-    Menu->AddSection("Verbosity", FEditorStyle::GetFonts().Body);
+    Menu->AddSection(TEXT("Verbosity"), FEditorStyle::GetFonts().Body);
 
     const auto AddSeverityToggle = [this, &Menu](const CHAR_T* ItemLabel, ELogSeverity Severity)
     {
@@ -229,9 +229,9 @@ TSharedPtr<FVisualElement> FEditorOutputLogPanel::BuildFilterMenu()
         Menu->AddItem(FMenuItem::Create(ItemDesc));
     };
 
-    AddSeverityToggle("Messages", ELogSeverity::Info);
-    AddSeverityToggle("Warnings", ELogSeverity::Warning);
-    AddSeverityToggle("Errors", ELogSeverity::Error);
+    AddSeverityToggle(TEXT("Messages"), ELogSeverity::Info);
+    AddSeverityToggle(TEXT("Warnings"), ELogSeverity::Warning);
+    AddSeverityToggle(TEXT("Errors"), ELogSeverity::Error);
 
     return Menu;
 }
@@ -266,7 +266,7 @@ void FEditorOutputLogPanel::OnMatchCaseChanged(ECheckBoxState NewState)
 
     if (MatchCaseItem)
     {
-        MatchCaseItem->SetToolTipText(bCaseSensitive ? "Match Case (on)" : "Match Case");
+        MatchCaseItem->SetToolTipText(bCaseSensitive ? TEXT("Match Case (on)") : TEXT("Match Case"));
     }
 }
 
@@ -293,27 +293,27 @@ void FEditorOutputLogPanel::OnLogContextMenu(const FIntVector2& ScreenPosition)
         Menu->AddItem(FMenuItem::Create(ItemDesc));
     };
 
-    Menu->AddSection("Copy", FEditorStyle::GetFonts().Body);
+    Menu->AddSection(TEXT("Copy"), FEditorStyle::GetFonts().Body);
 
-    AddCommand("Select All", FOnMenuItemActivated::CreateLambda([this]()
+    AddCommand(TEXT("Select All"), FOnMenuItemActivated::CreateLambda([this]()
     {
         LogView->SelectAll();
     }));
 
-    AddCommand("Copy", FOnMenuItemActivated::CreateLambda([this]()
+    AddCommand(TEXT("Copy"), FOnMenuItemActivated::CreateLambda([this]()
     {
         LogView->CopyToClipboard();
     }));
 
-    AddCommand("Copy All", FOnMenuItemActivated::CreateLambda([this]()
+    AddCommand(TEXT("Copy All"), FOnMenuItemActivated::CreateLambda([this]()
     {
         LogView->SelectAll();
         LogView->CopyToClipboard();
     }));
 
-    Menu->AddSection("Search", FEditorStyle::GetFonts().Body);
+    Menu->AddSection(TEXT("Search"), FEditorStyle::GetFonts().Body);
 
-    AddCommand("Find", FOnMenuItemActivated::CreateLambda([this]()
+    AddCommand(TEXT("Find"), FOnMenuItemActivated::CreateLambda([this]()
     {
         if (SearchBox)
         {
@@ -321,9 +321,9 @@ void FEditorOutputLogPanel::OnLogContextMenu(const FIntVector2& ScreenPosition)
         }
     }));
 
-    Menu->AddSection("Log", FEditorStyle::GetFonts().Body);
+    Menu->AddSection(TEXT("Log"), FEditorStyle::GetFonts().Body);
 
-    AddCommand("Clear Log", FOnMenuItemActivated::CreateLambda([this]()
+    AddCommand(TEXT("Clear Log"), FOnMenuItemActivated::CreateLambda([this]()
     {
         LogView->Clear();
     }));

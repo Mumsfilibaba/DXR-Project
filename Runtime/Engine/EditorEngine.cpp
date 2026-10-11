@@ -24,8 +24,8 @@
 #include "RendererCore/Interfaces/IRendererModule.h"
 
 static TAutoConsoleVariable<bool> CVarUseCustomEditorUI(
-    "Engine.UseCustomEditorUI",
-    "True builds the editor from the Application element library, false falls back to the ImGui editor",
+    TEXT("Engine.UseCustomEditorUI"),
+    TEXT("True builds the editor from the Application element library, false falls back to the ImGui editor"),
     false,
     EConsoleVariableFlags::Default);
 
@@ -197,11 +197,11 @@ void FEditorEngine::Tick(float DeltaTime)
                 IScene* Scene       = LocalWorld->GetSceneInterface();
                 FActor* PickedActor = Scene ? Scene->GetActorByObjectID(PickResult.ObjectID) : nullptr;
 
-                if (IConsoleVariable* PickDebug = FConsoleManager::Get().FindConsoleVariable("Editor.Pick.Debug"))
+                if (IConsoleVariable* PickDebug = FConsoleManager::Get().FindConsoleVariable(TEXT("Editor.Pick.Debug")))
                 {
                     if (PickDebug->GetBool())
                     {
-                        LOG_INFO("[EditorPick] Completed. ObjectID=%u Actor=%s", PickResult.ObjectID, PickedActor ? *PickedActor->GetName() : "nullptr");
+                        LOG_INFO("[EditorPick] Completed. ObjectID=%u Actor=%s", PickResult.ObjectID, PickedActor ? *PickedActor->GetName() : TEXT("nullptr"));
                     }
                 }
 

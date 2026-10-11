@@ -132,12 +132,12 @@ namespace EditorNodeGraphPrivate
         {
             const float LabelX = bIsInput
                 ? (PinCenter.x + 10.0f * GCanvas.Zoom)
-                : (PinCenter.x - 10.0f * GCanvas.Zoom - ImGui::CalcTextSize(Pending.Label).x);
+                : (PinCenter.x - 10.0f * GCanvas.Zoom - ImGui::CalcTextSize(StringCast<ANSICHAR>(Pending.Label).Get()).x);
 
             GCanvas.DrawList->AddText(
                 ImVec2(LabelX, PinCenter.y + TextOffsetY),
                 LabelColor,
-                Pending.Label);
+                StringCast<ANSICHAR>(Pending.Label).Get());
         }
 
         const float PinRadius = 4.5f * GCanvas.Zoom;
@@ -212,8 +212,8 @@ void EditorNodeGraph::BeginCanvas(const CHAR_T* Id, const ImVec2& Size, EStyleFl
     GCanvas.bActive          = true;
     GCanvas.bNodesAboveLinks = (static_cast<uint8>(StyleFlags) & static_cast<uint8>(EStyleFlags::NodesAboveLinks)) != 0;
 
-    ImGui::PushID(Id);
-    ImGui::BeginChild(Id, Size, ImGuiChildFlags_Border, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    ImGui::PushID(StringCast<ANSICHAR>(Id).Get());
+    ImGui::BeginChild(StringCast<ANSICHAR>(Id).Get(), Size, ImGuiChildFlags_Border, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
     GCanvas.DrawList     = ImGui::GetWindowDrawList();
     GCanvas.CanvasOrigin = ImGui::GetCursorScreenPos();
@@ -360,7 +360,7 @@ void EditorNodeGraph::NodeTitle(const CHAR_T* Title)
         return;
     }
 
-    GCanvas.CurrentNode.Title = Title ? Title : "";
+    GCanvas.CurrentNode.Title = Title ? Title : TEXT("");
 }
 
 void EditorNodeGraph::EndNode()
@@ -397,12 +397,12 @@ void EditorNodeGraph::EndNode()
     const float PinPad   = 28.0f * GCanvas.Zoom;
 
     float ContentWidth = MinNodeWidthWorld * GCanvas.Zoom;
-    ContentWidth = Math::Max(ContentWidth, ImGui::CalcTextSize(*GCanvas.CurrentNode.Title).x + TitlePad);
+    ContentWidth = Math::Max(ContentWidth, ImGui::CalcTextSize(StringCast<ANSICHAR>(GCanvas.CurrentNode.Title).Get()).x + TitlePad);
     for (const FPendingPin& Pending : GCanvas.CurrentNode.PendingPins)
     {
         if (Pending.Label)
         {
-            ContentWidth = Math::Max(ContentWidth, ImGui::CalcTextSize(Pending.Label).x + PinPad);
+            ContentWidth = Math::Max(ContentWidth, ImGui::CalcTextSize(StringCast<ANSICHAR>(Pending.Label).Get()).x + PinPad);
         }
     }
 
@@ -456,7 +456,7 @@ void EditorNodeGraph::EndNode()
     if (!GCanvas.CurrentNode.Title.IsEmpty())
     {
         GCanvas.DrawList->AddText(ImVec2(DrawMin.x + 8.0f * GCanvas.Zoom, DrawMin.y + 3.0f * GCanvas.Zoom),
-            Colors.Text, *GCanvas.CurrentNode.Title);
+            Colors.Text, StringCast<ANSICHAR>(GCanvas.CurrentNode.Title).Get());
     }
 
     const ImU32 PinLabelColor = (GCanvas.CurrentNode.Style == ENodeStyle::Muted)

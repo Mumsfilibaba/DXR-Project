@@ -170,7 +170,7 @@ void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
 
 void FEditorDockspaceWidget::Draw()
 {
-    TRACE_SCOPE("Dockspace");
+    TRACE_SCOPE(TEXT("Dockspace"));
 
     ImGuiViewport* MainViewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(MainViewport->WorkPos);

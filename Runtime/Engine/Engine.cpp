@@ -23,8 +23,8 @@
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
 static FAutoConsoleCommand CCmdExit(
-    "Engine.Exit",
-    "Exits the engine",
+    TEXT("Engine.Exit"),
+    TEXT("Exits the engine"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         if (FEngine::IsInitialized())
@@ -32,26 +32,26 @@ static FAutoConsoleCommand CCmdExit(
             FEngine::Get()->Exit();
         }
 
-        RequestEngineExit("Engine.Exit");
+        RequestEngineExit(TEXT("Engine.Exit"));
     }));
 
 static FAutoConsoleCommand CCmdToggleFullscreen(
-    "Engine.ToggleFullscreen",
-    "Toggles fullscreen on the main Viewport",
+    TEXT("Engine.ToggleFullscreen"),
+    TEXT("Toggles fullscreen on the main Viewport"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         DEBUG_BREAK();
     }));
 
 static TAutoConsoleVariable<int32> CVarViewportWidth(
-    "Engine.ViewportWidth",
-    "Width of the main window",
+    TEXT("Engine.ViewportWidth"),
+    TEXT("Width of the main window"),
     1920,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarViewportHeight(
-    "Engine.ViewportHeight",
-    "Width of the main window",
+    TEXT("Engine.ViewportHeight"),
+    TEXT("Width of the main window"),
     1080,
     EConsoleVariableFlags::Default);
 
@@ -115,7 +115,7 @@ FEngine::~FEngine()
 bool FEngine::CreateEngineWindow()
 {
     FWindow::FDesc WindowDesc;
-    WindowDesc.Title      = "Sandbox";
+    WindowDesc.Title      = TEXT("Sandbox");
     WindowDesc.Size.X     = CVarViewportWidth.GetValue();
     WindowDesc.Size.Y     = CVarViewportHeight.GetValue();
     WindowDesc.StyleFlags = EWindowStyleFlags::Default;
@@ -140,7 +140,7 @@ bool FEngine::CreateEngineViewport()
 {
     if (!EngineWindow)
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "MainWindow is not initialized");
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("MainWindow is not initialized"));
         return false;
     }
 
@@ -215,7 +215,7 @@ bool FEngine::CreateViewportRenderTarget()
     }
 
     ViewportImage = NewViewportImage;
-    ViewportImage->SetDebugName("Viewport Image");
+    ViewportImage->SetDebugName(TEXT("Viewport Image"));
 
     SetSceneRenderTarget(ViewportImage);
 
@@ -261,7 +261,7 @@ void FEngine::UpdateViewportRenderTarget(float DeltaTime)
 
 void FEngine::OnEngineWindowClosed()
 {
-    RequestEngineExit("Window Closed");
+    RequestEngineExit(TEXT("Window Closed"));
 }
 
 void FEngine::OnEngineWindowMoved(const FIntVector2& /* NewScreenPosition */)
@@ -299,7 +299,7 @@ bool FEngine::Init()
     }
     else
     {
-        BaseTexture->SetDebugName("BaseTexture");
+        BaseTexture->SetDebugName(TEXT("BaseTexture"));
     }
 
     Pixels[0] = 127;
@@ -313,7 +313,7 @@ bool FEngine::Init()
     }
     else
     {
-        BaseNormal->SetDebugName("BaseNormal");
+        BaseNormal->SetDebugName(TEXT("BaseNormal"));
     }
 
     // Create material sampler (Used for now by all materials)

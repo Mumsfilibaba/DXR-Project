@@ -29,17 +29,17 @@
 
 static const CHAR_T* GMaterialTextureSlotNames[EMaterialTextureSlot::Count] =
 {
-    "Base Color",
-    "Normal",
-    "Height",
-    "Mask A",
-    "Mask B",
-    "Mask C",
-    "Mask D",
+    TEXT("Base Color"),
+    TEXT("Normal"),
+    TEXT("Height"),
+    TEXT("Mask A"),
+    TEXT("Mask B"),
+    TEXT("Mask C"),
+    TEXT("Mask D"),
 };
 
-static const CHAR_T* GNormalMapAxisLabels[2] = { "-Y (DirectX)", "+Y (OpenGL)" };
-static const CHAR_T* GDegreeSuffix           = "\xB0";
+static const CHAR_T* GNormalMapAxisLabels[2] = { TEXT("-Y (DirectX)"), TEXT("+Y (OpenGL)") };
+static const CHAR_T* GDegreeSuffix           = TEXT("\xB0");
 
 constexpr float REVERT_EPSILON = 0.00005f;
 
@@ -57,7 +57,7 @@ constexpr float COLOR_ROW_STEP    = 0.01f;
 
 static FString FormatVector(const FVector3& Value)
 {
-    return FString::Printf("%.3f, %.3f, %.3f", Value.X, Value.Y, Value.Z);
+    return FString::Printf(TEXT("%.3f, %.3f, %.3f"), Value.X, Value.Y, Value.Z);
 }
 
 class FUniformScaleToggle final : public FVisualElement
@@ -113,7 +113,7 @@ private:
 };
 
 FEditorPropertiesPanel::FEditorPropertiesPanel(FEditorEngine* InEditorEngine)
-    : FEditorPanel(InEditorEngine, "Properties", "Properties")
+    : FEditorPanel(InEditorEngine, TEXT("Properties"), TEXT("Properties"))
     , ScrollBox(nullptr)
     , Column(nullptr)
     , LightDirectionFields()
@@ -211,11 +211,11 @@ void FEditorPropertiesPanel::RebuildContent()
 
     if (!Actor)
     {
-        Column->AddSlot(CreateDisabledTextRow("No selection"));
+        Column->AddSlot(CreateDisabledTextRow(TEXT("No selection")));
         return;
     }
 
-    Column->AddSlot(CreateSectionLabel("Actor"));
+    Column->AddSlot(CreateSectionLabel(TEXT("Actor")));
 
     BuildTransformSection(Column, Actor);
 
@@ -259,10 +259,10 @@ void FEditorPropertiesPanel::BuildAttachmentSection(const TSharedPtr<FVerticalBo
     TSharedPtr<FHorizontalBox> Row = FHorizontalBox::Create();
 
     const FString& ParentName = ParentActor->GetName();
-    Row->AddSlot(CreateTextRow(ParentName.IsEmpty() ? FString("Actor") : ParentName)).SetFillCoefficient(1.0f);
+    Row->AddSlot(CreateTextRow(ParentName.IsEmpty() ? FString(TEXT("Actor")) : ParentName)).SetFillCoefficient(1.0f);
 
     FButton::FDesc DetachDesc;
-    DetachDesc.SetText("Detach").SetFont(FEditorStyle::GetFonts().Body);
+    DetachDesc.SetText(TEXT("Detach")).SetFont(FEditorStyle::GetFonts().Body);
     DetachDesc.OnClicked = FOnClicked::CreateLambda([this]()
     {
         if (FActor* Target = EditorEngine->GetSelectedActor())
@@ -275,21 +275,21 @@ void FEditorPropertiesPanel::BuildAttachmentSection(const TSharedPtr<FVerticalBo
     Row->AddSlot(FButton::Create(DetachDesc)).SetPadding(FMargin(8, 0, 0, 0));
 
     TSharedPtr<FPropertyTable> Table = CreateTable();
-    Table->AddRow("Parent", Row);
+    Table->AddRow(TEXT("Parent"), Row);
 
-    AddSection(InColumn, "Attachment", Table);
+    AddSection(InColumn, TEXT("Attachment"), Table);
 }
 
 void FEditorPropertiesPanel::BuildTransformSection(const TSharedPtr<FVerticalBox>& InColumn, FActor* Actor)
 {
     TSharedPtr<FPropertyTable> Table = CreateTable();
-    AddTextRow(Table, "Name", Actor->GetName());
-    AddTextRow(Table, "Type", Actor->GetTypeLabel());
+    AddTextRow(Table, TEXT("Name"), Actor->GetName());
+    AddTextRow(Table, TEXT("Type"), Actor->GetTypeLabel());
 
     const FActorTransform& Transform = Actor->GetTransform();
 
     const FVector3 TranslationDefault = FVector3(0.0f, 0.0f, 0.0f);
-    AddVectorRow(Table, "Location", Transform.GetTranslation(), 0.1f,
+    AddVectorRow(Table, TEXT("Location"), Transform.GetTranslation(), 0.1f,
         FOnVectorChanged::CreateLambda([this](const FVector3& Value)
         {
             if (FActor* Target = EditorEngine->GetSelectedActor())
@@ -306,7 +306,7 @@ void FEditorPropertiesPanel::BuildTransformSection(const TSharedPtr<FVerticalBox
     FCameraComponent* Camera = Actor->GetComponentOfType<FCameraComponent>();
 
     const FVector3 RotationDefault = FVector3(0.0f, 0.0f, 0.0f);
-    AddVectorRow(Table, "Rotation", Transform.GetRotation(), 0.5f,
+    AddVectorRow(Table, TEXT("Rotation"), Transform.GetRotation(), 0.5f,
         FOnVectorChanged::CreateLambda([this, Camera](const FVector3& Value)
         {
             if (Camera)
@@ -325,7 +325,7 @@ void FEditorPropertiesPanel::BuildTransformSection(const TSharedPtr<FVerticalBox
         }));
 
     const FVector3 ScaleDefault = FVector3(1.0f, 1.0f, 1.0f);
-    AddVectorRow(Table, "Scale", Transform.GetScale(), 0.01f,
+    AddVectorRow(Table, TEXT("Scale"), Transform.GetScale(), 0.01f,
         FOnVectorChanged::CreateLambda([this](const FVector3& Value)
         {
             if (FActor* Target = EditorEngine->GetSelectedActor())
@@ -339,12 +339,12 @@ void FEditorPropertiesPanel::BuildTransformSection(const TSharedPtr<FVerticalBox
             return Target ? Target->GetTransform().GetScale() : FVector3(1.0f, 1.0f, 1.0f);
         }), true);
 
-    AddSection(InColumn, Actor->GetParentActor() ? "Transform (Relative)" : "Transform", Table);
+    AddSection(InColumn, Actor->GetParentActor() ? TEXT("Transform (Relative)") : TEXT("Transform"), Table);
 }
 
 void FEditorPropertiesPanel::BuildStaticMeshSection(const TSharedPtr<FVerticalBox>& InColumn, FStaticMeshComponent* Component)
 {
-    InColumn->AddSlot(CreateSectionLabel("StaticMesh"));
+    InColumn->AddSlot(CreateSectionLabel(TEXT("StaticMesh")));
 
     TSharedPtr<FPropertyTable> MaterialTable = CreateTable();
     AddMaterialSlotRows(MaterialTable, Component);
@@ -352,28 +352,28 @@ void FEditorPropertiesPanel::BuildStaticMeshSection(const TSharedPtr<FVerticalBo
     TSharedPtr<FMaterial> Material = Component->GetMaterial(SelectedMaterialIndex);
     if (!Material)
     {
-        AddSection(InColumn, "Material", MaterialTable);
+        AddSection(InColumn, TEXT("Material"), MaterialTable);
         return;
     }
 
     FMaterial* MaterialPtr = Material.Get();
 
     AddMaterialRows(MaterialTable, MaterialPtr);
-    AddSection(InColumn, "Material", MaterialTable);
+    AddSection(InColumn, TEXT("Material"), MaterialTable);
 
     TSharedPtr<FPropertyTable> TextureTable = CreateTable();
     AddMaterialTextureRows(TextureTable, MaterialPtr);
-    AddSection(InColumn, "Textures", TextureTable);
+    AddSection(InColumn, TEXT("Textures"), TextureTable);
 
     TSharedPtr<FPropertyTable> FlagTable = CreateTable();
     AddMaterialFlagRows(FlagTable, MaterialPtr);
-    AddSection(InColumn, "Material Flags", FlagTable);
+    AddSection(InColumn, TEXT("Material Flags"), FlagTable);
 
     if (MaterialPtr->HasHeightMap())
     {
         TSharedPtr<FPropertyTable> ParallaxTable = CreateTable();
         AddParallaxRows(ParallaxTable, MaterialPtr);
-        AddSection(InColumn, "Parallax", ParallaxTable);
+        AddSection(InColumn, TEXT("Parallax"), ParallaxTable);
     }
 }
 
@@ -382,7 +382,7 @@ void FEditorPropertiesPanel::AddMaterialSlotRows(const TSharedPtr<FPropertyTable
     const int32 NumMaterials = Component->GetNumMaterials();
     SelectedMaterialIndex = Math::Clamp<int32>(SelectedMaterialIndex, 0, Math::Max<int32>(NumMaterials - 1, 0));
 
-    AddTextRow(Table, "Material slots", FString::Printf("%d", NumMaterials));
+    AddTextRow(Table, TEXT("Material slots"), FString::Printf(TEXT("%d"), NumMaterials));
 
     if (NumMaterials <= 1)
     {
@@ -397,15 +397,15 @@ void FEditorPropertiesPanel::AddMaterialSlotRows(const TSharedPtr<FPropertyTable
         TSharedPtr<FMaterial> Entry = Component->GetMaterial(Index);
         if (Entry && !Entry->GetName().IsEmpty())
         {
-            Options.Emplace(FString::Printf("%d: %s", Index, *Entry->GetName()));
+            Options.Emplace(FString::Printf(TEXT("%d: %s"), Index, *Entry->GetName()));
         }
         else
         {
-            Options.Emplace(FString::Printf("%d: <unnamed>", Index));
+            Options.Emplace(FString::Printf(TEXT("%d: <unnamed>"), Index));
         }
     }
 
-    Table->AddRow("Material", CreateComboEditor(Options, SelectedMaterialIndex,
+    Table->AddRow(TEXT("Material"), CreateComboEditor(Options, SelectedMaterialIndex,
         TDelegate<void(int32)>::CreateLambda([this](int32 NewIndex)
         {
             SelectedMaterialIndex = NewIndex;
@@ -418,43 +418,43 @@ void FEditorPropertiesPanel::AddMaterialRows(const TSharedPtr<FPropertyTable>& T
     const FMaterialInfo& MaterialInfo = Material->GetMaterialInfo();
 
     const FFloatColor AlbedoDefault = FFloatColor::White;
-    AddColorRow(Table, "Albedo", MaterialInfo.Albedo, &AlbedoDefault,
+    AddColorRow(Table, TEXT("Albedo"), MaterialInfo.Albedo, &AlbedoDefault,
         FOnColorChanged::CreateLambda([Material](const FFloatColor& Value)
         {
             Material->SetAlbedo(Value);
         }));
 
-    AddFloatRow(Table, "Roughness", MaterialInfo.Roughness, 0.01f, 1.0f, 0.01f, 0.0f, 2,
+    AddFloatRow(Table, TEXT("Roughness"), MaterialInfo.Roughness, 0.01f, 1.0f, 0.01f, 0.0f, 2,
         TDelegate<void(float)>::CreateLambda([Material](float Value)
         {
             Material->SetRoughness(Value);
         }));
 
-    AddFloatRow(Table, "Metallic", MaterialInfo.Metallic, 0.01f, 1.0f, 0.01f, 0.0f, 2,
+    AddFloatRow(Table, TEXT("Metallic"), MaterialInfo.Metallic, 0.01f, 1.0f, 0.01f, 0.0f, 2,
         TDelegate<void(float)>::CreateLambda([Material](float Value)
         {
             Material->SetMetallic(Value);
         }));
 
-    AddFloatRow(Table, "Ambient occlusion", MaterialInfo.AmbientOcclusion, 0.01f, 1.0f, 0.01f, 1.0f, 2,
+    AddFloatRow(Table, TEXT("Ambient occlusion"), MaterialInfo.AmbientOcclusion, 0.01f, 1.0f, 0.01f, 1.0f, 2,
         TDelegate<void(float)>::CreateLambda([Material](float Value)
         {
             Material->SetAmbientOcclusion(Value);
         }));
 
-    AddFloatRow(Table, "Opacity", MaterialInfo.Opacity, 0.0f, 1.0f, 0.01f, 1.0f, 2,
+    AddFloatRow(Table, TEXT("Opacity"), MaterialInfo.Opacity, 0.0f, 1.0f, 0.01f, 1.0f, 2,
         TDelegate<void(float)>::CreateLambda([Material](float Value)
         {
             Material->SetOpacity(Value);
         }));
 
-    AddFloatRow(Table, "Index of refraction", MaterialInfo.IndexOfRefraction, 1.0f, 3.0f, 0.01f, 1.5f, 2,
+    AddFloatRow(Table, TEXT("Index of refraction"), MaterialInfo.IndexOfRefraction, 1.0f, 3.0f, 0.01f, 1.5f, 2,
         TDelegate<void(float)>::CreateLambda([Material](float Value)
         {
             Material->SetIndexOfRefraction(Value);
         }));
 
-    AddFloatRow(Table, "Refraction strength", MaterialInfo.RefractionStrength, 0.0f, 1.0f, 0.01f, 1.0f, 2,
+    AddFloatRow(Table, TEXT("Refraction strength"), MaterialInfo.RefractionStrength, 0.0f, 1.0f, 0.01f, 1.0f, 2,
         TDelegate<void(float)>::CreateLambda([Material](float Value)
         {
             Material->SetRefractionStrength(Value);
@@ -474,7 +474,7 @@ void FEditorPropertiesPanel::AddMaterialTextureRows(const TSharedPtr<FPropertyTa
         FTexturePreview::FDesc PreviewDesc;
         PreviewDesc.Brush       = FUIBrush(Texture.Get());
         PreviewDesc.Font        = FEditorStyle::GetFonts().Body;
-        PreviewDesc.EmptyText   = "None";
+        PreviewDesc.EmptyText   = TEXT("None");
         PreviewDesc.PreviewSize = MATERIAL_TEXTURE_PREVIEW_SIZE;
         PreviewDesc.ZoomSize    = MATERIAL_TEXTURE_ZOOM_SIZE;
 
@@ -482,7 +482,7 @@ void FEditorPropertiesPanel::AddMaterialTextureRows(const TSharedPtr<FPropertyTa
 
         FPropertyRow& Row  = Table->AddRow(GMaterialTextureSlotNames[Slot], FTexturePreview::Create(PreviewDesc));
         Row.HeightOverride = MATERIAL_TEXTURE_ROW_HEIGHT;
-        Row.ToolTipText    = FString::Printf("%d x %d", Extent.X, Extent.Y);
+        Row.ToolTipText    = FString::Printf(TEXT("%d x %d"), Extent.X, Extent.Y);
     }
 }
 
@@ -492,7 +492,7 @@ void FEditorPropertiesPanel::AddMaterialFlagRows(const TSharedPtr<FPropertyTable
     const bool           bHasNormalTexture = Material->GetTexture(EMaterialTextureSlot::Normal).IsValid();
     const bool           bHasHeightTexture = Material->GetTexture(EMaterialTextureSlot::Height).IsValid();
 
-    AddBoolRow(Table, "Normal mapping", IsEnumFlagSet(Flags, EMaterialFlags::EnableNormalMapping),
+    AddBoolRow(Table, TEXT("Normal mapping"), IsEnumFlagSet(Flags, EMaterialFlags::EnableNormalMapping),
         TDelegate<void(bool)>::CreateLambda([this, Material](bool bValue)
         {
             Material->EnableNormalMapping(bValue);
@@ -506,52 +506,52 @@ void FEditorPropertiesPanel::AddMaterialFlagRows(const TSharedPtr<FPropertyTable
         AxisOptions.Emplace(GNormalMapAxisLabels[0]);
         AxisOptions.Emplace(GNormalMapAxisLabels[1]);
 
-        Table->AddRow("Normal map axis", CreateComboEditor(AxisOptions, Material->IsNormalMapPositiveY() ? 1 : 0,
+        Table->AddRow(TEXT("Normal map axis"), CreateComboEditor(AxisOptions, Material->IsNormalMapPositiveY() ? 1 : 0,
             TDelegate<void(int32)>::CreateLambda([Material](int32 NewIndex)
             {
                 Material->SetNormalMapPositiveY(NewIndex == 1);
             }))).IndentLevel = 1;
     }
 
-    AddBoolRow(Table, "Alpha mask", IsEnumFlagSet(Flags, EMaterialFlags::EnableAlpha),
+    AddBoolRow(Table, TEXT("Alpha mask"), IsEnumFlagSet(Flags, EMaterialFlags::EnableAlpha),
         TDelegate<void(bool)>::CreateLambda([Material](bool bValue)
         {
             Material->EnableAlphaMask(bValue);
         }), nullptr, Material->IsRouteFed(EMaterialScalar::Opacity) && !Material->IsTranslucent());
 
-    AddBoolRow(Table, "Double sided", IsEnumFlagSet(Flags, EMaterialFlags::DoubleSided),
+    AddBoolRow(Table, TEXT("Double sided"), IsEnumFlagSet(Flags, EMaterialFlags::DoubleSided),
         TDelegate<void(bool)>::CreateLambda([Material](bool bValue)
         {
             Material->EnableDoubleSided(bValue);
         }));
 
-    AddBoolRow(Table, "Height map", IsEnumFlagSet(Flags, EMaterialFlags::EnableHeight),
+    AddBoolRow(Table, TEXT("Height map"), IsEnumFlagSet(Flags, EMaterialFlags::EnableHeight),
         TDelegate<void(bool)>::CreateLambda([this, Material](bool bValue)
         {
             Material->EnableHeightMap(bValue);
             RequestRebuild();
         }), nullptr, bHasHeightTexture);
 
-    AddBoolRow(Table, "Parallax clipping", IsEnumFlagSet(Flags, EMaterialFlags::EnableParallaxClipping),
+    AddBoolRow(Table, TEXT("Parallax clipping"), IsEnumFlagSet(Flags, EMaterialFlags::EnableParallaxClipping),
         TDelegate<void(bool)>::CreateLambda([Material](bool bValue)
         {
             Material->EnableParallaxClipping(bValue);
         }), nullptr, Material->HasHeightMap());
 
-    AddBoolRow(Table, "Force forward pass", IsEnumFlagSet(Flags, EMaterialFlags::ForceForwardPass),
+    AddBoolRow(Table, TEXT("Force forward pass"), IsEnumFlagSet(Flags, EMaterialFlags::ForceForwardPass),
         TDelegate<void(bool)>::CreateLambda([Material](bool bValue)
         {
             Material->ForceForwardPass(bValue);
         }));
 
-    AddBoolRow(Table, "Translucent", IsEnumFlagSet(Flags, EMaterialFlags::Translucent),
+    AddBoolRow(Table, TEXT("Translucent"), IsEnumFlagSet(Flags, EMaterialFlags::Translucent),
         TDelegate<void(bool)>::CreateLambda([this, Material](bool bValue)
         {
             Material->EnableTranslucent(bValue);
             RequestRebuild();
         }));
 
-    AddBoolRow(Table, "Refraction", IsEnumFlagSet(Flags, EMaterialFlags::EnableRefraction),
+    AddBoolRow(Table, TEXT("Refraction"), IsEnumFlagSet(Flags, EMaterialFlags::EnableRefraction),
         TDelegate<void(bool)>::CreateLambda([Material](bool bValue)
         {
             Material->EnableRefraction(bValue);
@@ -562,19 +562,19 @@ void FEditorPropertiesPanel::AddParallaxRows(const TSharedPtr<FPropertyTable>& T
 {
     const FMaterialInfo& MaterialInfo = Material->GetMaterialInfo();
 
-    AddFloatRow(Table, "Height scale", MaterialInfo.ParallaxHeightScale, 0.0f, 0.2f, 0.001f, 0.03f, 3,
+    AddFloatRow(Table, TEXT("Height scale"), MaterialInfo.ParallaxHeightScale, 0.0f, 0.2f, 0.001f, 0.03f, 3,
         TDelegate<void(float)>::CreateLambda([Material](float Value)
         {
             Material->SetParallaxHeightScale(Value);
         }));
 
-    AddFloatRow(Table, "Min layers", MaterialInfo.ParallaxMinLayers, 1.0f, 128.0f, 1.0f, 32.0f, 0,
+    AddFloatRow(Table, TEXT("Min layers"), MaterialInfo.ParallaxMinLayers, 1.0f, 128.0f, 1.0f, 32.0f, 0,
         TDelegate<void(float)>::CreateLambda([Material](float Value)
         {
             Material->SetParallaxLayers(Value, Material->GetParallaxMaxLayers());
         }));
 
-    AddFloatRow(Table, "Max layers", MaterialInfo.ParallaxMaxLayers, 1.0f, 256.0f, 1.0f, 64.0f, 0,
+    AddFloatRow(Table, TEXT("Max layers"), MaterialInfo.ParallaxMaxLayers, 1.0f, 256.0f, 1.0f, 64.0f, 0,
         TDelegate<void(float)>::CreateLambda([Material](float Value)
         {
             Material->SetParallaxLayers(Material->GetParallaxMinLayers(), Value);
@@ -583,36 +583,36 @@ void FEditorPropertiesPanel::AddParallaxRows(const TSharedPtr<FPropertyTable>& T
 
 void FEditorPropertiesPanel::BuildPointLightSection(const TSharedPtr<FVerticalBox>& InColumn, FLightComponent* Component)
 {
-    InColumn->AddSlot(CreateSectionLabel("Light"));
+    InColumn->AddSlot(CreateSectionLabel(TEXT("Light")));
 
     TSharedPtr<FPropertyTable> SettingsTable = CreateTable();
-    AddLightSettingRows(SettingsTable, Component, Cast<FPointLightComponent>(Component) ? "Intensity (Lumen)" : "Intensity");
-    AddSection(InColumn, "Settings", SettingsTable);
+    AddLightSettingRows(SettingsTable, Component, Cast<FPointLightComponent>(Component) ? TEXT("Intensity (Lumen)") : TEXT("Intensity"));
+    AddSection(InColumn, TEXT("Settings"), SettingsTable);
 
     TSharedPtr<FPropertyTable> ShadowTable = CreateTable();
     AddShadowRows(ShadowTable, Component);
-    AddSection(InColumn, "Shadows", ShadowTable);
+    AddSection(InColumn, TEXT("Shadows"), ShadowTable);
 }
 
 void FEditorPropertiesPanel::BuildDirectionalLightSection(const TSharedPtr<FVerticalBox>& InColumn, FDirectionalLightComponent* Component)
 {
-    InColumn->AddSlot(CreateSectionLabel("DirectionalLight"));
+    InColumn->AddSlot(CreateSectionLabel(TEXT("DirectionalLight")));
 
     TSharedPtr<FPropertyTable> SettingsTable = CreateTable();
-    AddLightSettingRows(SettingsTable, Component, "Intensity (Lux)");
-    AddSection(InColumn, "Settings", SettingsTable);
+    AddLightSettingRows(SettingsTable, Component, TEXT("Intensity (Lux)"));
+    AddSection(InColumn, TEXT("Settings"), SettingsTable);
 
     TSharedPtr<FPropertyTable> DirectionTable = CreateTable();
     AddLightDirectionRows(DirectionTable, Component);
-    AddSection(InColumn, "Direction", DirectionTable);
+    AddSection(InColumn, TEXT("Direction"), DirectionTable);
 
     TSharedPtr<FPropertyTable> ShadowTable = CreateTable();
     AddShadowRows(ShadowTable, Component);
-    AddSection(InColumn, "Shadows", ShadowTable);
+    AddSection(InColumn, TEXT("Shadows"), ShadowTable);
 
     TSharedPtr<FPropertyTable> CascadeTable = CreateTable();
     AddCascadeRows(CascadeTable, Component);
-    AddSection(InColumn, "Cascades", CascadeTable);
+    AddSection(InColumn, TEXT("Cascades"), CascadeTable);
 }
 
 void FEditorPropertiesPanel::AddLightSettingRows(const TSharedPtr<FPropertyTable>& Table, FLightComponent* Component, const CHAR_T* IntensityLabel)
@@ -620,7 +620,7 @@ void FEditorPropertiesPanel::AddLightSettingRows(const TSharedPtr<FPropertyTable
     const FVector3    Color        = Component->GetColor();
     const FFloatColor ColorDefault = FFloatColor::White;
 
-    AddColorRow(Table, "Color", FFloatColor(Color.X, Color.Y, Color.Z, 1.0f), &ColorDefault,
+    AddColorRow(Table, TEXT("Color"), FFloatColor(Color.X, Color.Y, Color.Z, 1.0f), &ColorDefault,
         FOnColorChanged::CreateLambda([Component](const FFloatColor& Value)
         {
             Component->SetColor(FVector3(Value.R, Value.G, Value.B));
@@ -638,13 +638,13 @@ void FEditorPropertiesPanel::AddShadowRows(const TSharedPtr<FPropertyTable>& Tab
     FPointLightComponent* PointLight = Cast<FPointLightComponent>(Component);
 
     const bool bCastShadowsDefault = true;
-    AddBoolRow(Table, "Cast shadows", Component->CastsShadows(),
+    AddBoolRow(Table, TEXT("Cast shadows"), Component->CastsShadows(),
         TDelegate<void(bool)>::CreateLambda([Component](bool bValue)
         {
             Component->SetCastShadows(bValue);
         }), &bCastShadowsDefault);
 
-    AddFloatRow(Table, "Shadow bias", Component->GetShadowBias(), 0.0001f, 0.1f, 0.0001f, 0.005f, 4,
+    AddFloatRow(Table, TEXT("Shadow bias"), Component->GetShadowBias(), 0.0001f, 0.1f, 0.0001f, 0.005f, 4,
         TDelegate<void(float)>::CreateLambda([Component](float Value)
         {
             Component->SetShadowBias(Value);
@@ -657,7 +657,7 @@ void FEditorPropertiesPanel::AddShadowRows(const TSharedPtr<FPropertyTable>& Tab
     const float FarPlaneDefault  = PointLight ? 30.0f : 250.0f;
     const int32 PlanePrecision   = PointLight ? 2 : 1;
 
-    AddFloatRow(Table, "Shadow near plane", Component->GetShadowNearPlane(), 0.01f, NearPlaneMax, NearPlaneStep, NearPlaneDefault, PlanePrecision,
+    AddFloatRow(Table, TEXT("Shadow near plane"), Component->GetShadowNearPlane(), 0.01f, NearPlaneMax, NearPlaneStep, NearPlaneDefault, PlanePrecision,
         TDelegate<void(float)>::CreateLambda([Component, PointLight](float Value)
         {
             if (PointLight)
@@ -670,7 +670,7 @@ void FEditorPropertiesPanel::AddShadowRows(const TSharedPtr<FPropertyTable>& Tab
             }
         }));
 
-    AddFloatRow(Table, "Shadow far plane", Component->GetShadowFarPlane(), 0.01f, FarPlaneMax, 1.0f, FarPlaneDefault, 1,
+    AddFloatRow(Table, TEXT("Shadow far plane"), Component->GetShadowFarPlane(), 0.01f, FarPlaneMax, 1.0f, FarPlaneDefault, 1,
         TDelegate<void(float)>::CreateLambda([Component, PointLight](float Value)
         {
             if (PointLight)
@@ -694,7 +694,7 @@ void FEditorPropertiesPanel::AddLightDirectionRows(const TSharedPtr<FPropertyTab
 
     const FVector3 Rotation = Actor->GetWorldTransform().GetRotation();
 
-    AddFloatRow(Table, "Rotation theta (degrees)", Math::RadiansToDegrees(Rotation.X), -90.0f, 90.0f, 0.25f, 0.0f, 2,
+    AddFloatRow(Table, TEXT("Rotation theta (degrees)"), Math::RadiansToDegrees(Rotation.X), -90.0f, 90.0f, 0.25f, 0.0f, 2,
         TDelegate<void(float)>::CreateLambda([Actor](float Degrees)
         {
             FActorTransform NewWorldTransform = Actor->GetWorldTransform();
@@ -706,7 +706,7 @@ void FEditorPropertiesPanel::AddLightDirectionRows(const TSharedPtr<FPropertyTab
             Actor->SetWorldTransform(NewWorldTransform);
         }));
 
-    AddFloatRow(Table, "Rotation phi (degrees)", Math::RadiansToDegrees(Rotation.Y), 0.0f, 360.0f, 0.25f, 0.0f, 2,
+    AddFloatRow(Table, TEXT("Rotation phi (degrees)"), Math::RadiansToDegrees(Rotation.Y), 0.0f, 360.0f, 0.25f, 0.0f, 2,
         TDelegate<void(float)>::CreateLambda([Actor](float Degrees)
         {
             FActorTransform NewWorldTransform = Actor->GetWorldTransform();
@@ -736,24 +736,24 @@ void FEditorPropertiesPanel::AddLightDirectionRows(const TSharedPtr<FPropertyTab
         DirectionRow->AddSlot(LightDirectionFields[Axis]).SetFillCoefficient(1.0f).SetPadding(FMargin(Axis == 0 ? 0 : 2, 0, 0, 0));
     }
 
-    Table->AddRow("Direction", DirectionRow);
+    Table->AddRow(TEXT("Direction"), DirectionRow);
 }
 
 void FEditorPropertiesPanel::AddCascadeRows(const TSharedPtr<FPropertyTable>& Table, FDirectionalLightComponent* Component)
 {
-    AddFloatRow(Table, "Split lambda", Component->GetCascadeSplitLambda(), 0.0f, 1.0f, 0.01f, 0.95f, 2,
+    AddFloatRow(Table, TEXT("Split lambda"), Component->GetCascadeSplitLambda(), 0.0f, 1.0f, 0.01f, 0.95f, 2,
         TDelegate<void(float)>::CreateLambda([Component](float Value)
         {
             Component->SetCascadeSplitLambda(Value);
         }));
 
-    AddFloatRow(Table, "Position offset", Component->GetShadowPositionOffset(), 0.0f, 1000.0f, 1.0f, 200.0f, 1,
+    AddFloatRow(Table, TEXT("Position offset"), Component->GetShadowPositionOffset(), 0.0f, 1000.0f, 1.0f, 200.0f, 1,
         TDelegate<void(float)>::CreateLambda([Component](float Value)
         {
             Component->SetShadowPositionOffset(Value);
         }));
 
-    AddFloatRow(Table, "Light area", Component->GetLightArea(), 0.0f, 1.0f, 0.01f, 0.05f, 2,
+    AddFloatRow(Table, TEXT("Light area"), Component->GetLightArea(), 0.0f, 1.0f, 0.01f, 0.05f, 2,
         TDelegate<void(float)>::CreateLambda([Component](float Value)
         {
             Component->SetLightArea(Value);
@@ -762,35 +762,35 @@ void FEditorPropertiesPanel::AddCascadeRows(const TSharedPtr<FPropertyTable>& Ta
 
 void FEditorPropertiesPanel::BuildCameraSection(const TSharedPtr<FVerticalBox>& InColumn, FCameraComponent* Component)
 {
-    InColumn->AddSlot(CreateSectionLabel("Camera"));
+    InColumn->AddSlot(CreateSectionLabel(TEXT("Camera")));
 
     TSharedPtr<FPropertyTable> SettingsTable = CreateTable();
-    AddTextRow(SettingsTable, "Viewport size", FString::Printf("%.0f x %.0f", Component->GetWidth(), Component->GetHeight()));
+    AddTextRow(SettingsTable, TEXT("Viewport size"), FString::Printf(TEXT("%.0f x %.0f"), Component->GetWidth(), Component->GetHeight()));
 
-    AddFloatRow(SettingsTable, "Field of view", Component->GetFieldOfView(), 40.0f, 120.0f, 0.1f, 60.0f, 1,
+    AddFloatRow(SettingsTable, TEXT("Field of view"), Component->GetFieldOfView(), 40.0f, 120.0f, 0.1f, 60.0f, 1,
         TDelegate<void(float)>::CreateLambda([Component](float Value)
         {
             Component->SetFieldOfView(Value);
         }));
 
-    AddFloatRow(SettingsTable, "Near plane", Component->GetNearPlane(), 0.001f, 10.0f, 0.001f, 0.01f, 3,
+    AddFloatRow(SettingsTable, TEXT("Near plane"), Component->GetNearPlane(), 0.001f, 10.0f, 0.001f, 0.01f, 3,
         TDelegate<void(float)>::CreateLambda([Component](float Value)
         {
             Component->SetNearPlane(Value);
         }));
 
-    AddFloatRow(SettingsTable, "Far plane", Component->GetFarPlane(), 10.0f, 10000.0f, 1.0f, 200.0f, 0,
+    AddFloatRow(SettingsTable, TEXT("Far plane"), Component->GetFarPlane(), 10.0f, 10000.0f, 1.0f, 200.0f, 0,
         TDelegate<void(float)>::CreateLambda([Component](float Value)
         {
             Component->SetFarPlane(Value);
         }));
 
-    AddSection(InColumn, "Settings", SettingsTable);
+    AddSection(InColumn, TEXT("Settings"), SettingsTable);
 
     TSharedPtr<FPropertyTable> TransformTable = CreateTable();
 
     const FVector3 PositionDefault = FVector3(0.0f, 0.0f, 0.0f);
-    AddVectorRow(TransformTable, "Position", Component->GetPosition(), 0.1f,
+    AddVectorRow(TransformTable, TEXT("Position"), Component->GetPosition(), 0.1f,
         FOnVectorChanged::CreateLambda([Component](const FVector3& Value)
         {
             Component->SetPosition(Value);
@@ -801,7 +801,7 @@ void FEditorPropertiesPanel::BuildCameraSection(const TSharedPtr<FVerticalBox>& 
         }));
 
     const FVector3 RotationDefault = FVector3(0.0f, 0.0f, 0.0f);
-    AddVectorRow(TransformTable, "Rotation", Component->GetRotation(), 0.5f,
+    AddVectorRow(TransformTable, TEXT("Rotation"), Component->GetRotation(), 0.5f,
         FOnVectorChanged::CreateLambda([Component](const FVector3& Value)
         {
             Component->SetRotation(Value);
@@ -811,37 +811,37 @@ void FEditorPropertiesPanel::BuildCameraSection(const TSharedPtr<FVerticalBox>& 
             return Component->GetRotation();
         }));
 
-    AddSection(InColumn, "Transform", TransformTable);
+    AddSection(InColumn, TEXT("Transform"), TransformTable);
 }
 
 void FEditorPropertiesPanel::BuildLightProbeSection(const TSharedPtr<FVerticalBox>& InColumn, FLightProbeComponent* Component)
 {
-    InColumn->AddSlot(CreateSectionLabel("LightProbe"));
+    InColumn->AddSlot(CreateSectionLabel(TEXT("LightProbe")));
 
     TSharedPtr<FPropertyTable> Table = CreateTable();
 
     const FVector3 BoxExtentDefault = FVector3(0.0f, 0.0f, 0.0f);
-    AddVectorRow(Table, "Box extents", Component->GetBoxExtents(), 0.1f,
+    AddVectorRow(Table, TEXT("Box extents"), Component->GetBoxExtents(), 0.1f,
         FOnVectorChanged::CreateLambda([Component](const FVector3& Value)
         {
             Component->SetBoxExtent(Value);
         }), false, &BoxExtentDefault);
 
     const FVector3 BoxOffsetDefault = FVector3(0.0f, 0.0f, 0.0f);
-    AddVectorRow(Table, "Box offset", Component->GetBoxOffset(), 0.1f,
+    AddVectorRow(Table, TEXT("Box offset"), Component->GetBoxOffset(), 0.1f,
         FOnVectorChanged::CreateLambda([Component](const FVector3& Value)
         {
             Component->SetBoxOffset(Value);
         }), false, &BoxOffsetDefault);
 
     const bool bBoxProjectionDefault = false;
-    AddBoolRow(Table, "Box projection", Component->GetBoxProjection(),
+    AddBoolRow(Table, TEXT("Box projection"), Component->GetBoxProjection(),
         TDelegate<void(bool)>::CreateLambda([Component](bool bValue)
         {
             Component->SetBoxProjection(bValue);
         }), &bBoxProjectionDefault);
 
-    AddSection(InColumn, "Settings", Table);
+    AddSection(InColumn, TEXT("Settings"), Table);
 }
 
 FPropertyRow& FEditorPropertiesPanel::AddVectorRow(
@@ -872,7 +872,7 @@ FPropertyRow& FEditorPropertiesPanel::AddVectorRow(
         FieldDesc.Font              = FEditorStyle::GetFonts().Body;
         FieldDesc.bShowLabel        = false;
         FieldDesc.AccentEdge        = FUIStyle::GetDefault().AxisColors[Axis];
-        FieldDesc.Suffix            = bIsAngular ? GDegreeSuffix : "";
+        FieldDesc.Suffix            = bIsAngular ? GDegreeSuffix : TEXT("");
         FieldDesc.bDynamicPrecision = true;
 
         FieldDesc.OnValueChanged = TNumericEntry<float>::FOnValueChanged::CreateLambda(
@@ -912,7 +912,7 @@ FPropertyRow& FEditorPropertiesPanel::AddVectorRow(
 
     const FVector3 Default = *DefaultValue;
 
-    NewRow.ToolTipText = FString::Printf("Default %s", *FormatVector(Default));
+    NewRow.ToolTipText = FString::Printf(TEXT("Default %s"), *FormatVector(Default));
 
     NewRow.OnRevert = FOnClicked::CreateLambda([this, RowIndex, Default]()
     {
@@ -1049,7 +1049,7 @@ FPropertyRow& FEditorPropertiesPanel::AddColorRow(
 
     const FFloatColor Default = *DefaultValue;
 
-    NewRow.ToolTipText = FString::Printf("Default %.3f, %.3f, %.3f", Default.R, Default.G, Default.B);
+    NewRow.ToolTipText = FString::Printf(TEXT("Default %.3f, %.3f, %.3f"), Default.R, Default.G, Default.B);
 
     NewRow.OnRevert = FOnClicked::CreateLambda([this, RowIndex, Default]()
     {
@@ -1103,7 +1103,7 @@ FPropertyRow& FEditorPropertiesPanel::AddFloatRow(
     TSharedPtr<TNumericEntry<float>> Field = CreateFloatEditor(Value, MinValue, MaxValue, Step, Precision, OnChanged);
 
     FPropertyRow& NewRow = Table->AddRow(RowLabel,  Field);
-    NewRow.ToolTipText   = FString::Printf("Default %.4f", DefaultValue);
+    NewRow.ToolTipText   = FString::Printf(TEXT("Default %.4f"), DefaultValue);
 
     NewRow.OnRevert = FOnClicked::CreateLambda([Field, DefaultValue, OnChanged]()
     {
@@ -1139,7 +1139,7 @@ FPropertyRow& FEditorPropertiesPanel::AddBoolRow(
 
     const bool bDefaultValue = *DefaultValue;
 
-    NewRow.ToolTipText = bDefaultValue ? FString("Default on") : FString("Default off");
+    NewRow.ToolTipText = bDefaultValue ? FString(TEXT("Default on")) : FString(TEXT("Default off"));
 
     NewRow.OnRevert = FOnClicked::CreateLambda([Field, bDefaultValue, OnChanged]()
     {

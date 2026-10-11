@@ -14,45 +14,45 @@
 #include "Application/Menus/ComboBox.h"
 #include "ShaderCompiler/ShaderCompiler.h"
 
-static const CHAR_T* const GCascadeResolutions[]      = { "512", "1024", "2048", "4096" };
+static const CHAR_T* const GCascadeResolutions[]      = { TEXT("512"), TEXT("1024"), TEXT("2048"), TEXT("4096") };
 static const int32         GCascadeResolutionValues[] = { 512, 1024, 2048, 4096 };
 
-static const CHAR_T* const GPointResolutions[]      = { "128", "256", "512", "1024" };
+static const CHAR_T* const GPointResolutions[]      = { TEXT("128"), TEXT("256"), TEXT("512"), TEXT("1024") };
 static const int32         GPointResolutionValues[] = { 128, 256, 512, 1024 };
 
-static const CHAR_T* const GSampleCounts[]      = { "16", "32", "64", "128" };
+static const CHAR_T* const GSampleCounts[]      = { TEXT("16"), TEXT("32"), TEXT("64"), TEXT("128") };
 static const int32         GSampleCountValues[] = { 16, 32, 64, 128 };
 
-static const CHAR_T* const GFilterModes[]        = { "PCF", "PCSS" };
-static const CHAR_T* const GFilterFunctions[]    = { "Grid", "Poisson Disk", "Vogel Disk" };
-static const CHAR_T* const GReflectionSamplers[] = { "White noise", "Halton", "Blue noise" };
-static const CHAR_T* const GTonemappers[]        = { "Default", "ACES", "Reinhard", "Uncharted 2" };
+static const CHAR_T* const GFilterModes[]        = { TEXT("PCF"), TEXT("PCSS") };
+static const CHAR_T* const GFilterFunctions[]    = { TEXT("Grid"), TEXT("Poisson Disk"), TEXT("Vogel Disk") };
+static const CHAR_T* const GReflectionSamplers[] = { TEXT("White noise"), TEXT("Halton"), TEXT("Blue noise") };
+static const CHAR_T* const GTonemappers[]        = { TEXT("Default"), TEXT("ACES"), TEXT("Reinhard"), TEXT("Uncharted 2") };
 
-static const CHAR_T* const GRayTracingSection     = "Ray Tracing";
-static const CHAR_T* const GShaderCompilerSection = "Shader Compiler";
+static const CHAR_T* const GRayTracingSection     = TEXT("Ray Tracing");
+static const CHAR_T* const GShaderCompilerSection = TEXT("Shader Compiler");
 
 static FString DescribeShaderCompilerStatus()
 {
     const FShaderCompiler* Compiler = FShaderCompiler::TryGet();
-    return Compiler ? Compiler->DescribeRemoteStatus() : FString("Not initialized");
+    return Compiler ? Compiler->DescribeRemoteStatus() : FString(TEXT("Not initialized"));
 }
 
 static FString DescribeRayTracingSupport()
 {
     if (!RHI::bSupportsRayTracing)
     {
-        return "Not supported";
+        return TEXT("Not supported");
     }
 
     if (!RHI::bSupportsRayTracingPipeline)
     {
-        return "Inline only";
+        return TEXT("Inline only");
     }
 
-    return FString::Printf("Tier %s, inline %s, SER %s",
+    return FString::Printf(TEXT("Tier %s, inline %s, SER %s"),
         ToString(RHI::RayTracingTier),
-        RHI::bSupportsInlineRayTracing ? "yes" : "no",
-        RHI::bSupportsShaderExecutionReordering ? "yes" : "no");
+        RHI::bSupportsInlineRayTracing ? TEXT("yes") : TEXT("no"),
+        RHI::bSupportsShaderExecutionReordering ? TEXT("yes") : TEXT("no"));
 }
 
 #define SETTING_BOOL(Section, Label, Name) \
@@ -78,96 +78,96 @@ static FString DescribeRayTracingSupport()
 
 static const FRendererSetting GRendererSettings[] =
 {
-    SETTING_BOOL("Deferred Rendering", "Draw tile-debug",   "Renderer.Debug.DrawTiledLightning"),
-    SETTING_BOOL("Deferred Rendering", "Clear all targets", "Renderer.BasePass.ClearAllTargets"),
-    SETTING_BOOL("Deferred Rendering", "Enable pre-pass",   "Renderer.Feature.PrePass"),
-    SETTING_BOOL("Deferred Rendering", "Enable base-pass",  "Renderer.Feature.BasePass"),
+    SETTING_BOOL(TEXT("Deferred Rendering"), TEXT("Draw tile-debug"),   TEXT("Renderer.Debug.DrawTiledLightning")),
+    SETTING_BOOL(TEXT("Deferred Rendering"), TEXT("Clear all targets"), TEXT("Renderer.BasePass.ClearAllTargets")),
+    SETTING_BOOL(TEXT("Deferred Rendering"), TEXT("Enable pre-pass"),   TEXT("Renderer.Feature.PrePass")),
+    SETTING_BOOL(TEXT("Deferred Rendering"), TEXT("Enable base-pass"),  TEXT("Renderer.Feature.BasePass")),
 
-    SETTING_BOOL("Shadows", "Enable shadows", "Renderer.Feature.Shadows"),
+    SETTING_BOOL(TEXT("Shadows"), TEXT("Enable shadows"), TEXT("Renderer.Feature.Shadows")),
 
-    SETTING_BOOL        ("Cascaded Shadow Maps", "Enable sun shadows",             "Renderer.Feature.SunShadows"),
-    SETTING_BOOL        ("Cascaded Shadow Maps", "Enable shadow mask",             "Renderer.Feature.ShadowMask"),
-    SETTING_BOOL        ("Cascaded Shadow Maps", "Tight frustum (depth reduce)",   "Renderer.CSM.TightFrustum"),
-    SETTING_COMBO_VALUES("Cascaded Shadow Maps", "Cascade resolution",             "Renderer.CSM.CascadeSize", GCascadeResolutions, GCascadeResolutionValues),
-    SETTING_BOOL        ("Cascaded Shadow Maps", "Stable cascades",                "Renderer.CSM.StableCascades"),
-    SETTING_BOOL        ("Cascaded Shadow Maps", "Single-pass rendering",          "Renderer.CSM.EnableSinglePassRendering"),
-    SETTING_BOOL        ("Cascaded Shadow Maps", "Geometry shader instancing",     "Renderer.CSM.EnableGeometryShaderInstancing"),
-    SETTING_BOOL        ("Cascaded Shadow Maps", "View instancing",                "Renderer.CSM.EnableViewInstancing"),
-    SETTING_BOOL        ("Cascaded Shadow Maps", "Depth clipping",                 "Renderer.CSM.EnableDepthClipping"),
-    SETTING_BOOL        ("Cascaded Shadow Maps", "Blend cascades",                 "Renderer.CSM.BlendCascades"),
-    SETTING_BOOL        ("Cascaded Shadow Maps", "Select cascade from projection", "Renderer.CSM.SelectCascadeFromProjection"),
-    SETTING_COMBO       ("Cascaded Shadow Maps", "Filter mode",                    "Renderer.CSM.FilterMode", GFilterModes),
-    SETTING_COMBO       ("Cascaded Shadow Maps", "Filter function",                "Renderer.CSM.FilterFunction", GFilterFunctions),
-    SETTING_INT         ("Cascaded Shadow Maps", "Filter size",                    "Renderer.CSM.FilterSize", 1, 2048),
-    SETTING_INT         ("Cascaded Shadow Maps", "Max filter size",                "Renderer.CSM.MaxFilterSize", 1, 2048),
-    SETTING_COMBO_VALUES("Cascaded Shadow Maps", "Sample count",                   "Renderer.CSM.NumPoissonDiscSamples", GSampleCounts, GSampleCountValues),
-    SETTING_BOOL        ("Cascaded Shadow Maps", "Rotate samples",                 "Renderer.CSM.RotateSamples"),
+    SETTING_BOOL        (TEXT("Cascaded Shadow Maps"), TEXT("Enable sun shadows"),             TEXT("Renderer.Feature.SunShadows")),
+    SETTING_BOOL        (TEXT("Cascaded Shadow Maps"), TEXT("Enable shadow mask"),             TEXT("Renderer.Feature.ShadowMask")),
+    SETTING_BOOL        (TEXT("Cascaded Shadow Maps"), TEXT("Tight frustum (depth reduce)"),   TEXT("Renderer.CSM.TightFrustum")),
+    SETTING_COMBO_VALUES(TEXT("Cascaded Shadow Maps"), TEXT("Cascade resolution"),             TEXT("Renderer.CSM.CascadeSize"), GCascadeResolutions, GCascadeResolutionValues),
+    SETTING_BOOL        (TEXT("Cascaded Shadow Maps"), TEXT("Stable cascades"),                TEXT("Renderer.CSM.StableCascades")),
+    SETTING_BOOL        (TEXT("Cascaded Shadow Maps"), TEXT("Single-pass rendering"),          TEXT("Renderer.CSM.EnableSinglePassRendering")),
+    SETTING_BOOL        (TEXT("Cascaded Shadow Maps"), TEXT("Geometry shader instancing"),     TEXT("Renderer.CSM.EnableGeometryShaderInstancing")),
+    SETTING_BOOL        (TEXT("Cascaded Shadow Maps"), TEXT("View instancing"),                TEXT("Renderer.CSM.EnableViewInstancing")),
+    SETTING_BOOL        (TEXT("Cascaded Shadow Maps"), TEXT("Depth clipping"),                 TEXT("Renderer.CSM.EnableDepthClipping")),
+    SETTING_BOOL        (TEXT("Cascaded Shadow Maps"), TEXT("Blend cascades"),                 TEXT("Renderer.CSM.BlendCascades")),
+    SETTING_BOOL        (TEXT("Cascaded Shadow Maps"), TEXT("Select cascade from projection"), TEXT("Renderer.CSM.SelectCascadeFromProjection")),
+    SETTING_COMBO       (TEXT("Cascaded Shadow Maps"), TEXT("Filter mode"),                    TEXT("Renderer.CSM.FilterMode"), GFilterModes),
+    SETTING_COMBO       (TEXT("Cascaded Shadow Maps"), TEXT("Filter function"),                TEXT("Renderer.CSM.FilterFunction"), GFilterFunctions),
+    SETTING_INT         (TEXT("Cascaded Shadow Maps"), TEXT("Filter size"),                    TEXT("Renderer.CSM.FilterSize"), 1, 2048),
+    SETTING_INT         (TEXT("Cascaded Shadow Maps"), TEXT("Max filter size"),                TEXT("Renderer.CSM.MaxFilterSize"), 1, 2048),
+    SETTING_COMBO_VALUES(TEXT("Cascaded Shadow Maps"), TEXT("Sample count"),                   TEXT("Renderer.CSM.NumPoissonDiscSamples"), GSampleCounts, GSampleCountValues),
+    SETTING_BOOL        (TEXT("Cascaded Shadow Maps"), TEXT("Rotate samples"),                 TEXT("Renderer.CSM.RotateSamples")),
 
-    SETTING_BOOL        ("Point-light Shadow Maps", "Enable point-light shadows", "Renderer.Feature.PointLightShadows"),
-    SETTING_COMBO_VALUES("Point-light Shadow Maps", "Shadow map resolution",      "Renderer.Shadows.PointLightShadowMapSize", GPointResolutions, GPointResolutionValues),
-    SETTING_BOOL        ("Point-light Shadow Maps", "Single-pass rendering",      "Renderer.PointLights.EnableSinglePassRendering"),
-    SETTING_BOOL        ("Point-light Shadow Maps", "Geometry shader instancing", "Renderer.PointLights.EnableGeometryShaderInstancing"),
+    SETTING_BOOL        (TEXT("Point-light Shadow Maps"), TEXT("Enable point-light shadows"), TEXT("Renderer.Feature.PointLightShadows")),
+    SETTING_COMBO_VALUES(TEXT("Point-light Shadow Maps"), TEXT("Shadow map resolution"),      TEXT("Renderer.Shadows.PointLightShadowMapSize"), GPointResolutions, GPointResolutionValues),
+    SETTING_BOOL        (TEXT("Point-light Shadow Maps"), TEXT("Single-pass rendering"),      TEXT("Renderer.PointLights.EnableSinglePassRendering")),
+    SETTING_BOOL        (TEXT("Point-light Shadow Maps"), TEXT("Geometry shader instancing"), TEXT("Renderer.PointLights.EnableGeometryShaderInstancing")),
 
-    SETTING_BOOL("Skybox", "Enable Skybox",       "Renderer.Feature.Skybox"),
-    SETTING_BOOL("Skybox", "Clear before skybox", "Renderer.Skybox.ClearBeforeSkybox"),
+    SETTING_BOOL(TEXT("Skybox"), TEXT("Enable Skybox"),       TEXT("Renderer.Feature.Skybox")),
+    SETTING_BOOL(TEXT("Skybox"), TEXT("Clear before skybox"), TEXT("Renderer.Skybox.ClearBeforeSkybox")),
 
-    SETTING_BOOL ("SSAO", "Enable SSAO", "Renderer.Feature.SSAO"),
-    SETTING_INT  ("SSAO", "Kernel size", "Renderer.SSAO.KernelSize", 1, 128),
-    SETTING_FLOAT("SSAO", "Radius",      "Renderer.SSAO.Radius", 0.01f, 1.0f, 0.01f),
-    SETTING_FLOAT("SSAO", "Bias",        "Renderer.SSAO.Bias", 0.01f, 1.0f, 0.01f),
+    SETTING_BOOL (TEXT("SSAO"), TEXT("Enable SSAO"), TEXT("Renderer.Feature.SSAO")),
+    SETTING_INT  (TEXT("SSAO"), TEXT("Kernel size"), TEXT("Renderer.SSAO.KernelSize"), 1, 128),
+    SETTING_FLOAT(TEXT("SSAO"), TEXT("Radius"),      TEXT("Renderer.SSAO.Radius"), 0.01f, 1.0f, 0.01f),
+    SETTING_FLOAT(TEXT("SSAO"), TEXT("Bias"),        TEXT("Renderer.SSAO.Bias"), 0.01f, 1.0f, 0.01f),
 
-    SETTING_BOOL_GATED("Ray Tracing", "Enable ray tracing",                "Renderer.Feature.RayTracing",
+    SETTING_BOOL_GATED(TEXT("Ray Tracing"), TEXT("Enable ray tracing"),                TEXT("Renderer.Feature.RayTracing"),
         []() { return RHI::bSupportsRayTracing; }),
-    SETTING_BOOL_GATED("Ray Tracing", "Use local shader bindings",         "Renderer.RayTracing.EnableLocalShaderBindings",
+    SETTING_BOOL_GATED(TEXT("Ray Tracing"), TEXT("Use local shader bindings"),         TEXT("Renderer.RayTracing.EnableLocalShaderBindings"),
         []() { return RHI::bSupportsRayTracingPipeline; }),
-    SETTING_BOOL_GATED("Ray Tracing", "Inline reflections (RayQuery)",     "Renderer.RayTracing.InlineReflections",
+    SETTING_BOOL_GATED(TEXT("Ray Tracing"), TEXT("Inline reflections (RayQuery)"),     TEXT("Renderer.RayTracing.InlineReflections"),
         []() { return RHI::bSupportsInlineRayTracing; }),
-    SETTING_BOOL_GATED("Ray Tracing", "Shader Execution Reordering",       "Renderer.RayTracing.SER",
+    SETTING_BOOL_GATED(TEXT("Ray Tracing"), TEXT("Shader Execution Reordering"),       TEXT("Renderer.RayTracing.SER"),
         []() { return RHI::bSupportsShaderExecutionReordering; }),
-    SETTING_BOOL_GATED("Ray Tracing", "BLAS compaction",                   "Renderer.RayTracing.Compaction",
+    SETTING_BOOL_GATED(TEXT("Ray Tracing"), TEXT("BLAS compaction"),                   TEXT("Renderer.RayTracing.Compaction"),
         []() { return RHI::bSupportsRayTracing; }),
-    SETTING_BOOL_GATED("Ray Tracing", "Acceleration-structure disk cache", "Renderer.RayTracing.ASCache",
+    SETTING_BOOL_GATED(TEXT("Ray Tracing"), TEXT("Acceleration-structure disk cache"), TEXT("Renderer.RayTracing.ASCache"),
         []() { return RHI::bSupportsRayTracing; }),
 
-    SETTING_BOOL ("Reflections", "Enable",                       "Renderer.RayTracing.Reflections.Enable"),
-    SETTING_FLOAT("Reflections", "Indirect specular strength",   "Renderer.Reflections.IndirectSpecularStrength", 0.0f, 4.0f, 0.01f),
-    SETTING_BOOL ("Reflections", "Half resolution",              "Renderer.RayTracing.Reflections.HalfRes"),
-    SETTING_FLOAT("Reflections", "Max ray distance",             "Renderer.RayTracing.Reflections.MaxRayDistance", 1.0f, 100000.0f, 10.0f),
-    SETTING_FLOAT("Reflections", "Mirror roughness threshold",   "Renderer.RayTracing.Reflections.MirrorRoughnessThreshold", 0.0f, 1.0f, 0.001f),
-    SETTING_FLOAT("Reflections", "Ray bias",                     "Renderer.RayTracing.Reflections.RayBias", 0.0f, 1.0f, 0.001f),
-    SETTING_COMBO("Reflections", "GGX sampler",                  "Renderer.RayTracing.Reflections.Sampler", GReflectionSamplers),
-    SETTING_BOOL ("Reflections", "Enable denoiser",              "Renderer.RayTracing.Reflections.Denoise"),
-    SETTING_FLOAT("Reflections", "Temporal alpha",               "Renderer.RayTracing.Reflections.TemporalAlpha", 0.01f, 1.0f, 0.01f),
-    SETTING_FLOAT("Reflections", "Max radiance (firefly clamp)", "Renderer.RayTracing.Reflections.MaxRadiance", 0.0f, 100.0f, 0.1f),
-    SETTING_FLOAT("Reflections", "History clamp gamma",          "Renderer.RayTracing.Reflections.HistoryClampGamma", 0.0f, 10.0f, 0.01f),
-    SETTING_FLOAT("Reflections", "Max history length",           "Renderer.RayTracing.Reflections.MaxHistoryLength", 1.0f, 128.0f, 1.0f),
-    SETTING_INT  ("Reflections", "Neighborhood radius",          "Renderer.RayTracing.Reflections.NeighborhoodRadius", 0, 8),
-    SETTING_FLOAT("Reflections", "Camera-motion max history",    "Renderer.RayTracing.Reflections.CameraMotionMaxHistory", 0.0f, 64.0f, 0.5f),
-    SETTING_INT  ("Reflections", "A-trous iterations",           "Renderer.RayTracing.Reflections.AtrousIterations", 0, 8),
-    SETTING_FLOAT("Reflections", "A-trous color phi",            "Renderer.RayTracing.Reflections.AtrousPhiColor", 0.1f, 32.0f, 0.1f),
+    SETTING_BOOL (TEXT("Reflections"), TEXT("Enable"),                       TEXT("Renderer.RayTracing.Reflections.Enable")),
+    SETTING_FLOAT(TEXT("Reflections"), TEXT("Indirect specular strength"),   TEXT("Renderer.Reflections.IndirectSpecularStrength"), 0.0f, 4.0f, 0.01f),
+    SETTING_BOOL (TEXT("Reflections"), TEXT("Half resolution"),              TEXT("Renderer.RayTracing.Reflections.HalfRes")),
+    SETTING_FLOAT(TEXT("Reflections"), TEXT("Max ray distance"),             TEXT("Renderer.RayTracing.Reflections.MaxRayDistance"), 1.0f, 100000.0f, 10.0f),
+    SETTING_FLOAT(TEXT("Reflections"), TEXT("Mirror roughness threshold"),   TEXT("Renderer.RayTracing.Reflections.MirrorRoughnessThreshold"), 0.0f, 1.0f, 0.001f),
+    SETTING_FLOAT(TEXT("Reflections"), TEXT("Ray bias"),                     TEXT("Renderer.RayTracing.Reflections.RayBias"), 0.0f, 1.0f, 0.001f),
+    SETTING_COMBO(TEXT("Reflections"), TEXT("GGX sampler"),                  TEXT("Renderer.RayTracing.Reflections.Sampler"), GReflectionSamplers),
+    SETTING_BOOL (TEXT("Reflections"), TEXT("Enable denoiser"),              TEXT("Renderer.RayTracing.Reflections.Denoise")),
+    SETTING_FLOAT(TEXT("Reflections"), TEXT("Temporal alpha"),               TEXT("Renderer.RayTracing.Reflections.TemporalAlpha"), 0.01f, 1.0f, 0.01f),
+    SETTING_FLOAT(TEXT("Reflections"), TEXT("Max radiance (firefly clamp)"), TEXT("Renderer.RayTracing.Reflections.MaxRadiance"), 0.0f, 100.0f, 0.1f),
+    SETTING_FLOAT(TEXT("Reflections"), TEXT("History clamp gamma"),          TEXT("Renderer.RayTracing.Reflections.HistoryClampGamma"), 0.0f, 10.0f, 0.01f),
+    SETTING_FLOAT(TEXT("Reflections"), TEXT("Max history length"),           TEXT("Renderer.RayTracing.Reflections.MaxHistoryLength"), 1.0f, 128.0f, 1.0f),
+    SETTING_INT  (TEXT("Reflections"), TEXT("Neighborhood radius"),          TEXT("Renderer.RayTracing.Reflections.NeighborhoodRadius"), 0, 8),
+    SETTING_FLOAT(TEXT("Reflections"), TEXT("Camera-motion max history"),    TEXT("Renderer.RayTracing.Reflections.CameraMotionMaxHistory"), 0.0f, 64.0f, 0.5f),
+    SETTING_INT  (TEXT("Reflections"), TEXT("A-trous iterations"),           TEXT("Renderer.RayTracing.Reflections.AtrousIterations"), 0, 8),
+    SETTING_FLOAT(TEXT("Reflections"), TEXT("A-trous color phi"),            TEXT("Renderer.RayTracing.Reflections.AtrousPhiColor"), 0.1f, 32.0f, 0.1f),
 
-    SETTING_BOOL("Temporal Anti-aliasing (TAA)", "Enabled",         "Renderer.Feature.TemporalAntiAliasing"),
-    SETTING_BOOL("Temporal Anti-aliasing (TAA)", "Hardware jitter", "Renderer.TemporalAntiAliasing.HardwareJitter"),
+    SETTING_BOOL(TEXT("Temporal Anti-aliasing (TAA)"), TEXT("Enabled"),         TEXT("Renderer.Feature.TemporalAntiAliasing")),
+    SETTING_BOOL(TEXT("Temporal Anti-aliasing (TAA)"), TEXT("Hardware jitter"), TEXT("Renderer.TemporalAntiAliasing.HardwareJitter")),
 
-    SETTING_BOOL("FXAA", "Enable FXAA",       "Renderer.Feature.FXAA"),
-    SETTING_BOOL("FXAA", "Enable FXAA debug", "Renderer.Debug.FXAADebug"),
+    SETTING_BOOL(TEXT("FXAA"), TEXT("Enable FXAA"),       TEXT("Renderer.Feature.FXAA")),
+    SETTING_BOOL(TEXT("FXAA"), TEXT("Enable FXAA debug"), TEXT("Renderer.Debug.FXAADebug")),
 
-    SETTING_COMBO("Tonemapping", "Tonemapping function", "Renderer.Tonemapping.Function", GTonemappers),
-    SETTING_FLOAT("Tonemapping", "Exposure (EV100)",     "Renderer.Tonemapping.EV100", -10.0f, 20.0f, 0.1f),
-    SETTING_FLOAT("Tonemapping", "Reinhard intensity",   "Renderer.Tonemapping.ReinhardIntensity", 0.1f, 10.0f, 0.01f),
+    SETTING_COMBO(TEXT("Tonemapping"), TEXT("Tonemapping function"), TEXT("Renderer.Tonemapping.Function"), GTonemappers),
+    SETTING_FLOAT(TEXT("Tonemapping"), TEXT("Exposure (EV100)"),     TEXT("Renderer.Tonemapping.EV100"), -10.0f, 20.0f, 0.1f),
+    SETTING_FLOAT(TEXT("Tonemapping"), TEXT("Reinhard intensity"),   TEXT("Renderer.Tonemapping.ReinhardIntensity"), 0.1f, 10.0f, 0.01f),
 
-    SETTING_BOOL("Display", "Enable VSync", "Renderer.Feature.VerticalSync"),
+    SETTING_BOOL(TEXT("Display"), TEXT("Enable VSync"), TEXT("Renderer.Feature.VerticalSync")),
 
-    SETTING_BOOL("Culling", "Enable frustum-culling", "Renderer.Feature.FrustumCulling"),
+    SETTING_BOOL(TEXT("Culling"), TEXT("Enable frustum-culling"), TEXT("Renderer.Feature.FrustumCulling")),
 
-    SETTING_BOOL("Debug", "Enable debug-draw AABBs",        "Renderer.Debug.DrawAABBs"),
-    SETTING_BOOL("Debug", "Enable debug-draw point-lights", "Renderer.Debug.DrawPointLights"),
-    SETTING_BOOL("Debug", "Enable debug-draw light-probes", "Renderer.Debug.LightProbes"),
+    SETTING_BOOL(TEXT("Debug"), TEXT("Enable debug-draw AABBs"),        TEXT("Renderer.Debug.DrawAABBs")),
+    SETTING_BOOL(TEXT("Debug"), TEXT("Enable debug-draw point-lights"), TEXT("Renderer.Debug.DrawPointLights")),
+    SETTING_BOOL(TEXT("Debug"), TEXT("Enable debug-draw light-probes"), TEXT("Renderer.Debug.LightProbes")),
 
-    SETTING_BOOL  ("Shader Compiler", "Use remote shader compiler", "RHI.ShaderCompiler.UseRemote"),
-    SETTING_STRING("Shader Compiler", "Remote host",                "RHI.ShaderCompiler.RemoteHost"),
-    SETTING_INT   ("Shader Compiler", "Remote port",                "RHI.ShaderCompiler.RemotePort", 1, 65535),
-    SETTING_BOOL  ("Shader Compiler", "Fall back to local",         "RHI.ShaderCompiler.RemoteFallbackToLocal"),
+    SETTING_BOOL  (TEXT("Shader Compiler"), TEXT("Use remote shader compiler"), TEXT("RHI.ShaderCompiler.UseRemote")),
+    SETTING_STRING(TEXT("Shader Compiler"), TEXT("Remote host"),                TEXT("RHI.ShaderCompiler.RemoteHost")),
+    SETTING_INT   (TEXT("Shader Compiler"), TEXT("Remote port"),                TEXT("RHI.ShaderCompiler.RemotePort"), 1, 65535),
+    SETTING_BOOL  (TEXT("Shader Compiler"), TEXT("Fall back to local"),         TEXT("RHI.ShaderCompiler.RemoteFallbackToLocal")),
 };
 
 #undef SETTING_BOOL
@@ -179,9 +179,9 @@ static const FRendererSetting GRendererSettings[] =
 
 static const FRendererSubsection GRendererSubsections[] =
 {
-    { "Cascaded Shadow Maps",    "Shadows"     },
-    { "Point-light Shadow Maps", "Shadows"     },
-    { "Reflections",             "Ray Tracing" },
+    { TEXT("Cascaded Shadow Maps"),    TEXT("Shadows")     },
+    { TEXT("Point-light Shadow Maps"), TEXT("Shadows")     },
+    { TEXT("Reflections"),             TEXT("Ray Tracing") },
 };
 
 constexpr float RENDERER_SETTINGS_LABEL_FRACTION = 0.62f;
@@ -200,7 +200,7 @@ static const CHAR_T* FindParentSection(const CHAR_T* Section)
 }
 
 FEditorRendererSettingsPanel::FEditorRendererSettingsPanel(FEditorEngine* InEditorEngine)
-    : FEditorPanel(InEditorEngine, "RendererSettings", "Renderer Settings")
+    : FEditorPanel(InEditorEngine, TEXT("RendererSettings"), TEXT("Renderer Settings"))
     , ScrollBox(nullptr)
     , Column(nullptr)
     , SearchBox(nullptr)
@@ -225,7 +225,7 @@ bool FEditorRendererSettingsPanel::Initialize()
 
     ScrollBox->SetContent(Column);
 
-    SearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc("Search Settings",
+    SearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc(TEXT("Search Settings"),
         FOnSearchTextChanged::CreateRaw(this, &FEditorRendererSettingsPanel::OnSearchTextChanged)));
 
 
@@ -340,8 +340,8 @@ void FEditorRendererSettingsPanel::RebuildSections()
                 SupportDesc.Text = DescribeRayTracingSupport();
                 SupportDesc.Font = FEditorStyle::GetFonts().Monospace;
 
-                CurrentTable->AddRow("Hardware support", FTextBlock::Create(SupportDesc)).ToolTipText =
-                    "What this RHI reports, which is what decides whether the rows below it do anything";
+                CurrentTable->AddRow(TEXT("Hardware support"), FTextBlock::Create(SupportDesc)).ToolTipText =
+                    TEXT("What this RHI reports, which is what decides whether the rows below it do anything");
             }
             else if (FString(Setting.Section) == GShaderCompilerSection)
             {
@@ -350,15 +350,15 @@ void FEditorRendererSettingsPanel::RebuildSections()
                 StatusDesc.Font = FEditorStyle::GetFonts().Monospace;
 
                 ShaderCompilerStatus = FTextBlock::Create(StatusDesc);
-                CurrentTable->AddRow("Status", ShaderCompilerStatus).ToolTipText =
-                    "Where shaders compile right now. Shaders already compiled stay as they are until Renderer.RecompileShaders.";
+                CurrentTable->AddRow(TEXT("Status"), ShaderCompilerStatus).ToolTipText =
+                    TEXT("Where shaders compile right now. Shaders already compiled stay as they are until Renderer.RecompileShaders.");
             }
         }
 
         const bool bIsSupported = !Setting.IsSupported || Setting.IsSupported();
 
         FPropertyRow& Row = CurrentTable->AddRow(Setting.Label, Editor);
-        Row.ToolTipText   = bIsSupported ? FString(Setting.CVarName) : FString::Printf("%s (not supported by this RHI)", Setting.CVarName);
+        Row.ToolTipText   = bIsSupported ? FString(Setting.CVarName) : FString::Printf(TEXT("%s (not supported by this RHI)"), Setting.CVarName);
 
         if (!bIsSupported && Setting.Kind == ERendererSettingKind::Bool)
         {

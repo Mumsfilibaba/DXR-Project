@@ -158,7 +158,7 @@ bool FEditorGuizmoWidget::DrawGuizmo()
         return false;
     }
 
-    TRACE_SCOPE("Gizmo");
+    TRACE_SCOPE(TEXT("Gizmo"));
 
     if (!EditorEngine || !EditorEngine->IsEditing())
     {

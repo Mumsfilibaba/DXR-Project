@@ -15,12 +15,12 @@ namespace ModelFormat
 {
     struct FFileHeader
     {
-        CHAR_T Magic[7];     // Always "DXRMESH"
-        CHAR_T Padding[1];   // Should me zero
-        uint64 DataCRC;      // CRC of the data (Everything excluding the FFileHeader)
-        uint64 DataSize;     // Total DataSize
-        uint32 VersionMajor; // Major version of the file
-        uint32 VersionMinor; // Minor version of the file
+        ANSICHAR Magic[7];     // Always "DXRMESH"
+        uint8    Padding[1];   // Should me zero
+        uint64   DataCRC;      // CRC of the data (Everything excluding the FFileHeader)
+        uint64   DataSize;     // Total DataSize
+        uint32   VersionMajor; // Major version of the file
+        uint32   VersionMinor; // Minor version of the file
     };
 
     static_assert(TAlignmentOf<FFileHeader>::Value == sizeof(uint64));
@@ -48,18 +48,18 @@ namespace ModelFormat
 
     struct FMeshInfo
     {
-        CHAR_T Name[MODEL_FORMAT_MAX_NAME_LENGTH]; // Name of the mesh
+        ANSICHAR Name[MODEL_FORMAT_MAX_NAME_LENGTH]; // Name of the mesh, in UTF-8
         
-        int32  FirstSubMesh;                       // First SubMesh in the SubMeshArray
-        int32  NumSubMeshes;                       // Number of SubMeshes for this Mesh
+        int32    FirstSubMesh;                       // First SubMesh in the SubMeshArray
+        int32    NumSubMeshes;                       // Number of SubMeshes for this Mesh
         
-        int32  FirstVertex;                        // First Vertex in each stream
-        int32  NumVertices;                        // Number of Vertices for this Mesh
+        int32    FirstVertex;                        // First Vertex in each stream
+        int32    NumVertices;                        // Number of Vertices for this Mesh
         
-        int32  FirstIndex;                         // First Index in the IndexArray
-        int32  NumIndices;                         // Number of Indicies for this Mesh
+        int32    FirstIndex;                         // First Index in the IndexArray
+        int32    NumIndices;                         // Number of Indicies for this Mesh
 
-        int32  AttributeFlags;                     // EVertexAttributeFlags this mesh's streams were packed for
+        int32    AttributeFlags;                     // EVertexAttributeFlags this mesh's streams were packed for
     };
 
     struct FSubMeshInfo
@@ -75,7 +75,7 @@ namespace ModelFormat
 
     struct FTextureInfo
     {
-        CHAR_T Filepath[MODEL_FORMAT_MAX_NAME_LENGTH];
+        ANSICHAR Filepath[MODEL_FORMAT_MAX_NAME_LENGTH]; // In UTF-8
     };
 
     struct FMaterialInfo

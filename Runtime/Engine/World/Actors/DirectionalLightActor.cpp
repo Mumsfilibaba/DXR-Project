@@ -7,7 +7,7 @@ FDirectionalLightActor::FDirectionalLightActor(const FObjectInitializer& ObjectI
     : FActor(ObjectInitializer)
     , LightComponent(nullptr)
 {
-    SetName("Directional Light");
+    SetName(TEXT("Directional Light"));
     
     LightComponent = NewObject<FDirectionalLightComponent>();
     AddComponent(LightComponent);

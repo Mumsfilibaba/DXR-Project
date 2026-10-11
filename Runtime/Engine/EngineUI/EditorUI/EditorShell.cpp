@@ -41,7 +41,7 @@ FEditorShell::~FEditorShell()
 
 FString FEditorShell::GetLayoutFilename()
 {
-    return Paths::GetProjectDir() + "/EditorLayout.ini";
+    return Paths::GetProjectDir() + TEXT("/EditorLayout.ini");
 }
 
 bool FEditorShell::Initialize()
@@ -143,7 +143,7 @@ bool FEditorShell::RestoreLayout()
     if (LayoutFile.LoadFromFile(LayoutFilename))
     {
         int32 SavedVersion = 0;
-        if (!LayoutFile.GetInt("Editor", "PanelSetVersion", SavedVersion) || SavedVersion != PanelSetVersion)
+        if (!LayoutFile.GetInt(TEXT("Editor"), TEXT("PanelSetVersion"), SavedVersion) || SavedVersion != PanelSetVersion)
         {
             LOG_INFO("[FEditorShell]: The saved layout predates the current panel set, so the default is used");
             return false;
@@ -206,7 +206,7 @@ void FEditorShell::SaveLayout()
     FIniFile LayoutFile;
     if (LayoutFile.LoadFromFile(LayoutFilename))
     {
-        LayoutFile.SetOrAddInt("Editor", "PanelSetVersion", PanelSetVersion);
+        LayoutFile.SetOrAddInt(TEXT("Editor"), TEXT("PanelSetVersion"), PanelSetVersion);
         LayoutFile.WriteToFile();
     }
 }
@@ -269,7 +269,7 @@ void FEditorShell::Release()
 
 void FEditorShell::Tick(float DeltaTime)
 {
-    TRACE_SCOPE("Editor Shell Tick");
+    TRACE_SCOPE(TEXT("Editor Shell Tick"));
 
     FMenuInputHandler::Tick(DeltaTime);
 
@@ -318,18 +318,18 @@ void FEditorShell::OnPanelClosed(const FString& PanelId)
 FDockNode FEditorShell::BuildDefaultLayout()
 {
     FDockNode Right = FDockNode::CreateSplit(EDockSplitOrientation::Vertical,
-        FDockNode::CreateTabs({ "SceneHierarchy" }), FDockNode::CreateTabs({ "Properties" }));
+        FDockNode::CreateTabs({ TEXT("SceneHierarchy") }), FDockNode::CreateTabs({ TEXT("Properties") }));
     Right.ChildFractions = { 0.55f, 0.45f };
 
     FDockNode Centre = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal,
-        FDockNode::CreateTabs({ "RendererSettings", "Stats", "RHIInfo", "About" }), FDockNode::CreateTabs({ "Viewport" }));
+        FDockNode::CreateTabs({ TEXT("RendererSettings"), TEXT("Stats"), TEXT("RHIInfo"), TEXT("About") }), FDockNode::CreateTabs({ TEXT("Viewport") }));
     Centre.ChildFractions = { 0.24f, 0.76f };
 
     FDockNode Upper = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, Centre, Right);
     Upper.ChildFractions = { 0.78f, 0.22f };
 
     FDockNode Root = FDockNode::CreateSplit(EDockSplitOrientation::Vertical,
-        Upper, FDockNode::CreateTabs({ "OutputLog", "ContentBrowser", "Profiler", "RenderGraph" }));
+        Upper, FDockNode::CreateTabs({ TEXT("OutputLog"), TEXT("ContentBrowser"), TEXT("Profiler"), TEXT("RenderGraph") }));
     Root.ChildFractions = { 0.72f, 0.28f };
 
     return Root;

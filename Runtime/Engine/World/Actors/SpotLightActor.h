@@ -13,7 +13,7 @@ public:
 
     virtual const CHAR_T* GetTypeLabel() const override
     {
-        return "SpotLight";
+        return TEXT("SpotLight");
     }
 
     FSpotLightComponent* GetLightComponent() const

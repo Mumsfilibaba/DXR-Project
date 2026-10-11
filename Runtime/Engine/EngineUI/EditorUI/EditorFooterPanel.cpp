@@ -179,25 +179,25 @@ static const CHAR_T* GetConsoleVariableTypeName(IConsoleVariable* Variable)
 {
     if (Variable->IsVariableBool())
     {
-        return "Bool";
+        return TEXT("Bool");
     }
 
     if (Variable->IsVariableInt())
     {
-        return "Int";
+        return TEXT("Int");
     }
 
     if (Variable->IsVariableFloat())
     {
-        return "Float";
+        return TEXT("Float");
     }
 
     if (Variable->IsVariableString())
     {
-        return "String";
+        return TEXT("String");
     }
 
-    return "Variable";
+    return TEXT("Variable");
 }
 
 FEditorFooterPanel::FEditorFooterPanel()
@@ -226,7 +226,7 @@ bool FEditorFooterPanel::Initialize()
     const FInputFrameStyle FrameStyle = FEditorStyle::GetConsoleInputFrameStyle();
 
     FEditableText::FDesc FieldDesc;
-    FieldDesc.HintText        = "Console Input";
+    FieldDesc.HintText        = TEXT("Console Input");
     FieldDesc.Font            = FEditorStyle::GetFonts().Monospace;
     FieldDesc.ForegroundColor = FrameStyle.Text;
     FieldDesc.HintColor       = FrameStyle.HintNormal;
@@ -632,19 +632,19 @@ TSharedPtr<FVisualElement> FEditorFooterPanel::MakeCandidateToolTip(int32 Candid
     {
         const EConsoleVariableFlags SetByFlags = static_cast<EConsoleVariableFlags>(Variable->GetFlags() & EConsoleVariableFlags::SetByMask);
 
-        DetailRuns.Add(FTextRun(FString("Type: ") + GetConsoleVariableTypeName(Variable) + "\n", Font.Get(), DetailColor));
-        DetailRuns.Add(FTextRun(FString("Value: ") + Variable->GetString() + "\n", Font.Get(), DetailColor));
-        DetailRuns.Add(FTextRun(FString("Set By: ") + SetByFlagToString(SetByFlags), Font.Get(), DetailColor));
+        DetailRuns.Add(FTextRun(FString(TEXT("Type: ")) + GetConsoleVariableTypeName(Variable) + TEXT("\n"), Font.Get(), DetailColor));
+        DetailRuns.Add(FTextRun(FString(TEXT("Value: ")) + Variable->GetString() + TEXT("\n"), Font.Get(), DetailColor));
+        DetailRuns.Add(FTextRun(FString(TEXT("Set By: ")) + SetByFlagToString(SetByFlags), Font.Get(), DetailColor));
     }
     else if (Candidate.First->AsCommand())
     {
-        DetailRuns.Add(FTextRun("Type: Command", Font.Get(), DetailColor));
+        DetailRuns.Add(FTextRun(TEXT("Type: Command"), Font.Get(), DetailColor));
     }
 
     const CHAR_T* HelpString = Candidate.First->GetHelpString();
     if (HelpString && HelpString[0] != 0)
     {
-        const FString HelpText = DetailRuns.IsEmpty() ? FString(HelpString) : FString("\n") + HelpString;
+        const FString HelpText = DetailRuns.IsEmpty() ? FString(HelpString) : FString(TEXT("\n")) + HelpString;
         DetailRuns.Add(FTextRun(HelpText, Font.Get(), FFloatColor::White));
     }
 
@@ -701,10 +701,10 @@ void FEditorFooterPanel::Refresh()
     const int32 NumRemoteConsoles = FRemoteConsoleServer::GetNumConnectedClients();
     if (NumRemoteConsoles > 0)
     {
-        StatusLabel->SetText(FString::Printf("Remote console: %d connected    %.1f FPS  %.2f ms", NumRemoteConsoles, FramesPerSecond, FrameTimeMs));
+        StatusLabel->SetText(FString::Printf(TEXT("Remote console: %d connected    %.1f FPS  %.2f ms"), NumRemoteConsoles, FramesPerSecond, FrameTimeMs));
     }
     else
     {
-        StatusLabel->SetText(FString::Printf("%.1f FPS  %.2f ms", FramesPerSecond, FrameTimeMs));
+        StatusLabel->SetText(FString::Printf(TEXT("%.1f FPS  %.2f ms"), FramesPerSecond, FrameTimeMs));
     }
 }

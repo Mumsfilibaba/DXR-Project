@@ -81,27 +81,27 @@ static ImGuiStorage GPopupLastPlacedFrame;
 
 static const FEditorIconRequest GIconRequests[] =
 {
-    { "Editor/Icons/Undo.png",               &EditorIcons::UndoIcon             },
-    { "Editor/Icons/Search.png",             &EditorIcons::SearchIcon           },
-    { "Editor/Icons/Locked.png",             &EditorIcons::LockedIcon           },
-    { "Editor/Icons/Unlocked.png",           &EditorIcons::UnlockedIcon         },
-    { "Editor/Icons/Folder.png",             &EditorIcons::FolderIcon           },
-    { "Editor/Icons/FolderSmall.png",        &EditorIcons::FolderSmallIcon      },
-    { "Editor/Icons/FolderSmall2.png",       &EditorIcons::FolderSmall2Icon     },
-    { "Editor/Icons/FolderOpenSmall.png",    &EditorIcons::FolderOpenSmallIcon  },
-    { "Editor/Icons/Document.png",           &EditorIcons::DocumentIcon         },
-    { "Editor/Icons/DocumentSmall.png",      &EditorIcons::DocumentSmallIcon    },
-    { "Editor/Icons/Checkmark.png",          &EditorIcons::CheckmarkIcon        },
-    { "Editor/Icons/Forbidden.png",          &EditorIcons::ForbiddenIcon        },
-    { "Editor/Icons/CircledCheckmark.png",   &EditorIcons::CircledCheckmarkIcon },
-    { "Editor/Icons/Next.png",               &EditorIcons::NextIcon             },
-    { "Editor/Icons/Previous.png",           &EditorIcons::PreviousIcon         },
-    { "Editor/Icons/Close.png",              &EditorIcons::CloseIcon            },
-    { "Editor/Icons/Filter.png",             &EditorIcons::FilterIcon           },
-    { "Editor/Icons/RightArrow.png",         &EditorIcons::RightArrowIcon       },
-    { "Editor/Icons/DownArrow.png",          &EditorIcons::DownArrowIcon        },
-    { "Editor/Icons/CollapseArrowDown.png",  &EditorIcons::CollapseArrowDown    },
-    { "Editor/Icons/CollapseArrowRight.png", &EditorIcons::CollapseArrowRight   },
+    { TEXT("Editor/Icons/Undo.png"),               &EditorIcons::UndoIcon             },
+    { TEXT("Editor/Icons/Search.png"),             &EditorIcons::SearchIcon           },
+    { TEXT("Editor/Icons/Locked.png"),             &EditorIcons::LockedIcon           },
+    { TEXT("Editor/Icons/Unlocked.png"),           &EditorIcons::UnlockedIcon         },
+    { TEXT("Editor/Icons/Folder.png"),             &EditorIcons::FolderIcon           },
+    { TEXT("Editor/Icons/FolderSmall.png"),        &EditorIcons::FolderSmallIcon      },
+    { TEXT("Editor/Icons/FolderSmall2.png"),       &EditorIcons::FolderSmall2Icon     },
+    { TEXT("Editor/Icons/FolderOpenSmall.png"),    &EditorIcons::FolderOpenSmallIcon  },
+    { TEXT("Editor/Icons/Document.png"),           &EditorIcons::DocumentIcon         },
+    { TEXT("Editor/Icons/DocumentSmall.png"),      &EditorIcons::DocumentSmallIcon    },
+    { TEXT("Editor/Icons/Checkmark.png"),          &EditorIcons::CheckmarkIcon        },
+    { TEXT("Editor/Icons/Forbidden.png"),          &EditorIcons::ForbiddenIcon        },
+    { TEXT("Editor/Icons/CircledCheckmark.png"),   &EditorIcons::CircledCheckmarkIcon },
+    { TEXT("Editor/Icons/Next.png"),               &EditorIcons::NextIcon             },
+    { TEXT("Editor/Icons/Previous.png"),           &EditorIcons::PreviousIcon         },
+    { TEXT("Editor/Icons/Close.png"),              &EditorIcons::CloseIcon            },
+    { TEXT("Editor/Icons/Filter.png"),             &EditorIcons::FilterIcon           },
+    { TEXT("Editor/Icons/RightArrow.png"),         &EditorIcons::RightArrowIcon       },
+    { TEXT("Editor/Icons/DownArrow.png"),          &EditorIcons::DownArrowIcon        },
+    { TEXT("Editor/Icons/CollapseArrowDown.png"),  &EditorIcons::CollapseArrowDown    },
+    { TEXT("Editor/Icons/CollapseArrowRight.png"), &EditorIcons::CollapseArrowRight   },
 };
 
 static constexpr float EditorWindowBorderInset = 5.0f;
@@ -373,13 +373,13 @@ static bool ResetIconButton(float InSize = 0.0f)
     }
     else
     {
-        const CHAR_T* FallbackText = "R";
+        const CHAR_T* FallbackText = TEXT("R");
 
-        const ImVec2 FallbackTextSize     = ImGui::CalcTextSize(FallbackText);
+        const ImVec2 FallbackTextSize     = ImGui::CalcTextSize(StringCast<ANSICHAR>(FallbackText).Get());
         const ImVec2 FallbackTextPosition = ImVec2((ButtonRectMin.x + ButtonRectMax.x) * 0.5f - FallbackTextSize.x * 0.5f, (ButtonRectMin.y + ButtonRectMax.y) * 0.5f - FallbackTextSize.y * 0.5f);
 
         const ImU32 TextColor = ImGui::GetColorU32(ImGuiCol_Text);
-        WindowDrawList->AddText(FallbackTextPosition, TextColor, FallbackText);
+        WindowDrawList->AddText(FallbackTextPosition, TextColor, StringCast<ANSICHAR>(FallbackText).Get());
     }
 
     ImGui::PopID();
@@ -405,16 +405,18 @@ static void DrawSuffixAfterTempInputText(ImGuiID InItemId, const CHAR_T* InSuffi
         return;
     }
 
-    const CHAR_T* EditText = Context.InputTextState.TextA.Data;
+    const ANSICHAR* EditText = Context.InputTextState.TextA.Data;
     if (!EditText)
     {
         return;
     }
 
+    const TStringConversion<ANSICHAR, CHAR_T> Suffix = StringCast<ANSICHAR>(InSuffix);
+
     const ImVec2 ItemMin    = ImGui::GetItemRectMin();
     const ImVec2 ItemMax    = ImGui::GetItemRectMax();
     const ImVec2 TextSize   = ImGui::CalcTextSize(EditText);
-    const ImVec2 SuffixSize = ImGui::CalcTextSize(InSuffix);
+    const ImVec2 SuffixSize = ImGui::CalcTextSize(Suffix.Get());
 
     const float TextStartX = ItemMin.x + ImGui::GetStyle().FramePadding.x;
     const float RightLimit = ItemMax.x - ImGui::GetStyle().FramePadding.x;
@@ -426,7 +428,7 @@ static void DrawSuffixAfterTempInputText(ImGuiID InItemId, const CHAR_T* InSuffi
     }
 
     const float Y = ItemMin.y + (ItemMax.y - ItemMin.y - SuffixSize.y) * 0.5f;
-    Window->DrawList->AddText(ImVec2(DesiredX, Y), InColor, InSuffix);
+    Window->DrawList->AddText(ImVec2(DesiredX, Y), InColor, Suffix.Get());
 }
 
 static FORCEINLINE int32 ClampInt32(int32 V, int32 MinV, int32 MaxV)
@@ -555,7 +557,7 @@ static FString BuildSelectedText(const FRichTextViewContext& Ctx)
 
             if (L != LineMax)
             {
-                Result += "\n";
+                Result += TEXT("\n");
             }
         }
     }
@@ -575,7 +577,7 @@ static FString BuildAllText(const FRichTextViewContext& Ctx)
             Result.Append(Ctx.GetSpanText(Line.Spans[s]), Line.Spans[s].TextLength);
         }
 
-        Result += "\n";
+        Result += TEXT("\n");
     }
 
     return Result;
@@ -599,7 +601,7 @@ static FORCEINLINE float MeasureRichTextWidth(const CHAR_T* Text)
         return 0.0f;
     }
 
-    return Font->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, 0.0f, Text).x;
+    return Font->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, 0.0f, StringCast<ANSICHAR>(Text).Get()).x;
 }
 
 static FRichTextSelectionPoint GetMouseSelectionPoint(const FRichTextViewContext& Ctx, const ImVec2& MousePos)
@@ -706,7 +708,7 @@ static bool MenuFloatRow(EMenuFloatWidget WidgetType, const CHAR_T* Label, float
     const float RowWidth  = ImGui::GetContentRegionAvail().x;
     const float RowHeight = Math::Max(ImGui::GetFontSize() + PaddingY * 2.0f, ImGui::GetFrameHeight());
 
-    ImGui::PushID(Label);
+    ImGui::PushID(StringCast<ANSICHAR>(Label).Get());
 
     const ImVec2 RectMin = ImGui::GetCursorScreenPos();
     ImGui::Dummy(ImVec2(RowWidth, RowHeight));
@@ -715,7 +717,7 @@ static bool MenuFloatRow(EMenuFloatWidget WidgetType, const CHAR_T* Label, float
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
     DrawList->AddRectFilled(RectMin, RectMax, ImGui::GetColorU32(ImGuiCol_Header), 0.0f);
 
-    const ImVec2 LabelSize = ImGui::CalcTextSize(Label);
+    const ImVec2 LabelSize = ImGui::CalcTextSize(StringCast<ANSICHAR>(Label).Get());
     const float  LabelY    = RectMin.y + (RowHeight - LabelSize.y) * 0.5f + 0.5f;
 
     const float FieldWidth = Math::Min(ValueWidth, Math::Max(RowWidth - MenuIndentX * 2.0f, 1.0f));
@@ -723,7 +725,7 @@ static bool MenuFloatRow(EMenuFloatWidget WidgetType, const CHAR_T* Label, float
     const float FieldY     = RectMin.y + (RowHeight - ImGui::GetFrameHeight()) * 0.5f;
 
     DrawList->PushClipRect(ImVec2(RectMin.x + MenuIndentX, RectMin.y), ImVec2(Math::Max(FieldX - 8.0f, RectMin.x + MenuIndentX + 1.0f), RectMax.y), true);
-    DrawList->AddText(ImVec2(RectMin.x + MenuIndentX, LabelY), ImGui::GetColorU32(bEnabled ? ImGuiCol_Text : ImGuiCol_TextDisabled), Label);
+    DrawList->AddText(ImVec2(RectMin.x + MenuIndentX, LabelY), ImGui::GetColorU32(bEnabled ? ImGuiCol_Text : ImGuiCol_TextDisabled), StringCast<ANSICHAR>(Label).Get());
     DrawList->PopClipRect();
 
     ImGui::SetCursorScreenPos(ImVec2(FieldX, FieldY));
@@ -737,11 +739,11 @@ static bool MenuFloatRow(EMenuFloatWidget WidgetType, const CHAR_T* Label, float
     bool bChanged = false;
     if (WidgetType == EMenuFloatWidget::Slider)
     {
-        bChanged = ImGui::SliderFloat("##Value", &InOutValue, MinValue, MaxValue, Format);
+        bChanged = ImGui::SliderFloat("##Value", &InOutValue, MinValue, MaxValue, StringCast<ANSICHAR>(Format).Get());
     }
     else
     {
-        bChanged = ImGui::DragFloat("##Value", &InOutValue, Speed, MinValue, MaxValue, Format);
+        bChanged = ImGui::DragFloat("##Value", &InOutValue, Speed, MinValue, MaxValue, StringCast<ANSICHAR>(Format).Get());
     }
 
     DrawInputBorderLastItem(ImGui::GetStyle().FrameRounding);
@@ -876,9 +878,9 @@ static void DrawSubMenuArrow(ImDrawList* DrawList, const ImVec2& RectMin, const 
 static bool LoadEditorIconImage(const CHAR_T* InRelativePath, FEditorIconImage& OutImage)
 {
     FString FullPath = Paths::GetAssetDir();
-    if (!FullPath.EndsWith("/"))
+    if (!FullPath.EndsWith(TEXT("/")))
     {
-        FullPath += "/";
+        FullPath += TEXT("/");
     }
 
     FullPath += InRelativePath;
@@ -933,9 +935,9 @@ static bool LoadEditorIconImage(const CHAR_T* InRelativePath, FEditorIconImage& 
 static ImFont* LoadEditorFont(const CHAR_T* InRelativePath, float SizePixels, const ImFontConfig* FontCfgTemplate = nullptr, const ImWchar* GlyphRanges = nullptr)
 {
     FString FullPath = Paths::GetAssetDir();
-    if (!FullPath.EndsWith("/"))
+    if (!FullPath.EndsWith(TEXT("/")))
     {
-        FullPath += "/";
+        FullPath += TEXT("/");
     }
 
     FullPath += InRelativePath;
@@ -955,8 +957,8 @@ static ImFont* LoadSystemIconFont()
     // Segoe Fluent Icons ships with Windows 11, and Segoe MDL2 assets carries the same code points on Windows 10.
     const CHAR_T* IconFontPaths[] =
     {
-        "C:\\Windows\\Fonts\\SegoeIcons.ttf",
-        "C:\\Windows\\Fonts\\segmdl2.ttf",
+        TEXT("C:\\Windows\\Fonts\\SegoeIcons.ttf"),
+        TEXT("C:\\Windows\\Fonts\\segmdl2.ttf"),
     };
 
     // Kept alive past the call because the atlas only reads the ranges when it is built.
@@ -1056,7 +1058,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR_T* Label, FVector3& OutValue, f
         return Speed;
     };
 
-    const auto GetDynamicFormatString = [](float Value, TStaticArray<CHAR_T, 8>& OutFormat) -> const CHAR_T*
+    const auto GetDynamicFormatString = [](float Value, TStaticArray<ANSICHAR, 8>& OutFormat) -> const ANSICHAR*
     {
         static const TStaticArray<float, 4> Pow10Table = { 10.0f, 100.0f, 1000.0f, 10000.0f };
 
@@ -1078,19 +1080,19 @@ bool EditorWidgets::DrawFloat3Control(const CHAR_T* Label, FVector3& OutValue, f
             DecimalsToShow = 4;
         }
 
-        CString::Snprintf(OutFormat.Data(), static_cast<int32>(OutFormat.Size()), "%%.%df", DecimalsToShow);
+        FPlatformString::Snprintf(OutFormat.Data(), OutFormat.Size(), "%%.%df", DecimalsToShow);
         return OutFormat.Data();
     };
 
     BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
-    ImGui::Text("%s", Label);
+    ImGui::Text("%s", StringCast<ANSICHAR>(Label).Get());
 
     bool bUniformScaleEnabled = false;
     if (bIsScaleControl)
     {
         ImGui::SameLine(0.0f, 12.0f);
 
-        ImGui::PushID(Label);
+        ImGui::PushID(StringCast<ANSICHAR>(Label).Get());
 
         const ImGuiID UniformScaleKey = ImGui::GetID("UniformScale");
 
@@ -1131,12 +1133,12 @@ bool EditorWidgets::DrawFloat3Control(const CHAR_T* Label, FVector3& OutValue, f
             }
             else
             {
-                const CHAR_T* FallbackText = bUniformScaleEnabled ? "L" : "U";
+                const CHAR_T* FallbackText = bUniformScaleEnabled ? TEXT("L") : TEXT("U");
 
-                const ImVec2 TextSize = ImGui::CalcTextSize(FallbackText);
+                const ImVec2 TextSize = ImGui::CalcTextSize(StringCast<ANSICHAR>(FallbackText).Get());
                 const ImVec2 TextPos  = ImVec2((RectMin.x + RectMax.x) * 0.5f - TextSize.x * 0.5f, (RectMin.y + RectMax.y) * 0.5f - TextSize.y * 0.5f);
                 
-                DrawList->AddText(TextPos, ImGui::GetColorU32(ImGuiCol_Text), FallbackText);
+                DrawList->AddText(TextPos, ImGui::GetColorU32(ImGuiCol_Text), StringCast<ANSICHAR>(FallbackText).Get());
             }
         }
 
@@ -1158,7 +1160,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR_T* Label, FVector3& OutValue, f
     }
 
     BeginPropertyTableValueCell(FrameHeight);
-    ImGui::PushID(Label);
+    ImGui::PushID(StringCast<ANSICHAR>(Label).Get());
 
     const float AvailableWidth = GetPropertyTableValueWidth();
     const float TotalAxisGaps  = 2.0f * AxisGap;
@@ -1182,11 +1184,11 @@ bool EditorWidgets::DrawFloat3Control(const CHAR_T* Label, FVector3& OutValue, f
 
         bool bAxisValueChanged = false;
 
-        TStaticArray<CHAR_T, 8> FormatBuffer;
-        const CHAR_T* FormatString = GetDynamicFormatString(InOutAxisValue, FormatBuffer);
+        TStaticArray<ANSICHAR, 8> FormatBuffer;
+        const ANSICHAR* FormatString = GetDynamicFormatString(InOutAxisValue, FormatBuffer);
 
         const float AxisDragSpeed = GetAxisDragSpeed();
-        bAxisValueChanged |= ImGui::DragFloat(DragWidgetId, &InOutAxisValue, AxisDragSpeed, 0.0f, 0.0f, FormatString, ImGuiSliderFlags_NoRoundToFormat);
+        bAxisValueChanged |= ImGui::DragFloat(StringCast<ANSICHAR>(DragWidgetId).Get(), &InOutAxisValue, AxisDragSpeed, 0.0f, 0.0f, FormatString, ImGuiSliderFlags_NoRoundToFormat);
 
         if (bIsRotationDegrees && ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f))
         {
@@ -1206,11 +1208,11 @@ bool EditorWidgets::DrawFloat3Control(const CHAR_T* Label, FVector3& OutValue, f
         const bool bIsTempInputActive = ImGui::TempInputIsActive(LastItemId);
         if (!bIsTempInputActive)
         {
-            TStaticArray<CHAR_T, 8> FormatBufferAfter;
-            const CHAR_T* FormatStringAfter = GetDynamicFormatString(InOutAxisValue, FormatBufferAfter);
+            TStaticArray<ANSICHAR, 8> FormatBufferAfter;
+            const ANSICHAR* FormatStringAfter = GetDynamicFormatString(InOutAxisValue, FormatBufferAfter);
 
-            TStaticArray<CHAR_T, 64> ValueTextBuffer;
-            CString::Snprintf(ValueTextBuffer.Data(), static_cast<int32>(ValueTextBuffer.Size()), FormatStringAfter, InOutAxisValue);
+            TStaticArray<ANSICHAR, 64> ValueTextBuffer;
+            FPlatformString::Snprintf(ValueTextBuffer.Data(), ValueTextBuffer.Size(), FormatStringAfter, InOutAxisValue);
 
             ImGuiWindow* Window = ImGui::GetCurrentWindow();
             if (Window && !Window->SkipItems)
@@ -1242,7 +1244,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR_T* Label, FVector3& OutValue, f
 
         if (bIsRotationDegrees && bIsTempInputActive)
         {
-            DrawSuffixAfterTempInputText(LastItemId, "\xC2\xB0", ImGui::GetColorU32(ImGuiCol_Text));
+            DrawSuffixAfterTempInputText(LastItemId, TEXT("\xC2\xB0"), ImGui::GetColorU32(ImGuiCol_Text));
         }
 
         bRowHovered |= bIsItemHovered;
@@ -1258,9 +1260,9 @@ bool EditorWidgets::DrawFloat3Control(const CHAR_T* Label, FVector3& OutValue, f
     const ImU32 YAxisColor = ImGui::ColorConvertFloat4ToU32(EditorAxisColors::Y);
     const ImU32 ZAxisColor = ImGui::ColorConvertFloat4ToU32(EditorAxisColors::Z);
 
-    bXChanged = DrawAxisField("##X", OutValue.X, XAxisColor, AxisFieldWidth, false);
-    bYChanged = DrawAxisField("##Y", OutValue.Y, YAxisColor, AxisFieldWidth, true);
-    bZChanged = DrawAxisField("##Z", OutValue.Z, ZAxisColor, AxisFieldWidth, true);
+    bXChanged = DrawAxisField(TEXT("##X"), OutValue.X, XAxisColor, AxisFieldWidth, false);
+    bYChanged = DrawAxisField(TEXT("##Y"), OutValue.Y, YAxisColor, AxisFieldWidth, true);
+    bZChanged = DrawAxisField(TEXT("##Z"), OutValue.Z, ZAxisColor, AxisFieldWidth, true);
 
     if (bIsScaleControl && bUniformScaleEnabled)
     {
@@ -1337,10 +1339,10 @@ bool EditorWidgets::DrawFloatProperty(const CHAR_T* Label, float& InOutValue, fl
     bool bRowHovered = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
-    ImGui::TextUnformatted(Label);
+    ImGui::TextUnformatted(StringCast<ANSICHAR>(Label).Get());
 
     BeginPropertyTableValueCell(ContentHeight);
-    ImGui::PushID(Label);
+    ImGui::PushID(StringCast<ANSICHAR>(Label).Get());
 
     if (!bEnabled)
     {
@@ -1350,11 +1352,11 @@ bool EditorWidgets::DrawFloatProperty(const CHAR_T* Label, float& InOutValue, fl
     SetPropertyTableValueItemWidth();
     if (bUseSlider)
     {
-        bResult = ImGui::SliderFloat("##Value", &InOutValue, MinValue, MaxValue, Format);
+        bResult = ImGui::SliderFloat("##Value", &InOutValue, MinValue, MaxValue, StringCast<ANSICHAR>(Format).Get());
     }
     else
     {
-        bResult = ImGui::DragFloat("##Value", &InOutValue, Speed, MinValue, MaxValue, Format);
+        bResult = ImGui::DragFloat("##Value", &InOutValue, Speed, MinValue, MaxValue, StringCast<ANSICHAR>(Format).Get());
     }
 
     ImGuiStyle& Style = ImGui::GetStyle();
@@ -1407,10 +1409,10 @@ bool EditorWidgets::DrawIntProperty(const CHAR_T* Label, int32& InOutValue, floa
     bool bRowHovered = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
-    ImGui::TextUnformatted(Label);
+    ImGui::TextUnformatted(StringCast<ANSICHAR>(Label).Get());
 
     BeginPropertyTableValueCell(ContentHeight);
-    ImGui::PushID(Label);
+    ImGui::PushID(StringCast<ANSICHAR>(Label).Get());
 
     if (!bEnabled)
     {
@@ -1420,11 +1422,11 @@ bool EditorWidgets::DrawIntProperty(const CHAR_T* Label, int32& InOutValue, floa
     SetPropertyTableValueItemWidth();
     if (bUseSlider)
     {
-        bResult = ImGui::SliderInt("##Value", &InOutValue, MinValue, MaxValue, Format);
+        bResult = ImGui::SliderInt("##Value", &InOutValue, MinValue, MaxValue, StringCast<ANSICHAR>(Format).Get());
     }
     else
     {
-        bResult = ImGui::DragInt("##Value", &InOutValue, Speed, MinValue, MaxValue, Format);
+        bResult = ImGui::DragInt("##Value", &InOutValue, Speed, MinValue, MaxValue, StringCast<ANSICHAR>(Format).Get());
     }
 
     ImGuiStyle& Style = ImGui::GetStyle();
@@ -1477,10 +1479,10 @@ bool EditorWidgets::DrawComboProperty(const CHAR_T* Label, int32& InOutValue, co
     bool bRowHovered = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
-    ImGui::TextUnformatted(Label);
+    ImGui::TextUnformatted(StringCast<ANSICHAR>(Label).Get());
 
     BeginPropertyTableValueCell(ContentHeight);
-    ImGui::PushID(Label);
+    ImGui::PushID(StringCast<ANSICHAR>(Label).Get());
 
     if (!bEnabled)
     {
@@ -1501,7 +1503,7 @@ bool EditorWidgets::DrawComboProperty(const CHAR_T* Label, int32& InOutValue, co
     constexpr float PopupRounding = 0.0f;
 
     const int32   ClampedIndex = Math::Clamp<int32>(InOutValue, 0, Math::Max(0, ItemCount - 1));
-    const CHAR_T* PreviewText  = (Items && ItemCount > 0) ? Items[ClampedIndex] : "";
+    const CHAR_T* PreviewText  = (Items && ItemCount > 0) ? Items[ClampedIndex] : TEXT("");
     const float   FrameHeight  = ImGui::GetFrameHeight();
     const ImVec2  FieldSize    = ImVec2(GetPropertyTableValueWidth(), FrameHeight);
 
@@ -1521,7 +1523,7 @@ bool EditorWidgets::DrawComboProperty(const CHAR_T* Label, int32& InOutValue, co
         Window->DrawList->AddRectFilled(FieldMin, FieldMax, FieldBgU32, FieldRounding);
 
         const float  ArrowZoneW     = FrameHeight;
-        const ImVec2 TextSize       = ImGui::CalcTextSize(PreviewText);
+        const ImVec2 TextSize       = ImGui::CalcTextSize(StringCast<ANSICHAR>(PreviewText).Get());
         const float  TextY          = FieldMin.y + (FrameHeight - TextSize.y) * 0.5f;
         const float  ArrowPadX      = 8.0f;
         const float  TextStartX     = FieldMin.x + Style.FramePadding.x;
@@ -1532,7 +1534,7 @@ bool EditorWidgets::DrawComboProperty(const CHAR_T* Label, int32& InOutValue, co
         const ImU32  ArrowColorU32  = (bFieldHovered || bFieldActive) ? IM_COL32(255, 255, 255, 255) : ArrowU32;
 
         Window->DrawList->PushClipRect(ClipMin, ClipMax, true);
-        Window->DrawList->AddText(ImVec2(TextStartX, TextY), PreviewTextU32, PreviewText);
+        Window->DrawList->AddText(ImVec2(TextStartX, TextY), PreviewTextU32, StringCast<ANSICHAR>(PreviewText).Get());
         Window->DrawList->PopClipRect();
 
         const float ArrowSize = 6.0f;
@@ -1561,7 +1563,7 @@ bool EditorWidgets::DrawComboProperty(const CHAR_T* Label, int32& InOutValue, co
             float MaxItemTextWidth = 0.0f;
             for (int32 ItemIndex = 0; ItemIndex < ItemCount; ++ItemIndex)
             {
-                const ImVec2 TextSize = ImGui::CalcTextSize(Items[ItemIndex] ? Items[ItemIndex] : "");
+                const ImVec2 TextSize = ImGui::CalcTextSize(StringCast<ANSICHAR>(Items[ItemIndex] ? Items[ItemIndex] : TEXT("")).Get());
                 MaxItemTextWidth = Math::Max(MaxItemTextWidth, TextSize.x);
             }
 
@@ -1576,7 +1578,7 @@ bool EditorWidgets::DrawComboProperty(const CHAR_T* Label, int32& InOutValue, co
         ComboAnchor.Max = FieldMax;
 
         ImGui::SetNextWindowSize(ImVec2(PopupWidth, 0.0f));
-        SetNextBeginPopupPos("##ComboPopup", ComboAnchor, EPopupPlacement::BelowAnchor, ImVec2(PopupWidth, 0.0f));
+        SetNextBeginPopupPos(TEXT("##ComboPopup"), ComboAnchor, EPopupPlacement::BelowAnchor, ImVec2(PopupWidth, 0.0f));
     }
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -1619,14 +1621,14 @@ bool EditorWidgets::DrawComboProperty(const CHAR_T* Label, int32& InOutValue, co
                 PopupDrawList->AddRectFilled(ItemMin, ItemMax, SelectBgU32, 0.0f);
             }
 
-            const CHAR_T* ItemText     = (Items && ItemIndex < ItemCount) ? Items[ItemIndex] : "";
-            const ImVec2  ItemTextSize = ImGui::CalcTextSize(ItemText);
+            const CHAR_T* ItemText     = (Items && ItemIndex < ItemCount) ? Items[ItemIndex] : TEXT("");
+            const ImVec2  ItemTextSize = ImGui::CalcTextSize(StringCast<ANSICHAR>(ItemText).Get());
             const float   ItemTextY    = ItemMin.y + (ItemHeight - ItemTextSize.y) * 0.5f;
             const float   ItemTextX    = ItemMin.x + PopupTextPadX;
 
             if (PopupDrawList)
             {
-                PopupDrawList->AddText(ImVec2(ItemTextX, ItemTextY), PopupTextU32, ItemText);
+                PopupDrawList->AddText(ImVec2(ItemTextX, ItemTextY), PopupTextU32, StringCast<ANSICHAR>(ItemText).Get());
             }
 
             if (bSelected && PopupDrawList)
@@ -1714,12 +1716,12 @@ bool EditorWidgets::DrawCheckbox(const CHAR_T* Label, bool& InOutValue, bool bEn
 
     ImGuiContext&     Context          = *GImGui;
     const ImGuiStyle& Style            = Context.Style;
-    const ImGuiID     Id               = Window->GetID(Label);
+    const ImGuiID     Id               = Window->GetID(StringCast<ANSICHAR>(Label).Get());
     const float       FrameHeight      = ImGui::GetFrameHeight();
     const float       CheckboxSize     = FrameHeight * EditorStyleVars::CheckboxSizeScale;
     const float       OffsetY          = (FrameHeight - CheckboxSize) * 0.5f;
     const bool        bHasVisibleLabel = Label && !(Label[0] == '#' && Label[1] == '#');
-    const ImVec2      LabelSize        = bHasVisibleLabel ? ImGui::CalcTextSize(Label, nullptr, true) : ImVec2(0.0f, 0.0f);
+    const ImVec2      LabelSize        = bHasVisibleLabel ? ImGui::CalcTextSize(StringCast<ANSICHAR>(Label).Get(), nullptr, true) : ImVec2(0.0f, 0.0f);
     const ImVec2      Pos              = Window->DC.CursorPos;
     const float       TotalWidth       = CheckboxSize + (bHasVisibleLabel ? Style.ItemInnerSpacing.x + LabelSize.x : 0.0f);
     const ImRect      TotalBB          = ImRect(Pos, Pos + ImVec2(TotalWidth, FrameHeight));
@@ -1773,7 +1775,7 @@ bool EditorWidgets::DrawCheckbox(const CHAR_T* Label, bool& InOutValue, bool bEn
     if (bHasVisibleLabel)
     {
         const ImVec2 LabelPos = ImVec2(CheckBB.Max.x + Style.ItemInnerSpacing.x, Pos.y + Style.FramePadding.y);
-        ImGui::RenderText(LabelPos, Label);
+        ImGui::RenderText(LabelPos, StringCast<ANSICHAR>(Label).Get());
     }
 
     if (!bEnabled)
@@ -1800,12 +1802,12 @@ bool EditorWidgets::DrawCheckboxProperty(const CHAR_T* Label, bool& InOutValue, 
     bool bRowHovered = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
-    ImGui::TextUnformatted(Label);
+    ImGui::TextUnformatted(StringCast<ANSICHAR>(Label).Get());
 
     BeginPropertyTableValueCell(ContentHeight);
-    ImGui::PushID(Label);
+    ImGui::PushID(StringCast<ANSICHAR>(Label).Get());
 
-    bResult = EditorWidgets::DrawCheckbox("##Value", InOutValue, bEnabled);
+    bResult = EditorWidgets::DrawCheckbox(TEXT("##Value"), InOutValue, bEnabled);
 
     bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
     bRowHovered |= ImGui::IsItemActive();
@@ -1839,7 +1841,7 @@ bool EditorWidgets::DrawTextProperty(const CHAR_T* Label, const CHAR_T* ValueTex
     ImGuiTable* Table = ImGui::GetCurrentTable();
     if (!Table)
     {
-        ImGui::Text("%s: %s", Label, ValueText ? ValueText : "");
+        ImGui::Text("%s: %s", StringCast<ANSICHAR>(Label).Get(), StringCast<ANSICHAR>(ValueText ? ValueText : TEXT("")).Get());
         return false;
     }
 
@@ -1849,10 +1851,10 @@ bool EditorWidgets::DrawTextProperty(const CHAR_T* Label, const CHAR_T* ValueTex
     bool bRowHovered = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     BeginPropertyTableLabelCell(ContentHeight);
-    ImGui::TextUnformatted(Label);
+    ImGui::TextUnformatted(StringCast<ANSICHAR>(Label).Get());
 
     BeginPropertyTableValueCell(ImGui::GetTextLineHeight());
-    ImGui::TextUnformatted(ValueText ? ValueText : "");
+    ImGui::TextUnformatted(StringCast<ANSICHAR>(ValueText ? ValueText : TEXT("")).Get());
     bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
     ImGui::TableSetColumnIndex(2);
@@ -1874,7 +1876,7 @@ void EditorWidgets::DrawTextureProperty(const CHAR_T* Label, ImTextureID Texture
     bool bRowHovered = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
-    ImGui::TextUnformatted(Label);
+    ImGui::TextUnformatted(StringCast<ANSICHAR>(Label).Get());
 
     if (Texture)
     {
@@ -1912,7 +1914,7 @@ void EditorWidgets::DrawReadOnlyFloat3Property(const CHAR_T* Label, const FVecto
     ImGuiTable* Table = ImGui::GetCurrentTable();
     if (!Table)
     {
-        ImGui::Text("%s: %.3f %.3f %.3f", Label, Value.X, Value.Y, Value.Z);
+        ImGui::Text("%s: %.3f %.3f %.3f", StringCast<ANSICHAR>(Label).Get(), Value.X, Value.Y, Value.Z);
         return;
     }
 
@@ -1922,7 +1924,7 @@ void EditorWidgets::DrawReadOnlyFloat3Property(const CHAR_T* Label, const FVecto
     bool bRowHovered = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
-    ImGui::TextUnformatted(Label);
+    ImGui::TextUnformatted(StringCast<ANSICHAR>(Label).Get());
 
     BeginPropertyTableValueCell(ContentHeight);
 
@@ -1955,10 +1957,10 @@ bool EditorWidgets::DrawColor3Property(const CHAR_T* Label, float* InOutColor, c
     bool bRowHovered = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
-    ImGui::TextUnformatted(Label);
+    ImGui::TextUnformatted(StringCast<ANSICHAR>(Label).Get());
 
     BeginPropertyTableValueCell(ContentHeight);
-    ImGui::PushID(Label);
+    ImGui::PushID(StringCast<ANSICHAR>(Label).Get());
 
     if (!bEnabled)
     {
@@ -2008,7 +2010,7 @@ bool EditorWidgets::DrawColor3Property(const CHAR_T* Label, float* InOutColor, c
         }
 
         ImGui::SetNextItemWidth(FieldWidth);
-        bResult |= ImGui::DragFloat(Id, &OutValue, 0.01f, 0.0f, 1.0f, "%.3f");
+        bResult |= ImGui::DragFloat(StringCast<ANSICHAR>(Id).Get(), &OutValue, 0.01f, 0.0f, 1.0f, "%.3f");
 
         ImGuiStyle& Style = ImGui::GetStyle();
         DrawInputBorderLastItem(Style.FrameRounding);
@@ -2017,9 +2019,9 @@ bool EditorWidgets::DrawColor3Property(const CHAR_T* Label, float* InOutColor, c
         bRowHovered |= ImGui::IsItemActive();
     };
 
-    DrawComponentDragFloat("##R", InOutColor[0], false);
-    DrawComponentDragFloat("##G", InOutColor[1], true);
-    DrawComponentDragFloat("##B", InOutColor[2], true);
+    DrawComponentDragFloat(TEXT("##R"), InOutColor[0], false);
+    DrawComponentDragFloat(TEXT("##G"), InOutColor[1], true);
+    DrawComponentDragFloat(TEXT("##B"), InOutColor[2], true);
 
     if (!bEnabled)
     {
@@ -2168,7 +2170,7 @@ bool EditorWidgets::BeginEditorWindow(const CHAR_T* Title, bool* pbVisible, ImGu
     const ImVec4 ContentBg      = Style.Colors[ImGuiCol_WindowBg];
     const ImVec4 NestedChildBg  = Style.Colors[ImGuiCol_ChildBg];
 
-    ImGuiWindow* ExistingWindow = ImGui::FindWindowByName(Title);
+    ImGuiWindow* ExistingWindow = ImGui::FindWindowByName(StringCast<ANSICHAR>(Title).Get());
     const bool bFloating        = IsWindowFloating(ExistingWindow);
 
     const ImVec2 OuterPadding = bFloating
@@ -2184,7 +2186,7 @@ bool EditorWidgets::BeginEditorWindow(const CHAR_T* Title, bool* pbVisible, ImGu
         ImGuiWindowFlags_NoScrollbar |
         ImGuiWindowFlags_NoScrollWithMouse;
 
-    GEditorWindowOpen  = ImGui::Begin(Title, pbVisible, OuterFlags);
+    GEditorWindowOpen  = ImGui::Begin(StringCast<ANSICHAR>(Title).Get(), pbVisible, OuterFlags);
     GEditorWindowBegun = true;
     if (!GEditorWindowOpen)
     {
@@ -2269,8 +2271,8 @@ void EditorWidgets::DrawErrorWindow(FErrorWindowContext& InOutContext)
         return;
     }
 
-    const CHAR_T* TitleText  = !InOutContext.Title.IsEmpty() ? *InOutContext.Title : "Failed Renames";
-    const CHAR_T* HeaderText = !InOutContext.HeaderText.IsEmpty() ? *InOutContext.HeaderText : "The following files could not be moved";
+    const CHAR_T* TitleText  = !InOutContext.Title.IsEmpty() ? *InOutContext.Title : TEXT("Failed Renames");
+    const CHAR_T* HeaderText = !InOutContext.HeaderText.IsEmpty() ? *InOutContext.HeaderText : TEXT("The following files could not be moved");
 
     if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
     {
@@ -2296,10 +2298,10 @@ void EditorWidgets::DrawErrorWindow(FErrorWindowContext& InOutContext)
         ImGuiWindowFlags_NoSavedSettings;
 
     bool bClosePressed = false;
-    const bool bBeginWindow = ImGui::Begin(TitleText, nullptr, WindowFlags);
+    const bool bBeginWindow = ImGui::Begin(StringCast<ANSICHAR>(TitleText).Get(), nullptr, WindowFlags);
     if (bBeginWindow)
     {
-        ImGui::TextUnformatted(HeaderText);
+        ImGui::TextUnformatted(StringCast<ANSICHAR>(HeaderText).Get());
         ImGui::Spacing();
         ImGui::Spacing();
 
@@ -2324,7 +2326,7 @@ void EditorWidgets::DrawErrorWindow(FErrorWindowContext& InOutContext)
         {
             for (int32 Index = 0; Index < InOutContext.Entries.Size(); ++Index)
             {
-                ImGui::TextUnformatted(*InOutContext.Entries[Index]);
+                ImGui::TextUnformatted(StringCast<ANSICHAR>(InOutContext.Entries[Index]).Get());
             }
         }
 
@@ -2347,7 +2349,7 @@ void EditorWidgets::DrawErrorWindow(FErrorWindowContext& InOutContext)
         ImGui::SetCursorPosX(ButtonPosX);
 
         const ImVec2 ButtonSize(ButtonWidth, ButtonHeight);
-        bClosePressed = DrawDialogButton("Close", ButtonSize);
+        bClosePressed = DrawDialogButton(TEXT("Close"), ButtonSize);
     }
 
     ImGui::End();
@@ -2370,8 +2372,8 @@ bool EditorWidgets::DrawConfirmDialog(FConfirmDialogContext& InOutContext)
         return false;
     }
 
-    const CHAR_T* TitleText   = !InOutContext.Title.IsEmpty() ? *InOutContext.Title : "Confirm";
-    const CHAR_T* MessageText = !InOutContext.Message.IsEmpty() ? *InOutContext.Message : "Are you sure?";
+    const CHAR_T* TitleText   = !InOutContext.Title.IsEmpty() ? *InOutContext.Title : TEXT("Confirm");
+    const CHAR_T* MessageText = !InOutContext.Message.IsEmpty() ? *InOutContext.Message : TEXT("Are you sure?");
 
     if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
     {
@@ -2402,7 +2404,7 @@ bool EditorWidgets::DrawConfirmDialog(FConfirmDialogContext& InOutContext)
 
     bool bConfirmed = false;
 
-    if (ImGui::Begin(TitleText, &InOutContext.bVisible, WindowFlags))
+    if (ImGui::Begin(StringCast<ANSICHAR>(TitleText).Get(), &InOutContext.bVisible, WindowFlags))
     {
         const float ButtonWidth  = 100.0f;
         const float ButtonHeight = ImGui::GetFrameHeight();
@@ -2411,12 +2413,12 @@ bool EditorWidgets::DrawConfirmDialog(FConfirmDialogContext& InOutContext)
         const float AvailableX = ImGui::GetContentRegionAvail().x;
 
         // Center the message text on the x-axis
-        const ImVec2 MessageTextSize = ImGui::CalcTextSize(MessageText, nullptr, true, AvailableX);
+        const ImVec2 MessageTextSize = ImGui::CalcTextSize(StringCast<ANSICHAR>(MessageText).Get(), nullptr, true, AvailableX);
         const float MessageStartX   = ImGui::GetCursorPosX() + Math::Max(0.0f, (AvailableX - MessageTextSize.x) * 0.5f);
         ImGui::SetCursorPosX(MessageStartX);
 
         ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + AvailableX);
-        ImGui::TextUnformatted(MessageText);
+        ImGui::TextUnformatted(StringCast<ANSICHAR>(MessageText).Get());
         ImGui::PopTextWrapPos();
 
         ImGui::Spacing();
@@ -2426,13 +2428,13 @@ bool EditorWidgets::DrawConfirmDialog(FConfirmDialogContext& InOutContext)
         const float StartX          = ImGui::GetCursorPosX() + Math::Max(0.0f, (AvailableX - TwoButtonsWidth) * 0.5f);
 
         ImGui::SetCursorPosX(StartX);
-        if (DrawDialogButton("Yes", ImVec2(ButtonWidth, ButtonHeight)))
+        if (DrawDialogButton(TEXT("Yes"), ImVec2(ButtonWidth, ButtonHeight)))
         {
             bConfirmed = true;
             InOutContext.bVisible = false;
         }
         ImGui::SameLine(0.0f, Gap);
-        if (DrawDialogButton("No", ImVec2(ButtonWidth, ButtonHeight)))
+        if (DrawDialogButton(TEXT("No"), ImVec2(ButtonWidth, ButtonHeight)))
         {
             InOutContext.bVisible = false;
         }
@@ -2455,7 +2457,7 @@ ImVec2 EditorWidgets::GetButtonSize(const CHAR_T* Label, const ImVec2& Size)
 
     if (Result.x <= 0.0f)
     {
-        const float LabelWidth = Label ? ImGui::CalcTextSize(Label, nullptr, true).x : 0.0f;
+        const float LabelWidth = Label ? ImGui::CalcTextSize(StringCast<ANSICHAR>(Label).Get(), nullptr, true).x : 0.0f;
         Result.x = LabelWidth + EditorStyleVars::ButtonPaddingX * 2.0f;
     }
 
@@ -2476,7 +2478,7 @@ bool EditorWidgets::DrawButton(const CHAR_T* Label, const ImVec2& Size, bool bSe
 
     const ImVec2 ButtonSize = GetButtonSize(Label, Size);
 
-    const bool bPressed = ImGui::InvisibleButton(Label, ButtonSize);
+    const bool bPressed = ImGui::InvisibleButton(StringCast<ANSICHAR>(Label).Get(), ButtonSize);
     const bool bHovered = ImGui::IsItemHovered();
     const bool bHeld    = ImGui::IsItemActive();
 
@@ -2489,11 +2491,14 @@ bool EditorWidgets::DrawButton(const CHAR_T* Label, const ImVec2& Size, bool bSe
     const ImU32 Background = GetButtonBackground(bSelected, bHovered, bHeld);
     DrawList->AddRectFilled(Min, Max, ImGui::GetColorU32(Background), EditorStyleVars::ButtonRounding, Corners);
 
-    const CHAR_T* LabelEnd = ImGui::FindRenderedTextEnd(Label);
-    const ImVec2  TextSize = ImGui::CalcTextSize(Label, LabelEnd);
-    const ImVec2  TextPos  = ImVec2(Min.x + (ButtonSize.x - TextSize.x) * 0.5f, Min.y + (ButtonSize.y - TextSize.y) * 0.5f);
+    const TStringConversion<ANSICHAR, CHAR_T> Utf8Label = StringCast<ANSICHAR>(Label);
 
-    DrawList->AddText(TextPos, ImGui::GetColorU32(ImGuiCol_Text), Label, LabelEnd);
+    const ANSICHAR* LabelText = Utf8Label.Get();
+    const ANSICHAR* LabelEnd  = ImGui::FindRenderedTextEnd(LabelText);
+    const ImVec2    TextSize  = ImGui::CalcTextSize(LabelText, LabelEnd);
+    const ImVec2    TextPos   = ImVec2(Min.x + (ButtonSize.x - TextSize.x) * 0.5f, Min.y + (ButtonSize.y - TextSize.y) * 0.5f);
+
+    DrawList->AddText(TextPos, ImGui::GetColorU32(ImGuiCol_Text), LabelText, LabelEnd);
 
     return bPressed;
 }
@@ -2508,10 +2513,13 @@ bool EditorWidgets::DrawDropdownButton(const CHAR_T* InId, const CHAR_T* Label, 
         return false;
     }
 
-    const float   ContentGap = EditorStyleVars::ButtonContentGap;
-    const float   ArrowSize  = EditorStyleVars::ButtonArrowSize;
-    const CHAR_T* LabelEnd   = Label ? ImGui::FindRenderedTextEnd(Label) : nullptr;
-    const ImVec2  TextSize   = Label ? ImGui::CalcTextSize(Label, LabelEnd) : ImVec2(0.0f, 0.0f);
+    const TStringConversion<ANSICHAR, CHAR_T> Utf8Label = StringCast<ANSICHAR>(Label ? Label : TEXT(""));
+
+    const float     ContentGap = EditorStyleVars::ButtonContentGap;
+    const float     ArrowSize  = EditorStyleVars::ButtonArrowSize;
+    const ANSICHAR* LabelText  = Utf8Label.Get();
+    const ANSICHAR* LabelEnd   = Label ? ImGui::FindRenderedTextEnd(LabelText) : nullptr;
+    const ImVec2    TextSize   = Label ? ImGui::CalcTextSize(LabelText, LabelEnd) : ImVec2(0.0f, 0.0f);
 
     ImVec2 ButtonSize = Size;
     if (ButtonSize.x <= 0.0f)
@@ -2524,7 +2532,7 @@ bool EditorWidgets::DrawDropdownButton(const CHAR_T* InId, const CHAR_T* Label, 
         ButtonSize.y = GetButtonHeight();
     }
 
-    const bool bPressed = ImGui::InvisibleButton(InId, ButtonSize);
+    const bool bPressed = ImGui::InvisibleButton(StringCast<ANSICHAR>(InId).Get(), ButtonSize);
     const bool bHovered = ImGui::IsItemHovered();
     const bool bHeld    = ImGui::IsItemActive();
 
@@ -2543,7 +2551,7 @@ bool EditorWidgets::DrawDropdownButton(const CHAR_T* InId, const CHAR_T* Label, 
         const float TextX = Min.x + EditorStyleVars::ButtonPaddingX;
         const float TextY = Min.y + (ButtonSize.y - TextSize.y) * 0.5f;
 
-        DrawList->AddText(ImVec2(TextX, TextY), ContentColor, Label, LabelEnd);
+        DrawList->AddText(ImVec2(TextX, TextY), ContentColor, LabelText, LabelEnd);
     }
 
     if (EditorIcons::DownArrowIcon)
@@ -2625,7 +2633,7 @@ bool EditorWidgets::DrawSearchField(const CHAR_T* InId, const CHAR_T* InHint, CH
     const ImU32  IconInactive       = IM_COL32(192, 192, 192, 255);
     const ImU32  IconActive         = IM_COL32(255, 255, 255, 255);
 
-    const ImGuiID PendingInputId  = ImGui::GetID(InId);
+    const ImGuiID PendingInputId  = ImGui::GetID(StringCast<ANSICHAR>(InId).Get());
     const bool    bInputWasActive = ImGui::GetActiveID() == PendingInputId;
     const bool    bInputClicked   = ImGui::IsMouseHoveringRect(FullRect.Min, FullRect.Max, true) && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
     const bool    bUseActiveHint  = bInputWasActive || bInputClicked;
@@ -2649,7 +2657,7 @@ bool EditorWidgets::DrawSearchField(const CHAR_T* InId, const CHAR_T* InHint, CH
     ImGui::PushStyleColor(ImGuiCol_TextDisabled, HintTextColor);
     ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, EditorStyleVars::InputFieldSelectionColor);
 
-    bool bChanged = ImGui::InputTextWithHint(InId, InHint, InOutBuffer, static_cast<size_t>(InBufferSize));
+    bool bChanged = InputTextWithHint(InId, InHint, InOutBuffer, InBufferSize);
 
     ImGui::PopStyleColor(6);
     ImGui::PopStyleVar(3);
@@ -2727,24 +2735,67 @@ bool EditorWidgets::DrawSearchField(const CHAR_T* InId, const CHAR_T* InHint, CH
     return bChanged || bClearedThisFrame;
 }
 
-void EditorWidgets::DrawTextWithSearchHighlight(ImDrawList* DrawList, const ImVec2& TextPos, const CHAR_T* Text, const CHAR_T* FilterText, ImU32 BaseTextU32, float HighlightPadX, float HighlightPadY, const ImVec2* ClampMin, const ImVec2* ClampMax)
+bool EditorWidgets::InputText(const CHAR_T* InId, CHAR_T* InOutBuffer, int32 InBufferSize, ImGuiInputTextFlags InFlags)
 {
-    if (!DrawList || !Text)
+    return InputTextWithHint(InId, nullptr, InOutBuffer, InBufferSize, InFlags);
+}
+
+bool EditorWidgets::InputTextWithHint(const CHAR_T* InId, const CHAR_T* InHint, CHAR_T* InOutBuffer, int32 InBufferSize, ImGuiInputTextFlags InFlags)
+{
+    const TStringConversion<ANSICHAR, CHAR_T> Id   = StringCast<ANSICHAR>(InId);
+    const TStringConversion<ANSICHAR, CHAR_T> Hint = StringCast<ANSICHAR>(InHint ? InHint : TEXT(""));
+
+#if WIDE_CHAR_BUILD
+    TArray<ANSICHAR> Utf8Buffer;
+    Utf8Buffer.Resize(InBufferSize * 3);
+
+    const TStringConversion<ANSICHAR, CHAR_T> Utf8Text = StringCast<ANSICHAR>(InOutBuffer);
+    FPlatformString::Strncpy(Utf8Buffer.Data(), Utf8Text.Get(), Utf8Buffer.Size() - 1);
+    Utf8Buffer[Utf8Buffer.Size() - 1] = '\0';
+
+    ANSICHAR*    EditBuffer = Utf8Buffer.Data();
+    const size_t EditSize   = static_cast<size_t>(Utf8Buffer.Size());
+#else
+    ANSICHAR*    EditBuffer = InOutBuffer;
+    const size_t EditSize   = static_cast<size_t>(InBufferSize);
+#endif
+
+    const bool bResult = InHint ? ImGui::InputTextWithHint(Id.Get(), Hint.Get(), EditBuffer, EditSize, InFlags) : ImGui::InputText(Id.Get(), EditBuffer, EditSize, InFlags);
+
+#if WIDE_CHAR_BUILD
+    const TStringConversion<CHAR_T, ANSICHAR> EditedText = StringCast<CHAR_T>(EditBuffer);
+    if (CString::Strcmp(EditedText.Get(), InOutBuffer) != 0)
+    {
+        CString::Strncpy(InOutBuffer, EditedText.Get(), InBufferSize - 1);
+        InOutBuffer[InBufferSize - 1] = '\0';
+    }
+#endif
+
+    return bResult;
+}
+
+void EditorWidgets::DrawTextWithSearchHighlight(ImDrawList* DrawList, const ImVec2& TextPos, const CHAR_T* InText, const CHAR_T* FilterText, ImU32 BaseTextU32, float HighlightPadX, float HighlightPadY, const ImVec2* ClampMin, const ImVec2* ClampMax)
+{
+    if (!DrawList || !InText)
     {
         return;
     }
 
-    const CHAR_T* Query = (FilterText && *FilterText != 0) ? FilterText : nullptr;
+    const TStringConversion<ANSICHAR, CHAR_T> Utf8Text   = StringCast<ANSICHAR>(InText);
+    const TStringConversion<ANSICHAR, CHAR_T> Utf8Filter = StringCast<ANSICHAR>(FilterText ? FilterText : TEXT(""));
+
+    const ANSICHAR* Text  = Utf8Text.Get();
+    const ANSICHAR* Query = (Utf8Filter.Length() > 0) ? Utf8Filter.Get() : nullptr;
 
     int32 MatchStart = -1;
     int32 MatchLen   = 0;
 
     if (Query)
     {
-        if (const CHAR_T* MatchPtr = CString::Stristr(Text, Query))
+        if (const ANSICHAR* MatchPtr = FPlatformString::Stristr(Text, Query))
         {
             MatchStart = static_cast<int32>(MatchPtr - Text);
-            MatchLen   = static_cast<int32>(CString::Strlen(Query));
+            MatchLen   = Utf8Filter.Length();
         }
     }
 
@@ -2783,7 +2834,7 @@ void EditorWidgets::DrawTextWithSearchHighlight(ImDrawList* DrawList, const ImVe
         DrawList->AddRectFilled(HighlightMin, HighlightMax, HighlightBgU32, 0.0f);
         DrawList->AddText(MatchPos, HighlightTextU32, Text + MatchStart, Text + MatchStart + MatchLen);
 
-        const CHAR_T* Suffix = Text + MatchStart + MatchLen;
+        const ANSICHAR* Suffix = Text + MatchStart + MatchLen;
         if (Suffix && *Suffix != 0)
         {
             DrawList->AddText(SuffixPos, BaseTextU32, Suffix);
@@ -2858,7 +2909,7 @@ void EditorWidgets::MenuLabeledSeparator(const CHAR_T* Label, float Thickness, f
     const ImU32 LineColor  = IM_COL32(106, 106, 106, 255);
     const ImU32 LabelColor = IM_COL32(160, 160, 160, 255);
 
-    const CHAR_T* LabelToDraw = "";
+    const CHAR_T* LabelToDraw = TEXT("");
     TStaticArray<CHAR_T, 128> UpperLabel{};
 
     if (Label && Label[0] != '\0')
@@ -2875,7 +2926,7 @@ void EditorWidgets::MenuLabeledSeparator(const CHAR_T* Label, float Thickness, f
         LabelToDraw   = UpperLabel.Data();
     }
 
-    const ImVec2 LabelSize = ImGui::CalcTextSize(LabelToDraw);
+    const ImVec2 LabelSize = ImGui::CalcTextSize(StringCast<ANSICHAR>(LabelToDraw).Get());
     const float  RowHeight = Math::Max(LabelSize.y, Thickness);
     const float  YLine     = CursorMin.y + (RowHeight * 0.5f) + ((Thickness <= 1.0f) ? 0.5f : 0.0f);
     const float  LabelX    = CursorMin.x + InsetX;
@@ -2885,7 +2936,7 @@ void EditorWidgets::MenuLabeledSeparator(const CHAR_T* Label, float Thickness, f
 
     if (LabelSize.x > 0.0f)
     {
-        DrawList->AddText(ImVec2(LabelX, LabelY), LabelColor, LabelToDraw);
+        DrawList->AddText(ImVec2(LabelX, LabelY), LabelColor, StringCast<ANSICHAR>(LabelToDraw).Get());
     }
 
     const float GapAfterLabel = 12.0f;
@@ -2920,7 +2971,7 @@ bool EditorWidgets::MenuItem(const CHAR_T* Label, const CHAR_T* Shortcut, bool b
     const float MenuIndentX = MenuRowIndentX;
     const float IconGutterX = 0.0f;
 
-    ImGui::PushID(Label);
+    ImGui::PushID(StringCast<ANSICHAR>(Label).Get());
 
     if (!bEnabled)
     {
@@ -2992,8 +3043,8 @@ bool EditorWidgets::MenuItem(const CHAR_T* Label, const CHAR_T* Shortcut, bool b
         ShortcutToDraw   = UpperShortcut.Data();
     }
 
-    const ImVec2 ShortcutSize = bHasShortcut ? ImGui::CalcTextSize(ShortcutToDraw) : ImVec2(0.0f, 0.0f);
-    const ImVec2 LabelSize    = ImGui::CalcTextSize(Label);
+    const ImVec2 ShortcutSize = bHasShortcut ? ImGui::CalcTextSize(StringCast<ANSICHAR>(ShortcutToDraw).Get()) : ImVec2(0.0f, 0.0f);
+    const ImVec2 LabelSize    = ImGui::CalcTextSize(StringCast<ANSICHAR>(Label).Get());
 
     const float OpticalBiasY = 0.5f;
     const float LabelY       = RectMin.y + (RowHeight - LabelSize.y) * 0.5f + OpticalBiasY;
@@ -3032,7 +3083,7 @@ bool EditorWidgets::MenuItem(const CHAR_T* Label, const CHAR_T* Shortcut, bool b
     if (bDrawShortcut)
     {
         const float ShortcutY = RectMin.y + (RowHeight - ShortcutSize.y) * 0.5f + OpticalBiasY;
-        DrawList->AddText(ImVec2(ShortcutX, ShortcutY), ImGui::GetColorU32(ImGuiCol_TextDisabled), ShortcutToDraw);
+        DrawList->AddText(ImVec2(ShortcutX, ShortcutY), ImGui::GetColorU32(ImGuiCol_TextDisabled), StringCast<ANSICHAR>(ShortcutToDraw).Get());
     }
 
     // -----------------------------------------------------------------------------------------
@@ -3071,7 +3122,7 @@ bool EditorWidgets::MenuItem(const CHAR_T* Label, const CHAR_T* Shortcut, bool b
     ClipMaxX = Math::Max(ClipMaxX, LabelX + 1.0f);
 
     DrawList->PushClipRect(ImVec2(LabelX, RectMin.y), ImVec2(ClipMaxX, RectMax.y), true);
-    DrawList->AddText(ImVec2(LabelX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), Label);
+    DrawList->AddText(ImVec2(LabelX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), StringCast<ANSICHAR>(Label).Get());
     DrawList->PopClipRect();
 
     if (!bEnabled)
@@ -3095,7 +3146,7 @@ bool EditorWidgets::MenuDragFloat(const CHAR_T* Label, float& InOutValue, float 
 
 void EditorWidgets::MenuButton(const CHAR_T* Label, const CHAR_T* PopupId, bool bAnyPopupOpen, float ButtonHeight, FPopupAnchor& OutAnchor, bool bDrawBorder)
 {
-    const bool bThisPopupOpen = ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None);
+    const bool bThisPopupOpen = ImGui::IsPopupOpen(StringCast<ANSICHAR>(PopupId).Get(), ImGuiPopupFlags_None);
     OutAnchor.bRequestPosition = false;
 
     if (bThisPopupOpen)
@@ -3107,18 +3158,18 @@ void EditorWidgets::MenuButton(const CHAR_T* Label, const CHAR_T* PopupId, bool 
     }
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(EditorStyleVars::ButtonPaddingX, 0.0f));
-    const bool bPressed = ImGui::Button(Label, ImVec2(0.0f, ButtonHeight));
+    const bool bPressed = ImGui::Button(StringCast<ANSICHAR>(Label).Get(), ImVec2(0.0f, ButtonHeight));
     ImGui::PopStyleVar();
 
     if (bPressed)
     {
-        ImGui::OpenPopup(PopupId);
+        ImGui::OpenPopup(StringCast<ANSICHAR>(PopupId).Get());
         OutAnchor.bRequestPosition = true;
     }
 
     if (bAnyPopupOpen && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) && !bThisPopupOpen)
     {
-        ImGui::OpenPopup(PopupId);
+        ImGui::OpenPopup(StringCast<ANSICHAR>(PopupId).Get());
         OutAnchor.bRequestPosition = true;
     }
 
@@ -3172,7 +3223,7 @@ bool EditorWidgets::SetNextPopupPos(const CHAR_T* WindowId, const FPopupAnchor& 
     ImVec2 Size = FixedSize;
     if (Size.x <= 0.0f || Size.y <= 0.0f)
     {
-        ImGuiWindow* Window = ImGui::FindWindowByName(WindowId);
+        ImGuiWindow* Window = ImGui::FindWindowByName(StringCast<ANSICHAR>(WindowId).Get());
         if (!Window)
         {
             return false;
@@ -3214,7 +3265,7 @@ bool EditorWidgets::SetNextPopupPos(const CHAR_T* WindowId, const FPopupAnchor& 
     }
 
     const ImRect  Outer        = GetPopupExtentRect(RefPos);
-    const ImGuiID StateId      = ImHashStr(WindowId);
+    const ImGuiID StateId      = ImHashStr(StringCast<ANSICHAR>(WindowId).Get());
     const int32   CurrentFrame = ImGui::GetFrameCount();
     const int32   LastFrame    = GPopupLastPlacedFrame.GetInt(StateId, -1);
 
@@ -3249,14 +3300,14 @@ bool EditorWidgets::SetNextPopupPos(const CHAR_T* WindowId, const FPopupAnchor& 
 bool EditorWidgets::SetNextBeginPopupPos(const CHAR_T* PopupId, const FPopupAnchor& Anchor, EPopupPlacement Placement, const ImVec2& FixedSize)
 {
     TStaticArray<CHAR_T, 24> WindowName;
-    CString::Snprintf(WindowName.Data(), static_cast<int32>(WindowName.Size()), "##Popup_%08x", ImGui::GetID(PopupId));
+    CString::Snprintf(WindowName.Data(), static_cast<int32>(WindowName.Size()), TEXT("##Popup_%08x"), ImGui::GetID(StringCast<ANSICHAR>(PopupId).Get()));
 
     return SetNextPopupPos(WindowName.Data(), Anchor, Placement, FixedSize);
 }
 
 bool EditorWidgets::BeginMenuPopup(const CHAR_T* PopupId, const FPopupAnchor& Anchor, float MinWidth, EPopupPlacement Placement)
 {
-    if (!Anchor.bRequestPosition && !ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None))
+    if (!Anchor.bRequestPosition && !ImGui::IsPopupOpen(StringCast<ANSICHAR>(PopupId).Get(), ImGuiPopupFlags_None))
     {
         return false;
     }
@@ -3268,7 +3319,7 @@ bool EditorWidgets::BeginMenuPopup(const CHAR_T* PopupId, const FPopupAnchor& An
     const float FinalMinWidth = MinWidth + (MenuContentIndentX * 2.0f);
     ImGui::SetNextWindowSizeConstraints(ImVec2(FinalMinWidth, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
 
-    const bool bOpen = ImGui::BeginPopup(PopupId);
+    const bool bOpen = ImGui::BeginPopup(StringCast<ANSICHAR>(PopupId).Get());
     if (bOpen)
     {
         DrawMenuFrame();
@@ -3293,7 +3344,7 @@ bool EditorWidgets::BeginPopupContextWindow(const CHAR_T* PopupId, ImGuiPopupFla
 
     ImGui::SetNextWindowSizeConstraints(ImVec2(MenuFinalMinWidth, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
 
-    const bool bOpen = ImGui::BeginPopupContextWindow(PopupId, Flags);
+    const bool bOpen = ImGui::BeginPopupContextWindow(StringCast<ANSICHAR>(PopupId).Get(), Flags);
     if (bOpen)
     {
         DrawContextMenuFrame();
@@ -3312,7 +3363,7 @@ bool EditorWidgets::BeginPopupContextItem(const CHAR_T* PopupId)
 
     ImGui::SetNextWindowSizeConstraints(ImVec2(MenuFinalMinWidth, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
 
-    const bool bOpen = ImGui::BeginPopupContextItem(PopupId);
+    const bool bOpen = ImGui::BeginPopupContextItem(StringCast<ANSICHAR>(PopupId).Get());
     if (bOpen)
     {
         DrawContextMenuFrame();
@@ -3327,7 +3378,7 @@ bool EditorWidgets::BeginPopupContextItem(const CHAR_T* PopupId)
 
 bool EditorWidgets::BeginPopupContext(const CHAR_T* PopupId)
 {
-    if (!ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None))
+    if (!ImGui::IsPopupOpen(StringCast<ANSICHAR>(PopupId).Get(), ImGuiPopupFlags_None))
     {
         return false;
     }
@@ -3336,7 +3387,7 @@ bool EditorWidgets::BeginPopupContext(const CHAR_T* PopupId)
 
     ImGui::SetNextWindowSizeConstraints(ImVec2(MenuFinalMinWidth, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
 
-    const bool bOpen = ImGui::BeginPopup(PopupId);
+    const bool bOpen = ImGui::BeginPopup(StringCast<ANSICHAR>(PopupId).Get());
     if (bOpen)
     {
         DrawContextMenuFrame();
@@ -3355,7 +3406,7 @@ bool EditorWidgets::MenuSubMenuRow(const CHAR_T* Label, FPopupAnchor& OutAnchor,
     const float RowHeight = ImGui::GetFontSize() + PaddingY * 2.0f;
     const float RowWidth  = ImGui::GetContentRegionAvail().x;
 
-    ImGui::PushID(Label);
+    ImGui::PushID(StringCast<ANSICHAR>(Label).Get());
 
     const ImGuiSelectableFlags Flags =
         ImGuiSelectableFlags_SpanAvailWidth |
@@ -3383,11 +3434,11 @@ bool EditorWidgets::MenuSubMenuRow(const CHAR_T* Label, FPopupAnchor& OutAnchor,
 
     DrawList->AddRectFilled(RectMin, RectMax, Background, 0.0f);
 
-    const ImVec2 LabelSize = ImGui::CalcTextSize(Label);
+    const ImVec2 LabelSize = ImGui::CalcTextSize(StringCast<ANSICHAR>(Label).Get());
     const float  LabelX    = RectMin.x + LabelIndentX;
     const float  LabelY    = RectMin.y + (RowHeight - LabelSize.y) * 0.5f;
 
-    DrawList->AddText(ImVec2(LabelX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), Label);
+    DrawList->AddText(ImVec2(LabelX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), StringCast<ANSICHAR>(Label).Get());
 
     DrawSubMenuArrow(DrawList, RectMin, RectMax, RowHeight, LabelY);
 
@@ -3413,11 +3464,11 @@ void EditorWidgets::MenuSubMenuOverlay(const CHAR_T* Label, const FPopupAnchor& 
     DrawList->AddRectFilled(Anchor.Min, Anchor.Max, ImGui::GetColorU32(ImGuiCol_HeaderActive), 0.0f);
 
     const float  RowHeight = Anchor.Max.y - Anchor.Min.y;
-    const ImVec2 LabelSize = ImGui::CalcTextSize(Label);
+    const ImVec2 LabelSize = ImGui::CalcTextSize(StringCast<ANSICHAR>(Label).Get());
     const float  LabelX    = Anchor.Min.x + LabelIndentX;
     const float  LabelY    = Anchor.Min.y + (RowHeight - LabelSize.y) * 0.5f;
 
-    DrawList->AddText(ImVec2(LabelX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), Label);
+    DrawList->AddText(ImVec2(LabelX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), StringCast<ANSICHAR>(Label).Get());
 
     DrawSubMenuArrow(DrawList, Anchor.Min, Anchor.Max, RowHeight, LabelY);
 }
@@ -3427,7 +3478,7 @@ bool EditorWidgets::BeginSubMenu(FSubMenuState& InOutState, const CHAR_T* PopupI
     InOutState.Label   = Label;
     InOutState.PopupId = PopupId;
 
-    const bool bPopupOpen = ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None);
+    const bool bPopupOpen = ImGui::IsPopupOpen(StringCast<ANSICHAR>(PopupId).Get(), ImGuiPopupFlags_None);
 
     if (!bEnabled)
     {
@@ -3444,7 +3495,7 @@ bool EditorWidgets::BeginSubMenu(FSubMenuState& InOutState, const CHAR_T* PopupI
 
     if (bPressed || InOutState.bRowHovered)
     {
-        ImGui::OpenPopup(PopupId);
+        ImGui::OpenPopup(StringCast<ANSICHAR>(PopupId).Get());
         InOutState.Anchor.bRequestPosition = true;
     }
 
@@ -3550,7 +3601,7 @@ bool EditorWidgets::BeginPropertyTable(const CHAR_T* TableId, float LabelColumnW
     GPropertyTableState.BorderMin   = ImGui::GetCursorScreenPos();
     GPropertyTableState.BorderWidth = TableWidth;
 
-    if (!ImGui::BeginTable(TableId, 3, Flags, OuterSize))
+    if (!ImGui::BeginTable(StringCast<ANSICHAR>(TableId).Get(), 3, Flags, OuterSize))
     {
         ImGui::PopStyleColor(7);
         ImGui::PopStyleVar();
@@ -3608,7 +3659,7 @@ void EditorWidgets::PropertyRowLabel(const CHAR_T* Label)
     BeginPropertyTableRow(ContentHeight);
 
     BeginPropertyTableLabelCell(ContentHeight);
-    ImGui::TextUnformatted(Label);
+    ImGui::TextUnformatted(StringCast<ANSICHAR>(Label).Get());
 }
 
 void EditorWidgets::PropertyTableBeginValueCell(float ContentHeight)
@@ -3642,9 +3693,9 @@ bool EditorWidgets::BeginRichTextView(const CHAR_T* InId, const ImVec2& InSize, 
 
     const ImGuiWindowFlags Flags = InFlags | ImGuiWindowFlags_HorizontalScrollbar;
 
-    InOutContext.ViewId = ImGui::GetID(InId);
+    InOutContext.ViewId = ImGui::GetID(StringCast<ANSICHAR>(InId).Get());
 
-    const bool bOpen = ImGui::BeginChild(InId, InSize, ImGuiChildFlags_Border, Flags);
+    const bool bOpen = ImGui::BeginChild(StringCast<ANSICHAR>(InId).Get(), InSize, ImGuiChildFlags_Border, Flags);
     if (!bOpen)
     {
         return false;
@@ -3652,7 +3703,7 @@ bool EditorWidgets::BeginRichTextView(const CHAR_T* InId, const ImVec2& InSize, 
 
     InOutContext.bActive      = true;
     InOutContext.LineHeight   = ImGui::GetTextLineHeight();
-    InOutContext.CharWidth    = MeasureRichTextWidth("A");
+    InOutContext.CharWidth    = MeasureRichTextWidth(TEXT("A"));
     InOutContext.ContentStart = ImGui::GetCursorScreenPos();
 
     if (InOutContext.MeasuredFont != ImGui::GetFont() || InOutContext.MeasuredFontSize != ImGui::GetFontSize())
@@ -3669,23 +3720,23 @@ bool EditorWidgets::BeginRichTextView(const CHAR_T* InId, const ImVec2& InSize, 
         InOutContext.MeasuredFontSize = ImGui::GetFontSize();
     }
 
-    if (bWithContextMenu && EditorWidgets::BeginPopupContextWindow("##RichTextViewContext", ImGuiPopupFlags_MouseButtonRight))
+    if (bWithContextMenu && EditorWidgets::BeginPopupContextWindow(TEXT("##RichTextViewContext"), ImGuiPopupFlags_MouseButtonRight))
     {
-        EditorWidgets::MenuLabeledSeparator("Log");
+        EditorWidgets::MenuLabeledSeparator(TEXT("Log"));
 
         const FString Selected = BuildSelectedText(InOutContext);
-        if (EditorWidgets::MenuItem("Copy Selection", nullptr, false, InOutContext.bHasSelection && !Selected.IsEmpty()))
+        if (EditorWidgets::MenuItem(TEXT("Copy Selection"), nullptr, false, InOutContext.bHasSelection && !Selected.IsEmpty()))
         {
-            ImGui::SetClipboardText(*Selected);
+            ImGui::SetClipboardText(StringCast<ANSICHAR>(Selected).Get());
         }
 
-        if (EditorWidgets::MenuItem("Copy All"))
+        if (EditorWidgets::MenuItem(TEXT("Copy All")))
         {
             const FString All = BuildAllText(InOutContext);
-            ImGui::SetClipboardText(*All);
+            ImGui::SetClipboardText(StringCast<ANSICHAR>(All).Get());
         }
 
-        if (EditorWidgets::MenuItem("Clear Selection", nullptr, false, InOutContext.bHasSelection))
+        if (EditorWidgets::MenuItem(TEXT("Clear Selection"), nullptr, false, InOutContext.bHasSelection))
         {
             InOutContext.bHasSelection = false;
             InOutContext.bSelecting = false;
@@ -4011,7 +4062,7 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
             const FString Selected = BuildSelectedText(InOutContext);
             if (!Selected.IsEmpty())
             {
-                ImGui::SetClipboardText(*Selected);
+                ImGui::SetClipboardText(StringCast<ANSICHAR>(Selected).Get());
             }
         }
         else if (bHoveredContent)
@@ -4021,7 +4072,7 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
 
             if (!LineText.IsEmpty())
             {
-                ImGui::SetClipboardText(*LineText);
+                ImGui::SetClipboardText(StringCast<ANSICHAR>(LineText).Get());
             }
         }
     }
@@ -4102,7 +4153,7 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
                     DrawList->AddRectFilled(ImVec2(CursorX, HighlightTopY), ImVec2(CursorX + SpanWidth, HighlightBotY), Span.BackgroundColor, 0.0f);
                 }
 
-                DrawList->AddText(ImVec2(CursorX, LineMin.y), Span.TextColor, Text);
+                DrawList->AddText(ImVec2(CursorX, LineMin.y), Span.TextColor, StringCast<ANSICHAR>(Text).Get());
                 CursorX += SpanWidth;
             }
         }
@@ -4266,7 +4317,7 @@ bool EditorIcons::Initialize()
         return false;
     }
 
-    GIconAtlas.Texture->SetDebugName("Editor IconAtlas");
+    GIconAtlas.Texture->SetDebugName(TEXT("Editor IconAtlas"));
 
     GIconAtlas.ImGuiTexture = MakeUniquePtr<FImGuiTexture>(GIconAtlas.Texture);
     if (!GIconAtlas.ImGuiTexture)
@@ -4331,9 +4382,9 @@ bool EditorFonts::Initialize()
     DefaultFont = State.Fonts->AddFontDefault();
 
     // Load fonts from file
-    SegoeUI_18 = LoadEditorFont("Editor/Fonts/segoeui.ttf", 18.0f);
-    SegoeUI_22 = LoadEditorFont("Editor/Fonts/segoeui.ttf", 22.0f);
-    Consola_16 = LoadEditorFont("Editor/Fonts/consola.ttf", 16.0f);
+    SegoeUI_18 = LoadEditorFont(TEXT("Editor/Fonts/segoeui.ttf"), 18.0f);
+    SegoeUI_22 = LoadEditorFont(TEXT("Editor/Fonts/segoeui.ttf"), 22.0f);
+    Consola_16 = LoadEditorFont(TEXT("Editor/Fonts/consola.ttf"), 16.0f);
 
 #if PLATFORM_WINDOWS
     SystemIcons = LoadSystemIconFont();

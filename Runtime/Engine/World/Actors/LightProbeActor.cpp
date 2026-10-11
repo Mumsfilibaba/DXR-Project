@@ -7,7 +7,7 @@ FLightProbeActor::FLightProbeActor(const FObjectInitializer& ObjectInitializer)
     : FActor(ObjectInitializer)
     , LightProbeComponent(nullptr)
 {
-    SetName("Light Probe");
+    SetName(TEXT("Light Probe"));
     
     LightProbeComponent = NewObject<FLightProbeComponent>();
     AddComponent(LightProbeComponent);

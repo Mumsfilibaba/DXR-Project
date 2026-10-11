@@ -326,7 +326,7 @@ public:
      */
     virtual const CHAR_T* GetTypeLabel() const
     {
-        return "Actor";
+        return TEXT("Actor");
     }
 
     /**

@@ -14,7 +14,7 @@
 #include "Core/Time/Time.h"
 
 FEditorFrameProfilerPanel::FEditorFrameProfilerPanel(FEditorEngine* InEditorEngine)
-    : FEditorPanel(InEditorEngine, "FrameProfiler", "Frame Profiler")
+    : FEditorPanel(InEditorEngine, TEXT("FrameProfiler"), TEXT("Frame Profiler"))
     , ToolBar(nullptr)
     , FrameTimeHistogram(nullptr)
     , ThreadsColumn(nullptr)
@@ -40,7 +40,7 @@ bool FEditorFrameProfilerPanel::Initialize()
     FHistogram::FDesc HistogramDesc;
     HistogramDesc.Capacity        = NUM_LIVE_PROFILER_FRAMES;
     HistogramDesc.Font            = FEditorStyle::GetFonts().Body;
-    HistogramDesc.Label           = "CPU Frame Time (ms)";
+    HistogramDesc.Label           = TEXT("CPU Frame Time (ms)");
     HistogramDesc.PreferredHeight = 80;
 
     FrameTimeHistogram = FHistogram::Create(HistogramDesc);
@@ -84,7 +84,7 @@ TSharedPtr<FToolBar> FEditorFrameProfilerPanel::BuildToolBar()
         return nullptr;
     }
 
-    Bar->AddToggle(FToolBarItemDesc().SetLabel("Enable").SetToolTipText("Records the traced scopes the per-thread tables are filled from"),
+    Bar->AddToggle(FToolBarItemDesc().SetLabel(TEXT("Enable")).SetToolTipText(TEXT("Records the traced scopes the per-thread tables are filled from")),
         ECheckBoxState::Checked,
         FOnCheckStateChanged::CreateLambda([this](ECheckBoxState State)
         {
@@ -93,7 +93,7 @@ TSharedPtr<FToolBar> FEditorFrameProfilerPanel::BuildToolBar()
 
     Bar->AddSeparator();
 
-    Bar->AddButton(FToolBarItemDesc().SetLabel("Reset"), FOnClicked::CreateLambda([this]()
+    Bar->AddButton(FToolBarItemDesc().SetLabel(TEXT("Reset")), FOnClicked::CreateLambda([this]()
     {
         FFrameProfiler::Get().Reset();
 
@@ -223,7 +223,7 @@ void FEditorFrameProfilerPanel::RefreshThreads()
             const float Average = Time::ToMilliseconds<float>(Scope.Calls > 0
                 ? static_cast<float>(Scope.InclusiveNanoseconds / static_cast<uint64>(Scope.Calls))
                 : 0.0f);
-            (*Value)->SetText(FString::Printf("%.3f  %d", Average, Scope.Calls));
+            (*Value)->SetText(FString::Printf(TEXT("%.3f  %d"), Average, Scope.Calls));
         }
     }
 }
@@ -233,13 +233,13 @@ void FEditorFrameProfilerPanel::RebuildThreadRows(FThreadSection& ThreadSection,
     ThreadSection.Table->ClearRows();
     ThreadSection.Values.Clear();
 
-    ThreadSection.Table->AddHeaderRow("Scope  (avg ms, calls)");
+    ThreadSection.Table->AddHeaderRow(TEXT("Scope  (avg ms, calls)"));
 
     for (const FProfilerScopeAggregate& Scope : ThreadInfo.Scopes)
     {
-        TSharedPtr<FTextBlock> Value = CreateValueText("-");
+        TSharedPtr<FTextBlock> Value = CreateValueText(TEXT("-"));
 
-        ThreadSection.Table->AddRow(Scope.Name, Value).ToolTipText = "Average inclusive time in the scope, in milliseconds, and how many times it was entered";
+        ThreadSection.Table->AddRow(Scope.Name, Value).ToolTipText = TEXT("Average inclusive time in the scope, in milliseconds, and how many times it was entered");
         ThreadSection.Values.Add(Scope.Name, Value);
     }
 }
@@ -248,7 +248,7 @@ FString FEditorFrameProfilerPanel::ResolveThreadName(const FProfilerThreadAggreg
 {
     if (FThreadManager::Get().IsMainThread(ThreadInfo.ThreadHandle))
     {
-        return "Main Thread";
+        return TEXT("Main Thread");
     }
 
     if (IPlatformThread* Thread = FThreadManager::Get().GetThreadFromHandle(ThreadInfo.ThreadHandle))
@@ -259,7 +259,7 @@ FString FEditorFrameProfilerPanel::ResolveThreadName(const FProfilerThreadAggreg
         }
     }
 
-    return FString::Printf("Thread %d", ThreadIndex);
+    return FString::Printf(TEXT("Thread %d"), ThreadIndex);
 }
 
 TSharedPtr<FTextBlock> FEditorFrameProfilerPanel::CreateValueText(const FString& Text)

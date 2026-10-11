@@ -143,7 +143,7 @@ int32 FEditorViewportSurface::OnDraw(const FDrawGeometry& AllottedGeometry, FDra
         ++CurrentLayer;
     }
 
-    if (IConsoleVariable* DrawFps = FConsoleManager::Get().FindConsoleVariable("Engine.DrawFps"))
+    if (IConsoleVariable* DrawFps = FConsoleManager::Get().FindConsoleVariable(TEXT("Engine.DrawFps")))
     {
         if (DrawFps->GetBool())
         {
@@ -155,7 +155,7 @@ int32 FEditorViewportSurface::OnDraw(const FDrawGeometry& AllottedGeometry, FDra
             if (Font)
             {
                 CHAR_T FpsText[16];
-                CString::Snprintf(FpsText, static_cast<int32>(sizeof(FpsText)), "%d", FFrameProfiler::Get().GetFramesPerSecond());
+                CString::Snprintf(FpsText, ARRAY_COUNT(FpsText), TEXT("%d"), FFrameProfiler::Get().GetFramesPerSecond());
 
                 const FString FpsString(FpsText);
                 const int32   TextWidth  = Font->MeasureWidth(FStringView(FpsString.Data(), FpsString.Length()));

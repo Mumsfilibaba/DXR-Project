@@ -86,7 +86,7 @@ bool FMesh::Initialize(const FMeshData& MeshData, bool bCreateRayTracingResource
     }
     else
     {
-        IndexBuffer->SetDebugName("IndexBuffer");
+        IndexBuffer->SetDebugName(TEXT("IndexBuffer"));
     }
 
     if (bCreateRayTracingResources)
@@ -120,10 +120,10 @@ bool FMesh::CreateVertexStreams(const FMeshData& MeshData)
 {
     static const CHAR_T* StreamDebugNames[VERTEX_MAX_STREAMS] =
     {
-        "PositionStream",
-        "AttributeStream",
-        "ColorStream",
-        "VertexStream3"
+        TEXT("PositionStream"),
+        TEXT("AttributeStream"),
+        TEXT("ColorStream"),
+        TEXT("VertexStream3")
     };
 
     const EBufferFlags AttributeFlags = RHI::bSupportsRayTracing ? EBufferFlags::ShaderResourceBuffer : EBufferFlags::None;
@@ -230,7 +230,7 @@ bool FMesh::EnsureRayTracingResources()
         return false;
     }
 
-    RayTracingGeometry->SetDebugName("RayTracing Geometry");
+    RayTracingGeometry->SetDebugName(TEXT("RayTracing Geometry"));
     return true;
 }
 

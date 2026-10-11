@@ -38,10 +38,10 @@ static void DrawCanvasLegend()
 
     const CHAR_T* Labels[] =
     {
-        "Resource read (input)",
-        "Resource write (output)",
-        "Raster / Compute / Copy pass",
-        "Culled or disabled pass",
+        TEXT("Resource read (input)"),
+        TEXT("Resource write (output)"),
+        TEXT("Raster / Compute / Copy pass"),
+        TEXT("Culled or disabled pass"),
     };
 
     const EditorNodeGraph::FNodeColors NormalNode = EditorNodeGraph::GetNodeColors(EditorNodeGraph::ENodeStyle::Normal);
@@ -79,7 +79,7 @@ static void DrawCanvasLegend()
             DrawList->AddRect(SwatchMin, SwatchMax, Outlines[Index], 2.0f);
         }
 
-        DrawList->AddText(ImVec2(BoxMin.x + Padding + SwatchWidth + 6.0f, CenterY - ImGui::GetTextLineHeight() * 0.5f), IM_COL32(220, 220, 220, 255), Labels[Index]);
+        DrawList->AddText(ImVec2(BoxMin.x + Padding + SwatchWidth + 6.0f, CenterY - ImGui::GetTextLineHeight() * 0.5f), IM_COL32(220, 220, 220, 255), StringCast<ANSICHAR>(Labels[Index]).Get());
     }
 }
 
@@ -143,7 +143,7 @@ void FEditorRenderGraphWidget::Draw()
         return;
     }
 
-    TRACE_SCOPE("Render Graph");
+    TRACE_SCOPE(TEXT("Render Graph"));
 
     DrawWindow();
 }
@@ -197,28 +197,28 @@ void FEditorRenderGraphWidget::EstimateNodeSizes(TArrayView<const int32> Visible
         FString Title = Pass.Name;
         if (IsEnumFlagSet(Pass.Flags, ERenderGraphPassFlags::Raster))
         {
-            Title.Append(" [Raster]");
+            Title.Append(TEXT(" [Raster]"));
         }
         else if (IsEnumFlagSet(Pass.Flags, ERenderGraphPassFlags::Compute))
         {
-            Title.Append(" [Compute]");
+            Title.Append(TEXT(" [Compute]"));
         }
         else if (IsEnumFlagSet(Pass.Flags, ERenderGraphPassFlags::Copy))
         {
-            Title.Append(" [Copy]");
+            Title.Append(TEXT(" [Copy]"));
         }
 
         if (Pass.bCulled)
         {
-            Title.Append(" (Culled)");
+            Title.Append(TEXT(" (Culled)"));
         }
         else if (!Pass.bEnabled)
         {
-            Title.Append(" (Disabled)");
+            Title.Append(TEXT(" (Disabled)"));
         }
 
         float Width = MinWidth;
-        Width = Math::Max(Width, ImGui::CalcTextSize(*Title).x + TitlePad);
+        Width = Math::Max(Width, ImGui::CalcTextSize(StringCast<ANSICHAR>(Title).Get()).x + TitlePad);
 
         int32 InputCount  = 0;
         int32 OutputCount = 0;
@@ -232,7 +232,7 @@ void FEditorRenderGraphWidget::EstimateNodeSizes(TArrayView<const int32> Visible
             }
 
             const FRenderGraphDebugResource& Resource = Snapshot.Resources[Access.ResourceIndex];
-            Width = Math::Max(Width, ImGui::CalcTextSize(*Resource.Name).x + PinPad);
+            Width = Math::Max(Width, ImGui::CalcTextSize(StringCast<ANSICHAR>(Resource.Name).Get()).x + PinPad);
             if (Access.bIsWrite)
             {
                 ++OutputCount;
@@ -366,7 +366,7 @@ void FEditorRenderGraphWidget::EnsureNodeLayout(bool bForce)
 void FEditorRenderGraphWidget::DrawWindow()
 {
     const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing;
-    if (!EditorWidgets::BeginEditorWindow("Render Graph", &bVisible, Flags))
+    if (!EditorWidgets::BeginEditorWindow(TEXT("Render Graph"), &bVisible, Flags))
     {
         EditorWidgets::EndEditorWindow();
         if (!bVisible)
@@ -392,24 +392,24 @@ void FEditorRenderGraphWidget::DrawWindow()
     }
 #endif
 
-    ImGui::Text("Graph: %s", Snapshot.GraphName.IsEmpty() ? "(none)" : *Snapshot.GraphName);
+    ImGui::Text("Graph: %s", StringCast<ANSICHAR>(Snapshot.GraphName.IsEmpty() ? TEXT("(none)") : *Snapshot.GraphName).Get());
     ImGui::SameLine();
 
     ImGui::TextDisabled("| Passes: %d  Culled: %d  Disabled: %d  Textures: %d  Buffers: %d",
         Snapshot.Statistics.NumPasses, Snapshot.Statistics.NumCulledPasses, Snapshot.Statistics.NumDisabledPasses,
         Snapshot.Statistics.NumTexturesAllocated, Snapshot.Statistics.NumBuffersAllocated);
 
-    EditorWidgets::DrawCheckbox("Show culled/disabled", bShowCulled);
+    EditorWidgets::DrawCheckbox(TEXT("Show culled/disabled"), bShowCulled);
     ImGui::SameLine();
 
-    if (EditorWidgets::DrawButton("Auto Layout"))
+    if (EditorWidgets::DrawButton(TEXT("Auto Layout")))
     {
         bForceAutoLayout = true;
         bNeedsFitView    = true;
     }
 
     ImGui::SameLine();
-    if (EditorWidgets::DrawButton("Reset View"))
+    if (EditorWidgets::DrawButton(TEXT("Reset View")))
     {
         bNeedsFitView = true;
     }
@@ -421,7 +421,7 @@ void FEditorRenderGraphWidget::DrawWindow()
     TryRequestFitViewToNodes();
 
     const ImVec2 CanvasSize = ImGui::GetContentRegionAvail();
-    EditorNodeGraph::BeginCanvas("##RenderGraphCanvas", CanvasSize);
+    EditorNodeGraph::BeginCanvas(TEXT("##RenderGraphCanvas"), CanvasSize);
 
     for (int32 PassIndex = 0; PassIndex < Snapshot.Passes.Size(); ++PassIndex)
     {
@@ -447,24 +447,24 @@ void FEditorRenderGraphWidget::DrawWindow()
         FString Title = Pass.Name;
         if (IsEnumFlagSet(Pass.Flags, ERenderGraphPassFlags::Raster))
         {
-            Title.Append(" [Raster]");
+            Title.Append(TEXT(" [Raster]"));
         }
         else if (IsEnumFlagSet(Pass.Flags, ERenderGraphPassFlags::Compute))
         {
-            Title.Append(" [Compute]");
+            Title.Append(TEXT(" [Compute]"));
         }
         else if (IsEnumFlagSet(Pass.Flags, ERenderGraphPassFlags::Copy))
         {
-            Title.Append(" [Copy]");
+            Title.Append(TEXT(" [Copy]"));
         }
 
         if (Pass.bCulled)
         {
-            Title.Append(" (Culled)");
+            Title.Append(TEXT(" (Culled)"));
         }
         else if (!Pass.bEnabled)
         {
-            Title.Append(" (Disabled)");
+            Title.Append(TEXT(" (Disabled)"));
         }
 
         EditorNodeGraph::NodeTitle(*Title);

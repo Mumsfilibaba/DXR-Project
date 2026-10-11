@@ -21,20 +21,20 @@ struct FPipelineStatisticsCounter
 
 static const FPipelineStatisticsCounter GPipelineStatisticsCounters[] =
 {
-    { "IA Vertices",          &FRHIPipelineStatistics::IAVertices    },
-    { "IA Primitives",        &FRHIPipelineStatistics::IAPrimitives  },
-    { "VS Invocations",       &FRHIPipelineStatistics::VSInvocations },
-    { "HS Invocations",       &FRHIPipelineStatistics::HSInvocations },
-    { "DS Invocations",       &FRHIPipelineStatistics::DSInvocations },
-    { "GS Invocations",       &FRHIPipelineStatistics::GSInvocations },
-    { "GS Primitives",        &FRHIPipelineStatistics::GSPrimitives  },
-    { "Clipping Invocations", &FRHIPipelineStatistics::CInvocations  },
-    { "Clipping Primitives",  &FRHIPipelineStatistics::CPrimitives   },
-    { "PS Invocations",       &FRHIPipelineStatistics::PSInvocations },
-    { "CS Invocations",       &FRHIPipelineStatistics::CSInvocations },
-    { "AS Invocations",       &FRHIPipelineStatistics::ASInvocations },
-    { "MS Invocations",       &FRHIPipelineStatistics::MSInvocations },
-    { "MS Primitives",        &FRHIPipelineStatistics::MSPrimitives  },
+    { TEXT("IA Vertices"),          &FRHIPipelineStatistics::IAVertices    },
+    { TEXT("IA Primitives"),        &FRHIPipelineStatistics::IAPrimitives  },
+    { TEXT("VS Invocations"),       &FRHIPipelineStatistics::VSInvocations },
+    { TEXT("HS Invocations"),       &FRHIPipelineStatistics::HSInvocations },
+    { TEXT("DS Invocations"),       &FRHIPipelineStatistics::DSInvocations },
+    { TEXT("GS Invocations"),       &FRHIPipelineStatistics::GSInvocations },
+    { TEXT("GS Primitives"),        &FRHIPipelineStatistics::GSPrimitives  },
+    { TEXT("Clipping Invocations"), &FRHIPipelineStatistics::CInvocations  },
+    { TEXT("Clipping Primitives"),  &FRHIPipelineStatistics::CPrimitives   },
+    { TEXT("PS Invocations"),       &FRHIPipelineStatistics::PSInvocations },
+    { TEXT("CS Invocations"),       &FRHIPipelineStatistics::CSInvocations },
+    { TEXT("AS Invocations"),       &FRHIPipelineStatistics::ASInvocations },
+    { TEXT("MS Invocations"),       &FRHIPipelineStatistics::MSInvocations },
+    { TEXT("MS Primitives"),        &FRHIPipelineStatistics::MSPrimitives  },
 };
 
 static IGPUProfiler* GetGPUProfiler()
@@ -44,7 +44,7 @@ static IGPUProfiler* GetGPUProfiler()
 }
 
 FEditorGPUProfilerPanel::FEditorGPUProfilerPanel(FEditorEngine* InEditorEngine)
-    : FEditorPanel(InEditorEngine, "GPUProfiler", "GPU Profiler")
+    : FEditorPanel(InEditorEngine, TEXT("GPUProfiler"), TEXT("GPU Profiler"))
     , ToolBar(nullptr)
     , FrameTimeHistogram(nullptr)
     , PassTable(nullptr)
@@ -71,7 +71,7 @@ bool FEditorGPUProfilerPanel::Initialize()
     FHistogram::FDesc HistogramDesc;
     HistogramDesc.Capacity        = NUM_LIVE_PROFILER_FRAMES;
     HistogramDesc.Font            = FEditorStyle::GetFonts().Body;
-    HistogramDesc.Label           = "GPU Frame Time (ms)";
+    HistogramDesc.Label           = TEXT("GPU Frame Time (ms)");
     HistogramDesc.PreferredHeight = 80;
 
     FrameTimeHistogram = FHistogram::Create(HistogramDesc);
@@ -90,7 +90,7 @@ bool FEditorGPUProfilerPanel::Initialize()
 
     BuildPipelineStatisticsRows();
 
-    TSharedPtr<FExpander> StatisticsSection = FExpander::Create(FEditorStyle::MakeExpanderDesc("Pipeline Statistics", PipelineStatisticsTable, false));
+    TSharedPtr<FExpander> StatisticsSection = FExpander::Create(FEditorStyle::MakeExpanderDesc(TEXT("Pipeline Statistics"), PipelineStatisticsTable, false));
     if (!StatisticsSection)
     {
         return false;
@@ -123,7 +123,7 @@ void FEditorGPUProfilerPanel::BuildPipelineStatisticsRows()
 
     for (const FPipelineStatisticsCounter& Counter : GPipelineStatisticsCounters)
     {
-        TSharedPtr<FTextBlock> Value = CreateValueText("0");
+        TSharedPtr<FTextBlock> Value = CreateValueText(TEXT("0"));
 
         PipelineStatisticsTable->AddRow(Counter.Label, Value);
         PipelineStatisticsValues.Emplace(Value);
@@ -143,7 +143,7 @@ TSharedPtr<FToolBar> FEditorGPUProfilerPanel::BuildToolBar()
         return nullptr;
     }
 
-    Bar->AddToggle(FToolBarItemDesc().SetLabel("Enable").SetToolTipText("Issues the timestamp queries the per-pass timings come from"),
+    Bar->AddToggle(FToolBarItemDesc().SetLabel(TEXT("Enable")).SetToolTipText(TEXT("Issues the timestamp queries the per-pass timings come from")),
         ECheckBoxState::Unchecked,
         FOnCheckStateChanged::CreateLambda([this](ECheckBoxState State)
         {
@@ -155,7 +155,7 @@ TSharedPtr<FToolBar> FEditorGPUProfilerPanel::BuildToolBar()
         ? ECheckBoxState::Checked
         : ECheckBoxState::Unchecked;
 
-    Bar->AddToggle(FToolBarItemDesc().SetLabel("Pipeline Statistics"), StatisticsState,
+    Bar->AddToggle(FToolBarItemDesc().SetLabel(TEXT("Pipeline Statistics")), StatisticsState,
         FOnCheckStateChanged::CreateLambda([](ECheckBoxState State)
         {
             IGPUProfiler* Target = GetGPUProfiler();
@@ -176,7 +176,7 @@ TSharedPtr<FToolBar> FEditorGPUProfilerPanel::BuildToolBar()
 
     Bar->AddSeparator();
 
-    Bar->AddButton(FToolBarItemDesc().SetLabel("Reset"), FOnClicked::CreateLambda([this]()
+    Bar->AddButton(FToolBarItemDesc().SetLabel(TEXT("Reset")), FOnClicked::CreateLambda([this]()
     {
         if (IGPUProfiler* Target = GetGPUProfiler())
         {
@@ -294,12 +294,12 @@ void FEditorGPUProfilerPanel::RefreshPasses(IGPUProfiler& Profiler)
         PassTable->ClearRows();
         PassValues.Clear();
 
-        PassTable->AddHeaderRow("Pass  (inclusive / exclusive ms)");
+        PassTable->AddHeaderRow(TEXT("Pass  (inclusive / exclusive ms)"));
         for (const FGPUProfilerInterval& Interval : Latest.Intervals)
         {
-            const FString Name = Interval.Name ? Interval.Name : "<unnamed>";
+            const FString Name = Interval.Name ? Interval.Name : TEXT("<unnamed>");
 
-            TSharedPtr<FTextBlock> Value = CreateValueText("-");
+            TSharedPtr<FTextBlock> Value = CreateValueText(TEXT("-"));
             PassTable->AddRow(Name, Value);
             PassValues.Add(Name, Value);
         }
@@ -307,7 +307,7 @@ void FEditorGPUProfilerPanel::RefreshPasses(IGPUProfiler& Profiler)
 
     for (const FGPUProfilerInterval& Interval : Latest.Intervals)
     {
-        const FString Name = Interval.Name ? Interval.Name : "<unnamed>";
+        const FString Name = Interval.Name ? Interval.Name : TEXT("<unnamed>");
 
         TSharedPtr<FTextBlock>* Value = PassValues.Find(Name);
         if (!Value)
@@ -315,7 +315,7 @@ void FEditorGPUProfilerPanel::RefreshPasses(IGPUProfiler& Profiler)
             continue;
         }
 
-        (*Value)->SetText(FString::Printf("%.3f  %.3f",
+        (*Value)->SetText(FString::Printf(TEXT("%.3f  %.3f"),
             Time::ToMilliseconds<float>(static_cast<float>(Interval.InclusiveNanoseconds)),
             Time::ToMilliseconds<float>(static_cast<float>(Interval.ExclusiveNanoseconds))));
     }
@@ -364,7 +364,7 @@ void FEditorGPUProfilerPanel::RefreshPipelineStatistics(IGPUProfiler& Profiler)
     for (int32 Index = 0; Index < PipelineStatisticsValues.Size(); ++Index)
     {
         const uint64 Counter = Statistics.*GPipelineStatisticsCounters[Index].Member;
-        PipelineStatisticsValues[Index]->SetText(FString::Printf("%llu", static_cast<unsigned long long>(Counter)));
+        PipelineStatisticsValues[Index]->SetText(FString::Printf(TEXT("%llu"), static_cast<unsigned long long>(Counter)));
     }
 }
 

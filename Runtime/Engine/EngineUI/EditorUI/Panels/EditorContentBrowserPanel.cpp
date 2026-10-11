@@ -27,9 +27,9 @@
 #include "Application/Menus/ToolTipService.h"
 #include "Application/Elements/IndexedPathMove.h"
 
-static const CHAR_T* GItemDragDropPayloadId   = "CB_MOVE_ITEM";
-static const CHAR_T* GFolderDragDropPayloadId = "CB_MOVE_FOLDER";
-static const CHAR_T* GNewFolderName           = "New folder";
+static const CHAR_T* GItemDragDropPayloadId   = TEXT("CB_MOVE_ITEM");
+static const CHAR_T* GFolderDragDropPayloadId = TEXT("CB_MOVE_FOLDER");
+static const CHAR_T* GNewFolderName           = TEXT("New folder");
 
 constexpr float DROP_INDICATOR_THICKNESS = 2.0f;
 constexpr int32 FOLDER_PANEL_WIDTH = 220;
@@ -689,7 +689,7 @@ void FEditorContentBrowserView::ClearDragState()
 }
 
 FEditorContentBrowserPanel::FEditorContentBrowserPanel(FEditorEngine* InEditorEngine)
-    : FEditorPanel(InEditorEngine, "ContentBrowser", "Content Browser")
+    : FEditorPanel(InEditorEngine, TEXT("ContentBrowser"), TEXT("Content Browser"))
     , Splitter(nullptr)
     , TreeWrapper(nullptr)
     , GridWrapper(nullptr)
@@ -763,7 +763,7 @@ bool FEditorContentBrowserPanel::Initialize()
 
 TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildFolderColumn()
 {
-    FolderSearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc("Search Paths",
+    FolderSearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc(TEXT("Search Paths"),
         FOnSearchTextChanged::CreateRaw(this, &FEditorContentBrowserPanel::OnFolderSearchTextChanged)));
 
     if (!FolderSearchBox)
@@ -827,7 +827,7 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildContentColumn()
         return nullptr;
     }
 
-    ContentSearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc("Search Content",
+    ContentSearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc(TEXT("Search Content"),
         FOnSearchTextChanged::CreateRaw(this, &FEditorContentBrowserPanel::OnContentSearchTextChanged)));
 
     if (!ContentSearchBox)
@@ -882,7 +882,7 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildContentColumn()
     FTextBlock::FDesc EmptyDesc;
     EmptyDesc.Font            = FEditorStyle::GetFonts().Body;
     EmptyDesc.ColorAndOpacity = Style.Colors.TextDisabled;
-    EmptyDesc.Text            = "Folder is empty";
+    EmptyDesc.Text            = TEXT("Folder is empty");
 
     EmptyStateText = FTextBlock::Create(EmptyDesc);
     if (!EmptyStateText)
@@ -966,26 +966,26 @@ void FEditorContentBrowserPanel::BuildPlaceholderTree()
 {
     static const CHAR_T* const CategoryNames[] =
     {
-        "MyOtherContent",
-        "Materials",
-        "Geometry",
-        "Textures",
-        "Scenes",
+        TEXT("MyOtherContent"),
+        TEXT("Materials"),
+        TEXT("Geometry"),
+        TEXT("Textures"),
+        TEXT("Scenes"),
     };
 
-    static const CHAR_T* const EvenSubFolders[] = { "Meshes", "Materials", "Textures" };
-    static const CHAR_T* const EvenAssets[]     = { "Car.asset", "Door.asset", "Wood.asset", "Stone.asset", "Gold.asset" };
+    static const CHAR_T* const EvenSubFolders[] = { TEXT("Meshes"), TEXT("Materials"), TEXT("Textures") };
+    static const CHAR_T* const EvenAssets[]     = { TEXT("Car.asset"), TEXT("Door.asset"), TEXT("Wood.asset"), TEXT("Stone.asset"), TEXT("Gold.asset") };
 
-    static const CHAR_T* const OddSubFolders[] = { "Animations", "Shaders", "Icons" };
-    static const CHAR_T* const OddAssets[]     = { "Bus.asset", "Train.asset", "Metal.asset", "Lava.asset", "Silver.asset", "WalkAnimation.asset", "JumpAnimation.asset" };
+    static const CHAR_T* const OddSubFolders[] = { TEXT("Animations"), TEXT("Shaders"), TEXT("Icons") };
+    static const CHAR_T* const OddAssets[]     = { TEXT("Bus.asset"), TEXT("Train.asset"), TEXT("Metal.asset"), TEXT("Lava.asset"), TEXT("Silver.asset"), TEXT("WalkAnimation.asset"), TEXT("JumpAnimation.asset") };
 
     static const CHAR_T* const LeafAssets[] =
     {
-        "WalkAnimation.asset",
-        "JumpAnimation.asset",
-        "LavaTexture.asset",
-        "GoldTexture.asset",
-        "SpaceshipModel.asset",
+        TEXT("WalkAnimation.asset"),
+        TEXT("JumpAnimation.asset"),
+        TEXT("LavaTexture.asset"),
+        TEXT("GoldTexture.asset"),
+        TEXT("SpaceshipModel.asset"),
     };
 
     const auto CreateEntry = [](const CHAR_T* Name, bool bIsFolder)
@@ -998,7 +998,7 @@ void FEditorContentBrowserPanel::BuildPlaceholderTree()
 
     Roots.Clear();
 
-    static const CHAR_T* const RootNames[] = { "Content", "MoreContent" };
+    static const CHAR_T* const RootNames[] = { TEXT("Content"), TEXT("MoreContent") };
     for (const CHAR_T* RootName : RootNames)
     {
         FEntry Root = CreateEntry(RootName, true);
@@ -1159,7 +1159,7 @@ void FEditorContentBrowserPanel::RefreshTiles()
 
     if (EmptyStateText)
     {
-        const CHAR_T* Message = !Folder ? "No folder selected" : (Folder->Children.IsEmpty() ? "Folder is empty" : "No results");
+        const CHAR_T* Message = !Folder ? TEXT("No folder selected") : (Folder->Children.IsEmpty() ? TEXT("Folder is empty") : TEXT("No results"));
 
         EmptyStateText->SetText(Message);
         EmptyStateText->SetVisibility(Items.IsEmpty() ? EVisibility::Visible : EVisibility::Hidden);
@@ -1191,7 +1191,7 @@ void FEditorContentBrowserPanel::RefreshBreadcrumbs()
         BreadcrumbBar->AddSlot(FButton::Create(Desc)).SetVerticalAlignment(EVerticalAlignment::Center);
     };
 
-    AddCrumb("Root", FEntryPath());
+    AddCrumb(TEXT("Root"), FEntryPath());
 
     FEntryPath Prefix;
     for (int32 Depth = 0; Depth < CurrentPath.Size(); ++Depth)
@@ -1486,7 +1486,7 @@ FString FEditorContentBrowserPanel::CreateUniqueName(const TArray<FEntry>& Sibli
 
     for (int32 Suffix = 1;; ++Suffix)
     {
-        const FString Candidate = FString::Printf("%s (%d)%s", Stem.Data(), Suffix, Extension.Data());
+        const FString Candidate = FString::Printf(TEXT("%s (%d)%s"), Stem.Data(), Suffix, Extension.Data());
         if (!IsTaken(Candidate))
         {
             return Candidate;
@@ -1548,7 +1548,7 @@ void FEditorContentBrowserPanel::MoveEntries(const FEntryPath& SourceParentPath,
     TArray<FEntry>* Source = FindChildArray(SourceParentPath);
     if (!Source)
     {
-        ReportFailure("Could not find the folder these items came from", CollectEntryNames(SourceParentPath, Legal));
+        ReportFailure(TEXT("Could not find the folder these items came from"), CollectEntryNames(SourceParentPath, Legal));
         return;
     }
 
@@ -1577,7 +1577,7 @@ void FEditorContentBrowserPanel::MoveEntries(const FEntryPath& SourceParentPath,
             Source->Emplace(Move(Entry));
         }
 
-        ReportFailure("Could not move these items, so they were left where they were", FailedNames);
+        ReportFailure(TEXT("Could not move these items, so they were left where they were"), FailedNames);
     }
     else
     {
@@ -1615,22 +1615,22 @@ void FEditorContentBrowserPanel::RequestDelete(const FEntryPath& ParentPath, con
 
     if (bIsFolderPanel)
     {
-        const FString Name = Children->IsValidIndex(ChildIndices[0]) ? (*Children)[ChildIndices[0]].Name : FString("this folder");
+        const FString Name = Children->IsValidIndex(ChildIndices[0]) ? (*Children)[ChildIndices[0]].Name : FString(TEXT("this folder"));
 
-        Desc.Title   = "Delete Folder";
-        Desc.Message = FString::Printf("Are you sure you want to delete \"%s\" and its contents?", Name.Data());
+        Desc.Title   = TEXT("Delete Folder");
+        Desc.Message = FString::Printf(TEXT("Are you sure you want to delete \"%s\" and its contents?"), Name.Data());
     }
     else if (ChildIndices.Size() == 1)
     {
-        const FString Name = Children->IsValidIndex(ChildIndices[0]) ? (*Children)[ChildIndices[0]].Name : FString("this item");
+        const FString Name = Children->IsValidIndex(ChildIndices[0]) ? (*Children)[ChildIndices[0]].Name : FString(TEXT("this item"));
 
-        Desc.Title   = "Delete";
-        Desc.Message = FString::Printf("Are you sure you want to delete \"%s\"?", Name.Data());
+        Desc.Title   = TEXT("Delete");
+        Desc.Message = FString::Printf(TEXT("Are you sure you want to delete \"%s\"?"), Name.Data());
     }
     else
     {
-        Desc.Title   = "Delete";
-        Desc.Message = "Are you sure you want to delete the selected items?";
+        Desc.Title   = TEXT("Delete");
+        Desc.Message = TEXT("Are you sure you want to delete the selected items?");
     }
 
     const FEntryPath  CapturedPath    = ParentPath;
@@ -1687,7 +1687,7 @@ void FEditorContentBrowserPanel::ReportFailure(const FString& Message, const TAr
     }
 
     FEditorErrorDialog::FDesc Desc;
-    Desc.Title   = "Content Browser";
+    Desc.Title   = TEXT("Content Browser");
     Desc.Message = Message;
     Desc.Details = FailedNames;
 
@@ -1706,20 +1706,20 @@ TSharedPtr<FMenu> FEditorContentBrowserPanel::BuildContextMenu(bool bIsFolderPan
 
     const bool bHasSelection = bIsFolderPanel ? !FolderTree->GetSelection().IsEmpty() : !TileView->GetSelection().IsEmpty();
 
-    Menu->AddSection("Create", Font);
+    Menu->AddSection(TEXT("Create"), Font);
 
     FMenuItem::FDesc NewFolderDesc;
-    NewFolderDesc.Label       = "New folder";
+    NewFolderDesc.Label       = TEXT("New folder");
     NewFolderDesc.Font        = Font;
     NewFolderDesc.OnActivated = FOnMenuItemActivated::CreateRaw(this, &FEditorContentBrowserPanel::NewFolder);
 
     Menu->AddItem(FMenuItem::Create(NewFolderDesc));
 
-    Menu->AddSection("Common", Font);
+    Menu->AddSection(TEXT("Common"), Font);
 
     FMenuItem::FDesc DeleteDesc;
-    DeleteDesc.Label        = "Delete";
-    DeleteDesc.ShortcutText = "Delete";
+    DeleteDesc.Label        = TEXT("Delete");
+    DeleteDesc.ShortcutText = TEXT("Delete");
     DeleteDesc.Font         = Font;
     DeleteDesc.OnActivated  = bIsFolderPanel
         ? FOnMenuItemActivated::CreateRaw(this, &FEditorContentBrowserPanel::OnTreeDeleteRequested)
@@ -1731,8 +1731,8 @@ TSharedPtr<FMenu> FEditorContentBrowserPanel::BuildContextMenu(bool bIsFolderPan
     Menu->AddItem(DeleteItem);
 
     FMenuItem::FDesc RenameDesc;
-    RenameDesc.Label        = "Rename";
-    RenameDesc.ShortcutText = "F2";
+    RenameDesc.Label        = TEXT("Rename");
+    RenameDesc.ShortcutText = TEXT("F2");
     RenameDesc.Font         = Font;
     RenameDesc.OnActivated  = bIsFolderPanel
         ? FOnMenuItemActivated::CreateRaw(this, &FEditorContentBrowserPanel::OnTreeRenameRequested)
@@ -1744,7 +1744,7 @@ TSharedPtr<FMenu> FEditorContentBrowserPanel::BuildContextMenu(bool bIsFolderPan
     Menu->AddItem(RenameItem);
 
     FMenuItem::FDesc CopyDesc;
-    CopyDesc.Label       = "Copy";
+    CopyDesc.Label       = TEXT("Copy");
     CopyDesc.Font        = Font;
     CopyDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this, bIsFolderPanel]()
     {
@@ -1783,7 +1783,7 @@ TSharedPtr<FMenu> FEditorContentBrowserPanel::BuildContextMenu(bool bIsFolderPan
     Menu->AddItem(CopyItem);
 
     FMenuItem::FDesc PasteDesc;
-    PasteDesc.Label       = "Paste";
+    PasteDesc.Label       = TEXT("Paste");
     PasteDesc.Font        = Font;
     PasteDesc.OnActivated = FOnMenuItemActivated::CreateRaw(this, &FEditorContentBrowserPanel::PasteEntries);
 
@@ -2160,7 +2160,7 @@ void FEditorContentBrowserPanel::UpdateGridDragPreview(int32 Target)
             const TArray<FString> Names = CollectEntryNames(DragParentPath,  DragChildIndices);
             const FString         SourceName = Names.IsEmpty() ? FString() : Names[0];
             FDragDropService::Get().SetPreview(EDragDropPreviewState::Forbidden,
-                FString::Printf("Cannot move %s to %s", *SourceName, *Entry->Name));
+                FString::Printf(TEXT("Cannot move %s to %s"), *SourceName, *Entry->Name));
             return;
         }
     }
@@ -2173,7 +2173,7 @@ void FEditorContentBrowserPanel::UpdateGridDragPreview(int32 Target)
         }
         else
         {
-            TargetName = "Root";
+            TargetName = TEXT("Root");
         }
     }
 
@@ -2204,17 +2204,17 @@ void FEditorContentBrowserPanel::UpdateDragPreview(const FEntryPath& TargetPath,
         if (Legal.IsEmpty())
         {
             State  = EDragDropPreviewState::Forbidden;
-            Status = FString::Printf("Cannot move %s to %s", *SourceName, *TargetName);
+            Status = FString::Printf(TEXT("Cannot move %s to %s"), *SourceName, *TargetName);
         }
         else if (!Illegal.IsEmpty())
         {
             State  = EDragDropPreviewState::Partial;
-            Status = FString::Printf("Move %s and others to %s", *SourceName, *TargetName);
+            Status = FString::Printf(TEXT("Move %s and others to %s"), *SourceName, *TargetName);
         }
         else
         {
             State  = EDragDropPreviewState::Allowed;
-            Status = FString::Printf("Move %s to %s", *SourceName, *TargetName);
+            Status = FString::Printf(TEXT("Move %s to %s"), *SourceName, *TargetName);
         }
     }
 
@@ -2252,11 +2252,11 @@ FString FEditorContentBrowserPanel::BuildHoverTip(const FEntryPath& Path, const 
         {
             if (!FullPath.IsEmpty())
             {
-                FullPath += "/";
+                FullPath += TEXT("/");
             }
             FullPath += Node->Name;
         }
     }
 
-    return FString::Printf("%s\n%s\nPath: %s", *Entry.Name, Entry.bIsFolder ? "Folder" : "Document", *FullPath);
+    return FString::Printf(TEXT("%s\n%s\nPath: %s"), *Entry.Name, Entry.bIsFolder ? TEXT("Folder") : TEXT("Document"), *FullPath);
 }

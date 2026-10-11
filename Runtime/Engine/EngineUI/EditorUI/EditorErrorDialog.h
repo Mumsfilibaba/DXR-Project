@@ -20,7 +20,7 @@ struct ENGINE_API FEditorErrorDialog
     struct FDesc
     {
         /** @brief The caption above the message, left out when it is empty. */
-        FString Title = "Error";
+        FString Title = TEXT("Error");
 
         /** @brief The line above the list, naming what failed. */
         FString Message;
@@ -29,7 +29,7 @@ struct ENGINE_API FEditorErrorDialog
         TArray<FString> Details;
 
         /** @brief The label of the button that dismisses the dialog. */
-        FString DismissLabel = "OK";
+        FString DismissLabel = TEXT("OK");
 
         /** @brief Fired once the dialog has been dismissed. */
         FOnErrorDialogClosed OnClosed;

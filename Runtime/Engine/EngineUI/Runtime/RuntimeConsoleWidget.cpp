@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
@@ -142,12 +143,12 @@ void FRuntimeConsoleWidget::DrawConsole()
                 // First find the maximum length of each column for the selectable
                 Candidates.Foreach([&](const TPair<IConsoleObject*, FString>& Candidate)
                 {
-                    VariableNameWidth = Math::Max(VariableNameWidth, ImGui::CalcTextSize(*Candidate.Second).x);
+                    VariableNameWidth = Math::Max(VariableNameWidth, ImGui::CalcTextSize(StringCast<ANSICHAR>(Candidate.Second).Get()).x);
 
                     if (IConsoleVariable* Variable = Candidate.First->AsVariable())
                     {
                         const FString Value = Variable->GetString();
-                        VariableValueWidth = Math::Max(VariableValueWidth, ImGui::CalcTextSize(*Value).x);
+                        VariableValueWidth = Math::Max(VariableValueWidth, ImGui::CalcTextSize(StringCast<ANSICHAR>(Value).Get()).x);
                     }
                 });
 
@@ -156,7 +157,7 @@ void FRuntimeConsoleWidget::DrawConsole()
 
                 const auto GetFlagStringLength = [](EConsoleVariableFlags Flag)
                 {
-                    return ImGui::CalcTextSize(SetByFlagToString(Flag)).x;
+                    return ImGui::CalcTextSize(StringCast<ANSICHAR>(SetByFlagToString(Flag)).Get()).x;
                 };
 
                 const float PostFixTextLength =
@@ -181,7 +182,7 @@ void FRuntimeConsoleWidget::DrawConsole()
                     ImGui::PushID(CandidateIndex);
 
                     const ImVec2 SelectableSize(ImGui::GetContentRegionAvail().x, 20.0f);
-                    ImGui::Selectable(*Candidate.Second, bIsActiveIndex, ImGuiSelectableFlags_None, SelectableSize);
+                    ImGui::Selectable(StringCast<ANSICHAR>(Candidate.Second).Get(), bIsActiveIndex, ImGuiSelectableFlags_None, SelectableSize);
 
                     // If the selectable is not visible we want to scroll to it
                     const bool bIsSelectableVisible = ImGuiExtensions::IsItemFullyVisible();
@@ -192,14 +193,14 @@ void FRuntimeConsoleWidget::DrawConsole()
 
                     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.85f, 0.85f, 1.0f));
 
-                    const char* PostFixText = "";
-                    const char* SetByText   = "";
+                    const char*   PostFixText = "";
+                    const CHAR_T* SetByText   = TEXT("");
 
                     IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable();
                     if (ConsoleVariable)
                     {
                         const FString Value = ConsoleVariable->GetString();
-                        ImGui::Text("%s", *Value);
+                        ImGui::Text("%s", StringCast<ANSICHAR>(Value).Get());
 
                         if (ConsoleVariable->IsVariableBool())
                         {
@@ -237,14 +238,14 @@ void FRuntimeConsoleWidget::DrawConsole()
                     if (ConsoleVariable)
                     {
                         ImGui::SameLine(SetByOffset);
-                        ImGui::Text("[%s]", SetByText);
+                        ImGui::Text("[%s]", StringCast<ANSICHAR>(SetByText).Get());
                     }
 
                     const float HelpStringOffset = SetByOffset + SetByTextLength + 20.0f * Scale;
                     ImGui::SameLine(HelpStringOffset);
 
-                    const char* HelpString = Candidate.First->GetHelpString();
-                    ImGui::Text(" [Help: %s]", HelpString);
+                    const CHAR_T* HelpString = Candidate.First->GetHelpString();
+                    ImGui::Text(" [Help: %s]", StringCast<ANSICHAR>(HelpString).Get());
 
                     ImGui::PopStyleColor();
 
@@ -302,7 +303,7 @@ void FRuntimeConsoleWidget::DrawConsole()
                 for (const FConsoleMessage& Text : Messages)
                 {
                     const ImVec4 Color = GetColorFromLogSeverity(Text.Severity);
-                    ImGui::TextColored(Color, "%s", *Text.Message);
+                    ImGui::TextColored(Color, "%s", StringCast<ANSICHAR>(Text.Message).Get());
                 }
 
                 ImGui::PopStyleVar();
@@ -359,12 +360,12 @@ void FRuntimeConsoleWidget::DrawConsole()
                         CHECK(Candidates.IsEmpty() == false);
 
                         const FString& NewTextData = Candidates[SelectedCandidateIndex].Second;
-                        CString::Strcpy(TextBuffer.Data(), *NewTextData);
+                        FPlatformString::Strcpy(TextBuffer.Data(), StringCast<ANSICHAR>(NewTextData).Get());
                         bUpdateCursorPosition = true;
                     }
                     else
                     {
-                        const FString Text = FString(TextBuffer.Data());
+                        const FString Text = StringCast<CHAR_T>(TextBuffer.Data()).ToString();
                         FConsoleManager::Get().ExecuteCommand(*this, Text);
 
                         TextBuffer[0] = 0;
@@ -461,8 +462,8 @@ int32 FRuntimeConsoleWidget::InputTextCallback(ImGuiInputTextCallbackData* Callb
             const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
             if (WordLength > 0)
             {
-                const FStringView CandidateName(WordStart, WordLength);
-                FConsoleManager::Get().FindCandidates(CandidateName, Candidates);
+                const FString CandidateName = StringCast<CHAR_T>(WordStart, WordLength).ToString();
+                FConsoleManager::Get().FindCandidates(FStringView(CandidateName), Candidates);
 
                 // If we found any candidates, then want to reset the history index, otherwise the index will be the 
                 // the same if we erase the text in the input-field and start iterating through the history.
@@ -511,7 +512,7 @@ int32 FRuntimeConsoleWidget::InputTextCallback(ImGuiInputTextCallbackData* Callb
 
                     const FString& NewTextData = Candidates[SelectedCandidateIndex].Second;
                     CallbackData->DeleteChars(Pos, Count);
-                    CallbackData->InsertChars(CallbackData->CursorPos, *NewTextData);
+                    CallbackData->InsertChars(CallbackData->CursorPos, StringCast<ANSICHAR>(NewTextData).Get());
 
                     // If we used tried to complete the command and there actually was text, then we want to clear the candidate array
                     InvalidateCandidates();
@@ -590,9 +591,9 @@ int32 FRuntimeConsoleWidget::InputTextCallback(ImGuiInputTextCallbackData* Callb
                 if (PrevHistoryIndex != HistoryIndex)
                 {
                     // If the history-index is invalid, then we clear the input-text field
-                    const char* HistoryStr = (HistoryIndex >= 0) ? *History[HistoryIndex] : "";
+                    const TStringConversion<ANSICHAR, CHAR_T> HistoryStr = StringCast<ANSICHAR>((HistoryIndex >= 0) ? *History[HistoryIndex] : TEXT(""));
                     CallbackData->DeleteChars(0, CallbackData->BufTextLen);
-                    CallbackData->InsertChars(0, HistoryStr);
+                    CallbackData->InsertChars(0, HistoryStr.Get());
                 }
             }
             else

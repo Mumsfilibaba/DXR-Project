@@ -8,15 +8,15 @@
 
 static bool IsRHIGroup(const CHAR_T* GroupName)
 {
-    return CString::Strcmp(GroupName, "RHI") == 0
-        || CString::Strcmp(GroupName, "RHI Budget") == 0
-        || CString::Strcmp(GroupName, "D3D11 Resources") == 0
-        || CString::Strcmp(GroupName, "D3D12 Allocators") == 0
-        || CString::Strcmp(GroupName, "Vulkan Allocators") == 0
-        || CString::Strcmp(GroupName, "D3D11 PSO") == 0
-        || CString::Strcmp(GroupName, "D3D12 PSO") == 0
-        || CString::Strcmp(GroupName, "Vulkan PSO") == 0
-        || CString::Strncmp(GroupName, "Metal ", 6) == 0;
+    return CString::Strcmp(GroupName, TEXT("RHI")) == 0
+        || CString::Strcmp(GroupName, TEXT("RHI Budget")) == 0
+        || CString::Strcmp(GroupName, TEXT("D3D11 Resources")) == 0
+        || CString::Strcmp(GroupName, TEXT("D3D12 Allocators")) == 0
+        || CString::Strcmp(GroupName, TEXT("Vulkan Allocators")) == 0
+        || CString::Strcmp(GroupName, TEXT("D3D11 PSO")) == 0
+        || CString::Strcmp(GroupName, TEXT("D3D12 PSO")) == 0
+        || CString::Strcmp(GroupName, TEXT("Vulkan PSO")) == 0
+        || CString::Strncmp(GroupName, TEXT("Metal "), 6) == 0;
 }
 
 FEditorStatsWidget::FEditorStatsWidget()
@@ -45,9 +45,9 @@ void FEditorStatsWidget::Draw()
         return;
     }
 
-    TRACE_SCOPE("Engine Stats");
+    TRACE_SCOPE(TEXT("Engine Stats"));
 
-    if (EditorWidgets::BeginEditorWindow("Engine Stats", &bVisible))
+    if (EditorWidgets::BeginEditorWindow(TEXT("Engine Stats"), &bVisible))
     {
         const FStatRegistry& Registry = FStatRegistry::Get();
         TArray<const CHAR_T*> Groups;
@@ -62,7 +62,7 @@ void FEditorStatsWidget::Draw()
                 continue;
             }
 
-            if (!ImGui::CollapsingHeader(GroupName, ImGuiTreeNodeFlags_DefaultOpen))
+            if (!ImGui::CollapsingHeader(StringCast<ANSICHAR>(GroupName).Get(), ImGuiTreeNodeFlags_DefaultOpen))
             {
                 continue;
             }
@@ -70,7 +70,7 @@ void FEditorStatsWidget::Draw()
             TArray<FStatData*> GroupStats;
             Registry.GetStatsByGroup(GroupName, GroupStats);
 
-            if (ImGui::BeginTable(GroupName, 2, TableFlags))
+            if (ImGui::BeginTable(StringCast<ANSICHAR>(GroupName).Get(), 2, TableFlags))
             {
                 ImGui::TableSetupColumn("Stat",  ImGuiTableColumnFlags_WidthStretch, 0.6f);
                 ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch, 0.4f);
@@ -88,7 +88,7 @@ void FEditorStatsWidget::Draw()
                     }
 
                     ImGui::TableNextRow();
-                    ImGui::TableNextColumn(); ImGui::Text("%s", Stat->StatName);
+                    ImGui::TableNextColumn(); ImGui::Text("%s", StringCast<ANSICHAR>(Stat->StatName).Get());
                     ImGui::TableNextColumn(); ImGui::Text("%s", ValueText);
                 }
 

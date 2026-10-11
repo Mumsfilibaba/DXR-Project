@@ -34,7 +34,7 @@ bool FEditorPanelRegistry::Add(const TSharedPtr<FEditorPanel>& Panel)
 {
     if (!Panel || !Panel->Initialize())
     {
-        LOG_ERROR("[FEditorPanelRegistry]: Failed to initialize panel '%s'", Panel ? *Panel->GetPanelId() : "<null>");
+        LOG_ERROR("[FEditorPanelRegistry]: Failed to initialize panel '%s'", Panel ? *Panel->GetPanelId() : TEXT("<null>"));
         return false;
     }
 

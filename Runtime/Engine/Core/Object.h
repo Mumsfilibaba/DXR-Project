@@ -46,7 +46,7 @@ class FObjectInitializer;
         { \
             FObjectClass::GlobalRegisterClass( \
                 GlobalClassInfo, \
-                #FObjectType, \
+                TEXT(#FObjectType), \
                 sizeof(FObjectType), \
                 alignof(FObjectType), \
                 &Super::GetStaticClass, \

@@ -2,6 +2,7 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Color.h"
 #include "Core/Containers/UniquePtr.h"
+#include "Core/Containers/StringConversion.h"
 #include "ImGuiPlugin/ImGuiCore.h"
 
 struct FImGuiTexture;
@@ -267,12 +268,12 @@ struct ENGINE_API EditorWidgets
 
     static FORCEINLINE bool DrawColorEdit3(const CHAR_T* Label, FVector3& OutColor, ImGuiColorEditFlags Flags = 0)
     {
-        return ImGui::ColorEdit3(Label, OutColor.XYZ, Flags);
+        return ImGui::ColorEdit3(StringCast<ANSICHAR>(Label).Get(), OutColor.XYZ, Flags);
     }
 
     static FORCEINLINE bool DrawColorEdit3(const CHAR_T* Label, FFloatColor& OutColor, ImGuiColorEditFlags Flags = 0)
     {
-        return ImGui::ColorEdit3(Label, OutColor.RGBA, Flags);
+        return ImGui::ColorEdit3(StringCast<ANSICHAR>(Label).Get(), OutColor.RGBA, Flags);
     }
 
     // -----------------------------------------------------------------------------------------
@@ -280,6 +281,9 @@ struct ENGINE_API EditorWidgets
     // -----------------------------------------------------------------------------------------
 
     static bool DrawSearchField(const CHAR_T* InId, const CHAR_T* InHint, CHAR_T* InOutBuffer, int32 InBufferSize, float InWidth = -1.0f, bool bDrawBorder = true);
+
+    static bool InputText(const CHAR_T* InId, CHAR_T* InOutBuffer, int32 InBufferSize, ImGuiInputTextFlags InFlags = 0);
+    static bool InputTextWithHint(const CHAR_T* InId, const CHAR_T* InHint, CHAR_T* InOutBuffer, int32 InBufferSize, ImGuiInputTextFlags InFlags = 0);
     static void DrawTextWithSearchHighlight(ImDrawList* DrawList, const ImVec2& TextPos, const CHAR_T* Text, const CHAR_T* FilterText, ImU32 BaseTextU32, float HighlightPadX = 1.0f, float HighlightPadY = 1.0f, const ImVec2* ClampMin = nullptr, const ImVec2* ClampMax = nullptr);
 
     // -----------------------------------------------------------------------------------------

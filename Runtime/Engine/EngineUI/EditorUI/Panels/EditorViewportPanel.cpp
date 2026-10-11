@@ -55,23 +55,23 @@ struct FDebugViewEntry
 
 constexpr FDebugViewEntry DEBUG_VIEW_ENTRIES[] =
 {
-    { "Lit",                         FSceneRenderView::EDebugView::None },
-    { "Shadow Mask",                 FSceneRenderView::EDebugView::ShadowMask },
-    { "GBuffer: Albedo",             FSceneRenderView::EDebugView::GBufferAlbedo },
-    { "GBuffer: Normal",             FSceneRenderView::EDebugView::GBufferNormal },
-    { "GBuffer: Material",           FSceneRenderView::EDebugView::GBufferMaterial },
-    { "GBuffer: Velocity",           FSceneRenderView::EDebugView::GBufferVelocity },
-    { "SSAO",                        FSceneRenderView::EDebugView::SSAO },
-    { "Depth",                       FSceneRenderView::EDebugView::Depth },
-    { "CSM Cascades (2x2)",          FSceneRenderView::EDebugView::ShadowCascades },
-    { "CSM Cascade Index",           FSceneRenderView::EDebugView::ShadowCascadeIndex },
-    { "CSM Cascade Overlay",         FSceneRenderView::EDebugView::ShadowCascadeOverlay },
-    { "Reflections Radiance",        FSceneRenderView::EDebugView::RayTracingReflectionsRaw },
-    { "Reflections Temporal Filter", FSceneRenderView::EDebugView::RayTracingReflectionsTemporal },
-    { "Reflections Spatial Filter",  FSceneRenderView::EDebugView::RayTracingReflectionsSpatial },
-    { "Reflections Variance",        FSceneRenderView::EDebugView::RayTracingReflectionsVariance },
-    { "Reflections History Length",  FSceneRenderView::EDebugView::RayTracingReflectionsHistory },
-    { "Geometry Debug",              FSceneRenderView::EDebugView::RayTracingPrimaryID },
+    { TEXT("Lit"),                         FSceneRenderView::EDebugView::None },
+    { TEXT("Shadow Mask"),                 FSceneRenderView::EDebugView::ShadowMask },
+    { TEXT("GBuffer: Albedo"),             FSceneRenderView::EDebugView::GBufferAlbedo },
+    { TEXT("GBuffer: Normal"),             FSceneRenderView::EDebugView::GBufferNormal },
+    { TEXT("GBuffer: Material"),           FSceneRenderView::EDebugView::GBufferMaterial },
+    { TEXT("GBuffer: Velocity"),           FSceneRenderView::EDebugView::GBufferVelocity },
+    { TEXT("SSAO"),                        FSceneRenderView::EDebugView::SSAO },
+    { TEXT("Depth"),                       FSceneRenderView::EDebugView::Depth },
+    { TEXT("CSM Cascades (2x2)"),          FSceneRenderView::EDebugView::ShadowCascades },
+    { TEXT("CSM Cascade Index"),           FSceneRenderView::EDebugView::ShadowCascadeIndex },
+    { TEXT("CSM Cascade Overlay"),         FSceneRenderView::EDebugView::ShadowCascadeOverlay },
+    { TEXT("Reflections Radiance"),        FSceneRenderView::EDebugView::RayTracingReflectionsRaw },
+    { TEXT("Reflections Temporal Filter"), FSceneRenderView::EDebugView::RayTracingReflectionsTemporal },
+    { TEXT("Reflections Spatial Filter"),  FSceneRenderView::EDebugView::RayTracingReflectionsSpatial },
+    { TEXT("Reflections Variance"),        FSceneRenderView::EDebugView::RayTracingReflectionsVariance },
+    { TEXT("Reflections History Length"),  FSceneRenderView::EDebugView::RayTracingReflectionsHistory },
+    { TEXT("Geometry Debug"),              FSceneRenderView::EDebugView::RayTracingPrimaryID },
 };
 
 constexpr int32 NUM_DEBUG_VIEW_ENTRIES       = static_cast<int32>(ARRAY_COUNT(DEBUG_VIEW_ENTRIES));
@@ -123,7 +123,7 @@ static bool HasSelectedAncestor(const TSet<FActor*>& SelectionLookup, FActor* Ac
 }
 
 FEditorViewportPanel::FEditorViewportPanel(FEditorEngine* InEditorEngine)
-    : FEditorPanel(InEditorEngine, "Viewport", "Viewport")
+    : FEditorPanel(InEditorEngine, TEXT("Viewport"), TEXT("Viewport"))
     , CameraController(MakeUniquePtr<FEditorCameraController>())
     , Surface(nullptr)
     , Image(nullptr)
@@ -414,21 +414,21 @@ TSharedPtr<FToolBar> FEditorViewportPanel::BuildToolBar()
     Bar->BeginGroup();
 
     TranslateItem = Bar->AddButton(
-        FToolBarItemDesc().SetIcon(FEditorIcons::Translate).SetToolTipText("Translate the selection"),
+        FToolBarItemDesc().SetIcon(FEditorIcons::Translate).SetToolTipText(TEXT("Translate the selection")),
         FOnClicked::CreateLambda([this]()
         {
             SetGizmoOperation(EGizmoOperation::Translate);
         }));
 
     RotateItem = Bar->AddButton(
-        FToolBarItemDesc().SetIcon(FEditorIcons::Rotate).SetToolTipText("Rotate the selection"),
+        FToolBarItemDesc().SetIcon(FEditorIcons::Rotate).SetToolTipText(TEXT("Rotate the selection")),
         FOnClicked::CreateLambda([this]()
         {
             SetGizmoOperation(EGizmoOperation::Rotate);
         }));
 
     ScaleItem = Bar->AddButton(
-        FToolBarItemDesc().SetIcon(FEditorIcons::Scale).SetToolTipText("Scale the selection"),
+        FToolBarItemDesc().SetIcon(FEditorIcons::Scale).SetToolTipText(TEXT("Scale the selection")),
         FOnClicked::CreateLambda([this]()
         {
             SetGizmoOperation(EGizmoOperation::Scale);
@@ -439,14 +439,14 @@ TSharedPtr<FToolBar> FEditorViewportPanel::BuildToolBar()
     Bar->BeginGroup();
 
     CenterItem = Bar->AddButton(
-        FToolBarItemDesc().SetIcon(FEditorIcons::GizmoCenter).SetToolTipText("Put the handles at the bounds centre"),
+        FToolBarItemDesc().SetIcon(FEditorIcons::GizmoCenter).SetToolTipText(TEXT("Put the handles at the bounds centre")),
         FOnClicked::CreateLambda([this]()
         {
             SetGizmoPlacement(EEditorGizmoPlacement::Center);
         }));
 
     PivotItem = Bar->AddButton(
-        FToolBarItemDesc().SetIcon(FEditorIcons::GizmoPivot).SetToolTipText("Put the handles at the pivot"),
+        FToolBarItemDesc().SetIcon(FEditorIcons::GizmoPivot).SetToolTipText(TEXT("Put the handles at the pivot")),
         FOnClicked::CreateLambda([this]()
         {
             SetGizmoPlacement(EEditorGizmoPlacement::Pivot);
@@ -457,14 +457,14 @@ TSharedPtr<FToolBar> FEditorViewportPanel::BuildToolBar()
     Bar->BeginGroup();
 
     LocalItem = Bar->AddButton(
-        FToolBarItemDesc().SetIcon(FEditorIcons::GizmoLocal).SetToolTipText("Align the handles to the selection"),
+        FToolBarItemDesc().SetIcon(FEditorIcons::GizmoLocal).SetToolTipText(TEXT("Align the handles to the selection")),
         FOnClicked::CreateLambda([this]()
         {
             SetGizmoMode(EGizmoMode::Local);
         }));
 
     WorldItem = Bar->AddButton(
-        FToolBarItemDesc().SetIcon(FEditorIcons::GizmoWorld).SetToolTipText("Align the handles to the world axes"),
+        FToolBarItemDesc().SetIcon(FEditorIcons::GizmoWorld).SetToolTipText(TEXT("Align the handles to the world axes")),
         FOnClicked::CreateLambda([this]()
         {
             SetGizmoMode(EGizmoMode::World);
@@ -475,11 +475,11 @@ TSharedPtr<FToolBar> FEditorViewportPanel::BuildToolBar()
     Bar->AddFlexibleSpace();
 
     Bar->AddDropDown(
-        FToolBarItemDesc().SetLabel("Camera").SetToolTipText("Speeds, lens and framing").SetMinWidth(CAMERA_BUTTON_WIDTH),
+        FToolBarItemDesc().SetLabel(TEXT("Camera")).SetToolTipText(TEXT("Speeds, lens and framing")).SetMinWidth(CAMERA_BUTTON_WIDTH),
         FOnGetMenuContent::CreateRaw(this, &FEditorViewportPanel::BuildCameraMenu));
 
     Bar->AddDropDown(
-        FToolBarItemDesc().SetToolTipText("View mode, secondary view and channel mask").SetMinWidth(ComputeViewButtonWidth()),
+        FToolBarItemDesc().SetToolTipText(TEXT("View mode, secondary view and channel mask")).SetMinWidth(ComputeViewButtonWidth()),
         FOnGetMenuContent::CreateRaw(this, &FEditorViewportPanel::BuildViewOptionsMenu));
 
     ViewItem = Bar->GetItems().Last().Button;
@@ -504,11 +504,11 @@ TSharedPtr<FToolBar> FEditorViewportPanel::BuildTransportBar()
     Bar->BeginGroup();
 
     PlayItem = Bar->AddButton(
-        FToolBarItemDesc().SetIcon(FEditorIcons::Play).SetToolTipText("Run the world in the editor").SetMinWidth(TRANSPORT_BUTTON_WIDTH),
+        FToolBarItemDesc().SetIcon(FEditorIcons::Play).SetToolTipText(TEXT("Run the world in the editor")).SetMinWidth(TRANSPORT_BUTTON_WIDTH),
         FOnClicked::CreateRaw(this, &FEditorViewportPanel::TogglePlay));
 
     PauseItem = Bar->AddButton(
-        FToolBarItemDesc().SetIcon(FEditorIcons::Pause).SetToolTipText("Freeze the running world").SetMinWidth(TRANSPORT_BUTTON_WIDTH),
+        FToolBarItemDesc().SetIcon(FEditorIcons::Pause).SetToolTipText(TEXT("Freeze the running world")).SetMinWidth(TRANSPORT_BUTTON_WIDTH),
         FOnClicked::CreateLambda([this]()
         {
             EditorEngine->TogglePause();
@@ -581,7 +581,7 @@ void FEditorViewportPanel::RefreshToolBarState()
     if (PlayItem)
     {
         PlayItem->SetIcon(bIsEditing ? FEditorIcons::Play : FEditorIcons::Stop);
-        PlayItem->SetToolTipText(bIsEditing ? "Run the world in the editor" : "Stop the running world");
+        PlayItem->SetToolTipText(bIsEditing ? TEXT("Run the world in the editor") : TEXT("Stop the running world"));
         PlayItem->SetHighlighted(!bIsEditing);
     }
 
@@ -625,7 +625,7 @@ TSharedPtr<FComboBox> FEditorViewportPanel::BuildSecondaryDebugViewCombo()
     Desc.Options            = Options;
     Desc.SelectedIndex      = FindDebugViewIndex(SecondaryDebugView);
     Desc.Font               = FEditorStyle::GetFonts().Body;
-    Desc.PlaceholderText    = "Off";
+    Desc.PlaceholderText    = TEXT("Off");
     Desc.OnSelectionChanged = FOnComboSelectionChanged::CreateLambda([this](int32 SelectedIndex)
     {
         if (SelectedIndex >= 0 && SelectedIndex < NUM_DEBUG_VIEW_ENTRIES)
@@ -692,47 +692,47 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildCameraMenu()
 
     FEditorCameraController* Camera = CameraController.Get();
 
-    Menu->AddSection("Movement", Font);
+    Menu->AddSection(TEXT("Movement"), Font);
 
-    AddSliderRow("Move", FEditorCameraController::MinMoveSpeed, FEditorCameraController::MaxMoveSpeed, Camera->GetMoveSpeed(), 1,
+    AddSliderRow(TEXT("Move"), FEditorCameraController::MinMoveSpeed, FEditorCameraController::MaxMoveSpeed, Camera->GetMoveSpeed(), 1,
         FOnSliderValueChanged::CreateLambda([this](float NewValue)
         {
             CameraController->SetMoveSpeed(NewValue);
         }));
 
-    AddSliderRow("Rotate", 1.0f, 20.0f, Camera->GetRotationSpeed(), 1,
+    AddSliderRow(TEXT("Rotate"), 1.0f, 20.0f, Camera->GetRotationSpeed(), 1,
         FOnSliderValueChanged::CreateLambda([this](float NewValue)
         {
             CameraController->SetRotationSpeed(NewValue);
         }));
 
-    AddSliderRow("Look", 0.01f, 1.0f, Camera->GetMouseSensitivity(), 2,
+    AddSliderRow(TEXT("Look"), 0.01f, 1.0f, Camera->GetMouseSensitivity(), 2,
         FOnSliderValueChanged::CreateLambda([this](float NewValue)
         {
             CameraController->SetMouseSensitivity(NewValue);
         }));
 
-    AddSliderRow("Pan", 0.1f, 20.0f, Camera->GetPanSpeed(), 1,
+    AddSliderRow(TEXT("Pan"), 0.1f, 20.0f, Camera->GetPanSpeed(), 1,
         FOnSliderValueChanged::CreateLambda([this](float NewValue)
         {
             CameraController->SetPanSpeed(NewValue);
         }));
 
-    Menu->AddSection("Lens", Font);
+    Menu->AddSection(TEXT("Lens"), Font);
 
-    AddSliderRow("FOV", 20.0f, 120.0f, Camera->GetFieldOfView(), 0,
+    AddSliderRow(TEXT("FOV"), 20.0f, 120.0f, Camera->GetFieldOfView(), 0,
         FOnSliderValueChanged::CreateLambda([this](float NewValue)
         {
             CameraController->SetFieldOfView(NewValue);
         }));
 
-    AddSliderRow("Near", 0.01f, 10.0f, Camera->GetNearPlane(), 2,
+    AddSliderRow(TEXT("Near"), 0.01f, 10.0f, Camera->GetNearPlane(), 2,
         FOnSliderValueChanged::CreateLambda([this](float NewValue)
         {
             CameraController->SetNearPlane(NewValue);
         }));
 
-    AddSliderRow("Far", 100.0f, 10000.0f, Camera->GetFarPlane(), 0,
+    AddSliderRow(TEXT("Far"), 100.0f, 10000.0f, Camera->GetFarPlane(), 0,
         FOnSliderValueChanged::CreateLambda([this](float NewValue)
         {
             CameraController->SetFarPlane(NewValue);
@@ -743,10 +743,10 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildCameraMenu()
         CaptionColumn->SetMinWidth(CaptionColumnWidth);
     }
 
-    Menu->AddSection("Actions", Font);
+    Menu->AddSection(TEXT("Actions"), Font);
 
     FMenuItem::FDesc ResetDesc;
-    ResetDesc.Label       = "Reset";
+    ResetDesc.Label       = TEXT("Reset");
     ResetDesc.Font        = Font;
     ResetDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this]()
     {
@@ -756,7 +756,7 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildCameraMenu()
     Menu->AddItem(FMenuItem::Create(ResetDesc));
 
     FMenuItem::FDesc FocusDesc;
-    FocusDesc.Label       = "Focus Selected";
+    FocusDesc.Label       = TEXT("Focus Selected");
     FocusDesc.Font        = Font;
     FocusDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this]()
     {
@@ -766,7 +766,7 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildCameraMenu()
     Menu->AddItem(FMenuItem::Create(FocusDesc));
 
     FMenuItem::FDesc AttachDesc;
-    AttachDesc.Label       = "Attach To Selected";
+    AttachDesc.Label       = TEXT("Attach To Selected");
     AttachDesc.Font        = Font;
     AttachDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this]()
     {
@@ -779,7 +779,7 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildCameraMenu()
     Menu->AddItem(FMenuItem::Create(AttachDesc));
 
     FMenuItem::FDesc DetachDesc;
-    DetachDesc.Label       = "Detach";
+    DetachDesc.Label       = TEXT("Detach");
     DetachDesc.Font        = Font;
     DetachDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this]()
     {
@@ -803,7 +803,7 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildViewOptionsMenu()
 
     Menu->SetMinDesiredWidth(CAMERA_MENU_WIDTH);
 
-    Menu->AddSection("View Mode", Font);
+    Menu->AddSection(TEXT("View Mode"), Font);
 
     const auto AddDebugViewItem = [this, &Font](const TSharedPtr<FMenu>& Target, const FDebugViewEntry& Entry)
     {
@@ -834,7 +834,7 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildViewOptionsMenu()
     }
 
     FMenuItem::FDesc ShadowDesc;
-    ShadowDesc.Label   = "Shadow Debug";
+    ShadowDesc.Label   = TEXT("Shadow Debug");
     ShadowDesc.Font    = Font;
     ShadowDesc.SubMenu = ShadowMenu;
 
@@ -847,13 +847,13 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildViewOptionsMenu()
     }
 
     FMenuItem::FDesc RayTracingDesc;
-    RayTracingDesc.Label   = "Ray Tracing";
+    RayTracingDesc.Label   = TEXT("Ray Tracing");
     RayTracingDesc.Font    = Font;
     RayTracingDesc.SubMenu = RayTracingMenu;
 
     Menu->AddItem(FMenuItem::Create(RayTracingDesc));
 
-    Menu->AddSection("Split View", Font);
+    Menu->AddSection(TEXT("Split View"), Font);
 
     SecondaryDebugViewCombo = BuildSecondaryDebugViewCombo();
     if (SecondaryDebugViewCombo)
@@ -864,7 +864,7 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildViewOptionsMenu()
         Menu->AddCustomEntry(ComboRow);
     }
 
-    Menu->AddSection("Channels", Font);
+    Menu->AddSection(TEXT("Channels"), Font);
 
     struct FChannelEntry
     {
@@ -874,10 +874,10 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildViewOptionsMenu()
 
     constexpr FChannelEntry CHANNEL_ENTRIES[] =
     {
-        { "R", FSceneRenderView::EDebugViewChannel::Red   },
-        { "G", FSceneRenderView::EDebugViewChannel::Green },
-        { "B", FSceneRenderView::EDebugViewChannel::Blue  },
-        { "A", FSceneRenderView::EDebugViewChannel::Alpha },
+        { TEXT("R"), FSceneRenderView::EDebugViewChannel::Red   },
+        { TEXT("G"), FSceneRenderView::EDebugViewChannel::Green },
+        { TEXT("B"), FSceneRenderView::EDebugViewChannel::Blue  },
+        { TEXT("A"), FSceneRenderView::EDebugViewChannel::Alpha },
     };
 
     TSharedPtr<FHorizontalBox> ChannelRow = FHorizontalBox::Create();
@@ -1176,10 +1176,10 @@ TSharedPtr<FMenu> FEditorViewportPanel::BuildContextMenu()
         return nullptr;
     }
 
-    Menu->AddSection("Create", Font);
+    Menu->AddSection(TEXT("Create"), Font);
 
     FMenuItem::FDesc PlaceDesc;
-    PlaceDesc.Label   = "Place Actor";
+    PlaceDesc.Label   = TEXT("Place Actor");
     PlaceDesc.Font    = Font;
     PlaceDesc.SubMenu = FEditorMenus::BuildPlaceActorMenu(EditorEngine, FGetPlaceActorLocation::CreateLambda([this]()
     {
@@ -1188,11 +1188,11 @@ TSharedPtr<FMenu> FEditorViewportPanel::BuildContextMenu()
 
     Menu->AddItem(FMenuItem::Create(PlaceDesc));
 
-    Menu->AddSection("Actor", Font);
+    Menu->AddSection(TEXT("Actor"), Font);
 
     FMenuItem::FDesc FocusDesc;
-    FocusDesc.Label        = "Focus";
-    FocusDesc.ShortcutText = "F";
+    FocusDesc.Label        = TEXT("Focus");
+    FocusDesc.ShortcutText = TEXT("F");
     FocusDesc.Font         = Font;
     FocusDesc.OnActivated  = FOnMenuItemActivated::CreateLambda([this]()
     {
@@ -1202,8 +1202,8 @@ TSharedPtr<FMenu> FEditorViewportPanel::BuildContextMenu()
     Menu->AddItem(FMenuItem::Create(FocusDesc));
 
     FMenuItem::FDesc DeleteDesc;
-    DeleteDesc.Label        = "Delete";
-    DeleteDesc.ShortcutText = "Del";
+    DeleteDesc.Label        = TEXT("Delete");
+    DeleteDesc.ShortcutText = TEXT("Del");
     DeleteDesc.Font         = Font;
     DeleteDesc.OnActivated  = FOnMenuItemActivated::CreateLambda([this]()
     {

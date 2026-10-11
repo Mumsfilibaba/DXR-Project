@@ -9,24 +9,24 @@
 
 static const CHAR_T* const GRHIOwnedGroups[] =
 {
-    "RHI",
-    "RHI Budget",
-    "D3D11 Resources",
-    "D3D12 Allocators",
-    "Vulkan Allocators",
-    "Metal Allocators",
-    "Metal Heaps",
-    "Metal Standalone",
-    "Metal Defrag",
-    "D3D11 PSO",
-    "D3D12 PSO",
-    "Vulkan PSO",
-    "Metal PSO",
-    "Metal Commands",
-    "Metal Queries",
-    "Metal GPU",
-    "Metal Residency",
-    "Metal Bindless",
+    TEXT("RHI"),
+    TEXT("RHI Budget"),
+    TEXT("D3D11 Resources"),
+    TEXT("D3D12 Allocators"),
+    TEXT("Vulkan Allocators"),
+    TEXT("Metal Allocators"),
+    TEXT("Metal Heaps"),
+    TEXT("Metal Standalone"),
+    TEXT("Metal Defrag"),
+    TEXT("D3D11 PSO"),
+    TEXT("D3D12 PSO"),
+    TEXT("Vulkan PSO"),
+    TEXT("Metal PSO"),
+    TEXT("Metal Commands"),
+    TEXT("Metal Queries"),
+    TEXT("Metal GPU"),
+    TEXT("Metal Residency"),
+    TEXT("Metal Bindless"),
 };
 
 constexpr double BYTES_PER_MEGABYTE = 1024.0 * 1024.0;
@@ -55,14 +55,14 @@ static FString FormatStatValue(const FStatData& Stat)
     const int64 Value = Stat.Value.Load();
     if (Stat.Type == EStatType::Memory)
     {
-        return FString::Printf("%.2f MB", static_cast<double>(Value) / BYTES_PER_MEGABYTE);
+        return FString::Printf(TEXT("%.2f MB"), static_cast<double>(Value) / BYTES_PER_MEGABYTE);
     }
 
-    return FString::Printf("%lld", static_cast<long long>(Value));
+    return FString::Printf(TEXT("%lld"), static_cast<long long>(Value));
 }
 
 FEditorStatsPanel::FEditorStatsPanel(FEditorEngine* InEditorEngine)
-    : FEditorPanel(InEditorEngine, "Stats", "Engine Stats")
+    : FEditorPanel(InEditorEngine, TEXT("Stats"), TEXT("Engine Stats"))
     , Column(nullptr)
     , SummaryText(nullptr)
     , Sections()
@@ -87,7 +87,7 @@ bool FEditorStatsPanel::Initialize()
 
     ScrollBox->SetContent(Column);
 
-    TSharedPtr<FVisualElement> HeaderCard = FEditorStyle::MakeHeaderCard("Engine Stats", FString(), &SummaryText);
+    TSharedPtr<FVisualElement> HeaderCard = FEditorStyle::MakeHeaderCard(TEXT("Engine Stats"), FString(), &SummaryText);
 
     TSharedPtr<FVerticalBox> Layout = FVerticalBox::Create();
     Layout->AddSlot(HeaderCard).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
@@ -188,7 +188,7 @@ void FEditorStatsPanel::RebuildSections()
         NumCounters += GroupSection.Values.Size();
     }
 
-    SummaryText->SetText(FString::Printf("%d groups  |  %d counters", Sections.Size(), NumCounters));
+    SummaryText->SetText(FString::Printf(TEXT("%d groups  |  %d counters"), Sections.Size(), NumCounters));
 }
 
 void FEditorStatsPanel::RebuildGroupRows(FStatGroupSection& GroupSection)

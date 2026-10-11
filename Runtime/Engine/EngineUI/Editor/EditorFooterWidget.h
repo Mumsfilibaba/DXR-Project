@@ -45,7 +45,7 @@ private:
 private:
     TArray<TPair<IConsoleObject*, FString>> Candidates;
     FString                                 CandidateFilter;
-    TStaticArray<CHAR_T, 256>               TextBuffer;
+    TStaticArray<ANSICHAR, 256>             TextBuffer; // UTF-8, as ImGui edits it
     TSharedPtr<IOutputDevice>               OutputDevice;
     TSharedPtr<FConsoleInputHandler>        InputHandler;
     int32                                   SelectedCandidateIndex;

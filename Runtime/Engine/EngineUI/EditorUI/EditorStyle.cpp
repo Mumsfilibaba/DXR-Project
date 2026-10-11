@@ -40,7 +40,7 @@ static FFloatColor FromBytes(int32 R, int32 G, int32 B, int32 A = 255)
 
 static TSharedPtr<IFontFace> LoadFace(const CHAR_T* Filename, int32 PixelHeight)
 {
-    const FString Path = Paths::GetAssetDir() + "/Editor/Fonts/" + Filename;
+    const FString Path = Paths::GetAssetDir() + TEXT("/Editor/Fonts/") + Filename;
 
     TSharedPtr<FTrueTypeFontFace> Face = FTrueTypeFontFace::CreateFromFile(Path, PixelHeight);
     if (!Face)
@@ -54,11 +54,11 @@ static TSharedPtr<IFontFace> LoadFace(const CHAR_T* Filename, int32 PixelHeight)
 
 bool FEditorStyle::Initialize()
 {
-    GFonts.Body      = LoadFace("segoeui.ttf", BODY_PIXEL_HEIGHT);
-    GFonts.BodyBold  = LoadFace("segoeuib.ttf", BODY_PIXEL_HEIGHT);
-    GFonts.Title     = LoadFace("segoeui.ttf", TITLE_PIXEL_HEIGHT);
-    GFonts.Tab       = LoadFace("segoeui.ttf", TAB_PIXEL_HEIGHT);
-    GFonts.Monospace = LoadFace("consola.ttf", MONOSPACE_PIXEL_HEIGHT);
+    GFonts.Body      = LoadFace(TEXT("segoeui.ttf"), BODY_PIXEL_HEIGHT);
+    GFonts.BodyBold  = LoadFace(TEXT("segoeuib.ttf"), BODY_PIXEL_HEIGHT);
+    GFonts.Title     = LoadFace(TEXT("segoeui.ttf"), TITLE_PIXEL_HEIGHT);
+    GFonts.Tab       = LoadFace(TEXT("segoeui.ttf"), TAB_PIXEL_HEIGHT);
+    GFonts.Monospace = LoadFace(TEXT("consola.ttf"), MONOSPACE_PIXEL_HEIGHT);
 
     if (!GFonts.Body || !GFonts.BodyBold || !GFonts.Title || !GFonts.Tab || !GFonts.Monospace)
     {

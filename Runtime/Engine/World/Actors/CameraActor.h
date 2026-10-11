@@ -16,7 +16,7 @@ public:
 
     virtual const CHAR_T* GetTypeLabel() const override
     {
-        return "Camera";
+        return TEXT("Camera");
     }
 
     FCameraComponent* GetCameraComponent() const

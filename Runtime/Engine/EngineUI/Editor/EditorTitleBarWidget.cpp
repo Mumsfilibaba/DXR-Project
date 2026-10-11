@@ -39,13 +39,13 @@ static const CHAR_T* GetCaptionGlyph(ECaptionButton Button)
 {
     switch (Button)
     {
-        case ECaptionButton::Minimize: return "\xEE\xA4\xA1";
-        case ECaptionButton::Maximize: return "\xEE\xA4\xA2";
-        case ECaptionButton::Restore:  return "\xEE\xA4\xA3";
-        case ECaptionButton::Close:    return "\xEE\xA2\xBB";
+        case ECaptionButton::Minimize: return TEXT("\xEE\xA4\xA1");
+        case ECaptionButton::Maximize: return TEXT("\xEE\xA4\xA2");
+        case ECaptionButton::Restore:  return TEXT("\xEE\xA4\xA3");
+        case ECaptionButton::Close:    return TEXT("\xEE\xA2\xBB");
     }
 
-    return "";
+    return TEXT("");
 }
 
 // Used when neither system icon font is installed, so a missing font shows the right shape rather than tofu.
@@ -94,7 +94,7 @@ static bool DrawCaptionButton(const CHAR_T* Id, ECaptionButton Button, const ImV
     const ImVec2 Min = ImGui::GetCursorScreenPos();
     const ImVec2 Max = ImVec2(Min.x + Size.x, Min.y + Size.y);
 
-    const bool bPressed = ImGui::InvisibleButton(Id, Size);
+    const bool bPressed = ImGui::InvisibleButton(StringCast<ANSICHAR>(Id).Get(), Size);
     const bool bHovered = ImGui::IsItemHovered();
     const bool bHeld    = ImGui::IsItemActive();
 
@@ -140,9 +140,9 @@ static bool DrawCaptionButton(const CHAR_T* Id, ECaptionButton Button, const ImV
     if (ImFont* IconFont = EditorFonts::SystemIcons)
     {
         const CHAR_T* Glyph     = GetCaptionGlyph(Button);
-        const ImVec2  GlyphSpan = IconFont->CalcTextSizeA(IconFont->FontSize, FLT_MAX, 0.0f, Glyph);
+        const ImVec2  GlyphSpan = IconFont->CalcTextSizeA(IconFont->FontSize, FLT_MAX, 0.0f, StringCast<ANSICHAR>(Glyph).Get());
 
-        DrawList->AddText(IconFont, IconFont->FontSize, ImVec2(ImFloor(Center.x - GlyphSpan.x * 0.5f), ImFloor(Center.y - GlyphSpan.y * 0.5f)), GlyphColor, Glyph);
+        DrawList->AddText(IconFont, IconFont->FontSize, ImVec2(ImFloor(Center.x - GlyphSpan.x * 0.5f), ImFloor(Center.y - GlyphSpan.y * 0.5f)), GlyphColor, StringCast<ANSICHAR>(Glyph).Get());
     }
     else
     {
@@ -190,7 +190,7 @@ FEditorTitleBarWidget::~FEditorTitleBarWidget()
 
 void FEditorTitleBarWidget::Draw()
 {
-    TRACE_SCOPE("Title Bar");
+    TRACE_SCOPE(TEXT("Title Bar"));
 
     TSharedPtr<FWindow> Window = EditorEngine ? EditorEngine->GetEngineWindow() : nullptr;
 
@@ -289,7 +289,7 @@ void FEditorTitleBarWidget::DrawCaptionButtons(const FWindowTitleBarMetrics& Met
     // Flush to the trailing corner with no gap, exactly where the system buttons would have been.
     ImGui::SetCursorPos(ImVec2(ImGui::GetWindowSize().x - (ButtonSize.x * 3.0f), 0.0f));
 
-    if (DrawCaptionButton("##CaptionMinimize", ECaptionButton::Minimize, ButtonSize, bIsActive))
+    if (DrawCaptionButton(TEXT("##CaptionMinimize"), ECaptionButton::Minimize, ButtonSize, bIsActive))
     {
         Window->Minimize();
     }
@@ -299,7 +299,7 @@ void FEditorTitleBarWidget::DrawCaptionButtons(const FWindowTitleBarMetrics& Met
     ImGui::SameLine(0.0f, 0.0f);
 
     const ECaptionButton MaximizeGlyph = bIsMaximized ? ECaptionButton::Restore : ECaptionButton::Maximize;
-    if (DrawCaptionButton("##CaptionMaximize", MaximizeGlyph, ButtonSize, bIsActive))
+    if (DrawCaptionButton(TEXT("##CaptionMaximize"), MaximizeGlyph, ButtonSize, bIsActive))
     {
         if (bIsMaximized)
         {
@@ -326,9 +326,9 @@ void FEditorTitleBarWidget::DrawCaptionButtons(const FWindowTitleBarMetrics& Met
 
     ImGui::SameLine(0.0f, 0.0f);
 
-    if (DrawCaptionButton("##CaptionClose", ECaptionButton::Close, ButtonSize, bIsActive))
+    if (DrawCaptionButton(TEXT("##CaptionClose"), ECaptionButton::Close, ButtonSize, bIsActive))
     {
-        RequestEngineExit("Title bar close button");
+        RequestEngineExit(TEXT("Title bar close button"));
     }
 
     AddInteractiveRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
@@ -336,33 +336,33 @@ void FEditorTitleBarWidget::DrawCaptionButtons(const FWindowTitleBarMetrics& Met
 
 void FEditorTitleBarWidget::DrawMenuButtons()
 {
-    const CHAR_T* PopupFile    = "##ToolbarPopup_File";
-    const CHAR_T* PopupEdit    = "##ToolbarPopup_Edit";
-    const CHAR_T* PopupWindows = "##ToolbarPopup_Windows";
-    const CHAR_T* PopupHelp    = "##ToolbarPopup_Help";
+    const CHAR_T* PopupFile    = TEXT("##ToolbarPopup_File");
+    const CHAR_T* PopupEdit    = TEXT("##ToolbarPopup_Edit");
+    const CHAR_T* PopupWindows = TEXT("##ToolbarPopup_Windows");
+    const CHAR_T* PopupHelp    = TEXT("##ToolbarPopup_Help");
 
     const bool bAnyPopupOpen =
-        ImGui::IsPopupOpen(PopupFile, ImGuiPopupFlags_None) ||
-        ImGui::IsPopupOpen(PopupEdit, ImGuiPopupFlags_None) ||
-        ImGui::IsPopupOpen(PopupWindows, ImGuiPopupFlags_None) ||
-        ImGui::IsPopupOpen(PopupHelp, ImGuiPopupFlags_None);
+        ImGui::IsPopupOpen(StringCast<ANSICHAR>(PopupFile).Get(), ImGuiPopupFlags_None) ||
+        ImGui::IsPopupOpen(StringCast<ANSICHAR>(PopupEdit).Get(), ImGuiPopupFlags_None) ||
+        ImGui::IsPopupOpen(StringCast<ANSICHAR>(PopupWindows).Get(), ImGuiPopupFlags_None) ||
+        ImGui::IsPopupOpen(StringCast<ANSICHAR>(PopupHelp).Get(), ImGuiPopupFlags_None);
 
     // File
     {
         FPopupAnchor FileAnchor;
-        EditorWidgets::MenuButton("File", PopupFile, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, FileAnchor);
+        EditorWidgets::MenuButton(TEXT("File"), PopupFile, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, FileAnchor);
 
         AddInteractiveRect(FileAnchor.Min, FileAnchor.Max);
 
         if (EditorWidgets::BeginMenuPopup(PopupFile, FileAnchor))
         {
-            EditorWidgets::MenuLabeledSeparator("Open");
-            EditorWidgets::MenuItem("New Level", "Ctrl+N");
-            EditorWidgets::MenuItem("Open Level", "Ctrl+O");
-            EditorWidgets::MenuLabeledSeparator("Save");
-            EditorWidgets::MenuItem("Save All", "Ctrl+Shift+S");
-            EditorWidgets::MenuLabeledSeparator("Exit");
-            EditorWidgets::MenuItem("Exit");
+            EditorWidgets::MenuLabeledSeparator(TEXT("Open"));
+            EditorWidgets::MenuItem(TEXT("New Level"), TEXT("Ctrl+N"));
+            EditorWidgets::MenuItem(TEXT("Open Level"), TEXT("Ctrl+O"));
+            EditorWidgets::MenuLabeledSeparator(TEXT("Save"));
+            EditorWidgets::MenuItem(TEXT("Save All"), TEXT("Ctrl+Shift+S"));
+            EditorWidgets::MenuLabeledSeparator(TEXT("Exit"));
+            EditorWidgets::MenuItem(TEXT("Exit"));
             EditorWidgets::EndMenuPopup();
         }
     }
@@ -372,15 +372,15 @@ void FEditorTitleBarWidget::DrawMenuButtons()
     // Edit
     {
         FPopupAnchor EditAnchor;
-        EditorWidgets::MenuButton("Edit", PopupEdit, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, EditAnchor);
+        EditorWidgets::MenuButton(TEXT("Edit"), PopupEdit, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, EditAnchor);
 
         AddInteractiveRect(EditAnchor.Min, EditAnchor.Max);
 
         if (EditorWidgets::BeginMenuPopup(PopupEdit, EditAnchor))
         {
-            EditorWidgets::MenuLabeledSeparator("Settings");
-            EditorWidgets::MenuItem("Project Settings");
-            EditorWidgets::MenuItem("Editor Preferences");
+            EditorWidgets::MenuLabeledSeparator(TEXT("Settings"));
+            EditorWidgets::MenuItem(TEXT("Project Settings"));
+            EditorWidgets::MenuItem(TEXT("Editor Preferences"));
             EditorWidgets::EndMenuPopup();
         }
     }
@@ -390,170 +390,170 @@ void FEditorTitleBarWidget::DrawMenuButtons()
     // Windows
     {
         FPopupAnchor WindowsAnchor;
-        EditorWidgets::MenuButton("Windows", PopupWindows, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, WindowsAnchor);
+        EditorWidgets::MenuButton(TEXT("Windows"), PopupWindows, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, WindowsAnchor);
 
         AddInteractiveRect(WindowsAnchor.Min, WindowsAnchor.Max);
 
         if (EditorWidgets::BeginMenuPopup(PopupWindows, WindowsAnchor))
         {
-            EditorWidgets::MenuLabeledSeparator("Windows");
+            EditorWidgets::MenuLabeledSeparator(TEXT("Windows"));
 
             if (EditorEngine)
             {
                 if (FEditorOutputLogWidget* LogWidget = EditorEngine->GetOutputLogWidget().Get())
                 {
                     bool bVisible = LogWidget->IsVisible();
-                    if (EditorWidgets::MenuItem("Output Log", nullptr, bVisible))
+                    if (EditorWidgets::MenuItem(TEXT("Output Log"), nullptr, bVisible))
                     {
                         LogWidget->SetVisible(!bVisible);
                     }
                 }
                 else
                 {
-                    EditorWidgets::MenuItem("Output Log", nullptr, false, false);
+                    EditorWidgets::MenuItem(TEXT("Output Log"), nullptr, false, false);
                 }
 
                 if (FEditorViewportWidget* EditorWidget = EditorEngine->GetEditorViewportWidget().Get())
                 {
                     bool bVisible = EditorWidget->IsVisible();
-                    if (EditorWidgets::MenuItem("Viewport", nullptr, bVisible))
+                    if (EditorWidgets::MenuItem(TEXT("Viewport"), nullptr, bVisible))
                     {
                         EditorWidget->SetVisible(!bVisible);
                     }
                 }
                 else
                 {
-                    EditorWidgets::MenuItem("Viewport", nullptr, false, false);
+                    EditorWidgets::MenuItem(TEXT("Viewport"), nullptr, false, false);
                 }
 
                 if (FEditorSceneHierarchyWidget* SceneHierarchyWidget = EditorEngine->GetSceneHierarchyWidget().Get())
                 {
                     bool bVisible = SceneHierarchyWidget->IsVisible();
-                    if (EditorWidgets::MenuItem("Scene Hierarchy", nullptr, bVisible))
+                    if (EditorWidgets::MenuItem(TEXT("Scene Hierarchy"), nullptr, bVisible))
                     {
                         SceneHierarchyWidget->SetVisible(!bVisible);
                     }
                 }
                 else
                 {
-                    EditorWidgets::MenuItem("Scene Hierarchy", nullptr, false, false);
+                    EditorWidgets::MenuItem(TEXT("Scene Hierarchy"), nullptr, false, false);
                 }
 
                 if (FEditorPropertiesWidget* PropertiesWidget = EditorEngine->GetPropertiesWidget().Get())
                 {
                     bool bVisible = PropertiesWidget->IsVisible();
-                    if (EditorWidgets::MenuItem("Properties", nullptr, bVisible))
+                    if (EditorWidgets::MenuItem(TEXT("Properties"), nullptr, bVisible))
                     {
                         PropertiesWidget->SetVisible(!bVisible);
                     }
                 }
                 else
                 {
-                    EditorWidgets::MenuItem("Properties", nullptr, false, false);
+                    EditorWidgets::MenuItem(TEXT("Properties"), nullptr, false, false);
                 }
 
                 if (FEditorRendererSettingsWidget* RendererSettingsWidget = EditorEngine->GetRendererSettingsWidget().Get())
                 {
                     bool bVisible = RendererSettingsWidget->IsVisible();
-                    if (EditorWidgets::MenuItem("Renderer Settings", nullptr, bVisible))
+                    if (EditorWidgets::MenuItem(TEXT("Renderer Settings"), nullptr, bVisible))
                     {
                         RendererSettingsWidget->SetVisible(!bVisible);
                     }
                 }
                 else
                 {
-                    EditorWidgets::MenuItem("Renderer Settings", nullptr, false, false);
+                    EditorWidgets::MenuItem(TEXT("Renderer Settings"), nullptr, false, false);
                 }
 
                 if (FEditorContentBrowserWidget* ContentBrowserWidget = EditorEngine->GetContentBrowserWidget().Get())
                 {
                     bool bVisible = ContentBrowserWidget->IsVisible();
-                    if (EditorWidgets::MenuItem("Content Browser", nullptr, bVisible))
+                    if (EditorWidgets::MenuItem(TEXT("Content Browser"), nullptr, bVisible))
                     {
                         ContentBrowserWidget->SetVisible(!bVisible);
                     }
                 }
                 else
                 {
-                    EditorWidgets::MenuItem("Content Browser", nullptr, false, false);
+                    EditorWidgets::MenuItem(TEXT("Content Browser"), nullptr, false, false);
                 }
 
                 if (FEditorGPUProfilerWidget* GPUProfilerWidget = EditorEngine->GetGPUProfilerWidget().Get())
                 {
                     bool bVisible = GPUProfilerWidget->IsVisible();
-                    if (EditorWidgets::MenuItem("GPU Profiler", nullptr, bVisible))
+                    if (EditorWidgets::MenuItem(TEXT("GPU Profiler"), nullptr, bVisible))
                     {
                         GPUProfilerWidget->SetVisible(!bVisible);
                     }
                 }
                 else
                 {
-                    EditorWidgets::MenuItem("GPU Profiler", nullptr, false, false);
+                    EditorWidgets::MenuItem(TEXT("GPU Profiler"), nullptr, false, false);
                 }
 
                 if (FEditorFrameProfilerWidget* FrameProfilerWidget = EditorEngine->GetFrameProfilerWidget().Get())
                 {
                     bool bVisible = FrameProfilerWidget->IsVisible();
-                    if (EditorWidgets::MenuItem("Frame Profiler", nullptr, bVisible))
+                    if (EditorWidgets::MenuItem(TEXT("Frame Profiler"), nullptr, bVisible))
                     {
                         FrameProfilerWidget->SetVisible(!bVisible);
                     }
                 }
                 else
                 {
-                    EditorWidgets::MenuItem("Frame Profiler", nullptr, false, false);
+                    EditorWidgets::MenuItem(TEXT("Frame Profiler"), nullptr, false, false);
                 }
 
                 if (FEditorRenderGraphWidget* RenderGraphWidget = EditorEngine->GetRenderGraphWidget().Get())
                 {
                     bool bVisible = RenderGraphWidget->IsVisible();
-                    if (EditorWidgets::MenuItem("Render Graph", nullptr, bVisible))
+                    if (EditorWidgets::MenuItem(TEXT("Render Graph"), nullptr, bVisible))
                     {
                         RenderGraphWidget->SetVisible(!bVisible);
                     }
                 }
                 else
                 {
-                    EditorWidgets::MenuItem("Render Graph", nullptr, false, false);
+                    EditorWidgets::MenuItem(TEXT("Render Graph"), nullptr, false, false);
                 }
 
                 if (FEditorRHIInfoWidget* RHIInfoWidget = EditorEngine->GetRHIInfoWidget().Get())
                 {
                     bool bVisible = RHIInfoWidget->IsVisible();
-                    if (EditorWidgets::MenuItem("RHI Info", nullptr, bVisible))
+                    if (EditorWidgets::MenuItem(TEXT("RHI Info"), nullptr, bVisible))
                     {
                         RHIInfoWidget->SetVisible(!bVisible);
                     }
                 }
                 else
                 {
-                    EditorWidgets::MenuItem("RHI Info", nullptr, false, false);
+                    EditorWidgets::MenuItem(TEXT("RHI Info"), nullptr, false, false);
                 }
 
                 if (FEditorStatsWidget* StatsWidget = EditorEngine->GetStatsWidget().Get())
                 {
                     bool bVisible = StatsWidget->IsVisible();
-                    if (EditorWidgets::MenuItem("Engine Stats", nullptr, bVisible))
+                    if (EditorWidgets::MenuItem(TEXT("Engine Stats"), nullptr, bVisible))
                     {
                         StatsWidget->SetVisible(!bVisible);
                     }
                 }
                 else
                 {
-                    EditorWidgets::MenuItem("Engine Stats", nullptr, false, false);
+                    EditorWidgets::MenuItem(TEXT("Engine Stats"), nullptr, false, false);
                 }
 
                 if (FEditorAboutWidget* AboutWidget = EditorEngine->GetAboutWidget().Get())
                 {
                     bool bVisible = AboutWidget->IsVisible();
-                    if (EditorWidgets::MenuItem("About", nullptr, bVisible))
+                    if (EditorWidgets::MenuItem(TEXT("About"), nullptr, bVisible))
                     {
                         AboutWidget->SetVisible(!bVisible);
                     }
                 }
                 else
                 {
-                    EditorWidgets::MenuItem("About", nullptr, false, false);
+                    EditorWidgets::MenuItem(TEXT("About"), nullptr, false, false);
                 }
             }
 
@@ -566,24 +566,24 @@ void FEditorTitleBarWidget::DrawMenuButtons()
     // Help
     {
         FPopupAnchor HelpAnchor;
-        EditorWidgets::MenuButton("Help", PopupHelp, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, HelpAnchor);
+        EditorWidgets::MenuButton(TEXT("Help"), PopupHelp, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, HelpAnchor);
 
         AddInteractiveRect(HelpAnchor.Min, HelpAnchor.Max);
 
         if (EditorWidgets::BeginMenuPopup(PopupHelp, HelpAnchor))
         {
-            EditorWidgets::MenuLabeledSeparator("About");
+            EditorWidgets::MenuLabeledSeparator(TEXT("About"));
 
             if (FEditorAboutWidget* AboutWidget = EditorEngine ? EditorEngine->GetAboutWidget().Get() : nullptr)
             {
-                if (EditorWidgets::MenuItem("About"))
+                if (EditorWidgets::MenuItem(TEXT("About")))
                 {
                     AboutWidget->SetVisible(true);
                 }
             }
             else
             {
-                EditorWidgets::MenuItem("About", nullptr, false, false);
+                EditorWidgets::MenuItem(TEXT("About"), nullptr, false, false);
             }
 
             EditorWidgets::EndMenuPopup();

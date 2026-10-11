@@ -42,7 +42,7 @@ FEditorFooterWidget::~FEditorFooterWidget()
 
 void FEditorFooterWidget::Draw()
 {
-    TRACE_SCOPE("Footer");
+    TRACE_SCOPE(TEXT("Footer"));
 
     const ImVec2 FrameBufferScale = ImGuiExtensions::GetDisplayFramebufferScale();
 
@@ -167,13 +167,13 @@ void FEditorFooterWidget::Draw()
             {
                 if (SelectedCandidateIndex >= 0 && !Candidates.IsEmpty())
                 {
-                    const FString& NewText = Candidates[SelectedCandidateIndex].Second;
-                    CString::Strncpy(TextBuffer.Data(), *NewText, Math::Min(TextBuffer.Size(), NewText.Size()));
+                    const FAnsiString NewText = StringCast<ANSICHAR>(Candidates[SelectedCandidateIndex].Second).ToString();
+                    FPlatformString::Strncpy(TextBuffer.Data(), *NewText, Math::Min(TextBuffer.Size(), NewText.Size()));
                     bUpdateCursorPosition = true;
                 }
                 else
                 {
-                    const FString Command(TextBuffer.Data());
+                    const FString Command = StringCast<CHAR_T>(TextBuffer.Data()).ToString();
                     FConsoleManager::Get().ExecuteCommand(*OutputDevice, Command);
 
                     TextBuffer[0]   = 0;
@@ -223,7 +223,7 @@ void FEditorFooterWidget::Draw()
 
         Candidates.Foreach([&](const TPair<IConsoleObject*, FString>& Candidate)
         {
-            OverlayMaxNameWidth = Math::Max(OverlayMaxNameWidth, ImGui::CalcTextSize(*Candidate.Second).x);
+            OverlayMaxNameWidth = Math::Max(OverlayMaxNameWidth, ImGui::CalcTextSize(StringCast<ANSICHAR>(Candidate.Second).Get()).x);
         });
 
         const float  ReservedScrollbarWidth = Style.ScrollbarSize;
@@ -274,7 +274,7 @@ void FEditorFooterWidget::Draw()
         float MaxNameWidth = 0.0f;
         Candidates.Foreach([&](const TPair<IConsoleObject*, FString>& Candidate)
         {
-            MaxNameWidth = Math::Max(MaxNameWidth, ImGui::CalcTextSize(*Candidate.Second).x);
+            MaxNameWidth = Math::Max(MaxNameWidth, ImGui::CalcTextSize(StringCast<ANSICHAR>(Candidate.Second).Get()).x);
         });
 
         const float ReservedScrollbarWidth = Style.ScrollbarSize;
@@ -310,7 +310,7 @@ void FEditorFooterWidget::Draw()
         ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 999.0f);
 
         ImGui::SetNextWindowSize(WindowSize, ImGuiCond_Always);
-        EditorWidgets::SetNextPopupPos("ConsoleCandidates", OverlayAnchor, EPopupPlacement::ClampOnly, WindowSize);
+        EditorWidgets::SetNextPopupPos(TEXT("ConsoleCandidates"), OverlayAnchor, EPopupPlacement::ClampOnly, WindowSize);
 
         const ImGuiWindowFlags OverlayFlags =
             ImGuiWindowFlags_NoMove |
@@ -345,7 +345,7 @@ void FEditorFooterWidget::Draw()
 
                 const float   TooltipOffsetX  = (10.0f * Scale) + (bHasVerticalScrollbar ? Style.ScrollbarSize : 0.0f);
                 const float   TooltipMaxWidth = 420.0f * Scale;
-                const CHAR_T* TooltipId       = "##ConsoleCandidateTooltip";
+                const CHAR_T* TooltipId       = TEXT("##ConsoleCandidateTooltip");
 
                 FPopupAnchor TooltipAnchor;
                 TooltipAnchor.Min = ImVec2(InItemRect.Min.x - TooltipOffsetX, InItemRect.Min.y);
@@ -364,10 +364,10 @@ void FEditorFooterWidget::Draw()
                     ImGuiWindowFlags_NoFocusOnAppearing |
                     ImGuiWindowFlags_NoDocking;
 
-                ImGui::Begin(TooltipId, nullptr, TooltipFlags);
+                ImGui::Begin(StringCast<ANSICHAR>(TooltipId).Get(), nullptr, TooltipFlags);
 
                 ImGui::PushStyleColor(ImGuiCol_Text, TooltipTextWhite);
-                ImGui::TextUnformatted(*Candidate.Second);
+                ImGui::TextUnformatted(StringCast<ANSICHAR>(Candidate.Second).Get());
                 ImGui::PopStyleColor();
 
                 ImGui::Dummy(ImVec2(0.0f, 4.0f * Scale));
@@ -376,31 +376,31 @@ void FEditorFooterWidget::Draw()
 
                 if (IConsoleVariable* Var = Candidate.First->AsVariable())
                 {
-                    const CHAR_T* TypeText = "Variable";
+                    const CHAR_T* TypeText = TEXT("Variable");
                     if (Var->IsVariableBool())
                     {
-                        TypeText = "Bool";
+                        TypeText = TEXT("Bool");
                     }
                     else if (Var->IsVariableInt())
                     {
-                        TypeText = "Int";
+                        TypeText = TEXT("Int");
                     }
                     else if (Var->IsVariableFloat())
                     {
-                        TypeText = "Float";
+                        TypeText = TEXT("Float");
                     }
                     else if (Var->IsVariableString())
                     {
-                        TypeText = "String";
+                        TypeText = TEXT("String");
                     }
 
                     const FString ValueString = Var->GetString();
 
-                    ImGui::Text("Type: %s", TypeText);
-                    ImGui::Text("Value: %s", *ValueString);
+                    ImGui::Text("Type: %s", StringCast<ANSICHAR>(TypeText).Get());
+                    ImGui::Text("Value: %s", StringCast<ANSICHAR>(ValueString).Get());
 
                     const EConsoleVariableFlags VariableFlags = static_cast<EConsoleVariableFlags>(Var->GetFlags() & EConsoleVariableFlags::SetByMask);
-                    ImGui::Text("Set By: %s", SetByFlagToString(VariableFlags));
+                    ImGui::Text("Set By: %s", StringCast<ANSICHAR>(SetByFlagToString(VariableFlags)).Get());
                 }
                 else if (Candidate.First->AsCommand())
                 {
@@ -413,7 +413,7 @@ void FEditorFooterWidget::Draw()
                     ImGui::PushStyleColor(ImGuiCol_Text, TooltipTextWhite);
 
                     ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + TooltipMaxWidth - 20.0f * Scale);
-                    ImGui::TextUnformatted(HelpString);
+                    ImGui::TextUnformatted(StringCast<ANSICHAR>(HelpString).Get());
                     ImGui::PopTextWrapPos();
 
                     ImGui::PopStyleColor();
@@ -449,16 +449,21 @@ void FEditorFooterWidget::Draw()
                 const ImVec2 TextStart   = ImVec2(ItemRect.Min.x + 6.0f * Scale, ItemRect.Min.y + (RowHeight - ImGui::GetTextLineHeight()) * 0.5f);
                 const ImU32  BaseTextU32 = ImGui::GetColorU32(bIsActiveIndex ? TextSelectedColor : TextNormalColor);
 
-                const CHAR_T* NameText   = *Candidate.Second;
-                const CHAR_T* FilterText = CandidateFilter.IsEmpty() ? nullptr : *CandidateFilter;
+                const TStringConversion<ANSICHAR, CHAR_T> Utf8Name   = StringCast<ANSICHAR>(Candidate.Second);
+                const TStringConversion<ANSICHAR, CHAR_T> Utf8Filter = StringCast<ANSICHAR>(CandidateFilter);
+
+                const ANSICHAR* NameText = Utf8Name.Get();
 
                 int32 MatchStart = -1;
                 int32 MatchLen   = 0;
 
-                if (FilterText && FilterText[0] != 0)
+                if (Utf8Filter.Length() > 0)
                 {
-                    MatchStart = FStringView(NameText).Find(FilterText, EStringCaseType::NoCase);
-                    MatchLen   = static_cast<int32>(CString::Strlen(FilterText));
+                    if (const ANSICHAR* MatchPtr = FPlatformString::Stristr(NameText, Utf8Filter.Get()))
+                    {
+                        MatchStart = static_cast<int32>(MatchPtr - NameText);
+                        MatchLen   = Utf8Filter.Length();
+                    }
                 }
 
                 ImDrawList* DrawList = ImGui::GetWindowDrawList();
@@ -531,16 +536,16 @@ void FEditorFooterWidget::DrawRunStateLabel()
     }
 
     const bool    bPaused    = FEngine::Get()->IsPaused();
-    const CHAR_T* LabelText  = bPaused ? "PAUSED" : "PLAYING";
+    const CHAR_T* LabelText  = bPaused ? TEXT("PAUSED") : TEXT("PLAYING");
     const ImU32   LabelColor = bPaused ? IM_COL32(214, 154, 32, 255) : IM_COL32(46, 168, 76, 255);
 
-    const ImVec2 LabelSize    = ImGui::CalcTextSize(LabelText);
+    const ImVec2 LabelSize    = ImGui::CalcTextSize(StringCast<ANSICHAR>(LabelText).Get());
     const ImVec2 ContentStart = ImGui::GetWindowPos();
     const float  ContentRight = ContentStart.x + ImGui::GetWindowContentRegionMax().x;
 
     const ImVec2 LabelPosition = ImVec2(ContentRight - LabelSize.x, ImGui::GetItemRectMin().y + (ImGui::GetItemRectSize().y - LabelSize.y) * 0.5f);
 
-    ImGui::GetWindowDrawList()->AddText(LabelPosition, LabelColor, LabelText);
+    ImGui::GetWindowDrawList()->AddText(LabelPosition, LabelColor, StringCast<ANSICHAR>(LabelText).Get());
 }
 
 void FEditorFooterWidget::ApplyCandidateToBuffer(int32 CandidateIndex)
@@ -550,8 +555,8 @@ void FEditorFooterWidget::ApplyCandidateToBuffer(int32 CandidateIndex)
         return;
     }
 
-    const CHAR_T* Buffer = TextBuffer.Data();
-    const int32 BufferLength = CString::Strlen(Buffer);
+    const ANSICHAR* Buffer       = TextBuffer.Data();
+    const int32     BufferLength = static_cast<int32>(FPlatformString::Strlen(Buffer));
 
     int32 CursorPos = LastCursorPosition;
     if (CursorPos < 0)
@@ -563,12 +568,12 @@ void FEditorFooterWidget::ApplyCandidateToBuffer(int32 CandidateIndex)
         CursorPos = BufferLength;
     }
 
-    const CHAR_T* WordEnd   = Buffer + CursorPos;
-    const CHAR_T* WordStart = WordEnd;
+    const ANSICHAR* WordEnd   = Buffer + CursorPos;
+    const ANSICHAR* WordStart = WordEnd;
 
     while (WordStart > Buffer)
     {
-        const CHAR_T CurrentChar = WordStart[-1];
+        const ANSICHAR CurrentChar = WordStart[-1];
         if (CurrentChar == ' ' || CurrentChar == '\t' || CurrentChar == ',' || CurrentChar == ';')
         {
             break;
@@ -583,14 +588,14 @@ void FEditorFooterWidget::ApplyCandidateToBuffer(int32 CandidateIndex)
         return;
     }
 
-    const FString Prefix(Buffer, static_cast<int32>(WordStart - Buffer));
-    const FString Suffix(WordEnd);
+    const FAnsiString Prefix(Buffer, static_cast<int32>(WordStart - Buffer));
+    const FAnsiString Suffix(WordEnd);
 
-    const FString& CandidateText = Candidates[CandidateIndex].Second;
-    const FString NewBuffer = Prefix + CandidateText + Suffix;
+    const FAnsiString CandidateText = StringCast<ANSICHAR>(Candidates[CandidateIndex].Second).ToString();
+    const FAnsiString NewBuffer     = Prefix + CandidateText + Suffix;
 
     const int32 CopyLen = Math::Min(TextBuffer.Size(), NewBuffer.Size());
-    CString::Strncpy(TextBuffer.Data(), *NewBuffer, CopyLen);
+    FPlatformString::Strncpy(TextBuffer.Data(), *NewBuffer, CopyLen);
     TextBuffer[TextBuffer.Size() - 1] = 0;
 
     PendingCursorPosition = Prefix.Size() + CandidateText.Size();
@@ -633,12 +638,12 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
         // This callback is called whenever we edit the text in the InputText field
         case ImGuiInputTextFlags_CallbackEdit:
         {
-            const CHAR_T* WordEnd   = CallbackData->Buf + CallbackData->CursorPos;
-            const CHAR_T* WordStart = WordEnd;
+            const ANSICHAR* WordEnd   = CallbackData->Buf + CallbackData->CursorPos;
+            const ANSICHAR* WordStart = WordEnd;
 
             while (WordStart > CallbackData->Buf)
             {
-                const CHAR_T CurrentChar = WordStart[-1];
+                const ANSICHAR CurrentChar = WordStart[-1];
                 if (CurrentChar == ' ' || CurrentChar == '\t' || CurrentChar == ',' || CurrentChar == ';')
                 {
                     break;
@@ -653,9 +658,8 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
             const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
             if (WordLength > 0)
             {
-                const FStringView CandidateName(WordStart, WordLength);
-                CandidateFilter = FString(WordStart, WordLength);
-                FConsoleManager::Get().FindCandidates(CandidateName, Candidates);
+                CandidateFilter = StringCast<CHAR_T>(WordStart, WordLength).ToString();
+                FConsoleManager::Get().FindCandidates(FStringView(CandidateFilter), Candidates);
 
                 // If we found any candidates, then want to reset the history index, otherwise the index will be the 
                 // the same if we erase the text in the input-field and start iterating through the history.
@@ -671,14 +675,14 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
         // This callback is called when we press TAB when the console InputText field has keyboard- focus
         case ImGuiInputTextFlags_CallbackCompletion:
         {
-            const CHAR_T* WordEnd   = CallbackData->Buf + CallbackData->CursorPos;
-            const CHAR_T* WordStart = WordEnd;
+            const ANSICHAR* WordEnd   = CallbackData->Buf + CallbackData->CursorPos;
+            const ANSICHAR* WordStart = WordEnd;
 
             if (CallbackData->BufTextLen > 0)
             {
                 while (WordStart > CallbackData->Buf)
                 {
-                    const CHAR_T CurrentChar = WordStart[-1];
+                    const ANSICHAR CurrentChar = WordStart[-1];
                     if (CurrentChar == ' ' || CurrentChar == '\t' || CurrentChar == ',' || CurrentChar == ';')
                     {
                         break;
@@ -699,7 +703,7 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
 
                     const FString& NewTextData = Candidates[SelectedCandidateIndex].Second;
                     CallbackData->DeleteChars(Pos, Count);
-                    CallbackData->InsertChars(CallbackData->CursorPos, *NewTextData);
+                    CallbackData->InsertChars(CallbackData->CursorPos, StringCast<ANSICHAR>(NewTextData).Get());
 
                     // If we used tried to complete the command and there actually was text, then we want to clear the candidate array
                     InvalidateCandidates();
@@ -776,9 +780,9 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
                 if (PrevHistoryIndex != HistoryIndex)
                 {
                     // If the history-index is invalid, then we clear the input-text field
-                    const CHAR_T* HistoryStr = (HistoryIndex >= 0) ? *History[HistoryIndex] : "";
+                    const CHAR_T* HistoryStr = (HistoryIndex >= 0) ? *History[HistoryIndex] : TEXT("");
                     CallbackData->DeleteChars(0, CallbackData->BufTextLen);
-                    CallbackData->InsertChars(0, HistoryStr);
+                    CallbackData->InsertChars(0, StringCast<ANSICHAR>(HistoryStr).Get());
                 }
             }
             else

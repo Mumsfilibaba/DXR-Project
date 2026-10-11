@@ -102,8 +102,8 @@ bool FImGuiRenderer::InitializeRHI()
 
     TArray<uint8> ShaderCode;
 
-    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
-    if (!FShaderBytecodeCache::CompileFromFile("Shaders/ImGui.hlsl", CompileInfo, ShaderCode))
+    FShaderCompileInfo CompileInfo(TEXT("VSMain"), EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
+    if (!FShaderBytecodeCache::CompileFromFile(TEXT("Shaders/ImGui.hlsl"), CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
         return false;
@@ -116,8 +116,8 @@ bool FImGuiRenderer::InitializeRHI()
         return false;
     }
     
-    CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
-    if (!FShaderBytecodeCache::CompileFromFile("Shaders/ImGui.hlsl", CompileInfo, ShaderCode))
+    CompileInfo = FShaderCompileInfo(TEXT("PSMain"), EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
+    if (!FShaderBytecodeCache::CompileFromFile(TEXT("Shaders/ImGui.hlsl"), CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
         return false;
@@ -132,9 +132,9 @@ bool FImGuiRenderer::InitializeRHI()
 
     TArray<FRHIInputElementDesc> InputElements =
     {
-        { "POSITION", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(offsetof(ImDrawVert, pos)), 0, EVertexInputClass::Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(offsetof(ImDrawVert, uv)),  1, EVertexInputClass::Vertex, 0 },
-        { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(ImDrawVert), 0, static_cast<uint32>(offsetof(ImDrawVert, col)), 2, EVertexInputClass::Vertex, 0 },
+        { TEXT("POSITION"), 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(offsetof(ImDrawVert, pos)), 0, EVertexInputClass::Vertex, 0 },
+        { TEXT("TEXCOORD"), 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(offsetof(ImDrawVert, uv)),  1, EVertexInputClass::Vertex, 0 },
+        { TEXT("COLOR"),    0, EFormat::R8G8B8A8_Unorm, sizeof(ImDrawVert), 0, static_cast<uint32>(offsetof(ImDrawVert, col)), 2, EVertexInputClass::Vertex, 0 },
     };
 
     InputLayout = RHI::CreateInputLayout(InputElements);
@@ -260,7 +260,7 @@ bool FImGuiRenderer::UpdateFontAtlas()
 	}
 	else
 	{
-		FontAtlas->SetDebugName("ImGui FontTexture");
+		FontAtlas->SetDebugName(TEXT("ImGui FontTexture"));
 	}
 
     // TODO: We need to uncomment below, but this requires changes to the renderer loop so keep avoiding this for now. 
@@ -332,7 +332,7 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
 
         // Render
         {
-            TRACE_SCOPE("ImGui Generate DrawData");
+            TRACE_SCOPE(TEXT("ImGui Generate DrawData"));
             ImGui::Render();
         }
 
@@ -361,7 +361,7 @@ void FImGuiRenderer::RenderPlatformWindows(FRHICommandList& CommandList)
     if (IOState.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
         {
-            TRACE_SCOPE("ImGui Update Platform Windows");
+            TRACE_SCOPE(TEXT("ImGui Update Platform Windows"));
             ImGui::UpdatePlatformWindows();
         }
 
@@ -385,7 +385,7 @@ void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* Dr
         return;
     }
 
-    TRACE_SCOPE("ImGui Render Viewport");
+    TRACE_SCOPE(TEXT("ImGui Render Viewport"));
 
     STAT_ADD(STAT_ImGui_Viewports, 1);
 
@@ -414,7 +414,7 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
         return;
     }
 
-    TRACE_SCOPE("ImGui Upload Geometry");
+    TRACE_SCOPE(TEXT("ImGui Upload Geometry"));
 
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(DrawData->OwnerViewport->RendererUserData);
     CHECK(ViewportData != nullptr);
@@ -429,7 +429,7 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
         FRHIBufferRef NewVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::GenericRead, nullptr);
         if (NewVertexBuffer)
         {
-            NewVertexBuffer->SetDebugName("ImGui VertexBuffer");
+            NewVertexBuffer->SetDebugName(TEXT("ImGui VertexBuffer"));
             ViewportData->VertexBuffer = NewVertexBuffer;
             ViewportData->VertexCount  = NewVertexCount;
         }
@@ -449,7 +449,7 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
         FRHIBufferRef NewIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::GenericRead, nullptr);
         if (NewIndexBuffer)
         {
-            NewIndexBuffer->SetDebugName("ImGui IndexBuffer");
+            NewIndexBuffer->SetDebugName(TEXT("ImGui IndexBuffer"));
             ViewportData->IndexBuffer = NewIndexBuffer;
             ViewportData->IndexCount  = NewIndexCount;
         }
@@ -502,7 +502,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
         return;
     }
 
-    TRACE_SCOPE("ImGui Record DrawCommands");
+    TRACE_SCOPE(TEXT("ImGui Record DrawCommands"));
 
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(DrawData->OwnerViewport->RendererUserData);
     CHECK(ViewportData != nullptr);
@@ -676,7 +676,7 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CommandList, ImDrawData* 
 
 void FImGuiRenderer::PrepareTexturesForShaderResourceUsage(FRHICommandList& CommandList, ImDrawData* DrawData)
 {
-    TRACE_SCOPE("ImGui Texture Transitions");
+    TRACE_SCOPE(TEXT("ImGui Texture Transitions"));
 
 	for (int32 i = 0; i < DrawData->CmdListsCount; ++i)
 	{

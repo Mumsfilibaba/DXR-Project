@@ -13,34 +13,34 @@
 
 static const CHAR_T* const GRHIDetailGroups[] =
 {
-    "RHI",
-    "D3D11 Resources",
-    "D3D12 Allocators",
-    "Vulkan Allocators",
-    "Metal Allocators",
-    "Metal Heaps",
-    "Metal Standalone",
-    "Metal Defrag",
-    "D3D11 PSO",
-    "D3D12 PSO",
-    "Vulkan PSO",
-    "Metal PSO",
-    "D3D11 State Changes",
-    "D3D12 Commands",
-    "Vulkan Commands",
-    "Metal Commands",
-    "D3D12 Submissions / Frame",
-    "Vulkan Submissions / Frame",
-    "D3D12 Ray Tracing / Frame",
-    "Vulkan Ray Tracing / Frame",
-    "D3D11 Queries",
-    "D3D12 Queries",
-    "Vulkan Queries",
-    "Metal Queries",
-    "Metal GPU",
-    "D3D12 Residency",
-    "Metal Residency",
-    "Metal Bindless",
+    TEXT("RHI"),
+    TEXT("D3D11 Resources"),
+    TEXT("D3D12 Allocators"),
+    TEXT("Vulkan Allocators"),
+    TEXT("Metal Allocators"),
+    TEXT("Metal Heaps"),
+    TEXT("Metal Standalone"),
+    TEXT("Metal Defrag"),
+    TEXT("D3D11 PSO"),
+    TEXT("D3D12 PSO"),
+    TEXT("Vulkan PSO"),
+    TEXT("Metal PSO"),
+    TEXT("D3D11 State Changes"),
+    TEXT("D3D12 Commands"),
+    TEXT("Vulkan Commands"),
+    TEXT("Metal Commands"),
+    TEXT("D3D12 Submissions / Frame"),
+    TEXT("Vulkan Submissions / Frame"),
+    TEXT("D3D12 Ray Tracing / Frame"),
+    TEXT("Vulkan Ray Tracing / Frame"),
+    TEXT("D3D11 Queries"),
+    TEXT("D3D12 Queries"),
+    TEXT("Vulkan Queries"),
+    TEXT("Metal Queries"),
+    TEXT("Metal GPU"),
+    TEXT("D3D12 Residency"),
+    TEXT("Metal Residency"),
+    TEXT("Metal Bindless"),
 };
 
 static bool IsInactiveBackendGroup(const CHAR_T* GroupName)
@@ -72,10 +72,10 @@ static FString FormatStatValue(const FStatData& Stat)
     const int64 Value = Stat.Value.Load();
     if (Stat.Type == EStatType::Memory)
     {
-        return FString::Printf("%.2f MB", static_cast<double>(Value) / BYTES_PER_MEGABYTE);
+        return FString::Printf(TEXT("%.2f MB"), static_cast<double>(Value) / BYTES_PER_MEGABYTE);
     }
 
-    return FString::Printf("%lld", static_cast<long long>(Value));
+    return FString::Printf(TEXT("%lld"), static_cast<long long>(Value));
 }
 
 static void UpdateMemoryBar(const TSharedPtr<FProgressBar>& Bar, int64 Usage, int64 Budget)
@@ -83,7 +83,7 @@ static void UpdateMemoryBar(const TSharedPtr<FProgressBar>& Bar, int64 Usage, in
     const float Ratio = Budget > 0 ? static_cast<float>(static_cast<double>(Usage) / static_cast<double>(Budget)) : 0.0f;
 
     Bar->SetPercent(Ratio);
-    Bar->SetOverlayText(FString::Printf("%lld / %lld MB",
+    Bar->SetOverlayText(FString::Printf(TEXT("%lld / %lld MB"),
         static_cast<long long>(static_cast<double>(Usage) / BYTES_PER_MEGABYTE),
         static_cast<long long>(static_cast<double>(Budget) / BYTES_PER_MEGABYTE)));
 
@@ -93,7 +93,7 @@ static void UpdateMemoryBar(const TSharedPtr<FProgressBar>& Bar, int64 Usage, in
 }
 
 FEditorRHIInfoPanel::FEditorRHIInfoPanel(FEditorEngine* InEditorEngine)
-    : FEditorPanel(InEditorEngine, "RHIInfo", "RHI Info")
+    : FEditorPanel(InEditorEngine, TEXT("RHIInfo"), TEXT("RHI Info"))
     , LocalMemoryBar(nullptr)
     , NonLocalMemoryBar(nullptr)
     , DrawCallsText(nullptr)
@@ -148,9 +148,9 @@ bool FEditorRHIInfoPanel::Initialize()
 TSharedPtr<FVisualElement> FEditorRHIInfoPanel::BuildHeaderCard()
 {
     const FString AdapterName = RHI::Device ? RHI::Device->GetAdapterName() : FString();
-    const FString Backend     = RHI::Device ? FString(ToString(RHI::Device->GetRHIType())) : FString("None");
+    const FString Backend     = RHI::Device ? FString(ToString(RHI::Device->GetRHIType())) : FString(TEXT("None"));
 
-    return FEditorStyle::MakeHeaderCard(AdapterName.IsEmpty() ? FString("Unknown Adapter") : AdapterName, Backend);
+    return FEditorStyle::MakeHeaderCard(AdapterName.IsEmpty() ? FString(TEXT("Unknown Adapter")) : AdapterName, Backend);
 }
 
 bool FEditorRHIInfoPanel::BuildOverview(const TSharedPtr<FVerticalBox>& InColumn)
@@ -164,10 +164,10 @@ bool FEditorRHIInfoPanel::BuildOverview(const TSharedPtr<FVerticalBox>& InColumn
     LocalMemoryBar    = CreateMemoryBar();
     NonLocalMemoryBar = CreateMemoryBar();
 
-    Table->AddRow("Local", LocalMemoryBar).ToolTipText = "Memory on the adapter itself, against the budget the driver grants this process";
-    Table->AddRow("Non-Local", NonLocalMemoryBar).ToolTipText = "System memory the adapter reads across the bus, against the budget the driver grants this process";
+    Table->AddRow(TEXT("Local"), LocalMemoryBar).ToolTipText = TEXT("Memory on the adapter itself, against the budget the driver grants this process");
+    Table->AddRow(TEXT("Non-Local"), NonLocalMemoryBar).ToolTipText = TEXT("System memory the adapter reads across the bus, against the budget the driver grants this process");
 
-    AddSection(InColumn, "Memory", Table, true);
+    AddSection(InColumn, TEXT("Memory"), Table, true);
     return true;
 }
 
@@ -179,15 +179,15 @@ bool FEditorRHIInfoPanel::BuildCounters(const TSharedPtr<FVerticalBox>& InColumn
         return false;
     }
 
-    DrawCallsText     = CreateValueText("0");
-    DispatchCallsText = CreateValueText("0");
-    CommandsText      = CreateValueText("0");
+    DrawCallsText     = CreateValueText(TEXT("0"));
+    DispatchCallsText = CreateValueText(TEXT("0"));
+    CommandsText      = CreateValueText(TEXT("0"));
 
-    Table->AddRow("Draw Calls", DrawCallsText);
-    Table->AddRow("Dispatch Calls", DispatchCallsText);
-    Table->AddRow("Commands", CommandsText);
+    Table->AddRow(TEXT("Draw Calls"), DrawCallsText);
+    Table->AddRow(TEXT("Dispatch Calls"), DispatchCallsText);
+    Table->AddRow(TEXT("Commands"), CommandsText);
 
-    AddSection(InColumn, "Command Submission", Table, true);
+    AddSection(InColumn, TEXT("Command Submission"), Table, true);
     return true;
 }
 
@@ -231,9 +231,9 @@ void FEditorRHIInfoPanel::RefreshBudgets()
 
 void FEditorRHIInfoPanel::RefreshCounters()
 {
-    DrawCallsText->SetText(FString::Printf("%lld", static_cast<long long>(STAT_GET(STAT_RHI_DrawCalls))));
-    DispatchCallsText->SetText(FString::Printf("%lld", static_cast<long long>(STAT_GET(STAT_RHI_DispatchCalls))));
-    CommandsText->SetText(FString::Printf("%lld", static_cast<long long>(STAT_GET(STAT_RHI_Commands))));
+    DrawCallsText->SetText(FString::Printf(TEXT("%lld"), static_cast<long long>(STAT_GET(STAT_RHI_DrawCalls))));
+    DispatchCallsText->SetText(FString::Printf(TEXT("%lld"), static_cast<long long>(STAT_GET(STAT_RHI_DispatchCalls))));
+    CommandsText->SetText(FString::Printf(TEXT("%lld"), static_cast<long long>(STAT_GET(STAT_RHI_Commands))));
 }
 
 void FEditorRHIInfoPanel::RefreshDetailGroups()
@@ -341,7 +341,7 @@ TSharedPtr<FProgressBar> FEditorRHIInfoPanel::CreateMemoryBar()
 {
     FProgressBar::FDesc Desc;
     Desc.Font        = FEditorStyle::GetFonts().Body;
-    Desc.OverlayText = "0 / 0 MB";
+    Desc.OverlayText = TEXT("0 / 0 MB");
 
     return FProgressBar::Create(Desc);
 }

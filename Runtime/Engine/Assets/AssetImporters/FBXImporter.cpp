@@ -1,5 +1,6 @@
 #include "Core/Math/Matrix4.h"
 #include "Core/Containers/Map.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Engine/Assets/VertexFormat.h"
@@ -57,11 +58,11 @@ static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Mater
     const ofbx::Texture* MaterialTexture = Material->getTexture(Type);
     if (MaterialTexture)
     {
-        CHAR_T StringBuffer[256];
+        ANSICHAR StringBuffer[256];
         MaterialTexture->getRelativeFileName().toString(StringBuffer);
 
         // Make sure that correct slashes are used
-        FString Filename = Path + '/' + StringBuffer;
+        FString Filename = Path + '/' + StringCast<CHAR_T>(StringBuffer).ToString();
         Filename.ReplaceAll('\\', '/');
 
         return StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
@@ -95,8 +96,8 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
     ofbx::IScene* FBXScene = ofbx::load(FileContent.Data(), FileSize, static_cast<ofbx::u64>(ofbx::LoadFlags::NONE));
     if (!FBXScene)
     {
-        const CHAR_T* ErrorString = ofbx::getError();
-        LOG_ERROR("[FFBXImporter]: Failed to load content '%s', error '%s'", *Filename, ErrorString);
+        const ANSICHAR* ErrorString = ofbx::getError();
+        LOG_ERROR("[FFBXImporter]: Failed to load content '%s', error '%s'", *Filename, StringCast<CHAR_T>(ErrorString).Get());
         return false;
     }
 
@@ -140,7 +141,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
             LOG_INFO("[FFBXImporter] Loading Material '%s'", CurrentMaterial->name);
 
             FMaterialData MaterialData;
-            MaterialData.Name = CurrentMaterial->name;
+            MaterialData.Name = StringCast<CHAR_T>(CurrentMaterial->name).ToString();
 
             MaterialData.Textures[EMaterialTexture::Diffuse]          = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::DIFFUSE);
             MaterialData.Textures[EMaterialTexture::Normal]           = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::NORMAL);
@@ -312,8 +313,8 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
         // Add the mesh to our scene
         if (!MeshData.Vertices.IsEmpty())
         {
-            LOG_INFO("[FFBXImporter] Loaded Mesh '%s'", CurrentMesh->name);
-            MeshData.Name = CurrentMesh->name;
+            LOG_INFO("[FFBXImporter] Loaded Mesh '%s'", StringCast<CHAR_T>(CurrentMesh->name).Get());
+            MeshData.Name = StringCast<CHAR_T>(CurrentMesh->name).ToString();
             OutModelData.Meshes.Add(Move(MeshData));
         }
         else
@@ -333,5 +334,5 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 
 bool FFBXImporter::MatchExtenstion(const FStringView& FileName)
 {
-    return FileName.EndsWith(".fbx", EStringCaseType::NoCase);
+    return FileName.EndsWith(TEXT(".fbx"), EStringCaseType::NoCase);
 }

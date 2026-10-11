@@ -152,12 +152,12 @@ TSharedRef<FTexture> FTextureImporterBase::ImportFromFile(const FStringView& Fil
 
 bool FTextureImporterBase::MatchExtenstion(const FStringView& FileName)
 {
-    return FileName.EndsWith(".jpeg", EStringCaseType::NoCase)
-        || FileName.EndsWith(".jpg", EStringCaseType::NoCase)
-        || FileName.EndsWith(".png", EStringCaseType::NoCase)
-        || FileName.EndsWith(".bmp", EStringCaseType::NoCase)
-        || FileName.EndsWith(".psd", EStringCaseType::NoCase)
-        || FileName.EndsWith(".gif", EStringCaseType::NoCase)
-        || FileName.EndsWith(".tga", EStringCaseType::NoCase)
-        || FileName.EndsWith(".hdr", EStringCaseType::NoCase);
+    return FileName.EndsWith(TEXT(".jpeg"), EStringCaseType::NoCase)
+        || FileName.EndsWith(TEXT(".jpg"), EStringCaseType::NoCase)
+        || FileName.EndsWith(TEXT(".png"), EStringCaseType::NoCase)
+        || FileName.EndsWith(TEXT(".bmp"), EStringCaseType::NoCase)
+        || FileName.EndsWith(TEXT(".psd"), EStringCaseType::NoCase)
+        || FileName.EndsWith(TEXT(".gif"), EStringCaseType::NoCase)
+        || FileName.EndsWith(TEXT(".tga"), EStringCaseType::NoCase)
+        || FileName.EndsWith(TEXT(".hdr"), EStringCaseType::NoCase);
 }

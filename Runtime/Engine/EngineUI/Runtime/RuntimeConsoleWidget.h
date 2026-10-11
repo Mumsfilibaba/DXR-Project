@@ -58,7 +58,7 @@ private:
     FCriticalSection                        MessagesCS;
     int32                                   SelectedCandidateIndex = InvalidIndex;
     int32                                   HistoryIndex           = InvalidIndex;
-    TStaticArray<CHAR_T, 256>               TextBuffer;
+    TStaticArray<ANSICHAR, 256>             TextBuffer; // UTF-8, as ImGui edits it
     bool                                    bUpdateCursorPosition : 1;
     bool                                    bIsActive : 1;
     bool                                    bCandidateSelectionChanged : 1;

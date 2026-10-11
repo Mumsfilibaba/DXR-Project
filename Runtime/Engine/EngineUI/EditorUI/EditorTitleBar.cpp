@@ -27,7 +27,7 @@ bool FEditorTitleBar::Initialize()
     }
 
     FTitleBar::FDesc Desc;
-    Desc.Title   = "DXR Engine";
+    Desc.Title   = TEXT("DXR Engine");
     Desc.Font    = FEditorStyle::GetFonts().Title;
     Desc.Content = MenuBar;
 
@@ -54,7 +54,7 @@ void FEditorTitleBar::Refresh()
     const bool bIsPlaying = EditorEngine->IsPlaying();
     if (bIsPlaying != bWasPlaying)
     {
-        Bar->SetTitle(bIsPlaying ? "DXR Engine (Playing)" : "DXR Engine");
+        Bar->SetTitle(bIsPlaying ? TEXT("DXR Engine (Playing)") : TEXT("DXR Engine"));
         bWasPlaying = bIsPlaying;
     }
 }

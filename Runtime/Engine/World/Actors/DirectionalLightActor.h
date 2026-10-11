@@ -16,7 +16,7 @@ public:
 
     virtual const CHAR_T* GetTypeLabel() const override
     {
-        return "DirectionalLight";
+        return TEXT("DirectionalLight");
     }
 
     FDirectionalLightComponent* GetLightComponent() const

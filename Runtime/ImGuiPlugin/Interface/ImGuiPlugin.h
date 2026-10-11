@@ -45,13 +45,13 @@ struct IImguiPlugin : public IModule
     // This ensures that the plugin is actually loaded
     static bool IsEnabled()
     {
-        return FModuleManager::Get().IsModuleLoaded("ImGuiPlugin");
+        return FModuleManager::Get().IsModuleLoaded(TEXT("ImGuiPlugin"));
     }
 
     // Use IsEnabled before calling get to ensure that there is a valid interface
     static IImguiPlugin& Get()
     {
-        return FModuleManager::Get().GetModuleRef<IImguiPlugin>("ImGuiPlugin");
+        return FModuleManager::Get().GetModuleRef<IImguiPlugin>(TEXT("ImGuiPlugin"));
     }
 
     virtual ~IImguiPlugin() = default;

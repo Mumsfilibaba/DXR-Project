@@ -32,7 +32,7 @@ void FEditorFrameProfilerWidget::Draw()
 {
     if (bVisible)
     {
-        TRACE_SCOPE("Frame Profiler");
+        TRACE_SCOPE(TEXT("Frame Profiler"));
         DrawWindow();
     }
 }
@@ -129,7 +129,7 @@ void FEditorFrameProfilerWidget::DrawCPUData(float Width)
         FString ThreadName;
         if (FThreadManager::Get().IsMainThread(ThreadInfo.ThreadHandle))
         {
-            ThreadName = "MainThread";
+            ThreadName = TEXT("MainThread");
             bIsMainThread = true;
         }
         else
@@ -143,12 +143,12 @@ void FEditorFrameProfilerWidget::DrawCPUData(float Width)
             ThreadName = Thread->GetName();
             if (ThreadName.IsEmpty())
             {
-                ThreadName = FString::Printf("Thread %d", ThreadIndex);
+                ThreadName = FString::Printf(TEXT("Thread %d"), ThreadIndex);
             }
         }
 
         const ImGuiTreeNodeFlags TreeFlags = bIsMainThread ? ImGuiTreeNodeFlags_DefaultOpen : ImGuiTreeNodeFlags_None;
-        if (ImGui::CollapsingHeader(*ThreadName, TreeFlags))
+        if (ImGui::CollapsingHeader(StringCast<ANSICHAR>(ThreadName).Get(), TreeFlags))
         {
             if (ImGui::BeginTable("Functions", NumColumns, TableFlags | ImGuiTableFlags_Resizable))
             {
@@ -175,7 +175,7 @@ void FEditorFrameProfilerWidget::DrawCPUData(float Width)
                     int32 Calls = Sample.Calls;
 
                     ImGui::TableSetColumnIndex(0);
-                    ImGui::Text("%s", *Sample.Name);
+                    ImGui::Text("%s", StringCast<ANSICHAR>(Sample.Name).Get());
 
                     ImGui::TableSetColumnIndex(1);
                     ImGui::Text("%d", Calls);
@@ -207,23 +207,23 @@ void FEditorFrameProfilerWidget::DrawWindow()
 
     const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings;
 
-    if (EditorWidgets::BeginEditorWindow("Frame Profiler", &bVisible, Flags))
+    if (EditorWidgets::BeginEditorWindow(TEXT("Frame Profiler"), &bVisible, Flags))
     {
-        if (EditorWidgets::DrawButton("Start Profile"))
+        if (EditorWidgets::DrawButton(TEXT("Start Profile")))
         {
             FFrameProfiler::Get().Enable();
         }
 
         ImGui::SameLine();
 
-        if (EditorWidgets::DrawButton("Stop Profile"))
+        if (EditorWidgets::DrawButton(TEXT("Stop Profile")))
         {
             FFrameProfiler::Get().Disable();
         }
 
         ImGui::SameLine();
 
-        if (EditorWidgets::DrawButton("Reset"))
+        if (EditorWidgets::DrawButton(TEXT("Reset")))
         {
             FFrameProfiler::Get().Reset();
         }

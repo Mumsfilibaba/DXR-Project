@@ -7,7 +7,7 @@ FSpotLightActor::FSpotLightActor(const FObjectInitializer& ObjectInitializer)
     : FActor(ObjectInitializer)
     , LightComponent(nullptr)
 {
-    SetName("Spot Light");
+    SetName(TEXT("Spot Light"));
     
     LightComponent = NewObject<FSpotLightComponent>();
     AddComponent(LightComponent);

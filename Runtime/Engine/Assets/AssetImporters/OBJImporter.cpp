@@ -88,13 +88,13 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
     FOBJMaterialReader MaterialReader(MTLFiledir);
     if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, &TextStream, &MaterialReader, true, false))
     {
-        LOG_ERROR("[FOBJImporter]: Failed to load '%s'. Warning: %s Error: %s", *Filename, Warning.c_str(), Error.c_str());
+        LOG_ERROR("[FOBJImporter]: Failed to load '%s'. Warning: %s Error: %s", *Filename, StringCast<CHAR_T>(Warning.c_str()).Get(), StringCast<CHAR_T>(Error.c_str()).Get());
         return false;
     }
     
     if (!Warning.empty())
     {
-        LOG_WARNING("[FOBJImporter]: Loaded '%s' with Warning: %s", *Filename, Warning.c_str());
+        LOG_WARNING("[FOBJImporter]: Loaded '%s' with Warning: %s", *Filename, StringCast<CHAR_T>(Warning.c_str()).Get());
     }
 
     // Create all Materials in scene
@@ -108,7 +108,7 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
                 return nullptr;
             }
 
-            return StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + TexName.c_str()));
+            return StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + StringCast<CHAR_T>(TexName.c_str()).ToString()));
         };
 
         // Create new material with default properties
@@ -135,11 +135,11 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 
         if (Mat.name.empty())
         {
-            MaterialData.Name = FString::Printf("%s_material_%d", *FilenameWithoutPath, SceneMaterialIndex);
+            MaterialData.Name = FString::Printf(TEXT("%s_material_%d"), *FilenameWithoutPath, SceneMaterialIndex);
         }
         else
         {
-            MaterialData.Name = FString(Mat.name.c_str());
+            MaterialData.Name = StringCast<CHAR_T>(Mat.name.c_str()).ToString();
         }
         
         OutModelData.Materials.Add(Move(MaterialData));
@@ -239,11 +239,11 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 
         if (Shape.name.empty())
         {
-            MeshData.Name = FString::Printf("%s_%d", *FilenameWithoutPath, ShapeIndex);
+            MeshData.Name = FString::Printf(TEXT("%s_%d"), *FilenameWithoutPath, ShapeIndex);
         }
         else
         {
-            MeshData.Name = Shape.name.c_str();
+            MeshData.Name = StringCast<CHAR_T>(Shape.name.c_str()).ToString();
         }
 
         OutModelData.Meshes.Add(Move(MeshData));
@@ -256,5 +256,5 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 
 bool FOBJImporter::MatchExtenstion(const FStringView& FileName)
 {
-    return FileName.EndsWith(".obj", EStringCaseType::NoCase);
+    return FileName.EndsWith(TEXT(".obj"), EStringCaseType::NoCase);
 }

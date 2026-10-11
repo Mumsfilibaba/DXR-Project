@@ -9,8 +9,8 @@
 #include "RendererCore/Interfaces/IRendererModule.h"
 
 static TAutoConsoleVariable<bool> CVarUseOverlayConsole(
-    "Engine.UseOverlayConsole",
-    "True draws the console with the Application element library, false falls back to the ImGui console",
+    TEXT("Engine.UseOverlayConsole"),
+    TEXT("True draws the console with the Application element library, false falls back to the ImGui console"),
     true,
     EConsoleVariableFlags::Default);
 

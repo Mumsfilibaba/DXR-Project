@@ -7,7 +7,7 @@ FCameraActor::FCameraActor(const FObjectInitializer& ObjectInitializer)
     : FActor(ObjectInitializer)
     , CameraComponent(nullptr)
 {
-    SetName("Camera");
+    SetName(TEXT("Camera"));
     GetTransform().SetTranslation(0.0f, 0.0f, -2.0f);
 
     CameraComponent = NewObject<FCameraComponent>();

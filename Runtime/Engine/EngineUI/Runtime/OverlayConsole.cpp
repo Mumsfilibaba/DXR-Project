@@ -33,7 +33,7 @@ bool FOverlayConsole::Initialize()
         return false;
     }
 
-    Font = FTrueTypeFontFace::CreateFromFile(Paths::GetAssetDir() + "/Editor/Fonts/consola.ttf", GConsoleFontPixelHeight);
+    Font = FTrueTypeFontFace::CreateFromFile(Paths::GetAssetDir() + TEXT("/Editor/Fonts/consola.ttf"), GConsoleFontPixelHeight);
     if (!Font)
     {
         return false;
