@@ -1,6 +1,8 @@
 #pragma once
+#include "Core/Memory/Memory.h"
 #include "Core/Platform/PlatformTLS.h"
 #include "Core/Threading/Atomic.h"
+#include <new>
 
 class FThreadLocalSlot
 {
@@ -70,7 +72,33 @@ private:
     AtomicUInt32      Index;
 };
 
-template<typename T>
+struct FThreadLocalDefaultAllocator
+{
+    /**
+     * @brief Allocates the storage for one thread's instance
+     *
+     * @param Size Number of bytes to allocate
+     * @param Alignment Alignment of the instance
+     * @return Returns the storage, or nullptr when the allocation failed
+     */
+    static FORCEINLINE void* Allocate(uint64 Size, uint32 Alignment)
+    {
+        return Memory::Malloc(Size, Alignment);
+    }
+
+    /**
+     * @brief Releases the storage of one thread's instance once it has been destroyed
+     *
+     * @param Block The storage Allocate returned
+     * @param Size The size that was passed to Allocate
+     */
+    static FORCEINLINE void Free(void* Block, MAYBE_UNUSED uint64 Size)
+    {
+        Memory::Free(Block);
+    }
+};
+
+template<typename T, typename AllocatorType = FThreadLocalDefaultAllocator>
 class TThreadLocal
 {
 public:
@@ -94,7 +122,9 @@ public:
         if (!Value)
         {
             CHECK(Slot.GetIndex() != CORE_INVALID_TLS_INDEX);
-            Value = new T();
+            void* Storage = AllocatorType::Allocate(sizeof(T), static_cast<uint32>(alignof(T)));
+            CHECK(Storage != nullptr);
+            Value = ::new (Storage) T();
             Slot.SetValue(Value);
         }
 
@@ -122,7 +152,9 @@ public:
 private:
     static void DestroyValue(void* Value)
     {
-        delete static_cast<T*>(Value);
+        T* Instance = static_cast<T*>(Value);
+        Instance->~T();
+        AllocatorType::Free(Instance, sizeof(T));
     }
 
     FThreadLocalSlot Slot;
