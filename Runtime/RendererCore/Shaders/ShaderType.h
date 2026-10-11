@@ -101,7 +101,7 @@ struct TShaderTypeHelpers
 
 #define IMPLEMENT_SHADER_TYPE(ShaderClass, InSourceFile, InEntryPoint, InMinShaderModel) \
     static FShaderType GShaderType##ShaderClass(                                         \
-        #ShaderClass,                                                                    \
+        TEXT(#ShaderClass),                                                              \
         InSourceFile,                                                                    \
         InEntryPoint,                                                                    \
         ShaderClass::Stage,                                                              \

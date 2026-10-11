@@ -101,7 +101,7 @@ public:
 private:
     NODISCARD FString CreateFilePath(const FStringView& Key) const
     {
-        return Directory + '/' + FString(Key) + ".rtas";
+        return Directory + '/' + FString(Key) + TEXT(".rtas");
     }
 
     FString Directory;

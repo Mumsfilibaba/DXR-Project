@@ -105,15 +105,15 @@ static FString FormatTimeLabel(double Nanoseconds, double StepNanoseconds)
 {
     if (StepNanoseconds >= 1000000.0)
     {
-        return FString::Printf("%.1f ms", Time::ToMilliseconds(Nanoseconds));
+        return FString::Printf(TEXT("%.1f ms"), Time::ToMilliseconds(Nanoseconds));
     }
 
     if (StepNanoseconds >= 1000.0)
     {
-        return FString::Printf("%.0f us", Time::ToMicroseconds(Nanoseconds));
+        return FString::Printf(TEXT("%.0f us"), Time::ToMicroseconds(Nanoseconds));
     }
 
-    return FString::Printf("%.0f ns", Nanoseconds);
+    return FString::Printf(TEXT("%.0f ns"), Nanoseconds);
 }
 
 TSharedPtr<FProfilerTimeline> FProfilerTimeline::Create(const FDesc& Desc)
@@ -579,7 +579,7 @@ int32 FProfilerTimeline::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
 
     if (Lanes.IsEmpty() && Font)
     {
-        const FString     Empty      = FString("Nothing was captured for this frame");
+        const FString     Empty      = FString(TEXT("Nothing was captured for this frame"));
         const FIntVector2 Size       = FIntVector2(Font->MeasureWidth(FStringView(Empty.Data(), Empty.Length())), Font->GetLineHeight());
         const FRectangle  TextBounds = FLayout::AlignInBounds(Bounds, Size, EHorizontalAlignment::Center, EVerticalAlignment::Center);
 
@@ -805,13 +805,13 @@ FEventResponse FProfilerTimeline::OnMouseLeft(const FCursorEvent& CursorEvent)
 
 FString FProfilerTimeline::FormatBarToolTip(const FProfilerTimelineBar& Bar)
 {
-    const FString Name = Bar.Name ? FString(Bar.Name) : FString("<unnamed>");
+    const FString Name = Bar.Name ? FString(Bar.Name) : FString(TEXT("<unnamed>"));
     if (Bar.bInstant)
     {
-        return Name + "\nevent";
+        return Name + TEXT("\nevent");
     }
 
-    return Name + FString::Printf("\n%.3f ms",
+    return Name + FString::Printf(TEXT("\n%.3f ms"),
         Time::ToMilliseconds(static_cast<double>(Bar.EndNanoseconds - Bar.StartNanoseconds)));
 }
 

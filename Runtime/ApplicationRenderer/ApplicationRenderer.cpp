@@ -27,32 +27,32 @@
 IMPLEMENT_ENGINE_MODULE(IModule, ApplicationRenderer);
 
 static TAutoConsoleVariable<bool> CVarUIAntiAliasing(
-    "UI.AntiAliasing",
-    "True lays a one pixel soft edge over curved user interface geometry",
+    TEXT("UI.AntiAliasing"),
+    TEXT("True lays a one pixel soft edge over curved user interface geometry"),
     true,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarUIUploadTransient(
-    "UI.Upload.Transient",
-    "True uploads user interface geometry into fresh upload memory every frame instead of copying it into kept GPU buffers",
+    TEXT("UI.Upload.Transient"),
+    TEXT("True uploads user interface geometry into fresh upload memory every frame instead of copying it into kept GPU buffers"),
     false,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarDumpDrawData(
-    "ApplicationRenderer.DumpDrawData",
-    "Logs the commands, geometry and batches of every window for this many frames, counting itself back down to zero",
+    TEXT("ApplicationRenderer.DumpDrawData"),
+    TEXT("Logs the commands, geometry and batches of every window for this many frames, counting itself back down to zero"),
     0);
 
 static TAutoConsoleVariable<bool> CVarPaintTiming(
-    "ApplicationRenderer.PaintTiming",
-    "Logs what the per-frame UI rebuild costs each window, averaged over the reporting interval",
+    TEXT("ApplicationRenderer.PaintTiming"),
+    TEXT("Logs what the per-frame UI rebuild costs each window, averaged over the reporting interval"),
     false,
     EConsoleVariableFlags::Default);
 
 static bool GVSyncEnabled = false;
 static FAutoConsoleVariableRef CVarVSyncEnabled(
-    "Renderer.Feature.VerticalSync",
-    "Enables Vertical-Sync",
+    TEXT("Renderer.Feature.VerticalSync"),
+    TEXT("Enables Vertical-Sync"),
     GVSyncEnabled,
     EConsoleVariableFlags::Default);
 
@@ -118,17 +118,17 @@ static void ConvertIndicesToUInt16(const uint32* Source, uint16* Destination, in
 
 static FString DescribeRectangle(const FRectangle& Rectangle)
 {
-    return FString::Printf("(%d, %d, %d x %d)", Rectangle.Position.X, Rectangle.Position.Y, Rectangle.Width, Rectangle.Height);
+    return FString::Printf(TEXT("(%d, %d, %d x %d)"), Rectangle.Position.X, Rectangle.Position.Y, Rectangle.Width, Rectangle.Height);
 }
 
 static const CHAR_T* DescribeBatchTexture(const FUITextureHandle& Texture)
 {
     if (Texture.GetAtlas())
     {
-        return "atlas";
+        return TEXT("atlas");
     }
 
-    return Texture.GetTexture() ? "image" : "white";
+    return Texture.GetTexture() ? TEXT("image") : TEXT("white");
 }
 
 static void DumpWindowDrawData(const FWindow& Window, const FDrawCommandList& Commands, const FUIDrawData& DrawData)
@@ -152,7 +152,7 @@ static void DumpWindowDrawData(const FWindow& Window, const FDrawCommandList& Co
     {
         const FUIDrawBatch& Batch = Batches[Index];
         LOG_INFO("[FApplicationRenderer]:   Batch %d: %s, scissor %s, indices %d to %d",
-            Index, DescribeBatchTexture(Batch.Texture), Batch.bIsClipped ? *DescribeRectangle(Batch.ScissorRectangle) : "none",
+            Index, DescribeBatchTexture(Batch.Texture), Batch.bIsClipped ? *DescribeRectangle(Batch.ScissorRectangle) : TEXT("none"),
             Batch.IndexOffset, Batch.IndexOffset + Batch.IndexCount);
     }
 }
@@ -197,8 +197,8 @@ bool FApplicationRenderer::InitializeRHI()
 {
     TArray<uint8> ShaderCode;
 
-    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
-    if (!FShaderBytecodeCache::CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
+    FShaderCompileInfo CompileInfo(TEXT("VSMain"), EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
+    if (!FShaderBytecodeCache::CompileFromFile(TEXT("Shaders/UserInterface.hlsl"), CompileInfo, ShaderCode))
     {
         LOG_ERROR("[FApplicationRenderer]: Failed to compile the vertex shader");
         return false;
@@ -210,8 +210,8 @@ bool FApplicationRenderer::InitializeRHI()
         return false;
     }
 
-    CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
-    if (!FShaderBytecodeCache::CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
+    CompileInfo = FShaderCompileInfo(TEXT("PSMain"), EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
+    if (!FShaderBytecodeCache::CompileFromFile(TEXT("Shaders/UserInterface.hlsl"), CompileInfo, ShaderCode))
     {
         LOG_ERROR("[FApplicationRenderer]: Failed to compile the pixel shader");
         return false;
@@ -225,9 +225,9 @@ bool FApplicationRenderer::InitializeRHI()
 
     TArray<FRHIInputElementDesc> InputElements =
     {
-        { "POSITION", 0, EFormat::R32G32_Float,   sizeof(FUIVertex), 0, static_cast<uint32>(offsetof(FUIVertex, Position)), 0, EVertexInputClass::Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(FUIVertex), 0, static_cast<uint32>(offsetof(FUIVertex, TexCoord)), 1, EVertexInputClass::Vertex, 0 },
-        { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(FUIVertex), 0, static_cast<uint32>(offsetof(FUIVertex, Color)),    2, EVertexInputClass::Vertex, 0 },
+        { TEXT("POSITION"), 0, EFormat::R32G32_Float,   sizeof(FUIVertex), 0, static_cast<uint32>(offsetof(FUIVertex, Position)), 0, EVertexInputClass::Vertex, 0 },
+        { TEXT("TEXCOORD"), 0, EFormat::R32G32_Float,   sizeof(FUIVertex), 0, static_cast<uint32>(offsetof(FUIVertex, TexCoord)), 1, EVertexInputClass::Vertex, 0 },
+        { TEXT("COLOR"),    0, EFormat::R8G8B8A8_Unorm, sizeof(FUIVertex), 0, static_cast<uint32>(offsetof(FUIVertex, Color)),    2, EVertexInputClass::Vertex, 0 },
     };
 
     InputLayout = RHI::CreateInputLayout(InputElements);
@@ -236,8 +236,8 @@ bool FApplicationRenderer::InitializeRHI()
         return false;
     }
 
-    CompileInfo = FShaderCompileInfo("VSText", EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
-    if (!FShaderBytecodeCache::CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
+    CompileInfo = FShaderCompileInfo(TEXT("VSText"), EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
+    if (!FShaderBytecodeCache::CompileFromFile(TEXT("Shaders/UserInterface.hlsl"), CompileInfo, ShaderCode))
     {
         LOG_ERROR("[FApplicationRenderer]: Failed to compile the text vertex shader");
         return false;
@@ -251,11 +251,11 @@ bool FApplicationRenderer::InitializeRHI()
 
     TArray<FRHIInputElementDesc> TextInputElements =
     {
-        { "POSITION", 0, EFormat::R32G32_Float,   sizeof(FUITextGlyphInstance), 0, static_cast<uint32>(offsetof(FUITextGlyphInstance, Position)),    0, EVertexInputClass::Instance, 1 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(FUITextGlyphInstance), 0, static_cast<uint32>(offsetof(FUITextGlyphInstance, Size)),        1, EVertexInputClass::Instance, 1 },
-        { "TEXCOORD", 1, EFormat::R32G32_Float,   sizeof(FUITextGlyphInstance), 0, static_cast<uint32>(offsetof(FUITextGlyphInstance, MinTexCoord)), 2, EVertexInputClass::Instance, 1 },
-        { "TEXCOORD", 2, EFormat::R32G32_Float,   sizeof(FUITextGlyphInstance), 0, static_cast<uint32>(offsetof(FUITextGlyphInstance, MaxTexCoord)), 3, EVertexInputClass::Instance, 1 },
-        { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(FUITextGlyphInstance), 0, static_cast<uint32>(offsetof(FUITextGlyphInstance, Color)),       4, EVertexInputClass::Instance, 1 },
+        { TEXT("POSITION"), 0, EFormat::R32G32_Float,   sizeof(FUITextGlyphInstance), 0, static_cast<uint32>(offsetof(FUITextGlyphInstance, Position)),    0, EVertexInputClass::Instance, 1 },
+        { TEXT("TEXCOORD"), 0, EFormat::R32G32_Float,   sizeof(FUITextGlyphInstance), 0, static_cast<uint32>(offsetof(FUITextGlyphInstance, Size)),        1, EVertexInputClass::Instance, 1 },
+        { TEXT("TEXCOORD"), 1, EFormat::R32G32_Float,   sizeof(FUITextGlyphInstance), 0, static_cast<uint32>(offsetof(FUITextGlyphInstance, MinTexCoord)), 2, EVertexInputClass::Instance, 1 },
+        { TEXT("TEXCOORD"), 2, EFormat::R32G32_Float,   sizeof(FUITextGlyphInstance), 0, static_cast<uint32>(offsetof(FUITextGlyphInstance, MaxTexCoord)), 3, EVertexInputClass::Instance, 1 },
+        { TEXT("COLOR"),    0, EFormat::R8G8B8A8_Unorm, sizeof(FUITextGlyphInstance), 0, static_cast<uint32>(offsetof(FUITextGlyphInstance, Color)),       4, EVertexInputClass::Instance, 1 },
     };
 
     TextInputLayout = RHI::CreateInputLayout(TextInputElements);
@@ -264,8 +264,8 @@ bool FApplicationRenderer::InitializeRHI()
         return false;
     }
 
-    CompileInfo = FShaderCompileInfo("VSShape", EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
-    if (!FShaderBytecodeCache::CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
+    CompileInfo = FShaderCompileInfo(TEXT("VSShape"), EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
+    if (!FShaderBytecodeCache::CompileFromFile(TEXT("Shaders/UserInterface.hlsl"), CompileInfo, ShaderCode))
     {
         LOG_ERROR("[FApplicationRenderer]: Failed to compile the shape vertex shader");
         return false;
@@ -277,8 +277,8 @@ bool FApplicationRenderer::InitializeRHI()
         return false;
     }
 
-    CompileInfo = FShaderCompileInfo("PSShape", EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
-    if (!FShaderBytecodeCache::CompileFromFile("Shaders/UserInterface.hlsl", CompileInfo, ShaderCode))
+    CompileInfo = FShaderCompileInfo(TEXT("PSShape"), EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
+    if (!FShaderBytecodeCache::CompileFromFile(TEXT("Shaders/UserInterface.hlsl"), CompileInfo, ShaderCode))
     {
         LOG_ERROR("[FApplicationRenderer]: Failed to compile the shape pixel shader");
         return false;
@@ -292,13 +292,13 @@ bool FApplicationRenderer::InitializeRHI()
 
     TArray<FRHIInputElementDesc> ShapeInputElements =
     {
-        { "POSITION",  0, EFormat::R32G32_Float,       sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, Position)),    0, EVertexInputClass::Instance, 1 },
-        { "COLOR",     0, EFormat::R8G8B8A8_Unorm,     sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, Color)),       1, EVertexInputClass::Instance, 1 },
-        { "TEXCOORD",  0, EFormat::R32G32_Float,       sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, DrawSize)),    2, EVertexInputClass::Instance, 1 },
-        { "TEXCOORD",  1, EFormat::R32G32_Float,       sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, LocalOrigin)), 3, EVertexInputClass::Instance, 1 },
-        { "TEXCOORD",  2, EFormat::R32G32_Float,       sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, RectSize)),    4, EVertexInputClass::Instance, 1 },
-        { "TEXCOORD",  3, EFormat::R32G32B32A32_Float, sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, RadiusTL)),    5, EVertexInputClass::Instance, 1 },
-        { "TEXCOORD",  4, EFormat::R32G32_Float,       sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, Thickness)),   6, EVertexInputClass::Instance, 1 },
+        { TEXT("POSITION"),  0, EFormat::R32G32_Float,       sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, Position)),    0, EVertexInputClass::Instance, 1 },
+        { TEXT("COLOR"),     0, EFormat::R8G8B8A8_Unorm,     sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, Color)),       1, EVertexInputClass::Instance, 1 },
+        { TEXT("TEXCOORD"),  0, EFormat::R32G32_Float,       sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, DrawSize)),    2, EVertexInputClass::Instance, 1 },
+        { TEXT("TEXCOORD"),  1, EFormat::R32G32_Float,       sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, LocalOrigin)), 3, EVertexInputClass::Instance, 1 },
+        { TEXT("TEXCOORD"),  2, EFormat::R32G32_Float,       sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, RectSize)),    4, EVertexInputClass::Instance, 1 },
+        { TEXT("TEXCOORD"),  3, EFormat::R32G32B32A32_Float, sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, RadiusTL)),    5, EVertexInputClass::Instance, 1 },
+        { TEXT("TEXCOORD"),  4, EFormat::R32G32_Float,       sizeof(FUIShapeInstance), 0, static_cast<uint32>(offsetof(FUIShapeInstance, Thickness)),   6, EVertexInputClass::Instance, 1 },
     };
 
     ShapeInputLayout = RHI::CreateInputLayout(ShapeInputElements);
@@ -363,7 +363,7 @@ bool FApplicationRenderer::InitializeRHI()
         return false;
     }
 
-    DefaultTexture->SetDebugName("ApplicationUI DefaultTexture");
+    DefaultTexture->SetDebugName(TEXT("ApplicationUI DefaultTexture"));
     return true;
 }
 
@@ -508,7 +508,7 @@ void FApplicationRenderer::ReportPaintStats(FWindowDrawState& WindowState)
     const float               Frames = static_cast<float>(WindowState.TimedFrameCount);
 
     LOG_INFO("[FApplicationRenderer]: '%s' paint over %d frames: walk %.3f ms, build %.3f ms, upload %.3f ms, total %.3f ms (%d commands, %d vertices, %d batches)",
-        Window ? *Window->GetTitle() : "<closed>", WindowState.TimedFrameCount, Total.ElementWalkTime / Frames,
+        Window ? *Window->GetTitle() : TEXT("<closed>"), WindowState.TimedFrameCount, Total.ElementWalkTime / Frames,
         Total.GeometryBuildTime / Frames, Total.BufferUploadTime / Frames, Total.GetTotalTime() / Frames,
         WindowState.TimedFrameCount > 0 ? Total.CommandCount / WindowState.TimedFrameCount : 0,
         WindowState.TimedFrameCount > 0 ? Total.VertexCount / WindowState.TimedFrameCount : 0,
@@ -666,7 +666,7 @@ bool FApplicationRenderer::PrepareGeometry(FRHICommandList& InCommandList, FWind
         }
     }
 
-    TRACE_SCOPE("UI Geometry Upload");
+    TRACE_SCOPE(TEXT("UI Geometry Upload"));
 
     const uint64 UploadStartTime = FPlatformTime::QueryPerformanceCounter();
 
@@ -748,7 +748,7 @@ FRHIShaderResourceView* FApplicationRenderer::PrepareAtlasTexture(FRHICommandLis
             return GetDefaultShaderResourceView();
         }
 
-        NewAtlasTexture->SetDebugName("ApplicationUI FontAtlas");
+        NewAtlasTexture->SetDebugName(TEXT("ApplicationUI FontAtlas"));
 
         if (Entry)
         {
@@ -815,7 +815,7 @@ FRHIShaderResourceView* FApplicationRenderer::PrepareBrushTexture(FRHICommandLis
 
 void FApplicationRenderer::PrepareBatchTextures(FRHICommandList& InCommandList, const FUIDrawData& DrawData)
 {
-    TRACE_SCOPE("UI Prepare Textures");
+    TRACE_SCOPE(TEXT("UI Prepare Textures"));
 
     for (const FUIDrawBatch& Batch : DrawData.GetBatches())
     {
@@ -880,7 +880,7 @@ void FApplicationRenderer::RenderWindowToSwapChain(FRHICommandList& InCommandLis
 
     bool bHasGeometry = false;
     {
-        FScopedApplicationGPUTrace GPUTrace(GPUProfiler, InCommandList, "UI Upload");
+        FScopedApplicationGPUTrace GPUTrace(GPUProfiler, InCommandList, TEXT("UI Upload"));
 
         if (LoadAction == EAttachmentLoadAction::Clear)
         {
@@ -906,7 +906,7 @@ void FApplicationRenderer::RenderWindowToSwapChain(FRHICommandList& InCommandLis
         EAttachmentStoreAction::Store, ClearColor);
 
     {
-        FScopedApplicationGPUTrace GPUTrace(GPUProfiler, InCommandList, "UI Clear");
+        FScopedApplicationGPUTrace GPUTrace(GPUProfiler, InCommandList, TEXT("UI Clear"));
 
         FRHIBeginRenderPassDesc RenderPassDesc({ Attachment }, 1);
         InCommandList.BeginRenderPass(RenderPassDesc);
@@ -914,7 +914,7 @@ void FApplicationRenderer::RenderWindowToSwapChain(FRHICommandList& InCommandLis
 
     if (bHasGeometry)
     {
-        FScopedApplicationGPUTrace GPUTrace(GPUProfiler, InCommandList, "UI Draws");
+        FScopedApplicationGPUTrace GPUTrace(GPUProfiler, InCommandList, TEXT("UI Draws"));
         RenderWindow(InCommandList, *WindowState);
     }
 
@@ -1084,7 +1084,7 @@ void FApplicationRenderer::BeginFrame()
     CHECK_MAIN_THREAD();
 
     {
-        TRACE_SCOPE("UI Sync Surfaces");
+        TRACE_SCOPE(TEXT("UI Sync Surfaces"));
         SyncWindowSurfaces();
     }
 
@@ -1096,8 +1096,8 @@ void FApplicationRenderer::RecordWindows()
 {
     CHECK_MAIN_THREAD();
 
-    RHI_EVENT_SCOPE(CommandList, "UI Render");
-    TRACE_SCOPE("Record UI");
+    RHI_EVENT_SCOPE(CommandList, TEXT("UI Render"));
+    TRACE_SCOPE(TEXT("Record UI"));
 
 #if SUPPORT_VARIABLE_RATE_SHADING
     if (RHISupportsVariableRateShading())
@@ -1108,14 +1108,14 @@ void FApplicationRenderer::RecordWindows()
 #endif
 
     {
-        TRACE_SCOPE("UI Draw Windows");
+        TRACE_SCOPE(TEXT("UI Draw Windows"));
         FApplication::Get().DrawWindows();
     }
 
     {
-        TRACE_SCOPE("UI Record Surfaces");
+        TRACE_SCOPE(TEXT("UI Record Surfaces"));
 
-        FScopedApplicationGPUTrace GPUTrace(GPUProfiler, CommandList, "UI Render");
+        FScopedApplicationGPUTrace GPUTrace(GPUProfiler, CommandList, TEXT("UI Render"));
         RenderWindowSurfaces(CommandList);
     }
 }
@@ -1137,24 +1137,24 @@ void FApplicationRenderer::EndFrameAndPresent()
     }
 
     {
-        TRACE_SCOPE("UI Present Windows");
+        TRACE_SCOPE(TEXT("UI Present Windows"));
         PresentWindowSurfaces(CommandList);
     }
 
     {
-        TRACE_SCOPE("UI Finalize Command List");
+        TRACE_SCOPE(TEXT("UI Finalize Command List"));
 
         CommandList.EndFrame();
         CommandList.FlushDeletedResources();
     }
 
     {
-        TRACE_SCOPE("ExecuteCommandList");
+        TRACE_SCOPE(TEXT("ExecuteCommandList"));
 
         if (LastFrameFinishedEvent)
         {
             {
-                TRACE_SCOPE("UI RHI Wait Prior Frame");
+                TRACE_SCOPE(TEXT("UI RHI Wait Prior Frame"));
                 LastFrameFinishedEvent->Wait(FTimespan::Infinity());
             }
 
@@ -1169,7 +1169,7 @@ void FApplicationRenderer::EndFrameAndPresent()
         }
 
         {
-            TRACE_SCOPE("UI RHI Dispatch Command List");
+            TRACE_SCOPE(TEXT("UI RHI Dispatch Command List"));
             FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
         }
     }
@@ -1187,14 +1187,14 @@ void FApplicationRenderer::RedrawWindow(const TSharedPtr<FWindow>& InWindow)
         return;
     }
 
-    TRACE_SCOPE("Redraw Window");
+    TRACE_SCOPE(TEXT("Redraw Window"));
 
     FApplication::Get().DrawWindow(InWindow);
 
     ResizeCommandList.BeginFrame();
 
     {
-        RHI_EVENT_SCOPE(ResizeCommandList, "Resize Redraw");
+        RHI_EVENT_SCOPE(ResizeCommandList, TEXT("Resize Redraw"));
 
         RedrawWindowSurface(ResizeCommandList, *Surface);
     }
@@ -1495,7 +1495,7 @@ FRHITextureRef FApplicationRenderer::RenderElementToTexture(const TSharedPtr<FVi
         return nullptr;
     }
 
-    Texture->SetDebugName("ApplicationUI ElementSnapshot");
+    Texture->SetDebugName(TEXT("ApplicationUI ElementSnapshot"));
 
     FRHIRenderTargetViewRef RenderTargetView = RHI::CreateRenderTargetView(Texture.Get(),
         FRHIRenderTargetViewDesc::CreateTexture2D(GSnapshotFormat, 0));

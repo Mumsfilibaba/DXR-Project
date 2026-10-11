@@ -144,7 +144,7 @@ bool FUIAtlas::EnsureTexture()
         return false;
     }
 
-    Texture->SetDebugName(DebugName.IsEmpty() ? FString("UI Atlas") : DebugName);
+    Texture->SetDebugName(DebugName.IsEmpty() ? FString(TEXT("UI Atlas")) : DebugName);
     return true;
 }
 

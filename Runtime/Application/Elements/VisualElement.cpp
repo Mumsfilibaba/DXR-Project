@@ -7,26 +7,26 @@
 #include "Core/Templates/NumericLimits.h"
 
 static TAutoConsoleVariable<bool> CVarDrawCacheEnable(
-    "UI.DrawCache.Enable",
-    "Replays the draw commands a clean subtree recorded before instead of walking it again",
+    TEXT("UI.DrawCache.Enable"),
+    TEXT("Replays the draw commands a clean subtree recorded before instead of walking it again"),
     true,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarDrawCacheMinCommands(
-    "UI.DrawCache.MinCommands",
-    "How many commands a subtree has to emit before keeping its recording is worth the copy",
+    TEXT("UI.DrawCache.MinCommands"),
+    TEXT("How many commands a subtree has to emit before keeping its recording is worth the copy"),
     24,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarDrawCacheMinCleanFrames(
-    "UI.DrawCache.MinCleanFrames",
-    "How many frames in a row a subtree has to stay clean before its recording is kept",
+    TEXT("UI.DrawCache.MinCleanFrames"),
+    TEXT("How many frames in a row a subtree has to stay clean before its recording is kept"),
     2,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarDrawCacheMaxDirtyFrames(
-    "UI.DrawCache.MaxDirtyFrames",
-    "How many recent frames may dirty a subtree before its recording stops being cached at all",
+    TEXT("UI.DrawCache.MaxDirtyFrames"),
+    TEXT("How many recent frames may dirty a subtree before its recording stops being cached at all"),
     3,
     EConsoleVariableFlags::Default);
 

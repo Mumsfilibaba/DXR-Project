@@ -30,7 +30,7 @@ struct TNumericEntryTraits<float>
      */
     NODISCARD static FORCEINLINE FString Format(float Value, int32 Precision)
     {
-        return FString::Printf("%.*f", Precision, Value);
+        return FString::Printf(TEXT("%.*f"), Precision, Value);
     }
 
     /**
@@ -58,7 +58,7 @@ struct TNumericEntryTraits<float>
             }
         }
 
-        return FString::Printf("%.*f", Decimals, Value);
+        return FString::Printf(TEXT("%.*f"), Decimals, Value);
     }
 
     /**
@@ -92,7 +92,7 @@ struct TNumericEntryTraits<int32>
     NODISCARD static FORCEINLINE FString Format(int32 Value, int32 Precision)
     {
         UNREFERENCED_VARIABLE(Precision);
-        return FString::Printf("%d", Value);
+        return FString::Printf(TEXT("%d"), Value);
     }
 
     /** @return The value in decimal, an integer having no decimals to drop. */

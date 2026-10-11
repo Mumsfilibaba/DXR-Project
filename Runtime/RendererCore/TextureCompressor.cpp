@@ -36,7 +36,7 @@ class FBlockCompressionBC1CS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FBlockCompressionBC1CS, "Shaders/BlockCompression/BlockCompressionBC1.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FBlockCompressionBC1CS, TEXT("Shaders/BlockCompression/BlockCompressionBC1.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 class FBlockCompressionBC2CS
 {
@@ -45,7 +45,7 @@ class FBlockCompressionBC2CS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FBlockCompressionBC2CS, "Shaders/BlockCompression/BlockCompressionBC2.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FBlockCompressionBC2CS, TEXT("Shaders/BlockCompression/BlockCompressionBC2.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 class FBlockCompressionBC3CS
 {
@@ -54,7 +54,7 @@ class FBlockCompressionBC3CS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FBlockCompressionBC3CS, "Shaders/BlockCompression/BlockCompressionBC3.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FBlockCompressionBC3CS, TEXT("Shaders/BlockCompression/BlockCompressionBC3.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 class FBlockCompressionBC4CS
 {
@@ -63,7 +63,7 @@ class FBlockCompressionBC4CS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FBlockCompressionBC4CS, "Shaders/BlockCompression/BlockCompressionBC4.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FBlockCompressionBC4CS, TEXT("Shaders/BlockCompression/BlockCompressionBC4.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 class FBlockCompressionBC5CS
 {
@@ -72,9 +72,9 @@ class FBlockCompressionBC5CS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FBlockCompressionBC5CS, "Shaders/BlockCompression/BlockCompressionBC5.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FBlockCompressionBC5CS, TEXT("Shaders/BlockCompression/BlockCompressionBC5.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
-class FBC6HCubeMap : SHADER_PERMUTATION_BOOL("ENABLE_CUBE_MAP");
+class FBC6HCubeMap : SHADER_PERMUTATION_BOOL(TEXT("ENABLE_CUBE_MAP"));
 
 class FBlockCompressionBC6HCS
 {
@@ -83,7 +83,7 @@ class FBlockCompressionBC6HCS
     using FPermutation = TShaderPermutation<FBC6HCubeMap>;
 };
 
-IMPLEMENT_SHADER_TYPE(FBlockCompressionBC6HCS, "Shaders/BlockCompression/BlockCompressionBC6H.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FBlockCompressionBC6HCS, TEXT("Shaders/BlockCompression/BlockCompressionBC6H.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 class FBC7TryMode456CS
 {
@@ -92,7 +92,7 @@ class FBC7TryMode456CS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FBC7TryMode456CS, "Shaders/BlockCompression/BlockCompressionBC7.hlsl", "TryMode456CS", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FBC7TryMode456CS, TEXT("Shaders/BlockCompression/BlockCompressionBC7.hlsl"), TEXT("TryMode456CS"), EShaderModel::SM_6_2);
 
 class FBC7TryMode137CS
 {
@@ -101,7 +101,7 @@ class FBC7TryMode137CS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FBC7TryMode137CS, "Shaders/BlockCompression/BlockCompressionBC7.hlsl", "TryMode137CS", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FBC7TryMode137CS, TEXT("Shaders/BlockCompression/BlockCompressionBC7.hlsl"), TEXT("TryMode137CS"), EShaderModel::SM_6_2);
 
 class FBC7TryMode02CS
 {
@@ -110,7 +110,7 @@ class FBC7TryMode02CS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FBC7TryMode02CS, "Shaders/BlockCompression/BlockCompressionBC7.hlsl", "TryMode02CS", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FBC7TryMode02CS, TEXT("Shaders/BlockCompression/BlockCompressionBC7.hlsl"), TEXT("TryMode02CS"), EShaderModel::SM_6_2);
 
 class FBC7EncodeBlockCS
 {
@@ -120,11 +120,11 @@ class FBC7EncodeBlockCS
 
     static void ModifyCompilationEnvironment(const FShaderPermutationDesc&, FShaderCompilationEnvironment& Environment)
     {
-        Environment.SetDefine("BC7_ENCODE_ONLY", "(1)");
+        Environment.SetDefine(TEXT("BC7_ENCODE_ONLY"), TEXT("(1)"));
     }
 };
 
-IMPLEMENT_SHADER_TYPE(FBC7EncodeBlockCS, "Shaders/BlockCompression/BlockCompressionBC7.hlsl", "EncodeBlockCS", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FBC7EncodeBlockCS, TEXT("Shaders/BlockCompression/BlockCompressionBC7.hlsl"), TEXT("EncodeBlockCS"), EShaderModel::SM_6_2);
 
 template<typename ShaderType>
 static bool AcquireComputePipeline(FRHIComputeShaderRef& OutShader, FRHIComputePipelineStateRef& OutPSO,
@@ -1019,7 +1019,7 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
     }
     else
     {
-        CompressedTex->SetDebugName("Temp Compressed Texture");
+        CompressedTex->SetDebugName(TEXT("Temp Compressed Texture"));
     }
 
     TArray<FRHIUnorderedAccessViewRef> CompressedUAVs;
@@ -1069,7 +1069,7 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
     }
     else
     {
-        OutCubeMap->SetDebugName("Compressed Texture");
+        OutCubeMap->SetDebugName(TEXT("Compressed Texture"));
     }
 
     // Compress the texture

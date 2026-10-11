@@ -16,18 +16,18 @@
 FShaderCache* FShaderCache::ShaderCache = nullptr;
 
 static TAutoConsoleVariable<bool> CVarPrewarm(
-    "Renderer.ShaderCache.Prewarm",
-    "Compiles the shader permutations the last run needed on worker threads during startup",
+    TEXT("Renderer.ShaderCache.Prewarm"),
+    TEXT("Compiles the shader permutations the last run needed on worker threads during startup"),
     true);
 
 static TAutoConsoleVariable<bool> CVarSaveManifest(
-    "Renderer.ShaderCache.SaveManifest",
-    "Records which shader permutations were used, so the next run can pre-warm them",
+    TEXT("Renderer.ShaderCache.SaveManifest"),
+    TEXT("Records which shader permutations were used, so the next run can pre-warm them"),
     true);
 
 static FAutoConsoleCommand CCmdRecompileShaders(
-    "Renderer.RecompileShaders",
-    "Drops every compiled shader and the pipelines built from them, so the next frame recompiles",
+    TEXT("Renderer.RecompileShaders"),
+    TEXT("Drops every compiled shader and the pipelines built from them, so the next frame recompiles"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         if (FShaderCache* Cache = FShaderCache::TryGet())
@@ -39,8 +39,8 @@ static FAutoConsoleCommand CCmdRecompileShaders(
 static void CompileAllShaders(FStringView Arguments);
 
 static FAutoConsoleCommand CCmdCompileAllShaders(
-    "Shaders.CompileAll",
-    "Compiles every registered shader type and permutation for an RHI (Null, D3D11, D3D12, Vulkan or Metal, defaults to the active one) and logs the failures",
+    TEXT("Shaders.CompileAll"),
+    TEXT("Compiles every registered shader type and permutation for an RHI (Null, D3D11, D3D12, Vulkan or Metal, defaults to the active one) and logs the failures"),
     FConsoleCommandDelegate::CreateStatic(&CompileAllShaders));
 
 static bool ParseRHIType(FStringView Text, ERHIType& OutRHIType)
@@ -77,8 +77,8 @@ static void SaveShaderJobFile(FStringView /* Arguments */)
 }
 
 static FAutoConsoleCommand CCmdSaveShaderJobFile(
-    "Shaders.SaveJobFile",
-    "Writes every shader permutation used so far, for every RHI, to the job file the ShaderCompiler tool compiles",
+    TEXT("Shaders.SaveJobFile"),
+    TEXT("Writes every shader permutation used so far, for every RHI, to the job file the ShaderCompiler tool compiles"),
     FConsoleCommandDelegate::CreateStatic(&SaveShaderJobFile));
 #endif
 
@@ -335,7 +335,7 @@ void FShaderCache::SaveJobFile()
                     const FShaderCompileInfo CompileInfo(Type->GetEntryPoint(), Environment.ShaderModel, Type->GetStage(), OutputLanguage, Environment.Defines);
 
                     FShaderCompileJob Job = FShaderCompileJob::FromCompileInfo(Type->GetSourceFile(), CompileInfo);
-                    Job.Name = FString::Printf("%s#%d", Type->GetName(), PermutationID);
+                    Job.Name = FString::Printf(TEXT("%s#%d"), Type->GetName(), PermutationID);
                     NumAdded += JobFile.Add(ToString(TargetRHI), ::Move(Job)) ? 1 : 0;
                 }
             }

@@ -323,7 +323,7 @@ static EAttachmentLoadAction FindAttachmentLoadAction(const FRenderGraphPass& Pa
 }
 
 FRenderGraphBuilder::FRenderGraphBuilder(const CHAR_T* InName)
-    : Name(InName ? InName : "RenderGraph")
+    : Name(InName ? InName : TEXT("RenderGraph"))
     , Memory()
     , Passes()
     , Textures()
@@ -386,7 +386,7 @@ ViewType* FRenderGraphBuilder::AllocateTextureView(FRenderGraphTexture* Texture,
 
     View->Parent = Texture;
     View->Desc   = Desc;
-    View->Name   = InName ? InName : "RenderGraphView";
+    View->Name   = InName ? InName : TEXT("RenderGraphView");
     return View;
 }
 
@@ -399,7 +399,7 @@ ViewType* FRenderGraphBuilder::AllocateShaderAccessTextureView(FRenderGraphTextu
     View->Parent.Texture = Texture;
     View->ParentKind     = ERenderGraphParentKind::Texture;
     View->Desc           = Desc;
-    View->Name           = InName ? InName : "RenderGraphView";
+    View->Name           = InName ? InName : TEXT("RenderGraphView");
     return View;
 }
 
@@ -412,7 +412,7 @@ ViewType* FRenderGraphBuilder::AllocateBufferView(FRenderGraphBuffer* Buffer, co
     View->Parent.Buffer = Buffer;
     View->ParentKind    = ERenderGraphParentKind::Buffer;
     View->Desc          = Desc;
-    View->Name          = InName ? InName : "RenderGraphView";
+    View->Name          = InName ? InName : TEXT("RenderGraphView");
     return View;
 }
 
@@ -438,14 +438,14 @@ FRenderGraphTexture* FRenderGraphBuilder::RegisterExternalTexture(FRHITexture* T
 {
     if (!Texture)
     {
-        LOG_ERROR("Graph '%s' cannot register a null external texture as '%s'", Name, InName ? InName : "Unnamed");
+        LOG_ERROR("Graph '%s' cannot register a null external texture as '%s'", Name, InName ? InName : TEXT("Unnamed"));
         return nullptr;
     }
 
     if (FinalState == ERHIResourceState::Undefined)
     {
         LOG_ERROR("Graph '%s' cannot register external texture '%s' with a final state of Undefined. The epilogue would "
-            "emit it as an after-state, which no backend accepts", Name, InName ? InName : "Unnamed");
+            "emit it as an after-state, which no backend accepts", Name, InName ? InName : TEXT("Unnamed"));
 
         SetHasErrors(true);
         return nullptr;
@@ -467,7 +467,7 @@ FRenderGraphBuffer* FRenderGraphBuilder::RegisterExternalBuffer(FRHIBuffer* Buff
 {
     if (!Buffer)
     {
-        LOG_ERROR("Graph '%s' cannot register a null external buffer as '%s'", Name, InName ? InName : "Unnamed");
+        LOG_ERROR("Graph '%s' cannot register a null external buffer as '%s'", Name, InName ? InName : TEXT("Unnamed"));
         return nullptr;
     }
 
@@ -485,14 +485,14 @@ bool FRenderGraphBuilder::ValidateExternalViewRegistration(FRenderGraphTexture* 
 {
     if (!Texture)
     {
-        LOG_ERROR("Graph '%s' cannot register the external %s '%s' without a texture to hang it on", Name, ViewKind, InName ? InName : "Unnamed");
+        LOG_ERROR("Graph '%s' cannot register the external %s '%s' without a texture to hang it on", Name, ViewKind, InName ? InName : TEXT("Unnamed"));
         SetHasErrors(true);
         return false;
     }
 
     if (!View)
     {
-        LOG_ERROR("Graph '%s' cannot register a null external %s as '%s'", Name, ViewKind, InName ? InName : "Unnamed");
+        LOG_ERROR("Graph '%s' cannot register a null external %s as '%s'", Name, ViewKind, InName ? InName : TEXT("Unnamed"));
         SetHasErrors(true);
         return false;
     }
@@ -504,7 +504,7 @@ bool FRenderGraphBuilder::ValidateViewCreation(FRenderGraphTexture* Texture, con
 {
     if (!Texture)
     {
-        LOG_ERROR("Graph '%s' cannot create %s '%s' on a null texture", Name, ViewKind, InName ? InName : "Unnamed");
+        LOG_ERROR("Graph '%s' cannot create %s '%s' on a null texture", Name, ViewKind, InName ? InName : TEXT("Unnamed"));
         SetHasErrors(true);
         return false;
     }
@@ -512,7 +512,7 @@ bool FRenderGraphBuilder::ValidateViewCreation(FRenderGraphTexture* Texture, con
     if (Texture->GetDesc().TextureDesc.IsPresentable())
     {
         LOG_ERROR("Graph '%s' cannot create %s '%s' on back-buffer '%s'. Hand its own view to RegisterExternal%s instead",
-            Name, ViewKind, InName ? InName : "Unnamed", Texture->GetName(), ViewKind);
+            Name, ViewKind, InName ? InName : TEXT("Unnamed"), Texture->GetName(), ViewKind);
         SetHasErrors(true);
         return false;
     }
@@ -522,7 +522,7 @@ bool FRenderGraphBuilder::ValidateViewCreation(FRenderGraphTexture* Texture, con
 
 FRenderGraphShaderResourceView* FRenderGraphBuilder::RegisterExternalSRV(FRenderGraphTexture* Texture, FRHIShaderResourceView* ShaderResourceView, const CHAR_T* InName)
 {
-    if (!ValidateExternalViewRegistration(Texture, ShaderResourceView, "SRV", InName))
+    if (!ValidateExternalViewRegistration(Texture, ShaderResourceView, TEXT("SRV"), InName))
     {
         return nullptr;
     }
@@ -538,7 +538,7 @@ FRenderGraphShaderResourceView* FRenderGraphBuilder::RegisterExternalSRV(FRender
 
 FRenderGraphUnorderedAccessView* FRenderGraphBuilder::RegisterExternalUAV(FRenderGraphTexture* Texture, FRHIUnorderedAccessView* UnorderedAccessView, const CHAR_T* InName)
 {
-    if (!ValidateExternalViewRegistration(Texture, UnorderedAccessView, "UAV", InName))
+    if (!ValidateExternalViewRegistration(Texture, UnorderedAccessView, TEXT("UAV"), InName))
     {
         return nullptr;
     }
@@ -554,7 +554,7 @@ FRenderGraphUnorderedAccessView* FRenderGraphBuilder::RegisterExternalUAV(FRende
 
 FRenderGraphRenderTargetView* FRenderGraphBuilder::RegisterExternalRTV(FRenderGraphTexture* Texture, FRHIRenderTargetView* RenderTargetView, const CHAR_T* InName)
 {
-    if (!ValidateExternalViewRegistration(Texture, RenderTargetView, "RTV", InName))
+    if (!ValidateExternalViewRegistration(Texture, RenderTargetView, TEXT("RTV"), InName))
     {
         return nullptr;
     }
@@ -570,7 +570,7 @@ FRenderGraphRenderTargetView* FRenderGraphBuilder::RegisterExternalRTV(FRenderGr
 
 FRenderGraphDepthStencilView* FRenderGraphBuilder::RegisterExternalDSV(FRenderGraphTexture* Texture, FRHIDepthStencilView* DepthStencilView, const CHAR_T* InName)
 {
-    if (!ValidateExternalViewRegistration(Texture, DepthStencilView, "DSV", InName))
+    if (!ValidateExternalViewRegistration(Texture, DepthStencilView, TEXT("DSV"), InName))
     {
         return nullptr;
     }
@@ -586,7 +586,7 @@ FRenderGraphDepthStencilView* FRenderGraphBuilder::RegisterExternalDSV(FRenderGr
 
 FRenderGraphShaderResourceView* FRenderGraphBuilder::CreateSRV(FRenderGraphTexture* Texture, const FRHIShaderResourceViewDesc& Desc, const CHAR_T* InName)
 {
-    if (!ValidateViewCreation(Texture, "SRV", InName))
+    if (!ValidateViewCreation(Texture, TEXT("SRV"), InName))
     {
         return nullptr;
     }
@@ -600,7 +600,7 @@ FRenderGraphShaderResourceView* FRenderGraphBuilder::CreateSRV(FRenderGraphTextu
 
 FRenderGraphUnorderedAccessView* FRenderGraphBuilder::CreateUAV(FRenderGraphTexture* Texture, const FRHIUnorderedAccessViewDesc& Desc, const CHAR_T* InName)
 {
-    if (!ValidateViewCreation(Texture, "UAV", InName))
+    if (!ValidateViewCreation(Texture, TEXT("UAV"), InName))
     {
         return nullptr;
     }
@@ -614,7 +614,7 @@ FRenderGraphUnorderedAccessView* FRenderGraphBuilder::CreateUAV(FRenderGraphText
 
 FRenderGraphRenderTargetView* FRenderGraphBuilder::CreateRTV(FRenderGraphTexture* Texture, const FRHIRenderTargetViewDesc& Desc, const CHAR_T* InName)
 {
-    if (!ValidateViewCreation(Texture, "RTV", InName))
+    if (!ValidateViewCreation(Texture, TEXT("RTV"), InName))
     {
         return nullptr;
     }
@@ -628,7 +628,7 @@ FRenderGraphRenderTargetView* FRenderGraphBuilder::CreateRTV(FRenderGraphTexture
 
 FRenderGraphDepthStencilView* FRenderGraphBuilder::CreateDSV(FRenderGraphTexture* Texture, const FRHIDepthStencilViewDesc& Desc, const CHAR_T* InName)
 {
-    if (!ValidateViewCreation(Texture, "DSV", InName))
+    if (!ValidateViewCreation(Texture, TEXT("DSV"), InName))
     {
         return nullptr;
     }
@@ -702,7 +702,7 @@ FRenderGraphShaderResourceView* FRenderGraphBuilder::GetOrCreateDefaultSRV(FRend
         }
     }
 
-    FRenderGraphShaderResourceView* View = CreateSRV(Texture, "DefaultSRV");
+    FRenderGraphShaderResourceView* View = CreateSRV(Texture, TEXT("DefaultSRV"));
     DefaultShaderResourceViews.Emplace(View);
     return View;
 }
@@ -717,7 +717,7 @@ FRenderGraphUnorderedAccessView* FRenderGraphBuilder::GetOrCreateDefaultUAV(FRen
         }
     }
 
-    FRenderGraphUnorderedAccessView* View = CreateUAV(Texture, "DefaultUAV");
+    FRenderGraphUnorderedAccessView* View = CreateUAV(Texture, TEXT("DefaultUAV"));
     DefaultUnorderedAccessViews.Emplace(View);
     return View;
 }
@@ -732,7 +732,7 @@ FRenderGraphRenderTargetView* FRenderGraphBuilder::GetOrCreateDefaultRTV(FRender
         }
     }
 
-    FRenderGraphRenderTargetView* View = CreateRTV(Texture, "DefaultRTV");
+    FRenderGraphRenderTargetView* View = CreateRTV(Texture, TEXT("DefaultRTV"));
     DefaultRenderTargetViews.Emplace(View);
     return View;
 }
@@ -750,7 +750,7 @@ FRenderGraphDepthStencilView* FRenderGraphBuilder::GetOrCreateDefaultDSV(FRender
     FRHIDepthStencilViewDesc Desc = RenderGraphDefaultViewDescs::DepthStencilForTexture(Texture->GetDesc().TextureDesc);
     Desc.Flags = Flags;
 
-    FRenderGraphDepthStencilView* View = CreateDSV(Texture, Desc, Flags == EDepthStencilViewFlags::None ? "DefaultDSV" : "ReadOnlyDSV");
+    FRenderGraphDepthStencilView* View = CreateDSV(Texture, Desc, Flags == EDepthStencilViewFlags::None ? TEXT("DefaultDSV") : TEXT("ReadOnlyDSV"));
     DefaultDepthStencilViews.Emplace(View);
     return View;
 }
@@ -765,7 +765,7 @@ FRenderGraphShaderResourceView* FRenderGraphBuilder::GetOrCreateDefaultSRV(FRend
         }
     }
 
-    FRenderGraphShaderResourceView* View = CreateSRV(Buffer, RenderGraphDefaultViewDescs::ShaderResourceForBuffer(Buffer->GetDesc().BufferDesc), "DefaultBufferSRV");
+    FRenderGraphShaderResourceView* View = CreateSRV(Buffer, RenderGraphDefaultViewDescs::ShaderResourceForBuffer(Buffer->GetDesc().BufferDesc), TEXT("DefaultBufferSRV"));
     DefaultBufferShaderResourceViews.Emplace(View);
     return View;
 }
@@ -780,7 +780,7 @@ FRenderGraphUnorderedAccessView* FRenderGraphBuilder::GetOrCreateDefaultUAV(FRen
         }
     }
 
-    FRenderGraphUnorderedAccessView* View = CreateUAV(Buffer, RenderGraphDefaultViewDescs::UnorderedAccessForBuffer(Buffer->GetDesc().BufferDesc), "DefaultBufferUAV");
+    FRenderGraphUnorderedAccessView* View = CreateUAV(Buffer, RenderGraphDefaultViewDescs::UnorderedAccessForBuffer(Buffer->GetDesc().BufferDesc), TEXT("DefaultBufferUAV"));
     DefaultBufferUnorderedAccessViews.Emplace(View);
     return View;
 }
@@ -789,7 +789,7 @@ FRenderGraphPass* FRenderGraphBuilder::AllocatePass(const CHAR_T* InName, ERende
 {
     if (bIsCompiled)
     {
-        LOG_ERROR("Graph '%s' cannot add pass '%s' after it has been compiled", Name, InName ? InName : "Unnamed");
+        LOG_ERROR("Graph '%s' cannot add pass '%s' after it has been compiled", Name, InName ? InName : TEXT("Unnamed"));
         return nullptr;
     }
 
@@ -1170,7 +1170,7 @@ void FRenderGraphBuilder::Compile()
         return;
     }
 
-    TRACE_SCOPE("RenderGraph Compile");
+    TRACE_SCOPE(TEXT("RenderGraph Compile"));
 
     bIsCompiled = true;
     Statistics.NumPasses = Passes.Size();
@@ -1193,7 +1193,7 @@ FRHIBeginRenderPassDesc FRenderGraphBuilder::BuildBeginRenderPassDesc(const FRen
         FRHIRenderTargetView* RenderTargetView = ResolveRenderTargetAttachmentView(Attachment, ViewCache);
         if (!RenderTargetView)
         {
-            LOG_ERROR("Graph '%s' pass '%s' failed to resolve render-target attachment %u ('%s')", Name, Pass.GetName(), Index, Attachment.Texture ? Attachment.Texture->GetName() : "null");
+            LOG_ERROR("Graph '%s' pass '%s' failed to resolve render-target attachment %u ('%s')", Name, Pass.GetName(), Index, Attachment.Texture ? Attachment.Texture->GetName() : TEXT("null"));
             return FRHIBeginRenderPassDesc();
         }
 
@@ -1209,7 +1209,7 @@ FRHIBeginRenderPassDesc FRenderGraphBuilder::BuildBeginRenderPassDesc(const FRen
     }
     else if (DepthStencil.DepthStencilView || DepthStencil.Texture)
     {
-        LOG_ERROR("Graph '%s' pass '%s' failed to resolve depth-stencil attachment ('%s')", Name, Pass.GetName(), DepthStencil.Texture ? DepthStencil.Texture->GetName() : "null");
+        LOG_ERROR("Graph '%s' pass '%s' failed to resolve depth-stencil attachment ('%s')", Name, Pass.GetName(), DepthStencil.Texture ? DepthStencil.Texture->GetName() : TEXT("null"));
     }
 
     return FRHIBeginRenderPassDesc(RenderTargets, NumRenderTargets, DepthStencilAttachment);
@@ -1322,7 +1322,7 @@ void FRenderGraphBuilder::Execute(FRHICommandList& CommandList)
     RHI_EVENT_SCOPE(CommandList, Name);
 
     {
-        TRACE_SCOPE("RenderGraph Record Passes");
+        TRACE_SCOPE(TEXT("RenderGraph Record Passes"));
 
         for (FRenderGraphPass* Pass : Passes)
         {
@@ -1384,7 +1384,7 @@ void FRenderGraphBuilder::Execute(FRHICommandList& CommandList)
     }
 
     {
-        TRACE_SCOPE("RenderGraph Finalize");
+        TRACE_SCOPE(TEXT("RenderGraph Finalize"));
 
         Statistics.NumViewsCreated   = ViewCache.GetNumViewsCreated();
         Statistics.NumViewsCacheHits = ViewCache.GetNumViewsCacheHits();

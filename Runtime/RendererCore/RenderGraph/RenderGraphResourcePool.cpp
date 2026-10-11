@@ -57,11 +57,11 @@ FRHITexture* FRenderGraphResourcePool::AcquireTexture(const FRenderGraphTextureD
     FRHITextureRef NewTexture = RHI::CreateTexture(Desc.TextureDesc, ERHIResourceState::Common);
     if (!NewTexture)
     {
-        LOG_ERROR("Failed to create render-graph texture '%s'", Name ? Name : "Unnamed");
+        LOG_ERROR("Failed to create render-graph texture '%s'", Name ? Name : TEXT("Unnamed"));
         return nullptr;
     }
 
-    NewTexture->SetDebugName(Name ? Name : "RenderGraphTexture");
+    NewTexture->SetDebugName(Name ? Name : TEXT("RenderGraphTexture"));
 
     FPooledTexture& Pooled = Textures.Emplace();
     Pooled.Texture         = NewTexture;
@@ -95,11 +95,11 @@ FRHIBuffer* FRenderGraphResourcePool::AcquireBuffer(const FRenderGraphBufferDesc
     FRHIBufferRef NewBuffer = RHI::CreateBuffer(Desc.BufferDesc, ERHIResourceState::Common);
     if (!NewBuffer)
     {
-        LOG_ERROR("Failed to create render-graph buffer '%s'", Name ? Name : "Unnamed");
+        LOG_ERROR("Failed to create render-graph buffer '%s'", Name ? Name : TEXT("Unnamed"));
         return nullptr;
     }
 
-    NewBuffer->SetDebugName(Name ? Name : "RenderGraphBuffer");
+    NewBuffer->SetDebugName(Name ? Name : TEXT("RenderGraphBuffer"));
 
     FPooledBuffer& Pooled = Buffers.Emplace();
     Pooled.Buffer         = NewBuffer;

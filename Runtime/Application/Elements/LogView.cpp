@@ -353,7 +353,7 @@ void FLogView::RebuildLayout()
         Runs.Emplace(Line.Message, Font.Get(), Color);
         if (LineIndex < LastVisibleIndex)
         {
-            Runs.Emplace("\n", Font.Get(), Color);
+            Runs.Emplace(TEXT("\n"), Font.Get(), Color);
         }
     }
 
@@ -389,13 +389,13 @@ const CHAR_T* FLogView::GetSeverityPrefix(ELogSeverity Severity)
     switch (Severity)
     {
         case ELogSeverity::Warning:
-            return "[Warning] ";
+            return TEXT("[Warning] ");
 
         case ELogSeverity::Error:
-            return "[Error] ";
+            return TEXT("[Error] ");
 
         default:
-            return "[Info] ";
+            return TEXT("[Info] ");
     }
 }
 

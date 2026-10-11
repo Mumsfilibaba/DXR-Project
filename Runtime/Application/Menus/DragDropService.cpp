@@ -235,7 +235,7 @@ void FDragDropService::DrawDragVisual(FDrawCommandList& OutCommandList, int32 La
 
         if (Payload.SelectionCount > 1 && Font)
         {
-            const FString CountText = FString::Printf("+%d", Payload.SelectionCount - 1);
+            const FString CountText = FString::Printf(TEXT("+%d"), Payload.SelectionCount - 1);
             const int32   CountWidth = Font->MeasureWidth(FStringView(CountText.Data(), CountText.Length()));
 
             FRectangle BadgeBounds;

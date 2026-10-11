@@ -3,9 +3,9 @@
 #include "Core/Templates/CString.h"
 
 // The section every saved layout starts with, and the prefixes the node and window sections are named by
-constexpr const CHAR_T* LAYOUT_SECTION       = "Layout";
-constexpr const CHAR_T* LAYOUT_NODE_PREFIX   = "Node";
-constexpr const CHAR_T* LAYOUT_WINDOW_PREFIX = "Window";
+constexpr const CHAR_T* LAYOUT_SECTION       = TEXT("Layout");
+constexpr const CHAR_T* LAYOUT_NODE_PREFIX   = TEXT("Node");
+constexpr const CHAR_T* LAYOUT_WINDOW_PREFIX = TEXT("Window");
 
 static void SplitList(const FString& Value, TArray<FString>& OutTokens)
 {
@@ -51,7 +51,7 @@ static FString JoinList(const TArray<FString>& Tokens)
 
 static FString WritePoint(const FIntVector2& Point)
 {
-    return FString::Printf("%d,%d", Point.X, Point.Y);
+    return FString::Printf(TEXT("%d,%d"), Point.X, Point.Y);
 }
 
 static FIntVector2 ReadPoint(const FString& Value)
@@ -76,29 +76,29 @@ static int32 WriteNode(FIniFile& File, const FDockNode& Node, int32& InOutNextIn
     {
         for (const FDockNode& Child : Node.Children)
         {
-            ChildIndices.Add(FString::Printf("%d", WriteNode(File, Child, InOutNextIndex)));
+            ChildIndices.Add(FString::Printf(TEXT("%d"), WriteNode(File, Child, InOutNextIndex)));
         }
     }
 
-    const FString SectionName = FString::Printf("%s%d", LAYOUT_NODE_PREFIX, NodeIndex);
+    const FString SectionName = FString::Printf(TEXT("%s%d"), LAYOUT_NODE_PREFIX, NodeIndex);
     if (Node.Kind == EDockNodeKind::Split)
     {
         TArray<FString> Fractions;
         for (float Fraction : Node.ChildFractions)
         {
-            Fractions.Add(FString::Printf("%.6f", Fraction));
+            Fractions.Add(FString::Printf(TEXT("%.6f"), Fraction));
         }
 
-        File.SetOrAddString(SectionName.Data(), "Kind", FString("Split"));
-        File.SetOrAddString(SectionName.Data(), "Orientation", FString(Node.Orientation == EDockSplitOrientation::Horizontal ? "Horizontal" : "Vertical"));
-        File.SetOrAddString(SectionName.Data(), "Children", JoinList(ChildIndices));
-        File.SetOrAddString(SectionName.Data(), "Fractions", JoinList(Fractions));
+        File.SetOrAddString(SectionName.Data(), TEXT("Kind"), FString(TEXT("Split")));
+        File.SetOrAddString(SectionName.Data(), TEXT("Orientation"), FString(Node.Orientation == EDockSplitOrientation::Horizontal ? TEXT("Horizontal") : TEXT("Vertical")));
+        File.SetOrAddString(SectionName.Data(), TEXT("Children"), JoinList(ChildIndices));
+        File.SetOrAddString(SectionName.Data(), TEXT("Fractions"), JoinList(Fractions));
     }
     else
     {
-        File.SetOrAddString(SectionName.Data(), "Kind", FString("Tabs"));
-        File.SetOrAddString(SectionName.Data(), "Tabs", JoinList(Node.TabIds));
-        File.SetOrAddInt(SectionName.Data(), "ActiveTab", Node.ActiveTabIndex);
+        File.SetOrAddString(SectionName.Data(), TEXT("Kind"), FString(TEXT("Tabs")));
+        File.SetOrAddString(SectionName.Data(), TEXT("Tabs"), JoinList(Node.TabIds));
+        File.SetOrAddInt(SectionName.Data(), TEXT("ActiveTab"), Node.ActiveTabIndex);
     }
 
     return NodeIndex;
@@ -111,24 +111,24 @@ static bool ReadNode(FIniFile& File, int32 NodeIndex, int32 NumNodes, int32 Dept
         return false;
     }
 
-    const FString SectionName = FString::Printf("%s%d", LAYOUT_NODE_PREFIX, NodeIndex);
+    const FString SectionName = FString::Printf(TEXT("%s%d"), LAYOUT_NODE_PREFIX, NodeIndex);
 
     FString Kind;
-    if (!File.GetString(SectionName.Data(), "Kind", Kind))
+    if (!File.GetString(SectionName.Data(), TEXT("Kind"), Kind))
     {
         return false;
     }
 
-    if (Kind == "Tabs")
+    if (Kind == TEXT("Tabs"))
     {
         OutNode.Kind = EDockNodeKind::Tabs;
 
         FString Tabs;
-        File.GetString(SectionName.Data(), "Tabs", Tabs);
+        File.GetString(SectionName.Data(), TEXT("Tabs"), Tabs);
         SplitList(Tabs, OutNode.TabIds);
 
         int32 ActiveTab = 0;
-        File.GetInt(SectionName.Data(), "ActiveTab", ActiveTab);
+        File.GetInt(SectionName.Data(), TEXT("ActiveTab"), ActiveTab);
 
         OutNode.ActiveTabIndex = ActiveTab;
         return true;
@@ -137,12 +137,12 @@ static bool ReadNode(FIniFile& File, int32 NodeIndex, int32 NumNodes, int32 Dept
     OutNode.Kind = EDockNodeKind::Split;
 
     FString Orientation;
-    File.GetString(SectionName.Data(), "Orientation", Orientation);
+    File.GetString(SectionName.Data(), TEXT("Orientation"), Orientation);
 
-    OutNode.Orientation = Orientation == "Vertical" ? EDockSplitOrientation::Vertical : EDockSplitOrientation::Horizontal;
+    OutNode.Orientation = Orientation == TEXT("Vertical") ? EDockSplitOrientation::Vertical : EDockSplitOrientation::Horizontal;
 
     FString Children;
-    File.GetString(SectionName.Data(), "Children", Children);
+    File.GetString(SectionName.Data(), TEXT("Children"), Children);
 
     TArray<FString> ChildIndices;
     SplitList(Children, ChildIndices);
@@ -159,7 +159,7 @@ static bool ReadNode(FIniFile& File, int32 NodeIndex, int32 NumNodes, int32 Dept
     }
 
     FString Fractions;
-    File.GetString(SectionName.Data(), "Fractions", Fractions);
+    File.GetString(SectionName.Data(), TEXT("Fractions"), Fractions);
 
     TArray<FString> FractionTokens;
     SplitList(Fractions, FractionTokens);
@@ -199,19 +199,19 @@ bool FDockLayoutFile::Save(const FString& Filename, const TArray<FDockWindowLayo
         const FDockWindowLayout& Layout    = Windows[Index];
         const int32              RootIndex = WriteNode(File, Layout.Root, NextIndex);
 
-        const FString SectionName = FString::Printf("%s%d", LAYOUT_WINDOW_PREFIX, Index);
+        const FString SectionName = FString::Printf(TEXT("%s%d"), LAYOUT_WINDOW_PREFIX, Index);
 
-        File.SetOrAddString(SectionName.Data(), "Title", Layout.Title);
-        File.SetOrAddString(SectionName.Data(), "Position", WritePoint(Layout.Position));
-        File.SetOrAddString(SectionName.Data(), "Size", WritePoint(Layout.Size));
-        File.SetOrAddInt(SectionName.Data(), "Maximized", Layout.bIsMaximized ? 1 : 0);
-        File.SetOrAddInt(SectionName.Data(), "Root", RootIndex);
+        File.SetOrAddString(SectionName.Data(), TEXT("Title"), Layout.Title);
+        File.SetOrAddString(SectionName.Data(), TEXT("Position"), WritePoint(Layout.Position));
+        File.SetOrAddString(SectionName.Data(), TEXT("Size"), WritePoint(Layout.Size));
+        File.SetOrAddInt(SectionName.Data(), TEXT("Maximized"), Layout.bIsMaximized ? 1 : 0);
+        File.SetOrAddInt(SectionName.Data(), TEXT("Root"), RootIndex);
     }
 
-    File.SetOrAddInt(LAYOUT_SECTION, "Version", CurrentVersion);
-    File.SetOrAddInt(LAYOUT_SECTION, "NumNodes", NextIndex);
-    File.SetOrAddInt(LAYOUT_SECTION, "NumWindows", Windows.Size());
-    File.SetOrAddInt(LAYOUT_SECTION, "Root", 0);
+    File.SetOrAddInt(LAYOUT_SECTION, TEXT("Version"), CurrentVersion);
+    File.SetOrAddInt(LAYOUT_SECTION, TEXT("NumNodes"), NextIndex);
+    File.SetOrAddInt(LAYOUT_SECTION, TEXT("NumWindows"), Windows.Size());
+    File.SetOrAddInt(LAYOUT_SECTION, TEXT("Root"), 0);
     return File.WriteToFile();
 }
 
@@ -226,7 +226,7 @@ bool FDockLayoutFile::Load(const FString& Filename, TArray<FDockWindowLayout>& O
     }
 
     int32 Version = 0;
-    if (!File.GetInt(LAYOUT_SECTION, "Version", Version))
+    if (!File.GetInt(LAYOUT_SECTION, TEXT("Version"), Version))
     {
         return false;
     }
@@ -237,12 +237,12 @@ bool FDockLayoutFile::Load(const FString& Filename, TArray<FDockWindowLayout>& O
     }
 
     int32 NumNodes = 0;
-    File.GetInt(LAYOUT_SECTION, "NumNodes", NumNodes);
+    File.GetInt(LAYOUT_SECTION, TEXT("NumNodes"), NumNodes);
 
     int32 NumWindows = 1;
     if (Version == CurrentVersion)
     {
-        File.GetInt(LAYOUT_SECTION, "NumWindows", NumWindows);
+        File.GetInt(LAYOUT_SECTION, TEXT("NumWindows"), NumWindows);
     }
 
     for (int32 Index = 0; Index < NumWindows; ++Index)
@@ -252,35 +252,35 @@ bool FDockLayoutFile::Load(const FString& Filename, TArray<FDockWindowLayout>& O
         int32 RootIndex = 0;
         if (Version == CurrentVersion)
         {
-            const FString SectionName = FString::Printf("%s%d", LAYOUT_WINDOW_PREFIX, Index);
+            const FString SectionName = FString::Printf(TEXT("%s%d"), LAYOUT_WINDOW_PREFIX, Index);
 
             FString Value;
-            if (File.GetString(SectionName.Data(), "Title", Value))
+            if (File.GetString(SectionName.Data(), TEXT("Title"), Value))
             {
                 Layout.Title = Value;
             }
 
-            if (File.GetString(SectionName.Data(), "Position", Value))
+            if (File.GetString(SectionName.Data(), TEXT("Position"), Value))
             {
                 Layout.Position = ReadPoint(Value);
             }
 
-            if (File.GetString(SectionName.Data(), "Size", Value))
+            if (File.GetString(SectionName.Data(), TEXT("Size"), Value))
             {
                 Layout.Size = ReadPoint(Value);
             }
 
             int32 MaximizedValue = 0;
-            if (File.GetInt(SectionName.Data(), "Maximized", MaximizedValue))
+            if (File.GetInt(SectionName.Data(), TEXT("Maximized"), MaximizedValue))
             {
                 Layout.bIsMaximized = MaximizedValue != 0;
             }
 
-            File.GetInt(SectionName.Data(), "Root", RootIndex);
+            File.GetInt(SectionName.Data(), TEXT("Root"), RootIndex);
         }
         else
         {
-            File.GetInt(LAYOUT_SECTION, "Root", RootIndex);
+            File.GetInt(LAYOUT_SECTION, TEXT("Root"), RootIndex);
         }
 
         if (!ReadNode(File, RootIndex, NumNodes, 0, Layout.Root))

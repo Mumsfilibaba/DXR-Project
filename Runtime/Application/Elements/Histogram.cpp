@@ -177,7 +177,7 @@ int32 FHistogram::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
         int32 ValueWidth = 0;
         if (HoveredSample != InvalidSampleIndex)
         {
-            Value      = FString::Printf("%.2f", GetSample(HoveredSample));
+            Value      = FString::Printf(TEXT("%.2f"), GetSample(HoveredSample));
             ValueWidth = ValueMetrics.GetWidth(Font.Get(), FStringView(Value.Data(), Value.Length()));
         }
 

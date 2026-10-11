@@ -15,7 +15,7 @@ public:
     struct FDesc
     {
         /** @brief Drawn in place of the text while the field is empty. */
-        FString HintText = "Search";
+        FString HintText = TEXT("Search");
 
         /** @brief The face the text is measured and drawn with. */
         TSharedPtr<IFontFace> Font;

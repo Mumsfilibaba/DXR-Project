@@ -6,23 +6,23 @@
 #if APPLICATION_ENABLE_INPUT_LOGGING
 
 static TAutoConsoleVariable<bool> CVarEnableInputLogging(
-    "Input.EnableLogging",
-    "Registers the handler that logs input events, read once as the application starts",
+    TEXT("Input.EnableLogging"),
+    TEXT("Registers the handler that logs input events, read once as the application starts"),
     false);
 
 static TAutoConsoleVariable<bool> CVarLogKeyEvents(
-    "Input.LogKeyEvents",
-    "Logs every key and every character the platform delivers, with the modifiers each arrived under",
+    TEXT("Input.LogKeyEvents"),
+    TEXT("Logs every key and every character the platform delivers, with the modifiers each arrived under"),
     false);
 
 static TAutoConsoleVariable<bool> CVarLogMouseEvents(
-    "Input.LogMouseEvents",
-    "Logs every mouse event the platform delivers, moves included, which arrive often enough to flood the log",
+    TEXT("Input.LogMouseEvents"),
+    TEXT("Logs every mouse event the platform delivers, moves included, which arrive often enough to flood the log"),
     false);
 
 static TAutoConsoleVariable<bool> CVarLogGamepadEvents(
-    "Input.LogGamepadEvents",
-    "Logs every analog change the platform delivers, which arrive for as long as a stick is off centre",
+    TEXT("Input.LogGamepadEvents"),
+    TEXT("Logs every analog change the platform delivers, which arrive for as long as a stick is off centre"),
     false);
 
 static FString DescribeModifiers(const FModifierKeyState& Modifiers)
@@ -30,22 +30,22 @@ static FString DescribeModifiers(const FModifierKeyState& Modifiers)
     FString Description;
     if (Modifiers.IsCtrlDown())
     {
-        Description += "Ctrl ";
+        Description += TEXT("Ctrl ");
     }
     if (Modifiers.IsAltDown())
     {
-        Description += "Alt ";
+        Description += TEXT("Alt ");
     }
     if (Modifiers.IsShiftDown())
     {
-        Description += "Shift ";
+        Description += TEXT("Shift ");
     }
     if (Modifiers.IsSuperDown())
     {
-        Description += "Super ";
+        Description += TEXT("Super ");
     }
 
-    return Description.IsEmpty() ? FString("none") : Description;
+    return Description.IsEmpty() ? FString(TEXT("none")) : Description;
 }
 
 bool FInputLogger::IsEnabled()
@@ -57,7 +57,7 @@ bool FInputLogger::OnKeyDown(const FKeyEvent& KeyEvent)
 {
     if (CVarLogKeyEvents.GetValue())
     {
-        LOG_INFO("[FInputLogger]: KeyDown '%s'%s, modifiers %s", KeyEvent.GetKey().ToString(), KeyEvent.IsRepeat() ? " (repeat)" : "", *DescribeModifiers(KeyEvent.GetModifierKeys()));
+        LOG_INFO("[FInputLogger]: KeyDown '%s'%s, modifiers %s", KeyEvent.GetKey().ToString(), KeyEvent.IsRepeat() ? TEXT(" (repeat)") : TEXT(""), *DescribeModifiers(KeyEvent.GetModifierKeys()));
     }
 
     return false;

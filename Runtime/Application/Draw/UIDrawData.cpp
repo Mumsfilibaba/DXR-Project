@@ -10,8 +10,8 @@
 #include "Core/Misc/FrameProfiler.h"
 
 static TAutoConsoleVariable<bool> CVarDrawCacheGeometry(
-    "UI.DrawCache.Geometry",
-    "Splices the tessellated geometry a cached block captured instead of tessellating its commands again",
+    TEXT("UI.DrawCache.Geometry"),
+    TEXT("Splices the tessellated geometry a cached block captured instead of tessellating its commands again"),
     true,
     EConsoleVariableFlags::Default);
 
@@ -132,7 +132,7 @@ void FUIDrawData::BuildFromCommandList(const FDrawCommandList& CommandList)
     ReserveForAppend(TextGlyphInstances, Commands.Size() * 4);
 
     {
-        TRACE_SCOPE("UI Sort Commands");
+        TRACE_SCOPE(TEXT("UI Sort Commands"));
 
         SortedCommandIndices.ResizeUninitialized(Commands.Size());
         for (int32 Index = 0; Index < Commands.Size(); ++Index)
@@ -153,7 +153,7 @@ void FUIDrawData::BuildFromCommandList(const FDrawCommandList& CommandList)
     }
 
     {
-        TRACE_SCOPE("UI Tessellate");
+        TRACE_SCOPE(TEXT("UI Tessellate"));
 
         for (int32 SortedIndex = 0; SortedIndex < SortedCommandIndices.Size(); )
         {

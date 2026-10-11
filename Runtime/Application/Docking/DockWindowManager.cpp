@@ -11,8 +11,8 @@
 #include "Core/Misc/ConsoleManager.h"
 
 static TAutoConsoleVariable<bool> CVarDecoratorSnapshot(
-    "Docking.DecoratorSnapshot",
-    "Drags a picture of the torn-off panel taken once at tear-out, instead of a live docking area",
+    TEXT("Docking.DecoratorSnapshot"),
+    TEXT("Drags a picture of the torn-off panel taken once at tear-out, instead of a live docking area"),
     false,
     EConsoleVariableFlags::Default);
 

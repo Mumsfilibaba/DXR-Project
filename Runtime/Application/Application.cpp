@@ -22,8 +22,8 @@
 IMPLEMENT_ENGINE_MODULE(IModule, Application);
 
 static TAutoConsoleVariable<bool> CVarDrawCacheValidation(
-    "UI.DrawCache.Validation",
-    "Records every window a second time with the draw cache off and reports where the two recordings disagree",
+    TEXT("UI.DrawCache.Validation"),
+    TEXT("Records every window a second time with the draw cache off and reports where the two recordings disagree"),
     false,
     EConsoleVariableFlags::Default);
 
@@ -230,7 +230,7 @@ bool FApplication::Initialize()
     TSharedPtr<IPlatformApplication> PlatformApplication = FPlatformApplication::Create();
     if (!PlatformApplication)
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create FPlatformApplication");
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("Failed to create FPlatformApplication"));
         return false;
     }
 
@@ -1007,7 +1007,7 @@ void FApplication::DestroyWindow(const TSharedPtr<FWindow>& DestroyedWindow)
 
 void FApplication::Tick(float Delta)
 {
-    TRACE_SCOPE("Application Tick");
+    TRACE_SCOPE(TEXT("Application Tick"));
 
     FUIFrameClock::BeginFrame();
 
@@ -1015,7 +1015,7 @@ void FApplication::Tick(float Delta)
     ProcessDeferredEvents();
 
     {
-        TRACE_SCOPE("Platform Application Tick");
+        TRACE_SCOPE(TEXT("Platform Application Tick"));
         PlatformApplication->Tick(Delta);
     }
 
@@ -1061,7 +1061,7 @@ void FApplication::LayoutWindow(const TSharedPtr<FWindow>& InWindow)
         return;
     }
 
-    TRACE_SCOPE("UI Layout");
+    TRACE_SCOPE(TEXT("UI Layout"));
 
     FRectangle WindowRectangle;
     WindowRectangle.Position = FIntVector2(0, 0);
@@ -1069,12 +1069,12 @@ void FApplication::LayoutWindow(const TSharedPtr<FWindow>& InWindow)
     WindowRectangle.Height   = InWindow->GetSize().Y;
 
     {
-        TRACE_SCOPE("Layout Measure");
+        TRACE_SCOPE(TEXT("Layout Measure"));
         InWindow->PrepareDesiredSize();
     }
 
     {
-        TRACE_SCOPE("Layout Arrange");
+        TRACE_SCOPE(TEXT("Layout Arrange"));
         InWindow->Arrange(WindowRectangle);
     }
 
@@ -1129,7 +1129,7 @@ void FApplication::RecordWindow(const TSharedPtr<FWindow>& InWindow)
 
         int32 TopLayerId = 0;
         {
-            TRACE_SCOPE("UI Element Paint");
+            TRACE_SCOPE(TEXT("UI Element Paint"));
 
             TopLayerId = InWindow->Draw(WindowGeometry, *CommandList, 0);
 
@@ -1208,13 +1208,13 @@ void FApplication::SetOnWindowLiveResize(const FOnWindowLiveResize& InOnWindowLi
 
 void FApplication::ProcessEvents()
 {
-    TRACE_SCOPE("Process Events");
+    TRACE_SCOPE(TEXT("Process Events"));
     PlatformApplication->ProcessEvents();
 }
 
 void FApplication::ProcessDeferredEvents()
 {
-    TRACE_SCOPE("Process Deferred Events");
+    TRACE_SCOPE(TEXT("Process Deferred Events"));
     PlatformApplication->ProcessDeferredEvents();
 
     if (!bIsApplicationActive || !FocusWindow.IsValid())
@@ -1225,7 +1225,7 @@ void FApplication::ProcessDeferredEvents()
 
 void FApplication::UpdateInputDevices()
 {
-    TRACE_SCOPE("Update Input Devices");
+    TRACE_SCOPE(TEXT("Update Input Devices"));
     PlatformApplication->UpdateInputDevices();
 }
 

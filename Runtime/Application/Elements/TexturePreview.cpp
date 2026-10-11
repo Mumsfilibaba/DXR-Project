@@ -16,7 +16,7 @@ FTexturePreview::FTexturePreview()
     : FVisualElement()
     , Brush()
     , Font(nullptr)
-    , EmptyText("None")
+    , EmptyText(TEXT("None"))
     , PreviewSize(48)
     , ZoomSize(256)
 {

@@ -7,24 +7,25 @@
 #include "Core/Misc/Paths.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Templates/CString.h"
+#include "Core/Containers/StringConversion.h"
 #include "RendererCore/Shaders/ShaderManifest.h"
 
 static TAutoConsoleVariable<FString> CVarManifestFileName(
-    "Renderer.ShaderCache.ManifestFileName",
-    "FileName for the file recording which shader permutations to pre-warm",
-    "Shaders.shadermanifest");
+    TEXT("Renderer.ShaderCache.ManifestFileName"),
+    TEXT("FileName for the file recording which shader permutations to pre-warm"),
+    TEXT("Shaders.shadermanifest"));
     
-static const CHAR_T*    GShaderManifestMagic   = "DXRSHMAN";
+static const ANSICHAR*  GShaderManifestMagic   = "DXRSHMAN";
 static constexpr uint32 GShaderManifestVersion = 1;
 static constexpr uint32 GMaxShaderManifestSize = 16 * 1024 * 1024; // A manifest is a few kilobytes of names and integers, so anything near this is a corrupt header rather than a big project.
 
 struct FShaderManifestHeader
 {
-    CHAR_T Magic[8]; // Always "DXRSHMAN"
-    uint32 Version;
-    uint32 DataCRC;  // CRC of everything after this header
-    uint32 DataSize; // Size of everything after this header
-    uint32 NumEntries;
+    ANSICHAR Magic[8]; // Always "DXRSHMAN"
+    uint32   Version;
+    uint32   DataCRC;  // CRC of everything after this header
+    uint32   DataSize; // Size of everything after this header
+    uint32   NumEntries;
 };
 
 static bool CanRead(const FByteInputStream& Stream, uint64 NumBytes)
@@ -117,11 +118,12 @@ bool FShaderManifest::Load()
             break;
         }
 
-        TArray<CHAR_T> NameBuffer;
+        // Names are stored as UTF-8
+        TArray<ANSICHAR> NameBuffer;
         NameBuffer.Resize(static_cast<int32>(NameLength));
         Stream.Read(NameBuffer.Data(), NameBuffer.Size());
 
-        const FString TypeName(NameBuffer.Data(), NameBuffer.Size());
+        const FString TypeName = StringCast<CHAR_T>(NameBuffer.Data(), NameBuffer.Size()).ToString();
 
         uint64 SpaceSignature  = 0;
         uint32 NumPermutations = 0;
@@ -171,13 +173,14 @@ bool FShaderManifest::Save() const
             continue;
         }
 
-        const CHAR_T* TypeName        = Entry.Type->GetName();
-        const uint32  NameLength      = static_cast<uint32>(CString::Strlen(TypeName));
-        const uint64  SpaceSignature  = Entry.Type->GetPermutationSpaceSignature();
-        const uint32  NumPermutations = static_cast<uint32>(Entry.PermutationIDs.Size());
+        const TStringConversion<ANSICHAR, CHAR_T> TypeName = StringCast<ANSICHAR>(Entry.Type->GetName());
+
+        const uint32 NameLength      = static_cast<uint32>(TypeName.Length());
+        const uint64 SpaceSignature  = Entry.Type->GetPermutationSpaceSignature();
+        const uint32 NumPermutations = static_cast<uint32>(Entry.PermutationIDs.Size());
 
         Payload.Add(NameLength);
-        Payload.Add(TypeName, static_cast<int32>(NameLength));
+        Payload.Add(TypeName.Get(), static_cast<int32>(NameLength));
         Payload.Add(SpaceSignature);
         Payload.Add(NumPermutations);
         Payload.Add(Entry.PermutationIDs.Data(), Entry.PermutationIDs.Size());

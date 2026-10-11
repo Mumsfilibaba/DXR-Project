@@ -43,7 +43,7 @@ struct TNumericRange
     /** @return The value as text with the range's precision. */
     NODISCARD FString Format(T InValue) const
     {
-        return FString::Printf("%.*f", Precision, static_cast<double>(InValue));
+        return FString::Printf(TEXT("%.*f"), Precision, static_cast<double>(InValue));
     }
 
     T     Min       = T(0);

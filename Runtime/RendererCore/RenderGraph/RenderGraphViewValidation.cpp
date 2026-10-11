@@ -10,13 +10,13 @@ static bool ValidateTextureViewDesc(FRenderGraphBuilder& Builder, FRenderGraphTe
 {
     if (!Parent)
     {
-        LOG_ERROR("Graph '%s' view '%s' has a null parent texture", Builder.GetName(), ViewName ? ViewName : "Unnamed");
+        LOG_ERROR("Graph '%s' view '%s' has a null parent texture", Builder.GetName(), ViewName ? ViewName : TEXT("Unnamed"));
         Builder.SetHasErrors(true);
         return false;
     }
 
     const FRHITextureDesc& TextureDesc = Parent->GetDesc().TextureDesc;
-    if (!RHIValidationInternal::ValidateTextureSlicesAndMips("RenderGraphView", TextureDesc, BaseLayer, LayerCount, FirstMip, NumMips, ViewFormat, ViewDimension))
+    if (!RHIValidationInternal::ValidateTextureSlicesAndMips(TEXT("RenderGraphView"), TextureDesc, BaseLayer, LayerCount, FirstMip, NumMips, ViewFormat, ViewDimension))
     {
         Builder.SetHasErrors(true);
         return false;
@@ -30,12 +30,12 @@ static bool ValidateBufferViewDesc(FRenderGraphBuilder& Builder, FRenderGraphBuf
 {
     if (!Parent)
     {
-        LOG_ERROR("Graph '%s' view '%s' has a null parent buffer", Builder.GetName(), ViewName ? ViewName : "Unnamed");
+        LOG_ERROR("Graph '%s' view '%s' has a null parent buffer", Builder.GetName(), ViewName ? ViewName : TEXT("Unnamed"));
         Builder.SetHasErrors(true);
         return false;
     }
 
-    if (!RHIValidationInternal::ValidateBufferView("RenderGraphView", Parent->GetDesc().BufferDesc, ViewType, FirstElement, NumElements, Format))
+    if (!RHIValidationInternal::ValidateBufferView(TEXT("RenderGraphView"), Parent->GetDesc().BufferDesc, ViewType, FirstElement, NumElements, Format))
     {
         Builder.SetHasErrors(true);
         return false;

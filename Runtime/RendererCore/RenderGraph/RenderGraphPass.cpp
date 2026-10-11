@@ -23,7 +23,7 @@ FRenderGraphPassResources::FRenderGraphPassResources(const FRenderGraphPass& InP
 FRenderGraphPassResources::~FRenderGraphPassResources() = default;
 
 FRenderGraphPass::FRenderGraphPass(const CHAR_T* InName, ERenderGraphPassFlags InFlags, bool bInEnabled)
-    : Name(InName ? InName : "RenderGraphPass")
+    : Name(InName ? InName : TEXT("RenderGraphPass"))
     , Flags(InFlags)
     , Executor(nullptr)
     , TextureAccesses()

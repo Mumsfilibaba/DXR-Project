@@ -8,8 +8,8 @@
 #include "Core/Templates/NumericLimits.h"
 
 static TAutoConsoleVariable<float> CVarGizmoSize(
-    "Editor.Gizmo.Size",
-    "Scales the transform gizmo, where one is the size the editor ships with",
+    TEXT("Editor.Gizmo.Size"),
+    TEXT("Scales the transform gizmo, where one is the size the editor ships with"),
     1.2f,
     EConsoleVariableFlags::Default);
 
@@ -700,7 +700,7 @@ void FGizmo::UpdateDrag(const FIntVector2& ClientPosition)
     }
 
     const int32 AxisIndex = GetHandleAxis(ActiveHandle);
-    const CHAR_T* AxisNames[3] = { "X", "Y", "Z" };
+    const CHAR_T* AxisNames[3] = { TEXT("X"), TEXT("Y"), TEXT("Z") };
 
     if (IsTranslateHandle(ActiveHandle))
     {
@@ -716,7 +716,7 @@ void FGizmo::UpdateDrag(const FIntVector2& ClientPosition)
                 const float Distance = FGizmoMath::SnapValue(RawDelta.DotProduct(DragAxis), Snap.TranslationSnap);
 
                 Delta   = DragAxis * Distance;
-                Readout = FString::Printf("%s  %.3f", AxisNames[AxisIndex], Distance);
+                Readout = FString::Printf(TEXT("%s  %.3f"), AxisNames[AxisIndex], Distance);
                 break;
             }
 
@@ -728,14 +728,14 @@ void FGizmo::UpdateDrag(const FIntVector2& ClientPosition)
                 const float AlongV = FGizmoMath::SnapValue(RawDelta.DotProduct(DragBasisV), Snap.TranslationSnap);
 
                 Delta   = (DragBasisU * AlongU) + (DragBasisV * AlongV);
-                Readout = FString::Printf("%s %.3f  %s %.3f", AxisNames[(AxisIndex + 1) % 3], AlongU, AxisNames[(AxisIndex + 2) % 3], AlongV);
+                Readout = FString::Printf(TEXT("%s %.3f  %s %.3f"), AxisNames[(AxisIndex + 1) % 3], AlongU, AxisNames[(AxisIndex + 2) % 3], AlongV);
                 break;
             }
 
             default:
             {
                 Delta   = FGizmoMath::SnapVector(RawDelta, Snap.TranslationSnap);
-                Readout = FString::Printf("%.3f  %.3f  %.3f", Delta.X, Delta.Y, Delta.Z);
+                Readout = FString::Printf(TEXT("%.3f  %.3f  %.3f"), Delta.X, Delta.Y, Delta.Z);
                 break;
             }
         }
@@ -765,8 +765,8 @@ void FGizmo::UpdateDrag(const FIntVector2& ClientPosition)
         const FMatrix4 AboutPivot = FMatrix4::Translation(-DragPlanePoint) * Rotation * FMatrix4::Translation(DragPlanePoint);
 
         Readout = ActiveHandle == EGizmoHandle::RotateScreen
-            ? FString::Printf("%.2f deg", Math::RadiansToDegrees(Applied))
-            : FString::Printf("%s  %.2f deg", AxisNames[AxisIndex], Math::RadiansToDegrees(Applied));
+            ? FString::Printf(TEXT("%.2f deg"), Math::RadiansToDegrees(Applied))
+            : FString::Printf(TEXT("%s  %.2f deg"), AxisNames[AxisIndex], Math::RadiansToDegrees(Applied));
 
         ApplyTransform(TransformAtDragStart * AboutPivot);
         return;
@@ -799,7 +799,7 @@ void FGizmo::UpdateDrag(const FIntVector2& ClientPosition)
     if (bIsUniform)
     {
         ScaleVector = FVector3(Factor, Factor, Factor);
-        Readout     = FString::Printf("%.3f",  Factor);
+        Readout     = FString::Printf(TEXT("%.3f"),  Factor);
     }
     else if (bIsPlane)
     {
@@ -812,12 +812,12 @@ void FGizmo::UpdateDrag(const FIntVector2& ClientPosition)
 
         ScaleVector[IndexU] = AlongU;
         ScaleVector[IndexV] = AlongV;
-        Readout             = FString::Printf("%s %.3f  %s %.3f", AxisNames[IndexU], AlongU, AxisNames[IndexV], AlongV);
+        Readout             = FString::Printf(TEXT("%s %.3f  %s %.3f"), AxisNames[IndexU], AlongU, AxisNames[IndexV], AlongV);
     }
     else
     {
         ScaleVector[AxisIndex] = Factor;
-        Readout                = FString::Printf("%s  %.3f", AxisNames[AxisIndex], Factor);
+        Readout                = FString::Printf(TEXT("%s  %.3f"), AxisNames[AxisIndex], Factor);
     }
 
     ApplyTransform(FMatrix4::Scale(ScaleVector) * TransformAtDragStart);

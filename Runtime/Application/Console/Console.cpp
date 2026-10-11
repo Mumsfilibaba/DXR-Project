@@ -35,7 +35,7 @@ static FConsoleCandidateText GetCandidateText(const TPair<IConsoleObject*, FStri
     FConsoleCandidateText RowText;
     RowText.Name = Candidate.Second;
 
-    const CHAR_T* TypeText = "";
+    const CHAR_T* TypeText = TEXT("");
 
     if (IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable())
     {
@@ -43,37 +43,37 @@ static FConsoleCandidateText GetCandidateText(const TPair<IConsoleObject*, FStri
 
         if (ConsoleVariable->IsVariableBool())
         {
-            TypeText = "Bool";
+            TypeText = TEXT("Bool");
         }
         else if (ConsoleVariable->IsVariableInt())
         {
-            TypeText = "Int";
+            TypeText = TEXT("Int");
         }
         else if (ConsoleVariable->IsVariableFloat())
         {
-            TypeText = "Float";
+            TypeText = TEXT("Float");
         }
         else if (ConsoleVariable->IsVariableString())
         {
-            TypeText = "String";
+            TypeText = TEXT("String");
         }
 
         const EConsoleVariableFlags VariableFlags = ConsoleVariable->GetFlags() & EConsoleVariableFlags::SetByMask;
-        RowText.SetBy = FString::Printf("[%s]", SetByFlagToString(VariableFlags));
+        RowText.SetBy = FString::Printf(TEXT("[%s]"), SetByFlagToString(VariableFlags));
     }
     else if (Candidate.First->AsCommand())
     {
-        TypeText = "Command";
+        TypeText = TEXT("Command");
     }
 
-    RowText.Type = FString::Printf("[%s]", TypeText);
-    RowText.Help = FString::Printf("[Help: %s]", Candidate.First->GetHelpString());
+    RowText.Type = FString::Printf(TEXT("[%s]"), TypeText);
+    RowText.Help = FString::Printf(TEXT("[Help: %s]"), Candidate.First->GetHelpString());
     return RowText;
 }
 
 static int32 GetTypeColumnWidth(const TSharedPtr<IFontFace>& Font)
 {
-    static const CHAR_T* TypeTexts[] = { "[Bool]", "[Int]", "[Float]", "[String]", "[Command]" };
+    static const CHAR_T* TypeTexts[] = { TEXT("[Bool]"), TEXT("[Int]"), TEXT("[Float]"), TEXT("[String]"), TEXT("[Command]") };
 
     int32 Width = 0;
     for (const CHAR_T* TypeText : TypeTexts)
@@ -98,7 +98,7 @@ static int32 GetSetByColumnWidth(const TSharedPtr<IFontFace>& Font)
     int32 Width = 0;
     for (EConsoleVariableFlags SetByFlag : SetByFlags)
     {
-        Width = Math::Max(Width, MeasureTextWidth(Font, FString::Printf("[%s]", SetByFlagToString(SetByFlag))));
+        Width = Math::Max(Width, MeasureTextWidth(Font, FString::Printf(TEXT("[%s]"), SetByFlagToString(SetByFlag))));
     }
 
     return Width;
@@ -161,7 +161,7 @@ void FConsole::Initialize(const FDesc& Desc)
 
     FEditableText::FDesc InputDesc;
     InputDesc.Font     = Font;
-    InputDesc.HintText = "Console Input";
+    InputDesc.HintText = TEXT("Console Input");
     InputDesc.Padding  = FMargin(4, 0);
 
     Input = FEditableText::Create(InputDesc);

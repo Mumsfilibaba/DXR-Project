@@ -54,7 +54,7 @@ public:
 
     NODISCARD static FString ToDefineValue(Type Value)
     {
-        return Value ? FString("(1)") : FString("(0)");
+        return Value ? FString(TEXT("(1)")) : FString(TEXT("(0)"));
     }
 };
 
@@ -81,7 +81,7 @@ public:
 
     NODISCARD static FString ToDefineValue(Type Value)
     {
-        return FString::Printf("%d", static_cast<int32>(Value));
+        return FString::Printf(TEXT("%d"), static_cast<int32>(Value));
     }
 };
 
@@ -108,7 +108,7 @@ public:
 
     NODISCARD static FString ToDefineValue(Type Value)
     {
-        return FString::Printf("%d", static_cast<int32>(Value));
+        return FString::Printf(TEXT("%d"), static_cast<int32>(Value));
     }
 };
 

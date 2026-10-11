@@ -23,18 +23,18 @@ constexpr uint64 ROW_PITCH_ALIGNMENT   = 256ull;
 constexpr uint64 ROW_OFFSET_ALIGNMENT  = 512ull;
 
 static FAutoConsoleCommand CCmdUIScreenshot(
-    "UI.Screenshot",
-    "Writes a PNG of the main window's UI. Takes the path to write, defaulting to Screenshots/Current/UI.png",
+    TEXT("UI.Screenshot"),
+    TEXT("Writes a PNG of the main window's UI. Takes the path to write, defaulting to Screenshots/Current/UI.png"),
     FConsoleCommandDelegate::CreateLambda([](FStringView Arguments)
     {
-        const FString Filename = Arguments.IsEmpty() ? FString("Screenshots/Current/UI.png") : FString(Arguments);
+        const FString Filename = Arguments.IsEmpty() ? FString(TEXT("Screenshots/Current/UI.png")) : FString(Arguments);
         UIScreenshot::CapturePrimaryWindow(Filename);
     }));
 
 static FAutoConsoleCommand CCmdUIScreenshotAtFrame(
-    "UI.ScreenshotAtFrame",
-    "Writes a PNG of the main window's UI once the given number of frames have passed, then exits. "
-    "Takes the frame count followed by the path, for example '30 Screenshots/Current/Shell.png'",
+    TEXT("UI.ScreenshotAtFrame"),
+    TEXT("Writes a PNG of the main window's UI once the given number of frames have passed, then exits. "
+    "Takes the frame count followed by the path, for example '30 Screenshots/Current/Shell.png'"),
     FConsoleCommandDelegate::CreateLambda([](FStringView Arguments)
     {
         const FString Text = FString(Arguments).Trim();
@@ -55,7 +55,7 @@ static FAutoConsoleCommand CCmdUIScreenshotAtFrame(
 
         if (Filename.IsEmpty())
         {
-            Filename = FString("Screenshots/Current/Shell.png");
+            Filename = FString(TEXT("Screenshots/Current/Shell.png"));
         }
 
         UIScreenshot::RequestAtFrame(Frames, Filename, true);
@@ -76,7 +76,7 @@ static bool GHasReadCommandLine = false;
 static void ReadCommandLineRequest()
 {
     FStringView Path;
-    if (!CommandLine::FindOption("UIScreenshot", Path) || Path.IsEmpty())
+    if (!CommandLine::FindOption(TEXT("UIScreenshot"), Path) || Path.IsEmpty())
     {
         return;
     }
@@ -84,7 +84,7 @@ static void ReadCommandLineRequest()
     int32 Frames = DEFAULT_SETTLE_FRAMES;
 
     FStringView FrameText;
-    if (CommandLine::FindOption("UIScreenshotFrame", FrameText) && !FrameText.IsEmpty())
+    if (CommandLine::FindOption(TEXT("UIScreenshotFrame"), FrameText) && !FrameText.IsEmpty())
     {
         Frames = CString::Atoi(*FString(FrameText));
     }
@@ -120,8 +120,8 @@ static bool WriteTextureToPng(const FRHITextureRef& Texture, const FString& File
         return false;
     }
 
-    ReadbackBuffer->SetDebugName("UIScreenshot Readback");
-    Fence->SetDebugName("UIScreenshot Fence");
+    ReadbackBuffer->SetDebugName(TEXT("UIScreenshot Readback"));
+    Fence->SetDebugName(TEXT("UIScreenshot Fence"));
 
     FRHICommandList CommandList;
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Texture.Get(), ERHIResourceState::CopySource));
@@ -268,6 +268,6 @@ void UIScreenshot::Tick()
 
     if (bExitAfter)
     {
-        FConsoleManager::Get().ExecuteCommand(*FOutputDeviceManager::Get(), FString("Engine.Exit"));
+        FConsoleManager::Get().ExecuteCommand(*FOutputDeviceManager::Get(), FString(TEXT("Engine.Exit")));
     }
 }

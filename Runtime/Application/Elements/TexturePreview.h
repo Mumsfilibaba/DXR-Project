@@ -17,7 +17,7 @@ public:
         TSharedPtr<IFontFace> Font = nullptr;
 
         /** @brief Drawn dimmed in place of the image while the brush holds no texture. */
-        FString EmptyText = "None";
+        FString EmptyText = TEXT("None");
 
         /** @brief The edge of the square the image is drawn in, in pixels. */
         int32 PreviewSize = 48;

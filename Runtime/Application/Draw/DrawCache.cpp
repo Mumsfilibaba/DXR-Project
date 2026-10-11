@@ -6,14 +6,14 @@
 #include "Core/Misc/OutputDeviceManager.h"
 
 static TAutoConsoleVariable<int32> CVarDrawCacheBudgetKB(
-    "UI.DrawCache.BudgetKB",
-    "How much memory every draw cache block may hold between them, in kilobytes",
+    TEXT("UI.DrawCache.BudgetKB"),
+    TEXT("How much memory every draw cache block may hold between them, in kilobytes"),
     8192,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleCommand CCmdDumpDrawCacheStats(
-    "UI.DumpDrawCacheStats",
-    "Logs how many subtrees are keeping their recording and how much memory those recordings hold",
+    TEXT("UI.DumpDrawCacheStats"),
+    TEXT("Logs how many subtrees are keeping their recording and how much memory those recordings hold"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         DrawCacheRegistry::DumpStats();

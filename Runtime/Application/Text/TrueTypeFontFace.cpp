@@ -8,7 +8,14 @@
 
 static FORCEINLINE int32 ToCodepoint(CHAR_T Character)
 {
-    return static_cast<int32>(static_cast<uint8>(Character));
+    if constexpr (sizeof(CHAR_T) == sizeof(uint8))
+    {
+        return static_cast<int32>(static_cast<uint8>(Character));
+    }
+    else
+    {
+        return static_cast<int32>(Character);
+    }
 }
 
 TSharedPtr<FTrueTypeFontFace> FTrueTypeFontFace::CreateFromFile(const FString& Filename, int32 PixelHeight)

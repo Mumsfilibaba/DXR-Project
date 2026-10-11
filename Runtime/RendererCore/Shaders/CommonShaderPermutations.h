@@ -2,10 +2,10 @@
 #include "RendererCore/Shaders/ShaderPermutation.h"
 #include "RendererCore/VertexDeclaration.h"
 
-class FParallax    : SHADER_PERMUTATION_BOOL("ENABLE_PARALLAX_MAPPING");
-class FClipping    : SHADER_PERMUTATION_BOOL("ENABLE_PARALLAX_CLIPPING");
-class FAlphaMask   : SHADER_PERMUTATION_BOOL("ENABLE_ALPHA_MASK");
-class FDoubleSided : SHADER_PERMUTATION_BOOL("ENABLE_DOUBLE_SIDED");
+class FParallax    : SHADER_PERMUTATION_BOOL(TEXT("ENABLE_PARALLAX_MAPPING"));
+class FClipping    : SHADER_PERMUTATION_BOOL(TEXT("ENABLE_PARALLAX_CLIPPING"));
+class FAlphaMask   : SHADER_PERMUTATION_BOOL(TEXT("ENABLE_ALPHA_MASK"));
+class FDoubleSided : SHADER_PERMUTATION_BOOL(TEXT("ENABLE_DOUBLE_SIDED"));
 
 using FMaterialPermutation = TShaderPermutation<FParallax, FClipping, FAlphaMask, FDoubleSided>;
 
@@ -22,7 +22,7 @@ NODISCARD PermutationType RemapMaterialPermutation(PermutationType Permutation)
 
 class FRequiredAttributes : public TShaderPermutationInt<EVertexAttributeFlags, NUM_VERTEX_ATTRIBUTE_COMBINATIONS>
 {
-    SHADER_PERMUTATION_DEFINE("VERTEX_ATTRIBUTES");
+    SHADER_PERMUTATION_DEFINE(TEXT("VERTEX_ATTRIBUTES"));
 };
 
 NODISCARD inline EVertexAttributeFlags CreateDepthOnlyAttributes(bool bParallax, bool bAlphaMask)
@@ -51,7 +51,7 @@ NODISCARD PermutationType RemapDepthOnlyAttributes(PermutationType Permutation)
 
 class FBindless : public FShaderPermutationBool
 {
-    SHADER_PERMUTATION_DEFINE("ENABLE_BINDLESS");
+    SHADER_PERMUTATION_DEFINE(TEXT("ENABLE_BINDLESS"));
 
 public:
     static void ModifyCompilationEnvironment(Type Value, FShaderCompilationEnvironment& Environment)
@@ -63,4 +63,4 @@ public:
     }
 };
 
-class FUnjitteredCamera : SHADER_PERMUTATION_BOOL("USE_UNJITTERED_CAMERA");
+class FUnjitteredCamera : SHADER_PERMUTATION_BOOL(TEXT("USE_UNJITTERED_CAMERA"));

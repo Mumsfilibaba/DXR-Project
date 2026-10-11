@@ -28,7 +28,7 @@ TSharedPtr<FWindow> Popups::Open(const TSharedPtr<FWindow>& ParentWindow, const 
     const EPopupCornerRounding Rounding = ResolveCornerRounding();
 
     FWindow::FDesc Desc;
-    Desc.Title           = "Popup";
+    Desc.Title           = TEXT("Popup");
     Desc.ParentWindow    = ParentWindow;
     Desc.Size            = FIntVector2(Bounds.Width, Bounds.Height);
     Desc.Position        = Bounds.Position;

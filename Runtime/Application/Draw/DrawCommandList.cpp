@@ -676,31 +676,31 @@ bool FDrawCommandList::FindFirstDifference(
 
         if (LeftCommand.Type != RightCommand.Type)
         {
-            OutReason = "command type";
+            OutReason = TEXT("command type");
             return true;
         }
 
         if (LeftCommand.Flags != RightCommand.Flags || LeftCommand.LayerId != RightCommand.LayerId)
         {
-            OutReason = "flags or layer";
+            OutReason = TEXT("flags or layer");
             return true;
         }
 
         if (LeftCommand.Bounds != RightCommand.Bounds)
         {
-            OutReason = "bounds";
+            OutReason = TEXT("bounds");
             return true;
         }
 
         if (LeftCommand.PackedColor != RightCommand.PackedColor)
         {
-            OutReason = "colour";
+            OutReason = TEXT("colour");
             return true;
         }
 
         if (LeftCommand.CornerRadius != RightCommand.CornerRadius || LeftCommand.Thickness != RightCommand.Thickness)
         {
-            OutReason = "shape parameters";
+            OutReason = TEXT("shape parameters");
             return true;
         }
 
@@ -708,25 +708,25 @@ bool FDrawCommandList::FindFirstDifference(
         {
             if (LeftCommand.Font != RightCommand.Font)
             {
-                OutReason = "font or payload size";
+                OutReason = TEXT("font or payload size");
                 return true;
             }
         }
         else if (LeftCommand.Fade[0] != RightCommand.Fade[0] || LeftCommand.Fade[1] != RightCommand.Fade[1])
         {
-            OutReason = "shape parameters";
+            OutReason = TEXT("shape parameters");
             return true;
         }
 
         if (LeftCommand.PayloadCount != RightCommand.PayloadCount)
         {
-            OutReason = "font or payload size";
+            OutReason = TEXT("font or payload size");
             return true;
         }
 
         if (LeftCommand.IsClipped() && Left.GetCommandClipRectangle(LeftCommand) != Right.GetCommandClipRectangle(RightCommand))
         {
-            OutReason = "clip rectangle";
+            OutReason = TEXT("clip rectangle");
             return true;
         }
 
@@ -739,7 +739,7 @@ bool FDrawCommandList::FindFirstDifference(
 
                 if (!LeftText.Equals(RightText))
                 {
-                    OutReason = "text";
+                    OutReason = TEXT("text");
                     return true;
                 }
 
@@ -756,7 +756,7 @@ bool FDrawCommandList::FindFirstDifference(
                     || (LeftPoints.Size() > 0 && Memory::Memcmp(LeftPoints.Data(), RightPoints.Data(),
                         LeftPoints.Size() * static_cast<int32>(sizeof(FVector2))) != 0))
                 {
-                    OutReason = "points";
+                    OutReason = TEXT("points");
                     return true;
                 }
 
@@ -770,13 +770,13 @@ bool FDrawCommandList::FindFirstDifference(
 
                 if (!LeftBrush != !RightBrush)
                 {
-                    OutReason = "brush presence";
+                    OutReason = TEXT("brush presence");
                     return true;
                 }
 
                 if (LeftBrush && Memory::Memcmp(LeftBrush, RightBrush, sizeof(FUIBrush)) != 0)
                 {
-                    OutReason = "brush";
+                    OutReason = TEXT("brush");
                     return true;
                 }
 
@@ -793,7 +793,7 @@ bool FDrawCommandList::FindFirstDifference(
     if (Left.Commands.Size() != Right.Commands.Size())
     {
         OutIndex  = SharedCount;
-        OutReason = "command count";
+        OutReason = TEXT("command count");
         return true;
     }
 

@@ -15,11 +15,11 @@ struct FVertexElementTemplate
 
 static constexpr FVertexElementTemplate GVertexElementTemplates[] =
 {
-    { EVertexElement::Position,  EVertexAttributeFlags::Position,     EFormat::R32G32B32_Float,    "POSITION", 0, EVertexStreamIndex::Position   },
-    { EVertexElement::Normal,    EVertexAttributeFlags::TangentBasis, EFormat::R16G16B16A16_Snorm, "NORMAL",   0, EVertexStreamIndex::Attributes },
-    { EVertexElement::Tangent,   EVertexAttributeFlags::TangentBasis, EFormat::R16G16B16A16_Snorm, "TANGENT",  0, EVertexStreamIndex::Attributes },
-    { EVertexElement::TexCoord0, EVertexAttributeFlags::TexCoord0,    EFormat::R32G32_Float,       "TEXCOORD", 0, EVertexStreamIndex::Attributes },
-    { EVertexElement::Color,     EVertexAttributeFlags::Color,        EFormat::R8G8B8A8_Unorm,     "COLOR",    0, EVertexStreamIndex::Color      },
+    { EVertexElement::Position,  EVertexAttributeFlags::Position,     EFormat::R32G32B32_Float,    TEXT("POSITION"), 0, EVertexStreamIndex::Position   },
+    { EVertexElement::Normal,    EVertexAttributeFlags::TangentBasis, EFormat::R16G16B16A16_Snorm, TEXT("NORMAL"),   0, EVertexStreamIndex::Attributes },
+    { EVertexElement::Tangent,   EVertexAttributeFlags::TangentBasis, EFormat::R16G16B16A16_Snorm, TEXT("TANGENT"),  0, EVertexStreamIndex::Attributes },
+    { EVertexElement::TexCoord0, EVertexAttributeFlags::TexCoord0,    EFormat::R32G32_Float,       TEXT("TEXCOORD"), 0, EVertexStreamIndex::Attributes },
+    { EVertexElement::Color,     EVertexAttributeFlags::Color,        EFormat::R8G8B8A8_Unorm,     TEXT("COLOR"),    0, EVertexStreamIndex::Color      },
 };
 
 static_assert(ARRAY_COUNT(GVertexElementTemplates) == FVertexDeclaration::MAX_ATTRIBUTES,

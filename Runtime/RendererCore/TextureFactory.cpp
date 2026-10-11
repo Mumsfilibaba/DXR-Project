@@ -14,7 +14,7 @@ class FCubeMapGenCS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FCubeMapGenCS, "Shaders/CubeMapGen.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FCubeMapGenCS, TEXT("Shaders/CubeMapGen.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 class FGenerateMipsTex2DCS
 {
@@ -23,7 +23,7 @@ class FGenerateMipsTex2DCS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FGenerateMipsTex2DCS, "Shaders/GenerateMipsTex2D.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FGenerateMipsTex2DCS, TEXT("Shaders/GenerateMipsTex2D.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 class FGenerateMipsTexCubeCS
 {
@@ -32,7 +32,7 @@ class FGenerateMipsTexCubeCS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FGenerateMipsTexCubeCS, "Shaders/GenerateMipsTexCube.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FGenerateMipsTexCubeCS, TEXT("Shaders/GenerateMipsTexCube.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 class FIrradianceGenCS
 {
@@ -41,7 +41,7 @@ class FIrradianceGenCS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FIrradianceGenCS, "Shaders/IrradianceGen.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FIrradianceGenCS, TEXT("Shaders/IrradianceGen.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 class FSpecularIrradianceGenCS
 {
@@ -50,7 +50,7 @@ class FSpecularIrradianceGenCS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FSpecularIrradianceGenCS, "Shaders/SpecularIrradianceGen.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FSpecularIrradianceGenCS, TEXT("Shaders/SpecularIrradianceGen.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 class FPackMaterialParamsCS
 {
@@ -59,7 +59,7 @@ class FPackMaterialParamsCS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FPackMaterialParamsCS, "Shaders/PackMaterialParams.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FPackMaterialParamsCS, TEXT("Shaders/PackMaterialParams.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 class FBakeAlphaCS
 {
@@ -68,7 +68,7 @@ class FBakeAlphaCS
     using FPermutation = TShaderPermutation<>;
 };
 
-IMPLEMENT_SHADER_TYPE(FBakeAlphaCS, "Shaders/BakeAlpha.hlsl", "Main", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FBakeAlphaCS, TEXT("Shaders/BakeAlpha.hlsl"), TEXT("Main"), EShaderModel::SM_6_2);
 
 template<typename ShaderType>
 static bool AcquireComputePipeline(FRHIComputeShaderRef& OutShader, FRHIComputePipelineStateRef& OutPSO,
@@ -308,7 +308,7 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
         }
         else
         {
-            StagingTexture->SetDebugName("TextureCube From Panorama StagingTexture");
+            StagingTexture->SetDebugName(TEXT("TextureCube From Panorama StagingTexture"));
         }
     }
     else
@@ -422,7 +422,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
         }
         else
         {
-            StagingTexture->SetDebugName("GenerateMiplevels StagingTexture");
+            StagingTexture->SetDebugName(TEXT("GenerateMiplevels StagingTexture"));
         }
     }
     else

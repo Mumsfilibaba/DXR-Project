@@ -62,7 +62,7 @@ void RenderGraphDebug::CaptureSnapshot(const FRenderGraphBuilder& Builder, FRend
 {
     Out = FRenderGraphDebugSnapshot();
 
-    Out.GraphName  = Builder.GetName() ? Builder.GetName() : "";
+    Out.GraphName  = Builder.GetName() ? Builder.GetName() : TEXT("");
     Out.Statistics = Builder.GetStatistics();
 
     TMap<const FRenderGraphTexture*, int32> TextureIndices;
@@ -79,7 +79,7 @@ void RenderGraphDebug::CaptureSnapshot(const FRenderGraphBuilder& Builder, FRend
         }
 
         FRenderGraphDebugResource& Resource = Out.Resources.Emplace();
-        Resource.Name        = Texture->GetName() ? Texture->GetName() : "UnnamedTexture";
+        Resource.Name        = Texture->GetName() ? Texture->GetName() : TEXT("UnnamedTexture");
         Resource.Kind        = ERenderGraphDebugResourceKind::Texture;
         Resource.bIsExternal = Texture->IsExternal();
         Resource.Width       = static_cast<uint32>(Texture->GetDesc().TextureDesc.Extent.X);
@@ -97,7 +97,7 @@ void RenderGraphDebug::CaptureSnapshot(const FRenderGraphBuilder& Builder, FRend
         }
 
         FRenderGraphDebugResource& Resource = Out.Resources.Emplace();
-        Resource.Name        = Buffer->GetName() ? Buffer->GetName() : "UnnamedBuffer";
+        Resource.Name        = Buffer->GetName() ? Buffer->GetName() : TEXT("UnnamedBuffer");
         Resource.Kind        = ERenderGraphDebugResourceKind::Buffer;
         Resource.bIsExternal = Buffer->IsExternal();
         Resource.Width       = 0;
@@ -122,7 +122,7 @@ void RenderGraphDebug::CaptureSnapshot(const FRenderGraphBuilder& Builder, FRend
         }
 
         FRenderGraphDebugPass& DebugPass = Out.Passes.Emplace();
-        DebugPass.Name     = Pass->GetName() ? Pass->GetName() : "UnnamedPass";
+        DebugPass.Name     = Pass->GetName() ? Pass->GetName() : TEXT("UnnamedPass");
         DebugPass.Flags    = Pass->GetFlags();
         DebugPass.bEnabled = Pass->IsEnabled();
         DebugPass.bCulled  = Pass->IsCulled();

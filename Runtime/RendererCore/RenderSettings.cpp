@@ -5,9 +5,9 @@
 
 RENDERERCORE_API bool GRayTracingEnabled = false;
 static FAutoConsoleVariableRef CVarRayTracingEnabled(
-    "Renderer.Feature.RayTracing",
-    "Enables ray tracing. Only takes effect when the hardware reports ray tracing support. Turning it off releases every ray tracing "
-    "resource (acceleration structures, shaders, pipelines, textures and buffers), turning it on creates them again.",
+    TEXT("Renderer.Feature.RayTracing"),
+    TEXT("Enables ray tracing. Only takes effect when the hardware reports ray tracing support. Turning it off releases every ray tracing "
+    "resource (acceleration structures, shaders, pipelines, textures and buffers), turning it on creates them again."),
     GRayTracingEnabled,
     EConsoleVariableFlags::Default);
 
