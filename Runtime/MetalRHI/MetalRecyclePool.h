@@ -13,7 +13,7 @@ public:
 
     ~TMetalRecyclePool()
     {
-        CHECK(AllObjects.IsEmpty() && "DestroyAll must be called before the owning object is destroyed");
+        CHECK(AllObjects.IsEmpty() && TEXT("DestroyAll must be called before the owning object is destroyed"));
     }
 
     template<typename CreateFunctorType>
@@ -75,7 +75,7 @@ public:
     {
         TScopedLock Lock(PoolCS);
 
-        CHECK(FreeObjects.Size() == AllObjects.Size() && "Every pooled object must be released before the pool is destroyed");
+        CHECK(FreeObjects.Size() == AllObjects.Size() && TEXT("Every pooled object must be released before the pool is destroyed"));
 
         for (ObjectType* Object : AllObjects)
         {

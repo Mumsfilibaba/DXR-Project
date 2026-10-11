@@ -64,7 +64,7 @@ bool FVulkanRayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineS
         VkPipelineShaderStageCreateInfo StageInfo = {};
         StageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         StageInfo.stage = RayTracingShaderStageToVk(RHIShader->GetShaderStage());
-        StageInfo.pName = *VulkanShader->GetEntryPointName();
+        StageInfo.pName = VulkanShader->GetAnsiEntryPointName();
 
         ShaderStages.Add(StageInfo);
         return StageIndex;

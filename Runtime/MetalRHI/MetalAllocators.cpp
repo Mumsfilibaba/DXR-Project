@@ -13,8 +13,8 @@
 
 #if METAL_ENABLE_MEMORY_LOGGING
 static TAutoConsoleVariable<bool> CVarMetalLogMemoryAllocations(
-    "MetalRHI.LogMemoryAllocations",
-    "Log every buffer and texture allocation with where it was placed, and every new heap and upload page",
+    TEXT("MetalRHI.LogMemoryAllocations"),
+    TEXT("Log every buffer and texture allocation with where it was placed, and every new heap and upload page"),
     false);
 #endif
 
@@ -296,7 +296,7 @@ uint32 FMetalHeapPool::CreateHeapBlock(uint64 MinimumSize)
 #endif
 
     FMetalHeap* Heap = new FMetalHeap(GetDevice(), MetalHeap, HeapDescriptor.size);
-    Heap->SetDebugName("MetalDeviceHeap");
+    Heap->SetDebugName(TEXT("MetalDeviceHeap"));
     GetDevice()->GetResidencyManager().BeginTracking(Heap->GetResidencyEntry());
 
     int32 BlockIndex = 0;
@@ -788,7 +788,7 @@ FMetalLinearAllocator::FPage* FMetalLinearAllocator::CreatePage(uint64 SizeInByt
 #if METAL_ENABLE_MEMORY_LOGGING
     if (CVarMetalLogMemoryAllocations.GetValue())
     {
-        METAL_INFO("[LinearAllocator] New %s Size=%llu", bDedicated ? "dedicated allocation" : "page", PageSize);
+        METAL_INFO("[LinearAllocator] New %s Size=%llu", bDedicated ? TEXT("dedicated allocation") : TEXT("page"), PageSize);
     }
 #endif
 
@@ -1368,7 +1368,7 @@ uint32 FMetalTextureAllocator::RecordDefragMoves(FMetalCommandContext& Context, 
 
         for (MTLRenderPassDescriptor* InitPass : InitPasses)
         {
-            Encoders.EncodeLoadStorePass(InitPass, "DefragInitialize");
+            Encoders.EncodeLoadStorePass(InitPass, TEXT("DefragInitialize"));
         }
 
         Encoders.FlushPendingClears(OldTexture);

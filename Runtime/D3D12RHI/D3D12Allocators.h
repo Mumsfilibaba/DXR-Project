@@ -29,15 +29,15 @@ enum class EAllocationStrategy : uint8
     SuballocatedResource,
 };
 
-NODISCARD inline const char* ToString(EAllocationStrategy Strategy)
+NODISCARD inline const CHAR_T* ToString(EAllocationStrategy Strategy)
 {
     switch (Strategy)
     {
-        case EAllocationStrategy::SuballocatedHeap:     return "SuballocatedHeap";
-        case EAllocationStrategy::SuballocatedResource: return "SuballocatedResource";
+        case EAllocationStrategy::SuballocatedHeap:     return TEXT("SuballocatedHeap");
+        case EAllocationStrategy::SuballocatedResource: return TEXT("SuballocatedResource");
     }
     
-    return "Unknown";
+    return TEXT("Unknown");
 }
 
 class FD3D12BuddyAllocator : public FD3D12DeviceChild

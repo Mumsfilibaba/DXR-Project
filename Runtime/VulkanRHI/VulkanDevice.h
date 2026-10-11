@@ -52,8 +52,8 @@ struct FVulkanDeviceCreateInfo
     FVulkanCoreFeatures RequiredFeatures;
     FVulkanCoreFeatures OptionalFeatures;
 
-    TArray<const CHAR_T*> RequiredLayerNames;
-    TArray<const CHAR_T*> OptionalLayerNames;
+    TArray<const ANSICHAR*> RequiredLayerNames;
+    TArray<const ANSICHAR*> OptionalLayerNames;
     TArray<TUniquePtr<FVulkanDeviceExtension>> Extensions;
 };
 
@@ -371,8 +371,8 @@ public:
     }
 #endif
 
-    bool IsLayerEnabled(const FString& LayerName)         const { return (LayerNames.Find(LayerName) != nullptr); }
-    bool IsExtensionEnabled(const FString& ExtensionName) const { return (ExtensionNames.Find(ExtensionName) != nullptr); }
+    bool IsLayerEnabled(const FAnsiString& LayerName)         const { return (LayerNames.Find(LayerName) != nullptr); }
+    bool IsExtensionEnabled(const FAnsiString& ExtensionName) const { return (ExtensionNames.Find(ExtensionName) != nullptr); }
 
 #if VULKAN_ENABLE_CRASH_MARKERS
     bool IsAMDBufferMarkerEnabled()         const { return bSupportsAMDBufferMarker; }
@@ -430,8 +430,8 @@ private:
     FVulkanQueryPoolManager*             PipelineStatsQueryPoolManager;
     FVulkanDefaultResources              DefaultResources;
     FVulkanBufferClearPipelines          BufferClearPipelines;
-    TSet<FString>                        ExtensionNames;
-    TSet<FString>                        LayerNames;
+    TSet<FAnsiString>                    ExtensionNames;
+    TSet<FAnsiString>                    LayerNames;
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
     FVulkanQueue*                        GraphicsQueue;
     FVulkanQueue*                        PresentQueue;

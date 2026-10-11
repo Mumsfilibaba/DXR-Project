@@ -14,7 +14,7 @@ FMetalParallelRenderPass::FMetalParallelRenderPass(FMetalCommandContext& InParen
     MTLRenderPassDescriptor* Descriptor = [MTLRenderPassDescriptor renderPassDescriptor];
     Parent.FillRenderPassDescriptor(Descriptor, Desc);
 
-    Encoder        = [Parent.GetEncoders().BeginParallelRenderEncoder(Descriptor, "ParallelRender") retain];
+    Encoder        = [Parent.GetEncoders().BeginParallelRenderEncoder(Descriptor, TEXT("ParallelRender")) retain];
     RenderPassInfo = FMetalCommandContext::GetRenderPassInfo(Descriptor, Desc.NumRenderTargets);
 }
 

@@ -22,21 +22,21 @@
 IMPLEMENT_ENGINE_MODULE(FVulkanModuleRHI, VulkanRHI);
 
 static TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame(
-    "VulkanRHI.MaxDefragMovesPerFrame",
-    "Maximum number of texture defragmentation moves per frame (0 to disable)",
+    TEXT("VulkanRHI.MaxDefragMovesPerFrame"),
+    TEXT("Maximum number of texture defragmentation moves per frame (0 to disable)"),
     4);
 
 #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
 static TAutoConsoleVariable<bool> CVarVulkanUseDynamicRendering(
-    "VulkanRHI.UseDynamicRendering",
-    "Use VK_KHR_dynamic_rendering instead of VkRenderPass and VkFramebuffer",
+    TEXT("VulkanRHI.UseDynamicRendering"),
+    TEXT("Use VK_KHR_dynamic_rendering instead of VkRenderPass and VkFramebuffer"),
     true,
     EConsoleVariableFlags::Default);
 #endif
 
 static TAutoConsoleVariable<bool> CVarVulkanEnableRobustBufferAccess(
-    "VulkanRHI.EnableRobustBufferAccess",
-    "Enable Vulkan robustBufferAccess feature. Costs more user-data DWORDs per dynamic uniform buffer.",
+    TEXT("VulkanRHI.EnableRobustBufferAccess"),
+    TEXT("Enable Vulkan robustBufferAccess feature. Costs more user-data DWORDs per dynamic uniform buffer."),
     #if RELEASE_BUILD
     false);
 #else
@@ -45,8 +45,8 @@ static TAutoConsoleVariable<bool> CVarVulkanEnableRobustBufferAccess(
 
 #if VULKAN_ENABLE_CRASH_MARKERS
 static TAutoConsoleVariable<bool> CVarVulkanEnableCrashMarkers(
-    "VulkanRHI.EnableCrashMarkers",
-    "Enable GPU crash markers for post-mortem debugging. Requires VK_AMD_buffer_marker or VK_NV_device_diagnostic_checkpoints.",
+    TEXT("VulkanRHI.EnableCrashMarkers"),
+    TEXT("Enable GPU crash markers for post-mortem debugging. Requires VK_AMD_buffer_marker or VK_NV_device_diagnostic_checkpoints."),
     true);
 #endif
 
@@ -242,7 +242,7 @@ bool FVulkanDeviceRHI::Initialize()
     FVulkanInstanceExtension::RegisterExtensions(InstanceCreateInfo.Extensions);
     
     bool bEnableDebugLayer = false;
-    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
+    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable(TEXT("RHI.EnableDebugLayer")))
     {
         bEnableDebugLayer = CVarEnableDebugLayer->GetBool();
     }
@@ -599,7 +599,7 @@ FRHISwapChain* FVulkanDeviceRHI::CreateSwapChain(const FRHISwapChainDesc& InSwap
     if (!Tasks::IsInRHIThread())
     {
         FRHISwapChain* NewSwapChain = nullptr;
-        Tasks::LaunchOnRHIThread("VulkanCreateSwapChain", [this, &NewSwapChain, &InSwapChainDesc]()
+        Tasks::LaunchOnRHIThread(TEXT("VulkanCreateSwapChain"), [this, &NewSwapChain, &InSwapChainDesc]()
         {
             NewSwapChain = CreateSwapChain(InSwapChainDesc);
         }).Wait();
@@ -1404,7 +1404,7 @@ FString FVulkanDeviceRHI::GetAdapterName() const
     }
 
     VkPhysicalDeviceProperties DeviceProperties = PhysicalDevice->GetProperties();
-    return FString(DeviceProperties.deviceName);
+    return StringCast<CHAR_T>(DeviceProperties.deviceName).ToString();
 }
 
 IRHICommandContext* FVulkanDeviceRHI::ObtainCommandContext()

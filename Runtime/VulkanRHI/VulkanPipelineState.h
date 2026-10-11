@@ -212,10 +212,10 @@ private:
 
 struct FVulkanPipelineDataHeader
 {
-    CHAR_T Magic[5];   // Always "VKPSO"
-    CHAR_T Padding[3]; 
-    uint64 DataCRC;
-    uint64 DataSize;
+    ANSICHAR Magic[5];   // Always "VKPSO"
+    uint8    Padding[3];
+    uint64   DataCRC;
+    uint64   DataSize;
 };
 
 struct FVulkanPipelineCacheHeader

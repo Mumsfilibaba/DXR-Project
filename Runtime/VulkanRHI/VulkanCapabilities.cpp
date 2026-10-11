@@ -6,16 +6,16 @@
 #include "VulkanRHI/VulkanSwapChain.h"
 
 static FAutoConsoleCommand CCmdVulkanDumpRayTracingCapsCommand(
-    "VulkanRHI.DumpRayTracingCaps",
-    "Logs the backend-native Vulkan ray-tracing capability table (GVulkanSupports* RT globals)",
+    TEXT("VulkanRHI.DumpRayTracingCaps"),
+    TEXT("Logs the backend-native Vulkan ray-tracing capability table (GVulkanSupports* RT globals)"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         DumpVulkanRayTracingCapabilities();
     }));
 
 static FAutoConsoleCommand CCmdVulkanDumpCapsCommand(
-    "VulkanRHI.DumpCaps",
-    "Logs the backend-native Vulkan capability table (GVulkan* globals) followed by the ray-tracing table",
+    TEXT("VulkanRHI.DumpCaps"),
+    TEXT("Logs the backend-native Vulkan capability table (GVulkan* globals) followed by the ray-tracing table"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         DumpVulkanCapabilities();
@@ -216,7 +216,7 @@ VULKANRHI_API void DumpVulkanRayTracingCapabilities()
 {
     const auto YesNo = [](bool bValue) -> const CHAR_T*
     {
-        return bValue ? "Yes" : "No";
+        return bValue ? TEXT("Yes") : TEXT("No");
     };
 
     LOG_INFO("[VulkanRHI] ------------------------ Vulkan Ray Tracing Capabilities (native) ------------------------");
@@ -236,14 +236,14 @@ VULKANRHI_API void DumpVulkanCapabilities()
 {
     const auto YesNo = [](bool bValue) -> const CHAR_T*
     {
-        return bValue ? "Yes" : "No";
+        return bValue ? TEXT("Yes") : TEXT("No");
     };
 
     LOG_INFO("[VulkanRHI] --------------------------- Vulkan Capabilities (native) ---------------------------");
     LOG_INFO("[VulkanRHI]   Force Binding                         : %s", YesNo(GVulkanForceBinding));
     LOG_INFO("[VulkanRHI]   Bindless                              : %s", YesNo(GVulkanSupportsBindless));
     LOG_INFO("[VulkanRHI]   Mutable Descriptor Type               : %s", YesNo(GVulkanSupportsMutableDescriptorType));
-    LOG_INFO("[VulkanRHI]   Bindless Heap Layout                  : %s", GVulkanUseSplitBindlessHeap ? "Split" : "Mutable");
+    LOG_INFO("[VulkanRHI]   Bindless Heap Layout                  : %s", GVulkanUseSplitBindlessHeap ? TEXT("Split") : TEXT("Mutable"));
     LOG_INFO("[VulkanRHI]   Bindless Resource Descriptor Limit    : %u", GVulkanMaxBindlessResourceDescriptors);
     LOG_INFO("[VulkanRHI]   Bindless Sampler Descriptor Limit     : %u", GVulkanMaxBindlessSamplerDescriptors);
     LOG_INFO("[VulkanRHI]   UpdateAfterBind Sampled Images        : %u", GVulkanMaxUpdateAfterBindDescriptorSetSampledImages);
@@ -396,7 +396,7 @@ void FVulkanDevice::DeriveCoreCapabilities(
 
 #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     bool bRequestDynamicRendering = true;
-    if (IConsoleVariable* UseDynamicRenderingVar = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.UseDynamicRendering"))
+    if (IConsoleVariable* UseDynamicRenderingVar = FConsoleManager::Get().FindConsoleVariable(TEXT("VulkanRHI.UseDynamicRendering")))
     {
         bRequestDynamicRendering = UseDynamicRenderingVar->GetBool();
     }
@@ -417,7 +417,7 @@ void FVulkanDevice::DeriveCoreCapabilities(
     {
     #if VULKAN_ENABLE_SPLIT_BINDLESS_HEAP
         bool bForceSplitHeap = false;
-        if (IConsoleVariable* ForceSplitHeapVar = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.ForceSplitBindlessHeap"))
+        if (IConsoleVariable* ForceSplitHeapVar = FConsoleManager::Get().FindConsoleVariable(TEXT("VulkanRHI.ForceSplitBindlessHeap")))
         {
             bForceSplitHeap = ForceSplitHeapVar->GetBool();
         }

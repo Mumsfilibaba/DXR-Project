@@ -90,7 +90,7 @@ bool FD3D11Query::GetData(void* OutData, uint32 DataSize, EQueryResultMode Mode)
 
     if (FAILED(Result))
     {
-        GetDevice()->CheckDeviceRemoved(Result, "Query::GetData");
+        GetDevice()->CheckDeviceRemoved(Result, TEXT("Query::GetData"));
         D3D11_ERROR("[FD3D11Query]: GetData FAILED (0x%08X)", static_cast<uint32>(Result));
         return false;
     }
@@ -133,7 +133,7 @@ bool FD3D11QueryRHI::Initialize()
         return false;
     }
 
-    NewQuery->SetDebugName(FString::Printf("%s Query", ToString(GetType())));
+    NewQuery->SetDebugName(FString::Printf(TEXT("%s Query"), ToString(GetType())));
     Query = NewQuery;
     return true;
 }

@@ -6,8 +6,8 @@
 #include "D3D12RHI/D3D12RHI.h"
 
 static TAutoConsoleVariable<int32> CVarNumOfflineDescriptors(
-    "D3D12RHI.NumOfflineDescriptors",
-    "The number of descriptors in each Offline DescriptorHeap",
+    TEXT("D3D12RHI.NumOfflineDescriptors"),
+    TEXT("The number of descriptors in each Offline DescriptorHeap"),
     D3D12_MAX_OFFLINE_DESCRIPTOR_COUNT,
     EConsoleVariableFlags::Default);
 

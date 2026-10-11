@@ -7,19 +7,19 @@
 #include "VulkanRHI/Platform/VulkanPlatform.h"
 
 static TAutoConsoleVariable<bool> CVarVulkanVerboseLogging(
-    "VulkanRHI.VerboseLogging",
-    "Enables more logging within VulkanRHI",
+    TEXT("VulkanRHI.VerboseLogging"),
+    TEXT("Enables more logging within VulkanRHI"),
     true);
 
 #if VULKAN_ENABLE_GPU_VALIDATION
 static TAutoConsoleVariable<bool> CVarVulkanEnableGPUAssistedValidation(
-    "VulkanRHI.EnableGPUAssistedValidation",
-    "Enable GPU-Assisted Validation to detect shader-level out-of-bounds buffer accesses at runtime. Requires the debug layer.",
+    TEXT("VulkanRHI.EnableGPUAssistedValidation"),
+    TEXT("Enable GPU-Assisted Validation to detect shader-level out-of-bounds buffer accesses at runtime. Requires the debug layer."),
     false);
 
 static TAutoConsoleVariable<bool> CVarVulkanEnableSynchronizationValidation(
-    "VulkanRHI.EnableSynchronizationValidation",
-    "Also enable Khronos synchronization validation. Only takes effect together with VulkanRHI.EnableGPUAssistedValidation.",
+    TEXT("VulkanRHI.EnableSynchronizationValidation"),
+    TEXT("Also enable Khronos synchronization validation. Only takes effect together with VulkanRHI.EnableGPUAssistedValidation."),
     false);
 #endif
 
@@ -45,7 +45,7 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
         return false;
     }
 
-    vkGetInstanceProcAddr = FPlatformLibrary::LoadSymbol<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr", DriverHandle);
+    vkGetInstanceProcAddr = FPlatformLibrary::LoadSymbol<PFN_vkGetInstanceProcAddr>(TEXT("vkGetInstanceProcAddr"), DriverHandle);
     if (!vkGetInstanceProcAddr)
     {
         VULKAN_ERROR_CRITICAL("Failed to load vkGetInstanceProcAddr");
@@ -101,7 +101,7 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
             VULKAN_INFO("Available Instance Extensions:");
             for (const VkExtensionProperties& ExtensionProperty : ExtensionProperties)
             {
-                LOG_INFO("    %s", ExtensionProperty.extensionName);
+                LOG_INFO("    %s", StringCast<CHAR_T>(ExtensionProperty.extensionName).Get());
             }
         }
         else
@@ -114,7 +114,7 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
             VULKAN_INFO("Available Instance Layers:");
             for (const VkLayerProperties& LayerProperty : LayerProperties)
             {
-                LOG_INFO("    %s: %s", LayerProperty.layerName, LayerProperty.description);
+                LOG_INFO("    %s: %s", StringCast<CHAR_T>(LayerProperty.layerName).Get(), StringCast<CHAR_T>(LayerProperty.description).Get());
             }
         }
         else
@@ -124,10 +124,10 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
     }
 
     // Verify Layers
-    TArray<const CHAR_T*> EnabledLayerNames;
+    TArray<const ANSICHAR*> EnabledLayerNames;
     for (const VkLayerProperties& LayerProperty : LayerProperties)
     {
-        const auto MatchLayer = [=](const CHAR_T* Other) -> bool { return CString::Strcmp(LayerProperty.layerName, Other) == 0; };
+        const auto MatchLayer = [=](const ANSICHAR* Other) -> bool { return FPlatformString::Strcmp(LayerProperty.layerName, Other) == 0; };
 
         if (CreateInfo.RequiredLayerNames.ContainsWithPredicate(MatchLayer) || CreateInfo.OptionalLayerNames.ContainsWithPredicate(MatchLayer))
         {
@@ -136,18 +136,18 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
         }
     }
 
-    for (const CHAR_T* LayerName : CreateInfo.RequiredLayerNames)
+    for (const ANSICHAR* LayerName : CreateInfo.RequiredLayerNames)
     {
-        const auto MatchLayer = [=](const CHAR_T* Other) -> bool { return CString::Strcmp(LayerName, Other) == 0; };
+        const auto MatchLayer = [=](const ANSICHAR* Other) -> bool { return FPlatformString::Strcmp(LayerName, Other) == 0; };
 
         if (!EnabledLayerNames.ContainsWithPredicate(MatchLayer))
         {
-            VULKAN_ERROR_CRITICAL("Instance layer '%s' could not be enabled", LayerName);
+            VULKAN_ERROR_CRITICAL("Instance layer '%s' could not be enabled", StringCast<CHAR_T>(LayerName).Get());
             return false;
         }
     }
 
-    for (const CHAR_T* LayerName : EnabledLayerNames)
+    for (const ANSICHAR* LayerName : EnabledLayerNames)
     {
         uint32 LayerExtensionCount = 0;
         Result = vkEnumerateInstanceExtensionProperties(LayerName, &LayerExtensionCount, nullptr);
@@ -165,7 +165,7 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
 
         for (const VkExtensionProperties& LayerExtension : LayerExtensions)
         {
-            const auto MatchExtension = [&](const VkExtensionProperties& Other) -> bool { return CString::Strcmp(LayerExtension.extensionName, Other.extensionName) == 0; };
+            const auto MatchExtension = [&](const VkExtensionProperties& Other) -> bool { return FPlatformString::Strcmp(LayerExtension.extensionName, Other.extensionName) == 0; };
             if (!ExtensionProperties.ContainsWithPredicate(MatchExtension))
             {
                 ExtensionProperties.Add(LayerExtension);
@@ -174,7 +174,7 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
     }
 
     // Resolve instance extensions
-    TArray<const CHAR_T*> EnabledExtensionNames;
+    TArray<const ANSICHAR*> EnabledExtensionNames;
     for (const TUniquePtr<FVulkanInstanceExtension>& Extension : CreateInfo.Extensions)
     {
         Extension->SetEnabled(false);
@@ -186,7 +186,7 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
 
         for (const VkExtensionProperties& Property : ExtensionProperties)
         {
-            if (CString::Strcmp(Extension->GetExtensionName(), Property.extensionName) == 0)
+            if (FPlatformString::Strcmp(Extension->GetExtensionName(), Property.extensionName) == 0)
             {
                 Extension->SetEnabled(true);
                 EnabledExtensionNames.Add(Property.extensionName);
@@ -197,7 +197,7 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
 
         if (!Extension->IsEnabled() && Extension->IsRequired())
         {
-            VULKAN_ERROR_CRITICAL("Required instance extension '%s' is not available", Extension->GetExtensionName());
+            VULKAN_ERROR_CRITICAL("Required instance extension '%s' is not available", StringCast<CHAR_T>(Extension->GetExtensionName()).Get());
             return false;
         }
     }
@@ -208,9 +208,9 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
         {
             VULKAN_INFO("Enabled Instance Layers:");
 
-            for (const CHAR_T* LayerName : EnabledLayerNames)
+            for (const ANSICHAR* LayerName : EnabledLayerNames)
             {
-                LOG_INFO("    %s", LayerName);
+                LOG_INFO("    %s", StringCast<CHAR_T>(LayerName).Get());
             }
         }
 
@@ -218,9 +218,9 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
         {
             VULKAN_INFO("Enabled Instance Extensions:");
 
-            for (const CHAR_T* ExtensionName : EnabledExtensionNames)
+            for (const ANSICHAR* ExtensionName : EnabledExtensionNames)
             {
-                LOG_INFO("    %s", ExtensionName);
+                LOG_INFO("    %s", StringCast<CHAR_T>(ExtensionName).Get());
             }
         }
     }

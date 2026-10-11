@@ -17,29 +17,29 @@
 #endif
 
 static TAutoConsoleVariable<bool> CVarCaptureNextFrame(
-    "MetalRHI.CaptureNextFrame",
-    "Captures the next BeginFrame/EndFrame pair with MTLCaptureManager",
+    TEXT("MetalRHI.CaptureNextFrame"),
+    TEXT("Captures the next BeginFrame/EndFrame pair with MTLCaptureManager"),
     false);
 
 #if METAL_ENABLE_DEBUG_LAYER
 static TAutoConsoleVariable<bool> CVarCaptureValidationOutput(
-    "MetalRHI.CaptureValidationOutput",
-    "Redirects the Metal debug layer's stderr output into the engine log",
+    TEXT("MetalRHI.CaptureValidationOutput"),
+    TEXT("Redirects the Metal debug layer's stderr output into the engine log"),
     true);
 
 static TAutoConsoleVariable<bool> CVarBreakOnValidationError(
-    "MetalRHI.BreakOnValidationError",
-    "Enables breakpoints when the Metal debug layer reports an error",
+    TEXT("MetalRHI.BreakOnValidationError"),
+    TEXT("Enables breakpoints when the Metal debug layer reports an error"),
     false);
 
 static TAutoConsoleVariable<bool> CVarBreakOnValidationWarning(
-    "MetalRHI.BreakOnValidationWarning",
-    "Enables breakpoints when the Metal debug layer reports a warning",
+    TEXT("MetalRHI.BreakOnValidationWarning"),
+    TEXT("Enables breakpoints when the Metal debug layer reports a warning"),
     false);
 
 static TAutoConsoleVariable<bool> CVarEnableShaderValidation(
-    "MetalRHI.EnableShaderValidation",
-    "Arms Metal shader validation (MTL_SHADER_VALIDATION), which reports out-of-bounds and other invalid shader accesses with the shader and source line. Takes effect at launch",
+    TEXT("MetalRHI.EnableShaderValidation"),
+    TEXT("Arms Metal shader validation (MTL_SHADER_VALIDATION), which reports out-of-bounds and other invalid shader accesses with the shader and source line. Takes effect at launch"),
     false);
 #endif
 
@@ -57,7 +57,7 @@ static bool IsEnvFlagEnabled(const CHAR_T* Name)
         return false;
     }
 
-    return CString::Stricmp(*Value, "false") != 0 && CString::Stricmp(*Value, "off") != 0;
+    return CString::Stricmp(*Value, TEXT("false")) != 0 && CString::Stricmp(*Value, TEXT("off")) != 0;
 }
 
 static bool IsMetalValidationLine(const CHAR_T* Text)
@@ -67,7 +67,7 @@ static bool IsMetalValidationLine(const CHAR_T* Text)
         return false;
     }
 
-    return CString::Strstr(Text, "[MetalRHI]") == nullptr;
+    return CString::Strstr(Text, TEXT("[MetalRHI]")) == nullptr;
 }
 
 static const CHAR_T* SkipNSLogPrefix(const CHAR_T* Text)
@@ -77,7 +77,7 @@ static const CHAR_T* SkipNSLogPrefix(const CHAR_T* Text)
         return Text;
     }
 
-    const CHAR_T* Separator = CString::Strstr(Text, "] ");
+    const CHAR_T* Separator = CString::Strstr(Text, TEXT("] "));
     const CHAR_T* Bracket   = CString::Strchr(Text, '[');
 
     if (!Separator || !Bracket || Bracket > Separator)
@@ -113,10 +113,10 @@ static void ReportValidationLine(const CHAR_T* RawText)
     FlushRepeatedLine();
     GLastReportedLine = Text;
 
-    const bool bIsError = CString::Stristr(Text, "failed assertion") != nullptr
-        || CString::Stristr(Text, "error")      != nullptr
-        || CString::Stristr(Text, "page fault") != nullptr
-        || CString::Stristr(Text, "faulted")    != nullptr;
+    const bool bIsError = CString::Stristr(Text, TEXT("failed assertion")) != nullptr
+        || CString::Stristr(Text, TEXT("error"))      != nullptr
+        || CString::Stristr(Text, TEXT("page fault")) != nullptr
+        || CString::Stristr(Text, TEXT("faulted"))    != nullptr;
 
     if (bIsError)
     {
@@ -204,7 +204,7 @@ public:
 
         GRepeatedLineCount = 0;
 
-        Thread = FPlatformThread::Create(this, "MetalValidationLog");
+        Thread = FPlatformThread::Create(this, TEXT("MetalValidationLog"));
 
         if (!Thread || !Thread->Start())
         {
@@ -340,7 +340,7 @@ static FMetalStderrCapture GStderrCapture;
 
 bool MetalIsDebugLayerRequested()
 {
-    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
+    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable(TEXT("RHI.EnableDebugLayer")))
     {
         if (CVarEnableDebugLayer->GetBool())
         {
@@ -348,12 +348,12 @@ bool MetalIsDebugLayerRequested()
         }
     }
 
-    return IsEnvFlagEnabled("MTL_DEBUG_LAYER") || IsEnvFlagEnabled("METAL_DEVICE_WRAPPER_TYPE");
+    return IsEnvFlagEnabled(TEXT("MTL_DEBUG_LAYER")) || IsEnvFlagEnabled(TEXT("METAL_DEVICE_WRAPPER_TYPE"));
 }
 
 void MetalEnableDebugLayer()
 {
-    if (IsEnvFlagEnabled("MTL_SHADER_VALIDATION"))
+    if (IsEnvFlagEnabled(TEXT("MTL_SHADER_VALIDATION")))
     {
         METAL_INFO("Metal shader validation enabled");
     }
@@ -399,12 +399,12 @@ void MetalForceGPUHang(FStringView)
     }
 
     static const CHAR_T* HangSource =
-        "#include <metal_stdlib>\n"
+        TEXT("#include <metal_stdlib>\n"
         "using namespace metal;\n"
         "kernel void ForceGPUHang(device atomic_uint* Flag [[buffer(0)]])\n"
         "{\n"
         "    while (atomic_load_explicit(Flag, memory_order_relaxed) == 0u) {}\n"
-        "}\n";
+        "}\n");
 
     id<MTLDevice> DeviceHandle = Device->GetMTLDevice();
     NSError*      Error        = nil;
@@ -430,7 +430,7 @@ void MetalForceGPUHang(FStringView)
     }
 
     Commands->CommandBuffer.label = @"ForceGPUHang";
-    Commands->Breadcrumbs.Push("ForceGPUHang");
+    Commands->Breadcrumbs.Push(TEXT("ForceGPUHang"));
 
     id<MTLComputeCommandEncoder> Encoder = [Commands->CommandBuffer computeCommandEncoder];
     Encoder.label = @"ForceGPUHang";

@@ -16,26 +16,26 @@
 
 #if D3D12_ENABLE_GPU_VALIDATION
 static TAutoConsoleVariable<bool> CVarEnableGPUValidation(
-    "D3D12RHI.EnableGPUValidation",
-    "Enables GPU Based Validation if true",
+    TEXT("D3D12RHI.EnableGPUValidation"),
+    TEXT("Enables GPU Based Validation if true"),
     false);
 #endif
 
 #if D3D12_ENABLE_CRASH_MARKERS
 static TAutoConsoleVariable<bool> CVarEnableDRED(
-    "D3D12RHI.EnableDRED",
-    "Enables Device Removed Extended Data (DRED) if the Device gets removed",
+    TEXT("D3D12RHI.EnableDRED"),
+    TEXT("Enables Device Removed Extended Data (DRED) if the Device gets removed"),
     false);
 #endif
 
 static TAutoConsoleVariable<FString> CVarDeviceRemovedDumpFilePath(
-    "D3D12RHI.DeviceRemovedDumpFilePath",
-    "File path for DRED device removed dump output",
-    "D3D12DeviceRemovedDump.txt");
+    TEXT("D3D12RHI.DeviceRemovedDumpFilePath"),
+    TEXT("File path for DRED device removed dump output"),
+    TEXT("D3D12DeviceRemovedDump.txt"));
 
 static FAutoConsoleCommand CCmdForceDeviceRemoved(
-    "D3D12RHI.ForceDeviceRemoved",
-    "Forces a device removal via ID3D12Device5::RemoveDevice() to verify the detection -> dump pipeline",
+    TEXT("D3D12RHI.ForceDeviceRemoved"),
+    TEXT("Forces a device removal via ID3D12Device5::RemoveDevice() to verify the detection -> dump pipeline"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
     #if D3D12_USE_ID3D12DEVICE_5
@@ -62,50 +62,50 @@ static const CHAR_T* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
 {
     switch (BreadCrumbOp)
     {
-    case D3D12_AUTO_BREADCRUMB_OP_SETMARKER:                                        return "D3D12_AUTO_BREADCRUMB_OP_SETMARKER";
-    case D3D12_AUTO_BREADCRUMB_OP_BEGINEVENT:                                       return "D3D12_AUTO_BREADCRUMB_OP_BEGINEVENT";
-    case D3D12_AUTO_BREADCRUMB_OP_ENDEVENT:                                         return "D3D12_AUTO_BREADCRUMB_OP_ENDEVENT";
-    case D3D12_AUTO_BREADCRUMB_OP_DRAWINSTANCED:                                    return "D3D12_AUTO_BREADCRUMB_OP_DRAWINSTANCED";
-    case D3D12_AUTO_BREADCRUMB_OP_DRAWINDEXEDINSTANCED:                             return "D3D12_AUTO_BREADCRUMB_OP_DRAWINDEXEDINSTANCED";
-    case D3D12_AUTO_BREADCRUMB_OP_EXECUTEINDIRECT:                                  return "D3D12_AUTO_BREADCRUMB_OP_EXECUTEINDIRECT";
-    case D3D12_AUTO_BREADCRUMB_OP_DISPATCH:                                         return "D3D12_AUTO_BREADCRUMB_OP_DISPATCH";
-    case D3D12_AUTO_BREADCRUMB_OP_COPYBUFFERREGION:                                 return "D3D12_AUTO_BREADCRUMB_OP_COPYBUFFERREGION";
-    case D3D12_AUTO_BREADCRUMB_OP_COPYTEXTUREREGION:                                return "D3D12_AUTO_BREADCRUMB_OP_COPYTEXTUREREGION";
-    case D3D12_AUTO_BREADCRUMB_OP_COPYRESOURCE:                                     return "D3D12_AUTO_BREADCRUMB_OP_COPYRESOURCE";
-    case D3D12_AUTO_BREADCRUMB_OP_COPYTILES:                                        return "D3D12_AUTO_BREADCRUMB_OP_COPYTILES";
-    case D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCE:                               return "D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCE";
-    case D3D12_AUTO_BREADCRUMB_OP_CLEARRENDERTARGETVIEW:                            return "D3D12_AUTO_BREADCRUMB_OP_CLEARRENDERTARGETVIEW";
-    case D3D12_AUTO_BREADCRUMB_OP_CLEARUNORDEREDACCESSVIEW:                         return "D3D12_AUTO_BREADCRUMB_OP_CLEARUNORDEREDACCESSVIEW";
-    case D3D12_AUTO_BREADCRUMB_OP_CLEARDEPTHSTENCILVIEW:                            return "D3D12_AUTO_BREADCRUMB_OP_CLEARDEPTHSTENCILVIEW";
-    case D3D12_AUTO_BREADCRUMB_OP_RESOURCEBARRIER:                                  return "D3D12_AUTO_BREADCRUMB_OP_RESOURCEBARRIER";
-    case D3D12_AUTO_BREADCRUMB_OP_EXECUTEBUNDLE:                                    return "D3D12_AUTO_BREADCRUMB_OP_EXECUTEBUNDLE";
-    case D3D12_AUTO_BREADCRUMB_OP_PRESENT:                                          return "D3D12_AUTO_BREADCRUMB_OP_PRESENT";
-    case D3D12_AUTO_BREADCRUMB_OP_RESOLVEQUERYDATA:                                 return "D3D12_AUTO_BREADCRUMB_OP_RESOLVEQUERYDATA";
-    case D3D12_AUTO_BREADCRUMB_OP_BEGINSUBMISSION:                                  return "D3D12_AUTO_BREADCRUMB_OP_BEGINSUBMISSION";
-    case D3D12_AUTO_BREADCRUMB_OP_ENDSUBMISSION:                                    return "D3D12_AUTO_BREADCRUMB_OP_ENDSUBMISSION";
-    case D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME:                                      return "D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME";
-    case D3D12_AUTO_BREADCRUMB_OP_PROCESSFRAMES:                                    return "D3D12_AUTO_BREADCRUMB_OP_PROCESSFRAMES";
-    case D3D12_AUTO_BREADCRUMB_OP_ATOMICCOPYBUFFERUINT:                             return "D3D12_AUTO_BREADCRUMB_OP_ATOMICCOPYBUFFERUINT";
-    case D3D12_AUTO_BREADCRUMB_OP_ATOMICCOPYBUFFERUINT64:                           return "D3D12_AUTO_BREADCRUMB_OP_ATOMICCOPYBUFFERUINT64";
-    case D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCEREGION:                         return "D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCEREGION";
-    case D3D12_AUTO_BREADCRUMB_OP_WRITEBUFFERIMMEDIATE:                             return "D3D12_AUTO_BREADCRUMB_OP_WRITEBUFFERIMMEDIATE";
-    case D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME1:                                     return "D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME1";
-    case D3D12_AUTO_BREADCRUMB_OP_SETPROTECTEDRESOURCESESSION:                      return "D3D12_AUTO_BREADCRUMB_OP_SETPROTECTEDRESOURCESESSION";
-    case D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME2:                                     return "D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME2";
-    case D3D12_AUTO_BREADCRUMB_OP_PROCESSFRAMES1:                                   return "D3D12_AUTO_BREADCRUMB_OP_PROCESSFRAMES1";
-    case D3D12_AUTO_BREADCRUMB_OP_BUILDRAYTRACINGACCELERATIONSTRUCTURE:             return "D3D12_AUTO_BREADCRUMB_OP_BUILDRAYTRACINGACCELERATIONSTRUCTURE";
-    case D3D12_AUTO_BREADCRUMB_OP_EMITRAYTRACINGACCELERATIONSTRUCTUREPOSTBUILDINFO: return "D3D12_AUTO_BREADCRUMB_OP_EMITRAYTRACINGACCELERATIONSTRUCTUREPOSTBUILDINFO";
-    case D3D12_AUTO_BREADCRUMB_OP_COPYRAYTRACINGACCELERATIONSTRUCTURE:              return "D3D12_AUTO_BREADCRUMB_OP_COPYRAYTRACINGACCELERATIONSTRUCTURE";
-    case D3D12_AUTO_BREADCRUMB_OP_DISPATCHRAYS:                                     return "D3D12_AUTO_BREADCRUMB_OP_DISPATCHRAYS";
-    case D3D12_AUTO_BREADCRUMB_OP_INITIALIZEMETACOMMAND:                            return "D3D12_AUTO_BREADCRUMB_OP_INITIALIZEMETACOMMAND";
-    case D3D12_AUTO_BREADCRUMB_OP_EXECUTEMETACOMMAND:                               return "D3D12_AUTO_BREADCRUMB_OP_EXECUTEMETACOMMAND";
-    case D3D12_AUTO_BREADCRUMB_OP_ESTIMATEMOTION:                                   return "D3D12_AUTO_BREADCRUMB_OP_ESTIMATEMOTION";
-    case D3D12_AUTO_BREADCRUMB_OP_RESOLVEMOTIONVECTORHEAP:                          return "D3D12_AUTO_BREADCRUMB_OP_RESOLVEMOTIONVECTORHEAP";
-    case D3D12_AUTO_BREADCRUMB_OP_SETPIPELINESTATE1:                                return "D3D12_AUTO_BREADCRUMB_OP_SETPIPELINESTATE1";
-    case D3D12_AUTO_BREADCRUMB_OP_INITIALIZEEXTENSIONCOMMAND:                       return "D3D12_AUTO_BREADCRUMB_OP_INITIALIZEEXTENSIONCOMMAND";
-    case D3D12_AUTO_BREADCRUMB_OP_EXECUTEEXTENSIONCOMMAND:                          return "D3D12_AUTO_BREADCRUMB_OP_EXECUTEEXTENSIONCOMMAND";
-    case D3D12_AUTO_BREADCRUMB_OP_DISPATCHMESH:                                     return "D3D12_AUTO_BREADCRUMB_OP_DISPATCHMESH";
-    default:                                                                        return "UNKNOWN";
+    case D3D12_AUTO_BREADCRUMB_OP_SETMARKER:                                        return TEXT("D3D12_AUTO_BREADCRUMB_OP_SETMARKER");
+    case D3D12_AUTO_BREADCRUMB_OP_BEGINEVENT:                                       return TEXT("D3D12_AUTO_BREADCRUMB_OP_BEGINEVENT");
+    case D3D12_AUTO_BREADCRUMB_OP_ENDEVENT:                                         return TEXT("D3D12_AUTO_BREADCRUMB_OP_ENDEVENT");
+    case D3D12_AUTO_BREADCRUMB_OP_DRAWINSTANCED:                                    return TEXT("D3D12_AUTO_BREADCRUMB_OP_DRAWINSTANCED");
+    case D3D12_AUTO_BREADCRUMB_OP_DRAWINDEXEDINSTANCED:                             return TEXT("D3D12_AUTO_BREADCRUMB_OP_DRAWINDEXEDINSTANCED");
+    case D3D12_AUTO_BREADCRUMB_OP_EXECUTEINDIRECT:                                  return TEXT("D3D12_AUTO_BREADCRUMB_OP_EXECUTEINDIRECT");
+    case D3D12_AUTO_BREADCRUMB_OP_DISPATCH:                                         return TEXT("D3D12_AUTO_BREADCRUMB_OP_DISPATCH");
+    case D3D12_AUTO_BREADCRUMB_OP_COPYBUFFERREGION:                                 return TEXT("D3D12_AUTO_BREADCRUMB_OP_COPYBUFFERREGION");
+    case D3D12_AUTO_BREADCRUMB_OP_COPYTEXTUREREGION:                                return TEXT("D3D12_AUTO_BREADCRUMB_OP_COPYTEXTUREREGION");
+    case D3D12_AUTO_BREADCRUMB_OP_COPYRESOURCE:                                     return TEXT("D3D12_AUTO_BREADCRUMB_OP_COPYRESOURCE");
+    case D3D12_AUTO_BREADCRUMB_OP_COPYTILES:                                        return TEXT("D3D12_AUTO_BREADCRUMB_OP_COPYTILES");
+    case D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCE:                               return TEXT("D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCE");
+    case D3D12_AUTO_BREADCRUMB_OP_CLEARRENDERTARGETVIEW:                            return TEXT("D3D12_AUTO_BREADCRUMB_OP_CLEARRENDERTARGETVIEW");
+    case D3D12_AUTO_BREADCRUMB_OP_CLEARUNORDEREDACCESSVIEW:                         return TEXT("D3D12_AUTO_BREADCRUMB_OP_CLEARUNORDEREDACCESSVIEW");
+    case D3D12_AUTO_BREADCRUMB_OP_CLEARDEPTHSTENCILVIEW:                            return TEXT("D3D12_AUTO_BREADCRUMB_OP_CLEARDEPTHSTENCILVIEW");
+    case D3D12_AUTO_BREADCRUMB_OP_RESOURCEBARRIER:                                  return TEXT("D3D12_AUTO_BREADCRUMB_OP_RESOURCEBARRIER");
+    case D3D12_AUTO_BREADCRUMB_OP_EXECUTEBUNDLE:                                    return TEXT("D3D12_AUTO_BREADCRUMB_OP_EXECUTEBUNDLE");
+    case D3D12_AUTO_BREADCRUMB_OP_PRESENT:                                          return TEXT("D3D12_AUTO_BREADCRUMB_OP_PRESENT");
+    case D3D12_AUTO_BREADCRUMB_OP_RESOLVEQUERYDATA:                                 return TEXT("D3D12_AUTO_BREADCRUMB_OP_RESOLVEQUERYDATA");
+    case D3D12_AUTO_BREADCRUMB_OP_BEGINSUBMISSION:                                  return TEXT("D3D12_AUTO_BREADCRUMB_OP_BEGINSUBMISSION");
+    case D3D12_AUTO_BREADCRUMB_OP_ENDSUBMISSION:                                    return TEXT("D3D12_AUTO_BREADCRUMB_OP_ENDSUBMISSION");
+    case D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME:                                      return TEXT("D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME");
+    case D3D12_AUTO_BREADCRUMB_OP_PROCESSFRAMES:                                    return TEXT("D3D12_AUTO_BREADCRUMB_OP_PROCESSFRAMES");
+    case D3D12_AUTO_BREADCRUMB_OP_ATOMICCOPYBUFFERUINT:                             return TEXT("D3D12_AUTO_BREADCRUMB_OP_ATOMICCOPYBUFFERUINT");
+    case D3D12_AUTO_BREADCRUMB_OP_ATOMICCOPYBUFFERUINT64:                           return TEXT("D3D12_AUTO_BREADCRUMB_OP_ATOMICCOPYBUFFERUINT64");
+    case D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCEREGION:                         return TEXT("D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCEREGION");
+    case D3D12_AUTO_BREADCRUMB_OP_WRITEBUFFERIMMEDIATE:                             return TEXT("D3D12_AUTO_BREADCRUMB_OP_WRITEBUFFERIMMEDIATE");
+    case D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME1:                                     return TEXT("D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME1");
+    case D3D12_AUTO_BREADCRUMB_OP_SETPROTECTEDRESOURCESESSION:                      return TEXT("D3D12_AUTO_BREADCRUMB_OP_SETPROTECTEDRESOURCESESSION");
+    case D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME2:                                     return TEXT("D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME2");
+    case D3D12_AUTO_BREADCRUMB_OP_PROCESSFRAMES1:                                   return TEXT("D3D12_AUTO_BREADCRUMB_OP_PROCESSFRAMES1");
+    case D3D12_AUTO_BREADCRUMB_OP_BUILDRAYTRACINGACCELERATIONSTRUCTURE:             return TEXT("D3D12_AUTO_BREADCRUMB_OP_BUILDRAYTRACINGACCELERATIONSTRUCTURE");
+    case D3D12_AUTO_BREADCRUMB_OP_EMITRAYTRACINGACCELERATIONSTRUCTUREPOSTBUILDINFO: return TEXT("D3D12_AUTO_BREADCRUMB_OP_EMITRAYTRACINGACCELERATIONSTRUCTUREPOSTBUILDINFO");
+    case D3D12_AUTO_BREADCRUMB_OP_COPYRAYTRACINGACCELERATIONSTRUCTURE:              return TEXT("D3D12_AUTO_BREADCRUMB_OP_COPYRAYTRACINGACCELERATIONSTRUCTURE");
+    case D3D12_AUTO_BREADCRUMB_OP_DISPATCHRAYS:                                     return TEXT("D3D12_AUTO_BREADCRUMB_OP_DISPATCHRAYS");
+    case D3D12_AUTO_BREADCRUMB_OP_INITIALIZEMETACOMMAND:                            return TEXT("D3D12_AUTO_BREADCRUMB_OP_INITIALIZEMETACOMMAND");
+    case D3D12_AUTO_BREADCRUMB_OP_EXECUTEMETACOMMAND:                               return TEXT("D3D12_AUTO_BREADCRUMB_OP_EXECUTEMETACOMMAND");
+    case D3D12_AUTO_BREADCRUMB_OP_ESTIMATEMOTION:                                   return TEXT("D3D12_AUTO_BREADCRUMB_OP_ESTIMATEMOTION");
+    case D3D12_AUTO_BREADCRUMB_OP_RESOLVEMOTIONVECTORHEAP:                          return TEXT("D3D12_AUTO_BREADCRUMB_OP_RESOLVEMOTIONVECTORHEAP");
+    case D3D12_AUTO_BREADCRUMB_OP_SETPIPELINESTATE1:                                return TEXT("D3D12_AUTO_BREADCRUMB_OP_SETPIPELINESTATE1");
+    case D3D12_AUTO_BREADCRUMB_OP_INITIALIZEEXTENSIONCOMMAND:                       return TEXT("D3D12_AUTO_BREADCRUMB_OP_INITIALIZEEXTENSIONCOMMAND");
+    case D3D12_AUTO_BREADCRUMB_OP_EXECUTEEXTENSIONCOMMAND:                          return TEXT("D3D12_AUTO_BREADCRUMB_OP_EXECUTEEXTENSIONCOMMAND");
+    case D3D12_AUTO_BREADCRUMB_OP_DISPATCHMESH:                                     return TEXT("D3D12_AUTO_BREADCRUMB_OP_DISPATCHMESH");
+    default:                                                                        return TEXT("UNKNOWN");
     }
 }
 
@@ -113,33 +113,33 @@ static const CHAR_T* ToString(D3D12_DRED_ALLOCATION_TYPE AllocationType)
 {
     switch (AllocationType)
     {
-    case D3D12_DRED_ALLOCATION_TYPE_COMMAND_QUEUE:               return "COMMAND_QUEUE";
-    case D3D12_DRED_ALLOCATION_TYPE_COMMAND_ALLOCATOR:           return "COMMAND_ALLOCATOR";
-    case D3D12_DRED_ALLOCATION_TYPE_PIPELINE_STATE:              return "PIPELINE_STATE";
-    case D3D12_DRED_ALLOCATION_TYPE_COMMAND_LIST:                return "COMMAND_LIST";
-    case D3D12_DRED_ALLOCATION_TYPE_FENCE:                       return "FENCE";
-    case D3D12_DRED_ALLOCATION_TYPE_DESCRIPTOR_HEAP:             return "DESCRIPTOR_HEAP";
-    case D3D12_DRED_ALLOCATION_TYPE_HEAP:                        return "HEAP";
-    case D3D12_DRED_ALLOCATION_TYPE_QUERY_HEAP:                  return "QUERY_HEAP";
-    case D3D12_DRED_ALLOCATION_TYPE_COMMAND_SIGNATURE:           return "COMMAND_SIGNATURE";
-    case D3D12_DRED_ALLOCATION_TYPE_PIPELINE_LIBRARY:            return "PIPELINE_LIBRARY";
-    case D3D12_DRED_ALLOCATION_TYPE_VIDEO_DECODER:               return "VIDEO_DECODER";
-    case D3D12_DRED_ALLOCATION_TYPE_VIDEO_PROCESSOR:             return "VIDEO_PROCESSOR";
-    case D3D12_DRED_ALLOCATION_TYPE_RESOURCE:                    return "RESOURCE";
-    case D3D12_DRED_ALLOCATION_TYPE_PASS:                        return "PASS";
-    case D3D12_DRED_ALLOCATION_TYPE_CRYPTOSESSION:               return "CRYPTOSESSION";
-    case D3D12_DRED_ALLOCATION_TYPE_CRYPTOSESSIONPOLICY:         return "CRYPTOSESSIONPOLICY";
-    case D3D12_DRED_ALLOCATION_TYPE_PROTECTEDRESOURCESESSION:    return "PROTECTEDRESOURCESESSION";
-    case D3D12_DRED_ALLOCATION_TYPE_VIDEO_DECODER_HEAP:          return "VIDEO_DECODER_HEAP";
-    case D3D12_DRED_ALLOCATION_TYPE_COMMAND_POOL:                return "COMMAND_POOL";
-    case D3D12_DRED_ALLOCATION_TYPE_COMMAND_RECORDER:            return "COMMAND_RECORDER";
-    case D3D12_DRED_ALLOCATION_TYPE_STATE_OBJECT:                return "STATE_OBJECT";
-    case D3D12_DRED_ALLOCATION_TYPE_METACOMMAND:                 return "METACOMMAND";
-    case D3D12_DRED_ALLOCATION_TYPE_SCHEDULINGGROUP:             return "SCHEDULINGGROUP";
-    case D3D12_DRED_ALLOCATION_TYPE_VIDEO_MOTION_ESTIMATOR:      return "VIDEO_MOTION_ESTIMATOR";
-    case D3D12_DRED_ALLOCATION_TYPE_VIDEO_MOTION_VECTOR_HEAP:    return "VIDEO_MOTION_VECTOR_HEAP";
-    case D3D12_DRED_ALLOCATION_TYPE_VIDEO_EXTENSION_COMMAND:     return "VIDEO_EXTENSION_COMMAND";
-    default:                                                     return "UNKNOWN";
+    case D3D12_DRED_ALLOCATION_TYPE_COMMAND_QUEUE:               return TEXT("COMMAND_QUEUE");
+    case D3D12_DRED_ALLOCATION_TYPE_COMMAND_ALLOCATOR:           return TEXT("COMMAND_ALLOCATOR");
+    case D3D12_DRED_ALLOCATION_TYPE_PIPELINE_STATE:              return TEXT("PIPELINE_STATE");
+    case D3D12_DRED_ALLOCATION_TYPE_COMMAND_LIST:                return TEXT("COMMAND_LIST");
+    case D3D12_DRED_ALLOCATION_TYPE_FENCE:                       return TEXT("FENCE");
+    case D3D12_DRED_ALLOCATION_TYPE_DESCRIPTOR_HEAP:             return TEXT("DESCRIPTOR_HEAP");
+    case D3D12_DRED_ALLOCATION_TYPE_HEAP:                        return TEXT("HEAP");
+    case D3D12_DRED_ALLOCATION_TYPE_QUERY_HEAP:                  return TEXT("QUERY_HEAP");
+    case D3D12_DRED_ALLOCATION_TYPE_COMMAND_SIGNATURE:           return TEXT("COMMAND_SIGNATURE");
+    case D3D12_DRED_ALLOCATION_TYPE_PIPELINE_LIBRARY:            return TEXT("PIPELINE_LIBRARY");
+    case D3D12_DRED_ALLOCATION_TYPE_VIDEO_DECODER:               return TEXT("VIDEO_DECODER");
+    case D3D12_DRED_ALLOCATION_TYPE_VIDEO_PROCESSOR:             return TEXT("VIDEO_PROCESSOR");
+    case D3D12_DRED_ALLOCATION_TYPE_RESOURCE:                    return TEXT("RESOURCE");
+    case D3D12_DRED_ALLOCATION_TYPE_PASS:                        return TEXT("PASS");
+    case D3D12_DRED_ALLOCATION_TYPE_CRYPTOSESSION:               return TEXT("CRYPTOSESSION");
+    case D3D12_DRED_ALLOCATION_TYPE_CRYPTOSESSIONPOLICY:         return TEXT("CRYPTOSESSIONPOLICY");
+    case D3D12_DRED_ALLOCATION_TYPE_PROTECTEDRESOURCESESSION:    return TEXT("PROTECTEDRESOURCESESSION");
+    case D3D12_DRED_ALLOCATION_TYPE_VIDEO_DECODER_HEAP:          return TEXT("VIDEO_DECODER_HEAP");
+    case D3D12_DRED_ALLOCATION_TYPE_COMMAND_POOL:                return TEXT("COMMAND_POOL");
+    case D3D12_DRED_ALLOCATION_TYPE_COMMAND_RECORDER:            return TEXT("COMMAND_RECORDER");
+    case D3D12_DRED_ALLOCATION_TYPE_STATE_OBJECT:                return TEXT("STATE_OBJECT");
+    case D3D12_DRED_ALLOCATION_TYPE_METACOMMAND:                 return TEXT("METACOMMAND");
+    case D3D12_DRED_ALLOCATION_TYPE_SCHEDULINGGROUP:             return TEXT("SCHEDULINGGROUP");
+    case D3D12_DRED_ALLOCATION_TYPE_VIDEO_MOTION_ESTIMATOR:      return TEXT("VIDEO_MOTION_ESTIMATOR");
+    case D3D12_DRED_ALLOCATION_TYPE_VIDEO_MOTION_VECTOR_HEAP:    return TEXT("VIDEO_MOTION_VECTOR_HEAP");
+    case D3D12_DRED_ALLOCATION_TYPE_VIDEO_EXTENSION_COMMAND:     return TEXT("VIDEO_EXTENSION_COMMAND");
+    default:                                                     return TEXT("UNKNOWN");
     }
 }
 
@@ -154,12 +154,12 @@ static const CHAR_T* GetDeviceRemovedDumpFilePath()
 
 static VOID CALLBACK OnDeviceRemovedEvent(PVOID Context, BOOLEAN /*bTimerOrWaitFired*/)
 {
-    D3D12Debug::DeviceRemovedHandler(reinterpret_cast<FD3D12Device*>(Context), "RemovedEvent");
+    D3D12Debug::DeviceRemovedHandler(reinterpret_cast<FD3D12Device*>(Context), TEXT("RemovedEvent"));
 }
 
 // Writes the DRED breadcrumbs and page-fault data for a removed device. Only produces anything
 // when DRED was armed before device creation, so every caller has to treat it as best-effort.
-static void D3D12RHIWriteDeviceRemovedDump(ID3D12Device* D3DDevice, HRESULT Reason, const char* Source)
+static void D3D12RHIWriteDeviceRemovedDump(ID3D12Device* D3DDevice, HRESULT Reason, const CHAR_T* Source)
 {
     TComPtr<ID3D12DeviceRemovedExtendedData1> DREDInterface;
     if (FAILED(D3DDevice->QueryInterface(IID_PPV_ARGS(&DREDInterface))))
@@ -197,7 +197,7 @@ static void D3D12RHIWriteDeviceRemovedDump(ID3D12Device* D3DDevice, HRESULT Reas
         }
     };
 
-    WriteLine(FString::Printf("[D3D12] Device Removed (Source=%s, Reason=0x%08X)", Source ? Source : "Unknown", static_cast<uint32>(Reason)));
+    WriteLine(FString::Printf(TEXT("[D3D12] Device Removed (Source=%s, Reason=0x%08X)"), Source ? Source : TEXT("Unknown"), static_cast<uint32>(Reason)));
 
     TComPtr<ID3D12DeviceRemovedExtendedData2> DREDInterface2;
 
@@ -205,7 +205,7 @@ static void D3D12RHIWriteDeviceRemovedDump(ID3D12Device* D3DDevice, HRESULT Reas
     if (bHasDREDInterface2)
     {
         const D3D12_DRED_DEVICE_STATE State = DREDInterface2->GetDeviceState();
-        WriteLine(FString::Printf("DRED DeviceState: %d", static_cast<int32>(State)));
+        WriteLine(FString::Printf(TEXT("DRED DeviceState: %d"), static_cast<int32>(State)));
     }
 
     const D3D12_AUTO_BREADCRUMB_NODE1* CurrentNode = DREDAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
@@ -213,27 +213,27 @@ static void D3D12RHIWriteDeviceRemovedDump(ID3D12Device* D3DDevice, HRESULT Reas
     {
         const uint32 LastCompleted = CurrentNode->pLastBreadcrumbValue ? *CurrentNode->pLastBreadcrumbValue : CurrentNode->BreadcrumbCount;
 
-        WriteLine("BreadCrumbs:");
+        WriteLine(TEXT("BreadCrumbs:"));
 
         for (uint32 i = 0; i < CurrentNode->BreadcrumbCount; i++)
         {
-            const CHAR_T* Marker = "";
+            const CHAR_T* Marker = TEXT("");
             if (i + 1 == LastCompleted)
             {
-                Marker = "  <-- LAST COMPLETED";
+                Marker = TEXT("  <-- LAST COMPLETED");
             }
             else if (i == LastCompleted)
             {
-                Marker = "  <-- FAULTING (did not complete)";
+                Marker = TEXT("  <-- FAULTING (did not complete)");
             }
 
-            FString Line = FString("    ") + ToString(CurrentNode->pCommandHistory[i]);
+            FString Line = FString(TEXT("    ")) + ToString(CurrentNode->pCommandHistory[i]);
             for (uint32 c = 0; c < CurrentNode->BreadcrumbContextsCount; ++c)
             {
                 if (CurrentNode->pBreadcrumbContexts[c].BreadcrumbIndex == i)
                 {
-                    const FString Context = FString::Printf("%ls", CurrentNode->pBreadcrumbContexts[c].pContextString);
-                    Line = Line + " [" + *Context + "]";
+                    const FString Context = FString::Printf(TEXT("%ls"), CurrentNode->pBreadcrumbContexts[c].pContextString);
+                    Line = Line + TEXT(" [") + *Context + TEXT("]");
                     break;
                 }
             }
@@ -248,49 +248,49 @@ static void D3D12RHIWriteDeviceRemovedDump(ID3D12Device* D3DDevice, HRESULT Reas
     {
         if (!Node)
         {
-            WriteLine(FString("  ") + ListName + ": <none>");
+            WriteLine(FString(TEXT("  ")) + ListName + TEXT(": <none>"));
             return;
         }
 
-        WriteLine(FString("  ") + ListName + ":");
+        WriteLine(FString(TEXT("  ")) + ListName + TEXT(":"));
 
         while (Node)
         {
             FString Name;
             if (Node->ObjectNameA)
             {
-                Name = Node->ObjectNameA;
+                Name = StringCast<CHAR_T>(Node->ObjectNameA).ToString();
             }
             else if (Node->ObjectNameW)
             {
-                Name = FString(FString::Printf("%ls", Node->ObjectNameW));
+                Name = StringCast<CHAR_T>(Node->ObjectNameW).ToString();
             }
             else
             {
-                Name = "<unnamed>";
+                Name = TEXT("<unnamed>");
             }
 
-            WriteLine(FString::Printf("    '%s' (%s)", *Name, ToString(Node->AllocationType)));
+            WriteLine(FString::Printf(TEXT("    '%s' (%s)"), *Name, ToString(Node->AllocationType)));
             Node = Node->pNext;
         }
     };
 
-    WriteLine(FString::Printf("PageFault VA: 0x%llx", static_cast<unsigned long long>(DREDPageFaultOutput.PageFaultVA)));
+    WriteLine(FString::Printf(TEXT("PageFault VA: 0x%llx"), static_cast<unsigned long long>(DREDPageFaultOutput.PageFaultVA)));
 
     if (bHasDREDInterface2)
     {
         D3D12_DRED_PAGE_FAULT_OUTPUT2 PageFault2;
         if (SUCCEEDED(DREDInterface2->GetPageFaultAllocationOutput2(&PageFault2)))
         {
-            WriteLine(FString::Printf("PageFault Flags: 0x%x", static_cast<uint32>(PageFault2.PageFaultFlags)));
+            WriteLine(FString::Printf(TEXT("PageFault Flags: 0x%x"), static_cast<uint32>(PageFault2.PageFaultFlags)));
         }
     }
 
-    WriteAllocationNodes(DREDPageFaultOutput.pHeadExistingAllocationNode,    "ExistingAllocations");
-    WriteAllocationNodes(DREDPageFaultOutput.pHeadRecentFreedAllocationNode, "RecentFreedAllocations");
+    WriteAllocationNodes(DREDPageFaultOutput.pHeadExistingAllocationNode,    TEXT("ExistingAllocations"));
+    WriteAllocationNodes(DREDPageFaultOutput.pHeadRecentFreedAllocationNode, TEXT("RecentFreedAllocations"));
 }
 
-void D3D12Debug::DeviceRemovedHandler(FD3D12Device* Device, const char* Source)
+void D3D12Debug::DeviceRemovedHandler(FD3D12Device* Device, const CHAR_T* Source)
 {
     CHECK(Device != nullptr);
 
@@ -308,7 +308,7 @@ void D3D12Debug::DeviceRemovedHandler(FD3D12Device* Device, const char* Source)
         return;
     }
 
-    D3D12_ERROR("[D3D12] Device Removed (Source=%s, Reason=0x%08X)", Source ? Source : "Unknown", static_cast<uint32>(Reason));
+    D3D12_ERROR("[D3D12] Device Removed (Source=%s, Reason=0x%08X)", Source ? Source : TEXT("Unknown"), static_cast<uint32>(Reason));
 
     // Signal other systems that the device is removed. This runs before the dump
     // below, which is long enough that process teardown can cut it short.
@@ -316,10 +316,10 @@ void D3D12Debug::DeviceRemovedHandler(FD3D12Device* Device, const char* Source)
 
     D3D12RHIWriteDeviceRemovedDump(D3DDevice, Reason, Source);
 
-    FPlatformApplicationMisc::MessageBox("Error", " [D3D12] Device Removed");
+    FPlatformApplicationMisc::MessageBox(TEXT("Error"), TEXT(" [D3D12] Device Removed"));
 }
 
-bool D3D12Debug::CheckDeviceRemoved(FD3D12Device* Device, HRESULT Result, const char* Source)
+bool D3D12Debug::CheckDeviceRemoved(FD3D12Device* Device, HRESULT Result, const CHAR_T* Source)
 {
     if (SUCCEEDED(Result))
     {
@@ -385,13 +385,13 @@ static void __stdcall D3D12DebugMessageCallback(D3D12_MESSAGE_CATEGORY, D3D12_ME
         case D3D12_MESSAGE_SEVERITY_CORRUPTION:
         case D3D12_MESSAGE_SEVERITY_ERROR:
         {
-            D3D12_ERROR("[D3D12 Debug Layer] %s", pDescription);
+            D3D12_ERROR("[D3D12 Debug Layer] %s", StringCast<CHAR_T>(pDescription).Get());
             break;
         }
 
         case D3D12_MESSAGE_SEVERITY_WARNING:
         {
-            D3D12_WARNING("[D3D12 Debug Layer] %s", pDescription);
+            D3D12_WARNING("[D3D12 Debug Layer] %s", StringCast<CHAR_T>(pDescription).Get());
             break;
         }
 
@@ -399,7 +399,7 @@ static void __stdcall D3D12DebugMessageCallback(D3D12_MESSAGE_CATEGORY, D3D12_ME
         case D3D12_MESSAGE_SEVERITY_MESSAGE:
         default:
         {
-            D3D12_INFO("[D3D12 Debug Layer] %s", pDescription);
+            D3D12_INFO("[D3D12 Debug Layer] %s", StringCast<CHAR_T>(pDescription).Get());
             break;
         }
     }
@@ -534,7 +534,7 @@ void D3D12Debug::SetupDebugInterfaces(bool bEnableDebugLayer)
     if (SUCCEEDED(D3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&InfoQueue))))
     {
         bool bBreakOnError = true;
-        if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("D3D12RHI.BreakOnError"))
+        if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable(TEXT("D3D12RHI.BreakOnError")))
         {
             bBreakOnError = CVar->GetBool();
         }
@@ -543,7 +543,7 @@ void D3D12Debug::SetupDebugInterfaces(bool bEnableDebugLayer)
         InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, bBreakOnError);
 
         bool bBreakOnWarning = false;
-        if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("D3D12RHI.BreakOnWarning"))
+        if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable(TEXT("D3D12RHI.BreakOnWarning")))
         {
             bBreakOnWarning = CVar->GetBool();
         }

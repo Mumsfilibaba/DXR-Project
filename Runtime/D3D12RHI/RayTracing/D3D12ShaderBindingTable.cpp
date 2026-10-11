@@ -154,7 +154,7 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
     {
         D3D12_ERROR("[FD3D12ShaderBindingTable]: Failed to resolve shader identifier for record kind '%s' index %u (export name '%s')."
             "The record would be written with a zeroed identifier and its shader would never execute. verify the pipeline registered an export for this shader.",
-            ToString(RecordKind), RecordIndex, ExportName.IsEmpty() ? "<empty>" : *ExportName);
+            ToString(RecordKind), RecordIndex, ExportName.IsEmpty() ? TEXT("<empty>") : *ExportName);
     }
 
     if (!LocalRootSignature || !Bindings || NumBindings == 0)
@@ -193,7 +193,7 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
     {
         if (ParamIndex >= D3D12_MAX_LOCAL_RECORD_ENTRIES && !bReportedBudgetOverflow)
         {
-            D3D12_ERROR("[FD3D12ShaderBindingTable]: Local root signature for '%s' exceeds the %d-entry hit-record budget. local binding at parameter %d dropped.", ExportName.IsEmpty() ? "<empty>" : *ExportName, int32(D3D12_MAX_LOCAL_RECORD_ENTRIES), int32(ParamIndex));
+            D3D12_ERROR("[FD3D12ShaderBindingTable]: Local root signature for '%s' exceeds the %d-entry hit-record budget. local binding at parameter %d dropped.", ExportName.IsEmpty() ? TEXT("<empty>") : *ExportName, int32(D3D12_MAX_LOCAL_RECORD_ENTRIES), int32(ParamIndex));
             bReportedBudgetOverflow = true;
         }
     };
@@ -203,7 +203,7 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
     {
         if (Slot >= int8(FD3D12PendingLocalTable::MaxDescriptors) && !bReportedTableOverflow)
         {
-            D3D12_ERROR("[FD3D12ShaderBindingTable]: Local descriptor table for '%s' exceeds the %u-descriptor capacity. local binding at table slot %d dropped.", ExportName.IsEmpty() ? "<empty>" : *ExportName, FD3D12PendingLocalTable::MaxDescriptors, int32(Slot));
+            D3D12_ERROR("[FD3D12ShaderBindingTable]: Local descriptor table for '%s' exceeds the %u-descriptor capacity. local binding at table slot %d dropped.", ExportName.IsEmpty() ? TEXT("<empty>") : *ExportName, FD3D12PendingLocalTable::MaxDescriptors, int32(Slot));
             bReportedTableOverflow = true;
         }
     };

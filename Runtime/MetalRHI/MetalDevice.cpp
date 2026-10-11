@@ -22,54 +22,54 @@
 #include <CoreGraphics/CoreGraphics.h>
 
 static TAutoConsoleVariable<bool> CVarEnableMeshShaders(
-    "MetalRHI.EnableMeshShaders",
-    "Enables mesh and amplification shaders on Metal 3 GPUs. Disable to work around a driver that misbehaves on the SPIRV-Cross mesh output",
+    TEXT("MetalRHI.EnableMeshShaders"),
+    TEXT("Enables mesh and amplification shaders on Metal 3 GPUs. Disable to work around a driver that misbehaves on the SPIRV-Cross mesh output"),
     true);
 
 static TAutoConsoleVariable<bool> CVarForceMetal2Features(
-    "MetalRHI.ForceMetal2Features",
-    "Masks the device down to a Metal 2 feature set (no Metal 3, Tier 1 argument buffers, no mesh shaders, no vertex amplification) to exercise the non-bindless paths",
+    TEXT("MetalRHI.ForceMetal2Features"),
+    TEXT("Masks the device down to a Metal 2 feature set (no Metal 3, Tier 1 argument buffers, no mesh shaders, no vertex amplification) to exercise the non-bindless paths"),
     false);
 
 static TAutoConsoleVariable<FString> CVarPreferredDeviceName(
-    "MetalRHI.PreferredDeviceName",
-    "Selects the Metal device whose name contains this text, ignoring the device scoring when it matches",
-    "");
+    TEXT("MetalRHI.PreferredDeviceName"),
+    TEXT("Selects the Metal device whose name contains this text, ignoring the device scoring when it matches"),
+    TEXT(""));
 
 static TAutoConsoleVariable<bool> CVarPreferDisplayDevice(
-    "MetalRHI.PreferDisplayDevice",
-    "Renders on the GPU that drives the main display, which avoids copying every presented frame between GPUs. MetalRHI.PreferredDeviceName still wins when it matches",
+    TEXT("MetalRHI.PreferDisplayDevice"),
+    TEXT("Renders on the GPU that drives the main display, which avoids copying every presented frame between GPUs. MetalRHI.PreferredDeviceName still wins when it matches"),
     false);
 
 static TAutoConsoleVariable<float> CVarLogMemoryStatsInterval(
-    "MetalRHI.LogMemoryStatsInterval",
-    "Logs a summary of Metal memory usage every this many seconds, or never when zero",
+    TEXT("MetalRHI.LogMemoryStatsInterval"),
+    TEXT("Logs a summary of Metal memory usage every this many seconds, or never when zero"),
     0.0f);
 
 static TAutoConsoleVariable<FString> CVarDynamicConstantsStorage(
-    "MetalRHI.DynamicConstantsStorage",
-    "Storage mode of the dynamic constant pages: Auto (Managed on discrete GPUs, Shared otherwise), Shared or Managed",
-    "Auto");
+    TEXT("MetalRHI.DynamicConstantsStorage"),
+    TEXT("Storage mode of the dynamic constant pages: Auto (Managed on discrete GPUs, Shared otherwise), Shared or Managed"),
+    TEXT("Auto"));
 
 static TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame(
-    "MetalRHI.MaxDefragMovesPerFrame",
-    "Most heap-placed resources copied out of the sparsest heap each frame, which the next frame waits for before swapping them in. Zero disables defragmentation",
+    TEXT("MetalRHI.MaxDefragMovesPerFrame"),
+    TEXT("Most heap-placed resources copied out of the sparsest heap each frame, which the next frame waits for before swapping them in. Zero disables defragmentation"),
     4);
 
 static TAutoConsoleVariable<int32> CVarDefragEligibilityDelay(
-    "MetalRHI.DefragEligibilityDelay",
-    "Frames an allocation has to live before a defrag move may relocate it, so resources created and filled this frame are left alone",
+    TEXT("MetalRHI.DefragEligibilityDelay"),
+    TEXT("Frames an allocation has to live before a defrag move may relocate it, so resources created and filled this frame are left alone"),
     1);
 
 static TAutoConsoleVariable<FString> CVarBinaryArchiveMode(
-    "MetalRHI.BinaryArchiveMode",
-    "How the MTLBinaryArchive is used: Ignore, Use (load read-only), Append (load, then save every pipeline this session created) or Create (start empty, then save every pipeline this session created)",
-    "Append");
+    TEXT("MetalRHI.BinaryArchiveMode"),
+    TEXT("How the MTLBinaryArchive is used: Ignore, Use (load read-only), Append (load, then save every pipeline this session created) or Create (start empty, then save every pipeline this session created)"),
+    TEXT("Append"));
 
 static TAutoConsoleVariable<FString> CVarBinaryArchiveFileName(
-    "MetalRHI.BinaryArchiveFileName",
-    "File name of the MTLBinaryArchive in the asset directory. A .version sidecar sits beside it",
-    "PipelineCache.metalarchive");
+    TEXT("MetalRHI.BinaryArchiveFileName"),
+    TEXT("File name of the MTLBinaryArchive in the asset directory. A .version sidecar sits beside it"),
+    TEXT("PipelineCache.metalarchive"));
 
 static constexpr MTLResourceOptions GNullResourceOptions = MTLResourceStorageModePrivate | MTLResourceHazardTrackingModeUntracked;
 static constexpr NSUInteger         GNullSampleCount     = 4;
@@ -78,12 +78,12 @@ static MTLResourceOptions GetDynamicConstantsOptions()
 {
     const FString Storage = CVarDynamicConstantsStorage.GetValue();
 
-    if (Storage.Equals("Shared", EStringCaseType::NoCase))
+    if (Storage.Equals(TEXT("Shared"), EStringCaseType::NoCase))
     {
         return MetalRHI::GetMTLResourceOptions(EMetalMemoryClass::Upload);
     }
 
-    if (Storage.Equals("Managed", EStringCaseType::NoCase))
+    if (Storage.Equals(TEXT("Managed"), EStringCaseType::NoCase))
     {
         return MTLResourceStorageModeManaged | MTLResourceCPUCacheModeWriteCombined | MTLResourceHazardTrackingModeUntracked;
     }
@@ -697,9 +697,9 @@ id<MTLDevice> FMetalDevice::SelectDevice()
             *Name,
             Score,
             CandidateDevice.recommendedMaxWorkingSetSize / (1024ull * 1024ull),
-            CandidateDevice.isLowPower  ? "yes" : "no",
-            CandidateDevice.isRemovable ? "yes" : "no",
-            CandidateDevice.isHeadless  ? "yes" : "no");
+            CandidateDevice.isLowPower  ? TEXT("yes") : TEXT("no"),
+            CandidateDevice.isRemovable ? TEXT("yes") : TEXT("no"),
+            CandidateDevice.isHeadless  ? TEXT("yes") : TEXT("no"));
 
         if (!PreferredMatch && !PreferredName.IsEmpty() && Name.Contains(PreferredName, EStringCaseType::NoCase))
         {
@@ -802,17 +802,17 @@ void FMetalDevice::ReadDeviceProperties()
     const FString DeviceClass([[Device class] description]);
     METAL_INFO("Selected Device=%s (%s)", *Properties.Name, *DeviceClass);
 
-    if (DeviceClass.Contains("Capture"))
+    if (DeviceClass.Contains(TEXT("Capture")))
     {
         METAL_WARNING("Metal GPU capture is wrapping the device, which inflates the reported memory usage. Disable GPU Frame Capture in the scheme, or launch the app outside Xcode, before measuring memory");
     }
 
 #if METAL_ENABLE_DEBUG_LAYER
-    if (DeviceClass.Contains("MTLDebug"))
+    if (DeviceClass.Contains(TEXT("MTLDebug")))
     {
         METAL_INFO("Metal debug layer is live, the selected device is a debug wrapper");
     }
-    else if (DeviceClass.Contains("Capture"))
+    else if (DeviceClass.Contains(TEXT("Capture")))
     {
         METAL_INFO("The debug layer sits underneath the capture wrapper and cannot be read from the device class");
     }
@@ -968,7 +968,7 @@ bool FMetalDevice::CreateDefaultResources()
 
             if (!Texture)
             {
-                METAL_ERROR("Failed to create null %s texture %u", Desc.bWritable ? "writable" : "read-only", Desc.NullTextureType);
+                METAL_ERROR("Failed to create null %s texture %u", Desc.bWritable ? TEXT("writable") : TEXT("read-only"), Desc.NullTextureType);
                 return false;
             }
 

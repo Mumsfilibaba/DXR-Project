@@ -185,7 +185,7 @@ bool FD3D12Shader::ValidateRequiresFlags(ED3D12ShaderFlags InFlags, const CHAR_T
     bool bAllSatisfied = true;
 
     // Release graphics and compute shaders carry no entry point
-    MAYBE_UNUSED const CHAR_T* SafeName = (InShaderName != nullptr && InShaderName[0] != '\0') ? InShaderName : "<unnamed>";
+    MAYBE_UNUSED const CHAR_T* SafeName = (InShaderName != nullptr && InShaderName[0] != '\0') ? InShaderName : TEXT("<unnamed>");
 
     auto ReportMissing = [&](const CHAR_T* InFeature)
     {
@@ -196,107 +196,107 @@ bool FD3D12Shader::ValidateRequiresFlags(ED3D12ShaderFlags InFlags, const CHAR_T
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresResourceDescriptorHeapIndexing) && !GD3D12SupportsBindless)
     {
-        ReportMissing("ResourceDescriptorHeap indexing (SM6.6 dynamic resources)");
+        ReportMissing(TEXT("ResourceDescriptorHeap indexing (SM6.6 dynamic resources)"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresSamplerDescriptorHeapIndexing) && !GD3D12SupportsBindless)
     {
-        ReportMissing("SamplerDescriptorHeap indexing (SM6.6 dynamic resources)");
+        ReportMissing(TEXT("SamplerDescriptorHeap indexing (SM6.6 dynamic resources)"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresStencilRef) && !GD3D12PSSpecifiedStencilRefSupported)
     {
-        ReportMissing("PS-specified SV_StencilRef");
+        ReportMissing(TEXT("PS-specified SV_StencilRef"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresInnerCoverage) && GD3D12ConservativeRasterizationTier < D3D12_CONSERVATIVE_RASTERIZATION_TIER_3)
     {
-        ReportMissing("Inner Coverage (Conservative Raster Tier 3)");
+        ReportMissing(TEXT("Inner Coverage (Conservative Raster Tier 3)"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresROVs) && !GD3D12RasterizerOrderViewsSupported)
     {
-        ReportMissing("Rasterizer Ordered Views");
+        ReportMissing(TEXT("Rasterizer Ordered Views"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresWaveOps) && !GD3D12WaveOpsSupported)
     {
-        ReportMissing("Wave Intrinsics");
+        ReportMissing(TEXT("Wave Intrinsics"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresInt64Ops) && !GD3D12Int64ShaderOpsSupported)
     {
-        ReportMissing("64-bit integer shader ops");
+        ReportMissing(TEXT("64-bit integer shader ops"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresNative16BitOps) && !GD3D12Native16BitShaderOpsSupported)
     {
-        ReportMissing("Native 16-bit shader ops");
+        ReportMissing(TEXT("Native 16-bit shader ops"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresBarycentrics) && !GD3D12BarycentricsSupported)
     {
-        ReportMissing("SV_Barycentrics");
+        ReportMissing(TEXT("SV_Barycentrics"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresViewID) && GD3D12ViewInstancingTier == D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
     {
-        ReportMissing("View Instancing (SV_ViewID)");
+        ReportMissing(TEXT("View Instancing (SV_ViewID)"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresShadingRate) && GD3D12VariableRateShadingTier < D3D12_VARIABLE_SHADING_RATE_TIER_2)
     {
-        ReportMissing("Variable Rate Shading Tier 2 (per-primitive SV_ShadingRate)");
+        ReportMissing(TEXT("Variable Rate Shading Tier 2 (per-primitive SV_ShadingRate)"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresRaytracingTier1_1) && GD3D12RayTracingTier < D3D12_RAYTRACING_TIER_1_1)
     {
-        ReportMissing("Ray Tracing Tier 1.1");
+        ReportMissing(TEXT("Ray Tracing Tier 1.1"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresSamplerFeedback) && GD3D12SamplerFeedbackTier == D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED)
     {
-        ReportMissing("Sampler Feedback");
+        ReportMissing(TEXT("Sampler Feedback"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresTiledResources) && GD3D12TiledResourcesTier == D3D12_TILED_RESOURCES_TIER_NOT_SUPPORTED)
     {
-        ReportMissing("Tiled Resources");
+        ReportMissing(TEXT("Tiled Resources"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresTypedUAVLoadAdditionalFormats) && !GD3D12TypedUAVLoadAdditionalFormats)
     {
-        ReportMissing("Typed UAV Load Additional Formats");
+        ReportMissing(TEXT("Typed UAV Load Additional Formats"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresVPAndRTArrayIndexFromAnyShader) && GD3D12ViewInstancingTier == D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
     {
-        ReportMissing("Viewport and RT Array Index from any shader feeding rasterizer");
+        ReportMissing(TEXT("Viewport and RT Array Index from any shader feeding rasterizer"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresAtomicInt64OnTypedResource) && !GD3D12AtomicInt64OnTypedResourceSupported)
     {
-        ReportMissing("Atomic Int64 on typed resources");
+        ReportMissing(TEXT("Atomic Int64 on typed resources"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresAtomicInt64OnGroupShared) && !GD3D12AtomicInt64OnGroupSharedSupported)
     {
-        ReportMissing("Atomic Int64 on group-shared memory");
+        ReportMissing(TEXT("Atomic Int64 on group-shared memory"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresAtomicInt64OnDescriptorHeapResource) && !GD3D12AtomicInt64OnDescriptorHeapResourceSupported)
     {
-        ReportMissing("Atomic Int64 on descriptor-heap resources");
+        ReportMissing(TEXT("Atomic Int64 on descriptor-heap resources"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresWaveMMA) && GD3D12WaveMMATier == D3D12_WAVE_MMA_TIER_NOT_SUPPORTED)
     {
-        ReportMissing("Wave MMA");
+        ReportMissing(TEXT("Wave MMA"));
     }
 
     if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresDerivativesInMeshAndAmpShaders) && !GD3D12DerivativesInMeshAndAmpShadersSupported)
     {
-        ReportMissing("Derivatives in Mesh / Amplification shaders");
+        ReportMissing(TEXT("Derivatives in Mesh / Amplification shaders"));
     }
 
     return bAllSatisfied;

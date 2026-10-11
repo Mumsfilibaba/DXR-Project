@@ -431,12 +431,12 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutIn
     {
         LOG_WARNING("[FVulkanPipelineLayout] UserDataCost=%u DWORDs exceeds recommended %u (Sets=%u [Bindless=%s], PushConstants=%u, DynamicBuffers=%u)",
             UserDataCostDwords, VULKAN_RECOMMENDED_MAX_USER_DATA_DWORDS, TotalSetCount, 
-            bHasBindlessSet ? "yes" : "no", LayoutInfo.ConstantsInfo.NumConstants, TotalDynamicOffsets);
+            bHasBindlessSet ? TEXT("yes") : TEXT("no"), LayoutInfo.ConstantsInfo.NumConstants, TotalDynamicOffsets);
     }
     else
     {
         LOG_INFO("[FVulkanPipelineLayout] UserDataCost=%u DWORDs (Sets=%u [Bindless=%s], PushConstants=%u, DynamicBuffers=%u)",
-            UserDataCostDwords, TotalSetCount, bHasBindlessSet ? "yes" : "no", LayoutInfo.ConstantsInfo.NumConstants, TotalDynamicOffsets);
+            UserDataCostDwords, TotalSetCount, bHasBindlessSet ? TEXT("yes") : TEXT("no"), LayoutInfo.ConstantsInfo.NumConstants, TotalDynamicOffsets);
     }
 
     SetupResourceMapping(LayoutInfo);
@@ -574,12 +574,12 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
             {
             case EVulkanBindingType::UniformBuffer:
             case EVulkanBindingType::UniformBufferDynamic:
-                CheckSlotCollision(StageMapping.UniformMappings[RemappingInfo.OriginalBindingIndex], "CBV");
+                CheckSlotCollision(StageMapping.UniformMappings[RemappingInfo.OriginalBindingIndex], TEXT("CBV"));
                 StageMapping.UniformMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
 
             case EVulkanBindingType::Sampler:
-                CheckSlotCollision(StageMapping.SamplerMappings[RemappingInfo.OriginalBindingIndex], "Sampler");
+                CheckSlotCollision(StageMapping.SamplerMappings[RemappingInfo.OriginalBindingIndex], TEXT("Sampler"));
                 StageMapping.SamplerMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
 
@@ -587,14 +587,14 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
             case EVulkanBindingType::StorageBufferRead:
             case EVulkanBindingType::TexelBufferRead:
             case EVulkanBindingType::AccelerationStructure:
-                CheckSlotCollision(StageMapping.SRVMappings[RemappingInfo.OriginalBindingIndex], "SRV");
+                CheckSlotCollision(StageMapping.SRVMappings[RemappingInfo.OriginalBindingIndex], TEXT("SRV"));
                 StageMapping.SRVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
 
             case EVulkanBindingType::StorageImage:
             case EVulkanBindingType::StorageBufferReadWrite:
             case EVulkanBindingType::TexelBufferReadWrite:
-                CheckSlotCollision(StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex], "UAV");
+                CheckSlotCollision(StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex], TEXT("UAV"));
                 StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
 
@@ -658,7 +658,7 @@ FVulkanPipelineLayout* FVulkanPipelineLayoutManager::FindOrCreateLayout(const FV
     if (NewLayout->Initialize(LayoutInfo))
     {
         // Set a debug-name for the pipeline-layout
-        const FString DebugName = FString::Printf("PipelineLayout %d", Layouts.Size());
+        const FString DebugName = FString::Printf(TEXT("PipelineLayout %d"), Layouts.Size());
         NewLayout->SetDebugName(DebugName.Data());
         Layouts.Add(LayoutInfo, NewLayout);
 

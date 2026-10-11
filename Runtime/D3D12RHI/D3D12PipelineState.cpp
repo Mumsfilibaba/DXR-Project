@@ -3,6 +3,7 @@
 #include "Core/Platform/PlatformTime.h"
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Containers/SharedPtr.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Tasks/Tasks.h"
 #include "Core/Misc/Paths.h"
 #include "D3D12RHI/D3D12PipelineState.h"
@@ -11,13 +12,13 @@
 #include "D3D12RHI/D3D12RHI.h"
 
 static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
-    "D3D12RHI.PipelineCacheFileName",
-    "FileName for the file storing the PipelineCache",
-    "PipelineCache.d3d12psocache");
+    TEXT("D3D12RHI.PipelineCacheFileName"),
+    TEXT("FileName for the file storing the PipelineCache"),
+    TEXT("PipelineCache.d3d12psocache"));
 
 static TAutoConsoleVariable<int32> CVarPipelineCacheSaveInterval(
-    "D3D12RHI.PipelineCacheSaveInterval",
-    "Minimum interval in seconds between automatic pipeline cache saves",
+    TEXT("D3D12RHI.PipelineCacheSaveInterval"),
+    TEXT("Minimum interval in seconds between automatic pipeline cache saves"),
     30);
 
 FD3D12InputLayoutRHI::FD3D12InputLayoutRHI(const TArray<FRHIInputElementDesc>& InInputElements)
@@ -38,9 +39,9 @@ FD3D12InputLayoutRHI::FD3D12InputLayoutRHI(const TArray<FRHIInputElementDesc>& I
         D3D12_INPUT_ELEMENT_DESC InputElementDesc;
         Memory::Memzero(&InputElementDesc, sizeof(D3D12_INPUT_ELEMENT_DESC));
 
-        const FString& Semantic = SemanticNames.Emplace(Element.Semantic);
+        const FAnsiString& Semantic = SemanticNames.Emplace(StringCast<ANSICHAR>(Element.Semantic).ToString());
         InputElementDesc.SemanticName = *Semantic;
-        HashCombine(CalculatedHash, THash<FString>::GetHash(Semantic));
+        HashCombine(CalculatedHash, THash<FAnsiString>::GetHash(Semantic));
 
         InputElementDesc.SemanticIndex = Element.SemanticIndex;
         HashCombine(CalculatedHash, InputElementDesc.SemanticIndex);
@@ -539,7 +540,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
             }
             else
             {
-                RootSignature->SetDebugName("Custom Graphics RootSignature");
+                RootSignature->SetDebugName(TEXT("Custom Graphics RootSignature"));
             }
 
             // Validate that all shaders with embedded root signatures are compatible
@@ -614,14 +615,17 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
     // Stream Output
     TArray<UINT>                       StreamOutputStrides;
     TArray<D3D12_SO_DECLARATION_ENTRY> StreamOutputEntries;
+    TArray<FAnsiString>                StreamOutputSemanticNames;
 
     if (Desc.StreamOutputDeclaration)
     {
         const FRHIStreamOutputDeclaration& StreamOutputDecl = *Desc.StreamOutputDeclaration;
+
+        StreamOutputSemanticNames.Reserve(StreamOutputDecl.Entries.Size());
         for (const FRHIStreamOutputEntry& Entry : StreamOutputDecl.Entries)
         {
             D3D12_SO_DECLARATION_ENTRY D3DEntry = {};
-            D3DEntry.SemanticName   = Entry.SemanticName;
+            D3DEntry.SemanticName   = *StreamOutputSemanticNames.Emplace(StringCast<ANSICHAR>(Entry.SemanticName).ToString());
             D3DEntry.SemanticIndex  = Entry.SemanticIndex;
             D3DEntry.StartComponent = Entry.StartComponent;
             D3DEntry.ComponentCount = Entry.ComponentCount;
@@ -868,7 +872,7 @@ bool FD3D12ComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
         }
         else
         {
-            RootSignature->SetDebugName("Custom Compute RootSignature");
+            RootSignature->SetDebugName(TEXT("Custom Compute RootSignature"));
         }
 
         const FD3D12ShaderBindingInfo& BindingInfo = Shader->GetBindingInfo();
@@ -1194,7 +1198,7 @@ bool FD3D12MeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDes
             }
             else
             {
-                RootSignature->SetDebugName("Custom Meshlet RootSignature");
+                RootSignature->SetDebugName(TEXT("Custom Meshlet RootSignature"));
             }
 
             for (int32 i = 1; i < ShadersWithRootSignature.Size(); i++)

@@ -6,26 +6,26 @@
 #include "D3D12RHI/D3D12SwapChain.h"
 
 static TAutoConsoleVariable<int32> CVarResourceBindingTierOverride(
-    "D3D12RHI.ResourceBindingTierOverride",
-    "Override the resource binding tier (0=no override, 1=Tier1, 2=Tier2, 3=Tier3)",
+    TEXT("D3D12RHI.ResourceBindingTierOverride"),
+    TEXT("Override the resource binding tier (0=no override, 1=Tier1, 2=Tier2, 3=Tier3)"),
     0);
 
 static TAutoConsoleVariable<bool> CVarEnableTightAlignment(
-    "D3D12RHI.EnableTightAlignment",
-    "Enable tight alignment if supported by the device",
+    TEXT("D3D12RHI.EnableTightAlignment"),
+    TEXT("Enable tight alignment if supported by the device"),
     true);
 
 static FAutoConsoleCommand CCmdD3D12DumpRayTracingCapsCommand(
-    "D3D12RHI.DumpRayTracingCaps",
-    "Logs the backend-native D3D12 ray-tracing capability table (GD3D12Supports* RT globals)",
+    TEXT("D3D12RHI.DumpRayTracingCaps"),
+    TEXT("Logs the backend-native D3D12 ray-tracing capability table (GD3D12Supports* RT globals)"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         DumpD3D12RayTracingCapabilities();
     }));
 
 static FAutoConsoleCommand CCmdD3D12DumpCapsCommand(
-    "D3D12RHI.DumpCaps",
-    "Logs the backend-native D3D12 capability table (all GD3D12* globals, including ray tracing)",
+    TEXT("D3D12RHI.DumpCaps"),
+    TEXT("Logs the backend-native D3D12 capability table (all GD3D12* globals, including ray tracing)"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         DumpD3D12Capabilities();
@@ -128,7 +128,7 @@ D3D12RHI_API void DumpD3D12RayTracingCapabilities()
 {
     const auto YesNo = [](bool bValue) -> const CHAR_T*
     {
-        return bValue ? "Yes" : "No";
+        return bValue ? TEXT("Yes") : TEXT("No");
     };
 
     LOG_INFO("[D3D12RHI] ------------------------- D3D12 Ray Tracing Capabilities (native) -------------------------");
@@ -148,7 +148,7 @@ D3D12RHI_API void DumpD3D12Capabilities()
 {
     const auto YesNo = [](bool bValue) -> const CHAR_T*
     {
-        return bValue ? "Yes" : "No";
+        return bValue ? TEXT("Yes") : TEXT("No");
     };
 
     LOG_INFO("[D3D12RHI] ------------------------- D3D12 Capabilities (native) -------------------------");
@@ -279,10 +279,10 @@ void FD3D12Device::QueryDeviceFeatureSupport()
             D3D12_INFO("[FD3D12Device] ResourceBinding Tier: %d", GD3D12ResourceBindingTier);
             D3D12_INFO("[FD3D12Device] ResourceHeap Tier: %d", GD3D12ResourceHeapTier);
             D3D12_INFO("[FD3D12Device] ConservativeRasterization Tier: %d", GD3D12ConservativeRasterizationTier);
-            D3D12_INFO("[FD3D12Device] TypedUAVLoadAdditionalFormats: %s", GD3D12TypedUAVLoadAdditionalFormats ? "true" : "false");
-            D3D12_INFO("[FD3D12Device] ROVsSupported: %s", GD3D12RasterizerOrderViewsSupported ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] TypedUAVLoadAdditionalFormats: %s", GD3D12TypedUAVLoadAdditionalFormats ? TEXT("true") : TEXT("false"));
+            D3D12_INFO("[FD3D12Device] ROVsSupported: %s", GD3D12RasterizerOrderViewsSupported ? TEXT("true") : TEXT("false"));
             D3D12_INFO("[FD3D12Device] TiledResources Tier: %d", GD3D12TiledResourcesTier);
-            D3D12_INFO("[FD3D12Device] PSSpecifiedStencilRefSupported: %s", GD3D12PSSpecifiedStencilRefSupported ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] PSSpecifiedStencilRefSupported: %s", GD3D12PSSpecifiedStencilRefSupported ? TEXT("true") : TEXT("false"));
         }
         else
         {
@@ -305,8 +305,8 @@ void FD3D12Device::QueryDeviceFeatureSupport()
             GD3D12WaveLaneCountMax        = Features1.WaveLaneCountMax;
             GD3D12TotalLaneCount          = Features1.TotalLaneCount;
 
-            D3D12_INFO("[FD3D12Device] WaveOps Supported: %s", GD3D12WaveOpsSupported ? "true" : "false");
-            D3D12_INFO("[FD3D12Device] Int64ShaderOps Supported: %s", GD3D12Int64ShaderOpsSupported ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] WaveOps Supported: %s", GD3D12WaveOpsSupported ? TEXT("true") : TEXT("false"));
+            D3D12_INFO("[FD3D12Device] Int64ShaderOps Supported: %s", GD3D12Int64ShaderOpsSupported ? TEXT("true") : TEXT("false"));
             D3D12_INFO("[FD3D12Device] Wave Lane Count Min/Max: %u / %u", GD3D12WaveLaneCountMin, GD3D12WaveLaneCountMax);
             D3D12_INFO("[FD3D12Device] Total Lane Count: %u", GD3D12TotalLaneCount);
         }
@@ -328,7 +328,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
             GD3D12DepthBoundsTestSupported        = !!Features2.DepthBoundsTestSupported;
             GD3D12ProgrammableSamplePositionsTier = Features2.ProgrammableSamplePositionsTier;
 
-            D3D12_INFO("[FD3D12Device] DepthBoundsTestSupported: %s", GD3D12DepthBoundsTestSupported ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] DepthBoundsTestSupported: %s", GD3D12DepthBoundsTestSupported ? TEXT("true") : TEXT("false"));
             D3D12_INFO("[FD3D12Device] ProgrammableSamplePositions Tier: %d", GD3D12ProgrammableSamplePositionsTier);
         }
         else
@@ -350,7 +350,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
             GD3D12WriteBufferImmediateSupportFlags = Features3.WriteBufferImmediateSupportFlags;
             GD3D12BarycentricsSupported            = !!Features3.BarycentricsSupported;
 
-            D3D12_INFO("[FD3D12Device] BarycentricsSupported: %s", GD3D12BarycentricsSupported ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] BarycentricsSupported: %s", GD3D12BarycentricsSupported ? TEXT("true") : TEXT("false"));
             D3D12_INFO("[FD3D12Device] ViewInstancing Tier: %d", GD3D12ViewInstancingTier);
             D3D12_INFO("[FD3D12Device] WriteBufferImmediate SupportFlags: 0x%X", static_cast<uint32>(GD3D12WriteBufferImmediateSupportFlags));
         }
@@ -370,7 +370,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
         if (SUCCEEDED(hr))
         {
             GD3D12Native16BitShaderOpsSupported = !!Features4.Native16BitShaderOpsSupported;
-            D3D12_INFO("[FD3D12Device] Native16BitShaderOps Supported: %s", GD3D12Native16BitShaderOpsSupported ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] Native16BitShaderOps Supported: %s", GD3D12Native16BitShaderOpsSupported ? TEXT("true") : TEXT("false"));
         }
         else
         {
@@ -449,9 +449,9 @@ void FD3D12Device::QueryDeviceFeatureSupport()
             GD3D12DerivativesInMeshAndAmpShadersSupported = !!Features9.DerivativesInMeshAndAmplificationShadersSupported;
             GD3D12WaveMMATier                             = Features9.WaveMMATier;
 
-            D3D12_INFO("[FD3D12Device] AtomicInt64OnTypedResource Supported: %s", GD3D12AtomicInt64OnTypedResourceSupported ? "true" : "false");
-            D3D12_INFO("[FD3D12Device] AtomicInt64OnGroupShared Supported: %s", GD3D12AtomicInt64OnGroupSharedSupported ? "true" : "false");
-            D3D12_INFO("[FD3D12Device] DerivativesInMeshAndAmpShaders Supported: %s", GD3D12DerivativesInMeshAndAmpShadersSupported ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] AtomicInt64OnTypedResource Supported: %s", GD3D12AtomicInt64OnTypedResourceSupported ? TEXT("true") : TEXT("false"));
+            D3D12_INFO("[FD3D12Device] AtomicInt64OnGroupShared Supported: %s", GD3D12AtomicInt64OnGroupSharedSupported ? TEXT("true") : TEXT("false"));
+            D3D12_INFO("[FD3D12Device] DerivativesInMeshAndAmpShaders Supported: %s", GD3D12DerivativesInMeshAndAmpShadersSupported ? TEXT("true") : TEXT("false"));
             D3D12_INFO("[FD3D12Device] WaveMMA Tier: %d", GD3D12WaveMMATier);
         }
         else
@@ -470,7 +470,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
         if (SUCCEEDED(hr))
         {
             GD3D12AtomicInt64OnDescriptorHeapResourceSupported = !!Features11.AtomicInt64OnDescriptorHeapResourceSupported;
-            D3D12_INFO("[FD3D12Device] AtomicInt64OnDescriptorHeapResource Supported: %s", GD3D12AtomicInt64OnDescriptorHeapResourceSupported ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] AtomicInt64OnDescriptorHeapResource Supported: %s", GD3D12AtomicInt64OnDescriptorHeapResourceSupported ? TEXT("true") : TEXT("false"));
         }
         else
         {
@@ -488,7 +488,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
         if (SUCCEEDED(hr))
         {
             GD3D12SupportEnhancedBarriers = !!Features12.EnhancedBarriersSupported;
-            D3D12_INFO("[FD3D12Device] Enhanced Barriers Supported: %s", GD3D12SupportEnhancedBarriers ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] Enhanced Barriers Supported: %s", GD3D12SupportEnhancedBarriers ? TEXT("true") : TEXT("false"));
         }
         else
         {
@@ -506,11 +506,11 @@ void FD3D12Device::QueryDeviceFeatureSupport()
         if (SUCCEEDED(hr))
         {
             GD3D12SupportGPUUploadHeaps = !!Features16.GPUUploadHeapSupported;
-            D3D12_INFO("[FD3D12Device] GPU Upload Heaps Supported: %s", GD3D12SupportGPUUploadHeaps ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] GPU Upload Heaps Supported: %s", GD3D12SupportGPUUploadHeaps ? TEXT("true") : TEXT("false"));
 
         #if D3D12_ENABLE_DYNAMIC_DEPTH_BIAS && D3D12_USE_ID3D12COMMANDLIST_9
             GD3D12SupportDynamicDepthBias = !!Features16.DynamicDepthBiasSupported;
-            D3D12_INFO("[FD3D12Device] Dynamic Depth Bias Supported: %s", GD3D12SupportDynamicDepthBias ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] Dynamic Depth Bias Supported: %s", GD3D12SupportDynamicDepthBias ? TEXT("true") : TEXT("false"));
         #endif
         }
         else
@@ -558,7 +558,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
             }
             else
             {
-                D3D12_INFO("[FD3D12Device] Tight Alignment Support: %s", GD3D12SupportTightAlignment ? "true" : "false");
+                D3D12_INFO("[FD3D12Device] Tight Alignment Support: %s", GD3D12SupportTightAlignment ? TEXT("true") : TEXT("false"));
             }
         }
         else
@@ -590,15 +590,15 @@ void FD3D12Device::QueryDeviceFeatureSupport()
         {
             GD3D12RootSignatureVersion = RootSignature.HighestVersion;
 
-            const CHAR_T* VersionString = "1.0";
+            const CHAR_T* VersionString = TEXT("1.0");
             if (GD3D12RootSignatureVersion == D3D_ROOT_SIGNATURE_VERSION_1_1)
             {
-                VersionString = "1.1";
+                VersionString = TEXT("1.1");
             }
         #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
             else if (GD3D12RootSignatureVersion == D3D_ROOT_SIGNATURE_VERSION_1_2)
             {
-                VersionString = "1.2";
+                VersionString = TEXT("1.2");
             }
         #endif
 
@@ -631,7 +631,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
         }
 
         GD3D12SupportsBindless = (GD3D12HighestShaderModel >= D3D_SHADER_MODEL_6_6) && (GD3D12ResourceBindingTier >= D3D12_RESOURCE_BINDING_TIER_3);
-        D3D12_INFO("[FD3D12Device] Supports Bindless: %s", GD3D12SupportsBindless ? "true" : "false");
+        D3D12_INFO("[FD3D12Device] Supports Bindless: %s", GD3D12SupportsBindless ? TEXT("true") : TEXT("false"));
     }
 
     // -------------------------------------------------------------------------------------------
@@ -675,8 +675,8 @@ void FD3D12Device::QueryDeviceFeatureSupport()
             GD3D12IsArchitectureUMA              = !!Architecture.UMA;
             GD3D12IsArchitectureCacheCoherentUMA = !!Architecture.CacheCoherentUMA;
 
-            D3D12_INFO("[FD3D12Device] UMA Architecture: %s", GD3D12IsArchitectureUMA ? "true" : "false");
-            D3D12_INFO("[FD3D12Device] CacheCoherentUMA Architecture: %s", GD3D12IsArchitectureCacheCoherentUMA ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] UMA Architecture: %s", GD3D12IsArchitectureUMA ? TEXT("true") : TEXT("false"));
+            D3D12_INFO("[FD3D12Device] CacheCoherentUMA Architecture: %s", GD3D12IsArchitectureCacheCoherentUMA ? TEXT("true") : TEXT("false"));
         }
         else
         {

@@ -347,7 +347,7 @@ id<MTLComputeCommandEncoder> FMetalEncoderManager::RequireComputeEncoder()
         Attachment.startOfEncoderSampleIndex = SampleIndex;
         Attachment.endOfEncoderSampleIndex   = MTLCounterDontSample;
         return [Commands->CommandBuffer computeCommandEncoderWithDescriptor:Descriptor];
-    }, "Compute"));
+    }, TEXT("Compute")));
 }
 
 id<MTLBlitCommandEncoder> FMetalEncoderManager::RequireBlitEncoder()
@@ -372,7 +372,7 @@ id<MTLBlitCommandEncoder> FMetalEncoderManager::RequireBlitEncoder()
         Attachment.startOfEncoderSampleIndex = SampleIndex;
         Attachment.endOfEncoderSampleIndex   = MTLCounterDontSample;
         return [Commands->CommandBuffer blitCommandEncoderWithDescriptor:Descriptor];
-    }, "Blit"));
+    }, TEXT("Blit")));
 }
 
 id<MTLAccelerationStructureCommandEncoder> FMetalEncoderManager::RequireAccelerationStructureEncoder()
@@ -397,7 +397,7 @@ id<MTLAccelerationStructureCommandEncoder> FMetalEncoderManager::RequireAccelera
         Attachment.startOfEncoderSampleIndex = SampleIndex;
         Attachment.endOfEncoderSampleIndex   = MTLCounterDontSample;
         return [Commands->CommandBuffer accelerationStructureCommandEncoderWithDescriptor:Descriptor];
-    }, "AccelerationStructure"));
+    }, TEXT("AccelerationStructure")));
 }
 
 id<MTLParallelRenderCommandEncoder> FMetalEncoderManager::BeginParallelRenderEncoder(MTLRenderPassDescriptor* Descriptor, const CHAR_T* Label)
@@ -793,7 +793,7 @@ void FMetalEncoderManager::EncodePendingClear(const FMetalPendingClear& Clear)
         Descriptor.stencilAttachment.clearStencil = Clear.Stencil;
     }
 
-    OpenRenderEncoder(Descriptor, "Clear");
+    OpenRenderEncoder(Descriptor, TEXT("Clear"));
     EndEncoder();
 }
 
@@ -953,7 +953,7 @@ NSString* FMetalEncoderManager::MakeEncoderLabel(const CHAR_T* Label) const
         return [NSString stringWithUTF8String:Label];
     }
 
-    return FString::Printf("%s | %s", *ScopePath, Label).GetNSString();
+    return FString::Printf(TEXT("%s | %s"), *ScopePath, Label).GetNSString();
 }
 
 uint32 FMetalEncoderManager::TakeScheduledTimestamp()

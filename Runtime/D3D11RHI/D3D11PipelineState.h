@@ -29,7 +29,7 @@ public:
 
 private:
     TArray<FRHIInputElementDesc>     InputElements;
-    TArray<FString>                  SemanticNames;
+    TArray<FAnsiString>              SemanticNames;
     TArray<D3D11_INPUT_ELEMENT_DESC> ElementDesc;
 };
 

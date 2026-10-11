@@ -25,7 +25,7 @@ struct VulkanPlatformWindows : public VulkanPlatformBase
 
     static FORCEINLINE void* LoadVulkanLibrary()
     {
-        return FPlatformLibrary::LoadDynamicLib("vulkan-1");
+        return FPlatformLibrary::LoadDynamicLib(TEXT("vulkan-1"));
     }
 
     static FORCEINLINE VkResult CreateSurface(VkInstance Instance, void* InWindowHandle, VkSurfaceKHR* OutSurface)

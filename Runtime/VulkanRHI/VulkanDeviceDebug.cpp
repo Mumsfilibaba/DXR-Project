@@ -9,8 +9,8 @@
 VULKANRHI_API bool GVulkanSupportsDebugUtils = false;
 
 static TAutoConsoleVariable<bool> CVarBreakOnValidationError(
-    "VulkanRHI.BreakOnValidationError",
-    "Enables breakpoints when the validation-layer encounters an error",
+    TEXT("VulkanRHI.BreakOnValidationError"),
+    TEXT("Enables breakpoints when the validation-layer encounters an error"),
     true);
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -23,14 +23,14 @@ static bool VulkanIsMessageSuppressed(const VkDebugUtilsMessengerCallbackDataEXT
     }
 
     // Nothing is suppressed at the moment. The null entry keeps the list valid where a zero-length array is not
-    static const CHAR_T* SuppressedMessageIds[] =
+    static const ANSICHAR* SuppressedMessageIds[] =
     {
         nullptr,
     };
 
-    for (const CHAR_T* SuppressedId : SuppressedMessageIds)
+    for (const ANSICHAR* SuppressedId : SuppressedMessageIds)
     {
-        if (SuppressedId && CString::Strcmp(CallbackData->pMessageIdName, SuppressedId) == 0)
+        if (SuppressedId && FPlatformString::Strcmp(CallbackData->pMessageIdName, SuppressedId) == 0)
         {
             return true;
         }
@@ -46,14 +46,14 @@ static bool VulkanIsMessageSilenced(const VkDebugUtilsMessengerCallbackDataEXT* 
         return false;
     }
 
-    static const CHAR_T* SilencedMessageText[] =
+    static const ANSICHAR* SilencedMessageText[] =
     {
         "Blending is enabled for attachment with format",
     };
 
-    for (const CHAR_T* SilencedText : SilencedMessageText)
+    for (const ANSICHAR* SilencedText : SilencedMessageText)
     {
-        if (CString::Strstr(CallbackData->pMessage, SilencedText) != nullptr)
+        if (FPlatformString::Strstr(CallbackData->pMessage, SilencedText) != nullptr)
         {
             return true;
         }
@@ -72,7 +72,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugLayerCallback(VkDebugUtilsMessa
 
     if (Severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
     {
-        LOG_ERROR("[Vulkan Validation layer] %s", CallbackData->pMessage);
+        LOG_ERROR("[Vulkan Validation layer] %s", StringCast<CHAR_T>(CallbackData->pMessage).Get());
 
         if (CVarBreakOnValidationError.GetValue() && !VulkanIsMessageSuppressed(CallbackData))
         {
@@ -81,7 +81,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugLayerCallback(VkDebugUtilsMessa
     }
     else if (Severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
     {
-        LOG_WARNING("[Vulkan Validation layer] %s", CallbackData->pMessage);
+        LOG_WARNING("[Vulkan Validation layer] %s", StringCast<CHAR_T>(CallbackData->pMessage).Get());
     }
 
     return VK_FALSE;
@@ -98,7 +98,7 @@ void VulkanCreateDebugMessenger(VkInstance Instance, VkDebugUtilsMessengerEXT& O
     }
 
     bool bEnableDebugLayer = false;
-    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
+    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable(TEXT("RHI.EnableDebugLayer")))
     {
         bEnableDebugLayer = CVarEnableDebugLayer->GetBool();
     }
@@ -244,7 +244,7 @@ void FVulkanCrashMarkers::WriteEndMarker(FVulkanCommandBuffer& CmdBuf)
 {
     if (!CurrentRegion.IsEmpty())
     {
-        FString Name = FString::Printf("%s [END]", *CurrentRegion);
+        FString Name = FString::Printf(TEXT("%s [END]"), *CurrentRegion);
         WriteMarkerInternal(CmdBuf, *Name);
     }
 }
@@ -254,11 +254,11 @@ void FVulkanCrashMarkers::WriteDrawMarker(FVulkanCommandBuffer& CmdBuf, const FS
     FString Name;
     if (!CurrentRegion.IsEmpty())
     {
-        Name = FString::Printf("%s > %s #%u", *CurrentRegion, DrawType.Data(), DrawCounter);
+        Name = FString::Printf(TEXT("%s > %s #%u"), *CurrentRegion, DrawType.Data(), DrawCounter);
     }
     else
     {
-        Name = FString::Printf("%s #%u", DrawType.Data(), DrawCounter);
+        Name = FString::Printf(TEXT("%s #%u"), DrawType.Data(), DrawCounter);
     }
 
     DrawCounter++;
@@ -267,7 +267,7 @@ void FVulkanCrashMarkers::WriteDrawMarker(FVulkanCommandBuffer& CmdBuf, const FS
 
 void FVulkanCrashMarkers::WriteSplitMarker(FVulkanCommandBuffer& CmdBuf)
 {
-    WriteMarkerInternal(CmdBuf, "---------- CommandBuffer Split ----------");
+    WriteMarkerInternal(CmdBuf, TEXT("---------- CommandBuffer Split ----------"));
 }
 
 void FVulkanCrashMarkers::WriteMarkerInternal(FVulkanCommandBuffer& CmdBuf, const FStringView& Name)
@@ -308,7 +308,7 @@ void FVulkanCrashMarkers::WriteMarkerInternal(FVulkanCommandBuffer& CmdBuf, cons
 
 const FString& FVulkanCrashMarkers::ResolveHash(uint32 Hash) const
 {
-    static const FString Unknown("???");
+    static const FString Unknown(TEXT("???"));
     
     const uint32* Index = HashToIndex.Find(Hash);
     if (Index && *Index < static_cast<uint32>(StringPool.Size()))
@@ -485,23 +485,23 @@ bool VulkanCheckDeviceLost(VkResult Result)
                         {
                             if (FaultInfo.description[0] != '\0')
                             {
-                                LOG_ERROR("[VulkanRHI]   Description: %s", FaultInfo.description);
+                                LOG_ERROR("[VulkanRHI]   Description: %s", StringCast<CHAR_T>(FaultInfo.description).Get());
                             }
 
                             for (uint32 i = 0; i < FaultCounts.addressInfoCount; i++)
                             {
                                 const VkDeviceFaultAddressInfoEXT& Addr = AddressInfos[i];
 
-                                const CHAR_T* TypeStr = "UNKNOWN";
+                                const CHAR_T* TypeStr = TEXT("UNKNOWN");
                                 switch (Addr.addressType)
                                 {
-                                    case VK_DEVICE_FAULT_ADDRESS_TYPE_NONE_EXT:                         TypeStr = "NONE";                    break;
-                                    case VK_DEVICE_FAULT_ADDRESS_TYPE_READ_INVALID_EXT:                 TypeStr = "READ_INVALID";            break;
-                                    case VK_DEVICE_FAULT_ADDRESS_TYPE_WRITE_INVALID_EXT:                TypeStr = "WRITE_INVALID";           break;
-                                    case VK_DEVICE_FAULT_ADDRESS_TYPE_EXECUTE_INVALID_EXT:              TypeStr = "EXECUTE_INVALID";         break;
-                                    case VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_UNKNOWN_EXT:  TypeStr = "INSTRUCTION_PTR_UNKNOWN"; break;
-                                    case VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_INVALID_EXT:  TypeStr = "INSTRUCTION_PTR_INVALID"; break;
-                                    case VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_FAULT_EXT:    TypeStr = "INSTRUCTION_PTR_FAULT";   break;
+                                    case VK_DEVICE_FAULT_ADDRESS_TYPE_NONE_EXT:                         TypeStr = TEXT("NONE");                    break;
+                                    case VK_DEVICE_FAULT_ADDRESS_TYPE_READ_INVALID_EXT:                 TypeStr = TEXT("READ_INVALID");            break;
+                                    case VK_DEVICE_FAULT_ADDRESS_TYPE_WRITE_INVALID_EXT:                TypeStr = TEXT("WRITE_INVALID");           break;
+                                    case VK_DEVICE_FAULT_ADDRESS_TYPE_EXECUTE_INVALID_EXT:              TypeStr = TEXT("EXECUTE_INVALID");         break;
+                                    case VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_UNKNOWN_EXT:  TypeStr = TEXT("INSTRUCTION_PTR_UNKNOWN"); break;
+                                    case VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_INVALID_EXT:  TypeStr = TEXT("INSTRUCTION_PTR_INVALID"); break;
+                                    case VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_FAULT_EXT:    TypeStr = TEXT("INSTRUCTION_PTR_FAULT");   break;
 
                                     default: break;
                                 }
@@ -514,7 +514,7 @@ bool VulkanCheckDeviceLost(VkResult Result)
                             {
                                 const VkDeviceFaultVendorInfoEXT& Vendor = VendorInfos[i];
                                 LOG_ERROR("[VulkanRHI]   Vendor[%u]: '%s' code=0x%llX data=0x%llX",
-                                    i, Vendor.description, Vendor.vendorFaultCode, Vendor.vendorFaultData);
+                                    i, StringCast<CHAR_T>(Vendor.description).Get(), Vendor.vendorFaultCode, Vendor.vendorFaultData);
                             }
                         }
                     }

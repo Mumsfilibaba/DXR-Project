@@ -43,34 +43,34 @@ static D3D12_UAV_DIMENSION GetUnorderedAccessViewDimension(ED3D12NullDescriptorT
 }
 
 static TAutoConsoleVariable<int32> CVarSamplerDescriptorCacheSize(
-    "D3D12RHI.SamplerDescriptorCacheSize",
-    "Number of entries in the sampler descriptor LRU cache",
+    TEXT("D3D12RHI.SamplerDescriptorCacheSize"),
+    TEXT("Number of entries in the sampler descriptor LRU cache"),
     256);
 
 #if D3D12_ENABLE_DESCRIPTOR_TABLE_VALIDATION
 static TAutoConsoleVariable<int32> CVarValidateDescriptorTables(
-    "D3D12RHI.ValidateDescriptorTables",
-    "When non-zero, logs the (stage, root-parameter, slot, register, SRV view dimension) staged into each online SRV descriptor table. "
-    "Diagnostic aid for tracking stale/mismatched descriptor-table binds (e.g. a Texture2D landing in a StructuredBuffer slot).",
+    TEXT("D3D12RHI.ValidateDescriptorTables"),
+    TEXT("When non-zero, logs the (stage, root-parameter, slot, register, SRV view dimension) staged into each online SRV descriptor table. "
+    "Diagnostic aid for tracking stale/mismatched descriptor-table binds (e.g. a Texture2D landing in a StructuredBuffer slot)."),
     0);
 
 static const CHAR_T* GetSRVDimensionString(D3D12_SRV_DIMENSION Dimension)
 {
     switch (Dimension)
     {
-    case D3D12_SRV_DIMENSION_UNKNOWN:                           return "UNKNOWN";
-    case D3D12_SRV_DIMENSION_BUFFER:                            return "BUFFER";
-    case D3D12_SRV_DIMENSION_TEXTURE1D:                         return "TEXTURE1D";
-    case D3D12_SRV_DIMENSION_TEXTURE1DARRAY:                    return "TEXTURE1DARRAY";
-    case D3D12_SRV_DIMENSION_TEXTURE2D:                         return "TEXTURE2D";
-    case D3D12_SRV_DIMENSION_TEXTURE2DARRAY:                    return "TEXTURE2DARRAY";
-    case D3D12_SRV_DIMENSION_TEXTURE2DMS:                       return "TEXTURE2DMS";
-    case D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY:                  return "TEXTURE2DMSARRAY";
-    case D3D12_SRV_DIMENSION_TEXTURE3D:                         return "TEXTURE3D";
-    case D3D12_SRV_DIMENSION_TEXTURECUBE:                       return "TEXTURECUBE";
-    case D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:                  return "TEXTURECUBEARRAY";
-    case D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE: return "RAYTRACING_AS";
-    default:                                                    return "?";
+    case D3D12_SRV_DIMENSION_UNKNOWN:                           return TEXT("UNKNOWN");
+    case D3D12_SRV_DIMENSION_BUFFER:                            return TEXT("BUFFER");
+    case D3D12_SRV_DIMENSION_TEXTURE1D:                         return TEXT("TEXTURE1D");
+    case D3D12_SRV_DIMENSION_TEXTURE1DARRAY:                    return TEXT("TEXTURE1DARRAY");
+    case D3D12_SRV_DIMENSION_TEXTURE2D:                         return TEXT("TEXTURE2D");
+    case D3D12_SRV_DIMENSION_TEXTURE2DARRAY:                    return TEXT("TEXTURE2DARRAY");
+    case D3D12_SRV_DIMENSION_TEXTURE2DMS:                       return TEXT("TEXTURE2DMS");
+    case D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY:                  return TEXT("TEXTURE2DMSARRAY");
+    case D3D12_SRV_DIMENSION_TEXTURE3D:                         return TEXT("TEXTURE3D");
+    case D3D12_SRV_DIMENSION_TEXTURECUBE:                       return TEXT("TEXTURECUBE");
+    case D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:                  return TEXT("TEXTURECUBEARRAY");
+    case D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE: return TEXT("RAYTRACING_AS");
+    default:                                                    return TEXT("?");
     }
 }
 #endif
@@ -126,14 +126,14 @@ bool FD3D12LocalDescriptorHeap::Realloc()
         Heap = new FD3D12DescriptorHeap(GlobalHeap.GetHeap(), Block->HandleOffset, Block->NumDescriptors);
     #if D3D12_ENABLE_DESCRIPTOR_HEAP_ROLLOVER_LOGGING
         D3D12_INFO("[DescriptorCache] Realloc new block: heap=%s HandleOffset=%u NumDescriptors=%u",
-            bIsSamplerHeap ? "Sampler" : "Resource", Block->HandleOffset, Block->NumDescriptors);
+            bIsSamplerHeap ? TEXT("Sampler") : TEXT("Resource"), Block->HandleOffset, Block->NumDescriptors);
     #endif
         return true;
     }
     else
     {
         D3D12_WARNING("[DescriptorCache] Realloc FAILED (no free block; forces command-list split): heap=%s NumBlocks=%u",
-            bIsSamplerHeap ? "Sampler" : "Resource", GlobalHeap.GetNumBlocks());
+            bIsSamplerHeap ? TEXT("Sampler") : TEXT("Resource"), GlobalHeap.GetNumBlocks());
         return false;
     }
 }

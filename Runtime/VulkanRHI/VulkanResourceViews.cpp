@@ -665,7 +665,7 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
 
             if (!TextureDebugName.IsEmpty())
             {
-                SetDebugName(TextureDebugName + " ImageView SRV");
+                SetDebugName(TextureDebugName + TEXT(" ImageView SRV"));
             }
 
             RegisterToResource(VulkanTexture);
@@ -947,7 +947,7 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
             VulkanTexture->GetDebugName(TextureDebugName);
             if (!TextureDebugName.IsEmpty())
             {
-                SetDebugName(TextureDebugName + " ImageView UAV");
+                SetDebugName(TextureDebugName + TEXT(" ImageView UAV"));
             }
 
             RegisterToResource(VulkanTexture);
@@ -1124,7 +1124,7 @@ bool FVulkanRenderTargetViewRHI::Initialize(FRHITexture* InTexture, const FRHIRe
 
     if (!TextureDebugName.IsEmpty())
     {
-        SetDebugName(TextureDebugName + " ImageView RTV");
+        SetDebugName(TextureDebugName + TEXT(" ImageView RTV"));
     }
 
     RegisterToResource(VulkanTexture);
@@ -1284,7 +1284,7 @@ bool FVulkanDepthStencilViewRHI::Initialize(FRHITexture* InTexture, const FRHIDe
     
     if (!TextureDebugName.IsEmpty())
     {
-        SetDebugName(TextureDebugName + " ImageView DSV");
+        SetDebugName(TextureDebugName + TEXT(" ImageView DSV"));
     }
 
     RegisterToResource(VulkanTexture);

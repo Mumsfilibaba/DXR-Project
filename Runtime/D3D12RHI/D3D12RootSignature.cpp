@@ -76,13 +76,13 @@ MAYBE_UNUSED static const CHAR_T* GetRootSignatureTypeName(ERootSignatureType Ty
 {
     switch (Type)
     {
-    case ERootSignatureType::Graphics:         return "Graphics";
-    case ERootSignatureType::Compute:          return "Compute";
-    case ERootSignatureType::RayTracingGlobal: return "RayTracingGlobal";
-    case ERootSignatureType::RayTracingLocal:  return "RayTracingLocal";
+    case ERootSignatureType::Graphics:         return TEXT("Graphics");
+    case ERootSignatureType::Compute:          return TEXT("Compute");
+    case ERootSignatureType::RayTracingGlobal: return TEXT("RayTracingGlobal");
+    case ERootSignatureType::RayTracingLocal:  return TEXT("RayTracingLocal");
 
     default:
-        return "Unknown";
+        return TEXT("Unknown");
     }
 }
 

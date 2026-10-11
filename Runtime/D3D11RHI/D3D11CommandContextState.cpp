@@ -86,7 +86,7 @@ bool FD3D11CommandContextState::Initialize()
             return false;
         }
 
-        D3D11SetDebugName(CommonState.ShaderConstantsBuffers[Index].Get(), Index == EShaderConstantsPipeline::Graphics ? "Graphics ShaderConstants" : "Compute ShaderConstants");
+        D3D11SetDebugName(CommonState.ShaderConstantsBuffers[Index].Get(), Index == EShaderConstantsPipeline::Graphics ? TEXT("Graphics ShaderConstants") : TEXT("Compute ShaderConstants"));
     }
 
     ResetState();

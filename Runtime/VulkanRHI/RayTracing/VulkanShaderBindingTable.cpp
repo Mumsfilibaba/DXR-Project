@@ -126,7 +126,7 @@ void FVulkanShaderBindingTable::PopulateRecord(uint8* OutRecord, ERayTracingShad
     else
     {
         VULKAN_ERROR("[FVulkanShaderBindingTable]: Failed to resolve shader-group handle for record kind '%s' index %u (export name '%s'). The record would be written with a zeroed handle and its shader would never execute; verify the pipeline registered a group for this shader.",
-            ToString(RecordKind), RecordIndex, ExportName.IsEmpty() ? "<empty>" : *ExportName);
+            ToString(RecordKind), RecordIndex, ExportName.IsEmpty() ? TEXT("<empty>") : *ExportName);
     }
 
     if (!Bindings || NumBindings == 0)

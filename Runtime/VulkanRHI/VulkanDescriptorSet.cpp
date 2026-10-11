@@ -12,43 +12,43 @@
 #include "VulkanRHI/VulkanConstants.h"
 
 static TAutoConsoleVariable<int32> CVarVulkanMaxDescriptorSetsPerPool(
-    "VulkanRHI.MaxDescriptorSetsPerPool",
-    "The number of DescriptorSets that can be created from a DescriptorPool",
+    TEXT("VulkanRHI.MaxDescriptorSetsPerPool"),
+    TEXT("The number of DescriptorSets that can be created from a DescriptorPool"),
     32);
 
 static TAutoConsoleVariable<int32> CVarVulkanTransientDescriptorSetsPerPool(
-    "VulkanRHI.TransientDescriptorSetsPerPool",
-    "The number of DescriptorSets per pool when using transient (non-cached) descriptor allocation",
+    TEXT("VulkanRHI.TransientDescriptorSetsPerPool"),
+    TEXT("The number of DescriptorSets per pool when using transient (non-cached) descriptor allocation"),
     256);
 
 static TAutoConsoleVariable<bool> CVarVulkanEnableBindless(
-    "VulkanRHI.EnableBindless",
-    "When enabled, allocates a global bindless descriptor set (plus a separate sampler set) which is "
+    TEXT("VulkanRHI.EnableBindless"),
+    TEXT("When enabled, allocates a global bindless descriptor set (plus a separate sampler set) which is "
     "appended to PSOs whose shaders reference the heaps. Has no effect when GVulkanSupportsBindless is "
     "false (requires the Vulkan 1.2 descriptor indexing sub-features and a device that allows enough "
-    "update-after-bind descriptors).",
+    "update-after-bind descriptors)."),
     true);
 
 #if VULKAN_ENABLE_SPLIT_BINDLESS_HEAP
 static TAutoConsoleVariable<bool> CVarVulkanForceSplitBindlessHeap(
-    "VulkanRHI.ForceSplitBindlessHeap",
-    "Forces the per-descriptor-type bindless heap layout even when VK_EXT_mutable_descriptor_type is "
+    TEXT("VulkanRHI.ForceSplitBindlessHeap"),
+    TEXT("Forces the per-descriptor-type bindless heap layout even when VK_EXT_mutable_descriptor_type is "
     "available, so the fallback path can be exercised on hardware that supports the extension. Read "
-    "once during device creation.",
+    "once during device creation."),
     false);
 #endif
 
 static TAutoConsoleVariable<int32> CVarVulkanNumBindlessResourceDescriptors(
-    "VulkanRHI.NumBindlessResourceDescriptors",
-    "Number of slots reserved in the global bindless resource descriptor set (sampled images / storage images / uniform buffers / storage "
+    TEXT("VulkanRHI.NumBindlessResourceDescriptors"),
+    TEXT("Number of slots reserved in the global bindless resource descriptor set (sampled images / storage images / uniform buffers / storage "
     "buffers, aliased into one binding via VK_EXT_mutable_descriptor_type or spread over one binding per type). Default mirrors D3D12 to "
-    "keep the cross-RHI budget aligned.",
+    "keep the cross-RHI budget aligned."),
     100000);
 
 static TAutoConsoleVariable<int32> CVarVulkanNumBindlessSamplerDescriptors(
-    "VulkanRHI.NumBindlessSamplerDescriptors",
-    "Number of slots reserved in the global bindless sampler descriptor set. Default mirrors "
-    "D3D12 to keep the cross-RHI budget aligned.",
+    TEXT("VulkanRHI.NumBindlessSamplerDescriptors"),
+    TEXT("Number of slots reserved in the global bindless sampler descriptor set. Default mirrors "
+    "D3D12 to keep the cross-RHI budget aligned."),
     2048);
 
 #if VULKAN_VALIDATE_NO_NULL_DESCRIPTORS
@@ -56,14 +56,14 @@ static const CHAR_T* GetDescriptorTypeName(VkDescriptorType Type)
 {
     switch (Type)
     {
-        case VK_DESCRIPTOR_TYPE_SAMPLER:                return "SAMPLER";
-        case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:          return "SAMPLED_IMAGE";
-        case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:          return "STORAGE_IMAGE";
-        case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:         return "UNIFORM_BUFFER";
-        case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:         return "STORAGE_BUFFER";
-        case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC: return "UNIFORM_BUFFER_DYNAMIC";
-        case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC: return "STORAGE_BUFFER_DYNAMIC";
-        default:                                        return "UNKNOWN";
+        case VK_DESCRIPTOR_TYPE_SAMPLER:                return TEXT("SAMPLER");
+        case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:          return TEXT("SAMPLED_IMAGE");
+        case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:          return TEXT("STORAGE_IMAGE");
+        case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:         return TEXT("UNIFORM_BUFFER");
+        case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:         return TEXT("STORAGE_BUFFER");
+        case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC: return TEXT("UNIFORM_BUFFER_DYNAMIC");
+        case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC: return TEXT("STORAGE_BUFFER_DYNAMIC");
+        default:                                        return TEXT("UNKNOWN");
     }
 }
 #endif
@@ -659,7 +659,7 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
         #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
             const CHAR_T* BindingName = Layout->GetBindingDebugName(Index, BindIdx);
         #else
-            const CHAR_T* BindingName = "";
+            const CHAR_T* BindingName = TEXT("");
         #endif
 
             if (WriteInfo.pBufferInfo)
@@ -1538,7 +1538,7 @@ bool FVulkanBindlessDescriptorManager::Initialize()
     Mode = SelectedMode;
 
     VULKAN_INFO("Bindless descriptor manager initialized: Layout=%s Resources=%u Samplers=%u (runtime set=%u)",
-        (Mode == EVulkanBindlessMode::Mutable) ? "Mutable" : "Split", ResourceCapacity, SamplerCapacity, VULKAN_BINDLESS_RUNTIME_SET_INDEX);
+        (Mode == EVulkanBindlessMode::Mutable) ? TEXT("Mutable") : TEXT("Split"), ResourceCapacity, SamplerCapacity, VULKAN_BINDLESS_RUNTIME_SET_INDEX);
 
     return true;
 }

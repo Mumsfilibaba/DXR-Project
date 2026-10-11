@@ -7,14 +7,14 @@
 #include "D3D12RHI/D3D12Stats.h"
 
 static TAutoConsoleVariable<int32> CVarResidencyDebugBudgetMB(
-    "D3D12RHI.ResidencyDebugBudgetMB",
-    "Override residency budget in MB for debugging (0 = use actual DXGI budget)",
+    TEXT("D3D12RHI.ResidencyDebugBudgetMB"),
+    TEXT("Override residency budget in MB for debugging (0 = use actual DXGI budget)"),
     0);
 
 #if D3D12_ENABLE_RESIDENCY_LOGGING
 static TAutoConsoleVariable<bool> CVarLogResidencyEvents(
-    "D3D12RHI.LogResidencyEvents",
-    "Log residency events such as evictions and make-resident calls",
+    TEXT("D3D12RHI.LogResidencyEvents"),
+    TEXT("Log residency events such as evictions and make-resident calls"),
     false);
 #endif
 
@@ -168,7 +168,7 @@ FD3D12ResidencyManager::FD3D12ResidencyManager(FD3D12Device* InDevice, bool bEna
 #endif
     {
         PagingWorker = new FD3D12PagingWorker(Device->GetD3D12Device());
-        if (!PagingWorker->Initialize("D3D12 Paging Worker"))
+        if (!PagingWorker->Initialize(TEXT("D3D12 Paging Worker")))
         {
             LOG_ERROR("[FD3D12ResidencyManager] Failed to initialize paging worker");
             delete PagingWorker;

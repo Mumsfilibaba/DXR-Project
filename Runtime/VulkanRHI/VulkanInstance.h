@@ -6,8 +6,8 @@
 
 struct FVulkanInstanceCreateInfo
 {
-    TArray<const CHAR_T*>                        RequiredLayerNames;
-    TArray<const CHAR_T*>                        OptionalLayerNames;
+    TArray<const ANSICHAR*>                      RequiredLayerNames;
+    TArray<const ANSICHAR*>                      OptionalLayerNames;
     TArray<TUniquePtr<FVulkanInstanceExtension>> Extensions;
 };
 
@@ -20,12 +20,12 @@ public:
     bool Initialize(FVulkanInstanceCreateInfo& CreateInfo);
     void Release();
 
-    bool IsLayerEnabled(const FString& LayerName)
+    bool IsLayerEnabled(const FAnsiString& LayerName)
     {
         return LayerNames.Find(LayerName) != nullptr;
     }
 
-    bool IsExtensionEnabled(const FString& ExtensionName)
+    bool IsExtensionEnabled(const FAnsiString& ExtensionName)
     {
         return ExtensionNames.Find(ExtensionName) != nullptr;
     }
@@ -38,6 +38,6 @@ public:
 private:
     void*         DriverHandle;  
     VkInstance    Instance;
-    TSet<FString> ExtensionNames;
-    TSet<FString> LayerNames;
+    TSet<FAnsiString> ExtensionNames;
+    TSet<FAnsiString> LayerNames;
 };

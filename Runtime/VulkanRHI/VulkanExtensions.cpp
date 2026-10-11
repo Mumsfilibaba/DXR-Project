@@ -7,8 +7,8 @@
 #include <vulkan/vulkan_beta.h>
 
 static TAutoConsoleVariable<bool> CVarVulkanDisableNullDescriptors(
-    "VulkanRHI.DisableNullDescriptors",
-    "Do not enable the nullDescriptor feature, so unbound descriptors use the fallback null buffers and images",
+    TEXT("VulkanRHI.DisableNullDescriptors"),
+    TEXT("Do not enable the nullDescriptor feature, so unbound descriptors use the fallback null buffers and images"),
     false);
 
 // ---- Complex instance extension classes ----
@@ -30,7 +30,7 @@ public:
         }
 
         bool bEnableSynchronizationValidation = false;
-        if (IConsoleVariable* Var = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.EnableSynchronizationValidation"))
+        if (IConsoleVariable* Var = FConsoleManager::Get().FindConsoleVariable(TEXT("VulkanRHI.EnableSynchronizationValidation")))
         {
             bEnableSynchronizationValidation = Var->GetBool();
         }
@@ -423,10 +423,10 @@ public:
         }
 
         VULKAN_INFO("Robustness: robustBufferAccess=%s, nullDescriptor=%s, robustBufferAccess2=%s, robustImageAccess2=%s",
-            GVulkanRobustBufferAccessEnabled ? "ON" : "OFF",
-            GVulkanSupportsNullDescriptors   ? "ON" : "OFF",
-            (AvailableFeatures.robustBufferAccess2 && GVulkanRobustBufferAccessEnabled) ? "ON" : "OFF",
-            AvailableFeatures.robustImageAccess2 ? "ON" : "OFF");
+            GVulkanRobustBufferAccessEnabled ? TEXT("ON") : TEXT("OFF"),
+            GVulkanSupportsNullDescriptors   ? TEXT("ON") : TEXT("OFF"),
+            (AvailableFeatures.robustBufferAccess2 && GVulkanRobustBufferAccessEnabled) ? TEXT("ON") : TEXT("OFF"),
+            AvailableFeatures.robustImageAccess2 ? TEXT("ON") : TEXT("OFF"));
 
         if (!GVulkanSupportsNullDescriptors)
         {
@@ -966,14 +966,14 @@ void FVulkanInstanceExtension::RegisterExtensions(TArray<TUniquePtr<FVulkanInsta
 #if VK_EXT_validation_features && VULKAN_ENABLE_GPU_VALIDATION
     {
         bool bEnableDebugLayer = false;
-        if (IConsoleVariable* Var = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
+        if (IConsoleVariable* Var = FConsoleManager::Get().FindConsoleVariable(TEXT("RHI.EnableDebugLayer")))
         {
             bEnableDebugLayer = Var->GetBool();
         }
 
         if (bEnableDebugLayer)
         {
-            if (IConsoleVariable* Var = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.EnableGPUAssistedValidation"))
+            if (IConsoleVariable* Var = FConsoleManager::Get().FindConsoleVariable(TEXT("VulkanRHI.EnableGPUAssistedValidation")))
             {
                 GVulkanGPUAssistedValidationEnabled = Var->GetBool();
             }

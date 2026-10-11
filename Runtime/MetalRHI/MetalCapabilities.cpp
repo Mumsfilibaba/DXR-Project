@@ -4,8 +4,8 @@
 #include "MetalRHI/MetalCapabilities.h"
 
 static FAutoConsoleCommand CCmdMetalDumpCapsCommand(
-    "MetalRHI.DumpCaps",
-    "Logs the backend-native Metal capability table (all GMetal* globals)",
+    TEXT("MetalRHI.DumpCaps"),
+    TEXT("Logs the backend-native Metal capability table (all GMetal* globals)"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         DumpMetalCapabilities();
@@ -40,20 +40,20 @@ static const CHAR_T* GetGPUFamilyName(MTLGPUFamily Family)
 {
     switch (Family)
     {
-        case MTLGPUFamilyApple9:  return "Apple9";
-        case MTLGPUFamilyApple8:  return "Apple8";
-        case MTLGPUFamilyApple7:  return "Apple7";
-        case MTLGPUFamilyApple6:  return "Apple6";
-        case MTLGPUFamilyApple5:  return "Apple5";
-        case MTLGPUFamilyApple4:  return "Apple4";
-        case MTLGPUFamilyApple3:  return "Apple3";
-        case MTLGPUFamilyApple2:  return "Apple2";
-        case MTLGPUFamilyApple1:  return "Apple1";
-        case MTLGPUFamilyMac2:    return "Mac2";
-        case MTLGPUFamilyCommon3: return "Common3";
-        case MTLGPUFamilyCommon2: return "Common2";
-        case MTLGPUFamilyCommon1: return "Common1";
-        default:                  return "Unknown";
+        case MTLGPUFamilyApple9:  return TEXT("Apple9");
+        case MTLGPUFamilyApple8:  return TEXT("Apple8");
+        case MTLGPUFamilyApple7:  return TEXT("Apple7");
+        case MTLGPUFamilyApple6:  return TEXT("Apple6");
+        case MTLGPUFamilyApple5:  return TEXT("Apple5");
+        case MTLGPUFamilyApple4:  return TEXT("Apple4");
+        case MTLGPUFamilyApple3:  return TEXT("Apple3");
+        case MTLGPUFamilyApple2:  return TEXT("Apple2");
+        case MTLGPUFamilyApple1:  return TEXT("Apple1");
+        case MTLGPUFamilyMac2:    return TEXT("Mac2");
+        case MTLGPUFamilyCommon3: return TEXT("Common3");
+        case MTLGPUFamilyCommon2: return TEXT("Common2");
+        case MTLGPUFamilyCommon1: return TEXT("Common1");
+        default:                  return TEXT("Unknown");
     }
 }
 
@@ -61,27 +61,27 @@ static const CHAR_T* GetRayTracingSupportName()
 {
     if (!GMetalFeatures.bRayTracing)
     {
-        return "No";
+        return TEXT("No");
     }
 
     if (GMetalFeatures.bHardwareRayTracing)
     {
-        return "Hardware, compute and render";
+        return TEXT("Hardware, compute and render");
     }
 
-    return GMetalFeatures.bRayTracingFromRender ? "Compute emulation, compute and render" : "Compute emulation, compute only";
+    return GMetalFeatures.bRayTracingFromRender ? TEXT("Compute emulation, compute and render") : TEXT("Compute emulation, compute only");
 }
 
 void DumpMetalCapabilities()
 {
     const auto YesNo = [](bool bValue) -> const CHAR_T*
     {
-        return bValue ? "Yes" : "No";
+        return bValue ? TEXT("Yes") : TEXT("No");
     };
 
     LOG_INFO("[MetalRHI] --------------------------- Metal Capabilities (native) ---------------------------");
-    LOG_INFO("[MetalRHI]   Highest GPU Family                     : %s%s", GetGPUFamilyName(GMetalHighestGPUFamily), GMetalFeatures.bMetal3 ? " (Metal3)" : "");
-    LOG_INFO("[MetalRHI]   Argument Buffers Tier                  : %s", GMetalFeatures.ArgumentBuffersTier == MTLArgumentBuffersTier2 ? "Tier2" : "Tier1");
+    LOG_INFO("[MetalRHI]   Highest GPU Family                     : %s%s", GetGPUFamilyName(GMetalHighestGPUFamily), GMetalFeatures.bMetal3 ? TEXT(" (Metal3)") : TEXT(""));
+    LOG_INFO("[MetalRHI]   Argument Buffers Tier                  : %s", GMetalFeatures.ArgumentBuffersTier == MTLArgumentBuffersTier2 ? TEXT("Tier2") : TEXT("Tier1"));
     LOG_INFO("[MetalRHI]   Read-Write Texture Tier                : %d", static_cast<int32>(GMetalReadWriteTextureTier));
     LOG_INFO("[MetalRHI]   Apple GPU                              : %s", YesNo(GMetalFeatures.bAppleGPU));
     LOG_INFO("[MetalRHI]   Unified Memory                         : %s", YesNo(GMetalFeatures.bUnifiedMemory));

@@ -116,7 +116,7 @@ void FD3D11CommandContext::QueryTimestamp(FRHIQuery* Query)
             return;
         }
 
-        NewDisjointQuery->SetDebugName("Timestamp Disjoint Query");
+        NewDisjointQuery->SetDebugName(TEXT("Timestamp Disjoint Query"));
         NewDisjointQuery->Begin(GetD3D11Context());
         TimestampDisjointQuery = NewDisjointQuery;
     }

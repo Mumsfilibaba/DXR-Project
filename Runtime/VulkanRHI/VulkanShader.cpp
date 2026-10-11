@@ -104,6 +104,7 @@ bool FVulkanShader::Initialize(const FShaderCodeView& InCode)
         return false;
     }
 
+    AnsiEntryPointName = StringCast<ANSICHAR>(EntryPointName).ToString();
     return BuildShaderInfo(InCode);
 }
 
@@ -220,7 +221,7 @@ bool FVulkanShader::PatchShaderBindings(FSpirvArray& OutSpirv, FVulkanPipelineLa
         if (ShaderVisibility != EShaderVisibility::RayTracing && (!bFound || RemappedBinding != Binding.BindingIndex))
         {
             VULKAN_ERROR_CRITICAL("Binding %u (register %u, %s) did not resolve to its own layout slot (found=%s, remapped=%u)",
-                Binding.BindingIndex, Binding.OriginalBindingIndex, ToString(Binding.BindingType), bFound ? "yes" : "no", RemappedBinding);
+                Binding.BindingIndex, Binding.OriginalBindingIndex, ToString(Binding.BindingType), bFound ? TEXT("yes") : TEXT("no"), RemappedBinding);
             return false;
         }
 

@@ -6,36 +6,36 @@
 #include "D3D12RHI/D3D12DeviceDebug.h"
 
 static TAutoConsoleVariable<int32> CVarSwapChainBackBufferCount(
-    "D3D12RHI.SwapChain.BackBufferCount",
-    "Number of swap chain back buffers",
+    TEXT("D3D12RHI.SwapChain.BackBufferCount"),
+    TEXT("Number of swap chain back buffers"),
     D3D12_NUM_BACK_BUFFERS);
 
 static TAutoConsoleVariable<int32> CVarSyncInterval(
-    "D3D12RHI.SwapChain.SyncInterval",
-    "Override sync interval for Present (-1 = use VSync setting, 0-4 = explicit interval)",
+    TEXT("D3D12RHI.SwapChain.SyncInterval"),
+    TEXT("Override sync interval for Present (-1 = use VSync setting, 0-4 = explicit interval)"),
     -1);
 
 static TAutoConsoleVariable<int32> CVarMaxFrameLatency(
-    "D3D12RHI.SwapChain.MaxFrameLatency",
-    "Maximum frame latency for the swap chain (-1 = use backbuffer count)",
+    TEXT("D3D12RHI.SwapChain.MaxFrameLatency"),
+    TEXT("Maximum frame latency for the swap chain (-1 = use backbuffer count)"),
     -1);
 
 static TAutoConsoleVariable<int32> CVarD3D12DefaultBackBufferFormat(
-    "D3D12RHI.DefaultBackBufferFormat",
-    "Default back-buffer format used when ColorFormat is Unknown. "
+    TEXT("D3D12RHI.DefaultBackBufferFormat"),
+    TEXT("Default back-buffer format used when ColorFormat is Unknown. "
     "0=B8G8R8A8_Unorm, "
     "1=R8G8B8A8_Unorm (default), "
     "2=R10G10B10A2_Unorm, "
-    "3=R16G16B16A16_Float.",
+    "3=R16G16B16A16_Float."),
     1); // D3D12 default: R8G8B8A8_Unorm
 
 static TAutoConsoleVariable<int32> CVarD3D12DefaultBackBufferColorSpace(
-    "D3D12RHI.DefaultBackBufferColorSpace",
-    "Default back-buffer color space used when ColorSpace is Unknown. "
+    TEXT("D3D12RHI.DefaultBackBufferColorSpace"),
+    TEXT("Default back-buffer color space used when ColorSpace is Unknown. "
     "0=RGB_Full_G22_None_P709 / sRGB (default), "
     "1=RGB_Full_G10_None_P709 / scRGB, "
     "2=RGB_Full_G2084_None_P2020 / HDR10, "
-    "3=RGB_Full_G22_None_P2020.",
+    "3=RGB_Full_G22_None_P2020."),
     0);
 
 EFormat FD3D12SwapChainRHI::GetDefaultBackBufferFormat()
@@ -339,7 +339,7 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
     else
     {
         D3D12_ERROR_CRITICAL("[FD3D12SwapChainRHI]: FAILED to create SwapChain (Result=0x%08X, Composition=%s, %ux%u, Format=%s, BufferCount=%u, BufferUsage=0x%08X, Flags=0x%08X, Hwnd=%p)",
-            static_cast<uint32>(Result), bUseComposition ? "Yes" : "No", SwapChainDesc.Width, SwapChainDesc.Height,
+            static_cast<uint32>(Result), bUseComposition ? TEXT("Yes") : TEXT("No"), SwapChainDesc.Width, SwapChainDesc.Height,
             ToString(ResolvedFormat), SwapChainDesc.BufferCount, static_cast<uint32>(SwapChainDesc.BufferUsage),
             static_cast<uint32>(SwapChainDesc.Flags), Hwnd);
         return false;
@@ -393,8 +393,8 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
     }
 
     D3D12_INFO("[FD3D12SwapChainRHI]: Created SwapChain (%s, %s, BufferCount=%u, AlphaMode=%s, Composition=%s, AllowTearing=%s)",
-        ToString(ResolvedFormat), ToString(ResolvedColorSpace), NumSwapChainBuffers, bUseComposition ? "Premultiplied" : "Ignore",
-        bUseComposition ? "Yes" : "No", (Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING) ? "Yes" : "No");
+        ToString(ResolvedFormat), ToString(ResolvedColorSpace), NumSwapChainBuffers, bUseComposition ? TEXT("Premultiplied") : TEXT("Ignore"),
+        bUseComposition ? TEXT("Yes") : TEXT("No"), (Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING) ? TEXT("Yes") : TEXT("No"));
 
     return true;
 }
@@ -741,7 +741,7 @@ void FD3D12SwapChainRHI::SwapResources(uint32 Index)
 
 bool FD3D12SwapChainRHI::Present(bool bVerticalSync)
 {
-    TRACE_SCOPE("D3D12 SwapChain Present");
+    TRACE_SCOPE(TEXT("D3D12 SwapChain Present"));
 
     const int32  SyncIntervalOverride = CVarSyncInterval.GetValue();
     const uint32 SyncInterval         = (SyncIntervalOverride >= 0) ? Math::Clamp<uint32>(SyncIntervalOverride, 0, 4) : (bVerticalSync ? 1 : 0);
@@ -754,17 +754,17 @@ bool FD3D12SwapChainRHI::Present(bool bVerticalSync)
 
     HRESULT Result;
     {
-        TRACE_SCOPE("D3D12 DXGI Present");
+        TRACE_SCOPE(TEXT("D3D12 DXGI Present"));
 
         Result = SwapChain->Present(SyncInterval, PresentFlags);
-        D3D12Debug::CheckDeviceRemoved(GetDevice(), Result, "Present");
+        D3D12Debug::CheckDeviceRemoved(GetDevice(), Result, TEXT("Present"));
     }
 
     if (SUCCEEDED(Result))
     {
         if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
         {
-            TRACE_SCOPE("D3D12 SwapChain Latency Wait");
+            TRACE_SCOPE(TEXT("D3D12 SwapChain Latency Wait"));
 
             const DWORD WaitResult = WaitForSingleObjectEx(SwapChainWaitableObject, INFINITE, TRUE);
             if (WaitResult != WAIT_OBJECT_0)
@@ -774,7 +774,7 @@ bool FD3D12SwapChainRHI::Present(bool bVerticalSync)
         }
 
         {
-            TRACE_SCOPE("D3D12 SwapChain Apply Settings");
+            TRACE_SCOPE(TEXT("D3D12 SwapChain Apply Settings"));
             ApplySettingsChanges();
         }
         return true;
@@ -936,7 +936,7 @@ bool FD3D12SwapChainRHI::RetrieveBackBuffers()
 
         BackBufferResource->SetResourceStateMode(ED3D12ResourceStateMode::ManualState);
         BackBufferResource->DisableDeferredRelease();
-        BackBufferResource->SetDebugName(FString::Printf("BackBuffer[%u]", Index));
+        BackBufferResource->SetDebugName(FString::Printf(TEXT("BackBuffer[%u]"), Index));
 
         BackBuffers[Index].Resource = BackBufferResource;
     }

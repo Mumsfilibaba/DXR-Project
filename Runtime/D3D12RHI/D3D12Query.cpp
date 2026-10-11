@@ -135,7 +135,7 @@ void FD3D12QueryHeap::SetDebugName(const FString& InName)
 
     if (ReadbackResource.IsValid())
     {
-        const FString ResourceName = InName + "ReadBack Resource";
+        const FString ResourceName = InName + TEXT("ReadBack Resource");
         ReadbackResource->SetDebugName(ResourceName);
     }
 }
@@ -203,7 +203,7 @@ FD3D12QueryHeap* FD3D12QueryHeapManager::ObtainHeap()
             return nullptr;
         }
 
-        NewHeap->SetDebugName(FString::Printf("QueryHeap [%d]", Index));
+        NewHeap->SetDebugName(FString::Printf(TEXT("QueryHeap [%d]"), Index));
         return NewHeap;
     });
 }

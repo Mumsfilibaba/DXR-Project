@@ -33,7 +33,7 @@ FMetalUploadBatch::FMetalUploadBatch(FMetalDevice* InDevice)
         STAT_ADD(STAT_Metal_EncodersOpen, 1);
 
         BlitEncoder.label = @"Upload";
-        Commands->Breadcrumbs.Push("Upload");
+        Commands->Breadcrumbs.Push(TEXT("Upload"));
     }
 
     METAL_ERROR_COND(BlitEncoder != nil, "Failed to create a blit encoder for an upload batch");

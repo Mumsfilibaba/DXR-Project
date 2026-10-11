@@ -7,9 +7,9 @@
 #if D3D12_ENABLE_DESCRIPTOR_HEAP_ROLLOVER_LOGGING
 static void LogDescriptorHeapRollover(const FString& PSOName, bool bCommandListSplit, uint32 NumResourceDescriptors)
 {
-    const CHAR_T* PSONameStr = PSOName.Length() > 0 ? PSOName.Data() : "<unnamed>";
+    const CHAR_T* PSONameStr = PSOName.Length() > 0 ? PSOName.Data() : TEXT("<unnamed>");
     D3D12_INFO("[DescriptorHeapRollover] %s (PSO: '%s', RequestedDescriptors: %u)",
-        bCommandListSplit ? "CommandList split" : "Realloc-only rollover", PSONameStr, NumResourceDescriptors);
+        bCommandListSplit ? TEXT("CommandList split") : TEXT("Realloc-only rollover"), PSONameStr, NumResourceDescriptors);
 }
 #endif
 
@@ -278,7 +278,7 @@ bool FD3D12CommandContextState::ResetStreamOutputFilledSizes()
             return false;
         }
 
-        GraphicsState.StreamOutputFilledSizeBuffer->SetDebugName("StreamOutput FilledSizes");
+        GraphicsState.StreamOutputFilledSizeBuffer->SetDebugName(TEXT("StreamOutput FilledSizes"));
     }
 
     FD3D12ResourceStorage ResourceStorage(GetDevice());
@@ -327,7 +327,7 @@ void FD3D12CommandContextState::BindComputeState()
         FString PSODebugName;
         ComputeState.PipelineState->GetDebugName(PSODebugName);
         
-        const CHAR_T* PSONameStr = PSODebugName.Length() > 0 ? PSODebugName.Data() : "<unnamed>";
+        const CHAR_T* PSONameStr = PSODebugName.Length() > 0 ? PSODebugName.Data() : TEXT("<unnamed>");
         D3D12_INFO("[PSO-BIND] Compute dispatch PSO=%p ('%s')", reinterpret_cast<void*>(ComputeState.PipelineState.Get()), PSONameStr);
     }
 #endif
@@ -1509,7 +1509,7 @@ void FD3D12CommandContextState::SetStencilRef(uint32 InStencilRef)
 
             if (PSOName.IsEmpty())
             {
-                PSOName = "<unnamed>";
+                PSOName = TEXT("<unnamed>");
             }
 
             D3D12_WARNING("[FD3D12CommandContextState] SetStencilRef(%u) called but bound PSO '%s' overrides the OM stencil ref per-pixel via SV_StencilRef. This value will be ignored.", InStencilRef, *PSOName);
@@ -1829,7 +1829,7 @@ void FD3D12CommandContextState::InternalSetRootSignature(FD3D12RootSignature* In
     }
 
 #if D3D12_ENABLE_PIPELINE_BIND_LOGGING
-    D3D12_INFO("[PSO-BIND] Switched %s root signature", bIsCompute ? "compute" : "graphics");
+    D3D12_INFO("[PSO-BIND] Switched %s root signature", bIsCompute ? TEXT("compute") : TEXT("graphics"));
 #endif
 
     CommonState.ConstantBufferCache.DirtyDescriptorTableAll();

@@ -7,19 +7,19 @@
 #include "Core/Threading/ScopedLock.h"
 
 static TAutoConsoleVariable<bool> CVarEnableResidencyEviction(
-    "MetalRHI.EnableResidencyEviction",
-    "Removes the least recently used Private heaps and standalone resources from the residency set while the resident bytes exceed the budget",
+    TEXT("MetalRHI.EnableResidencyEviction"),
+    TEXT("Removes the least recently used Private heaps and standalone resources from the residency set while the resident bytes exceed the budget"),
     true);
 
 static TAutoConsoleVariable<int32> CVarResidencyBudgetMB(
-    "MetalRHI.ResidencyBudgetMB",
-    "Residency budget in megabytes, or the device's recommendedMaxWorkingSetSize when zero",
+    TEXT("MetalRHI.ResidencyBudgetMB"),
+    TEXT("Residency budget in megabytes, or the device's recommendedMaxWorkingSetSize when zero"),
     0);
 
 #if METAL_ENABLE_RESIDENCY_LOGGING
 static TAutoConsoleVariable<bool> CVarLogResidencyEvents(
-    "MetalRHI.LogResidencyEvents",
-    "Log residency events: evictions, restores of evicted entries, and a summary when the budget forces evictions",
+    TEXT("MetalRHI.LogResidencyEvents"),
+    TEXT("Log residency events: evictions, restores of evicted entries, and a summary when the budget forces evictions"),
     false);
 #endif
 
@@ -287,7 +287,7 @@ void FMetalResidencyManager::Restore(FMetalResidencyEntry& Entry)
     #if METAL_ENABLE_RESIDENCY_LOGGING
         if (CVarLogResidencyEvents.GetValue())
         {
-            METAL_INFO("[ResidencyManager] Restore: %s Size=%llu bytes", Entry.bIsHeap ? "heap" : "resource", Entry.SizeInBytes);
+            METAL_INFO("[ResidencyManager] Restore: %s Size=%llu bytes", Entry.bIsHeap ? TEXT("heap") : TEXT("resource"), Entry.SizeInBytes);
         }
     #endif
     }
@@ -336,7 +336,7 @@ void FMetalResidencyManager::Evict(FMetalResidencyEntry& Entry)
     if (CVarLogResidencyEvents.GetValue())
     {
         METAL_INFO("[ResidencyManager] Evict: %s Size=%llu bytes (Resident=%llu Budget=%llu)",
-            Entry.bIsHeap ? "heap" : "resource", Entry.SizeInBytes, static_cast<uint64>(ResidentBytes.Load()), GetBudget());
+            Entry.bIsHeap ? TEXT("heap") : TEXT("resource"), Entry.SizeInBytes, static_cast<uint64>(ResidentBytes.Load()), GetBudget());
     }
 #endif
 }

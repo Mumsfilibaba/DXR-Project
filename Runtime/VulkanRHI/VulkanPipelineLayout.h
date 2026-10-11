@@ -323,7 +323,7 @@ public:
             return SetLayoutRemappings[SetIndex].DebugNames[BindingIndex].Data();
         }
 
-        return "";
+        return TEXT("");
     }
 #endif
     

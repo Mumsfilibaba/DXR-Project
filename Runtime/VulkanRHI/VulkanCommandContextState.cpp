@@ -35,7 +35,7 @@ static void AddRenderPassAttachmentLayouts(FVulkanCommandBuffer& CommandBuffer, 
 
         if (const FVulkanTextureRHI* Texture = static_cast<const FVulkanTextureRHI*>(View->GetOwnerResource()))
         {
-            CommandBuffer.AddImageLayoutForValidation(Texture->GetVkImage(), Layout, Layout, true, "BeginRendering");
+            CommandBuffer.AddImageLayoutForValidation(Texture->GetVkImage(), Layout, Layout, true, TEXT("BeginRendering"));
         }
     };
 

@@ -22,7 +22,7 @@
 #include "VulkanRHI/Generated/ClearBufferUAV_Sint.h"
 
 template <typename FeatureStructType>
-static bool CheckRequiredFeaturesHelper(const FeatureStructType& Required, const FeatureStructType& Available, const char* StructName)
+static bool CheckRequiredFeaturesHelper(const FeatureStructType& Required, const FeatureStructType& Available, const CHAR_T* StructName)
 {
     UNREFERENCED_VARIABLE(StructName);
 
@@ -59,20 +59,20 @@ static void EnableAvailableFeaturesHelper(FeatureStructType& OutEnabled, const F
 
 static FString GetQueuePropertiesAsString(const VkQueueFamilyProperties& Properties)
 {
-    FString PropertyString = "QueueCount=" + TTypeToString<int32>::ToString(Properties.queueCount) + ", QueueBits=(";
+    FString PropertyString = TEXT("QueueCount=") + TTypeToString<int32>::ToString(Properties.queueCount) + TEXT(", QueueBits=(");
     if (Properties.queueFlags & VK_QUEUE_GRAPHICS_BIT)
     {
-        PropertyString += "GRAPHICS | ";
+        PropertyString += TEXT("GRAPHICS | ");
     }
     
     if (Properties.queueFlags & VK_QUEUE_COMPUTE_BIT)
     {
-        PropertyString += "COMPUTE | ";
+        PropertyString += TEXT("COMPUTE | ");
     }
 
     if (Properties.queueFlags & VK_QUEUE_TRANSFER_BIT)
     {
-        PropertyString += "COPY | ";
+        PropertyString += TEXT("COPY | ");
     }
 
     PropertyString.Pop();
@@ -205,10 +205,10 @@ static bool CreateNullImages(FVulkanDevice& Device, VkImageUsageFlags Usage, con
     constexpr uint32 Size = VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT;
     const FNullImageDesc NullImageDescs[] =
     {
-        { EVulkanNullImageType::Image2D,   VK_IMAGE_TYPE_2D, { Size, Size, 1 },    VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, false, "Image2D"   },
-        { EVulkanNullImageType::Image1D,   VK_IMAGE_TYPE_1D, { Size, 1, 1 },       VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, 0,                                   false, "Image1D"   },
-        { EVulkanNullImageType::Image3D,   VK_IMAGE_TYPE_3D, { Size, Size, Size }, 1,                                 0,                                   false, "Image3D"   },
-        { EVulkanNullImageType::Image2DMS, VK_IMAGE_TYPE_2D, { Size, Size, 1 },    VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, 0,                                   true,  "Image2DMS" },
+        { EVulkanNullImageType::Image2D,   VK_IMAGE_TYPE_2D, { Size, Size, 1 },    VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, false, TEXT("Image2D")   },
+        { EVulkanNullImageType::Image1D,   VK_IMAGE_TYPE_1D, { Size, 1, 1 },       VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, 0,                                   false, TEXT("Image1D")   },
+        { EVulkanNullImageType::Image3D,   VK_IMAGE_TYPE_3D, { Size, Size, Size }, 1,                                 0,                                   false, TEXT("Image3D")   },
+        { EVulkanNullImageType::Image2DMS, VK_IMAGE_TYPE_2D, { Size, Size, 1 },    VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, 0,                                   true,  TEXT("Image2DMS") },
     };
 
     static_assert(ARRAY_COUNT(NullImageDescs) == static_cast<uint32>(EVulkanNullImageType::Count), "NullImageDescs is out of date");
@@ -243,7 +243,7 @@ static bool CreateNullImages(FVulkanDevice& Device, VkImageUsageFlags Usage, con
         ImageCreateInfo.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
         ImageCreateInfo.arrayLayers           = ImageDesc.ArrayLayers;
 
-        const FString DebugName = FString::Printf("%s%s", DebugPrefix, ImageDesc.DebugName);
+        const FString DebugName = FString::Printf(TEXT("%s%s"), DebugPrefix, ImageDesc.DebugName);
         if (!CreateNullImage(Device, ImageCreateInfo, DebugName, OutImages[static_cast<uint32>(ImageDesc.ImageType)]))
         {
             return false;
@@ -262,15 +262,15 @@ static bool CreateNullImages(FVulkanDevice& Device, VkImageUsageFlags Usage, con
     // A view whose image or view type is unavailable reuses its fallback, which is always listed earlier
     const FNullViewDesc NullViewDescs[] =
     {
-        { EVulkanNullImageViewType::Texture2D,        EVulkanNullImageType::Image2D,   1,                                 EVulkanNullImageViewType::Texture2D,      "ImageView2D"        },
-        { EVulkanNullImageViewType::Texture2DArray,   EVulkanNullImageType::Image2D,   VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, EVulkanNullImageViewType::Texture2D,      "ImageView2DArray"   },
-        { EVulkanNullImageViewType::TextureCube,      EVulkanNullImageType::Image2D,   VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, EVulkanNullImageViewType::Texture2D,      "ImageViewCube"      },
-        { EVulkanNullImageViewType::TextureCubeArray, EVulkanNullImageType::Image2D,   VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, EVulkanNullImageViewType::TextureCube,    "ImageViewCubeArray" },
-        { EVulkanNullImageViewType::Texture1D,        EVulkanNullImageType::Image1D,   1,                                 EVulkanNullImageViewType::Texture2D,      "ImageView1D"        },
-        { EVulkanNullImageViewType::Texture1DArray,   EVulkanNullImageType::Image1D,   VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, EVulkanNullImageViewType::Texture2DArray, "ImageView1DArray"   },
-        { EVulkanNullImageViewType::Texture3D,        EVulkanNullImageType::Image3D,   1,                                 EVulkanNullImageViewType::Texture2D,      "ImageView3D"        },
-        { EVulkanNullImageViewType::Texture2DMS,      EVulkanNullImageType::Image2DMS, 1,                                 EVulkanNullImageViewType::Texture2D,      "ImageView2DMS"      },
-        { EVulkanNullImageViewType::Texture2DMSArray, EVulkanNullImageType::Image2DMS, VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, EVulkanNullImageViewType::Texture2DArray, "ImageView2DMSArray" },
+        { EVulkanNullImageViewType::Texture2D,        EVulkanNullImageType::Image2D,   1,                                 EVulkanNullImageViewType::Texture2D,      TEXT("ImageView2D")        },
+        { EVulkanNullImageViewType::Texture2DArray,   EVulkanNullImageType::Image2D,   VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, EVulkanNullImageViewType::Texture2D,      TEXT("ImageView2DArray")   },
+        { EVulkanNullImageViewType::TextureCube,      EVulkanNullImageType::Image2D,   VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, EVulkanNullImageViewType::Texture2D,      TEXT("ImageViewCube")      },
+        { EVulkanNullImageViewType::TextureCubeArray, EVulkanNullImageType::Image2D,   VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, EVulkanNullImageViewType::TextureCube,    TEXT("ImageViewCubeArray") },
+        { EVulkanNullImageViewType::Texture1D,        EVulkanNullImageType::Image1D,   1,                                 EVulkanNullImageViewType::Texture2D,      TEXT("ImageView1D")        },
+        { EVulkanNullImageViewType::Texture1DArray,   EVulkanNullImageType::Image1D,   VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, EVulkanNullImageViewType::Texture2DArray, TEXT("ImageView1DArray")   },
+        { EVulkanNullImageViewType::Texture3D,        EVulkanNullImageType::Image3D,   1,                                 EVulkanNullImageViewType::Texture2D,      TEXT("ImageView3D")        },
+        { EVulkanNullImageViewType::Texture2DMS,      EVulkanNullImageType::Image2DMS, 1,                                 EVulkanNullImageViewType::Texture2D,      TEXT("ImageView2DMS")      },
+        { EVulkanNullImageViewType::Texture2DMSArray, EVulkanNullImageType::Image2DMS, VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, EVulkanNullImageViewType::Texture2DArray, TEXT("ImageView2DMSArray") },
     };
 
     static_assert(ARRAY_COUNT(NullViewDescs) == static_cast<uint32>(EVulkanNullImageViewType::Count), "NullViewDescs is out of date");
@@ -304,7 +304,7 @@ static bool CreateNullImages(FVulkanDevice& Device, VkImageUsageFlags Usage, con
         ImageViewCreateInfo.viewType                    = GetVkImageViewType(ViewDesc.ViewType);
         ImageViewCreateInfo.subresourceRange.layerCount = ViewDesc.LayerCount;
 
-        const FString DebugName = FString::Printf("%s%s", DebugPrefix, ViewDesc.DebugName);
+        const FString DebugName = FString::Printf(TEXT("%s%s"), DebugPrefix, ViewDesc.DebugName);
 
         VkResult Result = vkCreateImageView(Device.GetVkDevice(), &ImageViewCreateInfo, nullptr, &OutViews[ViewIndex]);
         if (VULKAN_FAILED(Result))
@@ -343,17 +343,17 @@ bool FVulkanCoreFeatures::CheckRequired(VkPhysicalDevice PhysicalDevice) const
     vkGetPhysicalDeviceFeatures2(PhysicalDevice, &DeviceFeatures2);
     Available.Features10 = DeviceFeatures2.features;
 
-    if (!CheckRequiredFeaturesHelper(Features10, Available.Features10, "VkPhysicalDeviceFeatures"))
+    if (!CheckRequiredFeaturesHelper(Features10, Available.Features10, TEXT("VkPhysicalDeviceFeatures")))
     {
         return false;
     }
     
-    if (!CheckRequiredFeaturesHelper(Features11, Available.Features11, "VkPhysicalDeviceVulkan11Features"))
+    if (!CheckRequiredFeaturesHelper(Features11, Available.Features11, TEXT("VkPhysicalDeviceVulkan11Features")))
     {
         return false;
     }
     
-    if (!CheckRequiredFeaturesHelper(Features12, Available.Features12, "VkPhysicalDeviceVulkan12Features"))
+    if (!CheckRequiredFeaturesHelper(Features12, Available.Features12, TEXT("VkPhysicalDeviceVulkan12Features")))
     {
         return false;
     }
@@ -414,7 +414,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
         return false;
     }
 
-    IConsoleVariable* CVarVerboseLogging = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.VerboseLogging");
+    IConsoleVariable* CVarVerboseLogging = FConsoleManager::Get().FindConsoleVariable(TEXT("VulkanRHI.VerboseLogging"));
 
     const bool bVerboseLogging = CVarVerboseLogging && CVarVerboseLogging->GetBool();
     if (bVerboseLogging)
@@ -425,7 +425,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
         {
             VkPhysicalDeviceProperties AdapterProperties;
             vkGetPhysicalDeviceProperties(CurrentAdapter, &AdapterProperties);
-            LOG_INFO("    '%s' Supports Vulkan '%s'", AdapterProperties.deviceName, *VulkanRHI::GetVersionAsString(AdapterProperties.apiVersion));
+            LOG_INFO("    '%s' Supports Vulkan '%s'", StringCast<CHAR_T>(AdapterProperties.deviceName).Get(), *VulkanRHI::GetVersionAsString(AdapterProperties.apiVersion));
         }
     }
 
@@ -443,7 +443,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
 
         if (AdapterProperties.apiVersion < VULKAN_TARGET_API_VERSION)
         {
-            VULKAN_INFO("Skipping device '%s' since it's api-version is below Vulkan 1.2 (apiVersion=%s)", AdapterProperties.deviceName, *VulkanRHI::GetVersionAsString(AdapterProperties.apiVersion));
+            VULKAN_INFO("Skipping device '%s' since it's api-version is below Vulkan 1.2 (apiVersion=%s)", StringCast<CHAR_T>(AdapterProperties.deviceName).Get(), *VulkanRHI::GetVersionAsString(AdapterProperties.apiVersion));
             continue;
         }
 
@@ -456,7 +456,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
         TOptional<FVulkanQueueFamilyIndices> QueueIndices = GetQueueFamilyIndices(CurrentAdapter);
         if (!QueueIndices)
         {
-            VULKAN_WARNING("PhysicalDevice '%s' does not support all required QueueFamilies", AdapterProperties.deviceName);
+            VULKAN_WARNING("PhysicalDevice '%s' does not support all required QueueFamilies", StringCast<CHAR_T>(AdapterProperties.deviceName).Get());
             continue;
         }
 
@@ -479,10 +479,10 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
 
         if (bVerboseLogging)
         {
-            VULKAN_INFO("The adapter '%s' has the following available extensions (NumExtensions=%d):", AdapterProperties.deviceName, AvailableDeviceExtensions.Size());
+            VULKAN_INFO("The adapter '%s' has the following available extensions (NumExtensions=%d):", StringCast<CHAR_T>(AdapterProperties.deviceName).Get(), AvailableDeviceExtensions.Size());
             for (const VkExtensionProperties& Extension : AvailableDeviceExtensions)
             {
-                LOG_INFO("    '%s'", Extension.extensionName);
+                LOG_INFO("    '%s'", StringCast<CHAR_T>(Extension.extensionName).Get());
             }
         }
 
@@ -497,7 +497,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
             bool bFound = false;
             for (const VkExtensionProperties& Property : AvailableDeviceExtensions)
             {
-                if (CString::Strcmp(Extension->GetExtensionName(), Property.extensionName) == 0)
+                if (FPlatformString::Strcmp(Extension->GetExtensionName(), Property.extensionName) == 0)
                 {
                     bFound = true;
                     break;
@@ -506,7 +506,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
 
             if (!bFound)
             {
-                VULKAN_WARNING("Adapter '%s' does not support required extension '%s'", AdapterProperties.deviceName, Extension->GetExtensionName());
+                VULKAN_WARNING("Adapter '%s' does not support required extension '%s'", StringCast<CHAR_T>(AdapterProperties.deviceName).Get(), StringCast<CHAR_T>(Extension->GetExtensionName()).Get());
                 bMissingRequiredExtension = true;
             }
         }
@@ -568,7 +568,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
             {
                 for (const VkExtensionProperties& Property : AvailableDeviceExtensions)
                 {
-                    if (CString::Strcmp(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME, Property.extensionName) == 0)
+                    if (FPlatformString::Strcmp(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME, Property.extensionName) == 0)
                     {
                         bAdapterSupportsRayTracingPipeline = true;
                         break;
@@ -610,7 +610,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
 
     vkGetPhysicalDeviceMemoryProperties2(PhysicalDevice, &DeviceMemoryProperties2);
     
-    VULKAN_INFO("Using adapter '%s' Which supports Vulkan '%s'", DeviceProperties.deviceName, *VulkanRHI::GetVersionAsString(DeviceProperties.apiVersion));
+    VULKAN_INFO("Using adapter '%s' Which supports Vulkan '%s'", StringCast<CHAR_T>(DeviceProperties.deviceName).Get(), *VulkanRHI::GetVersionAsString(DeviceProperties.apiVersion));
     return true;
 }
 
@@ -674,7 +674,7 @@ TOptional<FVulkanQueueFamilyIndices> FVulkanPhysicalDevice::GetQueueFamilyIndice
     TArray<VkQueueFamilyProperties> QueueFamilies(QueueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(PhysicalDevice, &QueueFamilyCount, QueueFamilies.Data());
     
-    IConsoleVariable* VerboseVulkan = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.VerboseLogging");
+    IConsoleVariable* VerboseVulkan = FConsoleManager::Get().FindConsoleVariable(TEXT("VulkanRHI.VerboseLogging"));
     if (VerboseVulkan && VerboseVulkan->GetBool())
     {
         uint32 Index = 0;
@@ -876,7 +876,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
         return false;
     }
 
-    TArray<const CHAR_T*> EnabledExtensionNames;
+    TArray<const ANSICHAR*> EnabledExtensionNames;
     for (const TUniquePtr<FVulkanDeviceExtension>& Extension : InDeviceCreateInfo.Extensions)
     {
         Extension->SetEnabled(false);
@@ -888,7 +888,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
 
         for (const VkExtensionProperties& Property : AvailableDeviceExtensions)
         {
-            if (CString::Strcmp(Extension->GetExtensionName(), Property.extensionName) == 0)
+            if (FPlatformString::Strcmp(Extension->GetExtensionName(), Property.extensionName) == 0)
             {
                 Extension->SetEnabled(true);
                 EnabledExtensionNames.Add(Property.extensionName);
@@ -899,19 +899,19 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
 
         if (!Extension->IsEnabled() && Extension->IsRequired())
         {
-            VULKAN_ERROR_CRITICAL("Required device extension '%s' is not available", Extension->GetExtensionName());
+            VULKAN_ERROR_CRITICAL("Required device extension '%s' is not available", StringCast<CHAR_T>(Extension->GetExtensionName()).Get());
             return false;
         }
     }
 
-    if (IConsoleVariable* VerboseVulkan = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.VerboseLogging"))
+    if (IConsoleVariable* VerboseVulkan = FConsoleManager::Get().FindConsoleVariable(TEXT("VulkanRHI.VerboseLogging")))
     {
         if (VerboseVulkan->GetBool() && !EnabledExtensionNames.IsEmpty())
         {
             VULKAN_INFO("Enabled Device Extensions:");
-            for (const CHAR_T* ExtensionName : EnabledExtensionNames)
+            for (const ANSICHAR* ExtensionName : EnabledExtensionNames)
             {
-                LOG_INFO("    %s", ExtensionName);
+                LOG_INFO("    %s", StringCast<CHAR_T>(ExtensionName).Get());
             }
         }
     }
@@ -1029,7 +1029,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
     // Resolve device layers
     // -------------------------------------------------------------------------------------------
 
-    TArray<const CHAR_T*> EnabledDeviceLayerNames;
+    TArray<const ANSICHAR*> EnabledDeviceLayerNames;
     if (!InDeviceCreateInfo.RequiredLayerNames.IsEmpty() || !InDeviceCreateInfo.OptionalLayerNames.IsEmpty())
     {
         uint32 DeviceLayerCount = 0;
@@ -1038,12 +1038,12 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
         TArray<VkLayerProperties> AvailableDeviceLayers(DeviceLayerCount);
         vkEnumerateDeviceLayerProperties(PhysicalDevice->GetVkPhysicalDevice(), &DeviceLayerCount, AvailableDeviceLayers.Data());
 
-        for (const CHAR_T* RequiredLayer : InDeviceCreateInfo.RequiredLayerNames)
+        for (const ANSICHAR* RequiredLayer : InDeviceCreateInfo.RequiredLayerNames)
         {
             bool bFound = false;
             for (const VkLayerProperties& LayerProp : AvailableDeviceLayers)
             {
-                if (CString::Strcmp(RequiredLayer, LayerProp.layerName) == 0)
+                if (FPlatformString::Strcmp(RequiredLayer, LayerProp.layerName) == 0)
                 {
                     EnabledDeviceLayerNames.Add(LayerProp.layerName);
                     LayerNames.Emplace(LayerProp.layerName);
@@ -1054,16 +1054,16 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
 
             if (!bFound)
             {
-                VULKAN_ERROR_CRITICAL("Required device layer '%s' is not available", RequiredLayer);
+                VULKAN_ERROR_CRITICAL("Required device layer '%s' is not available", StringCast<CHAR_T>(RequiredLayer).Get());
                 return false;
             }
         }
 
-        for (const CHAR_T* OptionalLayer : InDeviceCreateInfo.OptionalLayerNames)
+        for (const ANSICHAR* OptionalLayer : InDeviceCreateInfo.OptionalLayerNames)
         {
             for (const VkLayerProperties& LayerProp : AvailableDeviceLayers)
             {
-                if (CString::Strcmp(OptionalLayer, LayerProp.layerName) == 0)
+                if (FPlatformString::Strcmp(OptionalLayer, LayerProp.layerName) == 0)
                 {
                     EnabledDeviceLayerNames.Add(LayerProp.layerName);
                     LayerNames.Emplace(LayerProp.layerName);
@@ -1150,7 +1150,7 @@ bool FVulkanDevice::PostLoaderInitalize()
         return false;
     }
 
-    FrameFence->SetDebugName("FrameFence");
+    FrameFence->SetDebugName(TEXT("FrameFence"));
 
     if (BindlessDescriptorManager && GVulkanSupportsBindless)
     {
@@ -1288,7 +1288,7 @@ bool FVulkanDevice::FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreate
     }
     else
     {
-        const FString DebugName = FString::Printf("Sampler %d", SamplerMap.Size());
+        const FString DebugName = FString::Printf(TEXT("Sampler %d"), SamplerMap.Size());
         VulkanSetObjectName(GetVkDevice(), DebugName.Data(), OutSampler, VK_OBJECT_TYPE_SAMPLER);
     }
 
@@ -1462,7 +1462,7 @@ bool FVulkanDevice::CreateGraphicsQueue()
         return false;
     }
 
-    GraphicsQueue->SetDebugName("Graphics Queue");
+    GraphicsQueue->SetDebugName(TEXT("Graphics Queue"));
     return true;
 }
 
@@ -1493,7 +1493,7 @@ bool FVulkanDevice::EnsurePresentQueue()
         return false;
     }
 
-    PresentQueue->SetDebugName("Present Queue");
+    PresentQueue->SetDebugName(TEXT("Present Queue"));
     VULKAN_INFO("Created separate present queue (family=%u)", QueueIndicies->PresentQueueIndex);
     return true;
 }
@@ -1538,11 +1538,11 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
     if (!GVulkanSupportsNullDescriptors)
     {
         if (!CreateNullBuffer(Device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT,
-                "NullReadBuffer", "NullReadBufferView", NullReadBuffer, NullReadBufferView, NullReadBufferLocation) || 
+                TEXT("NullReadBuffer"), TEXT("NullReadBufferView"), NullReadBuffer, NullReadBufferView, NullReadBufferLocation) || 
             !CreateNullBuffer(Device, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT,
-                "NullWriteBuffer", "NullWriteBufferView", NullWriteBuffer, NullWriteBufferView, NullWriteBufferLocation) || 
-            !CreateNullImages(Device, VK_IMAGE_USAGE_SAMPLED_BIT, "NullRead", NullReadImages, NullReadImageViews) || 
-            !CreateNullImages(Device, VK_IMAGE_USAGE_STORAGE_BIT, "NullWrite", NullWriteImages, NullWriteImageViews))
+                TEXT("NullWriteBuffer"), TEXT("NullWriteBufferView"), NullWriteBuffer, NullWriteBufferView, NullWriteBufferLocation) || 
+            !CreateNullImages(Device, VK_IMAGE_USAGE_SAMPLED_BIT, TEXT("NullRead"), NullReadImages, NullReadImageViews) || 
+            !CreateNullImages(Device, VK_IMAGE_USAGE_STORAGE_BIT, TEXT("NullWrite"), NullWriteImages, NullWriteImageViews))
         {
             return false;
         }
@@ -1551,7 +1551,7 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
     else
     {
         if (!CreateNullBuffer(Device, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT,
-                "NullReadBuffer", "NullReadBufferView", NullReadBuffer, NullReadBufferView, NullReadBufferLocation))
+                TEXT("NullReadBuffer"), TEXT("NullReadBufferView"), NullReadBuffer, NullReadBufferView, NullReadBufferLocation))
         {
             return false;
         }
@@ -1584,7 +1584,7 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
     }
     else
     {
-        VulkanSetObjectName(Device.GetVkDevice(), "NullSampler", NullSampler, VK_OBJECT_TYPE_SAMPLER);
+        VulkanSetObjectName(Device.GetVkDevice(), TEXT("NullSampler"), NullSampler, VK_OBJECT_TYPE_SAMPLER);
     }
 
     return true;
@@ -1728,7 +1728,7 @@ FVulkanComputePipelineStateRHI* FVulkanBufferClearPipelines::GetOrCreatePipeline
         return nullptr;
     }
 
-    ClearPipeline->SetDebugName("Internal BufferUAV Clear");
+    ClearPipeline->SetDebugName(TEXT("Internal BufferUAV Clear"));
 
     Shaders[ClearTypeIndex]         = ClearShader;
     Pipelines[ClearTypeIndex]       = ClearPipeline;

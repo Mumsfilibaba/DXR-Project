@@ -31,7 +31,7 @@ struct VulkanPlatformMac : public VulkanPlatformBase
 
     static FORCEINLINE void* LoadVulkanLibrary()
     {
-        return FPlatformLibrary::LoadDynamicLib("vulkan");
+        return FPlatformLibrary::LoadDynamicLib(TEXT("vulkan"));
     }
 
 #if VK_KHR_surface

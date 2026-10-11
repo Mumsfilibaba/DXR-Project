@@ -11,23 +11,23 @@
 #include "D3D12RHI/D3D12DeviceDebug.h"
 
 static TAutoConsoleVariable<int32> CVarMaxPendingSubmissions(
-    "D3D12RHI.MaxPendingSubmissions",
-    "Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up",
+    TEXT("D3D12RHI.MaxPendingSubmissions"),
+    TEXT("Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up"),
     32);
 
 static TAutoConsoleVariable<bool> CVarEnableGPUTimeout(
-    "D3D12RHI.EnableGPUTimeout",
-    "Enables or disables the GPU timeout on all ID3D12CommandQueues",
+    TEXT("D3D12RHI.EnableGPUTimeout"),
+    TEXT("Enables or disables the GPU timeout on all ID3D12CommandQueues"),
     true);
 
 static TAutoConsoleVariable<int32> CVarCommandContextMaxIdleFrames(
-    "D3D12RHI.CommandContextPool.MaxIdleFrames",
-    "Number of frames a pooled CommandContext may sit unused before it is destroyed",
+    TEXT("D3D12RHI.CommandContextPool.MaxIdleFrames"),
+    TEXT("Number of frames a pooled CommandContext may sit unused before it is destroyed"),
     16);
 
 static TAutoConsoleVariable<int32> CVarCommandContextMinRetained(
-    "D3D12RHI.CommandContextPool.MinRetained",
-    "Number of CommandContexts the pool keeps alive regardless of how long they have been idle",
+    TEXT("D3D12RHI.CommandContextPool.MinRetained"),
+    TEXT("Number of CommandContexts the pool keeps alive regardless of how long they have been idle"),
     2);
 
 FD3D12Queue::FD3D12Queue(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
@@ -82,7 +82,7 @@ bool FD3D12Queue::Initialize()
         }
     }
 
-    D3D12SetDebugName(NewCommandQueue.Get(), FString::Printf("CommandQueue %s", ToString(QueueType)));
+    D3D12SetDebugName(NewCommandQueue.Get(), FString::Printf(TEXT("CommandQueue %s"), ToString(QueueType)));
 
     D3D12_INFO("[FD3D12Device]: Created CommandQueue '%s'", ToString(QueueType));
     CommandQueue = NewCommandQueue;
@@ -93,7 +93,7 @@ bool FD3D12Queue::Initialize()
         return false;
     }
 
-    SubmissionFence->SetDebugName(FString::Printf("SubmissionFence_%s", ToString(QueueType)));
+    SubmissionFence->SetDebugName(FString::Printf(TEXT("SubmissionFence_%s"), ToString(QueueType)));
     return true;
 }
 
@@ -108,7 +108,7 @@ FD3D12CommandList* FD3D12Queue::ObtainCommandList(FD3D12CommandAllocator* Comman
             return nullptr;
         }
 
-        NewCommandList->SetDebugName(FString::Printf("%s CommandList %d", ToString(CommandListType), Index));
+        NewCommandList->SetDebugName(FString::Printf(TEXT("%s CommandList %d"), ToString(CommandListType), Index));
         return NewCommandList;
     });
 
@@ -138,7 +138,7 @@ FD3D12CommandAllocator* FD3D12Queue::ObtainAllocator()
             return nullptr;
         }
 
-        NewAllocator->SetDebugName(FString::Printf("%s CommandAllocator %d", ToString(CommandListType), Index));
+        NewAllocator->SetDebugName(FString::Printf(TEXT("%s CommandAllocator %d"), ToString(CommandListType), Index));
         return NewAllocator;
     });
 }
@@ -272,7 +272,7 @@ FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandLists(FD3D12CommandList* const* 
 #if D3D12_ENABLE_DEVICE_LOST_CHECK
     if (GetDevice()->GetD3D12Device()->GetDeviceRemovedReason() != S_OK)
     {
-        D3D12Debug::DeviceRemovedHandler(GetDevice(), "ExecuteCommandLists");
+        D3D12Debug::DeviceRemovedHandler(GetDevice(), TEXT("ExecuteCommandLists"));
     }
 #endif
 
@@ -287,7 +287,7 @@ FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandLists(FD3D12CommandList* const* 
 
 FD3D12FenceSyncPoint FD3D12Queue::SubmitCommands(FD3D12Commands* Commands)
 {
-    TRACE_SCOPE("D3D12 Queue Submit");
+    TRACE_SCOPE(TEXT("D3D12 Queue Submit"));
 
     CHECK(Commands != nullptr);
 
@@ -360,7 +360,7 @@ FD3D12FenceSyncPoint FD3D12Queue::SubmitCommands(FD3D12Commands* Commands)
             FD3D12Commands* Oldest = nullptr;
             if (PendingSubmissions.Peek(Oldest) && Oldest)
             {
-                TRACE_SCOPE("D3D12 Queue Backpressure Wait");
+                TRACE_SCOPE(TEXT("D3D12 Queue Backpressure Wait"));
 
                 Oldest->SyncPoint.Wait();
                 PendingSubmissions.Dequeue();
@@ -482,7 +482,7 @@ void FD3D12Commands::PreExecute()
         Pending.Resource->GetDebugName(DebugName);
         D3D12_INFO(
             "[PendingFixup] Resource=%s Subresource=%u Global=%s(0x%X) Desired=%s(0x%X)",
-            DebugName.IsEmpty() ? "<unnamed>" : *DebugName,
+            DebugName.IsEmpty() ? TEXT("<unnamed>") : *DebugName,
             Subresource,
             ToString(BeforeState),
             uint32(BeforeState),

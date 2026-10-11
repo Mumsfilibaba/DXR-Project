@@ -24,136 +24,136 @@
 #include "D3D12RHI/D3D12DeviceDebug.h"
 
 static TAutoConsoleVariable<bool> CVarBreakOnError(
-    "D3D12RHI.BreakOnError",
-    "When enabled, there will be a DebugBreak when the validation layer encounters an errors",
+    TEXT("D3D12RHI.BreakOnError"),
+    TEXT("When enabled, there will be a DebugBreak when the validation layer encounters an errors"),
     true);
 
 static TAutoConsoleVariable<bool> CVarBreakOnWarning(
-    "D3D12RHI.BreakOnWarning",
-    "When enabled, there will be a DebugBreak when the validation layer encounters an warnings",
+    TEXT("D3D12RHI.BreakOnWarning"),
+    TEXT("When enabled, there will be a DebugBreak when the validation layer encounters an warnings"),
     false);
 
 static TAutoConsoleVariable<bool> CVarPreferDedicatedGPU(
-    "D3D12RHI.PreferDedicatedGPU",
-    "When enabled, a dedicated GPU will be selected when creating a the Device", 
+    TEXT("D3D12RHI.PreferDedicatedGPU"),
+    TEXT("When enabled, a dedicated GPU will be selected when creating a the Device"), 
     true);
 
 static TAutoConsoleVariable<bool> CVarStablePowerState(
-    "D3D12RHI.StablePowerState",
-    "Enables stable power state on the GPU for more consistent profiling results. Requires developer mode enabled in Windows.",
+    TEXT("D3D12RHI.StablePowerState"),
+    TEXT("Enables stable power state on the GPU for more consistent profiling results. Requires developer mode enabled in Windows."),
     false);
 
 static TAutoConsoleVariable<int32> CVarResourceOnlineDescriptorBlockSize(
-    "D3D12RHI.ResourceOnlineDescriptorBlockSize",
-    "Number of descriptors in each Resource OnlineDescriptorHeap", 
+    TEXT("D3D12RHI.ResourceOnlineDescriptorBlockSize"),
+    TEXT("Number of descriptors in each Resource OnlineDescriptorHeap"), 
     2048);
 
 static TAutoConsoleVariable<int32> CVarSamplerOnlineDescriptorBlockSize(
-    "D3D12RHI.SamplerOnlineDescriptorBlockSize",
-    "Number of descriptors in each Sampler OnlineDescriptorHeap. The sampler heap is capped at 2048 "
+    TEXT("D3D12RHI.SamplerOnlineDescriptorBlockSize"),
+    TEXT("Number of descriptors in each Sampler OnlineDescriptorHeap. The sampler heap is capped at 2048 "
     "descriptors by D3D12, so this directly sets how many blocks exist to share between every "
-    "concurrently recording context and every block still pending GPU completion.",
+    "concurrently recording context and every block still pending GPU completion."),
     64);
 
 static TAutoConsoleVariable<int32> CVarMinExpectedDescriptorBlocks(
-    "D3D12RHI.MinExpectedDescriptorBlocks",
-    "Block count each global descriptor heap is expected to provide. Falling below this warns at startup rather than stalling mysteriously "
-    "once several contexts record at once.",
+    TEXT("D3D12RHI.MinExpectedDescriptorBlocks"),
+    TEXT("Block count each global descriptor heap is expected to provide. Falling below this warns at startup rather than stalling mysteriously "
+    "once several contexts record at once."),
     16);
 
 static TAutoConsoleVariable<bool> CVarEnableBindless(
-    "D3D12RHI.EnableBindless",
-    "When enabled, allocates a sub-region of the global descriptor heaps for bindless resources and emits root signatures with "
+    TEXT("D3D12RHI.EnableBindless"),
+    TEXT("When enabled, allocates a sub-region of the global descriptor heaps for bindless resources and emits root signatures with "
     "HEAP_DIRECTLY_INDEXED flags for shaders that need it. Has no effect when GD3D12SupportsBindless is false (requires SM 6.6 + Resource "
-    "Binding Tier 3).",
+    "Binding Tier 3)."),
     true);
 
 static TAutoConsoleVariable<int32> CVarNumBindlessResourceDescriptors(
-    "D3D12RHI.NumBindlessResourceDescriptors",
-    "Number of CBV/SRV/UAV slots reserved at the start of the global resource descriptor heap "
+    TEXT("D3D12RHI.NumBindlessResourceDescriptors"),
+    TEXT("Number of CBV/SRV/UAV slots reserved at the start of the global resource descriptor heap "
     "for bindless resources. Clamped so that at least one block remains available for legacy "
-    "descriptor tables.",
+    "descriptor tables."),
     100000);
 
 static TAutoConsoleVariable<int32> CVarNumBindlessSamplerDescriptors(
-    "D3D12RHI.NumBindlessSamplerDescriptors",
-    "Number of sampler slots reserved at the start of the global sampler descriptor heap for bindless samplers. Clamped so that at least "
-    "one block remains available for legacy tables.",
+    TEXT("D3D12RHI.NumBindlessSamplerDescriptors"),
+    TEXT("Number of sampler slots reserved at the start of the global sampler descriptor heap for bindless samplers. Clamped so that at least "
+    "one block remains available for legacy tables."),
     256);
 
 static TAutoConsoleVariable<int32> CVarUploadHeapSmallAllocationThreshold(
-    "D3D12RHI.UploadHeapSmallAllocationThreshold",
-    "Allocation size threshold for the upload small allocator path (bytes)",
+    TEXT("D3D12RHI.UploadHeapSmallAllocationThreshold"),
+    TEXT("Allocation size threshold for the upload small allocator path (bytes)"),
     64 * 1024);
 
 static TAutoConsoleVariable<int32> CVarUploadHeapLargeAllocationThreshold(
-    "D3D12RHI.UploadHeapLargeAllocationThreshold",
-    "Max suballocation size before upload allocations become standalone (bytes)",
+    TEXT("D3D12RHI.UploadHeapLargeAllocationThreshold"),
+    TEXT("Max suballocation size before upload allocations become standalone (bytes)"),
     2 * 1024 * 1024);
 
 static TAutoConsoleVariable<int32> CVarTextureAllocatorDefaultPageSize(
-    "D3D12RHI.TextureAllocatorDefaultPageSize",
-    "Default page size for pooled texture allocator pages (bytes)",
+    TEXT("D3D12RHI.TextureAllocatorDefaultPageSize"),
+    TEXT("Default page size for pooled texture allocator pages (bytes)"),
     128 * 1024 * 1024);
 
 static TAutoConsoleVariable<int32> CVarTextureAllocatorCommittedThreshold(
-    "D3D12RHI.TextureAllocatorCommittedThreshold",
-    "Size threshold for committed texture allocations (bytes)",
+    TEXT("D3D12RHI.TextureAllocatorCommittedThreshold"),
+    TEXT("Size threshold for committed texture allocations (bytes)"),
     128 * 1024 * 1024);
 
 static TAutoConsoleVariable<int32> CVarDynamicConstantsAllocatorPageSize(
-    "D3D12RHI.DynamicConstantsAllocatorPageSize",
-    "Page size for the dynamic constants linear allocator (bytes)",
+    TEXT("D3D12RHI.DynamicConstantsAllocatorPageSize"),
+    TEXT("Page size for the dynamic constants linear allocator (bytes)"),
     4 * 1024 * 1024);
 
 static TAutoConsoleVariable<bool> CVarEnableResidencyTracking(
-    "D3D12RHI.EnableResidencyTracking",
-    "Enables GPU memory residency tracking and eviction management",
+    TEXT("D3D12RHI.EnableResidencyTracking"),
+    TEXT("Enables GPU memory residency tracking and eviction management"),
     true);
 
 static TAutoConsoleVariable<int32> CVarResidencyTargetBudget(
-    "D3D12RHI.ResidencyTargetBudget",
-    "Override target budget for residency eviction in MB (0 = use adapter-reported budget)",
+    TEXT("D3D12RHI.ResidencyTargetBudget"),
+    TEXT("Override target budget for residency eviction in MB (0 = use adapter-reported budget)"),
     0);
 
 static TAutoConsoleVariable<int32> CVarUploadHeapPageSize(
-    "D3D12RHI.UploadHeapPageSize",
-    "Page size for the upload heap allocator in KB",
+    TEXT("D3D12RHI.UploadHeapPageSize"),
+    TEXT("Page size for the upload heap allocator in KB"),
     8 * 1024);
 
 static TAutoConsoleVariable<int32> CVarStagingBufferPageSize(
-    "D3D12RHI.StagingBufferPageSize",
-    "Page size for the staging buffer linear allocator in KB",
+    TEXT("D3D12RHI.StagingBufferPageSize"),
+    TEXT("Page size for the staging buffer linear allocator in KB"),
     16 * 1024);
 
 static TAutoConsoleVariable<int32> CVarBufferAllocatorPageSize(
-    "D3D12RHI.BufferAllocatorPageSize",
-    "Page size for the buffer buddy allocator in MB",
+    TEXT("D3D12RHI.BufferAllocatorPageSize"),
+    TEXT("Page size for the buffer buddy allocator in MB"),
     128);
 
 static TAutoConsoleVariable<int32> CVarBufferAllocatorMaxSuballocationSize(
-    "D3D12RHI.BufferAllocatorMaxSuballocationSize",
-    "Max suballocation size before buffer allocations become committed resources in MB",
+    TEXT("D3D12RHI.BufferAllocatorMaxSuballocationSize"),
+    TEXT("Max suballocation size before buffer allocations become committed resources in MB"),
     64);
 
 static TAutoConsoleVariable<int32> CVarNumTimestampQueriesPerHeap(
-    "D3D12RHI.NumTimestampQueriesPerHeap",
-    "Number of timestamp queries in each timestamp query heap",
+    TEXT("D3D12RHI.NumTimestampQueriesPerHeap"),
+    TEXT("Number of timestamp queries in each timestamp query heap"),
     D3D12_DEFAULT_QUERY_COUNT);
 
 static TAutoConsoleVariable<int32> CVarNumOcclusionQueriesPerHeap(
-    "D3D12RHI.NumOcclusionQueriesPerHeap",
-    "Number of occlusion queries in each occlusion query heap",
+    TEXT("D3D12RHI.NumOcclusionQueriesPerHeap"),
+    TEXT("Number of occlusion queries in each occlusion query heap"),
     D3D12_DEFAULT_QUERY_COUNT);
 
 static TAutoConsoleVariable<int32> CVarNumPipelineStatsQueriesPerHeap(
-    "D3D12RHI.NumPipelineStatsQueriesPerHeap",
-    "Number of pipeline statistics queries in each query heap",
+    TEXT("D3D12RHI.NumPipelineStatsQueriesPerHeap"),
+    TEXT("Number of pipeline statistics queries in each query heap"),
     D3D12_DEFAULT_QUERY_COUNT);
 
 static TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame(
-    "D3D12RHI.MaxDefragMovesPerFrame",
-    "Maximum number of resource defragmentation moves per frame (0 to disable)",
+    TEXT("D3D12RHI.MaxDefragMovesPerFrame"),
+    TEXT("Maximum number of resource defragmentation moves per frame (0 to disable)"),
     4);
 
 FD3D12Adapter::FD3D12Adapter()
@@ -174,7 +174,7 @@ FD3D12Adapter::~FD3D12Adapter()
 
 bool FD3D12Adapter::Initialize()
 {
-    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
+    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable(TEXT("RHI.EnableDebugLayer")))
     {
         bEnableDebugLayer = CVarEnableDebugLayer->GetBool();
     }
@@ -187,7 +187,7 @@ bool FD3D12Adapter::Initialize()
 
     if (bEnableDebugLayer)
     {
-        if (IConsoleVariable* CVarEnablePIX = FConsoleManager::Get().FindConsoleVariable("D3D12RHI.EnablePIX"))
+        if (IConsoleVariable* CVarEnablePIX = FConsoleManager::Get().FindConsoleVariable(TEXT("D3D12RHI.EnablePIX")))
         {
             if (CVarEnablePIX->GetBool())
             {
@@ -290,7 +290,7 @@ bool FD3D12Adapter::Initialize()
                     // Here it is probably better to have something else to find the best GPU
                     if (Level >= BestFeatureLevel && Desc.DedicatedVideoMemory > BestVideoMem)
                     {
-                        D3D12_INFO("[FD3D12Adapter]: Suitable Direct3D Adapter (%u): %ls", Index, Desc.Description);
+                        D3D12_INFO("[FD3D12Adapter]: Suitable Direct3D Adapter (%u): %s", Index, StringCast<CHAR_T>(Desc.Description).Get());
 
                         AdapterIndex     = Index;
                         BestFeatureLevel = Level;
@@ -339,7 +339,7 @@ bool FD3D12Adapter::Initialize()
                 Result = D3D12::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr);
                 if (SUCCEEDED(Result))
                 {
-                    D3D12_INFO("[FD3D12Adapter]: Suitable Direct3D Adapter (%u): %ls", Index, Desc.Description);
+                    D3D12_INFO("[FD3D12Adapter]: Suitable Direct3D Adapter (%u): %s", Index, StringCast<CHAR_T>(Desc.Description).Get());
 
                     // When we loop based on DXGI_GPU_PREFERENCE we get the best one first, so cannot check for equal here
                     if (Level > BestFeatureLevel)
@@ -810,7 +810,7 @@ bool FD3D12Device::Initialize()
         return false;
     }
 
-    FrameFence->SetDebugName("FrameFence");
+    FrameFence->SetDebugName(TEXT("FrameFence"));
 
     // Check current feature-level
     const D3D_FEATURE_LEVEL SupportedFeatureLevels[] =
@@ -1029,7 +1029,7 @@ bool FD3D12Device::CreateDevice()
     // Create Device
     if (FAILED(D3D12::D3D12CreateDevice(Adapter->GetDXGIAdapter(), MinFeatureLevel, IID_PPV_ARGS(&D3D12Device))))
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create device");
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("FAILED to create device"));
         return false;
     }
     else

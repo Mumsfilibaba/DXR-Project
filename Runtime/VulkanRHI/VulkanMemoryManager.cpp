@@ -13,54 +13,54 @@
 
 #if VULKAN_ENABLE_MEMORY_LOGGING
 static TAutoConsoleVariable<bool> CVarVulkanLogMemoryAllocations(
-    "VulkanRHI.LogMemoryAllocations",
-    "Log when new memory allocator pages or dedicated allocations are created",
+    TEXT("VulkanRHI.LogMemoryAllocations"),
+    TEXT("Log when new memory allocator pages or dedicated allocations are created"),
     false);
 #endif
 
 static TAutoConsoleVariable<int32> CVarBufferAllocatorPageSize(
-    "VulkanRHI.BufferAllocatorPageSize",
-    "Page size for the buffer buddy allocator in MB",
+    TEXT("VulkanRHI.BufferAllocatorPageSize"),
+    TEXT("Page size for the buffer buddy allocator in MB"),
     64);
 
 static TAutoConsoleVariable<int32> CVarBufferAllocatorMaxSuballocationSize(
-    "VulkanRHI.BufferAllocatorMaxSuballocationSize",
-    "Max suballocation size before buffer allocations become dedicated in MB",
+    TEXT("VulkanRHI.BufferAllocatorMaxSuballocationSize"),
+    TEXT("Max suballocation size before buffer allocations become dedicated in MB"),
     32);
 
 static TAutoConsoleVariable<int32> CVarTextureAllocatorDefaultPageSize(
-    "VulkanRHI.TextureAllocatorDefaultPageSize",
-    "Default page size for pooled texture allocator pages in MB",
+    TEXT("VulkanRHI.TextureAllocatorDefaultPageSize"),
+    TEXT("Default page size for pooled texture allocator pages in MB"),
     64);
 
 static TAutoConsoleVariable<int32> CVarUploadHeapPageSize(
-    "VulkanRHI.UploadHeapPageSize",
-    "Page size for the upload heap allocator in KB",
+    TEXT("VulkanRHI.UploadHeapPageSize"),
+    TEXT("Page size for the upload heap allocator in KB"),
     8 * 1024);
 
 static TAutoConsoleVariable<int32> CVarUploadHeapSmallAllocationThreshold(
-    "VulkanRHI.UploadHeapSmallAllocationThreshold",
-    "Allocation size threshold for the upload small allocator path (bytes)",
+    TEXT("VulkanRHI.UploadHeapSmallAllocationThreshold"),
+    TEXT("Allocation size threshold for the upload small allocator path (bytes)"),
     64 * 1024);
 
 static TAutoConsoleVariable<int32> CVarUploadHeapLargeAllocationThreshold(
-    "VulkanRHI.UploadHeapLargeAllocationThreshold",
-    "Max suballocation size before upload allocations become standalone (bytes)",
+    TEXT("VulkanRHI.UploadHeapLargeAllocationThreshold"),
+    TEXT("Max suballocation size before upload allocations become standalone (bytes)"),
     2 * 1024 * 1024);
 
 static TAutoConsoleVariable<int32> CVarDynamicConstantsAllocatorPageSize(
-    "VulkanRHI.DynamicConstantsAllocatorPageSize",
-    "Page size for the dynamic constants linear allocator in KB",
+    TEXT("VulkanRHI.DynamicConstantsAllocatorPageSize"),
+    TEXT("Page size for the dynamic constants linear allocator in KB"),
     2 * 1024);
 
 static TAutoConsoleVariable<int32> CVarStagingBufferPageSize(
-    "VulkanRHI.StagingBufferPageSize",
-    "Page size for the staging buffer linear allocator in KB",
+    TEXT("VulkanRHI.StagingBufferPageSize"),
+    TEXT("Page size for the staging buffer linear allocator in KB"),
     4 * 1024);
 
 static TAutoConsoleVariable<int32> CVarDefragEligibilityDelay(
-    "VulkanRHI.DefragEligibilityDelay",
-    "Frames past the one carrying an allocation's initialization work before it may be defragmented",
+    TEXT("VulkanRHI.DefragEligibilityDelay"),
+    TEXT("Frames past the one carrying an allocation's initialization work before it may be defragmented"),
     1, 1, 16);
 
 static bool VulkanMapDedicatedAllocation(FVulkanDevice* Device, uint32 MemoryTypeIndex, VkDeviceMemory DeviceMemory, FVulkanMemoryLocation& OutLocation)
@@ -567,7 +567,7 @@ bool FVulkanBuddyAllocator::Initialize()
     if (CVarVulkanLogMemoryAllocations.GetValue())
     {
         VULKAN_INFO("FVulkanBuddyAllocator: Initialized (Size=%llu, MinBlock=%llu, MemoryTypeIndex=%u, HasSharedBuffer=%s)",
-            BackingStorageSize, MinBlockBytes, MemoryTypeIndex, SharedBuffer != VK_NULL_HANDLE ? "true" : "false");
+            BackingStorageSize, MinBlockBytes, MemoryTypeIndex, SharedBuffer != VK_NULL_HANDLE ? TEXT("true") : TEXT("false"));
     }
 #endif
 

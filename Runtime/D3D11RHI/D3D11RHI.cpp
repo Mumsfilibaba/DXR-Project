@@ -291,7 +291,7 @@ FRHISwapChain* FD3D11DeviceRHI::CreateSwapChain(const FRHISwapChainDesc& InSwapC
     if (!Tasks::IsInRHIThread())
     {
         FRHISwapChain* NewSwapChain = nullptr;
-        Tasks::LaunchOnRHIThread("D3D11CreateSwapChain", [this, &NewSwapChain, &InSwapChainDesc]()
+        Tasks::LaunchOnRHIThread(TEXT("D3D11CreateSwapChain"), [this, &NewSwapChain, &InSwapChainDesc]()
         {
             NewSwapChain = CreateSwapChain(InSwapChainDesc);
         }).Wait();

@@ -11,18 +11,18 @@
 #include <string.h>
 
 static TAutoConsoleVariable<bool> CVarEnableBindless(
-    "MetalRHI.EnableBindless",
-    "When enabled, allocates shared descriptor table buffers for SM 6.6 heap indexing. Requires Metal 3 gpuResourceID.",
+    TEXT("MetalRHI.EnableBindless"),
+    TEXT("When enabled, allocates shared descriptor table buffers for SM 6.6 heap indexing. Requires Metal 3 gpuResourceID."),
     true);
 
 static TAutoConsoleVariable<int32> CVarNumBindlessResourceDescriptors(
-    "MetalRHI.NumBindlessResourceDescriptors",
-    "Initial CBV/SRV/UAV slot count for the Metal bindless resource table. The table grows when this is exhausted.",
+    TEXT("MetalRHI.NumBindlessResourceDescriptors"),
+    TEXT("Initial CBV/SRV/UAV slot count for the Metal bindless resource table. The table grows when this is exhausted."),
     100000);
 
 static TAutoConsoleVariable<int32> CVarNumBindlessSamplerDescriptors(
-    "MetalRHI.NumBindlessSamplerDescriptors",
-    "Initial sampler slot count for the Metal bindless sampler table. The table grows when this is exhausted.",
+    TEXT("MetalRHI.NumBindlessSamplerDescriptors"),
+    TEXT("Initial sampler slot count for the Metal bindless sampler table. The table grows when this is exhausted."),
     2048);
 
 static constexpr uint32 MetalBindlessHardMaxSlots = 1u << 20;
@@ -94,8 +94,8 @@ bool FMetalBindlessDescriptorManager::Initialize()
     const uint32 ResourceCount = static_cast<uint32>(Math::Max<int32>(1, CVarNumBindlessResourceDescriptors.GetValue()));
     const uint32 SamplerCount  = static_cast<uint32>(Math::Max<int32>(1, CVarNumBindlessSamplerDescriptors.GetValue()));
 
-    if (!CreateTable(ResourceHeap, Math::Min(ResourceCount, HardMaxSlots), "MetalBindlessResourceHeap") ||
-        !CreateTable(SamplerHeap, Math::Min(SamplerCount, HardMaxSlots), "MetalBindlessSamplerHeap"))
+    if (!CreateTable(ResourceHeap, Math::Min(ResourceCount, HardMaxSlots), TEXT("MetalBindlessResourceHeap")) ||
+        !CreateTable(SamplerHeap, Math::Min(SamplerCount, HardMaxSlots), TEXT("MetalBindlessSamplerHeap")))
     {
         DestroyTable(ResourceHeap);
         DestroyTable(SamplerHeap);
@@ -174,11 +174,11 @@ bool FMetalBindlessDescriptorManager::GrowTable(FHeap& Heap)
 
     if (Grown <= Heap.Capacity)
     {
-        METAL_ERROR("Bindless %s table exhausted at %u slots", Heap.bSampler ? "sampler" : "resource", Heap.Capacity);
+        METAL_ERROR("Bindless %s table exhausted at %u slots", Heap.bSampler ? TEXT("sampler") : TEXT("resource"), Heap.Capacity);
         return false;
     }
 
-    METAL_INFO("Growing Metal bindless %s table from %u to %u slots", Heap.bSampler ? "sampler" : "resource", Heap.Capacity, Grown);
+    METAL_INFO("Growing Metal bindless %s table from %u to %u slots", Heap.bSampler ? TEXT("sampler") : TEXT("resource"), Heap.Capacity, Grown);
 
     id<MTLDevice>    Device    = GetDevice()->GetMTLDevice();
     const NSUInteger ByteSize  = static_cast<NSUInteger>(Grown) * sizeof(FMetalBindlessDescriptorEntry);
@@ -186,7 +186,7 @@ bool FMetalBindlessDescriptorManager::GrowTable(FHeap& Heap)
 
     if (!NewBuffer)
     {
-        METAL_ERROR("Failed to grow the Metal bindless %s table", Heap.bSampler ? "sampler" : "resource");
+        METAL_ERROR("Failed to grow the Metal bindless %s table", Heap.bSampler ? TEXT("sampler") : TEXT("resource"));
         return false;
     }
 

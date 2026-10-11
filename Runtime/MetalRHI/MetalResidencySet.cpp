@@ -4,8 +4,8 @@
 #include "Core/Threading/ScopedLock.h"
 
 static TAutoConsoleVariable<bool> CVarForceResidencyFallback(
-    "MetalRHI.ForceResidencyFallback",
-    "Declares bindless residency with useHeaps/useResources on each encoder, as on macOS 14, even where MTLResidencySet is available",
+    TEXT("MetalRHI.ForceResidencyFallback"),
+    TEXT("Declares bindless residency with useHeaps/useResources on each encoder, as on macOS 14, even where MTLResidencySet is available"),
     false);
 
 FMetalResidencySet::FMetalResidencySet(FMetalDevice* InDevice)

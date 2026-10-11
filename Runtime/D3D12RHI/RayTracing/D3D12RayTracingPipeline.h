@@ -10,7 +10,7 @@ typedef TSharedRef<class FD3D12RayTracingPipelineStateRHI> FD3D12RayTracingPipel
 
 struct FD3D12RayTracingShaderIdentifier
 {
-    CHAR_T ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
+    uint8 ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
 };
 
 struct FD3D12RootSignatureAssociation

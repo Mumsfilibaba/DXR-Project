@@ -2,6 +2,7 @@
 #include "D3D11RHI/D3D11Device.h"
 #include "D3D11RHI/D3D11RHI.h"
 #include "D3D11RHI/D3D11Stats.h"
+#include "Core/Containers/StringConversion.h"
 
 FD3D11InputLayoutRHI::FD3D11InputLayoutRHI(const TArray<FRHIInputElementDesc>& InInputElements)
     : FRHIInputLayout()
@@ -17,7 +18,7 @@ FD3D11InputLayoutRHI::FD3D11InputLayoutRHI(const TArray<FRHIInputElementDesc>& I
     {
         D3D11_INPUT_ELEMENT_DESC InputElementDesc = {};
 
-        const FString& Semantic = SemanticNames.Emplace(Element.Semantic);
+        const FAnsiString& Semantic = SemanticNames.Emplace(StringCast<ANSICHAR>(Element.Semantic).ToString());
         InputElementDesc.SemanticName         = *Semantic;
         InputElementDesc.SemanticIndex        = Element.SemanticIndex;
         InputElementDesc.Format               = ConvertFormat(Element.Format);
@@ -238,12 +239,16 @@ bool FD3D11GraphicsPipelineStateRHI::CreateStreamOutputShader(const FRHIStreamOu
         SourceShader = DomainShader.Get();
     }
 
+    // Reserved up front, the entries point into these strings
+    TArray<FAnsiString> StreamOutputSemanticNames;
+    StreamOutputSemanticNames.Reserve(StreamOutputDeclaration.Entries.Size());
+
     TArray<D3D11_SO_DECLARATION_ENTRY> StreamOutputEntries;
     for (const FRHIStreamOutputEntry& Entry : StreamOutputDeclaration.Entries)
     {
         D3D11_SO_DECLARATION_ENTRY D3DEntry = {};
         D3DEntry.Stream         = 0;
-        D3DEntry.SemanticName   = Entry.SemanticName;
+        D3DEntry.SemanticName   = *StreamOutputSemanticNames.Emplace(StringCast<ANSICHAR>(Entry.SemanticName).ToString());
         D3DEntry.SemanticIndex  = Entry.SemanticIndex;
         D3DEntry.StartComponent = Entry.StartComponent;
         D3DEntry.ComponentCount = Entry.ComponentCount;

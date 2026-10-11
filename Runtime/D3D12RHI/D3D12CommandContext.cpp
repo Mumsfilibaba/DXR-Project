@@ -20,8 +20,8 @@
 #include <pix.h>
 
 static TAutoConsoleVariable<int32> CVarMaxCommandsPerCommandList(
-    "D3D12RHI.MaxCommandsPerCommandList",
-    "Number of commands allowed before submitting the current CommandList to the GPU",
+    TEXT("D3D12RHI.MaxCommandsPerCommandList"),
+    TEXT("Number of commands allowed before submitting the current CommandList to the GPU"),
     10000);
 
 struct FD3D12BarrierSubresourceRange
@@ -389,11 +389,11 @@ bool FD3D12CommandContext::Initialize()
 
 void FD3D12CommandContext::ObtainCommandList()
 {
-    TRACE_SCOPE("D3D12 Obtain Command List");
+    TRACE_SCOPE(TEXT("D3D12 Obtain Command List"));
 
     if (!CommandAllocator)
     {
-        TRACE_SCOPE("D3D12 Obtain Allocator");
+        TRACE_SCOPE(TEXT("D3D12 Obtain Allocator"));
 
         CommandAllocator = Queue.ObtainAllocator();
         if (!CommandAllocator)
@@ -405,7 +405,7 @@ void FD3D12CommandContext::ObtainCommandList()
     if (!CommandList)
     {
         {
-            TRACE_SCOPE("D3D12 Get Command List");
+            TRACE_SCOPE(TEXT("D3D12 Get Command List"));
 
             CommandList = Queue.ObtainCommandList(CommandAllocator, nullptr);
             if (!CommandList)
@@ -415,12 +415,12 @@ void FD3D12CommandContext::ObtainCommandList()
         }
 
         {
-            TRACE_SCOPE("D3D12 Insert Begin Timestamp");
+            TRACE_SCOPE(TEXT("D3D12 Insert Begin Timestamp"));
             CommandList->InsertBeginTimestamp(TimingQueryAllocator);
         }
 
         {
-            TRACE_SCOPE("D3D12 Initialize Command List State");
+            TRACE_SCOPE(TEXT("D3D12 Initialize Command List State"));
 
             ReopenEventStack();
 
@@ -434,7 +434,7 @@ void FD3D12CommandContext::ObtainCommandList()
 
     if (!Commands)
     {
-        TRACE_SCOPE("D3D12 Allocate Command Submission");
+        TRACE_SCOPE(TEXT("D3D12 Allocate Command Submission"));
         Commands = Queue.ObtainCommands();
     }
 }
@@ -545,7 +545,7 @@ bool FD3D12CommandContext::HasPendingWork() const
 
 void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolveQueries, FD3D12FenceSyncPoint* OutSyncPoint)
 {
-    TRACE_SCOPE("D3D12 Finish Command List");
+    TRACE_SCOPE(TEXT("D3D12 Finish Command List"));
 
     ContextState.EndCommandList();
 
@@ -557,7 +557,7 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
     // -------------------------------------------------------------------------------------------
 
     {
-        TRACE_SCOPE("D3D12 Flush Bindless Descriptors");
+        TRACE_SCOPE(TEXT("D3D12 Flush Bindless Descriptors"));
 
         if (FD3D12BindlessDescriptorHeap* ResourceBindlessHeap = GetDevice()->GetResourceBindlessHeap())
         {
@@ -571,7 +571,7 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
     }
 
     {
-        TRACE_SCOPE("D3D12 Flush Barriers");
+        TRACE_SCOPE(TEXT("D3D12 Flush Barriers"));
         BarrierBatcher.FlushBarriers(GetCommandList());
     }
 
@@ -588,7 +588,7 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
     }
 
     {
-        TRACE_SCOPE("D3D12 Insert End Timestamp");
+        TRACE_SCOPE(TEXT("D3D12 Insert End Timestamp"));
         CommandList->InsertEndTimestamp(TimingQueryAllocator);
     }
 
@@ -607,7 +607,7 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
     {
         if (bResolveQueries)
         {
-            TRACE_SCOPE("D3D12 Resolve Queries");
+            TRACE_SCOPE(TEXT("D3D12 Resolve Queries"));
 
             TimingQueryAllocator.Reset(Commands->QueryRanges);
             OcclusionQueryAllocator.Reset(Commands->QueryRanges);
@@ -672,7 +672,7 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
         }
 
         {
-            TRACE_SCOPE("D3D12 Close Command List");
+            TRACE_SCOPE(TEXT("D3D12 Close Command List"));
 
             CloseEventStack();
 
@@ -2540,7 +2540,7 @@ void FD3D12CommandContext::EnsureDefaultState(const FD3D12Resource* Resource) co
             Resource->GetDebugName(DebugName);
 
             D3D12_ERROR("EnsureDefaultState mismatch on '%s': CurrentState=%s (0x%08X, Source=%s), DefaultState=%s (0x%08X)",
-                *DebugName, ToString(CurrentState), uint32(CurrentState), bUsePending ? "Pending" : "Global", ToString(DefaultState), uint32(DefaultState));
+                *DebugName, ToString(CurrentState), uint32(CurrentState), bUsePending ? TEXT("Pending") : TEXT("Global"), ToString(DefaultState), uint32(DefaultState));
         }
 
         CHECK(CurrentState == D3D12_RESOURCE_STATE_TO_BE_DETERMINED || CurrentState == DefaultState);
@@ -3691,7 +3691,7 @@ void FD3D12CommandContext::PushEvent(const FStringView& Name)
     if (D3D12::PIXBeginEventOnCommandList)
     {
         ID3D12GraphicsCommandList* GraphicsCommandList = static_cast<ID3D12GraphicsCommandList*>(CommandList->GetCommandList());
-        D3D12::PIXBeginEventOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), *Name);
+        D3D12::PIXBeginEventOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), StringCast<ANSICHAR>(Name).Get());
     }
 #endif
 }
@@ -3736,7 +3736,7 @@ void FD3D12CommandContext::ReopenEventStack()
 
         for (int32 i = 0; i < EventStack.Size(); ++i)
         {
-            D3D12::PIXBeginEventOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), *EventStack[i]);
+            D3D12::PIXBeginEventOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), StringCast<ANSICHAR>(EventStack[i]).Get());
         }
     }
 #endif

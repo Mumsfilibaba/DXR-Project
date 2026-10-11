@@ -18,20 +18,20 @@
 #include "VulkanRHI/VulkanDeviceDebug.h"
 
 static TAutoConsoleVariable<int32> CVarMaxCommandsPerCommandBuffer(
-    "VulkanRHI.MaxCommandsPerCommandBuffer",
-    "Number of commands allowed before submitting the current CommandBuffer to the GPU",
+    TEXT("VulkanRHI.MaxCommandsPerCommandBuffer"),
+    TEXT("Number of commands allowed before submitting the current CommandBuffer to the GPU"),
     10000);
 
 static TAutoConsoleVariable<bool> CVarTimestampTopOfPipe(
-    "VulkanRHI.TimestampTopOfPipe",
-    "Use top-of-pipe timestamps instead of bottom-of-pipe",
+    TEXT("VulkanRHI.TimestampTopOfPipe"),
+    TEXT("Use top-of-pipe timestamps instead of bottom-of-pipe"),
     false);
 
 #if VULKAN_ENABLE_CRASH_MARKERS
 static TAutoConsoleVariable<int32> CVarVulkanCrashMarkerLevel(
-    "VulkanRHI.CrashMarkerLevel",
-    "GPU crash marker tracking level. 0=off, 1=markers only, 2=per draw/dispatch. Requires VK_AMD_buffer_marker or "
-    "VK_NV_device_diagnostic_checkpoints.",
+    TEXT("VulkanRHI.CrashMarkerLevel"),
+    TEXT("GPU crash marker tracking level. 0=off, 1=markers only, 2=per draw/dispatch. Requires VK_AMD_buffer_marker or "
+    "VK_NV_device_diagnostic_checkpoints."),
     1);
 
 static int32 GetCrashMarkerLevel()
@@ -42,9 +42,9 @@ static int32 GetCrashMarkerLevel()
 
 #if VULKAN_ENABLE_BARRIER_STATS
 static TAutoConsoleVariable<bool> CVarLogBarrierStats(
-    "VulkanRHI.LogBarrierStats",
-    "Log per-frame averages of pipeline barriers, ALL_COMMANDS barriers and render-pass pauses, together with the "
-    "resources whose barriers caused the pauses",
+    TEXT("VulkanRHI.LogBarrierStats"),
+    TEXT("Log per-frame averages of pipeline barriers, ALL_COMMANDS barriers and render-pass pauses, together with the "
+    "resources whose barriers caused the pauses"),
     false);
 #endif
 
@@ -81,14 +81,14 @@ static FString GetBarrierDebugName(FVulkanTextureRHI* Texture)
 {
     FString Name;
     Texture->GetDebugName(Name);
-    return Name.IsEmpty() ? FString("Unnamed") : Name;
+    return Name.IsEmpty() ? FString(TEXT("Unnamed")) : Name;
 }
 
 static FString GetBarrierDebugName(FVulkanBufferRHI* Buffer)
 {
     FString Name;
     Buffer->GetDebugName(Name);
-    return Name.IsEmpty() ? FString("Unnamed") : Name;
+    return Name.IsEmpty() ? FString(TEXT("Unnamed")) : Name;
 }
 
 struct FScopedBarrierReason
@@ -105,7 +105,7 @@ struct FScopedBarrierReason
     {
         if (Batcher.GetGeneration() != Generation && FVulkanBarrierStats::IsEnabled())
         {
-            Batcher.AddDebugReason(FString::Printf("Texture '%s' -> %s", *GetBarrierDebugName(Texture), ToString(AfterLayout)));
+            Batcher.AddDebugReason(FString::Printf(TEXT("Texture '%s' -> %s"), *GetBarrierDebugName(Texture), ToString(AfterLayout)));
         }
     }
 
@@ -287,7 +287,7 @@ void FVulkanBarrierStats::RecordRenderPassPause(const TArray<FString>& Reasons)
     TScopedLock Lock(GBarrierStats.PauseReasonsCS);
     if (Reasons.IsEmpty())
     {
-        GBarrierStats.PauseReasons.FindOrAdd(FString("<untracked barrier>"))++;
+        GBarrierStats.PauseReasons.FindOrAdd(FString(TEXT("<untracked barrier>")))++;
     }
 
     for (const FString& Reason : Reasons)
@@ -575,7 +575,7 @@ void FVulkanBarrierBatcher::FlushBarriers(FVulkanCommandBuffer& CommandBuffer)
                 Range.baseMipLevel == 0 && Range.levelCount == VK_REMAINING_MIP_LEVELS &&
                 Range.baseArrayLayer == 0 && Range.layerCount == VK_REMAINING_ARRAY_LAYERS;
 
-            CommandBuffer.AddImageLayoutForValidation(Barrier.image, Barrier.oldLayout, Barrier.newLayout, bWholeImage, "PipelineBarrier");
+            CommandBuffer.AddImageLayoutForValidation(Barrier.image, Barrier.oldLayout, Barrier.newLayout, bWholeImage, TEXT("PipelineBarrier"));
         }
     #endif
 
@@ -672,7 +672,7 @@ void FVulkanCommandContext::ObtainCommandBuffer()
     if (!CommandPool)
     {
         {
-            TRACE_SCOPE("Vulkan Obtain Command Pool");
+            TRACE_SCOPE(TEXT("Vulkan Obtain Command Pool"));
             CommandPool = Queue.ObtainCommandPool();
         }
 
@@ -687,7 +687,7 @@ void FVulkanCommandContext::ObtainCommandBuffer()
     if (!CommandBuffer)
     {
         {
-            TRACE_SCOPE("Vulkan Get Command Buffer");
+            TRACE_SCOPE(TEXT("Vulkan Get Command Buffer"));
 
             CommandBuffer = CommandPool->GetOrCreateBuffer();
             if (!CommandBuffer)
@@ -698,11 +698,11 @@ void FVulkanCommandContext::ObtainCommandBuffer()
         }
 
         {
-            TRACE_SCOPE("Vulkan Begin Command Buffer");
+            TRACE_SCOPE(TEXT("Vulkan Begin Command Buffer"));
 
             const VkCommandBufferUsageFlags Flags = GVulkanAllowResetCommandBuffers ? 0 : VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
             {
-                TRACE_SCOPE("Vulkan Begin Command Buffer Recording");
+                TRACE_SCOPE(TEXT("Vulkan Begin Command Buffer Recording"));
                 
                 if (!CommandBuffer->Begin(Flags))
                 {
@@ -711,7 +711,7 @@ void FVulkanCommandContext::ObtainCommandBuffer()
             }
 
             {
-                TRACE_SCOPE("Vulkan Insert Begin Timestamp");
+                TRACE_SCOPE(TEXT("Vulkan Insert Begin Timestamp"));
                 CommandBuffer->InsertBeginTimestamp(TimestampQueryAllocator);
             }
 
@@ -719,7 +719,7 @@ void FVulkanCommandContext::ObtainCommandBuffer()
         }
 
         {
-            TRACE_SCOPE("Vulkan Initialize Command Buffer State");
+            TRACE_SCOPE(TEXT("Vulkan Initialize Command Buffer State"));
 
             ReopenEventStack();
 
@@ -731,7 +731,7 @@ void FVulkanCommandContext::ObtainCommandBuffer()
 
     if (!Commands)
     {
-        TRACE_SCOPE("Vulkan Allocate Command Submission");
+        TRACE_SCOPE(TEXT("Vulkan Allocate Command Submission"));
 
         Commands = Queue.ObtainCommands();
         Commands->AcquireFence();
@@ -3149,7 +3149,7 @@ void FVulkanCommandContext::RequireBufferState(FVulkanBufferRHI* VulkanBuffer, E
     #if VULKAN_ENABLE_BARRIER_STATS
         if (FVulkanBarrierStats::IsEnabled())
         {
-            BarrierBatcher.AddDebugReason(FString::Printf("Buffer '%s' (stage=0x%llx access=0x%llx) -> %s", *GetBarrierDebugName(VulkanBuffer),
+            BarrierBatcher.AddDebugReason(FString::Printf(TEXT("Buffer '%s' (stage=0x%llx access=0x%llx) -> %s"), *GetBarrierDebugName(VulkanBuffer),
                 static_cast<uint64>(LocalState.GetStage()), static_cast<uint64>(LocalState.GetAccess()), ToString(RequiredState)));
         }
     #endif
@@ -3529,7 +3529,7 @@ void FVulkanCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
 #if VULKAN_ENABLE_CRASH_MARKERS
     if (FVulkanDeviceRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() >= 2)
     {
-        FVulkanDeviceRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), "Draw");
+        FVulkanDeviceRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), TEXT("Draw"));
     }
 #endif
 }
@@ -3548,7 +3548,7 @@ void FVulkanCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLoca
 #if VULKAN_ENABLE_CRASH_MARKERS
     if (FVulkanDeviceRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() >= 2)
     {
-        FVulkanDeviceRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), "DrawIndexed");
+        FVulkanDeviceRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), TEXT("DrawIndexed"));
     }
 #endif
 }
@@ -3567,7 +3567,7 @@ void FVulkanCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 
 #if VULKAN_ENABLE_CRASH_MARKERS
     if (FVulkanDeviceRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() >= 2)
     {
-        FVulkanDeviceRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), "DrawInstanced");
+        FVulkanDeviceRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), TEXT("DrawInstanced"));
     }
 #endif
 }
@@ -3586,7 +3586,7 @@ void FVulkanCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, u
 #if VULKAN_ENABLE_CRASH_MARKERS
     if (FVulkanDeviceRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() >= 2)
     {
-        FVulkanDeviceRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), "DrawIndexedInstanced");
+        FVulkanDeviceRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), TEXT("DrawIndexedInstanced"));
     }
 #endif
 }
@@ -3608,7 +3608,7 @@ void FVulkanCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uin
 #if VULKAN_ENABLE_CRASH_MARKERS
     if (FVulkanDeviceRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() >= 2)
     {
-        FVulkanDeviceRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), "Dispatch");
+        FVulkanDeviceRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), TEXT("Dispatch"));
     }
 #endif
 }
@@ -3639,7 +3639,7 @@ void FVulkanCommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32 Thread
 #if VULKAN_ENABLE_CRASH_MARKERS
     if (FVulkanDeviceRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() >= 2)
     {
-        FVulkanDeviceRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), "DispatchMesh");
+        FVulkanDeviceRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), TEXT("DispatchMesh"));
     }
 #endif
 #else
@@ -3942,9 +3942,11 @@ void FVulkanCommandContext::PushEvent(const FStringView& Name)
 #if VK_EXT_debug_utils
     if (GVulkanSupportsDebugUtils)
     {
+        const TStringConversion<ANSICHAR, CHAR_T> LabelName = StringCast<ANSICHAR>(EventName);
+
         VkDebugUtilsLabelEXT DebugUtilsLabel = {};
         DebugUtilsLabel.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-        DebugUtilsLabel.pLabelName = *EventName;
+        DebugUtilsLabel.pLabelName = LabelName.Get();
         DebugUtilsLabel.color[0]   = 0.0f;
         DebugUtilsLabel.color[1]   = 0.0f;
         DebugUtilsLabel.color[2]   = 0.0f;
@@ -4004,9 +4006,11 @@ void FVulkanCommandContext::ReopenEventStack()
     {
         for (int32 i = 0; i < EventStack.Size(); ++i)
         {
+            const TStringConversion<ANSICHAR, CHAR_T> LabelName = StringCast<ANSICHAR>(EventStack[i]);
+
             VkDebugUtilsLabelEXT DebugUtilsLabel = {};
             DebugUtilsLabel.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-            DebugUtilsLabel.pLabelName = *EventStack[i];
+            DebugUtilsLabel.pLabelName = LabelName.Get();
             DebugUtilsLabel.color[0]   = 0.0f;
             DebugUtilsLabel.color[1]   = 0.0f;
             DebugUtilsLabel.color[2]   = 0.0f;

@@ -17,39 +17,39 @@
 #include "Core/Threading/ScopedLock.h"
 
 static TAutoConsoleVariable<int32> CVarMaxPendingSubmissions(
-    "MetalRHI.MaxPendingSubmissions",
-    "Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up",
+    TEXT("MetalRHI.MaxPendingSubmissions"),
+    TEXT("Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up"),
     32);
 
 static TAutoConsoleVariable<int32> CVarCommandContextMaxIdleFrames(
-    "MetalRHI.CommandContextPool.MaxIdleFrames",
-    "Number of frames a pooled CommandContext may sit unused before it is destroyed",
+    TEXT("MetalRHI.CommandContextPool.MaxIdleFrames"),
+    TEXT("Number of frames a pooled CommandContext may sit unused before it is destroyed"),
     16);
 
 static TAutoConsoleVariable<int32> CVarCommandContextMinRetained(
-    "MetalRHI.CommandContextPool.MinRetained",
-    "Number of CommandContexts the pool keeps alive regardless of how long they have been idle",
+    TEXT("MetalRHI.CommandContextPool.MinRetained"),
+    TEXT("Number of CommandContexts the pool keeps alive regardless of how long they have been idle"),
     2);
 
 static TAutoConsoleVariable<bool> CVarRetainedReferences(
-    "MetalRHI.RetainedReferences",
-    "When enabled, command buffers retain every object they reference. A diagnostic for a suspected use-after-free",
+    TEXT("MetalRHI.RetainedReferences"),
+    TEXT("When enabled, command buffers retain every object they reference. A diagnostic for a suspected use-after-free"),
     false);
 
 static TAutoConsoleVariable<bool> CVarEncoderExecutionStatus(
-    "MetalRHI.EncoderExecutionStatus",
-    "When enabled, a failed command buffer reports which of its encoders completed, faulted or never ran, each named by the scope path it opened under. On an AMD GPU this makes indirect mesh draws time out",
+    TEXT("MetalRHI.EncoderExecutionStatus"),
+    TEXT("When enabled, a failed command buffer reports which of its encoders completed, faulted or never ran, each named by the scope path it opened under. On an AMD GPU this makes indirect mesh draws time out"),
     false);
 
 static TAutoConsoleVariable<FString> CVarFaultReportFilePath(
-    "MetalRHI.FaultReportFilePath",
-    "File a failed command buffer's report is also written to, or empty to only log it",
-    "MetalFaultReport.txt");
+    TEXT("MetalRHI.FaultReportFilePath"),
+    TEXT("File a failed command buffer's report is also written to, or empty to only log it"),
+    TEXT("MetalFaultReport.txt"));
 
 #if METAL_ENABLE_DEBUG_LAYER
 static FAutoConsoleCommand CCmdForceGPUHang(
-    "MetalRHI.ForceGPUHang",
-    "Submits a kernel that never returns on the Direct queue, so the macOS GPU watchdog kills it, to verify the fault report",
+    TEXT("MetalRHI.ForceGPUHang"),
+    TEXT("Submits a kernel that never returns on the Direct queue, so the macOS GPU watchdog kills it, to verify the fault report"),
     FConsoleCommandDelegate::CreateStatic(&MetalForceGPUHang));
 #endif
 
@@ -64,7 +64,7 @@ static void ReportFunctionLogs(id<MTLCommandBuffer> CommandBuffer)
     {
         const FString Description(FunctionLog.description);
 
-        if (CString::Stristr(*Description, "error") != nullptr || CString::Stristr(*Description, "fault") != nullptr)
+        if (CString::Stristr(*Description, TEXT("error")) != nullptr || CString::Stristr(*Description, TEXT("fault")) != nullptr)
         {
             METAL_ERROR("[Metal Function] %s", *Description);
         }
@@ -79,18 +79,18 @@ static const CHAR_T* ToString(MTLCommandBufferError ErrorCode)
 {
     switch (ErrorCode)
     {
-        case MTLCommandBufferErrorNone:            return "None";
-        case MTLCommandBufferErrorInternal:        return "Internal";
-        case MTLCommandBufferErrorTimeout:         return "Timeout";
-        case MTLCommandBufferErrorPageFault:       return "PageFault";
-        case MTLCommandBufferErrorAccessRevoked:   return "AccessRevoked";
-        case MTLCommandBufferErrorNotPermitted:    return "NotPermitted";
-        case MTLCommandBufferErrorOutOfMemory:     return "OutOfMemory";
-        case MTLCommandBufferErrorInvalidResource: return "InvalidResource";
-        case MTLCommandBufferErrorMemoryless:      return "Memoryless";
-        case MTLCommandBufferErrorDeviceRemoved:   return "DeviceRemoved";
-        case MTLCommandBufferErrorStackOverflow:   return "StackOverflow";
-        default:                                   return "Unknown";
+        case MTLCommandBufferErrorNone:            return TEXT("None");
+        case MTLCommandBufferErrorInternal:        return TEXT("Internal");
+        case MTLCommandBufferErrorTimeout:         return TEXT("Timeout");
+        case MTLCommandBufferErrorPageFault:       return TEXT("PageFault");
+        case MTLCommandBufferErrorAccessRevoked:   return TEXT("AccessRevoked");
+        case MTLCommandBufferErrorNotPermitted:    return TEXT("NotPermitted");
+        case MTLCommandBufferErrorOutOfMemory:     return TEXT("OutOfMemory");
+        case MTLCommandBufferErrorInvalidResource: return TEXT("InvalidResource");
+        case MTLCommandBufferErrorMemoryless:      return TEXT("Memoryless");
+        case MTLCommandBufferErrorDeviceRemoved:   return TEXT("DeviceRemoved");
+        case MTLCommandBufferErrorStackOverflow:   return TEXT("StackOverflow");
+        default:                                   return TEXT("Unknown");
     }
 }
 
@@ -98,11 +98,11 @@ static const CHAR_T* ToString(MTLCommandEncoderErrorState ErrorState)
 {
     switch (ErrorState)
     {
-        case MTLCommandEncoderErrorStateCompleted: return "Completed";
-        case MTLCommandEncoderErrorStateAffected:  return "Affected";
-        case MTLCommandEncoderErrorStatePending:   return "Pending";
-        case MTLCommandEncoderErrorStateFaulted:   return "Faulted";
-        default:                                   return "Unknown";
+        case MTLCommandEncoderErrorStateCompleted: return TEXT("Completed");
+        case MTLCommandEncoderErrorStateAffected:  return TEXT("Affected");
+        case MTLCommandEncoderErrorStatePending:   return TEXT("Pending");
+        case MTLCommandEncoderErrorStateFaulted:   return TEXT("Faulted");
+        default:                                   return TEXT("Unknown");
     }
 }
 
@@ -138,7 +138,7 @@ static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer, const F
 
     if (!Error)
     {
-        WriteLine(FString::Printf("[MetalRHI] Command buffer '%s' failed without reporting an error", *Label));
+        WriteLine(FString::Printf(TEXT("[MetalRHI] Command buffer '%s' failed without reporting an error"), *Label));
         return;
     }
 
@@ -146,12 +146,12 @@ static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer, const F
 
     if ([Error.domain isEqualToString:MTLCommandBufferErrorDomain])
     {
-        WriteLine(FString::Printf("[MetalRHI] Command buffer '%s' failed with %s: %s", *Label, ToString(MTLCommandBufferError(Error.code)), *Description));
+        WriteLine(FString::Printf(TEXT("[MetalRHI] Command buffer '%s' failed with %s: %s"), *Label, ToString(MTLCommandBufferError(Error.code)), *Description));
     }
     else
     {
         const FString Domain(Error.domain);
-        WriteLine(FString::Printf("[MetalRHI] Command buffer '%s' failed with %s(%ld): %s", *Label, *Domain, long(Error.code), *Description));
+        WriteLine(FString::Printf(TEXT("[MetalRHI] Command buffer '%s' failed with %s(%ld): %s"), *Label, *Domain, long(Error.code), *Description));
     }
 
     NSArray<id<MTLCommandBufferEncoderInfo>>* EncoderInfos = Error.userInfo[MTLCommandBufferEncoderInfoErrorKey];
@@ -172,28 +172,28 @@ static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer, const F
 
     if (EncoderInfos.count > 0)
     {
-        WriteLine(FString::Printf("[MetalRHI]   Last completed: '%s', faulted: '%s'",
+        WriteLine(FString::Printf(TEXT("[MetalRHI]   Last completed: '%s', faulted: '%s'"),
             *FString(LastCompleted ? LastCompleted : @"<none>"), *FString(FirstFaulted ? FirstFaulted : @"<unknown>")));
     }
 
     for (id<MTLCommandBufferEncoderInfo> EncoderInfo in EncoderInfos)
     {
         const FString EncoderLabel(EncoderInfo.label ? EncoderInfo.label : @"<unnamed>");
-        WriteLine(FString::Printf("[MetalRHI]   Encoder '%s': %s", *EncoderLabel, ToString(EncoderInfo.errorState)));
+        WriteLine(FString::Printf(TEXT("[MetalRHI]   Encoder '%s': %s"), *EncoderLabel, ToString(EncoderInfo.errorState)));
 
         for (NSString* Signpost in EncoderInfo.debugSignposts)
         {
             const FString SignpostLabel(Signpost);
-            WriteLine(FString::Printf("[MetalRHI]     %s", *SignpostLabel));
+            WriteLine(FString::Printf(TEXT("[MetalRHI]     %s"), *SignpostLabel));
         }
     }
 
     if (Breadcrumbs.Count > 0)
     {
-        WriteLine("[MetalRHI]   Breadcrumbs:");
+        WriteLine(TEXT("[MetalRHI]   Breadcrumbs:"));
         Breadcrumbs.ForEach([&WriteLine](const CHAR_T* Name)
         {
-            WriteLine(FString::Printf("[MetalRHI]     %s", Name));
+            WriteLine(FString::Printf(TEXT("[MetalRHI]     %s"), Name));
         });
     }
 }

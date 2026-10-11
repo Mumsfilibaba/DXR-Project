@@ -62,7 +62,7 @@ void FD3D11FenceRHI::Signal()
         HRESULT Result = GetDevice()->GetD3D11Context4()->Signal(Fence.Get(), NewValue);
         if (FAILED(Result))
         {
-            GetDevice()->CheckDeviceRemoved(Result, "Fence::Signal");
+            GetDevice()->CheckDeviceRemoved(Result, TEXT("Fence::Signal"));
             D3D11_ERROR("[FD3D11FenceRHI]: Failed to signal Fence (0x%08X)", static_cast<uint32>(Result));
             return;
         }

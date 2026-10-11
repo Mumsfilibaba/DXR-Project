@@ -15,14 +15,14 @@ static constexpr uint64 D3D12_SMALL_TEXTURE_TIGHT_PLACEMENT_ALIGNMENT = 256ull;
 
 #if D3D12_ENABLE_MEMORY_LOGGING
 static TAutoConsoleVariable<bool> CVarD3D12LogMemoryAllocations(
-    "D3D12RHI.LogMemoryAllocations",
-    "Log when new memory allocator pages or dedicated allocations are created",
+    TEXT("D3D12RHI.LogMemoryAllocations"),
+    TEXT("Log when new memory allocator pages or dedicated allocations are created"),
     false);
 #endif
 
 static TAutoConsoleVariable<int32> CVarDefragEligibilityDelay(
-    "D3D12RHI.DefragEligibilityDelay",
-    "Frames past the one carrying an allocation's initialization work before it may be defragmented",
+    TEXT("D3D12RHI.DefragEligibilityDelay"),
+    TEXT("Frames past the one carrying an allocation's initialization work before it may be defragmented"),
     1, 1, 16);
 
 static D3D12_RESOURCE_DESC ApplyTightAlignmentFlag(const D3D12_RESOURCE_DESC& ResourceDesc)
@@ -3151,10 +3151,10 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
     {
         static const CHAR_T* PoolClassNames[] = 
         { 
-            "SmallReadOnly", 
-            "ReadOnly", 
-            "RenderTargetDepthStencil", 
-            "UAVOnly"
+            TEXT("SmallReadOnly"), 
+            TEXT("ReadOnly"), 
+            TEXT("RenderTargetDepthStencil"), 
+            TEXT("UAVOnly")
         };
         
         D3D12_INFO("[TextureAllocator] Dimension=%u %llux%u Format=%u Alignment=%llu Size=%llu -> Pool=%s (PoolAlignment=%llu)",

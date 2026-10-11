@@ -13,7 +13,7 @@ PFN_DCOMPOSITION_CREATE_DEVICE D3D11::DCompositionCreateDevice = nullptr;
 #define D3D11_LOAD_FUNCTION(Function, LibraryHandle) \
 do \
 { \
-    D3D11::Function = FPlatformLibrary::LoadSymbol<decltype(D3D11::Function)>(#Function, LibraryHandle); \
+    D3D11::Function = FPlatformLibrary::LoadSymbol<decltype(D3D11::Function)>(TEXT(#Function), LibraryHandle); \
     if (!D3D11::Function) \
     { \
         D3D11_ERROR_CRITICAL("Failed to load '%s'", #Function); \
@@ -29,10 +29,10 @@ void* D3D11::DCompLibrary       = nullptr;
 
 bool D3D11::Initialize()
 {
-    DXGILibrary = FPlatformLibrary::LoadDynamicLib("dxgi");
+    DXGILibrary = FPlatformLibrary::LoadDynamicLib(TEXT("dxgi"));
     if (!DXGILibrary)
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load dxgi.dll");
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("FAILED to load dxgi.dll"));
         return false;
     }
     else
@@ -40,10 +40,10 @@ bool D3D11::Initialize()
         D3D11_INFO("Loaded dxgi.dll");
     }
 
-    D3D11Library = FPlatformLibrary::LoadDynamicLib("d3d11");
+    D3D11Library = FPlatformLibrary::LoadDynamicLib(TEXT("d3d11"));
     if (!D3D11Library)
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load d3d11.dll");
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("FAILED to load d3d11.dll"));
         return false;
     }
     else
@@ -56,12 +56,12 @@ bool D3D11::Initialize()
     D3D11_LOAD_FUNCTION(D3D11CreateDevice, D3D11Library);
 
 #if D3D11_ENABLE_COMPOSITION
-    DCompLibrary = FPlatformLibrary::LoadDynamicLib("dcomp");
+    DCompLibrary = FPlatformLibrary::LoadDynamicLib(TEXT("dcomp"));
     if (DCompLibrary)
     {
         D3D11_INFO("Loaded dcomp.dll");
 
-        D3D11::DCompositionCreateDevice = FPlatformLibrary::LoadSymbol<PFN_DCOMPOSITION_CREATE_DEVICE>("DCompositionCreateDevice", DCompLibrary);
+        D3D11::DCompositionCreateDevice = FPlatformLibrary::LoadSymbol<PFN_DCOMPOSITION_CREATE_DEVICE>(TEXT("DCompositionCreateDevice"), DCompLibrary);
     }
 
     if (!D3D11::DCompositionCreateDevice)

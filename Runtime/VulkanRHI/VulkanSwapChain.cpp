@@ -8,35 +8,35 @@
 #include "VulkanRHI/VulkanDeviceDebug.h"
 
 static TAutoConsoleVariable<int32> CVarBackbufferCount(
-    "VulkanRHI.SwapChain.BackBufferCount",
-    "The preferred number of backbuffers for the SwapChain",
+    TEXT("VulkanRHI.SwapChain.BackBufferCount"),
+    TEXT("The preferred number of backbuffers for the SwapChain"),
     NUM_BACK_BUFFERS,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarEnableVSync(
-    "VulkanRHI.SwapChain.EnableVSync",
-    "Enable V-Sync for SwapChains (Changes take effect at the next present)",
+    TEXT("VulkanRHI.SwapChain.EnableVSync"),
+    TEXT("Enable V-Sync for SwapChains (Changes take effect at the next present)"),
     true,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarVulkanDefaultBackBufferFormat(
-    "VulkanRHI.DefaultBackBufferFormat",
-    "Default back-buffer format used when FRHISwapChainDesc::ColorFormat is Unknown. "
+    TEXT("VulkanRHI.DefaultBackBufferFormat"),
+    TEXT("Default back-buffer format used when FRHISwapChainDesc::ColorFormat is Unknown. "
     "0=B8G8R8A8_Unorm (default), "
     "1=R8G8B8A8_Unorm, "
     "2=B8G8R8A8_Unorm_SRGB, "
     "3=R8G8B8A8_Unorm_SRGB, "
     "4=R10G10B10A2_Unorm (HDR10 candidate), "
-    "5=R16G16B16A16_Float (scRGB candidate).",
+    "5=R16G16B16A16_Float (scRGB candidate)."),
     0);
 
 static TAutoConsoleVariable<int32> CVarVulkanDefaultBackBufferColorSpace(
-    "VulkanRHI.DefaultBackBufferColorSpace",
-    "Default back-buffer color space used when FRHISwapChainDesc::ColorSpace is Unknown. "
+    TEXT("VulkanRHI.DefaultBackBufferColorSpace"),
+    TEXT("Default back-buffer color space used when FRHISwapChainDesc::ColorSpace is Unknown. "
     "0=RGB_Full_G22_None_P709 / sRGB (default), "
     "1=RGB_Full_G10_None_P709 / scRGB, "
     "2=RGB_Full_G2084_None_P2020 / HDR10, "
-    "3=RGB_Full_G22_None_P2020.",
+    "3=RGB_Full_G22_None_P2020."),
     0);
 
 static void DestroyBackBufferImageView(FVulkanDevice* Device, VkImageView& ImageView)
@@ -918,7 +918,7 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
         FVulkanSemaphoreRef NewImageSemaphore = new FVulkanSemaphore(GetDevice());
         if (NewImageSemaphore->Initialize())
         {
-            NewImageSemaphore->SetDebugName("ImageSemaphore[" + TTypeToString<int32>::ToString(i) + "]");
+            NewImageSemaphore->SetDebugName(TEXT("ImageSemaphore[") + TTypeToString<int32>::ToString(i) + TEXT("]"));
             ImageSemaphores[i] = NewImageSemaphore;
         }
         else
@@ -929,7 +929,7 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
         FVulkanSemaphoreRef NewRenderSemaphore = new FVulkanSemaphore(GetDevice());
         if (NewRenderSemaphore->Initialize())
         {
-            NewRenderSemaphore->SetDebugName("RenderSemaphore[" + TTypeToString<int32>::ToString(i) + "]");
+            NewRenderSemaphore->SetDebugName(TEXT("RenderSemaphore[") + TTypeToString<int32>::ToString(i) + TEXT("]"));
             RenderSemaphores[i] = NewRenderSemaphore;
         }
         else
@@ -1053,7 +1053,7 @@ bool FVulkanSwapChainRHI::Resize(uint32 InWidth, uint32 InHeight, EFormat NewFor
 
 bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
 {
-    TRACE_SCOPE("Vulkan SwapChain Present");
+    TRACE_SCOPE(TEXT("Vulkan SwapChain Present"));
 
 	// If we don't have a drawable size, don't try to acquire/present
     if (!CanPresent())
@@ -1073,7 +1073,7 @@ bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
     if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_SURFACE_LOST_KHR)
     {
 		VULKAN_INFO("FVulkanSwapChainRHI::Present [Present] SwapChain is %s", 
-			(Result == VK_SUBOPTIMAL_KHR ? "Suboptimal" : (Result == VK_ERROR_SURFACE_LOST_KHR ? "SurfaceLost" : "OutOfDate")));
+			(Result == VK_SUBOPTIMAL_KHR ? TEXT("Suboptimal") : (Result == VK_ERROR_SURFACE_LOST_KHR ? TEXT("SurfaceLost") : TEXT("OutOfDate"))));
         bNeedsRecreation = true;
     }
 	else if (Result != VK_SUCCESS)
@@ -1084,7 +1084,7 @@ bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
 
     if (bVerticalSync != bActiveVSync)
     {
-        VULKAN_INFO("FVulkanSwapChainRHI::Present VSync changed (%s -> %s)", bActiveVSync ? "on" : "off", bVerticalSync ? "on" : "off");
+        VULKAN_INFO("FVulkanSwapChainRHI::Present VSync changed (%s -> %s)", bActiveVSync ? TEXT("on") : TEXT("off"), bVerticalSync ? TEXT("on") : TEXT("off"));
         CVarEnableVSync->SetAsBool(bVerticalSync, EConsoleVariableFlags::SetByCode);
         bNeedsRecreation = true;
     }
@@ -1098,7 +1098,7 @@ bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
 
     if (CVarEnableVSync.GetValue() != bActiveVSync)
     {
-        VULKAN_INFO("FVulkanSwapChainRHI::Present VSync CVar changed (%s -> %s)", bActiveVSync ? "on" : "off", CVarEnableVSync.GetValue() ? "on" : "off");
+        VULKAN_INFO("FVulkanSwapChainRHI::Present VSync CVar changed (%s -> %s)", bActiveVSync ? TEXT("on") : TEXT("off"), CVarEnableVSync.GetValue() ? TEXT("on") : TEXT("off"));
         bNeedsRecreation = true;
     }
 
@@ -1129,10 +1129,10 @@ void FVulkanSwapChainRHI::SetDebugName(const FString& InName)
 
         for (int32 Index = 0; Index < BackBufferImages.Size(); ++Index)
         {
-            const FString ImageName = InName + FString::Printf(" BackBuffer Image[%d]", Index);
+            const FString ImageName = InName + FString::Printf(TEXT(" BackBuffer Image[%d]"), Index);
             VulkanSetObjectName(GetDevice()->GetVkDevice(), *ImageName, BackBufferImages[Index].Image, VK_OBJECT_TYPE_IMAGE);
 
-            const FString ImageViewName = InName + FString::Printf(" BackBuffer ImageView[%d]", Index);
+            const FString ImageViewName = InName + FString::Printf(TEXT(" BackBuffer ImageView[%d]"), Index);
             VulkanSetObjectName(GetDevice()->GetVkDevice(), *ImageViewName, BackBufferImages[Index].ImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
         }
     }
@@ -1313,7 +1313,7 @@ VkResult FVulkanSwapChainRHI::AcquireNextBackBuffer(FVulkanCommands* InCommands)
 
 VkResult FVulkanSwapChainRHI::AcquireNextImage()
 {
-    TRACE_SCOPE("Vulkan SwapChain Acquire Image");
+    TRACE_SCOPE(TEXT("Vulkan SwapChain Acquire Image"));
 
 	FVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
@@ -1337,7 +1337,7 @@ VkResult FVulkanSwapChainRHI::AcquireNextImage()
     if (ImageFences[SemaphoreIndex])
     {
         {
-            TRACE_SCOPE("Vulkan SwapChain Image Fence Wait");
+            TRACE_SCOPE(TEXT("Vulkan SwapChain Image Fence Wait"));
             ImageFences[SemaphoreIndex]->Wait();
         }
 
@@ -1346,7 +1346,7 @@ VkResult FVulkanSwapChainRHI::AcquireNextImage()
 
     VkResult Result = VK_SUCCESS;
     {
-        TRACE_SCOPE("Vulkan Acquire Next Image");
+        TRACE_SCOPE(TEXT("Vulkan Acquire Next Image"));
         Result = SwapChainResource->AcquireNextImage(ImageSemaphore.Get());
     }
     

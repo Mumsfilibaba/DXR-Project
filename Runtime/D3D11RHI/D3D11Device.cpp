@@ -9,18 +9,18 @@
 #endif
 
 static TAutoConsoleVariable<bool> CVarBreakOnError(
-    "D3D11RHI.BreakOnError",
-    "When enabled, there will be a DebugBreak when the debug layer encounters an error",
+    TEXT("D3D11RHI.BreakOnError"),
+    TEXT("When enabled, there will be a DebugBreak when the debug layer encounters an error"),
     true);
 
 static TAutoConsoleVariable<bool> CVarBreakOnWarning(
-    "D3D11RHI.BreakOnWarning",
-    "When enabled, there will be a DebugBreak when the debug layer encounters a warning",
+    TEXT("D3D11RHI.BreakOnWarning"),
+    TEXT("When enabled, there will be a DebugBreak when the debug layer encounters a warning"),
     false);
 
 static TAutoConsoleVariable<bool> CVarPreferDedicatedGPU(
-    "D3D11RHI.PreferDedicatedGPU",
-    "When enabled, a dedicated GPU will be selected when creating the Device",
+    TEXT("D3D11RHI.PreferDedicatedGPU"),
+    TEXT("When enabled, a dedicated GPU will be selected when creating the Device"),
     true);
 
 static const D3D_FEATURE_LEVEL GD3D11FeatureLevels[] =
@@ -46,7 +46,7 @@ FD3D11Adapter::~FD3D11Adapter() = default;
 
 bool FD3D11Adapter::Initialize()
 {
-    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
+    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable(TEXT("RHI.EnableDebugLayer")))
     {
         bEnableDebugLayer = CVarEnableDebugLayer->GetBool();
     }
@@ -73,7 +73,7 @@ bool FD3D11Adapter::Initialize()
         }
     }
 
-    D3D11_INFO("[FD3D11Adapter]: Tearing is %s", bAllowTearing ? "supported" : "NOT supported");
+    D3D11_INFO("[FD3D11Adapter]: Tearing is %s", bAllowTearing ? TEXT("supported") : TEXT("NOT supported"));
 
     Factory.GetAs(&Factory6);
 
@@ -112,7 +112,7 @@ bool FD3D11Adapter::Initialize()
 
         if (SUCCEEDED(Result))
         {
-            D3D11_INFO("[FD3D11Adapter]: Suitable Direct3D Adapter (%u): %ls", Index, Desc.Description);
+            D3D11_INFO("[FD3D11Adapter]: Suitable Direct3D Adapter (%u): %s", Index, StringCast<CHAR_T>(Desc.Description).Get());
 
             // Adapters arrive in preference order, so only a higher feature level replaces an earlier pick
             if (SupportedLevel > BestFeatureLevel)
@@ -237,7 +237,7 @@ bool FD3D11Device::CreateDevice()
         D3D11_WARNING("[FD3D11Device]: ID3D11Multithread is not available, the immediate context is not protected");
     }
 
-    D3D11_INFO("[FD3D11Device]: Created device (FeatureLevel=0x%X, Debug=%s)", static_cast<uint32>(FeatureLevel), (DeviceFlags & D3D11_CREATE_DEVICE_DEBUG) ? "Yes" : "No");
+    D3D11_INFO("[FD3D11Device]: Created device (FeatureLevel=0x%X, Debug=%s)", static_cast<uint32>(FeatureLevel), (DeviceFlags & D3D11_CREATE_DEVICE_DEBUG) ? TEXT("Yes") : TEXT("No"));
     return true;
 }
 
@@ -292,11 +292,11 @@ void FD3D11Device::FlushDebugMessages()
         {
             case D3D11_MESSAGE_SEVERITY_CORRUPTION:
             case D3D11_MESSAGE_SEVERITY_ERROR:
-                D3D11_ERROR("[DebugLayer] %.*s", static_cast<int32>(Message->DescriptionByteLength), Message->pDescription);
+                D3D11_ERROR("[DebugLayer] %s", StringCast<CHAR_T>(Message->pDescription).Get());
                 break;
 
             case D3D11_MESSAGE_SEVERITY_WARNING:
-                D3D11_WARNING("[DebugLayer] %.*s", static_cast<int32>(Message->DescriptionByteLength), Message->pDescription);
+                D3D11_WARNING("[DebugLayer] %s", StringCast<CHAR_T>(Message->pDescription).Get());
                 break;
 
             default:
@@ -393,7 +393,7 @@ bool FD3D11Device::FindOrCreateSamplerState(const FRHISamplerStateDesc& SamplerD
         return false;
     }
 
-    D3D11SetDebugName(NewSamplerState.Get(), FString::Printf("Sampler %d", SamplerStateMap.Size()));
+    D3D11SetDebugName(NewSamplerState.Get(), FString::Printf(TEXT("Sampler %d"), SamplerStateMap.Size()));
 
     SamplerStateMap.Add(SamplerDesc, NewSamplerState);
     OutSamplerState = NewSamplerState;

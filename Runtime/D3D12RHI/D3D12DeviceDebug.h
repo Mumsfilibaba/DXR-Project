@@ -14,6 +14,6 @@ struct D3D12Debug
 
     static void ReportLiveDXGIObjects();
 
-    static void DeviceRemovedHandler(FD3D12Device* Device, const char* Source);
-    static bool CheckDeviceRemoved(FD3D12Device* Device, HRESULT Result, const char* Source);
+    static void DeviceRemovedHandler(FD3D12Device* Device, const CHAR_T* Source);
+    static bool CheckDeviceRemoved(FD3D12Device* Device, HRESULT Result, const CHAR_T* Source);
 };

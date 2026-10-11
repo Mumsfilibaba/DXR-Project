@@ -206,7 +206,7 @@ bool FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& Shade
 
                 if (Plan.ShaderResourceAccelerationStructureMask & Bit)
                 {
-                    METAL_ERROR("Shader stage %u binds SRV register %u as both an acceleration structure and a %s", Stage, Register, bBuffer ? "buffer" : "texture");
+                    METAL_ERROR("Shader stage %u binds SRV register %u as both an acceleration structure and a %s", Stage, Register, bBuffer ? TEXT("buffer") : TEXT("texture"));
                     return false;
                 }
 
@@ -231,7 +231,7 @@ bool FMetalPipelineBindingLayout::Collect(const TArray<FMSLShaderBinding>& Shade
                 if ((Plan.ShaderResourceMask & Bit) && !(Plan.ShaderResourceAccelerationStructureMask & Bit))
                 {
                     METAL_ERROR("Shader stage %u binds SRV register %u as both an acceleration structure and a %s", Stage, Register,
-                        (Plan.ShaderResourceBufferMask & Bit) ? "buffer" : "texture");
+                        (Plan.ShaderResourceBufferMask & Bit) ? TEXT("buffer") : TEXT("texture"));
                     return false;
                 }
 
@@ -444,7 +444,7 @@ bool FMetalPipelineBindingLayout::ConflictsWithVertexInputs(const FMetalInputLay
     {
         const uint32 Register = MetalRHI::FirstSetBit(Bits);
 
-        if (CheckSlot(Plan.ConstantBufferSlots[Register], "constant buffer register", Register))
+        if (CheckSlot(Plan.ConstantBufferSlots[Register], TEXT("constant buffer register"), Register))
         {
             return true;
         }
@@ -454,7 +454,7 @@ bool FMetalPipelineBindingLayout::ConflictsWithVertexInputs(const FMetalInputLay
     {
         const uint32 Register = MetalRHI::FirstSetBit(Bits);
 
-        if (CheckSlot(Plan.ShaderResourceSlots[Register], "SRV buffer register", Register))
+        if (CheckSlot(Plan.ShaderResourceSlots[Register], TEXT("SRV buffer register"), Register))
         {
             return true;
         }
@@ -464,15 +464,15 @@ bool FMetalPipelineBindingLayout::ConflictsWithVertexInputs(const FMetalInputLay
     {
         const uint32 Register = MetalRHI::FirstSetBit(Bits);
 
-        if (CheckSlot(Plan.UnorderedAccessSlots[Register], "UAV buffer register", Register))
+        if (CheckSlot(Plan.UnorderedAccessSlots[Register], TEXT("UAV buffer register"), Register))
         {
             return true;
         }
     }
 
-    return CheckSlot(Plan.ShaderConstantsSlot, "shader constants", 0)
-        || CheckSlot(Plan.ResourceHeapSlot, "bindless resource heap", 0)
-        || CheckSlot(Plan.SamplerHeapSlot, "bindless sampler heap", 0);
+    return CheckSlot(Plan.ShaderConstantsSlot, TEXT("shader constants"), 0)
+        || CheckSlot(Plan.ResourceHeapSlot, TEXT("bindless resource heap"), 0)
+        || CheckSlot(Plan.SamplerHeapSlot, TEXT("bindless sampler heap"), 0);
 }
 
 uint8 FMetalPipelineBindingLayout::GetSlot(EShaderVisibility::Type Stage, EMSLBindingType BindingType, uint32 RegisterIndex) const

@@ -15,9 +15,9 @@ static const CHAR_T* ToString(D3D_FEATURE_LEVEL FeatureLevel)
 {
     switch (FeatureLevel)
     {
-        case D3D_FEATURE_LEVEL_11_0: return "11_0";
-        case D3D_FEATURE_LEVEL_11_1: return "11_1";
-        default:                     return "Unknown";
+        case D3D_FEATURE_LEVEL_11_0: return TEXT("11_0");
+        case D3D_FEATURE_LEVEL_11_1: return TEXT("11_1");
+        default:                     return TEXT("Unknown");
     }
 }
 
@@ -25,7 +25,7 @@ void DumpD3D11Capabilities()
 {
     const auto YesNo = [](bool bBoolean) -> const CHAR_T*
     {
-        return bBoolean ? "Yes" : "No";
+        return bBoolean ? TEXT("Yes") : TEXT("No");
     };
 
     D3D11_INFO("---------------------------------- D3D11 Feature Support ----------------------------------");

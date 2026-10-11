@@ -46,7 +46,7 @@ public:
 private:
     TArray<FRHIInputElementDesc>     InputElements;
     D3D12_INPUT_LAYOUT_DESC          D3D12Desc;
-    TArray<FString>                  SemanticNames;
+    TArray<FAnsiString>              SemanticNames;
     TArray<D3D12_INPUT_ELEMENT_DESC> ElementDesc;
     uint64                           Hash;
 };
@@ -570,9 +570,9 @@ private:
 
 struct FD3D12PipelineDiskHeader
 {
-    CHAR_T Magic[8]; // Always "D3D12PSO"
-    uint64 DataCRC;
-    uint64 DataSize;
+    ANSICHAR Magic[8]; // Always "D3D12PSO"
+    uint64   DataCRC;
+    uint64   DataSize;
 };
 
 class FD3D12PipelineStateManager : public FD3D12DeviceChild

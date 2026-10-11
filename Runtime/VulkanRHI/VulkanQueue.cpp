@@ -15,24 +15,24 @@
 #include "VulkanRHI/VulkanDeviceLimits.h"
 
 static TAutoConsoleVariable<int32> CVarMaxPendingSubmissions(
-    "VulkanRHI.MaxPendingSubmissions",
-    "Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up",
+    TEXT("VulkanRHI.MaxPendingSubmissions"),
+    TEXT("Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up"),
     32);
 
 static TAutoConsoleVariable<int32> CVarCommandContextMaxIdleFrames(
-    "VulkanRHI.CommandContextPool.MaxIdleFrames",
-    "Number of frames a pooled CommandContext may sit unused before it is destroyed",
+    TEXT("VulkanRHI.CommandContextPool.MaxIdleFrames"),
+    TEXT("Number of frames a pooled CommandContext may sit unused before it is destroyed"),
     16);
 
 static TAutoConsoleVariable<int32> CVarCommandContextMinRetained(
-    "VulkanRHI.CommandContextPool.MinRetained",
-    "Number of CommandContexts the pool keeps alive regardless of how long they have been idle",
+    TEXT("VulkanRHI.CommandContextPool.MinRetained"),
+    TEXT("Number of CommandContexts the pool keeps alive regardless of how long they have been idle"),
     2);
 
 #if VULKAN_VALIDATE_IMAGE_LAYOUTS
 static TAutoConsoleVariable<int32> CVarBreakOnImageLayoutDesync(
-    "VulkanRHI.BreakOnImageLayoutDesync",
-    "Break into the debugger when a submission disagrees with the tracked image layout, instead of only logging it",
+    TEXT("VulkanRHI.BreakOnImageLayoutDesync"),
+    TEXT("Break into the debugger when a submission disagrees with the tracked image layout, instead of only logging it"),
     0);
 #endif
 
@@ -54,7 +54,7 @@ static void ReportImageLayoutDesync(FVulkanTextureRHI* Texture, const CHAR_T* Ph
     Texture->GetDebugName(TextureName);
 
     VULKAN_ERROR("Image layout desync (%s) on '%s' recorded by %s: the submission says %s but the tracker says %s",
-        Phase, *TextureName, RecordingSite ? RecordingSite : "<unknown>", ToString(CommandBufferLayout), ToString(TrackedLayout));
+        Phase, *TextureName, RecordingSite ? RecordingSite : TEXT("<unknown>"), ToString(CommandBufferLayout), ToString(TrackedLayout));
 
     if (CVarBreakOnImageLayoutDesync.GetValue() != 0)
     {
@@ -391,7 +391,7 @@ void FVulkanQueue::RetireDeferredObjects(TArray<FVulkanDeferredObject>&& InObjec
 
 void FVulkanQueue::SubmitCommands(FVulkanCommands* Commands)
 {
-    TRACE_SCOPE("Vulkan Queue Submit");
+    TRACE_SCOPE(TEXT("Vulkan Queue Submit"));
 
     CHECK(Commands != nullptr);
     if (Commands->IsEmpty())
@@ -463,7 +463,7 @@ void FVulkanQueue::SubmitCommands(FVulkanCommands* Commands)
             if (PendingSubmissions.Peek(Oldest) && Oldest)
             {
                 {
-                    TRACE_SCOPE("Vulkan Queue Backpressure Wait");
+                    TRACE_SCOPE(TEXT("Vulkan Queue Backpressure Wait"));
                     Oldest->Fence->Wait(UINT64_MAX);
                 }
 
@@ -809,7 +809,7 @@ void FVulkanCommands::ValidatePendingBarrierOrdering()
 
         if (Entry->ExpectedEntryLayout != Pending.DesiredLayout)
         {
-            ReportImageLayoutDesync(Pending.Texture, "hoisted fixup", Entry->RecordingSite, Entry->ExpectedEntryLayout, Pending.DesiredLayout);
+            ReportImageLayoutDesync(Pending.Texture, TEXT("hoisted fixup"), Entry->RecordingSite, Entry->ExpectedEntryLayout, Pending.DesiredLayout);
         }
     }
 }
@@ -848,7 +848,7 @@ void FVulkanCommands::ValidateImageLayouts()
 
                 if (Tracked != Entry.ExpectedEntryLayout && Tracked != VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
                 {
-                    ReportImageLayoutDesync(Texture, "entry", Entry.RecordingSite, Entry.ExpectedEntryLayout, Tracked);
+                    ReportImageLayoutDesync(Texture, TEXT("entry"), Entry.RecordingSite, Entry.ExpectedEntryLayout, Tracked);
                 }
             }
 
@@ -886,7 +886,7 @@ void FVulkanCommands::ValidateImageLayouts()
         const VkImageLayout AdoptedLayout = LocalState->GetImageLayout();
         if (AdoptedLayout != VK_IMAGE_LAYOUT_TO_BE_DETERMINED && AdoptedLayout != Entry.FinalLayout)
         {
-            ReportImageLayoutDesync(Texture, "exit", Entry.RecordingSite, Entry.FinalLayout, AdoptedLayout);
+            ReportImageLayoutDesync(Texture, TEXT("exit"), Entry.RecordingSite, Entry.FinalLayout, AdoptedLayout);
         }
     }
 }

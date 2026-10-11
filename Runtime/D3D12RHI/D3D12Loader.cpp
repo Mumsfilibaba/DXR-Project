@@ -21,7 +21,7 @@ PFN_DCOMPOSITION_CREATE_DEVICE                         D3D12::DCompositionCreate
 #define D3D12_LOAD_FUNCTION(Function, LibraryHandle) \
 do \
 { \
-    D3D12::Function = FPlatformLibrary::LoadSymbol<decltype(D3D12::Function)>(#Function, LibraryHandle); \
+    D3D12::Function = FPlatformLibrary::LoadSymbol<decltype(D3D12::Function)>(TEXT(#Function), LibraryHandle); \
     if (!D3D12::Function) \
     { \
         D3D12_ERROR_CRITICAL("Failed to load '%s'", #Function); \
@@ -38,10 +38,10 @@ void* D3D12::DCompLibrary = nullptr;
 
 bool D3D12::Initialize(bool bEnablePIX)
 {
-    DXGILibrary = FPlatformLibrary::LoadDynamicLib("dxgi");
+    DXGILibrary = FPlatformLibrary::LoadDynamicLib(TEXT("dxgi"));
     if (!DXGILibrary)
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load dxgi.dll");
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("FAILED to load dxgi.dll"));
         return false;
     }
     else
@@ -49,10 +49,10 @@ bool D3D12::Initialize(bool bEnablePIX)
         D3D12_INFO("Loaded dxgi.dll");
     }
 
-    D3D12Library = FPlatformLibrary::LoadDynamicLib("d3d12");
+    D3D12Library = FPlatformLibrary::LoadDynamicLib(TEXT("d3d12"));
     if (!D3D12Library)
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load d3d12.dll");
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("FAILED to load d3d12.dll"));
         return false;
     }
     else
@@ -71,12 +71,12 @@ bool D3D12::Initialize(bool bEnablePIX)
     D3D12_LOAD_FUNCTION(D3D12CreateVersionedRootSignatureDeserializer, D3D12Library);
 
 #if D3D12_ENABLE_COMPOSITION
-    DCompLibrary = FPlatformLibrary::LoadDynamicLib("dcomp");
+    DCompLibrary = FPlatformLibrary::LoadDynamicLib(TEXT("dcomp"));
     if (DCompLibrary)
     {
         D3D12_INFO("Loaded dcomp.dll");
 
-        D3D12::DCompositionCreateDevice = FPlatformLibrary::LoadSymbol<PFN_DCOMPOSITION_CREATE_DEVICE>("DCompositionCreateDevice", DCompLibrary);
+        D3D12::DCompositionCreateDevice = FPlatformLibrary::LoadSymbol<PFN_DCOMPOSITION_CREATE_DEVICE>(TEXT("DCompositionCreateDevice"), DCompLibrary);
     }
 
     if (!D3D12::DCompositionCreateDevice)
@@ -87,13 +87,13 @@ bool D3D12::Initialize(bool bEnablePIX)
 
     if (bEnablePIX)
     {
-        PIXLibrary = FPlatformLibrary::LoadDynamicLib("WinPixEventRuntime");
+        PIXLibrary = FPlatformLibrary::LoadDynamicLib(TEXT("WinPixEventRuntime"));
         if (PIXLibrary)
         {
             D3D12_INFO("Loaded WinPixEventRuntime.dll");
 
-            D3D12::PIXBeginEventOnCommandList = FPlatformLibrary::LoadSymbol<PFN_PIXBeginEventOnCommandList>("PIXBeginEventOnCommandList", PIXLibrary);
-            D3D12::PIXEndEventOnCommandList   = FPlatformLibrary::LoadSymbol<PFN_PIXEndEventOnCommandList>("PIXEndEventOnCommandList", PIXLibrary);
+            D3D12::PIXBeginEventOnCommandList = FPlatformLibrary::LoadSymbol<PFN_PIXBeginEventOnCommandList>(TEXT("PIXBeginEventOnCommandList"), PIXLibrary);
+            D3D12::PIXEndEventOnCommandList   = FPlatformLibrary::LoadSymbol<PFN_PIXEndEventOnCommandList>(TEXT("PIXEndEventOnCommandList"), PIXLibrary);
         }
         else
         {

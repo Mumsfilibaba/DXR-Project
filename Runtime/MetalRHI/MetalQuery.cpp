@@ -8,8 +8,8 @@
 #include "Core/Threading/ScopedLock.h"
 
 static TAutoConsoleVariable<bool> CVarStageUtilizationStats(
-    "MetalRHI.StageUtilizationStats",
-    "Publishes per-frame GPU cycle counts per stage in the Metal GPU stat group (AMD and Intel GPUs only). Samples every render and compute encoder, which adds a barrier at each encoder's start and end",
+    TEXT("MetalRHI.StageUtilizationStats"),
+    TEXT("Publishes per-frame GPU cycle counts per stage in the Metal GPU stat group (AMD and Intel GPUs only). Samples every render and compute encoder, which adds a barrier at each encoder's start and end"),
     false);
 
 static constexpr uint32 MetalMaxPendingUtilizationFrames = 8;

@@ -43,17 +43,17 @@ inline const CHAR_T* ToString(EShaderVisibility::Type ShaderVisibility)
 {
     CHECK(ShaderVisibility < EShaderVisibility::Count);
     
-    static constexpr const char* ShaderVisibilityStrings[]
+    static constexpr const CHAR_T* ShaderVisibilityStrings[]
     {
-        "Vertex",
-        "Hull",
-        "Domain",
-        "Geometry",
-        "Pixel",
-        "Compute",
-        "Task",
-        "Mesh",
-        "RayTracing",
+        TEXT("Vertex"),
+        TEXT("Hull"),
+        TEXT("Domain"),
+        TEXT("Geometry"),
+        TEXT("Pixel"),
+        TEXT("Compute"),
+        TEXT("Task"),
+        TEXT("Mesh"),
+        TEXT("RayTracing"),
     };
     
     static_assert(ARRAY_COUNT(ShaderVisibilityStrings) == EShaderVisibility::Count, "ShaderVisibilityStrings is out of date");
@@ -81,23 +81,23 @@ struct EVulkanBindingType
 
 inline const CHAR_T* ToString(EVulkanBindingType::Type Binding)
 {
-    static constexpr const char* const BindingTypeStrings[]
+    static constexpr const CHAR_T* const BindingTypeStrings[]
     {
-        "UniformBuffer",
-        "UniformBufferDynamic",
-        "SampledImage",
-        "StorageImage",
-        "StorageBufferRead",
-        "StorageBufferReadWrite",
-        "Sampler",
-        "TexelBufferRead",
-        "TexelBufferReadWrite",
-        "ImmutableSampler",
-        "AccelerationStructure",
+        TEXT("UniformBuffer"),
+        TEXT("UniformBufferDynamic"),
+        TEXT("SampledImage"),
+        TEXT("StorageImage"),
+        TEXT("StorageBufferRead"),
+        TEXT("StorageBufferReadWrite"),
+        TEXT("Sampler"),
+        TEXT("TexelBufferRead"),
+        TEXT("TexelBufferReadWrite"),
+        TEXT("ImmutableSampler"),
+        TEXT("AccelerationStructure"),
     };
     
     static_assert(ARRAY_COUNT(BindingTypeStrings) == EVulkanBindingType::Count, "BindingTypeStrings is out of date");
-    return Binding < EVulkanBindingType::Count ? BindingTypeStrings[Binding] : "Unknown BindingType";
+    return Binding < EVulkanBindingType::Count ? BindingTypeStrings[Binding] : TEXT("Unknown BindingType");
 }
 
 inline VkDescriptorType GetDescriptorTypeFromBindingType(EVulkanBindingType::Type BindingType)
@@ -230,6 +230,11 @@ public:
         return EntryPointName;
     }
 
+    const ANSICHAR* GetAnsiEntryPointName() const
+    {
+        return *AnsiEntryPointName;
+    }
+
 protected:
     bool BuildShaderInfo(const FShaderCodeView& InCode);
     
@@ -237,6 +242,7 @@ protected:
     FVulkanShaderInfo                    ShaderInfo;
     EShaderVisibility::Type              ShaderVisibility;
     FString                              EntryPointName;
+    FAnsiString                          AnsiEntryPointName;
     TMap<uint64, FVulkanShaderModuleRef> ShaderModules;
     FCriticalSection                     ShaderModulesCS;
 };

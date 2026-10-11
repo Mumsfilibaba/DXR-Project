@@ -13,13 +13,13 @@
 #include "VulkanRHI/VulkanDeviceDebug.h"
 
 static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
-    "VulkanRHI.PipelineCacheFileName",
-    "FileName for the file storing the PipelineCache",
-    "PipelineCache.vkpsocache");
+    TEXT("VulkanRHI.PipelineCacheFileName"),
+    TEXT("FileName for the file storing the PipelineCache"),
+    TEXT("PipelineCache.vkpsocache"));
 
 static TAutoConsoleVariable<int32> CVarPipelineCacheSaveInterval(
-    "VulkanRHI.PipelineCacheSaveInterval",
-    "Minimum interval in seconds between automatic pipeline cache saves",
+    TEXT("VulkanRHI.PipelineCacheSaveInterval"),
+    TEXT("Minimum interval in seconds between automatic pipeline cache saves"),
     30);
 
 static bool ResolveEffectiveSampleCount(const FRHIMultiSampleState& MultiSampleState, const FRHIRasterizerStateDesc& RasterizerDesc, const FRHIGraphicsPipelineFormats& OutputFormats, const CHAR_T* DebugContext, uint32& OutSampleCount)
@@ -447,7 +447,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     {
         ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_VERTEX_BIT;
         ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
-        ShaderStageCreateInfo.pName  = *Shaders[EShaderVisibility::Vertex]->GetEntryPointName();
+        ShaderStageCreateInfo.pName  = Shaders[EShaderVisibility::Vertex]->GetAnsiEntryPointName();
         ShaderStages.Add(ShaderStageCreateInfo);
     }
     else
@@ -462,7 +462,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
-            ShaderStageCreateInfo.pName  = *Shaders[EShaderVisibility::Hull]->GetEntryPointName();
+            ShaderStageCreateInfo.pName  = Shaders[EShaderVisibility::Hull]->GetAnsiEntryPointName();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -477,7 +477,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
-            ShaderStageCreateInfo.pName  = *Shaders[EShaderVisibility::Domain]->GetEntryPointName();
+            ShaderStageCreateInfo.pName  = Shaders[EShaderVisibility::Domain]->GetAnsiEntryPointName();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -492,7 +492,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_GEOMETRY_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
-            ShaderStageCreateInfo.pName  = *Shaders[EShaderVisibility::Geometry]->GetEntryPointName();
+            ShaderStageCreateInfo.pName  = Shaders[EShaderVisibility::Geometry]->GetAnsiEntryPointName();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -507,7 +507,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
-            ShaderStageCreateInfo.pName  = *Shaders[EShaderVisibility::Pixel]->GetEntryPointName();
+            ShaderStageCreateInfo.pName  = Shaders[EShaderVisibility::Pixel]->GetAnsiEntryPointName();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -606,7 +606,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
 
     uint32 EffectiveSampleCount = 0;
     if (!ResolveEffectiveSampleCount(InDesc.MultiSampleState, InDesc.RasterizerState->GetDesc(),
-        InDesc.RasterizerOutputFormats, "GraphicsPipeline", EffectiveSampleCount))
+        InDesc.RasterizerOutputFormats, TEXT("GraphicsPipeline"), EffectiveSampleCount))
     {
         return false;
     }
@@ -830,7 +830,7 @@ bool FVulkanComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDe
     VkPipelineShaderStageCreateInfo ShaderStageCreateInfo = {};
     ShaderStageCreateInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_COMPUTE_BIT;
-    ShaderStageCreateInfo.pName  = *VulkanComputeShader->GetEntryPointName();
+    ShaderStageCreateInfo.pName  = VulkanComputeShader->GetAnsiEntryPointName();
     
     // PipelineLayout
     FVulkanPipelineLayoutInfo LayoutInfo;
@@ -997,7 +997,7 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_TASK_BIT_EXT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
-            ShaderStageCreateInfo.pName  = *VulkanAmplificationShader->GetEntryPointName();
+            ShaderStageCreateInfo.pName  = VulkanAmplificationShader->GetAnsiEntryPointName();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -1011,7 +1011,7 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
     {
         ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_MESH_BIT_EXT;
         ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
-        ShaderStageCreateInfo.pName  = *VulkanMeshShader->GetEntryPointName();
+        ShaderStageCreateInfo.pName  = VulkanMeshShader->GetAnsiEntryPointName();
         ShaderStages.Add(ShaderStageCreateInfo);
     }
     else
@@ -1026,7 +1026,7 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
-            ShaderStageCreateInfo.pName  = *VulkanPixelShader->GetEntryPointName();
+            ShaderStageCreateInfo.pName  = VulkanPixelShader->GetAnsiEntryPointName();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -1082,7 +1082,7 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
 
     uint32 EffectiveSampleCount = 0;
     if (!ResolveEffectiveSampleCount(InDesc.MultiSampleState, InDesc.RasterizerState->GetDesc(),
-        InDesc.RasterizerOutputFormats, "MeshletPipeline", EffectiveSampleCount))
+        InDesc.RasterizerOutputFormats, TEXT("MeshletPipeline"), EffectiveSampleCount))
     {
         return false;
     }

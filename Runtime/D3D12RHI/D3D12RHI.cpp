@@ -27,8 +27,8 @@
 IMPLEMENT_ENGINE_MODULE(FD3D12ModuleRHI, D3D12RHI);
 
 static TAutoConsoleVariable<bool> CVarEnablePix(
-    "D3D12RHI.EnablePIX",
-    "Enables loading of PIX when creating device to capture frame's programmatically",
+    TEXT("D3D12RHI.EnablePIX"),
+    TEXT("Enables loading of PIX when creating device to capture frame's programmatically"),
     false);
 
 static bool IsBackBuffer(FRHIResource* InResource)
@@ -1563,7 +1563,7 @@ FRHISwapChain* FD3D12DeviceRHI::CreateSwapChain(const FRHISwapChainDesc& InSwapC
     if (!Tasks::IsInRHIThread())
     {
         FRHISwapChain* NewSwapChain = nullptr;
-        Tasks::LaunchOnRHIThread("D3D12CreateSwapChain", [this, &NewSwapChain, &InSwapChainDesc]()
+        Tasks::LaunchOnRHIThread(TEXT("D3D12CreateSwapChain"), [this, &NewSwapChain, &InSwapChainDesc]()
         {
             NewSwapChain = CreateSwapChain(InSwapChainDesc);
         }).Wait();

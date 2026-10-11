@@ -23,8 +23,8 @@
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 static TAutoConsoleVariable<bool> CVarDrawBreadcrumbs(
-    "MetalRHI.DrawBreadcrumbs",
-    "Records a breadcrumb and inserts a debug signpost for every draw and dispatch",
+    TEXT("MetalRHI.DrawBreadcrumbs"),
+    TEXT("Records a breadcrumb and inserts a debug signpost for every draw and dispatch"),
     false);
 
 static void InsertDrawBreadcrumb(FMetalEncoderManager& Encoders, id<MTLCommandEncoder> Encoder, const CHAR_T* Name)
@@ -353,7 +353,7 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     MTLRenderPassDescriptor* Descriptor = [MTLRenderPassDescriptor renderPassDescriptor];
     FillRenderPassDescriptor(Descriptor, BeginRenderPassDesc);
 
-    Encoders.BeginRenderEncoder(Descriptor, "Render");
+    Encoders.BeginRenderEncoder(Descriptor, TEXT("Render"));
     ContextState.SetRenderPassInfo(GetRenderPassInfo(Descriptor, BeginRenderPassDesc.NumRenderTargets));
 }
 
@@ -729,7 +729,7 @@ void FMetalCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
         ColorAttachment.storeAction    = MTLStoreActionMultisampleResolve;
     }
 
-    Encoders.EncodeLoadStorePass(Descriptor, "ResolveTexture");
+    Encoders.EncodeLoadStorePass(Descriptor, TEXT("ResolveTexture"));
 }
 
 void FMetalCommandContext::TranscodeSamplerFeedback(FRHITexture* Dst, uint32 DstSubresource, FRHITexture* Src, uint32 SrcSubresource, ESamplerFeedbackTranscodeMode Mode)
@@ -1063,7 +1063,7 @@ void FMetalCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 I
               instanceCount:InstanceCount
                baseInstance:StartInstanceLocation];
 
-    InsertDrawBreadcrumb(Encoders, Encoder, "DrawInstanced");
+    InsertDrawBreadcrumb(Encoders, Encoder, TEXT("DrawInstanced"));
 }
 
 void FMetalCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
@@ -1090,7 +1090,7 @@ void FMetalCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, ui
                         baseVertex:BaseVertexLocation
                       baseInstance:StartInstanceLocation];
 
-    InsertDrawBreadcrumb(Encoders, Encoder, "DrawIndexedInstanced");
+    InsertDrawBreadcrumb(Encoders, Encoder, TEXT("DrawIndexedInstanced"));
 }
 
 void FMetalCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
@@ -1106,7 +1106,7 @@ void FMetalCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint
     [Encoder dispatchThreadgroups:MTLSizeMake(WorkGroupsX, WorkGroupsY, WorkGroupsZ)
             threadsPerThreadgroup:ContextState.GetComputePipeline()->GetThreadsPerThreadgroup()];
 
-    InsertDrawBreadcrumb(Encoders, Encoder, "Dispatch");
+    InsertDrawBreadcrumb(Encoders, Encoder, TEXT("Dispatch"));
 }
 
 void FMetalCommandContext::DrawIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount)
@@ -1134,7 +1134,7 @@ void FMetalCommandContext::DrawIndirect(FRHIBuffer* ArgumentBuffer, uint64 Argum
            indirectBufferOffset:BaseOffset + CommandIndex * sizeof(FRHIDrawIndirectParameters)];
     }
 
-    InsertDrawBreadcrumb(Encoders, Encoder, "DrawIndirect");
+    InsertDrawBreadcrumb(Encoders, Encoder, TEXT("DrawIndirect"));
 }
 
 void FMetalCommandContext::DrawIndexedIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount)
@@ -1171,7 +1171,7 @@ void FMetalCommandContext::DrawIndexedIndirect(FRHIBuffer* ArgumentBuffer, uint6
                   indirectBufferOffset:BaseOffset + CommandIndex * sizeof(FRHIDrawIndexedIndirectParameters)];
     }
 
-    InsertDrawBreadcrumb(Encoders, Encoder, "DrawIndexedIndirect");
+    InsertDrawBreadcrumb(Encoders, Encoder, TEXT("DrawIndexedIndirect"));
 }
 
 void FMetalCommandContext::DispatchIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset)
@@ -1187,7 +1187,7 @@ void FMetalCommandContext::DispatchIndirect(FRHIBuffer* ArgumentBuffer, uint64 A
                                indirectBufferOffset:ArgumentBufferOffset + Arguments->GetMetalBindOffset()
                               threadsPerThreadgroup:ContextState.GetComputePipeline()->GetThreadsPerThreadgroup()];
 
-    InsertDrawBreadcrumb(Encoders, Encoder, "DispatchIndirect");
+    InsertDrawBreadcrumb(Encoders, Encoder, TEXT("DispatchIndirect"));
 }
 
 void FMetalCommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
@@ -1211,7 +1211,7 @@ void FMetalCommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadG
       threadsPerObjectThreadgroup:PipelineState->GetObjectThreadgroupSize()
         threadsPerMeshThreadgroup:PipelineState->GetMeshThreadgroupSize()];
 
-    InsertDrawBreadcrumb(Encoders, Encoder, "DispatchMesh");
+    InsertDrawBreadcrumb(Encoders, Encoder, TEXT("DispatchMesh"));
 }
 
 void FMetalCommandContext::DispatchMeshIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount)
@@ -1246,7 +1246,7 @@ void FMetalCommandContext::DispatchMeshIndirect(FRHIBuffer* ArgumentBuffer, uint
                               threadsPerMeshThreadgroup:PipelineState->GetMeshThreadgroupSize()];
     }
 
-    InsertDrawBreadcrumb(Encoders, Encoder, "DispatchMeshIndirect");
+    InsertDrawBreadcrumb(Encoders, Encoder, TEXT("DispatchMeshIndirect"));
 }
 
 void FMetalCommandContext::AcquireNextBackBuffer(FRHISwapChain* SwapChain)
@@ -1348,7 +1348,7 @@ void FMetalCommandContext::BeginParallelChild(FMetalCommands& ParentCommands, id
     bIsRecording  = true;
 
     Encoders.BeginCommandBuffer(&ParentCommands);
-    Encoders.AdoptRenderEncoder(SubEncoder, "ParallelRender");
+    Encoders.AdoptRenderEncoder(SubEncoder, TEXT("ParallelRender"));
     ContextState.ResetState();
     ContextState.BeginCommandBuffer();
 }

@@ -58,7 +58,7 @@ TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::GetOrCompile(TArrayVi
 {
     if (!EntryPoint)
     {
-        EntryPoint = "";
+        EntryPoint = TEXT("");
     }
 
     const uint64 Hash = HashSource(Source, EntryPoint);

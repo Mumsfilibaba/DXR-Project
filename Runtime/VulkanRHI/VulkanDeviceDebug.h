@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/String.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Containers/StringView.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Map.h"
@@ -25,10 +26,12 @@ inline VkResult VulkanSetObjectName(VkDevice Device, const CHAR_T* Name, uint64 
         return VK_SUCCESS;
     }
 
+    const TStringConversion<ANSICHAR, CHAR_T> AnsiName = StringCast<ANSICHAR>(Name);
+
     VkDebugUtilsObjectNameInfoEXT DebugUtilsObjectNameInfo = {};
     DebugUtilsObjectNameInfo.sType        = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
     DebugUtilsObjectNameInfo.pNext        = nullptr;
-    DebugUtilsObjectNameInfo.pObjectName  = Name;
+    DebugUtilsObjectNameInfo.pObjectName  = AnsiName.Get();
     DebugUtilsObjectNameInfo.objectHandle = ObjectHandle;
     DebugUtilsObjectNameInfo.objectType   = ObjectType;
 

@@ -24,11 +24,11 @@ constexpr const CHAR_T* ToString(ESurfaceStatus Status)
 {
     switch (Status)
     {
-    case ESurfaceStatus::Ok:          return "ESurfaceStatus::Ok";
-    case ESurfaceStatus::ZeroSized:   return "ESurfaceStatus::ZeroSized";
-    case ESurfaceStatus::SurfaceLost: return "ESurfaceStatus::SurfaceLost";
-    case ESurfaceStatus::Error:       return "ESurfaceStatus::Error";
-    default:                          return "Unknown";
+    case ESurfaceStatus::Ok:          return TEXT("ESurfaceStatus::Ok");
+    case ESurfaceStatus::ZeroSized:   return TEXT("ESurfaceStatus::ZeroSized");
+    case ESurfaceStatus::SurfaceLost: return TEXT("ESurfaceStatus::SurfaceLost");
+    case ESurfaceStatus::Error:       return TEXT("ESurfaceStatus::Error");
+    default:                          return TEXT("Unknown");
     }
 }
 
