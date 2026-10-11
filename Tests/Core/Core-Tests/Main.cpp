@@ -26,6 +26,7 @@
 #include "MemoryAlignmentTests.h"
 #include "PlatformMemoryTests.h"
 #include "MemoryProfilerTests.h"
+#include "MemoryTrackingTests.h"
 #include "ThreadLocalTests.h"
 #include "ConstantInitializationTests.h"
 #include "PlatformEventPoolTests.h"
@@ -67,6 +68,7 @@ static int32 RunCoreTests()
     RUN_TEST("MemoryAlignment", MemoryAlignment_Test());
     RUN_TEST("PlatformMemory", PlatformMemory_Test());
     RUN_TEST("MemoryProfiler", MemoryProfiler_Test());
+    RUN_TEST("MemoryTracking", MemoryTracking_Test());
     RUN_TEST("ThreadLocal", ThreadLocal_Test());
     RUN_TEST("ConstantInitialization", ConstantInitialization_Test());
     RUN_TEST("PlatformEventPool", PlatformEventPool_Test());

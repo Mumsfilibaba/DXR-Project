@@ -3,7 +3,11 @@
 #include "Core/Threading/Atomic.h"
 
 #ifndef ENABLE_MEMORY_PROFILER
-    #define ENABLE_MEMORY_PROFILER (!RELEASE_BUILD)
+    #if RELEASE_BUILD
+        #define ENABLE_MEMORY_PROFILER (0)
+    #else
+        #define ENABLE_MEMORY_PROFILER (1)
+    #endif
 #endif
 
 /** @brief Identifies an interned name, which is a module tag or one step of a scope path */
@@ -62,4 +66,44 @@ private:
 
     const CHAR*  Name;
     AtomicUInt16 Id;
+};
+
+struct CORE_API MemoryProfilerPages
+{
+    /**
+     * @brief Maps zeroed pages for the profiler's own tables, counting them as the profiler's overhead
+     *
+     * @param Size Number of bytes to map, rounded up to whole pages
+     * @return Returns the first page, or nullptr when the pages could not be mapped
+     */
+    static void* Allocate(uint64 Size);
+
+    /**
+     * @brief Unmaps pages taken with Allocate
+     *
+     * @param Pages The pointer Allocate returned
+     * @param Size The size that was passed to Allocate
+     */
+    static void Free(void* Pages, uint64 Size);
+
+    /** @return Returns the bytes the profiler currently has mapped for itself */
+    static uint64 GetBytes();
+
+    /** @return Returns the most bytes the profiler has had mapped for itself at once */
+    static uint64 GetPeakBytes();
+};
+
+struct FMemoryCounterSnapshot
+{
+    /** @brief Bytes in the allocations still live */
+    int64 CurrentBytes = 0;
+
+    /** @brief The most bytes that were live at once */
+    int64 PeakBytes = 0;
+
+    /** @brief How many allocations are still live */
+    int64 NumAllocations = 0;
+
+    /** @brief How many allocations were ever made, freed ones included */
+    int64 TotalAllocations = 0;
 };

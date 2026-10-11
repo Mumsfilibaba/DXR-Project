@@ -14,6 +14,7 @@
 #include "TaskGraph_Benchmark.h"
 #include "MemoryStack_Benchmark.h"
 #include "Sort_Benchmark.h"
+#include "Malloc_Benchmark.h"
 
 static int32 RunCoreBenchmarks()
 {
@@ -50,6 +51,10 @@ static int32 RunCoreBenchmarks()
 
 #if RUN_SORT_BENCHMARKS
     Sort_Benchmark();
+#endif
+
+#if RUN_MALLOC_BENCHMARKS
+    Malloc_Benchmark();
 #endif
 
     FTaskGraph::Release();

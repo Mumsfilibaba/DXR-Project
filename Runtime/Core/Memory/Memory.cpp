@@ -1,4 +1,5 @@
 #include "Core/Memory/Memory.h"
+#include "Core/Memory/MemoryProfiler.h"
 #include "Core/Memory/MemoryStats.h"
 #include "Core/Memory/Malloc.h"
 #include "Core/Platform/PlatformMisc.h"
@@ -79,6 +80,13 @@ void* Memory::Malloc(uint64 Size, uint32 Alignment) noexcept
     if (Result)
     {
         STAT_ADD(STAT_Memory_AllocationCount, 1);
+
+        #if ENABLE_MEMORY_PROFILER
+        if (GMemoryProfiler.IsTrackingEnabled())
+        {
+            GMemoryProfiler.OnMalloc(Result, Size);
+        }
+        #endif
     }
 
     return Result;
@@ -92,11 +100,35 @@ void* Memory::Realloc(void* Block, uint64 Size, uint32 Alignment) noexcept
         CHECK(GMalloc != nullptr);
     }
 
+    #if ENABLE_MEMORY_PROFILER
+    const bool bTracked = GMemoryProfiler.IsTrackingEnabled();
+
+    FMemoryReallocTicket Ticket;
+    if (bTracked && Block)
+    {
+        Ticket = GMemoryProfiler.BeginRealloc(Block);
+    }
+    #endif
+
     void* Result = GMalloc->Realloc(Block, Size, NormalizeAlignment(Alignment));
     if (!Block && Result)
     {
         STAT_ADD(STAT_Memory_AllocationCount, 1);
     }
+
+    #if ENABLE_MEMORY_PROFILER
+    if (bTracked)
+    {
+        if (Block)
+        {
+            GMemoryProfiler.EndRealloc(Ticket, Result, Size);
+        }
+        else if (Result)
+        {
+            GMemoryProfiler.OnMalloc(Result, Size);
+        }
+    }
+    #endif
 
     return Result;
 }
@@ -112,6 +144,13 @@ void Memory::Free(void* Block) noexcept
     if (Block)
     {
         STAT_SUBTRACT(STAT_Memory_AllocationCount, 1);
+
+        #if ENABLE_MEMORY_PROFILER
+        if (GMemoryProfiler.IsTrackingEnabled())
+        {
+            GMemoryProfiler.OnFree(Block);
+        }
+        #endif
     }
 
     GMalloc->Free(Block);

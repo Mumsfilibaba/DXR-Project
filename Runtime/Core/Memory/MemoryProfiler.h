@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Memory/MemoryAllocationMap.h"
 #include "Core/Memory/MemoryProfilerTypes.h"
 #include "Core/Memory/MemoryTagRegistry.h"
 #include "Core/Templates/Utility/NonCopyable.h"
@@ -45,6 +46,18 @@ struct CORE_API FMemoryProfilerStateAllocator
     static int32 GetNumLiveStates();
 };
 
+struct FMemoryReallocTicket
+{
+    /** @brief The entry taken out of the map for the block being reallocated */
+    FMemoryAllocationEntry Entry;
+
+    /** @brief Set when the block was tracked, so Entry holds what it was attributed to */
+    bool bTracked = false;
+
+    /** @brief Set when the profiler itself was running on the thread, so the realloc is left untracked */
+    bool bSkipped = false;
+};
+
 class CORE_API FMemoryProfiler
 {
 public:
@@ -60,8 +73,84 @@ public:
     constexpr FMemoryProfiler() noexcept
         : Registry()
         , ThreadState()
+        , Allocations()
+        , CountersLock()
+        , bCountersReady(false)
+        , TagCounters(nullptr)
+        , ScopeCounters(nullptr)
+        , bTrackingEnabled(ENABLE_MEMORY_PROFILER != 0)
     {
     }
+
+    /** @return Returns whether allocations are tracked, which costs Memory one relaxed load when they are not */
+    FORCEINLINE bool IsTrackingEnabled() const
+    {
+        return bTrackingEnabled.Load(EMemoryOrder::Relaxed);
+    }
+
+    /**
+     * @brief Turns allocation tracking on or off. Turning it off forgets every tracked block and resets the counters,
+     * since a block freed while tracking is off could never be matched again. No other thread may allocate meanwhile.
+     *
+     * @param bEnabled Whether to track allocations
+     */
+    void SetTrackingEnabled(bool bEnabled);
+
+    /**
+     * @brief Records a block Memory has just allocated, attributing it to the calling thread's tag and scope
+     *
+     * @param Block The new block
+     * @param Size The size that was requested
+     */
+    void OnMalloc(void* Block, uint64 Size);
+
+    /**
+     * @brief Forgets a block Memory is about to free. It has to run before the block is released, or another thread
+     * could be handed the same address and record it first.
+     *
+     * @param Block The block being freed
+     */
+    void OnFree(void* Block);
+
+    /**
+     * @brief Takes a block that is about to be reallocated out of the map, for the same reason OnFree runs first
+     *
+     * @param Block The block being reallocated
+     * @return Returns what EndRealloc needs to settle the block once the realloc is done
+     */
+    FMemoryReallocTicket BeginRealloc(void* Block);
+
+    /**
+     * @brief Settles a realloc. A failed realloc puts the old block back, and a successful one bills the new block to
+     * the calling thread's current tag and scope, including a realloc to zero bytes that freed the block.
+     *
+     * @param Ticket What BeginRealloc returned
+     * @param NewBlock The block the realloc returned, nullptr when it failed or freed the block
+     * @param NewSize The size that was requested
+     */
+    void EndRealloc(const FMemoryReallocTicket& Ticket, void* NewBlock, uint64 NewSize);
+
+    /**
+     * @brief Reads the counters of a module tag. The profiler's own tag reports the pages it has mapped for itself.
+     *
+     * @param Tag The tag to read
+     * @return Returns the tag's counters, all zero for a tag nothing was allocated under
+     */
+    FMemoryCounterSnapshot GetTagStats(FMemoryNameId Tag);
+
+    /**
+     * @brief Reads the counters of a scope node, which cover allocations made directly in it and not in its children
+     *
+     * @param Scope The scope node to read
+     * @return Returns the node's counters, all zero for a node nothing was allocated in
+     */
+    FMemoryCounterSnapshot GetScopeStats(FMemoryScopeId Scope);
+
+    /** @return Returns the tag the profiler reports its own overhead under */
+    FMemoryNameId GetProfilerTag();
+
+    /** @return Returns how many blocks are tracked */
+    int64 GetNumTrackedAllocations();
 
     /**
      * @brief Makes a module tag the calling thread's current tag until the matching PopTag
@@ -109,9 +198,29 @@ public:
     }
 
 private:
+    struct FCounters;
+
+    static void AddToCounters(FCounters& Counters, int64 Size);
+    static void RemoveFromCounters(FCounters& Counters, int64 Size);
+
+    bool EnsureCounters();
+
     FMemoryTagRegistry                                              Registry;
     TThreadLocal<FMemoryThreadState, FMemoryProfilerStateAllocator> ThreadState;
+    FMemoryAllocationMap                                            Allocations;
+    FSpinLock                                                       CountersLock;
+    AtomicBool                                                      bCountersReady;
+    FCounters*                                                      TagCounters;
+    FCounters*                                                      ScopeCounters;
+    AtomicBool                                                      bTrackingEnabled;
 };
+
+extern CORE_API FMemoryProfiler GMemoryProfiler;
+
+FORCEINLINE FMemoryProfiler& FMemoryProfiler::Get()
+{
+    return GMemoryProfiler;
+}
 
 class FMemoryModuleScope : FNonCopyAndNonMovable
 {

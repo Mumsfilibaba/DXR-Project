@@ -1,6 +1,5 @@
 #include "Core/Memory/MemoryTagRegistry.h"
 #include "Core/Memory/Memory.h"
-#include "Core/Platform/PlatformMemory.h"
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
 
@@ -63,7 +62,7 @@ bool FMemoryTagRegistry::EnsureStorage()
         return true;
     }
 
-    Storage = static_cast<FStorage*>(FPlatformMemory::AllocatePages(sizeof(FStorage)));
+    Storage = static_cast<FStorage*>(MemoryProfilerPages::Allocate(sizeof(FStorage)));
     if (!Storage)
     {
         return false;
@@ -97,7 +96,7 @@ FMemoryNameId FMemoryTagRegistry::InternNameLocked(const CHAR* Name, uint32 Hash
             {
                 const uint64 ChunkBytes = Length > STRING_CHUNK_BYTES ? Length : STRING_CHUNK_BYTES;
 
-                CHAR* Chunk = static_cast<CHAR*>(FPlatformMemory::AllocatePages(ChunkBytes));
+                CHAR* Chunk = static_cast<CHAR*>(MemoryProfilerPages::Allocate(ChunkBytes));
                 if (!Chunk)
                 {
                     return MEMORY_NAME_OVERFLOW;
