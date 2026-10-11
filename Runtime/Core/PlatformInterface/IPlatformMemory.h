@@ -3,6 +3,30 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
+struct FPlatformMemoryStats
+{
+    /** @brief The memory the system charges the process for: its physical footprint on Mac, its private commit on Windows */
+    uint64 FootprintBytes = 0;
+
+    /** @brief The highest footprint the process has reached */
+    uint64 PeakFootprintBytes = 0;
+
+    /** @brief The process's pages currently held in physical memory, its working set on Windows */
+    uint64 ResidentBytes = 0;
+
+    /** @brief The highest resident size the process has reached */
+    uint64 PeakResidentBytes = 0;
+
+    /** @brief Bytes in use in the C runtime heap, which includes allocations made outside GMalloc */
+    uint64 AllocatorInUseBytes = 0;
+
+    /** @brief The physical memory installed in the machine */
+    uint64 TotalPhysicalBytes = 0;
+
+    /** @brief The physical memory the system can hand out right now without paging anything out */
+    uint64 AvailablePhysicalBytes = 0;
+};
+
 struct IPlatformMemory
 {
     /**
@@ -36,6 +60,46 @@ struct IPlatformMemory
      * @param Block Block returned by Malloc or Realloc, which must not be nullptr
      */
     static FORCEINLINE void Free(void* Block)
+    {
+    }
+
+    /**
+     * @brief Reads the process's memory use from the operating system
+     *
+     * @param OutStats Receives the snapshot, with any field the platform cannot report left at zero
+     * @return Returns true when the snapshot was read
+     */
+    static FORCEINLINE bool GetStats(FPlatformMemoryStats& OutStats)
+    {
+        OutStats = FPlatformMemoryStats();
+        return false;
+    }
+
+    /** @return Returns the size of a virtual memory page, in bytes */
+    static FORCEINLINE uint64 GetPageSize()
+    {
+        return 0;
+    }
+
+    /**
+     * @brief Maps whole pages of zeroed, readable and writable memory straight from the operating system, bypassing
+     * every heap, so that memory can be taken from inside an allocator without recursing into it.
+     *
+     * @param Size Number of bytes to map, which must be non-zero and is rounded up to whole pages
+     * @return Returns the first page, aligned to GetPageSize, or nullptr when the mapping failed
+     */
+    static FORCEINLINE void* AllocatePages(uint64 Size)
+    {
+        return nullptr;
+    }
+
+    /**
+     * @brief Returns pages mapped by AllocatePages to the operating system
+     *
+     * @param Pages The pointer AllocatePages returned
+     * @param Size The size that was passed to AllocatePages
+     */
+    static FORCEINLINE void FreePages(void* Pages, uint64 Size)
     {
     }
 };
