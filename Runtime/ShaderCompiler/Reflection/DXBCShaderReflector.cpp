@@ -1,5 +1,6 @@
 #if PLATFORM_WINDOWS
 #include "Core/Containers/ComPtr.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Templates/CString.h"
 #include "ShaderCore/ShaderBindingConventions.h"
 #include "ShaderCompiler/Reflection/D3DReflectionUtils.h"
@@ -11,14 +12,14 @@ bool FDXBCShaderReflector::Reflect(PFN_FXC_D3D_REFLECT D3DReflectFunc, const voi
     TComPtr<ID3D11ShaderReflection> Reflection;
     if (!D3DReflectFunc || FAILED(D3DReflectFunc(Code, CodeSize, IID_PPV_ARGS(&Reflection))))
     {
-        OutErrors += "Failed to reflect the DXBC shader\n";
+        OutErrors += TEXT("Failed to reflect the DXBC shader\n");
         return false;
     }
 
     D3D11_SHADER_DESC ShaderDesc = {};
     if (FAILED(Reflection->GetDesc(&ShaderDesc)))
     {
-        OutErrors += "Failed to retrieve the shader description\n";
+        OutErrors += TEXT("Failed to retrieve the shader description\n");
         return false;
     }
 
@@ -30,18 +31,20 @@ bool FDXBCShaderReflector::Reflect(PFN_FXC_D3D_REFLECT D3DReflectFunc, const voi
             continue;
         }
 
+        const TStringConversion<CHAR_T, ANSICHAR> Name = StringCast<CHAR_T>(BindDesc.Name);
+
         // Counter buffers are plain RWStructuredBuffer UAVs to D3D11RHI
         EShaderResourceType Type;
         bool bHasCounter = false;
         if (!FD3DReflectionUtils::TranslateInputType(BindDesc.Type, BindDesc.Dimension, Type, bHasCounter))
         {
-            OutErrors += FString::Printf("Unhandled shader resource type '%u' for parameter '%s' at register %u\n", BindDesc.Type, BindDesc.Name, BindDesc.BindPoint);
+            OutErrors += FString::Printf(TEXT("Unhandled shader resource type '%u' for parameter '%s' at register %u\n"), BindDesc.Type, Name.Get(), BindDesc.BindPoint);
             return false;
         }
 
         const EShaderResourceDimension Dimension = FD3DReflectionUtils::TranslateDimension(BindDesc.Dimension);
 
-        if (Type == EShaderResourceType::ConstantBuffer && CString::Strcmp(BindDesc.Name, ShaderBindings::ShaderConstantsBufferName) == 0)
+        if (Type == EShaderResourceType::ConstantBuffer && CString::Strcmp(Name.Get(), ShaderBindings::ShaderConstantsBufferName) == 0)
         {
             uint32 SizeInBytes = 0;
             if (ID3D11ShaderReflectionConstantBuffer* ConstantBuffer = Reflection->GetConstantBufferByName(BindDesc.Name))
@@ -53,12 +56,12 @@ bool FDXBCShaderReflector::Reflect(PFN_FXC_D3D_REFLECT D3DReflectFunc, const voi
                 }
             }
 
-            if (!FShaderReflectionUtils::SetShaderConstantsSize(BindDesc.Name, SizeInBytes, OutReflection, OutErrors))
+            if (!FShaderReflectionUtils::SetShaderConstantsSize(Name.Get(), SizeInBytes, OutReflection, OutErrors))
             {
                 return false;
             }
 
-            if (!FShaderReflectionUtils::AddBinding(BindDesc.Name, Type, Dimension, EShaderBindingSpace::ShaderConstants, BindDesc.BindPoint, BindDesc.BindCount, CompileInfo.bDebugInfo, OutReflection, OutErrors))
+            if (!FShaderReflectionUtils::AddBinding(Name.Get(), Type, Dimension, EShaderBindingSpace::ShaderConstants, BindDesc.BindPoint, BindDesc.BindCount, CompileInfo.bDebugInfo, OutReflection, OutErrors))
             {
                 return false;
             }
@@ -66,7 +69,7 @@ bool FDXBCShaderReflector::Reflect(PFN_FXC_D3D_REFLECT D3DReflectFunc, const voi
             continue;
         }
 
-        if (!FShaderReflectionUtils::AddBinding(BindDesc.Name, Type, Dimension, EShaderBindingSpace::Global, BindDesc.BindPoint, BindDesc.BindCount, CompileInfo.bDebugInfo, OutReflection, OutErrors))
+        if (!FShaderReflectionUtils::AddBinding(Name.Get(), Type, Dimension, EShaderBindingSpace::Global, BindDesc.BindPoint, BindDesc.BindCount, CompileInfo.bDebugInfo, OutReflection, OutErrors))
         {
             return false;
         }

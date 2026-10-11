@@ -1,4 +1,5 @@
 #include "Core/Containers/Map.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Misc/CRC.h"
 #include "Core/Templates/CString.h"
 #include "ShaderCompiler/Spirv/SpirvTransforms.h"
@@ -52,15 +53,15 @@ struct SpirvOps
     static constexpr uint32 ImageSampledStorage    = 2;
 };
 
-static bool SpvReadLiteralString(const uint32* Inst, uint16 InstWords, uint16 StartWord, CHAR_T* OutBuf, uint32 BufSize)
+static bool SpvReadLiteralString(const uint32* Inst, uint16 InstWords, uint16 StartWord, ANSICHAR* OutBuf, uint32 BufSize)
 {
     if (StartWord >= InstWords || BufSize == 0)
     {
         return false;
     }
 
-    const CHAR_T* Src      = reinterpret_cast<const CHAR_T*>(&Inst[StartWord]);
-    const uint32  MaxBytes = (InstWords - StartWord) * sizeof(uint32);
+    const ANSICHAR* Src      = reinterpret_cast<const ANSICHAR*>(&Inst[StartWord]);
+    const uint32    MaxBytes = (InstWords - StartWord) * sizeof(uint32);
     
     uint32 i = 0;
     for (; i < MaxBytes && i < (BufSize - 1); ++i)
@@ -231,10 +232,10 @@ static bool SpvTypeDeclarationsMatch(const uint32* Existing, const TArray<uint32
     return true;
 }
 
-static bool IsOneOfGoogleExtensions(const CHAR_T* Name)
+static bool IsOneOfGoogleExtensions(const ANSICHAR* Name)
 {
-    return (CString::Strcmp(Name, "SPV_GOOGLE_decorate_string") == 0) || (CString::Strcmp(Name, "SPV_GOOGLE_hlsl_functionality1") == 0) || 
-        (CString::Strcmp(Name, "SPV_GOOGLE_user_type") == 0);
+    return (FPlatformString::Strcmp(Name, "SPV_GOOGLE_decorate_string") == 0) || (FPlatformString::Strcmp(Name, "SPV_GOOGLE_hlsl_functionality1") == 0) ||
+        (FPlatformString::Strcmp(Name, "SPV_GOOGLE_user_type") == 0);
 }
 
 static bool IsGoogleDecorateStringDecoration(uint32 DecorationId)
@@ -254,7 +255,7 @@ bool FSpirvTransforms::PrepareForVulkan(const TArray<uint32>& InWords, TArray<ui
     {
         if (OutError)
         {
-            *OutError = "Failed to strip the Google SPIR-V requirements";
+            *OutError = TEXT("Failed to strip the Google SPIR-V requirements");
         }
 
         return false;
@@ -265,7 +266,7 @@ bool FSpirvTransforms::PrepareForVulkan(const TArray<uint32>& InWords, TArray<ui
     {
         if (OutError)
         {
-            *OutError = FString::Printf("Google SPIR-V requirements remain after stripping: %s", *GoogleValidationError);
+            *OutError = FString::Printf(TEXT("Google SPIR-V requirements remain after stripping: %s"), *GoogleValidationError);
         }
 
         return false;
@@ -277,7 +278,7 @@ bool FSpirvTransforms::PrepareForVulkan(const TArray<uint32>& InWords, TArray<ui
     {
         if (OutError)
         {
-            *OutError = "Failed to rewrite the storage-image formats";
+            *OutError = TEXT("Failed to rewrite the storage-image formats");
         }
 
         return false;
@@ -293,7 +294,7 @@ bool FSpirvTransforms::PrepareForVulkan(const TArray<uint32>& InWords, TArray<ui
     {
         if (OutError)
         {
-            *OutError = "Failed to merge the duplicate type declarations";
+            *OutError = TEXT("Failed to merge the duplicate type declarations");
         }
 
         return false;
@@ -374,7 +375,7 @@ bool FSpirvTransforms::StripGoogleSpirvRequirements(const TArray<uint32>& InWord
         bool bSkip = false;
         if (OpCode == SpirvOps::OpExtension)
         {
-            CHAR_T ExtName[256] = {};
+            ANSICHAR ExtName[256] = {};
             if (SpvReadLiteralString(Inst, InstWords, 1, ExtName, sizeof(ExtName)))
             {
                 if (IsOneOfGoogleExtensions(ExtName))
@@ -451,14 +452,14 @@ bool FSpirvTransforms::ValidateNoGoogleSpirvRequirements(const TArray<uint32>& W
         const uint32* Inst = &Data[Read];
         if (OpCode == SpirvOps::OpExtension)
         {
-            CHAR_T ExtName[256] = {};
+            ANSICHAR ExtName[256] = {};
             if (SpvReadLiteralString(Inst, InstWords, 1, ExtName, sizeof(ExtName)))
             {
                 if (IsOneOfGoogleExtensions(ExtName))
                 {
                     if (OutErrorMessage)
                     {
-                        *OutErrorMessage = FString::Printf("Found Google extension: %s", ExtName);
+                        *OutErrorMessage = FString::Printf(TEXT("Found Google extension: %s"), StringCast<CHAR_T>(ExtName).Get());
                     }
 
                     return false;

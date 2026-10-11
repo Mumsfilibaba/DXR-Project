@@ -5,9 +5,9 @@
 #include "ShaderCompiler/ShaderJobFile.h"
 
 static TAutoConsoleVariable<FString> CVarJobFileName(
-    "Renderer.ShaderCache.JobFileName",
-    "FileName for the file listing every shader combination the editor used, for every RHI. Compiled by the ShaderCompiler tool.",
-    "Shaders.shaderjob");
+    TEXT("Renderer.ShaderCache.JobFileName"),
+    TEXT("FileName for the file listing every shader combination the editor used, for every RHI. Compiled by the ShaderCompiler tool."),
+    TEXT("Shaders.shaderjob"));
 
 static uint64 MakeEntryKey(const FString& RHIName, const FShaderCompileJob& Job)
 {
@@ -37,21 +37,21 @@ bool FShaderJobFile::Load(const FString& FilePath, FString& OutError)
     FJsonError ParseError;
     if (!Json::LoadFromFile(FilePath, Root, &ParseError))
     {
-        OutError = FString::Printf("'%s' is not valid JSON: %s", *FilePath, *ParseError.ToString());
+        OutError = FString::Printf(TEXT("'%s' is not valid JSON: %s"), *FilePath, *ParseError.ToString());
         return false;
     }
 
-    const FJsonValue* VersionValue = Root.Find("version");
+    const FJsonValue* VersionValue = Root.Find(TEXT("version"));
     if (!Root.IsObject() || !VersionValue || VersionValue->GetInt64Or(0) != Version)
     {
-        OutError = FString::Printf("'%s' is not a version %d shader job file", *FilePath, Version);
+        OutError = FString::Printf(TEXT("'%s' is not a version %d shader job file"), *FilePath, Version);
         return false;
     }
 
-    const FJsonValue* JobsValue = Root.Find("jobs");
+    const FJsonValue* JobsValue = Root.Find(TEXT("jobs"));
     if (!JobsValue || !JobsValue->IsArray())
     {
-        OutError = FString::Printf("'%s' has no 'jobs' array", *FilePath);
+        OutError = FString::Printf(TEXT("'%s' has no 'jobs' array"), *FilePath);
         return false;
     }
 
@@ -60,10 +60,10 @@ bool FShaderJobFile::Load(const FString& FilePath, FString& OutError)
         const FJsonValue& JobValue = (*JobsValue)[Index];
 
         FString RHIName;
-        const FJsonValue* RHIValue = JobValue.Find("rhi");
+        const FJsonValue* RHIValue = JobValue.Find(TEXT("rhi"));
         if (!RHIValue || !RHIValue->TryGetString(RHIName) || RHIName.IsEmpty())
         {
-            OutError = FString::Printf("'%s': job %d has no 'rhi'", *FilePath, Index);
+            OutError = FString::Printf(TEXT("'%s': job %d has no 'rhi'"), *FilePath, Index);
             return false;
         }
 
@@ -71,7 +71,7 @@ bool FShaderJobFile::Load(const FString& FilePath, FString& OutError)
         FString           JobError;
         if (!FShaderCompileJob::FromJson(JobValue, Job, JobError))
         {
-            OutError = FString::Printf("'%s': job %d: %s", *FilePath, Index, *JobError);
+            OutError = FString::Printf(TEXT("'%s': job %d: %s"), *FilePath, Index, *JobError);
             return false;
         }
 
@@ -88,7 +88,7 @@ bool FShaderJobFile::Save(const FString& FilePath) const
     {
         // "rhi" goes first so a diff shows which RHI a job belongs to without scrolling
         FJsonValue Job = FJsonValue::MakeObject();
-        Job.AddMember("rhi", FJsonValue(Entry.RHIName));
+        Job.AddMember(TEXT("rhi"), FJsonValue(Entry.RHIName));
 
         const FJsonValue JobValue = Entry.Job.ToJson();
         for (int32 MemberIndex = 0; MemberIndex < JobValue.NumMembers(); ++MemberIndex)
@@ -101,8 +101,8 @@ bool FShaderJobFile::Save(const FString& FilePath) const
     }
 
     FJsonValue Root = FJsonValue::MakeObject();
-    Root.AddMember("version", FJsonValue(Version));
-    Root.AddMember("jobs", ::Move(Jobs));
+    Root.AddMember(TEXT("version"), FJsonValue(Version));
+    Root.AddMember(TEXT("jobs"), ::Move(Jobs));
     return Json::SaveToFile(FilePath, Root, EJsonWriteFlags::Pretty);
 }
 

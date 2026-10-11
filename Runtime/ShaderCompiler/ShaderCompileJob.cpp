@@ -72,16 +72,16 @@ FJsonValue FShaderCompileJob::ToJson() const
     }
 
     FJsonValue Object = FJsonValue::MakeObject();
-    Object.AddMember("name", FJsonValue(Name));
-    Object.AddMember("source", FJsonValue(SourceFile));
-    Object.AddMember("entry", FJsonValue(EntryPoint));
-    Object.AddMember("stage", FJsonValue(ToString(ShaderStage)));
-    Object.AddMember("model", FJsonValue(ToString(ShaderModel)));
-    Object.AddMember("language", FJsonValue(ToString(OutputLanguage)));
-    Object.AddMember("optimize", FJsonValue(bOptimize));
-    Object.AddMember("debug", FJsonValue(bDebugInfo));
-    Object.AddMember("engineDefines", FJsonValue(bHasEngineDefines));
-    Object.AddMember("defines", ::Move(DefineArray));
+    Object.AddMember(TEXT("name"), FJsonValue(Name));
+    Object.AddMember(TEXT("source"), FJsonValue(SourceFile));
+    Object.AddMember(TEXT("entry"), FJsonValue(EntryPoint));
+    Object.AddMember(TEXT("stage"), FJsonValue(ToString(ShaderStage)));
+    Object.AddMember(TEXT("model"), FJsonValue(ToString(ShaderModel)));
+    Object.AddMember(TEXT("language"), FJsonValue(ToString(OutputLanguage)));
+    Object.AddMember(TEXT("optimize"), FJsonValue(bOptimize));
+    Object.AddMember(TEXT("debug"), FJsonValue(bDebugInfo));
+    Object.AddMember(TEXT("engineDefines"), FJsonValue(bHasEngineDefines));
+    Object.AddMember(TEXT("defines"), ::Move(DefineArray));
 
     if (!IncludeDirs.IsEmpty())
     {
@@ -91,7 +91,7 @@ FJsonValue FShaderCompileJob::ToJson() const
             IncludeDirArray.Add(FJsonValue(IncludeDir));
         }
 
-        Object.AddMember("includeDirs", ::Move(IncludeDirArray));
+        Object.AddMember(TEXT("includeDirs"), ::Move(IncludeDirArray));
     }
 
     return Object;
@@ -102,7 +102,7 @@ static bool ReadStringMember(const FJsonValue& Object, const CHAR_T* Name, FStri
     const FJsonValue* Member = Object.Find(Name);
     if (!Member || !Member->TryGetString(OutValue))
     {
-        OutError = FString::Printf("'%s' must be a string", Name);
+        OutError = FString::Printf(TEXT("'%s' must be a string"), Name);
         return false;
     }
 
@@ -113,74 +113,74 @@ bool FShaderCompileJob::FromJson(const FJsonValue& Value, FShaderCompileJob& Out
 {
     if (!Value.IsObject())
     {
-        OutError = "A job must be an object";
+        OutError = TEXT("A job must be an object");
         return false;
     }
 
     FShaderCompileJob Job;
 
-    if (const FJsonValue* NameValue = Value.Find("name"))
+    if (const FJsonValue* NameValue = Value.Find(TEXT("name")))
     {
-        Job.Name = NameValue->GetStringOr("");
+        Job.Name = NameValue->GetStringOr(TEXT(""));
     }
 
     FString StageText;
     FString ModelText;
     FString LanguageText;
 
-    if (!ReadStringMember(Value, "source", Job.SourceFile, OutError) ||
-        !ReadStringMember(Value, "entry", Job.EntryPoint, OutError) ||
-        !ReadStringMember(Value, "stage", StageText, OutError) ||
-        !ReadStringMember(Value, "model", ModelText, OutError) ||
-        !ReadStringMember(Value, "language", LanguageText, OutError))
+    if (!ReadStringMember(Value, TEXT("source"), Job.SourceFile, OutError) ||
+        !ReadStringMember(Value, TEXT("entry"), Job.EntryPoint, OutError) ||
+        !ReadStringMember(Value, TEXT("stage"), StageText, OutError) ||
+        !ReadStringMember(Value, TEXT("model"), ModelText, OutError) ||
+        !ReadStringMember(Value, TEXT("language"), LanguageText, OutError))
     {
         return false;
     }
 
     if (Job.SourceFile.IsEmpty() || Job.EntryPoint.IsEmpty())
     {
-        OutError = "'source' and 'entry' must not be empty";
+        OutError = TEXT("'source' and 'entry' must not be empty");
         return false;
     }
 
     if (!TryParseShaderStage(StageText, Job.ShaderStage))
     {
-        OutError = FString::Printf("'%s' is not a shader stage", *StageText);
+        OutError = FString::Printf(TEXT("'%s' is not a shader stage"), *StageText);
         return false;
     }
 
     if (!TryParseShaderModel(ModelText, Job.ShaderModel))
     {
-        OutError = FString::Printf("'%s' is not a shader model", *ModelText);
+        OutError = FString::Printf(TEXT("'%s' is not a shader model"), *ModelText);
         return false;
     }
 
     if (!TryParseShaderOutputLanguage(LanguageText, Job.OutputLanguage))
     {
-        OutError = FString::Printf("'%s' is not an output language", *LanguageText);
+        OutError = FString::Printf(TEXT("'%s' is not an output language"), *LanguageText);
         return false;
     }
 
-    if (const FJsonValue* OptimizeValue = Value.Find("optimize"))
+    if (const FJsonValue* OptimizeValue = Value.Find(TEXT("optimize")))
     {
         Job.bOptimize = OptimizeValue->GetBoolOr(true);
     }
 
-    if (const FJsonValue* DebugValue = Value.Find("debug"))
+    if (const FJsonValue* DebugValue = Value.Find(TEXT("debug")))
     {
         Job.bDebugInfo = DebugValue->GetBoolOr(false);
     }
 
-    if (const FJsonValue* EngineDefinesValue = Value.Find("engineDefines"))
+    if (const FJsonValue* EngineDefinesValue = Value.Find(TEXT("engineDefines")))
     {
         Job.bHasEngineDefines = EngineDefinesValue->GetBoolOr(false);
     }
 
-    if (const FJsonValue* DefinesValue = Value.Find("defines"))
+    if (const FJsonValue* DefinesValue = Value.Find(TEXT("defines")))
     {
         if (!DefinesValue->IsArray())
         {
-            OutError = "'defines' must be an array";
+            OutError = TEXT("'defines' must be an array");
             return false;
         }
 
@@ -193,7 +193,7 @@ bool FShaderCompileJob::FromJson(const FJsonValue& Value, FShaderCompileJob& Out
 
             if (!Pair.IsArray() || Pair.Num() != 2 || !Pair[0].TryGetString(DefineName) || !Pair[1].TryGetString(DefineValue) || DefineName.IsEmpty())
             {
-                OutError = "Every define must be a [name, value] pair of strings";
+                OutError = TEXT("Every define must be a [name, value] pair of strings");
                 return false;
             }
 
@@ -201,11 +201,11 @@ bool FShaderCompileJob::FromJson(const FJsonValue& Value, FShaderCompileJob& Out
         }
     }
 
-    if (const FJsonValue* IncludeDirsValue = Value.Find("includeDirs"))
+    if (const FJsonValue* IncludeDirsValue = Value.Find(TEXT("includeDirs")))
     {
         if (!IncludeDirsValue->IsArray())
         {
-            OutError = "'includeDirs' must be an array";
+            OutError = TEXT("'includeDirs' must be an array");
             return false;
         }
 
@@ -214,7 +214,7 @@ bool FShaderCompileJob::FromJson(const FJsonValue& Value, FShaderCompileJob& Out
             FString IncludeDir;
             if (!(*IncludeDirsValue)[Index].TryGetString(IncludeDir) || IncludeDir.IsEmpty())
             {
-                OutError = "Every include directory must be a non-empty string";
+                OutError = TEXT("Every include directory must be a non-empty string");
                 return false;
             }
 

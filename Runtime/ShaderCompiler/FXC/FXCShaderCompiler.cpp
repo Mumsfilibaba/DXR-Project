@@ -1,5 +1,6 @@
 #if PLATFORM_WINDOWS
 #include "Core/Containers/ComPtr.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformLibrary.h"
@@ -7,11 +8,11 @@
 #include "ShaderCompiler/FXC/FXCShaderTranslator.h"
 
 static TAutoConsoleVariable<bool> CVarFXCWarningsAsErrors(
-    "RHI.ShaderCompiler.FXC.WarningsAsErrors",
-    "Treat FXC warnings as errors. FXC warns about implicit truncations that DXC accepts.",
+    TEXT("RHI.ShaderCompiler.FXC.WarningsAsErrors"),
+    TEXT("Treat FXC warnings as errors. FXC warns about implicit truncations that DXC accepts."),
     false);
 
-static const CHAR_T* GetFXCProfile(EShaderStage Stage)
+static const ANSICHAR* GetFXCProfile(EShaderStage Stage)
 {
     switch (Stage)
     {
@@ -49,27 +50,27 @@ FFXCShaderCompiler::~FFXCShaderCompiler()
 
 bool FFXCShaderCompiler::Initialize()
 {
-    D3DCompilerLib = FPlatformLibrary::LoadDynamicLib("d3dcompiler_47");
+    D3DCompilerLib = FPlatformLibrary::LoadDynamicLib(TEXT("d3dcompiler_47"));
     if (!D3DCompilerLib)
     {
         return false;
     }
 
-    D3DCompileFunc = FPlatformLibrary::LoadSymbol<pD3DCompile>("D3DCompile", D3DCompilerLib);
+    D3DCompileFunc = FPlatformLibrary::LoadSymbol<pD3DCompile>(TEXT("D3DCompile"), D3DCompilerLib);
     if (!D3DCompileFunc)
     {
         LOG_ERROR("[FShaderCompiler]: Failed to load 'D3DCompile'");
         return false;
     }
 
-    D3DReflectFunc = FPlatformLibrary::LoadSymbol<PFN_FXC_D3D_REFLECT>("D3DReflect", D3DCompilerLib);
+    D3DReflectFunc = FPlatformLibrary::LoadSymbol<PFN_FXC_D3D_REFLECT>(TEXT("D3DReflect"), D3DCompilerLib);
     if (!D3DReflectFunc)
     {
         LOG_ERROR("[FShaderCompiler]: Failed to load 'D3DReflect'");
         return false;
     }
 
-    D3DStripShaderFunc = FPlatformLibrary::LoadSymbol<PFN_FXC_D3D_STRIP_SHADER>("D3DStripShader", D3DCompilerLib);
+    D3DStripShaderFunc = FPlatformLibrary::LoadSymbol<PFN_FXC_D3D_STRIP_SHADER>(TEXT("D3DStripShader"), D3DCompilerLib);
     if (!D3DStripShaderFunc)
     {
         LOG_ERROR("[FShaderCompiler]: Failed to load 'D3DStripShader'");
@@ -125,31 +126,35 @@ bool FFXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
 {
     const FShaderCompileInfo& CompileInfo = *Request.CompileInfo;
 
-    const CHAR_T* Profile = GetFXCProfile(CompileInfo.ShaderStage);
+    const ANSICHAR* Profile = GetFXCProfile(CompileInfo.ShaderStage);
     if (!Profile)
     {
-        OutResult.Messages = FString::Printf("Stage %s cannot be compiled to DXBC", ToString(CompileInfo.ShaderStage));
+        OutResult.Messages = FString::Printf(TEXT("Stage %s cannot be compiled to DXBC"), ToString(CompileInfo.ShaderStage));
         return false;
     }
 
     // Requests up to SM 6.2 are lowered to 5.0, anything newer relies on features that D3D11 does not have
     if (CompileInfo.ShaderModel > EShaderModel::SM_6_2)
     {
-        OutResult.Messages = FString::Printf("Shader Model %s cannot be compiled to DXBC", ToString(CompileInfo.ShaderModel));
+        OutResult.Messages = FString::Printf(TEXT("Shader Model %s cannot be compiled to DXBC"), ToString(CompileInfo.ShaderModel));
         return false;
     }
+
+    const TStringConversion<ANSICHAR, CHAR_T> Utf8Source = StringCast<ANSICHAR>(Request.Source);
+    const TStringConversion<ANSICHAR, CHAR_T> SourceName = StringCast<ANSICHAR>(Request.SourceName);
+    const TStringConversion<ANSICHAR, CHAR_T> EntryPoint = StringCast<ANSICHAR>(CompileInfo.EntryPoint);
 
     // The source is already preprocessed, so there are no defines or includes to pass
     TComPtr<ID3DBlob> CodeBlob;
     TComPtr<ID3DBlob> ErrorBlob;
 
     const HRESULT Result = D3DCompileFunc(
-        Request.Source.Data(),
-        static_cast<SIZE_T>(Request.Source.Size()),
-        Request.SourceName.IsEmpty() ? nullptr : *Request.SourceName,
+        Utf8Source.Get(),
+        static_cast<SIZE_T>(Utf8Source.Length()),
+        Request.SourceName.IsEmpty() ? nullptr : SourceName.Get(),
         nullptr,
         nullptr,
-        *CompileInfo.EntryPoint,
+        EntryPoint.Get(),
         Profile,
         BuildCompileFlags(CompileInfo),
         0,
@@ -158,7 +163,7 @@ bool FFXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
 
     if (ErrorBlob && ErrorBlob->GetBufferSize() > 0)
     {
-        const CHAR_T* Messages = reinterpret_cast<const CHAR_T*>(ErrorBlob->GetBufferPointer());
+        const ANSICHAR* Messages = reinterpret_cast<const ANSICHAR*>(ErrorBlob->GetBufferPointer());
 
         int32 Length = static_cast<int32>(ErrorBlob->GetBufferSize());
         while (Length > 0 && Messages[Length - 1] == '\0')
@@ -166,7 +171,7 @@ bool FFXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
             --Length;
         }
 
-        OutResult.Messages = FString(Messages, Length);
+        OutResult.Messages = StringCast<CHAR_T>(Messages, Length).ToString();
     }
 
     if (FAILED(Result) || !CodeBlob)
@@ -188,7 +193,7 @@ bool FFXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
         TComPtr<ID3DBlob> StrippedBlob;
         if (FAILED(D3DStripShaderFunc(CodeBlob->GetBufferPointer(), CodeBlob->GetBufferSize(), StripFlags, &StrippedBlob)) || !StrippedBlob)
         {
-            OutResult.Messages += "D3DStripShader failed\n";
+            OutResult.Messages += TEXT("D3DStripShader failed\n");
             return false;
         }
 

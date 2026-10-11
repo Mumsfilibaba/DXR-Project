@@ -28,7 +28,7 @@ struct FRemoteShaderCompilerServerSettings
      * dual-stack and falls back to 0.0.0.0 where IPv6 is unavailable. Without remote connections the server binds
      * 127.0.0.1 and ::1 instead.
      */
-    FString                       BindAddress             = "::";
+    FString                       BindAddress             = TEXT("::");
 
     /** Zero lets the OS pick, which is what the tests do */
     uint16                       Port                    = RemoteShaderCompilerProtocol::DefaultPort;
@@ -57,7 +57,7 @@ class SHADERCOMPILER_API FRemoteShaderCompilerServer final : public FRunnable
 public:
 
     /** Stands in for the asset directory on the server, nothing below it exists on disk */
-    static constexpr const CHAR_T* SourceRoot = "/RemoteShaderCompiler/Assets";
+    static constexpr const CHAR_T* SourceRoot = TEXT("/RemoteShaderCompiler/Assets");
 
 public:
     explicit FRemoteShaderCompilerServer(const FRemoteShaderCompilerServerSettings& InSettings);

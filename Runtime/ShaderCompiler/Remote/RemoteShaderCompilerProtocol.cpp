@@ -1,4 +1,5 @@
 #include "Core/Json/Json.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Memory/Memory.h"
 #include "ShaderCompiler/ShaderCompilerIdentity.h"
 #include "ShaderCompiler/Remote/RemoteShaderCompilerProtocol.h"
@@ -10,7 +11,8 @@ static bool IsKnownMessageType(uint32 Type)
 
 void RemoteShaderCompilerProtocol::EncodeFrame(const FFrame& Frame, TArray<uint8>& OutBytes)
 {
-    const FString HeaderText = Frame.Header.IsNull() ? FString() : Json::ToString(Frame.Header, EJsonWriteFlags::Compact);
+    const FString                             HeaderJson = Frame.Header.IsNull() ? FString() : Json::ToString(Frame.Header, EJsonWriteFlags::Compact);
+    const TStringConversion<ANSICHAR, CHAR_T> HeaderText = StringCast<ANSICHAR>(HeaderJson);
 
     FFrameHeader FrameHeader;
     FrameHeader.Type        = Frame.Type;
@@ -27,7 +29,7 @@ void RemoteShaderCompilerProtocol::EncodeFrame(const FFrame& Frame, TArray<uint8
 
     if (FrameHeader.HeaderSize > 0)
     {
-        Memory::Memcpy(Destination, HeaderText.Data(), FrameHeader.HeaderSize);
+        Memory::Memcpy(Destination, HeaderText.Get(), FrameHeader.HeaderSize);
         Destination += FrameHeader.HeaderSize;
     }
 
@@ -65,10 +67,11 @@ bool RemoteShaderCompilerProtocol::TryDecodeFrame(TArray<uint8>& InOutBuffer, FF
     Frame.Type      = FrameHeader.Type;
     Frame.RequestId = FrameHeader.RequestId;
 
-    const CHAR_T* HeaderText = reinterpret_cast<const CHAR_T*>(InOutBuffer.Data() + FrameHeaderSize);
+    const ANSICHAR* HeaderBytes = reinterpret_cast<const ANSICHAR*>(InOutBuffer.Data() + FrameHeaderSize);
     if (FrameHeader.HeaderSize > 0)
     {
-        if (!Json::Parse(FStringView(HeaderText, static_cast<int32>(FrameHeader.HeaderSize)), Frame.Header) || !Frame.Header.IsObject())
+        const TStringConversion<CHAR_T, ANSICHAR> HeaderText = StringCast<CHAR_T>(HeaderBytes, static_cast<int32>(FrameHeader.HeaderSize));
+        if (!Json::Parse(FStringView(HeaderText.Get(), HeaderText.Length()), Frame.Header) || !Frame.Header.IsObject())
         {
             return false;
         }
@@ -137,12 +140,12 @@ FString RemoteShaderCompilerProtocol::CollapsePath(const FString& Path)
         const FString Segment = Path.SubString(SegmentStart, Index - SegmentStart);
         SegmentStart = Index + 1;
 
-        if (Segment == ".")
+        if (Segment == TEXT("."))
         {
             continue;
         }
 
-        if (Segment == ".." && !Segments.IsEmpty() && Segments.Last() != ".." && !Segments.Last().IsEmpty())
+        if (Segment == TEXT("..") && !Segments.IsEmpty() && Segments.Last() != TEXT("..") && !Segments.Last().IsEmpty())
         {
             Segments.RemoveAt(Segments.Size() - 1);
             continue;
@@ -168,11 +171,11 @@ FString RemoteShaderCompilerProtocol::CollapsePath(const FString& Path)
 FJsonValue RemoteShaderCompilerProtocol::IdentityToJson(const FShaderCompilerIdentity& Identity)
 {
     FJsonValue Value = FJsonValue::MakeObject();
-    Value.AddMember("name", FJsonValue(Identity.Name));
-    Value.AddMember("major", FJsonValue(Identity.VersionMajor));
-    Value.AddMember("minor", FJsonValue(Identity.VersionMinor));
-    Value.AddMember("settings", FJsonValue(Identity.SettingsVersion));
-    Value.AddMember("translator", FJsonValue(Identity.TranslatorVersion));
+    Value.AddMember(TEXT("name"), FJsonValue(Identity.Name));
+    Value.AddMember(TEXT("major"), FJsonValue(Identity.VersionMajor));
+    Value.AddMember(TEXT("minor"), FJsonValue(Identity.VersionMinor));
+    Value.AddMember(TEXT("settings"), FJsonValue(Identity.SettingsVersion));
+    Value.AddMember(TEXT("translator"), FJsonValue(Identity.TranslatorVersion));
     return Value;
 }
 
@@ -183,16 +186,16 @@ bool RemoteShaderCompilerProtocol::IdentityFromJson(const FJsonValue& Value, FSh
         return false;
     }
 
-    const FJsonValue* NameValue = Value.Find("name");
+    const FJsonValue* NameValue = Value.Find(TEXT("name"));
     if (!NameValue || !NameValue->TryGetString(OutIdentity.Name) || OutIdentity.Name.IsEmpty())
     {
         return false;
     }
 
-    const FJsonValue* MajorValue      = Value.Find("major");
-    const FJsonValue* MinorValue      = Value.Find("minor");
-    const FJsonValue* SettingsValue   = Value.Find("settings");
-    const FJsonValue* TranslatorValue = Value.Find("translator");
+    const FJsonValue* MajorValue      = Value.Find(TEXT("major"));
+    const FJsonValue* MinorValue      = Value.Find(TEXT("minor"));
+    const FJsonValue* SettingsValue   = Value.Find(TEXT("settings"));
+    const FJsonValue* TranslatorValue = Value.Find(TEXT("translator"));
 
     OutIdentity.VersionMajor      = MajorValue      ? static_cast<uint32>(MajorValue->GetInt64Or(0))      : 0;
     OutIdentity.VersionMinor      = MinorValue      ? static_cast<uint32>(MinorValue->GetInt64Or(0))      : 0;
@@ -204,10 +207,10 @@ bool RemoteShaderCompilerProtocol::IdentityFromJson(const FJsonValue& Value, FSh
 const CHAR_T* RemoteShaderCompilerProtocol::GetPlatformName()
 {
 #if PLATFORM_WINDOWS
-    return "Windows";
+    return TEXT("Windows");
 #elif PLATFORM_MACOS
-    return "macOS";
+    return TEXT("macOS");
 #else
-    return "Unknown";
+    return TEXT("Unknown");
 #endif
 }

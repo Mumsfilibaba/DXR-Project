@@ -16,7 +16,7 @@ static uint64 GetMillisecondsNow()
 
 static FString MakeSentFileKey(const FString& Path, uint32 Hash)
 {
-    return FString::Printf("%s:%u", *Path, Hash);
+    return FString::Printf(TEXT("%s:%u"), *Path, Hash);
 }
 
 FRemoteShaderCompilerClient::FRemoteShaderCompilerClient()
@@ -55,7 +55,7 @@ bool FRemoteShaderCompilerClient::Connect(const FString& InHost, uint16 InPort, 
     FNetworkSocket NewSocket(ESocketType::TCP);
     if (!NewSocket.ConnectToHost(InHost, InPort, TimeoutMilliseconds))
     {
-        LastError = FString::Printf("Could not connect to %s", *FSocketAddress::FormatHostAndPort(InHost, InPort));
+        LastError = FString::Printf(TEXT("Could not connect to %s"), *FSocketAddress::FormatHostAndPort(InHost, InPort));
         return false;
     }
 
@@ -74,7 +74,7 @@ bool FRemoteShaderCompilerClient::Connect(const FString& InHost, uint16 InPort, 
 
     if (!Socket.SetNonBlocking(true))
     {
-        LastError = "Could not make the socket non-blocking";
+        LastError = TEXT("Could not make the socket non-blocking");
         Socket.Close();
         return false;
     }
@@ -83,10 +83,10 @@ bool FRemoteShaderCompilerClient::Connect(const FString& InHost, uint16 InPort, 
     bStopRequested.Store(false);
     bConnected.Store(true);
 
-    Thread = FPlatformThread::Create(this, "RemoteShaderCompilerClient");
+    Thread = FPlatformThread::Create(this, TEXT("RemoteShaderCompilerClient"));
     if (!Thread || !Thread->Start())
     {
-        LastError = "Could not start the network thread";
+        LastError = TEXT("Could not start the network thread");
         delete Thread;
         Thread = nullptr;
 
@@ -162,7 +162,7 @@ TArray<FRemoteLanguageInfo> FRemoteShaderCompilerClient::GetLanguages() const
 FString FRemoteShaderCompilerClient::GetPeerName() const
 {
     const FString Address = FSocketAddress::FormatHostAndPort(Host, Port);
-    return PeerPlatform.IsEmpty() ? Address : FString::Printf("%s (%s)", *Address, *PeerPlatform);
+    return PeerPlatform.IsEmpty() ? Address : FString::Printf(TEXT("%s (%s)"), *Address, *PeerPlatform);
 }
 
 FString FRemoteShaderCompilerClient::GetLastError() const
@@ -183,7 +183,7 @@ bool FRemoteShaderCompilerClient::ReceiveHello(uint32 TimeoutMilliseconds)
         bool bHasFrame = false;
         if (!RemoteShaderCompilerProtocol::TryDecodeFrame(ReceiveBuffer, Frame, bHasFrame))
         {
-            LastError = "The server sent a malformed frame";
+            LastError = TEXT("The server sent a malformed frame");
             return false;
         }
 
@@ -191,39 +191,39 @@ bool FRemoteShaderCompilerClient::ReceiveHello(uint32 TimeoutMilliseconds)
         {
             if (Frame.Type == RemoteShaderCompilerProtocol::EMessageType::Rejected)
             {
-                const FJsonValue* Reason = Frame.Header.Find("reason");
-                LastError = FString::Printf("The server rejected the connection: %s", Reason ? *Reason->GetStringOr("no reason given") : "no reason given");
+                const FJsonValue* Reason = Frame.Header.Find(TEXT("reason"));
+                LastError = FString::Printf(TEXT("The server rejected the connection: %s"), Reason ? *Reason->GetStringOr(TEXT("no reason given")) : TEXT("no reason given"));
                 return false;
             }
 
             if (Frame.Type != RemoteShaderCompilerProtocol::EMessageType::Hello)
             {
-                LastError = "The server did not start with a Hello";
+                LastError = TEXT("The server did not start with a Hello");
                 return false;
             }
 
-            const FJsonValue* ProtocolValue = Frame.Header.Find("protocol");
+            const FJsonValue* ProtocolValue = Frame.Header.Find(TEXT("protocol"));
             if (!ProtocolValue || ProtocolValue->GetInt64Or(0) != static_cast<int64>(RemoteShaderCompilerProtocol::Version))
             {
-                LastError = FString::Printf("The server speaks protocol %lld, this client speaks %u", ProtocolValue ? ProtocolValue->GetInt64Or(0) : 0ll, RemoteShaderCompilerProtocol::Version);
+                LastError = FString::Printf(TEXT("The server speaks protocol %lld, this client speaks %u"), ProtocolValue ? ProtocolValue->GetInt64Or(0) : 0ll, RemoteShaderCompilerProtocol::Version);
                 return false;
             }
 
-            const FJsonValue* PlatformValue = Frame.Header.Find("platform");
-            PeerPlatform = PlatformValue ? PlatformValue->GetStringOr("") : FString();
+            const FJsonValue* PlatformValue = Frame.Header.Find(TEXT("platform"));
+            PeerPlatform = PlatformValue ? PlatformValue->GetStringOr(TEXT("")) : FString();
 
             TArray<FRemoteLanguageInfo> NewLanguages;
-            if (const FJsonValue* LanguagesValue = Frame.Header.Find("languages"); LanguagesValue && LanguagesValue->IsArray())
+            if (const FJsonValue* LanguagesValue = Frame.Header.Find(TEXT("languages")); LanguagesValue && LanguagesValue->IsArray())
             {
                 for (int32 Index = 0; Index < LanguagesValue->Num(); ++Index)
                 {
                     const FJsonValue& LanguageValue = (*LanguagesValue)[Index];
-                    const FJsonValue* NameValue     = LanguageValue.Find("language");
-                    const FJsonValue* RouteValue    = LanguageValue.Find("route");
-                    const FJsonValue* IdentityValue = LanguageValue.Find("identity");
+                    const FJsonValue* NameValue     = LanguageValue.Find(TEXT("language"));
+                    const FJsonValue* RouteValue    = LanguageValue.Find(TEXT("route"));
+                    const FJsonValue* IdentityValue = LanguageValue.Find(TEXT("identity"));
 
                     FRemoteLanguageInfo Language;
-                    if (!NameValue || !TryParseShaderOutputLanguage(NameValue->GetStringOr(""), Language.OutputLanguage))
+                    if (!NameValue || !TryParseShaderOutputLanguage(NameValue->GetStringOr(TEXT("")), Language.OutputLanguage))
                     {
                         continue;
                     }
@@ -233,7 +233,7 @@ bool FRemoteShaderCompilerClient::ReceiveHello(uint32 TimeoutMilliseconds)
                         continue;
                     }
 
-                    Language.bForwarded = RouteValue && RouteValue->GetStringOr("") == "forwarded";
+                    Language.bForwarded = RouteValue && RouteValue->GetStringOr(TEXT("")) == TEXT("forwarded");
                     NewLanguages.Add(::Move(Language));
                 }
             }
@@ -246,7 +246,7 @@ bool FRemoteShaderCompilerClient::ReceiveHello(uint32 TimeoutMilliseconds)
         const uint64 Now = GetMillisecondsNow();
         if (Now >= Deadline)
         {
-            LastError = "The server did not send a Hello in time";
+            LastError = TEXT("The server did not send a Hello in time");
             return false;
         }
 
@@ -255,7 +255,7 @@ bool FRemoteShaderCompilerClient::ReceiveHello(uint32 TimeoutMilliseconds)
         const int32     NumReady  = FNetworkSocket::WaitForRead(Sockets, 1, &bReadable, static_cast<uint32>(Deadline - Now));
         if (NumReady < 0)
         {
-            LastError = "Waiting for the Hello failed";
+            LastError = TEXT("Waiting for the Hello failed");
             return false;
         }
 
@@ -267,7 +267,7 @@ bool FRemoteShaderCompilerClient::ReceiveHello(uint32 TimeoutMilliseconds)
         int32 BytesRead = 0;
         if (Socket.Recv(Chunk.Data(), Chunk.Size(), BytesRead) != ESocketResult::Success)
         {
-            LastError = "The server closed the connection before its Hello";
+            LastError = TEXT("The server closed the connection before its Hello");
             return false;
         }
 
@@ -311,8 +311,8 @@ ERemoteCompileStatus FRemoteShaderCompilerClient::Compile(const FShaderCompileJo
         for (const FShaderSourceFile& File : Files)
         {
             FJsonValue FileRef = FJsonValue::MakeObject();
-            FileRef.AddMember("path", FJsonValue(File.Path));
-            FileRef.AddMember("hash", FJsonValue(File.Hash));
+            FileRef.AddMember(TEXT("path"), FJsonValue(File.Path));
+            FileRef.AddMember(TEXT("hash"), FJsonValue(File.Hash));
             FileRefs.Add(::Move(FileRef));
 
             bool bAlreadySent = false;
@@ -323,20 +323,20 @@ ERemoteCompileStatus FRemoteShaderCompilerClient::Compile(const FShaderCompileJo
             }
 
             FJsonValue NewFile = FJsonValue::MakeObject();
-            NewFile.AddMember("path", FJsonValue(File.Path));
-            NewFile.AddMember("hash", FJsonValue(File.Hash));
-            NewFile.AddMember("offset", FJsonValue(Frame.Payload.Size()));
-            NewFile.AddMember("size", FJsonValue(File.Contents.Size()));
+            NewFile.AddMember(TEXT("path"), FJsonValue(File.Path));
+            NewFile.AddMember(TEXT("hash"), FJsonValue(File.Hash));
+            NewFile.AddMember(TEXT("offset"), FJsonValue(Frame.Payload.Size()));
+            NewFile.AddMember(TEXT("size"), FJsonValue(File.Contents.Size()));
             NewFiles.Add(::Move(NewFile));
 
             Frame.Payload.Append(File.Contents.Data(), File.Contents.Size());
         }
 
         Frame.Header = FJsonValue::MakeObject();
-        Frame.Header.AddMember("hops", FJsonValue(Hops));
-        Frame.Header.AddMember("job", Job.ToJson());
-        Frame.Header.AddMember("files", ::Move(FileRefs));
-        Frame.Header.AddMember("newFiles", ::Move(NewFiles));
+        Frame.Header.AddMember(TEXT("hops"), FJsonValue(Hops));
+        Frame.Header.AddMember(TEXT("job"), Job.ToJson());
+        Frame.Header.AddMember(TEXT("files"), ::Move(FileRefs));
+        Frame.Header.AddMember(TEXT("newFiles"), ::Move(NewFiles));
 
         RemoteShaderCompilerProtocol::EncodeFrame(Frame, SendBuffer);
 
@@ -359,7 +359,7 @@ ERemoteCompileStatus FRemoteShaderCompilerClient::Compile(const FShaderCompileJo
         else
         {
             PendingRequests.Remove(RequestId);
-            OutResult.Messages = FString::Printf("%s did not answer within %u ms", *GetPeerName(), TimeoutMilliseconds);
+            OutResult.Messages = FString::Printf(TEXT("%s did not answer within %u ms"), *GetPeerName(), TimeoutMilliseconds);
         }
     }
 
@@ -400,8 +400,8 @@ void FRemoteShaderCompilerClient::HandleFrame(RemoteShaderCompilerProtocol::FFra
 {
     if (Frame.Type == RemoteShaderCompilerProtocol::EMessageType::Rejected)
     {
-        const FJsonValue* Reason = Frame.Header.Find("reason");
-        LOG_WARNING("[RemoteShaderCompiler] %s closed the connection: %s", *GetPeerName(), Reason ? *Reason->GetStringOr("no reason given") : "no reason given");
+        const FJsonValue* Reason = Frame.Header.Find(TEXT("reason"));
+        LOG_WARNING("[RemoteShaderCompiler] %s closed the connection: %s", *GetPeerName(), Reason ? *Reason->GetStringOr(TEXT("no reason given")) : TEXT("no reason given"));
         bConnected.Store(false);
         return;
     }
@@ -422,13 +422,13 @@ void FRemoteShaderCompilerClient::HandleFrame(RemoteShaderCompilerProtocol::FFra
     FPendingRequest* Pending = *Found;
     PendingRequests.Remove(Frame.RequestId);
 
-    const FJsonValue* StatusValue   = Frame.Header.Find("status");
-    const FJsonValue* MessagesValue = Frame.Header.Find("messages");
-    const FString     StatusText    = StatusValue ? StatusValue->GetStringOr("") : FString();
+    const FJsonValue* StatusValue   = Frame.Header.Find(TEXT("status"));
+    const FJsonValue* MessagesValue = Frame.Header.Find(TEXT("messages"));
+    const FString     StatusText    = StatusValue ? StatusValue->GetStringOr(TEXT("")) : FString();
 
-    Pending->Result.Messages = MessagesValue ? MessagesValue->GetStringOr("") : FString();
+    Pending->Result.Messages = MessagesValue ? MessagesValue->GetStringOr(TEXT("")) : FString();
 
-    if (const FJsonValue* DependenciesValue = Frame.Header.Find("dependencies"); DependenciesValue && DependenciesValue->IsArray())
+    if (const FJsonValue* DependenciesValue = Frame.Header.Find(TEXT("dependencies")); DependenciesValue && DependenciesValue->IsArray())
     {
         for (int32 Index = 0; Index < DependenciesValue->Num(); ++Index)
         {
@@ -465,7 +465,7 @@ void FRemoteShaderCompilerClient::FailAllPending()
     PendingRequests.Foreach([](const uint32&, FPendingRequest* Pending)
     {
         Pending->Status          = ERemoteCompileStatus::Unreachable;
-        Pending->Result.Messages = "The connection to the remote shader compiler was lost";
+        Pending->Result.Messages = TEXT("The connection to the remote shader compiler was lost");
         Pending->bCompleted      = true;
         Pending->Event->Trigger();
     });

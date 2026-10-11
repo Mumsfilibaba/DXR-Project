@@ -26,50 +26,50 @@ IMPLEMENT_ENGINE_MODULE(IModule, ShaderCompiler);
 static constexpr uint32 GShaderReflectionVersion = 1;
 
 static TAutoConsoleVariable<bool> CVarShaderDebug(
-    "RHI.ShaderCompiler.Debug",
-    "Compile shaders with debug information, embedded reflection and binding names, for PIX and RenderDoc. Ignored in release builds.",
+    TEXT("RHI.ShaderCompiler.Debug"),
+    TEXT("Compile shaders with debug information, embedded reflection and binding names, for PIX and RenderDoc. Ignored in release builds."),
     false);
 
 static TAutoConsoleVariable<bool> CVarVerboseLogging(
-    "RHI.ShaderCompiler.VerboseLogging",
-    "Enable verbose logging in the ShaderCompiler",
+    TEXT("RHI.ShaderCompiler.VerboseLogging"),
+    TEXT("Enable verbose logging in the ShaderCompiler"),
     false);
 
 static TAutoConsoleVariable<bool> CVarMapMin16FloatToFloat(
-    "RHI.ShaderCompiler.MapMin16FloatToFloat",
-    "Map the min16float type family to full-precision float on non-HLSL backends (works around DXC's SPIR-V "
-    "RelaxedPrecision codegen bug). Disable to keep native min-precision types (also sets MIN16FLOAT_AVAILABLE).",
+    TEXT("RHI.ShaderCompiler.MapMin16FloatToFloat"),
+    TEXT("Map the min16float type family to full-precision float on non-HLSL backends (works around DXC's SPIR-V "
+    "RelaxedPrecision codegen bug). Disable to keep native min-precision types (also sets MIN16FLOAT_AVAILABLE)."),
     true);
 
 static TAutoConsoleVariable<FString> CVarDumpPreprocessedDir(
-    "RHI.ShaderCompiler.DumpPreprocessedDir",
-    "When set, every shader is written to this directory after preprocessing and translation, with the defines it was compiled with",
-    "");
+    TEXT("RHI.ShaderCompiler.DumpPreprocessedDir"),
+    TEXT("When set, every shader is written to this directory after preprocessing and translation, with the defines it was compiled with"),
+    TEXT(""));
 
 static TAutoConsoleVariable<bool> CVarUseRemote(
-    "RHI.ShaderCompiler.UseRemote",
-    "Send shader compiles to the ShaderCompiler -server at RHI.ShaderCompiler.RemoteHost instead of compiling in the engine",
+    TEXT("RHI.ShaderCompiler.UseRemote"),
+    TEXT("Send shader compiles to the ShaderCompiler -server at RHI.ShaderCompiler.RemoteHost instead of compiling in the engine"),
     false);
 
 static TAutoConsoleVariable<FString> CVarRemoteHost(
-    "RHI.ShaderCompiler.RemoteHost",
-    "Host name, IPv4 or IPv6 address of the ShaderCompiler -server",
+    TEXT("RHI.ShaderCompiler.RemoteHost"),
+    TEXT("Host name, IPv4 or IPv6 address of the ShaderCompiler -server"),
     RemoteShaderCompilerProtocol::LoopbackAddress);
 
 static TAutoConsoleVariable<int32> CVarRemotePort(
-    "RHI.ShaderCompiler.RemotePort",
-    "TCP port of the ShaderCompiler -server",
+    TEXT("RHI.ShaderCompiler.RemotePort"),
+    TEXT("TCP port of the ShaderCompiler -server"),
     RemoteShaderCompilerProtocol::DefaultPort,
     1, 65535);
 
 static TAutoConsoleVariable<bool> CVarRemoteFallbackToLocal(
-    "RHI.ShaderCompiler.RemoteFallbackToLocal",
-    "Compile in the engine when the remote server is unreachable or cannot produce the output language",
+    TEXT("RHI.ShaderCompiler.RemoteFallbackToLocal"),
+    TEXT("Compile in the engine when the remote server is unreachable or cannot produce the output language"),
     true);
 
 static TAutoConsoleVariable<int32> CVarRemoteTimeout(
-    "RHI.ShaderCompiler.RemoteTimeout",
-    "Milliseconds to wait for one remote compile before treating the server as unreachable",
+    TEXT("RHI.ShaderCompiler.RemoteTimeout"),
+    TEXT("Milliseconds to wait for one remote compile before treating the server as unreachable"),
     60000,
     1000, 600000);
 
@@ -77,8 +77,8 @@ static constexpr double GRemoteReconnectIntervalSeconds   = 5.0;
 static constexpr uint32 GRemoteConnectTimeoutMilliseconds = 2000;
 
 static FAutoConsoleCommand CCmdDumpShaderCompileStats(
-    "RHI.DumpShaderCompileStats",
-    "Logs how many shaders the compiler has built and how long they took",
+    TEXT("RHI.DumpShaderCompileStats"),
+    TEXT("Logs how many shaders the compiler has built and how long they took"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         if (FShaderCompiler* Compiler = FShaderCompiler::TryGet())
@@ -247,18 +247,18 @@ TArray<EShaderOutputLanguage> FShaderCompiler::GetSupportedOutputLanguages() con
 void FShaderCompiler::BuildCompileDefines(const FShaderCompileInfo& CompileInfo, TArray<FShaderDefine>& OutDefines) const
 {
     // Add defines that identify the target shader backend
-    OutDefines.Emplace("SHADER_BACKEND_D3D12", "(1)");
-    OutDefines.Emplace("SHADER_BACKEND_VULKAN", "(2)");
-    OutDefines.Emplace("SHADER_BACKEND_METAL", "(3)");
-    OutDefines.Emplace("SHADER_BACKEND_D3D11", "(4)");
+    OutDefines.Emplace(TEXT("SHADER_BACKEND_D3D12"), TEXT("(1)"));
+    OutDefines.Emplace(TEXT("SHADER_BACKEND_VULKAN"), TEXT("(2)"));
+    OutDefines.Emplace(TEXT("SHADER_BACKEND_METAL"), TEXT("(3)"));
+    OutDefines.Emplace(TEXT("SHADER_BACKEND_D3D11"), TEXT("(4)"));
 
     switch (CompileInfo.OutputLanguage)
     {
-        case EShaderOutputLanguage::DXIL:  OutDefines.Emplace("SHADER_BACKEND", "SHADER_BACKEND_D3D12");  break;
-        case EShaderOutputLanguage::MSL:   OutDefines.Emplace("SHADER_BACKEND", "SHADER_BACKEND_METAL");  break;
-        case EShaderOutputLanguage::SPIRV: OutDefines.Emplace("SHADER_BACKEND", "SHADER_BACKEND_VULKAN"); break;
-        case EShaderOutputLanguage::DXBC:  OutDefines.Emplace("SHADER_BACKEND", "SHADER_BACKEND_D3D11");  break;
-        default:                           OutDefines.Emplace("SHADER_BACKEND", "(0)");                   break;
+        case EShaderOutputLanguage::DXIL:  OutDefines.Emplace(TEXT("SHADER_BACKEND"), TEXT("SHADER_BACKEND_D3D12"));  break;
+        case EShaderOutputLanguage::MSL:   OutDefines.Emplace(TEXT("SHADER_BACKEND"), TEXT("SHADER_BACKEND_METAL"));  break;
+        case EShaderOutputLanguage::SPIRV: OutDefines.Emplace(TEXT("SHADER_BACKEND"), TEXT("SHADER_BACKEND_VULKAN")); break;
+        case EShaderOutputLanguage::DXBC:  OutDefines.Emplace(TEXT("SHADER_BACKEND"), TEXT("SHADER_BACKEND_D3D11"));  break;
+        default:                           OutDefines.Emplace(TEXT("SHADER_BACKEND"), TEXT("(0)"));                   break;
     }
 
     // The mapping only applies to the SPIR-V based outputs
@@ -267,15 +267,15 @@ void FShaderCompiler::BuildCompileDefines(const FShaderCompileInfo& CompileInfo,
 
     if (bMapMin16FloatToFloat)
     {
-        OutDefines.Emplace("min16float", "float");
-        OutDefines.Emplace("min16float2", "float2");
-        OutDefines.Emplace("min16float3", "float3");
-        OutDefines.Emplace("min16float4", "float4");
-        OutDefines.Emplace("MIN16FLOAT_AVAILABLE", "(0)");
+        OutDefines.Emplace(TEXT("min16float"), TEXT("float"));
+        OutDefines.Emplace(TEXT("min16float2"), TEXT("float2"));
+        OutDefines.Emplace(TEXT("min16float3"), TEXT("float3"));
+        OutDefines.Emplace(TEXT("min16float4"), TEXT("float4"));
+        OutDefines.Emplace(TEXT("MIN16FLOAT_AVAILABLE"), TEXT("(0)"));
     }
     else
     {
-        OutDefines.Emplace("MIN16FLOAT_AVAILABLE", "(1)");
+        OutDefines.Emplace(TEXT("MIN16FLOAT_AVAILABLE"), TEXT("(1)"));
     }
 
     for (const FShaderDefine& Define : CompileInfo.Defines)
@@ -341,13 +341,13 @@ bool FShaderCompiler::CompileFromFile(const FString& Filename, const FShaderComp
     // Compile the source
     const FString         Source(Text.Data(), Text.Size());
     const TArray<FString> IncludeDirs = ResolveIncludeDirs(CompileInfo);
-    return CompileLocal(Source, FilePath, AssetPath + "/Shaders", TArrayView<const FString>(IncludeDirs), CompileInfo, nullptr, false, OutByteCode, OutDependencies, nullptr);
+    return CompileLocal(Source, FilePath, AssetPath + TEXT("/Shaders"), TArrayView<const FString>(IncludeDirs), CompileInfo, nullptr, false, OutByteCode, OutDependencies, nullptr);
 }
 
 bool FShaderCompiler::CompileFromSource(const FString& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<FString>* OutDependencies)
 {
     const TArray<FString> IncludeDirs = ResolveIncludeDirs(CompileInfo);
-    return CompileLocal(ShaderSource, "", AssetPath + "/Shaders", TArrayView<const FString>(IncludeDirs), CompileInfo, nullptr, false, OutByteCode, OutDependencies, nullptr);
+    return CompileLocal(ShaderSource, TEXT(""), AssetPath + TEXT("/Shaders"), TArrayView<const FString>(IncludeDirs), CompileInfo, nullptr, false, OutByteCode, OutDependencies, nullptr);
 }
 
 uint64 FShaderCompiler::ComputeCompileHash(const FString& SourceFile, const FShaderCompileInfo& CompileInfo) const
@@ -481,10 +481,10 @@ public:
         for (int32 Index = 0; Index < InIncludeDirs.Size(); ++Index)
         {
             IncludeDirs.Add(InIncludeDirs[Index]);
-            AddRoot(FString::Printf("@Include%d", Index), InIncludeDirs[Index]);
+            AddRoot(FString::Printf(TEXT("@Include%d"), Index), InIncludeDirs[Index]);
         }
 
-        AddRoot("@Source", File::GetDirectoryOf(FilePath));
+        AddRoot(TEXT("@Source"), File::GetDirectoryOf(FilePath));
 
         MakePortable(FilePath, PortableFilePath);
         for (const FString& IncludeDir : IncludeDirs)
@@ -492,7 +492,7 @@ public:
             FString PortableDir;
             if (!MakePortable(IncludeDir, PortableDir) || PortableDir.IsEmpty())
             {
-                Error = FString::Printf("The include directory '%s' is the asset directory itself, pass its Shaders folder or a folder below it instead", *IncludeDir);
+                Error = FString::Printf(TEXT("The include directory '%s' is the asset directory itself, pass its Shaders folder or a folder below it instead"), *IncludeDir);
             }
 
             PortableIncludeDirs.Add(::Move(PortableDir));
@@ -652,14 +652,14 @@ bool FShaderCompiler::CollectSources(const FShaderSourceRoots& Roots, const FSha
     TArray<CHAR_T> RootText;
     if (!Recorder.ReadFile(FilePath, RootText))
     {
-        OutErrors = FString::Printf("Failed to open '%s'", *FilePath);
+        OutErrors = FString::Printf(TEXT("Failed to open '%s'"), *FilePath);
         return false;
     }
 
     TArray<FShaderDefine> Defines;
     BuildCompileDefines(CompileInfo, Defines);
 
-    FShaderPreprocessor Preprocessor(AssetPath + "/Shaders", &Recorder);
+    FShaderPreprocessor Preprocessor(AssetPath + TEXT("/Shaders"), &Recorder);
     for (const FString& IncludeDir : Roots.GetIncludeDirs())
     {
         Preprocessor.AddIncludeDir(IncludeDir);
@@ -682,7 +682,7 @@ bool FShaderCompiler::CollectSources(const FShaderSourceRoots& Roots, const FSha
         FString SourcePath;
         if (!Roots.MakePortable(Path, SourcePath))
         {
-            OutErrors = FString::Printf("'%s' is outside the asset directory, the include directories and the shader's folder, so it cannot be sent to a remote compiler", *Path);
+            OutErrors = FString::Printf(TEXT("'%s' is outside the asset directory, the include directories and the shader's folder, so it cannot be sent to a remote compiler"), *Path);
             return false;
         }
 
@@ -729,7 +729,7 @@ bool FShaderCompiler::CompileJob(FShaderCompileJob& Job, const FString& SourceRo
     TArray<CHAR_T> Text;
     if (!Sources.ReadFile(FilePath, Text))
     {
-        OutMessages = FString::Printf("'%s' was not sent with the request", *Job.SourceFile);
+        OutMessages = FString::Printf(TEXT("'%s' was not sent with the request"), *Job.SourceFile);
         return false;
     }
 
@@ -743,7 +743,7 @@ bool FShaderCompiler::CompileJob(FShaderCompileJob& Job, const FString& SourceRo
     }
 
     const FShaderCompileInfo CompileInfo = Job.ToCompileInfo();
-    const bool bCompiled = CompileLocal(FString(Text.Data(), Text.Size()), FilePath, SourceRoot + "/Shaders", TArrayView<const FString>(IncludeDirs), CompileInfo,
+    const bool bCompiled = CompileLocal(FString(Text.Data(), Text.Size()), FilePath, SourceRoot + TEXT("/Shaders"), TArrayView<const FString>(IncludeDirs), CompileInfo,
         &Sources, Job.bHasEngineDefines, OutShaderCode, &Dependencies, &OutMessages);
 
     const FString RootPrefix = SourceRoot + '/';
@@ -756,7 +756,7 @@ bool FShaderCompiler::CompileJob(FShaderCompileJob& Job, const FString& SourceRo
         }
     }
 
-    OutMessages = ReplaceAll(OutMessages, RootPrefix, "");
+    OutMessages = ReplaceAll(OutMessages, RootPrefix, TEXT(""));
     return bCompiled;
 }
 
@@ -829,7 +829,7 @@ ERemoteCompileStatus FShaderCompiler::CompileOnRemote(FRemoteShaderCompilerClien
             Memory::Memcpy(MSLSource.Data(), NativeCode.Data(), NativeCode.Size());
         }
 
-        DumpContentToFile(MSLSource, Roots.GetFilePath() + "_" + ToString(CompileInfo.ShaderStage) + ".metal");
+        DumpContentToFile(MSLSource, Roots.GetFilePath() + TEXT("_") + ToString(CompileInfo.ShaderStage) + TEXT(".metal"));
     }
 
     OutByteCode = ::Move(Result.ShaderCode);
@@ -906,14 +906,14 @@ FString FShaderCompiler::DescribeRemoteStatus() const
 {
     if (!CVarUseRemote.GetValue())
     {
-        return "Off, compiling in the engine";
+        return TEXT("Off, compiling in the engine");
     }
 
     FRemoteShaderCompilerClient* Client = GetRemoteClient();
     if (!Client || !Client->IsConnected())
     {
-        return FString::Printf("Not connected to %s, %s", *FSocketAddress::FormatHostAndPort(CVarRemoteHost.GetValue(), static_cast<uint16>(CVarRemotePort.GetValue())),
-            CVarRemoteFallbackToLocal.GetValue() ? "compiling in the engine" : "shaders cannot compile");
+        return FString::Printf(TEXT("Not connected to %s, %s"), *FSocketAddress::FormatHostAndPort(CVarRemoteHost.GetValue(), static_cast<uint16>(CVarRemotePort.GetValue())),
+            CVarRemoteFallbackToLocal.GetValue() ? TEXT("compiling in the engine") : TEXT("shaders cannot compile"));
     }
 
     FString Local;
@@ -923,21 +923,21 @@ FString FShaderCompiler::DescribeRemoteStatus() const
         FString& List = Language.bForwarded ? Forwarded : Local;
         if (!List.IsEmpty())
         {
-            List += ", ";
+            List += TEXT(", ");
         }
 
         List += ToString(Language.OutputLanguage);
     }
 
-    FString Description = FString::Printf("Connected to %s", *Client->GetPeerName());
+    FString Description = FString::Printf(TEXT("Connected to %s"), *Client->GetPeerName());
     if (!Local.IsEmpty())
     {
-        Description += FString::Printf(": %s local", *Local);
+        Description += FString::Printf(TEXT(": %s local"), *Local);
     }
 
     if (!Forwarded.IsEmpty())
     {
-        Description += FString::Printf("%s%s forwarded", Local.IsEmpty() ? ": " : ", ", *Forwarded);
+        Description += FString::Printf(TEXT("%s%s forwarded"), Local.IsEmpty() ? TEXT(": ") : TEXT(", "), *Forwarded);
     }
 
     return Description;
@@ -969,7 +969,7 @@ bool FShaderCompiler::CompileLocal(const FString& ShaderSource, const FString& F
     FShaderCompilerBackend* Backend = FindBackend(CompileInfo.OutputLanguage);
     if (!Backend)
     {
-        const FString Error = FString::Printf("No compiler backend can produce %s", ToString(CompileInfo.OutputLanguage));
+        const FString Error = FString::Printf(TEXT("No compiler backend can produce %s"), ToString(CompileInfo.OutputLanguage));
         LOG_ERROR("[FShaderCompiler]: %s", *Error);
 
         if (OutMessages)
@@ -1088,7 +1088,7 @@ bool FShaderCompiler::CompileLocal(const FString& ShaderSource, const FString& F
 
         if (OutMessages)
         {
-            *OutMessages += Result.Messages.IsEmpty() ? FString::Printf("%s failed without reporting an error", Backend->GetName()) : Result.Messages;
+            *OutMessages += Result.Messages.IsEmpty() ? FString::Printf(TEXT("%s failed without reporting an error"), Backend->GetName()) : Result.Messages;
         }
 
         // Callers handle the failure, so only stop when someone is there to look at the error
@@ -1115,7 +1115,7 @@ bool FShaderCompiler::CompileLocal(const FString& ShaderSource, const FString& F
     // Dump the metal file to disk, which only exists when the sources came from it
     if (CompileInfo.bDebugInfo && CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL && !FilePath.IsEmpty() && !Sources)
     {
-        if (!DumpContentToFile(Result.ByteCode, FilePath + "_" + ToString(CompileInfo.ShaderStage) + ".metal"))
+        if (!DumpContentToFile(Result.ByteCode, FilePath + TEXT("_") + ToString(CompileInfo.ShaderStage) + TEXT(".metal")))
         {
             DEBUG_BREAK();
             return false;
@@ -1182,13 +1182,13 @@ void FShaderCompiler::DumpPreprocessedSource(const FString& DumpDir, const FStri
         HashCombine(DefinesHash, Define.Value);
     }
 
-    const FString BaseName = FilePath.IsEmpty() ? FString("ShaderSource") : File::ExtractFilenameWithoutExtension(FilePath);
-    const FString Filename = FString::Printf("%s/%s_%s_%s_%016llx.hlsl", *DumpDir, *BaseName, *CompileInfo.EntryPoint, ToString(CompileInfo.OutputLanguage), DefinesHash);
+    const FString BaseName = FilePath.IsEmpty() ? FString(TEXT("ShaderSource")) : File::ExtractFilenameWithoutExtension(FilePath);
+    const FString Filename = FString::Printf(TEXT("%s/%s_%s_%s_%016llx.hlsl"), *DumpDir, *BaseName, *CompileInfo.EntryPoint, ToString(CompileInfo.OutputLanguage), DefinesHash);
 
-    FString Contents = FString::Printf("// Source: %s\n// Entry: %s\n// Stage: %s\n// Model: %s\n", *FilePath, *CompileInfo.EntryPoint, ToString(CompileInfo.ShaderStage), ToString(CompileInfo.ShaderModel));
+    FString Contents = FString::Printf(TEXT("// Source: %s\n// Entry: %s\n// Stage: %s\n// Model: %s\n"), *FilePath, *CompileInfo.EntryPoint, ToString(CompileInfo.ShaderStage), ToString(CompileInfo.ShaderModel));
     for (const FShaderDefine& Define : Defines)
     {
-        Contents += FString::Printf("// Define: %s=%s\n", *Define.Define, *Define.Value);
+        Contents += FString::Printf(TEXT("// Define: %s=%s\n"), *Define.Define, *Define.Value);
     }
 
     Contents += Source;

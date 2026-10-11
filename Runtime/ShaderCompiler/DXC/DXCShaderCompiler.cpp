@@ -195,14 +195,14 @@ FDXCShaderCompiler::~FDXCShaderCompiler()
 
 bool FDXCShaderCompiler::Initialize()
 {
-    DXCLib = FPlatformLibrary::LoadDynamicLib("dxcompiler");
+    DXCLib = FPlatformLibrary::LoadDynamicLib(TEXT("dxcompiler"));
     if (!DXCLib)
     {
         LOG_ERROR("[FShaderCompiler]: Failed to load 'dxcompiler'");
         return false;
     }
 
-    DxcCreateInstanceFunc = FPlatformLibrary::LoadSymbol<DxcCreateInstanceProc>("DxcCreateInstance", DXCLib);
+    DxcCreateInstanceFunc = FPlatformLibrary::LoadSymbol<DxcCreateInstanceProc>(TEXT("DxcCreateInstance"), DXCLib);
     if (!DxcCreateInstanceFunc)
     {
         LOG_ERROR("[FShaderCompiler]: Failed to load 'DxcCreateInstance'");
@@ -217,7 +217,7 @@ bool FDXCShaderCompiler::Initialize()
             uint32 Flags = 0;
             VersionInfo->GetFlags(&Flags);
 
-            LOG_INFO("[FShaderCompiler]: Loaded 'dxcompiler' version %u.%u%s", VersionMajor, VersionMinor, (Flags & DxcVersionInfoFlags_Debug) ? " (Debug)" : "");
+            LOG_INFO("[FShaderCompiler]: Loaded 'dxcompiler' version %u.%u%s", VersionMajor, VersionMinor, (Flags & DxcVersionInfoFlags_Debug) ? TEXT(" (Debug)") : TEXT(""));
         }
     }
     else
@@ -288,9 +288,11 @@ bool FDXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
         return false;
     }
 
+    const TStringConversion<ANSICHAR, CHAR_T> Utf8Source = StringCast<ANSICHAR>(Request.Source);
+
     DxcBuffer SourceBuffer;
-    SourceBuffer.Ptr      = Request.Source.Data();
-    SourceBuffer.Size     = Request.Source.Size();
+    SourceBuffer.Ptr      = Utf8Source.Get();
+    SourceBuffer.Size     = Utf8Source.Length();
     SourceBuffer.Encoding = DXC_CP_UTF8;
 
     // For the debug info, DXC reads the files the #line markers name, other than the source itself, through this. Without
@@ -326,7 +328,7 @@ bool FDXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
 
     if (PrintBlob && PrintBlob->GetBufferSize() > 0)
     {
-        OutResult.Messages = FString(reinterpret_cast<LPCSTR>(PrintBlob->GetBufferPointer()), static_cast<int32>(PrintBlob->GetBufferSize()));
+        OutResult.Messages = StringCast<CHAR_T>(reinterpret_cast<const ANSICHAR*>(PrintBlob->GetBufferPointer()), static_cast<int32>(PrintBlob->GetBufferSize())).ToString();
     }
 
     // If the error encountered an error
@@ -364,7 +366,7 @@ bool FDXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
         Memory::Memcpy(OutResult.ByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
         return true;
     #else
-        OutResult.Messages += "DXIL can only be reflected on Windows\n";
+        OutResult.Messages += TEXT("DXIL can only be reflected on Windows\n");
         return false;
     #endif
     }
@@ -401,7 +403,7 @@ bool FDXCShaderCompiler::Compile(const FShaderCompileRequest& Request, FShaderCo
         TArray<uint32> StrippedSpirv;
         if (!FSpirvTransforms::StripDebugInstructions(Spirv, StrippedSpirv))
         {
-            OutResult.Messages += "Failed to strip the SPIR-V debug instructions\n";
+            OutResult.Messages += TEXT("Failed to strip the SPIR-V debug instructions\n");
             return false;
         }
 

@@ -22,7 +22,7 @@ struct FRemoteConsoleRequest
 
 struct FRemoteConsoleClient
 {
-    FRemoteConsoleClient(uint32 InClientId, FNetworkSocket&& InSocket, const FString& InPeerAddress, const FString& InSendBuffer)
+    FRemoteConsoleClient(uint32 InClientId, FNetworkSocket&& InSocket, const FString& InPeerAddress, const FAnsiString& InSendBuffer)
         : ClientId(InClientId)
         , Socket(::Move(InSocket))
         , PeerAddress(InPeerAddress)
@@ -37,8 +37,8 @@ struct FRemoteConsoleClient
     uint32         ClientId;
     FNetworkSocket Socket;
     FString        PeerAddress;
-    FString        ReceiveBuffer;
-    FString        SendBuffer;
+    FAnsiString    ReceiveBuffer;    // UTF-8, as received
+    FAnsiString    SendBuffer;       // UTF-8, as sent
     FString        CloseReason;      // Logged by the network thread once the client is removed
     bool           bSubscribedToLog;
     bool           bPendingClose;
@@ -126,13 +126,13 @@ private:
     FJsonValue MakeResult(const FRemoteConsoleRequest& Request, bool bSucceeded) const;
     void       SendError(const FRemoteConsoleRequest& Request, const FString& Error);
     void       SendResult(const FRemoteConsoleRequest& Request, const FJsonValue& Result);
-    void       SendToClient(uint32 ClientId, const FString& Line);
+    void       SendToClient(uint32 ClientId, const FAnsiString& Line);
 
     TArray<FNetworkSocket>                   ListenSockets;
     TArray<FSocketAddress>                   ListenAddresses;
     IPlatformThread*                         Thread;
     FAtomicBool                              bStopRequested;
-    FString                                  HelloLine;
+    FAnsiString                              HelloLine;
     TArray<TUniquePtr<FRemoteConsoleClient>> Clients;
     FCriticalSection                         ClientsCS;
     uint32                                   NextClientId;

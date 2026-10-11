@@ -37,10 +37,11 @@ struct CORE_API RemoteConsoleProtocol
 
     /**
      * @brief Moves every complete '\n'-terminated line from the front of Buffer into OutLines, stripping any '\r'.
+     * @param Buffer The bytes received so far, which are UTF-8
      * @return False when the unterminated remainder is longer than MaxLineLength, meaning the peer should be dropped
      */
-    static bool ExtractLines(FString& Buffer, TArray<FString>& OutLines);
+    static bool ExtractLines(FAnsiString& Buffer, TArray<FString>& OutLines);
 
-    /** @return Message written as compact JSON followed by '\n' */
-    static FString ToLine(const FJsonValue& Message);
+    /** @return Message written as compact JSON followed by '\n', in UTF-8 as it is sent */
+    static FAnsiString ToLine(const FJsonValue& Message);
 };

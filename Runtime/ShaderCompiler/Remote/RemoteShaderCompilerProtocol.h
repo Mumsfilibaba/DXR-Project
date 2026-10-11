@@ -16,7 +16,7 @@ struct SHADERCOMPILER_API RemoteShaderCompilerProtocol
     static constexpr int32  MaxForwardHops = 1;
 
     // The address the server binds to while remote connections are off, and where clients look by default
-    static constexpr const CHAR_T* LoopbackAddress = "127.0.0.1";
+    static constexpr const CHAR_T* LoopbackAddress = TEXT("127.0.0.1");
 
     enum class EMessageType : uint32
     {
@@ -47,9 +47,9 @@ struct SHADERCOMPILER_API RemoteShaderCompilerProtocol
         TArray<uint8> Payload;
     };
 
-    static constexpr const CHAR_T* StatusSucceeded   = "succeeded";
-    static constexpr const CHAR_T* StatusFailed      = "failed";      // The shader has an error, compiling it elsewhere gives the same result.
-    static constexpr const CHAR_T* StatusUnavailable = "unavailable"; // The server could not serve the language, the requester may compile it itself.
+    static constexpr const CHAR_T* StatusSucceeded   = TEXT("succeeded");
+    static constexpr const CHAR_T* StatusFailed      = TEXT("failed");      // The shader has an error, compiling it elsewhere gives the same result.
+    static constexpr const CHAR_T* StatusUnavailable = TEXT("unavailable"); // The server could not serve the language, the requester may compile it itself.
 
     /** @brief Appends the encoded frame to OutBytes */
     static void EncodeFrame(const FFrame& Frame, TArray<uint8>& OutBytes);

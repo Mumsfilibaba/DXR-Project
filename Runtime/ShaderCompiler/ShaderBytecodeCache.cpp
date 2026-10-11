@@ -13,18 +13,18 @@
 #include "ShaderCore/ShaderCode.h"
 
 static TAutoConsoleVariable<bool> CVarEnableBytecodeCache(
-    "Renderer.ShaderCache.EnableBytecodeCache",
-    "Reuse shader bytecode compiled by earlier runs instead of invoking the shader compiler",
+    TEXT("Renderer.ShaderCache.EnableBytecodeCache"),
+    TEXT("Reuse shader bytecode compiled by earlier runs instead of invoking the shader compiler"),
     true);
 
 static TAutoConsoleVariable<FString> CVarBytecodeFileName(
-    "Renderer.ShaderCache.BytecodeFileName",
-    "FileName for the file storing compiled shader bytecode",
-    "Shaders.shaderbytecode");
+    TEXT("Renderer.ShaderCache.BytecodeFileName"),
+    TEXT("FileName for the file storing compiled shader bytecode"),
+    TEXT("Shaders.shaderbytecode"));
 
 static FAutoConsoleCommand CCmdDumpShaderBytecodeCacheStats(
-    "Renderer.DumpShaderBytecodeCacheStats",
-    "Logs how many compiled shaders the bytecode cache is holding",
+    TEXT("Renderer.DumpShaderBytecodeCacheStats"),
+    TEXT("Logs how many compiled shaders the bytecode cache is holding"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         if (FShaderBytecodeCache* Cache = FShaderBytecodeCache::TryGet())
@@ -33,16 +33,16 @@ static FAutoConsoleCommand CCmdDumpShaderBytecodeCacheStats(
         }
     }));
 
-static const CHAR_T*    GShaderBytecodeMagic        = "DXRSHBIN";
+static const ANSICHAR*  GShaderBytecodeMagic        = "DXRSHBIN";
 static constexpr uint32 GShaderBytecodeVersion      = 3;
 static constexpr uint32 GMaxShaderBytecodeCacheSize = 256 * 1024 * 1024; // MSL is stored as text and every permutation carries its own blob, so this is generous rather than tight.
 
 struct FShaderBytecodeHeader
 {
-    CHAR_T Magic[8]; // Always "DXRSHBIN"
-    uint32 Version;
-    uint32 DataCRC;  // CRC of everything after this header
-    uint32 DataSize; // Size of everything after this header
+    ANSICHAR Magic[8]; // Always "DXRSHBIN"
+    uint32   Version;
+    uint32   DataCRC;  // CRC of everything after this header
+    uint32   DataSize; // Size of everything after this header
     uint32 NumEntries;
 };
 

@@ -7,9 +7,9 @@ static constexpr int32 MaxIncludeDepth = 64;
 // Longest first, so the lexer can take the first match
 static const CHAR_T* const GMultiCharPunctuators[] =
 {
-    "<<=", ">>=", "...",
-    "##", "<<", ">>", "<=", ">=", "==", "!=", "&&", "||", "++", "--",
-    "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "->", "::",
+    TEXT("<<="), TEXT(">>="), TEXT("..."),
+    TEXT("##"), TEXT("<<"), TEXT(">>"), TEXT("<="), TEXT(">="), TEXT("=="), TEXT("!="), TEXT("&&"), TEXT("||"), TEXT("++"), TEXT("--"),
+    TEXT("+="), TEXT("-="), TEXT("*="), TEXT("/="), TEXT("%="), TEXT("&="), TEXT("|="), TEXT("^="), TEXT("->"), TEXT("::"),
 };
 
 static bool IsIdentifierStart(CHAR_T Char)
@@ -69,7 +69,7 @@ static bool NeedsSeparator(const FShaderToken& Previous, const FShaderToken& Cur
 {
     const bool bPreviousIsWord = Previous.Type == EShaderTokenType::Identifier || Previous.Type == EShaderTokenType::Number;
     const bool bCurrentIsWord  = Current.Type == EShaderTokenType::Identifier || Current.Type == EShaderTokenType::Number;
-    if (bPreviousIsWord && (bCurrentIsWord || (Previous.Type == EShaderTokenType::Number && Current.Text.StartsWith("."))))
+    if (bPreviousIsWord && (bCurrentIsWord || (Previous.Type == EShaderTokenType::Number && Current.Text.StartsWith(TEXT(".")))))
     {
         return true;
     }
@@ -80,7 +80,7 @@ static bool NeedsSeparator(const FShaderToken& Previous, const FShaderToken& Cur
     }
 
     const CHAR_T Pair[3] = { Previous.Text[Previous.Text.Length() - 1], Current.Text[0], '\0' };
-    if (CString::Strcmp(Pair, "//") == 0 || CString::Strcmp(Pair, "/*") == 0 || CString::Strcmp(Pair, "..") == 0)
+    if (CString::Strcmp(Pair, TEXT("//")) == 0 || CString::Strcmp(Pair, TEXT("/*")) == 0 || CString::Strcmp(Pair, TEXT("..")) == 0)
     {
         return true;
     }
@@ -115,7 +115,7 @@ public:
         OutValue = ParseTernary(true);
         if (ErrorMessage.IsEmpty() && Position < Tokens.Size())
         {
-            ErrorMessage = FString::Printf("Unexpected '%s' in #if expression", *Tokens[Position].Text);
+            ErrorMessage = FString::Printf(TEXT("Unexpected '%s' in #if expression"), *Tokens[Position].Text);
         }
 
         return ErrorMessage.IsEmpty();
@@ -152,15 +152,15 @@ private:
     int64 ParseTernary(bool bEvaluate)
     {
         const int64 Condition = ParseBinary(0, bEvaluate);
-        if (!Accept("?"))
+        if (!Accept(TEXT("?")))
         {
             return Condition;
         }
 
         const int64 TrueValue = ParseTernary(bEvaluate && Condition != 0);
-        if (!Accept(":"))
+        if (!Accept(TEXT(":")))
         {
-            return Fail("Expected ':' in #if expression");
+            return Fail(TEXT("Expected ':' in #if expression"));
         }
 
         const int64 FalseValue = ParseTernary(bEvaluate && Condition == 0);
@@ -171,16 +171,16 @@ private:
     {
         static const CHAR_T* const Levels[][4] =
         {
-            { "||" },
-            { "&&" },
-            { "|" },
-            { "^" },
-            { "&" },
-            { "==", "!=" },
-            { "<", ">", "<=", ">=" },
-            { "<<", ">>" },
-            { "+", "-" },
-            { "*", "/", "%" },
+            { TEXT("||") },
+            { TEXT("&&") },
+            { TEXT("|") },
+            { TEXT("^") },
+            { TEXT("&") },
+            { TEXT("=="), TEXT("!=") },
+            { TEXT("<"), TEXT(">"), TEXT("<="), TEXT(">=") },
+            { TEXT("<<"), TEXT(">>") },
+            { TEXT("+"), TEXT("-") },
+            { TEXT("*"), TEXT("/"), TEXT("%") },
         };
 
         for (int32 Level = 0; Level < static_cast<int32>(ARRAY_COUNT(Levels)); ++Level)
@@ -213,11 +213,11 @@ private:
 
             // The right-hand side of a short-circuit operator is only parsed, so '1 || 1/0' is fine
             bool bEvaluateRight = bEvaluate;
-            if (Operator.Equals("&&"))
+            if (Operator.Equals(TEXT("&&")))
             {
                 bEvaluateRight = bEvaluate && Left != 0;
             }
-            else if (Operator.Equals("||"))
+            else if (Operator.Equals(TEXT("||")))
             {
                 bEvaluateRight = bEvaluate && Left == 0;
             }
@@ -231,112 +231,112 @@ private:
 
     int64 Apply(const FString& Operator, int64 Left, int64 Right, bool bEvaluate)
     {
-        if (Operator.Equals("||"))
+        if (Operator.Equals(TEXT("||")))
         {
             return (Left != 0 || Right != 0) ? 1 : 0;
         }
 
-        if (Operator.Equals("&&"))
+        if (Operator.Equals(TEXT("&&")))
         {
             return (Left != 0 && Right != 0) ? 1 : 0;
         }
 
-        if (Operator.Equals("|"))
+        if (Operator.Equals(TEXT("|")))
         {
             return Left | Right;
         }
 
-        if (Operator.Equals("^"))
+        if (Operator.Equals(TEXT("^")))
         {
             return Left ^ Right;
         }
 
-        if (Operator.Equals("&"))
+        if (Operator.Equals(TEXT("&")))
         {
             return Left & Right;
         }
 
-        if (Operator.Equals("=="))
+        if (Operator.Equals(TEXT("==")))
         {
             return Left == Right ? 1 : 0;
         }
 
-        if (Operator.Equals("!="))
+        if (Operator.Equals(TEXT("!=")))
         {
             return Left != Right ? 1 : 0;
         }
 
-        if (Operator.Equals("<"))
+        if (Operator.Equals(TEXT("<")))
         {
             return Left < Right ? 1 : 0;
         }
 
-        if (Operator.Equals(">"))
+        if (Operator.Equals(TEXT(">")))
         {
             return Left > Right ? 1 : 0;
         }
 
-        if (Operator.Equals("<="))
+        if (Operator.Equals(TEXT("<=")))
         {
             return Left <= Right ? 1 : 0;
         }
 
-        if (Operator.Equals(">="))
+        if (Operator.Equals(TEXT(">=")))
         {
             return Left >= Right ? 1 : 0;
         }
 
-        if (Operator.Equals("<<"))
+        if (Operator.Equals(TEXT("<<")))
         {
             return (Right >= 0 && Right < 64) ? (Left << Right) : 0;
         }
 
-        if (Operator.Equals(">>"))
+        if (Operator.Equals(TEXT(">>")))
         {
             return (Right >= 0 && Right < 64) ? (Left >> Right) : 0;
         }
 
-        if (Operator.Equals("+"))
+        if (Operator.Equals(TEXT("+")))
         {
             return Left + Right;
         }
 
-        if (Operator.Equals("-"))
+        if (Operator.Equals(TEXT("-")))
         {
             return Left - Right;
         }
 
-        if (Operator.Equals("*"))
+        if (Operator.Equals(TEXT("*")))
         {
             return Left * Right;
         }
 
         if (Right == 0)
         {
-            return bEvaluate ? Fail("Division by zero in #if expression") : 0;
+            return bEvaluate ? Fail(TEXT("Division by zero in #if expression")) : 0;
         }
 
-        return Operator.Equals("/") ? (Left / Right) : (Left % Right);
+        return Operator.Equals(TEXT("/")) ? (Left / Right) : (Left % Right);
     }
 
     int64 ParseUnary(bool bEvaluate)
     {
-        if (Accept("!"))
+        if (Accept(TEXT("!")))
         {
             return ParseUnary(bEvaluate) == 0 ? 1 : 0;
         }
 
-        if (Accept("~"))
+        if (Accept(TEXT("~")))
         {
             return ~ParseUnary(bEvaluate);
         }
 
-        if (Accept("-"))
+        if (Accept(TEXT("-")))
         {
             return -ParseUnary(bEvaluate);
         }
 
-        if (Accept("+"))
+        if (Accept(TEXT("+")))
         {
             return ParseUnary(bEvaluate);
         }
@@ -348,15 +348,15 @@ private:
     {
         if (Position >= Tokens.Size())
         {
-            return Fail("Unexpected end of #if expression");
+            return Fail(TEXT("Unexpected end of #if expression"));
         }
 
-        if (Accept("("))
+        if (Accept(TEXT("(")))
         {
             const int64 Value = ParseTernary(bEvaluate);
-            if (!Accept(")"))
+            if (!Accept(TEXT(")")))
             {
-                return Fail("Expected ')' in #if expression");
+                return Fail(TEXT("Expected ')' in #if expression"));
             }
 
             return Value;
@@ -365,7 +365,7 @@ private:
         const FShaderToken& Token = Tokens[Position++];
         if (Token.Type != EShaderTokenType::Number)
         {
-            return Fail(FString::Printf("Unexpected '%s' in #if expression", *Token.Text));
+            return Fail(FString::Printf(TEXT("Unexpected '%s' in #if expression"), *Token.Text));
         }
 
         return ParseInteger(Token.Text);
@@ -413,7 +413,7 @@ private:
 
             if (Digit >= Base)
             {
-                return Fail(FString::Printf("'%s' is not an integer, #if only works with integers", *Text));
+                return Fail(FString::Printf(TEXT("'%s' is not an integer, #if only works with integers"), *Text));
             }
 
             Value = Value * Base + Digit;
@@ -462,7 +462,7 @@ FString FShaderPreprocessorOutput::GenerateSource(const FString& BaseDirectory) 
             }
 
             const FString& FileName = (Token.FileIndex >= 0 && Token.FileIndex < FileNames.Size()) ? FileNames[Token.FileIndex] : FString();
-            Result += FString::Printf("#line %d \"%s\"\n", Token.Line, *FileName);
+            Result += FString::Printf(TEXT("#line %d \"%s\"\n"), Token.Line, *FileName);
 
             CurrentFile = Token.FileIndex;
             CurrentLine = Token.Line;
@@ -736,7 +736,7 @@ bool FShaderPreprocessor::Preprocess(const FString& FilePath, FStringView Source
     Conditionals.Clear();
     OnceFiles.Clear();
 
-    const bool bResult = ProcessFile(FilePath.IsEmpty() ? FString("ShaderSource") : FilePath, Source, 0);
+    const bool bResult = ProcessFile(FilePath.IsEmpty() ? FString(TEXT("ShaderSource")) : FilePath, Source, 0);
 
     Output = nullptr;
     return bResult;
@@ -750,7 +750,7 @@ bool FShaderPreprocessor::IsActive() const
 bool FShaderPreprocessor::Error(const FShaderToken& Location, const FString& Message)
 {
     const bool bHasFile = Location.FileIndex >= 0 && Location.FileIndex < Output->Files.Size();
-    Output->Errors += FString::Printf("%s(%d): error: %s\n", bHasFile ? *Output->Files[Location.FileIndex] : "ShaderSource", Location.Line, *Message);
+    Output->Errors += FString::Printf(TEXT("%s(%d): error: %s\n"), bHasFile ? *Output->Files[Location.FileIndex] : TEXT("ShaderSource"), Location.Line, *Message);
     return false;
 }
 
@@ -784,7 +784,7 @@ bool FShaderPreprocessor::ProcessFile(const FString& FilePath, FStringView Sourc
         }
 
         const FShaderToken& First = Tokens[Index];
-        if (First.bStartOfLine && First.Is("#"))
+        if (First.bStartOfLine && First.Is(TEXT("#")))
         {
             if (!FlushPending())
             {
@@ -804,11 +804,11 @@ bool FShaderPreprocessor::ProcessFile(const FString& FilePath, FStringView Sourc
             for (int32 TokenIndex = Index; TokenIndex < LineEnd; ++TokenIndex)
             {
                 const FShaderToken& Token = Tokens[TokenIndex];
-                if (Token.Is("("))
+                if (Token.Is(TEXT("(")))
                 {
                     ++PendingParentheses;
                 }
-                else if (Token.Is(")"))
+                else if (Token.Is(TEXT(")")))
                 {
                     --PendingParentheses;
                 }
@@ -840,7 +840,7 @@ bool FShaderPreprocessor::ProcessFile(const FString& FilePath, FStringView Sourc
         FShaderToken Location;
         Location.FileIndex = FileIndex;
         Location.Line      = Tokens.IsEmpty() ? 1 : Tokens.Last().Line;
-        return Error(Location, "Unterminated #if at the end of the file");
+        return Error(Location, TEXT("Unterminated #if at the end of the file"));
     }
 
     return true;
@@ -857,7 +857,7 @@ bool FShaderPreprocessor::HandleDirective(TArrayView<const FShaderToken> Tokens,
     const FShaderToken& Name = Tokens[0];
     const TArrayView<const FShaderToken> Arguments = Tokens.SubView(1, Tokens.Size() - 1);
 
-    if (Name.Is("if") || Name.Is("ifdef") || Name.Is("ifndef"))
+    if (Name.Is(TEXT("if")) || Name.Is(TEXT("ifdef")) || Name.Is(TEXT("ifndef")))
     {
         FConditional Conditional;
         Conditional.bParentActive = IsActive();
@@ -865,7 +865,7 @@ bool FShaderPreprocessor::HandleDirective(TArrayView<const FShaderToken> Tokens,
         bool bValue = false;
         if (Conditional.bParentActive)
         {
-            if (Name.Is("if"))
+            if (Name.Is(TEXT("if")))
             {
                 if (!EvaluateCondition(Arguments, Name, bValue))
                 {
@@ -876,10 +876,10 @@ bool FShaderPreprocessor::HandleDirective(TArrayView<const FShaderToken> Tokens,
             {
                 if (Arguments.IsEmpty() || Arguments[0].Type != EShaderTokenType::Identifier)
                 {
-                    return Error(Name, FString::Printf("#%s expects a macro name", *Name.Text));
+                    return Error(Name, FString::Printf(TEXT("#%s expects a macro name"), *Name.Text));
                 }
 
-                bValue = (Macros.Find(Arguments[0].Text) != nullptr) == Name.Is("ifdef");
+                bValue = (Macros.Find(Arguments[0].Text) != nullptr) == Name.Is(TEXT("ifdef"));
             }
         }
 
@@ -889,15 +889,15 @@ bool FShaderPreprocessor::HandleDirective(TArrayView<const FShaderToken> Tokens,
         return true;
     }
 
-    if (Name.Is("elif") || Name.Is("else") || Name.Is("endif"))
+    if (Name.Is(TEXT("elif")) || Name.Is(TEXT("else")) || Name.Is(TEXT("endif")))
     {
         if (Conditionals.IsEmpty())
         {
-            return Error(Name, FString::Printf("#%s without #if", *Name.Text));
+            return Error(Name, FString::Printf(TEXT("#%s without #if"), *Name.Text));
         }
 
         FConditional& Conditional = Conditionals.Last();
-        if (Name.Is("endif"))
+        if (Name.Is(TEXT("endif")))
         {
             Conditionals.Pop();
             return true;
@@ -905,10 +905,10 @@ bool FShaderPreprocessor::HandleDirective(TArrayView<const FShaderToken> Tokens,
 
         if (Conditional.bSeenElse)
         {
-            return Error(Name, FString::Printf("#%s after #else", *Name.Text));
+            return Error(Name, FString::Printf(TEXT("#%s after #else"), *Name.Text));
         }
 
-        if (Name.Is("else"))
+        if (Name.Is(TEXT("else")))
         {
             Conditional.bSeenElse = true;
             Conditional.bActive   = Conditional.bParentActive && !Conditional.bTaken;
@@ -937,70 +937,70 @@ bool FShaderPreprocessor::HandleDirective(TArrayView<const FShaderToken> Tokens,
         return true;
     }
 
-    if (Name.Is("define"))
+    if (Name.Is(TEXT("define")))
     {
         return HandleDefine(Arguments, Name);
     }
 
-    if (Name.Is("undef"))
+    if (Name.Is(TEXT("undef")))
     {
         if (Arguments.IsEmpty() || Arguments[0].Type != EShaderTokenType::Identifier)
         {
-            return Error(Name, "#undef expects a macro name");
+            return Error(Name, TEXT("#undef expects a macro name"));
         }
 
         Macros.Remove(Arguments[0].Text);
         return true;
     }
 
-    if (Name.Is("include"))
+    if (Name.Is(TEXT("include")))
     {
         return HandleInclude(Arguments, Name, FilePath, IncludeDepth);
     }
 
-    if (Name.Is("error"))
+    if (Name.Is(TEXT("error")))
     {
-        return Error(Name, FString::Printf("#error %s", *JoinTokens(Arguments)));
+        return Error(Name, FString::Printf(TEXT("#error %s"), *JoinTokens(Arguments)));
     }
 
-    if (Name.Is("pragma"))
+    if (Name.Is(TEXT("pragma")))
     {
-        if (!Arguments.IsEmpty() && Arguments[0].Is("once"))
+        if (!Arguments.IsEmpty() && Arguments[0].Is(TEXT("once")))
         {
             OnceFiles.Add(FilePath);
             return true;
         }
 
         // Pragmas belong to the compiler, so they are passed through untouched
-        FShaderToken& Pragma = Output->Tokens.Emplace(MakeToken(HashToken, "", EShaderTokenType::Directive, false));
-        Pragma.Text = FString("#pragma ") + JoinTokens(Arguments);
+        FShaderToken& Pragma = Output->Tokens.Emplace(MakeToken(HashToken, TEXT(""), EShaderTokenType::Directive, false));
+        Pragma.Text = FString(TEXT("#pragma ")) + JoinTokens(Arguments);
         return true;
     }
 
-    return Error(Name, FString::Printf("Unsupported directive #%s", *Name.Text));
+    return Error(Name, FString::Printf(TEXT("Unsupported directive #%s"), *Name.Text));
 }
 
 bool FShaderPreprocessor::HandleDefine(TArrayView<const FShaderToken> Tokens, const FShaderToken& Location)
 {
     if (Tokens.IsEmpty() || Tokens[0].Type != EShaderTokenType::Identifier)
     {
-        return Error(Location, "#define expects a macro name");
+        return Error(Location, TEXT("#define expects a macro name"));
     }
 
-    if (Tokens[0].Is("defined"))
+    if (Tokens[0].Is(TEXT("defined")))
     {
-        return Error(Tokens[0], "'defined' cannot be used as a macro name");
+        return Error(Tokens[0], TEXT("'defined' cannot be used as a macro name"));
     }
 
     FMacro Macro;
 
     int32 BodyStart = 1;
-    if (Tokens.Size() > 1 && Tokens[1].Is("(") && !Tokens[1].bLeadingSpace)
+    if (Tokens.Size() > 1 && Tokens[1].Is(TEXT("(")) && !Tokens[1].bLeadingSpace)
     {
         Macro.bFunctionLike = true;
 
         int32 Index = 2;
-        if (Index < Tokens.Size() && Tokens[Index].Is(")"))
+        if (Index < Tokens.Size() && Tokens[Index].Is(TEXT(")")))
         {
             ++Index;
         }
@@ -1010,34 +1010,34 @@ bool FShaderPreprocessor::HandleDefine(TArrayView<const FShaderToken> Tokens, co
             {
                 if (Index >= Tokens.Size())
                 {
-                    return Error(Tokens[0], "Unterminated macro parameter list");
+                    return Error(Tokens[0], TEXT("Unterminated macro parameter list"));
                 }
 
-                if (Tokens[Index].Is("..."))
+                if (Tokens[Index].Is(TEXT("...")))
                 {
-                    return Error(Tokens[Index], "Variadic macros are not supported");
+                    return Error(Tokens[Index], TEXT("Variadic macros are not supported"));
                 }
 
                 if (Tokens[Index].Type != EShaderTokenType::Identifier)
                 {
-                    return Error(Tokens[Index], FString::Printf("Expected a parameter name, found '%s'", *Tokens[Index].Text));
+                    return Error(Tokens[Index], FString::Printf(TEXT("Expected a parameter name, found '%s'"), *Tokens[Index].Text));
                 }
 
                 Macro.Parameters.Add(Tokens[Index].Text);
                 ++Index;
 
-                if (Index < Tokens.Size() && Tokens[Index].Is(","))
+                if (Index < Tokens.Size() && Tokens[Index].Is(TEXT(",")))
                 {
                     ++Index;
                 }
-                else if (Index < Tokens.Size() && Tokens[Index].Is(")"))
+                else if (Index < Tokens.Size() && Tokens[Index].Is(TEXT(")")))
                 {
                     ++Index;
                     break;
                 }
                 else
                 {
-                    return Error(Tokens[0], "Expected ',' or ')' in the macro parameter list");
+                    return Error(Tokens[0], TEXT("Expected ',' or ')' in the macro parameter list"));
                 }
             }
         }
@@ -1049,14 +1049,14 @@ bool FShaderPreprocessor::HandleDefine(TArrayView<const FShaderToken> Tokens, co
     {
         FShaderToken& Token = Macro.Body.Emplace(Tokens[Index]);
         Token.bStartOfLine   = false;
-        Token.bPasteOperator = Token.Is("##");
+        Token.bPasteOperator = Token.Is(TEXT("##"));
     }
 
     if (!Macro.Body.IsEmpty())
     {
         if (Macro.Body[0].bPasteOperator || Macro.Body.Last().bPasteOperator)
         {
-            return Error(Tokens[0], "'##' cannot be at either end of a macro");
+            return Error(Tokens[0], TEXT("'##' cannot be at either end of a macro"));
         }
 
         Macro.Body[0].bLeadingSpace = false;
@@ -1071,11 +1071,11 @@ bool FShaderPreprocessor::HandleInclude(TArrayView<const FShaderToken> Tokens, c
     FString IncludeName;
     bool    bSystemInclude = false;
 
-    if (Tokens.Size() == 1 && Tokens[0].Type == EShaderTokenType::String && Tokens[0].Text.StartsWith("\"") && Tokens[0].Text.Length() >= 2)
+    if (Tokens.Size() == 1 && Tokens[0].Type == EShaderTokenType::String && Tokens[0].Text.StartsWith(TEXT("\"")) && Tokens[0].Text.Length() >= 2)
     {
         IncludeName = Tokens[0].Text.SubString(1, Tokens[0].Text.Length() - 2);
     }
-    else if (Tokens.Size() >= 3 && Tokens[0].Is("<") && Tokens.Last().Is(">"))
+    else if (Tokens.Size() >= 3 && Tokens[0].Is(TEXT("<")) && Tokens.Last().Is(TEXT(">")))
     {
         bSystemInclude = true;
         for (int32 Index = 1; Index < Tokens.Size() - 1; ++Index)
@@ -1085,12 +1085,12 @@ bool FShaderPreprocessor::HandleInclude(TArrayView<const FShaderToken> Tokens, c
     }
     else
     {
-        return Error(Location, "#include expects \"FileName\" or <FileName>");
+        return Error(Location, TEXT("#include expects \"FileName\" or <FileName>"));
     }
 
     if (IncludeDepth >= MaxIncludeDepth)
     {
-        return Error(Location, FString::Printf("Includes are nested more than %d levels deep", MaxIncludeDepth));
+        return Error(Location, FString::Printf(TEXT("Includes are nested more than %d levels deep"), MaxIncludeDepth));
     }
 
     // Resolve relative to the including file first, then the added include directories, then the shared shader directory
@@ -1125,7 +1125,7 @@ bool FShaderPreprocessor::HandleInclude(TArrayView<const FShaderToken> Tokens, c
 
     if (ResolvedPath.IsEmpty())
     {
-        return Error(Location, FString::Printf("Cannot find the include '%s'", *IncludeName));
+        return Error(Location, FString::Printf(TEXT("Cannot find the include '%s'"), *IncludeName));
     }
 
     if (!Output->Dependencies.Contains(ResolvedPath))
@@ -1141,7 +1141,7 @@ bool FShaderPreprocessor::HandleInclude(TArrayView<const FShaderToken> Tokens, c
     TArray<CHAR_T> Text;
     if (!SourceProvider->ReadFile(ResolvedPath, Text))
     {
-        return Error(Location, FString::Printf("Failed to read the include '%s'", *ResolvedPath));
+        return Error(Location, FString::Printf(TEXT("Failed to read the include '%s'"), *ResolvedPath));
     }
 
     return ProcessFile(ResolvedPath, FStringView(Text.Data(), Text.Size()), IncludeDepth + 1);
@@ -1154,26 +1154,26 @@ bool FShaderPreprocessor::EvaluateCondition(TArrayView<const FShaderToken> Token
     for (int32 Index = 0; Index < Tokens.Size(); ++Index)
     {
         const FShaderToken& Token = Tokens[Index];
-        if (!Token.Is("defined"))
+        if (!Token.Is(TEXT("defined")))
         {
             Resolved.Add(Token);
             continue;
         }
 
-        const bool bParenthesized = Index + 1 < Tokens.Size() && Tokens[Index + 1].Is("(");
+        const bool bParenthesized = Index + 1 < Tokens.Size() && Tokens[Index + 1].Is(TEXT("("));
         const int32 NameIndex = Index + (bParenthesized ? 2 : 1);
         if (NameIndex >= Tokens.Size() || Tokens[NameIndex].Type != EShaderTokenType::Identifier)
         {
-            return Error(Token, "'defined' expects a macro name");
+            return Error(Token, TEXT("'defined' expects a macro name"));
         }
 
-        if (bParenthesized && (NameIndex + 1 >= Tokens.Size() || !Tokens[NameIndex + 1].Is(")")))
+        if (bParenthesized && (NameIndex + 1 >= Tokens.Size() || !Tokens[NameIndex + 1].Is(TEXT(")"))))
         {
-            return Error(Token, "Expected ')' after 'defined(Name'");
+            return Error(Token, TEXT("Expected ')' after 'defined(Name'"));
         }
 
         const bool bDefined = Macros.Find(Tokens[NameIndex].Text) != nullptr;
-        Resolved.Add(MakeToken(Token, bDefined ? "1" : "0", EShaderTokenType::Number, Token.bLeadingSpace));
+        Resolved.Add(MakeToken(Token, bDefined ? TEXT("1") : TEXT("0"), EShaderTokenType::Number, Token.bLeadingSpace));
         Index = NameIndex + (bParenthesized ? 1 : 0);
     }
 
@@ -1188,14 +1188,14 @@ bool FShaderPreprocessor::EvaluateCondition(TArrayView<const FShaderToken> Token
     {
         if (Token.Type == EShaderTokenType::Identifier)
         {
-            Token.Text = Token.Is("true") ? "1" : "0";
+            Token.Text = Token.Is(TEXT("true")) ? TEXT("1") : TEXT("0");
             Token.Type = EShaderTokenType::Number;
         }
     }
 
     if (Expanded.IsEmpty())
     {
-        return Error(Location, FString::Printf("#%s without an expression", *Location.Text));
+        return Error(Location, FString::Printf(TEXT("#%s without an expression"), *Location.Text));
     }
 
     FConditionParser Parser(TArrayView<const FShaderToken>(Expanded.Data(), Expanded.Size()));
@@ -1254,7 +1254,7 @@ bool FShaderPreprocessor::ExpandTokens(TArray<FShaderToken>&& Input, TArray<FSha
             const FExpansionFrame& Frame = Frames[Index];
             if (Frame.Position < Frame.Tokens.Size())
             {
-                return Frame.Tokens[Frame.Position].Is("(");
+                return Frame.Tokens[Frame.Position].Is(TEXT("("));
             }
         }
 
@@ -1300,14 +1300,14 @@ bool FShaderPreprocessor::ExpandTokens(TArray<FShaderToken>&& Input, TArray<FSha
                 FShaderToken ArgumentToken;
                 if (!ReadToken(ArgumentToken))
                 {
-                    return Error(Token, FString::Printf("Unterminated invocation of the macro '%s'", *Token.Text));
+                    return Error(Token, FString::Printf(TEXT("Unterminated invocation of the macro '%s'"), *Token.Text));
                 }
 
-                if (ArgumentToken.Is("("))
+                if (ArgumentToken.Is(TEXT("(")))
                 {
                     ++Depth;
                 }
-                else if (ArgumentToken.Is(")"))
+                else if (ArgumentToken.Is(TEXT(")")))
                 {
                     if (Depth == 0)
                     {
@@ -1316,7 +1316,7 @@ bool FShaderPreprocessor::ExpandTokens(TArray<FShaderToken>&& Input, TArray<FSha
 
                     --Depth;
                 }
-                else if (ArgumentToken.Is(",") && Depth == 0)
+                else if (ArgumentToken.Is(TEXT(",")) && Depth == 0)
                 {
                     Arguments.Emplace();
                     continue;
@@ -1329,7 +1329,7 @@ bool FShaderPreprocessor::ExpandTokens(TArray<FShaderToken>&& Input, TArray<FSha
             const bool bNoArguments = Macro->Parameters.IsEmpty() && Arguments.Size() == 1 && Arguments[0].IsEmpty();
             if (!bNoArguments && Arguments.Size() != Macro->Parameters.Size())
             {
-                return Error(Token, FString::Printf("The macro '%s' takes %d arguments but was given %d", *Token.Text, Macro->Parameters.Size(), Arguments.Size()));
+                return Error(Token, FString::Printf(TEXT("The macro '%s' takes %d arguments but was given %d"), *Token.Text, Macro->Parameters.Size(), Arguments.Size()));
             }
 
             if (!Substitute(*Macro, Arguments, Token, Replacement))
@@ -1399,13 +1399,13 @@ bool FShaderPreprocessor::Substitute(const FMacro& Macro, const TArray<TArray<FS
     {
         const FShaderToken& BodyToken = Body[Index];
 
-        if (BodyToken.Is("#") && Index + 1 < Body.Size() && FindParameter(Body[Index + 1]) >= 0)
+        if (BodyToken.Is(TEXT("#")) && Index + 1 < Body.Size() && FindParameter(Body[Index + 1]) >= 0)
         {
             const TArray<FShaderToken>& Argument = Arguments[FindParameter(Body[Index + 1])];
 
             const FString Joined = JoinTokens(TArrayView<const FShaderToken>(Argument.Data(), Argument.Size()));
 
-            FString Text = "\"";
+            FString Text = TEXT("\"");
             for (int32 CharIndex = 0; CharIndex < Joined.Length(); ++CharIndex)
             {
                 if (Joined[CharIndex] == '"' || Joined[CharIndex] == '\\')
@@ -1418,7 +1418,7 @@ bool FShaderPreprocessor::Substitute(const FMacro& Macro, const TArray<TArray<FS
 
             Text += '"';
 
-            FShaderToken& Stringized = Substituted.Emplace(MakeToken(NameToken, "", EShaderTokenType::String, BodyToken.bLeadingSpace));
+            FShaderToken& Stringized = Substituted.Emplace(MakeToken(NameToken, TEXT(""), EShaderTokenType::String, BodyToken.bLeadingSpace));
             Stringized.Text = Text;
             ++Index;
             continue;
@@ -1449,7 +1449,7 @@ bool FShaderPreprocessor::Substitute(const FMacro& Macro, const TArray<TArray<FS
             // A placemarker, so pasting with an empty argument keeps the other side
             if (bPasted)
             {
-                Substituted.Emplace(MakeToken(NameToken, "", EShaderTokenType::Other, false));
+                Substituted.Emplace(MakeToken(NameToken, TEXT(""), EShaderTokenType::Other, false));
             }
 
             continue;
@@ -1495,7 +1495,7 @@ bool FShaderPreprocessor::Substitute(const FMacro& Macro, const TArray<TArray<FS
         Tokenize(FStringView(Pasted), NameToken.FileIndex, PastedTokens);
         if (PastedTokens.Size() != 1)
         {
-            return Error(NameToken, FString::Printf("Pasting '%s' and '%s' does not give a valid token", *Left.Text, *Right.Text));
+            return Error(NameToken, FString::Printf(TEXT("Pasting '%s' and '%s' does not give a valid token"), *Left.Text, *Right.Text));
         }
 
         const bool bLeadingSpace = Left.bLeadingSpace;

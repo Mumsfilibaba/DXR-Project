@@ -2,6 +2,7 @@
 #if PLATFORM_WINDOWS
 #include <d3dcommon.h>
 
+#include "Core/Containers/StringConversion.h"
 #include "ShaderCore/ShaderReflection.h"
 #include "ShaderCompiler/Reflection/ShaderReflectionUtils.h"
 
@@ -31,7 +32,7 @@ bool FD3DReflectionUtils::ReflectVertexInputs(ReflectionType* Reflection, uint32
 
         if (ParameterDesc.Register > 0xFF || ParameterDesc.SemanticIndex > 0xFF)
         {
-            OutErrors += FString::Printf("Vertex input '%s%u' at register %u is outside the supported range\n", ParameterDesc.SemanticName, ParameterDesc.SemanticIndex, ParameterDesc.Register);
+            OutErrors += FString::Printf(TEXT("Vertex input '%s%u' at register %u is outside the supported range\n"), ParameterDesc.SemanticName, ParameterDesc.SemanticIndex, ParameterDesc.Register);
             return false;
         }
 
@@ -42,7 +43,7 @@ bool FD3DReflectionUtils::ReflectVertexInputs(ReflectionType* Reflection, uint32
         }
 
         FShaderVertexInput& Input = OutReflection.VertexInputs.Emplace();
-        Input.SemanticHash  = HashShaderSemantic(ParameterDesc.SemanticName);
+        Input.SemanticHash  = HashShaderSemantic(StringCast<CHAR_T>(ParameterDesc.SemanticName).Get());
         Input.SemanticIndex = static_cast<uint8>(ParameterDesc.SemanticIndex);
         Input.Location      = static_cast<uint8>(ParameterDesc.Register);
         Input.ComponentType = TranslateComponentType(ParameterDesc.ComponentType, ParameterDesc.MinPrecision);

@@ -6,13 +6,13 @@ bool FShaderReflectionUtils::AddBinding(const CHAR_T* Name, EShaderResourceType 
     const uint32 BindingCount = Count == 0 ? 1 : Count;
     if (Register > 0xFF || BindingCount > 0xFF)
     {
-        OutErrors += FString::Printf("Shader Parameter '%s' at register %u with %u elements is outside the supported range (register and count at most 255)\n", Name, Register, BindingCount);
+        OutErrors += FString::Printf(TEXT("Shader Parameter '%s' at register %u with %u elements is outside the supported range (register and count at most 255)\n"), Name, Register, BindingCount);
         return false;
     }
 
     if (OutReflection.Bindings.Size() >= 0xFF)
     {
-        OutErrors += "The shader has more than 255 bindings\n";
+        OutErrors += TEXT("The shader has more than 255 bindings\n");
         return false;
     }
 
@@ -25,7 +25,7 @@ bool FShaderReflectionUtils::AddBinding(const CHAR_T* Name, EShaderResourceType 
 
     if (bKeepName)
     {
-        OutReflection.BindingNames.Emplace(Name ? Name : "");
+        OutReflection.BindingNames.Emplace(Name ? Name : TEXT(""));
     }
 
     return true;
@@ -37,19 +37,19 @@ bool FShaderReflectionUtils::SetShaderConstantsSize(const CHAR_T* Name, uint32 S
 
     if (OutReflection.Info.ShaderConstantsSize != 0)
     {
-        OutErrors += FString::Printf("Shader Parameter '%s' declares a second block of shader constants, only one is supported per shader\n", Name);
+        OutErrors += FString::Printf(TEXT("Shader Parameter '%s' declares a second block of shader constants, only one is supported per shader\n"), Name);
         return false;
     }
 
     if (SizeInBytes == 0)
     {
-        OutErrors += FString::Printf("Shader Parameter '%s' is a block of shader constants, but its size could not be retrieved from reflection\n", Name);
+        OutErrors += FString::Printf(TEXT("Shader Parameter '%s' is a block of shader constants, but its size could not be retrieved from reflection\n"), Name);
         return false;
     }
 
     if (SizeInBytes > MaxSizeInBytes)
     {
-        OutErrors += FString::Printf("Shader Parameter '%s' is %u bytes, which exceeds the maximum of %u bytes of shader constants\n", Name, SizeInBytes, MaxSizeInBytes);
+        OutErrors += FString::Printf(TEXT("Shader Parameter '%s' is %u bytes, which exceeds the maximum of %u bytes of shader constants\n"), Name, SizeInBytes, MaxSizeInBytes);
         return false;
     }
 
@@ -80,7 +80,7 @@ bool FShaderReflectionUtils::SortAndValidateVertexInputs(TArray<FShaderVertexInp
         {
             if (InOutVertexInputs[Index].SemanticHash == InOutVertexInputs[Other].SemanticHash && InOutVertexInputs[Index].SemanticIndex == InOutVertexInputs[Other].SemanticIndex)
             {
-                OutErrors += FString::Printf("The vertex inputs at locations %u and %u have the same semantic\n", InOutVertexInputs[Index].Location, InOutVertexInputs[Other].Location);
+                OutErrors += FString::Printf(TEXT("The vertex inputs at locations %u and %u have the same semantic\n"), InOutVertexInputs[Index].Location, InOutVertexInputs[Other].Location);
                 return false;
             }
         }

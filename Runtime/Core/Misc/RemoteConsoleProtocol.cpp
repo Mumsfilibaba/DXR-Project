@@ -1,5 +1,6 @@
 #include "Core/Misc/RemoteConsoleProtocol.h"
 #include "Core/Json/JsonWriter.h"
+#include "Core/Containers/StringConversion.h"
 
 const CHAR_T* RemoteConsoleProtocol::SeverityToString(ELogSeverity Severity)
 {
@@ -32,10 +33,10 @@ bool RemoteConsoleProtocol::SeverityFromString(const FString& Text, ELogSeverity
     return false;
 }
 
-bool RemoteConsoleProtocol::ExtractLines(FString& Buffer, TArray<FString>& OutLines)
+bool RemoteConsoleProtocol::ExtractLines(FAnsiString& Buffer, TArray<FString>& OutLines)
 {
-    const CHAR_T* Data   = Buffer.Data();
-    const int32   Length = Buffer.Length();
+    const ANSICHAR* Data   = Buffer.Data();
+    const int32     Length = Buffer.Length();
 
     int32 LineStart = 0;
     for (int32 Index = 0; Index < Length; ++Index)
@@ -51,7 +52,7 @@ bool RemoteConsoleProtocol::ExtractLines(FString& Buffer, TArray<FString>& OutLi
             --LineEnd;
         }
 
-        OutLines.Emplace(Data + LineStart, LineEnd - LineStart);
+        OutLines.Emplace(StringCast<CHAR_T>(Data + LineStart, LineEnd - LineStart).ToString());
         LineStart = Index + 1;
     }
 
@@ -63,12 +64,14 @@ bool RemoteConsoleProtocol::ExtractLines(FString& Buffer, TArray<FString>& OutLi
     return Buffer.Length() <= MaxLineLength;
 }
 
-FString RemoteConsoleProtocol::ToLine(const FJsonValue& Message)
+FAnsiString RemoteConsoleProtocol::ToLine(const FJsonValue& Message)
 {
     const FJsonWriter Writer(EJsonWriteFlags::Compact);
 
-    FString Line;
-    Writer.Write(Message, Line);
+    FString Text;
+    Writer.Write(Message, Text);
+
+    FAnsiString Line = StringCast<ANSICHAR>(Text).ToString();
     Line.Append('\n');
     return Line;
 }
