@@ -107,13 +107,13 @@ NODISCARD constexpr const CHAR_T* ToString(ERayTracingTier RayTracingTier)
 {
     switch (RayTracingTier)
     {
-        case ERayTracingTier::NotSupported: return "NotSupported";
-        case ERayTracingTier::Tier1:        return "Tier1";
-        case ERayTracingTier::Tier1_1:      return "Tier1_1";
-        case ERayTracingTier::Tier1_2:      return "Tier1_2";
-        case ERayTracingTier::Tier2_0:      return "Tier2_0";
+        case ERayTracingTier::NotSupported: return TEXT("NotSupported");
+        case ERayTracingTier::Tier1:        return TEXT("Tier1");
+        case ERayTracingTier::Tier1_1:      return TEXT("Tier1_1");
+        case ERayTracingTier::Tier1_2:      return TEXT("Tier1_2");
+        case ERayTracingTier::Tier2_0:      return TEXT("Tier2_0");
         
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -129,11 +129,11 @@ NODISCARD constexpr const CHAR_T* ToString(EShadingRateTier ShadingRateTier)
 {
     switch (ShadingRateTier)
     {
-        case EShadingRateTier::NotSupported: return "NotSupported";
-        case EShadingRateTier::Tier1:        return "Tier1";
-        case EShadingRateTier::Tier2:        return "Tier2";
+        case EShadingRateTier::NotSupported: return TEXT("NotSupported");
+        case EShadingRateTier::Tier1:        return TEXT("Tier1");
+        case EShadingRateTier::Tier2:        return TEXT("Tier2");
         
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -149,11 +149,11 @@ NODISCARD constexpr const CHAR_T* ToString(ESamplerFeedbackTier SamplerFeedbackT
 {
     switch (SamplerFeedbackTier)
     {
-        case ESamplerFeedbackTier::NotSupported: return "NotSupported";
-        case ESamplerFeedbackTier::Tier0_9:      return "Tier0_9";
-        case ESamplerFeedbackTier::Tier1_0:      return "Tier1_0";
+        case ESamplerFeedbackTier::NotSupported: return TEXT("NotSupported");
+        case ESamplerFeedbackTier::Tier0_9:      return TEXT("Tier0_9");
+        case ESamplerFeedbackTier::Tier1_0:      return TEXT("Tier1_0");
 
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -172,10 +172,10 @@ NODISCARD constexpr const CHAR_T* ToString(ESamplePositionsTier SamplePositionsT
 {
     switch (SamplePositionsTier)
     {
-        case ESamplePositionsTier::NotSupported: return "NotSupported";
-        case ESamplePositionsTier::Tier1:        return "Tier1";
-        case ESamplePositionsTier::Tier2:        return "Tier2";
+        case ESamplePositionsTier::NotSupported: return TEXT("NotSupported");
+        case ESamplePositionsTier::Tier1:        return TEXT("Tier1");
+        case ESamplePositionsTier::Tier2:        return TEXT("Tier2");
 
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }

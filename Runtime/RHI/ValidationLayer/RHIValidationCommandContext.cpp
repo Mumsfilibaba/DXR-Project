@@ -166,7 +166,7 @@ void FRHIValidationCommandContext::FinishContext()
 
 void FRHIValidationCommandContext::BeginQuery(FRHIQuery* Query)
 {
-    if (!ValidateRecordingPhase("BeginQuery"))
+    if (!ValidateRecordingPhase(TEXT("BeginQuery")))
     {
         return;
     }
@@ -196,7 +196,7 @@ void FRHIValidationCommandContext::BeginQuery(FRHIQuery* Query)
 
 void FRHIValidationCommandContext::EndQuery(FRHIQuery* Query)
 {
-    if (!ValidateRecordingPhase("EndQuery"))
+    if (!ValidateRecordingPhase(TEXT("EndQuery")))
     {
         return;
     }
@@ -226,7 +226,7 @@ void FRHIValidationCommandContext::EndQuery(FRHIQuery* Query)
 
 void FRHIValidationCommandContext::QueryTimestamp(FRHIQuery* Query)
 {
-    if (!ValidateRecordingPhase("QueryTimestamp"))
+    if (!ValidateRecordingPhase(TEXT("QueryTimestamp")))
     {
         return;
     }
@@ -255,12 +255,12 @@ void FRHIValidationCommandContext::ClearRenderTargetView(FRHIRenderTargetView* R
         return;
     }
 
-    if (!StateTracker->ValidateState(RenderTargetView->GetResource(), ERHIResourceState::RenderTarget, "ClearRenderTargetView"))
+    if (!StateTracker->ValidateState(RenderTargetView->GetResource(), ERHIResourceState::RenderTarget, TEXT("ClearRenderTargetView")))
     {
         return;
     }
 
-    if (!ValidateBackBufferViewWrite(RenderTargetView, "ClearRenderTargetView"))
+    if (!ValidateBackBufferViewWrite(RenderTargetView, TEXT("ClearRenderTargetView")))
     {
         return;
     }
@@ -276,7 +276,7 @@ void FRHIValidationCommandContext::ClearDepthStencilView(FRHIDepthStencilView* D
         return;
     }
 
-    if (!StateTracker->ValidateState(DepthStencilView->GetResource(), ERHIResourceState::DepthWrite, "ClearDepthStencilView"))
+    if (!StateTracker->ValidateState(DepthStencilView->GetResource(), ERHIResourceState::DepthWrite, TEXT("ClearDepthStencilView")))
     {
         return;
     }
@@ -292,12 +292,12 @@ void FRHIValidationCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAc
         return;
     }
 
-    if (!StateTracker->ValidateState(UnorderedAccessView->GetResource(), ERHIResourceState::UnorderedAccess, "ClearUnorderedAccessViewFloat"))
+    if (!StateTracker->ValidateState(UnorderedAccessView->GetResource(), ERHIResourceState::UnorderedAccess, TEXT("ClearUnorderedAccessViewFloat")))
     {
         return;
     }
 
-    if (!ValidateBackBufferViewWrite(UnorderedAccessView, "ClearUnorderedAccessViewFloat"))
+    if (!ValidateBackBufferViewWrite(UnorderedAccessView, TEXT("ClearUnorderedAccessViewFloat")))
     {
         return;
     }
@@ -313,12 +313,12 @@ void FRHIValidationCommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAcc
         return;
     }
 
-    if (!StateTracker->ValidateState(UnorderedAccessView->GetResource(), ERHIResourceState::UnorderedAccess, "ClearUnorderedAccessViewUint"))
+    if (!StateTracker->ValidateState(UnorderedAccessView->GetResource(), ERHIResourceState::UnorderedAccess, TEXT("ClearUnorderedAccessViewUint")))
     {
         return;
     }
 
-    if (!ValidateBackBufferViewWrite(UnorderedAccessView, "ClearUnorderedAccessViewUint"))
+    if (!ValidateBackBufferViewWrite(UnorderedAccessView, TEXT("ClearUnorderedAccessViewUint")))
     {
         return;
     }
@@ -354,14 +354,14 @@ void FRHIValidationCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc
             return;
         }
 
-        if (!StateTracker->ValidateState(Attachment.View.Get()->GetResource(), ERHIResourceState::RenderTarget, "BeginRenderPass render-target attachment"))
+        if (!StateTracker->ValidateState(Attachment.View.Get()->GetResource(), ERHIResourceState::RenderTarget, TEXT("BeginRenderPass render-target attachment")))
         {
             return;
         }
 
         const bool bValidAttachment = (Attachment.LoadAction == EAttachmentLoadAction::Load)
-            ? ValidateBackBufferViewRead(Attachment.View.Get(), "BeginRenderPass render-target attachment with EAttachmentLoadAction::Load")
-            : ValidateBackBufferViewWrite(Attachment.View.Get(), "BeginRenderPass render-target attachment");
+            ? ValidateBackBufferViewRead(Attachment.View.Get(), TEXT("BeginRenderPass render-target attachment with EAttachmentLoadAction::Load"))
+            : ValidateBackBufferViewWrite(Attachment.View.Get(), TEXT("BeginRenderPass render-target attachment"));
 
         if (!bValidAttachment)
         {
@@ -371,7 +371,7 @@ void FRHIValidationCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc
 
     if (FRHIDepthStencilView* DepthStencilView = BeginRenderPassDesc.DepthStencilAttachment.View.Get())
     {
-        if (!StateTracker->ValidateState(DepthStencilView->GetResource(), ERHIResourceState::DepthWrite | ERHIResourceState::DepthRead, "BeginRenderPass depth-stencil attachment"))
+        if (!StateTracker->ValidateState(DepthStencilView->GetResource(), ERHIResourceState::DepthWrite | ERHIResourceState::DepthRead, TEXT("BeginRenderPass depth-stencil attachment")))
         {
             return;
         }
@@ -496,7 +496,7 @@ void FRHIValidationCommandContext::SetSamplePositions(const FRHISamplePositionsD
 
 void FRHIValidationCommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot)
 {
-    if (!ValidateRecordingPhase("SetVertexBuffers"))
+    if (!ValidateRecordingPhase(TEXT("SetVertexBuffers")))
     {
         return;
     }
@@ -523,7 +523,7 @@ void FRHIValidationCommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer*
         }
 
         // GenericRead covers the vertex-buffer state, so a buffer parked there is legal to bind
-        if (!StateTracker->ValidateState(Buffer, ERHIResourceState::VertexBuffer | ERHIResourceState::GenericRead, "SetVertexBuffers"))
+        if (!StateTracker->ValidateState(Buffer, ERHIResourceState::VertexBuffer | ERHIResourceState::GenericRead, TEXT("SetVertexBuffers")))
         {
             return;
         }
@@ -534,7 +534,7 @@ void FRHIValidationCommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer*
 
 void FRHIValidationCommandContext::SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat)
 {
-    if (!ValidateRecordingPhase("SetIndexBuffer"))
+    if (!ValidateRecordingPhase(TEXT("SetIndexBuffer")))
     {
         return;
     }
@@ -552,7 +552,7 @@ void FRHIValidationCommandContext::SetIndexBuffer(FRHIBuffer* IndexBuffer, EInde
     }
 
     // GenericRead covers the index-buffer state, so a buffer parked there is legal to bind
-    if (!StateTracker->ValidateState(IndexBuffer, ERHIResourceState::IndexBuffer | ERHIResourceState::GenericRead, "SetIndexBuffer"))
+    if (!StateTracker->ValidateState(IndexBuffer, ERHIResourceState::IndexBuffer | ERHIResourceState::GenericRead, TEXT("SetIndexBuffer")))
     {
         return;
     }
@@ -562,7 +562,7 @@ void FRHIValidationCommandContext::SetIndexBuffer(FRHIBuffer* IndexBuffer, EInde
 
 void FRHIValidationCommandContext::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)
 {
-    if (!ValidateRecordingPhase("SetStreamOutputTargets"))
+    if (!ValidateRecordingPhase(TEXT("SetStreamOutputTargets")))
     {
         return;
     }
@@ -587,7 +587,7 @@ void FRHIValidationCommandContext::SetStreamOutputTargets(const TArrayView<FRHIB
 
 void FRHIValidationCommandContext::SetGraphicsPipelineState(FRHIGraphicsPipelineState* PipelineState)
 {
-    if (!ValidateRecordingPhase("SetGraphicsPipelineState"))
+    if (!ValidateRecordingPhase(TEXT("SetGraphicsPipelineState")))
     {
         return;
     }
@@ -605,7 +605,7 @@ void FRHIValidationCommandContext::SetGraphicsPipelineState(FRHIGraphicsPipeline
 
 void FRHIValidationCommandContext::SetComputePipelineState(FRHIComputePipelineState* PipelineState)
 {
-    if (!ValidateRecordingPhase("SetComputePipelineState"))
+    if (!ValidateRecordingPhase(TEXT("SetComputePipelineState")))
     {
         return;
     }
@@ -622,7 +622,7 @@ void FRHIValidationCommandContext::SetComputePipelineState(FRHIComputePipelineSt
 
 void FRHIValidationCommandContext::SetRayTracingPipelineState(FRHIRayTracingPipelineState* PipelineState)
 {
-    if (!ValidateRecordingPhase("SetRayTracingPipelineState"))
+    if (!ValidateRecordingPhase(TEXT("SetRayTracingPipelineState")))
     {
         return;
     }
@@ -639,7 +639,7 @@ void FRHIValidationCommandContext::SetRayTracingPipelineState(FRHIRayTracingPipe
 
 void FRHIValidationCommandContext::SetMeshletPipelineState(FRHIMeshletPipelineState* PipelineState)
 {
-    if (!ValidateRecordingPhase("SetMeshletPipelineState"))
+    if (!ValidateRecordingPhase(TEXT("SetMeshletPipelineState")))
     {
         return;
     }
@@ -680,7 +680,7 @@ void FRHIValidationCommandContext::SetShaderResourceView(FRHIShader* Shader, FRH
         return;
     }
 
-    if (!ValidateBackBufferViewRead(ShaderResourceView, "SetShaderResourceView"))
+    if (!ValidateBackBufferViewRead(ShaderResourceView, TEXT("SetShaderResourceView")))
     {
         return;
     }
@@ -698,7 +698,7 @@ void FRHIValidationCommandContext::SetShaderResourceViews(FRHIShader* Shader, co
 
     for (FRHIShaderResourceView* ShaderResourceView : InShaderResourceViews)
     {
-        if (!ValidateBackBufferViewRead(ShaderResourceView, "SetShaderResourceViews"))
+        if (!ValidateBackBufferViewRead(ShaderResourceView, TEXT("SetShaderResourceViews")))
         {
             return;
         }
@@ -715,7 +715,7 @@ void FRHIValidationCommandContext::SetUnorderedAccessView(FRHIShader* Shader, FR
         return;
     }
 
-    if (!ValidateBackBufferViewWrite(UnorderedAccessView, "SetUnorderedAccessView"))
+    if (!ValidateBackBufferViewWrite(UnorderedAccessView, TEXT("SetUnorderedAccessView")))
     {
         return;
     }
@@ -733,7 +733,7 @@ void FRHIValidationCommandContext::SetUnorderedAccessViews(FRHIShader* Shader, c
 
     for (FRHIUnorderedAccessView* UnorderedAccessView : InUnorderedAccessViews)
     {
-        if (!ValidateBackBufferViewWrite(UnorderedAccessView, "SetUnorderedAccessViews"))
+        if (!ValidateBackBufferViewWrite(UnorderedAccessView, TEXT("SetUnorderedAccessViews")))
         {
             return;
         }
@@ -803,7 +803,7 @@ void FRHIValidationCommandContext::SetSamplerStates(FRHIShader* Shader, const TA
 
 void FRHIValidationCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)
 {
-    if (!ValidateRecordingPhase("UpdateBuffer"))
+    if (!ValidateRecordingPhase(TEXT("UpdateBuffer")))
     {
         return;
     }
@@ -827,12 +827,12 @@ void FRHIValidationCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRe
     }
 
     // Only Default memory goes through a copy on the GPU timeline, so only it needs the state
-    if (Dst->GetDesc().IsDefault() && !StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, "UpdateBuffer destination"))
+    if (Dst->GetDesc().IsDefault() && !StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, TEXT("UpdateBuffer destination")))
     {
         return;
     }
 
-    if (!ValidateBufferRange("UpdateBuffer", Dst->GetDesc(), BufferRegion.Offset, BufferRegion.Size))
+    if (!ValidateBufferRange(TEXT("UpdateBuffer"), Dst->GetDesc(), BufferRegion.Offset, BufferRegion.Size))
     {
         return;
     }
@@ -842,7 +842,7 @@ void FRHIValidationCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRe
 
 void FRHIValidationCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch)
 {
-    if (!ValidateRecordingPhase("UpdateTexture2D"))
+    if (!ValidateRecordingPhase(TEXT("UpdateTexture2D")))
     {
         return;
     }
@@ -859,12 +859,12 @@ void FRHIValidationCommandContext::UpdateTexture2D(FRHITexture* Dst, const FText
         return;
     }
 
-    if (!ValidateTextureRegion2D("UpdateTexture2D", Dst->GetDesc(), MipLevel, TextureRegion))
+    if (!ValidateTextureRegion2D(TEXT("UpdateTexture2D"), Dst->GetDesc(), MipLevel, TextureRegion))
     {
         return;
     }
 
-    if (!StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, "UpdateTexture2D destination"))
+    if (!StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, TEXT("UpdateTexture2D destination")))
     {
         return;
     }
@@ -881,7 +881,7 @@ void FRHIValidationCommandContext::UpdateTexture2D(FRHITexture* Dst, const FText
 
 void FRHIValidationCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegion3D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch, uint32 SrcDepthPitch)
 {
-    if (!ValidateRecordingPhase("UpdateTexture3D"))
+    if (!ValidateRecordingPhase(TEXT("UpdateTexture3D")))
     {
         return;
     }
@@ -904,12 +904,12 @@ void FRHIValidationCommandContext::UpdateTexture3D(FRHITexture* Dst, const FText
         return;
     }
 
-    if (!ValidateTextureRegion3D("UpdateTexture3D", Dst->GetDesc(), MipLevel, TextureRegion))
+    if (!ValidateTextureRegion3D(TEXT("UpdateTexture3D"), Dst->GetDesc(), MipLevel, TextureRegion))
     {
         return;
     }
 
-    if (!StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, "UpdateTexture3D destination"))
+    if (!StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, TEXT("UpdateTexture3D destination")))
     {
         return;
     }
@@ -933,7 +933,7 @@ void FRHIValidationCommandContext::UpdateTexture3D(FRHITexture* Dst, const FText
 
 void FRHIValidationCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 {
-    if (!ValidateRecordingPhase("ResolveTexture"))
+    if (!ValidateRecordingPhase(TEXT("ResolveTexture")))
     {
         return;
     }
@@ -963,14 +963,14 @@ void FRHIValidationCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture*
         return;
     }
 
-    if (!StateTracker->ValidateState(Dst, ERHIResourceState::ResolveDest, "ResolveTexture destination") ||
-        !StateTracker->ValidateState(Src, ERHIResourceState::ResolveSource, "ResolveTexture source"))
+    if (!StateTracker->ValidateState(Dst, ERHIResourceState::ResolveDest, TEXT("ResolveTexture destination")) ||
+        !StateTracker->ValidateState(Src, ERHIResourceState::ResolveSource, TEXT("ResolveTexture source")))
     {
         return;
     }
 
-    if (!ValidateBackBufferRead(Src, "ResolveTexture source") ||
-        !ValidateBackBufferWrite(Dst, "ResolveTexture destination"))
+    if (!ValidateBackBufferRead(Src, TEXT("ResolveTexture source")) ||
+        !ValidateBackBufferWrite(Dst, TEXT("ResolveTexture destination")))
     {
         return;
     }
@@ -980,7 +980,7 @@ void FRHIValidationCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture*
 
 void FRHIValidationCommandContext::TranscodeSamplerFeedback(FRHITexture* Dst, uint32 DstSubresource, FRHITexture* Src, uint32 SrcSubresource, ESamplerFeedbackTranscodeMode Mode)
 {
-    if (!ValidateRecordingPhase("TranscodeSamplerFeedback"))
+    if (!ValidateRecordingPhase(TEXT("TranscodeSamplerFeedback")))
     {
         return;
     }
@@ -1016,7 +1016,7 @@ void FRHIValidationCommandContext::TranscodeSamplerFeedback(FRHITexture* Dst, ui
     if (!OpaqueDesc.IsSamplerFeedbackTexture())
     {
         RHI_VALIDATION_ERROR("%s: TranscodeSamplerFeedback: the %s must have ETextureUsageFlags::SamplerFeedback when %s.",
-            *GetResourceIdentity(OpaqueTexture), bDecode ? "source" : "destination", bDecode ? "decoding" : "encoding");
+            *GetResourceIdentity(OpaqueTexture), bDecode ? TEXT("source") : TEXT("destination"), bDecode ? TEXT("decoding") : TEXT("encoding"));
         return;
     }
 
@@ -1089,7 +1089,7 @@ void FRHIValidationCommandContext::TranscodeSamplerFeedback(FRHITexture* Dst, ui
 
 void FRHIValidationCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc)
 {
-    if (!ValidateRecordingPhase("CopyBuffer"))
+    if (!ValidateRecordingPhase(TEXT("CopyBuffer")))
     {
         return;
     }
@@ -1118,14 +1118,14 @@ void FRHIValidationCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, 
         return;
     }
 
-    if (!StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, "CopyBuffer destination") ||
-        !StateTracker->ValidateState(Src, ERHIResourceState::CopySource, "CopyBuffer source"))
+    if (!StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, TEXT("CopyBuffer destination")) ||
+        !StateTracker->ValidateState(Src, ERHIResourceState::CopySource, TEXT("CopyBuffer source")))
     {
         return;
     }
 
-    if (!ValidateBufferRange("CopyBuffer source", Src->GetDesc(), CopyDesc.SrcOffset, CopyDesc.Size) ||
-        !ValidateBufferRange("CopyBuffer destination", Dst->GetDesc(), CopyDesc.DstOffset, CopyDesc.Size))
+    if (!ValidateBufferRange(TEXT("CopyBuffer source"), Src->GetDesc(), CopyDesc.SrcOffset, CopyDesc.Size) ||
+        !ValidateBufferRange(TEXT("CopyBuffer destination"), Dst->GetDesc(), CopyDesc.DstOffset, CopyDesc.Size))
     {
         return;
     }
@@ -1145,7 +1145,7 @@ void FRHIValidationCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, 
 
 void FRHIValidationCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
 {
-    if (!ValidateRecordingPhase("CopyTexture"))
+    if (!ValidateRecordingPhase(TEXT("CopyTexture")))
     {
         return;
     }
@@ -1188,14 +1188,14 @@ void FRHIValidationCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Sr
         return;
     }
 
-    if (!StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, "CopyTexture destination") ||
-        !StateTracker->ValidateState(Src, ERHIResourceState::CopySource, "CopyTexture source"))
+    if (!StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, TEXT("CopyTexture destination")) ||
+        !StateTracker->ValidateState(Src, ERHIResourceState::CopySource, TEXT("CopyTexture source")))
     {
         return;
     }
 
-    if (!ValidateBackBufferRead(Src, "CopyTexture source") ||
-        !ValidateBackBufferWrite(Dst, "CopyTexture destination"))
+    if (!ValidateBackBufferRead(Src, TEXT("CopyTexture source")) ||
+        !ValidateBackBufferWrite(Dst, TEXT("CopyTexture destination")))
     {
         return;
     }
@@ -1205,7 +1205,7 @@ void FRHIValidationCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Sr
 
 void FRHIValidationCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyDesc)
 {
-    if (!ValidateRecordingPhase("CopyTextureRegion"))
+    if (!ValidateRecordingPhase(TEXT("CopyTextureRegion")))
     {
         return;
     }
@@ -1246,15 +1246,15 @@ void FRHIValidationCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITextu
         return;
     }
 
-    if (!StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, "CopyTextureRegion destination") ||
-        !StateTracker->ValidateState(Src, ERHIResourceState::CopySource, "CopyTextureRegion source"))
+    if (!StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, TEXT("CopyTextureRegion destination")) ||
+        !StateTracker->ValidateState(Src, ERHIResourceState::CopySource, TEXT("CopyTextureRegion source")))
     {
         return;
     }
 
     // A region copy leaves the rest of the destination alone, so it does not count as writing the whole
     // back-buffer, only as reading the source
-    if (!ValidateBackBufferRead(Src, "CopyTextureRegion source"))
+    if (!ValidateBackBufferRead(Src, TEXT("CopyTextureRegion source")))
     {
         return;
     }
@@ -1286,8 +1286,8 @@ void FRHIValidationCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITextu
     {
         FIntVector3 SrcExtent;
         FIntVector3 DstExtent;
-        if (!ValidateTextureMip("CopyTextureRegion source", SrcDesc, CopyDesc.SrcMipSlice + MipOffset, SrcExtent) ||
-            !ValidateTextureMip("CopyTextureRegion destination", DstDesc, CopyDesc.DstMipSlice + MipOffset, DstExtent))
+        if (!ValidateTextureMip(TEXT("CopyTextureRegion source"), SrcDesc, CopyDesc.SrcMipSlice + MipOffset, SrcExtent) ||
+            !ValidateTextureMip(TEXT("CopyTextureRegion destination"), DstDesc, CopyDesc.DstMipSlice + MipOffset, DstExtent))
         {
             return;
         }
@@ -1320,7 +1320,7 @@ void FRHIValidationCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITextu
 
 void FRHIValidationCommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion2D& SrcRegion, uint32 SrcMipLevel)
 {
-    if (!ValidateRecordingPhase("CopyTextureRegionToBuffer"))
+    if (!ValidateRecordingPhase(TEXT("CopyTextureRegionToBuffer")))
     {
         return;
     }
@@ -1351,18 +1351,18 @@ void FRHIValidationCommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, ui
         return;
     }
 
-    if (!StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, "CopyTextureRegionToBuffer destination") ||
-        !StateTracker->ValidateState(Src, ERHIResourceState::CopySource, "CopyTextureRegionToBuffer source"))
+    if (!StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, TEXT("CopyTextureRegionToBuffer destination")) ||
+        !StateTracker->ValidateState(Src, ERHIResourceState::CopySource, TEXT("CopyTextureRegionToBuffer source")))
     {
         return;
     }
 
-    if (!ValidateBackBufferRead(Src, "CopyTextureRegionToBuffer source"))
+    if (!ValidateBackBufferRead(Src, TEXT("CopyTextureRegionToBuffer source")))
     {
         return;
     }
 
-    if (!ValidateTextureRegion2D("CopyTextureRegionToBuffer", Src->GetDesc(), SrcMipLevel, SrcRegion) ||
+    if (!ValidateTextureRegion2D(TEXT("CopyTextureRegionToBuffer"), Src->GetDesc(), SrcMipLevel, SrcRegion) ||
         DstOffset >= Dst->GetDesc().Size)
     {
         if (DstOffset >= Dst->GetDesc().Size)
@@ -1377,7 +1377,7 @@ void FRHIValidationCommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, ui
 
 void FRHIValidationCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion3D& SrcRegion, uint32 SrcMipLevel, uint32 SrcArraySlice)
 {
-    if (!ValidateRecordingPhase("CopyTextureSubresourceToBuffer"))
+    if (!ValidateRecordingPhase(TEXT("CopyTextureSubresourceToBuffer")))
     {
         return;
     }
@@ -1408,19 +1408,19 @@ void FRHIValidationCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Ds
         return;
     }
 
-    if (!StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, "CopyTextureSubresourceToBuffer destination") ||
-        !StateTracker->ValidateState(Src, ERHIResourceState::CopySource, "CopyTextureSubresourceToBuffer source"))
+    if (!StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, TEXT("CopyTextureSubresourceToBuffer destination")) ||
+        !StateTracker->ValidateState(Src, ERHIResourceState::CopySource, TEXT("CopyTextureSubresourceToBuffer source")))
     {
         return;
     }
 
-    if (!ValidateBackBufferRead(Src, "CopyTextureSubresourceToBuffer source"))
+    if (!ValidateBackBufferRead(Src, TEXT("CopyTextureSubresourceToBuffer source")))
     {
         return;
     }
 
     const uint32 SrcLayers = RHIDimensionArrayLayers(Src->GetDesc().Dimension, Src->GetDesc().NumArraySlices);
-    if (!ValidateTextureRegion3D("CopyTextureSubresourceToBuffer", Src->GetDesc(), SrcMipLevel, SrcRegion) ||
+    if (!ValidateTextureRegion3D(TEXT("CopyTextureSubresourceToBuffer"), Src->GetDesc(), SrcMipLevel, SrcRegion) ||
         SrcArraySlice >= SrcLayers || DstOffset >= Dst->GetDesc().Size)
     {
         if (SrcArraySlice >= SrcLayers)
@@ -1442,7 +1442,7 @@ void FRHIValidationCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Ds
 
 void FRHIValidationCommandContext::WriteFence(FRHIFence* Fence)
 {
-    if (!ValidateRecordingPhase("WriteFence"))
+    if (!ValidateRecordingPhase(TEXT("WriteFence")))
     {
         return;
     }
@@ -1458,7 +1458,7 @@ void FRHIValidationCommandContext::WriteFence(FRHIFence* Fence)
 
 void FRHIValidationCommandContext::DiscardContents(FRHITexture* Texture)
 {
-    if (!ValidateRecordingPhase("DiscardContents"))
+    if (!ValidateRecordingPhase(TEXT("DiscardContents")))
     {
         return;
     }
@@ -1474,7 +1474,7 @@ void FRHIValidationCommandContext::DiscardContents(FRHITexture* Texture)
 
 void FRHIValidationCommandContext::BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* RayTracingScene, const FRHISceneAccelerationStructureBuildDesc& BuildDesc)
 {
-    if (!ValidateRecordingPhase("BuildSceneAccelerationStructure") || !RHI::bSupportsRayTracing)
+    if (!ValidateRecordingPhase(TEXT("BuildSceneAccelerationStructure")) || !RHI::bSupportsRayTracing)
     {
         if (!RHI::bSupportsRayTracing)
         {
@@ -1503,10 +1503,10 @@ void FRHIValidationCommandContext::BuildSceneAccelerationStructure(FRHISceneAcce
 
     for (uint32 Index = 0; Index < BuildDesc.NumInstances; ++Index)
     {
-        ValidateAccelerationStructureBarrier(BuildDesc.Instances[Index].Geometry, "BuildSceneAccelerationStructure (instance geometry)");
+        ValidateAccelerationStructureBarrier(BuildDesc.Instances[Index].Geometry, TEXT("BuildSceneAccelerationStructure (instance geometry)"));
     }
 
-    ValidateAccelerationStructureBarrier(RayTracingScene, "BuildSceneAccelerationStructure");
+    ValidateAccelerationStructureBarrier(RayTracingScene, TEXT("BuildSceneAccelerationStructure"));
 
     CommandContext->BuildSceneAccelerationStructure(RayTracingScene, BuildDesc);
     MarkAccelerationStructureWritten(RayTracingScene);
@@ -1514,7 +1514,7 @@ void FRHIValidationCommandContext::BuildSceneAccelerationStructure(FRHISceneAcce
 
 void FRHIValidationCommandContext::BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* RayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc)
 {
-    if (!ValidateRecordingPhase("BuildGeometryAccelerationStructure") || !RHI::bSupportsRayTracing)
+    if (!ValidateRecordingPhase(TEXT("BuildGeometryAccelerationStructure")) || !RHI::bSupportsRayTracing)
     {
         if (!RHI::bSupportsRayTracing)
         {
@@ -1572,7 +1572,7 @@ void FRHIValidationCommandContext::BuildGeometryAccelerationStructure(FRHIGeomet
         return;
     }
 
-    ValidateAccelerationStructureBarrier(RayTracingGeometry, "BuildGeometryAccelerationStructure");
+    ValidateAccelerationStructureBarrier(RayTracingGeometry, TEXT("BuildGeometryAccelerationStructure"));
 
     CommandContext->BuildGeometryAccelerationStructure(RayTracingGeometry, BuildDesc);
     MarkAccelerationStructureWritten(RayTracingGeometry);
@@ -1580,7 +1580,7 @@ void FRHIValidationCommandContext::BuildGeometryAccelerationStructure(FRHIGeomet
 
 void FRHIValidationCommandContext::SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
 {
-    if (!ValidateRecordingPhase("SetHitRecordLocalShaderBindings"))
+    if (!ValidateRecordingPhase(TEXT("SetHitRecordLocalShaderBindings")))
     {
         return;
     }
@@ -1647,7 +1647,7 @@ void FRHIValidationCommandContext::SetHitRecordLocalShaderBindings(FRHIShaderBin
 
 void FRHIValidationCommandContext::BuildShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable)
 {
-    if (!ValidateRecordingPhase("BuildShaderBindingTable"))
+    if (!ValidateRecordingPhase(TEXT("BuildShaderBindingTable")))
     {
         return;
     }
@@ -1665,7 +1665,7 @@ void FRHIValidationCommandContext::BuildShaderBindingTable(FRHIShaderBindingTabl
 
 void FRHIValidationCommandContext::ResetShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable)
 {
-    if (!ValidateRecordingPhase("ResetShaderBindingTable"))
+    if (!ValidateRecordingPhase(TEXT("ResetShaderBindingTable")))
     {
         return;
     }
@@ -1727,7 +1727,7 @@ void FRHIValidationCommandContext::DispatchRays(FRHIShaderBindingTable* ShaderBi
         return;
     }
 
-    ValidateSceneAccelerationStructureBarriers("DispatchRays");
+    ValidateSceneAccelerationStructureBarriers(TEXT("DispatchRays"));
 
     CommandContext->DispatchRays(ValidationShaderBindingTable->GetRHI(), Width, Height, Depth);
 }
@@ -1773,19 +1773,19 @@ void FRHIValidationCommandContext::DispatchRaysIndirect(FRHIShaderBindingTable* 
     }
 
     if (!ValidateIndirectArguments<FRHIDispatchRaysIndirectParameters>(
-        "DispatchRaysIndirect", ArgumentBuffer, ArgumentBufferOffset, 1))
+        TEXT("DispatchRaysIndirect"), ArgumentBuffer, ArgumentBufferOffset, 1))
     {
         return;
     }
 
-    ValidateSceneAccelerationStructureBarriers("DispatchRaysIndirect");
+    ValidateSceneAccelerationStructureBarriers(TEXT("DispatchRaysIndirect"));
 
     CommandContext->DispatchRaysIndirect(ValidationShaderBindingTable->GetRHI(), ArgumentBuffer, ArgumentBufferOffset);
 }
 
 void FRHIValidationCommandContext::BuildOpacityMicromap(FRHIOpacityMicromap* OpacityMicromap, const FRHIOpacityMicromapBuildDesc& BuildDesc)
 {
-    if (!ValidateRecordingPhase("BuildOpacityMicromap"))
+    if (!ValidateRecordingPhase(TEXT("BuildOpacityMicromap")))
     {
         return;
     }
@@ -1834,7 +1834,7 @@ void FRHIValidationCommandContext::BuildOpacityMicromap(FRHIOpacityMicromap* Opa
 
 void FRHIValidationCommandContext::ExecuteIndirectRayTracingAccelerationStructureOperations(const FRHIRayTracingAccelerationStructureOperationDesc* Operations, uint32 NumOperations)
 {
-    if (!ValidateRecordingPhase("ExecuteIndirectRayTracingAccelerationStructureOperations"))
+    if (!ValidateRecordingPhase(TEXT("ExecuteIndirectRayTracingAccelerationStructureOperations")))
     {
         return;
     }
@@ -1856,7 +1856,7 @@ void FRHIValidationCommandContext::ExecuteIndirectRayTracingAccelerationStructur
 
 void FRHIValidationCommandContext::WriteAccelerationStructurePostBuildInfo(FRHIBuffer* DstBuffer, uint64 DstOffset, EAccelerationStructurePostBuildInfoType InfoType, FRHIRayTracingAccelerationStructure* const* Sources, uint32 NumSources)
 {
-    if (!ValidateRecordingPhase("WriteAccelerationStructurePostBuildInfo") || !RHI::bSupportsRayTracing)
+    if (!ValidateRecordingPhase(TEXT("WriteAccelerationStructurePostBuildInfo")) || !RHI::bSupportsRayTracing)
     {
         if (!RHI::bSupportsRayTracing)
         {
@@ -1922,7 +1922,7 @@ void FRHIValidationCommandContext::WriteAccelerationStructurePostBuildInfo(FRHIB
 
     for (uint32 Index = 0; Index < NumSources; ++Index)
     {
-        ValidateAccelerationStructureBarrier(Sources[Index], "WriteAccelerationStructurePostBuildInfo");
+        ValidateAccelerationStructureBarrier(Sources[Index], TEXT("WriteAccelerationStructurePostBuildInfo"));
     }
 
     CommandContext->WriteAccelerationStructurePostBuildInfo(DstBuffer, DstOffset, InfoType, Sources, NumSources);
@@ -1930,7 +1930,7 @@ void FRHIValidationCommandContext::WriteAccelerationStructurePostBuildInfo(FRHIB
 
 void FRHIValidationCommandContext::CopyAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIRayTracingAccelerationStructure* Source, EAccelerationStructureCopyMode CopyMode)
 {
-    if (!ValidateRecordingPhase("CopyAccelerationStructure") || !RHI::bSupportsRayTracing)
+    if (!ValidateRecordingPhase(TEXT("CopyAccelerationStructure")) || !RHI::bSupportsRayTracing)
     {
         if (!RHI::bSupportsRayTracing)
         {
@@ -1967,8 +1967,8 @@ void FRHIValidationCommandContext::CopyAccelerationStructure(FRHIRayTracingAccel
         return;
     }
 
-    ValidateAccelerationStructureBarrier(Source, "CopyAccelerationStructure (source)");
-    ValidateAccelerationStructureBarrier(Destination, "CopyAccelerationStructure (destination)");
+    ValidateAccelerationStructureBarrier(Source, TEXT("CopyAccelerationStructure (source)"));
+    ValidateAccelerationStructureBarrier(Destination, TEXT("CopyAccelerationStructure (destination)"));
 
     CommandContext->CopyAccelerationStructure(Destination, Source, CopyMode);
     MarkAccelerationStructureWritten(Destination);
@@ -1976,7 +1976,7 @@ void FRHIValidationCommandContext::CopyAccelerationStructure(FRHIRayTracingAccel
 
 void FRHIValidationCommandContext::CompactAccelerationStructure(FRHIRayTracingAccelerationStructure* AccelerationStructure, uint64 CompactedSizeInBytes)
 {
-    if (!ValidateRecordingPhase("CompactAccelerationStructure") || !RHI::bSupportsRayTracing)
+    if (!ValidateRecordingPhase(TEXT("CompactAccelerationStructure")) || !RHI::bSupportsRayTracing)
     {
         if (!RHI::bSupportsRayTracing)
         {
@@ -2009,7 +2009,7 @@ void FRHIValidationCommandContext::CompactAccelerationStructure(FRHIRayTracingAc
         return;
     }
 
-    ValidateAccelerationStructureBarrier(AccelerationStructure, "CompactAccelerationStructure");
+    ValidateAccelerationStructureBarrier(AccelerationStructure, TEXT("CompactAccelerationStructure"));
 
     CommandContext->CompactAccelerationStructure(AccelerationStructure, CompactedSizeInBytes);
     MarkAccelerationStructureWritten(AccelerationStructure);
@@ -2017,7 +2017,7 @@ void FRHIValidationCommandContext::CompactAccelerationStructure(FRHIRayTracingAc
 
 void FRHIValidationCommandContext::SerializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Source, FRHIBuffer* DstBuffer, uint64 DstOffset)
 {
-    if (!ValidateRecordingPhase("SerializeAccelerationStructure") || !RHI::bSupportsRayTracing)
+    if (!ValidateRecordingPhase(TEXT("SerializeAccelerationStructure")) || !RHI::bSupportsRayTracing)
     {
         if (!RHI::bSupportsRayTracing)
         {
@@ -2032,14 +2032,14 @@ void FRHIValidationCommandContext::SerializeAccelerationStructure(FRHIRayTracing
         return;
     }
 
-    ValidateAccelerationStructureBarrier(Source, "SerializeAccelerationStructure");
+    ValidateAccelerationStructureBarrier(Source, TEXT("SerializeAccelerationStructure"));
 
     CommandContext->SerializeAccelerationStructure(Source, DstBuffer, DstOffset);
 }
 
 void FRHIValidationCommandContext::DeserializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIBuffer* SourceBuffer, uint64 SourceOffset)
 {
-    if (!ValidateRecordingPhase("DeserializeAccelerationStructure") || !RHI::bSupportsRayTracing)
+    if (!ValidateRecordingPhase(TEXT("DeserializeAccelerationStructure")) || !RHI::bSupportsRayTracing)
     {
         if (!RHI::bSupportsRayTracing)
         {
@@ -2054,7 +2054,7 @@ void FRHIValidationCommandContext::DeserializeAccelerationStructure(FRHIRayTraci
         return;
     }
 
-    ValidateAccelerationStructureBarrier(Destination, "DeserializeAccelerationStructure");
+    ValidateAccelerationStructureBarrier(Destination, TEXT("DeserializeAccelerationStructure"));
 
     CommandContext->DeserializeAccelerationStructure(Destination, SourceBuffer, SourceOffset);
     MarkAccelerationStructureWritten(Destination);
@@ -2241,7 +2241,7 @@ bool FRHIValidationCommandContext::ValidateTransitionBarrierDesc(const FRHITrans
                 "destroyed while this command list still referenced it. A command list stores a resource without taking a "
                 "reference, so the caller has to keep it alive until the list has executed.",
                 reinterpret_cast<const void*>(Buffer),
-                Destroyed.IsEmpty() ? "destroyed too long ago to name" : *Destroyed);
+                Destroyed.IsEmpty() ? TEXT("destroyed too long ago to name") : *Destroyed);
             return false;
         }
 
@@ -2406,7 +2406,7 @@ bool FRHIValidationCommandContext::ValidateTransitionBarrierDesc(const FRHITrans
 
         OpenSplits.RemoveAt(SplitIndex);
     }
-    else if (!ValidateNoOpenSplit(Resource, "TransitionBarrier"))
+    else if (!ValidateNoOpenSplit(Resource, TEXT("TransitionBarrier")))
     {
         return false;
     }
@@ -2421,7 +2421,7 @@ bool FRHIValidationCommandContext::ValidateTransitionBarrierDesc(const FRHITrans
 
 void FRHIValidationCommandContext::TransitionBarrier(TArrayView<const FRHITransitionBarrierDesc> TransitionDescs)
 {
-    if (!ValidateRecordingPhase("TransitionBarrier"))
+    if (!ValidateRecordingPhase(TEXT("TransitionBarrier")))
     {
         return;
     }
@@ -2483,7 +2483,7 @@ bool FRHIValidationCommandContext::ValidateUnorderedAccessBarrierDesc(const FRHI
             return false;
         }
 
-        return ValidateNoOpenSplit(Texture, "UnorderedAccessBarrier");
+        return ValidateNoOpenSplit(Texture, TEXT("UnorderedAccessBarrier"));
     }
 
     if (Desc.IsAccelerationStructure())
@@ -2518,12 +2518,12 @@ bool FRHIValidationCommandContext::ValidateUnorderedAccessBarrierDesc(const FRHI
         return false;
     }
 
-    return ValidateNoOpenSplit(Buffer, "UnorderedAccessBarrier");
+    return ValidateNoOpenSplit(Buffer, TEXT("UnorderedAccessBarrier"));
 }
 
 void FRHIValidationCommandContext::UnorderedAccessBarrier(TArrayView<const FRHIUnorderedAccessBarrierDesc> BarrierDescs)
 {
-    if (!ValidateRecordingPhase("UnorderedAccessBarrier"))
+    if (!ValidateRecordingPhase(TEXT("UnorderedAccessBarrier")))
     {
         return;
     }
@@ -2575,7 +2575,7 @@ void FRHIValidationCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLo
         return;
     }
 
-    ValidateSceneAccelerationStructureBarriers("Draw");
+    ValidateSceneAccelerationStructureBarriers(TEXT("Draw"));
     CommandContext->Draw(VertexCount, StartVertexLocation);
 }
 
@@ -2593,7 +2593,7 @@ void FRHIValidationCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIn
         return;
     }
 
-    ValidateSceneAccelerationStructureBarriers("DrawIndexed");
+    ValidateSceneAccelerationStructureBarriers(TEXT("DrawIndexed"));
     CommandContext->DrawIndexed(IndexCount, StartIndexLocation, BaseVertexLocation);
 }
 
@@ -2611,7 +2611,7 @@ void FRHIValidationCommandContext::DrawInstanced(uint32 VertexCountPerInstance, 
         return;
     }
 
-    ValidateSceneAccelerationStructureBarriers("DrawInstanced");
+    ValidateSceneAccelerationStructureBarriers(TEXT("DrawInstanced"));
     CommandContext->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
@@ -2629,7 +2629,7 @@ void FRHIValidationCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInst
         return;
     }
 
-    ValidateSceneAccelerationStructureBarriers("DrawIndexedInstanced");
+    ValidateSceneAccelerationStructureBarriers(TEXT("DrawIndexedInstanced"));
     CommandContext->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
 }
 
@@ -2647,7 +2647,7 @@ void FRHIValidationCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroup
         return;
     }
 
-    ValidateSceneAccelerationStructureBarriers("Dispatch");
+    ValidateSceneAccelerationStructureBarriers(TEXT("Dispatch"));
     CommandContext->Dispatch(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
 }
 
@@ -2665,7 +2665,7 @@ void FRHIValidationCommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32
         return;
     }
 
-    ValidateSceneAccelerationStructureBarriers("DispatchMesh");
+    ValidateSceneAccelerationStructureBarriers(TEXT("DispatchMesh"));
     CommandContext->DispatchMesh(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
 }
 
@@ -2683,9 +2683,9 @@ void FRHIValidationCommandContext::DrawIndirect(FRHIBuffer* ArgumentBuffer, uint
         return;
     }
 
-    if (ValidateIndirectArguments<FRHIDrawIndirectParameters>("DrawIndirect", ArgumentBuffer, ArgumentBufferOffset, CommandCount))
+    if (ValidateIndirectArguments<FRHIDrawIndirectParameters>(TEXT("DrawIndirect"), ArgumentBuffer, ArgumentBufferOffset, CommandCount))
     {
-        ValidateSceneAccelerationStructureBarriers("DrawIndirect");
+        ValidateSceneAccelerationStructureBarriers(TEXT("DrawIndirect"));
         CommandContext->DrawIndirect(ArgumentBuffer, ArgumentBufferOffset, CommandCount);
     }
 }
@@ -2704,10 +2704,10 @@ void FRHIValidationCommandContext::DrawIndirectCount(FRHIBuffer* ArgumentBuffer,
         return;
     }
 
-    if (ValidateIndirectArguments<FRHIDrawIndirectParameters>("DrawIndirectCount", ArgumentBuffer, ArgumentBufferOffset, MaxCommandCount) &&
-        ValidateIndirectCountBuffer("DrawIndirectCount", CountBuffer, CountBufferOffset))
+    if (ValidateIndirectArguments<FRHIDrawIndirectParameters>(TEXT("DrawIndirectCount"), ArgumentBuffer, ArgumentBufferOffset, MaxCommandCount) &&
+        ValidateIndirectCountBuffer(TEXT("DrawIndirectCount"), CountBuffer, CountBufferOffset))
     {
-        ValidateSceneAccelerationStructureBarriers("DrawIndirectCount");
+        ValidateSceneAccelerationStructureBarriers(TEXT("DrawIndirectCount"));
         CommandContext->DrawIndirectCount(ArgumentBuffer, ArgumentBufferOffset, CountBuffer, CountBufferOffset, MaxCommandCount);
     }
 }
@@ -2726,9 +2726,9 @@ void FRHIValidationCommandContext::DrawIndexedIndirect(FRHIBuffer* ArgumentBuffe
         return;
     }
 
-    if (ValidateIndirectArguments<FRHIDrawIndexedIndirectParameters>("DrawIndexedIndirect", ArgumentBuffer, ArgumentBufferOffset, CommandCount))
+    if (ValidateIndirectArguments<FRHIDrawIndexedIndirectParameters>(TEXT("DrawIndexedIndirect"), ArgumentBuffer, ArgumentBufferOffset, CommandCount))
     {
-        ValidateSceneAccelerationStructureBarriers("DrawIndexedIndirect");
+        ValidateSceneAccelerationStructureBarriers(TEXT("DrawIndexedIndirect"));
         CommandContext->DrawIndexedIndirect(ArgumentBuffer, ArgumentBufferOffset, CommandCount);
     }
 }
@@ -2747,10 +2747,10 @@ void FRHIValidationCommandContext::DrawIndexedIndirectCount(FRHIBuffer* Argument
         return;
     }
 
-    if (ValidateIndirectArguments<FRHIDrawIndexedIndirectParameters>("DrawIndexedIndirectCount", ArgumentBuffer, ArgumentBufferOffset, MaxCommandCount) &&
-        ValidateIndirectCountBuffer("DrawIndexedIndirectCount", CountBuffer, CountBufferOffset))
+    if (ValidateIndirectArguments<FRHIDrawIndexedIndirectParameters>(TEXT("DrawIndexedIndirectCount"), ArgumentBuffer, ArgumentBufferOffset, MaxCommandCount) &&
+        ValidateIndirectCountBuffer(TEXT("DrawIndexedIndirectCount"), CountBuffer, CountBufferOffset))
     {
-        ValidateSceneAccelerationStructureBarriers("DrawIndexedIndirectCount");
+        ValidateSceneAccelerationStructureBarriers(TEXT("DrawIndexedIndirectCount"));
         CommandContext->DrawIndexedIndirectCount(ArgumentBuffer, ArgumentBufferOffset, CountBuffer, CountBufferOffset, MaxCommandCount);
     }
 }
@@ -2769,9 +2769,9 @@ void FRHIValidationCommandContext::DispatchIndirect(FRHIBuffer* ArgumentBuffer, 
         return;
     }
 
-    if (ValidateIndirectArguments<FRHIDispatchIndirectParameters>("DispatchIndirect", ArgumentBuffer, ArgumentBufferOffset, 1))
+    if (ValidateIndirectArguments<FRHIDispatchIndirectParameters>(TEXT("DispatchIndirect"), ArgumentBuffer, ArgumentBufferOffset, 1))
     {
-        ValidateSceneAccelerationStructureBarriers("DispatchIndirect");
+        ValidateSceneAccelerationStructureBarriers(TEXT("DispatchIndirect"));
         CommandContext->DispatchIndirect(ArgumentBuffer, ArgumentBufferOffset);
     }
 }
@@ -2790,9 +2790,9 @@ void FRHIValidationCommandContext::DispatchMeshIndirect(FRHIBuffer* ArgumentBuff
         return;
     }
 
-    if (ValidateIndirectArguments<FRHIDispatchMeshIndirectParameters>("DispatchMeshIndirect", ArgumentBuffer, ArgumentBufferOffset, CommandCount))
+    if (ValidateIndirectArguments<FRHIDispatchMeshIndirectParameters>(TEXT("DispatchMeshIndirect"), ArgumentBuffer, ArgumentBufferOffset, CommandCount))
     {
-        ValidateSceneAccelerationStructureBarriers("DispatchMeshIndirect");
+        ValidateSceneAccelerationStructureBarriers(TEXT("DispatchMeshIndirect"));
         CommandContext->DispatchMeshIndirect(ArgumentBuffer, ArgumentBufferOffset, CommandCount);
     }
 }
@@ -2811,10 +2811,10 @@ void FRHIValidationCommandContext::DispatchMeshIndirectCount(FRHIBuffer* Argumen
         return;
     }
 
-    if (ValidateIndirectArguments<FRHIDispatchMeshIndirectParameters>("DispatchMeshIndirectCount", ArgumentBuffer, ArgumentBufferOffset, MaxCommandCount) &&
-        ValidateIndirectCountBuffer("DispatchMeshIndirectCount", CountBuffer, CountBufferOffset))
+    if (ValidateIndirectArguments<FRHIDispatchMeshIndirectParameters>(TEXT("DispatchMeshIndirectCount"), ArgumentBuffer, ArgumentBufferOffset, MaxCommandCount) &&
+        ValidateIndirectCountBuffer(TEXT("DispatchMeshIndirectCount"), CountBuffer, CountBufferOffset))
     {
-        ValidateSceneAccelerationStructureBarriers("DispatchMeshIndirectCount");
+        ValidateSceneAccelerationStructureBarriers(TEXT("DispatchMeshIndirectCount"));
         CommandContext->DispatchMeshIndirectCount(ArgumentBuffer, ArgumentBufferOffset, CountBuffer, CountBufferOffset, MaxCommandCount);
     }
 }
@@ -2862,7 +2862,7 @@ void FRHIValidationCommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bo
         return;
     }
 
-    if (!StateTracker->ValidateState(ValidationSwapChain->GetBackBuffer(), ERHIResourceState::Present, "PresentSwapChain back-buffer"))
+    if (!StateTracker->ValidateState(ValidationSwapChain->GetBackBuffer(), ERHIResourceState::Present, TEXT("PresentSwapChain back-buffer")))
     {
         return;
     }

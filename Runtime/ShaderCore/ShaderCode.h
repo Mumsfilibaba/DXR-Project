@@ -98,7 +98,7 @@ public:
     /** Null-terminated, empty when the container was compiled without debug info */
     NODISCARD const CHAR_T* GetBindingName(int32 BindingIndex) const
     {
-        return BindingNames.IsEmpty() ? "" : BindingNames[BindingIndex];
+        return BindingNames.IsEmpty() ? TEXT("") : BindingNames[BindingIndex];
     }
 
     NODISCARD TArrayView<const uint8> GetNativeCode() const
@@ -116,7 +116,7 @@ private:
     TArrayView<const FSpirvBindingOffsets>   SpirvOffsets;
     FMSLShaderInfo                           MSLInfo;
     TArrayView<const FMSLBindingSlot>        MSLSlots;
-    const CHAR_T*                            EntryPoint = "";
+    const CHAR_T*                            EntryPoint = TEXT("");
 
     /** Only allocated for DebugInfo containers */
     TArray<const CHAR_T*>                      BindingNames;

@@ -120,17 +120,17 @@ inline const CHAR_T* ToString(EMSLBindingType BindingType)
 {
     static constexpr const CHAR_T* const BindingTypeStrings[] =
     {
-        "Unknown",
-        "ConstantBuffer",
-        "ShaderResourceBuffer",
-        "ShaderResourceTexture",
-        "UnorderedAccessBuffer",
-        "UnorderedAccessTexture",
-        "Sampler",
-        "ShaderConstants",
-        "BindlessResourceHeap",
-        "BindlessSamplerHeap",
-        "AccelerationStructure",
+        TEXT("Unknown"),
+        TEXT("ConstantBuffer"),
+        TEXT("ShaderResourceBuffer"),
+        TEXT("ShaderResourceTexture"),
+        TEXT("UnorderedAccessBuffer"),
+        TEXT("UnorderedAccessTexture"),
+        TEXT("Sampler"),
+        TEXT("ShaderConstants"),
+        TEXT("BindlessResourceHeap"),
+        TEXT("BindlessSamplerHeap"),
+        TEXT("AccelerationStructure"),
     };
 
     static_assert(ARRAY_COUNT(BindingTypeStrings) == static_cast<int32>(EMSLBindingType::Count), "BindingTypeStrings is out of date");

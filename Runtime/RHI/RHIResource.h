@@ -36,29 +36,29 @@ NODISCARD constexpr const CHAR_T* ToString(ERHIResourceType Type)
 {
     switch (Type)
     {
-        case ERHIResourceType::Buffer:                        return "Buffer";
-        case ERHIResourceType::Texture:                       return "Texture";
-        case ERHIResourceType::SwapChain:                     return "SwapChain";
-        case ERHIResourceType::SamplerState:                  return "SamplerState";
-        case ERHIResourceType::Fence:                         return "Fence";
-        case ERHIResourceType::Query:                         return "Query";
-        case ERHIResourceType::Shader:                        return "Shader";
-        case ERHIResourceType::InputLayout:                   return "InputLayout";
-        case ERHIResourceType::PipelineState:                 return "PipelineState";
-        case ERHIResourceType::DepthStencilState:             return "DepthStencilState";
-        case ERHIResourceType::RasterizerState:               return "RasterizerState";
-        case ERHIResourceType::BlendState:                    return "BlendState";
-        case ERHIResourceType::GeometryAccelerationStructure: return "GeometryAccelerationStructure";
-        case ERHIResourceType::SceneAccelerationStructure:    return "SceneAccelerationStructure";
-        case ERHIResourceType::ClusterAccelerationStructure:  return "ClusterAccelerationStructure";
-        case ERHIResourceType::ClusterTemplate:               return "ClusterTemplate";
-        case ERHIResourceType::OpacityMicromap:               return "OpacityMicromap";
-        case ERHIResourceType::ShaderBindingTable:            return "ShaderBindingTable";
-        case ERHIResourceType::ShaderResourceView:            return "ShaderResourceView";
-        case ERHIResourceType::UnorderedAccessView:           return "UnorderedAccessView";
-        case ERHIResourceType::RenderTargetView:              return "RenderTargetView";
-        case ERHIResourceType::DepthStencilView:              return "DepthStencilView";
-        default:                                              return "Unknown";
+        case ERHIResourceType::Buffer:                        return TEXT("Buffer");
+        case ERHIResourceType::Texture:                       return TEXT("Texture");
+        case ERHIResourceType::SwapChain:                     return TEXT("SwapChain");
+        case ERHIResourceType::SamplerState:                  return TEXT("SamplerState");
+        case ERHIResourceType::Fence:                         return TEXT("Fence");
+        case ERHIResourceType::Query:                         return TEXT("Query");
+        case ERHIResourceType::Shader:                        return TEXT("Shader");
+        case ERHIResourceType::InputLayout:                   return TEXT("InputLayout");
+        case ERHIResourceType::PipelineState:                 return TEXT("PipelineState");
+        case ERHIResourceType::DepthStencilState:             return TEXT("DepthStencilState");
+        case ERHIResourceType::RasterizerState:               return TEXT("RasterizerState");
+        case ERHIResourceType::BlendState:                    return TEXT("BlendState");
+        case ERHIResourceType::GeometryAccelerationStructure: return TEXT("GeometryAccelerationStructure");
+        case ERHIResourceType::SceneAccelerationStructure:    return TEXT("SceneAccelerationStructure");
+        case ERHIResourceType::ClusterAccelerationStructure:  return TEXT("ClusterAccelerationStructure");
+        case ERHIResourceType::ClusterTemplate:               return TEXT("ClusterTemplate");
+        case ERHIResourceType::OpacityMicromap:               return TEXT("OpacityMicromap");
+        case ERHIResourceType::ShaderBindingTable:            return TEXT("ShaderBindingTable");
+        case ERHIResourceType::ShaderResourceView:            return TEXT("ShaderResourceView");
+        case ERHIResourceType::UnorderedAccessView:           return TEXT("UnorderedAccessView");
+        case ERHIResourceType::RenderTargetView:              return TEXT("RenderTargetView");
+        case ERHIResourceType::DepthStencilView:              return TEXT("DepthStencilView");
+        default:                                              return TEXT("Unknown");
     }
 }
 

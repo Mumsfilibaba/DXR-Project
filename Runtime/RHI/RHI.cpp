@@ -6,45 +6,45 @@
 IMPLEMENT_ENGINE_MODULE(FRHIModule, RHI);
 
 static TAutoConsoleVariable<bool> CVarEnableDebugLayer(
-    "RHI.EnableDebugLayer",
-    "Enables the DebugLayer for the RHI",
+    TEXT("RHI.EnableDebugLayer"),
+    TEXT("Enables the DebugLayer for the RHI"),
     false);
 
 static TAutoConsoleVariable<bool> CVarEnableValidation(
-    "RHI.EnableValidation",
-    "Enables the custom RHI-validation",
+    TEXT("RHI.EnableValidation"),
+    TEXT("Enables the custom RHI-validation"),
     false);
 
 static TAutoConsoleVariable<FString> CVarType(
-    "RHI.Type", 
-    "Selects the RHI Layer to use",
-    "Unknown");
+    TEXT("RHI.Type"), 
+    TEXT("Selects the RHI Layer to use"),
+    TEXT("Unknown"));
 
 static FRHIModule* LoadNullRHI()
 {
-    return FModuleManager::Get().LoadModule<FRHIModule>("NullRHI");
+    return FModuleManager::Get().LoadModule<FRHIModule>(TEXT("NullRHI"));
 }
 
 static ERHIType GetRHITypeFromConfig()
 {
     const FString RHITypeString = CVarType->GetString();
-    if (RHITypeString.Equals("D3D12", EStringCaseType::NoCase))
+    if (RHITypeString.Equals(TEXT("D3D12"), EStringCaseType::NoCase))
     {
         return ERHIType::D3D12;
     }
-    else if (RHITypeString.Equals("D3D11", EStringCaseType::NoCase))
+    else if (RHITypeString.Equals(TEXT("D3D11"), EStringCaseType::NoCase))
     {
         return ERHIType::D3D11;
     }
-    else if (RHITypeString.Equals("Vulkan", EStringCaseType::NoCase))
+    else if (RHITypeString.Equals(TEXT("Vulkan"), EStringCaseType::NoCase))
     {
         return ERHIType::Vulkan;
     }
-    else if (RHITypeString.Equals("Metal", EStringCaseType::NoCase))
+    else if (RHITypeString.Equals(TEXT("Metal"), EStringCaseType::NoCase))
     {
         return ERHIType::Metal;
     }
-    else if (RHITypeString.Equals("Null", EStringCaseType::NoCase))
+    else if (RHITypeString.Equals(TEXT("Null"), EStringCaseType::NoCase))
     {
         return ERHIType::Null;
     }
@@ -183,9 +183,9 @@ static ERHIType GetRHIType()
 
 RHI_API void RHI::DumpCapabilities()
 {
-    const auto YesNo = [](bool bBoolean) -> const char*
+    const auto YesNo = [](bool bBoolean) -> const CHAR_T*
     {
-        return bBoolean ? "Yes" : "No";
+        return bBoolean ? TEXT("Yes") : TEXT("No");
     };
 
     LOG_INFO("[RHI] ---------------------------------- Device Feature Support ----------------------------------");
@@ -307,19 +307,19 @@ bool RHI::Initialize()
     FRHIModule* RHIModule = nullptr;
     if (RHIType == ERHIType::D3D12)
     {
-        RHIModule = FModuleManager::Get().LoadModule<FRHIModule>("D3D12RHI");
+        RHIModule = FModuleManager::Get().LoadModule<FRHIModule>(TEXT("D3D12RHI"));
     }
     else if (RHIType == ERHIType::D3D11)
     {
-        RHIModule = FModuleManager::Get().LoadModule<FRHIModule>("D3D11RHI");
+        RHIModule = FModuleManager::Get().LoadModule<FRHIModule>(TEXT("D3D11RHI"));
     }
     else if (RHIType == ERHIType::Vulkan)
     {
-        RHIModule = FModuleManager::Get().LoadModule<FRHIModule>("VulkanRHI");
+        RHIModule = FModuleManager::Get().LoadModule<FRHIModule>(TEXT("VulkanRHI"));
     }
     else if (RHIType == ERHIType::Metal)
     {
-        RHIModule = FModuleManager::Get().LoadModule<FRHIModule>("MetalRHI");
+        RHIModule = FModuleManager::Get().LoadModule<FRHIModule>(TEXT("MetalRHI"));
     }
     else if (RHIType == ERHIType::Null)
     {

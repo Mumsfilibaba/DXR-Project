@@ -7,8 +7,8 @@
 FRHIPipelineStateCache* FRHIPipelineStateCache::PipelineStateCache = nullptr;
 
 static FAutoConsoleCommand CCmdDumpPipelineCacheStats(
-    "RHI.DumpPipelineCacheStats",
-    "Logs how many objects the pipeline state cache was asked for against how many it actually created",
+    TEXT("RHI.DumpPipelineCacheStats"),
+    TEXT("Logs how many objects the pipeline state cache was asked for against how many it actually created"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
@@ -21,17 +21,17 @@ static const CHAR_T* GetPipelineCacheKindName(EPipelineCacheKind::Type Kind)
 {
     switch (Kind)
     {
-        case EPipelineCacheKind::DepthStencilState:  return "DepthStencilState";
-        case EPipelineCacheKind::RasterizerState:    return "RasterizerState";
-        case EPipelineCacheKind::BlendState:         return "BlendState";
-        case EPipelineCacheKind::InputLayout:        return "InputLayout";
-        case EPipelineCacheKind::Shader:             return "Shader";
-        case EPipelineCacheKind::GraphicsPipeline:   return "GraphicsPipeline";
-        case EPipelineCacheKind::ComputePipeline:    return "ComputePipeline";
-        case EPipelineCacheKind::MeshletPipeline:    return "MeshletPipeline";
-        case EPipelineCacheKind::RayTracingPipeline: return "RayTracingPipeline";
+        case EPipelineCacheKind::DepthStencilState:  return TEXT("DepthStencilState");
+        case EPipelineCacheKind::RasterizerState:    return TEXT("RasterizerState");
+        case EPipelineCacheKind::BlendState:         return TEXT("BlendState");
+        case EPipelineCacheKind::InputLayout:        return TEXT("InputLayout");
+        case EPipelineCacheKind::Shader:             return TEXT("Shader");
+        case EPipelineCacheKind::GraphicsPipeline:   return TEXT("GraphicsPipeline");
+        case EPipelineCacheKind::ComputePipeline:    return TEXT("ComputePipeline");
+        case EPipelineCacheKind::MeshletPipeline:    return TEXT("MeshletPipeline");
+        case EPipelineCacheKind::RayTracingPipeline: return TEXT("RayTracingPipeline");
 
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 

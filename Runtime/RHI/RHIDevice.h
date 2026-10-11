@@ -28,13 +28,13 @@ NODISCARD constexpr const CHAR_T* ToString(ERHIType RenderLayerApi)
 {
     switch (RenderLayerApi)
     {
-        case ERHIType::Null:   return "Null";
-        case ERHIType::D3D11:  return "D3D11";
-        case ERHIType::D3D12:  return "D3D12";
-        case ERHIType::Vulkan: return "Vulkan";
-        case ERHIType::Metal:  return "Metal";
+        case ERHIType::Null:   return TEXT("Null");
+        case ERHIType::D3D11:  return TEXT("D3D11");
+        case ERHIType::D3D12:  return TEXT("D3D12");
+        case ERHIType::Vulkan: return TEXT("Vulkan");
+        case ERHIType::Metal:  return TEXT("Metal");
 
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 

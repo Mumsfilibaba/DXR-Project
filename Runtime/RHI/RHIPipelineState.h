@@ -25,16 +25,16 @@ NODISCARD constexpr const CHAR_T* ToString(EStencilOp StencilOp)
 {
     switch (StencilOp)
     {
-        case EStencilOp::Keep:    return "Keep";
-        case EStencilOp::Zero:    return "Zero";
-        case EStencilOp::Replace: return "Replace";
-        case EStencilOp::IncrSat: return "IncrSat";
-        case EStencilOp::DecrSat: return "DecrSat";
-        case EStencilOp::Invert:  return "Invert";
-        case EStencilOp::Incr:    return "Incr";
-        case EStencilOp::Decr:    return "Decr";
+        case EStencilOp::Keep:    return TEXT("Keep");
+        case EStencilOp::Zero:    return TEXT("Zero");
+        case EStencilOp::Replace: return TEXT("Replace");
+        case EStencilOp::IncrSat: return TEXT("IncrSat");
+        case EStencilOp::DecrSat: return TEXT("DecrSat");
+        case EStencilOp::Invert:  return TEXT("Invert");
+        case EStencilOp::Incr:    return TEXT("Incr");
+        case EStencilOp::Decr:    return TEXT("Decr");
         
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -130,11 +130,11 @@ NODISCARD constexpr const CHAR_T* ToString(ECullMode CullMode)
 {
     switch (CullMode)
     {
-        case ECullMode::None:  return "None";
-        case ECullMode::Front: return "Front";
-        case ECullMode::Back:  return "Back";
+        case ECullMode::None:  return TEXT("None");
+        case ECullMode::Front: return TEXT("Front");
+        case ECullMode::Back:  return TEXT("Back");
 
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -148,10 +148,10 @@ NODISCARD constexpr const CHAR_T* ToString(EFillMode FillMode)
 {
     switch (FillMode)
     {
-        case EFillMode::WireFrame: return "WireFrame";
-        case EFillMode::Solid:     return "Solid";
+        case EFillMode::WireFrame: return TEXT("WireFrame");
+        case EFillMode::Solid:     return TEXT("Solid");
         
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -243,25 +243,25 @@ NODISCARD constexpr const CHAR_T* ToString(EBlendType  Blend)
 {
     switch (Blend)
     {
-        case EBlendType::Zero:           return "Zero";
-        case EBlendType::One:            return "One";
-        case EBlendType::SrcColor:       return "SrcColor";
-        case EBlendType::InvSrcColor:    return "InvSrcColor";
-        case EBlendType::SrcAlpha:       return "SrcAlpha";
-        case EBlendType::InvSrcAlpha:    return "InvSrcAlpha";
-        case EBlendType::DstAlpha:       return "DstAlpha";
-        case EBlendType::InvDstAlpha:    return "InvDstAlpha";
-        case EBlendType::DstColor:       return "DstColor";
-        case EBlendType::InvDstColor:    return "InvDstColor";
-        case EBlendType::SrcAlphaSat:    return "SrcAlphaSat";
-        case EBlendType::BlendFactor:    return "BlendFactor";
-        case EBlendType::InvBlendFactor: return "InvBlendFactor";
-        case EBlendType::Src1Color:      return "Src1Color";
-        case EBlendType::InvSrc1Color:   return "InvSrc1Color";
-        case EBlendType::Src1Alpha:      return "Src1Alpha";
-        case EBlendType::InvSrc1Alpha:   return "InvSrc1Alpha";
+        case EBlendType::Zero:           return TEXT("Zero");
+        case EBlendType::One:            return TEXT("One");
+        case EBlendType::SrcColor:       return TEXT("SrcColor");
+        case EBlendType::InvSrcColor:    return TEXT("InvSrcColor");
+        case EBlendType::SrcAlpha:       return TEXT("SrcAlpha");
+        case EBlendType::InvSrcAlpha:    return TEXT("InvSrcAlpha");
+        case EBlendType::DstAlpha:       return TEXT("DstAlpha");
+        case EBlendType::InvDstAlpha:    return TEXT("InvDstAlpha");
+        case EBlendType::DstColor:       return TEXT("DstColor");
+        case EBlendType::InvDstColor:    return TEXT("InvDstColor");
+        case EBlendType::SrcAlphaSat:    return TEXT("SrcAlphaSat");
+        case EBlendType::BlendFactor:    return TEXT("BlendFactor");
+        case EBlendType::InvBlendFactor: return TEXT("InvBlendFactor");
+        case EBlendType::Src1Color:      return TEXT("Src1Color");
+        case EBlendType::InvSrc1Color:   return TEXT("InvSrc1Color");
+        case EBlendType::Src1Alpha:      return TEXT("Src1Alpha");
+        case EBlendType::InvSrc1Alpha:   return TEXT("InvSrc1Alpha");
         
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -278,13 +278,13 @@ NODISCARD constexpr const CHAR_T* ToString(EBlendOp BlendOp)
 {
     switch (BlendOp)
     {
-        case EBlendOp::Add:         return "Add";
-        case EBlendOp::Subtract:    return "Subtract";
-        case EBlendOp::RevSubtract: return "RevSubtract";
-        case EBlendOp::Min:         return "Min";
-        case EBlendOp::Max:         return "Max";
+        case EBlendOp::Add:         return TEXT("Add");
+        case EBlendOp::Subtract:    return TEXT("Subtract");
+        case EBlendOp::RevSubtract: return TEXT("RevSubtract");
+        case EBlendOp::Min:         return TEXT("Min");
+        case EBlendOp::Max:         return TEXT("Max");
         
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -312,24 +312,24 @@ NODISCARD constexpr const CHAR_T* ToString(ELogicOp LogicOp)
 {
     switch (LogicOp)
     {
-        case ELogicOp::Clear:        return "Clear";
-        case ELogicOp::Set:          return "Set";
-        case ELogicOp::Copy:         return "Copy";
-        case ELogicOp::CopyInverted: return "CopyInverted";
-        case ELogicOp::NoOp:         return "NoOp";
-        case ELogicOp::Invert:       return "Invert";
-        case ELogicOp::And:          return "And";
-        case ELogicOp::Nand:         return "Nand";
-        case ELogicOp::Or:           return "Or";
-        case ELogicOp::Nor:          return "Nor";
-        case ELogicOp::Xor:          return "Xor";
-        case ELogicOp::Equivalent:   return "Equivalent";
-        case ELogicOp::AndReverse:   return "AndReverse";
-        case ELogicOp::AndInverted:  return "AndInverted";
-        case ELogicOp::OrReverse:    return "OrReverse";
-        case ELogicOp::OrInverted:   return "OrInverted";
+        case ELogicOp::Clear:        return TEXT("Clear");
+        case ELogicOp::Set:          return TEXT("Set");
+        case ELogicOp::Copy:         return TEXT("Copy");
+        case ELogicOp::CopyInverted: return TEXT("CopyInverted");
+        case ELogicOp::NoOp:         return TEXT("NoOp");
+        case ELogicOp::Invert:       return TEXT("Invert");
+        case ELogicOp::And:          return TEXT("And");
+        case ELogicOp::Nand:         return TEXT("Nand");
+        case ELogicOp::Or:           return TEXT("Or");
+        case ELogicOp::Nor:          return TEXT("Nor");
+        case ELogicOp::Xor:          return TEXT("Xor");
+        case ELogicOp::Equivalent:   return TEXT("Equivalent");
+        case ELogicOp::AndReverse:   return TEXT("AndReverse");
+        case ELogicOp::AndInverted:  return TEXT("AndInverted");
+        case ELogicOp::OrReverse:    return TEXT("OrReverse");
+        case ELogicOp::OrInverted:   return TEXT("OrInverted");
         
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -444,10 +444,10 @@ NODISCARD constexpr const CHAR_T* ToString(EVertexInputClass BlendOp)
 {
     switch (BlendOp)
     {
-        case EVertexInputClass::Vertex:   return "Vertex";
-        case EVertexInputClass::Instance: return "Instance";
+        case EVertexInputClass::Vertex:   return TEXT("Vertex");
+        case EVertexInputClass::Instance: return TEXT("Instance");
         
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 

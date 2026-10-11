@@ -30,18 +30,18 @@ NODISCARD constexpr const CHAR_T* ToString(EShaderResourceType Type)
 {
     switch (Type)
     {
-        case EShaderResourceType::ConstantBuffer:        return "ConstantBuffer";
-        case EShaderResourceType::Sampler:               return "Sampler";
-        case EShaderResourceType::Texture:               return "Texture";
-        case EShaderResourceType::TypedBuffer:           return "TypedBuffer";
-        case EShaderResourceType::StructuredBuffer:      return "StructuredBuffer";
-        case EShaderResourceType::ByteAddressBuffer:     return "ByteAddressBuffer";
-        case EShaderResourceType::AccelerationStructure: return "AccelerationStructure";
-        case EShaderResourceType::RWTexture:             return "RWTexture";
-        case EShaderResourceType::RWTypedBuffer:         return "RWTypedBuffer";
-        case EShaderResourceType::RWStructuredBuffer:    return "RWStructuredBuffer";
-        case EShaderResourceType::RWByteAddressBuffer:   return "RWByteAddressBuffer";
-        default:                                         return "Unknown";
+        case EShaderResourceType::ConstantBuffer:        return TEXT("ConstantBuffer");
+        case EShaderResourceType::Sampler:               return TEXT("Sampler");
+        case EShaderResourceType::Texture:               return TEXT("Texture");
+        case EShaderResourceType::TypedBuffer:           return TEXT("TypedBuffer");
+        case EShaderResourceType::StructuredBuffer:      return TEXT("StructuredBuffer");
+        case EShaderResourceType::ByteAddressBuffer:     return TEXT("ByteAddressBuffer");
+        case EShaderResourceType::AccelerationStructure: return TEXT("AccelerationStructure");
+        case EShaderResourceType::RWTexture:             return TEXT("RWTexture");
+        case EShaderResourceType::RWTypedBuffer:         return TEXT("RWTypedBuffer");
+        case EShaderResourceType::RWStructuredBuffer:    return TEXT("RWStructuredBuffer");
+        case EShaderResourceType::RWByteAddressBuffer:   return TEXT("RWByteAddressBuffer");
+        default:                                         return TEXT("Unknown");
     }
 }
 

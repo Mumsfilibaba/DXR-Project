@@ -30,21 +30,21 @@ NODISCARD constexpr const CHAR_T* ToString(EShaderStage ShaderStage)
 {
     switch(ShaderStage)
     {
-        case EShaderStage::Vertex:          return "Vertex";
-        case EShaderStage::Hull:            return "Hull";
-        case EShaderStage::Domain:          return "Domain";
-        case EShaderStage::Geometry:        return "Geometry";
-        case EShaderStage::Mesh:            return "Mesh";
-        case EShaderStage::Amplification:   return "Amplification";
-        case EShaderStage::Pixel:           return "Pixel";
-        case EShaderStage::Compute:         return "Compute";
-        case EShaderStage::RayGen:          return "RayGen";
-        case EShaderStage::RayAnyHit:       return "RayAnyHit";
-        case EShaderStage::RayClosestHit:   return "RayClosestHit";
-        case EShaderStage::RayMiss:         return "RayMiss";
-        case EShaderStage::RayIntersection: return "RayIntersection";
-        case EShaderStage::RayCallable:     return "RayCallable";
-        default:                            return "Unknown";
+        case EShaderStage::Vertex:          return TEXT("Vertex");
+        case EShaderStage::Hull:            return TEXT("Hull");
+        case EShaderStage::Domain:          return TEXT("Domain");
+        case EShaderStage::Geometry:        return TEXT("Geometry");
+        case EShaderStage::Mesh:            return TEXT("Mesh");
+        case EShaderStage::Amplification:   return TEXT("Amplification");
+        case EShaderStage::Pixel:           return TEXT("Pixel");
+        case EShaderStage::Compute:         return TEXT("Compute");
+        case EShaderStage::RayGen:          return TEXT("RayGen");
+        case EShaderStage::RayAnyHit:       return TEXT("RayAnyHit");
+        case EShaderStage::RayClosestHit:   return TEXT("RayClosestHit");
+        case EShaderStage::RayMiss:         return TEXT("RayMiss");
+        case EShaderStage::RayIntersection: return TEXT("RayIntersection");
+        case EShaderStage::RayCallable:     return TEXT("RayCallable");
+        default:                            return TEXT("Unknown");
     }
 }
 
@@ -84,20 +84,20 @@ NODISCARD constexpr const CHAR_T* ToString(EShaderModel ShaderModel)
 {
     switch (ShaderModel)
     {
-        case EShaderModel::SM_5_0:  return "SM_5_0";
-        case EShaderModel::SM_6_0:  return "SM_6_0";
-        case EShaderModel::SM_6_1:  return "SM_6_1";
-        case EShaderModel::SM_6_2:  return "SM_6_2";
-        case EShaderModel::SM_6_3:  return "SM_6_3";
-        case EShaderModel::SM_6_4:  return "SM_6_4";
-        case EShaderModel::SM_6_5:  return "SM_6_5";
-        case EShaderModel::SM_6_6:  return "SM_6_6";
-        case EShaderModel::SM_6_7:  return "SM_6_7";
-        case EShaderModel::SM_6_8:  return "SM_6_8";
-        case EShaderModel::SM_6_9:  return "SM_6_9";
-        case EShaderModel::SM_6_10: return "SM_6_10";
+        case EShaderModel::SM_5_0:  return TEXT("SM_5_0");
+        case EShaderModel::SM_6_0:  return TEXT("SM_6_0");
+        case EShaderModel::SM_6_1:  return TEXT("SM_6_1");
+        case EShaderModel::SM_6_2:  return TEXT("SM_6_2");
+        case EShaderModel::SM_6_3:  return TEXT("SM_6_3");
+        case EShaderModel::SM_6_4:  return TEXT("SM_6_4");
+        case EShaderModel::SM_6_5:  return TEXT("SM_6_5");
+        case EShaderModel::SM_6_6:  return TEXT("SM_6_6");
+        case EShaderModel::SM_6_7:  return TEXT("SM_6_7");
+        case EShaderModel::SM_6_8:  return TEXT("SM_6_8");
+        case EShaderModel::SM_6_9:  return TEXT("SM_6_9");
+        case EShaderModel::SM_6_10: return TEXT("SM_6_10");
 
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -122,11 +122,11 @@ NODISCARD constexpr const CHAR_T* ToString(EShaderOutputLanguage OutputLanguage)
 {
     switch (OutputLanguage)
     {
-        case EShaderOutputLanguage::DXIL:  return "DXIL";
-        case EShaderOutputLanguage::MSL:   return "MSL";
-        case EShaderOutputLanguage::SPIRV: return "SPIRV";
-        case EShaderOutputLanguage::DXBC:  return "DXBC";
-        default:                           return "Unknown";
+        case EShaderOutputLanguage::DXIL:  return TEXT("DXIL");
+        case EShaderOutputLanguage::MSL:   return TEXT("MSL");
+        case EShaderOutputLanguage::SPIRV: return TEXT("SPIRV");
+        case EShaderOutputLanguage::DXBC:  return TEXT("DXBC");
+        default:                           return TEXT("Unknown");
     }
 }
 

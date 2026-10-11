@@ -31,7 +31,7 @@ namespace RHIValidationInternal
     { \
         RHIValidationInternal::IncrementErrorCount(); \
         LOG_ERROR("[RHI VALIDATION ERROR] " __VA_ARGS__); \
-        RHIValidationInternal::LogCallStack(__FILE__, __LINE__); \
+        RHIValidationInternal::LogCallStack(TEXT(__FILE__), __LINE__); \
         if (RHIValidationInternal::ShouldBreakOnValidationError()) \
         { \
             DEBUG_BREAK(); \

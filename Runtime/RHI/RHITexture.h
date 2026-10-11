@@ -68,15 +68,15 @@ NODISCARD constexpr const CHAR_T* ToString(ETextureDimension TextureDimension)
 {
 	switch (TextureDimension)
 	{
-	case ETextureDimension::Texture1D:        return "Texture1D";
-	case ETextureDimension::Texture1DArray:   return "Texture1DArray";
-	case ETextureDimension::Texture2D:        return "Texture2D";
-	case ETextureDimension::Texture2DArray:   return "Texture2DArray";
-	case ETextureDimension::TextureCube:      return "TextureCube";
-	case ETextureDimension::TextureCubeArray: return "TextureCubeArray";
-	case ETextureDimension::Texture3D:        return "Texture3D";
+	case ETextureDimension::Texture1D:        return TEXT("Texture1D");
+	case ETextureDimension::Texture1DArray:   return TEXT("Texture1DArray");
+	case ETextureDimension::Texture2D:        return TEXT("Texture2D");
+	case ETextureDimension::Texture2DArray:   return TEXT("Texture2DArray");
+	case ETextureDimension::TextureCube:      return TEXT("TextureCube");
+	case ETextureDimension::TextureCubeArray: return TEXT("TextureCubeArray");
+	case ETextureDimension::Texture3D:        return TEXT("Texture3D");
 
-	default: return "Unknown";
+	default: return TEXT("Unknown");
 	}
 }
 

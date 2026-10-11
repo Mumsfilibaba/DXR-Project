@@ -154,92 +154,92 @@ NODISCARD constexpr const CHAR_T* ToString(EFormat Format)
 {
     switch (Format)
     {
-        case EFormat::R32G32B32A32_Typeless:    return "R32G32B32A32_Typeless";
-        case EFormat::R32G32B32A32_Float:       return "R32G32B32A32_Float";
-        case EFormat::R32G32B32A32_Uint:        return "R32G32B32A32_Uint";
-        case EFormat::R32G32B32A32_Sint:        return "R32G32B32A32_Sint";
-        case EFormat::R32G32B32_Typeless:       return "R32G32B32_Typeless";
-        case EFormat::R32G32B32_Float:          return "R32G32B32_Float";
-        case EFormat::R32G32B32_Uint:           return "R32G32B32_Uint";
-        case EFormat::R32G32B32_Sint:           return "R32G32B32_Sint";
-        case EFormat::R16G16B16A16_Typeless:    return "R16G16B16A16_Typeless";
-        case EFormat::R16G16B16A16_Float:       return "R16G16B16A16_Float";
-        case EFormat::R16G16B16A16_Unorm:       return "R16G16B16A16_Unorm";
-        case EFormat::R16G16B16A16_Uint:        return "R16G16B16A16_Uint";
-        case EFormat::R16G16B16A16_Snorm:       return "R16G16B16A16_Snorm";
-        case EFormat::R16G16B16A16_Sint:        return "R16G16B16A16_Sint";
-        case EFormat::R32G32_Typeless:          return "R32G32_Typeless";
-        case EFormat::R32G32_Float:             return "R32G32_Float";
-        case EFormat::R32G32_Uint:              return "R32G32_Uint";
-        case EFormat::R32G32_Sint:              return "R32G32_Sint";
-        case EFormat::R10G10B10A2_Typeless:     return "R10G10B10A2_Typeless";
-        case EFormat::R10G10B10A2_Unorm:        return "R10G10B10A2_Unorm";
-        case EFormat::R10G10B10A2_Uint:         return "R10G10B10A2_Uint";
-        case EFormat::R11G11B10_Float:          return "R11G11B10_Float";
-        case EFormat::R8G8B8A8_Typeless:        return "R8G8B8A8_Typeless";
-        case EFormat::R8G8B8A8_Unorm:           return "R8G8B8A8_Unorm";
-        case EFormat::R8G8B8A8_Unorm_SRGB:      return "R8G8B8A8_Unorm_SRGB";
-        case EFormat::R8G8B8A8_Uint:            return "R8G8B8A8_Uint";
-        case EFormat::R8G8B8A8_Snorm:           return "R8G8B8A8_Snorm";
-        case EFormat::R8G8B8A8_Sint:            return "R8G8B8A8_Sint";
-        case EFormat::R16G16_Typeless:          return "R16G16_Typeless";
-        case EFormat::R16G16_Float:             return "R16G16_Float";
-        case EFormat::R16G16_Unorm:             return "R16G16_Unorm";
-        case EFormat::R16G16_Uint:              return "R16G16_Uint";
-        case EFormat::R16G16_Snorm:             return "R16G16_Snorm";
-        case EFormat::R16G16_Sint:              return "R16G16_Sint";
-        case EFormat::R32_Typeless:             return "R32_Typeless";
-        case EFormat::D32_Float:                return "D32_Float";
-        case EFormat::R32_Float:                return "R32_Float";
-        case EFormat::R32_Uint:                 return "R32_Uint";
-        case EFormat::R32_Sint:                 return "R32_Sint";
-        case EFormat::R24G8_Typeless:           return "R24G8_Typeless";
-        case EFormat::D24_Unorm_S8_Uint:        return "D24_Unorm_S8_Uint";
-        case EFormat::R24_Unorm_X8_Typeless:    return "R24_Unorm_X8_Typeless";
-        case EFormat::X24_Typeless_G8_Uint:     return "X24_Typeless_G8_Uint";
-        case EFormat::R8G8_Typeless:            return "R8G8_Typeless";
-        case EFormat::R8G8_Unorm:               return "R8G8_Unorm";
-        case EFormat::R8G8_Uint:                return "R8G8_Uint";
-        case EFormat::R8G8_Snorm:               return "R8G8_Snorm";
-        case EFormat::R8G8_Sint:                return "R8G8_Sint";
-        case EFormat::R16_Typeless:             return "R16_Typeless";
-        case EFormat::R16_Float:                return "R16_Float";
-        case EFormat::D16_Unorm:                return "D16_Unorm";
-        case EFormat::R16_Unorm:                return "R16_Unorm";
-        case EFormat::R16_Uint:                 return "R16_Uint";
-        case EFormat::R16_Snorm:                return "R16_Snorm";
-        case EFormat::R16_Sint:                 return "R16_Sint";
-        case EFormat::R8_Typeless:              return "R8_Typeless";
-        case EFormat::R8_Unorm:                 return "R8_Unorm";
-        case EFormat::R8_Uint:                  return "R8_Uint";
-        case EFormat::R8_Snorm:                 return "R8_Snorm";
-        case EFormat::R8_Sint:                  return "R8_Sint";
-        case EFormat::BC1_Typeless:             return "BC1_Typeless";
-        case EFormat::BC1_UNorm:                return "BC1_UNorm";
-        case EFormat::BC1_UNorm_SRGB:           return "BC1_UNorm_SRGB";
-        case EFormat::BC2_Typeless:             return "BC2_Typeless";
-        case EFormat::BC2_UNorm:                return "BC2_UNorm";
-        case EFormat::BC2_UNorm_SRGB:           return "BC2_UNorm_SRGB";
-        case EFormat::BC3_Typeless:             return "BC3_Typeless";
-        case EFormat::BC3_UNorm:                return "BC3_UNorm";
-        case EFormat::BC3_UNorm_SRGB:           return "BC3_UNorm_SRGB";
-        case EFormat::BC4_Typeless:             return "BC4_Typeless";
-        case EFormat::BC4_UNorm:                return "BC4_UNorm";
-        case EFormat::BC4_SNorm:                return "BC4_SNorm";
-        case EFormat::BC5_Typeless:             return "BC5_Typeless";
-        case EFormat::BC5_UNorm:                return "BC5_UNorm";
-        case EFormat::BC5_SNorm:                return "BC5_SNorm";
-        case EFormat::BC6H_Typeless:            return "BC6H_Typeless";
-        case EFormat::BC6H_UF16:                return "BC6H_UF16";
-        case EFormat::BC6H_SF16:                return "BC6H_SF16";
-        case EFormat::BC7_Typeless:             return "BC7_Typeless";
-        case EFormat::BC7_UNorm:                return "BC7_UNorm";
-        case EFormat::BC7_UNorm_SRGB:           return "BC7_UNorm_SRGB";
+        case EFormat::R32G32B32A32_Typeless:    return TEXT("R32G32B32A32_Typeless");
+        case EFormat::R32G32B32A32_Float:       return TEXT("R32G32B32A32_Float");
+        case EFormat::R32G32B32A32_Uint:        return TEXT("R32G32B32A32_Uint");
+        case EFormat::R32G32B32A32_Sint:        return TEXT("R32G32B32A32_Sint");
+        case EFormat::R32G32B32_Typeless:       return TEXT("R32G32B32_Typeless");
+        case EFormat::R32G32B32_Float:          return TEXT("R32G32B32_Float");
+        case EFormat::R32G32B32_Uint:           return TEXT("R32G32B32_Uint");
+        case EFormat::R32G32B32_Sint:           return TEXT("R32G32B32_Sint");
+        case EFormat::R16G16B16A16_Typeless:    return TEXT("R16G16B16A16_Typeless");
+        case EFormat::R16G16B16A16_Float:       return TEXT("R16G16B16A16_Float");
+        case EFormat::R16G16B16A16_Unorm:       return TEXT("R16G16B16A16_Unorm");
+        case EFormat::R16G16B16A16_Uint:        return TEXT("R16G16B16A16_Uint");
+        case EFormat::R16G16B16A16_Snorm:       return TEXT("R16G16B16A16_Snorm");
+        case EFormat::R16G16B16A16_Sint:        return TEXT("R16G16B16A16_Sint");
+        case EFormat::R32G32_Typeless:          return TEXT("R32G32_Typeless");
+        case EFormat::R32G32_Float:             return TEXT("R32G32_Float");
+        case EFormat::R32G32_Uint:              return TEXT("R32G32_Uint");
+        case EFormat::R32G32_Sint:              return TEXT("R32G32_Sint");
+        case EFormat::R10G10B10A2_Typeless:     return TEXT("R10G10B10A2_Typeless");
+        case EFormat::R10G10B10A2_Unorm:        return TEXT("R10G10B10A2_Unorm");
+        case EFormat::R10G10B10A2_Uint:         return TEXT("R10G10B10A2_Uint");
+        case EFormat::R11G11B10_Float:          return TEXT("R11G11B10_Float");
+        case EFormat::R8G8B8A8_Typeless:        return TEXT("R8G8B8A8_Typeless");
+        case EFormat::R8G8B8A8_Unorm:           return TEXT("R8G8B8A8_Unorm");
+        case EFormat::R8G8B8A8_Unorm_SRGB:      return TEXT("R8G8B8A8_Unorm_SRGB");
+        case EFormat::R8G8B8A8_Uint:            return TEXT("R8G8B8A8_Uint");
+        case EFormat::R8G8B8A8_Snorm:           return TEXT("R8G8B8A8_Snorm");
+        case EFormat::R8G8B8A8_Sint:            return TEXT("R8G8B8A8_Sint");
+        case EFormat::R16G16_Typeless:          return TEXT("R16G16_Typeless");
+        case EFormat::R16G16_Float:             return TEXT("R16G16_Float");
+        case EFormat::R16G16_Unorm:             return TEXT("R16G16_Unorm");
+        case EFormat::R16G16_Uint:              return TEXT("R16G16_Uint");
+        case EFormat::R16G16_Snorm:             return TEXT("R16G16_Snorm");
+        case EFormat::R16G16_Sint:              return TEXT("R16G16_Sint");
+        case EFormat::R32_Typeless:             return TEXT("R32_Typeless");
+        case EFormat::D32_Float:                return TEXT("D32_Float");
+        case EFormat::R32_Float:                return TEXT("R32_Float");
+        case EFormat::R32_Uint:                 return TEXT("R32_Uint");
+        case EFormat::R32_Sint:                 return TEXT("R32_Sint");
+        case EFormat::R24G8_Typeless:           return TEXT("R24G8_Typeless");
+        case EFormat::D24_Unorm_S8_Uint:        return TEXT("D24_Unorm_S8_Uint");
+        case EFormat::R24_Unorm_X8_Typeless:    return TEXT("R24_Unorm_X8_Typeless");
+        case EFormat::X24_Typeless_G8_Uint:     return TEXT("X24_Typeless_G8_Uint");
+        case EFormat::R8G8_Typeless:            return TEXT("R8G8_Typeless");
+        case EFormat::R8G8_Unorm:               return TEXT("R8G8_Unorm");
+        case EFormat::R8G8_Uint:                return TEXT("R8G8_Uint");
+        case EFormat::R8G8_Snorm:               return TEXT("R8G8_Snorm");
+        case EFormat::R8G8_Sint:                return TEXT("R8G8_Sint");
+        case EFormat::R16_Typeless:             return TEXT("R16_Typeless");
+        case EFormat::R16_Float:                return TEXT("R16_Float");
+        case EFormat::D16_Unorm:                return TEXT("D16_Unorm");
+        case EFormat::R16_Unorm:                return TEXT("R16_Unorm");
+        case EFormat::R16_Uint:                 return TEXT("R16_Uint");
+        case EFormat::R16_Snorm:                return TEXT("R16_Snorm");
+        case EFormat::R16_Sint:                 return TEXT("R16_Sint");
+        case EFormat::R8_Typeless:              return TEXT("R8_Typeless");
+        case EFormat::R8_Unorm:                 return TEXT("R8_Unorm");
+        case EFormat::R8_Uint:                  return TEXT("R8_Uint");
+        case EFormat::R8_Snorm:                 return TEXT("R8_Snorm");
+        case EFormat::R8_Sint:                  return TEXT("R8_Sint");
+        case EFormat::BC1_Typeless:             return TEXT("BC1_Typeless");
+        case EFormat::BC1_UNorm:                return TEXT("BC1_UNorm");
+        case EFormat::BC1_UNorm_SRGB:           return TEXT("BC1_UNorm_SRGB");
+        case EFormat::BC2_Typeless:             return TEXT("BC2_Typeless");
+        case EFormat::BC2_UNorm:                return TEXT("BC2_UNorm");
+        case EFormat::BC2_UNorm_SRGB:           return TEXT("BC2_UNorm_SRGB");
+        case EFormat::BC3_Typeless:             return TEXT("BC3_Typeless");
+        case EFormat::BC3_UNorm:                return TEXT("BC3_UNorm");
+        case EFormat::BC3_UNorm_SRGB:           return TEXT("BC3_UNorm_SRGB");
+        case EFormat::BC4_Typeless:             return TEXT("BC4_Typeless");
+        case EFormat::BC4_UNorm:                return TEXT("BC4_UNorm");
+        case EFormat::BC4_SNorm:                return TEXT("BC4_SNorm");
+        case EFormat::BC5_Typeless:             return TEXT("BC5_Typeless");
+        case EFormat::BC5_UNorm:                return TEXT("BC5_UNorm");
+        case EFormat::BC5_SNorm:                return TEXT("BC5_SNorm");
+        case EFormat::BC6H_Typeless:            return TEXT("BC6H_Typeless");
+        case EFormat::BC6H_UF16:                return TEXT("BC6H_UF16");
+        case EFormat::BC6H_SF16:                return TEXT("BC6H_SF16");
+        case EFormat::BC7_Typeless:             return TEXT("BC7_Typeless");
+        case EFormat::BC7_UNorm:                return TEXT("BC7_UNorm");
+        case EFormat::BC7_UNorm_SRGB:           return TEXT("BC7_UNorm_SRGB");
 
-        case EFormat::SamplerFeedbackMinMipOpaque:        return "SamplerFeedbackMinMipOpaque";
-        case EFormat::SamplerFeedbackMipRegionUsedOpaque: return "SamplerFeedbackMipRegionUsedOpaque";
+        case EFormat::SamplerFeedbackMinMipOpaque:        return TEXT("SamplerFeedbackMinMipOpaque");
+        case EFormat::SamplerFeedbackMipRegionUsedOpaque: return TEXT("SamplerFeedbackMipRegionUsedOpaque");
 
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -405,12 +405,12 @@ NODISCARD constexpr const CHAR_T* ToString(EColorSpace ColorSpace)
 {
     switch (ColorSpace)
     {
-        case EColorSpace::RGB_Full_G22_None_P709:    return "RGB_Full_G22_None_P709";
-        case EColorSpace::RGB_Full_G10_None_P709:    return "RGB_Full_G10_None_P709";
-        case EColorSpace::RGB_Full_G2084_None_P2020: return "RGB_Full_G2084_None_P2020";
-        case EColorSpace::RGB_Full_G22_None_P2020:   return "RGB_Full_G22_None_P2020";
+        case EColorSpace::RGB_Full_G22_None_P709:    return TEXT("RGB_Full_G22_None_P709");
+        case EColorSpace::RGB_Full_G10_None_P709:    return TEXT("RGB_Full_G10_None_P709");
+        case EColorSpace::RGB_Full_G2084_None_P2020: return TEXT("RGB_Full_G2084_None_P2020");
+        case EColorSpace::RGB_Full_G22_None_P2020:   return TEXT("RGB_Full_G22_None_P2020");
 
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -500,10 +500,10 @@ NODISCARD constexpr const CHAR_T* ToString(EIndexFormat IndexFormat)
 {
     switch (IndexFormat)
     {
-        case EIndexFormat::uint16: return "uint16";
-        case EIndexFormat::uint32: return "uint32";
+        case EIndexFormat::uint16: return TEXT("uint16");
+        case EIndexFormat::uint32: return TEXT("uint32");
         
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -566,16 +566,16 @@ NODISCARD constexpr const CHAR_T* ToString(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
-    case EComparisonFunc::Never:        return "Never";
-    case EComparisonFunc::Less:         return "Less";
-    case EComparisonFunc::Equal:        return "Equal";
-    case EComparisonFunc::LessEqual:    return "LessEqual";
-    case EComparisonFunc::Greater:      return "Greater";
-    case EComparisonFunc::NotEqual:     return "NotEqual";
-    case EComparisonFunc::GreaterEqual: return "GreaterEqual";
-    case EComparisonFunc::Always:       return "Always";
+    case EComparisonFunc::Never:        return TEXT("Never");
+    case EComparisonFunc::Less:         return TEXT("Less");
+    case EComparisonFunc::Equal:        return TEXT("Equal");
+    case EComparisonFunc::LessEqual:    return TEXT("LessEqual");
+    case EComparisonFunc::Greater:      return TEXT("Greater");
+    case EComparisonFunc::NotEqual:     return TEXT("NotEqual");
+    case EComparisonFunc::GreaterEqual: return TEXT("GreaterEqual");
+    case EComparisonFunc::Always:       return TEXT("Always");
     
-    default: return "Unknown";
+    default: return TEXT("Unknown");
     }
 }
 
@@ -612,30 +612,30 @@ NODISCARD constexpr const CHAR_T* ToString(ERHIResourceState ResourceState)
 {
     switch (ResourceState)
     {
-    case ERHIResourceState::Common:                          return "Common";
-    case ERHIResourceState::ConstantBuffer:                  return "ConstantBuffer";
-    case ERHIResourceState::IndexBuffer:                     return "IndexBuffer";
-    case ERHIResourceState::VertexBuffer:                    return "VertexBuffer";
-    case ERHIResourceState::RenderTarget:                    return "RenderTarget";
-    case ERHIResourceState::UnorderedAccess:                 return "UnorderedAccess";
-    case ERHIResourceState::DepthWrite:                      return "DepthWrite";
-    case ERHIResourceState::DepthRead:                       return "DepthRead";
-    case ERHIResourceState::NonPixelShaderResource:          return "NonPixelShaderResource";
-    case ERHIResourceState::PixelShaderResource:             return "PixelShaderResource";
-    case ERHIResourceState::CopyDest:                        return "CopyDest";
-    case ERHIResourceState::CopySource:                      return "CopySource";
-    case ERHIResourceState::ResolveDest:                     return "ResolveDest";
-    case ERHIResourceState::ResolveSource:                   return "ResolveSource";
-    case ERHIResourceState::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
-    case ERHIResourceState::ShadingRateSource:               return "ShadingRateSource";
-    case ERHIResourceState::Present:                         return "Present";
-    case ERHIResourceState::GenericRead:                     return "GenericRead";
-    case ERHIResourceState::StreamOutput:                    return "StreamOutput";
-    case ERHIResourceState::IndirectArgument:                return "IndirectArgument";
-    case ERHIResourceState::Undefined:                       return "Undefined";
-    case ERHIResourceState::ShaderResource:                  return "ShaderResource";
+    case ERHIResourceState::Common:                          return TEXT("Common");
+    case ERHIResourceState::ConstantBuffer:                  return TEXT("ConstantBuffer");
+    case ERHIResourceState::IndexBuffer:                     return TEXT("IndexBuffer");
+    case ERHIResourceState::VertexBuffer:                    return TEXT("VertexBuffer");
+    case ERHIResourceState::RenderTarget:                    return TEXT("RenderTarget");
+    case ERHIResourceState::UnorderedAccess:                 return TEXT("UnorderedAccess");
+    case ERHIResourceState::DepthWrite:                      return TEXT("DepthWrite");
+    case ERHIResourceState::DepthRead:                       return TEXT("DepthRead");
+    case ERHIResourceState::NonPixelShaderResource:          return TEXT("NonPixelShaderResource");
+    case ERHIResourceState::PixelShaderResource:             return TEXT("PixelShaderResource");
+    case ERHIResourceState::CopyDest:                        return TEXT("CopyDest");
+    case ERHIResourceState::CopySource:                      return TEXT("CopySource");
+    case ERHIResourceState::ResolveDest:                     return TEXT("ResolveDest");
+    case ERHIResourceState::ResolveSource:                   return TEXT("ResolveSource");
+    case ERHIResourceState::RayTracingAccelerationStructure: return TEXT("RayTracingAccelerationStructure");
+    case ERHIResourceState::ShadingRateSource:               return TEXT("ShadingRateSource");
+    case ERHIResourceState::Present:                         return TEXT("Present");
+    case ERHIResourceState::GenericRead:                     return TEXT("GenericRead");
+    case ERHIResourceState::StreamOutput:                    return TEXT("StreamOutput");
+    case ERHIResourceState::IndirectArgument:                return TEXT("IndirectArgument");
+    case ERHIResourceState::Undefined:                       return TEXT("Undefined");
+    case ERHIResourceState::ShaderResource:                  return TEXT("ShaderResource");
     
-    default: return "Unknown";
+    default: return TEXT("Unknown");
     }
 }
 
@@ -716,50 +716,50 @@ NODISCARD constexpr const CHAR_T* ToString(EPrimitiveTopology ResourceState)
 {
     switch (ResourceState)
     {
-    case EPrimitiveTopology::Undefined:              return "Undefined";
-    case EPrimitiveTopology::PointList:              return "PointList";
-    case EPrimitiveTopology::LineList:               return "LineList";
-    case EPrimitiveTopology::LineStrip:              return "LineStrip";
-    case EPrimitiveTopology::TriangleList:           return "TriangleList";
-    case EPrimitiveTopology::TriangleStrip:          return "TriangleStrip";
-    case EPrimitiveTopology::LineListAdjacency:      return "LineListAdjacency";
-    case EPrimitiveTopology::LineStripAdjacency:     return "LineStripAdjacency";
-    case EPrimitiveTopology::TriangleListAdjacency:  return "TriangleListAdjacency";
-    case EPrimitiveTopology::TriangleStripAdjacency: return "TriangleStripAdjacency";
-    case EPrimitiveTopology::PatchList_1:            return "PatchList_1";
-    case EPrimitiveTopology::PatchList_2:            return "PatchList_2";
-    case EPrimitiveTopology::PatchList_3:            return "PatchList_3";
-    case EPrimitiveTopology::PatchList_4:            return "PatchList_4";
-    case EPrimitiveTopology::PatchList_5:            return "PatchList_5";
-    case EPrimitiveTopology::PatchList_6:            return "PatchList_6";
-    case EPrimitiveTopology::PatchList_7:            return "PatchList_7";
-    case EPrimitiveTopology::PatchList_8:            return "PatchList_8";
-    case EPrimitiveTopology::PatchList_9:            return "PatchList_9";
-    case EPrimitiveTopology::PatchList_10:           return "PatchList_10";
-    case EPrimitiveTopology::PatchList_11:           return "PatchList_11";
-    case EPrimitiveTopology::PatchList_12:           return "PatchList_12";
-    case EPrimitiveTopology::PatchList_13:           return "PatchList_13";
-    case EPrimitiveTopology::PatchList_14:           return "PatchList_14";
-    case EPrimitiveTopology::PatchList_15:           return "PatchList_15";
-    case EPrimitiveTopology::PatchList_16:           return "PatchList_16";
-    case EPrimitiveTopology::PatchList_17:           return "PatchList_17";
-    case EPrimitiveTopology::PatchList_18:           return "PatchList_18";
-    case EPrimitiveTopology::PatchList_19:           return "PatchList_19";
-    case EPrimitiveTopology::PatchList_20:           return "PatchList_20";
-    case EPrimitiveTopology::PatchList_21:           return "PatchList_21";
-    case EPrimitiveTopology::PatchList_22:           return "PatchList_22";
-    case EPrimitiveTopology::PatchList_23:           return "PatchList_23";
-    case EPrimitiveTopology::PatchList_24:           return "PatchList_24";
-    case EPrimitiveTopology::PatchList_25:           return "PatchList_25";
-    case EPrimitiveTopology::PatchList_26:           return "PatchList_26";
-    case EPrimitiveTopology::PatchList_27:           return "PatchList_27";
-    case EPrimitiveTopology::PatchList_28:           return "PatchList_28";
-    case EPrimitiveTopology::PatchList_29:           return "PatchList_29";
-    case EPrimitiveTopology::PatchList_30:           return "PatchList_30";
-    case EPrimitiveTopology::PatchList_31:           return "PatchList_31";
-    case EPrimitiveTopology::PatchList_32:           return "PatchList_32";
+    case EPrimitiveTopology::Undefined:              return TEXT("Undefined");
+    case EPrimitiveTopology::PointList:              return TEXT("PointList");
+    case EPrimitiveTopology::LineList:               return TEXT("LineList");
+    case EPrimitiveTopology::LineStrip:              return TEXT("LineStrip");
+    case EPrimitiveTopology::TriangleList:           return TEXT("TriangleList");
+    case EPrimitiveTopology::TriangleStrip:          return TEXT("TriangleStrip");
+    case EPrimitiveTopology::LineListAdjacency:      return TEXT("LineListAdjacency");
+    case EPrimitiveTopology::LineStripAdjacency:     return TEXT("LineStripAdjacency");
+    case EPrimitiveTopology::TriangleListAdjacency:  return TEXT("TriangleListAdjacency");
+    case EPrimitiveTopology::TriangleStripAdjacency: return TEXT("TriangleStripAdjacency");
+    case EPrimitiveTopology::PatchList_1:            return TEXT("PatchList_1");
+    case EPrimitiveTopology::PatchList_2:            return TEXT("PatchList_2");
+    case EPrimitiveTopology::PatchList_3:            return TEXT("PatchList_3");
+    case EPrimitiveTopology::PatchList_4:            return TEXT("PatchList_4");
+    case EPrimitiveTopology::PatchList_5:            return TEXT("PatchList_5");
+    case EPrimitiveTopology::PatchList_6:            return TEXT("PatchList_6");
+    case EPrimitiveTopology::PatchList_7:            return TEXT("PatchList_7");
+    case EPrimitiveTopology::PatchList_8:            return TEXT("PatchList_8");
+    case EPrimitiveTopology::PatchList_9:            return TEXT("PatchList_9");
+    case EPrimitiveTopology::PatchList_10:           return TEXT("PatchList_10");
+    case EPrimitiveTopology::PatchList_11:           return TEXT("PatchList_11");
+    case EPrimitiveTopology::PatchList_12:           return TEXT("PatchList_12");
+    case EPrimitiveTopology::PatchList_13:           return TEXT("PatchList_13");
+    case EPrimitiveTopology::PatchList_14:           return TEXT("PatchList_14");
+    case EPrimitiveTopology::PatchList_15:           return TEXT("PatchList_15");
+    case EPrimitiveTopology::PatchList_16:           return TEXT("PatchList_16");
+    case EPrimitiveTopology::PatchList_17:           return TEXT("PatchList_17");
+    case EPrimitiveTopology::PatchList_18:           return TEXT("PatchList_18");
+    case EPrimitiveTopology::PatchList_19:           return TEXT("PatchList_19");
+    case EPrimitiveTopology::PatchList_20:           return TEXT("PatchList_20");
+    case EPrimitiveTopology::PatchList_21:           return TEXT("PatchList_21");
+    case EPrimitiveTopology::PatchList_22:           return TEXT("PatchList_22");
+    case EPrimitiveTopology::PatchList_23:           return TEXT("PatchList_23");
+    case EPrimitiveTopology::PatchList_24:           return TEXT("PatchList_24");
+    case EPrimitiveTopology::PatchList_25:           return TEXT("PatchList_25");
+    case EPrimitiveTopology::PatchList_26:           return TEXT("PatchList_26");
+    case EPrimitiveTopology::PatchList_27:           return TEXT("PatchList_27");
+    case EPrimitiveTopology::PatchList_28:           return TEXT("PatchList_28");
+    case EPrimitiveTopology::PatchList_29:           return TEXT("PatchList_29");
+    case EPrimitiveTopology::PatchList_30:           return TEXT("PatchList_30");
+    case EPrimitiveTopology::PatchList_31:           return TEXT("PatchList_31");
+    case EPrimitiveTopology::PatchList_32:           return TEXT("PatchList_32");
     
-    default: return "Unknown";
+    default: return TEXT("Unknown");
     }
 }
 
@@ -829,15 +829,15 @@ NODISCARD constexpr const CHAR_T* ToString(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
-    case EShadingRate::VRS_1x1: return "VRS_1x1";
-    case EShadingRate::VRS_1x2: return "VRS_1x2";
-    case EShadingRate::VRS_2x1: return "VRS_2x1";
-    case EShadingRate::VRS_2x2: return "VRS_2x2";
-    case EShadingRate::VRS_2x4: return "VRS_2x4";
-    case EShadingRate::VRS_4x2: return "VRS_4x2";
-    case EShadingRate::VRS_4x4: return "VRS_4x4";
+    case EShadingRate::VRS_1x1: return TEXT("VRS_1x1");
+    case EShadingRate::VRS_1x2: return TEXT("VRS_1x2");
+    case EShadingRate::VRS_2x1: return TEXT("VRS_2x1");
+    case EShadingRate::VRS_2x2: return TEXT("VRS_2x2");
+    case EShadingRate::VRS_2x4: return TEXT("VRS_2x4");
+    case EShadingRate::VRS_4x2: return TEXT("VRS_4x2");
+    case EShadingRate::VRS_4x4: return TEXT("VRS_4x4");
     
-    default: return "Unknown";
+    default: return TEXT("Unknown");
     }
 }
 
@@ -854,12 +854,12 @@ NODISCARD constexpr const CHAR_T* ToString(EDescriptorType DescriptorType)
 {
     switch (DescriptorType)
     {
-        case EDescriptorType::UnorderedAccess: return "UnorderedAccess";
-        case EDescriptorType::ShaderResource:  return "ShaderResource";
-        case EDescriptorType::ConstantBuffer:  return "ConstantBuffer";
-        case EDescriptorType::Sampler:         return "Sampler";
+        case EDescriptorType::UnorderedAccess: return TEXT("UnorderedAccess");
+        case EDescriptorType::ShaderResource:  return TEXT("ShaderResource");
+        case EDescriptorType::ConstantBuffer:  return TEXT("ConstantBuffer");
+        case EDescriptorType::Sampler:         return TEXT("Sampler");
         
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -1247,9 +1247,9 @@ NODISCARD constexpr const CHAR_T* ToString(ERayTracingGeometryType Type)
 {
     switch (Type)
     {
-        case ERayTracingGeometryType::Triangles:       return "Triangles";
-        case ERayTracingGeometryType::ProceduralAABBs: return "ProceduralAABBs";
-        default:                                       return "Unknown";
+        case ERayTracingGeometryType::Triangles:       return TEXT("Triangles");
+        case ERayTracingGeometryType::ProceduralAABBs: return TEXT("ProceduralAABBs");
+        default:                                       return TEXT("Unknown");
     }
 }
 
@@ -1344,11 +1344,11 @@ NODISCARD constexpr const CHAR_T* ToString(ERHIResourceStateTrackingMode Trackin
 {
     switch (TrackingMode)
     {
-    case ERHIResourceStateTrackingMode::Tracked: return "Tracked";
-    case ERHIResourceStateTrackingMode::Static:  return "Static";
-    case ERHIResourceStateTrackingMode::Manual:  return "Manual";
+    case ERHIResourceStateTrackingMode::Tracked: return TEXT("Tracked");
+    case ERHIResourceStateTrackingMode::Static:  return TEXT("Static");
+    case ERHIResourceStateTrackingMode::Manual:  return TEXT("Manual");
 
-    default: return "Unknown";
+    default: return TEXT("Unknown");
     }
 }
 

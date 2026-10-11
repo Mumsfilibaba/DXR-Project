@@ -70,11 +70,11 @@ NODISCARD constexpr const CHAR_T* ToString(ERayTracingShaderRecordKind Kind)
 {
     switch (Kind)
     {
-        case ERayTracingShaderRecordKind::RayGeneration: return "RayGeneration";
-        case ERayTracingShaderRecordKind::Miss:          return "Miss";
-        case ERayTracingShaderRecordKind::Callable:      return "Callable";
-        case ERayTracingShaderRecordKind::HitGroup:      return "HitGroup";
-        default:                                         return "Unknown";
+        case ERayTracingShaderRecordKind::RayGeneration: return TEXT("RayGeneration");
+        case ERayTracingShaderRecordKind::Miss:          return TEXT("Miss");
+        case ERayTracingShaderRecordKind::Callable:      return TEXT("Callable");
+        case ERayTracingShaderRecordKind::HitGroup:      return TEXT("HitGroup");
+        default:                                         return TEXT("Unknown");
     }
 }
 
@@ -94,11 +94,11 @@ NODISCARD constexpr const CHAR_T* ToString(ERayTracingAccelerationStructureType 
 {
     switch (Type)
     {
-        case ERayTracingAccelerationStructureType::Geometry:         return "Geometry";
-        case ERayTracingAccelerationStructureType::Scene:            return "Scene";
-        case ERayTracingAccelerationStructureType::Cluster:          return "Cluster";
-        case ERayTracingAccelerationStructureType::PartitionedScene: return "PartitionedScene";
-        default:                                                     return "Unknown";
+        case ERayTracingAccelerationStructureType::Geometry:         return TEXT("Geometry");
+        case ERayTracingAccelerationStructureType::Scene:            return TEXT("Scene");
+        case ERayTracingAccelerationStructureType::Cluster:          return TEXT("Cluster");
+        case ERayTracingAccelerationStructureType::PartitionedScene: return TEXT("PartitionedScene");
+        default:                                                     return TEXT("Unknown");
     }
 }
 
@@ -118,11 +118,11 @@ NODISCARD constexpr const CHAR_T* ToString(EAccelerationStructurePostBuildInfoTy
 {
     switch (Type)
     {
-        case EAccelerationStructurePostBuildInfoType::CompactedSize:      return "CompactedSize";
-        case EAccelerationStructurePostBuildInfoType::CurrentSize:        return "CurrentSize";
-        case EAccelerationStructurePostBuildInfoType::Serialization:      return "Serialization";
-        case EAccelerationStructurePostBuildInfoType::ToolsVisualization: return "ToolsVisualization";
-        default:                                                          return "Unknown";
+        case EAccelerationStructurePostBuildInfoType::CompactedSize:      return TEXT("CompactedSize");
+        case EAccelerationStructurePostBuildInfoType::CurrentSize:        return TEXT("CurrentSize");
+        case EAccelerationStructurePostBuildInfoType::Serialization:      return TEXT("Serialization");
+        case EAccelerationStructurePostBuildInfoType::ToolsVisualization: return TEXT("ToolsVisualization");
+        default:                                                          return TEXT("Unknown");
     }
 }
 
@@ -139,12 +139,12 @@ NODISCARD constexpr const CHAR_T* ToString(EAccelerationStructureCopyMode Mode)
 {
     switch (Mode)
     {
-        case EAccelerationStructureCopyMode::Clone:                    return "Clone";
-        case EAccelerationStructureCopyMode::Compact:                  return "Compact";
-        case EAccelerationStructureCopyMode::Serialize:                return "Serialize";
-        case EAccelerationStructureCopyMode::Deserialize:              return "Deserialize";
-        case EAccelerationStructureCopyMode::ToolsVisualizationDecode: return "ToolsVisualizationDecode";
-        default:                                                       return "Unknown";
+        case EAccelerationStructureCopyMode::Clone:                    return TEXT("Clone");
+        case EAccelerationStructureCopyMode::Compact:                  return TEXT("Compact");
+        case EAccelerationStructureCopyMode::Serialize:                return TEXT("Serialize");
+        case EAccelerationStructureCopyMode::Deserialize:              return TEXT("Deserialize");
+        case EAccelerationStructureCopyMode::ToolsVisualizationDecode: return TEXT("ToolsVisualizationDecode");
+        default:                                                       return TEXT("Unknown");
     }
 }
 

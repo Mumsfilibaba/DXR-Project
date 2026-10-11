@@ -22,12 +22,12 @@ NODISCARD constexpr const CHAR_T* ToString(EQueryType QueryType)
 {
     switch (QueryType)
     {
-        case EQueryType::Timestamp:          return "Timestamp";
-        case EQueryType::Occlusion:          return "Occlusion";
-        case EQueryType::PipelineStatistics: return "PipelineStatistics";
+        case EQueryType::Timestamp:          return TEXT("Timestamp");
+        case EQueryType::Occlusion:          return TEXT("Occlusion");
+        case EQueryType::PipelineStatistics: return TEXT("PipelineStatistics");
         
         default: 
-            return "Unknown EQueryType";
+            return TEXT("Unknown EQueryType");
     }
 }
 

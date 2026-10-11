@@ -8,18 +8,18 @@
 #include "RHI/ValidationLayer/RHIValidationInternal.h"
 
 static TAutoConsoleVariable<bool> CVarEnableValidationDebugBreak(
-    "RHI.EnableValidationDebugBreak",
-    "Enables debug-breaks when detecting errors in the custom RHI-validation layer",
+    TEXT("RHI.EnableValidationDebugBreak"),
+    TEXT("Enables debug-breaks when detecting errors in the custom RHI-validation layer"),
     true);
 
 static TAutoConsoleVariable<bool> CVarEnableResourceStateValidation(
-    "RHI.EnableResourceStateValidation",
-    "Tracks the state of every resource so the validation layer can detect a missing barrier",
+    TEXT("RHI.EnableResourceStateValidation"),
+    TEXT("Tracks the state of every resource so the validation layer can detect a missing barrier"),
     true);
 
 static TAutoConsoleVariable<bool> CVarEnableValidationCallstack(
-    "RHI.EnableValidationCallstack",
-    "Prints a callstack the first time each site in the custom RHI-validation layer reports an error",
+    TEXT("RHI.EnableValidationCallstack"),
+    TEXT("Prints a callstack the first time each site in the custom RHI-validation layer reports an error"),
     true);
 
 static constexpr int32 ValidationCallStackDepth = 24;
@@ -77,7 +77,7 @@ void RHIValidationInternal::LogCallStack(const CHAR_T* Filename, int32 Line)
     const TArray<FStackTraceEntry> Stack = FPlatformStackTrace::GetStack(ValidationCallStackDepth, 0);
 
     int32 FirstFrame = 0;
-    while (FirstFrame < Stack.Size() && CString::Strstr(Stack[FirstFrame].FunctionName, "RHIValidation") != nullptr)
+    while (FirstFrame < Stack.Size() && CString::Strstr(Stack[FirstFrame].FunctionName, TEXT("RHIValidation")) != nullptr)
     {
         FirstFrame++;
     }
@@ -93,11 +93,11 @@ void RHIValidationInternal::LogCallStack(const CHAR_T* Filename, int32 Line)
         const FStackTraceEntry& Entry = Stack[Index];
         if (Entry.Filename[0])
         {
-            Record.AppendPrintf("\n    [%2d] %s (%s:%u)", Index - FirstFrame, Entry.FunctionName, Entry.Filename, Entry.Line);
+            Record.AppendPrintf(TEXT("\n    [%2d] %s (%s:%u)"), Index - FirstFrame, Entry.FunctionName, Entry.Filename, Entry.Line);
         }
         else
         {
-            Record.AppendPrintf("\n    [%2d] %s [%s]", Index - FirstFrame, Entry.FunctionName, Entry.ModuleName);
+            Record.AppendPrintf(TEXT("\n    [%2d] %s [%s]"), Index - FirstFrame, Entry.FunctionName, Entry.ModuleName);
         }
     }
 
@@ -129,7 +129,7 @@ FString RHIValidationInternal::GetResourceIdentity(const FRHIResource* Resource)
 {
     if (!Resource)
     {
-        return FString("<null>");
+        return FString(TEXT("<null>"));
     }
 
     // Only textures and buffers carry a debug name, and the shared base does not declare the accessor
@@ -144,10 +144,10 @@ FString RHIValidationInternal::GetResourceIdentity(const FRHIResource* Resource)
     const CHAR_T* ResourceType = ToString(Resource->GetResourceType());
     if (DebugName.IsEmpty())
     {
-        return FString::Printf("%s <unnamed> (%p)", ResourceType, reinterpret_cast<const void*>(Resource));
+        return FString::Printf(TEXT("%s <unnamed> (%p)"), ResourceType, reinterpret_cast<const void*>(Resource));
     }
 
-    return FString::Printf("%s '%s'", ResourceType, *DebugName);
+    return FString::Printf(TEXT("%s '%s'"), ResourceType, *DebugName);
 }
 
 bool RHIValidationInternal::IsBufferValidAsCopyDestination(const FRHIBufferDesc& BufferDesc)

@@ -271,7 +271,7 @@ public:
 
     virtual FString GetAdapterName() const override final
     {
-        return FString("NullRHI Adapter");
+        return FString(TEXT("NullRHI Adapter"));
     }
 
     virtual ERHIType GetRHIType() const override final;

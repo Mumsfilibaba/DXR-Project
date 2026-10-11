@@ -4,48 +4,48 @@
 // Command Submission Stats
 // -------------------------------------------------------------------------------------------
 
-STAT_DEFINE_COUNTER(STAT_RHI_DrawCalls,     "Draw Calls",     "RHI");
-STAT_DEFINE_COUNTER(STAT_RHI_DispatchCalls, "Dispatch Calls", "RHI");
-STAT_DEFINE_COUNTER(STAT_RHI_Commands,      "Commands",       "RHI");
+STAT_DEFINE_COUNTER(STAT_RHI_DrawCalls,     TEXT("Draw Calls"),     TEXT("RHI"));
+STAT_DEFINE_COUNTER(STAT_RHI_DispatchCalls, TEXT("Dispatch Calls"), TEXT("RHI"));
+STAT_DEFINE_COUNTER(STAT_RHI_Commands,      TEXT("Commands"),       TEXT("RHI"));
 
 // -------------------------------------------------------------------------------------------
 // Texture Memory Stats
 // -------------------------------------------------------------------------------------------
 
-STAT_DEFINE_MEMORY(STAT_RHI_TextureMemory,      "Texture Memory",       "RHI");
-STAT_DEFINE_MEMORY(STAT_RHI_RenderTargetMemory, "Render Target Memory", "RHI");
+STAT_DEFINE_MEMORY(STAT_RHI_TextureMemory,      TEXT("Texture Memory"),       TEXT("RHI"));
+STAT_DEFINE_MEMORY(STAT_RHI_RenderTargetMemory, TEXT("Render Target Memory"), TEXT("RHI"));
 
 // -------------------------------------------------------------------------------------------
 // Buffer Memory Stats
 // -------------------------------------------------------------------------------------------
 
-STAT_DEFINE_MEMORY(STAT_RHI_VertexBufferMemory,     "Vertex Buffer Memory",     "RHI");
-STAT_DEFINE_MEMORY(STAT_RHI_IndexBufferMemory,      "Index Buffer Memory",      "RHI");
-STAT_DEFINE_MEMORY(STAT_RHI_ConstantBufferMemory,   "Constant Buffer Memory",   "RHI");
-STAT_DEFINE_MEMORY(STAT_RHI_StructuredBufferMemory, "Structured Buffer Memory", "RHI");
-STAT_DEFINE_MEMORY(STAT_RHI_MiscBufferMemory,       "Misc Buffer Memory",       "RHI");
+STAT_DEFINE_MEMORY(STAT_RHI_VertexBufferMemory,     TEXT("Vertex Buffer Memory"),     TEXT("RHI"));
+STAT_DEFINE_MEMORY(STAT_RHI_IndexBufferMemory,      TEXT("Index Buffer Memory"),      TEXT("RHI"));
+STAT_DEFINE_MEMORY(STAT_RHI_ConstantBufferMemory,   TEXT("Constant Buffer Memory"),   TEXT("RHI"));
+STAT_DEFINE_MEMORY(STAT_RHI_StructuredBufferMemory, TEXT("Structured Buffer Memory"), TEXT("RHI"));
+STAT_DEFINE_MEMORY(STAT_RHI_MiscBufferMemory,       TEXT("Misc Buffer Memory"),       TEXT("RHI"));
 
 // -------------------------------------------------------------------------------------------
 // Other Memory Stats
 // -------------------------------------------------------------------------------------------
 
-STAT_DEFINE_MEMORY(STAT_RHI_AccelerationStructureMemory, "Acceleration Structure Memory", "RHI");
-STAT_DEFINE_MEMORY(STAT_RHI_UploadMemory,                "Upload Memory",                 "RHI");
-STAT_DEFINE_MEMORY(STAT_RHI_ReadbackMemory,              "Readback Memory",               "RHI");
+STAT_DEFINE_MEMORY(STAT_RHI_AccelerationStructureMemory, TEXT("Acceleration Structure Memory"), TEXT("RHI"));
+STAT_DEFINE_MEMORY(STAT_RHI_UploadMemory,                TEXT("Upload Memory"),                 TEXT("RHI"));
+STAT_DEFINE_MEMORY(STAT_RHI_ReadbackMemory,              TEXT("Readback Memory"),               TEXT("RHI"));
 
 // -------------------------------------------------------------------------------------------
 // Ray Tracing Acceleration Structure Stats
 // -------------------------------------------------------------------------------------------
 
-STAT_DEFINE_COUNTER(STAT_RHI_BLASCount,                  "BLAS Count", "RHI");
-STAT_DEFINE_COUNTER(STAT_RHI_TLASCount,                  "TLAS Count", "RHI");
-STAT_DEFINE_COUNTER(STAT_RHI_AccelerationStructureBuilds, "AS Builds", "RHI");
+STAT_DEFINE_COUNTER(STAT_RHI_BLASCount,                  TEXT("BLAS Count"), TEXT("RHI"));
+STAT_DEFINE_COUNTER(STAT_RHI_TLASCount,                  TEXT("TLAS Count"), TEXT("RHI"));
+STAT_DEFINE_COUNTER(STAT_RHI_AccelerationStructureBuilds, TEXT("AS Builds"), TEXT("RHI"));
 
 // -------------------------------------------------------------------------------------------
 // Budget Stats
 // -------------------------------------------------------------------------------------------
 
-STAT_DEFINE_MEMORY(STAT_RHI_LocalMemoryBudget,     "Local Memory Budget",      "RHI Budget");
-STAT_DEFINE_MEMORY(STAT_RHI_LocalMemoryUsage,      "Local Memory Usage",       "RHI Budget");
-STAT_DEFINE_MEMORY(STAT_RHI_NonLocalMemoryBudget,  "Non-Local Memory Budget",  "RHI Budget");
-STAT_DEFINE_MEMORY(STAT_RHI_NonLocalMemoryUsage,   "Non-Local Memory Usage",   "RHI Budget");
+STAT_DEFINE_MEMORY(STAT_RHI_LocalMemoryBudget,     TEXT("Local Memory Budget"),      TEXT("RHI Budget"));
+STAT_DEFINE_MEMORY(STAT_RHI_LocalMemoryUsage,      TEXT("Local Memory Usage"),       TEXT("RHI Budget"));
+STAT_DEFINE_MEMORY(STAT_RHI_NonLocalMemoryBudget,  TEXT("Non-Local Memory Budget"),  TEXT("RHI Budget"));
+STAT_DEFINE_MEMORY(STAT_RHI_NonLocalMemoryUsage,   TEXT("Non-Local Memory Usage"),   TEXT("RHI Budget"));

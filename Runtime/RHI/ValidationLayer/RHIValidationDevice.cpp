@@ -31,7 +31,7 @@ static bool ValidateOutputFormatsSampleCount(const CHAR_T* Caller, FRHIDevice* D
 {
     for (uint32 Index = 0; Index < OutputFormats.NumRenderTargets; ++Index)
     {
-        if (!ValidateAttachmentSampleCount(Caller, Device, "render-target", OutputFormats.RenderTargetFormats[Index], SampleCount))
+        if (!ValidateAttachmentSampleCount(Caller, Device, TEXT("render-target"), OutputFormats.RenderTargetFormats[Index], SampleCount))
         {
             return false;
         }
@@ -39,7 +39,7 @@ static bool ValidateOutputFormatsSampleCount(const CHAR_T* Caller, FRHIDevice* D
 
     if (OutputFormats.DepthStencilFormat != EFormat::Unknown)
     {
-        return ValidateAttachmentSampleCount(Caller, Device, "depth-stencil", OutputFormats.DepthStencilFormat, SampleCount);
+        return ValidateAttachmentSampleCount(Caller, Device, TEXT("depth-stencil"), OutputFormats.DepthStencilFormat, SampleCount);
     }
 
     return true;
@@ -547,7 +547,7 @@ FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc,
     if (StorageFlagCount != 1)
     {
         RHI_VALIDATION_ERROR("CreateBuffer: Exactly one memory flag must be set. The options are Default/Dynamic/ReadBack/Transient. (The flags set are Default=%s, Dynamic=%s, ReadBack=%s, Transient=%s).",
-            bMemoryDefault ? "true" : "false", bMemoryDynamic ? "true" : "false", bMemoryReadBack ? "true" : "false", bMemoryTransient ? "true" : "false");
+            bMemoryDefault ? TEXT("true") : TEXT("false"), bMemoryDynamic ? TEXT("true") : TEXT("false"), bMemoryReadBack ? TEXT("true") : TEXT("false"), bMemoryTransient ? TEXT("true") : TEXT("false"));
         return nullptr;
     }
 
@@ -640,14 +640,14 @@ FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc,
     {
         if (BufferDesc.Stride == 0)
         {
-            RHI_VALIDATION_ERROR("CreateBuffer: %s requires a non-zero Stride. (Stride=0).", bIsVertexBuffer ? "VertexBuffer" : "IndexBuffer");
+            RHI_VALIDATION_ERROR("CreateBuffer: %s requires a non-zero Stride. (Stride=0).", bIsVertexBuffer ? TEXT("VertexBuffer") : TEXT("IndexBuffer"));
             return nullptr;
         }
 
         if ((BufferDesc.Size % BufferDesc.Stride) != 0ull)
         {
             RHI_VALIDATION_ERROR("CreateBuffer: %s size must be a multiple of Stride to satisfy device feature support. (Size=%llu, Stride=%u).",
-                bIsVertexBuffer ? "VertexBuffer" : "IndexBuffer", static_cast<uint64>(BufferDesc.Size), BufferDesc.Stride);
+                bIsVertexBuffer ? TEXT("VertexBuffer") : TEXT("IndexBuffer"), static_cast<uint64>(BufferDesc.Size), BufferDesc.Stride);
             return nullptr;
         }
 
@@ -676,7 +676,7 @@ FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc,
         if (BufferDesc.Size > RHI::MaxStorageBufferSize)
         {
 			RHI_VALIDATION_ERROR("CreateBuffer: %s size exceeds device feature support. (Size=%llu, MaxStorageBufferSize=%llu).",
-				bIsUnorderedAccessBuffer ? "UnorderedAccessBuffer" : "ShaderResourceBuffer", static_cast<uint64>(BufferDesc.Size),
+				bIsUnorderedAccessBuffer ? TEXT("UnorderedAccessBuffer") : TEXT("ShaderResourceBuffer"), static_cast<uint64>(BufferDesc.Size),
 				static_cast<uint64>(RHI::MaxStorageBufferSize));
             return nullptr;
         }
@@ -716,7 +716,7 @@ FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc,
         if (bMemoryReadBack)
         {
             RHI_VALIDATION_ERROR("CreateBuffer: %s cannot use ReadBack storage. ReadBack heaps are not GPU-readable/writable.",
-                bIsUnorderedAccessBuffer ? "UnorderedAccessBuffer" : "ShaderResourceBuffer");
+                bIsUnorderedAccessBuffer ? TEXT("UnorderedAccessBuffer") : TEXT("ShaderResourceBuffer"));
             return nullptr;
         }
     }
@@ -910,7 +910,7 @@ FRHIShaderResourceView* FRHIValidationDevice::CreateShaderResourceView(FRHIResou
             return nullptr;
         }
 
-        if (!ValidateBufferView("CreateShaderResourceView", Buffer->GetDesc(), InDesc.Buffer.Type,
+        if (!ValidateBufferView(TEXT("CreateShaderResourceView"), Buffer->GetDesc(), InDesc.Buffer.Type,
             InDesc.Buffer.FirstElement, InDesc.Buffer.NumElements, InDesc.Buffer.Format))
         {
             return nullptr;
@@ -996,7 +996,7 @@ FRHIShaderResourceView* FRHIValidationDevice::CreateShaderResourceView(FRHIResou
                 break;
         }
 
-        if (!ValidateTextureSlicesAndMips("CreateShaderResourceView", TextureDesc, BaseLayer, LayerCount, FirstMip, NumMips, ViewFormat, InDesc.ViewDimension))
+        if (!ValidateTextureSlicesAndMips(TEXT("CreateShaderResourceView"), TextureDesc, BaseLayer, LayerCount, FirstMip, NumMips, ViewFormat, InDesc.ViewDimension))
         {
             return nullptr;
         }
@@ -1055,7 +1055,7 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateUnorderedAccessView(FRHIRes
             return nullptr;
         }
 
-        if (!ValidateBufferView("CreateUnorderedAccessView", Buffer->GetDesc(), InDesc.Buffer.Type,
+        if (!ValidateBufferView(TEXT("CreateUnorderedAccessView"), Buffer->GetDesc(), InDesc.Buffer.Type,
             InDesc.Buffer.FirstElement, InDesc.Buffer.NumElements, InDesc.Buffer.Format))
         {
             return nullptr;
@@ -1141,7 +1141,7 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateUnorderedAccessView(FRHIRes
                 break;
         }
 
-        if (!ValidateTextureSlicesAndMips("CreateUnorderedAccessView", TextureDesc, BaseLayer, LayerCount, MipLevel, 1u, ViewFormat, InDesc.ViewDimension))
+        if (!ValidateTextureSlicesAndMips(TEXT("CreateUnorderedAccessView"), TextureDesc, BaseLayer, LayerCount, MipLevel, 1u, ViewFormat, InDesc.ViewDimension))
         {
             return nullptr;
         }
@@ -1156,7 +1156,7 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateUnorderedAccessView(FRHIRes
         if (InDesc.ViewDimension == EViewDimension::Texture3D)
         {
             FIntVector3 MipExtent;
-            if (!ValidateTextureMip("CreateUnorderedAccessView", TextureDesc, MipLevel, MipExtent))
+            if (!ValidateTextureMip(TEXT("CreateUnorderedAccessView"), TextureDesc, MipLevel, MipExtent))
             {
                 return nullptr;
             }
@@ -1309,7 +1309,7 @@ FRHIRenderTargetView* FRHIValidationDevice::CreateRenderTargetView(FRHIResource*
             break;
     }
 
-    if (!ValidateTextureSlicesAndMips("CreateRenderTargetView", TextureDesc, BaseLayer, LayerCount, MipLevel, 1u, ViewFormat, InDesc.ViewDimension))
+    if (!ValidateTextureSlicesAndMips(TEXT("CreateRenderTargetView"), TextureDesc, BaseLayer, LayerCount, MipLevel, 1u, ViewFormat, InDesc.ViewDimension))
     {
         return nullptr;
     }
@@ -1323,7 +1323,7 @@ FRHIRenderTargetView* FRHIValidationDevice::CreateRenderTargetView(FRHIResource*
     if (InDesc.ViewDimension == EViewDimension::Texture3D)
     {
         FIntVector3 MipExtent;
-        if (!ValidateTextureMip("CreateRenderTargetView", TextureDesc, MipLevel, MipExtent))
+        if (!ValidateTextureMip(TEXT("CreateRenderTargetView"), TextureDesc, MipLevel, MipExtent))
         {
             return nullptr;
         }
@@ -1418,7 +1418,7 @@ FRHIDepthStencilView* FRHIValidationDevice::CreateDepthStencilView(FRHIResource*
             break;
     }
 
-    if (!ValidateTextureSlicesAndMips("CreateDepthStencilView", TextureDesc, BaseLayer, LayerCount, MipLevel, 1u, ViewFormat, InDesc.ViewDimension))
+    if (!ValidateTextureSlicesAndMips(TEXT("CreateDepthStencilView"), TextureDesc, BaseLayer, LayerCount, MipLevel, 1u, ViewFormat, InDesc.ViewDimension))
     {
         return nullptr;
     }
@@ -1472,7 +1472,7 @@ FRHIComputeShader* FRHIValidationDevice::CreateComputeShader(const TArray<uint8>
         return nullptr;
     }
 
-    if (!ValidateShaderCode("CreateComputeShader", Device->GetRHIType(), EShaderStage::Compute, ShaderCode))
+    if (!ValidateShaderCode(TEXT("CreateComputeShader"), Device->GetRHIType(), EShaderStage::Compute, ShaderCode))
     {
         return nullptr;
     }
@@ -1488,7 +1488,7 @@ FRHIVertexShader* FRHIValidationDevice::CreateVertexShader(const TArray<uint8>& 
         return nullptr;
     }
 
-    if (!ValidateShaderCode("CreateVertexShader", Device->GetRHIType(), EShaderStage::Vertex, ShaderCode))
+    if (!ValidateShaderCode(TEXT("CreateVertexShader"), Device->GetRHIType(), EShaderStage::Vertex, ShaderCode))
     {
         return nullptr;
     }
@@ -1510,7 +1510,7 @@ FRHIHullShader* FRHIValidationDevice::CreateHullShader(const TArray<uint8>& Shad
         return nullptr;
     }
 
-    if (!ValidateShaderCode("CreateHullShader", Device->GetRHIType(), EShaderStage::Hull, ShaderCode))
+    if (!ValidateShaderCode(TEXT("CreateHullShader"), Device->GetRHIType(), EShaderStage::Hull, ShaderCode))
     {
         return nullptr;
     }
@@ -1532,7 +1532,7 @@ FRHIDomainShader* FRHIValidationDevice::CreateDomainShader(const TArray<uint8>& 
         return nullptr;
     }
 
-    if (!ValidateShaderCode("CreateDomainShader", Device->GetRHIType(), EShaderStage::Domain, ShaderCode))
+    if (!ValidateShaderCode(TEXT("CreateDomainShader"), Device->GetRHIType(), EShaderStage::Domain, ShaderCode))
     {
         return nullptr;
     }
@@ -1554,7 +1554,7 @@ FRHIGeometryShader* FRHIValidationDevice::CreateGeometryShader(const TArray<uint
         return nullptr;
     }
 
-    if (!ValidateShaderCode("CreateGeometryShader", Device->GetRHIType(), EShaderStage::Geometry, ShaderCode))
+    if (!ValidateShaderCode(TEXT("CreateGeometryShader"), Device->GetRHIType(), EShaderStage::Geometry, ShaderCode))
     {
         return nullptr;
     }
@@ -1570,7 +1570,7 @@ FRHIMeshShader* FRHIValidationDevice::CreateMeshShader(const TArray<uint8>& Shad
         return nullptr;
     }
 
-    if (!ValidateShaderCode("CreateMeshShader", Device->GetRHIType(), EShaderStage::Mesh, ShaderCode))
+    if (!ValidateShaderCode(TEXT("CreateMeshShader"), Device->GetRHIType(), EShaderStage::Mesh, ShaderCode))
     {
         return nullptr;
     }
@@ -1586,7 +1586,7 @@ FRHIAmplificationShader* FRHIValidationDevice::CreateAmplificationShader(const T
         return nullptr;
     }
 
-    if (!ValidateShaderCode("CreateAmplificationShader", Device->GetRHIType(), EShaderStage::Amplification, ShaderCode))
+    if (!ValidateShaderCode(TEXT("CreateAmplificationShader"), Device->GetRHIType(), EShaderStage::Amplification, ShaderCode))
     {
         return nullptr;
     }
@@ -1602,7 +1602,7 @@ FRHIPixelShader* FRHIValidationDevice::CreatePixelShader(const TArray<uint8>& Sh
         return nullptr;
     }
 
-    if (!ValidateShaderCode("CreatePixelShader", Device->GetRHIType(), EShaderStage::Pixel, ShaderCode))
+    if (!ValidateShaderCode(TEXT("CreatePixelShader"), Device->GetRHIType(), EShaderStage::Pixel, ShaderCode))
     {
         return nullptr;
     }
@@ -1618,7 +1618,7 @@ FRHIRayGenShader* FRHIValidationDevice::CreateRayGenShader(const TArray<uint8>& 
         return nullptr;
     }
 
-    if (!ValidateShaderCode("CreateRayGenShader", Device->GetRHIType(), EShaderStage::RayGen, ShaderCode))
+    if (!ValidateShaderCode(TEXT("CreateRayGenShader"), Device->GetRHIType(), EShaderStage::RayGen, ShaderCode))
     {
         return nullptr;
     }
@@ -1634,7 +1634,7 @@ FRHIRayAnyHitShader* FRHIValidationDevice::CreateRayAnyHitShader(const TArray<ui
         return nullptr;
     }
 
-    if (!ValidateShaderCode("CreateRayAnyHitShader", Device->GetRHIType(), EShaderStage::RayAnyHit, ShaderCode))
+    if (!ValidateShaderCode(TEXT("CreateRayAnyHitShader"), Device->GetRHIType(), EShaderStage::RayAnyHit, ShaderCode))
     {
         return nullptr;
     }
@@ -1650,7 +1650,7 @@ FRHIRayClosestHitShader* FRHIValidationDevice::CreateRayClosestHitShader(const T
         return nullptr;
     }
 
-    if (!ValidateShaderCode("CreateRayClosestHitShader", Device->GetRHIType(), EShaderStage::RayClosestHit, ShaderCode))
+    if (!ValidateShaderCode(TEXT("CreateRayClosestHitShader"), Device->GetRHIType(), EShaderStage::RayClosestHit, ShaderCode))
     {
         return nullptr;
     }
@@ -1666,7 +1666,7 @@ FRHIRayMissShader* FRHIValidationDevice::CreateRayMissShader(const TArray<uint8>
         return nullptr;
     }
 
-    if (!ValidateShaderCode("CreateRayMissShader", Device->GetRHIType(), EShaderStage::RayMiss, ShaderCode))
+    if (!ValidateShaderCode(TEXT("CreateRayMissShader"), Device->GetRHIType(), EShaderStage::RayMiss, ShaderCode))
     {
         return nullptr;
     }
@@ -1682,7 +1682,7 @@ FRHIRayIntersectionShader* FRHIValidationDevice::CreateRayIntersectionShader(con
         return nullptr;
     }
 
-    if (!ValidateShaderCode("CreateRayIntersectionShader", Device->GetRHIType(), EShaderStage::RayIntersection, ShaderCode))
+    if (!ValidateShaderCode(TEXT("CreateRayIntersectionShader"), Device->GetRHIType(), EShaderStage::RayIntersection, ShaderCode))
     {
         return nullptr;
     }
@@ -1698,7 +1698,7 @@ FRHIRayCallableShader* FRHIValidationDevice::CreateRayCallableShader(const TArra
         return nullptr;
     }
 
-    if (!ValidateShaderCode("CreateRayCallableShader", Device->GetRHIType(), EShaderStage::RayCallable, ShaderCode))
+    if (!ValidateShaderCode(TEXT("CreateRayCallableShader"), Device->GetRHIType(), EShaderStage::RayCallable, ShaderCode))
     {
         return nullptr;
     }
@@ -1815,7 +1815,7 @@ FRHIGraphicsPipelineState* FRHIValidationDevice::CreateGraphicsPipelineState(con
         return nullptr;
     }
 
-    if (!ValidateOutputFormatsSampleCount("CreateGraphicsPipelineState", Device, InDesc.RasterizerOutputFormats, InDesc.MultiSampleState.SampleCount))
+    if (!ValidateOutputFormatsSampleCount(TEXT("CreateGraphicsPipelineState"), Device, InDesc.RasterizerOutputFormats, InDesc.MultiSampleState.SampleCount))
     {
         return nullptr;
     }
@@ -1863,7 +1863,7 @@ FRHIMeshletPipelineState* FRHIValidationDevice::CreateMeshletPipelineState(const
         return nullptr;
     }
 
-    if (!ValidateOutputFormatsSampleCount("CreateMeshletPipelineState", Device, InDesc.RasterizerOutputFormats, InDesc.MultiSampleState.SampleCount))
+    if (!ValidateOutputFormatsSampleCount(TEXT("CreateMeshletPipelineState"), Device, InDesc.RasterizerOutputFormats, InDesc.MultiSampleState.SampleCount))
     {
         return nullptr;
     }

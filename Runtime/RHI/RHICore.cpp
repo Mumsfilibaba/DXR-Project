@@ -4,45 +4,45 @@
 #include "Core/Misc/ConsoleManager.h"
 
 static FAutoConsoleCommand CCmdDumpRayTracingCapsCommand(
-    "RHI.DumpRayTracingCaps",
-    "Logs the ray-tracing (DXR 2.0) capability table for the active RHI backend",
+    TEXT("RHI.DumpRayTracingCaps"),
+    TEXT("Logs the ray-tracing (DXR 2.0) capability table for the active RHI backend"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         RHI::DumpRayTracingCapabilities();
     }));
 
 static FAutoConsoleCommand CCmdDumpCapsCommand(
-    "RHI.DumpCaps",
-    "Logs the full device capability table (general + ray tracing) for the active RHI backend",
+    TEXT("RHI.DumpCaps"),
+    TEXT("Logs the full device capability table (general + ray tracing) for the active RHI backend"),
     FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         RHI::DumpCapabilities();
     }));
 
 static TAutoConsoleVariable<bool> CVarHDRUseDisplayLuminance(
-    "RHI.HDR.UseDisplayLuminance",
-    "Derive the mastering luminance range from the display instead of the RHI.HDR.*Luminance CVars, "
-    "on backends that can report it.",
+    TEXT("RHI.HDR.UseDisplayLuminance"),
+    TEXT("Derive the mastering luminance range from the display instead of the RHI.HDR.*Luminance CVars, "
+    "on backends that can report it."),
     true);
 
 static TAutoConsoleVariable<float> CVarHDRMaxMasteringLuminance(
-    "RHI.HDR.MaxMasteringLuminance",
-    "Maximum mastering-display luminance in nits.",
+    TEXT("RHI.HDR.MaxMasteringLuminance"),
+    TEXT("Maximum mastering-display luminance in nits."),
     1000.0f);
 
 static TAutoConsoleVariable<float> CVarHDRMinMasteringLuminance(
-    "RHI.HDR.MinMasteringLuminance",
-    "Minimum mastering-display luminance in nits.",
+    TEXT("RHI.HDR.MinMasteringLuminance"),
+    TEXT("Minimum mastering-display luminance in nits."),
     0.001f);
 
 static TAutoConsoleVariable<float> CVarHDRMaxContentLightLevel(
-    "RHI.HDR.MaxContentLightLevel",
-    "MaxCLL: brightest single pixel in the content, in nits.",
+    TEXT("RHI.HDR.MaxContentLightLevel"),
+    TEXT("MaxCLL: brightest single pixel in the content, in nits."),
     1000.0f);
 
 static TAutoConsoleVariable<float> CVarHDRMaxFrameAverageLightLevel(
-    "RHI.HDR.MaxFrameAverageLightLevel",
-    "MaxFALL: brightest frame average across the content, in nits.",
+    TEXT("RHI.HDR.MaxFrameAverageLightLevel"),
+    TEXT("MaxFALL: brightest frame average across the content, in nits."),
     400.0f);
 
 // -------------------------------------------------------------------------------------------
@@ -203,7 +203,7 @@ RHI_API void RHI::DumpRayTracingCapabilities()
 {
     const auto YesNo = [](bool bValue) -> const CHAR_T*
     {
-        return bValue ? "Yes" : "No";
+        return bValue ? TEXT("Yes") : TEXT("No");
     };
 
     LOG_INFO("[RHI] -------------------------------- Ray Tracing Capabilities ---------------------------------");

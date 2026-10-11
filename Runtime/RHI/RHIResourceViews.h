@@ -24,10 +24,10 @@ NODISCARD constexpr const CHAR_T* ToString(EBufferViewType ViewType)
 {
     switch (ViewType)
     {
-        case EBufferViewType::Structured:  return "Structured";
-        case EBufferViewType::ByteAddress: return "ByteAddress";
-        case EBufferViewType::Typed:       return "Typed";
-        default:                           return "Unknown";
+        case EBufferViewType::Structured:  return TEXT("Structured");
+        case EBufferViewType::ByteAddress: return TEXT("ByteAddress");
+        case EBufferViewType::Typed:       return TEXT("Typed");
+        default:                           return TEXT("Unknown");
     }
 }
 
@@ -46,11 +46,11 @@ NODISCARD constexpr const CHAR_T* ToString(EAttachmentLoadAction LoadAction)
 {
     switch (LoadAction)
     {
-        case EAttachmentLoadAction::DontCare: return "DontCare";
-        case EAttachmentLoadAction::Load:     return "Load";
-        case EAttachmentLoadAction::Clear:    return "Clear";
+        case EAttachmentLoadAction::DontCare: return TEXT("DontCare");
+        case EAttachmentLoadAction::Load:     return TEXT("Load");
+        case EAttachmentLoadAction::Clear:    return TEXT("Clear");
 
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -66,10 +66,10 @@ NODISCARD constexpr const CHAR_T* ToString(EAttachmentStoreAction StoreAction)
 {
     switch (StoreAction)
     {
-        case EAttachmentStoreAction::DontCare: return "DontCare";
-        case EAttachmentStoreAction::Store:    return "Store";
+        case EAttachmentStoreAction::DontCare: return TEXT("DontCare");
+        case EAttachmentStoreAction::Store:    return TEXT("Store");
 
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -102,17 +102,17 @@ NODISCARD constexpr const CHAR_T* ToString(EViewDimension Dimension)
 {
     switch (Dimension)
     {
-        case EViewDimension::Buffer:                return "Buffer";
-        case EViewDimension::Texture1D:             return "Texture1D";
-        case EViewDimension::Texture1DArray:        return "Texture1DArray";
-        case EViewDimension::Texture2D:             return "Texture2D";
-        case EViewDimension::Texture2DArray:        return "Texture2DArray";
-        case EViewDimension::TextureCube:           return "TextureCube";
-        case EViewDimension::TextureCubeArray:      return "TextureCubeArray";
-        case EViewDimension::Texture3D:             return "Texture3D";
-        case EViewDimension::AccelerationStructure: return "AccelerationStructure";
-        case EViewDimension::SamplerFeedback:       return "SamplerFeedback";
-        default:                                    return "None";
+        case EViewDimension::Buffer:                return TEXT("Buffer");
+        case EViewDimension::Texture1D:             return TEXT("Texture1D");
+        case EViewDimension::Texture1DArray:        return TEXT("Texture1DArray");
+        case EViewDimension::Texture2D:             return TEXT("Texture2D");
+        case EViewDimension::Texture2DArray:        return TEXT("Texture2DArray");
+        case EViewDimension::TextureCube:           return TEXT("TextureCube");
+        case EViewDimension::TextureCubeArray:      return TEXT("TextureCubeArray");
+        case EViewDimension::Texture3D:             return TEXT("Texture3D");
+        case EViewDimension::AccelerationStructure: return TEXT("AccelerationStructure");
+        case EViewDimension::SamplerFeedback:       return TEXT("SamplerFeedback");
+        default:                                    return TEXT("None");
     }
 }
 

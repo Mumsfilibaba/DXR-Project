@@ -11,7 +11,7 @@ struct ShaderBindings
     static constexpr uint32 MaxShaderConstants = 32;
 
     /** The cbuffer name FFXCShaderTranslator gives the shader constants in DXBC */
-    static constexpr const CHAR_T* ShaderConstantsBufferName = "Constants_CB";
+    static constexpr const CHAR_T* ShaderConstantsBufferName = TEXT("Constants_CB");
 
     /** Must match the -fvk-bind-*-heap arguments in DXCShaderCompiler.cpp. Shared by the Vulkan and the MSL conversion. */
     static constexpr uint32 SpirvHeapMarkerSet       = 31;

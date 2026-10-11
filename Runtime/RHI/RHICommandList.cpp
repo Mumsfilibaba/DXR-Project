@@ -10,8 +10,8 @@
 bool GRHIVerboseEventOutput = false;
 
 static TAutoConsoleVariable<bool> CVarVerboseEventOutput(
-    "RHI.VerboseEventOutput",
-    "When true, PushEvent names are sent to OutputDebugString (visible in debugger output)",
+    TEXT("RHI.VerboseEventOutput"),
+    TEXT("When true, PushEvent names are sent to OutputDebugString (visible in debugger output)"),
     GRHIVerboseEventOutput);
 
 FRHICommandList::FRHICommandList() noexcept
@@ -37,17 +37,17 @@ void FRHICommandList::Execute() noexcept
     // Then execute all commands on the assigned context
     IRHICommandContext& CommandContextRef = GetCommandContext();
     {
-        TRACE_SCOPE("RHI Context Start");
+        TRACE_SCOPE(TEXT("RHI Context Start"));
         CommandContextRef.StartContext();
     }
 
     {
-        TRACE_SCOPE("RHI Replay Commands");
+        TRACE_SCOPE(TEXT("RHI Replay Commands"));
         ExecuteWithContext(CommandContextRef);
     }
 
     {
-        TRACE_SCOPE("RHI Context Finish");
+        TRACE_SCOPE(TEXT("RHI Context Finish"));
         CommandContextRef.FinishContext();
     }
 }
@@ -211,9 +211,9 @@ void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
         NewCommandList->ExchangeState(CommandList);
         NewCommandList->SetCommandContext(DefaultCommandContext);
 
-        Tasks::LaunchOnRHIThread("RHIExecuteCommandList", [NewCommandList]()
+        Tasks::LaunchOnRHIThread(TEXT("RHIExecuteCommandList"), [NewCommandList]()
         {
-            TRACE_SCOPE("RHI Execute Command List");
+            TRACE_SCOPE(TEXT("RHI Execute Command List"));
 
             NewCommandList->Execute();
             delete NewCommandList;
@@ -230,7 +230,7 @@ void FRHICommandListExecutor::WaitForCommands()
 {
     if (FTaskGraph::Get().IsRHIThreadEnabled())
     {
-        Tasks::LaunchOnRHIThread("RHIFlush", []() { }).Wait();
+        Tasks::LaunchOnRHIThread(TEXT("RHIFlush"), []() { }).Wait();
     }
 }
 
@@ -253,7 +253,7 @@ void FRHICommandListExecutor::WaitForGPU()
 
     if (FTaskGraph::Get().IsRHIThreadEnabled() && !Tasks::IsInRHIThread())
     {
-        Tasks::LaunchOnRHIThread("RHIWaitForGPU", [this]()
+        Tasks::LaunchOnRHIThread(TEXT("RHIWaitForGPU"), [this]()
         {
             DefaultCommandContext->Flush();
         }).Wait();

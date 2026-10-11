@@ -19,12 +19,12 @@ NODISCARD constexpr const CHAR_T* ToString(ESwapChainUsageFlags Usage)
 {
     switch (Usage)
     {
-        case ESwapChainUsageFlags::None:            return "None";
-        case ESwapChainUsageFlags::RenderTarget:    return "RenderTarget";
-        case ESwapChainUsageFlags::UnorderedAccess: return "UnorderedAccess";
-        case ESwapChainUsageFlags::ShaderResource:  return "ShaderResource";
+        case ESwapChainUsageFlags::None:            return TEXT("None");
+        case ESwapChainUsageFlags::RenderTarget:    return TEXT("RenderTarget");
+        case ESwapChainUsageFlags::UnorderedAccess: return TEXT("UnorderedAccess");
+        case ESwapChainUsageFlags::ShaderResource:  return TEXT("ShaderResource");
 
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
@@ -40,10 +40,10 @@ NODISCARD constexpr const CHAR_T* ToString(ESwapChainFlags Flags)
 {
     switch (Flags)
     {
-        case ESwapChainFlags::None:        return "None";
-        case ESwapChainFlags::Transparent: return "Transparent";
+        case ESwapChainFlags::None:        return TEXT("None");
+        case ESwapChainFlags::Transparent: return TEXT("Transparent");
 
-        default: return "Unknown";
+        default: return TEXT("Unknown");
     }
 }
 
