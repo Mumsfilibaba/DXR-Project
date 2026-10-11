@@ -173,7 +173,7 @@ static FString GetCompileOutputPath(const FToolOptions& Options, const FRHITarge
 
     const FString Extension = File::ExtractExtension(Options.OutputPath);
     const FString Stem(Options.OutputPath.Data(), Options.OutputPath.Length() - Extension.Length());
-    return FString::Printf("%s_%s%s", *Stem, Target.Name, *Extension);
+    return FString::Printf(TEXT("%s_%s%s"), *Stem, Target.Name, *Extension);
 }
 
 int32 ShaderCompilerTool::RunCompile(const FToolOptions& Options)
@@ -324,7 +324,7 @@ static int32 ShaderCompilerMain()
 
     FConsoleManager::Get().LoadFromCommandLine();
 
-    if (IConsoleVariable* UseRemote = FConsoleManager::Get().FindConsoleVariable("RHI.ShaderCompiler.UseRemote"))
+    if (IConsoleVariable* UseRemote = FConsoleManager::Get().FindConsoleVariable(TEXT("RHI.ShaderCompiler.UseRemote")))
     {
         UseRemote->SetAsBool(false, EConsoleVariableFlags::SetByCode);
     }
@@ -356,4 +356,4 @@ static int32 ShaderCompilerMain()
     return Result;
 }
 
-IMPLEMENT_PROGRAM_MAIN("ShaderCompiler", &ShaderCompilerMain);
+IMPLEMENT_PROGRAM_MAIN(TEXT("ShaderCompiler"), &ShaderCompilerMain);

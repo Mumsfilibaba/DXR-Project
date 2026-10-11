@@ -64,10 +64,10 @@ static bool AddSandboxPlayer(FWorld* World, const FRHITextureRef& Skybox, FActor
         return false;
     }
 
-    CameraActor->SetName("Main Camera");
+    CameraActor->SetName(TEXT("Main Camera"));
     CameraActor->SetFilter(CamerasFilter);
 
-    Player->SetName("PlayerController");
+    Player->SetName(TEXT("PlayerController"));
     Player->SetFilter(ActorsFilter);
     Player->SetCameraActor(CameraActor);
     World->SetActiveCamera(CameraActor->GetCameraComponent());
@@ -132,16 +132,16 @@ void FSandbox::Tick(float)
 bool FSandbox::CreateSponza(FWorld* InWorld)
 {
     // Load Scene
-    TSharedRef<FModel> Sponza = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"));
+    TSharedRef<FModel> Sponza = FAssetManager::Get().LoadModel(TEXT(ENGINE_LOCATION "/Assets/Scenes/Sponza/Sponza.obj"));
     if (!Sponza)
     {
         return false;
     }
 
     // Filters are presented in the scene-hierarchy in the order they are created
-    FActorFilter* CamerasFilter  = InWorld->CreateActorFilter("Cameras");
-    FActorFilter* ActorsFilter   = InWorld->CreateActorFilter("Actors");
-    FActorFilter* LightingFilter = InWorld->CreateActorFilter("Lighting");
+    FActorFilter* CamerasFilter  = InWorld->CreateActorFilter(TEXT("Cameras"));
+    FActorFilter* ActorsFilter   = InWorld->CreateActorFilter(TEXT("Actors"));
+    FActorFilter* LightingFilter = InWorld->CreateActorFilter(TEXT("Lighting"));
 
     InWorld->SetCurrentFilter(ActorsFilter);
 
@@ -184,7 +184,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             if (NewActor)
             {
                 NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 0.6f, 40.0f + StartPositionY + (y * SphereOffset));
-                NewActor->SetName(FString::Printf("Sphere[%d]", SphereIndex));
+                NewActor->SetName(FString::Printf(TEXT("Sphere[%d]"), SphereIndex));
                 SphereIndex++;
 
                 FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
@@ -195,7 +195,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
                     NewMaterial->SetTexture(EMaterialTextureSlot::MaskA, FEngine::Get()->BaseTexture);
 
                     NewMaterial->Initialize();
-                    NewMaterial->SetName(FString::Printf("Sphere Material %d", SphereIndex));
+                    NewMaterial->SetName(FString::Printf(TEXT("Sphere Material %d"), SphereIndex));
 
                     NewComponent->SetMesh(SphereMesh);
                     NewComponent->SetMaterial(NewMaterial);
@@ -254,7 +254,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
                     NewActor->AddComponent(NewBall);
                 }
 
-                NewActor->SetName("Random Sphere[" + ToString(i) + "]");
+                NewActor->SetName(TEXT("Random Sphere[") + ToString(i) + TEXT("]"));
 
                 // MeshComponent
                 NewComponent = NewObject<FStaticMeshComponent>();
@@ -280,7 +280,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     // Create Other Meshes
     if (FActor* NewActor = InWorld->CreateActor())
     {
-        NewActor->SetName("Cube");
+        NewActor->SetName(TEXT("Cube"));
         NewActor->GetTransform().SetTranslation(0.0f, 2.0f, 50.0f);
 
         MaterialInfo.Albedo           = FFloatColor::White;
@@ -292,12 +292,12 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)
         {
-            FTexture2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Albedo.png")));
-            FTexture2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Normal.png")));
-            FTexture2DRef AOMap        = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_AO.png")));
-            FTexture2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Roughness.png")));
-            FTexture2DRef HeightMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Height.png")));
-            FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Metallic.png")));
+            FTexture2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/Gate_Albedo.png")));
+            FTexture2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/Gate_Normal.png")));
+            FTexture2DRef AOMap        = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/Gate_AO.png")));
+            FTexture2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/Gate_Roughness.png")));
+            FTexture2DRef HeightMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/Gate_Height.png")));
+            FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/Gate_Metallic.png")));
 
             FRHITextureRef PackedMaterial;
             FTextureFactory::Get().PackMaterialParamsTexture(AOMap->GetRHITexture(), RoughnessMap->GetRHITexture(), MetallicMap->GetRHITexture(), PackedMaterial);
@@ -314,7 +314,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             TryCompressBC1(Compressor, NewMaterial->GetTexture(EMaterialTextureSlot::MaskA));
 
             NewMaterial->Initialize();
-            NewMaterial->SetName("GateMaterial");
+            NewMaterial->SetName(TEXT("GateMaterial"));
 
             TSharedPtr<FMesh> CubeMesh = FMesh::Create(MeshFactory::CreateCube());
 
@@ -327,7 +327,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FActor* NewActor = InWorld->CreateActor())
     {
-        NewActor->SetName("Plane");
+        NewActor->SetName(TEXT("Plane"));
         NewActor->GetTransform().SetRotation(Math::Constants::HalfPI, 0.0f, 0.0f);
         NewActor->GetTransform().SetUniformScale(50.0f);
         NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 42.0f);
@@ -346,7 +346,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->SetTexture(EMaterialTextureSlot::MaskA, FEngine::Get()->BaseTexture);
 
             NewMaterial->Initialize();
-            NewMaterial->SetName("PlaneMaterial");
+            NewMaterial->SetName(TEXT("PlaneMaterial"));
 
             TSharedPtr<FMesh> PlaneMesh = FMesh::Create(MeshFactory::CreatePlane(10, 10));
 
@@ -359,7 +359,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FActor* NewActor = InWorld->CreateActor())
     {
-        NewActor->SetName("Cone");
+        NewActor->SetName(TEXT("Cone"));
         NewActor->GetTransform().SetRotation(0.0f, 0.0f, 0.0f);
         NewActor->GetTransform().SetUniformScale(3.0f);
         NewActor->GetTransform().SetTranslation(-15.0f, 0.5f, 50.0f);
@@ -378,7 +378,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->SetTexture(EMaterialTextureSlot::MaskA, FEngine::Get()->BaseTexture);
 
             NewMaterial->Initialize();
-            NewMaterial->SetName("ConeMaterial");
+            NewMaterial->SetName(TEXT("ConeMaterial"));
 
             TSharedPtr<FMesh> ConeMesh = FMesh::Create(MeshFactory::CreateCone(32, 0.5f));
 
@@ -391,7 +391,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FActor* NewActor = InWorld->CreateActor())
     {
-        NewActor->SetName("Torus");
+        NewActor->SetName(TEXT("Torus"));
         NewActor->GetTransform().SetRotation(0.0f, 0.0f, 0.0f);
         NewActor->GetTransform().SetUniformScale(1.0f);
         NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 45.0f);
@@ -410,7 +410,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->SetTexture(EMaterialTextureSlot::MaskA, FEngine::Get()->BaseTexture);
 
             NewMaterial->Initialize();
-            NewMaterial->SetName("TorusMaterial");
+            NewMaterial->SetName(TEXT("TorusMaterial"));
 
             TSharedPtr<FMesh> TorusMesh = FMesh::Create(MeshFactory::CreateTorus(1.0f, 0.4f, 48, 32));
 
@@ -423,7 +423,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FActor* NewActor = InWorld->CreateActor())
     {
-        NewActor->SetName("Teapot");
+        NewActor->SetName(TEXT("Teapot"));
         NewActor->GetTransform().SetRotation(0.0f, Math::Constants::HalfPI, 0.0f);
         NewActor->GetTransform().SetUniformScale(1.0f);
         NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 37.5f);
@@ -443,7 +443,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->SetTexture(EMaterialTextureSlot::MaskA, FEngine::Get()->BaseTexture);
 
             NewMaterial->Initialize();
-            NewMaterial->SetName("TeapotMaterial");
+            NewMaterial->SetName(TEXT("TeapotMaterial"));
 
             TSharedPtr<FMesh> TeapotMesh = FMesh::Create(MeshFactory::CreateTeapot(12));
 
@@ -456,7 +456,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FActor* NewActor = InWorld->CreateActor())
     {
-        NewActor->SetName("Pyramid");
+        NewActor->SetName(TEXT("Pyramid"));
         NewActor->GetTransform().SetRotation(0.0f, 0.0f, 0.0f);
         NewActor->GetTransform().SetUniformScale(1.0f);
         NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 30.0f);
@@ -475,7 +475,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->SetTexture(EMaterialTextureSlot::MaskA, FEngine::Get()->BaseTexture);
 
             NewMaterial->Initialize();
-            NewMaterial->SetName("PyramidMaterial");
+            NewMaterial->SetName(TEXT("PyramidMaterial"));
 
             TSharedPtr<FMesh> PyramidMesh = FMesh::Create(MeshFactory::CreatePyramid(2.0f, 2.0f, 2.0f));
 
@@ -488,7 +488,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FActor* NewActor = InWorld->CreateActor())
     {
-        NewActor->SetName("Capsule");
+        NewActor->SetName(TEXT("Capsule"));
         NewActor->GetTransform().SetRotation(0.0f, 0.0f, 0.0f);
         NewActor->GetTransform().SetUniformScale(1.0f);
         NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 25.0f);
@@ -508,7 +508,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->SetTexture(EMaterialTextureSlot::MaskA, FEngine::Get()->BaseTexture);
 
             NewMaterial->Initialize();
-            NewMaterial->SetName("CapsuleMaterial");
+            NewMaterial->SetName(TEXT("CapsuleMaterial"));
 
             TSharedPtr<FMesh> CapsuleMesh = FMesh::Create(MeshFactory::CreateCapsule(32, 8, 0.5f, 2.0f));
 
@@ -519,13 +519,13 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         }
     }
 
-    TSharedRef<FModel> StreetLightModel = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"));
+    TSharedRef<FModel> StreetLightModel = FAssetManager::Get().LoadModel(TEXT(ENGINE_LOCATION "/Assets/Models/Street_Light.obj"));
     if (StreetLightModel)
     {
-        FTexture2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/BaseColor.jpg")));
-        FTexture2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Normal.jpg")));
-        FTexture2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Roughness.jpg")));
-        FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Metallic.jpg")));
+        FTexture2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/StreetLight/BaseColor.jpg")));
+        FTexture2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/StreetLight/Normal.jpg")));
+        FTexture2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/StreetLight/Roughness.jpg")));
+        FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/StreetLight/Metallic.jpg")));
 
         FRHITextureRef StreetLightPackedMaterial;
         FTextureFactory::Get().PackMaterialParamsTexture(FEngine::Get()->BaseTexture, RoughnessMap->GetRHITexture(), MetallicMap->GetRHITexture(), StreetLightPackedMaterial);
@@ -547,7 +547,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         TryCompressBC1(Compressor, StreetLightMaterial->GetTexture(EMaterialTextureSlot::MaskA));
 
         StreetLightMaterial->Initialize();
-        StreetLightMaterial->SetName("StreetLightMaterial");
+        StreetLightMaterial->SetName(TEXT("StreetLightMaterial"));
 
         FMaterialInfo GlassInfo;
         GlassInfo.Albedo             = FFloatColor(0.85f, 0.88f, 0.95f, 1.0f);
@@ -561,7 +561,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
         TSharedPtr<FMaterial> StreetLightGlassMaterial = MakeSharedPtr<FMaterial>(GlassInfo);
         StreetLightGlassMaterial->Initialize();
-        StreetLightGlassMaterial->SetName("StreetLightGlassMaterial");
+        StreetLightGlassMaterial->SetName(TEXT("StreetLightGlassMaterial"));
 
         const int32 NumMeshes = StreetLightModel->GetNumMeshes();
         for (uint32 i = 0; i < 4; i++)
@@ -571,14 +571,14 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
                 if (FActor* NewActor = InWorld->CreateActor())
                 {
                     const TSharedPtr<FMesh>& Mesh = StreetLightModel->GetMesh(MeshIndex);
-                    NewActor->SetName(FString::Printf("Street Light (%s) %d", *Mesh->GetName(), i));
+                    NewActor->SetName(FString::Printf(TEXT("Street Light (%s) %d"), *Mesh->GetName(), i));
                     NewActor->GetTransform().SetUniformScale(0.25f);
                     NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - float(i) * 3.0f);
 
                     FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
                     if (NewComponent)
                     {
-                        const bool bIsGlass = Mesh->GetName().Contains("pSphere", EStringCaseType::NoCase);
+                        const bool bIsGlass = Mesh->GetName().Contains(TEXT("pSphere"), EStringCaseType::NoCase);
 
                         NewComponent->SetMesh(Mesh);
                         NewComponent->SetMaterial(bIsGlass ? StreetLightGlassMaterial : StreetLightMaterial);
@@ -600,7 +600,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     CylinderMaterial->SetTexture(EMaterialTextureSlot::MaskA, FEngine::Get()->BaseTexture);
 
     CylinderMaterial->Initialize();
-    CylinderMaterial->SetName("CylinderMaterial");
+    CylinderMaterial->SetName(TEXT("CylinderMaterial"));
 
     TSharedPtr<FMesh> CylinderMesh = FMesh::Create(MeshFactory::CreateCylinder(32, 0.4f, 5.0f));
 
@@ -609,7 +609,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     {
         if (FActor* NewActor = InWorld->CreateActor())
         {
-            NewActor->SetName(FString::Printf("Cylinder %d", i));
+            NewActor->SetName(FString::Printf(TEXT("Cylinder %d"), i));
             NewActor->GetTransform().SetUniformScale(1.0f);
             NewActor->GetTransform().SetTranslation(-15.0f + float(i) * 1.75f, 2.5f, 60.0f);
 
@@ -626,7 +626,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     InWorld->SetCurrentFilter(nullptr);
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Textures/arches.hdr");
+    FRHITextureRef Skybox = LoadCubeMapFromPanorama(TEXT(ENGINE_LOCATION "/Assets/Textures/arches.hdr"));
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -754,7 +754,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
 bool FSandbox::CreateBistro(FWorld* InWorld)
 {
-    TSharedRef<FModel> BistroInterior = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"));
+    TSharedRef<FModel> BistroInterior = FAssetManager::Get().LoadModel(TEXT(ENGINE_LOCATION "/Assets/Scenes/Bistro/BistroInterior.fbx"));
     if (!BistroInterior)
     {
         return false;
@@ -764,7 +764,7 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
     for (int32 Index = 0; Index < NumMaterials; Index++)
     {
         const TSharedPtr<FMaterial>& Material = BistroInterior->GetMaterial(Index);
-        if (Material->GetName().Contains("DoubleSided"))
+        if (Material->GetName().Contains(TEXT("DoubleSided")))
         {
             Material->SetMaterialFlags(EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided, true);
         }
@@ -772,7 +772,7 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
 
     BistroInterior->AddToWorld(InWorld);
 
-    TSharedRef<FModel> BistroExterior = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"));
+    TSharedRef<FModel> BistroExterior = FAssetManager::Get().LoadModel(TEXT(ENGINE_LOCATION "/Assets/Scenes/Bistro/BistroExterior.fbx"));
     if (!BistroExterior)
     {
         return false;
@@ -782,7 +782,7 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
     for (int32 Index = 0; Index < NumMaterials; Index++)
     {
         const TSharedPtr<FMaterial>& Material = BistroExterior->GetMaterial(Index);
-        if (Material->GetName().Contains("DoubleSided"))
+        if (Material->GetName().Contains(TEXT("DoubleSided")))
         {
             Material->SetMaterialFlags(EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided, true);
         }
@@ -791,7 +791,7 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
     BistroExterior->AddToWorld(InWorld);
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Scenes/Bistro/san_giuseppe_bridge_4k.hdr");
+    FRHITextureRef Skybox = LoadCubeMapFromPanorama(TEXT(ENGINE_LOCATION "/Assets/Scenes/Bistro/san_giuseppe_bridge_4k.hdr"));
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -822,7 +822,7 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
 bool FSandbox::CreateSunTemple(FWorld* InWorld)
 {
     const EMeshImportFlags ImportFlags = EMeshImportFlags::InvertAxisX;
-    TSharedRef<FModel> SunTemple = FAssetManager::Get().LoadModel(ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx", ImportFlags);
+    TSharedRef<FModel> SunTemple = FAssetManager::Get().LoadModel(TEXT(ENGINE_LOCATION "/Assets/Scenes/SunTemple/SunTemple.fbx"), ImportFlags);
     if (!SunTemple)
     {
         return false;
@@ -832,7 +832,7 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
     for (int32 Index = 0; Index < NumMaterials; Index++)
     {
         const TSharedPtr<FMaterial>& Material = SunTemple->GetMaterial(Index);
-        if (Material->GetName().Contains("DoubleSided"))
+        if (Material->GetName().Contains(TEXT("DoubleSided")))
         {
             Material->SetMaterialFlags(EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided, true);
         }
@@ -841,7 +841,7 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
     SunTemple->AddToWorld(InWorld);
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple_Skybox.hdr");
+    FRHITextureRef Skybox = LoadCubeMapFromPanorama(TEXT(ENGINE_LOCATION "/Assets/Scenes/SunTemple/SunTemple_Skybox.hdr"));
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -857,7 +857,7 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
     InWorld->SpawnActor<FSkyLightActor>(Skybox);
 
     // Load Reflection Probe
-    FRHITextureRef ReflectionProbeExterior = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple_Reflection.hdr");
+    FRHITextureRef ReflectionProbeExterior = LoadCubeMapFromPanorama(TEXT(ENGINE_LOCATION "/Assets/Scenes/SunTemple/SunTemple_Reflection.hdr"));
     if (!ReflectionProbeExterior)
     {
         DEBUG_BREAK();
@@ -874,7 +874,7 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
     }
 
     // Load Reflection Probe
-    FRHITextureRef ReflectionProbeInterior = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple_Reflection_Interior.hdr");
+    FRHITextureRef ReflectionProbeInterior = LoadCubeMapFromPanorama(TEXT(ENGINE_LOCATION "/Assets/Scenes/SunTemple/SunTemple_Reflection_Interior.hdr"));
     if (!ReflectionProbeInterior)
     {
         DEBUG_BREAK();
@@ -906,7 +906,7 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
 bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
 {
     const EMeshImportFlags ImportFlags = EMeshImportFlags::RecalculateTangents | EMeshImportFlags::Default;
-    TSharedRef<FModel> EmeraldSquare_Day = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"), ImportFlags);
+    TSharedRef<FModel> EmeraldSquare_Day = FAssetManager::Get().LoadModel(TEXT(ENGINE_LOCATION "/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"), ImportFlags);
     if (!EmeraldSquare_Day)
     {
         return false;
@@ -916,7 +916,7 @@ bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
     for (int32 Index = 0; Index < NumMaterials; Index++)
     {
         const TSharedPtr<FMaterial>& Material = EmeraldSquare_Day->GetMaterial(Index);
-        if (Material->GetName().Contains("DoubleSided"))
+        if (Material->GetName().Contains(TEXT("DoubleSided")))
         {
             Material->SetMaterialFlags(EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided, true);
         }
@@ -925,7 +925,7 @@ bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
     EmeraldSquare_Day->AddToWorld(InWorld);
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/symmetrical_garden_4k.hdr");
+    FRHITextureRef Skybox = LoadCubeMapFromPanorama(TEXT(ENGINE_LOCATION "/Assets/Scenes/EmeraldSquare/symmetrical_garden_4k.hdr"));
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -967,12 +967,12 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     BasicMaterial->SetTexture(EMaterialTextureSlot::MaskA, FEngine::Get()->BaseTexture);
 
     BasicMaterial->Initialize();
-    BasicMaterial->SetName("Basic-Material");
+    BasicMaterial->SetName(TEXT("Basic-Material"));
 
     // Create Plane
     if (FActor* NewActor = InWorld->CreateActor())
     {
-        NewActor->SetName("Plane");
+        NewActor->SetName(TEXT("Plane"));
         NewActor->GetTransform().SetRotation(Math::Constants::HalfPI, 0.0f, 0.0f);
         NewActor->GetTransform().SetUniformScale(30.0f);
         NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 0.0f);
@@ -992,7 +992,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     // Create plane
     if (FActor* NewActor = InWorld->CreateActor())
     {
-        NewActor->SetName("Cylinder");
+        NewActor->SetName(TEXT("Cylinder"));
         NewActor->GetTransform().SetScale(1.0f, 4.0f, 1.0f);
         NewActor->GetTransform().SetTranslation(0.0f, 4.0f, 10.0f);
 
@@ -1012,7 +1012,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
 
     if (FActor* NewActor = InWorld->CreateActor())
     {
-        NewActor->SetName("Wall 1");
+        NewActor->SetName(TEXT("Wall 1"));
         NewActor->GetTransform().SetScale(0.05f, 2.0f, 4.0f);
         NewActor->GetTransform().SetTranslation(9.975f, 1.0f, -8.0f);
 
@@ -1027,7 +1027,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
 
     if (FActor* NewActor = InWorld->CreateActor())
     {
-        NewActor->SetName("Wall 2");
+        NewActor->SetName(TEXT("Wall 2"));
         NewActor->GetTransform().SetScale(4.0f, 2.0f, 0.05f);
         NewActor->GetTransform().SetTranslation(8.0f, 1.0f, -9.975f);
 
@@ -1042,7 +1042,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
 
     if (FActor* NewActor = InWorld->CreateActor())
     {
-        NewActor->SetName("Wall 3");
+        NewActor->SetName(TEXT("Wall 3"));
         NewActor->GetTransform().SetScale(4.0f, 2.0f, 0.05f);
         NewActor->GetTransform().SetTranslation(8.0f, 1.0f, -5.975f);
 
@@ -1057,7 +1057,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
 
     if (FActor* NewActor = InWorld->CreateActor())
     {
-        NewActor->SetName("Roof");
+        NewActor->SetName(TEXT("Roof"));
         NewActor->GetTransform().SetScale(4.0f, 0.05f, 4.0f);
         NewActor->GetTransform().SetTranslation(8.0f, 1.975f, -8.0f);
 
@@ -1072,7 +1072,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
 
     if (FActor* NewActor = InWorld->CreateActor())
     {
-        NewActor->SetName("Cube 1");
+        NewActor->SetName(TEXT("Cube 1"));
         NewActor->GetTransform().SetScale(0.5f, 1.0f, 0.5f);
         NewActor->GetTransform().SetTranslation(8.0f, 0.5f, -7.0f);
 
@@ -1087,7 +1087,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
 
     if (FActor* NewActor = InWorld->CreateActor())
     {
-        NewActor->SetName("Cube 2");
+        NewActor->SetName(TEXT("Cube 2"));
         NewActor->GetTransform().SetScale(0.5f, 1.0f, 0.5f);
         NewActor->GetTransform().SetTranslation(8.0f, 0.5f, -9.0f);
 
@@ -1113,7 +1113,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     }
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Textures/arches.hdr");
+    FRHITextureRef Skybox = LoadCubeMapFromPanorama(TEXT(ENGINE_LOCATION "/Assets/Textures/arches.hdr"));
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -1181,7 +1181,7 @@ FRHITextureRef FSandbox::LoadCubeMapFromPanorama(const FString& Filename)
     }
     else
     {
-        Skybox->SetDebugName("Skybox Uncompressed");
+        Skybox->SetDebugName(TEXT("Skybox Uncompressed"));
     }
 
     // Unload the panorama
@@ -1195,7 +1195,7 @@ FRHITextureRef FSandbox::LoadCubeMapFromPanorama(const FString& Filename)
 
     if (CompressedSkybox)
     {
-        CompressedSkybox->SetDebugName("Skybox Compressed");
+        CompressedSkybox->SetDebugName(TEXT("Skybox Compressed"));
     }
 
     return CompressedSkybox;

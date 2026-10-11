@@ -2,6 +2,7 @@
 #include <Core/Math/Math.h>
 #include <Core/Misc/OutputDeviceManager.h>
 #include <Core/Misc/RemoteConsoleProtocol.h>
+#include <Core/Containers/StringConversion.h>
 #include <Core/Platform/PlatformThread.h>
 #include <Core/Templates/CString.h>
 #include <Core/Containers/StringConversion.h>
@@ -49,17 +50,17 @@ static constexpr CHAR_T GEditHomeCode                      = '1';
 static constexpr CHAR_T GEditHomeCodeAlt                   = '7';
 static constexpr CHAR_T GEditEndCode                       = '4';
 static constexpr CHAR_T GEditEndCodeAlt                    = '8';
-static constexpr CHAR_T GEraseLineSequence[]               = "\r\x1b[K";
+static constexpr CHAR_T GEraseLineSequence[]               = TEXT("\r\x1b[K");
 
 #endif
 
 static const FCompletionCandidate GMetaCommands[] =
 {
-    { ":help", "remote console command" },
-    { ":quit", "remote console command" },
-    { ":list", "remote console command" },
-    { ":get",  "remote console command" },
-    { ":log",  "remote console command" },
+    { TEXT(":help"), TEXT("remote console command") },
+    { TEXT(":quit"), TEXT("remote console command") },
+    { TEXT(":list"), TEXT("remote console command") },
+    { TEXT(":get"),  TEXT("remote console command") },
+    { TEXT(":log"),  TEXT("remote console command") },
 };
 
 #if PLATFORM_WINDOWS
@@ -128,7 +129,7 @@ static int32 GetTerminalWidth()
     return GDefaultTerminalWidth;
 }
 
-static int32 ReadInputBytes(CHAR_T* Buffer, int32 Size)
+static int32 ReadInputBytes(ANSICHAR* Buffer, int32 Size)
 {
     DWORD BytesRead = 0;
     if (!::ReadFile(::GetStdHandle(STD_INPUT_HANDLE), Buffer, static_cast<DWORD>(Size), &BytesRead, nullptr))
@@ -209,7 +210,7 @@ static int32 GetTerminalWidth()
     return GDefaultTerminalWidth;
 }
 
-static int32 ReadInputBytes(CHAR_T* Buffer, int32 Size)
+static int32 ReadInputBytes(ANSICHAR* Buffer, int32 Size)
 {
     return static_cast<int32>(::read(STDIN_FILENO, Buffer, static_cast<size_t>(Size)));
 }
@@ -239,7 +240,7 @@ static void WriteRaw(const FString& Text)
 
 FConsoleLineEditor::FConsoleLineEditor()
     : EditorCS()
-    , Prompt("> ")
+    , Prompt(TEXT("> "))
     , Buffer()
     , CursorPosition(0)
     , History()
@@ -262,7 +263,7 @@ bool FConsoleLineEditor::Initialize()
     bIsInteractive = IsConsoleAttached() && EnterCharacterMode();
     bIsRawModeActive = bIsInteractive;
 
-    IPlatformThread* InputThread = FPlatformThread::Create(this, "RemoteConsoleInput");
+    IPlatformThread* InputThread = FPlatformThread::Create(this, TEXT("RemoteConsoleInput"));
     if (!InputThread || !InputThread->Start())
     {
         Release();
@@ -505,8 +506,8 @@ void FConsoleLineEditor::RunInteractive()
 
 void FConsoleLineEditor::RunLineMode()
 {
-    CHAR_T Chunk[GInputChunkSize];
-    FString Pending;
+    ANSICHAR    Chunk[GInputChunkSize];
+    FAnsiString Pending;
 
     for (;;)
     {
@@ -531,7 +532,7 @@ void FConsoleLineEditor::RunLineMode()
     if (!Pending.IsEmpty())
     {
         TScopedLock Lock(EditorCS);
-        SubmittedLines.Add(::Move(Pending));
+        SubmittedLines.Add(StringCast<CHAR_T>(Pending).ToString());
     }
 }
 
@@ -598,7 +599,7 @@ void FConsoleLineEditor::SubmitLine()
     EraseInputLine();
     WriteRaw(Prompt);
     WriteRaw(Line);
-    WriteRaw("\n", 1);
+    WriteRaw(TEXT("\n"), 1);
 
     FString Trimmed = Line;
     Trimmed.TrimInline();
@@ -638,7 +639,7 @@ void FConsoleLineEditor::Complete()
 
     if (WordStart == 0)
     {
-        bMetaCommands = Prefix.StartsWith(":");
+        bMetaCommands = Prefix.StartsWith(TEXT(":"));
     }
     else
     {
@@ -662,11 +663,11 @@ void FConsoleLineEditor::Complete()
             return;
         }
 
-        if (FirstWord.Equals(":get", EStringCaseType::NoCase))
+        if (FirstWord.Equals(TEXT(":get"), EStringCaseType::NoCase))
         {
             bVariablesOnly = true;
         }
-        else if (!FirstWord.Equals(":list", EStringCaseType::NoCase))
+        else if (!FirstWord.Equals(TEXT(":list"), EStringCaseType::NoCase))
         {
             return;
         }
@@ -687,7 +688,7 @@ void FConsoleLineEditor::Complete()
     {
         for (const FCompletionCandidate& Candidate : Candidates)
         {
-            if ((!bVariablesOnly || (Candidate.Kind == "variable")) && Candidate.Name.StartsWith(*Prefix, Prefix.Length(), EStringCaseType::NoCase))
+            if ((!bVariablesOnly || (Candidate.Kind == TEXT("variable"))) && Candidate.Name.StartsWith(*Prefix, Prefix.Length(), EStringCaseType::NoCase))
             {
                 Matches.Add(&Candidate);
             }
@@ -742,12 +743,12 @@ void FConsoleLineEditor::Complete()
     const int32 NumListed = Math::Min(Matches.Size(), GMaxListedCandidates);
     for (int32 Index = 0; Index < NumListed; ++Index)
     {
-        FOutputDeviceManager::Get()->Log(FString::Printf("  %-*s %s", GCandidateNameColumnWidth, *Matches[Index]->Name, *Matches[Index]->Kind));
+        FOutputDeviceManager::Get()->Log(FString::Printf(TEXT("  %-*s %s"), GCandidateNameColumnWidth, *Matches[Index]->Name, *Matches[Index]->Kind));
     }
 
     if (Matches.Size() > NumListed)
     {
-        FOutputDeviceManager::Get()->Log(FString::Printf("  ... and %d more, keep typing to narrow it down", Matches.Size() - NumListed));
+        FOutputDeviceManager::Get()->Log(FString::Printf(TEXT("  ... and %d more, keep typing to narrow it down"), Matches.Size() - NumListed));
     }
 }
 

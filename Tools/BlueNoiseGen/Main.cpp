@@ -234,7 +234,7 @@ struct FCheckpointFile
 
     static bool Save(const FString& Path, const FBlueNoiseParams& Params, const TArray<float>& Values, int64 Iteration)
     {
-        const FString TempPath = Path + ".tmp";
+        const FString TempPath = Path + TEXT(".tmp");
 
         {
             TFileRef<IPlatformFile> OutputFile = FPlatformFile::OpenForWrite(TempPath);
@@ -304,14 +304,14 @@ struct FCheckpointFile
 
 static int32 BlueNoiseGenMain()
 {
-    if (CommandLine::FindOption("help") || CommandLine::FindOption("h") || (CString::Strlen(CommandLine::GetOriginal()) == 0))
+    if (CommandLine::FindOption(TEXT("help")) || CommandLine::FindOption(TEXT("h")) || (CString::Strlen(CommandLine::GetOriginal()) == 0))
     {
         PrintUsage();
         return 0;
     }
 
     FString Type;
-    if (!GetStringOption("type", Type))
+    if (!GetStringOption(TEXT("type"), Type))
     {
         LOG_ERROR("[BlueNoiseGen] --type is required");
         
@@ -322,23 +322,23 @@ static int32 BlueNoiseGenMain()
     FBlueNoiseParams Params;
 
     bool bSpatiotemporal = false;
-    if (Type == "vc_scalar")
+    if (Type == TEXT("vc_scalar"))
     {
         Params.Algorithm = EBlueNoiseAlgorithm::VoidAndCluster;
         Params.Channels  = 1;
     }
-    else if (Type == "vec2")
+    else if (Type == TEXT("vec2"))
     {
         Params.Algorithm = EBlueNoiseAlgorithm::VectorSwap;
         Params.Channels  = 2;
     }
-    else if (Type == "stbn_scalar")
+    else if (Type == TEXT("stbn_scalar"))
     {
         Params.Algorithm = EBlueNoiseAlgorithm::VoidAndCluster;
         Params.Channels  = 1;
         bSpatiotemporal  = true;
     }
-    else if (Type == "stbn_vec2")
+    else if (Type == TEXT("stbn_vec2"))
     {
         Params.Algorithm = EBlueNoiseAlgorithm::VectorSwap;
         Params.Channels  = 2;
@@ -358,12 +358,12 @@ static int32 BlueNoiseGenMain()
     int64 Iterations = 0;
     int64 Bits       = 16;
 
-    GetIntOption("size", Size);
-    GetIntOption("depth", Depth);
-    GetIntOption("channels", Channels);
-    GetIntOption("seed", Seed);
-    GetIntOption("iterations", Iterations);
-    GetIntOption("bits", Bits);
+    GetIntOption(TEXT("size"), Size);
+    GetIntOption(TEXT("depth"), Depth);
+    GetIntOption(TEXT("channels"), Channels);
+    GetIntOption(TEXT("seed"), Seed);
+    GetIntOption(TEXT("iterations"), Iterations);
+    GetIntOption(TEXT("bits"), Bits);
 
     Params.Width          = static_cast<int32>(Size);
     Params.Height         = static_cast<int32>(Size);
@@ -385,16 +385,16 @@ static int32 BlueNoiseGenMain()
     }
 
     FString OutputPath;
-    if (!GetStringOption("out", OutputPath))
+    if (!GetStringOption(TEXT("out"), OutputPath))
     {
         LOG_ERROR("[BlueNoiseGen] --out is required");
         return 1;
     }
 
-    const bool bAtlas = CommandLine::FindOption("atlas");
+    const bool bAtlas = CommandLine::FindOption(TEXT("atlas"));
 
     FString CheckpointPath;
-    const bool bCheckpoint = GetStringOption("checkpoint", CheckpointPath);
+    const bool bCheckpoint = GetStringOption(TEXT("checkpoint"), CheckpointPath);
 
     FThreadManager::Initialize();
     if (!FTaskGraph::Initialize())
@@ -496,10 +496,18 @@ static int32 BlueNoiseGenMain()
         return 1;
     }
 
-    const tinyddsloader::Result SaveResult = DDSFile::Save(OutputPath.Data(), Info, &Image);
+    std::vector<uint8_t> DDSBytes;
+    const tinyddsloader::Result SaveResult = DDSFile::Save(DDSBytes, Info, &Image);
     if (SaveResult != tinyddsloader::Result::Success)
     {
-        LOG_ERROR("[BlueNoiseGen] Failed to write '%s' (tinyddsloader result %d)", OutputPath.Data(), static_cast<int32>(SaveResult));
+        LOG_ERROR("[BlueNoiseGen] Failed to encode '%s' (tinyddsloader result %d)", OutputPath.Data(), static_cast<int32>(SaveResult));
+        return 1;
+    }
+
+    TFileRef<IPlatformFile> OutputFile = FPlatformFile::OpenForWrite(OutputPath);
+    if (!OutputFile.IsValid() || OutputFile->Write(DDSBytes.data(), static_cast<uint32>(DDSBytes.size())) != static_cast<int32>(DDSBytes.size()))
+    {
+        LOG_ERROR("[BlueNoiseGen] Failed to write '%s'", OutputPath.Data());
         return 1;
     }
 
@@ -509,4 +517,4 @@ static int32 BlueNoiseGenMain()
     return 0;
 }
 
-IMPLEMENT_PROGRAM_MAIN("BlueNoiseGen", &BlueNoiseGenMain);
+IMPLEMENT_PROGRAM_MAIN(TEXT("BlueNoiseGen"), &BlueNoiseGenMain);

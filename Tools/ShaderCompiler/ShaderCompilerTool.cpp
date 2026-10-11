@@ -134,7 +134,7 @@ bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, FString& OutErro
 
         if (NameStart == 0)
         {
-            OutError = FString::Printf("Unexpected argument '%s'", *Argument);
+            OutError = FString::Printf(TEXT("Unexpected argument '%s'"), *Argument);
             return false;
         }
 
@@ -148,105 +148,105 @@ bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, FString& OutErro
         const bool    bHasValue = NameEnd < Argument.Length();
         const FString Value     = bHasValue ? FString(Argument.Data() + NameEnd + 1, Argument.Length() - NameEnd - 1) : FString();
 
-        if (Name.Equals("help", EStringCaseType::NoCase) || Name.Equals("?"))
+        if (Name.Equals(TEXT("help"), EStringCaseType::NoCase) || Name.Equals(TEXT("?")))
         {
             OutOptions.bShowHelp = true;
         }
-        else if (Name.Equals("server", EStringCaseType::NoCase) && !bHasValue)
+        else if (Name.Equals(TEXT("server"), EStringCaseType::NoCase) && !bHasValue)
         {
             OutOptions.bServer = true;
         }
-        else if (Name.Equals("check", EStringCaseType::NoCase) && !bHasValue)
+        else if (Name.Equals(TEXT("check"), EStringCaseType::NoCase) && !bHasValue)
         {
             OutOptions.bCheck = true;
         }
-        else if (Name.Equals("force", EStringCaseType::NoCase) && !bHasValue)
+        else if (Name.Equals(TEXT("force"), EStringCaseType::NoCase) && !bHasValue)
         {
             OutOptions.bForce = true;
         }
-        else if (Name.Equals("allowremote", EStringCaseType::NoCase) && !bHasValue)
+        else if (Name.Equals(TEXT("allowremote"), EStringCaseType::NoCase) && !bHasValue)
         {
             OutOptions.bAllowRemote = true;
         }
-        else if (Name.Equals("crosscompile", EStringCaseType::NoCase) && !bHasValue)
+        else if (Name.Equals(TEXT("crosscompile"), EStringCaseType::NoCase) && !bHasValue)
         {
             OutOptions.bCrossCompile = true;
         }
-        else if (Name.Equals("compile", EStringCaseType::NoCase) && !Value.IsEmpty())
+        else if (Name.Equals(TEXT("compile"), EStringCaseType::NoCase) && !Value.IsEmpty())
         {
             OutOptions.CompileFile = MakeAbsolutePath(Value);
         }
-        else if (Name.Equals("header", EStringCaseType::NoCase) && !Value.IsEmpty())
+        else if (Name.Equals(TEXT("header"), EStringCaseType::NoCase) && !Value.IsEmpty())
         {
             OutOptions.HeaderPath = MakeAbsolutePath(Value);
         }
-        else if (Name.Equals("symbol", EStringCaseType::NoCase) && !Value.IsEmpty())
+        else if (Name.Equals(TEXT("symbol"), EStringCaseType::NoCase) && !Value.IsEmpty())
         {
             OutOptions.SymbolName = Value;
         }
-        else if (Name.Equals("entry", EStringCaseType::NoCase) && !Value.IsEmpty())
+        else if (Name.Equals(TEXT("entry"), EStringCaseType::NoCase) && !Value.IsEmpty())
         {
             OutOptions.EntryPoint = Value;
         }
-        else if (Name.Equals("stage", EStringCaseType::NoCase) && !Value.IsEmpty())
+        else if (Name.Equals(TEXT("stage"), EStringCaseType::NoCase) && !Value.IsEmpty())
         {
             if (!TryParseShaderStage(Value, OutOptions.ShaderStage))
             {
-                OutError = FString::Printf("'%s' is not a shader stage, expected Vertex, Pixel, Compute, ...", *Value);
+                OutError = FString::Printf(TEXT("'%s' is not a shader stage, expected Vertex, Pixel, Compute, ..."), *Value);
                 return false;
             }
         }
-        else if (Name.Equals("model", EStringCaseType::NoCase) && !Value.IsEmpty())
+        else if (Name.Equals(TEXT("model"), EStringCaseType::NoCase) && !Value.IsEmpty())
         {
             if (!TryParseShaderModel(Value, OutOptions.ShaderModel))
             {
-                OutError = FString::Printf("'%s' is not a shader model, expected SM_5_0 or SM_6_0 to SM_6_10", *Value);
+                OutError = FString::Printf(TEXT("'%s' is not a shader model, expected SM_5_0 or SM_6_0 to SM_6_10"), *Value);
                 return false;
             }
         }
-        else if (Name.Equals("define", EStringCaseType::NoCase) && !Value.IsEmpty())
+        else if (Name.Equals(TEXT("define"), EStringCaseType::NoCase) && !Value.IsEmpty())
         {
             const int32 Equals = Value.FindChar('=');
             if (Equals == 0)
             {
-                OutError = FString::Printf("'-define=%s' has to be NAME or NAME=VALUE", *Value);
+                OutError = FString::Printf(TEXT("'-define=%s' has to be NAME or NAME=VALUE"), *Value);
                 return false;
             }
 
             if (Equals == FString::InvalidIndex)
             {
-                OutOptions.Defines.Emplace(Value, FString("1"));
+                OutOptions.Defines.Emplace(Value, FString(TEXT("1")));
             }
             else
             {
                 OutOptions.Defines.Emplace(Value.SubString(0, Equals), Value.SubString(Equals + 1, Value.Length() - Equals - 1));
             }
         }
-        else if (Name.Equals("includedir", EStringCaseType::NoCase) && !Value.IsEmpty())
+        else if (Name.Equals(TEXT("includedir"), EStringCaseType::NoCase) && !Value.IsEmpty())
         {
             OutOptions.IncludeDirs.Add(MakeAbsolutePath(Value));
         }
-        else if (Name.Equals("jobs", EStringCaseType::NoCase) && !Value.IsEmpty())
+        else if (Name.Equals(TEXT("jobs"), EStringCaseType::NoCase) && !Value.IsEmpty())
         {
             OutOptions.JobFilePath = MakeAbsolutePath(Value);
         }
-        else if (Name.Equals("output", EStringCaseType::NoCase) && !Value.IsEmpty())
+        else if (Name.Equals(TEXT("output"), EStringCaseType::NoCase) && !Value.IsEmpty())
         {
             OutOptions.OutputPath = MakeAbsolutePath(Value);
         }
-        else if (Name.Equals("bind", EStringCaseType::NoCase) && !Value.IsEmpty())
+        else if (Name.Equals(TEXT("bind"), EStringCaseType::NoCase) && !Value.IsEmpty())
         {
             OutOptions.BindAddress = Value;
         }
-        else if (Name.Equals("port", EStringCaseType::NoCase))
+        else if (Name.Equals(TEXT("port"), EStringCaseType::NoCase))
         {
             if (!ParsePort(Value, OutOptions.Port))
             {
-                OutError = FString::Printf("'%s' is not a port", *Value);
+                OutError = FString::Printf(TEXT("'%s' is not a port"), *Value);
                 return false;
             }
         }
-        else if (Name.Equals("rhi", EStringCaseType::NoCase) && !Value.IsEmpty())
+        else if (Name.Equals(TEXT("rhi"), EStringCaseType::NoCase) && !Value.IsEmpty())
         {
             TArray<FString> RHINames;
             SplitList(Value, RHINames);
@@ -256,14 +256,14 @@ bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, FString& OutErro
                 const FRHITarget* Target = FindRHITarget(RHIName);
                 if (!Target)
                 {
-                    OutError = FString::Printf("Unknown RHI '%s', expected D3D11, D3D12, Vulkan or Metal", *RHIName);
+                    OutError = FString::Printf(TEXT("Unknown RHI '%s', expected D3D11, D3D12, Vulkan or Metal"), *RHIName);
                     return false;
                 }
 
                 OutOptions.RHINames.Add(Target->Name);
             }
         }
-        else if (Name.Equals("remote", EStringCaseType::NoCase) && !Value.IsEmpty())
+        else if (Name.Equals(TEXT("remote"), EStringCaseType::NoCase) && !Value.IsEmpty())
         {
             TArray<FString> Entries;
             SplitList(Value, Entries);
@@ -273,7 +273,7 @@ bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, FString& OutErro
                 const int32 At = Entry.FindChar('@');
                 if (At == FString::InvalidIndex)
                 {
-                    OutError = FString::Printf("'-remote=%s' has to be RHI@host[:port]", *Entry);
+                    OutError = FString::Printf(TEXT("'-remote=%s' has to be RHI@host[:port]"), *Entry);
                     return false;
                 }
 
@@ -281,13 +281,13 @@ bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, FString& OutErro
                 RemoteTarget.Target = FindRHITarget(Entry.SubString(0, At));
                 if (!RemoteTarget.Target)
                 {
-                    OutError = FString::Printf("Unknown RHI in '-remote=%s', expected D3D11, D3D12, Vulkan or Metal", *Entry);
+                    OutError = FString::Printf(TEXT("Unknown RHI in '-remote=%s', expected D3D11, D3D12, Vulkan or Metal"), *Entry);
                     return false;
                 }
 
                 if (!ParseHostAndPort(Entry.SubString(At + 1, Entry.Length() - At - 1), RemoteTarget.Host, RemoteTarget.Port))
                 {
-                    OutError = FString::Printf("'-remote=%s' has to be RHI@host[:port], with IPv6 literals in brackets", *Entry);
+                    OutError = FString::Printf(TEXT("'-remote=%s' has to be RHI@host[:port], with IPv6 literals in brackets"), *Entry);
                     return false;
                 }
 
@@ -300,7 +300,7 @@ bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, FString& OutErro
         }
         else
         {
-            OutError = FString::Printf("Unknown or malformed option '%s'", *Argument);
+            OutError = FString::Printf(TEXT("Unknown or malformed option '%s'"), *Argument);
             return false;
         }
     }
@@ -309,45 +309,45 @@ bool ShaderCompilerTool::ParseOptions(FToolOptions& OutOptions, FString& OutErro
     const bool bHeader  = !OutOptions.HeaderPath.IsEmpty();
     if (OutOptions.bServer && bCompile)
     {
-        OutError = "-server and -compile cannot be combined";
+        OutError = TEXT("-server and -compile cannot be combined");
         return false;
     }
 
     if (bCompile && (OutOptions.EntryPoint.IsEmpty() || OutOptions.ShaderStage == EShaderStage::Unknown || OutOptions.ShaderModel == EShaderModel::Unknown))
     {
-        OutError = "-compile needs -entry, -stage and -model";
+        OutError = TEXT("-compile needs -entry, -stage and -model");
         return false;
     }
 
     if (!bCompile && (!OutOptions.EntryPoint.IsEmpty() || OutOptions.ShaderStage != EShaderStage::Unknown || OutOptions.ShaderModel != EShaderModel::Unknown ||
         !OutOptions.Defines.IsEmpty() || !OutOptions.IncludeDirs.IsEmpty() || bHeader || !OutOptions.SymbolName.IsEmpty()))
     {
-        OutError = "-entry, -stage, -model, -define, -includedir, -header and -symbol only work with -compile";
+        OutError = TEXT("-entry, -stage, -model, -define, -includedir, -header and -symbol only work with -compile");
         return false;
     }
 
     if (bHeader != !OutOptions.SymbolName.IsEmpty())
     {
-        OutError = "-header and -symbol have to be given together";
+        OutError = TEXT("-header and -symbol have to be given together");
         return false;
     }
 
     // One header holds one container, so the language has to be known
     if (bHeader && OutOptions.RHINames.Size() != 1)
     {
-        OutError = "-header needs exactly one -rhi";
+        OutError = TEXT("-header needs exactly one -rhi");
         return false;
     }
 
     if (OutOptions.bCheck && !bHeader)
     {
-        OutError = "-check only works with -header";
+        OutError = TEXT("-check only works with -header");
         return false;
     }
 
     if (bCompile && !bHeader && OutOptions.OutputPath.IsEmpty())
     {
-        OutOptions.OutputPath = MakeAbsolutePath(File::ExtractFilenameWithoutExtension(OutOptions.CompileFile) + ".shadercode");
+        OutOptions.OutputPath = MakeAbsolutePath(File::ExtractFilenameWithoutExtension(OutOptions.CompileFile) + TEXT(".shadercode"));
     }
 
     return true;
@@ -499,7 +499,7 @@ TArray<FRouteEntry> ShaderCompilerTool::BuildRoutes(const FToolOptions& Options,
             }
             else
             {
-                Route.Reason          = FString::Printf("%s does not serve %s", *Client->GetPeerName(), ToString(Target.OutputLanguage));
+                Route.Reason          = FString::Printf(TEXT("%s does not serve %s"), *Client->GetPeerName(), ToString(Target.OutputLanguage));
                 bOutRemoteUnreachable = true;
             }
         }
@@ -511,7 +511,7 @@ TArray<FRouteEntry> ShaderCompilerTool::BuildRoutes(const FToolOptions& Options,
         }
         else
         {
-            Route.Reason = FString::Printf("this %s machine cannot compile %s, pass -remote=%s@<host>", RemoteShaderCompilerProtocol::GetPlatformName(), ToString(Target.OutputLanguage), Target.Name);
+            Route.Reason = FString::Printf(TEXT("this %s machine cannot compile %s, pass -remote=%s@<host>"), RemoteShaderCompilerProtocol::GetPlatformName(), ToString(Target.OutputLanguage), Target.Name);
         }
 
         Routes.Add(::Move(Route));

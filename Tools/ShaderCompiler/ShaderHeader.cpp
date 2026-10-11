@@ -9,7 +9,7 @@
 #include <ShaderCore/MSLShaderBindings.h>
 #include <ShaderCore/ShaderCode.h>
 
-static constexpr const CHAR_T* GStampPrefix  = "// Stamp:    0x";
+static constexpr const CHAR_T* GStampPrefix  = TEXT("// Stamp:    0x");
 static constexpr int32         GBytesPerLine = 12;
 
 static FString MakeEngineRelative(const FString& Path)
@@ -101,7 +101,7 @@ bool ShaderHeader::ReadStamp(const FString& HeaderPath, uint64& OutStamp)
     const FString Contents(Text.Data());
     const int32   StampStart = Contents.Find(GStampPrefix);
 
-    if (StampStart == FString::InvalidIndex || StampStart > Contents.Find("inline constexpr"))
+    if (StampStart == FString::InvalidIndex || StampStart > Contents.Find(TEXT("inline constexpr")))
     {
         return false;
     }
@@ -113,18 +113,18 @@ static const CHAR_T* GetDimensionName(EShaderResourceDimension Dimension)
 {
     switch (Dimension)
     {
-        case EShaderResourceDimension::Buffer:           return "Buffer";
-        case EShaderResourceDimension::BufferEx:         return "BufferEx";
-        case EShaderResourceDimension::Texture1D:        return "Texture1D";
-        case EShaderResourceDimension::Texture1DArray:   return "Texture1DArray";
-        case EShaderResourceDimension::Texture2D:        return "Texture2D";
-        case EShaderResourceDimension::Texture2DArray:   return "Texture2DArray";
-        case EShaderResourceDimension::Texture2DMS:      return "Texture2DMS";
-        case EShaderResourceDimension::Texture2DMSArray: return "Texture2DMSArray";
-        case EShaderResourceDimension::Texture3D:        return "Texture3D";
-        case EShaderResourceDimension::TextureCube:      return "TextureCube";
-        case EShaderResourceDimension::TextureCubeArray: return "TextureCubeArray";
-        default:                                         return "-";
+        case EShaderResourceDimension::Buffer:           return TEXT("Buffer");
+        case EShaderResourceDimension::BufferEx:         return TEXT("BufferEx");
+        case EShaderResourceDimension::Texture1D:        return TEXT("Texture1D");
+        case EShaderResourceDimension::Texture1DArray:   return TEXT("Texture1DArray");
+        case EShaderResourceDimension::Texture2D:        return TEXT("Texture2D");
+        case EShaderResourceDimension::Texture2DArray:   return TEXT("Texture2DArray");
+        case EShaderResourceDimension::Texture2DMS:      return TEXT("Texture2DMS");
+        case EShaderResourceDimension::Texture2DMSArray: return TEXT("Texture2DMSArray");
+        case EShaderResourceDimension::Texture3D:        return TEXT("Texture3D");
+        case EShaderResourceDimension::TextureCube:      return TEXT("TextureCube");
+        case EShaderResourceDimension::TextureCubeArray: return TEXT("TextureCubeArray");
+        default:                                         return TEXT("-");
     }
 }
 
@@ -132,11 +132,11 @@ static const CHAR_T* GetSpaceName(EShaderBindingSpace Space)
 {
     switch (Space)
     {
-        case EShaderBindingSpace::Global:          return "global";
-        case EShaderBindingSpace::RayTracingLocal: return "ray tracing local";
-        case EShaderBindingSpace::BindlessHeap:    return "bindless heap";
-        case EShaderBindingSpace::ShaderConstants: return "shader constants";
-        default:                                   return "unknown";
+        case EShaderBindingSpace::Global:          return TEXT("global");
+        case EShaderBindingSpace::RayTracingLocal: return TEXT("ray tracing local");
+        case EShaderBindingSpace::BindlessHeap:    return TEXT("bindless heap");
+        case EShaderBindingSpace::ShaderConstants: return TEXT("shader constants");
+        default:                                   return TEXT("unknown");
     }
 }
 
@@ -144,35 +144,35 @@ static FString GetRegisterName(const FShaderResourceBinding& Binding)
 {
     if (Binding.Space == EShaderBindingSpace::ShaderConstants)
     {
-        return "constants";
+        return TEXT("constants");
     }
 
-    const CHAR_T* Prefix = "t";
+    const CHAR_T* Prefix = TEXT("t");
     switch (GetShaderResourceClass(Binding.Type))
     {
-        case EShaderResourceClass::ConstantBuffer: Prefix = "b"; break;
-        case EShaderResourceClass::Sampler:        Prefix = "s"; break;
-        case EShaderResourceClass::UAV:            Prefix = "u"; break;
+        case EShaderResourceClass::ConstantBuffer: Prefix = TEXT("b"); break;
+        case EShaderResourceClass::Sampler:        Prefix = TEXT("s"); break;
+        case EShaderResourceClass::UAV:            Prefix = TEXT("u"); break;
         default:                                   break;
     }
 
-    return Binding.Count > 1 ? FString::Printf("%s%u[%u]", Prefix, Binding.Register, Binding.Count) : FString::Printf("%s%u", Prefix, Binding.Register);
+    return Binding.Count > 1 ? FString::Printf(TEXT("%s%u[%u]"), Prefix, Binding.Register, Binding.Count) : FString::Printf(TEXT("%s%u"), Prefix, Binding.Register);
 }
 
 static FString GetNullTextureName(uint8 NullTextureType)
 {
-    static constexpr const CHAR_T* DimensionNames[] = { "Texture1D", "Texture1DArray", "Texture2D", "Texture2DArray", "TextureCube", "TextureCubeArray", "Texture3D", "Texture2DMS", "TextureBuffer" };
-    static constexpr const CHAR_T* ComponentNames[] = { "Float", "Int", "Uint", "Depth" };
+    static constexpr const CHAR_T* DimensionNames[] = { TEXT("Texture1D"), TEXT("Texture1DArray"), TEXT("Texture2D"), TEXT("Texture2DArray"), TEXT("TextureCube"), TEXT("TextureCubeArray"), TEXT("Texture3D"), TEXT("Texture2DMS"), TEXT("TextureBuffer") };
+    static constexpr const CHAR_T* ComponentNames[] = { TEXT("Float"), TEXT("Int"), TEXT("Uint"), TEXT("Depth") };
     static_assert(ARRAY_COUNT(DimensionNames) == static_cast<int32>(EMSLTextureDimension::Count) && ARRAY_COUNT(ComponentNames) == static_cast<int32>(EMSLTextureComponent::Count), "The null texture names are out of date");
 
     const uint32 Dimension = NullTextureType % static_cast<uint32>(EMSLTextureDimension::Count);
     const uint32 Component = NullTextureType / static_cast<uint32>(EMSLTextureDimension::Count);
     if (Component >= ARRAY_COUNT(ComponentNames))
     {
-        return FString::Printf("%u", NullTextureType);
+        return FString::Printf(TEXT("%u"), NullTextureType);
     }
 
-    return FString::Printf("%s %s", DimensionNames[Dimension], ComponentNames[Component]);
+    return FString::Printf(TEXT("%s %s"), DimensionNames[Dimension], ComponentNames[Component]);
 }
 
 static FString BuildReflectionComment(const TArray<uint8>& ShaderCode)
@@ -186,47 +186,47 @@ static FString BuildReflectionComment(const TArray<uint8>& ShaderCode)
     const FShaderReflectionInfo& Info = CodeView.GetInfo();
     const bool bIsMSL = CodeView.GetOutputLanguage() == EShaderOutputLanguage::MSL;
 
-    FString Comment = "// Reflection:\n";
-    Comment += FString::Printf("//   Shader constants: %u bytes\n", Info.ShaderConstantsSize);
+    FString Comment = TEXT("// Reflection:\n");
+    Comment += FString::Printf(TEXT("//   Shader constants: %u bytes\n"), Info.ShaderConstantsSize);
 
     if (bIsMSL && CodeView.GetStage() == EShaderStage::Compute)
     {
         const FMSLShaderInfo& MSLInfo = CodeView.GetMSLInfo();
-        Comment += FString::Printf("//   Thread group:     %u x %u x %u\n", MSLInfo.ThreadGroupSize[0], MSLInfo.ThreadGroupSize[1], MSLInfo.ThreadGroupSize[2]);
+        Comment += FString::Printf(TEXT("//   Thread group:     %u x %u x %u\n"), MSLInfo.ThreadGroupSize[0], MSLInfo.ThreadGroupSize[1], MSLInfo.ThreadGroupSize[2]);
     }
 
     if (Info.NumVertexInputs > 0)
     {
-        Comment += FString::Printf("//   Vertex inputs:    %u\n", Info.NumVertexInputs);
+        Comment += FString::Printf(TEXT("//   Vertex inputs:    %u\n"), Info.NumVertexInputs);
     }
 
     if (Info.RequiredFeatures != EShaderFeatureFlags::None)
     {
-        Comment += FString::Printf("//   Features:         0x%08x\n", static_cast<uint32>(Info.RequiredFeatures));
+        Comment += FString::Printf(TEXT("//   Features:         0x%08x\n"), static_cast<uint32>(Info.RequiredFeatures));
     }
 
     const TArrayView<const FShaderResourceBinding> Bindings = CodeView.GetBindings();
     const TArrayView<const FMSLBindingSlot>        MSLSlots = CodeView.GetMSLSlots();
     if (Bindings.IsEmpty())
     {
-        Comment += "//   Bindings:         none\n";
+        Comment += TEXT("//   Bindings:         none\n");
         return Comment;
     }
 
-    Comment += "//   Bindings:\n";
+    Comment += TEXT("//   Bindings:\n");
     for (int32 Index = 0; Index < Bindings.Size(); ++Index)
     {
         const FShaderResourceBinding& Binding = Bindings[Index];
 
-        FString Line = FString::Printf("//     %-10s %-21s %-16s %s", *GetRegisterName(Binding), ToString(Binding.Type), GetDimensionName(Binding.Dimension), GetSpaceName(Binding.Space));
+        FString Line = FString::Printf(TEXT("//     %-10s %-21s %-16s %s"), *GetRegisterName(Binding), ToString(Binding.Type), GetDimensionName(Binding.Dimension), GetSpaceName(Binding.Space));
         if (bIsMSL && Index < MSLSlots.Size())
         {
             const EMSLBindingType BindingType = GetMSLBindingType(Binding);
-            Line += FString::Printf(", MSL %s slot %u", ToString(BindingType), MSLSlots[Index].Slot);
+            Line += FString::Printf(TEXT(", MSL %s slot %u"), ToString(BindingType), MSLSlots[Index].Slot);
 
             if (MSLSlots[Index].NullTextureType != 0 || GetMSLBindingTable(BindingType) == EMSLBindingTable::Texture)
             {
-                Line += FString::Printf(", null texture %s", *GetNullTextureName(MSLSlots[Index].NullTextureType));
+                Line += FString::Printf(TEXT(", null texture %s"), *GetNullTextureName(MSLSlots[Index].NullTextureType));
             }
         }
 
@@ -254,46 +254,46 @@ FString ShaderHeader::Build(const FShaderHeaderDesc& Desc, uint64 Stamp, const F
     {
         if (!Reads.IsEmpty())
         {
-            Reads += ", ";
+            Reads += TEXT(", ");
         }
 
         Reads += Source.LocalPath.IsEmpty() ? Source.Path : MakeEngineRelative(Source.LocalPath);
     }
 
-    FString Compiler = FString::Printf("%s %u.%u, settings %u", *Identity.Name, Identity.VersionMajor, Identity.VersionMinor, Identity.SettingsVersion);
+    FString Compiler = FString::Printf(TEXT("%s %u.%u, settings %u"), *Identity.Name, Identity.VersionMajor, Identity.VersionMinor, Identity.SettingsVersion);
     if (Identity.TranslatorVersion != 0)
     {
-        Compiler += FString::Printf(", translator %u", Identity.TranslatorVersion);
+        Compiler += FString::Printf(TEXT(", translator %u"), Identity.TranslatorVersion);
     }
 
     FString Header;
-    Header += "// Generated by ShaderCompiler -compile -header. Do not edit, building the module regenerates it from the sources below.\n";
-    Header += FString::Printf("// Source:   %s (%s, %s, %s, %s)\n", *MakeEngineRelative(Desc.Job.SourceFile), *Desc.Job.EntryPoint, ToString(Desc.Job.ShaderStage), ToString(Desc.Job.ShaderModel), ToString(Desc.Job.OutputLanguage));
-    Header += FString::Printf("// Defines:  %s\n", Defines.IsEmpty() ? "none" : *Defines);
-    Header += FString::Printf("// Compiler: %s\n", *Compiler);
-    Header += FString::Printf("// Reads:    %s\n", *Reads);
+    Header += TEXT("// Generated by ShaderCompiler -compile -header. Do not edit, building the module regenerates it from the sources below.\n");
+    Header += FString::Printf(TEXT("// Source:   %s (%s, %s, %s, %s)\n"), *MakeEngineRelative(Desc.Job.SourceFile), *Desc.Job.EntryPoint, ToString(Desc.Job.ShaderStage), ToString(Desc.Job.ShaderModel), ToString(Desc.Job.OutputLanguage));
+    Header += FString::Printf(TEXT("// Defines:  %s\n"), Defines.IsEmpty() ? TEXT("none") : *Defines);
+    Header += FString::Printf(TEXT("// Compiler: %s\n"), *Compiler);
+    Header += FString::Printf(TEXT("// Reads:    %s\n"), *Reads);
     Header += BuildReflectionComment(ShaderCode);
-    Header += FString::Printf("%s%016llx\n", GStampPrefix, Stamp);
-    Header += "#pragma once\n";
-    Header += "#include \"Core/Core.h\"\n";
-    Header += "\n";
-    Header += "/** FShaderCode container, read with FShaderCodeReader::ReadEmbedded */\n";
-    Header += FString::Printf("inline constexpr uint8 %s[] =\n", *Desc.SymbolName);
-    Header += "{\n";
+    Header += FString::Printf(TEXT("%s%016llx\n"), GStampPrefix, Stamp);
+    Header += TEXT("#pragma once\n");
+    Header += TEXT("#include \"Core/Core.h\"\n");
+    Header += TEXT("\n");
+    Header += TEXT("/** FShaderCode container, read with FShaderCodeReader::ReadEmbedded */\n");
+    Header += FString::Printf(TEXT("inline constexpr uint8 %s[] =\n"), *Desc.SymbolName);
+    Header += TEXT("{\n");
 
     for (int32 Offset = 0; Offset < ShaderCode.Size(); Offset += GBytesPerLine)
     {
-        Header += "   ";
+        Header += TEXT("   ");
         const int32 LineEnd = (Offset + GBytesPerLine < ShaderCode.Size()) ? (Offset + GBytesPerLine) : ShaderCode.Size();
         for (int32 Index = Offset; Index < LineEnd; ++Index)
         {
-            Header += FString::Printf(" 0x%02x,", static_cast<uint32>(ShaderCode[Index]));
+            Header += FString::Printf(TEXT(" 0x%02x,"), static_cast<uint32>(ShaderCode[Index]));
         }
 
         Header += '\n';
     }
 
-    Header += "};\n";
+    Header += TEXT("};\n");
     return Header;
 }
 
@@ -308,14 +308,14 @@ bool ShaderHeader::Write(const FShaderHeaderDesc& Desc, uint64 Stamp, const FSha
     const FString Folder = File::GetDirectoryOf(Desc.HeaderPath);
     if (!File::CreateDirectoryTree(Folder))
     {
-        OutError = FString::Printf("Cannot create '%s'", *Folder);
+        OutError = FString::Printf(TEXT("Cannot create '%s'"), *Folder);
         return false;
     }
 
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(Desc.HeaderPath);
     if (!FileHandle || !File::WriteTextFile(FileHandle.Get(), Build(Desc, Stamp, Identity, Sources, ShaderCode)))
     {
-        OutError = FString::Printf("Cannot write '%s'", *Desc.HeaderPath);
+        OutError = FString::Printf(TEXT("Cannot write '%s'"), *Desc.HeaderPath);
         return false;
     }
 

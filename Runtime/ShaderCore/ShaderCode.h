@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Containers/ArrayView.h"
+#include "Core/Containers/StringConversion.h"
 #include "ShaderCore/ShaderReflection.h"
 
 enum class EShaderCodeFlags : uint8
@@ -92,13 +93,13 @@ public:
     /** Null-terminated, empty when the RHI does not need an entry point */
     NODISCARD const CHAR_T* GetEntryPoint() const
     {
-        return EntryPoint;
+        return EntryPoint.Get();
     }
 
     /** Null-terminated, empty when the container was compiled without debug info */
     NODISCARD const CHAR_T* GetBindingName(int32 BindingIndex) const
     {
-        return BindingNames.IsEmpty() ? TEXT("") : BindingNames[BindingIndex];
+        return BindingNames.IsEmpty() ? TEXT("") : BindingNames[BindingIndex].Get();
     }
 
     NODISCARD TArrayView<const uint8> GetNativeCode() const
@@ -109,19 +110,19 @@ public:
 private:
     friend struct FShaderCodeReader;
 
-    FShaderCodeHeader                        Header;
-    FShaderReflectionInfo                    Info;
-    TArrayView<const FShaderVertexInput>     VertexInputs;
-    TArrayView<const FShaderResourceBinding> Bindings;
-    TArrayView<const FSpirvBindingOffsets>   SpirvOffsets;
-    FMSLShaderInfo                           MSLInfo;
-    TArrayView<const FMSLBindingSlot>        MSLSlots;
-    const CHAR_T*                            EntryPoint = TEXT("");
+    FShaderCodeHeader                           Header;
+    FShaderReflectionInfo                       Info;
+    TArrayView<const FShaderVertexInput>        VertexInputs;
+    TArrayView<const FShaderResourceBinding>    Bindings;
+    TArrayView<const FSpirvBindingOffsets>      SpirvOffsets;
+    FMSLShaderInfo                              MSLInfo;
+    TArrayView<const FMSLBindingSlot>           MSLSlots;
+    TStringConversion<CHAR_T, ANSICHAR>         EntryPoint = StringCast<CHAR_T>("");
 
     /** Only allocated for DebugInfo containers */
-    TArray<const CHAR_T*>                      BindingNames;
+    TArray<TStringConversion<CHAR_T, ANSICHAR>> BindingNames;
 
-    TArrayView<const uint8>                  NativeCode;
+    TArrayView<const uint8>                     NativeCode;
 };
 
 struct SHADERCORE_API FShaderCodeWriter

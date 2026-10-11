@@ -19,30 +19,30 @@ FSandboxPlayerController::FSandboxPlayerController(const FObjectInitializer& Ini
 {
     if (FPlayerInput* Input = GetPlayerInput())
     {
-        Input->AddActionKeyMapping(FActionKeyMapping("Shoot", Keys::Space));
-        Input->AddActionKeyMapping(FActionKeyMapping("Shoot", Keys::GamepadFaceDown));
-        Input->AddActionKeyMapping(FActionKeyMapping("Boost", Keys::LeftShift));
-        Input->AddActionKeyMapping(FActionKeyMapping("Boost", Keys::GamepadLeftThumb));
+        Input->AddActionKeyMapping(FActionKeyMapping(TEXT("Shoot"), Keys::Space));
+        Input->AddActionKeyMapping(FActionKeyMapping(TEXT("Shoot"), Keys::GamepadFaceDown));
+        Input->AddActionKeyMapping(FActionKeyMapping(TEXT("Boost"), Keys::LeftShift));
+        Input->AddActionKeyMapping(FActionKeyMapping(TEXT("Boost"), Keys::GamepadLeftThumb));
 
-        Input->AddAxisKeyMapping(FAxisKeyMapping("MoveForward", Keys::W, 1.0f));
-        Input->AddAxisKeyMapping(FAxisKeyMapping("MoveForward", Keys::S, -1.0f));
-        Input->AddAxisKeyMapping(FAxisKeyMapping("MoveRight", Keys::A, 1.0f));
-        Input->AddAxisKeyMapping(FAxisKeyMapping("MoveRight", Keys::D, -1.0f));
-        Input->AddAxisKeyMapping(FAxisKeyMapping("MoveUp", Keys::Q, 1.0f));
-        Input->AddAxisKeyMapping(FAxisKeyMapping("MoveUp", Keys::E, -1.0f));
-        Input->AddAxisKeyMapping(FAxisKeyMapping("MoveUp", Keys::GamepadLeftShoulder, 1.0f));
-        Input->AddAxisKeyMapping(FAxisKeyMapping("MoveUp", Keys::GamepadRightShoulder, -1.0f));
+        Input->AddAxisKeyMapping(FAxisKeyMapping(TEXT("MoveForward"), Keys::W, 1.0f));
+        Input->AddAxisKeyMapping(FAxisKeyMapping(TEXT("MoveForward"), Keys::S, -1.0f));
+        Input->AddAxisKeyMapping(FAxisKeyMapping(TEXT("MoveRight"), Keys::A, 1.0f));
+        Input->AddAxisKeyMapping(FAxisKeyMapping(TEXT("MoveRight"), Keys::D, -1.0f));
+        Input->AddAxisKeyMapping(FAxisKeyMapping(TEXT("MoveUp"), Keys::Q, 1.0f));
+        Input->AddAxisKeyMapping(FAxisKeyMapping(TEXT("MoveUp"), Keys::E, -1.0f));
+        Input->AddAxisKeyMapping(FAxisKeyMapping(TEXT("MoveUp"), Keys::GamepadLeftShoulder, 1.0f));
+        Input->AddAxisKeyMapping(FAxisKeyMapping(TEXT("MoveUp"), Keys::GamepadRightShoulder, -1.0f));
 
-        Input->AddAxisKeyMapping(FAxisKeyMapping("LookRight", Keys::Right, 1.0f));
-        Input->AddAxisKeyMapping(FAxisKeyMapping("LookRight", Keys::Left, -1.0f));
-        Input->AddAxisKeyMapping(FAxisKeyMapping("LookUp", Keys::Up, -1.0f));
-        Input->AddAxisKeyMapping(FAxisKeyMapping("LookUp", Keys::Down, 1.0f));
+        Input->AddAxisKeyMapping(FAxisKeyMapping(TEXT("LookRight"), Keys::Right, 1.0f));
+        Input->AddAxisKeyMapping(FAxisKeyMapping(TEXT("LookRight"), Keys::Left, -1.0f));
+        Input->AddAxisKeyMapping(FAxisKeyMapping(TEXT("LookUp"), Keys::Up, -1.0f));
+        Input->AddAxisKeyMapping(FAxisKeyMapping(TEXT("LookUp"), Keys::Down, 1.0f));
 
-        Input->AddAxisMapping(FAxisMapping("MoveForward", EAnalogSourceName::LeftThumbY, 1.0f));
-        Input->AddAxisMapping(FAxisMapping("MoveRight", EAnalogSourceName::LeftThumbX, -1.0f));
-        Input->AddAxisMapping(FAxisMapping("LookRight", EAnalogSourceName::RightThumbX, 1.0f));
-        Input->AddAxisMapping(FAxisMapping("LookUp", EAnalogSourceName::RightThumbY, -1.0f));
-        Input->AddAxisMapping(FAxisMapping("ShootTrigger", EAnalogSourceName::RightTrigger, 1.0f));
+        Input->AddAxisMapping(FAxisMapping(TEXT("MoveForward"), EAnalogSourceName::LeftThumbY, 1.0f));
+        Input->AddAxisMapping(FAxisMapping(TEXT("MoveRight"), EAnalogSourceName::LeftThumbX, -1.0f));
+        Input->AddAxisMapping(FAxisMapping(TEXT("LookRight"), EAnalogSourceName::RightThumbX, 1.0f));
+        Input->AddAxisMapping(FAxisMapping(TEXT("LookUp"), EAnalogSourceName::RightThumbY, -1.0f));
+        Input->AddAxisMapping(FAxisMapping(TEXT("ShootTrigger"), EAnalogSourceName::RightTrigger, 1.0f));
     }
 }
 
@@ -78,13 +78,13 @@ void FSandboxPlayerController::Tick(float DeltaTime)
 
     FFirstPersonCameraInput CameraInput;
     CameraInput.MoveAxis  = FVector3(
-        Input->GetAxisValue("MoveRight"),
-        Input->GetAxisValue("MoveUp"),
-        Input->GetAxisValue("MoveForward"));
+        Input->GetAxisValue(TEXT("MoveRight")),
+        Input->GetAxisValue(TEXT("MoveUp")),
+        Input->GetAxisValue(TEXT("MoveForward")));
 
     CameraInput.StickLook = FVector2(
-        Input->GetAxisValue("LookRight"),
-        Input->GetAxisValue("LookUp"));
+        Input->GetAxisValue(TEXT("LookRight")),
+        Input->GetAxisValue(TEXT("LookUp")));
             
     CameraInput.LookDelta = FVector2(static_cast<float>(MouseDelta.X), static_cast<float>(MouseDelta.Y));
     CameraInput.bBoost    = bBoostHeld;
@@ -96,10 +96,10 @@ void FSandboxPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
 
-    InputComponent->BindAction("Shoot", EActionState::Pressed, this, &FSandboxPlayerController::Shoot);
-    InputComponent->BindAction("Boost", EActionState::Pressed, this, &FSandboxPlayerController::BoostPressed);
-    InputComponent->BindAction("Boost", EActionState::Released, this, &FSandboxPlayerController::BoostReleased);
-    InputComponent->BindAxis("ShootTrigger", this, &FSandboxPlayerController::OnShootTriggerAxis);
+    InputComponent->BindAction(TEXT("Shoot"), EActionState::Pressed, this, &FSandboxPlayerController::Shoot);
+    InputComponent->BindAction(TEXT("Boost"), EActionState::Pressed, this, &FSandboxPlayerController::BoostPressed);
+    InputComponent->BindAction(TEXT("Boost"), EActionState::Released, this, &FSandboxPlayerController::BoostReleased);
+    InputComponent->BindAxis(TEXT("ShootTrigger"), this, &FSandboxPlayerController::OnShootTriggerAxis);
 }
 
 void FSandboxPlayerController::Shoot()

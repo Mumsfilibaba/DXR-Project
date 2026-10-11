@@ -201,7 +201,7 @@ static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer, const F
 void FMetalBreadcrumbRing::Push(const FStringView& Name)
 {
     const uint32 Length = Math::Min<uint32>(static_cast<uint32>(Name.Length()), EntryLength - 1);
-    Memory::Memcpy(Entries[Head], Name.Data(), Length);
+    Memory::Memcpy(Entries[Head], Name.Data(), Length * sizeof(CHAR_T));
     Entries[Head][Length] = '\0';
 
     Head  = (Head + 1) % NumEntries;

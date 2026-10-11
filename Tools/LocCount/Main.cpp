@@ -35,26 +35,26 @@ static TMap<FString, FString>    GModuleByDirectory;
 
 static bool ShouldSkipDirectory(const FString& Name)
 {
-    return (Name == "ThirdParty")
-        || (Name == "Build")
-        || (Name == "Solutions")
-        || (Name == ".git")
-        || (Name == "Generated");
+    return (Name == TEXT("ThirdParty"))
+        || (Name == TEXT("Build"))
+        || (Name == TEXT("Solutions"))
+        || (Name == TEXT(".git"))
+        || (Name == TEXT("Generated"));
 }
 
 static bool IsCountedExtension(const FString& Extension)
 {
     static const CHAR_T* CountedExtensions[] =
     {
-        ".h",
-        ".hpp",
-        ".inl",
-        ".c",
-        ".cpp",
-        ".hlsl",
-        ".glsl",
-        ".lua",
-        ".bat",
+        TEXT(".h"),
+        TEXT(".hpp"),
+        TEXT(".inl"),
+        TEXT(".c"),
+        TEXT(".cpp"),
+        TEXT(".hlsl"),
+        TEXT(".glsl"),
+        TEXT(".lua"),
+        TEXT(".bat"),
     };
 
     for (const CHAR_T* Counted : CountedExtensions)
@@ -70,8 +70,8 @@ static bool IsCountedExtension(const FString& Extension)
 
 static bool IsModuleRoot(const FString& Directory)
 {
-    return FPlatformFile::IsFile(*File::CombinePath(Directory, "Module.lua"))
-        || FPlatformFile::IsFile(*File::CombinePath(Directory, "Target.lua"));
+    return FPlatformFile::IsFile(*File::CombinePath(Directory, TEXT("Module.lua")))
+        || FPlatformFile::IsFile(*File::CombinePath(Directory, TEXT("Target.lua")));
 }
 
 static FString ResolveModuleName(const FString& Directory, const FString& ScanRoot, const FString& ScanRootName)
@@ -147,7 +147,7 @@ static void PrintRow(const CHAR_T* Name, const FLocTotals& Totals)
 
 static void PrintReport()
 {
-    LOG_INFO("[LocCount]   %-40s %6s %9s %9s %9s %7s", "Module", "Files", "Total", "Code", "Blank", "Share");
+    LOG_INFO("[LocCount]   %-40s %6s %9s %9s %9s %7s", TEXT("Module"), TEXT("Files"), TEXT("Total"), TEXT("Code"), TEXT("Blank"), TEXT("Share"));
 
     const TArray<FLocEntry> Modules = SortedByTotal(GByModule);
     for (const FLocEntry& Entry : Modules)
@@ -156,7 +156,7 @@ static void PrintReport()
     }
 
     LOG_INFO("[LocCount]");
-    LOG_INFO("[LocCount]   %-40s %6s %9s %9s %9s %7s", "Extension", "Files", "Total", "Code", "Blank", "Share");
+    LOG_INFO("[LocCount]   %-40s %6s %9s %9s %9s %7s", TEXT("Extension"), TEXT("Files"), TEXT("Total"), TEXT("Code"), TEXT("Blank"), TEXT("Share"));
 
     const TArray<FLocEntry> Extensions = SortedByTotal(GByExtension);
     for (const FLocEntry& Entry : Extensions)
@@ -165,7 +165,7 @@ static void PrintReport()
     }
 
     LOG_INFO("[LocCount]");
-    PrintRow("All modules", GTotals);
+    PrintRow(TEXT("All modules"), GTotals);
 }
 
 static int32 LocCountMain()
@@ -173,7 +173,7 @@ static int32 LocCountMain()
     FString Root = Paths::GetEngineDir();
 
     FStringView RootOption;
-    if (CommandLine::FindOption("root", RootOption) && (RootOption.Size() > 0))
+    if (CommandLine::FindOption(TEXT("root"), RootOption) && (RootOption.Size() > 0))
     {
         Root = FString(RootOption.Data(), RootOption.Size());
     }
@@ -182,11 +182,11 @@ static int32 LocCountMain()
 
     static const CHAR_T* Folders[] =
     {
-        "Runtime",
-        "Tools",
-        "Tests",
-        "Sandbox",
-        "SetupScripts",
+        TEXT("Runtime"),
+        TEXT("Tools"),
+        TEXT("Tests"),
+        TEXT("Sandbox"),
+        TEXT("SetupScripts"),
     };
 
     for (const CHAR_T* Folder : Folders)
@@ -239,4 +239,4 @@ static int32 LocCountMain()
     return 0;
 }
 
-IMPLEMENT_PROGRAM_MAIN("LocCount", &LocCountMain);
+IMPLEMENT_PROGRAM_MAIN(TEXT("LocCount"), &LocCountMain);

@@ -2,6 +2,7 @@
 #include "Core/Platform/PlatformTime.h"
 #include "Core/Filesystem/File.h"
 #include "Core/Misc/OutputDeviceManager.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/Debug.h"
 #include "Core/Modules/ModuleManager.h"
@@ -695,13 +696,15 @@ bool FShaderCompiler::CollectSources(const FShaderSourceRoots& Roots, const FSha
             TextLength--;
         }
 
+        const TStringConversion<ANSICHAR, CHAR_T> Utf8Text = StringCast<ANSICHAR>(Text.Data(), TextLength);
+
         FShaderSourceFile SourceFile;
         SourceFile.Path      = SourcePath;
         SourceFile.LocalPath = Path;
-        SourceFile.Contents.Resize(TextLength);
-        if (TextLength > 0)
+        SourceFile.Contents.Resize(Utf8Text.Length());
+        if (Utf8Text.Length() > 0)
         {
-            Memory::Memcpy(SourceFile.Contents.Data(), Text.Data(), TextLength);
+            Memory::Memcpy(SourceFile.Contents.Data(), Utf8Text.Get(), Utf8Text.Length());
         }
 
         ShaderSourceHash::NormalizeLineEndings(SourceFile.Contents);
