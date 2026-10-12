@@ -212,6 +212,20 @@ bool FVulkanQueryAllocator::Allocate(FVulkanQuery& OutQuery, uint64* ResultTarge
     return true;
 }
 
+void FVulkanQueryAllocator::Release(const FVulkanQuery& Query)
+{
+    if (Ranges.IsEmpty())
+    {
+        return;
+    }
+
+    FVulkanQueryRange& Range = Ranges.Last();
+    if (Range.Pool == Query.QueryPool && Range.StartIndex + Range.Count - 1 == Query.QueryIndex)
+    {
+        Range.Count--;
+    }
+}
+
 void FVulkanQueryAllocator::Reset(TArray<FVulkanQueryRange>& OutRanges)
 {
     for (FVulkanQueryRange& Range : Ranges)

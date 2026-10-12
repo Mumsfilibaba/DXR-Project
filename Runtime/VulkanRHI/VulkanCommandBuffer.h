@@ -432,6 +432,7 @@ public:
     void EndQuery(const FVulkanQuery& Query, VkPipelineStageFlagBits TimestampStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
     void InsertBeginTimestamp(FVulkanQueryAllocator& Allocator);
     void InsertEndTimestamp(FVulkanQueryAllocator& Allocator);
+    void ReleaseBeginTimestamp(FVulkanQueryAllocator& Allocator);
 
     FVulkanCommandPool* GetOwnerPool()
     {

@@ -152,6 +152,27 @@ void FVulkanCommandBuffer::InsertEndTimestamp(FVulkanQueryAllocator& Allocator)
     }
 }
 
+void FVulkanCommandBuffer::ReleaseBeginTimestamp(FVulkanQueryAllocator& Allocator)
+{
+    if (!BeginTimestamp)
+    {
+        return;
+    }
+
+    Allocator.Release(BeginTimestamp);
+
+    for (int32 Index = 0; Index < TimestampQueries.Size(); ++Index)
+    {
+        if (TimestampQueries[Index].QueryPool == BeginTimestamp.QueryPool && TimestampQueries[Index].QueryIndex == BeginTimestamp.QueryIndex)
+        {
+            TimestampQueries.RemoveAt(Index);
+            break;
+        }
+    }
+
+    BeginTimestamp = FVulkanQuery();
+}
+
 void FVulkanCommandBuffer::BeginQuery(const FVulkanQuery& Query)
 {
     FVulkanQueryPool* Pool = Query.QueryPool;

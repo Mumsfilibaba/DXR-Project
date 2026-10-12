@@ -813,6 +813,7 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
     {
         STAT_ADD_FRAME(STAT_Vulkan_EmptyCommandBuffersRecycled, 1);
 
+        CommandBuffer->ReleaseBeginTimestamp(TimestampQueryAllocator);
         CommandBuffer->End();
         CommandPool->RecycleBuffer(CommandBuffer);
         CommandBuffer = nullptr;

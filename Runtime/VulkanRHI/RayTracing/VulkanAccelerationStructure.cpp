@@ -136,20 +136,29 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
         VkDeviceOrHostAddressConstKHR VertexData = {};
         VertexData.deviceAddress = VertexBuffer->GetDeviceAddress();
 
-        VkDeviceOrHostAddressConstKHR IndexData = {};
-        IndexData.deviceAddress = IndexBuffer->GetDeviceAddress();
-
         AccelerationStructureGeometry.geometryType                    = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
         AccelerationStructureGeometry.geometry.triangles.sType        = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
         AccelerationStructureGeometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
         AccelerationStructureGeometry.geometry.triangles.maxVertex    = Math::Max<uint32>(BuildDesc.NumVertices - 1, 1);
         AccelerationStructureGeometry.geometry.triangles.vertexStride = VertexBuffer->GetDesc().Stride;
         AccelerationStructureGeometry.geometry.triangles.vertexData   = VertexData;
-        AccelerationStructureGeometry.geometry.triangles.indexType    = VulkanRHI::ConvertIndexFormat(BuildDesc.IndexFormat);
-        AccelerationStructureGeometry.geometry.triangles.indexData    = IndexData;
 
-        PrimitiveCount = BuildDesc.NumIndices / 3;
-        if ((BuildDesc.NumIndices % 3) != 0)
+        const uint32 NumTriangleCorners = IndexBuffer ? BuildDesc.NumIndices : BuildDesc.NumVertices;
+        if (IndexBuffer)
+        {
+            VkDeviceOrHostAddressConstKHR IndexData = {};
+            IndexData.deviceAddress = IndexBuffer->GetDeviceAddress();
+
+            AccelerationStructureGeometry.geometry.triangles.indexType = VulkanRHI::ConvertIndexFormat(BuildDesc.IndexFormat);
+            AccelerationStructureGeometry.geometry.triangles.indexData = IndexData;
+        }
+        else
+        {
+            AccelerationStructureGeometry.geometry.triangles.indexType = VK_INDEX_TYPE_NONE_KHR;
+        }
+
+        PrimitiveCount = NumTriangleCorners / 3;
+        if ((NumTriangleCorners % 3) != 0)
         {
             VULKAN_WARNING("Creating acceleration structure with an indexcount that is not a multiple of 3");
         }

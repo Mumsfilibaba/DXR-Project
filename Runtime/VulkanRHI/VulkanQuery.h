@@ -209,6 +209,7 @@ public:
     ~FVulkanQueryAllocator();
 
     bool Allocate(FVulkanQuery& OutQuery, uint64* ResultTarget, EVulkanQueryType InType);
+    void Release(const FVulkanQuery& Query);
     void Reset(TArray<FVulkanQueryRange>& OutRanges);
 
 private:
